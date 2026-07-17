@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.3)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/components.css">
+<style>
+  /* ---------- เฉพาะหน้านี้ — ค่าสีมาจาก tokens เท่านั้น ---------- */
+  .vlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin:14px 0 6px}
+  .veh{display:flex;gap:12px;align-items:center;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:12px;cursor:pointer;background:#fff}
+  .veh:hover{border-color:var(--primary-500)}
+  .veh.sel{border-color:var(--primary-600);background:var(--primary-25)}
+  .veh .ic{width:44px;height:44px;border-radius:10px;background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .veh b{color:var(--gray-900);font-size:15px}
+  .veh .meta{font-size:12.5px;color:var(--gray-500)}
+
+  .cat{font-size:14px;font-weight:600;color:var(--gray-600);margin:16px 0 8px;display:flex;align-items:center;gap:6px}
+  .cat .ms{font-size:18px;color:var(--primary-600)}
+
+  .photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .ph{width:72px;height:72px;border-radius:10px;background:linear-gradient(135deg,#d9b8d2,#8a5c95);position:relative;overflow:hidden}
+  .ph img{width:100%;height:100%;object-fit:cover}
+  .ph .rm{position:absolute;top:2px;right:2px;background:rgba(16,24,40,.6);color:#fff;border-radius:50%;width:18px;height:18px;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .addph{width:72px;height:72px;border:1.5px dashed var(--gray-300);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gray-400);cursor:pointer;font-size:10px;gap:2px;background:#fff}
+
+  #parts{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;margin:16px 0 10px}
+  #parts .empty{grid-column:1/-1}
+  .part{border:1px solid var(--gray-200);border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;background:#fff}
+  .part .top{display:flex;gap:10px;flex:1}
+  .part .pic{width:42px;height:42px;border-radius:10px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;color:var(--gray-500);flex-shrink:0}
+  .part b{color:var(--gray-900);font-size:14px}
+  .part .code{font-size:12px;color:var(--gray-400)}
+  .part .need{font-size:12.5px;color:var(--gray-600);margin-top:2px}
+  .part .stock{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px dashed var(--gray-200);font-size:12.5px;color:var(--gray-500);flex-wrap:wrap;gap:6px}
+  .bk{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .booked{color:var(--success-600);font-weight:600;font-size:13px;display:flex;align-items:center;gap:4px}
+  .ordered{color:var(--warning-700);font-weight:600;font-size:13px;display:flex;align-items:center;gap:4px}
+
+  .decide{display:flex;gap:14px;max-width:560px;margin-top:14px}
+  .decide .tile{flex:1}
+  .route{background:var(--gray-100);border-radius:10px;padding:12px 14px;font-size:13.5px;margin-top:14px;display:flex;gap:8px;align-items:flex-start;max-width:720px}
+  .route .ms{color:var(--primary-600);font-size:20px;flex-shrink:0}
+  .dnote{max-width:720px}
+
+  .sumbox{background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);padding:6px 16px;max-width:760px;margin-top:14px}
+  .sumrow{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px dashed var(--gray-200);font-size:14px}
+  .sumrow:last-child{border:none}
+  .sumrow span:first-child{color:var(--gray-500);flex-shrink:0}
+  .sumrow span:last-child{color:var(--gray-900);font-weight:500;text-align:right}
+
+  .done{text-align:center;padding:48px 20px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-lg);max-width:620px;margin:20px auto}
+  .done .ok{width:76px;height:76px;border-radius:50%;background:var(--success-50);color:var(--success-600);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+  .done .ok .ms{font-size:42px}
+  .done .no{font-size:26px;font-weight:700;color:var(--gray-900);margin:6px 0}
+  .stat{display:inline-block;background:var(--primary-50);color:var(--primary-600);border-radius:var(--r-pill);padding:4px 14px;font-size:13px;font-weight:600;margin-top:6px}
+
+  .hint{font-size:13px;color:var(--gray-500);margin-top:4px}
+  #othwrap{max-width:720px}
+  .rowbtns{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+  .rowbtns .btn{min-width:170px;padding:11px 22px}
+
+  .garage{display:flex;gap:10px;align-items:center;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:10px 12px;background:#fff;margin-top:8px;max-width:560px;cursor:pointer}
+  .garage .ms{color:var(--primary-600)}
+  .garage b{color:var(--gray-900);font-size:14px}
+  .garage .meta{font-size:12.5px;color:var(--gray-500)}
+  .panel{background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);padding:16px;max-width:760px;margin-top:14px}
+  .apptbox{background:var(--primary-25);border:1px solid var(--primary-50);border-radius:var(--r-md);padding:12px 16px;max-width:760px;margin-top:12px;font-size:14px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="vlogo">M<em>D</em></div>
+    <div class="nv" title="หน้าหลัก" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">home</span></div>
+    <div class="nv" id="nav-form" title="แจ้งซ่อม" onclick="switchView('form')"><span class="ms">build</span></div>
+    <div class="nv" id="nav-my" title="เรื่องแจ้งซ่อมของฉัน" onclick="switchView('my')"><span class="ms">assignment</span></div>
+    <div class="nv" id="nav-kbk" title="งานซ่อม กบค." onclick="switchView('kbk')"><span class="ms">engineering</span><span class="cnt hidden" id="kbkcnt"></span></div>
+    <div class="nv" title="คลังอะไหล่" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">warehouse</span></div>
+    <div class="nv" title="รายงาน" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">monitoring</span></div>
+  </aside>
+
+  <div class="work">
+    <div class="draft">🧪 ต้นแบบ Mock v0.3 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง ↔ กบค. ได้จากเมนูซ้าย</div>
+    <div class="topbar">
+      <span class="ms">light_mode</span>
+      <span class="ms" style="position:relative">notifications<i style="position:absolute;top:0;right:0;width:8px;height:8px;border-radius:50%;background:var(--success-600)"></i></span>
+    </div>
+
+    <!-- ============ VIEW: ฟอร์มแจ้งซ่อม ============ -->
+    <main class="content" id="view-form">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>แจ้งซ่อมและบริหารงานซ่อม</span><span class="sep">›</span><span class="cur">สร้างใบแจ้งซ่อม</span></div>
+      <h1 class="page-title">สร้างใบแจ้งซ่อม</h1>
+      <div class="wsteps" id="wsteps"></div>
+
+      <section id="s1">
+        <div class="sect">ข้อมูลรถ</div>
+        <div class="fgrid">
+          <div class="f sp2">
+            <label>ค้นหารถที่มีปัญหา</label>
+            <div class="in"><span class="ms">search</span><input type="text" id="vq" placeholder="ค้นหาทะเบียน หรือเลือกจากรายการด้านล่าง…" oninput="renderVehicles()"></div>
+            <div class="hint">รายการ: รถของฉัน/รถในทีม — ถ้ารถไม่อยู่ในระบบ ติดต่อผู้ดูแลข้อมูลรถ (กรย./กบค.)</div>
+          </div>
+        </div>
+        <div class="vlist" id="vlist"></div>
+        <div class="empty hidden" id="vnone">ไม่พบรถที่ค้นหา</div>
+        <div id="vinfo" class="hidden">
+          <div class="sect" style="margin-top:22px">ข้อมูลรถ (ระบบดึงให้อัตโนมัติ)</div>
+          <div class="fgrid" id="vauto"></div>
+        </div>
+      </section>
+
+      <section id="s2" class="hidden">
+        <div class="sect">อาการเสีย <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เลือกได้หลายอาการ จากรายการมาตรฐานที่กรองตามจุดที่เลือก</span></div>
+        <div id="symcats"></div>
+        <div id="othwrap" class="hidden">
+          <div class="f" style="margin-top:12px"><label>ระบุอาการเอง</label><textarea id="othtext" rows="2" placeholder="อธิบายอาการที่พบ…"></textarea></div>
+        </div>
+        <div class="sect" style="margin-top:24px">รายละเอียดเพิ่มเติม</div>
+        <div class="fgrid">
+          <div class="f sp2"><label>ระดับความรุนแรง</label><div class="rads" id="sev"></div></div>
+          <div class="f sp2"><label>คำอธิบายเพิ่มเติม <small>(ถ้ามี)</small></label><textarea id="desc" rows="2" placeholder="เช่น เกิดตอนยกของหนัก น้ำมันหยดใต้กระบอกที่ 2…"></textarea></div>
+          <div class="f sp4">
+            <label>รูปถ่ายอาการ</label>
+            <div class="photos" id="photos">
+              <div class="addph" onclick="document.getElementById('file').click()"><span class="ms">photo_camera</span>ถ่าย/แนบรูป</div>
+              <div class="addph" onclick="addDemoPhoto()"><span class="ms">add_photo_alternate</span>รูปตัวอย่าง</div>
+            </div>
+            <input type="file" id="file" accept="image/*" multiple class="hidden" onchange="addFiles(this.files)">
+          </div>
+        </div>
+      </section>
+
+      <section id="s3" class="hidden">
+        <div class="sect">อะไหล่ที่ระบบแนะนำ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— (mock) จองได้ถ้ามีของ · <b>ของหมดแต่จำเป็นต้องใช้ → กด "สั่งของ" เพื่อรวมไว้ในรายการที่ต้องใช้</b> · อัปเดตล่าสุด 17 ก.ค. 2569 09:30</span></div>
+        <div id="parts"></div>
+      </section>
+
+      <section id="s4" class="hidden">
+        <div class="sect">การตัดสินใจ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เห็นอะไหล่และของคงเหลือแล้ว งานนี้จะดำเนินการอย่างไร</span></div>
+        <div class="decide">
+          <div class="tile tile-magenta" id="dcself" onclick="setDecision('self')"><span class="ms">build</span><b>ซ่อมเอง</b><small>ซ่อมได้ที่หน้างาน/หน่วยงาน</small></div>
+          <div class="tile tile-blue" id="dckbk" onclick="setDecision('kbk')"><span class="ms">engineering</span><b>ส่งซ่อม กบค.</b><small>ส่งต่อให้กองบำรุงรักษาฯ</small></div>
+        </div>
+        <div id="selfx" class="hidden dnote"><div class="f" style="margin-top:14px"><label>แผน/บันทึกการซ่อมโดยย่อ</label><textarea id="selfnote" rows="2" placeholder="เช่น เปลี่ยนชุดซีลเองในวันพรุ่งนี้ ใช้อะไหล่ที่จองไว้…"></textarea></div></div>
+        <div id="kbkx" class="hidden dnote">
+          <div class="f" style="margin-top:14px"><label>เหตุผลที่ซ่อมเองไม่ได้</label><textarea id="kbknote" rows="2" placeholder="เช่น ต้องใช้เครื่องมือพิเศษ/อะไหล่รอของ…"></textarea></div>
+          <div class="route"><span class="ms">alt_route</span><span><b>หน่วยงานปลายทาง: กบค. (กองบำรุงรักษาเครื่องจักรกล)</b><br>ระบบเลือกให้ตามสังกัดของรถ — เอกสารจะแนบอาการ รูป และรายการอะไหล่ที่จอง/สั่งของให้อัตโนมัติ</span></div>
+        </div>
+        <div class="sect" style="margin-top:26px">สรุปเรื่องแจ้งซ่อม</div>
+        <div class="sumbox" id="summary"></div>
+      </section>
+
+      <section id="sdone" class="hidden">
+        <div class="done">
+          <div class="ok"><span class="ms">check_circle</span></div>
+          <div>ส่งเรื่องเรียบร้อย เลขที่ใบแจ้งซ่อม</div>
+          <div class="no" id="docno"></div>
+          <div class="stat" id="docstat"></div>
+          <div class="hint" style="margin-top:14px" id="docnote"></div>
+          <div class="rowbtns" style="justify-content:center">
+            <button class="btn btn-p" onclick="switchView('my')">ดูสถานะเรื่องของฉัน</button>
+            <button class="btn btn-o" onclick="resetForm()">แจ้งซ่อมเรื่องใหม่</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="actions" id="footer">
+        <button class="btn btn-g" id="back" onclick="nav(-1)">ย้อนกลับ</button>
+        <button class="btn btn-p" id="next" onclick="nav(1)">ถัดไป</button>
+      </div>
+    </main>
+
+    <!-- ============ VIEW: เรื่องของฉัน ============ -->
+    <main class="content hidden" id="view-my">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>แจ้งซ่อมและบริหารงานซ่อม</span><span class="sep">›</span><span class="cur">เรื่องแจ้งซ่อมของฉัน</span></div>
+      <h1 class="page-title">เรื่องแจ้งซ่อมของฉัน</h1>
+      <div id="mylist"></div>
+      <div id="mydetail" class="hidden"></div>
+    </main>
+
+    <!-- ============ VIEW: งานซ่อม กบค. ============ -->
+    <main class="content hidden" id="view-kbk">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>งานซ่อม กบค.</span><span class="sep">›</span><span class="cur">คิวงานซ่อม</span></div>
+      <h1 class="page-title">งานซ่อม กบค.</h1>
+      <div id="kbklist"></div>
+      <div id="kbkdetail" class="hidden"></div>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ================= MOCK DATA =================
+const VEHICLES=[
+ {id:1,plate:'81-2345 นครราชสีมา',model:'Hino FM8J 6 ล้อ',org:'กฟภ. เขต ฉ.3 นครราชสีมา',attach:'เครน Tadano TM-ZE304'},
+ {id:2,plate:'82-6789 ขอนแก่น',model:'Isuzu FTR',org:'กฟภ. เขต ฉ.1 ขอนแก่น',attach:'กระเช้า Aichi SK17A'},
+ {id:3,plate:'83-1122 กรุงเทพมหานคร',model:'Mitsubishi Fuso FI',org:'สำนักงานใหญ่ (กบค.)',attach:'เครน Unic URV554'},
+ {id:4,plate:'80-5566 เชียงใหม่',model:'Hino XZU กระบะยกสูง',org:'กฟภ. เขต น.1 เชียงใหม่',attach:null},
+];
+const CATS=[
+ {key:'hyd',name:'ระบบไฮดรอลิก',icon:'water_drop',for:'attach'},
+ {key:'boom',name:'บูม/กระเช้า',icon:'construction',for:'attach'},
+ {key:'elec',name:'ระบบไฟฟ้า',icon:'bolt',for:'both'},
+ {key:'eng',name:'เครื่องยนต์',icon:'settings',for:'vehicle'},
+ {key:'oth',name:'อื่นๆ',icon:'more_horiz',for:'both'},
+];
+const SYMPTOMS=[
+ {id:'HYD-01',cat:'hyd',name:'กระบอกไฮดรอลิกรั่ว/ซึม'},
+ {id:'HYD-02',cat:'hyd',name:'ปั๊มไฮดรอลิกเสียงดัง/แรงดันตก'},
+ {id:'HYD-03',cat:'hyd',name:'สายไฮดรอลิกแตก/รั่ว'},
+ {id:'BOOM-01',cat:'boom',name:'บูมยืด-หดสะดุด'},
+ {id:'BOOM-02',cat:'boom',name:'ลวดสลิงหย่อน/เส้นใยขาด'},
+ {id:'BOOM-03',cat:'boom',name:'กระเช้าเอียง/ล็อกไม่อยู่'},
+ {id:'ELEC-01',cat:'elec',name:'รีโมทคอนโทรลไม่ทำงาน'},
+ {id:'ELEC-02',cat:'elec',name:'ไฟเตือน load sensor ขึ้น'},
+ {id:'ENG-01',cat:'eng',name:'สตาร์ทไม่ติด'},
+ {id:'ENG-02',cat:'eng',name:'ควันดำ/กำลังตก'},
+ {id:'OTH',cat:'oth',name:'อื่นๆ ระบุเอง'},
+];
+const PARTS=[
+ {sym:'HYD-01',code:'SL-4402',name:'ชุดซีลกระบอกไฮดรอลิก',need:1,unit:'ชุด',stock:6,wh:'กบค. สนญ.',icon:'join_inner'},
+ {sym:'HYD-01',code:'OL-0046',name:'น้ำมันไฮดรอลิก ISO VG46 18L',need:1,unit:'ถัง',stock:2,wh:'กบค. สนญ.',icon:'oil_barrel'},
+ {sym:'HYD-02',code:'PM-2210',name:'ปั๊มไฮดรอลิกเกียร์',need:1,unit:'ตัว',stock:0,eta:'24 ก.ค.',wh:'กบค. สนญ.',icon:'compress'},
+ {sym:'HYD-02',code:'FT-1108',name:'ไส้กรองไฮดรอลิก',need:2,unit:'ชิ้น',stock:12,wh:'กบค. สนญ.',icon:'filter_alt'},
+ {sym:'HYD-03',code:'HS-3808',name:'สายไฮดรอลิกแรงดันสูง 3/8"',need:2,unit:'เส้น',stock:4,wh:'คลังเขต',icon:'cable'},
+ {sym:'HYD-03',code:'FT-2205',name:'ข้อต่อไฮดรอลิก',need:4,unit:'ตัว',stock:3,wh:'คลังเขต',icon:'valve'},
+ {sym:'BOOM-01',code:'WP-1030',name:'แผ่นสไลด์บูม (wear pad)',need:4,unit:'แผ่น',stock:8,wh:'กบค. สนญ.',icon:'layers'},
+ {sym:'BOOM-01',code:'GR-0002',name:'จาระบี EP2',need:1,unit:'หลอด',stock:20,wh:'คลังเขต',icon:'colorize'},
+ {sym:'BOOM-02',code:'WR-1000',name:'ลวดสลิง 10 มม.',need:25,unit:'เมตร',stock:0,wh:'กบค. สนญ.',icon:'line_weight'},
+ {sym:'BOOM-03',code:'LK-0770',name:'ชุดล็อกกระเช้า',need:1,unit:'ชุด',stock:5,wh:'กบค. สนญ.',icon:'lock'},
+ {sym:'ELEC-01',code:'BT-0912',name:'แบตเตอรี่รีโมท',need:2,unit:'ก้อน',stock:15,wh:'คลังเขต',icon:'battery_full'},
+ {sym:'ELEC-01',code:'RC-5521',name:'ชุดรับสัญญาณรีโมท',need:1,unit:'ชุด',stock:1,wh:'กบค. สนญ.',icon:'settings_remote'},
+ {sym:'ELEC-02',code:'SN-3310',name:'เซ็นเซอร์ load cell',need:1,unit:'ตัว',stock:0,eta:'31 ก.ค.',wh:'กบค. สนญ.',icon:'sensors'},
+ {sym:'ENG-01',code:'BT-1212',name:'แบตเตอรี่รถ 12V 120Ah',need:2,unit:'ลูก',stock:5,wh:'คลังเขต',icon:'battery_charging_full'},
+ {sym:'ENG-02',code:'FT-0330',name:'ไส้กรองอากาศ',need:1,unit:'ชิ้น',stock:9,wh:'คลังเขต',icon:'air'},
+];
+const SEVS=['ต่ำ','ปานกลาง','สูง','หยุดใช้งาน'];
+const GARAGES=[
+ {id:'g1',name:'อู่เจริญการช่าง',dist:'3.2 กม.',tags:'เครน · ไฮดรอลิก'},
+ {id:'g2',name:'อู่ ส.ทวีชัย เซอร์วิส',dist:'5.8 กม.',tags:'รถบรรทุก 6 ล้อ · ช่วงล่าง'},
+ {id:'g3',name:'อู่มิตรภาพทรัค',dist:'12 กม.',tags:'เครื่องยนต์ · ระบบไฟฟ้า'},
+];
+const KBK_STEPS=['รับเรื่องซ่อม','รอสั่งอะไหล่','อะไหล่ถึงแล้ว','ดำเนินการซ่อม','ซ่อมเสร็จ'];
+const CHECKS=['ทดสอบการทำงานตามอาการที่แจ้ง — ปกติ','ไม่มีรอยรั่ว/เสียงผิดปกติหลังซ่อม','อุปกรณ์ความปลอดภัยครบและใช้งานได้','เอกสาร/รายการอะไหล่ที่ใช้ครบถ้วน'];
+
+// ================= JOBS (in-memory DB) =================
+let SEQ=42;
+const JOBS=[
+ {no:'MTD-690716-031',plate:'82-6789 ขอนแก่น',model:'Isuzu FTR + กระเช้า Aichi SK17A',org:'กฟภ. เขต ฉ.1 ขอนแก่น',target:'กระเช้า Aichi SK17A',
+  syms:['กระเช้าเอียง/ล็อกไม่อยู่'],sev:'สูง',photos:2,desc:'ล็อกกระเช้าหลวม เอียงตอนยกสุด',
+  booked:[{name:'ชุดล็อกกระเช้า',qty:1,unit:'ชุด'}],ordered:[],reason:'ต้องปรับตั้งระบบล็อกด้วยเครื่องมือเฉพาะ',
+  phase:'pending',wi:0,history:[{t:'16 ก.ค. 2569 14:20',label:'ส่งเรื่องถึง กบค. — รอรับเรื่อง'}]},
+ {no:'MTD-690715-018',plate:'83-1122 กรุงเทพมหานคร',model:'Mitsubishi Fuso FI + เครน Unic URV554',org:'สำนักงานใหญ่ (กบค.)',target:'เครน Unic URV554',
+  syms:['ปั๊มไฮดรอลิกเสียงดัง/แรงดันตก'],sev:'ปานกลาง',photos:1,desc:'แรงดันตกตอนยกโหลดเกินครึ่ง',
+  booked:[{name:'ไส้กรองไฮดรอลิก',qty:2,unit:'ชิ้น'}],ordered:[{name:'ปั๊มไฮดรอลิกเกียร์',qty:1,unit:'ตัว',eta:'24 ก.ค.'}],reason:'ปั๊มต้องเปลี่ยนทั้งลูก รอของเข้า',
+  phase:'work',wi:1,history:[
+   {t:'15 ก.ค. 2569 10:05',label:'ส่งเรื่องถึง กบค. — รอรับเรื่อง'},
+   {t:'15 ก.ค. 2569 15:40',label:'กบค. รับเรื่องซ่อม'},
+   {t:'16 ก.ค. 2569 09:00',label:'สถานะ: รอสั่งอะไหล่ (ปั๊มไฮดรอลิกเกียร์ ETA 24 ก.ค.)'}]},
+];
+
+// ================= STATE =================
+const S={step:1,vehicle:null,target:null,symptoms:[],sev:null,photos:0,bookings:{},orders:{},decision:null};
+const STEPS=['เลือกรถ','อาการเสีย','อะไหล่ที่แนะนำ','ตัดสินใจและสรุป'];
+let VIEW='form';
+
+// ================= HELPERS =================
+const $=id=>document.getElementById(id);
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2600)}
+function nowStr(){return new Date().toLocaleString('th-TH',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).replace('พ.ศ. ','')}
+function esc(s){return (s||'').replace(/</g,'&lt;')}
+function badge(p){
+  if(p.stock===0&&p.eta)return'<span class="badge b-out">หมด · รอของ (ETA '+p.eta+')</span>';
+  if(p.stock===0)return'<span class="badge b-out">หมด</span>';
+  if(p.stock<=3)return'<span class="badge b-low">ใกล้หมด · เหลือ '+p.stock+'</span>';
+  return'<span class="badge b-ok">พร้อมเบิก · เหลือ '+p.stock+'</span>';
+}
+function statusInfo(j){
+  if(j.phase==='self')return{label:'บันทึกแล้ว — ซ่อมเอง',cls:'b-ok'};
+  if(j.phase==='pending')return{label:'รอ กบค. รับเรื่อง',cls:'b-brand'};
+  if(j.phase==='returned')return{label:'ส่งกลับให้ซ่อมเอง',cls:'b-low'};
+  if(j.phase==='work')return{label:KBK_STEPS[j.wi],cls:j.wi===4?'b-ok':'b-brand'};
+  if(j.phase==='appt')return{label:'นัดรับรถ '+j.appt.date+' '+j.appt.time,cls:'b-brand'};
+  return{label:'ปิดงาน — ตรวจสภาพผ่าน ส่งมอบแล้ว',cls:'b-ok'};
+}
+function updateBadge(){
+  const n=JOBS.filter(j=>j.phase==='pending').length;
+  $('kbkcnt').textContent=n;$('kbkcnt').classList.toggle('hidden',n===0);
+}
+
+// ================= VIEW SWITCH =================
+function switchView(v){
+  VIEW=v;
+  ['form','my','kbk'].forEach(x=>{
+    $('view-'+x).classList.toggle('hidden',x!==v);
+    $('nav-'+x).classList.toggle('on',x===v);
+  });
+  if(v==='my')renderMyList();
+  if(v==='kbk')renderKbkList();
+  window.scrollTo({top:0});
+}
+
+// ================= FORM (ผู้แจ้ง) =================
+function renderSteps(){
+  $('wsteps').innerHTML=STEPS.map((n,i)=>{
+    const st=i+1===S.step?'active':i+1<S.step?'passed':'';
+    return`<div class="wstep ${st}"><span class="num">${i+1<S.step?'✓':i+1}</span><span class="lbl">${n}</span></div>`;
+  }).join('');
+}
+function renderVehicles(){
+  const q=$('vq').value.trim();
+  const list=VEHICLES.filter(v=>!q||v.plate.includes(q)||v.model.includes(q));
+  $('vnone').classList.toggle('hidden',list.length>0);
+  $('vlist').innerHTML=list.map(v=>`
+    <div class="veh ${S.vehicle&&S.vehicle.id===v.id?'sel':''}" onclick="pickVehicle(${v.id})">
+      <div class="ic"><span class="ms">local_shipping</span></div>
+      <div><b>${v.plate}</b><div class="meta">${v.model}${v.attach?' · '+v.attach:''}</div></div>
+    </div>`).join('');
+}
+function pickVehicle(id){
+  const isNew=!S.vehicle||S.vehicle.id!==id;
+  S.vehicle=VEHICLES.find(v=>v.id===id);
+  if(isNew){S.target=S.vehicle.attach?null:'vehicle';S.symptoms=[];S.bookings={};S.orders={};}
+  renderVehicles();
+  $('vinfo').classList.remove('hidden');
+  const opts=[['vehicle','ตัวรถ']];
+  if(S.vehicle.attach)opts.push(['attach',S.vehicle.attach]);
+  $('vauto').innerHTML=`
+    <div class="f ro"><label>ยี่ห้อ/รุ่น</label><div class="in"><span class="ms">local_shipping</span><input value="${S.vehicle.model}" readonly></div></div>
+    <div class="f ro"><label>สังกัด</label><div class="in"><span class="ms">apartment</span><input value="${S.vehicle.org}" readonly></div></div>
+    <div class="f ro"><label>อุปกรณ์เสริม</label><div class="in"><span class="ms">construction</span><input value="${S.vehicle.attach||'ไม่มี'}" readonly></div></div>
+    <div class="f"><label>จุดที่มีปัญหา</label><div class="rads">${opts.map(([k,n])=>`<label><input type="radio" name="target" ${S.target===k?'checked':''} onchange="setTarget('${k}')">${n}</label>`).join('')}</div></div>`;
+}
+function setTarget(k){if(S.target!==k){S.target=k;S.symptoms=[];S.bookings={};S.orders={};}}
+function renderSymptoms(){
+  const scope=S.target==='attach'?['attach','both']:['vehicle','both'];
+  $('symcats').innerHTML=CATS.filter(c=>scope.includes(c.for)).map(c=>{
+    const items=SYMPTOMS.filter(s=>s.cat===c.key);
+    return`<div class="cat"><span class="ms">${c.icon}</span>${c.name}</div>
+      <div class="chips">${items.map(s=>`<div class="chip ${S.symptoms.includes(s.id)?'sel':''}" onclick="toggleSym('${s.id}')">${s.name}</div>`).join('')}</div>`;
+  }).join('');
+  $('othwrap').classList.toggle('hidden',!S.symptoms.includes('OTH'));
+  $('sev').innerHTML=SEVS.map(s=>`<label><input type="radio" name="sev" ${S.sev===s?'checked':''} onchange="S.sev='${s}'">${s}</label>`).join('');
+}
+function toggleSym(id){
+  if(S.symptoms.includes(id)){
+    S.symptoms=S.symptoms.filter(x=>x!==id);
+    const dropped=PARTS.filter(p=>p.sym===id&&(S.bookings[p.code]||S.orders[p.code]));
+    if(dropped.length){dropped.forEach(p=>{delete S.bookings[p.code];delete S.orders[p.code]});toast('ยกเลิกการจอง/สั่งของ ของอาการที่เอาออกแล้ว')}
+  }else S.symptoms.push(id);
+  renderSymptoms();
+}
+function partsFor(){return PARTS.filter(p=>S.symptoms.includes(p.sym))}
+function renderParts(){
+  const list=partsFor();
+  if(!list.length){$('parts').innerHTML='<div class="empty">ยังไม่มีอะไหล่แนะนำ — อาการ "อื่นๆ" จะให้ช่าง กบค. ประเมินรายการอะไหล่ให้หลังรับเรื่อง</div>';return}
+  $('parts').innerHTML=list.map(p=>{
+    const bk=S.bookings[p.code],od=S.orders[p.code];
+    let act;
+    if(bk){
+      act=`<div class="bk"><span class="booked"><span class="ms" style="font-size:18px">check_circle</span>จองแล้ว ${bk} ${p.unit}</span>
+        <div class="qty"><button onclick="chgQty('${p.code}',-1)">−</button><span>${bk}</span><button onclick="chgQty('${p.code}',1)">+</button></div>
+        <button class="btn btn-g" style="padding:7px 10px;font-size:12.5px" onclick="delete S.bookings['${p.code}'];renderParts()">ยกเลิก</button></div>`;
+    }else if(od){
+      act=`<div class="bk"><span class="ordered"><span class="ms" style="font-size:18px">shopping_cart</span>สั่งของแล้ว ${od} ${p.unit} · รอของเข้า${p.eta?' (ETA '+p.eta+')':''}</span>
+        <div class="qty"><button onclick="chgOrd('${p.code}',-1)">−</button><span>${od}</span><button onclick="chgOrd('${p.code}',1)">+</button></div>
+        <button class="btn btn-g" style="padding:7px 10px;font-size:12.5px" onclick="delete S.orders['${p.code}'];renderParts()">ยกเลิก</button></div>`;
+    }else if(p.stock>0){
+      act=`<div class="bk"><button class="btn btn-o" style="width:100%" onclick="book('${p.code}')"><span class="ms" style="font-size:18px">event_available</span> จองอะไหล่ (${Math.min(p.need,p.stock)} ${p.unit})</button></div>`;
+    }else{
+      act=`<div class="bk"><button class="btn btn-o" style="width:100%" onclick="order('${p.code}')"><span class="ms" style="font-size:18px">shopping_cart</span> สั่งของ (${p.need} ${p.unit}) — รวมไว้ในรายการที่ต้องใช้</button></div>`;
+    }
+    return`<div class="part">
+      <div class="top"><div class="pic"><span class="ms">${p.icon}</span></div>
+        <div style="flex:1"><b>${p.name}</b><div class="code">${p.code} · ${SYMPTOMS.find(s=>s.id===p.sym).name}</div>
+        <div class="need">ต้องใช้ ${p.need} ${p.unit}/ครั้ง</div></div>
+        <div>${badge(p)}</div></div>
+      <div class="stock"><span><span class="ms" style="font-size:16px">warehouse</span> ${p.wh}</span><span>อัปเดต 17 ก.ค. 09:30</span></div>
+      ${act}</div>`;
+  }).join('');
+}
+function book(code){const p=PARTS.find(x=>x.code===code);S.bookings[code]=Math.min(p.need,p.stock);toast('จอง '+p.name+' แล้ว (mock — ยังไม่ตัดสต็อกจริง)');renderParts()}
+function order(code){const p=PARTS.find(x=>x.code===code);S.orders[code]=p.need;toast('เพิ่ม '+p.name+' ในรายการสั่งของแล้ว');renderParts()}
+function chgQty(code,d){const p=PARTS.find(x=>x.code===code);const v=(S.bookings[code]||1)+d;if(v<1)return;if(v>p.stock){toast('เกินจำนวนคงเหลือในคลัง ('+p.stock+')');return}S.bookings[code]=v;renderParts()}
+function chgOrd(code,d){const v=(S.orders[code]||1)+d;if(v<1)return;S.orders[code]=v;renderParts()}
+
+function setDecision(d){S.decision=d;$('dcself').classList.toggle('sel',d==='self');$('dckbk').classList.toggle('sel',d==='kbk');$('selfx').classList.toggle('hidden',d!=='self');$('kbkx').classList.toggle('hidden',d!=='kbk');renderSummary()}
+function bookedArr(){return Object.entries(S.bookings).map(([c,q])=>{const p=PARTS.find(x=>x.code===c);return{name:p.name,qty:q,unit:p.unit}})}
+function orderedArr(){return Object.entries(S.orders).map(([c,q])=>{const p=PARTS.find(x=>x.code===c);return{name:p.name,qty:q,unit:p.unit,eta:p.eta||'รอยืนยัน'}})}
+function renderSummary(){
+  const bk=bookedArr().map(x=>`${x.name} ×${x.qty}`),od=orderedArr().map(x=>`${x.name} ×${x.qty} (ETA ${x.eta})`);
+  const symNames=S.symptoms.map(id=>SYMPTOMS.find(s=>s.id===id).name);
+  $('summary').innerHTML=`
+    <div class="sumrow"><span>รถ</span><span>${S.vehicle.plate} · ${S.vehicle.model}</span></div>
+    <div class="sumrow"><span>จุดที่มีปัญหา</span><span>${S.target==='attach'?S.vehicle.attach:'ตัวรถ'}</span></div>
+    <div class="sumrow"><span>อาการ</span><span>${symNames.join(', ')||'—'}</span></div>
+    <div class="sumrow"><span>ความรุนแรง</span><span>${S.sev||'—'}</span></div>
+    <div class="sumrow"><span>รูปแนบ</span><span>${S.photos} รูป</span></div>
+    <div class="sumrow"><span>อะไหล่ที่จอง</span><span>${bk.length?bk.join('<br>'):'ไม่มี'}</span></div>
+    <div class="sumrow"><span>อะไหล่ที่สั่งของ (รอเข้า)</span><span>${od.length?od.join('<br>'):'ไม่มี'}</span></div>
+    <div class="sumrow"><span>ดำเนินการ</span><span>${S.decision==='self'?'ซ่อมเอง':S.decision==='kbk'?'ส่งซ่อม กบค. (ระบบเลือกปลายทางตามสังกัด)':'— ยังไม่เลือก —'}</span></div>`;
+}
+
+// ---------- photos ----------
+function addDemoPhoto(){S.photos++;addThumb(null)}
+function addFiles(files){[...files].forEach(f=>{S.photos++;addThumb(URL.createObjectURL(f))});$('file').value=''}
+function addThumb(src){
+  const d=document.createElement('div');d.className='ph';
+  if(src)d.innerHTML=`<img src="${src}">`;
+  const rm=document.createElement('div');rm.className='rm';rm.textContent='✕';
+  rm.onclick=()=>{d.remove();S.photos--};
+  d.appendChild(rm);
+  $('photos').insertBefore(d,$('photos').firstChild);
+}
+
+// ---------- nav/validate/submit ----------
+function nav(d){
+  if(d>0&&!validate())return;
+  S.step+=d;
+  if(S.step<1)S.step=1;
+  if(S.step>4){submit();return}
+  ['s1','s2','s3','s4'].forEach((id,i)=>$(id).classList.toggle('hidden',i+1!==S.step));
+  if(S.step===2)renderSymptoms();
+  if(S.step===3)renderParts();
+  if(S.step===4)renderSummary();
+  $('back').style.visibility=S.step===1?'hidden':'visible';
+  $('next').textContent=S.step===4?'ส่งเรื่องแจ้งซ่อม':'ถัดไป';
+  renderSteps();
+  window.scrollTo({top:0});
+}
+function validate(){
+  if(S.step===1){
+    if(!S.vehicle){toast('กรุณาเลือกรถก่อน');return false}
+    if(!S.target){toast('กรุณาระบุจุดที่มีปัญหา (ตัวรถ/อุปกรณ์เสริม)');return false}
+  }
+  if(S.step===2){
+    if(!S.symptoms.length){toast('กรุณาเลือกอาการเสียอย่างน้อย 1 รายการ');return false}
+    if(S.symptoms.includes('OTH')&&!$('othtext').value.trim()){toast('กรุณาระบุอาการในช่อง "อื่นๆ"');return false}
+    if(!S.sev){toast('กรุณาเลือกระดับความรุนแรง');return false}
+  }
+  if(S.step===4&&!S.decision){toast('กรุณาเลือก ซ่อมเอง หรือ ส่งซ่อม กบค.');return false}
+  return true;
+}
+function submit(){
+  ['s1','s2','s3','s4'].forEach(id=>$(id).classList.add('hidden'));
+  $('footer').classList.add('hidden');
+  $('sdone').classList.remove('hidden');
+  const no='MTD-690717-0'+(++SEQ);
+  const job={no,plate:S.vehicle.plate,model:S.vehicle.model+(S.vehicle.attach?' + '+S.vehicle.attach:''),org:S.vehicle.org,
+    target:S.target==='attach'?S.vehicle.attach:'ตัวรถ',
+    syms:S.symptoms.map(id=>id==='OTH'?('อื่นๆ: '+esc($('othtext').value.trim())):SYMPTOMS.find(s=>s.id===id).name),
+    sev:S.sev,photos:S.photos,desc:esc($('desc').value.trim()),
+    booked:bookedArr(),ordered:orderedArr(),
+    reason:S.decision==='kbk'?esc($('kbknote').value.trim()):esc($('selfnote').value.trim()),
+    phase:S.decision==='kbk'?'pending':'self',wi:0,
+    history:[{t:nowStr(),label:S.decision==='kbk'?'ส่งเรื่องถึง กบค. — รอรับเรื่อง':'บันทึกเรื่อง — ดำเนินการซ่อมเอง'}]};
+  JOBS.unshift(job);
+  updateBadge();
+  $('docno').textContent=no;
+  if(S.decision==='self'){
+    $('docstat').textContent='บันทึกแล้ว — ดำเนินการซ่อมเอง';
+    $('docnote').textContent='เรื่องถูกบันทึกเข้าประวัติรถ พร้อม snapshot อะไหล่ที่จอง/สั่งของไว้';
+  }else{
+    $('docstat').textContent='ส่งเรื่องแล้ว — รอ กบค. รับเรื่อง';
+    $('docnote').textContent='เลขที่เรื่องไปแสดงที่เมนู "งานซ่อม กบค." แล้ว — ติดตามสถานะได้ที่ "เรื่องแจ้งซ่อมของฉัน"';
+  }
+  renderSteps();
+}
+function resetForm(){
+  Object.assign(S,{step:1,vehicle:null,target:null,symptoms:[],sev:null,photos:0,bookings:{},orders:{},decision:null});
+  ['vq','desc','othtext','selfnote','kbknote'].forEach(id=>$(id).value='');
+  document.querySelectorAll('#photos .ph').forEach(e=>e.remove());
+  $('vinfo').classList.add('hidden');$('vauto').innerHTML='';
+  $('dcself').classList.remove('sel');$('dckbk').classList.remove('sel');
+  $('selfx').classList.add('hidden');$('kbkx').classList.add('hidden');
+  $('sdone').classList.add('hidden');$('footer').classList.remove('hidden');
+  $('s1').classList.remove('hidden');['s2','s3','s4'].forEach(id=>$(id).classList.add('hidden'));
+  $('back').style.visibility='hidden';$('next').textContent='ถัดไป';
+  renderSteps();renderVehicles();
+}
+
+// ================= ส่วนกลาง: การ์ดข้อมูลเรื่อง =================
+function jobInfoBox(j){
+  return`<div class="sumbox">
+    <div class="sumrow"><span>เลขที่ใบแจ้งซ่อม</span><span>${j.no}</span></div>
+    <div class="sumrow"><span>หน่วยงานผู้แจ้ง</span><span>${j.org}</span></div>
+    <div class="sumrow"><span>รถ</span><span>${j.plate} · ${j.model}</span></div>
+    <div class="sumrow"><span>จุดที่มีปัญหา</span><span>${j.target}</span></div>
+    <div class="sumrow"><span>อาการ</span><span>${j.syms.join(', ')}</span></div>
+    <div class="sumrow"><span>ความรุนแรง</span><span>${j.sev}</span></div>
+    <div class="sumrow"><span>คำอธิบาย</span><span>${j.desc||'—'}</span></div>
+    <div class="sumrow"><span>รูปแนบ</span><span>${j.photos} รูป</span></div>
+    <div class="sumrow"><span>อะไหล่ที่จอง</span><span>${j.booked.length?j.booked.map(x=>`${x.name} ×${x.qty}`).join('<br>'):'ไม่มี'}</span></div>
+    <div class="sumrow"><span>อะไหล่ที่สั่งของ (รอเข้า)</span><span>${j.ordered.length?j.ordered.map(x=>`${x.name} ×${x.qty} (ETA ${x.eta})`).join('<br>'):'ไม่มี'}</span></div>
+    <div class="sumrow"><span>เหตุผล/บันทึกจากผู้แจ้ง</span><span>${j.reason||'—'}</span></div>
+  </div>`;
+}
+function timelineBox(j){
+  return`<div class="sect" style="margin-top:24px">ประวัติสถานะ</div>
+    <ul class="tl" style="margin-top:12px">${j.history.map((h,i)=>`<li class="${i===j.history.length-1?'on':''}">${h.label}<div class="when">${h.t}</div></li>`).join('')}</ul>`;
+}
+
+// ================= VIEW: เรื่องของฉัน =================
+function renderMyList(){
+  $('mydetail').classList.add('hidden');$('mylist').classList.remove('hidden');
+  if(!JOBS.length){$('mylist').innerHTML='<div class="empty">ยังไม่มีเรื่องแจ้งซ่อม</div>';return}
+  $('mylist').innerHTML=JOBS.map(j=>{
+    const st=statusInfo(j);
+    return`<div class="job" onclick="openMy('${j.no}')">
+      <span class="ms" style="color:var(--primary-600)">description</span>
+      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.plate} · ${j.syms[0]}${j.syms.length>1?' +'+(j.syms.length-1):''}</div></div>
+      <span class="badge ${st.cls}">${st.label}</span>
+      <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
+  }).join('');
+}
+function openMy(no){
+  const j=JOBS.find(x=>x.no===no);
+  const st=statusInfo(j);
+  let extra='';
+  if(j.phase==='returned'){
+    extra=`<div class="panel"><div class="sect" style="margin:0 0 8px">กบค. ส่งกลับให้ซ่อมเอง</div>
+      <div style="font-size:14px"><b>เหตุผล:</b> ${j.ret.reason}</div>
+      ${j.ret.garages.length?`<div style="font-size:14px;margin-top:10px"><b>อู่ใกล้เคียงที่ กบค. แนะนำ:</b></div>`+j.ret.garages.map(g=>`<div class="garage" style="cursor:default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join(''):''}
+    </div>`;
+  }
+  if(j.phase==='appt'||j.phase==='closed'){
+    extra+=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note?'· '+j.appt.note:''} — วันนัดมีการ<b>ตรวจสภาพหลังการซ่อม</b>ร่วมกัน</div>`;
+  }
+  if(j.phase==='closed'){
+    extra+=`<div class="panel"><div class="sect" style="margin:0 0 8px">ผลตรวจสภาพหลังการซ่อม</div>
+      <div style="font-size:14px">ผ่าน ${j.insp.checks}/${CHECKS.length} รายการ · <span class="badge b-ok">ผ่าน — รับมอบรถแล้ว</span></div>
+      ${j.insp.note?`<div class="hint">บันทึก: ${j.insp.note}</div>`:''}</div>`;
+  }
+  $('mylist').classList.add('hidden');
+  $('mydetail').classList.remove('hidden');
+  $('mydetail').innerHTML=`
+    <div class="job" style="cursor:default"><span class="ms" style="color:var(--primary-600)">description</span>
+      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.plate}</div></div>
+      <span class="badge ${st.cls}">${st.label}</span></div>
+    ${jobInfoBox(j)}${extra}${timelineBox(j)}
+    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderMyList()">← กลับรายการ</button></div>`;
+}
+
+// ================= VIEW: งานซ่อม กบค. =================
+const E={mode:null,garages:[]};
+function renderKbkList(){
+  $('kbkdetail').classList.add('hidden');$('kbklist').classList.remove('hidden');
+  const list=JOBS.filter(j=>['pending','work','appt','closed','returned'].includes(j.phase));
+  if(!list.length){$('kbklist').innerHTML='<div class="empty">ยังไม่มีงานเข้าคิว</div>';return}
+  $('kbklist').innerHTML=list.map(j=>{
+    const st=statusInfo(j);
+    return`<div class="job" onclick="openKbk('${j.no}')">
+      <span class="ms" style="color:var(--primary-600)">${j.phase==='pending'?'move_to_inbox':'engineering'}</span>
+      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org} · ${j.plate} · ${j.syms[0]}${j.syms.length>1?' +'+(j.syms.length-1):''} · ความรุนแรง: ${j.sev}</div></div>
+      <span class="badge ${st.cls}">${st.label}</span>
+      <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
+  }).join('');
+}
+function openKbk(no){
+  E.mode=null;E.garages=[];
+  renderKbkDetail(no);
+}
+function renderKbkDetail(no){
+  const j=JOBS.find(x=>x.no===no);
+  const st=statusInfo(j);
+  let action='';
+
+  if(j.phase==='pending'){
+    action=`<div class="sect" style="margin-top:24px">การประเมิน — รับไว้ซ่อม หรือส่งกลับ</div>
+    <div class="decide">
+      <div class="tile tile-magenta ${E.mode==='accept'?'sel':''}" onclick="E.mode='accept';renderKbkDetail('${no}')"><span class="ms">task_alt</span><b>รับไว้ซ่อม</b><small>กบค. ดำเนินการซ่อมเอง</small></div>
+      <div class="tile tile-blue ${E.mode==='return'?'sel':''}" onclick="E.mode='return';renderKbkDetail('${no}')"><span class="ms">u_turn_left</span><b>ส่งกลับให้ซ่อมเอง</b><small>คืนหน่วยงานผู้แจ้ง พร้อมเหตุผล</small></div>
+    </div>`;
+    if(E.mode==='accept'){
+      action+=`<div class="panel"><div class="f"><label>บันทึกการรับเรื่อง <small>(ถ้ามี)</small></label><textarea id="acnote" rows="2" placeholder="เช่น คิวช่างว่างพฤหัสนี้…"></textarea></div>
+        <div class="rowbtns"><button class="btn btn-p" onclick="kbkAccept('${no}')">ยืนยันรับเรื่องซ่อม</button></div></div>`;
+    }
+    if(E.mode==='return'){
+      action+=`<div class="panel">
+        <div class="f"><label>เหตุผลที่ส่งกลับ <small>(จำเป็น)</small></label><textarea id="retnote" rows="2" placeholder="เช่น อาการซ่อมได้ที่หน้างาน ใช้อะไหล่ที่จองไว้ได้เลย…"></textarea></div>
+        <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin-top:12px">แนะนำอู่ใกล้เคียงหน่วยงานผู้แจ้ง <small style="color:var(--gray-500);font-weight:400">(เลือกได้หลายแห่ง)</small></label>
+        ${GARAGES.map(g=>`<label class="garage"><input type="checkbox" ${E.garages.includes(g.id)?'checked':''} onchange="toggleGarage('${g.id}')"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></label>`).join('')}
+        <div class="rowbtns"><button class="btn btn-p" onclick="kbkReturn('${no}')">ยืนยันส่งกลับ</button></div></div>`;
+    }
+  }
+
+  if(j.phase==='work'){
+    action=`<div class="sect" style="margin-top:24px">สถานะงานซ่อม <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— สถานะแสดงที่ฝั่งผู้แจ้งด้วย</span></div>
+    <div class="wsteps" style="margin-top:14px">${KBK_STEPS.map((s,i)=>`<div class="wstep ${i===j.wi?'active':i<j.wi?'passed':''}"><span class="num">${i<j.wi?'✓':i+1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
+    if(j.wi===1&&j.ordered.length){
+      action+=`<div class="panel"><b style="color:var(--gray-900);font-size:14px">รายการที่รอสั่ง/รอของเข้า</b>${j.ordered.map(x=>`<div class="hint" style="margin-top:6px"><span class="ms" style="font-size:16px">shopping_cart</span> ${x.name} ×${x.qty} — ETA ${x.eta}</div>`).join('')}</div>`;
+    }
+    if(j.wi<4){
+      action+=`<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="kbkAdvance('${no}')">อัปเดตสถานะ → ${KBK_STEPS[j.wi+1]}</button></div>`;
+    }else{
+      action+=`<div class="sect" style="margin-top:24px">นัดรับรถ (ส่งกลับหน่วยงานผู้แจ้ง)</div>
+      <div class="fgrid" style="max-width:900px">
+        <div class="f"><label>วันนัดหมาย</label><div class="in"><span class="ms">calendar_month</span><input type="date" id="apdate"></div></div>
+        <div class="f"><label>เวลา</label><div class="in"><span class="ms">schedule</span><select id="aptime"><option>09:00</option><option>10:30</option><option>13:30</option><option>15:00</option></select></div></div>
+        <div class="f sp2"><label>หมายเหตุ <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="apnote" placeholder="เช่น จุดรับรถ ลานจอด กบค. อาคาร 3"></div></div>
+      </div>
+      <div class="hint" style="margin-top:-14px">วันนัดจะมีการ<b>ตรวจสภาพหลังการซ่อม</b>ร่วมกับหน่วยงานผู้แจ้งก่อนส่งมอบ</div>
+      <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="kbkAppoint('${no}')">ยืนยันวันนัดรับ</button></div>`;
+    }
+  }
+
+  if(j.phase==='appt'){
+    action=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note?'· '+j.appt.note:''}</div>
+    <div class="sect" style="margin-top:24px">ตรวจสภาพหลังการซ่อม (ทำร่วมกันวันนัดรับ)</div>
+    <div class="panel">
+      <div class="chk">${CHECKS.map((c,i)=>`<label><input type="checkbox" id="ck${i}">${c}</label>`).join('')}</div>
+      <div class="f"><label>บันทึกผลตรวจ <small>(ถ้ามี)</small></label><textarea id="inspnote" rows="2" placeholder="เช่น ทดสอบยกโหลด 80% ปกติ…"></textarea></div>
+      <div class="rowbtns">
+        <button class="btn btn-g" onclick="kbkFail('${no}')">ไม่ผ่าน — กลับไปแก้งานซ่อม</button>
+        <button class="btn btn-p" onclick="kbkClose('${no}')">ผ่าน — ส่งมอบรถ ปิดงาน</button>
+      </div></div>`;
+  }
+
+  if(j.phase==='returned'){
+    action=`<div class="panel"><div class="sect" style="margin:0 0 8px">ส่งกลับให้หน่วยงานผู้แจ้งซ่อมเองแล้ว</div>
+      <div style="font-size:14px"><b>เหตุผล:</b> ${j.ret.reason}</div>
+      ${j.ret.garages.length?j.ret.garages.map(g=>`<div class="garage" style="cursor:default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join(''):''}</div>`;
+  }
+  if(j.phase==='closed'){
+    action=`<div class="panel"><div class="sect" style="margin:0 0 8px">ปิดงานแล้ว</div>
+      <div style="font-size:14px">ตรวจสภาพผ่าน ${j.insp.checks}/${CHECKS.length} รายการ · ส่งมอบรถวันที่ ${j.appt.date} ${j.appt.time} น.</div>
+      ${j.insp.note?`<div class="hint">บันทึก: ${j.insp.note}</div>`:''}</div>`;
+  }
+
+  $('kbklist').classList.add('hidden');
+  $('kbkdetail').classList.remove('hidden');
+  $('kbkdetail').innerHTML=`
+    <div class="job" style="cursor:default"><span class="ms" style="color:var(--primary-600)">engineering</span>
+      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org}</div></div>
+      <span class="badge ${st.cls}">${st.label}</span></div>
+    ${jobInfoBox(j)}${action}${timelineBox(j)}
+    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderKbkList()">← กลับคิวงาน</button></div>`;
+}
+function toggleGarage(id){E.garages.includes(id)?E.garages=E.garages.filter(x=>x!==id):E.garages.push(id)}
+function kbkAccept(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.phase='work';j.wi=0;
+  const note=$('acnote').value.trim();
+  j.history.push({t:nowStr(),label:'กบค. รับเรื่องซ่อม'+(note?' — '+esc(note):'')});
+  updateBadge();toast('รับเรื่องแล้ว — สถานะ: รับเรื่องซ่อม');renderKbkDetail(no);
+}
+function kbkReturn(no){
+  const j=JOBS.find(x=>x.no===no);
+  const reason=$('retnote').value.trim();
+  if(!reason){toast('กรุณาระบุเหตุผลที่ส่งกลับ');return}
+  j.phase='returned';
+  j.ret={reason:esc(reason),garages:GARAGES.filter(g=>E.garages.includes(g.id))};
+  j.history.push({t:nowStr(),label:'กบค. ส่งกลับให้ซ่อมเอง — '+esc(reason)+(j.ret.garages.length?' · แนะนำอู่: '+j.ret.garages.map(g=>g.name).join(', '):'')});
+  updateBadge();toast('ส่งกลับเรื่องแล้ว — ผู้แจ้งเห็นเหตุผลและอู่แนะนำ');renderKbkDetail(no);
+}
+function kbkAdvance(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.wi++;
+  j.history.push({t:nowStr(),label:'สถานะ: '+KBK_STEPS[j.wi]});
+  toast('อัปเดตสถานะเป็น "'+KBK_STEPS[j.wi]+'" — ฝั่งผู้แจ้งเห็นด้วย');renderKbkDetail(no);
+}
+function kbkAppoint(no){
+  const j=JOBS.find(x=>x.no===no);
+  const d=$('apdate').value;
+  if(!d){toast('กรุณาเลือกวันนัดหมาย');return}
+  const [y,m,dd]=d.split('-');
+  j.appt={date:`${+dd}/${+m}/${+y+543}`,time:$('aptime').value,note:esc($('apnote').value.trim())};
+  j.phase='appt';
+  j.history.push({t:nowStr(),label:`นัดรับรถ ${j.appt.date} เวลา ${j.appt.time} น. (พร้อมตรวจสภาพหลังซ่อม)`});
+  toast('บันทึกวันนัดแล้ว — ผู้แจ้งเห็นวันนัดด้วย');renderKbkDetail(no);
+}
+function kbkClose(no){
+  const j=JOBS.find(x=>x.no===no);
+  const checks=CHECKS.filter((c,i)=>$('ck'+i).checked).length;
+  if(checks<CHECKS.length){toast('ต้องผ่านครบทุกข้อจึงปิดงานได้ (ติ๊กให้ครบ หรือกด "ไม่ผ่าน")');return}
+  j.insp={pass:true,checks,note:esc($('inspnote').value.trim())};
+  j.phase='closed';
+  j.history.push({t:nowStr(),label:'ตรวจสภาพหลังซ่อมผ่าน — ส่งมอบรถ ปิดงาน'});
+  toast('ปิดงานเรียบร้อย');renderKbkDetail(no);
+}
+function kbkFail(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.phase='work';j.wi=3;
+  j.history.push({t:nowStr(),label:'ตรวจสภาพไม่ผ่าน — กลับไปดำเนินการซ่อม'+($('inspnote').value.trim()?' ('+esc($('inspnote').value.trim())+')':'')});
+  toast('บันทึกผลไม่ผ่าน — กลับสู่สถานะ ดำเนินการซ่อม');renderKbkDetail(no);
+}
+
+// ================= INIT =================
+renderSteps();renderVehicles();updateBadge();
+$('back').style.visibility='hidden';
+switchView('form');
+</script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maintain-D Design System v0.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<style>
+  .app{padding-bottom:60px}
+  main{padding:24px}
+  .dsec{margin-bottom:8px}
+  .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+  .sw{border:1px solid var(--gray-200);border-radius:var(--r-md);overflow:hidden;background:#fff}
+  .sw .c{height:52px}
+  .sw .i{padding:6px 8px;font-size:11px;color:var(--gray-600)}
+  .sw .i b{display:block;color:var(--gray-900);font-size:12px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .demo{border:1px dashed var(--gray-300);border-radius:var(--r-md);padding:14px;margin-top:10px;background:var(--gray-50)}
+  code.u{background:var(--gray-100);border-radius:6px;padding:1px 7px;font-size:12px;color:var(--primary-600)}
+  .note{font-size:12.5px;color:var(--gray-500);margin-top:8px}
+  .hgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  @media(max-width:760px){.hgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="draft">🧭 Design System v0.1 · แหล่งความจริงเดียวของสี/ฟอนต์/component · อิง VMS Plus — ปรับได้เมื่อได้ screenshot หน้าจริงเพิ่ม</div>
+  <header>
+    <div class="bar">
+      <span class="logo">MD</span>
+      <h1>Maintain-D Design System</h1>
+      <span class="ms">palette</span>
+    </div>
+    <div class="steps">
+      <div class="st passed"><div class="dot"></div>Tokens</div>
+      <div class="st active"><div class="dot"></div>Components</div>
+      <div class="st"><div class="dot"></div>Patterns</div>
+      <div class="st"><div class="dot"></div>Pages</div>
+    </div>
+  </header>
+  <main>
+
+    <div class="card dsec">
+      <h2>วิธีใช้</h2>
+      <div class="sub">ทุกหน้าจอใหม่ ให้ลิงก์ 2 ไฟล์นี้ + ฟอนต์ แล้วใช้ตัวแปร/คลาสตามตัวอย่างด้านล่าง — <b>ห้าม hardcode ค่าสี</b> ในหน้าจอ</div>
+      <div class="demo" style="font-size:12.5px;font-family:ui-monospace,Menlo,monospace;overflow-x:auto;white-space:pre">&lt;link rel="stylesheet" href="../design-system/tokens.css"&gt;
+&lt;link rel="stylesheet" href="../design-system/components.css"&gt;
+color: var(--primary-600);   /* ✅ */
+color: #A80689;              /* ❌ */</div>
+    </div>
+
+    <div class="card dsec">
+      <h2>1 · สี Brand</h2>
+      <div class="sub">magenta หลักของ VMS Plus (ใช้บ่อยสุดใน CSS จริง 82 จุด) + น้ำเงินรอง</div>
+      <div class="swatches">
+        <div class="sw"><div class="c" style="background:var(--primary-700)"></div><div class="i"><b>primary-700</b>#8A0570</div></div>
+        <div class="sw"><div class="c" style="background:var(--primary-600)"></div><div class="i"><b>primary-600 ★</b>#A80689</div></div>
+        <div class="sw"><div class="c" style="background:var(--primary-500)"></div><div class="i"><b>primary-500</b>#CF07AA</div></div>
+        <div class="sw"><div class="c" style="background:var(--primary-50)"></div><div class="i"><b>primary-50</b>#FEEBFB</div></div>
+        <div class="sw"><div class="c" style="background:var(--primary-25)"></div><div class="i"><b>primary-25</b>#FFF5FD</div></div>
+        <div class="sw"><div class="c" style="background:var(--secondary-600)"></div><div class="i"><b>secondary-600</b>#1B4DB1</div></div>
+      </div>
+    </div>
+
+    <div class="card dsec">
+      <h2>2 · สี Semantic (สถานะ)</h2>
+      <div class="sub">ใช้กับ badge สถานะคลัง, ผลลัพธ์, การแจ้งเตือน — ชุดเดียวกับที่พบใน CSS ของ VMS Plus</div>
+      <div class="swatches">
+        <div class="sw"><div class="c" style="background:var(--success-600)"></div><div class="i"><b>success-600</b>#17B26A</div></div>
+        <div class="sw"><div class="c" style="background:var(--success-50)"></div><div class="i"><b>success-50</b>#ECFDF3</div></div>
+        <div class="sw"><div class="c" style="background:var(--warning-600)"></div><div class="i"><b>warning-600</b>#F79009</div></div>
+        <div class="sw"><div class="c" style="background:var(--warning-50)"></div><div class="i"><b>warning-50</b>#FFFAEB</div></div>
+        <div class="sw"><div class="c" style="background:var(--error-600)"></div><div class="i"><b>error-600</b>#D92D20</div></div>
+        <div class="sw"><div class="c" style="background:var(--error-50)"></div><div class="i"><b>error-50</b>#FEF3F2</div></div>
+        <div class="sw"><div class="c" style="background:var(--info-600)"></div><div class="i"><b>info-600</b>#6172F3</div></div>
+      </div>
+    </div>
+
+    <div class="card dsec">
+      <h2>3 · Gray scale</h2>
+      <div class="sub">โครง Untitled UI — heading 900 · body 700 · secondary 500 · placeholder 400 · เส้น 300/200 · พื้น 100/50</div>
+      <div class="swatches">
+        <div class="sw"><div class="c" style="background:var(--gray-900)"></div><div class="i"><b>gray-900</b>#101828</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-700)"></div><div class="i"><b>gray-700</b>#344054</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-500)"></div><div class="i"><b>gray-500</b>#667085</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-300)"></div><div class="i"><b>gray-300</b>#D0D5DD</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-200)"></div><div class="i"><b>gray-200</b>#EAECF0</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-100)"></div><div class="i"><b>gray-100</b>#F2F4F7</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-50);border-bottom:1px solid var(--gray-200)"></div><div class="i"><b>gray-50</b>#F9FAFB</div></div>
+      </div>
+    </div>
+
+    <div class="hgrid">
+      <div class="card dsec">
+        <h2>4 · Typography + ไอคอน</h2>
+        <div class="sub">ฟอนต์ <b>IBM Plex Sans Thai</b> · ไอคอน <b>Material Symbols Outlined</b> <code class="u">.ms</code></div>
+        <div class="demo">
+          <div style="font-size:18px;font-weight:600;color:var(--gray-900)">หัวข้อหน้า 18/600 — แจ้งซ่อมรถ/อุปกรณ์</div>
+          <div style="font-size:16px;font-weight:600;color:var(--gray-900)">หัวข้อการ์ด 16/600 — อะไหล่ที่ระบบแนะนำ</div>
+          <div style="font-size:15px">เนื้อหา 15/400 — ระบุอาการเสียจากรายการมาตรฐาน</div>
+          <div style="font-size:13px;color:var(--gray-500)">รอง 13/400 — อัปเดตล่าสุด 17 ก.ค. 2569 09:30</div>
+          <div class="row" style="margin-top:10px;color:var(--primary-600)">
+            <span class="ms">build</span><span class="ms">engineering</span><span class="ms">local_shipping</span><span class="ms">warehouse</span><span class="ms">event_available</span><span class="ms">photo_camera</span><span class="ms">check_circle</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card dsec">
+        <h2>5 · ปุ่ม <code class="u">.btn</code></h2>
+        <div class="sub">หลัก <code class="u">.btn-p</code> · รอง <code class="u">.btn-o</code> · เทา <code class="u">.btn-g</code> · ปิด <code class="u">:disabled</code></div>
+        <div class="demo"><div class="row">
+          <button class="btn btn-p">ส่งเรื่องแจ้งซ่อม</button>
+          <button class="btn btn-o"><span class="ms" style="font-size:18px">event_available</span> จองอะไหล่</button>
+          <button class="btn btn-g">ย้อนกลับ</button>
+          <button class="btn" disabled>จองไม่ได้ — ของหมด</button>
+        </div>
+        <div class="row" style="margin-top:12px"><div class="qty"><button>−</button><span>2</span><button>+</button></div><span class="note">ตัวปรับจำนวน <code class="u">.qty</code></span></div></div>
+      </div>
+    </div>
+
+    <div class="hgrid">
+      <div class="card dsec">
+        <h2>6 · Badge สถานะคลัง <code class="u">.badge</code></h2>
+        <div class="sub">4 สถานะตาม US-07 — สีอ่านรู้เรื่องโดยไม่ต้องอธิบาย</div>
+        <div class="demo"><div class="row">
+          <span class="badge b-ok">พร้อมเบิก · เหลือ 6</span>
+          <span class="badge b-low">ใกล้หมด · เหลือ 2</span>
+          <span class="badge b-out">หมด</span>
+          <span class="badge b-out">หมด · รอของ (ETA 24 ก.ค.)</span>
+          <span class="badge b-brand">ส่งเรื่องแล้ว — รอ กบค. รับเรื่อง</span>
+        </div></div>
+      </div>
+
+      <div class="card dsec">
+        <h2>7 · Chip เลือกหลายอัน / Segmented เลือกอันเดียว</h2>
+        <div class="sub"><code class="u">.chips .chip</code> (อาการเสีย) · <code class="u">.seg .sg</code> (ความรุนแรง)</div>
+        <div class="demo">
+          <div class="chips">
+            <div class="chip sel">กระบอกไฮดรอลิกรั่ว/ซึม</div>
+            <div class="chip">บูมยืด-หดสะดุด</div>
+            <div class="chip">อื่นๆ ระบุเอง</div>
+          </div>
+          <div class="seg" style="margin-top:10px;max-width:380px">
+            <div class="sg">ต่ำ</div><div class="sg sel">ปานกลาง</div><div class="sg">สูง</div><div class="sg">หยุดใช้งาน</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hgrid">
+      <div class="card dsec">
+        <h2>8 · Tile ตัวเลือกใหญ่ <code class="u">.tile</code></h2>
+        <div class="sub">แพทเทิร์นการ์ดเลือกจากหน้า landing ของ VMS Plus — <code class="u">.tile-magenta</code> / <code class="u">.tile-blue</code> + <code class="u">.sel</code></div>
+        <div class="demo"><div class="row" style="align-items:stretch">
+          <div class="tile tile-magenta" style="flex:1"><span class="ms">build</span><b>ซ่อมเอง</b><small>ซ่อมได้ที่หน้างาน/หน่วยงาน</small></div>
+          <div class="tile tile-blue sel" style="flex:1"><span class="ms">engineering</span><b>ส่งซ่อม กบค.</b><small>ส่งต่อให้กองบำรุงรักษาฯ</small></div>
+        </div></div>
+      </div>
+
+      <div class="card dsec">
+        <h2>9 · ฟอร์ม + Toast</h2>
+        <div class="sub"><code class="u">label.fl</code> + input/textarea · <code class="u">.toast</code> แจ้งผลชั่วคราว</div>
+        <div class="demo">
+          <label class="fl" style="margin-top:0">ค้นหาทะเบียนรถ</label>
+          <div class="search"><span class="ms">search</span><input type="text" placeholder="เช่น 81-2345"></div>
+          <label class="fl">คำอธิบายเพิ่มเติม</label>
+          <textarea rows="2" placeholder="เช่น น้ำมันหยดใต้กระบอกที่ 2…"></textarea>
+          <button class="btn btn-o" style="margin-top:10px" onclick="const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)">ลอง Toast</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card dsec">
+      <h2>10 · Pattern หน้าเว็บ (จากหน้าจริง "สร้างคำขอใช้ยานพาหนะ")</h2>
+      <div class="sub">โครงหน้า: <code class="u">.shell</code> = sidebar ไอคอน <code class="u">.side</code> + topbar + <code class="u">.content</code> · ดูของจริงเต็มหน้าที่ mock ฟอร์มแจ้งซ่อม</div>
+      <div class="demo">
+        <div class="crumbs" style="margin-bottom:10px"><span class="ms">home</span><span class="sep">›</span><span>แจ้งซ่อมและบริหารงานซ่อม</span><span class="sep">›</span><span class="cur">สร้างใบแจ้งซ่อม</span></div>
+        <div class="page-title" style="font-size:22px;margin-bottom:14px">สร้างใบแจ้งซ่อม</div>
+        <div class="wsteps" style="margin-bottom:16px">
+          <div class="wstep passed"><span class="num">✓</span><span class="lbl">เลือกรถ</span></div>
+          <div class="wstep active"><span class="num">2</span><span class="lbl">อาการเสีย</span></div>
+          <div class="wstep"><span class="num">3</span><span class="lbl">อะไหล่ที่แนะนำ</span></div>
+        </div>
+        <div class="sect" style="margin-bottom:12px">หัวข้อ section แถบ magenta <code class="u">.sect</code></div>
+        <div class="fgrid" style="margin:0">
+          <div class="f"><label>ช่องมีไอคอน</label><div class="in"><span class="ms">search</span><input type="text" placeholder="ค้นหาทะเบียน…"></div></div>
+          <div class="f ro"><label>readonly เส้นประ <code class="u">.f.ro</code></label><div class="in"><span class="ms">apartment</span><input value="กฟภ. เขต ฉ.3" readonly></div></div>
+          <div class="f err"><label>ช่อง error <code class="u">.f.err</code></label><div class="in"><span class="ms">call</span><input type="text" placeholder="ระบุเบอร์ภายใน"></div><div class="help">กรุณาระบุเบอร์ภายใน</div></div>
+          <div class="f"><label>Radio <code class="u">.rads</code></label><div class="rads"><label><input type="radio" name="dm" checked>ไป-กลับ</label><label><input type="radio" name="dm">ค้างแรม</label></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card dsec">
+      <h2>11 · หน้าที่ใช้ design system นี้แล้ว</h2>
+      <div class="row">
+        <a href="../mock/Maintenance-Request-Form.html" style="color:var(--primary-600);font-weight:600">🛠️ ฟอร์มแจ้งซ่อม (mock v0.2 — เลย์เอาต์ตามหน้าจริง)</a>
+      </div>
+      <div class="note">ได้ screenshot หน้าจริงเพิ่มเมื่อไหร่ → ปรับค่าใน tokens.css / components.css ที่เดียว ทุกหน้าเปลี่ยนตาม</div>
+    </div>
+
+  </main>
+</div>
+<div class="toast" id="toast">จอง ชุดซีลกระบอกไฮดรอลิก แล้ว (mock)</div>
+</body>
+</html>
