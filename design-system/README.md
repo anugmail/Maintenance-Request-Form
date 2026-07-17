@@ -210,6 +210,7 @@ design-system/
 | 17 ก.ค. 2569 | v0.1 | เริ่มระบบ: tokens + component พื้นฐาน จาก CSS สาธารณะ + หน้า landing/SSO ของ VMS Plus |
 | 17 ก.ค. 2569 | v0.2 | เพิ่ม pattern หน้าเว็บจาก screenshot หน้าจริง "สร้างคำขอใช้ยานพาหนะ": `.shell/.side/.topbar/.crumbs/.page-title/.wsteps/.sect/.fgrid/.f(.ro/.err)/.rads/.numfld/.actions` — mock ฟอร์มแจ้งซ่อมย้ายมาใช้โครงนี้ |
 | 17 ก.ค. 2569 | v0.3 | เพิ่ม component สำหรับ flow กบค./ติดตามสถานะ: `.nv .cnt` (badge ตัวเลขบน sidebar) · `.job` (แถวรายการเรื่อง) · `.tl` (timeline ประวัติสถานะ) · `.chk` + checkbox (checklist ตรวจสภาพ) |
+| 17 ก.ค. 2569 | v0.5 | เพิ่ม `.tbl` + `.tblwrap` (ตารางข้อมูล — เมนูคลังอะไหล่) — ตัดออกจากรายการ "สิ่งที่ยังขาด" ได้ |
 
 ## 9. สิ่งที่ยังขาด (รอ screenshot / รอตัดสินใจ)
 

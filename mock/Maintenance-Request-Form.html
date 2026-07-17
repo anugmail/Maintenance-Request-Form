@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.4)</title>
+<title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.5)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
@@ -69,6 +69,7 @@
   .garage b{color:var(--gray-900);font-size:14px}
   .garage .meta{font-size:12.5px;color:var(--gray-500)}
   .panel{background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);padding:16px;max-width:760px;margin-top:14px}
+  .dayrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
   .apptbox{background:var(--primary-25);border:1px solid var(--primary-50);border-radius:var(--r-md);padding:12px 16px;max-width:760px;margin-top:12px;font-size:14px}
 </style>
 </head>
@@ -80,12 +81,12 @@
     <div class="nv" id="nav-form" title="แจ้งซ่อม" onclick="switchView('form')"><span class="ms">build</span></div>
     <div class="nv" id="nav-my" title="เรื่องแจ้งซ่อมของฉัน" onclick="switchView('my')"><span class="ms">assignment</span></div>
     <div class="nv" id="nav-kbk" title="งานซ่อม กบค." onclick="switchView('kbk')"><span class="ms">engineering</span><span class="cnt hidden" id="kbkcnt"></span></div>
-    <div class="nv" title="คลังอะไหล่" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">warehouse</span></div>
+    <div class="nv" id="nav-stock" title="คลังอะไหล่" onclick="switchView('stock')"><span class="ms">warehouse</span></div>
     <div class="nv" title="รายงาน" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">monitoring</span></div>
   </aside>
 
   <div class="work">
-    <div class="draft">🧪 ต้นแบบ Mock v0.4 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง ↔ กบค. ได้จากเมนูซ้าย</div>
+    <div class="draft">🧪 ต้นแบบ Mock v0.5 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง ↔ กบค. ได้จากเมนูซ้าย</div>
     <div class="topbar">
       <span class="ms">light_mode</span>
       <span class="ms" style="position:relative">notifications<i style="position:absolute;top:0;right:0;width:8px;height:8px;border-radius:50%;background:var(--success-600)"></i></span>
@@ -190,6 +191,13 @@
       <div id="kbklist"></div>
       <div id="kbkdetail" class="hidden"></div>
     </main>
+
+    <!-- ============ VIEW: คลังอะไหล่ (กบค.) ============ -->
+    <main class="content hidden" id="view-stock">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>งานซ่อม กบค.</span><span class="sep">›</span><span class="cur">คลังอะไหล่</span></div>
+      <h1 class="page-title">คลังอะไหล่ — รายการจองและสั่งของ</h1>
+      <div id="stockbody"></div>
+    </main>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -290,6 +298,7 @@ function statusInfo(j){
     return{label:'ซ่อมเสร็จแล้วโดยอู่ — รอบันทึกปิดงาน',cls:'b-brand'};
   }
   if(j.phase==='gclosed')return{label:'ปิดงาน — ซ่อมโดยอู่',cls:'b-ok'};
+  if(j.phase==='slots')return{label:'ซ่อมเสร็จ — รอผู้แจ้งเลือกวันนัดรับ',cls:'b-brand'};
   if(j.phase==='work')return{label:KBK_STEPS[j.wi],cls:j.wi===4?'b-ok':'b-brand'};
   if(j.phase==='appt')return{label:'นัดรับรถ '+j.appt.date+' '+j.appt.time,cls:'b-brand'};
   return{label:'ปิดงาน — ตรวจสภาพผ่าน ส่งมอบแล้ว',cls:'b-ok'};
@@ -302,13 +311,50 @@ function updateBadge(){
 // ================= VIEW SWITCH =================
 function switchView(v){
   VIEW=v;
-  ['form','my','kbk'].forEach(x=>{
+  ['form','my','kbk','stock'].forEach(x=>{
     $('view-'+x).classList.toggle('hidden',x!==v);
     $('nav-'+x).classList.toggle('on',x===v);
   });
   if(v==='my')renderMyList();
   if(v==='kbk')renderKbkList();
+  if(v==='stock')renderStock();
   window.scrollTo({top:0});
+}
+
+// ================= VIEW: คลังอะไหล่ (กบค.) =================
+function renderStock(){
+  const held=[],orders=[],rets=[];
+  JOBS.forEach(j=>{
+    j.booked.forEach(b=>held.push({b,j}));
+    j.ordered.forEach(o=>orders.push({o,j}));
+    if(j.record)j.record.returns.filter(r=>r.qty>0).forEach(r=>rets.push({r,j}));
+  });
+  const link=j=>j.phase==='self'?j.no:`<a href="#" style="color:var(--primary-600);font-weight:600;text-decoration:none" onclick="switchView('kbk');openKbk('${j.no}');return false">${j.no}</a>`;
+  const stBadge=j=>{const s=statusInfo(j);return`<span class="badge ${s.cls}">${s.label}</span>`};
+  $('stockbody').innerHTML=`
+    <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+      <span class="badge b-brand">จองรวม ${held.reduce((s,x)=>s+x.b.qty,0)} ชิ้น (${held.length} รายการ)</span>
+      <span class="badge b-low">สั่งของรอเข้า ${orders.reduce((s,x)=>s+x.o.qty,0)} ชิ้น (${orders.length} รายการ)</span>
+      <span class="badge b-ok">คืนเข้าคลังแล้ว ${rets.reduce((s,x)=>s+x.r.qty,0)} ชิ้น (${rets.length} รายการ)</span>
+    </div>
+
+    <div class="sect" style="margin-top:18px">รายการจองอะไหล่ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— จองจากใบแจ้งซ่อม (mock ยังไม่ตัดสต็อกจริง)</span></div>
+    ${held.length?`<div class="tblwrap"><table class="tbl">
+      <thead><tr><th>อะไหล่</th><th class="num">จำนวน</th><th>เลขที่ใบแจ้งซ่อม</th><th>หน่วยงานผู้แจ้ง</th><th>สถานะเรื่อง</th></tr></thead>
+      <tbody>${held.map(x=>`<tr><td><b style="color:var(--gray-900)">${x.b.name}</b></td><td class="num">${x.b.qty} ${x.b.unit||''}</td><td>${link(x.j)}</td><td>${x.j.org}</td><td>${stBadge(x.j)}</td></tr>`).join('')}</tbody>
+    </table></div>`:'<div class="empty">ยังไม่มีรายการจอง</div>'}
+
+    <div class="sect" style="margin-top:26px">รายการสั่งของ (รอของเข้า) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— อะไหล่หมดคลังที่ผู้แจ้งกดสั่งของไว้</span></div>
+    ${orders.length?`<div class="tblwrap"><table class="tbl">
+      <thead><tr><th>อะไหล่</th><th class="num">จำนวน</th><th>ETA ของเข้า</th><th>เลขที่ใบแจ้งซ่อม</th><th>หน่วยงานผู้แจ้ง</th><th>สถานะเรื่อง</th></tr></thead>
+      <tbody>${orders.map(x=>`<tr><td><b style="color:var(--gray-900)">${x.o.name}</b></td><td class="num">${x.o.qty} ${x.o.unit||''}</td><td><span class="badge b-low">ETA ${x.o.eta}</span></td><td>${link(x.j)}</td><td>${x.j.org}</td><td>${stBadge(x.j)}</td></tr>`).join('')}</tbody>
+    </table></div>`:'<div class="empty">ยังไม่มีรายการสั่งของ</div>'}
+
+    <div class="sect" style="margin-top:26px">การคืนอะไหล่เข้าคลัง <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เหลือจากงานที่ปิดแบบซ่อมโดยอู่</span></div>
+    ${rets.length?`<div class="tblwrap"><table class="tbl">
+      <thead><tr><th>อะไหล่</th><th class="num">จำนวนคืน</th><th>เลขที่ใบแจ้งซ่อม</th><th>หน่วยงานผู้แจ้ง</th></tr></thead>
+      <tbody>${rets.map(x=>`<tr><td><b style="color:var(--gray-900)">${x.r.name}</b></td><td class="num">${x.r.qty} ${x.r.unit||''}</td><td>${link(x.j)}</td><td>${x.j.org}</td></tr>`).join('')}</tbody>
+    </table></div>`:'<div class="empty">ยังไม่มีการคืนอะไหล่</div>'}`;
 }
 
 // ================= FORM (ผู้แจ้ง) =================
@@ -524,12 +570,23 @@ function renderMyList(){
       <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
   }).join('');
 }
-let R={jobNo:null,photos:0,urls:[],returns:{},pc:'',lc:'',det:''};
+let R={jobNo:null,photos:0,urls:[],returns:{},pc:'',lc:'',det:'',pick:null};
 function openMy(no){
   const j=JOBS.find(x=>x.no===no);
-  R={jobNo:no,photos:0,urls:[],returns:{},pc:'',lc:'',det:''};
+  R={jobNo:no,photos:0,urls:[],returns:{},pc:'',lc:'',det:'',pick:null};
   j.booked.forEach(b=>R.returns[b.name]=0);
   renderMyDetail(no);
+}
+function pickSlot(no,id){R.pick=id;renderMyDetail(no)}
+function confirmSlot(no){
+  const j=JOBS.find(x=>x.no===no);
+  if(!R.pick){toast('กรุณาเลือกช่วงเวลานัดรับก่อนยืนยัน');return}
+  const si=+R.pick.split('::')[0],t=R.pick.split('::')[1];
+  const s=j.slots[si];
+  j.appt={date:s.date,time:t.split(' ').slice(1).join(' '),note:j.slotNote||''};
+  j.phase='appt';
+  j.history.push({t:nowStr(),label:'ผู้แจ้งยืนยันนัดรับรถ '+s.label+' '+t+' (พร้อมตรวจสภาพหลังซ่อม)'});
+  toast('ยืนยันวันนัดแล้ว — กบค. เห็นวันนัดที่เลือก');renderMyDetail(no);
 }
 function retPanel(j){
   return`<div class="panel"><div class="sect" style="margin:0 0 8px">กบค. ส่งกลับให้ซ่อมเอง</div>
@@ -586,6 +643,16 @@ function renderMyDetail(no){
     }
   }
   if(j.phase==='gclosed'){extra=retPanel(j)+recordPanel(j)}
+  if(j.phase==='slots'){
+    extra+=`<div class="sect" style="margin-top:24px">เลือกวันนัดรับรถ</div>
+    <div class="hint">กบค. ซ่อมเสร็จแล้ว และเปิด<b>ตารางว่าง</b>ให้เลือก — เลือก 1 ช่วงเวลา แล้วกดยืนยัน (วันนัดมีการตรวจสภาพหลังการซ่อมร่วมกัน)</div>
+    <div class="panel">
+      ${j.slots.map((s,si)=>`<div style="margin-bottom:12px"><b style="color:var(--gray-900)">${s.label}</b>
+        <div class="chips" style="margin-top:6px">${s.times.map(t=>{const id=si+'::'+t;return`<div class="chip ${R.pick===id?'sel':''}" onclick="pickSlot('${no}','${id}')">${t}</div>`}).join('')}</div></div>`).join('')}
+      ${j.slotNote?`<div class="hint">หมายเหตุจาก กบค.: ${j.slotNote}</div>`:''}
+      <div class="rowbtns"><button class="btn btn-p" onclick="confirmSlot('${no}')">ยืนยันวันนัดรับ</button></div>
+    </div>`;
+  }
   if(j.phase==='appt'||j.phase==='closed'){
     extra+=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note?'· '+j.appt.note:''} — วันนัดมีการ<b>ตรวจสภาพหลังการซ่อม</b>ร่วมกัน</div>`;
   }
@@ -633,6 +700,7 @@ function closeSelf(no){
 
 // ================= VIEW: งานซ่อม กบค. =================
 const E={mode:null,garages:[]};
+let K={slots:{},note:''};
 function renderKbkList(){
   $('kbkdetail').classList.add('hidden');$('kbklist').classList.remove('hidden');
   const list=JOBS.filter(j=>['pending','work','appt','closed','returned','gclosed'].includes(j.phase));
@@ -647,7 +715,7 @@ function renderKbkList(){
   }).join('');
 }
 function openKbk(no){
-  E.mode=null;E.garages=[];
+  E.mode=null;E.garages=[];K={slots:{},note:''};
   renderKbkDetail(no);
 }
 function renderKbkDetail(no){
@@ -683,15 +751,27 @@ function renderKbkDetail(no){
     if(j.wi<4){
       action+=`<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="kbkAdvance('${no}')">อัปเดตสถานะ → ${KBK_STEPS[j.wi+1]}</button></div>`;
     }else{
-      action+=`<div class="sect" style="margin-top:24px">นัดรับรถ (ส่งกลับหน่วยงานผู้แจ้ง)</div>
-      <div class="fgrid" style="max-width:900px">
-        <div class="f"><label>วันนัดหมาย</label><div class="in"><span class="ms">calendar_month</span><input type="date" id="apdate"></div></div>
-        <div class="f"><label>เวลา</label><div class="in"><span class="ms">schedule</span><select id="aptime"><option>09:00</option><option>10:30</option><option>13:30</option><option>15:00</option></select></div></div>
-        <div class="f sp2"><label>หมายเหตุ <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="apnote" placeholder="เช่น จุดรับรถ ลานจอด กบค. อาคาร 3"></div></div>
-      </div>
-      <div class="hint" style="margin-top:-14px">วันนัดจะมีการ<b>ตรวจสภาพหลังการซ่อม</b>ร่วมกับหน่วยงานผู้แจ้งก่อนส่งมอบ</div>
-      <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="kbkAppoint('${no}')">ยืนยันวันนัดรับ</button></div>`;
+      const days=nextDays(7);
+      action+=`<div class="sect" style="margin-top:24px">นัดรับรถ — เปิดตารางว่างของ กบค.</div>
+      <div class="hint">เลือกได้<b>หลายวัน</b> และเลือก<b>ช่วงเวลา</b>ของแต่ละวัน — ตารางว่างจะไปแสดงที่หน้าจอนัดรับรถของผู้แจ้ง ให้เลือกยืนยัน 1 ช่วง · วันนัดมีการ<b>ตรวจสภาพหลังการซ่อม</b>ร่วมกัน</div>
+      <div class="panel">
+        ${days.map(d=>{const s=K.slots[d.key];return`<div class="dayrow">
+          <div class="chip ${s?'sel':''}" style="min-width:112px;text-align:center" onclick="toggleDay('${no}','${d.key}','${d.label}','${d.thdate}')">${d.label}</div>
+          ${s?SLOT_TIMES.map(t=>`<div class="chip ${s.times.includes(t)?'sel':''}" onclick="toggleSlot('${no}','${d.key}','${t}')">${t}</div>`).join(''):'<span class="hint" style="margin:0">แตะวันที่เพื่อเปิดช่วงเวลา</span>'}
+        </div>`}).join('')}
+        <div class="f" style="margin-top:12px"><label>หมายเหตุ <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="slnote" value="${K.note}" oninput="K.note=this.value" placeholder="เช่น จุดรับรถ ลานจอด กบค. อาคาร 3"></div></div>
+        <div class="rowbtns"><button class="btn btn-p" onclick="kbkSendSlots('${no}')">ส่งตารางว่างให้ผู้แจ้งเลือก</button></div>
+      </div>`;
     }
+  }
+
+  if(j.phase==='slots'){
+    action=`<div class="sect" style="margin-top:24px">ตารางว่างนัดรับที่เปิดไว้ — รอผู้แจ้งเลือกยืนยัน</div>
+    <div class="panel">
+      ${j.slots.map(s=>`<div style="margin-bottom:8px"><b style="color:var(--gray-900)">${s.label}</b> <span class="hint" style="display:inline;margin:0">· ${s.times.join(' · ')}</span></div>`).join('')}
+      ${j.slotNote?`<div class="hint">หมายเหตุ: ${j.slotNote}</div>`:''}
+      <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="editSlots('${no}')">แก้ไขตารางว่าง</button></div>
+    </div>`;
   }
 
   if(j.phase==='appt'){
@@ -756,15 +836,41 @@ function kbkAdvance(no){
   j.history.push({t:nowStr(),label:'สถานะ: '+KBK_STEPS[j.wi]});
   toast('อัปเดตสถานะเป็น "'+KBK_STEPS[j.wi]+'" — ฝั่งผู้แจ้งเห็นด้วย');renderKbkDetail(no);
 }
-function kbkAppoint(no){
+const SLOT_TIMES=['เช้า 09:00–12:00','บ่าย 13:30–16:30'];
+const THD=['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'],THM=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function nextDays(n){
+  const out=[];
+  for(let i=1;i<=n;i++){
+    const d=new Date(Date.now()+i*864e5);
+    out.push({key:d.toISOString().slice(0,10),label:`${THD[d.getDay()]} ${d.getDate()} ${THM[d.getMonth()]}`,thdate:`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`});
+  }
+  return out;
+}
+function toggleDay(no,key,label,thdate){
+  if(K.slots[key])delete K.slots[key];
+  else K.slots[key]={label,thdate,times:[SLOT_TIMES[0]]};
+  renderKbkDetail(no);
+}
+function toggleSlot(no,key,t){
+  const s=K.slots[key];if(!s)return;
+  if(s.times.includes(t)){s.times=s.times.filter(x=>x!==t);if(!s.times.length)delete K.slots[key];}
+  else s.times.push(t);
+  renderKbkDetail(no);
+}
+function kbkSendSlots(no){
   const j=JOBS.find(x=>x.no===no);
-  const d=$('apdate').value;
-  if(!d){toast('กรุณาเลือกวันนัดหมาย');return}
-  const [y,m,dd]=d.split('-');
-  j.appt={date:`${+dd}/${+m}/${+y+543}`,time:$('aptime').value,note:esc($('apnote').value.trim())};
-  j.phase='appt';
-  j.history.push({t:nowStr(),label:`นัดรับรถ ${j.appt.date} เวลา ${j.appt.time} น. (พร้อมตรวจสภาพหลังซ่อม)`});
-  toast('บันทึกวันนัดแล้ว — ผู้แจ้งเห็นวันนัดด้วย');renderKbkDetail(no);
+  const days=Object.entries(K.slots).sort((a,b)=>a[0]<b[0]?-1:1).map(([k,v])=>v);
+  if(!days.length){toast('กรุณาเลือกอย่างน้อย 1 วัน');return}
+  j.slots=days.map(d=>({label:d.label,date:d.thdate,times:[...d.times]}));
+  j.slotNote=esc(K.note.trim());
+  j.phase='slots';
+  j.history.push({t:nowStr(),label:'กบค. เปิดตารางว่างนัดรับ '+j.slots.length+' วัน — รอผู้แจ้งเลือกยืนยัน'});
+  toast('ส่งตารางว่างแล้ว — ไปแสดงที่หน้าจอนัดรับรถของผู้แจ้ง');renderKbkDetail(no);
+}
+function editSlots(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.phase='work';K.slots={};K.note=j.slotNote||'';
+  renderKbkDetail(no);
 }
 function kbkClose(no){
   const j=JOBS.find(x=>x.no===no);
