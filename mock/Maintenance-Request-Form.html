@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.5)</title>
+<title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.6)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
@@ -86,7 +86,7 @@
   </aside>
 
   <div class="work">
-    <div class="draft">🧪 ต้นแบบ Mock v0.5 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง ↔ กบค. ได้จากเมนูซ้าย</div>
+    <div class="draft">🧪 ต้นแบบ Mock v0.6 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง ↔ กบค. ได้จากเมนูซ้าย</div>
     <div class="topbar">
       <span class="ms">light_mode</span>
       <span class="ms" style="position:relative">notifications<i style="position:absolute;top:0;right:0;width:8px;height:8px;border-radius:50%;background:var(--success-600)"></i></span>
@@ -700,7 +700,7 @@ function closeSelf(no){
 
 // ================= VIEW: งานซ่อม กบค. =================
 const E={mode:null,garages:[]};
-let K={slots:{},note:''};
+let K={slots:{},note:'',mode:'range',from:'',to:'',one:''};
 function renderKbkList(){
   $('kbkdetail').classList.add('hidden');$('kbklist').classList.remove('hidden');
   const list=JOBS.filter(j=>['pending','work','appt','closed','returned','gclosed'].includes(j.phase));
@@ -715,7 +715,7 @@ function renderKbkList(){
   }).join('');
 }
 function openKbk(no){
-  E.mode=null;E.garages=[];K={slots:{},note:''};
+  E.mode=null;E.garages=[];K={slots:{},note:'',mode:'range',from:'',to:'',one:''};
   renderKbkDetail(no);
 }
 function renderKbkDetail(no){
@@ -751,14 +751,34 @@ function renderKbkDetail(no){
     if(j.wi<4){
       action+=`<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="kbkAdvance('${no}')">อัปเดตสถานะ → ${KBK_STEPS[j.wi+1]}</button></div>`;
     }else{
-      const days=nextDays(7);
+      const today=new Date().toISOString().slice(0,10);
+      const sortedDays=Object.entries(K.slots).sort((a,b)=>a[0]<b[0]?-1:1);
       action+=`<div class="sect" style="margin-top:24px">นัดรับรถ — เปิดตารางว่างของ กบค.</div>
-      <div class="hint">เลือกได้<b>หลายวัน</b> และเลือก<b>ช่วงเวลา</b>ของแต่ละวัน — ตารางว่างจะไปแสดงที่หน้าจอนัดรับรถของผู้แจ้ง ให้เลือกยืนยัน 1 ช่วง · วันนัดมีการ<b>ตรวจสภาพหลังการซ่อม</b>ร่วมกัน</div>
+      <div class="hint"><b>ขั้น 1</b> เลือกวันด้วย date picker (เพิ่มเป็น<b>ช่วงวันที่</b> หรือ<b>ทีละวัน</b>) → <b>ขั้น 2</b> เลือก<b>ช่วงเวลา</b>ของแต่ละวัน — ตารางว่างจะไปแสดงที่หน้าจอนัดรับรถของผู้แจ้ง ให้เลือกยืนยัน 1 ช่วง</div>
       <div class="panel">
-        ${days.map(d=>{const s=K.slots[d.key];return`<div class="dayrow">
-          <div class="chip ${s?'sel':''}" style="min-width:112px;text-align:center" onclick="toggleDay('${no}','${d.key}','${d.label}','${d.thdate}')">${d.label}</div>
-          ${s?SLOT_TIMES.map(t=>`<div class="chip ${s.times.includes(t)?'sel':''}" onclick="toggleSlot('${no}','${d.key}','${t}')">${t}</div>`).join(''):'<span class="hint" style="margin:0">แตะวันที่เพื่อเปิดช่วงเวลา</span>'}
-        </div>`}).join('')}
+        <div class="seg" style="max-width:380px">
+          <div class="sg ${K.mode!=='single'?'sel':''}" onclick="K.mode='range';renderKbkDetail('${no}')">เลือกเป็นช่วงวันที่</div>
+          <div class="sg ${K.mode==='single'?'sel':''}" onclick="K.mode='single';renderKbkDetail('${no}')">เลือกทีละวัน</div>
+        </div>
+        ${K.mode!=='single'?`
+        <div class="fgrid" style="margin:14px 0 0;max-width:680px">
+          <div class="f sp2"><label>จากวันที่</label><div class="in"><span class="ms">calendar_month</span><input type="date" id="kfrom" min="${today}" value="${K.from}" onchange="K.from=this.value"></div></div>
+          <div class="f sp2"><label>ถึงวันที่</label><div class="in"><span class="ms">event</span><input type="date" id="kto" min="${today}" value="${K.to}" onchange="K.to=this.value"></div></div>
+        </div>
+        <div class="rowbtns" style="justify-content:flex-start;margin-top:4px"><button class="btn btn-o" onclick="addRange('${no}')"><span class="ms" style="font-size:18px">date_range</span> เพิ่มช่วงวันที่เข้าตาราง</button></div>`
+        :`
+        <div class="fgrid" style="margin:14px 0 0;max-width:680px">
+          <div class="f sp2"><label>วันที่</label><div class="in"><span class="ms">calendar_month</span><input type="date" id="kone" min="${today}" value="${K.one}" onchange="K.one=this.value"></div></div>
+        </div>
+        <div class="rowbtns" style="justify-content:flex-start;margin-top:4px"><button class="btn btn-o" onclick="addOne('${no}')"><span class="ms" style="font-size:18px">event</span> เพิ่มวันเข้าตาราง</button></div>`}
+
+        <div style="margin-top:16px;font-weight:600;color:var(--gray-900);font-size:14px">ขั้น 2 · วันที่เปิดว่างไว้ (${sortedDays.length} วัน) — แตะช่วงเวลาเพื่อเปิด/ปิด</div>
+        ${sortedDays.length?sortedDays.map(([key,s])=>`<div class="dayrow" style="margin-top:8px">
+          <div class="chip sel" style="min-width:112px;text-align:center;cursor:default">${s.label}</div>
+          ${SLOT_TIMES.map(t=>`<div class="chip ${s.times.includes(t)?'sel':''}" onclick="toggleSlot('${no}','${key}','${t}')">${t}</div>`).join('')}
+          <span class="ms" style="color:var(--gray-400);cursor:pointer" title="ลบวันนี้ออก" onclick="removeDay('${no}','${key}')">delete</span>
+        </div>`).join(''):'<div class="empty">ยังไม่ได้เลือกวัน — เพิ่มจาก date picker ด้านบน</div>'}
+
         <div class="f" style="margin-top:12px"><label>หมายเหตุ <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="slnote" value="${K.note}" oninput="K.note=this.value" placeholder="เช่น จุดรับรถ ลานจอด กบค. อาคาร 3"></div></div>
         <div class="rowbtns"><button class="btn btn-p" onclick="kbkSendSlots('${no}')">ส่งตารางว่างให้ผู้แจ้งเลือก</button></div>
       </div>`;
@@ -838,19 +858,37 @@ function kbkAdvance(no){
 }
 const SLOT_TIMES=['เช้า 09:00–12:00','บ่าย 13:30–16:30'];
 const THD=['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'],THM=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-function nextDays(n){
-  const out=[];
-  for(let i=1;i<=n;i++){
-    const d=new Date(Date.now()+i*864e5);
-    out.push({key:d.toISOString().slice(0,10),label:`${THD[d.getDay()]} ${d.getDate()} ${THM[d.getMonth()]}`,thdate:`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`});
-  }
-  return out;
+function isoInfo(iso){
+  const d=new Date(iso+'T00:00:00');
+  return{key:iso,label:`${THD[d.getDay()]} ${d.getDate()} ${THM[d.getMonth()]}`,thdate:`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`};
 }
-function toggleDay(no,key,label,thdate){
-  if(K.slots[key])delete K.slots[key];
-  else K.slots[key]={label,thdate,times:[SLOT_TIMES[0]]};
+function addDayKey(iso){
+  if(K.slots[iso])return false;
+  const i=isoInfo(iso);
+  K.slots[iso]={label:i.label,thdate:i.thdate,times:[SLOT_TIMES[0]]};
+  return true;
+}
+function addRange(no){
+  if(!K.from||!K.to){toast('กรุณาเลือกวันที่เริ่มและสิ้นสุดของช่วง');return}
+  if(K.from>K.to){toast('วันที่เริ่มต้องไม่เกินวันที่สิ้นสุด');return}
+  const n=Math.round((new Date(K.to+'T00:00:00')-new Date(K.from+'T00:00:00'))/864e5)+1;
+  if(n>31){toast('เลือกช่วงได้ไม่เกิน 31 วัน');return}
+  let added=0;
+  const start=new Date(K.from+'T00:00:00');
+  for(let i=0;i<n;i++){
+    const d=new Date(start.getTime()+i*864e5);
+    const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if(addDayKey(iso))added++;
+  }
+  toast(added?'เพิ่ม '+added+' วันเข้าตารางแล้ว — เลือกช่วงเวลาต่อได้เลย':'ทุกวันในช่วงถูกเลือกไว้แล้ว');
   renderKbkDetail(no);
 }
+function addOne(no){
+  if(!K.one){toast('กรุณาเลือกวันที่');return}
+  toast(addDayKey(K.one)?'เพิ่มวันเข้าตารางแล้ว — เลือกช่วงเวลาต่อได้เลย':'วันนี้ถูกเลือกไว้แล้ว');
+  renderKbkDetail(no);
+}
+function removeDay(no,key){delete K.slots[key];renderKbkDetail(no)}
 function toggleSlot(no,key,t){
   const s=K.slots[key];if(!s)return;
   if(s.times.includes(t)){s.times=s.times.filter(x=>x!==t);if(!s.times.length)delete K.slots[key];}
