@@ -24,4 +24,9 @@ Mock v0.3 มี 2 บทบาทในไฟล์เดียว สลับ
 | [mock/](mock/) | ต้นแบบ HTML คลิกได้จริง |
 | [assets/](assets/) | Screenshot อ้างอิงจาก VMS Plus |
 
-> หมายเหตุ: `design-system/` ใน repo นี้เป็นสำเนา sync มาจาก design system กลางของโปรเจกต์ (`Maintenance-Request/design-system/`) เพื่อให้ repo เปิดได้ด้วยตัวเอง — ถ้าแก้ต้นทาง ให้ copy มาทับก่อน push
+> ℹ️ **repo นี้คือบ้านหลักของ design system** (ตัดสินใจ 17 ก.ค. 2569) — แก้ tokens/components ที่นี่ที่เดียว ทุกหน้าในระบบอ้างจากที่นี่
+
+## 🌐 เปิดดูออนไลน์ (GitHub Pages)
+
+- ต้นแบบ: https://anugmail.github.io/Maintenance-Request-Form/mock/Maintenance-Request-Form.html
+- Style guide: https://anugmail.github.io/Maintenance-Request-Form/design-system/index.html
