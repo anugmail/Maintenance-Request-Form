@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.3)</title>
+<title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.4)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
@@ -85,7 +85,7 @@
   </aside>
 
   <div class="work">
-    <div class="draft">🧪 ต้นแบบ Mock v0.3 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง ↔ กบค. ได้จากเมนูซ้าย</div>
+    <div class="draft">🧪 ต้นแบบ Mock v0.4 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง ↔ กบค. ได้จากเมนูซ้าย</div>
     <div class="topbar">
       <span class="ms">light_mode</span>
       <span class="ms" style="position:relative">notifications<i style="position:absolute;top:0;right:0;width:8px;height:8px;border-radius:50%;background:var(--success-600)"></i></span>
@@ -283,7 +283,13 @@ function badge(p){
 function statusInfo(j){
   if(j.phase==='self')return{label:'บันทึกแล้ว — ซ่อมเอง',cls:'b-ok'};
   if(j.phase==='pending')return{label:'รอ กบค. รับเรื่อง',cls:'b-brand'};
-  if(j.phase==='returned')return{label:'ส่งกลับให้ซ่อมเอง',cls:'b-low'};
+  if(j.phase==='returned'){
+    const s=j.rstage||0;
+    if(s===0)return{label:'ส่งกลับให้ซ่อมเอง',cls:'b-low'};
+    if(s===1)return{label:'ดำเนินการซ่อมโดยอู่',cls:'b-brand'};
+    return{label:'ซ่อมเสร็จแล้วโดยอู่ — รอบันทึกปิดงาน',cls:'b-brand'};
+  }
+  if(j.phase==='gclosed')return{label:'ปิดงาน — ซ่อมโดยอู่',cls:'b-ok'};
   if(j.phase==='work')return{label:KBK_STEPS[j.wi],cls:j.wi===4?'b-ok':'b-brand'};
   if(j.phase==='appt')return{label:'นัดรับรถ '+j.appt.date+' '+j.appt.time,cls:'b-brand'};
   return{label:'ปิดงาน — ตรวจสภาพผ่าน ส่งมอบแล้ว',cls:'b-ok'};
@@ -518,16 +524,68 @@ function renderMyList(){
       <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
   }).join('');
 }
+let R={jobNo:null,photos:0,urls:[],returns:{},pc:'',lc:'',det:''};
 function openMy(no){
+  const j=JOBS.find(x=>x.no===no);
+  R={jobNo:no,photos:0,urls:[],returns:{},pc:'',lc:'',det:''};
+  j.booked.forEach(b=>R.returns[b.name]=0);
+  renderMyDetail(no);
+}
+function retPanel(j){
+  return`<div class="panel"><div class="sect" style="margin:0 0 8px">กบค. ส่งกลับให้ซ่อมเอง</div>
+    <div style="font-size:14px"><b>เหตุผล:</b> ${j.ret.reason}</div>
+    ${j.ret.garages.length?`<div style="font-size:14px;margin-top:10px"><b>อู่ใกล้เคียงที่ กบค. แนะนำ:</b></div>`+j.ret.garages.map(g=>`<div class="garage" style="cursor:default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join(''):''}
+  </div>`;
+}
+function recordPanel(j){
+  const total=(j.record.pc+j.record.lc).toLocaleString();
+  const rets=j.record.returns.filter(r=>r.qty>0);
+  return`<div class="panel"><div class="sect" style="margin:0 0 8px">บันทึกการซ่อม (ปิดงานแล้ว)</div>
+    <div style="font-size:14px"><b>รายละเอียดการซ่อม:</b> ${j.record.det}</div>
+    <div style="font-size:14px;margin-top:6px"><b>รูปประกอบ:</b> ${j.record.photos} รูป</div>
+    <div style="font-size:14px;margin-top:6px"><b>ค่าใช้จ่าย:</b> ค่าอะไหล่ ${j.record.pc.toLocaleString()} บาท · ค่าแรง ${j.record.lc.toLocaleString()} บาท · <b>รวม ${total} บาท</b></div>
+    <div style="font-size:14px;margin-top:6px"><b>คืนอะไหล่เข้าคลัง กบค.:</b> ${rets.length?rets.map(r=>`${r.name} ×${r.qty}`).join(', '):'ไม่มี'}</div>
+  </div>`;
+}
+function renderMyDetail(no){
   const j=JOBS.find(x=>x.no===no);
   const st=statusInfo(j);
   let extra='';
   if(j.phase==='returned'){
-    extra=`<div class="panel"><div class="sect" style="margin:0 0 8px">กบค. ส่งกลับให้ซ่อมเอง</div>
-      <div style="font-size:14px"><b>เหตุผล:</b> ${j.ret.reason}</div>
-      ${j.ret.garages.length?`<div style="font-size:14px;margin-top:10px"><b>อู่ใกล้เคียงที่ กบค. แนะนำ:</b></div>`+j.ret.garages.map(g=>`<div class="garage" style="cursor:default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join(''):''}
-    </div>`;
+    extra=retPanel(j);
+    const s=j.rstage||0;
+    if(s===0){
+      extra+=`<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="retAdvance('${no}',1)">เริ่มดำเนินการซ่อมโดยอู่</button></div>`;
+    }else if(s===1){
+      extra+=`<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="retAdvance('${no}',2)">บันทึกว่าซ่อมเสร็จแล้ว (โดยอู่)</button></div>`;
+    }else{
+      extra+=`<div class="sect" style="margin-top:24px">บันทึกการซ่อม + ปิดงาน</div>
+      <div class="panel">
+        <div class="f"><label>รายละเอียดการซ่อม <small>(จำเป็น)</small></label><textarea id="cdet" rows="3" placeholder="เช่น อู่เปลี่ยนชุดล็อกกระเช้าและปรับตั้งระบบ ทดสอบยกแล้วปกติ…" oninput="R.det=this.value">${R.det}</textarea></div>
+        <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin:12px 0 6px">รูปภาพหลังซ่อม</label>
+        <div class="photos" id="cphotos">
+          ${R.urls.map((u,i)=>`<div class="ph">${u?`<img src="${u}">`:''}<div class="rm" onclick="cRmPhoto(${i})">✕</div></div>`).join('')}
+          <div class="addph" onclick="document.getElementById('cfile').click()"><span class="ms">photo_camera</span>ถ่าย/แนบรูป</div>
+          <div class="addph" onclick="cAddPhoto(null)"><span class="ms">add_photo_alternate</span>รูปตัวอย่าง</div>
+        </div>
+        <input type="file" id="cfile" accept="image/*" multiple class="hidden" onchange="[...this.files].forEach(f=>cAddPhoto(URL.createObjectURL(f)));this.value=''">
+        <div class="fgrid" style="margin:14px 0 4px;max-width:760px">
+          <div class="f sp2"><label>ค่าอะไหล่ (บาท)</label><div class="in"><span class="ms">settings</span><input type="number" min="0" id="cpc" value="${R.pc}" placeholder="0" oninput="R.pc=this.value;cTotal()"></div></div>
+          <div class="f sp2"><label>ค่าแรง (บาท)</label><div class="in"><span class="ms">engineering</span><input type="number" min="0" id="clc" value="${R.lc}" placeholder="0" oninput="R.lc=this.value;cTotal()"></div></div>
+        </div>
+        <div style="font-size:14px;color:var(--gray-900)"><b>รวมค่าใช้จ่าย: <span id="ctot">0</span> บาท</b></div>
+        <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin:16px 0 4px">คืนอะไหล่ที่เบิกจาก กบค. <small style="color:var(--gray-500);font-weight:400">— เหลือจากการซ่อม ระบุจำนวนคืนเข้าคลัง</small></label>
+        ${j.booked.length?j.booked.map(b=>`
+          <div class="bk" style="border:1px dashed var(--gray-200);border-radius:10px;padding:8px 12px;max-width:560px">
+            <span style="flex:1;font-size:14px">${b.name} <span class="hint" style="display:inline">(เบิกไป ${b.qty} ${b.unit})</span></span>
+            <div class="qty"><button onclick="retChg('${no}','${b.name}',-1)">−</button><span>${R.returns[b.name]||0}</span><button onclick="retChg('${no}','${b.name}',1)">+</button></div>
+            <span class="hint">คืน</span>
+          </div>`).join(''):'<div class="hint">ไม่มีอะไหล่ที่เบิกจาก กบค.</div>'}
+        <div class="rowbtns"><button class="btn btn-p" onclick="closeSelf('${no}')">บันทึกและปิดงาน</button></div>
+      </div>`;
+    }
   }
+  if(j.phase==='gclosed'){extra=retPanel(j)+recordPanel(j)}
   if(j.phase==='appt'||j.phase==='closed'){
     extra+=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note?'· '+j.appt.note:''} — วันนัดมีการ<b>ตรวจสภาพหลังการซ่อม</b>ร่วมกัน</div>`;
   }
@@ -544,13 +602,40 @@ function openMy(no){
       <span class="badge ${st.cls}">${st.label}</span></div>
     ${jobInfoBox(j)}${extra}${timelineBox(j)}
     <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderMyList()">← กลับรายการ</button></div>`;
+  if(j.phase==='returned'&&(j.rstage||0)===2)cTotal();
+}
+function retAdvance(no,s){
+  const j=JOBS.find(x=>x.no===no);
+  j.rstage=s;
+  j.history.push({t:nowStr(),label:'สถานะ: '+(s===1?'ดำเนินการซ่อมโดยอู่':'ซ่อมเสร็จแล้วโดยอู่')});
+  toast('อัปเดตสถานะแล้ว — กบค. เห็นสถานะนี้ด้วย');renderMyDetail(no);
+}
+function cAddPhoto(url){R.photos++;R.urls.push(url);renderMyDetail(R.jobNo)}
+function cRmPhoto(i){R.photos--;R.urls.splice(i,1);renderMyDetail(R.jobNo)}
+function cTotal(){const t=(+R.pc||0)+(+R.lc||0);const el=$('ctot');if(el)el.textContent=t.toLocaleString()}
+function retChg(no,name,d){
+  const j=JOBS.find(x=>x.no===no);
+  const max=j.booked.find(b=>b.name===name).qty;
+  const v=(R.returns[name]||0)+d;
+  if(v<0||v>max){if(v>max)toast('คืนได้ไม่เกินจำนวนที่เบิก ('+max+')');return}
+  R.returns[name]=v;renderMyDetail(no);
+}
+function closeSelf(no){
+  const j=JOBS.find(x=>x.no===no);
+  if(!R.det.trim()){toast('กรุณากรอกรายละเอียดการซ่อมก่อนปิดงาน');return}
+  j.record={det:esc(R.det.trim()),photos:R.photos,pc:+R.pc||0,lc:+R.lc||0,
+    returns:j.booked.map(b=>({name:b.name,unit:b.unit,qty:R.returns[b.name]||0}))};
+  j.phase='gclosed';
+  const rets=j.record.returns.filter(r=>r.qty>0).map(r=>`${r.name} ×${r.qty}`).join(', ');
+  j.history.push({t:nowStr(),label:'บันทึกการซ่อมและปิดงาน — ค่าใช้จ่ายรวม '+(j.record.pc+j.record.lc).toLocaleString()+' บาท'+(rets?' · คืนอะไหล่: '+rets:'')});
+  toast('ปิดงานเรียบร้อย — กบค. เห็นบันทึกการซ่อมและการคืนอะไหล่ด้วย');renderMyDetail(no);
 }
 
 // ================= VIEW: งานซ่อม กบค. =================
 const E={mode:null,garages:[]};
 function renderKbkList(){
   $('kbkdetail').classList.add('hidden');$('kbklist').classList.remove('hidden');
-  const list=JOBS.filter(j=>['pending','work','appt','closed','returned'].includes(j.phase));
+  const list=JOBS.filter(j=>['pending','work','appt','closed','returned','gclosed'].includes(j.phase));
   if(!list.length){$('kbklist').innerHTML='<div class="empty">ยังไม่มีงานเข้าคิว</div>';return}
   $('kbklist').innerHTML=list.map(j=>{
     const st=statusInfo(j);
@@ -622,9 +707,16 @@ function renderKbkDetail(no){
   }
 
   if(j.phase==='returned'){
-    action=`<div class="panel"><div class="sect" style="margin:0 0 8px">ส่งกลับให้หน่วยงานผู้แจ้งซ่อมเองแล้ว</div>
+    const s=j.rstage||0;
+    const RSTEPS=['ส่งกลับให้ซ่อมเอง','ดำเนินการซ่อมโดยอู่','ซ่อมเสร็จแล้วโดยอู่'];
+    action=`<div class="panel"><div class="sect" style="margin:0 0 8px">ส่งกลับให้หน่วยงานผู้แจ้งซ่อมเองแล้ว — ติดตามสถานะ</div>
       <div style="font-size:14px"><b>เหตุผล:</b> ${j.ret.reason}</div>
-      ${j.ret.garages.length?j.ret.garages.map(g=>`<div class="garage" style="cursor:default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join(''):''}</div>`;
+      ${j.ret.garages.length?j.ret.garages.map(g=>`<div class="garage" style="cursor:default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join(''):''}</div>
+    <div class="wsteps" style="margin-top:14px">${RSTEPS.map((x,i)=>`<div class="wstep ${i===s?'active':i<s?'passed':''}"><span class="num">${i<s?'✓':i+1}</span><span class="lbl">${x}</span></div>`).join('')}</div>
+    <div class="hint">หน่วยงานผู้แจ้งเป็นผู้อัปเดตสถานะและบันทึกปิดงาน — กบค. เห็นความคืบหน้าที่นี่ตลอด${s===2?' · <b>รอบันทึกปิดงานจากผู้แจ้ง</b>':''}</div>`;
+  }
+  if(j.phase==='gclosed'){
+    action=retPanel(j)+recordPanel(j);
   }
   if(j.phase==='closed'){
     action=`<div class="panel"><div class="sect" style="margin:0 0 8px">ปิดงานแล้ว</div>
@@ -653,7 +745,7 @@ function kbkReturn(no){
   const j=JOBS.find(x=>x.no===no);
   const reason=$('retnote').value.trim();
   if(!reason){toast('กรุณาระบุเหตุผลที่ส่งกลับ');return}
-  j.phase='returned';
+  j.phase='returned';j.rstage=0;
   j.ret={reason:esc(reason),garages:GARAGES.filter(g=>E.garages.includes(g.id))};
   j.history.push({t:nowStr(),label:'กบค. ส่งกลับให้ซ่อมเอง — '+esc(reason)+(j.ret.garages.length?' · แนะนำอู่: '+j.ret.garages.map(g=>g.name).join(', '):'')});
   updateBadge();toast('ส่งกลับเรื่องแล้ว — ผู้แจ้งเห็นเหตุผลและอู่แนะนำ');renderKbkDetail(no);
