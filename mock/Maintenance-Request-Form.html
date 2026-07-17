@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.6)</title>
+<title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.7)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
@@ -86,7 +86,7 @@
   </aside>
 
   <div class="work">
-    <div class="draft">🧪 ต้นแบบ Mock v0.6 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง ↔ กบค. ได้จากเมนูซ้าย</div>
+    <div class="draft">🧪 ต้นแบบ Mock v0.7 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง ↔ กบค. ได้จากเมนูซ้าย</div>
     <div class="topbar">
       <span class="ms">light_mode</span>
       <span class="ms" style="position:relative">notifications<i style="position:absolute;top:0;right:0;width:8px;height:8px;border-radius:50%;background:var(--success-600)"></i></span>
@@ -254,7 +254,8 @@ const GARAGES=[
  {id:'g3',name:'อู่มิตรภาพทรัค',dist:'12 กม.',tags:'เครื่องยนต์ · ระบบไฟฟ้า'},
 ];
 const KBK_STEPS=['รับเรื่องซ่อม','รอสั่งอะไหล่','อะไหล่ถึงแล้ว','ดำเนินการซ่อม','ซ่อมเสร็จ'];
-const CHECKS=['ทดสอบการทำงานตามอาการที่แจ้ง — ปกติ','ไม่มีรอยรั่ว/เสียงผิดปกติหลังซ่อม','อุปกรณ์ความปลอดภัยครบและใช้งานได้','เอกสาร/รายการอะไหล่ที่ใช้ครบถ้วน'];
+const ZONES=['กันชนหน้า/ไฟหน้า','ฝากระโปรง/กระจกบังลม','ด้านซ้าย (ประตู/แก้มข้าง)','ด้านขวา (ประตู/แก้มข้าง)','ท้ายรถ/กันชนหลัง','หลังคา/เสา','ยาง/ล้อ/บันไดข้าง','อุปกรณ์เสริม (เครน/กระเช้า)'];
+const FUELS=['E','¼','½','¾','เต็ม'];
 
 // ================= JOBS (in-memory DB) =================
 let SEQ=42;
@@ -266,6 +267,7 @@ const JOBS=[
  {no:'MTD-690715-018',plate:'83-1122 กรุงเทพมหานคร',model:'Mitsubishi Fuso FI + เครน Unic URV554',org:'สำนักงานใหญ่ (กบค.)',target:'เครน Unic URV554',
   syms:['ปั๊มไฮดรอลิกเสียงดัง/แรงดันตก'],sev:'ปานกลาง',photos:1,desc:'แรงดันตกตอนยกโหลดเกินครึ่ง',
   booked:[{name:'ไส้กรองไฮดรอลิก',qty:2,unit:'ชิ้น'}],ordered:[{name:'ปั๊มไฮดรอลิกเกียร์',qty:1,unit:'ตัว',eta:'24 ก.ค.'}],reason:'ปั๊มต้องเปลี่ยนทั้งลูก รอของเข้า',
+  inspIn:{fuel:'½',odo:'84,120',defects:[{zone:'ด้านขวา (ประตู/แก้มข้าง)',note:'รอยขีดข่วนเดิม'}],extra:'',t:'15 ก.ค. 2569 15:45'},
   phase:'work',wi:1,history:[
    {t:'15 ก.ค. 2569 10:05',label:'ส่งเรื่องถึง กบค. — รอรับเรื่อง'},
    {t:'15 ก.ค. 2569 15:40',label:'กบค. รับเรื่องซ่อม'},
@@ -653,13 +655,14 @@ function renderMyDetail(no){
       <div class="rowbtns"><button class="btn btn-p" onclick="confirmSlot('${no}')">ยืนยันวันนัดรับ</button></div>
     </div>`;
   }
-  if(j.phase==='appt'||j.phase==='closed'){
-    extra+=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note?'· '+j.appt.note:''} — วันนัดมีการ<b>ตรวจสภาพหลังการซ่อม</b>ร่วมกัน</div>`;
+  if(j.inspIn&&['work','slots','appt','closed'].includes(j.phase)){
+    extra+=inspViewPanel('ตรวจสภาพรับรถเข้าซ่อม (ขาเข้า)',j.inspIn);
   }
-  if(j.phase==='closed'){
-    extra+=`<div class="panel"><div class="sect" style="margin:0 0 8px">ผลตรวจสภาพหลังการซ่อม</div>
-      <div style="font-size:14px">ผ่าน ${j.insp.checks}/${CHECKS.length} รายการ · <span class="badge b-ok">ผ่าน — รับมอบรถแล้ว</span></div>
-      ${j.insp.note?`<div class="hint">บันทึก: ${j.insp.note}</div>`:''}</div>`;
+  if(j.phase==='appt'||j.phase==='closed'){
+    extra+=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note?'· '+j.appt.note:''} — วันนัดมีการ<b>ตรวจสภาพตอนรับรถคืน (ขาออก)</b> เทียบกับขาเข้าร่วมกัน</div>`;
+  }
+  if(j.phase==='closed'&&j.inspOut){
+    extra+=inspViewPanel('ตรวจสภาพขาออก (ตอนรับรถคืน) — <span class="badge b-ok">ผ่าน — รับมอบรถแล้ว</span>',j.inspOut);
   }
   $('mylist').classList.add('hidden');
   $('mydetail').classList.remove('hidden');
@@ -700,7 +703,54 @@ function closeSelf(no){
 
 // ================= VIEW: งานซ่อม กบค. =================
 const E={mode:null,garages:[]};
-let K={slots:{},note:'',mode:'range',from:'',to:'',one:''};
+let K={slots:{},note:'',mode:'range',from:'',to:'',one:'',insp:null};
+function initInsp(){return{zones:ZONES.map(z=>({name:z,bad:false,note:''})),fuel:null,odo:'',symOk:{},extra:''}}
+function zSet(no,zi,v){K.insp.zones[zi].bad=v;renderKbkDetail(no)}
+function fuelSet(no,f){K.insp.fuel=f;renderKbkDetail(no)}
+function symTog(no,i){K.insp.symOk[i]=!K.insp.symOk[i]}
+function inspFormHTML(no,kind,j){
+  const I=K.insp;
+  return`<div class="panel">
+    <div style="font-weight:600;color:var(--gray-900);font-size:14px;margin-bottom:8px">① ความผิดปกติรอบตัวรถ <span class="hint" style="display:inline;margin:0">— แตะ "มีตำหนิ" แล้วระบุรายละเอียด</span></div>
+    ${I.zones.map((z,zi)=>`<div class="dayrow">
+      <span style="flex:0 0 210px;font-size:13.5px">${z.name}</span>
+      <div class="seg" style="flex:0 0 172px"><div class="sg ${!z.bad?'sel':''}" onclick="zSet('${no}',${zi},false)">ปกติ</div><div class="sg ${z.bad?'sel':''}" onclick="zSet('${no}',${zi},true)">มีตำหนิ</div></div>
+      ${z.bad?`<input type="text" style="flex:1;min-width:170px" placeholder="เช่น รอยบุบ ขีดข่วน สนิม รอยรั่ว…" value="${z.note}" oninput="K.insp.zones[${zi}].note=this.value">`:''}
+    </div>`).join('')}
+    <div class="fgrid" style="margin:14px 0 0;max-width:680px">
+      <div class="f sp2"><label>② ระดับน้ำมัน</label><div class="seg">${FUELS.map(f=>`<div class="sg ${I.fuel===f?'sel':''}" onclick="fuelSet('${no}','${f}')">${f}</div>`).join('')}</div></div>
+      <div class="f sp2"><label>เลขไมล์ (กม.)</label><div class="in"><span class="ms">speed</span><input type="number" value="${I.odo}" placeholder="เช่น 84120" oninput="K.insp.odo=this.value"></div></div>
+    </div>
+    ${kind==='in'
+      ?`<div class="f"><label>③ อาการเสียของเดิม (ตามที่แจ้งไว้)</label><div class="chk">${j.syms.map(s=>`<label><input type="checkbox" checked disabled>${s}</label>`).join('')}</div></div>
+      <div class="f"><label>อาการ/ตำหนิอื่นที่พบเพิ่มตอนรับรถ <small>(ถ้ามี)</small></label><textarea rows="2" oninput="K.insp.extra=this.value" placeholder="เช่น ไฟเลี้ยวซ้ายหลังไม่ติด…">${I.extra}</textarea></div>
+      <div class="rowbtns"><button class="btn btn-p" onclick="saveInspIn('${no}')">บันทึกตรวจสภาพขาเข้า — รับรถเข้าซ่อม</button></div>`
+      :`<div class="f"><label>③ ผลการซ่อม — ทดสอบตามอาการที่แจ้ง</label><div class="chk">${j.syms.map((s,i)=>`<label><input type="checkbox" ${I.symOk[i]?'checked':''} onchange="symTog('${no}',${i})">${s} — ซ่อมแล้ว ทดสอบปกติ</label>`).join('')}</div></div>
+      <div class="f"><label>บันทึกเพิ่มเติม <small>(ถ้ามี)</small></label><textarea rows="2" oninput="K.insp.extra=this.value" placeholder="เช่น ทดสอบยกโหลด 80% ปกติ…">${I.extra}</textarea></div>
+      <div class="rowbtns">
+        <button class="btn btn-g" onclick="kbkFail('${no}')">ไม่ผ่าน — กลับไปแก้งานซ่อม</button>
+        <button class="btn btn-p" onclick="kbkClose('${no}')">ผ่าน — ส่งมอบรถ ปิดงาน</button>
+      </div>`}
+  </div>`;
+}
+function inspRecord(){
+  const I=K.insp;
+  return{fuel:I.fuel,odo:esc(I.odo),defects:I.zones.filter(z=>z.bad).map(z=>({zone:z.name,note:esc(z.note.trim())})),extra:esc(I.extra.trim()),t:nowStr()};
+}
+function saveInspIn(no){
+  const j=JOBS.find(x=>x.no===no);
+  if(!K.insp.fuel){toast('กรุณาระบุระดับน้ำมัน');return}
+  j.inspIn=inspRecord();
+  j.history.push({t:nowStr(),label:'ตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) — น้ำมัน '+j.inspIn.fuel+' · ตำหนิรอบตัวรถ '+j.inspIn.defects.length+' จุด'});
+  K.insp=null;
+  toast('บันทึกตรวจสภาพขาเข้าแล้ว — เดินสถานะซ่อมต่อได้');renderKbkDetail(no);
+}
+function inspViewPanel(title,rec){
+  return`<div class="panel"><div class="sect" style="margin:0 0 8px">${title}</div>
+    <div style="font-size:14px">น้ำมัน: <b>${rec.fuel}</b> · เลขไมล์: <b>${rec.odo||'—'}</b> กม. · บันทึกเมื่อ ${rec.t}</div>
+    <div style="font-size:14px;margin-top:6px"><b>ตำหนิรอบตัวรถ:</b> ${rec.defects.length?rec.defects.map(d=>`${d.zone}${d.note?' ('+d.note+')':''}`).join(' · '):'ไม่มี'}</div>
+    ${rec.extra?`<div class="hint">เพิ่มเติม: ${rec.extra}</div>`:''}</div>`;
+}
 function renderKbkList(){
   $('kbkdetail').classList.add('hidden');$('kbklist').classList.remove('hidden');
   const list=JOBS.filter(j=>['pending','work','appt','closed','returned','gclosed'].includes(j.phase));
@@ -715,7 +765,7 @@ function renderKbkList(){
   }).join('');
 }
 function openKbk(no){
-  E.mode=null;E.garages=[];K={slots:{},note:'',mode:'range',from:'',to:'',one:''};
+  E.mode=null;E.garages=[];K={slots:{},note:'',mode:'range',from:'',to:'',one:'',insp:null};
   renderKbkDetail(no);
 }
 function renderKbkDetail(no){
@@ -745,6 +795,12 @@ function renderKbkDetail(no){
   if(j.phase==='work'){
     action=`<div class="sect" style="margin-top:24px">สถานะงานซ่อม <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— สถานะแสดงที่ฝั่งผู้แจ้งด้วย</span></div>
     <div class="wsteps" style="margin-top:14px">${KBK_STEPS.map((s,i)=>`<div class="wstep ${i===j.wi?'active':i<j.wi?'passed':''}"><span class="num">${i<j.wi?'✓':i+1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
+    if(j.inspIn){
+      action+=inspViewPanel('ตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) ✓',j.inspIn);
+    }else if(j.wi===0){
+      if(!K.insp)K.insp=initInsp();
+      action+=`<div class="sect" style="margin-top:24px">ตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ต้องบันทึกก่อนเดินสถานะซ่อม · ตรวจร่วมกับผู้ส่งรถ</span></div>`+inspFormHTML(no,'in',j);
+    }
     if(j.wi===1&&j.ordered.length){
       action+=`<div class="panel"><b style="color:var(--gray-900);font-size:14px">รายการที่รอสั่ง/รอของเข้า</b>${j.ordered.map(x=>`<div class="hint" style="margin-top:6px"><span class="ms" style="font-size:16px">shopping_cart</span> ${x.name} ×${x.qty} — ETA ${x.eta}</div>`).join('')}</div>`;
     }
@@ -795,15 +851,11 @@ function renderKbkDetail(no){
   }
 
   if(j.phase==='appt'){
+    if(!K.insp)K.insp=initInsp();
     action=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note?'· '+j.appt.note:''}</div>
-    <div class="sect" style="margin-top:24px">ตรวจสภาพหลังการซ่อม (ทำร่วมกันวันนัดรับ)</div>
-    <div class="panel">
-      <div class="chk">${CHECKS.map((c,i)=>`<label><input type="checkbox" id="ck${i}">${c}</label>`).join('')}</div>
-      <div class="f"><label>บันทึกผลตรวจ <small>(ถ้ามี)</small></label><textarea id="inspnote" rows="2" placeholder="เช่น ทดสอบยกโหลด 80% ปกติ…"></textarea></div>
-      <div class="rowbtns">
-        <button class="btn btn-g" onclick="kbkFail('${no}')">ไม่ผ่าน — กลับไปแก้งานซ่อม</button>
-        <button class="btn btn-p" onclick="kbkClose('${no}')">ผ่าน — ส่งมอบรถ ปิดงาน</button>
-      </div></div>`;
+    ${j.inspIn?inspViewPanel('เทียบกับตรวจสภาพขาเข้า (ตอนส่งรถซ่อม)',j.inspIn):''}
+    <div class="sect" style="margin-top:24px">ตรวจสภาพตอนรับรถคืน (ขาออก) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ทำร่วมกันวันนัดรับ เทียบกับขาเข้าก่อนส่งมอบ</span></div>`
+    +inspFormHTML(no,'out',j);
   }
 
   if(j.phase==='returned'){
@@ -819,9 +871,9 @@ function renderKbkDetail(no){
     action=retPanel(j)+recordPanel(j);
   }
   if(j.phase==='closed'){
-    action=`<div class="panel"><div class="sect" style="margin:0 0 8px">ปิดงานแล้ว</div>
-      <div style="font-size:14px">ตรวจสภาพผ่าน ${j.insp.checks}/${CHECKS.length} รายการ · ส่งมอบรถวันที่ ${j.appt.date} ${j.appt.time} น.</div>
-      ${j.insp.note?`<div class="hint">บันทึก: ${j.insp.note}</div>`:''}</div>`;
+    action=`<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ปิดงานแล้ว</b> — ส่งมอบรถวันที่ ${j.appt.date} ${j.appt.time} น.</div>`
+      +(j.inspIn?inspViewPanel('ตรวจสภาพขาเข้า (ตอนส่งรถซ่อม)',j.inspIn):'')
+      +(j.inspOut?inspViewPanel('ตรวจสภาพขาออก (ตอนรับรถคืน) — ผ่าน ✓',j.inspOut):'');
   }
 
   $('kbklist').classList.add('hidden');
@@ -852,6 +904,7 @@ function kbkReturn(no){
 }
 function kbkAdvance(no){
   const j=JOBS.find(x=>x.no===no);
+  if(j.wi===0&&!j.inspIn){toast('ต้องบันทึกตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) ก่อนเดินสถานะ');return}
   j.wi++;
   j.history.push({t:nowStr(),label:'สถานะ: '+KBK_STEPS[j.wi]});
   toast('อัปเดตสถานะเป็น "'+KBK_STEPS[j.wi]+'" — ฝั่งผู้แจ้งเห็นด้วย');renderKbkDetail(no);
@@ -912,17 +965,20 @@ function editSlots(no){
 }
 function kbkClose(no){
   const j=JOBS.find(x=>x.no===no);
-  const checks=CHECKS.filter((c,i)=>$('ck'+i).checked).length;
-  if(checks<CHECKS.length){toast('ต้องผ่านครบทุกข้อจึงปิดงานได้ (ติ๊กให้ครบ หรือกด "ไม่ผ่าน")');return}
-  j.insp={pass:true,checks,note:esc($('inspnote').value.trim())};
+  if(!K.insp.fuel){toast('กรุณาระบุระดับน้ำมัน (ขาออก)');return}
+  if(!j.syms.every((s,i)=>K.insp.symOk[i])){toast('ต้องยืนยันผลการซ่อมครบทุกอาการจึงปิดงานได้ — หรือเลือก "ไม่ผ่าน"');return}
+  j.inspOut=inspRecord();
   j.phase='closed';
-  j.history.push({t:nowStr(),label:'ตรวจสภาพหลังซ่อมผ่าน — ส่งมอบรถ ปิดงาน'});
+  j.history.push({t:nowStr(),label:'ตรวจสภาพขาออกผ่าน (น้ำมัน '+j.inspOut.fuel+' · ตำหนิ '+j.inspOut.defects.length+' จุด) — ส่งมอบรถ ปิดงาน'});
+  K.insp=null;
   toast('ปิดงานเรียบร้อย');renderKbkDetail(no);
 }
 function kbkFail(no){
   const j=JOBS.find(x=>x.no===no);
+  const note=K.insp?esc(K.insp.extra.trim()):'';
   j.phase='work';j.wi=3;
-  j.history.push({t:nowStr(),label:'ตรวจสภาพไม่ผ่าน — กลับไปดำเนินการซ่อม'+($('inspnote').value.trim()?' ('+esc($('inspnote').value.trim())+')':'')});
+  j.history.push({t:nowStr(),label:'ตรวจสภาพขาออกไม่ผ่าน — กลับไปดำเนินการซ่อม'+(note?' ('+note+')':'')});
+  K.insp=null;
   toast('บันทึกผลไม่ผ่าน — กลับสู่สถานะ ดำเนินการซ่อม');renderKbkDetail(no);
 }
 
