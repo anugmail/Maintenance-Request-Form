@@ -78,12 +78,13 @@
     <div class="nv" id="nav-my" title="เรื่องแจ้งซ่อมของฉัน" onclick="switchView('my')"><span class="ms">assignment</span></div>
     <div class="nv" id="nav-kry" title="งานคัดแยก กรย." onclick="switchView('kry')"><span class="ms">alt_route</span><span class="cnt hidden" id="krycnt"></span></div>
     <div class="nv" id="nav-kbk" title="งานซ่อม กบค." onclick="switchView('kbk')"><span class="ms">engineering</span><span class="cnt hidden" id="kbkcnt"></span></div>
+    <div class="nv" id="nav-sup" title="อนุมัติปิดงาน (ผู้บังคับบัญชา)" onclick="switchView('sup')"><span class="ms">approval</span><span class="cnt hidden" id="supcnt"></span></div>
     <div class="nv" id="nav-stock" title="คลังอะไหล่" onclick="switchView('stock')"><span class="ms">warehouse</span></div>
     <div class="nv" title="รายงาน" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">monitoring</span></div>
   </aside>
 
   <div class="work">
-    <div class="draft">🧪 ต้นแบบ Mock v0.12 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง → กรย. → กบค. ได้จากเมนูซ้าย · ปรับแต่งได้จาก Admin Control Panel</div>
+    <div class="draft">🧪 ต้นแบบ Mock v0.14 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง → กรย. → กบค. → ผู้บังคับบัญชา ได้จากเมนูซ้าย · ปรับแต่งได้จาก Admin Control Panel</div>
     <div class="topbar">
       <span class="ms">light_mode</span>
       <span class="ms" style="position:relative">notifications<i style="position:absolute;top:0;right:0;width:8px;height:8px;border-radius:50%;background:var(--success-600)"></i></span>
@@ -197,6 +198,14 @@
       <div id="kbkdetail" class="hidden"></div>
     </main>
 
+    <!-- ============ VIEW: อนุมัติปิดงาน (ผู้บังคับบัญชา) ============ -->
+    <main class="content hidden" id="view-sup">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>บริหารงานซ่อม</span><span class="sep">›</span><span class="cur">อนุมัติปิดงาน</span></div>
+      <h1 class="page-title">อนุมัติปิดงาน — ผู้บังคับบัญชา กบค.</h1>
+      <div id="suplist"></div>
+      <div id="supdetail" class="hidden"></div>
+    </main>
+
     <!-- ============ VIEW: คลังอะไหล่ (กบค.) ============ -->
     <main class="content hidden" id="view-stock">
       <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>งานซ่อม กบค.</span><span class="sep">›</span><span class="cur">คลังอะไหล่</span></div>
@@ -291,6 +300,7 @@ function statusInfo(j){
     return{label:KBK_STEPS[j.wi],cls:j.wi===4?'b-ok':'b-brand'};
   }
   if(j.phase==='appt')return{label:'นัดรับรถ '+j.appt.date+' '+j.appt.time,cls:'b-brand'};
+  if(j.phase==='approve')return{label:'รออนุมัติปิดงาน (ผู้บังคับบัญชา)',cls:'b-brand'};
   if(j.loc==='onsite')return{label:'ปิดงาน — ซ่อมหน้างานเสร็จ',cls:'b-ok'};
   return{label:'ปิดงาน — ตรวจสภาพผ่าน ส่งมอบแล้ว',cls:'b-ok'};
 }
@@ -299,18 +309,21 @@ function updateBadge(){
   $('kbkcnt').textContent=n;$('kbkcnt').classList.toggle('hidden',n===0);
   const k=JOBS.filter(j=>j.phase==='kry').length;
   $('krycnt').textContent=k;$('krycnt').classList.toggle('hidden',k===0);
+  const s=JOBS.filter(j=>j.phase==='approve').length;
+  $('supcnt').textContent=s;$('supcnt').classList.toggle('hidden',s===0);
 }
 
 // ================= VIEW SWITCH =================
 function switchView(v){
   VIEW=v;
-  ['form','my','kry','kbk','stock'].forEach(x=>{
+  ['form','my','kry','kbk','sup','stock'].forEach(x=>{
     $('view-'+x).classList.toggle('hidden',x!==v);
     $('nav-'+x).classList.toggle('on',x===v);
   });
   if(v==='my')renderMyList();
   if(v==='kry')renderKryList();
   if(v==='kbk')renderKbkList();
+  if(v==='sup')renderSupList();
   if(v==='stock')renderStock();
   window.scrollTo({top:0});
 }
@@ -663,6 +676,7 @@ function renderMyDetail(no){
   if(j.phase==='closed'&&j.inspOut){
     extra+=inspViewPanel('ตรวจสภาพขาออก (ตอนรับรถคืน) — <span class="badge b-ok">ผ่าน — รับมอบรถแล้ว</span>',j.inspOut);
   }
+  if(j.phase==='closed'&&j.cost)extra+=costPanel(j);
   $('mylist').classList.add('hidden');
   $('mydetail').classList.remove('hidden');
   $('mydetail').innerHTML=`
@@ -824,9 +838,10 @@ function inspFormHTML(no,kind,j){
       <div class="rowbtns"><button class="btn btn-p" onclick="saveInspIn('${no}')">บันทึกตรวจสภาพขาเข้า — รับรถเข้าซ่อม</button></div>`
       :`<div class="f"><label>③ ผลการซ่อม — ทดสอบตามอาการที่แจ้ง</label><div class="chk">${j.syms.map((s,i)=>`<label><input type="checkbox" ${I.symOk[i]?'checked':''} onchange="symTog('${no}',${i})">${s} — ซ่อมแล้ว ทดสอบปกติ</label>`).join('')}</div></div>
       <div class="f"><label>บันทึกเพิ่มเติม <small>(ถ้ามี)</small></label><textarea rows="2" oninput="K.insp.extra=this.value" placeholder="เช่น ทดสอบยกโหลด 80% ปกติ…">${I.extra}</textarea></div>
+      ${costFieldsHTML()}
       <div class="rowbtns">
         <button class="btn btn-g" onclick="kbkFail('${no}')">ไม่ผ่าน — กลับไปแก้งานซ่อม</button>
-        <button class="btn btn-p" onclick="kbkClose('${no}')">ผ่าน — ส่งมอบรถ ปิดงาน</button>
+        <button class="btn btn-p" onclick="kbkClose('${no}')">ผ่าน — ส่งขออนุมัติปิดงาน</button>
       </div>`}
   </div>`;
 }
@@ -933,7 +948,8 @@ function renderKbkDetail(no){
         <div class="chk" style="margin:0 0 10px"><label><input type="checkbox" id="os-ack" ${K.ack?'checked':''} onchange="K.ack=this.checked"> หน่วยงานเจ้าของรถรับทราบผลการซ่อม (ใบตรวจสภาพอะไหล่ · ก่อน/หลัง)</label></div>
         <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin-bottom:6px">ความพึงพอใจ</label>
         <div class="seg" id="os-sat" style="max-width:520px">${[1,2,3,4,5].map(n=>`<div class="sg ${K.sat===n?'sel':''}" onclick="K.sat=${n};renderKbkDetail('${no}')">${'★'.repeat(n)}</div>`).join('')}</div>
-        <div class="rowbtns"><button class="btn btn-p" onclick="onsiteClose('${no}')">ปิดงาน (ซ่อมหน้างานเสร็จ)</button></div>
+        ${costFieldsHTML()}
+        <div class="rowbtns"><button class="btn btn-p" onclick="onsiteClose('${no}')">ส่งขออนุมัติปิดงาน</button></div>
       </div>`;
     }
   }
@@ -991,7 +1007,7 @@ function renderKbkDetail(no){
       <div class="sect" style="margin-top:24px">ตรวจสภาพตอนรับรถคืน (ขาออก) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ทำร่วมกันวันนัดรับ เทียบกับขาเข้าก่อนส่งมอบ</span></div>`
       +inspFormHTML(no,'out',j);
     }else{   // ไม่มีตรวจสภาพ → ปิดงานได้ทันทีในวันนัด
-      action+=`<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="kbkCloseSimple('${no}')">ส่งมอบรถ ปิดงาน</button></div>`;
+      action+=`<div class="panel">${costFieldsHTML()}<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="kbkCloseSimple('${no}')">ส่งมอบรถ · ส่งขออนุมัติปิดงาน</button></div></div>`;
     }
   }
 
@@ -1012,7 +1028,8 @@ function renderKbkDetail(no){
       ?`<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ปิดงานแล้ว</b> — ซ่อมหน้างานเสร็จ${j.onsite&&j.onsite.site?' @ '+j.onsite.site:''}${j.sat?` · ความพึงพอใจ ${'★'.repeat(j.sat)}`:''}</div>`
       :`<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ปิดงานแล้ว</b> — ส่งมอบรถวันที่ ${j.appt.date} ${j.appt.time} น.</div>`)
       +(j.inspIn?inspViewPanel('ตรวจสภาพขาเข้า (ตอนส่งรถซ่อม)',j.inspIn):'')
-      +(j.inspOut?inspViewPanel('ตรวจสภาพขาออก (ตอนรับรถคืน) — ผ่าน ✓',j.inspOut):'');
+      +(j.inspOut?inspViewPanel('ตรวจสภาพขาออก (ตอนรับรถคืน) — ผ่าน ✓',j.inspOut):'')
+      +costPanel(j);
   }
 
   $('kbklist').classList.add('hidden');
@@ -1068,9 +1085,9 @@ function onsiteClose(no){
   const j=JOBS.find(x=>x.no===no);
   if(!K.ack){toast('ต้องให้หน่วยงานเจ้าของรถกดรับทราบก่อนปิดงาน');return}
   if(!K.sat){toast('กรุณาให้คะแนนความพึงพอใจ');return}
-  j.sat=K.sat;j.phase='closed';
-  j.history.push({t:nowStr(),label:'หน่วยงานรับทราบผลการซ่อมหน้างาน · ความพึงพอใจ '+'★'.repeat(j.sat)+' — ปิดงาน'});
-  toast('ปิดงานเรียบร้อย (ซ่อมหน้างาน)');renderKbkDetail(no);
+  j.sat=K.sat;j.cost=readCost();j.phase='approve';
+  j.history.push({t:nowStr(),label:'หน่วยงานรับทราบผลการซ่อมหน้างาน · ความพึงพอใจ '+'★'.repeat(j.sat)+' · สรุปต้นทุน '+costSum(j.cost).toLocaleString()+' บาท — ส่งขออนุมัติปิดงาน'});
+  updateBadge();toast('ส่งขออนุมัติปิดงานแล้ว — รอผู้บังคับบัญชา');renderKbkDetail(no);
 }
 function kbkReturn(no){
   const j=JOBS.find(x=>x.no===no);
@@ -1152,16 +1169,16 @@ function kbkClose(no){
   if(!K.insp.fuel){toast('กรุณาระบุระดับน้ำมัน (ขาออก)');return}
   if(!j.syms.every((s,i)=>K.insp.symOk[i])){toast('ต้องยืนยันผลการซ่อมครบทุกอาการจึงปิดงานได้ — หรือเลือก "ไม่ผ่าน"');return}
   j.inspOut=inspRecord();
-  j.phase='closed';
-  j.history.push({t:nowStr(),label:'ตรวจสภาพขาออกผ่าน (น้ำมัน '+j.inspOut.fuel+' · ตำหนิ '+j.inspOut.defects.length+' จุด) — ส่งมอบรถ ปิดงาน'});
+  j.cost=readCost();j.phase='approve';
+  j.history.push({t:nowStr(),label:'ตรวจสภาพขาออกผ่าน (น้ำมัน '+j.inspOut.fuel+' · ตำหนิ '+j.inspOut.defects.length+' จุด) · สรุปต้นทุน '+costSum(j.cost).toLocaleString()+' บาท — ส่งขออนุมัติปิดงาน'});
   K.insp=null;
-  toast('ปิดงานเรียบร้อย');renderKbkDetail(no);
+  updateBadge();toast('ส่งขออนุมัติปิดงานแล้ว — รอผู้บังคับบัญชา');renderKbkDetail(no);
 }
 function kbkCloseSimple(no){   // ปิดงานแบบไม่ตรวจสภาพ — ใช้เมื่อ toggle "ตรวจสภาพ 2 รอบ" ถูกปิด
   const j=JOBS.find(x=>x.no===no);
-  j.phase='closed';
-  j.history.push({t:nowStr(),label:'ส่งมอบรถ ปิดงาน'});
-  toast('ปิดงานเรียบร้อย');renderKbkDetail(no);
+  j.cost=readCost();j.phase='approve';
+  j.history.push({t:nowStr(),label:'ส่งมอบรถ · สรุปต้นทุน '+costSum(j.cost).toLocaleString()+' บาท — ส่งขออนุมัติปิดงาน'});
+  updateBadge();toast('ส่งขออนุมัติปิดงานแล้ว — รอผู้บังคับบัญชา');renderKbkDetail(no);
 }
 function kbkFail(no){
   const j=JOBS.find(x=>x.no===no);
@@ -1170,6 +1187,85 @@ function kbkFail(no){
   j.history.push({t:nowStr(),label:'ตรวจสภาพขาออกไม่ผ่าน — กลับไปดำเนินการซ่อม'+(note?' ('+note+')':'')});
   K.insp=null;
   toast('บันทึกผลไม่ผ่าน — กลับสู่สถานะ ดำเนินการซ่อม');renderKbkDetail(no);
+}
+// ---- ช่วงที่ 7: ต้นทุน + อนุมัติปิดงาน ----
+function readCost(){return{labor:+(($('cst-labor')||{}).value)||0,parts:+(($('cst-parts')||{}).value)||0,travel:+(($('cst-travel')||{}).value)||0,lodging:+(($('cst-lodging')||{}).value)||0}}
+function costSum(c){return c?(c.labor+c.parts+c.travel+c.lodging):0}
+function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">สรุปต้นทุนการซ่อม (ช่วงที่ 7)</div>
+  <div class="fgrid" style="max-width:680px">
+    <div class="f sp2"><label>ค่าแรง (บาท)</label><div class="in"><span class="ms">engineering</span><input type="number" min="0" id="cst-labor" placeholder="0"></div></div>
+    <div class="f sp2"><label>ค่าอะไหล่ (บาท)</label><div class="in"><span class="ms">settings</span><input type="number" min="0" id="cst-parts" placeholder="0"></div></div>
+    <div class="f sp2"><label>ค่าเดินทาง (บาท)</label><div class="in"><span class="ms">local_shipping</span><input type="number" min="0" id="cst-travel" placeholder="0"></div></div>
+    <div class="f sp2"><label>ค่าที่พัก (บาท)</label><div class="in"><span class="ms">hotel</span><input type="number" min="0" id="cst-lodging" placeholder="0"></div></div>
+  </div>`}
+const CROW=(k,v)=>`<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px"><span style="color:var(--gray-500)">${k}</span><span style="color:var(--gray-900)">${(v||0).toLocaleString()} บาท</span></div>`;
+function costPanel(j){
+  const c=j.cost||{labor:0,parts:0,travel:0,lodging:0};
+  return`<div class="panel"><div class="sect" style="margin:0 0 6px">ต้นทุนการซ่อม (SUM)</div>
+    ${CROW('ค่าแรง',c.labor)}${CROW('ค่าอะไหล่',c.parts)}${CROW('ค่าเดินทาง',c.travel)}${CROW('ค่าที่พัก',c.lodging)}
+    <div style="display:flex;justify-content:space-between;padding:9px 0 2px;border-top:1px solid var(--gray-200);margin-top:4px"><b style="color:var(--gray-900)">รวมทั้งสิ้น</b><b style="color:var(--primary-600);font-size:16px">${costSum(c).toLocaleString()} บาท</b></div>
+    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-o" onclick="exportCost('${j.no}')"><span class="ms" style="font-size:18px">download</span> Export ต้นทุน (CSV)</button></div>
+  </div>`;
+}
+function exportCost(no){
+  const j=JOBS.find(x=>x.no===no),c=j.cost||{labor:0,parts:0,travel:0,lodging:0};
+  const rows=[['เลขที่ใบแจ้งซ่อม','รถ','หน่วยงาน','ค่าแรง','ค่าอะไหล่','ค่าเดินทาง','ค่าที่พัก','รวม'],
+    [j.no,j.plate,j.org,c.labor,c.parts,c.travel,c.lodging,costSum(c)]];
+  const csv='﻿'+rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=j.no+'-ตนทุน.csv';
+  document.body.appendChild(a);a.click();a.remove();
+  toast('Export ต้นทุนเป็นไฟล์ CSV แล้ว');
+}
+
+// ================= VIEW: อนุมัติปิดงาน (ผู้บังคับบัญชา) =================
+function renderSupList(){
+  $('supdetail').classList.add('hidden');$('suplist').classList.remove('hidden');
+  const list=JOBS.filter(j=>j.phase==='approve');
+  if(!list.length){$('suplist').innerHTML='<div class="empty">ไม่มีงานรออนุมัติปิด</div>';return}
+  $('suplist').innerHTML=list.map(j=>{
+    const st=statusInfo(j);
+    return`<div class="job" onclick="openSup('${j.no}')">
+      <span class="ms" style="color:var(--primary-600)">approval</span>
+      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org} · ${j.plate} · ต้นทุนรวม ${costSum(j.cost).toLocaleString()} บาท</div></div>
+      <span class="badge ${st.cls}">${st.label}</span>
+      <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
+  }).join('');
+}
+function openSup(no){renderSupDetail(no)}
+function renderSupDetail(no){
+  const j=JOBS.find(x=>x.no===no);
+  const st=statusInfo(j);
+  let action;
+  if(j.phase==='approve'){
+    action=`<div class="sect" style="margin-top:24px">ตรวจสอบและอนุมัติปิดงาน</div>
+      <div class="hint">ตรวจสอบประวัติการซ่อมและต้นทุนก่อนอนุมัติ (ช่วงที่ 6)</div>
+      ${j.record?recordPanel(j):''}${costPanel(j)}
+      <div class="panel"><div class="f"><label>ความเห็น/เหตุผล <small>(กรณีตีกลับ)</small></label><textarea id="sup-reason" rows="2" placeholder="เช่น ต้นทุนค่าแรงสูงผิดปกติ ขอเอกสารเพิ่ม…"></textarea></div>
+        <div class="rowbtns"><button class="btn btn-g" onclick="supReject('${no}')">ตีกลับให้แก้ไข</button><button class="btn btn-p" onclick="supApprove('${no}')">อนุมัติปิดงาน</button></div></div>`;
+  }else{
+    action=`<div class="apptbox"><span class="ms" style="color:var(--success-600)">verified</span> <b>อนุมัติปิดงานแล้ว</b> — ส่ง Notification ถึงผู้แจ้ง · ผู้บังคับบัญชา · เจ้าของรถ</div>${costPanel(j)}`;
+  }
+  $('suplist').classList.add('hidden');
+  $('supdetail').classList.remove('hidden');
+  $('supdetail').innerHTML=`
+    <div class="job" style="cursor:default"><span class="ms" style="color:var(--primary-600)">approval</span>
+      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org}</div></div>
+      <span class="badge ${st.cls}">${st.label}</span></div>
+    ${jobInfoBox(j)}${action}${timelineBox(j)}
+    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderSupList()">← กลับรายการ</button></div>`;
+}
+function supApprove(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.phase='closed';j.approved=true;
+  j.history.push({t:nowStr(),label:'ผู้บังคับบัญชาอนุมัติปิดงาน — ปิดงานสำเร็จ'});
+  j.history.push({t:nowStr(),label:'ส่ง Notification ปิดงานถึง ผู้แจ้ง · ผู้บังคับบัญชา · เจ้าของรถ (ผ่าน VMS Plus)'});
+  updateBadge();toast('อนุมัติปิดงาน — ส่ง Notification ถึงทุกฝ่ายแล้ว');renderSupDetail(no);
+}
+function supReject(no){
+  const j=JOBS.find(x=>x.no===no);
+  const r=($('sup-reason').value||'').trim();
+  j.history.push({t:nowStr(),label:'ผู้บังคับบัญชาตีกลับ'+(r?' — '+esc(r):'')+' (กบค. แก้ไขและส่งอนุมัติใหม่)'});
+  toast('บันทึกตีกลับแล้ว — แจ้ง กบค. แก้ไข');renderSupDetail(no);
 }
 
 // ================= INIT =================
