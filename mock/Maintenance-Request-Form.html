@@ -3,15 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.7)</title>
+<title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.8)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
 <link rel="stylesheet" href="../design-system/tokens.css">
 <link rel="stylesheet" href="../design-system/components.css">
+<script src="../config.js"></script><!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
 <style>
   /* ---------- เฉพาะหน้านี้ — ค่าสีมาจาก tokens เท่านั้น ---------- */
   .vlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin:14px 0 6px}
+  /* variant "การ์ดจตุรัส" — สลับได้จาก admin-config */
+  .vlist.sq{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  .vlist.sq .veh{flex-direction:column;text-align:center;aspect-ratio:1/1;justify-content:center;gap:6px;overflow:hidden}
+  .vlist.sq .veh .meta{font-size:11.5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
   .veh{display:flex;gap:12px;align-items:center;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:12px;cursor:pointer;background:#fff}
   .veh:hover{border-color:var(--primary-500)}
   .veh.sel{border-color:var(--primary-600);background:var(--primary-25)}
@@ -86,7 +91,7 @@
   </aside>
 
   <div class="work">
-    <div class="draft">🧪 ต้นแบบ Mock v0.7 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง ↔ กบค. ได้จากเมนูซ้าย</div>
+    <div class="draft">🧪 ต้นแบบ Mock v0.8 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง ↔ กบค. ได้จากเมนูซ้าย · ปรับแต่งได้จาก Admin Control Panel</div>
     <div class="topbar">
       <span class="ms">light_mode</span>
       <span class="ms" style="position:relative">notifications<i style="position:absolute;top:0;right:0;width:8px;height:8px;border-radius:50%;background:var(--success-600)"></i></span>
@@ -125,7 +130,7 @@
         <div class="fgrid">
           <div class="f sp2"><label>ระดับความรุนแรง</label><div class="rads" id="sev"></div></div>
           <div class="f sp2"><label>คำอธิบายเพิ่มเติม <small>(ถ้ามี)</small></label><textarea id="desc" rows="2" placeholder="เช่น เกิดตอนยกของหนัก น้ำมันหยดใต้กระบอกที่ 2…"></textarea></div>
-          <div class="f sp4">
+          <div class="f sp4" id="f-photos">
             <label>รูปถ่ายอาการ</label>
             <div class="photos" id="photos">
               <div class="addph" onclick="document.getElementById('file').click()"><span class="ms">photo_camera</span>ถ่าย/แนบรูป</div>
@@ -204,12 +209,8 @@
 
 <script>
 // ================= MOCK DATA =================
-const VEHICLES=[
- {id:1,plate:'81-2345 นครราชสีมา',model:'Hino FM8J 6 ล้อ',org:'กฟภ. เขต ฉ.3 นครราชสีมา',attach:'เครน Tadano TM-ZE304'},
- {id:2,plate:'82-6789 ขอนแก่น',model:'Isuzu FTR',org:'กฟภ. เขต ฉ.1 ขอนแก่น',attach:'กระเช้า Aichi SK17A'},
- {id:3,plate:'83-1122 กรุงเทพมหานคร',model:'Mitsubishi Fuso FI',org:'สำนักงานใหญ่ (กบค.)',attach:'เครน Unic URV554'},
- {id:4,plate:'80-5566 เชียงใหม่',model:'Hino XZU กระบะยกสูง',org:'กฟภ. เขต น.1 เชียงใหม่',attach:null},
-];
+// VEHICLES/PARTS/GARAGES: ค่า default อยู่ใน ../config.js — แก้ไขได้จาก admin-config.html
+const VEHICLES=MDC.data('vehicles');
 const CATS=[
  {key:'hyd',name:'ระบบไฮดรอลิก',icon:'water_drop',for:'attach'},
  {key:'boom',name:'บูม/กระเช้า',icon:'construction',for:'attach'},
@@ -230,29 +231,9 @@ const SYMPTOMS=[
  {id:'ENG-02',cat:'eng',name:'ควันดำ/กำลังตก'},
  {id:'OTH',cat:'oth',name:'อื่นๆ ระบุเอง'},
 ];
-const PARTS=[
- {sym:'HYD-01',code:'SL-4402',name:'ชุดซีลกระบอกไฮดรอลิก',need:1,unit:'ชุด',stock:6,wh:'กบค. สนญ.',icon:'join_inner'},
- {sym:'HYD-01',code:'OL-0046',name:'น้ำมันไฮดรอลิก ISO VG46 18L',need:1,unit:'ถัง',stock:2,wh:'กบค. สนญ.',icon:'oil_barrel'},
- {sym:'HYD-02',code:'PM-2210',name:'ปั๊มไฮดรอลิกเกียร์',need:1,unit:'ตัว',stock:0,eta:'24 ก.ค.',wh:'กบค. สนญ.',icon:'compress'},
- {sym:'HYD-02',code:'FT-1108',name:'ไส้กรองไฮดรอลิก',need:2,unit:'ชิ้น',stock:12,wh:'กบค. สนญ.',icon:'filter_alt'},
- {sym:'HYD-03',code:'HS-3808',name:'สายไฮดรอลิกแรงดันสูง 3/8"',need:2,unit:'เส้น',stock:4,wh:'คลังเขต',icon:'cable'},
- {sym:'HYD-03',code:'FT-2205',name:'ข้อต่อไฮดรอลิก',need:4,unit:'ตัว',stock:3,wh:'คลังเขต',icon:'valve'},
- {sym:'BOOM-01',code:'WP-1030',name:'แผ่นสไลด์บูม (wear pad)',need:4,unit:'แผ่น',stock:8,wh:'กบค. สนญ.',icon:'layers'},
- {sym:'BOOM-01',code:'GR-0002',name:'จาระบี EP2',need:1,unit:'หลอด',stock:20,wh:'คลังเขต',icon:'colorize'},
- {sym:'BOOM-02',code:'WR-1000',name:'ลวดสลิง 10 มม.',need:25,unit:'เมตร',stock:0,wh:'กบค. สนญ.',icon:'line_weight'},
- {sym:'BOOM-03',code:'LK-0770',name:'ชุดล็อกกระเช้า',need:1,unit:'ชุด',stock:5,wh:'กบค. สนญ.',icon:'lock'},
- {sym:'ELEC-01',code:'BT-0912',name:'แบตเตอรี่รีโมท',need:2,unit:'ก้อน',stock:15,wh:'คลังเขต',icon:'battery_full'},
- {sym:'ELEC-01',code:'RC-5521',name:'ชุดรับสัญญาณรีโมท',need:1,unit:'ชุด',stock:1,wh:'กบค. สนญ.',icon:'settings_remote'},
- {sym:'ELEC-02',code:'SN-3310',name:'เซ็นเซอร์ load cell',need:1,unit:'ตัว',stock:0,eta:'31 ก.ค.',wh:'กบค. สนญ.',icon:'sensors'},
- {sym:'ENG-01',code:'BT-1212',name:'แบตเตอรี่รถ 12V 120Ah',need:2,unit:'ลูก',stock:5,wh:'คลังเขต',icon:'battery_charging_full'},
- {sym:'ENG-02',code:'FT-0330',name:'ไส้กรองอากาศ',need:1,unit:'ชิ้น',stock:9,wh:'คลังเขต',icon:'air'},
-];
+const PARTS=MDC.data('parts');
 const SEVS=['ต่ำ','ปานกลาง','สูง','หยุดใช้งาน'];
-const GARAGES=[
- {id:'g1',name:'อู่เจริญการช่าง',dist:'3.2 กม.',tags:'เครน · ไฮดรอลิก'},
- {id:'g2',name:'อู่ ส.ทวีชัย เซอร์วิส',dist:'5.8 กม.',tags:'รถบรรทุก 6 ล้อ · ช่วงล่าง'},
- {id:'g3',name:'อู่มิตรภาพทรัค',dist:'12 กม.',tags:'เครื่องยนต์ · ระบบไฟฟ้า'},
-];
+const GARAGES=MDC.data('garages');
 const KBK_STEPS=['รับเรื่องซ่อม','รอสั่งอะไหล่','อะไหล่ถึงแล้ว','ดำเนินการซ่อม','ซ่อมเสร็จ'];
 const ZONES=['กันชนหน้า/ไฟหน้า','ฝากระโปรง/กระจกบังลม','ด้านซ้าย (ประตู/แก้มข้าง)','ด้านขวา (ประตู/แก้มข้าง)','ท้ายรถ/กันชนหลัง','หลังคา/เสา','ยาง/ล้อ/บันไดข้าง','อุปกรณ์เสริม (เครน/กระเช้า)'];
 const FUELS=['E','¼','½','¾','เต็ม'];
@@ -362,8 +343,10 @@ function renderStock(){
 // ================= FORM (ผู้แจ้ง) =================
 function renderSteps(){
   $('wsteps').innerHTML=STEPS.map((n,i)=>{
+    if(i===2&&!TG.partsStep)return'';   // ปิดขั้นตอนอะไหล่จาก admin-config → เหลือ 3 ขั้น
     const st=i+1===S.step?'active':i+1<S.step?'passed':'';
-    return`<div class="wstep ${st}"><span class="num">${i+1<S.step?'✓':i+1}</span><span class="lbl">${n}</span></div>`;
+    const num=(!TG.partsStep&&i>2)?i:i+1;   // renumber เลขที่แสดง (S.step ภายในยังเป็น 1-4)
+    return`<div class="wstep ${st}"><span class="num">${i+1<S.step?'✓':num}</span><span class="lbl">${n}</span></div>`;
   }).join('');
 }
 function renderVehicles(){
@@ -476,6 +459,7 @@ function addThumb(src){
 function nav(d){
   if(d>0&&!validate())return;
   S.step+=d;
+  if(S.step===3&&!TG.partsStep)S.step+=d;   // ข้ามขั้นตอนอะไหล่ (ได้ทั้งเดินหน้า/ถอยหลัง)
   if(S.step<1)S.step=1;
   if(S.step>4){submit();return}
   ['s1','s2','s3','s4'].forEach((id,i)=>$(id).classList.toggle('hidden',i+1!==S.step));
@@ -795,11 +779,13 @@ function renderKbkDetail(no){
   if(j.phase==='work'){
     action=`<div class="sect" style="margin-top:24px">สถานะงานซ่อม <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— สถานะแสดงที่ฝั่งผู้แจ้งด้วย</span></div>
     <div class="wsteps" style="margin-top:14px">${KBK_STEPS.map((s,i)=>`<div class="wstep ${i===j.wi?'active':i<j.wi?'passed':''}"><span class="num">${i<j.wi?'✓':i+1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
-    if(j.inspIn){
-      action+=inspViewPanel('ตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) ✓',j.inspIn);
-    }else if(j.wi===0){
-      if(!K.insp)K.insp=initInsp();
-      action+=`<div class="sect" style="margin-top:24px">ตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ต้องบันทึกก่อนเดินสถานะซ่อม · ตรวจร่วมกับผู้ส่งรถ</span></div>`+inspFormHTML(no,'in',j);
+    if(TG.inspection){   // ปิด toggle ตรวจสภาพ → ข้ามฟอร์ม/แผงตรวจสภาพขาเข้าทั้งหมด
+      if(j.inspIn){
+        action+=inspViewPanel('ตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) ✓',j.inspIn);
+      }else if(j.wi===0){
+        if(!K.insp)K.insp=initInsp();
+        action+=`<div class="sect" style="margin-top:24px">ตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ต้องบันทึกก่อนเดินสถานะซ่อม · ตรวจร่วมกับผู้ส่งรถ</span></div>`+inspFormHTML(no,'in',j);
+      }
     }
     if(j.wi===1&&j.ordered.length){
       action+=`<div class="panel"><b style="color:var(--gray-900);font-size:14px">รายการที่รอสั่ง/รอของเข้า</b>${j.ordered.map(x=>`<div class="hint" style="margin-top:6px"><span class="ms" style="font-size:16px">shopping_cart</span> ${x.name} ×${x.qty} — ETA ${x.eta}</div>`).join('')}</div>`;
@@ -809,10 +795,11 @@ function renderKbkDetail(no){
     }else{
       const today=new Date().toISOString().slice(0,10);
       const sortedDays=Object.entries(K.slots).sort((a,b)=>a[0]<b[0]?-1:1);
-      action+=`<div class="sect" style="margin-top:24px">นัดรับรถ — เปิดตารางว่างของ กบค.</div>
-      <div class="hint"><b>ขั้น 1</b> เลือกวันด้วย date picker (เพิ่มเป็น<b>ช่วงวันที่</b> หรือ<b>ทีละวัน</b>) → <b>ขั้น 2</b> เลือก<b>ช่วงเวลา</b>ของแต่ละวัน — ตารางว่างจะไปแสดงที่หน้าจอนัดรับรถของผู้แจ้ง ให้เลือกยืนยัน 1 ช่วง</div>
-      <div class="panel">
-        <div class="seg" style="max-width:380px">
+      // "ขั้น 1" มี 2 สไตล์ สลับได้จาก admin-config (variants.slotPicker): date picker (เดิม) / ชิพวัน
+      const picker=UI.slotPicker==='chips'?`
+        <div style="font-weight:600;color:var(--gray-900);font-size:14px">แตะวันที่จะเปิดว่าง <span class="hint" style="display:inline;margin:0">— 14 วันถัดไป แตะซ้ำเพื่อเอาออก</span></div>
+        <div class="chips" style="margin-top:8px">${nextDays(14).map(d=>`<div class="chip ${K.slots[d.key]?'sel':''}" onclick="chipDay('${no}','${d.key}')">${d.label}</div>`).join('')}</div>`
+      :`<div class="seg" style="max-width:380px">
           <div class="sg ${K.mode!=='single'?'sel':''}" onclick="K.mode='range';renderKbkDetail('${no}')">เลือกเป็นช่วงวันที่</div>
           <div class="sg ${K.mode==='single'?'sel':''}" onclick="K.mode='single';renderKbkDetail('${no}')">เลือกทีละวัน</div>
         </div>
@@ -826,7 +813,11 @@ function renderKbkDetail(no){
         <div class="fgrid" style="margin:14px 0 0;max-width:680px">
           <div class="f sp2"><label>วันที่</label><div class="in"><span class="ms">calendar_month</span><input type="date" id="kone" min="${today}" value="${K.one}" onchange="K.one=this.value"></div></div>
         </div>
-        <div class="rowbtns" style="justify-content:flex-start;margin-top:4px"><button class="btn btn-o" onclick="addOne('${no}')"><span class="ms" style="font-size:18px">event</span> เพิ่มวันเข้าตาราง</button></div>`}
+        <div class="rowbtns" style="justify-content:flex-start;margin-top:4px"><button class="btn btn-o" onclick="addOne('${no}')"><span class="ms" style="font-size:18px">event</span> เพิ่มวันเข้าตาราง</button></div>`}`;
+      action+=`<div class="sect" style="margin-top:24px">นัดรับรถ — เปิดตารางว่างของ กบค.</div>
+      <div class="hint"><b>ขั้น 1</b> ${UI.slotPicker==='chips'?'แตะเลือกวันจากชิพด้านล่าง':'เลือกวันด้วย date picker (เพิ่มเป็น<b>ช่วงวันที่</b> หรือ<b>ทีละวัน</b>)'} → <b>ขั้น 2</b> เลือก<b>ช่วงเวลา</b>ของแต่ละวัน — ตารางว่างจะไปแสดงที่หน้าจอนัดรับรถของผู้แจ้ง ให้เลือกยืนยัน 1 ช่วง</div>
+      <div class="panel">
+        ${picker}
 
         <div style="margin-top:16px;font-weight:600;color:var(--gray-900);font-size:14px">ขั้น 2 · วันที่เปิดว่างไว้ (${sortedDays.length} วัน) — แตะช่วงเวลาเพื่อเปิด/ปิด</div>
         ${sortedDays.length?sortedDays.map(([key,s])=>`<div class="dayrow" style="margin-top:8px">
@@ -851,11 +842,15 @@ function renderKbkDetail(no){
   }
 
   if(j.phase==='appt'){
-    if(!K.insp)K.insp=initInsp();
-    action=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note?'· '+j.appt.note:''}</div>
-    ${j.inspIn?inspViewPanel('เทียบกับตรวจสภาพขาเข้า (ตอนส่งรถซ่อม)',j.inspIn):''}
-    <div class="sect" style="margin-top:24px">ตรวจสภาพตอนรับรถคืน (ขาออก) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ทำร่วมกันวันนัดรับ เทียบกับขาเข้าก่อนส่งมอบ</span></div>`
-    +inspFormHTML(no,'out',j);
+    action=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note?'· '+j.appt.note:''}</div>`;
+    if(TG.inspection){
+      if(!K.insp)K.insp=initInsp();
+      action+=`${j.inspIn?inspViewPanel('เทียบกับตรวจสภาพขาเข้า (ตอนส่งรถซ่อม)',j.inspIn):''}
+      <div class="sect" style="margin-top:24px">ตรวจสภาพตอนรับรถคืน (ขาออก) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ทำร่วมกันวันนัดรับ เทียบกับขาเข้าก่อนส่งมอบ</span></div>`
+      +inspFormHTML(no,'out',j);
+    }else{   // ไม่มีตรวจสภาพ → ปิดงานได้ทันทีในวันนัด
+      action+=`<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="kbkCloseSimple('${no}')">ส่งมอบรถ ปิดงาน</button></div>`;
+    }
   }
 
   if(j.phase==='returned'){
@@ -904,7 +899,7 @@ function kbkReturn(no){
 }
 function kbkAdvance(no){
   const j=JOBS.find(x=>x.no===no);
-  if(j.wi===0&&!j.inspIn){toast('ต้องบันทึกตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) ก่อนเดินสถานะ');return}
+  if(TG.inspection&&j.wi===0&&!j.inspIn){toast('ต้องบันทึกตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) ก่อนเดินสถานะ');return}
   j.wi++;
   j.history.push({t:nowStr(),label:'สถานะ: '+KBK_STEPS[j.wi]});
   toast('อัปเดตสถานะเป็น "'+KBK_STEPS[j.wi]+'" — ฝั่งผู้แจ้งเห็นด้วย');renderKbkDetail(no);
@@ -941,6 +936,19 @@ function addOne(no){
   toast(addDayKey(K.one)?'เพิ่มวันเข้าตารางแล้ว — เลือกช่วงเวลาต่อได้เลย':'วันนี้ถูกเลือกไว้แล้ว');
   renderKbkDetail(no);
 }
+/* variant "ชิพวันเร็ว ๆ นี้" (admin-config) */
+function nextDays(n){
+  const out=[],t=new Date();
+  for(let i=0;i<n;i++){
+    const d=new Date(t.getTime()+i*864e5);
+    out.push(isoInfo(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`));
+  }
+  return out;
+}
+function chipDay(no,iso){
+  if(K.slots[iso])delete K.slots[iso];else addDayKey(iso);
+  renderKbkDetail(no);
+}
 function removeDay(no,key){delete K.slots[key];renderKbkDetail(no)}
 function toggleSlot(no,key,t){
   const s=K.slots[key];if(!s)return;
@@ -973,6 +981,12 @@ function kbkClose(no){
   K.insp=null;
   toast('ปิดงานเรียบร้อย');renderKbkDetail(no);
 }
+function kbkCloseSimple(no){   // ปิดงานแบบไม่ตรวจสภาพ — ใช้เมื่อ toggle "ตรวจสภาพ 2 รอบ" ถูกปิด
+  const j=JOBS.find(x=>x.no===no);
+  j.phase='closed';
+  j.history.push({t:nowStr(),label:'ส่งมอบรถ ปิดงาน'});
+  toast('ปิดงานเรียบร้อย');renderKbkDetail(no);
+}
 function kbkFail(no){
   const j=JOBS.find(x=>x.no===no);
   const note=K.insp?esc(K.insp.extra.trim()):'';
@@ -983,9 +997,23 @@ function kbkFail(no){
 }
 
 // ================= INIT =================
+// อ่านค่าจาก admin-config.html (localStorage) — ไม่มีค่าที่ตั้งไว้ = พฤติกรรมเดิมทุกอย่าง
+const CFG=MDC.load(),TG=CFG.toggles,UI=CFG.variants;
+if(CFG.demo.jobs){JOBS.length=0;JOBS.push(...CFG.demo.jobs);if(CFG.demo.seq)SEQ=CFG.demo.seq;}
+if(!TG.menuStock)$('nav-stock').classList.add('hidden');
+if(!TG.photoUpload)$('f-photos').classList.add('hidden');
+if(UI.vehicleCard==='grid')$('vlist').classList.add('sq');
+// ฟังการแก้ค่าจากแท็บ admin: ธีม apply สด / ส่วนอื่นรีโหลดให้ state สะอาด
+const SNAP=JSON.stringify({t:CFG.toggles,u:CFG.variants,d:CFG.data,m:CFG.demo});
+window.addEventListener('storage',e=>{
+  if(e.key!==MDC.KEY)return;
+  const n=MDC.load();
+  MDC.applyTheme(n);
+  if(JSON.stringify({t:n.toggles,u:n.variants,d:n.data,m:n.demo})!==SNAP)location.reload();
+});
 renderSteps();renderVehicles();updateBadge();
 $('back').style.visibility='hidden';
-switchView('form');
+switchView((CFG.demo.startView==='stock'&&!TG.menuStock)?'form':(CFG.demo.startView||'form'));
 </script>
 </body>
 </html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maintain-D — Admin Control Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="design-system/tokens.css">
+<link rel="stylesheet" href="design-system/components.css">
+<script src="config.js"></script>
+<style>
+  /* ---------- เฉพาะหน้านี้ — ค่าสีมาจาก tokens เท่านั้น ---------- */
+  .hdr{background:var(--grad-header);color:#fff;padding:24px 20px}
+  .hwrap{max-width:880px;margin:0 auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .hwrap .ic{width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .hwrap h1{font-size:21px;font-weight:700;line-height:1.2}
+  .hwrap .sub2{font-size:13px;opacity:.85}
+  .hbtns{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+  .btn-w{background:#fff!important;color:var(--primary-600)!important;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  .btn-t{background:rgba(255,255,255,.14)!important;color:#fff!important;border:1.5px solid rgba(255,255,255,.55)!important}
+  .wrap{max-width:880px;margin:0 auto;padding:18px 16px 70px}
+  .note{background:var(--primary-25);border:1px solid var(--primary-50);border-radius:var(--r-md);padding:12px 16px;font-size:13.5px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}
+  .note .ms{color:var(--primary-600);flex-shrink:0}
+
+  .swatches{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 4px}
+  .sw{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:var(--r-md);cursor:pointer;background:#fff;min-width:96px;font-size:12.5px;color:var(--gray-700)}
+  .sw:hover{border-color:var(--primary-500)}
+  .sw.sel{border-color:var(--primary-600);background:var(--primary-25);font-weight:600;color:var(--primary-600)}
+  .sw .dot{width:34px;height:34px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px var(--gray-200)}
+  .shades{display:flex;gap:4px;margin-top:8px}
+  .shade{width:38px;height:24px;border-radius:5px;border:1px solid var(--gray-200)}
+  .cusrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .cusrow input[type=color]{width:56px;height:38px;border:1px solid var(--gray-300);border-radius:var(--r-sm);padding:2px;background:#fff;cursor:pointer}
+  .previewrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:14px;border:1px dashed var(--gray-200);border-radius:var(--r-md);background:var(--gray-50)}
+  .previewrow .lbl{font-size:12px;color:var(--gray-400);width:100%}
+
+  .trow{display:flex;gap:14px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--gray-200);flex-wrap:wrap}
+  .trow:last-child{border-bottom:none}
+  .trow .tinfo{flex:1;min-width:230px}
+  .trow .tname{font-weight:600;color:var(--gray-900);font-size:14px}
+  .trow .tdesc{font-size:12.5px;color:var(--gray-500);margin-top:2px}
+  .trow .seg{flex:0 0 170px}
+  .trow .seg.wide{flex:1;min-width:300px}
+
+  .grp{margin-top:6px}
+  .grphead{display:flex;gap:10px;align-items:center;margin:20px 0 2px;flex-wrap:wrap}
+  .grphead b{color:var(--gray-900);font-size:15px}
+  .grphead .badge{margin-left:2px}
+  .grpbtns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .etbl input,.etbl select{border:1px solid transparent;background:transparent;padding:7px 8px;border-radius:6px;font-size:13px;width:100%;min-width:60px}
+  .etbl input:hover,.etbl select:hover{border-color:var(--gray-300);background:#fff}
+  .etbl input:focus,.etbl select:focus{border-color:var(--primary-500);background:#fff;outline:none}
+  .etbl td{padding:3px 6px}
+  .etbl th{padding:9px 12px}
+  .fseg{max-width:420px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hwrap">
+    <div class="ic"><span class="ms" style="font-size:26px">tune</span></div>
+    <div>
+      <h1>แผงควบคุมต้นแบบ (Admin Control Panel)</h1>
+      <div class="sub2">ปรับธีม · สลับรูปแบบ UI · เปิด/ปิดฟีเจอร์ · เติมข้อมูลเดโม · จัดการข้อมูลหลัก — โดยไม่ต้องแก้โค้ด</div>
+    </div>
+    <div class="hbtns">
+      <a class="btn btn-w" href="mock/Maintenance-Request-Form.html" target="_blank"><span class="ms" style="font-size:18px">open_in_new</span>เปิดต้นแบบ</a>
+      <button class="btn btn-t" onclick="resetAll()">คืนค่าเริ่มต้นทั้งหมด</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="note"><span class="ms">lightbulb</span><span>เปิดหน้านี้<b>คู่กับหน้าต้นแบบในอีกแท็บ</b> — เปลี่ยน<b>ธีม</b>เห็นผลทันทีไม่รีโหลด ส่วน<b>รูปแบบ UI / ฟีเจอร์ / ข้อมูล / เดโม</b> หน้าต้นแบบจะรีโหลดอัตโนมัติ · ค่าทั้งหมดจำไว้ในเบราว์เซอร์นี้ (localStorage) แม้ปิดเปิดใหม่</span></div>
+
+  <!-- ============ 1) ธีม / ดีไซน์ ============ -->
+  <div class="card">
+    <h2 class="ttl">1 · ปรับแต่งดีไซน์ (Theme)</h2>
+    <div class="sub">สี ฟอนต์ มุมโค้ง มีผลกับทุกหน้าจอผ่าน design tokens — การ์ดนี้เป็นตัวอย่างสด ปรับแล้วหน้านี้เปลี่ยนตามด้วย</div>
+
+    <div style="font-weight:600;color:var(--gray-900);font-size:14px">ชุดสีแบรนด์</div>
+    <div class="swatches" id="swatches"></div>
+    <div class="cusrow hidden" id="customrow">
+      <label style="font-size:13.5px;font-weight:600;color:var(--gray-900)">เลือกสีหลักเอง</label>
+      <input type="color" id="cpick" oninput="setCustom(this.value)">
+      <div class="shades" id="shades"></div>
+      <span style="font-size:12px;color:var(--gray-400)">ระบบคำนวณเฉดอ่อน/เข้มให้อัตโนมัติ</span>
+    </div>
+
+    <div style="display:flex;gap:26px;flex-wrap:wrap;margin-top:18px">
+      <div style="flex:1;min-width:250px">
+        <div style="font-weight:600;color:var(--gray-900);font-size:14px;margin-bottom:8px">ขนาดตัวอักษร</div>
+        <div class="seg fseg" id="fontseg"></div>
+      </div>
+      <div style="flex:1;min-width:250px">
+        <div style="font-weight:600;color:var(--gray-900);font-size:14px;margin-bottom:8px">ความโค้งมุม (ปุ่ม/การ์ด)</div>
+        <div class="seg fseg" id="radseg"></div>
+      </div>
+    </div>
+
+    <div class="previewrow">
+      <span class="lbl">ตัวอย่าง component ตามธีมปัจจุบัน</span>
+      <button class="btn btn-p">ปุ่มหลัก</button>
+      <button class="btn btn-o">ปุ่มรอง</button>
+      <span class="badge b-brand">สถานะเรื่อง</span>
+      <span class="badge b-ok">พร้อมเบิก</span>
+      <div class="chip sel">ชิพที่เลือก</div>
+      <div class="chip">ชิพปกติ</div>
+    </div>
+  </div>
+
+  <!-- ============ 2) รูปแบบ UI (Design Variants) ============ -->
+  <div class="card">
+    <h2 class="ttl">2 · รูปแบบ UI (Design Variants)</h2>
+    <div class="sub">สลับดีไซน์ของจุดต่าง ๆ ในต้นแบบ เพื่อเทียบสไตล์กับผู้ใช้ — เช่น การ์ดผืนผ้า ↔ จตุรัส หรือสไตล์การเลือกวันนัด</div>
+    <div id="variants"></div>
+  </div>
+
+  <!-- ============ 3) ควบคุมการเดโม ============ -->
+  <div class="card">
+    <h2 class="ttl">3 · ควบคุมการเดโม (Demo)</h2>
+    <div class="sub">เตรียมสถานการณ์ก่อนพรีเซนต์ — เลือกหน้าเริ่มต้น และเติมชุดงานซ่อมตัวอย่าง (แทนที่งานในต้นแบบทั้งชุด)</div>
+
+    <div style="font-weight:600;color:var(--gray-900);font-size:14px;margin-bottom:8px">หน้าเริ่มต้นเมื่อเปิดต้นแบบ</div>
+    <div class="seg" style="max-width:560px" id="startseg"></div>
+
+    <div style="font-weight:600;color:var(--gray-900);font-size:14px;margin:18px 0 0">ชุดข้อมูลงานซ่อม</div>
+    <div id="seeds"></div>
+    <div style="font-size:12px;color:var(--gray-400);margin-top:8px">* งานที่สร้างสด ๆ ในต้นแบบเป็นข้อมูลชั่วคราว หายเมื่อรีโหลด — ชุดข้อมูลที่เลือกที่นี่จะถูกใช้ทุกครั้งที่เปิดต้นแบบ</div>
+  </div>
+
+  <!-- ============ 4) เปิด/ปิดฟีเจอร์ ============ -->
+  <div class="card">
+    <h2 class="ttl">4 · เปิด/ปิดฟีเจอร์ (Feature Toggles)</h2>
+    <div class="sub">ซ่อนเมนู ขั้นตอน หรือฟิลด์ เพื่อลองเทียบ flow แบบมี/ไม่มีฟีเจอร์นั้นกับผู้ใช้</div>
+    <div id="toggles"></div>
+  </div>
+
+  <!-- ============ 5) ข้อมูลหลัก ============ -->
+  <div class="card">
+    <h2 class="ttl">5 · จัดการข้อมูลหลัก (Master Data)</h2>
+    <div class="sub">แก้ไขรายการ รถ / อะไหล่ / อู่ ที่ต้นแบบใช้ — แก้ในตารางแล้วกด "บันทึก" ของแต่ละชุด (หน้าต้นแบบจะรีโหลดใช้ข้อมูลใหม่)</div>
+
+    <div class="grp">
+      <div class="grphead"><span class="ms" style="color:var(--primary-600)">local_shipping</span><b>รถ</b>
+        <span class="badge b-brand" id="src-vehicles"></span>
+        <span class="badge b-low hidden" id="dirty-vehicles">แก้ไขแล้ว — ยังไม่บันทึก</span></div>
+      <div class="tblwrap etbl" id="tbl-vehicles"></div>
+      <div class="grpbtns">
+        <button class="btn btn-o" onclick="madd('vehicles')"><span class="ms" style="font-size:18px">add</span> เพิ่มแถว</button>
+        <button class="btn btn-p" onclick="msave('vehicles')">บันทึกข้อมูลรถ</button>
+        <button class="btn btn-g" onclick="mreset('vehicles')">คืนค่าเริ่มต้น</button>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grphead"><span class="ms" style="color:var(--primary-600)">settings</span><b>อะไหล่</b>
+        <span class="badge b-brand" id="src-parts"></span>
+        <span class="badge b-low hidden" id="dirty-parts">แก้ไขแล้ว — ยังไม่บันทึก</span></div>
+      <div class="tblwrap etbl" id="tbl-parts"></div>
+      <div class="grpbtns">
+        <button class="btn btn-o" onclick="madd('parts')"><span class="ms" style="font-size:18px">add</span> เพิ่มแถว</button>
+        <button class="btn btn-p" onclick="msave('parts')">บันทึกข้อมูลอะไหล่</button>
+        <button class="btn btn-g" onclick="mreset('parts')">คืนค่าเริ่มต้น</button>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grphead"><span class="ms" style="color:var(--primary-600)">garage</span><b>อู่แนะนำ</b>
+        <span class="badge b-brand" id="src-garages"></span>
+        <span class="badge b-low hidden" id="dirty-garages">แก้ไขแล้ว — ยังไม่บันทึก</span></div>
+      <div class="tblwrap etbl" id="tbl-garages"></div>
+      <div class="grpbtns">
+        <button class="btn btn-o" onclick="madd('garages')"><span class="ms" style="font-size:18px">add</span> เพิ่มแถว</button>
+        <button class="btn btn-p" onclick="msave('garages')">บันทึกข้อมูลอู่</button>
+        <button class="btn btn-g" onclick="mreset('garages')">คืนค่าเริ่มต้น</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ================= STATE =================
+let cfg=MDC.load();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2600)}
+function persist(){MDC.save(cfg);MDC.applyTheme(cfg)}   // storage event ไม่ยิงในแท็บตัวเอง → apply ธีมกับหน้านี้ตรง ๆ
+
+// ================= 1) THEME =================
+function renderTheme(){
+  const t=cfg.theme;
+  $('swatches').innerHTML=Object.entries(MDC.PRESETS).map(([k,p])=>`
+    <div class="sw ${t.preset===k?'sel':''}" onclick="setPreset('${k}')"><span class="dot" style="background:${p.p600}"></span><span>${p.name}</span></div>`).join('')
+    +`<div class="sw ${t.preset==='custom'?'sel':''}" onclick="setPreset('custom')"><span class="dot" style="background:${t.custom&&t.custom.base?MDC.deriveShades(t.custom.base).p600:'conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)'}"></span><span>กำหนดเอง</span></div>`;
+  $('customrow').classList.toggle('hidden',t.preset!=='custom');
+  if(t.preset==='custom'){
+    const base=(t.custom&&t.custom.base)||'#A80689';
+    $('cpick').value=base;
+    const sh=MDC.deriveShades(base);
+    $('shades').innerHTML=['p700','p600','p500','p50','p25'].map(k=>`<div class="shade" style="background:${sh[k]}" title="${k}"></div>`).join('');
+  }
+  $('fontseg').innerHTML=Object.entries(MDC.FONT_SCALES).map(([k,v])=>`<div class="sg ${t.fontScale===k?'sel':''}" onclick="setTheme('fontScale','${k}')">${v.name}</div>`).join('');
+  $('radseg').innerHTML=Object.entries(MDC.RADIUS_SETS).map(([k,v])=>`<div class="sg ${t.radius===k?'sel':''}" onclick="setTheme('radius','${k}')">${v.name}</div>`).join('');
+}
+function setPreset(k){
+  cfg.theme.preset=k;
+  if(k==='custom'&&!cfg.theme.custom)cfg.theme.custom={base:'#A80689'};
+  persist();renderTheme();
+}
+function setTheme(f,v){cfg.theme[f]=v;persist();renderTheme()}
+function setCustom(v){cfg.theme.custom={base:v};cfg.theme.preset='custom';persist();renderTheme()}
+
+// ================= 2) UI VARIANTS =================
+function renderVariants(){
+  $('variants').innerHTML=Object.entries(MDC.VARIANTS).map(([k,v])=>`
+    <div class="trow">
+      <div class="tinfo"><div class="tname">${v.name}</div></div>
+      <div class="seg wide">${Object.entries(v.options).map(([ok,on])=>`<div class="sg ${cfg.variants[k]===ok?'sel':''}" onclick="vset('${k}','${ok}')">${on}</div>`).join('')}</div>
+    </div>`).join('');
+}
+function vset(k,v){cfg.variants[k]=v;persist();renderVariants();toast('บันทึกแล้ว — หน้าต้นแบบจะรีโหลดใช้รูปแบบใหม่')}
+
+// ================= 3) DEMO =================
+const VIEWS=[['form','แจ้งซ่อม'],['my','เรื่องของฉัน'],['kbk','งานซ่อม กบค.'],['stock','คลังอะไหล่']];
+function renderDemo(){
+  $('startseg').innerHTML=VIEWS.map(([k,n])=>`<div class="sg ${cfg.demo.startView===k?'sel':''}" onclick="dstart('${k}')">${n}</div>`).join('');
+  $('seeds').innerHTML=Object.entries(MDC.seeds).map(([k,s])=>`
+    <div class="trow">
+      <div class="tinfo"><div class="tname">${s.label} ${cfg.demo.scenario===k?'<span class="badge b-brand">ใช้อยู่</span>':''}</div><div class="tdesc">${s.desc}</div></div>
+      <button class="btn ${cfg.demo.scenario===k?'btn-g':'btn-o'}" onclick="dseed('${k}')">${cfg.demo.scenario===k?'ใช้อยู่':'ใช้ชุดนี้'}</button>
+    </div>`).join('');
+}
+function dstart(k){cfg.demo.startView=k;persist();renderDemo();toast('ตั้งหน้าเริ่มต้นแล้ว — หน้าต้นแบบจะรีโหลดและเปิดที่หน้านี้')}
+function dseed(k){
+  const jobs=MDC.seeds[k].make();
+  cfg.demo.jobs=jobs;cfg.demo.seq=jobs?60:null;cfg.demo.scenario=k;
+  persist();renderDemo();toast('ตั้งชุดข้อมูล "'+MDC.seeds[k].label+'" แล้ว — หน้าต้นแบบจะรีโหลด');
+}
+
+// ================= 4) FEATURE TOGGLES =================
+const TOGGLES=[
+  {k:'menuStock',n:'เมนู "คลังอะไหล่"',d:'ไอคอนคลังอะไหล่ในเมนูซ้าย (บทบาท กบค.) — ตารางจอง/สั่งของ/คืนอะไหล่'},
+  {k:'photoUpload',n:'แนบรูปถ่ายอาการ',d:'ช่องถ่าย/แนบรูปในขั้นตอนที่ 2 ของฟอร์มแจ้งซ่อม'},
+  {k:'partsStep',n:'ขั้นตอน "อะไหล่ที่แนะนำ"',d:'ปิดแล้วฟอร์มเหลือ 3 ขั้น: เลือกรถ → อาการเสีย → ตัดสินใจ (ไม่มีจอง/สั่งอะไหล่)'},
+  {k:'inspection',n:'ตรวจสภาพรถ 2 รอบ (ขาเข้า/ขาออก)',d:'ปิดแล้ว กบค. เดินสถานะซ่อมและปิดงานได้โดยไม่ต้องกรอกฟอร์มตรวจสภาพ'}
+];
+function renderToggles(){
+  $('toggles').innerHTML=TOGGLES.map(t=>`
+    <div class="trow">
+      <div class="tinfo"><div class="tname">${t.n}</div><div class="tdesc">${t.d}</div></div>
+      <div class="seg">
+        <div class="sg ${cfg.toggles[t.k]?'sel':''}" onclick="tset('${t.k}',true)">เปิด</div>
+        <div class="sg ${!cfg.toggles[t.k]?'sel':''}" onclick="tset('${t.k}',false)">ปิด</div>
+      </div>
+    </div>`).join('');
+}
+function tset(k,v){cfg.toggles[k]=v;persist();renderToggles();toast((v?'เปิด':'ปิด')+'ฟีเจอร์แล้ว — หน้าต้นแบบจะรีโหลด')}
+
+// ================= 5) MASTER DATA =================
+const W={vehicles:null,parts:null,garages:null};
+const dirty={vehicles:false,parts:false,garages:false};
+function wdata(name){if(!W[name])W[name]=MDC.clone(cfg.data[name]||MDC.defaults[name]);return W[name]}
+const MCOLS={
+  vehicles:[{f:'plate',n:'ทะเบียน'},{f:'model',n:'รุ่น'},{f:'org',n:'สังกัด'},{f:'attach',n:'อุปกรณ์เสริม (เว้นว่าง = ไม่มี)'}],
+  parts:[{f:'code',n:'รหัส'},{f:'name',n:'ชื่ออะไหล่'},{f:'sym',n:'อาการที่เกี่ยวข้อง',sel:true},{f:'need',n:'ต้องใช้',num:true},{f:'unit',n:'หน่วย'},{f:'stock',n:'คงเหลือ',num:true},{f:'eta',n:'ETA (ถ้าของหมด)'}],
+  garages:[{f:'name',n:'ชื่ออู่'},{f:'dist',n:'ระยะทาง'},{f:'tags',n:'ความถนัด'}]
+};
+function renderMaster(name){
+  const rows=wdata(name);
+  $('tbl-'+name).innerHTML=`<table class="tbl"><thead><tr>${MCOLS[name].map(c=>`<th>${c.n}</th>`).join('')}<th style="width:44px"></th></tr></thead>
+    <tbody>${rows.length?rows.map((r,i)=>`<tr>${MCOLS[name].map(c=>`<td>${c.sel
+      ?`<select onchange="mset('${name}',${i},'${c.f}',this.value)">${MDC.SYM_OPTS.map(s=>`<option value="${s.id}" ${r.sym===s.id?'selected':''}>${s.id} — ${s.name}</option>`).join('')}</select>`
+      :`<input type="${c.num?'number':'text'}"${c.num?' min="0" style="max-width:84px"':''} value="${esc(r[c.f])}" oninput="mset('${name}',${i},'${c.f}',this.value)">`}</td>`).join('')}
+      <td><span class="ms" style="color:var(--gray-400);cursor:pointer;font-size:19px" title="ลบแถว" onclick="mdel('${name}',${i})">delete</span></td></tr>`).join('')
+    :`<tr><td colspan="${MCOLS[name].length+1}"><div class="empty">ไม่มีรายการ — กด "เพิ่มแถว"</div></td></tr>`}</tbody></table>`;
+  $('dirty-'+name).classList.toggle('hidden',!dirty[name]);
+  $('src-'+name).textContent=cfg.data[name]?'ข้อมูลที่แก้ไขเอง':'ข้อมูลตั้งต้น';
+}
+function markDirty(name){dirty[name]=true;$('dirty-'+name).classList.remove('hidden')}
+function mset(name,i,f,v){wdata(name)[i][f]=v;markDirty(name)}   // ไม่ re-render — คงโฟกัสขณะพิมพ์
+function mdel(name,i){wdata(name).splice(i,1);markDirty(name);renderMaster(name)}
+const BLANK={
+  vehicles:()=>({id:null,plate:'',model:'',org:'',attach:''}),
+  parts:()=>({sym:'HYD-01',code:'',name:'',need:1,unit:'',stock:0,wh:'กบค. สนญ.',icon:'settings'}),
+  garages:()=>({id:null,name:'',dist:'',tags:''})
+};
+function madd(name){wdata(name).push(BLANK[name]());markDirty(name);renderMaster(name)}
+function msave(name){
+  const rows=MDC.clone(wdata(name));
+  if(name==='vehicles'){
+    for(const r of rows){
+      if(!String(r.plate).trim()||!String(r.model).trim()||!String(r.org).trim()){toast('รถ: กรอก ทะเบียน / รุ่น / สังกัด ให้ครบทุกแถว');return}
+      r.plate=String(r.plate).trim();r.model=String(r.model).trim();r.org=String(r.org).trim();
+      r.attach=String(r.attach||'').trim()||null;
+    }
+    let mx=Math.max(0,...rows.map(r=>+r.id||0));
+    rows.forEach(r=>{if(!r.id)r.id=++mx});
+  }
+  if(name==='parts'){
+    for(const r of rows){
+      if(!String(r.code).trim()||!String(r.name).trim()){toast('อะไหล่: กรอก รหัส / ชื่ออะไหล่ ให้ครบทุกแถว');return}
+      r.code=String(r.code).trim();r.name=String(r.name).trim();
+      r.need=Math.max(1,Math.round(+r.need)||1);r.stock=Math.max(0,Math.round(+r.stock)||0);
+      r.unit=String(r.unit||'').trim()||'ชิ้น';
+      if(String(r.eta||'').trim())r.eta=String(r.eta).trim();else delete r.eta;
+      r.wh=r.wh||'กบค. สนญ.';r.icon=r.icon||'settings';
+    }
+  }
+  if(name==='garages'){
+    for(const r of rows){
+      if(!String(r.name).trim()){toast('อู่: กรอกชื่ออู่ให้ครบทุกแถว');return}
+      r.name=String(r.name).trim();r.dist=String(r.dist||'').trim();r.tags=String(r.tags||'').trim();
+    }
+    let mx=Math.max(0,...rows.map(r=>+String(r.id||'').replace(/\D/g,'')||0));
+    rows.forEach(r=>{if(!r.id)r.id='g'+(++mx)});
+  }
+  cfg.data[name]=rows;persist();
+  W[name]=MDC.clone(rows);dirty[name]=false;
+  renderMaster(name);
+  toast('บันทึกแล้ว — หน้าต้นแบบจะรีโหลดใช้ข้อมูลใหม่');
+}
+function mreset(name){
+  cfg.data[name]=null;persist();
+  W[name]=null;dirty[name]=false;
+  renderMaster(name);
+  toast('คืนข้อมูลตั้งต้นแล้ว — หน้าต้นแบบจะรีโหลด');
+}
+
+// ================= RESET ALL =================
+function resetAll(){
+  if(!confirm('คืนค่าเริ่มต้นทั้งหมด?\nธีม · รูปแบบ UI · ฟีเจอร์ · ชุดเดโม · ข้อมูลหลัก จะถูกล้างทั้งหมด'))return;
+  MDC.reset();
+  cfg=MDC.load();
+  W.vehicles=W.parts=W.garages=null;
+  dirty.vehicles=dirty.parts=dirty.garages=false;
+  MDC.applyTheme(cfg);
+  renderAll();
+  toast('คืนค่าเริ่มต้นทั้งหมดแล้ว — หน้าต้นแบบจะรีโหลดกลับพฤติกรรมเดิม');
+}
+
+// ================= INIT =================
+function renderAll(){renderTheme();renderVariants();renderDemo();renderToggles();['vehicles','parts','garages'].forEach(renderMaster)}
+renderAll();
+</script>
+</body>
+</html>
