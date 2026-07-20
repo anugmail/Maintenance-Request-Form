@@ -10,19 +10,10 @@
 <link rel="stylesheet" href="../design-system/tokens.css">
 <link rel="stylesheet" href="../design-system/components.css">
 <script src="../config.js"></script><!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
+<script src="../ui-components.js"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
 <style>
   /* ---------- เฉพาะหน้านี้ — ค่าสีมาจาก tokens เท่านั้น ---------- */
-  .vlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin:14px 0 6px}
-  /* variant "การ์ดจตุรัส" — สลับได้จาก admin-config */
-  .vlist.sq{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
-  .vlist.sq .veh{flex-direction:column;text-align:center;aspect-ratio:1/1;justify-content:center;gap:6px;overflow:hidden}
-  .vlist.sq .veh .meta{font-size:11.5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-  .veh{display:flex;gap:12px;align-items:center;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:12px;cursor:pointer;background:#fff}
-  .veh:hover{border-color:var(--primary-500)}
-  .veh.sel{border-color:var(--primary-600);background:var(--primary-25)}
-  .veh .ic{width:44px;height:44px;border-radius:10px;background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .veh b{color:var(--gray-900);font-size:15px}
-  .veh .meta{font-size:12.5px;color:var(--gray-500)}
+  /* .vlist/.veh ย้ายไป design-system/components.css (shared UI components) */
 
   .cat{font-size:14px;font-weight:600;color:var(--gray-600);margin:16px 0 8px;display:flex;align-items:center;gap:6px}
   .cat .ms{font-size:18px;color:var(--primary-600)}
@@ -112,7 +103,7 @@
             <div class="hint">รายการ: รถของฉัน/รถในทีม — ถ้ารถไม่อยู่ในระบบ ติดต่อผู้ดูแลข้อมูลรถ (กรย./กบค.)</div>
           </div>
         </div>
-        <div class="vlist" id="vlist"></div>
+        <div id="vlist"></div><!-- mount จุดของ UIC.vehicleCard -->
         <div class="empty hidden" id="vnone">ไม่พบรถที่ค้นหา</div>
         <div id="vinfo" class="hidden">
           <div class="sect" style="margin-top:22px">ข้อมูลรถ (ระบบดึงให้อัตโนมัติ)</div>
@@ -349,15 +340,12 @@ function renderSteps(){
     return`<div class="wstep ${st}"><span class="num">${i+1<S.step?'✓':num}</span><span class="lbl">${n}</span></div>`;
   }).join('');
 }
-function renderVehicles(){
+function renderVehicles(){   // adapter → shared component UIC.vehicleCard
   const q=$('vq').value.trim();
   const list=VEHICLES.filter(v=>!q||v.plate.includes(q)||v.model.includes(q));
   $('vnone').classList.toggle('hidden',list.length>0);
-  $('vlist').innerHTML=list.map(v=>`
-    <div class="veh ${S.vehicle&&S.vehicle.id===v.id?'sel':''}" onclick="pickVehicle(${v.id})">
-      <div class="ic"><span class="ms">local_shipping</span></div>
-      <div><b>${v.plate}</b><div class="meta">${v.model}${v.attach?' · '+v.attach:''}</div></div>
-    </div>`).join('');
+  UIC.vehicleCard.render($('vlist'),{variant:UI.vehicleCard,vehicles:list,
+    selectedId:S.vehicle?S.vehicle.id:null,onPick:pickVehicle});
 }
 function pickVehicle(id){
   const isNew=!S.vehicle||S.vehicle.id!==id;
@@ -793,31 +781,12 @@ function renderKbkDetail(no){
     if(j.wi<4){
       action+=`<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="kbkAdvance('${no}')">อัปเดตสถานะ → ${KBK_STEPS[j.wi+1]}</button></div>`;
     }else{
-      const today=new Date().toISOString().slice(0,10);
       const sortedDays=Object.entries(K.slots).sort((a,b)=>a[0]<b[0]?-1:1);
-      // "ขั้น 1" มี 2 สไตล์ สลับได้จาก admin-config (variants.slotPicker): date picker (เดิม) / ชิพวัน
-      const picker=UI.slotPicker==='chips'?`
-        <div style="font-weight:600;color:var(--gray-900);font-size:14px">แตะวันที่จะเปิดว่าง <span class="hint" style="display:inline;margin:0">— 14 วันถัดไป แตะซ้ำเพื่อเอาออก</span></div>
-        <div class="chips" style="margin-top:8px">${nextDays(14).map(d=>`<div class="chip ${K.slots[d.key]?'sel':''}" onclick="chipDay('${no}','${d.key}')">${d.label}</div>`).join('')}</div>`
-      :`<div class="seg" style="max-width:380px">
-          <div class="sg ${K.mode!=='single'?'sel':''}" onclick="K.mode='range';renderKbkDetail('${no}')">เลือกเป็นช่วงวันที่</div>
-          <div class="sg ${K.mode==='single'?'sel':''}" onclick="K.mode='single';renderKbkDetail('${no}')">เลือกทีละวัน</div>
-        </div>
-        ${K.mode!=='single'?`
-        <div class="fgrid" style="margin:14px 0 0;max-width:680px">
-          <div class="f sp2"><label>จากวันที่</label><div class="in"><span class="ms">calendar_month</span><input type="date" id="kfrom" min="${today}" value="${K.from}" onchange="K.from=this.value"></div></div>
-          <div class="f sp2"><label>ถึงวันที่</label><div class="in"><span class="ms">event</span><input type="date" id="kto" min="${today}" value="${K.to}" onchange="K.to=this.value"></div></div>
-        </div>
-        <div class="rowbtns" style="justify-content:flex-start;margin-top:4px"><button class="btn btn-o" onclick="addRange('${no}')"><span class="ms" style="font-size:18px">date_range</span> เพิ่มช่วงวันที่เข้าตาราง</button></div>`
-        :`
-        <div class="fgrid" style="margin:14px 0 0;max-width:680px">
-          <div class="f sp2"><label>วันที่</label><div class="in"><span class="ms">calendar_month</span><input type="date" id="kone" min="${today}" value="${K.one}" onchange="K.one=this.value"></div></div>
-        </div>
-        <div class="rowbtns" style="justify-content:flex-start;margin-top:4px"><button class="btn btn-o" onclick="addOne('${no}')"><span class="ms" style="font-size:18px">event</span> เพิ่มวันเข้าตาราง</button></div>`}`;
+      // "ขั้น 1" คือ shared component UIC.dayPicker — mount ที่ #dpk หลังตั้ง innerHTML (ท้ายฟังก์ชัน)
       action+=`<div class="sect" style="margin-top:24px">นัดรับรถ — เปิดตารางว่างของ กบค.</div>
       <div class="hint"><b>ขั้น 1</b> ${UI.slotPicker==='chips'?'แตะเลือกวันจากชิพด้านล่าง':'เลือกวันด้วย date picker (เพิ่มเป็น<b>ช่วงวันที่</b> หรือ<b>ทีละวัน</b>)'} → <b>ขั้น 2</b> เลือก<b>ช่วงเวลา</b>ของแต่ละวัน — ตารางว่างจะไปแสดงที่หน้าจอนัดรับรถของผู้แจ้ง ให้เลือกยืนยัน 1 ช่วง</div>
       <div class="panel">
-        ${picker}
+        <div id="dpk"></div>
 
         <div style="margin-top:16px;font-weight:600;color:var(--gray-900);font-size:14px">ขั้น 2 · วันที่เปิดว่างไว้ (${sortedDays.length} วัน) — แตะช่วงเวลาเพื่อเปิด/ปิด</div>
         ${sortedDays.length?sortedDays.map(([key,s])=>`<div class="dayrow" style="margin-top:8px">
@@ -879,6 +848,12 @@ function renderKbkDetail(no){
       <span class="badge ${st.cls}">${st.label}</span></div>
     ${jobInfoBox(j)}${action}${timelineBox(j)}
     <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderKbkList()">← กลับคิวงาน</button></div>`;
+  // mount shared component "ตัวเลือกวันนัด" (มีเฉพาะตอน wi===4 หน้าเปิดตารางว่าง)
+  const dpk=document.getElementById('dpk');
+  if(dpk)UIC.dayPicker.render(dpk,{variant:UI.slotPicker,days:Object.keys(K.slots),state:K,
+    onToggleDay:iso=>chipDay(no,iso),
+    onAddRange:()=>addRange(no),onAddOne:()=>addOne(no),
+    onState:p=>Object.assign(K,p)});
 }
 function toggleGarage(id){E.garages.includes(id)?E.garages=E.garages.filter(x=>x!==id):E.garages.push(id)}
 function kbkAccept(no){
@@ -936,15 +911,7 @@ function addOne(no){
   toast(addDayKey(K.one)?'เพิ่มวันเข้าตารางแล้ว — เลือกช่วงเวลาต่อได้เลย':'วันนี้ถูกเลือกไว้แล้ว');
   renderKbkDetail(no);
 }
-/* variant "ชิพวันเร็ว ๆ นี้" (admin-config) */
-function nextDays(n){
-  const out=[],t=new Date();
-  for(let i=0;i<n;i++){
-    const d=new Date(t.getTime()+i*864e5);
-    out.push(isoInfo(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`));
-  }
-  return out;
-}
+/* callback ของ UIC.dayPicker variant "ชิพวัน" */
 function chipDay(no,iso){
   if(K.slots[iso])delete K.slots[iso];else addDayKey(iso);
   renderKbkDetail(no);
@@ -1002,7 +969,6 @@ const CFG=MDC.load(),TG=CFG.toggles,UI=CFG.variants;
 if(CFG.demo.jobs){JOBS.length=0;JOBS.push(...CFG.demo.jobs);if(CFG.demo.seq)SEQ=CFG.demo.seq;}
 if(!TG.menuStock)$('nav-stock').classList.add('hidden');
 if(!TG.photoUpload)$('f-photos').classList.add('hidden');
-if(UI.vehicleCard==='grid')$('vlist').classList.add('sq');
 // ฟังการแก้ค่าจากแท็บ admin: ธีม apply สด / ส่วนอื่นรีโหลดให้ state สะอาด
 const SNAP=JSON.stringify({t:CFG.toggles,u:CFG.variants,d:CFG.data,m:CFG.demo});
 window.addEventListener('storage',e=>{

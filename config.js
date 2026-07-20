@@ -19,13 +19,9 @@ const DEFAULT_CFG={
   demo:{jobs:null,seq:null,scenario:'default',startView:'form'}
 };
 
-/* ---------- UI Variants: สลับรูปแบบดีไซน์ของ component ใน mock ---------- */
-const VARIANTS={
-  vehicleCard:{name:'การ์ดเลือกรถ (ขั้นตอนที่ 1)',
-    options:{list:'แถวแนวนอน (ผืนผ้า)',grid:'การ์ดจตุรัส'}},
-  slotPicker:{name:'สไตล์เปิดตารางนัดรับ — กบค.',
-    options:{datepicker:'Date picker (ช่วงวันที่/ทีละวัน)',chips:'ชิพวันเร็ว ๆ นี้ (แตะเลือกวัน)'}}
-};
+/* UI Variants: ค่าที่เลือกเก็บใน cfg.variants (key ตรงกับ component ใน ui-components.js)
+   metadata ชื่อ/ตัวเลือกของแต่ละ component ย้ายไปอยู่กับตัว component ใน ui-components.js
+   (แหล่งเดียว — admin iterate UIC.components) */
 
 /* ---------- Theme: preset ถือ palette เต็ม 5 เฉด (hand-picked) ---------- */
 const PRESETS={
@@ -236,7 +232,7 @@ const seeds={
   mixed6:{label:'หลากสถานะ 6 งาน',desc:'เห็นครบทุกสถานะ: ซ่อมเอง · รอรับเรื่อง · รออะไหล่ · รอเลือกนัด · นัดแล้ว · ปิดงาน',make:()=>clone(SEED_MIXED6)}
 };
 
-window.MDC={KEY,DEFAULT_CFG,PRESETS,FONT_SCALES,RADIUS_SETS,VARIANTS,THEME_VARS,
+window.MDC={KEY,DEFAULT_CFG,PRESETS,FONT_SCALES,RADIUS_SETS,THEME_VARS,
   deriveShades,paletteFor,themeVars,applyTheme,load,save,reset,data,defaults,SYM_OPTS,seeds,clone};
 
 /* apply ธีมทันทีที่โหลดไฟล์ — ก่อน body render จึงไม่มี flash สีเดิม */

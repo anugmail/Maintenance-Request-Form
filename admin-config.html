@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="design-system/components.css">
 <script src="config.js"></script>
 <script src="config-daily.js"></script>
+<script src="ui-components.js"></script>
 <style>
   /* ---------- เฉพาะหน้านี้ — ค่าสีมาจาก tokens เท่านั้น ---------- */
   .hdr{background:var(--grad-header);color:#fff;padding:24px 20px}
@@ -44,6 +45,12 @@
   .trow .tdesc{font-size:12.5px;color:var(--gray-500);margin-top:2px}
   .trow .seg{flex:0 0 170px}
   .trow .seg.wide{flex:1;min-width:300px}
+
+  /* live demo ของ UI components */
+  .demobox{margin-top:12px;border:1.5px dashed var(--gray-300);border-radius:var(--r-md);padding:14px;background:var(--gray-50)}
+  .demolbl{font-size:12px;color:var(--gray-500);display:flex;gap:6px;align-items:center;margin-bottom:10px}
+  .demopicked{margin-top:12px;font-size:13px;color:var(--gray-700);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .demopicked .chip{padding:4px 10px;font-size:12px}
 
   .grp{margin-top:6px}
   .grphead{display:flex;gap:10px;align-items:center;margin:20px 0 2px;flex-wrap:wrap}
@@ -121,8 +128,8 @@
 
   <!-- ============ 2) รูปแบบ UI (Design Variants) ============ -->
   <div class="card">
-    <h2 class="ttl">2 · รูปแบบ UI (Design Variants)</h2>
-    <div class="sub">สลับดีไซน์ของจุดต่าง ๆ ในต้นแบบ เพื่อเทียบสไตล์กับผู้ใช้ — เช่น การ์ดผืนผ้า ↔ จตุรัส หรือสไตล์การเลือกวันนัด</div>
+    <h2 class="ttl">2 · UI Components (แยกอิสระ · สลับรูปแบบได้)</h2>
+    <div class="sub">component กลางจาก <b>ui-components.js</b> — ตัวเดียวกับที่หน้าต้นแบบใช้ ประกอบไปหน้าไหนก็ได้ · เลือกรูปแบบแล้ว<b>ลองกดเล่นในตัวอย่างด้านล่างได้ทันที</b></div>
     <div id="variants"></div>
   </div>
 
@@ -268,13 +275,65 @@ function setPreset(k){
 function setTheme(f,v){cfg.theme[f]=v;persist();renderTheme()}
 function setCustom(v){cfg.theme.custom={base:v};cfg.theme.preset='custom';persist();renderTheme()}
 
-// ================= 2) UI VARIANTS =================
+// ================= 2) UI COMPONENTS (แยกอิสระ + live demo) =================
+// component ทั้งหมดมาจาก ui-components.js (UIC) — admin แค่ iterate registry
+// demo เป็น instance อิสระของ component เดียวกับที่หน้า mock ใช้ (state อยู่ใน DEMO)
+const DEMO={
+  vehicleCard:{selectedId:2},
+  slotPicker:{days:[],state:{mode:'range',from:'',to:'',one:''}}
+};
 function renderVariants(){
-  $('variants').innerHTML=Object.entries(MDC.VARIANTS).map(([k,v])=>`
-    <div class="trow">
-      <div class="tinfo"><div class="tname">${v.name}</div></div>
-      <div class="seg wide">${Object.entries(v.options).map(([ok,on])=>`<div class="sg ${cfg.variants[k]===ok?'sel':''}" onclick="vset('${k}','${ok}')">${on}</div>`).join('')}</div>
+  $('variants').innerHTML=UIC.components.map(c=>`
+    <div style="padding:14px 0;border-bottom:1px dashed var(--gray-200)">
+      <div class="tname">${c.name}</div>
+      <div class="seg" style="max-width:640px;margin-top:8px">${Object.entries(c.variants).map(([k,n])=>`<div class="sg ${cfg.variants[c.key]===k?'sel':''}" onclick="vset('${c.key}','${k}')">${n}</div>`).join('')}</div>
+      <div class="demobox">
+        <div class="demolbl"><span class="ms" style="font-size:15px">touch_app</span>ตัวอย่างใช้งานจริง — ลองกดได้เลย (ตามรูปแบบที่เลือกอยู่)</div>
+        <div id="demo-${c.key}"></div>
+      </div>
     </div>`).join('');
+  UIC.components.forEach(c=>mountDemo(c.key));
+}
+function mountDemo(key){
+  const el=$('demo-'+key);if(!el)return;
+  if(key==='vehicleCard'){
+    UIC.vehicleCard.render(el,{variant:cfg.variants.vehicleCard,
+      vehicles:MDC.data('vehicles'),
+      selectedId:DEMO.vehicleCard.selectedId,
+      onPick:id=>{DEMO.vehicleCard.selectedId=id;mountDemo(key)}});
+  }
+  if(key==='slotPicker'){
+    const D=DEMO.slotPicker;
+    UIC.dayPicker.render(el,{variant:cfg.variants.slotPicker,days:D.days,state:D.state,
+      onToggleDay:iso=>{D.days=D.days.includes(iso)?D.days.filter(x=>x!==iso):[...D.days,iso];mountDemo(key)},
+      onAddRange:demoAddRange,onAddOne:demoAddOne,
+      onState:p=>Object.assign(D.state,p)});
+    const picked=document.createElement('div');
+    picked.className='demopicked';
+    picked.innerHTML=D.days.length
+      ?`<b>เปิดว่างแล้ว ${D.days.length} วัน:</b> `+[...D.days].sort().map(iso=>`<span class="chip sel" style="cursor:default">${UIC.thLabel(iso)}</span>`).join('')
+      :'<span style="color:var(--gray-400)">ยังไม่ได้เลือกวัน — ผลจะโชว์ตรงนี้</span>';
+    el.appendChild(picked);
+  }
+}
+function demoAddDay(iso){if(!DEMO.slotPicker.days.includes(iso))DEMO.slotPicker.days.push(iso)}
+function demoAddRange(){
+  const D=DEMO.slotPicker.state;
+  if(!D.from||!D.to){toast('กรุณาเลือกวันที่เริ่มและสิ้นสุดของช่วง');return}
+  if(D.from>D.to){toast('วันที่เริ่มต้องไม่เกินวันที่สิ้นสุด');return}
+  const n=Math.round((new Date(D.to+'T00:00:00')-new Date(D.from+'T00:00:00'))/864e5)+1;
+  if(n>31){toast('เลือกช่วงได้ไม่เกิน 31 วัน');return}
+  const start=new Date(D.from+'T00:00:00');
+  for(let i=0;i<n;i++){
+    const d=new Date(start.getTime()+i*864e5);
+    demoAddDay(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+  }
+  mountDemo('slotPicker');toast('เพิ่มช่วงวันที่ในตัวอย่างแล้ว');
+}
+function demoAddOne(){
+  const D=DEMO.slotPicker.state;
+  if(!D.one){toast('กรุณาเลือกวันที่');return}
+  demoAddDay(D.one);mountDemo('slotPicker');toast('เพิ่มวันในตัวอย่างแล้ว');
 }
 function vset(k,v){cfg.variants[k]=v;persist();renderVariants();toast('บันทึกแล้ว — หน้าต้นแบบจะรีโหลดใช้รูปแบบใหม่')}
 
