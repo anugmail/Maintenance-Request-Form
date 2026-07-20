@@ -76,13 +76,14 @@
     <div class="nv" title="หน้าหลัก" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">home</span></div>
     <div class="nv" id="nav-form" title="แจ้งซ่อม" onclick="switchView('form')"><span class="ms">build</span></div>
     <div class="nv" id="nav-my" title="เรื่องแจ้งซ่อมของฉัน" onclick="switchView('my')"><span class="ms">assignment</span></div>
+    <div class="nv" id="nav-kry" title="งานคัดแยก กรย." onclick="switchView('kry')"><span class="ms">alt_route</span><span class="cnt hidden" id="krycnt"></span></div>
     <div class="nv" id="nav-kbk" title="งานซ่อม กบค." onclick="switchView('kbk')"><span class="ms">engineering</span><span class="cnt hidden" id="kbkcnt"></span></div>
     <div class="nv" id="nav-stock" title="คลังอะไหล่" onclick="switchView('stock')"><span class="ms">warehouse</span></div>
     <div class="nv" title="รายงาน" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">monitoring</span></div>
   </aside>
 
   <div class="work">
-    <div class="draft">🧪 ต้นแบบ Mock v0.8 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง ↔ กบค. ได้จากเมนูซ้าย · ปรับแต่งได้จาก Admin Control Panel</div>
+    <div class="draft">🧪 ต้นแบบ Mock v0.12 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง → กรย. → กบค. ได้จากเมนูซ้าย · ปรับแต่งได้จาก Admin Control Panel</div>
     <div class="topbar">
       <span class="ms">light_mode</span>
       <span class="ms" style="position:relative">notifications<i style="position:absolute;top:0;right:0;width:8px;height:8px;border-radius:50%;background:var(--success-600)"></i></span>
@@ -141,12 +142,12 @@
         <div class="sect">การตัดสินใจ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เห็นอะไหล่และของคงเหลือแล้ว งานนี้จะดำเนินการอย่างไร</span></div>
         <div class="decide">
           <div class="tile tile-magenta" id="dcself" onclick="setDecision('self')"><span class="ms">build</span><b>ซ่อมเอง</b><small>ซ่อมได้ที่หน้างาน/หน่วยงาน</small></div>
-          <div class="tile tile-blue" id="dckbk" onclick="setDecision('kbk')"><span class="ms">engineering</span><b>ส่งซ่อม กบค.</b><small>ส่งต่อให้กองบำรุงรักษาฯ</small></div>
+          <div class="tile tile-blue" id="dckbk" onclick="setDecision('kbk')"><span class="ms">alt_route</span><b>ส่งเรื่องให้ กรย.</b><small>ให้ กรย. คัดแยกช่องทางซ่อม</small></div>
         </div>
         <div id="selfx" class="hidden dnote"><div class="f" style="margin-top:14px"><label>แผน/บันทึกการซ่อมโดยย่อ</label><textarea id="selfnote" rows="2" placeholder="เช่น เปลี่ยนชุดซีลเองในวันพรุ่งนี้ ใช้อะไหล่ที่จองไว้…"></textarea></div></div>
         <div id="kbkx" class="hidden dnote">
           <div class="f" style="margin-top:14px"><label>เหตุผลที่ซ่อมเองไม่ได้</label><textarea id="kbknote" rows="2" placeholder="เช่น ต้องใช้เครื่องมือพิเศษ/อะไหล่รอของ…"></textarea></div>
-          <div class="route"><span class="ms">alt_route</span><span><b>หน่วยงานปลายทาง: กบค. (กองบำรุงรักษาเครื่องจักรกล)</b><br>ระบบเลือกให้ตามสังกัดของรถ — เอกสารจะแนบอาการ รูป และรายการอะไหล่ที่จอง/สั่งของให้อัตโนมัติ</span></div>
+          <div class="route"><span class="ms">alt_route</span><span><b>ส่งให้ กรย. (กองระบบไฟฟ้าและงานโยธา 12 เขต)</b><br>กรย. จะคัดแยกว่าให้ <b>ซ่อมที่อู่</b> · <b>กรย. ซ่อมเอง</b> · หรือ <b>ส่งต่อ กบค.</b> — เอกสารแนบอาการ รูป และอะไหล่ที่จอง/สั่งของให้อัตโนมัติ</span></div>
         </div>
         <div class="sect" style="margin-top:26px">สรุปเรื่องแจ้งซ่อม</div>
         <div class="sumbox" id="summary"></div>
@@ -178,6 +179,14 @@
       <h1 class="page-title">เรื่องแจ้งซ่อมของฉัน</h1>
       <div id="mylist"></div>
       <div id="mydetail" class="hidden"></div>
+    </main>
+
+    <!-- ============ VIEW: งานคัดแยก กรย. ============ -->
+    <main class="content hidden" id="view-kry">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>บริหารงานซ่อม</span><span class="sep">›</span><span class="cur">งานคัดแยก กรย.</span></div>
+      <h1 class="page-title">งานคัดแยกซ่อม — กรย.</h1>
+      <div id="krylist"></div>
+      <div id="krydetail" class="hidden"></div>
     </main>
 
     <!-- ============ VIEW: งานซ่อม กบค. ============ -->
@@ -264,10 +273,13 @@ function badge(p){
 }
 function statusInfo(j){
   if(j.phase==='self')return{label:'บันทึกแล้ว — ซ่อมเอง',cls:'b-ok'};
+  if(j.phase==='kry')return{label:'รอ กรย. คัดแยกช่องทาง',cls:'b-brand'};
+  if(j.phase==='krd')return{label:'กรย. รับไปซ่อมเอง',cls:'b-brand'};
   if(j.phase==='pending')return{label:'รอ กบค. รับเรื่อง',cls:'b-brand'};
   if(j.phase==='returned'){
     const s=j.rstage||0;
-    if(s===0)return{label:'ส่งกลับให้ซ่อมเอง',cls:'b-low'};
+    const g=j.garageRoute;
+    if(s===0)return{label:g?'กรย. ส่งซ่อมอู่ภายนอก':'ส่งกลับให้ซ่อมเอง',cls:'b-low'};
     if(s===1)return{label:'ดำเนินการซ่อมโดยอู่',cls:'b-brand'};
     return{label:'ซ่อมเสร็จแล้วโดยอู่ — รอบันทึกปิดงาน',cls:'b-brand'};
   }
@@ -280,16 +292,19 @@ function statusInfo(j){
 function updateBadge(){
   const n=JOBS.filter(j=>j.phase==='pending').length;
   $('kbkcnt').textContent=n;$('kbkcnt').classList.toggle('hidden',n===0);
+  const k=JOBS.filter(j=>j.phase==='kry').length;
+  $('krycnt').textContent=k;$('krycnt').classList.toggle('hidden',k===0);
 }
 
 // ================= VIEW SWITCH =================
 function switchView(v){
   VIEW=v;
-  ['form','my','kbk','stock'].forEach(x=>{
+  ['form','my','kry','kbk','stock'].forEach(x=>{
     $('view-'+x).classList.toggle('hidden',x!==v);
     $('nav-'+x).classList.toggle('on',x===v);
   });
   if(v==='my')renderMyList();
+  if(v==='kry')renderKryList();
   if(v==='kbk')renderKbkList();
   if(v==='stock')renderStock();
   window.scrollTo({top:0});
@@ -303,7 +318,11 @@ function renderStock(){
     j.ordered.forEach(o=>orders.push({o,j}));
     if(j.record)j.record.returns.filter(r=>r.qty>0).forEach(r=>rets.push({r,j}));
   });
-  const link=j=>j.phase==='self'?j.no:`<a href="#" style="color:var(--primary-600);font-weight:600;text-decoration:none" onclick="switchView('kbk');openKbk('${j.no}');return false">${j.no}</a>`;
+  const link=j=>{
+    if(j.phase==='self')return j.no;
+    const v=['kry','krd'].includes(j.phase)?['kry','openKry']:['kbk','openKbk'];
+    return`<a href="#" style="color:var(--primary-600);font-weight:600;text-decoration:none" onclick="switchView('${v[0]}');${v[1]}('${j.no}');return false">${j.no}</a>`;
+  };
   const stBadge=j=>{const s=statusInfo(j);return`<span class="badge ${s.cls}">${s.label}</span>`};
   $('stockbody').innerHTML=`
     <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
@@ -483,8 +502,8 @@ function submit(){
     sev:S.sev,photos:S.photos,desc:esc($('desc').value.trim()),
     booked:bookedArr(),ordered:orderedArr(),
     reason:S.decision==='kbk'?esc($('kbknote').value.trim()):esc($('selfnote').value.trim()),
-    phase:S.decision==='kbk'?'pending':'self',wi:0,
-    history:[{t:nowStr(),label:S.decision==='kbk'?'ส่งเรื่องถึง กบค. — รอรับเรื่อง':'บันทึกเรื่อง — ดำเนินการซ่อมเอง'}]};
+    phase:S.decision==='kbk'?'kry':'self',wi:0,
+    history:[{t:nowStr(),label:S.decision==='kbk'?'ส่งเรื่องถึง กรย. — รอคัดแยกช่องทางซ่อม':'บันทึกเรื่อง — ดำเนินการซ่อมเอง'}]};
   JOBS.unshift(job);
   updateBadge();
   $('docno').textContent=no;
@@ -492,8 +511,8 @@ function submit(){
     $('docstat').textContent='บันทึกแล้ว — ดำเนินการซ่อมเอง';
     $('docnote').textContent='เรื่องถูกบันทึกเข้าประวัติรถ พร้อม snapshot อะไหล่ที่จอง/สั่งของไว้';
   }else{
-    $('docstat').textContent='ส่งเรื่องแล้ว — รอ กบค. รับเรื่อง';
-    $('docnote').textContent='เลขที่เรื่องไปแสดงที่เมนู "งานซ่อม กบค." แล้ว — ติดตามสถานะได้ที่ "เรื่องแจ้งซ่อมของฉัน"';
+    $('docstat').textContent='ส่งเรื่องแล้ว — รอ กรย. คัดแยก';
+    $('docnote').textContent='เลขที่เรื่องไปแสดงที่เมนู "งานคัดแยก กรย." แล้ว — ติดตามสถานะได้ที่ "เรื่องแจ้งซ่อมของฉัน"';
   }
   renderSteps();
 }
@@ -616,7 +635,7 @@ function renderMyDetail(no){
       </div>`;
     }
   }
-  if(j.phase==='gclosed'){extra=retPanel(j)+recordPanel(j)}
+  if(j.phase==='gclosed'){extra=(j.ret?retPanel(j):'')+recordPanel(j)}
   if(j.phase==='slots'){
     extra+=`<div class="sect" style="margin-top:24px">เลือกวันนัดรับรถ</div>
     <div class="hint">กบค. ซ่อมเสร็จแล้ว และเปิด<b>ตารางว่าง</b>ให้เลือก — เลือก 1 ช่วงเวลา แล้วกดยืนยัน (วันนัดมีการตรวจสภาพหลังการซ่อมร่วมกัน)</div>
@@ -671,6 +690,104 @@ function closeSelf(no){
   const rets=j.record.returns.filter(r=>r.qty>0).map(r=>`${r.name} ×${r.qty}`).join(', ');
   j.history.push({t:nowStr(),label:'บันทึกการซ่อมและปิดงาน — ค่าใช้จ่ายรวม '+(j.record.pc+j.record.lc).toLocaleString()+' บาท'+(rets?' · คืนอะไหล่: '+rets:'')});
   toast('ปิดงานเรียบร้อย — กบค. เห็นบันทึกการซ่อมและการคืนอะไหล่ด้วย');renderMyDetail(no);
+}
+
+// ================= VIEW: งานคัดแยก กรย. =================
+let KE={mode:null,garages:[]};
+function renderKryList(){
+  $('krydetail').classList.add('hidden');$('krylist').classList.remove('hidden');
+  const list=JOBS.filter(j=>['kry','krd'].includes(j.phase));
+  if(!list.length){$('krylist').innerHTML='<div class="empty">ยังไม่มีเรื่องรอคัดแยก</div>';return}
+  $('krylist').innerHTML=list.map(j=>{
+    const st=statusInfo(j);
+    return`<div class="job" onclick="openKry('${j.no}')">
+      <span class="ms" style="color:var(--primary-600)">${j.phase==='kry'?'move_to_inbox':'handyman'}</span>
+      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org} · ${j.plate} · ${j.syms[0]}${j.syms.length>1?' +'+(j.syms.length-1):''} · ความรุนแรง: ${j.sev}</div></div>
+      <span class="badge ${st.cls}">${st.label}</span>
+      <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
+  }).join('');
+}
+function openKry(no){KE={mode:null,garages:[]};renderKryDetail(no)}
+function renderKryDetail(no){
+  const j=JOBS.find(x=>x.no===no);
+  const st=statusInfo(j);
+  let action='';
+  if(j.phase==='kry'){
+    action=`<div class="sect" style="margin-top:24px">คัดแยกช่องทางซ่อม — กรย.</div>
+    <div class="decide" style="max-width:840px">
+      <div class="tile tile-blue ${KE.mode==='garage'?'sel':''}" onclick="KE.mode='garage';renderKryDetail('${no}')"><span class="ms">garage</span><b>ซ่อมที่อู่</b><small>เจ้าของรถขับไปอู่ภายนอก</small></div>
+      <div class="tile tile-magenta ${KE.mode==='self'?'sel':''}" onclick="KE.mode='self';renderKryDetail('${no}')"><span class="ms">handyman</span><b>กรย. ซ่อมเอง</b><small>เบิกอะไหล่จากคลัง ซ่อมที่ กรย.</small></div>
+      <div class="tile tile-blue ${KE.mode==='kbk'?'sel':''}" onclick="KE.mode='kbk';renderKryDetail('${no}')"><span class="ms">engineering</span><b>ส่งต่อ กบค.</b><small>งานเครื่องเสริม เช่น เครน/กระเช้า</small></div>
+    </div>`;
+    if(KE.mode==='garage'){
+      action+=`<div class="panel">
+        <div class="f"><label>บันทึก/เหตุผลการส่งซ่อมอู่ <small>(ถ้ามี)</small></label><textarea id="krynote" rows="2" placeholder="เช่น อาการซ่อมได้ที่อู่ทั่วไป ไม่ต้องใช้เครื่องมือเฉพาะ…"></textarea></div>
+        <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin-top:12px">แนะนำอู่ใกล้เคียง <small style="color:var(--gray-500);font-weight:400">(เลือกได้หลายแห่ง)</small></label>
+        ${GARAGES.map(g=>`<label class="garage"><input type="checkbox" ${KE.garages.includes(g.id)?'checked':''} onchange="kryToggleGarage('${g.id}')"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></label>`).join('')}
+        <div class="rowbtns"><button class="btn btn-p" onclick="kryGarage('${no}')">ยืนยันส่งซ่อมอู่</button></div></div>`;
+    }
+    if(KE.mode==='self'){
+      action+=`<div class="panel"><div class="f"><label>บันทึกการรับงาน <small>(ถ้ามี)</small></label><textarea id="krynote2" rows="2" placeholder="เช่น เบิกอะไหล่จากคลังเขต ซ่อมภายในสัปดาห์นี้…"></textarea></div>
+        <div class="rowbtns"><button class="btn btn-p" onclick="kryToSelf('${no}')">รับไปซ่อมเอง (กรย.)</button></div></div>`;
+    }
+    if(KE.mode==='kbk'){
+      action+=`<div class="panel"><div class="f"><label>บันทึกถึง กบค. <small>(ถ้ามี)</small></label><textarea id="krynote3" rows="2" placeholder="เช่น งานเครน ต้องใช้ช่างเฉพาะทางของ กบค.…"></textarea></div>
+        <div class="rowbtns"><button class="btn btn-p" onclick="kryToKbk('${no}')">ส่งต่อให้ กบค.</button></div></div>`;
+    }
+  }
+  if(j.phase==='krd'){
+    action=`<div class="sect" style="margin-top:24px">กรย. ดำเนินการซ่อมเอง</div>
+    <div class="panel">
+      ${j.booked.length?`<b style="color:var(--gray-900);font-size:14px">อะไหล่ที่เบิก</b>`+j.booked.map(b=>`<div class="hint" style="margin-top:4px"><span class="ms" style="font-size:16px">check_circle</span> ${b.name} ×${b.qty} ${b.unit||''}</div>`).join(''):'<div class="hint">ไม่มีการจองอะไหล่</div>'}
+      <div class="f" style="margin-top:12px"><label>บันทึกผลการซ่อม <small>(จำเป็น)</small></label><textarea id="krddet" rows="2" placeholder="เช่น เปลี่ยนแบตเตอรี่และตรวจระบบไฟ ทดสอบปกติ…"></textarea></div>
+      <div class="fgrid" style="margin:4px 0 8px;max-width:560px">
+        <div class="f sp2"><label>ค่าอะไหล่ (บาท)</label><div class="in"><span class="ms">settings</span><input type="number" min="0" id="krdpc" placeholder="0"></div></div>
+        <div class="f sp2"><label>ค่าแรง (บาท)</label><div class="in"><span class="ms">engineering</span><input type="number" min="0" id="krdlc" placeholder="0"></div></div>
+      </div>
+      <div class="rowbtns"><button class="btn btn-p" onclick="krdClose('${no}')">บันทึกการซ่อมและปิดงาน</button></div></div>`;
+  }
+  if(j.phase==='gclosed')action=recordPanel(j);
+  $('krylist').classList.add('hidden');
+  $('krydetail').classList.remove('hidden');
+  $('krydetail').innerHTML=`
+    <div class="job" style="cursor:default"><span class="ms" style="color:var(--primary-600)">alt_route</span>
+      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org}</div></div>
+      <span class="badge ${st.cls}">${st.label}</span></div>
+    ${jobInfoBox(j)}${action}${timelineBox(j)}
+    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderKryList()">← กลับรายการ</button></div>`;
+}
+function kryToggleGarage(id){KE.garages.includes(id)?KE.garages=KE.garages.filter(x=>x!==id):KE.garages.push(id)}
+function kryGarage(no){
+  const j=JOBS.find(x=>x.no===no);
+  const note=$('krynote').value.trim();
+  j.phase='returned';j.rstage=0;j.garageRoute=true;
+  j.ret={reason:'กรย. คัดแยกให้ซ่อมที่อู่ภายนอก'+(note?' — '+esc(note):''),garages:GARAGES.filter(g=>KE.garages.includes(g.id))};
+  j.history.push({t:nowStr(),label:'กรย. ส่งซ่อมอู่ภายนอก'+(j.ret.garages.length?' · แนะนำ: '+j.ret.garages.map(g=>g.name).join(', '):'')});
+  updateBadge();toast('ส่งซ่อมอู่แล้ว — ผู้แจ้งดำเนินการต่อที่ "เรื่องของฉัน"');renderKryDetail(no);
+}
+function kryToSelf(no){
+  const j=JOBS.find(x=>x.no===no);
+  const note=$('krynote2').value.trim();
+  j.phase='krd';
+  j.history.push({t:nowStr(),label:'กรย. รับไปซ่อมเอง'+(note?' — '+esc(note):'')});
+  updateBadge();toast('รับงานแล้ว — กรย. ดำเนินการซ่อมเอง');renderKryDetail(no);
+}
+function kryToKbk(no){
+  const j=JOBS.find(x=>x.no===no);
+  const note=$('krynote3').value.trim();
+  j.phase='pending';
+  j.history.push({t:nowStr(),label:'กรย. ส่งต่อให้ กบค.'+(note?' — '+esc(note):'')});
+  updateBadge();toast('ส่งต่อ กบค. แล้ว — ไปแสดงที่เมนู "งานซ่อม กบค."');renderKryDetail(no);
+}
+function krdClose(no){
+  const j=JOBS.find(x=>x.no===no);
+  const det=$('krddet').value.trim();
+  if(!det){toast('กรุณากรอกบันทึกผลการซ่อมก่อนปิดงาน');return}
+  const pc=+$('krdpc').value||0,lc=+$('krdlc').value||0;
+  j.record={det:esc(det),photos:0,pc,lc,returns:j.booked.map(b=>({name:b.name,unit:b.unit,qty:0})),by:'กรย.'};
+  j.phase='gclosed';
+  j.history.push({t:nowStr(),label:'กรย. ซ่อมเสร็จและปิดงาน — ค่าใช้จ่ายรวม '+(pc+lc).toLocaleString()+' บาท'});
+  updateBadge();toast('ปิดงานเรียบร้อย (กรย. ซ่อมเอง)');renderKryDetail(no);
 }
 
 // ================= VIEW: งานซ่อม กบค. =================
@@ -746,7 +863,20 @@ function renderKbkDetail(no){
   let action='';
 
   if(j.phase==='pending'){
-    action=`<div class="sect" style="margin-top:24px">การประเมิน — รับไว้ซ่อม หรือส่งกลับ</div>
+    action=`<div class="sect" style="margin-top:24px">วิเคราะห์และประเมิน (ช่วงที่ 2)</div>
+    <div class="panel">
+      <div class="hint" style="margin:0 0 10px"><span class="ms" style="font-size:16px">history</span> ระบบแสดงประวัติการซ่อมย้อนหลังของรถคันนี้ · โทรหาหน้างานเพื่อวิเคราะห์เพิ่มเติม</div>
+      <div class="fgrid" style="margin:0;max-width:560px">
+        <div class="f sp2"><label>ประเมินราคาซ่อม (บาท) <small>(ถ้ามี)</small></label><div class="in"><span class="ms">payments</span><input type="number" min="0" id="asprice" placeholder="0"></div></div>
+      </div>
+      <div class="rowbtns" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px">
+        <button class="btn btn-o" onclick="kbkSendTech('${no}')"><span class="ms" style="font-size:18px">engineering</span> ส่งช่างไปตรวจ (อาการไม่ชัดเจน)</button>
+        <button class="btn btn-g" onclick="kbkPlaceholder('Overhaul')">งาน Overhaul</button>
+        <button class="btn btn-g" onclick="kbkPlaceholder('ทำเรื่องจำหน่าย (ไม่คุ้มค่า)')">ไม่คุ้มค่า → จำหน่าย</button>
+      </div>
+      <div class="hint" style="margin-top:8px"><span class="ms" style="font-size:15px;color:var(--warning-700)">flag</span> "Overhaul" และ "จำหน่าย" เป็นเส้นทางที่ผังงานยังไม่กำหนด (placeholder)</div>
+    </div>
+    <div class="sect" style="margin-top:20px">การตัดสินใจ — รับไว้ซ่อม หรือส่งกลับ</div>
     <div class="decide">
       <div class="tile tile-magenta ${E.mode==='accept'?'sel':''}" onclick="E.mode='accept';renderKbkDetail('${no}')"><span class="ms">task_alt</span><b>รับไว้ซ่อม</b><small>กบค. ดำเนินการซ่อมเอง</small></div>
       <div class="tile tile-blue ${E.mode==='return'?'sel':''}" onclick="E.mode='return';renderKbkDetail('${no}')"><span class="ms">u_turn_left</span><b>ส่งกลับให้ซ่อมเอง</b><small>คืนหน่วยงานผู้แจ้ง พร้อมเหตุผล</small></div>
@@ -832,7 +962,7 @@ function renderKbkDetail(no){
     <div class="hint">หน่วยงานผู้แจ้งเป็นผู้อัปเดตสถานะและบันทึกปิดงาน — กบค. เห็นความคืบหน้าที่นี่ตลอด${s===2?' · <b>รอบันทึกปิดงานจากผู้แจ้ง</b>':''}</div>`;
   }
   if(j.phase==='gclosed'){
-    action=retPanel(j)+recordPanel(j);
+    action=(j.ret?retPanel(j):'')+recordPanel(j);
   }
   if(j.phase==='closed'){
     action=`<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ปิดงานแล้ว</b> — ส่งมอบรถวันที่ ${j.appt.date} ${j.appt.time} น.</div>`
@@ -856,6 +986,14 @@ function renderKbkDetail(no){
     onState:p=>Object.assign(K,p)});
 }
 function toggleGarage(id){E.garages.includes(id)?E.garages=E.garages.filter(x=>x!==id):E.garages.push(id)}
+function kbkSendTech(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.history.push({t:nowStr(),label:'กบค. ส่งช่างไปตรวจสอบหน้างาน (อาการไม่ชัดเจน)'});
+  toast('บันทึกส่งช่างไปตรวจแล้ว');renderKbkDetail(no);
+}
+function kbkPlaceholder(kind){
+  toast(kind+' — เส้นทางนี้ผังงานยังไม่กำหนด (placeholder)');
+}
 function kbkAccept(no){
   const j=JOBS.find(x=>x.no===no);
   j.phase='work';j.wi=0;
