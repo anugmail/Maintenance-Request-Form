@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="design-system/tokens.css">
 <link rel="stylesheet" href="design-system/components.css">
 <script src="config.js"></script>
+<script src="config-daily.js"></script>
 <style>
   /* ---------- เฉพาะหน้านี้ — ค่าสีมาจาก tokens เท่านั้น ---------- */
   .hdr{background:var(--grad-header);color:#fff;padding:24px 20px}
@@ -67,15 +68,21 @@
       <div class="sub2">ปรับธีม · สลับรูปแบบ UI · เปิด/ปิดฟีเจอร์ · เติมข้อมูลเดโม · จัดการข้อมูลหลัก — โดยไม่ต้องแก้โค้ด</div>
     </div>
     <div class="hbtns">
-      <a class="btn btn-w" href="mock/Maintenance-Request-Form.html" target="_blank"><span class="ms" style="font-size:18px">open_in_new</span>เปิดต้นแบบ</a>
-      <button class="btn btn-t" onclick="resetAll()">คืนค่าเริ่มต้นทั้งหมด</button>
+      <a class="btn btn-w" id="openlink" href="mock/Maintenance-Request-Form.html" target="_blank"><span class="ms" style="font-size:18px">open_in_new</span><span id="openlbl">เปิดต้นแบบ</span></a>
+      <button class="btn btn-t" onclick="resetAll()" id="resetbtn">คืนค่าเริ่มต้นทั้งหมด</button>
     </div>
   </div>
 </div>
 
 <div class="wrap">
-  <div class="note"><span class="ms">lightbulb</span><span>เปิดหน้านี้<b>คู่กับหน้าต้นแบบในอีกแท็บ</b> — เปลี่ยน<b>ธีม</b>เห็นผลทันทีไม่รีโหลด ส่วน<b>รูปแบบ UI / ฟีเจอร์ / ข้อมูล / เดโม</b> หน้าต้นแบบจะรีโหลดอัตโนมัติ · ค่าทั้งหมดจำไว้ในเบราว์เซอร์นี้ (localStorage) แม้ปิดเปิดใหม่</span></div>
+  <div class="seg" style="margin-bottom:14px;max-width:560px">
+    <div class="sg sel" id="pseg-repair" onclick="setPart('repair')"><span class="ms" style="font-size:17px">build</span> ต้นแบบแจ้งซ่อม</div>
+    <div class="sg" id="pseg-daily" onclick="setPart('daily')"><span class="ms" style="font-size:17px">local_gas_station</span> บันทึกการใช้งานรถ</div>
+  </div>
 
+  <div class="note"><span class="ms">lightbulb</span><span>เปิดหน้านี้<b>คู่กับหน้าต้นแบบ/แอปในอีกแท็บ</b> — เปลี่ยน<b>ธีม</b>เห็นผลทันทีไม่รีโหลด ส่วนค่าอื่นหน้าปลายทางจะรีโหลด/อัปเดตอัตโนมัติ · ค่าทั้งหมดจำไว้ในเบราว์เซอร์นี้ (localStorage) แม้ปิดเปิดใหม่</span></div>
+
+  <div id="part-repair">
   <!-- ============ 1) ธีม / ดีไซน์ ============ -->
   <div class="card">
     <h2 class="ttl">1 · ปรับแต่งดีไซน์ (Theme)</h2>
@@ -180,6 +187,51 @@
       </div>
     </div>
   </div>
+  </div><!-- /part-repair -->
+
+  <!-- ════════════ PART 2: บันทึกการใช้งานรถ (daily-record PWA) ════════════ -->
+  <div id="part-daily" class="hidden">
+
+  <div class="card">
+    <h2 class="ttl">1 · ฟิลด์ฟอร์มบันทึกรายวัน</h2>
+    <div class="sub">เปิด/ปิดฟิลด์มาตรฐาน กำหนด "จำเป็น" และสร้างฟิลด์เพิ่มเอง — ฟอร์มในแอปบันทึกรถอัปเดตทันที</div>
+    <div id="stdfields"></div>
+
+    <div class="grphead" style="margin-top:22px"><span class="ms" style="color:var(--primary-600)">dashboard_customize</span><b>ฟิลด์กำหนดเอง</b></div>
+    <div id="customfields"></div>
+    <div style="border:1.5px dashed var(--gray-300);border-radius:var(--r-md);padding:14px;margin-top:12px">
+      <div style="font-weight:600;color:var(--gray-900);font-size:14px;margin-bottom:10px">เพิ่มฟิลด์ใหม่</div>
+      <div class="f"><label>ชื่อฟิลด์</label><div class="in noic"><input id="nf-label" placeholder="เช่น เลขงาน/ใบสั่งงาน"></div></div>
+      <div class="f"><label>ชนิดการกรอก</label><div class="seg" id="nf-typeseg" style="max-width:560px"></div></div>
+      <div class="f hidden" id="nf-optwrap"><label>ตัวเลือกใน dropdown <small>(บรรทัดละ 1 ตัวเลือก อย่างน้อย 2)</small></label><textarea id="nf-options" rows="3" placeholder="งานปกติ&#10;งานเร่งด่วน"></textarea></div>
+      <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:4px 0 12px;color:var(--gray-700)"><input type="checkbox" id="nf-req">จำเป็นต้องกรอก</label>
+      <button class="btn btn-p" onclick="cfAdd()"><span class="ms" style="font-size:18px">add</span> เพิ่มฟิลด์</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="ttl">2 · Fleet Card ประจำรถ</h2>
+    <div class="sub">บัตรน้ำมันประจำคัน — แสดงบนการ์ดรถในแอป
+      <span class="badge b-brand" id="src-fleet"></span>
+      <span class="badge b-low hidden" id="dirty-fleet">แก้ไขแล้ว — ยังไม่บันทึก</span></div>
+    <div class="tblwrap etbl" id="tbl-fleet"></div>
+    <div class="grpbtns">
+      <button class="btn btn-p" onclick="fsave()">บันทึก Fleet Card</button>
+      <button class="btn btn-g" onclick="freset()">คืนค่าเริ่มต้น</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="ttl">3 · ข้อมูลบันทึก (เดโม)</h2>
+    <div class="sub">จัดการข้อมูลบันทึกการใช้งานรถในเบราว์เซอร์นี้ — <span id="reccount"></span></div>
+    <div class="grpbtns">
+      <button class="btn btn-o" onclick="dSeed()"><span class="ms" style="font-size:18px">auto_awesome</span> เติมบันทึกตัวอย่าง 1 เดือน (~15 รายการ)</button>
+      <button class="btn btn-o" onclick="dExport()"><span class="ms" style="font-size:18px">content_copy</span> คัดลอกข้อมูลเป็น JSON</button>
+      <button class="btn btn-g" style="color:var(--error-600)" onclick="dClear()">ล้างบันทึกทั้งหมด</button>
+    </div>
+  </div>
+
+  </div><!-- /part-daily -->
 </div>
 
 <div class="toast" id="toast"></div>
@@ -332,16 +384,168 @@ function mreset(name){
   toast('คืนข้อมูลตั้งต้นแล้ว — หน้าต้นแบบจะรีโหลด');
 }
 
-// ================= RESET ALL =================
+// ================= RESET (ตาม part ที่เปิดอยู่) =================
 function resetAll(){
-  if(!confirm('คืนค่าเริ่มต้นทั้งหมด?\nธีม · รูปแบบ UI · ฟีเจอร์ · ชุดเดโม · ข้อมูลหลัก จะถูกล้างทั้งหมด'))return;
-  MDC.reset();
-  cfg=MDC.load();
-  W.vehicles=W.parts=W.garages=null;
-  dirty.vehicles=dirty.parts=dirty.garages=false;
-  MDC.applyTheme(cfg);
-  renderAll();
-  toast('คืนค่าเริ่มต้นทั้งหมดแล้ว — หน้าต้นแบบจะรีโหลดกลับพฤติกรรมเดิม');
+  if(PART==='repair'){
+    if(!confirm('คืนค่าเริ่มต้น "ต้นแบบแจ้งซ่อม"?\nธีม · รูปแบบ UI · ฟีเจอร์ · ชุดเดโม · ข้อมูลหลัก จะถูกล้างทั้งหมด'))return;
+    MDC.reset();
+    cfg=MDC.load();
+    W.vehicles=W.parts=W.garages=null;
+    dirty.vehicles=dirty.parts=dirty.garages=false;
+    MDC.applyTheme(cfg);
+    renderAll();
+    toast('คืนค่าเริ่มต้นต้นแบบแจ้งซ่อมแล้ว');
+  }else{
+    if(!confirm('คืนค่าเริ่มต้น "บันทึกการใช้งานรถ"?\nฟิลด์ที่ตั้งค่า · Fleet Card · บันทึกทั้งหมด จะถูกล้าง'))return;
+    MDD.reset();
+    ddb=MDD.load();WF=null;dirtyFleet=false;
+    renderDailyAll();
+    toast('คืนค่าเริ่มต้นบันทึกการใช้งานรถแล้ว');
+  }
+}
+
+/* ════════════════ PART 2: บันทึกการใช้งานรถ (MDD → maintaind.daily.v1) ════════════════ */
+let PART='repair';
+function setPart(p){
+  PART=p;
+  $('part-repair').classList.toggle('hidden',p!=='repair');
+  $('part-daily').classList.toggle('hidden',p!=='daily');
+  $('pseg-repair').classList.toggle('sel',p==='repair');
+  $('pseg-daily').classList.toggle('sel',p==='daily');
+  $('openlink').href=p==='repair'?'mock/Maintenance-Request-Form.html':'daily-record/';
+  $('openlbl').textContent=p==='repair'?'เปิดต้นแบบ':'เปิดแอปบันทึกรถ';
+  $('resetbtn').textContent=p==='repair'?'คืนค่าเริ่มต้น (แจ้งซ่อม)':'คืนค่าเริ่มต้น (บันทึกรถ)';
+  if(p==='daily')renderDailyAll();
+}
+
+let ddb=MDD.load();
+let WF=null,dirtyFleet=false,nfType='text';
+
+function renderStdFields(){
+  $('stdfields').innerHTML=Object.entries(ddb.fields.std).map(([k,f])=>{
+    const meta=MDD.STD_META[k];
+    return`<div class="trow">
+      <div class="tinfo"><div class="tname">${meta.label} ${f.lock?'<span class="ms" style="font-size:15px;color:var(--gray-400)" title="ฟิลด์หลัก ปิดไม่ได้">lock</span>':''}</div><div class="tdesc">${meta.desc}</div></div>
+      <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--gray-600);flex-shrink:0"><input type="checkbox" ${f.req?'checked':''} ${f.lock?'disabled':''} onchange="stdReq('${k}',this.checked)">จำเป็น</label>
+      <div class="seg" style="flex:0 0 130px">
+        <div class="sg ${f.on?'sel':''}" onclick="stdOn('${k}',true)">เปิด</div>
+        <div class="sg ${!f.on?'sel':''}" onclick="stdOn('${k}',false)">ปิด</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function stdOn(k,v){
+  if(ddb.fields.std[k].lock&&!v){toast('ฟิลด์หลักของแอป — ปิดไม่ได้');return}
+  ddb.fields.std[k].on=v;MDD.save(ddb);renderStdFields();
+  toast((v?'เปิด':'ปิด')+'ฟิลด์ "'+MDD.STD_META[k].label+'" แล้ว — แอปอัปเดตทันที');
+}
+function stdReq(k,v){ddb.fields.std[k].req=v;MDD.save(ddb)}
+
+function renderCustomFields(){
+  const list=ddb.fields.custom;
+  $('customfields').innerHTML=list.length?list.map((c,i)=>`
+    <div class="trow">
+      <div class="tinfo"><div class="tname">${esc(c.label)} <span class="badge b-brand">${MDD.FIELD_TYPES[c.type]||c.type}</span> ${c.req?'<span class="badge b-low">จำเป็น</span>':''}</div>
+        ${c.type==='select'?`<div class="tdesc">ตัวเลือก: ${(c.options||[]).map(esc).join(' · ')}</div>`:''}</div>
+      <span class="ms" style="cursor:pointer;color:var(--gray-400)" title="เลื่อนขึ้น" onclick="cfMove(${i},-1)">arrow_upward</span>
+      <span class="ms" style="cursor:pointer;color:var(--gray-400)" title="เลื่อนลง" onclick="cfMove(${i},1)">arrow_downward</span>
+      <div class="seg" style="flex:0 0 118px">
+        <div class="sg ${c.on?'sel':''}" onclick="cfOn(${i},true)">เปิด</div>
+        <div class="sg ${!c.on?'sel':''}" onclick="cfOn(${i},false)">ปิด</div>
+      </div>
+      <span class="ms" style="cursor:pointer;color:var(--gray-400)" title="ลบฟิลด์" onclick="cfDel(${i})">delete</span>
+    </div>`).join(''):'<div class="empty">ยังไม่มีฟิลด์กำหนดเอง — เพิ่มจากฟอร์มด้านล่าง</div>';
+}
+function renderNfType(){
+  $('nf-typeseg').innerHTML=Object.entries(MDD.FIELD_TYPES).map(([k,n])=>
+    `<div class="sg ${nfType===k?'sel':''}" onclick="nfSetType('${k}')">${n}</div>`).join('');
+  $('nf-optwrap').classList.toggle('hidden',nfType!=='select');
+}
+function nfSetType(t){nfType=t;renderNfType()}
+function cfAdd(){
+  const label=$('nf-label').value.trim();
+  if(!label){toast('กรุณาตั้งชื่อฟิลด์');return}
+  let options=[];
+  if(nfType==='select'){
+    options=$('nf-options').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if(options.length<2){toast('ชนิดตัวเลือกต้องมีอย่างน้อย 2 ตัวเลือก');return}
+  }
+  ddb.fields.custom.push({key:'c'+Date.now(),label,type:nfType,options,req:$('nf-req').checked,on:true});
+  MDD.save(ddb);
+  $('nf-label').value='';$('nf-options').value='';$('nf-req').checked=false;nfType='text';
+  renderNfType();renderCustomFields();
+  toast('เพิ่มฟิลด์ "'+label+'" แล้ว — โผล่ในฟอร์มแอปทันที');
+}
+function cfMove(i,d){
+  const a=ddb.fields.custom,j=i+d;
+  if(j<0||j>=a.length)return;
+  [a[i],a[j]]=[a[j],a[i]];
+  MDD.save(ddb);renderCustomFields();
+}
+function cfOn(i,v){ddb.fields.custom[i].on=v;MDD.save(ddb);renderCustomFields()}
+function cfDel(i){
+  if(!confirm('ลบฟิลด์ "'+ddb.fields.custom[i].label+'"?\n(ค่าที่เคยบันทึกไว้ในรายการเก่ายังแสดงอยู่)'))return;
+  ddb.fields.custom.splice(i,1);MDD.save(ddb);renderCustomFields();
+}
+
+/* ----- Fleet Card ----- */
+function wfleet(){
+  if(!WF){
+    const cur=ddb.fleet||MDD.FLEET_DEFAULTS;
+    WF=MDC.data('vehicles').map(v=>{
+      const f=cur.find(x=>x.vehicleId===v.id);
+      return{vehicleId:v.id,no:f?f.no:'',holder:f?f.holder:v.org};
+    });
+  }
+  return WF;
+}
+function renderFleet(){
+  const vs=MDC.data('vehicles'),rows=wfleet();
+  $('tbl-fleet').innerHTML=`<table class="tbl"><thead><tr><th>รถ</th><th>เลขบัตร Fleet Card</th><th>ผู้ถือบัตร</th></tr></thead>
+    <tbody>${rows.map((r,i)=>{
+      const v=vs.find(x=>x.id===r.vehicleId);
+      return`<tr><td style="padding:10px 12px"><b style="color:var(--gray-900)">${esc(v?v.plate:'#'+r.vehicleId)}</b><br><span style="font-size:12px;color:var(--gray-500)">${esc(v?v.model:'')}</span></td>
+      <td><input value="${esc(r.no)}" placeholder="7024 8801 XXXX XXXX" oninput="WF[${i}].no=this.value;dirtyFleet=true;$('dirty-fleet').classList.remove('hidden')"></td>
+      <td><input value="${esc(r.holder)}" oninput="WF[${i}].holder=this.value;dirtyFleet=true;$('dirty-fleet').classList.remove('hidden')"></td></tr>`;
+    }).join('')}</tbody></table>`;
+  $('dirty-fleet').classList.toggle('hidden',!dirtyFleet);
+  $('src-fleet').textContent=ddb.fleet?'ข้อมูลที่แก้ไขเอง':'ข้อมูลตั้งต้น';
+}
+function fsave(){
+  ddb.fleet=MDD.clone(wfleet()).map(r=>({vehicleId:r.vehicleId,no:String(r.no).trim()||'— ไม่มีบัตร —',holder:String(r.holder).trim()}));
+  MDD.save(ddb);dirtyFleet=false;renderFleet();
+  toast('บันทึก Fleet Card แล้ว — การ์ดรถในแอปอัปเดตทันที');
+}
+function freset(){
+  ddb.fleet=null;MDD.save(ddb);WF=null;dirtyFleet=false;renderFleet();
+  toast('คืน Fleet Card ค่าเริ่มต้นแล้ว');
+}
+
+/* ----- ข้อมูลบันทึก ----- */
+function updCount(){$('reccount').textContent='ตอนนี้มีบันทึก '+ddb.records.length+' รายการ'}
+function dSeed(){
+  const seeds=MDD.seedMonth(),vs=MDC.data('vehicles');
+  seeds.forEach(r=>{const v=vs.find(x=>x.id===r.vehicleId);r.plate=v?v.plate:null});
+  ddb.records=seeds;
+  const names=[...new Set(seeds.map(r=>r.driver))];
+  ddb.drivers=[...new Set([...names,...ddb.drivers])].slice(0,20);
+  MDD.save(ddb);updCount();
+  toast('เติมบันทึกตัวอย่าง '+seeds.length+' รายการแล้ว — ดูได้ที่แอปบันทึกรถ');
+}
+function dClear(){
+  if(!confirm('ล้างบันทึกการใช้งานรถทั้งหมด ('+ddb.records.length+' รายการ)?'))return;
+  ddb.records=[];MDD.save(ddb);updCount();
+  toast('ล้างบันทึกทั้งหมดแล้ว');
+}
+function dExport(){
+  const json=JSON.stringify(ddb,null,2);
+  (navigator.clipboard?navigator.clipboard.writeText(json):Promise.reject()).then(
+    ()=>toast('คัดลอก JSON แล้ว ('+ddb.records.length+' รายการ)'),
+    ()=>{prompt('คัดลอกข้อมูลด้านล่าง',json)});
+}
+function renderDailyAll(){
+  ddb=MDD.load();
+  renderStdFields();renderCustomFields();renderNfType();renderFleet();updCount();
 }
 
 // ================= INIT =================

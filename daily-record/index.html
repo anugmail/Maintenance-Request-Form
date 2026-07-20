@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>บันทึกการใช้งานรถ — Maintain-D</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#A80689">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="บันทึกรถ">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css">
+<link rel="stylesheet" href="../design-system/components.css">
+<script src="../config.js"></script>
+<script src="../config-daily.js"></script>
+<style>
+  /* ---------- เฉพาะแอปนี้ — ค่าสีมาจาก tokens เท่านั้น ---------- */
+  body{background:var(--gray-50)}
+  .aphdr{background:var(--grad-header);color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:20}
+  .aphdr .ttl2{flex:1}
+  .aphdr h1{font-size:17px;font-weight:700;line-height:1.2}
+  .aphdr .sub2{font-size:11.5px;opacity:.85}
+  .aphdr a{color:#fff;text-decoration:none;display:flex}
+  .amain{max-width:640px;margin:0 auto;padding:16px 16px calc(88px + env(safe-area-inset-bottom))}
+
+  /* bottom tab bar */
+  .tabbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--gray-200);
+    display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom)}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 6px;
+    font-size:11px;color:var(--gray-500);cursor:pointer;user-select:none}
+  .tab .ms{font-size:24px}
+  .tab.on{color:var(--primary-600);font-weight:600}
+
+  /* Fleet Card */
+  .fcard{background:var(--grad-header);border-radius:var(--r-lg);color:#fff;padding:18px;position:relative;
+    overflow:hidden;box-shadow:var(--shadow-app)}
+  .fcard::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 85% 12%,rgba(255,255,255,.28),transparent 55%);pointer-events:none}
+  .frow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .fbrand{font-size:11.5px;letter-spacing:2px;opacity:.9;font-weight:600}
+  .fno{font-size:19px;letter-spacing:2.5px;font-weight:600;margin:16px 0 2px}
+  .fholder{font-size:11.5px;opacity:.8}
+  .fbot{margin-top:16px;align-items:flex-end}
+  .fbot small{opacity:.8;font-size:11.5px}
+  .fspend{text-align:right;font-size:11.5px;opacity:.95}
+  .fspend b{font-size:17px}
+  .vwrap{margin-bottom:20px}
+  .vquick{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  .vquick .btn{margin-left:auto;padding:8px 16px}
+
+  /* form */
+  input[type=number],input[type=date]{width:100%;border:1px solid var(--gray-300);border-radius:var(--r-sm);
+    padding:10px 12px;font:inherit;color:var(--gray-900);background:#fff}
+  .sumrow{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px dashed var(--gray-200);font-size:14px}
+  .sumrow:last-child{border:none}
+  .sumrow span:first-child{color:var(--gray-500);flex-shrink:0}
+  .sumrow span:last-child{color:var(--gray-900);font-weight:500;text-align:right}
+  .f em{color:var(--error-600);font-style:normal}
+  .odorow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .distline{font-size:13px;color:var(--gray-600);margin:-6px 0 12px}
+  .distline.err{color:var(--error-600);font-weight:600}
+  .formbtns{display:flex;gap:10px;margin-top:18px}
+  .formbtns .btn{flex:1;padding:12px}
+  .chkrow{display:flex!important;gap:10px;align-items:center;font-weight:600}
+  .f{margin-bottom:14px}
+
+  /* receipts */
+  .rccard{border:1px solid var(--gray-200);border-radius:var(--r-md);padding:12px;margin-bottom:10px;background:#fff}
+  .rcrow{display:flex;gap:12px;align-items:flex-start}
+  .rthumb{width:84px;height:84px;border-radius:10px;object-fit:cover;background:var(--gray-100);flex-shrink:0}
+  .rthumb-ph{display:flex;align-items:center;justify-content:center;color:var(--gray-400)}
+  .scanwrap{position:relative;flex-shrink:0;border-radius:10px;overflow:hidden}
+  .scanline{position:absolute;left:0;right:0;height:3px;background:var(--primary-500);box-shadow:0 0 14px 3px var(--primary-500);animation:scan 1.1s ease-in-out infinite}
+  @keyframes scan{0%{top:6%}50%{top:88%}100%{top:6%}}
+  .scantxt{display:flex;gap:8px;align-items:center;color:var(--primary-600);font-weight:600;font-size:14px;min-height:84px}
+  .spin{animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .rcgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .rcgrid .sp2{grid-column:1/-1}
+  .rcgrid label{font-size:11.5px;color:var(--gray-500);display:block;margin-bottom:3px;font-weight:500}
+  .rcgrid input,.rcgrid select{padding:8px 10px;font-size:14px}
+  .rcdel{color:var(--gray-400);cursor:pointer;flex-shrink:0}
+  .flash input,.flash select{animation:flash 1.4s ease-out}
+  @keyframes flash{0%{background:var(--primary-50);border-color:var(--primary-500)}100%{background:#fff}}
+  .rcbtns{display:flex;gap:8px;flex-wrap:wrap}
+  .rcbtns .btn{padding:9px 14px;font-size:13.5px}
+
+  /* others repeater */
+  .otrow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .otrow select{flex:0 0 118px;padding:9px 8px}
+  .otrow input{padding:9px 10px}
+  .otrow .amt{flex:0 0 96px}
+
+  /* history */
+  .dayhead{font-weight:700;color:var(--gray-900);font-size:14px;margin:18px 0 8px;display:flex;gap:8px;align-items:center}
+  .dayhead::before{content:'';width:4px;height:16px;background:var(--primary-600);border-radius:2px}
+  .hmeta{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--gray-500)}
+  .hmeta b{color:var(--gray-900)}
+
+  /* month summary */
+  .mnav{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+  .mnav b{flex:1;text-align:center;font-size:16px;color:var(--gray-900)}
+  .mnav .ms{cursor:pointer;color:var(--primary-600);font-size:26px}
+  .statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .stt{background:var(--gray-50);border:1px solid var(--gray-100);border-radius:var(--r-md);padding:9px 6px;text-align:center}
+  .stt b{display:block;font-size:16px;color:var(--gray-900)}
+  .stt span{font-size:11px;color:var(--gray-500)}
+  .barrow{display:flex;gap:10px;align-items:center;margin-top:8px;font-size:12.5px}
+  .barrow .lbl{flex:0 0 84px;color:var(--gray-700)}
+  .barwrap{flex:1;background:var(--gray-100);border-radius:6px;height:22px;overflow:hidden}
+  .bar{height:100%;background:var(--primary-600);border-radius:6px;min-width:3px}
+  .barrow .val{flex:0 0 76px;text-align:right;font-weight:600;color:var(--gray-900)}
+</style>
+</head>
+<body>
+
+<div class="aphdr">
+  <span class="ms" style="font-size:26px">local_gas_station</span>
+  <div class="ttl2">
+    <h1>บันทึกการใช้งานรถ</h1>
+    <div class="sub2">Fleet Card · บันทึกรายวัน · สรุปรายเดือน — ข้อมูลจำลอง (mock)</div>
+  </div>
+  <a href="../admin-config.html" title="ตั้งค่า (Admin Control Panel)"><span class="ms" style="font-size:24px">tune</span></a>
+</div>
+
+<div class="amain">
+  <section id="view-home"></section>
+  <section id="view-form" class="hidden"></section>
+  <section id="view-history" class="hidden"></section>
+  <section id="view-month" class="hidden"></section>
+</div>
+
+<nav class="tabbar">
+  <div class="tab on" id="tab-home" onclick="go('home')"><span class="ms">directions_car</span><span>รถของฉัน</span></div>
+  <div class="tab" id="tab-form" onclick="goNewForm()"><span class="ms">edit_note</span><span>บันทึก</span></div>
+  <div class="tab" id="tab-history" onclick="go('history')"><span class="ms">history</span><span>ประวัติ</span></div>
+  <div class="tab" id="tab-month" onclick="go('month')"><span class="ms">bar_chart</span><span>สรุปเดือน</span></div>
+</nav>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="rcfile" accept="image/*" capture="environment" class="hidden">
+
+<script src="ocr.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

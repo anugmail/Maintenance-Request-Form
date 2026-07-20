@@ -33,6 +33,7 @@ const browser=await chromium.launch({executablePath:'/Applications/Google Chrome
 3. **Toggle/variant/seed/master** → mock ต้องรีโหลดเอง (waitForEvent('load')) แล้วสะท้อนค่าใหม่
 4. ฟอร์มแจ้งซ่อมจนจบ + flow กบค. (รับเรื่อง → เดินสถานะ → นัดรับ → ปิดงาน) ทั้งแบบเปิด/ปิดตรวจสภาพ
 5. Reset ทั้งหมด + corrupt localStorage (`{{{broken`) → ต้องไม่ crash
+6. **daily-record PWA** (`/daily-record/`, key `maintaind.daily.v1`): สร้างบันทึก + mock OCR (`setInputFiles` JPEG จาก canvas → รอ badge "อ่านจากใบเสร็จ"), คณิตสรุปเดือน (seed ค่าที่รู้ผ่าน evaluate), custom field จาก admin part 2 → โผล่ในฟอร์มผ่าน storage event, sw offline (`context.setOffline(true)` + reload) — ระวัง: การ์ดเทียบในสรุปเดือนมีเลขทะเบียนซ้ำกับการ์ดต่อคัน ใช้ hasText ชื่อรุ่นรถแทน
 
 ## Gotchas
 
