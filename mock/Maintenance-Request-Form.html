@@ -235,6 +235,7 @@ const PARTS=MDC.data('parts');
 const SEVS=['ต่ำ','ปานกลาง','สูง','หยุดใช้งาน'];
 const GARAGES=MDC.data('garages');
 const KBK_STEPS=['รับเรื่องซ่อม','รอสั่งอะไหล่','อะไหล่ถึงแล้ว','ดำเนินการซ่อม','ซ่อมเสร็จ'];
+const ONSITE_STEPS=['เดินทาง/ถึงหน้างาน','ดำเนินการซ่อม','ซ่อมเสร็จ'];   // แทร็กงานเล็ก (ซ่อมหน้างาน)
 const ZONES=['กันชนหน้า/ไฟหน้า','ฝากระโปรง/กระจกบังลม','ด้านซ้าย (ประตู/แก้มข้าง)','ด้านขวา (ประตู/แก้มข้าง)','ท้ายรถ/กันชนหลัง','หลังคา/เสา','ยาง/ล้อ/บันไดข้าง','อุปกรณ์เสริม (เครน/กระเช้า)'];
 const FUELS=['E','¼','½','¾','เต็ม'];
 
@@ -285,8 +286,12 @@ function statusInfo(j){
   }
   if(j.phase==='gclosed')return{label:'ปิดงาน — ซ่อมโดยอู่',cls:'b-ok'};
   if(j.phase==='slots')return{label:'ซ่อมเสร็จ — รอผู้แจ้งเลือกวันนัดรับ',cls:'b-brand'};
-  if(j.phase==='work')return{label:KBK_STEPS[j.wi],cls:j.wi===4?'b-ok':'b-brand'};
+  if(j.phase==='work'){
+    if(j.loc==='onsite')return{label:'ซ่อมหน้างาน: '+ONSITE_STEPS[j.wi],cls:j.wi===2?'b-ok':'b-brand'};
+    return{label:KBK_STEPS[j.wi],cls:j.wi===4?'b-ok':'b-brand'};
+  }
   if(j.phase==='appt')return{label:'นัดรับรถ '+j.appt.date+' '+j.appt.time,cls:'b-brand'};
+  if(j.loc==='onsite')return{label:'ปิดงาน — ซ่อมหน้างานเสร็จ',cls:'b-ok'};
   return{label:'ปิดงาน — ตรวจสภาพผ่าน ส่งมอบแล้ว',cls:'b-ok'};
 }
 function updateBadge(){
@@ -649,8 +654,11 @@ function renderMyDetail(no){
   if(j.inspIn&&['work','slots','appt','closed'].includes(j.phase)){
     extra+=inspViewPanel('ตรวจสภาพรับรถเข้าซ่อม (ขาเข้า)',j.inspIn);
   }
-  if(j.phase==='appt'||j.phase==='closed'){
+  if((j.phase==='appt'||j.phase==='closed')&&j.appt){
     extra+=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note?'· '+j.appt.note:''} — วันนัดมีการ<b>ตรวจสภาพตอนรับรถคืน (ขาออก)</b> เทียบกับขาเข้าร่วมกัน</div>`;
+  }
+  if(j.phase==='closed'&&j.loc==='onsite'){
+    extra+=`<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ซ่อมหน้างานเสร็จ</b>${j.onsite&&j.onsite.site?' @ '+j.onsite.site:''}${j.sat?` · ความพึงพอใจ ${'★'.repeat(j.sat)}`:''}</div>`;
   }
   if(j.phase==='closed'&&j.inspOut){
     extra+=inspViewPanel('ตรวจสภาพขาออก (ตอนรับรถคืน) — <span class="badge b-ok">ผ่าน — รับมอบรถแล้ว</span>',j.inspOut);
@@ -791,7 +799,7 @@ function krdClose(no){
 }
 
 // ================= VIEW: งานซ่อม กบค. =================
-const E={mode:null,garages:[]};
+const E={mode:null,garages:[],loc:'hq'};
 let K={slots:{},note:'',mode:'range',from:'',to:'',one:'',insp:null};
 function initInsp(){return{zones:ZONES.map(z=>({name:z,bad:false,note:''})),fuel:null,odo:'',symOk:{},extra:''}}
 function zSet(no,zi,v){K.insp.zones[zi].bad=v;renderKbkDetail(no)}
@@ -854,7 +862,7 @@ function renderKbkList(){
   }).join('');
 }
 function openKbk(no){
-  E.mode=null;E.garages=[];K={slots:{},note:'',mode:'range',from:'',to:'',one:'',insp:null};
+  E.mode=null;E.garages=[];E.loc='hq';K={slots:{},note:'',mode:'range',from:'',to:'',one:'',insp:null,sat:null,ack:false};
   renderKbkDetail(no);
 }
 function renderKbkDetail(no){
@@ -882,7 +890,21 @@ function renderKbkDetail(no){
       <div class="tile tile-blue ${E.mode==='return'?'sel':''}" onclick="E.mode='return';renderKbkDetail('${no}')"><span class="ms">u_turn_left</span><b>ส่งกลับให้ซ่อมเอง</b><small>คืนหน่วยงานผู้แจ้ง พร้อมเหตุผล</small></div>
     </div>`;
     if(E.mode==='accept'){
-      action+=`<div class="panel"><div class="f"><label>บันทึกการรับเรื่อง <small>(ถ้ามี)</small></label><textarea id="acnote" rows="2" placeholder="เช่น คิวช่างว่างพฤหัสนี้…"></textarea></div>
+      const onsite=E.loc==='onsite';
+      action+=`<div class="panel">
+        <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin-bottom:6px">รูปแบบการซ่อม <small style="color:var(--gray-500);font-weight:400">(ช่วงที่ 4 · เตรียมแผนซ่อม)</small></label>
+        <div class="seg" style="max-width:560px">
+          <div class="sg ${!onsite?'sel':''}" onclick="E.loc='hq';renderKbkDetail('${no}')">งานใหญ่ — นำรถเข้า สนญ.</div>
+          <div class="sg ${onsite?'sel':''}" onclick="E.loc='onsite';renderKbkDetail('${no}')">งานเล็ก — ช่างออกหน้างาน</div>
+        </div>
+        ${onsite?`
+        <div class="fgrid" style="margin:14px 0 0;max-width:680px">
+          <div class="f sp2"><label>ชื่อช่าง กบค. (2–3 คน)</label><div class="in"><span class="ms">groups</span><input type="text" id="ac-team" placeholder="เช่น ก.สมชาย · ข.วิชัย"></div></div>
+          <div class="f sp2"><label>สถานที่ซ่อม (หน้างาน)</label><div class="in"><span class="ms">place</span><input type="text" id="ac-site" placeholder="เช่น จุดปฏิบัติงาน อ.สูงเนิน"></div></div>
+          <div class="f sp2"><label>ช่วงวันเดินทาง</label><div class="in"><span class="ms">event</span><input type="text" id="ac-trip" placeholder="เช่น 22–23 ก.ค. 2569"></div></div>
+        </div>`
+        :`<div class="hint" style="margin-top:10px">นำรถเข้าซ่อมที่สำนักงานใหญ่ — มีตรวจสภาพขาเข้า/ขาออก และนัดรับรถ (แทร็กเดิม)</div>`}
+        <div class="f" style="margin-top:12px"><label>บันทึกการรับเรื่อง <small>(ถ้ามี)</small></label><textarea id="acnote" rows="2" placeholder="เช่น คิวช่างว่างพฤหัสนี้…"></textarea></div>
         <div class="rowbtns"><button class="btn btn-p" onclick="kbkAccept('${no}')">ยืนยันรับเรื่องซ่อม</button></div></div>`;
     }
     if(E.mode==='return'){
@@ -894,7 +916,28 @@ function renderKbkDetail(no){
     }
   }
 
-  if(j.phase==='work'){
+  if(j.phase==='work'&&j.loc==='onsite'){   // ---- แทร็กงานเล็ก (ซ่อมหน้างาน) ----
+    action=`<div class="sect" style="margin-top:24px">ซ่อมหน้างาน (งานเล็ก) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ช่างออกไปซ่อมที่หน้างาน</span></div>
+    <div class="panel">
+      <div style="font-size:14px"><b>ทีมช่าง:</b> ${j.onsite&&j.onsite.team||'—'}</div>
+      <div style="font-size:14px;margin-top:4px"><b>สถานที่:</b> ${j.onsite&&j.onsite.site||'—'} · <b>ช่วงวันเดินทาง:</b> ${j.onsite&&j.onsite.trip||'—'}</div>
+    </div>
+    <div class="wsteps" style="margin-top:14px">${ONSITE_STEPS.map((s,i)=>`<div class="wstep ${i===j.wi?'active':i<j.wi?'passed':''}"><span class="num">${i<j.wi?'✓':i+1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
+    if(j.wi<2){
+      action+=`<div class="rowbtns" style="justify-content:flex-start;flex-wrap:wrap">
+        <button class="btn btn-p" onclick="onsiteAdvance('${no}')">อัปเดตสถานะ → ${ONSITE_STEPS[j.wi+1]}</button>
+        <button class="btn btn-o" onclick="onsiteFindMore('${no}')"><span class="ms" style="font-size:18px">report</span> พบชำรุดเพิ่ม → เบิกอะไหล่</button></div>`;
+    }else{
+      action+=`<div class="sect" style="margin-top:20px">หน่วยงานรับทราบและประเมินความพึงพอใจ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ทำร่วมกับหน่วยงานเจ้าของรถที่หน้างาน</span></div>
+      <div class="panel">
+        <div class="chk" style="margin:0 0 10px"><label><input type="checkbox" id="os-ack" ${K.ack?'checked':''} onchange="K.ack=this.checked"> หน่วยงานเจ้าของรถรับทราบผลการซ่อม (ใบตรวจสภาพอะไหล่ · ก่อน/หลัง)</label></div>
+        <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin-bottom:6px">ความพึงพอใจ</label>
+        <div class="seg" id="os-sat" style="max-width:520px">${[1,2,3,4,5].map(n=>`<div class="sg ${K.sat===n?'sel':''}" onclick="K.sat=${n};renderKbkDetail('${no}')">${'★'.repeat(n)}</div>`).join('')}</div>
+        <div class="rowbtns"><button class="btn btn-p" onclick="onsiteClose('${no}')">ปิดงาน (ซ่อมหน้างานเสร็จ)</button></div>
+      </div>`;
+    }
+  }
+  else if(j.phase==='work'){   // ---- แทร็กงานใหญ่ (นำรถเข้า สนญ.) ----
     action=`<div class="sect" style="margin-top:24px">สถานะงานซ่อม <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— สถานะแสดงที่ฝั่งผู้แจ้งด้วย</span></div>
     <div class="wsteps" style="margin-top:14px">${KBK_STEPS.map((s,i)=>`<div class="wstep ${i===j.wi?'active':i<j.wi?'passed':''}"><span class="num">${i<j.wi?'✓':i+1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
     if(TG.inspection){   // ปิด toggle ตรวจสภาพ → ข้ามฟอร์ม/แผงตรวจสภาพขาเข้าทั้งหมด
@@ -965,7 +1008,9 @@ function renderKbkDetail(no){
     action=(j.ret?retPanel(j):'')+recordPanel(j);
   }
   if(j.phase==='closed'){
-    action=`<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ปิดงานแล้ว</b> — ส่งมอบรถวันที่ ${j.appt.date} ${j.appt.time} น.</div>`
+    action=(j.loc==='onsite'
+      ?`<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ปิดงานแล้ว</b> — ซ่อมหน้างานเสร็จ${j.onsite&&j.onsite.site?' @ '+j.onsite.site:''}${j.sat?` · ความพึงพอใจ ${'★'.repeat(j.sat)}`:''}</div>`
+      :`<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ปิดงานแล้ว</b> — ส่งมอบรถวันที่ ${j.appt.date} ${j.appt.time} น.</div>`)
       +(j.inspIn?inspViewPanel('ตรวจสภาพขาเข้า (ตอนส่งรถซ่อม)',j.inspIn):'')
       +(j.inspOut?inspViewPanel('ตรวจสภาพขาออก (ตอนรับรถคืน) — ผ่าน ✓',j.inspOut):'');
   }
@@ -996,10 +1041,36 @@ function kbkPlaceholder(kind){
 }
 function kbkAccept(no){
   const j=JOBS.find(x=>x.no===no);
-  j.phase='work';j.wi=0;
+  j.phase='work';j.wi=0;j.loc=E.loc;
   const note=$('acnote').value.trim();
-  j.history.push({t:nowStr(),label:'กบค. รับเรื่องซ่อม'+(note?' — '+esc(note):'')});
-  updateBadge();toast('รับเรื่องแล้ว — สถานะ: รับเรื่องซ่อม');renderKbkDetail(no);
+  if(E.loc==='onsite'){
+    j.onsite={team:esc($('ac-team').value.trim()),site:esc($('ac-site').value.trim()),trip:esc($('ac-trip').value.trim())};
+    j.history.push({t:nowStr(),label:'กบค. รับเรื่องซ่อม (งานเล็ก — ช่างออกหน้างาน'+(j.onsite.site?' @ '+j.onsite.site:'')+')'+(note?' — '+esc(note):'')});
+    updateBadge();toast('รับเรื่องแล้ว — แผนซ่อมหน้างาน');renderKbkDetail(no);
+  }else{
+    j.history.push({t:nowStr(),label:'กบค. รับเรื่องซ่อม (งานใหญ่ — นำรถเข้า สนญ.)'+(note?' — '+esc(note):'')});
+    updateBadge();toast('รับเรื่องแล้ว — สถานะ: รับเรื่องซ่อม');renderKbkDetail(no);
+  }
+}
+// ---- แทร็กงานเล็ก (ซ่อมหน้างาน) ----
+function onsiteAdvance(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.wi++;
+  j.history.push({t:nowStr(),label:'ซ่อมหน้างาน: '+ONSITE_STEPS[j.wi]});
+  toast('อัปเดตสถานะเป็น "'+ONSITE_STEPS[j.wi]+'"');renderKbkDetail(no);
+}
+function onsiteFindMore(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.history.push({t:nowStr(),label:'พบชำรุดเพิ่มระหว่างซ่อมหน้างาน — เบิกอะไหล่เพิ่ม'});
+  toast('บันทึกพบชำรุดเพิ่ม + เบิกอะไหล่เพิ่มแล้ว');renderKbkDetail(no);
+}
+function onsiteClose(no){
+  const j=JOBS.find(x=>x.no===no);
+  if(!K.ack){toast('ต้องให้หน่วยงานเจ้าของรถกดรับทราบก่อนปิดงาน');return}
+  if(!K.sat){toast('กรุณาให้คะแนนความพึงพอใจ');return}
+  j.sat=K.sat;j.phase='closed';
+  j.history.push({t:nowStr(),label:'หน่วยงานรับทราบผลการซ่อมหน้างาน · ความพึงพอใจ '+'★'.repeat(j.sat)+' — ปิดงาน'});
+  toast('ปิดงานเรียบร้อย (ซ่อมหน้างาน)');renderKbkDetail(no);
 }
 function kbkReturn(no){
   const j=JOBS.find(x=>x.no===no);
