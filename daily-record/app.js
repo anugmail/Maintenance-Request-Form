@@ -327,7 +327,7 @@ function renderHistDetail(id){
     <div class="card" style="padding:6px 16px">
       <div class="sumrow"><span>ผู้ใช้รถ</span><span>${esc(r.driver||'—')}</span></div>
       <div class="sumrow"><span>ภารกิจ/เส้นทาง</span><span>${esc(r.mission||'—')}</span></div>
-      <div class="sumrow"><span>เลขไมล์</span><span>${baht(r.odoStart)} → ${baht(r.odoEnd)} (${baht(distOf(r))} กม.)</span></div>
+      <div class="sumrow"><span>เลขไมล์</span><span>${(r.odoStart||r.odoEnd)?`${baht(r.odoStart)} → ${baht(r.odoEnd)} (${baht(distOf(r))} กม.)`:'—'}</span></div>
       <div class="sumrow"><span>ค่าน้ำมัน</span><span>฿${baht(fuelCost(r))} (${baht(litersOf(r))} ลิตร)</span></div>
       <div class="sumrow"><span>ค่าใช้จ่ายอื่น</span><span>${r.others.length?r.others.map(o=>`${esc(o.type)} ฿${baht(o.amount)}${o.note?' ('+esc(o.note)+')':''}`).join('<br>'):'—'}</span></div>
       ${customRows}
@@ -387,7 +387,7 @@ function renderMonth(){
     const fuel=rs.reduce((s,r)=>s+fuelCost(r),0);
     const other=rs.reduce((s,r)=>s+otherCost(r),0);
     return{v,days:new Set(rs.map(r=>r.date)).size,dist,liters,fuel,other,
-      kmpl:liters>0?(dist/liters):null};
+      kmpl:(liters>0&&dist>0)?(dist/liters):null};
   }).filter(Boolean);
   const maxFuel=Math.max(...perV.map(x=>x.fuel),1);
   $('view-month').innerHTML=nav+perV.map(x=>`

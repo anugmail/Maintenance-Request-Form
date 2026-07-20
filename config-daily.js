@@ -15,10 +15,10 @@ const DEFAULT_DB={
                 //  receipts:[{no,station,fuelType,liters,amount,photoThumb,ocr}],
                 //  others:[{type,amount,note}],custom:{},createdAt,updatedAt}
   fields:{
-    std:{
-      date:    {on:true,req:true,lock:true},
-      odoStart:{on:true,req:true,lock:true},
-      odoEnd:  {on:true,req:true,lock:true},
+    std:{   // ทุกฟิลด์เปิด/ปิดได้หมด — ปิด "วันที่" แล้วระบบใช้วันที่วันนี้ให้อัตโนมัติ
+      date:    {on:true,req:true},
+      odoStart:{on:true,req:true},
+      odoEnd:  {on:true,req:true},
       driver:  {on:true,req:true},
       mission: {on:true,req:false},
       receipts:{on:true,req:false},
@@ -32,9 +32,9 @@ const DEFAULT_DB={
 
 /* label/คำอธิบายของฟิลด์มาตรฐาน — ใช้ทั้งใน admin (ตั้งค่า) และ PWA (แสดง error) */
 const STD_META={
-  date:    {label:'วันที่ใช้งาน',desc:'วันที่ของบันทึก (ฟิลด์หลัก ปิดไม่ได้)'},
-  odoStart:{label:'เลขไมล์เริ่มต้น',desc:'ใช้คำนวณระยะทาง (ฟิลด์หลัก ปิดไม่ได้)'},
-  odoEnd:  {label:'เลขไมล์สิ้นสุด',desc:'ใช้คำนวณระยะทาง (ฟิลด์หลัก ปิดไม่ได้)'},
+  date:    {label:'วันที่ใช้งาน',desc:'วันที่ของบันทึก — ปิดแล้วระบบใช้วันที่วันนี้ให้อัตโนมัติ'},
+  odoStart:{label:'เลขไมล์เริ่มต้น',desc:'ใช้คำนวณระยะทาง — ปิดแล้วสรุปเดือนไม่มีระยะทาง/กม.ต่อลิตร'},
+  odoEnd:  {label:'เลขไมล์สิ้นสุด',desc:'ใช้คำนวณระยะทาง — ปิดแล้วสรุปเดือนไม่มีระยะทาง/กม.ต่อลิตร'},
   driver:  {label:'ผู้ใช้รถ/พนักงานขับ',desc:'ชื่อผู้ใช้งานรถในวันนั้น'},
   mission: {label:'ภารกิจ/เส้นทาง',desc:'ไปไหน ทำอะไร'},
   receipts:{label:'ใบเสร็จน้ำมัน (Fleet Card)',desc:'รูปใบเสร็จ + เลขที่ + ลิตร + จำนวนเงิน (mock OCR อ่านให้)'},
@@ -60,8 +60,10 @@ function load(){
     const j=JSON.parse(raw);
     if(!j||j.v!==1)return clone(DEFAULT_DB);
     const std={};
-    Object.keys(DEFAULT_DB.fields.std).forEach(k=>
-      std[k]=Object.assign({},DEFAULT_DB.fields.std[k],(j.fields&&j.fields.std&&j.fields.std[k])||{}));
+    Object.keys(DEFAULT_DB.fields.std).forEach(k=>{
+      std[k]=Object.assign({},DEFAULT_DB.fields.std[k],(j.fields&&j.fields.std&&j.fields.std[k])||{});
+      delete std[k].lock;   // ล้าง flag lock จากข้อมูลเวอร์ชันเก่า — ปัจจุบันทุกฟิลด์ปิดได้
+    });
     return{
       v:1,
       records:Array.isArray(j.records)?j.records:[],

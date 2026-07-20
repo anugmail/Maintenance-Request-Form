@@ -425,8 +425,8 @@ function renderStdFields(){
   $('stdfields').innerHTML=Object.entries(ddb.fields.std).map(([k,f])=>{
     const meta=MDD.STD_META[k];
     return`<div class="trow">
-      <div class="tinfo"><div class="tname">${meta.label} ${f.lock?'<span class="ms" style="font-size:15px;color:var(--gray-400)" title="ฟิลด์หลัก ปิดไม่ได้">lock</span>':''}</div><div class="tdesc">${meta.desc}</div></div>
-      <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--gray-600);flex-shrink:0"><input type="checkbox" ${f.req?'checked':''} ${f.lock?'disabled':''} onchange="stdReq('${k}',this.checked)">จำเป็น</label>
+      <div class="tinfo"><div class="tname">${meta.label}</div><div class="tdesc">${meta.desc}</div></div>
+      <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--gray-600);flex-shrink:0"><input type="checkbox" ${f.req?'checked':''} onchange="stdReq('${k}',this.checked)">จำเป็น</label>
       <div class="seg" style="flex:0 0 130px">
         <div class="sg ${f.on?'sel':''}" onclick="stdOn('${k}',true)">เปิด</div>
         <div class="sg ${!f.on?'sel':''}" onclick="stdOn('${k}',false)">ปิด</div>
@@ -435,7 +435,6 @@ function renderStdFields(){
   }).join('');
 }
 function stdOn(k,v){
-  if(ddb.fields.std[k].lock&&!v){toast('ฟิลด์หลักของแอป — ปิดไม่ได้');return}
   ddb.fields.std[k].on=v;MDD.save(ddb);renderStdFields();
   toast((v?'เปิด':'ปิด')+'ฟิลด์ "'+MDD.STD_META[k].label+'" แล้ว — แอปอัปเดตทันที');
 }
