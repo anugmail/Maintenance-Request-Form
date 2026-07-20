@@ -97,7 +97,7 @@
       <div class="wsteps" id="wsteps"></div>
 
       <section id="s1">
-        <div class="sect">ข้อมูลรถ</div>
+        <div class="sect"><span id="head-vehicle">ข้อมูลรถ</span></div>
         <div class="fgrid">
           <div class="f sp2">
             <label>ค้นหารถที่มีปัญหา</label>
@@ -114,7 +114,7 @@
       </section>
 
       <section id="s2" class="hidden">
-        <div class="sect">อาการเสีย <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เลือกได้หลายอาการ จากรายการมาตรฐานที่กรองตามจุดที่เลือก</span></div>
+        <div class="sect"><span id="head-symptom">อาการเสีย</span> <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เลือกได้หลายอาการ จากรายการมาตรฐานที่กรองตามจุดที่เลือก</span></div>
         <div id="symcats"></div>
         <div id="othwrap" class="hidden">
           <div class="f" style="margin-top:12px"><label>ระบุอาการเอง</label><textarea id="othtext" rows="2" placeholder="อธิบายอาการที่พบ…"></textarea></div>
@@ -135,12 +135,12 @@
       </section>
 
       <section id="s3" class="hidden">
-        <div class="sect">อะไหล่ที่ระบบแนะนำ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— (mock) จองได้ถ้ามีของ · <b>ของหมดแต่จำเป็นต้องใช้ → กด "สั่งของ" เพื่อรวมไว้ในรายการที่ต้องใช้</b> · อัปเดตล่าสุด 17 ก.ค. 2569 09:30</span></div>
+        <div class="sect"><span id="head-parts">อะไหล่ที่ระบบแนะนำ</span> <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— (mock) จองได้ถ้ามีของ · <b>ของหมดแต่จำเป็นต้องใช้ → กด "สั่งของ" เพื่อรวมไว้ในรายการที่ต้องใช้</b> · อัปเดตล่าสุด 17 ก.ค. 2569 09:30</span></div>
         <div id="parts"></div>
       </section>
 
       <section id="s4" class="hidden">
-        <div class="sect">การตัดสินใจ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เห็นอะไหล่และของคงเหลือแล้ว งานนี้จะดำเนินการอย่างไร</span></div>
+        <div class="sect"><span id="head-decision">การตัดสินใจ</span> <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เห็นอะไหล่และของคงเหลือแล้ว งานนี้จะดำเนินการอย่างไร</span></div>
         <div class="decide">
           <div class="tile tile-magenta" id="dcself" onclick="setDecision('self')"><span class="ms">build</span><b>ซ่อมเอง</b><small>ซ่อมได้ที่หน้างาน/หน่วยงาน</small></div>
           <div class="tile tile-blue" id="dckbk" onclick="setDecision('kbk')"><span class="ms">alt_route</span><b>ส่งเรื่องให้ กรย.</b><small>ให้ กรย. คัดแยกช่องทางซ่อม</small></div>
@@ -267,7 +267,8 @@ const JOBS=[
 
 // ================= STATE =================
 const S={step:1,vehicle:null,target:null,symptoms:[],sev:null,photos:0,bookings:{},orders:{},decision:null};
-const STEPS=['เลือกรถ','อาการเสีย','อะไหล่ที่แนะนำ','ตัดสินใจและสรุป'];
+const STEPS=['เลือกรถ','อาการเสีย','อะไหล่ที่แนะนำ','ตัดสินใจและสรุป'];   // label ถูก override จาก cfg.steps.wizard ที่ INIT
+let WZ={vehicle:{on:true},symptom:{on:true},parts:{on:true},decision:{on:true}};   // map ขั้น wizard ตาม key (เติมจาก config)
 let VIEW='form';
 
 // ================= HELPERS =================
@@ -371,9 +372,9 @@ function renderStock(){
 // ================= FORM (ผู้แจ้ง) =================
 function renderSteps(){
   $('wsteps').innerHTML=STEPS.map((n,i)=>{
-    if(i===2&&!TG.partsStep)return'';   // ปิดขั้นตอนอะไหล่จาก admin-config → เหลือ 3 ขั้น
+    if(i===2&&!WZ.parts.on)return'';   // ปิดขั้นตอนอะไหล่จาก admin (steps.wizard) → เหลือ 3 ขั้น
     const st=i+1===S.step?'active':i+1<S.step?'passed':'';
-    const num=(!TG.partsStep&&i>2)?i:i+1;   // renumber เลขที่แสดง (S.step ภายในยังเป็น 1-4)
+    const num=(!WZ.parts.on&&i>2)?i:i+1;   // renumber เลขที่แสดง (S.step ภายในยังเป็น 1-4)
     return`<div class="wstep ${st}"><span class="num">${i+1<S.step?'✓':num}</span><span class="lbl">${n}</span></div>`;
   }).join('');
 }
@@ -484,7 +485,7 @@ function addThumb(src){
 function nav(d){
   if(d>0&&!validate())return;
   S.step+=d;
-  if(S.step===3&&!TG.partsStep)S.step+=d;   // ข้ามขั้นตอนอะไหล่ (ได้ทั้งเดินหน้า/ถอยหลัง)
+  if(S.step===3&&!WZ.parts.on)S.step+=d;   // ข้ามขั้นตอนอะไหล่ (ได้ทั้งเดินหน้า/ถอยหลัง)
   if(S.step<1)S.step=1;
   if(S.step>4){submit();return}
   ['s1','s2','s3','s4'].forEach((id,i)=>$(id).classList.toggle('hidden',i+1!==S.step));
@@ -1272,6 +1273,11 @@ function supReject(no){
 // อ่านค่าจาก admin-config.html (localStorage) — ไม่มีค่าที่ตั้งไว้ = พฤติกรรมเดิมทุกอย่าง
 const CFG=MDC.load(),TG=CFG.toggles,UI=CFG.variants;
 if(CFG.demo.jobs){JOBS.length=0;JOBS.push(...CFG.demo.jobs);if(CFG.demo.seq)SEQ=CFG.demo.seq;}
+// ---- ขั้นตอน (stepper) จาก admin: ชื่อขั้น/หัวข้อ/เปิดปิด (wizard) + ป้ายสถานะ (kbk) ----
+// v0.16: ใช้ค่าตาม "key" (คงลำดับ vehicle→symptom→parts→decision) · การสลับลำดับ wizard = v0.17
+CFG.steps.wizard.forEach(s=>{WZ[s.key]=s});
+['vehicle','symptom','parts','decision'].forEach((k,i)=>{STEPS[i]=WZ[k].label;const h=$('head-'+k);if(h)h.textContent=WZ[k].heading});
+KBK_STEPS.length=0;KBK_STEPS.push(...CFG.steps.kbk);
 // จัดลำดับ + เปิด/ปิด เมนูซ้ายตามค่าจาก admin (cfg.menu)
 function applyMenu(menu){
   const side=document.querySelector('.side');
@@ -1281,12 +1287,12 @@ applyMenu(CFG.menu);
 const menuOn=k=>{const m=CFG.menu.find(x=>x.key===k);return!m||m.on};   // ไม่พบ = ถือว่าเปิด
 if(!TG.photoUpload)$('f-photos').classList.add('hidden');
 // ฟังการแก้ค่าจากแท็บ admin: ธีม apply สด / ส่วนอื่นรีโหลดให้ state สะอาด
-const SNAP=JSON.stringify({t:CFG.toggles,u:CFG.variants,g:CFG.menu,d:CFG.data,m:CFG.demo});
+const SNAP=JSON.stringify({t:CFG.toggles,u:CFG.variants,g:CFG.menu,s:CFG.steps,d:CFG.data,m:CFG.demo});
 window.addEventListener('storage',e=>{
   if(e.key!==MDC.KEY)return;
   const n=MDC.load();
   MDC.applyTheme(n);
-  if(JSON.stringify({t:n.toggles,u:n.variants,g:n.menu,d:n.data,m:n.demo})!==SNAP)location.reload();
+  if(JSON.stringify({t:n.toggles,u:n.variants,g:n.menu,s:n.steps,d:n.data,m:n.demo})!==SNAP)location.reload();
 });
 renderSteps();renderVehicles();updateBadge();
 $('back').style.visibility='hidden';

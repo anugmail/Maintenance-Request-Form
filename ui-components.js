@@ -98,9 +98,63 @@ const dayPicker={
   }
 };
 
+/* ============================================================
+   sortable — drag & drop จัดลำดับลิสต์ (pointer events: เมาส์+ทัช)
+   ใช้: UIC.sortable(listEl, {itemSelector, handleSelector, onDrop(from,to)})
+   - แต่ละ item ควรมี data-idx = ตำแหน่งเดิม
+   - ลากด้วย handle (ถ้าระบุ) หรือทั้ง item; drop → เรียก onDrop(from,to)
+     แล้วผู้เรียก re-render เอง (สอดคล้อง controlled pattern)
+   - เก็บปุ่มลูกศรไว้เป็น fallback ได้ (ไม่ชนกัน — ลูกศรมี onclick แยก)
+   ============================================================ */
+function sortable(listEl,opts){
+  const{itemSelector='[data-idx]',handleSelector,onDrop}=opts||{};
+  const items=()=>[...listEl.querySelectorAll(itemSelector)];
+  let drag=null,ph=null,startY=0;
+  items().forEach(it=>{
+    const handle=handleSelector?it.querySelector(handleSelector):it;
+    if(!handle)return;
+    handle.style.touchAction='none';
+    handle.style.cursor='grab';
+    handle.addEventListener('pointerdown',e=>{
+      if(e.button!==undefined&&e.button!==0)return;
+      e.preventDefault();
+      drag=it;startY=e.clientY;
+      const r=it.getBoundingClientRect();
+      ph=document.createElement('div');ph.style.height=r.height+'px';ph.style.border='1.5px dashed var(--primary-500)';ph.style.borderRadius='8px';ph.style.margin='2px 0';
+      it.parentNode.insertBefore(ph,it);
+      it.style.position='fixed';it.style.zIndex='999';it.style.width=r.width+'px';it.style.left=r.left+'px';it.style.top=r.top+'px';
+      it.style.opacity='.9';it.style.boxShadow='0 8px 24px rgba(16,24,40,.25)';it.style.pointerEvents='none';
+      handle.setPointerCapture&&handle.setPointerCapture(e.pointerId);
+      const move=ev=>{
+        it.style.top=(r.top+ev.clientY-startY)+'px';
+        const others=items().filter(x=>x!==drag);
+        for(const o of others){
+          const or=o.getBoundingClientRect();
+          if(ev.clientY<or.top+or.height/2){o.parentNode.insertBefore(ph,o);return}
+        }
+        listEl.appendChild(ph);
+      };
+      const up=()=>{
+        window.removeEventListener('pointermove',move);
+        window.removeEventListener('pointerup',up);
+        const from=+it.dataset.idx;
+        // ตำแหน่งปลายทาง = index ของ ph ในลำดับที่ "ไม่รวม item ที่ลาก" → ตรงกับ arrMove
+        const seq=[...listEl.children].filter(x=>x===ph||(x.matches(itemSelector)&&x!==it));
+        const to=seq.indexOf(ph);
+        it.removeAttribute('style'); ph.replaceWith(it); ph=null; drag=null;
+        if(onDrop&&to>=0&&to!==from)onDrop(from,to);
+      };
+      window.addEventListener('pointermove',move);
+      window.addEventListener('pointerup',up);
+    });
+  });
+}
+/* ย้าย element ใน array (ใช้คู่กับ onDrop) */
+function arrMove(a,from,to){const x=a.splice(from,1)[0];a.splice(to,0,x);return a}
+
 window.UIC={
   components:[vehicleCard,dayPicker],   // ลำดับที่แสดงในหน้า admin
-  vehicleCard,dayPicker,thLabel,
+  vehicleCard,dayPicker,thLabel,sortable,arrMove,
   get(key){return this.components.find(c=>c.key===key)}
 };
 })();

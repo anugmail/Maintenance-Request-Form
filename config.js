@@ -23,15 +23,41 @@ const MENU_META={
 };
 const MENU_DEFAULT=['home','form','my','kry','kbk','sup','stock','reports'];
 
+/* ---------- Stepper: ขั้นตอนของ mock (ปรับชื่อ/ลำดับ/เปิดปิด/หัวข้อ จาก admin) ----------
+   wizard: 4 ขั้นของฟอร์มแจ้งซ่อม (key ผูกกับ logic — vehicle/symptom/parts/decision)
+   kbk: 5 ป้ายสถานะงานซ่อม กบค. (label ล้วน — rename/reorder ได้) */
+const WIZARD_DEFAULT=[
+  {key:'vehicle', label:'เลือกรถ',         heading:'ข้อมูลรถ',            on:true},
+  {key:'symptom', label:'อาการเสีย',       heading:'อาการเสีย',          on:true},
+  {key:'parts',   label:'อะไหล่ที่แนะนำ',   heading:'อะไหล่ที่ระบบแนะนำ',  on:true},
+  {key:'decision',label:'ตัดสินใจและสรุป',  heading:'การตัดสินใจ',        on:true}
+];
+const KBK_STEPS_DEFAULT=['รับเรื่องซ่อม','รอสั่งอะไหล่','อะไหล่ถึงแล้ว','ดำเนินการซ่อม','ซ่อมเสร็จ'];
+
 const DEFAULT_CFG={
   v:1,
   theme:{preset:'pea',custom:null,fontScale:'md',radius:'md'},
   toggles:{menuStock:true,photoUpload:true,partsStep:true,inspection:true},
   variants:{vehicleCard:'list',slotPicker:'datepicker'},
   menu:MENU_DEFAULT.map(k=>({key:k,on:true})),
+  steps:{wizard:clone0(WIZARD_DEFAULT),kbk:KBK_STEPS_DEFAULT.slice()},
   data:{vehicles:null,parts:null,garages:null},   // null = ใช้ค่า default ด้านล่าง
   demo:{jobs:null,seq:null,scenario:'default',startView:'form'}
 };
+function clone0(o){return JSON.parse(JSON.stringify(o))}
+const WKEYS=WIZARD_DEFAULT.map(s=>s.key);
+/* reconcile wizard steps: คงเฉพาะ key ที่รู้จัก + เติม key ที่ขาดต่อท้าย + merge label/heading/on
+   migrate: config เก่าที่ยังไม่มี steps แต่เคยปิด partsStep → parts.on=false */
+function normSteps(s,toggles){
+  const w=(s&&Array.isArray(s.wizard))?s.wizard.filter(x=>x&&WKEYS.includes(x.key)):[];
+  const seen=new Set(w.map(x=>x.key));
+  WIZARD_DEFAULT.forEach(d=>{if(!seen.has(d.key))w.push(clone0(d))});
+  const def=Object.fromEntries(WIZARD_DEFAULT.map(d=>[d.key,d]));
+  const wizard=w.map(x=>({key:x.key,label:x.label||def[x.key].label,heading:x.heading||def[x.key].heading,on:x.on!==false}));
+  if(!(s&&s.wizard)&&toggles&&toggles.partsStep===false){const p=wizard.find(x=>x.key==='parts');if(p)p.on=false}
+  let kbk=(s&&Array.isArray(s.kbk)&&s.kbk.length)?s.kbk.map(String):KBK_STEPS_DEFAULT.slice();
+  return{wizard,kbk};
+}
 /* reconcile menu กับ MENU_DEFAULT: ตัด key แปลก + เติม key ที่ขาด (schema เพิ่มเมนูใหม่) + coerce on
    migrate: config เก่าที่ยังไม่มี menu แต่เคยปิด menuStock → ซ่อน stock ให้ */
 function normMenu(m,toggles){
@@ -135,6 +161,7 @@ function load(){
       toggles:Object.assign({},DEFAULT_CFG.toggles,j.toggles),
       variants:Object.assign({},DEFAULT_CFG.variants,j.variants),
       menu:normMenu(j.menu,j.toggles),
+      steps:normSteps(j.steps,j.toggles),
       data:Object.assign({},DEFAULT_CFG.data,j.data),
       demo:Object.assign({},DEFAULT_CFG.demo,j.demo)
     };
@@ -258,6 +285,7 @@ const seeds={
 };
 
 window.MDC={KEY,DEFAULT_CFG,PRESETS,FONT_SCALES,RADIUS_SETS,THEME_VARS,MENU_META,MENU_DEFAULT,
+  WIZARD_DEFAULT,KBK_STEPS_DEFAULT,
   deriveShades,paletteFor,themeVars,applyTheme,load,save,reset,data,defaults,SYM_OPTS,seeds,clone};
 
 /* apply ธีมทันทีที่โหลดไฟล์ — ก่อน body render จึงไม่มี flash สีเดิม */
