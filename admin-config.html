@@ -415,19 +415,25 @@ function menuToggle(i,v){cfg.menu[i].on=v;persist();renderMenuOrder();toast((v?'
 
 // ================= 6) จัดการขั้นตอน (Stepper) =================
 function renderWizSteps(){
+  const last=cfg.steps.wizard.length-1;
   $('wizsteps').innerHTML=cfg.steps.wizard.map((s,i)=>`
-    <div class="trow" style="flex-wrap:wrap;gap:10px;align-items:flex-end">
-      <div style="flex:1;min-width:160px"><label style="font-size:11.5px;color:var(--gray-500);display:block;margin-bottom:3px">ชื่อขั้น (บน stepper)</label>
+    <div class="trow" data-idx="${i}" style="flex-wrap:wrap;gap:10px;align-items:flex-end">
+      <span class="ms draghandle" title="ลากเพื่อจัดลำดับ" style="color:var(--gray-400);align-self:center">drag_indicator</span>
+      <div style="flex:1;min-width:150px"><label style="font-size:11.5px;color:var(--gray-500);display:block;margin-bottom:3px">ชื่อขั้น (บน stepper)</label>
         <input value="${esc(s.label)}" oninput="wizSet(${i},'label',this.value)" style="width:100%"></div>
-      <div style="flex:1;min-width:160px"><label style="font-size:11.5px;color:var(--gray-500);display:block;margin-bottom:3px">หัวข้อในหน้าฟอร์ม</label>
+      <div style="flex:1;min-width:150px"><label style="font-size:11.5px;color:var(--gray-500);display:block;margin-bottom:3px">หัวข้อในหน้าฟอร์ม</label>
         <input value="${esc(s.heading)}" oninput="wizSet(${i},'heading',this.value)" style="width:100%"></div>
+      <span class="ms" style="cursor:${i===0?'default':'pointer'};color:var(--gray-${i===0?'200':'400'});align-self:center" title="เลื่อนขึ้น" onclick="wizMove(${i},-1)">arrow_upward</span>
+      <span class="ms" style="cursor:${i===last?'default':'pointer'};color:var(--gray-${i===last?'200':'400'});align-self:center" title="เลื่อนลง" onclick="wizMove(${i},1)">arrow_downward</span>
       ${s.key==='parts'
-        ?`<div class="seg" style="flex:0 0 118px"><div class="sg ${s.on?'sel':''}" onclick="wizToggle(${i},true)">เปิด</div><div class="sg ${!s.on?'sel':''}" onclick="wizToggle(${i},false)">ปิด</div></div>`
+        ?`<div class="seg" style="flex:0 0 108px"><div class="sg ${s.on?'sel':''}" onclick="wizToggle(${i},true)">เปิด</div><div class="sg ${!s.on?'sel':''}" onclick="wizToggle(${i},false)">ปิด</div></div>`
         :`<span class="badge b-low" style="flex:0 0 auto;align-self:center" title="ขั้นนี้จำเป็นต่อ logic ปิดไม่ได้">จำเป็น</span>`}
-    </div>`).join('')+`<div class="hint" style="margin-top:8px"><span class="ms" style="font-size:15px;color:var(--gray-400)">info</span> การสลับลำดับขั้น wizard จะเปิดในเวอร์ชันถัดไป (v0.17) — ตอนนี้ปรับชื่อ/หัวข้อ/เปิดปิดได้</div>`;
+    </div>`).join('')+`<div class="hint" style="margin-top:8px"><span class="ms" style="font-size:15px;color:var(--warning-700)">info</span> สลับลำดับได้ — แต่ควรให้ "เลือกรถ" มาก่อน "อาการเสีย" และ "อาการเสีย" ก่อน "อะไหล่" (ไม่งั้นขั้นนั้นจะรอข้อมูลก่อนหน้า)</div>`;
+  UIC.sortable($('wizsteps'),{itemSelector:'.trow',handleSelector:'.draghandle',onDrop:(f,t)=>{UIC.arrMove(cfg.steps.wizard,f,t);persist();renderWizSteps();toast('จัดลำดับขั้นแล้ว — หน้าต้นแบบจะรีโหลด')}});
 }
 function wizSet(i,f,v){cfg.steps.wizard[i][f]=v;persist();toast('อัปเดตขั้นตอนแล้ว — หน้าต้นแบบจะรีโหลด')}
 function wizToggle(i,v){cfg.steps.wizard[i].on=v;persist();renderWizSteps();toast((v?'เปิด':'ปิด')+'ขั้น "'+cfg.steps.wizard[i].label+'" แล้ว')}
+function wizMove(i,d){const a=cfg.steps.wizard,j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];persist();renderWizSteps();toast('จัดลำดับขั้นแล้ว')}
 function renderKbkSteps(){
   $('kbksteps').innerHTML=cfg.steps.kbk.map((label,i)=>`
     <div class="trow" data-idx="${i}">

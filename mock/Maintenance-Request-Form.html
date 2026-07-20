@@ -267,8 +267,10 @@ const JOBS=[
 
 // ================= STATE =================
 const S={step:1,vehicle:null,target:null,symptoms:[],sev:null,photos:0,bookings:{},orders:{},decision:null};
-const STEPS=['เลือกรถ','อาการเสีย','อะไหล่ที่แนะนำ','ตัดสินใจและสรุป'];   // label ถูก override จาก cfg.steps.wizard ที่ INIT
-let WZ={vehicle:{on:true},symptom:{on:true},parts:{on:true},decision:{on:true}};   // map ขั้น wizard ตาม key (เติมจาก config)
+const STEPS=['เลือกรถ','อาการเสีย','อะไหล่ที่แนะนำ','ตัดสินใจและสรุป'];   // (คง fallback — ปัจจุบันใช้ WZ)
+let WZ={vehicle:{on:true,label:'เลือกรถ'},symptom:{on:true,label:'อาการเสีย'},parts:{on:true,label:'อะไหล่ที่แนะนำ'},decision:{on:true,label:'ตัดสินใจและสรุป'}};
+let WORDER=['vehicle','symptom','parts','decision'];   // ลำดับขั้น wizard (จาก cfg.steps.wizard ที่ INIT)
+const SECT={vehicle:'s1',symptom:'s2',parts:'s3',decision:'s4'};   // key → id ของ section (คงที่)
 let VIEW='form';
 
 // ================= HELPERS =================
@@ -370,13 +372,18 @@ function renderStock(){
 }
 
 // ================= FORM (ผู้แจ้ง) =================
-function renderSteps(){
-  $('wsteps').innerHTML=STEPS.map((n,i)=>{
-    if(i===2&&!WZ.parts.on)return'';   // ปิดขั้นตอนอะไหล่จาก admin (steps.wizard) → เหลือ 3 ขั้น
+function renderSteps(){   // เดินตามลำดับ WORDER (สลับ/เปิดปิดขั้นได้จาก admin)
+  $('wsteps').innerHTML=WORDER.map((k,i)=>{
     const st=i+1===S.step?'active':i+1<S.step?'passed':'';
-    const num=(!WZ.parts.on&&i>2)?i:i+1;   // renumber เลขที่แสดง (S.step ภายในยังเป็น 1-4)
-    return`<div class="wstep ${st}"><span class="num">${i+1<S.step?'✓':num}</span><span class="lbl">${n}</span></div>`;
+    return`<div class="wstep ${st}"><span class="num">${i+1<S.step?'✓':i+1}</span><span class="lbl">${WZ[k].label}</span></div>`;
   }).join('');
+}
+function showStepSection(key){   // แสดง section ของขั้นปัจจุบัน + render เนื้อหาตาม key
+  ['s1','s2','s3','s4'].forEach(id=>$(id).classList.add('hidden'));
+  $(SECT[key]).classList.remove('hidden');
+  if(key==='symptom')renderSymptoms();
+  if(key==='parts')renderParts();
+  if(key==='decision')renderSummary();
 }
 function renderVehicles(){   // adapter → shared component UIC.vehicleCard
   const q=$('vq').value.trim();
@@ -401,6 +408,7 @@ function pickVehicle(id){
 }
 function setTarget(k){if(S.target!==k){S.target=k;S.symptoms=[];S.bookings={};S.orders={};}}
 function renderSymptoms(){
+  if(!S.vehicle){$('symcats').innerHTML='<div class="empty">กรุณาเลือกรถก่อน — สลับให้ขั้น "เลือกรถ" มาก่อนขั้นนี้ (แก้ลำดับได้ที่ Admin)</div>';$('othwrap').classList.add('hidden');$('sev').innerHTML='';return}
   const scope=S.target==='attach'?['attach','both']:['vehicle','both'];
   $('symcats').innerHTML=CATS.filter(c=>scope.includes(c.for)).map(c=>{
     const items=SYMPTOMS.filter(s=>s.cat===c.key);
@@ -456,6 +464,7 @@ function setDecision(d){S.decision=d;$('dcself').classList.toggle('sel',d==='sel
 function bookedArr(){return Object.entries(S.bookings).map(([c,q])=>{const p=PARTS.find(x=>x.code===c);return{name:p.name,qty:q,unit:p.unit}})}
 function orderedArr(){return Object.entries(S.orders).map(([c,q])=>{const p=PARTS.find(x=>x.code===c);return{name:p.name,qty:q,unit:p.unit,eta:p.eta||'รอยืนยัน'}})}
 function renderSummary(){
+  if(!S.vehicle){$('summary').innerHTML='<div class="hint" style="padding:10px 0">ยังไม่ได้เลือกรถ — กลับไปขั้น "เลือกรถ" ก่อนส่งเรื่อง</div>';return}
   const bk=bookedArr().map(x=>`${x.name} ×${x.qty}`),od=orderedArr().map(x=>`${x.name} ×${x.qty} (ETA ${x.eta})`);
   const symNames=S.symptoms.map(id=>SYMPTOMS.find(s=>s.id===id).name);
   $('summary').innerHTML=`
@@ -485,29 +494,27 @@ function addThumb(src){
 function nav(d){
   if(d>0&&!validate())return;
   S.step+=d;
-  if(S.step===3&&!WZ.parts.on)S.step+=d;   // ข้ามขั้นตอนอะไหล่ (ได้ทั้งเดินหน้า/ถอยหลัง)
   if(S.step<1)S.step=1;
-  if(S.step>4){submit();return}
-  ['s1','s2','s3','s4'].forEach((id,i)=>$(id).classList.toggle('hidden',i+1!==S.step));
-  if(S.step===2)renderSymptoms();
-  if(S.step===3)renderParts();
-  if(S.step===4)renderSummary();
+  if(S.step>WORDER.length){submit();return}
+  showStepSection(WORDER[S.step-1]);
   $('back').style.visibility=S.step===1?'hidden':'visible';
-  $('next').textContent=S.step===4?'ส่งเรื่องแจ้งซ่อม':'ถัดไป';
+  $('next').textContent=S.step===WORDER.length?'ส่งเรื่องแจ้งซ่อม':'ถัดไป';
   renderSteps();
   window.scrollTo({top:0});
 }
 function validate(){
-  if(S.step===1){
+  const key=WORDER[S.step-1];
+  if(key==='vehicle'){
     if(!S.vehicle){toast('กรุณาเลือกรถก่อน');return false}
     if(!S.target){toast('กรุณาระบุจุดที่มีปัญหา (ตัวรถ/อุปกรณ์เสริม)');return false}
   }
-  if(S.step===2){
+  if(key==='symptom'){
+    if(!S.vehicle){toast('ต้องเลือกรถก่อนจึงจะเลือกอาการได้ — สลับให้ขั้น "เลือกรถ" มาก่อน');return false}
     if(!S.symptoms.length){toast('กรุณาเลือกอาการเสียอย่างน้อย 1 รายการ');return false}
     if(S.symptoms.includes('OTH')&&!$('othtext').value.trim()){toast('กรุณาระบุอาการในช่อง "อื่นๆ"');return false}
     if(!S.sev){toast('กรุณาเลือกระดับความรุนแรง');return false}
   }
-  if(S.step===4&&!S.decision){toast('กรุณาเลือก ซ่อมเอง หรือ ส่งซ่อม กบค.');return false}
+  if(key==='decision'&&!S.decision){toast('กรุณาเลือก ซ่อมเอง หรือ ส่งเรื่องให้ กรย.');return false}
   return true;
 }
 function submit(){
@@ -543,8 +550,8 @@ function resetForm(){
   $('dcself').classList.remove('sel');$('dckbk').classList.remove('sel');
   $('selfx').classList.add('hidden');$('kbkx').classList.add('hidden');
   $('sdone').classList.add('hidden');$('footer').classList.remove('hidden');
-  $('s1').classList.remove('hidden');['s2','s3','s4'].forEach(id=>$(id).classList.add('hidden'));
-  $('back').style.visibility='hidden';$('next').textContent='ถัดไป';
+  showStepSection(WORDER[0]);   // ขั้นแรกตามลำดับที่ตั้ง
+  $('back').style.visibility='hidden';$('next').textContent=WORDER.length===1?'ส่งเรื่องแจ้งซ่อม':'ถัดไป';
   renderSteps();renderVehicles();
 }
 
@@ -1276,7 +1283,9 @@ if(CFG.demo.jobs){JOBS.length=0;JOBS.push(...CFG.demo.jobs);if(CFG.demo.seq)SEQ=
 // ---- ขั้นตอน (stepper) จาก admin: ชื่อขั้น/หัวข้อ/เปิดปิด (wizard) + ป้ายสถานะ (kbk) ----
 // v0.16: ใช้ค่าตาม "key" (คงลำดับ vehicle→symptom→parts→decision) · การสลับลำดับ wizard = v0.17
 CFG.steps.wizard.forEach(s=>{WZ[s.key]=s});
-['vehicle','symptom','parts','decision'].forEach((k,i)=>{STEPS[i]=WZ[k].label;const h=$('head-'+k);if(h)h.textContent=WZ[k].heading});
+WORDER=CFG.steps.wizard.filter(s=>s.on).map(s=>s.key);
+if(!WORDER.length)WORDER=['vehicle'];   // กันกรณีปิดครบ (ไม่ควรเกิด — vehicle/symptom/decision ปิดไม่ได้)
+['vehicle','symptom','parts','decision'].forEach(k=>{const h=$('head-'+k);if(h)h.textContent=WZ[k].heading});
 KBK_STEPS.length=0;KBK_STEPS.push(...CFG.steps.kbk);
 // จัดลำดับ + เปิด/ปิด เมนูซ้ายตามค่าจาก admin (cfg.menu)
 function applyMenu(menu){
@@ -1294,6 +1303,8 @@ window.addEventListener('storage',e=>{
   MDC.applyTheme(n);
   if(JSON.stringify({t:n.toggles,u:n.variants,g:n.menu,s:n.steps,d:n.data,m:n.demo})!==SNAP)location.reload();
 });
+showStepSection(WORDER[0]);   // แสดงขั้นแรกตามลำดับที่ตั้ง (เผื่อสลับลำดับ/ปิดขั้นอะไหล่)
+$('next').textContent=WORDER.length===1?'ส่งเรื่องแจ้งซ่อม':'ถัดไป';
 renderSteps();renderVehicles();updateBadge();
 $('back').style.visibility='hidden';
 const sv=CFG.demo.startView||'form';
