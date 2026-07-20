@@ -149,13 +149,20 @@
   <!-- ============ 4) เปิด/ปิดฟีเจอร์ ============ -->
   <div class="card">
     <h2 class="ttl">4 · เปิด/ปิดฟีเจอร์ (Feature Toggles)</h2>
-    <div class="sub">ซ่อนเมนู ขั้นตอน หรือฟิลด์ เพื่อลองเทียบ flow แบบมี/ไม่มีฟีเจอร์นั้นกับผู้ใช้</div>
+    <div class="sub">ซ่อนขั้นตอน หรือฟิลด์ เพื่อลองเทียบ flow แบบมี/ไม่มีฟีเจอร์นั้นกับผู้ใช้</div>
     <div id="toggles"></div>
+  </div>
+
+  <!-- ============ 4b) จัดลำดับเมนู ============ -->
+  <div class="card">
+    <h2 class="ttl">5 · จัดลำดับเมนู (แถบซ้ายของต้นแบบ)</h2>
+    <div class="sub">จัดลำดับความสำคัญของเมนูซ้าย — เลื่อนขึ้น/ลง และเปิด/ปิดแต่ละเมนู · หน้าต้นแบบจะเรียงใหม่ทันที</div>
+    <div id="menuorder"></div>
   </div>
 
   <!-- ============ 5) ข้อมูลหลัก ============ -->
   <div class="card">
-    <h2 class="ttl">5 · จัดการข้อมูลหลัก (Master Data)</h2>
+    <h2 class="ttl">6 · จัดการข้อมูลหลัก (Master Data)</h2>
     <div class="sub">แก้ไขรายการ รถ / อะไหล่ / อู่ ที่ต้นแบบใช้ — แก้ในตารางแล้วกด "บันทึก" ของแต่ละชุด (หน้าต้นแบบจะรีโหลดใช้ข้อมูลใหม่)</div>
 
     <div class="grp">
@@ -356,7 +363,6 @@ function dseed(k){
 
 // ================= 4) FEATURE TOGGLES =================
 const TOGGLES=[
-  {k:'menuStock',n:'เมนู "คลังอะไหล่"',d:'ไอคอนคลังอะไหล่ในเมนูซ้าย (บทบาท กบค.) — ตารางจอง/สั่งของ/คืนอะไหล่'},
   {k:'photoUpload',n:'แนบรูปถ่ายอาการ',d:'ช่องถ่าย/แนบรูปในขั้นตอนที่ 2 ของฟอร์มแจ้งซ่อม'},
   {k:'partsStep',n:'ขั้นตอน "อะไหล่ที่แนะนำ"',d:'ปิดแล้วฟอร์มเหลือ 3 ขั้น: เลือกรถ → อาการเสีย → ตัดสินใจ (ไม่มีจอง/สั่งอะไหล่)'},
   {k:'inspection',n:'ตรวจสภาพรถ 2 รอบ (ขาเข้า/ขาออก)',d:'ปิดแล้ว กบค. เดินสถานะซ่อมและปิดงานได้โดยไม่ต้องกรอกฟอร์มตรวจสภาพ'}
@@ -372,6 +378,29 @@ function renderToggles(){
     </div>`).join('');
 }
 function tset(k,v){cfg.toggles[k]=v;persist();renderToggles();toast((v?'เปิด':'ปิด')+'ฟีเจอร์แล้ว — หน้าต้นแบบจะรีโหลด')}
+
+// ================= 5) จัดลำดับเมนู =================
+function renderMenuOrder(){
+  const M=MDC.MENU_META;
+  $('menuorder').innerHTML=cfg.menu.map((m,i)=>`
+    <div class="trow">
+      <span class="ms" style="color:var(--primary-600);flex-shrink:0">${M[m.key].icon}</span>
+      <div class="tinfo"><div class="tname">${M[m.key].label}</div></div>
+      <span class="ms" style="cursor:${i===0?'default':'pointer'};color:var(--gray-${i===0?'200':'400'})" title="เลื่อนขึ้น" onclick="menuMove(${i},-1)">arrow_upward</span>
+      <span class="ms" style="cursor:${i===cfg.menu.length-1?'default':'pointer'};color:var(--gray-${i===cfg.menu.length-1?'200':'400'})" title="เลื่อนลง" onclick="menuMove(${i},1)">arrow_downward</span>
+      <div class="seg" style="flex:0 0 118px">
+        <div class="sg ${m.on?'sel':''}" onclick="menuToggle(${i},true)">เปิด</div>
+        <div class="sg ${!m.on?'sel':''}" onclick="menuToggle(${i},false)">ปิด</div>
+      </div>
+    </div>`).join('');
+}
+function menuMove(i,d){
+  const a=cfg.menu,j=i+d;
+  if(j<0||j>=a.length)return;
+  [a[i],a[j]]=[a[j],a[i]];
+  persist();renderMenuOrder();toast('จัดลำดับเมนูแล้ว — หน้าต้นแบบจะเรียงใหม่');
+}
+function menuToggle(i,v){cfg.menu[i].on=v;persist();renderMenuOrder();toast((v?'เปิด':'ปิด')+'เมนู "'+MDC.MENU_META[cfg.menu[i].key].label+'" แล้ว')}
 
 // ================= 5) MASTER DATA =================
 const W={vehicles:null,parts:null,garages:null};
@@ -607,7 +636,7 @@ function renderDailyAll(){
 }
 
 // ================= INIT =================
-function renderAll(){renderTheme();renderVariants();renderDemo();renderToggles();['vehicles','parts','garages'].forEach(renderMaster)}
+function renderAll(){renderTheme();renderVariants();renderDemo();renderToggles();renderMenuOrder();['vehicles','parts','garages'].forEach(renderMaster)}
 renderAll();
 </script>
 </body>

@@ -73,14 +73,14 @@
 <div class="shell">
   <aside class="side">
     <div class="vlogo">M<em>D</em></div>
-    <div class="nv" title="หน้าหลัก" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">home</span></div>
+    <div class="nv" id="nav-home" title="หน้าหลัก" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">home</span></div>
     <div class="nv" id="nav-form" title="แจ้งซ่อม" onclick="switchView('form')"><span class="ms">build</span></div>
     <div class="nv" id="nav-my" title="เรื่องแจ้งซ่อมของฉัน" onclick="switchView('my')"><span class="ms">assignment</span></div>
     <div class="nv" id="nav-kry" title="งานคัดแยก กรย." onclick="switchView('kry')"><span class="ms">alt_route</span><span class="cnt hidden" id="krycnt"></span></div>
     <div class="nv" id="nav-kbk" title="งานซ่อม กบค." onclick="switchView('kbk')"><span class="ms">engineering</span><span class="cnt hidden" id="kbkcnt"></span></div>
     <div class="nv" id="nav-sup" title="อนุมัติปิดงาน (ผู้บังคับบัญชา)" onclick="switchView('sup')"><span class="ms">approval</span><span class="cnt hidden" id="supcnt"></span></div>
     <div class="nv" id="nav-stock" title="คลังอะไหล่" onclick="switchView('stock')"><span class="ms">warehouse</span></div>
-    <div class="nv" title="รายงาน" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">monitoring</span></div>
+    <div class="nv" id="nav-reports" title="รายงาน" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">monitoring</span></div>
   </aside>
 
   <div class="work">
@@ -1272,19 +1272,26 @@ function supReject(no){
 // อ่านค่าจาก admin-config.html (localStorage) — ไม่มีค่าที่ตั้งไว้ = พฤติกรรมเดิมทุกอย่าง
 const CFG=MDC.load(),TG=CFG.toggles,UI=CFG.variants;
 if(CFG.demo.jobs){JOBS.length=0;JOBS.push(...CFG.demo.jobs);if(CFG.demo.seq)SEQ=CFG.demo.seq;}
-if(!TG.menuStock)$('nav-stock').classList.add('hidden');
+// จัดลำดับ + เปิด/ปิด เมนูซ้ายตามค่าจาก admin (cfg.menu)
+function applyMenu(menu){
+  const side=document.querySelector('.side');
+  menu.forEach(m=>{const el=$('nav-'+m.key);if(el){el.classList.toggle('hidden',!m.on);side.appendChild(el)}});
+}
+applyMenu(CFG.menu);
+const menuOn=k=>{const m=CFG.menu.find(x=>x.key===k);return!m||m.on};   // ไม่พบ = ถือว่าเปิด
 if(!TG.photoUpload)$('f-photos').classList.add('hidden');
 // ฟังการแก้ค่าจากแท็บ admin: ธีม apply สด / ส่วนอื่นรีโหลดให้ state สะอาด
-const SNAP=JSON.stringify({t:CFG.toggles,u:CFG.variants,d:CFG.data,m:CFG.demo});
+const SNAP=JSON.stringify({t:CFG.toggles,u:CFG.variants,g:CFG.menu,d:CFG.data,m:CFG.demo});
 window.addEventListener('storage',e=>{
   if(e.key!==MDC.KEY)return;
   const n=MDC.load();
   MDC.applyTheme(n);
-  if(JSON.stringify({t:n.toggles,u:n.variants,d:n.data,m:n.demo})!==SNAP)location.reload();
+  if(JSON.stringify({t:n.toggles,u:n.variants,g:n.menu,d:n.data,m:n.demo})!==SNAP)location.reload();
 });
 renderSteps();renderVehicles();updateBadge();
 $('back').style.visibility='hidden';
-switchView((CFG.demo.startView==='stock'&&!TG.menuStock)?'form':(CFG.demo.startView||'form'));
+const sv=CFG.demo.startView||'form';
+switchView(menuOn(sv)?sv:'form');   // ถ้า startView ถูกปิดเมนู → เปิดหน้าแรก
 </script>
 </body>
 </html>

@@ -10,14 +10,38 @@
 (function(){
 const KEY='maintaind.admin.v1';
 
+/* ---------- Sidebar menu ของ mock (จัดลำดับ/เปิดปิดจาก admin) ---------- */
+const MENU_META={
+  home:   {label:'หน้าหลัก',icon:'home'},
+  form:   {label:'แจ้งซ่อม',icon:'build'},
+  my:     {label:'เรื่องแจ้งซ่อมของฉัน',icon:'assignment'},
+  kry:    {label:'งานคัดแยก กรย.',icon:'alt_route'},
+  kbk:    {label:'งานซ่อม กบค.',icon:'engineering'},
+  sup:    {label:'อนุมัติปิดงาน (ผู้บังคับบัญชา)',icon:'approval'},
+  stock:  {label:'คลังอะไหล่',icon:'warehouse'},
+  reports:{label:'รายงาน',icon:'monitoring'}
+};
+const MENU_DEFAULT=['home','form','my','kry','kbk','sup','stock','reports'];
+
 const DEFAULT_CFG={
   v:1,
   theme:{preset:'pea',custom:null,fontScale:'md',radius:'md'},
   toggles:{menuStock:true,photoUpload:true,partsStep:true,inspection:true},
   variants:{vehicleCard:'list',slotPicker:'datepicker'},
+  menu:MENU_DEFAULT.map(k=>({key:k,on:true})),
   data:{vehicles:null,parts:null,garages:null},   // null = ใช้ค่า default ด้านล่าง
   demo:{jobs:null,seq:null,scenario:'default',startView:'form'}
 };
+/* reconcile menu กับ MENU_DEFAULT: ตัด key แปลก + เติม key ที่ขาด (schema เพิ่มเมนูใหม่) + coerce on
+   migrate: config เก่าที่ยังไม่มี menu แต่เคยปิด menuStock → ซ่อน stock ให้ */
+function normMenu(m,toggles){
+  const arr=Array.isArray(m)?m.filter(x=>x&&MENU_META[x.key]):[];
+  const seen=new Set(arr.map(x=>x.key));
+  MENU_DEFAULT.forEach(k=>{if(!seen.has(k))arr.push({key:k,on:true})});
+  const out=arr.map(x=>({key:x.key,on:x.on!==false}));
+  if(!Array.isArray(m)&&toggles&&toggles.menuStock===false){const s=out.find(x=>x.key==='stock');if(s)s.on=false}
+  return out;
+}
 
 /* UI Variants: ค่าที่เลือกเก็บใน cfg.variants (key ตรงกับ component ใน ui-components.js)
    metadata ชื่อ/ตัวเลือกของแต่ละ component ย้ายไปอยู่กับตัว component ใน ui-components.js
@@ -110,6 +134,7 @@ function load(){
       theme:Object.assign({},DEFAULT_CFG.theme,j.theme),
       toggles:Object.assign({},DEFAULT_CFG.toggles,j.toggles),
       variants:Object.assign({},DEFAULT_CFG.variants,j.variants),
+      menu:normMenu(j.menu,j.toggles),
       data:Object.assign({},DEFAULT_CFG.data,j.data),
       demo:Object.assign({},DEFAULT_CFG.demo,j.demo)
     };
@@ -232,7 +257,7 @@ const seeds={
   mixed6:{label:'หลากสถานะ 6 งาน',desc:'เห็นครบทุกสถานะ: ซ่อมเอง · รอรับเรื่อง · รออะไหล่ · รอเลือกนัด · นัดแล้ว · ปิดงาน',make:()=>clone(SEED_MIXED6)}
 };
 
-window.MDC={KEY,DEFAULT_CFG,PRESETS,FONT_SCALES,RADIUS_SETS,THEME_VARS,
+window.MDC={KEY,DEFAULT_CFG,PRESETS,FONT_SCALES,RADIUS_SETS,THEME_VARS,MENU_META,MENU_DEFAULT,
   deriveShades,paletteFor,themeVars,applyTheme,load,save,reset,data,defaults,SYM_OPTS,seeds,clone};
 
 /* apply ธีมทันทีที่โหลดไฟล์ — ก่อน body render จึงไม่มี flash สีเดิม */
