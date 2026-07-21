@@ -244,7 +244,7 @@ const PARTS=MDC.data('parts');
 const SEVS=['ต่ำ','ปานกลาง','สูง','หยุดใช้งาน'];
 const GARAGES=MDC.data('garages');
 const WORK_STEPS=['ดำเนินการซ่อม','ตรวจผลหลังซ่อม','แจ้งรับรถคืน','สรุปอะไหล่และบันทึกประวัติ'];   // stepper รวม สนญ.+หน้างาน ตามผังต้นฉบับ
-const KRD_STEPS=['เข้าไปดูเช็ครถ','เบิกอะไหล่จากคลัง','ดำเนินการซ่อม','บันทึกประวัติการซ่อม'];   // กรย. ซ่อมเอง ตามผัง
+const KRD_STEPS=['เบิกอะไหล่จากคลัง','นัดวันซ่อมกับเจ้าของรถ','เดินทางไปหน้างาน','ดำเนินการซ่อม','บันทึกประวัติการซ่อม'];   // กรย. ซ่อมเอง ตามผัง (หลังประเมินคุ้มค่าแล้ว)
 const RSTEPS=['ขับรถไปซ่อมอู่','ดำเนินการซ่อมโดยอู่','ซ่อมเสร็จ — บันทึกการซ่อม'];   // เส้นซ่อมเอง/ซ่อมอู่
 const REPAIR_METHODS={   // ระบบแนะนำ "วิธีการซ่อม" (VMS+) — rule-based ต่ออาการ
  'HYD-01':'เปลี่ยนชุดซีลกระบอก + ไล่ลมระบบ แล้วทดสอบแรงดันค้าง 10 นาที',
@@ -295,7 +295,7 @@ const JOBS=[
  {no:'MTD-690528-003',plate:'83-1122 กรุงเทพมหานคร',model:'Mitsubishi Fuso FI + เครน Unic URV554',org:'สำนักงานใหญ่ (กบค.)',target:'ตัวรถ',
   syms:['สตาร์ทไม่ติด'],symIds:['ENG-01'],sev:'สูง',photos:0,desc:'',
   booked:[{name:'แบตเตอรี่ 12V 120Ah',qty:1,unit:'ลูก'}],ordered:[],reason:'',
-  krdStage:3,
+  worth:'yes',est:5000,krdStage:4,krdAppt:{date:'ศ. 30 พ.ค. (30/5/2569)',note:'',t:'28 พ.ค. 2569 13:00'},
   record:{det:'กรย. เปลี่ยนแบตเตอรี่และตรวจระบบไฟ ทดสอบสตาร์ทปกติ',photos:0,pc:4200,lc:600,returns:[{name:'แบตเตอรี่ 12V 120Ah',unit:'ลูก',qty:0}],by:'กรย.'},
   phase:'gclosed',wi:0,history:[
    {t:'28 พ.ค. 2569 09:20',label:'ส่งเรื่องถึง กรย. — รอคัดแยกช่องทางซ่อม'},
@@ -324,7 +324,7 @@ function badge(p){
 }
 function statusInfo(j){
   if(j.phase==='kry')return{label:'รอ กรย. คัดแยกช่องทาง',cls:'b-brand'};
-  if(j.phase==='krd')return{label:'กรย. ซ่อมเอง: '+KRD_STEPS[j.krdStage||0],cls:'b-brand'};
+  if(j.phase==='krd')return{label:j.worth==='yes'?'กรย. ซ่อมเอง: '+KRD_STEPS[j.krdStage||0]:'กรย. ประเมินราคา — คุ้มค่าซ่อมหรือไม่',cls:'b-brand'};
   if(j.phase==='pending')return{label:'รอ กบค. รับเรื่อง',cls:'b-brand'};
   if(j.phase==='returned'){
     const s=j.rstage||0;
@@ -334,7 +334,7 @@ function statusInfo(j){
   }
   if(j.phase==='gclosed')return{label:'ปิดงาน — '+(j.record&&j.record.by==='กรย.'?'กรย. ซ่อมเอง':'ซ่อมโดยอู่'),cls:'b-ok'};
   if(j.phase==='disposal')return{label:'ทำเรื่องจำหน่าย (ไม่คุ้มค่าซ่อม) ❓',cls:'b-low'};
-  if(j.phase==='sched')return{label:'รอ กบค. โทรนัดวันเข้าซ่อม สนญ.',cls:'b-brand'};
+  if(j.phase==='sched')return{label:'รอ กบค. นัดวันเข้าซ่อม สนญ. (โทรนัด)',cls:'b-brand'};
   if(j.phase==='consent')return{label:'นัดเข้าซ่อม '+j.inbound.date+' — รอผู้แจ้งยินยอมใบรับรถ',cls:'b-brand'};
   if(j.phase==='checkin')return{label:'รถถึง สนญ. — ตรวจรถเทียบเอกสารรับรถ',cls:'b-brand'};
   if(j.phase==='work')return{label:(j.loc==='onsite'?'ซ่อมหน้างาน: ':'')+WORK_STEPS[j.wi],cls:'b-brand'};
@@ -744,11 +744,17 @@ function renderMyDetail(no){
     }
   }
   if(j.phase==='gclosed'){extra=(j.ret?retPanel(j):'')+recordPanel(j)}
+  if(j.phase==='krd'&&j.krdAppt){
+    extra+=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>ได้รับนัดวัน — ได้รับการติดต่อจาก กรย.:</b> เข้าซ่อมหน้างาน ${j.krdAppt.date} ${j.krdAppt.note?'· '+j.krdAppt.note:''}</div>`;
+  }
+  if(j.phase==='disposal'){
+    extra+=`<div class="apptbox"><span class="ms" style="color:var(--warning-700)">flag</span> <b>ประเมินแล้วไม่คุ้มค่าซ่อม</b> — ${j.dispBy||''} ทำเรื่องจำหน่าย ❓ (เส้นทางในผังยังไม่กำหนด)</div>`;
+  }
   if(j.phase==='sched'){
     extra+=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">call</span> <b>กบค. รับเรื่องแล้ว (งานใหญ่ — นำรถเข้า สนญ.)</b> — รอ กบค. <b>โทรนัดวันเข้าซ่อม</b>กับเจ้าของรถ แล้วบันทึกวันที่ในระบบ</div>`;
   }
   if(j.phase==='consent'){
-    extra+=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>ได้รับการติดต่อ — นัดวันเข้าซ่อมกับ กบค.:</b> ${j.inbound.date} ${j.inbound.note?'· '+j.inbound.note:''}</div>
+    extra+=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>ได้รับนัดวัน — ได้รับการติดต่อจาก กบค.:</b> เข้าซ่อม สนญ. ${j.inbound.date} ${j.inbound.note?'· '+j.inbound.note:''}</div>
     <div class="sect" style="margin-top:24px">เอกสารรับรถ (VMS+)</div>
     <div class="panel">
       <div class="hint" style="margin:0 0 10px">ดาวน์โหลด<b>เอกสารรับรถ</b> อ่านเงื่อนไข แล้วกด<b>ยินยอม</b>ก่อนขับรถมาที่สำนักงานใหญ่ — กบค. จะบันทึกตรวจสอบรถเทียบกับเอกสารนี้ตอนรับรถ</div>
@@ -835,7 +841,7 @@ function vehHistoryPanel(j){
 let KE={mode:null,garages:[]};
 function renderKryList(){
   $('krydetail').classList.add('hidden');$('krylist').classList.remove('hidden');
-  const list=JOBS.filter(j=>['kry','krd'].includes(j.phase));
+  const list=JOBS.filter(j=>['kry','krd'].includes(j.phase)||(j.phase==='disposal'&&j.dispBy==='กรย.'));
   if(!list.length){$('krylist').innerHTML='<div class="empty">ยังไม่มีเรื่องรอคัดแยก</div>';return}
   $('krylist').innerHTML=list.map(j=>{
     const st=statusInfo(j);
@@ -846,7 +852,7 @@ function renderKryList(){
       <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
   }).join('');
 }
-function openKry(no){KE={mode:null,garages:[]};renderKryDetail(no)}
+function openKry(no){KE={mode:null,garages:[],worth:null};renderKryDetail(no)}
 function renderKryDetail(no){
   const j=JOBS.find(x=>x.no===no);
   const st=statusInfo(j);
@@ -856,7 +862,7 @@ function renderKryDetail(no){
     +`<div class="sect" style="margin-top:24px">ควรซ่อมที่ไหน? — กรย. คัดแยกช่องทางซ่อม</div>
     <div class="decide" style="max-width:840px">
       <div class="tile tile-blue ${KE.mode==='garage'?'sel':''}" onclick="KE.mode='garage';renderKryDetail('${no}')"><span class="ms">garage</span><b>ซ่อมที่อู่</b><small>เจ้าของรถขับไปอู่ภายนอก</small></div>
-      <div class="tile tile-magenta ${KE.mode==='self'?'sel':''}" onclick="KE.mode='self';renderKryDetail('${no}')"><span class="ms">handyman</span><b>กรย. ซ่อมเอง</b><small>เบิกอะไหล่จากคลัง ซ่อมที่ กรย.</small></div>
+      <div class="tile tile-magenta ${KE.mode==='self'?'sel':''}" onclick="KE.mode='self';renderKryDetail('${no}')"><span class="ms">handyman</span><b>กรย. ซ่อมเอง</b><small>ประเมินคุ้มค่า → เบิกอะไหล่ → นัดวัน → ซ่อมหน้างาน</small></div>
       <div class="tile tile-blue ${KE.mode==='kbk'?'sel':''}" onclick="KE.mode='kbk';renderKryDetail('${no}')"><span class="ms">engineering</span><b>ส่งต่อ กบค.</b><small>งานเครื่องเสริม เช่น เครน/กระเช้า</small></div>
     </div>`;
     if(KE.mode==='garage'){
@@ -875,19 +881,50 @@ function renderKryDetail(no){
         <div class="rowbtns"><button class="btn btn-p" onclick="kryToKbk('${no}')">ส่งต่อให้ กบค.</button></div></div>`;
     }
   }
-  if(j.phase==='krd'){
+  if(j.phase==='krd'&&j.worth!=='yes'){   // ---- กรย. ซ่อมเอง: ระบุอาการ/ประเมินราคา → คุ้มค่าซ่อมหรือไม่ (ตามผังปรับใหม่) ----
+    action=`<div class="sect" style="margin-top:24px">ระบุอาการเสีย และประเมินราคา — กรย.</div>
+    ${repairMethodsHTML(j.symIds,'max-width:760px')}
+    <div class="panel">
+      <div class="fgrid" style="margin:0;max-width:560px">
+        <div class="f sp2"><label>ประเมินราคาซ่อม (บาท)</label><div class="in"><span class="ms">payments</span><input type="number" min="0" id="kry-asprice" value="${j.est||''}" placeholder="0"></div></div>
+      </div>
+    </div>
+    <div class="sect" style="margin-top:20px">คุ้มค่าที่จะซ่อมหรือไม่?</div>
+    <div class="decide">
+      <div class="tile tile-magenta ${KE.worth==='yes'?'sel':''}" onclick="KE.worth='yes';renderKryDetail('${no}')"><span class="ms">task_alt</span><b>คุ้มค่า — กรย. ซ่อมเอง</b><small>เบิกอะไหล่ → นัดวัน → เดินทางไปหน้างาน</small></div>
+      <div class="tile tile-blue ${KE.worth==='no'?'sel':''}" onclick="KE.worth='no';renderKryDetail('${no}')"><span class="ms">delete_forever</span><b>ไม่คุ้มค่า → ทำเรื่องจำหน่าย</b><small>เส้นทางในผังยังไม่กำหนด (❓)</small></div>
+    </div>`;
+    if(KE.worth==='yes'){
+      action+=`<div class="panel"><div class="hint" style="margin:0">ยืนยันแล้วจะเข้าขั้นตอน: เบิกอะไหล่จากคลัง → นัดวันซ่อมกับเจ้าของรถ → เดินทางไปหน้างาน → ซ่อม → บันทึกประวัติ</div>
+        <div class="rowbtns"><button class="btn btn-p" onclick="krdWorthYes('${no}')">คุ้มค่าซ่อม — ทำเรื่องเบิกอะไหล่จากคลัง</button></div></div>`;
+    }
+    if(KE.worth==='no'){
+      action+=`<div class="panel">
+        <span class="badge b-low">❓ ทำเรื่องจำหน่าย — เส้นทางในผังงานยังไม่กำหนด (placeholder)</span>
+        <div class="f" style="margin-top:10px"><label>บันทึกเหตุผล <small>(ถ้ามี)</small></label><textarea id="kry-dispnote" rows="2" placeholder="เช่น ค่าซ่อมสูงกว่ามูลค่ารถ…"></textarea></div>
+        <div class="rowbtns"><button class="btn btn-p" onclick="krdDisposal('${no}')">บันทึก — ส่งเรื่องเข้ากระบวนการจำหน่าย</button></div></div>`;
+    }
+  }
+  else if(j.phase==='krd'){   // ---- คุ้มค่าแล้ว: เดิน 5 ขั้นตามผัง ----
     const s=j.krdStage||0;
-    action=`<div class="sect" style="margin-top:24px">กรย. ดำเนินการซ่อมเอง</div>
+    action=`<div class="sect" style="margin-top:24px">กรย. ดำเนินการซ่อมเอง <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ประเมินราคา ${(j.est||0).toLocaleString()} บาท · คุ้มค่าซ่อม</span></div>
     <div class="wsteps" style="margin-top:14px">${KRD_STEPS.map((x,i)=>`<div class="wstep ${i===s?'active':i<s?'passed':''}"><span class="num">${i<s?'✓':i+1}</span><span class="lbl">${x}</span></div>`).join('')}</div>`;
+    if(j.krdAppt)action+=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดวันซ่อมกับเจ้าของรถ:</b> ${j.krdAppt.date} ${j.krdAppt.note?'· '+j.krdAppt.note:''}</div>`;
     if(s===0){
-      action+=`<div class="panel"><div class="hint" style="margin:0">เข้าไปดู/เช็ครถกับหน่วยงานผู้แจ้ง ยืนยันอาการก่อนทำเรื่องเบิกอะไหล่</div>
-        <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="krdAdvance('${no}')">เช็ครถแล้ว → ทำเรื่องเบิกอะไหล่จากคลัง</button></div></div>`;
+      action+=`<div class="panel">
+        ${j.booked.length?`<b style="color:var(--gray-900);font-size:14px">อะไหล่ที่จองไว้จากใบแจ้งซ่อม</b>`+j.booked.map(b=>`<div class="hint" style="margin-top:4px"><span class="ms" style="font-size:16px">check_circle</span> ${b.name} ×${b.qty} ${b.unit||''}</div>`).join(''):'<div class="hint">ไม่มีการจองอะไหล่จากใบแจ้งซ่อม</div>'}
+        <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="krdAdvance('${no}')">เบิกอะไหล่แล้ว → นัดวันซ่อมกับเจ้าของรถ</button></div></div>`;
     }else if(s===1){
       action+=`<div class="panel">
-        <span class="badge b-low">❓ กรย. เบิกของจากคลังไหน? — ผังงานยังไม่กำหนด</span>
-        ${j.booked.length?`<div style="margin-top:10px"><b style="color:var(--gray-900);font-size:14px">อะไหล่ที่จองไว้จากใบแจ้งซ่อม</b>`+j.booked.map(b=>`<div class="hint" style="margin-top:4px"><span class="ms" style="font-size:16px">check_circle</span> ${b.name} ×${b.qty} ${b.unit||''}</div>`).join('')+'</div>':'<div class="hint" style="margin-top:10px">ไม่มีการจองอะไหล่จากใบแจ้งซ่อม</div>'}
-        <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="krdAdvance('${no}')">เบิกอะไหล่แล้ว → ดำเนินการซ่อม</button></div></div>`;
+        <div class="hint" style="margin:0 0 10px">โทรนัดกับเจ้าของรถ แล้ว<b>บันทึกวันที่จะเข้าซ่อมหน้างาน</b> — วันนัดไปแสดงที่ฝั่งผู้แจ้งด้วย</div>
+        <div class="fgrid" style="margin:0;max-width:680px">
+          <div class="f sp2"><label>วันนัดซ่อม (หน้างาน)</label><div class="in"><span class="ms">event</span><input type="date" id="krd-date"></div></div>
+          <div class="f sp2"><label>หมายเหตุ <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="krd-note" placeholder="เช่น จุดจอดรถหน่วยงาน"></div></div>
+        </div>
+        <div class="rowbtns"><button class="btn btn-p" onclick="confirmKrdAppt('${no}')">บันทึกวันนัดซ่อม (โทรนัดแล้ว)</button></div></div>`;
     }else if(s===2){
+      action+=`<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="krdAdvance('${no}')">ถึงหน้างานแล้ว → ดำเนินการซ่อม</button></div>`;
+    }else if(s===3){
       action+=`<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="krdAdvance('${no}')">ซ่อมเสร็จ → บันทึกประวัติการซ่อม</button></div>`;
     }else{
       action+=`<div class="panel">
@@ -896,8 +933,12 @@ function renderKryDetail(no){
         <div class="f sp2"><label>ค่าอะไหล่ (บาท)</label><div class="in"><span class="ms">settings</span><input type="number" min="0" id="krdpc" placeholder="0"></div></div>
         <div class="f sp2"><label>ค่าแรง (บาท)</label><div class="in"><span class="ms">engineering</span><input type="number" min="0" id="krdlc" placeholder="0"></div></div>
       </div>
-      <div class="rowbtns"><button class="btn btn-p" onclick="krdClose('${no}')">บันทึกประวัติการซ่อมและปิดงาน</button></div></div>`;
+      <div class="rowbtns"><button class="btn btn-p" onclick="krdClose('${no}')">บันทึกประวัติการซ่อม — ทำการปิดงาน</button></div></div>`;
     }
+  }
+  if(j.phase==='disposal'){
+    action=`<div class="panel"><span class="badge b-low">❓ ทำเรื่องจำหน่าย — เส้นทางในผังงานยังไม่กำหนด (placeholder)</span>
+    <div class="hint" style="margin-top:8px">ประเมินราคาซ่อม ${(j.est||0).toLocaleString()} บาท — ประเมินแล้วไม่คุ้มค่าซ่อม (โดย ${j.dispBy||'—'})</div></div>`;
   }
   if(j.phase==='gclosed')action=recordPanel(j);
   $('krylist').classList.add('hidden');
@@ -931,6 +972,29 @@ function kryToKbk(no){
   j.phase='pending';
   j.history.push({t:nowStr(),label:'กรย. ทำเอกสารแจ้ง กบค. — ส่งต่อให้ กบค.'+(note?' — '+esc(note):'')});
   persist();updateBadge();toast('ส่งต่อ กบค. แล้ว — ไปแสดงที่เมนู "งานซ่อม กบค."');renderKryDetail(no);
+}
+function krdWorthYes(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.worth='yes';j.est=+($('kry-asprice')?$('kry-asprice').value:0)||j.est||0;j.krdStage=0;
+  j.history.push({t:nowStr(),label:'กรย. ประเมินราคา '+(j.est||0).toLocaleString()+' บาท — คุ้มค่าซ่อม · ทำเรื่องเบิกอะไหล่จากคลัง'});
+  persist();toast('บันทึกแล้ว — ทำเรื่องเบิกอะไหล่จากคลังต่อ');renderKryDetail(no);
+}
+function krdDisposal(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.worth='no';j.est=+($('kry-asprice')?$('kry-asprice').value:0)||j.est||0;j.phase='disposal';j.dispBy='กรย.';
+  const note=$('kry-dispnote').value.trim();
+  j.history.push({t:nowStr(),label:'กรย. ประเมินแล้วไม่คุ้มค่าซ่อม — ทำเรื่องจำหน่าย ❓ (เส้นทางผังยังไม่กำหนด)'+(note?' — '+esc(note):'')});
+  persist();updateBadge();toast('บันทึกเข้ากระบวนการจำหน่ายแล้ว (placeholder)');renderKryDetail(no);
+}
+function confirmKrdAppt(no){
+  const j=JOBS.find(x=>x.no===no);
+  const iso=$('krd-date').value;
+  if(!iso){toast('กรุณาเลือกวันนัดซ่อม');return}
+  const i=isoInfo(iso);
+  j.krdAppt={date:`${i.label} (${i.thdate})`,note:esc($('krd-note').value.trim()),t:nowStr()};
+  j.krdStage=2;
+  j.history.push({t:nowStr(),label:'กรย. โทรนัด — นัดวันซ่อมกับเจ้าของรถ '+i.thdate+' · เดินทางไปหน้างาน'});
+  persist();toast('บันทึกวันนัดแล้ว — เจ้าของรถเห็นวันนัดด้วย');renderKryDetail(no);
 }
 function krdAdvance(no){
   const j=JOBS.find(x=>x.no===no);
@@ -1003,7 +1067,7 @@ function inspViewPanel(title,rec){
 }
 function renderKbkList(){
   $('kbkdetail').classList.add('hidden');$('kbklist').classList.remove('hidden');
-  const list=JOBS.filter(j=>['pending','sched','consent','checkin','work','approve','closed','returned','gclosed','disposal'].includes(j.phase));
+  const list=JOBS.filter(j=>['pending','sched','consent','checkin','work','approve','closed','returned','gclosed'].includes(j.phase)||(j.phase==='disposal'&&j.dispBy!=='กรย.'));
   if(!list.length){$('kbklist').innerHTML='<div class="empty">ยังไม่มีงานเข้าคิว</div>';return}
   $('kbklist').innerHTML=list.map(j=>{
     const st=statusInfo(j);
@@ -1075,7 +1139,7 @@ function renderKbkDetail(no){
   }
 
   if(j.phase==='sched'){
-    action=`<div class="sect" style="margin-top:24px">โทรนัดวันมา สนญ. กับเจ้าของรถ</div>
+    action=`<div class="sect" style="margin-top:24px">นัดวันมา สนญ. กับเจ้าของรถ (โทรนัด)</div>
     <div class="panel">
       <div class="hint" style="margin:0 0 10px">โทรนัดกับเจ้าของรถ แล้ว<b>บันทึกวันที่เจ้าของรถจะเดินทางเข้าซ่อม</b> — ระบบจะให้ผู้แจ้งดาวน์โหลดและยินยอมเอกสารรับรถ</div>
       <div class="fgrid" style="margin:0;max-width:680px">
@@ -1206,7 +1270,7 @@ function renderKbkDetail(no){
 }
 function confirmDisposal(no){
   const j=JOBS.find(x=>x.no===no);
-  j.worth='no';j.est=+($('asprice')?$('asprice').value:0)||j.est||0;j.phase='disposal';
+  j.worth='no';j.est=+($('asprice')?$('asprice').value:0)||j.est||0;j.phase='disposal';j.dispBy='กบค.';
   const note=$('dispnote').value.trim();
   j.history.push({t:nowStr(),label:'ประเมินแล้วไม่คุ้มค่าซ่อม — ทำเรื่องจำหน่าย ❓ (เส้นทางผังยังไม่กำหนด)'+(note?' — '+esc(note):'')});
   persist();updateBadge();toast('บันทึกเข้ากระบวนการจำหน่ายแล้ว (placeholder)');renderKbkDetail(no);
