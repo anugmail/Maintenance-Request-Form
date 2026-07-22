@@ -7,7 +7,7 @@
 // โครงข้อมูล (plain objects):
 // vehicle: { id, plate, vehicleType, criteria, region(1-12), status, mileage, engineHours }
 // item:    { id, name, category, oilKind?, unit, appliesToTypes:[], qtyPerVehicle }
-// plan:    { planName, criteria, selectedVehicleIds:[], quarter, year, preparedConfirmed, workNumber, approvalStatus,
+// plan:    { planName, selectedVehicleIds:[], quarter, year, preparedConfirmed, workNumber, approvalStatus,
 //            partsRequisitioned, travelPlan:{location,dateFrom,dateTo,perDiem,lodging,travel}|null, travelConfirmed }
 
 const MASTER_KEY = 'maintaind.yearly.master.v1';
@@ -17,7 +17,7 @@ const PLAN_KEY = 'maintaind.yearly.plan.v1';
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -69,7 +69,6 @@ const SEED_ITEMS = [
 
 const INITIAL_PLAN = {
   planName: '',
-  criteria: null,
   selectedVehicleIds: [],
   quarter: null,
   year: 2569,

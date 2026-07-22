@@ -103,17 +103,16 @@ function renderPhase() {
 // ================================================================
 // ================= MASTER PLAN WIZARD (Phase 1) =================
 // ================================================================
-// sub-stepper 5 ขั้น (state.sub, 1..5) เก็บใน memory เท่านั้น
+// sub-stepper 4 ขั้น (state.sub, 1..4) เก็บใน memory เท่านั้น
 // ข้อมูลแผนจริงอ่าน/เขียนผ่าน MYD.loadPlan()/MYD.savePlan() (localStorage)
 // เข้าเฟส 1 ครั้งใด ถ้าแผนอนุมัติแล้ว (approvalStatus==='approved') ข้าม
 // wizard ไปแสดงสรุปผลอนุมัติเลย ไม่ให้เริ่ม wizard ใหม่
 
 const SUB_STEPS = [
-  { no: 1, label: 'ชื่อแผน + เกณฑ์' },
-  { no: 2, label: 'เลือกรถ' },
-  { no: 3, label: 'รายการอะไหล่' },
-  { no: 4, label: 'ไทรมาส' },
-  { no: 5, label: 'ทวน + อนุมัติ' },
+  { no: 1, label: 'ชื่อแผน + เลือกรถ' },
+  { no: 2, label: 'รายการอะไหล่' },
+  { no: 3, label: 'ไทรมาส' },
+  { no: 4, label: 'ทวน + อนุมัติ' },
 ];
 
 const QUARTERS = [
@@ -137,7 +136,7 @@ function renderMasterPlan() {
 
 // ----- sub-nav -----
 function goSub(n) {
-  if (n < 1 || n > 5) return;
+  if (n < 1 || n > 4) return;
   state.sub = n;
   renderMasterPlan();
   window.scrollTo({ top: 0 });
@@ -146,7 +145,7 @@ function goSub(n) {
 function nextSub() {
   const plan = MYD.loadPlan();
   if (!validateSub(plan, state.sub)) return;
-  if (state.sub >= 5) return;
+  if (state.sub >= 4) return;
   goSub(state.sub + 1);
 }
 
@@ -156,23 +155,22 @@ function backSub() {
 }
 
 function validateSub(plan, sub) {
-  if (sub === 1) return !!(plan.planName && plan.planName.trim() && plan.criteria);
-  if (sub === 2) return (plan.selectedVehicleIds || []).length > 0;
-  if (sub === 3) return true;
-  if (sub === 4) return !!plan.quarter;
-  return true;
+  if (sub === 1) return !!(plan.planName && plan.planName.trim()) && (plan.selectedVehicleIds || []).length >= 1;
+  if (sub === 2) return true;
+  if (sub === 3) return !!plan.quarter;
+  return true; // sub 4: ปุ่มขออนุมัติคุมด้วย plan.preparedConfirmed แยกต่างหาก
 }
 
 function updatePrimaryEnabled(plan) {
   const btn = $('btnPrimarySub');
   if (!btn) return;
-  btn.disabled = state.sub < 5 ? !validateSub(plan, state.sub) : !plan.preparedConfirmed;
+  btn.disabled = state.sub < 4 ? !validateSub(plan, state.sub) : !plan.preparedConfirmed;
 }
 
 // ----- wizard shell -----
 function renderWizard(plan) {
-  const primaryLabel = state.sub === 5 ? 'ขออนุมัติเลขงาน' : 'ถัดไป';
-  const primaryDisabled = state.sub === 5 ? !plan.preparedConfirmed : !validateSub(plan, state.sub);
+  const primaryLabel = state.sub === 4 ? 'ขออนุมัติเลขงาน' : 'ถัดไป';
+  const primaryDisabled = state.sub === 4 ? !plan.preparedConfirmed : !validateSub(plan, state.sub);
 
   $('phase').innerHTML = `
     <div class="card">
@@ -199,7 +197,7 @@ function renderWizard(plan) {
 
   $('btnBackSub').addEventListener('click', backSub);
   $('btnPrimarySub').addEventListener('click', () => {
-    if (state.sub === 5) approvePlan(plan);
+    if (state.sub === 4) approvePlan(plan);
     else nextSub();
   });
 }
@@ -208,22 +206,40 @@ function renderSubBody(plan) {
   if (state.sub === 1) return renderStep1(plan);
   if (state.sub === 2) return renderStep2(plan);
   if (state.sub === 3) return renderStep3(plan);
-  if (state.sub === 4) return renderStep4(plan);
-  return renderStep5(plan);
+  return renderStep4(plan);
 }
 
 function bindSubBody(plan) {
   if (state.sub === 1) bindStep1(plan);
-  else if (state.sub === 2) bindStep2(plan);
+  else if (state.sub === 3) bindStep3(plan);
   else if (state.sub === 4) bindStep4(plan);
-  else if (state.sub === 5) bindStep5(plan);
-  // step 3 อ่านอย่างเดียว ไม่มี event ผูก
+  // step 2 (อะไหล่) อ่านอย่างเดียว ไม่มี event ผูก
 }
 
-// ----- ขั้น 1: ชื่อแผน + เกณฑ์ -----
+// ----- ขั้น 1: ชื่อแผน + เลือกรถเข้าแผน (ภาค → เขต → รถ) -----
+// state.expandedRegions: { [regionId]: true|false } — เก็บสถานะขยาย/ย่อของแต่ละเขต
+// ข้าม re-render ของ wizard ได้ (ไม่ผูกกับ plan, อยู่ใน memory เท่านั้น เหมือน state.sub)
+function regionVehiclesFor(master, regionId) {
+  return master.vehicles.filter(v => v.region === regionId);
+}
+
 function renderStep1(plan) {
+  if (!state.expandedRegions) state.expandedRegions = {};
+  const master = MYD.loadMaster();
+  const allVehicles = master.vehicles;
+  const selected = new Set(plan.selectedVehicleIds || []);
+  const allSelected = allVehicles.length > 0 && allVehicles.every(v => selected.has(v.id));
+  const regionsSelected = new Set(allVehicles.filter(v => selected.has(v.id)).map(v => v.region));
+
+  const zonesHtml = MYD.ZONE_ORDER.map(zone => {
+    const regions = MYD.REGIONS.filter(r => r.zone === zone);
+    if (!regions.length) return '';
+    const blocks = regions.map(r => renderRegionBlock(r, master, selected)).join('');
+    return `<div class="sect">${esc(MYD.ZONE_LABELS[zone])}</div>${blocks}`;
+  }).join('');
+
   return `
-    <div class="sect">ขั้นที่ 1: ชื่อแผน + เกณฑ์</div>
+    <div class="sect">ขั้นที่ 1: ชื่อแผน + เลือกรถเข้าแผน</div>
     <div class="fgrid">
       <div class="f sp4">
         <label>ชื่อแผน</label>
@@ -232,69 +248,15 @@ function renderStep1(plan) {
         </div>
       </div>
     </div>
-    <div class="f"><label>เกณฑ์การเข้าแผน</label></div>
-    <div class="fgrid" style="margin-top:0">
-      <div class="tile tile-magenta sp2 ${plan.criteria === 'truck' ? 'sel' : ''}" id="critTruck" data-crit="truck">
-        <span class="ms">local_shipping</span><b>${esc(MYD.CRITERIA_LABELS.truck)}</b>
-      </div>
-      <div class="tile tile-blue sp2 ${plan.criteria === 'net' ? 'sel' : ''}" id="critNet" data-crit="net">
-        <span class="ms">precision_manufacturing</span><b>${esc(MYD.CRITERIA_LABELS.net)}</b>
-      </div>
-    </div>`;
-}
-
-function bindStep1(plan) {
-  $('fPlanName').addEventListener('input', e => {
-    plan.planName = e.target.value;
-    MYD.savePlan(plan);
-    updatePrimaryEnabled(plan);
-  });
-  $('critTruck').addEventListener('click', () => selectCriteria(plan, 'truck'));
-  $('critNet').addEventListener('click', () => selectCriteria(plan, 'net'));
-}
-
-function selectCriteria(plan, crit) {
-  if (plan.criteria !== crit) {
-    plan.criteria = crit;
-    plan.selectedVehicleIds = []; // เปลี่ยนเกณฑ์ต้องล้างรถที่เลือกไว้
-  }
-  MYD.savePlan(plan);
-  renderWizard(plan);
-}
-
-// ----- ขั้น 2: เลือกรถเข้าแผน (ภาค → เขต → รถ) -----
-// state.expandedRegions: { [regionId]: true|false } — เก็บสถานะขยาย/ย่อของแต่ละเขต
-// ข้าม re-render ของ wizard ได้ (ไม่ผูกกับ plan, อยู่ใน memory เท่านั้น เหมือน state.sub)
-function regionVehiclesFor(master, plan, regionId) {
-  return master.vehicles.filter(v => v.region === regionId && v.criteria === plan.criteria);
-}
-
-function renderStep2(plan) {
-  if (!state.expandedRegions) state.expandedRegions = {};
-  const master = MYD.loadMaster();
-  const allVehicles = master.vehicles.filter(v => v.criteria === plan.criteria);
-  const selected = new Set(plan.selectedVehicleIds || []);
-  const allSelected = allVehicles.length > 0 && allVehicles.every(v => selected.has(v.id));
-  const regionsSelected = new Set(allVehicles.filter(v => selected.has(v.id)).map(v => v.region));
-
-  const zonesHtml = MYD.ZONE_ORDER.map(zone => {
-    const regions = MYD.REGIONS.filter(r => r.zone === zone);
-    if (!regions.length) return '';
-    const blocks = regions.map(r => renderRegionBlock(r, master, plan, selected)).join('');
-    return `<div class="sect">${esc(MYD.ZONE_LABELS[zone])}</div>${blocks}`;
-  }).join('');
-
-  return `
-    <div class="sect">ขั้นที่ 2: เลือกรถเข้าแผน (เกณฑ์: ${esc(MYD.CRITERIA_LABELS[plan.criteria] || plan.criteria)})</div>
     <div class="sub">เลือกแล้ว ${selected.size} คัน จาก ${regionsSelected.size} เขต</div>
     <div class="chk" style="margin-bottom:12px">
       <label><input type="checkbox" id="chkAllZones" ${allSelected ? 'checked' : ''} ${allVehicles.length === 0 ? 'disabled' : ''}> เลือกทั้งหมด (ทุกเขต) — ${allVehicles.length} คัน</label>
     </div>
-    ${zonesHtml || `<div class="empty">ไม่มีรถตามเกณฑ์นี้</div>`}`;
+    ${zonesHtml || `<div class="empty">ไม่มีรถ</div>`}`;
 }
 
-function renderRegionBlock(region, master, plan, selected) {
-  const vehicles = regionVehiclesFor(master, plan, region.id);
+function renderRegionBlock(region, master, selected) {
+  const vehicles = regionVehiclesFor(master, region.id);
   const selCount = vehicles.filter(v => selected.has(v.id)).length;
   const expanded = !!state.expandedRegions[region.id];
 
@@ -321,7 +283,7 @@ function renderRegionBlock(region, master, plan, selected) {
         <div class="tblwrap">
           <table class="tbl">
             <thead><tr><th></th><th>ทะเบียน</th><th>ประเภท</th><th>สถานะ</th></tr></thead>
-            <tbody>${rows || `<tr><td colspan="4" class="empty">ไม่มีรถตามเกณฑ์นี้ในเขตนี้</td></tr>`}</tbody>
+            <tbody>${rows || `<tr><td colspan="4" class="empty">ไม่มีรถในเขตนี้</td></tr>`}</tbody>
           </table>
         </div>
       </div>` : ''}
@@ -334,9 +296,15 @@ function toggleRegion(regionId) {
   renderWizard(MYD.loadPlan());
 }
 
-function bindStep2(plan) {
+function bindStep1(plan) {
+  $('fPlanName').addEventListener('input', e => {
+    plan.planName = e.target.value;
+    MYD.savePlan(plan);
+    updatePrimaryEnabled(plan);
+  });
+
   const master = MYD.loadMaster();
-  const allVehicles = master.vehicles.filter(v => v.criteria === plan.criteria);
+  const allVehicles = master.vehicles;
 
   const chkAllZones = $('chkAllZones');
   if (chkAllZones) {
@@ -349,7 +317,7 @@ function bindStep2(plan) {
 
   document.querySelectorAll('.regionAllChk').forEach(chk => {
     const regionId = Number(chk.dataset.region);
-    const vehicles = regionVehiclesFor(master, plan, regionId);
+    const vehicles = regionVehiclesFor(master, regionId);
     const selectedNow = new Set(plan.selectedVehicleIds || []);
     const selCount = vehicles.filter(v => selectedNow.has(v.id)).length;
     chk.indeterminate = selCount > 0 && selCount < vehicles.length;
@@ -376,14 +344,14 @@ function bindStep2(plan) {
   });
 }
 
-// ----- ขั้น 3: รายการอะไหล่/น้ำมัน/ไส้กรอง (auto) -----
+// ----- ขั้น 2: รายการอะไหล่/น้ำมัน/ไส้กรอง (auto) -----
 function deriveLinesForPlan(plan) {
   const master = MYD.loadMaster();
   const selectedVehicles = master.vehicles.filter(v => (plan.selectedVehicleIds || []).includes(v.id));
   return { selectedVehicles, lines: MYD.deriveItems(selectedVehicles, master.items) };
 }
 
-function renderStep3(plan) {
+function renderStep2(plan) {
   const { selectedVehicles, lines } = deriveLinesForPlan(plan);
 
   const groups = ['part', 'oil', 'filter'].map(cat => {
@@ -408,15 +376,15 @@ function renderStep3(plan) {
   }).join('');
 
   return `
-    <div class="sect">ขั้นที่ 3: รายการอะไหล่/น้ำมัน/ไส้กรอง (คำนวณอัตโนมัติ)</div>
+    <div class="sect">ขั้นที่ 2: รายการอะไหล่/น้ำมัน/ไส้กรอง (คำนวณอัตโนมัติ)</div>
     <div class="sub">จากรถที่เลือก ${selectedVehicles.length} คัน — รายการนี้อ่านอย่างเดียว</div>
     ${groups || `<div class="empty">ไม่มีรายการที่เกี่ยวข้องกับรถที่เลือก</div>`}`;
 }
 
-// ----- ขั้น 4: ระบุไทรมาส -----
-function renderStep4(plan) {
+// ----- ขั้น 3: ระบุไทรมาส -----
+function renderStep3(plan) {
   return `
-    <div class="sect">ขั้นที่ 4: ระบุไทรมาส</div>
+    <div class="sect">ขั้นที่ 3: ระบุไทรมาส</div>
     <div class="fgrid">
       ${QUARTERS.map(q => `
         <div class="tile tile-blue ${plan.quarter === q.q ? 'sel' : ''}" id="qtile-${q.q}" data-q="${q.q}">
@@ -431,7 +399,7 @@ function renderStep4(plan) {
     </div>`;
 }
 
-function bindStep4(plan) {
+function bindStep3(plan) {
   QUARTERS.forEach(q => {
     $(`qtile-${q.q}`).addEventListener('click', () => {
       plan.quarter = q.q;
@@ -446,8 +414,8 @@ function bindStep4(plan) {
   });
 }
 
-// ----- ขั้น 5: ทวน + ผบพ.เตรียมอะไหล่ + ขออนุมัติเลขงาน -----
-function renderStep5(plan) {
+// ----- ขั้น 4: ทวน + ผบพ.เตรียมอะไหล่ + ขออนุมัติเลขงาน -----
+function renderStep4(plan) {
   const { selectedVehicles, lines } = deriveLinesForPlan(plan);
   const qInfo = QUARTERS.find(q => q.q === plan.quarter);
   const catSummary = ['part', 'oil', 'filter']
@@ -459,10 +427,9 @@ function renderStep5(plan) {
     .join(' · ');
 
   return `
-    <div class="sect">ขั้นที่ 5: ทวนสอบแผน + ขออนุมัติเลขงาน</div>
+    <div class="sect">ขั้นที่ 4: ทวนสอบแผน + ขออนุมัติเลขงาน</div>
     <div class="fgrid">
       <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
-      <div class="f sp2"><label>เกณฑ์</label><div>${esc(MYD.CRITERIA_LABELS[plan.criteria] || '-')}</div></div>
       <div class="f sp2"><label>จำนวนรถ</label><div>${selectedVehicles.length} คัน</div></div>
       <div class="f sp2"><label>ไทรมาส/ปี</label><div>${esc(plan.quarter)}${qInfo ? ' (' + esc(qInfo.months) + ')' : ''} / ${esc(plan.year)}</div></div>
       <div class="f sp4"><label>สรุปอะไหล่รวม</label><div>${catSummary || 'ไม่มีรายการ'}</div></div>
@@ -472,7 +439,7 @@ function renderStep5(plan) {
     </div>`;
 }
 
-function bindStep5(plan) {
+function bindStep4(plan) {
   $('chkPrepared').addEventListener('change', e => {
     plan.preparedConfirmed = e.target.checked;
     MYD.savePlan(plan);
@@ -502,7 +469,6 @@ function renderApprovedSummary(plan) {
       <span class="badge b-ok" style="font-size:15px;padding:6px 16px">${esc(plan.workNumber)}</span>
       <div class="fgrid" style="margin-top:16px">
         <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
-        <div class="f sp2"><label>เกณฑ์</label><div>${esc(MYD.CRITERIA_LABELS[plan.criteria] || '-')}</div></div>
         <div class="f sp2"><label>ไทรมาส/ปี</label><div>${esc(plan.quarter)} / ${esc(plan.year)}</div></div>
         <div class="f sp2"><label>จำนวนรถทั้งหมด</label><div>${selectedVehicles.length} คัน</div></div>
       </div>
