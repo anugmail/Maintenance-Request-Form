@@ -391,7 +391,7 @@ function renderStep3(plan) {
     if (!catLines.length) return '';
     const rows = catLines.map(l => `
       <tr>
-        <td>${esc(l.item.name)}</td>
+        <td>${esc(l.item.name)}<div style="font-size:12px;color:var(--gray-500)">${esc(MYD.triggerText(l.item))}</div></td>
         <td class="num">${esc(l.item.qtyPerVehicle)}</td>
         <td class="num">${esc(l.vehicleCount)}</td>
         <td class="num">${esc(l.totalQty)}</td>
@@ -641,7 +641,7 @@ function renderProcStep1(plan) {
     if (!catLines.length) return '';
     const rows = catLines.map(l => `
       <tr>
-        <td>${esc(l.item.name)}</td>
+        <td>${esc(l.item.name)}<div style="font-size:12px;color:var(--gray-500)">${esc(MYD.triggerText(l.item))}</div></td>
         <td class="num">${esc(l.item.qtyPerVehicle)}</td>
         <td class="num">${esc(l.vehicleCount)}</td>
         <td class="num">${esc(l.totalQty)}</td>
