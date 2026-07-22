@@ -234,8 +234,15 @@ function renderStep1(plan) {
   const zonesHtml = MYD.ZONE_ORDER.map(zone => {
     const regions = MYD.REGIONS.filter(r => r.zone === zone);
     if (!regions.length) return '';
+    const regionIds = new Set(regions.map(r => r.id));
+    const zoneVehicles = allVehicles.filter(v => regionIds.has(v.region));
+    const zoneSel = zoneVehicles.filter(v => selected.has(v.id)).length;
+    const zoneChecked = zoneVehicles.length > 0 && zoneSel === zoneVehicles.length;
     const blocks = regions.map(r => renderRegionBlock(r, master, selected)).join('');
-    return `<div class="sect">${esc(MYD.ZONE_LABELS[zone])}</div>${blocks}`;
+    return `<div class="sect">
+      <span style="margin-right:auto">${esc(MYD.ZONE_LABELS[zone])} <span style="font-weight:400;color:var(--gray-500);font-size:14px">(${zoneVehicles.length} คัน)</span></span>
+      <label class="rzone-allchk" style="font-weight:500" onclick="event.stopPropagation()"><input type="checkbox" class="zoneAllChk" data-zone="${zone}" ${zoneVehicles.length === 0 ? 'disabled' : ''} ${zoneChecked ? 'checked' : ''}> เลือกทั้งภาค</label>
+    </div>${blocks}`;
   }).join('');
 
   return `
@@ -314,6 +321,24 @@ function bindStep1(plan) {
       renderWizard(plan);
     });
   }
+
+  document.querySelectorAll('.zoneAllChk').forEach(chk => {
+    const zone = chk.dataset.zone;
+    const regionIds = new Set(MYD.REGIONS.filter(r => r.zone === zone).map(r => r.id));
+    const zoneVehicles = allVehicles.filter(v => regionIds.has(v.region));
+    const selectedNow = new Set(plan.selectedVehicleIds || []);
+    const selCount = zoneVehicles.filter(v => selectedNow.has(v.id)).length;
+    chk.indeterminate = selCount > 0 && selCount < zoneVehicles.length;
+
+    chk.addEventListener('change', e => {
+      const set = new Set(plan.selectedVehicleIds || []);
+      if (e.target.checked) zoneVehicles.forEach(v => set.add(v.id));
+      else zoneVehicles.forEach(v => set.delete(v.id));
+      plan.selectedVehicleIds = [...set];
+      MYD.savePlan(plan);
+      renderWizard(plan);
+    });
+  });
 
   document.querySelectorAll('.regionAllChk').forEach(chk => {
     const regionId = Number(chk.dataset.region);
