@@ -8,7 +8,15 @@
 // vehicle: { id, plate, vehicleType, criteria, region(1-12), status, mileage, engineHours }
 // item:    { id, name, category, oilKind?, unit, appliesToTypes:[], qtyPerVehicle }
 // plan:    { planName, selectedVehicleIds:[], quarter, year, preparedConfirmed, workNumber, approvalStatus,
-//            partsRequisitioned, travelPlan:{location,dateFrom,dateTo,perDiem,lodging,travel}|null, travelConfirmed }
+//            partsRequisitioned, travelPlan:{location,dateFrom,dateTo,perDiem,lodging,travel}|null, travelConfirmed,
+//            rejectReason, statusHistory:[] }
+//
+// approvalStatus: 'draft' (กบก. ยังแก้แผนอยู่) -> 'pending' (ส่งขออนุมัติเลขงาน
+// ให้ฝ่ายพัสดุแล้ว รอผล) -> 'approved' (ฝ่ายพัสดุออกเลขงาน) | 'rejected'
+// (ฝ่ายพัสดุตีกลับ พร้อม rejectReason — กบก. แก้ไขแผนหรือส่งขออนุมัติใหม่ได้)
+// statusHistory: [{status, at, note}] — timeline แสดงฝั่ง กบก. และฝ่ายพัสดุ
+// (at ถูกสร้างฝั่ง browser ใน app.js/supplies.js ด้วย toLocaleString('th-TH',...)
+// ห้ามเรียก Date ในไฟล์นี้ — ให้ logic ในไฟล์นี้ยังคง pure/deterministic)
 
 const MASTER_KEY = 'maintaind.yearly.master.v1';
 const PLAN_KEY = 'maintaind.yearly.plan.v1';
@@ -17,7 +25,7 @@ const PLAN_KEY = 'maintaind.yearly.plan.v1';
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -75,6 +83,8 @@ const INITIAL_PLAN = {
   preparedConfirmed: false,
   workNumber: null,
   approvalStatus: 'draft',
+  rejectReason: '',
+  statusHistory: [],
   partsRequisitioned: false,
   travelPlan: null,
   travelConfirmed: false,

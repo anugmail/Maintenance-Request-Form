@@ -29,6 +29,26 @@ function toast(m) {
   t._x = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
+// เวลาปัจจุบันแบบไทย ใช้สร้าง statusHistory entry (Date() อยู่ฝั่ง browser
+// เท่านั้น — ห้ามเรียกใน mock-yearly.js เพื่อให้ logic ที่นั่น pure/testable)
+function nowTh() {
+  return new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+const STATUS_HISTORY_LABELS = { draft: 'ฉบับร่าง', pending: 'รออนุมัติ', approved: 'อนุมัติ/ออกเลขงาน', rejected: 'ตีกลับ' };
+
+function renderTimelineHtml(history) {
+  if (!history || !history.length) return '';
+  return `
+    <div class="sect">ประวัติการดำเนินการ</div>
+    <ul class="tl">${history.map((h, i) => `
+      <li class="${i === history.length - 1 ? 'on' : ''}">
+        <b>${esc(STATUS_HISTORY_LABELS[h.status] || h.status)}</b>
+        <div class="when">${esc(h.at)}</div>
+        <div>${esc(h.note)}</div>
+      </li>`).join('')}</ul>`;
+}
+
 // ================= PHASE COMPLETION / GUARD =================
 // เฟส 1 (master-plan) ถือว่า "complete" เมื่อแผนได้รับอนุมัติเลขงานแล้ว
 // เฟส 2-6 ยังไม่มี logic ความสำเร็จของตัวเอง (มาใน task ถัดไปเมื่อลงมือแต่ละเฟส)
@@ -126,8 +146,19 @@ const STATUS_BADGE_CLASS = { available: 'b-ok', pending_approval: 'b-low', trans
 
 function renderMasterPlan() {
   const plan = MYD.loadPlan();
+  // dispatch ตามสถานะขออนุมัติเลขงาน (cross-unit workflow กับฝ่ายพัสดุ):
+  // draft -> wizard 4 ขั้น (เดิม) | pending -> รอฝ่ายพัสดุ | rejected -> ตีกลับ
+  // | approved -> สรุปผล (เฟส 2 ปลดล็อกเมื่อ approved เท่านั้น — ดู isPhaseComplete)
   if (plan.approvalStatus === 'approved') {
     renderApprovedSummary(plan);
+    return;
+  }
+  if (plan.approvalStatus === 'pending') {
+    renderPendingView(plan);
+    return;
+  }
+  if (plan.approvalStatus === 'rejected') {
+    renderRejectedView(plan);
     return;
   }
   if (!state.sub) state.sub = 1;
@@ -169,7 +200,7 @@ function updatePrimaryEnabled(plan) {
 
 // ----- wizard shell -----
 function renderWizard(plan) {
-  const primaryLabel = state.sub === 4 ? 'ขออนุมัติเลขงาน' : 'ถัดไป';
+  const primaryLabel = state.sub === 4 ? 'ส่งขออนุมัติเลขงาน (ฝ่ายพัสดุ)' : 'ถัดไป';
   const primaryDisabled = state.sub === 4 ? !plan.preparedConfirmed : !validateSub(plan, state.sub);
 
   $('phase').innerHTML = `
@@ -197,7 +228,7 @@ function renderWizard(plan) {
 
   $('btnBackSub').addEventListener('click', backSub);
   $('btnPrimarySub').addEventListener('click', () => {
-    if (state.sub === 4) approvePlan(plan);
+    if (state.sub === 4) sendForApproval(plan);
     else nextSub();
   });
 }
@@ -439,8 +470,9 @@ function bindStep3(plan) {
   });
 }
 
-// ----- ขั้น 4: ทวน + ผบพ.เตรียมอะไหล่ + ขออนุมัติเลขงาน -----
-function renderStep4(plan) {
+// สรุปแผน (ชื่อ/จำนวนรถ/ไทรมาส-ปี/สรุปอะไหล่รวม) — ใช้ร่วมกันทั้งขั้น 4
+// (ทวนสอบก่อนส่ง) และ renderPendingView (รอฝ่ายพัสดุ) ให้ตรงกันเสมอ
+function computePlanSummary(plan) {
   const { selectedVehicles, lines } = deriveLinesForPlan(plan);
   const qInfo = QUARTERS.find(q => q.q === plan.quarter);
   const catSummary = ['part', 'oil', 'filter']
@@ -450,6 +482,12 @@ function renderStep4(plan) {
     })
     .filter(Boolean)
     .join(' · ');
+  return { selectedVehicles, qInfo, catSummary };
+}
+
+// ----- ขั้น 4: ทวน + ผบพ.เตรียมอะไหล่ + ขออนุมัติเลขงาน -----
+function renderStep4(plan) {
+  const { selectedVehicles, qInfo, catSummary } = computePlanSummary(plan);
 
   return `
     <div class="sect">ขั้นที่ 4: ทวนสอบแผน + ขออนุมัติเลขงาน</div>
@@ -472,14 +510,82 @@ function bindStep4(plan) {
   });
 }
 
-function approvePlan(plan) {
+// ส่งขออนุมัติเลขงานให้ฝ่ายพัสดุ (ไม่ออกเลขงานที่นี่ — รอฝ่ายพัสดุอนุมัติ/ตีกลับ
+// ที่หน้า supplies.html) approvalStatus: draft -> pending
+function sendForApproval(plan) {
   if (!plan.preparedConfirmed) return;
-  plan.workNumber = MYD.workNumber(plan.quarter, plan.year, 1);
-  plan.approvalStatus = 'approved';
+  plan.approvalStatus = 'pending';
+  plan.statusHistory = [...(plan.statusHistory || []), {
+    status: 'pending', at: nowTh(), note: 'กบก. ส่งขออนุมัติเลขงานให้ฝ่ายพัสดุ',
+  }];
   MYD.savePlan(plan);
-  toast('ขออนุมัติเลขงานสำเร็จ: ' + plan.workNumber);
-  renderStepper(); // เฟส 1 กลายเป็น passed, เฟส 2 ปลดล็อก
+  toast('ส่งขออนุมัติเลขงานสำเร็จ — รอฝ่ายพัสดุอนุมัติ');
+  renderStepper();
   renderMasterPlan();
+}
+
+// ----- รอฝ่ายพัสดุอนุมัติ (แทนที่ wizard เมื่อ approvalStatus==='pending') -----
+function renderPendingView(plan) {
+  const { selectedVehicles, qInfo, catSummary } = computePlanSummary(plan);
+
+  $('phase').innerHTML = `
+    <div class="card">
+      <div class="sect">แผนบำรุงรักษา</div>
+      <span class="badge b-low">⏳ รอฝ่ายพัสดุอนุมัติ</span>
+      <div class="fgrid" style="margin-top:16px">
+        <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
+        <div class="f sp2"><label>จำนวนรถ</label><div>${selectedVehicles.length} คัน</div></div>
+        <div class="f sp2"><label>ไทรมาส/ปี</label><div>${esc(plan.quarter)}${qInfo ? ' (' + esc(qInfo.months) + ')' : ''} / ${esc(plan.year)}</div></div>
+        <div class="f sp4"><label>สรุปอะไหล่รวม</label><div>${catSummary || 'ไม่มีรายการ'}</div></div>
+      </div>
+      ${renderTimelineHtml(plan.statusHistory)}
+      <div class="sub" style="margin-top:8px">รอฝ่ายพัสดุออกเลขงาน — (เดโม: ไปที่เมนู "ฝ่ายพัสดุ" เพื่ออนุมัติ/ตีกลับ)</div>
+      <div class="actions">
+        <button class="btn btn-g" id="btnCancelRequest">ยกเลิกคำขอ (กลับไปแก้แผน)</button>
+      </div>
+    </div>`;
+
+  $('btnCancelRequest').addEventListener('click', () => {
+    plan.approvalStatus = 'draft';
+    MYD.savePlan(plan);
+    renderStepper();
+    renderMasterPlan();
+  });
+}
+
+// ----- ฝ่ายพัสดุตีกลับ (แทนที่ wizard เมื่อ approvalStatus==='rejected') -----
+function renderRejectedView(plan) {
+  $('phase').innerHTML = `
+    <div class="card">
+      <div class="sect">แผนบำรุงรักษา</div>
+      <span class="badge b-out">❌ ฝ่ายพัสดุตีกลับ</span>
+      <div class="fgrid" style="margin-top:16px">
+        <div class="f sp4"><label>เหตุผล</label><div>${esc(plan.rejectReason || '-')}</div></div>
+      </div>
+      ${renderTimelineHtml(plan.statusHistory)}
+      <div class="actions">
+        <button class="btn btn-o" id="btnEditPlan">แก้ไขแผน</button>
+        <button class="btn btn-p" id="btnResubmit">ส่งขออนุมัติใหม่</button>
+      </div>
+    </div>`;
+
+  $('btnEditPlan').addEventListener('click', () => {
+    plan.approvalStatus = 'draft';
+    MYD.savePlan(plan);
+    state.sub = 1;
+    renderStepper();
+    renderMasterPlan();
+  });
+
+  $('btnResubmit').addEventListener('click', () => {
+    plan.approvalStatus = 'pending';
+    plan.statusHistory = [...(plan.statusHistory || []), {
+      status: 'pending', at: nowTh(), note: 'กบก. ส่งขออนุมัติใหม่',
+    }];
+    MYD.savePlan(plan);
+    renderStepper();
+    renderMasterPlan();
+  });
 }
 
 // ----- สรุปหลังอนุมัติ (แทนที่ wizard เมื่อ approvalStatus==='approved') -----
@@ -508,6 +614,7 @@ function renderApprovedSummary(plan) {
           </tbody>
         </table>
       </div>
+      ${renderTimelineHtml(plan.statusHistory)}
       <div class="actions">
         <button class="btn btn-p" id="btnGoNextPhase">ไปเฟสถัดไป →</button>
       </div>
