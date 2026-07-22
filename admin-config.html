@@ -255,6 +255,12 @@
     </div>
   </div>
 
+  <div class="card">
+    <h2 class="ttl">4 · ตั้งหนี้ + Reconcile Fleet Card</h2>
+    <div class="sub">เทียบยอดใบเสร็จน้ำมัน (Fleet Card) ที่บันทึกในแอปกับ Statement ธนาคารรายเดือน ก่อนตั้งหนี้เข้า SAP — mock คร่าวๆ ต่อยอด TOR ข้อ 5 (T13) ใช้ข้อมูลจริงจากการ์ด "ข้อมูลบันทึก" ด้านบน (กด "เติมบันทึกตัวอย่าง" ก่อนถ้ายังไม่มีข้อมูล)</div>
+    <div id="reconBody"></div>
+  </div>
+
   </div><!-- /part-daily -->
 </div>
 
@@ -624,22 +630,24 @@ function cfDel(i){
 }
 
 /* ----- Fleet Card ----- */
+const BANKS=['ธนาคารกรุงไทย','ธนาคารกรุงเทพ','ธนาคารไทยพาณิชย์','ธนาคารกสิกรไทย','ธนาคารกรุงศรีอยุธยา'];
 function wfleet(){
   if(!WF){
     const cur=ddb.fleet||MDD.FLEET_DEFAULTS;
     WF=MDC.data('vehicles').map(v=>{
       const f=cur.find(x=>x.vehicleId===v.id);
-      return{vehicleId:v.id,no:f?f.no:'',holder:f?f.holder:v.org};
+      return{vehicleId:v.id,no:f?f.no:'',bank:f?(f.bank||BANKS[0]):BANKS[0],holder:f?f.holder:v.org};
     });
   }
   return WF;
 }
 function renderFleet(){
   const vs=MDC.data('vehicles'),rows=wfleet();
-  $('tbl-fleet').innerHTML=`<table class="tbl"><thead><tr><th>รถ</th><th>เลขบัตร Fleet Card</th><th>ผู้ถือบัตร</th></tr></thead>
+  $('tbl-fleet').innerHTML=`<table class="tbl"><thead><tr><th>รถ</th><th>ธนาคาร</th><th>เลขบัตร Fleet Card</th><th>ผู้ถือบัตร</th></tr></thead>
     <tbody>${rows.map((r,i)=>{
       const v=vs.find(x=>x.id===r.vehicleId);
       return`<tr><td style="padding:10px 12px"><b style="color:var(--gray-900)">${esc(v?v.plate:'#'+r.vehicleId)}</b><br><span style="font-size:12px;color:var(--gray-500)">${esc(v?v.model:'')}</span></td>
+      <td><select onchange="WF[${i}].bank=this.value;dirtyFleet=true;$('dirty-fleet').classList.remove('hidden')">${BANKS.map(b=>`<option ${r.bank===b?'selected':''}>${esc(b)}</option>`).join('')}</select></td>
       <td><input value="${esc(r.no)}" placeholder="7024 8801 XXXX XXXX" oninput="WF[${i}].no=this.value;dirtyFleet=true;$('dirty-fleet').classList.remove('hidden')"></td>
       <td><input value="${esc(r.holder)}" oninput="WF[${i}].holder=this.value;dirtyFleet=true;$('dirty-fleet').classList.remove('hidden')"></td></tr>`;
     }).join('')}</tbody></table>`;
@@ -647,7 +655,7 @@ function renderFleet(){
   $('src-fleet').textContent=ddb.fleet?'ข้อมูลที่แก้ไขเอง':'ข้อมูลตั้งต้น';
 }
 function fsave(){
-  ddb.fleet=MDD.clone(wfleet()).map(r=>({vehicleId:r.vehicleId,no:String(r.no).trim()||'— ไม่มีบัตร —',holder:String(r.holder).trim()}));
+  ddb.fleet=MDD.clone(wfleet()).map(r=>({vehicleId:r.vehicleId,no:String(r.no).trim()||'— ไม่มีบัตร —',bank:r.bank||BANKS[0],holder:String(r.holder).trim()}));
   MDD.save(ddb);dirtyFleet=false;renderFleet();
   toast('บันทึก Fleet Card แล้ว — การ์ดรถในแอปอัปเดตทันที');
 }
@@ -664,12 +672,12 @@ function dSeed(){
   ddb.records=seeds;
   const names=[...new Set(seeds.map(r=>r.driver))];
   ddb.drivers=[...new Set([...names,...ddb.drivers])].slice(0,20);
-  MDD.save(ddb);updCount();
+  MDD.save(ddb);updCount();reconMonth=null;renderRecon();
   toast('เติมบันทึกตัวอย่าง '+seeds.length+' รายการแล้ว — ดูได้ที่แอปบันทึกรถ');
 }
 function dClear(){
   if(!confirm('ล้างบันทึกการใช้งานรถทั้งหมด ('+ddb.records.length+' รายการ)?'))return;
-  ddb.records=[];MDD.save(ddb);updCount();
+  ddb.records=[];MDD.save(ddb);updCount();reconMonth=null;renderRecon();
   toast('ล้างบันทึกทั้งหมดแล้ว');
 }
 function dExport(){
@@ -680,7 +688,83 @@ function dExport(){
 }
 function renderDailyAll(){
   ddb=MDD.load();
-  renderStdFields();renderCustomFields();renderNfType();renderFleet();updCount();
+  renderStdFields();renderCustomFields();renderNfType();renderFleet();updCount();renderRecon();
+}
+
+/* ----- ตั้งหนี้ + Reconcile Fleet Card (mock คร่าวๆ — ใช้ใบเสร็จจริงจาก ddb.records) -----
+   ทุกใบเสร็จในแอปนี้เป็น Fleet Card อยู่แล้ว (ไม่มีตัวเลือกเงินสดในโมเดลข้อมูลปัจจุบัน)
+   ยังไม่มี Statement ธนาคารจริง — ปรับยอด/เติมแถวสาธิต 3 จุดให้เห็นครบทุกสถานะเสมอเวลาพรีเซนต์
+   รอยืนยันรูปแบบ Statement จริงตาม Pre-Discovery Checklist ก่อนออกแบบการเชื่อมต่อจริงใน Implementation */
+let reconMonth=null;
+let reconPosted={};   // key: 'YYYY-MM' → true หลังกด "ยืนยันตั้งหนี้" (mock — ไม่ persist ข้ามรีโหลด)
+function reconBaht(n){return(Number(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function reconMonthsAvailable(){
+  const set=new Set(ddb.records.map(r=>(r.date||'').slice(0,7)).filter(Boolean));
+  if(!set.size)set.add(MDD.isoToday().slice(0,7));
+  return[...set].sort().reverse();
+}
+function reconRowsFor(monthKey){
+  const vs=MDC.data('vehicles');
+  const rows=[];
+  ddb.records.filter(r=>(r.date||'').slice(0,7)===monthKey).forEach(r=>{
+    const v=vs.find(x=>x.id===r.vehicleId);
+    (r.receipts||[]).forEach(rc=>{
+      rows.push({plate:v?v.plate:(r.plate||'ไม่ทราบทะเบียน'),date:r.date,station:rc.station||'-',sysAmt:rc.amount,bankAmt:rc.amount});
+    });
+  });
+  rows.sort((a,b)=>a.date<b.date?-1:1);
+  if(rows.length>1)rows[1].bankAmt=+(rows[1].bankAmt+5).toFixed(2);   // สาธิต: ยอดไม่ตรง
+  if(rows.length>2)rows[2].bankAmt=null;                                // สาธิต: บันทึกแล้วแต่ไม่พบใน Statement
+  if(rows.length)rows.push({plate:rows[0].plate,date:rows[0].date,station:'ปตท. (ตัวอย่าง Statement)',sysAmt:null,bankAmt:850});   // สาธิต: มีใน Statement แต่ไม่มีบันทึก
+  return rows;
+}
+function reconStatus(r){
+  if(r.sysAmt!=null&&r.bankAmt!=null&&Math.abs(r.sysAmt-r.bankAmt)<0.01)return{cls:'b-ok',label:'ตรงกัน'};
+  if(r.sysAmt!=null&&r.bankAmt!=null)return{cls:'b-low',label:'ยอดไม่ตรง'};
+  if(r.sysAmt==null&&r.bankAmt!=null)return{cls:'b-out',label:'มีใน Statement แต่ไม่มีบันทึก'};
+  return{cls:'b-out',label:'บันทึกแล้ว แต่ไม่พบใน Statement'};
+}
+function renderRecon(){
+  const months=reconMonthsAvailable();
+  if(!reconMonth||!months.includes(reconMonth))reconMonth=months[0];
+  const rows=reconRowsFor(reconMonth);
+  const sysTotal=rows.reduce((s,r)=>s+(r.sysAmt||0),0);
+  const bankTotal=rows.reduce((s,r)=>s+(r.bankAmt||0),0);
+  const issues=rows.filter(r=>reconStatus(r).cls!=='b-ok').length;
+  const posted=!!reconPosted[reconMonth];
+  $('reconBody').innerHTML=`
+    <div class="f" style="max-width:260px"><label>เดือนที่ตรวจสอบ</label><select id="reconMonthSel">${months.map(m=>`<option value="${m}" ${m===reconMonth?'selected':''}>${MDD.thMonth(m)}</option>`).join('')}</select></div>
+    ${rows.length===0?`<div class="empty">เดือนนี้ยังไม่มีใบเสร็จบันทึกไว้ — ลองกด "เติมบันทึกตัวอย่าง" ในการ์ด "ข้อมูลบันทึก" ด้านบนก่อน</div>`:`
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 16px">
+      <span class="badge b-brand">ยอดรวมในระบบ ${reconBaht(sysTotal)} บาท</span>
+      <span class="badge b-brand">ยอดรวม Statement ${reconBaht(bankTotal)} บาท</span>
+      <span class="badge ${issues>0?'b-low':'b-ok'}">${issues>0?issues+' รายการต้องตรวจสอบ':'ตรงกันทั้งหมด '+rows.length+' รายการ'}</span>
+    </div>
+    <div class="tblwrap etbl">
+      <table class="tbl">
+        <thead><tr><th>รถ</th><th>วันที่</th><th>สถานี</th><th class="num">ยอดในระบบ</th><th class="num">ยอด Statement</th><th>สถานะ</th></tr></thead>
+        <tbody>${rows.map(r=>{
+          const st=reconStatus(r);
+          return`<tr>
+            <td>${esc(r.plate)}</td><td>${MDD.thDate(r.date,{day:'numeric',month:'short',year:'numeric'})}</td><td>${esc(r.station)}</td>
+            <td class="num">${r.sysAmt!=null?reconBaht(r.sysAmt):'—'}</td>
+            <td class="num">${r.bankAmt!=null?reconBaht(r.bankAmt):'—'}</td>
+            <td><span class="badge ${st.cls}">${st.label}</span></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+    <div class="hint" style="margin:12px 0">เฉพาะรายการ "ตรงกัน" จะถูกตั้งหนี้เข้า SAP อัตโนมัติ (mock) — รายการ "ยอดไม่ตรง"/"ไม่พบคู่กัน" ต้องให้ธุรการตรวจสอบก่อน · mock นี้ยังไม่เชื่อม SAP/ธนาคารจริง</div>
+    ${posted?`<span class="badge b-ok" style="font-size:13px;padding:6px 14px">ตั้งหนี้ SAP แล้วสำหรับเดือนนี้</span>`
+      :`<button class="btn btn-p" id="reconConfirm">ยืนยันตั้งหนี้ SAP (${rows.length-issues} รายการที่ตรงกัน)</button>`}
+    `}
+  `;
+  document.getElementById('reconMonthSel')?.addEventListener('change',e=>{reconMonth=e.target.value;renderRecon()});
+  document.getElementById('reconConfirm')?.addEventListener('click',()=>{
+    reconPosted[reconMonth]=true;
+    toast(`ตั้งหนี้ SAP แล้ว ${rows.length-issues} รายการ ยอดรวม ${reconBaht(sysTotal)} บาท (mock)`);
+    renderRecon();
+  });
 }
 
 // ================= INIT =================

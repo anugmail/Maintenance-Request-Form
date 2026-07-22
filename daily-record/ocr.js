@@ -7,19 +7,20 @@
    - reject ได้เมื่ออ่านไม่สำเร็จ (mock ไม่เกิด แต่ UI รองรับ)
    ============================================================ */
 (function(){
+/* ค่าที่สุ่มให้ตรงกับ "ใบสั่งจ่ายน้ำมัน" จริงของ กฟภ. (แบบ ยพ.๑-ป.๔๔)
+   เลขที่ใบสั่งจ่าย = ตัวเลข 6 หลัก (ไม่ใช่รูปแบบ invoice การค้าทั่วไป), ราคา/ลิตร แยกจากยอดรวม */
 const STATIONS=['ปตท.','ปตท.','ปตท.','บางจาก','Shell','PT'];   // ถ่วงน้ำหนัก ปตท.
-const FUELS=['ดีเซล','ดีเซล','ดีเซล B7'];
+const FUELS=['ดีเซล','ดีเซล','ดีเซล','ดีเซล','ดีเซลปาล์ม','แก๊สโซฮอล์ 91'];   // รถ กฟภ. ส่วนใหญ่ใช้ดีเซล
 function gen(){
   const st=STATIONS[Math.floor(Math.random()*STATIONS.length)];
   const fuel=FUELS[Math.floor(Math.random()*FUELS.length)];
-  const price=32+Math.random()*3;                 // 32.00-35.00 บาท/ลิตร
+  const price=+(31+Math.random()*3).toFixed(2);   // 31.00-34.00 บาท/ลิตร
   const liters=+(20+Math.random()*40).toFixed(2); // 20-60 ลิตร
   const amount=+(liters*price).toFixed(2);
   const d=new Date();
   const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const bud=(d.getFullYear()+543)%100;
-  const no=`INV-${bud}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${1000+Math.floor(Math.random()*9000)}`;
-  return{station:st,no,date:iso,liters,amount,fuelType:fuel};
+  const no=String(900000+Math.floor(Math.random()*99999));   // เลขที่ใบสั่งจ่ายน้ำมัน 6 หลัก ตามแบบฟอร์มจริง
+  return{station:st,no,date:iso,price,liters,amount,fuelType:fuel};
 }
 window.DailyOCR={
   readReceipt(file){   // file ยังไม่ถูกใช้ใน mock — คง signature ไว้ให้ OCR จริง

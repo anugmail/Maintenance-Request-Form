@@ -15,13 +15,14 @@ const MENU_META={
   home:   {label:'หน้าหลัก',icon:'home'},
   form:   {label:'แจ้งซ่อม',icon:'build'},
   my:     {label:'เรื่องแจ้งซ่อมของฉัน',icon:'assignment'},
+  fuel:   {label:'เติมน้ำมัน + ชั่วโมงทำงาน',icon:'local_gas_station'},
   kry:    {label:'งานคัดแยก กรย.',icon:'alt_route'},
   kbk:    {label:'งานซ่อม กบค.',icon:'engineering'},
   sup:    {label:'อนุมัติปิดงาน (ผู้บังคับบัญชา)',icon:'approval'},
   stock:  {label:'คลังอะไหล่',icon:'warehouse'},
   reports:{label:'รายงาน',icon:'monitoring'}
 };
-const MENU_DEFAULT=['home','form','my','kry','kbk','sup','stock','reports'];
+const MENU_DEFAULT=['home','form','my','fuel','kry','kbk','sup','stock','reports'];
 
 /* ---------- Stepper: ขั้นตอนของ mock (ปรับชื่อ/ลำดับ/เปิดปิด/หัวข้อ จาก admin) ----------
    wizard: 4 ขั้นของฟอร์มแจ้งซ่อม (key ผูกกับ logic — vehicle/symptom/parts/decision)

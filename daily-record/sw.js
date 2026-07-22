@@ -6,12 +6,12 @@
    ออฟไลน์ fallback เป็น shell ใน cache) · cache-first สำหรับ asset อื่น
    + runtime cache ฟอนต์ Google (ใช้ออฟไลน์ได้หลังเปิดครั้งแรก)
    ============================================================ */
-const CACHE='daily-record-v2';
+const CACHE='daily-record-v14';
 const ASSETS=[
   './','./index.html','./app.js','./ocr.js','./manifest.webmanifest',
   './icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png',
   '../design-system/tokens.css','../design-system/components.css',
-  '../config.js','../config-daily.js'
+  '../config.js','../config-daily.js','../ui-components.js'
 ];
 
 self.addEventListener('install',e=>{
