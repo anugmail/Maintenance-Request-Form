@@ -818,4 +818,17 @@ function renderProcurementConfirmed(plan) {
 document.addEventListener('DOMContentLoaded', () => {
   renderStepper();
   renderPhase();
+
+  const btnReset = $('btnResetDemo');
+  if (btnReset) {
+    btnReset.addEventListener('click', () => {
+      if (!confirm('เริ่มเดโมใหม่? แผนปัจจุบันจะถูกล้าง')) return;
+      MYD.resetPlan();
+      state.phase = 'master-plan';
+      state.sub = 1;
+      renderStepper();
+      renderPhase();
+      toast('เริ่มเดโมใหม่แล้ว');
+    });
+  }
 });

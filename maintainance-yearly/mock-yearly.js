@@ -13,6 +13,12 @@
 const MASTER_KEY = 'maintaind.yearly.master.v1';
 const PLAN_KEY = 'maintaind.yearly.plan.v1';
 
+// schema version ของโครงข้อมูลใน localStorage — เพิ่มเลขนี้เมื่อโครงข้อมูล
+// เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
+// ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
+// auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
+const SCHEMA_VERSION = 2;
+
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
 const ZONE_LABELS = { north:'ภาคเหนือ', east:'ภาคตะวันออก', south:'ภาคใต้', west:'ภาคตะวันตก' };
@@ -99,12 +105,15 @@ const MYD = {
   SEED_VEHICLES,
   SEED_ITEMS,
   INITIAL_PLAN,
+  SCHEMA_VERSION,
 
-  // ----- storage (fallback seed เมื่อว่าง/พัง) -----
+  // ----- storage (fallback seed เมื่อว่าง/พัง/schema เก่า) -----
+  // หมายเหตุ: fallback ที่นี่ไม่ auto-write กลับ localStorage — แค่ return
+  // ค่า fresh ให้ใช้งาน ณ ตอนนั้น (เขียนจริงเมื่อเรียก saveMaster/savePlan
+  // หรือ resetMaster/resetPlan เท่านั้น)
   loadMaster() {
-    if (typeof localStorage === 'undefined') {
-      return { vehicles: deepCopy(SEED_VEHICLES), items: deepCopy(SEED_ITEMS) };
-    }
+    const fresh = () => ({ vehicles: deepCopy(SEED_VEHICLES), items: deepCopy(SEED_ITEMS) });
+    if (typeof localStorage === 'undefined') return fresh();
     try {
       const raw = localStorage.getItem(MASTER_KEY);
       if (!raw) throw new Error('empty');
@@ -112,15 +121,16 @@ const MYD = {
       if (!parsed || !Array.isArray(parsed.vehicles) || !Array.isArray(parsed.items)) {
         throw new Error('invalid shape');
       }
-      return parsed;
+      if (parsed._v !== SCHEMA_VERSION) throw new Error('stale schema');
+      return { vehicles: parsed.vehicles, items: parsed.items };
     } catch {
-      return { vehicles: deepCopy(SEED_VEHICLES), items: deepCopy(SEED_ITEMS) };
+      return fresh();
     }
   },
 
   saveMaster(master) {
     if (typeof localStorage === 'undefined') return;
-    localStorage.setItem(MASTER_KEY, JSON.stringify(master));
+    localStorage.setItem(MASTER_KEY, JSON.stringify({ _v: SCHEMA_VERSION, vehicles: master.vehicles, items: master.items }));
   },
 
   loadPlan() {
@@ -132,7 +142,9 @@ const MYD = {
       if (!raw) throw new Error('empty');
       const parsed = JSON.parse(raw);
       if (!parsed || typeof parsed !== 'object') throw new Error('invalid shape');
-      return parsed;
+      if (parsed._v !== SCHEMA_VERSION) throw new Error('stale schema');
+      const { _v, ...plan } = parsed;
+      return plan;
     } catch {
       return deepCopy(INITIAL_PLAN);
     }
@@ -140,15 +152,28 @@ const MYD = {
 
   savePlan(plan) {
     if (typeof localStorage === 'undefined') return;
-    localStorage.setItem(PLAN_KEY, JSON.stringify(plan));
+    localStorage.setItem(PLAN_KEY, JSON.stringify({ ...plan, _v: SCHEMA_VERSION }));
   },
 
   resetPlan() {
     const fresh = deepCopy(INITIAL_PLAN);
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(PLAN_KEY, JSON.stringify(fresh));
+      localStorage.setItem(PLAN_KEY, JSON.stringify({ ...fresh, _v: SCHEMA_VERSION }));
     }
     return fresh;
+  },
+
+  resetMaster() {
+    const fresh = { vehicles: deepCopy(SEED_VEHICLES), items: deepCopy(SEED_ITEMS) };
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(MASTER_KEY, JSON.stringify({ _v: SCHEMA_VERSION, vehicles: fresh.vehicles, items: fresh.items }));
+    }
+    return fresh;
+  },
+
+  resetAll() {
+    MYD.resetMaster();
+    MYD.resetPlan();
   },
 
   // ----- logic ล้วน (unit-tested) -----

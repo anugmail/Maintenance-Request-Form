@@ -41,7 +41,8 @@ function initTabs() {
 
 function renderBody() {
   if (state.tab === 'vehicles') renderVehicles();
-  else renderItems();
+  else if (state.tab === 'items') renderItems();
+  else renderDemo();
 }
 
 // ================= VEHICLES: READ =================
@@ -294,6 +295,51 @@ function openItemModal(id) {
     ov.remove();
     renderItems();
     toast(editing ? 'แก้ไขรายการเรียบร้อย' : 'เพิ่มรายการเรียบร้อย');
+  });
+}
+
+// ================= DEMO: จัดการเดโม (Yearly) =================
+const APPROVAL_STATUS_LABELS = { draft: 'ฉบับร่าง', approved: 'อนุมัติแล้ว' };
+
+function renderDemo() {
+  const plan = MYD.loadPlan();
+  const workNumberText = plan.workNumber || '— ยังไม่ออกเลขงาน';
+  const approvalText = APPROVAL_STATUS_LABELS[plan.approvalStatus] || plan.approvalStatus || '-';
+  const vehicleCount = (plan.selectedVehicleIds || []).length;
+
+  $('adminBody').innerHTML = `
+    <div class="card">
+      <div class="sect">จัดการเดโม — หน้าบำรุงรักษาตามวาระ</div>
+      <div class="sub">ใช้ตอนสาธิตให้ลูกค้า เพื่อล้างข้อมูลแล้วเริ่ม flow ใหม่</div>
+      <div class="fgrid">
+        <div class="f sp2"><label>เลขงาน</label><div>${esc(workNumberText)}</div></div>
+        <div class="f sp2"><label>สถานะอนุมัติ</label><div>${esc(approvalText)}</div></div>
+        <div class="f sp2"><label>จำนวนรถที่เลือก</label><div>${vehicleCount} คัน</div></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-o" id="btnResetPlanDemo">รีเซ็ตแผนปัจจุบัน</button>
+        <button class="btn btn-o" id="btnResetMasterDemo">รีเซ็ตข้อมูลหลักเป็นค่าเริ่มต้น (seed ~120 คัน)</button>
+        <button class="btn btn-p" id="btnResetAllDemo">รีเซ็ตทั้งหมด</button>
+      </div>
+    </div>`;
+
+  $('btnResetPlanDemo').addEventListener('click', () => {
+    if (!confirm('รีเซ็ตแผนปัจจุบัน? ข้อมูลแผนที่ทำไว้จะถูกล้าง')) return;
+    MYD.resetPlan();
+    renderDemo();
+    toast('รีเซ็ตแผนปัจจุบันแล้ว');
+  });
+  $('btnResetMasterDemo').addEventListener('click', () => {
+    if (!confirm('รีเซ็ตข้อมูลหลักเป็นค่าเริ่มต้น? ข้อมูลรถ/อะไหล่ที่แก้ไขไว้จะถูกล้าง')) return;
+    MYD.resetMaster();
+    renderDemo();
+    toast('รีเซ็ตข้อมูลหลักเป็นค่าเริ่มต้นแล้ว');
+  });
+  $('btnResetAllDemo').addEventListener('click', () => {
+    if (!confirm('รีเซ็ตทั้งหมด? ข้อมูลแผนและข้อมูลหลักทั้งหมดจะถูกล้าง')) return;
+    MYD.resetAll();
+    renderDemo();
+    toast('รีเซ็ตทั้งหมดแล้ว');
   });
 }
 
