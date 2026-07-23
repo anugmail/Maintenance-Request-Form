@@ -43,18 +43,8 @@
   .booked{color:var(--success-600);font-weight:600;font-size:13px;display:flex;align-items:center;gap:4px}
   .ordered{color:var(--warning-700);font-weight:600;font-size:13px;display:flex;align-items:center;gap:4px}
 
-  .decide{display:flex;flex-wrap:wrap;gap:12px;max-width:500px;margin-top:14px}
-  .decide .tile{flex:1 1 210px;min-height:112px;padding:14px 16px;border-width:1.5px;border-color:var(--gray-300);background:#fff;color:var(--gray-900);transition:background-color .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease}
-  .decide .tile .ms{font-size:28px;margin-bottom:6px}
-  .decide .tile b{font-size:14.5px}
-  .decide .tile small{color:var(--gray-500);opacity:1}
-  .decide .tile:hover{background:var(--gray-50);transform:translateY(-1px)}
-  .decide .tile-magenta:not(.sel) .ms{color:var(--primary-600)}
-  .decide .tile-blue:not(.sel) .ms{color:var(--secondary-600)}
-  .decide .tile-magenta.sel{background:var(--primary-600);border-color:var(--primary-700);color:#fff;box-shadow:var(--shadow-pop)}
-  .decide .tile-blue.sel{background:var(--secondary-600);border-color:var(--secondary-700);color:#fff;box-shadow:var(--shadow-pop)}
-  .decide .tile.sel small{color:#fff;opacity:.86}
-  .decide .tile.sel:hover{transform:none}
+  .decide{display:flex;gap:14px;max-width:560px;margin-top:14px}
+  .decide .tile{flex:1}
   .route{background:var(--gray-100);border-radius:10px;padding:12px 14px;font-size:13.5px;margin-top:14px;display:flex;gap:8px;align-items:flex-start;max-width:720px}
   .route .ms{color:var(--primary-600);font-size:20px;flex-shrink:0}
   .dnote{max-width:720px}
@@ -1420,6 +1410,7 @@ window.addEventListener('storage',e=>{
   if(e.key!==MDC.KEY)return;
   const n=MDC.load();
   MDC.applyTheme(n);
+  MDC.applyVariants(n);
   if(JSON.stringify({t:n.toggles,u:n.variants,g:n.menu,s:n.steps,d:n.data,m:n.demo})!==SNAP)location.reload();
 });
 showStepSection(WORDER[0]);   // แสดงขั้นแรกตามลำดับที่ตั้ง (เผื่อสลับลำดับ/ปิดขั้นอะไหล่)
