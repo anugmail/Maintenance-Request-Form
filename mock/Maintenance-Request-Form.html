@@ -1706,6 +1706,7 @@
     let WORDER = ['vehicle', 'symptom', 'parts', 'decision'];   // ลำดับขั้น wizard (จาก cfg.steps.wizard ที่ INIT)
     const SECT = { vehicle: 's1', symptom: 's2', parts: 's3', decision: 's4' };   // key → id ของ section (คงที่)
     let VIEW = 'form';
+    let VIEW_HISTORY = [];   // stack ปุ่มย้อนกลับ (switchView/goBackView) — เพิ่มการประกาศที่ขาดหาย ทำให้สลับเมนูไม่ได้
 
     // ================= HELPERS =================
     const $ = id => document.getElementById(id);
