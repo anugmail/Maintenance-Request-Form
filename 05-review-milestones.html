@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maintain-D — เฟสรีวิว/เดโม แจ้งซ่อม–กบค.</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
+    rel="stylesheet">
+  <link rel="stylesheet" href="design-system/tokens.css">
+  <link rel="stylesheet" href="design-system/components.css">
+  <style>
+    .wrap { max-width: 880px; margin: 0 auto; padding: 36px 20px 72px }
+    .back { display: inline-flex; align-items: center; gap: 4px; color: var(--gray-500); text-decoration: none; font-size: 14px; font-weight: 600; margin-bottom: 18px }
+    .back:hover { color: var(--primary-600) }
+    .lg { font-weight: 800; font-size: 38px; color: var(--primary-600); line-height: 1 }
+    .lg em { color: #F5A623; font-style: normal }
+    h1 { font-size: 25px; color: var(--gray-900); margin: 12px 0 6px }
+    .lead { color: var(--gray-500); margin-bottom: 22px; line-height: 1.5 }
+    .howto { border: 1px solid var(--primary-500); background: var(--primary-25); border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 28px; font-size: 13.5px; color: var(--gray-700); line-height: 1.7 }
+    .howto b { color: var(--gray-900) }
+    .howto .k { color: var(--primary-700); font-weight: 700 }
+
+    .ms-card { padding: 20px; margin-bottom: 16px; border-left: 4px solid var(--primary-500) }
+    .ms-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap }
+    .ms-num { width: 46px; height: 46px; border-radius: 12px; background: var(--primary-50); color: var(--primary-600); font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center; flex-shrink: 0 }
+    .ms-title { font-size: 18px; font-weight: 700; color: var(--gray-900); line-height: 1.2 }
+    .ms-span { font-size: 12.5px; color: var(--gray-500) }
+    .roles { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap }
+    .role { background: var(--gray-100); color: var(--gray-700); padding: 4px 11px; border-radius: var(--r-pill); font-size: 12.5px; font-weight: 600 }
+    .blk { margin-top: 14px }
+    .blk h4 { font-size: 12.5px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 7px; display: flex; align-items: center; gap: 6px }
+    .blk h4 .ms { font-size: 16px }
+    ol.demo { margin: 0; padding-left: 20px; color: var(--gray-800, var(--gray-700)); font-size: 14px; line-height: 1.7 }
+    ol.demo li { margin-bottom: 2px }
+    .focus { font-size: 14px; color: var(--gray-700); line-height: 1.6 }
+    ul.open { margin: 0; padding: 0; list-style: none }
+    ul.open li { position: relative; padding: 6px 0 6px 26px; font-size: 13.5px; color: var(--gray-700); line-height: 1.55; border-top: 1px dashed var(--gray-200) }
+    ul.open li:first-child { border-top: 0 }
+    ul.open li::before { content: 'help'; font-family: 'Material Symbols Outlined'; position: absolute; left: 0; top: 6px; color: #F5A623; font-size: 18px }
+    .ms-btns { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--gray-200) }
+    .btn .ms { font-size: 18px }
+    .more { font-size: 13px; color: var(--gray-500) }
+    .more a { color: var(--primary-600); text-decoration: none; font-weight: 600 }
+    .more a:hover { text-decoration: underline }
+    .foot { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--gray-200); font-size: 13px; color: var(--gray-500); line-height: 1.8 }
+    .foot a { color: var(--primary-600); text-decoration: none; font-weight: 600 }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <a class="back" href="index.html"><span class="ms" style="font-size:18px">arrow_back</span> กลับหน้าหลัก</a>
+    <div class="lg">M<em>D</em></div>
+    <h1>เฟสรีวิว / เดโม — แจ้งซ่อม–กบค.</h1>
+    <div class="lead">หั่นกระบวนการซ่อมเป็น <b>6 หมุด</b> ตาม flow-กบค. (ช่วง 1–6) เพื่อรีวิว/เดโมกับเจ้าของงานทีละช่วง —
+      แต่ละหมุดเดโมจบในตัว กดปุ่ม “เปิดเดโม” เพื่อกระโดดเข้าต้นแบบตรงหน้าจอของบทบาทนั้น</div>
+
+    <div class="howto">
+      <b>วิธีใช้</b><br>
+      • ลำดับบทบาท: <span class="k">ผู้แจ้ง → กรย. → กบค. → ผู้อนุมัติ</span> — เดโมไล่ต่อกันได้ในแท็บเดียวโดยสลับเมนูซ้าย (ไม่ต้องรีโหลด)<br>
+      • กด “เปิดเดโม” จะเปิดต้นแบบในแท็บใหม่ ตรงหน้าจอของหมุดนั้น<br>
+      • หมุด M2–M6 เปิดด้วย <span class="k">?seed=review</span> จะมีงานตัวอย่างในคิวให้เดินได้ทันที · ข้อมูลเดโมรีเซ็ตทุกครั้งที่เปิดลิงก์ (ตั้งใจให้ทดสอบซ้ำได้)<br>
+      • <span class="ms" style="font-size:16px;color:#F5A623;vertical-align:-3px">help</span> = คำถามเปิดที่ต้องเคลียร์กับเจ้าของงานในช่วงนั้น
+    </div>
+
+    <div id="mss"></div>
+
+    <div class="foot">
+      อ้างอิง flow: <b>flow-กบค. F1–F7</b> · <b>Diagram/02-แจ้งซ่อม-กบค.</b> · README §ประเด็นเปิด<br>
+      <a href="index.html">← หน้าหลัก Maintain-D</a> &nbsp;·&nbsp;
+      <a href="https://github.com/anugmail/Maintenance-Request-Form/tree/main/Diagram" target="_blank" rel="noopener">Diagram — Flow ทั้งหมด (GitHub)</a>
+    </div>
+  </div>
+
+  <script>
+    const MOCK = 'mock/Maintenance-Request-Form.html';
+    const MS = [
+      {
+        m: 'M1', span: 'ช่วง 1 · สร้างคำขอ / แจ้งซ่อม', roles: ['ผู้แจ้ง'], view: '#form',
+        demo: [
+          'เลือกรถ + อุปกรณ์เสริม (ข้อมูลรถมาอัตโนมัติ)',
+          'เลือกอาการเสีย + ความรุนแรง + แนบรูป',
+          'ดูอะไหล่ที่ระบบแนะนำ + สถานะคลัง → จอง / สั่งของ',
+          'ตัดสินใจ “ซ่อมเอง” หรือ “ส่ง กบค.” → สรุป + ส่งเรื่อง ได้เลขใบแจ้งซ่อม'
+        ],
+        focus: 'หน้าตา/ลำดับฟอร์ม · การ suggest อะไหล่ + จอง · ตัวกรอง + การเลือกประเภทการซ่อม (อัปเดตล่าสุดจาก Por)',
+        open: [
+          'ช่องทาง “ส่งอู่” หายจากขั้นตัดสินใจ — ต้องมีเป็นตัวเลือกที่ 3 ไหม (README#1)',
+          'routing ตามสังกัด (เขต→กรย. / สนญ.→กบค.) — mock fix ปลายทางเป็น กรย.→กบค. ก่อน (README#2)',
+          'ยืนยันจำนวนขั้น wizard (ปัจจุบันรวมเป็น 4 ขั้น: เลือกรถ / อาการ / อะไหล่ / ตัดสินใจ+สรุป)'
+        ],
+        seed: false, more: [['ติดตามสถานะ “เรื่องของฉัน”', '#my']]
+      },
+      {
+        m: 'M2', span: 'ช่วง 1→2 · คัดแยก + รับเข้าระบบ กบค.', roles: ['กรย.', 'กบค.'], view: '#kry',
+        demo: [
+          'กรย. เห็นคิว “งานคัดแยก” (มีงานตัวอย่าง 1 เรื่อง)',
+          'เลือกช่องทาง: ซ่อมอู่ (+แนะนำอู่ใกล้เคียง) / กรย. ซ่อมเอง / ส่งต่อ กบค.',
+          'กรณีส่งต่อ กบค. → เรื่องเข้าคิว “งานซ่อม กบค.”',
+          'กบค. “รับไว้ซ่อม” หรือ “ส่งกลับ” (+เหตุผล +แนะนำอู่)'
+        ],
+        focus: 'gateway การคัดแยก 3 ทาง · การส่งกลับพร้อมเหตุผล/แนะนำอู่ · การส่งต่อข้ามหน่วย',
+        open: [
+          'flow ใหม่ผ่าน กรย. แต่ F10 เดิมผ่าน “แผนกยานพาหนะของกอง” — อันไหนคือเส้นทางจริง (flow#10)',
+          'งาน Overhaul / ไม่คุ้มค่า→จำหน่าย (F14?) / กบค. ไม่ซ่อมเอง→จ้างเอกชน — เส้นทางยังไม่กำหนด (flow#2,3,4)'
+        ],
+        seed: true, more: [['งานซ่อม กบค. (รับ/ส่งกลับ)', '#kbk']]
+      },
+      {
+        m: 'M3', span: 'ช่วง 2→3 · ประเมิน + จัดการอะไหล่', roles: ['กบค.', 'คลัง'], view: '#kbk',
+        demo: [
+          'เปิดงานในคิว “งานซ่อม กบค.” → ประเมิน / ระบุอาการ + ราคา',
+          'เดินสถานะ: รอสั่งอะไหล่ → อะไหล่ถึงแล้ว (เห็นรายการ + ETA)',
+          'ไปหน้า “คลังอะไหล่”: จอง / สั่งของ+ETA / คืน'
+        ],
+        focus: 'การประเมิน+ประเมินราคา · สถานะอะไหล่ + ETA · มุมมองคลังอะไหล่',
+        open: [
+          'เบิกอะไหล่จากคลังของหน่วยไหน (flow#1)',
+          'เงื่อนไข + การอนุมัติ “ดัดแปลงอะไหล่” และการบันทึกลงประวัติ (flow#9)'
+        ],
+        seed: true, more: [['คลังอะไหล่', '#stock']]
+      },
+      {
+        m: 'M4', span: 'ช่วง 4 · นัดหมาย + รับรถ + ตรวจสภาพขาเข้า', roles: ['กบค.', 'เจ้าของรถ'], view: '#kbk',
+        demo: [
+          'กบค. เปิดตารางนัดรับ (เลือกได้หลายวัน + ช่วงเวลาต่อวัน)',
+          'ผู้แจ้งเข้า “เรื่องของฉัน” ยืนยัน 1 ช่วงเวลา',
+          'ตรวจสภาพขาเข้า: ตำหนิรอบตัวรถรายโซน · ระดับน้ำมัน · เลขไมล์ · อาการเดิม (บังคับก่อนเดินสถานะ)'
+        ],
+        focus: 'ประสบการณ์นัดหมาย 2 ฝั่ง · ความครบของ checklist ตรวจสภาพขาเข้า',
+        open: [
+          'ซ่อมที่ สนญ. vs ออกซ่อมหน้างาน — เงื่อนไข/เอกสารต่างกันอย่างไร',
+          'ใบตรวจสอบสภาพอะไหล่ + ใบตรวจสภาพก่อน/หลัง ใช้อย่างไรตอนออกหน้างาน (flow#5)'
+        ],
+        seed: true, more: [['ยืนยันนัด (เรื่องของฉัน)', '#my']]
+      },
+      {
+        m: 'M5', span: 'ช่วง 5 · ดำเนินการซ่อม + บันทึกผล', roles: ['กบค.', 'ผู้แจ้ง'], view: '#kbk',
+        demo: [
+          'เดินสถานะซ่อม (ดำเนินการซ่อม → ซ่อมเสร็จ)',
+          'กรณีเจออาการเพิ่ม → อัปเดตอาการ/อะไหล่ → ผู้แจ้ง “กดรับทราบ” ที่เรื่องของฉัน',
+          'ตรวจสภาพขาออก เทียบขาเข้า รายอาการ',
+          'คืนอะไหล่ที่เหลือ + บันทึกประวัติการซ่อม'
+        ],
+        focus: 'flow อาการเพิ่ม + การรับทราบของผู้แจ้ง · การเทียบผลตรวจขาเข้า/ขาออก',
+        open: [
+          '“หน่วยงานกดปุ่มรับทราบ” = ใคร (เจ้าของรถ/กรย.) และถ้าไม่กดจะบล็อกการซ่อมไหม (flow#8)'
+        ],
+        seed: true, more: [['กดรับทราบ (เรื่องของฉัน)', '#my']]
+      },
+      {
+        m: 'M6', span: 'ช่วง 6 · ต้นทุน + ปิดงาน + อนุมัติ', roles: ['กบค.', 'ผู้อนุมัติ'], view: '#sup',
+        demo: [
+          'กบค. กรอก/คำนวณต้นทุน (ค่าแรง + อะไหล่ + เดินทาง + ที่พัก) → Export CSV',
+          'ส่งอนุมัติปิดงาน → เข้าเมนู “อนุมัติปิดงาน”',
+          'ผู้อนุมัติ: ตรวจประวัติ + ต้นทุน → อนุมัติ / ตีกลับ (+timeline)',
+          'ปิดงาน → ส่ง Notification ถึงทุกฝ่าย'
+        ],
+        focus: 'สูตร SUM ต้นทุน · ขั้นอนุมัติ/ตีกลับ + timeline · การแจ้งเตือนปิดงาน',
+        open: [
+          'นิยาม/สูตร “SUM ต้นทุน” รวมอะไรบ้าง (flow#6)',
+          'ผู้อนุมัติปิดงานคือใคร — mock ใช้ “ผู้บังคับบัญชา กบค.” แต่ diagram ล่าสุด sync เป็น “ฝ่ายพัสดุ” → ยืนยันให้ตรงกัน (flow#7)'
+        ],
+        seed: true, more: [['คำนวณต้นทุน (งานซ่อม กบค.)', '#kbk']]
+      }
+    ];
+
+    const url = (view, seed) => MOCK + (seed ? '?seed=review' : '') + view;
+    $ = id => document.getElementById(id);
+    $('mss').innerHTML = MS.map(s => `
+      <div class="card ms-card">
+        <div class="ms-head">
+          <div class="ms-num">${s.m}</div>
+          <div><div class="ms-title">${s.span.split(' · ')[1]}</div><div class="ms-span">${s.span.split(' · ')[0]}</div></div>
+          <div class="roles">${s.roles.map(r => `<span class="role">${r}</span>`).join('')}</div>
+        </div>
+        <div class="blk"><h4><span class="ms">play_circle</span>เดโมให้ดู</h4>
+          <ol class="demo">${s.demo.map(d => `<li>${d}</li>`).join('')}</ol></div>
+        <div class="blk"><h4><span class="ms">visibility</span>จุดโฟกัสรีวิว</h4>
+          <div class="focus">${s.focus}</div></div>
+        <div class="blk"><h4><span class="ms">help</span>คำถามเปิดที่ต้องเคลียร์</h4>
+          <ul class="open">${s.open.map(o => `<li>${o}</li>`).join('')}</ul></div>
+        <div class="ms-btns">
+          <a class="btn btn-p" href="${url(s.view, s.seed)}" target="_blank" rel="noopener"><span class="ms">open_in_new</span> เปิดเดโม</a>
+          ${s.more.map(([label, v]) => `<span class="more">+ <a href="${url(v, s.seed)}" target="_blank" rel="noopener">${label}</a></span>`).join('')}
+        </div>
+      </div>`).join('');
+  </script>
+</body>
+
+</html>
