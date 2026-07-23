@@ -1077,10 +1077,30 @@
         <div class="crumbs"><span class="ms">home</span><span
             class="sep">›</span><span>แจ้งซ่อมและบริหารงานซ่อม</span><span class="sep">›</span><span
             class="cur">เรื่องแจ้งซ่อมของฉัน</span></div>
+        <div class="page-title-row page-title-with-filter">
         <h1 class="page-title">เรื่องแจ้งซ่อมของฉัน</h1>
-        <div id="mylist"></div>
-        <div id="mydetail" class="hidden"></div>
-      </main>
+          <div class="list-toolbar">
+        <div class="filter-field">
+          <label for="my-status-filter">กรองตามสถานะ</label>
+          <select id="my-status-filter" onchange="renderMyList()">
+            <option value="all">ทุกสถานะ</option>
+            <option value="self">บันทึกแล้ว — ซ่อมเอง</option>
+            <option value="kry">รอ กรย. คัดแยกช่องทาง</option>
+            <option value="krd">กรย. รับไปซ่อมเอง</option>
+            <option value="pending">รอ กบค. รับเรื่อง</option>
+            <option value="returned">ส่งกลับ/ดำเนินการซ่อมโดยอู่</option>
+            <option value="gclosed">ปิดงาน — กรย./อู่</option>
+            <option value="work">กำลังดำเนินการซ่อม</option>
+            <option value="slots">ซ่อมเสร็จ — รอเลือกวันนัดรับ</option>
+            <option value="appt">นัดรับรถแล้ว</option>
+            <option value="approve">รออนุมัติปิดงาน</option>
+            <option value="closed">ปิดงานแล้ว</option>
+          </select>
+        </div>
+        </div>
+      </div>
+      <div id="mylist"></div>
+        </main>
 
       <!-- ============ VIEW: เติมน้ำมัน + ชั่วโมงทำงาน ============ -->
       <main class="content hidden" id="view-fuel">
@@ -1095,23 +1115,43 @@
         </div>
       </main>
 
-      <!-- ============ VIEW: งานคัดแยก กรย. ============ -->
-      <main class="content hidden" id="view-kry">
-        <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>บริหารงานซ่อม</span><span
-            class="sep">›</span><span class="cur">งานคัดแยก กรย.</span></div>
+    <!-- ============ VIEW: งานคัดแยก กรย. ============ -->
+    <main class="content hidden" id="view-kry">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>บริหารงานซ่อม</span><span class="sep">›</span><span class="cur">งานคัดแยก กรย.</span></div>
+      <div class="page-title-row page-title-with-filter">
         <h1 class="page-title">งานคัดแยกซ่อม — กรย.</h1>
-        <div id="krylist"></div>
-        <div id="krydetail" class="hidden"></div>
-      </main>
+        <div class="list-toolbar"><div class="filter-field">
+          <label for="kry-status-filter">กรองตามสถานะ</label>
+          <select id="kry-status-filter" onchange="renderKryList()">
+            <option value="all">ทุกสถานะ</option>
+            <option value="kry">รอ กรย. คัดแยกช่องทาง</option>
+            <option value="krd">กรย. รับไปซ่อมเอง</option>
+          </select>
+        </div></div>
+      </div>
+      <div id="krylist"></div>
+    </main>
 
-      <!-- ============ VIEW: งานซ่อม กบค. ============ -->
-      <main class="content hidden" id="view-kbk">
-        <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>งานซ่อม กบค.</span><span
-            class="sep">›</span><span class="cur">คิวงานซ่อม</span></div>
+    <!-- ============ VIEW: งานซ่อม กบค. ============ -->
+    <main class="content hidden" id="view-kbk">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>งานซ่อม กบค.</span><span class="sep">›</span><span class="cur">คิวงานซ่อม</span></div>
+      <div class="page-title-row page-title-with-filter">
         <h1 class="page-title">งานซ่อม กบค.</h1>
-        <div id="kbklist"></div>
-        <div id="kbkdetail" class="hidden"></div>
-      </main>
+        <div class="list-toolbar"><div class="filter-field">
+          <label for="kbk-status-filter">กรองตามสถานะ</label>
+          <select id="kbk-status-filter" onchange="renderKbkList()">
+            <option value="all">ทุกสถานะ</option>
+            <option value="pending">รอ กบค. รับเรื่อง</option>
+            <option value="returned">ส่งกลับ/ดำเนินการซ่อมโดยอู่</option>
+            <option value="gclosed">ปิดงาน — กรย./อู่</option>
+            <option value="work">กำลังดำเนินการซ่อม</option>
+            <option value="appt">นัดรับรถแล้ว</option>
+            <option value="closed">ปิดงานแล้ว</option>
+          </select>
+        </div></div>
+      </div>
+      <div id="kbklist"></div>
+    </main>
 
       <!-- ============ VIEW: อนุมัติปิดงาน (ผู้บังคับบัญชา) ============ -->
       <main class="content hidden" id="view-sup">
@@ -1711,8 +1751,8 @@
     }
 
     // ================= VIEW SWITCH =================
-    function switchView(v) {
-      VIEW = v;
+    function switchView(v,remember=true) {
+      if(v!==VIEW){if(remember)VIEW_HISTORY.push(VIEW);VIEW = v}
       ['form', 'my', 'fuel', 'kry', 'kbk', 'sup', 'stock'].forEach(x => {
         $('view-' + x).classList.toggle('hidden', x !== v);
         $('nav-' + x).classList.toggle('on', x === v);
@@ -1725,6 +1765,14 @@
       if (v === 'stock') renderStock();
       window.scrollTo({ top: 0 });
     }
+function goBackView(){
+  if(VIEW_HISTORY.length){switchView(VIEW_HISTORY.pop(),false);return}
+  if(window.history.length>1)window.history.back();
+}
+function goBackFromForm(){
+  if($('sdone').classList.contains('hidden')&&S.step>1){nav(-1);return}
+  goBackView();
+}
 
     // ================= VIEW: คลังอะไหล่ (กบค.) =================
     function renderStock() {
@@ -1975,39 +2023,61 @@
     <ul class="tl" style="margin-top:12px">${j.history.map((h, i) => `<li class="${i === j.history.length - 1 ? 'on' : ''}">${h.label}<div class="when">${h.t}</div></li>`).join('')}</ul>`;
     }
 
-    // ================= VIEW: เรื่องของฉัน =================
-    function renderMyList() {
-      $('mydetail').classList.add('hidden'); $('mylist').classList.remove('hidden');
-      if (!JOBS.length) { $('mylist').innerHTML = '<div class="empty">ยังไม่มีเรื่องแจ้งซ่อม</div>'; return }
-      $('mylist').innerHTML = JOBS.map(j => {
-        const st = statusInfo(j);
-        return `<div class="job" onclick="openMy('${j.no}')">
+// ================= VIEW: เรื่องของฉัน =================
+const MY_STATUS_PHASES={self:['self'],kry:['kry'],krd:['krd'],pending:['pending'],returned:['returned'],gclosed:['gclosed'],work:['work'],slots:['slots'],appt:['appt'],approve:['approve'],closed:['closed']};
+function renderMyList(){
+  const list=$('mylist');R.jobNo=null;list.classList.remove('hidden');
+  const select=$('my-status-filter'),key=select.value,phases=MY_STATUS_PHASES[key];
+  const jobs=phases?JOBS.filter(j=>phases.includes(j.phase)):JOBS;
+  if(!jobs.length){
+    list.innerHTML=key==='all'?'<div class="empty">ยังไม่มีเรื่องแจ้งซ่อม</div>':`<div class="filter-empty"><span class="ms">filter_alt_off</span><b>ไม่พบข้อมูลในสถานะนี้</b><span>ยังไม่มีเรื่องแจ้งซ่อมที่อยู่ในสถานะ “${esc(select.options[select.selectedIndex].text)}”</span></div>`;
+    return;
+  }
+  list.innerHTML=jobs.map(j=>{
+    const st=statusInfo(j);
+    return`<div class="my-accordion"><div class="job my-job" id="my-job-${j.no}" onclick="openMy('${j.no}')" aria-expanded="false">
       <span class="ms" style="color:var(--primary-600)">description</span>
       <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.plate} · ${j.syms[0]}${j.syms.length > 1 ? ' +' + (j.syms.length - 1) : ''}</div></div>
       <span class="badge ${st.cls}">${st.label}</span>
-      <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
-      }).join('');
-    }
-    let R = { jobNo: null, photos: 0, urls: [], returns: {}, pc: '', lc: '', det: '', pick: null };
-    function openMy(no) {
-      const j = JOBS.find(x => x.no === no);
-      R = { jobNo: no, photos: 0, urls: [], returns: {}, pc: '', lc: '', det: '', pick: null };
-      j.booked.forEach(b => R.returns[b.name] = 0);
-      renderMyDetail(no);
-    }
-    function pickSlot(no, id) { R.pick = id; renderMyDetail(no) }
-    function confirmSlot(no) {
-      const j = JOBS.find(x => x.no === no);
-      if (!R.pick) { toast('กรุณาเลือกช่วงเวลานัดรับก่อนยืนยัน'); return }
-      const si = +R.pick.split('::')[0], t = R.pick.split('::')[1];
-      const s = j.slots[si];
-      j.appt = { date: s.date, time: t.split(' ').slice(1).join(' '), note: j.slotNote || '' };
-      j.phase = 'appt';
-      j.history.push({ t: nowStr(), label: 'ผู้แจ้งยืนยันนัดรับรถ ' + s.label + ' ' + t + ' (พร้อมตรวจสภาพหลังซ่อม)' });
-      toast('ยืนยันวันนัดแล้ว — กบค. เห็นวันนัดที่เลือก'); renderMyDetail(no);
-    }
-    function retPanel(j) {
-      return `<div class="panel"><div class="sect" style="margin:0 0 8px">กบค. ส่งกลับให้ซ่อมเอง</div>
+      <span class="ms my-chevron" style="color:var(--gray-300)">chevron_right</span></div>
+      <div class="my-inline-detail hidden" id="my-detail-${j.no}"></div></div>`;
+  }).join('');
+}
+let R={jobNo:null,photos:0,urls:[],returns:{},pc:'',lc:'',det:'',pick:null};
+function myDetail(no){return $('my-detail-'+no)}
+function setMyCardOpen(no,open){
+  const card=$('my-job-'+no);if(!card)return;
+  card.classList.toggle('open',open);card.setAttribute('aria-expanded',open);
+  const icon=card.querySelector('.my-chevron');if(icon)icon.textContent=open?'expand_less':'chevron_right';
+}
+function closeMyDetail(){
+  if(!R.jobNo)return;
+  setMyCardOpen(R.jobNo,false);
+  const detail=myDetail(R.jobNo);if(detail){detail.classList.add('hidden');detail.innerHTML=''}
+  R.jobNo=null;
+}
+function openMy(no){
+  if(R.jobNo===no&&!myDetail(no).classList.contains('hidden')){closeMyDetail();return}
+  if(R.jobNo){const previous=myDetail(R.jobNo);setMyCardOpen(R.jobNo,false);if(previous){previous.classList.add('hidden');previous.innerHTML=''}}
+  const j=JOBS.find(x=>x.no===no);
+  R={jobNo:no,photos:0,urls:[],returns:{},pc:'',lc:'',det:'',pick:null};
+  j.booked.forEach(b=>R.returns[b.name]=0);
+  setMyCardOpen(no,true);
+  renderMyDetail(no);
+}
+function pickSlot(no,id){R.pick=id;renderMyDetail(no)}
+function confirmSlot(no){
+  const j=JOBS.find(x=>x.no===no);
+  if(!R.pick){toast('กรุณาเลือกช่วงเวลานัดรับก่อนยืนยัน');return}
+  const si=+R.pick.split('::')[0],t=R.pick.split('::')[1];
+  const s=j.slots[si];
+  j.appt={date:s.date,time:t.split(' ').slice(1).join(' '),note:j.slotNote||''};
+  j.phase='appt';
+  j.history.push({t:nowStr(),label:'ผู้แจ้งยืนยันนัดรับรถ '+s.label+' '+t+' (พร้อมตรวจสภาพหลังซ่อม)'});
+  toast('ยืนยันวันนัดแล้ว — กบค. เห็นวันนัดที่เลือก');renderMyDetail(no);
+}
+function retPanel(j){
+  return`<div class="panel"><div class="sect" style="margin:0 0 8px">กบค. ส่งกลับให้ซ่อมเอง</div>
     <div style="font-size:14px"><b>เหตุผล:</b> ${j.ret.reason}</div>
     ${j.ret.garages.length ? `<div style="font-size:14px;margin-top:10px"><b>อู่ใกล้เคียงที่ กบค. แนะนำ:</b></div>` + j.ret.garages.map(g => `<div class="garage" style="cursor:default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join('') : ''}
   </div>`;
@@ -2124,27 +2194,50 @@
     }
 
     // ================= VIEW: งานคัดแยก กรย. =================
-    let KE = { mode: null, garages: [] };
+    let KE = { jobNo:null,mode: null, garages: [] };
+const KRY_STATUS_PHASES={kry:['kry'],krd:['krd']};
     function renderKryList() {
-      $('krydetail').classList.add('hidden'); $('krylist').classList.remove('hidden');
-      const list = JOBS.filter(j => ['kry', 'krd'].includes(j.phase));
-      if (!list.length) { $('krylist').innerHTML = '<div class="empty">ยังไม่มีเรื่องรอคัดแยก</div>'; return }
+      KE.jobNo=null; $('krylist').classList.remove('hidden');
+      const allJobs = JOBS.filter(j => ['kry', 'krd'].includes(j.phase));
+      const select=$('kry-status-filter'),key=select.value,phases=KRY_STATUS_PHASES[key];
+  const list=phases?allJobs.filter(j=>phases.includes(j.phase)):allJobs;
+  if (!list.length) { 
+    $('krylist').innerHTML = key==='all'?'<div class="empty">ยังไม่มีเรื่องรอคัดแยก</div>':`<div class="filter-empty"><span class="ms">filter_alt_off</span><b>ไม่พบข้อมูลในสถานะนี้</b><span>ยังไม่มีงานคัดแยกซ่อมที่อยู่ในสถานะ “${esc(select.options[select.selectedIndex].text)}”</span></div>`;
+     return;
+   }
       $('krylist').innerHTML = list.map(j => {
         const st = statusInfo(j);
-        return `<div class="job" onclick="openKry('${j.no}')">
+        return `<div class="kry-accordion"><div class="job kry-job" id="kry-job-${j.no}" onclick="openKry('${j.no}')" aria-expanded="false">
       <span class="ms" style="color:var(--primary-600)">${j.phase === 'kry' ? 'move_to_inbox' : 'handyman'}</span>
       <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org} · ${j.plate} · ${j.syms[0]}${j.syms.length > 1 ? ' +' + (j.syms.length - 1) : ''} · ความรุนแรง: ${j.sev}</div></div>
       <span class="badge ${st.cls}">${st.label}</span>
-      <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
-      }).join('');
-    }
-    function openKry(no) { KE = { mode: null, garages: [] }; renderKryDetail(no) }
-    function renderKryDetail(no) {
-      const j = JOBS.find(x => x.no === no);
-      const st = statusInfo(j);
-      let action = '';
-      if (j.phase === 'kry') {
-        action = `<div class="sect" style="margin-top:24px">คัดแยกช่องทางซ่อม — กรย.</div>
+      <span class="ms kry-chevron" style="color:var(--gray-300)">chevron_right</span></div>
+      <div class="kry-inline-detail hidden" id="kry-detail-${j.no}"></div></div>`;
+  }).join('');
+}
+function kryDetail(no){return $('kry-detail-'+no)}
+function setKryCardOpen(no,open){
+  const card=$('kry-job-'+no);if(!card)return;
+  card.classList.toggle('open',open);card.setAttribute('aria-expanded',open);
+  const icon=card.querySelector('.kry-chevron');if(icon)icon.textContent=open?'expand_less':'chevron_right';
+}
+function closeKryDetail(){
+  if(!KE.jobNo)return;
+  setKryCardOpen(KE.jobNo,false);
+  const detail=kryDetail(KE.jobNo);if(detail){detail.classList.add('hidden');detail.innerHTML=''}
+  KE.jobNo=null;
+}
+function openKry(no){
+  if(KE.jobNo===no&&!kryDetail(no).classList.contains('hidden')){closeKryDetail();return}
+  if(KE.jobNo){const previous=kryDetail(KE.jobNo);setKryCardOpen(KE.jobNo,false);if(previous){previous.classList.add('hidden');previous.innerHTML=''}}
+  KE={jobNo:no,mode:null,garages:[]};setKryCardOpen(no,true);renderKryDetail(no);
+}
+function renderKryDetail(no){
+  const j=JOBS.find(x=>x.no===no);
+  const st=statusInfo(j);
+  let action='';
+  if(j.phase==='kry'){
+    action=`<div class="sect" style="margin-top:24px">คัดแยกช่องทางซ่อม — กรย.</div>
     <div class="decide" style="max-width:840px">
       <div class="tile tile-blue ${KE.mode === 'garage' ? 'sel' : ''}" onclick="KE.mode='garage';renderKryDetail('${no}')"><span class="ms">garage</span><b>ซ่อมที่อู่</b><small>เจ้าของรถขับไปอู่ภายนอก</small></div>
       <div class="tile tile-magenta ${KE.mode === 'self' ? 'sel' : ''}" onclick="KE.mode='self';renderKryDetail('${no}')"><span class="ms">handyman</span><b>กรย. ซ่อมเอง</b><small>เบิกอะไหล่จากคลัง ซ่อมที่ กรย.</small></div>
@@ -2176,54 +2269,49 @@
         <div class="f sp2"><label>ค่าแรง (บาท)</label><div class="in"><span class="ms">engineering</span><input type="number" min="0" id="krdlc" placeholder="0"></div></div>
       </div>
       <div class="rowbtns"><button class="btn btn-p" onclick="krdClose('${no}')">บันทึกการซ่อมและปิดงาน</button></div></div>`;
-      }
-      if (j.phase === 'gclosed') action = recordPanel(j);
-      $('krylist').classList.add('hidden');
-      $('krydetail').classList.remove('hidden');
-      $('krydetail').innerHTML = `
-    <div class="job" style="cursor:default"><span class="ms" style="color:var(--primary-600)">alt_route</span>
-      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org}</div></div>
-      <span class="badge ${st.cls}">${st.label}</span></div>
-    ${jobInfoBox(j)}${action}${timelineBox(j)}
-    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderKryList()">← กลับรายการ</button></div>`;
-    }
-    function kryToggleGarage(id) { KE.garages.includes(id) ? KE.garages = KE.garages.filter(x => x !== id) : KE.garages.push(id) }
-    function kryGarage(no) {
-      const j = JOBS.find(x => x.no === no);
-      const note = $('krynote').value.trim();
-      j.phase = 'returned'; j.rstage = 0; j.garageRoute = true;
-      j.ret = { reason: 'กรย. คัดแยกให้ซ่อมที่อู่ภายนอก' + (note ? ' — ' + esc(note) : ''), garages: GARAGES.filter(g => KE.garages.includes(g.id)) };
-      j.history.push({ t: nowStr(), label: 'กรย. ส่งซ่อมอู่ภายนอก' + (j.ret.garages.length ? ' · แนะนำ: ' + j.ret.garages.map(g => g.name).join(', ') : '') });
-      updateBadge(); toast('ส่งซ่อมอู่แล้ว — ผู้แจ้งดำเนินการต่อที่ "เรื่องของฉัน"'); renderKryDetail(no);
-    }
-    function kryToSelf(no) {
-      const j = JOBS.find(x => x.no === no);
-      const note = $('krynote2').value.trim();
-      j.phase = 'krd';
-      j.history.push({ t: nowStr(), label: 'กรย. รับไปซ่อมเอง' + (note ? ' — ' + esc(note) : '') });
-      updateBadge(); toast('รับงานแล้ว — กรย. ดำเนินการซ่อมเอง'); renderKryDetail(no);
-    }
-    function kryToKbk(no) {
-      const j = JOBS.find(x => x.no === no);
-      const note = $('krynote3').value.trim();
-      j.phase = 'pending';
-      j.history.push({ t: nowStr(), label: 'กรย. ส่งต่อให้ กบค.' + (note ? ' — ' + esc(note) : '') });
-      updateBadge(); toast('ส่งต่อ กบค. แล้ว — ไปแสดงที่เมนู "งานซ่อม กบค."'); renderKryDetail(no);
-    }
-    function krdClose(no) {
-      const j = JOBS.find(x => x.no === no);
-      const det = $('krddet').value.trim();
-      if (!det) { toast('กรุณากรอกบันทึกผลการซ่อมก่อนปิดงาน'); return }
-      const pc = +$('krdpc').value || 0, lc = +$('krdlc').value || 0;
-      j.record = { det: esc(det), photos: 0, pc, lc, returns: j.booked.map(b => ({ name: b.name, unit: b.unit, qty: 0 })), by: 'กรย.' };
-      j.phase = 'gclosed';
-      j.history.push({ t: nowStr(), label: 'กรย. ซ่อมเสร็จและปิดงาน — ค่าใช้จ่ายรวม ' + (pc + lc).toLocaleString() + ' บาท' });
-      updateBadge(); toast('ปิดงานเรียบร้อย (กรย. ซ่อมเอง)'); renderKryDetail(no);
-    }
+  }
+  if(j.phase==='gclosed')action=recordPanel(j);
+  const detail=kryDetail(no);detail.classList.remove('hidden');
+  detail.innerHTML=`${jobInfoBox(j)}${action}${timelineBox(j)}`;
+}
+function kryToggleGarage(id){KE.garages.includes(id)?KE.garages=KE.garages.filter(x=>x!==id):KE.garages.push(id)}
+function kryGarage(no){
+  const j=JOBS.find(x=>x.no===no);
+  const note=$('krynote').value.trim();
+  j.phase='returned';j.rstage=0;j.garageRoute=true;
+  j.ret={reason:'กรย. คัดแยกให้ซ่อมที่อู่ภายนอก'+(note?' — '+esc(note):''),garages:GARAGES.filter(g=>KE.garages.includes(g.id))};
+  j.history.push({t:nowStr(),label:'กรย. ส่งซ่อมอู่ภายนอก'+(j.ret.garages.length?' · แนะนำ: '+j.ret.garages.map(g=>g.name).join(', '):'')});
+  updateBadge();toast('ส่งซ่อมอู่แล้ว — ผู้แจ้งดำเนินการต่อที่ "เรื่องของฉัน"');renderKryDetail(no);
+}
+function kryToSelf(no){
+  const j=JOBS.find(x=>x.no===no);
+  const note=$('krynote2').value.trim();
+  j.phase='krd';
+  j.history.push({t:nowStr(),label:'กรย. รับไปซ่อมเอง'+(note?' — '+esc(note):'')});
+  updateBadge();toast('รับงานแล้ว — กรย. ดำเนินการซ่อมเอง');renderKryDetail(no);
+}
+function kryToKbk(no){
+  const j=JOBS.find(x=>x.no===no);
+  const note=$('krynote3').value.trim();
+  j.phase='pending';
+  j.history.push({t:nowStr(),label:'กรย. ส่งต่อให้ กบค.'+(note?' — '+esc(note):'')});
+  updateBadge();toast('ส่งต่อ กบค. แล้ว — ไปแสดงที่เมนู "งานซ่อม กบค."');renderKryDetail(no);
+}
+function krdClose(no){
+  const j=JOBS.find(x=>x.no===no);
+  const det=$('krddet').value.trim();
+  if(!det){toast('กรุณากรอกบันทึกผลการซ่อมก่อนปิดงาน');return}
+  const pc=+$('krdpc').value||0,lc=+$('krdlc').value||0;
+  j.record={det:esc(det),photos:0,pc,lc,returns:j.booked.map(b=>({name:b.name,unit:b.unit,qty:0})),by:'กรย.'};
+  j.phase='gclosed';
+  j.history.push({t:nowStr(),label:'กรย. ซ่อมเสร็จและปิดงาน — ค่าใช้จ่ายรวม '+(pc+lc).toLocaleString()+' บาท'});
+  updateBadge();toast('ปิดงานเรียบร้อย (กรย. ซ่อมเอง)');renderKryDetail(no);
+}
 
     // ================= VIEW: งานซ่อม กบค. =================
     const E = { mode: null, garages: [], loc: 'hq' };
-    let K = { slots: {}, note: '', mode: 'range', from: '', to: '', one: '', insp: null };
+    let K = { slots: {}, note: '', mode: 'range', from: '', to: '', one: '', insp: null },KBK_OPEN=null;
+const KBK_STATUS_PHASES={pending:['pending'],returned:['returned'],gclosed:['gclosed'],work:['work'],appt:['appt'],closed:['closed']};
     function initInsp() { return { zones: ZONES.map(z => ({ name: z, bad: false, note: '' })), fuel: null, odo: '', symOk: {}, extra: '' } }
     function zSet(no, zi, v) { K.insp.zones[zi].bad = v; renderKbkDetail(no) }
     function fuelSet(no, f) { K.insp.fuel = f; renderKbkDetail(no) }
@@ -2273,21 +2361,42 @@
     ${rec.extra ? `<div class="hint">เพิ่มเติม: ${rec.extra}</div>` : ''}</div>`;
     }
     function renderKbkList() {
-      $('kbkdetail').classList.add('hidden'); $('kbklist').classList.remove('hidden');
-      const list = JOBS.filter(j => ['pending', 'work', 'appt', 'closed', 'returned', 'gclosed'].includes(j.phase));
-      if (!list.length) { $('kbklist').innerHTML = '<div class="empty">ยังไม่มีงานเข้าคิว</div>'; return }
+      KBK_OPEN=null; $('kbklist').classList.remove('hidden');
+      const allJobs = JOBS.filter(j => ['pending', 'work', 'appt', 'closed', 'returned', 'gclosed'].includes(j.phase));
+      const select=$('kbk-status-filter'),key=select.value,phases=KBK_STATUS_PHASES[key];
+  const list=phases?allJobs.filter(j=>phases.includes(j.phase)):allJobs;
+  if (!list.length) { 
+    $('kbklist').innerHTML = key==='all'?'<div class="empty">ยังไม่มีงานเข้าคิว</div>':`<div class="filter-empty"><span class="ms">filter_alt_off</span><b>ไม่พบข้อมูลในสถานะนี้</b><span>ยังไม่มีงานซ่อม กบค. ที่อยู่ในสถานะ “${esc(select.options[select.selectedIndex].text)}”</span></div>`;
+     return;
+   }
       $('kbklist').innerHTML = list.map(j => {
         const st = statusInfo(j);
-        return `<div class="job" onclick="openKbk('${j.no}')">
+        return `<div class="kbk-accordion"><div class="job kbk-job" id="kbk-job-${j.no}" onclick="openKbk('${j.no}')" aria-expanded="false">
       <span class="ms" style="color:var(--primary-600)">${j.phase === 'pending' ? 'move_to_inbox' : 'engineering'}</span>
       <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org} · ${j.plate} · ${j.syms[0]}${j.syms.length > 1 ? ' +' + (j.syms.length - 1) : ''} · ความรุนแรง: ${j.sev}</div></div>
       <span class="badge ${st.cls}">${st.label}</span>
-      <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
+      <span class="ms kbk-chevron" style="color:var(--gray-300)">chevron_right</span></div>
+      <div class="kbk-inline-detail hidden" id="kbk-detail-${j.no}"></div></div>`;
       }).join('');
     }
+function kbkDetail(no){return $('kbk-detail-'+no)}
+function setKbkCardOpen(no,open){
+  const card=$('kbk-job-'+no);if(!card)return;
+  card.classList.toggle('open',open);card.setAttribute('aria-expanded',open);
+  const icon=card.querySelector('.kbk-chevron');if(icon)icon.textContent=open?'expand_less':'chevron_right';
+}
+function closeKbkDetail(){
+  if(!KBK_OPEN)return;
+  setKbkCardOpen(KBK_OPEN,false);
+  const detail=kbkDetail(KBK_OPEN);if(detail){detail.classList.add('hidden');detail.innerHTML=''}
+  KBK_OPEN=null;
+}
     function openKbk(no) {
-      E.mode = null; E.garages = []; E.loc = 'hq'; K = { slots: {}, note: '', mode: 'range', from: '', to: '', one: '', insp: null, sat: null, ack: false };
-      renderKbkDetail(no);
+      if(KBK_OPEN===no&&!kbkDetail(no).classList.contains('hidden')){closeKbkDetail();return}
+  if(KBK_OPEN){const previous=kbkDetail(KBK_OPEN);setKbkCardOpen(KBK_OPEN,false);if(previous){previous.classList.add('hidden');previous.innerHTML=''}}
+  KBK_OPEN=no;
+  E.mode = null; E.garages = []; E.loc = 'hq'; K = { slots: {}, note: '', mode: 'range', from: '', to: '', one: '', insp: null, sat: null, ack: false };
+      setKbkCardOpen(no,true);renderKbkDetail(no);
     }
     function renderKbkDetail(no) {
       const j = JOBS.find(x => x.no === no);
@@ -2441,169 +2550,160 @@
           + costPanel(j);
       }
 
-      $('kbklist').classList.add('hidden');
-      $('kbkdetail').classList.remove('hidden');
-      $('kbkdetail').innerHTML = `
-    <div class="job" style="cursor:default"><span class="ms" style="color:var(--primary-600)">engineering</span>
-      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org}</div></div>
-      <span class="badge ${st.cls}">${st.label}</span></div>
-    ${jobInfoBox(j)}${action}${timelineBox(j)}
-    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderKbkList()">← กลับคิวงาน</button></div>`;
-      // mount shared component "ตัวเลือกวันนัด" (มีเฉพาะตอน wi===4 หน้าเปิดตารางว่าง)
-      const dpk = document.getElementById('dpk');
-      if (dpk) UIC.dayPicker.render(dpk, {
-        variant: UI.slotPicker, days: Object.keys(K.slots), state: K,
-        onToggleDay: iso => chipDay(no, iso),
-        onAddRange: () => addRange(no), onAddOne: () => addOne(no),
-        onState: p => Object.assign(K, p)
-      });
-    }
-    function toggleGarage(id) { E.garages.includes(id) ? E.garages = E.garages.filter(x => x !== id) : E.garages.push(id) }
-    function kbkSendTech(no) {
-      const j = JOBS.find(x => x.no === no);
-      j.history.push({ t: nowStr(), label: 'กบค. ส่งช่างไปตรวจสอบหน้างาน (อาการไม่ชัดเจน)' });
-      toast('บันทึกส่งช่างไปตรวจแล้ว'); renderKbkDetail(no);
-    }
-    function kbkPlaceholder(kind) {
-      toast(kind + ' — เส้นทางนี้ผังงานยังไม่กำหนด (placeholder)');
-    }
-    function kbkAccept(no) {
-      const j = JOBS.find(x => x.no === no);
-      j.phase = 'work'; j.wi = 0; j.loc = E.loc;
-      const note = $('acnote').value.trim();
-      if (E.loc === 'onsite') {
-        j.onsite = { team: esc($('ac-team').value.trim()), site: esc($('ac-site').value.trim()), trip: esc($('ac-trip').value.trim()) };
-        j.history.push({ t: nowStr(), label: 'กบค. รับเรื่องซ่อม (งานเล็ก — ช่างออกหน้างาน' + (j.onsite.site ? ' @ ' + j.onsite.site : '') + ')' + (note ? ' — ' + esc(note) : '') });
-        updateBadge(); toast('รับเรื่องแล้ว — แผนซ่อมหน้างาน'); renderKbkDetail(no);
-      } else {
-        j.history.push({ t: nowStr(), label: 'กบค. รับเรื่องซ่อม (งานใหญ่ — นำรถเข้า สนญ.)' + (note ? ' — ' + esc(note) : '') });
-        updateBadge(); toast('รับเรื่องแล้ว — สถานะ: รับเรื่องซ่อม'); renderKbkDetail(no);
-      }
-    }
-    // ---- แทร็กงานเล็ก (ซ่อมหน้างาน) ----
-    function onsiteAdvance(no) {
-      const j = JOBS.find(x => x.no === no);
-      j.wi++;
-      j.history.push({ t: nowStr(), label: 'ซ่อมหน้างาน: ' + ONSITE_STEPS[j.wi] });
-      toast('อัปเดตสถานะเป็น "' + ONSITE_STEPS[j.wi] + '"'); renderKbkDetail(no);
-    }
-    function onsiteFindMore(no) {
-      const j = JOBS.find(x => x.no === no);
-      j.history.push({ t: nowStr(), label: 'พบชำรุดเพิ่มระหว่างซ่อมหน้างาน — เบิกอะไหล่เพิ่ม' });
-      toast('บันทึกพบชำรุดเพิ่ม + เบิกอะไหล่เพิ่มแล้ว'); renderKbkDetail(no);
-    }
-    function onsiteClose(no) {
-      const j = JOBS.find(x => x.no === no);
-      if (!K.ack) { toast('ต้องให้หน่วยงานเจ้าของรถกดรับทราบก่อนปิดงาน'); return }
-      if (!K.sat) { toast('กรุณาให้คะแนนความพึงพอใจ'); return }
-      j.sat = K.sat; j.cost = readCost(); j.phase = 'approve';
-      j.history.push({ t: nowStr(), label: 'หน่วยงานรับทราบผลการซ่อมหน้างาน · ความพึงพอใจ ' + '★'.repeat(j.sat) + ' · สรุปต้นทุน ' + costSum(j.cost).toLocaleString() + ' บาท — ส่งขออนุมัติปิดงาน' });
-      updateBadge(); toast('ส่งขออนุมัติปิดงานแล้ว — รอผู้บังคับบัญชา'); renderKbkDetail(no);
-    }
-    function kbkReturn(no) {
-      const j = JOBS.find(x => x.no === no);
-      const reason = $('retnote').value.trim();
-      if (!reason) { toast('กรุณาระบุเหตุผลที่ส่งกลับ'); return }
-      j.phase = 'returned'; j.rstage = 0;
-      j.ret = { reason: esc(reason), garages: GARAGES.filter(g => E.garages.includes(g.id)) };
-      j.history.push({ t: nowStr(), label: 'กบค. ส่งกลับให้ซ่อมเอง — ' + esc(reason) + (j.ret.garages.length ? ' · แนะนำอู่: ' + j.ret.garages.map(g => g.name).join(', ') : '') });
-      updateBadge(); toast('ส่งกลับเรื่องแล้ว — ผู้แจ้งเห็นเหตุผลและอู่แนะนำ'); renderKbkDetail(no);
-    }
-    function kbkAdvance(no) {
-      const j = JOBS.find(x => x.no === no);
-      if (TG.inspection && j.wi === 0 && !j.inspIn) { toast('ต้องบันทึกตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) ก่อนเดินสถานะ'); return }
-      j.wi++;
-      j.history.push({ t: nowStr(), label: 'สถานะ: ' + KBK_STEPS[j.wi] });
-      toast('อัปเดตสถานะเป็น "' + KBK_STEPS[j.wi] + '" — ฝั่งผู้แจ้งเห็นด้วย'); renderKbkDetail(no);
-    }
-    const SLOT_TIMES = ['เช้า 09:00–12:00', 'บ่าย 13:30–16:30'];
-    const THD = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'], THM = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-    function isoInfo(iso) {
-      const d = new Date(iso + 'T00:00:00');
-      return { key: iso, label: `${THD[d.getDay()]} ${d.getDate()} ${THM[d.getMonth()]}`, thdate: `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear() + 543}` };
-    }
-    function addDayKey(iso) {
-      if (K.slots[iso]) return false;
-      const i = isoInfo(iso);
-      K.slots[iso] = { label: i.label, thdate: i.thdate, times: [SLOT_TIMES[0]] };
-      return true;
-    }
-    function addRange(no) {
-      if (!K.from || !K.to) { toast('กรุณาเลือกวันที่เริ่มและสิ้นสุดของช่วง'); return }
-      if (K.from > K.to) { toast('วันที่เริ่มต้องไม่เกินวันที่สิ้นสุด'); return }
-      const n = Math.round((new Date(K.to + 'T00:00:00') - new Date(K.from + 'T00:00:00')) / 864e5) + 1;
-      if (n > 31) { toast('เลือกช่วงได้ไม่เกิน 31 วัน'); return }
-      let added = 0;
-      const start = new Date(K.from + 'T00:00:00');
-      for (let i = 0; i < n; i++) {
-        const d = new Date(start.getTime() + i * 864e5);
-        const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        if (addDayKey(iso)) added++;
-      }
-      toast(added ? 'เพิ่ม ' + added + ' วันเข้าตารางแล้ว — เลือกช่วงเวลาต่อได้เลย' : 'ทุกวันในช่วงถูกเลือกไว้แล้ว');
-      renderKbkDetail(no);
-    }
-    function addOne(no) {
-      if (!K.one) { toast('กรุณาเลือกวันที่'); return }
-      toast(addDayKey(K.one) ? 'เพิ่มวันเข้าตารางแล้ว — เลือกช่วงเวลาต่อได้เลย' : 'วันนี้ถูกเลือกไว้แล้ว');
-      renderKbkDetail(no);
-    }
-    /* callback ของ UIC.dayPicker variant "ชิพวัน" */
-    function chipDay(no, iso) {
-      if (K.slots[iso]) delete K.slots[iso]; else addDayKey(iso);
-      renderKbkDetail(no);
-    }
-    function removeDay(no, key) { delete K.slots[key]; renderKbkDetail(no) }
-    function toggleSlot(no, key, t) {
-      const s = K.slots[key]; if (!s) return;
-      if (s.times.includes(t)) { s.times = s.times.filter(x => x !== t); if (!s.times.length) delete K.slots[key]; }
-      else s.times.push(t);
-      renderKbkDetail(no);
-    }
-    function kbkSendSlots(no) {
-      const j = JOBS.find(x => x.no === no);
-      const days = Object.entries(K.slots).sort((a, b) => a[0] < b[0] ? -1 : 1).map(([k, v]) => v);
-      if (!days.length) { toast('กรุณาเลือกอย่างน้อย 1 วัน'); return }
-      j.slots = days.map(d => ({ label: d.label, date: d.thdate, times: [...d.times] }));
-      j.slotNote = esc(K.note.trim());
-      j.phase = 'slots';
-      j.history.push({ t: nowStr(), label: 'กบค. เปิดตารางว่างนัดรับ ' + j.slots.length + ' วัน — รอผู้แจ้งเลือกยืนยัน' });
-      toast('ส่งตารางว่างแล้ว — ไปแสดงที่หน้าจอนัดรับรถของผู้แจ้ง'); renderKbkDetail(no);
-    }
-    function editSlots(no) {
-      const j = JOBS.find(x => x.no === no);
-      j.phase = 'work'; K.slots = {}; K.note = j.slotNote || '';
-      renderKbkDetail(no);
-    }
-    function kbkClose(no) {
-      const j = JOBS.find(x => x.no === no);
-      if (!K.insp.fuel) { toast('กรุณาระบุระดับน้ำมัน (ขาออก)'); return }
-      if (!j.syms.every((s, i) => K.insp.symOk[i])) { toast('ต้องยืนยันผลการซ่อมครบทุกอาการจึงปิดงานได้ — หรือเลือก "ไม่ผ่าน"'); return }
-      j.inspOut = inspRecord();
-      j.cost = readCost(); j.phase = 'approve';
-      j.history.push({ t: nowStr(), label: 'ตรวจสภาพขาออกผ่าน (น้ำมัน ' + j.inspOut.fuel + ' · ตำหนิ ' + j.inspOut.defects.length + ' จุด) · สรุปต้นทุน ' + costSum(j.cost).toLocaleString() + ' บาท — ส่งขออนุมัติปิดงาน' });
-      K.insp = null;
-      updateBadge(); toast('ส่งขออนุมัติปิดงานแล้ว — รอผู้บังคับบัญชา'); renderKbkDetail(no);
-    }
-    function kbkCloseSimple(no) {   // ปิดงานแบบไม่ตรวจสภาพ — ใช้เมื่อ toggle "ตรวจสภาพ 2 รอบ" ถูกปิด
-      const j = JOBS.find(x => x.no === no);
-      j.cost = readCost(); j.phase = 'approve';
-      j.history.push({ t: nowStr(), label: 'ส่งมอบรถ · สรุปต้นทุน ' + costSum(j.cost).toLocaleString() + ' บาท — ส่งขออนุมัติปิดงาน' });
-      updateBadge(); toast('ส่งขออนุมัติปิดงานแล้ว — รอผู้บังคับบัญชา'); renderKbkDetail(no);
-    }
-    function kbkFail(no) {
-      const j = JOBS.find(x => x.no === no);
-      const note = K.insp ? esc(K.insp.extra.trim()) : '';
-      j.phase = 'work'; j.wi = 3;
-      j.history.push({ t: nowStr(), label: 'ตรวจสภาพขาออกไม่ผ่าน — กลับไปดำเนินการซ่อม' + (note ? ' (' + note + ')' : '') });
-      K.insp = null;
-      toast('บันทึกผลไม่ผ่าน — กลับสู่สถานะ ดำเนินการซ่อม'); renderKbkDetail(no);
-    }
-    // ---- ช่วงที่ 7: ต้นทุน + อนุมัติปิดงาน ----
-    function readCost() { return { labor: +(($('cst-labor') || {}).value) || 0, parts: +(($('cst-parts') || {}).value) || 0, travel: +(($('cst-travel') || {}).value) || 0, lodging: +(($('cst-lodging') || {}).value) || 0 } }
-    function costSum(c) { return c ? (c.labor + c.parts + c.travel + c.lodging) : 0 }
-    function costFieldsHTML() {
-      return `<div class="sect" style="margin-top:20px">สรุปต้นทุนการซ่อม (ช่วงที่ 7)</div>
+  const detail=kbkDetail(no);detail.classList.remove('hidden');
+  detail.innerHTML=`${jobInfoBox(j)}${action}${timelineBox(j)}`;
+  // mount shared component "ตัวเลือกวันนัด" (มีเฉพาะตอน wi===4 หน้าเปิดตารางว่าง)
+  const dpk=document.getElementById('dpk');
+  if(dpk)UIC.dayPicker.render(dpk,{variant:UI.slotPicker,days:Object.keys(K.slots),state:K,
+    onToggleDay:iso=>chipDay(no,iso),
+    onAddRange:()=>addRange(no),onAddOne:()=>addOne(no),
+    onState:p=>Object.assign(K,p)});
+}
+function toggleGarage(id){E.garages.includes(id)?E.garages=E.garages.filter(x=>x!==id):E.garages.push(id)}
+function kbkSendTech(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.history.push({t:nowStr(),label:'กบค. ส่งช่างไปตรวจสอบหน้างาน (อาการไม่ชัดเจน)'});
+  toast('บันทึกส่งช่างไปตรวจแล้ว');renderKbkDetail(no);
+}
+function kbkPlaceholder(kind){
+  toast(kind+' — เส้นทางนี้ผังงานยังไม่กำหนด (placeholder)');
+}
+function kbkAccept(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.phase='work';j.wi=0;j.loc=E.loc;
+  const note=$('acnote').value.trim();
+  if(E.loc==='onsite'){
+    j.onsite={team:esc($('ac-team').value.trim()),site:esc($('ac-site').value.trim()),trip:esc($('ac-trip').value.trim())};
+    j.history.push({t:nowStr(),label:'กบค. รับเรื่องซ่อม (งานเล็ก — ช่างออกหน้างาน'+(j.onsite.site?' @ '+j.onsite.site:'')+')'+(note?' — '+esc(note):'')});
+    updateBadge();toast('รับเรื่องแล้ว — แผนซ่อมหน้างาน');renderKbkDetail(no);
+  }else{
+    j.history.push({t:nowStr(),label:'กบค. รับเรื่องซ่อม (งานใหญ่ — นำรถเข้า สนญ.)'+(note?' — '+esc(note):'')});
+    updateBadge();toast('รับเรื่องแล้ว — สถานะ: รับเรื่องซ่อม');renderKbkDetail(no);
+  }
+}
+// ---- แทร็กงานเล็ก (ซ่อมหน้างาน) ----
+function onsiteAdvance(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.wi++;
+  j.history.push({t:nowStr(),label:'ซ่อมหน้างาน: '+ONSITE_STEPS[j.wi]});
+  toast('อัปเดตสถานะเป็น "'+ONSITE_STEPS[j.wi]+'"');renderKbkDetail(no);
+}
+function onsiteFindMore(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.history.push({t:nowStr(),label:'พบชำรุดเพิ่มระหว่างซ่อมหน้างาน — เบิกอะไหล่เพิ่ม'});
+  toast('บันทึกพบชำรุดเพิ่ม + เบิกอะไหล่เพิ่มแล้ว');renderKbkDetail(no);
+}
+function onsiteClose(no){
+  const j=JOBS.find(x=>x.no===no);
+  if(!K.ack){toast('ต้องให้หน่วยงานเจ้าของรถกดรับทราบก่อนปิดงาน');return}
+  if(!K.sat){toast('กรุณาให้คะแนนความพึงพอใจ');return}
+  j.sat=K.sat;j.cost=readCost();j.phase='approve';
+  j.history.push({t:nowStr(),label:'หน่วยงานรับทราบผลการซ่อมหน้างาน · ความพึงพอใจ '+'★'.repeat(j.sat)+' · สรุปต้นทุน '+costSum(j.cost).toLocaleString()+' บาท — ส่งขออนุมัติปิดงาน'});
+  updateBadge();toast('ส่งขออนุมัติปิดงานแล้ว — รอผู้บังคับบัญชา');renderKbkDetail(no);
+}
+function kbkReturn(no){
+  const j=JOBS.find(x=>x.no===no);
+  const reason=$('retnote').value.trim();
+  if(!reason){toast('กรุณาระบุเหตุผลที่ส่งกลับ');return}
+  j.phase='returned';j.rstage=0;
+  j.ret={reason:esc(reason),garages:GARAGES.filter(g=>E.garages.includes(g.id))};
+  j.history.push({t:nowStr(),label:'กบค. ส่งกลับให้ซ่อมเอง — '+esc(reason)+(j.ret.garages.length?' · แนะนำอู่: '+j.ret.garages.map(g=>g.name).join(', '):'')});
+  updateBadge();toast('ส่งกลับเรื่องแล้ว — ผู้แจ้งเห็นเหตุผลและอู่แนะนำ');renderKbkDetail(no);
+}
+function kbkAdvance(no){
+  const j=JOBS.find(x=>x.no===no);
+  if(TG.inspection&&j.wi===0&&!j.inspIn){toast('ต้องบันทึกตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) ก่อนเดินสถานะ');return}
+  j.wi++;
+  j.history.push({t:nowStr(),label:'สถานะ: '+KBK_STEPS[j.wi]});
+  toast('อัปเดตสถานะเป็น "'+KBK_STEPS[j.wi]+'" — ฝั่งผู้แจ้งเห็นด้วย');renderKbkDetail(no);
+}
+const SLOT_TIMES=['เช้า 09:00–12:00','บ่าย 13:30–16:30'];
+const THD=['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'],THM=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function isoInfo(iso){
+  const d=new Date(iso+'T00:00:00');
+  return{key:iso,label:`${THD[d.getDay()]} ${d.getDate()} ${THM[d.getMonth()]}`,thdate:`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`};
+}
+function addDayKey(iso){
+  if(K.slots[iso])return false;
+  const i=isoInfo(iso);
+  K.slots[iso]={label:i.label,thdate:i.thdate,times:[SLOT_TIMES[0]]};
+  return true;
+}
+function addRange(no){
+  if(!K.from||!K.to){toast('กรุณาเลือกวันที่เริ่มและสิ้นสุดของช่วง');return}
+  if(K.from>K.to){toast('วันที่เริ่มต้องไม่เกินวันที่สิ้นสุด');return}
+  const n=Math.round((new Date(K.to+'T00:00:00')-new Date(K.from+'T00:00:00'))/864e5)+1;
+  if(n>31){toast('เลือกช่วงได้ไม่เกิน 31 วัน');return}
+  let added=0;
+  const start=new Date(K.from+'T00:00:00');
+  for(let i=0;i<n;i++){
+    const d=new Date(start.getTime()+i*864e5);
+    const iso=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if(addDayKey(iso))added++;
+  }
+  toast(added?'เพิ่ม '+added+' วันเข้าตารางแล้ว — เลือกช่วงเวลาต่อได้เลย':'ทุกวันในช่วงถูกเลือกไว้แล้ว');
+  renderKbkDetail(no);
+}
+function addOne(no){
+  if(!K.one){toast('กรุณาเลือกวันที่');return}
+  toast(addDayKey(K.one)?'เพิ่มวันเข้าตารางแล้ว — เลือกช่วงเวลาต่อได้เลย':'วันนี้ถูกเลือกไว้แล้ว');
+  renderKbkDetail(no);
+}
+/* callback ของ UIC.dayPicker variant "ชิพวัน" */
+function chipDay(no,iso){
+  if(K.slots[iso])delete K.slots[iso];else addDayKey(iso);
+  renderKbkDetail(no);
+}
+function removeDay(no,key){delete K.slots[key];renderKbkDetail(no)}
+function toggleSlot(no,key,t){
+  const s=K.slots[key];if(!s)return;
+  if(s.times.includes(t)){s.times=s.times.filter(x=>x!==t);if(!s.times.length)delete K.slots[key];}
+  else s.times.push(t);
+  renderKbkDetail(no);
+}
+function kbkSendSlots(no){
+  const j=JOBS.find(x=>x.no===no);
+  const days=Object.entries(K.slots).sort((a,b)=>a[0]<b[0]?-1:1).map(([k,v])=>v);
+  if(!days.length){toast('กรุณาเลือกอย่างน้อย 1 วัน');return}
+  j.slots=days.map(d=>({label:d.label,date:d.thdate,times:[...d.times]}));
+  j.slotNote=esc(K.note.trim());
+  j.phase='slots';
+  j.history.push({t:nowStr(),label:'กบค. เปิดตารางว่างนัดรับ '+j.slots.length+' วัน — รอผู้แจ้งเลือกยืนยัน'});
+  toast('ส่งตารางว่างแล้ว — ไปแสดงที่หน้าจอนัดรับรถของผู้แจ้ง');renderKbkDetail(no);
+}
+function editSlots(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.phase='work';K.slots={};K.note=j.slotNote||'';
+  renderKbkDetail(no);
+}
+function kbkClose(no){
+  const j=JOBS.find(x=>x.no===no);
+  if(!K.insp.fuel){toast('กรุณาระบุระดับน้ำมัน (ขาออก)');return}
+  if(!j.syms.every((s,i)=>K.insp.symOk[i])){toast('ต้องยืนยันผลการซ่อมครบทุกอาการจึงปิดงานได้ — หรือเลือก "ไม่ผ่าน"');return}
+  j.inspOut=inspRecord();
+  j.cost=readCost();j.phase='approve';
+  j.history.push({t:nowStr(),label:'ตรวจสภาพขาออกผ่าน (น้ำมัน '+j.inspOut.fuel+' · ตำหนิ '+j.inspOut.defects.length+' จุด) · สรุปต้นทุน '+costSum(j.cost).toLocaleString()+' บาท — ส่งขออนุมัติปิดงาน'});
+  K.insp=null;
+  updateBadge();toast('ส่งขออนุมัติปิดงานแล้ว — รอผู้บังคับบัญชา');renderKbkDetail(no);
+}
+function kbkCloseSimple(no){   // ปิดงานแบบไม่ตรวจสภาพ — ใช้เมื่อ toggle "ตรวจสภาพ 2 รอบ" ถูกปิด
+  const j=JOBS.find(x=>x.no===no);
+  j.cost=readCost();j.phase='approve';
+  j.history.push({t:nowStr(),label:'ส่งมอบรถ · สรุปต้นทุน '+costSum(j.cost).toLocaleString()+' บาท — ส่งขออนุมัติปิดงาน'});
+  updateBadge();toast('ส่งขออนุมัติปิดงานแล้ว — รอผู้บังคับบัญชา');renderKbkDetail(no);
+}
+function kbkFail(no){
+  const j=JOBS.find(x=>x.no===no);
+  const note=K.insp?esc(K.insp.extra.trim()):'';
+  j.phase='work';j.wi=3;
+  j.history.push({t:nowStr(),label:'ตรวจสภาพขาออกไม่ผ่าน — กลับไปดำเนินการซ่อม'+(note?' ('+note+')':'')});
+  K.insp=null;
+  toast('บันทึกผลไม่ผ่าน — กลับสู่สถานะ ดำเนินการซ่อม');renderKbkDetail(no);
+}
+// ---- ช่วงที่ 7: ต้นทุน + อนุมัติปิดงาน ----
+function readCost(){return{labor:+(($('cst-labor')||{}).value)||0,parts:+(($('cst-parts')||{}).value)||0,travel:+(($('cst-travel')||{}).value)||0,lodging:+(($('cst-lodging')||{}).value)||0}}
+function costSum(c){return c?(c.labor+c.parts+c.travel+c.lodging):0}
+function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">สรุปต้นทุนการซ่อม (ช่วงที่ 7)</div>
   <div class="fgrid" style="max-width:680px">
     <div class="f sp2"><label>ค่าแรง (บาท)</label><div class="in"><span class="ms">engineering</span><input type="number" min="0" id="cst-labor" placeholder="0"></div></div>
     <div class="f sp2"><label>ค่าอะไหล่ (บาท)</label><div class="in"><span class="ms">settings</span><input type="number" min="0" id="cst-parts" placeholder="0"></div></div>
