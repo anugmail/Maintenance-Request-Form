@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" data-admin-config>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,10 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
 <link rel="stylesheet" href="design-system/tokens.css">
-<link rel="stylesheet" href="design-system/components.css">
-<script src="config.js"></script>
+<link rel="stylesheet" href="design-system/components.css?v=20260723-decision-style">
+<script src="config.js?v=20260723-decision-style"></script>
 <script src="config-daily.js"></script>
-<script src="ui-components.js"></script>
+<script src="ui-components.js?v=20260723-decision-style"></script>
 <style>
   /* ---------- เฉพาะหน้านี้ — ค่าสีมาจาก tokens เท่านั้น ---------- */
   .hdr{background:var(--grad-header);color:#fff;padding:24px 20px}
@@ -131,6 +131,15 @@
     <h2 class="ttl">2 · UI Components (แยกอิสระ · สลับรูปแบบได้)</h2>
     <div class="sub">component กลางจาก <b>ui-components.js</b> — ตัวเดียวกับที่หน้าต้นแบบใช้ ประกอบไปหน้าไหนก็ได้ · เลือกรูปแบบแล้ว<b>ลองกดเล่นในตัวอย่างด้านล่างได้ทันที</b></div>
     <div id="variants"></div>
+    <div style="padding:14px 0">
+      <div class="tname">รูปแบบปุ่มตัวเลือกการตัดสินใจ</div>
+      <div class="tdesc">มีผลกับปุ่ม “ซ่อมเอง / ส่งเรื่องให้ กรย.” และการ์ดตัวเลือกชนิดเดียวกันทุกจุดในต้นแบบ</div>
+      <div class="seg" style="max-width:420px;margin-top:10px" id="decisionstyleseg"></div>
+      <div class="demobox">
+        <div class="demolbl"><span class="ms" style="font-size:15px">touch_app</span>ตัวอย่าง — ลองกดสลับปุ่มที่เลือกได้</div>
+        <div id="decisionstylepreview"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ============ 3) ควบคุมการเดโม ============ -->
@@ -266,7 +275,7 @@ let cfg=MDC.load();
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2600)}
-function persist(){MDC.save(cfg);MDC.applyTheme(cfg)}   // storage event ไม่ยิงในแท็บตัวเอง → apply ธีมกับหน้านี้ตรง ๆ
+function persist(){MDC.save(cfg);MDC.applyTheme(cfg);MDC.applyVariants(cfg)}   // storage event ไม่ยิงในแท็บตัวเอง → apply หน้านี้ตรง ๆ
 
 // ================= 1) THEME =================
 function renderTheme(){
@@ -293,10 +302,29 @@ function setTheme(f,v){cfg.theme[f]=v;persist();renderTheme()}
 function setCustom(v){cfg.theme.custom={base:v};cfg.theme.preset='custom';persist();renderTheme()}
 
 // ================= 2) UI COMPONENTS (แยกอิสระ + live demo) =================
+function renderDecisionStyle(){
+  const current=cfg.variants.decisionTile==='modern'?'modern':'legacy';
+  $('decisionstyleseg').innerHTML=`
+    <div class="sg ${current==='legacy'?'sel':''}" onclick="setDecisionStyle('legacy')">แบบมีสี</div>
+    <div class="sg ${current==='modern'?'sel':''}" onclick="setDecisionStyle('modern')">แบบไม่มีสี</div>`;
+  UIC.decisionTile.render($('decisionstylepreview'),{
+    variant:current,
+    selected:DEMO.decisionTile.selected,
+    onPick:value=>{DEMO.decisionTile.selected=value;renderDecisionStyle()}
+  });
+}
+function setDecisionStyle(value){
+  cfg.variants.decisionTile=value;
+  persist();
+  renderDecisionStyle();
+  toast('บันทึกรูปแบบปุ่มแล้ว — หน้าต้นแบบจะอัปเดตเป็น “'+(value==='legacy'?'แบบมีสี':'แบบไม่มีสี')+'”');
+}
+
 // component ทั้งหมดมาจาก ui-components.js (UIC) — admin แค่ iterate registry
 // demo เป็น instance อิสระของ component เดียวกับที่หน้า mock ใช้ (state อยู่ใน DEMO)
 const DEMO={
   vehicleCard:{selectedId:2},
+  decisionTile:{selected:'self'},
   slotPicker:{days:[],state:{mode:'range',from:'',to:'',one:''}}
 };
 function renderVariants(){
@@ -684,7 +712,7 @@ function renderDailyAll(){
 }
 
 // ================= INIT =================
-function renderAll(){renderTheme();renderVariants();renderDemo();renderToggles();renderMenuOrder();renderWizSteps();renderKbkSteps();['vehicles','parts','garages'].forEach(renderMaster)}
+function renderAll(){renderTheme();renderDecisionStyle();renderVariants();renderDemo();renderToggles();renderMenuOrder();renderWizSteps();renderKbkSteps();['vehicles','parts','garages'].forEach(renderMaster)}
 renderAll();
 </script>
 </body>

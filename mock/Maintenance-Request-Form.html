@@ -1,19 +1,25 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.8)</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="../design-system/tokens.css">
-<link rel="stylesheet" href="../design-system/components.css">
-<script src="../config.js"></script><!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
-<script src="../ui-components.js"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
-<style>
-  /* ---------- เฉพาะหน้านี้ — ค่าสีมาจาก tokens เท่านั้น ---------- */
-  /* .vlist/.veh ย้ายไป design-system/components.css (shared UI components) */
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.8)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
+    rel="stylesheet">
+  <link rel="stylesheet" href="../design-system/tokens.css">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260723-decision-style">
+  <script src="../config.js?v=20260723-decision-style"></script>
+  <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
+  <script src="../ui-components.js?v=20260723-decision-style"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <!-- OCR อ่านเลขที่สลิปเติมน้ำมัน ⛽ — รันฝั่ง client ล้วน ใช้ได้แม้ไม่มีเน็ต -->
+  <style>
+    /* ---------- เฉพาะหน้านี้ — ค่าสีมาจาก tokens เท่านั้น ---------- */
+    /* .vlist/.veh ย้ายไป design-system/components.css (shared UI components) */
 
   .cat{font-size:14px;font-weight:600;color:var(--gray-600);margin:16px 0 8px;display:flex;align-items:center;gap:6px}
   .cat .ms{font-size:18px;color:var(--primary-600)}
