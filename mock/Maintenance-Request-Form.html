@@ -2155,14 +2155,9 @@ function retPanel(j){
         extra += inspViewPanel('ตรวจสภาพขาออก (ตอนรับรถคืน) — <span class="badge b-ok">ผ่าน — รับมอบรถแล้ว</span>', j.inspOut);
       }
       if (j.phase === 'closed' && j.cost) extra += costPanel(j);
-      $('mylist').classList.add('hidden');
-      $('mydetail').classList.remove('hidden');
-      $('mydetail').innerHTML = `
-    <div class="job" style="cursor:default"><span class="ms" style="color:var(--primary-600)">description</span>
-      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.plate}</div></div>
-      <span class="badge ${st.cls}">${st.label}</span></div>
-    ${jobInfoBox(j)}${extra}${timelineBox(j)}
-    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderMyList()">← กลับรายการ</button></div>`;
+      // เขียนลง accordion (my-detail-<no>) แบบเดียวกับ renderKryDetail — element 'mydetail' เดิมถูกลบตอน refactor เป็น accordion
+      const detail = myDetail(no); detail.classList.remove('hidden');
+      detail.innerHTML = `${jobInfoBox(j)}${extra}${timelineBox(j)}`;
       if (j.phase === 'returned' && (j.rstage || 0) === 2) cTotal();
     }
     function retAdvance(no, s) {
