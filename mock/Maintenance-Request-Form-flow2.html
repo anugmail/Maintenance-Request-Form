@@ -67,6 +67,41 @@
   .panel{background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);padding:16px;max-width:760px;margin-top:14px}
   .dayrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
   .apptbox{background:var(--primary-25);border:1px solid var(--primary-50);border-radius:var(--r-md);padding:12px 16px;max-width:760px;margin-top:12px;font-size:14px}
+
+  #view-my,#view-kry,#view-kbk{margin-left:auto;margin-right:auto}
+
+  .my-detail-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(300px,.75fr);gap:24px;width:100%;max-width:1280px;margin:0 auto;padding-top:10px;align-items:start}
+  .my-detail-main{min-width:0}
+  .my-detail-main>.sumbox,.my-detail-main>.panel,.my-detail-main>.apptbox{max-width:none}
+  .my-detail-side{min-width:0;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--r-md);padding:14px 16px}
+  .my-current-status{padding-bottom:14px;margin-bottom:14px;border-bottom:1px dashed var(--gray-200)}
+  .my-current-status .label{font-size:12px;color:var(--gray-500);margin-bottom:7px}
+  .my-current-status .latest{font-size:13px;color:var(--gray-600);margin-top:8px;line-height:1.45}
+  .my-current-status .when{font-size:12px;color:var(--gray-400);margin-top:2px}
+  .my-detail-side>.sect{margin-top:0!important}
+  .my-detail-side>.tl{margin-bottom:0!important}
+  @media(max-width:980px){
+    .my-detail-layout{grid-template-columns:1fr;gap:16px;max-width:none}
+  }
+
+  .ops-detail-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(320px,.8fr);gap:24px;width:100%;max-width:1280px;margin:0 auto;padding-top:10px;align-items:start}
+  .ops-detail-main{min-width:0}
+  .ops-detail-main>.sumbox,.ops-detail-main>.panel,.ops-detail-main>.apptbox{max-width:none}
+  .ops-detail-side{min-width:0;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--r-md);padding:14px 16px}
+  .ops-current-status{padding-bottom:14px;margin-bottom:14px;border-bottom:1px dashed var(--gray-200)}
+  .ops-current-status .label{font-size:12px;color:var(--gray-500);margin-bottom:7px}
+  .ops-current-status .latest{font-size:13px;color:var(--gray-600);margin-top:8px;line-height:1.45}
+  .ops-current-status .when{font-size:12px;color:var(--gray-400);margin-top:2px}
+  .ops-detail-side>.sect{margin-top:0!important}
+  .ops-detail-side>.tl{margin-bottom:0!important}
+  .kry-route-options{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:none!important}
+  .kry-route-options .tile{width:100%;height:100%;min-width:0}
+  @media(max-width:1100px){
+    .ops-detail-layout{grid-template-columns:1fr;gap:16px;max-width:none}
+  }
+  @media(max-width:760px){
+    .kry-route-options{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
@@ -870,8 +905,19 @@ function renderMyDetail(no){
   }
   if(j.phase==='closed'&&j.cost)extra+=costPanel(j);
   const detail=myDetail(no);detail.classList.remove('hidden');
+  const latest=j.history[j.history.length-1];
   detail.innerHTML=`
-    ${jobInfoBox(j)}${extra}${timelineBox(j)}`;
+    <div class="my-detail-layout">
+      <div class="my-detail-main">${jobInfoBox(j)}${extra}</div>
+      <aside class="my-detail-side">
+        <div class="my-current-status">
+          <div class="label">สถานะปัจจุบัน</div>
+          <span class="badge ${st.cls}">${st.label}</span>
+          ${latest?`<div class="latest">${latest.label}<div class="when">${latest.t}</div></div>`:''}
+        </div>
+        ${timelineBox(j)}
+      </aside>
+    </div>`;
   if(j.phase==='returned'&&(j.rstage||0)===2)cTotal();
 }
 function retAdvance(no,s){
@@ -960,7 +1006,7 @@ function renderKryDetail(no){
   if(j.phase==='kry'){
     action=vehHistoryPanel(j)
     +`<div class="sect" style="margin-top:24px">ควรซ่อมที่ไหน? — กรย. คัดแยกช่องทางซ่อม</div>
-    <div class="decide" style="max-width:840px">
+    <div class="decide kry-route-options">
       <div class="tile tile-blue ${KE.mode==='garage'?'sel':''}" onclick="KE.mode='garage';renderKryDetail('${no}')"><span class="ms">garage</span><b>ซ่อมที่อู่</b><small>เจ้าของรถขับไปอู่ภายนอก</small></div>
       <div class="tile tile-magenta ${KE.mode==='self'?'sel':''}" onclick="KE.mode='self';renderKryDetail('${no}')"><span class="ms">handyman</span><b>กรย. ซ่อมเอง</b><small>ประเมินคุ้มค่า → เบิกอะไหล่ → นัดวัน → ซ่อมหน้างาน</small></div>
       <div class="tile tile-blue ${KE.mode==='kbk'?'sel':''}" onclick="KE.mode='kbk';renderKryDetail('${no}')"><span class="ms">engineering</span><b>ส่งต่อ กบค.</b><small>งานเครื่องเสริม เช่น เครน/กระเช้า</small></div>
@@ -1042,7 +1088,19 @@ function renderKryDetail(no){
   }
   if(j.phase==='gclosed')action=recordPanel(j);
   const detail=kryDetail(no);detail.classList.remove('hidden');
-  detail.innerHTML=`${jobInfoBox(j)}${action}${timelineBox(j)}`;
+  const latest=j.history[j.history.length-1];
+  detail.innerHTML=`
+    <div class="ops-detail-layout">
+      <div class="ops-detail-main">${jobInfoBox(j)}${action}</div>
+      <aside class="ops-detail-side">
+        <div class="ops-current-status">
+          <div class="label">สถานะปัจจุบัน</div>
+          <span class="badge ${st.cls}">${st.label}</span>
+          ${latest?`<div class="latest">${latest.label}<div class="when">${latest.t}</div></div>`:''}
+        </div>
+        ${timelineBox(j)}
+      </aside>
+    </div>`;
 }
 function kryToggleGarage(id){KE.garages.includes(id)?KE.garages=KE.garages.filter(x=>x!==id):KE.garages.push(id)}
 function kryGarage(no){
@@ -1376,7 +1434,19 @@ function renderKbkDetail(no){
   }
 
   const detail=kbkDetail(no);detail.classList.remove('hidden');
-  detail.innerHTML=`${jobInfoBox(j)}${action}${timelineBox(j)}`;
+  const latest=j.history[j.history.length-1];
+  detail.innerHTML=`
+    <div class="ops-detail-layout">
+      <div class="ops-detail-main">${jobInfoBox(j)}${action}</div>
+      <aside class="ops-detail-side">
+        <div class="ops-current-status">
+          <div class="label">สถานะปัจจุบัน</div>
+          <span class="badge ${st.cls}">${st.label}</span>
+          ${latest?`<div class="latest">${latest.label}<div class="when">${latest.t}</div></div>`:''}
+        </div>
+        ${timelineBox(j)}
+      </aside>
+    </div>`;
 }
 function confirmDisposal(no){
   const j=JOBS.find(x=>x.no===no);
