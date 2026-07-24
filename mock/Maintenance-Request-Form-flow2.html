@@ -1041,8 +1041,8 @@ function renderKryDetail(no){
       <div class="tile tile-blue ${KE.worth==='no'?'sel':''}" onclick="KE.worth='no';renderKryDetail('${no}')"><span class="ms">delete_forever</span><b>ไม่คุ้มค่า → ทำเรื่องจำหน่าย</b><small>เส้นทางในผังยังไม่กำหนด (❓)</small></div>
     </div>`;
     if(KE.worth==='yes'){
-      action+=`<div class="panel"><div class="hint" style="margin:0">ยืนยันแล้วจะเข้าขั้นตอน: เบิกอะไหล่จากคลัง → นัดวันซ่อมกับเจ้าของรถ → เดินทางไปหน้างาน → ซ่อม → บันทึกประวัติ</div>
-        <div class="rowbtns"><button class="btn btn-p" onclick="krdWorthYes('${no}')">คุ้มค่าซ่อม — ทำเรื่องเบิกอะไหล่จากคลัง</button></div></div>`;
+      action+=`<div class="hint" style="margin-top:14px;max-width:760px">ยืนยันแล้วจะเข้าขั้นตอน: เบิกอะไหล่จากคลัง → นัดวันซ่อมกับเจ้าของรถ → เดินทางไปหน้างาน → ซ่อม → บันทึกประวัติ</div>
+        <div class="rowbtns" style="max-width:760px"><button class="btn btn-p" onclick="krdWorthYes('${no}')">คุ้มค่าซ่อม — ทำเรื่องเบิกอะไหล่จากคลัง</button></div>`;
     }
     if(KE.worth==='no'){
       action+=`<div class="panel">
