@@ -2044,7 +2044,7 @@ function renderMyList(){
       <div class="my-inline-detail hidden" id="my-detail-${j.no}"></div></div>`;
   }).join('');
 }
-let R={jobNo:null,photos:0,urls:[],returns:{},pc:'',lc:'',det:'',pick:null};
+let R={jobNo:null,photos:0,urls:[],returns:{},pc:'',lc:'',det:'',pick:null,docs:{invoice:false,contractor:false},rdate:''};
 function myDetail(no){return $('my-detail-'+no)}
 function setMyCardOpen(no,open){
   const card=$('my-job-'+no);if(!card)return;
@@ -2061,7 +2061,7 @@ function openMy(no){
   if(R.jobNo===no&&!myDetail(no).classList.contains('hidden')){closeMyDetail();return}
   if(R.jobNo){const previous=myDetail(R.jobNo);setMyCardOpen(R.jobNo,false);if(previous){previous.classList.add('hidden');previous.innerHTML=''}}
   const j=JOBS.find(x=>x.no===no);
-  R={jobNo:no,photos:0,urls:[],returns:{},pc:'',lc:'',det:'',pick:null};
+  R={jobNo:no,photos:0,urls:[],returns:{},pc:'',lc:'',det:'',pick:null,docs:{invoice:false,contractor:false},rdate:''};
   j.booked.forEach(b=>R.returns[b.name]=0);
   setMyCardOpen(no,true);
   renderMyDetail(no);
@@ -2090,6 +2090,8 @@ function retPanel(j){
     <div style="font-size:14px"><b>รายละเอียดการซ่อม:</b> ${j.record.det}</div>
     <div style="font-size:14px;margin-top:6px"><b>รูปประกอบ:</b> ${j.record.photos} รูป</div>
     <div style="font-size:14px;margin-top:6px"><b>ค่าใช้จ่าย:</b> ค่าอะไหล่ ${j.record.pc.toLocaleString()} บาท · ค่าแรง ${j.record.lc.toLocaleString()} บาท · <b>รวม ${total} บาท</b></div>
+    ${j.record.rdate ? `<div style="font-size:14px;margin-top:6px"><b>วันที่ซ่อมเสร็จ:</b> ${j.record.rdate}</div>` : ''}
+    ${j.record.docs ? `<div style="font-size:14px;margin-top:6px"><b>เอกสารประกอบ:</b> ${[j.record.docs.invoice ? 'ใบแจ้งหนี้' : '', j.record.docs.contractor ? 'เอกสารผู้รับจ้าง' : ''].filter(Boolean).join(' · ') || '—'}</div>` : ''}
     <div style="font-size:14px;margin-top:6px"><b>คืนอะไหล่เข้าคลัง กบค.:</b> ${rets.length ? rets.map(r => `${r.name} ×${r.qty}`).join(', ') : 'ไม่มี'}</div>
   </div>`;
     }
@@ -2127,6 +2129,11 @@ function retPanel(j){
             <div class="qty"><button onclick="retChg('${no}','${b.name}',-1)">−</button><span>${R.returns[b.name] || 0}</span><button onclick="retChg('${no}','${b.name}',1)">+</button></div>
             <span class="hint">คืน</span>
           </div>`).join('') : '<div class="hint">ไม่มีอะไหล่ที่เบิกจาก กบค.</div>'}
+        <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin:16px 0 6px">เอกสารประกอบการจ้างซ่อม <small style="color:var(--warning-700);font-weight:600">(จำเป็นก่อนปิดงาน)</small></label>
+        <div class="hint" style="margin:0 0 8px">อ้างอิงเรื่องเดิม: <b>${j.no}</b> — ซ่อมโดยผู้รับจ้าง/อู่ภายนอก แนบเอกสารให้ครบก่อนปิดงาน</div>
+        <div class="f" style="max-width:260px"><label>วันที่ซ่อมเสร็จ</label><div class="in"><span class="ms">event</span><input type="date" id="crdate" value="${R.rdate}" oninput="R.rdate=this.value"></div></div>
+        <label class="garage" style="max-width:560px"><input type="checkbox" ${R.docs.invoice ? 'checked' : ''} onchange="R.docs.invoice=this.checked"><span class="ms">receipt_long</span><div><b>ใบแจ้งหนี้ / ใบเสร็จจากผู้รับจ้าง</b><div class="meta">ยืนยันว่ามีเอกสารแนบ</div></div></label>
+        <label class="garage" style="max-width:560px"><input type="checkbox" ${R.docs.contractor ? 'checked' : ''} onchange="R.docs.contractor=this.checked"><span class="ms">description</span><div><b>เอกสารผู้รับจ้าง (สัญญา/ใบเสนอราคา)</b><div class="meta">ยืนยันว่ามีเอกสารแนบ</div></div></label>
         <div class="rowbtns"><button class="btn btn-p" onclick="closeSelf('${no}')">บันทึกและปิดงาน</button></div>
       </div>`;
         }
@@ -2179,8 +2186,10 @@ function retPanel(j){
     function closeSelf(no) {
       const j = JOBS.find(x => x.no === no);
       if (!R.det.trim()) { toast('กรุณากรอกรายละเอียดการซ่อมก่อนปิดงาน'); return }
+      if (!R.docs.invoice || !R.docs.contractor) { toast('ต้องแนบเอกสารให้ครบ (ใบแจ้งหนี้ + เอกสารผู้รับจ้าง) ก่อนปิดงาน'); return }
       j.record = {
         det: esc(R.det.trim()), photos: R.photos, pc: +R.pc || 0, lc: +R.lc || 0,
+        rdate: R.rdate || '', docs: { invoice: !!R.docs.invoice, contractor: !!R.docs.contractor },
         returns: j.booked.map(b => ({ name: b.name, unit: b.unit, qty: R.returns[b.name] || 0 }))
       };
       j.phase = 'gclosed';
