@@ -37,6 +37,234 @@
       color: var(--primary-600)
     }
 
+    /* ---------- สรุปรายละเอียดรถหลังเลือก ---------- */
+    .vehicle-detail-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 22px
+    }
+
+    .vehicle-detail-heading .sect {
+      margin: 0
+    }
+
+    .vehicle-sync-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--gray-500);
+      font-size: 12.5px
+    }
+
+    .vehicle-sync-note .ms {
+      color: var(--success-600);
+      font-size: 18px
+    }
+
+    .vehicle-detail-card {
+      overflow: hidden;
+      margin: 12px 0 26px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--r-lg);
+      background: #fff
+    }
+
+    .vehicle-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--gray-200);
+      background: var(--primary-25)
+    }
+
+    .vehicle-detail-icon {
+      display: flex;
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: var(--primary-50);
+      color: var(--primary-600)
+    }
+
+    .vehicle-detail-title {
+      min-width: 0;
+      flex: 1
+    }
+
+    .vehicle-detail-title strong {
+      display: block;
+      overflow: hidden;
+      color: var(--gray-900);
+      font-size: 17px;
+      line-height: 1.35;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .vehicle-detail-title span {
+      display: block;
+      overflow: hidden;
+      margin-top: 2px;
+      color: var(--gray-600);
+      font-size: 13px;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .vehicle-selected-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex: 0 0 auto;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--success-600);
+      font-size: 12px;
+      font-weight: 600
+    }
+
+    .vehicle-selected-badge .ms {
+      font-size: 16px
+    }
+
+    .vehicle-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      padding: 16px 18px
+    }
+
+    .vehicle-detail-item {
+      display: flex;
+      min-width: 0;
+      gap: 10px;
+      padding: 12px;
+      border-radius: var(--r-md);
+      background: var(--gray-50)
+    }
+
+    .vehicle-detail-item>.ms {
+      flex: 0 0 auto;
+      margin-top: 1px;
+      color: var(--gray-500);
+      font-size: 20px
+    }
+
+    .vehicle-detail-copy {
+      min-width: 0
+    }
+
+    .vehicle-detail-label {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--gray-500);
+      font-size: 11.5px;
+      font-weight: 500
+    }
+
+    .vehicle-detail-value {
+      display: block;
+      overflow-wrap: anywhere;
+      color: var(--gray-800);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.45
+    }
+
+    .vehicle-target {
+      padding: 16px 18px 18px;
+      border-top: 1px solid var(--gray-200)
+    }
+
+    .vehicle-target-title {
+      color: var(--gray-900);
+      font-size: 14px;
+      font-weight: 600
+    }
+
+    .vehicle-target-help {
+      margin-top: 2px;
+      color: var(--gray-500);
+      font-size: 12.5px
+    }
+
+    .vehicle-target-options {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px
+    }
+
+    .vehicle-target-option {
+      display: flex;
+      min-width: 180px;
+      flex: 1 1 220px;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 13px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--r-md);
+      color: var(--gray-700);
+      cursor: pointer
+    }
+
+    .vehicle-target-option:hover {
+      border-color: var(--primary-500)
+    }
+
+    .vehicle-target-option.selected {
+      border-color: var(--primary-600);
+      background: var(--primary-25);
+      color: var(--primary-700)
+    }
+
+    .vehicle-target-option input {
+      flex: 0 0 auto;
+      margin: 0
+    }
+
+    .vehicle-target-option span {
+      font-size: 14px;
+      font-weight: 500
+    }
+
+    @media(max-width:760px) {
+      .vehicle-detail-heading {
+        align-items: flex-start;
+        flex-direction: column
+      }
+
+      .vehicle-detail-header {
+        align-items: flex-start;
+        padding: 14px
+      }
+
+      .vehicle-selected-badge {
+        padding: 4px 7px
+      }
+
+      .vehicle-detail-grid,
+      .vehicle-target {
+        padding: 14px
+      }
+
+      .vehicle-detail-grid {
+        grid-template-columns: 1fr
+      }
+
+      .vehicle-target-option {
+        min-width: 100%;
+        flex-basis: 100%
+      }
+    }
+
     .photos {
       display: flex;
       gap: 8px;
@@ -411,35 +639,6 @@
       border: 1px solid var(--gray-200);
       border-radius: var(--r-md);
       padding: 14px 16px
-    }
-
-    .my-current-status,
-    .ops-current-status {
-      padding-bottom: 14px;
-      margin-bottom: 14px;
-      border-bottom: 1px dashed var(--gray-200)
-    }
-
-    .my-current-status .label,
-    .ops-current-status .label {
-      font-size: 12px;
-      color: var(--gray-500);
-      margin-bottom: 7px
-    }
-
-    .my-current-status .latest,
-    .ops-current-status .latest {
-      font-size: 13px;
-      color: var(--gray-600);
-      margin-top: 8px;
-      line-height: 1.45
-    }
-
-    .my-current-status .when,
-    .ops-current-status .when {
-      font-size: 12px;
-      color: var(--gray-400);
-      margin-top: 2px
     }
 
     .my-detail-side>.sect,
@@ -1113,8 +1312,11 @@
           <div id="vlist"></div><!-- mount จุดของ UIC.vehicleCard -->
           <div class="empty hidden" id="vnone">ไม่พบรถที่ค้นหา</div>
           <div id="vinfo" class="hidden">
-            <div class="sect" style="margin-top:22px">ข้อมูลรถ (ระบบดึงให้อัตโนมัติ)</div>
-            <div class="fgrid" id="vauto"></div>
+            <div class="vehicle-detail-heading">
+              <div class="sect">รายละเอียดรถที่เลือก</div>
+              <div class="vehicle-sync-note"><span class="ms">verified</span>ข้อมูลจากทะเบียนรถในระบบ</div>
+            </div>
+            <div id="vauto"></div>
           </div>
         </section>
 
@@ -1971,15 +2173,53 @@ function goBackFromForm(){
       if (isNew) { S.target = S.vehicle.attach ? null : 'vehicle'; S.symptoms = []; S.bookings = {}; S.orders = {}; }
       renderVehicles();
       $('vinfo').classList.remove('hidden');
+      renderVehicleInfo();
+    }
+    function renderVehicleInfo() {
+      if (!S.vehicle) return;
+      // เพิ่มข้อมูลรถในอนาคตได้โดยเติมรายการใน details โดยไม่ต้องแก้โครงสร้างการ์ด
+      const details = [
+        { icon: 'directions_car', label: 'ยี่ห้อ / รุ่น', value: S.vehicle.model },
+        { icon: 'apartment', label: 'หน่วยงาน / สังกัด', value: S.vehicle.org },
+        { icon: 'construction', label: 'อุปกรณ์ติดตั้ง', value: S.vehicle.attach || 'ไม่มีอุปกรณ์ติดตั้ง' }
+      ];
       const opts = [['vehicle', 'ตัวรถ']];
       if (S.vehicle.attach) opts.push(['attach', S.vehicle.attach]);
       $('vauto').innerHTML = `
-    <div class="f ro"><label>ยี่ห้อ/รุ่น</label><div class="in"><span class="ms">local_shipping</span><input value="${S.vehicle.model}" readonly></div></div>
-    <div class="f ro"><label>สังกัด</label><div class="in"><span class="ms">apartment</span><input value="${S.vehicle.org}" readonly></div></div>
-    <div class="f ro"><label>อุปกรณ์เสริม</label><div class="in"><span class="ms">construction</span><input value="${S.vehicle.attach || 'ไม่มี'}" readonly></div></div>
-    <div class="f"><label>จุดที่มีปัญหา</label><div class="rads">${opts.map(([k, n]) => `<label><input type="radio" name="target" ${S.target === k ? 'checked' : ''} onchange="setTarget('${k}')">${n}</label>`).join('')}</div></div>`;
+    <div class="vehicle-detail-card">
+      <div class="vehicle-detail-header">
+        <div class="vehicle-detail-icon"><span class="ms">local_shipping</span></div>
+        <div class="vehicle-detail-title">
+          <strong>${esc(S.vehicle.plate)}</strong>
+          <span>${esc(S.vehicle.model)}</span>
+        </div>
+        <div class="vehicle-selected-badge"><span class="ms">check_circle</span>เลือกแล้ว</div>
+      </div>
+      <div class="vehicle-detail-grid">
+        ${details.map(d => `<div class="vehicle-detail-item">
+          <span class="ms">${d.icon}</span>
+          <div class="vehicle-detail-copy">
+            <span class="vehicle-detail-label">${d.label}</span>
+            <span class="vehicle-detail-value">${esc(d.value)}</span>
+          </div>
+        </div>`).join('')}
+      </div>
+      <div class="vehicle-target">
+        <div class="vehicle-target-title">จุดที่พบปัญหา</div>
+        <div class="vehicle-target-help">เลือกส่วนของรถที่ต้องการแจ้งซ่อม เพื่อให้ระบบแนะนำอาการและอะไหล่ได้ตรงจุด</div>
+        <div class="vehicle-target-options">
+          ${opts.map(([k, n]) => `<label class="vehicle-target-option ${S.target === k ? 'selected' : ''}">
+            <input type="radio" name="target" ${S.target === k ? 'checked' : ''} onchange="setTarget('${k}')">
+            <span>${esc(n)}</span>
+          </label>`).join('')}
+        </div>
+      </div>
+    </div>`;
     }
-    function setTarget(k) { if (S.target !== k) { S.target = k; S.symptoms = []; S.bookings = {}; S.orders = {}; } }
+    function setTarget(k) {
+      if (S.target !== k) { S.target = k; S.symptoms = []; S.bookings = {}; S.orders = {}; }
+      renderVehicleInfo();
+    }
     function renderSymptoms() {
       if (!S.vehicle) { $('symcats').innerHTML = '<div class="empty">กรุณาเลือกรถก่อน — สลับให้ขั้น "เลือกรถ" มาก่อนขั้นนี้ (แก้ลำดับได้ที่ Admin)</div>'; $('othwrap').classList.add('hidden'); $('sev').innerHTML = ''; return }
       const scope = S.target === 'attach' ? ['attach', 'both'] : ['vehicle', 'both'];
@@ -2224,7 +2464,6 @@ function retPanel(j){
     }
     function renderMyDetail(no) {
       const j = JOBS.find(x => x.no === no);
-      const st = statusInfo(j);
       let extra = '';
       if (j.phase === 'returned') {
         extra = retPanel(j);
@@ -2290,16 +2529,10 @@ function retPanel(j){
       }
       if (j.phase === 'closed' && j.cost) extra += costPanel(j);
       // เขียนลง accordion (my-detail-<no>) แบบเดียวกับ renderKryDetail — element 'mydetail' เดิมถูกลบตอน refactor เป็น accordion
-      const latest=j.history[j.history.length-1];
   const detail = myDetail(no); detail.classList.remove('hidden');
       detail.innerHTML = `<div class="my-detail-layout">
       <div class="my-detail-main">${jobInfoBox(j)}${extra}</div>
       <aside class="my-detail-side">
-        <div class="my-current-status">
-          <div class="label">สถานะปัจจุบัน</div>
-          <span class="badge ${st.cls}">${st.label}</span>
-          ${latest?`<div class="latest">${latest.label}<div class="when">${latest.t}</div></div>`:''}
-        </div>
         ${timelineBox(j)}
       </aside>
     </div>`;
@@ -2377,7 +2610,6 @@ function openKry(no){
 }
 function renderKryDetail(no){
   const j=JOBS.find(x=>x.no===no);
-  const st=statusInfo(j);
   let action='';
   if(j.phase==='kry'){
     action=`<div class="sect" style="margin-top:24px">คัดแยกช่องทางซ่อม — กรย.</div>
@@ -2414,17 +2646,11 @@ function renderKryDetail(no){
       <div class="rowbtns"><button class="btn btn-p" onclick="krdClose('${no}')">บันทึกการซ่อมและปิดงาน</button></div></div>`;
   }
   if(j.phase==='gclosed')action=recordPanel(j);
-  const latest=j.history[j.history.length-1];
   const detail=kryDetail(no);detail.classList.remove('hidden');
   detail.innerHTML=`
     <div class="ops-detail-layout">
       <div class="ops-detail-main">${jobInfoBox(j)}${action}</div>
       <aside class="ops-detail-side">
-        <div class="ops-current-status">
-          <div class="label">สถานะปัจจุบัน</div>
-          <span class="badge ${st.cls}">${st.label}</span>
-          ${latest?`<div class="latest">${latest.label}<div class="when">${latest.t}</div></div>`:''}
-        </div>
         ${timelineBox(j)}
       </aside>
     </div>`;
@@ -2555,7 +2781,6 @@ function closeKbkDetail(){
     }
     function renderKbkDetail(no) {
       const j = JOBS.find(x => x.no === no);
-      const st = statusInfo(j);
       let action = '';
 
       if (j.phase === 'pending') {
@@ -2705,17 +2930,11 @@ function closeKbkDetail(){
           + costPanel(j);
       }
 
-  const latest=j.history[j.history.length-1];
   const detail=kbkDetail(no);detail.classList.remove('hidden');
   detail.innerHTML=`
     <div class="ops-detail-layout">
       <div class="ops-detail-main">${jobInfoBox(j)}${action}</div>
       <aside class="ops-detail-side">
-        <div class="ops-current-status">
-          <div class="label">สถานะปัจจุบัน</div>
-          <span class="badge ${st.cls}">${st.label}</span>
-          ${latest?`<div class="latest">${latest.label}<div class="when">${latest.t}</div></div>`:''}
-        </div>
         ${timelineBox(j)}
       </aside>
     </div>`;
