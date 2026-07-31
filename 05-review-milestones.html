@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="design-system/tokens.css">
   <link rel="stylesheet" href="design-system/components.css">
   <style>
-    .wrap { max-width: 880px; margin: 0 auto; padding: 36px 20px 72px }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 36px 24px 72px }
     .back { display: inline-flex; align-items: center; gap: 4px; color: var(--gray-500); text-decoration: none; font-size: 14px; font-weight: 600; margin-bottom: 18px }
     .back:hover { color: var(--primary-600) }
     .lg { font-weight: 800; font-size: 38px; color: var(--primary-600); line-height: 1 }
@@ -23,10 +23,58 @@
     .howto b { color: var(--gray-900) }
     .howto .k { color: var(--primary-700); font-weight: 700 }
 
+    .journey { margin-bottom: 36px; overflow: hidden; border: 1px solid var(--gray-200); border-radius: 20px; background: #fff; box-shadow: 0 12px 32px color-mix(in srgb, var(--gray-900) 8%, transparent) }
+    .journey-top { padding: 26px 26px 22px; border-bottom: 1px solid var(--gray-200); background: linear-gradient(135deg, var(--primary-25), #fff 68%) }
+    .journey-eyebrow { display: flex; align-items: center; gap: 7px; color: var(--primary-700); font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase }
+    .journey-eyebrow .ms { font-size: 18px }
+    .journey-top h2 { margin: 6px 0 4px; color: var(--gray-900); font-size: 21px }
+    .journey-top p { margin: 0; color: var(--gray-500); font-size: 13.5px; line-height: 1.6 }
+    .journey-group-label { display: flex; align-items: center; gap: 6px; margin: 20px 0 9px; color: var(--gray-600); font-size: 12px; font-weight: 700 }
+    .journey-group-label .ms { font-size: 16px }
+    .journey-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px }
+    .journey-tab { position: relative; display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 11px; min-width: 0; min-height: 94px; align-items: start; padding: 15px; overflow: hidden; border: 1.5px solid var(--gray-200); border-radius: 14px; background: #fff; color: var(--gray-700); font: inherit; text-align: left; cursor: pointer; transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease }
+    .journey-tab:hover { border-color: var(--primary-500); box-shadow: 0 6px 18px color-mix(in srgb, var(--primary-600) 10%, transparent); transform: translateY(-2px) }
+    .journey-tab[aria-selected="true"] { border-color: var(--primary-600); background: var(--primary-25); box-shadow: inset 0 0 0 1px var(--primary-50) }
+    .journey-tab:focus-visible, .journey-branch-tab:focus-visible { outline: 3px solid var(--primary-50); outline-offset: 2px }
+    .journey-tab-copy { min-width: 0 }
+    .journey-tab .tab-icon { display: flex; width: 42px; height: 42px; align-items: center; justify-content: center; border-radius: 12px; background: var(--gray-100); color: var(--gray-500) }
+    .journey-tab[aria-selected="true"] .tab-icon { background: var(--primary-600); color: #fff }
+    .journey-tab .tab-icon .ms { font-size: 21px }
+    .journey-tab small { display: block; margin-bottom: 3px; color: var(--gray-500); font-size: 11.5px; line-height: 1.35 }
+    .journey-tab b { display: block; color: var(--gray-900); font-size: 13.5px; line-height: 1.45; overflow-wrap: anywhere; white-space: normal }
+    .journey-branches { display: flex; gap: 8px; flex-wrap: wrap }
+    .journey-branch-tab { display: inline-flex; max-width: 100%; min-width: 0; align-items: center; gap: 7px; padding: 8px 12px; border: 1px solid var(--gray-200); border-radius: var(--r-pill); background: #fff; color: var(--gray-600); font: inherit; font-size: 12.5px; line-height: 1.4; text-align: left; overflow-wrap: anywhere; white-space: normal; cursor: pointer; transition: border-color .18s ease, background-color .18s ease, color .18s ease, transform .18s ease }
+    .journey-branch-tab:hover { border-color: var(--primary-500); color: var(--primary-700) }
+    .journey-branch-tab[aria-selected="true"] { border-color: var(--primary-600); background: var(--primary-50); color: var(--primary-700); font-weight: 700; box-shadow: inset 0 0 0 1px var(--primary-50) }
+    .journey-branch-tab .ms { flex: 0 0 auto; font-size: 17px }
+    .journey-body { padding: 26px; background: #fff }
+    .journey-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 24px; margin-bottom: 20px }
+    .journey-summary > div:first-child { min-width: 0 }
+    .journey-role { display: inline-flex; align-items: center; gap: 5px; margin-bottom: 6px; padding: 4px 9px; border-radius: var(--r-pill); background: var(--primary-50); color: var(--primary-700); font-size: 12px; font-weight: 700 }
+    .journey-role .ms { font-size: 15px }
+    .journey-summary h3 { margin: 0 0 6px; color: var(--gray-900); font-size: 20px; line-height: 1.4; overflow-wrap: anywhere }
+    .journey-summary p { max-width: 720px; margin: 0; color: var(--gray-600); font-size: 13.5px; line-height: 1.65; overflow-wrap: anywhere }
+    .journey-count { padding: 5px 10px; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-500); font-size: 12px; font-weight: 600; white-space: nowrap }
+    .journey-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none }
+    .journey-step { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 11px; min-width: 0; align-items: start; padding: 14px; border: 1px solid var(--gray-200); border-radius: var(--r-md); background: var(--gray-50) }
+    .journey-step-num { display: flex; width: 34px; height: 34px; align-items: center; justify-content: center; border-radius: 10px; background: var(--primary-50); color: var(--primary-700); font-size: 12.5px; font-weight: 800 }
+    .journey-step-content { min-width: 0; padding-top: 1px }
+    .journey-step-content b { display: block; margin-bottom: 3px; color: var(--gray-900); font-size: 13.5px; line-height: 1.45; overflow-wrap: anywhere }
+    .journey-step-content span { display: block; color: var(--gray-500); font-size: 12.5px; line-height: 1.6; overflow-wrap: anywhere }
+    .journey-result { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: start; gap: 11px; min-width: 0; margin-top: 16px; padding: 14px 16px; border: 1px solid var(--success-200); border-radius: var(--r-md); background: var(--success-50); color: var(--gray-700); font-size: 13.5px; line-height: 1.6; overflow-wrap: anywhere }
+    .journey-result .ms { display: flex; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 10px; background: #fff; color: var(--success-600); font-size: 21px }
+    .journey-actions { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: 12px; margin-top: 18px }
+    .journey-actions .btn { display: inline-flex; max-width: 100%; align-items: center; gap: 6px; white-space: normal }
+    .journey-actions .hint { min-width: 0; color: var(--gray-500); font-size: 12.5px; line-height: 1.5; overflow-wrap: anywhere }
+    .milestones-heading { margin: 34px 0 14px }
+    .milestones-heading h2 { margin: 0 0 3px; color: var(--gray-900); font-size: 20px }
+    .milestones-heading p { margin: 0; color: var(--gray-500); font-size: 13px }
+
     .ms-card { padding: 20px; margin-bottom: 16px; border-left: 4px solid var(--primary-500) }
-    .ms-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap }
+    .ms-head { display: flex; min-width: 0; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap }
+    .ms-head > div:nth-child(2) { min-width: 0; flex: 1 1 260px }
     .ms-num { width: 46px; height: 46px; border-radius: 12px; background: var(--primary-50); color: var(--primary-600); font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center; flex-shrink: 0 }
-    .ms-title { font-size: 18px; font-weight: 700; color: var(--gray-900); line-height: 1.2 }
+    .ms-title { font-size: 18px; font-weight: 700; color: var(--gray-900); line-height: 1.3; overflow-wrap: anywhere }
     .ms-span { font-size: 12.5px; color: var(--gray-500) }
     .roles { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap }
     .role { background: var(--gray-100); color: var(--gray-700); padding: 4px 11px; border-radius: var(--r-pill); font-size: 12.5px; font-weight: 600 }
@@ -35,7 +83,9 @@
     .blk h4 .ms { font-size: 16px }
     ol.demo { margin: 0; padding-left: 20px; color: var(--gray-800, var(--gray-700)); font-size: 14px; line-height: 1.7 }
     ol.demo li { margin-bottom: 2px }
-    .focus { font-size: 14px; color: var(--gray-700); line-height: 1.6 }
+    ul.conditions { margin: 0; padding-left: 20px; color: var(--gray-700); font-size: 14px; line-height: 1.7 }
+    ul.conditions li { margin-bottom: 2px }
+    .focus, ol.demo li, ul.conditions li, ul.open li, .more { font-size: 14px; color: var(--gray-700); line-height: 1.6; overflow-wrap: anywhere }
     ul.open { margin: 0; padding: 0; list-style: none }
     ul.open li { position: relative; padding: 6px 0 6px 26px; font-size: 13.5px; color: var(--gray-700); line-height: 1.55; border-top: 1px dashed var(--gray-200) }
     ul.open li:first-child { border-top: 0 }
@@ -45,8 +95,23 @@
     .more { font-size: 13px; color: var(--gray-500) }
     .more a { color: var(--primary-600); text-decoration: none; font-weight: 600 }
     .more a:hover { text-decoration: underline }
-    .foot { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--gray-200); font-size: 13px; color: var(--gray-500); line-height: 1.8 }
+    .foot { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--gray-200); font-size: 13px; color: var(--gray-500); line-height: 1.8; overflow-wrap: anywhere }
     .foot a { color: var(--primary-600); text-decoration: none; font-weight: 600 }
+    @media (max-width: 860px) {
+      .journey-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+      .journey-steps { grid-template-columns: 1fr }
+    }
+    @media (max-width: 560px) {
+      .wrap { padding: 24px 14px 56px }
+      .journey-top, .journey-body { padding: 18px 16px }
+      .journey-tabs { grid-template-columns: 1fr; gap: 8px }
+      .journey-tab { min-height: 0 }
+      .journey-summary { grid-template-columns: 1fr }
+      .journey-count { width: max-content }
+      .journey-actions { grid-template-columns: 1fr }
+      .journey-actions .btn { width: 100%; justify-content: center }
+      .journey-branch-tab { flex: 1 1 calc(50% - 4px); justify-content: flex-start }
+    }
   </style>
 </head>
 
@@ -66,6 +131,20 @@
       • <span class="ms" style="font-size:16px;color:#F5A623;vertical-align:-3px">help</span> = คำถามเปิดที่ต้องเคลียร์กับเจ้าของงานในช่วงนั้น
     </div>
 
+    <section class="journey" aria-labelledby="journey-title">
+      <div class="journey-top">
+        <div class="journey-eyebrow"><span class="ms">route</span>User journey สร้างใบแจ้งซ่อม</div>
+        <div class="journey-group-label"><span class="ms">linear_scale</span>เส้นทางหลัก</div>
+        <div class="journey-tabs journey-tabs-main" id="journey-tabs" role="tablist" aria-label="เลือกช่วงของเส้นทางหลัก"></div>
+        <div class="journey-branches" id="journey-branches" role="tablist" aria-label="เลือกเส้นทางแยก"></div>
+      </div>
+      <div class="journey-body" id="journey-body" role="tabpanel"></div>
+    </section>
+
+    <div class="milestones-heading">
+      <h2>รายละเอียดสำหรับรีวิวทีละหมุด</h2>
+      <p>ใช้ส่วนนี้เมื่อต้องการดูขอบเขตเดโม จุดโฟกัส และคำถามที่ต้องตกลงในแต่ละช่วง</p>
+    </div>
     <div id="mss"></div>
 
     <div class="foot">
@@ -77,6 +156,89 @@
 
   <script>
     const MOCK = 'mock/Maintenance-Request-Form.html';
+    const JOURNEYS = [
+      {
+        id: 'requester',
+        group: 'main',
+        short: 'ผู้แจ้ง',
+        title: 'สร้างใบแจ้งซ่อม',
+        icon: 'edit_document',
+        role: 'ผู้แจ้ง / เจ้าของรถ',
+        goal: 'แจ้งปัญหาให้ครบในครั้งเดียว เพื่อให้ทีมถัดไปรู้ว่ารถคันไหน เสียอะไร และเร่งด่วนแค่ไหน',
+        steps: [
+          ['เลือกรถ', 'ตรวจสอบรายละเอียดรถและเลือกส่วนที่มีปัญหา'],
+          ['บอกอาการ', 'เลือกอาการ ระดับความรุนแรง และแนบรูปประกอบ'],
+          ['ดูอะไหล่แนะนำ', 'จองของที่มีในคลัง หรือสั่งของพร้อมดู ETA'],
+          ['เลือกวิธีดำเนินการ', 'เลือกซ่อมเอง หรือส่งเรื่องให้ กรย. พร้อมระบุเหตุผล (สาขาไซส์ XS ไม่สามารถส่งให้ กรย. ได้)'],
+          ['ส่งใบแจ้งซ่อมและติดตามเรื่อง', 'ตรวจสรุป ส่งคำขอ รับเลขใบแจ้งซ่อม และดูสถานะได้ที่ “เรื่องแจ้งซ่อมของฉัน” (สาขาไซส์ XS จะต้องส่งเรื่องไปที่ผู้ดูแลสาขาของตนเอง)'],
+        ],
+        result: 'ได้เลขใบแจ้งซ่อม และหากเลือกส่ง กรย. เรื่องจะเข้า “คิวงานคัดแยก” โดยอัตโนมัติ',
+        view: '#form',
+        seed: false,
+        hint: 'เริ่มจากฟอร์มว่าง ใช้เวลาลองประมาณ 2–3 นาที'
+      },
+      {
+        id: 'kry',
+        group: 'main',
+        short: 'กรย.',
+        title: 'คัดแยกและเลือกช่องทางซ่อม',
+        icon: 'alt_route',
+        role: 'เจ้าหน้าที่ กรย.',
+        goal: 'อ่านข้อมูลจากผู้แจ้ง แล้วเลือกช่องทางที่เหมาะสมตามอาการและเงื่อนไขของสาขา',
+        steps: [
+          ['เปิดคิวงานคัดแยก', 'เห็นใบแจ้งซ่อมใหม่พร้อมข้อมูลรถ อาการ รูป และอะไหล่ที่ต้องการใช้'],
+          ['ตรวจสอบรายละเอียด', 'อ่านอาการที่เสียและความรุนแรง เหตุผล และข้อมูลประกอบก่อนตัดสินใจ'],
+          ['เลือกช่องทางซ่อม', 'ส่งอู่ใกล้เคียง / กรย. ซ่อมเอง / ส่งต่อ กบค. สาขา XS เลือกได้ 2 ทาง (ซ่อมอู่ / กรย. ซ่อมเอง) ส่วนสาขา S ขึ้นไปเลือกได้ทั้ง 3 ทาง'],
+          ['ส่งมอบงาน', 'บันทึกผลคัดแยก แล้วส่งเรื่องไปยังผู้รับผิดชอบขั้นถัดไป']
+        ],
+        result: 'เรื่องถูกส่งไปยังอู่ งานซ่อมของ กรย. หรือคิว “งานซ่อม กบค.” ตามช่องทางที่เลือก',
+        view: '#kry',
+        seed: true,
+        hint: 'มีใบแจ้งซ่อมตัวอย่างเตรียมไว้ให้เลือกทันที'
+      },
+      {
+        id: 'kbk',
+        group: 'main',
+        short: 'กบค.',
+        title: 'รับงาน วางแผน การซ่อม',
+        icon: 'engineering',
+        role: 'เจ้าหน้าที่ กบค.',
+        goal: 'รับช่วงงานที่ต้องใช้ทีมกลาง ดูแลตั้งแต่ประเมิน นัดหมาย ซ่อม จนส่งอนุมัติปิดงาน',
+        steps: [
+          ['เปิดคิวงานกบค.', 'เปิดคิวแล้วเลือกงานที่ กรย. ส่งมา พร้อมดูประวัติและสถานะทั้งหมด'],
+          ['ประเมินงานและเลือกช่องทางการซ่อม', 'ประเมินอาการและราคาและตัดสินใจเลือกช่องทางการซ่อม "รับไว้ซ่อม" หรือ "ส่งกลับให้ซ่อมเอง" พร้อมระบุเหตุผล'],
+          ['ตรวจสภาพขาเข้า', 'ตรวจสภาพรอบตัวรถ ระดับน้ำมัน เลขไมล์ และอาการเดิมก่อนเริ่มซ่อม (เมื่อเลือก "รับไว้ซ่อม" -> รับเข้าสำนักงานใหญ่)'],
+          ['ดำเนินการซ่อม', 'บันทึกความคืบหน้า อาการเพิ่ม ผลซ่อม และตรวจสภาพขาออก'],
+          ['สรุปต้นทุนและประเมินความพึงพอใจ', 'รวมค่าแรง อะไหล่ เดินทาง เอกสารจากอู่หรือผู้รับจ้าง และ ประเมินความพึงพอใจ'],
+          ['ส่งอนุมัติและปิดงาน', 'ผู้อนุมัติตรวจข้อมูล อนุมัติหรือตีกลับ แล้วแจ้งผลทุกฝ่าย']
+        ],
+        result: 'ประวัติการซ่อมและต้นทุนถูกบันทึก งานถูกปิด และผู้เกี่ยวข้องได้รับการแจ้งเตือน',
+        view: '#kbk',
+        seed: true,
+        hint: 'มีงานตัวอย่างหลายสถานะให้ลองเดินต่อได้ทันที'
+      },
+      {
+        id: 'approver',
+        group: 'main',
+        short: 'ผู้อนุมัติ',
+        title: 'ตรวจสอบและอนุมัติปิดงาน',
+        icon: 'approval',
+        role: 'ผู้บังคับบัญชา กบค.',
+        goal: 'ตรวจว่าผลซ่อม เอกสาร และต้นทุนครบถ้วนก่อนอนุมัติให้ปิดงาน',
+        steps: [
+          ['เปิดคิวรออนุมัติ', 'เห็นงานที่ กบค. ส่งมา พร้อมสถานะและประวัติทั้งหมด'],
+          ['ตรวจผลซ่อม', 'อ่านอาการเดิม งานที่ทำ อาการเพิ่ม และผลตรวจสภาพขาออก'],
+          ['ตรวจต้นทุนและเอกสาร', 'ตรวจค่าแรง อะไหล่ เดินทาง ที่พัก และเอกสารจากผู้รับจ้าง'],
+          ['ตรวจสอบประวัติสถานะ', 'ตรวจสอบประวัติการเดินสถานะทั้งหมดและเอกสารประกอบ'],
+          ['ตัดสินใจ', 'อนุมัติปิดงาน หรือตีกลับให้ กบค. แก้ไขพร้อมระบุเหตุผล'],
+          ['แจ้งผล', 'เมื่ออนุมัติ ระบบปิดงานและแจ้งผู้แจ้ง ผู้บังคับบัญชา และเจ้าของรถ']
+        ],
+        result: 'งานได้รับการอนุมัติและปิดอย่างเป็นทางการ หรือกลับไปที่ กบค. เพื่อแก้ไขข้อมูล',
+        view: '#sup',
+        seed: true,
+        hint: 'มีงานตัวอย่างสถานะ “รออนุมัติปิดงาน” ให้ตรวจทันที'
+      },
+    ];
     const MS = [
       {
         m: 'M1', span: 'ช่วง 1 · สร้างคำขอ / แจ้งซ่อม', roles: ['ผู้แจ้ง'], view: '#form',
@@ -101,13 +263,17 @@
         demo: [
           'กรย. เห็นคิว “งานคัดแยก” (มีงานตัวอย่าง 1 เรื่อง)',
           'เลือกช่องทาง: ซ่อมอู่ (+แนะนำอู่ใกล้เคียง) / กรย. ซ่อมเอง / ส่งต่อ กบค.',
+          'สาขาไซส์ XS จะเลือกช่องทางได้เพียง 2 ทาง: "ซ่อมอู่" หรือ "กรย. ซ่อมเอง" (ไม่สามารถส่งต่อ กบค. ได้)',
+          'สาขาไซส์ S ขึ้นไป สามารถเลือกช่องทางได้ทั้ง 3 ทาง: "ซ่อมอู่" / "กรย. ซ่อมเอง" / "ส่งต่อ กบค."',
+        ],
+        conditions: [
           'กรณีเลือก "ซ่อมอู่" → แสดงอู่ที่ใกล้เคียง (mock)',
           'กรณีเลือก "กรย. ซ่อมเอง" → บันทึกการซ่อม, ค่าอะไหล่, ค่าแรง',
           'กรณีส่งต่อ กบค. → เรื่องเข้าคิว “งานซ่อม กบค.”',
           'กบค. “รับไว้ซ่อม” หรือ “ส่งกลับ” (+เหตุผล +แนะนำอู่)',
           'กบค. เลือก "รับไว้ซ่อม" → แสดง "งานใหญ่ นำรถเข้าสำนักงานใหญ่" และ "งานเล็ก ช่างออกหน้างาน" เลือกอย่างใดอย่างหนึ่ง',
           'กบค. เลือก "ส่งกลับให้ซ่อมเอง" → กรอกเหตุผลการส่งกลับ + แนะนำอู่ใกล้เคียง (mock)'
-        ],
+      ],
         focus: 'gateway การคัดแยก 3 ทาง · การส่งกลับพร้อมเหตุผล/แนะนำอู่ · การส่งต่อข้ามหน่วย',
         open: [
           'flow ใหม่ผ่าน กรย. แต่ F10 เดิมผ่าน “แผนกยานพาหนะของกอง” — อันไหนคือเส้นทางจริง (flow#10)',
@@ -177,6 +343,43 @@
 
     const url = (view, seed) => MOCK + (seed ? '?seed=review' : '') + view;
     $ = id => document.getElementById(id);
+    const renderJourney = selectedId => {
+      const selected = JOURNEYS.find(j => j.id === selectedId) || JOURNEYS[0];
+      $('journey-tabs').innerHTML = JOURNEYS.filter(j => j.group === 'main').map((j, index) => `
+        <button class="journey-tab" type="button" role="tab" aria-selected="${j.id === selected.id}" aria-controls="journey-body" data-journey="${j.id}">
+          <span class="tab-icon"><span class="ms">${j.icon}</span></span>
+          <span class="journey-tab-copy"><small>ขั้นที่ ${index + 1} · ${j.short}</small><b>${j.title}</b></span>
+        </button>`).join('');
+      $('journey-branches').innerHTML = JOURNEYS.filter(j => j.group === 'branch').map(j => `
+        <button class="journey-branch-tab" type="button" role="tab" aria-selected="${j.id === selected.id}" aria-controls="journey-body" data-journey="${j.id}">
+          <span class="ms">${j.icon}</span>${j.short}
+        </button>`).join('');
+      $('journey-body').innerHTML = `
+        <div class="journey-summary">
+          <div>
+            <div class="journey-role"><span class="ms">person</span>${selected.role}</div>
+            <h3>${selected.title}</h3>
+            <p>${selected.goal}</p>
+          </div>
+          <div class="journey-count">${selected.steps.length} ขั้นตอน</div>
+        </div>
+        <ol class="journey-steps">
+          ${selected.steps.map(([title, detail], index) => `
+            <li class="journey-step">
+              <div class="journey-step-num">${index + 1}</div>
+              <div class="journey-step-content"><b>${title}</b><span>${detail}</span></div>
+            </li>`).join('')}
+        </ol>
+        <div class="journey-result"><span class="ms">task_alt</span><div><b>ผลลัพธ์ของช่วงนี้</b><br>${selected.result}</div></div>
+        <div class="journey-actions">
+          <a class="btn btn-p" href="${url(selected.view, selected.seed)}" target="_blank" rel="noopener"><span class="ms">play_circle</span> ${selected.playLabel || 'ลองเล่น Flow นี้'}</a>
+          <span class="hint">${selected.hint}</span>
+        </div>`;
+      document.querySelectorAll('[data-journey]').forEach(tab => {
+        tab.addEventListener('click', () => renderJourney(tab.dataset.journey));
+      });
+    };
+    renderJourney('requester');
     $('mss').innerHTML = MS.map(s => `
       <div class="card ms-card">
         <div class="ms-head">
@@ -186,6 +389,8 @@
         </div>
         <div class="blk"><h4><span class="ms">play_circle</span>เดโมให้ดู</h4>
           <ol class="demo">${s.demo.map(d => `<li>${d}</li>`).join('')}</ol></div>
+        ${s.conditions ? `<div class="blk"><h4><span class="ms">rule</span>เงื่อนไข</h4>
+          <ul class="conditions">${s.conditions.map(c => `<li>${c}</li>`).join('')}</ul></div>` : ''}
         <div class="blk"><h4><span class="ms">visibility</span>จุดโฟกัสรีวิว</h4>
           <div class="focus">${s.focus}</div></div>
         <div class="blk"><h4><span class="ms">help</span>คำถามเปิดที่ต้องเคลียร์</h4>
