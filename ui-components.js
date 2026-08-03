@@ -36,7 +36,31 @@ const vehicleCard={
 };
 
 /* ============================================================
-   2) ตัวเลือกวันนัดรับ (dayPicker) — variants: datepicker | chips
+   2) การ์ดตัวเลือกการตัดสินใจ — variants: legacy | modern
+   props: {variant, selected:'self'|'route', onPick(value)}
+   ============================================================ */
+const decisionTile={
+  key:'decisionTile',
+  name:'การ์ดตัวเลือกการตัดสินใจ',
+  variants:{legacy:'แบบมีสี',modern:'แบบไม่มีสี'},
+  render(el,props){
+    const{variant='legacy',selected='self',onPick}=props;
+    el.innerHTML=`<div class="decision-tiles-${variant}">
+      <div class="decide" style="margin-top:0">
+        <div class="tile tile-magenta ${selected==='self'?'sel':''}" data-value="self">
+          <span class="ms">build</span><b>ซ่อมเอง</b><small>ซ่อมได้ที่หน้างาน/หน่วยงาน</small>
+        </div>
+        <div class="tile tile-blue ${selected==='route'?'sel':''}" data-value="route">
+          <span class="ms">alt_route</span><b>ส่งเรื่องให้ กรย.</b><small>ให้ กรย. คัดแยกช่องทางซ่อม</small>
+        </div>
+      </div>
+    </div>`;
+    if(onPick)el.querySelectorAll('[data-value]').forEach(x=>x.addEventListener('click',()=>onPick(x.dataset.value)));
+  }
+};
+
+/* ============================================================
+   3) ตัวเลือกวันนัดรับ (dayPicker) — variants: datepicker | chips
    controlled: state = {mode:'range'|'single', from:'', to:'', one:''}
    props: {variant, days:[iso...] (วันที่เลือกแล้ว), state, horizonDays=14,
            onToggleDay(iso)   — ชิพวัน: แตะเลือก/เอาออก (ผู้เรียก re-render เอง)
@@ -153,8 +177,8 @@ function sortable(listEl,opts){
 function arrMove(a,from,to){const x=a.splice(from,1)[0];a.splice(to,0,x);return a}
 
 window.UIC={
-  components:[vehicleCard,dayPicker],   // ลำดับที่แสดงในหน้า admin
-  vehicleCard,dayPicker,thLabel,sortable,arrMove,
+  components:[vehicleCard,dayPicker],   // decisionTile มีส่วนควบคุมเฉพาะที่เห็นเด่นชัดในหน้า admin
+  vehicleCard,decisionTile,dayPicker,thLabel,sortable,arrMove,
   get(key){return this.components.find(c=>c.key===key)}
 };
 })();

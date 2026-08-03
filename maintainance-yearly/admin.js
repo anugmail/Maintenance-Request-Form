@@ -41,7 +41,8 @@ function initTabs() {
 
 function renderBody() {
   if (state.tab === 'vehicles') renderVehicles();
-  else renderItems();
+  else if (state.tab === 'items') renderItems();
+  else renderDemo();
 }
 
 // ================= VEHICLES: READ =================
@@ -179,6 +180,7 @@ function renderItems() {
         <td>${esc(i.unit)}</td>
         <td class="num">${esc(i.qtyPerVehicle)}</td>
         <td>${esc((i.appliesToTypes || []).join(', '))}</td>
+        <td>${esc(MYD.triggerText(i))}</td>
         <td>
           <div class="rowline">
             <button class="iconbtn" data-act="edit-item" data-id="${esc(i.id)}" title="แก้ไข"><span class="ms">edit</span></button>
@@ -191,8 +193,8 @@ function renderItems() {
       <div class="sect">${esc(MYD.CATEGORY_LABELS[cat])}</div>
       <div class="tblwrap">
         <table class="tbl">
-          <thead><tr><th>ชื่อ</th><th>หน่วย</th><th>จำนวนต่อคัน</th><th>ประเภทรถที่ใช้</th><th>จัดการ</th></tr></thead>
-          <tbody>${rows || `<tr><td colspan="5" class="empty">ไม่มีรายการ</td></tr>`}</tbody>
+          <thead><tr><th>ชื่อ</th><th>หน่วย</th><th>จำนวนต่อคัน</th><th>ประเภทรถที่ใช้</th><th>เงื่อนไข</th><th>จัดการ</th></tr></thead>
+          <tbody>${rows || `<tr><td colspan="6" class="empty">ไม่มีรายการ</td></tr>`}</tbody>
         </table>
       </div>`;
   }).join('');
@@ -223,7 +225,7 @@ function deleteItem(id) {
 function openItemModal(id) {
   const master = MYD.loadMaster();
   const editing = id ? master.items.find(i => i.id === id) : null;
-  const it = editing || { name: '', category: 'part', oilKind: 'engine', unit: '', qtyPerVehicle: 1, appliesToTypes: [] };
+  const it = editing || { name: '', category: 'part', oilKind: 'engine', unit: '', qtyPerVehicle: 1, appliesToTypes: [], triggerType: 'calendar', interval: 0 };
 
   const ov = document.createElement('div');
   ov.className = 'modal-ov';
@@ -237,6 +239,8 @@ function openItemModal(id) {
           <div class="f sp2" id="fOilKindWrap" style="${it.category === 'oil' ? '' : 'display:none'}"><label>ชนิดน้ำมัน</label><div class="in"><span class="ms">opacity</span><select name="oilKind">${Object.entries(MYD.OILKIND_LABELS).map(([k, l]) => `<option value="${k}" ${it.oilKind === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div></div>
           <div class="f sp2"><label>หน่วย</label><div class="in"><span class="ms">straighten</span><input type="text" name="unit" value="${esc(it.unit)}"></div></div>
           <div class="f sp2"><label>จำนวนต่อคัน</label><div class="in"><span class="ms">numbers</span><input type="number" name="qtyPerVehicle" min="0" value="${esc(it.qtyPerVehicle)}"></div></div>
+          <div class="f sp2"><label>เงื่อนไข</label><div class="in"><span class="ms">rule</span><select name="triggerType" id="fTriggerType">${Object.entries(MYD.TRIGGER_LABELS).map(([k, l]) => `<option value="${k}" ${it.triggerType === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div></div>
+          <div class="f sp2" id="fIntervalWrap" style="${(it.triggerType === 'hours' || it.triggerType === 'mileage') ? '' : 'display:none'}"><label>ทุก (ชม./กม.)</label><div class="in"><span class="ms">timer</span><input type="number" name="interval" min="0" value="${esc(it.interval || 0)}"></div></div>
         </div>
         <div class="f"><label>ประเภทรถที่ใช้</label></div>
         <div class="chk">
@@ -256,12 +260,19 @@ function openItemModal(id) {
     oilWrap.style.display = catSel.value === 'oil' ? '' : 'none';
   });
 
+  const triggerSel = ov.querySelector('#fTriggerType');
+  const intervalWrap = ov.querySelector('#fIntervalWrap');
+  triggerSel.addEventListener('change', () => {
+    intervalWrap.style.display = (triggerSel.value === 'hours' || triggerSel.value === 'mileage') ? '' : 'none';
+  });
+
   ov.querySelector('#btnCancelItem').addEventListener('click', () => ov.remove());
   ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
   ov.querySelector('#itemForm').addEventListener('submit', e => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const category = fd.get('category');
+    const triggerType = fd.get('triggerType') || 'calendar';
     const rec = {
       id: editing ? editing.id : 'i' + Date.now(),
       name: String(fd.get('name') || '').trim(),
@@ -269,6 +280,8 @@ function openItemModal(id) {
       unit: String(fd.get('unit') || '').trim(),
       qtyPerVehicle: Number(fd.get('qtyPerVehicle')) || 0,
       appliesToTypes: fd.getAll('appliesToTypes'),
+      triggerType,
+      interval: triggerType === 'calendar' ? 0 : (Number(fd.get('interval')) || 0),
     };
     if (category === 'oil') rec.oilKind = fd.get('oilKind');
     const m = MYD.loadMaster();
@@ -282,6 +295,51 @@ function openItemModal(id) {
     ov.remove();
     renderItems();
     toast(editing ? 'แก้ไขรายการเรียบร้อย' : 'เพิ่มรายการเรียบร้อย');
+  });
+}
+
+// ================= DEMO: จัดการเดโม (Yearly) =================
+const APPROVAL_STATUS_LABELS = { draft: 'ฉบับร่าง', approved: 'อนุมัติแล้ว' };
+
+function renderDemo() {
+  const plan = MYD.loadPlan();
+  const workNumberText = plan.workNumber || '— ยังไม่ออกเลขงาน';
+  const approvalText = APPROVAL_STATUS_LABELS[plan.approvalStatus] || plan.approvalStatus || '-';
+  const vehicleCount = (plan.selectedVehicleIds || []).length;
+
+  $('adminBody').innerHTML = `
+    <div class="card">
+      <div class="sect">จัดการเดโม — หน้าบำรุงรักษาตามวาระ</div>
+      <div class="sub">ใช้ตอนสาธิตให้ลูกค้า เพื่อล้างข้อมูลแล้วเริ่ม flow ใหม่</div>
+      <div class="fgrid">
+        <div class="f sp2"><label>เลขงาน</label><div>${esc(workNumberText)}</div></div>
+        <div class="f sp2"><label>สถานะอนุมัติ</label><div>${esc(approvalText)}</div></div>
+        <div class="f sp2"><label>จำนวนรถที่เลือก</label><div>${vehicleCount} คัน</div></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-o" id="btnResetPlanDemo">รีเซ็ตแผนปัจจุบัน</button>
+        <button class="btn btn-o" id="btnResetMasterDemo">รีเซ็ตข้อมูลหลักเป็นค่าเริ่มต้น (seed ~120 คัน)</button>
+        <button class="btn btn-p" id="btnResetAllDemo">รีเซ็ตทั้งหมด</button>
+      </div>
+    </div>`;
+
+  $('btnResetPlanDemo').addEventListener('click', () => {
+    if (!confirm('รีเซ็ตแผนปัจจุบัน? ข้อมูลแผนที่ทำไว้จะถูกล้าง')) return;
+    MYD.resetPlan();
+    renderDemo();
+    toast('รีเซ็ตแผนปัจจุบันแล้ว');
+  });
+  $('btnResetMasterDemo').addEventListener('click', () => {
+    if (!confirm('รีเซ็ตข้อมูลหลักเป็นค่าเริ่มต้น? ข้อมูลรถ/อะไหล่ที่แก้ไขไว้จะถูกล้าง')) return;
+    MYD.resetMaster();
+    renderDemo();
+    toast('รีเซ็ตข้อมูลหลักเป็นค่าเริ่มต้นแล้ว');
+  });
+  $('btnResetAllDemo').addEventListener('click', () => {
+    if (!confirm('รีเซ็ตทั้งหมด? ข้อมูลแผนและข้อมูลหลักทั้งหมดจะถูกล้าง')) return;
+    MYD.resetAll();
+    renderDemo();
+    toast('รีเซ็ตทั้งหมดแล้ว');
   });
 }
 

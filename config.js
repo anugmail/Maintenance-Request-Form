@@ -39,7 +39,7 @@ const DEFAULT_CFG={
   v:1,
   theme:{preset:'pea',custom:null,fontScale:'md',radius:'md'},
   toggles:{menuStock:true,photoUpload:true,partsStep:true,inspection:true},
-  variants:{vehicleCard:'list',slotPicker:'datepicker'},
+  variants:{vehicleCard:'list',slotPicker:'datepicker',decisionTile:'legacy'},
   menu:MENU_DEFAULT.map(k=>({key:k,on:true})),
   steps:{wizard:clone0(WIZARD_DEFAULT),kbk:KBK_STEPS_DEFAULT.slice()},
   data:{vehicles:null,parts:null,garages:null},   // null = ใช้ค่า default ด้านล่าง
@@ -146,6 +146,12 @@ function themeVars(cfg){
 function applyTheme(cfg){
   const st=document.documentElement.style,m=themeVars(cfg);
   THEME_VARS.forEach(k=>{if(m[k]!==undefined)st.setProperty(k,m[k]);else st.removeProperty(k)});
+}
+function applyVariants(cfg){
+  if(document.documentElement.hasAttribute('data-admin-config'))return;
+  const modern=cfg&&cfg.variants&&cfg.variants.decisionTile==='modern';
+  document.documentElement.classList.toggle('decision-tiles-modern',modern);
+  document.documentElement.classList.toggle('decision-tiles-legacy',!modern);
 }
 
 /* ---------- load / save / reset ---------- */
@@ -287,8 +293,10 @@ const seeds={
 
 window.MDC={KEY,DEFAULT_CFG,PRESETS,FONT_SCALES,RADIUS_SETS,THEME_VARS,MENU_META,MENU_DEFAULT,
   WIZARD_DEFAULT,KBK_STEPS_DEFAULT,
-  deriveShades,paletteFor,themeVars,applyTheme,load,save,reset,data,defaults,SYM_OPTS,seeds,clone};
+  deriveShades,paletteFor,themeVars,applyTheme,applyVariants,load,save,reset,data,defaults,SYM_OPTS,seeds,clone};
 
-/* apply ธีมทันทีที่โหลดไฟล์ — ก่อน body render จึงไม่มี flash สีเดิม */
-applyTheme(load());
+/* apply ธีมและ UI variant ทันที — ก่อน body render จึงไม่มี flash ค่าเดิม */
+const initialCfg=load();
+applyTheme(initialCfg);
+applyVariants(initialCfg);
 })();

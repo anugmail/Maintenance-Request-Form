@@ -8,9 +8,9 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
 <link rel="stylesheet" href="../design-system/tokens.css">
-<link rel="stylesheet" href="../design-system/components.css">
-<script src="../config.js"></script><!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
-<script src="../ui-components.js"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
+<link rel="stylesheet" href="../design-system/components.css?v=20260724-sidebar-smooth">
+<script src="../config.js?v=20260723-decision-style"></script><!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
+<script src="../ui-components.js?v=20260723-decision-style"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
 <style>
   /* ---------- เฉพาะหน้านี้ — ค่าสีมาจาก tokens เท่านั้น ---------- */
   /* .vlist/.veh ย้ายไป design-system/components.css (shared UI components) */
@@ -67,6 +67,33 @@
   .panel{background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);padding:16px;max-width:760px;margin-top:14px}
   .dayrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
   .apptbox{background:var(--primary-25);border:1px solid var(--primary-50);border-radius:var(--r-md);padding:12px 16px;max-width:760px;margin-top:12px;font-size:14px}
+
+  #view-my,#view-kry,#view-kbk{margin-left:auto;margin-right:auto}
+
+  .my-detail-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(300px,.75fr);gap:24px;width:100%;max-width:1280px;margin:0 auto;padding-top:10px;align-items:start}
+  .my-detail-main{min-width:0}
+  .my-detail-main>.sumbox,.my-detail-main>.panel,.my-detail-main>.apptbox{max-width:none}
+  .my-detail-side{min-width:0;margin-top:14px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--r-md);padding:14px 16px}
+  .my-detail-side>.sect{margin-top:0!important}
+  .my-detail-side>.tl{margin-bottom:0!important}
+  @media(max-width:980px){
+    .my-detail-layout{grid-template-columns:1fr;gap:16px;max-width:none}
+  }
+
+  .ops-detail-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(320px,.8fr);gap:24px;width:100%;max-width:1280px;margin:0 auto;padding-top:10px;align-items:start}
+  .ops-detail-main{min-width:0}
+  .ops-detail-main>.sumbox,.ops-detail-main>.panel,.ops-detail-main>.apptbox{max-width:none}
+  .ops-detail-side{min-width:0;margin-top:14px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--r-md);padding:14px 16px}
+  .ops-detail-side>.sect{margin-top:0!important}
+  .ops-detail-side>.tl{margin-bottom:0!important}
+  .kry-route-options{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:none!important}
+  .kry-route-options .tile{width:100%;height:100%;min-width:0}
+  @media(max-width:1100px){
+    .ops-detail-layout{grid-template-columns:1fr;gap:16px;max-width:none}
+  }
+  @media(max-width:760px){
+    .kry-route-options{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
@@ -93,7 +120,10 @@
     <!-- ============ VIEW: ฟอร์มแจ้งซ่อม ============ -->
     <main class="content" id="view-form">
       <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>แจ้งซ่อมและบริหารงานซ่อม</span><span class="sep">›</span><span class="cur">สร้างใบแจ้งซ่อม</span></div>
-      <h1 class="page-title">สร้างใบแจ้งซ่อม</h1>
+      <div class="page-title-row">
+        <button type="button" class="page-back" onclick="goBackFromForm()" aria-label="ย้อนกลับ"><span class="ms">chevron_left</span></button>
+        <h1 class="page-title">สร้างใบแจ้งซ่อม</h1>
+      </div>
       <div class="wsteps" id="wsteps"></div>
 
       <section id="s1">
@@ -121,10 +151,10 @@
         </div>
         <div class="sect" style="margin-top:24px">รายละเอียดเพิ่มเติม</div>
         <div class="fgrid">
-          <div class="f sp2"><label>ระดับความรุนแรง</label><div class="rads" id="sev"></div></div>
-          <div class="f sp2"><label>คำอธิบายเพิ่มเติม <small>(ถ้ามี)</small></label><textarea id="desc" rows="2" placeholder="เช่น เกิดตอนยกของหนัก น้ำมันหยดใต้กระบอกที่ 2…"></textarea></div>
+          <div class="f sp4"><label>ระดับความรุนแรง</label><div class="rads" id="sev"></div></div>
+          <div class="f sp4" style="max-width:720px"><label for="desc">คำอธิบายเพิ่มเติม <small>(ถ้ามี)</small></label><textarea id="desc" rows="2" placeholder="เช่น เกิดตอนยกของหนัก น้ำมันหยดใต้กระบอกที่ 2…"></textarea></div>
           <div class="f sp4" id="f-photos">
-            <label>รูปถ่ายอาการ</label>
+            <label>รูปถ่ายอาการ / เอกสารประกอบ <small>(ถ้ามี)</small></label>
             <div class="photos" id="photos">
               <div class="addph" onclick="document.getElementById('file').click()"><span class="ms">photo_camera</span>ถ่าย/แนบรูป</div>
               <div class="addph" onclick="addDemoPhoto()"><span class="ms">add_photo_alternate</span>รูปตัวอย่าง</div>
@@ -177,25 +207,74 @@
     <!-- ============ VIEW: เรื่องของฉัน ============ -->
     <main class="content hidden" id="view-my">
       <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>แจ้งซ่อมและบริหารงานซ่อม</span><span class="sep">›</span><span class="cur">เรื่องแจ้งซ่อมของฉัน</span></div>
-      <h1 class="page-title">เรื่องแจ้งซ่อมของฉัน</h1>
+      <div class="page-title-row page-title-with-filter">
+        <h1 class="page-title">เรื่องแจ้งซ่อมของฉัน</h1>
+        <div class="list-toolbar">
+        <div class="filter-field">
+          <label for="my-status-filter">กรองตามสถานะ</label>
+          <select id="my-status-filter" onchange="renderMyList()">
+            <option value="all">ทุกสถานะ</option>
+            <option value="self">บันทึกแล้ว — ซ่อมเอง</option>
+            <option value="kry">รอ กรย. คัดแยกช่องทาง</option>
+            <option value="krd">กรย. รับไปซ่อมเอง</option>
+            <option value="pending">รอ กบค. รับเรื่อง</option>
+            <option value="returned">ส่งกลับ/ดำเนินการซ่อมโดยอู่</option>
+            <option value="gclosed">ปิดงาน — กรย./อู่</option>
+            <option value="disposal">ทำเรื่องจำหน่าย</option>
+            <option value="sched">รอ กบค. นัดวันเข้าซ่อม</option>
+            <option value="consent">รอยินยอมเอกสารใบรับรถ</option>
+            <option value="checkin">รอตรวจรถเข้าซ่อม</option>
+            <option value="work">กำลังดำเนินการซ่อม</option>
+            <option value="approve">รออนุมัติปิดงาน</option>
+            <option value="closed">ปิดงานแล้ว</option>
+          </select>
+        </div>
+        </div>
+      </div>
       <div id="mylist"></div>
-      <div id="mydetail" class="hidden"></div>
     </main>
 
     <!-- ============ VIEW: งานคัดแยก กรย. ============ -->
     <main class="content hidden" id="view-kry">
       <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>บริหารงานซ่อม</span><span class="sep">›</span><span class="cur">งานคัดแยก กรย.</span></div>
-      <h1 class="page-title">งานคัดแยกซ่อม — กรย.</h1>
+      <div class="page-title-row page-title-with-filter">
+        <h1 class="page-title">งานคัดแยกซ่อม — กรย.</h1>
+        <div class="list-toolbar"><div class="filter-field">
+          <label for="kry-status-filter">กรองตามสถานะ</label>
+          <select id="kry-status-filter" onchange="renderKryList()">
+            <option value="all">ทุกสถานะ</option>
+            <option value="kry">รอ กรย. คัดแยกช่องทาง</option>
+            <option value="krd">กรย. รับไปซ่อมเอง</option>
+            <option value="disposal">ทำเรื่องจำหน่าย</option>
+          </select>
+        </div></div>
+      </div>
       <div id="krylist"></div>
-      <div id="krydetail" class="hidden"></div>
     </main>
 
     <!-- ============ VIEW: งานซ่อม กบค. ============ -->
     <main class="content hidden" id="view-kbk">
       <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>งานซ่อม กบค.</span><span class="sep">›</span><span class="cur">คิวงานซ่อม</span></div>
-      <h1 class="page-title">งานซ่อม กบค.</h1>
+      <div class="page-title-row page-title-with-filter">
+        <h1 class="page-title">งานซ่อม กบค.</h1>
+        <div class="list-toolbar"><div class="filter-field">
+          <label for="kbk-status-filter">กรองตามสถานะ</label>
+          <select id="kbk-status-filter" onchange="renderKbkList()">
+            <option value="all">ทุกสถานะ</option>
+            <option value="pending">รอ กบค. รับเรื่อง</option>
+            <option value="returned">ส่งกลับ/ดำเนินการซ่อมโดยอู่</option>
+            <option value="gclosed">ปิดงาน — กรย./อู่</option>
+            <option value="disposal">ทำเรื่องจำหน่าย</option>
+            <option value="sched">รอ กบค. นัดวันเข้าซ่อม</option>
+            <option value="consent">รอยินยอมเอกสารใบรับรถ</option>
+            <option value="checkin">รอตรวจรถเข้าซ่อม</option>
+            <option value="work">กำลังดำเนินการซ่อม</option>
+            <option value="approve">รออนุมัติปิดงาน</option>
+            <option value="closed">ปิดงานแล้ว</option>
+          </select>
+        </div></div>
+      </div>
       <div id="kbklist"></div>
-      <div id="kbkdetail" class="hidden"></div>
     </main>
 
     <!-- ============ VIEW: อนุมัติปิดงาน (ผู้บังคับบัญชา) ============ -->
@@ -309,7 +388,7 @@ const STEPS=['เลือกรถ','อาการเสีย','อะไห
 let WZ={vehicle:{on:true,label:'เลือกรถ'},symptom:{on:true,label:'อาการเสีย'},parts:{on:true,label:'อะไหล่ที่แนะนำ'},decision:{on:true,label:'ตัดสินใจและสรุป'}};
 let WORDER=['vehicle','symptom','parts','decision'];   // ลำดับขั้น wizard (จาก cfg.steps.wizard ที่ INIT)
 const SECT={vehicle:'s1',symptom:'s2',parts:'s3',decision:'s4'};   // key → id ของ section (คงที่)
-let VIEW='form';
+let VIEW='form',VIEW_HISTORY=[];
 
 // ================= HELPERS =================
 const $=id=>document.getElementById(id);
@@ -352,8 +431,8 @@ function updateBadge(){
 }
 
 // ================= VIEW SWITCH =================
-function switchView(v){
-  VIEW=v;
+function switchView(v,remember=true){
+  if(v!==VIEW){if(remember)VIEW_HISTORY.push(VIEW);VIEW=v}
   ['form','my','kry','kbk','sup','stock'].forEach(x=>{
     $('view-'+x).classList.toggle('hidden',x!==v);
     $('nav-'+x).classList.toggle('on',x===v);
@@ -364,6 +443,14 @@ function switchView(v){
   if(v==='sup')renderSupList();
   if(v==='stock')renderStock();
   window.scrollTo({top:0});
+}
+function goBackView(){
+  if(VIEW_HISTORY.length){switchView(VIEW_HISTORY.pop(),false);return}
+  if(window.history.length>1)window.history.back();
+}
+function goBackFromForm(){
+  if($('sdone').classList.contains('hidden')&&S.step>1){nav(-1);return}
+  goBackView();
 }
 
 // ================= VIEW: คลังอะไหล่ (กบค.) =================
@@ -625,23 +712,45 @@ function timelineBox(j){
 }
 
 // ================= VIEW: เรื่องของฉัน =================
+const MY_STATUS_PHASES={self:['self'],kry:['kry'],krd:['krd'],pending:['pending'],returned:['returned'],gclosed:['gclosed'],disposal:['disposal'],sched:['sched'],consent:['consent'],checkin:['checkin'],work:['work'],approve:['approve'],closed:['closed']};
 function renderMyList(){
-  $('mydetail').classList.add('hidden');$('mylist').classList.remove('hidden');
-  if(!JOBS.length){$('mylist').innerHTML='<div class="empty">ยังไม่มีเรื่องแจ้งซ่อม</div>';return}
-  $('mylist').innerHTML=JOBS.map(j=>{
+  const list=$('mylist');R.jobNo=null;list.classList.remove('hidden');
+  const select=$('my-status-filter'),key=select.value,phases=MY_STATUS_PHASES[key];
+  const jobs=phases?JOBS.filter(j=>phases.includes(j.phase)):JOBS;
+  if(!jobs.length){
+    list.innerHTML=key==='all'?'<div class="empty">ยังไม่มีเรื่องแจ้งซ่อม</div>':`<div class="filter-empty"><span class="ms">filter_alt_off</span><b>ไม่พบข้อมูลในสถานะนี้</b><span>ยังไม่มีเรื่องแจ้งซ่อมที่อยู่ในสถานะ “${esc(select.options[select.selectedIndex].text)}”</span></div>`;
+    return;
+  }
+  list.innerHTML=jobs.map(j=>{
     const st=statusInfo(j);
-    return`<div class="job" onclick="openMy('${j.no}')">
+    return`<div class="my-accordion"><div class="job my-job" id="my-job-${j.no}" onclick="openMy('${j.no}')" aria-expanded="false">
       <span class="ms" style="color:var(--primary-600)">description</span>
       <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.plate} · ${j.syms[0]}${j.syms.length>1?' +'+(j.syms.length-1):''}</div></div>
       <span class="badge ${st.cls}">${st.label}</span>
-      <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
+      <span class="ms my-chevron" style="color:var(--gray-300)">chevron_right</span></div>
+      <div class="my-inline-detail hidden" id="my-detail-${j.no}"></div></div>`;
   }).join('');
 }
 let R={jobNo:null,photos:0,urls:[],returns:{},pc:'',lc:'',det:'',pick:null};
+function myDetail(no){return $('my-detail-'+no)}
+function setMyCardOpen(no,open){
+  const card=$('my-job-'+no);if(!card)return;
+  card.classList.toggle('open',open);card.setAttribute('aria-expanded',open);
+  const icon=card.querySelector('.my-chevron');if(icon)icon.textContent=open?'expand_less':'chevron_right';
+}
+function closeMyDetail(){
+  if(!R.jobNo)return;
+  setMyCardOpen(R.jobNo,false);
+  const detail=myDetail(R.jobNo);if(detail){detail.classList.add('hidden');detail.innerHTML=''}
+  R.jobNo=null;
+}
 function openMy(no){
+  if(R.jobNo===no&&!myDetail(no).classList.contains('hidden')){closeMyDetail();return}
+  if(R.jobNo){const previous=myDetail(R.jobNo);setMyCardOpen(R.jobNo,false);if(previous){previous.classList.add('hidden');previous.innerHTML=''}}
   const j=JOBS.find(x=>x.no===no);
   R={jobNo:no,photos:0,urls:[],returns:{},pc:'',lc:'',det:'',pick:null};
   j.booked.forEach(b=>R.returns[b.name]=0);
+  setMyCardOpen(no,true);
   renderMyDetail(no);
 }
 // ---- เอกสารรับรถ (ใบรับรถ) — Download + ยินยอม ตามผัง ----
@@ -707,7 +816,6 @@ function recordPanel(j){
 }
 function renderMyDetail(no){
   const j=JOBS.find(x=>x.no===no);
-  const st=statusInfo(j);
   let extra='';
   if(j.phase==='returned'){
     extra=retPanel(j);
@@ -787,14 +895,14 @@ function renderMyDetail(no){
     extra+=inspViewPanel('บันทึกตรวจสอบผลการซ่อมหลังซ่อม — <span class="badge b-ok">ผ่าน</span>',j.inspOut);
   }
   if(j.phase==='closed'&&j.cost)extra+=costPanel(j);
-  $('mylist').classList.add('hidden');
-  $('mydetail').classList.remove('hidden');
-  $('mydetail').innerHTML=`
-    <div class="job" style="cursor:default"><span class="ms" style="color:var(--primary-600)">description</span>
-      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.plate}</div></div>
-      <span class="badge ${st.cls}">${st.label}</span></div>
-    ${jobInfoBox(j)}${extra}${timelineBox(j)}
-    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderMyList()">← กลับรายการ</button></div>`;
+  const detail=myDetail(no);detail.classList.remove('hidden');
+  detail.innerHTML=`
+    <div class="my-detail-layout">
+      <div class="my-detail-main">${jobInfoBox(j)}${extra}</div>
+      <aside class="my-detail-side">
+        ${timelineBox(j)}
+      </aside>
+    </div>`;
   if(j.phase==='returned'&&(j.rstage||0)===2)cTotal();
 }
 function retAdvance(no,s){
@@ -838,29 +946,51 @@ function vehHistoryPanel(j){
 }
 
 // ================= VIEW: งานคัดแยก กรย. =================
-let KE={mode:null,garages:[]};
+let KE={jobNo:null,mode:null,garages:[]};
+const KRY_STATUS_PHASES={kry:['kry'],krd:['krd'],disposal:['disposal']};
 function renderKryList(){
-  $('krydetail').classList.add('hidden');$('krylist').classList.remove('hidden');
-  const list=JOBS.filter(j=>['kry','krd'].includes(j.phase)||(j.phase==='disposal'&&j.dispBy==='กรย.'));
-  if(!list.length){$('krylist').innerHTML='<div class="empty">ยังไม่มีเรื่องรอคัดแยก</div>';return}
+  KE.jobNo=null;$('krylist').classList.remove('hidden');
+  const allJobs=JOBS.filter(j=>['kry','krd'].includes(j.phase)||(j.phase==='disposal'&&j.dispBy==='กรย.'));
+  const select=$('kry-status-filter'),key=select.value,phases=KRY_STATUS_PHASES[key];
+  const list=phases?allJobs.filter(j=>phases.includes(j.phase)):allJobs;
+  if(!list.length){
+    $('krylist').innerHTML=key==='all'?'<div class="empty">ยังไม่มีเรื่องรอคัดแยก</div>':`<div class="filter-empty"><span class="ms">filter_alt_off</span><b>ไม่พบข้อมูลในสถานะนี้</b><span>ยังไม่มีงานคัดแยกซ่อมที่อยู่ในสถานะ “${esc(select.options[select.selectedIndex].text)}”</span></div>`;
+    return;
+  }
   $('krylist').innerHTML=list.map(j=>{
     const st=statusInfo(j);
-    return`<div class="job" onclick="openKry('${j.no}')">
+    return`<div class="kry-accordion"><div class="job kry-job" id="kry-job-${j.no}" onclick="openKry('${j.no}')" aria-expanded="false">
       <span class="ms" style="color:var(--primary-600)">${j.phase==='kry'?'move_to_inbox':'handyman'}</span>
       <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org} · ${j.plate} · ${j.syms[0]}${j.syms.length>1?' +'+(j.syms.length-1):''} · ความรุนแรง: ${j.sev}</div></div>
       <span class="badge ${st.cls}">${st.label}</span>
-      <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
+      <span class="ms kry-chevron" style="color:var(--gray-300)">chevron_right</span></div>
+      <div class="kry-inline-detail hidden" id="kry-detail-${j.no}"></div></div>`;
   }).join('');
 }
-function openKry(no){KE={mode:null,garages:[],worth:null};renderKryDetail(no)}
+function kryDetail(no){return $('kry-detail-'+no)}
+function setKryCardOpen(no,open){
+  const card=$('kry-job-'+no);if(!card)return;
+  card.classList.toggle('open',open);card.setAttribute('aria-expanded',open);
+  const icon=card.querySelector('.kry-chevron');if(icon)icon.textContent=open?'expand_less':'chevron_right';
+}
+function closeKryDetail(){
+  if(!KE.jobNo)return;
+  setKryCardOpen(KE.jobNo,false);
+  const detail=kryDetail(KE.jobNo);if(detail){detail.classList.add('hidden');detail.innerHTML=''}
+  KE.jobNo=null;
+}
+function openKry(no){
+  if(KE.jobNo===no&&!kryDetail(no).classList.contains('hidden')){closeKryDetail();return}
+  if(KE.jobNo){const previous=kryDetail(KE.jobNo);setKryCardOpen(KE.jobNo,false);if(previous){previous.classList.add('hidden');previous.innerHTML=''}}
+  KE={jobNo:no,mode:null,garages:[],worth:null};setKryCardOpen(no,true);renderKryDetail(no);
+}
 function renderKryDetail(no){
   const j=JOBS.find(x=>x.no===no);
-  const st=statusInfo(j);
   let action='';
   if(j.phase==='kry'){
     action=vehHistoryPanel(j)
     +`<div class="sect" style="margin-top:24px">ควรซ่อมที่ไหน? — กรย. คัดแยกช่องทางซ่อม</div>
-    <div class="decide" style="max-width:840px">
+    <div class="decide kry-route-options">
       <div class="tile tile-blue ${KE.mode==='garage'?'sel':''}" onclick="KE.mode='garage';renderKryDetail('${no}')"><span class="ms">garage</span><b>ซ่อมที่อู่</b><small>เจ้าของรถขับไปอู่ภายนอก</small></div>
       <div class="tile tile-magenta ${KE.mode==='self'?'sel':''}" onclick="KE.mode='self';renderKryDetail('${no}')"><span class="ms">handyman</span><b>กรย. ซ่อมเอง</b><small>ประเมินคุ้มค่า → เบิกอะไหล่ → นัดวัน → ซ่อมหน้างาน</small></div>
       <div class="tile tile-blue ${KE.mode==='kbk'?'sel':''}" onclick="KE.mode='kbk';renderKryDetail('${no}')"><span class="ms">engineering</span><b>ส่งต่อ กบค.</b><small>งานเครื่องเสริม เช่น เครน/กระเช้า</small></div>
@@ -895,8 +1025,8 @@ function renderKryDetail(no){
       <div class="tile tile-blue ${KE.worth==='no'?'sel':''}" onclick="KE.worth='no';renderKryDetail('${no}')"><span class="ms">delete_forever</span><b>ไม่คุ้มค่า → ทำเรื่องจำหน่าย</b><small>เส้นทางในผังยังไม่กำหนด (❓)</small></div>
     </div>`;
     if(KE.worth==='yes'){
-      action+=`<div class="panel"><div class="hint" style="margin:0">ยืนยันแล้วจะเข้าขั้นตอน: เบิกอะไหล่จากคลัง → นัดวันซ่อมกับเจ้าของรถ → เดินทางไปหน้างาน → ซ่อม → บันทึกประวัติ</div>
-        <div class="rowbtns"><button class="btn btn-p" onclick="krdWorthYes('${no}')">คุ้มค่าซ่อม — ทำเรื่องเบิกอะไหล่จากคลัง</button></div></div>`;
+      action+=`<div class="hint" style="margin-top:14px;max-width:760px">ยืนยันแล้วจะเข้าขั้นตอน: เบิกอะไหล่จากคลัง → นัดวันซ่อมกับเจ้าของรถ → เดินทางไปหน้างาน → ซ่อม → บันทึกประวัติ</div>
+        <div class="rowbtns" style="max-width:760px"><button class="btn btn-p" onclick="krdWorthYes('${no}')">คุ้มค่าซ่อม — ทำเรื่องเบิกอะไหล่จากคลัง</button></div>`;
     }
     if(KE.worth==='no'){
       action+=`<div class="panel">
@@ -941,14 +1071,14 @@ function renderKryDetail(no){
     <div class="hint" style="margin-top:8px">ประเมินราคาซ่อม ${(j.est||0).toLocaleString()} บาท — ประเมินแล้วไม่คุ้มค่าซ่อม (โดย ${j.dispBy||'—'})</div></div>`;
   }
   if(j.phase==='gclosed')action=recordPanel(j);
-  $('krylist').classList.add('hidden');
-  $('krydetail').classList.remove('hidden');
-  $('krydetail').innerHTML=`
-    <div class="job" style="cursor:default"><span class="ms" style="color:var(--primary-600)">alt_route</span>
-      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org}</div></div>
-      <span class="badge ${st.cls}">${st.label}</span></div>
-    ${jobInfoBox(j)}${action}${timelineBox(j)}
-    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderKryList()">← กลับรายการ</button></div>`;
+  const detail=kryDetail(no);detail.classList.remove('hidden');
+  detail.innerHTML=`
+    <div class="ops-detail-layout">
+      <div class="ops-detail-main">${jobInfoBox(j)}${action}</div>
+      <aside class="ops-detail-side">
+        ${timelineBox(j)}
+      </aside>
+    </div>`;
 }
 function kryToggleGarage(id){KE.garages.includes(id)?KE.garages=KE.garages.filter(x=>x!==id):KE.garages.push(id)}
 function kryGarage(no){
@@ -1016,7 +1146,8 @@ function krdClose(no){
 
 // ================= VIEW: งานซ่อม กบค. =================
 const E={worth:null,prov1:false,prov2:false,loc:'hq'};
-let K={insp:null,ack:false,fm:false,partsMode:null,rets:{},recdet:''};
+let K={insp:null,ack:false,fm:false,partsMode:null,rets:{},recdet:''},KBK_OPEN=null;
+const KBK_STATUS_PHASES={pending:['pending'],returned:['returned'],gclosed:['gclosed'],disposal:['disposal'],sched:['sched'],consent:['consent'],checkin:['checkin'],work:['work'],approve:['approve'],closed:['closed']};
 function initInsp(){return{zones:ZONES.map(z=>({name:z,bad:false,note:''})),fuel:null,odo:'',symOk:{},extra:''}}
 function zSet(no,zi,v){K.insp.zones[zi].bad=v;renderKbkDetail(no)}
 function fuelSet(no,f){K.insp.fuel=f;renderKbkDetail(no)}
@@ -1066,26 +1197,46 @@ function inspViewPanel(title,rec){
     ${rec.extra?`<div class="hint">เพิ่มเติม: ${rec.extra}</div>`:''}</div>`;
 }
 function renderKbkList(){
-  $('kbkdetail').classList.add('hidden');$('kbklist').classList.remove('hidden');
-  const list=JOBS.filter(j=>['pending','sched','consent','checkin','work','approve','closed','returned','gclosed'].includes(j.phase)||(j.phase==='disposal'&&j.dispBy!=='กรย.'));
-  if(!list.length){$('kbklist').innerHTML='<div class="empty">ยังไม่มีงานเข้าคิว</div>';return}
+  KBK_OPEN=null;$('kbklist').classList.remove('hidden');
+  const allJobs=JOBS.filter(j=>['pending','sched','consent','checkin','work','approve','closed','returned','gclosed'].includes(j.phase)||(j.phase==='disposal'&&j.dispBy!=='กรย.'));
+  const select=$('kbk-status-filter'),key=select.value,phases=KBK_STATUS_PHASES[key];
+  const list=phases?allJobs.filter(j=>phases.includes(j.phase)):allJobs;
+  if(!list.length){
+    $('kbklist').innerHTML=key==='all'?'<div class="empty">ยังไม่มีงานเข้าคิว</div>':`<div class="filter-empty"><span class="ms">filter_alt_off</span><b>ไม่พบข้อมูลในสถานะนี้</b><span>ยังไม่มีงานซ่อม กบค. ที่อยู่ในสถานะ “${esc(select.options[select.selectedIndex].text)}”</span></div>`;
+    return;
+  }
   $('kbklist').innerHTML=list.map(j=>{
     const st=statusInfo(j);
-    return`<div class="job" onclick="openKbk('${j.no}')">
+    return`<div class="kbk-accordion"><div class="job kbk-job" id="kbk-job-${j.no}" onclick="openKbk('${j.no}')" aria-expanded="false">
       <span class="ms" style="color:var(--primary-600)">${j.phase==='pending'?'move_to_inbox':'engineering'}</span>
       <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org} · ${j.plate} · ${j.syms[0]}${j.syms.length>1?' +'+(j.syms.length-1):''} · ความรุนแรง: ${j.sev}</div></div>
       <span class="badge ${st.cls}">${st.label}</span>
-      <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
+      <span class="ms kbk-chevron" style="color:var(--gray-300)">chevron_right</span></div>
+      <div class="kbk-inline-detail hidden" id="kbk-detail-${j.no}"></div></div>`;
   }).join('');
 }
+function kbkDetail(no){return $('kbk-detail-'+no)}
+function setKbkCardOpen(no,open){
+  const card=$('kbk-job-'+no);if(!card)return;
+  card.classList.toggle('open',open);card.setAttribute('aria-expanded',open);
+  const icon=card.querySelector('.kbk-chevron');if(icon)icon.textContent=open?'expand_less':'chevron_right';
+}
+function closeKbkDetail(){
+  if(!KBK_OPEN)return;
+  setKbkCardOpen(KBK_OPEN,false);
+  const detail=kbkDetail(KBK_OPEN);if(detail){detail.classList.add('hidden');detail.innerHTML=''}
+  KBK_OPEN=null;
+}
 function openKbk(no){
+  if(KBK_OPEN===no&&!kbkDetail(no).classList.contains('hidden')){closeKbkDetail();return}
+  if(KBK_OPEN){const previous=kbkDetail(KBK_OPEN);setKbkCardOpen(KBK_OPEN,false);if(previous){previous.classList.add('hidden');previous.innerHTML=''}}
+  KBK_OPEN=no;
   E.worth=null;E.prov1=false;E.prov2=false;E.loc='hq';
   K={insp:null,ack:false,fm:false,partsMode:null,rets:{},recdet:''};
-  renderKbkDetail(no);
+  setKbkCardOpen(no,true);renderKbkDetail(no);
 }
 function renderKbkDetail(no){
   const j=JOBS.find(x=>x.no===no);
-  const st=statusInfo(j);
   let action='';
 
   if(j.phase==='pending'){
@@ -1259,14 +1410,14 @@ function renderKbkDetail(no){
       +costPanel(j);
   }
 
-  $('kbklist').classList.add('hidden');
-  $('kbkdetail').classList.remove('hidden');
-  $('kbkdetail').innerHTML=`
-    <div class="job" style="cursor:default"><span class="ms" style="color:var(--primary-600)">engineering</span>
-      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org}</div></div>
-      <span class="badge ${st.cls}">${st.label}</span></div>
-    ${jobInfoBox(j)}${action}${timelineBox(j)}
-    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderKbkList()">← กลับคิวงาน</button></div>`;
+  const detail=kbkDetail(no);detail.classList.remove('hidden');
+  detail.innerHTML=`
+    <div class="ops-detail-layout">
+      <div class="ops-detail-main">${jobInfoBox(j)}${action}</div>
+      <aside class="ops-detail-side">
+        ${timelineBox(j)}
+      </aside>
+    </div>`;
 }
 function confirmDisposal(no){
   const j=JOBS.find(x=>x.no===no);
@@ -1476,7 +1627,12 @@ function persist(){try{localStorage.setItem(LSKEY,JSON.stringify({jobs:JOBS,seq:
   }catch(e){}
 })();
 // ฟังการแก้ค่าจากแท็บ admin: apply เฉพาะธีมสด — ไม่ reload (กัน state งานใน flow2 หาย)
-window.addEventListener('storage',e=>{if(e.key===MDC.KEY)MDC.applyTheme(MDC.load())});
+window.addEventListener('storage',e=>{
+  if(e.key!==MDC.KEY)return;
+  const next=MDC.load();
+  MDC.applyTheme(next);
+  MDC.applyVariants(next);
+});
 showStepSection(WORDER[0]);
 $('next').textContent=WORDER.length===1?'ส่งเรื่องแจ้งซ่อม':'ถัดไป';
 renderSteps();renderVehicles();updateBadge();
