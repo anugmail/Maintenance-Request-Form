@@ -21,13 +21,29 @@
 <style>
   /* ---------- เฉพาะแอปนี้ — ค่าสีมาจาก tokens เท่านั้น ---------- */
   body{background:var(--gray-50)}
+  /* badge สถานะ — เพิ่มขอบให้เห็นชัดขึ้น (เดิมมีแค่พื้นอ่อน ไม่มีขอบ) */
+  .badge{border:1px solid transparent}
+  .b-ok{border-color:var(--success-200)}
+  .b-low{border-color:var(--warning-200)}
+  .b-out{border-color:var(--error-200)}
+  .b-brand{border-color:rgba(168,6,137,.3)}
+
+  /* toast — หน้าตาแบบเดียวกับ badge (พื้นอ่อน+ขอบสี) แต่กว้างเต็มจอแทนเม็ดยาเล็กๆ กลางจอ
+     type เริ่มต้น = โทนม่วงแบรนด์ (แจ้งเฉยๆ), t-ok/t-warn/t-err = เขียว/ส้ม/แดง ตามสถานะ */
+  .toast{position:fixed;top:calc(10px + env(safe-area-inset-top));left:12px;right:12px;max-width:640px;margin:0 auto;
+    background:var(--primary-25);color:var(--primary-700);border:1px solid rgba(168,6,137,.3);
+    border-radius:var(--r-md);padding:11px 16px;font-size:13.5px;font-weight:600;z-index:50;opacity:0;
+    transform:translateY(-8px);transition:.25s;pointer-events:none;text-align:center}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast.t-ok{background:var(--success-50);color:var(--success-600);border-color:var(--success-200)}
+  .toast.t-warn{background:var(--warning-50);color:var(--warning-700);border-color:var(--warning-200)}
+  .toast.t-err{background:var(--error-50);color:var(--error-700);border-color:var(--error-200)}
   .aphdr{background:var(--grad-header);color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
     display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:20}
   .aphdr .ttl2{flex:1}
   .aphdr h1{font-size:17px;font-weight:700;line-height:1.2}
-  .aphdr .sub2{font-size:11.5px;opacity:.85}
   .aphdr a{color:#fff;text-decoration:none;display:flex}
-  .amain{max-width:640px;margin:0 auto;padding:16px 16px calc(88px + env(safe-area-inset-bottom))}
+  .amain{max-width:640px;margin:0 auto;padding:16px 16px calc(150px + env(safe-area-inset-bottom))}
 
   /* bottom tab bar */
   .tabbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--gray-200);
@@ -37,15 +53,16 @@
   .tab .ms{font-size:24px}
   .tab.on{color:var(--primary-600);font-weight:600}
 
-  /* ปุ่มลอย "เพิ่มบันทึกเอง" — สำหรับกรอกย้อนหลังถ้าลืมบันทึกวันไหน (ไม่ใช่แค่ทำวันนี้ได้อย่างเดียว) */
-  .fab{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));width:56px;height:56px;
-    border-radius:50%;background:var(--primary-600);color:#fff;border:none;display:flex;align-items:center;
-    justify-content:center;box-shadow:0 6px 16px rgba(168,6,137,.4);cursor:pointer;z-index:25}
-  .fab .ms{font-size:28px}
-  .fab:active{background:var(--primary-700,#8A0570)}
+  /* ปุ่มเด่นเดียวท้ายจอ "ลงบันทึกประจำวัน" — เปิด/เลื่อนไปที่การ์ดวันนี้เสมอ */
+  .stickycta{position:fixed;left:16px;right:16px;bottom:calc(74px + env(safe-area-inset-bottom));
+    max-width:608px;margin:0 auto;z-index:25;background:var(--primary-600);color:#fff;border:none;
+    border-radius:var(--r-md);padding:14px;font-size:15px;font-weight:700;display:flex;align-items:center;
+    justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(168,6,137,.3);cursor:pointer}
+  .stickycta .ms{font-size:20px}
+  .stickycta:active{background:var(--primary-700,#8A0570)}
 
   /* เลือกรถ: dropdown-card trigger + bottom sheet (แทน Fleet Card หน้าแรกเดิม) */
-  .vtrigger{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--gray-300);border-radius:var(--r-sm);padding:11px 12px;cursor:pointer}
+  .vtrigger{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--gray-300);border-radius:var(--r-sm);padding:11px 12px;cursor:pointer}
   .vtrigger .ms:first-child{color:var(--primary-600);font-size:22px;flex-shrink:0}
   .vtrigger .sp{flex:1;min-width:0}
   .vtrigger b{display:block;font-size:14.5px;color:var(--gray-900)}
@@ -56,21 +73,49 @@
   .vsheet-header{display:flex;align-items:center;justify-content:space-between;padding:6px 16px 10px;border-bottom:1px solid var(--gray-100);flex-shrink:0}
   .vsheet-header h3{font-size:15px;color:var(--gray-900);font-weight:600}
   .vsheet-list{overflow-y:auto;padding:14px}
+  /* modal "เพิ่มย้อนหลัง" ขั้นฟอร์มเต็ม — สูงกว่า sheet ทั่วไป + เนื้อหาเลื่อนแยกจาก header */
+  .modal-tall{max-height:90vh}
+  .vsheet-formwrap{flex:1;overflow-y:auto;padding:16px 16px 28px}
 
   /* แถบ Fleet Card ประจำรถ (default ผูกกับรถ — เปลี่ยนบัตรได้แต่ต้องตั้งใจกดและระบุเหตุผล) */
   .fcband{display:flex;align-items:center;gap:10px;background:var(--primary-25);border:1px solid var(--primary-50);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:10px}
   .fcband .ms{color:var(--primary-600);font-size:20px;flex-shrink:0}
   .fcband .sp{flex:1;min-width:0}
   .fcband b{font-size:13.5px;color:var(--gray-900);display:block}
-  .fclink{font-size:12px;color:var(--primary-600);font-weight:600;cursor:pointer;flex-shrink:0;text-decoration:underline;white-space:nowrap}
+  .fclink{font-size:12.5px;color:var(--primary-600);font-weight:600;cursor:pointer;flex-shrink:0;
+    display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+  .fclink .ms{font-size:15px}
 
   /* วิธีจ่ายค่าน้ำมัน — default เป็น Fleet Card เสมอ (ส่วนใหญ่ใช้บัตร) ไม่ต้องเลือกทุกครั้ง
-     "จ่ายเป็นเงินสดแทน" เป็นลิงก์เล็กๆ รองไว้ กดเฉพาะกรณีไม่มีบัตรจริงๆ */
-  .fclink-muted{font-size:12px;color:var(--gray-400);text-decoration:underline;cursor:pointer}
+     "ใช้บัตรอื่น" กับ "จ่ายเป็นเงินสดแทน" อยู่ใกล้กัน มีไอคอนกำกับให้ดูออกง่ายว่าเป็นการกระทำ */
+  .fclink-muted{font-size:12.5px;color:var(--gray-500);cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+  .fclink-muted .ms{font-size:15px;color:var(--gray-400)}
+  .pay-actions{display:flex;align-items:center;gap:18px;margin:8px 0 12px}
+
+  /* Fleet Card หน้าตาแบบบัตรเครดิตจริง — สีไล่ตามธนาคาร (MDD.BANK_THEME) อัตราส่วนบัตรมาตรฐาน 1.586:1
+     ดีไซน์แบบ flat/minimal — ไม่มี gloss overlay, เงาบางๆ + ขอบ 1px เท่านั้น */
+  .cc{position:relative;border-radius:14px;padding:16px 18px;color:#fff;overflow:hidden;
+    aspect-ratio:1.586/1;display:flex;flex-direction:column;justify-content:space-between;
+    border:1px solid rgba(255,255,255,.14);box-shadow:0 2px 8px rgba(16,24,40,.18);margin-bottom:4px}
+  .cc-row{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+  .cc-bank{font-size:13px;font-weight:700;letter-spacing:.2px}
+  .cc-wave{font-size:19px;opacity:.85;transform:rotate(90deg)}
+  .cc-chip{width:36px;height:27px;border-radius:6px;position:relative;z-index:1;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+  .cc-chip-line{position:absolute;top:50%;left:4px;right:4px;height:1px;background:rgba(0,0,0,.25)}
+  .cc-number{font-size:16.5px;font-weight:600;letter-spacing:2px;font-variant-numeric:tabular-nums;
+    position:relative;z-index:1}
+  .cc-bottom{align-items:flex-end}
+  .cc-label{font-size:9px;text-transform:uppercase;opacity:.75;letter-spacing:.5px;margin-bottom:2px}
+  .cc-name{font-size:12.5px;font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cc-brand{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-align:right;opacity:.9;line-height:1.2}
+  .cc-dim{filter:grayscale(.65) brightness(.72)}
+  .cc-ribbon{position:absolute;top:12px;right:12px;background:rgba(16,24,40,.82);color:#fff;
+    font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:20px;z-index:2;letter-spacing:.2px;white-space:nowrap}
 
   /* ถ่ายรูปสลิป — ปุ่มใหญ่แบบ dropzone เป็นแอ็กชันแรกที่เห็น กดง่ายกว่าไปหาในปุ่มเล็กท้ายฟอร์ม */
   .camera-cta{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-    border:2px dashed var(--primary-300,var(--primary-500));border-radius:var(--r-lg);padding:28px 16px;
+    border:1px dashed var(--primary-300,var(--primary-500));border-radius:var(--r-lg);padding:28px 16px;
     cursor:pointer;background:var(--primary-25);margin-bottom:8px;color:var(--primary-600);text-align:center}
   .camera-cta .ms{font-size:36px}
   .camera-cta b{font-size:14.5px}
@@ -86,7 +131,7 @@
   .loginhead .ms{color:var(--primary-600);font-size:40px}
   .loginhead h1{font-size:19px;margin:12px 0 4px;color:var(--gray-900)}
   .profilelist{display:flex;flex-direction:column;gap:12px}
-  .profilecard{display:flex;align-items:center;gap:14px;background:#fff;border:1.5px solid var(--gray-200);
+  .profilecard{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--gray-200);
     border-radius:var(--r-md);padding:14px;cursor:pointer}
   .profilecard:active{background:var(--gray-50)}
   .profilecard .avatar{width:48px;height:48px;font-size:16px}
@@ -100,19 +145,67 @@
   .feed-label .ms{font-size:20px}
   .feed-label.muted{color:var(--gray-500);font-size:13.5px;font-weight:700;margin-top:4px}
   .feed-label.muted .ms{font-size:17px;color:var(--gray-400)}
+  .feed-addlink{margin-left:auto;font-size:12.5px;color:var(--primary-600);font-weight:600;cursor:pointer}
 
-  .daycard{background:#fff;border:2px solid var(--gray-200);border-radius:var(--r-lg);margin-bottom:12px;overflow:hidden}
-  .daycard.today{background:var(--primary-25);border-color:var(--primary-600);border-width:2.5px}
+  /* ตัวกรองรายการย้อนหลัง — คัน (เป็น panel ไม่ใช่ native dropdown) + ช่วงเวลา ขึ้นบรรทัดใหม่ได้เองบนจอแคบ */
+  .hist-filter{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  .filtertrigger{display:flex;align-items:center;justify-content:space-between;gap:6px;flex:1;min-width:110px;
+    padding:7px 10px;font-size:12.5px;border:1px solid var(--gray-300);border-radius:var(--r-sm);
+    background:#fff;color:var(--gray-700);cursor:pointer}
+  .filtertrigger .ms{font-size:16px;color:var(--gray-400)}
+  .seg-mini{display:flex;border:1px solid var(--gray-300);border-radius:var(--r-sm);overflow:hidden;flex-shrink:0}
+  .seg-mini span{padding:7px 10px;font-size:12px;color:var(--gray-600);cursor:pointer;white-space:nowrap}
+  .seg-mini span.sel{background:var(--primary-600);color:#fff}
+  .seg-mini span+span{border-left:1px solid var(--gray-300)}
+  .hist-empty{color:var(--gray-400);font-size:13px;text-align:center;padding:24px 0}
+  .filterrow{display:flex;align-items:center;justify-content:space-between;padding:12px 6px;font-size:14px;
+    color:var(--gray-800);cursor:pointer;border-bottom:1px solid var(--gray-100)}
+  .filterrow:last-child{border-bottom:none}
+  .filterrow.sel{color:var(--primary-600);font-weight:600}
+  .filterrow .ms{color:var(--primary-600);font-size:18px}
+
+  /* การ์ดรายวัน — วันที่เป็นหัวเรื่องหลัก (แทนชื่อคนขับเดิม) ชื่อ/ทะเบียนรถเป็นรายละเอียดรองอยู่บรรทัดล่าง */
+  .daycard{background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-lg);margin-bottom:12px;
+    box-shadow:0 2px 6px rgba(16,24,40,.07),0 1px 2px rgba(16,24,40,.05)}
+  .daycard.today{background:#fff;border-color:var(--primary-500);border-width:1.5px}
   .daycard.unfilled{border-style:dashed}
-  .dc-head{display:flex;align-items:center;gap:12px;padding:16px 14px;cursor:pointer}
-  .dc-info{flex:1;min-width:0}
-  .dc-date{font-weight:700;font-size:16.5px;color:var(--gray-900);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-  .dc-sub{font-size:13px;color:var(--gray-600);margin-top:3px}
-  .dc-right{text-align:right;flex-shrink:0}
-  .dc-fuel{font-size:22px;font-weight:700;color:var(--gray-900)}
-  .dc-right .badge{font-size:12.5px;padding:3px 11px;margin-top:3px;display:inline-block}
-  .dc-chev{color:var(--gray-400);flex-shrink:0;font-size:26px}
+  .dc-head{display:flex;flex-direction:column;gap:8px;padding:14px 14px 12px;cursor:pointer}
+  .dc-main{display:flex;align-items:center;gap:10px;min-width:0}
+  .dc-identity{flex:1;min-width:0}
+  .dc-name{font-weight:700;font-size:15.5px;color:var(--gray-900);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .dc-sub{font-size:12.5px;color:var(--gray-600);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dc-odo{font-size:12px;color:var(--gray-500);margin-left:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dc-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:10px;border-top:1px solid var(--gray-100)}
+  .dc-fuel{font-size:19px;font-weight:700;color:var(--gray-900);white-space:nowrap}
+  .dc-chev{color:var(--gray-300);flex-shrink:0;font-size:24px}
+  .dc-actions{display:flex;align-items:center;gap:2px;flex-shrink:0;position:relative}
+
+  /* dropfield — แทน native <select> ทุกจุด (สถานี/ชนิดน้ำมัน/ประเภทค่าใช้จ่าย/ฟิลด์กำหนดเอง)
+     หน้าตาเหมือนช่องกรอกทั่วไป + ไอคอน chevron เปิด bottom sheet แบบเดียวกับเลือกรถ */
+  .dropfield{display:flex;align-items:center;justify-content:space-between;width:100%;border:1px solid var(--gray-300);
+    border-radius:var(--r-sm);padding:8px 10px;font-size:14px;color:var(--gray-900);background:#fff;cursor:pointer}
+  .dropfield .ms{font-size:18px;color:var(--gray-400);flex-shrink:0}
+  .rowic{font-size:19px;color:var(--gray-400);cursor:pointer;width:30px;height:30px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .rowic:active{background:var(--gray-100)}
+  /* เมนู 3 จุด -> รายการข้อความ "แก้ไข"/"ลบ" ชัดเจน แทนการเผยไอคอนดินสอซ้ำ (สับสนว่าไอคอนไหนทำอะไร) */
+  .actionmenu{position:absolute;top:36px;right:0;background:#fff;border:1px solid var(--gray-200);
+    border-radius:var(--r-md);box-shadow:0 4px 16px rgba(16,24,40,.15);z-index:36;min-width:132px;overflow:hidden}
+  .actionitem{display:flex;align-items:center;gap:8px;padding:11px 14px;font-size:13.5px;color:var(--gray-800);cursor:pointer}
+  .actionitem:active{background:var(--gray-50)}
+  .actionitem .ms{font-size:18px;color:var(--gray-500)}
+  .actionitem-del{color:var(--error-600)}
+  .actionitem-del .ms{color:var(--error-500)}
+  .menu-backdrop{position:fixed;inset:0;z-index:35;background:transparent}
   .dc-body{padding:0 16px 16px;border-top:1px solid var(--gray-100)}
+
+  /* มุมมอง read-only ของบันทึกที่มีอยู่แล้ว — ข้อความล้วน ไม่มีกรอบ input ให้เข้าใจผิดว่าแก้ไขได้ */
+  .ro-panel{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--r-md);padding:2px 14px;margin-top:14px}
+  .ro-row{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--gray-100)}
+  .ro-row:last-child{border-bottom:none}
+  .ro-label{font-size:12.5px;color:var(--gray-500);flex-shrink:0}
+  .ro-val{font-size:13.5px;color:var(--gray-900);font-weight:500;text-align:right}
+  .ro-mut{color:var(--gray-400);font-weight:400;font-size:12px}
 
   /* form — ทุกช่อง input/select เดี่ยวๆ กางเต็มความกว้าง (แถวที่แบ่งคอลัมน์เอง เช่น .rcgrid/.otrow จะ override ทับ) */
   input[type=number],input[type=date],input[type=text],input:not([type]),select{width:100%;border:1px solid var(--gray-300);border-radius:var(--r-sm);
@@ -127,6 +220,9 @@
   .distline.err{color:var(--error-600);font-weight:600}
   .formbtns{display:flex;gap:10px;margin-top:18px}
   .formbtns .btn{flex:1;padding:12px}
+  /* ปุ่ม secondary (ยกเลิก ฯลฯ) แบบโปร่ง มีขอบ แทนพื้นเทาทึบของ design-system เดิม */
+  .btn-g{background:transparent;border:1.5px solid var(--gray-300);color:var(--gray-700)}
+  .btn-g:active{background:var(--gray-50)}
   .chkrow{display:flex!important;gap:10px;align-items:center;font-weight:600}
   .f{margin-bottom:14px}
 
@@ -141,21 +237,20 @@
   .scantxt{display:flex;gap:8px;align-items:center;color:var(--primary-600);font-weight:600;font-size:14px;min-height:84px}
   .spin{animation:sp 1s linear infinite}
   @keyframes sp{to{transform:rotate(360deg)}}
-  .rcgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-  .rcgrid .sp2{grid-column:1/-1}
+  .rcgrid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:8px}
   .rcgrid label{font-size:11.5px;color:var(--gray-500);display:block;margin-bottom:3px;font-weight:500}
   .rcgrid input,.rcgrid select{padding:8px 10px;font-size:14px}
   .rcdel{color:var(--gray-400);cursor:pointer;flex-shrink:0}
   .flash input,.flash select{animation:flash 1.4s ease-out}
   @keyframes flash{0%{background:var(--primary-50);border-color:var(--primary-500)}100%{background:#fff}}
-  .rcbtns{display:flex;gap:8px;flex-wrap:wrap}
-  .rcbtns .btn{padding:9px 14px;font-size:13.5px}
+  .rcbtns{display:flex;gap:8px}
+  .rcbtns .btn{flex:1;padding:9px 14px;font-size:13.5px}
 
-  /* others repeater */
-  .otrow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-  .otrow select{flex:0 0 118px;padding:9px 8px}
-  .otrow input{padding:9px 10px}
-  .otrow .amt{flex:0 0 96px}
+  /* others repeater — เรียงลงมาทีละฟิลด์ (ไม่เบียดกันในแถวเดียว) */
+  .otcard{position:relative;border:1px solid var(--gray-200);border-radius:var(--r-md);padding:12px 40px 4px 12px;margin-bottom:10px;background:#fff}
+  .otcard label{font-size:11.5px;color:var(--gray-500);display:block;margin-bottom:3px;font-weight:500}
+  .otcard select,.otcard input,.otcard .dropfield{margin-bottom:10px}
+  .otcard .rcdel{position:absolute;top:10px;right:10px}
 
   /* month summary */
   .mnav{display:flex;align-items:center;gap:8px;margin-bottom:14px}
@@ -178,7 +273,6 @@
   <span class="ms" style="font-size:26px">local_gas_station</span>
   <div class="ttl2">
     <h1>บันทึกการใช้งานรถ</h1>
-    <div class="sub2" id="hdrSub">บันทึกรายวันแบบ logbook — ข้อมูลจำลอง (mock)</div>
   </div>
   <div class="avatar avatar-sm" id="hdrAvatar" onclick="doLogout()" title="สลับผู้ใช้"></div>
   <a href="../admin-config.html" title="ตั้งค่า (Admin Control Panel)"><span class="ms" style="font-size:24px">tune</span></a>
@@ -191,7 +285,7 @@
   <section id="view-month" class="hidden"></section>
 </div>
 
-<button class="fab hidden" id="fabAdd" onclick="openAddSheet()" title="เพิ่มบันทึกเอง (ย้อนหลังได้)"><span class="ms">add</span></button>
+<button class="stickycta hidden" id="stickyCta" onclick="focusToday()"><span class="ms">edit_note</span>รายงานประจำวัน</button>
 
 <nav class="tabbar hidden" id="tabbar">
   <div class="tab on" id="tab-form" onclick="go('form')"><span class="ms">edit_note</span><span>บันทึก</span></div>
@@ -200,8 +294,10 @@
 
 <div class="toast" id="toast"></div>
 <input type="file" id="rcfile" accept="image/*" capture="environment" class="hidden">
-<div id="vsheetRoot"></div>
 <div id="addSheetRoot"></div>
+<div id="histVSheetRoot"></div>
+<div id="vsheetRoot"></div>
+<div id="pickerSheetRoot"></div>
 
 <script src="ocr.js"></script>
 <script src="app.js"></script>

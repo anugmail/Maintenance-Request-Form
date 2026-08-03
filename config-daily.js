@@ -29,7 +29,8 @@ const DEFAULT_DB={
     custom:[]   // {key:'c<ts>',label,type:'text|number|select|date|check',options:[],req,on}
   },
   fleet:null,   // null = ใช้ FLEET_DEFAULTS; override = [{vehicleId,no,bank,holder}]
-  drivers:[]    // ชื่อผู้ขับที่เคยบันทึก → autocomplete (dedup, เก็บล่าสุด 20 ชื่อ)
+  drivers:[],   // ชื่อผู้ขับที่เคยบันทึก → autocomplete (dedup, เก็บล่าสุด 20 ชื่อ)
+  display:{cardOdo:true}   // ตั้งค่าการแสดงผลในการ์ดรายวัน (feed) — เช่น โชว์เลขไมล์ในการ์ดหรือไม่
 };
 
 /* label/คำอธิบายของฟิลด์มาตรฐาน — ใช้ทั้งใน admin (ตั้งค่า) และ PWA (แสดง error)
@@ -52,10 +53,19 @@ const OTHER_TYPES=['ทางด่วน','ล้างรถ','ค่าซ่
 /* ---------- Fleet Card defaults (จับคู่กับ vehicles ใน config.js) ---------- */
 const FLEET_DEFAULTS=[
   {vehicleId:1,no:'7024 8801 0042 2345',bank:'ธนาคารกรุงไทย',holder:'กฟภ. เขต ฉ.3 นครราชสีมา'},
-  {vehicleId:2,no:'7024 8801 0042 6789',bank:'ธนาคารกรุงไทย',holder:'กฟภ. เขต ฉ.1 ขอนแก่น'},
-  {vehicleId:3,no:'7024 8801 0042 1122',bank:'ธนาคารกรุงไทย',holder:'สำนักงานใหญ่ (กบค.)'},
-  {vehicleId:4,no:'7024 8801 0042 5566',bank:'ธนาคารกรุงไทย',holder:'กฟภ. เขต น.1 เชียงใหม่'}
+  {vehicleId:2,no:'7024 8801 0042 6789',bank:'ธนาคารกรุงศรีอยุธยา',holder:'กฟภ. เขต ฉ.1 ขอนแก่น'},
+  {vehicleId:3,no:'7024 8801 0042 1122',bank:'ธนาคารไทยพาณิชย์',holder:'สำนักงานใหญ่ (กบค.)'},
+  {vehicleId:4,no:'7024 8801 0042 5566',bank:'ธนาคารกสิกรไทย',holder:'กฟภ. เขต น.1 เชียงใหม่'}
 ];
+/* ---------- ธีมสีบัตรตามธนาคาร (โทนใกล้เคียงแบรนด์จริง) — ใช้วาดหน้าบัตร Fleet Card แบบบัตรเครดิตจริง ---------- */
+const BANK_THEME={
+  'ธนาคารกรุงไทย':      {grad:'linear-gradient(135deg,#0B3C7A 0%,#1A5CB0 55%,#0E4690 100%)',chip:'linear-gradient(135deg,#F4D896,#C9A227)'},
+  'ธนาคารกรุงเทพ':      {grad:'linear-gradient(135deg,#0B1F4B 0%,#1B3E86 55%,#0E2C66 100%)',chip:'linear-gradient(135deg,#E8D9A0,#B8922E)'},
+  'ธนาคารไทยพาณิชย์':   {grad:'linear-gradient(135deg,#3D0A52 0%,#7B1FA2 55%,#55127A 100%)',chip:'linear-gradient(135deg,#F4D896,#C9A227)'},
+  'ธนาคารกสิกรไทย':     {grad:'linear-gradient(135deg,#08402C 0%,#16794E 55%,#0B5A3B 100%)',chip:'linear-gradient(135deg,#F4E7B0,#CDAA3E)'},
+  'ธนาคารกรุงศรีอยุธยา':{grad:'linear-gradient(135deg,#6E4400 0%,#C98A00 55%,#8A5A00 100%)',chip:'linear-gradient(135deg,#FFF3D0,#E0B84A)'}
+};
+const BANK_THEME_DEFAULT={grad:'linear-gradient(135deg,#3A3F4B 0%,#5B6272 55%,#454B58 100%)',chip:'linear-gradient(135deg,#E2E5EA,#AEB4C0)'};
 
 /* ---------- load / save / reset ---------- */
 function clone(o){return JSON.parse(JSON.stringify(o))}
@@ -75,7 +85,8 @@ function load(){
       records:Array.isArray(j.records)?j.records:[],
       fields:{std,custom:(j.fields&&Array.isArray(j.fields.custom))?j.fields.custom:[]},
       fleet:Array.isArray(j.fleet)?j.fleet:null,
-      drivers:Array.isArray(j.drivers)?j.drivers:[]
+      drivers:Array.isArray(j.drivers)?j.drivers:[],
+      display:Object.assign({},DEFAULT_DB.display,j.display||{})
     };
   }catch(e){return clone(DEFAULT_DB)}
 }
@@ -167,6 +178,6 @@ function seedMonth(){
   return records;
 }
 
-window.MDD={KEY,DEFAULT_DB,STD_META,FIELD_TYPES,OTHER_TYPES,FLEET_DEFAULTS,MISSION_PRESETS,DRIVERS,
+window.MDD={KEY,DEFAULT_DB,STD_META,FIELD_TYPES,OTHER_TYPES,FLEET_DEFAULTS,BANK_THEME,BANK_THEME_DEFAULT,MISSION_PRESETS,DRIVERS,
   load,save,saveGuarded,reset,fleet,fleetFor,thDate,thMonth,isoToday,seedMonth,clone};
 })();

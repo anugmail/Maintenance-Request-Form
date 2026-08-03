@@ -231,6 +231,15 @@
       <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:4px 0 12px;color:var(--gray-700)"><input type="checkbox" id="nf-req">จำเป็นต้องกรอก</label>
       <button class="btn btn-p" onclick="cfAdd()"><span class="ms" style="font-size:18px">add</span> เพิ่มฟิลด์</button>
     </div>
+
+    <div class="grphead" style="margin-top:22px"><span class="ms" style="color:var(--primary-600)">view_agenda</span><b>การแสดงผลในการ์ดรายวัน (หน้าแรก)</b></div>
+    <div class="trow">
+      <div class="tinfo"><div class="tname">แสดงเลขไมล์ในการ์ด</div><div class="tdesc">โชว์เลขไมล์เริ่มต้น-สิ้นสุดใต้ชื่อผู้ขับในการ์ดรายวัน โดยไม่ต้องเปิดดูรายละเอียด</div></div>
+      <div class="seg" style="flex:0 0 130px">
+        <div class="sg" id="cardOdoOn" onclick="setCardOdo(true)">เปิด</div>
+        <div class="sg" id="cardOdoOff" onclick="setCardOdo(false)">ปิด</div>
+      </div>
+    </div>
   </div>
 
   <div class="card">
@@ -580,6 +589,15 @@ function stdOn(k,v){
 }
 function stdReq(k,v){ddb.fields.std[k].req=v;MDD.save(ddb)}
 
+function renderCardOdo(){
+  $('cardOdoOn').classList.toggle('sel',!!ddb.display.cardOdo);
+  $('cardOdoOff').classList.toggle('sel',!ddb.display.cardOdo);
+}
+function setCardOdo(v){
+  ddb.display.cardOdo=v;MDD.save(ddb);renderCardOdo();
+  toast((v?'เปิด':'ปิด')+'การแสดงเลขไมล์ในการ์ดแล้ว — แอปอัปเดตทันที');
+}
+
 function renderCustomFields(){
   const list=ddb.fields.custom;
   $('customfields').innerHTML=list.length?list.map((c,i)=>`
@@ -688,7 +706,7 @@ function dExport(){
 }
 function renderDailyAll(){
   ddb=MDD.load();
-  renderStdFields();renderCustomFields();renderNfType();renderFleet();updCount();renderRecon();
+  renderStdFields();renderCardOdo();renderCustomFields();renderNfType();renderFleet();updCount();renderRecon();
 }
 
 /* ----- ตั้งหนี้ + Reconcile Fleet Card (mock คร่าวๆ — ใช้ใบเสร็จจริงจาก ddb.records) -----
