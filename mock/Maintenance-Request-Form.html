@@ -358,8 +358,8 @@
     .part-popover {
       position: absolute;
       z-index: 20;
-      width: 236px;
-      max-width: 78vw;
+      width: 270px;
+      max-width: 82vw;
       padding: 12px;
       border: 1px solid var(--gray-200);
       border-radius: var(--r-md);
@@ -395,6 +395,25 @@
       font-size: 12px;
       line-height: 1;
       cursor: pointer
+    }
+
+    .pp-hint {
+      display: flex;
+      gap: 7px;
+      margin-bottom: 10px;
+      padding: 8px 10px;
+      border: 1px solid var(--primary-50);
+      border-radius: var(--r-sm);
+      background: var(--primary-25);
+      color: var(--gray-700);
+      font-size: 11.5px;
+      line-height: 1.55
+    }
+
+    .pp-hint .ms {
+      flex: 0 0 auto;
+      color: var(--primary-600);
+      font-size: 16px
     }
 
     .pp-field {
@@ -1762,24 +1781,28 @@
     ];
     const PARTS = MDC.data('parts');
 
-    // ---------- ไดอะแกรมจิ้มเลือกจุดที่มีปัญหา (ภาพประกอบ mock — ยังไม่มีรูปจริงของรถ กฟภ. ใช้แทนตำแหน่ง) ----------
-    const DIAG_IMG = '../assets/mock-vehicle-diagram.jpg';
-    // หมุด = จุดที่รูปต้นฉบับมีเลขชี้ไว้อยู่แล้ว (num ตรงกับเลขบนภาพ) — ตั้งชื่ออะไหล่ตามจุดที่เลขนั้นชี้ถึง
-    // cat ผูกกับ CATS.key เพื่ออ้างอิงอาการ/อะไหล่ที่เกี่ยวข้องในระบบ
-    // แต่ละเลข = อะไหล่จริง 1 รายการจากคลัง (PARTS.code) โดยตรง — ไม่ใช่แค่หมวดกว้างๆ อีกต่อไป
+    // ---------- ไดอะแกรมจิ้มเลือกจุดที่มีปัญหา (อ้างอิง Table 1-1 Main components of crane ที่ผู้ใช้ให้มา) ----------
+    const DIAG_IMG = '../assets/mock-crane-diagram.png';
+    // เลข (num) ตรงกับเลขในรูป/ตาราง Main components of crane ที่ให้มา — ชื่อ/คำแนะนำการแจ้งอาการตั้งตามตำแหน่งจริงของชิ้นส่วนนั้น
+    // cat ผูกกับ CATS.key เพื่อใช้กรองอาการ/อะไหล่ที่เกี่ยวข้องในระบบ (หมวดกว้าง — คำแนะนำ (hint) คือส่วนที่เจาะจงเฉพาะชิ้นส่วนนั้นจริงๆ)
     const PART_HOTSPOTS = [
-      { num: 55, code: 'RC-5521', x: 55.9, y: 33.0 },
-      { num: 71, code: 'BT-1212', x: 86.4, y: 32.8 },
-      { num: 83, code: 'WP-1030', x: 32.1, y: 46.8 },
-      { num: 23, code: 'PM-2210', x: 42.0, y: 54.5 }
+      { num: 1, cat: 'boom', name: 'ปลายบูม (Tip Boom)', hint: 'ระบุอาการ เช่น บูมโก่ง/งอ, จุดยึดลูกรอกปลายบูมหลวม, สลิงเสียดสีปลายบูม — บอกความยาวบูม ณ ขณะเกิดเหตุด้วยถ้าทราบ', x: 66, y: 9 },
+      { num: 2, cat: 'boom', name: 'ตะขอเกี่ยว (Hook Block)', hint: 'ระบุอาการ เช่น ตะขอบิดงอ/สึก, สลักนิรภัยตะขอชำรุด, ลูกปืนหมุนตะขอฝืด — ระบุน้ำหนักที่ยกขณะเกิดเหตุถ้าทราบ', x: 63, y: 30 },
+      { num: 3, cat: 'hyd', name: 'กลไกยก-กดบูม (Derricking Gear)', hint: 'ระบุอาการ เช่น ยก/กดบูมกระตุกหรือช้าผิดปกติ, มีเสียงดังขณะยกบูม, น้ำมันรั่วบริเวณกระบอกยกบูม', x: 60, y: 42 },
+      { num: 4, cat: 'elec', name: 'ห้องควบคุมเครน (Operator\'s Cab)', hint: 'ระบุอาการ เช่น จอ/สวิตช์ควบคุมไม่ทำงาน, คันบังคับ (joystick) ค้าง, กระจกห้องควบคุมแตก', x: 69, y: 75 },
+      { num: 5, cat: 'hyd', name: 'เฟืองหมุนแกนเครน (Slewing Gear)', hint: 'ระบุอาการ เช่น หมุนตัวเครนกระตุก/มีเสียงดัง, หมุนช้าผิดปกติ, มีน้ำมันรั่วซึมบริเวณเฟืองหมุน', x: 77, y: 86 },
+      { num: 6, cat: 'oth', name: 'แชสซีส์ตัวรถ 5 เพลา (Chassis)', hint: 'ระบุอาการ เช่น เฟรมรถแตกร้าว/บิดงอ, จุดยึดล้อหลวม, สนิมกัดกร่อนจุดสำคัญ — ระบุตำแหน่งบนแชสซีส์ให้ชัดเจน', x: 60, y: 94 },
+      { num: 7, cat: 'hyd', name: 'ขาตั้งค้ำยัน (Outrigger Pad)', hint: 'ระบุอาการ เช่น ขาค้ำยันยืด/หดไม่สุด, น้ำมันไฮดรอลิกรั่วที่กระบอกขาค้ำ, แผ่นรองขาค้ำแตก/หลุด', x: 51, y: 89 },
+      { num: 8, cat: 'oth', name: 'คานสไลด์ขาค้ำยัน (Sliding Beam)', hint: 'ระบุอาการ เช่น คานสไลด์ออกไม่สุด/ติดขัด, มีเสียงดังขณะสไลด์คาน, ล็อกคานไม่แน่น', x: 42, y: 93 },
+      { num: 9, cat: 'eng', name: 'เครื่องยนต์ตัวรถ (Engine, Chassis)', hint: 'ระบุอาการ เช่น สตาร์ทไม่ติด, ควันดำ/กำลังตก, มีเสียงผิดปกติจากเครื่องยนต์ขณะขับ', x: 33, y: 88 },
+      { num: 10, cat: 'oth', name: 'ยางล้อ (Tire)', hint: 'ระบุอาการ เช่น ยางแตก/รั่ว, ดอกยางสึกผิดปกติ, ลมยางอ่อนบ่อย — ระบุตำแหน่งล้อ (หน้า/หลัง ซ้าย/ขวา)', x: 24, y: 93 },
+      { num: 11, cat: 'elec', name: 'ห้องโดยสารคนขับ (Driver\'s Cab)', hint: 'ระบุอาการ เช่น แอร์ไม่เย็น, ไฟหน้าปัดไม่ติด, เบาะ/เข็มขัดนิรภัยชำรุด', x: 15, y: 88 },
+      { num: 12, cat: 'oth', name: 'ตุ้มถ่วงน้ำหนัก (Counterweight)', hint: 'ระบุอาการ เช่น สลักยึดตุ้มถ่วงหลวม/สึก, ตุ้มถ่วงแตกร้าว, ระบบล็อกตุ้มถ่วงไม่แน่น', x: 48, y: 80 },
+      { num: 13, cat: 'hyd', name: 'วินช์รอง (Auxiliary Winch)', hint: 'ระบุอาการ เช่น สลิงหย่อน/รูดไม่สม่ำเสมอ, มอเตอร์วินช์มีเสียงดัง, เบรกวินช์ไม่ทำงาน', x: 55, y: 75 },
+      { num: 14, cat: 'hyd', name: 'วินช์หลัก (Main Winch)', hint: 'ระบุอาการ เช่น สลิงหย่อน/รูดไม่สม่ำเสมอ, มอเตอร์วินช์มีเสียงดัง, เบรกวินช์ไม่ทำงาน', x: 63, y: 79 },
+      { num: 15, cat: 'hyd', name: 'แท่นหมุน (Slewing Table)', hint: 'ระบุอาการ เช่น แท่นหมุนโยก/มีระยะฟรีเกินปกติ, มีเสียงดังขณะหมุน, จารบีแห้ง/ไม่มีจารบี', x: 71, y: 80 },
+      { num: 16, cat: 'hyd', name: 'เครื่องยนต์ชุดเครน (Engine, Superstructure)', hint: 'ระบุอาการ เช่น สตาร์ทไม่ติด, รอบเครื่องไม่นิ่ง, มีเสียง/แรงสั่นสะเทือนผิดปกติขณะทำงานเครน', x: 40, y: 75 }
     ];
-    function hotspotMeta(h) {
-      const part = PARTS.find(x => x.code === h.code);
-      if (!part) return null;
-      const sym = SYMPTOMS.find(s => s.id === part.sym);
-      const cat = CATS.find(c => c.key === sym.cat);
-      return { part, sym, cat };
-    }
     const SEVS = ['ต่ำ', 'ปานกลาง', 'สูง', 'หยุดใช้งาน'];
     const GARAGES = MDC.data('garages');
     const KBK_STEPS = ['รับเรื่องซ่อม', 'รอสั่งอะไหล่', 'อะไหล่ถึงแล้ว', 'ดำเนินการซ่อม', 'ซ่อมเสร็จ'];
@@ -2476,53 +2499,51 @@ function goBackFromForm(){
     }
     function visibleHotspots() {
       return PART_HOTSPOTS.filter(h => {
-        const m = hotspotMeta(h);
-        return m && (m.cat.for !== 'attach' || S.vehicle.attach);
+        const c = CATS.find(x => x.key === h.cat);
+        return c.for !== 'attach' || S.vehicle.attach;
       });
     }
     function renderDiagramPicker() {
       if (!S.vehicle) return '';
       const hotspots = visibleHotspots();
       const pins = hotspots.map((h, i) => {
-        const m = hotspotMeta(h);
-        const on = S.symptoms.includes(m.sym.id);
-        const booked = !!(S.bookings[m.part.code] || S.orders[m.part.code]);
-        const open = S.popover && S.popover.code === h.code;
-        return `<button type="button" class="diagram-pin ${on ? 'has-sel' : ''} ${open ? 'active' : ''}" style="left:${h.x}%;top:${h.y}%" title="${esc(m.part.name)}" onclick="pinClick(${i})">${h.num}${booked ? '<i>✓</i>' : ''}</button>`;
+        const n = SYMPTOMS.filter(s => s.cat === h.cat && S.symptoms.includes(s.id)).length;
+        const open = S.popover && S.popover.num === h.num;
+        return `<button type="button" class="diagram-pin ${n ? 'has-sel' : ''} ${open ? 'active' : ''}" style="left:${h.x}%;top:${h.y}%" title="${esc(h.name)}" onclick="pinClick(${i})">${h.num}${n ? `<i>${n}</i>` : ''}</button>`;
       }).join('');
       const pop = S.popover ? renderPartPopover(S.popover) : '';
       return `<div class="diagram-card">
-      <div class="diagram-card-head"><div class="diagram-card-title"><span class="ms">touch_app</span>อีกวิธีเลือก — จิ้มเลขบนรูปตรงอะไหล่ที่เสีย</div><span class="diagram-card-badge">ภาพประกอบ (mock)</span></div>
-      <div class="diagram-card-hint">เลขบนรูปคือจุดเดียวกับภาพต้นฉบับที่ให้มา แต่ละเลขสื่อถึงอะไหล่ชิ้นนั้นโดยตรง — แตะแล้วยืนยันอาการ + จองอะไหล่ได้เลย</div>
-      <div class="diagram-stage"><img src="${DIAG_IMG}" alt="ภาพประกอบตำแหน่งอะไหล่ (mock)">${pins}${pop}</div>
+      <div class="diagram-card-head"><div class="diagram-card-title"><span class="ms">touch_app</span>อีกวิธีเลือก — จิ้มเลขชิ้นส่วนบนรูป (อ้างอิงตาราง Main Components of Crane)</div><span class="diagram-card-badge">ภาพประกอบ (mock)</span></div>
+      <div class="diagram-card-hint">เลขตรงกับตารางที่ให้มา — แตะเลขเพื่อดูคำแนะนำการแจ้งอาการของชิ้นส่วนนั้น แล้วกรอกอาการ + อะไหล่ที่เสียได้เลย</div>
+      <div class="diagram-stage"><img src="${DIAG_IMG}" alt="ภาพประกอบตำแหน่งชิ้นส่วนเครน (mock)">${pins}${pop}</div>
     </div>`;
     }
     function renderPartPopover(h) {
-      const m = hotspotMeta(h);
-      const p = m.part, sym = m.sym;
-      const on = S.symptoms.includes(sym.id);
-      const active = !!(S.bookings[p.code] || S.orders[p.code]);
-      const st = active
-        ? (S.bookings[p.code] ? `จองแล้ว ${S.bookings[p.code]} ${p.unit}` : `สั่งของแล้ว ${S.orders[p.code]} ${p.unit}`)
-        : (p.stock > 0 ? `มีของในคลัง ${p.stock} ${p.unit}` : 'ของหมด — แตะเพื่อสั่งของ');
+      const syms = SYMPTOMS.filter(s => s.cat === h.cat);
+      const symChips = syms.map(s => `<div class="chip ${S.symptoms.includes(s.id) ? 'sel' : ''}" onclick="toggleSym('${s.id}')">${s.name}</div>`).join('');
+      const partsHere = PARTS.filter(p => S.symptoms.includes(p.sym) && SYMPTOMS.find(s => s.id === p.sym)?.cat === h.cat);
+      const partsHtml = partsHere.length ? partsHere.map(p => {
+        const active = !!(S.bookings[p.code] || S.orders[p.code]);
+        const st = active ? (S.bookings[p.code] ? 'จองแล้ว' : 'สั่งของแล้ว') : (p.stock > 0 ? 'มีของ' : 'ของหมด — สั่งของ');
+        return `<div class="pp-part ${active ? 'sel' : ''}" onclick="quickTogglePart('${p.code}')"><span class="nm">${p.name}</span><span class="st">${st}</span></div>`;
+      }).join('') : '<div class="pp-empty">เลือกอาการก่อน — ระบบจะแสดงอะไหล่ที่เกี่ยวข้องให้ที่นี่</div>';
       const tx = h.x <= 50 ? '12px' : 'calc(-100% - 12px)';
       const ty = h.y <= 50 ? '12px' : 'calc(-100% - 12px)';
       return `<div class="part-popover" style="left:${h.x}%;top:${h.y}%;transform:translate(${tx},${ty})">
-      <div class="pp-head"><b>เลข ${h.num} · ${esc(p.name)}</b><button type="button" class="pp-close" onclick="closePopover()">✕</button></div>
-      <div class="pp-field"><label>อาการที่พบ</label><div class="chips"><div class="chip ${on ? 'sel' : ''}" onclick="toggleSym('${sym.id}')">${sym.name}</div></div></div>
-      <div class="pp-field"><label>อะไหล่ที่เสีย</label>
-        <div class="pp-part ${active ? 'sel' : ''}" onclick="quickTogglePart('${p.code}')"><span class="nm">${p.name}</span><span class="st">${st}</span></div>
-      </div>
+      <div class="pp-head"><b>เลข ${h.num} · ${esc(h.name)}</b><button type="button" class="pp-close" onclick="closePopover()">✕</button></div>
+      <div class="pp-hint"><span class="ms">lightbulb</span>${esc(h.hint)}</div>
+      <div class="pp-field"><label>อาการที่พบ</label><div class="chips">${symChips}</div></div>
+      <div class="pp-field"><label>อะไหล่ที่เสีย <small>(ถ้าทราบ)</small></label>${partsHtml}</div>
       <button type="button" class="btn btn-p" style="width:100%" onclick="closePopover()">เสร็จสิ้น</button>
     </div>`;
     }
     function pinClick(i) {
       const hotspots = visibleHotspots();
       const h = hotspots[i];
-      if (S.popover && S.popover.code === h.code) { S.popover = null; renderSymptoms(); return; }
-      const m = hotspotMeta(h);
-      if (m.cat.for === 'attach' && S.target !== 'attach') setTarget('attach');
-      else if (m.cat.for === 'vehicle' && S.target !== 'vehicle') setTarget('vehicle');
+      if (S.popover && S.popover.num === h.num) { S.popover = null; renderSymptoms(); return; }
+      const c = CATS.find(x => x.key === h.cat);
+      if (c.for === 'attach' && S.target !== 'attach') setTarget('attach');
+      else if (c.for === 'vehicle' && S.target !== 'vehicle') setTarget('vehicle');
       S.popover = h;
       renderSymptoms();
     }
