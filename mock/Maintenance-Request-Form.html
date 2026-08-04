@@ -235,6 +235,240 @@
       font-weight: 500
     }
 
+    /* ---------- ไดอะแกรมจิ้มเลือกจุดที่มีปัญหา (อีกวิธีเลือก คู่กับรายการหมวดด้านล่าง) ---------- */
+    .diagram-card {
+      margin-bottom: 18px;
+      padding: 16px 18px 18px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--r-lg);
+      background: #fff
+    }
+
+    .diagram-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap
+    }
+
+    .diagram-card-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--gray-900);
+      font-size: 14px;
+      font-weight: 600
+    }
+
+    .diagram-card-title .ms {
+      color: var(--primary-600);
+      font-size: 18px
+    }
+
+    .diagram-card-badge {
+      padding: 4px 10px;
+      border-radius: var(--r-pill);
+      background: var(--primary-25);
+      color: var(--primary-700);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap
+    }
+
+    .diagram-card-hint {
+      margin: 4px 0 14px;
+      color: var(--gray-500);
+      font-size: 12.5px;
+      line-height: 1.5
+    }
+
+    .diagram-stage {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+      background: var(--gray-50)
+    }
+
+    .diagram-stage img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: var(--r-md)
+    }
+
+    .diagram-pin {
+      position: absolute;
+      display: flex;
+      width: 30px;
+      height: 30px;
+      align-items: center;
+      justify-content: center;
+      transform: translate(-50%, -50%);
+      border: 2px solid var(--primary-600);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--primary-700);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(16, 24, 40, .18);
+      transition: transform .15s ease, box-shadow .15s ease
+    }
+
+    .diagram-pin i {
+      position: absolute;
+      top: -7px;
+      right: -7px;
+      display: flex;
+      width: 16px;
+      height: 16px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--success-600);
+      color: #fff;
+      font-size: 9.5px;
+      font-style: normal;
+      font-weight: 700
+    }
+
+    .diagram-pin:hover {
+      transform: translate(-50%, -50%) scale(1.12);
+      box-shadow: 0 4px 14px rgba(16, 24, 40, .24)
+    }
+
+    .diagram-pin.has-sel {
+      background: var(--primary-600);
+      color: #fff
+    }
+
+    .diagram-pin.active {
+      box-shadow: 0 0 0 3px var(--primary-25), 0 4px 14px rgba(16, 24, 40, .2)
+    }
+
+    .cat-block {
+      padding: 6px 10px;
+      margin: 0 -10px 2px;
+      border-radius: var(--r-md)
+    }
+
+    .part-popover {
+      position: absolute;
+      z-index: 20;
+      width: 236px;
+      max-width: 78vw;
+      padding: 12px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--r-md);
+      background: #fff;
+      box-shadow: 0 12px 32px rgba(16, 24, 40, .22)
+    }
+
+    .pp-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 9px
+    }
+
+    .pp-head b {
+      color: var(--gray-900);
+      font-size: 13.5px;
+      line-height: 1.3
+    }
+
+    .pp-close {
+      display: flex;
+      flex: 0 0 auto;
+      width: 22px;
+      height: 22px;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 50%;
+      background: var(--gray-100);
+      color: var(--gray-600);
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer
+    }
+
+    .pp-field {
+      margin-bottom: 10px
+    }
+
+    .pp-field label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--gray-700);
+      font-size: 12px;
+      font-weight: 600
+    }
+
+    .pp-field label small {
+      color: var(--gray-500);
+      font-weight: 400
+    }
+
+    .pp-field .chips {
+      gap: 6px
+    }
+
+    .pp-field .chip {
+      padding: 5px 10px;
+      font-size: 12px
+    }
+
+    .pp-part {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 9px;
+      margin-bottom: 6px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--r-sm);
+      font-size: 12px;
+      cursor: pointer
+    }
+
+    .pp-part:last-child {
+      margin-bottom: 0
+    }
+
+    .pp-part.sel {
+      border-color: var(--primary-600);
+      background: var(--primary-25)
+    }
+
+    .pp-part .nm {
+      color: var(--gray-800);
+      font-weight: 600
+    }
+
+    .pp-part .st {
+      color: var(--gray-500);
+      font-size: 11px;
+      white-space: nowrap
+    }
+
+    .pp-empty {
+      color: var(--gray-500);
+      font-size: 12px
+    }
+
+    @media (max-width: 560px) {
+      .diagram-pin {
+        width: 26px;
+        height: 26px;
+        font-size: 11.5px
+      }
+    }
+
     @media(max-width:760px) {
       .vehicle-detail-heading {
         align-items: flex-start;
@@ -1527,6 +1761,25 @@
       { id: 'OTH', cat: 'oth', name: 'อื่นๆ ระบุเอง' },
     ];
     const PARTS = MDC.data('parts');
+
+    // ---------- ไดอะแกรมจิ้มเลือกจุดที่มีปัญหา (ภาพประกอบ mock — ยังไม่มีรูปจริงของรถ กฟภ. ใช้แทนตำแหน่ง) ----------
+    const DIAG_IMG = '../assets/mock-vehicle-diagram.jpg';
+    // หมุด = จุดที่รูปต้นฉบับมีเลขชี้ไว้อยู่แล้ว (num ตรงกับเลขบนภาพ) — ตั้งชื่ออะไหล่ตามจุดที่เลขนั้นชี้ถึง
+    // cat ผูกกับ CATS.key เพื่ออ้างอิงอาการ/อะไหล่ที่เกี่ยวข้องในระบบ
+    // แต่ละเลข = อะไหล่จริง 1 รายการจากคลัง (PARTS.code) โดยตรง — ไม่ใช่แค่หมวดกว้างๆ อีกต่อไป
+    const PART_HOTSPOTS = [
+      { num: 55, code: 'RC-5521', x: 55.9, y: 33.0 },
+      { num: 71, code: 'BT-1212', x: 86.4, y: 32.8 },
+      { num: 83, code: 'WP-1030', x: 32.1, y: 46.8 },
+      { num: 23, code: 'PM-2210', x: 42.0, y: 54.5 }
+    ];
+    function hotspotMeta(h) {
+      const part = PARTS.find(x => x.code === h.code);
+      if (!part) return null;
+      const sym = SYMPTOMS.find(s => s.id === part.sym);
+      const cat = CATS.find(c => c.key === sym.cat);
+      return { part, sym, cat };
+    }
     const SEVS = ['ต่ำ', 'ปานกลาง', 'สูง', 'หยุดใช้งาน'];
     const GARAGES = MDC.data('garages');
     const KBK_STEPS = ['รับเรื่องซ่อม', 'รอสั่งอะไหล่', 'อะไหล่ถึงแล้ว', 'ดำเนินการซ่อม', 'ซ่อมเสร็จ'];
@@ -2029,7 +2282,7 @@
     ];
 
     // ================= STATE =================
-    const S = { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, decision: null };
+    const S = { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, decision: null, popover: null };
     const STEPS = ['เลือกรถ', 'อาการเสีย', 'อะไหล่ที่แนะนำ', 'ตัดสินใจและสรุป'];   // (คง fallback — ปัจจุบันใช้ WZ)
     let WZ = { vehicle: { on: true, label: 'เลือกรถ' }, symptom: { on: true, label: 'อาการเสีย' }, parts: { on: true, label: 'อะไหล่ที่แนะนำ' }, decision: { on: true, label: 'ตัดสินใจและสรุป' } };
     let WORDER = ['vehicle', 'symptom', 'parts', 'decision'];   // ลำดับขั้น wizard (จาก cfg.steps.wizard ที่ INIT)
@@ -2170,7 +2423,7 @@ function goBackFromForm(){
     function pickVehicle(id) {
       const isNew = !S.vehicle || S.vehicle.id !== id;
       S.vehicle = VEHICLES.find(v => v.id === id);
-      if (isNew) { S.target = S.vehicle.attach ? null : 'vehicle'; S.symptoms = []; S.bookings = {}; S.orders = {}; }
+      if (isNew) { S.target = S.vehicle.attach ? null : 'vehicle'; S.symptoms = []; S.bookings = {}; S.orders = {}; S.popover = null; }
       renderVehicles();
       $('vinfo').classList.remove('hidden');
       renderVehicleInfo();
@@ -2219,15 +2472,80 @@ function goBackFromForm(){
     function setTarget(k) {
       if (S.target !== k) { S.target = k; S.symptoms = []; S.bookings = {}; S.orders = {}; }
       renderVehicleInfo();
+      renderSymptoms();
+    }
+    function visibleHotspots() {
+      return PART_HOTSPOTS.filter(h => {
+        const m = hotspotMeta(h);
+        return m && (m.cat.for !== 'attach' || S.vehicle.attach);
+      });
+    }
+    function renderDiagramPicker() {
+      if (!S.vehicle) return '';
+      const hotspots = visibleHotspots();
+      const pins = hotspots.map((h, i) => {
+        const m = hotspotMeta(h);
+        const on = S.symptoms.includes(m.sym.id);
+        const booked = !!(S.bookings[m.part.code] || S.orders[m.part.code]);
+        const open = S.popover && S.popover.code === h.code;
+        return `<button type="button" class="diagram-pin ${on ? 'has-sel' : ''} ${open ? 'active' : ''}" style="left:${h.x}%;top:${h.y}%" title="${esc(m.part.name)}" onclick="pinClick(${i})">${h.num}${booked ? '<i>✓</i>' : ''}</button>`;
+      }).join('');
+      const pop = S.popover ? renderPartPopover(S.popover) : '';
+      return `<div class="diagram-card">
+      <div class="diagram-card-head"><div class="diagram-card-title"><span class="ms">touch_app</span>อีกวิธีเลือก — จิ้มเลขบนรูปตรงอะไหล่ที่เสีย</div><span class="diagram-card-badge">ภาพประกอบ (mock)</span></div>
+      <div class="diagram-card-hint">เลขบนรูปคือจุดเดียวกับภาพต้นฉบับที่ให้มา แต่ละเลขสื่อถึงอะไหล่ชิ้นนั้นโดยตรง — แตะแล้วยืนยันอาการ + จองอะไหล่ได้เลย</div>
+      <div class="diagram-stage"><img src="${DIAG_IMG}" alt="ภาพประกอบตำแหน่งอะไหล่ (mock)">${pins}${pop}</div>
+    </div>`;
+    }
+    function renderPartPopover(h) {
+      const m = hotspotMeta(h);
+      const p = m.part, sym = m.sym;
+      const on = S.symptoms.includes(sym.id);
+      const active = !!(S.bookings[p.code] || S.orders[p.code]);
+      const st = active
+        ? (S.bookings[p.code] ? `จองแล้ว ${S.bookings[p.code]} ${p.unit}` : `สั่งของแล้ว ${S.orders[p.code]} ${p.unit}`)
+        : (p.stock > 0 ? `มีของในคลัง ${p.stock} ${p.unit}` : 'ของหมด — แตะเพื่อสั่งของ');
+      const tx = h.x <= 50 ? '12px' : 'calc(-100% - 12px)';
+      const ty = h.y <= 50 ? '12px' : 'calc(-100% - 12px)';
+      return `<div class="part-popover" style="left:${h.x}%;top:${h.y}%;transform:translate(${tx},${ty})">
+      <div class="pp-head"><b>เลข ${h.num} · ${esc(p.name)}</b><button type="button" class="pp-close" onclick="closePopover()">✕</button></div>
+      <div class="pp-field"><label>อาการที่พบ</label><div class="chips"><div class="chip ${on ? 'sel' : ''}" onclick="toggleSym('${sym.id}')">${sym.name}</div></div></div>
+      <div class="pp-field"><label>อะไหล่ที่เสีย</label>
+        <div class="pp-part ${active ? 'sel' : ''}" onclick="quickTogglePart('${p.code}')"><span class="nm">${p.name}</span><span class="st">${st}</span></div>
+      </div>
+      <button type="button" class="btn btn-p" style="width:100%" onclick="closePopover()">เสร็จสิ้น</button>
+    </div>`;
+    }
+    function pinClick(i) {
+      const hotspots = visibleHotspots();
+      const h = hotspots[i];
+      if (S.popover && S.popover.code === h.code) { S.popover = null; renderSymptoms(); return; }
+      const m = hotspotMeta(h);
+      if (m.cat.for === 'attach' && S.target !== 'attach') setTarget('attach');
+      else if (m.cat.for === 'vehicle' && S.target !== 'vehicle') setTarget('vehicle');
+      S.popover = h;
+      renderSymptoms();
+    }
+    function closePopover() { S.popover = null; renderSymptoms(); }
+    function quickTogglePart(code) {
+      const p = PARTS.find(x => x.code === code);
+      const wasActive = !!(S.bookings[code] || S.orders[code]);
+      if (wasActive) { delete S.bookings[code]; delete S.orders[code]; }
+      else {
+        if (p.stock > 0) S.bookings[code] = Math.min(p.need, p.stock); else S.orders[code] = p.need;
+        if (!S.symptoms.includes(p.sym)) S.symptoms.push(p.sym);
+      }
+      renderSymptoms();
     }
     function renderSymptoms() {
       if (!S.vehicle) { $('symcats').innerHTML = '<div class="empty">กรุณาเลือกรถก่อน — สลับให้ขั้น "เลือกรถ" มาก่อนขั้นนี้ (แก้ลำดับได้ที่ Admin)</div>'; $('othwrap').classList.add('hidden'); $('sev').innerHTML = ''; return }
       const scope = S.target === 'attach' ? ['attach', 'both'] : ['vehicle', 'both'];
-      $('symcats').innerHTML = CATS.filter(c => scope.includes(c.for)).map(c => {
+      const cats = CATS.filter(c => scope.includes(c.for)).map(c => {
         const items = SYMPTOMS.filter(s => s.cat === c.key);
-        return `<div class="cat"><span class="ms">${c.icon}</span>${c.name}</div>
-      <div class="chips">${items.map(s => `<div class="chip ${S.symptoms.includes(s.id) ? 'sel' : ''}" onclick="toggleSym('${s.id}')">${s.name}</div>`).join('')}</div>`;
+        return `<div class="cat-block" id="cat-block-${c.key}"><div class="cat"><span class="ms">${c.icon}</span>${c.name}</div>
+      <div class="chips">${items.map(s => `<div class="chip ${S.symptoms.includes(s.id) ? 'sel' : ''}" onclick="toggleSym('${s.id}')">${s.name}</div>`).join('')}</div></div>`;
       }).join('');
+      $('symcats').innerHTML = renderDiagramPicker() + cats;
       $('othwrap').classList.toggle('hidden', !S.symptoms.includes('OTH'));
       $('sev').innerHTML = SEVS.map(s => `<label><input type="radio" name="sev" ${S.sev === s ? 'checked' : ''} onchange="S.sev='${s}'">${s}</label>`).join('');
     }
@@ -2358,7 +2676,7 @@ function goBackFromForm(){
       renderSteps();
     }
     function resetForm() {
-      Object.assign(S, { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, decision: null });
+      Object.assign(S, { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, decision: null, popover: null });
       ['vq', 'desc', 'othtext', 'selfnote', 'kbknote'].forEach(id => $(id).value = '');
       document.querySelectorAll('#photos .ph').forEach(e => e.remove());
       $('vinfo').classList.add('hidden'); $('vauto').innerHTML = '';
