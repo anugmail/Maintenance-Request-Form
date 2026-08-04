@@ -2028,6 +2028,27 @@
       },
     ];
 
+    // ประวัติการซ่อมย้อนหลังจาก VMS+ (ข้อมูลจำลองชุดเดียวกับ Flow2)
+    // แยกออกจาก JOBS เพื่อไม่ให้งานที่ปิดแล้วไปแสดงปะปนในคิวงาน กบค.
+    const VEHICLE_REPAIR_HISTORY = [
+      {
+        no: 'MTD-690610-007', plate: '82-6789 ขอนแก่น',
+        syms: ['บูมยืด-หดสะดุด'],
+        record: { det: 'อัดจาระบีรางสไลด์ + เปลี่ยนชุดซีล ทดสอบยืด-หดปกติ' },
+        cost: { labor: 1500, parts: 2400, travel: 0, lodging: 0 },
+        phase: 'closed', wi: 3,
+        history: [{ t: '9 มิ.ย. 2569 10:00', label: 'กรย. ส่งต่อให้ กบค.' }]
+      },
+      {
+        no: 'MTD-690528-003', plate: '83-1122 กรุงเทพมหานคร',
+        syms: ['สตาร์ทไม่ติด'],
+        record: { det: 'กรย. เปลี่ยนแบตเตอรี่และตรวจระบบไฟ ทดสอบสตาร์ทปกติ', by: 'กรย.' },
+        cost: { labor: 600, parts: 4200, travel: 0, lodging: 0 },
+        phase: 'gclosed', wi: 0,
+        history: [{ t: '28 พ.ค. 2569 09:20', label: 'ส่งเรื่องถึง กรย. — รอคัดแยกช่องทางซ่อม' }]
+      }
+    ];
+
     // ================= STATE =================
     const S = { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, decision: null };
     const STEPS = ['เลือกรถ', 'อาการเสีย', 'อะไหล่ที่แนะนำ', 'ตัดสินใจและสรุป'];   // (คง fallback — ปัจจุบันใช้ WZ)
@@ -2569,6 +2590,26 @@ function retPanel(j){
       toast('ปิดงานเรียบร้อย — กบค. เห็นบันทึกการซ่อมและการคืนอะไหล่ด้วย'); renderMyDetail(no);
     }
 
+    // ================= ส่วนกลาง: ประวัติการซ่อมย้อนหลังรายคัน (VMS+) =================
+    function vehHistoryPanel(j) {
+      const liveHistory = JOBS.filter(x => x.plate === j.plate && x.no !== j.no && ['closed', 'gclosed'].includes(x.phase));
+      const storedHistory = VEHICLE_REPAIR_HISTORY.filter(x => x.plate === j.plate);
+      const seen = new Set();
+      const past = [...liveHistory, ...storedHistory].filter(x => !seen.has(x.no) && seen.add(x.no));
+      return `<div class="sect" style="margin-top:24px">ประวัติการซ่อมแซมย้อนหลังของรถคันนี้ (VMS+) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ${j.plate}</span></div>
+      <div class="panel">${past.length ? past.map(x => {
+        const s = x.phase === 'gclosed' && x.record && x.record.by === 'กรย.'
+          ? { label: 'ปิดงาน — กรย. ซ่อมเอง', cls: 'b-ok' }
+          : statusInfo(x);
+        const total = x.cost ? costSum(x.cost).toLocaleString() : '';
+        return `<div class="dayrow" style="align-items:flex-start;border-bottom:1px dashed var(--gray-200);padding-bottom:8px">
+          <span style="flex:0 0 150px;font-weight:600;color:var(--gray-900);font-size:13.5px">${x.no}</span>
+          <span style="flex:1;font-size:13.5px">${x.syms.join(', ')}${x.record ? ` — ${x.record.det}` : ''}${total ? ` · ต้นทุน ${total} บาท` : ''}<div style="font-size:12px;color:var(--gray-400)">${x.history[0].t}</div></span>
+          <span class="badge ${s.cls}">${s.label}</span>
+        </div>`;
+      }).join('') : '<div class="hint" style="margin:0">ไม่พบประวัติการซ่อมย้อนหลังของรถคันนี้</div>'}</div>`;
+    }
+
     // ================= VIEW: งานคัดแยก กรย. =================
     let KE = { jobNo:null,mode: null, garages: [] };
 const KRY_STATUS_PHASES={kry:['kry'],krd:['krd']};
@@ -2784,9 +2825,9 @@ function closeKbkDetail(){
       let action = '';
 
       if (j.phase === 'pending') {
-        action = `<div class="sect" style="margin-top:24px">วิเคราะห์และประเมิน (ช่วงที่ 2)</div>
+        action = vehHistoryPanel(j) + `<div class="sect" style="margin-top:24px">วิเคราะห์และประเมิน (ช่วงที่ 2)</div>
     <div class="panel">
-      <div class="hint" style="margin:0 0 10px"><span class="ms" style="font-size:16px">history</span> ระบบแสดงประวัติการซ่อมย้อนหลังของรถคันนี้ · โทรหาหน้างานเพื่อวิเคราะห์เพิ่มเติม</div>
+      <div class="hint" style="margin:0 0 10px"><span class="ms" style="font-size:16px">support_agent</span> โทรหาหน้างานเพื่อวิเคราะห์อาการเพิ่มเติมก่อนประเมิน</div>
       <div class="fgrid" style="margin:0;max-width:560px">
         <div class="f sp2"><label>ประเมินราคาซ่อม (บาท) <small>(ถ้ามี)</small></label><div class="in"><span class="ms">payments</span><input type="number" min="0" id="asprice" placeholder="0"></div></div>
       </div>
