@@ -43,7 +43,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-top: 22px
+      margin-top: 24px
     }
 
     .vehicle-detail-heading .sect {
@@ -74,22 +74,26 @@
     .vehicle-detail-header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 16px 18px;
+      gap: 14px;
+      padding: 18px 20px;
       border-bottom: 1px solid var(--gray-200);
-      background: var(--primary-25)
+      background: linear-gradient(135deg, var(--primary-25), #fff 72%)
     }
 
     .vehicle-detail-icon {
       display: flex;
-      width: 44px;
-      height: 44px;
-      flex: 0 0 44px;
+      width: 48px;
+      height: 48px;
+      flex: 0 0 48px;
       align-items: center;
       justify-content: center;
-      border-radius: 12px;
-      background: var(--primary-50);
-      color: var(--primary-600)
+      border-radius: var(--r-md);
+      background: var(--primary-600);
+      color: #fff
+    }
+
+    .vehicle-detail-icon .ms {
+      font-size: 24px
     }
 
     .vehicle-detail-title {
@@ -101,18 +105,18 @@
       display: block;
       overflow: hidden;
       color: var(--gray-900);
-      font-size: 17px;
+      font-size: 18px;
       line-height: 1.35;
       text-overflow: ellipsis;
       white-space: nowrap
     }
 
-    .vehicle-detail-title span {
+    .vehicle-detail-title small {
       display: block;
       overflow: hidden;
-      margin-top: 2px;
-      color: var(--gray-600);
-      font-size: 13px;
+      margin-top: 3px;
+      color: var(--gray-500);
+      font-size: 12.5px;
       text-overflow: ellipsis;
       white-space: nowrap
     }
@@ -123,8 +127,9 @@
       gap: 4px;
       flex: 0 0 auto;
       padding: 5px 9px;
-      border-radius: 999px;
-      background: #fff;
+      border: 1px solid var(--success-200);
+      border-radius: var(--r-pill);
+      background: var(--success-50);
       color: var(--success-600);
       font-size: 12px;
       font-weight: 600
@@ -136,25 +141,33 @@
 
     .vehicle-detail-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
-      padding: 16px 18px
+      margin: 0;
+      padding: 16px 20px
     }
 
     .vehicle-detail-item {
-      display: flex;
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
       min-width: 0;
       gap: 10px;
       padding: 12px;
+      border: 1px solid var(--gray-200);
       border-radius: var(--r-md);
       background: var(--gray-50)
     }
 
     .vehicle-detail-item>.ms {
-      flex: 0 0 auto;
-      margin-top: 1px;
-      color: var(--gray-500);
-      font-size: 20px
+      display: flex;
+      width: 34px;
+      height: 34px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9px;
+      background: #fff;
+      color: var(--primary-600);
+      font-size: 19px
     }
 
     .vehicle-detail-copy {
@@ -171,6 +184,7 @@
 
     .vehicle-detail-value {
       display: block;
+      margin: 0;
       overflow-wrap: anywhere;
       color: var(--gray-800);
       font-size: 14px;
@@ -179,13 +193,26 @@
     }
 
     .vehicle-target {
-      padding: 16px 18px 18px;
-      border-top: 1px solid var(--gray-200)
+      min-width: 0;
+      margin: 0;
+      padding: 18px 20px 20px;
+      border: 0;
+      border-top: 1px solid var(--gray-200);
+      background: var(--gray-50)
     }
 
-    .vehicle-target-title {
+    .vehicle-target-legend {
+      width: 100%;
+      padding: 0;
       color: var(--gray-900);
       font-size: 14px;
+      font-weight: 600
+    }
+
+    .vehicle-target-required {
+      margin-left: 5px;
+      color: var(--primary-700);
+      font-size: 11.5px;
       font-weight: 600
     }
 
@@ -196,43 +223,97 @@
     }
 
     .vehicle-target-options {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 10px
+      margin-top: 12px
     }
 
     .vehicle-target-option {
-      display: flex;
-      min-width: 180px;
-      flex: 1 1 220px;
+      position: relative;
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr) 22px;
       align-items: center;
-      gap: 10px;
-      padding: 11px 13px;
+      gap: 11px;
+      min-width: 0;
+      padding: 13px;
       border: 1px solid var(--gray-300);
       border-radius: var(--r-md);
+      background: #fff;
       color: var(--gray-700);
-      cursor: pointer
+      cursor: pointer;
+      transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease
     }
 
     .vehicle-target-option:hover {
-      border-color: var(--primary-500)
+      border-color: var(--primary-500);
+      transform: translateY(-1px)
     }
 
     .vehicle-target-option.selected {
       border-color: var(--primary-600);
       background: var(--primary-25);
-      color: var(--primary-700)
+      color: var(--primary-700);
+      box-shadow: inset 0 0 0 1px var(--primary-50)
     }
 
     .vehicle-target-option input {
-      flex: 0 0 auto;
-      margin: 0
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none
     }
 
-    .vehicle-target-option span {
+    .vehicle-target-option:has(input:focus-visible) {
+      outline: 3px solid var(--primary-50);
+      outline-offset: 2px
+    }
+
+    .vehicle-target-option-icon {
+      display: flex;
+      width: 40px;
+      height: 40px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: var(--gray-100);
+      color: var(--gray-500)
+    }
+
+    .vehicle-target-option.selected .vehicle-target-option-icon {
+      background: var(--primary-50);
+      color: var(--primary-700)
+    }
+
+    .vehicle-target-option-copy {
+      min-width: 0
+    }
+
+    .vehicle-target-option-copy strong {
+      display: block;
       font-size: 14px;
-      font-weight: 500
+      font-weight: 600;
+      line-height: 1.4;
+      overflow-wrap: anywhere
+    }
+
+    .vehicle-target-option-copy small {
+      display: block;
+      margin-top: 2px;
+      color: var(--gray-500);
+      font-size: 12px;
+      line-height: 1.45;
+      overflow-wrap: anywhere
+    }
+
+    .vehicle-target-check {
+      color: var(--gray-400);
+      font-size: 21px
+    }
+
+    .vehicle-target-option.selected .vehicle-target-check {
+      color: var(--primary-600)
     }
 
     @media(max-width:760px) {
@@ -242,7 +323,6 @@
       }
 
       .vehicle-detail-header {
-        align-items: flex-start;
         padding: 14px
       }
 
@@ -255,13 +335,30 @@
         padding: 14px
       }
 
-      .vehicle-detail-grid {
+      .vehicle-detail-grid,
+      .vehicle-target-options {
         grid-template-columns: 1fr
       }
+    }
 
-      .vehicle-target-option {
-        min-width: 100%;
-        flex-basis: 100%
+    @media(max-width:480px) {
+      .vehicle-detail-header {
+        align-items: flex-start
+      }
+
+      .vehicle-detail-icon {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px
+      }
+
+      .vehicle-detail-title strong {
+        font-size: 16px;
+        white-space: normal
+      }
+
+      .vehicle-detail-title small {
+        white-space: normal
       }
     }
 
@@ -2204,38 +2301,42 @@ function goBackFromForm(){
         { icon: 'apartment', label: 'หน่วยงาน / สังกัด', value: S.vehicle.org },
         { icon: 'construction', label: 'อุปกรณ์ติดตั้ง', value: S.vehicle.attach || 'ไม่มีอุปกรณ์ติดตั้ง' }
       ];
-      const opts = [['vehicle', 'ตัวรถ']];
-      if (S.vehicle.attach) opts.push(['attach', S.vehicle.attach]);
+      const opts = [
+        { key: 'vehicle', name: 'ตัวรถ', icon: 'directions_car', help: 'เครื่องยนต์ ระบบไฟฟ้า ตัวถัง หรือช่วงล่าง' }
+      ];
+      if (S.vehicle.attach) opts.push({ key: 'attach', name: S.vehicle.attach, icon: 'construction', help: 'ระบบไฮดรอลิก เครน กระเช้า หรืออุปกรณ์ติดตั้ง' });
       $('vauto').innerHTML = `
-    <div class="vehicle-detail-card">
-      <div class="vehicle-detail-header">
-        <div class="vehicle-detail-icon"><span class="ms">local_shipping</span></div>
+    <article class="vehicle-detail-card" aria-labelledby="selected-vehicle-title">
+      <header class="vehicle-detail-header">
+        <div class="vehicle-detail-icon" aria-hidden="true"><span class="ms">local_shipping</span></div>
         <div class="vehicle-detail-title">
-          <strong>${esc(S.vehicle.plate)}</strong>
-          <span>${esc(S.vehicle.model)}</span>
+          <strong id="selected-vehicle-title">${esc(S.vehicle.plate)}</strong>
+          <small>รถที่เลือกจากทะเบียนรถในระบบ VMS+</small>
         </div>
-        <div class="vehicle-selected-badge"><span class="ms">check_circle</span>เลือกแล้ว</div>
-      </div>
-      <div class="vehicle-detail-grid">
+        <span class="vehicle-selected-badge" role="status"><span class="ms" aria-hidden="true">check_circle</span>เลือกแล้ว</span>
+      </header>
+      <dl class="vehicle-detail-grid">
         ${details.map(d => `<div class="vehicle-detail-item">
-          <span class="ms">${d.icon}</span>
+          <span class="ms" aria-hidden="true">${d.icon}</span>
           <div class="vehicle-detail-copy">
-            <span class="vehicle-detail-label">${d.label}</span>
-            <span class="vehicle-detail-value">${esc(d.value)}</span>
+            <dt class="vehicle-detail-label">${d.label}</dt>
+            <dd class="vehicle-detail-value">${esc(d.value)}</dd>
           </div>
         </div>`).join('')}
-      </div>
-      <div class="vehicle-target">
-        <div class="vehicle-target-title">จุดที่พบปัญหา</div>
-        <div class="vehicle-target-help">เลือกส่วนของรถที่ต้องการแจ้งซ่อม เพื่อให้ระบบแนะนำอาการและอะไหล่ได้ตรงจุด</div>
+      </dl>
+      <fieldset class="vehicle-target" aria-describedby="vehicle-target-help">
+        <legend class="vehicle-target-legend">จุดที่พบปัญหา <span class="vehicle-target-required">จำเป็น</span></legend>
+        <div class="vehicle-target-help" id="vehicle-target-help">เลือกส่วนที่ต้องการแจ้งซ่อม ระบบจะกรองอาการและแนะนำอะไหล่ให้ตรงจุด</div>
         <div class="vehicle-target-options">
-          ${opts.map(([k, n]) => `<label class="vehicle-target-option ${S.target === k ? 'selected' : ''}">
-            <input type="radio" name="target" ${S.target === k ? 'checked' : ''} onchange="setTarget('${k}')">
-            <span>${esc(n)}</span>
+          ${opts.map(o => `<label class="vehicle-target-option ${S.target === o.key ? 'selected' : ''}">
+            <input type="radio" name="target" value="${o.key}" ${S.target === o.key ? 'checked' : ''} required onchange="setTarget('${o.key}')">
+            <span class="vehicle-target-option-icon" aria-hidden="true"><span class="ms">${o.icon}</span></span>
+            <span class="vehicle-target-option-copy"><strong>${esc(o.name)}</strong><small>${o.help}</small></span>
+            <span class="ms vehicle-target-check" aria-hidden="true">${S.target === o.key ? 'check_circle' : 'radio_button_unchecked'}</span>
           </label>`).join('')}
         </div>
-      </div>
-    </div>`;
+      </fieldset>
+    </article>`;
     }
     function setTarget(k) {
       if (S.target !== k) { S.target = k; S.symptoms = []; S.bookings = {}; S.orders = {}; }
