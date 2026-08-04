@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMS Plus · Prototype — นัดหมายและรับรถ (กบค.)</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="design-system/tokens.css">
+<link rel="stylesheet" href="design-system/components.css">
+<style>
+  /* ===== เฉพาะ prototype นี้ (นอกเหนือจาก components.css) ===== */
+  .content{max-width:980px}
+  .stepnum{font-size:13px;color:var(--primary-600);font-weight:600;margin-bottom:4px}
+  .casebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-lg);padding:12px 16px;margin-bottom:18px}
+  .casebar .ro{font-weight:700;font-size:14px;color:var(--primary-600);background:var(--primary-50);padding:4px 10px;border-radius:var(--r-sm)}
+  .casebar .cx{font-size:13.5px;color:var(--gray-600)} .casebar .cx b{color:var(--gray-900)} .casebar .fill{flex:1}
+  .callout{display:flex;gap:11px;align-items:flex-start;background:var(--primary-25);border:1px solid var(--primary-200,#F3C6EA);border-radius:var(--r-md);padding:12px 15px;font-size:13.5px;color:var(--gray-700);margin-bottom:18px}
+  .callout .ms{color:var(--primary-600);font-size:20px} .callout b{color:var(--gray-900);font-weight:600}
+  .callout.warn{background:var(--warning-50);border-color:var(--warning-200)} .callout.warn .ms{color:var(--warning-700)}
+  .tilewrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px}
+  .tile{cursor:pointer} .tile small{line-height:1.5;display:block;margin-top:3px}
+  .docsheet{border:1px solid var(--gray-200);border-radius:var(--r-md);overflow:hidden;margin-bottom:14px}
+  .doc-hd{display:flex;align-items:center;gap:11px;padding:12px 16px;border-bottom:2px solid var(--primary-600);background:var(--gray-50)}
+  .doc-hd .dl{width:30px;height:30px;border-radius:8px;background:var(--primary-600);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
+  .doc-hd .dt{font-weight:700;font-size:14px;color:var(--gray-900)} .doc-hd .dm{font-size:11px;color:var(--gray-400)}
+  .doc-bd{padding:16px}
+  .drow{display:grid;grid-template-columns:150px 1fr;gap:4px 14px;font-size:13.5px;padding:8px 0;border-bottom:1px dashed var(--gray-200)}
+  .drow:last-of-type{border-bottom:0} .drow dt{color:var(--gray-500)} .drow dd{color:var(--gray-900);font-weight:500}
+  .doc-sys{font-size:11.5px;color:var(--gray-400);display:flex;align-items:center;gap:6px;margin-top:12px} .doc-sys .ms{font-size:16px}
+  .kv{border:1px solid var(--gray-200);border-radius:var(--r-md);overflow:hidden;margin-bottom:16px}
+  .kv .r{display:flex;justify-content:space-between;gap:12px;padding:11px 15px;font-size:13.5px;border-bottom:1px solid var(--gray-100)}
+  .kv .r:last-child{border-bottom:0} .kv .r .k{color:var(--gray-500)} .kv .r .v{font-weight:600;color:var(--gray-900);text-align:right}
+  .team{display:flex;flex-direction:column;gap:9px;margin-bottom:13px}
+  .member{display:flex;align-items:center;gap:12px;border:1px solid var(--gray-200);border-radius:var(--r-md);padding:11px 14px}
+  .member .av{width:32px;height:32px;border-radius:50%;background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+  .member .mn{font-size:14.5px;flex:1;color:var(--gray-900)} .member .rm{all:unset;cursor:pointer;color:var(--gray-400);font-size:18px;line-height:1} .member .rm:hover{color:var(--error-500)}
+  .addrow{display:flex;gap:10px} .addrow input{flex:1;height:46px;border:1px solid var(--gray-300);border-radius:10px;padding:0 13px;font:inherit;font-size:14.5px;color:var(--gray-900);background:#fff}
+  .addrow input:focus{outline:2px solid var(--primary-50);border-color:var(--primary-500)}
+  .agreed{display:flex;align-items:center;gap:12px;background:var(--success-50);border:1px solid var(--success-200);border-radius:var(--r-md);padding:15px;color:var(--success-600);font-weight:600;font-size:14.5px}
+  .agreed .ms{font-size:26px} .agreed small{display:block;font-weight:400;color:var(--gray-500);font-size:12px;margin-top:2px}
+  .done-hero{text-align:center;padding:14px 10px 4px} .done-hero .dc .ms{font-size:56px;color:var(--success-600)}
+  .done-hero h2{font-size:20px;color:var(--gray-900);margin:6px 0} .done-hero p{color:var(--gray-500);font-size:13.5px;max-width:46ch;margin:0 auto}
+  .veh .ok{margin-left:auto} .veh .ok .ms{color:var(--primary-600)}
+  .wstep{cursor:pointer;background:none;border:0;font-family:inherit;text-align:left}
+  .wstep .num .ms{font-size:16px}
+  .actions{justify-content:space-between}
+  .btn.full{width:100%;min-width:0}
+  @media(max-width:640px){.tilewrap{grid-template-columns:1fr}}
+  @media print{.side,.topbar,.draft,.wsteps,.actions,.crumbs,.page-back,.casebar .badge{display:none!important}
+    body{background:#fff} .work{background:#fff} .content{padding:0}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="vlogo">M<em>D</em></div>
+    <div class="nv"><span class="ms">dashboard</span></div>
+    <div class="nv"><span class="ms">directions_car</span></div>
+    <div class="nv on"><span class="ms">build</span></div>
+    <div class="nv"><span class="ms">inventory_2</span></div>
+    <div class="nv"><span class="ms">description</span></div>
+  </aside>
+  <div class="work">
+    <div class="draft">ต้นแบบ (Prototype) · หน้าจอตาม Flow กบค. ช่วงที่ 4 · ข้อมูลทั้งหมดเป็นข้อมูลจำลอง</div>
+    <div class="topbar"><span class="ms">light_mode</span><span class="ms">notifications</span><span class="ms">account_circle</span></div>
+    <div class="content">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span>งานซ่อม (กบค.)<span class="sep">›</span><span class="cur">นัดหมายและรับรถ</span></div>
+      <div class="page-title-row">
+        <button class="page-back" id="resetBtn" title="เริ่มใหม่"><span class="ms">arrow_back_ios_new</span></button>
+        <h1 class="page-title">นัดหมายและรับรถ (กบค.)</h1>
+      </div>
+
+      <div class="casebar">
+        <span class="ro">RO-2569-04821</span>
+        <span class="cx"><b>ทะเบียน 83-5567</b> · รถบรรทุกติดเครน 25 ตัน · อาการ: ระบบไฮดรอลิกเครนรั่ว</span>
+        <span class="fill"></span>
+        <span class="badge b-ok"><span class="ms" style="font-size:15px">check_circle</span> อนุมัติแล้ว · รอนัดหมาย</span>
+      </div>
+
+      <div class="wsteps" id="wsteps"></div>
+
+      <div class="card">
+        <div class="stepnum" id="eyebrow"></div>
+        <div class="sect" id="ttl"></div>
+        <div class="sub" id="sub"></div>
+        <div id="bodyc"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-g" id="backBtn">← ย้อนกลับ</button>
+        <button class="btn btn-p" id="nextBtn">ถัดไป →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function esc(s){return (""+s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");}
+  function ms(n){return '<span class="ms">'+n+'</span>';}
+
+  var data={branch:null,
+    appt:{date:"12 ส.ค. 2569",coord:"คุณสมชาย (ธุรการ กฟจ.นครราชสีมา)",phone:"08x-xxx-xxxx",note:"นัดช่วงเช้า 09:00 น."},
+    checkin:{odo:"148,230",items:{ext:true,tire:true,tool:true,fuel:true,key:true}},
+    consent:false,consentTime:"",
+    inspect:{before:{a:true,b:true,c:false},after:{a:false,b:false,c:false}},
+    plan:{from:"14 ส.ค. 2569",to:"16 ส.ค. 2569",area:"หน่วยงานก่อสร้างสายส่ง อ.ปากช่อง"},
+    team:["นายช่าง ก. (หัวหน้าชุด)","นายช่าง ข."],
+    vehicle:{plate:"83-5567",type:"รถบรรทุกติดเครน 25 ตัน"},
+    place:{prov:"นครราชสีมา",amp:"ปากช่อง",site:"จุดก่อสร้างสายส่ง 115kV ช่วงที่ 3",geo:""}
+  };
+  var HQ=["hq_appt","hq_receipt","hq_checkin","hq_consent","hq_inspect"];
+  var OS=["os_plan","os_team","os_vehicle","os_place","os_docs"];
+  var T={
+    decide:["เลือกวิธีการซ่อม","ระบบสร้างเอกสารให้ กบค. แล้ว — เลือกว่าจะซ่อมที่ไหนตามความหนักของอาการ","เลือกวิธี"],
+    hq_appt:["นัดวันเข้าซ่อม","กบค. โทรนัดวันกับเจ้าของรถ แล้วบันทึกวันเดินทางเข้าซ่อมที่สำนักงานใหญ่","นัดวัน"],
+    hq_receipt:["ใบรับรถ (ระบบสร้างให้)","VMS Plus สร้างใบรับรถอัตโนมัติ — อยู่ในระบบ พิมพ์ออกได้","ใบรับรถ"],
+    hq_checkin:["รับรถ & ตรวจใบรับรถ","หน่วยงานขับรถมาถึง สนญ. — กบค. ตรวจรายการต่างๆ ในใบรับรถ","ตรวจรับ"],
+    hq_consent:["หน่วยงานยินยอมใบรับรถ","ให้หน่วยงานเจ้าของรถกดยินยอมเอกสารใบรับรถ","ยินยอม"],
+    hq_inspect:["ตรวจสภาพการซ่อมก่อน/หลัง","กบค. ตรวจและบันทึกรายการในใบตรวจสภาพการซ่อม ก่อน–หลัง","ตรวจสภาพ"],
+    os_plan:["แผนเดินทาง (เป็นช่วง)","กำหนดช่วงวันที่ทีม กบค. เดินทางไปซ่อมหน้างาน","แผนเดินทาง"],
+    os_team:["ทีมช่าง กบค. (2–3 คน)","ใส่ชื่อพนักงาน กบค. ที่จะออกไปซ่อมหน้างาน","ทีมช่าง"],
+    os_vehicle:["เลือกรถที่จะซ่อม","ยืนยันรถคันที่ต้องซ่อม (ดึงจากใบแจ้งซ่อม)","เลือกรถ"],
+    os_place:["ระบุสถานที่ซ่อม","ระบุพื้นที่/จุดหน้างานที่ทีมจะไปดำเนินการ","สถานที่"],
+    os_docs:["เอกสารตรวจสภาพ (พิมพ์ได้)","ใบตรวจสอบสภาพอะไหล่ + ใบตรวจสภาพการซ่อมก่อน/หลัง","เอกสาร"],
+    done:["สรุปการนัดหมาย","ยืนยันข้อมูลแล้วส่งเข้าสู่ขั้นตอนดำเนินการซ่อม","สรุป"]
+  };
+  var cur="decide";
+  function steps(){return data.branch?["decide"].concat(data.branch==="hq"?HQ:OS,["done"]):["decide"];}
+  function idx(){return steps().indexOf(cur);}
+
+  function renderSteps(){
+    var s=steps(),ci=idx();
+    document.getElementById("wsteps").innerHTML=s.map(function(id,i){
+      var cls="wstep"+(id===cur?" active":"")+(i<ci?" passed":"");
+      var num=i<ci?ms("check"):(i+1);
+      return '<button class="'+cls+'" data-id="'+id+'"><span class="num">'+num+'</span><span class="lbl">'+T[id][2]+'</span></button>';
+    }).join("");
+    [].forEach.call(document.querySelectorAll("#wsteps .wstep"),function(el){el.onclick=function(){go(el.getAttribute("data-id"));};});
+  }
+  function render(){
+    var s=steps(),i=idx();
+    document.getElementById("eyebrow").textContent=data.branch?("ขั้นที่ "+(i+1)+" จาก "+s.length):"เริ่มต้น";
+    document.getElementById("ttl").textContent=T[cur][0];
+    document.getElementById("sub").textContent=T[cur][1];
+    document.getElementById("bodyc").innerHTML=body(cur);
+    wire(cur);
+    var back=document.getElementById("backBtn"),next=document.getElementById("nextBtn");
+    back.style.visibility=i<=0?"hidden":"visible";
+    if(cur==="decide"){next.disabled=!data.branch;next.textContent="ถัดไป →";}
+    else if(cur==="done"){next.textContent="ยืนยัน & ส่งเข้าขั้นตอนซ่อม ✓";next.disabled=false;}
+    else{next.disabled=false;next.textContent="ถัดไป →";}
+    renderSteps();window.scrollTo({top:0,behavior:"smooth"});
+  }
+  function go(id){if(steps().indexOf(id)<0)return;cur=id;render();}
+
+  function body(id){var f={decide:decideBody,hq_appt:apptBody,hq_receipt:receiptBody,hq_checkin:checkinBody,
+    hq_consent:consentBody,hq_inspect:inspectBody,os_plan:planBody,os_team:teamBody,os_vehicle:vehicleBody,
+    os_place:placeBody,os_docs:docsBody,done:doneBody};return f[id]?f[id]():"";}
+
+  function fld(lab,key,val,icon,span,ph){return '<div class="f '+(span||"sp2")+'"><label>'+lab+'</label>'+
+    '<div class="in'+(icon?"":" noic")+'">'+(icon?ms(icon):"")+'<input type="text" data-k="'+key+'" value="'+esc(val)+'" placeholder="'+(ph||"")+'"></div></div>';}
+  function drow(k,v){return '<dl class="drow"><dt>'+k+'</dt><dd>'+esc(v)+'</dd></dl>';}
+  function checkedCount(){return Object.keys(data.checkin.items).filter(function(k){return data.checkin.items[k];}).length;}
+
+  function decideBody(){
+    return '<div class="callout">'+ms("description")+'<div><b>VMS Plus สร้างชุดเอกสารให้ กบค. แล้ว</b> — เอกสารอยู่ในระบบ พิมพ์ออก (Print) ได้: ใบตรวจสอบสภาพอะไหล่ · ใบตรวจสภาพการซ่อมก่อน/หลัง</div></div>'+
+      '<div class="tilewrap">'+
+      '<div class="tile tile-magenta'+(data.branch==="hq"?" sel":"")+'" data-b="hq">'+ms("apartment")+'<b>ซ่อมที่สำนักงานใหญ่</b><small>งานใหญ่ · อาการหนัก — นำรถส่งซ่อมโดยไม่รออะไหล่</small></div>'+
+      '<div class="tile tile-blue'+(data.branch==="os"?" sel":"")+'" data-b="os">'+ms("construction")+'<b>ซ่อมหน้างาน</b><small>งานเล็ก · อาการไม่หนัก — ทีม กบค. ออกไปซ่อมถึงจุด</small></div>'+
+      '</div>';
+  }
+  function apptBody(){
+    return '<div class="callout">'+ms("call")+'<div>กบค. โทรประสานเจ้าของรถเพื่อนัดวันนำรถเข้าซ่อมที่สำนักงานใหญ่</div></div>'+
+      '<div class="fgrid">'+fld("วันเดินทางเข้าซ่อม","appt.date",data.appt.date,"event")+fld("ผู้ประสาน (เจ้าของรถ)","appt.coord",data.appt.coord,"person")+
+      fld("เบอร์ติดต่อ","appt.phone",data.appt.phone,"call")+fld("หมายเหตุการนัด","appt.note",data.appt.note,"edit_note")+'</div>';
+  }
+  function receiptBody(){
+    return '<div class="docsheet"><div class="doc-hd"><span class="dl">VP</span><div><div class="dt">ใบรับรถเข้าซ่อม</div><div class="dm">Vehicle Receipt · RO-2569-04821</div></div></div>'+
+      '<div class="doc-bd">'+drow("ทะเบียนรถ",data.vehicle.plate+" — "+data.vehicle.type)+drow("หน่วยงานเจ้าของรถ","กฟจ.นครราชสีมา")+
+      drow("วันนัดเข้าซ่อม",data.appt.date)+drow("สถานที่รับรถ","สำนักงานใหญ่ (กบค.)")+
+      drow("อาการแจ้งซ่อม","ระบบไฮดรอลิกเครนรั่ว ยกของไม่ขึ้น")+drow("ผู้รับรถ (กบค.)","___________________")+
+      '<div class="doc-sys">'+ms("bolt")+'สร้างอัตโนมัติโดย VMS Plus</div></div></div>'+
+      '<button class="btn btn-o" id="printBtn">'+ms("print")+' พิมพ์ใบรับรถ</button>';
+  }
+  function checkinBody(){
+    var it=[["ext","สภาพภายนอกรถ (ตัวถัง/สี/กระจก)"],["tire","ยางและล้อ"],["tool","เครื่องมือ/อุปกรณ์ประจำรถ"],["fuel","ระดับน้ำมันเชื้อเพลิง"],["key","กุญแจและเอกสารประจำรถ"]];
+    return '<div class="fgrid" style="margin-bottom:12px"><div class="f sp2"><label>เลขไมล์ ณ วันรับรถ (กม.)</label><div class="in">'+ms("speed")+'<input type="text" data-k="checkin.odo" value="'+esc(data.checkin.odo)+'"></div></div></div>'+
+      '<div class="sect">ตรวจรายการในใบรับรถ</div><div class="chk">'+it.map(function(x){
+        return '<label><input type="checkbox" data-ci="'+x[0]+'"'+(data.checkin.items[x[0]]?" checked":"")+'><span>'+x[1]+'</span></label>';}).join("")+'</div>';
+  }
+  function consentBody(){
+    if(data.consent)return '<div class="agreed">'+ms("check_circle")+'<div>หน่วยงานเจ้าของรถยินยอมใบรับรถแล้ว<small>'+esc(data.consentTime)+'</small></div></div>';
+    return '<div class="sect">สรุปใบรับรถ — รอการยินยอมจากหน่วยงานเจ้าของรถ</div>'+
+      '<div class="kv"><div class="r"><span class="k">ทะเบียนรถ</span><span class="v">'+data.vehicle.plate+'</span></div>'+
+      '<div class="r"><span class="k">เลขไมล์รับรถ</span><span class="v">'+esc(data.checkin.odo)+' กม.</span></div>'+
+      '<div class="r"><span class="k">วันรับรถ</span><span class="v">'+esc(data.appt.date)+'</span></div>'+
+      '<div class="r"><span class="k">รายการตรวจรับ</span><span class="v">'+checkedCount()+'/5 รายการ ✓</span></div></div>'+
+      '<button class="btn btn-p full" id="consentBtn">'+ms("draw")+' หน่วยงานกดยินยอมเอกสารใบรับรถ</button>';
+  }
+  function inspectBody(){
+    var it=[["a","ระบบไฮดรอลิก / แรงดัน"],["b","กระบอกไฮดรอลิกเครน (รอยรั่ว)"],["c","ทดสอบยกภาระตามพิกัด"]];
+    function col(title,which){return '<div class="f sp2"><div class="sect">'+title+'</div><div class="chk">'+it.map(function(x){
+      return '<label><input type="checkbox" data-ins="'+which+'|'+x[0]+'"'+(data.inspect[which][x[0]]?" checked":"")+'><span>'+x[1]+'</span></label>';}).join("")+'</div></div>';}
+    return '<div class="callout">'+ms("fact_check")+'<div>ใบตรวจสภาพการซ่อม <b>ก่อน–หลัง</b> — บันทึกในระบบ พิมพ์ออกได้</div></div>'+
+      '<div class="fgrid">'+col("ก่อนซ่อม","before")+col("หลังซ่อม","after")+'</div>';
+  }
+  function planBody(){
+    return '<div class="fgrid">'+fld("เดินทางตั้งแต่วันที่","plan.from",data.plan.from,"event")+fld("ถึงวันที่","plan.to",data.plan.to,"event")+
+      fld("พื้นที่/จุดหมายปลายทาง","plan.area",data.plan.area,"place","sp4")+'</div>'+
+      '<div class="callout warn">'+ms("date_range")+'<div>กำหนดเป็น <b>ช่วงวัน</b> เพราะงานหน้างานอาจใช้เวลาหลายวัน</div></div>';
+  }
+  function teamBody(){
+    return '<div class="team">'+data.team.map(function(n,i){
+      return '<div class="member"><span class="av">'+(i+1)+'</span><span class="mn">'+esc(n)+'</span><button class="rm" data-rm="'+i+'" aria-label="ลบ">✕</button></div>';}).join("")+'</div>'+
+      (data.team.length<4?'<div class="addrow"><input id="memberInput" type="text" placeholder="ชื่อพนักงาน กบค. เช่น นายช่าง ค."><button class="btn btn-o" id="addMember">'+ms("person_add")+' เพิ่มช่าง</button></div>':
+        '<div class="empty">ครบ 4 คนแล้ว (แนะนำ 2–3 คน)</div>');
+  }
+  function vehicleBody(){
+    return '<div class="sub" style="margin:0 0 12px">รถที่ต้องซ่อม (ดึงจากใบแจ้งซ่อม RO-2569-04821)</div>'+
+      '<div class="veh sel"><span class="ic">'+ms("local_shipping")+'</span><div><b>'+data.vehicle.plate+'</b><div class="meta">'+data.vehicle.type+' · กฟจ.นครราชสีมา</div></div><span class="ok">'+ms("check_circle")+'</span></div>';
+  }
+  function placeBody(){
+    return '<div class="fgrid">'+fld("จังหวัด","place.prov",data.place.prov,"map")+fld("อำเภอ","place.amp",data.place.amp,"pin_drop")+
+      fld("จุด/สถานที่หน้างาน","place.site",data.place.site,"place","sp4")+fld("พิกัด GPS (ถ้ามี)","place.geo",data.place.geo,"my_location","sp2","เช่น 14.70, 101.41")+'</div>';
+  }
+  function docsBody(){
+    function sheet(title,sub,rows){return '<div class="docsheet"><div class="doc-hd"><span class="dl">VP</span><div><div class="dt">'+title+'</div><div class="dm">'+sub+'</div></div></div>'+
+      '<div class="doc-bd">'+rows+'<div class="doc-sys">'+ms("bolt")+'อยู่ในระบบ · พิมพ์ออกได้</div></div></div>';}
+    return sheet("ใบตรวจสอบสภาพอะไหล่","Parts Inspection · RO-2569-04821",drow("อะไหล่ที่ต้องใช้","ซีลกระบอกไฮดรอลิก, สายไฮดรอลิกแรงดันสูง")+drow("สภาพก่อนเปลี่ยน","___________"))+
+      sheet("ใบตรวจสภาพการซ่อม (ก่อน/หลัง)","Repair Inspection · RO-2569-04821",drow("ก่อนซ่อม","ระบบไฮดรอลิกรั่ว แรงดันตก")+drow("หลังซ่อม","___________"))+
+      '<button class="btn btn-o" id="printBtn">'+ms("print")+' พิมพ์เอกสารทั้งหมด</button>';
+  }
+  function doneBody(){
+    var rows;
+    if(data.branch==="hq")rows=[["วิธีซ่อม","ซ่อมที่สำนักงานใหญ่ (งานใหญ่)"],["วันนัดเข้าซ่อม",data.appt.date],["ผู้ประสาน",data.appt.coord],
+      ["ตรวจรับใบรับรถ",checkedCount()+"/5 รายการ"],["หน่วยงานยินยอม",data.consent?"ยินยอมแล้ว ✓":"ยังไม่ยินยอม"]];
+    else rows=[["วิธีซ่อม","ซ่อมหน้างาน (งานเล็ก)"],["ช่วงเดินทาง",data.plan.from+" – "+data.plan.to],["ทีมช่าง กบค.",data.team.length+" คน"],
+      ["รถที่ซ่อม",data.vehicle.plate],["สถานที่",data.place.site+" อ."+data.place.amp+" จ."+data.place.prov]];
+    return '<div class="done-hero"><div class="dc">'+ms("check_circle")+'</div><h2>พร้อมส่งเข้าขั้นตอนดำเนินการซ่อม</h2>'+
+      '<p>ข้อมูลนัดหมายครบแล้ว — ขั้นถัดไปตาม Flow คือ “ดำเนินการซ่อม → บันทึกผล → คำนวณต้นทุน → ปิดงาน”</p></div>'+
+      '<div class="kv" style="margin-top:16px">'+rows.map(function(r){return '<div class="r"><span class="k">'+r[0]+'</span><span class="v">'+esc(r[1])+'</span></div>';}).join("")+'</div>';
+  }
+
+  function wire(id){
+    var b=document.getElementById("bodyc");
+    [].forEach.call(b.querySelectorAll("[data-k]"),function(inp){inp.oninput=function(){setPath(inp.getAttribute("data-k"),inp.value);};});
+    if(id==="decide")[].forEach.call(b.querySelectorAll(".tile"),function(c){c.onclick=function(){data.branch=c.getAttribute("data-b");render();};});
+    if(id==="hq_checkin")[].forEach.call(b.querySelectorAll("[data-ci]"),function(x){x.onchange=function(){data.checkin.items[x.getAttribute("data-ci")]=x.checked;};});
+    if(id==="hq_inspect")[].forEach.call(b.querySelectorAll("[data-ins]"),function(x){x.onchange=function(){var p=x.getAttribute("data-ins").split("|");data.inspect[p[0]][p[1]]=x.checked;};});
+    if(id==="hq_consent"){var cb=b.querySelector("#consentBtn");if(cb)cb.onclick=function(){data.consent=true;data.consentTime="ยินยอมเมื่อ "+data.appt.date+" · โดยหน่วยงานเจ้าของรถ";render();};}
+    if(id==="os_team"){
+      var add=b.querySelector("#addMember"),ip=b.querySelector("#memberInput");
+      if(add)add.onclick=function(){var v=(ip.value||"").trim();if(v&&data.team.length<4){data.team.push(v);render();}};
+      if(ip)ip.onkeydown=function(e){if(e.key==="Enter"&&add){e.preventDefault();add.click();}};
+      [].forEach.call(b.querySelectorAll("[data-rm]"),function(x){x.onclick=function(){data.team.splice(+x.getAttribute("data-rm"),1);render();};});
+    }
+    var pb=b.querySelector("#printBtn");if(pb)pb.onclick=function(){window.print();};
+  }
+  function setPath(path,val){var p=path.split("."),o=data;for(var i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=val;}
+
+  document.getElementById("nextBtn").onclick=function(){var s=steps(),i=idx();
+    if(cur==="done"){alert("เดโม: ส่งเข้าสู่ขั้นตอนดำเนินการซ่อมแล้ว ✓");return;}
+    if(i<s.length-1)go(s[i+1]);};
+  document.getElementById("backBtn").onclick=function(){var s=steps(),i=idx();if(i>0)go(s[i-1]);};
+  document.getElementById("resetBtn").onclick=function(){data.branch=null;cur="decide";render();};
+  render();
+})();
+</script>
+</body>
+</html>

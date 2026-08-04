@@ -1,0 +1,359 @@
+<title>VMS Plus · วิเคราะห์อะไหล่ (Parts Intelligence)</title>
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --font:"IBM Plex Sans Thai","Noto Sans Thai",-apple-system,BlinkMacSystemFont,"Segoe UI","Leelawadee UI",Roboto,"Helvetica Neue",Arial,"Sarabun",sans-serif;
+    --bg:#F6F4FB; --surface:#FFFFFF; --surface-2:#F3F0FA; --surface-3:#ECE7F6;
+    --border:#E7E2F1; --border-strong:#D6CEE8;
+    --ink:#1B1428; --ink-2:#5A5170; --ink-3:#8E86A3;
+    --accent:#6D2C9C; --accent-2:#8B45C4; --accent-soft:#F1E9FA; --accent-ink:#FFFFFF;
+    --lead:#C0561E; --lead-soft:#FBEBE1;
+    --good:#12805C; --good-soft:#E4F4EC; --warn:#9C6206; --warn-soft:#FBEFD8;
+    --crit:#C22F49; --crit-soft:#FBE6EA;
+    --track:#ECE7F6; --grid:#EFEBF7;
+    --shadow:0 1px 2px rgba(27,20,40,.06),0 10px 30px rgba(27,20,40,.07);
+    --radius:16px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#131019; --surface:#1C1826; --surface-2:#241F31; --surface-3:#2C2740;
+      --border:#332C46; --border-strong:#453D60; --ink:#F2EFF8; --ink-2:#BAB2CE; --ink-3:#8A82A0;
+      --accent:#B78BFF; --accent-2:#9E6BF0; --accent-soft:#2A2140; --accent-ink:#1A1226;
+      --lead:#E8894F; --lead-soft:#3A241A;
+      --good:#43C08C; --good-soft:#152E26; --warn:#E0A93B; --warn-soft:#332813;
+      --crit:#F0708A; --crit-soft:#38202A; --track:#2A2438; --grid:#282235;
+      --shadow:0 1px 2px rgba(0,0,0,.35),0 14px 34px rgba(0,0,0,.42);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#F6F4FB; --surface:#FFFFFF; --surface-2:#F3F0FA; --surface-3:#ECE7F6;
+    --border:#E7E2F1; --border-strong:#D6CEE8; --ink:#1B1428; --ink-2:#5A5170; --ink-3:#8E86A3;
+    --accent:#6D2C9C; --accent-2:#8B45C4; --accent-soft:#F1E9FA; --accent-ink:#FFFFFF;
+    --lead:#C0561E; --lead-soft:#FBEBE1; --good:#12805C; --good-soft:#E4F4EC; --warn:#9C6206; --warn-soft:#FBEFD8;
+    --crit:#C22F49; --crit-soft:#FBE6EA; --track:#ECE7F6; --grid:#EFEBF7;
+    --shadow:0 1px 2px rgba(27,20,40,.06),0 10px 30px rgba(27,20,40,.07);
+  }
+  :root[data-theme="dark"]{
+    --bg:#131019; --surface:#1C1826; --surface-2:#241F31; --surface-3:#2C2740;
+    --border:#332C46; --border-strong:#453D60; --ink:#F2EFF8; --ink-2:#BAB2CE; --ink-3:#8A82A0;
+    --accent:#B78BFF; --accent-2:#9E6BF0; --accent-soft:#2A2140; --accent-ink:#1A1226;
+    --lead:#E8894F; --lead-soft:#3A241A; --good:#43C08C; --good-soft:#152E26; --warn:#E0A93B; --warn-soft:#332813;
+    --crit:#F0708A; --crit-soft:#38202A; --track:#2A2438; --grid:#282235;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 14px 34px rgba(0,0,0,.42);
+  }
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.5;
+    -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+  .num{font-variant-numeric:tabular-nums}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 20px 80px}
+
+  header.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 86%,transparent);
+    backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--border)}
+  .top-in{max-width:1160px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px}
+  .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(140deg,var(--accent),var(--accent-2));
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0}
+  .brand h1{font-size:15.5px;margin:0;font-weight:700;letter-spacing:-.01em}
+  .brand p{margin:2px 0 0;font-size:12px;color:var(--ink-3)}
+  .spacer{flex:1}
+  .icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface);
+    color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  .lead{padding:26px 0 4px}
+  .lead h2{margin:0 0 5px;font-size:22px;letter-spacing:-.02em;text-wrap:balance}
+  .lead p{margin:0;color:var(--ink-2);font-size:14px;max-width:76ch}
+
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 4px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+  .tile .lab{font-size:11.5px;color:var(--ink-3)}
+  .tile .big{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-top:6px;line-height:1.1}
+  .tile .big small{font-size:12px;color:var(--ink-3);font-weight:600;margin-left:2px}
+  .tile .sub{font-size:11px;color:var(--ink-3);margin-top:4px}
+
+  .finds{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0 4px}
+  .find{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;
+    padding:13px 15px;box-shadow:var(--shadow)}
+  .find.l{border-left-color:var(--lead)} .find.c{border-left-color:var(--crit)} .find.g{border-left-color:var(--good)}
+  .find .fh{font-size:11px;color:var(--ink-3);display:flex;align-items:center;gap:6px;font-weight:600}
+  .find .fn{font-size:14.5px;font-weight:700;margin-top:6px;line-height:1.35}
+  .find .fs{font-size:12px;color:var(--ink-2);margin-top:4px}
+
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:22px}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:17px 18px;box-shadow:var(--shadow)}
+  .panel h3{margin:0 0 3px;font-size:14.5px;letter-spacing:-.01em}
+  .panel .ph{font-size:12px;color:var(--ink-3);margin:0 0 14px}
+  .panel.full{margin-top:22px}
+
+  /* horizontal bars */
+  .hb{display:flex;flex-direction:column;gap:9px}
+  .hbrow{display:grid;grid-template-columns:145px 1fr auto;gap:10px;align-items:center;font-size:12.5px}
+  .hbrow .hl{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hbrow .ht{position:relative;height:16px;background:var(--track);border-radius:999px;overflow:hidden}
+  .hbrow .ht>span{position:absolute;left:0;top:0;bottom:0;border-radius:999px}
+  .hbrow .hv{font-weight:700;font-variant-numeric:tabular-nums;min-width:52px;text-align:right}
+  .hbrow:hover .ht>span{filter:brightness(1.08)}
+
+  /* scatter */
+  .scatterbox{position:relative}
+  .scatterbox svg{display:block;width:100%;height:auto;overflow:visible}
+  .qlabel{font-size:10.5px;font-weight:700;fill:var(--accent)}
+  .axl{font-size:11px;fill:var(--ink-3)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin-top:12px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .lgd{width:10px;height:10px;border-radius:50%}
+  .tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);font-size:11.5px;padding:7px 10px;
+    border-radius:8px;opacity:0;transition:opacity .1s;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:50;max-width:230px}
+  .tip b{font-weight:700}
+
+  /* table */
+  .tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;margin-top:2px}
+  table{border-collapse:collapse;width:100%;min-width:900px;font-size:12.5px}
+  th,td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-3);font-weight:600;background:var(--surface-2);
+    cursor:pointer;user-select:none;position:sticky;top:0}
+  th.r,td.r{text-align:right}
+  tbody tr:hover{background:var(--surface-2)}
+  .st{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;display:inline-block}
+  .st.good{background:var(--good-soft);color:var(--good)} .st.warn{background:var(--warn-soft);color:var(--warn)}
+  .st.crit{background:var(--crit-soft);color:var(--crit)}
+  .flag{font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:5px;margin-left:6px}
+  .imp{font-size:10px;color:var(--lead);background:var(--lead-soft);padding:1px 6px;border-radius:5px;margin-left:4px}
+
+  .foot{margin-top:34px;padding-top:16px;border-top:1px solid var(--border);color:var(--ink-3);font-size:12px;
+    display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .foot code{background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:1px 6px}
+
+  @media (max-width:860px){ .kpis{grid-template-columns:repeat(2,1fr)} .finds{grid-template-columns:1fr 1fr} .row2{grid-template-columns:1fr} }
+  @media (max-width:560px){ .finds{grid-template-columns:1fr} .hbrow{grid-template-columns:120px 1fr auto} }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="logo">VP</div>
+    <div class="brand">
+      <h1>VMS Plus · วิเคราะห์อะไหล่</h1>
+      <p>Parts Intelligence — จากข้อมูลการเบิก/ซ่อม/จัดหา</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="themeBtn" title="สลับธีมสว่าง/มืด" aria-label="สลับธีม">◐</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="lead">
+    <h2>ระบบนี้ช่วยให้รู้อะไรเรื่องอะไหล่</h2>
+    <p>เมื่อทุกใบแจ้งซ่อมบันทึก “อะไหล่ที่ใช้” และการจัดหาอะไหล่ (สั่ง → รอ → รับ) อยู่ในระบบ เราตอบได้ว่า
+      <b>อะไหล่ตัวไหนเบิกบ่อยสุด · ตัวไหนสั่งนานสุด · ตัวไหนควรมีสต็อกล่วงหน้า</b> เพื่อลด downtime และวางแผนงบจัดซื้อ</p>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+  <div class="finds" id="finds"></div>
+
+  <div class="row2">
+    <div class="panel">
+      <h3>อะไหล่ที่เบิกบ่อยที่สุด</h3>
+      <p class="ph">จำนวนครั้งที่ถูกเบิกใช้ (Top 8)</p>
+      <div class="hb" id="freqBars"></div>
+    </div>
+    <div class="panel">
+      <h3>อะไหล่ที่สั่งนานที่สุด (Lead time)</h3>
+      <p class="ph">ระยะเวลาเฉลี่ยจากสั่ง → ของถึง (วัน) · Top 8</p>
+      <div class="hb" id="leadBars"></div>
+    </div>
+  </div>
+
+  <div class="panel full">
+    <h3>อะไหล่ตัวไหน “ควรมีสต็อกล่วงหน้า”</h3>
+    <p class="ph">ไขว้ ความถี่การเบิก × Lead time — มุมขวาบน = ใช้บ่อย + สั่งนาน = ห้ามให้ขาด (สีจุด = สถานะสต็อกปัจจุบัน)</p>
+    <div class="scatterbox" id="scatterbox"></div>
+    <div class="legend">
+      <span><i class="lgd" style="background:var(--good)"></i> สต็อกพอใช้</span>
+      <span><i class="lgd" style="background:var(--warn)"></i> ใกล้หมด</span>
+      <span><i class="lgd" style="background:var(--crit)"></i> ต้องสั่งเติม</span>
+      <span style="color:var(--ink-3)">· ขนาดจุด = มูลค่าอะไหล่</span>
+    </div>
+  </div>
+
+  <div class="panel full">
+    <h3>ตารางอะไหล่ทั้งหมด</h3>
+    <p class="ph">คลิกหัวคอลัมน์เพื่อจัดเรียง · <span class="flag">★ ควร stock</span> = ใช้บ่อย+สั่งนาน · <span class="imp">นำเข้า</span> = lead time ยาว</p>
+    <div class="tablewrap" id="tableWrap"></div>
+  </div>
+
+  <div class="foot"><span>ข้อมูลจำลอง (mock) ต่อยอดจากอะไหล่ในหน้าประวัติซ่อม</span>
+    <span>ต่อข้อมูลจริงที่ <code>vms-plus-main-be</code> (repair_parts · procurement)</span></div>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+(function(){
+  "use strict";
+  function money(v){return (""+Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g,",");}
+  function esc(s){return (""+s).replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+
+  // n=ชื่อ cat=หมวด freq=ครั้งเบิก qty=จำนวนรวม u=หน่วย price=ราคา/หน่วย lead=วันสั่งเฉลี่ย
+  // stock=คงเหลือ ro=จุดสั่งซื้อ sup=ผู้ขาย dt=downtime(วัน)ที่เคยรอ imp=นำเข้า
+  var P=[
+   {n:"กรองน้ำมันเครื่อง",cat:"กรอง",freq:42,qty:58,u:"ลูก",price:420,lead:2,stock:24,ro:15,sup:"ร้านอะไหล่ท้องถิ่น",dt:0},
+   {n:"น้ำมันเครื่อง 15W-40",cat:"ของเหลว",freq:40,qty:620,u:"ลิตร",price:165,lead:2,stock:300,ro:200,sup:"ร้านท้องถิ่น",dt:0},
+   {n:"กรองโซล่า",cat:"กรอง",freq:33,qty:70,u:"ลูก",price:380,lead:3,stock:40,ro:20,sup:"ร้านท้องถิ่น",dt:0},
+   {n:"ผ้าเบรกหน้า",cat:"เบรก",freq:21,qty:22,u:"ชุด",price:2400,lead:4,stock:8,ro:6,sup:"ร้านท้องถิ่น",dt:0},
+   {n:"จาระบีทนแรงดัน",cat:"ของเหลว",freq:18,qty:96,u:"กก.",price:210,lead:3,stock:60,ro:30,sup:"ร้านท้องถิ่น",dt:0},
+   {n:"น้ำมันไฮดรอลิก ISO 68",cat:"ของเหลว",freq:17,qty:380,u:"ลิตร",price:145,lead:3,stock:120,ro:150,sup:"ร้านท้องถิ่น",dt:0},
+   {n:"กรองอากาศ",cat:"กรอง",freq:15,qty:18,u:"ลูก",price:1200,lead:5,stock:10,ro:8,sup:"ผู้แทนจำหน่าย",dt:0},
+   {n:"ยาง 8.25R16",cat:"ยาง",freq:14,qty:40,u:"เส้น",price:6800,lead:10,stock:8,ro:8,sup:"ผู้แทนยาง",dt:1},
+   {n:"สายพานหน้าเครื่อง",cat:"เครื่องยนต์",freq:12,qty:14,u:"เส้น",price:650,lead:4,stock:6,ro:5,sup:"ร้านท้องถิ่น",dt:0},
+   {n:"ไดชาร์จ 24V",cat:"ไฟฟ้า",freq:8,qty:9,u:"ตัว",price:4200,lead:9,stock:3,ro:3,sup:"ผู้แทนจำหน่าย",dt:1},
+   {n:"ปั๊มน้ำ",cat:"ระบายความร้อน",freq:7,qty:8,u:"ตัว",price:6800,lead:12,stock:2,ro:2,sup:"ผู้แทนจำหน่าย",dt:2},
+   {n:"ซีลกระบอกไฮดรอลิกเครน",cat:"เครน-ไฮดรอลิก",freq:7,qty:9,u:"ชุด",price:18500,lead:25,stock:2,ro:2,sup:"ผู้แทนเครน",dt:5},
+   {n:"หม้อน้ำ",cat:"ระบายความร้อน",freq:6,qty:6,u:"ใบ",price:18500,lead:14,stock:1,ro:2,sup:"ผู้แทนจำหน่าย",dt:3},
+   {n:"ยาง 11R22.5 สเปคพิเศษ",cat:"ยาง",freq:6,qty:12,u:"เส้น",price:12800,lead:30,stock:2,ro:4,sup:"จัดหาโดย กบค.",dt:2,imp:true},
+   {n:"สลักบุ้งกี๋ (Backhoe)",cat:"เครื่องจักรกล",freq:6,qty:16,u:"ตัว",price:2800,lead:20,stock:8,ro:6,sup:"KOMATSU",dt:1,imp:true},
+   {n:"แบริ่งจานหมุนเครน",cat:"เครน",freq:5,qty:5,u:"ชุด",price:22000,lead:40,stock:1,ro:1,sup:"UNIC",dt:4,imp:true},
+   {n:"ชุดครัชครบชุด",cat:"ส่งกำลัง",freq:5,qty:5,u:"ชุด",price:14500,lead:15,stock:1,ro:2,sup:"ผู้แทนจำหน่าย",dt:3},
+   {n:"มอเตอร์ไฮดรอลิกกระเช้า",cat:"กระเช้า",freq:4,qty:4,u:"ตัว",price:38000,lead:45,stock:0,ro:1,sup:"AICHI (นำเข้า)",dt:12,imp:true},
+   {n:"ชุดควบคุม PLC เครน",cat:"เครน-อิเล็กทรอนิกส์",freq:3,qty:3,u:"ชุด",price:465000,lead:75,stock:0,ro:1,sup:"TADANO (นำเข้า)",dt:18,imp:true}
+  ];
+  var FREQ_HI=6, LEAD_HI=15;
+  P.forEach(function(p){
+    p.spend=p.qty*p.price;
+    p.status=p.stock<=p.ro?"crit":(p.stock<=p.ro*1.6?"warn":"good");
+    p.prestock=(p.freq>=FREQ_HI&&p.lead>=LEAD_HI)||p.lead>=40;
+  });
+  var STLABEL={good:"พอใช้",warn:"ใกล้หมด",crit:"ต้องสั่งเติม"};
+  var STVAR={good:"var(--good)",warn:"var(--warn)",crit:"var(--crit)"};
+
+  // ---- tooltip ----
+  var tip=document.getElementById("tip");
+  function showTip(html,x,y){tip.innerHTML=html;tip.style.opacity="1";tip.style.left=(x+14)+"px";tip.style.top=(y+14)+"px";}
+  function hideTip(){tip.style.opacity="0";}
+
+  // ---- KPIs ----
+  var totSpend=P.reduce(function(a,p){return a+p.spend;},0);
+  var totReq=P.reduce(function(a,p){return a+p.freq;},0);
+  var avgLead=Math.round(P.reduce(function(a,p){return a+p.lead;},0)/P.length);
+  var needOrder=P.filter(function(p){return p.status==="crit";}).length;
+  var preN=P.filter(function(p){return p.prestock;}).length;
+  document.getElementById("kpis").innerHTML=
+    tile("จำนวนรายการ (SKU)",P.length,"หมวดอะไหล่หลากหลาย")+
+    tile("ครั้งเบิกรวม",totReq,"จากใบแจ้งซ่อม/PM")+
+    tile("มูลค่าอะไหล่รวม","฿"+money(totSpend),"สะสมที่วิเคราะห์")+
+    tile("Lead time เฉลี่ย",avgLead+'<small>วัน</small>',"ทั้งพอร์ตอะไหล่")+
+    tile("ต้องสั่งเติม",needOrder+'<small>รายการ</small>',"สต็อก ≤ จุดสั่งซื้อ");
+  function tile(l,b,s){return '<div class="tile"><div class="lab">'+l+'</div><div class="big num">'+b+'</div><div class="sub">'+s+'</div></div>';}
+
+  // ---- headline findings ----
+  var byFreq=P.slice().sort(function(a,b){return b.freq-a.freq;});
+  var byLead=P.slice().sort(function(a,b){return b.lead-a.lead;});
+  var bySpend=P.slice().sort(function(a,b){return b.spend-a.spend;});
+  var byDt=P.slice().sort(function(a,b){return b.dt-a.dt;});
+  document.getElementById("finds").innerHTML=
+    find("g","เบิกบ่อยที่สุด",byFreq[0].n,byFreq[0].freq+" ครั้ง · ควรมีสต็อกเสมอ")+
+    find("l","สั่งนานที่สุด",byLead[0].n,byLead[0].lead+" วัน · เคยทำ downtime "+byLead[0].dt+" วัน")+
+    find("","ควร stock ล่วงหน้า",preN+" รายการ","ใช้บ่อย + สั่งนาน = ห้ามให้ขาด")+
+    find("c","ใช้งบสูงสุด",bySpend[0].n,"฿"+money(bySpend[0].spend)+" · โฟกัสงบจัดซื้อ");
+  function find(c,h,n,s){return '<div class="find '+c+'"><div class="fh">'+h+'</div><div class="fn">'+esc(n)+'</div><div class="fs">'+esc(s)+'</div></div>';}
+
+  // ---- horizontal bars ----
+  function bars(el,items,valAcc,color,unit,fmt){
+    var mx=Math.max.apply(0,items.map(valAcc));
+    el.innerHTML=items.map(function(p){
+      var v=valAcc(p),w=Math.max(3,v/mx*100);
+      return '<div class="hbrow" data-n="'+esc(p.n)+'"><span class="hl" title="'+esc(p.n)+'">'+esc(p.n)+'</span>'+
+        '<span class="ht"><span style="width:'+w+'%;background:'+color+'"></span></span>'+
+        '<span class="hv num">'+(fmt?fmt(v):v)+(unit||"")+'</span></div>';
+    }).join("");
+    [].forEach.call(el.querySelectorAll(".hbrow"),function(r){
+      var p=P.filter(function(x){return x.n===r.getAttribute("data-n");})[0];
+      r.onmousemove=function(e){showTip('<b>'+esc(p.n)+'</b><br>เบิก '+p.freq+' ครั้ง · lead '+p.lead+' วัน<br>คงเหลือ '+p.stock+' '+p.u+' · '+STLABEL[p.status],e.clientX,e.clientY);};
+      r.onmouseleave=hideTip;
+    });
+  }
+  bars(document.getElementById("freqBars"),byFreq.slice(0,8),function(p){return p.freq;},"linear-gradient(90deg,var(--accent-2),var(--accent))"," ครั้ง");
+  bars(document.getElementById("leadBars"),byLead.slice(0,8),function(p){return p.lead;},"linear-gradient(90deg,#E8894F,var(--lead))"," วัน");
+
+  // ---- scatter (freq x lead) ----
+  function scatter(){
+    var W=900,H=380,L=54,R=24,T=24,B=48,pw=W-L-R,ph=H-T-B;
+    var fx=Math.max.apply(0,P.map(function(p){return p.freq;}))+3;
+    var ly=Math.max.apply(0,P.map(function(p){return p.lead;}))+8;
+    function X(v){return L+v/fx*pw;} function Y(v){return T+ph-v/ly*ph;}
+    var mxSpend=Math.max.apply(0,P.map(function(p){return p.spend;}));
+    function R_(v){return 5+Math.sqrt(v/mxSpend)*13;}
+    var g="",i;
+    for(i=0;i<=5;i++){var gv=Math.round(fx*i/5),gx=X(gv);
+      g+='<line x1="'+gx+'" y1="'+T+'" x2="'+gx+'" y2="'+(T+ph)+'" stroke="var(--grid)"/>'+
+        '<text class="axl" x="'+gx+'" y="'+(H-28)+'" text-anchor="middle">'+gv+'</text>';}
+    for(i=0;i<=5;i++){var lv=Math.round(ly*i/5),gy=Y(lv);
+      g+='<line x1="'+L+'" y1="'+gy+'" x2="'+(W-R)+'" y2="'+gy+'" stroke="var(--grid)"/>'+
+        '<text class="axl" x="'+(L-9)+'" y="'+(gy+4)+'" text-anchor="end">'+lv+'</text>';}
+    // quadrant shading top-right
+    var qx=X(FREQ_HI),qy=Y(LEAD_HI);
+    var shade='<rect x="'+qx+'" y="'+T+'" width="'+(W-R-qx)+'" height="'+(qy-T)+'" fill="var(--accent)" opacity="0.07"/>'+
+      '<line x1="'+qx+'" y1="'+T+'" x2="'+qx+'" y2="'+(T+ph)+'" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="5 4" opacity="0.6"/>'+
+      '<line x1="'+L+'" y1="'+qy+'" x2="'+(W-R)+'" y2="'+qy+'" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="5 4" opacity="0.6"/>'+
+      '<text class="qlabel" x="'+(W-R-6)+'" y="'+(T+16)+'" text-anchor="end">★ ควร stock ล่วงหน้า</text>';
+    var labelSet={"ชุดควบคุม PLC เครน":1,"มอเตอร์ไฮดรอลิกกระเช้า":1,"แบริ่งจานหมุนเครน":1,"ซีลกระบอกไฮดรอลิกเครน":1,"ยาง 11R22.5 สเปคพิเศษ":1,"กรองน้ำมันเครื่อง":1};
+    var dots=P.map(function(p,idx){
+      var cx=X(p.freq),cy=Y(p.lead),r=R_(p.spend),col=STVAR[p.status];
+      var lab=labelSet[p.n]?'<text x="'+cx+'" y="'+(cy-r-5)+'" text-anchor="middle" font-size="10.5" fill="var(--ink-2)" font-weight="600">'+esc(shortName(p.n))+'</text>':"";
+      return '<g class="pt" data-i="'+idx+'" style="cursor:pointer">'+
+        '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+col+'" fill-opacity="0.28" stroke="'+col+'" stroke-width="2"/>'+lab+'</g>';
+    }).join("");
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="แผนภาพ ความถี่ x lead time">'+g+shade+dots+
+      '<text class="axl" x="'+(L+pw/2)+'" y="'+(H-6)+'" text-anchor="middle">ความถี่การเบิก (ครั้ง) →</text>'+
+      '<text class="axl" x="14" y="'+(T+ph/2)+'" text-anchor="middle" transform="rotate(-90 14 '+(T+ph/2)+')">Lead time (วัน) →</text>'+
+      '</svg>';
+    var box=document.getElementById("scatterbox");box.innerHTML=svg;
+    [].forEach.call(box.querySelectorAll(".pt"),function(gp){
+      var p=P[+gp.getAttribute("data-i")];
+      gp.onmousemove=function(e){showTip('<b>'+esc(p.n)+'</b><br>เบิก '+p.freq+' ครั้ง · lead <b>'+p.lead+' วัน</b><br>มูลค่ารวม ฿'+money(p.spend)+' · คงเหลือ '+p.stock+' '+p.u+'<br>'+(p.prestock?'★ ควร stock ล่วงหน้า':STLABEL[p.status]),e.clientX,e.clientY);};
+      gp.onmouseleave=hideTip;
+    });
+  }
+  function shortName(n){return n.length>16?n.slice(0,15)+"…":n;}
+  scatter();
+
+  // ---- table ----
+  var sort={k:"freq",d:-1};
+  function renderTable(){
+    var rows=P.slice().sort(function(a,b){
+      var av=a[sort.k],bv=b[sort.k];
+      if(sort.k==="n"||sort.k==="cat"||sort.k==="sup"){return (av<bv?-1:av>bv?1:0)*sort.d;}
+      return (av-bv)*sort.d;
+    });
+    var body=rows.map(function(p){
+      return '<tr><td>'+esc(p.n)+(p.prestock?'<span class="flag">★</span>':'')+(p.imp?'<span class="imp">นำเข้า</span>':'')+'</td>'+
+        '<td style="color:var(--ink-3)">'+esc(p.cat)+'</td>'+
+        '<td class="r num">'+p.freq+'</td>'+
+        '<td class="r num">'+p.qty+' '+p.u+'</td>'+
+        '<td class="r num">฿'+money(p.price)+'</td>'+
+        '<td class="r num" style="font-weight:600">฿'+money(p.spend)+'</td>'+
+        '<td class="r num" style="color:'+(p.lead>=LEAD_HI?"var(--lead)":"inherit")+';font-weight:'+(p.lead>=LEAD_HI?"700":"400")+'">'+p.lead+' วัน</td>'+
+        '<td class="r num">'+p.stock+' / '+p.ro+'</td>'+
+        '<td class="r num">'+p.dt+' วัน</td>'+
+        '<td><span class="st '+p.status+'">'+STLABEL[p.status]+'</span></td>'+
+        '<td style="color:var(--ink-3)">'+esc(p.sup)+'</td></tr>';
+    }).join("");
+    var head=[["n","อะไหล่",""],["cat","หมวด",""],["freq","เบิก(ครั้ง)","r"],["qty","จำนวนรวม","r"],
+      ["price","ราคา/หน่วย","r"],["spend","มูลค่ารวม","r"],["lead","Lead time","r"],
+      ["stock","คงเหลือ/สั่งซื้อ","r"],["dt","Downtime","r"],["status","สถานะ",""],["sup","ผู้ขาย",""]];
+    document.getElementById("tableWrap").innerHTML='<table><thead><tr>'+head.map(function(h){
+      var ar=sort.k===h[0]?(sort.d<0?" ↓":" ↑"):"";return '<th class="'+h[2]+'" data-k="'+h[0]+'">'+h[1]+ar+'</th>';}).join("")+
+      '</tr></thead><tbody>'+body+'</tbody></table>';
+    [].forEach.call(document.querySelectorAll("#tableWrap th"),function(th){
+      th.onclick=function(){var k=th.getAttribute("data-k");
+        sort=(sort.k===k)?{k:k,d:-sort.d}:{k:k,d:(k==="n"||k==="cat"||k==="sup")?1:-1};renderTable();};
+    });
+  }
+  renderTable();
+
+  document.getElementById("themeBtn").onclick=function(){
+    var cur=document.documentElement.getAttribute("data-theme");
+    var dark=cur?cur==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
+    document.documentElement.setAttribute("data-theme",dark?"light":"dark");
+    scatter();
+  };
+})();
+</script>

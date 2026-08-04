@@ -1,0 +1,343 @@
+<title>VMS Plus · Outcome — ฟีเจอร์นี้ทำแล้วได้อะไร</title>
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --font:"IBM Plex Sans Thai","Noto Sans Thai",-apple-system,BlinkMacSystemFont,"Segoe UI","Leelawadee UI",Roboto,"Helvetica Neue",Arial,"Sarabun",sans-serif;
+    --bg:#F6F4FB; --surface:#FFFFFF; --surface-2:#F3F0FA; --surface-3:#ECE7F6;
+    --border:#E7E2F1; --border-strong:#D6CEE8;
+    --ink:#1B1428; --ink-2:#5A5170; --ink-3:#8E86A3;
+    --accent:#6D2C9C; --accent-2:#8B45C4; --accent-soft:#F1E9FA; --accent-ink:#FFFFFF;
+    --good:#12805C; --good-soft:#E4F4EC; --good-border:#BDE4D2;
+    --warn:#9C6206; --track:#ECE7F6;
+    --shadow:0 1px 2px rgba(27,20,40,.06),0 10px 30px rgba(27,20,40,.07);
+    --radius:16px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#131019; --surface:#1C1826; --surface-2:#241F31; --surface-3:#2C2740;
+      --border:#332C46; --border-strong:#453D60; --ink:#F2EFF8; --ink-2:#BAB2CE; --ink-3:#8A82A0;
+      --accent:#B78BFF; --accent-2:#9E6BF0; --accent-soft:#2A2140; --accent-ink:#1A1226;
+      --good:#43C08C; --good-soft:#152E26; --good-border:#245043; --warn:#E0A93B; --track:#2A2438;
+      --shadow:0 1px 2px rgba(0,0,0,.35),0 14px 34px rgba(0,0,0,.42);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#F6F4FB; --surface:#FFFFFF; --surface-2:#F3F0FA; --surface-3:#ECE7F6;
+    --border:#E7E2F1; --border-strong:#D6CEE8; --ink:#1B1428; --ink-2:#5A5170; --ink-3:#8E86A3;
+    --accent:#6D2C9C; --accent-2:#8B45C4; --accent-soft:#F1E9FA; --accent-ink:#FFFFFF;
+    --good:#12805C; --good-soft:#E4F4EC; --good-border:#BDE4D2; --warn:#9C6206; --track:#ECE7F6;
+    --shadow:0 1px 2px rgba(27,20,40,.06),0 10px 30px rgba(27,20,40,.07);
+  }
+  :root[data-theme="dark"]{
+    --bg:#131019; --surface:#1C1826; --surface-2:#241F31; --surface-3:#2C2740;
+    --border:#332C46; --border-strong:#453D60; --ink:#F2EFF8; --ink-2:#BAB2CE; --ink-3:#8A82A0;
+    --accent:#B78BFF; --accent-2:#9E6BF0; --accent-soft:#2A2140; --accent-ink:#1A1226;
+    --good:#43C08C; --good-soft:#152E26; --good-border:#245043; --warn:#E0A93B; --track:#2A2438;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 14px 34px rgba(0,0,0,.42);
+  }
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.5;
+    -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 20px 80px}
+
+  header.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 86%,transparent);
+    backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--border)}
+  .top-in{max-width:1160px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px}
+  .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(140deg,var(--accent),var(--accent-2));
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex-shrink:0}
+  .brand h1{font-size:15.5px;margin:0;font-weight:700;letter-spacing:-.01em}
+  .brand p{margin:2px 0 0;font-size:12px;color:var(--ink-3)}
+  .spacer{flex:1}
+  .icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface);
+    color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  .lead{padding:26px 0 4px}
+  .lead h2{margin:0 0 5px;font-size:22px;letter-spacing:-.02em;text-wrap:balance}
+  .lead p{margin:0;color:var(--ink-2);font-size:14px;max-width:74ch}
+  .howto{margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--accent-soft);
+    border:1px solid color-mix(in srgb,var(--accent) 20%,transparent);border-radius:12px;padding:11px 15px;font-size:13px}
+  .howto svg{color:var(--accent);flex-shrink:0}
+  .howto .fill{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--ink-2);font-size:12.5px}
+  .howto .fill b{color:var(--accent);font-variant-numeric:tabular-nums}
+  .btn{font:inherit;font-size:12.5px;font-weight:600;border-radius:9px;padding:7px 12px;cursor:pointer;
+    border:1px solid var(--border);background:var(--surface);color:var(--ink-2)}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 4px}
+  .chip{font-size:12.5px;padding:7px 13px;border-radius:999px;border:1px solid var(--border);background:var(--surface);
+    color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  .chip:hover{border-color:var(--border-strong)}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+
+  .group{margin-top:26px}
+  .group-h{display:flex;align-items:center;gap:10px;margin:0 0 13px}
+  .group-stripe{width:4px;height:20px;border-radius:3px;background:var(--accent)}
+  .group-h h3{margin:0;font-size:14.5px;letter-spacing:.01em}
+  .group-h .gc{font-size:12px;color:var(--ink-3)}
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;
+    box-shadow:var(--shadow);display:flex;flex-direction:column;gap:0;scroll-margin-top:80px}
+  .card.hl{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 28%,transparent),var(--shadow)}
+  .card-top{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+  .code{font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--accent);background:var(--accent-soft);
+    padding:3px 7px;border-radius:6px;flex-shrink:0}
+  .card-top .nm{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  .benefit{display:flex;gap:10px;align-items:flex-start;margin-bottom:13px}
+  .benefit .bi{color:var(--accent);flex-shrink:0;margin-top:2px}
+  .benefit b{font-size:16px;font-weight:700;line-height:1.4;letter-spacing:-.01em}
+  .valuebox{background:linear-gradient(135deg,var(--accent-soft),color-mix(in srgb,var(--accent-soft) 40%,var(--surface)));
+    border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);border-radius:12px;padding:13px 16px}
+  .valuebox .vt{font-size:15px;font-weight:600;line-height:1.55;color:var(--ink)}
+  .ba{display:grid;grid-template-columns:1fr 22px 1fr;gap:8px;align-items:stretch;margin-top:13px}
+  .cell{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+  .cell.after{background:var(--good-soft);border-color:var(--good-border)}
+  .cell .cap{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:4px;color:var(--ink-3)}
+  .cell.after .cap{color:var(--good)}
+  .cell .txt{font-size:12.5px;line-height:1.5;color:var(--ink-2)}
+  .cell.after .txt{color:var(--ink)}
+  .arrow{display:flex;align-items:center;justify-content:center;color:var(--ink-3)}
+  .gains{margin-top:14px;padding-top:13px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:7px}
+  .gains .glab{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:700;margin-bottom:1px}
+  .gains .g{font-size:12.5px;color:var(--ink-2);display:flex;gap:9px;line-height:1.45}
+  .gains .g .bd{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:6px;flex-shrink:0}
+
+  /* editable number slot */
+  .ed{display:inline-block;min-width:2.2em;padding:0 4px;border-bottom:2px dashed color-mix(in srgb,var(--accent) 55%,transparent);
+    color:var(--accent);font-weight:700;text-align:center;cursor:text;border-radius:3px 3px 0 0;outline:none;
+    font-variant-numeric:tabular-nums;transition:background .12s}
+  .ed:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+  .ed:focus{background:color-mix(in srgb,var(--accent) 14%,transparent);border-bottom-style:solid}
+  .ed:empty::before{content:attr(data-ph);color:var(--ink-3);opacity:.55;font-weight:600}
+  .ed.big{font-size:23px;font-weight:800;letter-spacing:-.02em;min-width:2.4em}
+  .cell .ed{color:var(--ink);border-bottom-color:var(--border-strong);font-weight:700}
+  .cell.after .ed{color:var(--good);border-bottom-color:var(--good-border)}
+
+  .foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--border);color:var(--ink-3);font-size:12px;
+    display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .foot code{background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:1px 6px}
+
+  @media (max-width:820px){ .cards{grid-template-columns:1fr} }
+  @media print{ header.top,.controls,.howto .btn,.icon-btn{display:none} .card{break-inside:avoid} }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="logo">VP</div>
+    <div class="brand">
+      <h1>VMS Plus · Outcome — ทำแล้วได้อะไร</h1>
+      <p>คุณค่าที่แต่ละฟังก์ชันส่งมอบ (ไม่ใช่การไล่เป้า KPI)</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="themeBtn" title="สลับธีมสว่าง/มืด" aria-label="สลับธีม">◐</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="lead">
+    <h2>ฟีเจอร์นี้ทำแล้ว “ได้อะไร”</h2>
+    <p>แต่ละฟังก์ชัน (F01–F18) เล่าเป็น <b>คุณค่าที่ได้จริง</b> — สิ่งที่ดีขึ้น, ก่อน → หลัง, และงาน/เวลา/เงินที่ประหยัด ไม่ใช่แค่ตัวเลขเทียบเป้า</p>
+    <div class="howto">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      <span>ตัวเลขที่ <b style="color:var(--accent)">ขีดเส้นใต้</b> คลิกแล้วพิมพ์ทับด้วยเลขจริงของคุณได้เลย — บันทึกในเครื่องอัตโนมัติ</span>
+      <span class="fill"><span>เติมแล้ว <b id="filledN">0</b>/<b id="totalN">0</b> ช่อง</span>
+        <button class="btn" id="resetBtn">ล้างที่กรอก</button></span>
+    </div>
+  </div>
+
+  <div class="controls" id="chips"></div>
+  <div id="sections"></div>
+
+  <div class="foot"><span>ตัวเลขในช่องเป็นค่าตั้งต้น (placeholder) — แทนที่ด้วยข้อมูลจริงได้</span>
+    <span>ต่อข้อมูลจริงที่ <code>vms-plus-dashboard-be</code></span></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var GROUPS={1:"ข้อมูลหลัก (Master Data)",2:"วางแผนและขอใช้รถ",3:"บันทึกการใช้งาน",
+    4:"ซ่อมบำรุง",5:"การเงิน",6:"วงจรชีวิตทรัพย์สิน",7:"ระบบทั่วไป"};
+
+  // v/before/after: {tpl with {0},{1} ; slots:[{ph,big?}]}
+  var F=[
+   {c:"F01",g:1,name:"จัดการข้อมูลหลักรถ",benefit:"มีทะเบียนรถ “แหล่งความจริงเดียว” ทั้งองค์กร",
+    value:{tpl:"ลดเวลาไล่หา/กระทบยอดข้อมูลรถ ~ {0} ชม./เดือน",slots:[{ph:"15",big:true}]},
+    before:{tpl:"ข้อมูลรถกระจายหลายไฟล์/หลายกอง ซ้ำ-ขัดกัน",slots:[]},
+    after:{tpl:"ทะเบียนกลางชุดเดียว ทุกกองใช้ร่วมกัน",slots:[]},
+    gains:["รายงาน/Dashboard ดึงจากฐานเดียว เชื่อถือได้","ตัดสินใจจัดซื้อ/จำหน่ายบนข้อมูลที่ถูกต้อง"]},
+   {c:"F02",g:1,name:"ข้อมูล พขร. และผู้ควบคุมรถ",benefit:"กันความเสี่ยงใช้คนไม่ตรงประเภทรถ / ใบขับขี่หมดอายุ",
+    value:{tpl:"เหตุใช้คนผิดประเภท/ใบขับขี่ขาด เหลือ {0} ครั้ง/ปี",slots:[{ph:"0",big:true}]},
+    before:{tpl:"เช็คใบขับขี่-ประเภทด้วยมือ พลาดได้",slots:[]},
+    after:{tpl:"ระบบจับคู่ประเภทรถ-พขร. + เตือนหมดอายุอัตโนมัติ",slots:[]},
+    gains:["ลดความเสี่ยงเชิงวินัย/อุบัติเหตุ","จัดคน-รถให้ตรงงานได้เร็วขึ้น"]},
+   {c:"F03",g:1,name:"จัดการ Fleet Card ประจำรถ",benefit:"คุมวงเงินน้ำมัน + กันทุจริตรายคัน",
+    value:{tpl:"เห็นการใช้จ่ายรายคัน คุมวงเงิน ≤ {0} บาท/คัน/รอบ",slots:[{ph:"100,000",big:true}]},
+    before:{tpl:"บัตร-รถไม่ผูกกัน ตรวจสอบการใช้ยาก",slots:[]},
+    after:{tpl:"1 บัตร : 1 คัน เห็นยอดใช้จ่ายรายคันทันที",slots:[]},
+    gains:["จับการใช้ผิดปกติได้เร็ว","reconcile กับธนาคารง่ายขึ้น"]},
+   {c:"F04",g:2,name:"วางแผนการใช้รถ (WBS/WPS)",benefit:"ต้นทุนรถลงโครงการถูกต้อง (ผูกงบ WBS/WPS)",
+    value:{tpl:"ปันส่วนต้นทุนรถเข้าโครงการได้ {0}% ของการใช้งาน",slots:[{ph:"95",big:true}]},
+    before:{tpl:"ใช้รถไม่ผูกโครงการ ปันส่วนต้นทุนไม่ได้",slots:[]},
+    after:{tpl:"ทุกแผนผูก WBS/WPS ให้อัตโนมัติ",slots:[]},
+    gains:["รู้ต้นทุนรถต่อโครงการจริง","วางงบปีถัดไปแม่นขึ้น"]},
+   {c:"F05",g:2,name:"ขออนุมัติใช้รถ (ใบนำตัว)",benefit:"งานหน้างานไม่สะดุดเพราะอนุมัติทันเวลา",
+    value:{tpl:"มีเวลาเตรียมงานล่วงหน้าเพิ่มขึ้น {0} วัน",slots:[{ph:"14",big:true}]},
+    before:{tpl:"เดินเอกสารช้า อนุมัติไม่ทันสาย ผอ.ฝ่าย",slots:[]},
+    after:{tpl:"สายอนุมัติออนไลน์ ติดตามสถานะได้",slots:[]},
+    gains:["ลดงานตกค้าง/เลื่อนออกงาน","ลดกระดาษเวียน"]},
+   {c:"F06",g:2,name:"ขออนุมัติข้ามโซน (ใบวิทยุ)",benefit:"เดินทางข้ามเขตถูกระเบียบ ลดความเสี่ยงเชิงวินัย",
+    value:{tpl:"งานข้ามโซนมีใบวิทยุครบ {0}%",slots:[{ph:"100",big:true}]},
+    before:{tpl:"ตกหล่นใบวิทยุ เสี่ยงผิดระเบียบ",slots:[]},
+    after:{tpl:"ระบบแนบ/บังคับใบวิทยุอัตโนมัติเมื่อข้ามโซน",slots:[]},
+    gains:["ตรวจสอบย้อนหลังได้","อนุมัติระดับเขตเร็วขึ้น"]},
+   {c:"F07",g:2,name:"จัดสรร/สลับรถ (พูล/เร่งด่วน)",benefit:"ใช้รถที่มีให้คุ้ม ลดการเช่า/ซื้อเพิ่ม",
+    value:{tpl:"อัตราการใช้รถเพิ่มเป็น {0}% → เลี่ยงเช่ารถ ~ {1} บาท/เดือน",slots:[{ph:"80",big:true},{ph:"—"}]},
+    before:{tpl:"รถบางคันว่าง บางงานไม่มีรถ",slots:[]},
+    after:{tpl:"เห็นรถว่าง/จองทั้งพูล จัดได้ทันงานเร่งด่วน",slots:[]},
+    gains:["ลดตารางชนกัน","งานเร่งด่วนได้รถเร็ว"]},
+   {c:"F08",g:3,name:"บันทึกการใช้รถประจำวัน (ยพ.6)",benefit:"ปิดรายงานเดือนตรงเวลา ไม่ต้องไล่ตาม",
+    value:{tpl:"ส่ง ยพ.6 ทันวันที่ 5 เพิ่มเป็น {0}% · ลดงานทวง ~ {1} ชม./เดือน",slots:[{ph:"100",big:true},{ph:"—"}]},
+    before:{tpl:"ตามเก็บ ยพ.6 กระดาษ ล่าช้าทุกเดือน",slots:[]},
+    after:{tpl:"บันทึกรายวันจากมือถือ สรุปอัตโนมัติ",slots:[]},
+    gains:["ตรวจเช็ครถก่อนใช้ = ลดรถเสียกลางทาง","ไมล์/ชม. ไหลต่อเข้า PM และเบิกน้ำมัน"]},
+   {c:"F09",g:3,name:"บันทึกการเติมน้ำมัน (ยพ.1)",benefit:"เห็นต้นทุนน้ำมันต่อกม. จับรถเปลือง/รั่วไหล",
+    value:{tpl:"ต้นทุนน้ำมันลดจาก {0} เหลือ {1} บาท/กม.",slots:[{ph:"5.8"},{ph:"5.0",big:true}]},
+    before:{tpl:"บันทึกน้ำมันแยก ไม่เห็นต้นทุนต่อคัน",slots:[]},
+    after:{tpl:"บันทึก+อ่านใบเสร็จ สรุปบาท/กม. รายคัน",slots:[]},
+    gains:["จับความผิดปกติได้เร็ว","ข้อมูลพร้อม reconcile ทันที"]},
+   {c:"F10",g:4,name:"แจ้งซ่อมและบริหารงานซ่อม",benefit:"รถกลับมาใช้เร็วขึ้น + ข้อมูลซ่อมชุดเดียว",
+    value:{tpl:"≈ {0} คัน-วัน/เดือน ที่รถพร้อมใช้งานเพิ่มขึ้น",slots:[{ph:"50",big:true}]},
+    before:{tpl:"หนังสือ + โทรตาม ปิดงานเฉลี่ย {0} วัน",slots:[{ph:"6"}]},
+    after:{tpl:"แจ้งจากมือถือหน้างาน ปิดงาน {0} วัน",slots:[{ph:"4.2"}]},
+    gains:["กบค. กับกอง เห็นข้อมูลชุดเดียว (เลิก “คนละเล่ม”)","ประวัติผูกกับรถ ใช้ต่อ ยพ.6 / ตัดสินใจ overhaul"]},
+   {c:"F11",g:4,name:"บำรุงรักษาตามวาระ (PM)",benefit:"รถเสียกะทันหันน้อยลง อายุใช้งานยาวขึ้น",
+    value:{tpl:"รถเสียนอกแผน (breakdown) ลดลง {0}%",slots:[{ph:"—",big:true}]},
+    before:{tpl:"PM หลุดรอบ รู้ตัวตอนรถเสียกลางงาน",slots:[]},
+    after:{tpl:"เตือนครบรอบ 5,000 กม./500–1,000 ชม. อัตโนมัติ",slots:[]},
+    gains:["ครอบคลุม ปจ.2 (เครน) ครบตามกฎ ปีละ 2 ครั้ง","ลดค่าซ่อมใหญ่จากการละเลย"]},
+   {c:"F12",g:5,name:"เบิกจ่ายค่าน้ำมัน (Reconcile+SAP)",benefit:"ไม่โดนค่าปรับธนาคาร + ลดเงินรั่วไหล",
+    value:{tpl:"ส่งเอกสารทันวันที่ 28 = {0}% · ลดงานกระทบยอดมือ ~ {1} ชม./เดือน",slots:[{ph:"100",big:true},{ph:"20"}]},
+    before:{tpl:"กระทบยอดด้วยมือ ส่งช้า เสี่ยงค่าปรับ",slots:[]},
+    after:{tpl:"reconcile กับ SAP อัตโนมัติ จับ mismatch ได้",slots:[]},
+    gains:["จับรายการผิดปกติ = ลดรั่วไหล","เคลียร์เงินสำรองจ่ายตรงรอบ 30 วัน"]},
+   {c:"F13",g:6,name:"โอนย้ายทรัพย์สิน",benefit:"รถพร้อมใช้ที่สังกัดใหม่เร็ว ลดจอดรอเอกสาร",
+    value:{tpl:"รอบโอนย้ายลดจาก {0} เหลือ {1} วัน",slots:[{ph:"21"},{ph:"10",big:true}]},
+    before:{tpl:"เดินเอกสารข้ามกอง ช้า รถจอดรอ",slots:[]},
+    after:{tpl:"โอนย้ายออนไลน์ ติดตามสถานะได้",slots:[]},
+    gains:["ทะเบียนอัปเดตทันที","ไม่มีรถ “ตกสำรวจ” ระหว่างโอน"]},
+   {c:"F14",g:6,name:"จำหน่ายทรัพย์สิน",benefit:"ล้างรถหมดสภาพออกจากบัญชี ลดภาระดูแล",
+    value:{tpl:"รถอายุ ≥ 30 ปี เข้ากระบวนการจำหน่าย {0} คัน",slots:[{ph:"—",big:true}]},
+    before:{tpl:"รถเก่าค้างบัญชี ยังต้องดูแล/เสียค่าใช้จ่าย",slots:[]},
+    after:{tpl:"ระบบชี้รถเข้าเกณฑ์ + เดินเรื่องจำหน่าย",slots:[]},
+    gains:["ลดค่าใช้จ่ายดูแลรถหมดสภาพ","บัญชีทรัพย์สินสะอาด ตรงจริง"]},
+   {c:"F15",g:6,name:"แผนจัดซื้อ-จัดเช่ารถ (R3)",benefit:"วางแผนล่วงหน้า ลดเช่าฉุกเฉินราคาแพง",
+    value:{tpl:"ความต้องการมีแผนรองรับ {0}% → เลี่ยงเช่าด่วน ~ {1} บาท/ปี",slots:[{ph:"90",big:true},{ph:"—"}]},
+    before:{tpl:"ขาดรถแล้วค่อยเช่าด่วน ราคาแพง",slots:[]},
+    after:{tpl:"คาดการณ์จากการใช้งานจริง วางแผนจัดซื้อ-เช่า",slots:[]},
+    gains:["งบประมาณแม่นขึ้น","ต่อรองราคาได้ดีกว่า"]},
+   {c:"F16",g:7,name:"เข้าสู่ระบบและสิทธิ์ผู้ใช้",benefit:"คนหน้างานเข้าระบบได้ลื่น + สิทธิ์ถูกต้อง",
+    value:{tpl:"ล็อกอินสำเร็จ {0}% · บัญชีสิทธิ์ถูกต้อง {1}%",slots:[{ph:"99",big:true},{ph:"98"}]},
+    before:{tpl:"เข้าระบบยาก/สิทธิ์ปนกัน คนไม่ยอมใช้",slots:[]},
+    after:{tpl:"PASSO/OTP + สิทธิ์ตามบทบาท (PWA ลงมือถือได้)",slots:[]},
+    gains:["ลดบัญชีค้าง (orphan account)","ปลอดภัยขึ้น ตรวจสอบย้อนหลังได้"]},
+   {c:"F17",g:7,name:"รายงานและ Dashboard",benefit:"หน่วยงานกลางดูเอง เลิกส่งเอกสารไป-มา",
+    value:{tpl:"ลดรอบส่งเอกสาร ~ {0} รอบ/เดือน · เปิดดูเอง {1}%",slots:[{ph:"40",big:true},{ph:"90"}]},
+    before:{tpl:"ทำรายงานส่งเป็นไฟล์/กระดาษทุกสิ้นเดือน",slots:[]},
+    after:{tpl:"เปิด Dashboard ดูเองแบบ near real-time",slots:[]},
+    gains:["ผู้บริหารตัดสินใจเร็วขึ้น","ข้อมูลชุดเดียวทั้งองค์กร"]},
+   {c:"F18",g:7,name:"ประเมินพนักงานขับรถ",benefit:"คุมคุณภาพบริการ พขร. ด้วยข้อมูล",
+    value:{tpl:"คะแนนเฉลี่ย พขร. {0} (เกณฑ์ ≥ 3.7) · ประเมินครบ {1}%",slots:[{ph:"3.8",big:true},{ph:"95"}]},
+    before:{tpl:"ประเมินไม่ครบ/อิงความรู้สึก",slots:[]},
+    after:{tpl:"ประเมินตามรอบ + คะแนนผูกกับการใช้งานจริง",slots:[]},
+    gains:["ให้ feedback พขร. ได้ตรงจุด","ต่อสัญญา outsource บนข้อมูล"]}
+  ];
+
+  // ---- persistence ----
+  var LS="vmsp-outcome:",store={},total=0;
+  try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k.indexOf(LS)===0)store[k.slice(LS.length)]=localStorage.getItem(k);}}catch(e){}
+  F.forEach(function(f){["value","before","after"].forEach(function(fl){total+=(f[fl].slots||[]).length;});});
+
+  function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+  function edSpan(fc,field,i,slot){
+    var key=fc+"|"+field+"|"+i,v=store[key]||"";
+    return '<span class="ed'+(slot.big?" big":"")+'" contenteditable="true" role="textbox" spellcheck="false" '+
+      'inputmode="decimal" data-key="'+key+'" data-ph="'+slot.ph+'">'+esc(v)+'</span>';
+  }
+  function tpl(fc,field){
+    var o=F.filter(function(x){return x.c===fc;})[0][field],h=esc(o.tpl);
+    (o.slots||[]).forEach(function(s,i){h=h.replace("{"+i+"}",edSpan(fc,field,i,s));});
+    return h;
+  }
+
+  function cardHtml(f){
+    var gains=f.gains.map(function(g){return '<div class="g"><span class="bd"></span><span>'+esc(g)+'</span></div>';}).join("");
+    return '<article class="card" id="card-'+f.c+'"><div class="card-top"><span class="code">'+f.c+'</span>'+
+        '<span class="nm">'+esc(f.name)+'</span></div>'+
+      '<div class="benefit"><svg class="bi" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'+
+        '<path d="M12 2 15 9l7 .5-5.3 4.6L18.5 21 12 17l-6.5 4 1.8-6.9L2 9.5 9 9z"/></svg>'+
+        '<b>'+esc(f.benefit)+'</b></div>'+
+      '<div class="valuebox"><div class="vt">'+tpl(f.c,"value")+'</div></div>'+
+      '<div class="ba"><div class="cell"><div class="cap">ก่อน</div><div class="txt">'+tpl(f.c,"before")+'</div></div>'+
+        '<div class="arrow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>'+
+        '<div class="cell after"><div class="cap">หลัง</div><div class="txt">'+tpl(f.c,"after")+'</div></div></div>'+
+      '<div class="gains"><div class="glab">ได้เพิ่มเติม</div>'+gains+'</div></article>';
+  }
+
+  var state={group:"all"};
+  function renderChips(){
+    var html='<button class="chip'+(state.group==="all"?" on":"")+'" data-g="all">ทั้งหมด</button>';
+    Object.keys(GROUPS).forEach(function(g){
+      html+='<button class="chip'+(state.group===g?" on":"")+'" data-g="'+g+'">'+g+'. '+GROUPS[g].replace(/\s*\(.*\)/,"")+'</button>';});
+    var c=document.getElementById("chips");c.innerHTML=html;
+    [].forEach.call(c.querySelectorAll(".chip"),function(el){el.onclick=function(){state.group=el.getAttribute("data-g");render();};});
+  }
+  function render(){
+    renderChips();
+    var host=document.getElementById("sections"),html="";
+    Object.keys(GROUPS).forEach(function(g){
+      if(state.group!=="all"&&state.group!==g)return;
+      var items=F.filter(function(f){return String(f.g)===g;});
+      if(!items.length)return;
+      html+='<section class="group"><div class="group-h"><span class="group-stripe"></span>'+
+        '<h3>'+g+'. '+GROUPS[g]+'</h3><span class="gc">'+items.length+' ฟังก์ชัน</span></div>'+
+        '<div class="cards">'+items.map(cardHtml).join("")+'</div></section>';
+    });
+    host.innerHTML=html;
+    updateFilled();
+  }
+  function updateFilled(){
+    var n=0;Object.keys(store).forEach(function(k){if((store[k]||"").trim())n++;});
+    document.getElementById("filledN").textContent=n;
+    document.getElementById("totalN").textContent=total;
+  }
+
+  // edit events (delegated)
+  var root=document.getElementById("sections");
+  root.addEventListener("input",function(e){
+    var el=e.target.closest&&e.target.closest(".ed");if(!el)return;
+    var val=el.textContent.replace(/\s+/g," ").replace(/\n/g,"").trim(),key=el.getAttribute("data-key");
+    store[key]=val;
+    try{if(val)localStorage.setItem(LS+key,val);else localStorage.removeItem(LS+key);}catch(_){}
+    updateFilled();
+  });
+  root.addEventListener("keydown",function(e){
+    var el=e.target.closest&&e.target.closest(".ed");if(el&&e.key==="Enter"){e.preventDefault();el.blur();}});
+
+  document.getElementById("resetBtn").onclick=function(){
+    if(!confirm("ล้างตัวเลขที่กรอกทั้งหมด กลับเป็นค่าตั้งต้น?"))return;
+    try{Object.keys(store).forEach(function(k){localStorage.removeItem(LS+k);});}catch(_){}
+    store={};render();
+  };
+  document.getElementById("themeBtn").onclick=function(){
+    var cur=document.documentElement.getAttribute("data-theme");
+    var dark=cur?cur==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
+    document.documentElement.setAttribute("data-theme",dark?"light":"dark");
+  };
+
+  render();
+  var h=(location.hash||"").replace("#","");
+  if(/^F\d\d$/.test(h)){var el=document.getElementById("card-"+h);if(el){el.classList.add("hl");el.scrollIntoView({block:"center"});}}
+})();
+</script>
