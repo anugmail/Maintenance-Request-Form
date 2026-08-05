@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maintain-D — Hierarchy บุคลากร &amp; ขอบเขตการมองเห็นข้อมูล</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
+    rel="stylesheet">
+  <link rel="stylesheet" href="design-system/tokens.css">
+  <link rel="stylesheet" href="design-system/components.css">
+  <style>
+    body { font-family: var(--font); background: var(--gray-50); color: var(--gray-900); margin: 0 }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 80px }
+    .lead { color: var(--gray-600); font-size: var(--fs-body); margin: 6px 0 22px; line-height: var(--lh) }
+    .panel { background: #fff; border: 1px solid var(--gray-200); border-radius: var(--r-lg);
+             box-shadow: var(--shadow-app); padding: 20px; margin-bottom: 22px }
+    .panel > .sect:first-child { margin-top: 0 }
+    .note { background: var(--warning-50); border: 1px solid var(--warning-200); border-radius: var(--r-md);
+            padding: 12px 14px; font-size: var(--fs-sm); color: var(--warning-700); line-height: var(--lh) }
+    .note.info { background: var(--primary-25); border-color: var(--gray-200); color: var(--gray-700) }
+    .note.bad { background: var(--error-50); border-color: var(--error-200); color: var(--error-700) }
+    .ctrl { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end }
+    .ctrl .f { min-width: 260px; flex: 1 }
+    label.lbl { display: block; font-size: var(--fs-sm); font-weight: 600; margin-bottom: 6px; color: var(--gray-700) }
+    select { width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--r-md);
+             font-family: var(--font); font-size: var(--fs-body); background: #fff; color: var(--gray-900) }
+    table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm) }
+    th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--gray-200); vertical-align: middle }
+    th { background: var(--gray-50); font-weight: 600; color: var(--gray-700); white-space: nowrap;
+         position: sticky; top: 0; z-index: 1 }
+    tbody tr.vis { background: var(--primary-25) }
+    tbody tr.home td { box-shadow: inset 3px 0 0 var(--primary-600) }
+    .depth { display: inline-block }
+    .sap { font-variant-numeric: tabular-nums; color: var(--gray-500); font-size: var(--fs-xs) }
+    .sz { display: inline-block; min-width: 30px; text-align: center; font-weight: 600; font-size: var(--fs-xs);
+          padding: 2px 8px; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-700) }
+    .sz.XS { background: var(--error-50); color: var(--error-700) }
+    .sz.S  { background: var(--warning-50); color: var(--warning-700) }
+    .sz.M  { background: var(--success-50); color: var(--success-600) }
+    .sz.L  { background: var(--primary-50); color: var(--primary-700) }
+    .yes { color: var(--success-600); font-weight: 600 }
+    .no  { color: var(--gray-400) }
+    .part { color: var(--warning-700); font-weight: 600 }
+    .scroll { overflow-x: auto; border: 1px solid var(--gray-200); border-radius: var(--r-md) }
+    .sum { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 0 }
+    .stat { flex: 1; min-width: 150px; border: 1px solid var(--gray-200); border-radius: var(--r-md); padding: 12px 14px }
+    .stat b { display: block; font-size: var(--fs-h2); color: var(--primary-600); line-height: 1.2 }
+    .stat span { font-size: var(--fs-xs); color: var(--gray-600) }
+    .gap { border-left: 3px solid var(--error-500); padding-left: 12px; margin: 10px 0 }
+    code { background: var(--gray-100); padding: 1px 6px; border-radius: 4px; font-size: 12px }
+    ul { line-height: var(--lh); color: var(--gray-700); font-size: var(--fs-sm) }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="crumbs"><span class="ms">home</span> Maintain-D › โครงสร้างองค์กร › ขอบเขตการมองเห็น</div>
+    <h1 class="page-title">Hierarchy บุคลากร &amp; ขอบเขตการมองเห็นข้อมูล</h1>
+    <div class="lead">
+      ใช้ตอบคำถาม <b>“ใครเห็นข้อมูลของใครได้บ้าง”</b> — เลือกบทบาทกับหน่วยงานต้นสังกัดทางซ้าย
+      แล้วตารางจะไฮไลต์ว่าคนคนนั้นมองเห็นหน่วยงานไหนได้บ้าง
+    </div>
+
+    <div class="note bad">
+      <b>สภาพจริงตอนนี้: ระบบเป็น role-based ล้วน — ยังไม่มีชั้น scope เลย</b><br>
+      จากการสแกนโค้ด (<code>VMS-Plus-Permission-Role-3-ระยะ.md</code>) ไม่มีตาราง <code>permissions</code> /
+      <code>role_permissions</code> / policy ใดๆ · <code>admin-region</code> กับ <code>admin-department</code>
+      ทุกวันนี้แค่ “ทำให้ปุ่มโผล่” ยังไม่ได้จำกัดข้อมูลจริง — หน้านี้คือการร่างว่า <b>ถ้าจะทำ scope จริง (ระยะ 3) จะหน้าตาแบบไหน</b>
+    </div>
+
+    <!-- ── มุมมอง ───────────────────────────────── -->
+    <div class="panel">
+      <div class="sect">มองในมุมของ…</div>
+      <div class="ctrl">
+        <div class="f">
+          <label class="lbl" for="role">บทบาท (role จริงในระบบ)</label>
+          <select id="role"></select>
+        </div>
+        <div class="f">
+          <label class="lbl" for="home">หน่วยงานต้นสังกัด</label>
+          <select id="home"></select>
+        </div>
+      </div>
+      <div class="sum" id="sum"></div>
+      <div id="scopeNote" style="margin-top:14px"></div>
+    </div>
+
+    <!-- ── ตาราง hierarchy ──────────────────────── -->
+    <div class="panel">
+      <div class="sect">ตารางที่ 1 — โครงสร้างหน่วยงาน <span
+          style="font-weight:400;font-size:13px;color:var(--gray-500)">— flatten จาก tree · แถวไฮไลต์ = มองเห็นได้</span>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>หน่วยงาน</th>
+              <th>รหัส (dept_sap)</th>
+              <th>แม่ (dept_upper)</th>
+              <th>bureau</th>
+              <th>ชั้น</th>
+              <th>ขนาด 🆕</th>
+              <th>บุคลากร</th>
+              <th>หัวหน้าหน่วย</th>
+              <th>ส่งถึง กบค.?</th>
+              <th>เห็นข้อมูล?</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="note info" style="margin-top:14px">
+        <b>ที่มาของแต่ละคอลัมน์</b> — หน่วยงาน/รหัส/แม่/ชั้น มาจาก <code>mas_department</code>
+        (<code>dept_sap</code>, <code>dept_upper</code>) ผ่าน <code>GET /api/mas/department-tree?dept_upper=…</code> ·
+        บุคลากรนับจาก <code>GET /api/mas/user/list/dept-sap</code> · หัวหน้าหน่วยจาก
+        <code>funcs.GetUserManager(dept_sap)</code> ที่ยิงไป HR platform ·
+        <b>“ขนาด” ยังไม่มีในระบบ ต้องสร้างใหม่</b>
+      </div>
+    </div>
+
+    <!-- ── กรย. ดูแลใคร ─────────────────────────── -->
+    <div class="panel">
+      <div class="sect">ตารางที่ 2 — กรย. แต่ละเขตดูแลหน่วยงานอะไรบ้าง <span
+          style="font-weight:400;font-size:13px;color:var(--gray-500)">— ความสัมพันธ์เชิงหน้าที่ ไม่ใช่สายบังคับบัญชา</span>
+      </div>
+      <div class="note">
+        <b>กรย. ไม่ได้เป็น <code>dept_upper</code> ของ กฟจ.</b> — ในโครงองค์กร กรย. เป็น<b>พี่น้อง</b>กับ กฟจ. ใต้เขตเดียวกัน
+        ⇒ ตอบคำถาม “ใต้ กรย. มีจังหวัดอะไรบ้าง” ตรงๆ จากตาราง <b>ไม่ได้</b> ต้อง<b>คำนวณ</b>เอาจาก bureau:
+        ทุกหน่วยงานที่ <code>fn_get_bureau_dept_sap()</code> ชี้มาที่เขตเดียวกัน = ขอบเขตที่ กรย. นั้นดูแล
+        (นี่คือกลไกเดียวกับที่ระบบใช้ scope contract และ carpool อยู่แล้ว)
+      </div>
+      <div class="scroll" style="margin-top:14px">
+        <table>
+          <thead>
+            <tr>
+              <th>กรย.</th>
+              <th>bureau (เขต)</th>
+              <th>ดูแลกี่หน่วยงาน</th>
+              <th>รายชื่อหน่วยงานในขอบเขต</th>
+              <th>ในนั้นเป็น XS กี่แห่ง</th>
+            </tr>
+          </thead>
+          <tbody id="kryrows"></tbody>
+        </table>
+      </div>
+      <div class="note info" style="margin-top:14px">
+        <b>SQL ที่ใช้ได้เลย</b> — โค้ดมี recursive CTE ไต่ลงทั้งกิ่งอยู่แล้วที่
+        <code>handlers/department_management_hander.go:61</code>:
+        <code>WITH RECURSIVE down AS (SELECT dept_sap FROM vms_mas_department WHERE dept_sap = ? UNION ALL SELECT d.dept_sap FROM vms_mas_department d JOIN down dn ON d.dept_upper = dn.dept_sap)</code>
+        ⚠️ แต่ struct <code>VmsMasDepartment</code> ฝั่ง Go <b>ยังไม่ได้ map คอลัมน์ <code>dept_upper</code></b> — คอลัมน์มีในตาราง แต่โค้ด Go มองไม่เห็น ต้องเพิ่ม field ก่อน
+      </div>
+    </div>
+
+    <!-- ── role × scope ─────────────────────────── -->
+    <div class="panel">
+      <div class="sect">ตารางที่ 3 — บทบาท × ขอบเขตที่เสนอ <span
+          style="font-weight:400;font-size:13px;color:var(--gray-500)">— role คือของจริง 13 ตัว · scope คือข้อเสนอ ยังไม่ได้ทำ</span>
+      </div>
+      <div class="scroll" style="max-height:none">
+        <table>
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>ความหมาย</th>
+              <th>ขอบเขตที่เสนอ</th>
+              <th>เห็นอะไร</th>
+            </tr>
+          </thead>
+          <tbody id="rolerows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── ช่องว่าง ─────────────────────────────── -->
+    <div class="panel">
+      <div class="sect">ช่องว่างที่เจอ</div>
+      <div class="gap">
+        <b>1. flow งานซ่อมมีบทบาทที่ยังไม่มี role รองรับ</b><br>
+        <span style="font-size:var(--fs-sm);color:var(--gray-700)">flow แจ้งซ่อมเดินผ่าน <b>ผู้แจ้ง → กรย. → กบค. → ผู้บังคับบัญชา กบค.</b>
+          แต่ใน role 13 ตัวของระบบจริง <b>ไม่มีทั้ง กรย. และ กบค.</b> — ใกล้สุดคือ <code>admin-region</code> กับ
+          <code>admin-department</code> ซึ่งความหมายไม่ตรง ⇒ ต้องเพิ่ม role ใหม่หรือ map ให้ชัดก่อนทำ scope</span>
+      </div>
+      <div class="gap">
+        <b>2. “ขนาดหน่วยงาน” ยังไม่มีที่เก็บ</b><br>
+        <span style="font-size:var(--fs-sm);color:var(--gray-700)">AC-D2 ต้องใช้ขนาดเป็นเพดานว่าเรื่องส่งถึง กบค. ได้ไหม
+          แต่ derive จากของเดิมไม่ได้ (<code>level_code</code> เป็นระดับ<i>คน</i> ไม่ใช่<i>หน่วยงาน</i>) —
+          ควรเพิ่มคอลัมน์ที่ <code>vms_mas_department</code> (ตารางของเรา) <b>ไม่ใช่</b> <code>mas_department</code>
+          ที่น่าจะ sync มาจากระบบกลางแล้วโดนทับ</span>
+      </div>
+      <div class="gap">
+        <b>3. ต้นทุนการประกอบข้อมูล 1 + 2N</b><br>
+        <span style="font-size:var(--fs-sm);color:var(--gray-700)">ตารางนี้ 1 แถวต้องยิง 2 API (จำนวนคน + หัวหน้า) และ
+          <code>department-tree</code> เองก็ query DB แบบ N+1 ลึก 8 ชั้นอยู่ข้างใน ⇒ ระดับ PEA จริงต้องมี endpoint รวม
+          <code>GET /api/mas/hierarchy</code> ที่รับ <code>depth</code>, <code>search</code>, <code>include=manager,headcount</code>, paging</span>
+      </div>
+      <div class="gap">
+        <b>4. รหัสที่อ่านไม่ออก</b><br>
+        <span style="font-size:var(--fs-sm);color:var(--gray-700)"><code>level_code</code> (M1/M2/M3?) ·
+          <code>posi_code</code> (ตัวเลข) · <code>manager.type</code> — ทั้ง 3 ไม่มีตาราง ref ต้องขอจาก HR</span>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>ข้อมูลในหน้านี้เป็นตัวอย่างจำลอง</b> — โครงหน่วยงาน จำนวนคน และชื่อหัวหน้าเป็น mock เพื่อให้เห็นรูปแบบ
+      ส่วน <b>ชื่อ role และ field ของฐานข้อมูลเป็นของจริง</b>ที่อ่านจาก <code>code-maintainD/</code>
+    </div>
+  </div>
+
+  <script>
+    // ── mock org tree (โครงจริงของ PEA แบบย่อ ให้ตรงกับรถใน mock แจ้งซ่อม) ──
+    var DEPTS = [
+      { sap: '1000', name: 'การไฟฟ้าส่วนภูมิภาค (สำนักงานใหญ่)', upper: '', size: 'L', people: 0, head: 'ผู้ว่าการ' },
+      { sap: '1100', name: 'กองบำรุงรักษาเครื่องกล (กบค.)', upper: '1000', size: 'M', people: 38, head: 'ผอ.กบค.' },
+      { sap: '1200', name: 'กองระบบไฟฟ้าและงานโยธา (กรย.) ส่วนกลาง', upper: '1000', size: 'M', people: 24, head: 'ผอ.กรย.' },
+      { sap: '2000', name: 'การไฟฟ้าเขต น.1 (ภาคเหนือ)', upper: '1000', size: 'L', people: 12, head: 'ผจก.เขต น.1' },
+      { sap: '2010', name: 'กรย. เขต น.1', upper: '2000', size: 'S', people: 14, head: 'หน.กรย. น.1' },
+      { sap: '2100', name: 'กฟจ.เชียงใหม่', upper: '2000', size: 'M', people: 64, head: 'ผจก.กฟจ.เชียงใหม่' },
+      { sap: '2110', name: 'กฟอ.สันทราย', upper: '2100', size: 'XS', people: 9, head: 'หน.กฟอ.สันทราย' },
+      { sap: '3000', name: 'การไฟฟ้าเขต ฉ.1 (ภาคอีสาน)', upper: '1000', size: 'L', people: 11, head: 'ผจก.เขต ฉ.1' },
+      { sap: '3010', name: 'กรย. เขต ฉ.1', upper: '3000', size: 'S', people: 16, head: 'หน.กรย. ฉ.1' },
+      { sap: '3100', name: 'กฟจ.ขอนแก่น', upper: '3000', size: 'M', people: 57, head: 'ผจก.กฟจ.ขอนแก่น' },
+      { sap: '3110', name: 'กฟอ.บ้านไผ่', upper: '3100', size: 'XS', people: 8, head: 'หน.กฟอ.บ้านไผ่' },
+      { sap: '4000', name: 'การไฟฟ้าเขต ฉ.3', upper: '1000', size: 'L', people: 10, head: 'ผจก.เขต ฉ.3' },
+      { sap: '4010', name: 'กรย. เขต ฉ.3', upper: '4000', size: 'S', people: 15, head: 'หน.กรย. ฉ.3' },
+      { sap: '4100', name: 'กฟจ.นครราชสีมา', upper: '4000', size: 'M', people: 61, head: 'ผจก.กฟจ.นครราชสีมา' },
+      { sap: '4110', name: 'กฟอ.ปากช่อง', upper: '4100', size: 'XS', people: 7, head: 'หน.กฟอ.ปากช่อง' }
+    ];
+
+    // ── role จริง 13 ตัว + scope ที่เสนอ ──
+    var SCOPES = {
+      all: 'ทั้งองค์กร',
+      subtree: 'หน่วยงานตัวเอง + ลูกทั้งหมด',
+      own: 'เฉพาะหน่วยงานตัวเอง',
+      records: 'เฉพาะเรื่องที่ตัวเองเกี่ยวข้อง',
+      carpool: 'เฉพาะ Carpool ที่ดูแล'
+    };
+    var ROLES = [
+      { id: 'admin-super', desc: 'แอดมินสูงสุด', scope: 'all', see: 'ทุกหน่วยงาน ทุกเรื่อง แก้ไขได้' },
+      { id: 'executive', desc: 'ผู้บริหาร', scope: 'all', see: 'ทุกหน่วยงาน — ควรเป็น read-only' },
+      { id: 'admin-region', desc: 'แอดมินเขต', scope: 'subtree', see: 'ทุกหน่วยงานใต้เขตตัวเอง' },
+      { id: 'admin-department-main', desc: 'แอดมินกองหลัก', scope: 'subtree', see: 'กองตัวเอง + หน่วยงานลูก' },
+      { id: 'admin-department', desc: 'แอดมินกอง', scope: 'own', see: 'เฉพาะกองตัวเอง' },
+      { id: 'approval-department', desc: 'อนุมัติระดับกอง', scope: 'own', see: 'เรื่องที่รออนุมัติในกองตัวเอง' },
+      { id: 'level1-approval', desc: 'ผู้ยืนยันระดับ 1', scope: 'records', see: 'เฉพาะเรื่องที่ตัวเองเป็นผู้ยืนยัน' },
+      { id: 'license-approval', desc: 'อนุมัติใบขับขี่/ยานพาหนะ', scope: 'records', see: 'เฉพาะคำขอที่ตัวเองต้องอนุมัติ' },
+      { id: 'approval-carpool', desc: 'อนุมัติ Carpool', scope: 'carpool', see: 'เฉพาะ Carpool ที่ดูแล (ไม่อิงโครงหน่วยงาน)' },
+      { id: 'admin-carpool', desc: 'แอดมิน Carpool', scope: 'carpool', see: 'เฉพาะ Carpool ที่ดูแล (ไม่อิงโครงหน่วยงาน)' },
+      { id: 'driver', desc: 'พนักงานขับรถ', scope: 'records', see: 'เฉพาะงานที่ตัวเองถูกมอบหมาย' },
+      { id: 'vehicle-user', desc: 'ผู้ใช้รถ / ผู้แจ้ง (ทุกคนได้ role นี้)', scope: 'records', see: 'เฉพาะเรื่องที่ตัวเองแจ้ง' }
+    ];
+
+    var byId = {}; DEPTS.forEach(function (d) { byId[d.sap] = d });
+    function depth(d) { var n = 0, c = d; while (c && c.upper) { c = byId[c.upper]; n++ } return n }
+    function descendants(sap) {
+      var out = [], stack = [sap];
+      while (stack.length) {
+        var cur = stack.pop();
+        DEPTS.forEach(function (d) { if (d.upper === cur) { out.push(d.sap); stack.push(d.sap) } });
+      }
+      return out;
+    }
+    // XS = ไม่มีเส้นทางถึง กบค. (AC-D2)
+    function reachKbk(d) { return d.size !== 'XS' }
+
+    // จำลอง fn_get_bureau_dept_sap() — ไต่ขึ้นไปหาต้นสังกัดระดับ 1 (เขต/กองส่วนกลาง)
+    function bureauOf(sap) {
+      var c = byId[sap];
+      if (!c || !c.upper) return '';          // root ไม่มี bureau
+      while (byId[c.upper] && byId[c.upper].upper) c = byId[c.upper];
+      return c.sap;
+    }
+    // ขอบเขตที่ กรย. เขตหนึ่งดูแล = ทุกหน่วยงานที่ bureau เดียวกัน (ยกเว้นตัวเอง)
+    function servedBy(krySap) {
+      var b = bureauOf(krySap);
+      return DEPTS.filter(function (d) { return d.sap !== krySap && (bureauOf(d.sap) === b || d.sap === b) });
+    }
+
+    function visibleSet(roleId, homeSap) {
+      var r = ROLES.find(function (x) { return x.id === roleId });
+      if (!r) return { set: {}, kind: 'records' };
+      var set = {};
+      if (r.scope === 'all') { DEPTS.forEach(function (d) { set[d.sap] = 1 }) }
+      else if (r.scope === 'subtree') { set[homeSap] = 1; descendants(homeSap).forEach(function (s) { set[s] = 1 }) }
+      else if (r.scope === 'own') { set[homeSap] = 1 }
+      return { set: set, kind: r.scope, role: r };
+    }
+
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;') }
+
+    function render() {
+      var roleId = document.getElementById('role').value;
+      var homeSap = document.getElementById('home').value;
+      var v = visibleSet(roleId, homeSap);
+      var home = byId[homeSap];
+
+      // แถวตาราง
+      document.getElementById('rows').innerHTML = DEPTS.map(function (d) {
+        var lv = depth(d);
+        var vis = !!v.set[d.sap];
+        var cls = (vis ? 'vis' : '') + (d.sap === homeSap ? ' home' : '');
+        var seeCell = vis
+          ? '<span class="yes">✓ เห็นทั้งหมด</span>'
+          : (v.kind === 'records' ? '<span class="part">เฉพาะเรื่องตัวเอง</span>' : '<span class="no">— ไม่เห็น</span>');
+        if (v.kind === 'carpool') seeCell = '<span class="part">ตาม Carpool</span>';
+        return '<tr class="' + cls + '">' +
+          '<td><span class="depth" style="padding-left:' + (lv * 18) + 'px">' +
+          (lv ? '<span style="color:var(--gray-300)">└ </span>' : '') + esc(d.name) + '</span></td>' +
+          '<td class="sap">' + d.sap + '</td>' +
+          '<td class="sap">' + (d.upper || '—') + '</td>' +
+          '<td class="sap">' + (bureauOf(d.sap) || '—') + '</td>' +
+          '<td>' + lv + '</td>' +
+          '<td><span class="sz ' + d.size + '">' + d.size + '</span></td>' +
+          '<td>' + (d.people || '—') + '</td>' +
+          '<td>' + esc(d.head) + '</td>' +
+          '<td>' + (reachKbk(d) ? '<span class="yes">ได้</span>' : '<span class="no">ไม่ได้ (XS)</span>') + '</td>' +
+          '<td>' + seeCell + '</td>' +
+          '</tr>';
+      }).join('');
+
+      // สรุป
+      var n = Object.keys(v.set).length;
+      var people = DEPTS.reduce(function (a, d) { return a + (v.set[d.sap] ? (d.people || 0) : 0) }, 0);
+      document.getElementById('sum').innerHTML =
+        '<div class="stat"><b>' + n + '</b><span>หน่วยงานที่มองเห็น (จาก ' + DEPTS.length + ')</span></div>' +
+        '<div class="stat"><b>' + people + '</b><span>บุคลากรในขอบเขต</span></div>' +
+        '<div class="stat"><b>' + SCOPES[v.kind] + '</b><span>ประเภทขอบเขต</span></div>' +
+        '<div class="stat"><b>' + (reachKbk(home) ? 'ส่งถึง กบค. ได้' : 'ไม่ถึง กบค.') + '</b><span>เพดานงานซ่อมของต้นสังกัด (ขนาด ' + home.size + ')</span></div>';
+
+      var note = '';
+      if (v.kind === 'records')
+        note = '<div class="note">บทบาทนี้<b>ไม่ได้ผูกกับโครงหน่วยงาน</b> — เห็นเฉพาะเรื่องที่ตัวเองเกี่ยวข้อง ' +
+          'ต่อให้อยู่หน่วยงานไหนก็เห็นเท่ากัน ⇒ scope แบบนี้บังคับที่ระดับ<b>แถวข้อมูล</b> ไม่ใช่ระดับหน่วยงาน</div>';
+      else if (v.kind === 'carpool')
+        note = '<div class="note">Carpool เป็นการจัดกลุ่ม<b>ข้ามโครงหน่วยงาน</b> — ผูกกับ <code>vms_mas_carpool_admin</code> / ' +
+          '<code>vms_mas_carpool_approver</code> ไม่ใช่ <code>dept_upper</code> ⇒ ต้องมี scope คนละแบบ</div>';
+      else if (v.kind === 'all')
+        note = '<div class="note info">เห็นทั้งองค์กร — ประเด็นที่ต้องเคาะคือ <code>executive</code> ควรเป็น ' +
+          '<b>read-only</b> หรือแก้ไขได้ ตอนนี้โค้ดไม่ได้แยก</div>';
+      else
+        note = '<div class="note info">ขอบเขตนี้ไต่จาก <code>dept_upper</code> ⇒ ถ้าโครงหน่วยงานใน ' +
+          '<code>mas_department</code> ผิด สิทธิ์การมองเห็นก็ผิดตาม — ต้องมีคนรับผิดชอบความถูกต้องของ master data</div>';
+      document.getElementById('scopeNote').innerHTML = note;
+    }
+
+    // init
+    document.getElementById('role').innerHTML = ROLES.map(function (r) {
+      return '<option value="' + r.id + '">' + r.id + ' — ' + r.desc + '</option>';
+    }).join('');
+    document.getElementById('home').innerHTML = DEPTS.map(function (d) {
+      return '<option value="' + d.sap + '">' + '　'.repeat(depth(d)) + d.name + ' (' + d.sap + ')</option>';
+    }).join('');
+    document.getElementById('role').value = 'admin-region';
+    document.getElementById('home').value = '3000';
+    document.getElementById('kryrows').innerHTML = DEPTS.filter(function (d) {
+      return d.name.indexOf('กรย.') === 0 || d.name.indexOf('กรย.') > -1;
+    }).map(function (k) {
+      var served = servedBy(k.sap);
+      var xs = served.filter(function (d) { return d.size === 'XS' }).length;
+      return '<tr><td><b>' + esc(k.name) + '</b> <span class="sap">(' + k.sap + ')</span></td>' +
+        '<td class="sap">' + (bureauOf(k.sap) ? bureauOf(k.sap) + ' — ' + esc(byId[bureauOf(k.sap)].name) : 'ส่วนกลาง') + '</td>' +
+        '<td><b>' + served.length + '</b></td>' +
+        '<td style="font-size:var(--fs-xs);color:var(--gray-600)">' +
+        (served.length ? served.map(function (d) { return esc(d.name) }).join(' · ') : '—') + '</td>' +
+        '<td>' + (xs ? '<span class="sz XS">' + xs + '</span>' : '<span class="no">0</span>') + '</td></tr>';
+    }).join('');
+    document.getElementById('rolerows').innerHTML = ROLES.map(function (r) {
+      return '<tr><td><code>' + r.id + '</code></td><td>' + r.desc + '</td>' +
+        '<td><b>' + SCOPES[r.scope] + '</b></td><td>' + r.see + '</td></tr>';
+    }).join('');
+    document.getElementById('role').onchange = render;
+    document.getElementById('home').onchange = render;
+    render();
+  </script>
+</body>
+
+</html>
