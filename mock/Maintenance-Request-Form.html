@@ -1460,15 +1460,15 @@
           <div class="decide">
             <div class="tile tile-magenta" id="dcself" onclick="setDecision('self')"><span
                 class="ms">build</span><b>ซ่อมเอง</b><small>ซ่อมได้ที่หน้างาน/หน่วยงาน</small></div>
-            <div class="tile tile-blue" id="dckbk" onclick="setDecision('kbk')"><span
+            <div class="tile tile-blue" id="dckry" onclick="setDecision('kry')"><span
                 class="ms">alt_route</span><b>ส่งเรื่องให้ กรย.</b><small>ให้ กรย. คัดแยกช่องทางซ่อม</small></div>
           </div>
           <div id="selfx" class="hidden dnote">
             <div class="f" style="margin-top:14px"><label>แผน/บันทึกการซ่อมโดยย่อ</label><textarea id="selfnote"
                 rows="2" placeholder="เช่น เปลี่ยนชุดซีลเองในวันพรุ่งนี้ ใช้อะไหล่ที่จองไว้…"></textarea></div>
           </div>
-          <div id="kbkx" class="hidden dnote">
-            <div class="f" style="margin-top:14px"><label>เหตุผลที่ซ่อมเองไม่ได้</label><textarea id="kbknote" rows="2"
+          <div id="kryx" class="hidden dnote">
+            <div class="f" style="margin-top:14px"><label>เหตุผลที่ซ่อมเองไม่ได้</label><textarea id="kryreason" rows="2"
                 placeholder="เช่น ต้องใช้เครื่องมือพิเศษ/อะไหล่รอของ…"></textarea></div>
             <div class="route"><span class="ms">alt_route</span><span><b>ส่งให้ กรย. (กองระบบไฟฟ้าและงานโยธา 12
                   เขต)</b><br>กรย. จะคัดแยกว่าให้ <b>ซ่อมที่อู่</b> · <b>กรย. ซ่อมเอง</b> · หรือ <b>ส่งต่อ กบค.</b> —
@@ -2395,7 +2395,7 @@ function goBackFromForm(){
     function chgQty(code, d) { const p = PARTS.find(x => x.code === code); const v = (S.bookings[code] || 1) + d; if (v < 1) return; if (v > p.stock) { toast('เกินจำนวนคงเหลือในคลัง (' + p.stock + ')'); return } S.bookings[code] = v; renderParts() }
     function chgOrd(code, d) { const v = (S.orders[code] || 1) + d; if (v < 1) return; S.orders[code] = v; renderParts() }
 
-    function setDecision(d) { S.decision = d; $('dcself').classList.toggle('sel', d === 'self'); $('dckbk').classList.toggle('sel', d === 'kbk'); $('selfx').classList.toggle('hidden', d !== 'self'); $('kbkx').classList.toggle('hidden', d !== 'kbk'); renderSummary() }
+    function setDecision(d) { S.decision = d; $('dcself').classList.toggle('sel', d === 'self'); $('dckry').classList.toggle('sel', d === 'kry'); $('selfx').classList.toggle('hidden', d !== 'self'); $('kryx').classList.toggle('hidden', d !== 'kry'); renderSummary() }
     function bookedArr() { return Object.entries(S.bookings).map(([c, q]) => { const p = PARTS.find(x => x.code === c); return { name: p.name, qty: q, unit: p.unit } }) }
     function orderedArr() { return Object.entries(S.orders).map(([c, q]) => { const p = PARTS.find(x => x.code === c); return { name: p.name, qty: q, unit: p.unit, eta: p.eta || 'รอยืนยัน' } }) }
     function renderSummary() {
@@ -2410,7 +2410,7 @@ function goBackFromForm(){
     <div class="sumrow"><span>รูปแนบ</span><span>${S.photos} รูป</span></div>
     <div class="sumrow"><span>อะไหล่ที่จอง</span><span>${bk.length ? bk.join('<br>') : 'ไม่มี'}</span></div>
     <div class="sumrow"><span>อะไหล่ที่สั่งของ (รอเข้า)</span><span>${od.length ? od.join('<br>') : 'ไม่มี'}</span></div>
-    <div class="sumrow"><span>ดำเนินการ</span><span>${S.decision === 'self' ? 'ซ่อมเอง' : S.decision === 'kbk' ? 'ส่งซ่อม กบค. (ระบบเลือกปลายทางตามสังกัด)' : '— ยังไม่เลือก —'}</span></div>`;
+    <div class="sumrow"><span>ดำเนินการ</span><span>${S.decision === 'self' ? 'ซ่อมเอง' : S.decision === 'kry' ? 'ส่งเรื่องให้ กรย.' : '— ยังไม่เลือก —'}</span></div>`;
     }
 
     // ---------- photos ----------
@@ -2463,9 +2463,9 @@ function goBackFromForm(){
         syms: S.symptoms.map(id => id === 'OTH' ? ('อื่นๆ: ' + esc($('othtext').value.trim())) : SYMPTOMS.find(s => s.id === id).name),
         sev: S.sev, photos: S.photos, desc: esc($('desc').value.trim()),
         booked: bookedArr(), ordered: orderedArr(),
-        reason: S.decision === 'kbk' ? esc($('kbknote').value.trim()) : esc($('selfnote').value.trim()),
-        phase: S.decision === 'kbk' ? 'kry' : 'self', wi: 0,
-        history: [{ t: nowStr(), label: S.decision === 'kbk' ? 'ส่งเรื่องถึง กรย. — รอคัดแยกช่องทางซ่อม' : 'บันทึกเรื่อง — ดำเนินการซ่อมเอง' }]
+        reason: S.decision === 'kry' ? esc($('kryreason').value.trim()) : esc($('selfnote').value.trim()),
+        phase: S.decision === 'kry' ? 'kry' : 'self', wi: 0,
+        history: [{ t: nowStr(), label: S.decision === 'kry' ? 'ส่งเรื่องถึง กรย. — รอคัดแยกช่องทางซ่อม' : 'บันทึกเรื่อง — ดำเนินการซ่อมเอง' }]
       };
       JOBS.unshift(job);
       updateBadge();
@@ -2481,11 +2481,11 @@ function goBackFromForm(){
     }
     function resetForm() {
       Object.assign(S, { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, decision: null });
-      ['vq', 'desc', 'othtext', 'selfnote', 'kbknote'].forEach(id => $(id).value = '');
+      ['vq', 'desc', 'othtext', 'selfnote', 'kryreason'].forEach(id => $(id).value = '');
       document.querySelectorAll('#photos .ph').forEach(e => e.remove());
       $('vinfo').classList.add('hidden'); $('vauto').innerHTML = '';
-      $('dcself').classList.remove('sel'); $('dckbk').classList.remove('sel');
-      $('selfx').classList.add('hidden'); $('kbkx').classList.add('hidden');
+      $('dcself').classList.remove('sel'); $('dckry').classList.remove('sel');
+      $('selfx').classList.add('hidden'); $('kryx').classList.add('hidden');
       $('sdone').classList.add('hidden'); $('footer').classList.remove('hidden');
       showStepSection(WORDER[0]);   // ขั้นแรกตามลำดับที่ตั้ง
       $('back').style.visibility = 'hidden'; $('next').textContent = WORDER.length === 1 ? 'ส่งเรื่องแจ้งซ่อม' : 'ถัดไป';
