@@ -43,6 +43,24 @@
   .route .ms{color:var(--primary-600);font-size:20px;flex-shrink:0}
   .dnote{max-width:720px}
 
+  /* ---- ผู้อนุมัติใบแจ้งซ่อม (หัวหน้า) ---- */
+  .apwrap{max-width:760px}
+  .apsearch{width:100%;padding:10px 12px;border:1px solid var(--gray-300);border-radius:var(--r-md);font-family:var(--font);font-size:var(--fs-body);box-sizing:border-box}
+  .aplist{border:1px solid var(--gray-200);border-radius:var(--r-md);margin-top:10px;max-height:268px;overflow-y:auto;background:#fff}
+  .apitem{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--gray-100);cursor:pointer}
+  .apitem:last-child{border-bottom:0}
+  .apitem:hover{background:var(--primary-25)}
+  .apitem.sel{background:var(--primary-50);box-shadow:inset 3px 0 0 var(--primary-600)}
+  .apav{width:34px;height:34px;border-radius:50%;background:var(--gray-100);color:var(--gray-600);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex:none}
+  .apitem.sel .apav{background:var(--primary-600);color:#fff}
+  .apnm{flex:1;min-width:0}
+  .apnm b{display:block;font-size:var(--fs-body)}
+  .apnm span{font-size:var(--fs-xs);color:var(--gray-600)}
+  .apsrc{font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--r-pill);white-space:nowrap}
+  .apsrc.hr{background:var(--primary-50);color:var(--primary-700)}
+  .apsrc.admin{background:var(--warning-50);color:var(--warning-700)}
+  .apnone{padding:14px;font-size:var(--fs-sm);color:var(--gray-500);text-align:center}
+
   .sumbox{background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);padding:6px 16px;max-width:760px;margin-top:14px}
   .sumrow{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px dashed var(--gray-200);font-size:14px}
   .sumrow:last-child{border:none}
@@ -103,6 +121,7 @@
     <div class="nv" id="nav-home" title="หน้าหลัก" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">home</span></div>
     <div class="nv" id="nav-form" title="แจ้งซ่อม" onclick="switchView('form')"><span class="ms">build</span></div>
     <div class="nv" id="nav-my" title="เรื่องแจ้งซ่อมของฉัน" onclick="switchView('my')"><span class="ms">assignment</span></div>
+    <div class="nv" id="nav-boss" title="อนุมัติใบแจ้งซ่อม (หัวหน้า)" onclick="switchView('boss')"><span class="ms">how_to_reg</span><span class="cnt hidden" id="bosscnt"></span></div>
     <div class="nv" id="nav-kry" title="งานคัดแยก กรย." onclick="switchView('kry')"><span class="ms">alt_route</span><span class="cnt hidden" id="krycnt"></span></div>
     <div class="nv" id="nav-kbk" title="งานซ่อม กบค." onclick="switchView('kbk')"><span class="ms">engineering</span><span class="cnt hidden" id="kbkcnt"></span></div>
     <div class="nv" id="nav-sup" title="อนุมัติปิดงาน (ผู้บังคับบัญชา)" onclick="switchView('sup')"><span class="ms">approval</span><span class="cnt hidden" id="supcnt"></span></div>
@@ -111,7 +130,7 @@
   </aside>
 
   <div class="work">
-    <div class="draft">🧪 Mock Flow2 — เดินตามผังต้นฉบับทุกขั้น · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง → กรย. → กบค. → ผู้บังคับบัญชา ได้จากเมนูซ้าย</div>
+    <div class="draft">🧪 Mock Flow2 — เดินตามผังต้นฉบับทุกขั้น · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง → <b>หัวหน้า (อนุมัติใบแจ้งซ่อม)</b> → กรย. → กบค. → ผู้บังคับบัญชา ได้จากเมนูซ้าย</div>
     <div class="topbar">
       <span class="ms">light_mode</span>
       <span class="ms" style="position:relative">notifications<i style="position:absolute;top:0;right:0;width:8px;height:8px;border-radius:50%;background:var(--success-600)"></i></span>
@@ -180,6 +199,12 @@
           <div class="f" style="margin-top:14px"><label>เหตุผลที่ซ่อมเองไม่ได้</label><textarea id="kryreason" rows="2" placeholder="เช่น ต้องใช้เครื่องมือพิเศษ/อะไหล่รอของ…"></textarea></div>
           <div class="route"><span class="ms">alt_route</span><span><b>ส่งให้ กรย. (กองระบบไฟฟ้าและงานโยธา 12 เขต)</b><br>กรย. จะคัดแยกว่าให้ <b>ซ่อมที่อู่</b> · <b>กรย. ซ่อมเอง</b> · หรือ <b>ส่งต่อ กบค.</b> — เอกสารแนบอาการ รูป และอะไหล่ที่จอง/สั่งของให้อัตโนมัติ</span></div>
         </div>
+        <div class="sect" style="margin-top:26px">ผู้อนุมัติใบแจ้งซ่อม <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— <b>ต้องเลือกก่อนส่งเรื่อง</b> · ใบแจ้งซ่อมจะยังไม่เดินต่อจนกว่าหัวหน้าจะอนุมัติ</span></div>
+        <div class="apwrap">
+          <div class="route" style="margin-bottom:12px"><span class="ms">groups</span><span>รายชื่อมาจาก <b>2 แหล่ง</b> เหมือนระบบจริง — <b class="apsrc hr">หัวหน้าสายบังคับบัญชา</b> ดึงจาก HR ตาม <b>หน่วยงาน (dept_sap)</b> ของผู้แจ้ง (จึงได้ชุดเดียวกันทั้งหน่วยงาน) และ <b class="apsrc admin">แอดมินหน่วยงานของรถ</b> จากต้นสังกัดรถคันนั้น</span></div>
+          <input class="apsearch" id="apq" placeholder="ค้นหาชื่อ / รหัสพนักงาน / หน่วยงาน…" oninput="renderApprovers()">
+          <div class="aplist" id="aplist"></div>
+        </div>
         <div class="sect" style="margin-top:26px">สรุปเรื่องแจ้งซ่อม</div>
         <div class="sumbox" id="summary"></div>
       </section>
@@ -214,6 +239,8 @@
           <label for="my-status-filter">กรองตามสถานะ</label>
           <select id="my-status-filter" onchange="renderMyList()">
             <option value="all">ทุกสถานะ</option>
+            <option value="wait">รอหัวหน้าอนุมัติ</option>
+            <option value="reject">หัวหน้าไม่อนุมัติ — ตีกลับ</option>
             <option value="self">บันทึกแล้ว — ซ่อมเอง</option>
             <option value="kry">รอ กรย. คัดแยกช่องทาง</option>
             <option value="krd">กรย. รับไปซ่อมเอง</option>
@@ -232,6 +259,15 @@
         </div>
       </div>
       <div id="mylist"></div>
+    </main>
+
+    <!-- ============ VIEW: อนุมัติใบแจ้งซ่อม (หัวหน้าผู้แจ้ง) ============ -->
+    <main class="content hidden" id="view-boss">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>งานที่รอฉันอนุมัติ</span><span class="sep">›</span><span class="cur">อนุมัติใบแจ้งซ่อม</span></div>
+      <h1 class="page-title">อนุมัติใบแจ้งซ่อม — หัวหน้าผู้แจ้ง</h1>
+      <div class="hint" style="margin-bottom:14px">ขั้นนี้อยู่ <b>ก่อน</b> ส่งถึง กรย. — ใบแจ้งซ่อมที่ผู้แจ้งสร้างแล้วจะค้างที่นี่จนกว่าหัวหน้าที่ถูกเลือกไว้จะกดอนุมัติ</div>
+      <div id="bosslist"></div>
+      <div id="bossdetail" class="hidden"></div>
     </main>
 
     <!-- ============ VIEW: งานคัดแยก กรย. ============ -->
@@ -383,7 +419,20 @@ const JOBS=[
 ];
 
 // ================= STATE =================
-const S={step:1,vehicle:null,target:null,symptoms:[],sev:null,photos:0,bookings:{},orders:{},decision:null};
+const S={step:1,vehicle:null,target:null,symptoms:[],sev:null,photos:0,bookings:{},orders:{},decision:null,approver:null};
+
+// ---- ผู้อนุมัติใบแจ้งซ่อม (mock) ----
+// จำลองสิ่งที่ระบบจริงทำ: FE รวมผลจาก 2 API เป็น dropdown เดียว
+//   src:'hr'    = GET /api/mas/user-confirmer-users → HR /get-emp-manager?dept_sap=… (กรอง type L/A/U + ชั้นบนอีก 1 ชั้น)
+//   src:'admin' = GET /api/vehicle-breakdown/supervisor-list → vms_mas_department_admin ตามต้นสังกัดรถ
+const APPROVERS=[
+  {id:'501621',name:'สมชาย ใจดี',posi:'อก.',dept:'กบค.กฟก.1',src:'hr'},
+  {id:'512004',name:'ปราณี วงศ์ทอง',posi:'หก.บริหารงานทั่วไป',dept:'กบค.กฟก.1',src:'hr'},
+  {id:'498877',name:'วิเชียร แสงทวี',posi:'ผอ.กอง',dept:'กฟจ.นครนายก',src:'hr'},
+  {id:'523119',name:'อนุชา พูนสิน',posi:'พนักงานบริหารงานทั่วไป',dept:'กฟส.องครักษ์',src:'admin'},
+  {id:'530402',name:'ศิริพร ทองแท้',posi:'แอดมินหน่วยงาน',dept:'กฟส.บ้านนา',src:'admin'},
+];
+const APSRC={hr:'หัวหน้าสายบังคับบัญชา',admin:'แอดมินหน่วยงานของรถ'};
 const STEPS=['เลือกรถ','อาการเสีย','อะไหล่ที่แนะนำ','ตัดสินใจและสรุป'];   // (คง fallback — ปัจจุบันใช้ WZ)
 let WZ={vehicle:{on:true,label:'เลือกรถ'},symptom:{on:true,label:'อาการเสีย'},parts:{on:true,label:'อะไหล่ที่แนะนำ'},decision:{on:true,label:'ตัดสินใจและสรุป'}};
 let WORDER=['vehicle','symptom','parts','decision'];   // ลำดับขั้น wizard (จาก cfg.steps.wizard ที่ INIT)
@@ -402,6 +451,8 @@ function badge(p){
   return'<span class="badge b-ok">พร้อมเบิก · เหลือ '+p.stock+'</span>';
 }
 function statusInfo(j){
+  if(j.phase==='wait')return{label:'รอ '+j.approver.name+' อนุมัติ',cls:'b-low'};
+  if(j.phase==='reject')return{label:'ไม่อนุมัติ — ตีกลับให้แก้ไข',cls:'b-low'};
   if(j.phase==='kry')return{label:'รอ กรย. คัดแยกช่องทาง',cls:'b-brand'};
   if(j.phase==='krd')return{label:j.worth==='yes'?'กรย. ซ่อมเอง: '+KRD_STEPS[j.krdStage||0]:'กรย. ประเมินราคา — คุ้มค่าซ่อมหรือไม่',cls:'b-brand'};
   if(j.phase==='pending')return{label:'รอ กบค. รับเรื่อง',cls:'b-brand'};
@@ -428,16 +479,19 @@ function updateBadge(){
   $('krycnt').textContent=k;$('krycnt').classList.toggle('hidden',k===0);
   const s=JOBS.filter(j=>j.phase==='approve').length;
   $('supcnt').textContent=s;$('supcnt').classList.toggle('hidden',s===0);
+  const b=JOBS.filter(j=>j.phase==='wait').length;
+  $('bosscnt').textContent=b;$('bosscnt').classList.toggle('hidden',b===0);
 }
 
 // ================= VIEW SWITCH =================
 function switchView(v,remember=true){
   if(v!==VIEW){if(remember)VIEW_HISTORY.push(VIEW);VIEW=v}
-  ['form','my','kry','kbk','sup','stock'].forEach(x=>{
+  ['form','my','boss','kry','kbk','sup','stock'].forEach(x=>{
     $('view-'+x).classList.toggle('hidden',x!==v);
     $('nav-'+x).classList.toggle('on',x===v);
   });
   if(v==='my')renderMyList();
+  if(v==='boss')renderBossList();
   if(v==='kry')renderKryList();
   if(v==='kbk')renderKbkList();
   if(v==='sup')renderSupList();
@@ -590,6 +644,20 @@ function order(code){const p=PARTS.find(x=>x.code===code);S.orders[code]=p.need;
 function chgQty(code,d){const p=PARTS.find(x=>x.code===code);const v=(S.bookings[code]||1)+d;if(v<1)return;if(v>p.stock){toast('เกินจำนวนคงเหลือในคลัง ('+p.stock+')');return}S.bookings[code]=v;renderParts()}
 function chgOrd(code,d){const v=(S.orders[code]||1)+d;if(v<1)return;S.orders[code]=v;renderParts()}
 
+// ---------- ผู้อนุมัติใบแจ้งซ่อม ----------
+function renderApprovers(){
+  const q=($('apq').value||'').trim().toLowerCase();
+  const list=APPROVERS.filter(a=>!q||(a.name+' '+a.id+' '+a.dept+' '+a.posi).toLowerCase().includes(q));
+  if(!list.length){$('aplist').innerHTML='<div class="apnone">ไม่พบรายชื่อที่ค้นหา</div>';return}
+  $('aplist').innerHTML=list.map(a=>`
+    <div class="apitem ${S.approver&&S.approver.id===a.id?'sel':''}" onclick="setApprover('${a.id}')">
+      <div class="apav">${esc(a.name.charAt(0))}</div>
+      <div class="apnm"><b>${esc(a.name)}</b><span>${esc(a.id)} · ${esc(a.posi)} · ${esc(a.dept)}</span></div>
+      <span class="apsrc ${a.src}">${APSRC[a.src]}</span>
+    </div>`).join('');
+}
+function setApprover(id){S.approver=APPROVERS.find(a=>a.id===id)||null;renderApprovers();renderSummary()}
+
 function setDecision(d){S.decision=d;$('dcself').classList.toggle('sel',d==='self');$('dckry').classList.toggle('sel',d==='kry');$('selfx').classList.toggle('hidden',d!=='self');$('kryx').classList.toggle('hidden',d!=='kry');renderSummary()}
 function bookedArr(){return Object.entries(S.bookings).map(([c,q])=>{const p=PARTS.find(x=>x.code===c);return{name:p.name,qty:q,unit:p.unit}})}
 function orderedArr(){return Object.entries(S.orders).map(([c,q])=>{const p=PARTS.find(x=>x.code===c);return{name:p.name,qty:q,unit:p.unit,eta:p.eta||'รอยืนยัน'}})}
@@ -605,7 +673,8 @@ function renderSummary(){
     <div class="sumrow"><span>รูปแนบ</span><span>${S.photos} รูป</span></div>
     <div class="sumrow"><span>อะไหล่ที่จอง</span><span>${bk.length?bk.join('<br>'):'ไม่มี'}</span></div>
     <div class="sumrow"><span>อะไหล่ที่สั่งของ (รอเข้า)</span><span>${od.length?od.join('<br>'):'ไม่มี'}</span></div>
-    <div class="sumrow"><span>ดำเนินการ</span><span>${S.decision==='self'?'ซ่อมเอง':S.decision==='kry'?'ส่งเรื่องให้ กรย.':'— ยังไม่เลือก —'}</span></div>`;
+    <div class="sumrow"><span>ดำเนินการ</span><span>${S.decision==='self'?'ซ่อมเอง':S.decision==='kry'?'ส่งเรื่องให้ กรย.':'— ยังไม่เลือก —'}</span></div>
+    <div class="sumrow"><span>ผู้อนุมัติ</span><span>${S.approver?`${esc(S.approver.name)} · ${esc(S.approver.posi)} · ${esc(S.approver.dept)}`:'<span style="color:var(--error-600)">— ยังไม่เลือก —</span>'}</span></div>`;
 }
 
 // ---------- photos ----------
@@ -644,7 +713,10 @@ function validate(){
     if(S.symptoms.includes('OTH')&&!$('othtext').value.trim()){toast('กรุณาระบุอาการในช่อง "อื่นๆ"');return false}
     if(!S.sev){toast('กรุณาเลือกระดับความรุนแรง');return false}
   }
-  if(key==='decision'&&!S.decision){toast('กรุณาเลือก ซ่อมเอง หรือ ส่งเรื่องให้ กรย.');return false}
+  if(key==='decision'){
+    if(!S.decision){toast('กรุณาเลือก ซ่อมเอง หรือ ส่งเรื่องให้ กรย.');return false}
+    if(!S.approver){toast('กรุณาเลือกผู้อนุมัติใบแจ้งซ่อมก่อนส่งเรื่อง');return false}
+  }
   return true;
 }
 function submit(){
@@ -659,8 +731,11 @@ function submit(){
     sev:S.sev,photos:S.photos,desc:esc($('desc').value.trim()),
     booked:bookedArr(),ordered:orderedArr(),
     reason:S.decision==='kry'?esc($('kryreason').value.trim()):esc($('selfnote').value.trim()),
-    phase:S.decision==='kry'?'kry':'returned',wi:0,
-    history:[{t:nowStr(),label:S.decision==='kry'?'ส่งเรื่องถึง กรย. — รอคัดแยกช่องทางซ่อม':'บันทึกเรื่อง — ซ่อมเอง (ขับรถไปซ่อมอู่ → บันทึกการซ่อม)'}]};
+    // ทุกใบต้องผ่านหัวหน้าอนุมัติก่อน — nextPhase คือปลายทางหลังอนุมัติ
+    phase:'wait',nextPhase:S.decision==='kry'?'kry':'returned',wi:0,
+    // เก็บเป็น snapshot ตาม pattern confirmed_request_* ของระบบจริง (ไม่ได้เก็บแค่ emp_id)
+    approver:{...S.approver},
+    history:[{t:nowStr(),label:`สร้างใบแจ้งซ่อม — ส่งขออนุมัติถึง ${S.approver.name} (${S.approver.posi} ${S.approver.dept})`}]};
   if(S.decision==='self'){   // เส้นซ่อมเองตามผัง: ขับรถไปอู่ → บันทึกการซ่อม → Notification ปิดงาน
     job.rstage=0;job.selfRoute=true;
     job.ret={reason:'ผู้แจ้งประเมินว่าซ่อมเองได้ — ขับรถไปซ่อมอู่'+(job.reason?' · '+job.reason:''),garages:[]};
@@ -668,18 +743,16 @@ function submit(){
   JOBS.unshift(job);
   persist();updateBadge();
   $('docno').textContent=no;
-  if(S.decision==='self'){
-    $('docstat').textContent='บันทึกแล้ว — ซ่อมเอง (ขับรถไปซ่อมอู่)';
-    $('docnote').textContent='ไปที่ "เรื่องแจ้งซ่อมของฉัน" เพื่ออัปเดตสถานะ: ขับรถไปซ่อมอู่ → บันทึกการซ่อม → ปิดงาน (ได้รับ Notification)';
-  }else{
-    $('docstat').textContent='ส่งเรื่องแล้ว — รอ กรย. คัดแยก';
-    $('docnote').textContent='เลขที่เรื่องไปแสดงที่เมนู "งานคัดแยก กรย." แล้ว — ติดตามสถานะได้ที่ "เรื่องแจ้งซ่อมของฉัน"';
-  }
+  $('docstat').textContent='ส่งขออนุมัติแล้ว — รอ '+S.approver.name+' อนุมัติ';
+  $('docnote').textContent='ใบแจ้งซ่อมจะยังไม่เดินต่อจนกว่าหัวหน้าจะอนุมัติ · เมื่ออนุมัติแล้วจะไปยัง "'
+    +(S.decision==='kry'?'งานคัดแยก กรย.':'ซ่อมเอง (ขับรถไปซ่อมอู่)')
+    +'" อัตโนมัติ — ทดลองกดอนุมัติได้ที่เมนู "อนุมัติใบแจ้งซ่อม (หัวหน้า)"';
   renderSteps();
 }
 function resetForm(){
-  Object.assign(S,{step:1,vehicle:null,target:null,symptoms:[],sev:null,photos:0,bookings:{},orders:{},decision:null});
-  ['vq','desc','othtext','selfnote','kryreason'].forEach(id=>$(id).value='');
+  Object.assign(S,{step:1,vehicle:null,target:null,symptoms:[],sev:null,photos:0,bookings:{},orders:{},decision:null,approver:null});
+  ['vq','desc','othtext','selfnote','kryreason','apq'].forEach(id=>$(id).value='');
+  renderApprovers();
   document.querySelectorAll('#photos .ph').forEach(e=>e.remove());
   $('vinfo').classList.add('hidden');$('vauto').innerHTML='';
   $('dcself').classList.remove('sel');$('dckry').classList.remove('sel');
@@ -712,7 +785,7 @@ function timelineBox(j){
 }
 
 // ================= VIEW: เรื่องของฉัน =================
-const MY_STATUS_PHASES={self:['self'],kry:['kry'],krd:['krd'],pending:['pending'],returned:['returned'],gclosed:['gclosed'],disposal:['disposal'],sched:['sched'],consent:['consent'],checkin:['checkin'],work:['work'],approve:['approve'],closed:['closed']};
+const MY_STATUS_PHASES={wait:['wait'],reject:['reject'],self:['self'],kry:['kry'],krd:['krd'],pending:['pending'],returned:['returned'],gclosed:['gclosed'],disposal:['disposal'],sched:['sched'],consent:['consent'],checkin:['checkin'],work:['work'],approve:['approve'],closed:['closed']};
 function renderMyList(){
   const list=$('mylist');R.jobNo=null;list.classList.remove('hidden');
   const select=$('my-status-filter'),key=select.value,phases=MY_STATUS_PHASES[key];
@@ -1559,6 +1632,67 @@ function exportCost(no){
 }
 
 // ================= VIEW: อนุมัติปิดงาน (ผู้บังคับบัญชา) =================
+// ================= VIEW: อนุมัติใบแจ้งซ่อม (หัวหน้าผู้แจ้ง) =================
+function renderBossList(){
+  $('bossdetail').classList.add('hidden');$('bosslist').classList.remove('hidden');
+  const list=JOBS.filter(j=>['wait','reject'].includes(j.phase));
+  if(!list.length){$('bosslist').innerHTML='<div class="empty">ไม่มีใบแจ้งซ่อมรออนุมัติ — ลองสร้างใบใหม่จากเมนู “แจ้งซ่อม”</div>';return}
+  $('bosslist').innerHTML=list.map(j=>{
+    const st=statusInfo(j);
+    return`<div class="job" onclick="openBoss('${j.no}')">
+      <span class="ms" style="color:var(--primary-600)">how_to_reg</span>
+      <div class="sp"><div class="no">${j.no}</div><div class="meta">${esc(j.org)} · ${esc(j.plate)} · ขออนุมัติถึง ${esc(j.approver.name)}</div></div>
+      <span class="badge ${st.cls}">${st.label}</span>
+      <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
+  }).join('');
+}
+function openBoss(no){renderBossDetail(no)}
+function renderBossDetail(no){
+  const j=JOBS.find(x=>x.no===no);
+  const st=statusInfo(j);
+  const dest=j.nextPhase==='kry'?'ส่งเรื่องให้ กรย. คัดแยกช่องทางซ่อม':'ซ่อมเอง — ขับรถไปซ่อมอู่ แล้วบันทึกการซ่อม';
+  const apbox=`<div class="apwrap" style="margin-top:14px">
+      <div class="apitem sel" style="border-radius:var(--r-md)">
+        <div class="apav">${esc(j.approver.name.charAt(0))}</div>
+        <div class="apnm"><b>${esc(j.approver.name)}</b><span>${esc(j.approver.id)} · ${esc(j.approver.posi)} · ${esc(j.approver.dept)}</span></div>
+        <span class="apsrc ${j.approver.src}">${APSRC[j.approver.src]}</span>
+      </div></div>`;
+  let action;
+  if(j.phase==='wait'){
+    action=`<div class="sect" style="margin-top:24px">ผู้อนุมัติที่ผู้แจ้งเลือกไว้</div>${apbox}
+      <div class="route" style="margin-top:14px"><span class="ms">alt_route</span><span>ถ้าอนุมัติ เรื่องจะเดินต่อไปที่ <b>${dest}</b> ตามที่ผู้แจ้งเลือกไว้</span></div>
+      <div class="panel"><div class="f"><label>ความเห็น/เหตุผล <small>(บังคับกรอกกรณีไม่อนุมัติ)</small></label><textarea id="boss-reason" rows="2" placeholder="เช่น อาการนี้ซ่อมเองได้ ไม่ต้องส่ง กรย. / ขอรูปเพิ่ม…"></textarea></div>
+        <div class="rowbtns"><button class="btn btn-g" onclick="bossReject('${no}')">ไม่อนุมัติ — ตีกลับ</button><button class="btn btn-p" onclick="bossApprove('${no}')">อนุมัติใบแจ้งซ่อม</button></div></div>`;
+  }else{
+    action=`<div class="apptbox"><span class="ms" style="color:var(--error-600)">cancel</span> <b>ไม่อนุมัติ — ตีกลับให้ผู้แจ้งแก้ไข</b>${j.rejectReason?'<br>เหตุผล: '+esc(j.rejectReason):''}</div>${apbox}`;
+  }
+  $('bosslist').classList.add('hidden');
+  $('bossdetail').classList.remove('hidden');
+  $('bossdetail').innerHTML=`
+    <div class="job" style="cursor:default"><span class="ms" style="color:var(--primary-600)">how_to_reg</span>
+      <div class="sp"><div class="no">${j.no}</div><div class="meta">${esc(j.org)}</div></div>
+      <span class="badge ${st.cls}">${st.label}</span></div>
+    ${jobInfoBox(j)}${action}${timelineBox(j)}
+    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderBossList()">← กลับรายการ</button></div>`;
+}
+function bossApprove(no){
+  const j=JOBS.find(x=>x.no===no);
+  j.phase=j.nextPhase;j.approvedByBoss=true;
+  j.history.push({t:nowStr(),label:`${j.approver.name} อนุมัติใบแจ้งซ่อม`});
+  j.history.push({t:nowStr(),label:j.nextPhase==='kry'?'ส่งเรื่องถึง กรย. — รอคัดแยกช่องทางซ่อม':'บันทึกเรื่อง — ซ่อมเอง (ขับรถไปซ่อมอู่ → บันทึกการซ่อม)'});
+  persist();updateBadge();
+  toast('อนุมัติแล้ว — เรื่องเดินต่อไปที่ '+(j.nextPhase==='kry'?'งานคัดแยก กรย.':'ซ่อมเอง (ขับรถไปซ่อมอู่)'));
+  renderBossList();
+}
+function bossReject(no){
+  const j=JOBS.find(x=>x.no===no);
+  const r=($('boss-reason').value||'').trim();
+  if(!r){toast('กรุณากรอกเหตุผลที่ไม่อนุมัติ');return}
+  j.phase='reject';j.rejectReason=esc(r);
+  j.history.push({t:nowStr(),label:`${j.approver.name} ไม่อนุมัติ — ตีกลับให้แก้ไข · เหตุผล: ${esc(r)}`});
+  persist();updateBadge();toast('ตีกลับให้ผู้แจ้งแก้ไขแล้ว');renderBossDetail(no);
+}
+
 function renderSupList(){
   $('supdetail').classList.add('hidden');$('suplist').classList.remove('hidden');
   const list=JOBS.filter(j=>j.phase==='approve');
@@ -1635,7 +1769,7 @@ window.addEventListener('storage',e=>{
 });
 showStepSection(WORDER[0]);
 $('next').textContent=WORDER.length===1?'ส่งเรื่องแจ้งซ่อม':'ถัดไป';
-renderSteps();renderVehicles();updateBadge();
+renderSteps();renderVehicles();renderApprovers();updateBadge();
 $('back').style.visibility='hidden';
 switchView('form');
 </script>
