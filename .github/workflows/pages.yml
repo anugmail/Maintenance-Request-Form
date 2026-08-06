@@ -1,0 +1,45 @@
+# Deploy หน้า static ขึ้น GitHub Pages ด้วย Actions
+# ย้ายมาจาก legacy branch build (7 ส.ค. 2569) เพราะ legacy พังติดกัน 4 ครั้ง
+# โดยไม่บอกสาเหตุ — Actions มี log เต็มทุกขั้น
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:      # กดรันเองได้จากหน้า Actions ไม่ต้อง push commit เปล่า
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# ถ้ามี deploy ค้างอยู่ ให้ตัวใหม่รอ ไม่ยกเลิกตัวที่กำลังรัน
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ตรวจว่าไฟล์หลักครบ
+        run: |
+          for f in index.html mock/Maintenance-Request-Form.html design-system/components.css; do
+            test -f "$f" || { echo "::error::ไม่พบไฟล์ $f"; exit 1; }
+          done
+          echo "ไฟล์ทั้งหมดที่จะ deploy: $(find . -type f -not -path './.git/*' | wc -l) ไฟล์"
+
+      - uses: actions/configure-pages@v5
+
+      # อัปโหลดทั้ง repo ตามที่เป็น — ไม่ผ่าน Jekyll จึงไม่มีขั้นแปลงไฟล์
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
