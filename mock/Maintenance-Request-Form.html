@@ -1044,6 +1044,35 @@
       margin-top: 2px
     }
 
+    /* ---- หัวงาน + แถบขั้นตอน (หน้าขั้นตอน) ---- */
+    .jobhead{display:flex;align-items:flex-start;gap:14px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-lg);padding:16px 18px}
+    .jh-tx{flex:1;min-width:0}
+    .jh-no{font-size:var(--fs-h1);font-weight:700;color:var(--gray-900)}
+    .jobhead .meta{font-size:var(--fs-sm);color:var(--gray-600)}
+
+    .kstepbar{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 14px}
+    .kstep{display:flex;align-items:center;gap:8px;flex:1;min-width:170px;background:#fff;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:10px 13px}
+    .kstep .num{width:23px;height:23px;border-radius:50%;background:var(--gray-100);color:var(--gray-500);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}
+    .kstep .lbl{display:flex;align-items:center;gap:5px;font-size:13.5px;font-weight:600;color:var(--gray-500)}
+    .kstep .lbl .ms{font-size:17px}
+    .kstep.active{border-color:var(--primary-600);background:var(--primary-25)}
+    .kstep.active .num{background:var(--primary-600);color:#fff}
+    .kstep.active .lbl{color:var(--primary-700)}
+    .kstep.passed .num{background:var(--success-50);color:var(--success-600)}
+    .kstep.passed .lbl{color:var(--gray-600)}
+
+    .reqtoggle{display:flex;align-items:center;gap:8px;width:100%;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);padding:11px 15px;cursor:pointer;font-family:var(--font);font-size:14px;font-weight:600;color:var(--gray-700)}
+    .reqtoggle:hover{border-color:var(--primary-500);color:var(--primary-600)}
+    .reqtoggle .ms{font-size:19px;color:var(--primary-600)}
+    .reqinfo{border-left:3px solid var(--primary-50);padding-left:14px;margin-top:14px}
+
+    /* ---- ปุ่มไปหน้าขั้นตอน (ท้าย accordion ในลิสต์) ---- */
+    .gonext{display:flex;align-items:center;gap:11px;background:var(--primary-25);border:1px solid var(--primary-50);border-left:3px solid var(--primary-600);border-radius:var(--r-md);padding:13px 15px;margin-top:20px;max-width:860px}
+    .gonext>.ms{color:var(--primary-600);font-size:22px;flex:none}
+    .gonext>div{flex:1;min-width:0}
+    .gonext label{display:block;font-size:var(--fs-xs);font-weight:600;color:var(--gray-500);margin-bottom:2px}
+    .gonext b{font-size:14.5px;color:var(--gray-900)}
+
     /* ---- แถบสรุปแหล่งอะไหล่ ---- */
     .srcbar {
       display: flex;
@@ -2492,6 +2521,16 @@
       <div id="kbklist"></div>
     </main>
 
+    <!-- ============ VIEW: ขั้นตอนทำงาน กบค. (แยกหน้าละขั้น) ============ -->
+    <main class="content hidden" id="view-step">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><a href="#kbk"
+          onclick="backToQueue();return false" style="color:inherit;text-decoration:none">งานซ่อม กบค.</a><span
+          class="sep">›</span><span class="cur">ดำเนินการ</span></div>
+      <div id="stepbody"></div>
+      <div class="rowbtns" style="justify-content:flex-start;margin-top:18px">
+        <button class="btn btn-g" onclick="backToQueue()">← กลับคิวงาน</button></div>
+    </main>
+
     <!-- ============ VIEW: ประเมินความคุ้มค่าในการซ่อม (โครงเปล่า) ============ -->
     <main class="content hidden" id="view-worth">
       <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>งานซ่อม กบค.</span><span
@@ -3205,10 +3244,11 @@
     function switchView(v,remember=true) {
       if(v!==VIEW){if(remember)VIEW_HISTORY.push(VIEW);VIEW = v}
       // vhist = หน้าประวัติการซ่อม เปิดจากปุ่มในรายละเอียดงาน จึงไม่มีเมนูซ้ายของตัวเอง
-      ['form', 'my', 'fuel', 'boss', 'kry', 'kbk', 'sup', 'stock', 'vhist', 'worth'].forEach(x => {
+      ['form', 'my', 'fuel', 'boss', 'kry', 'kbk', 'sup', 'stock', 'vhist', 'worth', 'step'].forEach(x => {
         $('view-' + x).classList.toggle('hidden', x !== v);
         const nav = $('nav-' + x); if (nav) nav.classList.toggle('on', x === v);
       });
+      if (v === 'step') renderKbkDetail(STEP.no);
       if (v === 'vhist') renderVehHistory();
       if (v === 'worth') renderWorth();
       if (v === 'my') renderMyList();
@@ -4066,15 +4106,44 @@ function closeKbkDetail(){
   if(KBK_OPEN){const previous=kbkDetail(KBK_OPEN);setKbkCardOpen(KBK_OPEN,false);if(previous){previous.classList.add('hidden');previous.innerHTML=''}}
   KBK_OPEN=no;
   E.mode = null; E.garages = []; E.loc = 'hq'; E.addOpen = false; E.equip = undefined; E.q = ''; K = { slots: {}, note: '', mode: 'range', from: '', to: '', one: '', insp: null, sat: null, ack: false };
-      setKbkCardOpen(no,true);renderKbkDetail(no);
+      setKbkCardOpen(no,true);renderKbkInfo(no);
     }
-    function renderKbkDetail(no) {
-      const j = JOBS.find(x => x.no === no);
+    // ============ ขั้นตอนทำงาน กบค. — แยกหน้าละขั้น ============
+    // renderKbkDetail คงชื่อเดิม เพราะมี caller 35 จุดเรียกหลังเปลี่ยน state
+    let STEP = { no: null };
+    const KSTEPS = [
+      { k:'decide', label:'รับเรื่อง',      icon:'task_alt' },
+      { k:'route',  label:'เลือกวิธีซ่อม',  icon:'alt_route' },
+      { k:'parts',  label:'จัดอะไหล่',      icon:'inventory_2' },
+      { k:'work',   label:'ดำเนินการซ่อม',  icon:'engineering' }
+    ];
+    // ขั้นที่ใบนี้อยู่ตอนนี้ — คิดจากสถานะจริง ไม่ต้องให้ผู้ใช้เลือกเอง
+    function stepOf(j){
+      if(j.phase==='pending')return 'decide';
+      if(j.phase==='quote')return 'route';
+      if(j.phase==='work'&&!j.route)return 'route';
+      if(j.phase==='work'&&j.route==='self'&&!j.partsOK)return 'parts';
+      return 'work';
+    }
+    function stepIndex(j){ return KSTEPS.findIndex(x=>x.k===stepOf(j)) }
+
+    function openStep(no){
+      const j=JOBS.find(x=>x.no===no); if(!j)return;
+      E.mode=null; E.garages=[]; E.loc='hq'; E.addOpen=false; E.equip=undefined; E.q='';
+      K={slots:{},note:'',mode:'range',from:'',to:'',one:'',insp:null,sat:null,ack:false};
+      STEP={no};
+      switchView('step');
+      try{history.replaceState(null,'','#kbk/'+encodeURIComponent(no)+'/'+stepOf(j))}catch(e){}
+    }
+    function backToQueue(){ try{history.replaceState(null,'','#kbk')}catch(e){}; switchView('kbk') }
+    function toggleReqInfo(){ STEP.showInfo=!STEP.showInfo; renderKbkDetail(STEP.no) }
+
+    function kbkActionHTML(no, j){
       let action = '';
 
       if (j.phase === 'pending') {
         // ประเมินความคุ้มค่า/Overhaul/จำหน่าย ย้ายออกจากหน้านี้แล้ว — เหลือแค่ 2 ทางเลือก
-        action = vehHistoryPanel(j) + `<div class="sect" style="margin-top:24px">สถานะการแจ้งซ่อมครั้งนี้ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เลือกว่าจะรับไว้ซ่อม หรือส่งกลับให้ซ่อมเอง</span></div>
+        action = `<div class="sect" style="margin-top:24px">สถานะการแจ้งซ่อมครั้งนี้ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เลือกว่าจะรับไว้ซ่อม หรือส่งกลับให้ซ่อมเอง</span></div>
     <div id="kbkdec-${no}" style="margin-top:10px"></div>`;
         if (E.mode === 'accept') {
           // ตัด "รูปแบบการซ่อม งานใหญ่/งานเล็ก" ออกจากขั้นรับเรื่อง — ทุกใบเดินแทร็ก สนญ. (E.loc='hq')
@@ -4197,35 +4266,93 @@ function closeKbkDetail(){
           + costPanel(j);
       }
 
-  const detail=kbkDetail(no);detail.classList.remove('hidden');
-  detail.innerHTML=`
-    <div class="ops-detail-layout">
-      <div class="ops-detail-main">${vehInfoBox(j)}${action}</div>
-      <aside class="ops-detail-side">
-        ${timelineBox(j)}
-      </aside>
-    </div>`;
-  // mount shared component "ตัวเลือกการตัดสินใจ" — สลับหน้าตาได้ที่ Admin (variants.kbkDecision)
-  // มี fallback เผื่อ ui-components.js เป็นเวอร์ชันเก่าค้าง cache — จะได้ไม่เหลือช่องว่างเปล่าๆ
-  const dec=document.getElementById('kbkdec-'+no);
-  if(dec){
-    if(window.UIC&&UIC.kbkDecision){
-      UIC.kbkDecision.render(dec,{variant:UI.kbkDecision||'tiles',selected:E.mode,
-        onPick:v=>{E.mode=v;renderKbkDetail(no)}});
-    }else{
-      dec.innerHTML=`<div class="kbkdec-tiles"><div class="decide" style="margin-top:0">
-        <div class="tile tile-magenta ${E.mode==='accept'?'sel':''}" onclick="E.mode='accept';renderKbkDetail('${no}')"><span class="ms">task_alt</span><b>รับไว้ซ่อม</b><small>กบค. ดำเนินการซ่อมเอง</small></div>
-        <div class="tile tile-blue ${E.mode==='return'?'sel':''}" onclick="E.mode='return';renderKbkDetail('${no}')"><span class="ms">u_turn_left</span><b>ส่งกลับให้ซ่อมเอง</b><small>คืนหน่วยงานผู้แจ้ง พร้อมเหตุผล</small></div>
-      </div></div>`;
+      return action;
     }
-  }
-  // mount shared component "ตัวเลือกวันนัด" (มีเฉพาะตอน wi===4 หน้าเปิดตารางว่าง)
-  const dpk=document.getElementById('dpk');
-  if(dpk)UIC.dayPicker.render(dpk,{variant:UI.slotPicker,days:Object.keys(K.slots),state:K,
-    onToggleDay:iso=>chipDay(no,iso),
-    onAddRange:()=>addRange(no),onAddOne:()=>addOne(no),
-    onState:p=>Object.assign(K,p)});
-}
+
+    function renderKbkDetail(no){
+      no = no || STEP.no;
+      const j = JOBS.find(x => x.no === no);
+      if(!j){ $('stepbody').innerHTML='<div class="empty">ไม่พบใบแจ้งซ่อม</div>'; return }
+      STEP.no = no;
+      const st=statusInfo(j), t=vehType(j), ok=vehUsable(j), cur=stepIndex(j);
+      try{history.replaceState(null,'','#kbk/'+encodeURIComponent(no)+'/'+stepOf(j))}catch(e){}
+      $('stepbody').innerHTML = `
+    <div class="jobhead">
+      <div class="jh-tx">
+        <div class="jh-no">${esc(j.no)}</div>
+        <div class="vline" style="margin:4px 0 0">
+          <span class="vplate">${esc(j.plate)}</span>
+          <span class="vchip ${t.cls}"><span class="ms">${t.icon}</span>${t.name}</span>
+          <span class="vstat ${ok?'ok':'no'}"><span class="ms">${ok?'check_circle':'do_not_disturb_on'}</span>${ok?'ใช้งานได้':'ใช้งานไม่ได้'}</span>
+        </div>
+        <div class="meta" style="margin-top:4px">${esc(j.org)} · ${esc(j.syms[0])}${j.syms.length>1?' +'+(j.syms.length-1):''}</div>
+      </div>
+      <span class="badge ${st.cls}">${st.label}</span>
+    </div>
+
+    <div class="kstepbar">${KSTEPS.map((x,i)=>
+      `<div class="kstep ${i===cur?'active':i<cur?'passed':''}">
+         <span class="num">${i<cur?'✓':i+1}</span>
+         <span class="lbl"><span class="ms">${x.icon}</span>${x.label}</span></div>`).join('')}</div>
+
+    <button type="button" class="reqtoggle" onclick="toggleReqInfo()">
+      <span class="ms">${STEP.showInfo?'expand_less':'description'}</span>
+      ${STEP.showInfo?'ซ่อนรายละเอียดใบแจ้งซ่อม':'ดูรายละเอียดใบแจ้งซ่อม'}
+      <span class="ms" style="margin-left:auto">${STEP.showInfo?'expand_less':'expand_more'}</span>
+    </button>
+    ${STEP.showInfo?`<div class="reqinfo">${vehInfoBox(j)}${vehHistoryPanel(j)}</div>`:''}
+
+    <div class="ops-detail-layout" style="padding-top:8px">
+      <div class="ops-detail-main">${kbkActionHTML(no,j)}</div>
+      <aside class="ops-detail-side">${timelineBox(j)}</aside>
+    </div>`;
+      const dec=document.getElementById('kbkdec-'+no);
+      if(dec){
+        if(window.UIC&&UIC.kbkDecision){
+          UIC.kbkDecision.render(dec,{variant:UI.kbkDecision||'tiles',selected:E.mode,
+            onPick:v=>{E.mode=v;renderKbkDetail(no)}});
+        }else{
+          dec.innerHTML=`<div class="kbkdec-tiles"><div class="decide" style="margin-top:0">
+            <div class="tile tile-magenta ${E.mode==='accept'?'sel':''}" onclick="E.mode='accept';renderKbkDetail('${no}')"><span class="ms">task_alt</span><b>รับไว้ซ่อม</b><small>กบค. ดำเนินการซ่อมเอง</small></div>
+            <div class="tile tile-blue ${E.mode==='return'?'sel':''}" onclick="E.mode='return';renderKbkDetail('${no}')"><span class="ms">u_turn_left</span><b>ส่งกลับให้ซ่อมเอง</b><small>คืนหน่วยงานผู้แจ้ง พร้อมเหตุผล</small></div>
+          </div></div>`;
+        }
+      }
+      const dpk=document.getElementById('dpk');
+      if(dpk)UIC.dayPicker.render(dpk,{variant:UI.slotPicker,days:Object.keys(K.slots),state:K,
+        onToggleDay:iso=>chipDay(no,iso),
+        onAddRange:()=>addRange(no),onAddOne:()=>addOne(no),
+        onState:p=>Object.assign(K,p)});
+    }
+
+    // accordion ในลิสต์ = รายละเอียดใบแจ้งซ่อมครบเหมือนเดิม + ปุ่มไปหน้าขั้นตอน
+    function renderKbkInfo(no){
+      const j=JOBS.find(x=>x.no===no); if(!j)return;
+      const d=kbkDetail(no); d.classList.remove('hidden');
+      d.innerHTML=`
+    <div class="ops-detail-layout">
+      <div class="ops-detail-main">${vehInfoBox(j)}${vehHistoryPanel(j)}
+        <div class="gonext"><span class="ms">bolt</span>
+          <div><label>สิ่งที่ต้องทำต่อ</label><b>${esc(nextActionText(j))}</b></div>
+          <button class="btn btn-p" onclick="event.stopPropagation();openStep('${j.no}')">ดำเนินการต่อ →</button></div>
+      </div>
+      <aside class="ops-detail-side">${timelineBox(j)}</aside>
+    </div>`;
+    }
+    // ข้อความ "ต้องทำอะไรต่อ" — ตามสถานะจริงของใบ
+    function nextActionText(j){
+      if(j.phase==='pending')return 'รอคุณเลือกว่าจะรับไว้ซ่อม หรือส่งกลับให้ซ่อมเอง';
+      if(j.phase==='work'&&!j.route)return 'รอคุณเลือกว่าจะซ่อมเองได้ หรือส่งอู่ประเมินราคา';
+      if(j.phase==='work'&&j.route==='self'&&!j.partsOK)return 'รอคุณจัดรายการอะไหล่ให้ครบแล้วกดยืนยัน';
+      if(j.phase==='quote')return j.quote&&j.quote.sent?'รอใบเสนอราคาจาก '+esc(j.quote.garage):'รอคุณระบุอู่ที่จะส่งประเมินราคา';
+      if(j.phase==='work'&&TG.inspection&&!j.inspIn&&j.wi===0)return 'รอคุณบันทึกตรวจสภาพรับรถเข้าซ่อม';
+      if(j.phase==='work'&&j.wi<4)return 'รอคุณอัปเดตสถานะ → '+KBK_STEPS[j.wi+1];
+      if(j.phase==='work')return 'รอคุณเปิดตารางว่างให้ผู้แจ้งเลือกวันนัดรับ';
+      if(j.phase==='slots')return 'รอผู้แจ้งเลือกวันนัดรับ';
+      if(j.phase==='appt')return 'รอตรวจสภาพขาออก + ส่งมอบรถวันนัด';
+      if(j.phase==='returned')return 'รอหน่วยงานผู้แจ้งซ่อมและบันทึกปิดงาน';
+      return 'ไม่มีงานค้าง';
+    }
 function toggleGarage(id){E.garages.includes(id)?E.garages=E.garages.filter(x=>x!==id):E.garages.push(id)}
 function kbkSendTech(no){
   const j=JOBS.find(x=>x.no===no);
@@ -4827,7 +4954,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
     renderSteps(); renderVehicles(); renderApprovers(); updateBadge();
     $('back').style.visibility = 'hidden';
     // deep-link: ถ้ามี #view ที่ถูกต้อง (เช่น #kbk หรือ #view-kbk) ให้เปิดหน้านั้น — ใช้โดยหน้า 05-review-milestones
-    const VALID_VIEWS = ['form', 'my', 'fuel', 'boss', 'kry', 'kbk', 'sup', 'stock', 'vhist', 'worth'];
+    const VALID_VIEWS = ['form', 'my', 'fuel', 'boss', 'kry', 'kbk', 'sup', 'stock', 'vhist', 'worth', 'step'];
     const hashView = v => VALID_VIEWS.includes(v = (location.hash || '').replace(/^#\/?/, '').replace(/^view-/, '')) ? v : '';
     const sv = hashView() || CFG.demo.startView || 'form';
     switchView(menuOn(sv) ? sv : 'form');   // ถ้า startView ถูกปิดเมนู → เปิดหน้าแรก

@@ -1,0 +1,124 @@
+<!DOCTYPE html><meta charset="utf-8"><title>เทสเส้นงาน กบค.</title>
+<!-- เทสครอบทุกเฟสของหน้างานซ่อม กบค. — รันก่อน/หลังรื้อโครงหน้า ต้องผ่านเท่ากัน -->
+<style>body{font:13px/1.6 ui-monospace,monospace;margin:0;padding:16px}
+iframe{width:1240px;height:800px;border:1px solid #ddd}
+.pass{color:#067647}.fail{color:#b42318;font-weight:700}</style>
+<iframe id="f" src="../Maintenance-Request-Form.html"></iframe>
+<pre id="out">running…</pre>
+<script>
+const R=[];let pass=0,fail=0;
+const f=document.getElementById('f');
+f.onload=()=>setTimeout(()=>{
+  const w=f.contentWindow,E=s=>w.eval(s);
+  const ok=(name,got,want)=>{
+    const good=String(got)===String(want);
+    good?pass++:fail++;
+    R.push((good?'  ok  ':'FAIL  ')+name+(good?'':`\n        คาดหวัง: ${want}\n        ได้จริง: ${got}`));
+  };
+  const T=(name,expr,want)=>{try{ok(name,E(expr),want)}catch(e){ok(name,'ERR '+e.message,want)}};
+  const N='MTD-690716-031';
+  try{
+    // ---------- เฟส pending ----------
+    E(`switchView('kbk');openStep('${N}')`);
+    T('pending: สถานะ','statusInfo(JOBS.find(x=>x.no===\''+N+'\')).label','รอ กบค. รับเรื่อง');
+    T('pending: อยู่ขั้น รับเรื่อง',"stepOf(JOBS.find(x=>x.no==='"+N+"'))",'decide');
+    E("STEP.showInfo=true;renderKbkDetail('"+N+"')");
+    T('pending: กล่องรายละเอียด 7 ช่อง',"document.querySelectorAll('.vgrid .vcell').length",7);
+    T('pending: การ์ดผู้ติดต่อ 3 ใบ',"document.querySelectorAll('.pcard').length",3);
+    T('pending: มีงบ',"!!document.querySelector('.budgetbox')",true);
+    T('pending: ปุ่มประวัติการซ่อมยังอยู่',"(document.querySelector('.histbtn')||{}).tagName",'BUTTON');
+    E("STEP.showInfo=false;renderKbkDetail('"+N+"')");
+    T('pending: ตัวเลือกตัดสินใจ 2 ปุ่ม',"document.querySelectorAll('#stepbody [data-value]').length",2);
+    T('pending: ไม่มีรูปแบบการซ่อม',"/รูปแบบการซ่อม/.test($('stepbody').innerHTML)",false);
+
+    // ---------- ส่งกลับ ----------
+    E(`document.querySelectorAll('#stepbody .tile')[1].click()`);
+    T('ส่งกลับ: มี freetext',"!!$('retnote')",true);
+    T('ส่งกลับ: ไม่กรอกแล้วกด → ไม่เปลี่ยน',"kbkReturn('"+N+"');JOBS.find(x=>x.no==='"+N+"').phase",'pending');
+
+    // ---------- รับไว้ซ่อม ----------
+    E(`document.querySelectorAll('#stepbody .tile')[0].click()`);
+    T('รับเรื่อง: มีบันทึกการรับเรื่อง',"!!$('acnote')",true);
+    E(`$('acnote').value='คิวช่างว่างพฤหัส';kbkAccept('${N}')`);
+    T('รับเรื่อง: phase','JOBS.find(x=>x.no===\''+N+'\').phase','work');
+    T('รับเรื่อง: สถานะ','statusInfo(JOBS.find(x=>x.no===\''+N+'\')).label','รับเรื่องแล้ว — รอเลือกวิธีซ่อม');
+
+    // ---------- เลือกวิธีซ่อม ----------
+    T('วิธีซ่อม: 2 ตัวเลือก',"[...document.querySelectorAll('#stepbody .kbkdec-tiles .tile b')].map(e=>e.textContent).join('|')",'ซ่อมเองได้|ส่งอู่ประเมินราคา');
+    E(`kbkSetRoute('${N}','self')`);
+    T('ซ่อมเอง: สถานะ','statusInfo(JOBS.find(x=>x.no===\''+N+'\')).label','กำลังจัดรายการอะไหล่');
+
+    // ---------- อะไหล่ ----------
+    T('ซ่อมเอง: เลื่อนไปขั้น จัดอะไหล่',"stepOf(JOBS.find(x=>x.no==='"+N+"'))",'parts');
+    T('อะไหล่: ตั้งต้นจากผู้แจ้ง','JOBS.find(x=>x.no===\''+N+'\').parts.length',1);
+    E(`kbkPartAdd('${N}','FT-1108');kbkPartAdd('${N}','WR-1000');kbkPartAdd('${N}','PM-2210')`);
+    T('อะไหล่: 3 กลุ่มแหล่ง',"document.querySelectorAll('.ptab tr.ghead').length",3);
+    T('อะไหล่: ลำดับกลุ่ม',"[...document.querySelectorAll('.ptab tr.ghead')].map(e=>e.className).join(' ')",'ghead si ghead alt ghead buy');
+    T('อะไหล่: เตือนของสั่งซื้อ',"!!document.querySelector('.srcwarn')",true);
+    T('อะไหล่: ยอดรวม','partsTotal(JOBS.find(x=>x.no===\''+N+'\').parts)',30400);
+    T('อะไหล่: +1 ได้',"kbkPartQty('"+N+"','FT-1108',1);JOBS.find(x=>x.no==='"+N+"').parts.find(p=>p.code==='FT-1108').qty",3);
+    T('อะไหล่: ลบได้',"kbkPartDel('"+N+"','FT-1108');JOBS.find(x=>x.no==='"+N+"').parts.some(p=>p.code==='FT-1108')",false);
+    E(`E.addOpen=true;renderKbkDetail('${N}')`);
+    T('เลือกอะไหล่: ตั้งต้นรุ่นของรถ','E.equip','SK17A');
+    T('เลือกอะไหล่: ค้นหาได้',"E.q='สลิง';renderAddList('"+N+"');E.q='';renderAddList('"+N+"');true",true);
+    T('เลือกอะไหล่: ป้ายแหล่งครบ',"E.equip='all';renderAddList('"+N+"');['si','alt','buy'].every(k=>document.querySelectorAll('.addrow .ptag.src-'+k).length>0)",true);
+    T('ปุ่มประเมินความคุ้มค่า',"/ประเมินความคุ้มค่า/.test($('stepbody').innerHTML)",true);
+    E(`E.addOpen=false;kbkPartsConfirm('${N}')`);
+    T('ยืนยันอะไหล่: partsOK','JOBS.find(x=>x.no===\''+N+'\').partsOK',true);
+    T('ยืนยันอะไหล่: สถานะ','statusInfo(JOBS.find(x=>x.no===\''+N+'\')).label','รับเรื่องซ่อม');
+    T('ยืนยันแล้ว: อยู่ขั้น ดำเนินการซ่อม',"stepOf(JOBS.find(x=>x.no==='"+N+"'))",'work');
+    T('ยืนยันแล้ว: ยังเห็นสรุปอะไหล่ 3 กลุ่ม',"document.querySelectorAll('.ptab tr.ghead').length",3);
+    T('ยืนยันแล้ว: แก้ไม่ได้',"document.querySelectorAll('#stepbody .pdel').length",0);
+
+
+    // ---------- ตรวจสภาพ + เดินสถานะ ----------
+    T('มี stepper 5 ขั้น',"document.querySelectorAll('#stepbody .wstep').length",5);
+    T('stepper ชื่อใหม่',"KBK_STEPS.join('|')",'รับเรื่องซ่อม|จัดหาอะไหล่|อะไหล่พร้อม|ดำเนินการซ่อม|ซ่อมเสร็จ');
+    T('ยังไม่ตรวจสภาพ → เดินสถานะไม่ได้',"kbkAdvance('"+N+"');JOBS.find(x=>x.no==='"+N+"').wi",0);
+    E(`const j=JOBS.find(x=>x.no==='${N}');j.inspIn={fuel:'½',odo:'84,120',defects:[],extra:'',t:nowStr()};renderKbkDetail('${N}')`);
+    T('ตรวจสภาพแล้ว → เดินได้',"kbkAdvance('"+N+"');JOBS.find(x=>x.no==='"+N+"').wi",1);
+    E(`kbkAdvance('${N}');kbkAdvance('${N}');kbkAdvance('${N}')`);
+    T('เดินถึงขั้นสุดท้าย','JOBS.find(x=>x.no===\''+N+'\').wi',4);
+    T('ขั้นสุดท้าย: มีตัวเลือกวันนัด',"!!$('dpk')",true);
+
+    // ---------- ประวัติรถ ----------
+    T('เปิดหน้าประวัติรถ',"openVehHistory('82-6789 ขอนแก่น','"+N+"');!$('view-vhist').classList.contains('hidden')",true);
+    T('  มีตาราง 6 คอลัมน์',"document.querySelectorAll('#vhistbody th').length",6);
+
+    // ---------- ประเมินความคุ้มค่า ----------
+    T('เปิดหน้าประเมินความคุ้มค่า',"openWorth('"+N+"');!$('view-worth').classList.contains('hidden')",true);
+
+    // ---------- เส้นส่งอู่ประเมินราคา ----------
+    const M='MTD-690715-018';
+    E(`const j=JOBS.find(x=>x.no==='${M}');j.phase='pending';j.wi=0;delete j.route;delete j.partsOK;delete j.parts;openStep('${M}');document.querySelectorAll('#stepbody .tile')[0].click();kbkAccept('${M}');kbkSetRoute('${M}','garage')`);
+    T('ส่งอู่: phase','JOBS.find(x=>x.no===\''+M+'\').phase','quote');
+    T('ส่งอู่: ไม่กรอกอู่ → ส่งไม่ได้',"kbkSendGarage('"+M+"');!!JOBS.find(x=>x.no==='"+M+"').quote",false);
+    T('ส่งอู่: กรอกแล้วส่งได้',"$('q-garage').value='อู่ช่างเอก';kbkSendGarage('"+M+"');statusInfo(JOBS.find(x=>x.no==='"+M+"')).label",'รอใบเสนอราคาจากอู่');
+    T('คิวงานเห็นใบ quote',"renderKbkList();$('kbklist').innerHTML.includes('"+M+"')",true);
+    T('ฟิลเตอร์ quote',"$('kbk-status-filter').value='quote';renderKbkList();document.querySelectorAll('#kbklist .kbk-job').length",1);
+    E("$('kbk-status-filter').value='all';renderKbkList()");
+    // ---------- โครงหน้าใหม่ ----------
+    // ---------- โครงหน้าใหม่: ลิสต์เก็บรายละเอียดครบ + ขั้นตอนแยกหน้า ----------
+    // รีเซ็ตใบกลับเป็น pending ก่อน — เทสข้างบนเดินใบนี้ไปถึงขั้นซ่อมแล้ว
+    E("const j=JOBS.find(x=>x.no==='"+N+"');j.phase='pending';j.wi=0;delete j.route;delete j.partsOK;delete j.parts;delete j.inspIn;");
+    E("switchView('kbk');openKbk('"+N+"')");
+    T('ลิสต์: รายละเอียด 7 ช่องยังอยู่ครบ',"document.querySelectorAll('#kbk-detail-"+N+" .vgrid .vcell').length",7);
+    T('ลิสต์: ผู้ติดต่อ 3 การ์ด',"document.querySelectorAll('#kbk-detail-"+N+" .pcard').length",3);
+    T('ลิสต์: งบยังอยู่',"!!document.querySelector('#kbk-detail-"+N+" .budgetbox')",true);
+    T('ลิสต์: ปุ่มประวัติการซ่อมยังอยู่',"!!document.querySelector('#kbk-detail-"+N+" .histbtn')",true);
+    T('ลิสต์: ไม่มีปุ่มตัดสินใจแล้ว',"document.querySelectorAll('#kbk-detail-"+N+" .kbkdec-tiles').length",0);
+    T('ลิสต์: มีปุ่มดำเนินการต่อ',"/ดำเนินการต่อ/.test($('kbk-detail-"+N+"').innerHTML)",true);
+    T('กดดำเนินการต่อ → หน้าขั้นตอน',"openStep('"+N+"');!$('view-step').classList.contains('hidden')",true);
+    T('  ลิสต์ถูกซ่อน',"$('view-kbk').classList.contains('hidden')",true);
+    T('  แถบขั้นตอน 4 ขั้น',"document.querySelectorAll('.kstepbar .kstep').length",4);
+    T('  ขั้นที่ active ถูกต้อง',"document.querySelectorAll('.kstepbar .kstep')[0].className.includes('active')",true);
+    T('  กางรายละเอียดในหน้าขั้นตอนได้',"toggleReqInfo();document.querySelectorAll('.reqinfo .vcell').length",7);
+    T('  ปิดกลับได้',"toggleReqInfo();document.querySelectorAll('.reqinfo').length",0);
+    T('  deep-link มีขั้นตอน',"location.hash",'#kbk/MTD-690716-031/decide');
+    T('  กลับคิวงาน',"backToQueue();!$('view-kbk').classList.contains('hidden')",true);
+  }catch(e){R.push('FATAL '+e.message+'\n'+e.stack);fail++}
+  document.getElementById('out').innerHTML=
+    `<b class="${fail?'fail':'pass'}">ผ่าน ${pass} · ตก ${fail}</b>\n\n`+
+    R.map(l=>l.startsWith('FAIL')?`<span class="fail">${l}</span>`:`<span class="pass">${l}</span>`).join('\n');
+},1600);
+</script>
