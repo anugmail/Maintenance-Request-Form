@@ -12,7 +12,7 @@
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
   <link rel="stylesheet" href="../design-system/tokens.css">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260724-sidebar-smooth">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260807-align">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -20,7 +20,7 @@
   <!-- OCR อ่านเลขที่สลิปเติมน้ำมัน ⛽ — รันฝั่ง client ล้วน ใช้ได้แม้ไม่มีเน็ต -->
   <style>
     /* ---------- เฉพาะหน้านี้ — ค่าสีมาจาก tokens เท่านั้น ---------- */
-    /* .vlist/.veh ย้ายไป design-system/components.css (shared UI components) */
+    /* .vlist/.veh ย้ายไป design-system/components.css?v=20260807-align (shared UI components) */
 
     .cat {
       font-size: 14px;
@@ -1043,6 +1043,44 @@
       color: var(--gray-500);
       margin-top: 2px
     }
+
+    /* ---- ขั้น "ข้อมูลติดต่อ · สถานที่ · งบ" ---- */
+    .fsub{font-size:14px;font-weight:600;color:var(--gray-900);margin:24px 0 0;padding-top:4px}
+    .fsub:first-child{margin-top:8px}
+    .fsub small{font-weight:400;color:var(--gray-500)}
+    /* ---- จัดระนาบขั้น "ข้อมูลติดต่อ · สถานที่ · งบ" ---- */
+    .iwrap{max-width:1000px}
+    /* align-items:end = ก้นช่องกรอกเสมอกันทุกคอลัมน์ ต่อให้ label ตกบรรทัด */
+    .fgrid.ig{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 20px;align-items:end;margin:12px 0 0}
+    .fgrid.ig .f{min-width:0}
+    .fgrid.ig .f label{margin-bottom:7px;line-height:1.35}
+    .fsel{height:46px}
+    .areanote{font-size:var(--fs-xs);color:var(--gray-600);margin:8px 0 0;line-height:var(--lh)}
+    .areanote b{color:var(--primary-700)}
+    .ctlist{align-items:stretch}
+    .ctopt{align-items:center}
+    .ct-tx{min-width:0}
+
+    .fsel{width:100%;padding:11px 12px;border:1px solid var(--gray-300);border-radius:var(--r-md);font-family:var(--font);font-size:var(--fs-body);background:#fff;color:var(--gray-900)}
+    .ctlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+    .ctopt{display:flex;align-items:flex-start;gap:10px;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;background:#fff}
+    .ctopt:hover{border-color:var(--primary-500)}
+    .ctopt.sel{border-color:var(--primary-600);background:var(--primary-25)}
+    .ctopt .dot{width:17px;height:17px;border-radius:50%;border:2px solid var(--gray-300);flex:none;margin-top:2px}
+    .ctopt.sel .dot{border-color:var(--primary-600);border-width:5px}
+    .ct-tx b{display:block;font-size:14px;color:var(--gray-900)}
+    .ct-tx small{font-size:var(--fs-xs);color:var(--gray-500);line-height:1.45;display:block;margin-top:2px}
+    #i-usable .sg{display:flex;align-items:center;justify-content:center;gap:6px}
+    @media(max-width:1100px){.fgrid.ig{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:640px){.fgrid.ig{grid-template-columns:1fr}.ctlist{grid-template-columns:1fr}}
+    #i-usable .sg .ms{font-size:18px}
+
+    /* ---- แถวในคิวงาน: 2 บรรทัด (เลขที่ใบ | ทะเบียน+ชิป / หน่วยงาน·อาการ) ---- */
+    .rowtop{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:3px}
+    .rowtop .no{font-weight:700;color:var(--gray-900);font-size:15px;letter-spacing:.2px}
+    /* เส้นคั่นให้เห็นชัดว่าเลขที่ใบกับทะเบียนเป็นคนละอย่าง */
+    .vdiv{width:1px;height:15px;background:var(--gray-300);flex:none}
+    .rowtop .vplate{font-weight:600;font-size:14px;color:var(--gray-700);letter-spacing:.2px}
 
     /* ---- หัวงาน + แถบขั้นตอน (หน้าขั้นตอน) ---- */
     .jobhead{display:flex;align-items:flex-start;gap:14px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-lg);padding:16px 18px}
@@ -2354,8 +2392,11 @@
           </div>
           <div class="sect" style="margin-top:24px">รายละเอียดเพิ่มเติม</div>
           <div class="fgrid">
-            <div class="f sp4"><label>ระดับความรุนแรง</label>
-              <div class="rads" id="sev"></div>
+            <div class="f sp4"><label>สถานะรถตอนนี้ <small>(จำเป็น)</small></label>
+              <div class="seg" style="max-width:420px" id="i-usable">
+                <div class="sg" onclick="setUsable(true)"><span class="ms">check_circle</span> ใช้งานได้</div>
+                <div class="sg" onclick="setUsable(false)"><span class="ms">do_not_disturb_on</span> ใช้งานไม่ได้</div>
+              </div>
             </div>
             <div class="f sp4" style="max-width:720px"><label for="desc">คำอธิบายเพิ่มเติม <small>(ถ้ามี)</small></label><textarea id="desc" rows="2"
                 placeholder="เช่น เกิดตอนยกของหนัก น้ำมันหยดใต้กระบอกที่ 2…"></textarea></div>
@@ -2368,6 +2409,49 @@
               </div>
               <input type="file" id="file" accept="image/*" multiple class="hidden" onchange="addFiles(this.files)">
             </div>
+          </div>
+        </section>
+
+        <section id="sinfo" class="hidden">
+          <div class="sect"><span id="head-info">ข้อมูลติดต่อ · สถานที่ · งบ</span> <span
+              style="font-weight:400;font-size:13px;color:var(--gray-500)">— ข้อมูลชุดนี้ กบค. ต้องใช้ตอนรับเรื่อง ระบบเติมให้จากข้อมูลรถแล้ว แก้ได้</span></div>
+
+          <div class="iwrap">
+          <div class="fsub">รถอยู่ที่ไหน และใช้งานมาเท่าไร</div>
+          <div class="fgrid ig">
+            <div class="f"><label>จังหวัด <small>(จำเป็น)</small></label>
+              <select id="i-prov" class="fsel" onchange="onProvChange()"></select></div>
+            <div class="f"><label>หน่วยงานในพื้นที่ <small>(อำเภอที่รถอยู่)</small></label>
+              <select id="i-amp" class="fsel"></select></div>
+            <div class="f"><label>เลขไมล์ (กม.)</label>
+              <div class="in"><span class="ms">speed</span><input type="number" min="0" id="i-odo" placeholder="เช่น 84120"></div></div>
+            <div class="f"><label id="lbl-crane">ชั่วโมงใช้งานเครน/กระเช้า</label>
+              <div class="in"><span class="ms">schedule</span><input type="number" min="0" id="i-crane" placeholder="เช่น 3210"></div></div>
+          </div>
+          <div class="areanote" id="areanote"></div>
+
+          <div class="fsub">ผู้ติดต่อ</div>
+          <div class="fgrid ig">
+            <div class="f"><label>หน่วยงานเจ้าของเรื่อง</label>
+              <div class="in"><span class="ms">apartment</span><input type="text" id="i-own" ></div></div>
+            <div class="f"><label>เบอร์หน่วยงาน <small>(อย่างน้อย 1 เบอร์)</small></label>
+              <div class="in"><span class="ms">call</span><input type="tel" id="i-owntel" placeholder="เช่น 043-221-100"></div></div>
+            <div class="f"><label>ช่างคุมรถ</label>
+              <div class="in"><span class="ms">engineering</span><input type="text" id="i-tech" placeholder="ชื่อ-สกุล"></div></div>
+            <div class="f"><label>เบอร์ช่างคุมรถ</label>
+              <div class="in"><span class="ms">call</span><input type="tel" id="i-techtel" placeholder="08x-xxx-xxxx"></div></div>
+            <div class="f"><label>พนักงานขับรถ (พขร.)</label>
+              <div class="in"><span class="ms">badge</span><input type="text" id="i-drv" placeholder="ชื่อ-สกุล"></div></div>
+            <div class="f"><label>เบอร์ พขร.</label>
+              <div class="in"><span class="ms">call</span><input type="tel" id="i-drvtel" placeholder="08x-xxx-xxxx"></div></div>
+          </div>
+
+          <div class="fsub">งบที่จะตัด <small>(จำเป็น)</small></div>
+          <div class="ctlist" id="i-costtypes"></div>
+          <div class="fgrid ig" id="i-costfields"></div>
+          <div class="hint" style="margin-top:10px"><span class="ms" style="font-size:16px">info</span>
+            โครงประเภทงบ (code 1–4) และช่องที่ต้องกรอกแต่ละแบบ อิงจาก <code>vms_ref_cost_type</code> ของระบบจริง —
+            <b>ชื่องบเป็นข้อมูลสมมติ</b> ของจริงดึงจาก <code>GET /api/ref/cost-type</code></div>
           </div>
         </section>
 
@@ -2600,7 +2684,6 @@
       { id: 'OTH', cat: 'oth', name: 'อื่นๆ ระบุเอง' },
     ];
     const PARTS = MDC.data('parts');
-    const SEVS = ['ต่ำ', 'ปานกลาง', 'สูง', 'หยุดใช้งาน'];
     const GARAGES = MDC.data('garages');
     // ---- ผู้อนุมัติใบแจ้งซ่อม (mock) ----
     // จำลองสิ่งที่ระบบจริงทำ: FE รวมผลจาก 2 API เป็น dropdown เดียว
@@ -3098,7 +3181,7 @@
     const JOBS = [
       {
         no: 'MTD-690716-031', plate: '82-6789 ขอนแก่น', model: 'Isuzu FTR + กระเช้า Aichi SK17A', org: 'กฟภ. เขต ฉ.1 ขอนแก่น', target: 'กระเช้า Aichi SK17A',
-        syms: ['กระเช้าเอียง/ล็อกไม่อยู่'], sev: 'สูง', usable: false, photos: 2, desc: 'ล็อกกระเช้าหลวม เอียงตอนยกสุด',
+        syms: ['กระเช้าเอียง/ล็อกไม่อยู่'], usable: false, photos: 2, desc: 'ล็อกกระเช้าหลวม เอียงตอนยกสุด',
         at: { prov: 'ขอนแก่น', amp: 'เมืองขอนแก่น' }, use: { odo: 84120, crane: 3210 },
         owner: { name: 'กฟจ.ขอนแก่น', tel: '043-221-100' },
         tech: { name: 'ช.สมพงษ์ ไชยวงศ์', tel: '081-234-5678' },
@@ -3109,7 +3192,7 @@
       },
       {
         no: 'MTD-690715-018', plate: '83-1122 กรุงเทพมหานคร', model: 'Mitsubishi Fuso FI + เครน Unic URV554', org: 'สำนักงานใหญ่ (กบค.)', target: 'เครน Unic URV554',
-        syms: ['ปั๊มไฮดรอลิกเสียงดัง/แรงดันตก'], sev: 'ปานกลาง', usable: true, photos: 1, desc: 'แรงดันตกตอนยกโหลดเกินครึ่ง',
+        syms: ['ปั๊มไฮดรอลิกเสียงดัง/แรงดันตก'], usable: true, photos: 1, desc: 'แรงดันตกตอนยกโหลดเกินครึ่ง',
         at: { prov: 'กรุงเทพมหานคร', amp: 'จตุจักร' }, use: { odo: 84120, crane: 2980 },
         owner: { name: 'สำนักงานใหญ่ (กบค.)', tel: '02-590-9999' },
         tech: { name: 'ช.วิชัย ทองดี', tel: '086-555-7788' },
@@ -3160,11 +3243,18 @@
     ];
 
     // ================= STATE =================
-    const S = { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, decision: null, approver: null };
+    const S = { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, decision: null, approver: null,
+      usable: null, costType: null, costVals: {} };
+    const COST_TYPES = MDC.data('costTypes');
+    const COST_FIELD = { costCenter:{label:'ศูนย์ต้นทุน',ph:'เช่น B0002211',icon:'account_balance'},
+      wbs:{label:'เลขที่ WBS',ph:'เช่น WBS-2569-0142',icon:'tag'},
+      network:{label:'เลขที่โครงข่าย',ph:'เช่น NET-04412',icon:'lan'},
+      activity:{label:'เลขที่กิจกรรม',ph:'เช่น A-0310',icon:'checklist'},
+      pmOrder:{label:'เลขที่ใบสั่ง (PM Order)',ph:'เช่น PM690717-08',icon:'receipt_long'} };
     const STEPS = ['เลือกรถ', 'อาการเสีย', 'อะไหล่ที่แนะนำ', 'ตัดสินใจและสรุป'];   // (คง fallback — ปัจจุบันใช้ WZ)
     let WZ = { vehicle: { on: true, label: 'เลือกรถ' }, symptom: { on: true, label: 'อาการเสีย' }, parts: { on: true, label: 'อะไหล่ที่แนะนำ' }, decision: { on: true, label: 'ตัดสินใจและสรุป' } };
     let WORDER = ['vehicle', 'symptom', 'parts', 'decision'];   // ลำดับขั้น wizard (จาก cfg.steps.wizard ที่ INIT)
-    const SECT = { vehicle: 's1', symptom: 's2', parts: 's3', decision: 's4' };   // key → id ของ section (คงที่)
+    const SECT = { vehicle: 's1', symptom: 's2', info: 'sinfo', parts: 's3', decision: 's4' };   // key → id ของ section (คงที่)
     let VIEW = 'form';
     let VIEW_HISTORY = [];   // stack ปุ่มย้อนกลับ (switchView/goBackView) — เพิ่มการประกาศที่ขาดหาย ทำให้สลับเมนูไม่ได้
 
@@ -3187,11 +3277,8 @@
       if (at.startsWith('กระเช้า')) return { name: 'กระเช้า', cls: 'bucket', icon: 'elevator' };
       return { name: 'รถทั่วไป', cls: '', icon: 'local_shipping' };
     }
-    // สถานะรถ: ใช้ค่า j.usable ถ้ามี — ถ้าไม่มีให้อนุมานจากความรุนแรง (สูง = ใช้งานไม่ได้)
-    // ⚠️ ของจริงต้องเคาะว่ามาจากไหน: ผู้แจ้งระบุเอง หรือ derive จากความรุนแรง
-    function vehUsable(j) {
-      return typeof j.usable === 'boolean' ? j.usable : j.sev !== 'สูง';
-    }
+    // สถานะรถ — ผู้แจ้งระบุเองตอนแจ้งซ่อม (เลิกเดาจากระดับความรุนแรงแล้ว)
+    function vehUsable(j) { return j.usable !== false }
     function vehLine(j) {
       const t = vehType(j), ok = vehUsable(j);
       return `<div class="vline">
@@ -3317,8 +3404,9 @@ function goBackFromForm(){
       }).join('');
     }
     function showStepSection(key) {   // แสดง section ของขั้นปัจจุบัน + render เนื้อหาตาม key
-      ['s1', 's2', 's3', 's4'].forEach(id => $(id).classList.add('hidden'));
+      ['s1', 's2', 'sinfo', 's3', 's4'].forEach(id => $(id).classList.add('hidden'));
       $(SECT[key]).classList.remove('hidden');
+      if (key === 'info') { prefillInfo(); renderUsable(); renderCostTypes() }
       if (key === 'symptom') renderSymptoms();
       if (key === 'parts') renderParts();
       if (key === 'decision') renderSummary();
@@ -3390,6 +3478,7 @@ function goBackFromForm(){
       renderVehicleInfo();
     }
     function renderSymptoms() {
+      renderUsable();
       if (!S.vehicle) { $('symcats').innerHTML = '<div class="empty">กรุณาเลือกรถก่อน — สลับให้ขั้น "เลือกรถ" มาก่อนขั้นนี้ (แก้ลำดับได้ที่ Admin)</div>'; $('othwrap').classList.add('hidden'); $('sev').innerHTML = ''; return }
       const scope = S.target === 'attach' ? ['attach', 'both'] : ['vehicle', 'both'];
       $('symcats').innerHTML = CATS.filter(c => scope.includes(c.for)).map(c => {
@@ -3398,7 +3487,6 @@ function goBackFromForm(){
       <div class="chips">${items.map(s => `<div class="chip ${S.symptoms.includes(s.id) ? 'sel' : ''}" onclick="toggleSym('${s.id}')">${s.name}</div>`).join('')}</div>`;
       }).join('');
       $('othwrap').classList.toggle('hidden', !S.symptoms.includes('OTH'));
-      $('sev').innerHTML = SEVS.map(s => `<label><input type="radio" name="sev" ${S.sev === s ? 'checked' : ''} onchange="S.sev='${s}'">${s}</label>`).join('');
     }
     function toggleSym(id) {
       if (S.symptoms.includes(id)) {
@@ -3442,6 +3530,79 @@ function goBackFromForm(){
     function chgQty(code, d) { const p = PARTS.find(x => x.code === code); const v = (S.bookings[code] || 1) + d; if (v < 1) return; if (v > p.stock) { toast('เกินจำนวนคงเหลือในคลัง (' + p.stock + ')'); return } S.bookings[code] = v; renderParts() }
     function chgOrd(code, d) { const v = (S.orders[code] || 1) + d; if (v < 1) return; S.orders[code] = v; renderParts() }
 
+    // ---------- ขั้น "ข้อมูลติดต่อ · สถานที่ · งบ" ----------
+    const AREAS = MDC.data('areas');
+    function fillProvinces(){
+      const keys=Object.keys(AREAS);
+      $('i-prov').innerHTML='<option value="">— เลือกจังหวัด —</option>'
+        +keys.map(k=>`<option value="${k}">${k}</option>`).join('')
+        +'<option value="__other">จังหวัดอื่น (ยังไม่มีข้อมูลผัง)</option>';
+    }
+    function onProvChange(){
+      const v=$('i-prov').value, a=AREAS[v];
+      const sel=$('i-amp');
+      if(!a){ sel.innerHTML='<option value="">— ไม่มีข้อมูลหน่วยงานของจังหวัดนี้ —</option>';
+        $('areanote').textContent=''; renderSummary(); return }
+      // กฟจ. ขึ้นก่อน แล้วตามด้วย กฟส. เรียงตามขนาด (ใหญ่ก่อน)
+      const rank={L:0,M:1,S:2,XS:3};
+      const br=[...a.branches].sort((x,y)=>(rank[x.s]-rank[y.s])||x.n.localeCompare(y.n,'th'));
+      sel.innerHTML='<option value="">— เลือกหน่วยงาน —</option>'
+        +`<option value="กฟจ.${v}">กฟจ.${v} · ขนาด ${a.size}</option>`
+        +br.map(b=>`<option value="กฟส.${b.n}">กฟส.${b.n} · ขนาด ${b.s}</option>`).join('');
+      $('areanote').innerHTML=`ผังจริง: <b>${esc(a.region)}</b> · กฟจ.${esc(v)} ขนาด ${esc(a.size)} · กฟส. ${a.branches.length} แห่ง`;
+      renderSummary();
+    }
+    function setUsable(v){ S.usable=v; renderUsable(); renderSummary() }
+    function renderUsable(){
+      const sg=document.querySelectorAll('#i-usable .sg');
+      sg[0].classList.toggle('sel',S.usable===true);
+      sg[1].classList.toggle('sel',S.usable===false);
+    }
+    function setCostType(code){
+      S.costType=code; S.costVals={};
+      const ct=COST_TYPES.find(c=>c.code===code);
+      if(ct&&ct.sample)Object.assign(S.costVals,ct.sample);   // เติมตัวอย่างให้ ไม่ต้องพิมพ์เอง
+      renderCostTypes(); renderSummary();
+    }
+    function renderCostTypes(){
+      $('i-costtypes').innerHTML=COST_TYPES.map(c=>`
+        <label class="ctopt ${S.costType===c.code?'sel':''}" onclick="setCostType('${c.code}')">
+          <span class="dot"></span>
+          <span class="ct-tx"><b>${esc(c.name)}</b>
+            <small>ต้องระบุ: ${c.fields.map(f=>COST_FIELD[f].label).join(' · ')}${c.req==='any'?' (อย่างน้อย 1)':''}</small></span>
+        </label>`).join('');
+      const ct=COST_TYPES.find(c=>c.code===S.costType);
+      $('i-costfields').innerHTML=!ct?'':ct.fields.map(f=>{
+        const m=COST_FIELD[f], must=(ct.req==='all')||(ct.req===f);
+        return `<div class="f"><label>${m.label} ${must?'<small>(จำเป็น)</small>':'<small>(ถ้ามี)</small>'}</label>
+          <div class="in"><span class="ms">${m.icon}</span>
+            <input type="text" value="${esc(S.costVals[f]||'')}" placeholder="${m.ph}"
+              oninput="S.costVals['${f}']=this.value;renderSummary()"></div></div>`;
+      }).join('');
+    }
+    // เติมค่าอัตโนมัติจากข้อมูลรถ — ผู้แจ้งแก้ได้ ไม่ต้องกรอกจากศูนย์
+    function prefillInfo(){
+      if(!S.vehicle)return;
+      const plateProv=(S.vehicle.plate.split(' ')[1]||'');
+      if(!$('i-prov').value&&AREAS[plateProv]){ $('i-prov').value=plateProv; onProvChange() }
+      if(!$('i-own').value)$('i-own').value=S.vehicle.org;
+      $('lbl-crane').textContent=S.vehicle.attach?('ชั่วโมงใช้งาน'+(S.vehicle.attach.startsWith('กระเช้า')?'กระเช้า':'เครน')):'ชั่วโมงใช้งานอุปกรณ์เสริม';
+      $('lbl-crane').parentElement.style.display=S.vehicle.attach?'':'none';
+    }
+    function infoVals(){
+      return { at:{prov:esc($('i-prov').value),amp:esc($('i-amp').value)},
+        use:{odo:+$('i-odo').value||0,crane:+$('i-crane').value||0},
+        owner:{name:esc($('i-own').value.trim()),tel:esc($('i-owntel').value.trim())},
+        tech:{name:esc($('i-tech').value.trim()),tel:esc($('i-techtel').value.trim())},
+        driver:{name:esc($('i-drv').value.trim()),tel:esc($('i-drvtel').value.trim())} };
+    }
+    function costSummaryText(){
+      const ct=COST_TYPES.find(c=>c.code===S.costType);
+      if(!ct)return '';
+      const ref=ct.fields.map(f=>S.costVals[f]?`${COST_FIELD[f].label} ${S.costVals[f]}`:null).filter(Boolean).join(' · ');
+      return ct.name+(ref?' — '+ref:'');
+    }
+
     // ---------- ผู้อนุมัติใบแจ้งซ่อม ----------
     function renderApprovers() {
       const q = ($('apq').value || '').trim().toLowerCase();
@@ -3471,11 +3632,13 @@ function goBackFromForm(){
     <div class="sumrow"><span>รถ</span><span>${S.vehicle.plate} · ${S.vehicle.model}</span></div>
     <div class="sumrow"><span>จุดที่มีปัญหา</span><span>${S.target === 'attach' ? S.vehicle.attach : 'ตัวรถ'}</span></div>
     <div class="sumrow"><span>อาการ</span><span>${symNames.join(', ') || '—'}</span></div>
-    <div class="sumrow"><span>ความรุนแรง</span><span>${S.sev || '—'}</span></div>
     <div class="sumrow"><span>รูปแนบ</span><span>${S.photos} รูป</span></div>
     <div class="sumrow"><span>อะไหล่ที่จอง</span><span>${bk.length ? bk.join('<br>') : 'ไม่มี'}</span></div>
     <div class="sumrow"><span>อะไหล่ที่สั่งของ (รอเข้า)</span><span>${od.length ? od.join('<br>') : 'ไม่มี'}</span></div>
     <div class="sumrow"><span>ดำเนินการ</span><span>${S.decision === 'self' ? 'ซ่อมเอง' : S.decision === 'kry' ? 'ส่งเรื่องให้ กรย.' : '— ยังไม่เลือก —'}</span></div>
+    <div class="sumrow"><span>สถานที่รถอยู่</span><span>${$('i-prov').value&&$('i-prov').value!=='__other'?esc(($('i-amp').value?$('i-amp').value+' · ':'')+'จ.'+$('i-prov').value):'<span style="color:var(--error-600)">— ยังไม่ระบุ —</span>'}</span></div>
+    <div class="sumrow"><span>สถานะรถ</span><span>${S.usable===null?'<span style="color:var(--error-600)">— ยังไม่ระบุ —</span>':(S.usable?'ใช้งานได้':'ใช้งานไม่ได้')}</span></div>
+    <div class="sumrow"><span>งบที่จะตัด</span><span>${S.costType?esc(costSummaryText()):'<span style="color:var(--error-600)">— ยังไม่เลือก —</span>'}</span></div>
     <div class="sumrow"><span>ผู้อนุมัติ</span><span>${S.approver ? `${esc(S.approver.name)} · ${esc(S.approver.posi)} · ${esc(S.approver.dept)}` : '<span style="color:var(--error-600)">— ยังไม่เลือก —</span>'}</span></div>`;
     }
 
@@ -3513,7 +3676,20 @@ function goBackFromForm(){
         if (!S.vehicle) { toast('ต้องเลือกรถก่อนจึงจะเลือกอาการได้ — สลับให้ขั้น "เลือกรถ" มาก่อน'); return false }
         if (!S.symptoms.length) { toast('กรุณาเลือกอาการเสียอย่างน้อย 1 รายการ'); return false }
         if (S.symptoms.includes('OTH') && !$('othtext').value.trim()) { toast('กรุณาระบุอาการในช่อง "อื่นๆ"'); return false }
-        if (!S.sev) { toast('กรุณาเลือกระดับความรุนแรง'); return false }
+        if (S.usable === null) { toast('กรุณาระบุสถานะรถ (ใช้งานได้ / ใช้งานไม่ได้)'); return false }
+      }
+      if (key === 'info') {
+        if (!$('i-prov').value || $('i-prov').value === '__other') { toast('กรุณาเลือกจังหวัดที่รถอยู่'); return false }
+        if (!$('i-owntel').value.trim() && !$('i-techtel').value.trim() && !$('i-drvtel').value.trim()) {
+          toast('กรุณากรอกเบอร์ติดต่ออย่างน้อย 1 เบอร์'); return false }
+        if (!S.costType) { toast('กรุณาเลือกงบที่จะตัด'); return false }
+        const ct = COST_TYPES.find(c => c.code === S.costType);
+        if (ct.req === 'all' && ct.fields.some(f => !(S.costVals[f] || '').trim())) {
+          toast('กรุณากรอก ' + ct.fields.map(f => COST_FIELD[f].label).join(' และ ')); return false }
+        if (ct.req !== 'all' && ct.req !== 'any' && !(S.costVals[ct.req] || '').trim()) {
+          toast('กรุณาระบุ' + COST_FIELD[ct.req].label); return false }
+        if (ct.req === 'any' && !ct.fields.some(f => (S.costVals[f] || '').trim())) {
+          toast('กรุณาระบุ ' + ct.fields.map(f => COST_FIELD[f].label).join(' หรือ ') + ' อย่างน้อย 1 ช่อง'); return false }
       }
       if (key === 'decision') {
         if (!S.decision) { toast('กรุณาเลือก ซ่อมเอง หรือ ส่งเรื่องให้ กรย.'); return false }
@@ -3522,7 +3698,7 @@ function goBackFromForm(){
       return true;
     }
     function submit() {
-      ['s1', 's2', 's3', 's4'].forEach(id => $(id).classList.add('hidden'));
+      ['s1', 's2', 'sinfo', 's3', 's4'].forEach(id => $(id).classList.add('hidden'));
       $('footer').classList.add('hidden');
       $('sdone').classList.remove('hidden');
       const no = 'MTD-690717-0' + (++SEQ);
@@ -3530,12 +3706,10 @@ function goBackFromForm(){
         no, plate: S.vehicle.plate, model: S.vehicle.model + (S.vehicle.attach ? ' + ' + S.vehicle.attach : ''), org: S.vehicle.org,
         target: S.target === 'attach' ? S.vehicle.attach : 'ตัวรถ',
         syms: S.symptoms.map(id => id === 'OTH' ? ('อื่นๆ: ' + esc($('othtext').value.trim())) : SYMPTOMS.find(s => s.id === id).name),
-        // สถานะรถ (mock): อนุมานจากความรุนแรง — ⚠️ ของจริงต้องเคาะว่าให้ผู้แจ้งระบุเองหรือ derive
-        sev: S.sev, usable: S.sev !== 'สูง', photos: S.photos, desc: esc($('desc').value.trim()),
-        // เติมเท่าที่หาได้จากข้อมูลรถ — ที่เหลือ (สถานที่รถอยู่ · ช่างคุมรถ · พขร. · เลขไมล์ · ชม.เครน)
-        // ฟอร์มยังไม่ได้ถาม จึงเว้นว่างให้เห็นช่องโหว่ ดูโน๊ตท้ายหน้ารายละเอียด
-        owner: { name: S.vehicle.org, tel: '' }, fromUnit: 'กรย. ' + S.vehicle.org,
-        budget: 'งบซ่อมบำรุงยานพาหนะ ปี 2569 · ' + S.vehicle.org,
+        // สถานะรถ + ผู้ติดต่อ + สถานที่ + งบ — มาจากขั้น "ข้อมูลติดต่อ · สถานที่ · งบ" ที่ผู้แจ้งกรอกเอง
+        usable: S.usable !== false, photos: S.photos, desc: esc($('desc').value.trim()),
+        ...infoVals(), fromUnit: 'กรย. ' + S.vehicle.org,
+        budget: costSummaryText(), costType: S.costType, costVals: { ...S.costVals },
         booked: bookedArr(), ordered: orderedArr(),
         reason: S.decision === 'kry' ? esc($('kryreason').value.trim()) : esc($('selfnote').value.trim()),
         // ทุกใบต้องผ่านหัวหน้าอนุมัติก่อน — nextPhase คือปลายทางหลังอนุมัติ
@@ -3557,7 +3731,9 @@ function goBackFromForm(){
       renderSteps();
     }
     function resetForm() {
-      Object.assign(S, { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, decision: null, approver: null });
+      Object.assign(S, { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, decision: null, approver: null, usable: null, costType: null, costVals: {} });
+      ['i-prov','i-amp','i-odo','i-crane','i-own','i-owntel','i-tech','i-techtel','i-drv','i-drvtel'].forEach(id => { const e = $(id); if (e) e.value = '' });
+      renderUsable(); renderCostTypes();
       ['vq', 'desc', 'othtext', 'selfnote', 'kryreason', 'apq'].forEach(id => $(id).value = '');
       renderApprovers();
       document.querySelectorAll('#photos .ph').forEach(e => e.remove());
@@ -3578,7 +3754,6 @@ function goBackFromForm(){
     <div class="sumrow"><span>รถ</span><span>${j.plate} · ${j.model}</span></div>
     <div class="sumrow"><span>จุดที่มีปัญหา</span><span>${j.target}</span></div>
     <div class="sumrow"><span>อาการ</span><span>${j.syms.join(', ')}</span></div>
-    <div class="sumrow"><span>ความรุนแรง</span><span>${j.sev}</span></div>
     <div class="sumrow"><span>คำอธิบาย</span><span>${j.desc || '—'}</span></div>
     <div class="sumrow"><span>รูปแนบ</span><span>${j.photos} รูป</span></div>
     <div class="sumrow"><span>อะไหล่ที่จอง</span><span>${j.booked.length ? j.booked.map(x => `${x.name} ×${x.qty}`).join('<br>') : 'ไม่มี'}</span></div>
@@ -3632,10 +3807,10 @@ function goBackFromForm(){
     <div class="budgetbox"><span class="ms">receipt_long</span>
       <div class="bg-tx"><label>งบประมาณที่จะตัด</label><b>${j.budget ? esc(j.budget) : '<span style="color:var(--error-600)">— ผู้แจ้งยังไม่ได้เลือกงบ —</span>'}</b>
         <span class="bg-note">ผู้แจ้งเลือกมาตั้งแต่ตอนสร้างใบแจ้งซ่อม</span></div></div>
-    ${missingFields(j).length ? `<div class="todo"><span class="ms">edit_note</span><span><b>TODO — ฟอร์มแจ้งซ่อมยังไม่ได้ถาม ${missingFields(j).length} ช่องนี้</b>
-      ${missingFields(j).map(esc).join(' · ')} — ใบตัวอย่าง 2 ใบมีข้อมูลครบเพราะใส่ไว้ในข้อมูลจำลอง แต่ใบที่สร้างจากฟอร์มจริงจะขึ้น “—” จนกว่าจะเพิ่มช่องในฟอร์ม</span></div>` : ''}`;
+    ${missingFields(j).length ? `<div class="todo"><span class="ms">edit_note</span><span><b>ผู้แจ้งไม่ได้กรอก ${missingFields(j).length} ช่อง</b>
+      ${missingFields(j).map(esc).join(' · ')} — ฟอร์มแจ้งซ่อมมีช่องพวกนี้แล้วแต่ไม่ได้บังคับ ถ้าจำเป็นต่องาน กบค. ให้โทรถามหน่วยงานเจ้าของเรื่อง</span></div>` : ''}`;
     }
-    // เช็คว่าใบนี้ขาดข้อมูลช่องไหน (ช่องที่ฟอร์มแจ้งซ่อมยังไม่ได้เก็บ)
+    // เช็คว่าใบนี้ขาดข้อมูลช่องไหน (ฟอร์มมีช่องให้แล้ว แต่ไม่บังคับ)
     function missingFields(j) {
       const m = [];
       if (!(j.at && j.at.prov)) m.push('สถานที่รถอยู่ (จังหวัด/อำเภอ)');
@@ -3914,7 +4089,7 @@ const KRY_STATUS_PHASES={kry:['kry'],krd:['krd']};
         const st = statusInfo(j);
         return `<div class="kry-accordion"><div class="job kry-job" id="kry-job-${j.no}" onclick="openKry('${j.no}')" aria-expanded="false">
       <span class="ms" style="color:var(--primary-600)">${j.phase === 'kry' ? 'move_to_inbox' : 'handyman'}</span>
-      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org} · ${j.plate} · ${j.syms[0]}${j.syms.length > 1 ? ' +' + (j.syms.length - 1) : ''} · ความรุนแรง: ${j.sev}</div></div>
+      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org} · ${j.plate} · ${j.syms[0]}${j.syms.length > 1 ? ' +' + (j.syms.length - 1) : ''}</div></div>
       <span class="badge ${st.cls}">${st.label}</span>
       <span class="ms kry-chevron" style="color:var(--gray-300)">chevron_right</span></div>
       <div class="kry-inline-detail hidden" id="kry-detail-${j.no}"></div></div>`;
@@ -4080,10 +4255,18 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
      return;
    }
       $('kbklist').innerHTML = list.map(j => {
-        const st = statusInfo(j);
+        const st = statusInfo(j), t = vehType(j), ok = vehUsable(j);
         return `<div class="kbk-accordion"><div class="job kbk-job" id="kbk-job-${j.no}" onclick="openKbk('${j.no}')" aria-expanded="false">
       <span class="ms" style="color:var(--primary-600)">${j.phase === 'pending' ? 'move_to_inbox' : 'engineering'}</span>
-      <div class="sp"><div class="no">${j.no}</div>${vehLine(j)}<div class="meta">${j.org} · ${j.syms[0]}${j.syms.length > 1 ? ' +' + (j.syms.length - 1) : ''} · ความรุนแรง: ${j.sev}</div></div>
+      <div class="sp">
+        <div class="rowtop">
+          <span class="no">${j.no}</span>
+          <span class="vdiv"></span>
+          <span class="vplate">${esc(j.plate)}</span>
+          <span class="vchip ${t.cls}"><span class="ms">${t.icon}</span>${t.name}</span>
+          <span class="vstat ${ok ? 'ok' : 'no'}"><span class="ms">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span>
+        </div>
+        <div class="meta">${j.org} · ${j.syms[0]}${j.syms.length > 1 ? ' +' + (j.syms.length - 1) : ''}</div></div>
       <span class="badge ${st.cls}">${st.label}</span>
       <span class="ms kbk-chevron" style="color:var(--gray-300)">chevron_right</span></div>
       <div class="kbk-inline-detail hidden" id="kbk-detail-${j.no}"></div></div>`;
@@ -4951,6 +5134,8 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
     });
     showStepSection(WORDER[0]);   // แสดงขั้นแรกตามลำดับที่ตั้ง (เผื่อสลับลำดับ/ปิดขั้นอะไหล่)
     $('next').textContent = WORDER.length === 1 ? 'ส่งเรื่องแจ้งซ่อม' : 'ถัดไป';
+    fillProvinces();
+    renderUsable(); renderCostTypes();
     renderSteps(); renderVehicles(); renderApprovers(); updateBadge();
     $('back').style.visibility = 'hidden';
     // deep-link: ถ้ามี #view ที่ถูกต้อง (เช่น #kbk หรือ #view-kbk) ให้เปิดหน้านั้น — ใช้โดยหน้า 05-review-milestones

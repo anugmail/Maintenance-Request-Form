@@ -30,6 +30,7 @@ const MENU_DEFAULT=['home','form','my','fuel','kry','kbk','sup','stock','reports
 const WIZARD_DEFAULT=[
   {key:'vehicle', label:'เลือกรถ',         heading:'ข้อมูลรถ',            on:true},
   {key:'symptom', label:'อาการเสีย',       heading:'อาการเสีย',          on:true},
+  {key:'info',    label:'ข้อมูลติดต่อ/งบ',  heading:'ข้อมูลติดต่อ · สถานที่ · งบ', on:true},
   {key:'parts',   label:'อะไหล่ที่แนะนำ',   heading:'อะไหล่ที่ระบบแนะนำ',  on:true},
   {key:'decision',label:'ตัดสินใจและสรุป',  heading:'การตัดสินใจ',        on:true}
 ];
@@ -42,7 +43,7 @@ const DEFAULT_CFG={
   variants:{vehicleCard:'list',slotPicker:'datepicker',decisionTile:'legacy',kbkDecision:'tiles'},
   menu:MENU_DEFAULT.map(k=>({key:k,on:true})),
   steps:{wizard:clone0(WIZARD_DEFAULT),kbk:KBK_STEPS_DEFAULT.slice()},
-  data:{vehicles:null,parts:null,garages:null},   // null = ใช้ค่า default ด้านล่าง
+  data:{vehicles:null,parts:null,garages:null,costTypes:null,areas:null},   // null = ใช้ค่า default ด้านล่าง
   demo:{jobs:null,seq:null,scenario:'default',startView:'form'}
 };
 function clone0(o){return JSON.parse(JSON.stringify(o))}
@@ -187,6 +188,18 @@ const defaults={
     {id:2,plate:'82-6789 ขอนแก่น',model:'Isuzu FTR',org:'กฟภ. เขต ฉ.1 ขอนแก่น',attach:'กระเช้า Aichi SK17A'},
     {id:3,plate:'83-1122 กรุงเทพมหานคร',model:'Mitsubishi Fuso FI',org:'สำนักงานใหญ่ (กบค.)',attach:'เครน Unic URV554'},
     {id:4,plate:'80-5566 เชียงใหม่',model:'Hino XZU กระบะยกสูง',org:'กฟภ. เขต น.1 เชียงใหม่',attach:null}
+  ],
+  /* พื้นที่จริงจากผัง 'โครงสร้างหน้างาน 74 จังหวัด' — ใส่ไว้ 2 จังหวัดที่ตรงกับทะเบียนรถใน mock
+     (แก้สระ า/ำ ที่เพี้ยนจาก font subset ของ PDF แล้ว) ขนาดในวงเล็บ = ขนาดหน่วยงานจริง */
+  areas:{
+    'ขอนแก่น':{region:'กฟฉ.1',size:'L',branches:[{n:'บ้านไผ่',s:'M'},{n:'น้ำพอง',s:'S'},{n:'กระนวน',s:'S'},{n:'บ้านฝาง',s:'S'},{n:'อุบลรัตน์',s:'XS'},{n:'ซำสูง',s:'XS'},{n:'พระยืน',s:'XS'},{n:'ท่าพระ',s:'XS'},{n:'ภูเวียง',s:'S'},{n:'มัญจาคีรี',s:'S'},{n:'พล',s:'S'},{n:'หนองสองห้อง',s:'S'},{n:'สีชมพู',s:'XS'},{n:'หนองนาคำ',s:'XS'},{n:'เมืองขอนแก่น2',s:'L'},{n:'ชุมแพ',s:'M'},{n:'เขาสวนกวาง',s:'XS'},{n:'ภูผาม่าน',s:'XS'},{n:'หนองเรือ',s:'S'},{n:'เวียงเก่า',s:'XS'},{n:'เปือยน้อย',s:'XS'},{n:'ชนบท',s:'XS'},{n:'บ้านแฮด',s:'XS'},{n:'โนนศิลา',s:'XS'},{n:'โคกโพธิไชย',s:'XS'},{n:'แวงใหญ่',s:'XS'},{n:'แวงน้อย',s:'XS'}]},
+    'นครราชสีมา':{region:'กฟฉ.3',size:'L',branches:[{n:'โนนไทย',s:'S'},{n:'พระทองคำ',s:'XS'},{n:'เมืองนครราชสีมา 2 (หัวทะเล)',s:'M'},{n:'พิมาย',s:'M'},{n:'เมืองนครราชสีมา 3 (สุรนารี)',s:'M'},{n:'โชคชัย',s:'M'},{n:'ปักธงชัย',s:'M'},{n:'สีคิ้ว',s:'M'},{n:'บัวใหญ่',s:'M'},{n:'ปากช่อง',s:'L'},{n:'โนนสูง',s:'S'},{n:'จอหอ',s:'S'},{n:'จักราช',s:'S'},{n:'ชุมพวง',s:'S'},{n:'หนองบุญมาก',s:'S'},{n:'ครบุรี',s:'S'},{n:'เสิงสาง',s:'S'},{n:'วังน้ำเขียว',s:'S'},{n:'คง',s:'S'},{n:'ประทาย',s:'S'},{n:'ด่านขุนทด',s:'S'},{n:'สูงเนิน',s:'S'},{n:'หมูสี',s:'S'},{n:'ขามสะแกแสง',s:'XS'},{n:'ห้วยแถลง',s:'XS'},{n:'เฉลิมพระเกียรติ',s:'XS'},{n:'ขามทะเลสอ',s:'XS'},{n:'เมืองยาง',s:'XS'},{n:'คลองม่วง',s:'XS'},{n:'กลางดง',s:'XS'},{n:'ห้วยบง',s:'XS'},{n:'บัวลาย',s:'XS'},{n:'แก้งสนามนาง',s:'XS'},{n:'บ้านเหลื่อม',s:'XS'},{n:'โนนแดง',s:'XS'},{n:'เทพารักษ์',s:'XS'}]}
+  },
+  costTypes:[
+    {code:'1',name:'งบประจำหน่วยงาน',            fields:['costCenter'],                    req:'all', sample:{costCenter:'B0002211'}},
+    {code:'2',name:'งบส่วนกลาง (กบค.)',          fields:['costCenter'],                    req:'all', sample:{costCenter:'B0009100'}},
+    {code:'3',name:'งบโครงการ (ตาม WBS)',        fields:['wbs','network','activity'],      req:'wbs', sample:{wbs:'WBS-2569-0142',network:'NET-04412',activity:'A-0310'}},
+    {code:'4',name:'งบซ่อมบำรุงตามใบสั่ง (PM Order)',fields:['pmOrder','activity','network'],req:'any', sample:{pmOrder:'PM690717-08'}}
   ],
   parts:[
     {sym:'HYD-01',fit:'all',code:'SL-4402',name:'ชุดซีลกระบอกไฮดรอลิก',need:1,unit:'ชุด',stock:6,stockAlt:4,wh:'กบค. สนญ.',icon:'join_inner',price:1850},
