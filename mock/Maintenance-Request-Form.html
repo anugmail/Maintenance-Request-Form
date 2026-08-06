@@ -13,9 +13,9 @@
     rel="stylesheet">
   <link rel="stylesheet" href="../design-system/tokens.css">
   <link rel="stylesheet" href="../design-system/components.css?v=20260724-sidebar-smooth">
-  <script src="../config.js?v=20260723-decision-style"></script>
+  <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
-  <script src="../ui-components.js?v=20260723-decision-style"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
+  <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <!-- OCR อ่านเลขที่สลิปเติมน้ำมัน ⛽ — รันฝั่ง client ล้วน ใช้ได้แม้ไม่มีเน็ต -->
   <style>
@@ -540,6 +540,796 @@
 
     .dnote {
       max-width: 720px
+    }
+
+    /* ---- แถวรายการงาน: รายละเอียดรถ (ทะเบียน · ประเภท · สถานะรถ) ---- */
+    .vline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 3px 0 2px
+    }
+
+    .vplate {
+      font-weight: 700;
+      font-size: 13.5px;
+      color: var(--gray-900);
+      letter-spacing: .2px
+    }
+
+    .vchip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 2px 9px;
+      border-radius: var(--r-pill);
+      background: var(--gray-100);
+      color: var(--gray-700);
+      white-space: nowrap
+    }
+
+    .vchip .ms {
+      font-size: 14px
+    }
+
+    /* ประเภทรถไม่ใช่สถานะ — ใช้ชิปกลางๆ ให้สีเฉพาะไอคอน จะได้ไม่แย่งสายตากับสถานะรถ */
+    .vchip.crane .ms {
+      color: var(--primary-600)
+    }
+
+    .vchip.bucket .ms {
+      color: var(--secondary-600)
+    }
+
+    .vstat {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 2px 9px;
+      border-radius: var(--r-pill);
+      white-space: nowrap
+    }
+
+    .vstat .ms {
+      font-size: 14px
+    }
+
+    .vstat.ok {
+      background: var(--success-50);
+      color: var(--success-600)
+    }
+
+    .vstat.no {
+      background: var(--error-50);
+      color: var(--error-700)
+    }
+
+    /* ---- กล่องรายละเอียดรถ (หน้า กบค. ตอนกาง) ---- */
+    .vgrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--r-md);
+      padding: 16px;
+      max-width: 860px
+    }
+
+    .vcell label {
+      display: block;
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      color: var(--gray-500);
+      margin-bottom: 5px
+    }
+
+    .vcell .val {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gray-900);
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .todo {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      background: var(--warning-50);
+      border: 1px dashed var(--warning-200);
+      border-radius: var(--r-md);
+      padding: 11px 14px;
+      margin-top: 12px;
+      max-width: 860px;
+      font-size: var(--fs-sm);
+      color: var(--warning-700);
+      line-height: var(--lh)
+    }
+
+    .todo .ms {
+      font-size: 18px;
+      flex: none
+    }
+
+    /* งบที่จะตัด — ผู้แจ้งเลือกมาแล้วตั้งแต่ตอนสร้างใบ */
+    .budgetbox {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: var(--primary-25);
+      border: 1px solid var(--primary-50);
+      border-left: 3px solid var(--primary-600);
+      border-radius: var(--r-md);
+      padding: 12px 16px;
+      margin-top: 12px;
+      max-width: 860px
+    }
+
+    .budgetbox>.ms {
+      font-size: 24px;
+      flex: none;
+      color: var(--primary-600)
+    }
+
+    .bg-tx label {
+      display: block;
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      color: var(--gray-500);
+      margin-bottom: 2px
+    }
+
+    .bg-tx b {
+      display: block;
+      font-size: 15px;
+      color: var(--gray-900)
+    }
+
+    .bg-note {
+      font-size: var(--fs-xs);
+      color: var(--gray-500)
+    }
+
+    .todo b {
+      display: block
+    }
+
+    /* ---- การ์ดผู้ติดต่อ + รูปแนบ ---- */
+    .pcards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+      max-width: 860px;
+      margin-top: 10px
+    }
+
+    .pcard {
+      display: flex;
+      gap: 11px;
+      align-items: flex-start;
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--r-md);
+      padding: 13px 14px
+    }
+
+    .pcard>.ms {
+      color: var(--primary-600);
+      font-size: 21px;
+      flex: none;
+      margin-top: 1px
+    }
+
+    .pc-tx {
+      min-width: 0
+    }
+
+    .pc-tx label {
+      display: block;
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      color: var(--gray-500);
+      margin-bottom: 3px
+    }
+
+    .pc-tx b {
+      display: block;
+      font-size: 14px;
+      color: var(--gray-900)
+    }
+
+    .pc-tel {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      margin-top: 3px
+    }
+
+    .pc-tel .ms {
+      font-size: 14px;
+      color: var(--gray-400)
+    }
+
+    .phz {
+      width: 46px;
+      height: 46px;
+      border-radius: var(--r-sm);
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-400)
+    }
+
+    /* ---- ปุ่มการ์ดเปิดหน้าประวัติการซ่อม ---- */
+    .histbtn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      max-width: 860px;
+      background: #fff;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--r-md);
+      padding: 14px 16px;
+      cursor: pointer;
+      text-align: left;
+      font-family: var(--font);
+      transition: border-color .15s, box-shadow .15s, transform .08s
+    }
+
+    .histbtn:hover {
+      border-color: var(--primary-600);
+      box-shadow: var(--shadow-app)
+    }
+
+    .histbtn:active {
+      transform: translateY(1px)
+    }
+
+    .histbtn .ic {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--r-md);
+      background: var(--primary-50);
+      color: var(--primary-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: none
+    }
+
+    .histbtn .tx {
+      flex: 1;
+      min-width: 0
+    }
+
+    .histbtn .tx b {
+      display: block;
+      font-size: 15px;
+      color: var(--gray-900)
+    }
+
+    .histbtn .tx span {
+      font-size: var(--fs-sm);
+      color: var(--gray-600)
+    }
+
+    .histbtn .go {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: var(--fs-sm);
+      font-weight: 600;
+      color: var(--primary-600);
+      white-space: nowrap
+    }
+
+    /* ---- ตารางรายการอะไหล่ ---- */
+    .ptab {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--fs-sm);
+      min-width: 620px
+    }
+
+    .ptab th {
+      text-align: left;
+      padding: 8px 10px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+      font-weight: 600;
+      color: var(--gray-700);
+      white-space: nowrap
+    }
+
+    .ptab td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--gray-100);
+      vertical-align: middle
+    }
+
+    .ptab tfoot td {
+      border-bottom: 0;
+      border-top: 2px solid var(--gray-200);
+      font-weight: 600;
+      padding-top: 11px
+    }
+
+    .pmeta {
+      font-size: var(--fs-xs);
+      color: var(--gray-500);
+      margin-top: 2px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center
+    }
+
+    .ptag {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 1px 7px;
+      border-radius: var(--r-pill)
+    }
+
+    .ptag.req {
+      background: var(--primary-50);
+      color: var(--primary-700)
+    }
+
+    .ptag.add {
+      background: var(--success-50);
+      color: var(--success-600)
+    }
+
+    .ptag.wait {
+      background: var(--warning-50);
+      color: var(--warning-700)
+    }
+
+    .qty {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--r-pill);
+      overflow: hidden
+    }
+
+    .qty button {
+      border: 0;
+      background: #fff;
+      width: 26px;
+      height: 26px;
+      cursor: pointer;
+      font-size: 15px;
+      color: var(--gray-700);
+      font-family: var(--font)
+    }
+
+    .qty button:hover {
+      background: var(--gray-100)
+    }
+
+    .qty b {
+      min-width: 26px;
+      text-align: center;
+      font-size: 13.5px
+    }
+
+    .pdel {
+      border: 0;
+      background: none;
+      cursor: pointer;
+      color: var(--gray-400);
+      padding: 4px;
+      border-radius: var(--r-sm);
+      display: inline-flex
+    }
+
+    .pdel:hover {
+      background: var(--error-50);
+      color: var(--error-600)
+    }
+
+    .pdel .ms {
+      font-size: 19px
+    }
+
+    .addwrap {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--r-md);
+      margin-top: 10px;
+      background: var(--gray-50);
+      padding: 12px
+    }
+
+    .addctl {
+      display: grid;
+      grid-template-columns: minmax(200px, 1fr) minmax(220px, 1.3fr);
+      gap: 12px
+    }
+
+    @media (max-width:680px) {
+      .addctl {
+        grid-template-columns: 1fr
+      }
+    }
+
+    .addctl .f label {
+      display: block;
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      color: var(--gray-600);
+      margin-bottom: 4px
+    }
+
+    .addctl select {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--r-md);
+      font-family: var(--font);
+      font-size: 13.5px;
+      background: #fff;
+      color: var(--gray-900)
+    }
+
+    .addbox {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--r-md);
+      margin-top: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+      background: #fff
+    }
+
+    .ptag.gen {
+      background: var(--gray-100);
+      color: var(--gray-600)
+    }
+
+    /* ---- คอลัมน์คลัง (Smart Inventory) ---- */
+    .inv {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap
+    }
+
+    .inv .ms {
+      font-size: 16px
+    }
+
+    .inv.ok {
+      color: var(--success-600)
+    }
+
+    .inv.low {
+      color: var(--warning-700)
+    }
+
+    .inv.out {
+      color: var(--error-600)
+    }
+
+    .inv.na {
+      color: var(--gray-400);
+      font-weight: 400
+    }
+
+    .inv.alt {
+      color: var(--secondary-600)
+    }
+
+    .inv.buy {
+      color: var(--error-600)
+    }
+
+    .invsub {
+      font-size: var(--fs-xs);
+      color: var(--gray-500);
+      margin-top: 2px
+    }
+
+    /* ---- แถบสรุปแหล่งอะไหล่ ---- */
+    .srcbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 12px
+    }
+
+    .srcpill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 4px 11px;
+      border-radius: var(--r-pill);
+      border: 1px solid transparent
+    }
+
+    .srcpill .ms {
+      font-size: 16px
+    }
+
+    .srcpill b {
+      font-size: 14px
+    }
+
+    .srcpill.si {
+      background: var(--success-50);
+      color: var(--success-600)
+    }
+
+    .srcpill.alt {
+      background: #EEF3FF;
+      color: var(--secondary-600)
+    }
+
+    .srcpill.buy {
+      background: var(--error-50);
+      color: var(--error-700)
+    }
+
+    .srcpill.off {
+      background: var(--gray-50);
+      color: var(--gray-400);
+      border-color: var(--gray-200)
+    }
+
+    .srcwarn,
+    .srcok {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-left: auto
+    }
+
+    .srcwarn {
+      color: var(--error-700)
+    }
+
+    .srcok {
+      color: var(--success-600)
+    }
+
+    .srcwarn .ms,
+    .srcok .ms {
+      font-size: 17px
+    }
+
+    /* ---- หัวกลุ่มในตารางอะไหล่ ---- */
+    .ptab tr.ghead td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--gray-200);
+      font-size: 13px
+    }
+
+    .ptab tr.ghead .ms {
+      font-size: 17px;
+      vertical-align: -3px;
+      margin-right: 6px
+    }
+
+    .ptab tr.ghead .gcount {
+      color: var(--gray-500);
+      font-weight: 400;
+      margin-left: 8px;
+      font-size: var(--fs-xs)
+    }
+
+    .ptab tr.ghead.si td {
+      background: var(--success-50);
+      color: var(--success-600)
+    }
+
+    .ptab tr.ghead.alt td {
+      background: #EEF3FF;
+      color: var(--secondary-600)
+    }
+
+    .ptab tr.ghead.buy td {
+      background: var(--error-50);
+      color: var(--error-700)
+    }
+
+    /* ---- ป้ายแหล่งในลิสต์เลือกอะไหล่ ---- */
+    .ptag.src-si {
+      background: var(--success-50);
+      color: var(--success-600)
+    }
+
+    .ptag.src-alt {
+      background: #EEF3FF;
+      color: var(--secondary-600)
+    }
+
+    .ptag.src-buy {
+      background: var(--error-50);
+      color: var(--error-700)
+    }
+
+    .ptag[class*=src-] .ms {
+      font-size: 13px;
+      vertical-align: -2px;
+      margin-right: 2px
+    }
+
+    .addrow.isbuy {
+      background: repeating-linear-gradient(45deg, transparent, transparent 10px, var(--error-50) 10px, var(--error-50) 11px)
+    }
+
+    .ptag.fit {
+      background: var(--success-50);
+      color: var(--success-600)
+    }
+
+    .addrow {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 13px;
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer
+    }
+
+    .addrow:last-child {
+      border-bottom: 0
+    }
+
+    .addrow:hover {
+      background: var(--primary-25)
+    }
+
+    .addrow>.ms {
+      color: var(--gray-500);
+      flex: none
+    }
+
+    .ar-tx {
+      flex: 1;
+      min-width: 0
+    }
+
+    .ar-tx b {
+      display: block;
+      font-size: 13.5px
+    }
+
+    .ar-tx span {
+      font-size: var(--fs-xs);
+      color: var(--gray-500)
+    }
+
+    .ar-price {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-700);
+      white-space: nowrap
+    }
+
+    /* ---- kbkDecision variants ---- */
+    /* tiles = การ์ดสีแบบเดิม แต่ย่อลง (ไอคอนเล็กลง แถวเดียวจบ ไม่กินครึ่งจอ) */
+    .kbkdec-tiles .decide {
+      max-width: 520px;
+      gap: 10px
+    }
+
+    /* grid: ไอคอนคร่อม 2 แถวซ้าย · หัวข้อ/คำอธิบายเรียงลงมาขวา — กันคำตัดมั่ว */
+    .kbkdec-tiles .tile {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      column-gap: 10px;
+      align-items: center;
+      text-align: left;
+      padding: 10px 14px;
+      border-width: 2px;
+      border-radius: var(--r-md)
+    }
+
+    .kbkdec-tiles .tile .ms {
+      grid-row: 1 / 3;
+      font-size: 22px;
+      margin: 0
+    }
+
+    .kbkdec-tiles .tile b {
+      grid-column: 2;
+      font-size: 14px;
+      line-height: 1.3
+    }
+
+    .kbkdec-tiles .tile small {
+      grid-column: 2;
+      font-size: 11px;
+      line-height: 1.3
+    }
+
+    .kbkdec-seg .sg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px
+    }
+
+    .kbkdec-seg .sg .ms {
+      font-size: 18px
+    }
+
+    .kbkdec-radio {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 560px
+    }
+
+    .kbkdec-opt {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--r-md);
+      padding: 12px 14px;
+      cursor: pointer;
+      background: #fff
+    }
+
+    .kbkdec-opt:hover {
+      border-color: var(--primary-500)
+    }
+
+    .kbkdec-opt.sel {
+      border-color: var(--primary-600);
+      background: var(--primary-25)
+    }
+
+    .kbkdec-opt .dot {
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      border: 2px solid var(--gray-300);
+      flex: none
+    }
+
+    .kbkdec-opt.sel .dot {
+      border-color: var(--primary-600);
+      border-width: 5px
+    }
+
+    .kbkdec-opt>.ms {
+      color: var(--gray-500)
+    }
+
+    .kbkdec-opt.sel>.ms {
+      color: var(--primary-600)
+    }
+
+    .kbkdec-opt .tx b {
+      display: block;
+      font-size: 14.5px
+    }
+
+    .kbkdec-opt .tx small {
+      font-size: var(--fs-xs);
+      color: var(--gray-500)
     }
 
     /* ---- ผู้อนุมัติใบแจ้งซ่อม (หัวหน้า) ---- */
@@ -1631,6 +2421,7 @@
             <option value="all">ทุกสถานะ</option>
             <option value="wait">รอหัวหน้าอนุมัติ</option>
             <option value="reject">หัวหน้าไม่อนุมัติ — ตีกลับ</option>
+            <option value="quote">ส่งอู่ประเมินราคา</option>
             <option value="self">บันทึกแล้ว — ซ่อมเอง</option>
             <option value="kry">รอ กรย. คัดแยกช่องทาง</option>
             <option value="krd">กรย. รับไปซ่อมเอง</option>
@@ -1689,6 +2480,7 @@
           <select id="kbk-status-filter" onchange="renderKbkList()">
             <option value="all">ทุกสถานะ</option>
             <option value="pending">รอ กบค. รับเรื่อง</option>
+            <option value="quote">ส่งอู่ประเมินราคา</option>
             <option value="returned">ส่งกลับ/ดำเนินการซ่อมโดยอู่</option>
             <option value="gclosed">ปิดงาน — กรย./อู่</option>
             <option value="work">กำลังดำเนินการซ่อม</option>
@@ -1698,6 +2490,20 @@
         </div></div>
       </div>
       <div id="kbklist"></div>
+    </main>
+
+    <!-- ============ VIEW: ประเมินความคุ้มค่าในการซ่อม (โครงเปล่า) ============ -->
+    <main class="content hidden" id="view-worth">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>งานซ่อม กบค.</span><span
+          class="sep">›</span><span class="cur">ประเมินความคุ้มค่า</span></div>
+      <div id="worthbody"></div>
+    </main>
+
+    <!-- ============ VIEW: ประวัติการซ่อมของรถ (เปิดจากปุ่มในรายละเอียดงาน) ============ -->
+    <main class="content hidden" id="view-vhist">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>งานซ่อม กบค.</span><span
+          class="sep">›</span><span class="cur">ประวัติการซ่อม</span></div>
+      <div id="vhistbody"></div>
     </main>
 
       <!-- ============ VIEW: อนุมัติปิดงาน (ผู้บังคับบัญชา) ============ -->
@@ -2253,13 +3059,23 @@
     const JOBS = [
       {
         no: 'MTD-690716-031', plate: '82-6789 ขอนแก่น', model: 'Isuzu FTR + กระเช้า Aichi SK17A', org: 'กฟภ. เขต ฉ.1 ขอนแก่น', target: 'กระเช้า Aichi SK17A',
-        syms: ['กระเช้าเอียง/ล็อกไม่อยู่'], sev: 'สูง', photos: 2, desc: 'ล็อกกระเช้าหลวม เอียงตอนยกสุด',
+        syms: ['กระเช้าเอียง/ล็อกไม่อยู่'], sev: 'สูง', usable: false, photos: 2, desc: 'ล็อกกระเช้าหลวม เอียงตอนยกสุด',
+        at: { prov: 'ขอนแก่น', amp: 'เมืองขอนแก่น' }, use: { odo: 84120, crane: 3210 },
+        owner: { name: 'กฟจ.ขอนแก่น', tel: '043-221-100' },
+        tech: { name: 'ช.สมพงษ์ ไชยวงศ์', tel: '081-234-5678' },
+        driver: { name: 'พขร. อนุชิต ศรีสุข', tel: '089-111-2233' },
+        fromUnit: 'กรย. เขต ฉ.1 (ขอนแก่น)', budget: 'งบซ่อมบำรุงยานพาหนะ ปี 2569 · กฟจ.ขอนแก่น',
         booked: [{ name: 'ชุดล็อกกระเช้า', qty: 1, unit: 'ชุด' }], ordered: [], reason: 'ต้องปรับตั้งระบบล็อกด้วยเครื่องมือเฉพาะ',
         phase: 'pending', wi: 0, history: [{ t: '16 ก.ค. 2569 14:20', label: 'ส่งเรื่องถึง กบค. — รอรับเรื่อง' }]
       },
       {
         no: 'MTD-690715-018', plate: '83-1122 กรุงเทพมหานคร', model: 'Mitsubishi Fuso FI + เครน Unic URV554', org: 'สำนักงานใหญ่ (กบค.)', target: 'เครน Unic URV554',
-        syms: ['ปั๊มไฮดรอลิกเสียงดัง/แรงดันตก'], sev: 'ปานกลาง', photos: 1, desc: 'แรงดันตกตอนยกโหลดเกินครึ่ง',
+        syms: ['ปั๊มไฮดรอลิกเสียงดัง/แรงดันตก'], sev: 'ปานกลาง', usable: true, photos: 1, desc: 'แรงดันตกตอนยกโหลดเกินครึ่ง',
+        at: { prov: 'กรุงเทพมหานคร', amp: 'จตุจักร' }, use: { odo: 84120, crane: 2980 },
+        owner: { name: 'สำนักงานใหญ่ (กบค.)', tel: '02-590-9999' },
+        tech: { name: 'ช.วิชัย ทองดี', tel: '086-555-7788' },
+        driver: { name: 'พขร. ประเสริฐ มั่นคง', tel: '082-909-1122' },
+        fromUnit: 'กรย. สำนักงานใหญ่', budget: 'งบซ่อมบำรุงยานพาหนะ ปี 2569 · สนญ. (กบค.)',
         booked: [{ name: 'ไส้กรองไฮดรอลิก', qty: 2, unit: 'ชิ้น' }], ordered: [{ name: 'ปั๊มไฮดรอลิกเกียร์', qty: 1, unit: 'ตัว', eta: '24 ก.ค.' }], reason: 'ปั๊มต้องเปลี่ยนทั้งลูก รอของเข้า',
         inspIn: { fuel: '½', odo: '84,120', defects: [{ zone: 'ด้านขวา (ประตู/แก้มข้าง)', note: 'รอยขีดข่วนเดิม' }], extra: '', t: '15 ก.ค. 2569 15:45' },
         phase: 'work', wi: 1, history: [
@@ -2273,20 +3089,34 @@
     // แยกออกจาก JOBS เพื่อไม่ให้งานที่ปิดแล้วไปแสดงปะปนในคิวงาน กบค.
     const VEHICLE_REPAIR_HISTORY = [
       {
-        no: 'MTD-690610-007', plate: '82-6789 ขอนแก่น',
+        no: 'MTD-690610-007', plate: '82-6789 ขอนแก่น', date: '9 มิ.ย. 2569',
         syms: ['บูมยืด-หดสะดุด'],
+        usedParts: [{ name: 'ชุดซีลกระบอกไฮดรอลิก', qty: 1, unit: 'ชุด' }, { name: 'จาระบี EP2', qty: 2, unit: 'หลอด' }],
+        by: 'กบค.', hours: 3120, odo: 83450,
         record: { det: 'อัดจาระบีรางสไลด์ + เปลี่ยนชุดซีล ทดสอบยืด-หดปกติ' },
         cost: { labor: 1500, parts: 2400, travel: 0, lodging: 0 },
         phase: 'closed', wi: 3,
         history: [{ t: '9 มิ.ย. 2569 10:00', label: 'กรย. ส่งต่อให้ กบค.' }]
       },
       {
-        no: 'MTD-690528-003', plate: '83-1122 กรุงเทพมหานคร',
+        no: 'MTD-690528-003', plate: '83-1122 กรุงเทพมหานคร', date: '28 พ.ค. 2569',
         syms: ['สตาร์ทไม่ติด'],
+        usedParts: [{ name: 'แบตเตอรี่ 12V 100Ah', qty: 1, unit: 'ลูก' }],
+        by: 'กรย.', hours: 2870, odo: 81900,
         record: { det: 'กรย. เปลี่ยนแบตเตอรี่และตรวจระบบไฟ ทดสอบสตาร์ทปกติ', by: 'กรย.' },
         cost: { labor: 600, parts: 4200, travel: 0, lodging: 0 },
         phase: 'gclosed', wi: 0,
         history: [{ t: '28 พ.ค. 2569 09:20', label: 'ส่งเรื่องถึง กรย. — รอคัดแยกช่องทางซ่อม' }]
+      },
+      {
+        no: 'MTD-690412-045', plate: '82-6789 ขอนแก่น', date: '12 เม.ย. 2569',
+        syms: ['ยางหน้าซ้ายสึกผิดปกติ'],
+        usedParts: [{ name: 'ยาง 825R16', qty: 2, unit: 'เส้น' }],
+        by: 'อู่ภายนอก (อู่ช่างเอก ขอนแก่น)', hours: 2980, odo: 80120,
+        record: { det: 'เปลี่ยนยางคู่หน้า + ตั้งศูนย์ถ่วงล้อ', by: 'อู่' },
+        cost: { labor: 800, parts: 11600, travel: 0, lodging: 0 },
+        phase: 'gclosed', wi: 0,
+        history: [{ t: '12 เม.ย. 2569 13:30', label: 'กรย. ส่งซ่อมอู่ภายนอก' }]
       }
     ];
 
@@ -2310,6 +3140,28 @@
       if (p.stock <= 3) return '<span class="badge b-low">ใกล้หมด · เหลือ ' + p.stock + '</span>';
       return '<span class="badge b-ok">พร้อมเบิก · เหลือ ' + p.stock + '</span>';
     }
+    // ---- รายละเอียดรถสำหรับแถวรายการงาน ----
+    // ประเภทรถ: อ่านจากอุปกรณ์เสริมที่ต่อพ่วง (model = "รุ่นรถ + อุปกรณ์")
+    function vehType(j) {
+      const at = (j.model || '').split(' + ')[1] || '';
+      if (at.startsWith('เครน')) return { name: 'เครน', cls: 'crane', icon: 'construction' };
+      if (at.startsWith('กระเช้า')) return { name: 'กระเช้า', cls: 'bucket', icon: 'elevator' };
+      return { name: 'รถทั่วไป', cls: '', icon: 'local_shipping' };
+    }
+    // สถานะรถ: ใช้ค่า j.usable ถ้ามี — ถ้าไม่มีให้อนุมานจากความรุนแรง (สูง = ใช้งานไม่ได้)
+    // ⚠️ ของจริงต้องเคาะว่ามาจากไหน: ผู้แจ้งระบุเอง หรือ derive จากความรุนแรง
+    function vehUsable(j) {
+      return typeof j.usable === 'boolean' ? j.usable : j.sev !== 'สูง';
+    }
+    function vehLine(j) {
+      const t = vehType(j), ok = vehUsable(j);
+      return `<div class="vline">
+      <span class="vplate">${esc(j.plate)}</span>
+      <span class="vchip ${t.cls}"><span class="ms">${t.icon}</span>${t.name}</span>
+      <span class="vstat ${ok ? 'ok' : 'no'}"><span class="ms">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span>
+    </div>`;
+    }
+
     function statusInfo(j) {
       if (j.phase === 'wait') return { label: 'รอ ' + j.approver.name + ' อนุมัติ', cls: 'b-low' };
       if (j.phase === 'reject') return { label: 'ไม่อนุมัติ — ตีกลับให้แก้ไข', cls: 'b-low' };
@@ -2326,6 +3178,9 @@
       }
       if (j.phase === 'gclosed') return { label: 'ปิดงาน — ซ่อมโดยอู่', cls: 'b-ok' };
       if (j.phase === 'slots') return { label: 'ซ่อมเสร็จ — รอผู้แจ้งเลือกวันนัดรับ', cls: 'b-brand' };
+      if (j.phase === 'quote') return { label: j.quote && j.quote.sent ? 'รอใบเสนอราคาจากอู่' : 'ส่งอู่ประเมินราคา', cls: 'b-low' };
+      if (j.phase === 'work' && !j.route) return { label: 'รับเรื่องแล้ว — รอเลือกวิธีซ่อม', cls: 'b-brand' };
+      if (j.phase === 'work' && j.route === 'self' && !j.partsOK) return { label: 'กำลังจัดรายการอะไหล่', cls: 'b-brand' };
       if (j.phase === 'work') {
         if (j.loc === 'onsite') return { label: 'ซ่อมหน้างาน: ' + ONSITE_STEPS[j.wi], cls: j.wi === 2 ? 'b-ok' : 'b-brand' };
         return { label: KBK_STEPS[j.wi], cls: j.wi === 4 ? 'b-ok' : 'b-brand' };
@@ -2349,10 +3204,13 @@
     // ================= VIEW SWITCH =================
     function switchView(v,remember=true) {
       if(v!==VIEW){if(remember)VIEW_HISTORY.push(VIEW);VIEW = v}
-      ['form', 'my', 'fuel', 'boss', 'kry', 'kbk', 'sup', 'stock'].forEach(x => {
+      // vhist = หน้าประวัติการซ่อม เปิดจากปุ่มในรายละเอียดงาน จึงไม่มีเมนูซ้ายของตัวเอง
+      ['form', 'my', 'fuel', 'boss', 'kry', 'kbk', 'sup', 'stock', 'vhist', 'worth'].forEach(x => {
         $('view-' + x).classList.toggle('hidden', x !== v);
-        $('nav-' + x).classList.toggle('on', x === v);
+        const nav = $('nav-' + x); if (nav) nav.classList.toggle('on', x === v);
       });
+      if (v === 'vhist') renderVehHistory();
+      if (v === 'worth') renderWorth();
       if (v === 'my') renderMyList();
       if (v === 'fuel') renderPf();
       if (v === 'boss') renderBossList();
@@ -2632,7 +3490,12 @@ function goBackFromForm(){
         no, plate: S.vehicle.plate, model: S.vehicle.model + (S.vehicle.attach ? ' + ' + S.vehicle.attach : ''), org: S.vehicle.org,
         target: S.target === 'attach' ? S.vehicle.attach : 'ตัวรถ',
         syms: S.symptoms.map(id => id === 'OTH' ? ('อื่นๆ: ' + esc($('othtext').value.trim())) : SYMPTOMS.find(s => s.id === id).name),
-        sev: S.sev, photos: S.photos, desc: esc($('desc').value.trim()),
+        // สถานะรถ (mock): อนุมานจากความรุนแรง — ⚠️ ของจริงต้องเคาะว่าให้ผู้แจ้งระบุเองหรือ derive
+        sev: S.sev, usable: S.sev !== 'สูง', photos: S.photos, desc: esc($('desc').value.trim()),
+        // เติมเท่าที่หาได้จากข้อมูลรถ — ที่เหลือ (สถานที่รถอยู่ · ช่างคุมรถ · พขร. · เลขไมล์ · ชม.เครน)
+        // ฟอร์มยังไม่ได้ถาม จึงเว้นว่างให้เห็นช่องโหว่ ดูโน๊ตท้ายหน้ารายละเอียด
+        owner: { name: S.vehicle.org, tel: '' }, fromUnit: 'กรย. ' + S.vehicle.org,
+        budget: 'งบซ่อมบำรุงยานพาหนะ ปี 2569 · ' + S.vehicle.org,
         booked: bookedArr(), ordered: orderedArr(),
         reason: S.decision === 'kry' ? esc($('kryreason').value.trim()) : esc($('selfnote').value.trim()),
         // ทุกใบต้องผ่านหัวหน้าอนุมัติก่อน — nextPhase คือปลายทางหลังอนุมัติ
@@ -2683,13 +3546,72 @@ function goBackFromForm(){
     <div class="sumrow"><span>เหตุผล/บันทึกจากผู้แจ้ง</span><span>${j.reason || '—'}</span></div>
   </div>`;
     }
+    // รายละเอียดการแจ้งซ่อม (หน้า กบค.) — สถานะใบงานไม่อยู่ในนี้ อยู่ที่ป้ายบนหัวการ์ดที่เดียว
+    const NA = '<span style="color:var(--gray-400);font-weight:400">—</span>';
+    function telLink(t) { return t ? `<a href="tel:${esc(t).replace(/[^0-9+]/g, '')}" style="color:var(--primary-600);text-decoration:none">${esc(t)}</a>` : NA }
+    function pcard(icon, role, name, tel) {
+      return `<div class="pcard">
+      <span class="ms">${icon}</span>
+      <div class="pc-tx"><label>${role}</label><b>${name ? esc(name) : '—'}</b>
+        <span class="pc-tel"><span class="ms">call</span>${telLink(tel)}</span></div>
+    </div>`;
+    }
+    function vehInfoBox(j) {
+      const t = vehType(j), ok = vehUsable(j);
+      const at = j.at || {}, use = j.use || {};
+      const place = at.prov ? `${esc(at.amp || '')}${at.amp ? ' · ' : ''}จ.${esc(at.prov)}` : NA;
+      const useTx = [use.odo ? use.odo.toLocaleString() + ' กม.' : null,
+                     use.crane ? use.crane.toLocaleString() + ' ชม. (เครน/กระเช้า)' : null]
+                     .filter(Boolean).join(' · ') || NA;
+      return `<div class="sect" style="margin-top:4px">รายละเอียดการแจ้งซ่อม</div>
+    <div class="vgrid" style="margin-top:10px">
+      <div class="vcell"><label>เลขที่ใบแจ้งซ่อม</label><div class="val">${esc(j.no)}</div></div>
+      <div class="vcell"><label>เลขทะเบียนรถ</label><div class="val">${esc(j.plate)}</div></div>
+      <div class="vcell"><label>ประเภทรถ</label><div class="val"><span class="ms" style="font-size:19px;color:var(--${t.cls === 'crane' ? 'primary' : t.cls === 'bucket' ? 'secondary' : 'gray'}-600)">${t.icon}</span>${t.name}</div></div>
+      <div class="vcell"><label>สถานะรถ</label><div class="val"><span class="vstat ${ok ? 'ok' : 'no'}"><span class="ms">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span></div></div>
+      <div class="vcell"><label>สถานที่รถอยู่</label><div class="val" style="font-size:14px">${place}</div></div>
+      <div class="vcell"><label>ข้อมูลการใช้งานรถ</label><div class="val" style="font-size:14px">${useTx}</div></div>
+      <div class="vcell"><label>หน่วยงานที่แจ้งเข้ามา (เขต/กรย.)</label><div class="val" style="font-size:14px">${j.fromUnit ? esc(j.fromUnit) : NA}</div></div>
+    </div>
+
+    <div class="sect" style="margin-top:20px">อาการที่แจ้งเข้ามา</div>
+    <div class="vgrid" style="margin-top:10px;display:block">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${j.syms.map(s => `<span class="vchip">${esc(s)}</span>`).join('')}</div>
+      ${j.desc ? `<div style="margin-top:10px"><label style="display:block;font-size:var(--fs-xs);font-weight:600;color:var(--gray-500);margin-bottom:4px">หมายเหตุของผู้แจ้ง</label><div style="font-size:14px;line-height:var(--lh)">${esc(j.desc)}</div></div>` : ''}
+      <div style="margin-top:10px"><label style="display:block;font-size:var(--fs-xs);font-weight:600;color:var(--gray-500);margin-bottom:5px">รูปแนบ</label>
+        ${j.photos ? `<div style="display:flex;gap:8px;flex-wrap:wrap">${Array.from({ length: j.photos }, () => '<div class="phz"><span class="ms">image</span></div>').join('')}<span style="align-self:center;font-size:var(--fs-sm);color:var(--gray-500)">${j.photos} รูป</span></div>` : '<span style="font-size:14px;color:var(--gray-400)">ไม่มีรูปแนบ</span>'}</div>
+    </div>
+
+    <div class="sect" style="margin-top:20px">ผู้ติดต่อ</div>
+    <div class="pcards">
+      ${pcard('apartment', 'หน่วยงานเจ้าของเรื่อง', j.owner && j.owner.name || j.org, j.owner && j.owner.tel)}
+      ${pcard('engineering', 'ช่างคุมรถ', j.tech && j.tech.name, j.tech && j.tech.tel)}
+      ${pcard('badge', 'พนักงานขับรถ (พขร.)', j.driver && j.driver.name, j.driver && j.driver.tel)}
+    </div>
+
+    <div class="budgetbox"><span class="ms">receipt_long</span>
+      <div class="bg-tx"><label>งบประมาณที่จะตัด</label><b>${j.budget ? esc(j.budget) : '<span style="color:var(--error-600)">— ผู้แจ้งยังไม่ได้เลือกงบ —</span>'}</b>
+        <span class="bg-note">ผู้แจ้งเลือกมาตั้งแต่ตอนสร้างใบแจ้งซ่อม</span></div></div>
+    ${missingFields(j).length ? `<div class="todo"><span class="ms">edit_note</span><span><b>TODO — ฟอร์มแจ้งซ่อมยังไม่ได้ถาม ${missingFields(j).length} ช่องนี้</b>
+      ${missingFields(j).map(esc).join(' · ')} — ใบตัวอย่าง 2 ใบมีข้อมูลครบเพราะใส่ไว้ในข้อมูลจำลอง แต่ใบที่สร้างจากฟอร์มจริงจะขึ้น “—” จนกว่าจะเพิ่มช่องในฟอร์ม</span></div>` : ''}`;
+    }
+    // เช็คว่าใบนี้ขาดข้อมูลช่องไหน (ช่องที่ฟอร์มแจ้งซ่อมยังไม่ได้เก็บ)
+    function missingFields(j) {
+      const m = [];
+      if (!(j.at && j.at.prov)) m.push('สถานที่รถอยู่ (จังหวัด/อำเภอ)');
+      if (!(j.use && (j.use.odo || j.use.crane))) m.push('เลขไมล์ / ชม.การใช้เครน');
+      if (!(j.owner && j.owner.tel)) m.push('เบอร์โทรหน่วยงานเจ้าของเรื่อง');
+      if (!(j.tech && j.tech.name)) m.push('ชื่อ+เบอร์ ช่างคุมรถ');
+      if (!(j.driver && j.driver.name)) m.push('ชื่อ+เบอร์ พขร.');
+      return m;
+    }
     function timelineBox(j) {
       return `<div class="sect" style="margin-top:24px">ประวัติสถานะ</div>
     <ul class="tl" style="margin-top:12px">${j.history.map((h, i) => `<li class="${i === j.history.length - 1 ? 'on' : ''}">${h.label}<div class="when">${h.t}</div></li>`).join('')}</ul>`;
     }
 
 // ================= VIEW: เรื่องของฉัน =================
-const MY_STATUS_PHASES={wait:['wait'],reject:['reject'],self:['self'],kry:['kry'],krd:['krd'],pending:['pending'],returned:['returned'],gclosed:['gclosed'],work:['work'],slots:['slots'],appt:['appt'],approve:['approve'],closed:['closed']};
+const MY_STATUS_PHASES={wait:['wait'],reject:['reject'],quote:['quote'],self:['self'],kry:['kry'],krd:['krd'],pending:['pending'],returned:['returned'],gclosed:['gclosed'],work:['work'],slots:['slots'],appt:['appt'],approve:['approve'],closed:['closed']};
 function renderMyList(){
   const list=$('mylist');R.jobNo=null;list.classList.remove('hidden');
   const select=$('my-status-filter'),key=select.value,phases=MY_STATUS_PHASES[key];
@@ -2867,23 +3789,73 @@ function retPanel(j){
     }
 
     // ================= ส่วนกลาง: ประวัติการซ่อมย้อนหลังรายคัน (VMS+) =================
-    function vehHistoryPanel(j) {
-      const liveHistory = JOBS.filter(x => x.plate === j.plate && x.no !== j.no && ['closed', 'gclosed'].includes(x.phase));
-      const storedHistory = VEHICLE_REPAIR_HISTORY.filter(x => x.plate === j.plate);
+    // รวมประวัติการซ่อมของรถคันหนึ่ง — งานที่ปิดแล้วใน JOBS + ชุดที่ดึงมาจาก VMS+
+    function vehHistoryOf(plate, exceptNo) {
+      const live = JOBS.filter(x => x.plate === plate && x.no !== exceptNo && ['closed', 'gclosed'].includes(x.phase));
+      const stored = VEHICLE_REPAIR_HISTORY.filter(x => x.plate === plate);
       const seen = new Set();
-      const past = [...liveHistory, ...storedHistory].filter(x => !seen.has(x.no) && seen.add(x.no));
-      return `<div class="sect" style="margin-top:24px">ประวัติการซ่อมแซมย้อนหลังของรถคันนี้ (VMS+) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ${j.plate}</span></div>
-      <div class="panel">${past.length ? past.map(x => {
-        const s = x.phase === 'gclosed' && x.record && x.record.by === 'กรย.'
-          ? { label: 'ปิดงาน — กรย. ซ่อมเอง', cls: 'b-ok' }
-          : statusInfo(x);
-        const total = x.cost ? costSum(x.cost).toLocaleString() : '';
-        return `<div class="dayrow" style="align-items:flex-start;border-bottom:1px dashed var(--gray-200);padding-bottom:8px">
-          <span style="flex:0 0 150px;font-weight:600;color:var(--gray-900);font-size:13.5px">${x.no}</span>
-          <span style="flex:1;font-size:13.5px">${x.syms.join(', ')}${x.record ? ` — ${x.record.det}` : ''}${total ? ` · ต้นทุน ${total} บาท` : ''}<div style="font-size:12px;color:var(--gray-400)">${x.history[0].t}</div></span>
-          <span class="badge ${s.cls}">${s.label}</span>
-        </div>`;
-      }).join('') : '<div class="hint" style="margin:0">ไม่พบประวัติการซ่อมย้อนหลังของรถคันนี้</div>'}</div>`;
+      return [...live, ...stored].filter(x => !seen.has(x.no) && seen.add(x.no));
+    }
+    // ปุ่มการ์ด — ออกแบบให้เห็นชัดว่ากดได้ แล้วเปิดไปอีกหน้า (ไม่ใช่กางในที่)
+    function vehHistoryPanel(j) {
+      const n = vehHistoryOf(j.plate, j.no).length;
+      return `<div class="sect" style="margin-top:24px">ประวัติการซ่อม</div>
+      <button type="button" class="histbtn" onclick="openVehHistory('${esc(j.plate)}','${j.no}')">
+        <span class="ic"><span class="ms">history</span></span>
+        <span class="tx"><b>ดูประวัติการซ่อมของรถคันนี้</b>
+          <span>${esc(j.plate)} · พบ ${n} รายการ${n ? ' — เลขที่ใบแจ้งซ่อม อาการ อะไหล่ที่ใช้ ผู้ซ่อม ชั่วโมงใช้งาน เลขไมล์' : ''}</span></span>
+        <span class="go">เปิดดู<span class="ms" style="font-size:18px">open_in_new</span></span>
+      </button>`;
+    }
+
+    // ---------- หน้าประวัติการซ่อม (view แยก) ----------
+    let VH = { plate: null, back: 'kbk' };
+    function openVehHistory(plate, fromNo) {
+      VH = { plate, back: VIEW, fromNo };
+      switchView('vhist');
+    }
+    function renderVehHistory() {
+      const plate = VH.plate;
+      if (!plate) { $('vhistbody').innerHTML = '<div class="empty">ยังไม่ได้เลือกรถ</div>'; return }
+      const rows = vehHistoryOf(plate, null);
+      const v = VEHICLES.find(x => x.plate === plate);
+      const byBadge = b => {
+        const m = { 'กบค.': 'b-brand', 'กรย.': 'b-brand' };
+        return `<span class="badge ${/อู่/.test(b) ? 'b-low' : (m[b] || 'b-ok')}">${esc(b)}</span>`;
+      };
+      $('vhistbody').innerHTML = `
+    <h1 class="page-title">ประวัติการซ่อม — ${esc(plate)}</h1>
+    <div class="lead" style="color:var(--gray-600);margin:4px 0 18px">${v ? esc(v.model + (v.attach ? ' + ' + v.attach : '')) : ''} · ${esc((v && v.org) || '')} — ข้อมูลจำลองจาก VMS+</div>
+    ${rows.length ? `<div class="scrollx" style="overflow-x:auto;border:1px solid var(--gray-200);border-radius:var(--r-md);background:#fff">
+      <table style="width:100%;border-collapse:collapse;font-size:var(--fs-sm);min-width:900px">
+        <thead><tr>
+          <th style="text-align:left;padding:10px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);white-space:nowrap">เลขที่ใบแจ้งซ่อม · วันที่</th>
+          <th style="text-align:left;padding:10px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200)">อาการเสีย</th>
+          <th style="text-align:left;padding:10px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200)">อะไหล่ที่ใช้</th>
+          <th style="text-align:left;padding:10px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);white-space:nowrap">ผู้ซ่อม</th>
+          <th style="text-align:right;padding:10px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);white-space:nowrap">ชั่วโมงใช้งาน</th>
+          <th style="text-align:right;padding:10px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);white-space:nowrap">เลขไมล์</th>
+        </tr></thead>
+        <tbody>${rows.map(x => {
+        const parts = x.usedParts && x.usedParts.length ? x.usedParts.map(p => `${esc(p.name)} ×${p.qty} ${esc(p.unit || '')}`).join('<br>')
+          : (x.booked && x.booked.length ? x.booked.map(p => `${esc(p.name)} ×${p.qty} ${esc(p.unit || '')}`).join('<br>') : '<span style="color:var(--gray-400)">ไม่ได้ใช้อะไหล่</span>');
+        const by = x.by || (x.record && x.record.by) || 'กบค.';
+        const dt = x.date || (x.history && x.history[0] ? x.history[0].t : '—');
+        return `<tr>
+          <td style="padding:10px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top"><b>${esc(x.no)}</b><div style="font-size:12px;color:var(--gray-500)">${esc(dt)}</div></td>
+          <td style="padding:10px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top">${esc(x.syms.join(', '))}${x.record ? `<div style="font-size:12px;color:var(--gray-500)">${esc(x.record.det)}</div>` : ''}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top">${parts}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top">${byBadge(by)}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top;text-align:right">${x.hours ? x.hours.toLocaleString() + ' ชม.' : '<span style="color:var(--gray-400)">—</span>'}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top;text-align:right">${x.odo ? x.odo.toLocaleString() + ' กม.' : '<span style="color:var(--gray-400)">—</span>'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+      </table></div>`
+          : '<div class="empty">ไม่พบประวัติการซ่อมย้อนหลังของรถคันนี้</div>'}
+    <div class="todo"><span class="ms">pending_actions</span><span><b>TODO — ชั่วโมงใช้งาน / เลขไมล์ ยังไม่ได้ต่อของจริง</b>
+      ตอนนี้เป็นค่าที่ใส่ไว้ในข้อมูลจำลอง ของจริงต้องดึงจากบันทึกเติมน้ำมัน/ชั่วโมงทำงานใน VMS+ ณ วันปิดงาน</span></div>
+    <div class="rowbtns" style="justify-content:flex-start;margin-top:18px">
+      <button class="btn btn-g" onclick="switchView('${VH.back}')">← กลับหน้างานซ่อม</button></div>`;
     }
 
     // ================= VIEW: งานคัดแยก กรย. =================
@@ -3007,9 +3979,9 @@ function krdClose(no){
 }
 
     // ================= VIEW: งานซ่อม กบค. =================
-    const E = { mode: null, garages: [], loc: 'hq' };
+    const E = { mode: null, garages: [], loc: 'hq', addOpen: false };
     let K = { slots: {}, note: '', mode: 'range', from: '', to: '', one: '', insp: null },KBK_OPEN=null;
-const KBK_STATUS_PHASES={pending:['pending'],returned:['returned'],gclosed:['gclosed'],work:['work'],appt:['appt'],closed:['closed']};
+const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned'],gclosed:['gclosed'],work:['work'],appt:['appt'],closed:['closed']};
     function initInsp() { return { zones: ZONES.map(z => ({ name: z, bad: false, note: '' })), fuel: null, odo: '', symOk: {}, extra: '' } }
     function zSet(no, zi, v) { K.insp.zones[zi].bad = v; renderKbkDetail(no) }
     function fuelSet(no, f) { K.insp.fuel = f; renderKbkDetail(no) }
@@ -3060,7 +4032,7 @@ const KBK_STATUS_PHASES={pending:['pending'],returned:['returned'],gclosed:['gcl
     }
     function renderKbkList() {
       KBK_OPEN=null; $('kbklist').classList.remove('hidden');
-      const allJobs = JOBS.filter(j => ['pending', 'work', 'appt', 'closed', 'returned', 'gclosed'].includes(j.phase));
+      const allJobs = JOBS.filter(j => ['pending', 'quote', 'work', 'appt', 'closed', 'returned', 'gclosed'].includes(j.phase));
       const select=$('kbk-status-filter'),key=select.value,phases=KBK_STATUS_PHASES[key];
   const list=phases?allJobs.filter(j=>phases.includes(j.phase)):allJobs;
   if (!list.length) { 
@@ -3071,7 +4043,7 @@ const KBK_STATUS_PHASES={pending:['pending'],returned:['returned'],gclosed:['gcl
         const st = statusInfo(j);
         return `<div class="kbk-accordion"><div class="job kbk-job" id="kbk-job-${j.no}" onclick="openKbk('${j.no}')" aria-expanded="false">
       <span class="ms" style="color:var(--primary-600)">${j.phase === 'pending' ? 'move_to_inbox' : 'engineering'}</span>
-      <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org} · ${j.plate} · ${j.syms[0]}${j.syms.length > 1 ? ' +' + (j.syms.length - 1) : ''} · ความรุนแรง: ${j.sev}</div></div>
+      <div class="sp"><div class="no">${j.no}</div>${vehLine(j)}<div class="meta">${j.org} · ${j.syms[0]}${j.syms.length > 1 ? ' +' + (j.syms.length - 1) : ''} · ความรุนแรง: ${j.sev}</div></div>
       <span class="badge ${st.cls}">${st.label}</span>
       <span class="ms kbk-chevron" style="color:var(--gray-300)">chevron_right</span></div>
       <div class="kbk-inline-detail hidden" id="kbk-detail-${j.no}"></div></div>`;
@@ -3093,7 +4065,7 @@ function closeKbkDetail(){
       if(KBK_OPEN===no&&!kbkDetail(no).classList.contains('hidden')){closeKbkDetail();return}
   if(KBK_OPEN){const previous=kbkDetail(KBK_OPEN);setKbkCardOpen(KBK_OPEN,false);if(previous){previous.classList.add('hidden');previous.innerHTML=''}}
   KBK_OPEN=no;
-  E.mode = null; E.garages = []; E.loc = 'hq'; K = { slots: {}, note: '', mode: 'range', from: '', to: '', one: '', insp: null, sat: null, ack: false };
+  E.mode = null; E.garages = []; E.loc = 'hq'; E.addOpen = false; E.equip = undefined; E.q = ''; K = { slots: {}, note: '', mode: 'range', from: '', to: '', one: '', insp: null, sat: null, ack: false };
       setKbkCardOpen(no,true);renderKbkDetail(no);
     }
     function renderKbkDetail(no) {
@@ -3101,40 +4073,13 @@ function closeKbkDetail(){
       let action = '';
 
       if (j.phase === 'pending') {
-        action = vehHistoryPanel(j) + `<div class="sect" style="margin-top:24px">วิเคราะห์และประเมิน (ช่วงที่ 2)</div>
-    <div class="panel">
-      <div class="hint" style="margin:0 0 10px"><span class="ms" style="font-size:16px">support_agent</span> โทรหาหน้างานเพื่อวิเคราะห์อาการเพิ่มเติมก่อนประเมิน</div>
-      <div class="fgrid" style="margin:0;max-width:560px">
-        <div class="f sp2"><label>ประเมินราคาซ่อม (บาท) <small>(ถ้ามี)</small></label><div class="in"><span class="ms">payments</span><input type="number" min="0" id="asprice" placeholder="0"></div></div>
-      </div>
-      <div class="rowbtns" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px">
-        <button class="btn btn-o" onclick="kbkSendTech('${no}')"><span class="ms" style="font-size:18px">engineering</span> ส่งช่างไปตรวจ (อาการไม่ชัดเจน)</button>
-        <button class="btn btn-g" onclick="kbkPlaceholder('Overhaul')">งาน Overhaul</button>
-        <button class="btn btn-g" onclick="kbkPlaceholder('ทำเรื่องจำหน่าย (ไม่คุ้มค่า)')">ไม่คุ้มค่า → จำหน่าย</button>
-      </div>
-      <div class="hint" style="margin-top:8px"><span class="ms" style="font-size:15px;color:var(--warning-700)">flag</span> "Overhaul" และ "จำหน่าย" เป็นเส้นทางที่ผังงานยังไม่กำหนด (placeholder)</div>
-    </div>
-    <div class="sect" style="margin-top:20px">การตัดสินใจ — รับไว้ซ่อม หรือส่งกลับ</div>
-    <div class="decide">
-      <div class="tile tile-magenta ${E.mode === 'accept' ? 'sel' : ''}" onclick="E.mode='accept';renderKbkDetail('${no}')"><span class="ms">task_alt</span><b>รับไว้ซ่อม</b><small>กบค. ดำเนินการซ่อมเอง</small></div>
-      <div class="tile tile-blue ${E.mode === 'return' ? 'sel' : ''}" onclick="E.mode='return';renderKbkDetail('${no}')"><span class="ms">u_turn_left</span><b>ส่งกลับให้ซ่อมเอง</b><small>คืนหน่วยงานผู้แจ้ง พร้อมเหตุผล</small></div>
-    </div>`;
+        // ประเมินความคุ้มค่า/Overhaul/จำหน่าย ย้ายออกจากหน้านี้แล้ว — เหลือแค่ 2 ทางเลือก
+        action = vehHistoryPanel(j) + `<div class="sect" style="margin-top:24px">สถานะการแจ้งซ่อมครั้งนี้ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เลือกว่าจะรับไว้ซ่อม หรือส่งกลับให้ซ่อมเอง</span></div>
+    <div id="kbkdec-${no}" style="margin-top:10px"></div>`;
         if (E.mode === 'accept') {
-          const onsite = E.loc === 'onsite';
+          // ตัด "รูปแบบการซ่อม งานใหญ่/งานเล็ก" ออกจากขั้นรับเรื่อง — ทุกใบเดินแทร็ก สนญ. (E.loc='hq')
           action += `<div class="panel">
-        <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin-bottom:6px">รูปแบบการซ่อม <small style="color:var(--gray-500);font-weight:400">(ช่วงที่ 4 · เตรียมแผนซ่อม)</small></label>
-        <div class="seg" style="max-width:560px">
-          <div class="sg ${!onsite ? 'sel' : ''}" onclick="E.loc='hq';renderKbkDetail('${no}')">งานใหญ่ — นำรถเข้า สนญ.</div>
-          <div class="sg ${onsite ? 'sel' : ''}" onclick="E.loc='onsite';renderKbkDetail('${no}')">งานเล็ก — ช่างออกหน้างาน</div>
-        </div>
-        ${onsite ? `
-        <div class="fgrid" style="margin:14px 0 0;max-width:680px">
-          <div class="f sp2"><label>ชื่อช่าง กบค. (2–3 คน)</label><div class="in"><span class="ms">groups</span><input type="text" id="ac-team" placeholder="เช่น ก.สมชาย · ข.วิชัย"></div></div>
-          <div class="f sp2"><label>สถานที่ซ่อม (หน้างาน)</label><div class="in"><span class="ms">place</span><input type="text" id="ac-site" placeholder="เช่น จุดปฏิบัติงาน อ.สูงเนิน"></div></div>
-          <div class="f sp2"><label>ช่วงวันเดินทาง</label><div class="in"><span class="ms">event</span><input type="text" id="ac-trip" placeholder="เช่น 22–23 ก.ค. 2569"></div></div>
-        </div>`
-              : `<div class="hint" style="margin-top:10px">นำรถเข้าซ่อมที่สำนักงานใหญ่ — มีตรวจสภาพขาเข้า/ขาออก และนัดรับรถ (แทร็กเดิม)</div>`}
-        <div class="f" style="margin-top:12px"><label>บันทึกการรับเรื่อง <small>(ถ้ามี)</small></label><textarea id="acnote" rows="2" placeholder="เช่น คิวช่างว่างพฤหัสนี้…"></textarea></div>
+        <div class="f"><label>บันทึกการรับเรื่อง <small>(ถ้ามี)</small></label><textarea id="acnote" rows="2" placeholder="เช่น คิวช่างว่างพฤหัสนี้…"></textarea></div>
         <div class="rowbtns"><button class="btn btn-p" onclick="kbkAccept('${no}')">ยืนยันรับเรื่องซ่อม</button></div></div>`;
         }
         if (E.mode === 'return') {
@@ -3168,8 +4113,13 @@ function closeKbkDetail(){
       </div>`;
         }
       }
+      // ---- หลังรับเรื่อง: เลือกว่า ซ่อมเองได้ หรือ ส่งอู่ประเมินราคา ----
+      else if (j.phase === 'work' && !j.route) { action = routeChoiceHTML(no, j) }
+      // ---- ซ่อมเอง: จัดรายการอะไหล่ก่อนเริ่มงาน ----
+      else if (j.phase === 'work' && j.route === 'self' && !j.partsOK) { action = partsEditorHTML(no, j) }
+      else if (j.phase === 'quote') { action = quotePanelHTML(no, j) }
       else if (j.phase === 'work') {   // ---- แทร็กงานใหญ่ (นำรถเข้า สนญ.) ----
-        action = `<div class="sect" style="margin-top:24px">สถานะงานซ่อม <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— สถานะแสดงที่ฝั่งผู้แจ้งด้วย</span></div>
+        action = partsSummaryHTML(j) + `<div class="sect" style="margin-top:24px">สถานะงานซ่อม <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— สถานะแสดงที่ฝั่งผู้แจ้งด้วย</span></div>
     <div class="wsteps" style="margin-top:14px">${KBK_STEPS.map((s, i) => `<div class="wstep ${i === j.wi ? 'active' : i < j.wi ? 'passed' : ''}"><span class="num">${i < j.wi ? '✓' : i + 1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
         if (TG.inspection) {   // ปิด toggle ตรวจสภาพ → ข้ามฟอร์ม/แผงตรวจสภาพขาเข้าทั้งหมด
           if (j.inspIn) {
@@ -3250,11 +4200,25 @@ function closeKbkDetail(){
   const detail=kbkDetail(no);detail.classList.remove('hidden');
   detail.innerHTML=`
     <div class="ops-detail-layout">
-      <div class="ops-detail-main">${jobInfoBox(j)}${action}</div>
+      <div class="ops-detail-main">${vehInfoBox(j)}${action}</div>
       <aside class="ops-detail-side">
         ${timelineBox(j)}
       </aside>
     </div>`;
+  // mount shared component "ตัวเลือกการตัดสินใจ" — สลับหน้าตาได้ที่ Admin (variants.kbkDecision)
+  // มี fallback เผื่อ ui-components.js เป็นเวอร์ชันเก่าค้าง cache — จะได้ไม่เหลือช่องว่างเปล่าๆ
+  const dec=document.getElementById('kbkdec-'+no);
+  if(dec){
+    if(window.UIC&&UIC.kbkDecision){
+      UIC.kbkDecision.render(dec,{variant:UI.kbkDecision||'tiles',selected:E.mode,
+        onPick:v=>{E.mode=v;renderKbkDetail(no)}});
+    }else{
+      dec.innerHTML=`<div class="kbkdec-tiles"><div class="decide" style="margin-top:0">
+        <div class="tile tile-magenta ${E.mode==='accept'?'sel':''}" onclick="E.mode='accept';renderKbkDetail('${no}')"><span class="ms">task_alt</span><b>รับไว้ซ่อม</b><small>กบค. ดำเนินการซ่อมเอง</small></div>
+        <div class="tile tile-blue ${E.mode==='return'?'sel':''}" onclick="E.mode='return';renderKbkDetail('${no}')"><span class="ms">u_turn_left</span><b>ส่งกลับให้ซ่อมเอง</b><small>คืนหน่วยงานผู้แจ้ง พร้อมเหตุผล</small></div>
+      </div></div>`;
+    }
+  }
   // mount shared component "ตัวเลือกวันนัด" (มีเฉพาะตอน wi===4 หน้าเปิดตารางว่าง)
   const dpk=document.getElementById('dpk');
   if(dpk)UIC.dayPicker.render(dpk,{variant:UI.slotPicker,days:Object.keys(K.slots),state:K,
@@ -3271,6 +4235,266 @@ function kbkSendTech(no){
 function kbkPlaceholder(kind){
   toast(kind+' — เส้นทางนี้ผังงานยังไม่กำหนด (placeholder)');
 }
+// ================= หลังรับเรื่อง: ซ่อมเองได้ / ส่งอู่ประเมินราคา =================
+const baht = n => (n || 0).toLocaleString('th-TH');
+// ตั้งรายการอะไหล่ตั้งต้นจากที่ "ต้นทาง" (ผู้แจ้ง) เลือกมา — booked = จองได้แล้ว, ordered = รอของเข้า
+function initJobParts(j){
+  if(j.parts)return j.parts;
+  const find=nm=>PARTS.find(p=>p.name===nm)||{};
+  j.parts=[
+    ...j.booked.map(b=>{const p=find(b.name);return{code:p.code||b.name,name:b.name,unit:b.unit,qty:b.qty,price:p.price||0,src:'req',ready:true}}),
+    ...j.ordered.map(o=>{const p=find(o.name);return{code:p.code||o.name,name:o.name,unit:o.unit,qty:o.qty,price:p.price||0,src:'req',ready:false,eta:o.eta}})
+  ];
+  return j.parts;
+}
+function partsTotal(list){return list.reduce((s,x)=>s+(x.price||0)*x.qty,0)}
+
+function routeChoiceHTML(no, j){
+  return `<div class="sect" style="margin-top:24px">รับเรื่องแล้ว — จะดำเนินการอย่างไร <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เลือกก่อนงานถึงจะเดินต่อ</span></div>
+  <div class="kbkdec-tiles" style="margin-top:10px"><div class="decide" style="margin-top:0">
+    <div class="tile tile-magenta" onclick="kbkSetRoute('${no}','self')"><span class="ms">handyman</span><b>ซ่อมเองได้</b><small>กบค. ซ่อมเอง — จัดรายการอะไหล่ต่อ</small></div>
+    <div class="tile tile-blue" onclick="kbkSetRoute('${no}','garage')"><span class="ms">request_quote</span><b>ส่งอู่ประเมินราคา</b><small>ให้อู่ภายนอกตีราคาก่อน</small></div>
+  </div></div>`;
+}
+
+// ---- แหล่งอะไหล่: Smart Inventory → คลังสำรอง → สั่งซื้อภายนอก ----
+// 2 คลังแรกเบิกได้เหมือนกัน ต่างแค่ที่เก็บ · ไม่มีทั้งคู่ถึงจะต้องสั่งซื้อ
+const SRC = {
+  si:  { key:'si',  label:'เบิกจาก Smart Inventory', icon:'inventory_2',  cls:'si'  },
+  alt: { key:'alt', label:'เบิกจากคลังสำรอง',        icon:'warehouse',    cls:'alt' },
+  buy: { key:'buy', label:'ต้องสั่งซื้อจากภายนอก',   icon:'shopping_cart',cls:'buy' }
+};
+function partSource(x){
+  const p=PARTS.find(q=>q.code===x.code);
+  if(!p)return { src:SRC.buy, have:0, short:x.qty, where:'ไม่พบในทะเบียนอะไหล่', eta:null };
+  if(p.stock>0)  return { src:SRC.si,  have:p.stock,    short:Math.max(0,x.qty-p.stock),    where:p.wh,       eta:null, unit:p.unit };
+  if(p.stockAlt) return { src:SRC.alt, have:p.stockAlt, short:Math.max(0,x.qty-p.stockAlt), where:'คลังสำรอง', eta:null, unit:p.unit };
+  return { src:SRC.buy, have:0, short:x.qty, where:'ไม่มีทั้ง 2 คลัง', eta:p.eta, unit:p.unit };
+}
+function invCell(x){
+  const s=partSource(x), u=esc(s.unit||x.unit);
+  if(s.src.key==='buy')return `<span class="inv buy"><span class="ms">shopping_cart</span>ต้องสั่งซื้อ</span>
+    <div class="invsub">${esc(s.where)}${s.eta?' · ETA '+esc(s.eta):''}</div>`;
+  const ok=!s.short;
+  return `<span class="inv ${ok?(s.src.key==='si'?'ok':'alt'):'low'}"><span class="ms">${ok?s.src.icon:'warning'}</span>${baht(s.have)} ${u}</span>
+    <div class="invsub">${ok?esc(s.where):`${esc(s.where)} · ขาดอีก ${baht(s.short)} ${u}`}</div>`;
+}
+
+function partsRowsHTML(no, list, editable){
+  if(!list.length)return '<div class="hint" style="margin:0">ยังไม่มีรายการอะไหล่</div>';
+  const cols=editable?5:4;   // อะไหล่ · คลัง · จำนวน · ราคา (+ ปุ่มลบ) — ก่อนคอลัมน์ "รวม"
+  const G={si:[],alt:[],buy:[]};
+  list.forEach(x=>G[partSource(x).src.key].push(x));
+  const sum=a=>a.reduce((s,x)=>s+(x.price||0)*x.qty,0);
+
+  const bar=`<div class="srcbar">
+    ${['si','alt','buy'].map(k=>`<span class="srcpill ${k} ${G[k].length?'':'off'}">
+      <span class="ms">${SRC[k].icon}</span>${SRC[k].label.replace('เบิกจาก','').replace('ต้องสั่งซื้อจากภายนอก','สั่งซื้อภายนอก')} <b>${G[k].length}</b></span>`).join('')}
+    ${G.buy.length?'<span class="srcwarn"><span class="ms">schedule</span>งานนี้เริ่มไม่ได้ทันที — มีของที่ต้องสั่งซื้อ</span>'
+      :'<span class="srcok"><span class="ms">check_circle</span>เบิกได้ครบ เริ่มงานได้ทันที</span>'}
+  </div>`;
+
+  const group=k=>{
+    const rows=G[k]; if(!rows.length)return '';
+    return `<tr class="ghead ${k}"><td colspan="${editable?6:5}">
+        <span class="ms">${SRC[k].icon}</span><b>${SRC[k].label}</b>
+        <span class="gcount">${rows.length} รายการ · ${baht(sum(rows))} บาท</span></td></tr>`
+      + rows.map(x=>`<tr>
+      <td><b>${esc(x.name)}</b>
+        <div class="pmeta">${esc(x.code)} · ${esc(x.unit)}
+          ${x.src==='req'?'<span class="ptag req">ผู้แจ้งเลือกมา</span>':'<span class="ptag add">กบค. เพิ่ม</span>'}</div></td>
+      <td>${invCell(x)}</td>
+      <td style="text-align:center">${editable
+        ?`<span class="qty"><button onclick="kbkPartQty('${no}','${x.code}',-1)">−</button><b>${x.qty}</b><button onclick="kbkPartQty('${no}','${x.code}',1)">+</button></span>`
+        :x.qty}</td>
+      <td style="text-align:right">${x.price?baht(x.price):'<span style="color:var(--gray-400)">—</span>'}</td>
+      <td style="text-align:right"><b>${baht((x.price||0)*x.qty)}</b></td>
+      ${editable?`<td style="text-align:right"><button class="pdel" title="ลบออกจากรายการ" onclick="kbkPartDel('${no}','${x.code}')"><span class="ms">delete</span></button></td>`:''}
+    </tr>`).join('');
+  };
+
+  return bar+`<div class="scrollx" style="overflow-x:auto"><table class="ptab">
+    <thead><tr><th>อะไหล่</th><th>คลัง</th><th style="text-align:center">จำนวน</th><th style="text-align:right">ราคา/หน่วย</th><th style="text-align:right">รวม</th>${editable?'<th></th>':''}</tr></thead>
+    <tbody>${['si','alt','buy'].map(group).join('')}</tbody>
+    <tfoot><tr><td colspan="${cols-1}" style="text-align:right">รวมค่าอะไหล่ทั้งหมด</td>
+      <td style="text-align:right"><b>${baht(partsTotal(list))} บาท</b></td>${editable?'<td></td>':''}</tr></tfoot>
+  </table></div>`;
+}
+
+// ---- รุ่นอุปกรณ์ (เครน/กระเช้า) → ใช้กรองอะไหล่ ----
+// อะไหล่ผูกที่ "ระดับรุ่น": fit:'all' = ของกลางใช้ได้ทุกรุ่น · fit:['SK17A'] = เฉพาะรุ่นนั้น
+const EQUIPS = [...new Set(VEHICLES.map(v => v.attach).filter(Boolean))]
+  .map(a => ({ label: a, key: a.split(' ').pop() }));
+function equipOfJob(j){
+  const at=(j.model||'').split(' + ')[1]||'';
+  return EQUIPS.find(e=>at.indexOf(e.key)>=0)||null;
+}
+function partsFitting(key){
+  return key==='all'?PARTS:PARTS.filter(p=>p.fit==='all'||(Array.isArray(p.fit)&&p.fit.includes(key)));
+}
+
+function partsEditorHTML(no, j){
+  const list=initJobParts(j);
+  const eq=equipOfJob(j);
+  if(E.equip===undefined)E.equip=eq?eq.key:'all';   // ตั้งต้นตามรุ่นอุปกรณ์ของรถคันนี้
+  return `<div class="sect" style="margin-top:24px">รายการอะไหล่ที่จะใช้ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ตั้งต้นจากที่ผู้แจ้งเลือกมา · แก้จำนวน เพิ่ม หรือลบได้</span></div>
+  <div class="panel">
+    ${partsRowsHTML(no, list, true)}
+    <div class="rowbtns" style="justify-content:flex-start;margin-top:12px">
+      <button class="btn btn-o" onclick="E.addOpen=!E.addOpen;renderKbkDetail('${no}')">
+        <span class="ms" style="font-size:18px">${E.addOpen?'expand_less':'add'}</span> เพิ่มอะไหล่จากคลัง</button>
+    </div>
+    ${E.addOpen?`<div class="addwrap">
+      <div class="addctl">
+        <div class="f"><label>ยี่ห้อ/รุ่นอุปกรณ์</label>
+          <select id="eqsel" onchange="E.equip=this.value;renderAddList('${no}')">
+            ${EQUIPS.map(e=>`<option value="${e.key}" ${E.equip===e.key?'selected':''}>${esc(e.label)}${eq&&eq.key===e.key?' — ของรถคันนี้':''}</option>`).join('')}
+            <option value="all" ${E.equip==='all'?'selected':''}>ทุกยี่ห้อ (ทั้งคลัง)</option>
+          </select></div>
+        <div class="f"><label>ค้นหาอะไหล่</label>
+          <div class="in"><span class="ms">search</span>
+            <input type="text" id="pq" placeholder="พิมพ์ชื่อ หรือรหัสอะไหล่…" value="${esc(E.q||'')}"
+              oninput="E.q=this.value;renderAddList('${no}')"></div></div>
+      </div>
+      <div class="addbox" id="addbox-${no}">${addListHTML(no, j)}</div>
+    </div>`:''}
+    <div class="todo" style="margin-top:14px"><span class="ms">inventory_2</span><span><b>TODO — ยังไม่ตัด/คืนยอดในคลังอะไหล่จริง</b>
+      ลบของที่ผู้แจ้งจองไว้ ควรคืนยอดเข้าคลัง และเพิ่มของใหม่ควรตัดยอด/ตั้งเรื่องสั่งซื้อ — หน้าคลังอะไหล่ยังไม่ผูกกับตรงนี้</span></div>
+    <div class="rowbtns">
+      <button class="btn btn-o" onclick="openWorth('${no}')"><span class="ms" style="font-size:18px">balance</span> ประเมินความคุ้มค่าในการซ่อม</button>
+      <button class="btn btn-p" onclick="kbkPartsConfirm('${no}')">ยืนยันรายการอะไหล่ — เริ่มงานซ่อม</button></div>
+  </div>`;
+}
+
+// ---------- หน้าประเมินความคุ้มค่า (โครงเปล่า — รอเคาะเกณฑ์) ----------
+let WORTH = { no: null, back: 'kbk' };
+function openWorth(no){ WORTH = { no, back: VIEW }; switchView('worth') }
+function renderWorth(){
+  const j = JOBS.find(x => x.no === WORTH.no);
+  if(!j){ $('worthbody').innerHTML = '<div class="empty">ยังไม่ได้เลือกใบแจ้งซ่อม</div>'; return }
+  const t = vehType(j), parts = j.parts || [];
+  $('worthbody').innerHTML = `
+    <h1 class="page-title">ประเมินความคุ้มค่าในการซ่อม</h1>
+    <div class="lead" style="color:var(--gray-600);margin:4px 0 18px">${esc(j.no)} · ${esc(j.plate)} · ${t.name}</div>
+    <div class="vgrid">
+      <div class="vcell"><label>ค่าอะไหล่ที่ประเมินไว้</label><div class="val">${baht(partsTotal(parts))} บาท</div></div>
+      <div class="vcell"><label>จำนวนรายการอะไหล่</label><div class="val">${parts.length} รายการ</div></div>
+      <div class="vcell"><label>เลขไมล์ / ชม.ใช้งาน</label><div class="val" style="font-size:14px">${j.use && j.use.odo ? baht(j.use.odo) + ' กม.' : '—'}${j.use && j.use.crane ? ' · ' + baht(j.use.crane) + ' ชม.' : ''}</div></div>
+    </div>
+    <div class="todo" style="margin-top:18px"><span class="ms">construction</span><span><b>TODO — หน้านี้ยังเป็นโครงเปล่า</b>
+      ตั้งใจไว้ให้เทียบว่า <b>ซ่อมคุ้มกว่าจำหน่ายหรือไม่</b> แต่ยังไม่ได้ทำ เพราะต้องเคาะก่อนว่า:<br>
+      • ใช้เกณฑ์อะไรตัดสิน (ค่าซ่อมเทียบราคาประเมินรถ กี่ % · อายุรถ · ประวัติซ่อมสะสม)<br>
+      • ต้นทุนที่เอามาคิดรวมค่าแรง/ค่าเดินทางด้วยมั้ย<br>
+      • ถ้าไม่คุ้ม → ไปเส้นจำหน่ายเลย หรือส่งใครอนุมัติก่อน<br>
+      • ใครเป็นคนกดตัดสิน (กบค. เอง หรือผู้บังคับบัญชา)</span></div>
+    <div class="rowbtns" style="justify-content:flex-start;margin-top:18px">
+      <button class="btn btn-g" onclick="switchView('${WORTH.back}')">← กลับหน้างานซ่อม</button></div>`;
+}
+
+// รายการอะไหล่ที่เลือกเพิ่มได้ — กรองด้วย (รุ่นอุปกรณ์ × คำค้น) และตัดตัวที่อยู่ในรายการแล้วออก
+function addListHTML(no, j){
+  const inList=new Set((j.parts||[]).map(x=>x.code));
+  const q=(E.q||'').trim().toLowerCase();
+  const rows=partsFitting(E.equip||'all')
+    .filter(p=>!inList.has(p.code))
+    .filter(p=>!q||(p.name+' '+p.code).toLowerCase().includes(q))
+    // ของตรงรุ่นขึ้นก่อนของกลาง — ไม่งั้นของที่เจาะจงรุ่นจะจมอยู่ท้ายลิสต์
+    .sort((a,b)=>(Array.isArray(b.fit)?1:0)-(Array.isArray(a.fit)?1:0));
+  if(!rows.length)return `<div class="apnone">${q?'ไม่พบอะไหล่ที่ค้นหา':'เพิ่มครบทุกรายการของรุ่นนี้แล้ว'}</div>`;
+  return rows.map(p=>{
+    const own=Array.isArray(p.fit);
+    // แหล่งที่จะได้ของ — ดูจากยอดคงเหลือ 2 คลัง (ไม่อิงจำนวนที่จะเบิก เพราะยังไม่ได้เลือก)
+    const k=p.stock>0?'si':(p.stockAlt?'alt':'buy');
+    const where=k==='si'?`${esc(p.wh)} · เหลือ ${baht(p.stock)} ${esc(p.unit)}`
+      :k==='alt'?`คลังสำรอง · เหลือ ${baht(p.stockAlt)} ${esc(p.unit)}`
+      :`ไม่มีทั้ง 2 คลัง${p.eta?' · ETA '+esc(p.eta):''}`;
+    return `<div class="addrow ${k==='buy'?'isbuy':''}" onclick="kbkPartAdd('${no}','${p.code}')">
+      <span class="ms">${p.icon}</span>
+      <div class="ar-tx"><b>${esc(p.name)}</b>
+        <span>${esc(p.code)} · ${where}
+          ${own?'<span class="ptag fit">ตรงรุ่น</span>':'<span class="ptag gen">ของกลาง</span>'}
+          <span class="ptag src-${k}"><span class="ms">${SRC[k].icon}</span>${k==='si'?'Smart Inventory':k==='alt'?'คลังสำรอง':'ต้องสั่งซื้อ'}</span></span></div>
+      <span class="ar-price">${baht(p.price)} / ${esc(p.unit)}</span>
+      <span class="ms" style="color:var(--primary-600)">add_circle</span>
+    </div>`;
+  }).join('');
+}
+// อัปเดตเฉพาะลิสต์ ไม่ re-render ทั้งหน้า — ไม่งั้นพิมพ์ค้นหาแล้ว focus หลุด
+function renderAddList(no){
+  const j=JOBS.find(x=>x.no===no),box=$('addbox-'+no);
+  if(box)box.innerHTML=addListHTML(no,j);
+}
+
+function partsSummaryHTML(j){
+  if(!j.parts||!j.parts.length)return '';
+  return `<div class="sect" style="margin-top:24px">อะไหล่ที่ใช้ในงานนี้ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ยืนยันแล้ว รวม ${baht(partsTotal(j.parts))} บาท</span></div>
+  <div class="panel">${partsRowsHTML(j.no, j.parts, false)}</div>`;
+}
+
+function quotePanelHTML(no, j){
+  if(j.quote&&j.quote.sent){
+    return `<div class="sect" style="margin-top:24px">ส่งอู่ประเมินราคา</div>
+    <div class="apptbox"><span class="ms" style="color:var(--warning-700)">hourglass_top</span>
+      <b>ส่งให้ ${esc(j.quote.garage)} ประเมินราคาแล้ว — รอใบเสนอราคา</b>${j.quote.note?'<br>'+esc(j.quote.note):''}</div>
+    <div class="todo"><span class="ms">flag</span><span><b>TODO — ยังไม่ได้ทำขั้นตอนหลังได้ใบเสนอราคา</b>
+      ต้องเคาะก่อนว่าใบเสนอราคากลับมาแล้วใครอนุมัติ (กบค. เอง / ผู้บังคับบัญชา) และถ้าราคาสูงเกินเกณฑ์ต้องทำอย่างไร</span></div>`;
+  }
+  return `<div class="sect" style="margin-top:24px">ส่งอู่ประเมินราคา</div>
+  <div class="panel">
+    <div class="fgrid" style="margin:0;max-width:620px">
+      <div class="f sp2"><label>อู่ที่จะส่งประเมิน</label><div class="in"><span class="ms">garage</span>
+        <input list="garagelist" type="text" id="q-garage" placeholder="พิมพ์ชื่ออู่ หรือเลือกจากรายการ"></div>
+        <datalist id="garagelist">${GARAGES.map(g=>`<option value="${esc(g.name)}">`).join('')}</datalist></div>
+    </div>
+    <div class="f" style="margin-top:12px"><label>หมายเหตุถึงอู่ <small>(ถ้ามี)</small></label><textarea id="q-note" rows="2" placeholder="เช่น ขอใบเสนอราคาแยกค่าแรง/ค่าอะไหล่…"></textarea></div>
+    <div class="rowbtns">
+      <button class="btn btn-g" onclick="kbkSetRoute('${no}',null)">← เปลี่ยนเป็นซ่อมเอง</button>
+      <button class="btn btn-p" onclick="kbkSendGarage('${no}')">ยืนยันส่งอู่ประเมินราคา</button></div>
+  </div>`;
+}
+
+function kbkSetRoute(no, r){
+  const j=JOBS.find(x=>x.no===no);
+  E.addOpen=false;
+  if(r===null){ j.route=null; j.phase='work'; renderKbkDetail(no); return }
+  j.route=r;
+  if(r==='garage'){ j.phase='quote' } else { initJobParts(j) }
+  j.history.push({t:nowStr(),label:r==='self'?'กบค. เลือกซ่อมเอง — จัดรายการอะไหล่':'กบค. เลือกส่งอู่ประเมินราคา'});
+  updateBadge();renderKbkDetail(no);
+}
+function kbkPartQty(no, code, d){
+  const j=JOBS.find(x=>x.no===no),it=j.parts.find(x=>x.code===code);
+  if(!it)return; if(it.qty+d<1)return; it.qty+=d; renderKbkDetail(no);
+}
+function kbkPartDel(no, code){
+  const j=JOBS.find(x=>x.no===no),it=j.parts.find(x=>x.code===code);
+  if(!it)return;
+  if(it.src==='req'&&!confirm(`"${it.name}" เป็นของที่ผู้แจ้งจองไว้ — ลบออกจากรายการ?\n(ยอดในคลังยังไม่ถูกคืนอัตโนมัติ ดูโน๊ต TODO)`))return;
+  j.parts=j.parts.filter(x=>x.code!==code); renderKbkDetail(no);
+}
+function kbkPartAdd(no, code){
+  const j=JOBS.find(x=>x.no===no),p=PARTS.find(x=>x.code===code);
+  if(!p||j.parts.some(x=>x.code===code))return;
+  j.parts.push({code:p.code,name:p.name,unit:p.unit,qty:p.need||1,price:p.price||0,src:'kbk',
+    ready:p.stock>0,eta:p.stock===0?p.eta:undefined});
+  renderKbkDetail(no);
+}
+function kbkPartsConfirm(no){
+  const j=JOBS.find(x=>x.no===no);
+  if(!j.parts.length&&!confirm('ยังไม่มีรายการอะไหล่เลย — ยืนยันว่างานนี้ไม่ใช้อะไหล่?'))return;
+  j.partsOK=true; E.addOpen=false;
+  j.history.push({t:nowStr(),label:`ยืนยันรายการอะไหล่ ${j.parts.length} รายการ — รวม ${baht(partsTotal(j.parts))} บาท`});
+  toast('ยืนยันรายการอะไหล่แล้ว — เริ่มงานซ่อมได้');renderKbkDetail(no);
+}
+function kbkSendGarage(no){
+  const j=JOBS.find(x=>x.no===no);
+  const g=$('q-garage').value.trim();
+  if(!g){toast('กรุณาระบุอู่ที่จะส่งประเมินราคา');return}
+  j.quote={sent:true,garage:esc(g),note:esc($('q-note').value.trim())};
+  j.history.push({t:nowStr(),label:'ส่ง '+esc(g)+' ประเมินราคา — รอใบเสนอราคา'});
+  updateBadge();toast('ส่งอู่ประเมินราคาแล้ว');renderKbkDetail(no);
+}
+
 function kbkAccept(no){
   const j=JOBS.find(x=>x.no===no);
   j.phase='work';j.wi=0;j.loc=E.loc;
@@ -3280,7 +4504,7 @@ function kbkAccept(no){
     j.history.push({t:nowStr(),label:'กบค. รับเรื่องซ่อม (งานเล็ก — ช่างออกหน้างาน'+(j.onsite.site?' @ '+j.onsite.site:'')+')'+(note?' — '+esc(note):'')});
     updateBadge();toast('รับเรื่องแล้ว — แผนซ่อมหน้างาน');renderKbkDetail(no);
   }else{
-    j.history.push({t:nowStr(),label:'กบค. รับเรื่องซ่อม (งานใหญ่ — นำรถเข้า สนญ.)'+(note?' — '+esc(note):'')});
+    j.history.push({t:nowStr(),label:'กบค. รับเรื่องซ่อม'+(note?' — '+esc(note):'')});
     updateBadge();toast('รับเรื่องแล้ว — สถานะ: รับเรื่องซ่อม');renderKbkDetail(no);
   }
 }
@@ -3603,7 +4827,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
     renderSteps(); renderVehicles(); renderApprovers(); updateBadge();
     $('back').style.visibility = 'hidden';
     // deep-link: ถ้ามี #view ที่ถูกต้อง (เช่น #kbk หรือ #view-kbk) ให้เปิดหน้านั้น — ใช้โดยหน้า 05-review-milestones
-    const VALID_VIEWS = ['form', 'my', 'fuel', 'boss', 'kry', 'kbk', 'sup', 'stock'];
+    const VALID_VIEWS = ['form', 'my', 'fuel', 'boss', 'kry', 'kbk', 'sup', 'stock', 'vhist', 'worth'];
     const hashView = v => VALID_VIEWS.includes(v = (location.hash || '').replace(/^#\/?/, '').replace(/^view-/, '')) ? v : '';
     const sv = hashView() || CFG.demo.startView || 'form';
     switchView(menuOn(sv) ? sv : 'form');   // ถ้า startView ถูกปิดเมนู → เปิดหน้าแรก

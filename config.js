@@ -33,13 +33,13 @@ const WIZARD_DEFAULT=[
   {key:'parts',   label:'อะไหล่ที่แนะนำ',   heading:'อะไหล่ที่ระบบแนะนำ',  on:true},
   {key:'decision',label:'ตัดสินใจและสรุป',  heading:'การตัดสินใจ',        on:true}
 ];
-const KBK_STEPS_DEFAULT=['รับเรื่องซ่อม','รอสั่งอะไหล่','อะไหล่ถึงแล้ว','ดำเนินการซ่อม','ซ่อมเสร็จ'];
+const KBK_STEPS_DEFAULT=['รับเรื่องซ่อม','จัดหาอะไหล่','อะไหล่พร้อม','ดำเนินการซ่อม','ซ่อมเสร็จ'];
 
 const DEFAULT_CFG={
   v:1,
   theme:{preset:'pea',custom:null,fontScale:'md',radius:'md'},
   toggles:{menuStock:true,photoUpload:true,partsStep:true,inspection:true},
-  variants:{vehicleCard:'list',slotPicker:'datepicker',decisionTile:'legacy'},
+  variants:{vehicleCard:'list',slotPicker:'datepicker',decisionTile:'legacy',kbkDecision:'tiles'},
   menu:MENU_DEFAULT.map(k=>({key:k,on:true})),
   steps:{wizard:clone0(WIZARD_DEFAULT),kbk:KBK_STEPS_DEFAULT.slice()},
   data:{vehicles:null,parts:null,garages:null},   // null = ใช้ค่า default ด้านล่าง
@@ -189,21 +189,37 @@ const defaults={
     {id:4,plate:'80-5566 เชียงใหม่',model:'Hino XZU กระบะยกสูง',org:'กฟภ. เขต น.1 เชียงใหม่',attach:null}
   ],
   parts:[
-    {sym:'HYD-01',code:'SL-4402',name:'ชุดซีลกระบอกไฮดรอลิก',need:1,unit:'ชุด',stock:6,wh:'กบค. สนญ.',icon:'join_inner'},
-    {sym:'HYD-01',code:'OL-0046',name:'น้ำมันไฮดรอลิก ISO VG46 18L',need:1,unit:'ถัง',stock:2,wh:'กบค. สนญ.',icon:'oil_barrel'},
-    {sym:'HYD-02',code:'PM-2210',name:'ปั๊มไฮดรอลิกเกียร์',need:1,unit:'ตัว',stock:0,eta:'24 ก.ค.',wh:'กบค. สนญ.',icon:'compress'},
-    {sym:'HYD-02',code:'FT-1108',name:'ไส้กรองไฮดรอลิก',need:2,unit:'ชิ้น',stock:12,wh:'กบค. สนญ.',icon:'filter_alt'},
-    {sym:'HYD-03',code:'HS-3808',name:'สายไฮดรอลิกแรงดันสูง 3/8"',need:2,unit:'เส้น',stock:4,wh:'คลังเขต',icon:'cable'},
-    {sym:'HYD-03',code:'FT-2205',name:'ข้อต่อไฮดรอลิก',need:4,unit:'ตัว',stock:3,wh:'คลังเขต',icon:'valve'},
-    {sym:'BOOM-01',code:'WP-1030',name:'แผ่นสไลด์บูม (wear pad)',need:4,unit:'แผ่น',stock:8,wh:'กบค. สนญ.',icon:'layers'},
-    {sym:'BOOM-01',code:'GR-0002',name:'จาระบี EP2',need:1,unit:'หลอด',stock:20,wh:'คลังเขต',icon:'colorize'},
-    {sym:'BOOM-02',code:'WR-1000',name:'ลวดสลิง 10 มม.',need:25,unit:'เมตร',stock:0,wh:'กบค. สนญ.',icon:'line_weight'},
-    {sym:'BOOM-03',code:'LK-0770',name:'ชุดล็อกกระเช้า',need:1,unit:'ชุด',stock:5,wh:'กบค. สนญ.',icon:'lock'},
-    {sym:'ELEC-01',code:'BT-0912',name:'แบตเตอรี่รีโมท',need:2,unit:'ก้อน',stock:15,wh:'คลังเขต',icon:'battery_full'},
-    {sym:'ELEC-01',code:'RC-5521',name:'ชุดรับสัญญาณรีโมท',need:1,unit:'ชุด',stock:1,wh:'กบค. สนญ.',icon:'settings_remote'},
-    {sym:'ELEC-02',code:'SN-3310',name:'เซ็นเซอร์ load cell',need:1,unit:'ตัว',stock:0,eta:'31 ก.ค.',wh:'กบค. สนญ.',icon:'sensors'},
-    {sym:'ENG-01',code:'BT-1212',name:'แบตเตอรี่รถ 12V 120Ah',need:2,unit:'ลูก',stock:5,wh:'คลังเขต',icon:'battery_charging_full'},
-    {sym:'ENG-02',code:'FT-0330',name:'ไส้กรองอากาศ',need:1,unit:'ชิ้น',stock:9,wh:'คลังเขต',icon:'air'}
+    {sym:'HYD-01',fit:'all',code:'SL-4402',name:'ชุดซีลกระบอกไฮดรอลิก',need:1,unit:'ชุด',stock:6,stockAlt:4,wh:'กบค. สนญ.',icon:'join_inner',price:1850},
+    {sym:'HYD-01',fit:'all',code:'OL-0046',name:'น้ำมันไฮดรอลิก ISO VG46 18L',need:1,unit:'ถัง',stock:2,stockAlt:6,wh:'กบค. สนญ.',icon:'oil_barrel',price:2400},
+    {sym:'HYD-02',fit:'all',code:'PM-2210',name:'ปั๊มไฮดรอลิกเกียร์',need:1,unit:'ตัว',stock:0,stockAlt:0,eta:'24 ก.ค.',wh:'กบค. สนญ.',icon:'compress',price:18500},
+    {sym:'HYD-02',fit:'all',code:'FT-1108',name:'ไส้กรองไฮดรอลิก',need:2,unit:'ชิ้น',stock:12,stockAlt:0,wh:'กบค. สนญ.',icon:'filter_alt',price:650},
+    {sym:'HYD-03',fit:'all',code:'HS-3808',name:'สายไฮดรอลิกแรงดันสูง 3/8"',need:2,unit:'เส้น',stock:4,stockAlt:10,wh:'คลังเขต',icon:'cable',price:1200},
+    {sym:'HYD-03',fit:'all',code:'FT-2205',name:'ข้อต่อไฮดรอลิก',need:4,unit:'ตัว',stock:3,stockAlt:0,wh:'คลังเขต',icon:'valve',price:320},
+    {sym:'BOOM-01',fit:'all',code:'WP-1030',name:'แผ่นสไลด์บูม (wear pad)',need:4,unit:'แผ่น',stock:8,stockAlt:0,wh:'กบค. สนญ.',icon:'layers',price:780},
+    {sym:'BOOM-01',fit:'all',code:'GR-0002',name:'จาระบี EP2',need:1,unit:'หลอด',stock:20,stockAlt:35,wh:'คลังเขต',icon:'colorize',price:180},
+    {sym:'BOOM-02',fit:'all',code:'WR-1000',name:'ลวดสลิง 10 มม.',need:25,unit:'เมตร',stock:0,stockAlt:40,wh:'กบค. สนญ.',icon:'line_weight',price:240},
+    {sym:'BOOM-03',fit:'all',code:'LK-0770',name:'ชุดล็อกกระเช้า',need:1,unit:'ชุด',stock:5,stockAlt:0,wh:'กบค. สนญ.',icon:'lock',price:4600},
+    {sym:'ELEC-01',fit:'all',code:'BT-0912',name:'แบตเตอรี่รีโมท',need:2,unit:'ก้อน',stock:15,stockAlt:20,wh:'คลังเขต',icon:'battery_full',price:120},
+    {sym:'ELEC-01',fit:'all',code:'RC-5521',name:'ชุดรับสัญญาณรีโมท',need:1,unit:'ชุด',stock:1,stockAlt:6,wh:'กบค. สนญ.',icon:'settings_remote',price:9800},
+    {sym:'ELEC-02',fit:'all',code:'SN-3310',name:'เซ็นเซอร์ load cell',need:1,unit:'ตัว',stock:0,stockAlt:0,eta:'31 ก.ค.',wh:'กบค. สนญ.',icon:'sensors',price:12500},
+    {sym:'ENG-01',fit:'all',code:'BT-1212',name:'แบตเตอรี่รถ 12V 120Ah',need:2,unit:'ลูก',stock:5,stockAlt:8,wh:'คลังเขต',icon:'battery_charging_full',price:4200},
+    {sym:'ENG-02',fit:'all',code:'FT-0330',name:'ไส้กรองอากาศ',need:1,unit:'ชิ้น',stock:9,stockAlt:0,wh:'คลังเขต',icon:'air',price:540},
+    /* ---- อะไหล่เฉพาะรุ่นอุปกรณ์ (fit = รหัสรุ่น) ---- */
+    {sym:'BOOM-03',fit:['SK17A'],code:'AC-1101',name:'ชุดล็อกกระเช้า Aichi SK17A',need:1,unit:'ชุด',stock:3,stockAlt:0,wh:'กบค. สนญ.',icon:'lock',price:5200},
+    {sym:'BOOM-01',fit:['SK17A'],code:'AC-1102',name:'มอเตอร์หมุนแท่นกระเช้า Aichi',need:1,unit:'ตัว',stock:1,stockAlt:0,wh:'กบค. สนญ.',icon:'rotate_right',price:24000},
+    {sym:'ELEC-02',fit:['SK17A'],code:'AC-1103',name:'เซ็นเซอร์ระดับกระเช้า Aichi',need:1,unit:'ตัว',stock:0,stockAlt:2,eta:'2 ส.ค.',wh:'กบค. สนญ.',icon:'sensors',price:8900},
+    {sym:'BOOM-03',fit:['SK17A'],code:'AC-1104',name:'ยางกันกระแทกขอบกระเช้า',need:4,unit:'เส้น',stock:12,stockAlt:5,wh:'คลังเขต',icon:'shield',price:1450},
+    {sym:'ELEC-01',fit:['SK17A'],code:'AC-1105',name:'ชุดควบคุมบนกระเช้า Aichi',need:1,unit:'ชุด',stock:2,stockAlt:0,wh:'กบค. สนญ.',icon:'dashboard',price:15800},
+    {sym:'BOOM-02',fit:['TM-ZE304'],code:'TD-2201',name:'ลวดสลิงเครน Tadano 12 มม.',need:30,unit:'เมตร',stock:80,stockAlt:0,wh:'กบค. สนญ.',icon:'line_weight',price:380},
+    {sym:'BOOM-01',fit:['TM-ZE304'],code:'TD-2202',name:'แผ่นสไลด์บูม Tadano TM-ZE',need:4,unit:'แผ่น',stock:6,stockAlt:3,wh:'กบค. สนญ.',icon:'layers',price:1100},
+    {sym:'BOOM-02',fit:['TM-ZE304'],code:'TD-2203',name:'ตะขอเครนพร้อมสลักนิรภัย',need:1,unit:'ชุด',stock:2,stockAlt:0,wh:'กบค. สนญ.',icon:'anchor',price:6800},
+    {sym:'BOOM-02',fit:['TM-ZE304'],code:'TD-2204',name:'ชุดเบรกวินช์ Tadano',need:1,unit:'ชุด',stock:0,stockAlt:1,eta:'8 ส.ค.',wh:'กบค. สนญ.',icon:'settings_backup_restore',price:12400},
+    {sym:'ELEC-02',fit:['TM-ZE304'],code:'TD-2205',name:'เซ็นเซอร์น้ำหนัก Tadano',need:1,unit:'ตัว',stock:1,stockAlt:0,wh:'กบค. สนญ.',icon:'monitor_weight',price:16500},
+    {sym:'ELEC-01',fit:['URV554'],code:'UN-3301',name:'ชุดรับสัญญาณรีโมท Unic URV',need:1,unit:'ชุด',stock:2,stockAlt:0,wh:'กบค. สนญ.',icon:'settings_remote',price:11200},
+    {sym:'HYD-02',fit:['URV554'],code:'UN-3302',name:'ปั๊มไฮดรอลิก Unic URV554',need:1,unit:'ตัว',stock:0,stockAlt:0,eta:'15 ส.ค.',wh:'กบค. สนญ.',icon:'compress',price:21000},
+    {sym:'HYD-02',fit:['URV554'],code:'UN-3303',name:'ชุดวาล์วควบคุม 4 ทาง Unic',need:1,unit:'ชุด',stock:3,stockAlt:0,wh:'กบค. สนญ.',icon:'valve',price:9600},
+    {sym:'HYD-01',fit:['URV554'],code:'UN-3304',name:'ซีลกระบอกขาช้าง (outrigger)',need:2,unit:'ชุด',stock:7,stockAlt:0,wh:'คลังเขต',icon:'join_inner',price:2300},
+    {sym:'ELEC-02',fit:['URV554'],code:'UN-3305',name:'สวิตช์ลิมิตบูม Unic',need:2,unit:'ตัว',stock:5,stockAlt:9,wh:'คลังเขต',icon:'toggle_on',price:3400}
   ],
   garages:[
     {id:'g1',name:'อู่เจริญการช่าง',dist:'3.2 กม.',tags:'เครน · ไฮดรอลิก'},

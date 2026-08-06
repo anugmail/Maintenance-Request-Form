@@ -60,6 +60,47 @@ const decisionTile={
 };
 
 /* ============================================================
+   2b) การตัดสินใจของ กบค. (kbkDecision) — variants: tiles | segment | radio
+   ใช้ที่หน้า "งานซ่อม กบค." ตอนกางรายละเอียด — เลือกได้ 2 ทางเท่านั้น
+   (รับไว้ซ่อม / ส่งกลับให้ซ่อมเอง) — เรื่องประเมินความคุ้มค่าย้ายออกจากหน้านี้แล้ว
+   controlled: props {variant, selected:'accept'|'return'|null, onPick(value)}
+   ============================================================ */
+const kbkDecision={
+  key:'kbkDecision',
+  name:'ตัวเลือกการตัดสินใจ (หน้า กบค.)',
+  variants:{tiles:'การ์ด 2 ใบ',segment:'แถบสลับ',radio:'รายการตัวเลือก'},
+  OPTS:[
+    {v:'accept',icon:'task_alt',   title:'รับไว้ซ่อม',          desc:'กบค. ดำเนินการซ่อมเอง'},
+    {v:'return',icon:'u_turn_left',title:'ส่งกลับให้ซ่อมเอง',  desc:'คืนหน่วยงานผู้แจ้ง พร้อมเหตุผล'}
+  ],
+  render(el,props){
+    const{variant='tiles',selected=null,onPick}=props;
+    const O=this.OPTS;
+    let html;
+    if(variant==='segment'){
+      html=`<div class="seg kbkdec-seg">${O.map(o=>
+        `<div class="sg ${selected===o.v?'sel':''}" data-value="${o.v}" title="${o.desc}">
+           <span class="ms">${o.icon}</span>${o.title}</div>`).join('')}</div>`;
+    }else if(variant==='radio'){
+      html=`<div class="kbkdec-radio">${O.map(o=>
+        `<label class="kbkdec-opt ${selected===o.v?'sel':''}" data-value="${o.v}">
+           <span class="dot"></span>
+           <span class="ms">${o.icon}</span>
+           <span class="tx"><b>${o.title}</b><small>${o.desc}</small></span>
+         </label>`).join('')}</div>`;
+    }else{
+      // .kbkdec-tiles = การ์ดสีแบบเดิม แต่ย่อขนาดลง (หน้ารายละเอียดยาว ไม่ควรมีบล็อกใหญ่ท้ายหน้า)
+      html=`<div class="kbkdec-tiles"><div class="decide" style="margin-top:0">${O.map((o,i)=>
+        `<div class="tile ${i===0?'tile-magenta':'tile-blue'} ${selected===o.v?'sel':''}" data-value="${o.v}">
+           <span class="ms">${o.icon}</span><b>${o.title}</b><small>${o.desc}</small></div>`).join('')}</div></div>`;
+    }
+    el.innerHTML=html;
+    if(onPick)el.querySelectorAll('[data-value]').forEach(x=>
+      x.addEventListener('click',e=>{e.preventDefault();onPick(x.dataset.value)}));
+  }
+};
+
+/* ============================================================
    3) ตัวเลือกวันนัดรับ (dayPicker) — variants: datepicker | chips
    controlled: state = {mode:'range'|'single', from:'', to:'', one:''}
    props: {variant, days:[iso...] (วันที่เลือกแล้ว), state, horizonDays=14,
@@ -177,8 +218,8 @@ function sortable(listEl,opts){
 function arrMove(a,from,to){const x=a.splice(from,1)[0];a.splice(to,0,x);return a}
 
 window.UIC={
-  components:[vehicleCard,dayPicker],   // decisionTile มีส่วนควบคุมเฉพาะที่เห็นเด่นชัดในหน้า admin
-  vehicleCard,decisionTile,dayPicker,thLabel,sortable,arrMove,
+  components:[vehicleCard,kbkDecision,dayPicker],   // decisionTile มีส่วนควบคุมเฉพาะที่เห็นเด่นชัดในหน้า admin
+  vehicleCard,decisionTile,kbkDecision,dayPicker,thLabel,sortable,arrMove,
   get(key){return this.components.find(c=>c.key===key)}
 };
 })();
