@@ -20,6 +20,9 @@
   a.card b{color:var(--gray-900);font-size:16px;display:block}
   a.card .meta{font-size:13px;color:var(--gray-500)}
   a.card .go{margin-left:auto;color:var(--gray-300)}
+  .more{display:inline-flex;align-items:center;gap:7px;margin-top:22px;font-size:14px;font-weight:600;color:var(--primary-600);text-decoration:none}
+  .more:hover{text-decoration:underline}
+  .more .ms{font-size:19px}
 </style>
 </head>
 <body>
@@ -28,29 +31,9 @@
   <h1>Maintain-D — ต้นแบบฟอร์มแจ้งซ่อม</h1>
   <div class="lead">ระบบซ่อมบำรุงรถ · design อิง VMS Plus · ข้อมูลทั้งหมดเป็นข้อมูลจำลอง (mock)</div>
 
-  <a class="card" href="outcome-dashboard.html">
-    <span class="ic"><span class="ms">monitoring</span></span>
-    <span><b>Outcome Dashboard — วัดผลรายฟังก์ชัน</b><span class="meta">F01–F18 · ตัวชี้วัดผลลัพธ์ + คุณภาพข้อมูล เทียบเป้า Business Rule — คลิกดูแนวโน้มรายฟังก์ชัน</span></span>
-    <span class="ms go">chevron_right</span>
-  </a>
-  <a class="card" href="05-review-milestones.html">
-    <span class="ic"><span class="ms">flag</span></span>
-    <span><b>เฟสรีวิว / เดโม — แจ้งซ่อม–กบค. (6 หมุด)</b><span class="meta">แบ่งกระบวนการซ่อมเป็น 6 ช่วง · เปิดเดโมตรงหน้าจอแต่ละช่วง + คำถามเปิดที่ต้องเคลียร์กับเจ้าของงาน</span></span>
-    <span class="ms go">chevron_right</span>
-  </a>
-  <a class="card" href="mock/Maintenance-Request-Form-flow2.html">
-    <span class="ic"><span class="ms">account_tree</span></span>
-    <span><b>เปิดต้นแบบ Flow2 — ตามผังต้นฉบับ</b><span class="meta">เดินตามผังวาดมือทุกขั้น: นัดวันเข้าซ่อม · ใบรับรถ (Download+ยินยอม) · ประวัติรายคัน · คืนอะไหล่</span></span>
-    <span class="ms go">chevron_right</span>
-  </a>
-  <a class="card" href="06-hierarchy-scope.html">
-    <span class="ic"><span class="ms">lan</span></span>
-    <span><b>Hierarchy บุคลากร &amp; ขอบเขตการมองเห็น</b><span class="meta">โครงหน่วยงานจาก dept_upper · เลือกบทบาท+ต้นสังกัด แล้วดูว่าใครเห็นข้อมูลของใครได้บ้าง</span></span>
-    <span class="ms go">chevron_right</span>
-  </a>
-  <a class="card" href="07-dept-size-bridge.html">
-    <span class="ic"><span class="ms">table_view</span></span>
-    <span><b>ตารางสะพาน — ขนาดหน่วยงาน ↔ dept_sap</b><span class="meta">ขนาด L/M/S/XS จากผัง 74 จังหวัด · 1,888 แถว รอเติม dept_sap เพื่อ join กับ vms_mas_department</span></span>
+  <a class="card" href="mock/Maintenance-Request-Form.html">
+    <span class="ic"><span class="ms">build</span></span>
+    <span><b>เปิดต้นแบบ — แจ้งซ่อม · กรย. · กบค.</b><span class="meta">ฟอร์มแจ้งซ่อม 5 ขั้น · อนุมัติโดยหัวหน้า · คิวงาน กบค. แยกขั้นตอนเป็นหน้า — คลิกเล่นได้จริง</span></span>
     <span class="ms go">chevron_right</span>
   </a>
   <a class="card" href="design-system/index.html">
@@ -58,30 +41,9 @@
     <span><b>Design System / Style Guide</b><span class="meta">tokens · components · patterns จาก VMS Plus</span></span>
     <span class="ms go">chevron_right</span>
   </a>
-  <a class="card" href="admin-config.html">
-    <span class="ic"><span class="ms">tune</span></span>
-    <span><b>Admin Control Panel</b><span class="meta">ปรับธีม · สลับรูปแบบ UI · เปิด/ปิดฟีเจอร์ · เติมข้อมูลเดโม · จัดการข้อมูลหลัก</span></span>
-    <span class="ms go">chevron_right</span>
-  </a>
-  <a class="card" href="daily-record/">
-    <span class="ic"><span class="ms">local_gas_station</span></span>
-    <span><b>บันทึกการใช้งานรถ (PWA)</b><span class="meta">Fleet Card · บันทึกรายวัน + อ่านใบเสร็จ · สรุปรายเดือน — ติดตั้งลงมือถือได้</span></span>
-    <span class="ms go">chevron_right</span>
-  </a>
-  <a class="card" href="maintainance-yearly/">
-    <span class="ic"><span class="ms">event_note</span></span>
-    <span><b>บำรุงรักษาตามวาระ (To-be)</b><span class="meta">แผน PM รายไทรมาส · เลือกรถ กรย. 12 เขต · ออกเลขงาน → ตรวจรับ → คำนวณต้นทุน — คลิกเล่นได้จริง</span></span>
-    <span class="ms go">chevron_right</span>
-  </a>
-  <a class="card" href="https://github.com/anugmail/Maintenance-Request-Form/tree/main/Diagram">
-    <span class="ic"><span class="ms">account_tree</span></span>
-    <span><b>Diagram — รวม Flow ทุกอัน</b><span class="meta">flowchart (Mermaid) ของทุก flow แยกไฟล์ · เปิดบน GitHub เห็นเป็นภาพ (Pages แสดง .md ดิบ)</span></span>
-    <span class="ms go">chevron_right</span>
-  </a>
-  <a class="card" href="https://github.com/anugmail/Maintenance-Request-Form">
-    <span class="ic"><span class="ms">code</span></span>
-    <span><b>Repository บน GitHub</b><span class="meta">เอกสาร flow · design reference · mock data</span></span>
-    <span class="ms go">chevron_right</span>
+
+  <a class="more" href="more.html">
+    <span class="ms">apps</span>หน้าอื่นๆ ทั้งหมด (9 รายการ)
   </a>
 </div>
 </body>
