@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maintain-D — ตารางสะพาน ขนาดหน่วยงาน ↔ dept_sap</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
+    rel="stylesheet">
+  <link rel="stylesheet" href="design-system/tokens.css">
+  <link rel="stylesheet" href="design-system/components.css">
+  <style>
+    body { font-family: var(--font); background: var(--gray-50); color: var(--gray-900); margin: 0 }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 28px 20px 80px }
+    .lead { color: var(--gray-600); font-size: var(--fs-body); margin: 6px 0 22px; line-height: var(--lh) }
+    .panel { background: #fff; border: 1px solid var(--gray-200); border-radius: var(--r-lg);
+             box-shadow: var(--shadow-app); padding: 20px; margin-bottom: 22px }
+    .note { background: var(--warning-50); border: 1px solid var(--warning-200); border-radius: var(--r-md);
+            padding: 12px 14px; font-size: var(--fs-sm); color: var(--warning-700); line-height: var(--lh) }
+    .note.info { background: var(--primary-25); border-color: var(--gray-200); color: var(--gray-700) }
+    .note + .note { margin-top: 10px }
+    .ctrl { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end }
+    .ctrl .f { min-width: 150px; flex: 1 }
+    .ctrl .f.wide { min-width: 240px; flex: 2 }
+    label.lbl { display: block; font-size: var(--fs-sm); font-weight: 600; margin-bottom: 6px; color: var(--gray-700) }
+    select, input[type=search] { width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300);
+      border-radius: var(--r-md); font-family: var(--font); font-size: var(--fs-body); background: #fff;
+      color: var(--gray-900); box-sizing: border-box }
+    table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm) }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--gray-200); vertical-align: middle }
+    th { background: var(--gray-50); font-weight: 600; color: var(--gray-700); white-space: nowrap;
+         position: sticky; top: 0; z-index: 1 }
+    td.k { font-family: ui-monospace, monospace; color: var(--gray-600); font-size: 12px }
+    td.empty { color: var(--error-600); font-weight: 600; text-align: center }
+    tr.lvj td { background: var(--primary-25) }
+    .sz { display: inline-block; min-width: 30px; text-align: center; font-weight: 600; font-size: var(--fs-xs);
+          padding: 2px 8px; border-radius: var(--r-pill); background: var(--gray-100); color: var(--gray-700) }
+    .sz.XS { background: var(--error-50); color: var(--error-700) }
+    .sz.S  { background: var(--warning-50); color: var(--warning-700) }
+    .sz.M  { background: var(--success-50); color: var(--success-600) }
+    .sz.L  { background: var(--primary-50); color: var(--primary-700) }
+    .vf { font-size: var(--fs-xs); font-weight: 600 }
+    .vf.Y { color: var(--success-600) } .vf.N { color: var(--warning-700) }
+    .nt { font-size: var(--fs-xs); color: var(--gray-600) }
+    .scroll { overflow-x: auto; border: 1px solid var(--gray-200); border-radius: var(--r-md);
+              max-height: 640px; overflow-y: auto }
+    .sum { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0 0 }
+    .stat { flex: 1; min-width: 130px; border: 1px solid var(--gray-200); border-radius: var(--r-md); padding: 12px 14px }
+    .stat b { display: block; font-size: var(--fs-h2); color: var(--primary-600); line-height: 1.2 }
+    .stat span { font-size: var(--fs-xs); color: var(--gray-600) }
+    code { background: var(--gray-100); padding: 1px 6px; border-radius: 4px; font-size: 12px }
+    .cnt { font-size: var(--fs-sm); color: var(--gray-600); margin: 12px 0 8px }
+    h2 { font-size: var(--fs-h2); margin: 0 0 4px }
+    .sub { font-size: var(--fs-sm); color: var(--gray-600); margin-bottom: 14px; line-height: var(--lh) }
+    .dl { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); font-weight: 600;
+          color: var(--primary-600); text-decoration: none }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="crumbs"><span class="ms">home</span> Maintain-D › โครงสร้างองค์กร › ตารางสะพาน</div>
+    <h1 class="page-title">ตารางสะพาน — ขนาดหน่วยงาน ↔ <code>dept_sap</code></h1>
+    <div class="lead">
+      ต่อผัง <b>โครงสร้างหน้างาน 74 จังหวัด</b> (PDF) เข้ากับตาราง <code>vms_mas_department</code> ของระบบ
+      — PDF มี <b>ขนาด L/M/S/XS</b> ที่ระบบไม่มี ส่วนระบบมี <code>dept_sap</code> ที่ PDF ไม่มี
+      หน้านี้คือตารางกลางที่รอเติมช่อง <code>dept_sap</code> เมื่อได้ dump มา
+    </div>
+
+    <div class="panel">
+      <div class="note info">
+        <b>วิธี join</b> — <code>match_key</code> เป็นกุญแจแบบ <i>lossy ที่สมมาตร</i>: ตัดคำนำหน้า/จุด แล้วยุบ <code>ำ → า</code>
+        <b>ฝั่งระบบต้อง fold แบบเดียวกัน</b> จึงจะ match ได้แม้ชื่อฝั่ง PDF จะเพี้ยนจาก font subset
+        (PDF <code>สำรภี</code> → <code>สารภี</code> · ระบบ <code>สารภี</code> → <code>สารภี</code> ตรงกัน)
+      </div>
+      <div class="note">
+        <b>ต้อง join ด้วยคู่ (จังหวัด + match_key) ไม่ใช่ key เดี่ยว</b> — มีชื่ออำเภอซ้ำข้ามจังหวัด
+        <code>ท่าตูม</code>×2 · <code>ท่าเรือ</code>×2 · <code>เฉลิมพระเกียรติ</code>×3
+        ในระดับ (เวอร์ชัน + จังหวัด + key) ไม่ซ้ำเลยสักแถว
+      </div>
+      <div class="note">
+        <b>คอลัมน์ ✓ = ยืนยันชื่อแล้วหรือยัง</b> — <span class="vf Y">Y</span> เฉพาะระดับ กฟจ. ที่เทียบกับรายชื่อ 74 จังหวัดจริงแล้ว ·
+        <span class="vf N">N</span> คือชื่ออำเภอที่ยังยืนยันสระไม่ได้
+        <b>ห้ามเอาชื่อแถว N ไปแสดงผลให้ผู้ใช้</b> ใช้ได้แค่ช่วยไล่จับคู่
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ctrl">
+        <div class="f">
+          <label class="lbl" for="ver">โครงสร้าง</label>
+          <select id="ver"></select>
+        </div>
+        <div class="f">
+          <label class="lbl" for="reg">เขต</label>
+          <select id="reg"></select>
+        </div>
+        <div class="f">
+          <label class="lbl" for="lv">ระดับ</label>
+          <select id="lv"></select>
+        </div>
+        <div class="f">
+          <label class="lbl" for="sz">ขนาด</label>
+          <select id="sz"></select>
+        </div>
+        <div class="f wide">
+          <label class="lbl" for="q">ค้นหา (จังหวัด / ชื่อหน่วยงาน / key)</label>
+          <input type="search" id="q" placeholder="เช่น เชียงใหม่ หรือ สารภี">
+        </div>
+      </div>
+      <div class="sum" id="stats"></div>
+    </div>
+
+    <div class="panel">
+      <h2>ตารางสะพาน</h2>
+      <div class="sub">
+        ช่อง <code>dept_sap</code> ยังว่างทุกแถว — เป็นช่องที่รอเติมจาก dump ของ <code>vms_mas_department</code>
+      </div>
+      <div class="cnt" id="cnt">กำลังโหลด…</div>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>dept_sap</th><th>ระดับ</th><th>เขต</th><th>จังหวัด</th>
+              <th>ชื่อหน่วยงาน</th><th>match_key</th><th>ขนาด</th><th>✓</th><th>หมายเหตุ</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px">
+        <a class="dl" href="pea-dept-size-bridge.csv" download>
+          <span class="ms" style="font-size:18px">download</span> ดาวน์โหลด CSV ต้นฉบับ (1,888 แถว)
+        </a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>สรุปขนาดตามระดับ</h2>
+      <div class="sub">
+        ขนาดเป็น <b>เกรดภายในระดับ ไม่ใช่สเกลเดียวทั้งองค์กร</b> — กฟจ. มีแค่ L กับ S ไม่มี XS เลย
+        ⇒ กฎ “XS ส่ง กบค. ไม่ได้” กัดได้เฉพาะชั้น กฟส.
+      </div>
+      <div class="scroll" style="max-height:none">
+        <table>
+          <thead><tr><th>ระดับ</th><th>จำนวน</th><th>L</th><th>M</th><th>S</th><th>XS</th><th>สัดส่วน XS</th></tr></thead>
+          <tbody id="bylv"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>สิ่งที่เปลี่ยนเมื่อ 1 ม.ค. 2569</h2>
+      <div class="sub">
+        ไม่ใช่แค่ปรับขนาด แต่ <b>ยกระดับ กฟส.เมือง&lt;จังหวัด&gt; ขึ้นเป็น กฟจ.&lt;จังหวัด&gt;</b> แล้วจัดเกรดขนาดใหม่
+      </div>
+      <div class="scroll" style="max-height:none">
+        <table>
+          <thead><tr><th>จังหวัด</th><th>เขต</th><th>เดิม</th><th>ขนาดเดิม</th><th>ใหม่</th><th>ขนาดใหม่</th></tr></thead>
+          <tbody id="upg"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top:6px">
+      <a class="dl" href="06-hierarchy-scope.html">
+        <span class="ms" style="font-size:18px">arrow_back</span> กลับไปหน้า Hierarchy &amp; ขอบเขตการมองเห็น
+      </a>
+    </div>
+  </div>
+
+  <script>
+    var ROWS = [];
+
+    /* CSV parser รองรับ field ที่มี quote/คอมมาข้างใน */
+    function parseCSV(text) {
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      var rows = [], row = [], cur = '', q = false;
+      for (var i = 0; i < text.length; i++) {
+        var c = text[i];
+        if (q) {
+          if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++ } else q = false }
+          else cur += c;
+        } else if (c === '"') q = true;
+        else if (c === ',') { row.push(cur); cur = '' }
+        else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = '' }
+        else if (c !== '\r') cur += c;
+      }
+      if (cur !== '' || row.length) { row.push(cur); rows.push(row) }
+      var head = rows.shift();
+      return rows.filter(function (r) { return r.length === head.length })
+        .map(function (r) { var o = {}; head.forEach(function (h, j) { o[h] = r[j] }); return o });
+    }
+
+    function $(id) { return document.getElementById(id) }
+    function esc(s) { return (s || '').replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] }) }
+
+    function fillSel(id, vals, allLabel, def) {
+      var s = $(id);
+      s.innerHTML = '<option value="">' + allLabel + '</option>' +
+        vals.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v) + '</option>' }).join('');
+      if (def) s.value = def;
+    }
+
+    var VER_LABEL = { '2569-01-01': 'ใหม่ — 1 ม.ค. 2569', '2568-10-01': 'เดิม — 1 ต.ค. 2568' };
+
+    function uniq(key) {
+      var seen = {}, out = [];
+      ROWS.forEach(function (r) { if (r[key] && !seen[r[key]]) { seen[r[key]] = 1; out.push(r[key]) } });
+      return out.sort();
+    }
+
+    function filtered() {
+      var v = $('ver').value, g = $('reg').value, l = $('lv').value, z = $('sz').value,
+          q = $('q').value.trim().toLowerCase();
+      return ROWS.filter(function (r) {
+        if (v && r.structure_version !== v) return false;
+        if (g && r.region !== g) return false;
+        if (l && r.dept_level !== l) return false;
+        if (z && r.dept_size !== z) return false;
+        if (q && (r.province + ' ' + r.dept_name_display + ' ' + r.dept_name_raw + ' ' + r.match_key)
+                 .toLowerCase().indexOf(q) < 0) return false;
+        return true;
+      });
+    }
+
+    function render() {
+      var rs = filtered();
+      $('cnt').innerHTML = 'แสดง <b>' + rs.length.toLocaleString() + '</b> แถว จากทั้งหมด ' +
+        ROWS.length.toLocaleString() + ' แถว' +
+        (rs.length > 800 ? ' · <span style="color:var(--warning-700)">แสดง 800 แถวแรก — กรองเพิ่มเพื่อดูให้ครบ</span>' : '');
+
+      $('rows').innerHTML = rs.slice(0, 800).map(function (r) {
+        return '<tr' + (r.dept_level === 'กฟจ.' ? ' class="lvj"' : '') + '>' +
+          '<td class="empty">—</td>' +
+          '<td>' + esc(r.dept_level) + '</td>' +
+          '<td>' + esc(r.region) + '</td>' +
+          '<td>' + esc(r.province) + '</td>' +
+          '<td>' + esc(r.dept_name_display) + '</td>' +
+          '<td class="k">' + esc(r.match_key) + '</td>' +
+          '<td><span class="sz ' + esc(r.dept_size) + '">' + esc(r.dept_size) + '</span></td>' +
+          '<td><span class="vf ' + esc(r.name_verified) + '">' + esc(r.name_verified) + '</span></td>' +
+          '<td class="nt">' + esc(r.note) + '</td></tr>';
+      }).join('');
+
+      /* สถิติตามที่กรองอยู่ */
+      var c = { L: 0, M: 0, S: 0, XS: 0 }, provs = {}, sap = 0;
+      rs.forEach(function (r) { c[r.dept_size]++; provs[r.province] = 1; if (r.dept_sap) sap++ });
+      $('stats').innerHTML =
+        stat(rs.length.toLocaleString(), 'แถวที่กรองอยู่') +
+        stat(Object.keys(provs).length, 'จังหวัด') +
+        stat(c.XS.toLocaleString(), 'XS' + (rs.length ? ' (' + Math.round(100 * c.XS / rs.length) + '%)' : '')) +
+        stat(sap + ' / ' + rs.length.toLocaleString(), 'เติม dept_sap แล้ว');
+    }
+    function stat(b, s) { return '<div class="stat"><b>' + b + '</b><span>' + s + '</span></div>' }
+
+    function summaries() {
+      var v = '2569-01-01';
+      var by = {};
+      ROWS.filter(function (r) { return r.structure_version === v }).forEach(function (r) {
+        var o = by[r.dept_level] = by[r.dept_level] || { n: 0, L: 0, M: 0, S: 0, XS: 0 };
+        o.n++; o[r.dept_size]++;
+      });
+      $('bylv').innerHTML = ['กฟจ.', 'กฟอ.', 'กฟส.'].filter(function (k) { return by[k] }).map(function (k) {
+        var o = by[k];
+        return '<tr><td><b>' + k + '</b></td><td>' + o.n + '</td>' +
+          ['L', 'M', 'S', 'XS'].map(function (s) {
+            return '<td>' + (o[s] ? '<span class="sz ' + s + '">' + o[s] + '</span>' : '<span class="nt">—</span>') + '</td>';
+          }).join('') +
+          '<td>' + (o.XS ? Math.round(100 * o.XS / o.n) + '%' : '<span class="nt">ไม่มีเลย</span>') + '</td></tr>';
+      }).join('');
+
+      var up = ROWS.filter(function (r) { return r.note });
+      $('upg').innerHTML = up.map(function (r) {
+        var m = /ยกระดับจาก (.+?) \(ขนาดเดิม (\w+)\)/.exec(r.note) || [, '', ''];
+        return '<tr><td>' + esc(r.province) + '</td><td>' + esc(r.region) + '</td>' +
+          '<td>' + esc(m[1]) + '</td><td><span class="sz ' + esc(m[2]) + '">' + esc(m[2]) + '</span></td>' +
+          '<td>' + esc(r.dept_name_display) + '</td>' +
+          '<td><span class="sz ' + esc(r.dept_size) + '">' + esc(r.dept_size) + '</span></td></tr>';
+      }).join('');
+    }
+
+    fetch('pea-dept-size-bridge.csv').then(function (r) { return r.text() }).then(function (t) {
+      ROWS = parseCSV(t);
+      var vers = uniq('structure_version').sort().reverse();
+      var s = $('ver');
+      s.innerHTML = vers.map(function (v) {
+        return '<option value="' + v + '">' + (VER_LABEL[v] || v) + '</option>';
+      }).join('');
+      s.value = '2569-01-01';
+      fillSel('reg', uniq('region'), 'ทุกเขต');
+      fillSel('lv', uniq('dept_level'), 'ทุกระดับ');
+      fillSel('sz', ['L', 'M', 'S', 'XS'], 'ทุกขนาด');
+      ['ver', 'reg', 'lv', 'sz'].forEach(function (id) { $(id).addEventListener('change', render) });
+      $('q').addEventListener('input', render);
+      summaries();
+      render();
+    }).catch(function (e) {
+      $('cnt').innerHTML = '<span style="color:var(--error-600)">โหลด CSV ไม่ได้: ' + esc(String(e)) +
+        ' — ต้องเปิดผ่าน http:// ไม่ใช่ file://</span>';
+    });
+  </script>
+</body>
+
+</html>
