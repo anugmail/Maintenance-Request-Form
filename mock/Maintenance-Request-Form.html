@@ -3197,12 +3197,12 @@
         tech: { name: 'ช.วิชัย ทองดี', tel: '086-555-7788' },
         driver: { name: 'พขร. ประเสริฐ มั่นคง', tel: '082-909-1122' },
         fromUnit: 'กรย. สำนักงานใหญ่', budget: 'งบซ่อมบำรุงยานพาหนะ ปี 2569 · สนญ. (กบค.)',
-        booked: [{ name: 'ไส้กรองไฮดรอลิก', qty: 2, unit: 'ชิ้น' }], ordered: [{ name: 'ปั๊มไฮดรอลิกเกียร์', qty: 1, unit: 'ตัว', eta: '24 ก.ค.' }], reason: 'ปั๊มต้องเปลี่ยนทั้งลูก รอของเข้า',
+        booked: [{ name: 'ไส้กรองไฮดรอลิก', qty: 2, unit: 'ชิ้น' }], ordered: [{ name: 'ปั๊มไฮดรอลิกเกียร์', qty: 1, unit: 'ตัว' }], reason: 'ปั๊มต้องเปลี่ยนทั้งลูก รอของเข้า',
         inspIn: { fuel: '½', odo: '84,120', defects: [{ zone: 'ด้านขวา (ประตู/แก้มข้าง)', note: 'รอยขีดข่วนเดิม' }], extra: '', t: '15 ก.ค. 2569 15:45' },
         phase: 'work', wi: 1, history: [
           { t: '15 ก.ค. 2569 10:05', label: 'ส่งเรื่องถึง กบค. — รอรับเรื่อง' },
           { t: '15 ก.ค. 2569 15:40', label: 'กบค. รับเรื่องซ่อม' },
-          { t: '16 ก.ค. 2569 09:00', label: 'สถานะ: รอสั่งอะไหล่ (ปั๊มไฮดรอลิกเกียร์ ETA 24 ก.ค.)' }]
+          { t: '16 ก.ค. 2569 09:00', label: 'สถานะ: รอสั่งอะไหล่ (ปั๊มไฮดรอลิกเกียร์)' }]
       },
       // ---------- เคสเพิ่มเติม ครอบทุกสถานะที่ กบค. เจอจริง ----------
       {
@@ -3414,7 +3414,6 @@
     function nowStr() { return new Date().toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace('พ.ศ. ', '') }
     function esc(s) { return (s || '').replace(/</g, '&lt;') }
     function badge(p) {
-      if (p.stock === 0 && p.eta) return '<span class="badge b-out">หมด · รอของ (ETA ' + p.eta + ')</span>';
       if (p.stock === 0) return '<span class="badge b-out">หมด</span>';
       if (p.stock <= 3) return '<span class="badge b-low">ใกล้หมด · เหลือ ' + p.stock + '</span>';
       return '<span class="badge b-ok">พร้อมเบิก · เหลือ ' + p.stock + '</span>';
@@ -3535,8 +3534,8 @@ function goBackFromForm(){
 
     <div class="sect" style="margin-top:26px">รายการที่ต้องสั่งซื้อ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— อะไหล่ที่หมดคลังแต่ถูกเลือกไว้ในใบแจ้งซ่อม</span></div>
     ${orders.length ? `<div class="tblwrap"><table class="tbl">
-      <thead><tr><th>อะไหล่</th><th class="num">จำนวน</th><th>ETA ของเข้า</th><th>เลขที่ใบแจ้งซ่อม</th><th>หน่วยงานผู้แจ้ง</th><th>สถานะเรื่อง</th></tr></thead>
-      <tbody>${orders.map(x => `<tr><td><b style="color:var(--gray-900)">${x.o.name}</b></td><td class="num">${x.o.qty} ${x.o.unit || ''}</td><td><span class="badge b-low">ETA ${x.o.eta}</span></td><td>${link(x.j)}</td><td>${x.j.org}</td><td>${stBadge(x.j)}</td></tr>`).join('')}</tbody>
+      <thead><tr><th>อะไหล่</th><th class="num">จำนวน</th><th>เลขที่ใบแจ้งซ่อม</th><th>หน่วยงานผู้แจ้ง</th><th>สถานะเรื่อง</th></tr></thead>
+      <tbody>${orders.map(x => `<tr><td><b style="color:var(--gray-900)">${x.o.name}</b></td><td class="num">${x.o.qty} ${x.o.unit || ''}</td><td>${link(x.j)}</td><td>${x.j.org}</td><td>${stBadge(x.j)}</td></tr>`).join('')}</tbody>
     </table></div>`: '<div class="empty">ยังไม่มีรายการที่ต้องสั่งซื้อ</div>'}
 
     <div class="sect" style="margin-top:26px">การคืนอะไหล่เข้าคลัง <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เหลือจากงานที่ปิดแบบซ่อมโดยอู่</span></div>
@@ -3658,7 +3657,7 @@ function goBackFromForm(){
         <div class="qty"><button onclick="chgQty('${p.code}',-1)">−</button><span>${bk}</span><button onclick="chgQty('${p.code}',1)">+</button></div>
         <button class="btn btn-g" style="padding:7px 10px;font-size:12.5px" onclick="delete S.bookings['${p.code}'];renderParts()">ยกเลิก</button></div>`;
         } else if (od) {
-          act = `<div class="bk"><span class="ordered"><span class="ms" style="font-size:18px">shopping_cart</span>เลือกไว้ ${od} ${p.unit} · ต้องสั่งซื้อ${p.eta ? ' (ETA ' + p.eta + ')' : ''}</span>
+          act = `<div class="bk"><span class="ordered"><span class="ms" style="font-size:18px">shopping_cart</span>เลือกไว้ ${od} ${p.unit} · ต้องสั่งซื้อ</span>
         <div class="qty"><button onclick="chgOrd('${p.code}',-1)">−</button><span>${od}</span><button onclick="chgOrd('${p.code}',1)">+</button></div>
         <button class="btn btn-g" style="padding:7px 10px;font-size:12.5px" onclick="delete S.orders['${p.code}'];renderParts()">ยกเลิก</button></div>`;
         } else if (p.stock > 0) {
@@ -3773,10 +3772,10 @@ function goBackFromForm(){
 
     function setDecision(d) { S.decision = d; $('dcself').classList.toggle('sel', d === 'self'); $('dckry').classList.toggle('sel', d === 'kry'); $('selfx').classList.toggle('hidden', d !== 'self'); $('kryx').classList.toggle('hidden', d !== 'kry'); renderSummary() }
     function bookedArr() { return Object.entries(S.bookings).map(([c, q]) => { const p = PARTS.find(x => x.code === c); return { name: p.name, qty: q, unit: p.unit } }) }
-    function orderedArr() { return Object.entries(S.orders).map(([c, q]) => { const p = PARTS.find(x => x.code === c); return { name: p.name, qty: q, unit: p.unit, eta: p.eta || 'รอยืนยัน' } }) }
+    function orderedArr() { return Object.entries(S.orders).map(([c, q]) => { const p = PARTS.find(x => x.code === c); return { name: p.name, qty: q, unit: p.unit } }) }
     function renderSummary() {
       if (!S.vehicle) { $('summary').innerHTML = '<div class="hint" style="padding:10px 0">ยังไม่ได้เลือกรถ — กลับไปขั้น "เลือกรถ" ก่อนส่งเรื่อง</div>'; return }
-      const bk = bookedArr().map(x => `${x.name} ×${x.qty}`), od = orderedArr().map(x => `${x.name} ×${x.qty} (ETA ${x.eta})`);
+      const bk = bookedArr().map(x => `${x.name} ×${x.qty}`), od = orderedArr().map(x => `${x.name} ×${x.qty}`);
       const symNames = S.symptoms.map(id => SYMPTOMS.find(s => s.id === id).name);
       $('summary').innerHTML = `
     <div class="sumrow"><span>รถ</span><span>${S.vehicle.plate} · ${S.vehicle.model}</span></div>
@@ -3907,7 +3906,7 @@ function goBackFromForm(){
     <div class="sumrow"><span>คำอธิบาย</span><span>${j.desc || '—'}</span></div>
     <div class="sumrow"><span>รูปแนบ</span><span>${j.photos} รูป</span></div>
     <div class="sumrow"><span>อะไหล่ที่เลือกไว้</span><span>${j.booked.length ? j.booked.map(x => `${x.name} ×${x.qty}`).join('<br>') : 'ไม่มี'}</span></div>
-    <div class="sumrow"><span>อะไหล่ที่เลือกไว้ (ของหมด · ต้องสั่งซื้อ)</span><span>${j.ordered.length ? j.ordered.map(x => `${x.name} ×${x.qty} (ETA ${x.eta})`).join('<br>') : 'ไม่มี'}</span></div>
+    <div class="sumrow"><span>อะไหล่ที่เลือกไว้ (ของหมด · ต้องสั่งซื้อ)</span><span>${j.ordered.length ? j.ordered.map(x => `${x.name} ×${x.qty}`).join('<br>') : 'ไม่มี'}</span></div>
     <div class="sumrow"><span>เหตุผล/บันทึกจากผู้แจ้ง</span><span>${j.reason || '—'}</span></div>
   </div>`;
     }
@@ -4532,7 +4531,7 @@ function closeKbkDetail(){
           }
         }
         if (j.wi === 1 && j.ordered.length) {
-          action += `<div class="panel"><b style="color:var(--gray-900);font-size:14px">รายการที่รอสั่ง/รอของเข้า</b>${j.ordered.map(x => `<div class="hint" style="margin-top:6px"><span class="ms" style="font-size:16px">shopping_cart</span> ${x.name} ×${x.qty} — ETA ${x.eta}</div>`).join('')}</div>`;
+          action += `<div class="panel"><b style="color:var(--gray-900);font-size:14px">รายการที่รอสั่ง/รอของเข้า</b>${j.ordered.map(x => `<div class="hint" style="margin-top:6px"><span class="ms" style="font-size:16px">shopping_cart</span> ${x.name} ×${x.qty}</div>`).join('')}</div>`;
         }
         if (j.wi < 4) {
           action += `<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="kbkAdvance('${no}')">อัปเดตสถานะ → ${KBK_STEPS[j.wi + 1]}</button></div>`;
@@ -4703,7 +4702,7 @@ function initJobParts(j){
   const find=nm=>PARTS.find(p=>p.name===nm)||{};
   j.parts=[
     ...j.booked.map(b=>{const p=find(b.name);return{code:p.code||b.name,name:b.name,unit:b.unit,qty:b.qty,price:p.price||0,src:'req',ready:true}}),
-    ...j.ordered.map(o=>{const p=find(o.name);return{code:p.code||o.name,name:o.name,unit:o.unit,qty:o.qty,price:p.price||0,src:'req',ready:false,eta:o.eta}})
+    ...j.ordered.map(o=>{const p=find(o.name);return{code:p.code||o.name,name:o.name,unit:o.unit,qty:o.qty,price:p.price||0,src:'req',ready:false}})
   ];
   return j.parts;
 }
@@ -4726,15 +4725,15 @@ const SRC = {
 };
 function partSource(x){
   const p=PARTS.find(q=>q.code===x.code);
-  if(!p)return { src:SRC.buy, have:0, short:x.qty, where:'ไม่พบในทะเบียนอะไหล่', eta:null };
-  if(p.stock>0)  return { src:SRC.si,  have:p.stock,    short:Math.max(0,x.qty-p.stock),    where:p.wh,       eta:null, unit:p.unit };
-  if(p.stockAlt) return { src:SRC.alt, have:p.stockAlt, short:Math.max(0,x.qty-p.stockAlt), where:'คลังสำรอง', eta:null, unit:p.unit };
-  return { src:SRC.buy, have:0, short:x.qty, where:'ไม่มีทั้ง 2 คลัง', eta:p.eta, unit:p.unit };
+  if(!p)return { src:SRC.buy, have:0, short:x.qty, where:'ไม่พบในทะเบียนอะไหล่' };
+  if(p.stock>0)  return { src:SRC.si,  have:p.stock,    short:Math.max(0,x.qty-p.stock),    where:p.wh, unit:p.unit };
+  if(p.stockAlt) return { src:SRC.alt, have:p.stockAlt, short:Math.max(0,x.qty-p.stockAlt), where:'คลังสำรอง', unit:p.unit };
+  return { src:SRC.buy, have:0, short:x.qty, where:'ไม่มีทั้ง 2 คลัง', unit:p.unit };
 }
 function invCell(x){
   const s=partSource(x), u=esc(s.unit||x.unit);
   if(s.src.key==='buy')return `<span class="inv buy"><span class="ms">shopping_cart</span>ต้องสั่งซื้อ</span>
-    <div class="invsub">${esc(s.where)}${s.eta?' · ETA '+esc(s.eta):''}</div>`;
+    <div class="invsub">${esc(s.where)}</div>`;
   const ok=!s.short;
   return `<span class="inv ${ok?(s.src.key==='si'?'ok':'alt'):'low'}"><span class="ms">${ok?s.src.icon:'warning'}</span>${baht(s.have)} ${u}</span>
     <div class="invsub">${ok?esc(s.where):`${esc(s.where)} · ขาดอีก ${baht(s.short)} ${u}`}</div>`;
@@ -4867,7 +4866,7 @@ function addListHTML(no, j){
     const k=p.stock>0?'si':(p.stockAlt?'alt':'buy');
     const where=k==='si'?`${esc(p.wh)} · เหลือ ${baht(p.stock)} ${esc(p.unit)}`
       :k==='alt'?`คลังสำรอง · เหลือ ${baht(p.stockAlt)} ${esc(p.unit)}`
-      :`ไม่มีทั้ง 2 คลัง${p.eta?' · ETA '+esc(p.eta):''}`;
+      :`ไม่มีทั้ง 2 คลัง`;
     return `<div class="addrow ${k==='buy'?'isbuy':''}" onclick="kbkPartAdd('${no}','${p.code}')">
       <span class="ms">${p.icon}</span>
       <div class="ar-tx"><b>${esc(p.name)}</b>
@@ -4936,7 +4935,7 @@ function kbkPartAdd(no, code){
   const j=JOBS.find(x=>x.no===no),p=PARTS.find(x=>x.code===code);
   if(!p||j.parts.some(x=>x.code===code))return;
   j.parts.push({code:p.code,name:p.name,unit:p.unit,qty:p.need||1,price:p.price||0,src:'kbk',
-    ready:p.stock>0,eta:p.stock===0?p.eta:undefined});
+    ready:p.stock>0});
   renderKbkDetail(no);
 }
 function kbkPartsConfirm(no){
