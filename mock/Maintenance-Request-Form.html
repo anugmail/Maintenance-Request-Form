@@ -2457,8 +2457,7 @@
 
         <section id="s3" class="hidden">
           <div class="sect"><span id="head-parts">อะไหล่ที่ระบบแนะนำ</span> <span
-              style="font-weight:400;font-size:13px;color:var(--gray-500)">— (mock) จองได้ถ้ามีของ ·
-              <b>ของหมดแต่จำเป็นต้องใช้ → กด "สั่งของ" เพื่อรวมไว้ในรายการที่ต้องใช้</b> · อัปเดตล่าสุด 17 ก.ค. 2569
+              style="font-weight:400;font-size:13px;color:var(--gray-500)">— เลือกอะไหล่ที่คาดว่าต้องใช้ · <b>ยังไม่ตัดสต็อก</b> — กบค. จะยืนยันรายการจริงอีกครั้งตอนรับเรื่อง<br>ของหมดก็เลือกได้ ระบบจะทำเป็นรายการที่ต้องสั่งซื้อ · อัปเดตล่าสุด 17 ก.ค. 2569
               09:30</span></div>
           <div id="parts"></div>
         </section>
@@ -2475,14 +2474,14 @@
           </div>
           <div id="selfx" class="hidden dnote">
             <div class="f" style="margin-top:14px"><label>แผน/บันทึกการซ่อมโดยย่อ</label><textarea id="selfnote"
-                rows="2" placeholder="เช่น เปลี่ยนชุดซีลเองในวันพรุ่งนี้ ใช้อะไหล่ที่จองไว้…"></textarea></div>
+                rows="2" placeholder="เช่น เปลี่ยนชุดซีลเองในวันพรุ่งนี้ ใช้อะไหล่ที่เลือกไว้…"></textarea></div>
           </div>
           <div id="kryx" class="hidden dnote">
             <div class="f" style="margin-top:14px"><label>เหตุผลที่ซ่อมเองไม่ได้</label><textarea id="kryreason" rows="2"
                 placeholder="เช่น ต้องใช้เครื่องมือพิเศษ/อะไหล่รอของ…"></textarea></div>
             <div class="route"><span class="ms">alt_route</span><span><b>ส่งให้ กรย. (กองระบบไฟฟ้าและงานโยธา 12
                   เขต)</b><br>กรย. จะคัดแยกว่าให้ <b>ซ่อมที่อู่</b> · <b>กรย. ซ่อมเอง</b> · หรือ <b>ส่งต่อ กบค.</b> —
-                เอกสารแนบอาการ รูป และอะไหล่ที่จอง/สั่งของให้อัตโนมัติ</span></div>
+                เอกสารแนบอาการ รูป และอะไหล่ที่เลือกไว้ให้อัตโนมัติ</span></div>
           </div>
           <div class="sect" style="margin-top:26px">ผู้อนุมัติใบแจ้งซ่อม <span
               style="font-weight:400;font-size:13px;color:var(--gray-500)">— <b>ต้องเลือกก่อนส่งเรื่อง</b> ·
@@ -2652,7 +2651,7 @@
       <main class="content hidden" id="view-stock">
         <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>งานซ่อม กบค.</span><span
             class="sep">›</span><span class="cur">คลังอะไหล่</span></div>
-        <h1 class="page-title">คลังอะไหล่ — รายการจองและสั่งของ</h1>
+        <h1 class="page-title">คลังอะไหล่ — รายการที่ถูกเลือกไว้และต้องสั่งซื้อ</h1>
         <div id="stockbody"></div>
       </main>
     </div>
@@ -3205,6 +3204,157 @@
           { t: '15 ก.ค. 2569 15:40', label: 'กบค. รับเรื่องซ่อม' },
           { t: '16 ก.ค. 2569 09:00', label: 'สถานะ: รอสั่งอะไหล่ (ปั๊มไฮดรอลิกเกียร์ ETA 24 ก.ค.)' }]
       },
+      // ---------- เคสเพิ่มเติม ครอบทุกสถานะที่ กบค. เจอจริง ----------
+      {
+        no: 'MTD-690718-044', plate: '81-2345 นครราชสีมา', model: 'Hino FM8J 6 ล้อ + เครน Tadano TM-ZE304', org: 'กฟภ. เขต ฉ.3 นครราชสีมา', target: 'เครน Tadano TM-ZE304',
+        syms: ['ลวดสลิงหย่อน/เส้นใยขาด'], usable: false, photos: 3, desc: 'เส้นใยขาด 3 จุดช่วงกลางสลิง หยุดใช้งานทันที',
+        at: { prov: 'นครราชสีมา', amp: 'กฟส.ปากช่อง' }, use: { odo: 129480, crane: 5140 },
+        owner: { name: 'กฟจ.นครราชสีมา', tel: '044-242-060' },
+        tech: { name: 'ช.ธนากร บุญมี', tel: '081-877-4410' },
+        driver: { name: 'พขร. สุชาติ แก้วมณี', tel: '087-330-9922' },
+        fromUnit: 'กรย. เขต ฉ.3 (นครราชสีมา)',
+        budget: 'งบโครงการ (ตาม WBS) — เลขที่ WBS WBS-2569-0142 · เลขที่โครงข่าย NET-04412',
+        costType: '3', costVals: { wbs: 'WBS-2569-0142', network: 'NET-04412', activity: 'A-0310' },
+        booked: [], ordered: [], reason: 'สลิงเส้นใยขาด ต้องเปลี่ยนทั้งเส้น เกินกำลังหน่วยงาน',
+        phase: 'pending', wi: 0, history: [{ t: '18 ก.ค. 2569 08:40', label: 'ส่งเรื่องถึง กบค. — รอรับเรื่อง' }]
+      },
+      {
+        no: 'MTD-690718-047', plate: '80-5566 เชียงใหม่', model: 'Hino XZU กระบะยกสูง', org: 'กฟภ. เขต น.1 เชียงใหม่', target: 'ตัวรถ',
+        syms: ['ควันดำ/กำลังตก'], usable: true, photos: 1, desc: 'ควันดำตอนออกตัว กำลังตกช่วงขึ้นเขา',
+        at: { prov: 'เชียงใหม่', amp: 'เมืองเชียงใหม่' }, use: { odo: 168300, crane: 0 },
+        owner: { name: 'กฟจ.เชียงใหม่', tel: '053-241-000' },
+        tech: { name: 'ช.ประยุทธ์ คำแสน', tel: '089-556-1200' },
+        driver: { name: '', tel: '' },
+        fromUnit: 'กรย. เขต น.1 (เชียงใหม่)',
+        budget: 'งบซ่อมบำรุงตามใบสั่ง (PM Order) — เลขที่ใบสั่ง PM690718-12',
+        costType: '4', costVals: { pmOrder: 'PM690718-12' },
+        booked: [{ name: 'ไส้กรองอากาศ', qty: 1, unit: 'ชิ้น' }], ordered: [], reason: 'ยังใช้งานได้แต่กำลังตกชัดเจน ขอให้ตรวจเครื่อง',
+        phase: 'pending', wi: 0, history: [{ t: '18 ก.ค. 2569 11:15', label: 'ส่งเรื่องถึง กบค. — รอรับเรื่อง' }]
+      },
+      {
+        no: 'MTD-690717-039', plate: '82-6789 ขอนแก่น', model: 'Isuzu FTR + กระเช้า Aichi SK17A', org: 'กฟภ. เขต ฉ.1 ขอนแก่น', target: 'กระเช้า Aichi SK17A',
+        syms: ['ไฟเตือน load sensor ขึ้น'], usable: false, photos: 2, desc: 'ไฟเตือนขึ้นค้างแม้ไม่มีโหลด',
+        at: { prov: 'ขอนแก่น', amp: 'กฟส.บ้านไผ่' }, use: { odo: 91240, crane: 3480 },
+        owner: { name: 'กฟส.บ้านไผ่', tel: '043-272-100' },
+        tech: { name: 'ช.อดิศักดิ์ พงษ์ไทย', tel: '084-221-7788' },
+        driver: { name: 'พขร. วีระ ทองสุข', tel: '086-441-2200' },
+        fromUnit: 'กรย. เขต ฉ.1 (ขอนแก่น)', budget: 'งบประจำหน่วยงาน — ศูนย์ต้นทุน B0002211',
+        costType: '1', costVals: { costCenter: 'B0002211' },
+        booked: [], ordered: [], reason: 'ต้องใช้เครื่องมือสอบเทียบเซ็นเซอร์',
+        route: 'self',
+        parts: [
+          { code: 'AC-1103', name: 'เซ็นเซอร์ระดับกระเช้า Aichi', unit: 'ตัว', qty: 1, price: 8900, src: 'kbk' },
+          { code: 'SN-3310', name: 'เซ็นเซอร์ load cell', unit: 'ตัว', qty: 1, price: 12500, src: 'kbk' },
+          { code: 'GR-0002', name: 'จาระบี EP2', unit: 'หลอด', qty: 2, price: 180, src: 'kbk' }
+        ],
+        phase: 'work', wi: 0, history: [
+          { t: '17 ก.ค. 2569 09:30', label: 'ส่งเรื่องถึง กบค. — รอรับเรื่อง' },
+          { t: '17 ก.ค. 2569 13:10', label: 'กบค. รับเรื่องซ่อม' },
+          { t: '17 ก.ค. 2569 13:25', label: 'กบค. เลือกซ่อมเอง — จัดรายการอะไหล่' }]
+      },
+      {
+        no: 'MTD-690716-028', plate: '81-2345 นครราชสีมา', model: 'Hino FM8J 6 ล้อ + เครน Tadano TM-ZE304', org: 'กฟภ. เขต ฉ.3 นครราชสีมา', target: 'ตัวรถ',
+        syms: ['สตาร์ทไม่ติด'], usable: false, photos: 1, desc: 'สตาร์ทไม่ติดตั้งแต่เช้า จั๊มแล้วยังไม่ติด',
+        at: { prov: 'นครราชสีมา', amp: 'กฟส.สีคิ้ว' }, use: { odo: 130100, crane: 5150 },
+        owner: { name: 'กฟส.สีคิ้ว', tel: '044-411-260' },
+        tech: { name: 'ช.นพดล อินทร์แก้ว', tel: '081-909-3311' },
+        driver: { name: 'พขร. บุญส่ง ดีใจ', tel: '088-220-5566' },
+        fromUnit: 'กรย. เขต ฉ.3 (นครราชสีมา)', budget: 'งบส่วนกลาง (กบค.) — ศูนย์ต้นทุน B0009100',
+        costType: '2', costVals: { costCenter: 'B0009100' },
+        booked: [], ordered: [], reason: 'อาการไม่ชัด อาจเป็นระบบไฟทั้งชุด',
+        route: 'garage', quote: { sent: true, garage: 'อู่ ส.ทวีชัย เซอร์วิส', note: 'ขอใบเสนอราคาแยกค่าแรง/ค่าอะไหล่' },
+        phase: 'quote', wi: 0, history: [
+          { t: '16 ก.ค. 2569 10:20', label: 'ส่งเรื่องถึง กบค. — รอรับเรื่อง' },
+          { t: '16 ก.ค. 2569 15:00', label: 'กบค. รับเรื่องซ่อม' },
+          { t: '16 ก.ค. 2569 15:12', label: 'กบค. เลือกส่งอู่ประเมินราคา' },
+          { t: '16 ก.ค. 2569 15:20', label: 'ส่ง อู่ ส.ทวีชัย เซอร์วิส ประเมินราคา — รอใบเสนอราคา' }]
+      },
+      {
+        no: 'MTD-690714-011', plate: '83-1122 กรุงเทพมหานคร', model: 'Mitsubishi Fuso FI + เครน Unic URV554', org: 'สำนักงานใหญ่ (กบค.)', target: 'เครน Unic URV554',
+        syms: ['บูมยืด-หดสะดุด'], usable: false, photos: 2, desc: 'บูมสะดุดช่วงยืดท่อนที่ 2',
+        at: { prov: 'กรุงเทพมหานคร', amp: 'จตุจักร' }, use: { odo: 79800, crane: 2610 },
+        owner: { name: 'สำนักงานใหญ่ (กบค.)', tel: '02-590-9999' },
+        tech: { name: 'ช.วิชัย ทองดี', tel: '086-555-7788' },
+        driver: { name: 'พขร. ประเสริฐ มั่นคง', tel: '082-909-1122' },
+        fromUnit: 'กรย. สำนักงานใหญ่', budget: 'งบประจำหน่วยงาน — ศูนย์ต้นทุน B0009100',
+        costType: '1', costVals: { costCenter: 'B0009100' },
+        booked: [{ name: 'แผ่นสไลด์บูม (wear pad)', qty: 4, unit: 'แผ่น' }], ordered: [],
+        reason: 'ต้องถอดบูมเปลี่ยน wear pad', route: 'self', partsOK: true,
+        parts: [
+          { code: 'WP-1030', name: 'แผ่นสไลด์บูม (wear pad)', unit: 'แผ่น', qty: 4, price: 780, src: 'req' },
+          { code: 'GR-0002', name: 'จาระบี EP2', unit: 'หลอด', qty: 2, price: 180, src: 'kbk' }
+        ],
+        inspIn: { fuel: '¾', odo: '79,800', defects: [], extra: 'สภาพภายนอกปกติ', t: '14 ก.ค. 2569 10:20' },
+        phase: 'work', wi: 3, loc: 'hq', history: [
+          { t: '14 ก.ค. 2569 08:10', label: 'ส่งเรื่องถึง กบค. — รอรับเรื่อง' },
+          { t: '14 ก.ค. 2569 09:50', label: 'กบค. รับเรื่องซ่อม' },
+          { t: '14 ก.ค. 2569 10:05', label: 'กบค. เลือกซ่อมเอง — จัดรายการอะไหล่' },
+          { t: '14 ก.ค. 2569 10:15', label: 'ยืนยันรายการอะไหล่ 2 รายการ — รวม 3,480 บาท' },
+          { t: '14 ก.ค. 2569 10:20', label: 'บันทึกตรวจสภาพรับรถเข้าซ่อม (ขาเข้า)' },
+          { t: '15 ก.ค. 2569 14:00', label: 'สถานะ: ดำเนินการซ่อม — ฝั่งผู้แจ้งเห็นด้วย' }]
+      },
+      {
+        no: 'MTD-690710-005', plate: '82-6789 ขอนแก่น', model: 'Isuzu FTR + กระเช้า Aichi SK17A', org: 'กฟภ. เขต ฉ.1 ขอนแก่น', target: 'ตัวรถ',
+        syms: ['สายไฮดรอลิกแตก/รั่ว'], usable: true, photos: 2, desc: 'สายรั่วซึมที่ข้อต่อ',
+        at: { prov: 'ขอนแก่น', amp: 'กฟส.ชุมแพ' }, use: { odo: 88900, crane: 3300 },
+        owner: { name: 'กฟส.ชุมแพ', tel: '043-311-400' },
+        tech: { name: 'ช.สมพงษ์ ไชยวงศ์', tel: '081-234-5678' },
+        driver: { name: 'พขร. อนุชิต ศรีสุข', tel: '089-111-2233' },
+        fromUnit: 'กรย. เขต ฉ.1 (ขอนแก่น)', budget: 'งบประจำหน่วยงาน — ศูนย์ต้นทุน B0002211',
+        costType: '1', costVals: { costCenter: 'B0002211' },
+        booked: [{ name: 'สายไฮดรอลิกแรงดันสูง 3/8"', qty: 2, unit: 'เส้น' }], ordered: [], reason: '',
+        route: 'self', partsOK: true,
+        parts: [{ code: 'HS-3808', name: 'สายไฮดรอลิกแรงดันสูง 3/8"', unit: 'เส้น', qty: 2, price: 1200, src: 'req' }],
+        inspIn: { fuel: '½', odo: '88,900', defects: [], extra: '', t: '10 ก.ค. 2569 09:00' },
+        appt: { date: '22 ก.ค. 2569', time: '09:00–10:00', note: 'ลานจอด กบค. อาคาร 3' },
+        phase: 'appt', wi: 4, loc: 'hq', history: [
+          { t: '10 ก.ค. 2569 08:00', label: 'ส่งเรื่องถึง กบค. — รอรับเรื่อง' },
+          { t: '10 ก.ค. 2569 09:00', label: 'กบค. รับเรื่องซ่อม + ตรวจสภาพขาเข้า' },
+          { t: '19 ก.ค. 2569 16:00', label: 'ซ่อมเสร็จ — ส่งตารางว่างให้ผู้แจ้งเลือก' },
+          { t: '20 ก.ค. 2569 09:30', label: 'ผู้แจ้งยืนยันนัดรับรถ 22 ก.ค. 2569 09:00–10:00' }]
+      },
+      {
+        no: 'MTD-690712-022', plate: '80-5566 เชียงใหม่', model: 'Hino XZU กระบะยกสูง', org: 'กฟภ. เขต น.1 เชียงใหม่', target: 'ตัวรถ',
+        syms: ['ยางหน้าซ้ายสึกผิดปกติ'], usable: true, photos: 1, desc: 'สึกด้านในผิดปกติ สงสัยศูนย์ล้อ',
+        at: { prov: 'เชียงใหม่', amp: 'เมืองเชียงใหม่' }, use: { odo: 166200, crane: 0 },
+        owner: { name: 'กฟจ.เชียงใหม่', tel: '053-241-000' },
+        tech: { name: 'ช.ประยุทธ์ คำแสน', tel: '089-556-1200' },
+        driver: { name: 'พขร. มานพ ใจงาม', tel: '085-778-3311' },
+        fromUnit: 'กรย. เขต น.1 (เชียงใหม่)', budget: 'งบประจำหน่วยงาน — ศูนย์ต้นทุน B0004400',
+        costType: '1', costVals: { costCenter: 'B0004400' },
+        booked: [], ordered: [], reason: '',
+        rstage: 1, ret: { reason: 'งานตั้งศูนย์ถ่วงล้อ อู่ใกล้หน่วยงานทำได้ ไม่ต้องนำรถเข้า สนญ.', garages: [{ name: 'อู่เจริญการช่าง', dist: '3.2 กม.', tags: 'เครน · ไฮดรอลิก' }] },
+        phase: 'returned', wi: 0, history: [
+          { t: '12 ก.ค. 2569 10:00', label: 'ส่งเรื่องถึง กบค. — รอรับเรื่อง' },
+          { t: '12 ก.ค. 2569 14:30', label: 'กบค. ส่งกลับให้ซ่อมเอง — งานตั้งศูนย์ถ่วงล้อ ทำที่อู่ใกล้หน่วยงานได้ · แนะนำอู่: อู่เจริญการช่าง' },
+          { t: '15 ก.ค. 2569 09:00', label: 'หน่วยงานผู้แจ้งอัปเดต: ดำเนินการซ่อมโดยอู่' }]
+      },
+      {
+        no: 'MTD-690705-003', plate: '81-2345 นครราชสีมา', model: 'Hino FM8J 6 ล้อ + เครน Tadano TM-ZE304', org: 'กฟภ. เขต ฉ.3 นครราชสีมา', target: 'เครน Tadano TM-ZE304',
+        syms: ['กระบอกไฮดรอลิกรั่ว/ซึม'], usable: true, photos: 2, desc: 'ซึมที่กระบอกยกท่อนแรก',
+        at: { prov: 'นครราชสีมา', amp: 'กฟส.โชคชัย' }, use: { odo: 126400, crane: 4980 },
+        owner: { name: 'กฟส.โชคชัย', tel: '044-491-100' },
+        tech: { name: 'ช.ธนากร บุญมี', tel: '081-877-4410' },
+        driver: { name: 'พขร. สุชาติ แก้วมณี', tel: '087-330-9922' },
+        fromUnit: 'กรย. เขต ฉ.3 (นครราชสีมา)', budget: 'งบประจำหน่วยงาน — ศูนย์ต้นทุน B0003300',
+        costType: '1', costVals: { costCenter: 'B0003300' },
+        booked: [{ name: 'ชุดซีลกระบอกไฮดรอลิก', qty: 1, unit: 'ชุด' }], ordered: [], reason: '',
+        route: 'self', partsOK: true,
+        parts: [
+          { code: 'SL-4402', name: 'ชุดซีลกระบอกไฮดรอลิก', unit: 'ชุด', qty: 1, price: 1850, src: 'req' },
+          { code: 'OL-0046', name: 'น้ำมันไฮดรอลิก ISO VG46 18L', unit: 'ถัง', qty: 1, price: 2400, src: 'kbk' }
+        ],
+        inspIn: { fuel: '½', odo: '126,400', defects: [], extra: '', t: '5 ก.ค. 2569 09:10' },
+        inspOut: { fuel: '½', odo: '126,415', defects: [], extra: 'ทดสอบยกโหลดผ่าน', t: '11 ก.ค. 2569 14:00' },
+        appt: { date: '11 ก.ค. 2569', time: '13:00–14:00', note: '' },
+        cost: { labor: 2500, parts: 4250, travel: 0, lodging: 0 },
+        approved: true,
+        phase: 'closed', wi: 4, loc: 'hq', history: [
+          { t: '5 ก.ค. 2569 08:30', label: 'ส่งเรื่องถึง กบค. — รอรับเรื่อง' },
+          { t: '5 ก.ค. 2569 09:10', label: 'กบค. รับเรื่องซ่อม + ตรวจสภาพขาเข้า' },
+          { t: '11 ก.ค. 2569 14:00', label: 'ตรวจสภาพขาออกผ่าน — ส่งมอบรถ' },
+          { t: '11 ก.ค. 2569 16:30', label: 'ผู้บังคับบัญชาอนุมัติปิดงาน — ปิดงานสำเร็จ' }]
+      },
     ];
 
     // ประวัติการซ่อมย้อนหลังจาก VMS+ (ข้อมูลจำลองชุดเดียวกับ Flow2)
@@ -3373,21 +3523,21 @@ function goBackFromForm(){
       $('stockbody').innerHTML = `
     <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
       <span class="badge b-brand">จองรวม ${held.reduce((s, x) => s + x.b.qty, 0)} ชิ้น (${held.length} รายการ)</span>
-      <span class="badge b-low">สั่งของรอเข้า ${orders.reduce((s, x) => s + x.o.qty, 0)} ชิ้น (${orders.length} รายการ)</span>
+      <span class="badge b-low">ต้องสั่งซื้อ ${orders.reduce((s, x) => s + x.o.qty, 0)} ชิ้น (${orders.length} รายการ)</span>
       <span class="badge b-ok">คืนเข้าคลังแล้ว ${rets.reduce((s, x) => s + x.r.qty, 0)} ชิ้น (${rets.length} รายการ)</span>
     </div>
 
-    <div class="sect" style="margin-top:18px">รายการจองอะไหล่ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— จองจากใบแจ้งซ่อม (mock ยังไม่ตัดสต็อกจริง)</span></div>
+    <div class="sect" style="margin-top:18px">อะไหล่ที่ถูกเลือกไว้ในใบแจ้งซ่อม <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ยังไม่ตัดสต็อกจริง · ตัดจริงตอน กบค. ยืนยันรายการ</span></div>
     ${held.length ? `<div class="tblwrap"><table class="tbl">
       <thead><tr><th>อะไหล่</th><th class="num">จำนวน</th><th>เลขที่ใบแจ้งซ่อม</th><th>หน่วยงานผู้แจ้ง</th><th>สถานะเรื่อง</th></tr></thead>
       <tbody>${held.map(x => `<tr><td><b style="color:var(--gray-900)">${x.b.name}</b></td><td class="num">${x.b.qty} ${x.b.unit || ''}</td><td>${link(x.j)}</td><td>${x.j.org}</td><td>${stBadge(x.j)}</td></tr>`).join('')}</tbody>
     </table></div>`: '<div class="empty">ยังไม่มีรายการจอง</div>'}
 
-    <div class="sect" style="margin-top:26px">รายการสั่งของ (รอของเข้า) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— อะไหล่หมดคลังที่ผู้แจ้งกดสั่งของไว้</span></div>
+    <div class="sect" style="margin-top:26px">รายการที่ต้องสั่งซื้อ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— อะไหล่ที่หมดคลังแต่ถูกเลือกไว้ในใบแจ้งซ่อม</span></div>
     ${orders.length ? `<div class="tblwrap"><table class="tbl">
       <thead><tr><th>อะไหล่</th><th class="num">จำนวน</th><th>ETA ของเข้า</th><th>เลขที่ใบแจ้งซ่อม</th><th>หน่วยงานผู้แจ้ง</th><th>สถานะเรื่อง</th></tr></thead>
       <tbody>${orders.map(x => `<tr><td><b style="color:var(--gray-900)">${x.o.name}</b></td><td class="num">${x.o.qty} ${x.o.unit || ''}</td><td><span class="badge b-low">ETA ${x.o.eta}</span></td><td>${link(x.j)}</td><td>${x.j.org}</td><td>${stBadge(x.j)}</td></tr>`).join('')}</tbody>
-    </table></div>`: '<div class="empty">ยังไม่มีรายการสั่งของ</div>'}
+    </table></div>`: '<div class="empty">ยังไม่มีรายการที่ต้องสั่งซื้อ</div>'}
 
     <div class="sect" style="margin-top:26px">การคืนอะไหล่เข้าคลัง <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เหลือจากงานที่ปิดแบบซ่อมโดยอู่</span></div>
     ${rets.length ? `<div class="tblwrap"><table class="tbl">
@@ -3492,7 +3642,7 @@ function goBackFromForm(){
       if (S.symptoms.includes(id)) {
         S.symptoms = S.symptoms.filter(x => x !== id);
         const dropped = PARTS.filter(p => p.sym === id && (S.bookings[p.code] || S.orders[p.code]));
-        if (dropped.length) { dropped.forEach(p => { delete S.bookings[p.code]; delete S.orders[p.code] }); toast('ยกเลิกการจอง/สั่งของ ของอาการที่เอาออกแล้ว') }
+        if (dropped.length) { dropped.forEach(p => { delete S.bookings[p.code]; delete S.orders[p.code] }); toast('เอาอะไหล่ของอาการที่ลบออกไปแล้ว') }
       } else S.symptoms.push(id);
       renderSymptoms();
     }
@@ -3504,17 +3654,17 @@ function goBackFromForm(){
         const bk = S.bookings[p.code], od = S.orders[p.code];
         let act;
         if (bk) {
-          act = `<div class="bk"><span class="booked"><span class="ms" style="font-size:18px">check_circle</span>จองแล้ว ${bk} ${p.unit}</span>
+          act = `<div class="bk"><span class="booked"><span class="ms" style="font-size:18px">check_circle</span>เลือกไว้ ${bk} ${p.unit}</span>
         <div class="qty"><button onclick="chgQty('${p.code}',-1)">−</button><span>${bk}</span><button onclick="chgQty('${p.code}',1)">+</button></div>
         <button class="btn btn-g" style="padding:7px 10px;font-size:12.5px" onclick="delete S.bookings['${p.code}'];renderParts()">ยกเลิก</button></div>`;
         } else if (od) {
-          act = `<div class="bk"><span class="ordered"><span class="ms" style="font-size:18px">shopping_cart</span>สั่งของแล้ว ${od} ${p.unit} · รอของเข้า${p.eta ? ' (ETA ' + p.eta + ')' : ''}</span>
+          act = `<div class="bk"><span class="ordered"><span class="ms" style="font-size:18px">shopping_cart</span>เลือกไว้ ${od} ${p.unit} · ต้องสั่งซื้อ${p.eta ? ' (ETA ' + p.eta + ')' : ''}</span>
         <div class="qty"><button onclick="chgOrd('${p.code}',-1)">−</button><span>${od}</span><button onclick="chgOrd('${p.code}',1)">+</button></div>
         <button class="btn btn-g" style="padding:7px 10px;font-size:12.5px" onclick="delete S.orders['${p.code}'];renderParts()">ยกเลิก</button></div>`;
         } else if (p.stock > 0) {
-          act = `<div class="bk"><button class="btn btn-o" style="width:100%" onclick="book('${p.code}')"><span class="ms" style="font-size:18px">event_available</span> จองอะไหล่ (${Math.min(p.need, p.stock)} ${p.unit})</button></div>`;
+          act = `<div class="bk"><button class="btn btn-o" style="width:100%" onclick="book('${p.code}')"><span class="ms" style="font-size:18px">check_box</span> เลือกอะไหล่ (${Math.min(p.need, p.stock)} ${p.unit})</button></div>`;
         } else {
-          act = `<div class="bk"><button class="btn btn-o" style="width:100%" onclick="order('${p.code}')"><span class="ms" style="font-size:18px">shopping_cart</span> สั่งของ (${p.need} ${p.unit}) — รวมไว้ในรายการที่ต้องใช้</button></div>`;
+          act = `<div class="bk"><button class="btn btn-o" style="width:100%" onclick="order('${p.code}')"><span class="ms" style="font-size:18px">add_shopping_cart</span> เลือกไว้ (${p.need} ${p.unit}) — ของหมด ต้องสั่งซื้อ</button></div>`;
         }
         return `<div class="part">
       <div class="top"><div class="pic"><span class="ms">${p.icon}</span></div>
@@ -3526,7 +3676,7 @@ function goBackFromForm(){
       }).join('');
     }
     function book(code) { const p = PARTS.find(x => x.code === code); S.bookings[code] = Math.min(p.need, p.stock); toast('จอง ' + p.name + ' แล้ว (mock — ยังไม่ตัดสต็อกจริง)'); renderParts() }
-    function order(code) { const p = PARTS.find(x => x.code === code); S.orders[code] = p.need; toast('เพิ่ม ' + p.name + ' ในรายการสั่งของแล้ว'); renderParts() }
+    function order(code) { const p = PARTS.find(x => x.code === code); S.orders[code] = p.need; toast('เลือก ' + p.name + ' ไว้แล้ว (ของหมด — ต้องสั่งซื้อ)'); renderParts() }
     function chgQty(code, d) { const p = PARTS.find(x => x.code === code); const v = (S.bookings[code] || 1) + d; if (v < 1) return; if (v > p.stock) { toast('เกินจำนวนคงเหลือในคลัง (' + p.stock + ')'); return } S.bookings[code] = v; renderParts() }
     function chgOrd(code, d) { const v = (S.orders[code] || 1) + d; if (v < 1) return; S.orders[code] = v; renderParts() }
 
@@ -3633,8 +3783,8 @@ function goBackFromForm(){
     <div class="sumrow"><span>จุดที่มีปัญหา</span><span>${S.target === 'attach' ? S.vehicle.attach : 'ตัวรถ'}</span></div>
     <div class="sumrow"><span>อาการ</span><span>${symNames.join(', ') || '—'}</span></div>
     <div class="sumrow"><span>รูปแนบ</span><span>${S.photos} รูป</span></div>
-    <div class="sumrow"><span>อะไหล่ที่จอง</span><span>${bk.length ? bk.join('<br>') : 'ไม่มี'}</span></div>
-    <div class="sumrow"><span>อะไหล่ที่สั่งของ (รอเข้า)</span><span>${od.length ? od.join('<br>') : 'ไม่มี'}</span></div>
+    <div class="sumrow"><span>อะไหล่ที่เลือกไว้</span><span>${bk.length ? bk.join('<br>') : 'ไม่มี'}</span></div>
+    <div class="sumrow"><span>อะไหล่ที่เลือกไว้ (ของหมด · ต้องสั่งซื้อ)</span><span>${od.length ? od.join('<br>') : 'ไม่มี'}</span></div>
     <div class="sumrow"><span>ดำเนินการ</span><span>${S.decision === 'self' ? 'ซ่อมเอง' : S.decision === 'kry' ? 'ส่งเรื่องให้ กรย.' : '— ยังไม่เลือก —'}</span></div>
     <div class="sumrow"><span>สถานที่รถอยู่</span><span>${$('i-prov').value&&$('i-prov').value!=='__other'?esc(($('i-amp').value?$('i-amp').value+' · ':'')+'จ.'+$('i-prov').value):'<span style="color:var(--error-600)">— ยังไม่ระบุ —</span>'}</span></div>
     <div class="sumrow"><span>สถานะรถ</span><span>${S.usable===null?'<span style="color:var(--error-600)">— ยังไม่ระบุ —</span>':(S.usable?'ใช้งานได้':'ใช้งานไม่ได้')}</span></div>
@@ -3756,8 +3906,8 @@ function goBackFromForm(){
     <div class="sumrow"><span>อาการ</span><span>${j.syms.join(', ')}</span></div>
     <div class="sumrow"><span>คำอธิบาย</span><span>${j.desc || '—'}</span></div>
     <div class="sumrow"><span>รูปแนบ</span><span>${j.photos} รูป</span></div>
-    <div class="sumrow"><span>อะไหล่ที่จอง</span><span>${j.booked.length ? j.booked.map(x => `${x.name} ×${x.qty}`).join('<br>') : 'ไม่มี'}</span></div>
-    <div class="sumrow"><span>อะไหล่ที่สั่งของ (รอเข้า)</span><span>${j.ordered.length ? j.ordered.map(x => `${x.name} ×${x.qty} (ETA ${x.eta})`).join('<br>') : 'ไม่มี'}</span></div>
+    <div class="sumrow"><span>อะไหล่ที่เลือกไว้</span><span>${j.booked.length ? j.booked.map(x => `${x.name} ×${x.qty}`).join('<br>') : 'ไม่มี'}</span></div>
+    <div class="sumrow"><span>อะไหล่ที่เลือกไว้ (ของหมด · ต้องสั่งซื้อ)</span><span>${j.ordered.length ? j.ordered.map(x => `${x.name} ×${x.qty} (ETA ${x.eta})`).join('<br>') : 'ไม่มี'}</span></div>
     <div class="sumrow"><span>เหตุผล/บันทึกจากผู้แจ้ง</span><span>${j.reason || '—'}</span></div>
   </div>`;
     }
@@ -4141,7 +4291,7 @@ function renderKryDetail(no){
       if (j.phase === 'krd') {
         action = `<div class="sect" style="margin-top:24px">กรย. ดำเนินการซ่อมเอง</div>
     <div class="panel">
-      ${j.booked.length ? `<b style="color:var(--gray-900);font-size:14px">อะไหล่ที่เบิก</b>` + j.booked.map(b => `<div class="hint" style="margin-top:4px"><span class="ms" style="font-size:16px">check_circle</span> ${b.name} ×${b.qty} ${b.unit || ''}</div>`).join('') : '<div class="hint">ไม่มีการจองอะไหล่</div>'}
+      ${j.booked.length ? `<b style="color:var(--gray-900);font-size:14px">อะไหล่ที่เบิก</b>` + j.booked.map(b => `<div class="hint" style="margin-top:4px"><span class="ms" style="font-size:16px">check_circle</span> ${b.name} ×${b.qty} ${b.unit || ''}</div>`).join('') : '<div class="hint">ผู้แจ้งไม่ได้เลือกอะไหล่ไว้</div>'}
       <div class="f" style="margin-top:12px"><label>บันทึกผลการซ่อม <small>(จำเป็น)</small></label><textarea id="krddet" rows="2" placeholder="เช่น เปลี่ยนแบตเตอรี่และตรวจระบบไฟ ทดสอบปกติ…"></textarea></div>
       <div class="fgrid" style="margin:4px 0 8px;max-width:560px">
         <div class="f sp2"><label>ค่าอะไหล่ (บาท)</label><div class="in"><span class="ms">settings</span><input type="number" min="0" id="krdpc" placeholder="0"></div></div>
@@ -4336,7 +4486,7 @@ function closeKbkDetail(){
         }
         if (E.mode === 'return') {
           action += `<div class="panel">
-        <div class="f"><label>เหตุผลที่ส่งกลับ <small>(จำเป็น)</small></label><textarea id="retnote" rows="2" placeholder="เช่น อาการซ่อมได้ที่หน้างาน ใช้อะไหล่ที่จองไว้ได้เลย…"></textarea></div>
+        <div class="f"><label>เหตุผลที่ส่งกลับ <small>(จำเป็น)</small></label><textarea id="retnote" rows="2" placeholder="เช่น อาการซ่อมได้ที่หน้างาน ใช้อะไหล่ที่เลือกไว้ได้เลย…"></textarea></div>
         <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin-top:12px">แนะนำอู่ใกล้เคียงหน่วยงานผู้แจ้ง <small style="color:var(--gray-500);font-weight:400">(เลือกได้หลายแห่ง)</small></label>
         ${GARAGES.map(g => `<label class="garage"><input type="checkbox" ${E.garages.includes(g.id) ? 'checked' : ''} onchange="toggleGarage('${g.id}')"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></label>`).join('')}
         <div class="rowbtns"><button class="btn btn-p" onclick="kbkReturn('${no}')">ยืนยันส่งกลับ</button></div></div>`;

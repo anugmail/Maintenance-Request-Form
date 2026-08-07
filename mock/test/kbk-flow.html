@@ -95,7 +95,7 @@ f.onload=()=>setTimeout(()=>{
     T('ส่งอู่: ไม่กรอกอู่ → ส่งไม่ได้',"kbkSendGarage('"+M+"');!!JOBS.find(x=>x.no==='"+M+"').quote",false);
     T('ส่งอู่: กรอกแล้วส่งได้',"$('q-garage').value='อู่ช่างเอก';kbkSendGarage('"+M+"');statusInfo(JOBS.find(x=>x.no==='"+M+"')).label",'รอใบเสนอราคาจากอู่');
     T('คิวงานเห็นใบ quote',"renderKbkList();$('kbklist').innerHTML.includes('"+M+"')",true);
-    T('ฟิลเตอร์ quote',"$('kbk-status-filter').value='quote';renderKbkList();document.querySelectorAll('#kbklist .kbk-job').length",1);
+    T('ฟิลเตอร์ quote',"$('kbk-status-filter').value='quote';renderKbkList();const n=document.querySelectorAll('#kbklist .kbk-job').length;n>0&&n===JOBS.filter(j=>j.phase==='quote').length",true);
     E("$('kbk-status-filter').value='all';renderKbkList()");
     // ---------- โครงหน้าใหม่ ----------
     // ---------- โครงหน้าใหม่: ลิสต์เก็บรายละเอียดครบ + ขั้นตอนแยกหน้า ----------
