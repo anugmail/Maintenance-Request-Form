@@ -41,13 +41,88 @@ input:focus,textarea:focus{outline:2px solid var(--primary-50);border-color:var(
 .search .ms{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gray-400)}
 .search input{padding-left:38px}
 
-/* ---------- Buttons ---------- */
-.btn{border:none;border-radius:var(--r-sm);padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}
-.btn-p{background:var(--primary-600);color:#fff}
-.btn-p:hover{background:var(--primary-500)}
-.btn-o{background:#fff;color:var(--primary-600);border:1.5px solid var(--primary-600)}
-.btn-g{background:var(--gray-100);color:var(--gray-500)}
-.btn:disabled{background:var(--gray-100);color:var(--gray-400);cursor:not-allowed;border:none}
+/* ---------- Buttons ----------------------------------------------------
+   ตรงตาม Figma EXT_PEA_VMS_v1.0.2_Component หน้า "↳ Buttons" (node 1:1375)
+   แกนของไลบรารีจริง: Size × Hierarchy × State
+     Size       sm · md(ค่าเริ่มต้น) · lg · xl
+     Hierarchy  Primary · Secondary · Tertiary · Link color · Link gray
+                + ชุด Destructive
+     State      Default · Hover · Focused · Disabled · Loading
+   หมายเหตุ padding: ลบ 1px ทุกด้าน เพราะ Figma วาดเส้นขอบ "ด้านใน"
+   แต่ CSS วาดด้านนอก — ลบแล้วได้ความสูงตรงเป๊ะ 36/40/44/48px
+   ----------------------------------------------------------------------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:var(--space-1);
+  border:1px solid transparent;
+  border-radius:var(--rounded-md);
+  padding:calc(var(--space-2_5) - 1px) calc(var(--space-3_5) - 1px);  /* md → สูง 40px */
+  font:inherit;font-weight:var(--font-weight-semibold);
+  font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);
+  letter-spacing:var(--letter-spacing-normal);
+  text-decoration:none;white-space:nowrap;cursor:pointer;
+  transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease;
+}
+.btn .ms{font-size:20px}   /* ไอคอน 20px คงที่ทุกขนาด — ตามไลบรารี */
+
+/* ---- Size ---- */
+.btn-sm{padding:calc(var(--space-2) - 1px) calc(var(--space-3) - 1px);gap:var(--space-1)}                                                    /* 36px */
+.btn-md{padding:calc(var(--space-2_5) - 1px) calc(var(--space-3_5) - 1px);gap:var(--space-1)}                                                /* 40px */
+.btn-lg{padding:calc(var(--space-2_5) - 1px) calc(var(--space-4) - 1px);gap:var(--space-1_5);font-size:var(--fs-text-md);line-height:var(--lh-text-md)}   /* 44px */
+.btn-xl{padding:calc(var(--space-3) - 1px) calc(var(--space-4_5) - 1px);gap:var(--space-1_5);font-size:var(--fs-text-md);line-height:var(--lh-text-md)}   /* 48px */
+
+/* ---- Hierarchy: Primary ---- */
+.btn-p{background:var(--btn-primary-bg);border-color:var(--btn-primary-border);color:var(--btn-primary-text)}
+.btn-p:hover{background:var(--btn-primary-bg-hover);border-color:var(--btn-primary-border-hover)}
+
+/* ---- Hierarchy: Secondary (พื้นขาว ขอบเทา) ---- */
+.btn-s{background:var(--color-bg-primary);border-color:var(--color-border-primary);color:var(--color-text-secondary)}
+.btn-s:hover{background:var(--color-bg-primary-hover);color:var(--color-text-secondary-hover)}
+
+/* ---- Hierarchy: Tertiary (ไม่มีพื้น ไม่มีขอบ) ---- */
+.btn-t{background:transparent;border-color:transparent;color:var(--color-text-tertiary)}
+.btn-t:hover{background:var(--color-bg-primary-hover);color:var(--color-text-tertiary-hover)}
+
+/* ---- Hierarchy: Link (ไม่มี padding — สูงเท่า line-height) ---- */
+.btn-link,.btn-linkgray{background:transparent;border-color:transparent;padding:0}
+.btn-link{color:var(--btn-link-text)}
+.btn-link:hover{color:var(--btn-link-text-hover);text-decoration:underline}
+.btn-linkgray{color:var(--color-text-tertiary)}
+.btn-linkgray:hover{color:var(--color-text-tertiary-hover);text-decoration:underline}
+
+/* ---- ชุด Destructive ---- */
+.btn-d{background:var(--btn-destructive-bg);border-color:var(--btn-destructive-bg);color:var(--btn-destructive-text)}
+.btn-d:hover{background:var(--btn-destructive-bg-hover);border-color:var(--btn-destructive-bg-hover)}
+.btn-ds{background:var(--color-bg-primary);border-color:var(--error-200);color:var(--error-700)}
+.btn-ds:hover{background:var(--error-50)}
+
+/* ---- ส่วนขยายของต้นแบบ (ไม่มีในไลบรารี — คงไว้เพราะใช้อยู่ทั่วระบบ) ---- */
+.btn-o{background:#fff;color:var(--brand-600);border-color:var(--brand-600)}
+.btn-o:hover{background:var(--brand-50);color:var(--brand-800);border-color:var(--brand-800)}
+.btn-g{background:var(--gray-100);color:var(--gray-600);border-color:transparent}
+.btn-g:hover{background:var(--gray-200);color:var(--gray-700)}
+
+/* ---- State: Focused ---- */
+.btn:focus-visible{outline:none;box-shadow:0 0 0 4px var(--focus-ring)}
+.btn-d:focus-visible,.btn-ds:focus-visible{box-shadow:0 0 0 4px var(--focus-ring-error)}
+
+/* ---- State: Disabled ---- */
+.btn:disabled,.btn[aria-disabled=true]{
+  background:var(--color-bg-disabled);
+  border-color:var(--color-border-disabled-subtle);
+  color:var(--color-fg-disabled);
+  cursor:not-allowed;
+}
+.btn-link:disabled,.btn-linkgray:disabled{background:transparent;border-color:transparent;text-decoration:none}
+
+/* ---- State: Loading ---- */
+.btn.is-loading{pointer-events:none}
+.btn.is-loading::before{
+  content:'';flex:none;width:1em;height:1em;border-radius:50%;
+  border:2px solid currentColor;border-right-color:transparent;
+  animation:btn-spin .6s linear infinite;
+}
+@keyframes btn-spin{to{transform:rotate(1turn)}}
 
 /* ---------- Qty stepper ---------- */
 .qty{display:flex;align-items:center;border:1px solid var(--gray-300);border-radius:var(--r-sm);overflow:hidden}

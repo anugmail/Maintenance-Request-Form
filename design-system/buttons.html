@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ปุ่ม — ตรงตามไลบรารี VMS Plus | Maintain-D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css?v=20260807-vms102">
+<link rel="stylesheet" href="components.css?v=20260807-vms102">
+<style>
+  .app{padding-bottom:60px}
+  main{padding:24px}
+  .back{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--primary-600);text-decoration:none;margin-bottom:16px}
+  .back:hover{text-decoration:underline}
+  .demo{border:1px dashed var(--gray-300);border-radius:var(--r-md);padding:16px;background:var(--gray-50)}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  code.u{background:var(--gray-100);border-radius:6px;padding:1px 7px;font-size:12px;color:var(--primary-600);font-family:ui-monospace,Menlo,monospace}
+  .note{font-size:12.5px;color:var(--gray-500);margin-top:10px}
+  /* ตารางเมทริกซ์ */
+  .mwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table.m{border-collapse:collapse;width:100%;min-width:640px}
+  table.m th,table.m td{border:1px solid var(--gray-200);padding:10px 12px;text-align:left;vertical-align:middle}
+  table.m th{background:var(--gray-50);font-size:12.5px;font-weight:600;color:var(--gray-600);white-space:nowrap}
+  table.m td:first-child,table.m th:first-child{position:sticky;left:0;background:var(--gray-50);z-index:1;font-size:12.5px;font-weight:600;color:var(--gray-700)}
+  table.m td{background:#fff}
+  /* ตาราง token */
+  table.t{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
+  table.t th,table.t td{border-bottom:1px solid var(--gray-200);padding:8px 10px;text-align:left}
+  table.t th{color:var(--gray-600);font-size:12px;font-weight:600;white-space:nowrap}
+  table.t td code{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--gray-700)}
+  .dot{display:inline-block;width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.12);vertical-align:-2px;margin-right:6px}
+  .src{font-size:12.5px;line-height:1.7;color:var(--gray-600)}
+  .src b{color:var(--gray-900)}
+  pre.code{background:var(--gray-900);color:#E9EAEB;border-radius:var(--r-md);padding:14px 16px;overflow-x:auto;font-size:12.5px;line-height:1.65;font-family:ui-monospace,Menlo,monospace}
+  pre.code .c{color:var(--gray-500)}
+  .tag{display:inline-block;font-size:11px;font-weight:600;border-radius:var(--r-pill);padding:2px 8px}
+  .tag.ok{background:var(--success-50);color:#067647}
+  .tag.warn{background:var(--warning-50);color:var(--warning-700)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="draft">🎨 ปุ่มทุก variant — สกัดจากไฟล์ Figma จริงแบบอ่านอย่างเดียว ไม่ได้แก้ไฟล์ต้นทาง</div>
+  <header>
+    <div class="bar">
+      <span class="logo">MD</span>
+      <h1>ปุ่ม — ตรงตามไลบรารี VMS Plus</h1>
+      <span class="ms">smart_button</span>
+    </div>
+  </header>
+  <main>
+    <a class="back" href="index.html"><span class="ms">arrow_back</span>กลับ Design System</a>
+
+    <div class="card">
+      <h2>ที่มา</h2>
+      <div class="src">
+        ไฟล์ <b>EXT_PEA_VMS_v1.0.2_Component</b> · เวอร์ชันในไฟล์ <b>EXT-PEA-T0REUY1W-2026-V102</b><br>
+        หน้า <b>“↳ Buttons”</b> (node <code class="u">1:1375</code>) — <b>636 variants</b> ใน 5 ชุด<br>
+        อ่านผ่าน Figma MCP ด้วย <code class="u">get_metadata</code> / <code class="u">get_design_context</code> ซึ่งเป็น read-only
+      </div>
+      <div class="note">
+        <span class="tag ok">✔ ยืนยันแล้ว</span> อ่านค่าจาก Figma ตรงๆ &nbsp;
+        <span class="tag warn">⚠ รอยืนยัน</span> ยังไม่ได้อ่าน (ติด rate limit) — ประมาณจาก ramp ต้องกลับไปเช็ก
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>1 · ขนาด (Size)</h2>
+      <div class="sub">ไอคอน <b>20px คงที่ทุกขนาด</b> · ความสูงคุมด้วย padding + line-height ไม่ได้ fix height</div>
+      <div class="demo"><div class="row">
+        <button class="btn btn-p btn-sm"><span class="ms">add</span>sm · 36px</button>
+        <button class="btn btn-p"><span class="ms">add</span>md · 40px</button>
+        <button class="btn btn-p btn-lg"><span class="ms">add</span>lg · 44px</button>
+        <button class="btn btn-p btn-xl"><span class="ms">add</span>xl · 48px</button>
+      </div></div>
+      <div class="mwrap" style="margin-top:12px">
+      <table class="t">
+        <tr><th>Size</th><th>padding (บน/ล่าง · ซ้าย/ขวา)</th><th>gap</th><th>ตัวอักษร</th><th>สูงรวม</th><th>คลาส</th></tr>
+        <tr><td>sm</td><td>8 · 12</td><td>4</td><td>14 / 20</td><td>36px</td><td><code>.btn-sm</code></td></tr>
+        <tr><td><b>md</b> (ค่าเริ่มต้น)</td><td>10 · 14</td><td>4</td><td>14 / 20</td><td>40px</td><td><code>.btn</code></td></tr>
+        <tr><td>lg</td><td>10 · 16</td><td>6</td><td>16 / 24</td><td>44px</td><td><code>.btn-lg</code></td></tr>
+        <tr><td>xl</td><td>12 · 18</td><td>6</td><td>16 / 24</td><td>48px</td><td><code>.btn-xl</code></td></tr>
+      </table>
+      </div>
+      <div class="note">CSS เขียน padding เป็น <code class="u">calc(token − 1px)</code> เพราะ Figma วาดเส้นขอบ <b>ด้านใน</b> แต่ CSS วาด <b>ด้านนอก</b> — ลบแล้วความสูงตรงเป๊ะ</div>
+    </div>
+
+    <div class="card">
+      <h2>2 · เมทริกซ์ ระดับ × สถานะ</h2>
+      <div class="sub">Hierarchy 5 ระดับ × State 5 สถานะ (ขนาด md ทั้งหมด)</div>
+      <div class="mwrap">
+      <table class="m">
+        <tr><th>ระดับ</th><th>Default</th><th>Hover</th><th>Focused</th><th>Disabled</th><th>Loading</th></tr>
+        <tr>
+          <td>Primary<br><code class="u">.btn-p</code></td>
+          <td><button class="btn btn-p">Button CTA</button></td>
+          <td><button class="btn btn-p" style="background:var(--btn-primary-bg-hover);border-color:var(--btn-primary-bg-hover)">Button CTA</button></td>
+          <td><button class="btn btn-p" style="box-shadow:0 0 0 4px var(--focus-ring)">Button CTA</button></td>
+          <td><button class="btn btn-p" disabled>Button CTA</button></td>
+          <td><button class="btn btn-p is-loading">Submitting…</button></td>
+        </tr>
+        <tr>
+          <td>Secondary<br><code class="u">.btn-s</code></td>
+          <td><button class="btn btn-s">Button CTA</button></td>
+          <td><button class="btn btn-s" style="background:var(--color-bg-primary-hover);color:var(--color-text-secondary-hover)">Button CTA</button></td>
+          <td><button class="btn btn-s" style="box-shadow:0 0 0 4px var(--focus-ring)">Button CTA</button></td>
+          <td><button class="btn btn-s" disabled>Button CTA</button></td>
+          <td><button class="btn btn-s is-loading">Submitting…</button></td>
+        </tr>
+        <tr>
+          <td>Tertiary<br><code class="u">.btn-t</code></td>
+          <td><button class="btn btn-t">Button CTA</button></td>
+          <td><button class="btn btn-t" style="background:var(--color-bg-primary-hover);color:var(--color-text-tertiary-hover)">Button CTA</button></td>
+          <td><button class="btn btn-t" style="box-shadow:0 0 0 4px var(--focus-ring)">Button CTA</button></td>
+          <td><button class="btn btn-t" disabled>Button CTA</button></td>
+          <td><button class="btn btn-t is-loading">Submitting…</button></td>
+        </tr>
+        <tr>
+          <td>Link color <span class="tag warn">⚠</span><br><code class="u">.btn-link</code></td>
+          <td><button class="btn btn-link">Button CTA</button></td>
+          <td><button class="btn btn-link" style="color:var(--btn-link-text-hover);text-decoration:underline">Button CTA</button></td>
+          <td><button class="btn btn-link" style="box-shadow:0 0 0 4px var(--focus-ring)">Button CTA</button></td>
+          <td><button class="btn btn-link" disabled>Button CTA</button></td>
+          <td><button class="btn btn-link is-loading">Submitting…</button></td>
+        </tr>
+        <tr>
+          <td>Link gray<br><code class="u">.btn-linkgray</code></td>
+          <td><button class="btn btn-linkgray">Button CTA</button></td>
+          <td><button class="btn btn-linkgray" style="color:var(--color-text-tertiary-hover);text-decoration:underline">Button CTA</button></td>
+          <td><button class="btn btn-linkgray" style="box-shadow:0 0 0 4px var(--focus-ring)">Button CTA</button></td>
+          <td><button class="btn btn-linkgray" disabled>Button CTA</button></td>
+          <td><button class="btn btn-linkgray is-loading">Submitting…</button></td>
+        </tr>
+      </table>
+      </div>
+      <div class="note">คอลัมน์ Hover/Focused บังคับสไตล์ไว้ให้ดูเทียบกันเฉยๆ — ของจริงเกิดตอนชี้เมาส์ / กด Tab</div>
+    </div>
+
+    <div class="card">
+      <h2>3 · ชุด Destructive</h2>
+      <div class="sub">ใช้กับงานที่ย้อนกลับไม่ได้ — ยกเลิกใบแจ้งซ่อม · ตีกลับเรื่อง · จำหน่ายรถ</div>
+      <div class="demo"><div class="row">
+        <button class="btn btn-d">ยกเลิกใบแจ้งซ่อม</button>
+        <button class="btn btn-ds">ตีกลับเรื่อง</button>
+        <button class="btn btn-d" disabled>ยกเลิกไม่ได้</button>
+        <button class="btn btn-d is-loading">กำลังยกเลิก…</button>
+      </div></div>
+      <div class="note">พื้นหลัก <span class="dot" style="background:var(--error-600)"></span><code class="u">#D92D20</code> <span class="tag ok">✔</span> · hover <span class="dot" style="background:var(--error-700)"></span><code class="u">#B42318</code> <span class="tag warn">⚠</span></div>
+    </div>
+
+    <div class="card">
+      <h2>4 · ส่วนขยายของต้นแบบ</h2>
+      <div class="sub">ไม่มีในไลบรารี Figma แต่ต้นแบบใช้อยู่ <b>102 จุด</b> — คงไว้เพื่อไม่ให้หน้าเดิมพัง</div>
+      <div class="demo"><div class="row">
+        <button class="btn btn-o"><span class="ms">event_available</span>เลือกอะไหล่</button>
+        <button class="btn btn-g">ย้อนกลับ</button>
+      </div></div>
+      <div class="note"><code class="u">.btn-o</code> = ขอบสีแบรนด์ (ไลบรารีจริงไม่มี — Secondary ของจริงเป็นขอบเทา <code class="u">.btn-s</code>) · <code class="u">.btn-g</code> = พื้นเทา</div>
+    </div>
+
+    <div class="card">
+      <h2>5 · Token ที่สกัดมาได้</h2>
+      <div class="mwrap">
+      <table class="t">
+        <tr><th>ชื่อใน Figma</th><th>ค่า</th><th>ตัวแปรในโค้ด</th><th></th></tr>
+        <tr><td><code>component/button/primary-bg</code></td><td><span class="dot" style="background:#A80689"></span>#A80689</td><td><code>--btn-primary-bg</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>component/button/primary-bg-hover</code></td><td><span class="dot" style="background:#74045F"></span>#74045F</td><td><code>--btn-primary-bg-hover</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>component/button/primary-text</code></td><td><span class="dot" style="background:#fff"></span>white</td><td><code>--btn-primary-text</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>component/button/destructive-primary-bg</code></td><td><span class="dot" style="background:#D92D20"></span>#D92D20</td><td><code>--btn-destructive-bg</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>color/bg/primary</code></td><td><span class="dot" style="background:#fff"></span>white</td><td><code>--color-bg-primary</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>color/bg/primary-hover</code></td><td><span class="dot" style="background:#FAFAFA"></span>#FAFAFA</td><td><code>--color-bg-primary-hover</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>color/bg/disabled</code></td><td><span class="dot" style="background:#F5F5F5"></span>#F5F5F5</td><td><code>--color-bg-disabled</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>color/border/primary</code></td><td><span class="dot" style="background:#D5D7DA"></span>#D5D7DA</td><td><code>--color-border-primary</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>color/border/disabled-subtle</code></td><td><span class="dot" style="background:#E9EAEB"></span>#E9EAEB</td><td><code>--color-border-disabled-subtle</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>color/fg/disabled</code></td><td><span class="dot" style="background:#A4A7AE"></span>#A4A7AE</td><td><code>--color-fg-disabled</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>color/text/secondary</code></td><td><span class="dot" style="background:#414651"></span>#414651</td><td><code>--color-text-secondary</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>color/text/secondary-hover</code></td><td><span class="dot" style="background:#252B37"></span>#252B37</td><td><code>--color-text-secondary-hover</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>color/text/tertiary</code></td><td><span class="dot" style="background:#535862"></span>#535862</td><td><code>--color-text-tertiary</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>rounded-md</code></td><td>8px</td><td><code>--rounded-md</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>space-0_5 … space-4_5</code></td><td>2 · 4 · 6 · 8 · 10 · 12 · 14 · 16 · 18</td><td><code>--space-*</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>font-size/text-sm · line-height</code></td><td>14 / 20</td><td><code>--fs-text-sm</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>font-size/text-md · line-height</code></td><td>16 / 24</td><td><code>--fs-text-md</code></td><td><span class="tag ok">✔</span></td></tr>
+        <tr><td><code>font-family/body</code></td><td>Google Sans</td><td>คงเป็น IBM Plex Sans Thai (รองรับไทย)</td><td><span class="tag ok">✔</span></td></tr>
+      </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>6 · วิธีเรียกใช้</h2>
+      <pre class="code">&lt;!-- ขนาด: ไม่ใส่ = md --&gt;
+&lt;button class="btn btn-p"&gt;ส่งเรื่องแจ้งซ่อม&lt;/button&gt;
+&lt;button class="btn btn-p btn-lg"&gt;&lt;span class="ms"&gt;send&lt;/span&gt;ส่งต่อ กบค.&lt;/button&gt;
+
+<span class="c">&lt;!-- ระดับ --&gt;</span>
+&lt;button class="btn btn-s"&gt;รอง — ขอบเทา&lt;/button&gt;
+&lt;button class="btn btn-t"&gt;ลำดับสาม — ไม่มีพื้น&lt;/button&gt;
+&lt;button class="btn btn-link"&gt;ลิงก์สีแบรนด์&lt;/button&gt;
+&lt;button class="btn btn-d"&gt;ยกเลิก (destructive)&lt;/button&gt;
+
+<span class="c">&lt;!-- สถานะ --&gt;</span>
+&lt;button class="btn btn-p" disabled&gt;ปิดใช้งาน&lt;/button&gt;
+&lt;button class="btn btn-p is-loading"&gt;กำลังส่ง…&lt;/button&gt;  <span class="c">&lt;!-- สปินเนอร์มาเอง --&gt;</span></pre>
+      <div class="note">Focused ไม่ต้องเขียนอะไร — <code class="u">:focus-visible</code> ใส่วงแหวนให้เองตอนกด Tab</div>
+    </div>
+
+    <div class="card">
+      <h2>7 · ยังค้าง</h2>
+      <div class="src">
+        • <b>2 ค่าสีรอยืนยัน</b> — destructive hover และ Link color (ติด rate limit ตอนอ่าน)<br>
+        • <b>gray-500 / 900 / 950</b> ยังไม่ได้อ่านจาก Figma ใช้ค่ามาตรฐาน Untitled UI v2 ไปก่อน<br>
+        • <b>คอมโพเนนต์อื่นในไลบรารี</b> ที่ยังไม่ได้ดึง — Text input · Number input · Input dropdown · Text area · Badge outline/color · Pill · Table cell · Mobile table item · Indicator · Modal · Checkbox<br>
+        • <b>Shape=Round</b> ไลบรารีมี แต่ต้นแบบยังไม่ได้ใช้
+      </div>
+    </div>
+
+  </main>
+</div>
+</body>
+</html>

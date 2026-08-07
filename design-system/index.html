@@ -47,8 +47,8 @@
     <div class="card dsec">
       <h2>วิธีใช้</h2>
       <div class="sub">ทุกหน้าจอใหม่ ให้ลิงก์ 2 ไฟล์นี้ + ฟอนต์ แล้วใช้ตัวแปร/คลาสตามตัวอย่างด้านล่าง — <b>ห้าม hardcode ค่าสี</b> ในหน้าจอ</div>
-      <div class="demo" style="font-size:12.5px;font-family:ui-monospace,Menlo,monospace;overflow-x:auto;white-space:pre">&lt;link rel="stylesheet" href="../design-system/tokens.css"&gt;
-&lt;link rel="stylesheet" href="../design-system/components.css"&gt;
+      <div class="demo" style="font-size:12.5px;font-family:ui-monospace,Menlo,monospace;overflow-x:auto;white-space:pre">&lt;link rel="stylesheet" href="../design-system/tokens.css?v=20260807-vms102"&gt;
+&lt;link rel="stylesheet" href="../design-system/components.css?v=20260807-vms102"&gt;
 color: var(--primary-600);   /* ✅ */
 color: #A80689;              /* ❌ */</div>
     </div>
@@ -82,16 +82,20 @@ color: #A80689;              /* ❌ */</div>
 
     <div class="card dsec">
       <h2>3 · Gray scale</h2>
-      <div class="sub">โครง Untitled UI — heading 900 · body 700 · secondary 500 · placeholder 400 · เส้น 300/200 · พื้น 100/50</div>
+      <div class="sub"><b>Untitled UI v2</b> — ramp ที่ไลบรารี Figma จริงใช้ (v0.1 ของเราเคยใช้ v1 คนละชุด) · ✔ = อ่านจาก Figma ตรงๆ</div>
       <div class="swatches">
-        <div class="sw"><div class="c" style="background:var(--gray-900)"></div><div class="i"><b>gray-900</b>#101828</div></div>
-        <div class="sw"><div class="c" style="background:var(--gray-700)"></div><div class="i"><b>gray-700</b>#344054</div></div>
-        <div class="sw"><div class="c" style="background:var(--gray-500)"></div><div class="i"><b>gray-500</b>#667085</div></div>
-        <div class="sw"><div class="c" style="background:var(--gray-300)"></div><div class="i"><b>gray-300</b>#D0D5DD</div></div>
-        <div class="sw"><div class="c" style="background:var(--gray-200)"></div><div class="i"><b>gray-200</b>#EAECF0</div></div>
-        <div class="sw"><div class="c" style="background:var(--gray-100)"></div><div class="i"><b>gray-100</b>#F2F4F7</div></div>
-        <div class="sw"><div class="c" style="background:var(--gray-50);border-bottom:1px solid var(--gray-200)"></div><div class="i"><b>gray-50</b>#F9FAFB</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-900)"></div><div class="i"><b>gray-900 ⚠</b>#181D27</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-800)"></div><div class="i"><b>gray-800 ✔</b>#252B37</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-700)"></div><div class="i"><b>gray-700 ✔</b>#414651</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-600)"></div><div class="i"><b>gray-600 ✔</b>#535862</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-500)"></div><div class="i"><b>gray-500 ⚠</b>#717680</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-400)"></div><div class="i"><b>gray-400 ✔</b>#A4A7AE</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-300)"></div><div class="i"><b>gray-300 ✔</b>#D5D7DA</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-200)"></div><div class="i"><b>gray-200 ✔</b>#E9EAEB</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-100)"></div><div class="i"><b>gray-100 ✔</b>#F5F5F5</div></div>
+        <div class="sw"><div class="c" style="background:var(--gray-50);border-bottom:1px solid var(--gray-200)"></div><div class="i"><b>gray-50 ✔</b>#FAFAFA</div></div>
       </div>
+      <div class="note">⚠ = ยังไม่ได้อ่านจาก Figma (ติด rate limit) ใช้ค่ามาตรฐาน Untitled UI v2 ไปก่อน — ต้องกลับไปยืนยัน</div>
     </div>
 
     <div class="hgrid">
@@ -111,12 +115,17 @@ color: #A80689;              /* ❌ */</div>
 
       <div class="card dsec">
         <h2>5 · ปุ่ม <code class="u">.btn</code></h2>
-        <div class="sub">หลัก <code class="u">.btn-p</code> · รอง <code class="u">.btn-o</code> · เทา <code class="u">.btn-g</code> · ปิด <code class="u">:disabled</code></div>
+        <div class="sub">ตรงตามไลบรารี Figma — ดูครบทุก variant ที่ <a href="buttons.html" style="color:var(--primary-600);font-weight:600">หน้าปุ่มแบบเต็ม →</a></div>
         <div class="demo"><div class="row">
           <button class="btn btn-p">ส่งเรื่องแจ้งซ่อม</button>
-          <button class="btn btn-o"><span class="ms" style="font-size:18px">event_available</span> จองอะไหล่</button>
-          <button class="btn btn-g">ย้อนกลับ</button>
-          <button class="btn" disabled>จองไม่ได้ — ของหมด</button>
+          <button class="btn btn-s"><span class="ms">event_available</span> จองอะไหล่</button>
+          <button class="btn btn-t">ย้อนกลับ</button>
+          <button class="btn btn-p" disabled>จองไม่ได้ — ของหมด</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn btn-p is-loading">กำลังส่ง…</button>
+          <button class="btn btn-d">ยกเลิกใบแจ้งซ่อม</button>
+          <button class="btn btn-link">ดูประวัติรายคัน</button>
         </div>
         <div class="row" style="margin-top:12px"><div class="qty"><button>−</button><span>2</span><button>+</button></div><span class="note">ตัวปรับจำนวน <code class="u">.qty</code></span></div></div>
       </div>

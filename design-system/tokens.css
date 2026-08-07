@@ -1,51 +1,99 @@
 /* ============================================================
-   Maintain-D Design Tokens  (v0.1 — 17 ก.ค. 2569)
-   แหล่งความจริงเดียวเรื่อง สี/ฟอนต์/รัศมี ของระบบซ่อมบำรุงรถ
-   ที่มา: สกัดจาก VMS Plus (vmsplus-dev.pea.co.th v2.1.1)
-   - CSS bundle สาธารณะ /_next/static/chunks/*.css
-   - screenshot หน้า landing / SSO / login-os
+   Maintain-D Design Tokens  (v0.2 — 7 ส.ค. 2569)
+   แหล่งความจริงเดียวเรื่อง สี/ฟอนต์/ระยะ/รัศมี ของระบบซ่อมบำรุงรถ
+
+   ── ที่มาของค่า ────────────────────────────────────────────
+   ✔ = อ่านจาก Figma โดยตรง (read-only ไม่ได้แก้ไฟล์)
+       ไฟล์  EXT_PEA_VMS_v1.0.2_Component
+       เวอร์ชันในไฟล์  EXT-PEA-T0REUY1W-2026-V102
+       หน้า  "↳ Buttons"  node 1:1375
+   ~ = จาก VMS Plus runtime (vmsplus-dev.pea.co.th v2.1.1) รอบก่อน
+       ยังไม่พบใน Figma — ใช้ได้แต่ยังไม่ยืนยัน
+   ⚠ = ยังไม่ได้อ่าน (ติด rate limit ของ Figma MCP) — ประมาณจาก ramp
+       ต้องกลับไปยืนยันภายหลัง
+
+   โครงสร้าง 3 ชั้นตามไลบรารีจริง:  primitive → semantic → component
    ⚠️ แก้สีที่ไฟล์นี้ไฟล์เดียว — ห้าม hardcode สีในหน้าจอ
    ============================================================ */
 :root{
-  /* ---------- Brand (magenta VMS Plus) ---------- */
-  --primary-700:#8A0570;
-  --primary-600:#A80689;   /* สีหลัก — ปุ่ม, active, ลิงก์ */
-  --primary-500:#CF07AA;   /* hover / gradient ปลาย */
-  --primary-50:#FEEBFB;    /* พื้นอ่อน chip/highlight */
-  --primary-25:#FFF5FD;    /* พื้นอ่อนสุด */
+
+  /* ══════════ ชั้น 1 · PRIMITIVE ══════════ */
+
+  /* ---------- Brand (magenta PEA) ---------- */
+  --brand-800:#74045F;     /* ✔ component/button/primary-bg-hover */
+  --brand-700:#8A0570;     /* ~ */
+  --brand-600:#A80689;     /* ✔ component/button/primary-bg — สีหลัก */
+  --brand-500:#CF07AA;     /* ~ ใช้กับ gradient header เท่านั้น ไม่ใช่ hover */
+  --brand-50:#FEEBFB;      /* ~ พื้นอ่อน chip/highlight */
+  --brand-25:#FFF5FD;      /* ~ พื้นอ่อนสุด */
+
+  /* ---------- Gray (Untitled UI v2 — ramp ที่ไลบรารีจริงใช้) ----------
+     หมายเหตุ: v0.1 ของเราใช้ ramp v1 (#344054/#D0D5DD/…) ซึ่งคนละชุด
+     ค่าด้านล่างแทนที่ทั้งแถบ ชื่อตัวแปรเดิมยังใช้ได้ทุกตัว           */
+  --gray-950:#0A0D12;      /* ⚠ */
+  --gray-900:#181D27;      /* ⚠ */
+  --gray-800:#252B37;      /* ✔ color/text/secondary-hover */
+  --gray-700:#414651;      /* ✔ color/text/secondary · text/tertiary-hover */
+  --gray-600:#535862;      /* ✔ color/text/tertiary */
+  --gray-500:#717680;      /* ⚠ */
+  --gray-400:#A4A7AE;      /* ✔ color/fg/disabled */
+  --gray-300:#D5D7DA;      /* ✔ color/border/primary */
+  --gray-200:#E9EAEB;      /* ✔ color/border/disabled-subtle */
+  --gray-100:#F5F5F5;      /* ✔ color/bg/disabled */
+  --gray-50:#FAFAFA;       /* ✔ color/bg/primary-hover */
+
+  /* ---------- Semantic palette ---------- */
+  --success-600:#17B26A;   /* ~ */
+  --success-200:#75E0A7;   /* ~ */
+  --success-50:#ECFDF3;    /* ~ */
+  --warning-700:#B54708;   /* ~ */
+  --warning-600:#F79009;   /* ~ */
+  --warning-200:#FEDF89;   /* ~ */
+  --warning-50:#FFFAEB;    /* ~ */
+  --error-700:#B42318;     /* ⚠ ใช้เป็น destructive hover — ยังไม่ยืนยัน */
+  --error-600:#D92D20;     /* ✔ component/button/destructive-primary-bg */
+  --error-500:#F04438;     /* ~ */
+  --error-200:#FECDCA;     /* ~ */
+  --error-50:#FEF3F2;      /* ~ */
+  --info-600:#6172F3;      /* ~ */
 
   /* ---------- Secondary (น้ำเงิน การ์ดรอง) ---------- */
-  --secondary-600:#1B4DB1;
-  --secondary-700:#15409A;
+  --secondary-700:#15409A; /* ~ */
+  --secondary-600:#1B4DB1; /* ~ */
 
-  /* ---------- Semantic ---------- */
-  --success-600:#17B26A;
-  --success-200:#75E0A7;
-  --success-50:#ECFDF3;
-  --warning-600:#F79009;
-  --warning-700:#B54708;
-  --warning-200:#FEDF89;
-  --warning-50:#FFFAEB;
-  --error-700:#B42318;
-  --error-600:#D92D20;
-  --error-500:#F04438;
-  --error-200:#FECDCA;
-  --error-50:#FEF3F2;
-  --info-600:#6172F3;
+  /* ---------- Space scale (ฐาน 4px มีครึ่งขั้น) ✔ ทั้งชุด ---------- */
+  --space-0_5:2px;
+  --space-1:4px;
+  --space-1_5:6px;
+  --space-2:8px;
+  --space-2_5:10px;
+  --space-3:12px;
+  --space-3_5:14px;
+  --space-4:16px;
+  --space-4_5:18px;
+  --space-5:20px;
+  --space-6:24px;
 
-  /* ---------- Gray (Untitled UI scale) ---------- */
-  --gray-900:#101828;
-  --gray-700:#344054;
-  --gray-600:#475467;
-  --gray-500:#667085;
-  --gray-400:#98A2B3;
-  --gray-300:#D0D5DD;
-  --gray-200:#EAECF0;
-  --gray-100:#F2F4F7;
-  --gray-50:#F9FAFB;
+  /* ---------- Radius ---------- */
+  --rounded-md:8px;        /* ✔ รัศมีปุ่ม/อินพุต */
+  --r-sm:8px;              /* alias เดิม = rounded-md */
+  --r-md:12px;             /* ~ การ์ดย่อย, รายการ */
+  --r-lg:16px;             /* ~ การ์ดหลัก, tile */
+  --r-pill:99px;           /* ~ chip, badge, dot */
 
   /* ---------- Typography ---------- */
+  /* ฟอนต์ไลบรารีจริงคือ Google Sans (✔) — เราคง IBM Plex Sans Thai
+     ไว้เพราะต้องรองรับภาษาไทย ส่วนขนาด/line-height ใช้ตามไลบรารี   */
   --font:'IBM Plex Sans Thai',sans-serif;
+  --font-body-figma:'Google Sans',sans-serif;   /* ✔ อ้างอิงเฉยๆ ไม่ได้ใช้ */
+
+  --fs-text-xs:12px;   --lh-text-xs:18px;   /* ⚠ */
+  --fs-text-sm:14px;   --lh-text-sm:20px;   /* ✔ ใช้กับปุ่ม sm/md */
+  --fs-text-md:16px;   --lh-text-md:24px;   /* ✔ ใช้กับปุ่ม lg/xl */
+  --letter-spacing-normal:0px;              /* ✔ */
+  --font-weight-semibold:600;               /* ✔ */
+
+  /* alias เดิมของโปรเจกต์ */
   --fs-body:15px;
   --fs-sm:13px;
   --fs-xs:11px;
@@ -53,14 +101,58 @@
   --fs-h2:16px;
   --lh:1.55;
 
-  /* ---------- Shape ---------- */
-  --r-sm:8px;    /* ปุ่ม, input */
-  --r-md:12px;   /* การ์ดย่อย, รายการ */
-  --r-lg:16px;   /* การ์ดหลัก, tile */
-  --r-pill:99px; /* chip, badge, dot */
+
+  /* ══════════ ชั้น 2 · SEMANTIC (ชื่อตามไลบรารีจริง) ══════════ */
+
+  --color-bg-primary:#FFFFFF;                       /* ✔ */
+  --color-bg-primary-hover:var(--gray-50);          /* ✔ #FAFAFA */
+  --color-bg-disabled:var(--gray-100);              /* ✔ #F5F5F5 */
+
+  --color-border-primary:var(--gray-300);           /* ✔ #D5D7DA */
+  --color-border-disabled-subtle:var(--gray-200);   /* ✔ #E9EAEB */
+
+  --color-text-primary:var(--gray-900);             /* ⚠ */
+  --color-text-secondary:var(--gray-700);           /* ✔ #414651 */
+  --color-text-secondary-hover:var(--gray-800);     /* ✔ #252B37 */
+  --color-text-tertiary:var(--gray-600);            /* ✔ #535862 */
+  --color-text-tertiary-hover:var(--gray-700);      /* ✔ #414651 */
+  --color-fg-disabled:var(--gray-400);              /* ✔ #A4A7AE */
+
+
+  /* ══════════ ชั้น 3 · COMPONENT (ชื่อตามไลบรารีจริง) ══════════ */
+
+  /* ปุ่ม — Primary */
+  --btn-primary-bg:var(--brand-600);                /* ✔ */
+  --btn-primary-bg-hover:var(--brand-800);          /* ✔ #74045F (เข้มลง) */
+  --btn-primary-border:var(--brand-600);            /* ✔ */
+  --btn-primary-border-hover:var(--brand-800);      /* ✔ */
+  --btn-primary-text:#FFFFFF;                       /* ✔ */
+
+  /* ปุ่ม — Destructive */
+  --btn-destructive-bg:var(--error-600);            /* ✔ #D92D20 */
+  --btn-destructive-bg-hover:var(--error-700);      /* ⚠ ยังไม่ยืนยัน */
+  --btn-destructive-text:#FFFFFF;                   /* ✔ */
+
+  /* ปุ่ม — Link */
+  --btn-link-text:var(--brand-600);                 /* ⚠ ยังไม่ยืนยัน */
+  --btn-link-text-hover:var(--brand-800);           /* ⚠ ยังไม่ยืนยัน */
+
+  /* วงแหวน focus */
+  --focus-ring:rgba(168,6,137,.24);                 /* ⚠ ประมาณจาก brand-600 */
+  --focus-ring-error:rgba(217,45,32,.24);           /* ⚠ */
+
+
+  /* ══════════ alias เดิม — ห้ามลบ (ใช้อยู่ทั่วต้นแบบ) ══════════ */
+  --primary-800:var(--brand-800);
+  --primary-700:var(--brand-700);
+  --primary-600:var(--brand-600);
+  --primary-500:var(--brand-500);
+  --primary-50:var(--brand-50);
+  --primary-25:var(--brand-25);
+
 
   /* ---------- Effects ---------- */
   --shadow-app:0 0 40px rgba(16,24,40,.12);
   --shadow-pop:0 4px 14px rgba(16,24,40,.25);
-  --grad-header:linear-gradient(135deg,var(--primary-600),var(--primary-500));
+  --grad-header:linear-gradient(135deg,var(--brand-600),var(--brand-500));
 }
