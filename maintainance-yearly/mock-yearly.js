@@ -5,11 +5,12 @@
 // node's built-in test runner without any bundler/build step.
 //
 // โครงข้อมูล (plain objects):
-// vehicle: { id, plate, vehicleType, criteria, region(1-12), status, mileage, engineHours }
+// vehicle: { id, plate, vehicleType, brand, chassis, criteria, region(1-12), status, mileage, engineHours }
 // item:    { id, name, category, oilKind?, unit, appliesToTypes:[], qtyPerVehicle }
-// plan:    { planName, selectedVehicleIds:[], quarter, year, preparedConfirmed, workNumber, approvalStatus,
-//            partsRequisitioned, travelPlan:{location,dateFrom,dateTo,perDiem,lodging,travel}|null, travelConfirmed,
-//            rejectReason, statusHistory:[] }
+// plan:    { planName, selectedVehicleIds:[], itemAdj:{}, quarter, year, workNumber, approvalStatus:'draft'|'issued',
+//            suppliesAckAt:null|string, partsRequisitioned,
+//            travelPlan:{location,dateFrom,dateTo,perDiem,lodging,travel}|null, travelConfirmed, statusHistory:[] }
+// หมายเหตุ: กบก. เป็นผู้ออกเลขงานเอง — ฝ่ายพัสดุ "รับทราบ" เพื่อเตรียม/สั่งอะไหล่ ไม่ได้อนุมัติ
 //
 // approvalStatus: 'draft' (กบก. ยังแก้แผนอยู่) -> 'pending' (ส่งขออนุมัติเลขงาน
 // ให้ฝ่ายพัสดุแล้ว รอผล) -> 'approved' (ฝ่ายพัสดุออกเลขงาน) | 'rejected'
@@ -25,7 +26,7 @@ const PLAN_KEY = 'maintaind.yearly.plan.v1';
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;   // 5 = ตัด preparedConfirmed/pending-approval, พัสดุเป็นผู้รับทราบ
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -40,6 +41,24 @@ const REGIONS = Array.from({ length: 12 }, (_, i) => ({ id: i + 1, name: 'เข
 
 // ----- seed รถ: deterministic generator (ไม่ใช้ Math.random/Date) -----
 // ~10-12 คัน/เขต (รวม ~120-144 คัน) กระจาย criteria/status/vehicleType แบบคงที่
+// ยี่ห้อ/รุ่นอุปกรณ์ + ยี่ห้อรถบรรทุกที่รองรับ
+// ⚠️ ไม่ได้คิดขึ้นเอง — ยกมาจากข้อมูลที่มีอยู่แล้วในโปรเจกต์:
+//    config.js (ต้นแบบแจ้งซ่อม) และ repair-history.html
+// แผนนี้เป็นการบำรุงรักษาเครน/กระเช้า ยี่ห้อจึงเป็นตัวจัดกลุ่มที่มีความหมาย
+const BRANDS_BY_TYPE = {
+  'รถเครน':   [
+    { brand: 'TADANO TM-ZE304', chassis: 'HINO FM8J 6 ล้อ' },
+    { brand: 'TADANO TM-ZE504', chassis: 'HINO FM8J' },
+    { brand: 'UNIC URV554',     chassis: 'HINO XZU' },
+  ],
+  'รถกระเช้า': [
+    { brand: 'AICHI SK17A',     chassis: 'ISUZU FTR' },
+  ],
+  'รถขุด':    [
+    { brand: 'KOMATSU PC130-8', chassis: '—' },
+  ],
+};
+
 function genSeedVehicles() {
   const types = ['รถกระเช้า', 'รถเครน', 'รถขุด'];
   const out = [];
@@ -47,10 +66,14 @@ function genSeedVehicles() {
     const count = 10 + (r % 3);
     for (let i = 1; i <= count; i++) {
       const t = types[(r + i) % 3];
+      const bs = BRANDS_BY_TYPE[t];
+      const b = bs[(r * 2 + i) % bs.length];  // ไม่ใช้ (r+i) เพราะชนกับสูตรเลือกชนิดรถ ทำให้ได้ยี่ห้อเดียว
       out.push({
         id: `v-${r}-${i}`,
         plate: `${String(r).padStart(2, '0')}-${1000 + r * 100 + i}`,
         vehicleType: t,
+        brand: b.brand,
+        chassis: b.chassis,
         criteria: (r + i) % 2 === 0 ? 'truck' : 'net',
         region: r,
         status: i % 7 === 0 ? 'transferred' : i % 5 === 0 ? 'pending_approval' : 'available',
@@ -78,12 +101,12 @@ const SEED_ITEMS = [
 const INITIAL_PLAN = {
   planName: '',
   selectedVehicleIds: [],
-  quarter: null,
+  quarter: null,          // ระบบเติมตอนออกเลขงาน (ปีงบประมาณ ต.ค.–ก.ย.)
   year: 2569,
-  preparedConfirmed: false,
+  itemAdj: {},            // การแก้มือรายการอะไหล่ { [itemId]: {qty, off, added} }
   workNumber: null,
-  approvalStatus: 'draft',
-  rejectReason: '',
+  approvalStatus: 'draft',// draft -> issued
+  suppliesAckAt: null,    // ฝ่ายพัสดุกดรับทราบเมื่อไหร่
   statusHistory: [],
   partsRequisitioned: false,
   travelPlan: null,
@@ -111,6 +134,7 @@ const MYD = {
   REGIONS,
   regionZone,
 
+  BRANDS_BY_TYPE,
   SEED_VEHICLES,
   SEED_ITEMS,
   INITIAL_PLAN,
@@ -199,6 +223,35 @@ const MYD = {
       return a.item.name.localeCompare(b.item.name, 'th');
     });
     return lines;
+  },
+
+  // รายการอะไหล่ของรถชุดหนึ่ง + ทับด้วยการแก้มือ (plan.itemAdj)
+  // แยกจาก deriveItems() เพื่อให้หน้า กบก. และหน้าฝ่ายพัสดุเห็นตัวเลขชุดเดียวกัน
+  linesFor(vehicles, master, adj) {
+    adj = adj || {};
+    const lines = this.deriveItems(vehicles, master.items);
+    const autoIds = new Set(lines.map(l => l.item.id));
+
+    Object.keys(adj).forEach(id => {
+      if (!adj[id] || !adj[id].added || autoIds.has(id)) return;
+      const item = master.items.find(i => i.id === id);
+      if (item) lines.push({ item, vehicleCount: vehicles.length, totalQty: 0 });
+    });
+
+    return lines
+      .filter(l => !(adj[l.item.id] || {}).off)
+      .map(l => {
+        const a = adj[l.item.id] || {};
+        const per = a.qty != null ? a.qty : l.item.qtyPerVehicle;
+        return { ...l, perVehicle: per, totalQty: per * l.vehicleCount,
+                 edited: a.qty != null, manual: !!a.added };
+      });
+  },
+
+  // รายการอะไหล่ของทั้งแผน
+  planLines(plan, master) {
+    const vehicles = master.vehicles.filter(v => (plan.selectedVehicleIds || []).includes(v.id));
+    return { vehicles, lines: this.linesFor(vehicles, master, plan.itemAdj) };
   },
 
   // ไทรมาสตามปีงบประมาณ (ต.ค.–ก.ย.): ต.ค.=เดือน 10 → Q1

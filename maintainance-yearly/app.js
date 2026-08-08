@@ -35,7 +35,7 @@ function nowTh() {
   return new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-const STATUS_HISTORY_LABELS = { draft: 'ฉบับร่าง', pending: 'รออนุมัติ', approved: 'อนุมัติ/ออกเลขงาน', rejected: 'ตีกลับ' };
+const STATUS_HISTORY_LABELS = { draft: 'ฉบับร่าง', issued: 'ออกเลขงาน', notified: 'แจ้งฝ่ายพัสดุ', acknowledged: 'ฝ่ายพัสดุรับทราบ' };
 
 function renderTimelineHtml(history) {
   if (!history || !history.length) return '';
@@ -53,7 +53,7 @@ function renderTimelineHtml(history) {
 // เฟส 1 (master-plan) ถือว่า "complete" เมื่อแผนได้รับอนุมัติเลขงานแล้ว
 // เฟส 2-6 ยังไม่มี logic ความสำเร็จของตัวเอง (มาใน task ถัดไปเมื่อลงมือแต่ละเฟส)
 function isPhaseComplete(id) {
-  if (id === 'master-plan') return MYD.loadPlan().approvalStatus === 'approved';
+  if (id === 'master-plan') return !!MYD.loadPlan().workNumber;
   if (id === 'procurement') return MYD.loadPlan().travelConfirmed === true;
   return false;
 }
@@ -136,11 +136,11 @@ const SUB_STEPS = [
 const LAST_SUB = SUB_STEPS.length;
 
 // วิธีจัดกลุ่มรายการอะไหล่ในขั้น 2 — สลับได้สดๆ จาก dropdown ในหน้า
-// (ยังไม่มี "ตามยี่ห้อ" เพราะข้อมูลรถยังไม่มีฟิลด์ยี่ห้อ — ดู plan.md)
 const GROUP_MODES = [
   { id: 'cat',    label: 'ตามชนิดอะไหล่' },
   { id: 'zone',   label: 'ตามภาค' },
   { id: 'region', label: 'ตามเขต' },
+  { id: 'brand',  label: 'ตามยี่ห้อ/รุ่นอุปกรณ์' },
 ];
 
 const QUARTERS = [
@@ -154,19 +154,11 @@ const STATUS_BADGE_CLASS = { available: 'b-ok', pending_approval: 'b-low', trans
 
 function renderMasterPlan() {
   const plan = MYD.loadPlan();
-  // dispatch ตามสถานะขออนุมัติเลขงาน (cross-unit workflow กับฝ่ายพัสดุ):
-  // draft -> wizard 3 ขั้น | pending -> รอฝ่ายพัสดุ | rejected -> ตีกลับ
-  // | approved -> สรุปผล (เฟส 2 ปลดล็อกเมื่อ approved เท่านั้น — ดู isPhaseComplete)
-  if (plan.approvalStatus === 'approved') {
-    renderApprovedSummary(plan);
-    return;
-  }
-  if (plan.approvalStatus === 'pending') {
-    renderPendingView(plan);
-    return;
-  }
-  if (plan.approvalStatus === 'rejected') {
-    renderRejectedView(plan);
+  // dispatch ตามสถานะ: draft -> wizard 3 ขั้น | issued -> สรุปเลขงาน
+  // กบก. ออกเลขงานเอง ไม่มีขั้นรออนุมัติจากฝ่ายพัสดุแล้ว
+  // (เฟส 2 ปลดล็อกเมื่อมีเลขงาน — ดู isPhaseComplete)
+  if (plan.workNumber) {
+    renderIssuedSummary(plan);
     return;
   }
   if (!state.sub) state.sub = 1;
@@ -196,19 +188,19 @@ function backSub() {
 function validateSub(plan, sub) {
   if (sub === 1) return !!(plan.planName && plan.planName.trim()) && (plan.selectedVehicleIds || []).length >= 1;
   if (sub === 2) return deriveLinesForPlan(plan).lines.length >= 1;
-  return true; // ขั้นสุดท้าย: ปุ่มขออนุมัติคุมด้วย plan.preparedConfirmed แยกต่างหาก
+  return true; // ขั้นสุดท้าย (สรุป) กดออกเลขงานได้เสมอ
 }
 
 function updatePrimaryEnabled(plan) {
   const btn = $('btnPrimarySub');
   if (!btn) return;
-  btn.disabled = state.sub < LAST_SUB ? !validateSub(plan, state.sub) : !plan.preparedConfirmed;
+  btn.disabled = !validateSub(plan, state.sub);
 }
 
 // ----- wizard shell -----
 function renderWizard(plan) {
-  const primaryLabel = state.sub === LAST_SUB ? 'ส่งขออนุมัติเลขงาน (ฝ่ายพัสดุ)' : 'ถัดไป';
-  const primaryDisabled = state.sub === LAST_SUB ? !plan.preparedConfirmed : !validateSub(plan, state.sub);
+  const primaryLabel = state.sub === LAST_SUB ? 'ออกเลขงาน' : 'ถัดไป';
+  const primaryDisabled = !validateSub(plan, state.sub);
 
   $('phase').innerHTML = `
     <div class="card">
@@ -235,7 +227,7 @@ function renderWizard(plan) {
 
   $('btnBackSub').addEventListener('click', backSub);
   $('btnPrimarySub').addEventListener('click', () => {
-    if (state.sub === LAST_SUB) sendForApproval(plan);
+    if (state.sub === LAST_SUB) issueWorkNumber(plan);
     else nextSub();
   });
 }
@@ -307,7 +299,8 @@ function renderRegionBlock(region, master, selected) {
     <tr data-id="${esc(v.id)}">
       <td><input type="checkbox" class="rowChk" data-id="${esc(v.id)}" ${selected.has(v.id) ? 'checked' : ''}></td>
       <td>${esc(v.plate)}</td>
-      <td>${esc(v.vehicleType)}</td>
+      <td>${esc(v.vehicleType)}
+        <div style="font-size:12px;color:var(--gray-500)">${esc(v.brand)}${v.chassis && v.chassis !== '—' ? ' · ' + esc(v.chassis) : ''}</div></td>
       <td><span class="badge ${STATUS_BADGE_CLASS[v.status] || 'b-ok'}">${esc(MYD.STATUS_LABELS[v.status] || v.status)}</span></td>
     </tr>`).join('');
 
@@ -414,26 +407,10 @@ function planAdj(plan) {
   return plan.itemAdj;
 }
 
-// คำนวณรายการอะไหล่ของ "รถชุดหนึ่ง" — ใช้ซ้ำได้ทั้งภาพรวมและรายภาค/รายเขต
+// คำนวณรายการอะไหล่ของ "รถชุดหนึ่ง" — logic กลางอยู่ที่ MYD.linesFor()
+// (ใช้ร่วมกับหน้าฝ่ายพัสดุ ให้เห็นตัวเลขชุดเดียวกัน)
 function computeLines(vehicles, master, adj) {
-  const lines = MYD.deriveItems(vehicles, master.items);
-  const autoIds = new Set(lines.map(l => l.item.id));
-
-  // รายการที่ผู้ใช้เพิ่มเอง (ระบบไม่ได้เติมให้เพราะไม่ตรง appliesToTypes)
-  Object.keys(adj).forEach(id => {
-    if (!adj[id] || !adj[id].added || autoIds.has(id)) return;
-    const item = master.items.find(i => i.id === id);
-    if (item) lines.push({ item, vehicleCount: vehicles.length, totalQty: 0 });
-  });
-
-  return lines
-    .filter(l => !(adj[l.item.id] || {}).off)
-    .map(l => {
-      const a = adj[l.item.id] || {};
-      const per = a.qty != null ? a.qty : l.item.qtyPerVehicle;
-      return { ...l, perVehicle: per, totalQty: per * l.vehicleCount,
-               edited: a.qty != null, manual: !!a.added };
-    });
+  return MYD.linesFor(vehicles, master, adj);
 }
 
 function deriveLinesForPlan(plan) {
@@ -493,6 +470,14 @@ function groupLines(plan, master, selectedVehicles, adj) {
     return ids.map(r => {
       const vs = selectedVehicles.filter(v => v.region === r);
       return { label: `เขต ${r} — ${vs.length} คัน`, lines: computeLines(vs, master, adj) };
+    }).filter(g => g.lines.length);
+  }
+
+  if (mode === 'brand') {
+    const brands = [...new Set(selectedVehicles.map(v => v.brand))].sort();
+    return brands.map(b => {
+      const vs = selectedVehicles.filter(v => v.brand === b);
+      return { label: `${b} — ${vs.length} คัน`, lines: computeLines(vs, master, adj) };
     }).filter(g => g.lines.length);
   }
 
@@ -583,7 +568,7 @@ function bindStep2(plan) {
   });
 }
 
-// สรุปแผน — ใช้ร่วมกันทั้งขั้น 3 (ทวนก่อนส่ง), renderPendingView และ renderApprovedSummary
+// สรุปแผน — ใช้ร่วมกันทั้งขั้น 3 (สรุปทั้งปี) และ renderIssuedSummary
 function computePlanSummary(plan) {
   const { master, selectedVehicles, lines } = deriveLinesForPlan(plan);
   const qInfo = QUARTERS.find(q => q.q === plan.quarter);
@@ -617,6 +602,12 @@ function renderStep3(plan) {
   const byType = [...new Set(selectedVehicles.map(v => v.vehicleType))]
     .map(t => ({ t, n: selectedVehicles.filter(v => v.vehicleType === t).length }));
 
+  // รถแยกตามยี่ห้อ/รุ่นอุปกรณ์
+  const byBrand = [...new Set(selectedVehicles.map(v => v.brand))].sort().map(brand => {
+    const vs = selectedVehicles.filter(v => v.brand === brand);
+    return { brand, chassis: vs[0].chassis, type: vs[0].vehicleType, n: vs.length };
+  });
+
   return `
     <div class="sect">ขั้นที่ 3: สรุปแผนทั้งปี</div>
     <div class="sub">ทวนสอบก่อนส่งขออนุมัติเลขงานกับฝ่ายพัสดุ</div>
@@ -641,110 +632,57 @@ function renderStep3(plan) {
         <td>${byType.map(x => `<span class="badge b-low">${esc(x.t)} ${x.n}</span>`).join(' ')}</td></tr>
       </tbody></table></div>
 
+    <div class="sect">รถที่เลือกเข้าแผน — แยกตามยี่ห้อ/รุ่นอุปกรณ์</div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>ยี่ห้อ/รุ่นอุปกรณ์</th><th>ชนิดรถ</th><th class="num">จำนวนรถ</th></tr></thead>
+      <tbody>${byBrand.map(b => `<tr>
+        <td><b>${esc(b.brand)}</b>${b.chassis && b.chassis !== '—' ? `<div style="font-size:12px;color:var(--gray-500)">${esc(b.chassis)}</div>` : ''}</td>
+        <td>${esc(b.type)}</td>
+        <td class="num"><b>${b.n}</b></td>
+      </tr>`).join('')}</tbody></table></div>
+
     <div class="sect">อะไหล่ที่ต้องใช้ทั้งปี</div>
     ${lineTable(lines, false)}
 
-    <div class="chk" style="margin-top:14px">
-      <label><input type="checkbox" id="chkPrepared" ${plan.preparedConfirmed ? 'checked' : ''}> ผบพ. ตรวจ/เตรียมอะไหล่ตามแผนนี้แล้ว</label>
+    <div class="sub" style="margin-top:14px">
+      <span class="ms" style="font-size:16px">info</span>
+      กดออกเลขงานแล้ว ระบบจะ<b>ส่งเอกสารแจ้งฝ่ายพัสดุ</b>ให้ทราบว่าต้องเตรียม/สั่งอะไหล่อะไรบ้าง
     </div>`;
 }
 
-function bindStep3(plan) {
-  $('chkPrepared').addEventListener('change', e => {
-    plan.preparedConfirmed = e.target.checked;
-    MYD.savePlan(plan);
-    updatePrimaryEnabled(plan);
-  });
-}
+function bindStep3() { /* ไม่มี input ในขั้นนี้แล้ว */ }
 
-// ส่งขออนุมัติเลขงานให้ฝ่ายพัสดุ (ไม่ออกเลขงานที่นี่ — รอฝ่ายพัสดุอนุมัติ/ตีกลับ
-// ที่หน้า supplies.html) approvalStatus: draft -> pending
-function sendForApproval(plan) {
-  if (!plan.preparedConfirmed) return;
-  plan.approvalStatus = 'pending';
+// กบก. ออกเลขงานเอง — ฝ่ายพัสดุ "รับทราบ" เพื่อเตรียม/สั่งอะไหล่ ไม่ได้เป็นผู้อนุมัติ
+// ไทรมาสในเลขงานคิดจากวันที่ออกเลข (ปีงบประมาณ ต.ค.–ก.ย.)
+function issueWorkNumber(plan) {
+  if (!confirm('ยืนยันออกเลขงานสำหรับแผนนี้?')) return;
+  if (!plan.quarter) plan.quarter = MYD.quarterOfMonth(new Date().getMonth() + 1);
+  plan.workNumber = MYD.workNumber(plan.quarter, plan.year, 1);
+  plan.approvalStatus = 'issued';
   plan.statusHistory = [...(plan.statusHistory || []), {
-    status: 'pending', at: nowTh(), note: 'กบก. ส่งขออนุมัติเลขงานให้ฝ่ายพัสดุ',
+    status: 'issued', at: nowTh(), note: 'กบก. ออกเลขงาน ' + plan.workNumber,
+  }, {
+    status: 'notified', at: nowTh(), note: 'ส่งเอกสารแจ้งฝ่ายพัสดุ — แจ้งรายการอะไหล่ที่ต้องเตรียม/สั่ง',
   }];
   MYD.savePlan(plan);
-  toast('ส่งขออนุมัติเลขงานสำเร็จ — รอฝ่ายพัสดุอนุมัติ');
+  toast('ออกเลขงานสำเร็จ: ' + plan.workNumber + ' — ส่งเอกสารแจ้งฝ่ายพัสดุแล้ว');
   renderStepper();
   renderMasterPlan();
 }
 
-// ----- รอฝ่ายพัสดุอนุมัติ (แทนที่ wizard เมื่อ approvalStatus==='pending') -----
-function renderPendingView(plan) {
-  const { selectedVehicles, catSummary, periodText } = computePlanSummary(plan);
-
-  $('phase').innerHTML = `
-    <div class="card">
-      <div class="sect">แผนบำรุงรักษา</div>
-      <span class="badge b-low">⏳ รอฝ่ายพัสดุอนุมัติ</span>
-      <div class="fgrid" style="margin-top:16px">
-        <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
-        <div class="f sp2"><label>จำนวนรถ</label><div>${selectedVehicles.length} คัน</div></div>
-        <div class="f sp2"><label>ช่วงเวลา</label><div>${periodText}</div></div>
-        <div class="f sp4"><label>สรุปอะไหล่รวม</label><div>${catSummary || 'ไม่มีรายการ'}</div></div>
-      </div>
-      ${renderTimelineHtml(plan.statusHistory)}
-      <div class="sub" style="margin-top:8px">รอฝ่ายพัสดุออกเลขงาน — (เดโม: ไปที่เมนู "ฝ่ายพัสดุ" เพื่ออนุมัติ/ตีกลับ)</div>
-      <div class="actions">
-        <button class="btn btn-g" id="btnCancelRequest">ยกเลิกคำขอ (กลับไปแก้แผน)</button>
-      </div>
-    </div>`;
-
-  $('btnCancelRequest').addEventListener('click', () => {
-    plan.approvalStatus = 'draft';
-    MYD.savePlan(plan);
-    renderStepper();
-    renderMasterPlan();
-  });
-}
-
-// ----- ฝ่ายพัสดุตีกลับ (แทนที่ wizard เมื่อ approvalStatus==='rejected') -----
-function renderRejectedView(plan) {
-  $('phase').innerHTML = `
-    <div class="card">
-      <div class="sect">แผนบำรุงรักษา</div>
-      <span class="badge b-out">❌ ฝ่ายพัสดุตีกลับ</span>
-      <div class="fgrid" style="margin-top:16px">
-        <div class="f sp4"><label>เหตุผล</label><div>${esc(plan.rejectReason || '-')}</div></div>
-      </div>
-      ${renderTimelineHtml(plan.statusHistory)}
-      <div class="actions">
-        <button class="btn btn-o" id="btnEditPlan">แก้ไขแผน</button>
-        <button class="btn btn-p" id="btnResubmit">ส่งขออนุมัติใหม่</button>
-      </div>
-    </div>`;
-
-  $('btnEditPlan').addEventListener('click', () => {
-    plan.approvalStatus = 'draft';
-    MYD.savePlan(plan);
-    state.sub = 1;
-    renderStepper();
-    renderMasterPlan();
-  });
-
-  $('btnResubmit').addEventListener('click', () => {
-    plan.approvalStatus = 'pending';
-    plan.statusHistory = [...(plan.statusHistory || []), {
-      status: 'pending', at: nowTh(), note: 'กบก. ส่งขออนุมัติใหม่',
-    }];
-    MYD.savePlan(plan);
-    renderStepper();
-    renderMasterPlan();
-  });
-}
-
-// ----- สรุปหลังอนุมัติ (แทนที่ wizard เมื่อ approvalStatus==='approved') -----
-function renderApprovedSummary(plan) {
+// ----- ออกเลขงานแล้ว -----
+function renderIssuedSummary(plan) {
   const selectedVehicles = MYD.loadMaster().vehicles.filter(v => (plan.selectedVehicleIds || []).includes(v.id));
   const counts = { available: 0, pending_approval: 0, transferred: 0 };
   selectedVehicles.forEach(v => { counts[v.status] = (counts[v.status] || 0) + 1; });
 
   $('phase').innerHTML = `
     <div class="card">
-      <div class="sect">แผนบำรุงรักษา — อนุมัติแล้ว</div>
+      <div class="sect">แผนบำรุงรักษา — ออกเลขงานแล้ว</div>
       <span class="badge b-ok" style="font-size:15px;padding:6px 16px">${esc(plan.workNumber)}</span>
+      ${plan.suppliesAckAt
+        ? `<span class="badge b-ok" style="margin-left:8px">ฝ่ายพัสดุรับทราบแล้ว</span>`
+        : `<span class="badge b-low" style="margin-left:8px">ส่งเอกสารแจ้งฝ่ายพัสดุแล้ว — รอรับทราบ</span>`}
       <div class="fgrid" style="margin-top:16px">
         <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
         <div class="f sp2"><label>ไทรมาสที่ออกเลขงาน</label><div>${esc(plan.quarter || '—')} / ${esc(plan.year)}</div></div>
