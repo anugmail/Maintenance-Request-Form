@@ -306,11 +306,22 @@ function lineRow(l, editable) {
     </tr>`;
 }
 
+// ยอดรวมของกลุ่ม — หน่วยต่างกันบวกรวมกันไม่ได้ จึงรวมแยกตามหน่วย
+function unitTotals(lines) {
+  const by = {};
+  lines.forEach(l => { by[l.item.unit] = (by[l.item.unit] || 0) + l.totalQty; });
+  return Object.entries(by).map(([u, n]) => `<b>${n.toLocaleString('th-TH')}</b> ${esc(u)}`).join(' · ');
+}
+
 function lineTable(lines, editable) {
   if (!lines.length) return `<div class="empty">ไม่มีรายการ</div>`;
   return `<div class="tblwrap"><table class="tbl itbl">
       <thead><tr><th>ชื่อ</th><th>ต่อคัน</th><th>จำนวนรถ</th><th>รวม</th><th>หน่วย</th><th></th></tr></thead>
       <tbody>${lines.map(l => lineRow(l, editable)).join('')}</tbody>
+      <tfoot><tr class="sumrow">
+        <td><b>รวมกลุ่มนี้</b> · ${lines.length} รายการ</td>
+        <td colspan="5" style="text-align:right">${unitTotals(lines)}</td>
+      </tr></tfoot>
     </table></div>`;
 }
 
@@ -481,25 +492,34 @@ function renderStep3(plan) {
     </div>
 
     <div class="sect">รถที่เลือกเข้าแผน — แยกตามภาค</div>
-    <div class="tblwrap"><table class="tbl">
-      <thead><tr><th>ภาค</th><th class="num">จำนวนรถ</th><th>เขตที่มีรถเข้าแผน</th></tr></thead>
+    <div class="tblwrap"><table class="tbl itbl">
+      <thead><tr><th>ภาค</th><th colspan="2">เขตที่มีรถเข้าแผน</th><th>จำนวนรถ</th><th>หน่วย</th><th></th></tr></thead>
       <tbody>${byZone.map(z => `<tr>
         <td>${esc(z.label)}</td>
+        <td colspan="2">${z.regions.map(r => `<span class="badge b-ok">เขต ${r}</span>`).join(' ')}</td>
         <td class="num"><b>${z.count}</b></td>
-        <td>${z.regions.map(r => `<span class="badge b-ok">เขต ${r}</span>`).join(' ')}</td>
-      </tr>`).join('')}
-      <tr><td><b>รวม</b></td><td class="num"><b>${selectedVehicles.length}</b></td>
-        <td>${byType.map(x => `<span class="badge b-low">${esc(x.t)} ${x.n}</span>`).join(' ')}</td></tr>
-      </tbody></table></div>
+        <td>คัน</td><td></td>
+      </tr>`).join('')}</tbody>
+      <tfoot><tr class="sumrow">
+        <td><b>รวม</b></td>
+        <td colspan="2">${byType.map(x => `<span class="badge b-low">${esc(x.t)} ${x.n}</span>`).join(' ')}</td>
+        <td class="num"><b>${selectedVehicles.length}</b></td>
+        <td>คัน</td><td></td>
+      </tr></tfoot></table></div>
 
     <div class="sect">รถที่เลือกเข้าแผน — แยกตามยี่ห้อ/รุ่นอุปกรณ์</div>
-    <div class="tblwrap"><table class="tbl">
-      <thead><tr><th>ยี่ห้อ/รุ่นอุปกรณ์</th><th>ชนิดรถ</th><th class="num">จำนวนรถ</th></tr></thead>
+    <div class="tblwrap"><table class="tbl itbl">
+      <thead><tr><th>ยี่ห้อ/รุ่นอุปกรณ์</th><th colspan="2">ชนิดรถ</th><th>จำนวนรถ</th><th>หน่วย</th><th></th></tr></thead>
       <tbody>${byBrand.map(b => `<tr>
         <td><b>${esc(b.brand)}</b>${b.chassis && b.chassis !== '—' ? `<div style="font-size:12px;color:var(--gray-500)">${esc(b.chassis)}</div>` : ''}</td>
-        <td>${esc(b.type)}</td>
+        <td colspan="2">${esc(b.type)}</td>
         <td class="num"><b>${b.n}</b></td>
-      </tr>`).join('')}</tbody></table></div>
+        <td>คัน</td><td></td>
+      </tr>`).join('')}</tbody>
+      <tfoot><tr class="sumrow">
+        <td><b>รวม</b> · ${byBrand.length} ยี่ห้อ</td><td colspan="2"></td>
+        <td class="num"><b>${selectedVehicles.length}</b></td><td>คัน</td><td></td>
+      </tr></tfoot></table></div>
 
     <div class="sect">อะไหล่ที่ต้องใช้ทั้งปี</div>
     ${lineTable(lines, false)}

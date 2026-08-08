@@ -9,6 +9,13 @@
 //          supplies.html#<planId> -> เปิดเอกสารใบนั้น
 // ต้องโหลด common.js + mock-yearly.js ก่อนไฟล์นี้
 
+// ยอดรวมของกลุ่ม — หน่วยต่างกันบวกรวมกันไม่ได้ จึงรวมแยกตามหน่วย
+function unitTotals(lines) {
+  const by = {};
+  lines.forEach(l => { by[l.item.unit] = (by[l.item.unit] || 0) + l.totalQty; });
+  return Object.entries(by).map(([u, n]) => `<b>${n.toLocaleString('th-TH')}</b> ${esc(u)}`).join(' · ');
+}
+
 // ================= RENDER =================
 function render() {
   const id = (location.hash || '').replace('#', '');
@@ -82,13 +89,18 @@ function renderDoc(plan) {
         <td class="num">${esc(l.perVehicle)}</td>
         <td class="num">${esc(l.vehicleCount)}</td>
         <td class="num"><b>${esc(l.totalQty)}</b></td>
-        <td>${esc(l.item.unit)}</td>
+        <td>${esc(l.item.unit)}</td><td></td>
       </tr>`).join('');
     if (!rows) return '';
+    const catLines = lines.filter(l => l.item.category === cat);
     return `<div class="sect">${esc(MYD.CATEGORY_LABELS[cat])}</div>
-      <div class="tblwrap"><table class="tbl">
-        <thead><tr><th>ชื่อ</th><th class="num">ต่อคัน</th><th class="num">จำนวนรถ</th><th class="num">รวมที่ต้องเตรียม</th><th>หน่วย</th></tr></thead>
-        <tbody>${rows}</tbody></table></div>`;
+      <div class="tblwrap"><table class="tbl itbl">
+        <thead><tr><th>ชื่อ</th><th>ต่อคัน</th><th>จำนวนรถ</th><th>รวมที่ต้องเตรียม</th><th>หน่วย</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr class="sumrow">
+          <td><b>รวมกลุ่มนี้</b> · ${catLines.length} รายการ</td>
+          <td colspan="5" style="text-align:right">${unitTotals(catLines)}</td>
+        </tr></tfoot></table></div>`;
   }).join('');
 
   $('crumbs').innerHTML = `
@@ -114,20 +126,25 @@ function renderDoc(plan) {
       </div>
 
       <div class="sect">รถแยกตามภาค</div>
-      <div class="tblwrap"><table class="tbl">
-        <thead><tr><th>ภาค</th><th class="num">จำนวนรถ</th><th>เขต</th></tr></thead>
+      <div class="tblwrap"><table class="tbl itbl">
+        <thead><tr><th>ภาค</th><th colspan="2">เขต</th><th>จำนวนรถ</th><th>หน่วย</th><th></th></tr></thead>
         <tbody>${byZone.map(z => `<tr>
-          <td>${esc(z.label)}</td><td class="num"><b>${z.n}</b></td>
-          <td>${z.regions.map(r => `<span class="badge b-ok">เขต ${r}</span>`).join(' ')}</td>
-        </tr>`).join('')}</tbody></table></div>
+          <td>${esc(z.label)}</td>
+          <td colspan="2">${z.regions.map(r => `<span class="badge b-ok">เขต ${r}</span>`).join(' ')}</td>
+          <td class="num"><b>${z.n}</b></td><td>คัน</td><td></td>
+        </tr>`).join('')}</tbody>
+        <tfoot><tr class="sumrow"><td><b>รวม</b></td><td colspan="2"></td>
+          <td class="num"><b>${vehicles.length}</b></td><td>คัน</td><td></td></tr></tfoot></table></div>
 
       <div class="sect">รถแยกตามยี่ห้อ/รุ่นอุปกรณ์</div>
-      <div class="tblwrap"><table class="tbl">
-        <thead><tr><th>ยี่ห้อ/รุ่นอุปกรณ์</th><th>ชนิดรถ</th><th class="num">จำนวนรถ</th></tr></thead>
+      <div class="tblwrap"><table class="tbl itbl">
+        <thead><tr><th>ยี่ห้อ/รุ่นอุปกรณ์</th><th colspan="2">ชนิดรถ</th><th>จำนวนรถ</th><th>หน่วย</th><th></th></tr></thead>
         <tbody>${byBrand.map(b => `<tr>
           <td><b>${esc(b.brand)}</b>${b.chassis && b.chassis !== '—' ? `<div style="font-size:12px;color:var(--gray-500)">${esc(b.chassis)}</div>` : ''}</td>
-          <td>${esc(b.type)}</td><td class="num"><b>${b.n}</b></td>
-        </tr>`).join('')}</tbody></table></div>
+          <td colspan="2">${esc(b.type)}</td><td class="num"><b>${b.n}</b></td><td>คัน</td><td></td>
+        </tr>`).join('')}</tbody>
+        <tfoot><tr class="sumrow"><td><b>รวม</b> · ${byBrand.length} ยี่ห้อ</td><td colspan="2"></td>
+          <td class="num"><b>${vehicles.length}</b></td><td>คัน</td><td></td></tr></tfoot></table></div>
 
       <div class="sect">อะไหล่ที่ต้องเตรียม/สั่ง</div>
       ${itemTables || `<div class="empty">ไม่มีรายการ</div>`}

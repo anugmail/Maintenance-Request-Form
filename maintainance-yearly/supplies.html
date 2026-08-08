@@ -11,6 +11,18 @@
 <link rel="stylesheet" href="../design-system/tokens.css?v=20260808-align">
 <link rel="stylesheet" href="../design-system/components.css?v=20260808-align">
 <script src="../ui-components.js"></script><!-- shared components (window.UIC) จาก MRF -->
+<style>
+  /* เฉพาะหน้านี้ — ใช้ token เท่านั้น ไม่มีสี hardcode */
+  .tbl tfoot .sumrow td{background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:13px}
+  .itbl{table-layout:fixed}
+  .itbl th,.itbl td{overflow:hidden;text-overflow:ellipsis}
+  .itbl th:nth-child(1),.itbl td:nth-child(1){width:34%}
+  .itbl th:nth-child(2),.itbl td:nth-child(2),
+  .itbl th:nth-child(3),.itbl td:nth-child(3),
+  .itbl th:nth-child(4),.itbl td:nth-child(4){width:15%;text-align:center}
+  .itbl th:nth-child(5),.itbl td:nth-child(5){width:13%}
+  .itbl th:nth-child(6),.itbl td:nth-child(6){width:8%;text-align:center}
+</style>
 </head>
 <body>
 <div class="shell">

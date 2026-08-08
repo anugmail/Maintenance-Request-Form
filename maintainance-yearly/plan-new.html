@@ -14,6 +14,8 @@
   /* เฉพาะหน้านี้ — ใช้ token เท่านั้น ไม่มีสี hardcode */
   .wstep{cursor:pointer}
   .wstep.locked{opacity:.55;cursor:not-allowed}
+  /* แถวสรุปรวมท้ายตาราง */
+  .tbl tfoot .sumrow td{background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:13px}
   .itbl{table-layout:fixed}
   .itbl th,.itbl td{overflow:hidden;text-overflow:ellipsis}
   .itbl th:nth-child(1),.itbl td:nth-child(1){width:34%}
