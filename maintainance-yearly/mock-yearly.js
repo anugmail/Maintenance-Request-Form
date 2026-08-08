@@ -125,48 +125,24 @@ function deepCopy(v) {
 }
 
 
-// ---------- แผนตั้งต้น 1 ใบ (เหมือนมีแผนสร้างรออยู่แล้ว) ----------
-// ค่าคงที่ทั้งหมด (id / เลขงาน / รายการรถ) เพื่อให้ลิงก์ #<planId> ใช้ได้ตลอด
-// โผล่เฉพาะตอนที่ยังไม่เคยมีข้อมูลใน localStorage — กด "ล้างแผนทั้งหมด" แล้วจะไม่กลับมา
+// ---------- แผนตัวอย่าง 1 ใบ: "สร้างเสร็จแล้ว พร้อมไปเฟสต่อไป" ----------
+// ออกเลขงานแล้ว · ฝ่ายพัสดุรับทราบแล้ว · เบิกอะไหล่แล้ว · แผนเดินทางยืนยันแล้ว
+// ⇒ เฟส 1 เสร็จ เฟส 2 ปลดล็อก — ใช้เป็นตัวตั้งต้นตอนทำเฟสถัดไป
+// ค่าคงที่ทั้งหมด (id / เลขงาน / รายการรถ / วันที่) เพื่อให้ลิงก์ #<planId> ใช้ได้ตลอด
 const SEED_PLAN = {
   id: 'plan-seed-2569-001',
   createdAt: '1 ต.ค. 2568 09:00',
-  phase: 'procurement',
-  planName: 'บำรุงรักษาเครน/กระเช้า ภาคเหนือ',
-  selectedVehicleIds: [1, 2].flatMap(r => [1, 2, 3, 4].map(i => `v-${r}-${i}`)),
-  itemAdj: {},
-  quarter: 'Q1',
-  year: 2569,
-  workNumber: 'MT-2569-Q1-001',
-  approvalStatus: 'issued',
-  suppliesAckAt: null,
-  statusHistory: [
-    { status: 'issued',   at: '1 ต.ค. 2568 09:12', note: 'กบค. ออกเลขงาน MT-2569-Q1-001' },
-    { status: 'notified', at: '1 ต.ค. 2568 09:12', note: 'ส่งเอกสารแจ้งฝ่ายพัสดุ — แจ้งรายการอะไหล่ที่ต้องเตรียม/สั่ง' },
-  ],
-  partsRequisitioned: false,
-  travelPlan: null,
-  travelConfirmed: false,
-};
-
-
-// ---------- แผนตัวอย่างที่ "ทำเฟส 1 เสร็จแล้ว" — ใช้เป็นตัวตั้งต้นของเฟส 2 ----------
-// พัสดุรับทราบแล้ว · เบิกอะไหล่แล้ว · แผนเดินทางยืนยันแล้ว ⇒ เฟส 2 ปลดล็อก
-// ค่าคงที่ทั้งหมดเช่นกัน เพื่อให้ลิงก์ #<planId> ใช้ได้ตลอด
-const SEED_PLAN_READY = {
-  id: 'plan-seed-2569-002',
-  createdAt: '1 ต.ค. 2568 09:00',
-  phase: 'procurement',        // เฟส 1 เสร็จแล้ว (travelConfirmed) → กด "ไปเฟสถัดไป" เข้าเฟส 2 ได้
+  phase: 'procurement',        // เฟส 1 เสร็จแล้ว → กด "ไปเฟสถัดไป" เข้าเฟส 2 ได้
   planName: 'บำรุงรักษาเครน/กระเช้า ภาคตะวันออก',
   selectedVehicleIds: [3, 4].flatMap(r => [1, 2, 3, 4, 5, 6].map(i => `v-${r}-${i}`)),
   itemAdj: {},
   quarter: 'Q1',
   year: 2569,
-  workNumber: 'MT-2569-Q1-002',
+  workNumber: 'MT-2569-Q1-001',
   approvalStatus: 'issued',
   suppliesAckAt: '3 ต.ค. 2568 14:20',
   statusHistory: [
-    { status: 'issued',       at: '1 ต.ค. 2568 10:05', note: 'กบค. ออกเลขงาน MT-2569-Q1-002' },
+    { status: 'issued',       at: '1 ต.ค. 2568 10:05', note: 'กบค. ออกเลขงาน MT-2569-Q1-001' },
     { status: 'notified',     at: '1 ต.ค. 2568 10:05', note: 'ส่งเอกสารแจ้งฝ่ายพัสดุ — แจ้งรายการอะไหล่ที่ต้องเตรียม/สั่ง' },
     { status: 'acknowledged', at: '3 ต.ค. 2568 14:20', note: 'ฝ่ายพัสดุรับทราบ — เตรียม/สั่งอะไหล่ตามรายการ' },
   ],
@@ -198,7 +174,6 @@ const MYD = {
 
   BRANDS_BY_TYPE,
   SEED_PLAN,
-  SEED_PLAN_READY,
   SEED_VEHICLES,
   SEED_ITEMS,
   INITIAL_PLAN,
@@ -234,7 +209,7 @@ const MYD = {
   // { _v, plans: [ ...plan ] }  — เรียงใหม่สุดขึ้นก่อนตอนแสดงผล
   // แผนหนึ่ง = แผนบำรุงรักษาประจำปีหนึ่งใบของ กบค. · เลขงานคือหัวข้อของแผน
   loadPlans() {
-    const fresh = () => [deepCopy(SEED_PLAN), deepCopy(SEED_PLAN_READY)];
+    const fresh = () => [deepCopy(SEED_PLAN)];
     if (typeof localStorage === 'undefined') return fresh();
     try {
       const raw = localStorage.getItem(PLANS_KEY);
@@ -284,9 +259,9 @@ const MYD = {
     return [];
   },
 
-  // กลับไปเป็นค่าเริ่มต้น = มีแผนตั้งต้น 2 ใบ (ใบหนึ่งเพิ่งออกเลข อีกใบผ่านเฟส 1 แล้ว)
+  // กลับไปเป็นค่าเริ่มต้น = มีแผนตัวอย่างที่ทำเสร็จแล้ว 1 ใบ
   reseedPlans() {
-    const fresh = [deepCopy(SEED_PLAN), deepCopy(SEED_PLAN_READY)];
+    const fresh = [deepCopy(SEED_PLAN)];
     this.savePlans(fresh);
     return fresh;
   },

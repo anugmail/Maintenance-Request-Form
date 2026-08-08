@@ -324,12 +324,19 @@ function renderDemo() {
           <td class="num">${(p.selectedVehicleIds || []).length}</td>
         </tr>`).join('')}</tbody></table></div>` : ''}
       <div class="actions">
+        <button class="btn btn-o" id="btnReseedPlanDemo">คืนแผนตัวอย่าง 1 ใบ</button>
         <button class="btn btn-o" id="btnResetPlanDemo">ล้างแผนทั้งหมด</button>
         <button class="btn btn-o" id="btnResetMasterDemo">รีเซ็ตข้อมูลหลักเป็นค่าเริ่มต้น (seed ~120 คัน)</button>
         <button class="btn btn-p" id="btnResetAllDemo">รีเซ็ตทั้งหมด</button>
       </div>
     </div>`;
 
+  $('btnReseedPlanDemo').addEventListener('click', () => {
+    if (!confirm('คืนแผนตัวอย่าง? แผนทั้งหมดที่มีอยู่จะถูกแทนที่')) return;
+    MYD.reseedPlans();
+    renderDemo();
+    toast('คืนแผนตัวอย่างแล้ว');
+  });
   $('btnResetPlanDemo').addEventListener('click', () => {
     if (!confirm('ล้างแผนทั้งหมด? แผนที่ทำไว้ทุกใบจะหายไป')) return;
     MYD.resetPlans();

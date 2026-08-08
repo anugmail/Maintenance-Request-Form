@@ -195,7 +195,7 @@ function toggleRegion(regionId) {
 function bindStep1(plan) {
   $('fPlanName').addEventListener('input', e => {
     plan.planName = e.target.value;
-    MYD.savePlan(plan);
+    persist(plan);
     updatePrimaryEnabled(plan);
   });
 
@@ -206,7 +206,7 @@ function bindStep1(plan) {
   if (chkAllZones) {
     chkAllZones.addEventListener('change', e => {
       plan.selectedVehicleIds = e.target.checked ? allVehicles.map(v => v.id) : [];
-      MYD.savePlan(plan);
+      persist(plan);
       renderWizard(plan);
     });
   }
@@ -224,7 +224,7 @@ function bindStep1(plan) {
       if (e.target.checked) zoneVehicles.forEach(v => set.add(v.id));
       else zoneVehicles.forEach(v => set.delete(v.id));
       plan.selectedVehicleIds = [...set];
-      MYD.savePlan(plan);
+      persist(plan);
       renderWizard(plan);
     });
   });
@@ -241,7 +241,7 @@ function bindStep1(plan) {
       if (e.target.checked) vehicles.forEach(v => set.add(v.id));
       else vehicles.forEach(v => set.delete(v.id));
       plan.selectedVehicleIds = [...set];
-      MYD.savePlan(plan);
+      persist(plan);
       renderWizard(plan);
     });
   });
@@ -252,7 +252,7 @@ function bindStep1(plan) {
       const set = new Set(plan.selectedVehicleIds || []);
       if (e.target.checked) set.add(id); else set.delete(id);
       plan.selectedVehicleIds = [...set];
-      MYD.savePlan(plan);
+      persist(plan);
       renderWizard(plan);
     });
   });
@@ -412,7 +412,7 @@ function bindStep2(plan) {
     const id = e.target.value;
     if (!id) return;
     adj[id] = { ...(adj[id] || {}), added: true, off: false };
-    MYD.savePlan(plan);
+    persist(plan);
     toast('เพิ่มรายการเข้าแผนแล้ว');
     renderWizard(plan);
   });
@@ -433,7 +433,7 @@ function bindStep2(plan) {
         const next = Math.max(0, cur + (act === 'inc' ? 1 : -1));
         adj[id] = { ...(adj[id] || {}), qty: next };
       }
-      MYD.savePlan(plan);
+      persist(plan);
       renderWizard(plan);
     });
   });
@@ -544,7 +544,7 @@ function issueWorkNumber(plan) {
   }, {
     status: 'notified', at: nowTh(), note: 'ส่งเอกสารแจ้งฝ่ายพัสดุ — แจ้งรายการอะไหล่ที่ต้องเตรียม/สั่ง',
   }];
-  MYD.savePlan(plan);
+  persist(plan);
   toast('ออกเลขงานสำเร็จ: ' + plan.workNumber + ' — ส่งเอกสารแจ้งฝ่ายพัสดุแล้ว');
   render();
 }
@@ -576,10 +576,21 @@ function render() {
   renderWizard(PLAN);
 }
 
+// แผนร่างจะถูกบันทึกก็ต่อเมื่อ "มีเนื้อ" แล้วเท่านั้น (ตั้งชื่อ หรือเลือกรถ)
+// ⚠️ ของเดิมบันทึกทันทีที่เปิดหน้า → เปิดหน้ากี่ครั้งก็ได้ร่างเปล่าเท่านั้นใบ
+function hasContent(plan) {
+  return !!(plan.planName && plan.planName.trim()) || (plan.selectedVehicleIds || []).length > 0;
+}
+
+// เรียกแทน MYD.savePlan() ทุกจุดในหน้านี้
+function persist(plan) {
+  if (!hasContent(plan) && !MYD.getPlan(plan.id)) return;   // ยังว่าง + ยังไม่เคยบันทึก → ไม่ต้องเขียน
+  persist(plan);
+}
+
 // ================= INIT =================
 document.addEventListener('DOMContentLoaded', () => {
   const id = (location.hash || '').replace('#', '');
   PLAN = (id && MYD.getPlan(id)) || MYD.newPlan(nowTh());
-  if (!MYD.getPlan(PLAN.id)) MYD.savePlan(PLAN);   // จองที่ให้แผนร่างทันที จะได้ไม่หาย
   render();
 });

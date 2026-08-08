@@ -71,10 +71,11 @@ function renderList() {
             ? (ack ? '<span class="badge b-ok">พัสดุรับทราบแล้ว</span>' : '<span class="badge b-low">รอพัสดุรับทราบ</span>')
             : '<span class="badge b-out">ยังไม่ออกเลขงาน</span>'}</td>
       <td>${issued ? planProgressText(p) : '—'}</td>
-      <td class="num">
+      <td class="num" style="white-space:nowrap">
         ${issued
           ? `<a class="btn btn-s btn-sm" href="#${esc(p.id)}">เปิดแผน</a>`
-          : `<a class="btn btn-s btn-sm" href="plan-new.html#${esc(p.id)}">ทำต่อ</a>`}
+          : `<a class="btn btn-s btn-sm" href="plan-new.html#${esc(p.id)}">ทำต่อ</a>
+             <button class="btn btn-t btn-sm" data-del="${esc(p.id)}" title="ลบแผนร่างนี้"><span class="ms">delete</span></button>`}
       </td>
     </tr>`;
   }).join('');
@@ -91,9 +92,29 @@ function renderList() {
         <thead><tr><th>เลขงาน / ชื่อแผน</th><th class="num">รถ (คัน)</th><th>ไทรมาส/ปี</th><th>สถานะเอกสาร</th><th>ความคืบหน้า</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
         : `<div class="empty">ยังไม่มีแผน — กด "สร้างแผน / ออกเลขงาน" เพื่อเริ่ม</div>`}
+      <div class="actions" style="margin-top:14px">
+        <button class="btn btn-t btn-sm" id="btnReseed">
+          <span class="ms">restart_alt</span> คืนแผนตัวอย่าง (เดโม)</button>
+      </div>
     </div>`;
   $('stepper').innerHTML = '';
   $('crumbs').innerHTML = `<span class="ms">list_alt</span><span class="cur">รายการแผน</span>`;
+
+  $('phase').querySelectorAll('[data-del]').forEach(el => {
+    el.addEventListener('click', () => {
+      if (!confirm('ลบแผนร่างนี้?')) return;
+      MYD.deletePlan(el.getAttribute('data-del'));
+      toast('ลบแผนร่างแล้ว');
+      renderList();
+    });
+  });
+  const btnSeed = $('btnReseed');
+  if (btnSeed) btnSeed.addEventListener('click', () => {
+    if (!confirm('คืนแผนตัวอย่าง? แผนทั้งหมดที่มีอยู่จะถูกแทนที่ด้วยแผนตัวอย่าง 1 ใบ')) return;
+    MYD.reseedPlans();
+    toast('คืนแผนตัวอย่างแล้ว');
+    renderList();
+  });
 }
 
 // ================= หน้าแผนรายใบ =================
@@ -474,11 +495,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnReset = $('btnResetDemo');
   if (btnReset) {
     btnReset.addEventListener('click', () => {
-      if (!confirm('เริ่มเดโมใหม่? แผนทั้งหมดจะถูกล้าง')) return;
-      MYD.resetPlans();
+      if (!confirm('เริ่มเดโมใหม่? แผนทั้งหมดจะถูกแทนที่ด้วยแผนตัวอย่าง 1 ใบ')) return;
+      MYD.reseedPlans();
       location.hash = '';
       route();
-      toast('ล้างแผนทั้งหมดแล้ว');
+      toast('เริ่มเดโมใหม่แล้ว — เหลือแผนตัวอย่าง 1 ใบ');
     });
   }
 });
