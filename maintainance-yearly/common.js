@@ -54,6 +54,15 @@ function quarterYearText(plan) {
   return `${esc(plan.quarter)}${info ? ' (' + esc(info.months) + ')' : ''} / ${esc(plan.year)}`;
 }
 
+// วันที่จาก <input type="date"> (YYYY-MM-DD ปี พ.ศ.) → อ่านง่ายแบบไทย
+const TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function dateTh(v) {
+  if (!v) return '-';
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+  if (!m) return esc(v);
+  return `${Number(m[3])} ${TH_MONTHS[Number(m[2]) - 1]} ${m[1]}`;
+}
+
 // หัวข้อของแผน = เลขงาน · ถ้ายังไม่ออกเลขให้ใช้ชื่อแผนไปก่อน
 function planTitle(plan) {
   return plan.workNumber || (plan.planName ? plan.planName : '(แผนใหม่ ยังไม่ตั้งชื่อ)');

@@ -38,9 +38,16 @@ function currentPhase() {
 }
 
 // ================= รายการแผน =================
+// ความคืบหน้าของแผน — ถ้าเฟสที่อยู่ทำเสร็จแล้ว ให้บอกว่าพร้อมไปเฟสถัดไป
+// (ตอนนี้มี logic ความสำเร็จเฉพาะเฟส 1 — เฟส 2-5 ยังไม่มีของตัวเอง)
 function planProgressText(plan) {
-  const idx = PHASES.findIndex(p => p.id === (plan.phase || PHASES[0].id));
-  return `เฟส ${Math.max(1, idx + 1)}/${PHASES.length} · ${PHASES[Math.max(0, idx)].label}`;
+  const idx = Math.max(0, PHASES.findIndex(p => p.id === (plan.phase || PHASES[0].id)));
+  const cur = PHASES[idx];
+  const done = cur.id === 'procurement' && plan.travelConfirmed === true;
+  if (done && idx + 1 < PHASES.length) {
+    return `<span class="badge b-ok">เฟส ${cur.no} ✓</span> พร้อมเฟส ${PHASES[idx + 1].no} · ${esc(PHASES[idx + 1].label)}`;
+  }
+  return `เฟส ${cur.no}/${PHASES.length} · ${esc(cur.label)}`;
 }
 
 function renderList() {
@@ -63,7 +70,7 @@ function renderList() {
       <td>${issued
             ? (ack ? '<span class="badge b-ok">พัสดุรับทราบแล้ว</span>' : '<span class="badge b-low">รอพัสดุรับทราบ</span>')
             : '<span class="badge b-out">ยังไม่ออกเลขงาน</span>'}</td>
-      <td>${issued ? esc(planProgressText(p)) : '—'}</td>
+      <td>${issued ? planProgressText(p) : '—'}</td>
       <td class="num">
         ${issued
           ? `<a class="btn btn-s btn-sm" href="#${esc(p.id)}">เปิดแผน</a>`
@@ -436,12 +443,12 @@ function renderProcurementConfirmed(plan) {
       <span class="badge b-ok" style="font-size:15px;padding:6px 16px">แผนเดินทางยืนยันแล้ว</span>
       <div class="fgrid" style="margin-top:16px">
         <div class="f sp4"><label>สถานที่บำรุงรักษา</label><div>${esc(tp.location || '-')}</div></div>
-        <div class="f sp2"><label>จากวันที่</label><div>${esc(tp.dateFrom || '-')}</div></div>
-        <div class="f sp2"><label>ถึงวันที่</label><div>${esc(tp.dateTo || '-')}</div></div>
-        <div class="f"><label>ค่าเบี้ยเลี้ยง</label><div>${esc(tp.perDiem || 0)} บาท</div></div>
-        <div class="f"><label>ค่าที่พัก</label><div>${esc(tp.lodging || 0)} บาท</div></div>
-        <div class="f"><label>ค่าเดินทาง</label><div>${esc(tp.travel || 0)} บาท</div></div>
-        <div class="f sp4"><label>รวมค่าใช้จ่าย</label><div><b>${esc(total)} บาท</b></div></div>
+        <div class="f sp2"><label>จากวันที่</label><div>${dateTh(tp.dateFrom)}</div></div>
+        <div class="f sp2"><label>ถึงวันที่</label><div>${dateTh(tp.dateTo)}</div></div>
+        <div class="f"><label>ค่าเบี้ยเลี้ยง</label><div>${(tp.perDiem || 0).toLocaleString('th-TH')} บาท</div></div>
+        <div class="f"><label>ค่าที่พัก</label><div>${(tp.lodging || 0).toLocaleString('th-TH')} บาท</div></div>
+        <div class="f"><label>ค่าเดินทาง</label><div>${(tp.travel || 0).toLocaleString('th-TH')} บาท</div></div>
+        <div class="f sp4"><label>รวมค่าใช้จ่าย</label><div><b>${total.toLocaleString('th-TH')} บาท</b></div></div>
       </div>
     </div>
     <div class="card">

@@ -149,6 +149,39 @@ const SEED_PLAN = {
   travelConfirmed: false,
 };
 
+
+// ---------- แผนตัวอย่างที่ "ทำเฟส 1 เสร็จแล้ว" — ใช้เป็นตัวตั้งต้นของเฟส 2 ----------
+// พัสดุรับทราบแล้ว · เบิกอะไหล่แล้ว · แผนเดินทางยืนยันแล้ว ⇒ เฟส 2 ปลดล็อก
+// ค่าคงที่ทั้งหมดเช่นกัน เพื่อให้ลิงก์ #<planId> ใช้ได้ตลอด
+const SEED_PLAN_READY = {
+  id: 'plan-seed-2569-002',
+  createdAt: '1 ต.ค. 2568 09:00',
+  phase: 'procurement',        // เฟส 1 เสร็จแล้ว (travelConfirmed) → กด "ไปเฟสถัดไป" เข้าเฟส 2 ได้
+  planName: 'บำรุงรักษาเครน/กระเช้า ภาคตะวันออก',
+  selectedVehicleIds: [3, 4].flatMap(r => [1, 2, 3, 4, 5, 6].map(i => `v-${r}-${i}`)),
+  itemAdj: {},
+  quarter: 'Q1',
+  year: 2569,
+  workNumber: 'MT-2569-Q1-002',
+  approvalStatus: 'issued',
+  suppliesAckAt: '3 ต.ค. 2568 14:20',
+  statusHistory: [
+    { status: 'issued',       at: '1 ต.ค. 2568 10:05', note: 'กบค. ออกเลขงาน MT-2569-Q1-002' },
+    { status: 'notified',     at: '1 ต.ค. 2568 10:05', note: 'ส่งเอกสารแจ้งฝ่ายพัสดุ — แจ้งรายการอะไหล่ที่ต้องเตรียม/สั่ง' },
+    { status: 'acknowledged', at: '3 ต.ค. 2568 14:20', note: 'ฝ่ายพัสดุรับทราบ — เตรียม/สั่งอะไหล่ตามรายการ' },
+  ],
+  partsRequisitioned: true,
+  travelPlan: {
+    location: 'จุดรวมงาน กฟฉ. เขต 3 (นครราชสีมา) → หน้างาน อ.ปากช่อง / อ.สีคิ้ว',
+    dateFrom: '2568-11-04',
+    dateTo: '2568-11-08',
+    perDiem: 12000,
+    lodging: 9000,
+    travel: 6500,
+  },
+  travelConfirmed: true,
+};
+
 const MYD = {
   // ----- label maps (ภาษาไทย) -----
   CRITERIA_LABELS: { truck:'ทรัค', net:'เนต' },
@@ -165,6 +198,7 @@ const MYD = {
 
   BRANDS_BY_TYPE,
   SEED_PLAN,
+  SEED_PLAN_READY,
   SEED_VEHICLES,
   SEED_ITEMS,
   INITIAL_PLAN,
@@ -200,7 +234,7 @@ const MYD = {
   // { _v, plans: [ ...plan ] }  — เรียงใหม่สุดขึ้นก่อนตอนแสดงผล
   // แผนหนึ่ง = แผนบำรุงรักษาประจำปีหนึ่งใบของ กบค. · เลขงานคือหัวข้อของแผน
   loadPlans() {
-    const fresh = () => [deepCopy(SEED_PLAN)];
+    const fresh = () => [deepCopy(SEED_PLAN), deepCopy(SEED_PLAN_READY)];
     if (typeof localStorage === 'undefined') return fresh();
     try {
       const raw = localStorage.getItem(PLANS_KEY);
@@ -250,9 +284,9 @@ const MYD = {
     return [];
   },
 
-  // กลับไปเป็นค่าเริ่มต้น = มีแผนตั้งต้น 1 ใบ
+  // กลับไปเป็นค่าเริ่มต้น = มีแผนตั้งต้น 2 ใบ (ใบหนึ่งเพิ่งออกเลข อีกใบผ่านเฟส 1 แล้ว)
   reseedPlans() {
-    const fresh = [deepCopy(SEED_PLAN)];
+    const fresh = [deepCopy(SEED_PLAN), deepCopy(SEED_PLAN_READY)];
     this.savePlans(fresh);
     return fresh;
   },
