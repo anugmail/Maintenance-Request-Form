@@ -16,9 +16,11 @@
 <div class="shell">
   <aside class="side">
     <div class="vlogo">VMS<em>+</em></div>
-    <a class="nv" href="index.html" id="nav-flow" title="Flow"><span class="ms">event_note</span></a>
-    <a class="nv" href="admin.html" id="nav-admin" title="Admin — ข้อมูลหลัก"><span class="ms">settings</span></a>
-    <div class="nv on" id="nav-supplies" title="ฝ่ายพัสดุ"><span class="ms">inventory_2</span></div>
+    <a class="nv" href="index.html" title="รายการแผนบำรุงรักษา"><span class="ms">list_alt</span></a>
+    <a class="nv" href="plan-new.html" title="ออกเลขงาน — สร้างแผนใหม่"><span class="ms">note_add</span></a>
+    <a class="nv on" href="supplies.html" title="ฝ่ายพัสดุ"><span class="ms">inventory_2</span></a>
+    <a class="nv" href="admin.html" title="Admin — ข้อมูลหลัก"><span class="ms">settings</span></a>
+    <a class="nv" href="skeleton.html" title="โครงกระดูก 6 เฟส"><span class="ms">account_tree</span></a>
   </aside>
 
   <div class="work">
@@ -29,7 +31,8 @@
 
     <main class="content">
       <div class="draft">โหมดฝ่ายพัสดุ — รับเอกสารแจ้งเตรียม/สั่งอะไหล่ (ไม่ใช่ผู้อนุมัติเลขงาน)</div>
-      <h1 class="page-title">ฝ่ายพัสดุ — เอกสารแจ้งเตรียม/สั่งอะไหล่</h1>
+      <div class="crumbs" id="crumbs"></div>
+      <h1 class="page-title" id="supTitle">ฝ่ายพัสดุ — เอกสารแจ้งเตรียม/สั่งอะไหล่</h1>
       <div id="supBody"></div>
     </main>
   </div>
@@ -37,6 +40,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="common.js"></script>
 <script src="mock-yearly.js"></script>
 <script src="supplies.js"></script>
 </body>

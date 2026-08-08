@@ -1,76 +1,66 @@
 // supplies.js — หน้าฝ่ายพัสดุ
 //
-// ⚠️ เปลี่ยนบทบาท 8 ส.ค. 2569: ฝ่ายพัสดุ **ไม่ใช่ผู้อนุมัติ**
-// กบก. ออกเลขงานเองที่หน้าสรุป (เฟส 1 ขั้น 3) แล้วระบบ "ส่งเอกสารแจ้ง" มาที่นี่
-// หน้านี้จึงเป็น read + กดรับทราบ เพื่อเอาไปเตรียม/สั่งอะไหล่
+// ⚠️ ฝ่ายพัสดุ **ไม่ใช่ผู้อนุมัติ** — กบค. ออกเลขงานเองที่หน้า plan-new.html
+// แล้วระบบ "ส่งเอกสารแจ้ง" มาที่นี่ เพื่อให้พัสดุเตรียม/สั่งอะไหล่
 //   plan.workNumber    มีค่า → มีเอกสารส่งมาแล้ว
 //   plan.suppliesAckAt null → รอรับทราบ | มีค่า → รับทราบแล้ว
-// เขียนกลับผ่าน MYD.savePlan() ให้หน้า กบก. เห็นสถานะตรงกัน
-
-const QUARTER_MONTHS = { Q1: 'ต.ค.–ธ.ค.', Q2: 'ม.ค.–มี.ค.', Q3: 'เม.ย.–มิ.ย.', Q4: 'ก.ค.–ก.ย.' };
-
-const STATUS_HISTORY_LABELS = { draft: 'ฉบับร่าง', issued: 'ออกเลขงาน', notified: 'แจ้งฝ่ายพัสดุ', acknowledged: 'ฝ่ายพัสดุรับทราบ' };
-
-// ================= HELPERS =================
-const $ = id => document.getElementById(id);
-
-function esc(s) {
-  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
-}
-
-function toast(m) {
-  const t = $('toast');
-  t.textContent = m;
-  t.classList.add('show');
-  clearTimeout(t._x);
-  t._x = setTimeout(() => t.classList.remove('show'), 2600);
-}
-
-function nowTh() {
-  return new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
-}
-
-function renderTimelineHtml(history) {
-  if (!history || !history.length) return '';
-  return `
-    <div class="sect">ประวัติการดำเนินการ</div>
-    <ul class="tl">${history.map((h, i) => `
-      <li class="${i === history.length - 1 ? 'on' : ''}">
-        <b>${esc(STATUS_HISTORY_LABELS[h.status] || h.status)}</b>
-        <div class="when">${esc(h.at)}</div>
-        <div>${esc(h.note)}</div>
-      </li>`).join('')}</ul>`;
-}
-
-function quarterYearText(plan) {
-  const months = QUARTER_MONTHS[plan.quarter];
-  return `${esc(plan.quarter || '—')}${months ? ' (' + esc(months) + ')' : ''} / ${esc(plan.year)}`;
-}
+//
+// routing: supplies.html          -> รายการเอกสาร (ทุกแผนที่ออกเลขงานแล้ว)
+//          supplies.html#<planId> -> เปิดเอกสารใบนั้น
+// ต้องโหลด common.js + mock-yearly.js ก่อนไฟล์นี้
 
 // ================= RENDER =================
 function render() {
-  const plan = MYD.loadPlan();
-  if (!plan.workNumber) {
-    renderEmpty();
-    return;
-  }
+  const id = (location.hash || '').replace('#', '');
+  if (!id) { renderList(); return; }
+  const plan = MYD.getPlan(id);
+  if (!plan || !plan.workNumber) { location.hash = ''; renderList(); return; }
   renderDoc(plan);
 }
 
-function renderEmpty() {
+// ----- รายการเอกสารที่ส่งมา -----
+function renderList() {
+  const docs = MYD.loadPlans().filter(p => p.workNumber).reverse();
+  const master = MYD.loadMaster();
+
+  const rows = docs.map(p => {
+    const { vehicles, lines } = MYD.planLines(p, master);
+    const acked = !!p.suppliesAckAt;
+    return `<tr>
+      <td><b style="color:var(--gray-900)">${esc(p.workNumber)}</b>
+        <div style="font-size:12px;color:var(--gray-500)">${esc(p.planName || '—')}</div></td>
+      <td class="num">${vehicles.length}</td>
+      <td class="num">${lines.length}</td>
+      <td>${quarterYearText(p)}</td>
+      <td>${acked
+            ? `<span class="badge b-ok">รับทราบแล้ว</span>`
+            : `<span class="badge b-low">รอรับทราบ</span>`}</td>
+      <td class="num"><a class="btn btn-s btn-sm" href="#${esc(p.id)}">เปิดเอกสาร</a></td>
+    </tr>`;
+  }).join('');
+
+  const waiting = docs.filter(p => !p.suppliesAckAt).length;
+
+  $('crumbs').innerHTML = `<span class="ms">inventory_2</span><span class="cur">รายการเอกสาร</span>`;
+  $('supTitle').textContent = 'ฝ่ายพัสดุ — เอกสารแจ้งเตรียม/สั่งอะไหล่';
   $('supBody').innerHTML = `
     <div class="card">
-      <div class="empty">ยังไม่มีเอกสารส่งเข้ามา — รอ กบก. ออกเลขงาน</div>
+      <div class="sect">เอกสารที่ส่งมาจาก กบค.
+        ${waiting ? `<span class="badge b-low" style="margin-left:8px">รอรับทราบ ${waiting}</span>` : ''}</div>
+      <div class="sub">แต่ละใบคือแผนบำรุงรักษาประจำปีหนึ่งแผน — เลขงานคือหัวข้อของแผน</div>
+      ${docs.length ? `<div class="tblwrap"><table class="tbl">
+        <thead><tr><th>เลขงาน / ชื่อแผน</th><th class="num">รถ (คัน)</th><th class="num">อะไหล่ (รายการ)</th><th>ไทรมาส/ปี</th><th>สถานะ</th><th></th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`
+        : `<div class="empty">ยังไม่มีเอกสารส่งเข้ามา — รอ กบค. ออกเลขงาน</div>`}
     </div>`;
 }
 
-// เอกสารแจ้งเตรียม/สั่งอะไหล่ — รถกี่คัน ใช้อะไหล่อะไรบ้าง
+// ----- เอกสารรายใบ: รถกี่คัน ใช้อะไหล่อะไรบ้าง -----
 function renderDoc(plan) {
   const master = MYD.loadMaster();
   const { vehicles, lines } = MYD.planLines(plan, master);
   const acked = !!plan.suppliesAckAt;
 
-  // รถแยกตามภาค
   const byZone = MYD.ZONE_ORDER.map(z => {
     const vs = vehicles.filter(v => MYD.regionZone(v.region) === z);
     if (!vs.length) return null;
@@ -78,24 +68,22 @@ function renderDoc(plan) {
     return { label: MYD.ZONE_LABELS[z], n: vs.length, regions };
   }).filter(Boolean);
 
-  // รถแยกตามยี่ห้อ/รุ่นอุปกรณ์ — พัสดุใช้ตัดสินว่าต้องสั่งอะไหล่ของยี่ห้อไหน
+  // แยกยี่ห้อ/รุ่นอุปกรณ์ — พัสดุใช้ตัดสินว่าต้องสั่งอะไหล่ของยี่ห้อไหน
   const byBrand = [...new Set(vehicles.map(v => v.brand))].sort().map(brand => {
     const vs = vehicles.filter(v => v.brand === brand);
     return { brand, chassis: vs[0].chassis, type: vs[0].vehicleType, n: vs.length };
   });
 
-  const itemRows = cat => lines.filter(l => l.item.category === cat).map(l => `
-    <tr>
-      <td>${esc(l.item.name)}
-        <div style="font-size:12px;color:var(--gray-500)">${esc(MYD.triggerText(l.item))}</div></td>
-      <td class="num">${esc(l.perVehicle)}</td>
-      <td class="num">${esc(l.vehicleCount)}</td>
-      <td class="num"><b>${esc(l.totalQty)}</b></td>
-      <td>${esc(l.item.unit)}</td>
-    </tr>`).join('');
-
   const itemTables = ['part', 'oil', 'filter'].map(cat => {
-    const rows = itemRows(cat);
+    const rows = lines.filter(l => l.item.category === cat).map(l => `
+      <tr>
+        <td>${esc(l.item.name)}
+          <div style="font-size:12px;color:var(--gray-500)">${esc(MYD.triggerText(l.item))}</div></td>
+        <td class="num">${esc(l.perVehicle)}</td>
+        <td class="num">${esc(l.vehicleCount)}</td>
+        <td class="num"><b>${esc(l.totalQty)}</b></td>
+        <td>${esc(l.item.unit)}</td>
+      </tr>`).join('');
     if (!rows) return '';
     return `<div class="sect">${esc(MYD.CATEGORY_LABELS[cat])}</div>
       <div class="tblwrap"><table class="tbl">
@@ -103,16 +91,23 @@ function renderDoc(plan) {
         <tbody>${rows}</tbody></table></div>`;
   }).join('');
 
+  $('crumbs').innerHTML = `
+    <a href="supplies.html" style="color:inherit;text-decoration:none"><span class="ms">inventory_2</span> รายการเอกสาร</a>
+    <span class="sep">›</span><span class="cur">${esc(plan.workNumber)}</span>`;
+  $('supTitle').textContent = plan.workNumber;
+
   $('supBody').innerHTML = `
     <div class="card">
-      <div class="sect">เอกสารแจ้งเตรียม/สั่งอะไหล่</div>
-      <span class="badge b-ok" style="font-size:15px;padding:6px 16px">${esc(plan.workNumber)}</span>
-      ${acked
-        ? `<span class="badge b-ok" style="margin-left:8px">รับทราบแล้ว · ${esc(plan.suppliesAckAt)}</span>`
-        : `<span class="badge b-low" style="margin-left:8px">รอรับทราบ</span>`}
+      <div class="page-title-row" style="margin-bottom:10px">
+        <div class="sect" style="margin:0">เอกสารแจ้งเตรียม/สั่งอะไหล่</div>
+        ${acked
+          ? `<span class="badge b-ok" style="margin-left:10px">รับทราบแล้ว · ${esc(plan.suppliesAckAt)}</span>`
+          : `<span class="badge b-low" style="margin-left:10px">รอรับทราบ</span>`}
+        <a class="btn btn-t" href="supplies.html" style="margin-left:auto"><span class="ms">arrow_back</span> รายการเอกสาร</a>
+      </div>
 
-      <div class="fgrid" style="margin-top:16px">
-        <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
+      <div class="fgrid">
+        <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName || '—')}</div></div>
         <div class="f sp2"><label>ไทรมาสที่ออกเลขงาน</label><div>${quarterYearText(plan)}</div></div>
         <div class="f sp2"><label>รถเข้าแผนบำรุงรักษา</label><div><b style="font-size:20px">${vehicles.length}</b> คัน</div></div>
         <div class="f sp2"><label>รายการอะไหล่ที่ต้องเตรียม</label><div><b style="font-size:20px">${lines.length}</b> รายการ</div></div>
@@ -147,7 +142,7 @@ function renderDoc(plan) {
   if (!acked) $('btnAck').addEventListener('click', () => ackPlan(plan));
 }
 
-// ฝ่ายพัสดุกดรับทราบ — ไม่ใช่การอนุมัติ ไม่บล็อกเฟสถัดไปของ กบก.
+// ฝ่ายพัสดุกดรับทราบ — ไม่ใช่การอนุมัติ ไม่บล็อกเฟสถัดไปของ กบค.
 function ackPlan(plan) {
   plan.suppliesAckAt = nowTh();
   plan.statusHistory = [...(plan.statusHistory || []), {
@@ -159,6 +154,5 @@ function ackPlan(plan) {
 }
 
 // ================= INIT =================
-document.addEventListener('DOMContentLoaded', () => {
-  render();
-});
+window.addEventListener('hashchange', render);
+document.addEventListener('DOMContentLoaded', render);

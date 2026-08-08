@@ -299,35 +299,42 @@ function openItemModal(id) {
 }
 
 // ================= DEMO: จัดการเดโม (Yearly) =================
-const APPROVAL_STATUS_LABELS = { draft: 'ฉบับร่าง', approved: 'อนุมัติแล้ว' };
-
 function renderDemo() {
-  const plan = MYD.loadPlan();
-  const workNumberText = plan.workNumber || '— ยังไม่ออกเลขงาน';
-  const approvalText = APPROVAL_STATUS_LABELS[plan.approvalStatus] || plan.approvalStatus || '-';
-  const vehicleCount = (plan.selectedVehicleIds || []).length;
+  // ระบบเก็บ "หลายแผน" แล้ว — สรุปเป็นตัวเลขรวมแทนแผนเดียว
+  const plans = MYD.loadPlans();
+  const issued = plans.filter(p => p.workNumber);
+  const drafts = plans.length - issued.length;
+  const waitingAck = issued.filter(p => !p.suppliesAckAt).length;
 
   $('adminBody').innerHTML = `
     <div class="card">
       <div class="sect">จัดการเดโม — หน้าบำรุงรักษาตามวาระ</div>
       <div class="sub">ใช้ตอนสาธิตให้ลูกค้า เพื่อล้างข้อมูลแล้วเริ่ม flow ใหม่</div>
       <div class="fgrid">
-        <div class="f sp2"><label>เลขงาน</label><div>${esc(workNumberText)}</div></div>
-        <div class="f sp2"><label>สถานะอนุมัติ</label><div>${esc(approvalText)}</div></div>
-        <div class="f sp2"><label>จำนวนรถที่เลือก</label><div>${vehicleCount} คัน</div></div>
+        <div class="f sp2"><label>แผนทั้งหมด</label><div>${plans.length} แผน</div></div>
+        <div class="f sp2"><label>ออกเลขงานแล้ว</label><div>${issued.length} แผน</div></div>
+        <div class="f sp2"><label>ฉบับร่าง</label><div>${drafts} แผน</div></div>
+        <div class="f sp2"><label>รอฝ่ายพัสดุรับทราบ</label><div>${waitingAck} แผน</div></div>
       </div>
+      ${issued.length ? `<div class="tblwrap"><table class="tbl">
+        <thead><tr><th>เลขงาน</th><th>ชื่อแผน</th><th class="num">รถ</th></tr></thead>
+        <tbody>${issued.slice().reverse().map(p => `<tr>
+          <td><b style="color:var(--gray-900)">${esc(p.workNumber)}</b></td>
+          <td>${esc(p.planName || '—')}</td>
+          <td class="num">${(p.selectedVehicleIds || []).length}</td>
+        </tr>`).join('')}</tbody></table></div>` : ''}
       <div class="actions">
-        <button class="btn btn-o" id="btnResetPlanDemo">รีเซ็ตแผนปัจจุบัน</button>
+        <button class="btn btn-o" id="btnResetPlanDemo">ล้างแผนทั้งหมด</button>
         <button class="btn btn-o" id="btnResetMasterDemo">รีเซ็ตข้อมูลหลักเป็นค่าเริ่มต้น (seed ~120 คัน)</button>
         <button class="btn btn-p" id="btnResetAllDemo">รีเซ็ตทั้งหมด</button>
       </div>
     </div>`;
 
   $('btnResetPlanDemo').addEventListener('click', () => {
-    if (!confirm('รีเซ็ตแผนปัจจุบัน? ข้อมูลแผนที่ทำไว้จะถูกล้าง')) return;
-    MYD.resetPlan();
+    if (!confirm('ล้างแผนทั้งหมด? แผนที่ทำไว้ทุกใบจะหายไป')) return;
+    MYD.resetPlans();
     renderDemo();
-    toast('รีเซ็ตแผนปัจจุบันแล้ว');
+    toast('ล้างแผนทั้งหมดแล้ว');
   });
   $('btnResetMasterDemo').addEventListener('click', () => {
     if (!confirm('รีเซ็ตข้อมูลหลักเป็นค่าเริ่มต้น? ข้อมูลรถ/อะไหล่ที่แก้ไขไว้จะถูกล้าง')) return;

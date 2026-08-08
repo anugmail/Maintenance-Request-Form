@@ -1,7 +1,7 @@
 # 🛠️ Prototype — งานบำรุงรักษาตามวาระ (To-be)
 
 Prototype แบบ **static HTML คลิกเล่นได้จริง** ของ flow *Smart Mechanical Service Management — งานบำรุงรักษาตามวาระ (To-be)* ของ PEA (VMS Plus)
-เดินตาม happy path **สายตรวจเอง (กบก.)** ครบ 6 เฟส: ออกเลขงาน → เบิก/จัดหา → ดำเนินการ → ตรวจรับ → รายงาน → คำนวณต้นทุน
+เดินตาม happy path **สายตรวจเอง (กบค.)** ครบ 6 เฟส: ออกเลขงาน → เบิก/จัดหา → ดำเนินการ → ตรวจรับ → รายงาน → คำนวณต้นทุน
 
 > โฟลเดอร์นี้เป็น **โมดูลย่อยใน repo [`Maintenance-Request-Form`](https://github.com/anugmail/Maintenance-Request-Form)** — คนละเรื่องกับต้นแบบ *ฟอร์มแจ้งซ่อม* ที่อยู่ระดับบน (นี่คือ **บำรุงรักษาตามวาระ / scheduled PM**) · ใช้ **design-system ร่วมกัน** กับทั้ง repo
 

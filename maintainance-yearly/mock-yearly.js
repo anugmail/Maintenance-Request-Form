@@ -7,26 +7,27 @@
 // โครงข้อมูล (plain objects):
 // vehicle: { id, plate, vehicleType, brand, chassis, criteria, region(1-12), status, mileage, engineHours }
 // item:    { id, name, category, oilKind?, unit, appliesToTypes:[], qtyPerVehicle }
-// plan:    { planName, selectedVehicleIds:[], itemAdj:{}, quarter, year, workNumber, approvalStatus:'draft'|'issued',
+// plan:    { id, createdAt, phase, planName, selectedVehicleIds:[], itemAdj:{}, quarter, year,
+//            workNumber, approvalStatus:'draft'|'issued',
 //            suppliesAckAt:null|string, partsRequisitioned,
 //            travelPlan:{location,dateFrom,dateTo,perDiem,lodging,travel}|null, travelConfirmed, statusHistory:[] }
-// หมายเหตุ: กบก. เป็นผู้ออกเลขงานเอง — ฝ่ายพัสดุ "รับทราบ" เพื่อเตรียม/สั่งอะไหล่ ไม่ได้อนุมัติ
+// หมายเหตุ: กบค. เป็นผู้ออกเลขงานเอง — ฝ่ายพัสดุ "รับทราบ" เพื่อเตรียม/สั่งอะไหล่ ไม่ได้อนุมัติ
 //
-// approvalStatus: 'draft' (กบก. ยังแก้แผนอยู่) -> 'pending' (ส่งขออนุมัติเลขงาน
+// approvalStatus: 'draft' (กบค. ยังแก้แผนอยู่) -> 'pending' (ส่งขออนุมัติเลขงาน
 // ให้ฝ่ายพัสดุแล้ว รอผล) -> 'approved' (ฝ่ายพัสดุออกเลขงาน) | 'rejected'
-// (ฝ่ายพัสดุตีกลับ พร้อม rejectReason — กบก. แก้ไขแผนหรือส่งขออนุมัติใหม่ได้)
-// statusHistory: [{status, at, note}] — timeline แสดงฝั่ง กบก. และฝ่ายพัสดุ
+// (ฝ่ายพัสดุตีกลับ พร้อม rejectReason — กบค. แก้ไขแผนหรือส่งขออนุมัติใหม่ได้)
+// statusHistory: [{status, at, note}] — timeline แสดงฝั่ง กบค. และฝ่ายพัสดุ
 // (at ถูกสร้างฝั่ง browser ใน app.js/supplies.js ด้วย toLocaleString('th-TH',...)
 // ห้ามเรียก Date ในไฟล์นี้ — ให้ logic ในไฟล์นี้ยังคง pure/deterministic)
 
 const MASTER_KEY = 'maintaind.yearly.master.v1';
-const PLAN_KEY = 'maintaind.yearly.plan.v1';
+const PLANS_KEY = 'maintaind.yearly.plans.v1';
 
 // schema version ของโครงข้อมูลใน localStorage — เพิ่มเลขนี้เมื่อโครงข้อมูล
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 5;   // 5 = ตัด preparedConfirmed/pending-approval, พัสดุเป็นผู้รับทราบ
+const SCHEMA_VERSION = 6;   // 6 = เก็บเป็น 'หลายแผน' (plans[]) + ออกเลขงานแยกจาก stepper
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -99,6 +100,9 @@ const SEED_ITEMS = [
 ];
 
 const INITIAL_PLAN = {
+  id: null,               // ตั้งตอน newPlan()
+  createdAt: null,
+  phase: 'procurement',   // เฟสปฏิบัติการที่แผนนี้อยู่ (เริ่มที่เฟสแรกหลังออกเลขงาน)
   planName: '',
   selectedVehicleIds: [],
   quarter: null,          // ระบบเติมตอนออกเลขงาน (ปีงบประมาณ ต.ค.–ก.ย.)
@@ -123,7 +127,7 @@ function deepCopy(v) {
 const MYD = {
   // ----- label maps (ภาษาไทย) -----
   CRITERIA_LABELS: { truck:'ทรัค', net:'เนต' },
-  STATUS_LABELS:   { available:'ไม่ใช้', pending_approval:'รออนุมัติ', transferred:'โอน' },
+  STATUS_LABELS:   { available:'พร้อมเข้าแผน', pending_approval:'รออนุมัติ', transferred:'โอน' },
   CATEGORY_LABELS: { part:'อะไหล่', oil:'น้ำมัน', filter:'ไส้กรอง' },
   OILKIND_LABELS:  { engine:'น้ำมันเครื่อง', gear:'น้ำมันเฟือง', hydraulic:'น้ำมันไฮดรอลิก' },
   TRIGGER_LABELS:  { calendar:'ตามรอบ (ไทรมาส)', hours:'ชั่วโมงเครื่อง', mileage:'ระยะทาง' },
@@ -143,7 +147,7 @@ const MYD = {
   // ----- storage (fallback seed เมื่อว่าง/พัง/schema เก่า) -----
   // หมายเหตุ: fallback ที่นี่ไม่ auto-write กลับ localStorage — แค่ return
   // ค่า fresh ให้ใช้งาน ณ ตอนนั้น (เขียนจริงเมื่อเรียก saveMaster/savePlan
-  // หรือ resetMaster/resetPlan เท่านั้น)
+  // หรือ resetMaster/resetPlans เท่านั้น)
   loadMaster() {
     const fresh = () => ({ vehicles: deepCopy(SEED_VEHICLES), items: deepCopy(SEED_ITEMS) });
     if (typeof localStorage === 'undefined') return fresh();
@@ -166,34 +170,55 @@ const MYD = {
     localStorage.setItem(MASTER_KEY, JSON.stringify({ _v: SCHEMA_VERSION, vehicles: master.vehicles, items: master.items }));
   },
 
-  loadPlan() {
-    if (typeof localStorage === 'undefined') {
-      return deepCopy(INITIAL_PLAN);
-    }
+  // ---------- แผน: เก็บเป็น "หลายแผน" ----------
+  // { _v, plans: [ ...plan ] }  — เรียงใหม่สุดขึ้นก่อนตอนแสดงผล
+  // แผนหนึ่ง = แผนบำรุงรักษาประจำปีหนึ่งใบของ กบค. · เลขงานคือหัวข้อของแผน
+  loadPlans() {
+    if (typeof localStorage === 'undefined') return [];
     try {
-      const raw = localStorage.getItem(PLAN_KEY);
+      const raw = localStorage.getItem(PLANS_KEY);
       if (!raw) throw new Error('empty');
       const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== 'object') throw new Error('invalid shape');
+      if (!parsed || !Array.isArray(parsed.plans)) throw new Error('invalid shape');
       if (parsed._v !== SCHEMA_VERSION) throw new Error('stale schema');
-      const { _v, ...plan } = parsed;
-      return plan;
+      return parsed.plans;
     } catch {
-      return deepCopy(INITIAL_PLAN);
+      return [];
     }
   },
 
-  savePlan(plan) {
+  savePlans(plans) {
     if (typeof localStorage === 'undefined') return;
-    localStorage.setItem(PLAN_KEY, JSON.stringify({ ...plan, _v: SCHEMA_VERSION }));
+    localStorage.setItem(PLANS_KEY, JSON.stringify({ _v: SCHEMA_VERSION, plans }));
   },
 
-  resetPlan() {
-    const fresh = deepCopy(INITIAL_PLAN);
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(PLAN_KEY, JSON.stringify({ ...fresh, _v: SCHEMA_VERSION }));
-    }
-    return fresh;
+  getPlan(id) {
+    return this.loadPlans().find(p => p.id === id) || null;
+  },
+
+  // upsert ตาม id — ใช้แทน savePlan() เดิมทุกที่
+  savePlan(plan) {
+    const plans = this.loadPlans();
+    const i = plans.findIndex(p => p.id === plan.id);
+    if (i >= 0) plans[i] = plan; else plans.push(plan);
+    this.savePlans(plans);
+    return plan;
+  },
+
+  newPlan(nowStr) {
+    const p = deepCopy(INITIAL_PLAN);
+    p.id = 'plan-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6);
+    p.createdAt = nowStr || '';
+    return p;
+  },
+
+  deletePlan(id) {
+    this.savePlans(this.loadPlans().filter(p => p.id !== id));
+  },
+
+  resetPlans() {
+    if (typeof localStorage !== 'undefined') localStorage.removeItem(PLANS_KEY);
+    return [];
   },
 
   resetMaster() {
@@ -206,7 +231,7 @@ const MYD = {
 
   resetAll() {
     MYD.resetMaster();
-    MYD.resetPlan();
+    MYD.resetPlans();
   },
 
   // ----- logic ล้วน (unit-tested) -----
@@ -226,7 +251,7 @@ const MYD = {
   },
 
   // รายการอะไหล่ของรถชุดหนึ่ง + ทับด้วยการแก้มือ (plan.itemAdj)
-  // แยกจาก deriveItems() เพื่อให้หน้า กบก. และหน้าฝ่ายพัสดุเห็นตัวเลขชุดเดียวกัน
+  // แยกจาก deriveItems() เพื่อให้หน้า กบค. และหน้าฝ่ายพัสดุเห็นตัวเลขชุดเดียวกัน
   linesFor(vehicles, master, adj) {
     adj = adj || {};
     const lines = this.deriveItems(vehicles, master.items);
