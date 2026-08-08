@@ -1,17 +1,41 @@
 # 🧭 Maintain-D Design System
 
-> **เวอร์ชัน:** v0.2 (17 ก.ค. 2569) · **สถานะ:** ใช้งานกับ prototype แล้ว
-> **ที่มา:** อิงระบบ **VMS Plus** (vmsplus-dev.pea.co.th v2.1.1) — สกัดจาก CSS bundle สาธารณะ + screenshot หน้าจริง "สร้างคำขอใช้ยานพาหนะ" เพื่อให้ระบบซ่อมบำรุงรถ (Maintain-D) หน้าตาเป็นครอบครัวเดียวกับ VMS Plus
-> **Style guide แบบเปิดดูได้:** [index.html](index.html) · **ตัวอย่างหน้าที่ใช้จริง:** [ฟอร์มแจ้งซ่อม (mock)](../mock/Maintenance-Request-Form.html)
+> **เวอร์ชัน:** v0.3 (8 ส.ค. 2569) · **สถานะ:** ใช้กับทุกหน้าใน prototype แล้ว (20/20)
+> **ที่มา:** **Figma `EXT_PEA_VMS_v1.0.2_Component`** (`EXT-PEA-T0REUY1W-2026-V102`) — ค่าที่กำกับ `✔` ใน `tokens.css` อ่านจากไฟล์นั้นตรงๆ · ค่าที่กำกับ `~` มาจาก VMS Plus runtime (v2.1.1) รอบก่อน · `⚠` ยังไม่ยืนยัน
+> **Style guide:** [index.html](index.html) · **ปุ่มครบทุก variant:** [buttons.html](buttons.html) · **ตัวอย่างหน้าจริง:** [ฟอร์มแจ้งซ่อม (mock)](../mock/Maintenance-Request-Form.html)
+
+---
+
+## 0. 🔒 กฎบังคับสำหรับงานออกแบบทุกชิ้นนับจากนี้
+
+> เจ้าของงานกำหนดไว้ **8 ส.ค. 2569:** *"นับจากนี้ การออกแบบให้อิงจาก design system ด้วย"*
+
+**ก่อนสร้างหน้าใหม่หรือแก้หน้าเดิม ต้องผ่านทั้ง 5 ข้อ**
+
+1. `<link>` **`tokens.css` + `components.css`** เสมอ — ห้ามทำหน้า self-contained ที่นิยาม palette เอง
+2. **สี** ใช้ `var(--…)` เท่านั้น · ถ้าไม่มี token ที่ต้องการ **ให้เพิ่มใน `tokens.css` ก่อน** แล้วค่อยเรียกใช้ ห้าม hardcode hex ในหน้าจอ
+3. **ไอคอน** ใช้ **Material Symbols Outlined** ผ่าน `<span class="ms">ชื่อไอคอน</span>` — ห้าม inline `<svg>` และห้าม emoji แทนไอคอน UI *(ยกเว้นกราฟ/แผนภาพที่เป็น data-visualization)*
+4. **ปุ่ม** ใช้คลาสจาก `components.css` (`.btn` + `.btn-p/.btn-s/.btn-t/.btn-link/.btn-d` + `.btn-sm/lg/xl`) — ห้ามเขียนสไตล์ปุ่มเอง
+5. **light เท่านั้น** — ยังไม่มี dark token ในระบบ ห้ามใส่ `prefers-color-scheme:dark` รายหน้า (ถ้าจะมี dark ต้องเพิ่มใน `tokens.css` ก่อนแล้วใช้ทั้งระบบพร้อมกัน)
+
+**ข้อยกเว้นที่อนุญาตให้เป็นค่าตายตัว** (มีเท่านี้ ต้องมีคอมเมนต์กำกับ)
+`<meta name="theme-color">` (meta ใช้ `var()` ไม่ได้) · theme preset ใน `config.js`/`config-daily.js` (เป็น**ข้อมูล** ไม่ใช่สไตล์) · rainbow ของ colour picker ใน `admin-config.html` · หน้าเอกสารสีที่ตั้งใจโชว์ hex (`design-system/*.html`) · test harness
+
+**ตรวจว่ายังสะอาดอยู่ไหม**
+```bash
+grep -rnoiE '#[0-9a-f]{3,8}\b' --include='*.html' . \
+  | grep -viE '#fff|#000|design-system/|config.*\.js|admin-config|theme-color|/test/'
+```
 
 ---
 
 ## 1. หลักการ
 
-1. **แหล่งความจริงเดียว (Single Source of Truth)** — ค่าสี/ฟอนต์/รัศมีทั้งหมดอยู่ใน `tokens.css` เท่านั้น
-2. **ห้าม hardcode** — ในหน้าจอใช้ `var(--primary-600)` เสมอ ห้ามเขียน `#A80689` ตรงๆ
+1. **แหล่งความจริงเดียว (Single Source of Truth)** — ค่าสี/ฟอนต์/ระยะ/รัศมีทั้งหมดอยู่ใน `tokens.css` เท่านั้น
+2. **ห้าม hardcode** — ในหน้าจอใช้ `var(--brand-600)` เสมอ ห้ามเขียน `#A80689` ตรงๆ
 3. **Component ก่อน หน้าจอทีหลัง** — ถ้าต้องใช้ UI ที่ยังไม่มีในระบบ ให้เพิ่มเป็น component กลางใน `components.css` ก่อน แล้วค่อยเรียกใช้จากหน้าจอ
-4. **อัปเดตจากของจริง** — ได้ screenshot หน้าจริงของ VMS Plus เพิ่มเมื่อไหร่ เทียบกับ style guide แล้วปรับ token/component ให้ตรง (แก้ที่เดียว ทุกหน้าเปลี่ยนตาม)
+4. **อัปเดตจากของจริง** — ดึงค่าจาก Figma ไลบรารีจริงเป็นหลัก (read-only เท่านั้น **ห้ามแก้ไฟล์ Figma**) แล้วปรับ token ให้ตรง — แก้ที่เดียว ทุกหน้าเปลี่ยนตาม
+5. **token 3 ชั้น** ตามไลบรารีจริง — `primitive` (`--brand-600`, `--gray-*`) → `semantic` (`--color-text-secondary`) → `component` (`--btn-primary-bg`) · หน้าจอควรเรียกชั้น semantic/component ก่อน primitive
 
 ## 2. วิธีใช้
 

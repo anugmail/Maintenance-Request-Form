@@ -318,6 +318,26 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
 
 **ยังไม่ได้เทียบ layout หน้าจอ** — ลิงก์ที่ได้เป็นไลบรารีคอมโพเนนต์ ข้างในไม่มีแบบหน้าจอให้เทียบ · ที่ตรวจแล้วคือหน้าเดิมไม่พังหลังเปลี่ยน token (screenshot 4 หน้า)
 
+### Design System v0.3 — ยกทุกหน้าให้อิง design system (8 ส.ค. 2569)
+
+> 🔒 **กฎใหม่จากเจ้าของงาน:** *"นับจากนี้ การออกแบบให้อิงจาก design system ด้วย"* — เขียนเป็นกฎบังคับ 5 ข้อไว้หัว `design-system/README.md` ข้อ 0 พร้อมคำสั่ง `grep` ไว้ตรวจซ้ำ
+
+**ผล audit** — 17/20 หน้าอิง design system อยู่แล้ว · **หลุด 3 หน้า:** `outcome-dashboard.html` · `parts-insights.html` · `repair-history.html` (เป็นไฟล์ยุค artifact self-contained)
+
+| ปัญหาที่เจอใน 3 หน้านั้น | แก้เป็น |
+|---|---|
+| ไม่ `<link>` design-system เลย นิยาม palette เอง | `<link>` tokens.css + remap `:root` ทั้งบล็อกไปหา token กลาง |
+| ใช้ **สีม่วง** `#6D2C9C` ไม่ใช่ magenta แบรนด์ | `var(--brand-600)` `#A80689` |
+| มี **dark mode** ที่ระบบไม่มี (palette ม่วงเข้มคิดเอง) | **ตัดทิ้งทั้ง 3 บล็อก + ปุ่มสลับธีม** → light อย่างเดียวเท่ากับทุกหน้า |
+| ไอคอนเป็น **inline `<svg>`** | `<span class="ms">` Material Symbols (edit · star · arrow_forward · search · check · schedule · build · local_shipping · description) |
+| 🐛 **ไม่มี `<meta charset>` เลย** — ภาษาไทยเพี้ยนเป็น mojibake ตอนเปิดจาก Pages | เพิ่ม `<!DOCTYPE>` + `charset=UTF-8` + `viewport` (บั๊กเดิม ไม่ได้เกิดจากงานนี้) |
+
+**ที่เหลือทั้งโปรเจกต์** — `mock` ทั้ง 2 ไฟล์ · `05` · `index` · `executive-insights` · `flow-นัดหมายรับรถ` · `admin-config` · `daily-record` แทน hex เป็น token ครบ **22 จุด** (รวม gradient โลโก้ม่วง `#d9b8d2→#8a5c95` ที่หลุดอยู่ใน mock ทั้งสองไฟล์ · เทาชุด v1 ในเทมเพลตใบรับรถของ flow2 · `var(--primary-200)` ที่อ้างถึง token ที่ไม่มีอยู่จริง)
+
+**token ที่เพิ่มเพื่อเลิก hardcode** — `--brand-200` `--brand-accent` (ส้มในโลโก้ MD) · `--secondary-50` · `--info-25/100/200` · `--shadow-card`
+
+**hex ที่เหลือ = ตั้งใจให้เหลือ** (มีคอมเมนต์กำกับทุกจุด) — `<meta name="theme-color">` (meta ใช้ `var()` ไม่ได้) · theme preset ใน `config.js`/`config-daily.js` (เป็นข้อมูลไม่ใช่สไตล์) · rainbow ของ colour picker · หน้าเอกสารสีที่ตั้งใจโชว์ hex · test harness
+
 ### API ที่ได้รับเพิ่ม (7 ส.ค. 2569) — `GetMasterMatWiSto`
 
 `GET http://mmapi.pea.co.th/GetMasterMatWiSto?matcode=&plant=&sloc=&batch=` · auth ด้วย header `ApiKeys` · ไฟล์สเปกอยู่ที่ `Maintenance-Request/API_Spec_GetMasterMatWiSto.txt`

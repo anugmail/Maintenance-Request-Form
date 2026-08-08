@@ -9,14 +9,14 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="design-system/tokens.css?v=20260807-vms102">
-  <link rel="stylesheet" href="design-system/components.css?v=20260807-vms102">
+  <link rel="stylesheet" href="design-system/tokens.css?v=20260808-align">
+  <link rel="stylesheet" href="design-system/components.css?v=20260808-align">
   <style>
     .wrap { max-width: 1040px; margin: 0 auto; padding: 36px 24px 72px }
     .back { display: inline-flex; align-items: center; gap: 4px; color: var(--gray-500); text-decoration: none; font-size: 14px; font-weight: 600; margin-bottom: 18px }
     .back:hover { color: var(--primary-600) }
     .lg { font-weight: 800; font-size: 38px; color: var(--primary-600); line-height: 1 }
-    .lg em { color: #F5A623; font-style: normal }
+    .lg em { color: var(--brand-accent); font-style: normal }
     h1 { font-size: 25px; color: var(--gray-900); margin: 12px 0 6px }
     .lead { color: var(--gray-500); margin-bottom: 22px; line-height: 1.5 }
     .howto { border: 1px solid var(--primary-500); background: var(--primary-25); border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 28px; font-size: 13.5px; color: var(--gray-700); line-height: 1.7 }
@@ -89,7 +89,7 @@
     ul.open { margin: 0; padding: 0; list-style: none }
     ul.open li { position: relative; padding: 6px 0 6px 26px; font-size: 13.5px; color: var(--gray-700); line-height: 1.55; border-top: 1px dashed var(--gray-200) }
     ul.open li:first-child { border-top: 0 }
-    ul.open li::before { content: 'help'; font-family: 'Material Symbols Outlined'; position: absolute; left: 0; top: 6px; color: #F5A623; font-size: 18px }
+    ul.open li::before { content: 'help'; font-family: 'Material Symbols Outlined'; position: absolute; left: 0; top: 6px; color: var(--brand-accent); font-size: 18px }
     .ms-btns { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--gray-200) }
     .btn .ms { font-size: 18px }
     .more { font-size: 13px; color: var(--gray-500) }
@@ -128,7 +128,7 @@
       • ลำดับบทบาท: <span class="k">ผู้แจ้ง → กรย. → กบค. → ผู้อนุมัติ</span> — เดโมไล่ต่อกันได้ในแท็บเดียวโดยสลับเมนูซ้าย (ไม่ต้องรีโหลด)<br>
       • กด “เปิดเดโม” จะเปิดต้นแบบในแท็บใหม่ ตรงหน้าจอของหมุดนั้น<br>
       • หมุด M2–M6 เปิดด้วย <span class="k">?seed=review</span> จะมีงานตัวอย่างในคิวให้เดินได้ทันที · ข้อมูลเดโมรีเซ็ตทุกครั้งที่เปิดลิงก์ (ตั้งใจให้ทดสอบซ้ำได้)<br>
-      • <span class="ms" style="font-size:16px;color:#F5A623;vertical-align:-3px">help</span> = คำถามเปิดที่ต้องเคลียร์กับเจ้าของงานในช่วงนั้น
+      • <span class="ms" style="font-size:16px;color:var(--brand-accent);vertical-align:-3px">help</span> = คำถามเปิดที่ต้องเคลียร์กับเจ้าของงานในช่วงนั้น
     </div>
 
     <section class="journey" aria-labelledby="journey-title">

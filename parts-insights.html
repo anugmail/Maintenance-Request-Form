@@ -1,45 +1,33 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="design-system/tokens.css?v=20260808-align">
 <title>VMS Plus · วิเคราะห์อะไหล่ (Parts Intelligence)</title>
 <style>
   *{box-sizing:border-box}
+  /* ---- palette: map ชื่อเดิมของหน้านี้ → token กลางใน design-system/tokens.css ----
+     ห้าม hardcode สีในไฟล์นี้ · แก้สีที่ tokens.css ที่เดียว
+     ธีม light อย่างเดียว (design system ยังไม่มี dark) */
+  /* ไอคอน Material Symbols — ชุดเดียวกับทั้งระบบ (นิยามเต็มอยู่ design-system/components.css) */
+  .ms{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;display:inline-block;line-height:1;vertical-align:middle;font-size:20px;-webkit-font-smoothing:antialiased}
   :root{
-    --font:"IBM Plex Sans Thai","Noto Sans Thai",-apple-system,BlinkMacSystemFont,"Segoe UI","Leelawadee UI",Roboto,"Helvetica Neue",Arial,"Sarabun",sans-serif;
-    --bg:#F6F4FB; --surface:#FFFFFF; --surface-2:#F3F0FA; --surface-3:#ECE7F6;
-    --border:#E7E2F1; --border-strong:#D6CEE8;
-    --ink:#1B1428; --ink-2:#5A5170; --ink-3:#8E86A3;
-    --accent:#6D2C9C; --accent-2:#8B45C4; --accent-soft:#F1E9FA; --accent-ink:#FFFFFF;
-    --lead:#C0561E; --lead-soft:#FBEBE1;
-    --good:#12805C; --good-soft:#E4F4EC; --warn:#9C6206; --warn-soft:#FBEFD8;
-    --crit:#C22F49; --crit-soft:#FBE6EA;
-    --track:#ECE7F6; --grid:#EFEBF7;
-    --shadow:0 1px 2px rgba(27,20,40,.06),0 10px 30px rgba(27,20,40,.07);
-    --radius:16px;
-  }
-  @media (prefers-color-scheme:dark){
-    :root{
-      --bg:#131019; --surface:#1C1826; --surface-2:#241F31; --surface-3:#2C2740;
-      --border:#332C46; --border-strong:#453D60; --ink:#F2EFF8; --ink-2:#BAB2CE; --ink-3:#8A82A0;
-      --accent:#B78BFF; --accent-2:#9E6BF0; --accent-soft:#2A2140; --accent-ink:#1A1226;
-      --lead:#E8894F; --lead-soft:#3A241A;
-      --good:#43C08C; --good-soft:#152E26; --warn:#E0A93B; --warn-soft:#332813;
-      --crit:#F0708A; --crit-soft:#38202A; --track:#2A2438; --grid:#282235;
-      --shadow:0 1px 2px rgba(0,0,0,.35),0 14px 34px rgba(0,0,0,.42);
-    }
-  }
-  :root[data-theme="light"]{
-    --bg:#F6F4FB; --surface:#FFFFFF; --surface-2:#F3F0FA; --surface-3:#ECE7F6;
-    --border:#E7E2F1; --border-strong:#D6CEE8; --ink:#1B1428; --ink-2:#5A5170; --ink-3:#8E86A3;
-    --accent:#6D2C9C; --accent-2:#8B45C4; --accent-soft:#F1E9FA; --accent-ink:#FFFFFF;
-    --lead:#C0561E; --lead-soft:#FBEBE1; --good:#12805C; --good-soft:#E4F4EC; --warn:#9C6206; --warn-soft:#FBEFD8;
-    --crit:#C22F49; --crit-soft:#FBE6EA; --track:#ECE7F6; --grid:#EFEBF7;
-    --shadow:0 1px 2px rgba(27,20,40,.06),0 10px 30px rgba(27,20,40,.07);
-  }
-  :root[data-theme="dark"]{
-    --bg:#131019; --surface:#1C1826; --surface-2:#241F31; --surface-3:#2C2740;
-    --border:#332C46; --border-strong:#453D60; --ink:#F2EFF8; --ink-2:#BAB2CE; --ink-3:#8A82A0;
-    --accent:#B78BFF; --accent-2:#9E6BF0; --accent-soft:#2A2140; --accent-ink:#1A1226;
-    --lead:#E8894F; --lead-soft:#3A241A; --good:#43C08C; --good-soft:#152E26; --warn:#E0A93B; --warn-soft:#332813;
-    --crit:#F0708A; --crit-soft:#38202A; --track:#2A2438; --grid:#282235;
-    --shadow:0 1px 2px rgba(0,0,0,.35),0 14px 34px rgba(0,0,0,.42);
+    --font:'IBM Plex Sans Thai',sans-serif;
+    --bg:var(--gray-50); --surface:var(--color-bg-primary); --surface-2:var(--gray-50); --surface-3:var(--gray-100);
+    --border:var(--gray-200); --border-strong:var(--gray-300);
+    --ink:var(--gray-900); --ink-2:var(--gray-600); --ink-3:var(--gray-500);
+    --accent:var(--brand-600); --accent-2:var(--brand-500); --accent-soft:var(--brand-50); --accent-ink:var(--btn-primary-text);
+    --lead:var(--warning-700); --lead-soft:var(--warning-50);
+    --good:var(--success-600); --good-soft:var(--success-50); --good-border:var(--success-200);
+    --warn:var(--warning-700); --warn-soft:var(--warning-50);
+    --crit:var(--error-600); --crit-soft:var(--error-50);
+    --info:var(--info-600); --info-soft:var(--info-50);
+    --track:var(--gray-200); --grid:var(--gray-200);
+    --shadow:var(--shadow-card);
+    --radius:var(--r-lg);
   }
   html,body{margin:0}
   body{background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.5;
@@ -127,6 +115,8 @@
   @media (max-width:560px){ .finds{grid-template-columns:1fr} .hbrow{grid-template-columns:120px 1fr auto} }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+</head>
+<body>
 
 <header class="top">
   <div class="top-in">
@@ -136,7 +126,6 @@
       <p>Parts Intelligence — จากข้อมูลการเบิก/ซ่อม/จัดหา</p>
     </div>
     <div class="spacer"></div>
-    <button class="icon-btn" id="themeBtn" title="สลับธีมสว่าง/มืด" aria-label="สลับธีม">◐</button>
   </div>
 </header>
 
@@ -271,7 +260,7 @@
     });
   }
   bars(document.getElementById("freqBars"),byFreq.slice(0,8),function(p){return p.freq;},"linear-gradient(90deg,var(--accent-2),var(--accent))"," ครั้ง");
-  bars(document.getElementById("leadBars"),byLead.slice(0,8),function(p){return p.lead;},"linear-gradient(90deg,#E8894F,var(--lead))"," วัน");
+  bars(document.getElementById("leadBars"),byLead.slice(0,8),function(p){return p.lead;},"linear-gradient(90deg,var(--warning-600),var(--lead))"," วัน");
 
   // ---- scatter (freq x lead) ----
   function scatter(){
@@ -348,12 +337,8 @@
     });
   }
   renderTable();
-
-  document.getElementById("themeBtn").onclick=function(){
-    var cur=document.documentElement.getAttribute("data-theme");
-    var dark=cur?cur==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
-    document.documentElement.setAttribute("data-theme",dark?"light":"dark");
-    scatter();
-  };
 })();
 </script>
+
+</body>
+</html>
