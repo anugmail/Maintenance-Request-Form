@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บำรุงรักษาตามวาระ — โครงกระดูก 6 เฟส | Maintain-D</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260808-align">
+<link rel="stylesheet" href="../design-system/components.css?v=20260808-align">
+<style>
+  /* เฉพาะหน้านี้ — ใช้ token เท่านั้น ไม่มีสี hardcode */
+  .wstep{cursor:pointer}
+  .skel{border:1px dashed var(--gray-300);border-radius:var(--r-md);background:var(--gray-50);
+        color:var(--gray-500);text-align:center;padding:34px 18px;margin-top:14px}
+  .skel .ms{font-size:30px;color:var(--gray-400);display:block;margin-bottom:8px}
+  .kv{display:grid;grid-template-columns:132px 1fr;gap:8px 14px;font-size:14px;margin-top:4px}
+  .kv dt{color:var(--gray-500)}
+  .kv dd{color:var(--gray-900);margin:0}
+  ol.does{margin:8px 0 0 20px;font-size:14.5px;color:var(--gray-700)}
+  ol.does li{margin-bottom:6px}
+  ol.does li b{color:var(--gray-900)}
+  ul.asks{margin:8px 0 0 20px;font-size:14px;color:var(--gray-700)}
+  ul.asks li{margin-bottom:6px}
+  .navrow{display:flex;gap:10px;align-items:center;margin-top:22px}
+  .navrow .sp{flex:1}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv on" href="skeleton.html" title="โครงกระดูก 6 เฟส"><span class="ms">account_tree</span></a>
+    <a class="nv" href="index.html" title="ตัวเต็ม (เฟส 1–2 ทำแล้ว)"><span class="ms">event_note</span></a>
+    <a class="nv" href="admin.html" title="Admin — ข้อมูลหลัก"><span class="ms">settings</span></a>
+    <a class="nv" href="supplies.html" title="ฝ่ายพัสดุ"><span class="ms">inventory_2</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="ms">account_circle</span>
+      <span id="who">กบก. — ผู้ทำแผน</span>
+    </div>
+
+    <main class="content">
+      <div class="draft">🦴 โครงกระดูก — ยังไม่มีของจริงในหน้า ใช้คุยลำดับขั้นและเก็บเงื่อนไขทีละหน้า · ตัวเต็มที่ทำแล้ว (เฟส 1–2) อยู่ที่ <a href="index.html">index.html</a></div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><span class="sep">›</span>
+        <span>บำรุงรักษาตามวาระ</span><span class="sep">›</span>
+        <span class="cur" id="crumb">ออกเลขงาน</span>
+      </div>
+
+      <h1 class="page-title" id="ptitle">งานบำรุงรักษาตามวาระ</h1>
+
+      <div id="stepper"></div>
+      <div id="phase"></div>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── เนื้อหาทุกช่อง อ้างจาก Diagram/01-บำรุงรักษาตามวาระ/*.md ─────────────
+   ไม่ได้แต่งขึ้นเอง — ถ้าตกลงเงื่อนไขใหม่ ต้องแก้ mermaid ในคอมมิตเดียวกัน */
+const PHASES = [
+  { no:1, id:'plan',  label:'ออกเลขงาน', who:'กบก. → ฝ่ายพัสดุ',
+    what:'ทำแผนบำรุงรักษาประจำปี (Master Plan) แล้วส่งขออนุมัติข้ามหน่วยงานเพื่อ<b>ออกเลขงาน</b>',
+    inp:'— (จุดเริ่มต้น)', out:'เลขงาน <b>MT-ปี-ไทรมาส-NNN</b>',
+    does:[
+      'กบก. สร้างแผน แล้ว<b>ตั้งชื่อแผน + เลือกรถเข้าแผน</b> — กรย. 12 เขต เลือกทั้งภาค/ทั้งเขต/ข้ามเขตได้',
+      'ระบบแสดง<b>รายการอะไหล่ที่ต้องบำรุงรักษา</b> — อะไหล่ · น้ำมัน · ไส้กรอง (trigger: รอบปี / ชม.เครื่อง / ระยะทาง)',
+      '<b>ระบุไทรมาส</b> (Q1 ต.ค.–ธ.ค. … Q4 ก.ค.–ก.ย.)',
+      '<b>ทวนสอบแผน</b> แล้วส่งขออนุมัติเลขงาน',
+      '<b>ฝ่ายพัสดุ</b> พิจารณา → <b>ออกเลขงาน</b> หรือ <b>ตีกลับพร้อมเหตุผล</b>',
+      'ถูกตีกลับ → กบก. เห็นเหตุผล แก้ไข ส่งใหม่ · อนุมัติแล้ว → เห็นเลขงาน + timeline และ<b>ปลดล็อกเฟส 2</b>'
+    ],
+    asks:[
+      '<b>กบก. คือหน่วยงานอะไร</b> — ใช่ตัวเดียวกับ กบค. ไหม (ค้างมาจากรอบก่อน)',
+      'เกณฑ์ <b>ทรัค / เนต</b> — ผังบอกว่าตัดออกแล้ว ยืนยันว่าไม่ใช้จริงใช่ไหม',
+      'รูปแบบเลขงาน <b>MT-ปี-ไทรมาส-NNN</b> ตรงของจริงหรือยัง · เป็นปี พ.ศ. หรือ ค.ศ.',
+      'ฝ่ายพัสดุอนุมัติ<b>ทั้งแผน</b>ทีเดียว หรืออนุมัติ<b>รายเขต</b>ได้'
+    ]},
+
+  { no:2, id:'proc', label:'เบิก/จัดหา + แผนเดินทาง', who:'กบก. (+ ผู้รับจ้าง ถ้าว่าจ้าง)',
+    what:'เบิกอะไหล่เข้าแผน แล้ววาง<b>แผนเดินทาง</b>ไปทำงานตามจุดต่างๆ',
+    inp:'เลขงานจากเฟส 1', out:'แผนเดินทางที่ยืนยันแล้ว + แจ้ง กรย./เจ้าของรถ',
+    does:[
+      '<b>ตรวจสอบและเบิกอะไหล่</b> ผ่านระบบขออะไหล่ (App)',
+      '<b>แยกทาง: ว่าจ้าง หรือ ตรวจเอง</b>',
+      '<b>สายตรวจเอง</b> — กบก. ทำแผนเดินทาง · กรอกเบี้ยเลี้ยง/ที่พัก/ค่าเดินทาง · เลือกรถ+สถานที่+ช่วงวัน · ยืนยัน → ระบบส่ง Noti เจ้าของรถ + กรย. → ทำใบนำจ่ายด้วย PEA Life',
+      '<b>สายว่าจ้าง</b> — หาผู้รับจ้าง/เสนอราคา → กบก. กำหนดอัตราค่าจ้าง → ผู้รับจ้างทำแผน → กบก. ตรวจแผน → เลือกรถ+สถานที่+ช่วงวัน → ทำ PO → แจ้ง กรย.'
+    ],
+    asks:[
+      'prototype เดิมโฟกัส<b>เฉพาะสายตรวจเอง</b> — รอบนี้ทำสายว่าจ้างด้วยไหม',
+      'เลือก "ว่าจ้าง/ตรวจเอง" <b>ตรงไหน</b> — ที่นี่ หรือย้ายไปเลือกตั้งแต่เฟส 1 ตอนทำแผน',
+      'แผนเดินทาง <b>1 แผน = 1 ทริป</b> หรือหลายทริปในแผนเดียว'
+    ]},
+
+  { no:3, id:'work', label:'ดำเนินการบำรุงรักษา', who:'กบก. / ผู้รับจ้าง · กรย. (วางอะไหล่)',
+    what:'ลงหน้างานจริง <b>ทำบำรุงรักษา + บันทึกหลักฐาน</b>',
+    inp:'แผนเดินทางจากเฟส 2', out:'บันทึกงาน + รูปก่อน/หลัง + จำนวนอะไหล่จริง',
+    does:[
+      '<b>กรย. เอาอะไหล่ไปวางที่จุดรวมงาน</b>ก่อนวันเดินทาง · VMS+ สร้างเอกสารให้ กบก.',
+      'สายตรวจเอง — ระบบ<b>ส่ง Noti แจ้งใกล้ถึงวัน</b>เข้าตรวจ',
+      'เดินทางไปจุดรวมงาน → <b>รับอะไหล่</b> → ไปหน้างาน',
+      '<b>ตัดสิน: บำรุงรักษาได้หรือไม่ได้</b> — ถ้าไม่ได้ ให้บันทึกเหตุผลแล้วข้ามไปเฟส 4',
+      '<b>ถ่ายรูปก่อน</b> — รถ + ทะเบียน + อะไหล่ใหม่',
+      '<b>ดำเนินการบำรุงรักษา</b> · <b>เก็บตัวอย่างน้ำมันไฮดรอลิก</b>ไปทดสอบ',
+      '<b>บันทึกงาน + อะไหล่บน VMS+</b> — ยืนยันจำนวนจริง · เลขไมล์ · ชม.เครื่อง',
+      '<b>ถ่ายรูปหลัง</b> — รถ + ทะเบียน + อะไหล่เก่า + จุดซ่อม',
+      '<b>หน่วยงานพัสดุรับทราบ</b> — ใบตรวจอะไหล่ · ใบตรวจสภาพงาน · ประเมินความพึงพอใจ'
+    ],
+    asks:[
+      '<b>บันทึกรายคัน หรือรายแผน</b> — แผนหนึ่งมีหลายคันหลายเขต เฟสจบเมื่อครบทุกคันใช่ไหม',
+      '<b>"บำรุงรักษาไม่ได้"</b> — ข้ามเฉพาะคันนั้นแล้วไปต่อ หรือค้างทั้งแผน · ต้องเลื่อนไปไทรมาสหน้าอัตโนมัติไหม',
+      '<b>รูปถ่ายก่อน/หลัง</b> — บังคับกี่รูป ข้ามได้ไหม ถ้าข้ามต้องให้เหตุผลไหม',
+      '<b>เก็บตัวอย่างน้ำมันไฮดรอลิก</b> — ทุกคัน หรือเฉพาะบางประเภทรถ',
+      'ใบ 3 ใบที่พัสดุรับทราบ — ออกจากระบบเอง หรืออัปโหลดไฟล์'
+    ]},
+
+  { no:4, id:'inspect', label:'ตรวจรับ', who:'กบก.',
+    what:'<b>ตรวจรับงาน</b>ที่ทำไปแล้ว และคืนของที่ไม่ได้ใช้',
+    inp:'บันทึกงานจากเฟส 3', out:'ผลตรวจรับ + รายการคืนอะไหล่',
+    does:[
+      'กบก. <b>ตรวจสอบข้อมูลการบำรุงรักษา</b>',
+      '<b>ไม่ผ่าน</b> → ตรวจสอบสาเหตุ → แก้ไขได้ก็แก้ · <b>แก้ไม่ได้ → ขออนุมัติปรับลดงาน</b>',
+      '<b>ผ่าน</b> → ผู้รับจ้าง/กบก. <b>คืนอะไหล่-น้ำมันที่ไม่ได้ใช้</b>'
+    ],
+    asks:[
+      '<b>"ขออนุมัติปรับลดงาน" ใครอนุมัติ</b> — ฝ่ายพัสดุ (เจ้าของเลขงาน) หรือผู้บังคับบัญชา กบก.',
+      'ตรวจรับ<b>รายคัน</b>หรือ<b>ทั้งแผนรวดเดียว</b>',
+      'คืนอะไหล่ — ตัดยอดคลังกลับอัตโนมัติไหม (ต้นแบบแจ้งซ่อมยังไม่ตัดสต็อกจริง — จุดนี้เหมือนกันไหม)'
+    ]},
+
+  { no:5, id:'report', label:'จัดทำรายงาน', who:'กบก. → ผู้บังคับบัญชา กบก.',
+    what:'สรุปผล ตรวจสภาพ และ<b>ให้ผู้บังคับบัญชาอนุมัติปิดงาน</b>',
+    inp:'ผลตรวจรับจากเฟส 4', out:'งานปิด (ผ่านการตรวจของผู้บังคับบัญชา)',
+    does:[
+      'กบก. <b>ตรวจสภาพการทำงาน</b> — ไฟฟ้า / น้ำมัน / ไฮดรอลิก',
+      '<b>บันทึกผลตรวจน้ำมันไฮดรอลิก</b>ลงในใบงาน',
+      '<b>ส่ง Noti ผลตรวจน้ำมัน</b>ให้เจ้าของรถ',
+      'มีอะไหล่เหลือ → <b>ทำเรื่องคืนคลัง</b> · ครบแล้ว → บำรุงรักษาครบทุกคันตามแผน',
+      '<b>ผู้บังคับบัญชา กบก. ตรวจสอบประวัติงาน</b> → ผ่าน = ปิดงาน · ไม่ผ่าน = ตีกลับให้แก้'
+    ],
+    asks:[
+      '<b>ผู้บังคับบัญชา กบก. คือระดับไหน</b> — ผอ.กอง / ผช.ผอ. / อื่น',
+      'ผลตรวจน้ำมันไฮดรอลิก — <b>รอผลแล็บกี่วัน</b> เฟสค้างรอผลไหม หรือปิดไปก่อนแล้วเติมทีหลัง',
+      'ตีกลับจากเฟส 5 → <b>กลับไปเฟสไหน</b> (แก้ในเฟส 5 เอง หรือเด้งกลับเฟส 3)'
+    ]},
+
+  { no:6, id:'cost', label:'คำนวณต้นทุน', who:'ระบบ / กบก.',
+    what:'<b>คิดต้นทุนรวม</b>ของงานบำรุงรักษา และ export ออกไปใช้ต่อ',
+    inp:'งานที่ปิดแล้วจากเฟส 5', out:'SUM ต้นทุน + ไฟล์ Excel',
+    does:[
+      '<b>รายงานผลงานบำรุงรักษาบน VMS+</b> — ดาวน์โหลดได้',
+      '<b>คำนวณต้นทุนการบำรุงรักษา</b> → ได้ <b>SUM ต้นทุน</b>',
+      '<b>Export Excel</b> — ค่าแรง · ค่าใช้จ่ายต่างๆ · ค่าเบี้ยเลี้ยง · ค่าเดินทาง · ค่าน้ำมัน'
+    ],
+    asks:[
+      '<b>สูตร SUM ต้นทุน</b> — รวมอะไรบ้าง คิดต่อคันหรือต่อแผน (ค้างมาจากรอบก่อน)',
+      'ราคาอะไหล่ใช้ราคาไหน — ราคาเบิกจากคลัง หรือราคามาตรฐาน',
+      'ต้นทุนนี้<b>ต่อยอดไปหน้าประเมินความคุ้มค่า</b>ของฝั่งแจ้งซ่อมไหม'
+    ]},
+];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/</g,'&lt;');
+let cur = 1;
+
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show');
+  clearTimeout(t._x); t._x=setTimeout(()=>t.classList.remove('show'),2200); }
+
+function renderStepper(){
+  $('stepper').innerHTML = `<div class="wsteps">${PHASES.map(p=>{
+    const cls = p.no===cur ? 'active' : p.no<cur ? 'passed' : '';
+    return `<div class="wstep ${cls}" onclick="go(${p.no})" title="${p.label}">
+      <span class="num">${p.no<cur?'✓':p.no}</span><span class="lbl">${p.label}</span></div>`;
+  }).join('')}</div>`;
+}
+
+function renderPhase(){
+  const p = PHASES.find(x=>x.no===cur);
+  $('crumb').textContent = p.label;
+  $('ptitle').textContent = `เฟส ${p.no} · ${p.label}`;
+  $('who').textContent = p.who;
+
+  $('phase').innerHTML = `
+    <div class="card">
+      <h2>หน้านี้คืออะไร</h2>
+      <div class="sub">${p.what}</div>
+      <dl class="kv">
+        <dt>ใครทำ</dt><dd>${esc(p.who)}</dd>
+        <dt>รับอะไรเข้ามา</dt><dd>${p.inp}</dd>
+        <dt>ส่งอะไรออกไป</dt><dd>${p.out}</dd>
+      </dl>
+    </div>
+
+    <div class="card">
+      <h2>ทำอะไรบ้างในหน้านี้</h2>
+      <div class="sub">ลำดับตาม <code>Diagram/01-บำรุงรักษาตามวาระ/0${p.no}-*.md</code></div>
+      <ol class="does">${p.does.map(d=>`<li>${d}</li>`).join('')}</ol>
+      <div class="skel">
+        <span class="ms">dashboard_customize</span>
+        พื้นที่หน้าจอจริงของเฟสนี้ — <b>ยังว่าง</b><br>
+        จะค่อยๆ ใส่ทีละส่วนหลังเคาะเงื่อนไขด้านล่าง
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🔧 เงื่อนไขที่ต้องเคาะก่อนลงมือ <span class="badge b-low">${p.asks.length} ข้อ</span></h2>
+      <div class="sub">ตอบทีละข้อได้ ตอบแล้วผมจะบันทึกลง <code>plan.md</code> + อัปเดตผัง mermaid ให้ตรงกัน</div>
+      <ul class="asks">${p.asks.map((a,i)=>`<li><b>${p.no}.${i+1}</b> — ${a}</li>`).join('')}</ul>
+    </div>
+
+    <div class="navrow">
+      <button class="btn btn-s" onclick="go(${p.no-1})" ${p.no===1?'disabled':''}>
+        <span class="ms">arrow_back</span>ย้อนกลับ</button>
+      <span class="sp"></span>
+      <span class="sub" style="margin:0">เฟส ${p.no} จาก ${PHASES.length}</span>
+      <button class="btn btn-p" onclick="go(${p.no+1})" ${p.no===PHASES.length?'disabled':''}>
+        ถัดไป<span class="ms">arrow_forward</span></button>
+    </div>`;
+}
+
+function go(n){
+  if(n<1||n>PHASES.length) return;
+  cur = n; location.hash = '#' + n;
+  renderStepper(); renderPhase(); window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function boot(){
+  const h = parseInt((location.hash||'').replace('#',''),10);
+  cur = (h>=1 && h<=PHASES.length) ? h : 1;
+  renderStepper(); renderPhase();
+}
+window.addEventListener('hashchange', boot);
+boot();
+</script>
+</body>
+</html>

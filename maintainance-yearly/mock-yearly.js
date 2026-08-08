@@ -201,6 +201,16 @@ const MYD = {
     return lines;
   },
 
+  // ไทรมาสตามปีงบประมาณ (ต.ค.–ก.ย.): ต.ค.=เดือน 10 → Q1
+  // ผู้ทำแผนไม่ได้เลือกไทรมาสแล้ว — ระบบเติมให้ตอนฝ่ายพัสดุออกเลขงาน
+  // รับเลขเดือน 1-12 (ไม่รับ Date เพื่อให้ pure/เทสได้)
+  quarterOfMonth(month) {
+    if (month >= 10) return 'Q1';
+    if (month <= 3) return 'Q2';
+    if (month <= 6) return 'Q3';
+    return 'Q4';
+  },
+
   workNumber(quarter, year, seq) {
     return `MT-${year}-${quarter}-${String(seq).padStart(3, '0')}`;
   },

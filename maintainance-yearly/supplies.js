@@ -110,6 +110,8 @@ function renderPending(plan) {
 
 function approvePlan(plan) {
   if (!confirm('ยืนยันออกเลขงาน (อนุมัติแผนนี้)?')) return;
+  // ไทรมาสไม่ได้เลือกตอนทำแผน — ใช้ไทรมาส ณ วันที่ออกเลขงาน (ปีงบประมาณ ต.ค.–ก.ย.)
+  if (!plan.quarter) plan.quarter = MYD.quarterOfMonth(new Date().getMonth() + 1);
   plan.workNumber = MYD.workNumber(plan.quarter, plan.year, 1);
   plan.approvalStatus = 'approved';
   plan.statusHistory = [...(plan.statusHistory || []), {

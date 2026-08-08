@@ -1,5 +1,5 @@
 // app.js — app shell flow logic: central state, 6-phase chevron stepper,
-// phase router. Phase 1 (Master Plan) ships a full 5-sub-step wizard
+// phase router. Phase 1 (Master Plan) ships a 3-sub-step wizard
 // (renderMasterPlan). Phases 2-6 still render a placeholder via
 // renderPlaceholder() until their own tasks land.
 
@@ -123,7 +123,7 @@ function renderPhase() {
 // ================================================================
 // ================= MASTER PLAN WIZARD (Phase 1) =================
 // ================================================================
-// sub-stepper 4 ขั้น (state.sub, 1..4) เก็บใน memory เท่านั้น
+// sub-stepper 3 ขั้น (state.sub, 1..LAST_SUB) เก็บใน memory เท่านั้น
 // ข้อมูลแผนจริงอ่าน/เขียนผ่าน MYD.loadPlan()/MYD.savePlan() (localStorage)
 // เข้าเฟส 1 ครั้งใด ถ้าแผนอนุมัติแล้ว (approvalStatus==='approved') ข้าม
 // wizard ไปแสดงสรุปผลอนุมัติเลย ไม่ให้เริ่ม wizard ใหม่
@@ -131,8 +131,16 @@ function renderPhase() {
 const SUB_STEPS = [
   { no: 1, label: 'ชื่อแผน + เลือกรถ' },
   { no: 2, label: 'รายการอะไหล่' },
-  { no: 3, label: 'ไทรมาส' },
-  { no: 4, label: 'ทวน + อนุมัติ' },
+  { no: 3, label: 'สรุปแผนทั้งปี' },
+];
+const LAST_SUB = SUB_STEPS.length;
+
+// วิธีจัดกลุ่มรายการอะไหล่ในขั้น 2 — สลับได้สดๆ จาก dropdown ในหน้า
+// (ยังไม่มี "ตามยี่ห้อ" เพราะข้อมูลรถยังไม่มีฟิลด์ยี่ห้อ — ดู plan.md)
+const GROUP_MODES = [
+  { id: 'cat',    label: 'ตามชนิดอะไหล่' },
+  { id: 'zone',   label: 'ตามภาค' },
+  { id: 'region', label: 'ตามเขต' },
 ];
 
 const QUARTERS = [
@@ -147,7 +155,7 @@ const STATUS_BADGE_CLASS = { available: 'b-ok', pending_approval: 'b-low', trans
 function renderMasterPlan() {
   const plan = MYD.loadPlan();
   // dispatch ตามสถานะขออนุมัติเลขงาน (cross-unit workflow กับฝ่ายพัสดุ):
-  // draft -> wizard 4 ขั้น (เดิม) | pending -> รอฝ่ายพัสดุ | rejected -> ตีกลับ
+  // draft -> wizard 3 ขั้น | pending -> รอฝ่ายพัสดุ | rejected -> ตีกลับ
   // | approved -> สรุปผล (เฟส 2 ปลดล็อกเมื่อ approved เท่านั้น — ดู isPhaseComplete)
   if (plan.approvalStatus === 'approved') {
     renderApprovedSummary(plan);
@@ -167,7 +175,7 @@ function renderMasterPlan() {
 
 // ----- sub-nav -----
 function goSub(n) {
-  if (n < 1 || n > 4) return;
+  if (n < 1 || n > LAST_SUB) return;
   state.sub = n;
   renderMasterPlan();
   window.scrollTo({ top: 0 });
@@ -176,7 +184,7 @@ function goSub(n) {
 function nextSub() {
   const plan = MYD.loadPlan();
   if (!validateSub(plan, state.sub)) return;
-  if (state.sub >= 4) return;
+  if (state.sub >= LAST_SUB) return;
   goSub(state.sub + 1);
 }
 
@@ -187,21 +195,20 @@ function backSub() {
 
 function validateSub(plan, sub) {
   if (sub === 1) return !!(plan.planName && plan.planName.trim()) && (plan.selectedVehicleIds || []).length >= 1;
-  if (sub === 2) return true;
-  if (sub === 3) return !!plan.quarter;
-  return true; // sub 4: ปุ่มขออนุมัติคุมด้วย plan.preparedConfirmed แยกต่างหาก
+  if (sub === 2) return deriveLinesForPlan(plan).lines.length >= 1;
+  return true; // ขั้นสุดท้าย: ปุ่มขออนุมัติคุมด้วย plan.preparedConfirmed แยกต่างหาก
 }
 
 function updatePrimaryEnabled(plan) {
   const btn = $('btnPrimarySub');
   if (!btn) return;
-  btn.disabled = state.sub < 4 ? !validateSub(plan, state.sub) : !plan.preparedConfirmed;
+  btn.disabled = state.sub < LAST_SUB ? !validateSub(plan, state.sub) : !plan.preparedConfirmed;
 }
 
 // ----- wizard shell -----
 function renderWizard(plan) {
-  const primaryLabel = state.sub === 4 ? 'ส่งขออนุมัติเลขงาน (ฝ่ายพัสดุ)' : 'ถัดไป';
-  const primaryDisabled = state.sub === 4 ? !plan.preparedConfirmed : !validateSub(plan, state.sub);
+  const primaryLabel = state.sub === LAST_SUB ? 'ส่งขออนุมัติเลขงาน (ฝ่ายพัสดุ)' : 'ถัดไป';
+  const primaryDisabled = state.sub === LAST_SUB ? !plan.preparedConfirmed : !validateSub(plan, state.sub);
 
   $('phase').innerHTML = `
     <div class="card">
@@ -228,7 +235,7 @@ function renderWizard(plan) {
 
   $('btnBackSub').addEventListener('click', backSub);
   $('btnPrimarySub').addEventListener('click', () => {
-    if (state.sub === 4) sendForApproval(plan);
+    if (state.sub === LAST_SUB) sendForApproval(plan);
     else nextSub();
   });
 }
@@ -236,15 +243,13 @@ function renderWizard(plan) {
 function renderSubBody(plan) {
   if (state.sub === 1) return renderStep1(plan);
   if (state.sub === 2) return renderStep2(plan);
-  if (state.sub === 3) return renderStep3(plan);
-  return renderStep4(plan);
+  return renderStep3(plan);
 }
 
 function bindSubBody(plan) {
   if (state.sub === 1) bindStep1(plan);
-  else if (state.sub === 3) bindStep3(plan);
-  else if (state.sub === 4) bindStep4(plan);
-  // step 2 (อะไหล่) อ่านอย่างเดียว ไม่มี event ผูก
+  else if (state.sub === 2) bindStep2(plan);
+  else bindStep3(plan);
 }
 
 // ----- ขั้น 1: ชื่อแผน + เลือกรถเข้าแผน (ภาค → เขต → รถ) -----
@@ -400,80 +405,187 @@ function bindStep1(plan) {
   });
 }
 
-// ----- ขั้น 2: รายการอะไหล่/น้ำมัน/ไส้กรอง (auto) -----
+// ----- ขั้น 2: รายการอะไหล่/น้ำมัน/ไส้กรอง -----
+// ระบบคำนวณจากรถที่เลือก แล้ว "ทับ" ด้วยการแก้มือของผู้ใช้ที่เก็บใน plan.itemAdj
+//   itemAdj[itemId] = { qty:<จำนวนต่อคันที่แก้เอง>, off:true (ตัดออก), added:true (ผู้ใช้เพิ่มเอง) }
+// เปลี่ยนรถในขั้น 1 → ยอดที่ระบบคำนวณอัปเดตตาม แต่ของที่แก้มือไม่ถูกทับ
+function planAdj(plan) {
+  if (!plan.itemAdj) plan.itemAdj = {};
+  return plan.itemAdj;
+}
+
+// คำนวณรายการอะไหล่ของ "รถชุดหนึ่ง" — ใช้ซ้ำได้ทั้งภาพรวมและรายภาค/รายเขต
+function computeLines(vehicles, master, adj) {
+  const lines = MYD.deriveItems(vehicles, master.items);
+  const autoIds = new Set(lines.map(l => l.item.id));
+
+  // รายการที่ผู้ใช้เพิ่มเอง (ระบบไม่ได้เติมให้เพราะไม่ตรง appliesToTypes)
+  Object.keys(adj).forEach(id => {
+    if (!adj[id] || !adj[id].added || autoIds.has(id)) return;
+    const item = master.items.find(i => i.id === id);
+    if (item) lines.push({ item, vehicleCount: vehicles.length, totalQty: 0 });
+  });
+
+  return lines
+    .filter(l => !(adj[l.item.id] || {}).off)
+    .map(l => {
+      const a = adj[l.item.id] || {};
+      const per = a.qty != null ? a.qty : l.item.qtyPerVehicle;
+      return { ...l, perVehicle: per, totalQty: per * l.vehicleCount,
+               edited: a.qty != null, manual: !!a.added };
+    });
+}
+
 function deriveLinesForPlan(plan) {
   const master = MYD.loadMaster();
   const selectedVehicles = master.vehicles.filter(v => (plan.selectedVehicleIds || []).includes(v.id));
-  return { selectedVehicles, lines: MYD.deriveItems(selectedVehicles, master.items) };
+  return { master, selectedVehicles, lines: computeLines(selectedVehicles, master, planAdj(plan)) };
+}
+
+function lineRow(l, editable) {
+  const tags = [
+    l.manual ? '<span class="badge b-brand">เพิ่มเอง</span>' : '',
+    l.edited ? '<span class="badge b-low">แก้จำนวนแล้ว</span>' : '',
+  ].join(' ');
+  const qtyCell = editable
+    ? `<div class="qty" style="margin:0 auto;width:max-content">
+         <button data-act="dec" data-id="${esc(l.item.id)}">−</button>
+         <span>${esc(l.perVehicle)}</span>
+         <button data-act="inc" data-id="${esc(l.item.id)}">+</button>
+       </div>`
+    : esc(l.perVehicle);
+  const delCell = editable
+    ? `<button class="btn btn-t btn-sm" data-act="del" data-id="${esc(l.item.id)}" title="ตัดรายการนี้ออกจากแผน">
+         <span class="ms">delete</span></button>`
+    : '';
+  return `<tr>
+      <td>${esc(l.item.name)} ${tags}
+        <div style="font-size:12px;color:var(--gray-500)">${esc(MYD.triggerText(l.item))}</div></td>
+      <td class="num">${qtyCell}</td>
+      <td class="num">${esc(l.vehicleCount)}</td>
+      <td class="num"><b>${esc(l.totalQty)}</b></td>
+      <td>${esc(l.item.unit)}</td>
+      <td class="num">${delCell}</td>
+    </tr>`;
+}
+
+function lineTable(lines, editable) {
+  if (!lines.length) return `<div class="empty">ไม่มีรายการ</div>`;
+  return `<div class="tblwrap"><table class="tbl itbl">
+      <thead><tr><th>ชื่อ</th><th>ต่อคัน</th><th>จำนวนรถ</th><th>รวม</th><th>หน่วย</th><th></th></tr></thead>
+      <tbody>${lines.map(l => lineRow(l, editable)).join('')}</tbody>
+    </table></div>`;
+}
+
+// กลุ่มย่อยของขั้น 2 ตามโหมดที่เลือก — คืน [{label, lines}]
+function groupLines(plan, master, selectedVehicles, adj) {
+  const mode = state.grp || 'cat';
+
+  if (mode === 'cat') {
+    const all = computeLines(selectedVehicles, master, adj);
+    return ['part', 'oil', 'filter']
+      .map(cat => ({ label: MYD.CATEGORY_LABELS[cat], lines: all.filter(l => l.item.category === cat) }))
+      .filter(g => g.lines.length);
+  }
+
+  if (mode === 'region') {
+    const ids = [...new Set(selectedVehicles.map(v => v.region))].sort((a, b) => a - b);
+    return ids.map(r => {
+      const vs = selectedVehicles.filter(v => v.region === r);
+      return { label: `เขต ${r} — ${vs.length} คัน`, lines: computeLines(vs, master, adj) };
+    }).filter(g => g.lines.length);
+  }
+
+  // zone (ภาค)
+  return MYD.ZONE_ORDER.map(z => {
+    const vs = selectedVehicles.filter(v => MYD.regionZone(v.region) === z);
+    if (!vs.length) return null;
+    return { label: `${MYD.ZONE_LABELS[z]} — ${vs.length} คัน`, lines: computeLines(vs, master, adj) };
+  }).filter(g => g && g.lines.length);
 }
 
 function renderStep2(plan) {
-  const { selectedVehicles, lines } = deriveLinesForPlan(plan);
+  const { master, selectedVehicles } = deriveLinesForPlan(plan);
+  const adj = planAdj(plan);
+  const groups = groupLines(plan, master, selectedVehicles, adj);
+  const mode = state.grp || 'cat';
 
-  const groups = ['part', 'oil', 'filter'].map(cat => {
-    const catLines = lines.filter(l => l.item.category === cat);
-    if (!catLines.length) return '';
-    const rows = catLines.map(l => `
-      <tr>
-        <td>${esc(l.item.name)}<div style="font-size:12px;color:var(--gray-500)">${esc(MYD.triggerText(l.item))}</div></td>
-        <td class="num">${esc(l.item.qtyPerVehicle)}</td>
-        <td class="num">${esc(l.vehicleCount)}</td>
-        <td class="num">${esc(l.totalQty)}</td>
-        <td>${esc(l.item.unit)}</td>
-      </tr>`).join('');
-    return `
-      <div class="sect">${esc(MYD.CATEGORY_LABELS[cat])}</div>
-      <div class="tblwrap">
-        <table class="tbl itbl">
-          <thead><tr><th>ชื่อ</th><th>ต่อคัน</th><th>จำนวนรถ</th><th>รวม</th><th>หน่วย</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
-  }).join('');
+  // รายการที่ยังไม่อยู่ในแผน — ใส่ใน dropdown "เพิ่มอะไหล่"
+  const inPlan = new Set(computeLines(selectedVehicles, master, adj).map(l => l.item.id));
+  const addable = master.items.filter(i => !inPlan.has(i.id));
 
   return `
-    <div class="sect">ขั้นที่ 2: รายการอะไหล่/น้ำมัน/ไส้กรอง (คำนวณอัตโนมัติ)</div>
-    <div class="sub">จากรถที่เลือก ${selectedVehicles.length} คัน — รายการนี้อ่านอย่างเดียว</div>
-    ${groups || `<div class="empty">ไม่มีรายการที่เกี่ยวข้องกับรถที่เลือก</div>`}`;
-}
+    <div class="sect">ขั้นที่ 2: รายการอะไหล่/น้ำมัน/ไส้กรอง</div>
+    <div class="sub">ระบบคำนวณจากรถที่เลือก ${selectedVehicles.length} คัน — <b>ปรับจำนวน เพิ่ม หรือตัดรายการออกได้</b></div>
 
-// ----- ขั้น 3: ระบุไทรมาส -----
-function renderStep3(plan) {
-  return `
-    <div class="sect">ขั้นที่ 3: ระบุไทรมาส</div>
-    <div class="fgrid">
-      ${QUARTERS.map(q => `
-        <div class="tile tile-blue ${plan.quarter === q.q ? 'sel' : ''}" id="qtile-${q.q}" data-q="${q.q}">
-          <b>${esc(q.q)}</b><small>${esc(q.months)}</small>
-        </div>`).join('')}
-    </div>
-    <div class="fgrid">
+    <div class="fgrid" style="margin-bottom:6px">
       <div class="f sp2">
-        <label>ปี (พ.ศ.)</label>
-        <div class="in noic"><input type="number" id="fYear" min="2560" max="2700" value="${esc(plan.year || 2569)}"></div>
+        <label for="grpMode">จัดกลุ่ม</label>
+        <div class="in noic"><select id="grpMode">
+          ${GROUP_MODES.map(g => `<option value="${g.id}" ${mode === g.id ? 'selected' : ''}>${esc(g.label)}</option>`).join('')}
+        </select></div>
       </div>
-    </div>`;
+      <div class="f sp2">
+        <label for="addItem">เพิ่มอะไหล่เข้าแผน</label>
+        <div class="in noic"><select id="addItem" ${addable.length ? '' : 'disabled'}>
+          <option value="">${addable.length ? '— เลือกรายการ —' : 'ทะเบียนอะไหล่อยู่ในแผนครบแล้ว'}</option>
+          ${addable.map(i => `<option value="${esc(i.id)}">${esc(i.name)} (${esc(MYD.CATEGORY_LABELS[i.category])})</option>`).join('')}
+        </select></div>
+      </div>
+    </div>
+
+    ${mode !== 'cat'
+      ? `<div class="sub" style="margin-bottom:10px"><span class="ms" style="font-size:16px">info</span>
+           ปรับจำนวนที่นี่มีผล<b>ทั้งแผน</b> ไม่ใช่เฉพาะกลุ่มนี้ — ตัวเลข "รวม" ของแต่ละกลุ่มคิดจากจำนวนรถในกลุ่ม</div>`
+      : ''}
+
+    ${groups.length
+      ? groups.map(g => `<div class="sect">${esc(g.label)}</div>${lineTable(g.lines, true)}`).join('')
+      : `<div class="empty">ไม่มีรายการที่เกี่ยวข้องกับรถที่เลือก</div>`}`;
 }
 
-function bindStep3(plan) {
-  QUARTERS.forEach(q => {
-    $(`qtile-${q.q}`).addEventListener('click', () => {
-      plan.quarter = q.q;
+function bindStep2(plan) {
+  const adj = planAdj(plan);
+
+  $('grpMode').addEventListener('change', e => {
+    state.grp = e.target.value;
+    renderWizard(plan);
+  });
+
+  $('addItem').addEventListener('change', e => {
+    const id = e.target.value;
+    if (!id) return;
+    adj[id] = { ...(adj[id] || {}), added: true, off: false };
+    MYD.savePlan(plan);
+    toast('เพิ่มรายการเข้าแผนแล้ว');
+    renderWizard(plan);
+  });
+
+  $('subBody').querySelectorAll('[data-act]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.getAttribute('data-id');
+      const act = el.getAttribute('data-act');
+      const master = MYD.loadMaster();
+      const item = master.items.find(i => i.id === id);
+      if (!item) return;
+      const cur = adj[id] && adj[id].qty != null ? adj[id].qty : item.qtyPerVehicle;
+
+      if (act === 'del') {
+        adj[id] = { ...(adj[id] || {}), off: true, added: false };
+        toast('ตัดรายการออกจากแผนแล้ว');
+      } else {
+        const next = Math.max(0, cur + (act === 'inc' ? 1 : -1));
+        adj[id] = { ...(adj[id] || {}), qty: next };
+      }
       MYD.savePlan(plan);
       renderWizard(plan);
     });
   });
-  $('fYear').addEventListener('input', e => {
-    const n = Number(e.target.value);
-    plan.year = n || plan.year;
-    MYD.savePlan(plan);
-  });
 }
 
-// สรุปแผน (ชื่อ/จำนวนรถ/ไทรมาส-ปี/สรุปอะไหล่รวม) — ใช้ร่วมกันทั้งขั้น 4
-// (ทวนสอบก่อนส่ง) และ renderPendingView (รอฝ่ายพัสดุ) ให้ตรงกันเสมอ
+// สรุปแผน — ใช้ร่วมกันทั้งขั้น 3 (ทวนก่อนส่ง), renderPendingView และ renderApprovedSummary
 function computePlanSummary(plan) {
-  const { selectedVehicles, lines } = deriveLinesForPlan(plan);
+  const { master, selectedVehicles, lines } = deriveLinesForPlan(plan);
   const qInfo = QUARTERS.find(q => q.q === plan.quarter);
   const catSummary = ['part', 'oil', 'filter']
     .map(cat => {
@@ -482,27 +594,62 @@ function computePlanSummary(plan) {
     })
     .filter(Boolean)
     .join(' · ');
-  return { selectedVehicles, qInfo, catSummary };
+  // ไทรมาสไม่ได้เลือกตอนทำแผนแล้ว — ระบบเติมให้ตอนฝ่ายพัสดุออกเลขงาน
+  const periodText = plan.quarter
+    ? `${esc(plan.quarter)}${qInfo ? ' (' + esc(qInfo.months) + ')' : ''} / ${esc(plan.year)}`
+    : `แผนประจำปี ${esc(plan.year)} — ไทรมาสกำหนดตอนออกเลขงาน`;
+  return { master, selectedVehicles, lines, qInfo, catSummary, periodText };
 }
 
-// ----- ขั้น 4: ทวน + ผบพ.เตรียมอะไหล่ + ขออนุมัติเลขงาน -----
-function renderStep4(plan) {
-  const { selectedVehicles, qInfo, catSummary } = computePlanSummary(plan);
+// ----- ขั้น 3: สรุปแผนทั้งปี + ขออนุมัติเลขงาน -----
+function renderStep3(plan) {
+  const { master, selectedVehicles, lines, catSummary, periodText } = computePlanSummary(plan);
+
+  // รถแยกตามภาค → เขต
+  const byZone = MYD.ZONE_ORDER.map(z => {
+    const vs = selectedVehicles.filter(v => MYD.regionZone(v.region) === z);
+    if (!vs.length) return null;
+    const regions = [...new Set(vs.map(v => v.region))].sort((a, b) => a - b);
+    return { label: MYD.ZONE_LABELS[z], count: vs.length, regions };
+  }).filter(Boolean);
+
+  // รถแยกตามชนิด
+  const byType = [...new Set(selectedVehicles.map(v => v.vehicleType))]
+    .map(t => ({ t, n: selectedVehicles.filter(v => v.vehicleType === t).length }));
 
   return `
-    <div class="sect">ขั้นที่ 4: ทวนสอบแผน + ขออนุมัติเลขงาน</div>
+    <div class="sect">ขั้นที่ 3: สรุปแผนทั้งปี</div>
+    <div class="sub">ทวนสอบก่อนส่งขออนุมัติเลขงานกับฝ่ายพัสดุ</div>
+
     <div class="fgrid">
       <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
-      <div class="f sp2"><label>จำนวนรถ</label><div>${selectedVehicles.length} คัน</div></div>
-      <div class="f sp2"><label>ไทรมาส/ปี</label><div>${esc(plan.quarter)}${qInfo ? ' (' + esc(qInfo.months) + ')' : ''} / ${esc(plan.year)}</div></div>
-      <div class="f sp4"><label>สรุปอะไหล่รวม</label><div>${catSummary || 'ไม่มีรายการ'}</div></div>
+      <div class="f sp2"><label>ช่วงเวลา</label><div>${periodText}</div></div>
+      <div class="f sp2"><label>รถเข้าแผนบำรุงรักษา</label><div><b style="font-size:20px">${selectedVehicles.length}</b> คัน</div></div>
+      <div class="f sp2"><label>รายการอะไหล่ที่ต้องใช้</label><div><b style="font-size:20px">${lines.length}</b> รายการ</div></div>
+      <div class="f sp4"><label>แยกตามหมวด</label><div>${catSummary || 'ไม่มีรายการ'}</div></div>
     </div>
-    <div class="chk" style="margin-top:8px">
-      <label><input type="checkbox" id="chkPrepared" ${plan.preparedConfirmed ? 'checked' : ''}> ผบพ. ตรวจ/เตรียมอะไหล่สำหรับไทรมาสนี้แล้ว</label>
+
+    <div class="sect">รถที่เลือกเข้าแผน — แยกตามภาค</div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>ภาค</th><th class="num">จำนวนรถ</th><th>เขตที่มีรถเข้าแผน</th></tr></thead>
+      <tbody>${byZone.map(z => `<tr>
+        <td>${esc(z.label)}</td>
+        <td class="num"><b>${z.count}</b></td>
+        <td>${z.regions.map(r => `<span class="badge b-ok">เขต ${r}</span>`).join(' ')}</td>
+      </tr>`).join('')}
+      <tr><td><b>รวม</b></td><td class="num"><b>${selectedVehicles.length}</b></td>
+        <td>${byType.map(x => `<span class="badge b-low">${esc(x.t)} ${x.n}</span>`).join(' ')}</td></tr>
+      </tbody></table></div>
+
+    <div class="sect">อะไหล่ที่ต้องใช้ทั้งปี</div>
+    ${lineTable(lines, false)}
+
+    <div class="chk" style="margin-top:14px">
+      <label><input type="checkbox" id="chkPrepared" ${plan.preparedConfirmed ? 'checked' : ''}> ผบพ. ตรวจ/เตรียมอะไหล่ตามแผนนี้แล้ว</label>
     </div>`;
 }
 
-function bindStep4(plan) {
+function bindStep3(plan) {
   $('chkPrepared').addEventListener('change', e => {
     plan.preparedConfirmed = e.target.checked;
     MYD.savePlan(plan);
@@ -526,7 +673,7 @@ function sendForApproval(plan) {
 
 // ----- รอฝ่ายพัสดุอนุมัติ (แทนที่ wizard เมื่อ approvalStatus==='pending') -----
 function renderPendingView(plan) {
-  const { selectedVehicles, qInfo, catSummary } = computePlanSummary(plan);
+  const { selectedVehicles, catSummary, periodText } = computePlanSummary(plan);
 
   $('phase').innerHTML = `
     <div class="card">
@@ -535,7 +682,7 @@ function renderPendingView(plan) {
       <div class="fgrid" style="margin-top:16px">
         <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
         <div class="f sp2"><label>จำนวนรถ</label><div>${selectedVehicles.length} คัน</div></div>
-        <div class="f sp2"><label>ไทรมาส/ปี</label><div>${esc(plan.quarter)}${qInfo ? ' (' + esc(qInfo.months) + ')' : ''} / ${esc(plan.year)}</div></div>
+        <div class="f sp2"><label>ช่วงเวลา</label><div>${periodText}</div></div>
         <div class="f sp4"><label>สรุปอะไหล่รวม</label><div>${catSummary || 'ไม่มีรายการ'}</div></div>
       </div>
       ${renderTimelineHtml(plan.statusHistory)}
@@ -600,7 +747,7 @@ function renderApprovedSummary(plan) {
       <span class="badge b-ok" style="font-size:15px;padding:6px 16px">${esc(plan.workNumber)}</span>
       <div class="fgrid" style="margin-top:16px">
         <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
-        <div class="f sp2"><label>ไทรมาส/ปี</label><div>${esc(plan.quarter)} / ${esc(plan.year)}</div></div>
+        <div class="f sp2"><label>ไทรมาสที่ออกเลขงาน</label><div>${esc(plan.quarter || '—')} / ${esc(plan.year)}</div></div>
         <div class="f sp2"><label>จำนวนรถทั้งหมด</label><div>${selectedVehicles.length} คัน</div></div>
       </div>
       <div class="sect">สรุปสถานะรถตามแผน</div>
@@ -749,7 +896,7 @@ function renderProcStep1(plan) {
       <div class="sect">${esc(MYD.CATEGORY_LABELS[cat])}</div>
       <div class="tblwrap">
         <table class="tbl itbl">
-          <thead><tr><th>ชื่อ</th><th>ต่อคัน</th><th>จำนวนรถ</th><th>รวม</th><th>หน่วย</th></tr></thead>
+          <thead><tr><th>ชื่อ</th><th>ต่อคัน</th><th>จำนวนรถ</th><th>รวม</th><th>หน่วย</th><th></th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>`;
