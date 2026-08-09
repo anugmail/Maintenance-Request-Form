@@ -17,14 +17,26 @@
 3. **ไอคอน** ใช้ **Material Symbols Outlined** ผ่าน `<span class="ms">ชื่อไอคอน</span>` — ห้าม inline `<svg>` และห้าม emoji แทนไอคอน UI *(ยกเว้นกราฟ/แผนภาพที่เป็น data-visualization)*
 4. **ปุ่ม** ใช้คลาสจาก `components.css` (`.btn` + `.btn-p/.btn-s/.btn-t/.btn-link/.btn-d` + `.btn-sm/lg/xl`) — ห้ามเขียนสไตล์ปุ่มเอง
 5. **light เท่านั้น** — ยังไม่มี dark token ในระบบ ห้ามใส่ `prefers-color-scheme:dark` รายหน้า (ถ้าจะมี dark ต้องเพิ่มใน `tokens.css` ก่อนแล้วใช้ทั้งระบบพร้อมกัน)
+6. 🔴 **ห้ามคิดเอง** — เจ้าของงานกำหนด **9 ส.ค. 2569:** *"ทำตาม design system ทั้งหมด ห้ามคิดเอง"*
+   - **ต้องเปิดอ่าน `design-system/README.md` + `components.css` ก่อนลงมือทุกครั้ง** ห้ามเดาจากแพตเทิร์นของหน้าที่มีอยู่
+   - ต้องใช้ **คลาสที่มีอยู่แล้ว** เป็นอันดับแรก · จะเขียน CSS ใหม่ได้ต่อเมื่อ**ยืนยันแล้วว่าไม่มีของเดิมที่ใช้ได้**
+   - CSS ที่เขียนใหม่ **ต้องไปอยู่ `components.css`** ไม่ใช่ `<style>` ในหน้า · แล้วเพิ่มแถวในตารางข้อ 4 + Changelog ข้อ 8
+   - `<style>` ในหน้าเก็บได้เฉพาะสิ่งที่**เป็นของหน้านั้นจริงๆ ใช้ที่อื่นไม่ได้** และต้องมีคอมเมนต์บอกเหตุผล
+   - แก้ `components.css`/`tokens.css` เมื่อไหร่ → **บั๊ม `?v=` ทุกหน้าที่ลิงก์ไฟล์นั้น** (ไม่งั้น browser cache ค้าง)
 
 **ข้อยกเว้นที่อนุญาตให้เป็นค่าตายตัว** (มีเท่านี้ ต้องมีคอมเมนต์กำกับ)
 `<meta name="theme-color">` (meta ใช้ `var()` ไม่ได้) · theme preset ใน `config.js`/`config-daily.js` (เป็น**ข้อมูล** ไม่ใช่สไตล์) · rainbow ของ colour picker ใน `admin-config.html` · หน้าเอกสารสีที่ตั้งใจโชว์ hex (`design-system/*.html`) · test harness
 
 **ตรวจว่ายังสะอาดอยู่ไหม**
 ```bash
-grep -rnoiE '#[0-9a-f]{3,8}\b' --include='*.html' . \
-  | grep -viE '#fff|#000|design-system/|config.*\.js|admin-config|theme-color|/test/'
+# ห้ามใช้ grep -o ตรงนี้ — มันตัดบริบททิ้ง ทำให้ filter บรรทัดถัดไปกรอง theme-color ไม่โดน
+grep -rniE '#[0-9a-f]{3,8}\b' --include='*.html' . \
+  | grep -viE '#fff|#000|design-system/|config.*\.js|admin-config|theme-color|/test/|backup'
+```
+```bash
+# ห้ามมี emoji แทนไอคอน UI (ข้อ 3) — ต้องได้ผลว่าง
+grep -rnP '[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]' --include='*.html' --include='*.js' \
+  maintainance-yearly/ mock/ daily-record/ | grep -v '/test/'
 ```
 
 ---
@@ -134,6 +146,8 @@ grep -rnoiE '#[0-9a-f]{3,8}\b' --include='*.html' . \
 | Breadcrumb | `.crumbs` `.sep` `.cur` | บ้าน › ระดับกลาง › ปัจจุบัน (magenta) |
 | ชื่อหน้า | `.page-title` | 28px หนา |
 | Stepper ลูกศร | `.wsteps` > `.wstep` (`.active`/`.passed`) + `.num` `.lbl` | กล่องขาว คั่น chevron ›, ผ่านแล้ว = วงกลม magenta ✓ |
+| Stepper หลายกลุ่ม | `.wgrp` + `.wsteps` (`.wrap`) | หัวกลุ่มเทาเล็กเหนือแถว · `.wrap` = ชื่อขั้นยาวให้ตัดบรรทัดแทน … |
+| ป้ายสถานะบนขั้น | `.wstep` > `.st` > `.ms.done` / `.ms.todo` / `a` | ทำแล้ว (เขียว) · ยังไม่ทำ (เทา) · ลิงก์ไปหน้าจริง |
 | หัวข้อ section | `.sect` | แถบตั้ง magenta 4px + ตัวหนา |
 | ฟอร์ม grid | `.fgrid` (+ `.sp2` `.sp4` กว้าง 2/เต็มแถว) | 4 คอลัมน์ → 2 (≤1100px) → 1 (≤760px) |
 | ช่องกรอก | `.f` > `label` + `.in` > `.ms` + `input` | label หนาอยู่บน, ไอคอนนำหน้าในช่อง |
@@ -235,6 +249,7 @@ design-system/
 | 17 ก.ค. 2569 | v0.2 | เพิ่ม pattern หน้าเว็บจาก screenshot หน้าจริง "สร้างคำขอใช้ยานพาหนะ": `.shell/.side/.topbar/.crumbs/.page-title/.wsteps/.sect/.fgrid/.f(.ro/.err)/.rads/.numfld/.actions` — mock ฟอร์มแจ้งซ่อมย้ายมาใช้โครงนี้ |
 | 17 ก.ค. 2569 | v0.3 | เพิ่ม component สำหรับ flow กบค./ติดตามสถานะ: `.nv .cnt` (badge ตัวเลขบน sidebar) · `.job` (แถวรายการเรื่อง) · `.tl` (timeline ประวัติสถานะ) · `.chk` + checkbox (checklist ตรวจสภาพ) |
 | 17 ก.ค. 2569 | v0.5 | เพิ่ม `.tbl` + `.tblwrap` (ตารางข้อมูล — เมนูคลังอะไหล่) — ตัดออกจากรายการ "สิ่งที่ยังขาด" ได้ |
+| 9 ส.ค. 2569 | v0.6 | เพิ่ม `.wgrp` + `.wsteps.wrap` + `.wstep .st` (stepper หลายกลุ่ม + ป้ายสถานะบนขั้น) — เกิดจากหน้า `plan-skeleton` ที่มี 11 หน้าจอ 3 กลุ่มในหน้าเดียว · **ครั้งแรกที่โดนจับได้ว่าเขียน CSS คอมโพเนนต์ในหน้าแทนที่จะเพิ่มในระบบก่อน** — ย้ายกลับมาที่นี่แล้ว |
 
 ## 9. สิ่งที่ยังขาด (รอ screenshot / รอตัดสินใจ)
 

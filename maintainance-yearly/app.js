@@ -473,7 +473,7 @@ function renderProcurementConfirmed(plan) {
       </div>
     </div>
     <div class="card">
-      <div class="sect">📨 ส่ง Noti แจ้งเจ้าของรถ ${selectedVehicles.length} คัน + กรย. วันที่เข้าตรวจ</div>
+      <div class="sect"><span class="ms">mail</span> ส่ง Noti แจ้งเจ้าของรถ ${selectedVehicles.length} คัน + กรย. วันที่เข้าตรวจ</div>
       <div class="sub">ระบบส่งการแจ้งเตือนอัตโนมัติแล้ว (mock)</div>
     </div>
     <div class="card">

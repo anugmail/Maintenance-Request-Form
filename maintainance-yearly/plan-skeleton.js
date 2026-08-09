@@ -1,157 +1,59 @@
-// plan-skeleton.js — โครงหน้า "ออกเลขงาน" ที่ "แก้โครงได้" (แบบ B+)
+// plan-skeleton.js — โครงทั้งโฟลว์บำรุงรักษาที่ "แก้โครงได้" (11 หน้าจอ)
 //
-// ใช้ตอนไปเก็บ requirement — นั่งกับเจ้าของงานแล้ว เพิ่ม/ลด/แก้ชื่อคอลัมน์ได้สดๆ
+// ใช้ตอนไปเก็บ requirement — นั่งกับเจ้าของงานแล้ว เพิ่ม/ลด/แก้ชื่อฟิลด์ได้สดๆ
 // พร้อมดึง "ตัวอย่างข้อมูลจริง" จาก MYD มาโชว์ข้างๆ ให้เห็นภาพ
-// คอลัมน์ที่ยังไม่มีข้อมูลในระบบ = requirement ใหม่ → ติดป้าย "รอข้อมูล" + ใส่โน้ตได้
+// ฟิลด์ที่ยังไม่มีข้อมูลในระบบ = requirement ใหม่ → ติดป้าย "รอข้อมูล" + ใส่โน้ตได้
+//
+// หน้านี้เป็น "โครงเปล่า" โดยตั้งใจ — ไม่มีคำอธิบายว่าเฟสนี้คืออะไร ใครทำ ลำดับยังไง
+// เพราะ flow มีเจ้าของอยู่แล้วที่ Diagram/01-บำรุงรักษาตามวาระ/ ถ้าเขียนซ้ำ 2 ที่จะเพี้ยนกัน
 //
 // แยกจากหน้าจริงโดยตั้งใจ: แก้ตรงนี้ไม่กระทบ plan-new.html
 //   โครงที่ตกลง = ไฟล์นี้ (สัญญา) · ของที่ทำแล้ว = หน้าจริง (สถานะ)
-// เก็บใน localStorage แยก key + Export เป็น Markdown แปะเข้า plan.md ได้
 //
-// ต้องโหลด common.js + mock-yearly.js ก่อนไฟล์นี้
+// ต้องโหลด common.js + mock-yearly.js + skeleton-data.js ก่อนไฟล์นี้
 
 const SKEL_KEY = 'maintaind.yearly.skeleton.v1';
+const ASK_STATUS = { open: 'รอเคาะ', agreed: 'เคาะแล้ว', dropped: 'ตกไป' };
+const ASK_BADGE  = { open: 'b-out', agreed: 'b-ok', dropped: 'b-low' };
 
-// ---------- ตัวอย่างข้อมูลจริง ----------
-// src ของฟิลด์ต้องเป็น key ในตารางนี้ ถ้าไม่มี = ยังไม่มีข้อมูลในระบบ (requirement ใหม่)
-let master, plan, sampleV, sampleL, planLines;
-
-function buildSample() {
-  master = MYD.loadMaster();
-  plan = MYD.loadPlans()[0] || MYD.SEED_PLAN;
-  const r = MYD.planLines(plan, master);
-  planLines = r.lines;
-  sampleV = r.vehicles[0] || master.vehicles[0];
-  sampleL = planLines[0];
+// ---------- storage + migration ----------
+//
+// key คงเดิมเสมอ แล้วเก็บรุ่นของ schema ไว้ในก้อนข้อมูลแทน
+// (ขึ้น key ใหม่ = ของที่เจ้าของงานแก้ไว้หายทันที ซึ่งเป็นสิ่งเดียวที่ห้ามเกิด)
+function migrate(old) {
+  const byId = new Map((old.screens || []).map(s => [s.id, s]));
+  const screens = DEFAULT_SKEL.screens.map(def => {
+    const prev = byId.get(def.id);
+    if (!prev) return deepCopy(def);
+    byId.delete(def.id);
+    // ของที่เจ้าของงานแก้ไว้ชนะเสมอ — เติมเฉพาะคีย์ที่รุ่นเก่ายังไม่มี
+    return {
+      ...prev,
+      group: prev.group ?? def.group,
+      no:    prev.no    ?? def.no,
+      icon:  prev.icon  ?? def.icon,
+      real:  prev.real !== undefined ? prev.real : def.real,
+      asks:  prev.asks  ?? deepCopy(def.asks || []),
+    };
+  });
+  // หน้าจอที่เจ้าของงานเพิ่มเองไม่มีใน DEFAULT_SKEL — เก็บไว้ต่อท้าย ห้ามทิ้ง
+  byId.forEach(s => screens.push({ group: 'unit', no: '', real: null, asks: [], ...s }));
+  return { version: 2, screens };
 }
 
-const SAMPLE = {
-  'p.workNumber':  () => plan.workNumber || '(ยังไม่ออกเลข)',
-  'p.planName':    () => plan.planName,
-  'p.period':      () => quarterYearText(plan),
-  'p.vehCount':    () => (plan.selectedVehicleIds || []).length + ' คัน',
-  'p.lineCount':   () => planLines.length + ' รายการ',
-  'p.ack':         () => plan.suppliesAckAt ? 'รับทราบแล้ว' : 'รอรับทราบ',
-  'v.plate':       () => sampleV.plate,
-  'v.vehicleType': () => sampleV.vehicleType,
-  'v.brand':       () => sampleV.brand,
-  'v.chassis':     () => sampleV.chassis,
-  'v.status':      () => MYD.STATUS_LABELS[sampleV.status] || sampleV.status,
-  'v.region':      () => 'เขต ' + sampleV.region,
-  'v.zone':        () => MYD.ZONE_LABELS[MYD.regionZone(sampleV.region)],
-  'v.mileage':     () => sampleV.mileage.toLocaleString('th-TH') + ' กม.',
-  'v.engineHours': () => sampleV.engineHours.toLocaleString('th-TH') + ' ชม.',
-  'i.name':        () => sampleL && sampleL.item.name,
-  'i.trigger':     () => sampleL && MYD.triggerText(sampleL.item),
-  'i.perVehicle':  () => sampleL && sampleL.perVehicle,
-  'i.vehicleCount':() => sampleL && sampleL.vehicleCount,
-  'i.totalQty':    () => sampleL && sampleL.totalQty,
-  'i.unit':        () => sampleL && sampleL.item.unit,
-  'i.category':    () => sampleL && MYD.CATEGORY_LABELS[sampleL.item.category],
-};
+// deepCopy() มาจาก mock-yearly.js (global) — ห้ามประกาศซ้ำ classic script จะ SyntaxError
 
-const SRC_LABELS = {
-  '': '— ยังไม่มีข้อมูลในระบบ —',
-  'p.workNumber': 'แผน · เลขงาน', 'p.planName': 'แผน · ชื่อแผน', 'p.period': 'แผน · ไทรมาส/ปี',
-  'p.vehCount': 'แผน · จำนวนรถ', 'p.lineCount': 'แผน · จำนวนรายการอะไหล่', 'p.ack': 'แผน · สถานะพัสดุ',
-  'v.plate': 'รถ · ทะเบียน', 'v.vehicleType': 'รถ · ชนิดรถ', 'v.brand': 'รถ · ยี่ห้อ/รุ่นอุปกรณ์',
-  'v.chassis': 'รถ · ยี่ห้อรถบรรทุก', 'v.status': 'รถ · สถานะ', 'v.region': 'รถ · เขต', 'v.zone': 'รถ · ภาค',
-  'v.mileage': 'รถ · เลขไมล์', 'v.engineHours': 'รถ · ชม.เครื่อง',
-  'i.name': 'อะไหล่ · ชื่อ', 'i.trigger': 'อะไหล่ · เงื่อนไขรอบ', 'i.perVehicle': 'อะไหล่ · ต่อคัน',
-  'i.vehicleCount': 'อะไหล่ · จำนวนรถ', 'i.totalQty': 'อะไหล่ · รวม', 'i.unit': 'อะไหล่ · หน่วย',
-  'i.category': 'อะไหล่ · หมวด',
-};
-
-// ---------- โครงตั้งต้น = สิ่งที่หน้าจริงมีอยู่ตอนนี้ ----------
-// done:true = ทำในหน้าจริงแล้ว · false = ตกลงกันไว้แต่ยังไม่ทำ
-const f = (key, label, src, done = true) => ({ key, label, src, show: true, note: '', done });
-
-const DEFAULT_SKEL = {
-  screens: [
-    { id: 's1', title: 'ขั้น 1 · ชื่อแผน + เลือกรถ', sections: [
-      { id: 's1-head', title: 'หัวแผน', kind: 'form', fields: [
-        f('planName', 'ชื่อแผน', 'p.planName'),
-      ]},
-      { id: 's1-veh', title: 'ตารางรถในเขต (ภาค → เขต → กางออก)', kind: 'table', fields: [
-        f('chk',   'ช่องเลือก', ''),
-        f('plate', 'ทะเบียน', 'v.plate'),
-        f('type',  'ประเภท', 'v.vehicleType'),
-        f('brand', 'ยี่ห้อ/รุ่นอุปกรณ์', 'v.brand'),
-        f('status','สถานะ', 'v.status'),
-      ]},
-    ]},
-
-    { id: 's2', title: 'ขั้น 2 · รายการอะไหล่', sections: [
-      { id: 's2-tool', title: 'แถบเครื่องมือ', kind: 'form', fields: [
-        f('group', 'จัดกลุ่ม (ชนิดอะไหล่/ภาค/เขต/ยี่ห้อ)', ''),
-        f('add',   'เพิ่มอะไหล่เข้าแผน', ''),
-      ]},
-      { id: 's2-tbl', title: 'ตารางอะไหล่ (แก้จำนวน/ลบได้)', kind: 'table', fields: [
-        f('name',  'ชื่อ', 'i.name'),
-        f('per',   'ต่อคัน', 'i.perVehicle'),
-        f('nveh',  'จำนวนรถ', 'i.vehicleCount'),
-        f('total', 'รวม', 'i.totalQty'),
-        f('unit',  'หน่วย', 'i.unit'),
-        f('del',   'ปุ่มลบ', ''),
-      ]},
-    ]},
-
-    { id: 's3', title: 'ขั้น 3 · สรุปแผนทั้งปี', sections: [
-      { id: 's3-sum', title: 'กล่องสรุปหัวหน้า', kind: 'form', fields: [
-        f('planName', 'ชื่อแผน', 'p.planName'),
-        f('period',   'ช่วงเวลา', 'p.period'),
-        f('nveh',     'รถเข้าแผนบำรุงรักษา', 'p.vehCount'),
-        f('nline',    'รายการอะไหล่ที่ต้องใช้', 'p.lineCount'),
-      ]},
-      { id: 's3-zone', title: 'ตารางรถแยกตามภาค', kind: 'table', fields: [
-        f('zone',  'ภาค', 'v.zone'),
-        f('regs',  'เขตที่มีรถเข้าแผน', 'v.region'),
-        f('n',     'จำนวนรถ', 'p.vehCount'),
-      ]},
-      { id: 's3-brand', title: 'ตารางรถแยกตามยี่ห้อ/รุ่นอุปกรณ์', kind: 'table', fields: [
-        f('brand',   'ยี่ห้อ/รุ่นอุปกรณ์', 'v.brand'),
-        f('chassis', 'ยี่ห้อรถบรรทุก', 'v.chassis'),
-        f('type',    'ชนิดรถ', 'v.vehicleType'),
-        f('n',       'จำนวนรถ', 'p.vehCount'),
-      ]},
-      { id: 's3-items', title: 'ตารางอะไหล่ที่ต้องใช้ทั้งปี', kind: 'table', fields: [
-        f('name',  'ชื่อ', 'i.name'),
-        f('per',   'ต่อคัน', 'i.perVehicle'),
-        f('nveh',  'จำนวนรถ', 'i.vehicleCount'),
-        f('total', 'รวม', 'i.totalQty'),
-        f('unit',  'หน่วย', 'i.unit'),
-      ]},
-    ]},
-
-    { id: 'sup', title: 'หน้าฝ่ายพัสดุ · เอกสารแจ้งเตรียมอะไหล่', sections: [
-      { id: 'sup-head', title: 'หัวเอกสาร', kind: 'form', fields: [
-        f('wn',     'เลขงาน', 'p.workNumber'),
-        f('ack',    'สถานะรับทราบ', 'p.ack'),
-        f('name',   'ชื่อแผน', 'p.planName'),
-        f('period', 'ไทรมาสที่ออกเลขงาน', 'p.period'),
-        f('nveh',   'รถเข้าแผน', 'p.vehCount'),
-        f('nline',  'รายการอะไหล่ที่ต้องเตรียม', 'p.lineCount'),
-      ]},
-      { id: 'sup-items', title: 'ตารางอะไหล่ที่ต้องเตรียม/สั่ง', kind: 'table', fields: [
-        f('name',  'ชื่อ', 'i.name'),
-        f('per',   'ต่อคัน', 'i.perVehicle'),
-        f('nveh',  'จำนวนรถ', 'i.vehicleCount'),
-        f('total', 'รวมที่ต้องเตรียม', 'i.totalQty'),
-        f('unit',  'หน่วย', 'i.unit'),
-      ]},
-    ]},
-  ],
-};
-
-// ---------- storage ----------
 function loadSkel() {
   try {
     const raw = localStorage.getItem(SKEL_KEY);
     if (!raw) throw 0;
     const s = JSON.parse(raw);
     if (!s || !Array.isArray(s.screens)) throw 0;
-    return s;
-  } catch { return JSON.parse(JSON.stringify(DEFAULT_SKEL)); }
+    if (s.version === 2) return s;
+    const up = migrate(s);            // v1 (หรือไม่มี version) → v2
+    localStorage.setItem(SKEL_KEY, JSON.stringify(up));
+    return up;
+  } catch { return deepCopy(DEFAULT_SKEL); }
 }
 function saveSkel() { localStorage.setItem(SKEL_KEY, JSON.stringify(SKEL)); }
 function resetSkel() { localStorage.removeItem(SKEL_KEY); SKEL = loadSkel(); }
@@ -168,22 +70,37 @@ function sampleFor(src) {
   try { const v = SAMPLE[src](); return v == null ? null : String(v); } catch { return null; }
 }
 function countAll() {
-  let total = 0, shown = 0, waiting = 0, notDone = 0;
-  SKEL.screens.forEach(sc => sc.sections.forEach(se => se.fields.forEach(fd => {
-    total++;
-    if (fd.show) shown++;
-    if (!fd.src) waiting++;
-    if (!fd.done) notDone++;
-  })));
-  return { total, shown, waiting, notDone };
+  let total = 0, shown = 0, waiting = 0, notDone = 0, asks = 0, agreed = 0;
+  SKEL.screens.forEach(sc => {
+    sc.sections.forEach(se => se.fields.forEach(fd => {
+      total++;
+      if (fd.show) shown++;
+      if (!fd.src) waiting++;
+      if (!fd.done) notDone++;
+    }));
+    (sc.asks || []).forEach(a => { asks++; if (a.status === 'agreed') agreed++; });
+  });
+  return { total, shown, waiting, notDone, asks, agreed };
 }
 
 // ---------- render ----------
 function renderTabs() {
-  $('tabs').innerHTML = `<div class="wsteps">${SKEL.screens.map((s, i) => `
-    <div class="wstep ${i === cur ? 'active' : ''}" onclick="goScreen(${i})" title="${esc(s.title)}">
-      <span class="num">${i + 1}</span><span class="lbl">${esc(s.title)}</span>
-    </div>`).join('')}</div>`;
+  const groups = ['issue', 'phase', 'unit'];
+  $('tabs').innerHTML = groups.map(g => {
+    const items = SKEL.screens.map((s, i) => ({ s, i })).filter(x => (x.s.group || 'unit') === g);
+    if (!items.length) return '';
+    return `<div class="wgrp">${esc(GROUP_LABELS[g] || g)}</div>
+      <div class="wsteps wrap">${items.map(({ s, i }) => `
+        <div class="wstep ${i === cur ? 'active' : ''}" onclick="goScreen(${i})" title="${esc(s.title)}">
+          <span class="num">${s.no ? esc(s.no) : `<span class="ms">${esc(s.icon || 'description')}</span>`}</span>
+          <span class="lbl">${esc(s.title)}</span>
+          <span class="st">${s.real
+            ? `<span class="ms done" title="ทำหน้าจริงแล้ว">check_circle</span
+               ><a href="${esc(s.real)}" target="_blank" rel="noopener"
+                  onclick="event.stopPropagation()" title="เปิดหน้าจริง"><span class="ms">open_in_new</span></a>`
+            : '<span class="ms todo" title="ยังเป็นหน้าเปล่า">radio_button_unchecked</span>'}</span>
+        </div>`).join('')}</div>`;
+  }).join('');
 }
 
 function fieldRow(secId, fd, i, len) {
@@ -243,6 +160,46 @@ function preview(sec) {
   </table></div>`;
 }
 
+function renderAsks() {
+  const sc = screenNow();
+  const asks = sc.asks || [];
+  const nAgreed = asks.filter(a => a.status === 'agreed').length;
+  return `<div class="card">
+    <div class="page-title-row" style="margin-bottom:6px">
+      <h2 style="margin:0"><span class="ms">build</span> เงื่อนไขที่ต้องเคาะ</h2>
+      <span class="badge ${nAgreed === asks.length && asks.length ? 'b-ok' : 'b-out'}" style="margin-left:10px">เคาะแล้ว ${nAgreed}/${asks.length}</span>
+    </div>
+    ${asks.length ? `<div class="tblwrap"><table class="tbl">
+      <thead><tr>
+        <th style="width:6%">ข้อ</th>
+        <th style="width:40%">คำถาม</th>
+        <th style="width:34%">คำตอบ</th>
+        <th style="width:14%">สถานะ</th>
+        <th style="width:6%"></th>
+      </tr></thead>
+      <tbody>${asks.map((a, i) => `<tr>
+        <td><code>${esc(a.id)}</code></td>
+        <td>${editMode
+              ? `<input value="${esc(a.q)}" oninput="setAsk(${i},'q',this.value)" style="width:100%">`
+              : esc(a.q)}</td>
+        <td>${editMode
+              ? `<input value="${esc(a.ans)}" placeholder="คำตอบจากเจ้าของงาน…" oninput="setAsk(${i},'ans',this.value)" style="width:100%">`
+              : esc(a.ans || '—')}</td>
+        <td>${editMode
+              ? `<select onchange="setAsk(${i},'status',this.value)" style="width:100%">
+                   ${Object.keys(ASK_STATUS).map(k => `<option value="${k}" ${a.status === k ? 'selected' : ''}>${esc(ASK_STATUS[k])}</option>`).join('')}
+                 </select>`
+              : `<span class="badge ${ASK_BADGE[a.status]}">${esc(ASK_STATUS[a.status])}</span>`}</td>
+        <td class="num">${editMode
+              ? `<button class="btn btn-t btn-sm" onclick="delAsk(${i})" title="ลบ"><span class="ms">delete</span></button>` : ''}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>` : '<div class="empty">ยังไม่มีคำถามค้างในหน้าจอนี้</div>'}
+    ${editMode ? `<div class="actions" style="margin-top:10px">
+      <button class="btn btn-s btn-sm" onclick="addAsk()"><span class="ms">add</span> เพิ่มคำถาม</button>
+    </div>` : ''}
+  </div>`;
+}
+
 function renderBody() {
   const sc = screenNow();
   $('body').innerHTML = sc.sections.map(sec => `
@@ -275,9 +232,10 @@ function renderBody() {
       <div class="sect" style="margin-top:18px">พรีวิว</div>
       ${preview(sec)}
     </div>`).join('') +
-    (editMode ? `<div class="actions">
+    (editMode ? `<div class="actions" style="margin-bottom:18px">
       <button class="btn btn-s" onclick="addSection()"><span class="ms">add</span> เพิ่มหัวข้อในหน้านี้</button>
-    </div>` : '');
+    </div>` : '') +
+    renderAsks();
 }
 
 function renderCounts() {
@@ -286,7 +244,8 @@ function renderCounts() {
     <b>${c.total}</b> ฟิลด์ทั้งหมด ·
     <b>${c.shown}</b> เปิดแสดง ·
     <span class="badge b-out">รอข้อมูล ${c.waiting}</span>
-    <span class="badge b-low">ยังไม่ทำในหน้าจริง ${c.notDone}</span>`;
+    <span class="badge b-low">ยังไม่ทำในหน้าจริง ${c.notDone}</span>
+    <span class="badge ${c.agreed === c.asks && c.asks ? 'b-ok' : 'b-brand'}">เคาะแล้ว ${c.agreed}/${c.asks}</span>`;
 }
 
 function render() { renderTabs(); renderBody(); renderCounts(); }
@@ -323,15 +282,36 @@ function delSection(secId) {
   screenNow().sections = screenNow().sections.filter(s => s.id !== secId);
   saveSkel(); render(); toast('ลบหัวข้อแล้ว');
 }
+function setAsk(i, k, v) {
+  screenNow().asks[i][k] = v; saveSkel();
+  if (k === 'status') render(); else renderCounts();
+}
+function addAsk() {
+  const text = prompt('คำถามใหม่ที่ต้องเคาะกับเจ้าของงาน');
+  if (!text || !text.trim()) return;
+  const sc = screenNow();
+  sc.asks = sc.asks || [];
+  sc.asks.push({ id: `${sc.no || sc.id}.${sc.asks.length + 1}`, q: text.trim(), ans: '', status: 'open' });
+  saveSkel(); render(); toast('เพิ่มคำถามแล้ว');
+}
+function delAsk(i) {
+  const sc = screenNow();
+  if (!confirm(`ลบคำถาม "${sc.asks[i].q}"?`)) return;
+  sc.asks.splice(i, 1); saveSkel(); render(); toast('ลบคำถามแล้ว');
+}
 
 // ---------- export ----------
 function exportMd() {
   const c = countAll();
-  let md = `# โครงหน้า "ออกเลขงาน" — ที่ตกลงกับเจ้าของงาน\n\n`;
+  let md = `# โครงหน้าจอทั้งโฟลว์บำรุงรักษา — ที่ตกลงกับเจ้าของงาน\n\n`;
   md += `> สร้างจาก \`maintainance-yearly/plan-skeleton.html\` · ${nowTh()}\n`;
-  md += `> รวม **${c.total}** ฟิลด์ · เปิดแสดง **${c.shown}** · **รอข้อมูล ${c.waiting}** · **ยังไม่ทำในหน้าจริง ${c.notDone}**\n\n`;
+  md += `> **${SKEL.screens.length}** หน้าจอ · **${c.total}** ฟิลด์ · เปิดแสดง **${c.shown}** · `;
+  md += `**รอข้อมูล ${c.waiting}** · **ยังไม่ทำในหน้าจริง ${c.notDone}** · **เคาะแล้ว ${c.agreed}/${c.asks}**\n\n`;
+
   SKEL.screens.forEach(sc => {
-    md += `## ${sc.title}\n\n`;
+    const st = sc.real ? `✅ ทำแล้ว — \`${sc.real}\`` : '⬜ ยังเป็นหน้าเปล่า';
+    md += `## [${GROUP_LABELS[sc.group] || sc.group}] ${sc.no ? sc.no + ' · ' : ''}${sc.title}\n\n${st}\n\n`;
+
     sc.sections.forEach(se => {
       md += `### ${se.title}\n\n`;
       md += `| ฟิลด์ | แสดง | ข้อมูลจากไหน | ทำแล้ว | โน้ต |\n|---|---|---|---|---|\n`;
@@ -340,7 +320,22 @@ function exportMd() {
       });
       md += `\n`;
     });
+
+    if ((sc.asks || []).length) {
+      md += `### เงื่อนไขที่ต้องเคาะ\n\n`;
+      sc.asks.forEach(a => {
+        const box = a.status === 'agreed' ? 'x' : ' ';
+        const tail = a.status === 'dropped' ? ' _(ตกไป)_' : (a.ans ? ` — **ตอบ:** ${a.ans}` : '');
+        md += `- [${box}] **${a.id}** ${a.q}${tail}\n`;
+      });
+      md += `\n`;
+    }
+
+    const sw = sc.sections.flatMap(s => s.fields).filter(x => !x.src).length;
+    const sn = sc.sections.flatMap(s => s.fields).filter(x => !x.done).length;
+    md += `_ช่องว่าง: รอข้อมูล ${sw} · ยังไม่ทำในหน้าจริง ${sn}_\n\n`;
   });
+
   $('mdout').value = md;
   $('mdwrap').classList.remove('hidden');
   $('mdout').select();

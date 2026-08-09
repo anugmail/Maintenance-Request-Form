@@ -3,16 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>โครงหน้าออกเลขงาน (แก้โครงได้) | Maintain-D</title>
+<title>โครงหน้าจอทั้งโฟลว์ (แก้โครงได้) | Maintain-D</title>
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="../design-system/tokens.css?v=20260808-align">
-<link rel="stylesheet" href="../design-system/components.css?v=20260808-align">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260809-ds06">
+<link rel="stylesheet" href="../design-system/components.css?v=20260809-ds06">
 <style>
-  /* เฉพาะหน้านี้ — ใช้ token เท่านั้น ไม่มีสี hardcode */
+  /* เฉพาะหน้านี้ — ใช้ token เท่านั้น ไม่มีสี hardcode
+     stepper ที่นี่กดได้ + ใช้ไอคอนแทนเลขขั้นในบางกลุ่ม
+     (กลุ่ม .wgrp + ป้ายสถานะ .st ย้ายเป็น component กลางใน components.css v0.6 แล้ว) */
   .wstep{cursor:pointer}
+  .wstep .num .ms{font-size:20px}
   .tbl input[type=text],.tbl input:not([type]),.tbl select{font-size:13.5px;padding:6px 8px}
   .tbl code{background:var(--gray-100);border-radius:5px;padding:1px 6px;font-size:12.5px;color:var(--gray-700)}
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
@@ -20,10 +23,6 @@
   #counts{font-size:13.5px;color:var(--gray-600)}
   #mdout{width:100%;min-height:320px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;
          border:1px solid var(--gray-300);border-radius:var(--r-sm);padding:12px}
-  .how{border-left:4px solid var(--primary-600);background:var(--primary-25);
-       border:1px solid var(--brand-200);border-left:4px solid var(--primary-600);
-       border-radius:var(--r-md);padding:14px 16px;margin-bottom:18px;font-size:14px;color:var(--gray-700);line-height:1.7}
-  .how b{color:var(--gray-900)}
 </style>
 </head>
 <body>
@@ -34,8 +33,7 @@
     <a class="nv" href="plan-new.html" title="ออกเลขงาน — สร้างแผนใหม่"><span class="ms">note_add</span></a>
     <a class="nv" href="supplies.html" title="ฝ่ายพัสดุ"><span class="ms">inventory_2</span></a>
     <a class="nv" href="admin.html" title="Admin — ข้อมูลหลัก"><span class="ms">settings</span></a>
-    <a class="nv on" href="plan-skeleton.html" title="โครงหน้าออกเลขงาน (แก้ได้)"><span class="ms">dashboard_customize</span></a>
-    <a class="nv" href="skeleton.html" title="โครงกระดูก 5 เฟส"><span class="ms">account_tree</span></a>
+    <a class="nv on" href="plan-skeleton.html" title="โครงหน้าจอทั้งโฟลว์ (แก้ได้)"><span class="ms">dashboard_customize</span></a>
   </aside>
 
   <div class="work">
@@ -45,23 +43,14 @@
     </div>
 
     <main class="content">
-      <div class="draft">🧩 โครงแก้ได้ — ใช้ตอนเก็บ requirement · แก้ที่นี่<b>ไม่กระทบหน้าจริง</b> (<a href="plan-new.html">plan-new.html</a>)</div>
+      <div class="draft"><span class="ms">dashboard_customize</span> โครงแก้ได้ — ใช้ตอนเก็บ requirement · แก้ที่นี่<b>ไม่กระทบหน้าจริง</b> (<a href="plan-new.html">plan-new.html</a>)</div>
 
       <div class="crumbs">
         <span class="ms">dashboard_customize</span><span class="sep">›</span>
-        <span class="cur">โครงหน้าออกเลขงาน</span>
+        <span class="cur">โครงหน้าจอทั้งโฟลว์</span>
       </div>
 
-      <h1 class="page-title">โครงหน้า "ออกเลขงาน" — แก้โครงได้</h1>
-
-      <div class="how">
-        <b>ใช้ยังไง</b> — นั่งกับเจ้าของงาน แล้วแก้ตรงนี้สดๆ:
-        เปลี่ยนชื่อคอลัมน์ · ติ๊ก <b>แสดง/ซ่อน</b> · <b>เลื่อนลำดับ</b> · <b>เพิ่ม/ลบ</b> ฟิลด์ · ใส่<b>โน้ต</b>ตามที่เขาพูด<br>
-        คอลัมน์ที่ยังไม่มีข้อมูลในระบบจะขึ้น <span class="badge b-out">รอข้อมูล</span> —
-        <b>นั่นแหละคือ requirement ใหม่</b> · ช่อง "ตัวอย่างจริง" ดึงจากแผน <code>MT-2569-Q1-001</code> มาให้เห็นภาพ<br>
-        เสร็จแล้วกด <b>Export Markdown</b> เอาไปแปะ <code>plan.md</code> เป็นข้อสรุปที่ตกลงกันได้เลย<br>
-        <span style="color:var(--gray-500)">กติกา: โครงที่นี่ = <b>สิ่งที่ตกลงไว้</b> · หน้าจริง = <b>สิ่งที่ทำแล้ว</b> — ป้าย "ยังไม่ทำในหน้าจริง" คือช่องว่างระหว่างสองอัน</span>
-      </div>
+      <h1 class="page-title">โครงหน้าจอทั้งโฟลว์บำรุงรักษา — แก้โครงได้</h1>
 
       <div class="toolbar">
         <button class="btn btn-p" id="btnEdit"><span class="ms">visibility</span> ดูอย่างเดียว</button>
@@ -86,6 +75,7 @@
 
 <script src="common.js"></script>
 <script src="mock-yearly.js"></script>
+<script src="skeleton-data.js"></script>
 <script src="plan-skeleton.js"></script>
 </body>
 </html>

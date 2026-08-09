@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="design-system/tokens.css?v=20260808-align">
+<link rel="stylesheet" href="design-system/tokens.css?v=20260809-ds06">
 <title>VMS Plus · ค้นหาประวัติการซ่อมรถรายคัน</title>
 <style>
   *{box-sizing:border-box}
@@ -242,7 +242,7 @@
         </div>
         <div class="dropdown" id="dropdown" role="listbox"></div>
       </div>
-      <div class="hint">💡 ตัวอย่างข้อมูลจำลอง — ลองพิมพ์ <b>เครน</b> หรือคลิกรถด้านล่าง</div>
+      <div class="hint"><span class="ms">lightbulb</span> ตัวอย่างข้อมูลจำลอง — ลองพิมพ์ <b>เครน</b> หรือคลิกรถด้านล่าง</div>
     </div>
     <div class="reccap">รถที่เข้าซ่อมล่าสุด</div>
     <div class="vgrid" id="vgrid"></div>
@@ -591,9 +591,9 @@
         (r.egp?'<span class="egp">e-GP</span>':'')+
         stPill(r.st)+'</div>'+
       '<div class="rec-sym">'+r.sym+'</div>'+
-      '<div class="rec-foot"><span>📅 <b>'+dateStr+'</b></span>'+
-        '<span>🛠 <b>'+r.owner+'</b></span>'+
-        '<span>📍 '+r.place+'</span>'+
+      '<div class="rec-foot"><span><span class="ms">event</span> <b>'+dateStr+'</b></span>'+
+        '<span><span class="ms">build</span> <b>'+r.owner+'</b></span>'+
+        '<span><span class="ms">place</span> '+r.place+'</span>'+
         (r.down!=null?'<span>⏱ '+r.down+' วัน</span>':'')+
         '<span class="cost num">'+costStr+'</span></div></div></div>';
   }
@@ -633,7 +633,7 @@
         (r.egp?'<span class="egp">วงเงิน > 500,000 · e-GP</span>':'')+
         '<span class="tag '+(r.type==="PM"?"pm":"cor")+'">'+(r.type==="PM"?"บำรุงตามวาระ":"แจ้งซ่อม")+'</span></div>'+
       '<div class="sect-lab">อาการ / สาเหตุ</div>'+
-      '<div class="symbox">'+r.sym+'<div class="cause">🔍 '+r.cause+'</div></div>'+
+      '<div class="symbox">'+r.sym+'<div class="cause"><span class="ms">search</span> '+r.cause+'</div></div>'+
       '<div class="sect-lab">สถานะการดำเนินงาน</div><div class="steps">'+stepH+'</div>'+
       '<div class="sect-lab">รายการอะไหล่ที่ใช้'+(r.est?' (ประเมิน)':'')+'</div>'+
       '<div class="tablewrap"><table class="parts"><thead><tr><th>อะไหล่</th><th class="r">จำนวน</th><th class="r">ราคา/หน่วย</th><th class="r">รวม (฿)</th></tr></thead>'+

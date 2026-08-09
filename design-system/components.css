@@ -362,3 +362,20 @@ input[type=checkbox]{accent-color:var(--primary-600);width:17px;height:17px;curs
 .tbl tr:last-child td{border-bottom:none}
 .tbl tbody tr:hover td{background:var(--gray-50)}
 .tbl .num{text-align:center;font-weight:600;color:var(--gray-900)}
+
+/* ============================================================
+   v0.6 — Stepper หลายกลุ่ม + ป้ายสถานะบนขั้น (หน้า plan-skeleton)
+   ใช้เมื่อมีหน้าจอมากกว่าหนึ่งชุดในหน้าเดียว (เช่น ออกเลขงาน / เฟส / หน่วยงานอื่น)
+   ============================================================ */
+.wgrp{font-size:var(--fs-sm);font-weight:600;color:var(--gray-500);margin:0 0 8px 2px}
+.wgrp + .wsteps{margin-bottom:18px}
+
+/* ป้ายสถานะท้ายขั้น — ทำแล้ว / ยังไม่ทำ + ลิงก์ไปหน้าจริง */
+.wstep .st{margin-left:auto;display:flex;gap:4px;align-items:center;flex-shrink:0}
+.wstep .st .ms{font-size:19px}
+.wstep .st .done{color:var(--success-600)}
+.wstep .st .todo{color:var(--gray-300)}
+.wstep .st a{display:flex;color:var(--primary-600)}
+
+/* .wsteps.wrap — ชื่อขั้นยาวและมีหลายขั้นในแถวเดียว ให้ตัดบรรทัดแทน … */
+.wsteps.wrap .lbl{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
