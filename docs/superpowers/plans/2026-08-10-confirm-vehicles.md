@@ -420,6 +420,7 @@ git commit -m "feat(บำรุงรักษา): โครงข้อมู
 # Task 2: หน้า กบค. — ขั้นยืนยันรถ (ขั้นที่ 2 ของเฟส 1)
 
 **Files:**
+- Modify: `maintainance-yearly/common.js` (เพิ่ม `todayIso()` — ใช้ร่วมกับ Task 3)
 - Modify: `maintainance-yearly/app.js:208-212` (`PROC_STEPS`), `:232-251` (nav + validate), `:294-304` (router), เพิ่ม render/bind ใหม่
 - Test: เบราว์เซอร์ (headless Chromium ตาม `.claude/skills/verify`)
 
@@ -465,15 +466,21 @@ function validateProcSub(plan, sub) {
 
 ใช้คลาสที่มีอยู่แล้วเท่านั้น (`card` `sect` `sub` `tblwrap` `tbl` `itbl` `badge` `b-ok`/`b-low`/`b-brand` `btn` `btn-o`/`btn-s`/`btn-g` `btn-sm` `empty` `num`) — ห้ามเขียน CSS คอมโพเนนต์ในหน้า
 
+**ก่อนอื่น — เพิ่ม `todayIso()` ลง `common.js`** (ไม่ใช่ `app.js`) เพราะ `confirm.html` ใน Task 3 ต้องใช้ตัวเดียวกัน และ `common.js` คือที่รวม helper ร่วมอยู่แล้ว (`nowTh` `dateTh`) — วางต่อจาก `dateTh()`:
+
 ```js
-// ----- ขั้น 2: ยืนยันรถเข้าร่วมแผน -----
-// วันนี้แบบ ISO ปี พ.ศ. ให้ตรงรูปแบบที่ dueAt ใช้ (Date อยู่ฝั่ง browser เท่านั้น)
+// วันนี้แบบ ISO ปี พ.ศ. ('2569-08-10') ให้ตรงรูปแบบ dueAt และ <input type="date">
+// (Date อยู่ฝั่ง browser เท่านั้น — ห้ามย้ายไป mock-yearly.js)
 function todayIso() {
   const d = new Date();
-  const y = d.getFullYear() + 543;
-  return `${y}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return `${d.getFullYear() + 543}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+```
 
+จากนั้นใน `app.js`:
+
+```js
+// ----- ขั้น 2: ยืนยันรถเข้าร่วมแผน -----
 const CF_STATUS_BADGE = {
   ready:    { cls: 'b-ok',    text: 'พร้อม' },
   notready: { cls: 'b-brand', text: 'ไม่พร้อม' },
@@ -766,7 +773,7 @@ function renderList() {
 function renderRequest(req) {
   const { plan, dept, vehicles } = req;
   const locked = MYD.confirmLocked(plan);
-  const today = todayIsoCf();
+  const today = todayIso();
 
   const rows = vehicles.map(v => {
     const e = MYD.vehicleConfirm(plan, v.id);
@@ -853,12 +860,6 @@ function bindRequest(req) {
     toast(changed ? 'ส่งคำตอบแล้ว' : 'ไม่มีการเปลี่ยนแปลง');
     render();
   });
-}
-
-// วันนี้แบบ ISO ปี พ.ศ. (ซ้ำกับ app.js เพราะคนละหน้า ไม่ได้โหลด app.js)
-function todayIsoCf() {
-  const d = new Date();
-  return `${d.getFullYear() + 543}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 window.addEventListener('hashchange', render);
