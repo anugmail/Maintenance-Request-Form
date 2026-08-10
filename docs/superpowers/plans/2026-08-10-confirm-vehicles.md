@@ -420,6 +420,7 @@ git commit -m "feat(บำรุงรักษา): โครงข้อมู
 # Task 2: หน้า กบค. — ขั้นยืนยันรถ (ขั้นที่ 2 ของเฟส 1)
 
 **Files:**
+- Modify: `maintainance-yearly/common.js` (เพิ่ม `todayIso()` — ใช้ร่วมกับ Task 3)
 - Modify: `maintainance-yearly/app.js:208-212` (`PROC_STEPS`), `:232-251` (nav + validate), `:294-304` (router), เพิ่ม render/bind ใหม่
 - Test: เบราว์เซอร์ (headless Chromium ตาม `.claude/skills/verify`)
 
@@ -465,15 +466,21 @@ function validateProcSub(plan, sub) {
 
 ใช้คลาสที่มีอยู่แล้วเท่านั้น (`card` `sect` `sub` `tblwrap` `tbl` `itbl` `badge` `b-ok`/`b-low`/`b-brand` `btn` `btn-o`/`btn-s`/`btn-g` `btn-sm` `empty` `num`) — ห้ามเขียน CSS คอมโพเนนต์ในหน้า
 
+**ก่อนอื่น — เพิ่ม `todayIso()` ลง `common.js`** (ไม่ใช่ `app.js`) เพราะ `confirm.html` ใน Task 3 ต้องใช้ตัวเดียวกัน และ `common.js` คือที่รวม helper ร่วมอยู่แล้ว (`nowTh` `dateTh`) — วางต่อจาก `dateTh()`:
+
 ```js
-// ----- ขั้น 2: ยืนยันรถเข้าร่วมแผน -----
-// วันนี้แบบ ISO ปี พ.ศ. ให้ตรงรูปแบบที่ dueAt ใช้ (Date อยู่ฝั่ง browser เท่านั้น)
+// วันนี้แบบ ISO ปี พ.ศ. ('2569-08-10') ให้ตรงรูปแบบ dueAt และ <input type="date">
+// (Date อยู่ฝั่ง browser เท่านั้น — ห้ามย้ายไป mock-yearly.js)
 function todayIso() {
   const d = new Date();
-  const y = d.getFullYear() + 543;
-  return `${y}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return `${d.getFullYear() + 543}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+```
 
+จากนั้นใน `app.js`:
+
+```js
+// ----- ขั้น 2: ยืนยันรถเข้าร่วมแผน -----
 const CF_STATUS_BADGE = {
   ready:    { cls: 'b-ok',    text: 'พร้อม' },
   notready: { cls: 'b-brand', text: 'ไม่พร้อม' },
@@ -766,7 +773,7 @@ function renderList() {
 function renderRequest(req) {
   const { plan, dept, vehicles } = req;
   const locked = MYD.confirmLocked(plan);
-  const today = todayIsoCf();
+  const today = todayIso();
 
   const rows = vehicles.map(v => {
     const e = MYD.vehicleConfirm(plan, v.id);
@@ -855,12 +862,6 @@ function bindRequest(req) {
   });
 }
 
-// วันนี้แบบ ISO ปี พ.ศ. (ซ้ำกับ app.js เพราะคนละหน้า ไม่ได้โหลด app.js)
-function todayIsoCf() {
-  const d = new Date();
-  return `${d.getFullYear() + 543}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
 window.addEventListener('hashchange', render);
 render();
 ```
@@ -941,6 +942,115 @@ git commit -m "feat(บำรุงรักษา): หน้าหน่วย
 git add maintainance-yearly/app.js
 git commit -m "feat(บำรุงรักษา): แผนเดินทางใช้จำนวนรถที่ยืนยันแล้ว + หน้าทวนแสดงคันที่ตัด/เลื่อน"
 ```
+
+---
+
+# Task 4B: สลับลำดับ — ยืนยันรถมาก่อนเบิกอะไหล่ + อะไหล่คิดจากคันที่ยืนยันแล้ว
+
+> 🔒 **เจ้าของงานสั่งเพิ่ม 10 ส.ค. 2569** (หลัง Task 1-4 เสร็จ): *"เฟสทบทวนและยืนยันต้องเกิดก่อนที่จะเบิกอะไหล่ หลังจากยืนยันครบแล้วถึงจะเริ่มทำเรื่องจัดหาอะไหล่ และถึงไปเริ่มทำแผนการเดินทาง"*
+>
+> **เหตุผล:** ตารางอะไหล่คิดจากจำนวนรถ — ถ้าเบิกก่อนยืนยัน แล้วมีคันถูกตัด/เลื่อน จะสั่งของเกิน · เคาะเพิ่ม 2 ข้อ: (1) อะไหล่คิดจาก**คันที่ยืนยันแล้วเท่านั้น** (2) ขั้น "ทวน + ยืนยัน" **คงไว้ท้ายสุด**
+
+**Files:**
+- Modify: `maintainance-yearly/app.js` — `PROC_STEPS` · `validateProcSub` · `renderProcSubBody` · `bindProcSubBody` · หัวข้อ "ขั้นที่ N" ในทุก render · `renderProcStep1` (แหล่งที่มาของจำนวนรถ)
+
+**Interfaces:**
+- Consumes: `MYD.isVehicleIn` · `MYD.confirmResolved` · `MYD.deriveItems` (Task 1)
+- Produces: ลำดับขั้นสุดท้ายที่ Task 6 ต้องเอาไป sync ผัง
+
+- [ ] **Step 1: สลับ `PROC_STEPS`**
+
+```js
+const PROC_STEPS = [
+  { no: 1, label: 'ยืนยันรถเข้าร่วมแผน' },
+  { no: 2, label: 'เบิก/จัดหาอะไหล่' },
+  { no: 3, label: 'แผนเดินทาง' },
+  { no: 4, label: 'ทวน + ยืนยัน' },
+];
+```
+
+- [ ] **Step 2: สลับ router + validation ให้ตรงลำดับใหม่**
+
+⚠️ **ชื่อฟังก์ชันไม่ได้เปลี่ยนตาม** — `renderProcStep1` ยังเป็น *เบิกอะไหล่* · `renderProcStep2` ยังเป็น *แผนเดินทาง* · `renderProcStep3` ยังเป็น *ทวน* · เปลี่ยนแค่ว่าเลขขั้นไหนเรียกอันไหน
+
+```js
+function renderProcSubBody(plan) {
+  if (state.sub === 1) return renderProcStepConfirm(plan);
+  if (state.sub === 2) return renderProcStep1(plan);      // เบิก/จัดหาอะไหล่
+  if (state.sub === 3) return renderProcStep2(plan);      // แผนเดินทาง
+  return renderProcStep3(plan);                            // ทวน + ยืนยัน
+}
+
+function bindProcSubBody(plan) {
+  if (state.sub === 1) bindProcStepConfirm(plan);
+  else if (state.sub === 2) bindProcStep1(plan);
+  else if (state.sub === 3) bindProcStep2(plan);
+  // ขั้น 4 อ่านอย่างเดียว ปุ่มยืนยันอยู่ที่ actions footer
+}
+
+function validateProcSub(plan, sub) {
+  if (sub === 1) return MYD.confirmResolved(plan, plan.selectedVehicleIds || []);
+  if (sub === 2) return !!plan.partsRequisitioned;
+  if (sub === 3) {
+    const tp = plan.travelPlan;
+    return !!(tp && tp.location && tp.location.trim() && tp.dateFrom && tp.dateTo);
+  }
+  return true;
+}
+```
+
+- [ ] **Step 3: แก้หัวข้อ "ขั้นที่ N" ในทุก render ให้ตรงเลขใหม่**
+
+| ฟังก์ชัน | เดิม | ใหม่ |
+|---|---|---|
+| `renderProcStepConfirm` | ขั้นที่ 2: ยืนยันรถเข้าร่วมแผน | **ขั้นที่ 1**: ยืนยันรถเข้าร่วมแผน |
+| `renderProcStep1` | ขั้นที่ 1: เบิกอะไหล่ (สรุปรายการจากแผน) | **ขั้นที่ 2**: เบิก/จัดหาอะไหล่ |
+| `renderProcStep2` | ขั้นที่ 3: ทำแผนเดินทาง | คงเดิม (ยังเป็นขั้นที่ 3) |
+| `renderProcStep3` | ขั้นที่ 4: ทวนแผนเดินทาง + ยืนยัน | คงเดิม (ยังเป็นขั้นที่ 4) |
+
+ไล่ `grep -n 'ขั้นที่' app.js` ให้ครบ อย่าอาศัยตารางนี้อย่างเดียว
+
+- [ ] **Step 4: อะไหล่คิดจากคันที่ยืนยันแล้วเท่านั้น**
+
+`renderProcStep1` บรรทัด 312-314 ปัจจุบันนับรถในแผนทั้งหมด แก้เป็น:
+
+```js
+function renderProcStep1(plan) {
+  const master = MYD.loadMaster();
+  // นับเฉพาะคันที่ผ่านขั้นยืนยันแล้ว — เจ้าของงานสั่ง 10 ส.ค. 2569:
+  // เบิกตามจำนวนรถในแผนจะสั่งของเกิน เพราะบางคันถูกตัด/เลื่อนไปแล้ว
+  const selectedVehicles = master.vehicles.filter(v =>
+    (plan.selectedVehicleIds || []).includes(v.id) && MYD.isVehicleIn(plan, v.id));
+  const lines = MYD.deriveItems(selectedVehicles, master.items);
+  const dropped = (plan.selectedVehicleIds || []).length - selectedVehicles.length;
+```
+
+แล้วแก้บรรทัดคำอธิบายใต้หัวข้อจาก `รถที่เข้าแผน ${selectedVehicles.length} คัน — รายการนี้คำนวณอัตโนมัติจากรถที่เลือกไว้ในเฟส 1` เป็น:
+
+```js
+    <div class="sub">คิดจากรถที่ยืนยันแล้ว <b>${selectedVehicles.length}</b> คัน
+      ${dropped ? `(ตัด/เลื่อน ${dropped} คันจากขั้นยืนยันรถ)` : ''}</div>
+```
+
+- [ ] **Step 5: ตรวจในเบราว์เซอร์**
+
+ที่ `plan-seed-2569-002` (12 คัน · ยืนยันแล้ว 8 · ค้าง 4):
+- stepper ขั้น 1 = ยืนยันรถ · ขั้น 2 = เบิก/จัดหาอะไหล่
+- **เข้าหน้ามาแล้วขั้น 2 เปิดไม่ได้** จนกว่าจะตัดสินครบ (ปุ่มถัดไปปิด)
+- ตัดสินให้เหลือเข้าทริป 10 คัน → ขั้น 2 ต้องขึ้น "คิดจากรถที่ยืนยันแล้ว 10 คัน (ตัด/เลื่อน 2 คัน)" และ**ยอดอะไหล่ต้องลดลงตามจริง** (เทียบก่อน-หลัง)
+- ขั้น 3 แผนเดินทางยังขึ้นจำนวนเดียวกัน · ขั้น 4 ตารางรถที่ไม่เข้าทริปตรงกัน
+- ไม่มี `pageerror` · รีโหลดแล้วค่าอยู่
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add maintainance-yearly/app.js
+git commit -m "feat(บำรุงรักษา): ยืนยันรถมาก่อนเบิกอะไหล่ + อะไหล่คิดจากคันที่ยืนยันแล้ว"
+```
+
+## ⚠️ คำถามเปิดที่เกิดจากรอบนี้ (อย่าแก้เอง — ส่งให้เจ้าของงาน)
+
+เอกสารแจ้งฝ่ายพัสดุ (`supplies.html`) ออกตอน**ออกเลขงาน** ซึ่งเกิดก่อนขั้นยืนยันรถ ⇒ เอกสารจะระบุจำนวนรถ/อะไหล่ตาม**แผนเต็ม** แต่ของที่เบิกจริงในเฟส 1 จะน้อยกว่า · ต้องเคาะว่าจะให้พัสดุเห็นตัวเลขที่ปรับแล้วด้วยไหม หรือปล่อยให้เอกสารแรกเป็น "ประมาณการ" แล้วมีใบปรับยอดตามทีหลัง
 
 ---
 

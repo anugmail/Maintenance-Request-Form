@@ -67,3 +67,15 @@ function dateTh(v) {
 function planTitle(plan) {
   return plan.workNumber || (plan.planName ? plan.planName : '(แผนใหม่ ยังไม่ตั้งชื่อ)');
 }
+
+// แปลง Date -> ISO ปี พ.ศ. ('2569-08-10') ให้ตรงรูปแบบ dueAt และ <input type="date">
+// (Date อยู่ฝั่ง browser เท่านั้น — ห้ามย้ายไป mock-yearly.js)
+// จุดเดียวของการคำนวณปี พ.ศ. + zero-pad — todayIso() และ dueAt (bindProcStepConfirm
+// ใน app.js) เรียกตัวนี้ทั้งคู่ กันพลาดถ้าสูตรออฟเซ็ตปี/padding เปลี่ยนแล้วแก้ไม่ครบ
+function toIsoBE(d) {
+  return `${d.getFullYear() + 543}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function todayIso() {
+  return toIsoBE(new Date());
+}

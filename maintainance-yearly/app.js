@@ -201,14 +201,15 @@ function route() {
 // ================================================================
 // ================= PROCUREMENT WIZARD (Phase 2) =================
 // ================================================================
-// sub-stepper 3 ขั้น (ใช้ state.sub ร่วมกับเฟส 1 — goPhase() รีเซ็ตเป็น 1
+// sub-stepper 4 ขั้น (ใช้ state.sub ร่วมกับเฟส 1 — goPhase() รีเซ็ตเป็น 1
 // ทุกครั้งที่เปลี่ยนเฟส) เขียน/อ่านผ่าน PLAN/MYD.savePlan() เช่นกัน
 // เข้าเฟส 2 ครั้งใด ถ้า travelConfirmed แล้ว ข้าม wizard ไปแสดงสรุปยืนยันเลย
 
 const PROC_STEPS = [
-  { no: 1, label: 'เบิกอะไหล่' },
-  { no: 2, label: 'แผนเดินทาง' },
-  { no: 3, label: 'ทวน + ยืนยัน' },
+  { no: 1, label: 'ยืนยันรถเข้าร่วมแผน' },
+  { no: 2, label: 'เบิก/จัดหาอะไหล่' },
+  { no: 3, label: 'แผนเดินทาง' },
+  { no: 4, label: 'ทวน + ยืนยัน' },
 ];
 
 function renderProcurement() {
@@ -222,8 +223,21 @@ function renderProcurement() {
 }
 
 // ----- sub-nav -----
+// ถอยหลังไปขั้นก่อนหน้าได้เสมอ (ดู/แก้ของที่ทำไปแล้ว) แต่เดินหน้าข้ามขั้นบน stepper ได้
+// เฉพาะเมื่อทุกขั้นก่อนหน้าปลายทางผ่าน validateProcSub แล้ว — กันคลิกหัวข้อ stepper
+// ข้ามเข้าขั้นที่ยังไม่ถึง (เจ้าของงานสั่ง 10 ส.ค. 2569: ต้องยืนยันรถให้ครบก่อนเบิกอะไหล่จริง
+// ปุ่ม "ถัดไป" อย่างเดียวกันได้ไม่พอ เพราะ node บน stepper คลิกข้ามได้ตรงๆ)
 function goProcSub(n) {
-  if (n < 1 || n > 3) return;
+  if (n < 1 || n > PROC_STEPS.length) return;
+  if (n > state.sub) {
+    const plan = PLAN;
+    for (let i = 1; i < n; i++) {
+      if (!validateProcSub(plan, i)) {
+        toast(`ทำขั้น "${PROC_STEPS[i - 1].label}" ให้เสร็จก่อน ถึงจะไปขั้นถัดไปได้`);
+        return;
+      }
+    }
+  }
   state.sub = n;
   renderPhaseBody();
   window.scrollTo({ top: 0 });
@@ -232,7 +246,7 @@ function goProcSub(n) {
 function nextProcSub() {
   const plan = PLAN;
   if (!validateProcSub(plan, state.sub)) return;
-  if (state.sub >= 3) return;
+  if (state.sub >= PROC_STEPS.length) return;
   goProcSub(state.sub + 1);
 }
 
@@ -242,8 +256,9 @@ function backProcSub() {
 }
 
 function validateProcSub(plan, sub) {
-  if (sub === 1) return !!plan.partsRequisitioned;
-  if (sub === 2) {
+  if (sub === 1) return MYD.confirmResolved(plan, plan.selectedVehicleIds || []);
+  if (sub === 2) return !!plan.partsRequisitioned;
+  if (sub === 3) {
     const tp = plan.travelPlan;
     return !!(tp && tp.location && tp.location.trim() && tp.dateFrom && tp.dateTo);
   }
@@ -258,7 +273,7 @@ function updateProcPrimaryEnabled(plan) {
 
 // ----- wizard shell -----
 function renderProcWizard(plan) {
-  const primaryLabel = state.sub === 3 ? 'ยืนยันแผนเดินทาง' : 'ถัดไป';
+  const primaryLabel = state.sub === PROC_STEPS.length ? 'ยืนยันแผนเดินทาง' : 'ถัดไป';
   const primaryDisabled = !validateProcSub(plan, state.sub);
 
   $('phase').innerHTML = `
@@ -286,28 +301,34 @@ function renderProcWizard(plan) {
 
   $('btnBackProc').addEventListener('click', backProcSub);
   $('btnPrimaryProc').addEventListener('click', () => {
-    if (state.sub === 3) confirmTravelPlan(plan);
+    if (state.sub === PROC_STEPS.length) confirmTravelPlan(plan);
     else nextProcSub();
   });
 }
 
 function renderProcSubBody(plan) {
-  if (state.sub === 1) return renderProcStep1(plan);
-  if (state.sub === 2) return renderProcStep2(plan);
-  return renderProcStep3(plan);
+  if (state.sub === 1) return renderProcStepConfirm(plan);
+  if (state.sub === 2) return renderProcStep1(plan);      // เบิก/จัดหาอะไหล่
+  if (state.sub === 3) return renderProcStep2(plan);      // แผนเดินทาง
+  return renderProcStep3(plan);                            // ทวน + ยืนยัน
 }
 
 function bindProcSubBody(plan) {
-  if (state.sub === 1) bindProcStep1(plan);
-  else if (state.sub === 2) bindProcStep2(plan);
-  // ขั้น 3 อ่านอย่างเดียว ไม่มี event ผูก (ปุ่มยืนยันอยู่ที่ actions footer)
+  if (state.sub === 1) bindProcStepConfirm(plan);
+  else if (state.sub === 2) bindProcStep1(plan);
+  else if (state.sub === 3) bindProcStep2(plan);
+  // ขั้น 4 อ่านอย่างเดียว ไม่มี event ผูก (ปุ่มยืนยันอยู่ที่ actions footer)
 }
 
-// ----- ขั้น 1: เบิกอะไหล่ -----
+// ----- ขั้น 1 (ชื่อฟังก์ชันค้างจากตอนมี 3 ขั้น เนื้อหาจริงคือเบิกอะไหล่ เรียกเป็นขั้นที่ 2) -----
 function renderProcStep1(plan) {
   const master = MYD.loadMaster();
-  const selectedVehicles = master.vehicles.filter(v => (plan.selectedVehicleIds || []).includes(v.id));
+  // นับเฉพาะคันที่ผ่านขั้นยืนยันแล้ว — เจ้าของงานสั่ง 10 ส.ค. 2569:
+  // เบิกตามจำนวนรถในแผนจะสั่งของเกิน เพราะบางคันถูกตัด/เลื่อนไปแล้ว
+  const selectedVehicles = master.vehicles.filter(v =>
+    (plan.selectedVehicleIds || []).includes(v.id) && MYD.isVehicleIn(plan, v.id));
   const lines = MYD.deriveItems(selectedVehicles, master.items);
+  const dropped = (plan.selectedVehicleIds || []).length - selectedVehicles.length;
 
   const groups = ['part', 'oil', 'filter'].map(cat => {
     const catLines = lines.filter(l => l.item.category === cat);
@@ -331,8 +352,9 @@ function renderProcStep1(plan) {
   }).join('');
 
   return `
-    <div class="sect">ขั้นที่ 1: เบิกอะไหล่ (สรุปรายการจากแผน)</div>
-    <div class="sub">รถที่เข้าแผน ${selectedVehicles.length} คัน — รายการนี้คำนวณอัตโนมัติจากรถที่เลือกไว้ในเฟส 1</div>
+    <div class="sect">ขั้นที่ 2: เบิก/จัดหาอะไหล่ (สรุปรายการจากแผน)</div>
+    <div class="sub">คิดจากรถที่ยืนยันแล้ว <b>${selectedVehicles.length}</b> คัน
+      ${dropped ? `(ตัด/เลื่อน ${dropped} คันจากขั้นยืนยันรถ)` : ''}</div>
     ${groups || `<div class="empty">ไม่มีรายการที่เกี่ยวข้องกับรถที่เลือก</div>`}
     <div style="margin-top:14px">
       ${plan.partsRequisitioned
@@ -352,7 +374,161 @@ function bindProcStep1(plan) {
   });
 }
 
-// ----- ขั้น 2: ทำแผนเดินทาง -----
+// ----- ขั้น 1: ยืนยันรถเข้าร่วมแผน (ฟังก์ชันชื่อ renderProcStepConfirm) -----
+const CF_STATUS_BADGE = {
+  ready:    { cls: 'b-ok',    text: 'พร้อม' },
+  notready: { cls: 'b-brand', text: 'ไม่พร้อม' },
+  pending:  { cls: 'b-low',   text: 'รอตอบ' },
+  overdue:  { cls: 'b-low',   text: 'เลยกำหนด' },
+};
+const CF_VERDICT_LABELS = { keep: 'เข้าตามเดิม', drop: 'ตัดออกจากแผน', defer: 'เลื่อนรอบหน้า' };
+
+function renderProcStepConfirm(plan) {
+  const master = MYD.loadMaster();
+  const ids = plan.selectedVehicleIds || [];
+  const vehicles = master.vehicles.filter(v => ids.includes(v.id));
+  const days = MYD.loadSettings().confirmDueDays;
+
+  if (!plan.confirm || !plan.confirm.requestedAt) {
+    const depts = new Set(vehicles.map(v => v.ownerDept));
+    return `
+      <div class="sect">ขั้นที่ 1: ยืนยันรถเข้าร่วมแผน</div>
+      <div class="sub">ส่งรายการรถให้หน่วยงานเจ้าของรถยืนยันว่าเข้าบำรุงรักษาได้จริง
+        — ต้องรู้จำนวนรถที่แน่นอนก่อนวางแผนเดินทาง</div>
+      <div class="card">
+        <div>จะส่งคำขอไป <b>${depts.size}</b> หน่วยงาน รวม <b>${vehicles.length}</b> คัน</div>
+        <div class="sub">กำหนดตอบภายใน ${days} วัน (แก้ได้ที่หน้า Admin)</div>
+        <button class="btn btn-o" id="btnSendConfirm">
+          <span class="ms">send</span> ส่งคำขอยืนยัน</button>
+      </div>`;
+  }
+
+  const today = todayIso();
+  const s = MYD.confirmSummary(plan, ids, today);
+  const rows = vehicles.map(v => {
+    const e = MYD.vehicleConfirm(plan, v.id);
+    const st = MYD.confirmStatus(plan, v.id, today);
+    const b = CF_STATUS_BADGE[st];
+    const needsVerdict = (st === 'notready' || st === 'overdue') && e.verdict === null;
+    return `<tr>
+      <td><b>${esc(v.plate)}</b><div class="sub">${esc(v.brand)}</div></td>
+      <td>${esc(v.ownerDept)}<div class="sub">เขต ${esc(v.region)}</div></td>
+      <td><span class="badge ${b.cls}">${b.text}</span>
+        ${e.reason ? `<div class="sub">${esc(e.reason)}</div>` : ''}</td>
+      <td>${esc(e.meetPoint || '—')}</td>
+      <td>${esc(e.at || '—')}</td>
+      <td>${e.verdict
+            ? `<span class="badge b-brand">${CF_VERDICT_LABELS[e.verdict]}</span>
+               ${e.verdictWhy ? `<div class="sub">${esc(e.verdictWhy)}</div>` : ''}`
+            : needsVerdict
+              ? `<button class="btn btn-s btn-sm" data-verdict-for="${esc(v.id)}">ตัดสิน</button>`
+              : '—'}</td>
+      <td>${MYD.isVehicleIn(plan, v.id)
+            ? `<span class="badge b-ok">เข้าทริป</span>`
+            : `<span class="badge b-low">ไม่เข้า</span>`}</td>
+    </tr>`;
+  }).join('');
+
+  const left = ids.filter(id => {
+    const e = MYD.vehicleConfirm(plan, id);
+    return !(e.answer === 'ready' || e.verdict !== null);
+  }).length;
+
+  return `
+    <div class="sect">ขั้นที่ 1: ยืนยันรถเข้าร่วมแผน</div>
+    <div class="sub">ส่งคำขอเมื่อ ${dateTh(plan.confirm.requestedAt)}
+      · ครบกำหนดตอบ ${dateTh(plan.confirm.dueAt)}
+      ${plan.confirm.remindedAt ? `· เตือนซ้ำล่าสุด ${esc(plan.confirm.remindedAt)}` : ''}</div>
+    <div class="card">
+      <div class="sect">สรุปการยืนยัน</div>
+      <div>
+        <span class="badge b-ok">ยืนยันแล้ว ${s.ready}</span>
+        <span class="badge b-low">รอตอบ ${s.waiting}</span>
+        <span class="badge b-brand">ไม่พร้อม ${s.notready}</span>
+        <span class="badge b-low">เลยกำหนด ${s.overdue}</span>
+      </div>
+      <div class="sub" style="margin-top:8px">
+        เข้าทริปนี้ <b>${s.joining}</b> คัน จากรถในแผน ${s.total} คัน
+        — ตัวเลขนี้คือจำนวนที่แผนเดินทางจะใช้</div>
+      <button class="btn btn-g btn-sm" id="btnRemind">
+        <span class="ms">notifications</span> ส่งเตือนซ้ำ</button>
+    </div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>คำตอบ</th>
+        <th>จุดนัดรับ</th><th>ตอบเมื่อ</th><th>คำตัดสิน กบค.</th><th>ผล</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    ${left ? `<div class="empty">เหลืออีก ${left} คันที่ยังไม่มีข้อสรุป — ทำแผนเดินทางต่อไม่ได้จนกว่าจะครบ</div>` : ''}`;
+}
+
+function bindProcStepConfirm(plan) {
+  const send = $('btnSendConfirm');
+  if (send) {
+    send.addEventListener('click', () => {
+      // เขียน storage ตอนกดเท่านั้น — ห้ามสร้างตั้งแต่ render (บทเรียน plan-new.html)
+      const c = MYD.ensureConfirm(plan);
+      const days = MYD.loadSettings().confirmDueDays;
+      const d = new Date(); d.setDate(d.getDate() + days);
+      c.requestedAt = todayIso();
+      c.dueAt = toIsoBE(d);
+      (plan.selectedVehicleIds || []).forEach(id => {
+        if (!c.byVehicle[id]) c.byVehicle[id] = MYD.emptyConfirmEntry();
+      });
+      MYD.savePlan(plan);
+      toast('ส่งคำขอยืนยันแล้ว');
+      renderProcWizard(plan);
+    });
+  }
+
+  const remind = $('btnRemind');
+  if (remind) {
+    remind.addEventListener('click', () => {
+      MYD.ensureConfirm(plan).remindedAt = nowTh();
+      MYD.savePlan(plan);
+      toast('ส่งเตือนซ้ำแล้ว (ต้นแบบยังไม่มีระบบแจ้งเตือนจริง)');
+      renderProcWizard(plan);
+    });
+  }
+
+  document.querySelectorAll('[data-verdict-for]').forEach(btn => {
+    btn.addEventListener('click', () => openVerdictRow(plan, btn.dataset.verdictFor));
+  });
+}
+
+// แถวขยายในตาราง (ไม่ใช่ modal — components.css ไม่มีคลาส modal/dialog)
+// ใช้คลาสที่มีจริง: .rads (กลุ่ม radio) · .f (ช่องกรอก) · .btn
+function openVerdictRow(plan, vehicleId) {
+  const tr = document.querySelector(`[data-verdict-for="${vehicleId}"]`).closest('tr');
+  if (tr.nextElementSibling && tr.nextElementSibling.dataset.verdictRow) {
+    tr.nextElementSibling.remove(); return;          // กดซ้ำ = ปิด
+  }
+  const row = document.createElement('tr');
+  row.dataset.verdictRow = vehicleId;
+  row.innerHTML = `<td colspan="7">
+    <div class="rads">
+      <label><input type="radio" name="vd" value="keep"> เข้าตามเดิม</label>
+      <label><input type="radio" name="vd" value="drop"> ตัดออกจากแผน</label>
+      <label><input type="radio" name="vd" value="defer"> เลื่อนรอบหน้า</label>
+    </div>
+    <div class="f"><label>เหตุผลการตัดสิน</label>
+      <input type="text" id="vdWhy" placeholder="บันทึกไว้ให้ตรวจสอบย้อนหลังได้"></div>
+    <button class="btn btn-o btn-sm" id="vdSave">บันทึกคำตัดสิน</button></td>`;
+  tr.after(row);
+
+  $('vdSave').addEventListener('click', () => {
+    const picked = row.querySelector('input[name="vd"]:checked');
+    if (!picked) { toast('เลือกคำตัดสินก่อน'); return; }
+    const c = MYD.ensureConfirm(plan);
+    const e = c.byVehicle[vehicleId] || (c.byVehicle[vehicleId] = MYD.emptyConfirmEntry());
+    e.verdict = picked.value;
+    e.verdictWhy = ($('vdWhy').value || '').trim();
+    e.verdictAt = nowTh();
+    MYD.savePlan(plan);
+    toast('บันทึกคำตัดสินแล้ว');
+    renderProcWizard(plan);
+  });
+}
+
+// ----- ขั้น 3: ทำแผนเดินทาง -----
 function ensureTravelPlan(plan) {
   if (!plan.travelPlan) {
     plan.travelPlan = { location: '', dateFrom: '', dateTo: '', perDiem: 0, lodging: 0, travel: 0 };
@@ -362,8 +538,16 @@ function ensureTravelPlan(plan) {
 
 function renderProcStep2(plan) {
   const tp = plan.travelPlan || {};
+  const master = MYD.loadMaster();
+  const joining = (plan.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(plan, id));
+  const plates = master.vehicles.filter(v => joining.includes(v.id)).map(v => v.plate);
+  const dropped = (plan.selectedVehicleIds || []).length - joining.length;
   return `
-    <div class="sect">ขั้นที่ 2: ทำแผนเดินทาง</div>
+    <div class="sect">ขั้นที่ 3: ทำแผนเดินทาง</div>
+    <div class="sub">คิดจากรถที่ยืนยันแล้ว <b>${joining.length}</b> คัน
+      ${dropped ? `(ตัด/เลื่อน ${dropped} คันจากขั้นยืนยันรถ)` : ''}
+      — เบี้ยเลี้ยง/ที่พัก/ค่าเดินทางให้กรอกตามจำนวนนี้</div>
+    <div class="sub">${esc(plates.join(' · '))}</div>
     <div class="fgrid">
       <div class="f sp4">
         <label>สถานที่บำรุงรักษา</label>
@@ -426,13 +610,28 @@ function bindProcStep2(plan) {
   });
 }
 
-// ----- ขั้น 3: ทวน + ยืนยัน -----
+// ----- ขั้น 4: ทวน + ยืนยัน -----
 function renderProcStep3(plan) {
   const tp = plan.travelPlan || {};
   const total = (tp.perDiem || 0) + (tp.lodging || 0) + (tp.travel || 0);
+  const master3 = MYD.loadMaster();
+  const outRows = (plan.selectedVehicleIds || [])
+    .filter(id => !MYD.isVehicleIn(plan, id))
+    .map(id => {
+      const v = master3.vehicles.find(x => x.id === id);
+      const e = MYD.vehicleConfirm(plan, id);
+      return `<tr><td>${esc(v ? v.plate : id)}</td>
+        <td>${esc(CF_VERDICT_LABELS[e.verdict] || 'ไม่พร้อม')}</td>
+        <td>${esc(e.verdictWhy || e.reason || '—')}</td></tr>`;
+    }).join('');
 
   return `
-    <div class="sect">ขั้นที่ 3: ทวนแผนเดินทาง + ยืนยัน</div>
+    <div class="sect">ขั้นที่ 4: ทวนแผนเดินทาง + ยืนยัน</div>
+    ${outRows ? `
+    <div class="sect">รถที่ไม่เข้าทริปนี้</div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>ทะเบียน</th><th>คำตัดสิน กบค.</th><th>เหตุผล</th></tr></thead>
+      <tbody>${outRows}</tbody></table></div>` : ''}
     <div class="fgrid">
       <div class="f sp4"><label>สถานที่บำรุงรักษา</label><div>${esc(tp.location || '-')}</div></div>
       <div class="f sp2"><label>จากวันที่</label><div>${esc(tp.dateFrom || '-')}</div></div>
@@ -455,6 +654,7 @@ function confirmTravelPlan(plan) {
 // ----- สรุปหลังยืนยัน (แทนที่ wizard เมื่อ travelConfirmed===true) -----
 function renderProcurementConfirmed(plan) {
   const selectedVehicles = MYD.loadMaster().vehicles.filter(v => (plan.selectedVehicleIds || []).includes(v.id));
+  const joiningCount = selectedVehicles.filter(v => MYD.isVehicleIn(plan, v.id)).length;
   const tp = plan.travelPlan || {};
   const total = (tp.perDiem || 0) + (tp.lodging || 0) + (tp.travel || 0);
 
@@ -473,7 +673,7 @@ function renderProcurementConfirmed(plan) {
       </div>
     </div>
     <div class="card">
-      <div class="sect"><span class="ms">mail</span> ส่ง Noti แจ้งเจ้าของรถ ${selectedVehicles.length} คัน + กรย. วันที่เข้าตรวจ</div>
+      <div class="sect"><span class="ms">mail</span> ส่ง Noti แจ้งเจ้าของรถ ${joiningCount} คัน + กรย. วันที่เข้าตรวจ</div>
       <div class="sub">ระบบส่งการแจ้งเตือนอัตโนมัติแล้ว (mock)</div>
     </div>
     <div class="card">

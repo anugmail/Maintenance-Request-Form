@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ฝ่ายพัสดุ — เอกสารแจ้งเตรียมอะไหล่ — Maintain-D (Mock)</title>
+<title>ยืนยันรถเข้าร่วมแผน — Maintain-D (Mock)</title>
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -11,18 +11,6 @@
 <link rel="stylesheet" href="../design-system/tokens.css?v=20260809-ds06">
 <link rel="stylesheet" href="../design-system/components.css?v=20260809-ds06">
 <script src="../ui-components.js"></script><!-- shared components (window.UIC) จาก MRF -->
-<style>
-  /* เฉพาะหน้านี้ — ใช้ token เท่านั้น ไม่มีสี hardcode */
-  .tbl tfoot .sumrow td{background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:13px}
-  .itbl{table-layout:fixed}
-  .itbl th,.itbl td{overflow:hidden;text-overflow:ellipsis}
-  .itbl th:nth-child(1),.itbl td:nth-child(1){width:34%}
-  .itbl th:nth-child(2),.itbl td:nth-child(2),
-  .itbl th:nth-child(3),.itbl td:nth-child(3),
-  .itbl th:nth-child(4),.itbl td:nth-child(4){width:15%;text-align:center}
-  .itbl th:nth-child(5),.itbl td:nth-child(5){width:13%}
-  .itbl th:nth-child(6),.itbl td:nth-child(6){width:8%;text-align:center}
-</style>
 </head>
 <body>
 <div class="shell">
@@ -30,8 +18,8 @@
     <div class="vlogo">VMS<em>+</em></div>
     <a class="nv" href="index.html" title="รายการแผนบำรุงรักษา"><span class="ms">list_alt</span></a>
     <a class="nv" href="plan-new.html" title="ออกเลขงาน — สร้างแผนใหม่"><span class="ms">note_add</span></a>
-    <a class="nv on" href="supplies.html" title="ฝ่ายพัสดุ"><span class="ms">inventory_2</span></a>
-    <a class="nv" href="confirm.html" title="หน่วยงานเจ้าของรถ — ยืนยันรถเข้าร่วมแผน"><span class="ms">fact_check</span></a>
+    <a class="nv" href="supplies.html" title="ฝ่ายพัสดุ"><span class="ms">inventory_2</span></a>
+    <a class="nv on" href="confirm.html" title="หน่วยงานเจ้าของรถ — ยืนยันรถเข้าร่วมแผน"><span class="ms">fact_check</span></a>
     <a class="nv" href="admin.html" title="Admin — ข้อมูลหลัก"><span class="ms">settings</span></a>
     <a class="nv" href="plan-skeleton.html" title="โครงหน้าจอทั้งโฟลว์ (แก้ได้)"><span class="ms">dashboard_customize</span></a>
   </aside>
@@ -39,14 +27,14 @@
   <div class="work">
     <div class="topbar">
       <span class="ms">account_circle</span>
-      <span>ฝ่ายพัสดุ</span>
+      <span>หน่วยงานเจ้าของรถ</span>
     </div>
 
     <main class="content">
-      <div class="draft">โหมดฝ่ายพัสดุ — รับเอกสารแจ้งเตรียม/สั่งอะไหล่ (ไม่ใช่ผู้อนุมัติเลขงาน)</div>
+      <div class="draft">โหมดหน่วยงานเจ้าของรถ — ต้นแบบไม่มีระบบ login จึงเห็นทุกหน่วยงาน ของจริงจะเห็นเฉพาะหน่วยงานตัวเอง</div>
       <div class="crumbs" id="crumbs"></div>
-      <h1 class="page-title" id="supTitle">ฝ่ายพัสดุ — เอกสารแจ้งเตรียม/สั่งอะไหล่</h1>
-      <div id="supBody"></div>
+      <h1 class="page-title" id="cfTitle">ยืนยันรถเข้าร่วมแผน</h1>
+      <div id="cfBody"></div>
     </main>
   </div>
 </div>
@@ -55,6 +43,6 @@
 
 <script src="common.js"></script>
 <script src="mock-yearly.js"></script>
-<script src="supplies.js"></script>
+<script src="confirm.js"></script>
 </body>
 </html>
