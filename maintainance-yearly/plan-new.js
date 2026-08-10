@@ -585,7 +585,7 @@ function hasContent(plan) {
 // เรียกแทน MYD.savePlan() ทุกจุดในหน้านี้
 function persist(plan) {
   if (!hasContent(plan) && !MYD.getPlan(plan.id)) return;   // ยังว่าง + ยังไม่เคยบันทึก → ไม่ต้องเขียน
-  persist(plan);
+  MYD.savePlan(plan);
 }
 
 // ================= INIT =================
