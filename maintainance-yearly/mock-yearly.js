@@ -5,7 +5,7 @@
 // node's built-in test runner without any bundler/build step.
 //
 // โครงข้อมูล (plain objects):
-// vehicle: { id, plate, vehicleType, brand, chassis, criteria, region(1-12), status, mileage, engineHours }
+// vehicle: { id, plate, vehicleType, brand, chassis, ownerDept, criteria, region(1-12), status, mileage, engineHours }
 // item:    { id, name, category, oilKind?, unit, appliesToTypes:[], qtyPerVehicle }
 // plan:    { id, createdAt, phase, planName, selectedVehicleIds:[], itemAdj:{}, quarter, year,
 //            workNumber, approvalStatus:'draft'|'issued',
@@ -22,12 +22,14 @@
 
 const MASTER_KEY = 'maintaind.yearly.master.v1';
 const PLANS_KEY = 'maintaind.yearly.plans.v1';
+const SETTINGS_KEY = 'maintaind.yearly.settings.v1';
+const DEFAULT_SETTINGS = { confirmDueDays: 7 };   // ยังไม่ได้ค่าจริงจากเจ้าของงาน — แก้ได้จาก Admin
 
 // schema version ของโครงข้อมูลใน localStorage — เพิ่มเลขนี้เมื่อโครงข้อมูล
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 6;   // 6 = เก็บเป็น 'หลายแผน' (plans[]) + ออกเลขงานแยกจาก stepper
+const SCHEMA_VERSION = 7;   // 7 = + ownerDept ที่รถ, plan.confirm (ยืนยันรถเข้าร่วมแผน)
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -60,6 +62,27 @@ const BRANDS_BY_TYPE = {
   ],
 };
 
+// ----- หน่วยงานเจ้าของรถ (ผู้ตอบคำขอยืนยันรถเข้าร่วมแผน) -----
+// ⚠️ ไม่ได้คิดชื่อขึ้นเอง — ยกจาก hierarchy-data.json (โครงสร้างหน้างาน 74 จังหวัด
+// ที่ต้นแบบแจ้งซ่อมใช้อยู่) แล้วแก้สระ า/ำ ที่เพี้ยนจาก font subset ของ PDF ทีละชื่อ
+// การจับคู่ "เขต N → ภาคจริง" เป็นการจำลอง (โมเดล 12 เขต/4 ภาคของต้นแบบเองก็จำลอง
+// — ZONE_LABELS เหนือ/ตะวันออก/ใต้/ตะวันตก ไม่ตรงกับ น./ก./ฉ./ต. ของจริง)
+// แต่ "ชื่อหน่วยงาน" เป็นของจริง — พอได้ dump mas_department ค่อย join ทับ
+const OWNER_DEPTS_BY_REGION = {
+  1:  ['กฟจ. พะเยา',      'กฟส. เชียงคำ',      'กฟส. จุน'],              // กฟน.1
+  2:  ['กฟจ. กำแพงเพชร',  'กฟส. โกสัมพีนคร',   'กฟส. ปางศิลาทอง'],       // กฟน.2
+  3:  ['กฟจ. ชัยนาท',     'กฟส. มโนรมย์',      'กฟส. เนินขาม'],          // กฟน.3
+  4:  ['กฟจ. นครนายก',    'กฟส. บ้านนา',       'กฟส. ปากพลี'],           // กฟก.1
+  5:  ['กฟจ. จันทบุรี',    'กฟส. สอยดาว',       'กฟส. ท่าใหม่'],          // กฟก.2
+  6:  ['กฟจ. กาญจนบุรี',   'กฟส. ท่ามะกา',      'กฟส. ด่านมะขามเตี้ย'],    // กฟก.3
+  7:  ['กฟจ. ชุมพร',      'กฟส. ท่าแซะ',       'กฟส. พะโต๊ะ'],           // กฟต.1
+  8:  ['กฟจ. กระบี่',      'กฟส. เกาะลันตา',    'กฟส. เหนือคลอง'],        // กฟต.2
+  9:  ['กฟจ. นราธิวาส',   'กฟส. สุไหงโก-ลก',   'กฟส. สุไหงปาดี'],        // กฟต.3
+  10: ['กฟจ. ขอนแก่น',    'กฟส. บ้านไผ่',      'กฟส. น้ำพอง'],           // กฟฉ.1
+  11: ['กฟจ. กาฬสินธุ์',   'กฟส. สมเด็จ',       'กฟส. หนองกุงศรี'],       // กฟฉ.2
+  12: ['กฟจ. ชัยภูมิ',     'กฟส. แก้งคร้อ',     'กฟส. จัตุรัส'],          // กฟฉ.3
+};
+
 function genSeedVehicles() {
   const types = ['รถกระเช้า', 'รถเครน', 'รถขุด'];
   const out = [];
@@ -75,6 +98,7 @@ function genSeedVehicles() {
         vehicleType: t,
         brand: b.brand,
         chassis: b.chassis,
+        ownerDept: OWNER_DEPTS_BY_REGION[r][i % OWNER_DEPTS_BY_REGION[r].length],
         criteria: (r + i) % 2 === 0 ? 'truck' : 'net',
         region: r,
         status: i % 7 === 0 ? 'transferred' : i % 5 === 0 ? 'pending_approval' : 'available',
@@ -113,6 +137,7 @@ const INITIAL_PLAN = {
   suppliesAckAt: null,    // ฝ่ายพัสดุกดรับทราบเมื่อไหร่
   statusHistory: [],
   partsRequisitioned: false,
+  confirm: null,          // ตั้งค่าเมื่อ กบค. กด "ส่งคำขอยืนยัน" (ห้ามสร้างตั้งแต่เปิดหน้า)
   travelPlan: null,
   travelConfirmed: false,
 };
@@ -133,7 +158,7 @@ const SEED_PLAN = {
   id: 'plan-seed-2569-001',
   createdAt: '1 ต.ค. 2568 09:00',
   phase: 'procurement',        // เฟส 1 เสร็จแล้ว → กด "ไปเฟสถัดไป" เข้าเฟส 2 ได้
-  planName: 'บำรุงรักษาเครน/กระเช้า ภาคตะวันออก',
+  planName: 'บำรุงรักษาเครน/กระเช้า เขต 3-4',
   selectedVehicleIds: [3, 4].flatMap(r => [1, 2, 3, 4, 5, 6].map(i => `v-${r}-${i}`)),
   itemAdj: {},
   quarter: 'Q1',
@@ -147,8 +172,19 @@ const SEED_PLAN = {
     { status: 'acknowledged', at: '3 ต.ค. 2568 14:20', note: 'ฝ่ายพัสดุรับทราบ — เตรียม/สั่งอะไหล่ตามรายการ' },
   ],
   partsRequisitioned: true,
+  confirm: {
+    requestedAt: '2568-10-06', dueAt: '2568-10-13', remindedAt: null,
+    byVehicle: [3, 4].reduce((acc, r) => {
+      [1, 2, 3, 4, 5, 6].forEach(i => {
+        acc[`v-${r}-${i}`] = { answer: 'ready', reason: '', meetPoint: 'จุดรวมงาน กฟฉ. เขต 3',
+                               by: 'หน่วยงานเจ้าของรถ', at: '2568-10-08 10:00',
+                               history: [], verdict: null, verdictWhy: '', verdictAt: '' };
+      });
+      return acc;
+    }, {}),
+  },
   travelPlan: {
-    location: 'จุดรวมงาน กฟฉ. เขต 3 (นครราชสีมา) → หน้างาน อ.ปากช่อง / อ.สีคิ้ว',
+    location: 'จุดรวมงาน กฟจ. ชัยนาท → หน้างาน อ.มโนรมย์ / อ.เนินขาม',
     dateFrom: '2568-11-04',
     dateTo: '2568-11-08',
     perDiem: 12000,
@@ -156,6 +192,54 @@ const SEED_PLAN = {
     travel: 6500,
   },
   travelConfirmed: true,
+};
+
+// ---------- แผนตัวอย่างใบที่ 2: ค้างอยู่ที่ขั้น "ยืนยันรถเข้าร่วมแผน" ----------
+// เบิกอะไหล่แล้ว · ส่งคำขอยืนยันแล้ว · ตอบกลับมาบางส่วน · ยังไม่ทำแผนเดินทาง
+// ⇒ ใช้เดโม/พัฒนา CF ได้ทันที (SEED_PLAN ใบเดิม travelConfirmed:true จึงถูกล็อก)
+// ค่าคงที่ทั้งหมดเพื่อให้ลิงก์ #plan-seed-2569-002 ใช้ได้ตลอด
+// dueAt เป็นวันในอดีต ⇒ 2 คันที่ยังไม่ตอบจะขึ้น "เลยกำหนด" — ตั้งใจ เพื่อให้เห็นทั้ง
+// เส้น "ไม่พร้อม" และเส้น "เลยกำหนด" ซึ่งเป็น 2 ทางที่ต้องให้ กบค. ตัดสิน
+const CF_VEHICLE_IDS = [5, 6].flatMap(r => [1, 2, 3, 4, 5, 6].map(i => `v-${r}-${i}`));
+
+const SEED_PLAN_CF = {
+  id: 'plan-seed-2569-002',
+  createdAt: '2 ต.ค. 2568 09:30',
+  phase: 'procurement',
+  planName: 'บำรุงรักษาเครน/กระเช้า ภาคตะวันออก รอบ 2',
+  selectedVehicleIds: CF_VEHICLE_IDS,
+  itemAdj: {},
+  quarter: 'Q1',
+  year: 2569,
+  workNumber: 'MT-2569-Q1-002',
+  approvalStatus: 'issued',
+  suppliesAckAt: '4 ต.ค. 2568 11:10',
+  statusHistory: [
+    { status: 'issued',       at: '2 ต.ค. 2568 10:15', note: 'กบค. ออกเลขงาน MT-2569-Q1-002' },
+    { status: 'notified',     at: '2 ต.ค. 2568 10:15', note: 'ส่งเอกสารแจ้งฝ่ายพัสดุ' },
+    { status: 'acknowledged', at: '4 ต.ค. 2568 11:10', note: 'ฝ่ายพัสดุรับทราบ' },
+  ],
+  partsRequisitioned: true,
+  confirm: {
+    requestedAt: '2568-10-05', dueAt: '2568-10-12', remindedAt: null,
+    byVehicle: CF_VEHICLE_IDS.reduce((acc, id, idx) => {
+      const base = { reason: '', meetPoint: '', by: '', at: '',
+                     history: [], verdict: null, verdictWhy: '', verdictAt: '' };
+      if (idx < 8) {
+        acc[id] = { ...base, answer: 'ready', meetPoint: 'จุดรวมงาน กฟฉ. เขต 5',
+                    by: 'หน่วยงานเจ้าของรถ', at: '2568-10-07 09:40' };
+      } else if (idx < 10) {
+        acc[id] = { ...base, answer: 'notready',
+                    reason: idx === 8 ? 'ติดงานก่อสร้างสายส่งถึงสิ้นเดือน' : 'รถเข้าซ่อมเกียร์อยู่ที่อู่',
+                    by: 'หน่วยงานเจ้าของรถ', at: '2568-10-07 14:05' };
+      } else {
+        acc[id] = { ...base, answer: 'pending' };   // ยังไม่ตอบ → เลยกำหนดแล้ว
+      }
+      return acc;
+    }, {}),
+  },
+  travelPlan: null,
+  travelConfirmed: false,
 };
 
 const MYD = {
@@ -173,7 +257,9 @@ const MYD = {
   regionZone,
 
   BRANDS_BY_TYPE,
+  OWNER_DEPTS_BY_REGION,
   SEED_PLAN,
+  SEED_PLAN_CF,
   SEED_VEHICLES,
   SEED_ITEMS,
   INITIAL_PLAN,
@@ -205,11 +291,27 @@ const MYD = {
     localStorage.setItem(MASTER_KEY, JSON.stringify({ _v: SCHEMA_VERSION, vehicles: master.vehicles, items: master.items }));
   },
 
+  loadSettings() {
+    if (typeof localStorage === 'undefined') return { ...DEFAULT_SETTINGS };
+    try {
+      const parsed = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
+      if (!parsed || typeof parsed.confirmDueDays !== 'number') throw new Error('invalid');
+      return { ...DEFAULT_SETTINGS, ...parsed };
+    } catch {
+      return { ...DEFAULT_SETTINGS };
+    }
+  },
+
+  saveSettings(s) {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, ...s }));
+  },
+
   // ---------- แผน: เก็บเป็น "หลายแผน" ----------
   // { _v, plans: [ ...plan ] }  — เรียงใหม่สุดขึ้นก่อนตอนแสดงผล
   // แผนหนึ่ง = แผนบำรุงรักษาประจำปีหนึ่งใบของ กบค. · เลขงานคือหัวข้อของแผน
   loadPlans() {
-    const fresh = () => [deepCopy(SEED_PLAN)];
+    const fresh = () => [deepCopy(SEED_PLAN), deepCopy(SEED_PLAN_CF)];
     if (typeof localStorage === 'undefined') return fresh();
     try {
       const raw = localStorage.getItem(PLANS_KEY);
@@ -261,7 +363,7 @@ const MYD = {
 
   // กลับไปเป็นค่าเริ่มต้น = มีแผนตัวอย่างที่ทำเสร็จแล้ว 1 ใบ
   reseedPlans() {
-    const fresh = [deepCopy(SEED_PLAN)];
+    const fresh = [deepCopy(SEED_PLAN), deepCopy(SEED_PLAN_CF)];
     this.savePlans(fresh);
     return fresh;
   },
@@ -322,6 +424,74 @@ const MYD = {
   planLines(plan, master) {
     const vehicles = master.vehicles.filter(v => (plan.selectedVehicleIds || []).includes(v.id));
     return { vehicles, lines: this.linesFor(vehicles, master, plan.itemAdj) };
+  },
+
+  // ----- ยืนยันรถเข้าร่วมแผน (CF) -----
+  // สถานะ/การเข้าทริป คำนวณจาก plan.confirm อย่างเดียว — pure ทั้งหมด
+  // todayIso = 'YYYY-MM-DD' (ปี พ.ศ. ให้ตรงกับ <input type="date"> ที่ต้นแบบใช้)
+  // เทียบวันด้วย string compare ได้เพราะรูปแบบ zero-padded เรียงตามลำดับเวลาอยู่แล้ว
+
+  emptyConfirmEntry() {
+    return { answer: 'pending', reason: '', meetPoint: '', by: '', at: '',
+             history: [], verdict: null, verdictWhy: '', verdictAt: '' };
+  },
+
+  // สร้างโครงในหน่วยความจำเฉยๆ — ไม่เขียน storage (เขียนตอนกดส่งคำขอเท่านั้น)
+  ensureConfirm(plan) {
+    if (!plan.confirm) {
+      plan.confirm = { requestedAt: null, dueAt: null, remindedAt: null, byVehicle: {} };
+    }
+    if (!plan.confirm.byVehicle) plan.confirm.byVehicle = {};
+    return plan.confirm;
+  },
+
+  vehicleConfirm(plan, vehicleId) {
+    const c = plan.confirm;
+    return (c && c.byVehicle && c.byVehicle[vehicleId]) || this.emptyConfirmEntry();
+  },
+
+  confirmStatus(plan, vehicleId, todayIso) {
+    const e = this.vehicleConfirm(plan, vehicleId);
+    if (e.answer === 'ready' || e.answer === 'notready') return e.answer;
+    const due = plan.confirm && plan.confirm.dueAt;
+    // ยังไม่ส่งคำขอ (ไม่มี dueAt) → ยังไม่เริ่มนับ ไม่ใช่เลยกำหนด
+    if (due && todayIso && todayIso > due) return 'overdue';
+    return 'pending';
+  },
+
+  // verdict ของ กบค. ชนะคำตอบของหน่วยงานเสมอ
+  isVehicleIn(plan, vehicleId) {
+    const e = this.vehicleConfirm(plan, vehicleId);
+    if (e.verdict === 'drop' || e.verdict === 'defer') return false;
+    if (e.verdict === 'keep') return true;
+    return e.answer === 'ready';
+  },
+
+  // มีข้อสรุปแล้ว = ตอบว่าพร้อม หรือ กบค. ตัดสินแล้ว
+  confirmResolved(plan, vehicleIds) {
+    return (vehicleIds || []).every(id => {
+      const e = this.vehicleConfirm(plan, id);
+      return e.answer === 'ready' || e.verdict !== null;
+    });
+  },
+
+  confirmSummary(plan, vehicleIds, todayIso) {
+    const out = { total: 0, ready: 0, waiting: 0, notready: 0, overdue: 0, joining: 0 };
+    (vehicleIds || []).forEach(id => {
+      out.total++;
+      const st = this.confirmStatus(plan, id, todayIso);
+      if (st === 'ready') out.ready++;
+      else if (st === 'notready') out.notready++;
+      else if (st === 'overdue') out.overdue++;
+      else out.waiting++;
+      if (this.isVehicleIn(plan, id)) out.joining++;
+    });
+    return out;
+  },
+
+  // ยืนยันแผนเดินทางแล้ว = ล็อกการแก้คำตอบ (เคาะกับเจ้าของงาน 10 ส.ค. 2569)
+  confirmLocked(plan) {
+    return plan.travelConfirmed === true;
   },
 
   // ไทรมาสตามปีงบประมาณ (ต.ค.–ก.ย.): ต.ค.=เดือน 10 → Q1
