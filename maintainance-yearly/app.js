@@ -258,10 +258,8 @@ function backProcSub() {
 function validateProcSub(plan, sub) {
   if (sub === 1) return MYD.confirmResolved(plan, plan.selectedVehicleIds || []);
   if (sub === 2) return !!plan.partsRequisitioned;
-  if (sub === 3) {
-    const tp = plan.travelPlan;
-    return !!(tp && tp.location && tp.location.trim() && tp.dateFrom && tp.dateTo);
-  }
+  // ขั้นแผนเดินทางจบเมื่อ: จัดรถเข้าใบครบทุกคัน + ทุกใบได้รับการตอบรับจากหน่วยงาน
+  if (sub === 3) return MYD.travelPlanReady(plan, MYD.loadMaster());
   return true;
 }
 
@@ -564,92 +562,253 @@ function openVerdictRow(plan, vehicleId) {
 }
 
 // ----- ขั้น 3: ทำแผนเดินทาง -----
-function ensureTravelPlan(plan) {
-  if (!plan.travelPlan) {
-    plan.travelPlan = { location: '', dateFrom: '', dateTo: '', perDiem: 0, lodging: 0, travel: 0 };
-  }
-  return plan.travelPlan;
+const TRIP_STATUS_BADGE = {
+  draft:    { cls: 'b-low',   text: 'ยังไม่ส่ง' },
+  waiting:  { cls: 'b-low',   text: 'รอตอบรับ' },
+  rejected: { cls: 'b-brand', text: 'ถูกปฏิเสธ' },
+  accepted: { cls: 'b-ok',    text: 'ตอบรับแล้ว' },
+};
+
+function tripVehicles(trip, master) {
+  const byId = new Map(master.vehicles.map(v => [v.id, v]));
+  return (trip.vehicleIds || []).map(id => byId.get(id)).filter(Boolean);
 }
 
+// 1 แผนบำรุงรักษามีแผนเดินทางได้หลายใบ — กบค. เลือกเองว่ารถคันไหนเข้าใบไหน
+// (เจ้าของงานเคาะ 10 ส.ค. 2569: "การสร้างจะอิสระ หมายถึงเลือกรถได้ เลือกแผน")
 function renderProcStep2(plan) {
-  const tp = plan.travelPlan || {};
   const master = MYD.loadMaster();
+  const trips = MYD.ensureTrips(plan);
   const joining = (plan.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(plan, id));
-  const plates = master.vehicles.filter(v => joining.includes(v.id)).map(v => v.plate);
-  const dropped = (plan.selectedVehicleIds || []).length - joining.length;
+  const unassigned = MYD.unassignedVehicleIds(plan);
+  const accepted = trips.filter(t => MYD.tripStatus(t, master) === 'accepted').length;
+
+  const unassignedOpts = master.vehicles
+    .filter(v => unassigned.includes(v.id))
+    .map(v => `<option value="${esc(v.id)}">${esc(v.plate)} — ${esc(MYD.provinceOfRegion(v.region))} · ${esc(v.ownerDept)}</option>`)
+    .join('');
+
+  const tripBoxes = trips.map(trip => {
+    const st = MYD.tripStatus(trip, master);
+    const b = TRIP_STATUS_BADGE[st];
+    const sent = !!trip.sentAt;
+    const locked = sent && st !== 'rejected';   // ส่งแล้วแก้ไม่ได้ จนกว่าจะถูกปฏิเสธ
+    const dis = locked ? 'disabled' : '';
+    const vs = tripVehicles(trip, master);
+
+    const rows = vs.map(v => {
+      const d = (trip.dates || {})[v.id] || '';
+      const bad = d && !MYD.dateInWindow(trip, d);
+      return `<tr>
+        <td><b>${esc(v.plate)}</b><div class="sub">${esc(v.brand)}</div></td>
+        <td>${esc(v.ownerDept)}<div class="sub">${esc(MYD.provinceOfRegion(v.region))}</div></td>
+        <td><div class="in noic"><input type="date" value="${esc(d)}" ${dis}
+              data-trip="${esc(trip.id)}" data-veh="${esc(v.id)}"></div>
+            ${bad ? `<div class="sub">อยู่นอกช่วงที่เสนอ</div>` : ''}</td>
+        <td class="num">${locked ? '' : `<button class="btn btn-g btn-sm" data-trip-drop="${esc(trip.id)}" data-veh="${esc(v.id)}">เอาออก</button>`}</td>
+      </tr>`;
+    }).join('');
+
+    const replyRows = MYD.tripDepts(trip, master).map(d => {
+      const r = MYD.tripReply(trip, d);
+      const rb = r.status === 'accepted' ? 'b-ok' : r.status === 'rejected' ? 'b-brand' : 'b-low';
+      const rt = r.status === 'accepted' ? 'ตอบรับ' : r.status === 'rejected' ? 'ปฏิเสธ' : 'รอตอบ';
+      return `<tr><td>${esc(d)}</td>
+        <td><span class="badge ${rb}">${rt}</span></td>
+        <td>${esc(r.reason || '—')}</td>
+        <td>${esc(r.at || '—')}</td></tr>`;
+    }).join('');
+
+    return `
+      <div class="rzone">
+        <div class="rzone-head">
+          <span class="ms rzone-caret">event</span>
+          <b>${esc(trip.name || 'แผนเดินทาง')}</b>
+          <span class="rzone-count">${vs.length} คัน · ${MYD.tripDepts(trip, master).length} หน่วยงาน</span>
+          <span class="badge ${b.cls}">${b.text}</span>
+        </div>
+        <div class="rzone-body">
+          <div class="fgrid">
+            <div class="f sp2"><label>ชื่อแผน</label>
+              <div class="in"><span class="ms">label</span>
+                <input type="text" value="${esc(trip.name || '')}" ${dis}
+                  placeholder="เช่น ชัยนาท รอบ 1" data-trip="${esc(trip.id)}" data-field="name"></div></div>
+            <div class="f sp2"><label>สถานที่บำรุงรักษา</label>
+              <div class="in"><span class="ms">place</span>
+                <input type="text" value="${esc(trip.location || '')}" ${dis}
+                  placeholder="เช่น จุดรวมงาน กฟจ. ชัยนาท" data-trip="${esc(trip.id)}" data-field="location"></div></div>
+            <div class="f sp2"><label>ช่วงที่เสนอ — จากวันที่</label>
+              <div class="in noic"><input type="date" value="${esc(trip.windowFrom || '')}" ${dis}
+                data-trip="${esc(trip.id)}" data-field="windowFrom"></div></div>
+            <div class="f sp2"><label>ถึงวันที่</label>
+              <div class="in noic"><input type="date" value="${esc(trip.windowTo || '')}" ${dis}
+                data-trip="${esc(trip.id)}" data-field="windowTo"></div></div>
+            <div class="f"><label>ค่าเบี้ยเลี้ยง (บาท)</label>
+              <div class="in noic"><input type="number" min="0" value="${esc(trip.perDiem ?? 0)}" ${dis}
+                data-trip="${esc(trip.id)}" data-field="perDiem"></div></div>
+            <div class="f"><label>ค่าที่พัก (บาท)</label>
+              <div class="in noic"><input type="number" min="0" value="${esc(trip.lodging ?? 0)}" ${dis}
+                data-trip="${esc(trip.id)}" data-field="lodging"></div></div>
+            <div class="f"><label>ค่าเดินทาง (บาท)</label>
+              <div class="in noic"><input type="number" min="0" value="${esc(trip.travel ?? 0)}" ${dis}
+                data-trip="${esc(trip.id)}" data-field="travel"></div></div>
+            <div class="f"><label>รวม</label><div><b>${esc((trip.perDiem || 0) + (trip.lodging || 0) + (trip.travel || 0))} บาท</b></div></div>
+          </div>
+
+          <div class="sect">รถในแผนนี้ + วันนัดรายคัน</div>
+          ${vs.length ? `<div class="tblwrap"><table class="tbl">
+            <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>วันนัด</th><th></th></tr></thead>
+            <tbody>${rows}</tbody></table></div>`
+            : `<div class="empty">ยังไม่มีรถในแผนนี้ — เลือกจากรายการด้านล่าง</div>`}
+
+          ${locked ? '' : `
+          <div class="fgrid">
+            <div class="f sp3"><label>เพิ่มรถเข้าแผนนี้ <small>เลือกจากคันที่ยังไม่ถูกจัด</small></label>
+              <div class="in"><span class="ms">directions_car</span>
+                <select data-trip-add-sel="${esc(trip.id)}" ${unassignedOpts ? '' : 'disabled'}>
+                  ${unassignedOpts || '<option>— จัดครบทุกคันแล้ว —</option>'}</select></div></div>
+            <div class="f"><label>&nbsp;</label>
+              <button class="btn btn-s" data-trip-add="${esc(trip.id)}" ${unassignedOpts ? '' : 'disabled'}>เพิ่ม</button></div>
+          </div>`}
+
+          ${sent ? `
+            <div class="sect">การตอบรับรายหน่วยงาน</div>
+            <div class="sub">ส่งเมื่อ ${esc(trip.sentAt)} · เอกสารส่งถึงเจ้าของรถและ กรย. (กรย. รับสำเนา ไม่ต้องกดตอบ)</div>
+            <div class="tblwrap"><table class="tbl">
+              <thead><tr><th>หน่วยงาน</th><th>สถานะ</th><th>เหตุผลที่ปฏิเสธ</th><th>ตอบเมื่อ</th></tr></thead>
+              <tbody>${replyRows}</tbody></table></div>` : ''}
+
+          <div class="actions">
+            ${locked
+              ? `<button class="btn btn-g" data-trip-del="${esc(trip.id)}" disabled>ส่งแล้ว แก้ไม่ได้</button>`
+              : `<button class="btn btn-g" data-trip-del="${esc(trip.id)}">ลบแผนนี้</button>
+                 <button class="btn btn-o" data-trip-send="${esc(trip.id)}" ${MYD.tripReadyToSend(trip) ? '' : 'disabled'}>
+                   <span class="ms">send</span> ${st === 'rejected' ? 'แก้แล้วส่งใหม่' : 'ส่งแผนนัดให้หน่วยงาน'}</button>`}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
   return `
     <div class="sect">ขั้นที่ 3: ทำแผนเดินทาง</div>
-    <div class="sub">คิดจากรถที่ยืนยันแล้ว <b>${joining.length}</b> คัน
-      ${dropped ? `(ตัด/เลื่อน ${dropped} คันจากขั้นยืนยันรถ)` : ''}
-      — เบี้ยเลี้ยง/ที่พัก/ค่าเดินทางให้กรอกตามจำนวนนี้</div>
-    <div class="sub">${esc(plates.join(' · '))}</div>
-    <div class="fgrid">
-      <div class="f sp4">
-        <label>สถานที่บำรุงรักษา</label>
-        <div class="in"><span class="ms">place</span>
-          <input type="text" id="fLocation" placeholder="เช่น คลังพัสดุ กฟก.3 นครสวรรค์" value="${esc(tp.location || '')}">
-        </div>
-      </div>
-      <div class="f sp2">
-        <label>จากวันที่</label>
-        <div class="in noic"><input type="date" id="fDateFrom" value="${esc(tp.dateFrom || '')}"></div>
-      </div>
-      <div class="f sp2">
-        <label>ถึงวันที่</label>
-        <div class="in noic"><input type="date" id="fDateTo" value="${esc(tp.dateTo || '')}"></div>
-      </div>
-      <div class="f">
-        <label>ค่าเบี้ยเลี้ยง (บาท)</label>
-        <div class="in noic"><input type="number" min="0" id="fPerDiem" value="${esc(tp.perDiem ?? 0)}"></div>
-      </div>
-      <div class="f">
-        <label>ค่าที่พัก (บาท)</label>
-        <div class="in noic"><input type="number" min="0" id="fLodging" value="${esc(tp.lodging ?? 0)}"></div>
-      </div>
-      <div class="f">
-        <label>ค่าเดินทาง (บาท)</label>
-        <div class="in noic"><input type="number" min="0" id="fTravel" value="${esc(tp.travel ?? 0)}"></div>
-      </div>
-    </div>`;
+    <div class="sub">รถที่ยืนยันแล้ว <b>${joining.length}</b> คัน — จัดเข้าแผนแล้ว <b>${joining.length - unassigned.length}</b>
+      · ยังไม่จัด <b>${unassigned.length}</b> · แผนเดินทาง <b>${trips.length}</b> ใบ (ตอบรับแล้ว ${accepted})</div>
+    <div class="sub">แผนหนึ่งมีได้หลายใบ — จะแยกตามจังหวัด หรือจังหวัดละหลายใบก็ได้ · แต่ละใบเสนอเป็นช่วงเวลา
+      แล้วระบุวันนัดรายคันภายในช่วงนั้น</div>
+    <div class="actions" style="justify-content:flex-start">
+      <button class="btn btn-o" id="btnAddTrip"><span class="ms">add</span> สร้างแผนเดินทางใหม่</button>
+      ${unassigned.length ? `<button class="btn btn-s" id="btnAutoTrips">
+        <span class="ms">auto_awesome_motion</span> แยกอัตโนมัติตามจังหวัด</button>` : ''}
+    </div>
+    ${trips.length ? tripBoxes : `<div class="empty">ยังไม่มีแผนเดินทาง — กดสร้างแผนใหม่ หรือให้ระบบแยกตามจังหวัดให้</div>`}
+    ${unassigned.length ? `<div class="empty">ยังมีรถ ${unassigned.length} คันที่ยังไม่ถูกจัดเข้าแผนใด — ต้องจัดครบก่อนไปขั้นถัดไป</div>` : ''}`;
 }
 
 function bindProcStep2(plan) {
-  const tp = ensureTravelPlan(plan);
+  const master = MYD.loadMaster();
+  const trips = MYD.ensureTrips(plan);
+  const find = id => trips.find(t => t.id === id);
+  const rerender = () => { MYD.savePlan(plan); renderProcWizard(plan); };
 
-  $('fLocation').addEventListener('input', e => {
-    tp.location = e.target.value;
-    MYD.savePlan(plan);
-    updateProcPrimaryEnabled(plan);
+  // ช่องกรอกระดับใบ — บันทึกทันทีแต่ไม่ re-render (ไม่งั้นโฟกัสหลุดระหว่างพิมพ์)
+  document.querySelectorAll('[data-field][data-trip]').forEach(el => {
+    el.addEventListener('input', e => {
+      const t = find(el.dataset.trip);
+      if (!t) return;
+      const f = el.dataset.field;
+      t[f] = ['perDiem', 'lodging', 'travel'].includes(f) ? (Number(e.target.value) || 0) : e.target.value;
+      MYD.savePlan(plan);
+      updateProcPrimaryEnabled(plan);
+      const btn = document.querySelector(`[data-trip-send="${t.id}"]`);
+      if (btn) btn.disabled = !MYD.tripReadyToSend(t);
+    });
   });
-  $('fDateFrom').addEventListener('input', e => {
-    tp.dateFrom = e.target.value;
-    MYD.savePlan(plan);
-    updateProcPrimaryEnabled(plan);
+
+  // วันนัดรายคัน
+  document.querySelectorAll('[data-veh][data-trip]:not([data-trip-drop])').forEach(el => {
+    if (el.tagName !== 'INPUT') return;
+    el.addEventListener('input', e => {
+      const t = find(el.dataset.trip);
+      if (!t) return;
+      (t.dates = t.dates || {})[el.dataset.veh] = e.target.value;
+      MYD.savePlan(plan);
+      if (e.target.value && !MYD.dateInWindow(t, e.target.value)) {
+        toast('วันนัดต้องอยู่ในช่วงที่เสนอ');
+      }
+      renderProcWizard(plan);
+    });
   });
-  $('fDateTo').addEventListener('input', e => {
-    tp.dateTo = e.target.value;
-    MYD.savePlan(plan);
-    updateProcPrimaryEnabled(plan);
+
+  $('btnAddTrip')?.addEventListener('click', () => {
+    const t = MYD.emptyTrip('trip-' + Date.now().toString(36), `แผนเดินทาง ${trips.length + 1}`);
+    trips.push(t);
+    rerender();
   });
-  $('fPerDiem').addEventListener('input', e => {
-    tp.perDiem = Number(e.target.value) || 0;
-    MYD.savePlan(plan);
+
+  // ทางลัด: หนึ่งจังหวัดหนึ่งใบ — เป็นแค่จุดตั้งต้น กบค. ยังแก้/แตกใบต่อได้
+  $('btnAutoTrips')?.addEventListener('click', () => {
+    const unassigned = MYD.unassignedVehicleIds(plan);
+    const byRegion = {};
+    master.vehicles.filter(v => unassigned.includes(v.id))
+      .forEach(v => (byRegion[v.region] = byRegion[v.region] || []).push(v.id));
+    Object.keys(byRegion).sort((a, b) => a - b).forEach(r => {
+      const t = MYD.emptyTrip('trip-' + Date.now().toString(36) + '-' + r, MYD.provinceOfRegion(Number(r)));
+      t.vehicleIds = byRegion[r];
+      trips.push(t);
+    });
+    toast(`สร้าง ${Object.keys(byRegion).length} แผนตามจังหวัดแล้ว`);
+    rerender();
   });
-  $('fLodging').addEventListener('input', e => {
-    tp.lodging = Number(e.target.value) || 0;
-    MYD.savePlan(plan);
+
+  document.querySelectorAll('[data-trip-add]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = find(btn.dataset.tripAdd);
+      const sel = document.querySelector(`[data-trip-add-sel="${btn.dataset.tripAdd}"]`);
+      if (!t || !sel || !sel.value) return;
+      t.vehicleIds = [...new Set([...(t.vehicleIds || []), sel.value])];
+      rerender();
+    });
   });
-  $('fTravel').addEventListener('input', e => {
-    tp.travel = Number(e.target.value) || 0;
-    MYD.savePlan(plan);
+
+  document.querySelectorAll('[data-trip-drop]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = find(btn.dataset.tripDrop);
+      if (!t) return;
+      t.vehicleIds = (t.vehicleIds || []).filter(id => id !== btn.dataset.veh);
+      delete (t.dates || {})[btn.dataset.veh];
+      rerender();
+    });
+  });
+
+  document.querySelectorAll('[data-trip-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('ลบแผนเดินทางใบนี้? รถในใบจะกลับไปเป็นยังไม่ถูกจัด')) return;
+      plan.trips = trips.filter(t => t.id !== btn.dataset.tripDel);
+      rerender();
+    });
+  });
+
+  document.querySelectorAll('[data-trip-send]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = find(btn.dataset.tripSend);
+      if (!t || !MYD.tripReadyToSend(t)) { toast('กรอกสถานที่ ช่วงวัน และวันนัดให้ครบก่อน'); return; }
+      t.sentAt = nowTh();
+      t.replies = {};   // ส่งใหม่ = เริ่มนับการตอบรับใหม่ทั้งใบ
+      MYD.tripDepts(t, master).forEach(d => {
+        t.replies[d] = { status: 'pending', reason: '', by: '', at: '', history: [] };
+      });
+      toast('ส่งแผนนัดให้หน่วยงานแล้ว (สำเนาถึง กรย.)');
+      rerender();
+    });
   });
 }
 
 // ----- ขั้น 4: ทวน + ยืนยัน -----
 function renderProcStep3(plan) {
-  const tp = plan.travelPlan || {};
-  const total = (tp.perDiem || 0) + (tp.lodging || 0) + (tp.travel || 0);
   const master3 = MYD.loadMaster();
+  const trips = MYD.ensureTrips(plan);
+  const grand = trips.reduce((n, t) => n + (t.perDiem || 0) + (t.lodging || 0) + (t.travel || 0), 0);
+
   const outRows = (plan.selectedVehicleIds || [])
     .filter(id => !MYD.isVehicleIn(plan, id))
     .map(id => {
@@ -660,22 +819,38 @@ function renderProcStep3(plan) {
         <td>${esc(e.verdictWhy || e.reason || '—')}</td></tr>`;
     }).join('');
 
+  const tripBlocks = trips.map(t => {
+    const vs = tripVehicles(t, master3);
+    const sum = (t.perDiem || 0) + (t.lodging || 0) + (t.travel || 0);
+    const rows = vs.map(v => `<tr>
+        <td>${esc(v.plate)}</td>
+        <td>${esc(v.ownerDept)}</td>
+        <td>${dateTh((t.dates || {})[v.id] || '')}</td>
+      </tr>`).join('');
+    return `
+      <div class="rzone">
+        <div class="rzone-head">
+          <span class="ms rzone-caret">event_available</span>
+          <b>${esc(t.name || 'แผนเดินทาง')}</b>
+          <span class="rzone-count">${esc(t.location || '—')} · ${dateTh(t.windowFrom)}–${dateTh(t.windowTo)}
+            · ${vs.length} คัน · ${sum.toLocaleString('th-TH')} บาท</span>
+          <span class="badge b-ok">ตอบรับแล้ว</span>
+        </div>
+        <div class="rzone-body flush"><div class="tblwrap"><table class="tbl">
+          <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>วันนัด</th></tr></thead>
+          <tbody>${rows}</tbody></table></div></div>
+      </div>`;
+  }).join('');
+
   return `
     <div class="sect">ขั้นที่ 4: ทวนแผนเดินทาง + ยืนยัน</div>
+    <div class="sub">แผนเดินทาง <b>${trips.length}</b> ใบ · รวมค่าใช้จ่ายทั้งหมด <b>${grand.toLocaleString('th-TH')}</b> บาท</div>
+    ${tripBlocks || `<div class="empty">ยังไม่มีแผนเดินทาง</div>`}
     ${outRows ? `
-    <div class="sect">รถที่ไม่เข้าทริปนี้</div>
+    <div class="sect">รถที่ไม่เข้าแผนเดินทางรอบนี้</div>
     <div class="tblwrap"><table class="tbl">
       <thead><tr><th>ทะเบียน</th><th>คำตัดสิน กบค.</th><th>เหตุผล</th></tr></thead>
-      <tbody>${outRows}</tbody></table></div>` : ''}
-    <div class="fgrid">
-      <div class="f sp4"><label>สถานที่บำรุงรักษา</label><div>${esc(tp.location || '-')}</div></div>
-      <div class="f sp2"><label>จากวันที่</label><div>${esc(tp.dateFrom || '-')}</div></div>
-      <div class="f sp2"><label>ถึงวันที่</label><div>${esc(tp.dateTo || '-')}</div></div>
-      <div class="f"><label>ค่าเบี้ยเลี้ยง</label><div>${esc(tp.perDiem || 0)} บาท</div></div>
-      <div class="f"><label>ค่าที่พัก</label><div>${esc(tp.lodging || 0)} บาท</div></div>
-      <div class="f"><label>ค่าเดินทาง</label><div>${esc(tp.travel || 0)} บาท</div></div>
-      <div class="f sp4"><label>รวมค่าใช้จ่าย</label><div><b>${esc(total)} บาท</b></div></div>
-    </div>`;
+      <tbody>${outRows}</tbody></table></div>` : ''}`;
 }
 
 function confirmTravelPlan(plan) {
@@ -690,22 +865,32 @@ function confirmTravelPlan(plan) {
 function renderProcurementConfirmed(plan) {
   const selectedVehicles = MYD.loadMaster().vehicles.filter(v => (plan.selectedVehicleIds || []).includes(v.id));
   const joiningCount = selectedVehicles.filter(v => MYD.isVehicleIn(plan, v.id)).length;
-  const tp = plan.travelPlan || {};
-  const total = (tp.perDiem || 0) + (tp.lodging || 0) + (tp.travel || 0);
+  const master = MYD.loadMaster();
+  const trips = MYD.ensureTrips(plan);
+  const grand = trips.reduce((n, t) => n + (t.perDiem || 0) + (t.lodging || 0) + (t.travel || 0), 0);
+
+  const tripRows = trips.map(t => {
+    const vs = tripVehicles(t, master);
+    const sum = (t.perDiem || 0) + (t.lodging || 0) + (t.travel || 0);
+    return `<tr>
+      <td><b>${esc(t.name || 'แผนเดินทาง')}</b><div class="sub">${esc(t.location || '—')}</div></td>
+      <td>${dateTh(t.windowFrom)} – ${dateTh(t.windowTo)}</td>
+      <td class="num">${vs.length}</td>
+      <td class="num">${sum.toLocaleString('th-TH')}</td>
+      <td>${MYD.tripDepts(t, master).join(' · ')}</td>
+    </tr>`;
+  }).join('');
 
   $('phase').innerHTML = `
     <div class="card">
       <div class="sect">เบิก/จัดหา + แผนเดินทาง — ยืนยันแล้ว</div>
       <span class="badge b-ok" style="font-size:15px;padding:6px 16px">แผนเดินทางยืนยันแล้ว</span>
-      <div class="fgrid" style="margin-top:16px">
-        <div class="f sp4"><label>สถานที่บำรุงรักษา</label><div>${esc(tp.location || '-')}</div></div>
-        <div class="f sp2"><label>จากวันที่</label><div>${dateTh(tp.dateFrom)}</div></div>
-        <div class="f sp2"><label>ถึงวันที่</label><div>${dateTh(tp.dateTo)}</div></div>
-        <div class="f"><label>ค่าเบี้ยเลี้ยง</label><div>${(tp.perDiem || 0).toLocaleString('th-TH')} บาท</div></div>
-        <div class="f"><label>ค่าที่พัก</label><div>${(tp.lodging || 0).toLocaleString('th-TH')} บาท</div></div>
-        <div class="f"><label>ค่าเดินทาง</label><div>${(tp.travel || 0).toLocaleString('th-TH')} บาท</div></div>
-        <div class="f sp4"><label>รวมค่าใช้จ่าย</label><div><b>${total.toLocaleString('th-TH')} บาท</b></div></div>
-      </div>
+      <div class="sub" style="margin-top:12px">แผนเดินทาง <b>${trips.length}</b> ใบ
+        · รวมค่าใช้จ่าย <b>${grand.toLocaleString('th-TH')}</b> บาท · ทุกใบได้รับการตอบรับจากหน่วยงานแล้ว</div>
+      ${trips.length ? `<div class="tblwrap"><table class="tbl">
+        <thead><tr><th>แผน / สถานที่</th><th>ช่วงที่นัด</th><th class="num">รถ</th>
+          <th class="num">ค่าใช้จ่าย</th><th>หน่วยงานที่ตอบรับ</th></tr></thead>
+        <tbody>${tripRows}</tbody></table></div>` : ''}
     </div>
     <div class="card">
       <div class="sect"><span class="ms">mail</span> ส่ง Noti แจ้งเจ้าของรถ ${joiningCount} คัน + กรย. วันที่เข้าตรวจ</div>

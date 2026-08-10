@@ -10,7 +10,12 @@
 // plan:    { id, createdAt, phase, planName, selectedVehicleIds:[], itemAdj:{}, quarter, year,
 //            workNumber, approvalStatus:'draft'|'issued',
 //            suppliesAckAt:null|string, partsRequisitioned,
-//            travelPlan:{location,dateFrom,dateTo,perDiem,lodging,travel}|null, travelConfirmed, statusHistory:[] }
+//            confirm:{...}|null, trips:[trip], travelConfirmed, statusHistory:[] }
+// trip:    { id, name, location, windowFrom, windowTo, perDiem, lodging, travel,
+//            vehicleIds:[], dates:{[vehicleId]:'YYYY-MM-DD'}, sentAt,
+//            replies:{[ownerDept]:{status,reason,by,at,history:[]}} }
+//   1 แผนบำรุงรักษามีแผนเดินทางได้หลายใบ — กบค. เลือกเองว่ารถคันไหนเข้าใบไหน
+//   วันนัดอยู่ระดับรายคัน · ช่วงเวลาอยู่ระดับใบ · การตอบรับอยู่ระดับใบ × หน่วยงาน
 // หมายเหตุ: กบค. เป็นผู้ออกเลขงานเอง — ฝ่ายพัสดุ "รับทราบ" เพื่อเตรียม/สั่งอะไหล่ ไม่ได้อนุมัติ
 //
 // approvalStatus: 'draft' (กบค. ยังแก้แผนอยู่) -> 'pending' (ส่งขออนุมัติเลขงาน
@@ -29,7 +34,7 @@ const DEFAULT_SETTINGS = { confirmDueDays: 7 };   // ยังไม่ได้
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 7;   // 7 = + ownerDept ที่รถ, plan.confirm (ยืนยันรถเข้าร่วมแผน)
+const SCHEMA_VERSION = 8;   // 8 = แผนเดินทางเป็น "หลายใบ" (plan.trips[]) แทน travelPlan ใบเดียว
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -138,7 +143,7 @@ const INITIAL_PLAN = {
   statusHistory: [],
   partsRequisitioned: false,
   confirm: null,          // ตั้งค่าเมื่อ กบค. กด "ส่งคำขอยืนยัน" (ห้ามสร้างตั้งแต่เปิดหน้า)
-  travelPlan: null,
+  trips: [],              // แผนเดินทางหลายใบ — กบค. สร้างเองอิสระ เลือกรถเข้าแต่ละใบ
   travelConfirmed: false,
 };
 
@@ -183,14 +188,37 @@ const SEED_PLAN = {
       return acc;
     }, {}),
   },
-  travelPlan: {
-    location: 'จุดรวมงาน กฟจ. ชัยนาท → หน้างาน อ.มโนรมย์ / อ.เนินขาม',
-    dateFrom: '2568-11-04',
-    dateTo: '2568-11-08',
-    perDiem: 12000,
-    lodging: 9000,
-    travel: 6500,
-  },
+  // แผนเดินทาง 2 ใบ — จังหวัดละใบ · ตอบรับครบแล้วทั้งคู่ (เฟส 1 จึงจบ)
+  trips: [
+    {
+      id: 'trip-seed-1', name: 'ชัยนาท',
+      location: 'จุดรวมงาน กฟจ. ชัยนาท → หน้างาน อ.มโนรมย์',
+      windowFrom: '2568-11-04', windowTo: '2568-11-08',
+      perDiem: 7000, lodging: 5000, travel: 3500,
+      vehicleIds: [1, 2, 3, 4, 5, 6].map(i => `v-3-${i}`),
+      dates: [1, 2, 3, 4, 5, 6].reduce((a, i) => (a[`v-3-${i}`] = i <= 3 ? '2568-11-04' : '2568-11-05', a), {}),
+      sentAt: '8 ต.ค. 2568 09:00',
+      replies: {
+        'กฟจ. ชัยนาท': { status: 'accepted', reason: '', by: 'หน่วยงานเจ้าของรถ', at: '9 ต.ค. 2568 10:20', history: [] },
+        'กฟส. มโนรมย์': { status: 'accepted', reason: '', by: 'หน่วยงานเจ้าของรถ', at: '9 ต.ค. 2568 11:05', history: [] },
+        'กฟส. เนินขาม': { status: 'accepted', reason: '', by: 'หน่วยงานเจ้าของรถ', at: '9 ต.ค. 2568 13:40', history: [] },
+      },
+    },
+    {
+      id: 'trip-seed-2', name: 'นครนายก',
+      location: 'จุดรวมงาน กฟจ. นครนายก → หน้างาน อ.บ้านนา',
+      windowFrom: '2568-11-06', windowTo: '2568-11-08',
+      perDiem: 5000, lodging: 4000, travel: 3000,
+      vehicleIds: [1, 2, 3, 4, 5, 6].map(i => `v-4-${i}`),
+      dates: [1, 2, 3, 4, 5, 6].reduce((a, i) => (a[`v-4-${i}`] = i <= 3 ? '2568-11-06' : '2568-11-07', a), {}),
+      sentAt: '8 ต.ค. 2568 09:00',
+      replies: {
+        'กฟจ. นครนายก': { status: 'accepted', reason: '', by: 'หน่วยงานเจ้าของรถ', at: '9 ต.ค. 2568 09:15', history: [] },
+        'กฟส. บ้านนา': { status: 'accepted', reason: '', by: 'หน่วยงานเจ้าของรถ', at: '9 ต.ค. 2568 09:50', history: [] },
+        'กฟส. ปากพลี': { status: 'accepted', reason: '', by: 'หน่วยงานเจ้าของรถ', at: '9 ต.ค. 2568 14:10', history: [] },
+      },
+    },
+  ],
   travelConfirmed: true,
 };
 
@@ -238,7 +266,7 @@ const SEED_PLAN_CF = {
       return acc;
     }, {}),
   },
-  travelPlan: null,
+  trips: [],
   travelConfirmed: false,
 };
 
@@ -500,6 +528,86 @@ const MYD = {
   // ยืนยันแผนเดินทางแล้ว = ล็อกการแก้คำตอบ (เคาะกับเจ้าของงาน 10 ส.ค. 2569)
   confirmLocked(plan) {
     return plan.travelConfirmed === true;
+  },
+
+  // ----- แผนเดินทาง: หลายใบต่อหนึ่งแผนบำรุงรักษา (เคาะ 10 ส.ค. 2569) -----
+  // "การสร้างจะอิสระ หมายถึงเลือกรถได้ เลือกแผน" — ใบไม่ผูกกับจังหวัด กบค. จัดเอง
+  // trip = { id, name, location, windowFrom, windowTo, perDiem, lodging, travel,
+  //          vehicleIds:[], dates:{[vehicleId]:'YYYY-MM-DD'}, sentAt,
+  //          replies:{ [ownerDept]: {status,reason,by,at,history:[]} } }
+  // วันนัดอยู่ระดับ "รายคัน" · ช่วงเวลาอยู่ระดับ "ใบ" · การตอบรับอยู่ระดับ "ใบ × หน่วยงาน"
+  // (ใบหนึ่งอาจมีรถของหลายหน่วยงาน แต่ละหน่วยงานตอบเฉพาะรถของตัวเอง)
+
+  emptyTrip(id, name) {
+    return { id, name: name || '', location: '', windowFrom: '', windowTo: '',
+             perDiem: 0, lodging: 0, travel: 0,
+             vehicleIds: [], dates: {}, sentAt: null, replies: {} };
+  },
+
+  // สร้างโครงในหน่วยความจำเฉยๆ — ไม่เขียน storage
+  ensureTrips(plan) {
+    if (!Array.isArray(plan.trips)) plan.trips = [];
+    return plan.trips;
+  },
+
+  getTrip(plan, tripId) {
+    return this.ensureTrips(plan).find(t => t.id === tripId) || null;
+  },
+
+  // รถที่ผ่านขั้นยืนยันแล้ว แต่ยังไม่ถูกจัดเข้าใบไหนเลย — ต้องเป็น 0 ถึงจะทำแผนครบ
+  unassignedVehicleIds(plan) {
+    const inTrips = new Set(this.ensureTrips(plan).flatMap(t => t.vehicleIds || []));
+    return (plan.selectedVehicleIds || [])
+      .filter(id => this.isVehicleIn(plan, id) && !inTrips.has(id));
+  },
+
+  // หน่วยงานเจ้าของรถที่มีรถอยู่ในใบนี้ — คือชุดคนที่ต้องตอบรับ
+  tripDepts(trip, master) {
+    const byId = new Map(master.vehicles.map(v => [v.id, v]));
+    return [...new Set((trip.vehicleIds || [])
+      .map(id => (byId.get(id) || {}).ownerDept)
+      .filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+  },
+
+  tripReply(trip, dept) {
+    return (trip.replies || {})[dept] || { status: 'pending', reason: '', by: '', at: '', history: [] };
+  },
+
+  // 'draft'    = ยังไม่ส่ง
+  // 'waiting'  = ส่งแล้ว ยังตอบไม่ครบ
+  // 'rejected' = มีอย่างน้อย 1 หน่วยงานปฏิเสธ (กบค. ต้องแก้แล้วส่งใหม่)
+  // 'accepted' = ทุกหน่วยงานตอบรับครบ
+  tripStatus(trip, master) {
+    if (!trip.sentAt) return 'draft';
+    const depts = this.tripDepts(trip, master);
+    if (!depts.length) return 'draft';
+    const st = depts.map(d => this.tripReply(trip, d).status);
+    if (st.includes('rejected')) return 'rejected';
+    return st.every(s => s === 'accepted') ? 'accepted' : 'waiting';
+  },
+
+  // วันนัดต้องอยู่ในช่วงที่ กบค. เสนอเท่านั้น (เทียบ string ได้เพราะรูปแบบ zero-padded)
+  dateInWindow(trip, d) {
+    if (!d) return false;
+    if (trip.windowFrom && d < trip.windowFrom) return false;
+    if (trip.windowTo && d > trip.windowTo) return false;
+    return true;
+  },
+
+  // ใบพร้อมส่ง = มีสถานที่ · มีช่วงวัน · มีรถ · และทุกคันมีวันนัดที่อยู่ในช่วง
+  tripReadyToSend(trip) {
+    if (!trip.location || !trip.location.trim()) return false;
+    if (!trip.windowFrom || !trip.windowTo || trip.windowFrom > trip.windowTo) return false;
+    if (!(trip.vehicleIds || []).length) return false;
+    return (trip.vehicleIds || []).every(id => this.dateInWindow(trip, (trip.dates || {})[id]));
+  },
+
+  // ขั้นแผนเดินทางจบเมื่อ: จัดรถเข้าใบครบทุกคัน + ทุกใบได้รับการตอบรับ
+  travelPlanReady(plan, master) {
+    const trips = this.ensureTrips(plan);
+    if (!trips.length) return false;
+    if (this.unassignedVehicleIds(plan).length) return false;
+    return trips.every(t => this.tripStatus(t, master) === 'accepted');
   },
 
   // ไทรมาสตามปีงบประมาณ (ต.ค.–ก.ย.): ต.ค.=เดือน 10 → Q1
