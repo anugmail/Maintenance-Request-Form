@@ -405,14 +405,15 @@ function renderProcStepConfirm(plan) {
 
   const today = todayIso();
   const s = MYD.confirmSummary(plan, ids, today);
-  const rows = vehicles.map(v => {
+
+  const cfRow = v => {
     const e = MYD.vehicleConfirm(plan, v.id);
     const st = MYD.confirmStatus(plan, v.id, today);
     const b = CF_STATUS_BADGE[st];
     const needsVerdict = (st === 'notready' || st === 'overdue') && e.verdict === null;
     return `<tr>
       <td><b>${esc(v.plate)}</b><div class="sub">${esc(v.brand)}</div></td>
-      <td>${esc(v.ownerDept)}<div class="sub">เขต ${esc(v.region)}</div></td>
+      <td>${esc(v.ownerDept)}</td>
       <td><span class="badge ${b.cls}">${b.text}</span>
         ${e.reason ? `<div class="sub">${esc(e.reason)}</div>` : ''}</td>
       <td>${esc(e.meetPoint || '—')}</td>
@@ -427,6 +428,43 @@ function renderProcStepConfirm(plan) {
             ? `<span class="badge b-ok">เข้าทริป</span>`
             : `<span class="badge b-low">ไม่เข้า</span>`}</td>
     </tr>`;
+  };
+
+  // แบ่งรายการเป็น ภาค → จังหวัด ตามที่เจ้าของงานสั่ง 10 ส.ค. 2569
+  // แสดงเฉพาะภาค/จังหวัดที่มีรถในแผนนี้จริง ไม่ไล่ทั้ง 12 เขต
+  const cfTable = rows => `
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>คำตอบ</th>
+        <th>จุดนัดรับ</th><th>ตอบเมื่อ</th><th>คำตัดสิน กบค.</th><th>ผล</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+
+  const countText = list => {
+    const g = MYD.confirmSummary(plan, list.map(v => v.id), today);
+    const parts = [`${g.total} คัน`, `เข้าทริป ${g.joining}`];
+    if (g.notready) parts.push(`ไม่พร้อม ${g.notready}`);
+    if (g.overdue) parts.push(`เลยกำหนด ${g.overdue}`);
+    if (g.waiting) parts.push(`รอตอบ ${g.waiting}`);
+    return parts.join(' · ');
+  };
+
+  const groups = MYD.ZONE_ORDER.map(zone => {
+    const inZone = vehicles.filter(v => MYD.regionZone(v.region) === zone);
+    if (!inZone.length) return '';
+
+    const provinces = [...new Set(inZone.map(v => v.region))].sort((a, b) => a - b).map(r => {
+      const inProv = inZone.filter(v => v.region === r);
+      return `
+        <div class="rzone">
+          <div class="rzone-head">
+            <span class="ms rzone-caret">location_city</span>
+            <b>${esc(MYD.provinceOfRegion(r))}</b>
+            <span class="rzone-count">เขต ${esc(r)} · ${countText(inProv)}</span>
+          </div>
+          <div class="rzone-body flush">${cfTable(inProv.map(cfRow).join(''))}</div>
+        </div>`;
+    }).join('');
+
+    return `<div class="wgrp">${esc(MYD.ZONE_LABELS[zone])} — ${countText(inZone)}</div>${provinces}`;
   }).join('');
 
   const left = ids.filter(id => {
@@ -453,10 +491,7 @@ function renderProcStepConfirm(plan) {
       <button class="btn btn-g btn-sm" id="btnRemind">
         <span class="ms">notifications</span> ส่งเตือนซ้ำ</button>
     </div>
-    <div class="tblwrap"><table class="tbl">
-      <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>คำตอบ</th>
-        <th>จุดนัดรับ</th><th>ตอบเมื่อ</th><th>คำตัดสิน กบค.</th><th>ผล</th></tr></thead>
-      <tbody>${rows}</tbody></table></div>
+    ${groups}
     ${left ? `<div class="empty">เหลืออีก ${left} คันที่ยังไม่มีข้อสรุป — ทำแผนเดินทางต่อไม่ได้จนกว่าจะครบ</div>` : ''}`;
 }
 

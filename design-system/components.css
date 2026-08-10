@@ -379,3 +379,24 @@ input[type=checkbox]{accent-color:var(--primary-600);width:17px;height:17px;curs
 
 /* .wsteps.wrap — ชื่อขั้นยาวและมีหลายขั้นในแถวเดียว ให้ตัดบรรทัดแทน … */
 .wsteps.wrap .lbl{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
+
+/* ============================================================
+   v0.7 — กล่องจัดกลุ่มรายการ (.rzone)
+   ใช้กับลิสต์ยาวที่ต้องแบ่งเป็นชั้น เช่น ภาค → จังหวัด/เขต → รถ
+   เดิมนิยามซ้ำอยู่ใน <style> ของ index.html และ plan-new.html — ยกขึ้นมาที่นี่
+   ตอนหน้า "ยืนยันรถเข้าร่วมแผน" ต้องใช้ชุดเดียวกัน (10 ส.ค. 2569)
+   .rzone-head กดเพื่อพับ/กางได้ · .rzone-count = จำนวนแบบจาง ดันของท้ายไปชิดขวา
+   ============================================================ */
+.rzone{border:1px solid var(--gray-200);border-radius:var(--r-md);margin-bottom:8px;overflow:hidden;background:#fff}
+.rzone-head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;background:var(--gray-50)}
+.rzone-head:hover{background:var(--gray-100)}
+.rzone-caret{color:var(--gray-500);font-size:20px;flex-shrink:0}
+.rzone-count{color:var(--gray-500);font-size:13px;margin-right:auto}
+.rzone-allchk{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--gray-700);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.rzone-body{padding:12px 14px;border-top:1px solid var(--gray-200)}
+
+/* .rzone-body.flush — ใส่ตารางเต็มความกว้าง ไม่ต้องมีขอบในซ้อนอีกชั้น */
+.rzone-body.flush{padding:0}
+
+/* ขั้นที่ยังกดเข้าไม่ได้ — เดิมมีแต่คลาส ไม่มีสไตล์ ทำให้ดูเหมือนกดได้ */
+.wstep.locked{opacity:.55;cursor:not-allowed}

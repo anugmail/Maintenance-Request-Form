@@ -258,6 +258,14 @@ const MYD = {
 
   BRANDS_BY_TYPE,
   OWNER_DEPTS_BY_REGION,
+
+  // จังหวัดของเขต — อ่านจากชื่อ กฟจ. ที่เป็นรายการแรกของเขตนั้นใน OWNER_DEPTS_BY_REGION
+  // (ข้อมูลจำลองชุดนี้ 1 เขต = 1 จังหวัด · ถ้าของจริงมีหลายจังหวัดต่อเขต ต้องเก็บ
+  //  จังหวัดที่ตัวรถแทน ไม่ใช่อนุมานจากเขต)
+  provinceOfRegion(r) {
+    const first = (OWNER_DEPTS_BY_REGION[r] || [])[0] || '';
+    return first.replace(/^กฟจ\.\s*/, '') || `เขต ${r}`;
+  },
   SEED_PLAN,
   SEED_PLAN_CF,
   SEED_VEHICLES,
