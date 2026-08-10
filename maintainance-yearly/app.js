@@ -520,8 +520,16 @@ function ensureTravelPlan(plan) {
 
 function renderProcStep2(plan) {
   const tp = plan.travelPlan || {};
+  const master = MYD.loadMaster();
+  const joining = (plan.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(plan, id));
+  const plates = master.vehicles.filter(v => joining.includes(v.id)).map(v => v.plate);
+  const dropped = (plan.selectedVehicleIds || []).length - joining.length;
   return `
     <div class="sect">ขั้นที่ 3: ทำแผนเดินทาง</div>
+    <div class="sub">คิดจากรถที่ยืนยันแล้ว <b>${joining.length}</b> คัน
+      ${dropped ? `(ตัด/เลื่อน ${dropped} คันจากขั้นยืนยันรถ)` : ''}
+      — เบี้ยเลี้ยง/ที่พัก/ค่าเดินทางให้กรอกตามจำนวนนี้</div>
+    <div class="sub">${esc(plates.join(' · '))}</div>
     <div class="fgrid">
       <div class="f sp4">
         <label>สถานที่บำรุงรักษา</label>
@@ -588,9 +596,24 @@ function bindProcStep2(plan) {
 function renderProcStep3(plan) {
   const tp = plan.travelPlan || {};
   const total = (tp.perDiem || 0) + (tp.lodging || 0) + (tp.travel || 0);
+  const master3 = MYD.loadMaster();
+  const outRows = (plan.selectedVehicleIds || [])
+    .filter(id => !MYD.isVehicleIn(plan, id))
+    .map(id => {
+      const v = master3.vehicles.find(x => x.id === id);
+      const e = MYD.vehicleConfirm(plan, id);
+      return `<tr><td>${esc(v ? v.plate : id)}</td>
+        <td>${esc(CF_VERDICT_LABELS[e.verdict] || 'ไม่พร้อม')}</td>
+        <td>${esc(e.verdictWhy || e.reason || '—')}</td></tr>`;
+    }).join('');
 
   return `
     <div class="sect">ขั้นที่ 4: ทวนแผนเดินทาง + ยืนยัน</div>
+    ${outRows ? `
+    <div class="sect">รถที่ไม่เข้าทริปนี้</div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>ทะเบียน</th><th>คำตัดสิน กบค.</th><th>เหตุผล</th></tr></thead>
+      <tbody>${outRows}</tbody></table></div>` : ''}
     <div class="fgrid">
       <div class="f sp4"><label>สถานที่บำรุงรักษา</label><div>${esc(tp.location || '-')}</div></div>
       <div class="f sp2"><label>จากวันที่</label><div>${esc(tp.dateFrom || '-')}</div></div>
@@ -613,6 +636,7 @@ function confirmTravelPlan(plan) {
 // ----- สรุปหลังยืนยัน (แทนที่ wizard เมื่อ travelConfirmed===true) -----
 function renderProcurementConfirmed(plan) {
   const selectedVehicles = MYD.loadMaster().vehicles.filter(v => (plan.selectedVehicleIds || []).includes(v.id));
+  const joiningCount = selectedVehicles.filter(v => MYD.isVehicleIn(plan, v.id)).length;
   const tp = plan.travelPlan || {};
   const total = (tp.perDiem || 0) + (tp.lodging || 0) + (tp.travel || 0);
 
@@ -631,7 +655,7 @@ function renderProcurementConfirmed(plan) {
       </div>
     </div>
     <div class="card">
-      <div class="sect"><span class="ms">mail</span> ส่ง Noti แจ้งเจ้าของรถ ${selectedVehicles.length} คัน + กรย. วันที่เข้าตรวจ</div>
+      <div class="sect"><span class="ms">mail</span> ส่ง Noti แจ้งเจ้าของรถ ${joiningCount} คัน + กรย. วันที่เข้าตรวจ</div>
       <div class="sub">ระบบส่งการแจ้งเตือนอัตโนมัติแล้ว (mock)</div>
     </div>
     <div class="card">
