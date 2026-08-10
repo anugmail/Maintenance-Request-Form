@@ -57,6 +57,7 @@ function renderVehicles() {
       <td>${esc(v.vehicleType)}</td>
       <td>${esc(MYD.CRITERIA_LABELS[v.criteria] || v.criteria)}</td>
       <td>เขต ${esc(v.region)} <span class="rcell-zone">(${esc(MYD.ZONE_LABELS[MYD.regionZone(v.region)])})</span></td>
+      <td>${esc(v.ownerDept || '—')}</td>
       <td><span class="badge ${statusBadgeClass(v.status)}">${esc(MYD.STATUS_LABELS[v.status] || v.status)}</span></td>
       <td class="num">${esc(v.mileage)}</td>
       <td class="num">${esc(v.engineHours)}</td>
@@ -83,9 +84,9 @@ function renderVehicles() {
     <div class="tblwrap">
       <table class="tbl">
         <thead><tr>
-          <th>ทะเบียน</th><th>ประเภท</th><th>เกณฑ์</th><th>เขต</th><th>สถานะ</th><th>เลขไมล์</th><th>ชม.เครื่อง</th><th>จัดการ</th>
+          <th>ทะเบียน</th><th>ประเภท</th><th>เกณฑ์</th><th>เขต</th><th>หน่วยงานเจ้าของรถ</th><th>สถานะ</th><th>เลขไมล์</th><th>ชม.เครื่อง</th><th>จัดการ</th>
         </tr></thead>
-        <tbody>${rows || `<tr><td colspan="8" class="empty">ไม่มีรถในเขตที่เลือก</td></tr>`}</tbody>
+        <tbody>${rows || `<tr><td colspan="9" class="empty">ไม่มีรถในเขตที่เลือก</td></tr>`}</tbody>
       </table>
     </div>`;
 
@@ -114,7 +115,7 @@ function openVehicleModal(id) {
   const master = MYD.loadMaster();
   const editing = id ? master.vehicles.find(v => v.id === id) : null;
   const defaultRegion = state.regionFilter !== 'all' ? Number(state.regionFilter) : 1;
-  const v = editing || { plate: '', vehicleType: VEHICLE_TYPES[0], criteria: 'truck', region: defaultRegion, status: 'available', mileage: 0, engineHours: 0 };
+  const v = editing || { plate: '', vehicleType: VEHICLE_TYPES[0], criteria: 'truck', region: defaultRegion, ownerDept: '', status: 'available', mileage: 0, engineHours: 0 };
 
   const ov = document.createElement('div');
   ov.className = 'modal-ov';
@@ -127,6 +128,10 @@ function openVehicleModal(id) {
           <div class="f sp2"><label>ประเภท</label><div class="in"><span class="ms">category</span><select name="vehicleType">${VEHICLE_TYPES.map(t => `<option value="${esc(t)}" ${v.vehicleType === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div></div>
           <div class="f sp2"><label>เกณฑ์</label><div class="in"><span class="ms">rule</span><select name="criteria">${Object.entries(MYD.CRITERIA_LABELS).map(([k, l]) => `<option value="${k}" ${v.criteria === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div></div>
           <div class="f sp2"><label>เขต</label><div class="in"><span class="ms">map</span><select name="region">${MYD.REGIONS.map(r => `<option value="${r.id}" ${Number(v.region) === r.id ? 'selected' : ''}>${esc(r.name)} (${esc(MYD.ZONE_LABELS[r.zone])})</option>`).join('')}</select></div></div>
+          <div class="f sp2"><label>หน่วยงานเจ้าของรถ <small>ผู้ตอบคำขอยืนยันรถ</small></label>
+            <div class="in"><span class="ms">apartment</span>
+              <input type="text" name="ownerDept" list="deptOpts" value="${esc(v.ownerDept || '')}" placeholder="เช่น กฟจ. ขอนแก่น"></div>
+            <datalist id="deptOpts">${(MYD.OWNER_DEPTS_BY_REGION[Number(v.region) || 1] || []).map(d => `<option value="${esc(d)}">`).join('')}</datalist></div>
           <div class="f sp2"><label>สถานะ</label><div class="in"><span class="ms">flag</span><select name="status">${Object.entries(MYD.STATUS_LABELS).map(([k, l]) => `<option value="${k}" ${v.status === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div></div>
           <div class="f sp2"><label>เลขไมล์</label><div class="in"><span class="ms">speed</span><input type="number" name="mileage" min="0" value="${esc(v.mileage)}"></div></div>
           <div class="f sp2"><label>ชม.เครื่อง</label><div class="in"><span class="ms">schedule</span><input type="number" name="engineHours" min="0" value="${esc(v.engineHours)}"></div></div>
@@ -150,6 +155,7 @@ function openVehicleModal(id) {
       vehicleType: fd.get('vehicleType'),
       criteria: fd.get('criteria'),
       region: Number(fd.get('region')) || 1,
+      ownerDept: String(fd.get('ownerDept') || '').trim(),
       status: fd.get('status'),
       mileage: Number(fd.get('mileage')) || 0,
       engineHours: Number(fd.get('engineHours')) || 0,
@@ -329,7 +335,30 @@ function renderDemo() {
         <button class="btn btn-o" id="btnResetMasterDemo">รีเซ็ตข้อมูลหลักเป็นค่าเริ่มต้น (seed ~120 คัน)</button>
         <button class="btn btn-p" id="btnResetAllDemo">รีเซ็ตทั้งหมด</button>
       </div>
+    </div>
+
+    <div class="card">
+      <div class="sect">ค่าตั้งค่าโฟลว์</div>
+      <div class="sub">กำหนดให้หน่วยงานเจ้าของรถตอบคำขอยืนยันรถภายในกี่วัน
+        — ยังไม่ได้ค่าจริงจากเจ้าของงาน ตั้ง 7 วันไว้ก่อน</div>
+      <div class="fgrid">
+        <div class="f sp2"><label>กำหนดตอบภายใน <small>วัน</small></label>
+          <div class="in"><span class="ms">event_available</span>
+            <input type="number" id="cfDays" min="1" max="60" value="${MYD.loadSettings().confirmDueDays}"></div></div>
+      </div>
+      <div class="sub">เปลี่ยนค่านี้มีผลกับคำขอที่ส่ง<b>หลังจากนี้</b>เท่านั้น
+        — คำขอที่ส่งไปแล้วคำนวณวันครบกำหนดตอนกดส่ง จะไม่ถูกแก้ย้อนหลัง</div>
+      <div class="actions">
+        <button class="btn btn-p" id="btnSaveSettings">บันทึกค่าตั้งค่า</button>
+      </div>
     </div>`;
+
+  $('btnSaveSettings').addEventListener('click', () => {
+    const n = Number($('cfDays').value);
+    if (!Number.isFinite(n) || n < 1 || n > 60) { toast('กรอกจำนวนวันระหว่าง 1–60'); return; }
+    MYD.saveSettings({ confirmDueDays: n });
+    toast(`บันทึกแล้ว — กำหนดตอบภายใน ${n} วัน`);
+  });
 
   $('btnReseedPlanDemo').addEventListener('click', () => {
     if (!confirm('คืนแผนตัวอย่าง? แผนทั้งหมดที่มีอยู่จะถูกแทนที่')) return;
