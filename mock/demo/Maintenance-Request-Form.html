@@ -834,6 +834,215 @@
       margin-top: 14px
     }
 
+    /* ---------- บำรุงรักษา กบค. (PM) — ประวัติต่อระบบ ---------- */
+    .pm-hist-row {
+      display: grid;
+      grid-template-columns: 110px 1fr auto;
+      gap: 10px;
+      align-items: start;
+      padding: 8px 0;
+      border-top: 1px dashed var(--gray-200);
+      font-size: 13px
+    }
+
+    .pm-hist-row:first-child {
+      border-top: none
+    }
+
+    .pm-hist-date {
+      color: var(--gray-500);
+      white-space: nowrap
+    }
+
+    .pm-hist-desc {
+      color: var(--gray-800)
+    }
+
+    .pm-hist-cost {
+      color: var(--gray-700);
+      font-weight: 600;
+      white-space: nowrap;
+      text-align: right
+    }
+
+    @media (max-width: 560px) {
+      .pm-hist-row {
+        grid-template-columns: 1fr;
+        gap: 2px
+      }
+
+      .pm-hist-cost {
+        text-align: left
+      }
+    }
+
+    .tbl td.pm-detail-td {
+      padding: 16px;
+      background: var(--gray-50)
+    }
+
+    .pm-part-filter {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap
+    }
+
+    .pm-part-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      border: 1.5px solid var(--gray-300);
+      border-radius: var(--r-pill);
+      background: #fff;
+      color: var(--gray-700);
+      font-size: 13.5px;
+      cursor: pointer;
+      transition: border-color .15s ease, background-color .15s ease, color .15s ease
+    }
+
+    .pm-part-check:has(input:checked) {
+      border-color: var(--primary-600);
+      background: var(--primary-25);
+      color: var(--primary-700);
+      font-weight: 600
+    }
+
+    .pm-part-check input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer
+    }
+
+    .pm-part-check .ms {
+      font-size: 17px;
+      color: var(--primary-600)
+    }
+
+    /* ---------- บำรุงรักษา กบค. (PM) — ตารางแผนงาน / เมนู 3 จุด / โมดัล ---------- */
+    .pm-kebab {
+      display: flex;
+      width: 32px;
+      height: 32px;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: var(--r-sm);
+      background: transparent;
+      color: var(--gray-600);
+      cursor: pointer
+    }
+
+    .pm-kebab:hover {
+      background: var(--gray-100)
+    }
+
+    .pm-menu {
+      position: fixed;
+      z-index: 105;
+      min-width: 210px;
+      padding: 6px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--r-md);
+      background: #fff;
+      box-shadow: 0 8px 24px rgba(16, 24, 40, .18);
+      text-align: left
+    }
+
+    .pm-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 10px;
+      border-radius: var(--r-sm);
+      color: var(--gray-700);
+      font-size: 13.5px;
+      white-space: nowrap;
+      cursor: pointer
+    }
+
+    .pm-menu-item:hover {
+      background: var(--gray-50)
+    }
+
+    .pm-menu-item.danger {
+      color: var(--error-600)
+    }
+
+    .pm-menu-item .ms {
+      font-size: 18px
+    }
+
+    .pm-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+      overflow-y: auto;
+      background: rgba(16, 24, 40, .5)
+    }
+
+    .pm-modal {
+      width: 100%;
+      margin-bottom: 40px;
+      border-radius: var(--r-lg);
+      background: #fff;
+      box-shadow: 0 20px 60px rgba(16, 24, 40, .3)
+    }
+
+    .pm-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--gray-200)
+    }
+
+    .pm-modal-head h3 {
+      margin: 0;
+      color: var(--gray-900);
+      font-size: 18px
+    }
+
+    .pm-modal-close {
+      display: flex;
+      width: 32px;
+      height: 32px;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 50%;
+      background: var(--gray-100);
+      color: var(--gray-600);
+      cursor: pointer
+    }
+
+    .pm-modal-body {
+      padding: 20px 22px
+    }
+
+    .pm-pager {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-top: 16px
+    }
+
+    .pm-pager .btn {
+      padding: 7px 10px
+    }
+
+    .pm-pager-info {
+      color: var(--gray-600);
+      font-size: 13px;
+      white-space: nowrap
+    }
+
     .dayrow {
       display: flex;
       gap: 8px;
@@ -1527,6 +1736,10 @@
           class="ms">alt_route</span><span class="cnt hidden" id="krycnt"></span></div>
       <div class="nv" id="nav-kbk" title="งานซ่อม กบค." onclick="switchView('kbk')"><span
           class="ms">engineering</span><span class="cnt hidden" id="kbkcnt"></span></div>
+      <div class="nv" id="nav-pm" title="บำรุงรักษา กบค." onclick="switchView('pm')"><span
+          class="ms">event_repeat</span></div>
+      <div class="nv" id="nav-pmplan" title="แผนบำรุงรักษา" onclick="switchView('pmplan')"><span
+          class="ms">event_available</span></div>
       <div class="nv" id="nav-sup" title="อนุมัติปิดงาน (ผู้บังคับบัญชา)" onclick="switchView('sup')"><span
           class="ms">approval</span><span class="cnt hidden" id="supcnt"></span></div>
       <div class="nv" id="nav-stock" title="คลังอะไหล่" onclick="switchView('stock')"><span class="ms">warehouse</span>
@@ -1735,6 +1948,63 @@
       <div id="kbklist"></div>
     </main>
 
+    <!-- ============ VIEW: บำรุงรักษา กบค. (Preventive Maintenance) ============ -->
+    <main class="content hidden" id="view-pm">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>งานซ่อม กบค.</span><span class="sep">›</span><span class="cur">บำรุงรักษายานพาหนะ</span></div>
+      <h1 class="page-title">บำรุงรักษายานพาหนะ — กบค.</h1>
+      <div class="lead" style="margin-bottom:16px">รายการรถทั้งหมดพร้อมอายุการใช้งาน และสถานะบำรุงรักษาแยกตามระบบ (ล้อ/ยาง · ไฮดรอลิก · เครน/บูม · เครื่องยนต์ · ไฟฟ้า) — ติ๊กเลือกรถแล้วกด “สร้างแผนงาน” เพื่อไปตั้งแผนบำรุงรักษาต่อ หรือแตะแถวเพื่อดูประวัติ/บันทึกบำรุงรักษาใหม่ต่อระบบ</div>
+      <div id="pmsummary"></div>
+      <div style="margin:14px 0 10px">
+        <label style="display:block;margin-bottom:8px;color:var(--gray-600);font-size:12.5px;font-weight:600">กรองตามชิ้นส่วน (เลือกได้หลายอัน)</label>
+        <div class="pm-part-filter" id="pm-list-f-parts"></div>
+      </div>
+      <div class="page-title-row page-title-with-filter" style="margin-top:6px">
+        <button class="btn btn-o" onclick="pmOpenIntervalSettings()"><span class="ms" style="font-size:18px">tune</span> ตั้งค่ารอบบำรุงรักษา</button>
+        <div class="list-toolbar" style="gap:10px;flex-wrap:wrap">
+          <div class="filter-field">
+            <label for="pm-list-f-q">ค้นหาทะเบียน</label>
+            <div class="in"><span class="ms">search</span><input type="text" id="pm-list-f-q" placeholder="ค้นหาทะเบียนรถ…" oninput="pmListFilterChanged()"></div>
+          </div>
+          <div class="filter-field">
+            <label for="pm-list-f-org">หน่วยงาน</label>
+            <select id="pm-list-f-org" onchange="pmListFilterChanged()"></select>
+          </div>
+          <div class="filter-field">
+            <label for="pm-list-f-region">ภาค</label>
+            <select id="pm-list-f-region" onchange="pmListFilterChanged()"></select>
+          </div>
+          <div class="filter-field">
+            <label for="pm-status-filter">สถานะ</label>
+            <select id="pm-status-filter" onchange="pmListFilterChanged()">
+              <option value="all">ทุกสถานะ</option>
+              <option value="overdue">เกินกำหนด</option>
+              <option value="due">ใกล้ครบกำหนด</option>
+              <option value="ok">ปกติ</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div id="pmlistbar"></div>
+      <div id="pm-interval-modal-root"></div>
+      <div id="pmlist"></div>
+    </main>
+
+    <!-- ============ VIEW: แผนบำรุงรักษา กบค. (Maintenance Plan) ============ -->
+    <main class="content hidden" id="view-pmplan">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>งานซ่อม กบค.</span><span class="sep">›</span><span class="cur">แผนบำรุงรักษา</span></div>
+      <h1 class="page-title">แผนบำรุงรักษา — กบค.</h1>
+      <div class="lead" style="margin-bottom:16px">สร้างแผนงานบำรุงรักษาโดยเลือกรถจากหน่วยงาน/จังหวัด/ภาค แล้วติดตามการเตรียมอะไหล่และต้นทุนต่อแผน</div>
+      <div class="page-title-row" style="margin-bottom:12px">
+        <div class="sect" style="margin:0">ตารางแผนงานบำรุงรักษา</div>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn btn-o" onclick="pmOpenTeamsModal()"><span class="ms" style="font-size:18px">groups</span> จัดการทีม/ผู้รับจ้าง</button>
+          <button class="btn btn-p" onclick="pmOpenCreateModal()"><span class="ms" style="font-size:18px">add</span> สร้างแผนงาน</button>
+        </div>
+      </div>
+      <div id="pmplantable"></div>
+      <div id="pm-modal-root"></div>
+    </main>
+
       <!-- ============ VIEW: อนุมัติปิดงาน (ผู้บังคับบัญชา) ============ -->
       <main class="content hidden" id="view-sup">
         <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>บริหารงานซ่อม</span><span
@@ -1808,6 +2078,684 @@
     const KBK_STEPS = ['รับเรื่องซ่อม', 'รอสั่งอะไหล่', 'อะไหล่ถึงแล้ว', 'ดำเนินการซ่อม', 'ซ่อมเสร็จ'];
     const ONSITE_STEPS = ['เดินทาง/ถึงหน้างาน', 'ดำเนินการซ่อม', 'ซ่อมเสร็จ'];   // แทร็กงานเล็ก (ซ่อมหน้างาน)
     const ZONES = ['กันชนหน้า/ไฟหน้า', 'ฝากระโปรง/กระจกบังลม', 'ด้านซ้าย (ประตู/แก้มข้าง)', 'ด้านขวา (ประตู/แก้มข้าง)', 'ท้ายรถ/กันชนหลัง', 'หลังคา/เสา', 'ยาง/ล้อ/บันไดข้าง', 'อุปกรณ์เสริม (เครน/กระเช้า)'];
+
+    // ================= 🔧 บำรุงรักษา กบค. (Preventive Maintenance) — งานบำรุงรักษา To Be =================
+    // MOCK_YEAR: ปี พ.ศ. ปัจจุบันของข้อมูลจำลอง (ใช้คำนวณอายุการใช้งานรถ) — ให้ตรงกับวันที่อื่นๆ ในม็อค (ก.ค.-ส.ค. 2569)
+    const MOCK_YEAR = 2569;
+    const PM_PAGE_SIZE = 10;
+    function pmPager(page, total, fnName) {
+      const totalPages = Math.max(1, Math.ceil(total / PM_PAGE_SIZE));
+      if (totalPages <= 1) return '';
+      return `<div class="pm-pager">
+      <button type="button" class="btn btn-g" ${page <= 1 ? 'disabled' : ''} onclick="${fnName}(${page - 1})"><span class="ms" style="font-size:18px">chevron_left</span></button>
+      <span class="pm-pager-info">หน้า ${page} จาก ${totalPages} · ${total} คัน</span>
+      <button type="button" class="btn btn-g" ${page >= totalPages ? 'disabled' : ''} onclick="${fnName}(${page + 1})"><span class="ms" style="font-size:18px">chevron_right</span></button>
+    </div>`;
+    }
+    // รอบบำรุงรักษาต่อระบบ (intervalMonths แก้ไขได้จาก "ตั้งค่ารอบบำรุงรักษา" ในหน้าบำรุงรักษา) — สถานะคำนวณสดจาก lastISO + intervalMonths เทียบกับวันนี้ ไม่ได้เก็บ status ไว้ตรงๆ
+    const MAINT_ZONES = [
+      { key: 'tire', name: 'ล้อ/ยาง', icon: 'tire_repair', intervalMonths: 6, attachOnly: false },
+      { key: 'hyd', name: 'ระบบไฮดรอลิก', icon: 'water_drop', intervalMonths: 24, attachOnly: true },
+      { key: 'crane', name: 'เครน/บูม/กระเช้า', icon: 'construction', intervalMonths: 6, attachOnly: true },
+      { key: 'engine', name: 'เครื่องยนต์ (น้ำมันเครื่อง)', icon: 'settings', intervalMonths: 12, attachOnly: false },
+      { key: 'elec', name: 'ระบบไฟฟ้า', icon: 'bolt', intervalMonths: 12, attachOnly: false }
+    ];
+    const PM_STATUS = { ok: { label: 'ปกติ', cls: 'b-ok' }, due: { label: 'ใกล้ครบกำหนด', cls: 'b-low' }, overdue: { label: 'เกินกำหนด', cls: 'b-out' } };
+    const PM_DUE_SOON_DAYS = 45; // เหลือน้อยกว่านี้ = "ใกล้ครบกำหนด"
+    function isoToThai(iso) { return new Date(iso + 'T00:00:00').toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }).replace('พ.ศ. ', '') }
+    function todayISO() { return new Date().toISOString().slice(0, 10) }
+    // ไตรมาสถัดไป 5 ไตรมาส (เริ่มจากไตรมาสปัจจุบัน) — ใช้ตอนสร้างแผนงานแบบหยาบ (เลือกไตรมาส+รถก่อน แล้วค่อยเติมวันที่จริงทีหลัง)
+    function pmQuarterOptions() {
+      const now = new Date();
+      let q = Math.floor(now.getMonth() / 3) + 1, y = MOCK_YEAR;
+      const out = [];
+      for (let i = 0; i < 5; i++) { out.push(`ไตรมาส ${q}/${y}`); q++; if (q > 4) { q = 1; y++ } }
+      return out;
+    }
+    // คำนวณสถานะ/จำนวนวันคงเหลือของแต่ละระบบสดๆ ทุกครั้ง — แก้ intervalMonths แล้วผลจะเปลี่ยนตามทันทีโดยไม่ต้องแก้ข้อมูลรถ
+    function pmZoneCalc(zoneKey, lastISO) {
+      const zone = MAINT_ZONES.find(z => z.key === zoneKey);
+      const last = new Date(lastISO + 'T00:00:00');
+      const due = new Date(last); due.setMonth(due.getMonth() + zone.intervalMonths);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const daysLeft = Math.round((due - today) / 86400000);
+      const status = daysLeft < 0 ? 'overdue' : daysLeft <= PM_DUE_SOON_DAYS ? 'due' : 'ok';
+      const dueISO = due.toISOString().slice(0, 10);
+      const dueText = daysLeft < 0 ? `เกินกำหนดมาแล้ว ${Math.abs(daysLeft)} วัน` : daysLeft === 0 ? 'ครบกำหนดวันนี้' : `อีก ${daysLeft} วันครบกำหนด`;
+      return { status, daysLeft, dueISO, dueThai: isoToThai(dueISO), dueText };
+    }
+    const PM_DATA = {
+      1: {
+        purchaseYear: 2563, mileage: 84250, hours: 1180,
+        zones: {
+          tire: { lastISO: '2026-05-10', history: [{ dateISO: '2026-05-10', desc: 'สลับยาง + ตรวจสภาพดอกยางทุกล้อ', cost: 800, by: 'อู่เจริญการช่าง' }, { dateISO: '2025-11-12', desc: 'เปลี่ยนยางหน้าซ้าย (ยางบวม)', cost: 4200, by: 'กบค. สนญ.' }] },
+          hyd: { lastISO: '2026-03-02', history: [{ dateISO: '2026-03-02', desc: 'เปลี่ยนน้ำมันไฮดรอลิก + ไส้กรอง', cost: 3600, by: 'กบค. สนญ.' }] },
+          crane: { lastISO: '2025-11-20', history: [{ dateISO: '2025-11-20', desc: 'อัดจาระบีจุดหมุนบูม + ตรวจสภาพลวดสลิง', cost: 1200, by: 'กบค. สนญ.' }] },
+          engine: { lastISO: '2026-06-01', history: [{ dateISO: '2026-06-01', desc: 'เปลี่ยนถ่ายน้ำมันเครื่อง + ไส้กรองอากาศ', cost: 2100, by: 'อู่เจริญการช่าง' }] },
+          elec: { lastISO: '2026-01-15', history: [{ dateISO: '2026-01-15', desc: 'ตรวจระบบไฟส่องสว่าง + แบตเตอรี่', cost: 0, by: 'กบค. สนญ.' }] }
+        }
+      },
+      2: {
+        purchaseYear: 2565, mileage: 45200, hours: 610,
+        zones: {
+          tire: { lastISO: '2026-01-05', history: [{ dateISO: '2026-01-05', desc: 'ตรวจลมยาง + สลับยาง', cost: 500, by: 'กบค. สนญ.' }] },
+          hyd: { lastISO: '2026-06-20', history: [{ dateISO: '2026-06-20', desc: 'เปลี่ยนน้ำมันไฮดรอลิกกระเช้า', cost: 2800, by: 'กบค. สนญ.' }] },
+          crane: { lastISO: '2026-06-18', history: [{ dateISO: '2026-06-18', desc: 'ตรวจระบบล็อกกระเช้า + ทดสอบยกรับน้ำหนัก', cost: 0, by: 'กบค. สนญ.' }] },
+          engine: { lastISO: '2025-10-10', history: [{ dateISO: '2025-10-10', desc: 'เปลี่ยนถ่ายน้ำมันเครื่อง', cost: 1900, by: 'อู่ ส.ทวีชัย เซอร์วิส' }] },
+          elec: { lastISO: '2026-02-02', history: [{ dateISO: '2026-02-02', desc: 'ตรวจแบตเตอรี่ + ไฟสัญญาณกระเช้า', cost: 0, by: 'กบค. สนญ.' }] }
+        }
+      },
+      3: {
+        purchaseYear: 2567, mileage: 12100, hours: 210,
+        zones: {
+          tire: { lastISO: '2026-06-28', history: [{ dateISO: '2026-06-28', desc: 'ตรวจลมยาง + ดอกยาง (รถใหม่)', cost: 0, by: 'กบค. สนญ.' }] },
+          hyd: { lastISO: '2026-06-15', history: [{ dateISO: '2026-06-15', desc: 'ตรวจระดับน้ำมันไฮดรอลิก', cost: 0, by: 'กบค. สนญ.' }] },
+          crane: { lastISO: '2026-06-15', history: [{ dateISO: '2026-06-15', desc: 'ตรวจสภาพลวดสลิง + ทดสอบตะขอเกี่ยว', cost: 0, by: 'กบค. สนญ.' }] },
+          engine: { lastISO: '2026-07-01', history: [{ dateISO: '2026-07-01', desc: 'ตรวจเช็กระยะ 10,000 กม. แรก', cost: 1500, by: 'อู่มิตรภาพทรัค' }] },
+          elec: { lastISO: '2025-12-05', history: [{ dateISO: '2025-12-05', desc: 'ตรวจระบบไฟฟ้าตอนรับรถใหม่', cost: 0, by: 'กบค. สนญ.' }] }
+        }
+      },
+      4: {
+        purchaseYear: 2559, mileage: 152300, hours: null,
+        zones: {
+          tire: { lastISO: '2025-09-01', history: [{ dateISO: '2025-09-01', desc: 'เปลี่ยนยางหลังคู่ (สึกผิดปกติ)', cost: 8400, by: 'อู่มิตรภาพทรัค' }] },
+          engine: { lastISO: '2026-02-05', history: [{ dateISO: '2026-02-05', desc: 'เปลี่ยนถ่ายน้ำมันเครื่อง + ไส้กรองน้ำมันเครื่อง', cost: 1800, by: 'กบค. สนญ.' }] },
+          elec: { lastISO: '2026-03-20', history: [{ dateISO: '2026-03-20', desc: 'เปลี่ยนแบตเตอรี่รถ', cost: 3200, by: 'กบค. สนญ.' }] }
+        }
+      }
+    };
+    // เติมข้อมูล PM_DATA ให้รถตัวอย่างที่เพิ่มมาใน config.js (id 5+) แบบ deterministic — รถ id 1-4 ใช้ค่าที่เขียนไว้ข้างบนเป๊ะๆ ไม่ถูกเขียนทับ
+    // สุ่ม "ระยะเวลาที่ผ่านมาแล้ว" เป็นสัดส่วนของรอบบำรุงรักษาแต่ละระบบ (ไม่ใช่จำนวนเดือนตายตัว) เพื่อให้สถานะ ok/due/overdue กระจายสมเหตุสมผล ไม่ว่า intervalMonths จะสั้นหรือยาว
+    (function fillGeneratedPmData() {
+      const zoneTasks = {
+        tire: ['สลับยาง + ตรวจสภาพดอกยาง', 'เปลี่ยนยางที่สึก', 'ตรวจลมยางทุกล้อ'],
+        hyd: ['เปลี่ยนน้ำมันไฮดรอลิก + ไส้กรอง', 'ตรวจระดับน้ำมันไฮดรอลิก', 'ตรวจสายไฮดรอลิก'],
+        crane: ['อัดจาระบีจุดหมุนบูม + ตรวจสลิง', 'ตรวจระบบล็อกกระเช้า', 'ทดสอบยกรับน้ำหนัก'],
+        engine: ['เปลี่ยนถ่ายน้ำมันเครื่อง + ไส้กรอง', 'ตรวจเช็กระยะ', 'เปลี่ยนไส้กรองอากาศ'],
+        elec: ['ตรวจระบบไฟส่องสว่าง + แบตเตอรี่', 'เปลี่ยนแบตเตอรี่', 'ตรวจไฟสัญญาณ']
+      };
+      const byList = ['กบค. สนญ.', 'อู่เจริญการช่าง', 'อู่ ส.ทวีชัย เซอร์วิส', 'อู่มิตรภาพทรัค'];
+      const fracPool = [0.15, 0.35, 0.55, 0.8, 0.98, 1.15, 1.4, 1.7];
+      const isoMonthsAgo = n => { const d = new Date(); d.setMonth(d.getMonth() - n); return d.toISOString().slice(0, 10) };
+      const genZone = (seed, key) => {
+        const zone = MAINT_ZONES.find(z => z.key === key);
+        const frac = fracPool[seed % fracPool.length];
+        const monthsAgo = Math.max(0, Math.round(zone.intervalMonths * frac));
+        const dateISO = isoMonthsAgo(monthsAgo);
+        return { lastISO: dateISO, history: [{ dateISO, desc: zoneTasks[key][seed % zoneTasks[key].length], cost: (seed % 4 === 0) ? 0 : 500 + (seed * 53) % 4000, by: byList[seed % byList.length] }] };
+      };
+      VEHICLES.forEach(v => {
+        if (PM_DATA[v.id]) return;
+        PM_DATA[v.id] = {
+          purchaseYear: MOCK_YEAR - (2 + (v.id % 11)),
+          mileage: 8000 + (v.id * 3217) % 160000,
+          hours: v.id % 3 === 0 ? null : 150 + (v.id * 91) % 1400,
+          zones: { tire: genZone(v.id * 7 + 1, 'tire'), hyd: genZone(v.id * 7 + 2, 'hyd'), crane: genZone(v.id * 7 + 3, 'crane'), engine: genZone(v.id * 7 + 4, 'engine'), elec: genZone(v.id * 7 + 5, 'elec') }
+        };
+      });
+    })();
+    function pmAge(vid) { return MOCK_YEAR - PM_DATA[vid].purchaseYear }
+    function pmZonesFor(v) { return MAINT_ZONES.filter(z => !z.attachOnly || v.attach) }
+    function todayDateStr() { return isoToThai(todayISO()) }
+    let PM_LIST_PAGE = 1;
+    function pmListFilterChanged() { PM_LIST_PAGE = 1; renderPmList() }
+    function pmGotoListPage(p) { PM_LIST_PAGE = p; renderPmList(); $('pmlist').scrollIntoView({ behavior: 'smooth', block: 'start' }) }
+    function pmListToggleSelect(id) {
+      if (PM_SELECTED.has(id)) PM_SELECTED.delete(id); else PM_SELECTED.add(id);
+      renderPmList();
+    }
+    function pmListToggleAll(checked, ids) {
+      ids.forEach(id => { if (checked) PM_SELECTED.add(id); else PM_SELECTED.delete(id) });
+      renderPmList();
+    }
+    function pmStartPlanFromList() {
+      if (!PM_SELECTED.size) { toast('กรุณาเลือกรถอย่างน้อย 1 คัน'); return }
+      switchView('pmplan');
+      pmOpenCreateModal(true);
+    }
+    function pmFillListFilters() {
+      if ($('pm-list-f-org').options.length) return;
+      const orgs = [...new Set(VEHICLES.map(v => v.org))].sort();
+      const regions = [...new Set(VEHICLES.map(v => pmLoc(v).region))].sort();
+      const opts = (arr, label) => `<option value="all">${label}</option>` + arr.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+      $('pm-list-f-org').innerHTML = opts(orgs, 'ทุกหน่วยงาน');
+      $('pm-list-f-region').innerHTML = opts(regions, 'ทุกภาค');
+      $('pm-list-f-parts').innerHTML = MAINT_ZONES.map(z => `<label class="pm-part-check">
+        <input type="checkbox" id="pm-list-part-${z.key}" onchange="pmListFilterChanged()">
+        <span class="ms">${z.icon}</span>${esc(z.name)}
+      </label>`).join('');
+    }
+    function pmSelectedParts() { return MAINT_ZONES.filter(z => $('pm-list-part-' + z.key).checked).map(z => z.key) }
+    // ---- ตั้งค่ารอบบำรุงรักษาต่อระบบ (intervalMonths) — แก้แล้วสถานะ ok/due/overdue ของทุกคันคำนวณใหม่ทันที ----
+    function pmOpenIntervalSettings() {
+      $('pm-interval-modal-root').innerHTML = `<div class="pm-modal-backdrop" onclick="if(event.target===this)pmCloseIntervalSettings()">
+      <div class="pm-modal" style="max-width:480px">
+        <div class="pm-modal-head"><h3><span class="ms" style="vertical-align:-4px;color:var(--primary-600)">tune</span> ตั้งค่ารอบบำรุงรักษา</h3>
+          <button type="button" class="pm-modal-close" onclick="pmCloseIntervalSettings()"><span class="ms">close</span></button></div>
+        <div class="pm-modal-body">
+          <div class="hint" style="margin-bottom:14px">กำหนดรอบบำรุงรักษาต่อระบบ (ทุกกี่เดือน) — ระบบจะคำนวณว่ารถแต่ละคันใกล้/เกินกำหนดหรือยังจากวันที่บำรุงรักษาล่าสุด</div>
+          ${MAINT_ZONES.map(z => `<div class="f" style="margin-bottom:14px">
+            <label><span class="ms" style="font-size:16px;vertical-align:-3px;color:var(--primary-600)">${z.icon}</span> ${esc(z.name)}</label>
+            <div class="in"><span class="ms">event_repeat</span><input type="number" min="1" id="pm-interval-${z.key}" value="${z.intervalMonths}"></div>
+          </div>`).join('')}
+        </div>
+        <div class="rowbtns" style="justify-content:flex-end;padding:14px 22px;border-top:1px solid var(--gray-200)">
+          <button type="button" class="btn btn-g" onclick="pmCloseIntervalSettings()">ยกเลิก</button>
+          <button type="button" class="btn btn-p" onclick="pmSaveIntervals()"><span class="ms" style="font-size:18px">save</span> บันทึก</button>
+        </div>
+      </div>
+    </div>`;
+    }
+    function pmCloseIntervalSettings() { $('pm-interval-modal-root').innerHTML = '' }
+    function pmSaveIntervals() {
+      MAINT_ZONES.forEach(z => { const v = +$('pm-interval-' + z.key).value; if (v > 0) z.intervalMonths = v });
+      toast('บันทึกรอบบำรุงรักษาแล้ว (mock)');
+      pmCloseIntervalSettings();
+      renderPmList();
+    }
+    function pmWorstAmong(v, zones) {
+      const statuses = zones.map(z => pmZoneCalc(z.key, PM_DATA[v.id].zones[z.key].lastISO).status);
+      if (statuses.includes('overdue')) return 'overdue';
+      if (statuses.includes('due')) return 'due';
+      return 'ok';
+    }
+    function renderPmList() {
+      const orgFilter = $('pm-list-f-org').value, regionFilter = $('pm-list-f-region').value, key = $('pm-status-filter').value;
+      const q = $('pm-list-f-q').value.trim().toLowerCase();
+      const parts = pmSelectedParts();
+      const zonesForFilter = v => parts.length ? pmZonesFor(v).filter(z => parts.includes(z.key)) : pmZonesFor(v);
+      const partLabel = parts.length ? ' — ' + parts.map(k => MAINT_ZONES.find(z => z.key === k).name).join(', ') : '';
+      const counts = { overdue: 0, due: 0, ok: 0 };
+      VEHICLES.forEach(v => {
+        const zones = zonesForFilter(v);
+        if (!zones.length) return;
+        counts[pmWorstAmong(v, zones)]++;
+      });
+      $('pmsummary').innerHTML = `<div class="row" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+      <span class="badge b-out"><span class="ms" style="font-size:15px">error</span>เกินกำหนด${partLabel} ${counts.overdue} คัน</span>
+      <span class="badge b-low"><span class="ms" style="font-size:15px">schedule</span>ใกล้ครบกำหนด${partLabel} ${counts.due} คัน</span>
+      <span class="badge b-ok"><span class="ms" style="font-size:15px">check_circle</span>ปกติ${partLabel} ${counts.ok} คัน</span>
+    </div>`;
+      const rank = { overdue: 0, due: 1, ok: 2 };
+      const list = VEHICLES.filter(v => {
+        if (orgFilter !== 'all' && v.org !== orgFilter) return false;
+        if (regionFilter !== 'all' && pmLoc(v).region !== regionFilter) return false;
+        if (q && !v.plate.toLowerCase().includes(q)) return false;
+        const zones = zonesForFilter(v);
+        if (!zones.length) return false;
+        if (key !== 'all' && pmWorstAmong(v, zones) !== key) return false;
+        return true;
+      }).sort((a, b) => rank[pmWorstAmong(a, zonesForFilter(a))] - rank[pmWorstAmong(b, zonesForFilter(b))]);
+      const nSel = [...PM_SELECTED].length;
+      $('pmlistbar').innerHTML = `<div class="panel" style="max-width:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <b>เลือกแล้ว ${nSel} คัน</b>
+      <button type="button" class="btn btn-p" ${nSel ? '' : 'disabled'} onclick="pmStartPlanFromList()"><span class="ms" style="font-size:18px">event_available</span> สร้างแผนงาน</button>
+    </div>`;
+      if (!list.length) { $('pmlist').innerHTML = `<div class="filter-empty"><span class="ms">filter_alt_off</span><b>ไม่พบรถ</b><span>ไม่มีรถที่ตรงกับตัวกรองที่เลือก</span></div>`; return }
+      const totalPages = Math.max(1, Math.ceil(list.length / PM_PAGE_SIZE));
+      if (PM_LIST_PAGE > totalPages) PM_LIST_PAGE = totalPages;
+      const pageItems = list.slice((PM_LIST_PAGE - 1) * PM_PAGE_SIZE, PM_LIST_PAGE * PM_PAGE_SIZE);
+      const allIds = list.map(v => v.id);
+      const allChecked = allIds.length > 0 && allIds.every(id => PM_SELECTED.has(id));
+      $('pmlist').innerHTML = `<div class="tblwrap"><table class="tbl">
+      <thead><tr>
+        <th><input type="checkbox" style="width:18px;height:18px;cursor:pointer" ${allChecked ? 'checked' : ''} onchange="pmListToggleAll(this.checked,[${allIds.join(',')}])"></th>
+        <th>ทะเบียน</th><th>รุ่น / หน่วยงาน</th><th>อายุใช้งาน / เลขไมล์</th><th>สถานะระบบ (เรียงเกินกำหนดก่อน)</th><th></th>
+      </tr></thead>
+      <tbody>${pageItems.map(v => {
+        const zones = pmZonesFor(v), d = PM_DATA[v.id];
+        const pills = zones.map(z => { const calc = pmZoneCalc(z.key, d.zones[z.key].lastISO), st = PM_STATUS[calc.status]; return `<span class="badge ${st.cls}" title="${esc(z.name)}: ${esc(calc.dueText)}"><span class="ms" style="font-size:14px">${z.icon}</span>${z.name}</span>` }).join(' ');
+        const checked = PM_SELECTED.has(v.id);
+        return `<tr id="pm-job-${v.id}" style="cursor:pointer" aria-expanded="false" onclick="openPm(${v.id})">
+          <td><input type="checkbox" style="width:18px;height:18px;cursor:pointer" ${checked ? 'checked' : ''} onclick="event.stopPropagation();pmListToggleSelect(${v.id})"></td>
+          <td><b style="color:var(--gray-900)">${esc(v.plate)}</b></td>
+          <td>${esc(v.model)}${v.attach ? ' + ' + esc(v.attach) : ''}<div class="hint">${esc(v.org)}</div></td>
+          <td>${pmAge(v.id)} ปี<div class="hint">${d.mileage.toLocaleString()} กม.${d.hours ? ' · ' + d.hours.toLocaleString() + ' ชม.' : ''}</div></td>
+          <td><div style="display:flex;gap:6px;flex-wrap:wrap;max-width:320px">${pills}</div></td>
+          <td><span class="ms pm-chevron" style="color:var(--gray-300)">chevron_right</span></td>
+        </tr>
+        <tr class="hidden" id="pm-detail-row-${v.id}"><td colspan="6" class="pm-detail-td"><div id="pm-detail-${v.id}"></div></td></tr>`;
+      }).join('')}</tbody>
+    </table></div>${pmPager(PM_LIST_PAGE, list.length, 'pmGotoListPage')}`;
+    }
+    let PM_OPEN = null;
+    function pmDetailEl(id) { return $('pm-detail-' + id) }
+    function pmDetailRow(id) { return $('pm-detail-row-' + id) }
+    function setPmCardOpen(id, open) {
+      const card = $('pm-job-' + id); if (!card) return;
+      card.classList.toggle('open', open); card.setAttribute('aria-expanded', open);
+      const icon = card.querySelector('.pm-chevron'); if (icon) icon.textContent = open ? 'expand_less' : 'chevron_right';
+    }
+    function closePmDetail() {
+      if (!PM_OPEN) return;
+      setPmCardOpen(PM_OPEN, false);
+      const row = pmDetailRow(PM_OPEN); if (row) { row.classList.add('hidden'); pmDetailEl(PM_OPEN).innerHTML = '' }
+      PM_OPEN = null;
+    }
+    function openPm(id) {
+      if (PM_OPEN === id && !pmDetailRow(id).classList.contains('hidden')) { closePmDetail(); return }
+      if (PM_OPEN) { const prevRow = pmDetailRow(PM_OPEN); setPmCardOpen(PM_OPEN, false); if (prevRow) { prevRow.classList.add('hidden'); pmDetailEl(PM_OPEN).innerHTML = '' } }
+      PM_OPEN = id;
+      setPmCardOpen(id, true);
+      pmDetailRow(id).classList.remove('hidden');
+      renderPmDetail(id);
+    }
+    function renderPmDetail(id) {
+      const v = VEHICLES.find(x => x.id === id), d = PM_DATA[id];
+      pmDetailEl(id).innerHTML = pmZonesFor(v).map(z => {
+        const zd = d.zones[z.key], calc = pmZoneCalc(z.key, zd.lastISO), st = PM_STATUS[calc.status];
+        const hist = zd.history.map(h => `<div class="pm-hist-row"><div class="pm-hist-date">${isoToThai(h.dateISO)}</div><div class="pm-hist-desc">${esc(h.desc)}${h.by ? ' — ' + esc(h.by) : ''}</div><div class="pm-hist-cost">${h.cost ? h.cost.toLocaleString() + ' บาท' : '—'}</div></div>`).join('') || '<div class="empty">ยังไม่มีประวัติ</div>';
+        return `<div class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div class="sect" style="margin:0"><span class="ms">${z.icon}</span>${z.name}</div>
+          <span class="badge ${st.cls}">${st.label}</span>
+        </div>
+        <div class="hint" style="margin:4px 0 2px">รอบบำรุงรักษา: ทุก ${z.intervalMonths} เดือน · บำรุงรักษาล่าสุด: ${isoToThai(zd.lastISO)} · ครบกำหนดถัดไป: ${calc.dueThai}</div>
+        <div class="hint" style="margin:0 0 10px;font-weight:600;color:var(--${calc.status === 'overdue' ? 'error' : calc.status === 'due' ? 'warning' : 'success'}-600)">${calc.dueText}</div>
+        <div class="pm-hist">${hist}</div>
+        <div class="fgrid" style="margin:14px 0 4px">
+          <div class="f sp2"><label>วันที่บำรุงรักษา</label><div class="in"><span class="ms">event</span><input type="date" id="pm-date-${id}-${z.key}" value="${todayISO()}"></div></div>
+          <div class="f sp2"><label>ค่าใช้จ่าย (บาท) <small>(ถ้ามี)</small></label><div class="in"><span class="ms">payments</span><input type="number" min="0" id="pm-cost-${id}-${z.key}" placeholder="0"></div></div>
+          <div class="f sp4"><label>รายละเอียดที่ทำ</label><textarea id="pm-desc-${id}-${z.key}" rows="2" placeholder="เช่น เปลี่ยนน้ำมันไฮดรอลิก + ไส้กรอง"></textarea></div>
+        </div>
+        <div class="rowbtns" style="justify-content:flex-start">
+          <button class="btn btn-p" onclick="addPmRecord(${id},'${z.key}')"><span class="ms" style="font-size:18px">add_task</span> บันทึกบำรุงรักษา</button>
+        </div>
+      </div>`;
+      }).join('');
+    }
+    function addPmRecord(id, zkey) {
+      const descEl = $('pm-desc-' + id + '-' + zkey);
+      const desc = descEl.value.trim();
+      if (!desc) { toast('กรุณาระบุรายละเอียดที่ทำ'); return }
+      const dateISO = $('pm-date-' + id + '-' + zkey).value || todayISO();
+      const cost = +($('pm-cost-' + id + '-' + zkey).value || 0);
+      const zd = PM_DATA[id].zones[zkey];
+      zd.history.unshift({ dateISO, desc, cost, by: 'กบค. สนญ.' });
+      zd.lastISO = dateISO;
+      toast('บันทึกบำรุงรักษาแล้ว (mock)');
+      renderPmList();
+      setPmCardOpen(id, true);
+      pmDetailRow(id).classList.remove('hidden');
+      renderPmDetail(id);
+    }
+
+    // ---------- ตารางแผนงานบำรุงรักษา (Master Plan) — เลือกรถจากหน่วยงาน/จังหวัด/ภาค ----------
+    // ที่อยู่ของรถ (จังหวัด/ภาค) — รถ id 1-4 กำหนดตายตัวไว้ (ตรงกับ org เดิม) รถที่เหลือ derive จาก plate/org ของ VEHICLES โดยตรง
+    const PM_REGIONS = {
+      1: { province: 'นครราชสีมา', region: 'ภาคตะวันออกเฉียงเหนือ' },
+      2: { province: 'ขอนแก่น', region: 'ภาคตะวันออกเฉียงเหนือ' },
+      3: { province: 'กรุงเทพมหานคร', region: 'สำนักงานใหญ่' },
+      4: { province: 'เชียงใหม่', region: 'ภาคเหนือ' }
+    };
+    const PM_REGION_BY_CODE = { 'น': 'ภาคเหนือ', 'ฉ': 'ภาคตะวันออกเฉียงเหนือ', 'ม': 'ภาคกลาง', 'ต': 'ภาคใต้' };
+    function pmLoc(v) {
+      if (PM_REGIONS[v.id]) return PM_REGIONS[v.id];
+      const province = v.plate.split(' ').slice(1).join(' ') || '-';
+      if (v.org.includes('สำนักงานใหญ่')) return { province, region: 'สำนักงานใหญ่' };
+      const m = v.org.match(/เขต\s*([ก-ฮ])\./);
+      return { province, region: (m && PM_REGION_BY_CODE[m[1]]) || '-' };
+    }
+    let PM_SELECTED = new Set();
+    const PM_PLANS = [];
+    let PM_PLAN_SEQ = 0;
+    let PM_MODAL = null;       // null | 'create' | {type:'prep', no}
+    let PM_MENU_OPEN = null;   // เลขแผนที่เปิดเมนู 3 จุดอยู่
+    const PM_PREP_STATUS = {
+      pending: { label: 'รอเบิกอะไหล่', cls: 'b-low' },
+      requested: { label: 'เบิกอะไหล่แล้ว', cls: 'b-brand' },
+      ready: { label: 'พร้อมดำเนินการ', cls: 'b-ok' },
+      cancelled: { label: 'ยกเลิกแผนงาน', cls: 'b-out' }
+    };
+    const PM_RESPONSIBLE = { pm: { label: 'กบค. ดำเนินการ' }, unit: { label: 'หน่วยงานดำเนินการเอง' } };
+    let PM_NEW_RESPONSIBLE = 'pm';
+    function pmSetResponsible(v) { PM_NEW_RESPONSIBLE = v; renderPmModal() }
+    function pmCostSum(p) { const c = p.costs || {}; return (c.general || 0) + (c.travel || 0) + (c.parts || 0) }
+    const PM_APPROVAL_STATUS = {
+      pending: { label: 'รออนุมัติ', cls: 'b-low' },
+      approved: { label: 'อนุมัติแล้ว', cls: 'b-ok' },
+      rejected: { label: 'ไม่อนุมัติ', cls: 'b-out' }
+    };
+    function pmSetApproval(no, status) {
+      const p = PM_PLANS.find(x => x.no === no);
+      p.approvalStatus = status;
+      PM_MENU_OPEN = null;
+      toast((status === 'approved' ? 'อนุมัติ' : 'ไม่อนุมัติ') + 'แผนงาน ' + no + ' แล้ว (mock)');
+      renderPmPlansTable();
+    }
+    // ---- ทีม/ผู้รับจ้าง (มอบหมายให้แผนงานได้เมื่อสถานะ "รับแล้ว") ----
+    let PM_TEAM_SEQ = 0;
+    const PM_TEAMS = [];
+    function pmSeedTeams() {
+      if (PM_TEAMS.length) return;
+      ['ทีมช่าง กบค. ชุด 1', 'ทีมช่าง กบค. ชุด 2'].forEach(name => {
+        PM_TEAMS.push({ id: ++PM_TEAM_SEQ, name, type: 'internal', contact: 'กบค. สนญ.', quoteFileName: null, status: 'accepted' });
+      });
+    }
+    let PM_TEAM_FORM_OPEN = false;
+    let PM_NEW_TEAM_TYPE = 'internal';
+    let PM_NEW_TEAM_QUOTE_NAME = '';
+    function pmOpenTeamsModal() {
+      pmSeedTeams();
+      PM_MODAL = { type: 'teams' }; PM_MENU_OPEN = null; PM_TEAM_FORM_OPEN = false;
+      renderPmPlansTable();
+      renderPmModal();
+    }
+    function pmNewTeamType(t) { PM_NEW_TEAM_TYPE = t; renderPmModal() }
+    function pmTeamQuotePicked(el) { PM_NEW_TEAM_QUOTE_NAME = el.files[0] ? el.files[0].name : ''; renderPmModal() }
+    function pmAddTeam() {
+      const name = $('pm-team-name').value.trim(), contact = $('pm-team-contact').value.trim();
+      if (!name) { toast('กรุณาระบุชื่อทีม/บริษัท'); return }
+      PM_TEAMS.push({
+        id: ++PM_TEAM_SEQ, name, type: PM_NEW_TEAM_TYPE, contact,
+        quoteFileName: PM_NEW_TEAM_TYPE === 'vendor' ? (PM_NEW_TEAM_QUOTE_NAME || null) : null,
+        status: PM_NEW_TEAM_TYPE === 'internal' ? 'accepted' : 'pending'
+      });
+      PM_TEAM_FORM_OPEN = false; PM_NEW_TEAM_TYPE = 'internal'; PM_NEW_TEAM_QUOTE_NAME = '';
+      toast('เพิ่มทีม/ผู้รับจ้างแล้ว (mock)');
+      renderPmModal();
+    }
+    function pmSetTeamStatus(id, status) {
+      const t = PM_TEAMS.find(x => x.id === id);
+      t.status = status;
+      toast(status === 'accepted' ? 'รับทีม/ผู้รับจ้างนี้แล้ว — มอบหมายงานให้ได้แล้ว' : 'ไม่รับใบเสนอราคานี้');
+      renderPmModal();
+    }
+    function pmTeamsModalHTML() {
+      const teamStatusMeta = { pending: { label: 'รอพิจารณา', cls: 'b-low' }, accepted: { label: 'รับแล้ว', cls: 'b-ok' }, rejected: { label: 'ไม่รับ', cls: 'b-out' } };
+      const rows = PM_TEAMS.length ? PM_TEAMS.map(t => `<tr>
+        <td><b style="color:var(--gray-900)">${esc(t.name)}</b><div class="hint">${t.type === 'internal' ? 'ทีมภายใน กบค.' : 'ผู้รับจ้างภายนอก'}${t.contact ? ' · ' + esc(t.contact) : ''}</div></td>
+        <td>${t.quoteFileName ? `<span class="badge b-brand"><span class="ms" style="font-size:14px">description</span>${esc(t.quoteFileName)}</span>` : '<span class="hint">—</span>'}</td>
+        <td><span class="badge ${teamStatusMeta[t.status].cls}">${teamStatusMeta[t.status].label}</span></td>
+        <td>${t.status === 'pending' ? `<button type="button" class="btn btn-p" style="padding:6px 10px;font-size:12px" onclick="pmSetTeamStatus(${t.id},'accepted')">รับ</button>
+          <button type="button" class="btn btn-g" style="padding:6px 10px;font-size:12px" onclick="pmSetTeamStatus(${t.id},'rejected')">ไม่รับ</button>` : ''}</td>
+      </tr>`).join('') : '<tr><td colspan="4" class="empty">ยังไม่มีทีม/ผู้รับจ้าง</td></tr>';
+      return `<div class="pm-modal-backdrop" onclick="if(event.target===this)pmCloseModal()">
+      <div class="pm-modal" style="max-width:740px">
+        <div class="pm-modal-head"><h3><span class="ms" style="vertical-align:-4px;color:var(--primary-600)">groups</span> จัดการทีม/ผู้รับจ้าง</h3>
+          <button type="button" class="pm-modal-close" onclick="pmCloseModal()"><span class="ms">close</span></button></div>
+        <div class="pm-modal-body">
+          <div class="tblwrap"><table class="tbl">
+            <thead><tr><th>ทีม/ผู้รับจ้าง</th><th>ใบเสนอราคา</th><th>สถานะ</th><th></th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table></div>
+          <div class="rowbtns" style="justify-content:flex-start;margin-top:14px">
+            <button type="button" class="btn btn-o" onclick="PM_TEAM_FORM_OPEN=!PM_TEAM_FORM_OPEN;renderPmModal()"><span class="ms" style="font-size:18px">add</span> เพิ่มทีม/ผู้รับจ้าง</button>
+          </div>
+          ${PM_TEAM_FORM_OPEN ? `<div class="panel" style="max-width:none;margin-top:14px">
+            <div class="seg" style="max-width:420px;margin-bottom:14px">
+              <div class="sg ${PM_NEW_TEAM_TYPE === 'internal' ? 'sel' : ''}" onclick="pmNewTeamType('internal')">ทีมภายใน กบค.</div>
+              <div class="sg ${PM_NEW_TEAM_TYPE === 'vendor' ? 'sel' : ''}" onclick="pmNewTeamType('vendor')">ผู้รับจ้างภายนอก</div>
+            </div>
+            <div class="fgrid">
+              <div class="f sp2"><label>ชื่อทีม/บริษัท</label><input type="text" id="pm-team-name" placeholder="เช่น ทีมช่าง กบค. ชุด 3 / บจก. เอบีซี เซอร์วิส"></div>
+              <div class="f sp2"><label>ผู้ติดต่อ/สมาชิก</label><input type="text" id="pm-team-contact" placeholder="เช่น สมชาย 08x-xxx-xxxx"></div>
+              ${PM_NEW_TEAM_TYPE === 'vendor' ? `<div class="f sp4"><label>แนบใบเสนอราคา</label><input type="file" id="pm-team-quote" accept=".pdf,.jpg,.jpeg,.png" onchange="pmTeamQuotePicked(this)"><div class="hint" style="margin-top:4px">${PM_NEW_TEAM_QUOTE_NAME ? 'แนบแล้ว: ' + esc(PM_NEW_TEAM_QUOTE_NAME) : 'รองรับ PDF/รูปภาพ (mock — ยังไม่อัปโหลดขึ้นเซิร์ฟเวอร์จริง)'}</div></div>` : ''}
+            </div>
+            <div class="rowbtns" style="justify-content:flex-start">
+              <button type="button" class="btn btn-p" onclick="pmAddTeam()"><span class="ms" style="font-size:18px">check</span> บันทึก</button>
+            </div>
+          </div>` : ''}
+        </div>
+        <div class="rowbtns" style="justify-content:flex-end;padding:14px 22px;border-top:1px solid var(--gray-200)">
+          <button type="button" class="btn btn-g" onclick="pmCloseModal()">ปิด</button>
+        </div>
+      </div>
+    </div>`;
+    }
+    // ---- ดูรายชื่อรถทั้งหมดในแผน + ค้นหาทะเบียน ----
+    function pmOpenVehicleViewer(no) {
+      PM_MODAL = { type: 'vehicles', no };
+      renderPmModal();
+    }
+    function pmVehiclesModalHTML(no) {
+      const p = PM_PLANS.find(x => x.no === no);
+      return `<div class="pm-modal-backdrop" onclick="if(event.target===this)pmCloseModal()">
+      <div class="pm-modal" style="max-width:520px">
+        <div class="pm-modal-head"><h3><span class="ms" style="vertical-align:-4px;color:var(--primary-600)">local_shipping</span> รถในแผน ${p.no} (${p.vehicles.length} คัน)</h3>
+          <button type="button" class="pm-modal-close" onclick="pmCloseModal()"><span class="ms">close</span></button></div>
+        <div class="pm-modal-body">
+          <div class="in" style="margin-bottom:12px"><span class="ms">search</span><input type="text" id="pm-veh-view-q" placeholder="ค้นหาทะเบียนรถ…" oninput="pmRenderVehViewList('${no}')"></div>
+          <div id="pm-veh-view-list"></div>
+        </div>
+        <div class="rowbtns" style="justify-content:flex-end;padding:14px 22px;border-top:1px solid var(--gray-200)">
+          <button type="button" class="btn btn-g" onclick="pmCloseModal()">ปิด</button>
+        </div>
+      </div>
+    </div>`;
+    }
+    function pmRenderVehViewList(no) {
+      const p = PM_PLANS.find(x => x.no === no);
+      const q = $('pm-veh-view-q').value.trim().toLowerCase();
+      const list = p.vehicles.filter(v => !q || v.plate.toLowerCase().includes(q));
+      $('pm-veh-view-list').innerHTML = list.length ? list.map(v => `<div class="job" style="cursor:default">
+        <span class="ms" style="color:var(--primary-600)">local_shipping</span>
+        <div class="sp"><div class="no">${esc(v.plate)}</div><div class="meta">${esc(v.model)}${v.attach ? ' + ' + esc(v.attach) : ''} · ${esc(v.org)}</div></div>
+      </div>`).join('') : '<div class="empty">ไม่พบทะเบียนที่ค้นหา</div>';
+    }
+    // ---- ตารางแผนงาน (หน้า "แผนบำรุงรักษา") ----
+    function renderPmPlansTable() {
+      if (!PM_PLANS.length) { $('pmplantable').innerHTML = '<div class="filter-empty"><span class="ms">event_repeat</span><b>ยังไม่มีแผนงานบำรุงรักษา</b><span>กด “สร้างแผนงาน” ด้านบนเพื่อเริ่มต้น</span></div>'; return }
+      $('pmplantable').innerHTML = `<div class="tblwrap"><table class="tbl">
+      <thead><tr><th>แผนงาน</th><th>รถ</th><th>ไตรมาส</th><th>ช่วงเดินทาง</th><th>ทีมที่มอบหมาย</th><th>สถานที่</th><th>ผู้ดำเนินการ</th><th>สถานะอนุมัติ</th><th>สถานะเตรียมการ</th><th class="num">ต้นทุนรวม</th><th></th></tr></thead>
+      <tbody>${PM_PLANS.map(p => {
+        const st = PM_PREP_STATUS[p.prepStatus];
+        const ap = PM_APPROVAL_STATUS[p.approvalStatus];
+        const team = PM_TEAMS.find(t => t.id === p.assignedTeamId);
+        const notSet = '<span class="hint">ยังไม่ระบุ</span>';
+        return `<tr>
+          <td><b style="color:var(--gray-900)">${esc(p.name || p.no)}</b><div class="hint">${p.no} · สร้างเมื่อ ${p.created}</div></td>
+          <td><button type="button" class="btn btn-g" style="padding:6px 10px;font-size:12.5px" onclick="pmOpenVehicleViewer('${p.no}')"><span class="ms" style="font-size:15px">local_shipping</span> ${p.vehicles.length} คัน</button></td>
+          <td><span class="badge b-brand">${esc(p.quarter)}</span></td>
+          <td>${p.from ? p.from + (p.to && p.to !== p.from ? ' – ' + p.to : '') : notSet}</td>
+          <td>${team ? esc(team.name) : notSet}</td>
+          <td>${p.site ? esc(p.site) : notSet}</td>
+          <td>${PM_RESPONSIBLE[p.responsible].label}</td>
+          <td><span class="badge ${ap.cls}">${ap.label}</span></td>
+          <td><span class="badge ${st.cls}">${st.label}</span></td>
+          <td class="num">${pmCostSum(p).toLocaleString()} บาท</td>
+          <td><div style="position:relative;display:inline-block">
+            <button type="button" class="pm-kebab" onclick="pmToggleMenu(event,'${p.no}')"><span class="ms">more_vert</span></button>
+          </div></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+    ${PM_MENU_OPEN ? `<div class="pm-menu" style="top:${PM_MENU_POS.top}px;left:${PM_MENU_POS.left}px">
+      <div class="pm-menu-item" onclick="pmOpenPrep('${PM_MENU_OPEN}')"><span class="ms">inventory_2</span>เบิกอะไหล่ &amp; เตรียมการ</div>
+      ${PM_PLANS.find(x => x.no === PM_MENU_OPEN).approvalStatus === 'pending' ? `
+      <div class="pm-menu-item" onclick="pmSetApproval('${PM_MENU_OPEN}','approved')"><span class="ms">check_circle</span>อนุมัติแผนงาน</div>
+      <div class="pm-menu-item danger" onclick="pmSetApproval('${PM_MENU_OPEN}','rejected')"><span class="ms">cancel</span>ไม่อนุมัติแผนงาน</div>` : ''}
+      <div class="pm-menu-item danger" onclick="pmCancelPlan('${PM_MENU_OPEN}')"><span class="ms">delete</span>ยกเลิกแผนงาน</div>
+    </div>` : ''}`;
+    }
+    let PM_MENU_POS = { top: 0, left: 0 };
+    function pmToggleMenu(e, no) {
+      e.stopPropagation();
+      if (PM_MENU_OPEN === no) { PM_MENU_OPEN = null; }
+      else {
+        const r = e.currentTarget.getBoundingClientRect();
+        PM_MENU_POS = { top: r.bottom + 4, left: Math.max(8, r.right - 210) };
+        PM_MENU_OPEN = no;
+      }
+      renderPmPlansTable();
+    }
+    document.addEventListener('click', () => { if (PM_MENU_OPEN) { PM_MENU_OPEN = null; renderPmPlansTable() } });
+    function pmCancelPlan(no) {
+      const p = PM_PLANS.find(x => x.no === no);
+      p.prepStatus = 'cancelled';
+      PM_MENU_OPEN = null;
+      toast('ยกเลิกแผนงาน ' + no + ' แล้ว (mock)');
+      renderPmPlansTable();
+    }
+    // ---- Modal 1: สร้างแผนงาน (เลือกรถจากตาราง) ----
+    function pmOpenCreateModal(keepSelection) {
+      if (!keepSelection) PM_SELECTED.clear();
+      if (!PM_SELECTED.size) { toast('กรุณาเลือกรถที่หน้า “บำรุงรักษา กบค.” ก่อน'); switchView('pm'); return }
+      PM_MODAL = 'create'; PM_MENU_OPEN = null; PM_NEW_RESPONSIBLE = 'pm';
+      renderPmPlansTable();
+      renderPmModal();
+    }
+    function pmCloseModal() { PM_MODAL = null; renderPmModal() }
+    function renderPmModal() {
+      const root = $('pm-modal-root');
+      if (!PM_MODAL) { root.innerHTML = ''; return }
+      if (PM_MODAL === 'create') {
+        root.innerHTML = `<div class="pm-modal-backdrop" onclick="if(event.target===this)pmCloseModal()">
+        <div class="pm-modal" style="max-width:640px">
+          <div class="pm-modal-head"><h3><span class="ms" style="vertical-align:-4px;color:var(--primary-600)">event_available</span> สร้างแผนงานบำรุงรักษา</h3>
+            <button type="button" class="pm-modal-close" onclick="pmCloseModal()"><span class="ms">close</span></button></div>
+          <div class="pm-modal-body">
+            <div class="sect" style="margin:0 0 8px">ชื่อแผนงาน</div>
+            <div class="f sp2"><input type="text" id="pm-plan-name" placeholder="เช่น บำรุงรักษาประจำไตรมาส 3 เขตอีสาน"></div>
+            <div class="sect" style="margin-top:22px">รถที่เลือก (${PM_SELECTED.size} คัน)</div>
+            <div id="pm-selected-summary">${renderPmSelectedSummary()}</div>
+            <div class="sect" style="margin-top:22px">ไตรมาสที่วางแผนบำรุงรักษา</div>
+            <div class="f sp2"><select id="pm-plan-quarter">${pmQuarterOptions().map(q => `<option value="${q}">${q}</option>`).join('')}</select></div>
+            <div class="sect" style="margin-top:22px">ผู้ดำเนินการ</div>
+            <div class="seg" style="max-width:460px;margin-bottom:4px">
+              <div class="sg ${PM_NEW_RESPONSIBLE === 'pm' ? 'sel' : ''}" onclick="pmSetResponsible('pm')">${PM_RESPONSIBLE.pm.label}</div>
+              <div class="sg ${PM_NEW_RESPONSIBLE === 'unit' ? 'sel' : ''}" onclick="pmSetResponsible('unit')">${PM_RESPONSIBLE.unit.label}</div>
+            </div>
+            <div class="hint" style="margin-top:14px">นี่คือแผนแบบหยาบ — พอใกล้ถึงไตรมาสจริง ค่อยกดเมนู 3 จุดที่ตารางแผนงานเพื่อกรอกวันที่เดินทางจริง ทีมช่าง เบิกอะไหล่ และค่าใช้จ่าย</div>
+          </div>
+          <div class="rowbtns" style="justify-content:flex-end;padding:14px 22px;border-top:1px solid var(--gray-200)">
+            <button type="button" class="btn btn-g" onclick="pmCloseModal()">ยกเลิก</button>
+            <button type="button" class="btn btn-p" onclick="pmSubmitPlan()"><span class="ms" style="font-size:18px">task_alt</span> สร้างแผนงาน</button>
+          </div>
+        </div>
+      </div>`;
+        return;
+      }
+      if (PM_MODAL.type === 'prep') { root.innerHTML = pmPrepModalHTML(PM_MODAL.no); return }
+      if (PM_MODAL.type === 'teams') { root.innerHTML = pmTeamsModalHTML(); return }
+      if (PM_MODAL.type === 'vehicles') { root.innerHTML = pmVehiclesModalHTML(PM_MODAL.no); pmRenderVehViewList(PM_MODAL.no); return }
+    }
+    function renderPmSelectedSummary() {
+      const vehicles = [...PM_SELECTED].map(id => VEHICLES.find(v => v.id === id)).filter(Boolean);
+      if (!vehicles.length) return '<div class="empty">ยังไม่ได้เลือกรถ — กลับไปติ๊กเลือกที่หน้า “บำรุงรักษา กบค.” ก่อน</div>';
+      return vehicles.map(v => `<div class="job" style="cursor:default">
+      <span class="ms" style="color:var(--primary-600)">local_shipping</span>
+      <div class="sp"><div class="no">${esc(v.plate)}</div><div class="meta">${esc(v.model)}${v.attach ? ' + ' + esc(v.attach) : ''} · ${esc(v.org)}</div></div>
+      <button type="button" class="btn btn-g" style="padding:6px 9px" onclick="pmRemoveFromSelection(${v.id})"><span class="ms" style="font-size:16px">close</span></button>
+    </div>`).join('');
+    }
+    function pmRemoveFromSelection(id) {
+      PM_SELECTED.delete(id);
+      renderPmModal();
+    }
+    function pmSubmitPlan() {
+      if (!PM_SELECTED.size) { toast('กรุณาเลือกรถอย่างน้อย 1 คัน'); return }
+      const quarter = $('pm-plan-quarter').value;
+      const name = $('pm-plan-name').value.trim();
+      const vids = [...PM_SELECTED];
+      const plan = {
+        no: 'PM-690717-0' + (++PM_PLAN_SEQ), name, vehicles: vids.map(id => VEHICLES.find(v => v.id === id)),
+        quarter, responsible: PM_NEW_RESPONSIBLE, assignedTeamId: null, approvalStatus: 'pending', created: todayDateStr(),
+        from: '', to: '', team: '', site: '',
+        prepStatus: 'pending', parts: [], costs: { general: 0, travel: 0, parts: 0 }
+      };
+      PM_PLANS.unshift(plan);
+      PM_SELECTED.clear();
+      toast('สร้างแผนงานบำรุงรักษาแล้ว (mock) — เลขที่ ' + plan.no);
+      pmCloseModal();
+      renderPmPlansTable();
+    }
+    // ---- Modal 2: เบิกอะไหล่ & เตรียมการ ----
+    function pmOpenPrep(no) {
+      PM_MODAL = { type: 'prep', no }; PM_MENU_OPEN = null;
+      renderPmPlansTable();
+      renderPmModal();
+    }
+    function pmPrepModalHTML(no) {
+      const p = PM_PLANS.find(x => x.no === no);
+      const partsRows = p.parts.length ? p.parts.map((pt, i) => `<tr>
+        <td>${esc(pt.name)}</td><td class="num">${pt.qty} ${esc(pt.unit || '')}</td>
+        <td><button type="button" class="btn btn-g" style="padding:5px 9px;font-size:12px" onclick="pmPrepRemovePart('${no}',${i})"><span class="ms" style="font-size:15px">close</span></button></td>
+      </tr>`).join('') : '<tr><td colspan="3" class="empty">ยังไม่ได้เบิกอะไหล่</td></tr>';
+      const partOptions = PARTS.map(pt => `<option value="${pt.code}">${esc(pt.name)} (${pt.code}) — คงเหลือ ${pt.stock} ${pt.unit}</option>`).join('');
+      const c = p.costs;
+      return `<div class="pm-modal-backdrop" onclick="if(event.target===this)pmCloseModal()">
+      <div class="pm-modal" style="max-width:680px">
+        <div class="pm-modal-head"><h3><span class="ms" style="vertical-align:-4px;color:var(--primary-600)">inventory_2</span> เบิกอะไหล่ &amp; เตรียมการ — ${no}</h3>
+          <button type="button" class="pm-modal-close" onclick="pmCloseModal()"><span class="ms">close</span></button></div>
+        <div class="pm-modal-body">
+          <div class="sect" style="margin:0 0 8px">สถานะเตรียมการ</div>
+          <div class="seg" style="max-width:520px;margin-bottom:20px">
+            ${['pending', 'requested', 'ready'].map(k => `<div class="sg ${p.prepStatus === k ? 'sel' : ''}" onclick="pmPrepSetStatus('${no}','${k}')">${PM_PREP_STATUS[k].label}</div>`).join('')}
+          </div>
+
+          <div class="sect" style="margin:0 0 8px">ข้อมูลการเดินทาง <small style="font-weight:400;color:var(--gray-500)">(ไตรมาส: ${esc(p.quarter)})</small></div>
+          <div class="fgrid" style="margin-bottom:6px">
+            <div class="f sp2"><label>วันที่เดินทาง (จาก)</label><div class="in"><span class="ms">event</span><input type="text" id="pm-prep-from" value="${esc(p.from)}" placeholder="เช่น 10 ส.ค. 2569"></div></div>
+            <div class="f sp2"><label>ถึงวันที่</label><div class="in"><span class="ms">event</span><input type="text" id="pm-prep-to" value="${esc(p.to)}" placeholder="เช่น 12 ส.ค. 2569"></div></div>
+            <div class="f sp2"><label>ทีมช่าง (ใครไปบ้าง)</label><input type="text" id="pm-prep-team" value="${esc(p.team)}" placeholder="เช่น สมชาย, วิชัย"></div>
+            <div class="f sp2"><label>สถานที่บำรุงรักษา</label><input type="text" id="pm-prep-site" value="${esc(p.site)}" placeholder="เช่น หน่วยงานเจ้าของรถ / กบค. สนญ."></div>
+          </div>
+
+          <div class="sect" style="margin:22px 0 8px">มอบหมายทีมผู้ทำ</div>
+          <div class="fgrid" style="margin-bottom:4px">
+            <div class="f sp2"><select id="pm-prep-team-id">
+              <option value="">ยังไม่มอบหมาย</option>
+              ${PM_TEAMS.filter(t => t.status === 'accepted').map(t => `<option value="${t.id}" ${p.assignedTeamId === t.id ? 'selected' : ''}>${esc(t.name)}${t.type === 'vendor' ? ' (ผู้รับจ้าง)' : ''}</option>`).join('')}
+            </select></div>
+            <div class="f sp2" style="display:flex;align-items:flex-end"><button type="button" class="btn btn-o" style="width:100%" onclick="pmOpenTeamsModal()"><span class="ms" style="font-size:18px">groups</span> จัดการทีม/ผู้รับจ้าง</button></div>
+          </div>
+          ${!PM_TEAMS.some(t => t.status === 'accepted') ? '<div class="hint" style="margin-bottom:6px">ยังไม่มีทีม/ผู้รับจ้างที่ “รับแล้ว” — เพิ่มและรับก่อนถึงจะมอบหมายได้</div>' : ''}
+
+          <div class="sect" style="margin:22px 0 8px">เบิกอะไหล่มาเตรียม</div>
+          <div class="fgrid" style="margin-bottom:6px">
+            <div class="f sp2"><label>อะไหล่</label><select id="pm-prep-part">${partOptions}</select></div>
+            <div class="f"><label>จำนวน</label><input type="number" min="1" value="1" id="pm-prep-qty"></div>
+            <div class="f" style="display:flex;align-items:flex-end"><button type="button" class="btn btn-o" style="width:100%" onclick="pmPrepAddPart('${no}')"><span class="ms" style="font-size:18px">add</span> เพิ่ม</button></div>
+          </div>
+          <div class="tblwrap"><table class="tbl">
+            <thead><tr><th>อะไหล่</th><th class="num">จำนวน</th><th></th></tr></thead>
+            <tbody>${partsRows}</tbody>
+          </table></div>
+
+          <div class="sect" style="margin:22px 0 8px">ค่าใช้จ่ายเตรียมการ</div>
+          <div class="fgrid">
+            <div class="f sp2"><label>ค่าใช้จ่าย (บาท)</label><div class="in"><span class="ms">payments</span><input type="number" min="0" id="pm-cost-general" value="${c.general || ''}" placeholder="0"></div></div>
+            <div class="f sp2"><label>ค่าเดินทาง (บาท)</label><div class="in"><span class="ms">local_shipping</span><input type="number" min="0" id="pm-cost-travel" value="${c.travel || ''}" placeholder="0"></div></div>
+            <div class="f sp2"><label>ค่าอะไหล่ (บาท)</label><div class="in"><span class="ms">settings</span><input type="number" min="0" id="pm-cost-parts" value="${c.parts || ''}" placeholder="0"></div></div>
+          </div>
+        </div>
+        <div class="rowbtns" style="justify-content:flex-end;padding:14px 22px;border-top:1px solid var(--gray-200)">
+          <button type="button" class="btn btn-g" onclick="pmCloseModal()">ปิด</button>
+          <button type="button" class="btn btn-p" onclick="pmPrepSave('${no}')"><span class="ms" style="font-size:18px">save</span> บันทึก</button>
+        </div>
+      </div>
+    </div>`;
+    }
+    function pmPrepSetStatus(no, status) {
+      PM_PLANS.find(x => x.no === no).prepStatus = status;
+      renderPmModal();
+    }
+    function pmPrepAddPart(no) {
+      const p = PM_PLANS.find(x => x.no === no);
+      const sel = $('pm-prep-part'), code = sel.value, qty = +$('pm-prep-qty').value || 1;
+      const part = PARTS.find(x => x.code === code);
+      const existing = p.parts.find(x => x.code === code);
+      if (existing) existing.qty += qty; else p.parts.push({ code, name: part.name, unit: part.unit, qty });
+      renderPmModal();
+    }
+    function pmPrepRemovePart(no, i) {
+      PM_PLANS.find(x => x.no === no).parts.splice(i, 1);
+      renderPmModal();
+    }
+    function pmPrepSave(no) {
+      const p = PM_PLANS.find(x => x.no === no);
+      p.from = $('pm-prep-from').value.trim();
+      p.to = $('pm-prep-to').value.trim();
+      p.team = $('pm-prep-team').value.trim();
+      p.site = $('pm-prep-site').value.trim();
+      p.assignedTeamId = $('pm-prep-team-id').value ? +$('pm-prep-team-id').value : null;
+      p.costs = { general: +$('pm-cost-general').value || 0, travel: +$('pm-cost-travel').value || 0, parts: +$('pm-cost-parts').value || 0 };
+      if (p.prepStatus === 'pending' && p.parts.length) p.prepStatus = 'requested';
+      toast('บันทึกการเตรียมการแล้ว (mock)');
+      pmCloseModal();
+      renderPmPlansTable();
+    }
     const FUELS = ['E', '¼', '½', '¾', 'เต็ม'];
 
     // ================= ⛽ เติมน้ำมัน + ชั่วโมงทำงาน (04-Flow-Fuel-and-Hours.md) =================
@@ -2359,7 +3307,7 @@
     // ================= VIEW SWITCH =================
     function switchView(v,remember=true) {
       if(v!==VIEW){if(remember)VIEW_HISTORY.push(VIEW);VIEW = v}
-      ['form', 'my', 'fuel', 'kry', 'kbk', 'sup', 'stock'].forEach(x => {
+      ['form', 'my', 'fuel', 'kry', 'kbk', 'pm', 'pmplan', 'sup', 'stock'].forEach(x => {
         $('view-' + x).classList.toggle('hidden', x !== v);
         $('nav-' + x).classList.toggle('on', x === v);
       });
@@ -2367,6 +3315,8 @@
       if (v === 'fuel') renderPf();
       if (v === 'kry') renderKryList();
       if (v === 'kbk') renderKbkList();
+      if (v === 'pm') { pmFillListFilters(); renderPmList(); }
+      if (v === 'pmplan') renderPmPlansTable();
       if (v === 'sup') renderSupList();
       if (v === 'stock') renderStock();
       window.scrollTo({ top: 0 });
@@ -3561,7 +4511,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
     renderSteps(); renderVehicles(); updateBadge();
     $('back').style.visibility = 'hidden';
     // deep-link: ถ้ามี #view ที่ถูกต้อง (เช่น #kbk หรือ #view-kbk) ให้เปิดหน้านั้น — ใช้โดยหน้า 05-review-milestones
-    const VALID_VIEWS = ['form', 'my', 'fuel', 'kry', 'kbk', 'sup', 'stock'];
+    const VALID_VIEWS = ['form', 'my', 'fuel', 'kry', 'kbk', 'pm', 'pmplan', 'sup', 'stock'];
     const hashView = v => VALID_VIEWS.includes(v = (location.hash || '').replace(/^#\/?/, '').replace(/^view-/, '')) ? v : '';
     const sv = hashView() || CFG.demo.startView || 'form';
     switchView(menuOn(sv) ? sv : 'form');   // ถ้า startView ถูกปิดเมนู → เปิดหน้าแรก

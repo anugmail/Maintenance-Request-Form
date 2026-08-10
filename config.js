@@ -18,11 +18,13 @@ const MENU_META={
   fuel:   {label:'เติมน้ำมัน + ชั่วโมงทำงาน',icon:'local_gas_station'},
   kry:    {label:'งานคัดแยก กรย.',icon:'alt_route'},
   kbk:    {label:'งานซ่อม กบค.',icon:'engineering'},
+  pm:     {label:'บำรุงรักษา กบค.',icon:'event_repeat'},
+  pmplan: {label:'แผนบำรุงรักษา',icon:'event_available'},
   sup:    {label:'อนุมัติปิดงาน (ผู้บังคับบัญชา)',icon:'approval'},
   stock:  {label:'คลังอะไหล่',icon:'warehouse'},
   reports:{label:'รายงาน',icon:'monitoring'}
 };
-const MENU_DEFAULT=['home','form','my','fuel','kry','kbk','sup','stock','reports'];
+const MENU_DEFAULT=['home','form','my','fuel','kry','kbk','pm','pmplan','sup','stock','reports'];
 
 /* ---------- Stepper: ขั้นตอนของ mock (ปรับชื่อ/ลำดับ/เปิดปิด/หัวข้อ จาก admin) ----------
    wizard: 4 ขั้นของฟอร์มแจ้งซ่อม (key ผูกกับ logic — vehicle/symptom/parts/decision)
@@ -181,13 +183,42 @@ function reset(){localStorage.removeItem(KEY)}
    Master data defaults — ย้ายมาจาก mock (แหล่งความจริงเดียว)
    mock ใช้ผ่าน MDC.data('vehicles'|'parts'|'garages')
    ============================================================ */
+/* สร้างรถตัวอย่างเพิ่มแบบ deterministic (ไม่ใช้ Math.random เพื่อให้ผลลัพธ์เดิมทุกครั้งที่โหลด)
+   ใช้เติมกองรถให้เยอะพอสำหรับทดสอบค้นหา/กรองในโมดูลบำรุงรักษา — plate ซ้ำกันได้บ้าง (ไม่ใช่ key จริง ใช้ id) */
+function genFleet(n,startId){
+  const provinces=[
+    {p:'เชียงราย',r:'น'},{p:'ลำปาง',r:'น'},{p:'พิษณุโลก',r:'น'},{p:'ตาก',r:'น'},
+    {p:'อุดรธานี',r:'ฉ'},{p:'อุบลราชธานี',r:'ฉ'},{p:'สุรินทร์',r:'ฉ'},{p:'ขอนแก่น',r:'ฉ'},
+    {p:'ชลบุรี',r:'ม'},{p:'นครปฐม',r:'ม'},{p:'สระบุรี',r:'ม'},{p:'ราชบุรี',r:'ม'},
+    {p:'สุราษฎร์ธานี',r:'ต'},{p:'สงขลา',r:'ต'},{p:'ภูเก็ต',r:'ต'},{p:'นครศรีธรรมราช',r:'ต'}
+  ];
+  const models=[
+    {model:'Hino FM8J 6 ล้อ',attach:'เครน Tadano TM-ZE304'},
+    {model:'Isuzu FTR',attach:'กระเช้า Aichi SK17A'},
+    {model:'Mitsubishi Fuso FI',attach:'เครน Unic URV554'},
+    {model:'Hino XZU กระบะยกสูง',attach:null},
+    {model:'Isuzu ELF 4 ล้อ',attach:'กระเช้า Aichi SS250'},
+    {model:'Hino 300 กระบะบรรทุก',attach:null},
+    {model:'Mitsubishi Fuso FN 6 ล้อ',attach:'เครน Tadano GR-150N'},
+    {model:'Isuzu NPR กระบะบรรทุก',attach:null}
+  ];
+  const out=[];
+  for(let i=0;i<n;i++){
+    const id=startId+i,loc=provinces[i%provinces.length],mdl=models[i%models.length];
+    const plateA=70+((i*7)%29),plateB=1000+((i*151)%8999),zone=(i%3)+1;
+    out.push({id,plate:`${plateA}-${plateB} ${loc.p}`,model:mdl.model,
+      org: id%9===0?'สำนักงานใหญ่ (กบค.)':`กฟภ. เขต ${loc.r}.${zone} ${loc.p}`,
+      attach:mdl.attach});
+  }
+  return out;
+}
 const defaults={
   vehicles:[
     {id:1,plate:'81-2345 นครราชสีมา',model:'Hino FM8J 6 ล้อ',org:'กฟภ. เขต ฉ.3 นครราชสีมา',attach:'เครน Tadano TM-ZE304'},
     {id:2,plate:'82-6789 ขอนแก่น',model:'Isuzu FTR',org:'กฟภ. เขต ฉ.1 ขอนแก่น',attach:'กระเช้า Aichi SK17A'},
     {id:3,plate:'83-1122 กรุงเทพมหานคร',model:'Mitsubishi Fuso FI',org:'สำนักงานใหญ่ (กบค.)',attach:'เครน Unic URV554'},
     {id:4,plate:'80-5566 เชียงใหม่',model:'Hino XZU กระบะยกสูง',org:'กฟภ. เขต น.1 เชียงใหม่',attach:null}
-  ],
+  ].concat(genFleet(50,5)),
   parts:[
     {sym:'HYD-01',code:'SL-4402',name:'ชุดซีลกระบอกไฮดรอลิก',need:1,unit:'ชุด',stock:6,wh:'กบค. สนญ.',icon:'join_inner'},
     {sym:'HYD-01',code:'OL-0046',name:'น้ำมันไฮดรอลิก ISO VG46 18L',need:1,unit:'ถัง',stock:2,wh:'กบค. สนญ.',icon:'oil_barrel'},
