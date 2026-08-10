@@ -451,7 +451,7 @@ function bindProcStepConfirm(plan) {
       const days = MYD.loadSettings().confirmDueDays;
       const d = new Date(); d.setDate(d.getDate() + days);
       c.requestedAt = todayIso();
-      c.dueAt = `${d.getFullYear() + 543}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      c.dueAt = toIsoBE(d);
       (plan.selectedVehicleIds || []).forEach(id => {
         if (!c.byVehicle[id]) c.byVehicle[id] = MYD.emptyConfirmEntry();
       });
