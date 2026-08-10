@@ -67,3 +67,10 @@ function dateTh(v) {
 function planTitle(plan) {
   return plan.workNumber || (plan.planName ? plan.planName : '(แผนใหม่ ยังไม่ตั้งชื่อ)');
 }
+
+// วันนี้แบบ ISO ปี พ.ศ. ('2569-08-10') ให้ตรงรูปแบบ dueAt และ <input type="date">
+// (Date อยู่ฝั่ง browser เท่านั้น — ห้ามย้ายไป mock-yearly.js)
+function todayIso() {
+  const d = new Date();
+  return `${d.getFullYear() + 543}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
