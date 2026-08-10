@@ -206,8 +206,8 @@ function route() {
 // เข้าเฟส 2 ครั้งใด ถ้า travelConfirmed แล้ว ข้าม wizard ไปแสดงสรุปยืนยันเลย
 
 const PROC_STEPS = [
-  { no: 1, label: 'เบิกอะไหล่' },
-  { no: 2, label: 'ยืนยันรถเข้าร่วมแผน' },
+  { no: 1, label: 'ยืนยันรถเข้าร่วมแผน' },
+  { no: 2, label: 'เบิก/จัดหาอะไหล่' },
   { no: 3, label: 'แผนเดินทาง' },
   { no: 4, label: 'ทวน + ยืนยัน' },
 ];
@@ -243,8 +243,8 @@ function backProcSub() {
 }
 
 function validateProcSub(plan, sub) {
-  if (sub === 1) return !!plan.partsRequisitioned;
-  if (sub === 2) return MYD.confirmResolved(plan, plan.selectedVehicleIds || []);
+  if (sub === 1) return MYD.confirmResolved(plan, plan.selectedVehicleIds || []);
+  if (sub === 2) return !!plan.partsRequisitioned;
   if (sub === 3) {
     const tp = plan.travelPlan;
     return !!(tp && tp.location && tp.location.trim() && tp.dateFrom && tp.dateTo);
@@ -294,24 +294,28 @@ function renderProcWizard(plan) {
 }
 
 function renderProcSubBody(plan) {
-  if (state.sub === 1) return renderProcStep1(plan);
-  if (state.sub === 2) return renderProcStepConfirm(plan);
-  if (state.sub === 3) return renderProcStep2(plan);
-  return renderProcStep3(plan);
+  if (state.sub === 1) return renderProcStepConfirm(plan);
+  if (state.sub === 2) return renderProcStep1(plan);      // เบิก/จัดหาอะไหล่
+  if (state.sub === 3) return renderProcStep2(plan);      // แผนเดินทาง
+  return renderProcStep3(plan);                            // ทวน + ยืนยัน
 }
 
 function bindProcSubBody(plan) {
-  if (state.sub === 1) bindProcStep1(plan);
-  else if (state.sub === 2) bindProcStepConfirm(plan);
+  if (state.sub === 1) bindProcStepConfirm(plan);
+  else if (state.sub === 2) bindProcStep1(plan);
   else if (state.sub === 3) bindProcStep2(plan);
   // ขั้น 4 อ่านอย่างเดียว ไม่มี event ผูก (ปุ่มยืนยันอยู่ที่ actions footer)
 }
 
-// ----- ขั้น 1: เบิกอะไหล่ -----
+// ----- ขั้น 1 (ชื่อฟังก์ชันค้างจากตอนมี 3 ขั้น เนื้อหาจริงคือเบิกอะไหล่ เรียกเป็นขั้นที่ 2) -----
 function renderProcStep1(plan) {
   const master = MYD.loadMaster();
-  const selectedVehicles = master.vehicles.filter(v => (plan.selectedVehicleIds || []).includes(v.id));
+  // นับเฉพาะคันที่ผ่านขั้นยืนยันแล้ว — เจ้าของงานสั่ง 10 ส.ค. 2569:
+  // เบิกตามจำนวนรถในแผนจะสั่งของเกิน เพราะบางคันถูกตัด/เลื่อนไปแล้ว
+  const selectedVehicles = master.vehicles.filter(v =>
+    (plan.selectedVehicleIds || []).includes(v.id) && MYD.isVehicleIn(plan, v.id));
   const lines = MYD.deriveItems(selectedVehicles, master.items);
+  const dropped = (plan.selectedVehicleIds || []).length - selectedVehicles.length;
 
   const groups = ['part', 'oil', 'filter'].map(cat => {
     const catLines = lines.filter(l => l.item.category === cat);
@@ -335,8 +339,9 @@ function renderProcStep1(plan) {
   }).join('');
 
   return `
-    <div class="sect">ขั้นที่ 1: เบิกอะไหล่ (สรุปรายการจากแผน)</div>
-    <div class="sub">รถที่เข้าแผน ${selectedVehicles.length} คัน — รายการนี้คำนวณอัตโนมัติจากรถที่เลือกไว้ในเฟส 1</div>
+    <div class="sect">ขั้นที่ 2: เบิก/จัดหาอะไหล่ (สรุปรายการจากแผน)</div>
+    <div class="sub">คิดจากรถที่ยืนยันแล้ว <b>${selectedVehicles.length}</b> คัน
+      ${dropped ? `(ตัด/เลื่อน ${dropped} คันจากขั้นยืนยันรถ)` : ''}</div>
     ${groups || `<div class="empty">ไม่มีรายการที่เกี่ยวข้องกับรถที่เลือก</div>`}
     <div style="margin-top:14px">
       ${plan.partsRequisitioned
@@ -356,7 +361,7 @@ function bindProcStep1(plan) {
   });
 }
 
-// ----- ขั้น 2: ยืนยันรถเข้าร่วมแผน -----
+// ----- ขั้น 1: ยืนยันรถเข้าร่วมแผน (ฟังก์ชันชื่อ renderProcStepConfirm) -----
 const CF_STATUS_BADGE = {
   ready:    { cls: 'b-ok',    text: 'พร้อม' },
   notready: { cls: 'b-brand', text: 'ไม่พร้อม' },
@@ -374,7 +379,7 @@ function renderProcStepConfirm(plan) {
   if (!plan.confirm || !plan.confirm.requestedAt) {
     const depts = new Set(vehicles.map(v => v.ownerDept));
     return `
-      <div class="sect">ขั้นที่ 2: ยืนยันรถเข้าร่วมแผน</div>
+      <div class="sect">ขั้นที่ 1: ยืนยันรถเข้าร่วมแผน</div>
       <div class="sub">ส่งรายการรถให้หน่วยงานเจ้าของรถยืนยันว่าเข้าบำรุงรักษาได้จริง
         — ต้องรู้จำนวนรถที่แน่นอนก่อนวางแผนเดินทาง</div>
       <div class="card">
@@ -417,7 +422,7 @@ function renderProcStepConfirm(plan) {
   }).length;
 
   return `
-    <div class="sect">ขั้นที่ 2: ยืนยันรถเข้าร่วมแผน</div>
+    <div class="sect">ขั้นที่ 1: ยืนยันรถเข้าร่วมแผน</div>
     <div class="sub">ส่งคำขอเมื่อ ${dateTh(plan.confirm.requestedAt)}
       · ครบกำหนดตอบ ${dateTh(plan.confirm.dueAt)}
       ${plan.confirm.remindedAt ? `· เตือนซ้ำล่าสุด ${esc(plan.confirm.remindedAt)}` : ''}</div>
