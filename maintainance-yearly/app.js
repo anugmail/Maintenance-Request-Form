@@ -223,8 +223,21 @@ function renderProcurement() {
 }
 
 // ----- sub-nav -----
+// ถอยหลังไปขั้นก่อนหน้าได้เสมอ (ดู/แก้ของที่ทำไปแล้ว) แต่เดินหน้าข้ามขั้นบน stepper ได้
+// เฉพาะเมื่อทุกขั้นก่อนหน้าปลายทางผ่าน validateProcSub แล้ว — กันคลิกหัวข้อ stepper
+// ข้ามเข้าขั้นที่ยังไม่ถึง (เจ้าของงานสั่ง 10 ส.ค. 2569: ต้องยืนยันรถให้ครบก่อนเบิกอะไหล่จริง
+// ปุ่ม "ถัดไป" อย่างเดียวกันได้ไม่พอ เพราะ node บน stepper คลิกข้ามได้ตรงๆ)
 function goProcSub(n) {
   if (n < 1 || n > PROC_STEPS.length) return;
+  if (n > state.sub) {
+    const plan = PLAN;
+    for (let i = 1; i < n; i++) {
+      if (!validateProcSub(plan, i)) {
+        toast(`ทำขั้น "${PROC_STEPS[i - 1].label}" ให้เสร็จก่อน ถึงจะไปขั้นถัดไปได้`);
+        return;
+      }
+    }
+  }
   state.sub = n;
   renderPhaseBody();
   window.scrollTo({ top: 0 });
