@@ -25,6 +25,12 @@
 
 **แก้ `components.css` หรือ `tokens.css` เมื่อไหร่ → บั๊ม `?v=` ทุกหน้าที่ลิงก์ไฟล์นั้น** แล้วอัปเดตตารางหัวข้อ 4 + Changelog หัวข้อ 8 ของ `design-system/README.md`
 
+**อ่าน `components.css` อย่างเดียวไม่พอ** — มันบอกได้แค่ว่าคลาส*หน้าตายังไง* ตัวที่บอกว่า*ใช้ตอนไหน*
+คือตารางหัวข้อ 4 ของ `design-system/README.md` (คอลัมน์ "ใช้เมื่อ") · เคยพลาดเพราะเช็คแค่ว่า
+"คลาสนี้มีอยู่ไหม" แล้วหยิบ `.search` (ช่องกรอกในฟอร์ม) ไปใช้เป็นหัวลิสต์ ⇒ ระยะหายไป 0px
+
+**วางคอมโพเนนต์ต่อกันแนวตั้ง → ห่อด้วย `.stack` เสมอ** อย่าพึ่ง margin ของแต่ละตัว (ไม่สม่ำเสมอทั้งระบบ)
+
 **ตรวจก่อนบอกว่าเสร็จ** (ทั้งสองคำสั่งต้องได้ผลว่าง)
 
 ```bash
@@ -56,6 +62,9 @@ grep -rnP '[\x{1F300}-\x{1FAFF}]' --include='*.html' --include='*.js' \
 ```bash
 python3 -m http.server 8123 --bind 127.0.0.1        # ห้ามใช้ file://
 node maintainance-yearly/test/skeleton-data.test.js  # โครงข้อมูล skeleton
+
+# ระยะห่างคอมโพเนนต์ — grep จับไม่ได้ ต้องเรนเดอร์แล้ววัด
+NODE_PATH=<ที่ที่ npm i playwright-core ไว้>/node_modules node design-system/check-spacing.js
 ```
 
 ขับเบราว์เซอร์ตาม `.claude/skills/verify/SKILL.md` (playwright-core + Chromium ที่ติดเครื่องอยู่แล้ว)

@@ -400,3 +400,53 @@ input[type=checkbox]{accent-color:var(--primary-600);width:17px;height:17px;curs
 
 /* ขั้นที่ยังกดเข้าไม่ได้ — เดิมมีแต่คลาส ไม่มีสไตล์ ทำให้ดูเหมือนกดได้ */
 .wstep.locked{opacity:.55;cursor:not-allowed}
+
+/* ============================================================
+   v0.8 — .stack : คุมระยะแนวตั้งที่ "ตัวครอบ"
+   ปัญหาที่แก้: คอมโพเนนต์ในระบบนี้ถือ margin ของตัวเองไม่สม่ำเสมอ
+   (.job มี margin-bottom 10px · .search ไม่มีเลย · .sect มี 8px 0 2px)
+   เอามาต่อกันแล้วระยะเดาไม่ได้ — เคยทำให้ช่องค้นหาติดลิสต์สนิท 0px
+   วิธีใช้: ห่อกลุ่มที่ต้องเรียงแนวตั้งด้วย .stack แล้วระยะมาจาก gap ที่เดียว
+   ลูกโดยตรงถูกล้าง margin-bottom ทิ้ง เพื่อไม่ให้บวกซ้อนกับ gap
+   ============================================================ */
+.stack{display:flex;flex-direction:column;gap:var(--space-3)}
+.stack > *{margin-bottom:0}
+.stack.tight{gap:var(--space-2)}
+.stack.loose{gap:var(--space-5)}
+
+/* ---------- .daterange : เลือก "ช่วงวันที่" ในคลิกเดียว ----------
+   ระบบยังไม่มีของเดิม และ <input type="date"> เลือกได้ทีละวันเท่านั้น
+   จึงทำเป็นช่องกดเปิดปฏิทิน แล้วคลิก 2 ครั้ง = วันเริ่ม → วันสิ้นสุด
+   ใช้เมื่อ: ต้องระบุช่วง จาก–ถึง เช่น ช่วงที่เสนอให้อีกฝ่ายเลือกวันเอง
+   โครง: .daterange > .daterange-field (ช่องที่กด) + .cal (แผงปฏิทิน)     */
+.daterange{position:relative}
+.daterange-field{display:flex;align-items:center;gap:10px;height:46px;padding:0 12px;
+           border:1px solid var(--gray-300);border-radius:var(--r-sm);background:#fff;
+           cursor:pointer;color:var(--gray-900);user-select:none}
+.daterange-field:hover{border-color:var(--gray-400)}
+.daterange.open .daterange-field{outline:2px solid var(--primary-50);border-color:var(--primary-500)}
+.daterange-field .ms{color:var(--gray-500);flex-shrink:0}
+.daterange-field .val{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.daterange-field .val.ph{color:var(--gray-400)}
+
+/* แผงปฏิทิน — ซ่อนไว้จนกว่า .daterange จะมีคลาส .open */
+.cal{position:absolute;top:calc(100% + 6px);left:0;z-index:30;display:none;
+     background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);
+     box-shadow:var(--shadow-pop);padding:14px;width:min(320px,92vw)}
+.daterange.open .cal{display:block}
+.cal-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cal-head b{flex:1;text-align:center;color:var(--gray-900);font-size:15px}
+.cal-nav{width:32px;height:32px;border:1px solid var(--gray-300);border-radius:var(--r-sm);
+     background:#fff;cursor:pointer;color:var(--gray-700);display:flex;align-items:center;justify-content:center}
+.cal-nav:hover{background:var(--gray-50)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-dow{text-align:center;font-size:11.5px;font-weight:600;color:var(--gray-500);padding:4px 0}
+.cal-day{height:34px;display:flex;align-items:center;justify-content:center;font-size:13.5px;
+     border-radius:var(--r-sm);cursor:pointer;color:var(--gray-900);background:none;border:0}
+.cal-day:hover{background:var(--gray-100)}
+.cal-day.muted{color:var(--gray-300);cursor:default}
+.cal-day.muted:hover{background:none}
+.cal-day.in{background:var(--primary-25);border-radius:0}
+.cal-day.edge{background:var(--primary-600);color:#fff;font-weight:600}
+.cal-foot{display:flex;align-items:center;gap:8px;margin-top:10px}
+.cal-foot .hint{flex:1;font-size:12.5px;color:var(--gray-500)}
