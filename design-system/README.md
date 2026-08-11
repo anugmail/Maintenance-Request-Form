@@ -2,6 +2,7 @@
 
 > **เวอร์ชัน:** v0.3 (8 ส.ค. 2569) · **สถานะ:** ใช้กับทุกหน้าใน prototype แล้ว (20/20)
 > **ที่มา:** **Figma `EXT_PEA_VMS_v1.0.2_Component`** (`EXT-PEA-T0REUY1W-2026-V102`) — ค่าที่กำกับ `✔` ใน `tokens.css` อ่านจากไฟล์นั้นตรงๆ · ค่าที่กำกับ `~` มาจาก VMS Plus runtime (v2.1.1) รอบก่อน · `⚠` ยังไม่ยืนยัน
+> **แหล่งที่มา + สถานะการอ่านจาก Figma:** [SOURCES.md](SOURCES.md) — 12 node ที่เจ้าของงานส่งมายังอ่านไม่ครบ (ติด rate limit)
 > **Style guide:** [index.html](index.html) · **ปุ่มครบทุก variant:** [buttons.html](buttons.html) · **ตัวอย่างหน้าจริง:** [ฟอร์มแจ้งซ่อม (mock)](../mock/Maintenance-Request-Form.html)
 
 ---
