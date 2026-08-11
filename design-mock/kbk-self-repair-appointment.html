@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>กบค. ซ่อมเอง — นัดหมายวันซ่อม — Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260811-ds09">
+<link rel="stylesheet" href="../design-system/components.css?v=20260811-ds09">
+<!-- แบบหน้าจอเดี่ยว แยกจากส่วนอื่น — ไม่มีเมนู ไม่มีลิงก์เข้า/ออก
+     ไม่มี <style> โดยตั้งใจ ใช้คอมโพเนนต์จาก design system เท่านั้น:
+     .content · .wsteps/.wstep · .card/.sect/.sub · .stack
+     .fgrid/.f/.in/.sp2/.sp4 · .daterange/.daterange-field/.cal · .job/.no/.meta · .badge · .btn · .empty · .actions · .toast -->
+</head>
+<body>
+    <main class="content">
+      <div class="draft">แบบหน้าจอเดี่ยว (design mock) — ขั้น "นัดหมายวันซ่อม" ของเส้น กบค. ซ่อมเอง · โครงเปล่า ยังไม่ต่อข้อมูลจริง</div>
+      <h1 class="page-title">กบค. ซ่อมเอง</h1>
+
+      <div class="wsteps wrap">
+        <div class="wstep passed"><span class="num">✓</span><span class="lbl">เบิกอะไหล่</span></div>
+        <div class="wstep active"><span class="num">2</span><span class="lbl">นัดหมายวันซ่อม</span></div>
+        <div class="wstep locked"><span class="num">3</span><span class="lbl">ตรวจสภาพก่อนซ่อม</span></div>
+        <div class="wstep locked"><span class="num">4</span><span class="lbl">ดำเนินการซ่อม</span></div>
+        <div class="wstep locked"><span class="num">5</span><span class="lbl">ตรวจสภาพรถหลังซ่อม</span></div>
+        <div class="wstep locked"><span class="num">6</span><span class="lbl">รายงานการปิดงาน</span></div>
+      </div>
+
+      <div class="stack">
+
+        <!-- ── สถานะ 1: กบค. กรอกและส่งคำนัด ── -->
+        <div class="card" id="formCard">
+          <div class="stack">
+            <div class="sect" id="formTitle">นัดหมายให้เข้ามาซ่อมที่ กบค.</div>
+            <div class="sub" id="formHint">กบค. เสนอเป็น<b>ช่วงเวลา</b> แล้วให้เจ้าของรถเลือกวันที่สะดวกเองภายในช่วงนั้น</div>
+
+            <div class="fgrid">
+              <div class="f sp2"><label>รูปแบบการนัด</label>
+                <div class="in"><span class="ms">swap_horiz</span>
+                  <select id="mode">
+                    <option value="in" selected>นัดเข้ามา — เจ้าของรถขับรถเข้ามาซ่อมที่ กบค.</option>
+                    <option value="out">เดินทางไปซ่อม — ทีม กบค. เดินทางไปซ่อมที่หน้างาน</option>
+                  </select></div></div>
+
+              <div class="f sp2"><label>ช่วงที่เสนอ</label>
+                <div class="daterange" id="dr">
+                  <div class="daterange-field" id="drField">
+                    <span class="ms">calendar_month</span>
+                    <span class="val ph" id="drVal">เลือกช่วงวันที่</span>
+                    <span class="ms">expand_more</span>
+                  </div>
+                  <div class="cal" id="cal"></div>
+                </div>
+                <div class="sub" id="daySummary">—</div>
+              </div>
+            </div>
+
+            <div class="sect">เจ้าหน้าที่ประสานงาน</div>
+            <div class="fgrid">
+              <div class="f sp2"><label>ชื่อเจ้าหน้าที่</label>
+                <div class="in"><span class="ms">person</span>
+                  <input type="text" id="coordName" placeholder="ชื่อ–สกุล ผู้ที่เจ้าของรถติดต่อได้"></div></div>
+              <div class="f sp2"><label>เบอร์โทร</label>
+                <div class="in"><span class="ms">call</span>
+                  <input type="tel" id="coordTel" placeholder="08x-xxx-xxxx หรือเบอร์ภายใน"></div></div>
+            </div>
+
+            <div class="sect">สถานที่นัด</div>
+            <div class="fgrid">
+              <div class="f sp4"><label>จุดนัดรับรถ</label>
+                <div class="in"><span class="ms">place</span>
+                  <input type="text" id="place" placeholder="เช่น โรงซ่อม กบค. สนญ. อาคาร 3 ประตู 2"></div></div>
+              <div class="f sp4"><label>รายละเอียดเพิ่มเติม <small>ถ้ามี</small></label>
+                <div class="in"><span class="ms">edit_note</span>
+                  <input type="text" id="note" placeholder="เช่น จอดรถรอที่ลานหน้าอาคาร แจ้ง รปภ. ว่ามานัดซ่อม"></div></div>
+            </div>
+
+            <div class="actions">
+              <button class="btn btn-g">ย้อนกลับ</button>
+              <button class="btn btn-p" id="btnSend">ส่งคำนัดให้เจ้าของรถ</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── สถานะ 2: ส่งแล้ว รอเจ้าของรถเลือกวัน ── -->
+        <div class="card hidden" id="waitCard">
+          <div class="stack">
+            <div class="sect">รอตอบกลับ</div>
+            <div class="sub">ส่งคำนัดให้เจ้าของรถแล้ว — รอเลือกวันจากช่วงที่เสนอ · ระบบส่งสำเนาถึง กรย. ด้วย</div>
+
+            <div class="job">
+              <div class="sp">
+                <div class="no">ช่วงที่เสนอ</div>
+                <div class="meta" id="wRange">—</div>
+                <div class="meta" id="wDays">—</div>
+              </div>
+              <span class="badge b-low">รอเลือกวัน</span>
+            </div>
+
+            <div class="fgrid">
+              <div class="f sp2"><label>เจ้าหน้าที่ประสานงาน</label><div id="wCoord">—</div></div>
+              <div class="f sp2"><label>เบอร์โทร</label><div id="wTel">—</div></div>
+              <div class="f sp4"><label>สถานที่นัด</label><div id="wPlace">—</div></div>
+            </div>
+
+            <div class="empty">เมื่อเจ้าของรถเลือกวันแล้ว วันนัดจะขึ้นตรงนี้ และขั้น "ตรวจสภาพก่อนซ่อม" จะปลดล็อก</div>
+
+            <div class="actions">
+              <button class="btn btn-g" id="btnEdit">แก้คำนัด</button>
+              <button class="btn btn-s" id="btnRemind"><span class="ms">notifications</span> ส่งเตือนซ้ำ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// โครงหน้าจอเปล่า — ไม่มี state จริง ไม่ผูกกับข้อมูลใดๆ
+const $ = id => document.getElementById(id);
+const TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+function toast(m) {
+  const t = $('toast'); t.textContent = m; t.classList.add('show');
+  clearTimeout(t._x); t._x = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+const TH_DOW = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
+const fmtTh = d => `${d.getDate()} ${TH_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
+const sameDay = (a, b) => a && b && a.toDateString() === b.toDateString();
+
+// ── ปฏิทินเลือกช่วง: คลิกแรก = วันเริ่ม · คลิกสอง = วันสิ้นสุด (คลิกก่อนวันเริ่ม = เริ่มใหม่)
+const R = { start: null, end: null, view: new Date(2026, 7, 1) };   // ส.ค. 2569
+
+function dayCount() {
+  if (!R.start || !R.end) return 0;
+  return Math.round((R.end - R.start) / 86400000) + 1;
+}
+
+function renderField() {
+  const n = dayCount();
+  const val = $('drVal');
+  if (R.start && R.end) {
+    val.textContent = `${fmtTh(R.start)} – ${fmtTh(R.end)}`;
+    val.classList.remove('ph');
+  } else if (R.start) {
+    val.textContent = `${fmtTh(R.start)} – เลือกวันสิ้นสุด`;
+    val.classList.remove('ph');
+  } else {
+    val.textContent = 'เลือกช่วงวันที่';
+    val.classList.add('ph');
+  }
+  $('daySummary').innerHTML = n
+    ? `ช่วงนี้มี <b>${n}</b> วัน — เจ้าของรถจะเป็นคนเลือกวันที่สะดวกเองจากช่วงนี้`
+    : 'ยังไม่ได้เลือกช่วง — กดที่ช่องด้านบนเพื่อเปิดปฏิทิน';
+}
+
+function renderCal() {
+  const y = R.view.getFullYear(), m = R.view.getMonth();
+  const first = new Date(y, m, 1), pad = first.getDay();
+  const total = new Date(y, m + 1, 0).getDate();
+
+  let cells = '';
+  for (let i = 0; i < pad; i++) cells += `<div class="cal-day muted"></div>`;
+  for (let d = 1; d <= total; d++) {
+    const cur = new Date(y, m, d);
+    const isEdge = sameDay(cur, R.start) || sameDay(cur, R.end);
+    const isIn = R.start && R.end && cur > R.start && cur < R.end;
+    cells += `<button type="button" class="cal-day${isEdge ? ' edge' : isIn ? ' in' : ''}" data-d="${d}">${d}</button>`;
+  }
+
+  $('cal').innerHTML = `
+    <div class="cal-head">
+      <button type="button" class="cal-nav" data-mv="-1"><span class="ms">chevron_left</span></button>
+      <b>${TH_MONTHS[m]} ${y + 543}</b>
+      <button type="button" class="cal-nav" data-mv="1"><span class="ms">chevron_right</span></button>
+    </div>
+    <div class="cal-grid">${TH_DOW.map(w => `<div class="cal-dow">${w}</div>`).join('')}${cells}</div>
+    <div class="cal-foot">
+      <span class="hint">${R.start && !R.end ? 'เลือกวันสิ้นสุด' : 'คลิกวันเริ่ม แล้วคลิกวันสิ้นสุด'}</span>
+      <button type="button" class="btn btn-g btn-sm" id="calClear">ล้าง</button>
+      <button type="button" class="btn btn-p btn-sm" id="calOk">ตกลง</button>
+    </div>`;
+
+  $('cal').querySelectorAll('[data-mv]').forEach(b => b.addEventListener('click', () => {
+    R.view = new Date(y, m + Number(b.dataset.mv), 1);
+    renderCal();
+  }));
+  $('cal').querySelectorAll('[data-d]').forEach(b => b.addEventListener('click', () => {
+    const picked = new Date(y, m, Number(b.dataset.d));
+    if (!R.start || R.end || picked < R.start) { R.start = picked; R.end = null; }
+    else { R.end = picked; }
+    renderCal(); renderField();
+  }));
+  $('calClear').addEventListener('click', () => { R.start = R.end = null; renderCal(); renderField(); });
+  $('calOk').addEventListener('click', () => {
+    if (R.start && !R.end) { toast('ยังไม่ได้เลือกวันสิ้นสุด'); return; }
+    $('dr').classList.remove('open');
+  });
+}
+
+$('drField').addEventListener('click', e => {
+  e.stopPropagation();
+  $('dr').classList.toggle('open');
+  if ($('dr').classList.contains('open')) renderCal();
+});
+$('cal').addEventListener('click', e => e.stopPropagation());
+document.addEventListener('click', () => $('dr').classList.remove('open'));
+
+$('mode').addEventListener('change', e => {
+  const inbound = e.target.value === 'in';
+  $('formTitle').textContent = inbound ? 'นัดหมายให้เข้ามาซ่อมที่ กบค.' : 'นัดหมายให้ทีม กบค. เดินทางไปซ่อม';
+  $('formHint').innerHTML = inbound
+    ? 'กบค. เสนอเป็น<b>ช่วงเวลา</b> แล้วให้เจ้าของรถเลือกวันที่สะดวกเองภายในช่วงนั้น'
+    : 'กบค. เสนอเป็น<b>ช่วงเวลา</b> ที่ทีมเดินทางไปได้ แล้วให้เจ้าของรถเลือกวันที่พร้อมให้เข้าหน้างาน';
+  $('place').placeholder = inbound
+    ? 'เช่น โรงซ่อม กบค. สนญ. อาคาร 3 ประตู 2'
+    : 'เช่น จุดจอดรถ กฟจ. ขอนแก่น หลังอาคารสำนักงาน';
+});
+
+$('btnSend').addEventListener('click', () => {
+  const n = dayCount();
+  if (!n) { toast('ยังไม่ได้เลือกช่วงวันที่'); return; }
+  if (!$('coordName').value.trim() || !$('coordTel').value.trim()) { toast('กรอกเจ้าหน้าที่ประสานงานและเบอร์โทร'); return; }
+  if (!$('place').value.trim()) { toast('ระบุสถานที่นัด'); return; }
+
+  $('wRange').textContent = `${fmtTh(R.start)} – ${fmtTh(R.end)}`;
+  $('wDays').textContent = `ช่วงนี้มี ${n} วัน ให้เจ้าของรถเลือก`;
+  $('wCoord').textContent = $('coordName').value.trim();
+  $('wTel').textContent = $('coordTel').value.trim();
+  $('wPlace').textContent = $('place').value.trim() + ($('note').value.trim() ? ` · ${$('note').value.trim()}` : '');
+  $('formCard').classList.add('hidden');
+  $('waitCard').classList.remove('hidden');
+  toast('ส่งคำนัดแล้ว (สำเนาถึง กรย.)');
+});
+
+$('btnEdit').addEventListener('click', () => {
+  $('waitCard').classList.add('hidden');
+  $('formCard').classList.remove('hidden');
+});
+$('btnRemind').addEventListener('click', () => toast('ส่งเตือนซ้ำแล้ว'));
+
+renderField();
+</script>
+</body>
+</html>

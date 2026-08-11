@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>กบค. ซ่อมเอง — เบิกอะไหล่ — Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260811-ds09">
+<link rel="stylesheet" href="../design-system/components.css?v=20260811-ds09">
+<!-- หน้านี้เป็นแบบหน้าจอเดี่ยว แยกจากส่วนอื่นของโปรเจกต์ —
+     ไม่มีแถบเมนู ไม่มีลิงก์เข้า/ออก ไม่มีหน้าไหนอ้างถึง
+     ไม่มี <style> ในหน้าโดยตั้งใจ — ใช้คอมโพเนนต์จาก design system เท่านั้น:
+     .content · .wsteps/.wstep · .card/.sect/.sub · .fgrid/.f/.sp2/.sp4
+     .job/.sp/.no/.meta · .qty · .badge/.b-ok/.b-low/.b-out · .search · .btn · .empty · .actions · .toast -->
+</head>
+<body>
+    <main class="content">
+      <div class="draft">แบบหน้าจอเดี่ยว (design mock) — ขั้น "เบิกอะไหล่" ของเส้น กบค. ซ่อมเอง</div>
+      <h1 class="page-title">กบค. ซ่อมเอง</h1>
+
+      <div class="wsteps wrap">
+        <div class="wstep active"><span class="num">1</span><span class="lbl">เบิกอะไหล่</span></div>
+        <div class="wstep locked"><span class="num">2</span><span class="lbl">นัดหมายวันซ่อม</span></div>
+        <div class="wstep locked"><span class="num">3</span><span class="lbl">ตรวจสภาพก่อนซ่อม</span></div>
+        <div class="wstep locked"><span class="num">4</span><span class="lbl">ดำเนินการซ่อม</span></div>
+        <div class="wstep locked"><span class="num">5</span><span class="lbl">ตรวจสภาพรถหลังซ่อม</span></div>
+        <div class="wstep locked"><span class="num">6</span><span class="lbl">รายงานการปิดงาน</span></div>
+      </div>
+
+      <div class="fgrid">
+        <!-- ซ้าย = คลังอะไหล่ (ที่มาของของ) · ขวา = รายการที่เลือกไว้ (ผลลัพธ์) -->
+        <div class="f sp2">
+          <div class="card">
+            <div class="stack">
+              <div class="sect">คลังอะไหล่</div>
+              <div class="sub">Smart Inventory และคลังสำรองเบิกได้เหมือนกัน — ไม่มีทั้งคู่ = ต้องสั่งซื้อภายนอก</div>
+              <div class="search"><span class="ms">search</span>
+                <input type="text" id="q" placeholder="ค้นหาชื่อหรือรหัสอะไหล่"></div>
+              <div id="stock"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="f sp2">
+          <div class="card">
+            <div class="stack">
+              <div class="sect">รายการอะไหล่ที่ต้องการใช้งาน</div>
+              <div class="sub">จำนวนที่เกินยอดในคลัง จะถูกตั้งเป็นรายการจัดซื้อให้อัตโนมัติ</div>
+              <div id="picked"></div>
+              <button class="btn btn-s" id="btnAdd"><span class="ms">add</span> เพิ่มอะไหล่</button>
+
+              <div class="sect">รวมค่าอะไหล่</div>
+              <div class="fgrid">
+                <div class="f sp2"><label>เบิกจากคลัง</label><div id="sumStock">—</div></div>
+                <div class="f sp2"><label>ต้องจัดซื้อ</label><div id="sumBuy">—</div></div>
+                <div class="f sp4"><label>รวมทั้งหมด</label><div><b id="sumAll">—</b></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-g">ย้อนกลับ</button>
+        <button class="btn btn-p">ยืนยันรายการเบิก</button>
+      </div>
+    </main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ⚠️ ข้อมูลอะไหล่ยกจาก config.js ของต้นแบบแจ้งซ่อม (ของจริงในโปรเจกต์ ไม่ได้คิดขึ้นเอง)
+// stock = Smart Inventory · alt = คลังสำรอง · ไม่มีทั้งคู่ = ต้องสั่งซื้อภายนอก
+const PARTS = [
+  { code:'SL-4402', name:'ชุดซีลกระบอกไฮดรอลิก',        unit:'ชุด',  stock:6,  alt:4,  price:1850 },
+  { code:'OL-0046', name:'น้ำมันไฮดรอลิก ISO VG46 18L',  unit:'ถัง',  stock:2,  alt:6,  price:2400 },
+  { code:'FT-1108', name:'ไส้กรองไฮดรอลิก',              unit:'ชิ้น', stock:12, alt:0,  price:650  },
+  { code:'HS-3808', name:'สายไฮดรอลิกแรงดันสูง 3/8"',    unit:'เส้น', stock:4,  alt:10, price:1200 },
+  { code:'PM-2210', name:'ปั๊มไฮดรอลิกเกียร์',            unit:'ตัว',  stock:0,  alt:0,  price:18500 },
+  { code:'FT-2205', name:'ข้อต่อไฮดรอลิก',               unit:'ตัว',  stock:3,  alt:0,  price:320  },
+  { code:'WR-1000', name:'ลวดสลิง 10 มม.',               unit:'เมตร', stock:0,  alt:40, price:240  },
+  { code:'FT-0330', name:'ไส้กรองอากาศ',                 unit:'ชิ้น', stock:9,  alt:0,  price:540  },
+];
+
+const picked = { 'SL-4402': 3, 'OL-0046': 2, 'PM-2210': 1 };
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const baht = n => n.toLocaleString('th-TH') + ' บาท';
+const partOf = code => PARTS.find(p => p.code === code);
+const onHand = p => p.stock + p.alt;
+
+function toast(m) {
+  const t = $('toast'); t.textContent = m; t.classList.add('show');
+  clearTimeout(t._x); t._x = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function renderPicked() {
+  const codes = Object.keys(picked);
+  $('picked').innerHTML = codes.length ? codes.map(code => {
+    const p = partOf(code), qty = picked[code];
+    const fromStock = Math.min(qty, onHand(p));
+    const toBuy = Math.max(0, qty - onHand(p));
+    return `
+      <div class="job">
+        <div class="sp">
+          <div class="no">${esc(p.name)}</div>
+          <div class="meta">${esc(p.code)} · ${baht(p.price)}/${esc(p.unit)}</div>
+          <div class="meta">เบิกจากคลัง ${fromStock} ${esc(p.unit)}${toBuy ? ` · จัดซื้อ ${toBuy} ${esc(p.unit)}` : ''}</div>
+          ${toBuy ? `<span class="badge b-low">อะไหล่ที่จัดซื้อใช้เวลา ${onHand(p) === 0 ? '30' : '7–14'} วันทำการ</span>` : ''}
+        </div>
+        <div class="qty">
+          <button data-dec="${esc(code)}" aria-label="ลดจำนวน">−</button>
+          <span>${qty}</span>
+          <button data-inc="${esc(code)}" aria-label="เพิ่มจำนวน">+</button>
+        </div>
+      </div>`;
+  }).join('') : `<div class="empty">ยังไม่ได้เลือกอะไหล่ — เลือกจากคลังอะไหล่ทางซ้าย</div>`;
+
+  let stockCost = 0, buyCost = 0;
+  codes.forEach(code => {
+    const p = partOf(code), qty = picked[code];
+    stockCost += Math.min(qty, onHand(p)) * p.price;
+    buyCost += Math.max(0, qty - onHand(p)) * p.price;
+  });
+  $('sumStock').textContent = baht(stockCost);
+  $('sumBuy').textContent = baht(buyCost);
+  $('sumAll').textContent = baht(stockCost + buyCost);
+
+  $('picked').querySelectorAll('[data-inc]').forEach(b =>
+    b.addEventListener('click', () => { picked[b.dataset.inc]++; renderAll(); }));
+  $('picked').querySelectorAll('[data-dec]').forEach(b =>
+    b.addEventListener('click', () => {
+      const c = b.dataset.dec;
+      if (--picked[c] <= 0) { delete picked[c]; toast('เอาออกจากรายการแล้ว'); }
+      renderAll();
+    }));
+}
+
+function renderStock() {
+  const q = ($('q').value || '').trim().toLowerCase();
+  const list = PARTS.filter(p => !q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q));
+  $('stock').innerHTML = list.length ? list.map(p => {
+    const src = p.stock ? `Smart Inventory ${p.stock} ${p.unit}`
+              : p.alt   ? `คลังสำรอง ${p.alt} ${p.unit}`
+              : 'ไม่มีในคลัง — ต้องสั่งซื้อภายนอก';
+    const cls = p.stock ? 'b-ok' : p.alt ? 'b-low' : 'b-out';
+    return `
+      <div class="job">
+        <div class="sp">
+          <div class="no">${esc(p.name)}</div>
+          <div class="meta">${esc(p.code)} · ${baht(p.price)}/${esc(p.unit)}</div>
+          <span class="badge ${cls}">${esc(src)}</span>
+        </div>
+        <button class="btn btn-s btn-sm" data-add="${esc(p.code)}" aria-label="เพิ่มเข้ารายการ">
+          <span class="ms">add</span></button>
+      </div>`;
+  }).join('') : `<div class="empty">ไม่พบอะไหล่ที่ค้นหา</div>`;
+
+  $('stock').querySelectorAll('[data-add]').forEach(b =>
+    b.addEventListener('click', () => {
+      const c = b.dataset.add;
+      picked[c] = (picked[c] || 0) + 1;
+      toast('เพิ่ม ' + partOf(c).name + ' แล้ว');
+      renderAll();
+    }));
+}
+
+function renderAll() { renderPicked(); renderStock(); }
+
+$('q').addEventListener('input', renderStock);
+$('btnAdd').addEventListener('click', () => { $('q').focus(); toast('ค้นหาแล้วกด + จากคลังอะไหล่ทางซ้าย'); });
+renderAll();
+</script>
+</body>
+</html>
