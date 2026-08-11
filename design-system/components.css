@@ -414,6 +414,20 @@ input[type=checkbox]{accent-color:var(--primary-600);width:17px;height:17px;curs
 .stack.tight{gap:var(--space-2)}
 .stack.loose{gap:var(--space-5)}
 
+/* ---------- .gallery : แกลเลอรีพรีวิวหน้าจอ ----------
+   แสดงหน้าจริงย่อส่วนด้วย <iframe> + pointer-events:none = เห็น UI แต่กดไม่ได้
+   ใช้ iframe แทนภาพนิ่ง เพราะแก้หน้าไหนพรีวิวอัปเดตเอง ไม่มีภาพเก่าค้าง
+   หน้าถูกเรนเดอร์ที่ 1440px แล้วย่อ .25 เท่า ⇒ คอลัมน์กว้าง 360px พอดี      */
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px}
+.gcard{border:1px solid var(--gray-200);border-radius:var(--r-lg);background:#fff;overflow:hidden}
+.gframe{position:relative;height:240px;overflow:hidden;background:var(--gray-50);
+        border-bottom:1px solid var(--gray-200)}
+.gframe iframe{position:absolute;top:0;left:0;width:1440px;height:1200px;border:0;
+        transform:scale(.25);transform-origin:top left;pointer-events:none}
+.gcard-body{padding:14px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.gcard-body .nm{font-weight:600;color:var(--gray-900);flex:1;min-width:0}
+.gcard-body .meta{width:100%;font-size:12.5px;color:var(--gray-500)}
+
 /* ---------- .daterange : เลือก "ช่วงวันที่" ในคลิกเดียว ----------
    ระบบยังไม่มีของเดิม และ <input type="date"> เลือกได้ทีละวันเท่านั้น
    จึงทำเป็นช่องกดเปิดปฏิทิน แล้วคลิก 2 ครั้ง = วันเริ่ม → วันสิ้นสุด

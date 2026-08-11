@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แกลเลอรีแบบหน้าจอ — Maintain-D</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260811-ds10">
+<link rel="stylesheet" href="../design-system/components.css?v=20260811-ds10">
+<!-- ไม่มี <style> ในหน้าโดยตั้งใจ — ใช้คอมโพเนนต์จาก design system เท่านั้น:
+     .content · .card/.sect/.sub · .stack · .gallery/.gcard/.gframe/.gcard-body
+     .badge/.b-ok/.b-low/.b-brand · .btn · .page-title -->
+</head>
+<body>
+  <main class="content">
+    <div class="draft">แกลเลอรีสำหรับดูหน้าตา UI — พรีวิวในหน้านี้ <b>กดไม่ได้</b> ถ้าจะลองใช้จริงให้กด "เปิดหน้าเต็ม"</div>
+    <h1 class="page-title">แกลเลอรีแบบหน้าจอ — Maintain-D</h1>
+
+    <div class="stack loose">
+
+      <div class="card">
+        <div class="stack">
+          <div class="sect">แบบหน้าจอ (design mock) — เส้น กบค. ซ่อมเอง</div>
+          <div class="sub">ออกแบบทีละหน้า ยังไม่โยงเข้าระบบ · แต่ละหน้าเปิดเดี่ยวได้
+            ใช้คอมโพเนนต์จาก design system ล้วน</div>
+
+          <div class="gallery">
+            <div class="gcard">
+              <div class="gframe"><iframe src="kbk-self-repair-parts.html" loading="lazy" title="เบิกอะไหล่" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">1 · เบิกอะไหล่</span>
+                <span class="badge b-low">โครง · กดได้บางส่วน</span>
+                <div class="meta">คลังอะไหล่ (ซ้าย) → รายการที่เลือก (ขวา) · แยกของที่เบิกได้กับที่ต้องจัดซื้อ</div>
+                <a class="btn btn-s btn-sm" href="kbk-self-repair-parts.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+
+            <div class="gcard">
+              <div class="gframe"><iframe src="kbk-self-repair-appointment.html" loading="lazy" title="นัดหมายวันซ่อม" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">2 · นัดหมายวันซ่อม</span>
+                <span class="badge b-low">โครง · กดได้บางส่วน</span>
+                <div class="meta">เลือกรูปแบบการนัด · ปฏิทินเลือกช่วงในคลิกเดียว · ผู้ประสานงาน · สถานที่นัด</div>
+                <a class="btn btn-s btn-sm" href="kbk-self-repair-appointment.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="empty">ขั้นที่ 3–6 (ตรวจสภาพก่อนซ่อม · ดำเนินการซ่อม · ตรวจสภาพหลังซ่อม · รายงานปิดงาน) ยังไม่ได้ออกแบบ</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="stack">
+          <div class="sect">ต้นแบบที่ต่อระบบแล้ว — โฟลว์บำรุงรักษาตามวาระ</div>
+          <div class="sub">ของจริงที่มี state · เก็บข้อมูลใน localStorage · เดินทั้ง flow ได้</div>
+
+          <div class="gallery">
+            <div class="gcard">
+              <div class="gframe"><iframe src="../maintainance-yearly/index.html" loading="lazy" title="รายการแผน" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">รายการแผนบำรุงรักษา</span>
+                <span class="badge b-ok">ใช้งานได้</span>
+                <div class="meta">เปิดแผน → stepper 5 เฟส · เฟส 1 ทำครบแล้ว (ยืนยันรถ → เบิกอะไหล่ → แผนเดินทาง → ทวน)</div>
+                <a class="btn btn-s btn-sm" href="../maintainance-yearly/index.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+
+            <div class="gcard">
+              <div class="gframe"><iframe src="../maintainance-yearly/plan-new.html" loading="lazy" title="ออกเลขงาน" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">ออกเลขงาน (สร้างแผนประจำปี)</span>
+                <span class="badge b-ok">ใช้งานได้</span>
+                <div class="meta">wizard 3 ขั้น · เลือกรถทั้งหมด/ทั้งภาค/ทั้งเขต · จัดกลุ่มอะไหล่ 4 แบบ</div>
+                <a class="btn btn-s btn-sm" href="../maintainance-yearly/plan-new.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+
+            <div class="gcard">
+              <div class="gframe"><iframe src="../maintainance-yearly/confirm.html" loading="lazy" title="หน่วยงานเจ้าของรถ" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">หน่วยงานเจ้าของรถ</span>
+                <span class="badge b-ok">ใช้งานได้</span>
+                <div class="meta">ตอบคำขอยืนยันรถ + ตอบรับแผนนัดหมาย (เลือกวันได้เฉพาะในช่วงที่ กบค. เสนอ)</div>
+                <a class="btn btn-s btn-sm" href="../maintainance-yearly/confirm.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+
+            <div class="gcard">
+              <div class="gframe"><iframe src="../maintainance-yearly/supplies.html" loading="lazy" title="ฝ่ายพัสดุ" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">ฝ่ายพัสดุ</span>
+                <span class="badge b-ok">ใช้งานได้</span>
+                <div class="meta">รับเอกสารแจ้งเตรียม/สั่งอะไหล่ แล้วกดรับทราบ (ไม่ใช่ผู้อนุมัติ)</div>
+                <a class="btn btn-s btn-sm" href="../maintainance-yearly/supplies.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+
+            <div class="gcard">
+              <div class="gframe"><iframe src="../maintainance-yearly/admin.html" loading="lazy" title="Admin" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">Admin — ข้อมูลหลัก</span>
+                <span class="badge b-ok">ใช้งานได้</span>
+                <div class="meta">รถ · อะไหล่ · หน่วยงานเจ้าของรถ · ตั้งกำหนดวันตอบคำขอยืนยัน</div>
+                <a class="btn btn-s btn-sm" href="../maintainance-yearly/admin.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+
+            <div class="gcard">
+              <div class="gframe"><iframe src="../maintainance-yearly/plan-skeleton.html" loading="lazy" title="โครงหน้าจอทั้งโฟลว์" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">โครงหน้าจอทั้งโฟลว์ (แก้ได้)</span>
+                <span class="badge b-brand">เครื่องมือเก็บ requirement</span>
+                <div class="meta">11 หน้าจอ · 172 ฟิลด์ · คำถามที่ยังไม่เคาะ 21 ข้อ · export เป็น Markdown ได้</div>
+                <a class="btn btn-s btn-sm" href="../maintainance-yearly/plan-skeleton.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="stack">
+          <div class="sect">Design System</div>
+          <div class="sub">แหล่งความจริงเดียวของสี/ฟอนต์/ระยะ/คอมโพเนนต์ — ทุกหน้าข้างบนดึงจากที่นี่</div>
+          <div class="gallery">
+            <div class="gcard">
+              <div class="gframe"><iframe src="../design-system/index.html" loading="lazy" title="Design System" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">Style guide</span>
+                <div class="meta">token · คอมโพเนนต์ทั้งหมดพร้อมตัวอย่างที่ใช้ได้จริง</div>
+                <a class="btn btn-s btn-sm" href="../design-system/index.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="../design-system/buttons.html" loading="lazy" title="ปุ่มทุก variant" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">ปุ่มครบทุก variant</span>
+                <div class="meta">4 ขนาด × 5 ระดับ × 5 สถานะ + ชุด destructive · ดึงค่าจาก Figma ไลบรารีจริง</div>
+                <a class="btn btn-s btn-sm" href="../design-system/buttons.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</body>
+</html>

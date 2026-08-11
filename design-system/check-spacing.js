@@ -13,7 +13,9 @@
 const { chromium } = require('playwright-core');
 
 const DEFAULT_PAGES = [
+  '/design-mock/index.html',
   '/design-mock/kbk-self-repair-parts.html',
+  '/design-mock/kbk-self-repair-appointment.html',
   '/maintainance-yearly/index.html',
   '/maintainance-yearly/plan-new.html',
   '/maintainance-yearly/confirm.html',
@@ -26,7 +28,8 @@ const FLUSH_BY_DESIGN = ['.wsteps', '.qty', '.tbl', '.seg', '.chips', '.rads', '
 
 // ตัวที่ "ตั้งใจให้ชิดกับของถัดไป" — เป็น page chrome เต็มความกว้าง ไม่ใช่คอมโพเนนต์เนื้อหา
 // .draft/.topbar = แบนเนอร์ระบบ · .seg = แถบแท็บที่แปะติดกับพาเนลของตัวเอง
-const FLUSH_SELF = ['.draft', '.topbar', '.seg', '.crumbs'];
+// .gframe = พื้นที่พรีวิว/รูปปกของการ์ด ต้องชิดกับคำบรรยายใต้ภาพเสมอ
+const FLUSH_SELF = ['.draft', '.topbar', '.seg', '.crumbs', '.gframe'];
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
 const pages = process.argv.slice(2).length ? process.argv.slice(2) : DEFAULT_PAGES;
