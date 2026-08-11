@@ -21,9 +21,32 @@ curl -H "X-Figma-Token: $(cat ~/.figma-token)" \
   "https://api.figma.com/v1/files/IMiHaWKCqp6j3lpWdCnYY8" -o figma-full.json
 ```
 
-- token เป็น personal access token **scope `file_content:read`** — เก็บที่ `~/.figma-token` (`chmod 600`) **นอก repo ห้าม commit**
+- token ต้องเป็น personal access token **scope `file_content:read`** (`library_*` ใช้ไม่ได้ — 403)
 - ได้มา **89 MB · 43 หน้า · 58,331 node · component 3,304 (component set 176) · style 118**
-- ไฟล์ดิบเก็บใน scratchpad ของเซสชัน ไม่เอาเข้า repo (ใหญ่เกินและเป็นของ vendor) — วิเคราะห์ในเครื่องแล้วเอาเฉพาะ**ค่าที่สรุปได้**มาลง `tokens.css`
+
+> 🔑 **token ถูก revoke แล้ว 11 ส.ค. 2569 และ `~/.figma-token` ถูกลบแล้ว — ไม่ต้องใช้อีก**
+> เพราะสกัดของที่ต้องใช้ออกมาเก็บไว้ในเครื่องครบแล้ว (ดูหัวข้อถัดไป)
+> ถ้าจะขุดเพิ่มในอนาคตต้องออก token ใหม่ที่ figma.com/settings → Security
+
+## ของที่สกัดเก็บไว้แล้ว — `design-system/.figma-extract/` (อยู่ใน `.gitignore`)
+
+| ไฟล์ | เนื้อหา |
+|---|---|
+| `<node-id>.json` × 33 | **สเปกคอมโพเนนต์รายหน้า** — ขนาด · padding · gap · radius · fill · stroke · เงา · ฟอนต์ ครบทุก variant (รวม 5.1 MB) |
+| `00-summary-colors-radii-fonts.json` | สรุปนับ 142 สี · 43 radius · 49 ชุดฟอนต์ |
+| `99-figma-full-raw.json` | ไฟล์ดิบ 89 MB เผื่อต้องขุดอย่างอื่น |
+
+🚫 **ไม่ push ขึ้น repo** — `Maintenance-Request-Form` เป็น repo **public** และ deploy เป็น GitHub Pages
+เอาโครงไลบรารีของ PEA ขึ้นไปแล้วเอาคืนยาก ⇒ เก็บในเครื่องอย่างเดียว
+⚠️ **ผลข้างเคียง: ไม่มี backup** — ถ้าเครื่องหาย ต้องออก token ใหม่แล้วโหลดใหม่
+
+ตัวอย่างการใช้ (ไม่ต้องต่อ Figma):
+
+```python
+import json
+d = json.load(open('design-system/.figma-extract/1-1380.json'))   # หน้า Inputs
+# Input field md/Default/Placeholder → h 44 · padding 14/10 · radius 8 · เส้น 1px #D5D7DA
+```
 
 ⚠️ `GET /v1/files/{key}/variables/local` **ใช้ไม่ได้ — เป็นฟีเจอร์ Enterprise**
 ⇒ อ่าน **Figma Variables ตัวจริงไม่ได้** ได้แค่ fill/stroke/text style ที่ปรากฏบน node
@@ -75,7 +98,7 @@ curl -H "X-Figma-Token: $(cat ~/.figma-token)" \
 |---|---|
 | ปุ่ม (`.btn` ทุก variant) | ✅ ตรงกับไลบรารี — ดึงครบ 636 variants (7 ส.ค.) |
 | สี | ✅ เทียบครบทั้งไฟล์ (11 ส.ค.) |
-| radius · typography | ⚠️ **มีข้อมูลแล้วแต่ยังไม่เทียบ** — อยู่ใน `extracted.json` |
+| radius · typography | ⚠️ **มีข้อมูลแล้วแต่ยังไม่เทียบ** — อยู่ใน `.figma-extract/00-summary-colors-radii-fonts.json` |
 | ช่องกรอก · dropdown · textarea · modal · badge · tag · table · date picker · progress steps | ❌ **ประกอบเอง ยังไม่เคยเทียบกับไลบรารี** ทั้งที่มีหน้าอยู่ในไฟล์แล้ว |
 
 `componentKey` ที่ได้จาก `search_design_system` (คำว่า "input" 11 ส.ค.) — ใช้ import ได้ถ้าต้องการเทียบละเอียด
@@ -95,14 +118,14 @@ curl -H "X-Figma-Token: $(cat ~/.figma-token)" \
 
 ## งานที่ค้างอยู่ (เรียงตามความคุ้ม)
 
-1. **เทียบ radius 43 ค่า + typography 49 ชุด** กับ `tokens.css` — ข้อมูลมีแล้วใน `extracted.json` เหลือแค่เทียบ
+1. **เทียบ radius 43 ค่า + typography 49 ชุด** กับ `tokens.css` — ข้อมูลมีแล้วใน `.figma-extract/00-summary-colors-radii-fonts.json` เหลือแค่เทียบ
 2. **เทียบช่องกรอก/dropdown/table/modal** กับหน้า `1:1380` · `1:1379` · `3:20` · `3:9` — ส่วนที่ประกอบเองล้วน เสี่ยงผิดที่สุด
 3. **Date pickers `3:23`** — `.daterange`/`.cal` เราออกแบบเองทั้งหมด ยังไม่รู้ว่าไลบรารีทำไว้ยังไง
 4. **Progress steps `3:16`** — เทียบกับ `.wsteps`/`.wstep`
 
 ## ข้อจำกัดที่ต้องรู้
 
-- **REST API แก้ปัญหา rate limit ได้แล้ว** — ไม่ต้องพึ่ง MCP สำหรับงานอ่านค่าอีก
+- **REST API แก้ปัญหา rate limit ได้แล้ว** — ไม่ต้องพึ่ง MCP สำหรับงานอ่านค่าอีก · แต่ตอนนี้ **token revoke แล้ว** ⇒ ใช้ของที่สกัดไว้ใน `.figma-extract/` แทน ไม่ต้องต่อ Figma
 - **`/variables/local` เป็น Enterprise-only** ⇒ อ่านชื่อ Figma Variable ไม่ได้ ได้แต่ค่าดิบบน node
 - `get_metadata` ที่ไม่ใส่ `nodeId` คืนแค่หน้า `Cover` — MCP มองไม่เห็นรายชื่อหน้า (REST เห็นครบ)
 - `get_variable_defs` ใช้ไม่ได้ถ้าไม่ได้เลือก layer ในแอป Figma desktop
