@@ -24,7 +24,7 @@ function buildSample() {
 }
 
 const baht = n => Number(n).toLocaleString('th-TH') + ' บาท';
-const tp = () => plan.travelPlan;   // แผนร่างยังไม่มี travelPlan → คืน null ⇒ ขึ้น "รอข้อมูล"
+const tp = () => (plan.trips || [])[0];   // ใบแรกของแผนเดินทาง · ยังไม่มีใบ → คืน undefined ⇒ ขึ้น "รอข้อมูล"
 
 const PHASE_TH = {
   procurement: 'เฟส 1 · เบิก/จัดหา + แผนเดินทาง',
@@ -46,9 +46,11 @@ const SAMPLE = {
   'p.partsReq':    () => plan.partsRequisitioned ? 'เบิกแล้ว' : 'ยังไม่เบิก',
   'p.phase':       () => PHASE_TH[plan.phase] || plan.phase,
   // ----- แผนเดินทาง -----
-  't.location':    () => tp() && tp().location,
-  't.dateFrom':    () => tp() && dateTh(tp().dateFrom),
-  't.dateTo':      () => tp() && dateTh(tp().dateTo),
+  't.name':        () => tp() && tp().name,
+  't.name': 'แผนเดินทาง · ชื่อแผน', 't.window': 'แผนเดินทาง · ช่วงที่เสนอ', 't.location':    () => tp() && tp().location,
+  't.window':      () => tp() && `${dateTh(tp().windowFrom)} – ${dateTh(tp().windowTo)}`,
+  't.dateFrom':    () => tp() && dateTh(tp().windowFrom),
+  't.dateTo':      () => tp() && dateTh(tp().windowTo),
   't.perDiem':     () => tp() && baht(tp().perDiem),
   't.lodging':     () => tp() && baht(tp().lodging),
   't.travel':      () => tp() && baht(tp().travel),
@@ -58,6 +60,7 @@ const SAMPLE = {
   'v.brand':       () => sampleV.brand,
   'v.chassis':     () => sampleV.chassis,
   'v.status':      () => MYD.STATUS_LABELS[sampleV.status] || sampleV.status,
+  'v.ownerDept':   () => sampleV.ownerDept,
   'v.region':      () => 'เขต ' + sampleV.region,
   'v.zone':        () => MYD.ZONE_LABELS[MYD.regionZone(sampleV.region)],
   'v.mileage':     () => sampleV.mileage.toLocaleString('th-TH') + ' กม.',
@@ -77,11 +80,12 @@ const SRC_LABELS = {
   'p.workNumber': 'แผน · เลขงาน', 'p.planName': 'แผน · ชื่อแผน', 'p.period': 'แผน · ไทรมาส/ปี',
   'p.vehCount': 'แผน · จำนวนรถ', 'p.lineCount': 'แผน · จำนวนรายการอะไหล่', 'p.ack': 'แผน · สถานะพัสดุ',
   'p.ackAt': 'แผน · พัสดุรับทราบเมื่อ', 'p.partsReq': 'แผน · สถานะเบิกอะไหล่', 'p.phase': 'แผน · เฟสปัจจุบัน',
-  't.location': 'แผนเดินทาง · จุดรวมงาน/หน้างาน', 't.dateFrom': 'แผนเดินทาง · วันเริ่ม',
+  't.name': 'แผนเดินทาง · ชื่อแผน', 't.window': 'แผนเดินทาง · ช่วงที่เสนอ',
+  't.location': 'แผนเดินทาง · สถานที่บำรุงรักษา', 't.dateFrom': 'แผนเดินทาง · วันเริ่ม',
   't.dateTo': 'แผนเดินทาง · วันสิ้นสุด', 't.perDiem': 'แผนเดินทาง · เบี้ยเลี้ยง',
   't.lodging': 'แผนเดินทาง · ที่พัก', 't.travel': 'แผนเดินทาง · ค่าเดินทาง',
   'v.plate': 'รถ · ทะเบียน', 'v.vehicleType': 'รถ · ชนิดรถ', 'v.brand': 'รถ · ยี่ห้อ/รุ่นอุปกรณ์',
-  'v.chassis': 'รถ · ยี่ห้อรถบรรทุก', 'v.status': 'รถ · สถานะ', 'v.region': 'รถ · เขต', 'v.zone': 'รถ · ภาค',
+  'v.chassis': 'รถ · ยี่ห้อรถบรรทุก', 'v.status': 'รถ · สถานะ', 'v.region': 'รถ · เขต', 'v.zone': 'รถ · ภาค', 'v.ownerDept': 'รถ · หน่วยงานเจ้าของรถ',
   'v.mileage': 'รถ · เลขไมล์', 'v.engineHours': 'รถ · ชม.เครื่อง',
   'i.name': 'อะไหล่ · ชื่อ', 'i.trigger': 'อะไหล่ · เงื่อนไขรอบ', 'i.perVehicle': 'อะไหล่ · ต่อคัน',
   'i.vehicleCount': 'อะไหล่ · จำนวนรถ', 'i.totalQty': 'อะไหล่ · รวม', 'i.unit': 'อะไหล่ · หน่วย',
@@ -161,7 +165,7 @@ const DEFAULT_SKEL = {
 
     // ================= กลุ่ม 2 · 5 เฟสปฏิบัติการ =================
     // เฟส 1 แตกเป็น 2 หน้าจอ (ยืนยันรถ / แผนเดินทาง) — stepper ของหน้าจริงยังเป็น 5 เฟสเหมือนเดิม
-    { id: 'ph1a', group: 'phase', no: '1a', title: 'ยืนยันรถเข้าร่วมแผน', real: null, sections: [
+    { id: 'ph1a', group: 'phase', no: '1a', title: 'ยืนยันรถเข้าร่วมแผน', real: 'index.html', sections: [
       { id: 'ph1a-sum', title: 'สรุปการยืนยัน', kind: 'form', fields: [
         nf('wn',      'เลขงาน', 'p.workNumber'),
         nf('nveh',    'รถในแผน', 'p.vehCount'),
@@ -189,32 +193,39 @@ const DEFAULT_SKEL = {
         nf('why',     'เหตุผลการตัดสิน', ''),
       ]},
     ], asks: [
-      q('1a.1', 'เจ้าของรถกับ กรย. ต้องตอบทั้งคู่ไหม หรือคนใดคนหนึ่งพอ'),
-      q('1a.2', 'กำหนดตอบภายในกี่วัน · ถ้าไม่ตอบถือว่าพร้อมหรือไม่พร้อม'),
-      q('1a.3', 'ตอบไปแล้วแก้คำตอบได้ไหม ถึงเมื่อไหร่'),
-      q('1a.4', '"หน่วยงานเจ้าของรถ" ดึงจากไหน — ยังไม่มีในข้อมูลจำลอง'),
+      q('1a.1', 'ใครในหน่วยงานเจ้าของรถมีสิทธิ์กดตอบ (ตอนนี้พิมพ์ชื่อผู้ตอบเอง ยังไม่ผูก role)'),
+      q('1a.2', 'กำหนดตอบกี่วันของจริง (ตั้ง 7 วันไว้ก่อน แก้ได้ที่ Admin)'),
+      q('1a.3', 'คันที่ กบค. สั่ง "เลื่อนรอบหน้า" ต้องไปโผล่ในแผนปีถัดไปอัตโนมัติไหม'),
+      q('1a.4', '"หน่วยงานเจ้าของรถ" ของจริงดึงจากไหน — ตอนนี้ยกจาก hierarchy-data.json ต้อง join กับ mas_department'),
     ]},
 
-    { id: 'ph1b', group: 'phase', no: '1b', title: 'เบิก/จัดหา + แผนเดินทาง', real: 'index.html', sections: [
-      { id: 'ph1b-req', title: 'เบิกอะไหล่', kind: 'form', fields: [
+    { id: 'ph1b', group: 'phase', no: '1b', title: 'เบิก/จัดหาอะไหล่ + แผนเดินทาง (หลายใบ)', real: 'index.html', sections: [
+      { id: 'ph1b-req', title: 'เบิก/จัดหาอะไหล่ (ขั้นที่ 2)', kind: 'form', fields: [
         f('status', 'สถานะการเบิก', 'p.partsReq'),
         f('nline',  'จำนวนรายการที่เบิก', 'p.lineCount'),
+        f('base',   'คิดจากรถที่ยืนยันแล้วกี่คัน', ''),
+        f('drop',   'ตัด/เลื่อนจากขั้นยืนยันรถกี่คัน', ''),
       ]},
-      { id: 'ph1b-trip', title: 'แผนเดินทาง', kind: 'form', fields: [
-        f('loc',     'จุดรวมงาน/หน้างาน', 't.location'),
-        f('from',    'วันเริ่ม', 't.dateFrom'),
-        f('to',      'วันสิ้นสุด', 't.dateTo'),
-        f('perdiem', 'เบี้ยเลี้ยง', 't.perDiem'),
-        f('lodge',   'ที่พัก', 't.lodging'),
-        f('travel',  'ค่าเดินทาง', 't.travel'),
-        f('sum',     'รวมค่าใช้จ่าย', ''),
+      { id: 'ph1b-trips', title: 'แผนเดินทาง — สร้างได้หลายใบ (ขั้นที่ 3)', kind: 'table', fields: [
+        f('name',    'ชื่อแผน', 't.name'),
+        f('loc',     'สถานที่บำรุงรักษา', 't.location'),
+        f('window',  'ช่วงที่เสนอ (จาก–ถึง)', 't.window'),
+        f('nveh',    'รถในใบนี้', ''),
+        f('ndept',   'หน่วยงานที่ต้องตอบรับ', ''),
+        f('cost',    'ค่าใช้จ่ายของใบ', ''),
+        f('status',  'สถานะใบ (ยังไม่ส่ง/รอตอบรับ/ถูกปฏิเสธ/ตอบรับแล้ว)', ''),
       ]},
-      { id: 'ph1b-veh', title: 'รถที่เข้าแผนเดินทาง', kind: 'table', fields: [
+      { id: 'ph1b-veh', title: 'รถในแต่ละใบ + วันนัดรายคัน', kind: 'table', fields: [
         f('plate',   'ทะเบียน', 'v.plate'),
-        f('region',  'เขต', 'v.region'),
-        f('zone',    'ภาค', 'v.zone'),
-        nf('meet',   'จุดนัดรับ', ''),
-        nf('day',    'วันที่เข้าตรวจรายคัน', ''),
+        f('owner',   'หน่วยงานเจ้าของรถ', 'v.ownerDept'),
+        f('prov',    'จังหวัด', ''),
+        f('day',     'วันนัดรายคัน (ต้องอยู่ในช่วงของใบ)', ''),
+      ]},
+      { id: 'ph1b-reply', title: 'การตอบรับรายหน่วยงาน', kind: 'table', fields: [
+        f('dept',   'หน่วยงาน', 'v.ownerDept'),
+        f('status', 'สถานะ (รอตอบ/ตอบรับ/ปฏิเสธ)', ''),
+        f('reason', 'เหตุผลที่ปฏิเสธ', ''),
+        f('at',     'ตอบเมื่อ', ''),
       ]},
       { id: 'ph1b-hire', title: 'สายว่าจ้าง', kind: 'form', fields: [
         nf('vendor', 'ผู้รับจ้าง', ''),
@@ -224,7 +235,7 @@ const DEFAULT_SKEL = {
     ], asks: [
       q('1b.1', 'ต้นแบบทำเฉพาะสายตรวจเอง — ทำสายว่าจ้างด้วยไหม'),
       q('1b.2', 'เลือก "ว่าจ้าง/ตรวจเอง" ตรงไหน — ที่นี่ หรือย้ายไปเลือกตอนออกเลขงาน'),
-      q('1b.3', 'แผนเดินทาง 1 แผน = 1 ทริป หรือหลายทริปในแผนเดียว'),
+      q('1b.3', 'เอกสารพัสดุออกตอนออกเลขงาน (ก่อนยืนยันรถ) ยอดจึงเป็นของแผนเต็ม แต่เบิกจริงน้อยกว่า — ให้เป็นประมาณการ หรือมีใบปรับยอดตามทีหลัง'),
     ]},
 
     { id: 'ph2', group: 'phase', no: '2', title: 'ดำเนินการบำรุงรักษา', real: null, sections: [
@@ -390,7 +401,7 @@ const DEFAULT_SKEL = {
       ]},
     ]},
 
-    { id: 'src1', group: 'unit', no: '', icon: 'directions_car', title: 'ต้นทาง · ยืนยันรถ (เจ้าของรถ / กรย.)', real: null, sections: [
+    { id: 'src1', group: 'unit', no: '', icon: 'directions_car', title: 'หน่วยงานเจ้าของรถ · ยืนยันรถ + ตอบรับแผนนัด', real: 'confirm.html', sections: [
       { id: 'src1-head', title: 'หัวคำขอ', kind: 'form', fields: [
         nf('wn',    'เลขงาน', 'p.workNumber'),
         nf('name',  'ชื่อแผน', 'p.planName'),
