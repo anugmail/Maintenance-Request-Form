@@ -1,8 +1,8 @@
 # 🧭 Maintain-D Design System
 
-> **เวอร์ชัน:** v0.3 (8 ส.ค. 2569) · **สถานะ:** ใช้กับทุกหน้าใน prototype แล้ว (20/20)
-> **ที่มา:** **Figma `EXT_PEA_VMS_v1.0.2_Component`** (`EXT-PEA-T0REUY1W-2026-V102`) — ค่าที่กำกับ `✔` ใน `tokens.css` อ่านจากไฟล์นั้นตรงๆ · ค่าที่กำกับ `~` มาจาก VMS Plus runtime (v2.1.1) รอบก่อน · `⚠` ยังไม่ยืนยัน
-> **แหล่งที่มา + สถานะการอ่านจาก Figma:** [SOURCES.md](SOURCES.md) — 12 node ที่เจ้าของงานส่งมายังอ่านไม่ครบ (ติด rate limit)
+> **เวอร์ชัน:** v0.11 (11 ส.ค. 2569) · **สถานะ:** ใช้กับทุกหน้าใน prototype แล้ว (24/24)
+> **ที่มา:** **Figma `EXT_PEA_VMS_v1.0.2_Component`** (`EXT-PEA-T0REUY1W-2026-V102`) — ดึงทั้งไฟล์ผ่าน REST API แล้ว (43 หน้า · 58,331 node) · ค่าที่กำกับ `✔` ใน `tokens.css` **ยืนยันแล้วว่ามีใช้จริงในไลบรารี** · `⚠` = ไม่พบในไลบรารี เราเพิ่มเอง
+> **แหล่งที่มา + สถานะการอ่านจาก Figma:** [SOURCES.md](SOURCES.md) — สีเทียบครบแล้ว · **radius กับ typography ยังไม่เทียบ** · คอมโพเนนต์ (input/table/modal) ยังประกอบเอง
 > **Style guide:** [index.html](index.html) · **ปุ่มครบทุก variant:** [buttons.html](buttons.html) · **ตัวอย่างหน้าจริง:** [ฟอร์มแจ้งซ่อม (mock)](../mock/Maintenance-Request-Form.html)
 
 ---
@@ -81,9 +81,9 @@ grep -rnP '[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]' --include='*.html' --include=
 | `--primary-700` | `#8A0570` | active/pressed เข้ม |
 | `--primary-600` ★ | `#A80689` | สีหลัก — ปุ่ม, ลิงก์, active state, แถบ section (สีที่ใช้บ่อยสุดใน CSS จริงของ VMS Plus) |
 | `--primary-500` | `#CF07AA` | hover, ปลาย gradient |
-| `--primary-50` | `#FEEBFB` | พื้นหลังอ่อน chip/highlight |
-| `--primary-25` | `#FFF5FD` | พื้นหลังอ่อนสุด (แถวที่เลือก) |
-| `--secondary-600` | `#1B4DB1` | น้ำเงินรอง (tile "ส่งซ่อม กบค.") |
+| `--primary-50` | `#FDEEFC` | พื้นหลังอ่อน chip/highlight |
+| `--primary-25` | `#FDF2FA` | พื้นหลังอ่อนสุด (แถวที่เลือก) |
+| `--secondary-600` | `#172B85` | น้ำเงินรอง (tile "ส่งซ่อม กบค.") |
 | `--secondary-700` | `#15409A` | น้ำเงินเข้ม hover |
 
 ### 3.2 สี Semantic (สถานะ)
@@ -103,19 +103,19 @@ grep -rnP '[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]' --include='*.html' --include=
 
 | Token | ค่า | ที่มา | ใช้กับ |
 |---|---|---|---|
-| `--gray-950` | `#0A0D12` | ⚠ | เข้มสุด (ยังไม่ได้ใช้ในหน้าจอ) |
-| `--gray-900` | `#181D27` | ⚠ | หัวข้อ, ตัวเลขสำคัญ (`--color-text-primary`) |
+| `--gray-950` | `#0A0D12` | ✔ | เข้มสุด (ยังไม่ได้ใช้ในหน้าจอ) |
+| `--gray-900` | `#181D27` | ✔ | หัวข้อ, ตัวเลขสำคัญ (`--color-text-primary`) |
 | `--gray-800` | `#252B37` | ✔ | `color/text/secondary-hover` |
 | `--gray-700` | `#414651` | ✔ | เนื้อความหลัก (`--color-text-secondary`) |
 | `--gray-600` | `#535862` | ✔ | เนื้อความรอง (`--color-text-tertiary`) |
-| `--gray-500` | `#717680` | ⚠ | ข้อความ secondary, ไอคอนในช่องกรอก |
+| `--gray-500` | `#717680` | ✔ | ข้อความ secondary, ไอคอนในช่องกรอก |
 | `--gray-400` | `#A4A7AE` | ✔ | placeholder, ข้อความจาง (`--color-fg-disabled`) |
 | `--gray-300` | `#D5D7DA` | ✔ | เส้นขอบช่องกรอก (`--color-border-primary`) |
 | `--gray-200` | `#E9EAEB` | ✔ | เส้นคั่น, ขอบการ์ด (`--color-border-disabled-subtle`) |
 | `--gray-100` | `#F5F5F5` | ✔ | พื้น hover, ปุ่มเทา (`--color-bg-disabled`) |
 | `--gray-50` | `#FAFAFA` | ✔ | พื้นหลังหน้า (`--color-bg-primary-hover`) |
 
-`✔` อ่านจาก Figma ตรงๆ (หน้า `↳ Buttons` node `1:1375`) · `⚠` ยังไม่ได้ยืนยัน ประมาณจาก ramp — ดู [SOURCES.md](SOURCES.md)
+**ทั้งแถบยืนยันแล้วว่าตรงกับไลบรารี** — เทียบกับทั้งไฟล์เมื่อ 11 ส.ค. 2569 ไม่ใช่แค่หน้า Buttons — ดู [SOURCES.md](SOURCES.md)
 
 ### 3.4 Typography
 
@@ -266,6 +266,7 @@ design-system/
 | 17 ก.ค. 2569 | v0.2 | เพิ่ม pattern หน้าเว็บจาก screenshot หน้าจริง "สร้างคำขอใช้ยานพาหนะ": `.shell/.side/.topbar/.crumbs/.page-title/.wsteps/.sect/.fgrid/.f(.ro/.err)/.rads/.numfld/.actions` — mock ฟอร์มแจ้งซ่อมย้ายมาใช้โครงนี้ |
 | 17 ก.ค. 2569 | v0.3 | เพิ่ม component สำหรับ flow กบค./ติดตามสถานะ: `.nv .cnt` (badge ตัวเลขบน sidebar) · `.job` (แถวรายการเรื่อง) · `.tl` (timeline ประวัติสถานะ) · `.chk` + checkbox (checklist ตรวจสภาพ) |
 | 17 ก.ค. 2569 | v0.5 | เพิ่ม `.tbl` + `.tblwrap` (ตารางข้อมูล — เมนูคลังอะไหล่) — ตัดออกจากรายการ "สิ่งที่ยังขาด" ได้ |
+| 11 ส.ค. 2569 | v0.11 | **`tokens.css` v0.3 — เทียบสีกับไลบรารี Figma ทั้งไฟล์** (ดึงผ่าน REST API 43 หน้า) · แก้ `--secondary-600` `#1B4DB1`→`#172B85` (ผิดคนละสี) · `--brand-50/-25/-200` · เพิ่ม `--brand-100` `--success-700/-500/-100` `--chart-1..6` · `#067647` ที่ค้างใน `buttons.html` เปลี่ยนมาใช้ `--success-700` · provenance เหลือ `✔` 40 · `⚠` 6 (ไม่มี `~` แล้ว) · บั๊ม `?v=20260811-ds11` |
 | 11 ส.ค. 2569 | v0.10 | เพิ่ม `.gallery` — แกลเลอรีพรีวิวหน้าจอด้วย iframe ย่อส่วนที่กดไม่ได้ ใช้กับ `design-mock/index.html` · บั๊ม `?v=20260811-ds10` |
 | 11 ส.ค. 2569 | v0.9 | เพิ่ม `.daterange` + `.cal` — ปฏิทินเลือก**ช่วงวันที่**ในคลิกเดียว (คลิกวันเริ่ม → วันสิ้นสุด) · เกิดจากหน้านัดหมายวันซ่อมที่ต้องเสนอเป็นช่วงให้อีกฝ่ายเลือกวันเอง ซึ่ง `<input type="date">` ทำไม่ได้ · บั๊ม `?v=20260811-ds09` |
 | 11 ส.ค. 2569 | v0.8 | เพิ่ม `.stack` — คุมระยะแนวตั้งที่ตัวครอบแทนการพึ่ง margin ของแต่ละคอมโพเนนต์ · เกิดจากบั๊กจริง: `.search` วางเหนือลิสต์แล้วติดกันสนิท 0px เพราะ `.search` ไม่มี margin ส่วน `.job` มีแต่ margin ล่าง · เพิ่มคำเตือนเรื่อง `.search` ในตารางข้อ 4 |

@@ -1,93 +1,109 @@
 # แหล่งที่มาจริงของ Design System — Figma `EXT_PEA_VMS_v1.0.2_Component`
 
 > **ไฟล์นี้คือทะเบียนว่าอะไรอ่านมาจริงแล้ว อะไรยังไม่ได้อ่าน**
-> `tokens.css` กำกับที่มารายค่าด้วย `✔` / `~` / `⚠` — ไฟล์นี้ตอบระดับ "หน้า/คอมโพเนนต์"
+> `tokens.css` กำกับที่มารายค่าด้วย `✔` / `⚠` — ไฟล์นี้ตอบระดับ "หน้า/คอมโพเนนต์"
 >
 > **file key** `IMiHaWKCqp6j3lpWdCnYY8` · เวอร์ชันในไฟล์ `EXT-PEA-T0REUY1W-2026-V102`
 > library name `(Component) VMS Plus`
 > `libraryKey` `lk-a1ccfdc4fdf188eafdc83f178ae0c2f43346...` (ใช้กับ `search_design_system`)
 >
 > 🚫 **ห้ามแก้ไฟล์ Figma นี้เด็ดขาด** — เจ้าของงานสั่งไว้ · ใช้ได้เฉพาะเครื่องมืออ่าน
-> (`get_metadata` / `get_design_context` / `get_screenshot` / `search_design_system`)
+> (`get_metadata` / `get_design_context` / `get_screenshot` / `search_design_system` / REST `GET`)
 > **ห้ามเรียก `use_figma`** เพราะรันสคริปต์แก้ไฟล์ได้
 
-## สถานะการอ่าน
+## วิธีที่ใช้อ่าน — REST API ไม่ใช่ MCP
 
-เจ้าของงานส่งลิงก์มา **33 node** (11 ส.ค. 2569) พร้อมสั่งว่า
-*"ทั้งหมดที่ส่งคือ design systems ที่ต้องเอาไปเก็บไว้ใน folder design systems อ่านให้ครบ"*
+MCP ติด rate limit ของแพลน Starter (~4 call ต่อรอบ) ⇒ 33 node ที่เจ้าของงานส่งมาอ่านไม่มีทางจบ
+**11 ส.ค. 2569 เปลี่ยนไปใช้ Figma REST API แทน แล้วดึงทั้งไฟล์รวดเดียว**
 
-**อ่านแล้ว 1 · ค้าง 32** — ยังอ่านไม่ได้เพราะ Figma MCP ติด rate limit ของแพลน Starter
-(ดู "ข้อจำกัดที่ต้องรู้" ท้ายไฟล์)
+```bash
+curl -H "X-Figma-Token: $(cat ~/.figma-token)" \
+  "https://api.figma.com/v1/files/IMiHaWKCqp6j3lpWdCnYY8" -o figma-full.json
+```
 
-### ✅ อ่านแล้ว
+- token เป็น personal access token **scope `file_content:read`** — เก็บที่ `~/.figma-token` (`chmod 600`) **นอก repo ห้าม commit**
+- ได้มา **89 MB · 43 หน้า · 58,331 node · component 3,304 (component set 176) · style 118**
+- ไฟล์ดิบเก็บใน scratchpad ของเซสชัน ไม่เอาเข้า repo (ใหญ่เกินและเป็นของ vendor) — วิเคราะห์ในเครื่องแล้วเอาเฉพาะ**ค่าที่สรุปได้**มาลง `tokens.css`
 
-| node | ได้อะไรมา |
+⚠️ `GET /v1/files/{key}/variables/local` **ใช้ไม่ได้ — เป็นฟีเจอร์ Enterprise**
+⇒ อ่าน **Figma Variables ตัวจริงไม่ได้** ได้แค่ fill/stroke/text style ที่ปรากฏบน node
+ค่าที่กำกับ `✔` จึงหมายถึง "มีใช้จริงในไลบรารี" ไม่ใช่ "เป็นชื่อ variable ตามไลบรารี"
+
+## หน้าทั้ง 43 หน้าในไฟล์ (ดึงมาครบแล้วทุกหน้า)
+
+| หมวด | หน้า |
 |---|---|
-| `1:1375` — หน้า `↳ Buttons` | 636 variants 5 ชุด → `tokens.css` (สีปุ่ม · gray ramp · radius · typography ปุ่ม) + `buttons.html` (7 ส.ค. 2569) |
+| ปก/ประกาศ | `0:1` Cover · `269:291760` Terms of Use |
+| ❖ BASE COMPONENTS `1:1374` | `1:1375` Buttons · `1:1376` Button groups · `1:1377` Badges · `1:1378` Tags · `1:1379` Dropdowns · `1:1380` Inputs · `1:1382` Toggles · `1:1383` Checkboxes · `589:205480` Checkbox cards · `589:206913` Radio buttons · `1:1384` Radio cards · `1:1385` Avatars · `1:1386` Tooltips · `1:1387` Progress indicators |
+| ❖ APPLICATION COMPONENTS `3:2` | `3:4` Page headers · `3:5` Card headers · `3:6` Section headers · `3:8` Application navigation · `3:9` Modals · `3:11` Charts · `3:12` Metrics · `3:13` Slideout menus · `3:15` Pagination · `3:16` Progress steps · `3:19` Tabs · `3:20` Tables · `3:21` Breadcrumbs · `3:22` Alerts & notifications · `3:23` Date pickers · `3:25` File upload · `3:26` Content dividers · `3:27` Loading indicators · `3:29` Empty states |
+| ❖ SHARED ASSETS `585:205477` | `1:1393` 404 pages · `1:1396` Background elements |
 
-### ⬜ ค้าง — ชุดที่ 1 (ส่งมารอบแรก)
+> ครบทุก node ที่เจ้าของงานส่งมา **บวก** `1:1376` Button groups กับ `3:20` Tables ที่ไม่ได้อยู่ในลิสต์
+> (เจ้าของงานข้ามไป — แต่ดึงมาแล้วเพราะโหลดทั้งไฟล์)
 
-`1:1377` · `1:1378` · `1:1379` · `1:1380` · `1:1382` · `1:1383` · `1:1384` · `1:1385` · `1:1386` · `1:1387` · `589:205480` · `589:206913`
+## สกัดมาได้อะไรบ้าง
 
-### ⬜ ค้าง — ชุดที่ 2 (ส่งมารอบสอง)
+| ชนิด | จำนวนที่นับได้ทั้งไฟล์ | เอามาลง `tokens.css` แล้วหรือยัง |
+|---|---|---|
+| สี (hex ที่ใช้จริง) | **142** | ✅ เทียบครบ → `tokens.css` v0.3 |
+| radius | **43** | ⬜ **ยังไม่เทียบ** |
+| ชุด typography (family/size/weight/line-height) | **49** | ⬜ **ยังไม่เทียบ** |
 
-`3:2` · `3:4` · `3:5` · `3:6` · `3:8` · `3:9` · `3:11` · `3:12` · `3:13` · `3:15` · `3:16` · `3:19` · `3:21` · `3:22` · `3:23` · `3:25` · `3:26` · `3:27` · `3:29` · `1:1393` · `1:1396`
+### สิ่งที่การเทียบสีรอบ 11 ส.ค. จับผิดได้ (`tokens.css` v0.2 → v0.3)
 
-> เลข `3:x` เรียงติดกันเป็นชุด (ข้าม 3, 7, 10, 14, 17, 18, 20, 24, 28) — น่าจะเป็นหน้าย่อยในหมวดเดียวกัน
-> **แต่ยังไม่ได้อ่าน จึงยังไม่รู้ว่าแต่ละอันคืออะไร ห้ามเดา**
+| token | เคยเป็น | ของจริง |
+|---|---|---|
+| `--secondary-600` | `#1B4DB1` | **`#172B85`** — ผิดคนละสีเลย |
+| `--brand-50` | `#FEEBFB` | **`#FDEEFC`** |
+| `--brand-25` | `#FFF5FD` | **`#FDF2FA`** |
+| `--brand-200` | (ค่าเดิมไม่ตรง) | **`#F8BFF4`** |
+| `--brand-100` | ไม่มี | **`#FBD9F9`** เพิ่มใหม่ |
+| `--success-700` / `--success-500` / `--success-100` | ไม่มี | **`#067647` / `#079455` / `#DCFAE6`** เพิ่มใหม่ |
+| `--chart-1..6` | ไม่มี | เพิ่มชุดสีกราฟจากหน้า `3:11` Charts |
 
-**ยังไม่ได้ยืนยันว่านี่คือทั้งหมดของไฟล์** — `get_metadata` ที่ไม่ใส่ `nodeId` คืนแค่หน้า `Cover`
-API มองไม่เห็นรายชื่อหน้า จึงตรวจไม่ได้ว่าเหลือหน้าอื่นอีกไหม
+> `#E134C1` ที่เกือบเข้าใจผิดว่าเป็นสี brand — ตรวจแล้วพบว่าใช้เฉพาะหน้า Charts ⇒ เป็น**สีข้อมูล ไม่ใช่สีแบรนด์**
+> `#067647` ที่ค้างเป็น hex ดิบใน `buttons.html` — ตรวจแล้วพบว่ามีใช้จริง 107 จุดในไลบรารี ⇒ ตั้งเป็น `--success-700` แล้วเปลี่ยนมาเรียก token
 
-## คอมโพเนนต์ในไลบรารีที่ยืนยันแล้วว่ามี แต่ยังไม่เคยดึง
+**สถานะ provenance ปัจจุบันใน `tokens.css`: `✔` 40 · `⚠` 6**
+6 ตัวที่ยัง `⚠` = **ไม่มีในไลบรารี** (เราเพิ่มเอง): `--brand-700` · `--brand-accent` · `--success-200` · `--info-25` · `--secondary-700` · `--secondary-50`
 
-จาก `search_design_system` (คำว่า "input" คำเดียว 11 ส.ค. 2569) — ยังไม่ได้ค้นคำอื่น
+## คอมโพเนนต์ — ยังไม่เทียบ
+
+ดึง JSON มาครบแล้ว แต่**ยังไม่ได้เอาโครง/ระยะ/สถานะของแต่ละคอมโพเนนต์มาเทียบกับ `components.css`**
+
+| ส่วน | สถานะ |
+|---|---|
+| ปุ่ม (`.btn` ทุก variant) | ✅ ตรงกับไลบรารี — ดึงครบ 636 variants (7 ส.ค.) |
+| สี | ✅ เทียบครบทั้งไฟล์ (11 ส.ค.) |
+| radius · typography | ⚠️ **มีข้อมูลแล้วแต่ยังไม่เทียบ** — อยู่ใน `extracted.json` |
+| ช่องกรอก · dropdown · textarea · modal · badge · tag · table · date picker · progress steps | ❌ **ประกอบเอง ยังไม่เคยเทียบกับไลบรารี** ทั้งที่มีหน้าอยู่ในไฟล์แล้ว |
+
+`componentKey` ที่ได้จาก `search_design_system` (คำว่า "input" 11 ส.ค.) — ใช้ import ได้ถ้าต้องการเทียบละเอียด
 
 | คอมโพเนนต์ | `componentKey` | ของเราตอนนี้ |
 |---|---|---|
-| Text input | `227eddb9d08b3e8307addc76e56ddb4e2087a671` | `.f .in` — **ประกอบเอง ยังไม่เทียบ** |
-| Number input | `9e533c842111aa06905876fadf2ea287e6ed603a` | `.numfld` / `.qty` — ประกอบเอง |
-| Input label | `01dfbf5c3f94ae7771b1c77278823c7308ee2f02` | `.f label` — ประกอบเอง |
-| Input dropdown | `a51d3b07ab3c996ac459710124a5ee2ff1cf31e7` | `<select>` ใน `.in` — ประกอบเอง |
+| Text input | `227eddb9d08b3e8307addc76e56ddb4e2087a671` | `.f .in` |
+| Number input | `9e533c842111aa06905876fadf2ea287e6ed603a` | `.numfld` / `.qty` |
+| Input label | `01dfbf5c3f94ae7771b1c77278823c7308ee2f02` | `.f label` |
+| Input dropdown | `a51d3b07ab3c996ac459710124a5ee2ff1cf31e7` | `<select>` ใน `.in` |
 | Input dropdown with badges | `8c56d38a5c678080d722ced688f29262ee122a96` | ยังไม่มีของเทียบ |
-| Text area | `9237413644d6ed5849f10756c7bed857b2a09c12` | `.f textarea` — ประกอบเอง |
-| Modal | `f30e79daef79f0b2fa1dd3bd5a6d81fe08d85dde` | **ไม่มีในระบบเรา** (เคยเลี่ยงไปใช้แถวขยายแทน) |
+| Text area | `9237413644d6ed5849f10756c7bed857b2a09c12` | `.f textarea` |
+| Modal | `f30e79daef79f0b2fa1dd3bd5a6d81fe08d85dde` | **ไม่มีในระบบเรา** |
 | Modal_Body | `2499a59d53ff2de3c60cfcd9c8318896c4fb4226` | ไม่มี |
 
 มี **`Specs - …`** ของแต่ละตัวด้วย (`Specs - Text input`, `Specs - Input label`, `Specs - Number input`, `Specs - Input dropdown`) — หน้าสเปกที่บอกขนาด/ระยะ/สถานะ **เป็นของที่มีค่าที่สุดสำหรับงานเทียบ**
 
-เห็นชื่อจากรอบก่อนแต่ยังไม่ได้ key: Badge outline/color · Pill · Table cell · Mobile table item · Indicator · Checkbox
+## งานที่ค้างอยู่ (เรียงตามความคุ้ม)
 
-## สรุปว่าตอนนี้ design system ของเราอิงของจริงแค่ไหน
-
-| ส่วน | สถานะ |
-|---|---|
-| ปุ่ม (`.btn` ทุก variant) | ✅ ตรงกับไลบรารี — ดึงครบ 636 variants |
-| สีเทา · typography · radius | ⚠️ ได้จากหน้า Buttons เท่านั้น ยังไม่ยืนยันกับหน้า Foundation |
-| ช่องกรอก · dropdown · textarea · modal · badge · table | ❌ **ประกอบเอง ไม่เคยเทียบกับไลบรารี** |
-
-นับรายค่าใน `tokens.css`: `✔` **34** · `~` **27** (จาก VMS Plus runtime ไม่ใช่ Figma) · `⚠` **11** (ประมาณเอง)
-⇒ **34 จาก 72 ค่าที่ยืนยันกับ Figma จริง**
+1. **เทียบ radius 43 ค่า + typography 49 ชุด** กับ `tokens.css` — ข้อมูลมีแล้วใน `extracted.json` เหลือแค่เทียบ
+2. **เทียบช่องกรอก/dropdown/table/modal** กับหน้า `1:1380` · `1:1379` · `3:20` · `3:9` — ส่วนที่ประกอบเองล้วน เสี่ยงผิดที่สุด
+3. **Date pickers `3:23`** — `.daterange`/`.cal` เราออกแบบเองทั้งหมด ยังไม่รู้ว่าไลบรารีทำไว้ยังไง
+4. **Progress steps `3:16`** — เทียบกับ `.wsteps`/`.wstep`
 
 ## ข้อจำกัดที่ต้องรู้
 
-- **บัญชีเป็น Figma Starter plan** ⇒ MCP มีเพดานเรียกต่อช่วงเวลาต่ำมาก · เซสชัน 11 ส.ค. ใช้ไป **4 call ก็ตัน** (`whoami` → `create_new_file` → `get_metadata` → `search_design_system`)
-  ⇒ 12 node ที่ค้างอยู่ **ทำไม่จบในโควตาเดียวแน่นอน** ต้องทยอยหลายรอบ หรืออัปเกรดแพลน
-- **`get_metadata` ที่ไม่ใส่ `nodeId` คืนแค่หน้า `Cover`** — API มองไม่เห็นรายชื่อหน้าอื่น ต้องได้ลิงก์ node จากคนที่เปิดไฟล์เท่านั้น
+- **REST API แก้ปัญหา rate limit ได้แล้ว** — ไม่ต้องพึ่ง MCP สำหรับงานอ่านค่าอีก
+- **`/variables/local` เป็น Enterprise-only** ⇒ อ่านชื่อ Figma Variable ไม่ได้ ได้แต่ค่าดิบบน node
+- `get_metadata` ที่ไม่ใส่ `nodeId` คืนแค่หน้า `Cover` — MCP มองไม่เห็นรายชื่อหน้า (REST เห็นครบ)
 - `get_variable_defs` ใช้ไม่ได้ถ้าไม่ได้เลือก layer ในแอป Figma desktop
 - ไฟล์นี้เป็น **ไลบรารีคอมโพเนนต์ ไม่มีแบบหน้าจอ (screen)** — เทียบ layout ทั้งหน้าไม่ได้ ต้องขอลิงก์ไฟล์อื่น
-
-## ขั้นตอนเมื่อโควตากลับมา
-
-**ใช้ `get_design_context` ตรงๆ ทีละ node — ไม่ต้อง `get_metadata` ก่อน**
-(metadata บอกแค่โครง ส่วน design_context ให้ค่าจริงเลย ⇒ ประหยัดโควตาครึ่งหนึ่ง: 33 call แทน 66)
-
-1. ไล่ตามลำดับในตารางด้านบน ทีละ node → ได้ค่าจริง
-2. เทียบกับ `tokens.css` / `components.css` → **บันทึกทั้งที่ตรงและที่ผิด**
-   (รอบปุ่มเจอผิด 2 เรื่อง: hover ปุ่มหลักเป็น `#74045F` ไม่ใช่ `#CF07AA` · gray ramp คนละชุดทั้งแถบ)
-3. อัปเดตค่า + เปลี่ยนเครื่องหมาย `~`/`⚠` เป็น `✔` พร้อมระบุว่ามาจาก node ไหน
-4. บั๊ม `?v=` ทุกหน้า + เพิ่ม Changelog ใน `README.md` ข้อ 8
-5. **อัปเดตตารางสถานะในไฟล์นี้ทุกครั้ง** — ทำทีละรอบโควตา ต้องรู้ว่าค้างตรงไหน
-
-**ประเมินเวลา** — โควตา Starter ที่วัดได้ ≈ **4 call ต่อรอบ** ⇒ 32 node ที่ค้าง ≈ **8 รอบโควตา**
-ถ้าจะจบในครั้งเดียวต้องอัปเกรดแพลน
