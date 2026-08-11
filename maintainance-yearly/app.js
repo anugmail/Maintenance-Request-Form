@@ -583,10 +583,18 @@ function renderProcStep2(plan) {
   const unassigned = MYD.unassignedVehicleIds(plan);
   const accepted = trips.filter(t => MYD.tripStatus(t, master) === 'accepted').length;
 
-  const unassignedOpts = master.vehicles
-    .filter(v => unassigned.includes(v.id))
-    .map(v => `<option value="${esc(v.id)}">${esc(v.plate)} — ${esc(MYD.provinceOfRegion(v.region))} · ${esc(v.ownerDept)}</option>`)
-    .join('');
+  // จัดตัวเลือกเป็นกลุ่มตามจังหวัด — เห็นได้ทันทีว่ารถที่ยังไม่ถูกจัดกระจายอยู่จังหวัดไหนบ้าง
+  // และเลือกทีละจังหวัดได้ง่ายเวลาแผนหนึ่งมีรถข้ามจังหวัด
+  const byProvince = {};
+  master.vehicles.filter(v => unassigned.includes(v.id)).forEach(v => {
+    const prov = MYD.provinceOfRegion(v.region);
+    (byProvince[prov] = byProvince[prov] || []).push(v);
+  });
+  const unassignedOpts = Object.keys(byProvince).sort((a, b) => a.localeCompare(b, 'th')).map(prov => {
+    const opts = byProvince[prov].map(v =>
+      `<option value="${esc(v.id)}">${esc(v.plate)} · ${esc(v.ownerDept)} — ${esc(v.brand)}</option>`).join('');
+    return `<optgroup label="${esc(prov)} (${byProvince[prov].length} คัน)">${opts}</optgroup>`;
+  }).join('');
 
   const tripBoxes = trips.map(trip => {
     const st = MYD.tripStatus(trip, master);
@@ -663,7 +671,7 @@ function renderProcStep2(plan) {
 
           ${locked ? '' : `
           <div class="fgrid">
-            <div class="f sp3"><label>เพิ่มรถเข้าแผนนี้ <small>เลือกจากคันที่ยังไม่ถูกจัด</small></label>
+            <div class="f sp2"><label>เพิ่มรถเข้าแผนนี้ <small>เลือกจากคันที่ยังไม่ถูกจัด</small></label>
               <div class="in"><span class="ms">directions_car</span>
                 <select data-trip-add-sel="${esc(trip.id)}" ${unassignedOpts ? '' : 'disabled'}>
                   ${unassignedOpts || '<option>— จัดครบทุกคันแล้ว —</option>'}</select></div></div>
