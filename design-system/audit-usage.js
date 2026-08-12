@@ -79,7 +79,14 @@ function checkFile(f) {
   const btnRe = isDoc ? /(?!)/g : /<button\b[^>]*>/gi;
   while ((m = btnRe.exec(txt))) {
     const tag = m[0];
-    if (!/class\s*=\s*["'][^"']*\bbtn\b/.test(tag)) add('ปุ่มไม่ได้ใช้ .btn', lineOf(txt, m.index), tag);
+    // ปุ่มที่เป็นส่วนหนึ่งของ component ที่มีชื่อ (.qty button · .page-back · .cal-nav · .pf-*)
+    // ถือว่าถูกแล้ว — ที่ผิดคือปุ่มเปล่าไม่มีคลาสเลย หรือปุ่มที่จัดสไตล์เองด้วย inline style
+    const hasClass = /class\s*=\s*["'][^"']+["']/.test(tag);
+    const isBtn = /class\s*=\s*["'][^"']*\bbtn\b/.test(tag);
+    const inlineStyled = /style\s*=\s*["'][^"']*(background|border|padding|font)/.test(tag);
+    // ปุ่มที่อยู่ในกล่องของ component ที่มีสไตล์ปุ่มในตัว (.qty · .numfld · .cal · .pf-*)
+    const inComponent = /class\s*=\s*["'][^"']*\b(qty|numfld|cal|cal-\w+|pf-\w+|seg)\b/.test(txt.slice(Math.max(0, m.index - 200), m.index));
+    if (!isBtn && !inComponent && (!hasClass || inlineStyled)) add('ปุ่มไม่ได้ใช้ .btn', lineOf(txt, m.index), tag);
   }
 
   // 3) <table> ที่ไม่ได้ใช้ .tbl
@@ -117,6 +124,9 @@ function checkFile(f) {
   const fsRe = /font-size\s*:\s*([\d.]+)px/g;
   while ((m = fsRe.exec(txt))) {
     const v = m[1];
+    // ขนาดไอคอน (.ms) ไม่ได้อยู่ในสเกลตัวอักษร — ไลบรารีใช้ 16/20/24 ตามบริบท
+    const around = txt.slice(Math.max(0, m.index - 160), m.index);
+    if (/\.ms\b[^{]*\{[^}]*$/.test(around)) continue;
     if (!['12', '14', '16', '18', '20', '22', '24', '26', '28', '32', '34', '11', '10'].includes(v)) {
       add('font-size นอกสเกล', lineOf(txt, m.index), m[0]);
     } else if (['11', '10'].includes(v)) {
