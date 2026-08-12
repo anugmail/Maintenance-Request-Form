@@ -16,7 +16,9 @@ const path = require('path');
 
 const OUT = path.join(__dirname, 'out');
 const CACHE = path.join(OUT, 'icons.json');
-const SLUGS = ['index', 'plan-new', 'supplies', 'confirm', 'plan-skeleton'];
+const SLUGS = ['index', 'plan-new', 'supplies', 'confirm', 'plan-skeleton',
+  // โฟลว์แจ้งซ่อมฝั่งผู้แจ้ง (flow-report-extract.js) — ไอคอนของ mock ก็ต้องมี svg
+  ...Array.from({ length: 8 }, (_, i) => 'report-0' + (i + 1))];
 const URL = (name) => 'https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/' + name + '/default/24px.svg';
 
 function collectNames() {

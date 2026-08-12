@@ -171,7 +171,9 @@ const figma = {
 const code = fs.readFileSync(path.join(__dirname, 'plugin', 'code.js'), 'utf8');
 vm.runInNewContext(code, { figma, __html__: '', console });
 
-const spec = JSON.parse(fs.readFileSync(path.join(__dirname, 'out', 'spec.json'), 'utf8'));
+// --report = เทสสเปกโฟลว์แจ้งซ่อม (spec-report.json) — สองสเปกเป็นคนละไฟล์ ไม่ทับกัน
+const specFile = process.argv.includes('--report') ? 'spec-report.json' : 'spec.json';
+const spec = JSON.parse(fs.readFileSync(path.join(__dirname, 'out', specFile), 'utf8'));
 
 /* ค่าคาดหวังจาก spec — ข้อความที่ต้องเห็นบนหน้าจอ (multiset) */
 const expectTexts = [];

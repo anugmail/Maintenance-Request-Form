@@ -34,6 +34,11 @@ const SIMPLE = [
   ['rzone-head', 'review zone / head'], ['rzone-body', 'review zone / body'],
   ['rzone-count', 'review zone / count'], ['rzone-caret', 'review zone / caret'],
   ['rzone-allchk', 'review zone / select all'], ['rzone', 'review zone'],
+  // การ์ดรถของ mock แจ้งซ่อม (UIC.vehicleCard ใน ui-components.js)
+  ['vehicle-detail-card', 'vehicle detail card'], ['vehicle-detail-grid', 'vehicle detail grid'],
+  ['vehicle-detail-label', 'vehicle detail label'], ['vehicle-detail-value', 'vehicle detail value'],
+  ['vehicle-target-option', 'vehicle target option'], ['vehicle-target-legend', 'vehicle target legend'],
+  ['vehicle-target', 'vehicle target'], ['veh', 'vehicle card'],
   ['fgrid', 'form grid'], ['actions', 'actions'], ['footer', 'footer'],
   ['empty', 'empty state'], ['toast', 'toast'], ['chk', 'checkbox'],
   ['seg', 'segmented'], ['chips', 'chips'], ['chip', 'chip'],

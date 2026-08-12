@@ -9,7 +9,11 @@
    ถ้าเขียน rule แยกทุกค่าจะพลาดเคสผสมเรื่อยๆ แต่ "ลูกเรียงลงล่าง"
    กับ "ลูกเรียงไปขวา" วัดจากพิกัดจริงได้แม่นกว่า และครอบคลุมทุก display
 
-   รัน:  node figma-export/2-map.js
+   รัน:  node figma-export/2-map.js             → out/spec.json (4 หน้า yearly)
+         node figma-export/2-map.js --report    → out/spec-report.json
+                                                  (โฟลว์แจ้งซ่อมฝั่งผู้แจ้ง 8 state จาก flow-report-extract.js)
+
+   สองท่อไม่แตะกัน: spec*.json ของท่อ Figma design · board.json ของบอร์ด FigJam
    ============================================================ */
 
 const fs = require('fs');
@@ -19,8 +23,13 @@ const { parseTokens } = require('./tokens-vars');
 const { collectComponents } = require('./components-map');
 
 const OUT = path.join(__dirname, 'out');
+const REPORT = process.argv.includes('--report');
 // plan-skeleton พักไว้ก่อนตามที่เจ้าของงานสั่ง 11 ส.ค. 2569 · admin ตัดออกเพราะใหญ่เกิน (3,770 node)
-const SLUGS = ['index', 'plan-new', 'supplies', 'confirm'];
+const SLUGS = REPORT
+  ? Array.from({ length: 8 }, (_, i) => 'report-0' + (i + 1))
+  : ['index', 'plan-new', 'supplies', 'confirm'];
+const PAGE_NAME = REPORT ? 'Screens — แจ้งซ่อม (ฝั่งผู้แจ้ง)' : 'Screens — บำรุงรักษาประจำปี';
+const OUT_FILE = REPORT ? 'spec-report.json' : 'spec.json';
 
 const ICONS = (() => {
   const f = path.join(OUT, 'icons.json');
@@ -381,7 +390,10 @@ function main() {
   const screens = [];
   for (const slug of SLUGS) {
     const file = path.join(OUT, 'dom-' + slug + '.json');
-    if (!fs.existsSync(file)) { console.error('ไม่พบ ' + file + ' — รัน 1-extract.js ก่อน'); process.exit(1); }
+    if (!fs.existsSync(file)) {
+      console.error('ไม่พบ ' + file + ' — รัน ' + (REPORT ? 'flow-report-extract.js' : '1-extract.js') + ' ก่อน');
+      process.exit(1);
+    }
     const d = JSON.parse(fs.readFileSync(file, 'utf8'));
     const before = stats.nodes + stats.texts;
     const root = convert(d.root, null, { inActions: false, inFooter: false, depth: 0 });
@@ -399,8 +411,8 @@ function main() {
   stats.variables = Object.fromEntries(Object.entries(tokens.collections).map(([k, v]) => [k, v.length]));
   stats.tokensSkipped = tokens.skipped;
 
-  const spec = { version: 2, pageName: 'Screens — บำรุงรักษาประจำปี', generatedAt: new Date().toISOString(), variables, components, screens };
-  const outFile = path.join(OUT, 'spec.json');
+  const spec = { version: 2, pageName: PAGE_NAME, generatedAt: new Date().toISOString(), variables, components, screens };
+  const outFile = path.join(OUT, OUT_FILE);
   fs.writeFileSync(outFile, JSON.stringify(spec));
 
   const unknown = Object.entries(stats.unknown).sort((a, b) => b[1] - a[1]);

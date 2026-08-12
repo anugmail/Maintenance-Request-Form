@@ -1,9 +1,30 @@
 # figma-export — ส่งหน้าจอจาก HTML prototype เข้า Figma / FigJam
 
 > **ทางหลักตอนนี้ (เจ้าของงานเคาะ 12 ส.ค. 2569): บอร์ด FigJam แบบ capture** — ดูหัวข้อ "FigJam board" ข้างล่าง
-> ท่อ Figma design (frame/auto-layout/Variables/component) **พักไว้** — โค้ด+เทสเสร็จแล้ว ไม่ทิ้ง:
-> 4 หน้าจอ + ไอคอน SVG + **Variables 99 ตัวจาก `tokens.css`** + **component 6 ชุด / instance 121 จุด**
+> ท่อ Figma design (frame/auto-layout/Variables/component) กลับมาใช้ 12 ส.ค. กับ **โฟลว์แจ้งซ่อมฝั่งผู้แจ้ง**
+> (`spec-report.json` — 8 state ของ wizard ดูหัวข้อถัดไป) · สเปกชุด yearly เดิมยังอยู่ครบ:
+> 4 หน้าจอ + ไอคอน SVG + **Variables 99 ตัวจาก `tokens.css`** + **component + instance**
 > (`plan-skeleton` พักตามคำสั่ง 11 ส.ค. · `admin` ตัดออกเพราะใหญ่เกิน 3,770 node)
+>
+> **สองท่อนี้แยกไฟล์กันเด็ดขาด ไม่ทับกัน:** ท่อ FigJam ใช้ `board.json` + `figjam-plugin/` ·
+> ท่อ design ใช้ `spec.json` / `spec-report.json` + `plugin/` — `serve.js` ตัวเดียวเสิร์ฟทั้งหมด
+
+## ท่อ design กับโฟลว์แจ้งซ่อม (ฝั่งผู้แจ้ง 8 state)
+
+`flow-report-extract.js` เป็นคู่แฝดของ `flow-report-capture.js` — ไล่กด wizard เส้นเดียวกันเป๊ะ
+แต่แทนที่จะถ่ายภาพ มันรัน `walkDom` (แชร์จาก `dom-walk.js`) เก็บ DOM + computed style ทีละ state
+→ `out/dom-report-01..08.json` แล้ว `2-map.js --report` แปลงเป็น `out/spec-report.json`
+(หน้า Figma ชื่อ `Screens — แจ้งซ่อม (ฝั่งผู้แจ้ง)` · node รวม 1,729 — หนักสุด 342/state ไม่ชนเพดานแบบ admin)
+
+```bash
+NODE_PATH=… node figma-export/flow-report-extract.js   # ต้องมี :8123 รันอยู่
+node figma-export/0-icons.js                           # เก็บไอคอนของ mock เพิ่ม (58 ตัว)
+node figma-export/2-map.js --report                    # → out/spec-report.json (ไม่แตะ spec.json)
+node figma-export/test-plugin.js --report              # เทสบน mock Plugin API ก่อนเปิด Figma
+```
+
+ในไฟล์ **Figma design** (ไม่ใช่ FigJam): import `figma-export/plugin/manifest.json` → ช่อง "ที่อยู่สเปก"
+เปลี่ยนเป็น `http://localhost:8124/spec-report.json` → กด **"โหลด + สร้าง"**
 
 ## FigJam board — capture ทุกโฟลว์/ทุกหน้า (ทางหลัก)
 
