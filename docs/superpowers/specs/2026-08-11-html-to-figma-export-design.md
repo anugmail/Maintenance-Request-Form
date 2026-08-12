@@ -132,7 +132,9 @@ Starter สร้าง local variable ได้ (จำกัดที่จำ
 
 ## 8. ที่ยังไม่ทำ
 
-- `1-extract.js` · `mapping.js` · `2-map.js`
-- gen Figma Variables จาก `tokens.css`
-- ดึง SVG ไอคอน 45 ตัว
-- รองรับ `type: "instance"` ใน `code.js` (ตอนนี้ log เตือนแล้ววาดเป็น frame)
+~~ทุกข้อในลิสต์เดิมทำครบแล้ว~~ — 11 ส.ค. ค่ำ: `1-extract.js` · `mapping.js` · `2-map.js` · ไอคอน SVG
+· **12 ส.ค.:** gen Variables จาก `tokens.css` (3 collection + ผูก fill/stroke/radius) และ
+`type:"instance"` เต็มรูป (component 6 ชุด + specimen + icon component · override ข้อความ/สลับไอคอน/ซ่อนส่วนเกิน)
+สถานะปัจจุบัน + วิธีใช้ดูที่ [`figma-export/README.md`](../../../figma-export/README.md)
+
+ที่เหลือจริง: หน้า `admin` (3,770 node ต้องตัดเป็นส่วน) · `plan-skeleton` (พักตามคำสั่ง 11 ส.ค.)

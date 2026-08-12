@@ -34,6 +34,81 @@ function solid(hex, opacity) {
   return { type: 'SOLID', color, opacity: typeof opacity === 'number' ? opacity : 1 };
 }
 
+/* ---------- Figma Variables ----------
+   สร้างจาก spec.variables (tokens.css ที่ 2-map.js แปลงมา) แล้วเก็บดัชนี
+   hex → Variable ไว้ผูกทุก paint ที่วาด — แก้ brand/600 ที่เดียวทั้งไฟล์เปลี่ยน */
+const BOUND = { color: {}, radius: {} };
+
+function boundSolid(hex, opacity) {
+  const paint = solid(hex, opacity);
+  if (!paint) return null;
+  const v = BOUND.color[String(hex).trim().toUpperCase()];
+  return v ? figma.variables.setBoundVariableForPaint(paint, 'color', v) : paint;
+}
+
+async function syncVariables(vars) {
+  BOUND.color = {}; BOUND.radius = {};
+  if (!vars || !figma.variables) return 0;
+
+  const existingCols = await figma.variables.getLocalVariableCollectionsAsync();
+  const cols = {};
+  for (const name of Object.keys(vars.collections)) {
+    cols[name] = existingCols.find(c => c.name === name) || figma.variables.createVariableCollection(name);
+  }
+
+  // รันซ้ำ = อัปเดตค่าตัวเดิม ไม่สร้างซ้ำ — จับคู่ด้วยชื่อใน collection เดียวกัน
+  const existingVars = await figma.variables.getLocalVariablesAsync();
+  const byKey = new Map();
+  for (const v of existingVars) {
+    const col = existingCols.find(c => c.id === v.variableCollectionId);
+    if (col) byKey.set(col.name + '§' + v.name, v);
+  }
+
+  const made = new Map();
+  // รอบ 1: ให้ทุกตัวมีตัวตนก่อน — alias ในรอบ 2 จะได้ชี้เจอเสมอไม่ว่าลำดับไหน
+  for (const [colName, defs] of Object.entries(vars.collections)) {
+    for (const def of defs) {
+      const type = def.type === 'ALIAS' ? def.resolvedType : def.type;
+      let v = byKey.get(colName + '§' + def.name);
+      if (v && v.resolvedType !== type) { v.remove(); v = null; }
+      if (!v) v = figma.variables.createVariable(def.name, cols[colName], type);
+      if (def.description) v.description = def.description;
+      made.set(colName + '§' + def.name, v);
+    }
+  }
+  // รอบ 2: ใส่ค่า
+  for (const [colName, defs] of Object.entries(vars.collections)) {
+    const modeId = cols[colName].modes[0].modeId;
+    for (const def of defs) {
+      const v = made.get(colName + '§' + def.name);
+      try {
+        if (def.type === 'COLOR') {
+          const c = hexToRgb(def.hex);
+          v.setValueForMode(modeId, { r: c.r, g: c.g, b: c.b, a: def.alpha == null ? 1 : def.alpha });
+        } else if (def.type === 'FLOAT') {
+          v.setValueForMode(modeId, def.value);
+        } else if (def.type === 'ALIAS') {
+          const target = made.get(def.targetCollection + '§' + def.target);
+          if (target) v.setValueForMode(modeId, figma.variables.createVariableAlias(target));
+          else warn('alias ' + def.name + ' หาปลายทาง ' + def.target + ' ไม่เจอ');
+        }
+      } catch (e) {
+        warn('ตั้งค่า variable ' + def.name + ' ไม่ได้ — ' + e.message);
+      }
+    }
+  }
+
+  for (const [hex, name] of Object.entries(vars.colorIndex || {})) {
+    const v = made.get('primitive§' + name);
+    if (v) BOUND.color[hex.toUpperCase()] = v;
+  }
+  for (const [pxv, name] of Object.entries(vars.radiusIndex || {})) {
+    const v = made.get('primitive§' + name);
+    if (v) BOUND.radius[pxv] = v;
+  }
+  return made.size;
+}
+
 /* ---------- ฟอนต์ ----------
    น้ำหนัก CSS → ชื่อ style ของ Figma · ถ้าโหลดไม่ได้จะไล่ fallback ลงมา
    จนถึง Inter Regular ซึ่งมีติดมากับ Figma เสมอ                        */
@@ -86,7 +161,7 @@ async function createNode(spec) {
       if (typeof t.letterSpacing === 'number') node.letterSpacing = { value: t.letterSpacing, unit: 'PIXELS' };
       node.textAlignHorizontal = t.align || 'LEFT';
       node.textAlignVertical = t.valign || 'TOP';
-      const fill = solid(t.color || '#181D27');
+      const fill = boundSolid(t.color || '#181D27');
       if (fill) node.fills = [fill];
       // WIDTH_AND_HEIGHT = hug ตามตัวอักษร · HEIGHT = ล็อกความกว้างไว้ให้ตัดบรรทัดเหมือนต้นฉบับ
       node.textAutoResize = t.autoResize || 'WIDTH_AND_HEIGHT';
@@ -104,7 +179,7 @@ async function createNode(spec) {
 
 /* auto-layout + padding + gap — ต้องตั้งก่อน append ลูก */
 function applyLayout(node, spec) {
-  if (node.type !== 'FRAME') return;
+  if (node.type !== 'FRAME' && node.type !== 'COMPONENT') return;
   const L = spec.layout;
   if (!L || !L.mode || L.mode === 'NONE') {
     node.layoutMode = 'NONE';
@@ -126,11 +201,11 @@ function applyLayout(node, spec) {
 /* พื้น เส้น มุม เงา — ทำได้ทุกจังหวะ */
 function applyPaint(node, spec) {
   if ('fills' in node && spec.type !== 'text') {
-    const fill = spec.fill ? solid(spec.fill, spec.fillOpacity) : null;
+    const fill = spec.fill ? boundSolid(spec.fill, spec.fillOpacity) : null;
     node.fills = fill ? [fill] : [];
   }
   if (spec.stroke && 'strokes' in node) {
-    const s = solid(spec.stroke.color);
+    const s = boundSolid(spec.stroke.color);
     if (s) {
       node.strokes = [s];
       node.strokeWeight = spec.stroke.weight || 1;
@@ -146,6 +221,12 @@ function applyPaint(node, spec) {
   }
   if (typeof spec.radius === 'number' && 'cornerRadius' in node) {
     node.cornerRadius = spec.radius;
+    const rv = BOUND.radius[spec.radius];
+    if (rv && node.setBoundVariable) {
+      for (const f of ['topLeftRadius', 'topRightRadius', 'bottomRightRadius', 'bottomLeftRadius']) {
+        try { node.setBoundVariable(f, rv); } catch (e) { break; }   // API เก่าไม่มี field นี้ก็ข้ามทั้งชุด
+      }
+    }
   } else if (Array.isArray(spec.radius) && 'topLeftRadius' in node) {
     node.topLeftRadius = spec.radius[0] || 0;
     node.topRightRadius = spec.radius[1] || 0;
@@ -170,8 +251,9 @@ function applyPaint(node, spec) {
    เพราะ HUG ต้องรู้ลูก และ FILL ต้องรู้ว่า parent เป็น auto-layout */
 function applySizing(node, spec) {
   const s = spec.size || {};
-  const canHug = node.type === 'TEXT' || (node.type === 'FRAME' && node.layoutMode !== 'NONE');
-  const parentIsAuto = node.parent && node.parent.type === 'FRAME' && node.parent.layoutMode !== 'NONE';
+  const boxy = (t) => t === 'FRAME' || t === 'COMPONENT' || t === 'INSTANCE';
+  const canHug = node.type === 'TEXT' || (boxy(node.type) && node.layoutMode !== 'NONE');
+  const parentIsAuto = node.parent && boxy(node.parent.type) && node.parent.layoutMode !== 'NONE';
 
   if (typeof s.w === 'number' && typeof s.h === 'number' && 'resize' in node) {
     try { node.resize(Math.max(0.01, s.w), Math.max(0.01, s.h)); } catch (e) { /* auto-layout คุมอยู่ */ }
@@ -215,27 +297,50 @@ function buildSvg(spec, parent) {
     try { node.rescale(want / node.width); } catch (e) { /* ขนาดเดิมก็พอใช้ได้ */ }
   }
 
-  const fill = solid(spec.color);
-  if (fill) {
-    (function paint(n) {
-      if ('fills' in n && Array.isArray(n.fills) && n.fills.length) n.fills = [fill];
-      if ('strokes' in n && Array.isArray(n.strokes) && n.strokes.length) n.strokes = [fill];
-      if ('children' in n) n.children.forEach(paint);
-    })(node);
-  }
+  recolorVectors(node, spec.color);
   node.fills = [];        // กรอบนอกของ SVG ต้องใส เห็นแต่ตัวไอคอน
   return node;
 }
 
+/* ทาสีทุกเส้น/พื้นข้างในไอคอน — ใช้ทั้งตอนวาด svg สดและตอน override ใน instance */
+function recolorVectors(root, hex) {
+  const fill = boundSolid(hex);
+  if (!fill) return;
+  (function paint(n) {
+    if ('fills' in n && Array.isArray(n.fills) && n.fills.length) n.fills = [fill];
+    if ('strokes' in n && Array.isArray(n.strokes) && n.strokes.length) n.strokes = [fill];
+    if ('children' in n) n.children.forEach(paint);
+  })(root);
+}
+
+/* ---------- component registry ----------
+   เติมโดย buildComponents ก่อนสร้างหน้าจอ — หน้าจออ้างผ่านชื่อชุด+key */
+const REG = { icons: {}, sets: {} };
+
 async function buildNode(spec, parent) {
   if (spec.type === 'svg') {
+    // มี icon component แล้ว → วาง instance แทนการวาด svg ซ้ำ (สลับไอคอนได้ทีหลัง)
+    const iconComp = spec.glyph && REG.icons[spec.glyph];
+    if (iconComp) {
+      const inst = iconComp.createInstance();
+      parent.appendChild(inst);
+      inst.name = spec.name || 'icon / ' + spec.glyph;
+      const want = (spec.size && spec.size.w) || 20;
+      if (inst.width > 0 && Math.abs(inst.width - want) > 0.5) {
+        try { inst.rescale(want / inst.width); } catch (e) { /* ขนาดเดิมก็พอใช้ได้ */ }
+      }
+      if (spec.color) recolorVectors(inst, spec.color);
+      applySizing(inst, Object.assign({}, spec, { size: {} }));
+      return inst;
+    }
     const node = buildSvg(spec, parent);
     if (node) applySizing(node, Object.assign({}, spec, { size: {} }));   // ข้าม resize ปล่อยขนาดที่ rescale ไว้
     return node;
   }
   if (spec.type === 'instance') {
-    // ยังไม่รองรับในรอบนี้ — component library ยังไม่ถูกสร้าง (ส่วนที่ 2 ของดีไซน์)
-    warn('ยังแปลง instance ไม่ได้: ' + (spec.component || '?') + ' → วาดเป็น frame แทน');
+    const comp = REG.sets[spec.set + '§' + spec.key];
+    if (comp) return await buildInstance(spec, parent, comp);
+    warn('ไม่พบ component ' + spec.set + ' § ' + spec.key + ' → วาดเป็น frame แทน');
     spec = Object.assign({}, spec, { type: 'frame' });
   }
   const node = await createNode(spec);
@@ -251,10 +356,154 @@ async function buildNode(spec, parent) {
   return node;
 }
 
+/* ---------- instance + override ----------
+   index ของ override นับจากตัวนิยามแบบ pre-order (2-map.js นับมาให้)
+   ตรงกับลำดับ findAll ของ Figma พอดี — node ที่ถูกซ่อนก็ยังอยู่ในลำดับ */
+async function buildInstance(spec, parent, comp) {
+  const inst = comp.createInstance();
+  parent.appendChild(inst);
+  inst.name = spec.name || comp.name;
+  const ov = spec.overrides || {};
+
+  for (const path of ov.hidden || []) {
+    try {
+      let n = inst;
+      for (const idx of path) n = n.children[idx];
+      n.visible = false;
+    } catch (e) { warn('ซ่อนชิ้นส่วนใน "' + inst.name + '" ไม่ได้'); }
+  }
+
+  const textNodes = inst.findAll(n => n.type === 'TEXT');
+  for (const o of ov.texts || []) {
+    const tn = textNodes[o.i];
+    if (!tn) { warn('หา text ตัวที่ ' + o.i + ' ใน "' + inst.name + '" ไม่เจอ'); continue; }
+    const family = tn.fontName.family;
+    const font = await resolveFont(family, o.weight || WEIGHT_OF(tn));
+    tn.fontName = font;
+    tn.characters = String(o.chars == null ? '' : o.chars);
+    if (o.size) tn.fontSize = o.size;
+    if (o.color) { const p = boundSolid(o.color); if (p) tn.fills = [p]; }
+  }
+
+  const iconNodes = inst.findAll(n => n.type === 'INSTANCE' && n.name.indexOf('icon / ') === 0);
+  for (const o of ov.icons || []) {
+    const icn = iconNodes[o.i];
+    if (!icn) { warn('หาไอคอนตัวที่ ' + o.i + ' ใน "' + inst.name + '" ไม่เจอ'); continue; }
+    const target = o.glyph && REG.icons[o.glyph];
+    if (target && icn.name !== 'icon / ' + o.glyph) {
+      try { icn.swapComponent(target); icn.name = 'icon / ' + o.glyph; }
+      catch (e) { warn('สลับไอคอนเป็น ' + o.glyph + ' ใน "' + inst.name + '" ไม่ได้'); }
+    }
+    if (o.color) recolorVectors(icn, o.color);
+  }
+
+  applySizing(inst, spec);
+  return inst;
+}
+
+/* น้ำหนักปัจจุบันของ text node — ไว้คงน้ำหนักเดิมตอน override แค่ข้อความ */
+function WEIGHT_OF(tn) {
+  const style = tn.fontName && tn.fontName.style;
+  for (const [w, s] of Object.entries(WEIGHT_STYLE)) if (s === style) return parseInt(w, 10);
+  return 400;
+}
+
+/* ---------- หน้า Foundations & Components ----------
+   ไอคอน → ชุด variant → specimen (ลำดับนี้เพราะชุดหลังใช้ของชุดแรกได้) */
+async function buildComponents(comp) {
+  REG.icons = {}; REG.sets = {};
+  if (!comp) return { sets: 0, icons: 0 };
+
+  const pageName = comp.pageName || 'Foundations & Components';
+  let page = figma.root.children.find(p => p.name === pageName);
+  if (page) {
+    for (const child of page.children.slice()) child.remove();   // รันซ้ำ = ล้างแล้วสร้างใหม่
+  } else {
+    page = figma.createPage();
+    page.name = pageName;
+  }
+
+  let y = 0;
+
+  if (Array.isArray(comp.icons) && comp.icons.length) {
+    const grid = figma.createFrame();
+    grid.name = 'icons';
+    page.appendChild(grid);
+    grid.layoutMode = 'HORIZONTAL';
+    grid.layoutWrap = 'WRAP';
+    grid.itemSpacing = 24;
+    grid.counterAxisSpacing = 24;
+    grid.paddingTop = grid.paddingRight = grid.paddingBottom = grid.paddingLeft = 24;
+    grid.resize(640, 100);
+    grid.layoutSizingVertical = 'HUG';
+    grid.fills = [];
+    for (const ic of comp.icons) {
+      let svgNode;
+      try { svgNode = figma.createNodeFromSvg(ic.svg); }
+      catch (e) { warn('สร้าง icon component ไม่ได้: ' + ic.glyph); continue; }
+      const c = figma.createComponent();
+      c.name = 'icon / ' + ic.glyph;
+      c.resizeWithoutConstraints(svgNode.width || 20, svgNode.height || 20);
+      c.appendChild(svgNode);
+      svgNode.x = 0; svgNode.y = 0;
+      svgNode.fills = [];
+      c.fills = [];
+      grid.appendChild(c);
+      REG.icons[ic.glyph] = c;
+    }
+    grid.x = 0; grid.y = y;
+    y += grid.height + 120;
+  }
+
+  for (const setDef of comp.sets || []) {
+    const variantNodes = [];
+    for (const v of setDef.variants || []) {
+      const c = figma.createComponent();
+      c.name = v.key;                       // 'Hierarchy=primary, Size=md' — รูปแบบที่ combineAsVariants ต้องการ
+      page.appendChild(c);
+      applyLayout(c, v.root);
+      applyPaint(c, v.root);
+      for (const child of v.root.children || []) await buildNode(child, c);
+      applySizing(c, v.root);
+      variantNodes.push(c);
+      REG.sets[setDef.set + '§' + v.key] = c;
+    }
+    if (!variantNodes.length) continue;
+    let shown;
+    if (variantNodes.length === 1 && variantNodes[0].name === 'default') {
+      shown = variantNodes[0];
+      shown.name = setDef.set;              // ตัวเดียวไม่มี prop — เป็น component เดี่ยวชื่อชุดตรงๆ
+    } else {
+      shown = figma.combineAsVariants(variantNodes, page);
+      shown.name = setDef.set;
+    }
+    shown.x = 0; shown.y = y;
+    y += shown.height + 120;
+  }
+
+  for (const sp of comp.specimens || []) {
+    const c = figma.createComponent();
+    c.name = sp.name;
+    page.appendChild(c);
+    applyLayout(c, sp.root);
+    applyPaint(c, sp.root);
+    for (const child of sp.root.children || []) await buildNode(child, c);
+    applySizing(c, sp.root);
+    c.x = 0; c.y = y;
+    y += c.height + 120;
+  }
+
+  return { sets: Object.keys(REG.sets).length, icons: Object.keys(REG.icons).length };
+}
+
 /* ---------- สร้างทั้งสเปก ---------- */
 async function buildSpec(spec) {
   warnings.length = 0;
   await figma.loadAllPagesAsync();
+
+  // ลำดับสำคัญ: variables → components → หน้าจอ (instance ชี้หา component ที่เพิ่งสร้าง)
+  const varCount = await syncVariables(spec.variables);
+  const compInfo = await buildComponents(spec.components);
 
   const pageName = spec.pageName || 'Maintain-D';
   let page = figma.root.children.find(p => p.name === pageName);
@@ -279,7 +528,13 @@ async function buildSpec(spec) {
   }
 
   if (made.length) figma.viewport.scrollAndZoomIntoView(made);
-  return { screens: made.length, warnings: warnings.slice() };
+  return {
+    screens: made.length,
+    variables: varCount,
+    components: compInfo.sets,
+    icons: compInfo.icons,
+    warnings: warnings.slice()
+  };
 }
 
 /* ---------- สเปกตัวอย่าง ----------
@@ -359,7 +614,8 @@ figma.ui.onmessage = async (msg) => {
     try {
       const result = await buildSpec(msg.type === 'sample' ? SAMPLE_SPEC : msg.spec);
       figma.ui.postMessage({ type: 'done', result });
-      figma.notify('สร้างแล้ว ' + result.screens + ' หน้าจอ' +
+      figma.notify('สร้างแล้ว ' + result.screens + ' หน้าจอ · variable ' + (result.variables || 0) +
+        ' · component ' + (result.components || 0) + ' · ไอคอน ' + (result.icons || 0) +
         (result.warnings.length ? ' · เตือน ' + result.warnings.length + ' รายการ' : ''));
     } catch (e) {
       figma.ui.postMessage({ type: 'error', message: String(e && e.message ? e.message : e) });

@@ -1,8 +1,9 @@
 # figma-export — ส่งหน้าจอจาก HTML prototype เข้า Figma
 
-> **สถานะ:** ทั้ง 3 ท่อนใช้ได้แล้ว — 4 หน้าจอออกมาเป็น frame + auto-layout + ไอคอน SVG
+> **สถานะ:** ครบทั้งท่อ — 4 หน้าจอเป็น frame + auto-layout + ไอคอน SVG
+> **+ Figma Variables 99 ตัวจาก `tokens.css`** (fill/stroke/radius ผูก variable ไม่ทาสีดิบ)
+> **+ component 6 ชุด + specimen + icon component** — จุดใช้งานในหน้าจอเป็น instance จริง 121 จุด
 > (`plan-skeleton` พักไว้ตามที่เจ้าของงานสั่ง 11 ส.ค. · `admin` ตัดออกเพราะใหญ่เกิน 3,770 node)
-> ยังไม่ได้ทำ: ยกเป็น Figma component/variant จริง · gen Variables จาก `tokens.css`
 
 ## ทำไมต้องเป็นปลั๊กอิน ไม่ใช่ REST API
 
@@ -17,10 +18,12 @@ Figma REST API **เขียน node ไม่ได้** — เขียน�
    │                 เดิน DOM เก็บ rect + computed style + pseudo-element
    ▼ out/dom-<page>.json  + out/shot-<page>.png
    │  2-map.js       ใช้ mapping.js แปลงเป็น frame + auto-layout
+   │                 + tokens-vars.js อ่าน tokens.css → Variables 3 collection
+   │                 + components-map.js ยกของซ้ำเป็น component + แทนด้วย instance
    ▼ out/spec.json  + out/map-report.json
    │  serve.js       เสิร์ฟที่ localhost:8124 (ต้องมี CORS)
    ▼
-plugin/  ปลั๊กอินดึง spec.json แล้วสร้างของใน Figma
+plugin/  สร้าง Variables → หน้า Foundations & Components → หน้าจอ (ตามลำดับ)
 ```
 
 **หลักการตัดสินโครง: geometry เป็นคนบอกโครง · CSS เป็นคนบอกหน้าตา**
@@ -70,12 +73,39 @@ node figma-export/serve.js                          # เสิร์ฟให�
 | ไลบรารี PEA เป็นคนละไฟล์ + บัญชี Starter | ใช้ `importComponentByKeyAsync` ไม่ได้ ⇒ **สร้าง component เองในไฟล์นี้** |
 | ฟอนต์ | ถ้า `IBM Plex Sans Thai` ไม่มีในเครื่อง จะ fallback เป็น Inter แล้ว log เตือน |
 
-## รูปแบบสเปก (v1)
+## Variables + Components (spec v2)
+
+**Variables** — `tokens-vars.js` อ่าน `tokens.css` ทั้งไฟล์ แยกเป็น 3 collection ตามชั้นในไฟล์
+(`primitive` / `semantic` / `component`) · `var(--x)` กลายเป็น alias จริงใน Figma
+⇒ แก้ `brand/600` ที่เดียวทั้งไฟล์เปลี่ยน เทียบเท่า `var(--brand-600)` ในโค้ด
+ชื่อ variable = ชื่อ CSS ตรงๆ เปลี่ยน `-` เป็น `/` (`--brand-600` → `brand/600`) — map กลับหาโค้ดได้เสมอ
+ปลั๊กอิน**ผูก fill / stroke / สี text / radius เข้ากับ variable** ทุกจุดที่ค่าตรง token (สีดูจากชั้น primitive · #FFFFFF ไม่ผูกเพราะไม่มีชื่อ primitive ถือ)
+รันซ้ำ = อัปเดตค่าตัวเดิม ไม่สร้างซ้ำ (เทสยืนยันแล้ว)
+
+**Components** — `components-map.js` ใช้ชื่อ layer จาก `mapping.js` เป็นกุญแจ:
+
+- **ชุด variant จริง + instance**: `btn` (Hierarchy×Size) · `badge` (Status) · `sidebar item` · `stepper step` (State) · `header cell` · `cell` — occurrence ที่โครงตรงตัวนิยามกลายเป็น instance พร้อม override (ข้อความ / สลับไอคอน / ซ่อนส่วนเกิน) ตัวที่โครงไม่ตรงคงเป็น frame แล้วรายงานใน `map-report.json`
+- **specimen**: `card` `section header` `form field` `breadcrumb` `draft banner` `review zone` ฯลฯ — สถานะจับไม่ได้จากการเรนเดอร์รอบเดียว จึงเป็น component ตัวอย่างให้หยิบใช้ต่อ หน้าจอคงเป็น frame ตามจริง
+- **icon component** ทุก glyph ที่ใช้ — ทุกจุดในหน้าจอเป็น instance สลับไอคอนได้
+
+ตัวนิยามของ variant เลือกแบบ `rich` (โครงแบน เอาตัว node เยอะสุด — ปุ่มไม่มีไอคอน = ซ่อนไอคอน)
+หรือ `common` (ข้างในหลากหลาย เช่นเซลล์ตาราง เอาโครงพบบ่อยสุด) — ตั้งใน `SETS` ของ `components-map.js`
+
+**เทสก่อนเปิด Figma:** `node figma-export/test-plugin.js` — รัน `plugin/code.js` บน mock ของ Plugin API
+ตรวจ: ข้อความครบตัวต่อตัว · alias ครบ · สีแบรนด์ไม่หลุดผูก · รันซ้ำ variable ไม่งอก
+
+## รูปแบบสเปก (v2)
 
 ```jsonc
 {
-  "version": 1,
+  "version": 2,
   "pageName": "ชื่อ page ใน Figma",
+  "variables": { "collections": { "primitive": [], "semantic": [], "component": [] },
+                 "colorIndex": { "#A80689": "brand/600" }, "radiusIndex": { "8": "rounded/md" } },
+  "components": { "pageName": "Foundations & Components",
+                  "sets": [ { "set": "btn", "variants": [ { "key": "Hierarchy=primary, Size=md", "root": {} } ] } ],
+                  "specimens": [ { "name": "card", "root": {} } ],
+                  "icons": [ { "glyph": "list_alt", "svg": "<svg…>" } ] },
   "screens": [ { "name": "ชื่อ frame", "root": <node> } ]
 }
 ```
@@ -84,7 +114,7 @@ node figma-export/serve.js                          # เสิร์ฟให�
 
 | คีย์ | ค่า |
 |---|---|
-| `type` | `frame` · `text` · `rect` · `ellipse` (`instance` ยังไม่รองรับ — จะ log เตือนแล้ววาดเป็น frame) |
+| `type` | `frame` · `text` · `rect` · `ellipse` · `svg` (มี `glyph` จะวางเป็น instance ของ icon component) · `instance` (`set`+`key` ชี้เข้า components.sets · `overrides` = `{texts, icons, hidden}` index นับจากตัวนิยามแบบ pre-order) |
 | `name` | ชื่อ layer — **ตั้งให้ตรงคลาสในโค้ด** เช่น `btn / primary / md` เพื่อ map กลับไปหา `.btn.btn-p.btn-md` ได้ |
 | `layout` | `{ mode: VERTICAL\|HORIZONTAL\|NONE, gap, padding:[t,r,b,l], align, cross, wrap }` |
 | `size` | `{ w, h, wMode, hMode }` — mode เป็น `FIXED` · `HUG` · `FILL` |

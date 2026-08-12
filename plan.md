@@ -555,6 +555,15 @@ token เป็น PAT scope `file_content:read` เก็บที่ `~/.figma
 - รันซ้ำชื่อ page เดิม = ล้างของเดิมสร้างใหม่ ไม่ซ้อน · ภาษาไทยเรนเดอร์ปกติ
 - ดีไซน์เต็ม + ข้อจำกัดที่เจอ (ฟรี 3 page/ไฟล์ · sandbox ไม่มี `fetch`/`eval` · `localhost` resolve เป็น `::1` ฯลฯ) อยู่ที่ `figma-export/README.md` และ `docs/superpowers/specs/2026-08-11-html-to-figma-export-design.md`
 
+### 🔁 figma-export — Variables + component/variant จริง (12 ส.ค. 2569)
+
+ปิดสองข้อใหญ่ที่เหลือของ spec (หัวข้อ 4.1–4.2) — ไฟล์ Figma ที่ได้ตอนนี้ "ดีไซเนอร์แก้ได้จริง" ครบเงื่อนไข: auto-layout · instance สลับได้ · fill ผูก variable
+
+- **Variables 99 ตัว** (`tokens-vars.js`): อ่าน `tokens.css` แยก 3 collection ตามชั้นในไฟล์ (primitive 76 · semantic 11 · component 12) · `var(--x)` เป็น alias จริง ⇒ แก้ `brand/600` ที่เดียวทั้งไฟล์เปลี่ยน · ชื่อ = ชื่อ CSS เปลี่ยน `-` เป็น `/` map กลับหาโค้ดได้ · ปลั๊กอินผูก fill/stroke/สี text/radius ทุกจุดที่ค่าตรง token · รันซ้ำอัปเดตตัวเดิมไม่งอก
+- **Component 6 ชุด + specimen 6 + icon 10** (`components-map.js`): ชื่อ layer เป็นกุญแจ → tree-diff เทียบตัวนิยาม ตรงก็เป็น **instance 121 จุด** พร้อม override (ข้อความ/สลับไอคอน/ซ่อนส่วนเกิน) โครงไม่ตรงคงเป็น frame (cell 50 จุด — เซลล์มี badge/สองบรรทัด ฯลฯ รายงานใน `map-report.json`) · ชุดสถานะจับไม่ได้ (card, form field, review zone …) เป็น specimen ในหน้า Foundations
+- **เทสไม่ต้องเปิด Figma**: `test-plugin.js` mock Plugin API แล้วรัน `plugin/code.js` ทั้งไฟล์ — ตรวจข้อความครบตัวต่อตัว (273/273) · alias ครบ 18 · สีแบรนด์ไม่หลุดผูก · รันซ้ำ variable ไม่งอก — **ผ่าน 12/12**
+- ยังไม่ได้กด "โหลด + สร้าง" ใน Figma desktop จริง — mock จับตรรกะได้แต่จับหน้าตา/ฟอนต์/ขนาด svg ไม่ได้ ต้องเปิดไฟล์จริงเทียบ screenshot (เกณฑ์ตาดู ข้อ 6 ของ spec)
+
 ### ค้างอยู่ (รอบถัดไป)
 - [x] ~~sync ผัง + skeleton ให้ตรงลำดับใหม่~~ — **เสร็จแล้ว 11 ส.ค.** ผัง 7/7 parse ผ่าน · `skeleton-data.js` จอ 1a/1b/ต้นทาง ตรงกับโค้ด · เทส 27/27
 - [ ] **สไตล์ช่องกรอกในตารางของ `confirm.html`** — รอเจ้าของงานเคาะ (ก ช่องเปล่าแบบตอนนี้ / ข ทรีตเมนต์เต็ม / ค เปลี่ยนเป็นการ์ดรายคัน)
@@ -583,8 +592,9 @@ token เป็น PAT scope `file_content:read` เก็บที่ `~/.figma
 - [x] ~~Diagram 02–06 ยังนับเป็น "6 ช่วง" ไม่ตรงโครงใหม่~~ — **เสร็จแล้ว 9 ส.ค.** sync ครบ 7 ไฟล์ + เปลี่ยนชื่อไฟล์ให้มีเลขเฟส
 - [x] ~~`plan-skeleton.html` ยังครอบแค่ฝั่งออกเลขงาน~~ — **เสร็จแล้ว 9 ส.ค.** ครอบครบ 11 หน้าจอ
 - [ ] **`plan-skeleton`** ยังไม่มีปุ่ม "ยกโครงไปหน้าจริง" · ธง `done` ยังตั้งมือใน `skeleton-data.js`
-- [ ] **figma-export: gen Figma Variables จาก `tokens.css`** — 3 collection (primitive/semantic/component) แล้วผูก fill ทุกตัวเข้า variable แทนทาสีดิบ (spec หัวข้อ 4.1)
-- [ ] **figma-export: ยก component/variant จริง 14 ชุด** — Button 5×2 · Badge 4 · Form field · Table cell · Sidebar item · Stepper step ฯลฯ + รองรับ `type:"instance"` ใน `code.js` (spec หัวข้อ 4.2)
+- [x] ~~**figma-export: gen Figma Variables จาก `tokens.css`**~~ — **เสร็จแล้ว 12 ส.ค.** 99 ตัว 3 collection + alias จริง + ผูก fill/stroke/สี text/radius (ดูหมุด 12 ส.ค.)
+- [x] ~~**figma-export: ยก component/variant จริง**~~ — **เสร็จแล้ว 12 ส.ค.** 6 ชุด variant + specimen 6 + icon component 10 · หน้าจอเป็น instance 121 จุด + override (ดูหมุด 12 ส.ค.)
+- [ ] **figma-export: กด "โหลด + สร้าง" ในไฟล์จริง** — โค้ด+เทสผ่านแล้ว แต่ยังไม่ได้รันใน Figma desktop เทียบตากับ screenshot (ไฟล์ต้องอยู่ใน anu phetcharat's Team)
 - [ ] **figma-export: หน้า `admin`** — extract ไว้แล้ว (3,770 node) แต่ยังไม่ได้ map/สร้าง อาจต้องตัดเป็นส่วนๆ
 - [ ] **figma-export: `plan-skeleton`** — พักไว้ตามที่เจ้าของงานสั่ง 11 ส.ค. รอปลดล็อก
 - [x] ~~หน้าจริงของ "ยืนยันรถเข้าร่วมแผน"~~ — **เสร็จแล้ว 10–11 ส.ค.** ทำครบทั้ง 2 ฝั่ง (กบค. + `confirm.html`) · เคาะ 4 ข้อกับเจ้าของงานแล้ว

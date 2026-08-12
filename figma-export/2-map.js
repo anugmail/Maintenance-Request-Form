@@ -15,6 +15,8 @@
 const fs = require('fs');
 const path = require('path');
 const { nameFor, isKnown, ICON_CLASS, GAP_TOLERANCE } = require('./mapping');
+const { parseTokens } = require('./tokens-vars');
+const { collectComponents } = require('./components-map');
 
 const OUT = path.join(__dirname, 'out');
 // plan-skeleton พักไว้ก่อนตามที่เจ้าของงานสั่ง 11 ส.ค. 2569 · admin ตัดออกเพราะใหญ่เกิน (3,770 node)
@@ -333,6 +335,7 @@ function convertIcon(node, parentRect) {
   const spec = {
     type: 'svg',
     name: 'icon / ' + glyph,
+    glyph,                       // ปลั๊กอินใช้หา icon component — มีแล้วจะสร้างเป็น instance ไม่วาด svg ซ้ำ
     svg,
     color: color ? color.hex : '#535862',
     size: { w: side, h: side, wMode: 'FIXED', hMode: 'FIXED' }
@@ -387,13 +390,32 @@ function main() {
     console.log('✓ ' + slug.padEnd(14) + (stats.nodes + stats.texts - before) + ' node');
   }
 
-  const spec = { version: 1, pageName: 'Screens — บำรุงรักษาประจำปี', generatedAt: new Date().toISOString(), screens };
+  // ยกของซ้ำเป็น component + instance (mutate screens) — ต้องทำก่อนประกอบ spec
+  const components = collectComponents(screens, ICONS, stats);
+
+  // tokens.css → Figma Variables 3 collection + ดัชนีให้ปลั๊กอินผูก fill/radius
+  const tokens = parseTokens();
+  const variables = { collections: tokens.collections, colorIndex: tokens.colorIndex, radiusIndex: tokens.radiusIndex };
+  stats.variables = Object.fromEntries(Object.entries(tokens.collections).map(([k, v]) => [k, v.length]));
+  stats.tokensSkipped = tokens.skipped;
+
+  const spec = { version: 2, pageName: 'Screens — บำรุงรักษาประจำปี', generatedAt: new Date().toISOString(), variables, components, screens };
   const outFile = path.join(OUT, 'spec.json');
   fs.writeFileSync(outFile, JSON.stringify(spec));
 
   const unknown = Object.entries(stats.unknown).sort((a, b) => b[1] - a[1]);
   console.log('\nรวม ' + stats.nodes + ' frame · ' + stats.texts + ' text · pseudo ' + stats.pseudo + ' จุด');
   console.log('gap ที่ปัดค่า: ' + stats.gapApprox + ' กล่อง · วางตามพิกัด (ไม่ใช้ auto-layout): ' + stats.absolute.length + ' กล่อง');
+  console.log('variables: primitive ' + stats.variables.primitive + ' · semantic ' + stats.variables.semantic +
+    ' · component ' + stats.variables.component + (tokens.skipped.length ? ' · ข้าม ' + tokens.skipped.length : ''));
+  const setSummary = components.sets.map(s => s.set + ' ' + s.variants.length).join(' · ');
+  console.log('components: ' + setSummary + ' · specimen ' + components.specimens.length +
+    ' · icon ' + components.icons.length + ' → instance ' + stats.instances + ' จุด');
+  const fb = Object.entries(stats.componentFallback).sort((a, b) => b[1] - a[1]);
+  if (fb.length) {
+    console.log('\n⚠ เข้า pattern component แต่โครงไม่ตรงตัวนิยาม (คงเป็น frame):');
+    fb.slice(0, 10).forEach(([k, v]) => console.log('   x' + String(v).padStart(3) + '  ' + k));
+  }
   if (unknown.length) {
     console.log('\n⚠ คลาสที่ตารางแปลงยังไม่รู้จัก ' + unknown.length + ' แบบ:');
     unknown.slice(0, 15).forEach(([k, v]) => console.log('   x' + String(v).padStart(3) + '  ' + k));
