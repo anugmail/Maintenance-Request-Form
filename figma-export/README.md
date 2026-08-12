@@ -15,7 +15,8 @@ figjam-capture.js            capture ทุกหน้า (25 หน้า ส�
 flow-plan-capture.js         ไล่กดโฟลว์ "สร้างแผน / ออกเลขงาน" จริง 8 หน้าจอ
 flow-after-issue-capture.js  โฟลว์ต่อ: พัสดุรับทราบ + ส่งคำขอ/ตอบยืนยันรถ 7 หน้าจอ
    ▼ out/figjam/**/*.png + manifest.json
-3-figjam-board.js            รวมทุก manifest → out/board.json (8 section · 45 รูป)
+3-figjam-board.js            → out/board.json · ค่าเริ่มต้น = โฟลว์สร้างแผนอย่างเดียว (1 section · 8 รูป)
+                             ตามที่เจ้าของงานสั่ง "ทำแค่ flow ที่บอก" · เพิ่มชุดอื่นด้วย --after / --pages / --all
 serve.js                     เสิร์ฟ board.json + รูป (รองรับ path ย่อยแล้ว)
    ▼
 figjam-plugin/               ปลั๊กอิน FigJam: สร้าง section + รูป (ShapeWithText ใส่ IMAGE fill)

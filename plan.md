@@ -575,6 +575,7 @@ token เป็น PAT scope `file_content:read` เก็บที่ `~/.figma
   - บทเรียน: ห้ามใช้ `fullPage:true` — element ที่ fixed (โลโก้) โดนวาดซ้ำกลางหน้า ต้องขยาย viewport เท่าหน้าจริงแทน
 - **เข้าไฟล์ทาง dev plugin ใหม่ `figjam-plugin/`** (MCP Starter จำกัด **20 call/เดือน — เดือนนี้หมดแล้ว** ตอนติดคือจังหวะจัดวางพอดี รูป 30 ใบที่อัปโหลดค้างในบอร์ดจะถูกปลั๊กอินเก็บกวาดให้): `3-figjam-board.js` รวม manifest → `board.json` (8 section · 40 หน้าจอ · 45 รูป) → ปลั๊กอินสร้าง section+ป้าย+ลูกศร flow · รูปใน FigJam = ShapeWithText ใส่ IMAGE fill (FigJam ไม่มี rectangle/frame) · `serve.js` รองรับ path ย่อย + content-type แล้ว
 - **เทส `test-figjam-plugin.js` ผ่าน 9/9** (จำนวนครบ/ลูกศรผูกปลาย/section ครอบลูก/รันซ้ำไม่ซ้อน/เก็บกวาด MEDIA)
+- **สโคปบอร์ด (เจ้าของงานย้ำ):** "ทำแค่ flow ที่บอก ไม่ใช่ทั้งหมด" ⇒ `board.json` ค่าเริ่มต้นเหลือ **โฟลว์สร้างแผนอย่างเดียว (1 section · 8 หน้าจอ · ลูกศร 7)** — ชุด after-issue/หน้ารวมยังอยู่เป็นตัวเลือก `--after`/`--pages`/`--all` เมื่อถูกขอเท่านั้น
 - ไฟล์บอร์ด: `mDn6j6wVtdn0DMtFwiDsRQ` (anu phetcharat's Team) — https://www.figma.com/board/mDn6j6wVtdn0DMtFwiDsRQ
 
 ### ค้างอยู่ (รอบถัดไป)
