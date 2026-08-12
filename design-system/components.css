@@ -15,12 +15,12 @@ body{font-family:var(--font);background:#E9EAEC;color:var(--gray-700);font-size:
 
 /* ---------- App shell ---------- */
 .app{max-width:1120px;margin:0 auto;min-height:100dvh;background:var(--gray-50);box-shadow:var(--shadow-app);display:flex;flex-direction:column}
-.draft{background:var(--warning-50);border-bottom:1px solid var(--warning-200);color:#93370D;font-size:12px;padding:6px 16px;text-align:center}
+.draft{background:var(--warning-50);border-bottom:1px solid var(--warning-200);color:var(--warning-800);font-size:var(--fs-text-xs);padding:6px 16px;text-align:center}
 
 /* ---------- Header + Stepper ---------- */
 header{background:var(--grad-header);color:#fff;padding:16px 24px 14px}
 header .bar{display:flex;align-items:center;gap:10px}
-header .logo{background:#fff;color:var(--primary-600);font-weight:700;border-radius:10px;padding:3px 8px;font-size:14px}
+header .logo{background:#fff;color:var(--primary-600);font-weight:700;border-radius:var(--rounded-md);padding:3px 8px;font-size:14px}
 header h1{font-size:var(--fs-h1);font-weight:600;flex:1}
 .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px;align-items:start;max-width:640px}
 .steps .st{text-align:center;font-size:var(--fs-xs);color:rgba(255,255,255,.75)}
@@ -35,8 +35,9 @@ header h1{font-size:var(--fs-h1);font-weight:600;flex:1}
 
 /* ---------- Form ---------- */
 label.fl{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--gray-700);margin:12px 0 6px}
-input[type=text],input[type=number],input[type=tel],input[type=email],input[type=date],input[type=search],textarea,select{width:100%;border:1px solid var(--gray-300);border-radius:var(--r-sm);padding:10px 12px;font:inherit;color:var(--gray-900);background:#fff}
-input:focus,textarea:focus{outline:2px solid var(--primary-50);border-color:var(--primary-500)}
+input[type=text],input[type=number],input[type=tel],input[type=email],input[type=date],input[type=search],textarea,select{width:100%;border:1px solid var(--gray-300);border-radius:var(--r-sm);padding:10px 14px;font:inherit;color:var(--gray-900);background:#fff;box-shadow:var(--shadow-xs)}
+/* focus ตามไลบรารี (Input field State=Focused): ขอบ brand-500 + วงแหวน */
+input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow:var(--shadow-xs),0 0 0 4px var(--focus-ring)}
 .search{position:relative}
 .search .ms{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gray-400)}
 .search input{padding-left:38px}
@@ -131,26 +132,29 @@ input:focus,textarea:focus{outline:2px solid var(--primary-50);border-color:var(
 
 /* ---------- Chip (multi-select) ---------- */
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{border:1.5px solid var(--gray-300);border-radius:var(--r-pill);padding:7px 14px;font-size:13.5px;cursor:pointer;background:#fff;color:var(--gray-700)}
-.chip.sel{background:var(--primary-600);border-color:var(--primary-600);color:#fff;font-weight:500}
+/* ตามไลบรารี Tag (Size=lg): r6 · เส้น 1px gray-300 · pad 4/10 · 14/500 gray-700 */
+.chip{border:1px solid var(--gray-300);border-radius:var(--rounded-sm);padding:4px 10px;font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);font-weight:500;cursor:pointer;background:#fff;color:var(--gray-700)}
+.chip.sel{background:var(--primary-600);border-color:var(--primary-600);color:#fff}
 
 /* ---------- Segmented (single-select) ---------- */
 .seg{display:flex;gap:8px}
 .seg .sg{flex:1;text-align:center;border:1.5px solid var(--gray-300);border-radius:var(--r-sm);padding:8px 4px;font-size:var(--fs-sm);cursor:pointer;background:#fff}
 .seg .sg.sel{border-color:var(--primary-600);background:var(--primary-25);color:var(--primary-600);font-weight:600}
 
-/* ---------- Badge สถานะ ---------- */
-.badge{display:inline-flex;align-items:center;gap:4px;border-radius:var(--r-pill);padding:2px 10px;font-size:12px;font-weight:600}
-.b-ok{background:var(--success-50);color:var(--success-600)}
-.b-low{background:var(--warning-50);color:var(--warning-700)}
-.b-out{background:var(--error-50);color:var(--error-600)}
-.b-brand{background:var(--primary-50);color:var(--primary-600)}
+/* ---------- Badge สถานะ ----------------------------------------------
+   ตามไลบรารี Badge (Size=md, Type=Pill color): pad 2/10 · 14/500 lh20
+   ทุกสีมี "เส้นขอบ" โทน 200 · ตัวอักษรโทน 700 (แบรนด์ = brand-500)      */
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:var(--r-pill);padding:2px 10px;font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);font-weight:500;border:1px solid transparent}
+.b-ok{background:var(--success-50);color:var(--success-700);border-color:var(--success-200)}
+.b-low{background:var(--warning-50);color:var(--warning-700);border-color:var(--warning-200)}
+.b-out{background:var(--error-50);color:var(--error-700);border-color:var(--error-200)}
+.b-brand{background:var(--brand-50);color:var(--brand-500);border-color:var(--brand-200)}
 
 /* ---------- Tile (การ์ดเลือกแบบ VMS Plus) ---------- */
 .tile{border-radius:var(--r-lg);padding:18px 12px;text-align:center;cursor:pointer;color:#fff;border:3px solid transparent}
 .tile .ms{font-size:34px;margin-bottom:8px}
-.tile b{display:block;font-size:15px}
-.tile small{font-size:11.5px;opacity:.85}
+.tile b{display:block;font-size:var(--fs-body)}
+.tile small{font-size:var(--fs-text-xs);opacity:.85}
 .tile-magenta{background:var(--primary-600)}
 .tile-blue{background:var(--secondary-600)}
 .tile.sel{border-color:var(--gray-900);box-shadow:var(--shadow-pop)}
@@ -164,7 +168,7 @@ input:focus,textarea:focus{outline:2px solid var(--primary-50);border-color:var(
 .decision-tiles-modern .decide{display:flex;flex-wrap:wrap;gap:12px;max-width:500px;margin-top:14px}
 .decision-tiles-modern .decide .tile{flex:1 1 210px;min-height:112px;padding:14px 16px;border-width:1.5px;border-color:var(--gray-300);background:#fff;color:var(--gray-900);transition:background-color .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease}
 .decision-tiles-modern .decide .tile .ms{font-size:28px;margin-bottom:6px}
-.decision-tiles-modern .decide .tile b{font-size:14.5px}
+.decision-tiles-modern .decide .tile b{font-size:var(--fs-text-sm)}
 .decision-tiles-modern .decide .tile small{color:var(--gray-500);opacity:1}
 .decision-tiles-modern .decide .tile:hover{background:var(--gray-50);transform:translateY(-1px)}
 .decision-tiles-modern .decide .tile-magenta:not(.sel) .ms{color:var(--primary-600)}
@@ -176,10 +180,10 @@ input:focus,textarea:focus{outline:2px solid var(--primary-50);border-color:var(
 
 /* ---------- Footer ปุ่มนำทาง ---------- */
 .footer{display:flex;gap:10px;justify-content:flex-end;padding:4px 24px 36px}
-.footer .btn{min-width:170px;padding:12px 24px;font-size:15px}
+.footer .btn{min-width:170px;padding:12px 24px;font-size:var(--fs-text-md)}
 
 /* ---------- Toast ---------- */
-.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--gray-900);color:#fff;border-radius:10px;padding:10px 18px;font-size:13.5px;z-index:50;opacity:0;transition:.25s;pointer-events:none;max-width:380px;text-align:center}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--gray-900);color:#fff;border-radius:var(--rounded-md);padding:10px 18px;font-size:var(--fs-text-sm);z-index:50;opacity:0;transition:.25s;pointer-events:none;max-width:380px;text-align:center}
 .toast.show{opacity:1}
 
 /* ============================================================
@@ -203,14 +207,15 @@ input:focus,textarea:focus{outline:2px solid var(--primary-50);border-color:var(
 .side:hover .nv .cnt{top:50%;right:14px;transform:translateY(-50%)}
 .side .nv:hover{background:var(--gray-100)}
 .side .nv.on{background:var(--gray-100);color:var(--primary-600)}
-.work{flex:1;min-width:0;display:flex;flex-direction:column;background:#FCFCFD}
+.work{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--gray-25)}
 .topbar{background:#fff;border-bottom:1px solid var(--gray-100);padding:13px 28px;display:flex;justify-content:flex-end;align-items:center;gap:18px;color:var(--gray-600)}
 .content{padding:22px 32px 48px;width:100%;max-width:1500px}
 
 /* ---------- Breadcrumb + ชื่อหน้า ---------- */
-.crumbs{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--gray-500);margin-bottom:14px;flex-wrap:wrap}
-.crumbs .ms{font-size:18px}
-.crumbs .sep{color:var(--gray-300)}
+/* ตามไลบรารี Breadcrumbs: 14/600 · ฐาน gray-500 · ตัวคั่น chevron gray-400 · ปัจจุบัน brand-600 */
+.crumbs{display:flex;align-items:center;gap:8px;font-size:var(--fs-text-sm);font-weight:600;color:var(--gray-500);margin-bottom:14px;flex-wrap:wrap}
+.crumbs .ms{font-size:20px}
+.crumbs .sep{color:var(--gray-400)}
 .crumbs .cur{color:var(--primary-600)}
 .page-title{font-size:28px;font-weight:700;color:var(--gray-900);margin-bottom:20px}
 .page-title-row{display:flex;align-items:center;gap:4px;margin-bottom:20px}
@@ -222,7 +227,7 @@ input:focus,textarea:focus{outline:2px solid var(--primary-50);border-color:var(
 
 /* ---------- Stepper แบบลูกศร (chevron) ---------- */
 .wsteps{display:flex;background:#fff;border:1px solid var(--gray-200);border-radius:12px;margin-bottom:26px}
-.wstep{flex:1;display:flex;align-items:center;gap:12px;padding:17px 18px;position:relative;color:var(--gray-500);font-size:14.5px;min-width:0}
+.wstep{flex:1;display:flex;align-items:center;gap:12px;padding:17px 18px;position:relative;color:var(--gray-500);font-size:var(--fs-text-sm);min-width:0}
 .wstep .num{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--gray-300);display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;background:#fff}
 .wstep .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wstep.active{color:var(--primary-600);font-weight:600}
@@ -236,32 +241,35 @@ input:focus,textarea:focus{outline:2px solid var(--primary-50);border-color:var(
 .sect{display:flex;gap:10px;align-items:center;font-weight:700;color:var(--gray-900);font-size:17px;margin:8px 0 2px}
 .sect::before{content:'';width:4px;height:20px;background:var(--primary-600);border-radius:2px;flex-shrink:0}
 
-/* ---------- ฟอร์มแบบหน้าใน: label บน + ไอคอนในช่อง ---------- */
+/* ---------- ฟอร์มแบบหน้าใน: label บน + ไอคอนในช่อง ----------
+   ตามไลบรารี Input field (Size=md): ช่องสูง 44 · r8 · pad นอน 14 · เงา xs
+   label 14/500 gray-700 ห่างช่อง 6 · error = ขอบ error-300 + ข้อความ error-600 14px */
 .fgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 24px;margin:16px 0 26px}
-.f label{display:block;font-size:14px;font-weight:600;color:var(--gray-900);margin-bottom:8px}
+.f label{display:block;font-size:var(--fs-text-sm);font-weight:500;color:var(--gray-700);margin-bottom:6px}
 .f label small{color:var(--gray-500);font-weight:400}
 .f .in{position:relative}
-.f .in>.ms{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-500);font-size:20px;pointer-events:none}
-.f .in input,.f .in select{height:46px;border-radius:10px;padding:0 12px 0 40px}
-.f .in.noic input{padding-left:12px}
-.f textarea{border-radius:10px}
-.f.ro .in input{border-style:dashed;background:var(--gray-50);color:var(--gray-700)}
-.f.err .in input,.f.err textarea{border-color:var(--error-500)}
-.f .help{font-size:12.5px;color:var(--error-600);margin-top:6px}
+.f .in>.ms{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--gray-500);font-size:20px;pointer-events:none}
+.f .in input,.f .in select{height:44px;border-radius:var(--rounded-md);padding:0 14px 0 42px}
+.f .in.noic input{padding-left:14px}
+.f textarea{border-radius:var(--rounded-md);padding:12px 14px}
+.f.ro .in input{background:var(--gray-50);color:var(--gray-700)}   /* = state Disabled ของไลบรารี (ขอบทึบ พื้น gray-50) */
+.f.err .in input,.f.err textarea{border-color:var(--error-300)}
+.f .help{font-size:var(--fs-text-sm);color:var(--error-600);margin-top:6px}
 
-/* ---------- Radio (สี primary เหมือนหน้าจริง) ---------- */
-.rads{display:flex;gap:22px;align-items:center;min-height:46px;flex-wrap:wrap}
-.rads label{display:flex;gap:8px;align-items:center;font-size:14.5px;color:var(--gray-700);cursor:pointer;font-weight:400;margin:0}
-input[type=radio]{accent-color:var(--primary-600);width:18px;height:18px;cursor:pointer}
+/* ---------- Radio ----------
+   ตามไลบรารี Radio button (Size=md): ปุ่ม 20px · ข้อความ 16/500 gray-700 · gap 12 */
+.rads{display:flex;gap:22px;align-items:center;min-height:44px;flex-wrap:wrap}
+.rads label{display:flex;gap:12px;align-items:center;font-size:var(--fs-text-md);color:var(--gray-700);cursor:pointer;font-weight:500;margin:0}
+input[type=radio]{accent-color:var(--primary-600);width:20px;height:20px;cursor:pointer}
 
 /* ---------- ช่องจำนวน − n + ---------- */
-.numfld{display:flex;align-items:center;border:1px solid var(--gray-300);border-radius:10px;height:46px;background:#fff}
+.numfld{display:flex;align-items:center;border:1px solid var(--gray-300);border-radius:var(--rounded-md);height:44px;background:#fff;box-shadow:var(--shadow-xs)}
 .numfld button{flex:0 0 44px;height:100%;border:none;background:none;font-size:20px;color:var(--gray-600);cursor:pointer}
 .numfld span{flex:1;text-align:center;font-weight:600;color:var(--gray-900)}
 
 /* ---------- แถวปุ่มท้ายฟอร์ม ---------- */
 .actions{display:flex;justify-content:flex-end;gap:12px;padding-top:10px}
-.actions .btn{min-width:170px;padding:12px 24px;font-size:15px}
+.actions .btn{min-width:170px;padding:12px 24px;font-size:var(--fs-text-md)}
 
 /* ---------- Column span (desktop เท่านั้น) ---------- */
 @media(min-width:761px){.sp2{grid-column:span 2}.sp4{grid-column:1/-1}}
@@ -304,18 +312,18 @@ input[type=radio]{accent-color:var(--primary-600);width:18px;height:18px;cursor:
 .my-job.open,.kry-job.open,.kbk-job.open{margin-bottom:0;border-color:var(--primary-500);border-radius:var(--r-md) var(--r-md) 0 0;background:var(--primary-25)}
 .my-inline-detail,.kry-inline-detail,.kbk-inline-detail{border:1px solid var(--primary-500);border-top:0;border-radius:0 0 var(--r-md) var(--r-md);padding:4px 16px 16px;background:#fff}
 .job .no{font-weight:700;color:var(--gray-900)}
-.job .meta{font-size:12.5px;color:var(--gray-500)}
+.job .meta{font-size:var(--fs-text-xs);color:var(--gray-500)}
 .job .sp{flex:1;min-width:0}
 .list-toolbar{display:flex;justify-content:flex-end;align-items:flex-end;margin:0 0 12px}
 .page-title-with-filter{align-items:flex-end}
 .page-title-with-filter .list-toolbar{margin:0 0 1px auto}
 .filter-field{width:min(100%,240px)}
-.filter-field label{display:block;font-size:11.5px;font-weight:600;color:var(--gray-600);margin-bottom:3px}
-.filter-field select{padding:6px 30px 6px 10px;background-color:#fff;font-size:13.5px;cursor:pointer}
+.filter-field label{display:block;font-size:var(--fs-text-xs);font-weight:600;color:var(--gray-600);margin-bottom:3px}
+.filter-field select{padding:6px 30px 6px 10px;background-color:#fff;font-size:var(--fs-text-sm);cursor:pointer}
 .filter-empty{display:flex;min-height:170px;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:1px dashed var(--gray-300);border-radius:var(--r-md);background:var(--gray-50);padding:24px;text-align:center;color:var(--gray-500)}
 .filter-empty .ms{font-size:32px;color:var(--gray-400);margin-bottom:3px}
-.filter-empty b{font-size:15px;color:var(--gray-700)}
-.filter-empty span:last-child{font-size:13px}
+.filter-empty b{font-size:var(--fs-body);color:var(--gray-700)}
+.filter-empty span:last-child{font-size:var(--fs-sm)}
 @media(max-width:760px){
   .page-title-with-filter{flex-wrap:wrap}
   .page-title-with-filter .list-toolbar{flex:1 0 100%;justify-content:stretch;margin:4px 0 0}
@@ -332,9 +340,10 @@ input[type=radio]{accent-color:var(--primary-600);width:18px;height:18px;cursor:
 .tl .when{font-size:12px;color:var(--gray-400)}
 
 /* ---------- Checklist ตรวจสภาพ ---------- */
+/* ตามไลบรารี Checkbox (Size=md): กล่อง 20px · ข้อความ 16/500 gray-700 · gap 12 */
 .chk{display:flex;flex-direction:column;gap:8px;margin:10px 0}
-.chk label{display:flex;gap:10px;align-items:center;font-size:14.5px;color:var(--gray-700);cursor:pointer}
-input[type=checkbox]{accent-color:var(--primary-600);width:17px;height:17px;cursor:pointer;flex-shrink:0}
+.chk label{display:flex;gap:12px;align-items:center;font-size:var(--fs-text-md);font-weight:500;color:var(--gray-700);cursor:pointer}
+input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;cursor:pointer;flex-shrink:0}
 
 /* ============================================================
    v0.11 — Shared UI components (ui-components.js / window.UIC)
@@ -344,21 +353,23 @@ input[type=checkbox]{accent-color:var(--primary-600);width:17px;height:17px;curs
 .vlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin:14px 0 6px}
 .vlist.sq{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
 .vlist.sq .veh{flex-direction:column;text-align:center;aspect-ratio:1/1;justify-content:center;gap:6px;overflow:hidden}
-.vlist.sq .veh .meta{font-size:11.5px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.vlist.sq .veh .meta{font-size:var(--fs-text-xs);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .veh{display:flex;gap:12px;align-items:center;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:12px;cursor:pointer;background:#fff}
 .veh:hover{border-color:var(--primary-500)}
 .veh.sel{border-color:var(--primary-600);background:var(--primary-25)}
-.veh .ic{width:44px;height:44px;border-radius:10px;background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.veh b{color:var(--gray-900);font-size:15px}
-.veh .meta{font-size:12.5px;color:var(--gray-500)}
+.veh .ic{width:44px;height:44px;border-radius:var(--rounded-md);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.veh b{color:var(--gray-900);font-size:var(--fs-body)}
+.veh .meta{font-size:var(--fs-text-xs);color:var(--gray-500)}
 
 /* ============================================================
    v0.5 — ตารางข้อมูล (เมนูคลังอะไหล่)
    ============================================================ */
 .tblwrap{overflow-x:auto;margin-top:12px}
-.tbl{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);overflow:hidden;font-size:13.5px}
-.tbl th{background:var(--gray-50);color:var(--gray-600);font-weight:600;text-align:left;padding:10px 14px;border-bottom:1px solid var(--gray-200);white-space:nowrap}
-.tbl td{padding:10px 14px;border-bottom:1px solid var(--gray-100);color:var(--gray-700);vertical-align:top}
+/* ตามไลบรารี Tables: กรอบ r12 gray-200 เงา xs · หัว 12/600 gray-500 พื้นขาว สูง 44 (pad 12/24)
+   เซลล์ (Size=sm) pad 16/20 · 14px gray-600 · เส้นคั่น gray-200 */
+.tbl{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);overflow:hidden;font-size:var(--fs-text-sm);box-shadow:var(--shadow-xs)}
+.tbl th{background:#fff;color:var(--gray-500);font-weight:600;font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);text-align:left;padding:12px 24px;border-bottom:1px solid var(--gray-200);white-space:nowrap}
+.tbl td{padding:16px 20px;border-bottom:1px solid var(--gray-200);color:var(--gray-600);vertical-align:top}
 .tbl tr:last-child td{border-bottom:none}
 .tbl tbody tr:hover td{background:var(--gray-50)}
 .tbl .num{text-align:center;font-weight:600;color:var(--gray-900)}
@@ -391,8 +402,8 @@ input[type=checkbox]{accent-color:var(--primary-600);width:17px;height:17px;curs
 .rzone-head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;background:var(--gray-50)}
 .rzone-head:hover{background:var(--gray-100)}
 .rzone-caret{color:var(--gray-500);font-size:20px;flex-shrink:0}
-.rzone-count{color:var(--gray-500);font-size:13px;margin-right:auto}
-.rzone-allchk{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--gray-700);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.rzone-count{color:var(--gray-500);font-size:var(--fs-sm);margin-right:auto}
+.rzone-allchk{display:flex;align-items:center;gap:6px;font-size:var(--fs-text-sm);color:var(--gray-700);cursor:pointer;white-space:nowrap;flex-shrink:0}
 .rzone-body{padding:12px 14px;border-top:1px solid var(--gray-200)}
 
 /* .rzone-body.flush — ใส่ตารางเต็มความกว้าง ไม่ต้องมีขอบในซ้อนอีกชั้น */
@@ -426,7 +437,7 @@ input[type=checkbox]{accent-color:var(--primary-600);width:17px;height:17px;curs
         transform:scale(.25);transform-origin:top left;pointer-events:none}
 .gcard-body{padding:14px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .gcard-body .nm{font-weight:600;color:var(--gray-900);flex:1;min-width:0}
-.gcard-body .meta{width:100%;font-size:12.5px;color:var(--gray-500)}
+.gcard-body .meta{width:100%;font-size:var(--fs-text-xs);color:var(--gray-500)}
 
 /* ---------- .daterange : เลือก "ช่วงวันที่" ในคลิกเดียว ----------
    ระบบยังไม่มีของเดิม และ <input type="date"> เลือกได้ทีละวันเท่านั้น
@@ -434,9 +445,9 @@ input[type=checkbox]{accent-color:var(--primary-600);width:17px;height:17px;curs
    ใช้เมื่อ: ต้องระบุช่วง จาก–ถึง เช่น ช่วงที่เสนอให้อีกฝ่ายเลือกวันเอง
    โครง: .daterange > .daterange-field (ช่องที่กด) + .cal (แผงปฏิทิน)     */
 .daterange{position:relative}
-.daterange-field{display:flex;align-items:center;gap:10px;height:46px;padding:0 12px;
+.daterange-field{display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;
            border:1px solid var(--gray-300);border-radius:var(--r-sm);background:#fff;
-           cursor:pointer;color:var(--gray-900);user-select:none}
+           box-shadow:var(--shadow-xs);cursor:pointer;color:var(--gray-900);user-select:none}
 .daterange-field:hover{border-color:var(--gray-400)}
 .daterange.open .daterange-field{outline:2px solid var(--primary-50);border-color:var(--primary-500)}
 .daterange-field .ms{color:var(--gray-500);flex-shrink:0}
@@ -449,18 +460,19 @@ input[type=checkbox]{accent-color:var(--primary-600);width:17px;height:17px;curs
      box-shadow:var(--shadow-pop);padding:14px;width:min(320px,92vw)}
 .daterange.open .cal{display:block}
 .cal-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.cal-head b{flex:1;text-align:center;color:var(--gray-900);font-size:15px}
+.cal-head b{flex:1;text-align:center;color:var(--gray-900);font-size:var(--fs-body)}
 .cal-nav{width:32px;height:32px;border:1px solid var(--gray-300);border-radius:var(--r-sm);
      background:#fff;cursor:pointer;color:var(--gray-700);display:flex;align-items:center;justify-content:center}
 .cal-nav:hover{background:var(--gray-50)}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cal-dow{text-align:center;font-size:11.5px;font-weight:600;color:var(--gray-500);padding:4px 0}
-.cal-day{height:34px;display:flex;align-items:center;justify-content:center;font-size:13.5px;
-     border-radius:var(--r-sm);cursor:pointer;color:var(--gray-900);background:none;border:0}
+.cal-dow{text-align:center;font-size:var(--fs-text-xs);font-weight:600;color:var(--gray-500);padding:4px 0}
+/* ตามไลบรารี _Calendar cell: ช่องวัน 40px กลม (r-pill) · 14/500 */
+.cal-day{height:40px;display:flex;align-items:center;justify-content:center;font-size:var(--fs-text-sm);font-weight:500;
+     border-radius:var(--r-pill);cursor:pointer;color:var(--gray-900);background:none;border:0}
 .cal-day:hover{background:var(--gray-100)}
 .cal-day.muted{color:var(--gray-300);cursor:default}
 .cal-day.muted:hover{background:none}
 .cal-day.in{background:var(--primary-25);border-radius:0}
 .cal-day.edge{background:var(--primary-600);color:#fff;font-weight:600}
 .cal-foot{display:flex;align-items:center;gap:8px;margin-top:10px}
-.cal-foot .hint{flex:1;font-size:12.5px;color:var(--gray-500)}
+.cal-foot .hint{flex:1;font-size:var(--fs-text-xs);color:var(--gray-500)}

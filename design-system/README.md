@@ -1,8 +1,8 @@
 # 🧭 Maintain-D Design System
 
-> **เวอร์ชัน:** v0.11 (11 ส.ค. 2569) · **สถานะ:** ใช้กับทุกหน้าใน prototype แล้ว (24/24)
+> **เวอร์ชัน:** v0.12 (12 ส.ค. 2569) · **สถานะ:** ใช้กับทุกหน้าใน prototype แล้ว (24/24)
 > **ที่มา:** **Figma `EXT_PEA_VMS_v1.0.2_Component`** (`EXT-PEA-T0REUY1W-2026-V102`) — ดึงทั้งไฟล์ผ่าน REST API แล้ว (43 หน้า · 58,331 node) · ค่าที่กำกับ `✔` ใน `tokens.css` **ยืนยันแล้วว่ามีใช้จริงในไลบรารี** · `⚠` = ไม่พบในไลบรารี เราเพิ่มเอง
-> **แหล่งที่มา + สถานะการอ่านจาก Figma:** [SOURCES.md](SOURCES.md) — สีเทียบครบแล้ว · **radius กับ typography ยังไม่เทียบ** · คอมโพเนนต์ (input/table/modal) ยังประกอบเอง
+> **แหล่งที่มา + สถานะการอ่านจาก Figma:** [SOURCES.md](SOURCES.md) — สี ✅ · radius/typography ✅ · **base component เทียบ+จูนตรงไลบรารีแล้ว 12 ส.ค.** (`compare-figma.js` — input/select/textarea/badge/tag/table/checkbox/radio/breadcrumb/ปฏิทิน) · โครงหน้า (.shell/stepper/.sect) อิง screenshot หน้าจริง ไลบรารีไม่มีของเทียบ
 > **Style guide:** [index.html](index.html) · **ปุ่มครบทุก variant:** [buttons.html](buttons.html) · **ตัวอย่างหน้าจริง:** [ฟอร์มแจ้งซ่อม (mock)](../mock/Maintenance-Request-Form.html)
 
 ---
@@ -90,7 +90,7 @@ grep -rnP '[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]' --include='*.html' --include=
 
 | กลุ่ม | เข้ม | กลาง | พื้นอ่อน | ใช้กับ |
 |---|---|---|---|---|
-| Success | `--success-600` `#17B26A` | `--success-200` `#75E0A7` | `--success-50` `#ECFDF3` | พร้อมเบิก, จองสำเร็จ, เสร็จสิ้น |
+| Success | `--success-700` `#067647` (ตัวอักษร badge) · `--success-600` `#17B26A` | `--success-200` `#ABEFC6` (ขอบ badge) | `--success-50` `#ECFDF3` | พร้อมเบิก, จองสำเร็จ, เสร็จสิ้น |
 | Warning | `--warning-600` `#F79009` · text `--warning-700` `#B54708` | `--warning-200` `#FEDF89` | `--warning-50` `#FFFAEB` | ใกล้หมด, แถบ mock/draft |
 | Error | `--error-600` `#D92D20` · `--error-700` `#B42318` | `--error-500` `#F04438` · `--error-200` `#FECDCA` | `--error-50` `#FEF3F2` | หมด/รอของ, validation error |
 | Info | `--info-600` `#6172F3` | — | — | ลิงก์/ข้อมูลเสริม |
@@ -124,9 +124,9 @@ grep -rnP '[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]' --include='*.html' --include=
 | `--font` | `'IBM Plex Sans Thai', sans-serif` | ทั้งระบบ (ตรงกับ VMS Plus) |
 | `--fs-h1` | 18px | หัวแอปบนแถบสี |
 | `--fs-h2` | 16px | หัวการ์ด |
-| `--fs-body` | 15px | เนื้อความ |
-| `--fs-sm` | 13px | ข้อความรอง/label |
-| `--fs-xs` | 11px | stepper, หมายเหตุ |
+| `--fs-body` | **16px** (= text-md ไลบรารี) | เนื้อความ, ตัวอักษรในช่องกรอก — *เดิม 15px ไม่มีในสเกลไลบรารี จูนแล้ว 12 ส.ค.* |
+| `--fs-sm` | **14px** (= text-sm) | ข้อความรอง/label — *เดิม 13px* |
+| `--fs-xs` | **12px** (= text-xs) | stepper, หมายเหตุ, badge — *เดิม 11px* |
 | ชื่อหน้า (web) | 28px/700 (`.page-title`) | หัวหน้าแบบหน้าจริง |
 | ไอคอน | Material Symbols Outlined (`.ms`) | ทั้งระบบ |
 
@@ -134,11 +134,13 @@ grep -rnP '[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]' --include='*.html' --include=
 
 | Token | ค่า | ใช้กับ |
 |---|---|---|
-| `--r-sm` | 8px | ปุ่ม |
-| `--r-md` | 12px | การ์ดย่อย, รายการ, stepper กล่อง |
+| `--rounded-sm` | 6px | tag/chip, กล่อง checkbox (ตามไลบรารี) |
+| `--r-sm` / `--rounded-md` | 8px | ปุ่ม, ช่องกรอก |
+| `--r-md` | 12px | การ์ดย่อย, รายการ, stepper กล่อง, กรอบตาราง |
 | `--r-lg` | 16px | การ์ดหลัก, tile |
-| `--r-pill` | 99px | chip, badge |
-| ช่องกรอก (web) | 10px, สูง 46px | `.f .in input` |
+| `--r-pill` | 99px | badge, วันในปฏิทิน |
+| ช่องกรอก (web) | สูง **44px** · r **8** · pad นอน 14 · `--shadow-xs` | `.f .in input` — ตามไลบรารี Input md (*เดิม 46/r10 ไม่ตรง จูนแล้ว 12 ส.ค.*) |
+| `--shadow-xs` | เงา 0 1 2 (#0A0D12 5%) | ช่องกรอก, ตาราง — ตามไลบรารี |
 | `--shadow-app` | เงากรอบแอป | `.app` |
 | `--shadow-pop` | เงา tile ที่เลือก | `.tile.sel` |
 | `--grad-header` | gradient magenta | header มือถือ |
@@ -201,8 +203,8 @@ grep -rnP '[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]' --include='*.html' --include=
 | ปุ่มรอง (outline) | `.btn.btn-o` | action รอง (จองอะไหล่, แจ้งเรื่องใหม่) |
 | ปุ่มเทา | `.btn.btn-g` | ย้อนกลับ/ยกเลิก |
 | ปุ่มปิดใช้ | `.btn:disabled` | ทำไม่ได้ + บอกเหตุผลในตัวปุ่ม |
-| Badge สถานะ | `.badge` + `.b-ok`/`.b-low`/`.b-out`/`.b-brand` | สถานะคลัง/สถานะเรื่อง |
-| Chip (เลือกหลายอัน) | `.chips` > `.chip` (`.sel`) | อาการเสีย, tag |
+| Badge สถานะ | `.badge` + `.b-ok`/`.b-low`/`.b-out`/`.b-brand` | สถานะคลัง/สถานะเรื่อง — ตามไลบรารี Badge md: 14/500 + **เส้นขอบโทน 200** + ตัวอักษรโทน 700 (แบรนด์ = brand-500) |
+| Chip (เลือกหลายอัน) | `.chips` > `.chip` (`.sel`) | อาการเสีย, tag — ตามไลบรารี Tag lg: r6 · เส้น 1px gray-300 · 14/500 (ไม่ใช่ pill แล้ว) |
 | Segmented (เลือกอันเดียว) | `.seg` > `.sg` (`.sel`) | ตัวเลือกสั้นๆ 2–4 ตัว |
 | ตัวปรับจำนวน | `.qty` | เพิ่ม/ลดจำนวนจอง |
 | Tile เลือกใหญ่ | `.tile` + `.tile-magenta`/`.tile-blue` (`.sel`) | ทางเลือกใหญ่ 2 ทาง (ซ่อมเอง/ส่ง กบค.) |
@@ -262,6 +264,7 @@ design-system/
 
 | วันที่ | เวอร์ชัน | สิ่งที่เปลี่ยน |
 |---|---|---|
+| 12 ส.ค. 2569 | v0.12 | **เทียบ base component กับไลบรารีทั้งชุดแล้วจูนให้ตรง** (`compare-figma.js` อ่านจาก `.figma-extract/` — คำสั่งเจ้าของงาน "ยึดตาม design ห้ามกำหนดเอง เช็คทั้งโปรเจ็ค ยกเว้น admin") · ช่องกรอก/select/numfld/daterange 46→**44** r10→**8** pad 12→14 + `--shadow-xs` · focus = ขอบ brand-500 + วงแหวน · label 600→**500** gray-900→**gray-700** ห่าง 6 · error border → `--error-300` `#FDA29B` (ใหม่ ✔) · `.f.ro` เส้นประ→ทึบ (= Disabled) · **badge มีเส้นขอบโทน 200** ตัวโทน 700 14/500 (`--success-200` แก้เป็น `#ABEFC6` ✔) · chip = Tag lg r6 (`--rounded-sm` 6px ใหม่ ✔) · ตาราง: หัวขาว 12/600 gray-500 pad 12/24 · เซลล์ pad 16/20 เส้น gray-200 · breadcrumb 14/600 · checkbox/radio 20px ข้อความ 16/500 · ปฏิทินวัน 40px กลม · `--fs-body/sm/xs` 15/13/11→**16/14/12** (สเกลไลบรารี) + กวาดขนาดเศษ (13.5/12.5/14.5/11.5) ทั้งโปรเจ็ค 299 จุด 21 ไฟล์ · `.draft`→`--warning-800` · `.work`→`--gray-25` · บั๊ม `?v=20260812-ds12` ทุกหน้า |
 | 17 ก.ค. 2569 | v0.1 | เริ่มระบบ: tokens + component พื้นฐาน จาก CSS สาธารณะ + หน้า landing/SSO ของ VMS Plus |
 | 17 ก.ค. 2569 | v0.2 | เพิ่ม pattern หน้าเว็บจาก screenshot หน้าจริง "สร้างคำขอใช้ยานพาหนะ": `.shell/.side/.topbar/.crumbs/.page-title/.wsteps/.sect/.fgrid/.f(.ro/.err)/.rads/.numfld/.actions` — mock ฟอร์มแจ้งซ่อมย้ายมาใช้โครงนี้ |
 | 17 ก.ค. 2569 | v0.3 | เพิ่ม component สำหรับ flow กบค./ติดตามสถานะ: `.nv .cnt` (badge ตัวเลขบน sidebar) · `.job` (แถวรายการเรื่อง) · `.tl` (timeline ประวัติสถานะ) · `.chk` + checkbox (checklist ตรวจสภาพ) |

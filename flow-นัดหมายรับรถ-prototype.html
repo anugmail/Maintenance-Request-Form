@@ -6,41 +6,41 @@
 <title>VMS Plus · Prototype — นัดหมายและรับรถ (กบค.)</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="design-system/tokens.css?v=20260811-ds11">
-<link rel="stylesheet" href="design-system/components.css?v=20260811-ds11">
+<link rel="stylesheet" href="design-system/tokens.css?v=20260812-ds12">
+<link rel="stylesheet" href="design-system/components.css?v=20260812-ds12">
 <style>
   /* ===== เฉพาะ prototype นี้ (นอกเหนือจาก components.css) ===== */
   .content{max-width:980px}
-  .stepnum{font-size:13px;color:var(--primary-600);font-weight:600;margin-bottom:4px}
+  .stepnum{font-size:var(--fs-sm);color:var(--primary-600);font-weight:600;margin-bottom:4px}
   .casebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-lg);padding:12px 16px;margin-bottom:18px}
   .casebar .ro{font-weight:700;font-size:14px;color:var(--primary-600);background:var(--primary-50);padding:4px 10px;border-radius:var(--r-sm)}
-  .casebar .cx{font-size:13.5px;color:var(--gray-600)} .casebar .cx b{color:var(--gray-900)} .casebar .fill{flex:1}
-  .callout{display:flex;gap:11px;align-items:flex-start;background:var(--primary-25);border:1px solid var(--brand-200);border-radius:var(--r-md);padding:12px 15px;font-size:13.5px;color:var(--gray-700);margin-bottom:18px}
+  .casebar .cx{font-size:var(--fs-text-sm);color:var(--gray-600)} .casebar .cx b{color:var(--gray-900)} .casebar .fill{flex:1}
+  .callout{display:flex;gap:11px;align-items:flex-start;background:var(--primary-25);border:1px solid var(--brand-200);border-radius:var(--r-md);padding:12px 15px;font-size:var(--fs-text-sm);color:var(--gray-700);margin-bottom:18px}
   .callout .ms{color:var(--primary-600);font-size:20px} .callout b{color:var(--gray-900);font-weight:600}
   .callout.warn{background:var(--warning-50);border-color:var(--warning-200)} .callout.warn .ms{color:var(--warning-700)}
   .tilewrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px}
   .tile{cursor:pointer} .tile small{line-height:1.5;display:block;margin-top:3px}
   .docsheet{border:1px solid var(--gray-200);border-radius:var(--r-md);overflow:hidden;margin-bottom:14px}
   .doc-hd{display:flex;align-items:center;gap:11px;padding:12px 16px;border-bottom:2px solid var(--primary-600);background:var(--gray-50)}
-  .doc-hd .dl{width:30px;height:30px;border-radius:8px;background:var(--primary-600);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
-  .doc-hd .dt{font-weight:700;font-size:14px;color:var(--gray-900)} .doc-hd .dm{font-size:11px;color:var(--gray-400)}
+  .doc-hd .dl{width:30px;height:30px;border-radius:8px;background:var(--primary-600);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-xs)}
+  .doc-hd .dt{font-weight:700;font-size:14px;color:var(--gray-900)} .doc-hd .dm{font-size:var(--fs-xs);color:var(--gray-400)}
   .doc-bd{padding:16px}
-  .drow{display:grid;grid-template-columns:150px 1fr;gap:4px 14px;font-size:13.5px;padding:8px 0;border-bottom:1px dashed var(--gray-200)}
+  .drow{display:grid;grid-template-columns:150px 1fr;gap:4px 14px;font-size:var(--fs-text-sm);padding:8px 0;border-bottom:1px dashed var(--gray-200)}
   .drow:last-of-type{border-bottom:0} .drow dt{color:var(--gray-500)} .drow dd{color:var(--gray-900);font-weight:500}
-  .doc-sys{font-size:11.5px;color:var(--gray-400);display:flex;align-items:center;gap:6px;margin-top:12px} .doc-sys .ms{font-size:16px}
+  .doc-sys{font-size:var(--fs-text-xs);color:var(--gray-400);display:flex;align-items:center;gap:6px;margin-top:12px} .doc-sys .ms{font-size:16px}
   .kv{border:1px solid var(--gray-200);border-radius:var(--r-md);overflow:hidden;margin-bottom:16px}
-  .kv .r{display:flex;justify-content:space-between;gap:12px;padding:11px 15px;font-size:13.5px;border-bottom:1px solid var(--gray-100)}
+  .kv .r{display:flex;justify-content:space-between;gap:12px;padding:11px 15px;font-size:var(--fs-text-sm);border-bottom:1px solid var(--gray-100)}
   .kv .r:last-child{border-bottom:0} .kv .r .k{color:var(--gray-500)} .kv .r .v{font-weight:600;color:var(--gray-900);text-align:right}
   .team{display:flex;flex-direction:column;gap:9px;margin-bottom:13px}
   .member{display:flex;align-items:center;gap:12px;border:1px solid var(--gray-200);border-radius:var(--r-md);padding:11px 14px}
-  .member .av{width:32px;height:32px;border-radius:50%;background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
-  .member .mn{font-size:14.5px;flex:1;color:var(--gray-900)} .member .rm{all:unset;cursor:pointer;color:var(--gray-400);font-size:18px;line-height:1} .member .rm:hover{color:var(--error-500)}
-  .addrow{display:flex;gap:10px} .addrow input{flex:1;height:46px;border:1px solid var(--gray-300);border-radius:10px;padding:0 13px;font:inherit;font-size:14.5px;color:var(--gray-900);background:#fff}
+  .member .av{width:32px;height:32px;border-radius:50%;background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-sm);flex-shrink:0}
+  .member .mn{font-size:var(--fs-text-sm);flex:1;color:var(--gray-900)} .member .rm{all:unset;cursor:pointer;color:var(--gray-400);font-size:18px;line-height:1} .member .rm:hover{color:var(--error-500)}
+  .addrow{display:flex;gap:10px} .addrow input{flex:1;height:44px;border:1px solid var(--gray-300);border-radius:var(--rounded-md);padding:0 13px;font:inherit;font-size:var(--fs-text-sm);color:var(--gray-900);background:#fff}
   .addrow input:focus{outline:2px solid var(--primary-50);border-color:var(--primary-500)}
-  .agreed{display:flex;align-items:center;gap:12px;background:var(--success-50);border:1px solid var(--success-200);border-radius:var(--r-md);padding:15px;color:var(--success-600);font-weight:600;font-size:14.5px}
+  .agreed{display:flex;align-items:center;gap:12px;background:var(--success-50);border:1px solid var(--success-200);border-radius:var(--r-md);padding:15px;color:var(--success-600);font-weight:600;font-size:var(--fs-text-sm)}
   .agreed .ms{font-size:26px} .agreed small{display:block;font-weight:400;color:var(--gray-500);font-size:12px;margin-top:2px}
   .done-hero{text-align:center;padding:14px 10px 4px} .done-hero .dc .ms{font-size:56px;color:var(--success-600)}
-  .done-hero h2{font-size:20px;color:var(--gray-900);margin:6px 0} .done-hero p{color:var(--gray-500);font-size:13.5px;max-width:46ch;margin:0 auto}
+  .done-hero h2{font-size:20px;color:var(--gray-900);margin:6px 0} .done-hero p{color:var(--gray-500);font-size:var(--fs-text-sm);max-width:46ch;margin:0 auto}
   .veh .ok{margin-left:auto} .veh .ok .ms{color:var(--primary-600)}
   .wstep{cursor:pointer;background:none;border:0;font-family:inherit;text-align:left}
   .wstep .num .ms{font-size:16px}
@@ -75,7 +75,7 @@
         <span class="ro">RO-2569-04821</span>
         <span class="cx"><b>ทะเบียน 83-5567</b> · รถบรรทุกติดเครน 25 ตัน · อาการ: ระบบไฮดรอลิกเครนรั่ว</span>
         <span class="fill"></span>
-        <span class="badge b-ok"><span class="ms" style="font-size:15px">check_circle</span> อนุมัติแล้ว · รอนัดหมาย</span>
+        <span class="badge b-ok"><span class="ms" style="font-size:var(--fs-body)">check_circle</span> อนุมัติแล้ว · รอนัดหมาย</span>
       </div>
 
       <div class="wsteps" id="wsteps"></div>

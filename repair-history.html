@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="design-system/tokens.css?v=20260811-ds11">
+<link rel="stylesheet" href="design-system/tokens.css?v=20260812-ds12">
 <title>VMS Plus · ค้นหาประวัติการซ่อมรถรายคัน</title>
 <style>
   *{box-sizing:border-box}
@@ -43,7 +43,7 @@
   .brand h1{font-size:15.5px;margin:0;font-weight:700;letter-spacing:-.01em}
   .brand p{margin:2px 0 0;font-size:12px;color:var(--ink-3)}
   .spacer{flex:1}
-  .icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface);
+  .icon-btn{width:38px;height:38px;border-radius:var(--rounded-md);border:1px solid var(--border);background:var(--surface);
     color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}
   .icon-btn:hover{border-color:var(--accent);color:var(--accent)}
 
@@ -57,7 +57,7 @@
   .sfield:focus-within{border-color:var(--accent)}
   .sfield .ms{color:var(--ink-3);flex-shrink:0}
   .sfield input{border:0;background:transparent;color:var(--ink);font:inherit;font-size:16px;outline:none;width:100%}
-  .sfield kbd{font-size:11px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--border);
+  .sfield kbd{font-size:var(--fs-xs);color:var(--ink-3);background:var(--surface-2);border:1px solid var(--border);
     border-radius:6px;padding:2px 7px;flex-shrink:0}
   .dropdown{position:absolute;top:calc(100% + 8px);left:0;right:0;background:var(--surface);border:1px solid var(--border);
     border-radius:14px;box-shadow:var(--shadow);overflow:hidden;z-index:15;display:none}
@@ -65,12 +65,12 @@
   .dd-item{display:flex;align-items:center;gap:12px;padding:11px 15px;cursor:pointer;border-bottom:1px solid var(--border)}
   .dd-item:last-child{border-bottom:0}
   .dd-item:hover,.dd-item.hl{background:var(--surface-2)}
-  .dd-plate{font-weight:700;font-size:13.5px;flex-shrink:0;min-width:96px}
-  .dd-meta{font-size:12.5px;color:var(--ink-3);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .dd-empty{padding:16px;color:var(--ink-3);font-size:13.5px;text-align:center}
-  .hint{margin-top:12px;font-size:12.5px;color:var(--ink-3)}
+  .dd-plate{font-weight:700;font-size:var(--fs-text-sm);flex-shrink:0;min-width:96px}
+  .dd-meta{font-size:var(--fs-text-xs);color:var(--ink-3);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dd-empty{padding:16px;color:var(--ink-3);font-size:var(--fs-text-sm);text-align:center}
+  .hint{margin-top:12px;font-size:var(--fs-text-xs);color:var(--ink-3)}
 
-  .reccap{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:600;margin:28px 0 12px}
+  .reccap{font-size:var(--fs-text-xs);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:600;margin:28px 0 12px}
   .vgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}
   .vcard{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:15px;box-shadow:var(--shadow);
     cursor:pointer;transition:transform .13s,border-color .13s;display:flex;flex-direction:column;gap:9px}
@@ -78,13 +78,13 @@
   .vcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .vcard-top{display:flex;align-items:center;gap:10px}
   .plate{font-weight:800;font-size:16px;letter-spacing:-.01em}
-  .vcard-type{font-size:13px;color:var(--ink);font-weight:600}
+  .vcard-type{font-size:var(--fs-sm);color:var(--ink);font-weight:600}
   .vcard-meta{font-size:12px;color:var(--ink-3)}
-  .vcard-foot{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--border);padding-top:9px;flex-wrap:wrap}
+  .vcard-foot{display:flex;align-items:center;gap:8px;font-size:var(--fs-text-xs);color:var(--ink-3);border-top:1px solid var(--border);padding-top:9px;flex-wrap:wrap}
 
   /* vehicle profile */
   .backlink{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:var(--accent);
-    font:inherit;font-size:13px;cursor:pointer;padding:22px 0 12px;font-weight:600}
+    font:inherit;font-size:var(--fs-sm);cursor:pointer;padding:22px 0 12px;font-weight:600}
   .backlink:hover{text-decoration:underline}
   .profile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
     padding:20px;display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
@@ -94,13 +94,13 @@
   .veh-main{flex:1;min-width:220px}
   .veh-main .plate{font-size:26px;display:inline-block;margin-right:10px}
   .veh-main .code{font-size:12px;color:var(--accent);background:var(--accent-soft);padding:3px 8px;border-radius:6px;font-weight:600;vertical-align:middle}
-  .veh-main .vt{font-size:15px;font-weight:600;margin-top:6px}
+  .veh-main .vt{font-size:var(--fs-body);font-weight:600;margin-top:6px}
   .veh-facts{display:flex;gap:22px;flex-wrap:wrap;margin-top:12px}
-  .fact .fl{font-size:11px;color:var(--ink-3)}
+  .fact .fl{font-size:var(--fs-xs);color:var(--ink-3)}
   .fact .fv{font-size:14px;font-weight:600;margin-top:1px}
   .veh-actions{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
   .vstat{font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;display:inline-flex;align-items:center;gap:6px}
-  .btn{font:inherit;font-size:13px;font-weight:600;border-radius:10px;padding:9px 15px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--ink-2)}
+  .btn{font:inherit;font-size:var(--fs-sm);font-weight:600;border-radius:var(--rounded-md);padding:9px 15px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--ink-2)}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
   .btn:hover{border-color:var(--accent);color:var(--accent)}
   .btn.primary:hover{color:var(--accent-ink);filter:brightness(1.05)}
@@ -110,19 +110,19 @@
   .tile .lab{font-size:12px;color:var(--ink-3)}
   .tile .big{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-top:6px;line-height:1.1}
   .tile .big small{font-size:12px;color:var(--ink-3);font-weight:600;margin-left:3px}
-  .tile .sub{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+  .tile .sub{font-size:var(--fs-text-xs);color:var(--ink-3);margin-top:4px}
 
   /* filter bar */
   .fbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:22px 0 6px}
   .fbar .lbl{font-size:12px;color:var(--ink-3);margin-right:2px}
-  .chip{font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:var(--surface);
+  .chip{font-size:var(--fs-text-xs);padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:var(--surface);
     color:var(--ink-2);cursor:pointer;white-space:nowrap}
   .chip:hover{border-color:var(--border-strong)}
   .chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
-  .sel{font:inherit;font-size:12.5px;padding:7px 11px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2);cursor:pointer}
+  .sel{font:inherit;font-size:var(--fs-text-xs);padding:7px 11px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2);cursor:pointer}
 
   /* timeline history */
-  .yr{font-size:12.5px;font-weight:700;color:var(--ink-2);margin:22px 0 12px;display:flex;align-items:center;gap:10px}
+  .yr{font-size:var(--fs-text-xs);font-weight:700;color:var(--ink-2);margin:22px 0 12px;display:flex;align-items:center;gap:10px}
   .yr::after{content:"";flex:1;height:1px;background:var(--border)}
   .tl{position:relative;margin-left:8px}
   .tl::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--border)}
@@ -136,12 +136,12 @@
   .rec:focus-visible{outline:none}
   .rec:focus-visible .rec-card{outline:2px solid var(--accent);outline-offset:2px}
   .rec-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:7px}
-  .rno{font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums}
+  .rno{font-weight:700;font-size:var(--fs-text-sm);font-variant-numeric:tabular-nums}
   .tag{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:6px;letter-spacing:.01em}
   .tag.cor{background:var(--surface-3);color:var(--ink-2)}
   .tag.pm{background:var(--info-soft);color:var(--info)}
-  .pill{font-size:11px;font-weight:600;padding:3px 9px 3px 7px;border-radius:999px;display:inline-flex;align-items:center;gap:4px}
-  .pill .ms{font-size:13px}
+  .pill{font-size:var(--fs-xs);font-weight:600;padding:3px 9px 3px 7px;border-radius:999px;display:inline-flex;align-items:center;gap:4px}
+  .pill .ms{font-size:var(--fs-sm)}
   .pill.good{background:var(--good-soft);color:var(--good)}
   .pill.warn{background:var(--warn-soft);color:var(--warn)}
   .pill.accent{background:var(--accent-soft);color:var(--accent)}
@@ -149,7 +149,7 @@
   .rec-sym{font-size:14px;font-weight:600;line-height:1.4;margin-bottom:8px}
   .rec-foot{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-3)}
   .rec-foot b{color:var(--ink-2);font-weight:600}
-  .rec-foot .cost{margin-left:auto;color:var(--ink);font-weight:700;font-size:13.5px}
+  .rec-foot .cost{margin-left:auto;color:var(--ink);font-weight:700;font-size:var(--fs-text-sm)}
   .egp{font-size:10px;font-weight:700;color:var(--warn);background:var(--warn-soft);padding:1px 6px;border-radius:5px}
   .empty{padding:40px 20px;text-align:center;color:var(--ink-3);font-size:14px}
 
@@ -167,12 +167,12 @@
     color:var(--ink-2);cursor:pointer;flex-shrink:0;font-size:17px;line-height:1}
   .dr-close:hover{color:var(--crit);border-color:var(--crit)}
   .dr-body{padding:18px 22px;overflow-y:auto;flex:1}
-  .sect-lab{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:600;
+  .sect-lab{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:600;
     display:flex;align-items:center;gap:8px;margin:22px 0 12px}
   .sect-lab:first-child{margin-top:2px}
   .sect-lab::after{content:"";flex:1;height:1px;background:var(--border)}
-  .symbox{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:13px 15px;font-size:13.5px;line-height:1.55}
-  .symbox .cause{color:var(--ink-3);font-size:12.5px;margin-top:6px}
+  .symbox{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:13px 15px;font-size:var(--fs-text-sm);line-height:1.55}
+  .symbox .cause{color:var(--ink-3);font-size:var(--fs-text-xs);margin-top:6px}
   /* status steps */
   .steps{display:flex;flex-direction:column;gap:0;margin:2px 0}
   .step{display:flex;gap:12px;position:relative;padding-bottom:16px}
@@ -184,29 +184,29 @@
   .step .sdot .ms{font-size:12px;color:#fff}
   .step.pending .sdot{background:var(--surface);border-color:var(--border-strong)}
   .step.current .sdot{background:var(--accent);border-color:var(--accent)}
-  .step .st{font-size:13.5px;font-weight:600}
+  .step .st{font-size:var(--fs-text-sm);font-weight:600}
   .step .sd{font-size:12px;color:var(--ink-3);margin-top:1px}
   .step.pending .st{color:var(--ink-3);font-weight:500}
 
   .tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:11px}
-  table.parts{border-collapse:collapse;width:100%;min-width:340px;font-size:12.5px}
+  table.parts{border-collapse:collapse;width:100%;min-width:340px;font-size:var(--fs-text-xs)}
   table.parts th,table.parts td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
-  table.parts th{font-size:11px;color:var(--ink-3);font-weight:600;background:var(--surface-2)}
+  table.parts th{font-size:var(--fs-xs);color:var(--ink-3);font-weight:600;background:var(--surface-2)}
   table.parts td.r,table.parts th.r{text-align:right}
   table.parts tr:last-child td{border-bottom:0}
-  .returned{color:var(--warn);font-size:11px;margin-top:8px}
+  .returned{color:var(--warn);font-size:var(--fs-xs);margin-top:8px}
   .cost-b{border:1px solid var(--border);border-radius:11px;overflow:hidden}
-  .cost-b .row{display:flex;justify-content:space-between;padding:10px 15px;font-size:13px;border-bottom:1px solid var(--border)}
+  .cost-b .row{display:flex;justify-content:space-between;padding:10px 15px;font-size:var(--fs-sm);border-bottom:1px solid var(--border)}
   .cost-b .row span:last-child{font-weight:600}
   .cost-b .row.sum{background:var(--accent-soft);border-bottom:0;font-weight:700}
-  .cost-b .row.sum span:last-child{color:var(--accent);font-size:15px}
-  .kv{margin:10px 0 4px;display:grid;grid-template-columns:auto 1fr;gap:9px 14px;font-size:13px}
+  .cost-b .row.sum span:last-child{color:var(--accent);font-size:var(--fs-body)}
+  .kv{margin:10px 0 4px;display:grid;grid-template-columns:auto 1fr;gap:9px 14px;font-size:var(--fs-sm)}
   .kv dt{color:var(--ink-3)} .kv dd{margin:0;color:var(--ink-2)}
   .docs{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
   .doc{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);background:var(--surface-2);
     border:1px solid var(--border);border-radius:8px;padding:6px 10px}
   .doc .ms{font-size:14px;color:var(--accent)}
-  .foot{margin-top:30px;padding-top:14px;border-top:1px solid var(--border);color:var(--ink-3);font-size:11.5px;
+  .foot{margin-top:30px;padding-top:14px;border-top:1px solid var(--border);color:var(--ink-3);font-size:var(--fs-text-xs);
     display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
   .foot code{background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:1px 6px}
 
@@ -523,14 +523,14 @@
       '<div class="veh-badge">'+ic("truck")+'</div>'+
       '<div class="veh-main"><span class="plate">'+v.reg+'</span><span class="code">'+v.code+'</span>'+
         '<div class="vt">'+v.type+'</div>'+
-        '<div class="vcard-meta" style="font-size:13px;margin-top:2px">'+v.brand+'</div>'+
+        '<div class="vcard-meta" style="font-size:var(--fs-sm);margin-top:2px">'+v.brand+'</div>'+
         '<div class="veh-facts">'+
           '<div class="fact"><div class="fl">สังกัด</div><div class="fv">'+v.unit+'</div></div>'+
           '<div class="fact"><div class="fl">ผู้ดูแลงานซ่อม</div><div class="fv">'+v.owner_dept+'</div></div>'+
           '<div class="fact"><div class="fl">'+(usesHr?"ชั่วโมงเครื่อง":"เลขไมล์ปัจจุบัน")+'</div><div class="fv num">'+(usesHr?money(v.hours)+" ชม.":money(v.odo)+" กม.")+'</div></div>'+
           '<div class="fact"><div class="fl">PM ครั้งถัดไป</div><div class="fv">'+v.nextPM+'</div></div>'+
         '</div></div>'+
-      '<div class="veh-actions"><span class="vstat" style="background:'+vs.bg+';color:'+vs.fg+';font-size:13px;padding:6px 13px">'+vs.t+'</span>'+
+      '<div class="veh-actions"><span class="vstat" style="background:'+vs.bg+';color:'+vs.fg+';font-size:var(--fs-sm);padding:6px 13px">'+vs.t+'</span>'+
         '<button class="btn primary">+ แจ้งซ่อมใหม่</button></div>';
   }
   function renderKpis(){

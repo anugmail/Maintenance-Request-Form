@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="design-system/tokens.css?v=20260811-ds11">
+<link rel="stylesheet" href="design-system/tokens.css?v=20260812-ds12">
 <title>VMS Plus · วิเคราะห์อะไหล่ (Parts Intelligence)</title>
 <style>
   *{box-sizing:border-box}
@@ -43,7 +43,7 @@
   .brand h1{font-size:15.5px;margin:0;font-weight:700;letter-spacing:-.01em}
   .brand p{margin:2px 0 0;font-size:12px;color:var(--ink-3)}
   .spacer{flex:1}
-  .icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface);
+  .icon-btn{width:38px;height:38px;border-radius:var(--rounded-md);border:1px solid var(--border);background:var(--surface);
     color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}
   .icon-btn:hover{border-color:var(--accent);color:var(--accent)}
 
@@ -53,28 +53,28 @@
 
   .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 4px}
   .tile{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
-  .tile .lab{font-size:11.5px;color:var(--ink-3)}
+  .tile .lab{font-size:var(--fs-text-xs);color:var(--ink-3)}
   .tile .big{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-top:6px;line-height:1.1}
   .tile .big small{font-size:12px;color:var(--ink-3);font-weight:600;margin-left:2px}
-  .tile .sub{font-size:11px;color:var(--ink-3);margin-top:4px}
+  .tile .sub{font-size:var(--fs-xs);color:var(--ink-3);margin-top:4px}
 
   .finds{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0 4px}
   .find{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;
     padding:13px 15px;box-shadow:var(--shadow)}
   .find.l{border-left-color:var(--lead)} .find.c{border-left-color:var(--crit)} .find.g{border-left-color:var(--good)}
-  .find .fh{font-size:11px;color:var(--ink-3);display:flex;align-items:center;gap:6px;font-weight:600}
-  .find .fn{font-size:14.5px;font-weight:700;margin-top:6px;line-height:1.35}
+  .find .fh{font-size:var(--fs-xs);color:var(--ink-3);display:flex;align-items:center;gap:6px;font-weight:600}
+  .find .fn{font-size:var(--fs-text-sm);font-weight:700;margin-top:6px;line-height:1.35}
   .find .fs{font-size:12px;color:var(--ink-2);margin-top:4px}
 
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:22px}
   .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:17px 18px;box-shadow:var(--shadow)}
-  .panel h3{margin:0 0 3px;font-size:14.5px;letter-spacing:-.01em}
+  .panel h3{margin:0 0 3px;font-size:var(--fs-text-sm);letter-spacing:-.01em}
   .panel .ph{font-size:12px;color:var(--ink-3);margin:0 0 14px}
   .panel.full{margin-top:22px}
 
   /* horizontal bars */
   .hb{display:flex;flex-direction:column;gap:9px}
-  .hbrow{display:grid;grid-template-columns:145px 1fr auto;gap:10px;align-items:center;font-size:12.5px}
+  .hbrow{display:grid;grid-template-columns:145px 1fr auto;gap:10px;align-items:center;font-size:var(--fs-text-xs)}
   .hbrow .hl{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .hbrow .ht{position:relative;height:16px;background:var(--track);border-radius:999px;overflow:hidden}
   .hbrow .ht>span{position:absolute;left:0;top:0;bottom:0;border-radius:999px}
@@ -85,23 +85,23 @@
   .scatterbox{position:relative}
   .scatterbox svg{display:block;width:100%;height:auto;overflow:visible}
   .qlabel{font-size:10.5px;font-weight:700;fill:var(--accent)}
-  .axl{font-size:11px;fill:var(--ink-3)}
+  .axl{font-size:var(--fs-xs);fill:var(--ink-3)}
   .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin-top:12px}
   .legend span{display:inline-flex;align-items:center;gap:6px}
   .lgd{width:10px;height:10px;border-radius:50%}
-  .tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);font-size:11.5px;padding:7px 10px;
+  .tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);font-size:var(--fs-text-xs);padding:7px 10px;
     border-radius:8px;opacity:0;transition:opacity .1s;box-shadow:0 6px 18px rgba(0,0,0,.28);z-index:50;max-width:230px}
   .tip b{font-weight:700}
 
   /* table */
   .tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;margin-top:2px}
-  table{border-collapse:collapse;width:100%;min-width:900px;font-size:12.5px}
+  table{border-collapse:collapse;width:100%;min-width:900px;font-size:var(--fs-text-xs)}
   th,td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
-  th{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-3);font-weight:600;background:var(--surface-2);
+  th{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.03em;color:var(--ink-3);font-weight:600;background:var(--surface-2);
     cursor:pointer;user-select:none;position:sticky;top:0}
   th.r,td.r{text-align:right}
   tbody tr:hover{background:var(--surface-2)}
-  .st{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;display:inline-block}
+  .st{font-size:var(--fs-xs);font-weight:600;padding:2px 8px;border-radius:999px;display:inline-block}
   .st.good{background:var(--good-soft);color:var(--good)} .st.warn{background:var(--warn-soft);color:var(--warn)}
   .st.crit{background:var(--crit-soft);color:var(--crit)}
   .flag{font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:5px;margin-left:6px}

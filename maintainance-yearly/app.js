@@ -892,7 +892,7 @@ function renderProcurementConfirmed(plan) {
   $('phase').innerHTML = `
     <div class="card">
       <div class="sect">เบิก/จัดหา + แผนเดินทาง — ยืนยันแล้ว</div>
-      <span class="badge b-ok" style="font-size:15px;padding:6px 16px">แผนเดินทางยืนยันแล้ว</span>
+      <span class="badge b-ok" style="font-size:var(--fs-body);padding:6px 16px">แผนเดินทางยืนยันแล้ว</span>
       <div class="sub" style="margin-top:12px">แผนเดินทาง <b>${trips.length}</b> ใบ
         · รวมค่าใช้จ่าย <b>${grand.toLocaleString('th-TH')}</b> บาท · ทุกใบได้รับการตอบรับจากหน่วยงานแล้ว</div>
       ${trips.length ? `<div class="tblwrap"><table class="tbl">

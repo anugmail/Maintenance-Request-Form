@@ -67,7 +67,7 @@ function renderLoginScreen(){
       <div class="loginhead">
         <span class="ms">directions_car</span>
         <h1>บันทึกการใช้งานรถ</h1>
-        <div class="sub2" style="color:var(--gray-500);font-size:12.5px">เลือกผู้ใช้งาน (mock login) — ข้อมูลจำลอง</div>
+        <div class="sub2" style="color:var(--gray-500);font-size:var(--fs-text-xs)">เลือกผู้ใช้งาน (mock login) — ข้อมูลจำลอง</div>
       </div>
       <div class="profilelist">
         ${DRIVERS.map(d=>`
@@ -228,7 +228,7 @@ function renderHistVSheet(){
     <div class="vsheet-backdrop" onclick="closeHistVSheet()"></div>
     <div class="vsheet-panel" style="max-height:60vh">
       <div class="vsheet-handle"></div>
-      <div class="vsheet-header"><h3>กรองตามรถ</h3><span class="ms" style="cursor:pointer;background:var(--gray-100);border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center" onclick="closeHistVSheet()">close</span></div>
+      <div class="vsheet-header"><h3>กรองตามรถ</h3><span class="ms" style="cursor:pointer;background:var(--gray-100);border-radius:var(--rounded-md);width:34px;height:34px;display:flex;align-items:center;justify-content:center" onclick="closeHistVSheet()">close</span></div>
       <div class="vsheet-list">
         ${rows.map(r=>`<div class="filterrow ${String(histFilter.vehicleId)===r.id?'sel':''}" onclick="setHistVehicle('${r.id}')">
           <span>${esc(r.label)}</span>
@@ -253,7 +253,7 @@ function renderPickerSheet(){
     <div class="vsheet-backdrop" onclick="closePicker()"></div>
     <div class="vsheet-panel" style="max-height:60vh">
       <div class="vsheet-handle"></div>
-      <div class="vsheet-header"><h3>${esc(st.title)}</h3><span class="ms" style="cursor:pointer;background:var(--gray-100);border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center" onclick="closePicker()">close</span></div>
+      <div class="vsheet-header"><h3>${esc(st.title)}</h3><span class="ms" style="cursor:pointer;background:var(--gray-100);border-radius:var(--rounded-md);width:34px;height:34px;display:flex;align-items:center;justify-content:center" onclick="closePicker()">close</span></div>
       <div class="vsheet-list">
         ${st.options.map((o,idx)=>`<div class="filterrow ${o===st.selected?'sel':''}" onclick="pickerChoose(${idx})">
           <span>${esc(o)}</span>
@@ -292,7 +292,7 @@ function renderAddSheet(){
       <div class="vsheet-backdrop" onclick="closeAddSheet()"></div>
       <div class="vsheet-panel modal-tall">
         <div class="vsheet-handle"></div>
-        <div class="vsheet-header"><h3>บันทึกย้อนหลัง — ${MDD.thDate(F.date,{day:'numeric',month:'short',year:'numeric'})}</h3><span class="ms" style="cursor:pointer;background:var(--gray-100);border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center" onclick="closeAddSheet()">close</span></div>
+        <div class="vsheet-header"><h3>บันทึกย้อนหลัง — ${MDD.thDate(F.date,{day:'numeric',month:'short',year:'numeric'})}</h3><span class="ms" style="cursor:pointer;background:var(--gray-100);border-radius:var(--rounded-md);width:34px;height:34px;display:flex;align-items:center;justify-content:center" onclick="closeAddSheet()">close</span></div>
         <div class="vsheet-formwrap">${dayFormHtml()}</div>
       </div>`;
     return;
@@ -302,7 +302,7 @@ function renderAddSheet(){
     <div class="vsheet-backdrop" onclick="closeAddSheet()"></div>
     <div class="vsheet-panel" style="max-height:none">
       <div class="vsheet-handle"></div>
-      <div class="vsheet-header"><h3>เพิ่มบันทึกย้อนหลัง</h3><span class="ms" style="cursor:pointer;background:var(--gray-100);border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center" onclick="closeAddSheet()">close</span></div>
+      <div class="vsheet-header"><h3>เพิ่มบันทึกย้อนหลัง</h3><span class="ms" style="cursor:pointer;background:var(--gray-100);border-radius:var(--rounded-md);width:34px;height:34px;display:flex;align-items:center;justify-content:center" onclick="closeAddSheet()">close</span></div>
       <div style="padding:16px">
         <div class="f"><label>เลือกวันที่ต้องการบันทึก</label>
           <input type="date" id="addDateInput" max="${today}" value="${today}">
@@ -478,7 +478,7 @@ function renderVSheet(){
     <div class="vsheet-backdrop" onclick="closeVSheet()"></div>
     <div class="vsheet-panel">
       <div class="vsheet-handle"></div>
-      <div class="vsheet-header"><h3>เลือกรถที่ใช้งาน</h3><span class="ms" style="cursor:pointer;background:var(--gray-100);border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center" onclick="closeVSheet()">close</span></div>
+      <div class="vsheet-header"><h3>เลือกรถที่ใช้งาน</h3><span class="ms" style="cursor:pointer;background:var(--gray-100);border-radius:var(--rounded-md);width:34px;height:34px;display:flex;align-items:center;justify-content:center" onclick="closeVSheet()">close</span></div>
       <div class="vsheet-list" id="vsheetList"></div>
     </div>`;
   UIC.vehicleCard.render($('vsheetList'),{variant:'list',vehicles:VEHICLES,selectedId:F.vehicleId,
@@ -727,7 +727,7 @@ function renderOthers(){
     <label>โน้ต (ถ้ามี)</label>
     <input placeholder="เช่น ทางด่วนไปหน้างาน" value="${esc(o.note)}" oninput="F.others[${i}].note=this.value">
   </div>`).join('')}
-  <button class="btn btn-g" style="padding:8px 14px;font-size:13.5px" onclick="F.others.push({type:'ทางด่วน',amount:'',note:''});toast('เพิ่มค่าใช้จ่ายแล้ว');renderEditingUI()"><span class="ms" style="font-size:17px">add</span> เพิ่มค่าใช้จ่าย</button></div>`;
+  <button class="btn btn-g" style="padding:8px 14px;font-size:var(--fs-text-sm)" onclick="F.others.push({type:'ทางด่วน',amount:'',note:''});toast('เพิ่มค่าใช้จ่ายแล้ว');renderEditingUI()"><span class="ms" style="font-size:17px">add</span> เพิ่มค่าใช้จ่าย</button></div>`;
 }
 function renderCustom(c){
   const v=F.custom[c.key],req=c.req?' <em>*</em>':'',fid='custom_'+c.key;

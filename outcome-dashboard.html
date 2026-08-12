@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="design-system/tokens.css?v=20260811-ds11">
+<link rel="stylesheet" href="design-system/tokens.css?v=20260812-ds12">
 <title>VMS Plus · Outcome — ฟีเจอร์นี้ทำแล้วได้อะไร</title>
 <style>
   *{box-sizing:border-box}
@@ -42,7 +42,7 @@
   .brand h1{font-size:15.5px;margin:0;font-weight:700;letter-spacing:-.01em}
   .brand p{margin:2px 0 0;font-size:12px;color:var(--ink-3)}
   .spacer{flex:1}
-  .icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface);
+  .icon-btn{width:38px;height:38px;border-radius:var(--rounded-md);border:1px solid var(--border);background:var(--surface);
     color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}
   .icon-btn:hover{border-color:var(--accent);color:var(--accent)}
 
@@ -50,16 +50,16 @@
   .lead h2{margin:0 0 5px;font-size:22px;letter-spacing:-.02em;text-wrap:balance}
   .lead p{margin:0;color:var(--ink-2);font-size:14px;max-width:74ch}
   .howto{margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--accent-soft);
-    border:1px solid color-mix(in srgb,var(--accent) 20%,transparent);border-radius:12px;padding:11px 15px;font-size:13px}
+    border:1px solid color-mix(in srgb,var(--accent) 20%,transparent);border-radius:12px;padding:11px 15px;font-size:var(--fs-sm)}
   .howto .ms{color:var(--accent);flex-shrink:0}
-  .howto .fill{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--ink-2);font-size:12.5px}
+  .howto .fill{margin-left:auto;display:flex;align-items:center;gap:10px;color:var(--ink-2);font-size:var(--fs-text-xs)}
   .howto .fill b{color:var(--accent);font-variant-numeric:tabular-nums}
-  .btn{font:inherit;font-size:12.5px;font-weight:600;border-radius:9px;padding:7px 12px;cursor:pointer;
+  .btn{font:inherit;font-size:var(--fs-text-xs);font-weight:600;border-radius:9px;padding:7px 12px;cursor:pointer;
     border:1px solid var(--border);background:var(--surface);color:var(--ink-2)}
   .btn:hover{border-color:var(--accent);color:var(--accent)}
 
   .controls{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 4px}
-  .chip{font-size:12.5px;padding:7px 13px;border-radius:999px;border:1px solid var(--border);background:var(--surface);
+  .chip{font-size:var(--fs-text-xs);padding:7px 13px;border-radius:999px;border:1px solid var(--border);background:var(--surface);
     color:var(--ink-2);cursor:pointer;white-space:nowrap}
   .chip:hover{border-color:var(--border-strong)}
   .chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
@@ -67,7 +67,7 @@
   .group{margin-top:26px}
   .group-h{display:flex;align-items:center;gap:10px;margin:0 0 13px}
   .group-stripe{width:4px;height:20px;border-radius:3px;background:var(--accent)}
-  .group-h h3{margin:0;font-size:14.5px;letter-spacing:.01em}
+  .group-h h3{margin:0;font-size:var(--fs-text-sm);letter-spacing:.01em}
   .group-h .gc{font-size:12px;color:var(--ink-3)}
   .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
 
@@ -75,26 +75,26 @@
     box-shadow:var(--shadow);display:flex;flex-direction:column;gap:0;scroll-margin-top:80px}
   .card.hl{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 28%,transparent),var(--shadow)}
   .card-top{display:flex;align-items:center;gap:10px;margin-bottom:11px}
-  .code{font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--accent);background:var(--accent-soft);
+  .code{font-size:var(--fs-xs);font-weight:700;letter-spacing:.03em;color:var(--accent);background:var(--accent-soft);
     padding:3px 7px;border-radius:6px;flex-shrink:0}
-  .card-top .nm{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  .card-top .nm{font-size:var(--fs-text-sm);font-weight:600;color:var(--ink-2)}
   .benefit{display:flex;gap:10px;align-items:flex-start;margin-bottom:13px}
   .benefit .bi{color:var(--accent);flex-shrink:0;margin-top:2px;font-size:20px}
   .benefit b{font-size:16px;font-weight:700;line-height:1.4;letter-spacing:-.01em}
   .valuebox{background:linear-gradient(135deg,var(--accent-soft),color-mix(in srgb,var(--accent-soft) 40%,var(--surface)));
     border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);border-radius:12px;padding:13px 16px}
-  .valuebox .vt{font-size:15px;font-weight:600;line-height:1.55;color:var(--ink)}
+  .valuebox .vt{font-size:var(--fs-body);font-weight:600;line-height:1.55;color:var(--ink)}
   .ba{display:grid;grid-template-columns:1fr 22px 1fr;gap:8px;align-items:stretch;margin-top:13px}
-  .cell{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+  .cell{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--rounded-md);padding:10px 12px}
   .cell.after{background:var(--good-soft);border-color:var(--good-border)}
   .cell .cap{font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:4px;color:var(--ink-3)}
   .cell.after .cap{color:var(--good)}
-  .cell .txt{font-size:12.5px;line-height:1.5;color:var(--ink-2)}
+  .cell .txt{font-size:var(--fs-text-xs);line-height:1.5;color:var(--ink-2)}
   .cell.after .txt{color:var(--ink)}
   .arrow{display:flex;align-items:center;justify-content:center;color:var(--ink-3)}
   .gains{margin-top:14px;padding-top:13px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:7px}
   .gains .glab{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:700;margin-bottom:1px}
-  .gains .g{font-size:12.5px;color:var(--ink-2);display:flex;gap:9px;line-height:1.45}
+  .gains .g{font-size:var(--fs-text-xs);color:var(--ink-2);display:flex;gap:9px;line-height:1.45}
   .gains .g .bd{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:6px;flex-shrink:0}
 
   /* editable number slot */

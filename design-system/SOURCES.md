@@ -68,9 +68,9 @@ d = json.load(open('design-system/.figma-extract/1-1380.json'))   # หน้า
 
 | ชนิด | จำนวนที่นับได้ทั้งไฟล์ | เอามาลง `tokens.css` แล้วหรือยัง |
 |---|---|---|
-| สี (hex ที่ใช้จริง) | **142** | ✅ เทียบครบ → `tokens.css` v0.3 |
-| radius | **43** | ⬜ **ยังไม่เทียบ** |
-| ชุด typography (family/size/weight/line-height) | **49** | ⬜ **ยังไม่เทียบ** |
+| สี (hex ที่ใช้จริง) | **142** | ✅ เทียบครบ → `tokens.css` v0.3 · เพิ่มรอบ 12 ส.ค.: `--success-200` แก้เป็น `#ABEFC6` · `--error-300` `#FDA29B` ใหม่ |
+| radius | **43** | ✅ เทียบแล้ว 12 ส.ค. — ตัวใช้หนักของไลบรารี 9999/6/8/4/12 ⇒ เพิ่ม `--rounded-sm:6px` · เลิกใช้ 10px ที่ไม่มีในสเกล (input r10→8) |
+| ชุด typography (family/size/weight/line-height) | **49** | ✅ เทียบแล้ว 12 ส.ค. — แกนจริงคือ 14/20 · 16/24 · 12/18 ⇒ `--fs-body/sm/xs` จูนเป็น 16/14/12 + กวาดขนาดเศษ (13.5 ฯลฯ) ทิ้งทั้งโปรเจ็ค |
 
 ### สิ่งที่การเทียบสีรอบ 11 ส.ค. จับผิดได้ (`tokens.css` v0.2 → v0.3)
 
@@ -90,16 +90,17 @@ d = json.load(open('design-system/.figma-extract/1-1380.json'))   # หน้า
 **สถานะ provenance ปัจจุบันใน `tokens.css`: `✔` 40 · `⚠` 6**
 6 ตัวที่ยัง `⚠` = **ไม่มีในไลบรารี** (เราเพิ่มเอง): `--brand-700` · `--brand-accent` · `--success-200` · `--info-25` · `--secondary-700` · `--secondary-50`
 
-## คอมโพเนนต์ — ยังไม่เทียบ
+## คอมโพเนนต์ — เทียบแล้ว 12 ส.ค. 2569 (`compare-figma.js`)
 
-ดึง JSON มาครบแล้ว แต่**ยังไม่ได้เอาโครง/ระยะ/สถานะของแต่ละคอมโพเนนต์มาเทียบกับ `components.css`**
+รันซ้ำได้เอง: `node design-system/compare-figma.js` (อ่าน `.figma-extract/` ล้วน ไม่ต่อ Figma)
 
 | ส่วน | สถานะ |
 |---|---|
 | ปุ่ม (`.btn` ทุก variant) | ✅ ตรงกับไลบรารี — ดึงครบ 636 variants (7 ส.ค.) |
-| สี | ✅ เทียบครบทั้งไฟล์ (11 ส.ค.) |
-| radius · typography | ⚠️ **มีข้อมูลแล้วแต่ยังไม่เทียบ** — อยู่ใน `.figma-extract/00-summary-colors-radii-fonts.json` |
-| ช่องกรอก · dropdown · textarea · modal · badge · tag · table · date picker · progress steps | ❌ **ประกอบเอง ยังไม่เคยเทียบกับไลบรารี** ทั้งที่มีหน้าอยู่ในไฟล์แล้ว |
+| สี · radius · typography | ✅ เทียบครบ (11–12 ส.ค.) |
+| ช่องกรอก · select · textarea · badge · tag/chip · table · checkbox · radio · breadcrumb · วันในปฏิทิน | ✅ **เทียบ+จูนตรงไลบรารีแล้ว 12 ส.ค.** — diff ที่เจอและแก้: input 46→44/r10→8/+shadow-xs · label 600→500 · error border 500→300 · badge ไม่มีขอบ→มีขอบโทน 200 + ตัวโทน 700 · chip pill→Tag r6 · ตาราง หัว gray-50→ขาว 12/600 · checkbox 17→20 ฯลฯ (รายละเอียดใน README §8 v0.12) |
+| modal | — ระบบเรายังไม่มี modal (ใช้ native confirm ใน prototype) — ถ้าทำเมื่อไหร่ให้อิง `3:9` |
+| progress steps (`.wsteps` ลูกศร chevron) · `.sect` · `.page-title` · `.shell` | ⚠️ อิง **screenshot หน้าจริง VMS Plus** — ไลบรารี `3:16` เป็นสไตล์ Untitled UI คนละแบบกับหน้าจริง จึงคงตาม screenshot |
 
 `componentKey` ที่ได้จาก `search_design_system` (คำว่า "input" 11 ส.ค.) — ใช้ import ได้ถ้าต้องการเทียบละเอียด
 
@@ -118,10 +119,10 @@ d = json.load(open('design-system/.figma-extract/1-1380.json'))   # หน้า
 
 ## งานที่ค้างอยู่ (เรียงตามความคุ้ม)
 
-1. **เทียบ radius 43 ค่า + typography 49 ชุด** กับ `tokens.css` — ข้อมูลมีแล้วใน `.figma-extract/00-summary-colors-radii-fonts.json` เหลือแค่เทียบ
-2. **เทียบช่องกรอก/dropdown/table/modal** กับหน้า `1:1380` · `1:1379` · `3:20` · `3:9` — ส่วนที่ประกอบเองล้วน เสี่ยงผิดที่สุด
-3. **Date pickers `3:23`** — `.daterange`/`.cal` เราออกแบบเองทั้งหมด ยังไม่รู้ว่าไลบรารีทำไว้ยังไง
-4. **Progress steps `3:16`** — เทียบกับ `.wsteps`/`.wstep`
+1. ~~เทียบ radius + typography~~ — ✅ เสร็จ 12 ส.ค. (ดูตารางบน)
+2. ~~เทียบช่องกรอก/dropdown/table~~ — ✅ เสร็จ 12 ส.ค. · **modal ยังไม่มีในระบบเรา** ถ้าเพิ่มให้อิง `3:9`
+3. **Date pickers `3:23`** — จูน `_Calendar cell` แล้ว (วัน 40px กลม) · โครงแผง `.cal` ทั้งแผงยังเป็นของเรา ถ้าจะเทียบละเอียดใช้ `Date picker modal`
+4. ~~Progress steps `3:16`~~ — ตัดสินใจคงตาม screenshot หน้าจริง (สไตล์ chevron ของ VMS Plus ไม่ใช่แบบไลบรารี)
 
 ## ข้อจำกัดที่ต้องรู้
 

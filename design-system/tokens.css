@@ -33,14 +33,16 @@
   --gray-200:#E9EAEB;      /* ✔ color/border/disabled-subtle */
   --gray-100:#F5F5F5;      /* ✔ color/bg/disabled */
   --gray-50:#FAFAFA;       /* ✔ color/bg/primary-hover */
+  --gray-25:#FCFCFD;       /* ⚠ ไม่พบในไลบรารี — พื้น .work จาก screenshot หน้าจริง (Untitled UI gray-25) */
 
   /* ---------- Semantic palette ---------- */
   --success-700:#067647;   /* ✔ node 1:1377 Badges + 3:20 Tables — ตัวอักษรบนพื้น success (107 ครั้ง) */
   --success-600:#17B26A;   /* ✔ node 1:1377 Badges (523 ครั้ง) */
   --success-500:#079455;   /* ✔ node 3:16 Progress steps + 3:12 Metrics */
-  --success-200:#75E0A7;   /* ⚠ ไม่พบในไลบรารี */
+  --success-200:#ABEFC6;   /* ✔ เส้นขอบ badge success (113 ครั้ง) — เดิมเราใส่ #75E0A7 ซึ่งไม่มีในไลบรารี */
   --success-100:#DCFAE6;   /* ✔ node 3:9 Modals — พื้นไอคอนสำเร็จ */
   --success-50:#ECFDF3;    /* ✔ node 1:1377 Badges — พื้น badge สำเร็จ */
+  --warning-800:#93370D;   /* ⚠ ไม่พบในไลบรารี — ตัวอักษรแถบ .draft (Untitled UI warning-800) เดิม hardcode ใน components.css */
   --warning-700:#B54708;   /* ✔ ยืนยันจากไลบรารี ใช้ 52 ครั้ง */
   --warning-600:#F79009;   /* ✔ ยืนยันจากไลบรารี ใช้ 48 ครั้ง */
   --warning-200:#FEDF89;   /* ✔ ยืนยันจากไลบรารี ใช้ 58 ครั้ง */
@@ -48,6 +50,7 @@
   --error-700:#B42318;     /* ✔ ยืนยันจากไลบรารี ใช้ 148 ครั้ง · ใช้เป็น destructive hover — ยังไม่ยืนยัน */
   --error-600:#D92D20;     /* ✔ component/button/destructive-primary-bg */
   --error-500:#F04438;     /* ✔ ยืนยันจากไลบรารี ใช้ 368 ครั้ง */
+  --error-300:#FDA29B;     /* ✔ เส้นขอบช่องกรอก state error (104 ครั้ง) */
   --error-200:#FECDCA;     /* ✔ ยืนยันจากไลบรารี ใช้ 66 ครั้ง */
   --error-50:#FEF3F2;      /* ✔ ยืนยันจากไลบรารี ใช้ 118 ครั้ง */
   --info-600:#6172F3;      /* ✔ ยืนยันจากไลบรารี ใช้ 32 ครั้ง */
@@ -85,6 +88,7 @@
   --space-6:24px;
 
   /* ---------- Radius ---------- */
+  --rounded-sm:6px;        /* ✔ tag / กล่อง checkbox (ใช้ 2,046 ครั้งในไลบรารี) */
   --rounded-md:8px;        /* ✔ รัศมีปุ่ม/อินพุต */
   --r-sm:8px;              /* alias เดิม = rounded-md */
   --r-md:12px;             /* ~ การ์ดย่อย, รายการ */
@@ -97,19 +101,19 @@
   --font:'IBM Plex Sans Thai',sans-serif;
   --font-body-figma:'Google Sans',sans-serif;   /* ✔ อ้างอิงเฉยๆ ไม่ได้ใช้ */
 
-  --fs-text-xs:12px;   --lh-text-xs:18px;   /* ⚠ */
-  --fs-text-sm:14px;   --lh-text-sm:20px;   /* ✔ ใช้กับปุ่ม sm/md */
-  --fs-text-md:16px;   --lh-text-md:24px;   /* ✔ ใช้กับปุ่ม lg/xl */
+  --fs-text-xs:12px;   --lh-text-xs:18px;   /* ✔ badge sm / หัวตาราง (12/18 ใช้ ~1,500 ครั้ง) */
+  --fs-text-sm:14px;   --lh-text-sm:20px;   /* ✔ ใช้กับปุ่ม sm/md · label · hint (14/20 ใช้ ~6,900 ครั้ง) */
+  --fs-text-md:16px;   --lh-text-md:24px;   /* ✔ ใช้กับปุ่ม lg/xl · ตัวอักษรในช่องกรอก (16/24 ใช้ ~2,200 ครั้ง) */
   --letter-spacing-normal:0px;              /* ✔ */
   --font-weight-semibold:600;               /* ✔ */
 
-  /* alias เดิมของโปรเจกต์ */
-  --fs-body:15px;
-  --fs-sm:13px;
-  --fs-xs:11px;
+  /* alias เดิมของโปรเจกต์ — 12 ส.ค. 2569 จูนเข้าสเกลไลบรารี (เดิม 15/13/11 ไม่มีในไลบรารี) */
+  --fs-body:16px;      /* ✔ = text-md */
+  --fs-sm:14px;        /* ✔ = text-sm */
+  --fs-xs:12px;        /* ✔ = text-xs */
   --fs-h1:18px;
   --fs-h2:16px;
-  --lh:1.55;
+  --lh:1.5;            /* ✔ = 24/16 ของ text-md */
 
 
   /* ══════════ ชั้น 2 · SEMANTIC (ชื่อตามไลบรารีจริง) ══════════ */
@@ -162,6 +166,7 @@
 
 
   /* ---------- Effects ---------- */
+  --shadow-xs:0 1px 2px rgba(10,13,18,.05);  /* ✔ เงาช่องกรอก/ตารางตามไลบรารี (#0A0D12 5%) */
   --shadow-app:0 0 40px rgba(16,24,40,.12);
   --shadow-pop:0 4px 14px rgba(16,24,40,.25);
   --shadow-card:0 1px 2px rgba(16,24,40,.06),0 10px 30px rgba(16,24,40,.07);  /* การ์ดหน้าวิเคราะห์ */

@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="../design-system/tokens.css?v=20260811-ds11">
-<link rel="stylesheet" href="../design-system/components.css?v=20260811-ds11">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260812-ds12">
+<link rel="stylesheet" href="../design-system/components.css?v=20260812-ds12">
 <script src="../config.js?v=20260806-kbk-detail"></script><!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
 <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
 <style>
@@ -19,27 +19,27 @@
   .cat .ms{font-size:18px;color:var(--primary-600)}
 
   .photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-  .ph{width:72px;height:72px;border-radius:10px;background:linear-gradient(135deg,var(--gray-200),var(--gray-400));position:relative;overflow:hidden}
+  .ph{width:72px;height:72px;border-radius:var(--rounded-md);background:linear-gradient(135deg,var(--gray-200),var(--gray-400));position:relative;overflow:hidden}
   .ph img{width:100%;height:100%;object-fit:cover}
   .ph .rm{position:absolute;top:2px;right:2px;background:rgba(16,24,40,.6);color:#fff;border-radius:50%;width:18px;height:18px;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer}
-  .addph{width:72px;height:72px;border:1.5px dashed var(--gray-300);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gray-400);cursor:pointer;font-size:10px;gap:2px;background:#fff}
+  .addph{width:72px;height:72px;border:1.5px dashed var(--gray-300);border-radius:var(--rounded-md);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gray-400);cursor:pointer;font-size:10px;gap:2px;background:#fff}
 
   #parts{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;margin:16px 0 10px}
   #parts .empty{grid-column:1/-1}
   .part{border:1px solid var(--gray-200);border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;background:#fff}
   .part .top{display:flex;gap:10px;flex:1}
-  .part .pic{width:42px;height:42px;border-radius:10px;background:var(--gray-100);display:flex;align-items:center;justify-content:center;color:var(--gray-500);flex-shrink:0}
+  .part .pic{width:42px;height:42px;border-radius:var(--rounded-md);background:var(--gray-100);display:flex;align-items:center;justify-content:center;color:var(--gray-500);flex-shrink:0}
   .part b{color:var(--gray-900);font-size:14px}
   .part .code{font-size:12px;color:var(--gray-400)}
-  .part .need{font-size:12.5px;color:var(--gray-600);margin-top:2px}
-  .part .stock{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px dashed var(--gray-200);font-size:12.5px;color:var(--gray-500);flex-wrap:wrap;gap:6px}
+  .part .need{font-size:var(--fs-text-xs);color:var(--gray-600);margin-top:2px}
+  .part .stock{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px dashed var(--gray-200);font-size:var(--fs-text-xs);color:var(--gray-500);flex-wrap:wrap;gap:6px}
   .bk{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
-  .booked{color:var(--success-600);font-weight:600;font-size:13px;display:flex;align-items:center;gap:4px}
-  .ordered{color:var(--warning-700);font-weight:600;font-size:13px;display:flex;align-items:center;gap:4px}
+  .booked{color:var(--success-600);font-weight:600;font-size:var(--fs-sm);display:flex;align-items:center;gap:4px}
+  .ordered{color:var(--warning-700);font-weight:600;font-size:var(--fs-sm);display:flex;align-items:center;gap:4px}
 
   .decide{display:flex;gap:14px;max-width:560px;margin-top:14px}
   .decide .tile{flex:1}
-  .route{background:var(--gray-100);border-radius:10px;padding:12px 14px;font-size:13.5px;margin-top:14px;display:flex;gap:8px;align-items:flex-start;max-width:720px}
+  .route{background:var(--gray-100);border-radius:var(--rounded-md);padding:12px 14px;font-size:var(--fs-text-sm);margin-top:14px;display:flex;gap:8px;align-items:flex-start;max-width:720px}
   .route .ms{color:var(--primary-600);font-size:20px;flex-shrink:0}
   .dnote{max-width:720px}
 
@@ -51,12 +51,12 @@
   .apitem:last-child{border-bottom:0}
   .apitem:hover{background:var(--primary-25)}
   .apitem.sel{background:var(--primary-50);box-shadow:inset 3px 0 0 var(--primary-600)}
-  .apav{width:34px;height:34px;border-radius:50%;background:var(--gray-100);color:var(--gray-600);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex:none}
+  .apav{width:34px;height:34px;border-radius:50%;background:var(--gray-100);color:var(--gray-600);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:var(--fs-sm);flex:none}
   .apitem.sel .apav{background:var(--primary-600);color:#fff}
   .apnm{flex:1;min-width:0}
   .apnm b{display:block;font-size:var(--fs-body)}
   .apnm span{font-size:var(--fs-xs);color:var(--gray-600)}
-  .apsrc{font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--r-pill);white-space:nowrap}
+  .apsrc{font-size:var(--fs-xs);font-weight:600;padding:2px 8px;border-radius:var(--r-pill);white-space:nowrap}
   .apsrc.hr{background:var(--primary-50);color:var(--primary-700)}
   .apsrc.admin{background:var(--warning-50);color:var(--warning-700)}
   .apnone{padding:14px;font-size:var(--fs-sm);color:var(--gray-500);text-align:center}
@@ -71,9 +71,9 @@
   .done .ok{width:76px;height:76px;border-radius:50%;background:var(--success-50);color:var(--success-600);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
   .done .ok .ms{font-size:42px}
   .done .no{font-size:26px;font-weight:700;color:var(--gray-900);margin:6px 0}
-  .stat{display:inline-block;background:var(--primary-50);color:var(--primary-600);border-radius:var(--r-pill);padding:4px 14px;font-size:13px;font-weight:600;margin-top:6px}
+  .stat{display:inline-block;background:var(--primary-50);color:var(--primary-600);border-radius:var(--r-pill);padding:4px 14px;font-size:var(--fs-sm);font-weight:600;margin-top:6px}
 
-  .hint{font-size:13px;color:var(--gray-500);margin-top:4px}
+  .hint{font-size:var(--fs-sm);color:var(--gray-500);margin-top:4px}
   #othwrap{max-width:720px}
   .rowbtns{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
   .rowbtns .btn{min-width:170px;padding:11px 22px}
@@ -81,7 +81,7 @@
   .garage{display:flex;gap:10px;align-items:center;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:10px 12px;background:#fff;margin-top:8px;max-width:560px;cursor:pointer}
   .garage .ms{color:var(--primary-600)}
   .garage b{color:var(--gray-900);font-size:14px}
-  .garage .meta{font-size:12.5px;color:var(--gray-500)}
+  .garage .meta{font-size:var(--fs-text-xs);color:var(--gray-500)}
   .panel{background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);padding:16px;max-width:760px;margin-top:14px}
   .dayrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
   .apptbox{background:var(--primary-25);border:1px solid var(--primary-50);border-radius:var(--r-md);padding:12px 16px;max-width:760px;margin-top:12px;font-size:14px}
@@ -163,7 +163,7 @@
       </section>
 
       <section id="s2" class="hidden">
-        <div class="sect"><span id="head-symptom">อาการเสีย</span> <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เลือกได้หลายอาการ จากรายการมาตรฐานที่กรองตามจุดที่เลือก</span></div>
+        <div class="sect"><span id="head-symptom">อาการเสีย</span> <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— เลือกได้หลายอาการ จากรายการมาตรฐานที่กรองตามจุดที่เลือก</span></div>
         <div id="symcats"></div>
         <div id="othwrap" class="hidden">
           <div class="f" style="margin-top:12px"><label>ระบุอาการเอง</label><textarea id="othtext" rows="2" placeholder="อธิบายอาการที่พบ…"></textarea></div>
@@ -184,12 +184,12 @@
       </section>
 
       <section id="s3" class="hidden">
-        <div class="sect"><span id="head-parts">อะไหล่ที่ระบบแนะนำ</span> <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— (mock) จองได้ถ้ามีของ · <b>ของหมดแต่จำเป็นต้องใช้ → กด "สั่งของ" เพื่อรวมไว้ในรายการที่ต้องใช้</b> · อัปเดตล่าสุด 17 ก.ค. 2569 09:30</span></div>
+        <div class="sect"><span id="head-parts">อะไหล่ที่ระบบแนะนำ</span> <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— (mock) จองได้ถ้ามีของ · <b>ของหมดแต่จำเป็นต้องใช้ → กด "สั่งของ" เพื่อรวมไว้ในรายการที่ต้องใช้</b> · อัปเดตล่าสุด 17 ก.ค. 2569 09:30</span></div>
         <div id="parts"></div>
       </section>
 
       <section id="s4" class="hidden">
-        <div class="sect"><span id="head-decision">การตัดสินใจ</span> <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เห็นอะไหล่และของคงเหลือแล้ว งานนี้จะดำเนินการอย่างไร</span></div>
+        <div class="sect"><span id="head-decision">การตัดสินใจ</span> <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— เห็นอะไหล่และของคงเหลือแล้ว งานนี้จะดำเนินการอย่างไร</span></div>
         <div class="decide">
           <div class="tile tile-magenta" id="dcself" onclick="setDecision('self')"><span class="ms">build</span><b>ซ่อมเอง</b><small>ซ่อมได้ที่หน้างาน/หน่วยงาน</small></div>
           <div class="tile tile-blue" id="dckry" onclick="setDecision('kry')"><span class="ms">alt_route</span><b>ส่งเรื่องให้ กรย.</b><small>ให้ กรย. คัดแยกช่องทางซ่อม</small></div>
@@ -199,7 +199,7 @@
           <div class="f" style="margin-top:14px"><label>เหตุผลที่ซ่อมเองไม่ได้</label><textarea id="kryreason" rows="2" placeholder="เช่น ต้องใช้เครื่องมือพิเศษ/อะไหล่รอของ…"></textarea></div>
           <div class="route"><span class="ms">alt_route</span><span><b>ส่งให้ กรย. (กองระบบไฟฟ้าและงานโยธา 12 เขต)</b><br>กรย. จะคัดแยกว่าให้ <b>ซ่อมที่อู่</b> · <b>กรย. ซ่อมเอง</b> · หรือ <b>ส่งต่อ กบค.</b> — เอกสารแนบอาการ รูป และอะไหล่ที่จอง/สั่งของให้อัตโนมัติ</span></div>
         </div>
-        <div class="sect" style="margin-top:26px">ผู้อนุมัติใบแจ้งซ่อม <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— <b>ต้องเลือกก่อนส่งเรื่อง</b> · ใบแจ้งซ่อมจะยังไม่เดินต่อจนกว่าหัวหน้าจะอนุมัติ</span></div>
+        <div class="sect" style="margin-top:26px">ผู้อนุมัติใบแจ้งซ่อม <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— <b>ต้องเลือกก่อนส่งเรื่อง</b> · ใบแจ้งซ่อมจะยังไม่เดินต่อจนกว่าหัวหน้าจะอนุมัติ</span></div>
         <div class="apwrap">
           <div class="route" style="margin-bottom:12px"><span class="ms">groups</span><span>รายชื่อมาจาก <b>2 แหล่ง</b> เหมือนระบบจริง — <b class="apsrc hr">หัวหน้าสายบังคับบัญชา</b> ดึงจาก HR ตาม <b>หน่วยงาน (dept_sap)</b> ของผู้แจ้ง (จึงได้ชุดเดียวกันทั้งหน่วยงาน) และ <b class="apsrc admin">แอดมินหน่วยงานของรถ</b> จากต้นสังกัดรถคันนั้น</span></div>
           <input class="apsearch" id="apq" placeholder="ค้นหาชื่อ / รหัสพนักงาน / หน่วยงาน…" oninput="renderApprovers()">
@@ -527,19 +527,19 @@ function renderStock(){
       <span class="badge b-ok">คืนเข้าคลังแล้ว ${rets.reduce((s,x)=>s+x.r.qty,0)} ชิ้น (${rets.length} รายการ)</span>
     </div>
 
-    <div class="sect" style="margin-top:18px">รายการจองอะไหล่ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— จองจากใบแจ้งซ่อม (mock ยังไม่ตัดสต็อกจริง)</span></div>
+    <div class="sect" style="margin-top:18px">รายการจองอะไหล่ <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— จองจากใบแจ้งซ่อม (mock ยังไม่ตัดสต็อกจริง)</span></div>
     ${held.length?`<div class="tblwrap"><table class="tbl">
       <thead><tr><th>อะไหล่</th><th class="num">จำนวน</th><th>เลขที่ใบแจ้งซ่อม</th><th>หน่วยงานผู้แจ้ง</th><th>สถานะเรื่อง</th></tr></thead>
       <tbody>${held.map(x=>`<tr><td><b style="color:var(--gray-900)">${x.b.name}</b></td><td class="num">${x.b.qty} ${x.b.unit||''}</td><td>${link(x.j)}</td><td>${x.j.org}</td><td>${stBadge(x.j)}</td></tr>`).join('')}</tbody>
     </table></div>`:'<div class="empty">ยังไม่มีรายการจอง</div>'}
 
-    <div class="sect" style="margin-top:26px">รายการสั่งของ (รอของเข้า) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— อะไหล่หมดคลังที่ผู้แจ้งกดสั่งของไว้</span></div>
+    <div class="sect" style="margin-top:26px">รายการสั่งของ (รอของเข้า) <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— อะไหล่หมดคลังที่ผู้แจ้งกดสั่งของไว้</span></div>
     ${orders.length?`<div class="tblwrap"><table class="tbl">
       <thead><tr><th>อะไหล่</th><th class="num">จำนวน</th><th>เลขที่ใบแจ้งซ่อม</th><th>หน่วยงานผู้แจ้ง</th><th>สถานะเรื่อง</th></tr></thead>
       <tbody>${orders.map(x=>`<tr><td><b style="color:var(--gray-900)">${x.o.name}</b></td><td class="num">${x.o.qty} ${x.o.unit||''}</td><td>${link(x.j)}</td><td>${x.j.org}</td><td>${stBadge(x.j)}</td></tr>`).join('')}</tbody>
     </table></div>`:'<div class="empty">ยังไม่มีรายการสั่งของ</div>'}
 
-    <div class="sect" style="margin-top:26px">การคืนอะไหล่เข้าคลัง <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— เหลือจากการซ่อม (อู่ / กรย. / กบค.)</span></div>
+    <div class="sect" style="margin-top:26px">การคืนอะไหล่เข้าคลัง <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— เหลือจากการซ่อม (อู่ / กรย. / กบค.)</span></div>
     ${rets.length?`<div class="tblwrap"><table class="tbl">
       <thead><tr><th>อะไหล่</th><th class="num">จำนวนคืน</th><th>เลขที่ใบแจ้งซ่อม</th><th>หน่วยงานผู้แจ้ง</th></tr></thead>
       <tbody>${rets.map(x=>`<tr><td><b style="color:var(--gray-900)">${x.r.name}</b></td><td class="num">${x.r.qty} ${x.r.unit||''}</td><td>${link(x.j)}</td><td>${x.j.org}</td></tr>`).join('')}</tbody>
@@ -611,11 +611,11 @@ function renderParts(){
     if(bk){
       act=`<div class="bk"><span class="booked"><span class="ms" style="font-size:18px">check_circle</span>จองแล้ว ${bk} ${p.unit}</span>
         <div class="qty"><button onclick="chgQty('${p.code}',-1)">−</button><span>${bk}</span><button onclick="chgQty('${p.code}',1)">+</button></div>
-        <button class="btn btn-g" style="padding:7px 10px;font-size:12.5px" onclick="delete S.bookings['${p.code}'];renderParts()">ยกเลิก</button></div>`;
+        <button class="btn btn-g" style="padding:7px 10px;font-size:var(--fs-text-xs)" onclick="delete S.bookings['${p.code}'];renderParts()">ยกเลิก</button></div>`;
     }else if(od){
       act=`<div class="bk"><span class="ordered"><span class="ms" style="font-size:18px">shopping_cart</span>สั่งของแล้ว ${od} ${p.unit} · รอของเข้า</span>
         <div class="qty"><button onclick="chgOrd('${p.code}',-1)">−</button><span>${od}</span><button onclick="chgOrd('${p.code}',1)">+</button></div>
-        <button class="btn btn-g" style="padding:7px 10px;font-size:12.5px" onclick="delete S.orders['${p.code}'];renderParts()">ยกเลิก</button></div>`;
+        <button class="btn btn-g" style="padding:7px 10px;font-size:var(--fs-text-xs)" onclick="delete S.orders['${p.code}'];renderParts()">ยกเลิก</button></div>`;
     }else if(p.stock>0){
       act=`<div class="bk"><button class="btn btn-o" style="width:100%" onclick="book('${p.code}')"><span class="ms" style="font-size:18px">event_available</span> จองอะไหล่ (${Math.min(p.need,p.stock)} ${p.unit})</button></div>`;
     }else{
@@ -832,7 +832,7 @@ function pickupDocHTML(j){
 h1{font-size:20px;border-bottom:2px solid var(--gray-900);padding-bottom:8px}
 table{width:100%;border-collapse:collapse;margin:12px 0}td{border:1px solid var(--gray-300);padding:8px 10px;font-size:14px}td:first-child{width:190px;color:var(--gray-600);background:var(--gray-50)}
 .sig{display:flex;gap:40px;margin-top:48px}.sig div{flex:1;text-align:center;font-size:14px}.line{border-top:1px dotted var(--gray-400);margin-bottom:6px;padding-top:40px}
-.note{font-size:13px;color:var(--gray-600);background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:10px 14px}</style></head><body>
+.note{font-size:var(--fs-sm);color:var(--gray-600);background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:10px 14px}</style></head><body>
 <h1>เอกสารรับรถเข้าซ่อม (ใบรับรถ) — VMS Plus</h1>
 <table>
 <tr><td>เลขที่ใบแจ้งซ่อม</td><td>${j.no}</td></tr>
@@ -914,7 +914,7 @@ function renderMyDetail(no){
         <div style="font-size:14px;color:var(--gray-900)"><b>รวมค่าใช้จ่าย: <span id="ctot">0</span> บาท</b></div>
         <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin:16px 0 4px">คืนอะไหล่ที่เบิกจาก กบค. <small style="color:var(--gray-500);font-weight:400">— เหลือจากการซ่อม ระบุจำนวนคืนเข้าคลัง</small></label>
         ${j.booked.length?j.booked.map(b=>`
-          <div class="bk" style="border:1px dashed var(--gray-200);border-radius:10px;padding:8px 12px;max-width:560px">
+          <div class="bk" style="border:1px dashed var(--gray-200);border-radius:var(--rounded-md);padding:8px 12px;max-width:560px">
             <span style="flex:1;font-size:14px">${b.name} <span class="hint" style="display:inline">(เบิกไป ${b.qty} ${b.unit})</span></span>
             <div class="qty"><button onclick="retChg('${no}','${b.name}',-1)">−</button><span>${R.returns[b.name]||0}</span><button onclick="retChg('${no}','${b.name}',1)">+</button></div>
             <span class="hint">คืน</span>
@@ -1008,11 +1008,11 @@ function closeSelf(no){
 // ================= ส่วนกลาง: ประวัติการซ่อมย้อนหลังรายคัน (VMS+) =================
 function vehHistoryPanel(j){
   const past=JOBS.filter(x=>x.plate===j.plate&&x.no!==j.no);
-  return`<div class="sect" style="margin-top:24px">ค้นหาประวัติการซ่อมย้อนหลังของรถคันนี้ (VMS+) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ${j.plate}</span></div>
+  return`<div class="sect" style="margin-top:24px">ค้นหาประวัติการซ่อมย้อนหลังของรถคันนี้ (VMS+) <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— ${j.plate}</span></div>
   <div class="panel">${past.length?past.map(x=>{const s=statusInfo(x);
     return`<div class="dayrow" style="align-items:flex-start;border-bottom:1px dashed var(--gray-200);padding-bottom:8px">
-      <span style="flex:0 0 150px;font-weight:600;color:var(--gray-900);font-size:13.5px">${x.no}</span>
-      <span style="flex:1;font-size:13.5px">${x.syms.join(', ')}${x.record?` — ${x.record.det}`:''}${x.cost?` · ต้นทุน ${costSum(x.cost).toLocaleString()} บาท`:''}<div style="font-size:12px;color:var(--gray-400)">${x.history[0].t}</div></span>
+      <span style="flex:0 0 150px;font-weight:600;color:var(--gray-900);font-size:var(--fs-text-sm)">${x.no}</span>
+      <span style="flex:1;font-size:var(--fs-text-sm)">${x.syms.join(', ')}${x.record?` — ${x.record.det}`:''}${x.cost?` · ต้นทุน ${costSum(x.cost).toLocaleString()} บาท`:''}<div style="font-size:12px;color:var(--gray-400)">${x.history[0].t}</div></span>
       <span class="badge ${s.cls}">${s.label}</span></div>`}).join('')
    :'<div class="hint" style="margin:0">ไม่พบประวัติการซ่อมย้อนหลังของรถคันนี้</div>'}</div>`;
 }
@@ -1109,7 +1109,7 @@ function renderKryDetail(no){
   }
   else if(j.phase==='krd'){   // ---- คุ้มค่าแล้ว: เดิน 5 ขั้นตามผัง ----
     const s=j.krdStage||0;
-    action=`<div class="sect" style="margin-top:24px">กรย. ดำเนินการซ่อมเอง <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ประเมินราคา ${(j.est||0).toLocaleString()} บาท · คุ้มค่าซ่อม</span></div>
+    action=`<div class="sect" style="margin-top:24px">กรย. ดำเนินการซ่อมเอง <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— ประเมินราคา ${(j.est||0).toLocaleString()} บาท · คุ้มค่าซ่อม</span></div>
     <div class="wsteps" style="margin-top:14px">${KRD_STEPS.map((x,i)=>`<div class="wstep ${i===s?'active':i<s?'passed':''}"><span class="num">${i<s?'✓':i+1}</span><span class="lbl">${x}</span></div>`).join('')}</div>`;
     if(j.krdAppt)action+=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดวันซ่อมกับเจ้าของรถ:</b> ${j.krdAppt.date} ${j.krdAppt.note?'· '+j.krdAppt.note:''}</div>`;
     if(s===0){
@@ -1229,7 +1229,7 @@ function inspFormHTML(no,kind,j){
   return`<div class="panel">
     <div style="font-weight:600;color:var(--gray-900);font-size:14px;margin-bottom:8px">① ความผิดปกติรอบตัวรถ <span class="hint" style="display:inline;margin:0">— แตะ "มีตำหนิ" แล้วระบุรายละเอียด</span></div>
     ${I.zones.map((z,zi)=>`<div class="dayrow">
-      <span style="flex:0 0 210px;font-size:13.5px">${z.name}</span>
+      <span style="flex:0 0 210px;font-size:var(--fs-text-sm)">${z.name}</span>
       <div class="seg" style="flex:0 0 172px"><div class="sg ${!z.bad?'sel':''}" onclick="zSet('${no}',${zi},false)">ปกติ</div><div class="sg ${z.bad?'sel':''}" onclick="zSet('${no}',${zi},true)">มีตำหนิ</div></div>
       ${z.bad?`<input type="text" style="flex:1;min-width:170px" placeholder="เช่น รอยบุบ ขีดข่วน สนิม รอยรั่ว…" value="${z.note}" oninput="K.insp.zones[${zi}].note=this.value">`:''}
     </div>`).join('')}
@@ -1381,18 +1381,18 @@ function renderKbkDetail(no){
   if(j.phase==='checkin'){
     if(!K.insp)K.insp=initInsp();
     action=`<div class="apptbox"><span class="ms" style="color:var(--success-600)">event_available</span> <b>ผู้แจ้งยินยอมเอกสารใบรับรถแล้ว</b> · นัดเข้าซ่อม ${j.inbound.date}</div>
-    <div class="sect" style="margin-top:24px">บันทึกตรวจสอบรถเทียบกับเอกสารรับรถ <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ตรวจร่วมกับผู้ส่งรถตอนรับรถเข้า สนญ.</span></div>`
+    <div class="sect" style="margin-top:24px">บันทึกตรวจสอบรถเทียบกับเอกสารรับรถ <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— ตรวจร่วมกับผู้ส่งรถตอนรับรถเข้า สนญ.</span></div>`
     +inspFormHTML(no,'in',j);
   }
 
   if(j.phase==='work'){   // ---- stepper รวมตามผัง: ซ่อม → ตรวจผลหลังซ่อม → แจ้งรับรถคืน → สรุปอะไหล่/ประวัติ ----
     const onsite=j.loc==='onsite';
-    action=onsite?`<div class="sect" style="margin-top:24px">ซ่อมหน้างาน (ทำแผนเดินทางแล้ว) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— ช่างออกไปซ่อมที่หน้างาน</span></div>
+    action=onsite?`<div class="sect" style="margin-top:24px">ซ่อมหน้างาน (ทำแผนเดินทางแล้ว) <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— ช่างออกไปซ่อมที่หน้างาน</span></div>
     <div class="panel">
       <div style="font-size:14px"><b>ทีมช่าง:</b> ${j.onsite&&j.onsite.team||'—'}</div>
       <div style="font-size:14px;margin-top:4px"><b>สถานที่:</b> ${j.onsite&&j.onsite.site||'—'} · <b>ช่วงวันเดินทาง:</b> ${j.onsite&&j.onsite.trip||'—'}</div>
     </div>`
-    :`<div class="sect" style="margin-top:24px">สถานะงานซ่อม (สนญ.) <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— สถานะแสดงที่ฝั่งผู้แจ้งด้วย</span></div>`;
+    :`<div class="sect" style="margin-top:24px">สถานะงานซ่อม (สนญ.) <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— สถานะแสดงที่ฝั่งผู้แจ้งด้วย</span></div>`;
     action+=`<div class="wsteps" style="margin-top:14px">${WORK_STEPS.map((s,i)=>`<div class="wstep ${i===j.wi?'active':i<j.wi?'passed':''}"><span class="num">${i<j.wi?'✓':i+1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
     if(j.inspIn)action+=inspViewPanel('บันทึกตรวจสอบรถเทียบเอกสารรับรถ (ตอนรับรถเข้า) ✓',j.inspIn);
     if(j.moreFinds&&j.moreFinds.length){
@@ -1419,7 +1419,7 @@ function renderKbkDetail(no){
     }
     if(j.wi===1){   // ตรวจสอบผลการซ่อมหลังซ่อม
       if(!K.insp)K.insp=initInsp();
-      action+=`<div class="sect" style="margin-top:24px">ตรวจสอบผลการซ่อมหลังซ่อม <span style="font-weight:400;font-size:13px;color:var(--gray-500)">— บันทึกผลตรวจสอบก่อนแจ้งหน่วยงาน/นัดรับรถคืน</span></div>`
+      action+=`<div class="sect" style="margin-top:24px">ตรวจสอบผลการซ่อมหลังซ่อม <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— บันทึกผลตรวจสอบก่อนแจ้งหน่วยงาน/นัดรับรถคืน</span></div>`
       +inspFormHTML(no,'out',j);
     }
     if(j.wi===2){   // หน่วยงานรับทราบ → แจ้งรับรถคืน → ใช้อะไหล่ครบไหม
@@ -1437,7 +1437,7 @@ function renderKbkDetail(no){
             <div class="sg ${K.partsMode==='return'?'sel':''}" onclick="K.partsMode='return';renderKbkDetail('${no}')">ไม่ครบ (เหลือ) — กรอกคืนอะไหล่</div>
           </div>
           ${K.partsMode?(j.booked.length?j.booked.map(b=>`
-          <div class="bk" style="border:1px dashed var(--gray-200);border-radius:10px;padding:8px 12px;max-width:560px">
+          <div class="bk" style="border:1px dashed var(--gray-200);border-radius:var(--rounded-md);padding:8px 12px;max-width:560px">
             <span style="flex:1;font-size:14px">${b.name} <span class="hint" style="display:inline">(เบิกไป ${b.qty} ${b.unit||''})</span></span>
             ${K.partsMode==='return'?`<div class="qty"><button onclick="kRetChg('${no}','${b.name}',-1)">−</button><span>${K.rets[b.name]||0}</span><button onclick="kRetChg('${no}','${b.name}',1)">+</button></div><span class="hint">คืน</span>`:`<span class="hint">ใช้จริง ${b.qty} ${b.unit||''}</span>`}
           </div>`).join(''):'<div class="hint" style="margin-top:10px">ไม่มีอะไหล่ที่เบิกในงานนี้</div>'):''}
