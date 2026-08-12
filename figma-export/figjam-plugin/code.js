@@ -52,6 +52,11 @@ async function build(spec, images) {
   let y = 0;
 
   for (const sec of spec.sections) {
+    if (sec.kind === 'diagram') {
+      y = await buildDiagram(sec, y, font, made);
+      post('✓ ' + sec.name + ' (ผัง ' + sec.diagram.nodes.length + ' node)');
+      continue;
+    }
     const s = figma.createSection();
     s.name = sec.name;
     s.fills = [{ type: 'SOLID', color: { r: sec.color[0] / 255, g: sec.color[1] / 255, b: sec.color[2] / 255 } }];
@@ -117,6 +122,89 @@ async function build(spec, images) {
 
   figma.viewport.scrollAndZoomIntoView(figma.currentPage.children);
   return made;
+}
+
+/* ---------- section ชนิดผัง (flowchart จาก Diagram/ ผ่าน 4-figjam-diagram.js) ----------
+   node = ShapeWithText ชนิดตามผัง mermaid · เส้น = ConnectorNode ผูกปลายจริง
+   (ลาก node แล้วเส้นตามมา — แก้ผังต่อบนบอร์ดได้เลย) · เลน = shape สีอ่อนรองพื้น */
+const DIAGRAM_SHAPE = {
+  process: 'ROUNDED_RECTANGLE', decision: 'DIAMOND', stadium: 'ELLIPSE',
+  subroutine: 'SQUARE', circle: 'ELLIPSE'
+};
+const LANE_TINTS = [
+  { r: 0xFF / 255, g: 0xF7 / 255, b: 0xF0 / 255 },   // ส้มอ่อน (palette FigJam)
+  { r: 0xF8 / 255, g: 0xF5 / 255, b: 0xFF / 255 }    // ม่วงอ่อน
+];
+const INK = { r: 0x75 / 255, g: 0x75 / 255, b: 0x75 / 255 };
+const WHITE = { r: 1, g: 1, b: 1 };
+
+async function buildDiagram(sec, y, font, made) {
+  const d = sec.diagram;
+  const PAD = 80;
+  const s = figma.createSection();
+  s.name = sec.name;
+  s.fills = [{ type: 'SOLID', color: { r: sec.color[0] / 255, g: sec.color[1] / 255, b: sec.color[2] / 255 } }];
+
+  // เลนก่อน — จะได้อยู่ใต้ node
+  d.clusters.forEach((cl, i) => {
+    const lane = figma.createShapeWithText();
+    lane.shapeType = 'SQUARE';
+    lane.name = 'lane / ' + cl.label;
+    s.appendChild(lane);
+    lane.resize(cl.w, cl.h);
+    lane.fills = [{ type: 'SOLID', color: LANE_TINTS[i % LANE_TINTS.length] }];
+    lane.strokes = [];
+    lane.x = PAD + cl.x; lane.y = PAD + cl.y;
+
+    const lt = figma.createText();
+    lt.fontName = font;
+    lt.fontSize = 30;
+    lt.characters = cl.label;
+    s.appendChild(lt);
+    lt.x = PAD + cl.x + 24; lt.y = PAD + cl.y + 14;
+  });
+
+  const byId = {};
+  for (const n of d.nodes) {
+    const sh = figma.createShapeWithText();
+    sh.shapeType = DIAGRAM_SHAPE[n.kind] || 'ROUNDED_RECTANGLE';
+    sh.name = n.id + ' / ' + (n.label.split('\n')[0] || n.kind);
+    s.appendChild(sh);
+    sh.resize(n.w, n.h);
+    sh.fills = [{ type: 'SOLID', color: WHITE }];
+    sh.strokes = [{ type: 'SOLID', color: INK }];
+    sh.strokeWeight = 2;
+    sh.text.fontName = font;
+    sh.text.characters = n.label;
+    sh.text.fontSize = n.kind === 'decision' ? 26 : 24;
+    sh.x = PAD + n.x; sh.y = PAD + n.y;
+    byId[n.id] = sh;
+    made.shapes++;
+  }
+
+  s.resizeWithoutConstraints(d.w + PAD * 2, d.h + PAD * 2);
+  s.x = 0; s.y = y;
+  made.sections++;
+
+  for (const e of d.edges) {
+    if (!byId[e.from] || !byId[e.to]) continue;
+    const c = figma.createConnector();
+    c.name = 'flow →';
+    c.connectorStart = { endpointNodeId: byId[e.from].id, magnet: 'AUTO' };
+    c.connectorEnd = { endpointNodeId: byId[e.to].id, magnet: 'AUTO' };
+    c.connectorStartStrokeCap = 'NONE';
+    c.connectorEndStrokeCap = 'ARROW_LINES';
+    c.strokes = [{ type: 'SOLID', color: e.style === 'thick' ? ARROW : INK }];
+    c.strokeWeight = e.style === 'thick' ? 4 : 2;
+    if (e.style === 'dotted') c.dashPattern = [8, 8];
+    if (e.label) {
+      c.text.fontName = font;
+      c.text.characters = e.label;
+    }
+    made.connectors++;
+  }
+
+  return y + s.height + 320;
 }
 
 figma.ui.onmessage = async (msg) => {

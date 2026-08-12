@@ -26,7 +26,10 @@ class MNode {
     this.x = 0; this.y = 0;
     this.strokeWeight = 1;
     if (type === 'TEXT') { this.characters = ''; this.fontName = null; this.fontSize = 12; }
-    if (type === 'SHAPE_WITH_TEXT') this.shapeType = 'SQUARE';
+    if (type === 'SHAPE_WITH_TEXT') {
+      this.shapeType = 'SQUARE';
+      this.text = { characters: '', fontName: null, fontSize: 12, fills: [] };
+    }
     if (type === 'CONNECTOR') {
       this.connectorStart = null; this.connectorEnd = null;
       this.connectorStartStrokeCap = 'NONE'; this.connectorEndStrokeCap = 'ARROW_LINES';
@@ -73,7 +76,7 @@ const code = fs.readFileSync(path.join(__dirname, 'figjam-plugin', 'code.js'), '
 vm.runInNewContext(code, { figma, __html__: '', console });
 
 const spec = JSON.parse(fs.readFileSync(path.join(__dirname, 'out', 'board.json'), 'utf8'));
-const srcs = [...new Set(spec.sections.flatMap(s => s.cols.flatMap(c => c.images.map(i => i.src))))];
+const srcs = [...new Set(spec.sections.flatMap(s => (s.cols || []).flatMap(c => c.images.map(i => i.src))))];
 const images = srcs.map(src => ({ src, bytes: new Uint8Array([1, 2, 3]) }));
 
 const fail = (m) => { console.error('✗ ' + m); process.exitCode = 1; };
@@ -85,9 +88,12 @@ const ok = (m) => console.log('✓ ' + m);
   if (!res || res.type !== 'done') return fail('build ไม่จบ: ' + JSON.stringify(res));
   const r = res.result;
 
-  const wantShapes = spec.sections.reduce((a, s) => a + s.cols.reduce((b, c) => b + c.images.length, 0), 0);
+  const diagSecs = spec.sections.filter(s => s.kind === 'diagram');
+  const wantShapes = spec.sections.reduce((a, s) => a + (s.cols || []).reduce((b, c) => b + c.images.length, 0), 0)
+    + diagSecs.reduce((a, s) => a + s.diagram.nodes.length, 0);
   const wantConn = spec.sections.filter(s => s.connect === 'sequence')
-    .reduce((a, s) => a + s.cols.length - 1, 0);
+    .reduce((a, s) => a + s.cols.length - 1, 0)
+    + diagSecs.reduce((a, s) => a + s.diagram.edges.length, 0);
 
   r.sections === spec.sections.length ? ok('section ' + r.sections) : fail('section ได้ ' + r.sections);
   r.shapes === wantShapes ? ok('รูป ' + r.shapes) : fail('รูปได้ ' + r.shapes + ' คาด ' + wantShapes);
@@ -100,8 +106,20 @@ const ok = (m) => console.log('✓ ' + m);
   const labels = [];
   page.children.filter(n => n.type === 'SECTION').forEach(s =>
     labels.push(...s.children.filter(c => c.type === 'TEXT')));
-  const wantLabels = spec.sections.reduce((a, s) => a + s.cols.length, 0);
+  const wantLabels = spec.sections.reduce((a, s) => a + (s.cols || []).length, 0)
+    + diagSecs.reduce((a, s) => a + s.diagram.clusters.length, 0);
   labels.length === wantLabels ? ok('ป้ายชื่อ ' + labels.length) : fail('ป้ายได้ ' + labels.length + ' คาด ' + wantLabels);
+
+  // node ผังทุกตัวต้องมีข้อความ + ชนิดถูกตั้ง (ไม่ค้าง SQUARE หมด)
+  if (diagSecs.length) {
+    const diagShapes = [];
+    page.children.filter(n => n.type === 'SECTION' && diagSecs.some(s => s.name === n.name))
+      .forEach(s => diagShapes.push(...s.children.filter(c => c.type === 'SHAPE_WITH_TEXT' && !c.name.startsWith('lane /'))));
+    const noText = diagShapes.filter(sh => !sh.text.characters);
+    noText.length === 0 ? ok('node ผังมีข้อความครบ ' + diagShapes.length) : fail('node ผังไม่มีข้อความ ' + noText.length);
+    const kinds = new Set(diagShapes.map(sh => sh.shapeType));
+    kinds.size >= 3 ? ok('ชนิดรูปผังหลากหลาย (' + [...kinds].join(',') + ')') : fail('ชนิดรูปผังผิด: ' + [...kinds].join(','));
+  }
 
   // section ต้องครอบลูกทุกตัว (spot check ทุก section)
   let overflow = 0;

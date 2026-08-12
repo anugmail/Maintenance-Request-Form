@@ -14,13 +14,16 @@
 figjam-capture.js            capture ทุกหน้า (25 หน้า สไลซ์หน้าสูงเกิน 4000px อัตโนมัติ)
 flow-plan-capture.js         ไล่กดโฟลว์ "สร้างแผน / ออกเลขงาน" จริง 8 หน้าจอ
 flow-after-issue-capture.js  โฟลว์ต่อ: พัสดุรับทราบ + ส่งคำขอ/ตอบยืนยันรถ 7 หน้าจอ
-   ▼ out/figjam/**/*.png + manifest.json
-3-figjam-board.js            → out/board.json · ค่าเริ่มต้น = โฟลว์สร้างแผนอย่างเดียว (1 section · 8 รูป)
+4-figjam-diagram.js          ผัง mermaid Diagram/01-…/01-ออกเลขงาน.md → out/diagram-plan.json
+                             (geometry จาก SVG ที่ mermaid จัด layout · เส้น/ชนิด node parse จากซอร์สตรงๆ)
+   ▼ out/figjam/**/*.png + manifest.json + out/diagram-plan.json
+3-figjam-board.js            → out/board.json · ค่าเริ่มต้น = ผังโฟลว์สร้างแผน + capture 8 หน้าจอ
                              ตามที่เจ้าของงานสั่ง "ทำแค่ flow ที่บอก" · เพิ่มชุดอื่นด้วย --after / --pages / --all
 serve.js                     เสิร์ฟ board.json + รูป (รองรับ path ย่อยแล้ว)
    ▼
-figjam-plugin/               ปลั๊กอิน FigJam: สร้าง section + รูป (ShapeWithText ใส่ IMAGE fill)
-                             + ป้ายชื่อ + ลูกศร flow · รันซ้ำล้างของเดิม + เก็บกวาดรูปอัปโหลดค้าง
+figjam-plugin/               ปลั๊กอิน FigJam: section ผัง (ShapeWithText ตามชนิด node + connector ผูกปลายจริง
+                             ลาก node แล้วเส้นตาม) + section รูป (IMAGE fill) + ป้าย + ลูกศร flow
+                             รันซ้ำล้างของเดิม + เก็บกวาดรูปอัปโหลดค้าง
 ```
 
 ใช้งาน (หลัง capture + gen board แล้ว):

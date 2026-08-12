@@ -64,7 +64,7 @@ $btn.addEventListener('click', async () => {
     log('— กำลังโหลด board.json');
     const spec = await (await fetch(base + 'board.json')).json();
 
-    const srcs = [...new Set(spec.sections.flatMap(s => s.cols.flatMap(c => c.images.map(i => i.src))))];
+    const srcs = [...new Set(spec.sections.flatMap(s => (s.cols || []).flatMap(c => c.images.map(i => i.src))))];
     log('— รูปทั้งหมด ' + srcs.length + ' ไฟล์');
     const images = [];
     let done = 0;

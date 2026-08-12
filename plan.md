@@ -576,6 +576,8 @@ token เป็น PAT scope `file_content:read` เก็บที่ `~/.figma
 - **เข้าไฟล์ทาง dev plugin ใหม่ `figjam-plugin/`** (MCP Starter จำกัด **20 call/เดือน — เดือนนี้หมดแล้ว** ตอนติดคือจังหวะจัดวางพอดี รูป 30 ใบที่อัปโหลดค้างในบอร์ดจะถูกปลั๊กอินเก็บกวาดให้): `3-figjam-board.js` รวม manifest → `board.json` (8 section · 40 หน้าจอ · 45 รูป) → ปลั๊กอินสร้าง section+ป้าย+ลูกศร flow · รูปใน FigJam = ShapeWithText ใส่ IMAGE fill (FigJam ไม่มี rectangle/frame) · `serve.js` รองรับ path ย่อย + content-type แล้ว
 - **เทส `test-figjam-plugin.js` ผ่าน 9/9** (จำนวนครบ/ลูกศรผูกปลาย/section ครอบลูก/รันซ้ำไม่ซ้อน/เก็บกวาด MEDIA)
 - **สโคปบอร์ด (เจ้าของงานย้ำ):** "ทำแค่ flow ที่บอก ไม่ใช่ทั้งหมด" ⇒ `board.json` ค่าเริ่มต้นเหลือ **โฟลว์สร้างแผนอย่างเดียว (1 section · 8 หน้าจอ · ลูกศร 7)** — ชุด after-issue/หน้ารวมยังอยู่เป็นตัวเลือก `--after`/`--pages`/`--all` เมื่อถูกขอเท่านั้น
+- **ผู้ใช้กดสร้างบอร์ดสำเร็จ** ("ได้แล้ว ถูกต้อง") — โฟลว์สร้างแผน 8 หน้าจอขึ้นบอร์ดจริงแล้ว
+- **เพิ่มแผนผัง flowchart (เจ้าของงานเคาะช่วงบ่าย):** อยากได้ผังกล่อง+ลูกศรของโฟลว์สร้างแผนแบบแก้บนบอร์ดได้ ⇒ `4-figjam-diagram.js` เรนเดอร์ผัง mermaid `Diagram/01-บำรุงรักษาตามวาระ/01-ออกเลขงาน.md` ใน Chromium แล้วสกัด geometry จาก SVG (mermaid เป็นคนจัด layout) ส่วน**เส้นเชื่อม/ชนิด node parse จากซอร์สตรงๆ** (DOM v11 แยกชนิดยาก + ลำดับ edgeLabels ไม่ตรง edgePaths เมื่อบางเส้นไม่มีป้าย — เจอจริง) → section ใหม่บนบอร์ด: node = ShapeWithText ตามชนิด (process/decision/stadium/subroutine) + ConnectorNode ผูกปลายจริง ลาก node แล้วเส้นตาม · เลนเป็น shape สีอ่อนรองพื้น · เทสขยายเป็น **11 ข้อ ผ่านหมด** (node ผัง 13 · เส้น 16 · ป้ายเส้นครบ)
 - ไฟล์บอร์ด: `mDn6j6wVtdn0DMtFwiDsRQ` (anu phetcharat's Team) — https://www.figma.com/board/mDn6j6wVtdn0DMtFwiDsRQ
 
 ### ค้างอยู่ (รอบถัดไป)
@@ -608,7 +610,8 @@ token เป็น PAT scope `file_content:read` เก็บที่ `~/.figma
 - [ ] **`plan-skeleton`** ยังไม่มีปุ่ม "ยกโครงไปหน้าจริง" · ธง `done` ยังตั้งมือใน `skeleton-data.js`
 - [x] ~~**figma-export: gen Figma Variables จาก `tokens.css`**~~ — **เสร็จแล้ว 12 ส.ค.** 99 ตัว 3 collection + alias จริง + ผูก fill/stroke/สี text/radius (ดูหมุด 12 ส.ค.)
 - [x] ~~**figma-export: ยก component/variant จริง**~~ — **เสร็จแล้ว 12 ส.ค.** 6 ชุด variant + specimen 6 + icon component 10 · หน้าจอเป็น instance 121 จุด + override (ดูหมุด 12 ส.ค.)
-- [ ] **figjam-plugin: กด "โหลด + สร้างบอร์ด" ในไฟล์จริง** — โค้ด+เทสผ่านแล้ว รอผู้ใช้ import `figjam-plugin/manifest.json` ใน Figma desktop (บอร์ด `mDn6j6wVtdn0DMtFwiDsRQ`) แล้วเทียบตา
+- [x] ~~figjam-plugin: กด "โหลด + สร้างบอร์ด" ในไฟล์จริง~~ — **สำเร็จ 12 ส.ค.** ผู้ใช้ยืนยัน "ได้แล้ว ถูกต้อง"
+- [ ] **figjam-plugin: กดรันซ้ำหลังเพิ่ม section ผัง** — board.json ใหม่ (ผัง + capture) พร้อมแล้ว รอผู้ใช้กด ⌘⌥P → "โหลด + สร้างบอร์ด" แล้วเทียบตากับผังบน GitHub
 - [ ] ~~figma-export: กด "โหลด + สร้าง" (ไฟล์ design)~~ — **พัก** ตามคำสั่ง 12 ส.ค. เปลี่ยนทางหลักเป็น FigJam
 - [ ] **figma-export: หน้า `admin`** — extract ไว้แล้ว (3,770 node) แต่ยังไม่ได้ map/สร้าง อาจต้องตัดเป็นส่วนๆ
 - [ ] **figma-export: `plan-skeleton`** — พักไว้ตามที่เจ้าของงานสั่ง 11 ส.ค. รอปลดล็อก

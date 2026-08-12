@@ -5,10 +5,12 @@
    ค่าเริ่มต้น = เฉพาะโฟลว์สร้างแผน/ออกเลขงาน ตามที่เจ้าของงานสั่ง 12 ส.ค. 2569
    ("ทำแค่ flow ที่บอก ไม่ใช่ทั้งหมด") — ชุดอื่นเป็นตัวเลือกเมื่อถูกขอเท่านั้น:
 
-     node figma-export/3-figjam-board.js            โฟลว์สร้างแผนอย่างเดียว (8 หน้าจอ)
+     node figma-export/3-figjam-board.js            ผังโฟลว์สร้างแผน + capture 8 หน้าจอ
      node figma-export/3-figjam-board.js --after    + โฟลว์หลังออกเลขงาน (พัสดุ/ยืนยันรถ)
      node figma-export/3-figjam-board.js --pages    + หน้ารวมทุกหน้าจัดหมวด
      node figma-export/3-figjam-board.js --all      ทุกชุด
+
+   ส่วนผัง (kind:diagram) อ่านจาก out/diagram-plan.json — สร้างด้วย 4-figjam-diagram.js ก่อน
 
    ปลั๊กอิน figjam-plugin/ เป็นคนอ่าน board.json นี้แล้วสร้างของจริง
    (รันซ้ำ: ปลั๊กอินล้างเฉพาะ section ที่ชื่ออยู่ใน board.json ปัจจุบัน)
@@ -44,10 +46,23 @@ function main() {
   const args = new Set(process.argv.slice(2));
   const all = args.has('--all');
 
-  const sections = [
-    flowSection('โฟลว์สร้างแผน / ออกเลขงาน — ทีละหน้าจอ', COLORS.green, 'flow-plan',
-      read(path.join(FJ, 'flow-plan', 'manifest.json')))
-  ];
+  const sections = [];
+
+  const diagFile = path.join(OUT, 'diagram-plan.json');
+  if (!fs.existsSync(diagFile)) {
+    console.error('ไม่พบ out/diagram-plan.json — รัน 4-figjam-diagram.js ก่อน');
+    process.exit(1);
+  }
+  const diag = read(diagFile);
+  sections.push({
+    name: 'แผนผังโฟลว์สร้างแผน / ออกเลขงาน',
+    color: COLORS.violet,
+    kind: 'diagram',
+    diagram: diag
+  });
+
+  sections.push(flowSection('โฟลว์สร้างแผน / ออกเลขงาน — ทีละหน้าจอ', COLORS.green, 'flow-plan',
+    read(path.join(FJ, 'flow-plan', 'manifest.json'))));
 
   if (all || args.has('--after')) {
     sections.push(flowSection('โฟลว์หลังออกเลขงาน — พัสดุรับทราบ + ยืนยันรถ', COLORS.teal,
@@ -82,9 +97,10 @@ function main() {
   };
 
   fs.writeFileSync(path.join(OUT, 'board.json'), JSON.stringify(board));
-  const nImg = sections.reduce((a, s) => a + s.cols.reduce((b, c) => b + c.images.length, 0), 0);
-  console.log('board.json: ' + sections.length + ' section · ' +
-    sections.reduce((a, s) => a + s.cols.length, 0) + ' หน้าจอ · ' + nImg + ' รูป');
+  const nImg = sections.reduce((a, s) => a + (s.cols || []).reduce((b, c) => b + c.images.length, 0), 0);
+  const nDiag = sections.filter(s => s.kind === 'diagram').length;
+  console.log('board.json: ' + sections.length + ' section (ผัง ' + nDiag + ') · ' +
+    sections.reduce((a, s) => a + (s.cols || []).length, 0) + ' หน้าจอ · ' + nImg + ' รูป');
 }
 
 main();
