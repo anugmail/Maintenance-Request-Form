@@ -45,7 +45,9 @@
 <p class="sub">สร้างหน้าจอจากสเปกที่ generate จาก HTML prototype</p>
 
 <label for="url">ที่อยู่สเปก</label>
-<input id="url" value="http://localhost:8124/spec.json" spellcheck="false">
+<!-- ค่าเริ่มต้น = สเปกงานปัจจุบัน (โฟลว์แจ้งซ่อมฝั่งผู้แจ้ง) — เคยปล่อยเป็น spec.json
+     แล้วผู้ใช้กดได้ flow ผิดชุด · ชุด yearly เดิมยังใช้ได้ แค่พิมพ์เปลี่ยนเป็น spec.json -->
+<input id="url" value="http://localhost:8124/spec-report.json" spellcheck="false">
 
 <div class="row">
   <button class="primary" id="load">โหลด + สร้าง</button>

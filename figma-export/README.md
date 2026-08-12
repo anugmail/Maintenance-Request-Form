@@ -23,8 +23,9 @@ node figma-export/2-map.js --report                    # → out/spec-report.jso
 node figma-export/test-plugin.js --report              # เทสบน mock Plugin API ก่อนเปิด Figma
 ```
 
-ในไฟล์ **Figma design** (ไม่ใช่ FigJam): import `figma-export/plugin/manifest.json` → ช่อง "ที่อยู่สเปก"
-เปลี่ยนเป็น `http://localhost:8124/spec-report.json` → กด **"โหลด + สร้าง"**
+ในไฟล์ **Figma design** (ไม่ใช่ FigJam): import `figma-export/plugin/manifest.json` → กด **"โหลด + สร้าง"**
+(ค่าเริ่มต้นของช่องที่อยู่สเปกชี้ `spec-report.json` อยู่แล้ว — จะเอาชุด yearly ให้พิมพ์เปลี่ยนเป็น `spec.json`)
+⚠ แพลนฟรีจำกัด 3 page/ไฟล์ — ถ้าในไฟล์มีหน้า Screens ชุดอื่นอยู่แล้ว ให้ลบทิ้งก่อนกด ไม่งั้นสร้าง page ใหม่ไม่ได้
 
 ## FigJam board — capture ทุกโฟลว์/ทุกหน้า (ทางหลัก)
 
