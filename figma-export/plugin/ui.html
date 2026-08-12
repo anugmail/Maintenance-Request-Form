@@ -1,0 +1,112 @@
+<!-- หน้าต่างปลั๊กอิน — ทำหน้าที่เดียวคือ "โหลดสเปก" แล้วส่งเข้า sandbox
+     สีทั้งหมดใช้ตัวแปรธีมของ Figma (--figma-color-*) ที่ showUI({themeColors:true})
+     ฉีดเข้ามาให้ จึงไม่มี hex ในไฟล์นี้ — ผ่านกฎ "ห้าม hardcode สี" ของโปรเจกต์
+     และ link tokens.css ไม่ได้เพราะ iframe ของปลั๊กอินอ่านไฟล์ในเครื่องไม่ได้ -->
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:16px;
+    font:12px/1.6 'IBM Plex Sans Thai','Inter',sans-serif;
+    background:var(--figma-color-bg);color:var(--figma-color-text);
+  }
+  h1{font-size:13px;font-weight:600;margin:0 0 2px}
+  .sub{color:var(--figma-color-text-secondary);margin:0 0 14px}
+  label{display:block;font-weight:600;margin:0 0 4px}
+  input{
+    width:100%;padding:7px 9px;margin:0 0 12px;
+    border:1px solid var(--figma-color-border);border-radius:6px;
+    background:var(--figma-color-bg-secondary);color:var(--figma-color-text);
+    font:inherit;
+  }
+  .row{display:flex;gap:8px;margin:0 0 12px}
+  button{
+    flex:1;padding:8px 10px;border:1px solid transparent;border-radius:6px;
+    font:inherit;font-weight:600;cursor:pointer;
+  }
+  .primary{background:var(--figma-color-bg-brand);color:var(--figma-color-text-onbrand)}
+  .primary:hover{background:var(--figma-color-bg-brand-hover)}
+  .secondary{
+    background:var(--figma-color-bg-secondary);color:var(--figma-color-text);
+    border-color:var(--figma-color-border);
+  }
+  button:disabled{opacity:.5;cursor:default}
+  #log{
+    height:250px;overflow:auto;padding:8px 10px;
+    border:1px solid var(--figma-color-border);border-radius:6px;
+    background:var(--figma-color-bg-secondary);
+    font:11px/1.55 ui-monospace,'SF Mono',Menlo,monospace;white-space:pre-wrap;
+  }
+  #log div{margin:0 0 2px}
+  .err{color:var(--figma-color-text-danger)}
+  .warn{color:var(--figma-color-text-secondary)}
+</style>
+
+<h1>Maintain-D → Figma</h1>
+<p class="sub">สร้างหน้าจอจากสเปกที่ generate จาก HTML prototype</p>
+
+<label for="url">ที่อยู่สเปก</label>
+<input id="url" value="http://localhost:8124/spec.json" spellcheck="false">
+
+<div class="row">
+  <button class="primary" id="load">โหลด + สร้าง</button>
+  <button class="secondary" id="sample">ใช้ตัวอย่างในตัว</button>
+</div>
+
+<div id="log"></div>
+
+<script>
+const $log = document.getElementById('log');
+
+function log(msg, cls) {
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = msg;
+  $log.appendChild(line);
+  $log.scrollTop = $log.scrollHeight;
+}
+
+function busy(on) {
+  document.getElementById('load').disabled = on;
+  document.getElementById('sample').disabled = on;
+}
+
+document.getElementById('load').onclick = async () => {
+  const url = document.getElementById('url').value.trim();
+  busy(true);
+  log('— กำลังโหลด ' + url);
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const spec = await res.json();
+    const screens = (spec.screens || []).length;
+    log('สเปก: ' + url + ' · ' + screens + ' หน้าจอ');
+    if (!screens) { log('สเปกไม่มี screens — ไม่มีอะไรให้สร้าง', 'err'); busy(false); return; }
+    parent.postMessage({ pluginMessage: { type: 'build', spec: spec } }, '*');
+  } catch (e) {
+    log('โหลดไม่ได้: ' + e.message, 'err');
+    log('เช็กว่ารัน `node figma-export/serve.js` อยู่หรือยัง', 'warn');
+    busy(false);
+  }
+};
+
+/* ตัวอย่างเก็บไว้ใน code.js ไม่ใช่ที่นี่ — กฎของโปรเจกต์ห้าม hex ในไฟล์ .html
+   และสเปกตัวอย่างจำเป็นต้องมีค่าสีจริง จึงย้ายไปอยู่ฝั่ง sandbox แทน */
+document.getElementById('sample').onclick = () => {
+  busy(true);
+  log('— ใช้สเปกตัวอย่างที่ฝังมากับปลั๊กอิน');
+  parent.postMessage({ pluginMessage: { type: 'sample' } }, '*');
+};
+
+onmessage = (event) => {
+  const msg = event.data.pluginMessage;
+  if (!msg) return;
+  if (msg.type === 'done') {
+    log('✓ สร้างเสร็จ ' + msg.result.screens + ' หน้าจอ');
+    (msg.result.warnings || []).forEach(w => log('  ! ' + w, 'warn'));
+    busy(false);
+  } else if (msg.type === 'error') {
+    log('✗ ' + msg.message, 'err');
+    busy(false);
+  }
+};
+</script>
