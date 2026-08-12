@@ -16,11 +16,13 @@ flow-plan-capture.js         ไล่กดโฟลว์ "สร้างแ�
 flow-after-issue-capture.js  โฟลว์ต่อ: พัสดุรับทราบ + ส่งคำขอ/ตอบยืนยันรถ 7 หน้าจอ
 flow-trips-capture.js        โฟลว์วางแผนการเดินทาง (เฟส 1 ขั้น 3) เส้นหลัก 8 หน้าจอ
                              (fast-forward gate ยืนยันรถด้วย verdict ตรงๆ แบบ test/verify-trips.js)
+flow-report-capture.js       โฟลว์แจ้งซ่อม ฝั่งผู้แจ้ง 8 หน้าจอ (mock/ wizard 5 ขั้น → ส่งเรื่อง
+                             → รอหัวหน้าอนุมัติ · เลือกอาการเฉพาะที่มีอะไหล่แนะนำ ให้ขั้นอะไหล่ไม่ว่าง)
 4-figjam-diagram.js          ผัง mermaid Diagram/01-…/01-ออกเลขงาน.md → out/diagram-plan.json
                              (geometry จาก SVG ที่ mermaid จัด layout · เส้น/ชนิด node parse จากซอร์สตรงๆ)
    ▼ out/figjam/**/*.png + manifest.json + out/diagram-plan.json
 3-figjam-board.js            → out/board.json · ค่าเริ่มต้น = ผังโฟลว์สร้างแผน + capture สร้างแผน 8 จอ
-                             + capture วางแผนการเดินทาง 8 จอ (ตามที่เจ้าของงานสั่งทีละโฟลว์)
+                             + วางแผนการเดินทาง 8 จอ + แจ้งซ่อมฝั่งผู้แจ้ง 8 จอ (เจ้าของงานสั่งทีละโฟลว์)
                              เพิ่มชุดอื่นด้วย --after / --pages / --all
 serve.js                     เสิร์ฟ board.json + รูป (รองรับ path ย่อยแล้ว)
    ▼

@@ -67,6 +67,9 @@ function main() {
   sections.push(flowSection('โฟลว์วางแผนการเดินทาง — ทีละหน้าจอ', COLORS.blue, 'flow-trips',
     read(path.join(FJ, 'flow-trips', 'manifest.json'))));
 
+  sections.push(flowSection('โฟลว์แจ้งซ่อม — ฝั่งผู้แจ้ง ทีละหน้าจอ', COLORS.yellow, 'flow-report',
+    read(path.join(FJ, 'flow-report', 'manifest.json'))));
+
   if (all || args.has('--after')) {
     sections.push(flowSection('โฟลว์หลังออกเลขงาน — พัสดุรับทราบ + ยืนยันรถ', COLORS.teal,
       'flow-after-issue', read(path.join(FJ, 'flow-after-issue', 'manifest.json'))));
