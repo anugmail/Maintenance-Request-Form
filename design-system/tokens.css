@@ -67,12 +67,12 @@
   /* ---------- Chart palette (ramp แบรนด์สำหรับกราฟ) ✔ ทั้งชุด ----------
      ยกจาก node 3:11 "↳ Charts" ของไลบรารีจริง — เรียงจากอ่อนไปเข้ม
      ⚠️ #E134C1 เป็น "สีกราฟ" ไม่ใช่สีแบรนด์ อย่าเอาไปใช้กับปุ่ม/ลิงก์ */
-  --chart-1:#FDEEFC;
-  --chart-2:#F8BFF4;
-  --chart-3:#EF82E1;
-  --chart-4:#E134C1;
-  --chart-5:#A80689;
-  --chart-6:#74045F;
+  --chart-1:#FDEEFC;        /* ✔ = brand-50 */
+  --chart-2:#F8BFF4;        /* ✔ = brand-200 */
+  --chart-3:#EF82E1;        /* ✔ node 3:11 Charts */
+  --chart-4:#E134C1;        /* ✔ node 3:11 Charts */
+  --chart-5:#A80689;        /* ✔ = brand-600 */
+  --chart-6:#74045F;        /* ✔ = brand-800 */
 
   /* ---------- Space scale (ฐาน 4px มีครึ่งขั้น) ✔ ทั้งชุด ---------- */
   --space-0_5:2px;

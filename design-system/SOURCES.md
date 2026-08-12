@@ -90,6 +90,51 @@ d = json.load(open('design-system/.figma-extract/1-1380.json'))   # หน้า
 **สถานะ provenance ปัจจุบันใน `tokens.css`: `✔` 40 · `⚠` 6**
 6 ตัวที่ยัง `⚠` = **ไม่มีในไลบรารี** (เราเพิ่มเอง): `--brand-700` · `--brand-accent` · `--success-200` · `--info-25` · `--secondary-700` · `--secondary-50`
 
+## 🗺️ ตารางความครอบคลุม — ของเราตรงกับไลบรารีแค่ไหน (12 ส.ค. 2569)
+
+> ตอบคำถามเจ้าของงาน *"ในไฟล์ component และ token เป็นของที่ตรงกับดีไซน์ที่ไปดึงมาหรือยัง"*
+> **token: ตรวจครบ 66 ค่าแล้วด้วยเครื่อง** (`node design-system/verify-tokens.js` — สี 52 · radius 6 · ฟอนต์ 8)
+> ผลคือทุกค่าที่กำกับ `✔` มีใช้จริงในไลบรารี และทุกค่าที่ไม่มีในไลบรารีถูกกำกับ `⚠` ครบ ไม่มีตัวไหนอ้างลอยๆ
+
+### ก. เทียบไลบรารีแล้ว ตรงทุกค่า ✅
+
+| ของเรา | ไลบรารี (node) |
+|---|---|
+| `.btn` + hierarchy/size ทั้งชุด | Buttons `1:1375` |
+| `.badge` `.b-ok/.b-low/.b-out/.b-brand` | Badge `1:1377` (Pill color) |
+| `.chip` · `.chips.pick` | Tag + Tag checkbox `1:1378` |
+| `.f .in input/select` · `.f textarea` · `.numfld` | Input field · Select · Textarea `1:1380` `1:1379` |
+| `.tbl` `.tblwrap` | Table / Table header cell / Table cell `3:20` |
+| `.chk` + `input[type=checkbox]` | Checkbox `1:1383` |
+| `.rads` + `input[type=radio]` | Radio button `589:206913` |
+| `.crumbs` | Breadcrumbs `3:21` |
+| `.cal-day` | `_Calendar cell` `3:23` |
+| `.seg` `.sg` | Button group `1:1376` |
+
+### ข. ไลบรารีมีของชื่อคล้าย แต่เป็นคนละแพตเทิร์น → **ยึด screenshot หน้าจริง VMS Plus**
+
+| ของเรา | ไลบรารีที่ชื่อคล้าย | ทำไมไม่ใช้ |
+|---|---|---|
+| `.shell` `.side` `.nv` `.topbar` | Application navigation `3:8` | ของไลบรารีเป็น slide-out มือถือ 375px มี overlay · หน้าจริงเป็นแถบไอคอน 96px |
+| `.wsteps` `.wstep` | Progress steps `3:16` | ไลบรารีเป็นวงกลม+เส้นต่อ · หน้าจริง VMS Plus เป็นกล่อง chevron |
+| `.page-title(-row)` | Page header `3:4` · `.sect` → Section header `3:6` | โครงคนละแบบ (ของเราเป็นหัวหน้าเดี่ยว) |
+| `.card` | Card header `3:5` | ของไลบรารีคือ "หัวการ์ด" มี divider + actions ไม่ใช่กล่องการ์ดทั้งใบ |
+| `.empty` | Empty state `3:29` | ของไลบรารีเป็นบล็อกภาพประกอบ 512px · ของเราเป็นบรรทัดเดียวในลิสต์ |
+| `.toast` | Notification `3:22` | ของไลบรารีเป็นการ์ด 400px มุมจอ · ของเราเป็นแถบกลางจอชั่วคราว |
+
+### ค. ของเราเอง ไลบรารีไม่มีให้เทียบ
+
+`.job` `.my-accordion` · `.rzone*` · `.stack` · `.gallery/.gcard/.gframe` · `.daterange` + แผง `.cal` ทั้งแผง ·
+`.tile` `.decision-tiles-*` · `.veh` `.vlist` · `.qty` · `.tl` · `.filter-field/.filter-empty` · `.search` · `.draft` ·
+`.app` `.steps` `.footer` (ชุด mobile legacy)
+
+### ง. ไลบรารีมี แต่เรายังไม่ได้ทำ — **ถ้าจะทำเมื่อไหร่ ให้ยกจาก node นี้ ห้ามออกแบบเอง**
+
+Modal `3:9` · Toggle `1:1382` · Avatar `1:1385` · Tooltip `1:1386` · Tabs `3:19` · Pagination `3:15` ·
+File upload `3:25` · Content divider `3:26` · Loading indicator `3:27` · Progress bar/circle `1:1387` ·
+Slide out menu `3:13` · Metric item `3:12` · Checkbox card `589:205480` · Radio card `1:1384` ·
+Dropdown menu `1:1379` · Alert `3:22` · Card header `3:5`
+
 ## คอมโพเนนต์ — เทียบแล้ว 12 ส.ค. 2569 (`compare-figma.js`)
 
 รันซ้ำได้เอง: `node design-system/compare-figma.js` (อ่าน `.figma-extract/` ล้วน ไม่ต่อ Figma)

@@ -156,10 +156,17 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 .chips.pick>.chip.plain{padding-left:10px;cursor:default}
 .chips.pick>.chip.plain::before{display:none}
 
-/* ---------- Segmented (single-select) ---------- */
-.seg{display:flex;gap:8px}
-.seg .sg{flex:1;text-align:center;border:1.5px solid var(--gray-300);border-radius:var(--r-sm);padding:8px 4px;font-size:var(--fs-sm);cursor:pointer;background:#fff}
-.seg .sg.sel{border-color:var(--primary-600);background:var(--primary-25);color:var(--primary-600);font-weight:600}
+/* ---------- Segmented (single-select) ----------------------------------
+   ตามไลบรารี Button group (node 1:1376): ปุ่มเชื่อมติดกันเป็นแถบเดียว
+   สูง 40 · pad 8/16 · 14/600 gray-700 · เส้น 1px gray-300 · r8 เฉพาะหัวท้าย
+   (ของเดิมแยกเป็นปุ่มลอย gap 8 เส้น 1.5px — ไม่มีแบบนี้ในไลบรารี)         */
+.seg{display:flex}
+.seg .sg{flex:1;text-align:center;border:1px solid var(--gray-300);padding:8px 16px;font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);font-weight:600;color:var(--gray-700);cursor:pointer;background:#fff;margin-left:-1px}
+.seg .sg:first-child{margin-left:0;border-radius:var(--rounded-md) 0 0 var(--rounded-md)}
+.seg .sg:last-child{border-radius:0 var(--rounded-md) var(--rounded-md) 0}
+.seg .sg:only-child{border-radius:var(--rounded-md)}
+.seg .sg:hover{background:var(--gray-50)}
+.seg .sg.sel{border-color:var(--primary-600);background:var(--primary-25);color:var(--primary-600);position:relative;z-index:1}
 
 /* ---------- Badge สถานะ ----------------------------------------------
    ตามไลบรารี Badge (Size=md, Type=Pill color): pad 2/10 · 14/500 lh20
