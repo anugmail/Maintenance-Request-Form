@@ -13,6 +13,25 @@ const path = require('path');
 const vm = require('vm');
 
 let idSeq = 1;
+
+/* จำลองกติกาฟอนต์ของ Figma: จะเขียนอะไรลง text sublayer (รวมถึงเปลี่ยน fontName)
+   ต้องโหลด "ฟอนต์ปัจจุบัน" ของมันก่อน — text ใน shape/connector เกิดมาเป็น Inter Medium
+   (บั๊กที่เจอจริงตอนรันในไฟล์: in set_fontName: Cannot write to node with unloaded font) */
+const loadedFonts = new Set();
+function textSublayer() {
+  const state = { characters: '', fontName: { family: 'Inter', style: 'Medium' }, fontSize: 12, fills: [] };
+  return new Proxy(state, {
+    set(t, k, v) {
+      const cur = t.fontName.family + ' ' + t.fontName.style;
+      if ((k === 'fontName' || k === 'characters') && !loadedFonts.has(cur)) {
+        throw new Error('in set_' + String(k) + ': Cannot write to node with unloaded font "' + cur + '"');
+      }
+      t[k] = v;
+      return true;
+    }
+  });
+}
+
 class MNode {
   constructor(type) {
     this.id = 'n' + (idSeq++);
@@ -28,12 +47,12 @@ class MNode {
     if (type === 'TEXT') { this.characters = ''; this.fontName = null; this.fontSize = 12; }
     if (type === 'SHAPE_WITH_TEXT') {
       this.shapeType = 'SQUARE';
-      this.text = { characters: '', fontName: null, fontSize: 12, fills: [] };
+      this.text = textSublayer();          // default Inter Medium — จำลองกติกา unloaded font
     }
     if (type === 'CONNECTOR') {
       this.connectorStart = null; this.connectorEnd = null;
       this.connectorStartStrokeCap = 'NONE'; this.connectorEndStrokeCap = 'ARROW_LINES';
-      this.text = { characters: '', fontName: null };
+      this.text = textSublayer();
     }
   }
   appendChild(n) {
@@ -61,7 +80,10 @@ const figma = {
   notify(m) { notifications.push(m); },
   ui: { postMessage(m) { figma._last = m; }, onmessage: null },
   viewport: { scrollAndZoomIntoView() {} },
-  loadFontAsync: async (f) => { if (f.family === 'ไม่มีจริง') throw new Error('no font'); },
+  loadFontAsync: async (f) => {
+    if (f.family === 'ไม่มีจริง') throw new Error('no font');
+    loadedFonts.add(f.family + ' ' + f.style);
+  },
   createSection() { const n = new MNode('SECTION'); page.appendChild(n); return n; },
   createText() { const n = new MNode('TEXT'); page.appendChild(n); return n; },
   createConnector() { const n = new MNode('CONNECTOR'); page.appendChild(n); return n; },

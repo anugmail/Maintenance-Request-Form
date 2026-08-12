@@ -47,6 +47,11 @@ async function build(spec, images) {
     font = spec.fallbackFont;
     await figma.loadFontAsync(font);
   }
+  // กติกา Figma: จะ "เปลี่ยน" fontName ของ text ที่มีอยู่ ต้องโหลดฟอนต์เดิมของมันก่อนด้วย
+  // — text ใน ShapeWithText/Connector เกิดมาเป็น Inter ⇒ โหลดกันไว้ทั้งสองน้ำหนัก
+  for (const f of [{ family: 'Inter', style: 'Medium' }, { family: 'Inter', style: 'Regular' }]) {
+    try { await figma.loadFontAsync(f); } catch (e) { /* ไม่มีก็ปล่อย — เจอจริงค่อยฟ้องตอนตั้งค่า */ }
+  }
 
   const made = { sections: 0, shapes: 0, connectors: 0, warnings };
   let y = 0;
