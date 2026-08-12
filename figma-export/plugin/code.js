@@ -163,6 +163,21 @@ async function createNode(spec) {
       node.textAlignVertical = t.valign || 'TOP';
       const fill = boundSolid(t.color || '#181D27');
       if (fill) node.fills = [fill];
+      // ranges = ย่อหน้าที่รวม inline element (<b>/<code>) เป็นข้อความเดียว
+      // ทาน้ำหนัก/สีเฉพาะช่วง — ต้องทำหลังตั้ง characters เสมอ
+      for (const rg of t.ranges || []) {
+        const start = Math.max(0, rg.start | 0);
+        const end = Math.min(node.characters.length, rg.end | 0);
+        if (end <= start) continue;
+        if (rg.weight) {
+          const rf = await resolveFont(t.font || 'IBM Plex Sans Thai', rg.weight);
+          node.setRangeFontName(start, end, rf);
+        }
+        if (rg.color) {
+          const rp = boundSolid(rg.color);
+          if (rp) node.setRangeFills(start, end, [rp]);
+        }
+      }
       // WIDTH_AND_HEIGHT = hug ตามตัวอักษร · HEIGHT = ล็อกความกว้างไว้ให้ตัดบรรทัดเหมือนต้นฉบับ
       node.textAutoResize = t.autoResize || 'WIDTH_AND_HEIGHT';
       return node;

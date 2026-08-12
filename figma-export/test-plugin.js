@@ -70,6 +70,9 @@ class MNode {
   resizeWithoutConstraints(w, h) { this.width = w; this.height = h; }
   rescale(f) { this.width *= f; this.height *= f; }
   setBoundVariable(field, v) { this.boundVariables[field] = v ? { type: 'VARIABLE_ALIAS', id: v.id } : undefined; }
+  // ranges ของข้อความที่รวม inline element — mock เก็บไว้ให้เทสตรวจว่าอยู่ในช่วงจริง
+  setRangeFontName(s, e, f) { (this.ranges = this.ranges || []).push({ s, e, f }); }
+  setRangeFills(s, e, p) { (this.ranges = this.ranges || []).push({ s, e, p }); }
   findAll(fn) {
     const out = [];
     (function walk(n) {

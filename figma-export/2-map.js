@@ -129,9 +129,100 @@ function classify(children) {
   return { mode: null };
 }
 
+/* ---------- ย่อหน้าที่มี inline element ปน → text node เดียว ----------
+   ปัญหาที่แก้: `<div>ข้อความ <code>x</code> ต่อ <b>y</b></div>` เดิมถูกแตกเป็น
+   กล่องข้อความหลายกล่องวางตามพิกัด พอฟอนต์ใน Figma กว้างไม่เท่าเบราว์เซอร์
+   กล่องก็เลื่อนทับกันมั่ว (เจ้าของงานเจอจริงที่ขั้น "ข้อมูลติดต่อ/งบ" 12 ส.ค. 2569)
+   ทางแก้: รวมเป็น text เดียวแล้วส่ง `ranges` ให้ปลั๊กอินทาน้ำหนัก/สีทีหลัง       */
+const INLINE_TAGS = new Set(['b', 'strong', 'em', 'i', 'small', 'code', 'span', 'u', 'mark', 'a']);
+
+function collectRuns(c, out) {
+  if (c.tag === '#text') { out.push({ chars: c.chars, style: c.style, ws: c, rect: rectOf(c) }); return out; }
+  if (!INLINE_TAGS.has(c.tag) || (c.classes || []).includes(ICON_CLASS)) return null;   // ไอคอน/บล็อก = รวมไม่ได้
+  for (const k of c.children || []) if (!collectRuns(k, out)) return null;
+  return out;
+}
+
+const isInlineTextish = (c) => collectRuns(c, []) !== null;
+
+/* จับ "ช่วงที่ติดกัน" ของข้อความ+inline element มารวมเป็น node เดียว
+   ไอคอน (.ms) หรือ element แบบบล็อกจะตัดช่วง — ของพวกนั้นยังเป็นลูกของตัวเองเหมือนเดิม */
+function mergeInlineChildren(node) {
+  const kids = node.children || [];
+  if (kids.length < 2) return kids;
+  const out = [];
+  let buf = [];
+  const flush = () => {
+    if (buf.length > 1 && buf.some(c => c.tag !== '#text')) {
+      const runs = [];
+      let ok = true;
+      for (const b of buf) if (!collectRuns(b, runs)) { ok = false; break; }
+      if (ok && runs.length > 1) {
+        const rs = runs.map(r => r.rect);
+        const x = Math.min(...rs.map(r => r.x)), y = Math.min(...rs.map(r => r.y));
+        out.push({
+          tag: '#merged', runs, style: node.style,
+          rect: { x, y, w: Math.max(...rs.map(r => r.x + r.w)) - x, h: Math.max(...rs.map(r => r.y + r.h)) - y }
+        });
+        buf = [];
+        return;
+      }
+    }
+    out.push(...buf);
+    buf = [];
+  };
+  for (const c of kids) {
+    if (isInlineTextish(c)) buf.push(c);
+    else { flush(); out.push(c); }
+  }
+  flush();
+  return out;
+}
+
+function convertMerged(node) {
+  const runs = node.runs;
+  const r = rectOf(node);
+  const s = node.style || {};
+  let chars = '';
+  const ranges = [];
+  runs.forEach((run, i) => {
+    if (i && (run.ws.wsBefore || runs[i - 1].ws.wsAfter)) chars += ' ';
+    const start = chars.length;
+    chars += run.chars;
+    const w = parseInt(run.style.fontWeight, 10) || 400;
+    const col = parseColor(run.style.color);
+    const base = parseInt(s.fontWeight, 10) || 400;
+    const baseCol = parseColor(s.color);
+    const diffW = w !== base;
+    const diffC = col && baseCol && col.hex !== baseCol.hex;
+    if (diffW || diffC) ranges.push(Object.assign({ start, end: chars.length }, diffW ? { weight: w } : {}, diffC ? { color: col.hex } : {}));
+  });
+
+  const lh = s.lineHeight === 'normal' ? Math.round(px(s.fontSize) * 1.4) : px(s.lineHeight);
+  stats.texts++;
+  stats.flattened = (stats.flattened || 0) + 1;
+  const spec = {
+    type: 'text',
+    name: chars.slice(0, 24),
+    size: { w: Math.round(r.w), h: Math.round(r.h), wMode: 'FIXED', hMode: 'FIXED' },
+    text: {
+      chars, size: px(s.fontSize), weight: parseInt(s.fontWeight, 10) || 400,
+      lineHeight: lh || undefined,
+      color: (parseColor(s.color) || {}).hex || '#181D27',
+      font: 'IBM Plex Sans Thai',
+      align: (s.textAlign === 'center' || s.textAlign === 'right') ? s.textAlign.toUpperCase() : 'LEFT',
+      autoResize: 'HEIGHT'
+    }
+  };
+  if (ranges.length) spec.text.ranges = ranges;
+  spec._rect = r;
+  return spec;
+}
+
 /* ---------- แปลง node ---------- */
 function convert(node, parentRect, ctx) {
   if (node.tag === '#text') return convertText(node, parentRect);
+  if (node.tag === '#merged') return convertMerged(node);
 
   const s = node.style || {};
   const r = rectOf(node);
@@ -152,7 +243,8 @@ function convert(node, parentRect, ctx) {
   if (c.includes(ICON_CLASS)) return convertIcon(node, parentRect);
 
   const kids = [];
-  for (const ch of node.children || []) {
+  // ย่อหน้าที่มีตัวหนา/<code> ปนกับข้อความ → รวมช่วงที่ติดกันเป็น text เดียว (กันกล่องซ้อนกัน)
+  for (const ch of mergeInlineChildren(node)) {
     const spec = convert(ch, r, childCtx);
     if (spec) kids.push({ spec, src: ch });
   }
@@ -229,7 +321,10 @@ function convert(node, parentRect, ctx) {
   if (radius !== undefined && radius !== 0) spec.radius = radius;
   const shadows = parseShadows(s.boxShadow);
   if (shadows) spec.shadows = shadows;
-  if (s.overflow === 'visible') spec.clip = false;
+  // ตัดขอบเฉพาะกล่องที่เลื่อนได้จริง — ของเดิมตัดทุกกล่องที่ overflow:hidden
+  // ทำให้ป้ายที่ browser ย่อด้วย ellipsis กลายเป็นข้อความโดนหั่นกลางคำใน Figma
+  // (เจ้าของงานเจอที่ stepper 12 ส.ค. 2569) · Figma ไม่มี text-overflow อยู่แล้ว
+  if (!/auto|scroll/.test(s.overflow || '')) spec.clip = false;
   spec._rect = r;
   return spec;
 }

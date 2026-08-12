@@ -106,9 +106,16 @@ function walkDom() {
 
     for (const child of el.childNodes) {
       if (child.nodeType === Node.TEXT_NODE) {
-        const chars = child.nodeValue.replace(/\s+/g, ' ').trim();
+        const raw = child.nodeValue.replace(/\s+/g, ' ');
+        const chars = raw.trim();
         if (!chars) continue;
-        node.children.push({ id: 'n' + (counter++), tag: '#text', chars, rect: textRect(child), style: pick(cs) });
+        // เก็บว่าเดิมมีช่องว่างขนาบไหม — ตอนรวม text run ใน 2-map.js ต้องใส่คืน
+        // ไม่งั้นคำที่คนละ <code>/<b> จะติดกันหมด
+        node.children.push({
+          id: 'n' + (counter++), tag: '#text', chars,
+          wsBefore: /^\s/.test(raw), wsAfter: /\s$/.test(raw),
+          rect: textRect(child), style: pick(cs)
+        });
       } else if (child.nodeType === Node.ELEMENT_NODE) {
         const sub = walk(child);
         if (sub) node.children.push(sub);
