@@ -550,7 +550,7 @@ function renderStock(){
 function renderSteps(){   // เดินตามลำดับ WORDER (สลับ/เปิดปิดขั้นได้จาก admin)
   $('wsteps').innerHTML=WORDER.map((k,i)=>{
     const st=i+1===S.step?'active':i+1<S.step?'passed':'';
-    return`<div class="wstep ${st}"><span class="num">${i+1<S.step?'✓':i+1}</span><span class="lbl">${WZ[k].label}</span></div>`;
+    return`<div class="wstep ${st}"><span class="num">${i+1<S.step?'<span class=\"ms\">check</span>':i+1}</span><span class="lbl">${WZ[k].label}</span></div>`;
   }).join('');
 }
 function showStepSection(key){   // แสดง section ของขั้นปัจจุบัน + render เนื้อหาตาม key
@@ -588,7 +588,7 @@ function renderSymptoms(){
   $('symcats').innerHTML=CATS.filter(c=>scope.includes(c.for)).map(c=>{
     const items=SYMPTOMS.filter(s=>s.cat===c.key);
     return`<div class="cat"><span class="ms">${c.icon}</span>${c.name}</div>
-      <div class="chips">${items.map(s=>`<div class="chip ${S.symptoms.includes(s.id)?'sel':''}" onclick="toggleSym('${s.id}')">${s.name}</div>`).join('')}</div>`;
+      <div class="chips pick">${items.map(s=>`<div class="chip ${S.symptoms.includes(s.id)?'sel':''}" onclick="toggleSym('${s.id}')">${s.name}</div>`).join('')}</div>`;
   }).join('');
   $('othwrap').classList.toggle('hidden',!S.symptoms.includes('OTH'));
   $('sev').innerHTML=SEVS.map(s=>`<label><input type="radio" name="sev" ${S.sev===s?'checked':''} onchange="S.sev='${s}'">${s}</label>`).join('');
@@ -1110,7 +1110,7 @@ function renderKryDetail(no){
   else if(j.phase==='krd'){   // ---- คุ้มค่าแล้ว: เดิน 5 ขั้นตามผัง ----
     const s=j.krdStage||0;
     action=`<div class="sect" style="margin-top:24px">กรย. ดำเนินการซ่อมเอง <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— ประเมินราคา ${(j.est||0).toLocaleString()} บาท · คุ้มค่าซ่อม</span></div>
-    <div class="wsteps" style="margin-top:14px">${KRD_STEPS.map((x,i)=>`<div class="wstep ${i===s?'active':i<s?'passed':''}"><span class="num">${i<s?'✓':i+1}</span><span class="lbl">${x}</span></div>`).join('')}</div>`;
+    <div class="wsteps" style="margin-top:14px">${KRD_STEPS.map((x,i)=>`<div class="wstep ${i===s?'active':i<s?'passed':''}"><span class="num">${i<s?'<span class=\"ms\">check</span>':i+1}</span><span class="lbl">${x}</span></div>`).join('')}</div>`;
     if(j.krdAppt)action+=`<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดวันซ่อมกับเจ้าของรถ:</b> ${j.krdAppt.date} ${j.krdAppt.note?'· '+j.krdAppt.note:''}</div>`;
     if(s===0){
       action+=`<div class="panel">
@@ -1393,7 +1393,7 @@ function renderKbkDetail(no){
       <div style="font-size:14px;margin-top:4px"><b>สถานที่:</b> ${j.onsite&&j.onsite.site||'—'} · <b>ช่วงวันเดินทาง:</b> ${j.onsite&&j.onsite.trip||'—'}</div>
     </div>`
     :`<div class="sect" style="margin-top:24px">สถานะงานซ่อม (สนญ.) <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— สถานะแสดงที่ฝั่งผู้แจ้งด้วย</span></div>`;
-    action+=`<div class="wsteps" style="margin-top:14px">${WORK_STEPS.map((s,i)=>`<div class="wstep ${i===j.wi?'active':i<j.wi?'passed':''}"><span class="num">${i<j.wi?'✓':i+1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
+    action+=`<div class="wsteps" style="margin-top:14px">${WORK_STEPS.map((s,i)=>`<div class="wstep ${i===j.wi?'active':i<j.wi?'passed':''}"><span class="num">${i<j.wi?'<span class=\"ms\">check</span>':i+1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
     if(j.inspIn)action+=inspViewPanel('บันทึกตรวจสอบรถเทียบเอกสารรับรถ (ตอนรับรถเข้า) ✓',j.inspIn);
     if(j.moreFinds&&j.moreFinds.length){
       action+=`<div class="panel"><b style="color:var(--gray-900);font-size:14px">อาการ/อะไหล่ที่อัปเดทเพิ่มระหว่างซ่อม</b>
@@ -1466,7 +1466,7 @@ function renderKbkDetail(no){
     action=`<div class="panel"><div class="sect" style="margin:0 0 8px">ส่งกลับให้หน่วยงานผู้แจ้งซ่อมเองแล้ว — ติดตามสถานะ</div>
       <div style="font-size:14px"><b>เหตุผล:</b> ${j.ret.reason}</div>
       ${j.ret.garages.length?j.ret.garages.map(g=>`<div class="garage" style="cursor:default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join(''):''}</div>
-    <div class="wsteps" style="margin-top:14px">${RSTEPS.map((x,i)=>`<div class="wstep ${i===s?'active':i<s?'passed':''}"><span class="num">${i<s?'✓':i+1}</span><span class="lbl">${x}</span></div>`).join('')}</div>
+    <div class="wsteps" style="margin-top:14px">${RSTEPS.map((x,i)=>`<div class="wstep ${i===s?'active':i<s?'passed':''}"><span class="num">${i<s?'<span class=\"ms\">check</span>':i+1}</span><span class="lbl">${x}</span></div>`).join('')}</div>
     <div class="hint">หน่วยงานผู้แจ้งเป็นผู้อัปเดตสถานะและบันทึกปิดงาน — กบค. เห็นความคืบหน้าที่นี่ตลอด${s===2?' · <b>รอบันทึกปิดงานจากผู้แจ้ง</b>':''}</div>`;
   }
   if(j.phase==='gclosed'){

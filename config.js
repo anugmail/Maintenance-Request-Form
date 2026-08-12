@@ -48,12 +48,22 @@ const DEFAULT_CFG={
 };
 function clone0(o){return JSON.parse(JSON.stringify(o))}
 const WKEYS=WIZARD_DEFAULT.map(s=>s.key);
-/* reconcile wizard steps: คงเฉพาะ key ที่รู้จัก + เติม key ที่ขาดต่อท้าย + merge label/heading/on
-   migrate: config เก่าที่ยังไม่มี steps แต่เคยปิด partsStep → parts.on=false */
+/* reconcile wizard steps: คงเฉพาะ key ที่รู้จัก + เติม key ที่ขาด + merge label/heading/on
+   migrate: config เก่าที่ยังไม่มี steps แต่เคยปิด partsStep → parts.on=false
+
+   ⚠ ขั้นที่ขาดต้องแทรก "ตามตำแหน่งใน WIZARD_DEFAULT" ไม่ใช่ต่อท้าย —
+   ของเดิมต่อท้าย ทำให้ config ที่บันทึกไว้ก่อนมีขั้น info/parts เห็นลำดับเพี้ยน
+   (เจอจริง 12 ส.ค. 2569: เลือกรถ → อะไหล่ → ตัดสินใจ → อาการเสีย → ข้อมูลติดต่อ) */
 function normSteps(s,toggles){
   const w=(s&&Array.isArray(s.wizard))?s.wizard.filter(x=>x&&WKEYS.includes(x.key)):[];
   const seen=new Set(w.map(x=>x.key));
-  WIZARD_DEFAULT.forEach(d=>{if(!seen.has(d.key))w.push(clone0(d))});
+  WIZARD_DEFAULT.forEach((d,di)=>{
+    if(seen.has(d.key))return;
+    // หาตัวถัดไปใน default ที่มีอยู่แล้ว แล้วแทรกไว้ข้างหน้า — ไม่เจอค่อยต่อท้าย
+    const nextKey=WIZARD_DEFAULT.slice(di+1).map(x=>x.key).find(k=>w.some(x=>x.key===k));
+    const at=nextKey?w.findIndex(x=>x.key===nextKey):w.length;
+    w.splice(at,0,clone0(d));
+  });
   const def=Object.fromEntries(WIZARD_DEFAULT.map(d=>[d.key,d]));
   const wizard=w.map(x=>({key:x.key,label:x.label||def[x.key].label,heading:x.heading||def[x.key].heading,on:x.on!==false}));
   if(!(s&&s.wizard)&&toggles&&toggles.partsStep===false){const p=wizard.find(x=>x.key==='parts');if(p)p.on=false}

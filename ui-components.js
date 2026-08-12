@@ -124,7 +124,7 @@ const dayPicker={
       }
       el.innerHTML=`
         <div style="font-weight:600;color:var(--gray-900);font-size:14px">แตะวันที่จะเปิดว่าง <span style="font-size:var(--fs-sm);color:var(--gray-500);font-weight:400">— ${horizonDays} วันถัดไป แตะซ้ำเพื่อเอาออก</span></div>
-        <div class="chips" style="margin-top:8px">${chips.map(c=>`<div class="chip ${c.sel?'sel':''}" data-iso="${c.iso}">${c.label}</div>`).join('')}</div>`;
+        <div class="chips pick" style="margin-top:8px">${chips.map(c=>`<div class="chip ${c.sel?'sel':''}" data-iso="${c.iso}">${c.label}</div>`).join('')}</div>`;
       if(onToggleDay)el.querySelectorAll('.chip').forEach(x=>x.addEventListener('click',()=>onToggleDay(x.dataset.iso)));
       return;
     }

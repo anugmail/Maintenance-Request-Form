@@ -132,9 +132,29 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 
 /* ---------- Chip (multi-select) ---------- */
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-/* ตามไลบรารี Tag (Size=lg): r6 · เส้น 1px gray-300 · pad 4/10 · 14/500 gray-700 */
-.chip{border:1px solid var(--gray-300);border-radius:var(--rounded-sm);padding:4px 10px;font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);font-weight:500;cursor:pointer;background:#fff;color:var(--gray-700)}
+/* ตามไลบรารี Tag (Size=lg) — node 1:1378: r6 · เส้น 1px gray-300 · pad 4/10 · 14/500 gray-700
+   .sel = เลือกอันเดียว/ตัวกรอง → ทึบสีแบรนด์แบบปุ่ม (ไลบรารีไม่มี selected tag ชนิดนี้) */
+.chip{display:inline-flex;align-items:center;border:1px solid var(--gray-300);border-radius:var(--rounded-sm);padding:4px 10px;font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);font-weight:500;cursor:pointer;background:#fff;color:var(--gray-700)}
 .chip.sel{background:var(--primary-600);border-color:var(--primary-600);color:#fff}
+
+/* .chips.pick — กลุ่มที่ "เลือกได้หลายอัน" (อาการเสีย, วัน/เวลาที่เปิดว่าง)
+   ตรงตาม Tag variant Checkbox=True: ตัวป้ายขาว/ขอบเทาเสมอแม้ตอนเลือก
+   สถานะเลือกอยู่ที่กล่องติ๊ก 18px r4 → พื้นแบรนด์ + เครื่องหมายถูกขาว
+   (ของเดิมท่วมสีทั้งก้อน แยกไม่ออกว่าเลือกได้หลายอัน — เจ้าของงานทักไว้ 12 ส.ค. 2569)
+   กล่องติ๊กวาดด้วย ::before + ฟอนต์ Material Symbols จึงไม่ต้องแก้ HTML ทุกจุด */
+.chips.pick>.chip{gap:6px;padding-left:5px}
+.chips.pick>.chip::before{
+  content:'check';font-family:'Material Symbols Outlined';font-size:14px;line-height:1;
+  flex:none;width:18px;height:18px;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--gray-300);border-radius:4px;background:#fff;color:transparent;
+  transition:background-color .15s ease,border-color .15s ease,color .15s ease;
+}
+.chips.pick>.chip:hover::before{border-color:var(--gray-400)}
+.chips.pick>.chip.sel{background:#fff;border-color:var(--gray-300);color:var(--gray-700)}
+.chips.pick>.chip.sel::before{background:var(--primary-600);border-color:var(--primary-600);color:#fff}
+/* .chip.plain — ป้ายบอกข้อมูลที่กดไม่ได้ (เช่นหัวแถววันในตารางเลือกช่วงเวลา) */
+.chips.pick>.chip.plain{padding-left:10px;cursor:default}
+.chips.pick>.chip.plain::before{display:none}
 
 /* ---------- Segmented (single-select) ---------- */
 .seg{display:flex;gap:8px}
@@ -229,6 +249,7 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 .wsteps{display:flex;background:#fff;border:1px solid var(--gray-200);border-radius:12px;margin-bottom:26px}
 .wstep{flex:1;display:flex;align-items:center;gap:12px;padding:17px 18px;position:relative;color:var(--gray-500);font-size:var(--fs-text-sm);min-width:0}
 .wstep .num{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--gray-300);display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;background:#fff}
+.wstep .num .ms{font-size:20px}   /* ขั้นที่ผ่านแล้วใช้ไอคอน check — เดิมเป็นตัวอักษร ✓ ผิดกฎไอคอน + ฟอนต์ไม่มี glyph นี้ */
 .wstep .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wstep.active{color:var(--primary-600);font-weight:600}
 .wstep.active .num{border-color:var(--primary-600);color:var(--primary-600)}

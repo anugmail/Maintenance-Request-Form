@@ -384,6 +384,8 @@
       object-fit: cover
     }
 
+    .ph .rm .ms { font-size: 14px }
+
     .ph .rm {
       position: absolute;
       top: 2px;
@@ -897,35 +899,9 @@
       color: var(--warning-700)
     }
 
-    .qty {
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-      border: 1px solid var(--gray-300);
-      border-radius: var(--r-pill);
-      overflow: hidden
-    }
-
-    .qty button {
-      border: 0;
-      background: #fff;
-      width: 26px;
-      height: 26px;
-      cursor: pointer;
-      font-size:var(--fs-body);
-      color: var(--gray-700);
-      font-family: var(--font)
-    }
-
-    .qty button:hover {
-      background: var(--gray-100)
-    }
-
-    .qty b {
-      min-width: 26px;
-      text-align: center;
-      font-size:var(--fs-text-sm)
-    }
+    /* .qty เคยถูกนิยามซ้ำที่นี่ (pill 26px สีเทา) ทับของกลางใน components.css
+       ซึ่งเป็น r8 32×34 สีแบรนด์ — ผิดกฎแหล่งความจริงเดียว ลบออก 12 ส.ค. 2569
+       ใช้ของกลางแทนทั้งหมด (ไล่ตรวจเฟส 1) */
 
     .pdel {
       border: 0;
@@ -3549,7 +3525,7 @@ function goBackFromForm(){
     function renderSteps() {   // เดินตามลำดับ WORDER (สลับ/เปิดปิดขั้นได้จาก admin)
       $('wsteps').innerHTML = WORDER.map((k, i) => {
         const st = i + 1 === S.step ? 'active' : i + 1 < S.step ? 'passed' : '';
-        return `<div class="wstep ${st}"><span class="num">${i + 1 < S.step ? '✓' : i + 1}</span><span class="lbl">${WZ[k].label}</span></div>`;
+        return `<div class="wstep ${st}"><span class="num">${i + 1 < S.step ? '<span class=\"ms\">check</span>' : i + 1}</span><span class="lbl">${WZ[k].label}</span></div>`;
       }).join('');
     }
     function showStepSection(key) {   // แสดง section ของขั้นปัจจุบัน + render เนื้อหาตาม key
@@ -3633,7 +3609,7 @@ function goBackFromForm(){
       $('symcats').innerHTML = CATS.filter(c => scope.includes(c.for)).map(c => {
         const items = SYMPTOMS.filter(s => s.cat === c.key);
         return `<div class="cat"><span class="ms">${c.icon}</span>${c.name}</div>
-      <div class="chips">${items.map(s => `<div class="chip ${S.symptoms.includes(s.id) ? 'sel' : ''}" onclick="toggleSym('${s.id}')">${s.name}</div>`).join('')}</div>`;
+      <div class="chips pick">${items.map(s => `<div class="chip ${S.symptoms.includes(s.id) ? 'sel' : ''}" onclick="toggleSym('${s.id}')">${s.name}</div>`).join('')}</div>`;
       }).join('');
       $('othwrap').classList.toggle('hidden', !S.symptoms.includes('OTH'));
     }
@@ -3797,7 +3773,7 @@ function goBackFromForm(){
     function addThumb(src) {
       const d = document.createElement('div'); d.className = 'ph';
       if (src) d.innerHTML = `<img src="${src}">`;
-      const rm = document.createElement('div'); rm.className = 'rm'; rm.textContent = '✕';
+      const rm = document.createElement('div'); rm.className = 'rm'; rm.innerHTML = '<span class="ms">close</span>';
       rm.onclick = () => { d.remove(); S.photos-- };
       d.appendChild(rm);
       $('photos').insertBefore(d, $('photos').firstChild);
@@ -4061,7 +4037,7 @@ function retPanel(j){
         <div class="f"><label>รายละเอียดการซ่อม <small>(จำเป็น)</small></label><textarea id="cdet" rows="3" placeholder="เช่น อู่เปลี่ยนชุดล็อกกระเช้าและปรับตั้งระบบ ทดสอบยกแล้วปกติ…" oninput="R.det=this.value">${R.det}</textarea></div>
         <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin:12px 0 6px">รูปภาพหลังซ่อม</label>
         <div class="photos" id="cphotos">
-          ${R.urls.map((u, i) => `<div class="ph">${u ? `<img src="${u}">` : ''}<div class="rm" onclick="cRmPhoto(${i})">✕</div></div>`).join('')}
+          ${R.urls.map((u, i) => `<div class="ph">${u ? `<img src="${u}">` : ''}<div class="rm" onclick="cRmPhoto(${i})"><span class="ms">close</span></div></div>`).join('')}
           <div class="addph" onclick="document.getElementById('cfile').click()"><span class="ms">photo_camera</span>ถ่าย/แนบรูป</div>
           <div class="addph" onclick="cAddPhoto(null)"><span class="ms">add_photo_alternate</span>รูปตัวอย่าง</div>
         </div>
@@ -4498,7 +4474,7 @@ function closeKbkDetail(){
       <div style="font-size:14px"><b>ทีมช่าง:</b> ${j.onsite && j.onsite.team || '—'}</div>
       <div style="font-size:14px;margin-top:4px"><b>สถานที่:</b> ${j.onsite && j.onsite.site || '—'} · <b>ช่วงวันเดินทาง:</b> ${j.onsite && j.onsite.trip || '—'}</div>
     </div>
-    <div class="wsteps" style="margin-top:14px">${ONSITE_STEPS.map((s, i) => `<div class="wstep ${i === j.wi ? 'active' : i < j.wi ? 'passed' : ''}"><span class="num">${i < j.wi ? '✓' : i + 1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
+    <div class="wsteps" style="margin-top:14px">${ONSITE_STEPS.map((s, i) => `<div class="wstep ${i === j.wi ? 'active' : i < j.wi ? 'passed' : ''}"><span class="num">${i < j.wi ? '<span class=\"ms\">check</span>' : i + 1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
         if (j.wi < 2) {
           action += `<div class="rowbtns" style="justify-content:flex-start;flex-wrap:wrap">
         <button class="btn btn-p" onclick="onsiteAdvance('${no}')">อัปเดตสถานะ → ${ONSITE_STEPS[j.wi + 1]}</button>
@@ -4521,7 +4497,7 @@ function closeKbkDetail(){
       else if (j.phase === 'quote') { action = quotePanelHTML(no, j) }
       else if (j.phase === 'work') {   // ---- แทร็กงานใหญ่ (นำรถเข้า สนญ.) ----
         action = partsSummaryHTML(j) + `<div class="sect" style="margin-top:24px">สถานะงานซ่อม <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— สถานะแสดงที่ฝั่งผู้แจ้งด้วย</span></div>
-    <div class="wsteps" style="margin-top:14px">${KBK_STEPS.map((s, i) => `<div class="wstep ${i === j.wi ? 'active' : i < j.wi ? 'passed' : ''}"><span class="num">${i < j.wi ? '✓' : i + 1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
+    <div class="wsteps" style="margin-top:14px">${KBK_STEPS.map((s, i) => `<div class="wstep ${i === j.wi ? 'active' : i < j.wi ? 'passed' : ''}"><span class="num">${i < j.wi ? '<span class=\"ms\">check</span>' : i + 1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
         if (TG.inspection) {   // ปิด toggle ตรวจสภาพ → ข้ามฟอร์ม/แผงตรวจสภาพขาเข้าทั้งหมด
           if (j.inspIn) {
             action += inspViewPanel('ตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) ✓', j.inspIn);
@@ -4544,8 +4520,8 @@ function closeKbkDetail(){
         <div id="dpk"></div>
 
         <div style="margin-top:16px;font-weight:600;color:var(--gray-900);font-size:14px">ขั้น 2 · วันที่เปิดว่างไว้ (${sortedDays.length} วัน) — แตะช่วงเวลาเพื่อเปิด/ปิด</div>
-        ${sortedDays.length ? sortedDays.map(([key, s]) => `<div class="dayrow" style="margin-top:8px">
-          <div class="chip sel" style="min-width:112px;text-align:center;cursor:default">${s.label}</div>
+        ${sortedDays.length ? sortedDays.map(([key, s]) => `<div class="dayrow chips pick" style="margin-top:8px">
+          <div class="chip sel plain" style="min-width:112px;text-align:center">${s.label}</div>
           ${SLOT_TIMES.map(t => `<div class="chip ${s.times.includes(t) ? 'sel' : ''}" onclick="toggleSlot('${no}','${key}','${t}')">${t}</div>`).join('')}
           <span class="ms" style="color:var(--gray-400);cursor:pointer" title="ลบวันนี้ออก" onclick="removeDay('${no}','${key}')">delete</span>
         </div>`).join('') : '<div class="empty">ยังไม่ได้เลือกวัน — เพิ่มจาก date picker ด้านบน</div>'}
@@ -4583,7 +4559,7 @@ function closeKbkDetail(){
         action = `<div class="panel"><div class="sect" style="margin:0 0 8px">ส่งกลับให้หน่วยงานผู้แจ้งซ่อมเองแล้ว — ติดตามสถานะ</div>
       <div style="font-size:14px"><b>เหตุผล:</b> ${j.ret.reason}</div>
       ${j.ret.garages.length ? j.ret.garages.map(g => `<div class="garage" style="cursor:default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join('') : ''}</div>
-    <div class="wsteps" style="margin-top:14px">${RSTEPS.map((x, i) => `<div class="wstep ${i === s ? 'active' : i < s ? 'passed' : ''}"><span class="num">${i < s ? '✓' : i + 1}</span><span class="lbl">${x}</span></div>`).join('')}</div>
+    <div class="wsteps" style="margin-top:14px">${RSTEPS.map((x, i) => `<div class="wstep ${i === s ? 'active' : i < s ? 'passed' : ''}"><span class="num">${i < s ? '<span class=\"ms\">check</span>' : i + 1}</span><span class="lbl">${x}</span></div>`).join('')}</div>
     <div class="hint">หน่วยงานผู้แจ้งเป็นผู้อัปเดตสถานะและบันทึกปิดงาน — กบค. เห็นความคืบหน้าที่นี่ตลอด${s === 2 ? ' · <b>รอบันทึกปิดงานจากผู้แจ้ง</b>' : ''}</div>`;
       }
       if (j.phase === 'gclosed') {
@@ -4624,7 +4600,7 @@ function closeKbkDetail(){
 
     <div class="kstepbar">${KSTEPS.map((x,i)=>
       `<div class="kstep ${i===cur?'active':i<cur?'passed':''}">
-         <span class="num">${i<cur?'✓':i+1}</span>
+         <span class="num">${i<cur?'<span class=\"ms\">check</span>':i+1}</span>
          <span class="lbl"><span class="ms">${x.icon}</span>${x.label}</span></div>`).join('')}</div>
 
     <button type="button" class="reqtoggle" onclick="toggleReqInfo()">
@@ -4764,7 +4740,7 @@ function partsRowsHTML(no, list, editable){
           ${x.src==='req'?'<span class="ptag req">ผู้แจ้งเลือกมา</span>':'<span class="ptag add">กบค. เพิ่ม</span>'}</div></td>
       <td>${invCell(x)}</td>
       <td style="text-align:center">${editable
-        ?`<span class="qty"><button onclick="kbkPartQty('${no}','${x.code}',-1)">−</button><b>${x.qty}</b><button onclick="kbkPartQty('${no}','${x.code}',1)">+</button></span>`
+        ?`<span class="qty"><button onclick="kbkPartQty('${no}','${x.code}',-1)">−</button><span>${x.qty}</span><button onclick="kbkPartQty('${no}','${x.code}',1)">+</button></span>`
         :x.qty}</td>
       <td style="text-align:right">${x.price?baht(x.price):'<span style="color:var(--gray-400)">—</span>'}</td>
       <td style="text-align:right"><b>${baht((x.price||0)*x.qty)}</b></td>
