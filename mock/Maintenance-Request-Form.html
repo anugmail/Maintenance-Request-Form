@@ -164,10 +164,10 @@
       height: 34px;
       align-items: center;
       justify-content: center;
-      border-radius: 9px;
+      border-radius: var(--rounded-md);
       background: #fff;
       color: var(--primary-600);
-      font-size: 19px
+      font-size: 20px
     }
 
     .vehicle-detail-copy {
@@ -309,7 +309,7 @@
 
     .vehicle-target-check {
       color: var(--gray-400);
-      font-size: 21px
+      font-size: 20px
     }
 
     .vehicle-target-option.selected .vehicle-target-check {
@@ -724,7 +724,7 @@
 
     .pcard>.ms {
       color: var(--primary-600);
-      font-size: 21px;
+      font-size: 20px;
       flex: none;
       margin-top: 1px
     }
@@ -837,26 +837,13 @@
     }
 
     /* ---- ตารางรายการอะไหล่ ---- */
+    /* .ptab ต่อยอดจาก .tbl ของกลาง (markup ใช้ class="tbl ptab")
+       เหลือเฉพาะสิ่งที่ .tbl ไม่มี: ความกว้างขั้นต่ำ · แถวหัวกลุ่ม · แถวรวมท้ายตาราง */
     .ptab {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: var(--fs-sm);
       min-width: 620px
     }
 
-    .ptab th {
-      text-align: left;
-      padding: 8px 10px;
-      background: var(--gray-50);
-      border-bottom: 1px solid var(--gray-200);
-      font-weight: 600;
-      color: var(--gray-700);
-      white-space: nowrap
-    }
-
     .ptab td {
-      padding: 9px 10px;
-      border-bottom: 1px solid var(--gray-100);
       vertical-align: middle
     }
 
@@ -878,7 +865,7 @@
     }
 
     .ptag {
-      font-size: 10.5px;
+      font-size: var(--fs-text-xs);
       font-weight: 600;
       padding: 1px 7px;
       border-radius: var(--r-pill)
@@ -919,7 +906,7 @@
     }
 
     .pdel .ms {
-      font-size: 19px
+      font-size: 20px
     }
 
     .addwrap {
@@ -1026,10 +1013,7 @@
     .fsub small{font-weight:400;color:var(--gray-500)}
     /* ---- จัดระนาบขั้น "ข้อมูลติดต่อ · สถานที่ · งบ" ---- */
     .iwrap{max-width:1000px}
-    /* align-items:end = ก้นช่องกรอกเสมอกันทุกคอลัมน์ ต่อให้ label ตกบรรทัด */
-    .fgrid.ig{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 20px;align-items:end;margin:12px 0 0}
-    .fgrid.ig .f{min-width:0}
-    .fgrid.ig .f label{margin-bottom:7px;line-height:1.35}
+    /* .fgrid.ig ย้ายไป design-system/components.css แล้ว (variant ของ form grid) */
     .fsel{height:44px}
     .areanote{font-size:var(--fs-xs);color:var(--gray-600);margin:8px 0 0;line-height:var(--lh)}
     .areanote b{color:var(--primary-700)}
@@ -1068,7 +1052,7 @@
     .kstep{display:flex;align-items:center;gap:8px;flex:1;min-width:170px;background:#fff;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:10px 13px}
     .kstep .num{width:23px;height:23px;border-radius:50%;background:var(--gray-100);color:var(--gray-500);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}
     .kstep .lbl{display:flex;align-items:center;gap:5px;font-size:var(--fs-text-sm);font-weight:600;color:var(--gray-500)}
-    .kstep .lbl .ms{font-size:17px}
+    .kstep .lbl .ms{font-size:16px}
     .kstep.active{border-color:var(--primary-600);background:var(--primary-25)}
     .kstep.active .num{background:var(--primary-600);color:#fff}
     .kstep.active .lbl{color:var(--primary-700)}
@@ -1077,7 +1061,7 @@
 
     .reqtoggle{display:flex;align-items:center;gap:8px;width:100%;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);padding:11px 15px;cursor:pointer;font-family:var(--font);font-size:14px;font-weight:600;color:var(--gray-700)}
     .reqtoggle:hover{border-color:var(--primary-500);color:var(--primary-600)}
-    .reqtoggle .ms{font-size:19px;color:var(--primary-600)}
+    .reqtoggle .ms{font-size:20px;color:var(--primary-600)}
     .reqinfo{border-left:3px solid var(--primary-50);padding-left:14px;margin-top:14px}
 
     /* ---- ปุ่มไปหน้าขั้นตอน (ท้าย accordion ในลิสต์) ---- */
@@ -1156,7 +1140,7 @@
 
     .srcwarn .ms,
     .srcok .ms {
-      font-size: 17px
+      font-size: 16px
     }
 
     /* ---- หัวกลุ่มในตารางอะไหล่ ---- */
@@ -1167,7 +1151,7 @@
     }
 
     .ptab tr.ghead .ms {
-      font-size: 17px;
+      font-size: 16px;
       vertical-align: -3px;
       margin-right: 6px
     }
@@ -1798,7 +1782,7 @@
     }
 
     .pf-icon-btn .ms {
-      font-size: 19px
+      font-size: 20px
     }
 
     .pf-net-banner {
@@ -1843,6 +1827,8 @@
       padding: 6px 2px;
       border-radius:var(--rounded-md);
       color: var(--gray-500);
+      /* ข้อยกเว้น: ป้ายแถบเมนูล่างของต้นแบบ "แอปมือถือ" ที่ฝังอยู่ในหน้านี้
+         ไม่ใช่ UI เว็บที่ design system ครอบ (สเกลเล็กสุดของไลบรารีคือ 12px) */
       font-size: 10.5px;
       cursor: pointer;
       min-height: 48px;
@@ -2587,7 +2573,7 @@
           class="sep">›</span><span class="cur">ดำเนินการ</span></div>
       <div id="stepbody"></div>
       <div class="rowbtns" style="justify-content:flex-start;margin-top:18px">
-        <button class="btn btn-g" onclick="backToQueue()">← กลับคิวงาน</button></div>
+        <button class="btn btn-g" onclick="backToQueue()"><span class="ms">arrow_back</span> กลับคิวงาน</button></div>
     </main>
 
     <!-- ============ VIEW: ประเมินความคุ้มค่าในการซ่อม (โครงเปล่า) ============ -->
@@ -3907,7 +3893,7 @@ function goBackFromForm(){
     <div class="vgrid" style="margin-top:10px">
       <div class="vcell"><label>เลขที่ใบแจ้งซ่อม</label><div class="val">${esc(j.no)}</div></div>
       <div class="vcell"><label>เลขทะเบียนรถ</label><div class="val">${esc(j.plate)}</div></div>
-      <div class="vcell"><label>ประเภทรถ</label><div class="val"><span class="ms" style="font-size:19px;color:var(--${t.cls === 'crane' ? 'primary' : t.cls === 'bucket' ? 'secondary' : 'gray'}-600)">${t.icon}</span>${t.name}</div></div>
+      <div class="vcell"><label>ประเภทรถ</label><div class="val"><span class="ms" style="font-size:20px;color:var(--${t.cls === 'crane' ? 'primary' : t.cls === 'bucket' ? 'secondary' : 'gray'}-600)">${t.icon}</span>${t.name}</div></div>
       <div class="vcell"><label>สถานะรถ</label><div class="val"><span class="vstat ${ok ? 'ok' : 'no'}"><span class="ms">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span></div></div>
       <div class="vcell"><label>สถานที่รถอยู่</label><div class="val" style="font-size:14px">${place}</div></div>
       <div class="vcell"><label>ข้อมูลการใช้งานรถ</label><div class="val" style="font-size:14px">${useTx}</div></div>
@@ -4081,7 +4067,7 @@ function retPanel(j){
         extra += `<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note ? '· ' + j.appt.note : ''} — วันนัดมีการ<b>ตรวจสภาพตอนรับรถคืน (ขาออก)</b> เทียบกับขาเข้าร่วมกัน</div>`;
       }
       if (j.phase === 'closed' && j.loc === 'onsite') {
-        extra += `<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ซ่อมหน้างานเสร็จ</b>${j.onsite && j.onsite.site ? ' @ ' + j.onsite.site : ''}${j.sat ? ` · ความพึงพอใจ ${'★'.repeat(j.sat)}` : ''}</div>`;
+        extra += `<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ซ่อมหน้างานเสร็จ</b>${j.onsite && j.onsite.site ? ' @ ' + j.onsite.site : ''}${j.sat ? ` · ความพึงพอใจ ${'<span class="ms">star</span>'.repeat(j.sat)}` : ''}</div>`;
       }
       if (j.phase === 'closed' && j.inspOut) {
         extra += inspViewPanel('ตรวจสภาพขาออก (ตอนรับรถคืน) — <span class="badge b-ok">ผ่าน — รับมอบรถแล้ว</span>', j.inspOut);
@@ -4166,15 +4152,15 @@ function retPanel(j){
       $('vhistbody').innerHTML = `
     <h1 class="page-title">ประวัติการซ่อม — ${esc(plate)}</h1>
     <div class="lead" style="color:var(--gray-600);margin:4px 0 18px">${v ? esc(v.model + (v.attach ? ' + ' + v.attach : '')) : ''} · ${esc((v && v.org) || '')} — ข้อมูลจำลองจาก VMS+</div>
-    ${rows.length ? `<div class="scrollx" style="overflow-x:auto;border:1px solid var(--gray-200);border-radius:var(--r-md);background:#fff">
-      <table style="width:100%;border-collapse:collapse;font-size:var(--fs-sm);min-width:900px">
+    ${rows.length ? `<div class="tblwrap">
+      <table class="tbl" style="min-width:900px">
         <thead><tr>
-          <th style="text-align:left;padding:10px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);white-space:nowrap">เลขที่ใบแจ้งซ่อม · วันที่</th>
-          <th style="text-align:left;padding:10px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200)">อาการเสีย</th>
-          <th style="text-align:left;padding:10px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200)">อะไหล่ที่ใช้</th>
-          <th style="text-align:left;padding:10px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);white-space:nowrap">ผู้ซ่อม</th>
-          <th style="text-align:right;padding:10px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);white-space:nowrap">ชั่วโมงใช้งาน</th>
-          <th style="text-align:right;padding:10px 12px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);white-space:nowrap">เลขไมล์</th>
+          <th>เลขที่ใบแจ้งซ่อม · วันที่</th>
+          <th>อาการเสีย</th>
+          <th>อะไหล่ที่ใช้</th>
+          <th>ผู้ซ่อม</th>
+          <th style="text-align:right">ชั่วโมงใช้งาน</th>
+          <th style="text-align:right">เลขไมล์</th>
         </tr></thead>
         <tbody>${rows.map(x => {
         const parts = x.usedParts && x.usedParts.length ? x.usedParts.map(p => `${esc(p.name)} ×${p.qty} ${esc(p.unit || '')}`).join('<br>')
@@ -4182,12 +4168,12 @@ function retPanel(j){
         const by = x.by || (x.record && x.record.by) || 'กบค.';
         const dt = x.date || (x.history && x.history[0] ? x.history[0].t : '—');
         return `<tr>
-          <td style="padding:10px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top"><b>${esc(x.no)}</b><div style="font-size:12px;color:var(--gray-500)">${esc(dt)}</div></td>
-          <td style="padding:10px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top">${esc(x.syms.join(', '))}${x.record ? `<div style="font-size:12px;color:var(--gray-500)">${esc(x.record.det)}</div>` : ''}</td>
-          <td style="padding:10px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top">${parts}</td>
-          <td style="padding:10px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top">${byBadge(by)}</td>
-          <td style="padding:10px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top;text-align:right">${x.hours ? x.hours.toLocaleString() + ' ชม.' : '<span style="color:var(--gray-400)">—</span>'}</td>
-          <td style="padding:10px 12px;border-bottom:1px solid var(--gray-100);vertical-align:top;text-align:right">${x.odo ? x.odo.toLocaleString() + ' กม.' : '<span style="color:var(--gray-400)">—</span>'}</td>
+          <td><b>${esc(x.no)}</b><div style="font-size:12px;color:var(--gray-500)">${esc(dt)}</div></td>
+          <td>${esc(x.syms.join(', '))}${x.record ? `<div style="font-size:12px;color:var(--gray-500)">${esc(x.record.det)}</div>` : ''}</td>
+          <td>${parts}</td>
+          <td>${byBadge(by)}</td>
+          <td style="text-align:right">${x.hours ? x.hours.toLocaleString() + ' ชม.' : '<span style="color:var(--gray-400)">—</span>'}</td>
+          <td style="text-align:right">${x.odo ? x.odo.toLocaleString() + ' กม.' : '<span style="color:var(--gray-400)">—</span>'}</td>
         </tr>`;
       }).join('')}</tbody>
       </table></div>`
@@ -4195,7 +4181,7 @@ function retPanel(j){
     <div class="todo"><span class="ms">pending_actions</span><span><b>TODO — ชั่วโมงใช้งาน / เลขไมล์ ยังไม่ได้ต่อของจริง</b>
       ตอนนี้เป็นค่าที่ใส่ไว้ในข้อมูลจำลอง ของจริงต้องดึงจากบันทึกเติมน้ำมัน/ชั่วโมงทำงานใน VMS+ ณ วันปิดงาน</span></div>
     <div class="rowbtns" style="justify-content:flex-start;margin-top:18px">
-      <button class="btn btn-g" onclick="switchView('${VH.back}')">← กลับหน้างานซ่อม</button></div>`;
+      <button class="btn btn-g" onclick="switchView('${VH.back}')"><span class="ms">arrow_back</span> กลับหน้างานซ่อม</button></div>`;
     }
 
     // ================= VIEW: งานคัดแยก กรย. =================
@@ -4484,7 +4470,7 @@ function closeKbkDetail(){
       <div class="panel">
         <div class="chk" style="margin:0 0 10px"><label><input type="checkbox" id="os-ack" ${K.ack ? 'checked' : ''} onchange="K.ack=this.checked"> หน่วยงานเจ้าของรถรับทราบผลการซ่อม (ใบตรวจสภาพอะไหล่ · ก่อน/หลัง)</label></div>
         <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin-bottom:6px">ความพึงพอใจ</label>
-        <div class="seg" id="os-sat" style="max-width:520px">${[1, 2, 3, 4, 5].map(n => `<div class="sg ${K.sat === n ? 'sel' : ''}" onclick="K.sat=${n};renderKbkDetail('${no}')">${'★'.repeat(n)}</div>`).join('')}</div>
+        <div class="seg" id="os-sat" style="max-width:520px">${[1, 2, 3, 4, 5].map(n => `<div class="sg ${K.sat === n ? 'sel' : ''}" onclick="K.sat=${n};renderKbkDetail('${no}')">${'<span class="ms">star</span>'.repeat(n)}</div>`).join('')}</div>
         ${costFieldsHTML()}
         <div class="rowbtns"><button class="btn btn-p" onclick="onsiteClose('${no}')">ส่งขออนุมัติปิดงาน</button></div>
       </div>`;
@@ -4567,7 +4553,7 @@ function closeKbkDetail(){
       }
       if (j.phase === 'closed') {
         action = (j.loc === 'onsite'
-          ? `<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ปิดงานแล้ว</b> — ซ่อมหน้างานเสร็จ${j.onsite && j.onsite.site ? ' @ ' + j.onsite.site : ''}${j.sat ? ` · ความพึงพอใจ ${'★'.repeat(j.sat)}` : ''}</div>`
+          ? `<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ปิดงานแล้ว</b> — ซ่อมหน้างานเสร็จ${j.onsite && j.onsite.site ? ' @ ' + j.onsite.site : ''}${j.sat ? ` · ความพึงพอใจ ${'<span class="ms">star</span>'.repeat(j.sat)}` : ''}</div>`
           : `<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ปิดงานแล้ว</b> — ส่งมอบรถวันที่ ${j.appt.date} ${j.appt.time} น.</div>`)
           + (j.inspIn ? inspViewPanel('ตรวจสภาพขาเข้า (ตอนส่งรถซ่อม)', j.inspIn) : '')
           + (j.inspOut ? inspViewPanel('ตรวจสภาพขาออก (ตอนรับรถคืน) — ผ่าน ✓', j.inspOut) : '')
@@ -4748,7 +4734,7 @@ function partsRowsHTML(no, list, editable){
     </tr>`).join('');
   };
 
-  return bar+`<div class="scrollx" style="overflow-x:auto"><table class="ptab">
+  return bar+`<div class="scrollx" style="overflow-x:auto"><table class="tbl ptab">
     <thead><tr><th>อะไหล่</th><th>คลัง</th><th style="text-align:center">จำนวน</th><th style="text-align:right">ราคา/หน่วย</th><th style="text-align:right">รวม</th>${editable?'<th></th>':''}</tr></thead>
     <tbody>${['si','alt','buy'].map(group).join('')}</tbody>
     <tfoot><tr><td colspan="${cols-1}" style="text-align:right">รวมค่าอะไหล่ทั้งหมด</td>
@@ -4823,7 +4809,7 @@ function renderWorth(){
       • ถ้าไม่คุ้ม → ไปเส้นจำหน่ายเลย หรือส่งใครอนุมัติก่อน<br>
       • ใครเป็นคนกดตัดสิน (กบค. เอง หรือผู้บังคับบัญชา)</span></div>
     <div class="rowbtns" style="justify-content:flex-start;margin-top:18px">
-      <button class="btn btn-g" onclick="switchView('${WORTH.back}')">← กลับหน้างานซ่อม</button></div>`;
+      <button class="btn btn-g" onclick="switchView('${WORTH.back}')"><span class="ms">arrow_back</span> กลับหน้างานซ่อม</button></div>`;
 }
 
 // รายการอะไหล่ที่เลือกเพิ่มได้ — กรองด้วย (รุ่นอุปกรณ์ × คำค้น) และตัดตัวที่อยู่ในรายการแล้วออก
@@ -4883,7 +4869,7 @@ function quotePanelHTML(no, j){
     </div>
     <div class="f" style="margin-top:12px"><label>หมายเหตุถึงอู่ <small>(ถ้ามี)</small></label><textarea id="q-note" rows="2" placeholder="เช่น ขอใบเสนอราคาแยกค่าแรง/ค่าอะไหล่…"></textarea></div>
     <div class="rowbtns">
-      <button class="btn btn-g" onclick="kbkSetRoute('${no}',null)">← เปลี่ยนเป็นซ่อมเอง</button>
+      <button class="btn btn-g" onclick="kbkSetRoute('${no}',null)"><span class="ms">arrow_back</span> เปลี่ยนเป็นซ่อมเอง</button>
       <button class="btn btn-p" onclick="kbkSendGarage('${no}')">ยืนยันส่งอู่ประเมินราคา</button></div>
   </div>`;
 }
@@ -4960,7 +4946,7 @@ function onsiteClose(no){
   if(!K.ack){toast('ต้องให้หน่วยงานเจ้าของรถกดรับทราบก่อนปิดงาน');return}
   if(!K.sat){toast('กรุณาให้คะแนนความพึงพอใจ');return}
   j.sat=K.sat;j.cost=readCost();j.phase='approve';
-  j.history.push({t:nowStr(),label:'หน่วยงานรับทราบผลการซ่อมหน้างาน · ความพึงพอใจ '+'★'.repeat(j.sat)+' · สรุปต้นทุน '+costSum(j.cost).toLocaleString()+' บาท — ส่งขออนุมัติปิดงาน'});
+  j.history.push({t:nowStr(),label:'หน่วยงานรับทราบผลการซ่อมหน้างาน · ความพึงพอใจ '+'<span class="ms">star</span>'.repeat(j.sat)+' · สรุปต้นทุน '+costSum(j.cost).toLocaleString()+' บาท — ส่งขออนุมัติปิดงาน'});
   updateBadge();toast('ส่งขออนุมัติปิดงานแล้ว — รอผู้บังคับบัญชา');renderKbkDetail(no);
 }
 function kbkReturn(no){
@@ -5133,7 +5119,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
       <div class="sp"><div class="no">${j.no}</div><div class="meta">${esc(j.org)}</div></div>
       <span class="badge ${st.cls}">${st.label}</span></div>
     ${jobInfoBox(j)}${action}${timelineBox(j)}
-    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderBossList()">← กลับรายการ</button></div>`;
+    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderBossList()"><span class="ms">arrow_back</span> กลับรายการ</button></div>`;
     }
     function bossApprove(no) {
       const j = JOBS.find(x => x.no === no);
@@ -5190,7 +5176,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
       <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org}</div></div>
       <span class="badge ${st.cls}">${st.label}</span></div>
     ${jobInfoBox(j)}${action}${timelineBox(j)}
-    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderSupList()">← กลับรายการ</button></div>`;
+    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderSupList()"><span class="ms">arrow_back</span> กลับรายการ</button></div>`;
     }
     function supApprove(no) {
       const j = JOBS.find(x => x.no === no);

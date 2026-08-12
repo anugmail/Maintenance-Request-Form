@@ -166,6 +166,7 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 .seg .sg:last-child{border-radius:0 var(--rounded-md) var(--rounded-md) 0}
 .seg .sg:only-child{border-radius:var(--rounded-md)}
 .seg .sg:hover{background:var(--gray-50)}
+.seg .sg .ms{font-size:18px;vertical-align:-3px}   /* เช่นดาวคะแนน — ไอคอนในปุ่มแถบ */
 .seg .sg.sel{border-color:var(--primary-600);background:var(--primary-25);color:var(--primary-600);position:relative;z-index:1}
 
 /* ---------- Badge สถานะ ----------------------------------------------
@@ -273,6 +274,11 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
    ตามไลบรารี Input field (Size=md): ช่องสูง 44 · r8 · pad นอน 14 · เงา xs
    label 14/500 gray-700 ห่างช่อง 6 · error = ขอบ error-300 + ข้อความ error-600 14px */
 .fgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 24px;margin:16px 0 26px}
+/* .fgrid.ig — แถวช่องกรอกที่ก้นช่องเสมอกันทุกคอลัมน์ แม้ label ตกบรรทัด
+   (ยกมาจาก <style> ของ mock 12 ส.ค. 2569 ตอนไล่ตรวจเฟส 1) */
+.fgrid.ig{gap:16px 20px;align-items:end;margin:12px 0 0}
+.fgrid.ig .f{min-width:0}
+.fgrid.ig .f label{margin-bottom:7px;line-height:1.35}
 .f label{display:block;font-size:var(--fs-text-sm);font-weight:500;color:var(--gray-700);margin-bottom:6px}
 .f label small{color:var(--gray-500);font-weight:400}
 .f .in{position:relative}

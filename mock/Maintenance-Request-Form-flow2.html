@@ -1673,7 +1673,7 @@ function renderBossDetail(no){
       <div class="sp"><div class="no">${j.no}</div><div class="meta">${esc(j.org)}</div></div>
       <span class="badge ${st.cls}">${st.label}</span></div>
     ${jobInfoBox(j)}${action}${timelineBox(j)}
-    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderBossList()">← กลับรายการ</button></div>`;
+    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderBossList()"><span class="ms">arrow_back</span> กลับรายการ</button></div>`;
 }
 function bossApprove(no){
   const j=JOBS.find(x=>x.no===no);
@@ -1730,7 +1730,7 @@ function renderSupDetail(no){
       <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org}</div></div>
       <span class="badge ${st.cls}">${st.label}</span></div>
     ${jobInfoBox(j)}${action}${timelineBox(j)}
-    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderSupList()">← กลับรายการ</button></div>`;
+    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderSupList()"><span class="ms">arrow_back</span> กลับรายการ</button></div>`;
 }
 function supApprove(no){
   const j=JOBS.find(x=>x.no===no);
