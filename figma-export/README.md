@@ -1,7 +1,8 @@
 # figma-export — ส่งหน้าจอจาก HTML prototype เข้า Figma
 
-> **สถานะ:** ทั้ง 3 ท่อนใช้ได้แล้ว — 5 หน้าจอออกมาเป็น frame + auto-layout
-> ยังไม่ได้ทำ: ยกเป็น Figma component/variant จริง · gen Variables จาก `tokens.css` · ไอคอนเป็น SVG · หน้า `admin`
+> **สถานะ:** ทั้ง 3 ท่อนใช้ได้แล้ว — 4 หน้าจอออกมาเป็น frame + auto-layout + ไอคอน SVG
+> (`plan-skeleton` พักไว้ตามที่เจ้าของงานสั่ง 11 ส.ค. · `admin` ตัดออกเพราะใหญ่เกิน 3,770 node)
+> ยังไม่ได้ทำ: ยกเป็น Figma component/variant จริง · gen Variables จาก `tokens.css`
 
 ## ทำไมต้องเป็นปลั๊กอิน ไม่ใช่ REST API
 

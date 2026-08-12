@@ -545,6 +545,16 @@ token เป็น PAT scope `file_content:read` เก็บที่ `~/.figma
 จับได้ 2 รอบ: ตาราง gray ใน README ค้างเป็น Untitled UI **v1** ผิด 9 ค่า · แล้วหลังอัปเดต token ก็จับ README/`index.html` ที่ยังโชว์ค่าเก่าอีก 6 จุด
 `SOURCES.md` เขียนใหม่ทั้งไฟล์ — เดิมบอก "อ่านแล้ว 1 · ค้าง 32" ซึ่งไม่จริงแล้ว
 
+### 🔁 figma-export — ส่งหน้าจอ HTML เข้า Figma (11 ส.ค. 2569 ค่ำ)
+
+**โจทย์:** ไฟล์ Figma ที่ดีไซเนอร์แก้ได้จริง โดยโค้ดยังเป็นต้นทางเสมอ — Figma REST API **เขียน node ไม่ได้** ⇒ ใช้ **Plugin API** (dev plugin บน Figma desktop) · ท่อนี้ไม่ใช้ Figma token และไม่ใช้ MCP เลย
+
+- ท่อครบ 3 ท่อน: `1-extract.js` (playwright เดิน DOM หน้า JS-rendered) → `2-map.js` (แปลงเป็น `spec.json` — geometry บอกโครง · CSS บอกหน้าตา) → `plugin/` สร้าง frame + auto-layout
+- **4 หน้าจอออกเป็น frame แล้ว** (`index` · `plan-new` · `supplies` · `confirm`) — `plan-skeleton` พักไว้ตามที่เจ้าของงานสั่ง · `admin` ตัดออก (3,770 node ใหญ่เกิน)
+- ไอคอน Material Symbols 48 ตัว ดึง SVG จาก Google Fonts (cache ที่ `out/icons.json`) วาดเป็น vector จริงในไฟล์ — คนเปิดไฟล์ไม่ต้องมีฟอนต์ไอคอน
+- รันซ้ำชื่อ page เดิม = ล้างของเดิมสร้างใหม่ ไม่ซ้อน · ภาษาไทยเรนเดอร์ปกติ
+- ดีไซน์เต็ม + ข้อจำกัดที่เจอ (ฟรี 3 page/ไฟล์ · sandbox ไม่มี `fetch`/`eval` · `localhost` resolve เป็น `::1` ฯลฯ) อยู่ที่ `figma-export/README.md` และ `docs/superpowers/specs/2026-08-11-html-to-figma-export-design.md`
+
 ### ค้างอยู่ (รอบถัดไป)
 - [x] ~~sync ผัง + skeleton ให้ตรงลำดับใหม่~~ — **เสร็จแล้ว 11 ส.ค.** ผัง 7/7 parse ผ่าน · `skeleton-data.js` จอ 1a/1b/ต้นทาง ตรงกับโค้ด · เทส 27/27
 - [ ] **สไตล์ช่องกรอกในตารางของ `confirm.html`** — รอเจ้าของงานเคาะ (ก ช่องเปล่าแบบตอนนี้ / ข ทรีตเมนต์เต็ม / ค เปลี่ยนเป็นการ์ดรายคัน)
@@ -573,6 +583,10 @@ token เป็น PAT scope `file_content:read` เก็บที่ `~/.figma
 - [x] ~~Diagram 02–06 ยังนับเป็น "6 ช่วง" ไม่ตรงโครงใหม่~~ — **เสร็จแล้ว 9 ส.ค.** sync ครบ 7 ไฟล์ + เปลี่ยนชื่อไฟล์ให้มีเลขเฟส
 - [x] ~~`plan-skeleton.html` ยังครอบแค่ฝั่งออกเลขงาน~~ — **เสร็จแล้ว 9 ส.ค.** ครอบครบ 11 หน้าจอ
 - [ ] **`plan-skeleton`** ยังไม่มีปุ่ม "ยกโครงไปหน้าจริง" · ธง `done` ยังตั้งมือใน `skeleton-data.js`
+- [ ] **figma-export: gen Figma Variables จาก `tokens.css`** — 3 collection (primitive/semantic/component) แล้วผูก fill ทุกตัวเข้า variable แทนทาสีดิบ (spec หัวข้อ 4.1)
+- [ ] **figma-export: ยก component/variant จริง 14 ชุด** — Button 5×2 · Badge 4 · Form field · Table cell · Sidebar item · Stepper step ฯลฯ + รองรับ `type:"instance"` ใน `code.js` (spec หัวข้อ 4.2)
+- [ ] **figma-export: หน้า `admin`** — extract ไว้แล้ว (3,770 node) แต่ยังไม่ได้ map/สร้าง อาจต้องตัดเป็นส่วนๆ
+- [ ] **figma-export: `plan-skeleton`** — พักไว้ตามที่เจ้าของงานสั่ง 11 ส.ค. รอปลดล็อก
 - [x] ~~หน้าจริงของ "ยืนยันรถเข้าร่วมแผน"~~ — **เสร็จแล้ว 10–11 ส.ค.** ทำครบทั้ง 2 ฝั่ง (กบค. + `confirm.html`) · เคาะ 4 ข้อกับเจ้าของงานแล้ว
 - [ ] **อะไหล่ผูกกับชนิดรถ ไม่ใช่ยี่ห้อ** (`appliesToBrands`) — จัดกลุ่มตามยี่ห้อได้แล้ว แต่รายการอะไหล่ของยี่ห้อที่เป็นรถชนิดเดียวกันยังเหมือนกัน
 - [ ] **ผบพ. / กบท. คือใคร · เกณฑ์ทรัค-เนต · สูตร SUM ต้นทุน** — ยังไม่เคาะ
