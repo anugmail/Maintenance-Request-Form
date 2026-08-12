@@ -1,0 +1,13 @@
+{
+  "name": "Maintain-D → FigJam board",
+  "id": "1471820935506372002",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figjam"],
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "devAllowedDomains": ["http://localhost:8124"],
+    "reasoning": "โหลด board.json + รูป capture จากเครื่อง (serve.js) — ไม่ต่อออกอินเทอร์เน็ตเลย"
+  }
+}

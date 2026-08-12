@@ -1,0 +1,97 @@
+<!-- หน้าต่างปลั๊กอินบอร์ด FigJam — โหลด board.json + รูปทั้งหมด แล้วส่งเข้า sandbox
+     (sandbox ไม่มี fetch จึงต้องโหลดที่นี่) สีใช้ตัวแปรธีมของ Figma ล้วน
+     ไม่มี hex ในไฟล์นี้ — ผ่านกฎ "ห้าม hardcode สี" ของโปรเจกต์ -->
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:16px;
+    font:12px/1.6 'IBM Plex Sans Thai','Inter',sans-serif;
+    background:var(--figma-color-bg);color:var(--figma-color-text);
+  }
+  h1{font-size:13px;font-weight:600;margin:0 0 2px}
+  .sub{color:var(--figma-color-text-secondary);margin:0 0 14px}
+  label{display:block;font-weight:600;margin:0 0 4px}
+  input{
+    width:100%;padding:7px 9px;margin:0 0 12px;
+    border:1px solid var(--figma-color-border);border-radius:6px;
+    background:var(--figma-color-bg-secondary);color:var(--figma-color-text);
+    font:inherit;
+  }
+  button{
+    width:100%;padding:8px 10px;border:1px solid transparent;border-radius:6px;
+    font:inherit;font-weight:600;cursor:pointer;margin:0 0 12px;
+    background:var(--figma-color-bg-brand);color:var(--figma-color-text-onbrand);
+  }
+  button:hover{background:var(--figma-color-bg-brand-hover)}
+  button:disabled{opacity:.5;cursor:default}
+  #log{
+    height:280px;overflow:auto;padding:8px 10px;
+    border:1px solid var(--figma-color-border);border-radius:6px;
+    background:var(--figma-color-bg-secondary);
+    font:11px/1.55 ui-monospace,'SF Mono',Menlo,monospace;white-space:pre-wrap;
+  }
+  #log div{margin:0 0 2px}
+  .err{color:var(--figma-color-text-danger)}
+  .warn{color:var(--figma-color-text-secondary)}
+</style>
+
+<h1>Maintain-D → FigJam board</h1>
+<p class="sub">วางรูป capture ทุกโฟลว์/ทุกหน้าเป็นบอร์ดพร้อมลูกศร</p>
+
+<label for="url">ที่อยู่สเปกบอร์ด</label>
+<input id="url" value="http://localhost:8124/board.json" spellcheck="false">
+
+<button id="build">โหลด + สร้างบอร์ด</button>
+
+<div id="log"></div>
+
+<script>
+const $log = document.getElementById('log');
+const $btn = document.getElementById('build');
+
+function log(msg, cls) {
+  const d = document.createElement('div');
+  if (cls) d.className = cls;
+  d.textContent = msg;
+  $log.appendChild(d);
+  $log.scrollTop = $log.scrollHeight;
+}
+
+$btn.addEventListener('click', async () => {
+  $btn.disabled = true;
+  try {
+    const base = document.getElementById('url').value.replace(/board\.json$/, '');
+    log('— กำลังโหลด board.json');
+    const spec = await (await fetch(base + 'board.json')).json();
+
+    const srcs = [...new Set(spec.sections.flatMap(s => s.cols.flatMap(c => c.images.map(i => i.src))))];
+    log('— รูปทั้งหมด ' + srcs.length + ' ไฟล์');
+    const images = [];
+    let done = 0;
+    for (const src of srcs) {
+      const r = await fetch(base + src);
+      if (!r.ok) throw new Error('โหลดรูปไม่ได้: ' + src + ' (' + r.status + ')');
+      images.push({ src, bytes: new Uint8Array(await r.arrayBuffer()) });
+      if (++done % 10 === 0) log('   โหลดแล้ว ' + done + '/' + srcs.length);
+    }
+    log('— ส่งเข้า Figma สร้างบอร์ด…');
+    parent.postMessage({ pluginMessage: { type: 'build', spec, images } }, '*');
+  } catch (e) {
+    log('พัง: ' + e.message, 'err');
+    log('เช็คว่ารัน `node figma-export/serve.js` อยู่หรือยัง', 'warn');
+    $btn.disabled = false;
+  }
+});
+
+onmessage = (e) => {
+  const m = e.data.pluginMessage;
+  if (!m) return;
+  if (m.type === 'log') log(m.text, m.cls);
+  if (m.type === 'done') {
+    log('เสร็จ: section ' + m.result.sections + ' · รูป ' + m.result.shapes + ' · ลูกศร ' + m.result.connectors);
+    (m.result.warnings || []).forEach(w => log('เตือน: ' + w, 'warn'));
+    $btn.disabled = false;
+  }
+  if (m.type === 'error') { log('พัง: ' + m.message, 'err'); $btn.disabled = false; }
+};
+</script>

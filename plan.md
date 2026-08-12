@@ -564,6 +564,19 @@ token เป็น PAT scope `file_content:read` เก็บที่ `~/.figma
 - **เทสไม่ต้องเปิด Figma**: `test-plugin.js` mock Plugin API แล้วรัน `plugin/code.js` ทั้งไฟล์ — ตรวจข้อความครบตัวต่อตัว (273/273) · alias ครบ 18 · สีแบรนด์ไม่หลุดผูก · รันซ้ำ variable ไม่งอก — **ผ่าน 12/12**
 - ยังไม่ได้กด "โหลด + สร้าง" ใน Figma desktop จริง — mock จับตรรกะได้แต่จับหน้าตา/ฟอนต์/ขนาด svg ไม่ได้ ต้องเปิดไฟล์จริงเทียบ screenshot (เกณฑ์ตาดู ข้อ 6 ของ spec)
 
+### 🔄 เปลี่ยนทางหลักเป็น FigJam capture board (12 ส.ค. 2569 บ่าย)
+
+**เจ้าของงานเคาะ:** ไม่เอาไฟล์ Figma design เป็นหลักแล้ว — เอา **FigJam ที่เป็น capture เรียงต่อกัน** แทน (ท่อ design ที่ทำเช้านี้ **พัก** ไม่ทิ้ง) และหลังเห็น capture รอบแรกสั่งเพิ่ม: อยากเห็น "โฟลว์สร้างแผน" เป็นรายหน้าจอ ไม่ใช่แค่สถานะแรกของแต่ละไฟล์
+
+- **capture 3 ชุด** (playwright ขับจริง เริ่มจากล้าง localStorage ให้ default เสมอ):
+  - `figjam-capture.js` — ทุกหน้า 25 หน้า 30 รูป (สไลซ์หน้าสูงเกิน 4,000px เพราะ Figma รับรูปไม่เกิน 4096px/ด้าน)
+  - `flow-plan-capture.js` — โฟลว์สร้างแผน/ออกเลขงาน **8 หน้าจอ**: รายการแผน → ขั้น 1 (ว่าง/เลือกรถแล้ว) → ขั้น 2 (2 มุมมองจัดกลุ่ม) → ขั้น 3 → ได้เลขงาน → กลับรายการแผน
+  - `flow-after-issue-capture.js` — โฟลว์ต่อ **7 หน้าจอ**: กบค. ส่งคำขอยืนยัน → พัสดุ (รายการ/เปิดเอกสาร/รับทราบ) → หน่วยงานเจ้าของรถตอบรายคัน
+  - บทเรียน: ห้ามใช้ `fullPage:true` — element ที่ fixed (โลโก้) โดนวาดซ้ำกลางหน้า ต้องขยาย viewport เท่าหน้าจริงแทน
+- **เข้าไฟล์ทาง dev plugin ใหม่ `figjam-plugin/`** (MCP Starter จำกัด **20 call/เดือน — เดือนนี้หมดแล้ว** ตอนติดคือจังหวะจัดวางพอดี รูป 30 ใบที่อัปโหลดค้างในบอร์ดจะถูกปลั๊กอินเก็บกวาดให้): `3-figjam-board.js` รวม manifest → `board.json` (8 section · 40 หน้าจอ · 45 รูป) → ปลั๊กอินสร้าง section+ป้าย+ลูกศร flow · รูปใน FigJam = ShapeWithText ใส่ IMAGE fill (FigJam ไม่มี rectangle/frame) · `serve.js` รองรับ path ย่อย + content-type แล้ว
+- **เทส `test-figjam-plugin.js` ผ่าน 9/9** (จำนวนครบ/ลูกศรผูกปลาย/section ครอบลูก/รันซ้ำไม่ซ้อน/เก็บกวาด MEDIA)
+- ไฟล์บอร์ด: `mDn6j6wVtdn0DMtFwiDsRQ` (anu phetcharat's Team) — https://www.figma.com/board/mDn6j6wVtdn0DMtFwiDsRQ
+
 ### ค้างอยู่ (รอบถัดไป)
 - [x] ~~sync ผัง + skeleton ให้ตรงลำดับใหม่~~ — **เสร็จแล้ว 11 ส.ค.** ผัง 7/7 parse ผ่าน · `skeleton-data.js` จอ 1a/1b/ต้นทาง ตรงกับโค้ด · เทส 27/27
 - [ ] **สไตล์ช่องกรอกในตารางของ `confirm.html`** — รอเจ้าของงานเคาะ (ก ช่องเปล่าแบบตอนนี้ / ข ทรีตเมนต์เต็ม / ค เปลี่ยนเป็นการ์ดรายคัน)
@@ -594,7 +607,8 @@ token เป็น PAT scope `file_content:read` เก็บที่ `~/.figma
 - [ ] **`plan-skeleton`** ยังไม่มีปุ่ม "ยกโครงไปหน้าจริง" · ธง `done` ยังตั้งมือใน `skeleton-data.js`
 - [x] ~~**figma-export: gen Figma Variables จาก `tokens.css`**~~ — **เสร็จแล้ว 12 ส.ค.** 99 ตัว 3 collection + alias จริง + ผูก fill/stroke/สี text/radius (ดูหมุด 12 ส.ค.)
 - [x] ~~**figma-export: ยก component/variant จริง**~~ — **เสร็จแล้ว 12 ส.ค.** 6 ชุด variant + specimen 6 + icon component 10 · หน้าจอเป็น instance 121 จุด + override (ดูหมุด 12 ส.ค.)
-- [ ] **figma-export: กด "โหลด + สร้าง" ในไฟล์จริง** — โค้ด+เทสผ่านแล้ว แต่ยังไม่ได้รันใน Figma desktop เทียบตากับ screenshot (ไฟล์ต้องอยู่ใน anu phetcharat's Team)
+- [ ] **figjam-plugin: กด "โหลด + สร้างบอร์ด" ในไฟล์จริง** — โค้ด+เทสผ่านแล้ว รอผู้ใช้ import `figjam-plugin/manifest.json` ใน Figma desktop (บอร์ด `mDn6j6wVtdn0DMtFwiDsRQ`) แล้วเทียบตา
+- [ ] ~~figma-export: กด "โหลด + สร้าง" (ไฟล์ design)~~ — **พัก** ตามคำสั่ง 12 ส.ค. เปลี่ยนทางหลักเป็น FigJam
 - [ ] **figma-export: หน้า `admin`** — extract ไว้แล้ว (3,770 node) แต่ยังไม่ได้ map/สร้าง อาจต้องตัดเป็นส่วนๆ
 - [ ] **figma-export: `plan-skeleton`** — พักไว้ตามที่เจ้าของงานสั่ง 11 ส.ค. รอปลดล็อก
 - [x] ~~หน้าจริงของ "ยืนยันรถเข้าร่วมแผน"~~ — **เสร็จแล้ว 10–11 ส.ค.** ทำครบทั้ง 2 ฝั่ง (กบค. + `confirm.html`) · เคาะ 4 ข้อกับเจ้าของงานแล้ว

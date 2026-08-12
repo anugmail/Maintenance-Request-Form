@@ -1,9 +1,40 @@
-# figma-export — ส่งหน้าจอจาก HTML prototype เข้า Figma
+# figma-export — ส่งหน้าจอจาก HTML prototype เข้า Figma / FigJam
 
-> **สถานะ:** ครบทั้งท่อ — 4 หน้าจอเป็น frame + auto-layout + ไอคอน SVG
-> **+ Figma Variables 99 ตัวจาก `tokens.css`** (fill/stroke/radius ผูก variable ไม่ทาสีดิบ)
-> **+ component 6 ชุด + specimen + icon component** — จุดใช้งานในหน้าจอเป็น instance จริง 121 จุด
-> (`plan-skeleton` พักไว้ตามที่เจ้าของงานสั่ง 11 ส.ค. · `admin` ตัดออกเพราะใหญ่เกิน 3,770 node)
+> **ทางหลักตอนนี้ (เจ้าของงานเคาะ 12 ส.ค. 2569): บอร์ด FigJam แบบ capture** — ดูหัวข้อ "FigJam board" ข้างล่าง
+> ท่อ Figma design (frame/auto-layout/Variables/component) **พักไว้** — โค้ด+เทสเสร็จแล้ว ไม่ทิ้ง:
+> 4 หน้าจอ + ไอคอน SVG + **Variables 99 ตัวจาก `tokens.css`** + **component 6 ชุด / instance 121 จุด**
+> (`plan-skeleton` พักตามคำสั่ง 11 ส.ค. · `admin` ตัดออกเพราะใหญ่เกิน 3,770 node)
+
+## FigJam board — capture ทุกโฟลว์/ทุกหน้า (ทางหลัก)
+
+ทำไมเป็น capture: เจ้าของงานต้องการภาพหน้าจอจริง "เรียงต่อกัน" ให้ดู flow ได้ ไม่ใช่ไฟล์ design ให้แก้
+และ MCP ของแพลน Starter จำกัด **20 call/เดือน** (เดือนนี้หมดแล้ว) ⇒ เข้าไฟล์ทาง **dev plugin** ที่ไม่กินโควตา
+
+```
+figjam-capture.js            capture ทุกหน้า (25 หน้า สไลซ์หน้าสูงเกิน 4000px อัตโนมัติ)
+flow-plan-capture.js         ไล่กดโฟลว์ "สร้างแผน / ออกเลขงาน" จริง 8 หน้าจอ
+flow-after-issue-capture.js  โฟลว์ต่อ: พัสดุรับทราบ + ส่งคำขอ/ตอบยืนยันรถ 7 หน้าจอ
+   ▼ out/figjam/**/*.png + manifest.json
+3-figjam-board.js            รวมทุก manifest → out/board.json (8 section · 45 รูป)
+serve.js                     เสิร์ฟ board.json + รูป (รองรับ path ย่อยแล้ว)
+   ▼
+figjam-plugin/               ปลั๊กอิน FigJam: สร้าง section + รูป (ShapeWithText ใส่ IMAGE fill)
+                             + ป้ายชื่อ + ลูกศร flow · รันซ้ำล้างของเดิม + เก็บกวาดรูปอัปโหลดค้าง
+```
+
+ใช้งาน (หลัง capture + gen board แล้ว):
+
+```bash
+python3 -m http.server 8123 --bind 127.0.0.1 &      # ตอน capture เท่านั้น
+node figma-export/serve.js                          # เสิร์ฟให้ปลั๊กอิน พอร์ต 8124
+```
+
+เปิด **Figma desktop** → ไฟล์ FigJam (บอร์ดปัจจุบัน: `mDn6j6wVtdn0DMtFwiDsRQ` ใน anu phetcharat's Team)
+→ Plugins → Development → **Import new plugin from manifest…** → เลือก `figma-export/figjam-plugin/manifest.json`
+→ กด **"โหลด + สร้างบอร์ด"** · รูปใน FigJam ใช้ `figma.createImage` + ShapeWithText (FigJam ไม่มี rectangle/frame)
+· รูปห้ามเกิน 4096px ต่อด้าน — เป็นเหตุที่ capture ที่ scale 1 และสไลซ์หน้ายาว
+
+เทสก่อนเปิด Figma: `node figma-export/test-figjam-plugin.js` (mock Plugin API — ตรวจจำนวน/ลูกศร/รันซ้ำไม่ซ้อน)
 
 ## ทำไมต้องเป็นปลั๊กอิน ไม่ใช่ REST API
 

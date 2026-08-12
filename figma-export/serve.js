@@ -26,16 +26,23 @@ const handler = (req, res) => {
     return res.end();
   }
 
-  // กัน path traversal — รับเฉพาะชื่อไฟล์ตรงๆ ใน out/
-  const name = path.basename(decodeURIComponent(req.url.split('?')[0]));
-  const file = path.join(OUT, name === '' || name === '/' ? 'spec.json' : name);
+  // กัน path traversal — normalize แล้วต้องยังอยู่ใต้ out/ เท่านั้น
+  // (รับ path ย่อยได้ เช่น figjam/flow-plan/01-….png สำหรับบอร์ด FigJam)
+  const rel = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '');
+  const file = path.normalize(path.join(OUT, rel === '' ? 'spec.json' : rel));
+  if (file !== OUT && !file.startsWith(OUT + path.sep)) {
+    res.writeHead(403, cors);
+    return res.end();
+  }
 
+  const TYPES = { '.png': 'image/png', '.json': 'application/json; charset=utf-8' };
   fs.readFile(file, (err, body) => {
     if (err) {
       res.writeHead(404, Object.assign({ 'Content-Type': 'application/json; charset=utf-8' }, cors));
       return res.end(JSON.stringify({ error: 'ไม่พบไฟล์ ' + path.relative(process.cwd(), file) }));
     }
-    res.writeHead(200, Object.assign({ 'Content-Type': 'application/json; charset=utf-8' }, cors));
+    const type = TYPES[path.extname(file)] || 'application/octet-stream';
+    res.writeHead(200, Object.assign({ 'Content-Type': type }, cors));
     res.end(body);
   });
 };
