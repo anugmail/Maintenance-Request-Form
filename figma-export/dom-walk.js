@@ -117,6 +117,9 @@ function walkDom() {
           rect: textRect(child), style: pick(cs)
         });
       } else if (child.nodeType === Node.ELEMENT_NODE) {
+        // <br> ไม่มีกล่องให้เดิน แต่เป็นตัวขึ้นบรรทัดจริง — ถ้าทิ้งไป ข้อความสองบรรทัด
+        // จะถูกรวมติดกันตอนแปลงเป็น text node เดียวใน 2-map.js
+        if (child.tagName === 'BR') { node.children.push({ id: 'n' + (counter++), tag: '#br' }); continue; }
         const sub = walk(child);
         if (sub) node.children.push(sub);
       }

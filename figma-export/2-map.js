@@ -137,13 +137,21 @@ function classify(children) {
 const INLINE_TAGS = new Set(['b', 'strong', 'em', 'i', 'small', 'code', 'span', 'u', 'mark', 'a']);
 
 function collectRuns(c, out) {
+  if (c.tag === '#br') { out.push({ br: true, chars: '\n', style: null, ws: {}, rect: { x: 0, y: 0, w: 0, h: 0 } }); return out; }
   if (c.tag === '#text') { out.push({ chars: c.chars, style: c.style, ws: c, rect: rectOf(c) }); return out; }
   if (!INLINE_TAGS.has(c.tag) || (c.classes || []).includes(ICON_CLASS)) return null;   // ไอคอน/บล็อก = รวมไม่ได้
+  /* รวมได้เฉพาะ "ข้อความไหลในบรรทัดเดียวกัน" จริงๆ — ต้อง display:inline และไม่มีกล่องของตัวเอง
+     ถ้าปล่อยหลวม จะไปรวมของที่เป็นกล่องแยก เช่น .num (วงกลมเลขขั้น flex + ขอบ) กับ .lbl
+     กลายเป็น "4อะไหล่ที่แนะนำ" ก้อนเดียว — เจอจริงในไฟล์ Figma 12 ส.ค. 2569 */
+  const st = c.style || {};
+  if (st.display !== 'inline') return null;
+  if (parseColor(st.backgroundColor)) return null;
+  if ([st.borderTopWidth, st.borderRightWidth, st.borderBottomWidth, st.borderLeftWidth].some(v => px(v) > 0)) return null;
   for (const k of c.children || []) if (!collectRuns(k, out)) return null;
   return out;
 }
 
-const isInlineTextish = (c) => collectRuns(c, []) !== null;
+const isInlineTextish = (c) => c.tag === '#br' || collectRuns(c, []) !== null;
 
 /* จับ "ช่วงที่ติดกัน" ของข้อความ+inline element มารวมเป็น node เดียว
    ไอคอน (.ms) หรือ element แบบบล็อกจะตัดช่วง — ของพวกนั้นยังเป็นลูกของตัวเองเหมือนเดิม */
@@ -157,8 +165,9 @@ function mergeInlineChildren(node) {
       const runs = [];
       let ok = true;
       for (const b of buf) if (!collectRuns(b, runs)) { ok = false; break; }
-      if (ok && runs.length > 1) {
-        const rs = runs.map(r => r.rect);
+      if (ok && runs.filter(r => !r.br).length > 1) {
+        const rs = runs.filter(r => !r.br).map(r => r.rect);
+        if (!rs.length) { out.push(...buf); buf = []; return; }
         const x = Math.min(...rs.map(r => r.x)), y = Math.min(...rs.map(r => r.y));
         out.push({
           tag: '#merged', runs, style: node.style,
@@ -186,7 +195,8 @@ function convertMerged(node) {
   let chars = '';
   const ranges = [];
   runs.forEach((run, i) => {
-    if (i && (run.ws.wsBefore || runs[i - 1].ws.wsAfter)) chars += ' ';
+    if (run.br) { chars += '\n'; return; }
+    if (i && !runs[i - 1].br && (run.ws.wsBefore || runs[i - 1].ws.wsAfter)) chars += ' ';
     const start = chars.length;
     chars += run.chars;
     const w = parseInt(run.style.fontWeight, 10) || 400;
@@ -222,6 +232,7 @@ function convertMerged(node) {
 /* ---------- แปลง node ---------- */
 function convert(node, parentRect, ctx) {
   if (node.tag === '#text') return convertText(node, parentRect);
+  if (node.tag === '#br') return null;
   if (node.tag === '#merged') return convertMerged(node);
 
   const s = node.style || {};
@@ -522,6 +533,12 @@ function main() {
   if (fb.length) {
     console.log('\n⚠ เข้า pattern component แต่โครงไม่ตรงตัวนิยาม (คงเป็น frame):');
     fb.slice(0, 10).forEach(([k, v]) => console.log('   x' + String(v).padStart(3) + '  ' + k));
+  }
+  // ไอคอนที่ไม่มี SVG จะกลายเป็นกล่องเปล่าในไฟล์ Figma (เคยทำให้วงกลม "ผ่านแล้ว" ว่างเปล่า)
+  const missIcons = Object.entries(stats.iconMissing || {});
+  if (missIcons.length) {
+    console.log('\n🔴 ไอคอนไม่มี SVG ' + missIcons.length + ' ตัว — จะเป็นกล่องเปล่าใน Figma · แก้ด้วย `node figma-export/0-icons.js`');
+    missIcons.forEach(([g, n]) => console.log('   x' + String(n).padStart(3) + '  ' + g));
   }
   if (unknown.length) {
     console.log('\n⚠ คลาสที่ตารางแปลงยังไม่รู้จัก ' + unknown.length + ' แบบ:');
