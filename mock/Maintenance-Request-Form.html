@@ -11,8 +11,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260813-ds14">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260813-ds14">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260813-ds15">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260813-ds15">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -4072,31 +4072,56 @@ function retPanel(j){
       </div>
       <div class="tabpanel" id="${uid}-0" role="tabpanel" style="margin-top:16px">${vehInfoBox(j)}
         <div class="rowbtns">
-          <button type="button" class="btn btn-o" onclick="event.stopPropagation();toast('mock — ยังไม่เปิดใช้งาน')"><span class="ms">u_turn_left</span> ส่งกลับ/ปฏิเสธ</button>
+          <button type="button" class="btn btn-o" onclick="event.stopPropagation();openKbkReturnModal('${j.no}')"><span class="ms">u_turn_left</span> ส่งกลับ/ปฏิเสธ</button>
           <button type="button" class="btn btn-p" onclick="event.stopPropagation();openKbkAcceptModal('${j.no}')"><span class="ms">task_alt</span> รับซ่อม</button>
         </div>
       </div>
       <div class="tabpanel hidden" id="${uid}-1" role="tabpanel" style="margin-top:16px">${vehHistoryPanel(j)}</div>`;
     }
-    // Modal ยืนยันรับซ่อม — ยังไม่ใส่เนื้อหาในตัว modal (รอออกแบบฟอร์มต่อ)
-    function openKbkAcceptModal(no) {
+    // กลไก modal กลาง — เปิดได้ทีละใบ (id เดียวกันทุกครั้ง) ปิดได้ด้วยปุ่ม ✕ / คลิกนอกกรอบ / Esc
+    let KBK_MODAL_ESC = null;
+    function openModal(bodyHtml) {
+      closeModal();
       const ov = document.createElement('div');
       ov.className = 'modal-overlay';
-      ov.id = 'kbkAcceptModal';
-      ov.onclick = e => { if (e.target === ov) closeKbkAcceptModal() };
-      ov.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="รับซ่อม">
-        <div class="modal-head"><h2>รับซ่อม</h2>
-          <button type="button" class="modal-close" onclick="closeKbkAcceptModal()"><span class="ms">close</span></button></div>
-      </div>`;
+      ov.id = 'kbkModal';
+      ov.onclick = e => { if (e.target === ov) closeModal() };
+      ov.innerHTML = bodyHtml;
       document.body.appendChild(ov);
-      document.addEventListener('keydown', kbkAcceptModalEsc);
+      KBK_MODAL_ESC = e => { if (e.key === 'Escape') closeModal() };
+      document.addEventListener('keydown', KBK_MODAL_ESC);
     }
-    function closeKbkAcceptModal() {
-      const ov = document.getElementById('kbkAcceptModal');
+    function closeModal() {
+      const ov = document.getElementById('kbkModal');
       if (ov) ov.remove();
-      document.removeEventListener('keydown', kbkAcceptModalEsc);
+      if (KBK_MODAL_ESC) { document.removeEventListener('keydown', KBK_MODAL_ESC); KBK_MODAL_ESC = null }
     }
-    function kbkAcceptModalEsc(e) { if (e.key === 'Escape') closeKbkAcceptModal() }
+    // Modal ยืนยันรับซ่อม — ยังไม่ใส่เนื้อหาในตัว modal (รอออกแบบฟอร์มต่อ)
+    function openKbkAcceptModal(no) {
+      openModal(`<div class="modal" role="dialog" aria-modal="true" aria-label="รับซ่อม">
+        <div class="modal-head"><h2>รับซ่อม</h2>
+          <button type="button" class="modal-close" onclick="closeModal()"><span class="ms">close</span></button></div>
+      </div>`);
+    }
+    // Modal ส่งกลับ/ปฏิเสธ — กล่องกรอกเหตุผลของการตีกลับ
+    function openKbkReturnModal(no) {
+      openModal(`<div class="modal" role="dialog" aria-modal="true" aria-label="ส่งกลับ/ปฏิเสธ">
+        <div class="modal-head"><h2>ส่งกลับ/ปฏิเสธ</h2>
+          <button type="button" class="modal-close" onclick="closeModal()"><span class="ms">close</span></button></div>
+        <div class="f"><label>เหตุผลที่ส่งกลับ/ปฏิเสธ <small>(จำเป็น)</small></label>
+          <textarea id="kbkReturnReason" rows="3" placeholder="เช่น อาการซ่อมได้ที่หน้างาน ใช้อะไหล่ที่เลือกไว้ได้เลย…"></textarea></div>
+        <div class="modal-foot">
+          <button type="button" class="btn btn-g" onclick="closeModal()">ยกเลิก</button>
+          <button type="button" class="btn btn-p" onclick="submitKbkReturn('${no}')"><span class="ms">reply</span> ส่งกลับให้ผู้สร้างใบแจ้งซ่อม</button>
+        </div>
+      </div>`);
+    }
+    function submitKbkReturn(no) {
+      const ta = document.getElementById('kbkReturnReason');
+      if (!ta.value.trim()) { ta.focus(); toast('กรอกเหตุผลที่ส่งกลับ/ปฏิเสธก่อน'); return }
+      closeModal();
+      toast('ส่งกลับใบแจ้งซ่อมให้ผู้สร้างใบแจ้งซ่อมแล้ว');
+    }
     function switchVehTab(btn, uid, idx) {
       const tabs = btn.closest('.tabs');
       tabs.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('on'); b.setAttribute('aria-selected', 'false') });

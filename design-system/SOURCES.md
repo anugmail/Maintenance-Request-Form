@@ -144,7 +144,7 @@ Dropdown menu `1:1379` · Alert `3:22` · Card header `3:5`
 | ปุ่ม (`.btn` ทุก variant) | ✅ ตรงกับไลบรารี — ดึงครบ 636 variants (7 ส.ค.) |
 | สี · radius · typography | ✅ เทียบครบ (11–12 ส.ค.) |
 | ช่องกรอก · select · textarea · badge · tag/chip · table · checkbox · radio · breadcrumb · วันในปฏิทิน | ✅ **เทียบ+จูนตรงไลบรารีแล้ว 12 ส.ค.** — diff ที่เจอและแก้: input 46→44/r10→8/+shadow-xs · label 600→500 · error border 500→300 · badge ไม่มีขอบ→มีขอบโทน 200 + ตัวโทน 700 · chip pill→Tag r6 · ตาราง หัว gray-50→ขาว 12/600 · checkbox 17→20 ฯลฯ (รายละเอียดใน README §8 v0.12) |
-| modal | ⚠️ 13 ส.ค. 2569 เพิ่ม `.modal-overlay`/`.modal` แล้ว (ปุ่ม "รับซ่อม" หน้า กบค.) แต่เครื่องที่เขียนไม่มี `.figma-extract/` ให้ดึงมาเทียบ — ค่ายังไม่ผ่าน `compare-figma.js` เทียบกับ `3:9` ต้องรันซ้ำเมื่อมีเครื่องที่ดึงข้อมูลได้ |
+| modal | ⚠️ 13 ส.ค. 2569 เพิ่ม `.modal-overlay`/`.modal` แล้ว (ปุ่ม "รับซ่อม" หน้า กบค.) · 13 ส.ค. 2569 เพิ่ม `.modal-foot` (แถวปุ่ม action ในโมดัล "ส่งกลับ/ปฏิเสธ") แต่เครื่องที่เขียนไม่มี `.figma-extract/` ให้ดึงมาเทียบ — ค่ายังไม่ผ่าน `compare-figma.js` เทียบกับ `3:9` ต้องรันซ้ำเมื่อมีเครื่องที่ดึงข้อมูลได้ |
 | progress steps (`.wsteps` ลูกศร chevron) · `.sect` · `.page-title` · `.shell` | ⚠️ อิง **screenshot หน้าจริง VMS Plus** — ไลบรารี `3:16` เป็นสไตล์ Untitled UI คนละแบบกับหน้าจริง จึงคงตาม screenshot |
 
 `componentKey` ที่ได้จาก `search_design_system` (คำว่า "input" 11 ส.ค.) — ใช้ import ได้ถ้าต้องการเทียบละเอียด

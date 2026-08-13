@@ -200,6 +200,8 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 .modal-close{background:none;border:none;cursor:pointer;color:var(--gray-500);display:flex;padding:2px}
 .modal-close:hover{color:var(--gray-700)}
 .modal-close .ms{font-size:22px}
+.modal-foot{display:flex;gap:var(--space-2_5);justify-content:flex-end;flex-wrap:wrap;
+  margin-top:var(--space-4_5);padding-top:var(--space-4);border-top:1px solid var(--gray-200)}
 
 /* ---------- Tile (การ์ดเลือกแบบ VMS Plus) ---------- */
 .tile{border-radius:var(--r-lg);padding:18px 12px;text-align:center;cursor:pointer;color:#fff;border:3px solid transparent}
