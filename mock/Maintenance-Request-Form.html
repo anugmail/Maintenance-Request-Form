@@ -586,31 +586,6 @@
       color: var(--secondary-600)
     }
 
-    .vstat {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size:var(--fs-text-xs);
-      font-weight: 600;
-      padding: 2px 9px;
-      border-radius: var(--r-pill);
-      white-space: nowrap
-    }
-
-    .vstat .ms {
-      font-size: 14px
-    }
-
-    .vstat.ok {
-      background: var(--success-50);
-      color: var(--success-600)
-    }
-
-    .vstat.no {
-      background: var(--error-50);
-      color: var(--error-700)
-    }
-
     /* ---- กล่องรายละเอียดรถ (หน้า กบค. ตอนกาง) ---- */
     .vgrid {
       display: grid;
@@ -3395,7 +3370,7 @@
       return `<div class="vline">
       <span class="vplate">${esc(j.plate)}</span>
       <span class="vchip ${t.cls}"><span class="ms">${t.icon}</span>${t.name}</span>
-      <span class="vstat ${ok ? 'ok' : 'no'}"><span class="ms">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span>
+      <span class="badge ${ok ? 'b-ok' : 'b-out'}"><span class="ms" style="font-size:var(--fs-body)">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span>
     </div>`;
     }
 
@@ -3894,7 +3869,7 @@ function goBackFromForm(){
       <div class="vcell"><label>เลขที่ใบแจ้งซ่อม</label><div class="val">${esc(j.no)}</div></div>
       <div class="vcell"><label>เลขทะเบียนรถ</label><div class="val">${esc(j.plate)}</div></div>
       <div class="vcell"><label>ประเภทรถ</label><div class="val"><span class="ms" style="font-size:20px;color:var(--${t.cls === 'crane' ? 'primary' : t.cls === 'bucket' ? 'secondary' : 'gray'}-600)">${t.icon}</span>${t.name}</div></div>
-      <div class="vcell"><label>สถานะรถ</label><div class="val"><span class="vstat ${ok ? 'ok' : 'no'}"><span class="ms">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span></div></div>
+      <div class="vcell"><label>สถานะรถ</label><div class="val"><span class="badge ${ok ? 'b-ok' : 'b-out'}"><span class="ms" style="font-size:var(--fs-body)">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span></div></div>
       <div class="vcell"><label>สถานที่รถอยู่</label><div class="val" style="font-size:14px">${place}</div></div>
       <div class="vcell"><label>ข้อมูลการใช้งานรถ</label><div class="val" style="font-size:14px">${useTx}</div></div>
       <div class="vcell"><label>หน่วยงานที่แจ้งเข้ามา (เขต/กรย.)</label><div class="val" style="font-size:14px">${j.fromUnit ? esc(j.fromUnit) : NA}</div></div>
@@ -4375,7 +4350,7 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
           <span class="vdiv"></span>
           <span class="vplate">${esc(j.plate)}</span>
           <span class="vchip ${t.cls}"><span class="ms">${t.icon}</span>${t.name}</span>
-          <span class="vstat ${ok ? 'ok' : 'no'}"><span class="ms">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span>
+          <span class="badge ${ok ? 'b-ok' : 'b-out'}"><span class="ms" style="font-size:var(--fs-body)">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span>
         </div>
         <div class="meta">${j.org} · ${j.syms[0]}${j.syms.length > 1 ? ' +' + (j.syms.length - 1) : ''}</div></div>
       <span class="badge ${st.cls}">${st.label}</span>
@@ -4577,7 +4552,7 @@ function closeKbkDetail(){
         <div class="vline" style="margin:4px 0 0">
           <span class="vplate">${esc(j.plate)}</span>
           <span class="vchip ${t.cls}"><span class="ms">${t.icon}</span>${t.name}</span>
-          <span class="vstat ${ok?'ok':'no'}"><span class="ms">${ok?'check_circle':'do_not_disturb_on'}</span>${ok?'ใช้งานได้':'ใช้งานไม่ได้'}</span>
+          <span class="badge ${ok?'b-ok':'b-out'}"><span class="ms" style="font-size:var(--fs-body)">${ok?'check_circle':'do_not_disturb_on'}</span>${ok?'ใช้งานได้':'ใช้งานไม่ได้'}</span>
         </div>
         <div class="meta" style="margin-top:4px">${esc(j.org)} · ${esc(j.syms[0])}${j.syms.length>1?' +'+(j.syms.length-1):''}</div>
       </div>
