@@ -39,6 +39,8 @@ class MNode {
     this.layoutWrap = 'NO_WRAP';
     this.layoutSizingHorizontal = 'FIXED';
     this.layoutSizingVertical = 'FIXED';
+    this.rotation = 0;
+    this.layoutPositioning = 'AUTO';
     this.clipsContent = true;
     this.cornerRadius = 0;
     this.topLeftRadius = this.topRightRadius = this.bottomRightRadius = this.bottomLeftRadius = 0;
@@ -259,6 +261,33 @@ const ok = (msg) => console.log('✓ ' + msg);
   if (r.warnings.length) {
     console.log('\nคำเตือนจากปลั๊กอิน ' + r.warnings.length + ' รายการ:');
     r.warnings.slice(0, 10).forEach(w => console.log('   ' + w));
+  }
+
+  /* chevron ของ stepper — ต้องหมุนและอยู่ขอบขวา ไม่ใช่แท่งตรงหน้าเลขขั้น */
+  const fPage2 = root.children.find(p => p.name === spec.components.pageName);
+  let chev = [];
+  (function findChev(n) {
+    if (/::(before|after)$/.test(n.name || '') && /wstep/.test(n.name || '')) chev.push(n);
+    n.children.forEach(findChev);
+  })(fPage2);
+
+  if (!chev.length) fail('ไม่เจอ node chevron ของ .wstep เลย');
+  else {
+    const rotated = chev.filter(c => Math.abs(c.rotation) > 1);
+    rotated.length === chev.length
+      ? ok('chevron หมุนครบ ' + chev.length + ' เส้น (' + chev.map(c => Math.round(c.rotation)).join(',') + '°)')
+      : fail('chevron ไม่หมุน ' + (chev.length - rotated.length) + ' เส้นจาก ' + chev.length);
+
+    const abs = chev.filter(c => c.layoutPositioning === 'ABSOLUTE');
+    abs.length === chev.length
+      ? ok('chevron วางแบบ ABSOLUTE ครบ ' + chev.length + ' เส้น')
+      : fail('chevron ยังอยู่ใน flow ของ auto-layout ' + (chev.length - abs.length) + ' เส้น');
+
+    // ต้องอยู่ครึ่งขวาของขั้น ไม่ใช่มุมซ้ายบน
+    const left = chev.filter(c => c.x < (c.parent ? c.parent.width : 256) / 2);
+    left.length === 0
+      ? ok('chevron อยู่ครึ่งขวาทุกเส้น')
+      : fail('chevron ยังอยู่ครึ่งซ้าย ' + left.length + ' เส้น (x=' + left.map(c => Math.round(c.x)).join(',') + ')');
   }
 
   /* รันซ้ำ — variable ต้องไม่งอกเพิ่ม และผลต้องเท่าเดิม */

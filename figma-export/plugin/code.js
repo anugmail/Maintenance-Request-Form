@@ -286,11 +286,34 @@ function applySizing(node, spec) {
     try { node.layoutSizingVertical = mode; } catch (e) { warn('ตั้งความสูง ' + mode + ' ไม่ได้ที่ "' + node.name + '"'); }
   }
 
-  // พ่อไม่มี auto-layout ⇒ ลูกต้องบอกตำแหน่งเอง (2-map.js ใส่ pos มาให้เฉพาะกรณีนี้)
+  // pseudo ที่ CSS สั่ง position:absolute — ต้องหลุดจาก flow ของ auto-layout
+  // ไม่งั้นมันจะถูกจัดเรียงเป็นลูกในแถวแทนที่จะทับอยู่ตามพิกัด
+  if (spec.absolute && parentIsAuto && 'layoutPositioning' in node) {
+    try { node.layoutPositioning = 'ABSOLUTE'; }
+    catch (e) { warn('ตั้ง ABSOLUTE ไม่ได้ที่ "' + node.name + '"'); }
+  }
+
+  // พ่อไม่มี auto-layout ⇒ ลูกต้องบอกตำแหน่งเอง · หรือลูกเป็น absolute ก็ต้องบอกเอง
   // ต้องทำหลัง resize ไม่งั้นค่าที่ตั้งไว้โดนเขียนทับ
-  if (spec.pos && !parentIsAuto && 'x' in node) {
-    node.x = spec.pos.x;
-    node.y = spec.pos.y;
+  const positioned = spec.absolute || !parentIsAuto;
+  if (spec.pos && positioned && 'x' in node) {
+    let x = spec.pos.x, y = spec.pos.y;
+    // Figma หมุนรอบมุมซ้ายบนของ node แต่ CSS หมุนรอบ transform-origin
+    // ⇒ เลื่อนชดเชยให้จุดหมุนอยู่ที่เดิม: P = P0 + o − R·o
+    if (typeof spec.rotation === 'number' && spec.rotation !== 0 && spec.rotateOrigin) {
+      const rad = spec.rotation * Math.PI / 180;
+      const cos = Math.cos(rad), sin = Math.sin(rad);
+      const ox = spec.rotateOrigin[0], oy = spec.rotateOrigin[1];
+      x += ox - (ox * cos + oy * sin);
+      y += oy - (-ox * sin + oy * cos);
+    }
+    node.x = x;
+    node.y = y;
+  }
+
+  if (typeof spec.rotation === 'number' && spec.rotation !== 0 && 'rotation' in node) {
+    try { node.rotation = spec.rotation; }
+    catch (e) { warn('ตั้งมุมหมุนไม่ได้ที่ "' + node.name + '"'); }
   }
 }
 
