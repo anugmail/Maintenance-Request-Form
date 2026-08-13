@@ -11,8 +11,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260813-ds13">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260813-ds13">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260813-ds14">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260813-ds14">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -974,13 +974,6 @@
     .reqtoggle:hover{border-color:var(--primary-500);color:var(--primary-600)}
     .reqtoggle .ms{font-size:20px;color:var(--primary-600)}
     .reqinfo{border-left:3px solid var(--primary-50);padding-left:14px;margin-top:14px}
-
-    /* ---- ปุ่มไปหน้าขั้นตอน (ท้าย accordion ในลิสต์) ---- */
-    .gonext{display:flex;align-items:center;gap:11px;background:var(--primary-25);border:1px solid var(--primary-50);border-left:3px solid var(--primary-600);border-radius:var(--r-md);padding:13px 15px;margin-top:20px;max-width:860px}
-    .gonext>.ms{color:var(--primary-600);font-size:22px;flex:none}
-    .gonext>div{flex:1;min-width:0}
-    .gonext label{display:block;font-size:var(--fs-xs);font-weight:600;color:var(--gray-500);margin-bottom:2px}
-    .gonext b{font-size:var(--fs-text-sm);color:var(--gray-900)}
 
     /* ---- แถบสรุปแหล่งอะไหล่ ---- */
     .srcbar {
@@ -4077,9 +4070,33 @@ function retPanel(j){
         <button type="button" class="tab-btn on" role="tab" aria-selected="true" aria-controls="${uid}-0" onclick="switchVehTab(this,'${uid}',0)">รายละเอียดการซ่อม</button>
         <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="${uid}-1" onclick="switchVehTab(this,'${uid}',1)">ประวัติการซ่อม</button>
       </div>
-      <div class="tabpanel" id="${uid}-0" role="tabpanel" style="margin-top:16px">${vehInfoBox(j)}</div>
+      <div class="tabpanel" id="${uid}-0" role="tabpanel" style="margin-top:16px">${vehInfoBox(j)}
+        <div class="rowbtns">
+          <button type="button" class="btn btn-o" onclick="event.stopPropagation();toast('mock — ยังไม่เปิดใช้งาน')"><span class="ms">u_turn_left</span> ส่งกลับ/ปฏิเสธ</button>
+          <button type="button" class="btn btn-p" onclick="event.stopPropagation();openKbkAcceptModal('${j.no}')"><span class="ms">task_alt</span> รับซ่อม</button>
+        </div>
+      </div>
       <div class="tabpanel hidden" id="${uid}-1" role="tabpanel" style="margin-top:16px">${vehHistoryPanel(j)}</div>`;
     }
+    // Modal ยืนยันรับซ่อม — ยังไม่ใส่เนื้อหาในตัว modal (รอออกแบบฟอร์มต่อ)
+    function openKbkAcceptModal(no) {
+      const ov = document.createElement('div');
+      ov.className = 'modal-overlay';
+      ov.id = 'kbkAcceptModal';
+      ov.onclick = e => { if (e.target === ov) closeKbkAcceptModal() };
+      ov.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="รับซ่อม">
+        <div class="modal-head"><h2>รับซ่อม</h2>
+          <button type="button" class="modal-close" onclick="closeKbkAcceptModal()"><span class="ms">close</span></button></div>
+      </div>`;
+      document.body.appendChild(ov);
+      document.addEventListener('keydown', kbkAcceptModalEsc);
+    }
+    function closeKbkAcceptModal() {
+      const ov = document.getElementById('kbkAcceptModal');
+      if (ov) ov.remove();
+      document.removeEventListener('keydown', kbkAcceptModalEsc);
+    }
+    function kbkAcceptModalEsc(e) { if (e.key === 'Escape') closeKbkAcceptModal() }
     function switchVehTab(btn, uid, idx) {
       const tabs = btn.closest('.tabs');
       tabs.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('on'); b.setAttribute('aria-selected', 'false') });
@@ -4549,27 +4566,9 @@ function closeKbkDetail(){
       const d=kbkDetail(no); d.classList.remove('hidden');
       d.innerHTML=`
     <div class="ops-detail-layout">
-      <div class="ops-detail-main">${vehInfoTabs(j)}
-        <div class="gonext"><span class="ms">bolt</span>
-          <div><label>สิ่งที่ต้องทำต่อ</label><b>${esc(nextActionText(j))}</b></div>
-          <button class="btn btn-p" onclick="event.stopPropagation();openStep('${j.no}')">ดำเนินการต่อ →</button></div>
-      </div>
+      <div class="ops-detail-main">${vehInfoTabs(j)}</div>
       <aside class="ops-detail-side">${timelineBox(j)}</aside>
     </div>`;
-    }
-    // ข้อความ "ต้องทำอะไรต่อ" — ตามสถานะจริงของใบ
-    function nextActionText(j){
-      if(j.phase==='pending')return 'รอคุณเลือกว่าจะรับไว้ซ่อม หรือส่งกลับให้ซ่อมเอง';
-      if(j.phase==='work'&&!j.route)return 'รอคุณเลือกว่าจะซ่อมเองได้ หรือส่งอู่ประเมินราคา';
-      if(j.phase==='work'&&j.route==='self'&&!j.partsOK)return 'รอคุณจัดรายการอะไหล่ให้ครบแล้วกดยืนยัน';
-      if(j.phase==='quote')return j.quote&&j.quote.sent?'รอใบเสนอราคาจาก '+esc(j.quote.garage):'รอคุณระบุอู่ที่จะส่งประเมินราคา';
-      if(j.phase==='work'&&TG.inspection&&!j.inspIn&&j.wi===0)return 'รอคุณบันทึกตรวจสภาพรับรถเข้าซ่อม';
-      if(j.phase==='work'&&j.wi<4)return 'รอคุณอัปเดตสถานะ → '+KBK_STEPS[j.wi+1];
-      if(j.phase==='work')return 'รอคุณเปิดตารางว่างให้ผู้แจ้งเลือกวันนัดรับ';
-      if(j.phase==='slots')return 'รอผู้แจ้งเลือกวันนัดรับ';
-      if(j.phase==='appt')return 'รอตรวจสภาพขาออก + ส่งมอบรถวันนัด';
-      if(j.phase==='returned')return 'รอหน่วยงานผู้แจ้งซ่อมและบันทึกปิดงาน';
-      return 'ไม่มีงานค้าง';
     }
 function toggleGarage(id){E.garages.includes(id)?E.garages=E.garages.filter(x=>x!==id):E.garages.push(id)}
 function kbkSendTech(no){
