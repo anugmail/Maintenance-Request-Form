@@ -178,6 +178,16 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 .b-out{background:var(--error-50);color:var(--error-700);border-color:var(--error-200)}
 .b-brand{background:var(--brand-50);color:var(--brand-500);border-color:var(--brand-200)}
 
+/* ---------- Tabs (underline) — ไลบรารีมี Tabs `3:19` (ดู SOURCES.md หมวด ง) แต่เครื่องนี้ไม่มี
+   .figma-extract/ ให้ดึงค่าเทียบ จึงคุมด้วยสเกล/โทนที่ตรวจแล้วของระบบไปก่อน (14/600 gray-500→primary-600
+   + เส้นใต้ 2px) — ต้องรัน compare-figma.js เทียบกับ node นี้ซ้ำเมื่อมีเครื่องที่ดึงข้อมูลได้ */
+.tabs{display:flex;gap:24px;border-bottom:1px solid var(--gray-200)}
+.tab-btn{font-family:inherit;background:none;border:none;padding:10px 2px;margin-bottom:-1px;
+  font-size:var(--fs-text-sm);font-weight:var(--font-weight-semibold);color:var(--gray-500);
+  border-bottom:2px solid transparent;cursor:pointer}
+.tab-btn:hover{color:var(--gray-700)}
+.tab-btn.on{color:var(--primary-600);border-bottom-color:var(--primary-600)}
+
 /* ---------- Tile (การ์ดเลือกแบบ VMS Plus) ---------- */
 .tile{border-radius:var(--r-lg);padding:18px 12px;text-align:center;cursor:pointer;color:#fff;border:3px solid transparent}
 .tile .ms{font-size:34px;margin-bottom:8px}
