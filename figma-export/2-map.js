@@ -459,6 +459,18 @@ function convertIcon(node, parentRect) {
   return spec;
 }
 
+/* CSS transform เป็น matrix(a,b,c,d,e,f) — มุมหมุนอยู่ที่ atan2(b,a)
+   คืนค่าเป็น "องศาแบบ CSS" (ตามเข็มเป็นบวก) — ฝั่ง Figma ต้องกลับเครื่องหมายเอง */
+function degFromMatrix(t) {
+  if (!t || t === 'none') return 0;
+  const m = /^matrix\(([^)]+)\)$/.exec(t.trim());
+  if (!m) return 0;
+  const n = m[1].split(',').map(v => parseFloat(v));
+  if (n.length < 4 || !isFinite(n[0]) || !isFinite(n[1])) return 0;
+  const deg = Math.atan2(n[1], n[0]) * 180 / Math.PI;
+  return Math.abs(deg) < 1e-9 ? 0 : deg;
+}
+
 /* ::before / ::after — ในระบบนี้เป็นแถบ/เส้น/จุดล้วน ไม่มีข้อความ
    เช่นแถบม่วง 4×20 ของ .sect · เส้นเฉียงของ .wstep · จุดกลมของ .tl */
 function convertPseudo(host, p) {
@@ -553,4 +565,5 @@ function main() {
   console.log('\nเขียน ' + path.relative(process.cwd(), outFile) + ' (' + Math.round(fs.statSync(outFile).size / 1024) + 'KB)');
 }
 
-main();
+module.exports = { degFromMatrix };
+if (require.main === module) main();
