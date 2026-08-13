@@ -183,6 +183,9 @@ node figma-export/serve.js                          # เสิร์ฟให�
 | `fill` | hex เช่น `#FFFFFF` |
 | `stroke` | `{ color, weight, sides:[t,r,b,l] }` — `sides` ไว้ทำ border ด้านเดียว |
 | `radius` | ตัวเลข หรือ `[tl,tr,br,bl]` |
+| `rotation` | องศา **ทวนเข็มเป็นบวก** (แบบ Figma — ตรงข้ามกับ CSS) ใช้คู่กับ `rotateOrigin` |
+| `rotateOrigin` | `[ox, oy]` จุดหมุนภายในกล่อง (px) — ปลั๊กอินเลื่อนชดเชยให้จุดนี้อยู่กับที่ เพราะ Figma หมุนรอบมุมซ้ายบน |
+| `absolute` | `true` = หลุดจาก flow ของ auto-layout (`layoutPositioning:'ABSOLUTE'`) ใช้กับ pseudo ที่ CSS สั่ง `position:absolute` · ต้องมี `pos` มาด้วย |
 | `shadows` | `[{ color, a, x, y, blur, spread }]` |
 | `text` | `{ chars, size, weight, lineHeight, color, font, align }` |
 | `children` | array ของ node |
