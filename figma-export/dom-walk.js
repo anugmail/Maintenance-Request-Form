@@ -23,7 +23,8 @@ function walkDom() {
     'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor',
     'borderTopStyle', 'borderRightStyle', 'borderBottomStyle', 'borderLeftStyle',
     'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius',
-    'boxShadow', 'transform',
+    'boxShadow', 'transform', 'transformOrigin',
+    'position', 'top', 'right', 'bottom', 'left',
     'color', 'fontSize', 'fontWeight', 'fontFamily', 'fontStyle',
     'lineHeight', 'letterSpacing', 'textAlign', 'textDecorationLine', 'whiteSpace', 'textTransform'
   ];

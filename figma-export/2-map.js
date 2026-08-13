@@ -471,6 +471,27 @@ function degFromMatrix(t) {
   return Math.abs(deg) < 1e-9 ? 0 : deg;
 }
 
+/* กล่องของ pseudo เทียบมุมซ้ายบนของ host — อ่านจาก offset ของ CSS ตรงๆ
+   ค่า 'auto' แปลว่าอีกฝั่งเป็นตัวกำหนด (เช่น right:0 + left:auto = ชิดขวา) */
+function pseudoBox(hostRect, s) {
+  const px = (v) => { const n = parseFloat(v); return isFinite(n) ? n : null; };
+  const w = px(s.width) || 0, h = px(s.height) || 0;
+  const left = px(s.left), right = px(s.right), top = px(s.top), bottom = px(s.bottom);
+
+  let x = 0, y = 0;
+  if (left !== null) x = left;
+  else if (right !== null) x = hostRect.w - right - w;
+  if (top !== null) y = top;
+  else if (bottom !== null) y = hostRect.h - bottom - h;
+
+  // transform-origin คืนมาเป็น "<x>px <y>px" เสมอเมื่ออ่านจาก computed style
+  const o = String(s.transformOrigin || '').split(/\s+/).map(v => parseFloat(v));
+  const ox = isFinite(o[0]) ? o[0] : w / 2;
+  const oy = isFinite(o[1]) ? o[1] : h / 2;
+
+  return { x, y, ox, oy };
+}
+
 /* ::before / ::after — ในระบบนี้เป็นแถบ/เส้น/จุดล้วน ไม่มีข้อความ
    เช่นแถบม่วง 4×20 ของ .sect · เส้นเฉียงของ .wstep · จุดกลมของ .tl */
 function convertPseudo(host, p) {
@@ -490,8 +511,23 @@ function convertPseudo(host, p) {
   };
   const radius = radiusOf(s);
   if (radius !== undefined && radius !== 0) spec.radius = radius;
-  // pseudo ไม่มี rect จริงให้วัด — วางไว้ที่มุมซ้ายบนของ host แล้วให้ auto-layout จัดต่อ
-  spec._rect = { x: hr.x, y: hr.y, w, h };
+
+  // pseudo ที่ absolute ไม่ร่วมใน flow ของ auto-layout — บอกตำแหน่ง+มุมหมุนไปตรงๆ
+  // ที่เหลือ (static/relative เช่นแถบ magenta ของ .sect) คงพฤติกรรมเดิม: เป็นลูกในแถว
+  if (s.position === 'absolute' || s.position === 'fixed') {
+    const b = pseudoBox({ w: hr.w, h: hr.h }, s);
+    const deg = degFromMatrix(s.transform);
+    spec.absolute = true;
+    spec.pos = { x: Math.round(b.x * 100) / 100, y: Math.round(b.y * 100) / 100 };
+    if (deg !== 0) {
+      spec.rotation = -deg;                       // Figma ทวนเข็มเป็นบวก CSS ตามเข็มเป็นบวก
+      spec.rotateOrigin = [b.ox, b.oy];
+    }
+    spec._rect = { x: hr.x + b.x, y: hr.y + b.y, w, h };
+  } else {
+    // pseudo ไม่มี rect จริงให้วัด — วางไว้ที่มุมซ้ายบนของ host แล้วให้ auto-layout จัดต่อ
+    spec._rect = { x: hr.x, y: hr.y, w, h };
+  }
   return spec;
 }
 
@@ -565,5 +601,5 @@ function main() {
   console.log('\nเขียน ' + path.relative(process.cwd(), outFile) + ' (' + Math.round(fs.statSync(outFile).size / 1024) + 'KB)');
 }
 
-module.exports = { degFromMatrix };
+module.exports = { degFromMatrix, pseudoBox };
 if (require.main === module) main();
