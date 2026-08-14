@@ -8,15 +8,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="../design-system/tokens.css?v=20260813-ds15">
-<link rel="stylesheet" href="../design-system/components.css?v=20260813-ds15">
-<!-- หน้านี้เป็นแบบหน้าจอเดี่ยว แยกจากส่วนอื่นของโปรเจกต์ — ไม่มีแถบเมนู
-     14 ส.ค. 2569: ต้นแบบเรียกหน้านี้แล้ว — mock/Maintenance-Request-Form.html กด "รับซ่อม" → "กบค. ซ่อมเอง"
-     เปิดหน้านี้ในแท็บใหม่พร้อม ?no=<เลขใบแจ้งซ่อม> (แท็บใหม่เพราะ JOBS ฝั่งต้นแบบอยู่ใน memory ล้วน)
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260814-ds16">
+<link rel="stylesheet" href="../design-system/components.css?v=20260814-ds16">
+<!-- ขั้น 1 "เบิกอะไหล่" ของเส้น กบค. ซ่อมเอง (design mock)
+     14 ส.ค. 2569: ต่อเข้า flow แล้ว — mock/Maintenance-Request-Form.html กด "รับซ่อม" → "กบค. ซ่อมเอง"
+     พามาที่นี่ในแท็บเดิม พร้อม ?no=<เลขใบแจ้งซ่อม> · กด "ยืนยันรายการเบิก" ไปต่อขั้น 2
+     (kbk-self-repair-appointment.html) · ⚠️ JOBS ฝั่งต้นแบบอยู่ใน memory ล้วน ออกจากหน้าโน้นแล้วสถานะหาย
      ข้อมูลอะไหล่ในหน้านี้ยังเป็นชุดตัวอย่างของตัวเอง ยังไม่ได้ผูกกับใบงานจริงที่ส่งมา
      ไม่มี <style> ในหน้าโดยตั้งใจ — ใช้คอมโพเนนต์จาก design system เท่านั้น:
-     .content · .wsteps/.wstep · .card/.sect/.sub · .fgrid/.f/.sp2/.sp4
-     .job/.sp/.no/.meta · .qty · .badge/.b-ok/.b-low/.b-out · .search · .btn · .empty · .actions · .toast -->
+     .shell/.side/.nv/.work/.topbar · .content · .crumbs · .wsteps/.wstep · .card/.sect/.sub · .fgrid/.f/.sp2/.sp4
+     .job/.sp/.no/.meta · .qty · .badge/.b-ok/.b-low/.b-out · .search · .btn · .empty · .actions · .modal* · .toast -->
 </head>
 <body>
   <div class="shell">
@@ -94,7 +95,7 @@
 
       <div class="actions">
         <button class="btn btn-g" onclick="goApp('kbk')"><span class="ms">arrow_back</span> ย้อนกลับ</button>
-        <button class="btn btn-p">ยืนยันรายการเบิก</button>
+        <button class="btn btn-p" id="btnConfirm">ยืนยันรายการเบิก</button>
       </div>
       </main>
     </div>
@@ -257,6 +258,12 @@ function renderAll() { renderPicked(); renderStock(); }
 
 $('q').addEventListener('input', renderStock);
 $('btnAdd').addEventListener('click', () => { $('q').focus(); toast('ค้นหาแล้วกด + จากคลังอะไหล่ทางซ้าย'); });
+
+// ยืนยันรายการเบิก → ไปขั้น 2 "นัดหมายวันซ่อม" ในแท็บเดิม · ส่ง ?no= ต่อให้รู้ว่ามาจากใบไหน
+$('btnConfirm').addEventListener('click', () => {
+  if (!Object.keys(picked).length) { toast('ยังไม่ได้เลือกอะไหล่ — เลือกอย่างน้อย 1 รายการก่อน'); return; }
+  location.href = 'kbk-self-repair-appointment.html' + (fromNo ? '?no=' + encodeURIComponent(fromNo) : '');
+});
 
 // มาจากต้นแบบ (กด "รับซ่อม" → "กบค. ซ่อมเอง") จะมี ?no=<เลขใบแจ้งซ่อม> ติดมา — โชว์ให้รู้ว่ากำลังเบิกของใบไหน
 // เปิดหน้านี้ตรงๆ ไม่มี param ก็ยังใช้ได้เหมือนเดิม (ซ่อนบรรทัดนี้ไว้)

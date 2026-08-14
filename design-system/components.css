@@ -312,7 +312,8 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 .f .in.noic input{padding-left:14px}
 .f textarea{border-radius:var(--rounded-md);padding:12px 14px}
 .f.ro .in input{background:var(--gray-50);color:var(--gray-700)}   /* = state Disabled ของไลบรารี (ขอบทึบ พื้น gray-50) */
-.f.err .in input,.f.err textarea{border-color:var(--error-300)}
+/* .daterange-field รวมด้วย — ช่องเลือกช่วงวันที่ก็ต้องขึ้นกรอบแดงได้เหมือนช่องกรอกอื่น (14 ส.ค. 2569) */
+.f.err .in input,.f.err textarea,.f.err .daterange-field{border-color:var(--error-300)}
 .f .help{font-size:var(--fs-text-sm);color:var(--error-600);margin-top:6px}
 
 /* ---------- Radio ----------
