@@ -135,6 +135,49 @@ function goApp(view) {
   location.href = '../mock/Maintenance-Request-Form.html' + (view ? '#' + view : '');
 }
 
+// ---- modal กลาง (ยกแพตเทิร์นเดียวกับ openModal/closeModal ในแอปหลัก) ----
+// สร้างตอนเปิด ลบตอนปิด · ปิดได้ด้วยปุ่ม ✕ / คลิกนอกกรอบ / Esc
+let MODAL_ESC = null;
+function openModal(bodyHtml) {
+  closeModal();
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay';
+  ov.id = 'pageModal';
+  ov.onclick = e => { if (e.target === ov) closeModal(); };
+  ov.innerHTML = bodyHtml;
+  document.body.appendChild(ov);
+  MODAL_ESC = e => { if (e.key === 'Escape') closeModal(); };
+  document.addEventListener('keydown', MODAL_ESC);
+  return ov;
+}
+function closeModal() {
+  const ov = $('pageModal');
+  if (ov) ov.remove();
+  if (MODAL_ESC) { document.removeEventListener('keydown', MODAL_ESC); MODAL_ESC = null; }
+}
+
+// ถามยืนยันก่อนลบอะไหล่ออกจากรายการ — กันกดพลาดแล้วของหายทั้งรายการ
+function askDelete(code) {
+  const p = partOf(code), qty = picked[code];
+  const ov = openModal(`<div class="modal" role="dialog" aria-modal="true" aria-label="ยืนยันลบอะไหล่">
+    <div class="modal-head"><h2>ลบอะไหล่ออกจากรายการ</h2>
+      <button type="button" class="modal-close" data-cancel aria-label="ปิด"><span class="ms">close</span></button></div>
+    <div>ต้องการลบ <b>${esc(p.name)}</b> ออกจากรายการอะไหล่ที่ต้องการใช้งานหรือไม่?</div>
+    <div class="sub" style="margin:6px 0 0">${esc(p.code)} · จำนวนที่เลือกไว้ ${qty} ${esc(p.unit)}</div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-g" data-cancel>ยกเลิก</button>
+      <button type="button" class="btn btn-d" data-confirm><span class="ms">delete</span> ลบออกจากรายการ</button>
+    </div>
+  </div>`);
+  ov.querySelectorAll('[data-cancel]').forEach(b => b.addEventListener('click', closeModal));
+  ov.querySelector('[data-confirm]').addEventListener('click', () => {
+    delete picked[code];
+    closeModal();
+    toast('เอา ' + p.name + ' ออกจากรายการแล้ว');
+    renderAll();
+  });
+}
+
 function renderPicked() {
   const codes = Object.keys(picked);
   $('picked').innerHTML = codes.length ? codes.map(code => {
@@ -154,6 +197,7 @@ function renderPicked() {
           <span>${qty}</span>
           <button data-inc="${esc(code)}" aria-label="เพิ่มจำนวน">+</button>
         </div>
+        <button class="btn btn-t btn-sm" data-del="${esc(code)}" title="ลบรายการนี้" aria-label="ลบ ${esc(p.name)} ออกจากรายการ"><span class="ms">close</span></button>
       </div>`;
   }).join('') : `<div class="empty">ยังไม่ได้เลือกอะไหล่ — เลือกจากคลังอะไหล่ทางซ้าย</div>`;
 
@@ -175,6 +219,9 @@ function renderPicked() {
       if (--picked[c] <= 0) { delete picked[c]; toast('เอาออกจากรายการแล้ว'); }
       renderAll();
     }));
+  // ปุ่มกากบาท — ลบทั้งรายการในครั้งเดียว ไม่ต้องกด − ทีละอันจนหมด · ถามยืนยันก่อนเพราะลบแล้วกู้ไม่ได้
+  $('picked').querySelectorAll('[data-del]').forEach(b =>
+    b.addEventListener('click', () => askDelete(b.dataset.del)));
 }
 
 function renderStock() {
