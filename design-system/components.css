@@ -312,8 +312,9 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 .f .in.noic input{padding-left:14px}
 .f textarea{border-radius:var(--rounded-md);padding:12px 14px}
 .f.ro .in input{background:var(--gray-50);color:var(--gray-700)}   /* = state Disabled ของไลบรารี (ขอบทึบ พื้น gray-50) */
-/* .daterange-field รวมด้วย — ช่องเลือกช่วงวันที่ก็ต้องขึ้นกรอบแดงได้เหมือนช่องกรอกอื่น (14 ส.ค. 2569) */
-.f.err .in input,.f.err textarea,.f.err .daterange-field{border-color:var(--error-300)}
+/* .daterange-field / .search input รวมด้วย — ช่องเลือกช่วงวันที่ และช่องค้นหาที่ใช้เป็นตัวเลือกรายการ
+   ก็ต้องขึ้นกรอบแดงได้เหมือนช่องกรอกอื่น (14 ส.ค. 2569) */
+.f.err .in input,.f.err textarea,.f.err .daterange-field,.f.err .search input{border-color:var(--error-300)}
 .f .help{font-size:var(--fs-text-sm);color:var(--error-600);margin-top:6px}
 
 /* ---------- Radio ----------
@@ -367,6 +368,8 @@ input[type=radio]{accent-color:var(--primary-600);width:20px;height:20px;cursor:
 /* ---------- แถวรายการงาน/เรื่อง ---------- */
 .job{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);padding:14px 16px;cursor:pointer;margin-bottom:10px;flex-wrap:wrap}
 .job:hover{border-color:var(--primary-500)}
+/* .job.sel — ใช้ตอน .job เป็น "รายการให้เลือก" (เช่น เลือกช่างจากรายชื่อ) โทนเดียวกับ .sg.sel/.chip.sel (14 ส.ค. 2569) */
+.job.sel{border-color:var(--primary-600);background:var(--primary-25)}
 .my-accordion,.kry-accordion,.kbk-accordion{margin-bottom:10px}
 .my-accordion .my-job,.kry-accordion .kry-job,.kbk-accordion .kbk-job{margin-bottom:0}
 .my-job.open,.kry-job.open,.kbk-job.open{margin-bottom:0;border-color:var(--primary-500);border-radius:var(--r-md) var(--r-md) 0 0;background:var(--primary-25)}
