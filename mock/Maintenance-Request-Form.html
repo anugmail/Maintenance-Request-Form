@@ -3192,7 +3192,7 @@
         rstage: 1, ret: { reason: 'งานตั้งศูนย์ถ่วงล้อ อู่ใกล้หน่วยงานทำได้ ไม่ต้องนำรถเข้า สนญ.', garages: [{ name: 'อู่เจริญการช่าง', dist: '3.2 กม.', tags: 'เครน · ไฮดรอลิก' }] },
         phase: 'returned', wi: 0, history: [
           { t: '12 ก.ค. 2569 10:00', label: 'ส่งเรื่องถึง กบค. — รอรับเรื่อง' },
-          { t: '12 ก.ค. 2569 14:30', label: 'กบค. ส่งกลับให้ซ่อมเอง — งานตั้งศูนย์ถ่วงล้อ ทำที่อู่ใกล้หน่วยงานได้ · แนะนำอู่: อู่เจริญการช่าง' },
+          { t: '12 ก.ค. 2569 14:30', label: 'กบค. ตีกลับ/ปฏิเสธ — งานตั้งศูนย์ถ่วงล้อ ทำที่อู่ใกล้หน่วยงานได้ · แนะนำอู่: อู่เจริญการช่าง' },
           { t: '15 ก.ค. 2569 09:00', label: 'หน่วยงานผู้แจ้งอัปเดต: ดำเนินการซ่อมโดยอู่' }]
       },
       {
@@ -3313,7 +3313,7 @@
       if (j.phase === 'returned') {
         const s = j.rstage || 0;
         const g = j.garageRoute;
-        if (s === 0) return { label: g ? 'กรย. ส่งซ่อมอู่ภายนอก' : 'ส่งกลับให้ซ่อมเอง', cls: 'b-low' };
+        if (s === 0) return { label: g ? 'กรย. ส่งซ่อมอู่ภายนอก' : 'กบค.ตีกลับ/ปฏิเสธ', cls: 'b-low' };
         if (s === 1) return { label: 'ดำเนินการซ่อมโดยอู่', cls: 'b-brand' };
         return { label: 'ซ่อมเสร็จแล้วโดยอู่ — รอบันทึกปิดงาน', cls: 'b-brand' };
       }
@@ -3893,8 +3893,8 @@ function confirmSlot(no){
   toast('ยืนยันวันนัดแล้ว — กบค. เห็นวันนัดที่เลือก');renderMyDetail(no);
 }
 function retPanel(j){
-  return`<div class="panel"><div class="sect" style="margin:0 0 8px">กบค. ส่งกลับให้ซ่อมเอง</div>
-    <div style="font-size:14px"><b>เหตุผล:</b> ${j.ret.reason}</div>
+  return`<div class="panel"><div class="sect" style="margin:0 0 8px">เหตุผล</div>
+    <div style="font-size:14px">${j.ret.reason}</div>
     ${j.ret.garages.length ? `<div style="font-size:14px;margin-top:10px"><b>อู่ใกล้เคียงที่ กบค. แนะนำ:</b></div>` + j.ret.garages.map(g => `<div class="garage" style="cursor:default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join('') : ''}
   </div>`;
     }
@@ -3914,7 +3914,7 @@ function retPanel(j){
       const j = JOBS.find(x => x.no === no);
       let extra = '';
       if (j.phase === 'returned') {
-        extra = retPanel(j);
+        extra = '';
         const s = j.rstage || 0;
         if (s === 0) {
           extra += `<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="retAdvance('${no}',1)">เริ่มดำเนินการซ่อมโดยอู่</button></div>`;
@@ -3952,7 +3952,7 @@ function retPanel(j){
       </div>`;
         }
       }
-      if (j.phase === 'gclosed') { extra = (j.ret ? retPanel(j) : '') + recordPanel(j) }
+      if (j.phase === 'gclosed') { extra = recordPanel(j) }
       if (j.phase === 'slots') {
         extra += `<div class="sect" style="margin-top:24px">เลือกวันนัดรับรถ</div>
     <div class="hint">กบค. ซ่อมเสร็จแล้ว และเปิด<b>ตารางว่าง</b>ให้เลือก — เลือก 1 ช่วงเวลา แล้วกดยืนยัน (วันนัดมีการตรวจสภาพหลังการซ่อมร่วมกัน)</div>
@@ -3982,6 +3982,7 @@ function retPanel(j){
       <div class="my-detail-main">${jobInfoBox(j)}${extra}</div>
       <aside class="my-detail-side">
         ${timelineBox(j)}
+        ${j.ret ? retPanel(j) : ''}
       </aside>
     </div>`;
       if (j.phase === 'returned' && (j.rstage || 0) === 2) cTotal();
@@ -4118,9 +4119,16 @@ function retPanel(j){
     }
     function submitKbkReturn(no) {
       const ta = document.getElementById('kbkReturnReason');
-      if (!ta.value.trim()) { ta.focus(); toast('กรอกเหตุผลที่ส่งกลับ/ปฏิเสธก่อน'); return }
+      const reason = ta.value.trim();
+      if (!reason) { ta.focus(); toast('กรอกเหตุผลที่ส่งกลับ/ปฏิเสธก่อน'); return }
+      const j = JOBS.find(x => x.no === no);
+      j.phase = 'returned'; j.rstage = 0;
+      j.ret = { reason: esc(reason), garages: [] };
+      j.history.push({ t: nowStr(), label: 'กบค. ส่งกลับ/ปฏิเสธ — ' + esc(reason) });
+      updateBadge();
       closeModal();
       toast('ส่งกลับใบแจ้งซ่อมให้ผู้สร้างใบแจ้งซ่อมแล้ว');
+      if (VIEW === 'step') { renderKbkDetail(no) } else { renderKbkList() }
     }
     function switchVehTab(btn, uid, idx) {
       const tabs = btn.closest('.tabs');
@@ -4507,7 +4515,7 @@ function closeKbkDetail(){
 
       if (j.phase === 'returned') {
         const s = j.rstage || 0;
-        const RSTEPS = ['ส่งกลับให้ซ่อมเอง', 'ดำเนินการซ่อมโดยอู่', 'ซ่อมเสร็จแล้วโดยอู่'];
+        const RSTEPS = ['กบค.ตีกลับ/ปฏิเสธ', 'ดำเนินการซ่อมโดยอู่', 'ซ่อมเสร็จแล้วโดยอู่'];
         action = `<div class="panel"><div class="sect" style="margin:0 0 8px">ส่งกลับให้หน่วยงานผู้แจ้งซ่อมเองแล้ว — ติดตามสถานะ</div>
       <div style="font-size:14px"><b>เหตุผล:</b> ${j.ret.reason}</div>
       ${j.ret.garages.length ? j.ret.garages.map(g => `<div class="garage" style="cursor:default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join('') : ''}</div>
@@ -4903,7 +4911,7 @@ function kbkReturn(no){
   if(!reason){toast('กรุณาระบุเหตุผลที่ส่งกลับ');return}
   j.phase='returned';j.rstage=0;
   j.ret={reason:esc(reason),garages:GARAGES.filter(g=>E.garages.includes(g.id))};
-  j.history.push({t:nowStr(),label:'กบค. ส่งกลับให้ซ่อมเอง — '+esc(reason)+(j.ret.garages.length?' · แนะนำอู่: '+j.ret.garages.map(g=>g.name).join(', '):'')});
+  j.history.push({t:nowStr(),label:'กบค. ตีกลับ/ปฏิเสธ — '+esc(reason)+(j.ret.garages.length?' · แนะนำอู่: '+j.ret.garages.map(g=>g.name).join(', '):'')});
   updateBadge();toast('ส่งกลับเรื่องแล้ว — ผู้แจ้งเห็นเหตุผลและอู่แนะนำ');renderKbkDetail(no);
 }
 function kbkAdvance(no){
