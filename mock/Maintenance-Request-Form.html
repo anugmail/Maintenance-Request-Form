@@ -4130,6 +4130,12 @@ function retPanel(j){
       KBK_ACCEPT_ROUTE = null;
       toast('รับซ่อมแล้ว — ' + (route === 'self' ? 'กบค. ซ่อมเอง' : 'จ้างอู่ภายนอกซ่อมให้'));
       if (VIEW === 'step') { renderKbkDetail(no) } else { renderKbkList() }
+      // เส้นซ่อมเอง → เปิดหน้าเบิกอะไหล่ (design mock) แท็บใหม่
+      // ต้องแท็บใหม่เท่านั้น: JOBS อยู่ใน memory ล้วน (ดูโน๊ตบรรทัด PF_KEY) ถ้าเปลี่ยนหน้าทับแท็บเดิม
+      // สถานะที่เพิ่งกดรับซ่อมจะหายหมด · ส่ง ?no= ไปให้หน้าปลายทางรู้ว่ามาจากใบไหน
+      if (route === 'self') {
+        window.open('../design-mock/kbk-self-repair-parts.html?no=' + encodeURIComponent(no), '_blank', 'noopener');
+      }
     }
     // Modal ส่งกลับ/ปฏิเสธ — กล่องกรอกเหตุผลของการตีกลับ
     function openKbkReturnModal(no) {
