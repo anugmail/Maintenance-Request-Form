@@ -4097,12 +4097,39 @@ function retPanel(j){
       if (ov) ov.remove();
       if (KBK_MODAL_ESC) { document.removeEventListener('keydown', KBK_MODAL_ESC); KBK_MODAL_ESC = null }
     }
-    // Modal ยืนยันรับซ่อม — ยังไม่ใส่เนื้อหาในตัว modal (รอออกแบบฟอร์มต่อ)
+    // Modal ยืนยันรับซ่อม — เลือกช่องทาง (ซ่อมเอง/จ้างอู่ภายนอก) เหมือน kbkSetRoute แต่เลือกได้ตั้งแต่ตอนรับซ่อมเลย
+    let KBK_ACCEPT_ROUTE = null;
     function openKbkAcceptModal(no) {
+      KBK_ACCEPT_ROUTE = null;
+      renderKbkAcceptModal(no);
+    }
+    function renderKbkAcceptModal(no) {
       openModal(`<div class="modal" role="dialog" aria-modal="true" aria-label="รับซ่อม">
         <div class="modal-head"><h2>รับซ่อม</h2>
           <button type="button" class="modal-close" onclick="closeModal()"><span class="ms">close</span></button></div>
+        <div class="sect" style="margin:0 0 8px">เลือกช่องทางการซ่อม</div>
+        <div class="kbkdec-tiles"><div class="decide" style="margin-top:0">
+          <div class="tile tile-magenta ${KBK_ACCEPT_ROUTE === 'self' ? 'sel' : ''}" onclick="KBK_ACCEPT_ROUTE='self';renderKbkAcceptModal('${no}')"><span class="ms">handyman</span><b>กบค. ซ่อมเอง</b><small>จัดรายการอะไหล่ ดำเนินการซ่อมเอง</small></div>
+          <div class="tile tile-blue ${KBK_ACCEPT_ROUTE === 'garage' ? 'sel' : ''}" onclick="KBK_ACCEPT_ROUTE='garage';renderKbkAcceptModal('${no}')"><span class="ms">request_quote</span><b>จ้างอู่ภายนอกซ่อมให้</b><small>ส่งอู่ประเมินราคาก่อนเริ่มซ่อม</small></div>
+        </div></div>
+        <div class="modal-foot">
+          <button type="button" class="btn btn-g" onclick="closeModal()">ปิด</button>
+          <button type="button" class="btn btn-p" onclick="confirmKbkAccept('${no}')"><span class="ms">task_alt</span> ยืนยัน</button>
+        </div>
       </div>`);
+    }
+    function confirmKbkAccept(no) {
+      if (!KBK_ACCEPT_ROUTE) { toast('เลือกช่องทางการซ่อมก่อน'); return }
+      const route = KBK_ACCEPT_ROUTE;
+      const j = JOBS.find(x => x.no === no);
+      j.phase = 'work'; j.wi = 0; j.loc = 'hq'; j.route = route;
+      j.history.push({ t: nowStr(), label: 'กบค. รับเรื่องซ่อม — เลือก' + (route === 'self' ? 'ซ่อมเอง' : 'จ้างอู่ภายนอกซ่อม') });
+      if (route === 'self') { initJobParts(j) } else { j.phase = 'quote' }
+      updateBadge();
+      closeModal();
+      KBK_ACCEPT_ROUTE = null;
+      toast('รับซ่อมแล้ว — ' + (route === 'self' ? 'กบค. ซ่อมเอง' : 'จ้างอู่ภายนอกซ่อมให้'));
+      if (VIEW === 'step') { renderKbkDetail(no) } else { renderKbkList() }
     }
     // Modal ส่งกลับ/ปฏิเสธ — กล่องกรอกเหตุผลของการตีกลับ
     function openKbkReturnModal(no) {
