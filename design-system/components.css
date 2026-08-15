@@ -59,40 +59,53 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
    หมายเหตุ padding: ลบ 1px ทุกด้าน เพราะ Figma วาดเส้นขอบ "ด้านใน"
    แต่ CSS วาดด้านนอก — ลบแล้วได้ความสูงตรงเป๊ะ 36/40/44/48px
    ----------------------------------------------------------------------- */
+/* ✅ วัดจาก vmsplus-dev: สูง 40 คงที่ · padding แนวนอนอย่างเดียว 16 · gap 8 · lh 14 (เท่าขนาดตัวอักษร)
+   · มีเงา shadow-xs — ของเดิมคุมความสูงด้วย padding แนวตั้ง (9/13) gap 4 lh 20 และไม่มีเงา */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;
-  gap:var(--space-1);
+  gap:var(--space-2);
   border:1px solid transparent;
   border-radius:var(--rounded-md);
-  padding:calc(var(--space-2_5) - 1px) calc(var(--space-3_5) - 1px);  /* md → สูง 40px */
+  height:40px;padding:0 var(--space-4);
   font:inherit;font-weight:var(--font-weight-semibold);
-  font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);
+  font-size:var(--fs-text-sm);line-height:14px;
   letter-spacing:var(--letter-spacing-normal);
+  box-shadow:var(--shadow-xs);
   text-decoration:none;white-space:nowrap;cursor:pointer;
   transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease;
 }
 .btn .ms{font-size:20px}   /* ไอคอน 20px คงที่ทุกขนาด — ตามไลบรารี */
 
-/* ---- Size ---- */
-.btn-sm{padding:calc(var(--space-2) - 1px) calc(var(--space-3) - 1px);gap:var(--space-1)}                                                    /* 36px */
-.btn-md{padding:calc(var(--space-2_5) - 1px) calc(var(--space-3_5) - 1px);gap:var(--space-1)}                                                /* 40px */
-.btn-lg{padding:calc(var(--space-2_5) - 1px) calc(var(--space-4) - 1px);gap:var(--space-1_5);font-size:var(--fs-text-md);line-height:var(--lh-text-md)}   /* 44px */
-.btn-xl{padding:calc(var(--space-3) - 1px) calc(var(--space-4_5) - 1px);gap:var(--space-1_5);font-size:var(--fs-text-md);line-height:var(--lh-text-md)}   /* 48px */
+/* ---- Size ---- sm วัดจาก pagination ของจริง (h39 pad 0/12 — ปัดเป็น 36 ตามสเกลเดิมของเรา)
+   lg/xl ไม่มีของเทียบใน runtime → คงระยะแนวนอนเดิมไว้ แค่เปลี่ยนมาคุมความสูงตรงๆ  */
+.btn-sm{height:36px;padding:0 var(--space-3)}
+.btn-md{height:40px;padding:0 var(--space-4)}
+.btn-lg{height:44px;padding:0 15px;font-size:var(--fs-text-md);line-height:var(--lh-text-md)}
+.btn-xl{height:48px;padding:0 17px;font-size:var(--fs-text-md);line-height:var(--lh-text-md)}
 
 /* ---- Hierarchy: Primary ---- */
 .btn-p{background:var(--btn-primary-bg);border-color:var(--btn-primary-border);color:var(--btn-primary-text)}
 .btn-p:hover{background:var(--btn-primary-bg-hover);border-color:var(--btn-primary-border-hover)}
 
 /* ---- Hierarchy: Secondary (พื้นขาว ขอบเทา) ---- */
-.btn-s{background:var(--color-bg-primary);border-color:var(--color-border-primary);color:var(--color-text-secondary)}
+.btn-s{background:var(--color-bg-primary);border-color:var(--btn-secondary-border);color:var(--btn-secondary-text)}
 .btn-s:hover{background:var(--color-bg-primary-hover);color:var(--color-text-secondary-hover)}
 
-/* ---- Hierarchy: Tertiary (ไม่มีพื้น ไม่มีขอบ) ---- */
-.btn-t{background:transparent;border-color:transparent;color:var(--color-text-tertiary)}
+/* ---- Hierarchy: Tertiary — ✅ ของจริงไม่มีทั้งขอบและเงา ---- */
+.btn-t{background:transparent;border-color:transparent;box-shadow:none;color:var(--btn-tertiary-text)}
 .btn-t:hover{background:var(--color-bg-primary-hover);color:var(--color-text-tertiary-hover)}
+/* tertiary สีแบรนด์ / สีอันตราย — ระบบจริงมี เราเพิ่งเพิ่ม */
+.btn-tb{background:transparent;border-color:transparent;box-shadow:none;color:var(--btn-tertiary-brand-text)}
+.btn-tb:hover{background:var(--badge-brand-bg)}
+.btn-td{background:transparent;border-color:transparent;box-shadow:none;color:var(--btn-tertiary-danger-text)}
+.btn-td:hover{background:var(--error-50)}
 
-/* ---- Hierarchy: Link (ไม่มี padding — สูงเท่า line-height) ---- */
-.btn-link,.btn-linkgray{background:transparent;border-color:transparent;padding:0}
+/* ---- ทรง: ปุ่มไอคอนล้วน (topbar / ท้ายแถวตาราง) · ปุ่มกลมมีขอบ (มุมโมดัล) ---- */
+.btn-icon{width:40px;height:40px;padding:0;gap:0;border-radius:var(--r-pill)}
+.btn-circle{width:43px;height:43px;padding:0;gap:0;border-radius:var(--r-pill);border-color:var(--btn-secondary-border)}
+
+/* ---- Hierarchy: Link (ไม่มี padding/ความสูง/เงา — สูงเท่า line-height) ---- */
+.btn-link,.btn-linkgray{background:transparent;border-color:transparent;padding:0;height:auto;box-shadow:none;line-height:var(--lh-text-sm)}
 .btn-link{color:var(--btn-link-text)}
 .btn-link:hover{color:var(--btn-link-text-hover);text-decoration:underline}
 .btn-linkgray{color:var(--color-text-tertiary)}
@@ -114,11 +127,12 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 .btn:focus-visible{outline:none;box-shadow:0 0 0 4px var(--focus-ring)}
 .btn-d:focus-visible,.btn-ds:focus-visible{box-shadow:0 0 0 4px var(--focus-ring-error)}
 
-/* ---- State: Disabled ---- */
+/* ---- State: Disabled — ✅ ของจริง พื้นกับขอบเป็นสีเดียวกัน (#F2F4F7) ตัวอักษร #98A2B3 ---- */
 .btn:disabled,.btn[aria-disabled=true]{
-  background:var(--color-bg-disabled);
-  border-color:var(--color-border-disabled-subtle);
-  color:var(--color-fg-disabled);
+  background:var(--btn-disabled-bg);
+  border-color:var(--btn-disabled-bg);
+  color:var(--btn-disabled-text);
+  box-shadow:none;
   cursor:not-allowed;
 }
 .btn-link:disabled,.btn-linkgray:disabled{background:transparent;border-color:transparent;text-decoration:none}
@@ -194,12 +208,12 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
    ระยะมาจาก padding ของแต่ละแท็บ (12/24) ไม่ใช่ gap ของแถว · แท็บที่เลือกอยู่ตัวอักษร "ดำ"
    ไม่ใช่สีแบรนด์ มีแค่เส้นใต้ที่เป็นสีแบรนด์ และหนา 4px ไม่ใช่ 2px */
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--gray-300)}
-.tab-btn{font-family:inherit;background:none;border:none;border-bottom:4px solid transparent;
-  padding:12px 24px;margin-bottom:-1px;display:inline-flex;align-items:center;gap:8px;
+.tab-btn{font-family:inherit;background:#fff;border:none;border-bottom:1px solid var(--gray-300);
+  height:48px;padding:12px 24px;margin-bottom:-1px;display:inline-flex;align-items:center;gap:8px;
   font-size:var(--fs-text-sm);font-weight:var(--font-weight-semibold);line-height:21px;
   letter-spacing:-.2px;color:var(--gray-500);cursor:pointer}
 .tab-btn:hover{color:var(--gray-700)}
-.tab-btn.on{color:#000;border-bottom-color:var(--primary-600)}
+.tab-btn.on{color:#000;border-bottom:4px solid var(--primary-600)}
 
 /* ---------- Modal — ไลบรารีมี Modal `3:9` (ดู SOURCES.md หมวด ง) แต่เครื่องนี้ไม่มี .figma-extract/
    ให้ดึงค่าเทียบ จึงคุมด้วย pattern กลางของระบบไปก่อน (overlay มืด+เบลอเหมือน .shell::after ·
@@ -448,6 +462,28 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
 .tbl td a{text-decoration:underline}
 .tbl tbody tr:hover td{background:var(--gray-50)}
 .tbl .num{text-align:center;font-weight:600}
+/* ปุ่มท้ายแถว — ✅ ของจริง 40×40 · โปร่งใส ไม่มีขอบ/เงา · ไอคอน 20px น้ำหนักบาง (wght 300) */
+.tbl .dt-action{display:flex;justify-content:center;gap:4px}
+/* radius: วัดจากหน้าจริงได้ 9999 (กลม) — ในไฟล์ CSS ของเขามีกฎ .5rem อยู่ด้วย แต่ไม่ได้ผลกับหน้านี้ ยึดค่าที่เรนเดอร์จริง */
+.tbl .dt-action .btn{width:40px;min-width:40px;height:40px;padding:0;gap:0;border:0;border-radius:var(--r-pill);
+  background:transparent;box-shadow:none;color:var(--gray-600);
+  font-size:var(--fs-text-xs);font-weight:400;line-height:var(--lh-text-xs);letter-spacing:-.2px}
+.tbl .dt-action .btn:hover{background:var(--gray-100)}
+.tbl .dt-action .btn .ms{font-size:20px;font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24}
+
+/* ---------- Pagination — ✅ วัดจาก vmsplus-dev (.join-item.btn.btn-sm)
+   ปุ่มติดกันเป็นแถบเดียว: radius 0 ตรงกลาง โค้ง 8px เฉพาะหัวท้าย · ซ้อนขอบด้วย margin-left -1
+   สูง 39 · pad 0/12 · ขอบ gray-300 · ตัวที่เลือกอยู่พื้น gray-300                        */
+.pager{display:flex;align-items:center}
+.pager .pg{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:39px;
+  padding:0 var(--space-3);margin-left:-1px;background:#fff;border:1px solid var(--gray-300);border-radius:0;gap:var(--space-2);
+  font:inherit;font-size:var(--fs-text-sm);line-height:14px;color:var(--gray-600);cursor:pointer;box-shadow:none}
+.pager .pg:first-child{border-radius:var(--rounded-md) 0 0 var(--rounded-md);margin-left:0}
+.pager .pg:last-child{border-radius:0 var(--rounded-md) var(--rounded-md) 0}
+.pager .pg:hover:not(:disabled){background:var(--gray-50)}
+.pager .pg.on{background:var(--gray-300)}
+.pager .pg:disabled{color:var(--gray-400);cursor:not-allowed}
+.pager .pg .ms{font-size:20px}
 
 /* ============================================================
    v0.6 — Stepper หลายกลุ่ม + ป้ายสถานะบนขั้น (หน้า plan-skeleton)

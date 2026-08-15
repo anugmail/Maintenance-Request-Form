@@ -131,19 +131,20 @@
 
   /* ══════════ ชั้น 2 · SEMANTIC (ชื่อตามไลบรารีจริง) ══════════ */
 
+  /* หมายเหตุ hex ในคอมเมนต์ท้ายบรรทัดอัปเดตตาม gray ramp v1 แล้ว (v0.13) */
   --color-bg-primary:#FFFFFF;                       /* ✔ */
-  --color-bg-primary-hover:var(--gray-50);          /* ✔ #FAFAFA */
-  --color-bg-disabled:var(--gray-100);              /* ✔ #F5F5F5 */
+  --color-bg-primary-hover:var(--gray-50);          /* ✅ #F9FAFB */
+  --color-bg-disabled:var(--gray-100);              /* ✅ #F2F4F7 — พื้นปุ่ม disabled ของจริง */
 
-  --color-border-primary:var(--gray-300);           /* ✔ #D5D7DA */
-  --color-border-disabled-subtle:var(--gray-200);   /* ✔ #E9EAEB */
+  --color-border-primary:var(--gray-300);           /* ✅ #D0D5DD */
+  --color-border-disabled-subtle:var(--gray-200);   /* ✅ #EAECF0 */
 
-  --color-text-primary:var(--gray-900);             /* ⚠ */
-  --color-text-secondary:var(--gray-700);           /* ✔ #414651 */
-  --color-text-secondary-hover:var(--gray-800);     /* ✔ #252B37 */
-  --color-text-tertiary:var(--gray-600);            /* ✔ #535862 */
-  --color-text-tertiary-hover:var(--gray-700);      /* ✔ #414651 */
-  --color-fg-disabled:var(--gray-400);              /* ✔ #A4A7AE */
+  --color-text-primary:#000000;                     /* ✅ runtime — ระบบจริงใช้ดำสนิท ไม่ใช่ gray-900 */
+  --color-text-secondary:var(--gray-700);           /* ✅ #344054 */
+  --color-text-secondary-hover:var(--gray-800);     /* ✔ #252B37 (ไลบรารี · runtime ไม่มีของเทียบ) */
+  --color-text-tertiary:var(--gray-600);            /* ✅ #475467 */
+  --color-text-tertiary-hover:var(--gray-700);      /* ✅ #344054 */
+  --color-fg-disabled:var(--gray-400);              /* ✅ #98A2B3 */
 
 
   /* ══════════ ชั้น 3 · COMPONENT (ชื่อตามไลบรารีจริง) ══════════ */
@@ -154,6 +155,15 @@
   --btn-primary-border:var(--brand-600);            /* ✔ */
   --btn-primary-border-hover:var(--brand-800);      /* ✔ */
   --btn-primary-text:#FFFFFF;                       /* ✔ */
+
+  /* ปุ่ม — Secondary / Tertiary / Disabled (✅ วัดจาก vmsplus-dev) */
+  --btn-secondary-text:var(--gray-600);             /* ✅ #475467 */
+  --btn-secondary-border:var(--gray-300);           /* ✅ #D0D5DD */
+  --btn-tertiary-text:var(--gray-600);              /* ✅ #475467 */
+  --btn-tertiary-brand-text:var(--brand-600);       /* ✅ #A80689 — ปุ่ม "แก้ไข" ในโมดัล */
+  --btn-tertiary-danger-text:var(--error-600);      /* ✅ #D92D20 — ปุ่ม "ยกเลิกคำขอ" */
+  --btn-disabled-bg:var(--gray-100);                /* ✅ #F2F4F7 */
+  --btn-disabled-text:var(--gray-400);              /* ✅ #98A2B3 */
 
   /* ปุ่ม — Destructive */
   --btn-destructive-bg:var(--error-600);            /* ✔ #D92D20 */
