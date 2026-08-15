@@ -46,8 +46,12 @@ while ((m = colorRe.exec(css))) {
   const used = libColors.get(hex.toUpperCase()) || 0;
   const claimsOk = mark === '✔';
   const claimsMissing = mark === '⚠';
+  // ✅ = วัดจากระบบจริง (.vms-runtime) — เจ้าของงานเคาะ 14 ส.ค. 2569 ว่า runtime มาก่อน Figma
+  // ค่าพวกนี้ verify-runtime.js เป็นเจ้าของการตรวจ ไฟล์นี้แค่รายงานว่าไลบรารีมี/ไม่มี
+  const claimsRuntime = mark === '✅';
   let verdict = 'ตรง';
-  if (used && !claimsOk) { verdict = 'ป้ายผิด — มีในไลบรารีแต่กำกับ ' + (mark || '(ไม่มีป้าย)'); problems.push({ name, hex, verdict, used }); }
+  if (claimsRuntime) { verdict = used ? 'ตรง (runtime — ไลบรารีก็มี)' : 'ตรง (runtime — ไลบรารีไม่มี ถือว่า runtime ชนะ)'; }
+  else if (used && !claimsOk) { verdict = 'ป้ายผิด — มีในไลบรารีแต่กำกับ ' + (mark || '(ไม่มีป้าย)'); problems.push({ name, hex, verdict, used }); }
   else if (!used && claimsOk) { verdict = 'ป้ายผิด — กำกับ ✔ แต่ไม่พบในไลบรารี'; problems.push({ name, hex, verdict, used }); }
   else if (!used && !claimsMissing) { verdict = 'ไม่พบในไลบรารีและไม่ได้กำกับ ⚠'; problems.push({ name, hex, verdict, used }); }
   rows.push({ kind: 'สี', name, value: hex, used, mark: mark || '-', verdict, note: (note || '').trim().slice(0, 40) });

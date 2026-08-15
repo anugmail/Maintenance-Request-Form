@@ -19,29 +19,32 @@
   --brand-25:#FDF2FA;      /* ✔ node 1:1377 Badges — พื้นอ่อนสุด */
   --brand-accent:#F5A623;  /* ⚠ ไม่พบในไลบรารี — ส้มในโลโก้ M(D) คนละแหล่ง ใช้เฉพาะโลโก้ */
 
-  /* ---------- Gray (Untitled UI v2 — ramp ที่ไลบรารีจริงใช้) ----------
-     หมายเหตุ: v0.1 ของเราใช้ ramp v1 (#344054/#D0D5DD/…) ซึ่งคนละชุด
-     ค่าด้านล่างแทนที่ทั้งแถบ ชื่อตัวแปรเดิมยังใช้ได้ทุกตัว           */
-  --gray-950:#0A0D12;      /* ✔ ยืนยันจากไลบรารี ใช้ 188 ครั้ง */
-  --gray-900:#181D27;      /* ✔ ยืนยันจากไลบรารี ใช้ 1427 ครั้ง */
-  --gray-800:#252B37;      /* ✔ color/text/secondary-hover */
-  --gray-700:#414651;      /* ✔ color/text/secondary · text/tertiary-hover */
-  --gray-600:#535862;      /* ✔ color/text/tertiary */
-  --gray-500:#717680;      /* ✔ ยืนยันจากไลบรารี ใช้ 1171 ครั้ง */
-  --gray-400:#A4A7AE;      /* ✔ color/fg/disabled */
-  --gray-300:#D5D7DA;      /* ✔ color/border/primary */
-  --gray-200:#E9EAEB;      /* ✔ color/border/disabled-subtle */
-  --gray-100:#F5F5F5;      /* ✔ color/bg/disabled */
-  --gray-50:#FAFAFA;       /* ✔ color/bg/primary-hover */
-  --gray-25:#FCFCFD;       /* ⚠ ไม่พบในไลบรารี — พื้น .work จาก screenshot หน้าจริง (Untitled UI gray-25) */
+  /* ---------- Gray (Untitled UI v1 — ramp ที่ "ระบบจริง" ใช้) ----------
+     🔴 14 ส.ค. 2569 เจ้าของงานเคาะ: ยึด runtime จริงเหนือ Figma library
+     หลังพบว่าสองแหล่งขัดกันทั้งแถบ — Figma = v2 (#717680/#D5D7DA/…) · ระบบจริง = v1
+     ทุกค่าที่กำกับ ✅ วัดจาก vmsplus-dev (ดู .vms-runtime/palette.json)
+     v0.12 เคยย้ายไป v2 ตาม Figma — v0.13 ย้อนกลับมา v1 ตามของจริง           */
+  --gray-950:#0A0D12;      /* ✔ ไลบรารีมี (188 ครั้ง) · หน้าที่เก็บจาก runtime ยังไม่ใช้ตัวนี้ */
+  --gray-900:#181D27;      /* ✔ ไลบรารีมี (1427 ครั้ง) · runtime ใช้ #000 เป็นตัวอักษรหลักแทน (745 ครั้ง) */
+  --gray-800:#252B37;      /* ✔ ไลบรารีมี (94 ครั้ง) · หน้าที่เก็บจาก runtime ยังไม่ใช้ตัวนี้ */
+  --gray-700:#344054;      /* ✅ runtime — ตัวอักษร pill "ยกเลิก" */
+  --gray-600:#475467;      /* ✅ runtime — ตัวอักษรปุ่มรอง · ไอคอน topbar (370 ครั้ง) */
+  --gray-500:#667085;      /* ✅ runtime — ไอคอน sidebar · แท็บที่ไม่ได้เลือก (210 ครั้ง) */
+  --gray-400:#98A2B3;      /* ✅ runtime — ตัวอักษร disabled */
+  --gray-300:#D0D5DD;      /* ✅ runtime — ขอบ input/ปุ่มรอง/pagination (222 ครั้ง) */
+  --gray-200:#EAECF0;      /* ✅ runtime — เส้นใต้แถวตาราง · ขอบ sidebar (495 ครั้ง) */
+  --gray-100:#F2F4F7;      /* ✅ runtime — พื้นหัวตาราง · พื้นปุ่ม disabled (98 ครั้ง) */
+  --gray-50:#F9FAFB;       /* ✅ runtime — พื้น form-card-body (276 ครั้ง) */
+  --gray-25:#FCFCFD;       /* ✅ runtime — พื้น pill "ยกเลิก" */
 
   /* ---------- Semantic palette ---------- */
-  --success-700:#067647;   /* ✔ node 1:1377 Badges + 3:20 Tables — ตัวอักษรบนพื้น success (107 ครั้ง) */
-  --success-600:#17B26A;   /* ✔ node 1:1377 Badges (523 ครั้ง) */
-  --success-500:#079455;   /* ✔ node 3:16 Progress steps + 3:12 Metrics */
-  --success-200:#ABEFC6;   /* ✔ เส้นขอบ badge success (113 ครั้ง) — เดิมเราใส่ #75E0A7 ซึ่งไม่มีในไลบรารี */
+  --success-700:#027A48;   /* ✅ runtime — ตัวอักษร pill "เสร็จสิ้น" (Figma ให้ #067647 · runtime ชนะ) */
+  --success-600:#17B26A;   /* ✅ runtime — badge-indicator badge-success · ตรงกับ Figma พอดี */
+  --success-500:#079455;   /* ✔ node 3:16 Progress steps + 3:12 Metrics — ไม่พบใน runtime แต่ไม่ขัดกัน */
+  --success-200:#A6F4C5;   /* ✅ runtime — ขอบ pill success (Figma ให้ #ABEFC6) */
   --success-100:#DCFAE6;   /* ✔ node 3:9 Modals — พื้นไอคอนสำเร็จ */
-  --success-50:#ECFDF3;    /* ✔ node 1:1377 Badges — พื้น badge สำเร็จ */
+  --success-50:#ECFDF3;    /* ✔ node 1:1377 Badges — ยังใช้ที่อื่น · พื้น badge ให้ใช้ --success-25 */
+  --success-25:#F6FEF9;    /* ✅ runtime — พื้น pill success */
   --warning-800:#93370D;   /* ⚠ ไม่พบในไลบรารี — ตัวอักษรแถบ .draft (Untitled UI warning-800) เดิม hardcode ใน components.css */
   --warning-700:#B54708;   /* ✔ ยืนยันจากไลบรารี ใช้ 52 ครั้ง */
   --warning-600:#F79009;   /* ✔ ยืนยันจากไลบรารี ใช้ 48 ครั้ง */
@@ -53,11 +56,21 @@
   --error-300:#FDA29B;     /* ✔ เส้นขอบช่องกรอก state error (104 ครั้ง) */
   --error-200:#FECDCA;     /* ✔ ยืนยันจากไลบรารี ใช้ 66 ครั้ง */
   --error-50:#FEF3F2;      /* ✔ ยืนยันจากไลบรารี ใช้ 118 ครั้ง */
-  --info-600:#6172F3;      /* ✔ ยืนยันจากไลบรารี ใช้ 32 ครั้ง */
+  --info-700:#3538CD;      /* ✅ runtime — ตัวอักษร badge info ("บันทึกการเดินทาง") */
+  --info-600:#6172F3;      /* ✅ runtime — จุดสถานะสีน้ำเงินในตาราง · ตรงกับ Figma พอดี */
   --info-200:#C7D7FE;      /* ✔ ยืนยันจากไลบรารี ใช้ 72 ครั้ง */
   --info-100:#E0EAFF;      /* ✔ ยืนยันจากไลบรารี ใช้ 2 ครั้ง · เส้นขอบ/แทร็กของ info */
   --info-50:#EEF4FF;       /* ✔ ยืนยันจากไลบรารี ใช้ 72 ครั้ง · พื้นอ่อนของ info */
   --info-25:#F5F8FF;       /* ⚠ ไม่พบในไลบรารี */
+
+  /* ---------- Badge (วัดจาก runtime — pill outline) ✅ ทั้งบล็อก ----------
+     ระบบจริงใช้ ramp แบรนด์อ่อนคนละชุดกับ Figma สำหรับ badge โดยเฉพาะ
+     (Figma: พื้น #FDEEFC ขอบ #F8BFF4 · runtime: พื้น #FFF5FD ขอบ #FED8F6)  */
+  --badge-brand-bg:#FFF5FD;        /* ✅ runtime — พื้น badge แบรนด์ (ชิปนับบนแท็บ) */
+  --badge-brand-border:#FED8F6;    /* ✅ runtime — ขอบ badge แบรนด์ */
+  --badge-neutral-text:var(--gray-700);
+  --badge-neutral-bg:var(--gray-25);
+  --badge-neutral-border:#E4E7EC;  /* ✅ runtime — ขอบ pill "ยกเลิก" · ขอบล่าง topbar (ไม่ตรง gray-200) */
 
   /* ---------- Secondary (น้ำเงิน การ์ดรอง) ---------- */
   --secondary-700:#15409A; /* ⚠ ไม่พบในไลบรารี */
