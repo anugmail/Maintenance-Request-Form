@@ -106,7 +106,7 @@
   --r-sm:8px;              /* alias เดิม = rounded-md */
   --r-md:12px;             /* ~ การ์ดย่อย, รายการ */
   --r-lg:16px;             /* ~ การ์ดหลัก, tile */
-  --r-pill:99px;           /* ~ chip, badge, dot */
+  --r-pill:9999px;         /* ✅ runtime — ค่าที่ระบบจริงใช้จริง (เดิมเราใส่ 99px ซึ่งกลมเท่ากันแต่ไม่ตรงตัวเลข) */
 
   /* ---------- Typography ---------- */
   /* ฟอนต์ไลบรารีจริงคือ Google Sans (✔) — เราคง IBM Plex Sans Thai

@@ -40,9 +40,14 @@ label.fl{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--gray-7
 input[type=text],input[type=number],input[type=tel],input[type=email],input[type=date],input[type=search],textarea,select{width:100%;border:1px solid var(--gray-300);border-radius:var(--r-sm);padding:10px 14px;font:inherit;color:var(--gray-900);background:#fff;box-shadow:var(--shadow-xs)}
 /* focus ตามไลบรารี (Input field State=Focused): ขอบ brand-500 + วงแหวน */
 input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow:var(--shadow-xs),0 0 0 4px var(--focus-ring)}
-.search{position:relative}
-.search .ms{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gray-400)}
-.search input{padding-left:38px}
+/* ช่องค้นหาของ "ลิสต์" (คนละตัวกับ .in ที่เป็นช่องมีไอคอนในฟอร์ม)
+   ✅ วัดจาก vmsplus-dev (.input-group-search): กล่องสูง 40 · ขอบ 1px gray-300 · r8 · pad 0/12 · gap 8
+   ของเดิมเป็นแค่ wrapper relative แล้ววางไอคอนลอยทับ input — ไม่มีกล่องจริง */
+.search{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 12px;background:#fff;border:1px solid var(--gray-300);border-radius:var(--rounded-md)}
+.search .ms{position:static;transform:none;font-size:20px;color:var(--gray-500);flex:0 0 auto}
+.search input{flex:1;min-width:0;height:100%;border:0;border-radius:0;padding:0;background:none;box-shadow:none;font:inherit;font-size:var(--fs-body)}
+.search input:focus{outline:none;border:0;box-shadow:none}
+.search:focus-within{border-color:var(--brand-500);box-shadow:0 0 0 4px var(--focus-ring)}
 
 /* ---------- Buttons ----------------------------------------------------
    ตรงตาม Figma EXT_PEA_VMS_v1.0.2_Component หน้า "↳ Buttons" (node 1:1375)
@@ -172,13 +177,18 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 .seg .sg.sel{border-color:var(--primary-600);background:var(--primary-25);color:var(--primary-600);position:relative;z-index:1}
 
 /* ---------- Badge สถานะ ----------------------------------------------
-   ตามไลบรารี Badge (Size=md, Type=Pill color): pad 2/10 · 14/500 lh20
-   ทุกสีมี "เส้นขอบ" โทน 200 · ตัวอักษรโทน 700 (แบรนด์ = brand-500)      */
-.badge{display:inline-flex;align-items:center;gap:4px;border-radius:var(--r-pill);padding:2px 10px;font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);font-weight:500;border:1px solid transparent}
-.b-ok{background:var(--success-50);color:var(--success-700);border-color:var(--success-200)}
+   ✅ วัดจาก vmsplus-dev (.badge.badge-pill-outline): pad 4/8 · 12/600 lh18 · ls -0.2 · สูง 28
+   ของเดิมอิงไลบรารี Figma (pad 2/10 · 14/500) ซึ่งไม่ตรงกับที่รันอยู่จริง
+   ramp แบรนด์ของ badge ก็คนละชุดกับ Figma → ใช้ --badge-brand-*                */
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:var(--r-pill);padding:4px 8px;font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);font-weight:600;letter-spacing:-.2px;border:1px solid transparent}
+.b-ok{background:var(--success-25);color:var(--success-700);border-color:var(--success-200)}
 .b-low{background:var(--warning-50);color:var(--warning-700);border-color:var(--warning-200)}
 .b-out{background:var(--error-50);color:var(--error-700);border-color:var(--error-200)}
-.b-brand{background:var(--brand-50);color:var(--brand-500);border-color:var(--brand-200)}
+.b-brand{background:var(--badge-brand-bg);color:var(--brand-600);border-color:var(--badge-brand-border)}
+.b-info{background:var(--info-50);color:var(--info-700);border-color:var(--info-200)}
+.b-neutral{background:var(--badge-neutral-bg);color:var(--badge-neutral-text);border-color:var(--badge-neutral-border)}
+/* จุดสถานะนำหน้าข้อความ — ของจริงเป็นวงกลม 6px สีเดียวกับตัวอักษร */
+.badge .dot{width:6px;height:6px;border-radius:var(--r-pill);background:currentColor;flex:0 0 auto}
 
 /* ---------- Tabs (underline) — ✅ วัดจาก vmsplus-dev แล้ว
    ระยะมาจาก padding ของแต่ละแท็บ (12/24) ไม่ใช่ gap ของแถว · แท็บที่เลือกอยู่ตัวอักษร "ดำ"
@@ -425,14 +435,19 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
    v0.5 — ตารางข้อมูล (เมนูคลังอะไหล่)
    ============================================================ */
 .tblwrap{overflow-x:auto;margin-top:12px}
-/* ตามไลบรารี Tables: กรอบ r12 gray-200 เงา xs · หัว 12/600 gray-500 พื้นขาว สูง 44 (pad 12/24)
-   เซลล์ (Size=sm) pad 16/20 · 14px gray-600 · เส้นคั่น gray-200 */
-.tbl{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);overflow:hidden;font-size:var(--fs-text-sm);box-shadow:var(--shadow-xs)}
-.tbl th{background:#fff;color:var(--gray-500);font-weight:600;font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);text-align:left;padding:12px 24px;border-bottom:1px solid var(--gray-200);white-space:nowrap}
-.tbl td{padding:16px 20px;border-bottom:1px solid var(--gray-200);color:var(--gray-600);vertical-align:top}
-.tbl tr:last-child td{border-bottom:none}
+/* ✅ วัดจาก vmsplus-dev (.dataTable) — ต่างจากไลบรารี Figma หลายจุด runtime ชนะ
+   · ไม่มีกรอบ/radius/เงา รอบตาราง (ของเดิมมีครบสามอย่างตามไลบรารี)
+   · หัวตารางพื้น gray-100 · 14/600 ls -0.2 · ไม่มีเส้นขอบ · โค้ง 8px เฉพาะหัวแรก/สุดท้าย · สูง 56
+   · เซลล์ pad 8/16 · ชิดกลางแนวตั้ง · ลิงก์ในเซลล์ขีดเส้นใต้ · ตัวอักษรดำ                    */
+.tbl{width:100%;border-collapse:separate;border-spacing:0;background:none;color:#000}
+.tbl th{background:var(--gray-100);color:#000;font-weight:600;font-size:var(--fs-text-sm);line-height:21px;letter-spacing:-.2px;text-align:left;padding:12px 16px;border:0;height:56px;white-space:nowrap}
+.tbl th:first-child{border-radius:var(--rounded-md) 0 0 var(--rounded-md)}
+.tbl th:last-child{border-radius:0 var(--rounded-md) var(--rounded-md) 0}
+.tbl th .ms{font-size:20px}
+.tbl td{background:#fff;padding:8px 16px;border-bottom:1px solid var(--gray-200);color:#000;font-size:var(--fs-text-sm);line-height:21px;letter-spacing:-.2px;vertical-align:middle}
+.tbl td a{text-decoration:underline}
 .tbl tbody tr:hover td{background:var(--gray-50)}
-.tbl .num{text-align:center;font-weight:600;color:var(--gray-900)}
+.tbl .num{text-align:center;font-weight:600}
 
 /* ============================================================
    v0.6 — Stepper หลายกลุ่ม + ป้ายสถานะบนขั้น (หน้า plan-skeleton)
