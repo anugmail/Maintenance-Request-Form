@@ -13,6 +13,9 @@
 
 ## วิธีที่ใช้อ่าน — REST API ไม่ใช่ MCP
 
+> 📘 **ขั้นตอนเต็ม + สคริปต์สกัดที่เทสแล้ว อยู่ที่ [`HOWTO-read-figma.md`](HOWTO-read-figma.md)**
+> (ออก token · หา file key/node id · endpoint ที่ใช้ได้/ใช้ไม่ได้ · สคริปต์ generate `.figma-extract/` ใหม่)
+
 MCP ติด rate limit ของแพลน Starter (~4 call ต่อรอบ) ⇒ 33 node ที่เจ้าของงานส่งมาอ่านไม่มีทางจบ
 **11 ส.ค. 2569 เปลี่ยนไปใช้ Figma REST API แทน แล้วดึงทั้งไฟล์รวดเดียว**
 

@@ -3,5 +3,8 @@
 # ดัมป์ไลบรารี Figma ของ PEA — repo นี้ public จึงไม่ push ขึ้นไป
 design-system/.figma-extract/
 
+# สกรีนช็อต + ค่า computed ที่ดูดจาก vmsplus-dev (มีชื่อพนักงาน/เลขคำขอจริง) — ห้าม push
+design-system/.vms-runtime/
+
 # ผลลัพธ์ที่ generate ของ figma-export (dom-*.json, spec.json)
 figma-export/out/
