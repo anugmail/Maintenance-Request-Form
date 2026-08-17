@@ -125,9 +125,9 @@ function renderStep1(plan) {
 
   // ติ๊กในตาราง = รถของไตรมาสที่กำลังดูอยู่เท่านั้น
   const selected = new Set(MYD.planVehicleIds(plan, activeQ));
-  // ทุกยอด "เลือกได้กี่คัน" นับจากรถที่ผ่าน canJoinPlan เท่านั้น — รถซ่อมอยู่/หมดสภาพ
-  // ติ๊กไม่ได้ ถ้ายังเอามานับ ช่อง "เลือกทั้งเขต" จะไม่มีวันขึ้นเครื่องหมายถูก
-  const joinableAll = allVehicles.filter(v => MYD.canJoinPlan(v));
+  // ติ๊กได้ทุกสถานะแล้ว (เจ้าของงานสั่ง 17 ส.ค. 2569) — สถานะเป็นข้อมูลประกอบการตัดสินใจ
+  // ไม่ใช่ตัวกั้น · ยอดทุกระดับจึงนับรถทั้งหมด
+  const joinableAll = allVehicles;
   const allSelected = joinableAll.length > 0 && joinableAll.every(v => selected.has(v.id));
   const regionsSelected = new Set(allVehicles.filter(v => selected.has(v.id)).map(v => v.region));
 
@@ -136,13 +136,13 @@ function renderStep1(plan) {
     if (!regions.length) return '';
     const regionIds = new Set(regions.map(r => r.id));
     const zoneVehicles = allVehicles.filter(v => regionIds.has(v.region));
-    const zoneJoinable = zoneVehicles.filter(v => MYD.canJoinPlan(v));
+    const zoneJoinable = zoneVehicles;
     const zoneSel = zoneVehicles.filter(v => selected.has(v.id)).length;
     const zoneChecked = zoneJoinable.length > 0 && zoneSel === zoneJoinable.length;
-    const zoneBlocked = zoneVehicles.length - zoneJoinable.length;
+
     const blocks = regions.map(r => renderRegionBlock(r, master, selected, plan)).join('');
     return `<div class="sect">
-      <span style="margin-right:auto">${esc(MYD.ZONE_LABELS[zone])} <span style="font-weight:400;color:var(--gray-500);font-size:14px">(${zoneJoinable.length} คัน${zoneBlocked ? ` · เลือกไม่ได้ ${zoneBlocked}` : ''})</span></span>
+      <span style="margin-right:auto">${esc(MYD.ZONE_LABELS[zone])} <span style="font-weight:400;color:var(--gray-500);font-size:14px">(${zoneJoinable.length} คัน)</span></span>
       <label class="rzone-allchk" style="font-weight:500" onclick="event.stopPropagation()"><input type="checkbox" class="zoneAllChk" data-zone="${zone}" ${zoneJoinable.length === 0 ? 'disabled' : ''} ${zoneChecked ? 'checked' : ''}> เลือกทั้งภาค</label>
     </div>${blocks}`;
   }).join('');
@@ -188,30 +188,28 @@ function renderStep1(plan) {
       <div>มีรถ <b>${noneCount}</b> คันอยู่ในแผนแต่<b>ยังไม่ระบุไตรมาส</b> — ถูกพักไว้ตอนแก้แผนเดินทาง ยังไม่ถูกนับเข้าไตรมาสไหน</div></div>` : ''}
 
     <div class="sect">เลือกรถเข้าไตรมาส ${esc(activeQ.replace('Q', ''))}${activeInfo ? ' (' + esc(activeInfo.months) + ')' : ''}</div>
-    <div class="sub">ไตรมาสนี้เลือกแล้ว ${selected.size} คัน จาก ${regionsSelected.size} เขต${allVehicles.length - joinableAll.length ? ` · มีรถที่เลือกเข้าแผนไม่ได้ ${allVehicles.length - joinableAll.length} คัน (ซ่อมอยู่ · หมดสภาพ · โอนย้าย · รอจำหน่าย)` : ''}</div>
+    <div class="sub">ไตรมาสนี้เลือกแล้ว ${selected.size} คัน จาก ${regionsSelected.size} เขต · เลือกได้ทุกสถานะ — ดูคำเตือนใต้ป้ายสถานะแล้วติ๊กออกเองได้</div>
     <div class="chk" style="margin-bottom:12px">
-      <label><input type="checkbox" id="chkAllZones" ${allSelected ? 'checked' : ''} ${joinableAll.length === 0 ? 'disabled' : ''}> เลือกทั้งหมด (ทุกเขต) — ${joinableAll.length} คันที่เลือกได้</label>
+      <label><input type="checkbox" id="chkAllZones" ${allSelected ? 'checked' : ''} ${joinableAll.length === 0 ? 'disabled' : ''}> เลือกทั้งหมด (ทุกเขต) — ${joinableAll.length} คัน</label>
     </div>
     ${zonesHtml || `<div class="empty">ไม่มีรถ</div>`}`;
 }
 
 function renderRegionBlock(region, master, selected, plan) {
   const vehicles = regionVehiclesFor(master, region.id);
-  const joinable = vehicles.filter(v => MYD.canJoinPlan(v));   // นับจากรถที่เลือกได้จริงเท่านั้น
+  const joinable = vehicles;
   const selCount = vehicles.filter(v => selected.has(v.id)).length;
-  const blocked = vehicles.length - joinable.length;
   const expanded = !!state.expandedRegions[region.id];
 
   const rows = vehicles.map(v => {
-    const can = MYD.canJoinPlan(v);
-    const reason = MYD.blockReason(v);
+    const note = MYD.statusNote(v);
     // รถอยู่ได้ไตรมาสเดียว — ต้องบอกทุกคันว่า "ถูกจัดไปไตรมาสไหนแล้ว" ไม่ใช่เฉพาะคันที่อยู่
     // ไตรมาสอื่น (เจ้าของงานสั่ง 17 ส.ค. 2569) ไม่งั้นคันที่อยู่ไตรมาสนี้จะอ่านไม่ออกจาก
     // ช่องติ๊กอย่างเดียวว่าเลือกไปแล้ว และติ๊กในไตรมาสใหม่แล้วจะงงว่าทำไมยอดไตรมาสโน้นลด
     const bucket = MYD.bucketOf(plan, v.id);
     return `
-    <tr data-id="${esc(v.id)}"${can ? '' : ' class="vrow-blocked"'}>
-      <td><input type="checkbox" class="rowChk" data-id="${esc(v.id)}" ${selected.has(v.id) ? 'checked' : ''} ${can ? '' : 'disabled'}></td>
+    <tr data-id="${esc(v.id)}">
+      <td><input type="checkbox" class="rowChk" data-id="${esc(v.id)}" ${selected.has(v.id) ? 'checked' : ''}></td>
       <td>${esc(v.plate)}</td>
       <td>${esc(v.vehicleType)}
         <div class="cell-sub">${esc(v.brand)}${v.chassis && v.chassis !== '—' ? ' · ' + esc(v.chassis) : ''}</div></td>
@@ -225,7 +223,7 @@ function renderRegionBlock(region, master, selected, plan) {
                 ? `<span class="badge b-brand"><span class="dot"></span>${esc(bucket)} · ไตรมาสนี้</span>`
                 : `<span class="badge b-info">${esc(bucket)}</span>`}</td>
       <td><span class="badge ${STATUS_BADGE_CLASS[v.status] || 'b-neutral'}">${esc(MYD.STATUS_LABELS[v.status] || v.status)}</span>
-        ${reason ? `<div class="cell-sub">${esc(reason)}</div>` : ''}</td>
+        ${note ? `<div class="cell-sub">${esc(note)}</div>` : ''}</td>
     </tr>`;
   }).join('');
 
@@ -247,7 +245,7 @@ function renderRegionBlock(region, master, selected, plan) {
       <div class="rzone-head" onclick="toggleRegion(${region.id})">
         <span class="ms rzone-caret">${expanded ? 'expand_more' : 'chevron_right'}</span>
         <b>${esc(region.name)}</b>
-        <span class="rzone-count">(ไตรมาสนี้ ${selCount}/${joinable.length} คัน${blocked ? ` · เลือกไม่ได้ ${blocked}` : ''})</span>
+        <span class="rzone-count">(ไตรมาสนี้ ${selCount}/${joinable.length} คัน)</span>
         ${pickedTags}
         <label class="rzone-allchk" onclick="event.stopPropagation()">
           <input type="checkbox" class="regionAllChk" data-region="${region.id}" ${joinable.length === 0 ? 'disabled' : ''} ${joinable.length > 0 && selCount === joinable.length ? 'checked' : ''}> เลือกทั้งเขต
@@ -290,7 +288,7 @@ function bindStep1(plan) {
   const master = MYD.loadMaster();
   const allVehicles = master.vehicles;
   // เลือกหมู่ทุกระดับทำงานกับ "รถที่เลือกได้" ชุดเดียวกับที่เรนเดอร์ช่องติ๊ก
-  const joinable = vs => vs.filter(v => MYD.canJoinPlan(v));
+  const joinable = vs => vs;
 
   const chkAllZones = $('chkAllZones');
   if (chkAllZones) {

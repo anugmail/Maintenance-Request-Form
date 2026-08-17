@@ -490,9 +490,6 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
    เหตุผลใต้ป้ายสถานะ) ใช้เมื่อค่าสองชั้นควรอยู่เซลล์เดียวกัน ไม่ใช่แตกคอลัมน์เพิ่ม
    ต่างจาก .sub ที่เป็นคำโปรยใต้หัวข้อของ section (14px + margin ล่าง) */
 .tbl .cell-sub{font-size:var(--fs-text-xs);line-height:18px;color:var(--gray-500);margin-top:2px}
-/* แถวที่เลือกไม่ได้ — จางลงทั้งแถว แต่ยังอ่านออก (ต้องเห็นว่ามีรถคันนี้อยู่และทำไมถึงเลือกไม่ได้) */
-.tbl tr.vrow-blocked td{color:var(--gray-500)}
-.tbl tr.vrow-blocked td:first-child{opacity:.5}
 /* ปุ่มท้ายแถว — ✅ ของจริง 40×40 · โปร่งใส ไม่มีขอบ/เงา · ไอคอน 20px น้ำหนักบาง (wght 300) */
 .tbl .dt-action{display:flex;justify-content:center;gap:4px}
 /* radius: วัดจากหน้าจริงได้ 9999 (กลม) — ในไฟล์ CSS ของเขามีกฎ .5rem อยู่ด้วย แต่ไม่ได้ผลกับหน้านี้ ยึดค่าที่เรนเดอร์จริง */

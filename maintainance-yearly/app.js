@@ -637,12 +637,25 @@ function renderProcStep2(plan) {
     const rows = vs.map(v => {
       const d = (trip.dates || {})[v.id] || '';
       const bad = d && !MYD.dateInWindow(trip, d);
+      const jobs = MYD.tripJobsOf(trip, v.id);
+      const noJob = !jobs.change && !jobs.inspect;
+      const placeSet = (trip.places || {})[v.id];
       return `<tr>
-        <td><b>${esc(v.plate)}</b><div class="sub">${esc(v.brand)}</div></td>
-        <td>${esc(v.ownerDept)}<div class="sub">${esc(MYD.provinceOfRegion(v.region))}</div></td>
+        <td><b>${esc(v.plate)}</b><div class="cell-sub">${esc(v.brand)}</div></td>
+        <td>${esc(v.ownerDept)}<div class="cell-sub">${v.ownerLevel === 'region' ? 'รถของเขต' : esc(v.province)}</div></td>
+        <td>${locked
+              ? esc(MYD.tripJobsText(trip, v.id))
+              : `<div class="chips pick">${MYD.TRIP_JOBS.map(j => `
+                  <span class="chip ${jobs[j.id] ? 'sel' : ''}" data-job-trip="${esc(trip.id)}"
+                    data-job-veh="${esc(v.id)}" data-job="${esc(j.id)}">${esc(j.label)}</span>`).join('')}</div>
+                 ${noJob ? '<div class="cell-sub">ต้องเลือกอย่างน้อย 1 งาน</div>' : ''}`}</td>
+        <td><div class="in noic"><input type="text" value="${esc(placeSet || '')}" ${dis}
+              placeholder="${esc(MYD.defaultPlaceOf(v))}"
+              data-place-trip="${esc(trip.id)}" data-place-veh="${esc(v.id)}"></div>
+            <div class="cell-sub">${placeSet ? 'แก้จากค่าตั้งต้น' : 'ค่าตั้งต้น: ' + esc(MYD.defaultPlaceOf(v))}</div></td>
         <td><div class="in noic"><input type="date" value="${esc(d)}" ${dis}
               data-trip="${esc(trip.id)}" data-veh="${esc(v.id)}"></div>
-            ${bad ? `<div class="sub">อยู่นอกช่วงที่เสนอ</div>` : ''}</td>
+            ${bad ? `<div class="cell-sub">อยู่นอกช่วงที่เสนอ</div>` : ''}</td>
         <td>${locked ? esc(MYD.bucketOf(plan, v.id) || '—') : `
           <div class="in noic"><select class="vehQMove" data-veh="${esc(v.id)}" data-trip="${esc(trip.id)}">
             ${['Q1', 'Q2', 'Q3', 'Q4'].map(q => `<option value="${q}" ${MYD.bucketOf(plan, v.id) === q ? 'selected' : ''}>อยู่ ${q}</option>`).join('')}
@@ -699,9 +712,23 @@ function renderProcStep2(plan) {
             <div class="f"><label>รวม</label><div><b>${esc((trip.perDiem || 0) + (trip.lodging || 0) + (trip.travel || 0))} บาท</b></div></div>
           </div>
 
+          <div class="sect">พนักงาน กบค. ที่ออกไปซ่อม</div>
+          <div class="sub">ปกติ 2-3 คนต่อใบ — ใส่ชื่อไว้เพื่อให้หน่วยงานเจ้าของรถรู้ว่าใครจะไป</div>
+          <div class="fgrid">
+            ${(trip.staff || ['']).map((name, i) => `
+              <div class="f sp2"><label>คนที่ ${i + 1}</label>
+                <div class="in"><span class="ms">engineering</span>
+                  <input type="text" value="${esc(name || '')}" ${dis} placeholder="ชื่อ-สกุล"
+                    data-staff-trip="${esc(trip.id)}" data-staff-i="${i}"></div></div>`).join('')}
+          </div>
+          ${locked ? '' : `<div class="actions" style="justify-content:flex-start;margin-top:-6px">
+            <button class="btn btn-t btn-sm" data-staff-add="${esc(trip.id)}"><span class="ms">add</span> เพิ่มคน</button>
+            ${(trip.staff || []).length > 1 ? `<button class="btn btn-t btn-sm" data-staff-del="${esc(trip.id)}"><span class="ms">remove</span> ลดคน</button>` : ''}
+          </div>`}
+
           <div class="sect">รถในแผนนี้ + วันนัดรายคัน</div>
           ${vs.length ? `<div class="tblwrap"><table class="tbl">
-            <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>วันนัด</th><th>ไตรมาส</th><th></th></tr></thead>
+            <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>งานที่จะทำ</th><th>สถานที่บำรุงรักษา</th><th>วันนัด</th><th>ไตรมาส</th><th></th></tr></thead>
             <tbody>${rows}</tbody></table></div>`
             : `<div class="empty">ยังไม่มีรถในแผนนี้ — เลือกจากรายการด้านล่าง</div>`}
 
@@ -726,7 +753,7 @@ function renderProcStep2(plan) {
             ${locked
               ? `<button class="btn btn-g" data-trip-del="${esc(trip.id)}" disabled>ส่งแล้ว แก้ไม่ได้</button>`
               : `<button class="btn btn-g" data-trip-del="${esc(trip.id)}">ลบแผนนี้</button>
-                 <button class="btn btn-o" data-trip-send="${esc(trip.id)}" ${MYD.tripReadyToSend(trip) ? '' : 'disabled'}>
+                 <button class="btn btn-o" data-trip-send="${esc(trip.id)}" ${MYD.tripReadyToSend(trip) && MYD.tripStaffList(trip).length && !MYD.tripJobsIncomplete(trip).length ? '' : 'disabled'}>
                    <span class="ms">send</span> ${st === 'rejected' ? 'แก้แล้วส่งใหม่' : 'ส่งแผนนัดให้หน่วยงาน'}</button>`}
           </div>
         </div>
@@ -760,6 +787,57 @@ function bindProcStep2(plan) {
   const trips = MYD.ensureTrips(plan);
   const find = id => trips.find(t => t.id === id);
   const rerender = () => { MYD.savePlan(plan); renderProcWizard(plan); };
+
+  // ชื่อพนักงาน กบค. — บันทึกทันทีแต่ไม่ re-render (ไม่งั้นโฟกัสหลุดระหว่างพิมพ์)
+  document.querySelectorAll('[data-staff-trip]').forEach(el => {
+    el.addEventListener('input', e => {
+      const t = find(el.dataset.staffTrip);
+      if (!t) return;
+      t.staff = t.staff || [];
+      t.staff[Number(el.dataset.staffI)] = e.target.value;
+      MYD.savePlan(plan);
+    });
+  });
+  document.querySelectorAll('[data-staff-add]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = find(btn.dataset.staffAdd);
+      if (!t) return;
+      t.staff = [...(t.staff || []), ''];
+      rerender();
+    });
+  });
+  document.querySelectorAll('[data-staff-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = find(btn.dataset.staffDel);
+      if (!t || (t.staff || []).length <= 1) return;
+      t.staff = t.staff.slice(0, -1);
+      rerender();
+    });
+  });
+
+  // งานต่อคัน — ติ๊กได้ทั้งสองอย่าง หรืออย่างเดียว
+  document.querySelectorAll('[data-job]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const t = find(chip.dataset.jobTrip);
+      if (!t) return;
+      const veh = chip.dataset.jobVeh;
+      const cur = MYD.tripJobsOf(t, veh);
+      t.jobs = t.jobs || {};
+      t.jobs[veh] = { ...cur, [chip.dataset.job]: !cur[chip.dataset.job] };
+      rerender();
+    });
+  });
+
+  // สถานที่บำรุงรักษารายคัน — ว่าง = กลับไปใช้ค่าตั้งต้น
+  document.querySelectorAll('[data-place-trip]').forEach(el => {
+    el.addEventListener('input', e => {
+      const t = find(el.dataset.placeTrip);
+      if (!t) return;
+      t.places = t.places || {};
+      t.places[el.dataset.placeVeh] = e.target.value;
+      MYD.savePlan(plan);
+    });
+  });
 
   // สลับไตรมาสที่กำลังทำแผนเดินทาง — ไม่แตะข้อมูล แค่เปลี่ยนมุมมอง
   document.querySelectorAll('.travelQSeg').forEach(sg => {

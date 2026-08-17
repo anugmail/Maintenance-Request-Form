@@ -34,7 +34,7 @@ const DEFAULT_SETTINGS = { confirmDueDays: 7 };   // ยังไม่ได้
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 10;  // 10 = เพิ่มปฏิทินปีงบ (createdFY) + รอบทบทวนแผน (revisions)
+const SCHEMA_VERSION = 11;  // 11 = trip มีพนักงาน/งานต่อคัน/สถานที่รายคัน + รถมี ownerLevel
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -112,7 +112,14 @@ function genSeedVehicles() {
         vehicleType: t,
         brand: b.brand,
         chassis: b.chassis,
-        ownerDept: OWNER_DEPTS_BY_REGION[r][i % OWNER_DEPTS_BY_REGION[r].length],
+        // ⚠️ ข้อมูลจำลอง: ทุก 6 คันให้ 1 คันเป็น "รถของเขต" (กรย. เขต N) ที่เหลือเป็นรถของ
+        // หน่วยงานระดับจังหวัด/สาขา — ของจริงต้องดูจาก mas_department ว่าหน่วยเจ้าของ
+        // อยู่ระดับไหน · เพิ่มเพราะเจ้าของงานกำหนดกติกา default สถานที่ต่างกันสองแบบ
+        // (17 ส.ค. 2569: "Default เป็นจังหวัดที่สังกัด แต่ถ้าเป็นรถเขต ให้เป็นเขตที่อยู่")
+        ownerLevel: i % 6 === 0 ? 'region' : 'province',
+        ownerDept: i % 6 === 0
+          ? `กรย. เขต ${r}`
+          : OWNER_DEPTS_BY_REGION[r][i % OWNER_DEPTS_BY_REGION[r].length],
         // จังหวัด = ชื่อหลัง "กฟจ." ของเขตนั้น (กฟส. ที่เหลือเป็นอำเภอในจังหวัดเดียวกัน)
         // ไม่ได้ตั้งชื่อจังหวัดขึ้นใหม่ — ยกจาก OWNER_DEPTS_BY_REGION ที่มีอยู่แล้ว
         province: OWNER_DEPTS_BY_REGION[r][0].replace('กฟจ. ', ''),
@@ -330,14 +337,15 @@ const MYD = {
     decommissioned:  'หมดสภาพการใช้งาน',
     disposal:        'รอจำหน่าย',
   },
-  // เหตุผลที่เลือกเข้าแผนไม่ได้ — คีย์ที่ไม่มีในนี้ = เลือกได้
-  // (เจ้าของงานสั่ง 17 ส.ค. 2569: รถสถานะไม่พร้อมต้องปิดช่องติ๊ก + บอกเหตุผล
-  //  ไม่ใช่แค่ขึ้นป้ายเตือน — กันทำแผนให้รถที่เข้าซ่อมไม่ได้จริง)
-  STATUS_BLOCK_REASON: {
-    repairing:      'อยู่ระหว่างซ่อม ยังเข้าแผนบำรุงรักษาไม่ได้',
-    transferred:    'โอนย้ายไปหน่วยงานอื่นแล้ว',
-    decommissioned: 'หมดสภาพการใช้งาน ไม่ต้องบำรุงรักษา',
-    disposal:       'รอจำหน่าย ไม่ต้องบำรุงรักษา',
+  // ข้อควรรู้ของแต่ละสถานะ — "เตือน" ไม่ใช่ "ห้าม"
+  // เจ้าของงานสั่ง 17 ส.ค. 2569 (แก้จากตอนเช้าที่ให้ปิดช่องติ๊ก):
+  //   "ตอนเลือก ทุกสถานะสามารถเลือกได้ แล้วคนสร้างแผนค่อยมาเลือกออก"
+  // ⇒ ติ๊กได้ทุกคัน · ข้อความนี้แสดงใต้ป้ายสถานะให้คนทำแผนตัดสินเอง
+  STATUS_NOTE: {
+    repairing:      'อยู่ระหว่างซ่อม — ตรวจสอบก่อนว่าจะซ่อมเสร็จทันรอบไหม',
+    transferred:    'โอนย้ายไปหน่วยงานอื่นแล้ว — ยืนยันกับหน่วยงานปลายทางก่อน',
+    decommissioned: 'หมดสภาพการใช้งาน — ปกติไม่ต้องบำรุงรักษา',
+    disposal:       'รอจำหน่าย — ปกติไม่ต้องบำรุงรักษา',
   },
   CATEGORY_LABELS: { part:'อะไหล่', oil:'น้ำมัน', filter:'ไส้กรอง' },
   OILKIND_LABELS:  { engine:'น้ำมันเครื่อง', gear:'น้ำมันเฟือง', hydraulic:'น้ำมันไฮดรอลิก' },
@@ -599,15 +607,64 @@ const MYD = {
   // ----- แผนเดินทาง: หลายใบต่อหนึ่งแผนบำรุงรักษา (เคาะ 10 ส.ค. 2569) -----
   // "การสร้างจะอิสระ หมายถึงเลือกรถได้ เลือกแผน" — ใบไม่ผูกกับจังหวัด กบค. จัดเอง
   // trip = { id, name, location, windowFrom, windowTo, perDiem, lodging, travel,
-  //          vehicleIds:[], dates:{[vehicleId]:'YYYY-MM-DD'}, sentAt,
-  //          replies:{ [ownerDept]: {status,reason,by,at,history:[]} } }
+  //          staff:[ชื่อพนักงาน กบค.], vehicleIds:[], dates:{[vehicleId]:'YYYY-MM-DD'},
+  //          jobs:{[vehicleId]:{change,inspect}}, places:{[vehicleId]:'สถานที่'},
+  //          sentAt, replies:{ [ownerDept]: {status,reason,by,at,history:[]} } }
   // วันนัดอยู่ระดับ "รายคัน" · ช่วงเวลาอยู่ระดับ "ใบ" · การตอบรับอยู่ระดับ "ใบ × หน่วยงาน"
   // (ใบหนึ่งอาจมีรถของหลายหน่วยงาน แต่ละหน่วยงานตอบเฉพาะรถของตัวเอง)
 
   emptyTrip(id, name) {
     return { id, name: name || '', location: '', windowFrom: '', windowTo: '',
              perDiem: 0, lodging: 0, travel: 0,
-             vehicleIds: [], dates: {}, sentAt: null, replies: {} };
+             staff: ['', ''],        // พนักงาน กบค. ที่ออกไปซ่อม — ปกติ 2-3 คน
+             vehicleIds: [], dates: {},
+             jobs: {},               // { [vehicleId]: { change:bool, inspect:bool } }
+             places: {},             // { [vehicleId]: 'สถานที่บำรุงรักษา' } — ว่าง = ใช้ default
+             sentAt: null, replies: {} };
+  },
+
+  // งานที่ทำได้ต่อรถ 1 คัน — เลือกอย่างเดียวหรือทั้งสองก็ได้ (เจ้าของงาน 17 ส.ค. 2569)
+  TRIP_JOBS: [
+    { id: 'change',  label: 'เปลี่ยนถ่ายน้ำมันไฮดรอลิก' },
+    { id: 'inspect', label: 'ตรวจน้ำมันไฮดรอลิก' },
+  ],
+
+  // ตั้งต้นติ๊กทั้งสองงาน — ส่วนใหญ่ไปทำทั้งคู่ คนทำแผนค่อยติ๊กออกเฉพาะคันที่ทำอย่างเดียว
+  tripJobsOf(trip, vehicleId) {
+    const j = (trip.jobs || {})[vehicleId];
+    return j || { change: true, inspect: true };
+  },
+
+  tripJobsText(trip, vehicleId) {
+    const j = this.tripJobsOf(trip, vehicleId);
+    const on = this.TRIP_JOBS.filter(x => j[x.id]).map(x => x.label);
+    return on.length ? on.join(' + ') : 'ยังไม่เลือกงาน';
+  },
+
+  // สถานที่บำรุงรักษาตั้งต้นของรถคันหนึ่ง (เจ้าของงาน 17 ส.ค. 2569)
+  //   รถของหน่วยงานระดับจังหวัด/สาขา → จังหวัดที่สังกัด
+  //   รถของเขต (ownerLevel='region') → เขตที่อยู่
+  defaultPlaceOf(vehicle) {
+    if (!vehicle) return '';
+    return vehicle.ownerLevel === 'region' ? `กรย. เขต ${vehicle.region}` : vehicle.province;
+  },
+
+  tripPlaceOf(trip, vehicle) {
+    const set = (trip.places || {})[vehicle.id];
+    return set != null && set !== '' ? set : this.defaultPlaceOf(vehicle);
+  },
+
+  // ใบนี้พร้อมส่งไหม (นอกจากวันนัด/ช่วงเวลาเดิม) — ต้องมีพนักงานอย่างน้อย 1 คน
+  // และทุกคันต้องเลือกงานอย่างน้อย 1 อย่าง ไม่งั้นส่งไปหน่วยงานก็ไม่รู้ว่าจะทำอะไร
+  tripStaffList(trip) {
+    return (trip.staff || []).map(x => (x || '').trim()).filter(Boolean);
+  },
+
+  tripJobsIncomplete(trip) {
+    return (trip.vehicleIds || []).filter(id => {
+      const j = this.tripJobsOf(trip, id);
+      return !j.change && !j.inspect;
+    });
   },
 
   // สร้างโครงในหน่วยความจำเฉยๆ — ไม่เขียน storage
@@ -843,14 +900,9 @@ const MYD = {
     return this.QUARTER_KEYS.filter(q => plan.byQuarter[q].length === 0);
   },
 
-  // รถคันนี้เลือกเข้าแผนได้ไหม — ใช้ทั้งตอนเรนเดอร์ช่องติ๊กและตอน "เลือกทั้งเขต/ภาค/ทั้งหมด"
-  // ให้ตอบจากที่เดียว ไม่งั้นปุ่มเลือกหมู่จะติ๊กรถที่ช่องเดี่ยวปิดไว้
-  canJoinPlan(vehicle) {
-    return !this.STATUS_BLOCK_REASON[vehicle.status];
-  },
-
-  blockReason(vehicle) {
-    return this.STATUS_BLOCK_REASON[vehicle.status] || '';
+  // ข้อความเตือนของรถคันนี้ (ถ้ามี) — ไม่ได้ห้ามเลือก แค่บอกให้คนทำแผนรู้
+  statusNote(vehicle) {
+    return this.STATUS_NOTE[vehicle.status] || '';
   },
 
   // ไตรมาสตามปีงบประมาณ (ต.ค.–ก.ย.): ต.ค.=เดือน 10 → Q1
