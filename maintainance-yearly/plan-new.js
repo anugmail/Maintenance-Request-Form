@@ -1,7 +1,7 @@
 // plan-new.js — หน้า "ออกเลขงาน" (แยกออกจาก stepper ปฏิบัติการแล้ว)
 //
 // หน้านี้ทำเรื่องเดียว: สร้างแผนบำรุงรักษาประจำปีของ กบค. แล้วออกเลขงาน
-// wizard 3 ขั้น: ชื่อแผน+เลือกรถ → รายการอะไหล่ → สรุปทั้งปี → [ออกเลขงาน]
+// wizard 3 ขั้น: ไทรมาส+ชื่อแผน+เลือกรถ → รายการอะไหล่ → สรุปทั้งปี → [ออกเลขงาน]
 // ออกเลขแล้วส่งเอกสารแจ้งฝ่ายพัสดุ และแผนจะไปโผล่ใน "รายการแผน" (index.html)
 //
 // deep-link: plan-new.html#<planId> = แก้แผนร่างที่ค้างอยู่ · ไม่มี hash = สร้างใหม่
@@ -11,7 +11,7 @@ const state = { sub: 1, grp: 'cat', expandedRegions: {} };
 let PLAN = null;
 
 const SUB_STEPS = [
-  { no: 1, label: 'ชื่อแผน + เลือกรถ' },
+  { no: 1, label: 'ไทรมาส + ชื่อแผน + เลือกรถ' },
   { no: 2, label: 'รายการอะไหล่' },
   { no: 3, label: 'สรุปแผนทั้งปี' },
 ];
@@ -46,7 +46,7 @@ function backSub() {
 }
 
 function validateSub(plan, sub) {
-  if (sub === 1) return !!(plan.planName && plan.planName.trim()) && (plan.selectedVehicleIds || []).length >= 1;
+  if (sub === 1) return !!plan.quarter && !!(plan.planName && plan.planName.trim()) && (plan.selectedVehicleIds || []).length >= 1;
   if (sub === 2) return deriveLinesForPlan(plan).lines.length >= 1;
   return true; // ขั้นสุดท้าย (สรุป) กดออกเลขงานได้เสมอ
 }
@@ -133,9 +133,20 @@ function renderStep1(plan) {
     </div>${blocks}`;
   }).join('');
 
+  const nowQ = MYD.quarterOfMonth(new Date().getMonth() + 1);
+  const qInfo = QUARTERS.find(q => q.q === plan.quarter);
+  const qSeg = QUARTERS.map(q => `
+    <div class="sg qSeg ${plan.quarter === q.q ? 'sel' : ''}" data-q="${q.q}">
+      ${esc(q.q)}<div style="font-weight:400;font-size:var(--fs-text-xs);color:var(--gray-500)">${esc(q.months)}${q.q === nowQ ? ' · ตอนนี้' : ''}</div>
+    </div>`).join('');
+
   return `
-    <div class="sect">ขั้นที่ 1: ชื่อแผน + เลือกรถเข้าแผน</div>
+    <div class="sect">ขั้นที่ 1: ไทรมาส + ชื่อแผน + เลือกรถเข้าแผน</div>
     <div class="fgrid">
+      <div class="f sp2">
+        <label>ไทรมาสของแผน (ปีงบประมาณ ${esc(plan.year)})</label>
+        <div class="seg">${qSeg}</div>
+      </div>
       <div class="f sp4">
         <label>ชื่อแผน</label>
         <div class="in"><span class="ms">assignment</span>
@@ -143,11 +154,14 @@ function renderStep1(plan) {
         </div>
       </div>
     </div>
+    ${!plan.quarter ? `
+    <div class="empty">เลือกไทรมาสก่อน จึงจะเลือกรถเข้าแผนได้</div>` : `
+    <div class="sect">เลือกรถเข้าแผนไทรมาส ${esc(plan.quarter.replace('Q', ''))}${qInfo ? ' (' + esc(qInfo.months) + ')' : ''}</div>
     <div class="sub">เลือกแล้ว ${selected.size} คัน จาก ${regionsSelected.size} เขต</div>
     <div class="chk" style="margin-bottom:12px">
       <label><input type="checkbox" id="chkAllZones" ${allSelected ? 'checked' : ''} ${allVehicles.length === 0 ? 'disabled' : ''}> เลือกทั้งหมด (ทุกเขต) — ${allVehicles.length} คัน</label>
     </div>
-    ${zonesHtml || `<div class="empty">ไม่มีรถ</div>`}`;
+    ${zonesHtml || `<div class="empty">ไม่มีรถ</div>`}`}`;
 }
 
 function renderRegionBlock(region, master, selected) {
@@ -193,6 +207,16 @@ function toggleRegion(regionId) {
 }
 
 function bindStep1(plan) {
+  // เปลี่ยนไทรมาสหลังเลือกรถไปแล้วไม่ล้างรถที่เลือก — 1 แผน = 1 ไทรมาส
+  // การกดเปลี่ยนจึงเป็น "แก้ไทรมาสของแผนใบนี้" ไม่ใช่ย้ายรถข้ามแผน
+  document.querySelectorAll('.qSeg').forEach(sg => {
+    sg.addEventListener('click', () => {
+      plan.quarter = sg.dataset.q;
+      persist(plan);
+      renderWizard(plan);
+    });
+  });
+
   $('fPlanName').addEventListener('input', e => {
     plan.planName = e.target.value;
     persist(plan);
@@ -450,10 +474,9 @@ function computePlanSummary(plan) {
     })
     .filter(Boolean)
     .join(' · ');
-  // ไทรมาสไม่ได้เลือกตอนทำแผนแล้ว — ระบบเติมให้ตอนฝ่ายพัสดุออกเลขงาน
-  const periodText = plan.quarter
-    ? `${esc(plan.quarter)}${qInfo ? ' (' + esc(qInfo.months) + ')' : ''} / ${esc(plan.year)}`
-    : `แผนประจำปี ${esc(plan.year)} — ไทรมาสกำหนดตอนออกเลขงาน`;
+  // ใช้ตัวเดียวกับที่อื่นทั้งระบบ (common.js) — เดิมหน้านี้เขียนสูตรซ้ำเอง
+  // ข้อความจึงไม่ตรงกับหน้ารายการแผนเวลาข้อความเปลี่ยน
+  const periodText = quarterYearText(plan);
   return { master, selectedVehicles, lines, qInfo, catSummary, periodText };
 }
 
@@ -533,9 +556,10 @@ function renderStep3(plan) {
 function bindStep3() { /* ไม่มี input ในขั้นนี้แล้ว */ }
 
 // กบค. ออกเลขงานเอง — ฝ่ายพัสดุ "รับทราบ" เพื่อเตรียม/สั่งอะไหล่ ไม่ได้เป็นผู้อนุมัติ
-// ไทรมาสในเลขงานคิดจากวันที่ออกเลข (ปีงบประมาณ ต.ค.–ก.ย.)
+// ไทรมาสในเลขงาน = ไทรมาสที่ผู้ทำแผนเลือกไว้ในขั้นที่ 1 (ไม่ใช่วันที่กดออกเลข)
 function issueWorkNumber(plan) {
   if (!confirm('ยืนยันออกเลขงานสำหรับแผนนี้?')) return;
+  // แผนร่างที่สร้างไว้ก่อนมีตัวเลือกไทรมาสจะยังไม่มีค่า — เติมจากเดือนปัจจุบันให้เลขงานออกได้
   if (!plan.quarter) plan.quarter = MYD.quarterOfMonth(new Date().getMonth() + 1);
   plan.workNumber = MYD.workNumber(plan.quarter, plan.year, 1);
   plan.approvalStatus = 'issued';
@@ -560,7 +584,7 @@ function renderDone(plan) {
       </div>
       <div class="fgrid" style="margin-top:12px">
         <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
-        <div class="f sp2"><label>ไทรมาสที่ออกเลขงาน</label><div>${quarterYearText(plan)}</div></div>
+        <div class="f sp2"><label>ไทรมาสของแผน</label><div>${quarterYearText(plan)}</div></div>
       </div>
       ${renderTimelineHtml(plan.statusHistory)}
       <div class="actions">
@@ -576,10 +600,11 @@ function render() {
   renderWizard(PLAN);
 }
 
-// แผนร่างจะถูกบันทึกก็ต่อเมื่อ "มีเนื้อ" แล้วเท่านั้น (ตั้งชื่อ หรือเลือกรถ)
+// แผนร่างจะถูกบันทึกก็ต่อเมื่อ "มีเนื้อ" แล้วเท่านั้น (เลือกไทรมาส ตั้งชื่อ หรือเลือกรถ)
 // ⚠️ ของเดิมบันทึกทันทีที่เปิดหน้า → เปิดหน้ากี่ครั้งก็ได้ร่างเปล่าเท่านั้นใบ
+// ไทรมาสนับเป็นเนื้อด้วย เพราะเป็นช่องแรกที่ต้องเลือก — ถ้าไม่นับ เลือกแล้วรีโหลดค่าจะหาย
 function hasContent(plan) {
-  return !!(plan.planName && plan.planName.trim()) || (plan.selectedVehicleIds || []).length > 0;
+  return !!plan.quarter || !!(plan.planName && plan.planName.trim()) || (plan.selectedVehicleIds || []).length > 0;
 }
 
 // เรียกแทน MYD.savePlan() ทุกจุดในหน้านี้

@@ -108,8 +108,9 @@ const DEFAULT_SKEL = {
   screens: [
 
     // ================= กลุ่ม 1 · ออกเลขงาน =================
-    { id: 's1', group: 'issue', no: '1', title: 'ชื่อแผน + เลือกรถ', real: 'plan-new.html', asks: [], sections: [
+    { id: 's1', group: 'issue', no: '1', title: 'ไทรมาส + ชื่อแผน + เลือกรถ', real: 'plan-new.html', asks: [], sections: [
       { id: 's1-head', title: 'หัวแผน', kind: 'form', fields: [
+        f('quarter',  'ไทรมาสของแผน', 'p.period'),
         f('planName', 'ชื่อแผน', 'p.planName'),
       ]},
       { id: 's1-veh', title: 'ตารางรถในเขต (ภาค → เขต → กางออก)', kind: 'table', fields: [
@@ -388,7 +389,7 @@ const DEFAULT_SKEL = {
         f('wn',     'เลขงาน', 'p.workNumber'),
         f('ack',    'สถานะรับทราบ', 'p.ack'),
         f('name',   'ชื่อแผน', 'p.planName'),
-        f('period', 'ไทรมาสที่ออกเลขงาน', 'p.period'),
+        f('period', 'ไทรมาสของแผน', 'p.period'),
         f('nveh',   'รถเข้าแผน', 'p.vehCount'),
         f('nline',  'รายการอะไหล่ที่ต้องเตรียม', 'p.lineCount'),
       ]},

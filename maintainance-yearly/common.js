@@ -50,7 +50,7 @@ function renderTimelineHtml(history) {
 
 function quarterYearText(plan) {
   const info = QUARTERS.find(q => q.q === plan.quarter);
-  if (!plan.quarter) return `แผนประจำปี ${esc(plan.year)} — ไทรมาสกำหนดตอนออกเลขงาน`;
+  if (!plan.quarter) return `ปีงบประมาณ ${esc(plan.year)} — ยังไม่เลือกไทรมาส`;
   return `${esc(plan.quarter)}${info ? ' (' + esc(info.months) + ')' : ''} / ${esc(plan.year)}`;
 }
 
