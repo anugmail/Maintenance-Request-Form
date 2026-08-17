@@ -2332,14 +2332,14 @@
           <div class="sect"><span id="head-decision">การตัดสินใจ</span> <span
               style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— เห็นอะไหล่และของคงเหลือแล้ว
               งานนี้จะดำเนินการอย่างไร</span></div>
-          <div class="decide">
-            <div class="tile tile-magenta" id="dcself" onclick="setDecision('self')"><span
-                class="ms">build</span><b>ซ่อมเอง</b><small>ซ่อมได้ที่หน้างาน/หน่วยงาน</small></div>
-            <div class="tile tile-blue" id="dckry" onclick="setDecision('kry')"><span
-                class="ms">alt_route</span><b>ส่งเรื่องให้ กรย.</b><small>ให้ กรย. คัดแยกช่องทางซ่อม</small></div>
+          <div class="rads" id="dcrads" style="margin-top:10px">
+            <label><input type="radio" name="decision" value="self" onchange="setDecision('self')">ซ่อมเอง
+              <small>— ซ่อมได้ที่หน้างาน/หน่วยงาน</small></label>
+            <label><input type="radio" name="decision" value="kry" onchange="setDecision('kry')">ส่งเรื่องให้ กรย.
+              <small>— ให้ กรย. คัดแยกช่องทางซ่อม</small></label>
           </div>
           <div id="selfx" class="hidden dnote">
-            <div class="f" style="margin-top:14px"><label>แผน/บันทึกการซ่อมโดยย่อ</label><textarea id="selfnote"
+            <div class="f" style="margin-top:14px"><label>รายละเอียดการซ่อม</label><textarea id="selfnote"
                 rows="2" placeholder="เช่น เปลี่ยนชุดซีลเองในวันพรุ่งนี้ ใช้อะไหล่ที่เลือกไว้…"></textarea></div>
           </div>
           <div id="kryx" class="hidden dnote">
@@ -3636,7 +3636,8 @@ function goBackFromForm(){
       renderApprovers(); renderSummary();
     }
 
-    function setDecision(d) { S.decision = d; $('dcself').classList.toggle('sel', d === 'self'); $('dckry').classList.toggle('sel', d === 'kry'); $('selfx').classList.toggle('hidden', d !== 'self'); $('kryx').classList.toggle('hidden', d !== 'kry'); renderSummary() }
+    // radio คุม state เลือกเองแล้ว (checked) เหลือแค่เปิด/ปิดกล่องรายละเอียดของแต่ละทาง
+    function setDecision(d) { S.decision = d; $('selfx').classList.toggle('hidden', d !== 'self'); $('kryx').classList.toggle('hidden', d !== 'kry'); renderSummary() }
     function bookedArr() { return Object.entries(S.bookings).map(([c, q]) => { const p = PARTS.find(x => x.code === c); return { name: p.name, qty: q, unit: p.unit } }) }
     function orderedArr() { return Object.entries(S.orders).map(([c, q]) => { const p = PARTS.find(x => x.code === c); return { name: p.name, qty: q, unit: p.unit } }) }
     function renderSummary() {
@@ -3753,7 +3754,7 @@ function goBackFromForm(){
       renderApprovers();
       document.querySelectorAll('#photos .ph').forEach(e => e.remove());
       $('vinfo').classList.add('hidden'); $('vauto').innerHTML = '';
-      $('dcself').classList.remove('sel'); $('dckry').classList.remove('sel');
+      $('dcrads').querySelectorAll('input[name=decision]').forEach(r => r.checked = false);
       $('selfx').classList.add('hidden'); $('kryx').classList.add('hidden');
       $('sdone').classList.add('hidden'); $('footer').classList.remove('hidden');
       showStepSection(WORDER[0]);   // ขั้นแรกตามลำดับที่ตั้ง
