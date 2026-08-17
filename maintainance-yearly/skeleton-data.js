@@ -60,6 +60,8 @@ const SAMPLE = {
   'v.brand':       () => sampleV.brand,
   'v.chassis':     () => sampleV.chassis,
   'v.status':      () => MYD.STATUS_LABELS[sampleV.status] || sampleV.status,
+  'v.province':    () => sampleV.province,
+  'v.blockReason': () => MYD.blockReason(sampleV) || '— เลือกเข้าแผนได้ —',
   'v.ownerDept':   () => sampleV.ownerDept,
   'v.region':      () => 'เขต ' + sampleV.region,
   'v.zone':        () => MYD.ZONE_LABELS[MYD.regionZone(sampleV.region)],
@@ -86,6 +88,7 @@ const SRC_LABELS = {
   't.lodging': 'แผนเดินทาง · ที่พัก', 't.travel': 'แผนเดินทาง · ค่าเดินทาง',
   'v.plate': 'รถ · ทะเบียน', 'v.vehicleType': 'รถ · ชนิดรถ', 'v.brand': 'รถ · ยี่ห้อ/รุ่นอุปกรณ์',
   'v.chassis': 'รถ · ยี่ห้อรถบรรทุก', 'v.status': 'รถ · สถานะ', 'v.region': 'รถ · เขต', 'v.zone': 'รถ · ภาค', 'v.ownerDept': 'รถ · หน่วยงานเจ้าของรถ',
+  'v.province': 'รถ · จังหวัด', 'v.blockReason': 'รถ · เหตุผลที่เลือกเข้าแผนไม่ได้',
   'v.mileage': 'รถ · เลขไมล์', 'v.engineHours': 'รถ · ชม.เครื่อง',
   'i.name': 'อะไหล่ · ชื่อ', 'i.trigger': 'อะไหล่ · เงื่อนไขรอบ', 'i.perVehicle': 'อะไหล่ · ต่อคัน',
   'i.vehicleCount': 'อะไหล่ · จำนวนรถ', 'i.totalQty': 'อะไหล่ · รวม', 'i.unit': 'อะไหล่ · หน่วย',
@@ -114,30 +117,18 @@ const DEFAULT_SKEL = {
         f('planName', 'ชื่อแผน', 'p.planName'),
       ]},
       { id: 's1-veh', title: 'ตารางรถในเขต (ภาค → เขต → กางออก)', kind: 'table', fields: [
-        f('chk',   'ช่องเลือก', ''),
-        f('plate', 'ทะเบียน', 'v.plate'),
-        f('type',  'ประเภท', 'v.vehicleType'),
-        f('brand', 'ยี่ห้อ/รุ่นอุปกรณ์', 'v.brand'),
-        f('status','สถานะ', 'v.status'),
+        f('chk',      'ช่องเลือก (ปิดเมื่อสถานะไม่พร้อม)', ''),
+        f('plate',    'ทะเบียน', 'v.plate'),
+        f('type',     'ประเภท', 'v.vehicleType'),
+        f('brand',    'ยี่ห้อ/รุ่นอุปกรณ์', 'v.brand'),
+        f('province', 'จังหวัด', 'v.province'),
+        f('owner',    'หน่วยงานเจ้าของรถ', 'v.ownerDept'),
+        f('status',   'สถานะรถ (6 แบบ)', 'v.status'),
+        f('reason',   'เหตุผลที่เลือกไม่ได้', 'v.blockReason'),
       ]},
     ]},
 
-    { id: 's2', group: 'issue', no: '2', title: 'รายการอะไหล่', real: 'plan-new.html', asks: [], sections: [
-      { id: 's2-tool', title: 'แถบเครื่องมือ', kind: 'form', fields: [
-        f('group', 'จัดกลุ่ม (ชนิดอะไหล่/ภาค/เขต/ยี่ห้อ)', ''),
-        f('add',   'เพิ่มอะไหล่เข้าแผน', ''),
-      ]},
-      { id: 's2-tbl', title: 'ตารางอะไหล่ (แก้จำนวน/ลบได้)', kind: 'table', fields: [
-        f('name',  'ชื่อ', 'i.name'),
-        f('per',   'ต่อคัน', 'i.perVehicle'),
-        f('nveh',  'จำนวนรถ', 'i.vehicleCount'),
-        f('total', 'รวม', 'i.totalQty'),
-        f('unit',  'หน่วย', 'i.unit'),
-        f('del',   'ปุ่มลบ', ''),
-      ]},
-    ]},
-
-    { id: 's3', group: 'issue', no: '3', title: 'สรุปแผนทั้งปี', real: 'plan-new.html', asks: [], sections: [
+    { id: 's3', group: 'issue', no: '2', title: 'สรุปแผน + ออกเลขงาน', real: 'plan-new.html', asks: [], sections: [
       { id: 's3-sum', title: 'กล่องสรุปหัวหน้า', kind: 'form', fields: [
         f('planName', 'ชื่อแผน', 'p.planName'),
         f('period',   'ช่วงเวลา', 'p.period'),

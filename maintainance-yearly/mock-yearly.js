@@ -88,6 +88,15 @@ const OWNER_DEPTS_BY_REGION = {
   12: ['กฟจ. ชัยภูมิ',     'กฟส. แก้งคร้อ',     'กฟส. จัตุรัส'],          // กฟฉ.3
 };
 
+// วนสถานะรถให้ครบทั้ง 6 แบบในข้อมูลจำลอง โดยยังเหลือรถ "พร้อมเข้าแผน" เป็นส่วนใหญ่
+// (10/16 ≈ 62%) ไม่งั้นเดโมทำแผนไม่ได้เพราะรถถูกบล็อกเกือบหมด
+const VEHICLE_STATUS_CYCLE = [
+  'available', 'available', 'available', 'repairing',
+  'available', 'available', 'pending_approval', 'available',
+  'available', 'decommissioned', 'available', 'available',
+  'transferred', 'available', 'available', 'disposal',
+];
+
 function genSeedVehicles() {
   const types = ['รถกระเช้า', 'รถเครน', 'รถขุด'];
   const out = [];
@@ -104,9 +113,13 @@ function genSeedVehicles() {
         brand: b.brand,
         chassis: b.chassis,
         ownerDept: OWNER_DEPTS_BY_REGION[r][i % OWNER_DEPTS_BY_REGION[r].length],
+        // จังหวัด = ชื่อหลัง "กฟจ." ของเขตนั้น (กฟส. ที่เหลือเป็นอำเภอในจังหวัดเดียวกัน)
+        // ไม่ได้ตั้งชื่อจังหวัดขึ้นใหม่ — ยกจาก OWNER_DEPTS_BY_REGION ที่มีอยู่แล้ว
+        province: OWNER_DEPTS_BY_REGION[r][0].replace('กฟจ. ', ''),
         criteria: (r + i) % 2 === 0 ? 'truck' : 'net',
         region: r,
-        status: i % 7 === 0 ? 'transferred' : i % 5 === 0 ? 'pending_approval' : 'available',
+        // ไม่ใช้ (r+i) เพราะชนกับสูตรเลือกชนิดรถ ทำให้สถานะผูกติดกับชนิดรถ
+        status: VEHICLE_STATUS_CYCLE[(r * 5 + i * 3) % VEHICLE_STATUS_CYCLE.length],
         mileage: 40000 + ((r * 1000 + i * 137) % 120000),
         engineHours: 1500 + ((r * 97 + i * 53) % 5000),
       });
@@ -273,7 +286,23 @@ const SEED_PLAN_CF = {
 const MYD = {
   // ----- label maps (ภาษาไทย) -----
   CRITERIA_LABELS: { truck:'ทรัค', net:'เนต' },
-  STATUS_LABELS:   { available:'พร้อมเข้าแผน', pending_approval:'รออนุมัติ', transferred:'โอน' },
+  STATUS_LABELS:   {
+    available:       'พร้อมเข้าแผน',
+    pending_approval:'รออนุมัติ',
+    repairing:       'ซ่อมอยู่',
+    transferred:     'โอนย้ายหน่วยงาน',
+    decommissioned:  'หมดสภาพการใช้งาน',
+    disposal:        'รอจำหน่าย',
+  },
+  // เหตุผลที่เลือกเข้าแผนไม่ได้ — คีย์ที่ไม่มีในนี้ = เลือกได้
+  // (เจ้าของงานสั่ง 17 ส.ค. 2569: รถสถานะไม่พร้อมต้องปิดช่องติ๊ก + บอกเหตุผล
+  //  ไม่ใช่แค่ขึ้นป้ายเตือน — กันทำแผนให้รถที่เข้าซ่อมไม่ได้จริง)
+  STATUS_BLOCK_REASON: {
+    repairing:      'อยู่ระหว่างซ่อม ยังเข้าแผนบำรุงรักษาไม่ได้',
+    transferred:    'โอนย้ายไปหน่วยงานอื่นแล้ว',
+    decommissioned: 'หมดสภาพการใช้งาน ไม่ต้องบำรุงรักษา',
+    disposal:       'รอจำหน่าย ไม่ต้องบำรุงรักษา',
+  },
   CATEGORY_LABELS: { part:'อะไหล่', oil:'น้ำมัน', filter:'ไส้กรอง' },
   OILKIND_LABELS:  { engine:'น้ำมันเครื่อง', gear:'น้ำมันเฟือง', hydraulic:'น้ำมันไฮดรอลิก' },
   TRIGGER_LABELS:  { calendar:'ตามรอบ (ไทรมาส)', hours:'ชั่วโมงเครื่อง', mileage:'ระยะทาง' },
@@ -608,6 +637,16 @@ const MYD = {
     if (!trips.length) return false;
     if (this.unassignedVehicleIds(plan).length) return false;
     return trips.every(t => this.tripStatus(t, master) === 'accepted');
+  },
+
+  // รถคันนี้เลือกเข้าแผนได้ไหม — ใช้ทั้งตอนเรนเดอร์ช่องติ๊กและตอน "เลือกทั้งเขต/ภาค/ทั้งหมด"
+  // ให้ตอบจากที่เดียว ไม่งั้นปุ่มเลือกหมู่จะติ๊กรถที่ช่องเดี่ยวปิดไว้
+  canJoinPlan(vehicle) {
+    return !this.STATUS_BLOCK_REASON[vehicle.status];
+  },
+
+  blockReason(vehicle) {
+    return this.STATUS_BLOCK_REASON[vehicle.status] || '';
   },
 
   // ไทรมาสตามปีงบประมาณ (ต.ค.–ก.ย.): ต.ค.=เดือน 10 → Q1

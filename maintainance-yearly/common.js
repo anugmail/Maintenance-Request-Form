@@ -30,7 +30,14 @@ const QUARTERS = [
   { q: 'Q4', months: 'ก.ค.–ก.ย.' },
 ];
 
-const STATUS_BADGE_CLASS = { available: 'b-ok', pending_approval: 'b-low', transferred: 'b-brand' };
+const STATUS_BADGE_CLASS = {
+  available:        'b-ok',       // เขียว — พร้อมใช้
+  pending_approval: 'b-low',      // เหลือง — รอดำเนินการ
+  repairing:        'b-info',     // ฟ้า — กำลังมีงานอยู่
+  transferred:      'b-brand',    // แบรนด์ — ย้ายออกไปแล้ว ไม่ใช่ปัญหาของรถ
+  decommissioned:   'b-out',      // แดง — ใช้งานไม่ได้แล้ว
+  disposal:         'b-neutral',  // เทา — รอออกจากระบบ
+};
 
 const STATUS_HISTORY_LABELS = {
   draft: 'ฉบับร่าง', issued: 'ออกเลขงาน', notified: 'แจ้งฝ่ายพัสดุ', acknowledged: 'ฝ่ายพัสดุรับทราบ',
