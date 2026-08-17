@@ -5,7 +5,10 @@
 // node's built-in test runner without any bundler/build step.
 //
 // โครงข้อมูล (plain objects):
-// vehicle: { id, plate, vehicleType, brand, chassis, ownerDept, criteria, region(1-12), status, mileage, engineHours }
+// vehicle: { id, plate, plateProvince, vehicleType, rigBrand, rigModel, truckBrand, truckModel,
+//            assetCode, serialNo, hcNo, brand(derived), chassis(derived), ownerDept, ownerLevel,
+//            province, criteria, region(1-12), status, mileage, engineHours }
+//   ฟิลด์ระบุตัวรถยกตาม "แบบฟอร์มตรวจสภาพบำรุงรักษารถกระเช้า" ที่เจ้าของงานส่งมา 17 ส.ค. 2569
 // item:    { id, name, category, oilKind?, unit, appliesToTypes:[], qtyPerVehicle }
 // plan:    { id, createdAt, phase, planName, byQuarter:{Q1..Q4,none}, selectedVehicleIds:[],
 //            itemAdj:{}, year, workNumbers:{Q1..Q4}, workNumber, approvalStatus:'draft'|'issued',
@@ -34,7 +37,7 @@ const DEFAULT_SETTINGS = { confirmDueDays: 7 };   // ยังไม่ได้
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 11;  // 11 = trip มีพนักงาน/งานต่อคัน/สถานที่รายคัน + รถมี ownerLevel
+const SCHEMA_VERSION = 12;  // 12 = แยกยี่ห้อ/รุ่น รถยนต์-อุปกรณ์ + รหัส/SN/HC/ตัวย่อจังหวัด ตามแบบฟอร์มจริง
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -53,19 +56,41 @@ const REGIONS = Array.from({ length: 12 }, (_, i) => ({ id: i + 1, name: 'เข
 // ⚠️ ไม่ได้คิดขึ้นเอง — ยกมาจากข้อมูลที่มีอยู่แล้วในโปรเจกต์:
 //    config.js (ต้นแบบแจ้งซ่อม) และ repair-history.html
 // แผนนี้เป็นการบำรุงรักษาเครน/กระเช้า ยี่ห้อจึงเป็นตัวจัดกลุ่มที่มีความหมาย
+// ⚠️ แยก "ยี่ห้อ" กับ "รุ่น" ออกจากกัน และแยกฝั่งรถบรรทุกกับฝั่งอุปกรณ์ยก
+// ตามแบบฟอร์มตรวจสภาพบำรุงรักษารถกระเช้าของจริง (เจ้าของงานส่งมา 17 ส.ค. 2569)
+// ฟอร์มมีช่องแยกกันชัด: "ยี่ห้อรถยนต์ / รุ่น" กับ "ยี่ห้อกระเช้า / รุ่น"
+// ของเดิมเก็บรวมเป็นสตริงเดียว ('AICHI SK17A') ทำให้แยกไม่ออกว่าท่อนไหนเป็นยี่ห้อ
+// VERSALIFT SST37EIH บน ISUZU = คู่ที่ยกมาจากฟอร์มจริงที่เจ้าของงานส่งมา
 const BRANDS_BY_TYPE = {
   'รถเครน':   [
-    { brand: 'TADANO TM-ZE304', chassis: 'HINO FM8J 6 ล้อ' },
-    { brand: 'TADANO TM-ZE504', chassis: 'HINO FM8J' },
-    { brand: 'UNIC URV554',     chassis: 'HINO XZU' },
+    { rigBrand: 'TADANO',    rigModel: 'TM-ZE304', truckBrand: 'HINO',  truckModel: 'FM8J 6 ล้อ' },
+    { rigBrand: 'TADANO',    rigModel: 'TM-ZE504', truckBrand: 'HINO',  truckModel: 'FM8J' },
+    { rigBrand: 'UNIC',      rigModel: 'URV554',   truckBrand: 'HINO',  truckModel: 'XZU' },
   ],
   'รถกระเช้า': [
-    { brand: 'AICHI SK17A',     chassis: 'ISUZU FTR' },
+    { rigBrand: 'AICHI',     rigModel: 'SK17A',    truckBrand: 'ISUZU', truckModel: 'FTR' },
+    { rigBrand: 'VERSALIFT', rigModel: 'SST37EIH', truckBrand: 'ISUZU', truckModel: 'FTR' },
   ],
   'รถขุด':    [
-    { brand: 'KOMATSU PC130-8', chassis: '—' },
+    { rigBrand: 'KOMATSU',   rigModel: 'PC130-8',  truckBrand: '',      truckModel: '' },
   ],
 };
+
+// ชื่อเรียกอุปกรณ์ยกตามชนิดรถ — ฟอร์มจริงของรถกระเช้าเขียนว่า "ยี่ห้อกระเช้า"
+// คนละคำกับรถเครน/รถขุด จึงต้องเปลี่ยนป้ายตามชนิด ไม่ใช่ใช้คำกลางๆ ว่า "อุปกรณ์"
+const RIG_LABEL_BY_TYPE = { 'รถกระเช้า': 'กระเช้า', 'รถเครน': 'เครน', 'รถขุด': 'ชุดขุด' };
+
+// ตัวย่อจังหวัดบนป้ายทะเบียน — ฟอร์มจริงเขียน "80-5738 นน." (นน. = น่าน)
+// ⚠️ ตัวย่อเป็นของจริง แต่การจับคู่ "เขต N → จังหวัด" ยังเป็นการจำลองเหมือนเดิม
+const PROVINCE_ABBR = {
+  'พะเยา': 'พย.', 'กำแพงเพชร': 'กพ.', 'ชัยนาท': 'ชน.', 'นครนายก': 'นย.',
+  'จันทบุรี': 'จบ.', 'กาญจนบุรี': 'กจ.', 'ชุมพร': 'ชพ.', 'กระบี่': 'กบ.',
+  'นราธิวาส': 'นธ.', 'ขอนแก่น': 'ขก.', 'กาฬสินธุ์': 'กส.', 'ชัยภูมิ': 'ชย.',
+};
+
+// อักษรนำหน้ารหัสครุภัณฑ์ตามภาค — ฟอร์มจริงเขียน "น.2-09-0504"
+// ⚠️ ของเราจำลอง: ZONE ของต้นแบบ (เหนือ/ตะวันออก/ใต้/ตะวันตก) ไม่ตรงกับ น./ก./ฉ./ต. ของจริง
+const ZONE_CODE_LETTER = { north: 'น.', east: 'ก.', south: 'ต.', west: 'ฉ.' };
 
 // ----- หน่วยงานเจ้าของรถ (ผู้ตอบคำขอยืนยันรถเข้าร่วมแผน) -----
 // ⚠️ ไม่ได้คิดชื่อขึ้นเอง — ยกจาก hierarchy-data.json (โครงสร้างหน้างาน 74 จังหวัด
@@ -106,12 +131,26 @@ function genSeedVehicles() {
       const t = types[(r + i) % 3];
       const bs = BRANDS_BY_TYPE[t];
       const b = bs[(r * 2 + i) % bs.length];  // ไม่ใช้ (r+i) เพราะชนกับสูตรเลือกชนิดรถ ทำให้ได้ยี่ห้อเดียว
+      const prov = OWNER_DEPTS_BY_REGION[r][0].replace('กฟจ. ', '');
       out.push({
         id: `v-${r}-${i}`,
         plate: `${String(r).padStart(2, '0')}-${1000 + r * 100 + i}`,
+        plateProvince: PROVINCE_ABBR[prov] || '',      // ทะเบียนของจริงมีตัวย่อจังหวัดต่อท้าย
         vehicleType: t,
-        brand: b.brand,
-        chassis: b.chassis,
+        // ---- ฝั่งอุปกรณ์ยก (กระเช้า/เครน/ชุดขุด) ----
+        rigBrand: b.rigBrand,
+        rigModel: b.rigModel,
+        // ---- ฝั่งรถบรรทุกที่ติดตั้ง ----
+        truckBrand: b.truckBrand,
+        truckModel: b.truckModel,
+        // ---- เลขอ้างอิงตามแบบฟอร์มตรวจสภาพ ----
+        assetCode: `${ZONE_CODE_LETTER[regionZone(r)]}${r}-${String(9 + (i % 4)).padStart(2, '0')}-${String(500 + r * 7 + i).padStart(4, '0')}`,
+        serialNo: `${b.rigBrand.slice(0, 3).toUpperCase()}${String(r).padStart(2, '0')}${String(1000 + i * 37)}`,
+        hcNo: `HC-${1500 + r * 11 + i}`,
+        // brand/chassis = ค่าที่ประกอบจากฟิลด์แยกด้านบน (derived) — คงไว้เพื่อให้หน้าที่
+        // จัดกลุ่ม "ตามยี่ห้อ/รุ่นอุปกรณ์" (พัสดุ · สรุปแผน) ใช้ต่อได้โดยไม่ต้องแก้
+        brand: `${b.rigBrand} ${b.rigModel}`,
+        chassis: b.truckBrand ? `${b.truckBrand} ${b.truckModel}` : '—',
         // ⚠️ ข้อมูลจำลอง: ทุก 6 คันให้ 1 คันเป็น "รถของเขต" (กรย. เขต N) ที่เหลือเป็นรถของ
         // หน่วยงานระดับจังหวัด/สาขา — ของจริงต้องดูจาก mas_department ว่าหน่วยเจ้าของ
         // อยู่ระดับไหน · เพิ่มเพราะเจ้าของงานกำหนดกติกา default สถานที่ต่างกันสองแบบ
@@ -122,7 +161,7 @@ function genSeedVehicles() {
           : OWNER_DEPTS_BY_REGION[r][i % OWNER_DEPTS_BY_REGION[r].length],
         // จังหวัด = ชื่อหลัง "กฟจ." ของเขตนั้น (กฟส. ที่เหลือเป็นอำเภอในจังหวัดเดียวกัน)
         // ไม่ได้ตั้งชื่อจังหวัดขึ้นใหม่ — ยกจาก OWNER_DEPTS_BY_REGION ที่มีอยู่แล้ว
-        province: OWNER_DEPTS_BY_REGION[r][0].replace('กฟจ. ', ''),
+        province: prov,
         criteria: (r + i) % 2 === 0 ? 'truck' : 'net',
         region: r,
         // ไม่ใช้ (r+i) เพราะชนกับสูตรเลือกชนิดรถ ทำให้สถานะผูกติดกับชนิดรถ
@@ -898,6 +937,35 @@ const MYD = {
   quartersMissing(plan) {
     this.ensurePlanQuarters(plan);
     return this.QUARTER_KEYS.filter(q => plan.byQuarter[q].length === 0);
+  },
+
+  // ---- ข้อมูลระบุตัวรถตามแบบฟอร์มตรวจสภาพ (เจ้าของงานส่งฟอร์มจริงมา 17 ส.ค. 2569) ----
+  RIG_LABEL_BY_TYPE,
+
+  rigLabelOf(vehicle) {
+    return RIG_LABEL_BY_TYPE[vehicle.vehicleType] || 'อุปกรณ์';
+  },
+
+  plateFull(vehicle) {
+    return vehicle.plateProvince ? `${vehicle.plate} ${vehicle.plateProvince}` : vehicle.plate;
+  },
+
+  // รายการฟิลด์หัวฟอร์ม เรียงตามแบบฟอร์มจริง — ใช้เรนเดอร์กล่องรายละเอียดรถ
+  // คืน [{label, value}] เพื่อให้หน้าจอไม่ต้องรู้ว่าฟิลด์ไหนมาจากไหน
+  vehicleIdentityRows(vehicle) {
+    const rig = this.rigLabelOf(vehicle);
+    return [
+      { label: 'ยี่ห้อรถยนต์',        value: vehicle.truckBrand || '—' },
+      { label: 'รุ่นรถยนต์',          value: vehicle.truckModel || '—' },
+      { label: 'รหัส',               value: vehicle.assetCode || '—' },
+      { label: 'ทะเบียน',            value: this.plateFull(vehicle) },
+      { label: `ยี่ห้อ${rig}`,        value: vehicle.rigBrand || '—' },
+      { label: `รุ่น${rig}`,          value: vehicle.rigModel || '—' },
+      { label: 'หมายเลข (S/N)',      value: vehicle.serialNo || '—' },
+      { label: 'ชั่วโมงการทำงาน',     value: `${(vehicle.engineHours || 0).toLocaleString('th-TH')} ชม.` },
+      { label: 'หมายเลข HC',         value: vehicle.hcNo || '—' },
+      { label: 'ใช้งานประจำที่',      value: vehicle.ownerDept || '—' },
+    ];
   },
 
   // ข้อความเตือนของรถคันนี้ (ถ้ามี) — ไม่ได้ห้ามเลือก แค่บอกให้คนทำแผนรู้

@@ -210,9 +210,10 @@ function renderRegionBlock(region, master, selected, plan) {
     return `
     <tr data-id="${esc(v.id)}">
       <td><input type="checkbox" class="rowChk" data-id="${esc(v.id)}" ${selected.has(v.id) ? 'checked' : ''}></td>
-      <td>${esc(v.plate)}</td>
+      <td><button class="btn btn-link" data-veh-detail="${esc(v.id)}" title="ดูรายละเอียดรถ">${esc(MYD.plateFull(v))}</button>
+        <div class="cell-sub">${esc(v.assetCode)}</div></td>
       <td>${esc(v.vehicleType)}
-        <div class="cell-sub">${esc(v.brand)}${v.chassis && v.chassis !== '—' ? ' · ' + esc(v.chassis) : ''}</div></td>
+        <div class="cell-sub">${esc(MYD.rigLabelOf(v))} ${esc(v.rigBrand)} ${esc(v.rigModel)}${v.truckBrand ? ` · รถ ${esc(v.truckBrand)} ${esc(v.truckModel)}` : ''}</div></td>
       <td>${esc(v.province)}
         <div class="cell-sub">${esc(v.ownerDept)}</div></td>
       <td>${!bucket
@@ -261,6 +262,37 @@ function renderRegionBlock(region, master, selected, plan) {
         </div>
       </div>` : ''}
     </div>`;
+}
+
+// กล่องรายละเอียดรถ — ฟิลด์และลำดับยกจาก "แบบฟอร์มตรวจสภาพบำรุงรักษารถกระเช้า" ของจริง
+function showVehicleDetail(vehicleId) {
+  const v = MYD.loadMaster().vehicles.find(x => x.id === vehicleId);
+  if (!v) return;
+  const rows = MYD.vehicleIdentityRows(v)
+    .map(r => `<div class="f sp2"><label>${esc(r.label)}</label><div>${esc(r.value)}</div></div>`).join('');
+  const host = $('vehModal');
+  host.innerHTML = `
+    <div class="modal-overlay" id="vehOverlay">
+      <div class="modal" style="max-width:720px">
+        <div class="modal-head">
+          <div>
+            <b>${esc(MYD.plateFull(v))}</b>
+            <div class="cell-sub">${esc(v.vehicleType)} · ${esc(v.ownerDept)}</div>
+          </div>
+          <button class="modal-close" id="vehClose"><span class="ms">close</span></button>
+        </div>
+        <div class="sub">ข้อมูลระบุตัวรถ — ฟิลด์ตามแบบฟอร์มตรวจสภาพบำรุงรักษา</div>
+        <div class="fgrid">${rows}</div>
+        <div class="fgrid">
+          <div class="f sp2"><label>สถานะปัจจุบัน</label>
+            <div><span class="badge ${STATUS_BADGE_CLASS[v.status] || 'b-neutral'}">${esc(MYD.STATUS_LABELS[v.status] || v.status)}</span></div></div>
+          <div class="f sp2"><label>เลขไมล์</label><div>${esc((v.mileage || 0).toLocaleString('th-TH'))} กม.</div></div>
+        </div>
+      </div>
+    </div>`;
+  const close = () => { host.innerHTML = ''; };
+  $('vehClose').addEventListener('click', close);
+  $('vehOverlay').addEventListener('click', e => { if (e.target.id === 'vehOverlay') close(); });
 }
 
 function toggleRegion(regionId) {
@@ -333,6 +365,11 @@ function bindStep1(plan) {
       persist(plan);
       renderWizard(plan);
     });
+  });
+
+  // เปิดรายละเอียดรถตามหัวแบบฟอร์มตรวจสภาพ — ข้อมูลระบุตัวรถมีหลายฟิลด์เกินกว่าจะยัดในตาราง
+  document.querySelectorAll('[data-veh-detail]').forEach(btn => {
+    btn.addEventListener('click', () => showVehicleDetail(btn.dataset.vehDetail));
   });
 
   document.querySelectorAll('.rowChk').forEach(chk => {
