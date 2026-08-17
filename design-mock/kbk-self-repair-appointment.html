@@ -8,20 +8,47 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="../design-system/tokens.css?v=20260813-ds15">
-<link rel="stylesheet" href="../design-system/components.css?v=20260813-ds15">
-<!-- แบบหน้าจอเดี่ยว แยกจากส่วนอื่น — ไม่มีเมนู ไม่มีลิงก์เข้า/ออก
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260814-ds17">
+<link rel="stylesheet" href="../design-system/components.css?v=20260814-ds17">
+<!-- แบบหน้าจอเดี่ยว (design mock) — ขั้น 2 ของเส้น กบค. ซ่อมเอง
+     14 ส.ค. 2569: ต่อเข้า flow แล้ว — หน้าเบิกอะไหล่ (kbk-self-repair-parts.html) กด "ยืนยันรายการเบิก"
+     พามาที่นี่ในแท็บเดิม พร้อม ?no=<เลขใบแจ้งซ่อม> · ฟอร์มในหน้ายังเป็นโครงเปล่า ยังไม่ต่อข้อมูลจริง
      ไม่มี <style> โดยตั้งใจ ใช้คอมโพเนนต์จาก design system เท่านั้น:
-     .content · .wsteps/.wstep · .card/.sect/.sub · .stack
+     .shell/.side/.nv/.work/.topbar · .content · .crumbs · .wsteps/.wstep · .card/.sect/.sub · .stack
      .fgrid/.f/.in/.sp2/.sp4 · .daterange/.daterange-field/.cal · .job/.no/.meta · .badge · .btn · .empty · .actions · .toast -->
 </head>
 <body>
-    <main class="content">
+  <div class="shell">
+    <!-- แถบเมนูซ้าย — ชุดเดียวกับหน้าเบิกอะไหล่ (kbk-self-repair-parts.html) และแอปหลัก
+         หน้านี้อยู่คนละไฟล์กับแอปหลัก จึงลิงก์กลับด้วย #<view> ที่ hashView() ฝั่งโน้นรองรับ -->
+    <aside class="side">
+      <div class="vlogo">M<em>D</em></div>
+      <div class="nv" title="หน้าหลัก" onclick="goApp('')"><span class="ms">home</span></div>
+      <div class="nv" title="แจ้งซ่อม" onclick="goApp('form')"><span class="ms">build</span></div>
+      <div class="nv" title="เรื่องแจ้งซ่อมของฉัน" onclick="goApp('my')"><span class="ms">assignment</span></div>
+      <div class="nv" title="เติมน้ำมัน + ชั่วโมงทำงาน" onclick="goApp('fuel')"><span class="ms">local_gas_station</span></div>
+      <div class="nv" title="อนุมัติใบแจ้งซ่อม (หัวหน้า)" onclick="goApp('boss')"><span class="ms">how_to_reg</span></div>
+      <div class="nv" title="งานคัดแยก กรย." onclick="goApp('kry')"><span class="ms">alt_route</span></div>
+      <div class="nv on" title="งานซ่อม กบค." onclick="goApp('kbk')"><span class="ms">engineering</span></div>
+      <div class="nv" title="อนุมัติปิดงาน (ผู้บังคับบัญชา)" onclick="goApp('sup')"><span class="ms">approval</span></div>
+      <div class="nv" title="คลังอะไหล่" onclick="goApp('stock')"><span class="ms">warehouse</span></div>
+      <div class="nv" title="รายงาน" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">monitoring</span></div>
+    </aside>
+
+    <div class="work">
       <div class="draft">แบบหน้าจอเดี่ยว (design mock) — ขั้น "นัดหมายวันซ่อม" ของเส้น กบค. ซ่อมเอง · โครงเปล่า ยังไม่ต่อข้อมูลจริง</div>
+      <div class="topbar">
+        <span class="ms">light_mode</span>
+        <span class="ms">notifications</span>
+      </div>
+
+      <main class="content">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><a href="../mock/Maintenance-Request-Form.html#kbk" style="color:inherit;text-decoration:none">งานซ่อม กบค.</a><span class="sep">›</span><span class="cur">นัดหมายวันซ่อม</span></div>
       <h1 class="page-title">กบค. ซ่อมเอง</h1>
+      <div class="sub" id="fromJob" hidden></div>
 
       <div class="wsteps wrap">
-        <div class="wstep passed"><span class="num">✓</span><span class="lbl">เบิกอะไหล่</span></div>
+        <div class="wstep passed"><span class="num"><span class="ms">check</span></span><span class="lbl">เบิกอะไหล่</span></div>
         <div class="wstep active"><span class="num">2</span><span class="lbl">นัดหมายวันซ่อม</span></div>
         <div class="wstep locked"><span class="num">3</span><span class="lbl">ตรวจสภาพก่อนซ่อม</span></div>
         <div class="wstep locked"><span class="num">4</span><span class="lbl">ดำเนินการซ่อม</span></div>
@@ -31,20 +58,25 @@
 
       <div class="stack">
 
-        <!-- ── สถานะ 1: กบค. กรอกและส่งคำนัด ── -->
+        <!-- ── เลือกรูปแบบการนัด — คุมว่าจะโชว์การ์ดไหนด้านล่าง ── -->
+        <div class="card">
+          <div class="stack">
+            <div class="sect">รูปแบบการนัด</div>
+            <div class="sub">เลือกว่าจะให้เจ้าของรถขับรถเข้ามาที่ กบค. หรือทีม กบค. เดินทางไปซ่อมที่หน้างาน</div>
+            <div class="seg" id="modeSeg" style="max-width:620px">
+              <div class="sg sel" data-mode="in"><span class="ms">login</span> นัดเข้ามา</div>
+              <div class="sg" data-mode="out"><span class="ms">directions_car</span> เดินทางไปซ่อม</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── สถานะ 1: กบค. กรอกและส่งคำนัด (เฉพาะรูปแบบ "นัดเข้ามา") ── -->
         <div class="card" id="formCard">
           <div class="stack">
-            <div class="sect" id="formTitle">นัดหมายให้เข้ามาซ่อมที่ กบค.</div>
-            <div class="sub" id="formHint">กบค. เสนอเป็น<b>ช่วงเวลา</b> แล้วให้เจ้าของรถเลือกวันที่สะดวกเองภายในช่วงนั้น</div>
+            <div class="sect">นัดหมายให้เข้ามาซ่อมที่ กบค.</div>
+            <div class="sub">กบค. เสนอเป็น<b>ช่วงเวลา</b> แล้วให้เจ้าของรถเลือกวันที่สะดวกเองภายในช่วงนั้น</div>
 
             <div class="fgrid">
-              <div class="f sp2"><label>รูปแบบการนัด</label>
-                <div class="in"><span class="ms">swap_horiz</span>
-                  <select id="mode">
-                    <option value="in" selected>นัดเข้ามา — เจ้าของรถขับรถเข้ามาซ่อมที่ กบค.</option>
-                    <option value="out">เดินทางไปซ่อม — ทีม กบค. เดินทางไปซ่อมที่หน้างาน</option>
-                  </select></div></div>
-
               <div class="f sp2"><label>ช่วงที่เสนอ</label>
                 <div class="daterange" id="dr">
                   <div class="daterange-field" id="drField">
@@ -79,8 +111,69 @@
             </div>
 
             <div class="actions">
-              <button class="btn btn-g">ย้อนกลับ</button>
+              <button class="btn btn-g" id="btnBack"><span class="ms">arrow_back</span> ย้อนกลับ</button>
               <button class="btn btn-p" id="btnSend">ส่งคำนัดให้เจ้าของรถ</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── รูปแบบ "เดินทางไปซ่อม" — กบค. กำหนดวันไปเอง จึงเป็นวันที่เดียว ไม่ใช่ช่วงให้เลือก ── -->
+        <div class="card hidden" id="outCard">
+          <div class="stack">
+            <div class="sect">เดินทางไปซ่อมที่หน้างาน</div>
+            <div class="sub">ทีม กบค. เดินทางไปซ่อมที่หน่วยงานเจ้าของรถ — กำหนด<b>วันที่แน่นอน</b>ไปเลย ไม่ต้องให้เจ้าของรถเลือกช่วง</div>
+
+            <div class="fgrid">
+              <div class="f sp2"><label>วันที่นัดหมาย</label>
+                <div class="in"><span class="ms">event</span>
+                  <input type="date" id="outDate"></div></div>
+            </div>
+
+            <div class="sect">ช่างผู้รับผิดชอบ</div>
+            <div class="sub">รายชื่อดึงจาก HR ตาม<b>หน่วยงานเดียวกัน (dept_sap)</b> เหมือนหน้าเลือกผู้อนุมัติใบแจ้งซ่อม ·
+              ป้ายด้านขวาคือ<b>ตำแหน่ง</b> · เลือกแล้วเบอร์โทรเติมให้อัตโนมัติ · <b>ข้อมูลจำลอง</b></div>
+            <div class="fgrid">
+              <div class="f sp4"><label>ชื่อช่าง</label>
+                <div class="stack tight">
+                  <div class="search"><span class="ms">search</span>
+                    <input type="text" id="techQ" placeholder="ค้นหาชื่อ / รหัสพนักงาน / หน่วยงาน…"></div>
+                  <div id="techList"></div>
+                </div></div>
+              <div class="f sp2"><label>เบอร์โทร</label>
+                <div class="in"><span class="ms">call</span>
+                  <input type="tel" id="techTel" placeholder="เลือกช่างแล้วเบอร์จะขึ้นให้เอง"></div></div>
+            </div>
+
+            <div class="actions">
+              <button class="btn btn-g" id="btnBackOut"><span class="ms">arrow_back</span> ย้อนกลับ</button>
+              <button class="btn btn-p" id="btnSendOut">ส่งคำนัดให้เจ้าของรถ</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ส่งคำนัดแบบ "เดินทางไปซ่อม" แล้ว — วันนัดถูกกำหนดแล้ว ไม่มีอะไรต้องรอเลือก ── -->
+        <div class="card hidden" id="outDoneCard">
+          <div class="stack">
+            <div class="sect">แจ้งวันนัดแล้ว</div>
+            <div class="sub">แจ้งวันที่ทีม กบค. จะเดินทางไปซ่อมให้เจ้าของรถแล้ว · ระบบส่งสำเนาถึง กรย. ด้วย</div>
+
+            <div class="job">
+              <div class="sp">
+                <div class="no">วันที่นัดหมาย</div>
+                <div class="meta" id="oDate">—</div>
+              </div>
+              <span class="badge b-ok">นัดแล้ว</span>
+            </div>
+
+            <div class="fgrid">
+              <div class="f sp2"><label>ชื่อช่าง</label><div id="oTech">—</div></div>
+              <div class="f sp2"><label>เบอร์โทร</label><div id="oTel">—</div></div>
+            </div>
+
+            <div class="empty">ถึงวันนัด ทีมออกหน้างานแล้วขั้น "ตรวจสภาพก่อนซ่อม" จะปลดล็อก</div>
+
+            <div class="actions">
+              <button class="btn btn-g" id="btnEditOut">แก้คำนัด</button>
             </div>
           </div>
         </div>
@@ -115,18 +208,39 @@
           </div>
         </div>
       </div>
-    </main>
+      </main>
+    </div>
+  </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 // โครงหน้าจอเปล่า — ไม่มี state จริง ไม่ผูกกับข้อมูลใดๆ
 const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');   // ใช้ตอนต่อ HTML ของรายชื่อช่าง
 const TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
 function toast(m) {
   const t = $('toast'); t.textContent = m; t.classList.add('show');
   clearTimeout(t._x); t._x = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// กลับไปแอปหลัก — hashView() ฝั่งโน้นอ่าน #<view> ตอน boot · ค่าว่าง = หน้าแรกตามค่าตั้งต้น
+function goApp(view) {
+  location.href = '../mock/Maintenance-Request-Form.html' + (view ? '#' + view : '');
+}
+
+// ย้อนกลับ → ขั้น 1 เบิกอะไหล่ (แท็บเดิม) ส่ง ?no= กลับไปด้วย
+function goParts() {
+  location.href = 'kbk-self-repair-parts.html' + (fromNo ? '?no=' + encodeURIComponent(fromNo) : '');
+}
+
+// มาจากหน้าเบิกอะไหล่จะมี ?no=<เลขใบแจ้งซ่อม> ติดมา — เปิดตรงๆ ไม่มี param ก็ยังใช้ได้ (ซ่อนบรรทัดนี้ไว้)
+const fromNo = new URLSearchParams(location.search).get('no');
+if (fromNo) {
+  const el = $('fromJob');
+  el.textContent = 'ใบแจ้งซ่อม ' + fromNo + ' — ฟอร์มนัดหมายด้านล่างยังเป็นโครงเปล่า ยังไม่ได้ผูกกับใบงานจริง';
+  el.hidden = false;
 }
 
 const TH_DOW = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
@@ -157,6 +271,7 @@ function renderField() {
   $('daySummary').innerHTML = n
     ? `ช่วงนี้มี <b>${n}</b> วัน — เจ้าของรถจะเป็นคนเลือกวันที่สะดวกเองจากช่วงนี้`
     : 'ยังไม่ได้เลือกช่วง — กดที่ช่องด้านบนเพื่อเปิดปฏิทิน';
+  if (n) clearErr('drField');   // เลือกช่วงครบแล้ว กรอบแดงหายทันที
 }
 
 function renderCal() {
@@ -211,22 +326,88 @@ $('drField').addEventListener('click', e => {
 $('cal').addEventListener('click', e => e.stopPropagation());
 document.addEventListener('click', () => $('dr').classList.remove('open'));
 
-$('mode').addEventListener('change', e => {
-  const inbound = e.target.value === 'in';
-  $('formTitle').textContent = inbound ? 'นัดหมายให้เข้ามาซ่อมที่ กบค.' : 'นัดหมายให้ทีม กบค. เดินทางไปซ่อม';
-  $('formHint').innerHTML = inbound
-    ? 'กบค. เสนอเป็น<b>ช่วงเวลา</b> แล้วให้เจ้าของรถเลือกวันที่สะดวกเองภายในช่วงนั้น'
-    : 'กบค. เสนอเป็น<b>ช่วงเวลา</b> ที่ทีมเดินทางไปได้ แล้วให้เจ้าของรถเลือกวันที่พร้อมให้เข้าหน้างาน';
-  $('place').placeholder = inbound
-    ? 'เช่น โรงซ่อม กบค. สนญ. อาคาร 3 ประตู 2'
-    : 'เช่น จุดจอดรถ กฟจ. ขอนแก่น หลังอาคารสำนักงาน';
-});
+// ── รูปแบบการนัด: "นัดเข้ามา" เสนอเป็นช่วงให้เลือก · "เดินทางไปซ่อม" กบค. กำหนดวันไปเลย ──
+// สลับรูปแบบเมื่อไหร่ = กลับมาเริ่มกรอกใหม่ (ซ่อนการ์ดผลลัพธ์ของทั้งสองฝั่ง)
+let MODE = 'in';
+function setMode(m) {
+  MODE = m;
+  $('modeSeg').querySelectorAll('.sg').forEach(s => s.classList.toggle('sel', s.dataset.mode === m));
+  $('waitCard').classList.add('hidden');
+  $('outDoneCard').classList.add('hidden');
+  $('formCard').classList.toggle('hidden', m !== 'in');
+  $('outCard').classList.toggle('hidden', m !== 'out');
+}
+$('modeSeg').querySelectorAll('.sg').forEach(s =>
+  s.addEventListener('click', () => setMode(s.dataset.mode)));
+
+$('btnBack').addEventListener('click', goParts);
+
+// ── ตรวจฟอร์มก่อนส่ง ──────────────────────────────────────────────
+// ช่องที่ยังไม่กรอก → ใส่ .err ที่ .f (กรอบแดงมาจาก design system) + ต่อ .help "กรุณากรอก…" ใต้ช่อง
+// ชื่อหัวข้อดึงจาก <label> ของช่องนั้นเอง จะได้ไม่ต้องเขียนชื่อซ้ำสองที่ (แก้ label แล้วข้อความตามอัตโนมัติ)
+const REQUIRED_IN = [
+  { id: 'drField',   ok: () => dayCount() > 0, verb: 'เลือก' },   // ช่วงวันที่ = เลือก ไม่ใช่กรอก
+  { id: 'coordName', ok: () => $('coordName').value.trim() },
+  { id: 'coordTel',  ok: () => $('coordTel').value.trim() },
+  { id: 'place',     ok: () => $('place').value.trim() },
+];
+const REQUIRED_OUT = [
+  { id: 'outDate',  ok: () => $('outDate').value, verb: 'เลือก' },
+  { id: 'techQ',    ok: () => !!TECH, verb: 'เลือก' },   // ชื่อช่าง = เลือกจากรายชื่อ ไม่ใช่พิมพ์เอง
+  { id: 'techTel',  ok: () => $('techTel').value.trim() },
+];
+
+const fieldOf = id => $(id).closest('.f');
+// ชื่อหัวข้อ = ข้อความใน <label> ตัดส่วน <small> (เช่น "ถ้ามี") ออก
+const labelOf = f => {
+  const l = f.querySelector('label').cloneNode(true);
+  l.querySelectorAll('small').forEach(s => s.remove());
+  return l.textContent.trim();
+};
+
+function clearErr(id) {
+  const f = fieldOf(id);
+  f.classList.remove('err');
+  const h = f.querySelector('.help');
+  if (h) h.remove();
+}
+
+function setErr(id, msg) {
+  const f = fieldOf(id);
+  f.classList.add('err');
+  let h = f.querySelector('.help');
+  if (!h) { h = document.createElement('div'); h.className = 'help'; f.appendChild(h); }
+  h.textContent = msg;
+}
+
+function validateForm(list) {
+  const bad = [];
+  list.forEach(r => {
+    const f = fieldOf(r.id);
+    if (r.ok()) { clearErr(r.id); return; }
+    setErr(r.id, 'กรุณา' + (r.verb || 'กรอก') + labelOf(f));
+    bad.push(r);
+  });
+  if (bad.length) {
+    // พาไปช่องแรกที่ผิด — ผู้ใช้จะได้ไม่ต้องไล่หาเองว่าตกตรงไหน
+    const first = fieldOf(bad[0].id);
+    first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const focusable = first.querySelector('input, textarea, select');
+    if (focusable) focusable.focus({ preventScroll: true });
+    toast('ยังกรอกไม่ครบ ' + bad.length + ' ช่อง');
+  }
+  return !bad.length;
+}
+
+// กรอก/เลือกแล้วให้กรอบแดงหายทันที ไม่ต้องรอกดส่งใหม่
+// (input type=date ยิง change ด้วย ใส่ทั้งคู่กันเบราว์เซอร์ที่ไม่ยิง input)
+['coordName', 'coordTel', 'place', 'outDate', 'techTel'].forEach(id =>
+  ['input', 'change'].forEach(ev =>
+    $(id).addEventListener(ev, () => { if ($(id).value.trim()) clearErr(id); })));
 
 $('btnSend').addEventListener('click', () => {
+  if (!validateForm(REQUIRED_IN)) return;
   const n = dayCount();
-  if (!n) { toast('ยังไม่ได้เลือกช่วงวันที่'); return; }
-  if (!$('coordName').value.trim() || !$('coordTel').value.trim()) { toast('กรอกเจ้าหน้าที่ประสานงานและเบอร์โทร'); return; }
-  if (!$('place').value.trim()) { toast('ระบุสถานที่นัด'); return; }
 
   $('wRange').textContent = `${fmtTh(R.start)} – ${fmtTh(R.end)}`;
   $('wDays').textContent = `ช่วงนี้มี ${n} วัน ให้เจ้าของรถเลือก`;
@@ -243,6 +424,66 @@ $('btnEdit').addEventListener('click', () => {
   $('formCard').classList.remove('hidden');
 });
 $('btnRemind').addEventListener('click', () => toast('ส่งเตือนซ้ำแล้ว'));
+
+// ── ฝั่ง "เดินทางไปซ่อม" ──
+// รายชื่อช่าง = พนักงานในหน่วยงานเดียวกัน (dept_sap) — เงื่อนไขเดียวกับรายชื่อผู้อนุมัติในต้นแบบ
+// ⚠️ ข้อมูลจำลอง ยังไม่ได้ต่อ HR จริง · เบอร์โทรติดมากับรายชื่อ เลือกแล้วเติมให้อัตโนมัติ
+const TECHS = [
+  { id: '538877', name: 'สุรชัย พันธ์ดี',    posi: 'หก.ซ่อมบำรุง',  dept: 'กบค.กฟก.1', tel: '081-770-3388' },
+  { id: '540118', name: 'ประสิทธิ์ แก้วมณี', posi: 'ช่างระดับ 6',   dept: 'กบค.กฟก.1', tel: '081-455-2201' },
+  { id: '541902', name: 'วิรัตน์ ศรีสุข',    posi: 'ช่างระดับ 5',   dept: 'กบค.กฟก.1', tel: '089-330-7712' },
+  { id: '546210', name: 'ธนพล อินทร์ทอง',   posi: 'ช่างระดับ 5',   dept: 'กบค.กฟก.1', tel: '086-221-9043' },
+  { id: '552341', name: 'อนุวัฒน์ คำแหง',   posi: 'ช่างระดับ 4',   dept: 'กบค.กฟก.1', tel: '092-118-4460' },
+];
+let TECH = null;   // ช่างที่เลือกไว้
+
+function renderTechs() {
+  const q = ($('techQ').value || '').trim().toLowerCase();
+  const list = TECHS.filter(t => !q ||
+    (t.name + ' ' + t.id + ' ' + t.dept + ' ' + t.posi).toLowerCase().includes(q));
+  $('techList').innerHTML = list.length ? list.map(t => `
+    <div class="job${TECH && TECH.id === t.id ? ' sel' : ''}" data-tech="${esc(t.id)}">
+      <div class="sp">
+        <div class="no">${esc(t.name)}</div>
+        <div class="meta">${esc(t.id)} · ${esc(t.dept)}</div>
+      </div>
+      <span class="badge b-brand">${esc(t.posi)}</span>
+    </div>`).join('') : '<div class="empty">ไม่พบรายชื่อที่ค้นหา</div>';
+
+  $('techList').querySelectorAll('[data-tech]').forEach(el =>
+    el.addEventListener('click', () => pickTech(el.dataset.tech)));
+}
+
+function pickTech(id) {
+  TECH = TECHS.find(t => t.id === id) || null;
+  if (TECH) {
+    $('techTel').value = TECH.tel;   // auto fill เบอร์โทรจากรายชื่อที่เลือก
+    clearErr('techQ'); clearErr('techTel');
+  }
+  renderTechs();
+}
+
+$('techQ').addEventListener('input', renderTechs);
+renderTechs();
+
+$('btnBackOut').addEventListener('click', goParts);
+
+$('btnSendOut').addEventListener('click', () => {
+  if (!validateForm(REQUIRED_OUT)) return;
+  // input type=date คืน yyyy-mm-dd — แปลงเป็นวันที่ไทยให้อ่านง่ายเหมือนฝั่งช่วงวันที่
+  const [y, m, d] = $('outDate').value.split('-').map(Number);
+  $('oDate').textContent = fmtTh(new Date(y, m - 1, d));
+  $('oTech').textContent = `${TECH.name} · ${TECH.posi} · ${TECH.dept}`;
+  $('oTel').textContent = $('techTel').value.trim();
+  $('outCard').classList.add('hidden');
+  $('outDoneCard').classList.remove('hidden');
+  toast('แจ้งวันนัดแล้ว (สำเนาถึง กรย.)');
+});
+
+$('btnEditOut').addEventListener('click', () => {
+  $('outDoneCard').classList.add('hidden');
+  $('outCard').classList.remove('hidden');
+});
 
 renderField();
 </script>
