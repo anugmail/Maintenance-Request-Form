@@ -193,10 +193,10 @@ function renderRegionBlock(region, master, selected, plan) {
   const rows = vehicles.map(v => {
     const can = MYD.canJoinPlan(v);
     const reason = MYD.blockReason(v);
-    // รถอยู่ได้ไตรมาสเดียว — ถ้าคันนี้ถูกจัดไว้ไตรมาสอื่นแล้วต้องเห็นชัด
-    // ไม่งั้นติ๊กในไตรมาสนี้แล้วจะงงว่าทำไมยอดไตรมาสโน้นลดลง
+    // รถอยู่ได้ไตรมาสเดียว — ต้องบอกทุกคันว่า "ถูกจัดไปไตรมาสไหนแล้ว" ไม่ใช่เฉพาะคันที่อยู่
+    // ไตรมาสอื่น (เจ้าของงานสั่ง 17 ส.ค. 2569) ไม่งั้นคันที่อยู่ไตรมาสนี้จะอ่านไม่ออกจาก
+    // ช่องติ๊กอย่างเดียวว่าเลือกไปแล้ว และติ๊กในไตรมาสใหม่แล้วจะงงว่าทำไมยอดไตรมาสโน้นลด
     const bucket = MYD.bucketOf(plan, v.id);
-    const elsewhere = bucket && bucket !== state.activeQ;
     return `
     <tr data-id="${esc(v.id)}"${can ? '' : ' class="vrow-blocked"'}>
       <td><input type="checkbox" class="rowChk" data-id="${esc(v.id)}" ${selected.has(v.id) ? 'checked' : ''} ${can ? '' : 'disabled'}></td>
@@ -205,22 +205,38 @@ function renderRegionBlock(region, master, selected, plan) {
         <div class="cell-sub">${esc(v.brand)}${v.chassis && v.chassis !== '—' ? ' · ' + esc(v.chassis) : ''}</div></td>
       <td>${esc(v.province)}
         <div class="cell-sub">${esc(v.ownerDept)}</div></td>
-      <td>${elsewhere
-            ? (bucket === 'none'
-                ? '<span class="badge b-neutral">ยังไม่ระบุไตรมาส</span>'
-                : `<span class="badge b-info">อยู่ ${esc(bucket)}</span>`)
-            : '<span class="cell-sub">—</span>'}</td>
+      <td>${!bucket
+            ? '<span class="cell-sub">ยังไม่เลือก</span>'
+            : bucket === 'none'
+              ? '<span class="badge b-neutral">ยังไม่ระบุไตรมาส</span>'
+              : bucket === state.activeQ
+                ? `<span class="badge b-brand"><span class="dot"></span>${esc(bucket)} · ไตรมาสนี้</span>`
+                : `<span class="badge b-info">${esc(bucket)}</span>`}</td>
       <td><span class="badge ${STATUS_BADGE_CLASS[v.status] || 'b-neutral'}">${esc(MYD.STATUS_LABELS[v.status] || v.status)}</span>
         ${reason ? `<div class="cell-sub">${esc(reason)}</div>` : ''}</td>
     </tr>`;
   }).join('');
+
+  // ป้ายสรุปว่ารถในเขตนี้ถูกจัดไปไตรมาสไหนแล้วบ้าง — เห็นได้โดยไม่ต้องกางตาราง
+  const picked = {};
+  vehicles.forEach(v => {
+    const b = MYD.bucketOf(plan, v.id);
+    if (b) picked[b] = (picked[b] || 0) + 1;
+  });
+  const pickedTags = [...MYD.QUARTER_KEYS, 'none']
+    .filter(k => picked[k])
+    .map(k => k === 'none'
+      ? `<span class="badge b-neutral">ยังไม่ระบุ ${picked[k]}</span>`
+      : `<span class="badge ${k === state.activeQ ? 'b-brand' : 'b-info'}">${k} ${picked[k]}</span>`)
+    .join(' ');
 
   return `
     <div class="rzone" data-region="${region.id}">
       <div class="rzone-head" onclick="toggleRegion(${region.id})">
         <span class="ms rzone-caret">${expanded ? 'expand_more' : 'chevron_right'}</span>
         <b>${esc(region.name)}</b>
-        <span class="rzone-count">(เลือก ${selCount}/${joinable.length} คัน${blocked ? ` · เลือกไม่ได้ ${blocked}` : ''})</span>
+        <span class="rzone-count">(ไตรมาสนี้ ${selCount}/${joinable.length} คัน${blocked ? ` · เลือกไม่ได้ ${blocked}` : ''})</span>
+        ${pickedTags}
         <label class="rzone-allchk" onclick="event.stopPropagation()">
           <input type="checkbox" class="regionAllChk" data-region="${region.id}" ${joinable.length === 0 ? 'disabled' : ''} ${joinable.length > 0 && selCount === joinable.length ? 'checked' : ''}> เลือกทั้งเขต
         </label>
@@ -229,7 +245,7 @@ function renderRegionBlock(region, master, selected, plan) {
       <div class="rzone-body">
         <div class="tblwrap">
           <table class="tbl">
-            <thead><tr><th></th><th>ทะเบียน</th><th>ประเภท</th><th>จังหวัด</th><th>จัดไว้แล้ว</th><th>สถานะ</th></tr></thead>
+            <thead><tr><th></th><th>ทะเบียน</th><th>ประเภท</th><th>จังหวัด</th><th>เลือกเข้าไตรมาส</th><th>สถานะ</th></tr></thead>
             <tbody>${rows || `<tr><td colspan="6" class="empty">ไม่มีรถในเขตนี้</td></tr>`}</tbody>
           </table>
         </div>
