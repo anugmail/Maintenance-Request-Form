@@ -19,7 +19,7 @@
 - **GitHub (self-contained repo):** repo นี้ push เป็น `github.com/anugmail/maintainance-yearly` แยกจาก repo อื่น (แบบเดียวกับ `Maintenance-Request-Form`) · มี `.nojekyll` + `README.md` แล้ว · Pages URL = `https://anugmail.github.io/maintainance-yearly/`
 - **ห้าม hardcode สี:** ใช้ CSS variables/คลาสจาก design-system เท่านั้น (เช่น `var(--primary-600)`, `.btn-p`, `.card`, `.tbl`, `.wsteps`, `.sect`, `.badge`, `.veh`) — ห้ามใส่ hex สีเองในหน้า
 - **สีหลัก design-system เก่า:** `--primary-600:#A80689` (ปุ่ม/active), hover `--primary-500:#CF07AA` — ยึดตาม tokens.css เดิม
-- **ภาษา UI:** ไทยทั้งหมด · ปี = **พ.ศ.** (default ปัจจุบัน = **2569**, ไทรมาสปัจจุบัน = **Q3**)
+- **ภาษา UI:** ไทยทั้งหมด · ปี = **พ.ศ.** (default ปัจจุบัน = **2569**, ไตรมาสปัจจุบัน = **Q3**)
 - **ขอบเขต flow:** happy path **สายตรวจเอง (กบค.) เท่านั้น** — ไม่ทำสายว่าจ้าง/ผู้รับจ้าง, ไม่ทำเคส "บำรุงรักษาไม่ได้"/loop ตีกลับ (แสดงทางเดียว)
 - **สถานะรถ:** `available`=ไม่ใช้ · `pending_approval`=รออนุมัติ · `transferred`=โอน
 - **เกณฑ์:** `truck`=ทรัค · `net`=เนต · **หมวดรายการ:** `part`=อะไหล่ · `oil`=น้ำมัน(oilKind: engine/gear/hydraulic) · `filter`=ไส้กรอง
@@ -290,11 +290,11 @@ SEED_ITEMS: [
 - [ ] **Step 2: verify (browser)** — เลือกรถกระเช้า 2 คัน → น้ำมันเครื่องรวม 24 ลิตร; ไม่เห็นไส้กรองอากาศ (ของรถขุด)
 - [ ] **Step 3: commit** — `git commit -am "feat: master plan step 3 (auto-derived items)"`
 
-## Task 1.4: ขั้น 4 — ระบุไทรมาส
+## Task 1.4: ขั้น 4 — ระบุไตรมาส
 
 **Files:** Modify `app.js`
 
-**Interfaces:** เลือกไทรมาส Q1–Q4 (`.seg`/`.tile` พร้อมช่วงเดือนปีงบฯ: Q1 ต.ค.–ธ.ค., Q2 ม.ค.–มี.ค., Q3 เม.ย.–มิ.ย., Q4 ก.ค.–ก.ย.) + ปี พ.ศ. (default 2569) → เขียน `plan.quarter/year`; ถัดไป disabled จนเลือกไทรมาส
+**Interfaces:** เลือกไตรมาส Q1–Q4 (`.seg`/`.tile` พร้อมช่วงเดือนปีงบฯ: Q1 ต.ค.–ธ.ค., Q2 ม.ค.–มี.ค., Q3 เม.ย.–มิ.ย., Q4 ก.ค.–ก.ย.) + ปี พ.ศ. (default 2569) → เขียน `plan.quarter/year`; ถัดไป disabled จนเลือกไตรมาส
 
 - [ ] **Step 1:** เขียนขั้น 4
 - [ ] **Step 2: verify (browser)** — เลือก Q3/2569 → ถัดไป enable
@@ -305,13 +305,13 @@ SEED_ITEMS: [
 **Files:** Modify `app.js`
 
 **Interfaces:**
-- แสดงสรุปแผน (ชื่อ, เกณฑ์, จำนวนรถ, ไทรมาส/ปี, สรุปอะไหล่รวม)
-- checkbox "ผบพ. ตรวจ/เตรียมอะไหล่สำหรับไทรมาสนี้แล้ว" → `plan.preparedConfirmed`
+- แสดงสรุปแผน (ชื่อ, เกณฑ์, จำนวนรถ, ไตรมาส/ปี, สรุปอะไหล่รวม)
+- checkbox "ผบพ. ตรวจ/เตรียมอะไหล่สำหรับไตรมาสนี้แล้ว" → `plan.preparedConfirmed`
 - ปุ่ม "ขออนุมัติเลขงาน" (disabled จน preparedConfirmed) → set `approvalStatus='approved'`, `workNumber=MYD.workNumber(plan.quarter, plan.year, 1)`, savePlan
 - หลังอนุมัติ: แสดงเลขงาน (`.badge b-ok`) + ตารางสรุปจำนวนรถตามแผนแยกสถานะ (ไม่ใช้/รออนุมัติ/โอน) + ปุ่ม "ไปเฟสถัดไป →" (`goPhase('procurement')`); stepper เฟส 1 กลายเป็น passed
 
 - [ ] **Step 1:** เขียนขั้น 5
-- [ ] **Step 2: verify (browser, happy path เต็ม Phase 1)** — serve → index.html → ชื่อ+เกณฑ์ → เลือกรถ → ดูอะไหล่ → ไทรมาส → ติ๊กเตรียม → ขออนุมัติ → ได้ `MT-2569-Q3-001`, เห็นสรุปสถานะรถ, stepper เฟส 1 = passed, เฟส 2 คลิกได้ · reload แล้ว plan ยังอยู่
+- [ ] **Step 2: verify (browser, happy path เต็ม Phase 1)** — serve → index.html → ชื่อ+เกณฑ์ → เลือกรถ → ดูอะไหล่ → ไตรมาส → ติ๊กเตรียม → ขออนุมัติ → ได้ `MT-2569-Q3-001`, เห็นสรุปสถานะรถ, stepper เฟส 1 = passed, เฟส 2 คลิกได้ · reload แล้ว plan ยังอยู่
 - [ ] **Step 3: commit** — `git commit -am "feat: master plan step 5 (review + approve + work number)"`
 
 ---
@@ -383,12 +383,12 @@ SEED_ITEMS: [
 |---|---|---|
 | 1 | ชื่อแผน + เลือกรถ | เหมือนเดิม |
 | 2 | รายการอะไหล่ (อ่านอย่างเดียว) | **จัดกลุ่มได้ 3 แบบ + ปรับจำนวน/เพิ่ม/ตัดออกได้** |
-| 3 | ~~ระบุไทรมาส~~ | **ตัดทิ้ง** — เป็นแผนประจำปี ไม่ต้องเลือกไทรมาส |
+| 3 | ~~ระบุไตรมาส~~ | **ตัดทิ้ง** — เป็นแผนประจำปี ไม่ต้องเลือกไตรมาส |
 | 4 | ทวน + อนุมัติ | → เลื่อนเป็นขั้น 3 **"สรุปแผนทั้งปี"** |
 
 ### เคาะกับเจ้าของงาน (8 ส.ค.)
 
-1. **เลขงานคง `MT-ปี-ไทรมาส-NNN` ไว้** — แต่ผู้ทำแผนไม่ได้เลือกไทรมาส ⇒ ระบบเติมให้จาก**ไทรมาส ณ วันที่ฝ่ายพัสดุออกเลขงาน** (ปีงบประมาณ ต.ค.–ก.ย.) ผ่าน `MYD.quarterOfMonth()` ที่เพิ่มใหม่ (pure + เทสได้)
+1. **เลขงานคง `MT-ปี-ไตรมาส-NNN` ไว้** — แต่ผู้ทำแผนไม่ได้เลือกไตรมาส ⇒ ระบบเติมให้จาก**ไตรมาส ณ วันที่ฝ่ายพัสดุออกเลขงาน** (ปีงบประมาณ ต.ค.–ก.ย.) ผ่าน `MYD.quarterOfMonth()` ที่เพิ่มใหม่ (pure + เทสได้)
 2. **config การจัดกลุ่มอะไหล่ = dropdown ในหน้า** สลับดูสดๆ ไม่ใช่ตั้งที่ Admin
 3. **"ตามยี่ห้อ" ตัดออกก่อน** เหลือ 3 แบบ — ชนิดอะไหล่ / ภาค / เขต
 
@@ -417,7 +417,7 @@ SEED_ITEMS: [
 
 ### ไฟล์ที่แตะ
 
-`app.js` (SUB_STEPS · computeLines · renderStep2/bindStep2 · renderStep3/bindStep3 · computePlanSummary) · `mock-yearly.js` (`quarterOfMonth`) · `supplies.js` (เติมไทรมาสตอนออกเลขงาน) · `index.html` (คอลัมน์ที่ 6 ของ `.itbl`) · `Diagram/01-บำรุงรักษาตามวาระ/01-ออกเลขงาน.md` (sync ผัง)
+`app.js` (SUB_STEPS · computeLines · renderStep2/bindStep2 · renderStep3/bindStep3 · computePlanSummary) · `mock-yearly.js` (`quarterOfMonth`) · `supplies.js` (เติมไตรมาสตอนออกเลขงาน) · `index.html` (คอลัมน์ที่ 6 ของ `.itbl`) · `Diagram/01-บำรุงรักษาตามวาระ/01-ออกเลขงาน.md` (sync ผัง)
 
 ### โครงกระดูก 6 เฟส (ใหม่)
 
@@ -438,7 +438,7 @@ SEED_ITEMS: [
 | ปลดล็อกเฟส 2 | เมื่อ `approved` | เมื่อ **มีเลขงาน** (พัสดุไม่บล็อก) |
 
 - ตัด `renderPendingView` · `renderRejectedView` · `sendForApproval` · `approvePlan` · `openRejectModal` · `rejectReason` ทิ้งทั้งหมด
-- `issueWorkNumber()` ใหม่ใน `app.js` — เติมไทรมาส + ออกเลข + ลง history 2 รายการ (`issued`, `notified`)
+- `issueWorkNumber()` ใหม่ใน `app.js` — เติมไตรมาส + ออกเลข + ลง history 2 รายการ (`issued`, `notified`)
 - `supplies.js` เขียนใหม่เป็นหน้า **เอกสารแจ้งเตรียม/สั่งอะไหล่**: เลขงาน · รถกี่คัน · **แยกภาค** · **แยกยี่ห้อ/รุ่นอุปกรณ์** · **ตารางอะไหล่ 3 หมวดพร้อมยอดรวมที่ต้องเตรียม** · timeline · ปุ่ม "รับทราบ"
 - `SCHEMA_VERSION` 4 → 5 (แผนเก่าใน localStorage รีเซ็ตเอง)
 - ย้าย logic รายการอะไหล่ไป `MYD.linesFor()` / `MYD.planLines()` เพื่อให้หน้า กบค. กับหน้าพัสดุเห็นตัวเลข**ชุดเดียวกัน**
@@ -529,7 +529,7 @@ seed 3 แผน (ออกเลข 2 · ร่าง 1) → รายการ
 - การ์ดนำหน้า **"ก่อนเข้า stepper — ออกเลขงาน (แยกหน้า)"** ✅ ทำแล้ว พร้อมลิงก์ไป `plan-new.html`
 - stepper เหลือ **5 เฟส** (เบิก/จัดหา → ดำเนินการ → ตรวจรับ → รายงาน → ต้นทุน)
 - แต่ละเฟสติดป้าย **ทำแล้ว / ยังเป็นหน้าเปล่า**
-- ตัดคำถามที่เคาะแล้วออก (กบค. · ไทรมาส · พัสดุอนุมัติ) เหลือ **17 ข้อ** จากเดิม 21
+- ตัดคำถามที่เคาะแล้วออก (กบค. · ไตรมาส · พัสดุอนุมัติ) เหลือ **17 ข้อ** จากเดิม 21
 - แก้ข้อ 3.1 ให้สอดคล้อง: *"ปรับลดงานใครอนุมัติ — พัสดุเป็นแค่ผู้รับทราบแล้ว น่าจะเป็นผู้บังคับบัญชา กบค. ใช่ไหม"*
 
 ### รอบแก้ 8 ส.ค. 2569 — รอบ 5: แผนตัวอย่างที่ผ่านเฟส 1 แล้ว (ตัวตั้งต้นของเฟส 2)

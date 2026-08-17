@@ -147,7 +147,7 @@ const INITIAL_PLAN = {
   phase: 'procurement',   // เฟสปฏิบัติการที่แผนนี้อยู่ (เริ่มที่เฟสแรกหลังออกเลขงาน)
   planName: '',
   selectedVehicleIds: [],
-  quarter: null,          // ผู้ทำแผนเลือกในขั้นที่ 1 (ปีงบประมาณ ต.ค.–ก.ย.) — 1 แผน = 1 ไทรมาส
+  quarter: null,          // ผู้ทำแผนเลือกในขั้นที่ 1 (ปีงบประมาณ ต.ค.–ก.ย.) — 1 แผน = 1 ไตรมาส
   year: 2569,
   itemAdj: {},            // การแก้มือรายการอะไหล่ { [itemId]: {qty, off, added} }
   workNumber: null,
@@ -305,7 +305,7 @@ const MYD = {
   },
   CATEGORY_LABELS: { part:'อะไหล่', oil:'น้ำมัน', filter:'ไส้กรอง' },
   OILKIND_LABELS:  { engine:'น้ำมันเครื่อง', gear:'น้ำมันเฟือง', hydraulic:'น้ำมันไฮดรอลิก' },
-  TRIGGER_LABELS:  { calendar:'ตามรอบ (ไทรมาส)', hours:'ชั่วโมงเครื่อง', mileage:'ระยะทาง' },
+  TRIGGER_LABELS:  { calendar:'ตามรอบ (ไตรมาส)', hours:'ชั่วโมงเครื่อง', mileage:'ระยะทาง' },
 
   // ----- กรย. 12 เขต / 4 ภาค -----
   ZONE_LABELS,
@@ -649,8 +649,8 @@ const MYD = {
     return this.STATUS_BLOCK_REASON[vehicle.status] || '';
   },
 
-  // ไทรมาสตามปีงบประมาณ (ต.ค.–ก.ย.): ต.ค.=เดือน 10 → Q1
-  // ผู้ทำแผนเลือกไทรมาสเองในขั้นที่ 1 — ตัวนี้เหลือไว้ 2 งาน: ทำป้าย "· ตอนนี้"
+  // ไตรมาสตามปีงบประมาณ (ต.ค.–ก.ย.): ต.ค.=เดือน 10 → Q1
+  // ผู้ทำแผนเลือกไตรมาสเองในขั้นที่ 1 — ตัวนี้เหลือไว้ 2 งาน: ทำป้าย "· ตอนนี้"
   // ในตัวเลือก และเติมค่าให้แผนร่างเก่าที่สร้างไว้ก่อนมีตัวเลือก
   // รับเลขเดือน 1-12 (ไม่รับ Date เพื่อให้ pure/เทสได้)
   quarterOfMonth(month) {
@@ -668,7 +668,7 @@ const MYD = {
   triggerText(item) {
     if (item.triggerType === 'hours') return `ทุก ${item.interval} ชม.`;
     if (item.triggerType === 'mileage') return `ทุก ${item.interval} กม.`;
-    return 'ตามรอบ (ไทรมาส)';
+    return 'ตามรอบ (ไตรมาส)';
   },
 };
 

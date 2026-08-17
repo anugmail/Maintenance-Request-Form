@@ -3,7 +3,7 @@
 // ⚠️ โครงเปลี่ยน 8 ส.ค. 2569
 //   - "ออกเลขงาน" แยกไป plan-new.html แล้ว ไม่อยู่ใน stepper นี้
 //   - ระบบเก็บ "หลายแผน" (MYD.loadPlans()) แผนหนึ่ง = ประจำปีหนึ่งใบของ กบค.
-//   - เลขงาน (MT-ปี-ไทรมาส-NNN) คือหัวข้อของแผน · stepper เป็นของ "แต่ละแผน"
+//   - เลขงาน (MT-ปี-ไตรมาส-NNN) คือหัวข้อของแผน · stepper เป็นของ "แต่ละแผน"
 //
 // routing: index.html         -> รายการแผน
 //          index.html#<planId> -> เปิดแผนนั้น + stepper 5 เฟส
@@ -89,7 +89,7 @@ function renderList() {
     <div class="card">
       <div class="sub">เลือกแผนเพื่อทำเฟสถัดไป — เลขงานคือหัวข้อของแผนแต่ละใบ</div>
       ${plans.length ? `<div class="tblwrap"><table class="tbl">
-        <thead><tr><th>เลขงาน / ชื่อแผน</th><th class="num">รถ (คัน)</th><th>ไทรมาส/ปี</th><th>สถานะเอกสาร</th><th>ความคืบหน้า</th><th></th></tr></thead>
+        <thead><tr><th>เลขงาน / ชื่อแผน</th><th class="num">รถ (คัน)</th><th>ไตรมาส/ปี</th><th>สถานะเอกสาร</th><th>ความคืบหน้า</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
         : `<div class="empty">ยังไม่มีแผน — กด "สร้างแผน / ออกเลขงาน" เพื่อเริ่ม</div>`}
       <div class="actions" style="margin-top:14px">

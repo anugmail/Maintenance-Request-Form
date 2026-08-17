@@ -56,7 +56,7 @@ function renderList() {
         ${waiting ? `<span class="badge b-low" style="margin-left:8px">รอรับทราบ ${waiting}</span>` : ''}</div>
       <div class="sub">แต่ละใบคือแผนบำรุงรักษาประจำปีหนึ่งแผน — เลขงานคือหัวข้อของแผน</div>
       ${docs.length ? `<div class="tblwrap"><table class="tbl">
-        <thead><tr><th>เลขงาน / ชื่อแผน</th><th class="num">รถ (คัน)</th><th class="num">อะไหล่ (รายการ)</th><th>ไทรมาส/ปี</th><th>สถานะ</th><th></th></tr></thead>
+        <thead><tr><th>เลขงาน / ชื่อแผน</th><th class="num">รถ (คัน)</th><th class="num">อะไหล่ (รายการ)</th><th>ไตรมาส/ปี</th><th>สถานะ</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
         : `<div class="empty">ยังไม่มีเอกสารส่งเข้ามา — รอ กบค. ออกเลขงาน</div>`}
     </div>`;
@@ -120,7 +120,7 @@ function renderDoc(plan) {
 
       <div class="fgrid">
         <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName || '—')}</div></div>
-        <div class="f sp2"><label>ไทรมาสที่ออกเลขงาน</label><div>${quarterYearText(plan)}</div></div>
+        <div class="f sp2"><label>ไตรมาสที่ออกเลขงาน</label><div>${quarterYearText(plan)}</div></div>
         <div class="f sp2"><label>รถเข้าแผนบำรุงรักษา</label><div><b style="font-size:20px">${vehicles.length}</b> คัน</div></div>
         <div class="f sp2"><label>รายการอะไหล่ที่ต้องเตรียม</label><div><b style="font-size:20px">${lines.length}</b> รายการ</div></div>
       </div>

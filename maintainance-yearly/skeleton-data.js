@@ -79,7 +79,7 @@ const SAMPLE = {
 
 const SRC_LABELS = {
   '': '— ยังไม่มีข้อมูลในระบบ —',
-  'p.workNumber': 'แผน · เลขงาน', 'p.planName': 'แผน · ชื่อแผน', 'p.period': 'แผน · ไทรมาส/ปี',
+  'p.workNumber': 'แผน · เลขงาน', 'p.planName': 'แผน · ชื่อแผน', 'p.period': 'แผน · ไตรมาส/ปี',
   'p.vehCount': 'แผน · จำนวนรถ', 'p.lineCount': 'แผน · จำนวนรายการอะไหล่', 'p.ack': 'แผน · สถานะพัสดุ',
   'p.ackAt': 'แผน · พัสดุรับทราบเมื่อ', 'p.partsReq': 'แผน · สถานะเบิกอะไหล่', 'p.phase': 'แผน · เฟสปัจจุบัน',
   't.name': 'แผนเดินทาง · ชื่อแผน', 't.window': 'แผนเดินทาง · ช่วงที่เสนอ',
@@ -111,9 +111,9 @@ const DEFAULT_SKEL = {
   screens: [
 
     // ================= กลุ่ม 1 · ออกเลขงาน =================
-    { id: 's1', group: 'issue', no: '1', title: 'ไทรมาส + ชื่อแผน + เลือกรถ', real: 'plan-new.html', asks: [], sections: [
+    { id: 's1', group: 'issue', no: '1', title: 'ไตรมาส + ชื่อแผน + เลือกรถ', real: 'plan-new.html', asks: [], sections: [
       { id: 's1-head', title: 'หัวแผน', kind: 'form', fields: [
-        f('quarter',  'ไทรมาสของแผน', 'p.period'),
+        f('quarter',  'ไตรมาสของแผน', 'p.period'),
         f('planName', 'ชื่อแผน', 'p.planName'),
       ]},
       { id: 's1-veh', title: 'ตารางรถในเขต (ภาค → เขต → กางออก)', kind: 'table', fields: [
@@ -380,7 +380,7 @@ const DEFAULT_SKEL = {
         f('wn',     'เลขงาน', 'p.workNumber'),
         f('ack',    'สถานะรับทราบ', 'p.ack'),
         f('name',   'ชื่อแผน', 'p.planName'),
-        f('period', 'ไทรมาสของแผน', 'p.period'),
+        f('period', 'ไตรมาสของแผน', 'p.period'),
         f('nveh',   'รถเข้าแผน', 'p.vehCount'),
         f('nline',  'รายการอะไหล่ที่ต้องเตรียม', 'p.lineCount'),
       ]},
