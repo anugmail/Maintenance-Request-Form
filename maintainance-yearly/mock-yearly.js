@@ -37,7 +37,7 @@ const DEFAULT_SETTINGS = { confirmDueDays: 7 };   // ยังไม่ได้
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 12;  // 12 = แยกยี่ห้อ/รุ่น รถยนต์-อุปกรณ์ + รหัส/SN/HC/ตัวย่อจังหวัด ตามแบบฟอร์มจริง
+const SCHEMA_VERSION = 13;  // 13 = แผนเดินทางเลือกจ้างผู้รับจ้างได้รายใบ (mode/vendorId/hireCost)
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -175,6 +175,19 @@ function genSeedVehicles() {
 }
 
 const SEED_VEHICLES = genSeedVehicles();
+
+// ----- ผู้รับจ้าง (vendor) -----
+// เจ้าของงานสั่ง 17 ส.ค. 2569: "ตอนสร้างแผนการเดินทาง สามารถเลือกจ้าง vendor
+// รายแผนการเดินทางเลย ก็ assign แผนการซ่อม/แผนการเดินทางเข้ากับ vendor ได้เลย"
+// ⇒ ปิดคำถามค้าง 1b.1 (ทำสายว่าจ้างไหม = ทำ) และ 1b.2 (เลือกตรงไหน = รายใบเดินทาง)
+// ⚠️ ชื่อผู้รับจ้างทั้งหมดเป็นข้อมูลจำลอง — ยังไม่มีทะเบียนผู้รับจ้างจริงจาก VMS Plus
+const SEED_VENDORS = [
+  { id:'vd1', name:'หจก. เชียงรายยานยนต์บริการ',  taxId:'0573xxxxxxxx1', contact:'คุณสมชาย',  phone:'081-234-5671', zones:['north'] },
+  { id:'vd2', name:'บจ. ตะวันออกเครนเซอร์วิส',    taxId:'0245xxxxxxxx2', contact:'คุณวิไล',    phone:'081-234-5672', zones:['east'] },
+  { id:'vd3', name:'หจก. ใต้กลการ',              taxId:'0803xxxxxxxx3', contact:'คุณอนุชา',   phone:'081-234-5673', zones:['south'] },
+  { id:'vd4', name:'บจ. อีสานไฮดรอลิก',          taxId:'0405xxxxxxxx4', contact:'คุณพรทิพย์', phone:'081-234-5674', zones:['west'] },
+  { id:'vd5', name:'บจ. ทั่วไทยเซอร์วิส',         taxId:'0105xxxxxxxx5', contact:'คุณธนกร',   phone:'081-234-5675', zones:['north','east','south','west'] },
+];
 
 const SEED_ITEMS = [
   { id:'p1', name:'ผ้าเบรก',              category:'part',   unit:'ชุด', appliesToTypes:['รถกระเช้า','รถเครน','รถขุด'], qtyPerVehicle:1,  triggerType:'mileage', interval:20000 },
@@ -646,7 +659,8 @@ const MYD = {
   // ----- แผนเดินทาง: หลายใบต่อหนึ่งแผนบำรุงรักษา (เคาะ 10 ส.ค. 2569) -----
   // "การสร้างจะอิสระ หมายถึงเลือกรถได้ เลือกแผน" — ใบไม่ผูกกับจังหวัด กบค. จัดเอง
   // trip = { id, name, location, windowFrom, windowTo, perDiem, lodging, travel,
-  //          staff:[ชื่อพนักงาน กบค.], vehicleIds:[], dates:{[vehicleId]:'YYYY-MM-DD'},
+  //          mode:'self'|'vendor', vendorId, hireCost, staff:[ชื่อพนักงาน กบค.],
+  //          vehicleIds:[], dates:{[vehicleId]:'YYYY-MM-DD'},
   //          jobs:{[vehicleId]:{change,inspect}}, places:{[vehicleId]:'สถานที่'},
   //          sentAt, replies:{ [ownerDept]: {status,reason,by,at,history:[]} } }
   // วันนัดอยู่ระดับ "รายคัน" · ช่วงเวลาอยู่ระดับ "ใบ" · การตอบรับอยู่ระดับ "ใบ × หน่วยงาน"
@@ -655,7 +669,10 @@ const MYD = {
   emptyTrip(id, name) {
     return { id, name: name || '', location: '', windowFrom: '', windowTo: '',
              perDiem: 0, lodging: 0, travel: 0,
-             staff: ['', ''],        // พนักงาน กบค. ที่ออกไปซ่อม — ปกติ 2-3 คน
+             mode: 'self',           // 'self' = กบค. ตรวจเอง · 'vendor' = จ้างผู้รับจ้าง
+             vendorId: null,         // ผู้รับจ้างที่ถูก assign ให้ใบนี้ (เมื่อ mode='vendor')
+             hireCost: 0,            // ค่าจ้างเหมาของใบนี้ (แทนเบี้ยเลี้ยง/ที่พัก/เดินทาง)
+             staff: ['', ''],        // พนักงาน กบค. ที่ออกไปซ่อม — ปกติ 2-3 คน (เมื่อ mode='self')
              vehicleIds: [], dates: {},
              jobs: {},               // { [vehicleId]: { change:bool, inspect:bool } }
              places: {},             // { [vehicleId]: 'สถานที่บำรุงรักษา' } — ว่าง = ใช้ default
@@ -937,6 +954,38 @@ const MYD = {
   quartersMissing(plan) {
     this.ensurePlanQuarters(plan);
     return this.QUARTER_KEYS.filter(q => plan.byQuarter[q].length === 0);
+  },
+
+  // ---- ผู้รับจ้าง: เลือกได้รายใบเดินทาง (เจ้าของงานเคาะ 17 ส.ค. 2569) ----
+  VENDORS: SEED_VENDORS,
+
+  vendorById(id) {
+    return SEED_VENDORS.find(v => v.id === id) || null;
+  },
+
+  // ผู้รับจ้างที่รับงานในภาคของรถในใบนี้ — ใบที่มีรถข้ามภาคจะเหลือเฉพาะรายที่ครอบทุกภาค
+  vendorsForTrip(trip, master) {
+    const byId = new Map(master.vehicles.map(v => [v.id, v]));
+    const zones = [...new Set((trip.vehicleIds || [])
+      .map(id => byId.get(id)).filter(Boolean).map(v => regionZone(v.region)))];
+    if (!zones.length) return SEED_VENDORS;
+    return SEED_VENDORS.filter(vd => zones.every(z => vd.zones.includes(z)));
+  },
+
+  tripVendor(trip) {
+    return trip.mode === 'vendor' ? this.vendorById(trip.vendorId) : null;
+  },
+
+  // ค่าใช้จ่ายของใบ — คนละชุดกันตามโหมด (ตรวจเอง = เบี้ยเลี้ยง+ที่พัก+เดินทาง · จ้าง = ค่าจ้างเหมา)
+  tripCost(trip) {
+    return trip.mode === 'vendor'
+      ? (trip.hireCost || 0)
+      : (trip.perDiem || 0) + (trip.lodging || 0) + (trip.travel || 0);
+  },
+
+  // ใบพร้อมส่งไหมในแง่ "ใครไปทำ" — ตรวจเองต้องมีชื่อพนักงาน · จ้างต้องเลือกผู้รับจ้าง
+  tripDoerReady(trip) {
+    return trip.mode === 'vendor' ? !!trip.vendorId : this.tripStaffList(trip).length > 0;
   },
 
   // ---- ข้อมูลระบุตัวรถตามแบบฟอร์มตรวจสภาพ (เจ้าของงานส่งฟอร์มจริงมา 17 ส.ค. 2569) ----

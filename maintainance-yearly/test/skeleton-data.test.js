@@ -42,12 +42,15 @@ const badSrc = allFields.filter(f => f.src && !SAMPLE[f.src]);
 ok(badSrc.length === 0, `ทุก src ที่ระบุมีจริงใน SAMPLE${badSrc.length ? ' — เจอผิด: ' + badSrc.map(f => f.src).join(', ') : ''}`);
 const missLabel = Object.keys(SAMPLE).filter(k => !(k in SRC_LABELS));
 ok(missLabel.length === 0, `ทุก key ใน SAMPLE มีชื่อไทยใน SRC_LABELS${missLabel.length ? ' — ขาด: ' + missLabel.join(', ') : ''}`);
-eq(Object.keys(SAMPLE).length, 45, 'แหล่งข้อมูล 45 ตัว (+8 ฟิลด์ระบุตัวรถตามแบบฟอร์มตรวจสภาพ)');
+eq(Object.keys(SAMPLE).length, 47, 'แหล่งข้อมูล 47 ตัว (+t.vendor +t.hireCost)');
 
 console.log('\nคำถามที่ต้องเคาะ');
 eq(allAsks.length, 21, 'รวม 21 ข้อ (17 ของเดิม + 4 ของยืนยันรถ)');
 eq(new Set(allAsks.map(a => a.id)).size, 21, 'ask id ไม่ซ้ำ');
-ok(allAsks.every(a => a.status === 'open' && a.ans === ''), 'ตั้งต้นทุกข้อยัง "รอเคาะ" และคำตอบว่าง');
+// 1b.1/1b.2 (สายว่าจ้าง) เจ้าของงานเคาะแล้ว 17 ส.ค. 2569 — ที่เหลือยังรอ
+eq(allAsks.filter(a => a.status === 'answered').length, 2, 'เคาะแล้ว 2 ข้อ (1b.1 สายว่าจ้าง · 1b.2 เลือกที่ไหน)');
+ok(allAsks.filter(a => a.status === 'answered').every(a => a.ans !== ''), 'ข้อที่เคาะแล้วต้องมีคำตอบ');
+ok(allAsks.filter(a => a.status !== 'answered').every(a => a.status === 'open' && a.ans === ''), 'ข้อที่เหลือยัง "รอเคาะ" และคำตอบว่าง');
 eq(screens.find(s => s.id === 'ph1a').asks.length, 4, 'จอยืนยันรถมีคำถามใหม่ 4 ข้อ');
 eq(screens.find(s => s.id === 'ph2').asks.length, 5, 'เฟส 2 มีคำถาม 5 ข้อ');
 

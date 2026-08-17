@@ -633,6 +633,7 @@ function renderProcStep2(plan) {
     const locked = sent && st !== 'rejected';   // ส่งแล้วแก้ไม่ได้ จนกว่าจะถูกปฏิเสธ
     const dis = locked ? 'disabled' : '';
     const vs = tripVehicles(trip, master);
+    const vendor = MYD.tripVendor(trip);
 
     const rows = vs.map(v => {
       const d = (trip.dates || {})[v.id] || '';
@@ -681,7 +682,8 @@ function renderProcStep2(plan) {
         <div class="rzone-head">
           <span class="ms rzone-caret">event</span>
           <b>${esc(trip.name || 'แผนเดินทาง')}</b>
-          <span class="rzone-count">${vs.length} คัน · ${MYD.tripDepts(trip, master).length} หน่วยงาน</span>
+          <span class="rzone-count">${vs.length} คัน · ${MYD.tripDepts(trip, master).length} หน่วยงาน · ${MYD.tripCost(trip).toLocaleString('th-TH')} บาท</span>
+          <span class="badge ${trip.mode === 'vendor' ? 'b-info' : 'b-neutral'}">${trip.mode === 'vendor' ? (vendor ? esc(vendor.name) : 'จ้าง — ยังไม่เลือกผู้รับจ้าง') : 'กบค. ตรวจเอง'}</span>
           <span class="badge ${b.cls}">${b.text}</span>
         </div>
         <div class="rzone-body">
@@ -700,6 +702,25 @@ function renderProcStep2(plan) {
             <div class="f sp2"><label>ถึงวันที่</label>
               <div class="in noic"><input type="date" value="${esc(trip.windowTo || '')}" ${dis}
                 data-trip="${esc(trip.id)}" data-field="windowTo"></div></div>
+            <div class="f sp4"><label>ผู้ดำเนินการของใบนี้</label>
+              <div class="seg">
+                <div class="sg tripMode ${trip.mode !== 'vendor' ? 'sel' : ''}" data-mode-trip="${esc(trip.id)}" data-mode="self">
+                  กบค. ตรวจเอง<div class="sg-sub">ระบุชื่อพนักงานที่ออกไปซ่อม</div></div>
+                <div class="sg tripMode ${trip.mode === 'vendor' ? 'sel' : ''}" data-mode-trip="${esc(trip.id)}" data-mode="vendor">
+                  จ้างผู้รับจ้าง<div class="sg-sub">assign ใบนี้ให้ผู้รับจ้างไปทำ</div></div>
+              </div></div>
+            ${trip.mode === 'vendor' ? `
+            <div class="f sp2"><label>ผู้รับจ้าง</label>
+              <div class="in noic"><select data-vendor-trip="${esc(trip.id)}" ${dis}>
+                <option value="">— เลือกผู้รับจ้าง —</option>
+                ${MYD.vendorsForTrip(trip, master).map(vd => `
+                  <option value="${esc(vd.id)}" ${trip.vendorId === vd.id ? 'selected' : ''}>${esc(vd.name)}</option>`).join('')}
+              </select></div>
+              ${vendor ? `<div class="cell-sub">ผู้ติดต่อ ${esc(vendor.contact)} · ${esc(vendor.phone)} · เลขผู้เสียภาษี ${esc(vendor.taxId)}</div>` : ''}</div>
+            <div class="f sp2"><label>ค่าจ้างเหมา (บาท)</label>
+              <div class="in noic"><input type="number" min="0" value="${esc(trip.hireCost ?? 0)}" ${dis}
+                data-trip="${esc(trip.id)}" data-field="hireCost"></div></div>
+            ` : `
             <div class="f"><label>ค่าเบี้ยเลี้ยง (บาท)</label>
               <div class="in noic"><input type="number" min="0" value="${esc(trip.perDiem ?? 0)}" ${dis}
                 data-trip="${esc(trip.id)}" data-field="perDiem"></div></div>
@@ -710,8 +731,10 @@ function renderProcStep2(plan) {
               <div class="in noic"><input type="number" min="0" value="${esc(trip.travel ?? 0)}" ${dis}
                 data-trip="${esc(trip.id)}" data-field="travel"></div></div>
             <div class="f"><label>รวม</label><div><b>${esc((trip.perDiem || 0) + (trip.lodging || 0) + (trip.travel || 0))} บาท</b></div></div>
+            `}
           </div>
 
+          ${trip.mode === 'vendor' ? '' : `
           <div class="sect">พนักงาน กบค. ที่ออกไปซ่อม</div>
           <div class="sub">ปกติ 2-3 คนต่อใบ — ใส่ชื่อไว้เพื่อให้หน่วยงานเจ้าของรถรู้ว่าใครจะไป</div>
           <div class="fgrid">
@@ -725,6 +748,7 @@ function renderProcStep2(plan) {
             <button class="btn btn-t btn-sm" data-staff-add="${esc(trip.id)}"><span class="ms">add</span> เพิ่มคน</button>
             ${(trip.staff || []).length > 1 ? `<button class="btn btn-t btn-sm" data-staff-del="${esc(trip.id)}"><span class="ms">remove</span> ลดคน</button>` : ''}
           </div>`}
+          `}
 
           <div class="sect">รถในแผนนี้ + วันนัดรายคัน</div>
           ${vs.length ? `<div class="tblwrap"><table class="tbl">
@@ -753,7 +777,7 @@ function renderProcStep2(plan) {
             ${locked
               ? `<button class="btn btn-g" data-trip-del="${esc(trip.id)}" disabled>ส่งแล้ว แก้ไม่ได้</button>`
               : `<button class="btn btn-g" data-trip-del="${esc(trip.id)}">ลบแผนนี้</button>
-                 <button class="btn btn-o" data-trip-send="${esc(trip.id)}" ${MYD.tripReadyToSend(trip) && MYD.tripStaffList(trip).length && !MYD.tripJobsIncomplete(trip).length ? '' : 'disabled'}>
+                 <button class="btn btn-o" data-trip-send="${esc(trip.id)}" ${MYD.tripReadyToSend(trip) && MYD.tripDoerReady(trip) && !MYD.tripJobsIncomplete(trip).length ? '' : 'disabled'}>
                    <span class="ms">send</span> ${st === 'rejected' ? 'แก้แล้วส่งใหม่' : 'ส่งแผนนัดให้หน่วยงาน'}</button>`}
           </div>
         </div>
@@ -787,6 +811,28 @@ function bindProcStep2(plan) {
   const trips = MYD.ensureTrips(plan);
   const find = id => trips.find(t => t.id === id);
   const rerender = () => { MYD.savePlan(plan); renderProcWizard(plan); };
+
+  // สลับ ตรวจเอง / จ้างผู้รับจ้าง — รายใบเดินทาง (เจ้าของงานเคาะ 17 ส.ค. 2569)
+  document.querySelectorAll('.tripMode').forEach(sg => {
+    sg.addEventListener('click', () => {
+      const t = find(sg.dataset.modeTrip);
+      if (!t || (t.sentAt && MYD.tripStatus(t, master) !== 'rejected')) return;
+      t.mode = sg.dataset.mode;
+      if (t.mode !== 'vendor') t.vendorId = null;
+      rerender();
+    });
+  });
+
+  document.querySelectorAll('[data-vendor-trip]').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const t = find(sel.dataset.vendorTrip);
+      if (!t) return;
+      t.vendorId = e.target.value || null;
+      const vd = MYD.vendorById(t.vendorId);
+      if (vd) toast('assign ใบนี้ให้ ' + vd.name + ' แล้ว');
+      rerender();
+    });
+  });
 
   // ชื่อพนักงาน กบค. — บันทึกทันทีแต่ไม่ re-render (ไม่งั้นโฟกัสหลุดระหว่างพิมพ์)
   document.querySelectorAll('[data-staff-trip]').forEach(el => {
@@ -868,7 +914,7 @@ function bindProcStep2(plan) {
       const t = find(el.dataset.trip);
       if (!t) return;
       const f = el.dataset.field;
-      t[f] = ['perDiem', 'lodging', 'travel'].includes(f) ? (Number(e.target.value) || 0) : e.target.value;
+      t[f] = ['perDiem', 'lodging', 'travel', 'hireCost'].includes(f) ? (Number(e.target.value) || 0) : e.target.value;
       MYD.savePlan(plan);
       updateProcPrimaryEnabled(plan);
       const btn = document.querySelector(`[data-trip-send="${t.id}"]`);
