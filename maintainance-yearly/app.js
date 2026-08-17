@@ -625,7 +625,7 @@ function renderProcStep2(plan) {
 
   const qSeg = ['Q1', 'Q2', 'Q3', 'Q4'].map(q => {
     const n = MYD.planVehicleIds(plan, q).length;
-    return `<div class="sg travelQSeg ${travelQ === q ? 'sel' : ''}" data-q="${q}">${q} · ${n} คัน</div>`;
+    return `<div class="sg travelQSeg ${travelQ === q ? 'sel' : ''}" data-q="${q}">${esc(MYD.quarterLabel(q))} · ${n} คัน</div>`;
   }).join('');
   const noneIds = MYD.planVehicleIds(plan, 'none');
 
@@ -673,9 +673,9 @@ function renderProcStep2(plan) {
         <td><div class="in noic"><input type="date" value="${esc(d)}" ${dis}
               data-trip="${esc(trip.id)}" data-veh="${esc(v.id)}"></div>
             ${bad ? `<div class="cell-sub">อยู่นอกช่วงที่เสนอ</div>` : ''}</td>
-        <td>${locked ? esc(MYD.bucketOf(plan, v.id) || '—') : `
+        <td>${locked ? esc(MYD.quarterLabel(MYD.bucketOf(plan, v.id)) || '—') : `
           <div class="in noic"><select class="vehQMove" data-veh="${esc(v.id)}" data-trip="${esc(trip.id)}">
-            ${['Q1', 'Q2', 'Q3', 'Q4'].map(q => `<option value="${q}" ${MYD.bucketOf(plan, v.id) === q ? 'selected' : ''}>อยู่ ${q}</option>`).join('')}
+            ${['Q1', 'Q2', 'Q3', 'Q4'].map(q => `<option value="${q}" ${MYD.bucketOf(plan, v.id) === q ? 'selected' : ''}>อยู่${esc(MYD.quarterLabel(q))}</option>`).join('')}
             <option value="none" ${MYD.bucketOf(plan, v.id) === 'none' ? 'selected' : ''}>ยังไม่ระบุไตรมาส</option>
             <option value="out">เอาออกจากแผนทั้งใบ</option>
           </select></div>`}</td>
@@ -809,7 +809,7 @@ function renderProcStep2(plan) {
     ${noneIds.length ? `<div class="note note-info"><span class="ms">inbox</span>
       <div>มีรถ <b>${noneIds.length}</b> คันถูกพักไว้แบบ <b>ยังไม่ระบุไตรมาส</b> — ยังอยู่ในแผน
       แต่จะไม่โผล่ในไตรมาสไหนจนกว่าจะย้ายกลับเข้าไตรมาส</div></div>` : ''}
-    <div class="sub">ไตรมาส ${esc(travelQ)}: รถที่ยืนยันแล้ว <b>${joining.length}</b> คัน — จัดเข้าแผนแล้ว <b>${joining.length - unassigned.length}</b>
+    <div class="sub">${esc(MYD.quarterLabel(travelQ))}: รถที่ยืนยันแล้ว <b>${joining.length}</b> คัน — จัดเข้าแผนแล้ว <b>${joining.length - unassigned.length}</b>
       · ยังไม่จัด <b>${unassigned.length}</b> · แผนเดินทาง <b>${trips.length}</b> ใบ (ตอบรับแล้ว ${accepted})</div>
     <div class="sub">แผนหนึ่งมีได้หลายใบ — จะแยกตามจังหวัด หรือจังหวัดละหลายใบก็ได้ · แต่ละใบเสนอเป็นช่วงเวลา
       แล้วระบุวันนัดรายคันภายในช่วงนั้น</div>
@@ -919,7 +919,7 @@ function bindProcStep2(plan) {
       MYD.assignVehicle(plan, vehId, target === 'out' ? null : target);
       toast(target === 'out' ? 'เอารถออกจากแผนแล้ว'
         : target === 'none' ? 'พักรถไว้แบบยังไม่ระบุไตรมาสแล้ว'
-        : 'ย้ายรถไป ' + target + ' แล้ว');
+        : 'ย้ายรถไป' + MYD.quarterLabel(target) + 'แล้ว');
       rerender();
     });
   });

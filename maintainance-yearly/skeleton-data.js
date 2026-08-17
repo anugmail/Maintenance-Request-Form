@@ -130,7 +130,7 @@ const DEFAULT_SKEL = {
     { id: 's1', group: 'issue', no: '1', title: 'ชื่อแผน + จัดรถเข้าไตรมาส', real: 'plan-new.html', asks: [], sections: [
       { id: 's1-head', title: 'หัวแผน', kind: 'form', fields: [
         f('planName', 'ชื่อแผน', 'p.planName'),
-        f('quarter',  'แท็บไตรมาส Q1–Q4 (ต้องมีรถครบทุกไตรมาส)', 'p.period'),
+        f('quarter',  'แท็บไตรมาส 1–4 (ต้องมีรถครบทุกไตรมาส)', 'p.period'),
       ]},
       { id: 's1-veh', title: 'ตารางรถในเขต (ภาค → เขต → กางออก)', kind: 'table', fields: [
         f('chk',      'ช่องเลือก (เลือกได้ทุกสถานะ)', ''),

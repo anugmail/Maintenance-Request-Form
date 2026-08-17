@@ -135,7 +135,7 @@ function quarterYearText(plan) {
     .filter(q => plan.byQuarter && (plan.byQuarter[q] || []).length);
   if (!filled.length) return `ปีงบประมาณ ${esc(plan.year)} — ยังไม่ได้จัดรถเข้าไตรมาส`;
   if (filled.length === 4) return `ปีงบประมาณ ${esc(plan.year)} — ครบ 4 ไตรมาส`;
-  return `ปีงบประมาณ ${esc(plan.year)} — จัดแล้ว ${esc(filled.join(' · '))}`;
+  return `ปีงบประมาณ ${esc(plan.year)} — จัดแล้ว ${esc(filled.map(q => MYD.quarterLabel(q)).join(' · '))}`;
 }
 
 // วันที่จาก <input type="date"> (YYYY-MM-DD ปี พ.ศ.) → อ่านง่ายแบบไทย

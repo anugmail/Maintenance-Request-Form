@@ -153,7 +153,7 @@ function renderStep1(plan) {
     const n = MYD.planVehicleIds(plan, q.q).length;
     return `
     <div class="sg qSeg ${activeQ === q.q ? 'sel' : ''}${n ? '' : ' qSeg-empty'}" data-q="${q.q}">
-      ${esc(q.q)} · ${n ? `${n} คัน` : 'ยังไม่เลือก'}
+      ${esc(MYD.quarterLabel(q.q))} · ${n ? `${n} คัน` : 'ยังไม่เลือก'}
       <div class="sg-sub">${esc(q.months)}${q.q === nowQ ? ' · ตอนนี้' : ''}</div>
     </div>`;
   }).join('');
@@ -179,7 +179,7 @@ function renderStep1(plan) {
 
     ${missing.length
       ? `<div class="note note-warn"><span class="ms">warning</span>
-           <div>ยังไม่ได้จัดรถเข้า <b>${missing.join(' · ')}</b> — ต้องมีรถอย่างน้อยไตรมาสละ 1 คัน จึงจะไปขั้นสรุปได้</div>
+           <div>ยังไม่ได้จัดรถเข้า <b>${missing.map(q => esc(MYD.quarterLabel(q))).join(' · ')}</b> — ต้องมีรถอย่างน้อยไตรมาสละ 1 คัน จึงจะไปขั้นสรุปได้</div>
          </div>`
       : `<div class="note note-ok"><span class="ms">check_circle</span>
            <div>จัดรถครบทั้ง 4 ไตรมาสแล้ว รวม <b>${plan.selectedVehicleIds.length}</b> คัน — ไปขั้นสรุปได้</div>
@@ -187,7 +187,7 @@ function renderStep1(plan) {
     ${noneCount ? `<div class="note note-info"><span class="ms">inbox</span>
       <div>มีรถ <b>${noneCount}</b> คันอยู่ในแผนแต่<b>ยังไม่ระบุไตรมาส</b> — ถูกพักไว้ตอนแก้แผนเดินทาง ยังไม่ถูกนับเข้าไตรมาสไหน</div></div>` : ''}
 
-    <div class="sect">เลือกรถเข้าไตรมาส ${esc(activeQ.replace('Q', ''))}${activeInfo ? ' (' + esc(activeInfo.months) + ')' : ''}</div>
+    <div class="sect">เลือกรถเข้า${esc(MYD.quarterLabel(activeQ))}${activeInfo ? ' (' + esc(activeInfo.months) + ')' : ''}</div>
     <div class="sub">ไตรมาสนี้เลือกแล้ว ${selected.size} คัน จาก ${regionsSelected.size} เขต · เลือกได้ทุกสถานะ — ดูคำเตือนใต้ป้ายสถานะแล้วติ๊กออกเองได้</div>
     <div class="chk" style="margin-bottom:12px">
       <label><input type="checkbox" id="chkAllZones" ${allSelected ? 'checked' : ''} ${joinableAll.length === 0 ? 'disabled' : ''}> เลือกทั้งหมด (ทุกเขต) — ${joinableAll.length} คัน</label>
@@ -221,8 +221,8 @@ function renderRegionBlock(region, master, selected, plan) {
             : bucket === 'none'
               ? '<span class="badge b-neutral">ยังไม่ระบุไตรมาส</span>'
               : bucket === state.activeQ
-                ? `<span class="badge b-brand"><span class="dot"></span>${esc(bucket)} · ไตรมาสนี้</span>`
-                : `<span class="badge b-info">${esc(bucket)}</span>`}</td>
+                ? `<span class="badge b-brand"><span class="dot"></span>${esc(MYD.quarterLabel(bucket))} · ไตรมาสนี้</span>`
+                : `<span class="badge b-info">${esc(MYD.quarterLabel(bucket))}</span>`}</td>
       <td><span class="badge ${STATUS_BADGE_CLASS[v.status] || 'b-neutral'}">${esc(MYD.STATUS_LABELS[v.status] || v.status)}</span>
         ${note ? `<div class="cell-sub">${esc(note)}</div>` : ''}</td>
     </tr>`;
@@ -237,8 +237,8 @@ function renderRegionBlock(region, master, selected, plan) {
   const pickedTags = [...MYD.QUARTER_KEYS, 'none']
     .filter(k => picked[k])
     .map(k => k === 'none'
-      ? `<span class="badge b-neutral">ยังไม่ระบุ ${picked[k]}</span>`
-      : `<span class="badge ${k === state.activeQ ? 'b-brand' : 'b-info'}">${k} ${picked[k]}</span>`)
+      ? `<span class="badge b-neutral">ยังไม่ระบุ · ${picked[k]} คัน</span>`
+      : `<span class="badge ${k === state.activeQ ? 'b-brand' : 'b-info'}">${esc(MYD.quarterLabel(k))} · ${picked[k]} คัน</span>`)
     .join(' ');
 
   return `
@@ -503,7 +503,7 @@ function renderStepSummary(plan) {
     <div class="tblwrap"><table class="tbl itbl">
       <thead><tr><th>ไตรมาส</th><th colspan="2">ช่วงเดือน</th><th>จำนวนรถ</th><th>รายการอะไหล่</th><th></th></tr></thead>
       <tbody>${byQuarter.map(q => `<tr>
-        <td><b>${esc(q.q)}</b></td>
+        <td><b>${esc(MYD.quarterLabel(q.q))}</b></td>
         <td colspan="2">${esc(q.months)}</td>
         <td class="num"><b>${q.count}</b> คัน</td>
         <td class="num">${q.lines.length} รายการ</td>
@@ -569,7 +569,7 @@ function renderStepSummary(plan) {
 // ออกครบ 4 ใบพร้อมกัน 1 ใบต่อไตรมาส (เจ้าของงานเคาะ 17 ส.ค. 2569)
 function issueWorkNumber(plan) {
   const missing = MYD.quartersMissing(plan);
-  if (missing.length) { toast('ยังจัดรถไม่ครบ — ขาด ' + missing.join(' · ')); return; }
+  if (missing.length) { toast('ยังจัดรถไม่ครบ — ขาด ' + missing.map(q => MYD.quarterLabel(q)).join(' · ')); return; }
   if (!confirm('ยืนยันออกเลขงานสำหรับแผนนี้? (ได้เลขงาน 4 ใบ ไตรมาสละ 1 ใบ)')) return;
 
   const numbers = MYD.issueWorkNumbers(plan, 1);
@@ -588,7 +588,7 @@ function issueWorkNumber(plan) {
 // ปิดรอบทบทวน — บันทึกเวอร์ชัน + สิ่งที่เปลี่ยนจากรอบก่อน (เลขงานเดิมไม่เปลี่ยน)
 function commitRevise(plan) {
   const missing = MYD.quartersMissing(plan);
-  if (missing.length) { toast('ยังจัดรถไม่ครบ — ขาด ' + missing.join(' · ')); return; }
+  if (missing.length) { toast('ยังจัดรถไม่ครบ — ขาด ' + missing.map(q => MYD.quarterLabel(q)).join(' · ')); return; }
   const round = state.reviseRound;
   if (!confirm(`สรุปแผนรอบทบทวนครั้งที่ ${round.no} (${round.label})?`)) return;
 
@@ -613,7 +613,7 @@ function renderDone(plan) {
       <div class="sect">ออกเลขงานเรียบร้อย — ${MYD.workNumberList(plan).length} ใบ</div>
       <div class="worknos">${MYD.workNumberList(plan).map(x => `
         <div class="workno">
-          <div class="workno-q">${esc(x.q)} · ${MYD.planVehicleIds(plan, x.q).length} คัน</div>
+          <div class="workno-q">${esc(MYD.quarterLabel(x.q))} · ${MYD.planVehicleIds(plan, x.q).length} คัน</div>
           <span class="badge b-ok">${esc(x.no)}</span>
         </div>`).join('')}</div>
       <div class="sub" style="margin-top:14px">
