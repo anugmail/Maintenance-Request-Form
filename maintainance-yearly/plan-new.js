@@ -52,11 +52,22 @@ function updatePrimaryEnabled(plan) {
 
 // ----- wizard shell -----
 function renderWizard(plan) {
-  const primaryLabel = state.sub === LAST_SUB ? 'ออกเลขงาน' : 'ถัดไป';
+  const revising = state.stage === 'revising';
+  const primaryLabel = state.sub === LAST_SUB
+    ? (revising ? 'สรุปแผนก่อนออกปฏิบัติงาน' : 'ออกเลขงาน')
+    : 'ถัดไป';
   const primaryDisabled = !validateSub(plan, state.sub);
+
+  const reviseBanner = revising ? `
+    <div class="note note-warn"><span class="ms">event_repeat</span>
+      <div><b>รอบทบทวนแผน ครั้งที่ ${state.reviseRound.no} — ${esc(state.reviseRound.label)}</b><br>
+      แผนนี้ออกเลขงานไว้แล้วสำหรับ<b>ปีงบ ${esc(plan.year)}</b> · ตอนนี้ถึงรอบสรุปแผนก่อนออกปฏิบัติงาน
+      — แก้รถ/ไตรมาสได้ แล้วกด "สรุปแผนก่อนออกปฏิบัติงาน" · <b>เลขงานเดิมไม่เปลี่ยน</b></div>
+    </div>` : '';
 
   $('planNewBody').innerHTML = `
     <div class="card">
+      ${reviseBanner}
       <div class="wsteps sm">${SUB_STEPS.map(s => {
         const active = s.no === state.sub;
         const passed = s.no < state.sub;
@@ -80,8 +91,9 @@ function renderWizard(plan) {
 
   $('btnBackSub').addEventListener('click', backSub);
   $('btnPrimarySub').addEventListener('click', () => {
-    if (state.sub === LAST_SUB) issueWorkNumber(plan);
-    else nextSub();
+    if (state.sub !== LAST_SUB) { nextSub(); return; }
+    if (state.stage === 'revising') commitRevise(plan);
+    else issueWorkNumber(plan);
   });
 }
 
@@ -525,6 +537,27 @@ function issueWorkNumber(plan) {
   render();
 }
 
+// ปิดรอบทบทวน — บันทึกเวอร์ชัน + สิ่งที่เปลี่ยนจากรอบก่อน (เลขงานเดิมไม่เปลี่ยน)
+function commitRevise(plan) {
+  const missing = MYD.quartersMissing(plan);
+  if (missing.length) { toast('ยังจัดรถไม่ครบ — ขาด ' + missing.join(' · ')); return; }
+  const round = state.reviseRound;
+  if (!confirm(`สรุปแผนรอบทบทวนครั้งที่ ${round.no} (${round.label})?`)) return;
+
+  const rev = MYD.commitRevision(plan, state.reviseBefore, round, nowTh());
+  const changed = rev.added || rev.removed || rev.moved
+    ? `เพิ่ม ${rev.added} · ถอด ${rev.removed} · ย้ายไตรมาส ${rev.moved} คัน`
+    : 'ไม่มีการเปลี่ยนแปลง';
+  plan.statusHistory = [...(plan.statusHistory || []), {
+    status: 'revised', at: nowTh(),
+    note: `สรุปแผนรอบทบทวนครั้งที่ ${rev.no} (${round.label}) — ${changed}`,
+  }];
+  persist(plan);
+  state.reviseBefore = null;
+  toast('สรุปแผนเรียบร้อย — ' + changed);
+  render();
+}
+
 // ================= หน้าเสร็จสิ้น =================
 function renderDone(plan) {
   $('planNewBody').innerHTML = `
@@ -552,6 +585,15 @@ function renderDone(plan) {
 
 // ================= RENDER =================
 function render() {
+  const f = fiscalNow();
+  state.stage = MYD.planStage(PLAN, f.fy, f.month);
+  // อยู่ในรอบทบทวน = เปิดแผนกลับมาแก้ได้อีกครั้ง (เลขงานเดิม) แล้วกด "สรุปแผนก่อนออกปฏิบัติงาน"
+  if (state.stage === 'revising') {
+    state.reviseRound = MYD.reviseRoundNow(PLAN, f.fy, f.month);
+    if (!state.reviseBefore) state.reviseBefore = JSON.parse(JSON.stringify(PLAN));
+    renderWizard(PLAN);
+    return;
+  }
   if (PLAN.workNumber) { renderDone(PLAN); return; }
   renderWizard(PLAN);
 }
@@ -571,7 +613,15 @@ function persist(plan) {
 
 // ================= INIT =================
 document.addEventListener('DOMContentLoaded', () => {
+  renderTimeSim();
   const id = (location.hash || '').replace('#', '');
   PLAN = (id && MYD.getPlan(id)) || MYD.newPlan(nowTh());
+  // แผนทำล่วงหน้า 2 ปี — แผนใหม่ที่สร้างวันนี้เป็นของปีงบ (ปีงบปัจจุบัน + 2)
+  if (!PLAN.workNumber && !MYD.getPlan(PLAN.id)) {
+    const f = fiscalNow();
+    PLAN.createdFY = f.fy;
+    PLAN.year = MYD.planningYearFrom(f.fy);
+  }
+  MYD.ensurePlanQuarters(PLAN);
   render();
 });

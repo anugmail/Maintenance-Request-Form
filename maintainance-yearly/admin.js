@@ -388,6 +388,7 @@ function renderDemo() {
 
 // ================= INIT =================
 document.addEventListener('DOMContentLoaded', () => {
+  renderTimeSim();
   initTabs();
   renderBody();
 });

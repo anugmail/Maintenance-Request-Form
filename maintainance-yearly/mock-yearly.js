@@ -34,7 +34,7 @@ const DEFAULT_SETTINGS = { confirmDueDays: 7 };   // ยังไม่ได้
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 9;   // 9 = แผน 1 ใบครอบทั้งปี รถแยกรายไตรมาส (plan.byQuarter) + เลขงาน 4 ใบ
+const SCHEMA_VERSION = 10;  // 10 = เพิ่มปฏิทินปีงบ (createdFY) + รอบทบทวนแผน (revisions)
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -155,7 +155,9 @@ const INITIAL_PLAN = {
   // มีไว้ให้หน้าปลายน้ำ (พัสดุ · ยืนยันรถ · แผนเดินทาง · เฟส) ที่สนใจแค่ "รถทั้งหมดในแผน"
   // ใช้ต่อได้โดยไม่ต้องรู้เรื่องไตรมาส
   selectedVehicleIds: [],
-  year: 2569,
+  year: 2569,             // ปีงบที่แผนมีผล = ปีงบที่ทำแผน + PLAN_LEAD_YEARS (ตั้งใน newPlan)
+  createdFY: 2569,        // ปีงบที่ทำแผน — ใช้คำนวณว่ามีรอบทบทวนกี่รอบ
+  revisions: [],          // [{no, fy, at, added, removed, moved, byQuarter}] — รอบทบทวนที่ปิดแล้ว
   itemAdj: {},            // การแก้มือรายการอะไหล่ { [itemId]: {qty, off, added} }
   workNumbers: {},        // { Q1:'MT-2569-Q1-001', … } ออกครบ 4 ใบพร้อมกันตอนกดออกเลขงาน
   workNumber: null,       // = เลขของไตรมาสแรกที่มีรถ — ใช้เป็นหัวข้อแผนในลิสต์/ไทม์ไลน์
@@ -197,6 +199,8 @@ const SEED_PLAN = {
   selectedVehicleIds: [3, 4].flatMap(r => [1, 2, 3, 4, 5, 6].map(i => `v-${r}-${i}`)),
   itemAdj: {},
   year: 2569,
+  createdFY: 2567,
+  revisions: [],
   workNumbers: {
     Q1: 'MT-2569-Q1-001', Q2: 'MT-2569-Q2-001',
     Q3: 'MT-2569-Q3-001', Q4: 'MT-2569-Q4-001',
@@ -278,6 +282,8 @@ const SEED_PLAN_CF = {
   selectedVehicleIds: CF_VEHICLE_IDS,
   itemAdj: {},
   year: 2569,
+  createdFY: 2567,
+  revisions: [],
   workNumbers: {
     Q1: 'MT-2569-Q1-002', Q2: 'MT-2569-Q2-002',
     Q3: 'MT-2569-Q3-002', Q4: 'MT-2569-Q4-002',
@@ -668,6 +674,93 @@ const MYD = {
     if (!trips.length) return false;
     if (this.unassignedVehicleIds(plan).length) return false;
     return trips.every(t => this.tripStatus(t, master) === 'accepted');
+  },
+
+  // ================= ปฏิทินปีงบ + รอบทบทวนแผน =================
+  // ทั้งหมดเป็น pure — รับปี/เดือนเข้ามา ไม่เรียก Date เอง (กติกาหัวไฟล์)
+  // นาฬิกา (ของจริงหรือที่จำลองไว้) อยู่ฝั่ง browser: common.js simNow()/fiscalNow()
+  //
+  // ปีงบประมาณ ต.ค.–ก.ย. · แผนทำล่วงหน้า 2 ปี (เจ้าของงาน 17 ส.ค. 2569):
+  //   ทำแผนในปีงบ 2569 → ได้แผนของปีงบ 2571
+  //   ระหว่างนั้นมี "รอบทบทวน" ทุกปลายปีงบ (ไตรมาส 4 = ก.ค.–ก.ย.)
+  //   คือปลายปีงบ 2569 และปลายปีงบ 2570 รวม 2 รอบ ก่อนแผนมีผลจริง
+  //   รอบทบทวน = สรุปแผนก่อนออกปฏิบัติงาน (ไม่ใช่แค่ดูเฉยๆ — แก้รถ/ไตรมาสได้)
+  PLAN_LEAD_YEARS: 2,
+  REVISE_MONTHS: [7, 8, 9],   // ไตรมาส 4 ของปีงบ = ปลายปี
+
+  // เดือน 1-12 (ปฏิทินปกติ) + พ.ศ. ปฏิทิน → พ.ศ. ปีงบ
+  fiscalYearOf(buddhistYear, month) {
+    return month >= 10 ? buddhistYear + 1 : buddhistYear;
+  },
+
+  planningYearFrom(fyNow) {
+    return fyNow + this.PLAN_LEAD_YEARS;
+  },
+
+  // รอบทบทวนของแผนใบหนึ่ง — ปลายปีงบ ตั้งแต่ปีถัดจากปีที่ทำแผน ถึงปีก่อนแผนมีผล
+  // เริ่มที่ createdFY + 1 ไม่ใช่ createdFY เพราะถ้าทำแผนช่วง ก.ค.–ก.ย. (= ปลายปีงบพอดี)
+  // แผนที่เพิ่งสร้างเสร็จจะเด้งเข้ารอบ "ทบทวน" ของตัวเองทันที ซึ่งไม่มีอะไรให้ทบทวน
+  // ⇒ แผนทำปีงบ 2569 ใช้ปี 2571 จะมีรอบทบทวนรอบเดียว: ปลายปีงบ 2570
+  reviseRoundsFor(plan) {
+    const from = (plan.createdFY || (plan.year - this.PLAN_LEAD_YEARS)) + 1;
+    const out = [];
+    for (let fy = from; fy <= plan.year - 1; fy++) {
+      out.push({ no: out.length + 1, fy, label: `ปลายปีงบ ${fy} (ก.ค.–ก.ย. ${fy})` });
+    }
+    return out;
+  },
+
+  // อยู่ในช่วงทบทวนไหม — คืน round ที่ตรง หรือ null
+  reviseRoundNow(plan, fyNow, month) {
+    if (!this.REVISE_MONTHS.includes(month)) return null;
+    return this.reviseRoundsFor(plan).find(r => r.fy === fyNow) || null;
+  },
+
+  reviseDoneFor(plan, fy) {
+    return (plan.revisions || []).some(r => r.fy === fy);
+  },
+
+  // สถานะของแผนเทียบกับเวลา — ใช้ตัดสินว่าหน้าไหนโชว์ปุ่มอะไร
+  planStage(plan, fyNow, month) {
+    if (!plan.workNumber) return 'drafting';           // ยังไม่ออกเลขงาน
+    if (fyNow > plan.year) return 'past';              // ปีงบผ่านไปแล้ว
+    if (fyNow === plan.year) return 'active';          // ถึงปีที่แผนมีผล → ออกปฏิบัติงาน
+    const round = this.reviseRoundNow(plan, fyNow, month);
+    if (round && !this.reviseDoneFor(plan, round.fy)) return 'revising';  // ถึงรอบทบทวน ยังไม่สรุป
+    if (round) return 'revised';                       // ทบทวนรอบนี้เสร็จแล้ว
+    return 'scheduled';                                // ยังไม่ถึงรอบทบทวน
+  },
+
+  // เทียบแผนก่อน/หลังทบทวน — ใช้บันทึกว่ารอบนั้นเปลี่ยนอะไรบ้าง
+  diffPlan(before, after) {
+    const bAll = new Set(before.selectedVehicleIds || []);
+    const aAll = new Set(after.selectedVehicleIds || []);
+    const added = [...aAll].filter(id => !bAll.has(id));
+    const removed = [...bAll].filter(id => !aAll.has(id));
+    const moved = [];
+    this.BUCKET_KEYS.forEach(k => {
+      (after.byQuarter[k] || []).forEach(id => {
+        if (!bAll.has(id)) return;
+        const wasIn = this.BUCKET_KEYS.find(kk => (before.byQuarter[kk] || []).includes(id));
+        if (wasIn && wasIn !== k) moved.push({ id, from: wasIn, to: k });
+      });
+    });
+    return { added, removed, moved };
+  },
+
+  // ปิดรอบทบทวน: บันทึกเวอร์ชัน + สิ่งที่เปลี่ยน (เลขงานคงเดิม)
+  commitRevision(plan, before, round, at) {
+    const diff = this.diffPlan(before, plan);
+    plan.revisions = [...(plan.revisions || []), {
+      no: (plan.revisions || []).length + 1,
+      fy: round.fy,
+      at,
+      added: diff.added.length,
+      removed: diff.removed.length,
+      moved: diff.moved.length,
+      byQuarter: deepCopy(plan.byQuarter),
+    }];
+    return plan.revisions[plan.revisions.length - 1];
   },
 
   // ================= รถรายไตรมาสในแผน =================

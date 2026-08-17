@@ -344,6 +344,7 @@ function exportMd() {
 
 // ---------- init ----------
 document.addEventListener('DOMContentLoaded', () => {
+  renderTimeSim();
   buildSample();
   SKEL = loadSkel();
   render();

@@ -172,4 +172,4 @@ function ackPlan(plan) {
 
 // ================= INIT =================
 window.addEventListener('hashchange', render);
-document.addEventListener('DOMContentLoaded', render);
+document.addEventListener('DOMContentLoaded', () => { renderTimeSim(); render(); });

@@ -17,6 +17,17 @@ const PHASES = [
   { id: 'cost',        no: 5, label: 'คำนวณต้นทุน' },
 ];
 
+// สถานะแผนเทียบกับปฏิทินปีงบ — แผนทำล่วงหน้า 2 ปี จึงมีช่วง "รอ" และ "รอบทบทวน"
+// ก่อนถึงปีที่แผนมีผลจริง (ดู MYD.planStage)
+const PLAN_STAGE_BADGE = {
+  drafting:  { cls: 'b-out',     text: 'ฉบับร่าง' },
+  scheduled: { cls: 'b-neutral', text: 'รอถึงรอบทบทวน' },
+  revising:  { cls: 'b-low',     text: 'ถึงรอบทบทวน' },
+  revised:   { cls: 'b-info',    text: 'สรุปแผนแล้ว' },
+  active:    { cls: 'b-ok',      text: 'ปีนี้มีผล — ออกปฏิบัติงาน' },
+  past:      { cls: 'b-neutral', text: 'ปีงบผ่านไปแล้ว' },
+};
+
 // travelQ = ไตรมาสที่กำลังทำแผนเดินทางอยู่ (memory เท่านั้น ไม่ผูกกับแผน เหมือน sub)
 const state = { sub: 1, travelQ: 'Q1' };
 let PLAN = null;   // แผนที่กำลังเปิดอยู่ (null = อยู่หน้ารายการ)
@@ -60,6 +71,9 @@ function renderList() {
     const n = (p.selectedVehicleIds || []).length;
     const issued = !!p.workNumber;
     const ack = !!p.suppliesAckAt;
+    const f = fiscalNow();
+    const stage = MYD.planStage(p, f.fy, f.month);
+    const st = PLAN_STAGE_BADGE[stage];
     return `<tr>
       <td>
         <b style="color:var(--gray-900)">${esc(planTitle(p))}</b>
@@ -70,13 +84,14 @@ function renderList() {
       </td>
       <td class="num">${n}</td>
       <td>${issued ? quarterYearText(p) : '—'}</td>
-      <td>${issued
-            ? (ack ? '<span class="badge b-ok">พัสดุรับทราบแล้ว</span>' : '<span class="badge b-low">รอพัสดุรับทราบ</span>')
-            : '<span class="badge b-out">ยังไม่ออกเลขงาน</span>'}</td>
+      <td><span class="badge ${st.cls}">${st.text}</span>
+        ${issued ? `<div class="cell-sub">${ack ? 'พัสดุรับทราบแล้ว' : 'รอพัสดุรับทราบ'}${(p.revisions || []).length ? ` · ทบทวนแล้ว ${p.revisions.length} รอบ` : ''}</div>` : ''}</td>
       <td>${issued ? planProgressText(p) : '—'}</td>
       <td class="num" style="white-space:nowrap">
-        ${issued
-          ? `<a class="btn btn-s btn-sm" href="#${esc(p.id)}">เปิดแผน</a>`
+        ${stage === 'revising'
+          ? `<a class="btn btn-p btn-sm" href="plan-new.html#${esc(p.id)}"><span class="ms">event_repeat</span> ทบทวนแผน</a>`
+          : issued
+          ? `<a class="btn btn-s btn-sm" href="#${esc(p.id)}" ${stage === 'active' || stage === 'past' ? '' : 'title="แผนยังไม่ถึงปีที่มีผล — เปิดดูได้ แต่ยังไม่ควรออกปฏิบัติงาน"'}>เปิดแผน</a>`
           : `<a class="btn btn-s btn-sm" href="plan-new.html#${esc(p.id)}">ทำต่อ</a>
              <button class="btn btn-t btn-sm" data-del="${esc(p.id)}" title="ลบแผนร่างนี้"><span class="ms">delete</span></button>`}
       </td>
@@ -969,6 +984,7 @@ function renderProcurementConfirmed(plan) {
 // ================= INIT =================
 window.addEventListener('hashchange', route);
 document.addEventListener('DOMContentLoaded', () => {
+  renderTimeSim();
   route();
 
   const btnReset = $('btnResetDemo');

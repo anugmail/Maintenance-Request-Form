@@ -17,10 +17,75 @@ function toast(m) {
   t._x = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
+// ================= นาฬิกาของต้นแบบ (จริง / จำลอง) =================
+// แผนบำรุงรักษาทำล่วงหน้า 2 ปี และมีรอบทบทวนทุกปลายปีงบ ⇒ เหตุการณ์สำคัญอยู่ในอนาคต
+// (วันนี้ปีงบ 2569 · แผนใหม่เป็นของ 2571 · รอบทบทวนอยู่ปลายปี 2569 และ 2570)
+// ถ้าไม่มีตัวเลื่อนเวลา จะเดโมรอบทบทวนไม่ได้เลย ⇒ เก็บ "วันที่จำลอง" ไว้ใน localStorage
+// แล้วให้ทุกหน้าอ่านเวลาผ่าน simNow() ตัวเดียว ห้ามเรียก new Date() ตรงๆ อีก
+const SIMDATE_KEY = 'maintaind.yearly.simdate.v1';
+
+function simNow() {
+  try {
+    const raw = localStorage.getItem(SIMDATE_KEY);
+    if (raw) {
+      const d = new Date(raw);
+      if (!isNaN(d)) return d;
+    }
+  } catch (e) { /* localStorage ใช้ไม่ได้ → ใช้เวลาจริง */ }
+  return new Date();
+}
+
+function isSimulated() {
+  try { return !!localStorage.getItem(SIMDATE_KEY); } catch (e) { return false; }
+}
+
+function setSimDate(iso) {
+  if (iso) localStorage.setItem(SIMDATE_KEY, iso);
+  else localStorage.removeItem(SIMDATE_KEY);
+}
+
+// ปีงบ + เดือนของ "ตอนนี้" (ตามนาฬิกาที่ใช้อยู่) — ปี ค.ศ. → พ.ศ.
+function fiscalNow() {
+  const d = simNow();
+  const month = d.getMonth() + 1;
+  const buddhistYear = d.getFullYear() + 543;
+  return { fy: MYD.fiscalYearOf(buddhistYear, month), month, buddhistYear, date: d };
+}
+
+// หมุดเวลาให้เลื่อนไปดู — ครอบทุกช่วงที่โฟลว์มีความหมายต่างกัน
+const TIME_MARKS = [
+  { id: 'real',    label: 'เวลาจริง',                    iso: null },
+  { id: 'r2569',   label: 'ปลายปีงบ 2569 — ทบทวนรอบ 1',  iso: '2026-08-15T09:00:00' },
+  { id: 'r2570',   label: 'ปลายปีงบ 2570 — ทบทวนรอบ 2',  iso: '2027-08-15T09:00:00' },
+  { id: 'a2571',   label: 'ต้นปีงบ 2571 — แผนมีผล',       iso: '2027-10-05T09:00:00' },
+  { id: 'm2571',   label: 'กลางปีงบ 2571',                iso: '2028-03-05T09:00:00' },
+];
+
+// แถบเลือกเวลาบน topbar — ใส่ให้ทุกหน้าที่มี #timeSim
+function renderTimeSim() {
+  const host = $('timeSim');
+  if (!host) return;
+  const cur = (() => {
+    try { return localStorage.getItem(SIMDATE_KEY) || ''; } catch (e) { return ''; }
+  })();
+  const f = fiscalNow();
+  host.innerHTML = `
+    <div class="in noic" style="width:auto">
+      <select id="timeSimSel" title="จำลองวันที่ เพื่อดูรอบทบทวนแผนที่อยู่ในอนาคต">
+        ${TIME_MARKS.map(m => `<option value="${m.iso || ''}" ${(m.iso || '') === cur ? 'selected' : ''}>${esc(m.label)}</option>`).join('')}
+      </select>
+    </div>
+    <span class="badge ${isSimulated() ? 'b-low' : 'b-neutral'}">ปีงบ ${f.fy}${isSimulated() ? ' · จำลอง' : ''}</span>`;
+  $('timeSimSel').addEventListener('change', e => {
+    setSimDate(e.target.value);
+    location.reload();
+  });
+}
+
 // เวลาปัจจุบันแบบไทย — Date() อยู่ฝั่ง browser เท่านั้น
 // (ห้ามเรียกใน mock-yearly.js เพื่อให้ logic ที่นั่น pure/testable)
 function nowTh() {
-  return new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
+  return simNow().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 const QUARTERS = [

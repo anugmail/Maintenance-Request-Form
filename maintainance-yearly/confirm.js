@@ -305,4 +305,5 @@ function bindRequest(req) {
 
 // ================= INIT =================
 window.addEventListener('hashchange', render);
+renderTimeSim();
 render();
