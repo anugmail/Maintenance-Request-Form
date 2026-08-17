@@ -600,6 +600,18 @@ token เป็น PAT scope `file_content:read` เก็บที่ `~/.figma
 - **กวาดทั้งโปรเจ็ค 299 จุด 21 ไฟล์** (ขนาดเศษ 13.5/12.5/14.5/11.5/15/13/11px → token · r10 → `--rounded-md` · h46 → 44) — ยกเว้น admin-config/admin.html/backup/test ตามคำสั่ง · บั๊ม `?v=20260812-ds12` 25 ไฟล์
 - **ตรวจแล้ว:** grep hex/emoji ว่าง · skeleton test 27/27 · check-spacing ผ่าน · smoke 17 หน้าไม่มี pageerror + วัดจริง (body 16 · input 44/r8/เงา xs · label 500) · capture 3 โฟลว์ใหม่ + spec ทั้งคู่ regen + เทส plugin/figjam ผ่านหมด · ตรวจตาภาพ badge/chip ตรงไลบรารี
 
+### 🚢 ยกชุดให้ตรง VMS Plus ตัวจริง — เข้า main + deploy (14–17 ส.ค. 2569)
+
+**เจ้าของงานแจ้ง 17 ส.ค.:** *"จากแผนบำรุงรักษา ยังไม่ตรงตาม design เช่น BG ต้องสีขาว แต่ทำมาสีเทา"*
+
+- **สาเหตุไม่ใช่โค้ดผิด แต่คือของที่แก้ไว้ยังไม่ถึงหน้าเว็บ** — งาน alignment 6 คอมมิตค้างบนสาขา `design/vmsplus-runtime-alignment` ไม่ได้ merge เข้า main ⇒ Pages ยังเสิร์ฟ `body{background:#E9EAEC}` + `.work{background:var(--gray-25)}` ของเดิม · ซ้ำร้ายสาขานั้นแก้ `components.css`/`tokens.css` ไป 4 คอมมิต **โดยไม่บั๊ม `?v=`** (ค้างที่ ds15 ส่วน main เดินไป ds17 แล้ว) ⇒ ต่อให้ merge เฉยๆ เบราว์เซอร์ที่แคชไว้ก็ยังเห็นของเก่า
+- **งานที่อยู่ในสาขานั้น** (วัดจาก `vmsplus-dev` ไม่ได้เดาจากไลบรารีอย่างเดียว): พื้นขาวทั้ง `body`/`.shell`/`.work` · หัวเรื่อง 32/600 · sidebar 96→80px · gray ramp กลับเป็น Untitled UI v1 · `--color-text-primary`→`#000` · ตารางถอดกรอบ/หัว gray-100 สูง 56/เซลล์ pad 8-16 · badge 12/600 + `.b-info`/`.b-neutral`/`.dot` · `.search` เป็นกล่องจริง h40 · ฐานปุ่มคุมสูง 40 + `.btn-tb`/`.btn-td`/`.btn-icon`/`.btn-circle`/`.pager`/`.dt-action` · `.tab-btn` สูง 48 — เทียบ element ต่อ element **17/20 ตรงทุกค่า** (เดิม 0)
+- **merge สะอาด ไม่มี conflict** (`git merge-tree` ตรวจก่อน) — ของ main 6 คอมมิตเป็นงานฟีเจอร์ทีม (modal เลือกวิธีซ่อม · นัดหมายวันซ่อม · เบิกอะไหล่) แตะ `components.css` แค่ 2 จุดเล็ก (`.f.err` ครอบ `.search input` · `.job.sel`)
+- **บั๊ม `?v=20260817-ds18` 24 หน้า** (เว้น `mock/backup.html`) + README design-system §8 เพิ่ม v0.18
+- **ตรวจก่อน push:** `verify-tokens.js` ผ่านทุกค่า · `skeleton-data.test.js` 27/27 · grep hex/emoji ว่างทั้งคู่ · เรนเดอร์จริง 6 หน้าของ `maintainance-yearly/` — `body`/`.shell`/`.work`/`.side`/`.topbar` = `rgb(255,255,255)` ทุกหน้า ไม่มี pageerror ไม่มี response ≥400
+- **push `design/vmsplus-runtime-alignment` → main** (fast-forward `c5b6b95..7e0d2ee`) · Actions deploy สำเร็จ · **ตรวจซ้ำบนเว็บจริงหลัง deploy: 6 หน้า PASS ทั้งหมด** พื้นขาวจริง โหลด ds18 จริง
+- บทเรียน: แก้ `components.css`/`tokens.css` แล้ว**ต้องบั๊ม `?v=` + ลง changelog ในคอมมิตเดียวกัน** ไม่ใช่รอตอน merge — ไม่งั้นสาขาที่ยังไม่ merge จะกลายเป็น "แก้แล้วแต่ไม่มีใครเห็น"
+
 ### ค้างอยู่ (รอบถัดไป)
 - [x] ~~sync ผัง + skeleton ให้ตรงลำดับใหม่~~ — **เสร็จแล้ว 11 ส.ค.** ผัง 7/7 parse ผ่าน · `skeleton-data.js` จอ 1a/1b/ต้นทาง ตรงกับโค้ด · เทส 27/27
 - [ ] **สไตล์ช่องกรอกในตารางของ `confirm.html`** — รอเจ้าของงานเคาะ (ก ช่องเปล่าแบบตอนนี้ / ข ทรีตเมนต์เต็ม / ค เปลี่ยนเป็นการ์ดรายคัน)
