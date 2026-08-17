@@ -349,19 +349,25 @@ function renderProcStep1(plan) {
   const groups = ['part', 'oil', 'filter'].map(cat => {
     const catLines = lines.filter(l => l.item.category === cat);
     if (!catLines.length) return '';
-    const rows = catLines.map(l => `
+    const rows = catLines.map(l => {
+      // ขั้นเบิกจริง — ต้องเห็นยอดคงเหลือคู่กับยอดที่ขอเบิก ไม่งั้นเบิกไปแล้วค่อยรู้ว่าของไม่พอ
+      const st = MYD.stockStatus(l.item.id, l.totalQty);
+      return `
       <tr>
-        <td>${esc(l.item.name)}<div style="font-size:12px;color:var(--gray-500)">${esc(MYD.triggerText(l.item))}</div></td>
+        <td>${esc(l.item.name)}<div class="cell-sub">${esc(MYD.triggerText(l.item))}</div></td>
         <td class="num">${esc(l.item.qtyPerVehicle)}</td>
         <td class="num">${esc(l.vehicleCount)}</td>
         <td class="num">${esc(l.totalQty)}</td>
         <td>${esc(l.item.unit)}</td>
-      </tr>`).join('');
+        <td class="num">${st.have == null ? '<span class="cell-sub">—</span>' : `<b>${st.have.toLocaleString('th-TH')}</b>`}
+          <div><span class="badge ${STOCK_BADGE[st.level]}">${esc(st.text)}</span></div></td>
+      </tr>`;
+    }).join('');
     return `
       <div class="sect">${esc(MYD.CATEGORY_LABELS[cat])}</div>
       <div class="tblwrap">
         <table class="tbl itbl">
-          <thead><tr><th>ชื่อ</th><th>ต่อคัน</th><th>จำนวนรถ</th><th>รวม</th><th>หน่วย</th><th></th></tr></thead>
+          <thead><tr><th>ชื่อ</th><th>ต่อคัน</th><th>จำนวนรถ</th><th>รวม</th><th>หน่วย</th><th>คงเหลือ (Smart Inventory)</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>`;
@@ -371,6 +377,16 @@ function renderProcStep1(plan) {
     <div class="sect">ขั้นที่ 2: เบิก/จัดหาอะไหล่ (สรุปรายการจากแผน)</div>
     <div class="sub">คิดจากรถที่ยืนยันแล้ว <b>${selectedVehicles.length}</b> คัน
       ${dropped ? `(ตัด/เลื่อน ${dropped} คันจากขั้นยืนยันรถ)` : ''}</div>
+    ${(() => {
+      const sm = MYD.stockSummary(lines);
+      if (sm.short.length) return `<div class="note note-warn"><span class="ms">inventory</span>
+        <div><b>เบิกได้ไม่ครบ ${sm.short.length} รายการ</b> — ${esc(sm.short.map(l =>
+          `${l.item.name} (ขาด ${MYD.stockStatus(l.item.id, l.totalQty).short} ${l.item.unit})`).join(' · '))}
+        <br>ต้องรอฝ่ายพัสดุสั่งเพิ่ม หรือปรับแผนก่อน</div></div>`;
+      if (sm.tight.length) return `<div class="note note-info"><span class="ms">inventory</span>
+        <div>เบิกได้ครบ แต่คลังจะเหลือน้อย ${sm.tight.length} รายการ</div></div>`;
+      return `<div class="note note-ok"><span class="ms">inventory</span><div>คลังพอทุกรายการ เบิกได้ครบ</div></div>`;
+    })()}
     ${groups || `<div class="empty">ไม่มีรายการที่เกี่ยวข้องกับรถที่เลือก</div>`}
     <div style="margin-top:14px">
       ${plan.partsRequisitioned

@@ -18,12 +18,14 @@
   .tbl tfoot .sumrow td{background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:var(--fs-sm)}
   .itbl{table-layout:fixed}
   .itbl th,.itbl td{overflow:hidden;text-overflow:ellipsis}
-  .itbl th:nth-child(1),.itbl td:nth-child(1){width:34%}
+  /* คอลัมน์ที่ 6 เดิมเป็นปุ่มลบ (8%) — ตอนนี้เป็น "คงเหลือ (Smart Inventory)"
+     ที่มีทั้งตัวเลขและป้ายสถานะ จึงต้องกว้างขึ้น ไม่งั้นหัวตารางตกขอบ */
+  .itbl th:nth-child(1),.itbl td:nth-child(1){width:30%}
   .itbl th:nth-child(2),.itbl td:nth-child(2),
   .itbl th:nth-child(3),.itbl td:nth-child(3),
-  .itbl th:nth-child(4),.itbl td:nth-child(4){width:15%;text-align:center}
-  .itbl th:nth-child(5),.itbl td:nth-child(5){width:13%}
-  .itbl th:nth-child(6),.itbl td:nth-child(6){width:8%;text-align:center}
+  .itbl th:nth-child(4),.itbl td:nth-child(4){width:13%;text-align:center}
+  .itbl th:nth-child(5),.itbl td:nth-child(5){width:10%}
+  .itbl th:nth-child(6),.itbl td:nth-child(6){width:21%;text-align:center}
   .wsteps.sm{margin-bottom:18px}
   .wsteps.sm .wstep{padding:10px 12px;font-size:var(--fs-text-xs);gap:8px}
   .wsteps.sm .wstep .num{width:24px;height:24px;font-size:12px}

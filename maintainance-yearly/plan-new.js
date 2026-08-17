@@ -409,6 +409,9 @@ function lineRow(l) {
     l.manual ? '<span class="badge b-brand">เพิ่มเอง</span>' : '',
     l.edited ? '<span class="badge b-low">แก้จำนวนแล้ว</span>' : '',
   ].join(' ');
+  // คงเหลือจาก Smart Inventory — ต้องเห็นคู่กับ "ที่ต้องใช้" ในแถวเดียวกัน
+  // ไม่งั้นคนอ่านต้องเปิดอีกระบบมาเทียบเอง (เจ้าของงานสั่ง 17 ส.ค. 2569)
+  const st = MYD.stockStatus(l.item.id, l.totalQty);
   return `<tr>
       <td>${esc(l.item.name)} ${tags}
         <div class="cell-sub">${esc(MYD.triggerText(l.item))}</div></td>
@@ -416,7 +419,8 @@ function lineRow(l) {
       <td class="num">${esc(l.vehicleCount)}</td>
       <td class="num"><b>${esc(l.totalQty)}</b></td>
       <td>${esc(l.item.unit)}</td>
-      <td></td>
+      <td class="num">${st.have == null ? '<span class="cell-sub">—</span>' : `<b>${st.have.toLocaleString('th-TH')}</b>`}
+        <div><span class="badge ${STOCK_BADGE[st.level]}">${esc(st.text)}</span></div></td>
     </tr>`;
 }
 
@@ -430,7 +434,7 @@ function unitTotals(lines) {
 function lineTable(lines) {
   if (!lines.length) return `<div class="empty">ไม่มีรายการ</div>`;
   return `<div class="tblwrap"><table class="tbl itbl">
-      <thead><tr><th>ชื่อ</th><th>ต่อคัน</th><th>จำนวนรถ</th><th>รวม</th><th>หน่วย</th><th></th></tr></thead>
+      <thead><tr><th>ชื่อ</th><th>ต่อคัน</th><th>จำนวนรถ</th><th>รวม</th><th>หน่วย</th><th>คงเหลือ (Smart Inventory)</th></tr></thead>
       <tbody>${lines.map(l => lineRow(l)).join('')}</tbody>
       <tfoot><tr class="sumrow">
         <td><b>รวมทั้งแผน</b> · ${lines.length} รายการ</td>
@@ -543,7 +547,16 @@ function renderStepSummary(plan) {
         <td class="num"><b>${selectedVehicles.length}</b></td><td>คัน</td><td></td>
       </tr></tfoot></table></div>
 
-    <div class="sect">อะไหล่ที่ต้องใช้ในไตรมาสนี้ (ระบบคำนวณจากรถที่เลือก)</div>
+    <div class="sect">อะไหล่ที่ต้องใช้ทั้งปี (ระบบคำนวณจากรถที่เลือก) · เทียบยอดคงเหลือจาก Smart Inventory</div>
+    ${(() => {
+      const sm = MYD.stockSummary(lines);
+      if (sm.short.length) return `<div class="note note-warn"><span class="ms">inventory</span>
+        <div><b>คลังไม่พอ ${sm.short.length} รายการ</b> — ${esc(sm.short.map(l => l.item.name).join(' · '))}
+        <br>ฝ่ายพัสดุต้องสั่งเพิ่มก่อนถึงรอบบำรุงรักษา</div></div>`;
+      if (sm.tight.length) return `<div class="note note-info"><span class="ms">inventory</span>
+        <div>คลังพอ แต่เหลือน้อยหลังเบิก ${sm.tight.length} รายการ — ${esc(sm.tight.map(l => l.item.name).join(' · '))}</div></div>`;
+      return `<div class="note note-ok"><span class="ms">inventory</span><div>คลังพอทุกรายการ</div></div>`;
+    })()}
     ${lineTable(lines)}
 
     <div class="sub" style="margin-top:14px">

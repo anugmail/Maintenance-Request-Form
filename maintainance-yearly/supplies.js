@@ -82,20 +82,27 @@ function renderDoc(plan) {
   });
 
   const itemTables = ['part', 'oil', 'filter'].map(cat => {
-    const rows = lines.filter(l => l.item.category === cat).map(l => `
+    const rows = lines.filter(l => l.item.category === cat).map(l => {
+      // ฝ่ายพัสดุคือคนที่ต้องตัดสินว่าจะสั่งเพิ่มไหม — ยอดคงเหลือจึงต้องอยู่ในเอกสารนี้
+      // ไม่ใช่ให้ไปเปิด Smart Inventory เทียบเอง (เจ้าของงานสั่ง 17 ส.ค. 2569)
+      const st = MYD.stockStatus(l.item.id, l.totalQty);
+      return `
       <tr>
         <td>${esc(l.item.name)}
-          <div style="font-size:12px;color:var(--gray-500)">${esc(MYD.triggerText(l.item))}</div></td>
+          <div class="cell-sub">${esc(MYD.triggerText(l.item))}</div></td>
         <td class="num">${esc(l.perVehicle)}</td>
         <td class="num">${esc(l.vehicleCount)}</td>
         <td class="num"><b>${esc(l.totalQty)}</b></td>
-        <td>${esc(l.item.unit)}</td><td></td>
-      </tr>`).join('');
+        <td>${esc(l.item.unit)}</td>
+        <td class="num">${st.have == null ? '<span class="cell-sub">—</span>' : `<b>${st.have.toLocaleString('th-TH')}</b>`}
+          <div><span class="badge ${STOCK_BADGE[st.level]}">${esc(st.text)}</span></div></td>
+      </tr>`;
+    }).join('');
     if (!rows) return '';
     const catLines = lines.filter(l => l.item.category === cat);
     return `<div class="sect">${esc(MYD.CATEGORY_LABELS[cat])}</div>
       <div class="tblwrap"><table class="tbl itbl">
-        <thead><tr><th>ชื่อ</th><th>ต่อคัน</th><th>จำนวนรถ</th><th>รวมที่ต้องเตรียม</th><th>หน่วย</th><th></th></tr></thead>
+        <thead><tr><th>ชื่อ</th><th>ต่อคัน</th><th>จำนวนรถ</th><th>รวมที่ต้องเตรียม</th><th>หน่วย</th><th>คงเหลือ (Smart Inventory)</th></tr></thead>
         <tbody>${rows}</tbody>
         <tfoot><tr class="sumrow">
           <td><b>รวมกลุ่มนี้</b> · ${catLines.length} รายการ</td>
@@ -146,7 +153,16 @@ function renderDoc(plan) {
         <tfoot><tr class="sumrow"><td><b>รวม</b> · ${byBrand.length} ยี่ห้อ</td><td colspan="2"></td>
           <td class="num"><b>${vehicles.length}</b></td><td>คัน</td><td></td></tr></tfoot></table></div>
 
-      <div class="sect">อะไหล่ที่ต้องเตรียม/สั่ง</div>
+      <div class="sect">อะไหล่ที่ต้องเตรียม/สั่ง · เทียบยอดคงเหลือจาก Smart Inventory</div>
+      ${(() => {
+        const sm = MYD.stockSummary(lines);
+        if (sm.short.length) return `<div class="note note-warn"><span class="ms">inventory</span>
+          <div><b>ต้องสั่งเพิ่ม ${sm.short.length} รายการ</b> — ${esc(sm.short.map(l =>
+            `${l.item.name} (ขาด ${MYD.stockStatus(l.item.id, l.totalQty).short} ${l.item.unit})`).join(' · '))}</div></div>`;
+        if (sm.tight.length) return `<div class="note note-info"><span class="ms">inventory</span>
+          <div>คลังพอ แต่เหลือน้อยหลังเบิก ${sm.tight.length} รายการ — ${esc(sm.tight.map(l => l.item.name).join(' · '))}</div></div>`;
+        return `<div class="note note-ok"><span class="ms">inventory</span><div>คลังพอทุกรายการ ไม่ต้องสั่งเพิ่ม</div></div>`;
+      })()}
       ${itemTables || `<div class="empty">ไม่มีรายการ</div>`}
 
       ${renderTimelineHtml(plan.statusHistory)}

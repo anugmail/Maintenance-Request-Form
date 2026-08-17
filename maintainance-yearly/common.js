@@ -108,6 +108,10 @@ const STATUS_BADGE_CLASS = {
   disposal:         'b-neutral',  // เทา — รอออกจากระบบ
 };
 
+// สีป้ายยอดคงเหลือคลัง — เกณฑ์ (พอ/เหลือน้อย/ขาด) ตัดสินที่ MYD.stockStatus() ที่เดียว
+// หน้าจอแค่แปลง level เป็นสี · ใช้ทั้งหน้าสรุปแผน หน้าเอกสารพัสดุ และขั้นเบิกอะไหล่
+const STOCK_BADGE = { ok: 'b-ok', tight: 'b-low', short: 'b-out', unknown: 'b-neutral' };
+
 const STATUS_HISTORY_LABELS = {
   draft: 'ฉบับร่าง', issued: 'ออกเลขงาน', notified: 'แจ้งฝ่ายพัสดุ', acknowledged: 'ฝ่ายพัสดุรับทราบ',
 };

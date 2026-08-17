@@ -582,6 +582,46 @@ const MYD = {
       });
   },
 
+  // ----- ยอดคงเหลือจาก Smart Inventory -----
+  // เจ้าของงานสั่ง 17 ส.ค. 2569: "อยากให้ระบบแสดงอะไหล่คงเหลือจาก smart inventory ให้ด้วย"
+  // ⚠️ ยังไม่ได้ต่อ API จริง — ยอดคงเหลือเป็นข้อมูลจำลอง คงที่ต่อ item (ไม่ใช้ random
+  // เพื่อให้เดโมซ้ำได้ผลเดิม) · จงใจให้บางรายการไม่พอ จะได้เห็นสถานะครบทุกแบบ
+  // ของจริงต้องดึงยอดตามคลัง/หน่วยงาน ณ เวลาที่เปิดดู และคงมี lead time สั่งซื้อด้วย
+  STOCK_ON_HAND: {
+    p1: 24,    // ผ้าเบรก (ชุด)
+    p2: 8,     // สายไฮดรอลิก (เส้น) — มักไม่พอ
+    o1: 400,   // น้ำมันเครื่อง (ลิตร)
+    o2: 30,    // น้ำมันเฟือง (ลิตร) — มักไม่พอ
+    o3: 260,   // น้ำมันไฮดรอลิก (ลิตร)
+    f1: 40,    // ไส้กรองน้ำมันเครื่อง (ชิ้น)
+    f2: 12,    // ไส้กรองไฮดรอลิก (ชิ้น) — มักไม่พอ
+    f3: 18,    // ไส้กรองอากาศ (ชิ้น)
+  },
+
+  stockOnHand(itemId) {
+    const v = this.STOCK_ON_HAND[itemId];
+    return v == null ? null : v;   // null = Smart Inventory ไม่มีข้อมูลของรายการนี้
+  },
+
+  // เทียบยอดที่ต้องใช้กับยอดคงเหลือ → บอกว่าพอไหม ขาดเท่าไหร่
+  // คืน level ไว้ให้หน้าจอ map เป็นสีป้าย ไม่ให้แต่ละหน้าไปตัดสินเกณฑ์เอง
+  stockStatus(itemId, needQty) {
+    const have = this.stockOnHand(itemId);
+    if (have == null) return { level: 'unknown', have: null, short: 0, text: 'ไม่มีข้อมูลคลัง' };
+    const short = Math.max(0, needQty - have);
+    if (short > 0) return { level: 'short', have, short, text: `ขาด ${short.toLocaleString('th-TH')}` };
+    // เหลือหลังเบิกไม่ถึง 20% ของที่ต้องใช้ = เฉียดฉิว ควรเตือนให้สั่งเพิ่ม
+    if (have - needQty < needQty * 0.2) return { level: 'tight', have, short: 0, text: 'พอ แต่เหลือน้อย' };
+    return { level: 'ok', have, short: 0, text: 'พอ' };
+  },
+
+  // สรุปทั้งแผน — ใช้ขึ้นกล่องเตือนหัวตาราง
+  stockSummary(lines) {
+    const short = lines.filter(l => this.stockStatus(l.item.id, l.totalQty).level === 'short');
+    const tight = lines.filter(l => this.stockStatus(l.item.id, l.totalQty).level === 'tight');
+    return { short, tight };
+  },
+
   // รายการอะไหล่ของทั้งแผน
   planLines(plan, master) {
     const vehicles = master.vehicles.filter(v => (plan.selectedVehicleIds || []).includes(v.id));
