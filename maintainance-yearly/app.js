@@ -17,7 +17,8 @@ const PHASES = [
   { id: 'cost',        no: 5, label: 'คำนวณต้นทุน' },
 ];
 
-const state = { sub: 1 };
+// travelQ = ไตรมาสที่กำลังทำแผนเดินทางอยู่ (memory เท่านั้น ไม่ผูกกับแผน เหมือน sub)
+const state = { sub: 1, travelQ: 'Q1' };
 let PLAN = null;   // แผนที่กำลังเปิดอยู่ (null = อยู่หน้ารายการ)
 
 // ================= PHASE COMPLETION / GUARD (ต่อแผน) =================
@@ -63,7 +64,9 @@ function renderList() {
       <td>
         <b style="color:var(--gray-900)">${esc(planTitle(p))}</b>
         ${issued ? '' : '<span class="badge b-low" style="margin-left:6px">ฉบับร่าง</span>'}
-        <div style="font-size:12px;color:var(--gray-500)">${issued && p.planName ? esc(p.planName) + ' · ' : ''}${p.createdAt ? 'สร้าง ' + esc(p.createdAt) : ''}</div>
+        <div class="cell-sub">${issued
+            ? MYD.workNumberList(p).map(x => esc(x.no)).join(' · ') + (p.createdAt ? ' · ' : '')
+            : ''}${p.createdAt ? 'สร้าง ' + esc(p.createdAt) : ''}</div>
       </td>
       <td class="num">${n}</td>
       <td>${issued ? quarterYearText(p) : '—'}</td>
@@ -579,9 +582,21 @@ function tripVehicles(trip, master) {
 function renderProcStep2(plan) {
   const master = MYD.loadMaster();
   const trips = MYD.ensureTrips(plan);
-  const joining = (plan.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(plan, id));
-  const unassigned = MYD.unassignedVehicleIds(plan);
+  MYD.ensurePlanQuarters(plan);
+  // แผนเดินทางทำทีละไตรมาส (เจ้าของงานสั่ง 17 ส.ค. 2569) — เห็นเฉพาะรถของไตรมาสที่เลือก
+  // แล้วย้ายรถข้ามไตรมาส/พักไว้ยังไม่ระบุ ได้จากหน้านี้เลย
+  if (!MYD.QUARTER_KEYS.includes(state.travelQ)) state.travelQ = 'Q1';
+  const travelQ = state.travelQ;
+  const inQuarter = new Set(MYD.planVehicleIds(plan, travelQ));
+  const joining = MYD.planVehicleIds(plan, travelQ).filter(id => MYD.isVehicleIn(plan, id));
+  const unassigned = MYD.unassignedVehicleIds(plan).filter(id => inQuarter.has(id));
   const accepted = trips.filter(t => MYD.tripStatus(t, master) === 'accepted').length;
+
+  const qSeg = ['Q1', 'Q2', 'Q3', 'Q4'].map(q => {
+    const n = MYD.planVehicleIds(plan, q).length;
+    return `<div class="sg travelQSeg ${travelQ === q ? 'sel' : ''}" data-q="${q}">${q} · ${n} คัน</div>`;
+  }).join('');
+  const noneIds = MYD.planVehicleIds(plan, 'none');
 
   // จัดตัวเลือกเป็นกลุ่มตามจังหวัด — เห็นได้ทันทีว่ารถที่ยังไม่ถูกจัดกระจายอยู่จังหวัดไหนบ้าง
   // และเลือกทีละจังหวัดได้ง่ายเวลาแผนหนึ่งมีรถข้ามจังหวัด
@@ -613,7 +628,13 @@ function renderProcStep2(plan) {
         <td><div class="in noic"><input type="date" value="${esc(d)}" ${dis}
               data-trip="${esc(trip.id)}" data-veh="${esc(v.id)}"></div>
             ${bad ? `<div class="sub">อยู่นอกช่วงที่เสนอ</div>` : ''}</td>
-        <td class="num">${locked ? '' : `<button class="btn btn-g btn-sm" data-trip-drop="${esc(trip.id)}" data-veh="${esc(v.id)}">เอาออก</button>`}</td>
+        <td>${locked ? esc(MYD.bucketOf(plan, v.id) || '—') : `
+          <div class="in noic"><select class="vehQMove" data-veh="${esc(v.id)}" data-trip="${esc(trip.id)}">
+            ${['Q1', 'Q2', 'Q3', 'Q4'].map(q => `<option value="${q}" ${MYD.bucketOf(plan, v.id) === q ? 'selected' : ''}>อยู่ ${q}</option>`).join('')}
+            <option value="none" ${MYD.bucketOf(plan, v.id) === 'none' ? 'selected' : ''}>ยังไม่ระบุไตรมาส</option>
+            <option value="out">เอาออกจากแผนทั้งใบ</option>
+          </select></div>`}</td>
+        <td class="num">${locked ? '' : `<button class="btn btn-g btn-sm" data-trip-drop="${esc(trip.id)}" data-veh="${esc(v.id)}">เอาออกจากใบนี้</button>`}</td>
       </tr>`;
     }).join('');
 
@@ -665,7 +686,7 @@ function renderProcStep2(plan) {
 
           <div class="sect">รถในแผนนี้ + วันนัดรายคัน</div>
           ${vs.length ? `<div class="tblwrap"><table class="tbl">
-            <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>วันนัด</th><th></th></tr></thead>
+            <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>วันนัด</th><th>ไตรมาส</th><th></th></tr></thead>
             <tbody>${rows}</tbody></table></div>`
             : `<div class="empty">ยังไม่มีรถในแผนนี้ — เลือกจากรายการด้านล่าง</div>`}
 
@@ -699,7 +720,14 @@ function renderProcStep2(plan) {
 
   return `
     <div class="sect">ขั้นที่ 3: ทำแผนเดินทาง</div>
-    <div class="sub">รถที่ยืนยันแล้ว <b>${joining.length}</b> คัน — จัดเข้าแผนแล้ว <b>${joining.length - unassigned.length}</b>
+    <div class="f" style="margin-bottom:14px">
+      <label>เลือกไตรมาสที่จะทำแผนเดินทาง</label>
+      <div class="seg">${qSeg}</div>
+    </div>
+    ${noneIds.length ? `<div class="note note-info"><span class="ms">inbox</span>
+      <div>มีรถ <b>${noneIds.length}</b> คันถูกพักไว้แบบ <b>ยังไม่ระบุไตรมาส</b> — ยังอยู่ในแผน
+      แต่จะไม่โผล่ในไตรมาสไหนจนกว่าจะย้ายกลับเข้าไตรมาส</div></div>` : ''}
+    <div class="sub">ไตรมาส ${esc(travelQ)}: รถที่ยืนยันแล้ว <b>${joining.length}</b> คัน — จัดเข้าแผนแล้ว <b>${joining.length - unassigned.length}</b>
       · ยังไม่จัด <b>${unassigned.length}</b> · แผนเดินทาง <b>${trips.length}</b> ใบ (ตอบรับแล้ว ${accepted})</div>
     <div class="sub">แผนหนึ่งมีได้หลายใบ — จะแยกตามจังหวัด หรือจังหวัดละหลายใบก็ได้ · แต่ละใบเสนอเป็นช่วงเวลา
       แล้วระบุวันนัดรายคันภายในช่วงนั้น</div>
@@ -717,6 +745,29 @@ function bindProcStep2(plan) {
   const trips = MYD.ensureTrips(plan);
   const find = id => trips.find(t => t.id === id);
   const rerender = () => { MYD.savePlan(plan); renderProcWizard(plan); };
+
+  // สลับไตรมาสที่กำลังทำแผนเดินทาง — ไม่แตะข้อมูล แค่เปลี่ยนมุมมอง
+  document.querySelectorAll('.travelQSeg').forEach(sg => {
+    sg.addEventListener('click', () => { state.travelQ = sg.dataset.q; renderProcWizard(plan); });
+  });
+
+  // ย้ายรถข้ามไตรมาส / พักไว้ยังไม่ระบุ / เอาออกจากแผน — ทำจากหน้าแผนเดินทางได้เลย
+  // (เจ้าของงานสั่ง 17 ส.ค. 2569) · ถอดออกจากใบเดินทางที่ถืออยู่ด้วยเสมอ ไม่งั้นใบเดินทาง
+  // ของไตรมาสนี้จะยังค้างรถที่ย้ายไปไตรมาสอื่นแล้ว
+  document.querySelectorAll('.vehQMove').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const vehId = sel.dataset.veh;
+      const target = e.target.value;
+      const t = find(sel.dataset.trip);
+      if (t) t.vehicleIds = (t.vehicleIds || []).filter(id => id !== vehId);
+      if (t && t.dates) delete t.dates[vehId];
+      MYD.assignVehicle(plan, vehId, target === 'out' ? null : target);
+      toast(target === 'out' ? 'เอารถออกจากแผนแล้ว'
+        : target === 'none' ? 'พักรถไว้แบบยังไม่ระบุไตรมาสแล้ว'
+        : 'ย้ายรถไป ' + target + ' แล้ว');
+      rerender();
+    });
+  });
 
   // ช่องกรอกระดับใบ — บันทึกทันทีแต่ไม่ re-render (ไม่งั้นโฟกัสหลุดระหว่างพิมพ์)
   document.querySelectorAll('[data-field][data-trip]').forEach(el => {

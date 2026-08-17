@@ -55,10 +55,14 @@ function renderTimelineHtml(history) {
       </li>`).join('')}</ul>`;
 }
 
+// แผน 1 ใบครอบทั้งปีงบ รถแยกรายไตรมาส (แก้ 17 ส.ค. 2569) — ข้อความจึงบอก "ปีงบ + จัดครบกี่ไตรมาส"
+// ไม่ใช่ไตรมาสเดียวแบบเดิม
 function quarterYearText(plan) {
-  const info = QUARTERS.find(q => q.q === plan.quarter);
-  if (!plan.quarter) return `ปีงบประมาณ ${esc(plan.year)} — ยังไม่เลือกไตรมาส`;
-  return `${esc(plan.quarter)}${info ? ' (' + esc(info.months) + ')' : ''} / ${esc(plan.year)}`;
+  const filled = (window.MYD ? MYD.QUARTER_KEYS : ['Q1', 'Q2', 'Q3', 'Q4'])
+    .filter(q => plan.byQuarter && (plan.byQuarter[q] || []).length);
+  if (!filled.length) return `ปีงบประมาณ ${esc(plan.year)} — ยังไม่ได้จัดรถเข้าไตรมาส`;
+  if (filled.length === 4) return `ปีงบประมาณ ${esc(plan.year)} — ครบ 4 ไตรมาส`;
+  return `ปีงบประมาณ ${esc(plan.year)} — จัดแล้ว ${esc(filled.join(' · '))}`;
 }
 
 // วันที่จาก <input type="date"> (YYYY-MM-DD ปี พ.ศ.) → อ่านง่ายแบบไทย
@@ -71,8 +75,10 @@ function dateTh(v) {
 }
 
 // หัวข้อของแผน = เลขงาน · ถ้ายังไม่ออกเลขให้ใช้ชื่อแผนไปก่อน
+// แผนหนึ่งใบมีเลขงาน 4 ใบแล้ว (ไตรมาสละใบ) — ใช้ "ชื่อแผน" เป็นหัวข้อแทนเลขงานเดี่ยว
+// เลขงานทุกใบแสดงแยกด้วย MYD.workNumberList() ตรงที่ต้องเห็นครบ
 function planTitle(plan) {
-  return plan.workNumber || (plan.planName ? plan.planName : '(แผนใหม่ ยังไม่ตั้งชื่อ)');
+  return plan.planName || plan.workNumber || '(แผนใหม่ ยังไม่ตั้งชื่อ)';
 }
 
 // แปลง Date -> ISO ปี พ.ศ. ('2569-08-10') ให้ตรงรูปแบบ dueAt และ <input type="date">

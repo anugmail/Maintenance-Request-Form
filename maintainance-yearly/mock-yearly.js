@@ -7,8 +7,8 @@
 // โครงข้อมูล (plain objects):
 // vehicle: { id, plate, vehicleType, brand, chassis, ownerDept, criteria, region(1-12), status, mileage, engineHours }
 // item:    { id, name, category, oilKind?, unit, appliesToTypes:[], qtyPerVehicle }
-// plan:    { id, createdAt, phase, planName, selectedVehicleIds:[], itemAdj:{}, quarter, year,
-//            workNumber, approvalStatus:'draft'|'issued',
+// plan:    { id, createdAt, phase, planName, byQuarter:{Q1..Q4,none}, selectedVehicleIds:[],
+//            itemAdj:{}, year, workNumbers:{Q1..Q4}, workNumber, approvalStatus:'draft'|'issued',
 //            suppliesAckAt:null|string, partsRequisitioned,
 //            confirm:{...}|null, trips:[trip], travelConfirmed, statusHistory:[] }
 // trip:    { id, name, location, windowFrom, windowTo, perDiem, lodging, travel,
@@ -34,7 +34,7 @@ const DEFAULT_SETTINGS = { confirmDueDays: 7 };   // ยังไม่ได้
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 8;   // 8 = แผนเดินทางเป็น "หลายใบ" (plan.trips[]) แทน travelPlan ใบเดียว
+const SCHEMA_VERSION = 9;   // 9 = แผน 1 ใบครอบทั้งปี รถแยกรายไตรมาส (plan.byQuarter) + เลขงาน 4 ใบ
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -146,11 +146,19 @@ const INITIAL_PLAN = {
   createdAt: null,
   phase: 'procurement',   // เฟสปฏิบัติการที่แผนนี้อยู่ (เริ่มที่เฟสแรกหลังออกเลขงาน)
   planName: '',
+  // 1 แผน = ทั้งปี · รถถูกจัดเข้า "ไตรมาสที่จะเข้าบำรุงรักษา" (เจ้าของงานสั่ง 17 ส.ค. 2569:
+  // ต้องเลือกรถให้ครบทุกไตรมาสก่อน จึงจะไปขั้นถัดไปได้)
+  // ถัง none = อยู่ในแผนแล้วแต่ยังไม่ระบุไตรมาส — ใช้ตอนแผนเดินทางถอดรถออกจากไตรมาส
+  // แล้วยังไม่รู้ว่าจะไปไตรมาสไหน (เจ้าของงานสั่งเพิ่ม 17 ส.ค. 2569)
+  byQuarter: { Q1: [], Q2: [], Q3: [], Q4: [], none: [] },
+  // ⚠️ อย่าเขียนตรงๆ — เป็น "ผลรวมทุกไตรมาส" ที่ MYD.setQuarterVehicles() เขียนให้เอง
+  // มีไว้ให้หน้าปลายน้ำ (พัสดุ · ยืนยันรถ · แผนเดินทาง · เฟส) ที่สนใจแค่ "รถทั้งหมดในแผน"
+  // ใช้ต่อได้โดยไม่ต้องรู้เรื่องไตรมาส
   selectedVehicleIds: [],
-  quarter: null,          // ผู้ทำแผนเลือกในขั้นที่ 1 (ปีงบประมาณ ต.ค.–ก.ย.) — 1 แผน = 1 ไตรมาส
   year: 2569,
   itemAdj: {},            // การแก้มือรายการอะไหล่ { [itemId]: {qty, off, added} }
-  workNumber: null,
+  workNumbers: {},        // { Q1:'MT-2569-Q1-001', … } ออกครบ 4 ใบพร้อมกันตอนกดออกเลขงาน
+  workNumber: null,       // = เลขของไตรมาสแรกที่มีรถ — ใช้เป็นหัวข้อแผนในลิสต์/ไทม์ไลน์
   approvalStatus: 'draft',// draft -> issued
   suppliesAckAt: null,    // ฝ่ายพัสดุกดรับทราบเมื่อไหร่
   statusHistory: [],
@@ -177,10 +185,22 @@ const SEED_PLAN = {
   createdAt: '1 ต.ค. 2568 09:00',
   phase: 'procurement',        // เฟส 1 เสร็จแล้ว → กด "ไปเฟสถัดไป" เข้าเฟส 2 ได้
   planName: 'บำรุงรักษาเครน/กระเช้า เขต 3-4',
+  // รถ 12 คันของเขต 3-4 กระจายครบ 4 ไตรมาส (3 คัน/ไตรมาส) — แผนตัวอย่างต้องผ่าน
+  // เงื่อนไข "ทุกไตรมาสต้องมีรถ" ไม่งั้นเปิดมาแล้วแก้ไม่ได้
+  byQuarter: {
+    Q1: ['v-3-1', 'v-3-2', 'v-3-3'],
+    Q2: ['v-3-4', 'v-3-5', 'v-3-6'],
+    Q3: ['v-4-1', 'v-4-2', 'v-4-3'],
+    Q4: ['v-4-4', 'v-4-5', 'v-4-6'],
+    none: [],
+  },
   selectedVehicleIds: [3, 4].flatMap(r => [1, 2, 3, 4, 5, 6].map(i => `v-${r}-${i}`)),
   itemAdj: {},
-  quarter: 'Q1',
   year: 2569,
+  workNumbers: {
+    Q1: 'MT-2569-Q1-001', Q2: 'MT-2569-Q2-001',
+    Q3: 'MT-2569-Q3-001', Q4: 'MT-2569-Q4-001',
+  },
   workNumber: 'MT-2569-Q1-001',
   approvalStatus: 'issued',
   suppliesAckAt: '3 ต.ค. 2568 14:20',
@@ -248,10 +268,20 @@ const SEED_PLAN_CF = {
   createdAt: '2 ต.ค. 2568 09:30',
   phase: 'procurement',
   planName: 'บำรุงรักษาเครน/กระเช้า ภาคตะวันออก รอบ 2',
+  byQuarter: {
+    Q1: CF_VEHICLE_IDS.slice(0, 2),
+    Q2: CF_VEHICLE_IDS.slice(2, 4),
+    Q3: CF_VEHICLE_IDS.slice(4, 6),
+    Q4: CF_VEHICLE_IDS.slice(6),
+    none: [],
+  },
   selectedVehicleIds: CF_VEHICLE_IDS,
   itemAdj: {},
-  quarter: 'Q1',
   year: 2569,
+  workNumbers: {
+    Q1: 'MT-2569-Q1-002', Q2: 'MT-2569-Q2-002',
+    Q3: 'MT-2569-Q3-002', Q4: 'MT-2569-Q4-002',
+  },
   workNumber: 'MT-2569-Q1-002',
   approvalStatus: 'issued',
   suppliesAckAt: '4 ต.ค. 2568 11:10',
@@ -413,6 +443,7 @@ const MYD = {
     const p = deepCopy(INITIAL_PLAN);
     p.id = 'plan-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6);
     p.createdAt = nowStr || '';
+    this.ensurePlanQuarters(p);
     return p;
   },
 
@@ -639,6 +670,86 @@ const MYD = {
     return trips.every(t => this.tripStatus(t, master) === 'accepted');
   },
 
+  // ================= รถรายไตรมาสในแผน =================
+  // แผน 1 ใบครอบทั้งปี · รถแต่ละคันอยู่ได้ถังเดียว: Q1–Q4 หรือ none (ยังไม่ระบุไตรมาส)
+  // ทุกการเขียนต้องผ่าน setQuarterVehicles/assignVehicle เพื่อให้ selectedVehicleIds
+  // (ผลรวมที่หน้าปลายน้ำใช้) ตรงกับถังเสมอ
+  QUARTER_KEYS: ['Q1', 'Q2', 'Q3', 'Q4'],
+  BUCKET_KEYS:  ['Q1', 'Q2', 'Q3', 'Q4', 'none'],
+
+  // เรียกก่อนอ่าน/เขียนถังเสมอ — เติมถังที่ขาด + ย้ายแผนเก่าเข้าโครงใหม่
+  ensurePlanQuarters(plan) {
+    if (!plan.byQuarter || typeof plan.byQuarter !== 'object') plan.byQuarter = {};
+    this.BUCKET_KEYS.forEach(k => {
+      if (!Array.isArray(plan.byQuarter[k])) plan.byQuarter[k] = [];
+    });
+    // แผนเก่า (ก่อน 17 ส.ค. 2569) เก็บรถเป็นก้อนเดียว + ไตรมาสของทั้งแผน
+    // ⇒ ยกเข้าไตรมาสนั้น ถ้าไม่เคยเลือกไตรมาสก็ไปกองที่ none ให้คนมาจัดต่อ
+    const already = this.BUCKET_KEYS.some(k => plan.byQuarter[k].length);
+    if (!already && Array.isArray(plan.selectedVehicleIds) && plan.selectedVehicleIds.length) {
+      const target = this.QUARTER_KEYS.includes(plan.quarter) ? plan.quarter : 'none';
+      plan.byQuarter[target] = [...plan.selectedVehicleIds];
+    }
+    this.syncPlanVehicles(plan);
+    return plan;
+  },
+
+  // selectedVehicleIds = ผลรวมทุกถัง (derived) — หน้าปลายน้ำอ่านตัวนี้ตัวเดียวพอ
+  syncPlanVehicles(plan) {
+    const seen = new Set();
+    this.BUCKET_KEYS.forEach(k => (plan.byQuarter[k] || []).forEach(id => seen.add(id)));
+    plan.selectedVehicleIds = [...seen];
+    return plan.selectedVehicleIds;
+  },
+
+  planVehicleIds(plan, bucket) {
+    this.ensurePlanQuarters(plan);
+    if (bucket == null) return [...plan.selectedVehicleIds];
+    return [...(plan.byQuarter[bucket] || [])];
+  },
+
+  // รถคันนี้อยู่ถังไหนของแผน — null = ยังไม่อยู่ในแผนเลย
+  bucketOf(plan, vehicleId) {
+    this.ensurePlanQuarters(plan);
+    return this.BUCKET_KEYS.find(k => plan.byQuarter[k].includes(vehicleId)) || null;
+  },
+
+  // ตั้งรายชื่อรถของถังหนึ่งทั้งชุด — คันที่ใส่เข้ามาจะถูกถอดออกจากถังอื่นให้เอง
+  // (รถคันเดียวอยู่สองไตรมาสพร้อมกันไม่ได้ ไม่งั้นยอดอะไหล่จะนับซ้ำ)
+  setQuarterVehicles(plan, bucket, ids) {
+    this.ensurePlanQuarters(plan);
+    const incoming = new Set(ids);
+    this.BUCKET_KEYS.forEach(k => {
+      if (k === bucket) return;
+      plan.byQuarter[k] = plan.byQuarter[k].filter(id => !incoming.has(id));
+    });
+    plan.byQuarter[bucket] = [...incoming];
+    this.syncPlanVehicles(plan);
+    return plan;
+  },
+
+  // ย้ายรถคันเดียว — bucket = null คือเอาออกจากแผนไปเลย
+  assignVehicle(plan, vehicleId, bucket) {
+    this.ensurePlanQuarters(plan);
+    this.BUCKET_KEYS.forEach(k => {
+      plan.byQuarter[k] = plan.byQuarter[k].filter(id => id !== vehicleId);
+    });
+    if (bucket) plan.byQuarter[bucket].push(vehicleId);
+    this.syncPlanVehicles(plan);
+    return plan;
+  },
+
+  // เงื่อนไขไปขั้นถัดไป: ทุกไตรมาสต้องมีรถอย่างน้อย 1 คัน (ถัง none ไม่นับ)
+  quartersComplete(plan) {
+    this.ensurePlanQuarters(plan);
+    return this.QUARTER_KEYS.every(q => plan.byQuarter[q].length > 0);
+  },
+
+  quartersMissing(plan) {
+    this.ensurePlanQuarters(plan);
+    return this.QUARTER_KEYS.filter(q => plan.byQuarter[q].length === 0);
+  },
+
   // รถคันนี้เลือกเข้าแผนได้ไหม — ใช้ทั้งตอนเรนเดอร์ช่องติ๊กและตอน "เลือกทั้งเขต/ภาค/ทั้งหมด"
   // ให้ตอบจากที่เดียว ไม่งั้นปุ่มเลือกหมู่จะติ๊กรถที่ช่องเดี่ยวปิดไว้
   canJoinPlan(vehicle) {
@@ -662,6 +773,27 @@ const MYD = {
 
   workNumber(quarter, year, seq) {
     return `MT-${year}-${quarter}-${String(seq).padStart(3, '0')}`;
+  },
+
+  // ออกเลขงานครบ 4 ใบพร้อมกัน — 1 ใบต่อไตรมาส (เจ้าของงานเคาะ 17 ส.ค. 2569)
+  // ไตรมาสที่ไม่มีรถจะไม่ได้เลข แต่ตามกติกา "ต้องเลือกให้ครบ" จึงไม่ควรเกิด
+  // seq ต่อไตรมาส = นับจากแผนที่ออกเลขไปแล้วในปีเดียวกัน (mock: ไม่มี counter กลาง)
+  issueWorkNumbers(plan, seq) {
+    this.ensurePlanQuarters(plan);
+    const numbers = {};
+    this.QUARTER_KEYS.forEach(q => {
+      if (plan.byQuarter[q].length) numbers[q] = this.workNumber(q, plan.year, seq);
+    });
+    plan.workNumbers = numbers;
+    plan.workNumber = numbers[this.QUARTER_KEYS.find(q => numbers[q])] || null;
+    return numbers;
+  },
+
+  // เลขงานทุกใบของแผน เรียงตามไตรมาส — ใช้แสดงในลิสต์/เอกสาร
+  workNumberList(plan) {
+    return this.QUARTER_KEYS
+      .filter(q => plan.workNumbers && plan.workNumbers[q])
+      .map(q => ({ q, no: plan.workNumbers[q] }));
   },
 
   // ----- เงื่อนไข trigger ของ item (display only — ไม่คำนวณ due) -----

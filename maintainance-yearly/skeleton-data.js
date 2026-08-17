@@ -62,6 +62,7 @@ const SAMPLE = {
   'v.status':      () => MYD.STATUS_LABELS[sampleV.status] || sampleV.status,
   'v.province':    () => sampleV.province,
   'v.blockReason': () => MYD.blockReason(sampleV) || '— เลือกเข้าแผนได้ —',
+  'v.bucket':      () => MYD.bucketOf(plan, sampleV.id) || '— ยังไม่อยู่ในแผน —',
   'v.ownerDept':   () => sampleV.ownerDept,
   'v.region':      () => 'เขต ' + sampleV.region,
   'v.zone':        () => MYD.ZONE_LABELS[MYD.regionZone(sampleV.region)],
@@ -79,7 +80,7 @@ const SAMPLE = {
 
 const SRC_LABELS = {
   '': '— ยังไม่มีข้อมูลในระบบ —',
-  'p.workNumber': 'แผน · เลขงาน', 'p.planName': 'แผน · ชื่อแผน', 'p.period': 'แผน · ไตรมาส/ปี',
+  'p.workNumber': 'แผน · เลขงาน', 'p.planName': 'แผน · ชื่อแผน', 'p.period': 'แผน · ปีงบ/ไตรมาสที่จัดแล้ว',
   'p.vehCount': 'แผน · จำนวนรถ', 'p.lineCount': 'แผน · จำนวนรายการอะไหล่', 'p.ack': 'แผน · สถานะพัสดุ',
   'p.ackAt': 'แผน · พัสดุรับทราบเมื่อ', 'p.partsReq': 'แผน · สถานะเบิกอะไหล่', 'p.phase': 'แผน · เฟสปัจจุบัน',
   't.name': 'แผนเดินทาง · ชื่อแผน', 't.window': 'แผนเดินทาง · ช่วงที่เสนอ',
@@ -88,7 +89,7 @@ const SRC_LABELS = {
   't.lodging': 'แผนเดินทาง · ที่พัก', 't.travel': 'แผนเดินทาง · ค่าเดินทาง',
   'v.plate': 'รถ · ทะเบียน', 'v.vehicleType': 'รถ · ชนิดรถ', 'v.brand': 'รถ · ยี่ห้อ/รุ่นอุปกรณ์',
   'v.chassis': 'รถ · ยี่ห้อรถบรรทุก', 'v.status': 'รถ · สถานะ', 'v.region': 'รถ · เขต', 'v.zone': 'รถ · ภาค', 'v.ownerDept': 'รถ · หน่วยงานเจ้าของรถ',
-  'v.province': 'รถ · จังหวัด', 'v.blockReason': 'รถ · เหตุผลที่เลือกเข้าแผนไม่ได้',
+  'v.province': 'รถ · จังหวัด', 'v.blockReason': 'รถ · เหตุผลที่เลือกเข้าแผนไม่ได้', 'v.bucket': 'รถ · ไตรมาสที่จัดไว้',
   'v.mileage': 'รถ · เลขไมล์', 'v.engineHours': 'รถ · ชม.เครื่อง',
   'i.name': 'อะไหล่ · ชื่อ', 'i.trigger': 'อะไหล่ · เงื่อนไขรอบ', 'i.perVehicle': 'อะไหล่ · ต่อคัน',
   'i.vehicleCount': 'อะไหล่ · จำนวนรถ', 'i.totalQty': 'อะไหล่ · รวม', 'i.unit': 'อะไหล่ · หน่วย',
@@ -111,10 +112,10 @@ const DEFAULT_SKEL = {
   screens: [
 
     // ================= กลุ่ม 1 · ออกเลขงาน =================
-    { id: 's1', group: 'issue', no: '1', title: 'ไตรมาส + ชื่อแผน + เลือกรถ', real: 'plan-new.html', asks: [], sections: [
+    { id: 's1', group: 'issue', no: '1', title: 'ชื่อแผน + จัดรถเข้าไตรมาส', real: 'plan-new.html', asks: [], sections: [
       { id: 's1-head', title: 'หัวแผน', kind: 'form', fields: [
-        f('quarter',  'ไตรมาสของแผน', 'p.period'),
         f('planName', 'ชื่อแผน', 'p.planName'),
+        f('quarter',  'แท็บไตรมาส Q1–Q4 (ต้องมีรถครบทุกไตรมาส)', 'p.period'),
       ]},
       { id: 's1-veh', title: 'ตารางรถในเขต (ภาค → เขต → กางออก)', kind: 'table', fields: [
         f('chk',      'ช่องเลือก (ปิดเมื่อสถานะไม่พร้อม)', ''),
@@ -125,6 +126,7 @@ const DEFAULT_SKEL = {
         f('owner',    'หน่วยงานเจ้าของรถ', 'v.ownerDept'),
         f('status',   'สถานะรถ (6 แบบ)', 'v.status'),
         f('reason',   'เหตุผลที่เลือกไม่ได้', 'v.blockReason'),
+        f('bucket',   'ไตรมาสที่จัดไว้แล้ว', 'v.bucket'),
       ]},
     ]},
 

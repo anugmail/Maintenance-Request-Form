@@ -42,7 +42,7 @@ const badSrc = allFields.filter(f => f.src && !SAMPLE[f.src]);
 ok(badSrc.length === 0, `ทุก src ที่ระบุมีจริงใน SAMPLE${badSrc.length ? ' — เจอผิด: ' + badSrc.map(f => f.src).join(', ') : ''}`);
 const missLabel = Object.keys(SAMPLE).filter(k => !(k in SRC_LABELS));
 ok(missLabel.length === 0, `ทุก key ใน SAMPLE มีชื่อไทยใน SRC_LABELS${missLabel.length ? ' — ขาด: ' + missLabel.join(', ') : ''}`);
-eq(Object.keys(SAMPLE).length, 36, 'แหล่งข้อมูล 36 ตัว (+v.province +v.blockReason)');
+eq(Object.keys(SAMPLE).length, 37, 'แหล่งข้อมูล 37 ตัว (+v.province +v.blockReason +v.bucket)');
 
 console.log('\nคำถามที่ต้องเคาะ');
 eq(allAsks.length, 21, 'รวม 21 ข้อ (17 ของเดิม + 4 ของยืนยันรถ)');

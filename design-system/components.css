@@ -189,6 +189,20 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 .seg .sg:hover{background:var(--gray-50)}
 .seg .sg .ms{font-size:18px;vertical-align:-3px}   /* เช่นดาวคะแนน — ไอคอนในปุ่มแถบ */
 .seg .sg.sel{border-color:var(--primary-600);background:var(--primary-25);color:var(--primary-600);position:relative;z-index:1}
+/* .sg-sub — บรรทัดรองในปุ่มแถบ (เช่นช่วงเดือนใต้ชื่อไตรมาส) ใช้เมื่อตัวเลือกต้องมีคำขยาย
+   ที่อ่านได้โดยไม่ต้อง hover · ไม่ใช่ .cell-sub ที่เป็นของเซลล์ตาราง */
+.seg .sg .sg-sub{font-weight:400;font-size:var(--fs-text-xs);line-height:18px;color:var(--gray-500);margin-top:2px}
+.seg .sg.sel .sg-sub{color:var(--primary-600)}
+
+/* ---------- Note — กล่องข้อความบอกสถานะ/เงื่อนไขของหน้า ----------------
+   ใช้เมื่อต้องบอกผู้ใช้ว่า "ตอนนี้ยังทำอะไรไม่ได้ และต้องทำอะไรก่อน" หรือยืนยันว่าครบแล้ว
+   ต่างจาก .draft (แถบคาดหัวหน้าบอกว่าเป็น mock) และ .sub (คำโปรยใต้หัวข้อ)
+   โทนสีใช้ชุดเดียวกับ .badge เพื่อให้ความหมายสีทั้งระบบตรงกัน */
+.note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid;border-radius:var(--rounded-md);font-size:var(--fs-text-sm);line-height:20px;margin-bottom:14px}
+.note .ms{font-size:20px;flex:0 0 auto}
+.note-warn{background:var(--warning-50);border-color:var(--warning-200);color:var(--warning-800)}
+.note-ok{background:var(--success-25);border-color:var(--success-200);color:var(--success-700)}
+.note-info{background:var(--info-50);border-color:var(--info-200);color:var(--info-700)}
 
 /* ---------- Badge สถานะ ----------------------------------------------
    ✅ วัดจาก vmsplus-dev (.badge.badge-pill-outline): pad 4/8 · 12/600 lh18 · ls -0.2 · สูง 28
@@ -466,6 +480,12 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
 .tbl td a{text-decoration:underline}
 .tbl tbody tr:hover td{background:var(--gray-50)}
 .tbl .num{text-align:center;font-weight:600}
+/* .worknos — แถวเลขงานหลายใบของแผนเดียว (1 ใบต่อไตรมาส) ใช้ตอนงานหนึ่งออกเลขหลายเลข
+   พร้อมกัน ต้องเห็นทุกเลขเท่าๆ กัน ไม่ใช่ตัวหลักตัวรอง */
+.worknos{display:flex;flex-wrap:wrap;gap:10px}
+.workno{display:flex;flex-direction:column;gap:6px;align-items:flex-start;padding:10px 12px;border:1px solid var(--gray-200);border-radius:var(--rounded-md);background:#fff}
+.workno-q{font-size:var(--fs-text-xs);line-height:18px;color:var(--gray-500);font-weight:600}
+
 /* บรรทัดรองในเซลล์ — ข้อมูลขยายความของค่าหลัก (ยี่ห้อใต้ชนิดรถ · หน่วยงานใต้จังหวัด ·
    เหตุผลใต้ป้ายสถานะ) ใช้เมื่อค่าสองชั้นควรอยู่เซลล์เดียวกัน ไม่ใช่แตกคอลัมน์เพิ่ม
    ต่างจาก .sub ที่เป็นคำโปรยใต้หัวข้อของ section (14px + margin ล่าง) */
