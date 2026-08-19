@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
 <link rel="stylesheet" href="../design-system/tokens.css?v=20260817-ds21">
 <link rel="stylesheet" href="../design-system/components.css?v=20260817-ds21">
+<script src="../job-store.js?v=20260819-jobstore"></script><!-- MDJ: อ่าน/เขียนใบงานร่วมกับแอปหลัก — หน้านี้อยู่คนละไฟล์ ถ้าไม่เขียนลง store คำนัดจะไม่ถึงผู้แจ้ง -->
 <!-- แบบหน้าจอเดี่ยว (design mock) — ขั้น 2 ของเส้น กบค. ซ่อมเอง
      14 ส.ค. 2569: ต่อเข้า flow แล้ว — หน้าเบิกอะไหล่ (kbk-self-repair-parts.html) กด "ยืนยันรายการเบิก"
      พามาที่นี่ในแท็บเดิม พร้อม ?no=<เลขใบแจ้งซ่อม> · ฟอร์มในหน้ายังเป็นโครงเปล่า ยังไม่ต่อข้อมูลจริง
@@ -36,7 +37,7 @@
     </aside>
 
     <div class="work">
-      <div class="draft">แบบหน้าจอเดี่ยว (design mock) — ขั้น "นัดหมายวันซ่อม" ของเส้น กบค. ซ่อมเอง · โครงเปล่า ยังไม่ต่อข้อมูลจริง</div>
+      <div class="draft">แบบหน้าจอเดี่ยว (design mock) — ขั้น "นัดหมายวันซ่อม" ของเส้น กบค. ซ่อมเอง · เข้ามาจากใบงานจริงจะบันทึกคำนัดลงใบงานให้</div>
       <div class="topbar">
         <span class="ms">light_mode</span>
         <span class="ms">notifications</span>
@@ -170,10 +171,11 @@
               <div class="f sp2"><label>เบอร์โทร</label><div id="oTel">—</div></div>
             </div>
 
-            <div class="empty">ถึงวันนัด ทีมออกหน้างานแล้วขั้น "ตรวจสภาพก่อนซ่อม" จะปลดล็อก</div>
+            <div class="empty">วันนัดถูกกำหนดแล้ว ไม่ต้องรอใครยืนยัน — ถึงวันนัดทีมออกหน้างานแล้วตรวจสภาพก่อนซ่อมได้เลย</div>
 
             <div class="actions">
               <button class="btn btn-g" id="btnEditOut">แก้คำนัด</button>
+              <button class="btn btn-p" id="btnInspectOut">ไปขั้นตรวจสภาพก่อนซ่อม</button>
             </div>
           </div>
         </div>
@@ -190,7 +192,7 @@
                 <div class="meta" id="wRange">—</div>
                 <div class="meta" id="wDays">—</div>
               </div>
-              <span class="badge b-low">รอเลือกวัน</span>
+              <span class="badge b-low" id="wBadge">รอเลือกวัน</span>
             </div>
 
             <div class="fgrid">
@@ -199,11 +201,13 @@
               <div class="f sp4"><label>สถานที่นัด</label><div id="wPlace">—</div></div>
             </div>
 
-            <div class="empty">เมื่อเจ้าของรถเลือกวันแล้ว วันนัดจะขึ้นตรงนี้ และขั้น "ตรวจสภาพก่อนซ่อม" จะปลดล็อก</div>
+            <div class="empty" id="wHint">เมื่อเจ้าของรถเลือกวันแล้ว วันนัดจะขึ้นตรงนี้ และขั้น "ตรวจสภาพก่อนซ่อม" จะปลดล็อก</div>
 
             <div class="actions">
               <button class="btn btn-g" id="btnEdit">แก้คำนัด</button>
               <button class="btn btn-s" id="btnRemind"><span class="ms">notifications</span> ส่งเตือนซ้ำ</button>
+              <button class="btn btn-s" id="btnSimPick"><span class="ms">science</span> จำลอง: เจ้าของรถเลือกวันแล้ว</button>
+              <button class="btn btn-p" id="btnInspect" disabled title="รอเจ้าของรถเลือกวันจากช่วงที่เสนอก่อน">ไปขั้นตรวจสภาพก่อนซ่อม</button>
             </div>
           </div>
         </div>
@@ -237,9 +241,22 @@ function goParts() {
 
 // มาจากหน้าเบิกอะไหล่จะมี ?no=<เลขใบแจ้งซ่อม> ติดมา — เปิดตรงๆ ไม่มี param ก็ยังใช้ได้ (ซ่อนบรรทัดนี้ไว้)
 const fromNo = new URLSearchParams(location.search).get('no');
+// LINKED = เข้ามาจากแอปหลักและหาใบงานใน store เจอ → คำนัดที่ส่งจากหน้านี้ไปโผล่ฝั่งผู้แจ้งจริง
+// ไม่ LINKED (เปิดจากแกลเลอรี design-mock ตรงๆ) → หน้านี้ทำงานเป็นแบบหน้าจอเดี่ยวเหมือนเดิม
+const JOB = fromNo ? MDJ.get(fromNo) : null;
+const LINKED = !!JOB;
+let CURRENT_REQ = null;   // คำนัดที่ส่งไปแล้วรอบล่าสุด (ใช้วาดการ์ดรอตอบกลับ)
+const TH_MON_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+// รูปแบบเวลาเดียวกับ history ในแอปหลัก (nowStr ของ mock/Maintenance-Request-Form.html)
+function nowStr() {
+  const d = new Date();
+  return `${d.getDate()} ${TH_MON_SHORT[d.getMonth()]} ${d.getFullYear() + 543} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
 if (fromNo) {
   const el = $('fromJob');
-  el.textContent = 'ใบแจ้งซ่อม ' + fromNo + ' — ฟอร์มนัดหมายด้านล่างยังเป็นโครงเปล่า ยังไม่ได้ผูกกับใบงานจริง';
+  el.textContent = LINKED
+    ? `ใบแจ้งซ่อม ${fromNo} · ${JOB.plate} — คำนัดที่ส่งจากหน้านี้จะไปแสดงที่เมนู "เรื่องแจ้งซ่อมของฉัน" ของผู้แจ้ง`
+    : `ใบแจ้งซ่อม ${fromNo} — ไม่พบใบงานนี้ในเครื่อง หน้านี้จึงทำงานเป็นแบบหน้าจอเดี่ยว`;
   el.hidden = false;
 }
 
@@ -332,6 +349,7 @@ let MODE = 'in';
 function setMode(m) {
   MODE = m;
   $('modeSeg').querySelectorAll('.sg').forEach(s => s.classList.toggle('sel', s.dataset.mode === m));
+  resetOwnerPick();   // สลับรูปแบบการนัด = เริ่มนัดใหม่ ไม่ให้สถานะยืนยันค้างข้ามฝั่ง
   $('waitCard').classList.add('hidden');
   $('outDoneCard').classList.add('hidden');
   $('formCard').classList.toggle('hidden', m !== 'in');
@@ -405,25 +423,93 @@ function validateForm(list) {
   ['input', 'change'].forEach(ev =>
     $(id).addEventListener(ev, () => { if ($(id).value.trim()) clearErr(id); })));
 
+// ทุกวันในช่วงที่เสนอ = ตัวเลือกที่ผู้แจ้งจะได้เห็น (หน้านี้เก็บแค่ช่วงวัน ไม่ได้เลือกช่วงเวลารายวัน)
+function daysInRange() {
+  const out = [];
+  for (let d = new Date(R.start); d <= R.end; d.setDate(d.getDate() + 1)) {
+    out.push({ key: `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`, label: `${TH_DOW[d.getDay()]} ${fmtTh(d)}` });
+  }
+  return out;
+}
+
 $('btnSend').addEventListener('click', () => {
   if (!validateForm(REQUIRED_IN)) return;
-  const n = dayCount();
-
-  $('wRange').textContent = `${fmtTh(R.start)} – ${fmtTh(R.end)}`;
-  $('wDays').textContent = `ช่วงนี้มี ${n} วัน ให้เจ้าของรถเลือก`;
-  $('wCoord').textContent = $('coordName').value.trim();
-  $('wTel').textContent = $('coordTel').value.trim();
-  $('wPlace').textContent = $('place').value.trim() + ($('note').value.trim() ? ` · ${$('note').value.trim()}` : '');
-  $('formCard').classList.add('hidden');
-  $('waitCard').classList.remove('hidden');
+  const req = {
+    mode: 'in', days: daysInRange(),
+    coord: $('coordName').value.trim(), tel: $('coordTel').value.trim(),
+    place: $('place').value.trim(), note: $('note').value.trim()
+  };
+  if (LINKED) {
+    MDJ.update(fromNo, j => {
+      j.rslots = req; delete j.rappt;
+      j.history.push({ t: nowStr(), label: `กบค. ส่งคำนัดวันเข้าซ่อม ${req.days.length} วัน — รอผู้แจ้งเลือกยืนยัน` });
+    });
+  }
+  CURRENT_REQ = req;
+  showWaiting(req, null);
   toast('ส่งคำนัดแล้ว (สำเนาถึง กรย.)');
 });
 
 $('btnEdit').addEventListener('click', () => {
+  // แก้คำนัดใหม่ = ช่วงวันเปลี่ยน คำยืนยันเดิมใช้ไม่ได้แล้ว ต้องถอนออกจากใบงานด้วย
+  if (LINKED) MDJ.update(fromNo, j => { delete j.rslots; delete j.rappt });
+  resetOwnerPick();
   $('waitCard').classList.add('hidden');
   $('formCard').classList.remove('hidden');
 });
 $('btnRemind').addEventListener('click', () => toast('ส่งเตือนซ้ำแล้ว'));
+
+// ── ด่าน "รอผู้แจ้งเลือกวัน" (เฉพาะเส้นนัดเข้ามา) ─────────────────
+// ผูกใบงานจริง: ผู้แจ้งเลือกวันที่แอปหลัก เมนู "เรื่องแจ้งซ่อมของฉัน" → ใบงานได้ j.rappt
+// ไม่ผูก (เปิดหน้านี้เดี่ยวๆ จากแกลเลอรี): ไม่มีฝั่งผู้แจ้งให้กด จึงเหลือปุ่มจำลองไว้ให้เดินดูได้
+// วาดการ์ด "รอตอบกลับ" — req = คำนัดที่ส่งไป · appt = วันที่ผู้แจ้งยืนยันแล้ว (null = ยังไม่ยืนยัน)
+function showWaiting(req, appt) {
+  $('wRange').textContent = req.days[0].label + ' – ' + req.days[req.days.length - 1].label;
+  $('wCoord').textContent = req.coord;
+  $('wTel').textContent = req.tel;
+  $('wPlace').textContent = req.place + (req.note ? ` · ${req.note}` : '');
+  if (appt) {
+    $('wDays').textContent = 'ผู้แจ้งเลือก ' + appt.date;
+    $('wBadge').className = 'badge b-ok';
+    $('wBadge').textContent = 'ยืนยันวันแล้ว';
+    $('wHint').classList.add('hidden');
+    $('btnSimPick').classList.add('hidden');
+    $('btnInspect').disabled = false;
+    $('btnInspect').title = '';
+  } else {
+    $('wDays').textContent = `ช่วงนี้มี ${req.days.length} วัน ให้ผู้แจ้งเลือก`;
+    resetOwnerPick();
+  }
+  $('formCard').classList.add('hidden');
+  $('outCard').classList.add('hidden');
+  $('outDoneCard').classList.add('hidden');
+  $('waitCard').classList.remove('hidden');
+}
+
+function resetOwnerPick() {
+  $('wBadge').className = 'badge b-low';
+  $('wBadge').textContent = 'รอเลือกวัน';
+  $('wHint').textContent = LINKED
+    ? 'ผู้แจ้งเลือกวันได้ที่เมนู "เรื่องแจ้งซ่อมของฉัน" → เปิดใบงานนี้ — เลือกแล้วกลับมาหน้านี้ ขั้น "ตรวจสภาพก่อนซ่อม" จะปลดล็อก'
+    : 'เมื่อผู้แจ้งเลือกวันแล้ว วันนัดจะขึ้นตรงนี้ และขั้น "ตรวจสภาพก่อนซ่อม" จะปลดล็อก';
+  $('wHint').classList.remove('hidden');
+  $('btnSimPick').classList.toggle('hidden', LINKED);   // ผูกใบงานจริงแล้วไม่ต้องจำลอง
+  $('btnInspect').disabled = true;
+  $('btnInspect').title = 'รอผู้แจ้งเลือกวันจากช่วงที่เสนอก่อน';
+}
+
+$('btnSimPick').addEventListener('click', () => {
+  // เฉพาะโหมดหน้าจอเดี่ยว — จำลองว่าผู้แจ้งเลือกวันแรกของช่วงที่เสนอ
+  showWaiting(CURRENT_REQ, { date: CURRENT_REQ.days[0].label });
+  toast('ผู้แจ้งยืนยันวันนัดแล้ว — เข้าขั้นตรวจสภาพก่อนซ่อมได้');
+});
+
+// ไปขั้น 3 ตรวจสภาพก่อนซ่อม (แท็บเดิม) ส่ง ?no= ต่อ — ใช้ร่วมกันทั้งสองรูปแบบการนัด
+function goInspection() {
+  location.href = 'kbk-self-repair-inspection.html' + (fromNo ? '?no=' + encodeURIComponent(fromNo) : '');
+}
+$('btnInspect').addEventListener('click', goInspection);
+$('btnInspectOut').addEventListener('click', goInspection);
 
 // ── ฝั่ง "เดินทางไปซ่อม" ──
 // รายชื่อช่าง = พนักงานในหน่วยงานเดียวกัน (dept_sap) — เงื่อนไขเดียวกับรายชื่อผู้อนุมัติในต้นแบบ
@@ -468,24 +554,47 @@ renderTechs();
 
 $('btnBackOut').addEventListener('click', goParts);
 
+// วาดการ์ด "แจ้งวันนัดแล้ว" ของเส้นเดินทางไปซ่อม — กบค. กำหนดวันเอง ไม่มีใครต้องยืนยัน
+function showOutDone(appt) {
+  $('oDate').textContent = appt.date;
+  $('oTech').textContent = appt.tech;
+  $('oTel').textContent = appt.techTel;
+  $('formCard').classList.add('hidden');
+  $('waitCard').classList.add('hidden');
+  $('outCard').classList.add('hidden');
+  $('outDoneCard').classList.remove('hidden');
+}
+
 $('btnSendOut').addEventListener('click', () => {
   if (!validateForm(REQUIRED_OUT)) return;
   // input type=date คืน yyyy-mm-dd — แปลงเป็นวันที่ไทยให้อ่านง่ายเหมือนฝั่งช่วงวันที่
   const [y, m, d] = $('outDate').value.split('-').map(Number);
-  $('oDate').textContent = fmtTh(new Date(y, m - 1, d));
-  $('oTech').textContent = `${TECH.name} · ${TECH.posi} · ${TECH.dept}`;
-  $('oTel').textContent = $('techTel').value.trim();
-  $('outCard').classList.add('hidden');
-  $('outDoneCard').classList.remove('hidden');
+  const appt = {
+    mode: 'out', date: fmtTh(new Date(y, m - 1, d)),
+    tech: `${TECH.name} · ${TECH.posi} · ${TECH.dept}`, techTel: $('techTel').value.trim()
+  };
+  if (LINKED) {
+    MDJ.update(fromNo, j => {
+      j.rappt = appt; delete j.rslots;
+      j.history.push({ t: nowStr(), label: `กบค. นัดเดินทางไปซ่อมหน้างาน ${appt.date} — ช่าง ${TECH.name}` });
+    });
+  }
+  showOutDone(appt);
   toast('แจ้งวันนัดแล้ว (สำเนาถึง กรย.)');
 });
 
 $('btnEditOut').addEventListener('click', () => {
+  if (LINKED) MDJ.update(fromNo, j => { delete j.rappt });
   $('outDoneCard').classList.add('hidden');
   $('outCard').classList.remove('hidden');
 });
 
 renderField();
+
+// ใบงานที่ผูกอยู่มีสถานะค้างอยู่แล้ว → ข้ามฟอร์ม เข้าการ์ดที่ตรงกับความจริง
+// (กลับเข้าหน้านี้ = โหลดหน้าใหม่ จึงอ่านค่าล่าสุดจาก store ได้เลย ไม่ต้องฟัง storage event)
+if (LINKED && JOB.rappt && JOB.rappt.mode === 'out') { setMode('out'); showOutDone(JOB.rappt) }
+else if (LINKED && JOB.rslots) { CURRENT_REQ = JOB.rslots; setMode('in'); showWaiting(JOB.rslots, JOB.rappt || null) }
 </script>
 </body>
 </html>

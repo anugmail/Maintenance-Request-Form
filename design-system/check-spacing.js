@@ -16,6 +16,7 @@ const DEFAULT_PAGES = [
   '/design-mock/index.html',
   '/design-mock/kbk-self-repair-parts.html',
   '/design-mock/kbk-self-repair-appointment.html',
+  '/design-mock/kbk-self-repair-inspection.html',
   '/maintainance-yearly/index.html',
   '/maintainance-yearly/plan-new.html',
   '/maintainance-yearly/confirm.html',

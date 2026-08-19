@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
 <link rel="stylesheet" href="../design-system/tokens.css?v=20260817-ds21">
 <link rel="stylesheet" href="../design-system/components.css?v=20260817-ds21">
+<script src="../job-store.js?v=20260819-jobstore"></script><!-- MDJ: เขียนรายการเบิกกลับเข้าใบงาน ไม่งั้นกลับไปแอปหลักจะค้างที่ "กำลังจัดรายการอะไหล่" -->
 <!-- ขั้น 1 "เบิกอะไหล่" ของเส้น กบค. ซ่อมเอง (design mock)
      14 ส.ค. 2569: ต่อเข้า flow แล้ว — mock/Maintenance-Request-Form.html กด "รับซ่อม" → "กบค. ซ่อมเอง"
      พามาที่นี่ในแท็บเดิม พร้อม ?no=<เลขใบแจ้งซ่อม> · กด "ยืนยันรายการเบิก" ไปต่อขั้น 2
@@ -262,6 +263,18 @@ $('btnAdd').addEventListener('click', () => { $('q').focus(); toast('ค้น�
 // ยืนยันรายการเบิก → ไปขั้น 2 "นัดหมายวันซ่อม" ในแท็บเดิม · ส่ง ?no= ต่อให้รู้ว่ามาจากใบไหน
 $('btnConfirm').addEventListener('click', () => {
   if (!Object.keys(picked).length) { toast('ยังไม่ได้เลือกอะไหล่ — เลือกอย่างน้อย 1 รายการก่อน'); return; }
+  // เขียนกลับเข้าใบงานจริง (ถ้าเปิดมาจากแอปหลัก) — ของมีในคลัง = booked · ของขาด = ordered ตาม shape ของ mock
+  if (fromNo) {
+    MDJ.update(fromNo, j => {
+      const booked = [], ordered = [];
+      Object.keys(picked).forEach(code => {
+        const p = partOf(code), row = { name: p.name, qty: picked[code], unit: p.unit };
+        (p.stock >= picked[code] ? booked : ordered).push(row);
+      });
+      j.booked = booked; j.ordered = ordered; j.partsOK = true;
+      j.history.push({ t: nowStr(), label: `กบค. ยืนยันรายการเบิกอะไหล่ ${booked.length + ordered.length} รายการ` });
+    });
+  }
   location.href = 'kbk-self-repair-appointment.html' + (fromNo ? '?no=' + encodeURIComponent(fromNo) : '');
 });
 
@@ -270,8 +283,17 @@ $('btnConfirm').addEventListener('click', () => {
 const fromNo = new URLSearchParams(location.search).get('no');
 if (fromNo) {
   const el = $('fromJob');
-  el.textContent = 'ใบแจ้งซ่อม ' + fromNo + ' — ข้อมูลอะไหล่ด้านล่างยังเป็นชุดตัวอย่างของหน้านี้ ยังไม่ได้ผูกกับใบงานจริง';
+  el.textContent = MDJ.get(fromNo)
+    ? `ใบแจ้งซ่อม ${fromNo} — คลังอะไหล่ด้านล่างเป็นชุดตัวอย่างของหน้านี้ แต่รายการที่ยืนยันจะถูกบันทึกกลับเข้าใบงานจริง`
+    : `ใบแจ้งซ่อม ${fromNo} — ไม่พบใบงานนี้ในเครื่อง หน้านี้จึงทำงานเป็นแบบหน้าจอเดี่ยว`;
   el.hidden = false;
+}
+
+// รูปแบบเวลาเดียวกับ history ในแอปหลัก (nowStr ของ mock/Maintenance-Request-Form.html)
+const TH_MON_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function nowStr() {
+  const d = new Date();
+  return `${d.getDate()} ${TH_MON_SHORT[d.getMonth()]} ${d.getFullYear() + 543} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
 renderAll();
