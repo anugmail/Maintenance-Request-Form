@@ -11,6 +11,7 @@
 //      (ไม่ใส่ path = ตรวจชุดหน้าหลักของโปรเจกต์)
 
 const { chromium } = require('playwright-core');
+const fs = require('fs');
 
 const DEFAULT_PAGES = [
   '/design-mock/index.html',
@@ -35,9 +36,28 @@ const FLUSH_SELF = ['.draft', '.topbar', '.seg', '.crumbs', '.gframe'];
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
 const pages = process.argv.slice(2).length ? process.argv.slice(2) : DEFAULT_PAGES;
 
+// Chrome ที่ติดเครื่องอยู่แล้ว — ชื่อโฟลเดอร์ต่างกันไปตามเครื่อง (บางเครื่องมี "Google Chrome 2.app"
+// จากตอนติดตั้งซ้อน) เดิม hardcode ตัวเดียวแล้วสคริปต์ตายทั้งตัวเมื่อย้ายเครื่อง จึงไล่หาจากรายการแทน
+const CHROME_CANDIDATES = [
+  process.env.CHROME_PATH,
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome',
+  '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+].filter(Boolean);
+
+function findChrome() {
+  const hit = CHROME_CANDIDATES.find(p => fs.existsSync(p));
+  if (!hit) {
+    console.error('ไม่พบ Chrome ในเครื่อง — ตั้ง CHROME_PATH=<path> แล้วรันใหม่');
+    console.error('ที่ลองหา:\n  ' + CHROME_CANDIDATES.join('\n  '));
+    process.exit(2);
+  }
+  return hit;
+}
+
 (async () => {
   const browser = await chromium.launch({
-    executablePath: '/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome',
+    executablePath: findChrome(),
     headless: true,
   });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
