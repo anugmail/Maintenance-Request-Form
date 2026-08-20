@@ -813,12 +813,14 @@ const MYD = {
     return true;
   },
 
-  // ใบพร้อมส่ง = มีสถานที่ · มีช่วงวัน · มีรถ · และทุกคันมีวันนัดที่อยู่ในช่วง
+  // ใบพร้อมส่ง = มีสถานที่ · มีช่วงวัน · มีรถ
+  // **ไม่บังคับวันนัดรายคัน** — กบค. เสนอแค่ "ช่วงเวลา" ส่วนวันจริงของแต่ละคัน
+  // หน่วยงานเจ้าของรถเป็นคนเลือกเองตอนตอบรับ (confirm.js) ภายในช่วงนี้
   tripReadyToSend(trip) {
     if (!trip.location || !trip.location.trim()) return false;
     if (!trip.windowFrom || !trip.windowTo || trip.windowFrom > trip.windowTo) return false;
     if (!(trip.vehicleIds || []).length) return false;
-    return (trip.vehicleIds || []).every(id => this.dateInWindow(trip, (trip.dates || {})[id]));
+    return true;
   },
 
   // ขั้นแผนเดินทางจบเมื่อ: จัดรถเข้าใบครบทุกคัน + ทุกใบได้รับการตอบรับ

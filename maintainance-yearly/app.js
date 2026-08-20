@@ -652,8 +652,6 @@ function renderProcStep2(plan) {
     const vendor = MYD.tripVendor(trip);
 
     const rows = vs.map(v => {
-      const d = (trip.dates || {})[v.id] || '';
-      const bad = d && !MYD.dateInWindow(trip, d);
       const jobs = MYD.tripJobsOf(trip, v.id);
       const noJob = !jobs.change && !jobs.inspect;
       const placeSet = (trip.places || {})[v.id];
@@ -670,15 +668,6 @@ function renderProcStep2(plan) {
               placeholder="${esc(MYD.defaultPlaceOf(v))}"
               data-place-trip="${esc(trip.id)}" data-place-veh="${esc(v.id)}"></div>
             <div class="cell-sub">${placeSet ? 'แก้จากค่าตั้งต้น' : 'ค่าตั้งต้น: ' + esc(MYD.defaultPlaceOf(v))}</div></td>
-        <td><div class="in noic"><input type="date" value="${esc(d)}" ${dis}
-              data-trip="${esc(trip.id)}" data-veh="${esc(v.id)}"></div>
-            ${bad ? `<div class="cell-sub">อยู่นอกช่วงที่เสนอ</div>` : ''}</td>
-        <td>${locked ? esc(MYD.quarterLabel(MYD.bucketOf(plan, v.id)) || '—') : `
-          <div class="in noic"><select class="vehQMove" data-veh="${esc(v.id)}" data-trip="${esc(trip.id)}">
-            ${['Q1', 'Q2', 'Q3', 'Q4'].map(q => `<option value="${q}" ${MYD.bucketOf(plan, v.id) === q ? 'selected' : ''}>อยู่${esc(MYD.quarterLabel(q))}</option>`).join('')}
-            <option value="none" ${MYD.bucketOf(plan, v.id) === 'none' ? 'selected' : ''}>ยังไม่ระบุไตรมาส</option>
-            <option value="out">เอาออกจากแผนทั้งใบ</option>
-          </select></div>`}</td>
         <td class="num">${locked ? '' : `<button class="btn btn-g btn-sm" data-trip-drop="${esc(trip.id)}" data-veh="${esc(v.id)}">เอาออกจากใบนี้</button>`}</td>
       </tr>`;
     }).join('');
@@ -766,9 +755,10 @@ function renderProcStep2(plan) {
           </div>`}
           `}
 
-          <div class="sect">รถในแผนนี้ + วันนัดรายคัน</div>
+          <div class="sect">รถในแผนนี้</div>
+          <div class="sub">วันนัดรายคันไม่ได้กำหนดที่นี่ — หน่วยงานเจ้าของรถเป็นคนเลือกวันเองภายในช่วงที่เสนอ ตอนตอบรับแผนนัด</div>
           ${vs.length ? `<div class="tblwrap"><table class="tbl">
-            <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>งานที่จะทำ</th><th>สถานที่บำรุงรักษา</th><th>วันนัด</th><th>ไตรมาส</th><th></th></tr></thead>
+            <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>งานที่จะทำ</th><th>สถานที่บำรุงรักษา</th><th></th></tr></thead>
             <tbody>${rows}</tbody></table></div>`
             : `<div class="empty">ยังไม่มีรถในแผนนี้ — เลือกจากรายการด้านล่าง</div>`}
 
@@ -811,8 +801,8 @@ function renderProcStep2(plan) {
       แต่จะไม่โผล่ในไตรมาสไหนจนกว่าจะย้ายกลับเข้าไตรมาส</div></div>` : ''}
     <div class="sub">${esc(MYD.quarterLabel(travelQ))}: รถที่ยืนยันแล้ว <b>${joining.length}</b> คัน — จัดเข้าแผนแล้ว <b>${joining.length - unassigned.length}</b>
       · ยังไม่จัด <b>${unassigned.length}</b> · แผนเดินทาง <b>${trips.length}</b> ใบ (ตอบรับแล้ว ${accepted})</div>
-    <div class="sub">แผนหนึ่งมีได้หลายใบ — จะแยกตามจังหวัด หรือจังหวัดละหลายใบก็ได้ · แต่ละใบเสนอเป็นช่วงเวลา
-      แล้วระบุวันนัดรายคันภายในช่วงนั้น</div>
+    <div class="sub">แผนหนึ่งมีได้หลายใบ — จะแยกตามจังหวัด หรือจังหวัดละหลายใบก็ได้ · แต่ละใบเสนอเป็น<b>ช่วงเวลา</b>
+      แล้วหน่วยงานเจ้าของรถเลือกวันนัดของรถแต่ละคันภายในช่วงนั้นเอง</div>
     <div class="actions" style="justify-content:flex-start">
       <button class="btn btn-o" id="btnAddTrip"><span class="ms">add</span> สร้างแผนเดินทางใหม่</button>
       ${unassigned.length ? `<button class="btn btn-s" id="btnAutoTrips">
@@ -909,21 +899,6 @@ function bindProcStep2(plan) {
   // ย้ายรถข้ามไตรมาส / พักไว้ยังไม่ระบุ / เอาออกจากแผน — ทำจากหน้าแผนเดินทางได้เลย
   // (เจ้าของงานสั่ง 17 ส.ค. 2569) · ถอดออกจากใบเดินทางที่ถืออยู่ด้วยเสมอ ไม่งั้นใบเดินทาง
   // ของไตรมาสนี้จะยังค้างรถที่ย้ายไปไตรมาสอื่นแล้ว
-  document.querySelectorAll('.vehQMove').forEach(sel => {
-    sel.addEventListener('change', e => {
-      const vehId = sel.dataset.veh;
-      const target = e.target.value;
-      const t = find(sel.dataset.trip);
-      if (t) t.vehicleIds = (t.vehicleIds || []).filter(id => id !== vehId);
-      if (t && t.dates) delete t.dates[vehId];
-      MYD.assignVehicle(plan, vehId, target === 'out' ? null : target);
-      toast(target === 'out' ? 'เอารถออกจากแผนแล้ว'
-        : target === 'none' ? 'พักรถไว้แบบยังไม่ระบุไตรมาสแล้ว'
-        : 'ย้ายรถไป' + MYD.quarterLabel(target) + 'แล้ว');
-      rerender();
-    });
-  });
-
   // ช่องกรอกระดับใบ — บันทึกทันทีแต่ไม่ re-render (ไม่งั้นโฟกัสหลุดระหว่างพิมพ์)
   document.querySelectorAll('[data-field][data-trip]').forEach(el => {
     el.addEventListener('input', e => {
@@ -935,21 +910,6 @@ function bindProcStep2(plan) {
       updateProcPrimaryEnabled(plan);
       const btn = document.querySelector(`[data-trip-send="${t.id}"]`);
       if (btn) btn.disabled = !MYD.tripReadyToSend(t);
-    });
-  });
-
-  // วันนัดรายคัน
-  document.querySelectorAll('[data-veh][data-trip]:not([data-trip-drop])').forEach(el => {
-    if (el.tagName !== 'INPUT') return;
-    el.addEventListener('input', e => {
-      const t = find(el.dataset.trip);
-      if (!t) return;
-      (t.dates = t.dates || {})[el.dataset.veh] = e.target.value;
-      MYD.savePlan(plan);
-      if (e.target.value && !MYD.dateInWindow(t, e.target.value)) {
-        toast('วันนัดต้องอยู่ในช่วงที่เสนอ');
-      }
-      renderProcWizard(plan);
     });
   });
 
@@ -1005,7 +965,7 @@ function bindProcStep2(plan) {
   document.querySelectorAll('[data-trip-send]').forEach(btn => {
     btn.addEventListener('click', () => {
       const t = find(btn.dataset.tripSend);
-      if (!t || !MYD.tripReadyToSend(t)) { toast('กรอกสถานที่ ช่วงวัน และวันนัดให้ครบก่อน'); return; }
+      if (!t || !MYD.tripReadyToSend(t)) { toast('กรอกสถานที่และช่วงวันให้ครบก่อน'); return; }
       t.sentAt = nowTh();
       t.replies = {};   // ส่งใหม่ = เริ่มนับการตอบรับใหม่ทั้งใบ
       MYD.tripDepts(t, master).forEach(d => {
