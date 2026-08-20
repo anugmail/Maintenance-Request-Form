@@ -9,18 +9,13 @@ const VEHICLE_TYPES = ['รถกระเช้า', 'รถเครน', 'ร
 const ITEM_CATEGORY_ORDER = ['part', 'oil', 'filter'];
 
 // ================= HELPERS =================
-const $ = id => document.getElementById(id);
-
+// `$` และ `toast` มาจาก common.js (โหลดก่อนไฟล์นี้) — เคยประกาศซ้ำที่นี่ด้วย `const $`
+// ซึ่งชนกันจน SyntaxError ทั้งไฟล์ เลยต้องถอด common.js ออกจาก admin.html ไปชั่วคราว
+// ⇒ กลายเป็นว่า renderTimeSim() ไม่มีตัวตน แถบจำลองวันที่จึงหายไปหน้าเดียว (แก้ 20 ส.ค. 2569)
+// ส่วน esc() ที่นี่ตั้งใจ "ทับ" ของ common.js เพราะหน้านี้เอาค่าไปแปะใน attribute ด้วย
+// จึงต้อง escape `"` เพิ่ม (function declaration ของไฟล์ที่โหลดทีหลังชนะ — ตั้งใจ ไม่ใช่บั๊ก)
 function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-}
-
-function toast(m) {
-  const t = $('toast');
-  t.textContent = m;
-  t.classList.add('show');
-  clearTimeout(t._x);
-  t._x = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
 function statusBadgeClass(status) {
