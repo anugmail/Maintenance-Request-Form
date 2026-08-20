@@ -206,6 +206,71 @@ function renderPlaceholder(id) {
   </div>`;
 }
 
+// ================= เฟส 3 · ดำเนินการบำรุงรักษา =================
+// แสดง "งานที่จะทำ" ที่เลือกไว้ตอนทำแผนเดินทาง (ขั้น 3 ของเฟส 1) มาให้ช่างเห็นหน้างาน
+// ยังไม่มีการบันทึกผลงานจริง — หน้านี้เป็นตัวส่งต่อข้อมูลอย่างเดียว
+function renderMaintenance() {
+  const master = MYD.loadMaster();
+  const byId = new Map(master.vehicles.map(v => [v.id, v]));
+  // แสดงเฉพาะคันที่ "ตรวจสภาพก่อนซ่อมเสร็จแล้ว" — รถที่ยังไม่รับมอบ/ตรวจไม่ครบ ยังลงมือซ่อมไม่ได้
+  const joined = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
+  const ids = joined.filter(id => MYD.inspectionDone(PLAN, id));
+  const waiting = joined.length - ids.length;
+
+  // นับว่ามีรถกี่คันที่ต้องทำแต่ละงาน — ช่วยเตรียมของก่อนออกหน้างาน
+  const tally = MYD.TRIP_JOBS.map(j => ({
+    label: j.label,
+    n: ids.filter(id => {
+      const t = MYD.tripOfVehicle(PLAN, id);
+      return t && MYD.tripJobsOf(t, id)[j.id];
+    }).length,
+  }));
+
+  const rows = ids.map(id => {
+    const v = byId.get(id);
+    if (!v) return '';
+    const t = MYD.tripOfVehicle(PLAN, id);
+    const jobs = t ? MYD.tripJobsOf(t, id) : null;
+    // ใช้ badge ไม่ใช่ chip.sel — chip สื่อว่ากดเลือกได้ แต่หน้านี้อ่านอย่างเดียว (แก้ที่หน้าแผนเดินทาง)
+    const chips = jobs
+      ? MYD.TRIP_JOBS.filter(j => jobs[j.id]).map(j => `<span class="badge b-brand">${esc(j.label)}</span>`).join(' ')
+      : '';
+    return `<tr>
+      <td><b>${esc(v.plate)}</b><div class="cell-sub">${esc(v.brand)}</div></td>
+      <td>${esc(v.ownerDept)}<div class="cell-sub">${esc(MYD.quarterLabel(MYD.bucketOf(PLAN, id)) || '—')}</div></td>
+      <td>${chips || '<span class="badge b-low">ยังไม่เลือกงาน</span>'}</td>
+      <td>${t ? esc(MYD.tripPlaceOf(t, v)) : '—'}
+          <div class="cell-sub">${t ? 'ใบ: ' + esc(t.name || 'แผนเดินทาง') : 'ยังไม่อยู่ในใบเดินทาง'}</div></td>
+    </tr>`;
+  }).join('');
+
+  $('phase').innerHTML = `
+    <div class="card">
+      <div class="sect">ดำเนินการบำรุงรักษา</div>
+      <div class="sub">แสดงเฉพาะรถที่<b>ตรวจสภาพก่อนซ่อมเสร็จแล้ว</b> (รับมอบรถครบ) — งานที่จะทำมาจากที่เลือกไว้
+        ตอนทำแผนเดินทาง (เฟส 1 · ขั้นที่ 3) แก้ได้ที่หน้านั้น</div>
+      <div class="sub">พร้อมลงมือ <b>${ids.length}</b> จาก <b>${joined.length}</b> คัน${
+        ids.length ? ' · ' + tally.map(x => `${esc(x.label)} <b>${x.n}</b> คัน`).join(' · ') : ''}</div>
+      ${waiting ? `<div class="note note-warn"><span class="ms">pending</span>
+        <div>อีก <b>${waiting}</b> คันยัง<b>ตรวจสภาพก่อนซ่อมไม่เสร็จ</b> จึงยังไม่ขึ้นที่นี่ —
+          กลับไปเฟส 2 เพื่อตรวจสภาพและลงนามรับมอบให้ครบก่อน</div></div>` : ''}
+      <div class="note note-info"><span class="ms">science</span>
+        <div>หน้านี้<b>แสดงงานที่ต้องทำอย่างเดียว</b> — การบันทึกผลงานหน้างาน (รูปก่อน/หลัง · อะไหล่ที่ใช้จริง ·
+          เลขไมล์/ชม.เครื่อง) ยังไม่ได้ทำในต้นแบบ</div></div>
+      ${ids.length ? `<div class="tblwrap"><table class="tbl">
+        <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>งานที่จะทำ</th><th>สถานที่บำรุงรักษา</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`
+        : `<div class="empty">${joined.length
+            ? 'ยังไม่มีรถที่ตรวจสภาพก่อนซ่อมเสร็จ — กลับไปเฟส 2 ตรวจสภาพก่อน'
+            : 'ยังไม่มีรถที่ยืนยันเข้าแผน'}</div>`}
+      <div class="actions">
+        <button class="btn btn-p" id="btnPhaseNext">ถัดไป${nextPhaseLabel('maintenance')}</button>
+      </div>
+    </div>`;
+
+  $('btnPhaseNext')?.addEventListener('click', () => finishPhase('maintenance'));
+}
+
 // ================= เฟส 3 · ตรวจสภาพก่อนซ่อม =================
 // รายการรถในแผน → กดปุ่มท้ายแถวเพื่อเปิดใบตรวจของคันนั้น (โครงตามแบบฟอร์มกระดาษของ กบค.)
 let INSP = { vehicleId: null };
@@ -390,6 +455,7 @@ function finishPhase(id) {
 function renderPhaseBody() {
   if (currentPhase() === 'procurement') { renderProcurement(); return; }
   if (currentPhase() === 'inspection') { renderInspection(); return; }
+  if (currentPhase() === 'maintenance') { renderMaintenance(); return; }
   const id = currentPhase();
   $('phase').innerHTML = renderPlaceholder(id);
   $('btnPhaseNext')?.addEventListener('click', () => finishPhase(id));
