@@ -742,11 +742,11 @@ function renderProcStep2(plan) {
             · ค่าเบี้ยเลี้ยงกรอกเป็น<b>อัตราต่อวัน</b>รายคน ระบบคูณจำนวนวันของช่วงที่เสนอแล้วรวมให้ในช่องด้านล่าง</div>
           <div class="fgrid">
             ${(trip.staff || ['']).map((name, i) => `
-              <div class="f sp2"><label>คนที่ ${i + 1}</label>
+              <div class="f sp3"><label>คนที่ ${i + 1}</label>
                 <div class="in"><span class="ms">engineering</span>
                   <input type="text" value="${esc(name || '')}" ${dis} placeholder="ชื่อ-สกุล"
                     data-staff-trip="${esc(trip.id)}" data-staff-i="${i}"></div></div>
-              <div class="f sp2"><label>ค่าเบี้ยเลี้ยง/วัน คนที่ ${i + 1} (บาท)</label>
+              <div class="f"><label>ค่าเบี้ยเลี้ยง/วัน (บาท)</label>
                 <div class="in noic"><input type="number" min="0" value="${esc((trip.staffPerDiem || [])[i] ?? 0)}" ${dis}
                   data-staffpd-trip="${esc(trip.id)}" data-staffpd-i="${i}"></div></div>`).join('')}
           </div>
