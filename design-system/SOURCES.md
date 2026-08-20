@@ -127,6 +127,8 @@ d = json.load(open('design-system/.figma-extract/1-1380.json'))   # หน้า
 
 ### ค. ของเราเอง ไลบรารีไม่มีให้เทียบ
 
+`.side.wide` + `.nvlbl` (sidebar กางตอน hover — ไลบรารีมี Application navigation `3:8` แต่เป็น slide-out
+มือถือ 375px คนละแพตเทิร์น ดูหมวด ข · runtime VMS Plus ก็ไม่มีการกาง ⇒ เป็นของเราล้วน opt-in ต่อหน้า) ·
 `.job` `.my-accordion` · `.rzone*` · `.stack` · `.gallery/.gcard/.gframe` · `.daterange` + แผง `.cal` ทั้งแผง ·
 `.tile` `.decision-tiles-*` · `.veh` `.vlist` · `.qty` · `.tl` · `.filter-field/.filter-empty` · `.search` · `.draft` ·
 `.app` `.steps` `.footer` (ชุด mobile legacy)
