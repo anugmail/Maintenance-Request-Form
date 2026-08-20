@@ -290,6 +290,8 @@ const SEED_PLAN = {
       id: 'trip-seed-1', name: 'ชัยนาท',
       location: 'จุดรวมงาน กฟจ. ชัยนาท → หน้างาน อ.มโนรมย์',
       windowFrom: '2568-11-04', windowTo: '2568-11-08',
+      staff: ['ช่างสมชาย ใจดี', 'ช่างวิรัตน์ ศรีสุข'],
+      staffPerDiem: [700, 700],     // อัตราเบี้ยเลี้ยง/วัน ต่อคน — perDiem ของใบ = ผลรวมนี้ × จำนวนวัน
       perDiem: 7000, lodging: 5000, travel: 3500,
       vehicleIds: [1, 2, 3, 4, 5, 6].map(i => `v-3-${i}`),
       dates: [1, 2, 3, 4, 5, 6].reduce((a, i) => (a[`v-3-${i}`] = i <= 3 ? '2568-11-04' : '2568-11-05', a), {}),
@@ -304,6 +306,8 @@ const SEED_PLAN = {
       id: 'trip-seed-2', name: 'นครนายก',
       location: 'จุดรวมงาน กฟจ. นครนายก → หน้างาน อ.บ้านนา',
       windowFrom: '2568-11-06', windowTo: '2568-11-08',
+      staff: ['ช่างประยุทธ์ แก้วมณี', 'ช่างอนุชิต ศรีสุข'],
+      staffPerDiem: [700, 700],
       perDiem: 5000, lodging: 4000, travel: 3000,
       vehicleIds: [1, 2, 3, 4, 5, 6].map(i => `v-4-${i}`),
       dates: [1, 2, 3, 4, 5, 6].reduce((a, i) => (a[`v-4-${i}`] = i <= 3 ? '2568-11-06' : '2568-11-07', a), {}),
@@ -713,6 +717,7 @@ const MYD = {
              vendorId: null,         // ผู้รับจ้างที่ถูก assign ให้ใบนี้ (เมื่อ mode='vendor')
              hireCost: 0,            // ค่าจ้างเหมาของใบนี้ (แทนเบี้ยเลี้ยง/ที่พัก/เดินทาง)
              staff: ['', ''],        // พนักงาน กบค. ที่ออกไปซ่อม — ปกติ 2-3 คน (เมื่อ mode='self')
+             staffPerDiem: [0, 0],   // ค่าเบี้ยเลี้ยงรายคน (index ตรงกับ staff) — perDiem ของใบ = ผลรวมของอาร์เรย์นี้
              vehicleIds: [], dates: {},
              jobs: {},               // { [vehicleId]: { change:bool, inspect:bool } }
              places: {},             // { [vehicleId]: 'สถานที่บำรุงรักษา' } — ว่าง = ใช้ default
@@ -754,6 +759,47 @@ const MYD = {
   // และทุกคันต้องเลือกงานอย่างน้อย 1 อย่าง ไม่งั้นส่งไปหน่วยงานก็ไม่รู้ว่าจะทำอะไร
   tripStaffList(trip) {
     return (trip.staff || []).map(x => (x || '').trim()).filter(Boolean);
+  },
+
+  // จำนวนวันของใบ — นับรวมวันแรกและวันสุดท้าย (4–8 พ.ย. = 5 วัน)
+  // วันที่เก็บเป็น พ.ศ. ทั้งคู่ ผลต่างจึงถูกต้องแม้ปีไม่ใช่ ค.ศ. · ยังไม่ครบช่วง = 0 วัน
+  tripDays(trip) {
+    if (!trip.windowFrom || !trip.windowTo) return 0;
+    const a = new Date(trip.windowFrom + 'T00:00:00');
+    const b = new Date(trip.windowTo + 'T00:00:00');
+    if (isNaN(a) || isNaN(b)) return 0;
+    const n = Math.round((b - a) / 86400000) + 1;
+    return n > 0 ? n : 0;
+  },
+
+  // อัตราเบี้ยเลี้ยง "ต่อวัน" รวมทุกคนในใบ
+  tripPerDiemPerDay(trip) {
+    return (trip.staffPerDiem || []).reduce((n, v) => n + (Number(v) || 0), 0);
+  },
+
+  // ค่าเบี้ยเลี้ยงของใบ = (ผลรวมอัตรารายวันของทุกคน) × จำนวนวันของใบ
+  tripPerDiemSum(trip) {
+    return this.tripPerDiemPerDay(trip) * this.tripDays(trip);
+  },
+
+  // ใบเก่าที่มีแต่ยอดรวม `perDiem` ยังไม่มี `staffPerDiem` — เกลี่ยยอดเดิมลงรายคนให้ผลรวมเท่าเดิม
+  // (คนแรกรับเศษ) เรียกก่อนเรนเดอร์ทุกครั้ง ปลอดภัยกับใบที่มีข้อมูลอยู่แล้ว
+  ensureTripPerDiem(trip) {
+    const n = (trip.staff || ['']).length;
+    if (!Array.isArray(trip.staffPerDiem)) trip.staffPerDiem = [];
+    if (trip.staffPerDiem.length !== n) {
+      const had = trip.staffPerDiem.length;
+      if (!had && (trip.perDiem || 0) > 0 && n > 0) {
+        // ของเดิม perDiem เป็น "ยอดรวมทั้งใบ" → แปลงกลับเป็นอัตรารายวันต่อคน
+        const days = this.tripDays(trip) || 1;
+        const each = Math.round(trip.perDiem / (n * days));
+        trip.staffPerDiem = Array.from({ length: n }, () => each);
+      } else {
+        trip.staffPerDiem = Array.from({ length: n }, (_, i) => Number(trip.staffPerDiem[i]) || 0);
+      }
+    }
+    trip.perDiem = this.tripPerDiemSum(trip);
+    return trip;
   },
 
   tripJobsIncomplete(trip) {

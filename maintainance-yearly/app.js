@@ -610,6 +610,13 @@ function tripVehicles(trip, master) {
 
 // 1 แผนบำรุงรักษามีแผนเดินทางได้หลายใบ — กบค. เลือกเองว่ารถคันไหนเข้าใบไหน
 // (เจ้าของงานเคาะ 10 ส.ค. 2569: "การสร้างจะอิสระ หมายถึงเลือกรถได้ เลือกแผน")
+// ข้อความใต้ช่องค่าเบี้ยเลี้ยง — บอกที่มาของตัวเลขให้ตรวจสอบได้
+function perDiemNote(trip) {
+  const perDay = MYD.tripPerDiemPerDay(trip), days = MYD.tripDays(trip);
+  if (!days) return 'ยังไม่ได้เลือกช่วงวัน — ระบุจากวันที่/ถึงวันที่ก่อน';
+  return `${perDay.toLocaleString('th-TH')} บาท/วัน (รวมทุกคน) × ${days} วัน`;
+}
+
 function renderProcStep2(plan) {
   const master = MYD.loadMaster();
   const trips = MYD.ensureTrips(plan);
@@ -643,6 +650,7 @@ function renderProcStep2(plan) {
   }).join('');
 
   const tripBoxes = trips.map(trip => {
+    MYD.ensureTripPerDiem(trip);   // ใบเก่าที่มีแต่ยอดรวม → เกลี่ยลงรายคน + sync perDiem ให้ตรงผลรวมเสมอ
     const st = MYD.tripStatus(trip, master);
     const b = TRIP_STATUS_BADGE[st];
     const sent = !!trip.sentAt;
@@ -725,34 +733,41 @@ function renderProcStep2(plan) {
             <div class="f sp2"><label>ค่าจ้างเหมา (บาท)</label>
               <div class="in noic"><input type="number" min="0" value="${esc(trip.hireCost ?? 0)}" ${dis}
                 data-trip="${esc(trip.id)}" data-field="hireCost"></div></div>
-            ` : `
-            <div class="f"><label>ค่าเบี้ยเลี้ยง (บาท)</label>
-              <div class="in noic"><input type="number" min="0" value="${esc(trip.perDiem ?? 0)}" ${dis}
-                data-trip="${esc(trip.id)}" data-field="perDiem"></div></div>
+            ` : ''}
+          </div>
+
+          ${trip.mode === 'vendor' ? '' : `
+          <div class="sect">พนักงาน กบค. ที่ออกไปซ่อม</div>
+          <div class="sub">ปกติ 2-3 คนต่อใบ — ใส่ชื่อไว้เพื่อให้หน่วยงานเจ้าของรถรู้ว่าใครจะไป
+            · ค่าเบี้ยเลี้ยงกรอกเป็น<b>อัตราต่อวัน</b>รายคน ระบบคูณจำนวนวันของช่วงที่เสนอแล้วรวมให้ในช่องด้านล่าง</div>
+          <div class="fgrid">
+            ${(trip.staff || ['']).map((name, i) => `
+              <div class="f sp2"><label>คนที่ ${i + 1}</label>
+                <div class="in"><span class="ms">engineering</span>
+                  <input type="text" value="${esc(name || '')}" ${dis} placeholder="ชื่อ-สกุล"
+                    data-staff-trip="${esc(trip.id)}" data-staff-i="${i}"></div></div>
+              <div class="f sp2"><label>ค่าเบี้ยเลี้ยง/วัน คนที่ ${i + 1} (บาท)</label>
+                <div class="in noic"><input type="number" min="0" value="${esc((trip.staffPerDiem || [])[i] ?? 0)}" ${dis}
+                  data-staffpd-trip="${esc(trip.id)}" data-staffpd-i="${i}"></div></div>`).join('')}
+          </div>
+          ${locked ? '' : `<div class="actions" style="justify-content:flex-start;margin-top:-6px">
+            <button class="btn btn-t btn-sm" data-staff-add="${esc(trip.id)}"><span class="ms">add</span> เพิ่มคน</button>
+            ${(trip.staff || []).length > 1 ? `<button class="btn btn-t btn-sm" data-staff-del="${esc(trip.id)}"><span class="ms">remove</span> ลดคน</button>` : ''}
+          </div>`}
+
+          <div class="fgrid">
+            <div class="f ro"><label>ค่าเบี้ยเลี้ยง (บาท) <small>คิดให้อัตโนมัติ</small></label>
+              <div class="in noic"><input type="number" value="${esc(MYD.tripPerDiemSum(trip))}" readonly
+                data-perdiem-sum="${esc(trip.id)}"></div>
+              <div class="cell-sub" data-perdiem-note="${esc(trip.id)}">${esc(perDiemNote(trip))}</div></div>
             <div class="f"><label>ค่าที่พัก (บาท)</label>
               <div class="in noic"><input type="number" min="0" value="${esc(trip.lodging ?? 0)}" ${dis}
                 data-trip="${esc(trip.id)}" data-field="lodging"></div></div>
             <div class="f"><label>ค่าเดินทาง (บาท)</label>
               <div class="in noic"><input type="number" min="0" value="${esc(trip.travel ?? 0)}" ${dis}
                 data-trip="${esc(trip.id)}" data-field="travel"></div></div>
-            <div class="f"><label>รวม</label><div><b>${esc((trip.perDiem || 0) + (trip.lodging || 0) + (trip.travel || 0))} บาท</b></div></div>
-            `}
+            <div class="f"><label>รวม</label><div><b data-trip-grand="${esc(trip.id)}">${esc(MYD.tripPerDiemSum(trip) + (trip.lodging || 0) + (trip.travel || 0))} บาท</b></div></div>
           </div>
-
-          ${trip.mode === 'vendor' ? '' : `
-          <div class="sect">พนักงาน กบค. ที่ออกไปซ่อม</div>
-          <div class="sub">ปกติ 2-3 คนต่อใบ — ใส่ชื่อไว้เพื่อให้หน่วยงานเจ้าของรถรู้ว่าใครจะไป</div>
-          <div class="fgrid">
-            ${(trip.staff || ['']).map((name, i) => `
-              <div class="f sp2"><label>คนที่ ${i + 1}</label>
-                <div class="in"><span class="ms">engineering</span>
-                  <input type="text" value="${esc(name || '')}" ${dis} placeholder="ชื่อ-สกุล"
-                    data-staff-trip="${esc(trip.id)}" data-staff-i="${i}"></div></div>`).join('')}
-          </div>
-          ${locked ? '' : `<div class="actions" style="justify-content:flex-start;margin-top:-6px">
-            <button class="btn btn-t btn-sm" data-staff-add="${esc(trip.id)}"><span class="ms">add</span> เพิ่มคน</button>
-            ${(trip.staff || []).length > 1 ? `<button class="btn btn-t btn-sm" data-staff-del="${esc(trip.id)}"><span class="ms">remove</span> ลดคน</button>` : ''}
-          </div>`}
           `}
 
           <div class="sect">รถในแผนนี้</div>
@@ -850,11 +865,38 @@ function bindProcStep2(plan) {
       MYD.savePlan(plan);
     });
   });
+  // อัปเดตยอดเงินของใบสด ๆ โดยไม่ re-render (กันโฟกัสหลุดตอนพิมพ์)
+  // ใช้ทั้งตอนแก้เบี้ยเลี้ยงรายคน และตอนแก้ช่วงวัน/ที่พัก/เดินทาง เพราะทุกตัวมีผลกับยอดรวม
+  const refreshTripMoney = t => {
+    t.perDiem = MYD.tripPerDiemSum(t);
+    const sumEl = document.querySelector(`[data-perdiem-sum="${t.id}"]`);
+    if (sumEl) sumEl.value = t.perDiem;
+    const noteEl = document.querySelector(`[data-perdiem-note="${t.id}"]`);
+    if (noteEl) noteEl.textContent = perDiemNote(t);
+    const grandEl = document.querySelector(`[data-trip-grand="${t.id}"]`);
+    if (grandEl) grandEl.textContent = `${t.perDiem + (t.lodging || 0) + (t.travel || 0)} บาท`;
+  };
+
+  // ค่าเบี้ยเลี้ยงรายคน (อัตราต่อวัน)
+  document.querySelectorAll('[data-staffpd-trip]').forEach(el => {
+    el.addEventListener('input', e => {
+      const t = find(el.dataset.staffpdTrip);
+      if (!t) return;
+      t.staffPerDiem = t.staffPerDiem || [];
+      t.staffPerDiem[Number(el.dataset.staffpdI)] = Number(e.target.value) || 0;
+      refreshTripMoney(t);
+      MYD.savePlan(plan);
+      updateProcPrimaryEnabled(plan);
+    });
+  });
+
   document.querySelectorAll('[data-staff-add]').forEach(btn => {
     btn.addEventListener('click', () => {
       const t = find(btn.dataset.staffAdd);
       if (!t) return;
       t.staff = [...(t.staff || []), ''];
+      t.staffPerDiem = [...(t.staffPerDiem || []), 0];   // sync ก่อน rerender เพราะ rerender เซฟก่อนเรนเดอร์
+      t.perDiem = MYD.tripPerDiemSum(t);
       rerender();
     });
   });
@@ -863,6 +905,8 @@ function bindProcStep2(plan) {
       const t = find(btn.dataset.staffDel);
       if (!t || (t.staff || []).length <= 1) return;
       t.staff = t.staff.slice(0, -1);
+      t.staffPerDiem = (t.staffPerDiem || []).slice(0, t.staff.length);
+      t.perDiem = MYD.tripPerDiemSum(t);
       rerender();
     });
   });
@@ -906,6 +950,8 @@ function bindProcStep2(plan) {
       if (!t) return;
       const f = el.dataset.field;
       t[f] = ['perDiem', 'lodging', 'travel', 'hireCost'].includes(f) ? (Number(e.target.value) || 0) : e.target.value;
+      // ช่วงวันเปลี่ยน = จำนวนวันเปลี่ยน = ค่าเบี้ยเลี้ยงเปลี่ยน · ที่พัก/เดินทางมีผลกับยอดรวมทั้งใบ
+      if (['windowFrom', 'windowTo', 'lodging', 'travel'].includes(f)) refreshTripMoney(t);
       MYD.savePlan(plan);
       updateProcPrimaryEnabled(plan);
       const btn = document.querySelector(`[data-trip-send="${t.id}"]`);
