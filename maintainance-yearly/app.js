@@ -11,8 +11,8 @@
 
 const PHASES = [
   { id: 'procurement', no: 1, label: 'เบิก/จัดหา + แผนเดินทาง' },
-  { id: 'maintenance', no: 2, label: 'ดำเนินการบำรุงรักษา' },
-  { id: 'inspection',  no: 3, label: 'ตรวจรับ' },
+  { id: 'inspection',  no: 2, label: 'ตรวจสภาพก่อนซ่อม' },
+  { id: 'maintenance', no: 3, label: 'ดำเนินการบำรุงรักษา' },
   { id: 'report',      no: 4, label: 'จัดทำรายงาน' },
   { id: 'cost',        no: 5, label: 'คำนวณต้นทุน' },
 ];
@@ -33,16 +33,34 @@ const state = { sub: 1, travelQ: 'Q1' };
 let PLAN = null;   // แผนที่กำลังเปิดอยู่ (null = อยู่หน้ารายการ)
 
 // ================= PHASE COMPLETION / GUARD (ต่อแผน) =================
+// เฟส 1 จบด้วยการยืนยันแผนเดินทางจริง · เฟส 2-5 ยังไม่ได้ทำหน้าจริง
+// จึงใช้ธง plan.phaseDone[id] ที่ปุ่ม "ถัดไป" ของการ์ดเปล่าเป็นคนติ๊กให้ (ทางลัดของต้นแบบ)
+function phaseCompleteOf(plan, id) {
+  if (!plan) return false;
+  if (id === 'procurement') return plan.travelConfirmed === true;
+  return !!(plan.phaseDone || {})[id];
+}
+
 function isPhaseComplete(id) {
-  if (!PLAN) return false;
-  if (id === 'procurement') return PLAN.travelConfirmed === true;
-  return false;   // เฟส 2-5 ยังไม่มี logic ของตัวเอง (ทำเมื่อถึงคิว)
+  return phaseCompleteOf(PLAN, id);
 }
 
 function canGoPhase(id) {
   const idx = PHASES.findIndex(p => p.id === id);
   if (idx <= 0) return true;
   return isPhaseComplete(PHASES[idx - 1].id);
+}
+
+// เฟสถัดไปตามลำดับใน PHASES — ใช้แทนการ hardcode id/ชื่อเฟส
+// (สลับลำดับเฟสเมื่อไหร่ ปุ่มทุกจุดจะตามให้เอง)
+function nextPhaseOf(id) {
+  const i = PHASES.findIndex(p => p.id === id);
+  return i >= 0 ? PHASES[i + 1] || null : null;
+}
+
+function nextPhaseLabel(id) {
+  const nx = nextPhaseOf(id);
+  return nx ? ` — ${nx.label}` : '';
 }
 
 function currentPhase() {
@@ -55,10 +73,11 @@ function currentPhase() {
 function planProgressText(plan) {
   const idx = Math.max(0, PHASES.findIndex(p => p.id === (plan.phase || PHASES[0].id)));
   const cur = PHASES[idx];
-  const done = cur.id === 'procurement' && plan.travelConfirmed === true;
+  const done = phaseCompleteOf(plan, cur.id);
   if (done && idx + 1 < PHASES.length) {
     return `<span class="badge b-ok">เฟส ${cur.no} ✓</span> พร้อมเฟส ${PHASES[idx + 1].no} · ${esc(PHASES[idx + 1].label)}`;
   }
+  if (done) return `<span class="badge b-ok">จบแผนแล้ว</span> ครบทั้ง ${PHASES.length} เฟส`;
   return `เฟส ${cur.no}/${PHASES.length} · ${esc(cur.label)}`;
 }
 
@@ -167,17 +186,213 @@ function goPhase(id) {
 }
 
 function renderPlaceholder(id) {
-  const phase = PHASES.find(p => p.id === id);
+  const idx = PHASES.findIndex(p => p.id === id);
+  const phase = PHASES[idx];
   const label = phase ? phase.label : id;
+  const next = nextPhaseOf(id);
+  const done = isPhaseComplete(id);
   return `<div class="card">
     <div class="sect">${esc(label)}</div>
-    <div class="empty">เฟสนี้อยู่ในแผนถัดไป — ${esc(label)}</div>
+    <div class="note note-info"><span class="ms">science</span>
+      <div><b>หน้าจอของเฟสนี้ยังไม่ได้ทำ</b> — ปุ่มด้านล่างเป็น<b>ทางลัดของต้นแบบ</b>
+        ไว้เดินดูขั้นตอนถัดไปเท่านั้น ยังไม่มีการบันทึกงานจริงของเฟสนี้</div></div>
+    ${done ? `<div class="note note-ok"><span class="ms">check_circle</span>
+      <div>ทำเครื่องหมายว่าเฟสนี้เสร็จแล้ว — กดปุ่มเพื่อไปเฟสถัดไปได้เลย</div></div>` : ''}
+    <div class="actions">
+      ${next
+        ? `<button class="btn btn-p" id="btnPhaseNext">ถัดไป — ${esc(next.label)}</button>`
+        : `<button class="btn btn-p" id="btnPhaseNext" ${done ? 'disabled' : ''}>${done ? 'จบแผนแล้ว' : 'จบแผน'}</button>`}
+    </div>
   </div>`;
+}
+
+// ================= เฟส 3 · ตรวจสภาพก่อนซ่อม =================
+// รายการรถในแผน → กดปุ่มท้ายแถวเพื่อเปิดใบตรวจของคันนั้น (โครงตามแบบฟอร์มกระดาษของ กบค.)
+let INSP = { vehicleId: null };
+
+function renderInspection() {
+  if (INSP.vehicleId) { renderInspectForm(INSP.vehicleId); return; }
+  renderInspectList();
+}
+
+function renderInspectList() {
+  const master = MYD.loadMaster();
+  const ids = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
+  const byId = new Map(master.vehicles.map(v => [v.id, v]));
+  const done = ids.filter(id => MYD.inspectionDone(PLAN, id)).length;
+
+  const rows = ids.map(id => {
+    const v = byId.get(id);
+    if (!v) return '';
+    const ok = MYD.inspectionDone(PLAN, id);
+    const q = MYD.quarterLabel(MYD.bucketOf(PLAN, id)) || '—';
+    return `<tr>
+      <td><b>${esc(v.plate)}</b><div class="cell-sub">${esc(v.brand)}</div></td>
+      <td>${esc(v.ownerDept)}<div class="cell-sub">${esc(q)}</div></td>
+      <td><span class="badge ${ok ? 'b-ok' : 'b-low'}">${ok ? 'ตรวจแล้ว' : 'ยังไม่ตรวจ'}</span></td>
+      <td class="num"><button class="btn btn-s btn-sm" data-insp-open="${esc(id)}">
+        <span class="ms">fact_check</span> ตรวจสภาพก่อนบำรุงรักษา</button></td>
+    </tr>`;
+  }).join('');
+
+  $('phase').innerHTML = `
+    <div class="card">
+      <div class="sect">ตรวจสภาพก่อนซ่อม</div>
+      <div class="sub">ตรวจสภาพรถร่วมกับผู้ส่งมอบในวันนัด ก่อนเริ่มงานบำรุงรักษา — กดปุ่มท้ายแถวเพื่อเปิดใบตรวจของรถคันนั้น</div>
+      <div class="sub">ตรวจแล้ว <b>${done}</b> จาก <b>${ids.length}</b> คัน</div>
+      ${ids.length ? `<div class="tblwrap"><table class="tbl">
+        <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>สถานะ</th><th></th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`
+        : '<div class="empty">ยังไม่มีรถที่ยืนยันเข้าแผน</div>'}
+    </div>`;
+
+  document.querySelectorAll('[data-insp-open]').forEach(b => b.addEventListener('click', () => {
+    INSP.vehicleId = b.dataset.inspOpen;
+    renderInspection();
+  }));
+}
+
+function renderInspectForm(vehicleId) {
+  const master = MYD.loadMaster();
+  const v = master.vehicles.find(x => x.id === vehicleId);
+  if (!v) { INSP.vehicleId = null; renderInspection(); return; }
+  const f = MYD.ensureInspection(PLAN, vehicleId);
+  const trip = MYD.tripOfVehicle(PLAN, vehicleId);
+  const kbkStaff = trip ? MYD.tripStaffList(trip) : [];
+
+  const opt = (list, sel) => list.map(n =>
+    `<option value="${esc(n)}" ${n === sel ? 'selected' : ''}>${esc(n)}</option>`).join('');
+
+  const itemRows = f.items.map((it, i) => `
+    <tr>
+      <td>${i + 1}. ${esc(it.name)}</td>
+      <td class="num"><input type="radio" name="insp-${i}" ${it.result === 'yes' ? 'checked' : ''}
+        data-insp-r="${i}" value="yes"></td>
+      <td class="num"><input type="radio" name="insp-${i}" ${it.result === 'no' ? 'checked' : ''}
+        data-insp-r="${i}" value="no"></td>
+      <td><div class="in noic"><input type="text" value="${esc(it.note || '')}"
+        placeholder="ระบุหมายเหตุ" data-insp-note="${i}"></div></td>
+    </tr>`).join('');
+
+  $('phase').innerHTML = `
+    <div class="card">
+      <button class="btn btn-t" id="btnInspBack" style="margin-bottom:8px">
+        <span class="ms">arrow_back</span> กลับไปรายการรถ</button>
+
+      <div class="sect">ตรวจสภาพก่อนซ่อม — ${esc(v.plate)}</div>
+      <div class="sub"><b>${esc(v.plate)} ${esc(v.plateProvince || '')}</b> · ${esc(v.brand)} · ${esc(v.ownerDept)}</div>
+      <div class="sub">เลขครุภัณฑ์ ${esc(v.assetCode || '—')} · Serial No. ${esc(v.serialNo || '—')} · HC No. ${esc(v.hcNo || '—')}</div>
+
+      <div class="sect" style="margin-top:22px">ลงนามการรับมอบรถ</div>
+      <div class="fgrid">
+        <div class="f sp2"><label>ผู้ส่งมอบรถ</label>
+          <div class="in"><span class="ms">person</span>
+            <select data-insp-field="deliverBy">
+              <option value="">— เลือกผู้ส่งมอบรถ —</option>
+              ${opt(MYD.deliverersOf(v), f.deliverBy)}
+            </select></div>
+          <div class="actions" style="justify-content:flex-start;margin-top:8px">
+            ${f.signedDeliverAt
+              ? `<span class="badge b-ok"><span class="ms" style="font-size:var(--fs-body)">check_circle</span> เซ็นแล้ว ${esc(f.signedDeliverAt)}</span>`
+              : `<button class="btn btn-s btn-sm" id="btnSignDeliver" ${f.deliverBy ? '' : 'disabled'}>เซ็นลงนาม</button>`}
+          </div></div>
+
+        <div class="f sp2"><label>ผู้รับมอบ (กบค.)</label>
+          <div class="in"><span class="ms">badge</span>
+            <select data-insp-field="receiveBy">
+              <option value="">${kbkStaff.length ? '— เลือกผู้รับมอบ —' : '— ยังไม่ได้ระบุพนักงาน กบค. ในแผนเดินทาง —'}</option>
+              ${opt(kbkStaff, f.receiveBy)}
+            </select></div>
+          <div class="actions" style="justify-content:flex-start;margin-top:8px">
+            ${f.signedReceiveAt
+              ? `<span class="badge b-ok"><span class="ms" style="font-size:var(--fs-body)">check_circle</span> เซ็นแล้ว ${esc(f.signedReceiveAt)}</span>`
+              : `<button class="btn btn-s btn-sm" id="btnSignReceive" ${f.receiveBy ? '' : 'disabled'}>เซ็นลงนาม</button>`}
+          </div></div>
+      </div>
+
+      <div class="sect" style="margin-top:22px">รายละเอียดการตรวจสภาพก่อนซ่อม</div>
+      <div class="tblwrap"><table class="tbl">
+        <thead>
+          <tr><th rowspan="2">รายการ</th><th colspan="2">ผลการตรวจ</th><th rowspan="2">หมายเหตุ</th></tr>
+          <tr><th class="num">มี</th><th class="num">ไม่มี</th></tr>
+        </thead>
+        <tbody>${itemRows}</tbody>
+      </table></div>
+      <div class="actions" style="justify-content:space-between;margin-top:10px">
+        <button class="btn btn-t btn-sm" id="btnInspAdd"><span class="ms">add</span> เพิ่มรายการ</button>
+        <button class="btn btn-p" id="btnInspDone"><span class="ms">check</span> เสร็จสิ้น${nextPhaseLabel('inspection').replace(' — ', ' — ไป')}</button>
+      </div>
+    </div>`;
+
+  bindInspectForm(vehicleId, f);
+}
+
+function bindInspectForm(vehicleId, f) {
+  const save = () => MYD.savePlan(PLAN);
+  const redraw = () => { save(); renderStepper(); renderInspectForm(vehicleId); };
+
+  $('btnInspBack').addEventListener('click', () => { INSP.vehicleId = null; renderInspection(); });
+
+  document.querySelectorAll('[data-insp-field]').forEach(el => el.addEventListener('change', e => {
+    f[el.dataset.inspField] = e.target.value;
+    redraw();   // ปุ่มเซ็นลงนามปลดล็อกตามชื่อที่เลือก
+  }));
+
+  $('btnSignDeliver')?.addEventListener('click', () => { f.signedDeliverAt = nowTh(); toast('ลงนามผู้ส่งมอบแล้ว'); redraw(); });
+  $('btnSignReceive')?.addEventListener('click', () => { f.signedReceiveAt = nowTh(); toast('ลงนามผู้รับมอบแล้ว'); redraw(); });
+
+  // ผลตรวจรายข้อ — บันทึกทันที ไม่ re-render (กันจอกระโดดตอนติ๊กรายการล่างๆ)
+  document.querySelectorAll('[data-insp-r]').forEach(el => el.addEventListener('change', e => {
+    f.items[Number(el.dataset.inspR)].result = e.target.value;
+    save();
+  }));
+  document.querySelectorAll('[data-insp-note]').forEach(el => el.addEventListener('input', e => {
+    f.items[Number(el.dataset.inspNote)].note = e.target.value;
+    save();
+  }));
+
+  // เสร็จสิ้น = บันทึกใบนี้ + ปิดเฟสตรวจสภาพ แล้วข้ามไปเฟสถัดไปเลย (ปุ่มเดียวจบตามที่เจ้าของงานสั่ง)
+  // ไม่บล็อกถ้ายังตรวจไม่ครบทุกคัน — แค่บอกให้รู้ว่าเหลือกี่คัน · กลับมาแก้ทีหลังได้จาก stepper
+  $('btnInspDone').addEventListener('click', () => {
+    save();
+    const ids = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
+    const left = ids.filter(id => !MYD.inspectionDone(PLAN, id)).length;
+    const nx = nextPhaseOf('inspection');
+    PLAN.phaseDone = PLAN.phaseDone || {};
+    PLAN.phaseDone.inspection = true;
+    MYD.savePlan(PLAN);
+    INSP.vehicleId = null;
+    if (nx) goPhase(nx.id); else { renderStepper(); renderInspection(); }
+    toast(left
+      ? `บันทึกแล้ว — ยังตรวจไม่ครบอีก ${left} คัน${nx ? ' · ข้ามไป' + nx.label : ''}`
+      : `ตรวจครบทุกคันแล้ว${nx ? ' — ไป' + nx.label : ''}`);
+  });
+
+  $('btnInspAdd').addEventListener('click', () => {
+    f.items.push({ name: '', result: null, note: '' });
+    redraw();
+  });
+}
+
+// ติ๊กว่าเฟสนี้เสร็จ แล้วพาไปเฟสถัดไป (เฟสสุดท้ายแค่ติ๊กจบ ไม่มีที่ให้ไปต่อ)
+function finishPhase(id) {
+  const idx = PHASES.findIndex(p => p.id === id);
+  const next = PHASES[idx + 1];
+  PLAN.phaseDone = PLAN.phaseDone || {};
+  PLAN.phaseDone[id] = true;
+  MYD.savePlan(PLAN);
+  if (next) { goPhase(next.id); toast(`ผ่านเฟส ${PHASES[idx].no} แล้ว — ต่อที่ ${next.label}`); return; }
+  toast('จบแผนแล้ว — ครบทั้ง 5 เฟส');
+  renderStepper();
+  renderPhaseBody();
 }
 
 function renderPhaseBody() {
   if (currentPhase() === 'procurement') { renderProcurement(); return; }
-  $('phase').innerHTML = renderPlaceholder(currentPhase());
+  if (currentPhase() === 'inspection') { renderInspection(); return; }
+  const id = currentPhase();
+  $('phase').innerHTML = renderPlaceholder(id);
+  $('btnPhaseNext')?.addEventListener('click', () => finishPhase(id));
 }
 
 function renderPlanHeader() {
@@ -281,6 +496,31 @@ function validateProcSub(plan, sub) {
   return true;
 }
 
+// เหตุผลที่ขั้น 3 ยังไปต่อไม่ได้ — คืนเป็นรายการข้อความ (ว่าง = ผ่าน)
+// ต้องสะท้อน MYD.travelPlanReady() ให้ตรงเป๊ะ ไม่งั้นจะบอกผู้ใช้ผิด
+function travelBlockers(plan) {
+  const master = MYD.loadMaster();
+  const trips = MYD.ensureTrips(plan);
+  const out = [];
+  if (!trips.length) { out.push('ยังไม่มีใบเดินทางสักใบ — กด "สร้างแผนเดินทางใหม่" ก่อน'); return out; }
+
+  // ค้างที่ไตรมาสไหนบ้าง — บอกให้รู้ว่าต้องไปกดแท็บไหน (ปัญหาเดิมคือจอโชว์เฉพาะไตรมาสที่เปิดอยู่)
+  const un = MYD.unassignedVehicleIds(plan);
+  if (un.length) {
+    const byQ = {};
+    un.forEach(id => { const q = MYD.bucketOf(plan, id); byQ[q] = (byQ[q] || 0) + 1; });
+    const detail = Object.keys(byQ).sort()
+      .map(q => `${esc(MYD.quarterLabel(q) || q)} ${byQ[q]} คัน`).join(' · ');
+    out.push(`ยังมีรถ <b>${un.length}</b> คันไม่ได้อยู่ในใบเดินทางไหนเลย — ${detail}`);
+  }
+
+  const ST = { draft: 'ยังไม่ได้ส่ง', waiting: 'รอหน่วยงานตอบรับ', rejected: 'ถูกปฏิเสธ — แก้แล้วส่งใหม่' };
+  const notOk = trips.filter(t => MYD.tripStatus(t, master) !== 'accepted');
+  notOk.forEach(t => out.push(
+    `ใบ "<b>${esc(t.name || 'แผนเดินทาง')}</b>" ${esc(ST[MYD.tripStatus(t, master)] || '')}`));
+  return out;
+}
+
 function updateProcPrimaryEnabled(plan) {
   const btn = $('btnPrimaryProc');
   if (!btn) return;
@@ -307,6 +547,12 @@ function renderProcWizard(plan) {
         </div>`;
       }).join('')}</div>
       <div id="procBody">${renderProcSubBody(plan)}</div>
+      ${primaryDisabled && state.sub === 3 ? (() => {
+        const bl = travelBlockers(plan);
+        return bl.length ? `<div class="note note-warn"><span class="ms">error</span>
+          <div><b>ยังไปขั้นถัดไปไม่ได้</b> — ต้องเคลียร์ ${bl.length} เรื่องนี้ก่อน
+            <ul style="margin:6px 0 0 18px">${bl.map(x => `<li>${x}</li>`).join('')}</ul></div></div>` : '';
+      })() : ''}
       <div class="actions">
         <button class="btn btn-g" id="btnBackProc" ${state.sub === 1 ? 'disabled' : ''}>ย้อนกลับ</button>
         <button class="btn btn-p" id="btnPrimaryProc" ${primaryDisabled ? 'disabled' : ''}>${esc(primaryLabel)}</button>
@@ -814,8 +1060,11 @@ function renderProcStep2(plan) {
     ${noneIds.length ? `<div class="note note-info"><span class="ms">inbox</span>
       <div>มีรถ <b>${noneIds.length}</b> คันถูกพักไว้แบบ <b>ยังไม่ระบุไตรมาส</b> — ยังอยู่ในแผน
       แต่จะไม่โผล่ในไตรมาสไหนจนกว่าจะย้ายกลับเข้าไตรมาส</div></div>` : ''}
-    <div class="sub">${esc(MYD.quarterLabel(travelQ))}: รถที่ยืนยันแล้ว <b>${joining.length}</b> คัน — จัดเข้าแผนแล้ว <b>${joining.length - unassigned.length}</b>
-      · ยังไม่จัด <b>${unassigned.length}</b> · แผนเดินทาง <b>${trips.length}</b> ใบ (ตอบรับแล้ว ${accepted})</div>
+    <div class="sub"><b>${esc(MYD.quarterLabel(travelQ))}</b> (ที่กำลังดูอยู่): รถที่ยืนยันแล้ว <b>${joining.length}</b> คัน
+      — จัดเข้าใบแล้ว <b>${joining.length - unassigned.length}</b> · ยังไม่จัด <b>${unassigned.length}</b></div>
+    <div class="sub"><b>ทั้งแผน</b> (ทุกไตรมาสรวมกัน — เกณฑ์ที่ใช้ปลดปุ่ม "ถัดไป"): แผนเดินทาง <b>${trips.length}</b> ใบ
+      · ตอบรับครบแล้ว <b>${accepted}</b> ใบ · รถที่ยังไม่อยู่ในใบไหนเลย <b>${MYD.unassignedVehicleIds(plan).length}</b> คัน
+      <small>(รถที่พักไว้แบบยังไม่ระบุไตรมาสไม่นับ)</small></div>
     <div class="sub">แผนหนึ่งมีได้หลายใบ — จะแยกตามจังหวัด หรือจังหวัดละหลายใบก็ได้ · แต่ละใบเสนอเป็น<b>ช่วงเวลา</b>
       แล้วหน่วยงานเจ้าของรถเลือกวันนัดของรถแต่ละคันภายในช่วงนั้นเอง</div>
     <div class="actions" style="justify-content:flex-start">
@@ -1124,7 +1373,7 @@ function renderProcurementConfirmed(plan) {
     </div>`;
 
   $('btnPeaLife').addEventListener('click', () => toast('สร้างใบนำจ่าย (PEA Life) สำเร็จ (mock)'));
-  $('btnGoNextPhaseProc').addEventListener('click', () => goPhase('maintenance'));
+  $('btnGoNextPhaseProc').addEventListener('click', () => { const nx = nextPhaseOf('procurement'); if (nx) goPhase(nx.id); });
 }
 
 // ================= INIT =================

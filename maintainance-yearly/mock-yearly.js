@@ -757,6 +757,76 @@ const MYD = {
 
   // ใบนี้พร้อมส่งไหม (นอกจากวันนัด/ช่วงเวลาเดิม) — ต้องมีพนักงานอย่างน้อย 1 คน
   // และทุกคันต้องเลือกงานอย่างน้อย 1 อย่าง ไม่งั้นส่งไปหน่วยงานก็ไม่รู้ว่าจะทำอะไร
+  // ================= เฟส 3 · ตรวจสภาพก่อนบำรุงรักษา =================
+  // รายการตรวจ 23 ข้อตามแบบฟอร์มกระดาษของ กบค. (เจ้าของงานส่งภาพแบบฟอร์มมา 20 ส.ค. 2569)
+  // เป็นค่าตั้งต้นของรถทุกคัน — เพิ่มรายการเองได้รายคัน
+  INSPECT_ITEMS: [
+    'ชุดเกียร์ PTO',
+    'ปั๊มน้ำมันไฮดรอลิค',
+    'น้ำมันและกรองไฮดรอลิค',
+    'ชุดกระบอกขาช้างหน้า ซ้าย ขวา',
+    'ชุดกระบอกขาช้างหลัง ซ้าย ขวา',
+    'ชุด CONTROL ด้านล่าง, ด้านบน',
+    'สายไฮดรอลิค, สายสัญญาณต่างๆ',
+    'ชุดโรตารี่',
+    'น้ำมันหล่อลื่นชุดหมุนฐานเครน',
+    'ชุดมอเตอร์หมุนฐานเครน',
+    'ชุดเฟืองหมุนฐานเครน',
+    'ชุดกระบอก UPPER BOOM',
+    'ชุดกระบอก LOWER BOOM',
+    'ชุดกระบอก EXTENSION',
+    'ชุดปรับดิ่งกระเช้า',
+    'ชุดปรับการหมุนของใบกระเช้า',
+    'ชุดวาล์วล็อคต่างๆ',
+    'BUCKET, LINER',
+    'รอกและเชือกวินซ์',
+    'ชุด LIFT รุ่น 115 kV',
+    'การอัดและเคลือบจารบีตามจุดต่างๆ',
+    'ชุดยึดฐานเครน',
+    'เกจวัดต่างๆ',
+  ],
+
+  // ใบตรวจของรถ 1 คัน — สร้างตอนเปิดครั้งแรก แล้วเก็บใน plan.inspections[vehicleId]
+  ensureInspection(plan, vehicleId) {
+    plan.inspections = plan.inspections || {};
+    let f = plan.inspections[vehicleId];
+    if (!f) {
+      f = plan.inspections[vehicleId] = {
+        deliverBy: '', receiveBy: '',           // ผู้ส่งมอบรถ · ผู้รับมอบ (กบค.)
+        signedDeliverAt: '', signedReceiveAt: '',
+        items: this.INSPECT_ITEMS.map(name => ({ name, result: null, note: '' })),
+      };
+    }
+    if (!Array.isArray(f.items)) f.items = this.INSPECT_ITEMS.map(name => ({ name, result: null, note: '' }));
+    return f;
+  },
+
+  // ตรวจครบ = ทุกรายการเลือก มี/ไม่มี แล้ว และลงนามครบทั้งสองฝั่ง
+  inspectionDone(plan, vehicleId) {
+    const f = (plan.inspections || {})[vehicleId];
+    if (!f) return false;
+    if (!f.signedDeliverAt || !f.signedReceiveAt) return false;
+    return (f.items || []).length > 0 && (f.items || []).every(x => x.result === 'yes' || x.result === 'no');
+  },
+
+  // ผู้ส่งมอบรถฝั่งหน่วยงานเจ้าของรถ — ⚠️ ข้อมูลจำลอง ของจริงต้อง join กับทะเบียนพนักงาน
+  // วนจากชื่อชุดเดียวโดยอิง id ของรถ เพื่อให้แต่ละคันได้ชุดชื่อคงที่ (ไม่สุ่มใหม่ทุกครั้งที่เรนเดอร์)
+  DELIVERER_NAMES: [
+    'นายอนุชิต ลิ้มกิมฮวย', 'นายสมพงษ์ ไชยวงศ์', 'นายวิรัตน์ ทองสุข',
+    'นายประยุทธ์ แก้วมณี', 'นายธนากร ศรีสมบัติ', 'นายเอกชัย พูลทรัพย์',
+  ],
+
+  deliverersOf(vehicle) {
+    const n = this.DELIVERER_NAMES.length;
+    const seed = String(vehicle.id || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+    return [0, 1, 2].map(k => this.DELIVERER_NAMES[(seed + k) % n]);
+  },
+
+  // ใบเดินทางที่รถคันนี้อยู่ — ใช้ดึงรายชื่อพนักงาน กบค. มาเป็นตัวเลือก "ผู้รับมอบ"
+  tripOfVehicle(plan, vehicleId) {
+    return this.ensureTrips(plan).find(t => (t.vehicleIds || []).includes(vehicleId)) || null;
+  },
+
   tripStaffList(trip) {
     return (trip.staff || []).map(x => (x || '').trim()).filter(Boolean);
   },
@@ -820,9 +890,15 @@ const MYD = {
   },
 
   // รถที่ผ่านขั้นยืนยันแล้ว แต่ยังไม่ถูกจัดเข้าใบไหนเลย — ต้องเป็น 0 ถึงจะทำแผนครบ
+  // **นับเฉพาะรถที่อยู่ในไตรมาสจริง Q1–Q4** ไม่รวมถัง 'none' (พักไว้ยังไม่ระบุไตรมาส)
+  // เพราะ "พักไว้" = ยังไม่เข้าแผนเดินทางรอบนี้ (เจ้าของงานเคาะ 20 ส.ค. 2569)
+  // เดิมอ่านจาก selectedVehicleIds ซึ่งรวมถัง none ด้วย ⇒ รถที่พักไว้ทำให้ขั้น 3 จบไม่ได้ถาวร
+  // (แท็บในขั้น 3 มีแค่ Q1–Q4 จึงไม่มีทางจัดรถถังนั้นเข้าใบได้เลย)
   unassignedVehicleIds(plan) {
+    this.ensurePlanQuarters(plan);
     const inTrips = new Set(this.ensureTrips(plan).flatMap(t => t.vehicleIds || []));
-    return (plan.selectedVehicleIds || [])
+    const inQuarters = this.QUARTER_KEYS.flatMap(k => plan.byQuarter[k] || []);
+    return [...new Set(inQuarters)]
       .filter(id => this.isVehicleIn(plan, id) && !inTrips.has(id));
   },
 
