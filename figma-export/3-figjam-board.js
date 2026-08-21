@@ -7,6 +7,7 @@
 
      node figma-export/3-figjam-board.js            ผังโฟลว์สร้างแผน + capture 8 หน้าจอ
      node figma-export/3-figjam-board.js --after    + โฟลว์หลังออกเลขงาน (พัสดุ/ยืนยันรถ)
+     node figma-export/3-figjam-board.js --maint    + เฟส 2 ดำเนินการบำรุงรักษา (ผัง + capture ถ้ามี)
      node figma-export/3-figjam-board.js --pages    + หน้ารวมทุกหน้าจัดหมวด
      node figma-export/3-figjam-board.js --all      ทุกชุด
 
@@ -73,6 +74,29 @@ function main() {
   if (all || args.has('--after')) {
     sections.push(flowSection('โฟลว์หลังออกเลขงาน — พัสดุรับทราบ + ยืนยันรถ', COLORS.teal,
       'flow-after-issue', read(path.join(FJ, 'flow-after-issue', 'manifest.json'))));
+  }
+
+  // เฟส 2 — ผังมาก่อน capture เพราะหน้าจอจริงยังทยอยทำ · ไม่มี capture ก็ลงผังอย่างเดียวได้
+  if (all || args.has('--maint')) {
+    const maintDiag = path.join(OUT, 'diagram-maint.json');
+    if (!fs.existsSync(maintDiag)) {
+      console.error('ไม่พบ out/diagram-maint.json — รัน 4-figjam-diagram.js --src=…03-เฟส2-… --out=diagram-maint.json ก่อน');
+      process.exit(1);
+    }
+    sections.push({
+      name: 'แผนผังเฟส 2 — ดำเนินการบำรุงรักษา',
+      color: COLORS.pink,
+      kind: 'diagram',
+      diagram: read(maintDiag)
+    });
+
+    const maintShots = path.join(FJ, 'flow-maint', 'manifest.json');
+    if (fs.existsSync(maintShots)) {
+      sections.push(flowSection('โฟลว์เฟส 2 ดำเนินการบำรุงรักษา — ทีละหน้าจอ', COLORS.pink,
+        'flow-maint', read(maintShots)));
+    } else {
+      console.log('— ยังไม่มี capture เฟส 2 (out/figjam/flow-maint/) ลงเฉพาะผัง');
+    }
   }
 
   if (all || args.has('--pages')) {

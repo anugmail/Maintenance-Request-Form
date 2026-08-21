@@ -480,6 +480,10 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
 .tbl td a{text-decoration:underline}
 .tbl tbody tr:hover td{background:var(--gray-50)}
 .tbl .num{text-align:center;font-weight:600}
+/* แถบสลับสีแถว — ✅ หน้ารายการจริง (ทั้ง "งานแจ้งซ่อม" และ "งานซ่อม") แถวคู่พื้นเทาอ่อน
+   opt-in ไม่ใส่ให้ .tbl ทุกตัว เพราะตารางที่วัดไว้ตอน v0.18 (.dataTable หน้าอื่น) ไม่มีแถบสลับสี */
+.tbl.striped tbody tr:nth-child(even) td{background:var(--gray-50)}
+.tbl.striped tbody tr:hover td{background:var(--gray-100)}
 /* .worknos — แถวเลขงานหลายใบของแผนเดียว (1 ใบต่อไตรมาส) ใช้ตอนงานหนึ่งออกเลขหลายเลข
    พร้อมกัน ต้องเห็นทุกเลขเท่าๆ กัน ไม่ใช่ตัวหลักตัวรอง */
 .worknos{display:flex;flex-wrap:wrap;gap:10px}
@@ -512,6 +516,58 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
 .pager .pg.on{background:var(--gray-300)}
 .pager .pg:disabled{color:var(--gray-400);cursor:not-allowed}
 .pager .pg .ms{font-size:20px}
+
+/* ============================================================
+   v0.22 — หน้ารายการ (list page) ครบชุด
+   ✅ จาก screenshot หน้าจริง VMS Plus "งานแจ้งซ่อม" (จัดการเหตุรถเสีย) — 18 ส.ค. 2569
+   ปิดช่องว่างข้อ 9 ของ README ที่ค้างไว้ว่า "ตาราง list ยังเข้าไม่ได้ (401)"
+   โครงหน้า: [แถบเครื่องมือ] → [ตาราง] → [แถบท้าย]  ใช้คู่กับ .tbl/.pager ที่มีอยู่แล้ว
+   ============================================================ */
+/* แถบเครื่องมือเหนือตาราง — ค้นหาชิดซ้าย · ตัวกรอง/ปุ่มหลักชิดขวา
+   .list-toolbar เดิม (ชิดขวาอย่างเดียว) ยังใช้ได้เหมือนเดิม — .split คือโหมดสองฝั่ง */
+.list-toolbar.split{justify-content:space-between;align-items:center;gap:var(--space-3);flex-wrap:wrap}
+.list-toolbar .lt-search{flex:0 1 415px;min-width:220px}
+.list-toolbar .lt-search .search{display:flex;width:100%}
+.list-toolbar .lt-actions{display:flex;align-items:center;gap:var(--space-3);margin-left:auto}
+/* select ที่วางในแถบเครื่องมือ/แถบท้าย (ไม่มี label ของตัวเอง ต่างจาก .filter-field ที่มี label บน)
+   สูงเท่าปุ่ม 40 · กว้างตามเนื้อหา — ฐาน select เป็น width:100% ซึ่งใช้ในแถบ flex ไม่ได้ */
+.select-inline{width:auto;min-width:96px;height:40px;padding:0 var(--space-3);background-color:#fff;font-size:var(--fs-text-sm);cursor:pointer}
+
+/* หัวตารางกดเรียงได้ — ทั้งช่องเป็นปุ่ม ไอคอนลูกศรตามหลังข้อความ
+   ยังไม่ได้เรียง = swap_vert จาง · เรียงอยู่ = ลูกศรทิศทางจริง เข้ม (ตามหน้าจริง) */
+.tbl th.sortable{padding:0}
+.tbl th.sortable>button{display:inline-flex;align-items:center;gap:var(--space-2);width:100%;height:56px;
+  padding:12px 16px;background:none;border:0;box-shadow:none;border-radius:inherit;cursor:pointer;
+  font:inherit;font-size:var(--fs-text-sm);font-weight:600;line-height:21px;letter-spacing:-.2px;color:inherit;text-align:left}
+.tbl th.sortable>button:hover{background:var(--gray-200)}
+.tbl th.sortable .ms{font-size:16px;color:var(--gray-400)}
+.tbl th.sortable.on .ms{color:var(--gray-700)}
+
+/* ค่าหลักของแถว (เลขที่ใบงาน/รหัสอ้างอิง) — เน้นให้กวาดตาหาเจอในคอลัมน์แรก
+   คู่กับ .cell-sub ที่เป็นบรรทัดรอง */
+.tbl .cell-key{font-weight:600}
+
+/* ค่ายาวกว่าคอลัมน์ → ตัดด้วย … บรรทัดเดียว (หน้าจริงตัดทั้ง "สังกัดยานพาหนะ" และ "ผู้แจ้งเหตุ")
+   ต้องคู่กับ title="ค่าเต็ม" เสมอ ไม่งั้นค่าที่ถูกตัดจะอ่านไม่ได้เลย */
+.tbl .cell-clip{display:block;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* แผงตัวกรอง — กางจากปุ่ม "ตัวกรอง" บนแถบเครื่องมือ
+   ⚠️ ภาพหน้าจริงมีแต่ปุ่ม (ปิดอยู่) ไม่เห็นตอนกาง ⇒ ตัวแผงประกอบจาก .filter-field + token ที่มีอยู่ */
+.filter-panel{display:none;gap:var(--space-4);flex-wrap:wrap;align-items:flex-end;
+  padding:var(--space-4);margin:0 0 var(--space-3);
+  background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);box-shadow:var(--shadow-xs)}
+.filter-panel.open{display:flex}
+
+/* แถบท้ายตาราง — "แสดง x ถึง y จาก z รายการ" + จำนวนแถวต่อหน้า ซ้าย · เลขหน้าขวา
+   เดิมหน้า style guide ประกอบเองด้วย .row + inline style ⇒ ยกเป็นคอมโพเนนต์ */
+.tblfoot{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;margin-top:var(--space-5)}
+.tblfoot .tf-left{display:flex;align-items:center;gap:var(--space-3);font-size:var(--fs-text-sm);line-height:21px;color:var(--gray-700)}
+@media(max-width:760px){
+  .list-toolbar.split{align-items:stretch}
+  .list-toolbar .lt-search{flex:1 0 100%}
+  .list-toolbar .lt-actions{margin-left:0;flex-wrap:wrap}
+  .tblfoot{justify-content:flex-start}
+}
 
 /* ============================================================
    v0.6 — Stepper หลายกลุ่ม + ป้ายสถานะบนขั้น (หน้า plan-skeleton)

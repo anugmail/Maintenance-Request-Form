@@ -21,7 +21,7 @@
 | ข้อจำกัด | ผลที่ตามมา |
 |---|---|
 | Figma REST API เขียน node ไม่ได้ (เขียนได้แค่ comment / dev resource / webhook / variable ที่เป็น Enterprise) | ต้องใช้ **Plugin API** ⇒ งานนี้**ไม่ใช้ Figma token เลย** |
-| ปลั๊กอิน dev ต้องใช้ **Figma desktop app** | เบราว์เซอร์ไม่มีเมนู Plugins → Development · แต่**คนใช้ผลลัพธ์ไม่ต้องลงอะไร** เปิดแก้ในเบราว์เซอร์ได้ปกติ |
+| ปลั๊กอิน dev ต้องใช้ **Figma desktop app** | เบราว์เซอร์ไม่มีเมนู Plugins → Development · แต่**คนใช้ผลลัพธ์ไม่ต้องลงอะไร** 0kdเปิดแก้ในเบราว์เซอร์ได้ปกติ |
 | บัญชี `anu@odds.team` เป็น **Starter** และไลบรารี PEA อยู่คนละทีม | `importComponentByKeyAsync` ใช้ไม่ได้ ⇒ **สร้าง component เองในไฟล์ปลายทาง** |
 | แพลนฟรีจำกัด **3 page ต่อไฟล์** | ทุกหน้าจอเป็น frame เรียงกันใน page เดียว ห้ามแตก page ละหน้าจอ |
 | 6 หน้าเป็น **JS-rendered ทั้งหมด** (`<div id="planNewBody"></div>`) | parse HTML แบบ static ไม่ได้เลย ต้องเรนเดอร์ด้วยเบราว์เซอร์จริง |

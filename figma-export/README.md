@@ -43,12 +43,17 @@ flow-trips-capture.js        โฟลว์วางแผนการเดิ
                              (fast-forward gate ยืนยันรถด้วย verdict ตรงๆ แบบ test/verify-trips.js)
 flow-report-capture.js       โฟลว์แจ้งซ่อม ฝั่งผู้แจ้ง 8 หน้าจอ (mock/ wizard 5 ขั้น → ส่งเรื่อง
                              → รอหัวหน้าอนุมัติ · เลือกอาการเฉพาะที่มีอะไหล่แนะนำ ให้ขั้นอะไหล่ไม่ว่าง)
-4-figjam-diagram.js          ผัง mermaid Diagram/01-…/01-ออกเลขงาน.md → out/diagram-plan.json
+4-figjam-diagram.js          ผัง mermaid ใน Diagram/ → out/*.json · ไม่ใส่พารามิเตอร์ = ค่าเดิม
+                             (01-ออกเลขงาน.md → diagram-plan.json)
+                             ผังอื่น: --src=<path.md> --out=<ชื่อ.json>
+                               เช่น --src=Diagram/01-…/03-เฟส2-ดำเนินการบำรุงรักษา.md
+                                    --out=diagram-maint.json
                              (geometry จาก SVG ที่ mermaid จัด layout · เส้น/ชนิด node parse จากซอร์สตรงๆ)
-   ▼ out/figjam/**/*.png + manifest.json + out/diagram-plan.json
+   ▼ out/figjam/**/*.png + manifest.json + out/diagram-*.json
 3-figjam-board.js            → out/board.json · ค่าเริ่มต้น = ผังโฟลว์สร้างแผน + capture สร้างแผน 8 จอ
                              + วางแผนการเดินทาง 8 จอ + แจ้งซ่อมฝั่งผู้แจ้ง 8 จอ (เจ้าของงานสั่งทีละโฟลว์)
-                             เพิ่มชุดอื่นด้วย --after / --pages / --all
+                             เพิ่มชุดอื่นด้วย --after / --maint / --pages / --all
+                             --maint = ผังเฟส 2 (+ capture out/figjam/flow-maint/ ถ้ามี · ไม่มีก็ลงผังอย่างเดียว)
 serve.js                     เสิร์ฟ board.json + รูป (รองรับ path ย่อยแล้ว)
    ▼
 figjam-plugin/               ปลั๊กอิน FigJam: section ผัง (ShapeWithText ตามชนิด node + connector ผูกปลายจริง

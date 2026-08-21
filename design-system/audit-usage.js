@@ -84,8 +84,10 @@ function checkFile(f) {
     const hasClass = /class\s*=\s*["'][^"']+["']/.test(tag);
     const isBtn = /class\s*=\s*["'][^"']*\bbtn\b/.test(tag);
     const inlineStyled = /style\s*=\s*["'][^"']*(background|border|padding|font)/.test(tag);
-    // ปุ่มที่อยู่ในกล่องของ component ที่มีสไตล์ปุ่มในตัว (.qty · .numfld · .cal · .pf-*)
-    const inComponent = /class\s*=\s*["'][^"']*\b(qty|numfld|cal|cal-\w+|pf-\w+|seg)\b/.test(txt.slice(Math.max(0, m.index - 200), m.index));
+    // ปุ่มที่อยู่ในกล่องของ component ที่มีสไตล์ปุ่มในตัว (.qty · .numfld · .cal · .pf-* · th.sortable)
+    // th.sortable: หัวตารางกดเรียง — ทั้งช่องเป็น <button> ที่ .tbl th.sortable>button จัดสไตล์ให้
+    // ใส่ .btn ไม่ได้เพราะจะได้ปุ่มสูง 40 มีขอบ/เงาซ้อนในหัวตาราง (18 ส.ค. 2569)
+    const inComponent = /class\s*=\s*["'][^"']*\b(qty|numfld|cal|cal-\w+|pf-\w+|seg|sortable)\b/.test(txt.slice(Math.max(0, m.index - 200), m.index));
     if (!isBtn && !inComponent && (!hasClass || inlineStyled)) add('ปุ่มไม่ได้ใช้ .btn', lineOf(txt, m.index), tag);
   }
 
@@ -135,10 +137,11 @@ function checkFile(f) {
   }
 
   // 7) .search ที่ไม่ได้อยู่ใน .stack (บทเรียน 10 ส.ค. — ระยะหายไป 0px)
+  //    .list-toolbar ก็ผ่าน — มันมี margin-bottom 12 ของตัวเอง อาการ 0px จึงเกิดไม่ได้ (18 ส.ค. 2569)
   const searchRe = isDoc ? /(?!)/g : /class\s*=\s*["'][^"']*\bsearch\b[^"']*["']/g;
   while ((m = searchRe.exec(txt))) {
     const before = txt.slice(Math.max(0, m.index - 400), m.index);
-    if (!/class\s*=\s*["'][^"']*\bstack\b/.test(before)) add('.search อาจไม่ได้ห่อ .stack', lineOf(txt, m.index), m[0]);
+    if (!/class\s*=\s*["'][^"']*\b(stack|list-toolbar)\b/.test(before)) add('.search อาจไม่ได้ห่อ .stack', lineOf(txt, m.index), m[0]);
   }
 
   return hits;

@@ -7,11 +7,15 @@
    SVG ที่เรนเดอร์เสร็จ (ตำแหน่ง/ขนาด node, เลน, เส้นเชื่อม, ป้าย)
    ไม่เขียน layout เอง จะได้ตรงกับผังต้นทางเสมอ
 
-   ต้นทาง: Diagram/01-บำรุงรักษาตามวาระ/01-ออกเลขงาน.md (block แรก)
-   — แหล่งความจริงของ flow ตาม CLAUDE.md · แก้ผังแล้วรันไฟล์นี้ซ้ำ
+   ต้นทาง: ผังใน Diagram/ (block mermaid แรกของไฟล์) — แหล่งความจริงของ flow
+   ตาม CLAUDE.md · แก้ผังแล้วรันไฟล์นี้ซ้ำ · default = 01-ออกเลขงาน.md
 
    รัน:  python3 -m http.server 8123 --bind 127.0.0.1 &
          NODE_PATH=<ที่ npm i playwright-core>/node_modules node figma-export/4-figjam-diagram.js
+         # ผังอื่น:
+         … node figma-export/4-figjam-diagram.js \
+             --src=Diagram/01-บำรุงรักษาตามวาระ/03-เฟส2-ดำเนินการบำรุงรักษา.md \
+             --out=diagram-maint.json
    ============================================================ */
 
 const fs = require('fs');
@@ -19,8 +23,15 @@ const path = require('path');
 const { chromium } = require('playwright-core');
 
 const CHROME = process.env.CHROME || '/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome';
-const SRC = path.join(__dirname, '..', 'Diagram', '01-บำรุงรักษาตามวาระ', '01-ออกเลขงาน.md');
-const OUT = path.join(__dirname, 'out', 'diagram-plan.json');
+
+// รับผังไหนก็ได้ใน Diagram/ — ไม่ใส่ = ค่าเดิม (ออกเลขงาน → diagram-plan.json)
+//   --src=Diagram/01-บำรุงรักษาตามวาระ/03-เฟส2-ดำเนินการบำรุงรักษา.md --out=diagram-maint.json
+const arg = (k, d) => {
+  const hit = process.argv.slice(2).find(a => a.startsWith('--' + k + '='));
+  return hit ? hit.slice(k.length + 3) : d;
+};
+const SRC = path.resolve(__dirname, '..', arg('src', path.join('Diagram', '01-บำรุงรักษาตามวาระ', '01-ออกเลขงาน.md')));
+const OUT = path.join(__dirname, 'out', arg('out', 'diagram-plan.json'));
 const SCALE = 2;          // ผัง mermaid ตัวเล็ก — ขยายให้อ่านบน FigJam สบาย
 
 async function main() {
