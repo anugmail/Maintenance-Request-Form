@@ -22,7 +22,7 @@ npm i playwright-core   # ใน scratchpad
 
 ```js
 const {chromium}=require('playwright-core');
-const browser=await chromium.launch({executablePath:'/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome',headless:true});
+const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
 // เปิด mock กับ admin-config.html เป็นคนละ page ใน context เดียวกัน → localStorage ร่วมกัน + storage event ยิงข้ามหน้าจริง
 ```
 

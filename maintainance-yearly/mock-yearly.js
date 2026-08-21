@@ -239,12 +239,12 @@ function deepCopy(v) {
 
 // ---------- แผนตัวอย่าง 1 ใบ: "สร้างเสร็จแล้ว พร้อมไปเฟสต่อไป" ----------
 // ออกเลขงานแล้ว · ฝ่ายพัสดุรับทราบแล้ว · เบิกอะไหล่แล้ว · แผนเดินทางยืนยันแล้ว
-// ⇒ เฟส 1 เสร็จ เฟส 2 ปลดล็อก — ใช้เป็นตัวตั้งต้นตอนทำเฟสถัดไป
+// ⇒ เฟส 1-2 เสร็จ เฟส 3 ปลดล็อก — ใช้เป็นตัวตั้งต้นตอนทำเฟสถัดไป
 // ค่าคงที่ทั้งหมด (id / เลขงาน / รายการรถ / วันที่) เพื่อให้ลิงก์ #<planId> ใช้ได้ตลอด
 const SEED_PLAN = {
   id: 'plan-seed-2569-001',
   createdAt: '1 ต.ค. 2568 09:00',
-  phase: 'procurement',        // เฟส 1 เสร็จแล้ว → กด "ไปเฟสถัดไป" เข้าเฟส 2 ได้
+  phase: 'travel',              // เฟส 1-2 เสร็จแล้ว → กด "ไปเฟสถัดไป" เข้าเฟส 3 ได้
   planName: 'บำรุงรักษาเครน/กระเช้า เขต 3-4',
   // รถ 12 คันของเขต 3-4 กระจายครบ 4 ไตรมาส (3 คัน/ไตรมาส) — แผนตัวอย่างต้องผ่าน
   // เงื่อนไข "ทุกไตรมาสต้องมีรถ" ไม่งั้นเปิดมาแล้วแก้ไม่ได้
@@ -284,12 +284,14 @@ const SEED_PLAN = {
       return acc;
     }, {}),
   },
-  // แผนเดินทาง 2 ใบ — จังหวัดละใบ · ตอบรับครบแล้วทั้งคู่ (เฟส 1 จึงจบ)
+  // แผนเดินทาง 2 ใบ — จังหวัดละใบ · ตอบรับครบแล้วทั้งคู่ (เฟส 2 จึงจบ)
   trips: [
     {
       id: 'trip-seed-1', name: 'ชัยนาท',
       location: 'จุดรวมงาน กฟจ. ชัยนาท → หน้างาน อ.มโนรมย์',
       windowFrom: '2568-11-04', windowTo: '2568-11-08',
+      staff: ['ช่างสมชาย ใจดี', 'ช่างวิรัตน์ ศรีสุข'],
+      staffPerDiem: [700, 700],     // อัตราเบี้ยเลี้ยง/วัน ต่อคน — perDiem ของใบ = ผลรวมนี้ × จำนวนวัน
       perDiem: 7000, lodging: 5000, travel: 3500,
       vehicleIds: [1, 2, 3, 4, 5, 6].map(i => `v-3-${i}`),
       dates: [1, 2, 3, 4, 5, 6].reduce((a, i) => (a[`v-3-${i}`] = i <= 3 ? '2568-11-04' : '2568-11-05', a), {}),
@@ -304,6 +306,8 @@ const SEED_PLAN = {
       id: 'trip-seed-2', name: 'นครนายก',
       location: 'จุดรวมงาน กฟจ. นครนายก → หน้างาน อ.บ้านนา',
       windowFrom: '2568-11-06', windowTo: '2568-11-08',
+      staff: ['ช่างประยุทธ์ แก้วมณี', 'ช่างอนุชิต ศรีสุข'],
+      staffPerDiem: [700, 700],
       perDiem: 5000, lodging: 4000, travel: 3000,
       vehicleIds: [1, 2, 3, 4, 5, 6].map(i => `v-4-${i}`),
       dates: [1, 2, 3, 4, 5, 6].reduce((a, i) => (a[`v-4-${i}`] = i <= 3 ? '2568-11-06' : '2568-11-07', a), {}),
@@ -713,22 +717,27 @@ const MYD = {
              vendorId: null,         // ผู้รับจ้างที่ถูก assign ให้ใบนี้ (เมื่อ mode='vendor')
              hireCost: 0,            // ค่าจ้างเหมาของใบนี้ (แทนเบี้ยเลี้ยง/ที่พัก/เดินทาง)
              staff: ['', ''],        // พนักงาน กบค. ที่ออกไปซ่อม — ปกติ 2-3 คน (เมื่อ mode='self')
+             staffPerDiem: [0, 0],   // ค่าเบี้ยเลี้ยงรายคน (index ตรงกับ staff) — perDiem ของใบ = ผลรวมของอาร์เรย์นี้
              vehicleIds: [], dates: {},
              jobs: {},               // { [vehicleId]: { change:bool, inspect:bool } }
              places: {},             // { [vehicleId]: 'สถานที่บำรุงรักษา' } — ว่าง = ใช้ default
              sentAt: null, replies: {} };
   },
 
-  // งานที่ทำได้ต่อรถ 1 คัน — เลือกอย่างเดียวหรือทั้งสองก็ได้ (เจ้าของงาน 17 ส.ค. 2569)
+  // งานที่ทำได้ต่อรถ 1 คัน — ติ๊กกี่อย่างก็ได้ แต่ต้องอย่างน้อย 1 (เจ้าของงาน 17 ส.ค. 2569)
+  // เพิ่ม "เปลี่ยนตัวกรอง" 21 ส.ค. 2569 · เพิ่มงานใหม่ = เติมในลิสต์นี้อย่างเดียว
+  // (ชิปในตาราง · ป้ายในเฟสดำเนินการ · ตัวนับ · เกณฑ์ส่งใบ ไล่จากลิสต์นี้ทั้งหมด)
   TRIP_JOBS: [
     { id: 'change',  label: 'เปลี่ยนถ่ายน้ำมันไฮดรอลิก' },
     { id: 'inspect', label: 'ตรวจน้ำมันไฮดรอลิก' },
+    { id: 'filter',  label: 'เปลี่ยนตัวกรอง' },
   ],
 
-  // ตั้งต้นติ๊กทั้งสองงาน — ส่วนใหญ่ไปทำทั้งคู่ คนทำแผนค่อยติ๊กออกเฉพาะคันที่ทำอย่างเดียว
+  // ตั้งต้นติ๊ก 2 งานน้ำมัน — ส่วนใหญ่ไปทำทั้งคู่ คนทำแผนค่อยติ๊กออกเฉพาะคันที่ทำอย่างเดียว
+  // ส่วน "เปลี่ยนตัวกรอง" ตั้งต้น**ไม่ติ๊ก** — เป็นงานที่เลือกเพิ่มรายคัน ไม่ได้ทำทุกคัน
   tripJobsOf(trip, vehicleId) {
     const j = (trip.jobs || {})[vehicleId];
-    return j || { change: true, inspect: true };
+    return j || { change: true, inspect: true, filter: false };
   },
 
   tripJobsText(trip, vehicleId) {
@@ -752,14 +761,126 @@ const MYD = {
 
   // ใบนี้พร้อมส่งไหม (นอกจากวันนัด/ช่วงเวลาเดิม) — ต้องมีพนักงานอย่างน้อย 1 คน
   // และทุกคันต้องเลือกงานอย่างน้อย 1 อย่าง ไม่งั้นส่งไปหน่วยงานก็ไม่รู้ว่าจะทำอะไร
+  // ================= เฟส 3 · ตรวจสภาพก่อนบำรุงรักษา =================
+  // รายการตรวจ 23 ข้อตามแบบฟอร์มกระดาษของ กบค. (เจ้าของงานส่งภาพแบบฟอร์มมา 20 ส.ค. 2569)
+  // เป็นค่าตั้งต้นของรถทุกคัน — เพิ่มรายการเองได้รายคัน
+  INSPECT_ITEMS: [
+    'ชุดเกียร์ PTO',
+    'ปั๊มน้ำมันไฮดรอลิค',
+    'น้ำมันและกรองไฮดรอลิค',
+    'ชุดกระบอกขาช้างหน้า ซ้าย ขวา',
+    'ชุดกระบอกขาช้างหลัง ซ้าย ขวา',
+    'ชุด CONTROL ด้านล่าง, ด้านบน',
+    'สายไฮดรอลิค, สายสัญญาณต่างๆ',
+    'ชุดโรตารี่',
+    'น้ำมันหล่อลื่นชุดหมุนฐานเครน',
+    'ชุดมอเตอร์หมุนฐานเครน',
+    'ชุดเฟืองหมุนฐานเครน',
+    'ชุดกระบอก UPPER BOOM',
+    'ชุดกระบอก LOWER BOOM',
+    'ชุดกระบอก EXTENSION',
+    'ชุดปรับดิ่งกระเช้า',
+    'ชุดปรับการหมุนของใบกระเช้า',
+    'ชุดวาล์วล็อคต่างๆ',
+    'BUCKET, LINER',
+    'รอกและเชือกวินซ์',
+    'ชุด LIFT รุ่น 115 kV',
+    'การอัดและเคลือบจารบีตามจุดต่างๆ',
+    'ชุดยึดฐานเครน',
+    'เกจวัดต่างๆ',
+  ],
+
+  // ใบตรวจของรถ 1 คัน — สร้างตอนเปิดครั้งแรก แล้วเก็บใน plan.inspections[vehicleId]
+  ensureInspection(plan, vehicleId) {
+    plan.inspections = plan.inspections || {};
+    let f = plan.inspections[vehicleId];
+    if (!f) {
+      f = plan.inspections[vehicleId] = {
+        deliverBy: '', receiveBy: '',           // ผู้ส่งมอบรถ · ผู้รับมอบ (กบค.)
+        signedDeliverAt: '', signedReceiveAt: '',
+        items: this.INSPECT_ITEMS.map(name => ({ name, result: null, note: '' })),
+      };
+    }
+    if (!Array.isArray(f.items)) f.items = this.INSPECT_ITEMS.map(name => ({ name, result: null, note: '' }));
+    return f;
+  },
+
+  // ตรวจครบ = ทุกรายการเลือก มี/ไม่มี แล้ว และลงนามครบทั้งสองฝั่ง
+  inspectionDone(plan, vehicleId) {
+    const f = (plan.inspections || {})[vehicleId];
+    if (!f) return false;
+    if (!f.signedDeliverAt || !f.signedReceiveAt) return false;
+    return (f.items || []).length > 0 && (f.items || []).every(x => x.result === 'yes' || x.result === 'no');
+  },
+
+  // ผู้ส่งมอบรถฝั่งหน่วยงานเจ้าของรถ — ⚠️ ข้อมูลจำลอง ของจริงต้อง join กับทะเบียนพนักงาน
+  // วนจากชื่อชุดเดียวโดยอิง id ของรถ เพื่อให้แต่ละคันได้ชุดชื่อคงที่ (ไม่สุ่มใหม่ทุกครั้งที่เรนเดอร์)
+  DELIVERER_NAMES: [
+    'นายอนุชิต ลิ้มกิมฮวย', 'นายสมพงษ์ ไชยวงศ์', 'นายวิรัตน์ ทองสุข',
+    'นายประยุทธ์ แก้วมณี', 'นายธนากร ศรีสมบัติ', 'นายเอกชัย พูลทรัพย์',
+  ],
+
+  deliverersOf(vehicle) {
+    const n = this.DELIVERER_NAMES.length;
+    const seed = String(vehicle.id || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+    return [0, 1, 2].map(k => this.DELIVERER_NAMES[(seed + k) % n]);
+  },
+
+  // ใบเดินทางที่รถคันนี้อยู่ — ใช้ดึงรายชื่อพนักงาน กบค. มาเป็นตัวเลือก "ผู้รับมอบ"
+  tripOfVehicle(plan, vehicleId) {
+    return this.ensureTrips(plan).find(t => (t.vehicleIds || []).includes(vehicleId)) || null;
+  },
+
   tripStaffList(trip) {
     return (trip.staff || []).map(x => (x || '').trim()).filter(Boolean);
   },
 
+  // จำนวนวันของใบ — นับรวมวันแรกและวันสุดท้าย (4–8 พ.ย. = 5 วัน)
+  // วันที่เก็บเป็น พ.ศ. ทั้งคู่ ผลต่างจึงถูกต้องแม้ปีไม่ใช่ ค.ศ. · ยังไม่ครบช่วง = 0 วัน
+  tripDays(trip) {
+    if (!trip.windowFrom || !trip.windowTo) return 0;
+    const a = new Date(trip.windowFrom + 'T00:00:00');
+    const b = new Date(trip.windowTo + 'T00:00:00');
+    if (isNaN(a) || isNaN(b)) return 0;
+    const n = Math.round((b - a) / 86400000) + 1;
+    return n > 0 ? n : 0;
+  },
+
+  // อัตราเบี้ยเลี้ยง "ต่อวัน" รวมทุกคนในใบ
+  tripPerDiemPerDay(trip) {
+    return (trip.staffPerDiem || []).reduce((n, v) => n + (Number(v) || 0), 0);
+  },
+
+  // ค่าเบี้ยเลี้ยงของใบ = (ผลรวมอัตรารายวันของทุกคน) × จำนวนวันของใบ
+  tripPerDiemSum(trip) {
+    return this.tripPerDiemPerDay(trip) * this.tripDays(trip);
+  },
+
+  // ใบเก่าที่มีแต่ยอดรวม `perDiem` ยังไม่มี `staffPerDiem` — เกลี่ยยอดเดิมลงรายคนให้ผลรวมเท่าเดิม
+  // (คนแรกรับเศษ) เรียกก่อนเรนเดอร์ทุกครั้ง ปลอดภัยกับใบที่มีข้อมูลอยู่แล้ว
+  ensureTripPerDiem(trip) {
+    const n = (trip.staff || ['']).length;
+    if (!Array.isArray(trip.staffPerDiem)) trip.staffPerDiem = [];
+    if (trip.staffPerDiem.length !== n) {
+      const had = trip.staffPerDiem.length;
+      if (!had && (trip.perDiem || 0) > 0 && n > 0) {
+        // ของเดิม perDiem เป็น "ยอดรวมทั้งใบ" → แปลงกลับเป็นอัตรารายวันต่อคน
+        const days = this.tripDays(trip) || 1;
+        const each = Math.round(trip.perDiem / (n * days));
+        trip.staffPerDiem = Array.from({ length: n }, () => each);
+      } else {
+        trip.staffPerDiem = Array.from({ length: n }, (_, i) => Number(trip.staffPerDiem[i]) || 0);
+      }
+    }
+    trip.perDiem = this.tripPerDiemSum(trip);
+    return trip;
+  },
+
+  // คันที่ยังไม่เลือกงานสักอย่าง — ไล่จาก TRIP_JOBS ไม่ฮาร์ดโค้ดชื่องาน
   tripJobsIncomplete(trip) {
     return (trip.vehicleIds || []).filter(id => {
       const j = this.tripJobsOf(trip, id);
-      return !j.change && !j.inspect;
+      return !this.TRIP_JOBS.some(x => j[x.id]);
     });
   },
 
@@ -774,9 +895,15 @@ const MYD = {
   },
 
   // รถที่ผ่านขั้นยืนยันแล้ว แต่ยังไม่ถูกจัดเข้าใบไหนเลย — ต้องเป็น 0 ถึงจะทำแผนครบ
+  // **นับเฉพาะรถที่อยู่ในไตรมาสจริง Q1–Q4** ไม่รวมถัง 'none' (พักไว้ยังไม่ระบุไตรมาส)
+  // เพราะ "พักไว้" = ยังไม่เข้าแผนเดินทางรอบนี้ (เจ้าของงานเคาะ 20 ส.ค. 2569)
+  // เดิมอ่านจาก selectedVehicleIds ซึ่งรวมถัง none ด้วย ⇒ รถที่พักไว้ทำให้ขั้น 3 จบไม่ได้ถาวร
+  // (แท็บในขั้น 3 มีแค่ Q1–Q4 จึงไม่มีทางจัดรถถังนั้นเข้าใบได้เลย)
   unassignedVehicleIds(plan) {
+    this.ensurePlanQuarters(plan);
     const inTrips = new Set(this.ensureTrips(plan).flatMap(t => t.vehicleIds || []));
-    return (plan.selectedVehicleIds || [])
+    const inQuarters = this.QUARTER_KEYS.flatMap(k => plan.byQuarter[k] || []);
+    return [...new Set(inQuarters)]
       .filter(id => this.isVehicleIn(plan, id) && !inTrips.has(id));
   },
 
@@ -813,12 +940,14 @@ const MYD = {
     return true;
   },
 
-  // ใบพร้อมส่ง = มีสถานที่ · มีช่วงวัน · มีรถ · และทุกคันมีวันนัดที่อยู่ในช่วง
+  // ใบพร้อมส่ง = มีสถานที่ · มีช่วงวัน · มีรถ
+  // **ไม่บังคับวันนัดรายคัน** — กบค. เสนอแค่ "ช่วงเวลา" ส่วนวันจริงของแต่ละคัน
+  // หน่วยงานเจ้าของรถเป็นคนเลือกเองตอนตอบรับ (confirm.js) ภายในช่วงนี้
   tripReadyToSend(trip) {
     if (!trip.location || !trip.location.trim()) return false;
     if (!trip.windowFrom || !trip.windowTo || trip.windowFrom > trip.windowTo) return false;
     if (!(trip.vehicleIds || []).length) return false;
-    return (trip.vehicleIds || []).every(id => this.dateInWindow(trip, (trip.dates || {})[id]));
+    return true;
   },
 
   // ขั้นแผนเดินทางจบเมื่อ: จัดรถเข้าใบครบทุกคัน + ทุกใบได้รับการตอบรับ

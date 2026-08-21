@@ -292,10 +292,37 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 /* คอลัมน์กว้าง 80 — ตัวอักษร 26px ล้น จึงย่อให้พอดี (ของจริงเป็นโลโก้รูป เราไม่มีไฟล์ ใช้ wordmark แทน) */
 .side .vlogo{width:100%;text-align:center;font-weight:800;font-size:20px;color:var(--primary-600);line-height:1;margin-bottom:4px}
 .side .vlogo em{color:var(--brand-accent);font-style:normal}
-.side .nv{width:48px;height:48px;border-radius:var(--rounded-md);display:flex;align-items:center;justify-content:center;color:var(--gray-500);cursor:pointer;transition:background-color .18s ease,color .18s ease}
+.side .nv{width:48px;height:48px;border-radius:var(--rounded-md);display:flex;align-items:center;justify-content:center;color:var(--gray-500);cursor:pointer;text-decoration:none;transition:background-color .18s ease,color .18s ease}
 .side .nv>.ms{font-size:24px;flex:0 0 auto}
 .side .nv:hover{background:var(--gray-100)}
 .side .nv.on{background:var(--gray-100);color:var(--primary-600)}
+
+/* ---------- `.side.wide` — sidebar กางตอน hover พร้อมชื่อเมนูเต็ม ----------
+   ที่มา: **ของเราเอง ไม่ใช่ไลบรารี** — ไลบรารีมีแต่ Application navigation `3:8` ซึ่งเป็น slide-out
+   มือถือ 375px มี overlay คนละแพตเทิร์นกับแถบไอคอนของหน้าจริง (SOURCES.md หมวด ข) และ
+   runtime VMS Plus เองก็ไม่มีการกาง ⇒ **เป็น variant เสริม opt-in ต่อหน้า ไม่ใช่ค่า default ของระบบ**
+   เจ้าของงานสั่งเปิดเฉพาะโฟลว์บำรุงรักษาประจำปี 20 ส.ค. 2569 (เพราะเมนู 6 ตัวจำไอคอนไม่ไหว)
+   ชุดนี้เคยเป็นพฤติกรรมของ `.side` ทุกหน้าใน `fdb704c` แล้วถอดออกทั้งชุดใน `3eac9ff` ตอนจูนให้ตรง
+   runtime — รอบนี้ยกกลับมาโดยผูกกับคลาส `.wide` หน้าที่ไม่ใส่จึงยังเป็นแถบไอคอน 80px เท่าเดิม
+   กติกาค่า: กางเป็น 280 แต่คอลัมน์ยังกิน 80 เท่าเดิม (margin-right ติดลบ = กางทับเนื้อหา ไม่ดันหน้า)
+   ไอคอน **ต้องไม่ขยับ** ตอนกาง — คุมให้จุดกึ่งกลางไอคอนอยู่ที่ x=40 ทั้งสองสถานะ
+   (ยุบ: nv 48 อยู่กลางแถบ 80 ⇒ 16+24=40 · กาง: nv กว้าง 280−24 อยู่กลาง ⇒ ขอบซ้าย 12 + pad 16 + 12=40) */
+.side.wide{transition:width .34s cubic-bezier(.22,1,.36,1),margin-right .34s cubic-bezier(.22,1,.36,1),box-shadow .34s cubic-bezier(.22,1,.36,1)}
+.side.wide:hover{width:280px;margin-right:-200px;box-shadow:12px 0 30px rgba(16,24,40,.14)}
+/* wordmark ตรึงไว้ในกล่องกว้าง 80 ชิดซ้าย — ถ้าปล่อย width:100% ตัวอักษรจะไหลตามตอนกาง */
+.side.wide .vlogo{width:80px;flex:0 0 auto;align-self:flex-start}
+.side.wide .nv{white-space:nowrap;overflow:hidden;transition:width .32s cubic-bezier(.22,1,.36,1),gap .32s cubic-bezier(.22,1,.36,1),padding .32s cubic-bezier(.22,1,.36,1),background-color .18s ease,color .18s ease}
+.side.wide .nvlbl{display:block;min-width:0;max-width:0;overflow:hidden;opacity:0;transform:translateX(-6px);font-size:var(--fs-text-sm);font-weight:500;line-height:20px;text-overflow:ellipsis;transition:max-width .3s cubic-bezier(.22,1,.36,1),opacity .2s ease,transform .3s cubic-bezier(.22,1,.36,1)}
+.side.wide:hover .nv{width:calc(100% - 24px);justify-content:flex-start;gap:12px;padding:0 16px}
+.side.wide:hover .nvlbl{max-width:188px;opacity:1;transform:translateX(0);transition-delay:.04s}
+/* badge ตัวเลขย้ายจากมุมบนขวาของไอคอนมาชิดขวาสุดของแถว (transition อยู่ที่ `.nv .cnt` แล้ว) */
+.side.wide:hover .nv:has(.cnt){padding-right:44px}
+.side.wide:hover .nv .cnt{top:50%;right:16px;transform:translateY(-50%)}
+/* ฉากหลังมืด+เบลอตอนกาง (โทนเดียวกับ `.modal-overlay` แต่จางกว่าเพราะไม่ได้บล็อกการทำงาน)
+   ผูกกับ `:has(>.side.wide)` เพื่อไม่ให้หน้าที่ใช้ `.side` เปล่าเกิด pseudo-element ลอยขึ้นมา */
+.shell:has(>.side.wide)::after{content:"";position:fixed;inset:0;background:rgba(16,24,40,.18);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .32s cubic-bezier(.22,1,.36,1);z-index:35}
+.shell:has(>.side.wide:hover)::after{opacity:1;pointer-events:auto}
+
 .work{flex:1;min-width:0;display:flex;flex-direction:column;background:#fff}
 .topbar{background:#fff;border-bottom:1px solid var(--badge-neutral-border);padding:12px 28px;display:flex;justify-content:flex-end;align-items:center;gap:4px;color:var(--gray-600)}
 .content{padding:22px 32px 48px;width:100%;max-width:1500px}
@@ -372,8 +399,9 @@ input[type=radio]{accent-color:var(--primary-600);width:20px;height:20px;cursor:
 .actions .btn{min-width:170px;padding:12px 24px;font-size:var(--fs-text-md)}
 
 /* ---------- Column span (desktop เท่านั้น) ---------- */
-@media(min-width:761px){.sp2{grid-column:span 2}.sp4{grid-column:1/-1}}
-@media(max-width:1100px){.fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:761px){.sp2{grid-column:span 2}.sp3{grid-column:span 3}.sp4{grid-column:1/-1}}
+/* ≤1100px กริดเหลือ 2 คอลัมน์ — `span 3` จะดันคอลัมน์ที่ 3 เกินออกมา จึงต้องกลายเป็นเต็มแถวแทน */
+@media(max-width:1100px){.fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.sp3{grid-column:1/-1}}
 
 /* ---------- Responsive (มือถือ ≤760px) ---------- */
 @media(max-width:760px){

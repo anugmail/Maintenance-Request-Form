@@ -11,11 +11,12 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260818-ds23">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260818-ds23">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260820-ds23">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260820-ds23">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
+  <script src="../job-store.js?v=20260819-jobstore"></script><!-- MDJ: เก็บใบงานข้ามไฟล์ (หน้า design-mock ขั้นซ่อมเองอยู่คนละไฟล์) -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <!-- OCR อ่านเลขที่สลิปเติมน้ำมัน ⛽ — รันฝั่ง client ล้วน ใช้ได้แม้ไม่มีเน็ต -->
   <style>
@@ -598,12 +599,26 @@
       max-width: 860px
     }
 
-    .vcell label {
+    /* .vgrid.rows — เรียงหัวข้อเป็นบรรทัดลงมาคอลัมน์เดียว (หน้ารายละเอียดใบแจ้งซ่อมฝั่ง กบค.) */
+    .vgrid.rows {
+      grid-template-columns: 1fr;
+      gap: 14px
+    }
+
+    .vcell label,
+    .vcell dt {
       display: block;
       font-size: var(--fs-xs);
       font-weight: 600;
       color: var(--gray-500);
       margin-bottom: 5px
+    }
+
+    /* <dl>/<dt>/<dd> = โครงที่ถูกความหมายของคู่ "หัวข้อ–ค่า" (อ่านด้วย screen reader ได้ถูก)
+       dd ต้องล้าง margin ของเบราว์เซอร์ · min-height กันแถวที่ยังไม่มีข้อมูลยุบจนดูเหมือนหน้าพัง */
+    .vcell dd {
+      margin: 0;
+      min-height: 24px
     }
 
     .vcell .val {
@@ -635,104 +650,9 @@
       flex: none
     }
 
-    /* งบที่จะตัด — ผู้แจ้งเลือกมาแล้วตั้งแต่ตอนสร้างใบ */
-    .budgetbox {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      background: var(--primary-25);
-      border: 1px solid var(--primary-50);
-      border-left: 3px solid var(--primary-600);
-      border-radius: var(--r-md);
-      padding: 12px 16px;
-      margin-top: 12px;
-      max-width: 860px
-    }
-
-    .budgetbox>.ms {
-      font-size: 24px;
-      flex: none;
-      color: var(--primary-600)
-    }
-
-    .bg-tx label {
-      display: block;
-      font-size: var(--fs-xs);
-      font-weight: 600;
-      color: var(--gray-500);
-      margin-bottom: 2px
-    }
-
-    .bg-tx b {
-      display: block;
-      font-size:var(--fs-body);
-      color: var(--gray-900)
-    }
-
-    .bg-note {
-      font-size: var(--fs-xs);
-      color: var(--gray-500)
-    }
-
+    /* หัวข้อ TODO ต้องขึ้นบรรทัดของตัวเอง ไม่ไหลต่อกับคำอธิบาย */
     .todo b {
       display: block
-    }
-
-    /* ---- การ์ดผู้ติดต่อ + รูปแนบ ---- */
-    .pcards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-      gap: 10px;
-      max-width: 860px;
-      margin-top: 10px
-    }
-
-    .pcard {
-      display: flex;
-      gap: 11px;
-      align-items: flex-start;
-      background: #fff;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--r-md);
-      padding: 13px 14px
-    }
-
-    .pcard>.ms {
-      color: var(--primary-600);
-      font-size: 20px;
-      flex: none;
-      margin-top: 1px
-    }
-
-    .pc-tx {
-      min-width: 0
-    }
-
-    .pc-tx label {
-      display: block;
-      font-size: var(--fs-xs);
-      font-weight: 600;
-      color: var(--gray-500);
-      margin-bottom: 3px
-    }
-
-    .pc-tx b {
-      display: block;
-      font-size: 14px;
-      color: var(--gray-900)
-    }
-
-    .pc-tel {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size:var(--fs-sm);
-      margin-top: 3px
-    }
-
-    .pc-tel .ms {
-      font-size: 14px;
-      color: var(--gray-400)
     }
 
     .phz {
@@ -949,9 +869,6 @@
     /* .rowtop/.vdiv ถูกลบ 18 ส.ค. 2569 — คิวงานเปลี่ยนจากการ์ด 2 บรรทัดเป็นตาราง (.tbl) */
 
     /* ---- หัวงาน + แถบขั้นตอน (หน้าขั้นตอน) ---- */
-    .jobhead{display:flex;align-items:flex-start;gap:14px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-lg);padding:16px 18px}
-    .jh-tx{flex:1;min-width:0}
-    .jobhead .meta{font-size:var(--fs-sm);color:var(--gray-600)}
 
 
     .reqinfo{border-left:3px solid var(--primary-50);padding-left:14px;margin-top:14px}
@@ -1495,6 +1412,14 @@
       margin: 0 auto;
       padding-top: 10px;
       align-items: start
+    }
+
+    /* .in-tab — ตอนวางในแท็บ ต้องกินเต็มความกว้างแท็บ ไม่ต้องจัดกลาง
+       ไม่งั้นจอกว้างกว่า 1280px จะถูกบีบ+จัดกลาง เยื้องจากแท็บ "ประวัติการซ่อม" ที่เต็มความกว้าง */
+    .ops-detail-layout.in-tab {
+      max-width: none;
+      margin: 0;
+      padding-top: 0
     }
 
     .kry-route-options {
@@ -3289,6 +3214,12 @@
       if (j.phase === 'quote') return { label: j.quote && j.quote.sent ? 'รอใบเสนอราคาจากอู่' : 'ส่งอู่ประเมินราคา', cls: 'b-low' };
       if (j.phase === 'work' && !j.route) return { label: 'รับเรื่องแล้ว — รอเลือกวิธีซ่อม', cls: 'b-brand' };
       if (j.phase === 'work' && j.route === 'self' && !j.partsOK) return { label: 'กำลังจัดรายการอะไหล่', cls: 'b-brand' };
+      // ---- ขั้นนัดวันนำรถเข้าซ่อม (คนละเรื่องกับ 'slots' ซึ่งเป็นนัดรับรถตอนซ่อมเสร็จ) ----
+      if (j.phase === 'work' && j.route === 'self' && !j.rappt) {
+        if (j.rslots) return { label: 'รอผู้แจ้งเลือกวันเข้าซ่อม', cls: 'b-low' };
+        return { label: 'รอ กบค. นัดวันเข้าซ่อม', cls: 'b-brand' };
+      }
+      if (j.phase === 'work' && j.rappt && j.wi === 0) return { label: 'นัดเข้าซ่อม ' + j.rappt.date, cls: 'b-brand' };
       if (j.phase === 'work') {
         if (j.loc === 'onsite') return { label: 'ซ่อมหน้างาน: ' + ONSITE_STEPS[j.wi], cls: j.wi === 2 ? 'b-ok' : 'b-brand' };
         return { label: KBK_STEPS[j.wi], cls: j.wi === 4 ? 'b-ok' : 'b-brand' };
@@ -3307,7 +3238,10 @@
       $('supcnt').textContent = s; $('supcnt').classList.toggle('hidden', s === 0);
       const b = JOBS.filter(j => j.phase === 'wait').length;
       $('bosscnt').textContent = b; $('bosscnt').classList.toggle('hidden', b === 0);
+      MDJ.save(JOBS);   // จุดนี้ถูกเรียกต่อท้ายทุก mutation ของใบงานอยู่แล้ว
     }
+    // กันตกสำหรับ mutation ที่ไม่ได้เรียก updateBadge — ยิงตอนหน้ากำลังจะถูกทิ้ง (รวมกรณี location.href ข้ามไฟล์)
+    window.addEventListener('pagehide', () => MDJ.save(JOBS));
 
     // ================= VIEW SWITCH =================
     function switchView(v,remember=true) {
@@ -3748,62 +3682,53 @@ function goBackFromForm(){
   </div>`;
     }
     // รายละเอียดการแจ้งซ่อม (หน้า กบค.) — สถานะใบงานไม่อยู่ในนี้ อยู่ที่ป้ายบนหัวการ์ดที่เดียว
-    const NA = '<span style="color:var(--gray-400);font-weight:400">—</span>';
-    function telLink(t) { return t ? `<a href="tel:${esc(t).replace(/[^0-9+]/g, '')}" style="color:var(--primary-600);text-decoration:none">${esc(t)}</a>` : NA }
-    function pcard(icon, role, name, tel) {
-      return `<div class="pcard">
-      <span class="ms">${icon}</span>
-      <div class="pc-tx"><label>${role}</label><b>${name ? esc(name) : '—'}</b>
-        <span class="pc-tel"><span class="ms">call</span>${telLink(tel)}</span></div>
-    </div>`;
-    }
+    // เบอร์โทรทำเป็นลิงก์ tel: — กบค. ต้องโทรหาผู้ติดต่อบ่อย บนมือถือกดโทรได้เลย
+    const telLink = t => t
+      ? `<a href="tel:${esc(t).replace(/[^0-9+]/g, '')}" style="color:var(--primary-600);text-decoration:none">${esc(t)}</a>`
+      : '';
+
+    // รายละเอียดใบแจ้งซ่อม (ฝั่ง กบค.) — 14 หัวข้อตามลำดับที่เจ้าของงานกำหนด 19 ส.ค. 2569
+    // จัดเป็น 3 กลุ่มเพื่อลดภาระการกวาดสายตา แต่ "ลำดับหัวข้อ" ยังเหมือนเดิมทุกตัว
+    // กติกา: หัวข้อไหนไม่มีข้อมูล ให้โชว์หัวข้อไว้เฉยๆ ไม่ต้องเติมอะไร
     function vehInfoBox(j) {
-      const t = vehType(j), ok = vehUsable(j);
+      const ok = vehUsable(j);
       const at = j.at || {}, use = j.use || {};
-      const place = at.prov ? `${esc(at.amp || '')}${at.amp ? ' · ' : ''}จ.${esc(at.prov)}` : NA;
+      const owner = j.owner || {}, tech = j.tech || {}, driver = j.driver || {};
+      const row = (label, val) => `<div class="vcell"><dt>${label}</dt><dd class="val">${val || ''}</dd></div>`;
+      const group = (title, rows) => `<div class="sect">${title}</div><dl class="vgrid rows">${rows.join('')}</dl>`;
+
+      const place = at.prov ? `${esc(at.amp || '')}${at.amp ? ' · ' : ''}จ.${esc(at.prov)}` : '';
       const useTx = [use.odo ? use.odo.toLocaleString() + ' กม.' : null,
                      use.crane ? use.crane.toLocaleString() + ' ชม. (เครน/กระเช้า)' : null]
-                     .filter(Boolean).join(' · ') || NA;
-      return `<div class="vgrid" style="margin-top:4px">
-      <div class="vcell"><label>เลขที่ใบแจ้งซ่อม</label><div class="val">${esc(j.no)}</div></div>
-      <div class="vcell"><label>เลขทะเบียนรถ</label><div class="val">${esc(j.plate)}</div></div>
-      <div class="vcell"><label>ประเภทรถ</label><div class="val"><span class="ms" style="font-size:20px;color:var(--${t.cls === 'crane' ? 'primary' : t.cls === 'bucket' ? 'secondary' : 'gray'}-600)">${t.icon}</span>${t.name}</div></div>
-      <div class="vcell"><label>สถานะรถ</label><div class="val"><span class="badge ${ok ? 'b-ok' : 'b-out'}"><span class="ms" style="font-size:var(--fs-body)">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span></div></div>
-      <div class="vcell"><label>สถานที่รถอยู่</label><div class="val" style="font-size:14px">${place}</div></div>
-      <div class="vcell"><label>ข้อมูลการใช้งานรถ</label><div class="val" style="font-size:14px">${useTx}</div></div>
-      <div class="vcell"><label>หน่วยงานที่แจ้งเข้ามา (เขต/กรย.)</label><div class="val" style="font-size:14px">${j.fromUnit ? esc(j.fromUnit) : NA}</div></div>
-    </div>
+                     .filter(Boolean).join(' · ');
+      const syms = j.syms && j.syms.length
+        ? `<div style="display:flex;gap:6px;flex-wrap:wrap">${j.syms.map(s => `<span class="vchip">${esc(s)}</span>`).join('')}</div>` : '';
+      const photos = j.photos
+        ? `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${Array.from({ length: j.photos }, () => '<div class="phz"><span class="ms">image</span></div>').join('')}<span style="font-size:var(--fs-sm);color:var(--gray-500);font-weight:400">${j.photos} รูป</span></div>` : '';
+      const status = `<span class="badge ${ok ? 'b-ok' : 'b-out'}"><span class="ms" style="font-size:var(--fs-body)">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span>`;
 
-    <div class="sect" style="margin-top:20px">อาการที่แจ้งเข้ามา</div>
-    <div class="vgrid" style="margin-top:10px;display:block">
-      <div style="display:flex;gap:6px;flex-wrap:wrap">${j.syms.map(s => `<span class="vchip">${esc(s)}</span>`).join('')}</div>
-      ${j.desc ? `<div style="margin-top:10px"><label style="display:block;font-size:var(--fs-xs);font-weight:600;color:var(--gray-500);margin-bottom:4px">หมายเหตุของผู้แจ้ง</label><div style="font-size:14px;line-height:var(--lh)">${esc(j.desc)}</div></div>` : ''}
-      <div style="margin-top:10px"><label style="display:block;font-size:var(--fs-xs);font-weight:600;color:var(--gray-500);margin-bottom:5px">รูปแนบ</label>
-        ${j.photos ? `<div style="display:flex;gap:8px;flex-wrap:wrap">${Array.from({ length: j.photos }, () => '<div class="phz"><span class="ms">image</span></div>').join('')}<span style="align-self:center;font-size:var(--fs-sm);color:var(--gray-500)">${j.photos} รูป</span></div>` : '<span style="font-size:14px;color:var(--gray-400)">ไม่มีรูปแนบ</span>'}</div>
-    </div>
-
-    <div class="sect" style="margin-top:20px">ผู้ติดต่อ</div>
-    <div class="pcards">
-      ${pcard('apartment', 'หน่วยงานเจ้าของเรื่อง', j.owner && j.owner.name || j.org, j.owner && j.owner.tel)}
-      ${pcard('engineering', 'ช่างคุมรถ', j.tech && j.tech.name, j.tech && j.tech.tel)}
-      ${pcard('badge', 'พนักงานขับรถ (พขร.)', j.driver && j.driver.name, j.driver && j.driver.tel)}
-    </div>
-
-    <div class="budgetbox"><span class="ms">receipt_long</span>
-      <div class="bg-tx"><label>งบประมาณที่จะตัด</label><b>${j.budget ? esc(j.budget) : '<span style="color:var(--error-600)">— ผู้แจ้งยังไม่ได้เลือกงบ —</span>'}</b>
-        <span class="bg-note">ผู้แจ้งเลือกมาตั้งแต่ตอนสร้างใบแจ้งซ่อม</span></div></div>
-    ${missingFields(j).length ? `<div class="todo"><span class="ms">edit_note</span><span><b>ผู้แจ้งไม่ได้กรอก ${missingFields(j).length} ช่อง</b>
-      ${missingFields(j).map(esc).join(' · ')} — ฟอร์มแจ้งซ่อมมีช่องพวกนี้แล้วแต่ไม่ได้บังคับ ถ้าจำเป็นต่องาน กบค. ให้โทรถามหน่วยงานเจ้าของเรื่อง</span></div>` : ''}`;
-    }
-    // เช็คว่าใบนี้ขาดข้อมูลช่องไหน (ฟอร์มมีช่องให้แล้ว แต่ไม่บังคับ)
-    function missingFields(j) {
-      const m = [];
-      if (!(j.at && j.at.prov)) m.push('สถานที่รถอยู่ (จังหวัด/อำเภอ)');
-      if (!(j.use && (j.use.odo || j.use.crane))) m.push('เลขไมล์ / ชม.การใช้เครน');
-      if (!(j.owner && j.owner.tel)) m.push('เบอร์โทรหน่วยงานเจ้าของเรื่อง');
-      if (!(j.tech && j.tech.name)) m.push('ชื่อ+เบอร์ ช่างคุมรถ');
-      if (!(j.driver && j.driver.name)) m.push('ชื่อ+เบอร์ พขร.');
-      return m;
+      return `<div class="stack">
+      ${group('ใบแจ้งซ่อมและสภาพรถ', [
+        row('เลขที่ใบแจ้งซ่อม', esc(j.no)),
+        row('อาการที่แจ้งเข้ามา', syms),
+        row('สถานที่รถอยู่ (จังหวัด · อำเภอ)', place),
+        row('สถานะรถ', status),
+      ])}
+      ${group('ผู้ติดต่อ', [
+        row('ชื่อ หน่วยงานเจ้าของเรื่อง', esc(owner.name || j.org || '')),
+        row('เบอร์โทร หน่วยงานเจ้าของเรื่อง', telLink(owner.tel)),
+        row('ชื่อ ช่างคุมรถ', esc(tech.name || '')),
+        row('เบอร์โทร ช่างคุมรถ', telLink(tech.tel)),
+        row('ชื่อ พขร.', esc(driver.name || '')),
+        row('เบอร์โทร พขร.', telLink(driver.tel)),
+      ])}
+      ${group('ข้อมูลประกอบ', [
+        row('หน่วยงานที่แจ้งเข้ามา (เขต/กรย.)', esc(j.fromUnit || '')),
+        row('รูปแนบ', photos),
+        row('ข้อมูลการใช้งานรถ (เลขไมล์ · ชม.ใช้เครน)', useTx),
+        row('หมายเหตุของผู้แจ้ง', esc(j.desc || '')),
+      ])}
+    </div>`;
     }
     function timelineBox(j) {
       return `<div class="sect" style="margin-top:24px">สถานะใบงาน</div>
@@ -3957,6 +3882,16 @@ function confirmSlot(no){
   j.history.push({t:nowStr(),label:'ผู้แจ้งยืนยันนัดรับรถ '+s.label+' '+t+' (พร้อมตรวจสภาพหลังซ่อม)'});
   toast('ยืนยันวันนัดแล้ว — กบค. เห็นวันนัดที่เลือก');renderMyDetail(no);
 }
+// ยืนยัน "วันเข้าซ่อม" — ใช้ R.pick ร่วมกับชิพนัดรับรถ จึงคั่น id ด้วย 'r::' กันหยิบผิดรายการ
+function confirmRepairSlot(no){
+  const j=JOBS.find(x=>x.no===no);
+  if(!R.pick||!R.pick.startsWith('r::')){toast('กรุณาเลือกวันเข้าซ่อมก่อนยืนยัน');return}
+  const d=j.rslots.days[+R.pick.slice(3)];
+  j.rappt={mode:j.rslots.mode,date:d.label,coord:j.rslots.coord,tel:j.rslots.tel,place:j.rslots.place};
+  j.history.push({t:nowStr(),label:'ผู้แจ้งยืนยันวันนำรถเข้าซ่อม '+d.label+' @ '+j.rslots.place});
+  R.pick=null;updateBadge();
+  toast('ยืนยันวันเข้าซ่อมแล้ว — กบค. เห็นวันที่เลือก');renderMyDetail(no);
+}
 function retPanel(j){
   return`<div class="panel"><div class="sect" style="margin:0 0 8px">เหตุผล</div>
     <div style="font-size:14px">${j.ret.reason}</div>
@@ -4018,6 +3953,20 @@ function retPanel(j){
         }
       }
       if (j.phase === 'gclosed') { extra = recordPanel(j) }
+      // ---- เลือกวันนำรถ "เข้า" ซ่อม — กบค. เสนอวันมาจากขั้นนัดหมาย (design-mock/kbk-self-repair-appointment.html) ----
+      if (j.rslots && !j.rappt) {
+        const r = j.rslots;
+        extra += `<div class="sect" style="margin-top:24px">เลือกวันเข้าซ่อม</div>
+    <div class="hint">กบค. เสนอวันสำหรับ<b>นำรถเข้าซ่อม</b> — เลือก 1 วัน แล้วกดยืนยัน (คนละรายการกับวันนัดรับรถตอนซ่อมเสร็จ)</div>
+    <div class="panel">
+      <div class="chips">${r.days.map((d, di) => { const id = 'r::' + di; return `<div class="chip ${R.pick === id ? 'sel' : ''}" onclick="pickSlot('${no}','${id}')">${d.label}</div>` }).join('')}</div>
+      <div class="hint" style="margin-top:12px"><b>ผู้ประสานงาน:</b> ${r.coord} · ${r.tel}<br><b>สถานที่:</b> ${r.place}${r.note ? '<br><b>หมายเหตุ:</b> ' + r.note : ''}</div>
+      <div class="rowbtns"><button class="btn btn-p" onclick="confirmRepairSlot('${no}')">ยืนยันวันเข้าซ่อม</button></div>
+    </div>`;
+      }
+      if (j.rappt) {
+        extra += `<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>วันนำรถเข้าซ่อม:</b> ${j.rappt.date}${j.rappt.mode === 'out' ? ' — ทีม กบค. เดินทางไปซ่อมที่หน้างาน' : ' · ' + j.rappt.place}</div>`;
+      }
       if (j.phase === 'slots') {
         extra += `<div class="sect" style="margin-top:24px">เลือกวันนัดรับรถ</div>
     <div class="hint">กบค. ซ่อมเสร็จแล้ว และเปิด<b>ตารางว่าง</b>ให้เลือก — เลือก 1 ช่วงเวลา แล้วกดยืนยัน (วันนัดมีการตรวจสภาพหลังการซ่อมร่วมกัน)</div>
@@ -4137,7 +4086,7 @@ function retPanel(j){
         <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="${uid}-1" onclick="switchVehTab(this,'${uid}',1)">ประวัติการซ่อม</button>
       </div>
       <div class="tabpanel" id="${uid}-0" role="tabpanel" style="margin-top:16px">
-        <div class="ops-detail-layout" style="padding-top:0">
+        <div class="ops-detail-layout in-tab">
           <div class="ops-detail-main">${vehInfoBox(j)}
             <div class="rowbtns">
               <button type="button" class="btn btn-o" onclick="event.stopPropagation();openKbkReturnModal('${j.no}')"><span class="ms">u_turn_left</span> ส่งกลับ/ปฏิเสธ</button>
@@ -4199,8 +4148,7 @@ function retPanel(j){
       closeModal();
       KBK_ACCEPT_ROUTE = null;
       // เส้นซ่อมเอง → เปลี่ยนหน้าไปหน้าเบิกอะไหล่ (design mock) ในแท็บเดิม · ส่ง ?no= ไปให้รู้ว่ามาจากใบไหน
-      // ⚠️ JOBS อยู่ใน memory ล้วน (ดูโน๊ตบรรทัด PF_KEY) ⇒ ออกจากหน้านี้แล้วสถานะที่เพิ่งกดรับซ่อมจะหาย
-      // กดกลับมาใบงานจะเป็น "รอ กบค. รับเรื่อง" เหมือนเดิม — ยอมรับได้เพราะเป็นต้นแบบไว้เดินดูหน้าจอ
+      // updateBadge() ด้านบนเซฟ JOBS ลง MDJ แล้ว หน้าปลายทางจึงหยิบใบงานใบนี้ต่อได้
       if (route === 'self') {
         location.href = '../design-mock/kbk-self-repair-parts.html?no=' + encodeURIComponent(no);
         return;
@@ -4428,21 +4376,15 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
     // (กลไก accordion เดิม KBK_OPEN/kbkDetail/setKbkCardOpen/closeKbkDetail/openKbk/renderKbkInfo ถูกลบทิ้ง)
     // renderKbkDetail คงชื่อเดิม เพราะมี caller 35 จุดเรียกหลังเปลี่ยน state
     let STEP = { no: null };
-    const KSTEPS = [
-      { k:'decide', label:'รับเรื่อง' },
-      { k:'route',  label:'เลือกวิธีซ่อม' },
-      { k:'parts',  label:'จัดอะไหล่' },
-      { k:'work',   label:'ดำเนินการซ่อม' }
-    ];
     // ขั้นที่ใบนี้อยู่ตอนนี้ — คิดจากสถานะจริง ไม่ต้องให้ผู้ใช้เลือกเอง
     function stepOf(j){
       if(j.phase==='pending')return 'decide';
       if(j.phase==='quote')return 'route';
       if(j.phase==='work'&&!j.route)return 'route';
       if(j.phase==='work'&&j.route==='self'&&!j.partsOK)return 'parts';
+      if(j.phase==='work'&&j.route==='self'&&!j.rappt)return 'appt';
       return 'work';
     }
-    function stepIndex(j){ return KSTEPS.findIndex(x=>x.k===stepOf(j)) }
 
     function openStep(no){
       const j=JOBS.find(x=>x.no===no); if(!j)return;
@@ -4487,8 +4429,14 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
       // ---- ซ่อมเอง: จัดรายการอะไหล่ก่อนเริ่มงาน ----
       else if (j.phase === 'work' && j.route === 'self' && !j.partsOK) { action = partsEditorHTML(no, j) }
       else if (j.phase === 'quote') { action = quotePanelHTML(no, j) }
+      // ---- ซ่อมเอง: ยังไม่มีวันนัดนำรถเข้าซ่อม = ยังตรวจสภาพขาเข้า/เดินสถานะไม่ได้ ----
+      // เจ้าของงานสั่ง 19 ส.ค. 2569: ไม่ต้องแสดงแผงอะไรในช่วงนี้ — ป้ายสถานะหัวหน้าจอบอกอยู่แล้ว
+      // ว่ารออะไรอยู่ ("รอ กบค. นัดวันเข้าซ่อม" / "รอผู้แจ้งเลือกวันเข้าซ่อม")
+      else if (j.phase === 'work' && j.route === 'self' && !j.rappt) { action = '' }
       else if (j.phase === 'work') {   // ---- แทร็กงานใหญ่ (นำรถเข้า สนญ.) ----
-        action = partsSummaryHTML(j) + `<div class="sect" style="margin-top:24px">สถานะงานซ่อม <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— สถานะแสดงที่ฝั่งผู้แจ้งด้วย</span></div>
+        action = partsSummaryHTML(j)
+          + (j.rappt ? `<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>วันนำรถเข้าซ่อม:</b> ${j.rappt.date}${j.rappt.mode === 'out' ? ' — ทีมเดินทางไปซ่อมหน้างาน' + (j.rappt.tech ? ' · ช่าง ' + j.rappt.tech : '') : ' · ' + j.rappt.place} <span class="hint" style="display:inline;margin:0">(ผู้แจ้งยืนยันแล้ว)</span></div>` : '')
+          + `<div class="sect" style="margin-top:24px">สถานะงานซ่อม <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— สถานะแสดงที่ฝั่งผู้แจ้งด้วย</span></div>
     <div class="wsteps" style="margin-top:14px">${KBK_STEPS.map((s, i) => `<div class="wstep ${i === j.wi ? 'active' : i < j.wi ? 'passed' : ''}"><span class="num">${i < j.wi ? '<span class=\"ms\">check</span>' : i + 1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
         if (TG.inspection) {   // ปิด toggle ตรวจสภาพ → ข้ามฟอร์ม/แผงตรวจสภาพขาเข้าทั้งหมด
           if (j.inspIn) {
@@ -4574,24 +4522,13 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
       const j = JOBS.find(x => x.no === no);
       if(!j){ $('stepbody').innerHTML='<div class="empty">ไม่พบใบแจ้งซ่อม</div>'; return }
       STEP.no = no;
-      const st=statusInfo(j), t=vehType(j), ok=vehUsable(j), cur=stepIndex(j);
+      const st=statusInfo(j);
       try{history.replaceState(null,'','#kbk/'+encodeURIComponent(no)+'/'+stepOf(j))}catch(e){}
       $('stepbody').innerHTML = `
-    <h1 class="page-title">${esc(j.no)}</h1>
-    <div class="jobhead">
-      <div class="jh-tx">
-        <div class="vline">
-          <span class="vplate">${esc(j.plate)}</span>
-          <span class="vchip ${t.cls}"><span class="ms">${t.icon}</span>${t.name}</span>
-          <span class="badge ${ok?'b-ok':'b-out'}"><span class="ms" style="font-size:var(--fs-body)">${ok?'check_circle':'do_not_disturb_on'}</span>${ok?'ใช้งานได้':'ใช้งานไม่ได้'}</span>
-        </div>
-        <div class="meta" style="margin-top:4px">${esc(j.org)} · ${esc(j.syms[0])}${j.syms.length>1?' +'+(j.syms.length-1):''}</div>
-      </div>
-      <span class="badge ${st.cls}">${st.label}</span>
+    <div class="page-title-row">
+      <h1 class="page-title">${esc(j.no)}</h1>
+      <span class="badge ${st.cls}" style="margin-left:10px">${st.label}</span>
     </div>
-
-    <div class="wsteps">${KSTEPS.map((x,i)=>
-      `<div class="wstep ${i===cur?'active':i<cur?'passed':''}"><span class="num">${i<cur?'<span class=\"ms\">check</span>':i+1}</span><span class="lbl">${x.label}</span></div>`).join('')}</div>
 
     <div class="reqinfo">${vehInfoTabs(j)}</div>
 
@@ -5130,7 +5067,16 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
     // ================= INIT =================
     // อ่านค่าจาก admin-config.html (localStorage) — ไม่มีค่าที่ตั้งไว้ = พฤติกรรมเดิมทุกอย่าง
     const CFG = MDC.load(), TG = CFG.toggles, UI = CFG.variants;
-    if (CFG.demo.jobs) { JOBS.length = 0; JOBS.push(...CFG.demo.jobs); if (CFG.demo.seq) SEQ = CFG.demo.seq; }
+    // ?reset = ทิ้งสถานะใบงานที่ค้างอยู่ กลับไปใช้ seed ตั้งต้น แล้วถอด param ทิ้งเพื่อไม่ให้รีโหลดรอบหน้าล้างซ้ำ
+    const RESET_JOBS = new URLSearchParams(location.search).has('reset');
+    if (RESET_JOBS) { MDJ.clear(); try { history.replaceState(null, '', location.pathname + location.hash) } catch (e) {} }
+    if (CFG.demo.jobs) { JOBS.length = 0; JOBS.push(...CFG.demo.jobs); if (CFG.demo.seq) SEQ = CFG.demo.seq; MDJ.clear() }
+    else if (!RESET_JOBS) {
+      // คืนสถานะใบงานที่ค้างไว้ — ขั้น "ซ่อมเอง" เดินข้ามไปหน้า design-mock (คนละไฟล์)
+      // กลับมาทีไรสคริปต์นี้รันใหม่หมด ถ้าไม่คืนค่า ใบงานจะเด้งกลับ seed ตั้งต้นทุกครั้ง
+      const saved = MDJ.load();
+      if (saved) { JOBS.length = 0; JOBS.push(...saved) }
+    }
     // เดโมรีวิว (05-review-milestones): เปิดด้วย ?seed=review → เติมงานตัวอย่างช่วง "กรย. คัดแยก" + "รออนุมัติปิดงาน"
     // ให้ปุ่ม "เปิดเดโม" ของทุกหมุดมีของให้ดูทันที โดยไม่กระทบสถานะเริ่มปกติของ mock (และ admin CFG.demo.jobs ยัง override ได้)
     if (!CFG.demo.jobs && new URLSearchParams(location.search).get('seed') === 'review') {

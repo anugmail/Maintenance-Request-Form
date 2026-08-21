@@ -8,10 +8,13 @@
 //        node Diagram/check-mermaid.js "Diagram/01-บำรุงรักษาตามวาระ"
 const { chromium } = require('playwright-core');
 const fs = require('fs'), path = require('path');
-const DIR = process.argv[2];
+const DIR = process.argv[2] || 'Diagram/01-บำรุงรักษาตามวาระ';
+// เครื่องที่ใช้มีชื่อแอป Chrome ไม่เหมือนกัน — เลือกตัวที่มีอยู่จริง
+const CHROME = ['/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome',
+                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(f => fs.existsSync(f));
 (async () => {
   const files = fs.readdirSync(DIR).filter(f => f.endsWith('.md'));
-  const b = await chromium.launch({ executablePath:'/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome', headless:true });
+  const b = await chromium.launch({ executablePath: CHROME, headless:true });
   const p = await b.newPage();
   await p.goto('http://127.0.0.1:8123/');
   await p.addScriptTag({ url: 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js' });

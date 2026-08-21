@@ -13,13 +13,13 @@ const allAsks = screens.flatMap(s => s.asks || []);
 
 console.log('\nโครงรวม');
 eq(DEFAULT_SKEL.version, 2, 'version = 2');
-eq(screens.length, 10, 'มี 10 หน้าจอ');
-eq(new Set(screens.map(s => s.id)).size, 10, 'screen id ไม่ซ้ำ');
+eq(screens.length, 11, 'มี 11 หน้าจอ');
+eq(new Set(screens.map(s => s.id)).size, 11, 'screen id ไม่ซ้ำ');
 
 console.log('\nแบ่งกลุ่ม');
 const byGroup = g => screens.filter(s => s.group === g).length;
 eq(byGroup('issue'), 2, 'กลุ่ม issue 2 จอ (ตัดจอเลือกอะไหล่ออก 17 ส.ค. 2569)');
-eq(byGroup('phase'), 6, 'กลุ่ม phase 6 จอ (เฟส 1 แตกเป็น 1a/1b)');
+eq(byGroup('phase'), 7, 'กลุ่ม phase 7 จอ (เฟส 1 แตกเป็น 1a/1b · แผนเดินทางแยกเป็นจอเฟส 2)');
 eq(byGroup('unit'), 2, 'กลุ่ม unit 2 จอ');
 ok(screens.every(s => GROUP_LABELS[s.group]), 'ทุกจอมี group ที่รู้จัก');
 
@@ -42,13 +42,13 @@ const badSrc = allFields.filter(f => f.src && !SAMPLE[f.src]);
 ok(badSrc.length === 0, `ทุก src ที่ระบุมีจริงใน SAMPLE${badSrc.length ? ' — เจอผิด: ' + badSrc.map(f => f.src).join(', ') : ''}`);
 const missLabel = Object.keys(SAMPLE).filter(k => !(k in SRC_LABELS));
 ok(missLabel.length === 0, `ทุก key ใน SAMPLE มีชื่อไทยใน SRC_LABELS${missLabel.length ? ' — ขาด: ' + missLabel.join(', ') : ''}`);
-eq(Object.keys(SAMPLE).length, 47, 'แหล่งข้อมูล 47 ตัว (+t.vendor +t.hireCost)');
+eq(Object.keys(SAMPLE).length, 48, 'แหล่งข้อมูล 48 ตัว (+t.staff — ผู้รับมอบในใบตรวจเฟส 3)');
 
 console.log('\nคำถามที่ต้องเคาะ');
 eq(allAsks.length, 21, 'รวม 21 ข้อ (17 ของเดิม + 4 ของยืนยันรถ)');
 eq(new Set(allAsks.map(a => a.id)).size, 21, 'ask id ไม่ซ้ำ');
 // 1b.1/1b.2 (สายว่าจ้าง) เจ้าของงานเคาะแล้ว 17 ส.ค. 2569 — ที่เหลือยังรอ
-eq(allAsks.filter(a => a.status === 'answered').length, 2, 'เคาะแล้ว 2 ข้อ (1b.1 สายว่าจ้าง · 1b.2 เลือกที่ไหน)');
+eq(allAsks.filter(a => a.status === 'answered').length, 3, 'เคาะแล้ว 3 ข้อ (1b.1 สายว่าจ้าง · 1b.2 เลือกที่ไหน · 3.2 ตรวจรายคัน)');
 ok(allAsks.filter(a => a.status === 'answered').every(a => a.ans !== ''), 'ข้อที่เคาะแล้วต้องมีคำตอบ');
 ok(allAsks.filter(a => a.status !== 'answered').every(a => a.status === 'open' && a.ans === ''), 'ข้อที่เหลือยัง "รอเคาะ" และคำตอบว่าง');
 eq(screens.find(s => s.id === 'ph1a').asks.length, 4, 'จอยืนยันรถมีคำถามใหม่ 4 ข้อ');
@@ -56,7 +56,7 @@ eq(screens.find(s => s.id === 'ph2').asks.length, 5, 'เฟส 2 มีคำ�
 
 console.log('\nสถานะหน้าจริง');
 const real = screens.filter(s => s.real);
-eq(real.length, 6, 'มี 6 จอที่ทำหน้าจริงแล้ว (ออกเลขงาน 2 · ยืนยันรถ 1a · เฟส 1b · พัสดุ · หน่วยงานเจ้าของรถ)');
+eq(real.length, 8, 'มี 8 จอที่ทำหน้าจริงแล้ว (+จอแผนเดินทาง เฟส 2)');
 ok(screens.filter(s => !s.real).every(s => s.sections.flatMap(se => se.fields).every(f => !f.done)),
    'จอที่ยังไม่มีหน้าจริง ทุกฟิลด์ต้อง done:false');
 
