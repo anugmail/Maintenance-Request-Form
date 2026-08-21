@@ -71,9 +71,19 @@ const PLAN = 'plan-seed-2569-002';
   await page.waitForTimeout(400);
   ok(!(await trip1().locator('[data-trip-send]').isDisabled()), 'ครบเกณฑ์ (สถานที่+ช่วง+พนักงาน+งานรายคัน) → ส่งได้');
 
-  // เอางานของรถคันแรกออกให้หมด → ส่งไม่ได้ แล้วติ๊กกลับ
+  // ตัวเลือก "งานที่จะทำ" รายคัน — 3 อย่าง (เพิ่ม "เปลี่ยนตัวกรอง" 21 ส.ค. 2569)
   const row1 = () => trip1().locator('tbody tr').first();
-  for (let i = 0; i < 4 && await row1().locator('.chip.sel').count(); i++) {
+  const jobLabels = await row1().locator('.chip').allTextContents();
+  ok(jobLabels.length === 3 && jobLabels.includes('เปลี่ยนตัวกรอง'),
+    `งานที่จะทำมี 3 ตัวเลือก — ${jobLabels.join(' · ')}`);
+  ok((await row1().locator('.chip.sel').allTextContents()).join('|') === 'เปลี่ยนถ่ายน้ำมันไฮดรอลิก|ตรวจน้ำมันไฮดรอลิก',
+    'ตั้งต้นติ๊ก 2 งานน้ำมัน · เปลี่ยนตัวกรองยังไม่ติ๊ก');
+  await row1().locator('.chip', { hasText: 'เปลี่ยนตัวกรอง' }).click();
+  await page.waitForTimeout(400);
+  ok(await row1().locator('.chip.sel', { hasText: 'เปลี่ยนตัวกรอง' }).count() > 0, 'ติ๊กเปลี่ยนตัวกรองได้');
+
+  // เอางานของรถคันแรกออกให้หมด → ส่งไม่ได้ แล้วติ๊กกลับ
+  for (let i = 0; i < 5 && await row1().locator('.chip.sel').count(); i++) {
     await row1().locator('.chip.sel').first().click();
     await page.waitForTimeout(200);
   }
