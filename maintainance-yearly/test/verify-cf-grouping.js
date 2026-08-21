@@ -7,7 +7,7 @@ const URL = 'http://127.0.0.1:8123/maintainance-yearly/index.html#plan-seed-2569
 
 (async () => {
   const browser = await chromium.launch({
-    executablePath: '/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome',
+    executablePath: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     headless: true,
   });
   const page = await browser.newPage();

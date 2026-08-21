@@ -9,7 +9,7 @@ const PLAN = 'plan-seed-2569-002';
 
 (async () => {
   const browser = await chromium.launch({
-    executablePath: '/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome',
+    executablePath: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     headless: true,
   });
   const ctx = await browser.newContext();
@@ -40,10 +40,10 @@ const PLAN = 'plan-seed-2569-002';
   await page.reload();
   await page.waitForSelector('.wsteps');
 
-  // ไปขั้นที่ 3 ด้วยการคลิกจริง
-  await page.locator('[onclick="goProcSub(3)"]').click();
+  // ไปเฟส 2 (แผนเดินทาง) ด้วยการคลิกจริงบน stepper หลัก — แยกเป็นคนละเฟสแล้ว 21 ส.ค. 2569
+  await page.locator(`[onclick="goPhase('travel')"]`).click();
   await page.waitForTimeout(400);
-  ok(await page.locator('.sect', { hasText: 'ขั้นที่ 3' }).count() > 0, 'เข้าขั้นที่ 3 แผนเดินทางได้');
+  ok(await page.locator('.sect', { hasText: 'ทำแผนเดินทาง' }).count() > 0, 'เข้าเฟส 2 · ขั้นที่ 1 แผนเดินทางได้');
 
   console.log('\nสร้างแผนเดินทาง');
   ok(await page.locator('#btnPrimaryProc').isDisabled(), 'ยังไม่มีแผน → ปุ่มถัดไปปิดอยู่');
@@ -62,19 +62,25 @@ const PLAN = 'plan-seed-2569-002';
   await box1.locator('[data-field="windowFrom"]').fill('2568-11-04');
   await box1.locator('[data-field="windowTo"]').fill('2568-11-08');
   await page.waitForTimeout(200);
-  ok(await box1.locator('[data-trip-send]').isDisabled(), 'ยังไม่ใส่วันนัดรายคัน → ส่งไม่ได้');
+  ok(await box1.locator('[data-trip-send]').isDisabled(), 'ยังไม่ระบุพนักงาน กบค. → ส่งไม่ได้');
 
-  // วันนอกช่วงต้องถูกทัก
-  const firstDate = box1.locator('tbody input[type="date"]').first();
-  await firstDate.fill('2568-12-01');
+  // ⚠️ วันนัดรายคันไม่ได้อยู่จอนี้แล้ว — หน่วยงานเจ้าของรถเลือกเองตอนตอบรับ (17 ส.ค. 2569)
+  // เกณฑ์ส่งใบตอนนี้ = สถานที่ + ช่วงวัน + ผู้ดำเนินการ (พนักงาน กบค./ผู้รับจ้าง) + ทุกคันเลือกงานอย่างน้อย 1
+  const trip1 = () => page.locator('.rzone').first();
+  await trip1().locator('[data-staff-trip]').first().fill('ช่างสมชาย');
   await page.waitForTimeout(400);
-  ok(await page.locator('.sub', { hasText: 'อยู่นอกช่วงที่เสนอ' }).count() > 0, 'ใส่วันนอกช่วง → ขึ้นเตือน');
-  ok(await page.locator('.rzone').first().locator('[data-trip-send]').isDisabled(), 'วันนอกช่วง → ส่งไม่ได้');
+  ok(!(await trip1().locator('[data-trip-send]').isDisabled()), 'ครบเกณฑ์ (สถานที่+ช่วง+พนักงาน+งานรายคัน) → ส่งได้');
 
-  const dates = await page.locator('.rzone').first().locator('tbody input[type="date"]').all();
-  for (const d of dates) { await d.fill('2568-11-05'); await page.waitForTimeout(150); }
-  await page.waitForTimeout(300);
-  ok(!(await page.locator('.rzone').first().locator('[data-trip-send]').isDisabled()), 'ครบแล้ว → ส่งได้');
+  // เอางานของรถคันแรกออกให้หมด → ส่งไม่ได้ แล้วติ๊กกลับ
+  const row1 = () => trip1().locator('tbody tr').first();
+  for (let i = 0; i < 4 && await row1().locator('.chip.sel').count(); i++) {
+    await row1().locator('.chip.sel').first().click();
+    await page.waitForTimeout(200);
+  }
+  ok(await trip1().locator('[data-trip-send]').isDisabled(), 'มีรถที่ยังไม่เลือกงาน → ส่งไม่ได้');
+  await row1().locator('.chip').first().click();
+  await page.waitForTimeout(400);
+  ok(!(await trip1().locator('[data-trip-send]').isDisabled()), 'ติ๊กงานกลับ → ส่งได้อีกครั้ง');
 
   console.log('\nส่งแผนนัด');
   await page.locator('.rzone').first().locator('[data-trip-send]').click();
@@ -88,7 +94,13 @@ const PLAN = 'plan-seed-2569-002';
   // แผนตัวอย่างใบเดิม (001) ก็มีแผนนัดที่ตอบรับไปแล้ว จึงต้องเจาะเฉพาะของแผน 002
   const mine = page.locator(`a[href^="#trip/${PLAN}/"]`);
   const inviteRows = await mine.count();
-  ok(inviteRows === 3, `แผนนัดของแผนนี้รอตอบ ${inviteRows} รายการ (1 ใบ × 3 หน่วยงาน)`);
+  // จำนวนหน่วยงานที่ต้องตอบ = หน่วยงานเจ้าของรถในใบที่ส่งไป (ไม่ hardcode — ข้อมูลรถ/หน่วยงานเปลี่ยนได้)
+  const nDept = await page.evaluate((planId) => {
+    const p = MYD.getPlan(planId);
+    const sent = (p.trips || []).filter(t => t.sentAt);
+    return sent.reduce((n, t) => n + MYD.tripDepts(t, MYD.loadMaster()).length, 0);
+  }, PLAN);
+  ok(inviteRows === nDept, `แผนนัดของแผนนี้รอตอบ ${inviteRows} รายการ (1 ใบ × ${nDept} หน่วยงาน)`);
   ok(await page.locator('a[href^="#trip/"]').count() > inviteRows, 'รายการรวมมีของแผนอื่นด้วย (ที่ตอบรับไปแล้ว)');
 
   // ปฏิเสธของหน่วยงานแรกในแผนนี้
@@ -106,7 +118,7 @@ const PLAN = 'plan-seed-2569-002';
   console.log('\nกลับฝั่ง กบค. — ใบถูกปฏิเสธต้องแก้แล้วส่งใหม่ได้');
   await page.goto(`${BASE}/index.html#${PLAN}`);
   await page.waitForSelector('.wsteps');
-  await page.locator('[onclick="goProcSub(3)"]').click();
+  await page.locator(`[onclick="goPhase('travel')"]`).click();
   await page.waitForTimeout(400);
   ok(await page.locator('.badge', { hasText: 'ถูกปฏิเสธ' }).count() > 0, 'ใบขึ้นสถานะถูกปฏิเสธ');
   ok(!(await page.locator('.rzone').first().locator('[data-field="location"]').isDisabled()), 'ปลดล็อกให้แก้ได้อีกครั้ง');

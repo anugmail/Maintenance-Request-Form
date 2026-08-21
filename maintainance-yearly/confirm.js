@@ -117,7 +117,7 @@ function renderInviteListCard() {
         <thead><tr><th>หน่วยงาน / แผนเดินทาง</th><th>สถานที่</th><th>ช่วงที่เสนอ</th>
           <th class="num">รถ (คัน)</th><th>สถานะ</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
-        : `<div class="empty">ยังไม่มีแผนนัด — รอ กบค. ส่งแผนเดินทางมาในขั้นที่ 3</div>`}
+        : `<div class="empty">ยังไม่มีแผนนัด — รอ กบค. ส่งแผนเดินทางมาในเฟส 2 · แผนเดินทาง</div>`}
     </div>`;
 }
 

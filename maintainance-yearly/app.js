@@ -1,4 +1,4 @@
-// app.js — รายการแผน + หน้าแผนรายใบ (stepper 5 เฟสปฏิบัติการ)
+// app.js — รายการแผน + หน้าแผนรายใบ (stepper 6 เฟสปฏิบัติการ)
 //
 // ⚠️ โครงเปลี่ยน 8 ส.ค. 2569
 //   - "ออกเลขงาน" แยกไป plan-new.html แล้ว ไม่อยู่ใน stepper นี้
@@ -6,15 +6,18 @@
 //   - เลขงาน (MT-ปี-ไตรมาส-NNN) คือหัวข้อของแผน · stepper เป็นของ "แต่ละแผน"
 //
 // routing: index.html         -> รายการแผน
-//          index.html#<planId> -> เปิดแผนนั้น + stepper 5 เฟส
+//          index.html#<planId> -> เปิดแผนนั้น + stepper 6 เฟส
 // ต้องโหลด common.js + mock-yearly.js ก่อนไฟล์นี้
 
+// ⚠️ แยกเฟส 21 ส.ค. 2569 — "เบิก/จัดหา + แผนเดินทาง" เดิมแตกเป็น 2 เฟส
+//   (เบิก/จัดหา · แผนเดินทาง) เฟส 2-5 เดิมจึงเลื่อนเป็น 3-6
 const PHASES = [
-  { id: 'procurement', no: 1, label: 'เบิก/จัดหา + แผนเดินทาง' },
-  { id: 'inspection',  no: 2, label: 'ตรวจสภาพก่อนซ่อม' },
-  { id: 'maintenance', no: 3, label: 'ดำเนินการบำรุงรักษา' },
-  { id: 'report',      no: 4, label: 'จัดทำรายงาน' },
-  { id: 'cost',        no: 5, label: 'คำนวณต้นทุน' },
+  { id: 'procurement', no: 1, label: 'เบิก/จัดหา' },
+  { id: 'travel',      no: 2, label: 'แผนเดินทาง' },
+  { id: 'inspection',  no: 3, label: 'ตรวจสภาพก่อนซ่อม' },
+  { id: 'maintenance', no: 4, label: 'ดำเนินการบำรุงรักษา' },
+  { id: 'report',      no: 5, label: 'จัดทำรายงาน' },
+  { id: 'cost',        no: 6, label: 'คำนวณต้นทุน' },
 ];
 
 // สถานะแผนเทียบกับปฏิทินปีงบ — แผนทำล่วงหน้า 2 ปี จึงมีช่วง "รอ" และ "รอบทบทวน"
@@ -33,11 +36,19 @@ const state = { sub: 1, travelQ: 'Q1' };
 let PLAN = null;   // แผนที่กำลังเปิดอยู่ (null = อยู่หน้ารายการ)
 
 // ================= PHASE COMPLETION / GUARD (ต่อแผน) =================
-// เฟส 1 จบด้วยการยืนยันแผนเดินทางจริง · เฟส 2-5 ยังไม่ได้ทำหน้าจริง
-// จึงใช้ธง plan.phaseDone[id] ที่ปุ่ม "ถัดไป" ของการ์ดเปล่าเป็นคนติ๊กให้ (ทางลัดของต้นแบบ)
+// เฟส 1 จบด้วยการส่งคำขอเบิกอะไหล่ · เฟส 2 จบด้วยการยืนยันแผนเดินทางจริง
+// เฟส 3-6 ยังไม่ได้ทำหน้าจริงทั้งหมด จึงใช้ธง plan.phaseDone[id] ที่ปุ่ม "ถัดไป"
+// ของการ์ดเปล่าเป็นคนติ๊กให้ (ทางลัดของต้นแบบ)
 function phaseCompleteOf(plan, id) {
   if (!plan) return false;
-  if (id === 'procurement') return plan.travelConfirmed === true;
+  if (id === 'procurement') {
+    // ต้องยืนยันรถครบ (ขั้น 1) ด้วย ไม่ใช่แค่เบิกอะไหล่ (ขั้น 2) — กันเคสข้อมูลเก่า/ทางลัดที่
+    // partsRequisitioned เป็น true ทั้งที่รถยังไม่มีข้อสรุปครบ (เจ้าของงานสั่ง 10 ส.ค. 2569)
+    // travelConfirmed ไว้รองรับแผนเก่าที่ยืนยันแผนเดินทางไปแล้วตั้งแต่ตอนยังเป็นเฟสเดียว
+    return plan.travelConfirmed === true ||
+      (MYD.confirmResolved(plan, plan.selectedVehicleIds || []) && plan.partsRequisitioned === true);
+  }
+  if (id === 'travel') return plan.travelConfirmed === true;
   return !!(plan.phaseDone || {})[id];
 }
 
@@ -69,7 +80,7 @@ function currentPhase() {
 
 // ================= รายการแผน =================
 // ความคืบหน้าของแผน — ถ้าเฟสที่อยู่ทำเสร็จแล้ว ให้บอกว่าพร้อมไปเฟสถัดไป
-// (ตอนนี้มี logic ความสำเร็จเฉพาะเฟส 1 — เฟส 2-5 ยังไม่มีของตัวเอง)
+// (ตอนนี้มี logic ความสำเร็จเฉพาะเฟส 1-2 — เฟส 3-6 ยังไม่มีของตัวเอง)
 function planProgressText(plan) {
   const idx = Math.max(0, PHASES.findIndex(p => p.id === (plan.phase || PHASES[0].id)));
   const cur = PHASES[idx];
@@ -206,8 +217,8 @@ function renderPlaceholder(id) {
   </div>`;
 }
 
-// ================= เฟส 3 · ดำเนินการบำรุงรักษา =================
-// แสดง "งานที่จะทำ" ที่เลือกไว้ตอนทำแผนเดินทาง (ขั้น 3 ของเฟส 1) มาให้ช่างเห็นหน้างาน
+// ================= เฟส 4 · ดำเนินการบำรุงรักษา =================
+// แสดง "งานที่จะทำ" ที่เลือกไว้ตอนทำแผนเดินทาง (ขั้น 1 ของเฟส 2 · แผนเดินทาง) มาให้ช่างเห็นหน้างาน
 // ยังไม่มีการบันทึกผลงานจริง — หน้านี้เป็นตัวส่งต่อข้อมูลอย่างเดียว
 function renderMaintenance() {
   const master = MYD.loadMaster();
@@ -248,12 +259,12 @@ function renderMaintenance() {
     <div class="card">
       <div class="sect">ดำเนินการบำรุงรักษา</div>
       <div class="sub">แสดงเฉพาะรถที่<b>ตรวจสภาพก่อนซ่อมเสร็จแล้ว</b> (รับมอบรถครบ) — งานที่จะทำมาจากที่เลือกไว้
-        ตอนทำแผนเดินทาง (เฟส 1 · ขั้นที่ 3) แก้ได้ที่หน้านั้น</div>
+        ตอนทำแผนเดินทาง (เฟส 2 · ขั้นที่ 1) แก้ได้ที่หน้านั้น</div>
       <div class="sub">พร้อมลงมือ <b>${ids.length}</b> จาก <b>${joined.length}</b> คัน${
         ids.length ? ' · ' + tally.map(x => `${esc(x.label)} <b>${x.n}</b> คัน`).join(' · ') : ''}</div>
       ${waiting ? `<div class="note note-warn"><span class="ms">pending</span>
         <div>อีก <b>${waiting}</b> คันยัง<b>ตรวจสภาพก่อนซ่อมไม่เสร็จ</b> จึงยังไม่ขึ้นที่นี่ —
-          กลับไปเฟส 2 เพื่อตรวจสภาพและลงนามรับมอบให้ครบก่อน</div></div>` : ''}
+          กลับไปเฟส 3 เพื่อตรวจสภาพและลงนามรับมอบให้ครบก่อน</div></div>` : ''}
       <div class="note note-info"><span class="ms">science</span>
         <div>หน้านี้<b>แสดงงานที่ต้องทำอย่างเดียว</b> — การบันทึกผลงานหน้างาน (รูปก่อน/หลัง · อะไหล่ที่ใช้จริง ·
           เลขไมล์/ชม.เครื่อง) ยังไม่ได้ทำในต้นแบบ</div></div>
@@ -261,7 +272,7 @@ function renderMaintenance() {
         <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>งานที่จะทำ</th><th>สถานที่บำรุงรักษา</th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
         : `<div class="empty">${joined.length
-            ? 'ยังไม่มีรถที่ตรวจสภาพก่อนซ่อมเสร็จ — กลับไปเฟส 2 ตรวจสภาพก่อน'
+            ? 'ยังไม่มีรถที่ตรวจสภาพก่อนซ่อมเสร็จ — กลับไปเฟส 3 ตรวจสภาพก่อน'
             : 'ยังไม่มีรถที่ยืนยันเข้าแผน'}</div>`}
       <div class="actions">
         <button class="btn btn-p" id="btnPhaseNext">ถัดไป${nextPhaseLabel('maintenance')}</button>
@@ -447,13 +458,14 @@ function finishPhase(id) {
   PLAN.phaseDone[id] = true;
   MYD.savePlan(PLAN);
   if (next) { goPhase(next.id); toast(`ผ่านเฟส ${PHASES[idx].no} แล้ว — ต่อที่ ${next.label}`); return; }
-  toast('จบแผนแล้ว — ครบทั้ง 5 เฟส');
+  toast(`จบแผนแล้ว — ครบทั้ง ${PHASES.length} เฟส`);
   renderStepper();
   renderPhaseBody();
 }
 
 function renderPhaseBody() {
   if (currentPhase() === 'procurement') { renderProcurement(); return; }
+  if (currentPhase() === 'travel') { renderTravelPhase(); return; }
   if (currentPhase() === 'inspection') { renderInspection(); return; }
   if (currentPhase() === 'maintenance') { renderMaintenance(); return; }
   const id = currentPhase();
@@ -498,23 +510,43 @@ function route() {
 }
 
 // ================================================================
-// ================= PROCUREMENT WIZARD (Phase 2) =================
+// ============ เฟส 1 (เบิก/จัดหา) + เฟส 2 (แผนเดินทาง) wizard ============
 // ================================================================
-// sub-stepper 4 ขั้น (ใช้ state.sub ร่วมกับเฟส 1 — goPhase() รีเซ็ตเป็น 1
-// ทุกครั้งที่เปลี่ยนเฟส) เขียน/อ่านผ่าน PLAN/MYD.savePlan() เช่นกัน
-// เข้าเฟส 2 ครั้งใด ถ้า travelConfirmed แล้ว ข้าม wizard ไปแสดงสรุปยืนยันเลย
+// เดิมเป็น wizard เดียว 4 ขั้นของเฟส "เบิก/จัดหา + แผนเดินทาง" · แยก 21 ส.ค. 2569
+// เป็น 2 เฟสบน stepper บน (เบิก/จัดหา · แผนเดินทาง) แต่ยัง reuse โครง wizard เดิม
+// อยู่ — แค่แบ่ง PROC_STEPS ออกเป็น 2 ชุดตามเฟส (2 ขั้นต่อเฟส) โดยใช้ "master step"
+// (1-4 อิงลำดับเดิม) เป็นตัวคุม logic ร่วม ส่วน state.sub คือขั้นย่อย "ภายในเฟสนั้น" (1-2)
+// goPhase() รีเซ็ต state.sub เป็น 1 ทุกครั้งที่เปลี่ยนเฟส
+// เข้าเฟส "แผนเดินทาง" ครั้งใด ถ้า travelConfirmed แล้ว ข้าม wizard ไปแสดงสรุปยืนยันเลย
 
-const PROC_STEPS = [
+const PROC_STEPS = [        // เฟส 1 · เบิก/จัดหา
   { no: 1, label: 'ยืนยันรถเข้าร่วมแผน' },
   { no: 2, label: 'เบิก/จัดหาอะไหล่' },
-  { no: 3, label: 'แผนเดินทาง' },
-  { no: 4, label: 'ทวน + ยืนยัน' },
+];
+const TRAVEL_STEPS = [      // เฟส 2 · แผนเดินทาง
+  { no: 1, label: 'แผนเดินทาง' },
+  { no: 2, label: 'ทวน + ยืนยัน' },
 ];
 
+// ขั้นย่อยของเฟสปัจจุบัน (2 ขั้นเสมอ ไม่ว่าจะเฟส "เบิก/จัดหา" หรือ "แผนเดินทาง")
+function currentProcSteps() {
+  return currentPhase() === 'travel' ? TRAVEL_STEPS : PROC_STEPS;
+}
+
+// master step 1-4 อิงลำดับเดิม — ใช้คุม logic ที่ใช้ร่วมกันระหว่าง 2 เฟส (validate/render/bind)
+function masterStep(sub) {
+  return currentPhase() === 'travel' ? sub + 2 : sub;
+}
+
 function renderProcurement() {
+  if (!state.sub) state.sub = 1;
+  renderProcWizard(PLAN);
+}
+
+function renderTravelPhase() {
   const plan = PLAN;
   if (plan.travelConfirmed === true) {
-    renderProcurementConfirmed(plan);
+    renderTravelConfirmed(plan);
     return;
   }
   if (!state.sub) state.sub = 1;
@@ -527,12 +559,13 @@ function renderProcurement() {
 // ข้ามเข้าขั้นที่ยังไม่ถึง (เจ้าของงานสั่ง 10 ส.ค. 2569: ต้องยืนยันรถให้ครบก่อนเบิกอะไหล่จริง
 // ปุ่ม "ถัดไป" อย่างเดียวกันได้ไม่พอ เพราะ node บน stepper คลิกข้ามได้ตรงๆ)
 function goProcSub(n) {
-  if (n < 1 || n > PROC_STEPS.length) return;
+  const steps = currentProcSteps();
+  if (n < 1 || n > steps.length) return;
   if (n > state.sub) {
     const plan = PLAN;
     for (let i = 1; i < n; i++) {
       if (!validateProcSub(plan, i)) {
-        toast(`ทำขั้น "${PROC_STEPS[i - 1].label}" ให้เสร็จก่อน ถึงจะไปขั้นถัดไปได้`);
+        toast(`ทำขั้น "${steps[i - 1].label}" ให้เสร็จก่อน ถึงจะไปขั้นถัดไปได้`);
         return;
       }
     }
@@ -545,7 +578,7 @@ function goProcSub(n) {
 function nextProcSub() {
   const plan = PLAN;
   if (!validateProcSub(plan, state.sub)) return;
-  if (state.sub >= PROC_STEPS.length) return;
+  if (state.sub >= currentProcSteps().length) return;
   goProcSub(state.sub + 1);
 }
 
@@ -555,14 +588,15 @@ function backProcSub() {
 }
 
 function validateProcSub(plan, sub) {
-  if (sub === 1) return MYD.confirmResolved(plan, plan.selectedVehicleIds || []);
-  if (sub === 2) return !!plan.partsRequisitioned;
+  const m = masterStep(sub);
+  if (m === 1) return MYD.confirmResolved(plan, plan.selectedVehicleIds || []);
+  if (m === 2) return !!plan.partsRequisitioned;
   // ขั้นแผนเดินทางจบเมื่อ: จัดรถเข้าใบครบทุกคัน + ทุกใบได้รับการตอบรับจากหน่วยงาน
-  if (sub === 3) return MYD.travelPlanReady(plan, MYD.loadMaster());
+  if (m === 3) return MYD.travelPlanReady(plan, MYD.loadMaster());
   return true;
 }
 
-// เหตุผลที่ขั้น 3 ยังไปต่อไม่ได้ — คืนเป็นรายการข้อความ (ว่าง = ผ่าน)
+// เหตุผลที่ขั้นแผนเดินทางยังไปต่อไม่ได้ — คืนเป็นรายการข้อความ (ว่าง = ผ่าน)
 // ต้องสะท้อน MYD.travelPlanReady() ให้ตรงเป๊ะ ไม่งั้นจะบอกผู้ใช้ผิด
 function travelBlockers(plan) {
   const master = MYD.loadMaster();
@@ -595,12 +629,15 @@ function updateProcPrimaryEnabled(plan) {
 
 // ----- wizard shell -----
 function renderProcWizard(plan) {
-  const primaryLabel = state.sub === PROC_STEPS.length ? 'ยืนยันแผนเดินทาง' : 'ถัดไป';
+  const steps = currentProcSteps();
+  const onTravel = currentPhase() === 'travel';
+  const isLastStep = state.sub === steps.length;
+  const primaryLabel = isLastStep ? (onTravel ? 'ยืนยันแผนเดินทาง' : 'ไปเฟสถัดไป') : 'ถัดไป';
   const primaryDisabled = !validateProcSub(plan, state.sub);
 
   $('phase').innerHTML = `
     <div class="card">
-      <div class="wsteps sm">${PROC_STEPS.map(s => {
+      <div class="wsteps sm">${steps.map(s => {
         const active = s.no === state.sub;
         const passed = s.no < state.sub;
         const cls = ['wstep'];
@@ -613,7 +650,7 @@ function renderProcWizard(plan) {
         </div>`;
       }).join('')}</div>
       <div id="procBody">${renderProcSubBody(plan)}</div>
-      ${primaryDisabled && state.sub === 3 ? (() => {
+      ${primaryDisabled && masterStep(state.sub) === 3 ? (() => {
         const bl = travelBlockers(plan);
         return bl.length ? `<div class="note note-warn"><span class="ms">error</span>
           <div><b>ยังไปขั้นถัดไปไม่ได้</b> — ต้องเคลียร์ ${bl.length} เรื่องนี้ก่อน
@@ -629,23 +666,27 @@ function renderProcWizard(plan) {
 
   $('btnBackProc').addEventListener('click', backProcSub);
   $('btnPrimaryProc').addEventListener('click', () => {
-    if (state.sub === PROC_STEPS.length) confirmTravelPlan(plan);
-    else nextProcSub();
+    if (!isLastStep) { nextProcSub(); return; }
+    if (onTravel) { confirmTravelPlan(plan); return; }
+    const nx = nextPhaseOf('procurement');
+    if (nx) goPhase(nx.id);
   });
 }
 
 function renderProcSubBody(plan) {
-  if (state.sub === 1) return renderProcStepConfirm(plan);
-  if (state.sub === 2) return renderProcStep1(plan);      // เบิก/จัดหาอะไหล่
-  if (state.sub === 3) return renderProcStep2(plan);      // แผนเดินทาง
-  return renderProcStep3(plan);                            // ทวน + ยืนยัน
+  const m = masterStep(state.sub);
+  if (m === 1) return renderProcStepConfirm(plan);
+  if (m === 2) return renderProcStep1(plan);      // เบิก/จัดหาอะไหล่
+  if (m === 3) return renderProcStep2(plan);      // แผนเดินทาง
+  return renderProcStep3(plan);                    // ทวน + ยืนยัน
 }
 
 function bindProcSubBody(plan) {
-  if (state.sub === 1) bindProcStepConfirm(plan);
-  else if (state.sub === 2) bindProcStep1(plan);
-  else if (state.sub === 3) bindProcStep2(plan);
-  // ขั้น 4 อ่านอย่างเดียว ไม่มี event ผูก (ปุ่มยืนยันอยู่ที่ actions footer)
+  const m = masterStep(state.sub);
+  if (m === 1) bindProcStepConfirm(plan);
+  else if (m === 2) bindProcStep1(plan);
+  else if (m === 3) bindProcStep2(plan);
+  // ขั้นทวน+ยืนยัน อ่านอย่างเดียว ไม่มี event ผูก (ปุ่มยืนยันอยู่ที่ actions footer)
 }
 
 // ----- ขั้น 1 (ชื่อฟังก์ชันค้างจากตอนมี 3 ขั้น เนื้อหาจริงคือเบิกอะไหล่ เรียกเป็นขั้นที่ 2) -----
@@ -907,7 +948,7 @@ function openVerdictRow(plan, vehicleId) {
   });
 }
 
-// ----- ขั้น 3: ทำแผนเดินทาง -----
+// ----- เฟส 2 (แผนเดินทาง) ขั้น 1: ทำแผนเดินทาง -----
 const TRIP_STATUS_BADGE = {
   draft:    { cls: 'b-low',   text: 'ยังไม่ส่ง' },
   waiting:  { cls: 'b-low',   text: 'รอตอบรับ' },
@@ -927,6 +968,12 @@ function perDiemNote(trip) {
   const perDay = MYD.tripPerDiemPerDay(trip), days = MYD.tripDays(trip);
   if (!days) return 'ยังไม่ได้เลือกช่วงวัน — ระบุจากวันที่/ถึงวันที่ก่อน';
   return `${perDay.toLocaleString('th-TH')} บาท/วัน (รวมทุกคน) × ${days} วัน`;
+}
+
+// เกณฑ์ "ส่งใบเดินทางได้" — ที่เดียวจบ เพราะใช้ทั้งตอน render และตอนอัปเดตสดระหว่างพิมพ์
+// (เคยเขียนแยกกันแล้วหลุด: ตอนพิมพ์เช็คแค่ tripReadyToSend ปุ่มเลยเปิดทั้งที่ยังไม่ได้ระบุพนักงาน)
+function tripSendable(trip) {
+  return MYD.tripReadyToSend(trip) && MYD.tripDoerReady(trip) && !MYD.tripJobsIncomplete(trip).length;
 }
 
 function renderProcStep2(plan) {
@@ -1110,7 +1157,7 @@ function renderProcStep2(plan) {
             ${locked
               ? `<button class="btn btn-g" data-trip-del="${esc(trip.id)}" disabled>ส่งแล้ว แก้ไม่ได้</button>`
               : `<button class="btn btn-g" data-trip-del="${esc(trip.id)}">ลบแผนนี้</button>
-                 <button class="btn btn-o" data-trip-send="${esc(trip.id)}" ${MYD.tripReadyToSend(trip) && MYD.tripDoerReady(trip) && !MYD.tripJobsIncomplete(trip).length ? '' : 'disabled'}>
+                 <button class="btn btn-o" data-trip-send="${esc(trip.id)}" ${tripSendable(trip) ? '' : 'disabled'}>
                    <span class="ms">send</span> ${st === 'rejected' ? 'แก้แล้วส่งใหม่' : 'ส่งแผนนัดให้หน่วยงาน'}</button>`}
           </div>
         </div>
@@ -1118,7 +1165,7 @@ function renderProcStep2(plan) {
   }).join('');
 
   return `
-    <div class="sect">ขั้นที่ 3: ทำแผนเดินทาง</div>
+    <div class="sect">ขั้นที่ 1: ทำแผนเดินทาง</div>
     <div class="f" style="margin-bottom:14px">
       <label>เลือกไตรมาสที่จะทำแผนเดินทาง</label>
       <div class="seg">${qSeg}</div>
@@ -1170,6 +1217,13 @@ function bindProcStep2(plan) {
     });
   });
 
+  // ปุ่ม "ส่งแผนนัด" ของใบนั้น — ต้องใช้เกณฑ์เดียวกับตอน render (tripSendable)
+  // ไม่งั้นปุ่มจะเพี้ยนระหว่างพิมพ์: เคยเปิดทั้งที่ยังไม่ระบุพนักงาน และเคยไม่ยอมเปิดหลังพิมพ์ชื่อพนักงาน
+  const syncSendBtn = t => {
+    const btn = document.querySelector(`[data-trip-send="${t.id}"]`);
+    if (btn) btn.disabled = !tripSendable(t);
+  };
+
   // ชื่อพนักงาน กบค. — บันทึกทันทีแต่ไม่ re-render (ไม่งั้นโฟกัสหลุดระหว่างพิมพ์)
   document.querySelectorAll('[data-staff-trip]').forEach(el => {
     el.addEventListener('input', e => {
@@ -1178,6 +1232,7 @@ function bindProcStep2(plan) {
       t.staff = t.staff || [];
       t.staff[Number(el.dataset.staffI)] = e.target.value;
       MYD.savePlan(plan);
+      syncSendBtn(t);   // มีชื่อพนักงานแล้ว = ผู้ดำเนินการครบ → ปุ่มส่งต้องเปิดทันที
     });
   });
   // อัปเดตยอดเงินของใบสด ๆ โดยไม่ re-render (กันโฟกัสหลุดตอนพิมพ์)
@@ -1269,8 +1324,7 @@ function bindProcStep2(plan) {
       if (['windowFrom', 'windowTo', 'lodging', 'travel'].includes(f)) refreshTripMoney(t);
       MYD.savePlan(plan);
       updateProcPrimaryEnabled(plan);
-      const btn = document.querySelector(`[data-trip-send="${t.id}"]`);
-      if (btn) btn.disabled = !MYD.tripReadyToSend(t);
+      syncSendBtn(t);
     });
   });
 
@@ -1338,7 +1392,7 @@ function bindProcStep2(plan) {
   });
 }
 
-// ----- ขั้น 4: ทวน + ยืนยัน -----
+// ----- เฟส 2 (แผนเดินทาง) ขั้น 2: ทวน + ยืนยัน -----
 function renderProcStep3(plan) {
   const master3 = MYD.loadMaster();
   const trips = MYD.ensureTrips(plan);
@@ -1378,7 +1432,7 @@ function renderProcStep3(plan) {
   }).join('');
 
   return `
-    <div class="sect">ขั้นที่ 4: ทวนแผนเดินทาง + ยืนยัน</div>
+    <div class="sect">ขั้นที่ 2: ทวนแผนเดินทาง + ยืนยัน</div>
     <div class="sub">แผนเดินทาง <b>${trips.length}</b> ใบ · รวมค่าใช้จ่ายทั้งหมด <b>${grand.toLocaleString('th-TH')}</b> บาท</div>
     ${tripBlocks || `<div class="empty">ยังไม่มีแผนเดินทาง</div>`}
     ${outRows ? `
@@ -1392,12 +1446,12 @@ function confirmTravelPlan(plan) {
   plan.travelConfirmed = true;
   MYD.savePlan(plan);
   toast('ยืนยันแผนเดินทางสำเร็จ');
-  renderStepper(); // เฟส 2 กลายเป็น passed, เฟส 3 ปลดล็อก
-  renderProcurement();
+  renderStepper(); // เฟส 2 (แผนเดินทาง) กลายเป็น passed, เฟส 3 (ตรวจสภาพก่อนซ่อม) ปลดล็อก
+  renderTravelPhase();
 }
 
 // ----- สรุปหลังยืนยัน (แทนที่ wizard เมื่อ travelConfirmed===true) -----
-function renderProcurementConfirmed(plan) {
+function renderTravelConfirmed(plan) {
   const selectedVehicles = MYD.loadMaster().vehicles.filter(v => (plan.selectedVehicleIds || []).includes(v.id));
   const joiningCount = selectedVehicles.filter(v => MYD.isVehicleIn(plan, v.id)).length;
   const master = MYD.loadMaster();
@@ -1418,7 +1472,7 @@ function renderProcurementConfirmed(plan) {
 
   $('phase').innerHTML = `
     <div class="card">
-      <div class="sect">เบิก/จัดหา + แผนเดินทาง — ยืนยันแล้ว</div>
+      <div class="sect">แผนเดินทาง — ยืนยันแล้ว</div>
       <span class="badge b-ok" style="font-size:var(--fs-body);padding:6px 16px">แผนเดินทางยืนยันแล้ว</span>
       <div class="sub" style="margin-top:12px">แผนเดินทาง <b>${trips.length}</b> ใบ
         · รวมค่าใช้จ่าย <b>${grand.toLocaleString('th-TH')}</b> บาท · ทุกใบได้รับการตอบรับจากหน่วยงานแล้ว</div>
@@ -1439,7 +1493,7 @@ function renderProcurementConfirmed(plan) {
     </div>`;
 
   $('btnPeaLife').addEventListener('click', () => toast('สร้างใบนำจ่าย (PEA Life) สำเร็จ (mock)'));
-  $('btnGoNextPhaseProc').addEventListener('click', () => { const nx = nextPhaseOf('procurement'); if (nx) goPhase(nx.id); });
+  $('btnGoNextPhaseProc').addEventListener('click', () => { const nx = nextPhaseOf('travel'); if (nx) goPhase(nx.id); });
 }
 
 // ================= INIT =================

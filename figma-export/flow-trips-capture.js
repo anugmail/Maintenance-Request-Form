@@ -89,9 +89,9 @@ async function main() {
   await page.waitForSelector('.wsteps');
 
   // ---- ฝั่ง กบค. ----
-  await page.locator('[onclick="goProcSub(3)"]').click();
+  await page.locator(`[onclick="goPhase('travel')"]`).click();
   await page.waitForSelector('#btnAddTrip');
-  await capture(page, 'ขั้น3-ว่าง', 'ขั้นที่ 3 ทำแผนเดินทาง — ยังไม่มีใบ',
+  await capture(page, 'ขั้น3-ว่าง', 'เฟส 2 · ขั้นที่ 1 ทำแผนเดินทาง — ยังไม่มีใบ',
     'ปุ่ม "สร้างแผนเดินทางใหม่" / "แยกอัตโนมัติตามจังหวัด" · ปุ่มถัดไปยังปิด');
 
   await page.locator('#btnAutoTrips').click();
@@ -147,7 +147,7 @@ async function main() {
   // ---- กลับฝั่ง กบค. — ทุกใบตอบรับแล้ว ----
   await page.goto(BASE + '/maintainance-yearly/index.html#' + PLAN, { waitUntil: 'networkidle' });
   await page.waitForSelector('.wsteps');
-  await page.locator('[onclick="goProcSub(3)"]').click();
+  await page.locator(`[onclick="goPhase('travel')"]`).click();
   await page.waitForFunction(() => document.querySelectorAll('.rzone').length > 0);
   const accepted = await page.locator('.rzone .badge', { hasText: 'ตอบรับแล้ว' }).count();
   if (accepted < 2) errors.push('คาดทุกใบตอบรับแล้ว แต่เจอ badge ตอบรับแล้วแค่ ' + accepted);
