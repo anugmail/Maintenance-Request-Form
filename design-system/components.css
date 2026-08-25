@@ -14,6 +14,13 @@ body{font-family:var(--font);background:#fff;color:#000;font-size:var(--fs-body)
 .ms{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;display:inline-block;line-height:1;vertical-align:middle;font-size:22px;-webkit-font-smoothing:antialiased}
 .hidden{display:none!important}
 .empty{color:var(--gray-400);font-size:var(--fs-sm);text-align:center;padding:14px 0}
+/* ดันสิ่งที่ตามมาไปชิดขวาสุดของแถว flex เดียวกัน (เช่น ปุ่ม action ในแถวหัวหน้า) — แทน style="margin-left:auto" ที่เขียนซ้ำ */
+.ml-auto{margin-left:auto}
+/* ระยะห่างท้ายอิสระ 16px — ใช้ตอน .tabs ตามด้วยบล็อกอื่นที่ไม่ใช่ .tabpanel (เช่นหน้ารายละเอียดเหตุการณ์ที่มี
+   .tabs คั่นก่อนถึง .note/.wsteps) ไม่เพิ่ม margin-bottom ให้ .tabs ตรงๆ เพราะที่ใช้อยู่แล้วใน
+   mock/Maintenance-Request-Form.html (vehInfoTabs) มี .tabpanel ที่กำกับ margin-top:16px รับช่วงต่ออยู่แล้ว
+   เพิ่มที่ .tabs เองจะกลายเป็นเว้นซ้อน 32px ที่จุดนั้น */
+.mb-4{margin-bottom:var(--space-4)}
 
 /* ---------- App shell ---------- */
 .app{max-width:1120px;margin:0 auto;min-height:100dvh;background:var(--gray-50);box-shadow:var(--shadow-app);display:flex;flex-direction:column}
@@ -38,8 +45,10 @@ header h1{font-size:var(--fs-h1);font-weight:600;flex:1}
 /* ---------- Form ---------- */
 label.fl{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--gray-700);margin:12px 0 6px}
 input[type=text],input[type=number],input[type=tel],input[type=email],input[type=date],input[type=search],textarea,select{width:100%;border:1px solid var(--gray-300);border-radius:var(--r-sm);padding:10px 14px;font:inherit;color:var(--gray-900);background:#fff;box-shadow:var(--shadow-xs)}
-/* focus ตามไลบรารี (Input field State=Focused): ขอบ brand-500 + วงแหวน */
-input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow:var(--shadow-xs),0 0 0 4px var(--focus-ring)}
+/* focus ตามไลบรารี (Input field State=Focused): ขอบ brand-500 + วงแหวน
+   ยกเว้น radio — เดิม input:focus ทั่วไปให้วงแหวนสี่เหลี่ยมทับปุ่มวงกลม ดูเพี้ยน (เจอจริงกับ radio ในตารางตรวจสภาพ)
+   checkbox ไม่ยกเว้น เพราะเป็นสี่เหลี่ยมมุมโค้งอยู่แล้ว วงแหวนสี่เหลี่ยมตรงทรงพอดี ไม่มีปัญหาแบบ radio */
+input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow:var(--shadow-xs),0 0 0 4px var(--focus-ring)}
 /* ช่องค้นหาของ "ลิสต์" (คนละตัวกับ .in ที่เป็นช่องมีไอคอนในฟอร์ม)
    ✅ วัดจาก vmsplus-dev (.input-group-search): กล่องสูง 40 · ขอบ 1px gray-300 · r8 · pad 0/12 · gap 8
    ของเดิมเป็นแค่ wrapper relative แล้ววางไอคอนลอยทับ input — ไม่มีกล่องจริง */
@@ -122,6 +131,8 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 .btn-o:hover{background:var(--brand-50);color:var(--brand-800);border-color:var(--brand-800)}
 .btn-g{background:var(--gray-100);color:var(--gray-600);border-color:transparent}
 .btn-g:hover{background:var(--gray-200);color:var(--gray-700)}
+/* ปุ่มเต็มความกว้างของตัวครอบ — ใช้เมื่อปุ่มต้องกว้างเท่าฟิลด์ด้านบน (เช่น "เซ็นลงนาม" ใต้ select เลือกชื่อ) */
+.btn-block{width:100%}
 
 /* ---- State: Focused ---- */
 .btn:focus-visible{outline:none;box-shadow:0 0 0 4px var(--focus-ring)}
@@ -335,10 +346,15 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 .crumbs .ms{font-size:20px;color:var(--gray-500)}
 .crumbs .sep{width:6px;height:6px;border-right:1px solid var(--gray-300);border-bottom:1px solid var(--gray-300);transform:rotate(-45deg);display:inline-block;flex:0 0 auto}
 .crumbs .cur{color:var(--primary-600)}
+/* ลิงก์ระดับกลางใน breadcrumb (ไม่ใช่ home ไม่ใช่ .cur) — สีดำเหมือนข้อความรอบข้าง ไม่ใช่สีลิงก์ browser
+   เดิมเขียน style="color:inherit;text-decoration:none" ซ้ำทุกไฟล์ที่มี breadcrumb กดได้ (parts/appointment/inspection) */
+.crumbs a{color:inherit;text-decoration:none}
 /* ของจริง .page-title-label = 32/600/lh48 สีดำ (ของเดิม 28/700 gray-900) */
 .page-title{font-size:32px;font-weight:600;line-height:48px;color:#000;margin-bottom:20px}
 .page-title-row{display:flex;align-items:center;gap:4px;margin-bottom:20px}
 .page-title-row .page-title{margin-bottom:0}
+/* badge ต่อท้ายชื่อหน้า (เช่น "เร่งด่วน") เว้น 10px จากชื่อ — เดิมเขียน style="margin-left:10px" ซ้ำทุกจุดที่ใช้ */
+.page-title-row .badge{margin-left:10px}
 .page-back{all:unset;flex:0 0 auto;color:var(--gray-400);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:color .18s ease}
 .page-back .ms{font-size:28px}
 .page-back:hover{color:var(--gray-600)}
@@ -384,10 +400,24 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 .f .help{font-size:var(--fs-text-sm);color:var(--error-600);margin-top:6px}
 
 /* ---------- Radio ----------
-   ตามไลบรารี Radio button (Size=md): ปุ่ม 20px · ข้อความ 16/500 gray-700 · gap 12 */
+   ตามไลบรารี Radio button (Size=md): ปุ่ม 20px · ข้อความ 16/500 gray-700 · gap 12
+   วาดเองด้วย appearance:none แทนปล่อยให้ browser วาด native — ลองแล้วว่า native radio (accent-color เฉยๆ)
+   ไม่ยอมให้ box-shadow/outline โค้งตาม border-radius ของกล่อง (ทดสอบจริงใน Chromium) วงแหวน focus เลย
+   ออกมาเป็นสี่เหลี่ยมทับปุ่มกลม — appearance:none คุมกล่องเองได้เต็มที่ ตกกลมได้แล้ว หน้าตาติ๊กยังเหมือนเดิม */
 .rads{display:flex;gap:22px;align-items:center;min-height:44px;flex-wrap:wrap}
 .rads label{display:flex;gap:12px;align-items:center;font-size:var(--fs-text-md);color:var(--gray-700);cursor:pointer;font-weight:500;margin:0}
-input[type=radio]{accent-color:var(--primary-600);width:20px;height:20px;cursor:pointer}
+input[type=radio]{
+  appearance:none;-webkit-appearance:none;margin:0;
+  width:20px;height:20px;border-radius:var(--r-pill);
+  border:1.5px solid var(--gray-300);background:#fff;
+  display:inline-grid;place-content:center;
+  cursor:pointer;flex:0 0 auto;
+}
+input[type=radio]::before{content:"";width:10px;height:10px;border-radius:var(--r-pill);background:var(--primary-600);transform:scale(0);transition:transform .1s ease-in-out}
+input[type=radio]:checked{border-color:var(--primary-600)}
+input[type=radio]:checked::before{transform:scale(1)}
+input[type=radio]:hover{border-color:var(--primary-600)}
+input[type=radio]:focus{outline:none;box-shadow:0 0 0 4px var(--focus-ring)}
 
 /* ---------- ช่องจำนวน − n + ---------- */
 .numfld{display:flex;align-items:center;border:1px solid var(--gray-300);border-radius:var(--rounded-md);height:44px;background:#fff;box-shadow:var(--shadow-xs)}
@@ -579,6 +609,15 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
    ต้องคู่กับ title="ค่าเต็ม" เสมอ ไม่งั้นค่าที่ถูกตัดจะอ่านไม่ได้เลย */
 .tbl .cell-clip{display:block;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+/* ฟิลด์แทรกกลางบรรทัดในเซลล์ตารางรายการตรวจสภาพ — เกิดจากแถว "แบตเตอรี่ยี่ห้อ ___ จำนวน ___ ลูก"
+   ในใบรับรถ (kbk-self-repair-inspection.html) ที่ต้องมีช่องกรอกสั้นๆ แทรกอยู่กลางข้อความรายการ
+   .tbl-row-label = ช่องกรอกชื่อรายการเต็มบรรทัด ใช้ตอนกด "เพิ่มรายการ" เอง (ระบบไม่มีชื่อล่วงหน้าให้) */
+/* ต้องเป็น input.classname (ไม่ใช่ .classname เฉยๆ) เพื่อชนะ specificity ของ base rule
+   input[type=text]{width:100%} ที่บรรทัดต้นไฟล์ — .classname เดี่ยวๆ specificity ต่ำกว่า element+attribute แพ้เงียบๆ */
+input.tbl-inline-sm{width:64px;display:inline-block}
+input.tbl-inline-md{width:120px;display:inline-block}
+input.tbl-row-label{width:80%;display:inline-block}
+
 /* แผงตัวกรอง — กางจากปุ่ม "ตัวกรอง" บนแถบเครื่องมือ
    ⚠️ ภาพหน้าจริงมีแต่ปุ่ม (ปิดอยู่) ไม่เห็นตอนกาง ⇒ ตัวแผงประกอบจาก .filter-field + token ที่มีอยู่ */
 .filter-panel{display:none;gap:var(--space-4);flex-wrap:wrap;align-items:flex-end;
@@ -647,6 +686,10 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
 .stack > *{margin-bottom:0}
 .stack.tight{gap:var(--space-2)}
 .stack.loose{gap:var(--space-5)}
+/* .stack เป็น flex column → align-items เริ่มต้นของ browser คือ stretch ⇒ ปุ่มที่เป็นลูกตรงของ .stack
+   (เช่นปุ่ม "เพิ่มรายการ" ใต้ตารางตรวจสภาพ) จะถูกยืดเต็มความกว้างโดยไม่ตั้งใจ ทั้งที่ไม่ได้ใส่ .btn-block
+   ปุ่มควรหุบตามเนื้อหาเสมอเว้นแต่ตั้งใจสั่ง .btn-block เอง จึงบังคับ align-self ที่ .btn เดี่ยวๆ ไว้ที่นี่ */
+.stack > .btn{align-self:flex-start}
 
 /* ---------- .gallery : แกลเลอรีพรีวิวหน้าจอ ----------
    แสดงหน้าจริงย่อส่วนด้วย <iframe> + pointer-events:none = เห็น UI แต่กดไม่ได้
