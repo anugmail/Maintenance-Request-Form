@@ -237,19 +237,24 @@ function renderMaintenance() {
     }).length,
   }));
 
+  let doneJobs = 0, totalJobs = 0;
   const rows = ids.map(id => {
     const v = byId.get(id);
     if (!v) return '';
     const t = MYD.tripOfVehicle(PLAN, id);
-    const jobs = t ? MYD.tripJobsOf(t, id) : null;
-    // ใช้ badge ไม่ใช่ chip.sel — chip สื่อว่ากดเลือกได้ แต่หน้านี้อ่านอย่างเดียว (แก้ที่หน้าแผนเดินทาง)
-    const chips = jobs
-      ? MYD.TRIP_JOBS.filter(j => jobs[j.id]).map(j => `<span class="badge b-brand">${esc(j.label)}</span>`).join(' ')
-      : '';
+    const need = t ? MYD.maintJobsFor(t, id) : [];
+    totalJobs += need.length;
+    // ติ๊กได้จริง — ทำงานเสร็จข้อไหนกดติ๊กไว้ที่นี่ (แก้ "งานที่ต้องทำ" เองต้องไปหน้าแผนเดินทาง)
+    const chk = need.length ? `<div class="chk" style="margin:0">${need.map(j => {
+      const on = MYD.maintJobDone(PLAN, id, j.id);
+      if (on) doneJobs++;
+      return `<label><input type="checkbox" ${on ? 'checked' : ''}
+        data-maint-v="${esc(id)}" data-maint-j="${esc(j.id)}">${esc(j.label)}</label>`;
+    }).join('')}</div>` : '<span class="badge b-low">ยังไม่เลือกงาน</span>';
     return `<tr>
       <td><b>${esc(v.plate)}</b><div class="cell-sub">${esc(v.brand)}</div></td>
       <td>${esc(v.ownerDept)}<div class="cell-sub">${esc(MYD.quarterLabel(MYD.bucketOf(PLAN, id)) || '—')}</div></td>
-      <td>${chips || '<span class="badge b-low">ยังไม่เลือกงาน</span>'}</td>
+      <td>${chk}</td>
       <td>${t ? esc(MYD.tripPlaceOf(t, v)) : '—'}
           <div class="cell-sub">${t ? 'ใบ: ' + esc(t.name || 'แผนเดินทาง') : 'ยังไม่อยู่ในใบเดินทาง'}</div></td>
     </tr>`;
@@ -258,15 +263,16 @@ function renderMaintenance() {
   $('phase').innerHTML = `
     <div class="card">
       <div class="sect">ดำเนินการบำรุงรักษา</div>
-      <div class="sub">แสดงเฉพาะรถที่<b>ตรวจสภาพก่อนซ่อมเสร็จแล้ว</b> (รับมอบรถครบ) — งานที่จะทำมาจากที่เลือกไว้
-        ตอนทำแผนเดินทาง (เฟส 2 · ขั้นที่ 1) แก้ได้ที่หน้านั้น</div>
+      <div class="sub">แสดงเฉพาะรถที่<b>ตรวจสภาพก่อนซ่อมเสร็จแล้ว</b> (รับมอบรถครบ) — งานที่ต้องทำมาจากที่เลือกไว้
+        ตอนทำแผนเดินทาง (เฟส 2 · ขั้นที่ 1) แก้รายการงานได้ที่หน้านั้น — ที่นี่ติ๊กเมื่อทำเสร็จแล้ว</div>
       <div class="sub">พร้อมลงมือ <b>${ids.length}</b> จาก <b>${joined.length}</b> คัน${
         ids.length ? ' · ' + tally.map(x => `${esc(x.label)} <b>${x.n}</b> คัน`).join(' · ') : ''}</div>
+      ${totalJobs ? `<div class="sub">ติ๊กเสร็จแล้ว <b id="maintDoneCount">${doneJobs}</b> จาก <b>${totalJobs}</b> งาน</div>` : ''}
       ${waiting ? `<div class="note note-warn"><span class="ms">pending</span>
         <div>อีก <b>${waiting}</b> คันยัง<b>ตรวจสภาพก่อนซ่อมไม่เสร็จ</b> จึงยังไม่ขึ้นที่นี่ —
           กลับไปเฟส 3 เพื่อตรวจสภาพและลงนามรับมอบให้ครบก่อน</div></div>` : ''}
       <div class="note note-info"><span class="ms">science</span>
-        <div>หน้านี้<b>แสดงงานที่ต้องทำอย่างเดียว</b> — การบันทึกผลงานหน้างาน (รูปก่อน/หลัง · อะไหล่ที่ใช้จริง ·
+        <div>หน้านี้ให้<b>ติ๊กงานที่ทำเสร็จ</b>ได้ — ส่วนการบันทึกผลงานหน้างานแบบละเอียด (รูปก่อน/หลัง · อะไหล่ที่ใช้จริง ·
           เลขไมล์/ชม.เครื่อง) ยังไม่ได้ทำในต้นแบบ</div></div>
       ${ids.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>งานที่จะทำ</th><th>สถานที่บำรุงรักษา</th></tr></thead>
@@ -278,6 +284,15 @@ function renderMaintenance() {
         <button class="btn btn-p" id="btnPhaseNext">ถัดไป${nextPhaseLabel('maintenance')}</button>
       </div>
     </div>`;
+
+  // ติ๊ก/ยกเลิกติ๊กงาน — บันทึกทันทีแบบไม่ re-render ทั้งหน้า (กันจอกระโดดเหมือนใบตรวจสภาพ)
+  // แค่ขยับตัวนับ "ติ๊กเสร็จแล้ว X จาก Y งาน" ที่หัวหน้าให้ตรงของจริง
+  const doneCountEl = $('maintDoneCount');
+  document.querySelectorAll('[data-maint-v]').forEach(el => el.addEventListener('change', e => {
+    MYD.setMaintJobDone(PLAN, el.dataset.maintV, el.dataset.maintJ, e.target.checked);
+    MYD.savePlan(PLAN);
+    if (doneCountEl) doneCountEl.textContent = document.querySelectorAll('[data-maint-v]:checked').length;
+  }));
 
   $('btnPhaseNext')?.addEventListener('click', () => finishPhase('maintenance'));
 }
