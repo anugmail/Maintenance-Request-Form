@@ -932,6 +932,19 @@ const MYD = {
     return this.linesFor([vehicle], master, plan.itemAdj).filter(l => l.perVehicle > 0);
   },
 
+  // ================= เฟส 6 · คำนวณต้นทุน — ค่าใช้จ่ายต่อคัน =================
+  // แยกจาก trip.perDiem/lodging/travel (กรอกครอบทั้งใบเดินทางตอนเฟส 2) — อันนี้คือยอดจัดสรรจริงต่อคันตอนปิดงบ
+  // plan.vehicleCost = { [vehicleId]: { perDiem, lodging, travel } } · 25 ส.ค. 2569
+  vehicleCostOf(plan, vehicleId) {
+    return (plan.vehicleCost || {})[vehicleId] || { perDiem: 0, lodging: 0, travel: 0 };
+  },
+
+  setVehicleCost(plan, vehicleId, field, value) {
+    plan.vehicleCost = plan.vehicleCost || {};
+    plan.vehicleCost[vehicleId] = plan.vehicleCost[vehicleId] || { perDiem: 0, lodging: 0, travel: 0 };
+    plan.vehicleCost[vehicleId][field] = value;
+  },
+
   // งานที่ต้องทำจริงของคันนี้ (เฉพาะที่ติ๊กไว้ตอนทำแผนเดินทาง) — ใช้นับว่าติ๊กเสร็จไปกี่จากกี่งาน
   maintJobsFor(trip, vehicleId) {
     const jobs = this.tripJobsOf(trip, vehicleId);
