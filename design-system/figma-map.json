@@ -112,17 +112,21 @@
       "props": {
         "Badge#1985:2": false,
         "Actions#1985:4": false,
-        "Divider#1985:5": false
+        "Divider#1985:5": false,
+        "Page": "Dashboard",
+        "Status": "Default",
+        "Breakpoint": "Desktop"
       },
       "when": {
         "hasButton": {
           "Actions#1985:4": true
         }
-      }
+      },
+      "comment": "ต้องตั้ง variant Page/Status ให้ครบ ไม่งั้น clone จะติดค่าของ instance ต้นแบบมา (เคยได้ 'หมายเลขเหตุการณ์ VMS005678' + ป้าย 'รอ กบค รับเรื่อง' ของไฟล์งานจริง)"
     },
     ".crumbs": {
-      "kind": "component",
-      "component": "Breadcrumbs"
+      "kind": "own",
+      "comment": "Breadcrumbs มีแต่ property BOOLEAN — ข้อความอยู่ใน instance ลูก (_Breadcrumbs item/Link) ที่ setProperties ไม่ถึง ⇒ clone แล้วจะติดข้อความของไฟล์งานจริงมา วาดเองไปก่อน"
     },
     ".tbl th": {
       "kind": "component",

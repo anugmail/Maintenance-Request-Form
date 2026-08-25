@@ -220,3 +220,22 @@ Card item base · Nav button · Header navigation
 3. **ข้อความหลักต้องไม่รวมบรรทัดรอง** — `.cell-sub`/`.sub` เป็น property แยก (`Supporting text`)
    ไม่งั้นได้ `"MTD-690716-031แจ้งเมื่อ 16 ก.ค. 2569"` ติดกันเป็นก้อนเดียว
 4. **ช่องกรอกอ่านค่าจาก attribute** ไม่ใช่ textContent (`value` → ถ้าว่างใช้ `placeholder`)
+
+## 9. รอบแก้ที่ 1 หลังเห็นผลจริงใน Figma (25 ส.ค. 2569)
+
+กดออกมาแล้วได้ component จริงครบ (Badge · Table cell · Alert · Page header) แต่หน้าตายังไม่เนียน
+เจอ 4 สาเหตุ — ทุกข้อยืนยันจากสเปกจริง ไม่ได้เดา
+
+| # | อาการที่เห็น | สาเหตุ | แก้ยังไง |
+|---|---|---|---|
+| 1 | Page header โชว์ **"หมายเลขเหตุการณ์ VMS005678"** + ป้าย "รอ กบค รับเรื่อง" | ไม่ได้ตั้ง variant `Page`/`Status`/`Breakpoint` ⇒ clone ติดค่าของ instance ต้นแบบ **ซึ่งเป็นข้อมูลไฟล์งานจริง** | ตั้ง `Page=Dashboard · Status=Default · Breakpoint=Desktop` |
+| 2 | Breadcrumbs โชว์ `Link Link Link` และข้อความของไฟล์งานจริง | มีแต่ property BOOLEAN — ข้อความอยู่ใน instance ลูกที่ `setProperties` เข้าไม่ถึง | ถอดเป็น `own` วาดเองไปก่อน |
+| 3 | หน้ามีคำว่า **`location_on` `account_circle`** ลอยอยู่ | `.ms` คือไอคอน Material Symbols เนื้อในเป็นชื่อ ligature ⇒ กลายเป็น text node | ข้าม `.ms` ทั้ง element |
+| 4 | บล็อกซ้อนทับกัน (หัวข้อทับ Alert) | instance ใหญ่กว่า element เดิม แต่ไม่ได้ปรับขนาด | `inst.resize()` เท่า rect ของจริง |
+
+⚠️ ข้อ 1–2 ไม่ใช่แค่เรื่องหน้าตา — **เป็นการเอาข้อมูลจากไฟล์งานจริงติดมากับ artifact**
+**กติกาใหม่:** เพิ่ม component เข้าแมปเมื่อไหร่ **ต้องตั้ง variant ให้ครบทุกตัว**
+
+**ยังค้างหลังรอบนี้**
+- [ ] ยังวางด้วยพิกัด x/y ไม่ได้ทำ auto-layout
+- [ ] component ที่ข้อความอยู่ใน instance ลูก (Breadcrumbs) ยังใช้ไม่ได้ — ต้องเดินเข้าไปตั้งใน instance ลูกเอง

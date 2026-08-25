@@ -155,6 +155,10 @@ function convert(node, stack) {
     return { kind: 'text', characters: t, rect: node.rect };
   }
   if (node.tag === '#br') return null;
+  // ไอคอน Material Symbols — เนื้อในเป็น "ชื่อ ligature" (location_on/account_circle)
+  // ถ้าปล่อยผ่านจะกลายเป็น text node ที่โชว์ชื่อไอคอนดิบๆ บนหน้า Figma
+  // component จริงมีไอคอนของตัวเองอยู่แล้ว ⇒ ข้ามทิ้ง
+  if ((node.classes || []).includes('ms')) return null;
 
   const rule = findRule(node, stack);
 

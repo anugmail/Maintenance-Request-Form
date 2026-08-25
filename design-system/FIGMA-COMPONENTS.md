@@ -8,7 +8,7 @@
 > 🔴 **ก่อนออกแบบหน้าจอใหม่ทุกครั้งต้องอ่านไฟล์นี้** (เจ้าของงานสั่ง 25 ส.ค. 2569) —
 > ดูขั้นที่ 3 ของ "ขั้นตอนบังคับ" ใน [README.md](README.md)
 
-## 1. คลาสที่มี component จริงให้ใช้ (31)
+## 1. คลาสที่มี component จริงให้ใช้ (30)
 
 สร้าง instance แล้ว `setProperties` ตามคอลัมน์สุดท้าย
 
@@ -22,7 +22,6 @@
 | `.badge` | **Pill outline** | 795 | 2 | `.b-ok`→Success · `.b-low`→Warning · `.b-out`→Error · `.b-brand`→Brand · `.b-info`→Info · `.b-neutral`→Gray |
 | `.sect` | **Section header** | 222 | 7 | `hasSub` |
 | `.page-title-row` | **Page header** | 206 | 11 | `hasButton` |
-| `.crumbs` | **Breadcrumbs** | 103 | 4 | — |
 | `.tbl th` | **Table header cell** | 290 | 7 | `.sortable` |
 | `.tbl td` | **Table cell** | 680 | 10 | `hasCellSub` · `hasBadge` · `hasButtons` |
 | `.f .in input` | **Text input** | 1,076 | 14 | `hasIcon` · `.help` |
@@ -70,10 +69,11 @@
 - `.tbl` — ตัวตาราง — เซลล์คือ .tbl td/th
 - `.cell-sub` — บรรทัดรองในเซลล์ — เป็น property Supporting ของ Table cell
 
-## 3. ของเราเอง — ไลบรารีไม่มีให้เทียบ (17)
+## 3. ของเราเอง — ไลบรารีไม่มีให้เทียบ (18)
 
 วาดเองตาม `components.css` · ถ้าจะเปลี่ยนต้องแจ้งเจ้าของงานก่อน
 
+- `.crumbs` — Breadcrumbs มีแต่ property BOOLEAN — ข้อความอยู่ใน instance ลูก (_Breadcrumbs item/Link) ที่ setProperties ไม่ถึง ⇒ clone แล้วจะติดข้อความของไฟล์งานจริงมา วาดเองไปก่อน
 - `.daterange` — ไลบรารีไม่มีตัวเลือกช่วงวันที่ — SOURCES.md หมวด ค
 - `.cal` — แผงปฏิทินทั้งแผงเป็นของเราเอง
 - `.toast` — ไลบรารีมี Notification แต่คนละแพตเทิร์น — SOURCES.md หมวด ข

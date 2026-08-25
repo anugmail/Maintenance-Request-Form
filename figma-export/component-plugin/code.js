@@ -86,7 +86,12 @@ async function build(node, parent) {
       propFail++;
       say('   ตั้ง property ไม่ได้ที่ ' + node.component + ': ' + String(e && e.message || e).slice(0, 90), 'err');
     }
-    if (node.rect) { inst.x = node.rect.x; inst.y = node.rect.y; }
+    if (node.rect) {
+      inst.x = node.rect.x; inst.y = node.rect.y;
+      // ย่อ/ขยายให้เท่าของจริงในหน้าเว็บ — ไม่งั้น instance ที่ใหญ่กว่าเดิมจะทับตัวข้างๆ
+      // บาง component ปรับขนาดไม่ได้ (ล็อกจากไลบรารี) จึงต้องกันพัง
+      try { if (node.rect.w > 1 && node.rect.h > 1) inst.resize(node.rect.w, node.rect.h); } catch (e) {}
+    }
     parent.appendChild(inst);
     made.instance++;
     return;
