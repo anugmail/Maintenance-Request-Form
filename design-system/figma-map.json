@@ -1,0 +1,429 @@
+{
+  "note": "แมปคลาสใน components.css → component จริงของ VMS Plus ในไฟล์ Figma · เขียนด้วยมือ ตรวจด้วย figma-export/6-validate-map.js",
+  "why": "ทุกครั้งที่สร้าง prototype ต้องอ้างของจริงจาก figma-components.json (เจ้าของงานสั่ง 25 ส.ค. 2569)",
+  "kinds": {
+    "component": "มี component จริงให้ใช้ — สร้าง instance แล้ว setProperties",
+    "layout": "ไม่ใช่ component — เป็นโครง auto-layout/utility ให้สร้างเป็น frame เปล่า",
+    "own": "ของเราเอง ไลบรารีไม่มีให้เทียบ — วาดเองตาม components.css"
+  },
+  "map": {
+    ".btn.btn-p": {
+      "kind": "component",
+      "component": "Primary button",
+      "text": "Text#105:0",
+      "props": {
+        "State": "Default",
+        "Size": "md"
+      },
+      "when": {
+        "disabled": {
+          "State": "Disabled"
+        },
+        ".btn-lg": {
+          "Size": "lg"
+        }
+      }
+    },
+    ".btn.btn-s": {
+      "kind": "component",
+      "component": "Secondary button",
+      "text": "Text#105:0",
+      "props": {
+        "State": "Default",
+        "Size": "md"
+      },
+      "when": {
+        "disabled": {
+          "State": "Disabled"
+        },
+        ".btn-lg": {
+          "Size": "lg"
+        }
+      }
+    },
+    ".btn.btn-o": {
+      "kind": "component",
+      "component": "Secondary button",
+      "text": "Text#105:0",
+      "props": {
+        "State": "Default",
+        "Size": "md"
+      },
+      "comment": "ปุ่ม outline ของเรา = Secondary ของไลบรารี"
+    },
+    ".btn.btn-t": {
+      "kind": "component",
+      "component": "Tertiary button",
+      "text": "Text#105:0",
+      "props": {
+        "State": "Default",
+        "Size": "md"
+      }
+    },
+    ".btn.btn-g": {
+      "kind": "component",
+      "component": "Tertiary button",
+      "text": "Text#105:0",
+      "props": {
+        "State": "Default",
+        "Size": "md"
+      },
+      "comment": "ปุ่มเทา (ย้อนกลับ/ยกเลิก) = Tertiary"
+    },
+    ".badge": {
+      "kind": "component",
+      "component": "Pill outline",
+      "text": "Text#695:3",
+      "variantFromClass": {
+        "prop": "Color",
+        "map": {
+          "b-ok": "Success",
+          "b-low": "Warning",
+          "b-out": "Error",
+          "b-brand": "Brand",
+          "b-info": "Info",
+          "b-neutral": "Gray"
+        }
+      },
+      "comment": "ตรงกัน 1:1 ทุกสี"
+    },
+    ".sect": {
+      "kind": "component",
+      "component": "Section header",
+      "text": "Title#1985:6",
+      "props": {
+        "Breakpoint": "Desktop",
+        "Badge#1985:2": false,
+        "Supporting text#1985:3": false,
+        "Actions#1985:4": false,
+        "Divider#1985:5": false
+      },
+      "when": {
+        "hasSub": {
+          "Supporting text#1985:3": true
+        }
+      }
+    },
+    ".page-title-row": {
+      "kind": "component",
+      "component": "Page header",
+      "text": "Title#1985:6",
+      "props": {
+        "Badge#1985:2": false,
+        "Actions#1985:4": false,
+        "Divider#1985:5": false
+      },
+      "when": {
+        "hasButton": {
+          "Actions#1985:4": true
+        }
+      }
+    },
+    ".crumbs": {
+      "kind": "component",
+      "component": "Breadcrumbs"
+    },
+    ".tbl th": {
+      "kind": "component",
+      "component": "Table header cell",
+      "text": "Text#3243:1",
+      "props": {
+        "Sort icon#3243:2": false,
+        "Checkbox": "False"
+      },
+      "when": {
+        ".sortable": {
+          "Sort icon#3243:2": true
+        }
+      }
+    },
+    ".tbl td": {
+      "kind": "component",
+      "component": "Table cell",
+      "text": "Text#213:0",
+      "props": {
+        "Style": "Text",
+        "Supporting#213:24": false
+      },
+      "when": {
+        ".cell-sub": {
+          "Supporting#213:24": true,
+          "_textProp": "Supporting text#2220:2"
+        },
+        "hasBadge": {
+          "Style": "Badge"
+        },
+        "hasButtons": {
+          "Style": "Action icons"
+        }
+      }
+    },
+    ".f .in input": {
+      "kind": "component",
+      "component": "Text input",
+      "text": "Text#33:0",
+      "props": {
+        "Label#265:0": true,
+        "Leading icon#33:9": false,
+        "Helper#33:19": false
+      },
+      "labelProp": "Label text#265:7",
+      "when": {
+        "hasIcon": {
+          "Leading icon#33:9": true
+        },
+        ".help": {
+          "Helper#33:19": true,
+          "_helperProp": "Helper text#33:15"
+        }
+      }
+    },
+    ".f .in select": {
+      "kind": "component",
+      "component": "Input dropdown",
+      "text": "Text#545:18",
+      "labelProp": "Label text#74:30",
+      "props": {
+        "Label#74:40": true,
+        "Helper#2011:48": false
+      }
+    },
+    ".chk input": {
+      "kind": "component",
+      "component": "Checkbox",
+      "props": {
+        "State": "Default",
+        "Type": "Unselected"
+      },
+      "when": {
+        "checked": {
+          "Type": "Selected"
+        },
+        "disabled": {
+          "State": "Disabled"
+        }
+      }
+    },
+    ".tabs .tab-btn": {
+      "kind": "component",
+      "component": "Tab item",
+      "text": "Text#22:4",
+      "props": {
+        "Active": "False",
+        "State": "Default",
+        "Badge#1387:0": false
+      },
+      "when": {
+        ".on": {
+          "Active": "True"
+        }
+      }
+    },
+    ".wsteps .wstep": {
+      "kind": "component",
+      "component": "Horizontal step item",
+      "text": "Text#703:28",
+      "numberProp": "Number#2294:3",
+      "props": {
+        "Status": "Incomplete",
+        "Supporting#634:7": false,
+        "Connector#703:14": true
+      },
+      "when": {
+        ".active": {
+          "Status": "Current"
+        },
+        ".passed": {
+          "Status": "Completed"
+        }
+      },
+      "comment": "ตรงกัน 1:1 — locked=Incomplete · active=Current · passed=Completed"
+    },
+    ".note": {
+      "kind": "component",
+      "component": "Alert",
+      "text": "Text#1336:0",
+      "props": {
+        "Color": "Info",
+        "Leading icon#1516:0": true,
+        "Close icon#2667:6": false
+      },
+      "variantFromClass": {
+        "prop": "Color",
+        "map": {
+          "note-info": "Info",
+          "note-warn": "Warning",
+          "note-ok": "Success"
+        }
+      }
+    },
+    ".pager": {
+      "kind": "component",
+      "component": "Button groups pagination item"
+    },
+    ".tblfoot": {
+      "kind": "component",
+      "component": "Table pagination"
+    },
+    ".modal-head": {
+      "kind": "component",
+      "component": "Modal header"
+    },
+    ".modal-foot": {
+      "kind": "component",
+      "component": "Modal footer"
+    },
+    ".rads label": {
+      "kind": "component",
+      "component": "Radio button"
+    },
+    ".tile": {
+      "kind": "component",
+      "component": "Radio text card"
+    },
+    ".card": {
+      "kind": "component",
+      "component": "Card item base"
+    },
+    ".side .nv": {
+      "kind": "component",
+      "component": "Nav button"
+    },
+    ".topbar": {
+      "kind": "component",
+      "component": "Header navigation"
+    },
+    ".shell": {
+      "kind": "layout",
+      "comment": "frame แนวนอน — sidebar + พื้นที่งาน"
+    },
+    ".work": {
+      "kind": "layout"
+    },
+    ".content": {
+      "kind": "layout"
+    },
+    ".stack": {
+      "kind": "layout",
+      "comment": "auto-layout แนวตั้ง gap 12 (tight 8 · loose 20)"
+    },
+    ".fgrid": {
+      "kind": "layout",
+      "comment": "grid 4 คอลัมน์ — Figma ใช้ auto-layout ซ้อน"
+    },
+    ".actions": {
+      "kind": "layout",
+      "comment": "แถวปุ่มชิดขวา"
+    },
+    ".tblwrap": {
+      "kind": "layout"
+    },
+    ".hidden": {
+      "kind": "layout"
+    },
+    ".daterange": {
+      "kind": "own",
+      "comment": "ไลบรารีไม่มีตัวเลือกช่วงวันที่ — SOURCES.md หมวด ค"
+    },
+    ".cal": {
+      "kind": "own",
+      "comment": "แผงปฏิทินทั้งแผงเป็นของเราเอง"
+    },
+    ".toast": {
+      "kind": "own",
+      "comment": "ไลบรารีมี Notification แต่คนละแพตเทิร์น — SOURCES.md หมวด ข"
+    },
+    ".empty": {
+      "kind": "own",
+      "comment": "ไลบรารี Empty state เป็นบล็อกภาพ 512px คนละแบบ"
+    },
+    ".rzone": {
+      "kind": "own",
+      "comment": "กล่องจัดกลุ่มรายการ ภาค→จังหวัด→รถ ของเราเอง"
+    },
+    ".draft": {
+      "kind": "own",
+      "comment": "แถบ mock ของ prototype ไม่ใช่ของระบบจริง"
+    },
+    ".gallery": {
+      "kind": "own"
+    },
+    ".numfld": {
+      "kind": "component",
+      "component": "Number input",
+      "comment": "ช่องจำนวน − ตัวเลข +"
+    },
+    ".qty": {
+      "kind": "component",
+      "component": "Number input",
+      "comment": "ตัวปรับจำนวนจอง = ตัวเดียวกับ .numfld"
+    },
+    ".search": {
+      "kind": "component",
+      "component": "Text input",
+      "text": "Text#33:0",
+      "props": {
+        "Leading icon#33:9": true,
+        "Label#265:0": false
+      },
+      "comment": "ช่องค้นหา = Text input ที่เปิดไอคอนนำหน้า ไลบรารีไม่มี component แยก"
+    },
+    ".chip": {
+      "kind": "own",
+      "comment": "ไลบรารีไม่มี Tag/Chip — SOURCES.md เคยเทียบกับ Tag `1:1378` ของไฟล์ไลบรารี แต่ไฟล์งานนี้ไม่มี instance ให้ใช้"
+    },
+    ".chips": {
+      "kind": "own",
+      "comment": "ดู .chip"
+    },
+    ".seg": {
+      "kind": "own",
+      "comment": "ไลบรารีมีแต่ pagination item ไม่ใช่ segmented control ทั่วไป"
+    },
+    ".sub": {
+      "kind": "layout",
+      "comment": "ข้อความบรรยายใต้หัวข้อ — เป็น text ธรรมดา ไม่ใช่ component"
+    },
+    ".list-toolbar": {
+      "kind": "layout",
+      "comment": "แถบเหนือตาราง — ประกอบจาก .search + ปุ่ม"
+    },
+    ".wgrp": {
+      "kind": "layout",
+      "comment": "หัวกลุ่มของ stepper หลายกลุ่ม"
+    },
+    ".vlist": {
+      "kind": "layout"
+    },
+    ".veh": {
+      "kind": "component",
+      "component": "Card item base",
+      "comment": "การ์ดรถ"
+    },
+    ".job": {
+      "kind": "component",
+      "component": "_Content item base",
+      "comment": "แถวรายการ"
+    },
+    ".app": {
+      "kind": "own",
+      "comment": "ชุด mobile legacy ของ prototype เก่า ไม่ใช่ของระบบจริง"
+    },
+    ".steps": {
+      "kind": "own",
+      "comment": "ดู .app"
+    },
+    ".workno": {
+      "kind": "own",
+      "comment": "ป้ายเลขงานเฉพาะโฟลว์บำรุงรักษา ไม่มีในระบบจริง"
+    },
+    ".page-back": {
+      "kind": "own",
+      "comment": "ปุ่มย้อนกลับหัวหน้า — ของเราเอง"
+    },
+    ".tl": {
+      "kind": "own",
+      "comment": "ไทม์ไลน์ — ไลบรารีไม่มี"
+    }
+  }
+}

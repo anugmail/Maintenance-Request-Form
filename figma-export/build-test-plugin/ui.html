@@ -1,0 +1,24 @@
+<style>
+  body{font:12px/1.55 -apple-system,"IBM Plex Sans Thai",sans-serif;margin:0;padding:14px;color:#1b1b1b}
+  h1{font-size:13px;margin:0 0 3px}
+  .warn{background:#fff4e5;border:1px solid #ffd399;border-radius:6px;padding:8px 10px;margin:8px 0;color:#8a5300}
+  button{padding:9px 16px;border:0;border-radius:6px;background:#0d99ff;color:#fff;font:inherit;font-weight:600;cursor:pointer}
+  button:disabled{background:#c4c4c4;cursor:default}
+  #log{margin-top:12px;padding:9px;background:#f5f5f5;border-radius:6px;white-space:pre-wrap;
+       max-height:240px;overflow:auto;font-size:11px;font-family:ui-monospace,Menlo,monospace}
+  .ok{color:#0a7c42}.err{color:#c4320a}
+</style>
+<h1>ทดสอบวิธีสร้าง instance</h1>
+<div class="warn">⚠️ ปลั๊กอินนี้ <b>เขียนของลงไฟล์</b> — สร้างหน้าใหม่ชื่อ <b>🧪 ทดสอบ Maintain-D</b><br>
+ไม่แตะหน้าอื่น · <b>รันในไฟล์ที่ duplicate มาแล้วเท่านั้น</b> · ดูเสร็จลบหน้านั้นทิ้งได้</div>
+<button id="go">รันทดสอบ</button>
+<div id="log">พร้อมแล้ว</div>
+<script>
+var log=document.getElementById('log'), go=document.getElementById('go'), lines=[];
+go.onclick=function(){ go.disabled=true; lines=[]; log.innerHTML='เริ่ม…';
+  parent.postMessage({pluginMessage:{type:'run'}},'*'); };
+onmessage=function(e){ var m=e.data&&e.data.pluginMessage; if(!m) return;
+  if(m.type==='done'){ go.disabled=false; return; }
+  lines.push(m.cls?'<span class="'+m.cls+'">'+m.text+'</span>':m.text);
+  log.innerHTML=lines.join('\n'); log.scrollTop=log.scrollHeight; };
+</script>

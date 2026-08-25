@@ -1,0 +1,5327 @@
+{
+  "note": "กลั่นจากไฟล์ Figma จริงด้วย figma-export/5-catalog-summary.js — ค่าข้อความ (TEXT) ถูกถอดทิ้งเพราะเป็นข้อมูลจากไฟล์งาน",
+  "sourceFile": "PEA",
+  "generatedAt": "2026-08-25T09:39:20.659Z",
+  "totalInstances": 42510,
+  "componentCount": 183,
+  "components": [
+    {
+      "name": "crop_free-20-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "234bdc259de272a633fc03791898e92bd60dfc64",
+        "a69425334b1d6d81dba86116fc714a035647cd53"
+      ],
+      "instanceCount": 4630,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "info-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "deed8e2c30f2e2ea34658c5d32377fbefa68b8f2",
+        "99563413a0914d366cf9fd80b92e41e035614d97"
+      ],
+      "instanceCount": 3643,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Radio button",
+      "fromLibrary": true,
+      "keys": [
+        "56fa13ab3a7d157974f5cf1613671ce868d341b5",
+        "5f7d7567b20292d1acecbbfeb9fd3069db079891"
+      ],
+      "instanceCount": 2724,
+      "variants": [
+        "State=Default, Selected=False",
+        "State=Hover, Selected=False",
+        "State=Focused, Selected=False",
+        "State=Default, Selected=True",
+        "State=Hover, Selected=True",
+        "State=Focused, Selected=True",
+        "State=Disabled, Selected=True",
+        "State=Disabled, Selected=False"
+      ],
+      "properties": [
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover",
+            "Focused",
+            "Disabled"
+          ]
+        },
+        {
+          "name": "Selected",
+          "type": "VARIANT",
+          "defaultValue": "False",
+          "options": [
+            "True",
+            "False"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "crop_free-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "aeb61ae52ae83dd57a04d758bac9fcfe65165467",
+        "3a16071b25f30807bcc57f2a3599e038f00907e0"
+      ],
+      "instanceCount": 2636,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "_Content item base",
+      "fromLibrary": true,
+      "keys": [
+        "12bce060554fd0bd9efccbb60db95fc5aff72776",
+        "37d6d38d3f9d4850d29f02e89760be6954f7ad6e"
+      ],
+      "instanceCount": 2002,
+      "variants": [
+        "Type=Text",
+        "Type=Text with label",
+        "Type=Attachment",
+        "Type=Big",
+        "Type=Component swap"
+      ],
+      "properties": [
+        {
+          "name": "Supporting#2543:21",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Icon swap#2543:22",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Text#2543:24",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Supporting text#2543:25",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Label#2543:26",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Leading icon#3384:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Instance swap#3814:0",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Type",
+          "type": "VARIANT",
+          "defaultValue": "Text",
+          "options": [
+            "Text",
+            "Text with label",
+            "Attachment",
+            "Big",
+            "Component swap"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Indicator",
+      "fromLibrary": true,
+      "keys": [
+        "e50e3d511cc1940a6b27968b5e0c92c7bce6a3e7",
+        "5a17a88168391cc6143f4cc0e8cde5e68fd4e3a4"
+      ],
+      "instanceCount": 1591,
+      "variants": [
+        "Size=sm",
+        "Size=md",
+        "Size=lg"
+      ],
+      "properties": [
+        {
+          "name": "Size",
+          "type": "VARIANT",
+          "defaultValue": "sm",
+          "options": [
+            "sm",
+            "md",
+            "lg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nav button",
+      "fromLibrary": true,
+      "keys": [
+        "baf9e08ef7abcdbae667011c0600ce9adb6d116e"
+      ],
+      "instanceCount": 1537,
+      "variants": [
+        "State=Default",
+        "State=Hover",
+        "State=Active",
+        "State=Focused",
+        "State=Disabled"
+      ],
+      "properties": [
+        {
+          "name": "Icon swap#1935:1",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Indicator#1935:3",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Text#1935:5",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Active",
+            "Default",
+            "Disabled",
+            "Focused",
+            "Hover"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tertiary button",
+      "fromLibrary": true,
+      "keys": [
+        "93598abe44eefaa38e02d3a0d13f7f39fba82e71",
+        "c45d501109d235a9a1f54e5650140a1080e571b3"
+      ],
+      "instanceCount": 1348,
+      "variants": [
+        "State=Default, Size=md",
+        "State=Hover, Size=md",
+        "State=Focused, Size=md",
+        "State=Disabled, Size=md"
+      ],
+      "properties": [
+        {
+          "name": "Text#105:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Leading icon#105:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Trailing icon#105:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Leading icon swap#133:10",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Trailing icon swap#133:12",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Button text#1153:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover",
+            "Focused",
+            "Disabled"
+          ]
+        },
+        {
+          "name": "Size",
+          "type": "VARIANT",
+          "defaultValue": "md",
+          "options": [
+            "md"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Input label",
+      "fromLibrary": true,
+      "keys": [
+        "01dfbf5c3f94ae7771b1c77278823c7308ee2f02",
+        "25e76f056580027af556e54b2c83c3b137b8ba25"
+      ],
+      "instanceCount": 1122,
+      "variants": null,
+      "properties": [
+        {
+          "name": "Label text#2404:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Info icon#2404:1",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Optional#2404:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "button#3608:0",
+          "type": "BOOLEAN",
+          "defaultValue": false,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "Text input",
+      "fromLibrary": true,
+      "keys": [
+        "227eddb9d08b3e8307addc76e56ddb4e2087a671",
+        "61790515f5da22b3f492f135d02c90f3c00015cc"
+      ],
+      "instanceCount": 1076,
+      "variants": [
+        "State=Default, Size=md",
+        "State=Focused, Size=md",
+        "State=Error Focused, Size=md",
+        "State=Error Focused, Size=lg",
+        "State=Filled, Size=md",
+        "State=Disabled, Size=md",
+        "State=Readonly, Size=md",
+        "State=Error, Size=md",
+        "State=Error Hover, Size=md",
+        "State=Error Readonly, Size=md",
+        "State=Default, Size=lg",
+        "State=Focused, Size=lg",
+        "State=Filled, Size=lg",
+        "State=Disabled, Size=lg",
+        "State=Readonly, Size=lg",
+        "State=Error, Size=lg",
+        "State=Error Hover, Size=lg",
+        "State=Error Readonly, Size=lg",
+        "State=Hover, Size=md",
+        "State=Hover, Size=lg"
+      ],
+      "properties": [
+        {
+          "name": "Text#33:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Leading icon swap#33:3",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Trailing icon swap#33:6",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Leading icon#33:9",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Trailing icon#33:12",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Helper text#33:15",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Helper#33:19",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Label#265:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Label text#265:7",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Info icon#522:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Optional#1105:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Filled",
+            "Hover",
+            "Focused",
+            "Disabled",
+            "Readonly",
+            "Error",
+            "Error Hover",
+            "Error Focused",
+            "Error Readonly"
+          ]
+        },
+        {
+          "name": "Size",
+          "type": "VARIANT",
+          "defaultValue": "md",
+          "options": [
+            "md",
+            "lg"
+          ]
+        },
+        {
+          "name": "Show Placeholder#3747:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "close_small-20-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "e8168bd00c32f14a463d740c09fcb598a94f202a",
+        "95943b1510d972edc1f07ad1586acd8b11b38a35"
+      ],
+      "instanceCount": 1070,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Secondary button",
+      "fromLibrary": true,
+      "keys": [
+        "6786eba04fb1409ebc48ed9296c0c0d4c41621fd",
+        "b978ae22c8ca480d01eaa3faccdfc1d3d184a8ef"
+      ],
+      "instanceCount": 863,
+      "variants": [
+        "State=Default, Size=lg",
+        "State=Hover, Size=lg",
+        "State=Focused, Size=lg",
+        "State=Disabled, Size=lg",
+        "State=Default, Size=md",
+        "State=Hover, Size=md",
+        "State=Focused, Size=md",
+        "State=Disabled, Size=md"
+      ],
+      "properties": [
+        {
+          "name": "Text#105:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Leading icon#105:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Trailing icon#105:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Leading icon swap#133:10",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Trailing icon swap#133:12",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Button text#1246:27",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover",
+            "Focused",
+            "Disabled"
+          ]
+        },
+        {
+          "name": "Size",
+          "type": "VARIANT",
+          "defaultValue": "lg",
+          "options": [
+            "lg",
+            "md"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "keyboard_arrow_down-20-400-round",
+      "fromLibrary": false,
+      "keys": [
+        "02a8be8126fd3055194ab725034f2e1635fbc57f",
+        "ef236f704e50c3aa9f15adf812a51cb3b45c6d10"
+      ],
+      "instanceCount": 843,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Input dropdown",
+      "fromLibrary": true,
+      "keys": [
+        "a51d3b07ab3c996ac459710124a5ee2ff1cf31e7"
+      ],
+      "instanceCount": 824,
+      "variants": [
+        "State=Default, Size=md",
+        "State=Default, Size=lg",
+        "State=Selected, Size=md",
+        "State=Selected, Size=lg",
+        "State=Hover, Size=md",
+        "State=Hover, Size=lg",
+        "State=Focused, Size=md",
+        "State=Focused, Size=lg",
+        "State=Disabled, Size=md",
+        "State=Disabled, Size=lg",
+        "State=Error, Size=md",
+        "State=Error, Size=lg",
+        "State=Error Hover, Size=md",
+        "State=Error Hover, Size=lg",
+        "State=Error Focused, Size=md",
+        "State=Error Focused, Size=lg"
+      ],
+      "properties": [
+        {
+          "name": "Label text#74:30",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Label#74:40",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Placeholder#545:12",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Text#545:18",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Info icon#2011:12",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Leading icon#2011:21",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Leading icon swap#2011:39",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Helper#2011:48",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Helper text#2011:75",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Optional#2147:29",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Selected",
+            "Hover",
+            "Focused",
+            "Disabled",
+            "Error",
+            "Error Hover",
+            "Error Focused"
+          ]
+        },
+        {
+          "name": "Size",
+          "type": "VARIANT",
+          "defaultValue": "md",
+          "options": [
+            "md",
+            "lg"
+          ]
+        },
+        {
+          "name": "Supporting#3300:0",
+          "type": "BOOLEAN",
+          "defaultValue": false,
+          "options": null
+        },
+        {
+          "name": "Supporting text#3300:17",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Cursor#3340:0",
+          "type": "BOOLEAN",
+          "defaultValue": false,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "Pill outline",
+      "fromLibrary": true,
+      "keys": [
+        "7cafc67f0784fa3326988f710dda6ab29fa77dd7",
+        "6ebef5045ecbed00104d93f8f37a4c4d4a636883"
+      ],
+      "instanceCount": 795,
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Info",
+        "Color=Success",
+        "Color=Warning",
+        "Color=Error",
+        "Color=Disabled",
+        "Color=Purple"
+      ],
+      "properties": [
+        {
+          "name": "Text#695:3",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Color",
+          "type": "VARIANT",
+          "defaultValue": "Brand",
+          "options": [
+            "Brand",
+            "Gray",
+            "Info",
+            "Success",
+            "Warning",
+            "Error",
+            "Disabled",
+            "Purple"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Table cell",
+      "fromLibrary": true,
+      "keys": [
+        "6dc06135f404f06cabff635e0021b00911990cd6",
+        "a71855ee7c412bfefaebc8f1dd4fe3727bcab7d1"
+      ],
+      "instanceCount": 680,
+      "variants": [
+        "Style=Text, Alternating fills=False",
+        "Style=Text, Alternating fills=True",
+        "Style=Lead text, Alternating fills=False",
+        "Style=Lead text, Alternating fills=True",
+        "Style=Avatar, Alternating fills=False",
+        "Style=Avatar, Alternating fills=True",
+        "Style=Lead avatar, Alternating fills=False",
+        "Style=Lead avatar, Alternating fills=True",
+        "Style=Badge, Alternating fills=False",
+        "Style=Badge, Alternating fills=True",
+        "Style=Action icons, Alternating fills=False",
+        "Style=Action icons, Alternating fills=True",
+        "Style=Multiple badges, Alternating fills=False",
+        "Style=Multiple badges, Alternating fills=True",
+        "Style=Toggle, Alternating fills=False",
+        "Style=Toggle, Alternating fills=True",
+        "Style=Lead checkbox, Alternating fills=False",
+        "Style=Lead checkbox + Badge, Alternating fills=False",
+        "Style=Lead checkbox, Alternating fills=True",
+        "Style=Lead checkbox avatar, Alternating fills=False",
+        "Style=Lead checkbox avatar, Alternating fills=True",
+        "Style=Select, Alternating fills=False",
+        "Style=Select, Alternating fills=True",
+        "Style=Lead Progress Bar, Alternating fills=False",
+        "Style=Rating, Alternating fills=False",
+        "Style=Rating, Alternating fills=True",
+        "Style=Lead Progress Bar, Alternating fills=True"
+      ],
+      "properties": [
+        {
+          "name": "Text#213:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Supporting#213:24",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting text#2220:2",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "View#2220:26",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Edit#2220:35",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Print#2220:44",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Delete#2220:53",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Instance swap#3567:0",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Style",
+          "type": "VARIANT",
+          "defaultValue": "Text",
+          "options": [
+            "Text",
+            "Lead text",
+            "Avatar",
+            "Lead avatar",
+            "Badge",
+            "Action icons",
+            "Multiple badges",
+            "Toggle",
+            "Lead checkbox",
+            "Lead checkbox avatar",
+            "Select",
+            "Lead checkbox + Badge",
+            "Lead Progress Bar",
+            "Rating"
+          ]
+        },
+        {
+          "name": "Alternating fills",
+          "type": "VARIANT",
+          "defaultValue": "False",
+          "options": [
+            "True",
+            "False"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "calendar_month-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "61ca2353e9535104066dfbaa55b852bc47ddef0e",
+        "ce7f55230fcef0c63a88da3151553cbdf2b74ac2"
+      ],
+      "instanceCount": 678,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Horizontal step item",
+      "fromLibrary": true,
+      "keys": [
+        "caa45eeebec5e43c971446774e8dab4d3c65eb8a"
+      ],
+      "instanceCount": 562,
+      "variants": [
+        "Status=Incomplete",
+        "Status=Current",
+        "Status=Completed"
+      ],
+      "properties": [
+        {
+          "name": "Supporting text#634:3",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Supporting#634:7",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Connector#703:14",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Text#703:28",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Number#2294:3",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Status",
+          "type": "VARIANT",
+          "defaultValue": "Incomplete",
+          "options": [
+            "Incomplete",
+            "Current",
+            "Completed"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "_Breadcrumbs item / Separator",
+      "fromLibrary": true,
+      "keys": [
+        "337c00f8f005c55f248d037c7798563ee469c3bc"
+      ],
+      "instanceCount": 515,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "keyboard_arrow_right-20-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "8a138399dff01818185011eac1b0f1d710345775"
+      ],
+      "instanceCount": 515,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "more_vert-20-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "2ab51b4ff52ba51878b5538dc7f34228f8febc15",
+        "b56e0a3aec2d044a0bc411ad09c6b5187ee35bc9"
+      ],
+      "instanceCount": 489,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Content item row",
+      "fromLibrary": true,
+      "keys": [
+        "ead76d15f8d59b62f8920c518dfaf16d610829dc"
+      ],
+      "instanceCount": 486,
+      "variants": [
+        "Column width=Full",
+        "Column width=50% first column",
+        "Column width=50% last column"
+      ],
+      "properties": [
+        {
+          "name": "Item 2#2511:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Item 1 swap#2513:12",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Item 2 swap#2513:14",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Item 3#2542:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Item 3 swap#2542:2",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Item 4#2542:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Item 4 swap#2542:6",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Column width",
+          "type": "VARIANT",
+          "defaultValue": "Full",
+          "options": [
+            "Full",
+            "50% first column",
+            "50% last column"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tab item",
+      "fromLibrary": true,
+      "keys": [
+        "30812d4accf0f7bcd46d5c880017de263c54f25b",
+        "2b1cc38006b0c6347ddf7b22ebbb2246a53b88d8"
+      ],
+      "instanceCount": 483,
+      "variants": [
+        "State=Default, Active=False",
+        "State=Hover, Active=False",
+        "State=Focused, Active=False",
+        "State=Default, Active=True",
+        "State=Hover, Active=True",
+        "State=Focused, Active=True"
+      ],
+      "properties": [
+        {
+          "name": "Text#22:4",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Badge#1387:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover",
+            "Focused"
+          ]
+        },
+        {
+          "name": "Active",
+          "type": "VARIANT",
+          "defaultValue": "False",
+          "options": [
+            "True",
+            "False"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Primary button",
+      "fromLibrary": true,
+      "keys": [
+        "f66c61dc82fe7004e5b5450aed0778e1e924393b"
+      ],
+      "instanceCount": 478,
+      "variants": [
+        "State=Default, Size=lg",
+        "State=Hover, Size=lg",
+        "State=Focused, Size=lg",
+        "State=Disabled, Size=lg",
+        "State=Default, Size=md",
+        "State=Hover, Size=md",
+        "State=Focused, Size=md",
+        "State=Disabled, Size=md"
+      ],
+      "properties": [
+        {
+          "name": "Text#105:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Leading icon#105:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Trailing icon#105:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Leading icon swap#133:10",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Trailing icon swap#133:12",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Button text#1246:11",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover",
+            "Focused",
+            "Disabled"
+          ]
+        },
+        {
+          "name": "Size",
+          "type": "VARIANT",
+          "defaultValue": "lg",
+          "options": [
+            "lg",
+            "md"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "_Breadcrumbs item / Link",
+      "fromLibrary": true,
+      "keys": [
+        "58111c24d34367d8a173fcf322f6d5f56af6d525"
+      ],
+      "instanceCount": 412,
+      "variants": [
+        "Current=False, State=Default",
+        "Current=False, State=Hover",
+        "Current=True, State=Default"
+      ],
+      "properties": [
+        {
+          "name": "Text#2065:2",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Current",
+          "type": "VARIANT",
+          "defaultValue": "False",
+          "options": [
+            "True",
+            "False"
+          ]
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "archived-travel_luggage_and_bags",
+      "fromLibrary": true,
+      "keys": [
+        "b2297b2386d5ea3eb502ad67bf645e66f62ed79a"
+      ],
+      "instanceCount": 402,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Horizontal radio groups",
+      "fromLibrary": true,
+      "keys": [
+        "11d953b1d1d3b14855a6c38f08020174a52aa9b9"
+      ],
+      "instanceCount": 379,
+      "variants": null,
+      "properties": [
+        {
+          "name": "Label text#1152:1",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Label#1152:5",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Radio text 1#1152:9",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Radio text 2#1152:13",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Radio text 3#1152:15",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Radio text 4#1152:17",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Radio 3#1231:3",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Radio 4#1231:5",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Helper text#1701:3",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Helper#1701:5",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Info icon#1733:1",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Leading icon#2159:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Leading icon swap#2159:1",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "Dropdown/MA duration",
+      "fromLibrary": true,
+      "keys": [
+        "9823f8629a618261e9d83c01b6c4b2880502e2bd"
+      ],
+      "instanceCount": 369,
+      "variants": [
+        "Expanded=False",
+        "Expanded=True"
+      ],
+      "properties": [
+        {
+          "name": "Expanded",
+          "type": "VARIANT",
+          "defaultValue": "False",
+          "options": [
+            "False",
+            "True"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dropdown/MA mile",
+      "fromLibrary": true,
+      "keys": [
+        "8b3ed65a8a78fa7460360e8a2cb8c0ec90682559"
+      ],
+      "instanceCount": 369,
+      "variants": [
+        "Expanded=False",
+        "Expanded=True"
+      ],
+      "properties": [
+        {
+          "name": "Expanded",
+          "type": "VARIANT",
+          "defaultValue": "False",
+          "options": [
+            "False",
+            "True"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Button groups pagination item",
+      "fromLibrary": true,
+      "keys": [
+        "38863530688bcf7defe49cd4a320fa08e501de54"
+      ],
+      "instanceCount": 350,
+      "variants": [
+        "Type=Previous, State=Default",
+        "Type=Next, State=Default",
+        "Type=Previous, State=Focused",
+        "Type=Next, State=Focused",
+        "Type=Previous, State=Disabled",
+        "Type=Next, State=Disabled",
+        "Type=Number, State=Default",
+        "Type=Previous, State=Hover/Active",
+        "Type=Next, State=Hover/Active",
+        "Type=Number, State=Hover/Active",
+        "Type=Number, State=Focused",
+        "Type=Number, State=Disabled"
+      ],
+      "properties": [
+        {
+          "name": "Number#917:4",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Type",
+          "type": "VARIANT",
+          "defaultValue": "Previous",
+          "options": [
+            "Previous",
+            "Next",
+            "Number"
+          ]
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover/Active",
+            "Focused",
+            "Disabled"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sort icon",
+      "fromLibrary": true,
+      "keys": [
+        "14744a332a543531b32d5cb4442231cc456f58a7"
+      ],
+      "instanceCount": 290,
+      "variants": [
+        "Icon=Swap",
+        "Icon=Up",
+        "Icon=Down"
+      ],
+      "properties": [
+        {
+          "name": "Icon",
+          "type": "VARIANT",
+          "defaultValue": "Swap",
+          "options": [
+            "Down",
+            "Up",
+            "Swap"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Table header cell",
+      "fromLibrary": true,
+      "keys": [
+        "7a9e10f063b2ce268f1a1b2b0fd6a082932fe552",
+        "8b4936785c50272138faeb72c3d64c66fa092da9"
+      ],
+      "instanceCount": 290,
+      "variants": [
+        "Checkbox=False",
+        "Checkbox=True"
+      ],
+      "properties": [
+        {
+          "name": "Header text#3243:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Text#3243:1",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Sort icon#3243:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Checkbox",
+          "type": "VARIANT",
+          "defaultValue": "False",
+          "options": [
+            "False",
+            "True"
+          ]
+        },
+        {
+          "name": "Sort icon#2218:1",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Text#2218:3",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Header text#2221:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "Tertiary brand button",
+      "fromLibrary": true,
+      "keys": [
+        "9c1189fd32156af5804040c6399f3fc501f88b12",
+        "acdf66174d87e4c6d56d365ebdd4d893440a1219"
+      ],
+      "instanceCount": 274,
+      "variants": [
+        "State=Default",
+        "State=Hover",
+        "State=Focused",
+        "State=Disabled"
+      ],
+      "properties": [
+        {
+          "name": "Text#105:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Leading icon#105:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Trailing icon#105:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Leading icon swap#133:10",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Trailing icon swap#133:12",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Button text#1153:12",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover",
+            "Focused",
+            "Disabled"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "arrow_downward_alt-20-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "f154d4781d7396a3cb704c6634de57315a8b8ca4"
+      ],
+      "instanceCount": 262,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "groups-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "16f9e5ce96b0b738a6cc2e87a7500a6898ac28ae"
+      ],
+      "instanceCount": 244,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Badge outline",
+      "fromLibrary": true,
+      "keys": [
+        "7e788816ef93f2b83279220fb8d4ec0c0e2abe55",
+        "1587bda177f8b173569907f37c01469ccca8571c"
+      ],
+      "instanceCount": 240,
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Disabled",
+        "Color=Success",
+        "Color=Error"
+      ],
+      "properties": [
+        {
+          "name": "Text#2104:3",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Color",
+          "type": "VARIANT",
+          "defaultValue": "Brand",
+          "options": [
+            "Brand",
+            "Gray",
+            "Disabled"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Avatar",
+      "fromLibrary": true,
+      "keys": [
+        "9523fbd8d6e6ab0a8b056ed2c16ed246972afb65",
+        "9d3356dd0170d00fc9605cca9982dd920d099370"
+      ],
+      "instanceCount": 226,
+      "variants": [
+        "Size=lg",
+        "Size=md",
+        "Size=sm",
+        "Size=xs"
+      ],
+      "properties": [
+        {
+          "name": "Size",
+          "type": "VARIANT",
+          "defaultValue": "lg",
+          "options": [
+            "lg",
+            "md",
+            "sm",
+            "xs"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "check-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "823400a4d10ede819dc152e7d942c5e9da9caecd",
+        "8898dbf11abd3f78cac70682c113cb168e29e304"
+      ],
+      "instanceCount": 222,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Section header",
+      "fromLibrary": true,
+      "keys": [
+        "c06b903746d94f8d616a7446aa5f50e2753ad634"
+      ],
+      "instanceCount": 222,
+      "variants": [
+        "Breakpoint=Desktop",
+        "Breakpoint=Mobile"
+      ],
+      "properties": [
+        {
+          "name": "Badge#1985:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting text#1985:3",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Actions#1985:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Divider#1985:5",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Title#1985:6",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "More actions#2004:6",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Breakpoint",
+          "type": "VARIANT",
+          "defaultValue": "Desktop",
+          "options": [
+            "Desktop",
+            "Mobile"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "_Indicator pagination item",
+      "fromLibrary": true,
+      "keys": [
+        "410738f64ea21706954166578763746602017089"
+      ],
+      "instanceCount": 210,
+      "variants": [
+        "Current=True",
+        "Current=False"
+      ],
+      "properties": [
+        {
+          "name": "Current",
+          "type": "VARIANT",
+          "defaultValue": "True",
+          "options": [
+            "True",
+            "False"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Header navigation",
+      "fromLibrary": true,
+      "keys": [
+        "e029a56f99f47fe197c2561130f8a74edfa7477f",
+        "db8914eda4965189b96517f621a9664f0436d1af"
+      ],
+      "instanceCount": 206,
+      "variants": [
+        "Breakpoint=Desktop",
+        "Breakpoint=Tablet",
+        "Breakpoint=Mobile"
+      ],
+      "properties": [
+        {
+          "name": "Breakpoint",
+          "type": "VARIANT",
+          "defaultValue": "Desktop",
+          "options": [
+            "Mobile",
+            "Desktop",
+            "Tablet"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "light_mode-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "a185b133b4e19ee33da34cd06d3c9cc3c4284356"
+      ],
+      "instanceCount": 206,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Page header",
+      "fromLibrary": true,
+      "keys": [
+        "5826180c9d30b736e12e11f89ef40f165c628f14",
+        "b73aaaf6e434cb6a994b33cbc59c85ee7a5d6531",
+        "77194979a9622f99650adc22fd06adc7b6a4d64a"
+      ],
+      "instanceCount": 206,
+      "variants": [
+        "Page=Dashboard, Status=Default",
+        "Page=Incident detail, Status=Default",
+        "Page=Incident detail, Status=02",
+        "Page=Incident detail, Status=03",
+        "Page=Incident detail, Status=Completed",
+        "Page=Incident detail, Status=Cancelled"
+      ],
+      "properties": [
+        {
+          "name": "Page",
+          "type": "VARIANT",
+          "defaultValue": "Dashboard",
+          "options": [
+            "Dashboard",
+            "Incident detail"
+          ]
+        },
+        {
+          "name": "Status",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "02",
+            "03",
+            "Completed",
+            "Cancelled"
+          ]
+        },
+        {
+          "name": "Badge#1985:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting text#1985:3",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Actions#1985:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Divider#1985:5",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Title#1985:6",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "More actions#2004:3",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Copy action#2743:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Back action#2818:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Breakpoint",
+          "type": "VARIANT",
+          "defaultValue": "Desktop",
+          "options": [
+            "Desktop",
+            "Mobile"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "build",
+      "fromLibrary": true,
+      "keys": [
+        "22d80cb2efbd47e912cc9d72610e317a48949f38",
+        "b7397b462873c2572c6e5150032eba4f9bf81872"
+      ],
+      "instanceCount": 196,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Section label",
+      "fromLibrary": true,
+      "keys": [
+        "cf7969183dac6fd003afedcc64e087875c3f9b33",
+        "ae51fedcd2f6bae256a20df3b1abbdd5f14c4c90"
+      ],
+      "instanceCount": 160,
+      "variants": [
+        "Breakpoint=Desktop",
+        "Breakpoint=Mobile"
+      ],
+      "properties": [
+        {
+          "name": "Supporting#1985:3",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Actions#1985:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Title#1985:6",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "More actions#2004:6",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Info icon#2298:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting text#2299:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Primary action#2299:3",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Secondary action#2299:6",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Breakpoint",
+          "type": "VARIANT",
+          "defaultValue": "Desktop",
+          "options": [
+            "Desktop",
+            "Mobile"
+          ]
+        },
+        {
+          "name": "Instance swap#3409:8",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "Card item base",
+      "fromLibrary": true,
+      "keys": [
+        "32e4785ff52d4ae492ee2196adab05e17dcbd812"
+      ],
+      "instanceCount": 116,
+      "variants": [
+        "Type=Text",
+        "Type=Text with supporting",
+        "Type=Text with component",
+        "Type=Text with label",
+        "Type=Text with label and component",
+        "Type=Vertical text with label"
+      ],
+      "properties": [
+        {
+          "name": "Icon swap#2504:0",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Text#2505:18",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Label#2505:21",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Supporting text#2533:4",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Supporting#2533:8",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Instance swap#2539:0",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Type",
+          "type": "VARIANT",
+          "defaultValue": "Text",
+          "options": [
+            "Text",
+            "Text with component",
+            "Vertical text with label",
+            "Text with supporting",
+            "Text with label",
+            "Text with label and component"
+          ]
+        },
+        {
+          "name": "Leading icon#3572:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "delete-24-300-round",
+      "fromLibrary": false,
+      "keys": [
+        "29edb1f36563d2115ee147593861170cbd55d600",
+        "8b18af3b48271220d89b74691baa8cb799e2b11e"
+      ],
+      "instanceCount": 109,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "add-24-300-round",
+      "fromLibrary": false,
+      "keys": [
+        "3bd27ab7f0a4febfe6187a1d7625cbbf5f949297",
+        "9d04257af4da15c03884dd3e190e8ccd46acdd86"
+      ],
+      "instanceCount": 108,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "search-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "91fdb91c82ac229050f64009f03660dd0fc81b5a"
+      ],
+      "instanceCount": 107,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "_Breadcrumbs item / Home",
+      "fromLibrary": true,
+      "keys": [
+        "cb137c6bc2a7c14f9504d14106ed7f08af8d2c14"
+      ],
+      "instanceCount": 103,
+      "variants": [
+        "State=Default",
+        "State=Hover"
+      ],
+      "properties": [
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "_Breadcrumbs item / Truncate link",
+      "fromLibrary": true,
+      "keys": [
+        "af9e3930a1c7b036a119bea0965b01eb5b54501c"
+      ],
+      "instanceCount": 103,
+      "variants": [
+        "State=Default",
+        "State=Hover"
+      ],
+      "properties": [
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Brand logo (Light mode)",
+      "fromLibrary": true,
+      "keys": [
+        "48a1b85889b0e291b74420ad6d054fd282759f40"
+      ],
+      "instanceCount": 103,
+      "variants": [
+        "Size=sm",
+        "Size=md"
+      ],
+      "properties": [
+        {
+          "name": "Size",
+          "type": "VARIANT",
+          "defaultValue": "sm",
+          "options": [
+            "sm",
+            "md"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Breadcrumbs",
+      "fromLibrary": true,
+      "keys": [
+        "93eda97f4cb1646e56af9695eb1204d357b7f3f1"
+      ],
+      "instanceCount": 103,
+      "variants": null,
+      "properties": [
+        {
+          "name": "Link 1#708:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Link 2#708:13",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Link 3#708:19",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Truncate link#760:1",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "car_rental-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "b9c047f0eb206b38cf9fd724cec72eca1a9d57ac"
+      ],
+      "instanceCount": 103,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "content_copy-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "838e9bac8110bd1c27f170eaec98c7c8ecabf258"
+      ],
+      "instanceCount": 103,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "database-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "0eb03a5c04485c6fbd8136a586c083d66d6aa5ce"
+      ],
+      "instanceCount": 103,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "home-20-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "152e741f028774952116068725021c22d5589368"
+      ],
+      "instanceCount": 103,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "home-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "723b0da997caddf8e0c9d5371b1a2aa010569c2f"
+      ],
+      "instanceCount": 103,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "id_card-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "571f9f64f051ea7ab6ec77c31e512c85a616a9fd"
+      ],
+      "instanceCount": 103,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "lock-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "17987c50f438447253fe642ff7d12fb4039e2b07"
+      ],
+      "instanceCount": 103,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "more_horiz-20-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "e361e8c99ab7774ffeb6ea88a0f7ae0f898fc043"
+      ],
+      "instanceCount": 103,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Nav button/Notification",
+      "fromLibrary": true,
+      "keys": [
+        "34fe3cb4282ade1a2b1872ba7552ed56bbf5204e"
+      ],
+      "instanceCount": 103,
+      "variants": [
+        "Expanded=False",
+        "Expanded=True"
+      ],
+      "properties": [
+        {
+          "name": "Expanded",
+          "type": "VARIANT",
+          "defaultValue": "False",
+          "options": [
+            "False",
+            "True"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nav button/Profile",
+      "fromLibrary": true,
+      "keys": [
+        "a4c1905c27b875e9d3104c401f3a76f470e5440f"
+      ],
+      "instanceCount": 103,
+      "variants": [
+        "Expanded=False",
+        "Expanded=True"
+      ],
+      "properties": [
+        {
+          "name": "Expanded",
+          "type": "VARIANT",
+          "defaultValue": "False",
+          "options": [
+            "False",
+            "True"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "notifications-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "6b2c14195d3b547c7df68fe58c591d3d64fac1df"
+      ],
+      "instanceCount": 103,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Sidebar",
+      "fromLibrary": true,
+      "keys": [
+        "eecd8b4b42a852e9e4be38a73ac2e6d071166eb4",
+        "722585b19834cefb3f4ba56bd0e0880a8fba5cd0",
+        "4b0197cf0db89603af55df355949ef69fbe2bf47"
+      ],
+      "instanceCount": 103,
+      "variants": [
+        "State=Expanded",
+        "State=Collapsed"
+      ],
+      "properties": [
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Expanded",
+          "options": [
+            "Expanded",
+            "Collapsed"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "traffic_jam-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "2f0a45e7f5c715055893443325b0f091b2bc2500"
+      ],
+      "instanceCount": 103,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "e911_emergency",
+      "fromLibrary": true,
+      "keys": [
+        "fbc3bd04872ca72c3e4850595c6b4b8c17905bac",
+        "9493f41aad566f83b49ebbc57fab567c5f571e0c"
+      ],
+      "instanceCount": 101,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "ev_station",
+      "fromLibrary": true,
+      "keys": [
+        "43cba263c63e30a836952d7386b61a293bfb560c",
+        "8ad90501a9aa9ace388c0e4afad30a6da6998a47"
+      ],
+      "instanceCount": 101,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "news",
+      "fromLibrary": true,
+      "keys": [
+        "242aacdcba6cdf76c1f5ad083f6441757478aa08",
+        "3b775ebe8e65655e4c88a81001e4c3481a07e4a1"
+      ],
+      "instanceCount": 101,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "swap_driving_apps",
+      "fromLibrary": true,
+      "keys": [
+        "09569bab67027a9a644c8e81f51753b039a703c1"
+      ],
+      "instanceCount": 97,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Tertiary danger button",
+      "fromLibrary": true,
+      "keys": [
+        "8ca8eb1138f915e8d6460887b6952778695dd86c"
+      ],
+      "instanceCount": 97,
+      "variants": [
+        "State=Default",
+        "State=Hover",
+        "State=Focused",
+        "State=Disabled"
+      ],
+      "properties": [
+        {
+          "name": "Text#105:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Leading icon#105:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Trailing icon#105:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Leading icon swap#133:10",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Trailing icon swap#133:12",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Button text#1153:6",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover",
+            "Focused",
+            "Disabled"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "car_repair-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "1e59e85c3ba457b3fbc4ea88a7eacba331ca23c7"
+      ],
+      "instanceCount": 90,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Tabs",
+      "fromLibrary": false,
+      "keys": [
+        "abcddb60d8ea1e2c6a76addb3913063455d47601",
+        "88b5d2b15c6147ec52c1eb93a59bbe50d19e3e97"
+      ],
+      "instanceCount": 90,
+      "variants": null,
+      "properties": [
+        {
+          "name": "Tab 3#2344:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Tab 4#2344:3",
+          "type": "BOOLEAN",
+          "defaultValue": false,
+          "options": null
+        },
+        {
+          "name": "Tab 5#2344:4",
+          "type": "BOOLEAN",
+          "defaultValue": false,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "car_crash",
+      "fromLibrary": true,
+      "keys": [
+        "ab81e75e2a2b6789c844d347e2ffb2e754dea1fb"
+      ],
+      "instanceCount": 83,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Radio text card",
+      "fromLibrary": true,
+      "keys": [
+        "bbf88eeeddcd8d6b38933dcda02f0bedb6cadf7a",
+        "fe5bd24f9e7526c06095743770eba831433252b7"
+      ],
+      "instanceCount": 80,
+      "variants": [
+        "State=Default, Selected=False",
+        "State=Default, Selected=True",
+        "State=Hover, Selected=False",
+        "State=Hover, Selected=True",
+        "State=Focused, Selected=False",
+        "State=Focused, Selected=True",
+        "State=Disabled, Selected=False",
+        "State=Disabled, Selected=True"
+      ],
+      "properties": [
+        {
+          "name": "Supporting text#2713:3",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Text#2713:4",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Supporting#2713:5",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover",
+            "Focused",
+            "Disabled"
+          ]
+        },
+        {
+          "name": "Selected",
+          "type": "VARIANT",
+          "defaultValue": "False",
+          "options": [
+            "False",
+            "True"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "stylus-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "d38f8e58a6027f1ecf4fad7cba3d0521d677282c"
+      ],
+      "instanceCount": 78,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "keyboard_arrow_left-20-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "c343f8a5010c84a249908e0842ae64e41eb6a63f"
+      ],
+      "instanceCount": 74,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "keyboard_arrow_right-20-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "f34d1e0df1f7017a0b80131f7ba24176c41595f6"
+      ],
+      "instanceCount": 74,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Background+Border",
+      "fromLibrary": false,
+      "keys": [
+        "2ad21d890bad6bdc25601c8dd7cf15b15baa2fd9",
+        "d3aa81f237cdcabb709879f39816a60026ca919c"
+      ],
+      "instanceCount": 68,
+      "variants": [
+        "อะไหล่=รายการในคลัง",
+        "อะไหล่=รายการที่เลือก",
+        "อะไหล่=เพิ่มอะไหล่"
+      ],
+      "properties": [
+        {
+          "name": "จัดซื้อเพิ่ม#109:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Suggestion#109:3",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "อะไหล่",
+          "type": "VARIANT",
+          "defaultValue": "รายการในคลัง",
+          "options": [
+            "รายการในคลัง",
+            "รายการที่เลือก",
+            "เพิ่มอะไหล่"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "attach_file-24-300-round",
+      "fromLibrary": false,
+      "keys": [
+        "64ad1b10492c2fb66c4a059f13c48ef8d6e31bb8"
+      ],
+      "instanceCount": 67,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Images",
+      "fromLibrary": true,
+      "keys": [
+        "0206052191cd325d5281315d1ee87bdee6f7623c"
+      ],
+      "instanceCount": 64,
+      "variants": [
+        "Size=md, Type=Image",
+        "Size=sm, Type=Image",
+        "Size=md, Type=Empty",
+        "Size=sm, Type=Empty"
+      ],
+      "properties": [
+        {
+          "name": "Indicator pagination#2635:14",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Buttons#2635:15",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Size",
+          "type": "VARIANT",
+          "defaultValue": "md",
+          "options": [
+            "md",
+            "sm"
+          ]
+        },
+        {
+          "name": "Type",
+          "type": "VARIANT",
+          "defaultValue": "Image",
+          "options": [
+            "Image",
+            "Empty"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Card item row",
+      "fromLibrary": true,
+      "keys": [
+        "4639d87a2afcaceaac07fcc56bde9ef02a138a5e"
+      ],
+      "instanceCount": 58,
+      "variants": [
+        "Type=1 Row",
+        "Type=2 Rows"
+      ],
+      "properties": [
+        {
+          "name": "Item 1#2653:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Item 2#2653:1",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Type",
+          "type": "VARIANT",
+          "defaultValue": "1 Row",
+          "options": [
+            "1 Row",
+            "2 Rows"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "print-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "2ffda8ab40fcfc9c64df8fbae3384853a1a25a6a"
+      ],
+      "instanceCount": 56,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "quick_reference_all-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "746712c9b0edd1de4ecdba5fedc343ef8652698d"
+      ],
+      "instanceCount": 56,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Badge outline with indicator",
+      "fromLibrary": true,
+      "keys": [
+        "b2892a42ab216e41baf21dd25d44052d3a047c97",
+        "d31d96fa2376cf198f9888677e491f9cc808c19c"
+      ],
+      "instanceCount": 54,
+      "variants": [
+        "Color=Gray",
+        "Color=Brand",
+        "Color=Info",
+        "Color=Success",
+        "Color=Warning",
+        "Color=Error"
+      ],
+      "properties": [
+        {
+          "name": "Text#1868:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Color",
+          "type": "VARIANT",
+          "defaultValue": "Gray",
+          "options": [
+            "Gray",
+            "Info",
+            "Success",
+            "Warning",
+            "Error",
+            "Brand"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Card form row",
+      "fromLibrary": true,
+      "keys": [
+        "f7360a7d852ac8c8392c171c8dde20ab26b8a078"
+      ],
+      "instanceCount": 50,
+      "variants": [
+        "Width=Full",
+        "Width=50%",
+        "Width=25%"
+      ],
+      "properties": [
+        {
+          "name": "Input 1 swap#2499:3",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Input 2#2499:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Input 2 swap#2499:5",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Width",
+          "type": "VARIANT",
+          "defaultValue": "Full",
+          "options": [
+            "Full",
+            "50%",
+            "25%"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Items per page dropdown",
+      "fromLibrary": true,
+      "keys": [
+        "c38cddd5e8ace0b096aa0f6a2dfdca9ebbbf1e8c"
+      ],
+      "instanceCount": 50,
+      "variants": [
+        "State=Default",
+        "State=Open",
+        "State=List"
+      ],
+      "properties": [
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Open",
+            "List"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Table pagination",
+      "fromLibrary": true,
+      "keys": [
+        "c6afe41aedc89bca69c1f39a8fd060b1fe0327b0"
+      ],
+      "instanceCount": 50,
+      "variants": [
+        "Breakpoint=Desktop",
+        "Breakpoint=Mobile"
+      ],
+      "properties": [
+        {
+          "name": "Breakpoint",
+          "type": "VARIANT",
+          "defaultValue": "Desktop",
+          "options": [
+            "Desktop",
+            "Mobile"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Vertical scrollbar",
+      "fromLibrary": true,
+      "keys": [
+        "4a1cfcc3944efc6d9356b5a305dd992f7f7b6a8f",
+        "7a58452a5250803e89b1e0c0d48a74caada35efc"
+      ],
+      "instanceCount": 48,
+      "variants": [
+        "Length=25%, Position=Top",
+        "Length=50%, Position=Top",
+        "Length=75%, Position=Top",
+        "Length=25%, Position=Bottom",
+        "Length=50%, Position=Bottom",
+        "Length=75%, Position=Bottom"
+      ],
+      "properties": [
+        {
+          "name": "Length",
+          "type": "VARIANT",
+          "defaultValue": "25%",
+          "options": [
+            "25%",
+            "50%",
+            "75%"
+          ]
+        },
+        {
+          "name": "Position",
+          "type": "VARIANT",
+          "defaultValue": "Top",
+          "options": [
+            "Top",
+            "Bottom"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "filter_list-24-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "89b103247d7678882c9798a60fe0b87a0700adf4"
+      ],
+      "instanceCount": 46,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Content divider",
+      "fromLibrary": true,
+      "keys": [
+        "3faf3762712b800dfb9cb5ce72217a6f1e2001e9"
+      ],
+      "instanceCount": 44,
+      "variants": [
+        "Type=Default",
+        "Type=Text"
+      ],
+      "properties": [
+        {
+          "name": "Text#2631:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Type",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Text",
+            "Default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "add-20-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "051ec912ede42903508c6baea720c2127f3a4597"
+      ],
+      "instanceCount": 42,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Indicator pagination",
+      "fromLibrary": true,
+      "keys": [
+        "68be60d0776b30ea1a5091eb71636ce53e07b4a0"
+      ],
+      "instanceCount": 42,
+      "variants": null,
+      "properties": [
+        {
+          "name": "Indicator 3#2714:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Indicator 4#2714:1",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Indicator 5#2714:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "Number input",
+      "fromLibrary": true,
+      "keys": [
+        "314ca356f1aa904ccc1ef13b0d6cb1f2545dbfd3"
+      ],
+      "instanceCount": 42,
+      "variants": [
+        "State=Filled, Size=md",
+        "State=Hover, Size=md",
+        "State=Hover, Size=lg",
+        "State=Focused, Size=md",
+        "State=Focused, Size=lg",
+        "State=Disabled, Size=md",
+        "State=Disabled, Size=lg",
+        "State=Error, Size=md",
+        "State=Error, Size=lg",
+        "State=Error Hover, Size=md",
+        "State=Error Hover, Size=lg",
+        "State=Error Focused, Size=md",
+        "State=Error Focused, Size=lg",
+        "State=Filled, Size=lg"
+      ],
+      "properties": [
+        {
+          "name": "Label#1990:6",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Label text#1990:7",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Number#1990:9",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Helper text#1990:10",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Info icon#1990:11",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Helper#1990:13",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Optional#1990:14",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Filled",
+          "options": [
+            "Filled",
+            "Hover",
+            "Focused",
+            "Disabled",
+            "Error",
+            "Error Hover",
+            "Error Focused"
+          ]
+        },
+        {
+          "name": "Size",
+          "type": "VARIANT",
+          "defaultValue": "md",
+          "options": [
+            "md",
+            "lg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "remove-20-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "2e34e803c73eea7ddc57a620bcf9d3e251cab3b6"
+      ],
+      "instanceCount": 42,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "location_on",
+      "fromLibrary": true,
+      "keys": [
+        "096ddf908781ee057bf06db45ae8d29668d42ae3"
+      ],
+      "instanceCount": 36,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "resize-right",
+      "fromLibrary": true,
+      "keys": [
+        "904cb89c89cc95bfa368bcc5d70745e2c70d1bf7"
+      ],
+      "instanceCount": 36,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Text area",
+      "fromLibrary": true,
+      "keys": [
+        "9237413644d6ed5849f10756c7bed857b2a09c12"
+      ],
+      "instanceCount": 36,
+      "variants": [
+        "State=Default, Size=md",
+        "State=Filled, Size=md",
+        "State=Hover, Size=md",
+        "State=Focused, Size=md",
+        "State=Disabled, Size=md",
+        "State=Readonly, Size=md",
+        "State=Error, Size=md",
+        "State=Error Hover, Size=md",
+        "State=Error Focused, Size=md",
+        "State=Error Readonly, Size=md"
+      ],
+      "properties": [
+        {
+          "name": "Text#33:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Trailing icon swap#33:6",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Trailing icon#33:12",
+          "type": "BOOLEAN",
+          "defaultValue": false,
+          "options": null
+        },
+        {
+          "name": "Helper text#33:15",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Helper#33:19",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Label#265:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Label text#265:7",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Info icon#522:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Optional#1105:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Show Placeholder#3749:21",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Filled",
+            "Hover",
+            "Focused",
+            "Disabled",
+            "Readonly",
+            "Error",
+            "Error Hover",
+            "Error Focused",
+            "Error Readonly"
+          ]
+        },
+        {
+          "name": "Size",
+          "type": "VARIANT",
+          "defaultValue": "md",
+          "options": [
+            "md"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Header",
+      "fromLibrary": true,
+      "keys": [
+        "1a4c81f4b5b21fa2e08ccd42c5af46b96fdef91c"
+      ],
+      "instanceCount": 35,
+      "variants": [
+        "Type=Header",
+        "Type=Subheader"
+      ],
+      "properties": [
+        {
+          "name": "Type",
+          "type": "VARIANT",
+          "defaultValue": "Header",
+          "options": [
+            "Header",
+            "Subheader"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "State",
+      "fromLibrary": true,
+      "keys": [
+        "d432743afe6ad16fb33a769a2b58250e9a10750d"
+      ],
+      "instanceCount": 35,
+      "variants": [
+        "State=Default",
+        "State=Success",
+        "State=Failed",
+        "State=Sub Flow",
+        "State=Sub Flow 2",
+        "State=Sub Success",
+        "State=Sub Failed",
+        "State=Other"
+      ],
+      "properties": [
+        {
+          "name": "Flow#486:6",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Sub Flow",
+            "Sub Flow 2",
+            "Success",
+            "Sub Success",
+            "Failed",
+            "Sub Failed",
+            "Other"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "garage",
+      "fromLibrary": true,
+      "keys": [
+        "31a7a3e6da92059ce9564a921cf96b5a65251ef8"
+      ],
+      "instanceCount": 34,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "search_check-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "230bb3b003a72d41a3649ee10760711ec3846d87"
+      ],
+      "instanceCount": 32,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "swap_horiz-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "f2b16e3fd439414a94daead42b001646ad848cab"
+      ],
+      "instanceCount": 32,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "call-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "117dd21b39fd7f89391fa783e220ad32b61746e2"
+      ],
+      "instanceCount": 30,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "close-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "76b1f215f9d4e198d61f79703c483816cda4272d",
+        "34cdcfb068f4facf03c033a0cb7877463ded0f01"
+      ],
+      "instanceCount": 30,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Featured icon",
+      "fromLibrary": true,
+      "keys": [
+        "b8fdc761d7394015c8959f811f02adf77baf8b0a"
+      ],
+      "instanceCount": 28,
+      "variants": [
+        "Color=Brand, Size=md",
+        "Color=Gray, Size=md",
+        "Color=Info, Size=md",
+        "Color=Success, Size=md",
+        "Color=Warning, Size=md",
+        "Color=Error, Size=md",
+        "Color=Disabled, Size=md",
+        "Color=Purple, Size=md",
+        "Color=Brand, Size=sm",
+        "Color=Gray, Size=sm",
+        "Color=Info, Size=sm",
+        "Color=Success, Size=sm",
+        "Color=Warning, Size=sm",
+        "Color=Error, Size=sm",
+        "Color=Disabled, Size=sm",
+        "Color=Purple, Size=sm"
+      ],
+      "properties": [
+        {
+          "name": "Icon swap#2032:0",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Color",
+          "type": "VARIANT",
+          "defaultValue": "Brand",
+          "options": [
+            "Gray",
+            "Info",
+            "Success",
+            "Warning",
+            "Error",
+            "Brand",
+            "Disabled"
+          ]
+        },
+        {
+          "name": "Size",
+          "type": "VARIANT",
+          "defaultValue": "md",
+          "options": [
+            "md",
+            "sm"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dropdown/Search PEA with request",
+      "fromLibrary": true,
+      "keys": [
+        "d3db73e40ee4b6cdbb983fbece7f28123d0c6ffa"
+      ],
+      "instanceCount": 26,
+      "variants": [
+        "Expanded=True, State=Selected 2",
+        "Expanded=True, State=Search not found 2",
+        "Expanded=True, State=Selected",
+        "Expanded=True, State=Search not found",
+        "Expanded=False, State=Selected",
+        "Expanded=False, State=Default"
+      ],
+      "properties": [
+        {
+          "name": "Expanded",
+          "type": "VARIANT",
+          "defaultValue": "False",
+          "options": [
+            "False",
+            "True"
+          ]
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Selected",
+            "Search not found",
+            "Selected 2",
+            "Search not found 2"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "person-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "f3dae8c55660b2721d3b29956b8c32fc643d32b9"
+      ],
+      "instanceCount": 26,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Background overlay",
+      "fromLibrary": true,
+      "keys": [
+        "c032f7b6a1fdcff798b63777242f4cfb23b1650b"
+      ],
+      "instanceCount": 24,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Checkbox",
+      "fromLibrary": true,
+      "keys": [
+        "dd7b1a8d5bf8f9f72509076d81f3f8cdbe135b4e",
+        "aa8af4d41e5ed1f9926cbd06e7ed6764a3dcf471"
+      ],
+      "instanceCount": 24,
+      "variants": [
+        "State=Default, Type=Unselected",
+        "State=Hover, Type=Unselected",
+        "State=Focused, Type=Unselected",
+        "State=Default, Type=Selected",
+        "State=Hover, Type=Selected",
+        "State=Focused, Type=Selected",
+        "State=Default, Type=Indeterminate",
+        "State=Hover, Type=Indeterminate",
+        "State=Focused, Type=Indeterminate",
+        "State=Disabled, Type=Selected",
+        "State=Disabled, Type=Unselected",
+        "State=Disabled, Type=Indeterminate"
+      ],
+      "properties": [
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover",
+            "Focused",
+            "Disabled"
+          ]
+        },
+        {
+          "name": "Type",
+          "type": "VARIANT",
+          "defaultValue": "Unselected",
+          "options": [
+            "Unselected",
+            "Selected",
+            "Indeterminate"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "keyboard_arrow_down",
+      "fromLibrary": true,
+      "keys": [
+        "cf9afb04d3ccdbc6097b589da248d63ec5aba559"
+      ],
+      "instanceCount": 24,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "smartphone-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "7e755d63cf5c5e1fe7ab5e7eddeea4fc4f6aae21"
+      ],
+      "instanceCount": 24,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "swap_vert-20-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "338f6cd2920ca3f97d87362e059fc19defa4fecc"
+      ],
+      "instanceCount": 24,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "imagesmode-48-300-round-filled",
+      "fromLibrary": true,
+      "keys": [
+        "a443e461ee265a9eea2329dac19f085fd04f8aed"
+      ],
+      "instanceCount": 22,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Modal footer",
+      "fromLibrary": true,
+      "keys": [
+        "24288abdb52fddba53755e00aff29972ef4a9bd5"
+      ],
+      "instanceCount": 22,
+      "variants": [
+        "Alignment=Horizontal fill",
+        "Alignment=Horizontal right",
+        "Alignment=Vertical fill"
+      ],
+      "properties": [
+        {
+          "name": "Secondary action#106:3",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Divider#2487:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Padding top#2487:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Primary action#2505:14",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Tertiary action#2560:61",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Alignment",
+          "type": "VARIANT",
+          "defaultValue": "Horizontal fill",
+          "options": [
+            "Horizontal fill",
+            "Horizontal right",
+            "Vertical fill"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Modal header",
+      "fromLibrary": true,
+      "keys": [
+        "38d60f8c7dc8881aed09993d84659bdabd946cfb"
+      ],
+      "instanceCount": 22,
+      "variants": [
+        "Alignment=Left",
+        "Alignment=Center"
+      ],
+      "properties": [
+        {
+          "name": "Title#1276:1",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Close icon#1276:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Divider#1278:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting#2485:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting text#2486:2",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Featured icon#2487:8",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Padding bottom#2491:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Back icon#2633:8",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Alignment",
+          "type": "VARIANT",
+          "defaultValue": "Left",
+          "options": [
+            "Center",
+            "Left"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "schedule-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "a2a51c1f870eac9f78166d8ff258c826d8b5ecf1"
+      ],
+      "instanceCount": 22,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "search-sm",
+      "fromLibrary": true,
+      "keys": [
+        "dd12a7b9effe12d58e71e02fa1d9e1be18181c40"
+      ],
+      "instanceCount": 19,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "_Modal content",
+      "fromLibrary": true,
+      "keys": [
+        "cfaeeaee1c3de364d01d1b9ff4b770d27265fbec"
+      ],
+      "instanceCount": 18,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "autorenew-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "c46e8c14a7d10e87b4994e2586e36e60e18b112e"
+      ],
+      "instanceCount": 18,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "garage_home-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "d7a761b13980dd20ac94a5cc377d5e1d30677bc0"
+      ],
+      "instanceCount": 18,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Repair section",
+      "fromLibrary": true,
+      "keys": [
+        "9ae618077b822975a8437f894a7c7fcb64fa6e74"
+      ],
+      "instanceCount": 18,
+      "variants": [
+        "Status=01",
+        "Status=02",
+        "Status=03",
+        "Status=Cancelled"
+      ],
+      "properties": [
+        {
+          "name": "Status",
+          "type": "VARIANT",
+          "defaultValue": "01",
+          "options": [
+            "01",
+            "02",
+            "03",
+            "Cancelled"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Illustration",
+      "fromLibrary": true,
+      "keys": [
+        "f633b1791f3dd47cd2045241952e5dd793ef82a5"
+      ],
+      "instanceCount": 16,
+      "variants": [
+        "Style=Search not found, Size=sm",
+        "Style=Search not found, Size=md",
+        "Style=Search not found, Size=lg",
+        "Style=Empty folder, Size=sm",
+        "Style=Empty folder, Size=md",
+        "Style=Empty folder, Size=lg"
+      ],
+      "properties": [
+        {
+          "name": "Style",
+          "type": "VARIANT",
+          "defaultValue": "Search not found",
+          "options": [
+            "Search not found",
+            "Empty folder"
+          ]
+        },
+        {
+          "name": "Size",
+          "type": "VARIANT",
+          "defaultValue": "sm",
+          "options": [
+            "sm",
+            "md",
+            "lg"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pill outline md",
+      "fromLibrary": true,
+      "keys": [
+        "2f294656bb852738ad588ef6769c4267f799e035"
+      ],
+      "instanceCount": 16,
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Info",
+        "Color=Success",
+        "Color=Warning",
+        "Color=Error"
+      ],
+      "properties": [
+        {
+          "name": "Text#2230:3",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Color",
+          "type": "VARIANT",
+          "defaultValue": "Brand",
+          "options": [
+            "Brand",
+            "Gray",
+            "Info",
+            "Success",
+            "Warning",
+            "Error"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Replace section",
+      "fromLibrary": true,
+      "keys": [
+        "62ff3c35b1a8cc55170fd4604a274d6de524e6e5"
+      ],
+      "instanceCount": 16,
+      "variants": [
+        "Status=01",
+        "Status=02",
+        "Status=03",
+        "Status=Cancelled"
+      ],
+      "properties": [
+        {
+          "name": "Status",
+          "type": "VARIANT",
+          "defaultValue": "01",
+          "options": [
+            "01",
+            "02",
+            "03",
+            "Cancelled"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "_close_small-20-400-round-resized",
+      "fromLibrary": true,
+      "keys": [
+        "592edbcb32f69b28df9eceb989c3faef6503823e"
+      ],
+      "instanceCount": 14,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "call",
+      "fromLibrary": true,
+      "keys": [
+        "f6c1254582542113e24298700f4937fd62d60a6c"
+      ],
+      "instanceCount": 14,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Badge outline with remove icon",
+      "fromLibrary": true,
+      "keys": [
+        "9d8b1507a13d25c59874191d6910e8ab54a90a8a"
+      ],
+      "instanceCount": 12,
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Disabled"
+      ],
+      "properties": [
+        {
+          "name": "Text#2104:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Color",
+          "type": "VARIANT",
+          "defaultValue": "Brand",
+          "options": [
+            "Brand",
+            "Gray",
+            "Disabled"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Card",
+      "fromLibrary": true,
+      "keys": [
+        "7e162f7df4b15bd5a878bb6903b7163cec7d3925"
+      ],
+      "instanceCount": 12,
+      "variants": [
+        "State=Default, Type=Centered image",
+        "State=Selected, Type=Centered image",
+        "State=Default, Type=Left aligned small image",
+        "State=Default, Type=Left aligned image"
+      ],
+      "properties": [
+        {
+          "name": "Secondary action#2508:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Card item#2508:1",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting 2#2508:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting#2508:3",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting text 2#2508:4",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Supporting text#2508:5",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Subtitle#2508:6",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Subtitle text#2508:7",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Title#2508:8",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Primary action#2508:9",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Actions#2508:15",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Tertiary action#2531:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Selected"
+          ]
+        },
+        {
+          "name": "Type",
+          "type": "VARIANT",
+          "defaultValue": "Centered image",
+          "options": [
+            "Centered image",
+            "Left aligned small image",
+            "Left aligned image"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cursor",
+      "fromLibrary": true,
+      "keys": [
+        "f8f458f35b3e1e9bee936fc1bcfb3c8821651e05"
+      ],
+      "instanceCount": 10,
+      "variants": [
+        "State=Drag",
+        "State=Arrow",
+        "State=Hand"
+      ],
+      "properties": [
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Hand",
+          "options": [
+            "Arrow",
+            "Drag",
+            "Hand"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Flow item",
+      "fromLibrary": true,
+      "keys": [
+        "efb401a6e54a57cb8d126a29ed43e3aab5faa9b0"
+      ],
+      "instanceCount": 10,
+      "variants": [
+        "Type=Flow Connector",
+        "Type=Frame"
+      ],
+      "properties": [
+        {
+          "name": "Flow#4970:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "No.#4970:1",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Text#4970:2",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Show Cursor#4970:3",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Type",
+          "type": "VARIANT",
+          "defaultValue": "Flow Connector",
+          "options": [
+            "Flow Connector",
+            "Frame"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Icon button",
+      "fromLibrary": true,
+      "keys": [
+        "be3001e015d74e00e8e41cf38daabea4ac65053d"
+      ],
+      "instanceCount": 10,
+      "variants": [
+        "State=Default",
+        "State=Hover",
+        "State=Focused",
+        "State=Disabled"
+      ],
+      "properties": [
+        {
+          "name": "Icon swap#133:10",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover",
+            "Focused",
+            "Disabled"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "List with checkbox item",
+      "fromLibrary": true,
+      "keys": [
+        "fd16dae3bc22ac51a01283f4f278a5e5d3ccd440"
+      ],
+      "instanceCount": 10,
+      "variants": [
+        "State=Default",
+        "State=Hover",
+        "State=Selected",
+        "State=Selected Hover",
+        "State=Disabled"
+      ],
+      "properties": [
+        {
+          "name": "Text#1028:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Supporting text#1028:5",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Supporting 2#1028:15",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting#1807:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting text 2#2147:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Avatar#3119:9",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover",
+            "Selected",
+            "Selected Hover",
+            "Disabled"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "swap_driving_apps_wheel-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "98a04a99c1dd4194dfbc5411625e73e9ae66804e"
+      ],
+      "instanceCount": 10,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "airline_seat_recline_extra",
+      "fromLibrary": true,
+      "keys": [
+        "17101db073daa873f95113d41a2eb4a2aa05aa8d"
+      ],
+      "instanceCount": 8,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Checkbox with badge",
+      "fromLibrary": true,
+      "keys": [
+        "9a02d25ed20cac3b5c4d6160ca65945ef92d512d"
+      ],
+      "instanceCount": 8,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "description",
+      "fromLibrary": true,
+      "keys": [
+        "29997ab8f10d157da6b7eb16c90ca5cfa2d94e76"
+      ],
+      "instanceCount": 8,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "directions_car-20-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "03c0f37e7ab83ea19833462bf2a21233bdf6d7f9"
+      ],
+      "instanceCount": 8,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "person-20-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "6ec1df5a413a33aa3ffd0fdee2f83e9555561066"
+      ],
+      "instanceCount": 8,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "calendar_clock-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "17c1f54942686727c7f1ae665fd903f346093660"
+      ],
+      "instanceCount": 6,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "contract",
+      "fromLibrary": true,
+      "keys": [
+        "e2d8365679c0b5cdd125747964e5d1cbbfe36007"
+      ],
+      "instanceCount": 6,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Delay fee",
+      "fromLibrary": true,
+      "keys": [
+        "30f7b373edccc0f5e70633e5b2882b3b6356c522"
+      ],
+      "instanceCount": 6,
+      "variants": [
+        "Status=On-time",
+        "Status=Delay"
+      ],
+      "properties": [
+        {
+          "name": "Status",
+          "type": "VARIANT",
+          "defaultValue": "On-time",
+          "options": [
+            "On-time",
+            "Delay"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "download-24-300-round",
+      "fromLibrary": false,
+      "keys": [
+        "bb38cad80b70cd6839429ac8d2090290d2f9238d",
+        "98df8e3fdaa011ec2d84bf537a40343636842a51"
+      ],
+      "instanceCount": 5,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "_File icon",
+      "fromLibrary": true,
+      "keys": [
+        "486dbe0cf9d6190296782da9d744426a2b943a99"
+      ],
+      "instanceCount": 4,
+      "variants": [
+        "Type=Document",
+        "Type=Image"
+      ],
+      "properties": [
+        {
+          "name": "Type",
+          "type": "VARIANT",
+          "defaultValue": "Document",
+          "options": [
+            "Document",
+            "Image"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "_File upload item base",
+      "fromLibrary": true,
+      "keys": [
+        "9bca8080bcbcf14c01949f506da3efa4ab6487a1"
+      ],
+      "instanceCount": 4,
+      "variants": [
+        "State=In progress",
+        "State=Completed",
+        "State=Error"
+      ],
+      "properties": [
+        {
+          "name": "File name#2841:4",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "File size#2841:8",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Progress bar#2843:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Actions#2858:1",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Download action#2858:5",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Delete action#2858:9",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "In progress",
+          "options": [
+            "In progress",
+            "Completed",
+            "Error"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "add-24-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "26b5f145ec277477c4450be9478182d6a4403d24"
+      ],
+      "instanceCount": 4,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "arrow_upward_alt-20-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "12181004e23df1fa1a36ada3e9db69b68973fe0d"
+      ],
+      "instanceCount": 4,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "battery_horiz_050-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "a1d7fac795e480b79d8d9e84ae2f41019e40d4ff"
+      ],
+      "instanceCount": 4,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "check_circle-20-300-round-fill",
+      "fromLibrary": true,
+      "keys": [
+        "f4dc3c4d19a09ecfc6453fae71559722bb0a85cc"
+      ],
+      "instanceCount": 4,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "check-20-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "6f9ee947820bba9dd9ee5424d7a7f992bb49d511",
+        "10746a1a61f0a6bbf1012573088c75a7ffa1172f"
+      ],
+      "instanceCount": 4,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Checkbox with description",
+      "fromLibrary": true,
+      "keys": [
+        "977a92f38614b4e85dc43cfa15609c8856217b53"
+      ],
+      "instanceCount": 4,
+      "variants": null,
+      "properties": [
+        {
+          "name": "Supporting#2192:1",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Text#2192:2",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Supporting text#2762:2",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "download-24-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "cefaf2089e8e43d1cd502022b9efb6a56bac8b38"
+      ],
+      "instanceCount": 4,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "draft-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "e9e46b49ab4407a6387c854769609015c2c66f03"
+      ],
+      "instanceCount": 4,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Horizontal scrollbar",
+      "fromLibrary": true,
+      "keys": [
+        "25a88b3aa56c9851dd7f4a1165b39be8be44e323"
+      ],
+      "instanceCount": 4,
+      "variants": [
+        "Length=25%",
+        "Length=50%",
+        "Length=75%"
+      ],
+      "properties": [
+        {
+          "name": "Length",
+          "type": "VARIANT",
+          "defaultValue": "25%",
+          "options": [
+            "75%",
+            "50%",
+            "25%"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Incident detail",
+      "fromLibrary": true,
+      "keys": [
+        "f1e41961d41f61d3aace5a16778637387bf13735"
+      ],
+      "instanceCount": 4,
+      "variants": null,
+      "properties": [
+        {
+          "name": "Repair section#317:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Replace section#317:1",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Delay fee#317:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "local_car_wash-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "70479232ec906f6477857a48fed92bdf9b6bf771"
+      ],
+      "instanceCount": 4,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "local_gas_station-24-300-round-filled",
+      "fromLibrary": true,
+      "keys": [
+        "06829e1e779d5921d4c43421a24719cdfd54bc25"
+      ],
+      "instanceCount": 4,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "local_parking-24-fill-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "31f53c49f2a25c3ca3b7ac06cbb6a9442249b2c6"
+      ],
+      "instanceCount": 4,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Modal / Sent to Repair",
+      "fromLibrary": true,
+      "keys": [
+        "cb0b39a2f3c2bab0e547d5799350b3b704826ee2"
+      ],
+      "instanceCount": 4,
+      "variants": [
+        "State=Default",
+        "State=Filled"
+      ],
+      "properties": [
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Filled"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Progress bar",
+      "fromLibrary": true,
+      "keys": [
+        "eb0c588a3a8e8f8c03b541e766b3117c8a0e05fd"
+      ],
+      "instanceCount": 4,
+      "variants": [
+        "Label=Right, Progress=0%",
+        "Label=Right, Progress=20%",
+        "Label=Right, Progress=40%",
+        "Label=Right, Progress=60%",
+        "Label=Right, Progress=80%",
+        "Label=Right, Progress=100%",
+        "Label=Top left, Progress=0%",
+        "Label=Top left, Progress=20%",
+        "Label=Top left, Progress=40%"
+      ],
+      "properties": [
+        {
+          "name": "Percentage#2941:3",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Label",
+          "type": "VARIANT",
+          "defaultValue": "Right",
+          "options": [
+            "Right",
+            "Top left"
+          ]
+        },
+        {
+          "name": "Progress",
+          "type": "VARIANT",
+          "defaultValue": "0%",
+          "options": [
+            "0%",
+            "20%",
+            "40%",
+            "60%",
+            "80%",
+            "100%"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Request card",
+      "fromLibrary": true,
+      "keys": [
+        "aeac55dbc2a45c7ba9289c8d20209aed3659ef13"
+      ],
+      "instanceCount": 4,
+      "variants": [
+        "Status=Level 1 approval",
+        "Status=1.1 Request verification",
+        "Status=1.2 Final approval",
+        "Status=1.3 Admin reject",
+        "Status=2.0 Key handover",
+        "Status=3.1 Vehicle pick-up",
+        "Status=3.2 In use",
+        "Status=4.1 Vehicle return",
+        "Status=4.2 Vehicle reject",
+        "Status=5.0 Completed"
+      ],
+      "properties": [
+        {
+          "name": "Status",
+          "type": "VARIANT",
+          "defaultValue": "Level 1 approval",
+          "options": [
+            "Level 1 approval",
+            "1.1 Request verification",
+            "1.2 Final approval",
+            "1.3 Admin reject",
+            "2.0 Key handover",
+            "3.1 Vehicle pick-up",
+            "3.2 In use",
+            "4.1 Vehicle return",
+            "4.2 Vehicle reject",
+            "5.0 Completed"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Table header",
+      "fromLibrary": true,
+      "keys": [
+        "4b53625d681b3aae8db00893dea5da1f9bb178c6"
+      ],
+      "instanceCount": 4,
+      "variants": [
+        "Breakpoint=Desktop",
+        "Breakpoint=Mobile"
+      ],
+      "properties": [
+        {
+          "name": "Badge#1985:2",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting text#1985:3",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Actions#1985:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Divider#1985:5",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Title#1985:6",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "More actions#2004:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Table title#2009:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Filters#2043:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Action 1 swap#2558:0",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Action 2 swap#2558:3",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Action 3 swap#2558:6",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Breakpoint",
+          "type": "VARIANT",
+          "defaultValue": "Desktop",
+          "options": [
+            "Desktop",
+            "Mobile"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Vehicle card",
+      "fromLibrary": true,
+      "keys": [
+        "de237940346e79f92021ddc1ded94585c82de98c"
+      ],
+      "instanceCount": 4,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Modal / Select contract type",
+      "fromLibrary": false,
+      "keys": [
+        "fae342a82cc20ec54c1b4cfe0f30f3858b74e6f1"
+      ],
+      "instanceCount": 3,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Alert",
+      "fromLibrary": true,
+      "keys": [
+        "5e67745441c2d41ca83a4d317d8808f1b9d3f432"
+      ],
+      "instanceCount": 2,
+      "variants": [
+        "Color=Brand",
+        "Color=Success",
+        "Color=Warning",
+        "Color=Error",
+        "Color=Info",
+        "Color=Gray"
+      ],
+      "properties": [
+        {
+          "name": "Supporting#591:22",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Text#1336:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Leading icon#1516:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting text#2667:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Close icon#2667:6",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Color",
+          "type": "VARIANT",
+          "defaultValue": "Brand",
+          "options": [
+            "Brand",
+            "Success",
+            "Warning",
+            "Error",
+            "Info",
+            "Gray"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Background+Border/เพิ่มอะไหล่",
+      "fromLibrary": false,
+      "keys": [
+        "62dfc14191d9e06bff445f92381ea775a4e67137"
+      ],
+      "instanceCount": 2,
+      "variants": null,
+      "properties": [
+        {
+          "name": "จัดซื้อเพิ่ม#109:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Suggestion#109:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "Badge outline with leading instant and remove icon",
+      "fromLibrary": true,
+      "keys": [
+        "a98ddb6fedff92318facadef5be5d175d5cb72d2"
+      ],
+      "instanceCount": 2,
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Disabled"
+      ],
+      "properties": [
+        {
+          "name": "Text#2104:0",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Leading instant swap#3500:0",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Color",
+          "type": "VARIANT",
+          "defaultValue": "Brand",
+          "options": [
+            "Brand",
+            "Gray",
+            "Disabled"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Carpool toggle",
+      "fromLibrary": true,
+      "keys": [
+        "99e20c0df31e6ff3e051e726f1ef931c60e80f2c"
+      ],
+      "instanceCount": 2,
+      "variants": [
+        "State=Active",
+        "State=Inactive",
+        "State=Unavailable"
+      ],
+      "properties": [
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Active",
+          "options": [
+            "Active",
+            "Inactive",
+            "Unavailable"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "check_indeterminate_small-20-400-round",
+      "fromLibrary": true,
+      "keys": [
+        "cd594ded102ac2a99ac00eedfff1aec7be4c21ce"
+      ],
+      "instanceCount": 2,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Content item",
+      "fromLibrary": true,
+      "keys": [
+        "499a458c5b78d85765362121be512f9d5471514a"
+      ],
+      "instanceCount": 2,
+      "variants": [
+        "Type=Default",
+        "Type=Avatar"
+      ],
+      "properties": [
+        {
+          "name": "Supporting#2543:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting text#2543:3",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Supporting 2#2543:6",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting text 2#2543:9",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Title#2543:12",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Subtitle#2543:15",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Subtitle text#2543:18",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Items#2544:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Type",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Avatar"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "EV car info",
+      "fromLibrary": true,
+      "keys": [
+        "12ad14a1d374a718a19e7b0f0ac5e8effe876917"
+      ],
+      "instanceCount": 2,
+      "variants": [
+        "PEA VOLTA=Empty",
+        "PEA VOLTA=Filled"
+      ],
+      "properties": [
+        {
+          "name": "PEA VOLTA",
+          "type": "VARIANT",
+          "defaultValue": "Empty",
+          "options": [
+            "Empty",
+            "Filled"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Fleet card",
+      "fromLibrary": true,
+      "keys": [
+        "36ffde7e6a251f54e342da16b5ac42b6d7c3ec75"
+      ],
+      "instanceCount": 2,
+      "variants": [
+        "Status=Valid",
+        "Status=Invalid",
+        "Status=Empty"
+      ],
+      "properties": [
+        {
+          "name": "Status",
+          "type": "VARIANT",
+          "defaultValue": "Valid",
+          "options": [
+            "Valid",
+            "Invalid",
+            "Empty"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Last usage",
+      "fromLibrary": true,
+      "keys": [
+        "d6fc8fc5a13f225683127151e542aa4a124eebf3"
+      ],
+      "instanceCount": 2,
+      "variants": null,
+      "properties": [
+        {
+          "name": "Fuel#7199:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "EV battery#7199:1",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "List header item",
+      "fromLibrary": true,
+      "keys": [
+        "d71621b247b260a2350398f95ff5a6747fae9166"
+      ],
+      "instanceCount": 2,
+      "variants": null,
+      "properties": [
+        {
+          "name": "Badge#3117:1",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "List with checkbox",
+      "fromLibrary": true,
+      "keys": [
+        "99aa348d43f33eb70de008353b270e40940e1ecd"
+      ],
+      "instanceCount": 2,
+      "variants": null,
+      "properties": [
+        {
+          "name": "Scrollbar#3117:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "movie_edit-24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "43de70b6825f2f7753e3feccbcf3d2ab41eb699b"
+      ],
+      "instanceCount": 2,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Notification",
+      "fromLibrary": true,
+      "keys": [
+        "7a3347532a45b2fde2b649426599323b78ddc105"
+      ],
+      "instanceCount": 2,
+      "variants": [
+        "Type=Default, Breakpoint=Desktop",
+        "Type=Default, Breakpoint=Mobile",
+        "Type=Success, Breakpoint=Desktop",
+        "Type=Success, Breakpoint=Mobile",
+        "Type=Warning, Breakpoint=Desktop",
+        "Type=Warning, Breakpoint=Mobile",
+        "Type=Error, Breakpoint=Desktop",
+        "Type=Error, Breakpoint=Mobile",
+        "Type=Info, Breakpoint=Desktop",
+        "Type=Info, Breakpoint=Mobile"
+      ],
+      "properties": [
+        {
+          "name": "Actions#1873:31",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Text#1873:33",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Supporting text#1873:35",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Type",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Success",
+            "Warning",
+            "Error",
+            "Info"
+          ]
+        },
+        {
+          "name": "Breakpoint",
+          "type": "VARIANT",
+          "defaultValue": "Desktop",
+          "options": [
+            "Desktop",
+            "Mobile"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "open_in_new",
+      "fromLibrary": true,
+      "keys": [
+        "6e1400a8fa4577fdea75e1ee87cd9d9bb3de9273"
+      ],
+      "instanceCount": 2,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Side panel footer",
+      "fromLibrary": true,
+      "keys": [
+        "3227984e39278c9ce0b95edfa46451b51a22098b"
+      ],
+      "instanceCount": 2,
+      "variants": null,
+      "properties": [
+        {
+          "name": "Tertiary action#1964:7",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Secondary action#1964:8",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "Side panel header",
+      "fromLibrary": true,
+      "keys": [
+        "e9fc992aeb9cf0ed23c3b62b45b0ed6df1445915"
+      ],
+      "instanceCount": 2,
+      "variants": null,
+      "properties": [
+        {
+          "name": "Close icon#1964:0",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Featured icon#1964:1",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Supporting#1964:3",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Text#1964:4",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Supporting text#1964:5",
+          "type": "TEXT",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "Tabs#1964:6",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        }
+      ]
+    },
+    {
+      "name": "swap_driving_apps_24-300-round",
+      "fromLibrary": true,
+      "keys": [
+        "de805b7669868cb4f5aa935599823fa45701ff15"
+      ],
+      "instanceCount": 2,
+      "variants": null,
+      "properties": []
+    },
+    {
+      "name": "Toggle",
+      "fromLibrary": true,
+      "keys": [
+        "f568f576d0ffc6e75f2020df80a0fcb328c58276"
+      ],
+      "instanceCount": 2,
+      "variants": [
+        "State=Default, Pressed=False, Size=md",
+        "State=Default, Pressed=False, Size=sm",
+        "State=Hover, Pressed=False, Size=md",
+        "State=Hover, Pressed=False, Size=sm",
+        "State=Focused, Pressed=False, Size=md",
+        "State=Focused, Pressed=False, Size=sm",
+        "State=Disabled, Pressed=False, Size=md",
+        "State=Disabled, Pressed=False, Size=sm",
+        "State=Disabled, Pressed=True, Size=md",
+        "State=Disabled, Pressed=True, Size=sm",
+        "State=Default, Pressed=True, Size=md",
+        "State=Default, Pressed=True, Size=sm",
+        "State=Hover, Pressed=True, Size=md",
+        "State=Hover, Pressed=True, Size=sm",
+        "State=Focused, Pressed=True, Size=md",
+        "State=Focused, Pressed=True, Size=sm"
+      ],
+      "properties": [
+        {
+          "name": "Icon#2901:5",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Icon swap#2902:17",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "X icon swap#2902:26",
+          "type": "INSTANCE_SWAP",
+          "defaultValue": null,
+          "options": null
+        },
+        {
+          "name": "State",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default",
+            "Hover",
+            "Focused",
+            "Disabled"
+          ]
+        },
+        {
+          "name": "Pressed",
+          "type": "VARIANT",
+          "defaultValue": "False",
+          "options": [
+            "False",
+            "True"
+          ]
+        },
+        {
+          "name": "Size",
+          "type": "VARIANT",
+          "defaultValue": "md",
+          "options": [
+            "md",
+            "sm"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Vehicle detail",
+      "fromLibrary": true,
+      "keys": [
+        "8d04cbcbd20ae71fa425fc682d0521f6b63e76f5"
+      ],
+      "instanceCount": 2,
+      "variants": [
+        "Type=Default"
+      ],
+      "properties": [
+        {
+          "name": "Carpool#195:1",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Dept#195:4",
+          "type": "BOOLEAN",
+          "defaultValue": true,
+          "options": null
+        },
+        {
+          "name": "Type",
+          "type": "VARIANT",
+          "defaultValue": "Default",
+          "options": [
+            "Default"
+          ]
+        }
+      ]
+    }
+  ]
+}

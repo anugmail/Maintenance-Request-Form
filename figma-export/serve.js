@@ -16,7 +16,7 @@ const OUT = path.join(__dirname, 'out');
 const handler = (req, res) => {
   const cors = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': '*',
     'Cache-Control': 'no-store'
   };
@@ -33,6 +33,29 @@ const handler = (req, res) => {
   if (file !== OUT && !file.startsWith(OUT + path.sep)) {
     res.writeHead(403, cors);
     return res.end();
+  }
+
+  /* POST — ให้ปลั๊กอินส่งผลกลับมาเขียนลง out/ (ใช้กับ catalog-plugin ที่ดัมป์ component
+     จากไฟล์ Figma จริง) · เขียนได้เฉพาะ .json ใต้ out/ เท่านั้น กัน path traversal ด้วย guard ตัวเดียวกับ GET */
+  if (req.method === 'POST') {
+    if (path.extname(file) !== '.json') {
+      res.writeHead(400, Object.assign({ 'Content-Type': 'application/json; charset=utf-8' }, cors));
+      return res.end(JSON.stringify({ error: 'เขียนได้เฉพาะไฟล์ .json' }));
+    }
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', () => {
+      fs.mkdir(path.dirname(file), { recursive: true }, () => {
+        fs.writeFile(file, body, (err) => {
+          const ok = !err;
+          console.log((ok ? '✓ เขียน ' : '✗ เขียนไม่ได้ ') + path.relative(process.cwd(), file)
+            + (ok ? ' (' + body.length.toLocaleString() + ' ไบต์)' : ' — ' + err.message));
+          res.writeHead(ok ? 200 : 500, Object.assign({ 'Content-Type': 'application/json; charset=utf-8' }, cors));
+          res.end(JSON.stringify(ok ? { ok: true, bytes: body.length } : { error: err.message }));
+        });
+      });
+    });
+    return;
   }
 
   const TYPES = { '.png': 'image/png', '.json': 'application/json; charset=utf-8' };

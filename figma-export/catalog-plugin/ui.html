@@ -1,0 +1,104 @@
+<style>
+  body{font:12px/1.55 -apple-system,"IBM Plex Sans Thai",sans-serif;margin:0;padding:14px;color:#1b1b1b}
+  h1{font-size:13px;margin:0 0 3px}
+  p.hint{margin:0 0 10px;color:#666}
+  label{display:block;font-weight:600;margin:10px 0 4px}
+  input{width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid #d5d5d5;border-radius:6px;font:inherit}
+  .row{display:flex;gap:8px;margin-top:12px}
+  button{padding:9px 14px;border:0;border-radius:6px;background:#0d99ff;color:#fff;font:inherit;font-weight:600;cursor:pointer}
+  button.sec{background:#e6e6e6;color:#1b1b1b}
+  button:disabled{background:#c4c4c4;color:#fff;cursor:default}
+  #log{margin-top:12px;padding:9px;background:#f5f5f5;border-radius:6px;white-space:pre-wrap;
+       max-height:190px;overflow:auto;font-size:11px;font-family:ui-monospace,Menlo,monospace}
+  .ok{color:#0a7c42}.err{color:#c4320a}
+  textarea{width:100%;box-sizing:border-box;height:110px;margin-top:8px;font-family:ui-monospace,Menlo,monospace;
+           font-size:10px;border:1px solid #d5d5d5;border-radius:6px;padding:8px;display:none}
+</style>
+
+<h1>ดัมป์แคตตาล็อก component</h1>
+<p class="hint">อ่านอย่างเดียว — ไม่แก้อะไรในไฟล์นี้เลย</p>
+
+<label>ส่งผลไปที่ (ต้องรัน <code>node figma-export/serve.js</code> ค้างไว้)</label>
+<input id="url" value="http://localhost:8124/figma-catalog.json" spellcheck="false">
+
+<div class="row">
+  <button id="go">เริ่มอ่านไฟล์</button>
+  <button id="copy" class="sec" disabled>คัดลอก JSON</button>
+</div>
+
+<div id="log">พร้อมแล้ว — กด "เริ่มอ่านไฟล์"</div>
+<textarea id="raw" spellcheck="false"></textarea>
+
+<script>
+var log  = document.getElementById('log');
+var go   = document.getElementById('go');
+var copy = document.getElementById('copy');
+var raw  = document.getElementById('raw');
+var lines = [];
+var catalogJson = '';
+
+function put(t, cls) {
+  lines.push(cls ? '<span class="' + cls + '">' + t + '</span>' : t);
+  if (lines.length > 40) lines.shift();
+  log.innerHTML = lines.join('\n');
+  log.scrollTop = log.scrollHeight;
+}
+
+go.onclick = function () {
+  go.disabled = true; copy.disabled = true; raw.style.display = 'none';
+  lines = []; put('เริ่ม…');
+  parent.postMessage({ pluginMessage: { type: 'scan' } }, '*');
+};
+
+copy.onclick = function () {
+  raw.style.display = 'block';
+  raw.value = catalogJson;
+  raw.focus(); raw.select();
+  try {
+    document.execCommand('copy');
+    put('✓ คัดลอกเข้าคลิปบอร์ดแล้ว — เอาไปวางให้ได้เลย', 'ok');
+  } catch (e) {
+    put('คัดลอกอัตโนมัติไม่ได้ — กด ⌘A ⌘C ในช่องด้านล่างแทน', 'err');
+  }
+};
+
+onmessage = function (e) {
+  var m = e.data && e.data.pluginMessage;
+  if (!m) return;
+
+  if (m.type === 'progress') { put(m.text, m.done ? 'ok' : ''); return; }
+
+  if (m.type === 'error') {
+    put('✗ พังที่: ' + m.where, 'err');
+    put('  ' + m.message, 'err');
+    if (m.stack) put('  ' + m.stack.split('\n').slice(0, 3).join('\n  '), 'err');
+    go.disabled = false;
+    return;
+  }
+
+  if (m.type === 'catalog') {
+    catalogJson = JSON.stringify(m.catalog, null, 2);
+    copy.disabled = false;
+    put('ได้ข้อมูลแล้ว ' + catalogJson.length.toLocaleString() + ' ตัวอักษร — กำลังส่งไปที่เครื่อง…');
+
+    var url = document.getElementById('url').value.trim();
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: catalogJson
+    })
+      .then(function (res) { return res.json().then(function (j) { return { ok: res.ok, j: j }; }); })
+      .then(function (r) {
+        if (!r.ok) throw new Error(r.j.error || 'HTTP error');
+        put('✓ เขียนลง out/figma-catalog.json แล้ว (' + r.j.bytes.toLocaleString() + ' ไบต์)', 'ok');
+        put('  ' + m.catalog.componentCount + ' component · ' + m.catalog.totalInstances + ' instance', 'ok');
+      })
+      .catch(function (err) {
+        put('✗ ส่งกลับเครื่องไม่ได้: ' + err.message, 'err');
+        put('  เช็ค: รัน "node figma-export/serve.js" ค้างไว้หรือยัง', 'err');
+        put('  → กดปุ่ม "คัดลอก JSON" แล้วเอาไปวางให้แทนได้เลย', 'err');
+      })
+      .then(function () { go.disabled = false; });
+  }
+};
+</script>

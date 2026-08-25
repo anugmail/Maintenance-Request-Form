@@ -1,0 +1,14 @@
+{
+  "name": "VMS Plus — ดัมป์แคตตาล็อก component",
+  "id": "1471820935506372002",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "devAllowedDomains": ["http://localhost:8124"],
+    "reasoning": "ส่งแคตตาล็อก component ที่อ่านได้กลับมาเขียนลงเครื่อง (serve.js) — ไม่ต่อออกอินเทอร์เน็ต"
+  }
+}
