@@ -38,36 +38,56 @@ async function buildSampleIndex() {
       try { main = await inst.getMainComponentAsync(); } catch (e) { continue; }
       if (!main) continue;
       var holder = (main.parent && main.parent.type === 'COMPONENT_SET') ? main.parent : main;
-      if (!sampleIndex[holder.name]) sampleIndex[holder.name] = { inst: inst, key: holder.key };
+      // เก็บ **ทุกตัว** ที่ชื่อนี้ ไม่ใช่ตัวแรก — ในไฟล์มี component ชื่อซ้ำกัน 64 ชื่อ
+      // (Page header มี 4 ตัว: บางตัวมีแค่ Page/Status บางตัวมี Title#/Badge#)
+      // ถ้าหยิบตัวแรกมั่วๆ จะได้ตัวที่ตั้ง property ที่ต้องการไม่ได้
+      var bag = sampleIndex[holder.name] || (sampleIndex[holder.name] = []);
+      var pk = [];
+      try { pk = Object.keys(inst.componentProperties || {}); } catch (e) { pk = []; }
+      var sig = pk.slice().sort().join('|');
+      var seen = false;
+      for (var b = 0; b < bag.length; b++) if (bag[b].sig === sig) { seen = true; break; }
+      if (!seen) bag.push({ inst: inst, key: holder.key, props: pk, sig: sig });
     }
   }
   return sampleIndex;
 }
 
-async function makeInstance(name) {
-  if (cache[name] === null) return null;
+// เลือกผู้สมัครที่มี property ตรงกับที่สเปกอยากตั้ง "มากที่สุด"
+// เทียบด้วยชื่อฐาน (ตัด #id) เพราะ id ต่างกันระหว่าง component คนละตัวที่ชื่อเหมือนกัน
+function pickCandidate(bag, wanted) {
+  var keys = Object.keys(wanted || {});
+  if (!bag.length) return null;
+  if (!keys.length) return bag[0];
+  var best = null, bestScore = -1;
+  for (var i = 0; i < bag.length; i++) {
+    var base = {};
+    bag[i].props.forEach(function (k) { base[k.split('#')[0]] = true; });
+    var score = 0;
+    keys.forEach(function (k) { if (base[k.split('#')[0]]) score++; });
+    if (score > bestScore) { bestScore = score; best = bag[i]; }
+  }
+  return best;
+}
 
+async function makeInstance(name, wanted) {
   var idx = await buildSampleIndex();
-  var s = idx[name];
+  var bag = idx[name];
+  if (!bag || !bag.length) return null;
 
-  if (cache[name] && cache[name].how === 'import') {
-    try { return cache[name].comp.createInstance(); } catch (e) { /* ตกไปทาง clone */ }
-  }
-  // ทาง A
-  if (!cache[name] && s && s.key) {
+  var pickedCand = pickCandidate(bag, wanted);
+
+  if (cache[name] === undefined) {
+    // ลองทาง A ครั้งเดียวต่อ component — ถ้าไม่ผ่านจำไว้ว่าให้ใช้ clone
     try {
-      var comp = await figma.importComponentByKeyAsync(s.key);
+      var comp = await figma.importComponentByKeyAsync(pickedCand.key);
       cache[name] = { how: 'import', comp: comp };
-      return comp.createInstance();
-    } catch (e) { /* เงียบไว้ ลองทาง B ต่อ */ }
+    } catch (e) { cache[name] = { how: 'clone' }; }
   }
-  // ทาง B
-  if (s) {
-    cache[name] = { how: 'clone' };
-    return s.inst.clone();
+  if (cache[name].how === 'import') {
+    try { return cache[name].comp.createInstance(); } catch (e) { cache[name] = { how: 'clone' }; }
   }
-  cache[name] = null;
-  return null;
+  return pickedCand.inst.clone();
 }
 
 /* ---------- ตั้ง property แบบทนทาน ----------
@@ -115,7 +135,7 @@ async function build(node, parent) {
   if (!node) return;
 
   if (node.kind === 'instance') {
-    var inst = await makeInstance(node.component);
+    var inst = await makeInstance(node.component, node.properties);
     if (!inst) { missing[node.component] = (missing[node.component] || 0) + 1; return; }
     applyProps(inst, node.component, node.properties || {});
     if (node.rect) {
@@ -163,7 +183,7 @@ figma.ui.onmessage = async function (msg) {
 
     say('ทำดัชนี instance ในไฟล์…');
     await buildSampleIndex();
-    say('เจอ component ที่ใช้ได้ ' + Object.keys(sampleIndex).length + ' ตัว');
+    say('เจอ component ที่ใช้ได้ ' + Object.keys(sampleIndex).length + ' ชื่อ');
 
     for (var s = 0; s < spec.screens.length; s++) {
       var sc = spec.screens[s];

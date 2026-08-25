@@ -40,6 +40,11 @@ for (const x of raw.components) {
       instanceCount: 0,
       variants: null,
       properties: [],
+      // ⚠️ ในไฟล์มี component **ชื่อซ้ำกัน** (Page header มี 4 ตัว — component set กับ
+      // component ธรรมดาปนกัน คนละ property) · properties ข้างบนเป็นการรวมทุกตัวเข้าด้วยกัน
+      // ซึ่ง **ไม่มี component ตัวไหนมีครบจริง** ⇒ เก็บชุดของแต่ละตัวไว้ที่นี่
+      // ให้ 6-validate-map.js เช็คว่า "มีตัวจริงสักตัวที่มี property ครบชุดที่แมปอ้าง" ไหม
+      propertySets: [],
     });
   }
   const a = byName.get(x.name);
@@ -47,6 +52,7 @@ for (const x of raw.components) {
   a.fromLibrary = a.fromLibrary && x.fromLibrary;
   if (x.key && !a.keys.includes(x.key)) a.keys.push(x.key);
   if (x.variants && (!a.variants || x.variants.length > a.variants.length)) a.variants = x.variants;
+  a.propertySets.push(x.properties.map((p) => p.name));
 
   for (const p of x.properties) {
     if (a.properties.some((q) => q.name === p.name)) continue;

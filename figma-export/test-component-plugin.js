@@ -25,7 +25,7 @@ function propsOf(name, shiftIds) {
   return out;
 }
 
-function scenario({ importWorks, haveAll = true, shiftIds = false }) {
+function scenario({ importWorks, haveAll = true, shiftIds = false, decoy = false }) {
   const page = { id: '0:1', name: 'src', type: 'PAGE' };
   const names = [...used].filter((n, i) => haveAll || i % 3 !== 0);   // จำลองกรณีไฟล์มีไม่ครบ
   const setPropsCalls = [];
@@ -49,6 +49,24 @@ function scenario({ importWorks, haveAll = true, shiftIds = false }) {
     inst.parent = page;
     return inst;
   });
+
+  // decoy = จำลองปัญหาจริง: มี component **ชื่อเดียวกัน** อีกตัว แต่ property คนละชุด
+  // (ในไฟล์ PEA "Page header" มี 4 ตัว — บางตัวมีแค่ Page/Status บางตัวมี Title#/Badge#)
+  // ปลั๊กอินต้องเลือกตัวที่ property ตรงกับที่สเปกอยากตั้ง ไม่ใช่หยิบตัวแรก
+  if (decoy) {
+    names.forEach((name) => {
+      const dset = { id: 'D:' + name, name, type: 'COMPONENT_SET', key: 'kd-' + name, parent: null };
+      const dvar = { id: 'DC:' + name, name: 'v', type: 'COMPONENT', parent: dset, key: 'kd-' + name };
+      const dcp = { 'Page': { value: 'x' }, 'Status': { value: 'y' } };   // คนละชุดกับที่สเปกต้องการ
+      const d = { id: 'DI', name: name, type: 'INSTANCE', width: 10, height: 10, x: 0, y: 0,
+        componentProperties: dcp, resize() {},
+        setProperties: (p) => { for (const k of Object.keys(p)) if (dcp[k] === undefined) throw new Error('missing ' + k); },
+        clone() { return this; } };
+      d.getMainComponentAsync = async () => dvar;
+      d.parent = page;
+      nodes.unshift(d);   // วางไว้หน้าสุด — ถ้าปลั๊กอินหยิบตัวแรกมั่วๆ จะเจอตัวนี้ก่อน
+    });
+  }
   page.findAllWithCriteria = ({ types }) => nodes.filter((n) => types.includes(n.type));
   page.findAll = (fn) => nodes.filter(fn);
 
@@ -128,6 +146,13 @@ function scenario({ importWorks, haveAll = true, shiftIds = false }) {
   await s.figma.ui.onmessage({ type: 'build', spec });
   ok(s.setPropsCalls.length > 200, `จับคู่ด้วยชื่อฐาน (ตัด #id) แล้วยังตั้งได้ ${s.setPropsCalls.length} จุด`);
   ok(s.logs.join('\n').includes('ตั้ง property ได้ครบทุกตัว'), 'ไม่มี property ตกหล่น');
+
+  console.log('\nกรณีที่ 5 — มี component ชื่อเดียวกันแต่ property คนละชุด ← บั๊กที่เจอจริง (Page header 4 ตัว)');
+  s = scenario({ importWorks: false, decoy: true });
+  await s.figma.ui.onmessage({ type: 'build', spec });
+  ok(s.setPropsCalls.length > 200, `เลือก instance ที่ property ตรง แล้วตั้งได้ ${s.setPropsCalls.length} จุด`);
+  ok(s.logs.join('\n').includes('ตั้ง property ได้ครบทุกตัว'),
+    'ไม่หยิบตัวหลอกที่วางไว้หน้าสุด — ' + (s.logs.find((l) => l.indexOf('property ที่ตั้งไม่ได้') === 0) || 'ครบ'));
 
   console.log(`\nผล: ${pass} ผ่าน · ${fail} ไม่ผ่าน`);
   process.exit(fail ? 1 : 0);

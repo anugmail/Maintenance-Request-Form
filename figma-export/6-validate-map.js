@@ -80,6 +80,22 @@ for (const [cls, m] of Object.entries(map.map)) {
       }
     }
   }
+  // ต้องมี component ตัวจริงสักตัวที่มี property **ครบทุกตัว**ที่แมปอ้าง
+  // ไม่ใช่แค่ "มีอยู่ในชุดรวม" ซึ่งเป็นการรวมข้าม component คนละตัว
+  if (comp.propertySets && comp.propertySets.length > 1) {
+    const wanted = new Set();
+    Object.keys(m.props || {}).forEach((k) => wanted.add(k));
+    Object.values(m.when || {}).forEach((o) => Object.keys(o).forEach((k) => { if (!k.startsWith('_')) wanted.add(k); }));
+    if (m.text) wanted.add(m.text);
+    if (m.labelProp) wanted.add(m.labelProp);
+    if (wanted.size) {
+      const fits = comp.propertySets.some((set) => [...wanted].every((w) => set.includes(w)));
+      if (!fits) {
+        bad(`${cls} → "${comp.name}" มี ${comp.propertySets.length} ตัวในไฟล์ (ชื่อซ้ำ) ` +
+            `แต่ไม่มีตัวไหนมี property ครบชุดนี้: ${[...wanted].join(' · ')}`);
+      }
+    }
+  }
   okCount++;
 }
 

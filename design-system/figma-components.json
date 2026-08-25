@@ -14,7 +14,11 @@
       ],
       "instanceCount": 4630,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "info-24-300-round",
@@ -25,7 +29,11 @@
       ],
       "instanceCount": 3643,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "Radio button",
@@ -66,6 +74,20 @@
             "False"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "State",
+          "Selected"
+        ],
+        [
+          "State",
+          "Selected"
+        ],
+        [
+          "State",
+          "Selected"
+        ]
       ]
     },
     {
@@ -77,7 +99,11 @@
       ],
       "instanceCount": 2636,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "_Content item base",
@@ -149,6 +175,62 @@
             "Component swap"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Supporting#2543:21",
+          "Icon swap#2543:22",
+          "Text#2543:24",
+          "Supporting text#2543:25",
+          "Label#2543:26",
+          "Leading icon#3384:0",
+          "Instance swap#3814:0",
+          "Type"
+        ],
+        [
+          "Supporting#2543:21",
+          "Icon swap#2543:22",
+          "Text#2543:24",
+          "Supporting text#2543:25",
+          "Label#2543:26",
+          "Leading icon#3384:0",
+          "Type"
+        ],
+        [
+          "Supporting#2543:21",
+          "Icon swap#2543:22",
+          "Text#2543:24",
+          "Supporting text#2543:25",
+          "Label#2543:26",
+          "Type"
+        ],
+        [
+          "Supporting#2543:21",
+          "Icon swap#2543:22",
+          "Text#2543:24",
+          "Supporting text#2543:25",
+          "Label#2543:26",
+          "Leading icon#3384:0",
+          "Type"
+        ],
+        [
+          "Supporting#2543:21",
+          "Icon swap#2543:22",
+          "Text#2543:24",
+          "Supporting text#2543:25",
+          "Label#2543:26",
+          "Type"
+        ],
+        [
+          "Supporting#2543:21",
+          "Icon swap#2543:22",
+          "Text#2543:24",
+          "Supporting text#2543:25",
+          "Label#2543:26",
+          "Leading icon#3384:0",
+          "Instance swap#3814:0",
+          "Type"
+        ]
       ]
     },
     {
@@ -175,6 +257,20 @@
             "lg"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Size"
+        ],
+        [
+          "Size"
+        ],
+        [
+          "Size"
+        ],
+        [
+          "Size"
+        ]
       ]
     },
     {
@@ -222,6 +318,14 @@
             "Hover"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Icon swap#1935:1",
+          "Indicator#1935:3",
+          "Text#1935:5",
+          "State"
+        ]
       ]
     },
     {
@@ -294,6 +398,68 @@
             "md"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1153:0",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1153:0",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1153:0",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1153:0",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1153:0",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1153:0",
+          "State",
+          "Size"
+        ]
       ]
     },
     {
@@ -330,6 +496,31 @@
           "defaultValue": false,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Label text#2404:0",
+          "Info icon#2404:1",
+          "Optional#2404:2"
+        ],
+        [
+          "Label text#2404:0",
+          "Info icon#2404:1",
+          "Optional#2404:2",
+          "button#3608:0"
+        ],
+        [
+          "Label text#2404:0",
+          "Info icon#2404:1",
+          "Optional#2404:2",
+          "button#3608:0"
+        ],
+        [
+          "Label text#2404:0",
+          "Info icon#2404:1",
+          "Optional#2404:2",
+          "button#3608:0"
+        ]
       ]
     },
     {
@@ -461,6 +652,55 @@
           "defaultValue": true,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Text#33:0",
+          "Leading icon swap#33:3",
+          "Trailing icon swap#33:6",
+          "Leading icon#33:9",
+          "Trailing icon#33:12",
+          "Helper text#33:15",
+          "Helper#33:19",
+          "Label#265:0",
+          "Label text#265:7",
+          "Info icon#522:0",
+          "Optional#1105:0",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#33:0",
+          "Leading icon swap#33:3",
+          "Trailing icon swap#33:6",
+          "Leading icon#33:9",
+          "Trailing icon#33:12",
+          "Helper text#33:15",
+          "Helper#33:19",
+          "Label#265:0",
+          "Label text#265:7",
+          "Info icon#522:0",
+          "Optional#1105:0",
+          "Show Placeholder#3747:0",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#33:0",
+          "Leading icon swap#33:3",
+          "Trailing icon swap#33:6",
+          "Leading icon#33:9",
+          "Trailing icon#33:12",
+          "Helper text#33:15",
+          "Helper#33:19",
+          "Label#265:0",
+          "Label text#265:7",
+          "Info icon#522:0",
+          "Optional#1105:0",
+          "Show Placeholder#3747:0",
+          "State",
+          "Size"
+        ]
       ]
     },
     {
@@ -472,7 +712,11 @@
       ],
       "instanceCount": 1070,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "Secondary button",
@@ -549,6 +793,88 @@
             "md"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1246:27",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1246:27",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1246:27",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1246:27",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1246:27",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1246:27",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1246:27",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1246:27",
+          "State",
+          "Size"
+        ]
       ]
     },
     {
@@ -560,7 +886,11 @@
       ],
       "instanceCount": 843,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "Input dropdown",
@@ -690,6 +1020,56 @@
           "defaultValue": false,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Label text#74:30",
+          "Label#74:40",
+          "Placeholder#545:12",
+          "Text#545:18",
+          "Info icon#2011:12",
+          "Leading icon#2011:21",
+          "Leading icon swap#2011:39",
+          "Helper#2011:48",
+          "Helper text#2011:75",
+          "Optional#2147:29",
+          "State",
+          "Size"
+        ],
+        [
+          "Label text#74:30",
+          "Label#74:40",
+          "Placeholder#545:12",
+          "Text#545:18",
+          "Info icon#2011:12",
+          "Leading icon#2011:21",
+          "Leading icon swap#2011:39",
+          "Helper#2011:48",
+          "Helper text#2011:75",
+          "Optional#2147:29",
+          "Supporting#3300:0",
+          "Supporting text#3300:17",
+          "Cursor#3340:0",
+          "State",
+          "Size"
+        ],
+        [
+          "Label text#74:30",
+          "Label#74:40",
+          "Placeholder#545:12",
+          "Text#545:18",
+          "Info icon#2011:12",
+          "Leading icon#2011:21",
+          "Leading icon swap#2011:39",
+          "Helper#2011:48",
+          "Helper text#2011:75",
+          "Optional#2147:29",
+          "Supporting#3300:0",
+          "Supporting text#3300:17",
+          "Cursor#3340:0",
+          "State",
+          "Size"
+        ]
       ]
     },
     {
@@ -732,6 +1112,24 @@
             "Purple"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#695:3",
+          "Color"
+        ],
+        [
+          "Text#695:3",
+          "Color"
+        ],
+        [
+          "Text#695:3",
+          "Color"
+        ],
+        [
+          "Text#695:3",
+          "Color"
+        ]
       ]
     },
     {
@@ -850,6 +1248,46 @@
             "False"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#213:0",
+          "Supporting#213:24",
+          "Supporting text#2220:2",
+          "View#2220:26",
+          "Edit#2220:35",
+          "Print#2220:44",
+          "Delete#2220:53",
+          "Instance swap#3567:0",
+          "Style",
+          "Alternating fills"
+        ],
+        [
+          "Text#213:0",
+          "Supporting#213:24",
+          "Supporting text#2220:2",
+          "View#2220:26",
+          "Edit#2220:35",
+          "Print#2220:44",
+          "Delete#2220:53",
+          "Style",
+          "Alternating fills"
+        ],
+        [
+          "Alternating fills"
+        ],
+        [
+          "Text#213:0",
+          "Supporting#213:24",
+          "Supporting text#2220:2",
+          "View#2220:26",
+          "Edit#2220:35",
+          "Print#2220:44",
+          "Delete#2220:53",
+          "Instance swap#3567:0",
+          "Style",
+          "Alternating fills"
+        ]
       ]
     },
     {
@@ -861,7 +1299,11 @@
       ],
       "instanceCount": 678,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "Horizontal step item",
@@ -916,6 +1358,16 @@
             "Completed"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Supporting text#634:3",
+          "Supporting#634:7",
+          "Connector#703:14",
+          "Text#703:28",
+          "Number#2294:3",
+          "Status"
+        ]
       ]
     },
     {
@@ -926,7 +1378,11 @@
       ],
       "instanceCount": 515,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "keyboard_arrow_right-20-300-round",
@@ -936,7 +1392,10 @@
       ],
       "instanceCount": 515,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "more_vert-20-400-round",
@@ -947,7 +1406,12 @@
       ],
       "instanceCount": 489,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        [],
+        []
+      ]
     },
     {
       "name": "Content item row",
@@ -1014,6 +1478,48 @@
             "50% last column"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Item 2#2511:0",
+          "Item 1 swap#2513:12",
+          "Item 2 swap#2513:14",
+          "Item 3#2542:0",
+          "Item 3 swap#2542:2",
+          "Item 4#2542:4",
+          "Item 4 swap#2542:6",
+          "Column width"
+        ],
+        [
+          "Item 2#2511:0",
+          "Item 1 swap#2513:12",
+          "Item 2 swap#2513:14",
+          "Item 3#2542:0",
+          "Item 3 swap#2542:2",
+          "Item 4#2542:4",
+          "Item 4 swap#2542:6",
+          "Column width"
+        ],
+        [
+          "Item 2#2511:0",
+          "Item 1 swap#2513:12",
+          "Item 2 swap#2513:14",
+          "Item 3#2542:0",
+          "Item 3 swap#2542:2",
+          "Item 4#2542:4",
+          "Item 4 swap#2542:6",
+          "Column width"
+        ],
+        [
+          "Item 2#2511:0",
+          "Item 1 swap#2513:12",
+          "Item 2 swap#2513:14",
+          "Item 3#2542:0",
+          "Item 3 swap#2542:2",
+          "Item 4#2542:4",
+          "Item 4 swap#2542:6",
+          "Column width"
+        ]
       ]
     },
     {
@@ -1064,6 +1570,20 @@
             "False"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#22:4",
+          "Badge#1387:0",
+          "State",
+          "Active"
+        ],
+        [
+          "Text#22:4",
+          "Badge#1387:0",
+          "State",
+          "Active"
+        ]
       ]
     },
     {
@@ -1140,6 +1660,48 @@
             "md"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1246:11",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1246:11",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1246:11",
+          "State",
+          "Size"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1246:11",
+          "State",
+          "Size"
+        ]
       ]
     },
     {
@@ -1179,6 +1741,18 @@
             "Hover"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#2065:2",
+          "Current",
+          "State"
+        ],
+        [
+          "Text#2065:2",
+          "Current",
+          "State"
+        ]
       ]
     },
     {
@@ -1189,7 +1763,10 @@
       ],
       "instanceCount": 402,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Horizontal radio groups",
@@ -1278,6 +1855,23 @@
           "defaultValue": null,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Label text#1152:1",
+          "Label#1152:5",
+          "Radio text 1#1152:9",
+          "Radio text 2#1152:13",
+          "Radio text 3#1152:15",
+          "Radio text 4#1152:17",
+          "Radio 3#1231:3",
+          "Radio 4#1231:5",
+          "Helper text#1701:3",
+          "Helper#1701:5",
+          "Info icon#1733:1",
+          "Leading icon#2159:0",
+          "Leading icon swap#2159:1"
+        ]
       ]
     },
     {
@@ -1301,6 +1895,11 @@
             "True"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Expanded"
+        ]
       ]
     },
     {
@@ -1324,6 +1923,11 @@
             "True"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Expanded"
+        ]
       ]
     },
     {
@@ -1375,6 +1979,18 @@
             "Disabled"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Number#917:4",
+          "Type",
+          "State"
+        ],
+        [
+          "Number#917:4",
+          "Type",
+          "State"
+        ]
       ]
     },
     {
@@ -1400,6 +2016,14 @@
             "Swap"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Icon"
+        ],
+        [
+          "Icon"
+        ]
       ]
     },
     {
@@ -1460,6 +2084,25 @@
           "defaultValue": true,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Header text#3243:0",
+          "Text#3243:1",
+          "Sort icon#3243:2",
+          "Checkbox"
+        ],
+        [
+          "Header text#3243:0",
+          "Text#3243:1",
+          "Sort icon#3243:2",
+          "Checkbox"
+        ],
+        [
+          "Sort icon#2218:1",
+          "Text#2218:3",
+          "Header text#2221:0"
+        ]
       ]
     },
     {
@@ -1524,6 +2167,53 @@
             "Disabled"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1153:12",
+          "State"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1153:12",
+          "State"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1153:12",
+          "State"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1153:12",
+          "State"
+        ],
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1153:12",
+          "State"
+        ]
       ]
     },
     {
@@ -1534,7 +2224,10 @@
       ],
       "instanceCount": 262,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "groups-24-300-round",
@@ -1544,7 +2237,10 @@
       ],
       "instanceCount": 244,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Badge outline",
@@ -1578,6 +2274,24 @@
             "Disabled"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#2104:3",
+          "Color"
+        ],
+        [
+          "Text#2104:3",
+          "Color"
+        ],
+        [
+          "Text#2104:3",
+          "Color"
+        ],
+        [
+          "Text#2104:3",
+          "Color"
+        ]
       ]
     },
     {
@@ -1606,6 +2320,14 @@
             "xs"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Size"
+        ],
+        [
+          "Size"
+        ]
       ]
     },
     {
@@ -1617,7 +2339,11 @@
       ],
       "instanceCount": 222,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "Section header",
@@ -1676,6 +2402,17 @@
             "Mobile"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Badge#1985:2",
+          "Supporting text#1985:3",
+          "Actions#1985:4",
+          "Divider#1985:5",
+          "Title#1985:6",
+          "More actions#2004:6",
+          "Breakpoint"
+        ]
       ]
     },
     {
@@ -1699,6 +2436,14 @@
             "False"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Current"
+        ],
+        [
+          "Current"
+        ]
       ]
     },
     {
@@ -1725,6 +2470,14 @@
             "Tablet"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Breakpoint"
+        ],
+        [
+          "Breakpoint"
+        ]
       ]
     },
     {
@@ -1735,7 +2488,10 @@
       ],
       "instanceCount": 206,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Page header",
@@ -1833,6 +2589,37 @@
             "Mobile"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Page",
+          "Status"
+        ],
+        [
+          "Badge#1985:2",
+          "Supporting text#1985:3",
+          "Actions#1985:4",
+          "Divider#1985:5",
+          "Title#1985:6",
+          "More actions#2004:3",
+          "Copy action#2743:0",
+          "Back action#2818:0",
+          "Breakpoint"
+        ],
+        [
+          "Page"
+        ],
+        [
+          "Badge#1985:2",
+          "Supporting text#1985:3",
+          "Actions#1985:4",
+          "Divider#1985:5",
+          "Title#1985:6",
+          "More actions#2004:3",
+          "Copy action#2743:0",
+          "Back action#2818:0",
+          "Breakpoint"
+        ]
       ]
     },
     {
@@ -1844,7 +2631,11 @@
       ],
       "instanceCount": 196,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "Section label",
@@ -1922,6 +2713,55 @@
           "defaultValue": null,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Supporting#1985:3",
+          "Actions#1985:4",
+          "Title#1985:6",
+          "More actions#2004:6",
+          "Info icon#2298:0",
+          "Supporting text#2299:0",
+          "Primary action#2299:3",
+          "Secondary action#2299:6",
+          "Breakpoint"
+        ],
+        [
+          "Supporting#1985:3",
+          "Actions#1985:4",
+          "Title#1985:6",
+          "More actions#2004:6",
+          "Info icon#2298:0",
+          "Supporting text#2299:0",
+          "Primary action#2299:3",
+          "Secondary action#2299:6",
+          "Instance swap#3409:8",
+          "Breakpoint"
+        ],
+        [
+          "Supporting#1985:3",
+          "Actions#1985:4",
+          "Title#1985:6",
+          "More actions#2004:6",
+          "Info icon#2298:0",
+          "Supporting text#2299:0",
+          "Primary action#2299:3",
+          "Secondary action#2299:6",
+          "Instance swap#3409:8",
+          "Breakpoint"
+        ],
+        [
+          "Supporting#1985:3",
+          "Actions#1985:4",
+          "Title#1985:6",
+          "More actions#2004:6",
+          "Info icon#2298:0",
+          "Supporting text#2299:0",
+          "Primary action#2299:3",
+          "Secondary action#2299:6",
+          "Instance swap#3409:8",
+          "Breakpoint"
+        ]
       ]
     },
     {
@@ -1995,6 +2835,46 @@
           "defaultValue": true,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Icon swap#2504:0",
+          "Text#2505:18",
+          "Label#2505:21",
+          "Supporting text#2533:4",
+          "Supporting#2533:8",
+          "Instance swap#2539:0",
+          "Type"
+        ],
+        [
+          "Icon swap#2504:0",
+          "Text#2505:18",
+          "Label#2505:21",
+          "Supporting text#2533:4",
+          "Supporting#2533:8",
+          "Instance swap#2539:0",
+          "Leading icon#3572:0",
+          "Type"
+        ],
+        [
+          "Icon swap#2504:0",
+          "Text#2505:18",
+          "Label#2505:21",
+          "Supporting text#2533:4",
+          "Supporting#2533:8",
+          "Instance swap#2539:0",
+          "Type"
+        ],
+        [
+          "Icon swap#2504:0",
+          "Text#2505:18",
+          "Label#2505:21",
+          "Supporting text#2533:4",
+          "Supporting#2533:8",
+          "Instance swap#2539:0",
+          "Leading icon#3572:0",
+          "Type"
+        ]
       ]
     },
     {
@@ -2006,7 +2886,11 @@
       ],
       "instanceCount": 109,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "add-24-300-round",
@@ -2017,7 +2901,11 @@
       ],
       "instanceCount": 108,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "search-24-300-round",
@@ -2027,7 +2915,10 @@
       ],
       "instanceCount": 107,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "_Breadcrumbs item / Home",
@@ -2050,6 +2941,14 @@
             "Hover"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "State"
+        ],
+        [
+          "State"
+        ]
       ]
     },
     {
@@ -2073,6 +2972,14 @@
             "Hover"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "State"
+        ],
+        [
+          "State"
+        ]
       ]
     },
     {
@@ -2096,6 +3003,11 @@
             "md"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Size"
+        ]
       ]
     },
     {
@@ -2131,6 +3043,20 @@
           "defaultValue": true,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Link 1#708:4",
+          "Link 2#708:13",
+          "Link 3#708:19",
+          "Truncate link#760:1"
+        ],
+        [
+          "Link 1#708:4",
+          "Link 2#708:13",
+          "Link 3#708:19",
+          "Truncate link#760:1"
+        ]
       ]
     },
     {
@@ -2141,7 +3067,10 @@
       ],
       "instanceCount": 103,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "content_copy-24-300-round",
@@ -2151,7 +3080,10 @@
       ],
       "instanceCount": 103,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "database-24-300-round",
@@ -2161,7 +3093,10 @@
       ],
       "instanceCount": 103,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "home-20-300-round",
@@ -2171,7 +3106,10 @@
       ],
       "instanceCount": 103,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "home-24-300-round",
@@ -2181,7 +3119,10 @@
       ],
       "instanceCount": 103,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "id_card-24-300-round",
@@ -2191,7 +3132,10 @@
       ],
       "instanceCount": 103,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "lock-24-300-round",
@@ -2201,7 +3145,10 @@
       ],
       "instanceCount": 103,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "more_horiz-20-400-round",
@@ -2211,7 +3158,10 @@
       ],
       "instanceCount": 103,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Nav button/Notification",
@@ -2234,6 +3184,11 @@
             "True"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Expanded"
+        ]
       ]
     },
     {
@@ -2257,6 +3212,11 @@
             "True"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Expanded"
+        ]
       ]
     },
     {
@@ -2267,7 +3227,10 @@
       ],
       "instanceCount": 103,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Sidebar",
@@ -2292,6 +3255,17 @@
             "Collapsed"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "State"
+        ],
+        [
+          "State"
+        ],
+        [
+          "State"
+        ]
       ]
     },
     {
@@ -2302,7 +3276,10 @@
       ],
       "instanceCount": 103,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "e911_emergency",
@@ -2313,7 +3290,11 @@
       ],
       "instanceCount": 101,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "ev_station",
@@ -2324,7 +3305,11 @@
       ],
       "instanceCount": 101,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "news",
@@ -2335,7 +3320,11 @@
       ],
       "instanceCount": 101,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "swap_driving_apps",
@@ -2345,7 +3334,10 @@
       ],
       "instanceCount": 97,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Tertiary danger button",
@@ -2408,6 +3400,17 @@
             "Disabled"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#105:0",
+          "Leading icon#105:2",
+          "Trailing icon#105:4",
+          "Leading icon swap#133:10",
+          "Trailing icon swap#133:12",
+          "Button text#1153:6",
+          "State"
+        ]
       ]
     },
     {
@@ -2418,7 +3421,10 @@
       ],
       "instanceCount": 90,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Tabs",
@@ -2448,6 +3454,18 @@
           "defaultValue": false,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Tab 3#2344:2",
+          "Tab 4#2344:3",
+          "Tab 5#2344:4"
+        ],
+        [
+          "Tab 3#2344:2",
+          "Tab 4#2344:3",
+          "Tab 5#2344:4"
+        ]
       ]
     },
     {
@@ -2458,7 +3476,10 @@
       ],
       "instanceCount": 83,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Radio text card",
@@ -2517,6 +3538,22 @@
             "True"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Supporting text#2713:3",
+          "Text#2713:4",
+          "Supporting#2713:5",
+          "State",
+          "Selected"
+        ],
+        [
+          "Supporting text#2713:3",
+          "Text#2713:4",
+          "Supporting#2713:5",
+          "State",
+          "Selected"
+        ]
       ]
     },
     {
@@ -2527,7 +3564,10 @@
       ],
       "instanceCount": 78,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "keyboard_arrow_left-20-400-round",
@@ -2537,7 +3577,10 @@
       ],
       "instanceCount": 74,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "keyboard_arrow_right-20-400-round",
@@ -2547,7 +3590,10 @@
       ],
       "instanceCount": 74,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Background+Border",
@@ -2585,6 +3631,18 @@
             "เพิ่มอะไหล่"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "จัดซื้อเพิ่ม#109:2",
+          "Suggestion#109:3",
+          "อะไหล่"
+        ],
+        [
+          "จัดซื้อเพิ่ม#109:2",
+          "Suggestion#109:3",
+          "อะไหล่"
+        ]
       ]
     },
     {
@@ -2595,7 +3653,10 @@
       ],
       "instanceCount": 67,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Images",
@@ -2641,6 +3702,26 @@
             "Empty"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Indicator pagination#2635:14",
+          "Buttons#2635:15",
+          "Size",
+          "Type"
+        ],
+        [
+          "Indicator pagination#2635:14",
+          "Buttons#2635:15",
+          "Size",
+          "Type"
+        ],
+        [
+          "Indicator pagination#2635:14",
+          "Buttons#2635:15",
+          "Size",
+          "Type"
+        ]
       ]
     },
     {
@@ -2676,6 +3757,28 @@
             "2 Rows"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Item 1#2653:0",
+          "Item 2#2653:1",
+          "Type"
+        ],
+        [
+          "Item 1#2653:0",
+          "Item 2#2653:1",
+          "Type"
+        ],
+        [
+          "Item 1#2653:0",
+          "Item 2#2653:1",
+          "Type"
+        ],
+        [
+          "Item 1#2653:0",
+          "Item 2#2653:1",
+          "Type"
+        ]
       ]
     },
     {
@@ -2686,7 +3789,10 @@
       ],
       "instanceCount": 56,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "quick_reference_all-24-300-round",
@@ -2696,7 +3802,10 @@
       ],
       "instanceCount": 56,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Badge outline with indicator",
@@ -2734,6 +3843,20 @@
             "Brand"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#1868:0",
+          "Color"
+        ],
+        [
+          "Text#1868:0",
+          "Color"
+        ],
+        [
+          "Text#1868:0",
+          "Color"
+        ]
       ]
     },
     {
@@ -2777,6 +3900,14 @@
             "25%"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Input 1 swap#2499:3",
+          "Input 2#2499:4",
+          "Input 2 swap#2499:5",
+          "Width"
+        ]
       ]
     },
     {
@@ -2802,6 +3933,14 @@
             "List"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "State"
+        ],
+        [
+          "State"
+        ]
       ]
     },
     {
@@ -2825,6 +3964,14 @@
             "Mobile"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Breakpoint"
+        ],
+        [
+          "Breakpoint"
+        ]
       ]
     },
     {
@@ -2863,6 +4010,18 @@
             "Bottom"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Length"
+        ],
+        [
+          "Length"
+        ],
+        [
+          "Length",
+          "Position"
+        ]
       ]
     },
     {
@@ -2873,7 +4032,10 @@
       ],
       "instanceCount": 46,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Content divider",
@@ -2902,6 +4064,16 @@
             "Default"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#2631:0",
+          "Type"
+        ],
+        [
+          "Text#2631:0",
+          "Type"
+        ]
       ]
     },
     {
@@ -2912,7 +4084,10 @@
       ],
       "instanceCount": 42,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Indicator pagination",
@@ -2941,6 +4116,18 @@
           "defaultValue": true,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Indicator 3#2714:0",
+          "Indicator 4#2714:1",
+          "Indicator 5#2714:2"
+        ],
+        [
+          "Indicator 3#2714:0",
+          "Indicator 4#2714:1",
+          "Indicator 5#2714:2"
+        ]
       ]
     },
     {
@@ -3032,6 +4219,19 @@
             "lg"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Label#1990:6",
+          "Label text#1990:7",
+          "Number#1990:9",
+          "Helper text#1990:10",
+          "Info icon#1990:11",
+          "Helper#1990:13",
+          "Optional#1990:14",
+          "State",
+          "Size"
+        ]
       ]
     },
     {
@@ -3042,7 +4242,10 @@
       ],
       "instanceCount": 42,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "location_on",
@@ -3052,7 +4255,10 @@
       ],
       "instanceCount": 36,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "resize-right",
@@ -3062,7 +4268,10 @@
       ],
       "instanceCount": 36,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Text area",
@@ -3169,6 +4378,22 @@
             "md"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#33:0",
+          "Trailing icon swap#33:6",
+          "Trailing icon#33:12",
+          "Helper text#33:15",
+          "Helper#33:19",
+          "Label#265:0",
+          "Label text#265:7",
+          "Info icon#522:0",
+          "Optional#1105:0",
+          "Show Placeholder#3749:21",
+          "State",
+          "Size"
+        ]
       ]
     },
     {
@@ -3192,6 +4417,11 @@
             "Subheader"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Type"
+        ]
       ]
     },
     {
@@ -3233,6 +4463,12 @@
             "Other"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Flow#486:6",
+          "State"
+        ]
       ]
     },
     {
@@ -3243,7 +4479,10 @@
       ],
       "instanceCount": 34,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "search_check-24-300-round",
@@ -3253,7 +4492,10 @@
       ],
       "instanceCount": 32,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "swap_horiz-24-300-round",
@@ -3263,7 +4505,10 @@
       ],
       "instanceCount": 32,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "call-24-300-round",
@@ -3273,7 +4518,10 @@
       ],
       "instanceCount": 30,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "close-24-300-round",
@@ -3284,7 +4532,11 @@
       ],
       "instanceCount": 30,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "Featured icon",
@@ -3341,6 +4593,18 @@
             "sm"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Icon swap#2032:0",
+          "Color",
+          "Size"
+        ],
+        [
+          "Icon swap#2032:0",
+          "Color",
+          "Size"
+        ]
       ]
     },
     {
@@ -3380,6 +4644,12 @@
             "Search not found 2"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Expanded",
+          "State"
+        ]
       ]
     },
     {
@@ -3390,7 +4660,10 @@
       ],
       "instanceCount": 26,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Background overlay",
@@ -3400,7 +4673,11 @@
       ],
       "instanceCount": 24,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "Checkbox",
@@ -3446,6 +4723,16 @@
             "Indeterminate"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "State",
+          "Type"
+        ],
+        [
+          "State",
+          "Type"
+        ]
       ]
     },
     {
@@ -3456,7 +4743,10 @@
       ],
       "instanceCount": 24,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "smartphone-24-300-round",
@@ -3466,7 +4756,10 @@
       ],
       "instanceCount": 24,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "swap_vert-20-300-round",
@@ -3476,7 +4769,10 @@
       ],
       "instanceCount": 24,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "imagesmode-48-300-round-filled",
@@ -3486,7 +4782,10 @@
       ],
       "instanceCount": 22,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Modal footer",
@@ -3541,6 +4840,24 @@
             "Vertical fill"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Secondary action#106:3",
+          "Divider#2487:0",
+          "Padding top#2487:4",
+          "Primary action#2505:14",
+          "Tertiary action#2560:61",
+          "Alignment"
+        ],
+        [
+          "Secondary action#106:3",
+          "Divider#2487:0",
+          "Padding top#2487:4",
+          "Primary action#2505:14",
+          "Tertiary action#2560:61",
+          "Alignment"
+        ]
       ]
     },
     {
@@ -3612,6 +4929,30 @@
             "Left"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Title#1276:1",
+          "Close icon#1276:2",
+          "Divider#1278:0",
+          "Supporting#2485:0",
+          "Supporting text#2486:2",
+          "Featured icon#2487:8",
+          "Padding bottom#2491:0",
+          "Back icon#2633:8",
+          "Alignment"
+        ],
+        [
+          "Title#1276:1",
+          "Close icon#1276:2",
+          "Divider#1278:0",
+          "Supporting#2485:0",
+          "Supporting text#2486:2",
+          "Featured icon#2487:8",
+          "Padding bottom#2491:0",
+          "Back icon#2633:8",
+          "Alignment"
+        ]
       ]
     },
     {
@@ -3622,7 +4963,10 @@
       ],
       "instanceCount": 22,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "search-sm",
@@ -3632,7 +4976,10 @@
       ],
       "instanceCount": 19,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "_Modal content",
@@ -3642,7 +4989,10 @@
       ],
       "instanceCount": 18,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "autorenew-24-300-round",
@@ -3652,7 +5002,10 @@
       ],
       "instanceCount": 18,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "garage_home-24-300-round",
@@ -3662,7 +5015,10 @@
       ],
       "instanceCount": 18,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Repair section",
@@ -3689,6 +5045,11 @@
             "Cancelled"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Status"
+        ]
       ]
     },
     {
@@ -3726,6 +5087,12 @@
             "lg"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Style",
+          "Size"
+        ]
       ]
     },
     {
@@ -3763,6 +5130,12 @@
             "Error"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#2230:3",
+          "Color"
+        ]
       ]
     },
     {
@@ -3790,6 +5163,11 @@
             "Cancelled"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Status"
+        ]
       ]
     },
     {
@@ -3800,7 +5178,10 @@
       ],
       "instanceCount": 14,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "call",
@@ -3810,7 +5191,10 @@
       ],
       "instanceCount": 14,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Badge outline with remove icon",
@@ -3841,6 +5225,12 @@
             "Disabled"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#2104:0",
+          "Color"
+        ]
       ]
     },
     {
@@ -3948,6 +5338,40 @@
             "Left aligned image"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Secondary action#2508:0",
+          "Card item#2508:1",
+          "Supporting 2#2508:2",
+          "Supporting#2508:3",
+          "Supporting text 2#2508:4",
+          "Supporting text#2508:5",
+          "Subtitle#2508:6",
+          "Subtitle text#2508:7",
+          "Title#2508:8",
+          "Primary action#2508:9",
+          "Actions#2508:15",
+          "Tertiary action#2531:0",
+          "State",
+          "Type"
+        ],
+        [
+          "Secondary action#2508:0",
+          "Card item#2508:1",
+          "Supporting 2#2508:2",
+          "Supporting#2508:3",
+          "Supporting text 2#2508:4",
+          "Supporting text#2508:5",
+          "Subtitle#2508:6",
+          "Subtitle text#2508:7",
+          "Title#2508:8",
+          "Primary action#2508:9",
+          "Actions#2508:15",
+          "Tertiary action#2531:0",
+          "State",
+          "Type"
+        ]
       ]
     },
     {
@@ -3973,6 +5397,11 @@
             "Hand"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "State"
+        ]
       ]
     },
     {
@@ -4020,6 +5449,15 @@
             "Frame"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Flow#4970:0",
+          "No.#4970:1",
+          "Text#4970:2",
+          "Show Cursor#4970:3",
+          "Type"
+        ]
       ]
     },
     {
@@ -4053,6 +5491,12 @@
             "Disabled"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Icon swap#133:10",
+          "State"
+        ]
       ]
     },
     {
@@ -4118,6 +5562,17 @@
             "Disabled"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#1028:0",
+          "Supporting text#1028:5",
+          "Supporting 2#1028:15",
+          "Supporting#1807:0",
+          "Supporting text 2#2147:0",
+          "Avatar#3119:9",
+          "State"
+        ]
       ]
     },
     {
@@ -4128,7 +5583,10 @@
       ],
       "instanceCount": 10,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "airline_seat_recline_extra",
@@ -4138,7 +5596,10 @@
       ],
       "instanceCount": 8,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Checkbox with badge",
@@ -4148,7 +5609,10 @@
       ],
       "instanceCount": 8,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "description",
@@ -4158,7 +5622,10 @@
       ],
       "instanceCount": 8,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "directions_car-20-400-round",
@@ -4168,7 +5635,10 @@
       ],
       "instanceCount": 8,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "person-20-400-round",
@@ -4178,7 +5648,10 @@
       ],
       "instanceCount": 8,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "calendar_clock-24-300-round",
@@ -4188,7 +5661,10 @@
       ],
       "instanceCount": 6,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "contract",
@@ -4198,7 +5674,10 @@
       ],
       "instanceCount": 6,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Delay fee",
@@ -4221,6 +5700,11 @@
             "Delay"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Status"
+        ]
       ]
     },
     {
@@ -4232,7 +5716,11 @@
       ],
       "instanceCount": 5,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "_File icon",
@@ -4255,6 +5743,11 @@
             "Image"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Type"
+        ]
       ]
     },
     {
@@ -4316,6 +5809,17 @@
             "Error"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "File name#2841:4",
+          "File size#2841:8",
+          "Progress bar#2843:0",
+          "Actions#2858:1",
+          "Download action#2858:5",
+          "Delete action#2858:9",
+          "State"
+        ]
       ]
     },
     {
@@ -4326,7 +5830,10 @@
       ],
       "instanceCount": 4,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "arrow_upward_alt-20-300-round",
@@ -4336,7 +5843,10 @@
       ],
       "instanceCount": 4,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "battery_horiz_050-24-300-round",
@@ -4346,7 +5856,10 @@
       ],
       "instanceCount": 4,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "check_circle-20-300-round-fill",
@@ -4356,7 +5869,10 @@
       ],
       "instanceCount": 4,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "check-20-400-round",
@@ -4367,7 +5883,11 @@
       ],
       "instanceCount": 4,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        [],
+        []
+      ]
     },
     {
       "name": "Checkbox with description",
@@ -4396,6 +5916,13 @@
           "defaultValue": null,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Supporting#2192:1",
+          "Text#2192:2",
+          "Supporting text#2762:2"
+        ]
       ]
     },
     {
@@ -4406,7 +5933,10 @@
       ],
       "instanceCount": 4,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "draft-24-300-round",
@@ -4416,7 +5946,10 @@
       ],
       "instanceCount": 4,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Horizontal scrollbar",
@@ -4441,6 +5974,11 @@
             "25%"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Length"
+        ]
       ]
     },
     {
@@ -4470,6 +6008,13 @@
           "defaultValue": true,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Repair section#317:0",
+          "Replace section#317:1",
+          "Delay fee#317:2"
+        ]
       ]
     },
     {
@@ -4480,7 +6025,10 @@
       ],
       "instanceCount": 4,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "local_gas_station-24-300-round-filled",
@@ -4490,7 +6038,10 @@
       ],
       "instanceCount": 4,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "local_parking-24-fill-300-round",
@@ -4500,7 +6051,10 @@
       ],
       "instanceCount": 4,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Modal / Sent to Repair",
@@ -4523,6 +6077,11 @@
             "Filled"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "State"
+        ]
       ]
     },
     {
@@ -4572,6 +6131,13 @@
             "100%"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Percentage#2941:3",
+          "Label",
+          "Progress"
+        ]
       ]
     },
     {
@@ -4611,6 +6177,11 @@
             "5.0 Completed"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Status"
+        ]
       ]
     },
     {
@@ -4700,6 +6271,22 @@
             "Mobile"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Badge#1985:2",
+          "Supporting text#1985:3",
+          "Actions#1985:4",
+          "Divider#1985:5",
+          "Title#1985:6",
+          "More actions#2004:0",
+          "Table title#2009:0",
+          "Filters#2043:0",
+          "Action 1 swap#2558:0",
+          "Action 2 swap#2558:3",
+          "Action 3 swap#2558:6",
+          "Breakpoint"
+        ]
       ]
     },
     {
@@ -4710,7 +6297,10 @@
       ],
       "instanceCount": 4,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Modal / Select contract type",
@@ -4720,7 +6310,10 @@
       ],
       "instanceCount": 3,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Alert",
@@ -4781,6 +6374,16 @@
             "Gray"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Supporting#591:22",
+          "Text#1336:0",
+          "Leading icon#1516:0",
+          "Supporting text#2667:0",
+          "Close icon#2667:6",
+          "Color"
+        ]
       ]
     },
     {
@@ -4804,6 +6407,12 @@
           "defaultValue": true,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "จัดซื้อเพิ่ม#109:0",
+          "Suggestion#109:4"
+        ]
       ]
     },
     {
@@ -4841,6 +6450,13 @@
             "Disabled"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Text#2104:0",
+          "Leading instant swap#3500:0",
+          "Color"
+        ]
       ]
     },
     {
@@ -4866,6 +6482,11 @@
             "Unavailable"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "State"
+        ]
       ]
     },
     {
@@ -4876,7 +6497,10 @@
       ],
       "instanceCount": 2,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Content item",
@@ -4947,6 +6571,19 @@
             "Avatar"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Supporting#2543:0",
+          "Supporting text#2543:3",
+          "Supporting 2#2543:6",
+          "Supporting text 2#2543:9",
+          "Title#2543:12",
+          "Subtitle#2543:15",
+          "Subtitle text#2543:18",
+          "Items#2544:0",
+          "Type"
+        ]
       ]
     },
     {
@@ -4970,6 +6607,11 @@
             "Filled"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "PEA VOLTA"
+        ]
       ]
     },
     {
@@ -4995,6 +6637,11 @@
             "Empty"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Status"
+        ]
       ]
     },
     {
@@ -5018,6 +6665,12 @@
           "defaultValue": true,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Fuel#7199:0",
+          "EV battery#7199:1"
+        ]
       ]
     },
     {
@@ -5035,6 +6688,11 @@
           "defaultValue": true,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Badge#3117:1"
+        ]
       ]
     },
     {
@@ -5052,6 +6710,11 @@
           "defaultValue": true,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Scrollbar#3117:0"
+        ]
       ]
     },
     {
@@ -5062,7 +6725,10 @@
       ],
       "instanceCount": 2,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Notification",
@@ -5123,6 +6789,15 @@
             "Mobile"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Actions#1873:31",
+          "Text#1873:33",
+          "Supporting text#1873:35",
+          "Type",
+          "Breakpoint"
+        ]
       ]
     },
     {
@@ -5133,7 +6808,10 @@
       ],
       "instanceCount": 2,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Side panel footer",
@@ -5156,6 +6834,12 @@
           "defaultValue": true,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Tertiary action#1964:7",
+          "Secondary action#1964:8"
+        ]
       ]
     },
     {
@@ -5203,6 +6887,16 @@
           "defaultValue": true,
           "options": null
         }
+      ],
+      "propertySets": [
+        [
+          "Close icon#1964:0",
+          "Featured icon#1964:1",
+          "Supporting#1964:3",
+          "Text#1964:4",
+          "Supporting text#1964:5",
+          "Tabs#1964:6"
+        ]
       ]
     },
     {
@@ -5213,7 +6907,10 @@
       ],
       "instanceCount": 2,
       "variants": null,
-      "properties": []
+      "properties": [],
+      "propertySets": [
+        []
+      ]
     },
     {
       "name": "Toggle",
@@ -5288,6 +6985,16 @@
             "sm"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Icon#2901:5",
+          "Icon swap#2902:17",
+          "X icon swap#2902:26",
+          "State",
+          "Pressed",
+          "Size"
+        ]
       ]
     },
     {
@@ -5321,6 +7028,13 @@
             "Default"
           ]
         }
+      ],
+      "propertySets": [
+        [
+          "Carpool#195:1",
+          "Dept#195:4",
+          "Type"
+        ]
       ]
     }
   ]

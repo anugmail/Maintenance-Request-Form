@@ -113,8 +113,6 @@
         "Badge#1985:2": false,
         "Actions#1985:4": false,
         "Divider#1985:5": false,
-        "Page": "Dashboard",
-        "Status": "Default",
         "Breakpoint": "Desktop"
       },
       "when": {
@@ -122,7 +120,7 @@
           "Actions#1985:4": true
         }
       },
-      "comment": "ต้องตั้ง variant Page/Status ให้ครบ ไม่งั้น clone จะติดค่าของ instance ต้นแบบมา (เคยได้ 'หมายเลขเหตุการณ์ VMS005678' + ป้าย 'รอ กบค รับเรื่อง' ของไฟล์งานจริง)"
+      "comment": "ในไฟล์มี component ชื่อ Page header ถึง 4 ตัว — ตัวที่ใช้ได้คือตัวที่มี Title#/Badge#/Breakpoint (อีกตัวมีแค่ Page/Status) · ตั้ง Badge=false เพื่อไม่ให้ป้ายสถานะของ instance ต้นแบบติดมา"
     },
     ".crumbs": {
       "kind": "own",
