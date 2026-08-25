@@ -733,6 +733,10 @@ function finishPhase(id) {
   PLAN.phaseDone[id] = true;
   MYD.savePlan(PLAN);
   if (next) { goPhase(next.id); toast(`ผ่านเฟส ${PHASES[idx].no} แล้ว — ต่อที่ ${next.label}`); return; }
+  // เฟสสุดท้าย (คำนวณต้นทุน) — "ส่งอนุมัติปิดแผน" คือส่งคำขอให้ผู้บังคับบัญชา กบค. อนุมัติ ไม่ใช่ปิดแผนทันที
+  // ดูรายการรออนุมัติได้ที่ approve-close.html (เมนู "อนุมัติปิดแผน" ใน sidebar) · 25 ส.ค. 2569
+  PLAN.closeApproval = { status: 'pending', requestedAt: nowTh() };
+  MYD.savePlan(PLAN);
   toast(`ส่งอนุมัติปิดแผนแล้ว — ครบทั้ง ${PHASES.length} เฟส`);
   renderStepper();
   renderPhaseBody();
