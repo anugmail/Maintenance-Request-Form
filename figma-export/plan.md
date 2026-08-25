@@ -239,3 +239,38 @@ Card item base · Nav button · Header navigation
 **ยังค้างหลังรอบนี้**
 - [ ] ยังวางด้วยพิกัด x/y ไม่ได้ทำ auto-layout
 - [ ] component ที่ข้อความอยู่ใน instance ลูก (Breadcrumbs) ยังใช้ไม่ได้ — ต้องเดินเข้าไปตั้งใน instance ลูกเอง
+
+## 10. รอบแก้ที่ 2 — property ตั้งไม่ติด (25 ส.ค. 2569)
+
+### ✅ ตอบคำถามที่ค้างมาตลอด: `import 0 · clone 11`
+
+`importComponentByKeyAsync` **ใช้ไม่ได้จริงบนสิทธิ์ปัจจุบัน** — ทางที่ใช้ได้คือ `clone()` เท่านั้น
+⇒ **ต้องทำงานในไฟล์ที่ก๊อปจาก PEA เสมอ** (ไฟล์เปล่าใช้ไม่ได้) เพราะต้องมี instance ให้โคลน
+โชคดีที่ปลั๊กอินทำเผื่อไว้ทั้งสองทาง เลยไม่ต้องแก้อะไร
+
+### 🐞 บั๊ก: `Could not find a component property with name: 'Title#1985:6'`
+
+**สาเหตุ** — ในไฟล์มี component **ชื่อซ้ำกันถึง 64 ชื่อ** เช่น `Page header` มี **4 ตัว**:
+
+| ตัว | instance | property |
+|---|---|---|
+| component **set** | 101 | `Page` · `Status` |
+| component ธรรมดา | 101 | `Badge#1985:2` · `Title#1985:6` · … |
+| อีกคู่หนึ่ง | 2 · 2 | เหมือนกัน แต่คนละ id |
+
+`5-catalog-summary.js` **รวม property ของทุกตัวที่ชื่อเหมือนกันเข้าด้วยกัน** ⇒ ได้ชุด property
+ที่ **ไม่มี component ตัวไหนมีครบจริง** · แล้ว `setProperties` เป็น **all-or-nothing**
+พังตัวเดียว = ไม่ได้สักตัว ⇒ Page header เลยไม่ได้ property อะไรเลย ติดค่าเดิมของต้นแบบมาทั้งดุ้น
+
+**แก้ที่ปลั๊กอิน — ยึดของจริงตอนรันไทม์**
+1. อ่าน `inst.componentProperties` ของ instance ตัวนั้น เป็นตัวตัดสินว่ามี property อะไร
+2. ชื่อไม่ตรงเป๊ะ → **จับคู่ด้วยชื่อฐาน** (ตัด `#id` ทิ้ง) เพราะ id ต่างกันระหว่าง component คนละตัว
+3. **ตั้งทีละตัว** ตัวไหนพังก็ข้าม ตัวอื่นยังได้ — ไม่ใช่ all-or-nothing
+4. รายงานตัวที่ตั้งไม่ได้ พร้อมจำนวน ไม่เงียบ
+
+**เทส** `test-component-plugin.js` **13/13** — mock ทำให้เหมือนของจริง (instance มี
+`componentProperties` · `setProperties` โยนเมื่อชื่อไม่มีจริง) + เพิ่มเคสที่ 4 จำลอง id ไม่ตรง
+
+**ยังค้าง**
+- [ ] `5-catalog-summary.js` ยังรวม property ข้าม component ที่ชื่อซ้ำ — ปลั๊กอินทนได้แล้ว
+      แต่ `figma-components.json` ยังบอกความจริงไม่ตรง ควรแยกรายตัวพร้อมตัวแยกแยะ

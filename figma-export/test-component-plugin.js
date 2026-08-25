@@ -13,7 +13,19 @@ const used = new Set();
 (function w(n) { if (n.kind === 'instance') used.add(n.component); (n.children || []).forEach(w); })
   ({ children: spec.screens.map((s) => s.root) });
 
-function scenario({ importWorks, haveAll = true }) {
+// instance จริงมี componentProperties เสมอ — mock ต้องมีด้วย ไม่งั้นเทสไม่ได้ทดสอบ applyProps
+// shiftIds = จำลองปัญหาจริง: component ชื่อซ้ำกันในไฟล์ ทำให้ id ของ property ไม่ตรงกับที่สเปกอ้าง
+function propsOf(name, shiftIds) {
+  const c = catByName.get(name);
+  const out = {};
+  (c ? c.properties : []).forEach((p) => {
+    const key = shiftIds ? p.name.replace(/#[\d:]+$/, '#9999:9') : p.name;
+    out[key] = { value: p.defaultValue };
+  });
+  return out;
+}
+
+function scenario({ importWorks, haveAll = true, shiftIds = false }) {
   const page = { id: '0:1', name: 'src', type: 'PAGE' };
   const names = [...used].filter((n, i) => haveAll || i % 3 !== 0);   // จำลองกรณีไฟล์มีไม่ครบ
   const setPropsCalls = [];
@@ -22,8 +34,15 @@ function scenario({ importWorks, haveAll = true }) {
       createInstance: () => mkInst(name) };
     const variant = { id: 'C:' + name, name: 'v', type: 'COMPONENT', parent: set, key: 'k-' + name };
     function mkInst(n) {
+      const cp = propsOf(n, shiftIds);
       return { id: 'I', name: n, type: 'INSTANCE', width: 10, height: 10, x: 0, y: 0,
-        setProperties: (p) => setPropsCalls.push([n, p]), clone() { return mkInst(n); } };
+        componentProperties: cp, resize() {},
+        setProperties: (p) => {
+          // Figma โยนทันทีถ้าชื่อ property ไม่มีจริง — mock ต้องทำแบบเดียวกัน
+          for (const k of Object.keys(p)) if (cp[k] === undefined) throw new Error("Could not find a component property with name: '" + k + "'");
+          setPropsCalls.push([n, p]);
+        },
+        clone() { return mkInst(n); } };
     }
     const inst = mkInst(name);
     inst.getMainComponentAsync = async () => variant;
@@ -47,8 +66,15 @@ function scenario({ importWorks, haveAll = true }) {
     importComponentByKeyAsync: async (k) => {
       if (!importWorks) throw new Error('Cannot access library');
       const n = k.replace(/^k-/, '');
-      return { createInstance: () => ({ id: 'I', name: n, type: 'INSTANCE', width: 10, height: 10, x: 0, y: 0,
-        setProperties: (p) => setPropsCalls.push([n, p]) }) };
+      return { createInstance: () => {
+        const cp = propsOf(n, shiftIds);
+        return { id: 'I', name: n, type: 'INSTANCE', width: 10, height: 10, x: 0, y: 0,
+          componentProperties: cp, resize() {},
+          setProperties: (p) => {
+            for (const k of Object.keys(p)) if (cp[k] === undefined) throw new Error('missing ' + k);
+            setPropsCalls.push([n, p]);
+          } };
+      } };
     },
     ui: { postMessage: (m) => { if (m.type === 'log') logs.push(m.text); }, onmessage: null },
   };
@@ -96,6 +122,12 @@ function scenario({ importWorks, haveAll = true }) {
   await s.figma.ui.onmessage({ type: 'build', spec });
   ok(s.logs.join('\n').includes('หา component ไม่เจอ'), 'รายงานตัวที่หาไม่เจอ ไม่เงียบ');
   ok(s.setPropsCalls.length > 0, 'ตัวที่เจอยังสร้างได้ ไม่ล้มทั้งงาน');
+
+  console.log('\nกรณีที่ 4 — id ของ property ไม่ตรง (component ชื่อซ้ำกันในไฟล์) ← บั๊กที่เจอจริง 25 ส.ค.');
+  s = scenario({ importWorks: false, shiftIds: true });
+  await s.figma.ui.onmessage({ type: 'build', spec });
+  ok(s.setPropsCalls.length > 200, `จับคู่ด้วยชื่อฐาน (ตัด #id) แล้วยังตั้งได้ ${s.setPropsCalls.length} จุด`);
+  ok(s.logs.join('\n').includes('ตั้ง property ได้ครบทุกตัว'), 'ไม่มี property ตกหล่น');
 
   console.log(`\nผล: ${pass} ผ่าน · ${fail} ไม่ผ่าน`);
   process.exit(fail ? 1 : 0);

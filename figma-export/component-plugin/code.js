@@ -70,6 +70,42 @@ async function makeInstance(name) {
   return null;
 }
 
+/* ---------- ตั้ง property แบบทนทาน ----------
+   ปัญหาที่เจอจริง: ในไฟล์มี component ชื่อซ้ำกันถึง 64 ชื่อ (เช่น "Page header" มี 4 ตัว —
+   เป็น component set กับ component ธรรมดาปนกัน) แต่ figma-components.json รวม property
+   ของทุกตัวที่ชื่อเหมือนกันไว้ด้วยกัน ⇒ สเปกอาจอ้าง property ที่ instance ตัวนี้ไม่มี
+   และ setProperties เป็น all-or-nothing — พังตัวเดียวคือไม่ได้สักตัว
+
+   ⇒ ยึด "property ที่ instance ตัวนี้มีจริง" เป็นหลัก
+     · ชื่อไม่ตรงเป๊ะ ให้จับคู่ด้วยชื่อฐาน (ตัด #id ทิ้ง) เพราะ id ต่างกันระหว่าง component คนละตัว
+     · ตั้งทีละตัว ตัวไหนพังก็ข้าม ตัวอื่นยังได้                                        */
+var skippedProps = {};
+
+function applyProps(inst, compName, wanted) {
+  var have = {};
+  try { have = inst.componentProperties || {}; } catch (e) { have = {}; }
+
+  var byBase = {};
+  Object.keys(have).forEach(function (k) { byBase[k.split('#')[0]] = k; });
+
+  Object.keys(wanted).forEach(function (k) {
+    var target = (have[k] !== undefined) ? k : byBase[k.split('#')[0]];
+    if (!target) {
+      var tag = compName + ' → ' + k;
+      skippedProps[tag] = (skippedProps[tag] || 0) + 1;
+      return;
+    }
+    var one = {};
+    one[target] = wanted[k];
+    try { inst.setProperties(one); }
+    catch (e) {
+      propFail++;
+      var t2 = compName + ' → ' + target + ' = ' + JSON.stringify(wanted[k]).slice(0, 30);
+      skippedProps[t2] = (skippedProps[t2] || 0) + 1;
+    }
+  });
+}
+
 /* ---------- สร้าง node ตาม spec ---------- */
 var made = { instance: 0, frame: 0, text: 0 };
 var missing = {};
@@ -81,11 +117,7 @@ async function build(node, parent) {
   if (node.kind === 'instance') {
     var inst = await makeInstance(node.component);
     if (!inst) { missing[node.component] = (missing[node.component] || 0) + 1; return; }
-    try { inst.setProperties(node.properties || {}); }
-    catch (e) {
-      propFail++;
-      say('   ตั้ง property ไม่ได้ที่ ' + node.component + ': ' + String(e && e.message || e).slice(0, 90), 'err');
-    }
+    applyProps(inst, node.component, node.properties || {});
     if (node.rect) {
       inst.x = node.rect.x; inst.y = node.rect.y;
       // ย่อ/ขยายให้เท่าของจริงในหน้าเว็บ — ไม่งั้น instance ที่ใหญ่กว่าเดิมจะทับตัวข้างๆ
@@ -159,7 +191,13 @@ figma.ui.onmessage = async function (msg) {
     } else {
       say('✓ หา component เจอครบทุกตัว', 'ok');
     }
-    if (propFail) say('ตั้ง property ไม่ได้ ' + propFail + ' จุด', 'err');
+    var sk = Object.keys(skippedProps);
+    if (sk.length) {
+      say('property ที่ตั้งไม่ได้ ' + sk.length + ' แบบ (instance นั้นไม่มี property นี้):', 'err');
+      sk.slice(0, 8).forEach(function (k) { say('   ' + k + ' × ' + skippedProps[k], 'err'); });
+    } else {
+      say('✓ ตั้ง property ได้ครบทุกตัว', 'ok');
+    }
 
     var howList = Object.keys(cache).filter(function (k) { return cache[k]; })
       .map(function (k) { return cache[k].how; });
