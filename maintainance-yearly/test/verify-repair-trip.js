@@ -41,7 +41,8 @@ const BASE = 'http://127.0.0.1:8123/maintainance-yearly';
   ok(/ยังไม่จัด\s*6/.test(head), 'ตอนเริ่มยังไม่จัดเข้าใบเลยทั้ง 6');
   ok(await page.locator('.note-info', { hasText: 'จัดซ่อมที่หน้างาน' }).count() > 0,
     'บอกเงื่อนไขเข้าแผนไว้บนหน้า (นับเฉพาะใบที่เลือกจัดซ่อมที่หน้างาน)');
-  const offRows = await page.locator('.tbl tbody tr').count();
+  // นับเฉพาะแถวที่ติดป้าย 'เข้าซ่อมที่ กบค.' — '.tbl tbody tr' เฉยๆ ชนกับตารางรายจังหวัดด้วย
+  const offRows = await page.locator('.tbl tbody tr').filter({ has: page.locator('.badge', { hasText: 'เข้าซ่อมที่ กบค.' }) }).count();
   ok(offRows === 2, `แสดงใบที่ถูกกันออก 2 ใบพร้อมเหตุผล (ได้ ${offRows})`);
   ok(await page.locator('.badge', { hasText: 'เข้าซ่อมที่ กบค.' }).count() === 2,
     'ใบที่ถูกกันออกติดป้ายว่า "เข้าซ่อมที่ กบค."');
@@ -50,10 +51,19 @@ const BASE = 'http://127.0.0.1:8123/maintainance-yearly';
   ok(await page.locator('#btnAutoTrips').count() === 0, 'ไม่มีปุ่ม "แยกอัตโนมัติตามจังหวัด"');
   ok(await page.locator('.travelQSeg').count() === 0, 'ไม่มีตัวเลือกไตรมาส');
 
+  console.log('\nแยกใบที่ยังไม่จัด ตามจังหวัด');
+  const provBoxes = await page.locator('.rzone-head b').allTextContents();
+  ok(provBoxes.length === 4, `มีกล่องจังหวัด 4 กล่อง (ได้ ${provBoxes.length}) — ${provBoxes.join(' · ')}`);
+  ok(provBoxes[0] === 'ขอนแก่น' || provBoxes[0] === 'อุดรธานี',
+    'เรียงจังหวัดที่มีใบเยอะสุดขึ้นก่อน (ขอนแก่น/อุดรธานี 2 ใบ)');
+  ok(await page.locator('.rzone-count').first().textContent().then(t => /2 ใบแจ้งซ่อม/.test(t)),
+    'หัวกล่องบอกจำนวนใบของจังหวัดนั้น');
+  ok(await page.locator('.sect', { hasText: 'แยกตามจังหวัด' }).count() > 0, 'มีหัวข้อ "แยกตามจังหวัด"');
+
   console.log('\nสร้างใบเดินทาง + เกณฑ์ส่ง');
   await page.locator('#btnAddRepairTrip').click();
   await page.waitForTimeout(300);
-  ok(await page.locator('.rzone').count() === 1, 'สร้างใบเดินทางได้');
+  ok(await page.locator('[data-rtrip]').count() > 0, 'สร้างใบเดินทางได้');
   ok(await page.locator('[data-rsend]').isDisabled(), 'ใบเปล่ายังส่งไม่ได้');
   const bl = await page.locator('.note-warn li').allTextContents();
   ok(bl.length === 6, `บอกครบว่าติดอะไรบ้าง ${bl.length} ข้อ`);
@@ -67,7 +77,7 @@ const BASE = 'http://127.0.0.1:8123/maintainance-yearly';
     await page.waitForTimeout(250);
   };
   await addOne(); await addOne(); await addOne();
-  ok(await page.locator('.rzone .tbl tbody tr').count() === 3, 'ใส่ใบแจ้งซ่อมเข้าใบเดียวกันได้ 3 ใบ');
+  ok(await page.locator('.rzone:has([data-rtrip]) .tbl tbody tr').count() === 3, 'ใส่ใบแจ้งซ่อมเข้าใบเดียวกันได้ 3 ใบ');
   const head2 = (await page.locator('.sub').first().textContent()).replace(/\s+/g, ' ');
   ok(/จัดเข้าใบแล้ว\s*3/.test(head2) && /ยังไม่จัด\s*3/.test(head2), 'ตัวเลขคุมยอดขยับตาม — ' + head2.trim());
   ok(await page.locator('.rzone-count').first().textContent().then(t => /3 ใบแจ้งซ่อม/.test(t)), 'หัวใบนับจำนวนใบแจ้งซ่อมถูก');
@@ -76,10 +86,10 @@ const BASE = 'http://127.0.0.1:8123/maintainance-yearly';
   console.log('\nเอาใบแจ้งซ่อมออกจากใบเดินทาง');
   await page.locator('[data-rdrop]').first().click();
   await page.waitForTimeout(250);
-  ok(await page.locator('.rzone .tbl tbody tr').count() === 2, 'เอาออกได้ทีละใบ');
+  ok(await page.locator('.rzone:has([data-rtrip]) .tbl tbody tr').count() === 2, 'เอาออกได้ทีละใบ');
 
   console.log('\nกรอกครบแล้วส่งได้');
-  const box = page.locator('.rzone').first();
+  const box = page.locator('.rzone').filter({ has: page.locator('[data-rtrip]') }).first();
   await box.locator('[data-field="location"]').fill('กฟจ.ขอนแก่น');
   await box.locator('[data-field="windowFrom"]').fill('2569-09-01');
   await box.locator('[data-field="windowTo"]').fill('2569-09-03');
@@ -99,7 +109,7 @@ const BASE = 'http://127.0.0.1:8123/maintainance-yearly';
   console.log('\nข้อมูลอยู่ต่อหลังรีโหลด');
   await page.reload();
   await page.waitForSelector('.rzone');
-  ok(await page.locator('.rzone .tbl tbody tr').count() === 2, 'ใบแจ้งซ่อมในใบเดินทางยังอยู่ครบหลังรีโหลด');
+  ok(await page.locator('.rzone:has([data-rtrip]) .tbl tbody tr').count() === 2, 'ใบแจ้งซ่อมในใบเดินทางยังอยู่ครบหลังรีโหลด');
 
   console.log('\nสายบำรุงรักษาไม่ถูกกระทบ');
   await page.locator('[data-src="plan"]').click();

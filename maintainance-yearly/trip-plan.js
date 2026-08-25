@@ -634,6 +634,18 @@
   // ⚠️ ขอบเขตรอบนี้ = "จังหวะสร้างแผน" เท่านั้น — จบที่ส่งแผนนัด
   //    (ฝั่งหน่วยงานตอบรับ · ขั้นขออนุมัติ · ยืนยันแผน ยังไม่ทำ)
 
+  // จัดใบแจ้งซ่อมเป็นกลุ่มตามจังหวัด — ทีมช่างออกทริปเดียวเก็บงานในจังหวัดเดียวกันเป็นปกติ
+  // เรียงจังหวัดที่มีใบเยอะสุดขึ้นก่อน (เท่ากันเรียงตามชื่อไทย) เพื่อให้เห็นจังหวัดที่คุ้มจะออกทริปทันที
+  function groupByProvince(jobs) {
+    const g = {};
+    jobs.forEach(j => (g[j.province] = g[j.province] || []).push(j));
+    return g;
+  }
+  function provinceOrder(jobs) {
+    const g = groupByProvince(jobs);
+    return Object.keys(g).sort((a, b) => g[b].length - g[a].length || a.localeCompare(b, 'th'));
+  }
+
   function repairTripBoxes(trips) {
     return trips.map(trip => {
       const locked = !!trip.sentAt;
@@ -793,6 +805,8 @@
       <div class="sub"><b>มีรถที่ต้องออกไปซ่อม ${onsite.length} คัน</b>
         — จัดเข้าใบแล้ว <b>${onsite.length - unassigned.length}</b> · ยังไม่จัด <b>${unassigned.length}</b>
         · แผนเดินทาง <b>${trips.length}</b> ใบ</div>
+      ${unassigned.length ? `<div class="sub">ที่ยังไม่จัด แยกตามจังหวัด:
+        ${provinceOrder(unassigned).map(pv => `<b>${esc(pv)}</b> ${groupByProvince(unassigned)[pv].length} ใบ`).join(' · ')}</div>` : ''}
       <div class="note note-info"><span class="ms">filter_alt</span>
         <div><b>นับเฉพาะใบที่เลือก "จัดซ่อมที่หน้างาน"</b> ในหัวข้อ <i>รูปแบบการซ่อม</i> ของใบแจ้งซ่อม
           — ใบที่เลือก <i>เข้าซ่อมที่ กบค.</i> ไม่ต้องเดินทาง จึงไม่เข้าแผนนี้
@@ -803,7 +817,35 @@
         <button class="btn btn-o" id="btnAddRepairTrip"><span class="ms">add</span> สร้างแผนเดินทางใหม่</button>
       </div>
       ${trips.length ? repairTripBoxes(trips) : `<div class="empty">ยังไม่มีแผนเดินทาง — กดสร้างแผนใหม่</div>`}
-      ${unassigned.length ? `<div class="empty">ยังมีใบแจ้งซ่อม ${unassigned.length} ใบที่ยังไม่ถูกจัดเข้าแผนใด</div>` : ''}
+      ${unassigned.length ? `
+        <div class="sect">ใบแจ้งซ่อมที่ยังไม่ถูกจัดเข้าแผน — แยกตามจังหวัด</div>
+        <div class="sub">ทีมหนึ่งมักออกทริปเดียวเก็บงานในจังหวัดเดียวกัน — ดูตรงนี้ว่าจังหวัดไหนมีกี่ใบ
+          แล้วค่อยตัดสินว่าจะรวมเป็นทริปเดียวหรือแยก</div>
+        <div class="stack">
+        ${provinceOrder(unassigned).map(pv => {
+          const js = groupByProvince(unassigned)[pv];
+          return `<div class="rzone">
+            <div class="rzone-head">
+              <span class="ms rzone-caret">location_on</span>
+              <b>${esc(pv)}</b>
+              <span class="rzone-count">${js.length} ใบแจ้งซ่อม · ${new Set(js.map(j => j.ownerDept)).size} หน่วยงาน</span>
+            </div>
+            <div class="rzone-body flush"><div class="tblwrap"><table class="tbl">
+              <thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th>
+                <th>อาการที่แจ้ง</th><th>ความเร่งด่วน</th></tr></thead>
+              <tbody>${js.map(j => {
+                const u = MYD.URGENCY[j.urgency] || MYD.URGENCY.normal;
+                return `<tr>
+                  <td><b>${esc(j.no)}</b><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
+                  <td><b>${esc(j.plate)}</b><div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
+                  <td>${esc(j.ownerDept)}</td>
+                  <td>${j.syms.map(x => `<span class="badge b-neutral">${esc(x)}</span>`).join(' ')}</td>
+                  <td><span class="badge ${u.cls}">${esc(u.text)}</span></td>
+                </tr>`;
+              }).join('')}</tbody></table></div></div>
+          </div>`;
+        }).join('')}
+        </div>` : ''}
       ${offsite.length ? `
         <div class="sect">ใบแจ้งซ่อมที่ไม่เข้าแผนเดินทาง</div>
         <div class="sub">เลือก <b>เข้าซ่อมที่ กบค.</b> — เจ้าของรถขนรถมาที่สำนักงานใหญ่ ไม่ต้องจัดทีมเดินทาง
