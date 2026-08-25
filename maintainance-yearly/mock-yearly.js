@@ -864,10 +864,12 @@ const MYD = {
     { id: 'filter',  label: 'เปลี่ยนตัวกรอง' },
   ],
 
-  // ตั้งต้นติ๊กทั้ง 3 งาน — ส่วนใหญ่ไปทำครบ คนทำแผนค่อยติ๊กออกเฉพาะคันที่ไม่ต้องทำบางงาน
+  // ตั้งต้นติ๊ก 2 งานน้ำมัน — ส่วนใหญ่ไปทำทั้งคู่ คนทำแผนค่อยติ๊กออกเฉพาะคันที่ทำอย่างเดียว
+  // ส่วน "เปลี่ยนตัวกรอง" ตั้งต้น**ไม่ติ๊ก** — เป็นงานที่เลือกเพิ่มรายคัน ไม่ได้ทำทุกคัน
+  // (เจ้าของงานเคาะ 21 ส.ค. 2569 · ยืนยันซ้ำ 25 ส.ค. 2569 หลัง 4e2f700 เปลี่ยนเป็น true)
   tripJobsOf(trip, vehicleId) {
     const j = (trip.jobs || {})[vehicleId];
-    return j || { change: true, inspect: true, filter: true };
+    return j || { change: true, inspect: true, filter: false };
   },
 
   tripJobsText(trip, vehicleId) {
