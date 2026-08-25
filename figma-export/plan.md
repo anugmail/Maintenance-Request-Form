@@ -21,7 +21,7 @@
 | 3 | แมป `components.css` ↔ component จริง | ✅ **เสร็จ** — `design-system/figma-map.json` 58 รายการ ตรวจผ่าน 58/58 |
 | 4 | ตั้งเป็นกฎบังคับอ่านก่อนออกแบบ | ✅ **เสร็จ** — `CLAUDE.md` + `design-system/README.md` |
 | 5 | รู้ว่าสร้าง instance ด้วยวิธีไหนได้ (import vs clone) | 🟡 **รอผล** — `build-test-plugin/` เขียนแล้ว รอเจ้าของงานรันแล้วบอกผล |
-| 6 | ตัวแปลง DOM → spec ที่อ้าง component จริง | ⬜ **ยังไม่ทำ** ← งานหลักรอบนี้ |
+| 6 | ตัวแปลง DOM → spec ที่อ้าง component จริง | ⬜ **ยังไม่ทำ** ← งานถัดไป (Task 2) |
 | 7 | ปลั๊กอินสร้าง instance จาก spec | ⬜ **ยังไม่ทำ** |
 | 8 | นำร่อง 1 หน้า (แผนเดินทางงานซ่อม) | ⬜ **ยังไม่ทำ** ← เป้าหมายรอบนี้ |
 | 9 | ขยายทุกหน้า | ⬜ ยังไม่ทำ |
@@ -95,7 +95,7 @@ out/spec-components.json
 
 ## 3. งานรอบนี้ — นำร่อง 1 หน้า
 
-### Task 1 — สคริปต์เก็บ DOM ของหน้าแผนเดินทางงานซ่อม
+### ✅ Task 1 — สคริปต์เก็บ DOM ของหน้าแผนเดินทางงานซ่อม (เสร็จ 25 ส.ค. 2569)
 
 `figma-export/flow-repair-trip-extract.js` (ก๊อปโครงจาก `flow-report-extract.js`)
 
@@ -106,7 +106,12 @@ out/spec-components.json
 - ⚠️ ห้าม `fullPage: true` — ขยาย viewport เท่าความสูงหน้าแทน
 - `walkDom()` ต้องเก็บ **`className` เต็ม** ของทุก node (ท่อเดิมเก็บแค่ style)
 
-**เสร็จเมื่อ:** ได้ `out/dom-repair-trip-01..03.json` และเปิดดูแล้วเห็น `.page-title-row` `.note-info` `.rzone` `.tbl` ครบ
+**ผลจริง:** `out/dom-repair-trip-01..03.json` · **1,512 node · 57 คลาส · ยังไม่มีในแมป 0 ตัว**
+สคริปต์เทียบคลาสที่เจอกับ `figma-map.json` ให้เองท้ายการรัน ⇒ รู้ทันทีว่าตกอะไรไหม
+
+จะกลายเป็น instance ของจริง: Pill outline 17 · Text input 15 · Input dropdown 15 ·
+Section header 6 · Table header cell 5 · Table cell 5 · Alert 3 · Page header · Breadcrumbs ·
+Card item base · Nav button · Header navigation
 
 ### Task 2 — ตัวแปลง DOM → spec v3
 
