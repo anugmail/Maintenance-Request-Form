@@ -746,6 +746,31 @@ const MYD = {
     return on.length ? on.join(' + ') : 'ยังไม่เลือกงาน';
   },
 
+  // ================= เฟส 4 · ดำเนินการบำรุงรักษา — ติ๊กงานที่ทำเสร็จแล้ว =================
+  // แยกจาก trip.jobs (นั่นคือ "งานที่ต้องทำ" เลือกไว้ตอนทำแผนเดินทาง เฟส 2) — อันนี้คือสถานะ "ทำเสร็จหรือยัง"
+  // plan.maintDone = { [vehicleId]: { [jobId]: true } }
+  maintJobDone(plan, vehicleId, jobId) {
+    return !!((plan.maintDone || {})[vehicleId] || {})[jobId];
+  },
+
+  setMaintJobDone(plan, vehicleId, jobId, done) {
+    plan.maintDone = plan.maintDone || {};
+    plan.maintDone[vehicleId] = plan.maintDone[vehicleId] || {};
+    plan.maintDone[vehicleId][jobId] = !!done;
+  },
+
+  // งานที่ต้องทำจริงของคันนี้ (เฉพาะที่ติ๊กไว้ตอนทำแผนเดินทาง) — ใช้นับว่าติ๊กเสร็จไปกี่จากกี่งาน
+  maintJobsFor(trip, vehicleId) {
+    const jobs = this.tripJobsOf(trip, vehicleId);
+    return this.TRIP_JOBS.filter(j => jobs[j.id]);
+  },
+
+  maintDoneCount(plan, trip, vehicleId) {
+    const need = this.maintJobsFor(trip, vehicleId);
+    const done = need.filter(j => this.maintJobDone(plan, vehicleId, j.id)).length;
+    return { done, total: need.length };
+  },
+
   // สถานที่บำรุงรักษาตั้งต้นของรถคันหนึ่ง (เจ้าของงาน 17 ส.ค. 2569)
   //   รถของหน่วยงานระดับจังหวัด/สาขา → จังหวัดที่สังกัด
   //   รถของเขต (ownerLevel='region') → เขตที่อยู่
