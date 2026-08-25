@@ -8,14 +8,31 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="../design-system/tokens.css?v=20260825-ds24">
-<link rel="stylesheet" href="../design-system/components.css?v=20260825-ds24">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260825-ds25">
+<link rel="stylesheet" href="../design-system/components.css?v=20260825-ds25">
+<script src="../job-store.js?v=20260819-jobstore"></script><!-- MDJ: อ่าน/เขียนใบงานร่วมกับแอปหลัก — หน้านี้อยู่คนละไฟล์ ถ้าไม่เขียนลง store ผลตรวจสภาพจะไม่ถึงขั้นถัดไป -->
 <!-- แบบหน้าจอเดี่ยว (design mock) — ขั้น 3 ของเส้น กบค. ซ่อมเอง
-     19 ส.ค. 2569: สร้างเป็นหน้าว่างก่อนตามที่เจ้าของงานสั่ง — ยังไม่ใส่ฟอร์มตรวจสภาพ
-     เข้ามาที่นี่จากหน้านัดหมาย (kbk-self-repair-appointment.html) หลังส่งคำนัดแล้ว พร้อม ?no=<เลขใบแจ้งซ่อม>
-     ไม่มี <style> โดยตั้งใจ ใช้คอมโพเนนต์จาก design system เท่านั้น:
-     .shell/.side/.nv/.work/.topbar · .content · .crumbs · .wsteps/.wstep · .card/.sect/.sub · .stack
-     .btn · .empty · .actions · .toast -->
+     24 ส.ค. 2569: ใส่เนื้อฟอร์มจริงตามภาพหน้าจอ "จัดการเหตุรถเสีย" ที่เจ้าของงานส่งมา (ใบรับรถ 13 รายการ
+     + ใบตรวจสภาพก่อนซ่อม 23 รายการชุดเครน/กระเช้า + ลงนามรับ-ส่งมอบ) — breadcrumb/หัวข้อ/badge/แท็บ
+     เปลี่ยนให้ตรงภาพตามที่เจ้าของงานยืนยัน แต่ "สเต็ปเปอร์ขั้น 1" ยังไม่เปลี่ยนป้ายจาก "เบิกอะไหล่" เป็น
+     "เปิดเหตุใหม่" ตามภาพ — เจ้าของงานยังไม่ยืนยันว่าเป็นขั้นเดียวกันหรือคนละขั้น (ถ้าเคาะแล้วค่อยแก้คู่กับ
+     Diagram/02-แจ้งซ่อม-กบค/ ในคอมมิตเดียวกัน) · ชุดรายการ 23 ข้อเป็นของรถกลุ่มเครน/กระเช้า — รถทั่วไปที่ไม่มี
+     เครน/กระเช้ายังไม่มีชุดรายการ (ดู plan.md หัวข้อค้างอยู่)
+     24 ส.ค. 2569 (รอบ 2): เจ้าของงานทัก "ไม่ตรงกับ design และไม่ได้ใช้ design system" — ไล่เก็บ style="" ที่เคย
+     เขียนกระจายในหน้า (crumbs link, badge margin, ปุ่มเต็มความกว้าง, ช่องกรอกแทรกในเซลล์ตาราง) ย้ายขึ้นเป็น
+     คลาสกลางใน components.css แล้ว: .crumbs a · .page-title-row .badge · .ml-auto · .mb-4 · .btn-block ·
+     .tbl-inline-sm/-md · .tbl-row-label — ส่วนโทนสีหลัก (brand-600) ที่ถูกทักว่าเทียบกับภาพสกรีนช็อตแล้วผิดโทน
+     ยังรอเจ้าของงานส่งภาพกลับมาเทียบสีจริงก่อนแก้ tokens.css (ไฟล์นี้กระทบทั้งระบบ ห้ามกะเอง)
+     ใช้คอมโพเนนต์จาก design system เท่านั้น:
+     .shell/.side/.nv/.work/.topbar · .content · .crumbs · .page-title-row · .badge · .tabs/.tab-btn · .mb-4
+     .wsteps/.wstep · .note-info · .card/.sect/.sub · .stack · .fgrid/.f(.ro)/.in(.noic)
+     .tblwrap/.tbl(.num/.tbl-inline-sm/.tbl-inline-md/.tbl-row-label) · .btn(.btn-block) · .ml-auto · .actions · .toast -->
+<style>
+/* ตาราง "รายละเอียดการตรวจสภาพก่อนซ่อม" มีหัวตาราง 2 แถว (กลุ่ม "การทดสอบหลังซ่อม" ครอบคอลัมน์ มี/ไม่มี)
+   ตารางมาตรฐานปัดมุมหัวตารางทุกแถวของ thead ตามปกติ ⇒ แถวที่ 2 จะโผล่มุมโค้งกลางตาราง
+   ปิดมุมเฉพาะแถวที่ 2 — เป็นของหน้านี้หน้าเดียวเพราะยังไม่มีตารางหัว 2 แถวที่อื่นในระบบ */
+#tblInspect thead tr:nth-child(2) th{border-radius:0}
+</style>
 </head>
 <body>
   <div class="shell">
@@ -36,16 +53,31 @@
     </aside>
 
     <div class="work">
-      <div class="draft">แบบหน้าจอเดี่ยว (design mock) — ขั้น "ตรวจสภาพก่อนซ่อม" ของเส้น กบค. ซ่อมเอง · ยังไม่ได้ออกแบบเนื้อหา</div>
+      <div class="draft">แบบหน้าจอเดี่ยว (design mock) — ขั้น "ตรวจสภาพก่อนซ่อม" ของเส้น กบค. ซ่อมเอง · เนื้อฟอร์มอิงภาพหน้าจริง ยังไม่ต่อ API</div>
       <div class="topbar">
         <span class="ms">light_mode</span>
         <span class="ms">notifications</span>
       </div>
 
       <main class="content">
-      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><a href="../mock/Maintenance-Request-Form.html#kbk" style="color:inherit;text-decoration:none">งานซ่อม กบค.</a><span class="sep">›</span><span class="cur">ตรวจสภาพก่อนซ่อม</span></div>
-      <h1 class="page-title">กบค. ซ่อมเอง</h1>
-      <div class="sub" id="fromJob" hidden></div>
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><a href="../mock/Maintenance-Request-Form.html#kbk">จัดการเหตุรถเสีย</a><span class="sep">›</span><span class="cur">หมายเลขเหตุการณ์ <span id="crumbNo"></span></span></div>
+
+      <div class="page-title-row">
+        <h1 class="page-title" id="pageTitle">หมายเลขเหตุการณ์</h1>
+        <span class="badge b-out"><span class="dot"></span>เร่งด่วน</span>
+        <button type="button" class="btn btn-link ml-auto" onclick="toast('mock — ยังไม่มีฟังก์ชันนี้')"><span class="ms">bookmark_border</span> บันทึกที่</button>
+      </div>
+
+      <div class="tabs mb-4" role="tablist" aria-label="หมายเลขเหตุการณ์">
+        <button type="button" class="tab-btn on" role="tab" aria-selected="true">กระบวนการซ่อม</button>
+        <button type="button" class="tab-btn" role="tab" aria-selected="false" onclick="toast('mock — ยังไม่มีหน้านี้')">ข้อมูลการซ่อม</button>
+        <button type="button" class="tab-btn" role="tab" aria-selected="false" onclick="toast('mock — ยังไม่มีหน้านี้')">ประวัติการดำเนินการ</button>
+      </div>
+
+      <div class="note note-info" id="demoNote" hidden>
+        <span class="ms">info</span>
+        <div>เปิดจากแกลเลอรีโดยไม่มี <code>?no=</code> ติดมา — ข้อมูลรถ/ผู้เกี่ยวข้องด้านล่างเป็นตัวอย่างสำหรับดูหน้าตาเท่านั้น ไม่ได้ผูกกับใบงานจริง</div>
+      </div>
 
       <div class="wsteps wrap">
         <div class="wstep passed"><span class="num"><span class="ms">check</span></span><span class="lbl">เบิกอะไหล่</span></div>
@@ -58,15 +90,55 @@
 
       <div class="card">
         <div class="stack">
+          <div class="sect">ข้อมูลเอกสารรับรถ</div>
+          <div class="fgrid">
+            <div class="f ro"><label>งานเลขที่</label><div class="in noic"><input type="text" id="fJobNo" readonly></div></div>
+            <div class="f ro"><label>หมายเลขทะเบียน</label><div class="in noic"><input type="text" id="fPlate" readonly></div></div>
+            <div class="f ro"><label>รหัส</label><div class="in noic"><input type="text" id="fCode" readonly></div></div>
+            <div class="f ro"><label>ยี่ห้อ</label><div class="in noic"><input type="text" id="fMake" readonly></div></div>
+            <div class="f ro"><label>รุ่น</label><div class="in noic"><input type="text" id="fModel" readonly></div></div>
+            <div class="f ro"><label>ใช้งานประจำ</label><div class="in noic"><input type="text" id="fOrg" readonly></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="stack">
           <div class="sect">ตรวจสภาพก่อนซ่อม</div>
           <div class="sub">ตรวจสภาพรถร่วมกับผู้ส่งรถในวันนัด ก่อนเริ่มงานซ่อม — บันทึกไว้เทียบกับตอนตรวจหลังซ่อม</div>
-          <div class="empty">ยังไม่ได้ออกแบบหน้าจอของขั้นนี้ — ต้องเคาะก่อนว่าใช้ฟิลด์อะไรบ้าง<br>(ตำหนิรอบตัวรถรายโซน · ระดับน้ำมัน · เลขไมล์ · อาการเสียเดิม · รูปถ่ายก่อนซ่อม)</div>
+
+          <div class="tblwrap"><table class="tbl" id="tblReceive"></table></div>
+          <button type="button" class="btn btn-o btn-sm" id="btnAddReceive"><span class="ms">add</span> เพิ่มรายการ</button>
+
+          <div class="sect">ลงนามการรับมอบรถ</div>
+          <div class="fgrid">
+            <div class="f sp2">
+              <label>ผู้ส่งมอบรถ</label>
+              <div class="stack tight">
+                <select id="signerSend"></select>
+                <button type="button" class="btn btn-o btn-block" id="btnSignSend" disabled>เซ็นลงนาม</button>
+              </div>
+            </div>
+            <div class="f sp2">
+              <label>ผู้รับมอบ (กบค.)</label>
+              <div class="stack tight">
+                <select id="signerRecv"></select>
+                <button type="button" class="btn btn-o btn-block" id="btnSignRecv" disabled>เซ็นลงนาม</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="sect">รายละเอียดการตรวจสภาพก่อนซ่อม</div>
+          <div class="sub">ชุดรายการตรวจสำหรับรถกลุ่มเครน/กระเช้า — คอลัมน์ "การทดสอบหลังซ่อม" คือค่าตั้งต้นที่จะใช้เทียบกับขั้นตรวจสภาพหลังซ่อม</div>
+
+          <div class="tblwrap"><table class="tbl" id="tblInspect"></table></div>
+          <button type="button" class="btn btn-o btn-sm" id="btnAddInspect"><span class="ms">add</span> เพิ่มรายการ</button>
         </div>
       </div>
 
       <div class="actions">
         <button class="btn btn-g" id="btnBack"><span class="ms">arrow_back</span> ย้อนกลับ</button>
-        <button class="btn btn-p" id="btnNext" disabled title="ยังไม่ได้ออกแบบฟอร์มตรวจสภาพ">บันทึกผลตรวจสภาพ</button>
+        <button class="btn btn-p" id="btnNext" disabled title="กรุณาตรวจครบทุกรายการและลงนามทั้ง 2 ฝั่งก่อน">ดำเนินการซ่อม</button>
       </div>
       </main>
     </div>
@@ -75,8 +147,13 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// หน้าว่างสำหรับวางฟอร์มตรวจสภาพก่อนซ่อม — ยังไม่มี state จริง
 const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const TH_MON_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function nowStr() {
+  const d = new Date();
+  return `${d.getDate()} ${TH_MON_SHORT[d.getMonth()]} ${d.getFullYear() + 543} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
 
 function toast(m) {
   const t = $('toast'); t.textContent = m; t.classList.add('show');
@@ -88,18 +165,215 @@ function goApp(view) {
   location.href = '../mock/Maintenance-Request-Form.html' + (view ? '#' + view : '');
 }
 
-// มาจากหน้านัดหมายจะมี ?no=<เลขใบแจ้งซ่อม> ติดมา — เปิดตรงๆ ไม่มี param ก็ยังใช้ได้ (ซ่อนบรรทัดนี้ไว้)
+// LINKED = เข้ามาจากแอปหลัก/ขั้นก่อนหน้าและหาใบงานใน store เจอ → ผลตรวจที่บันทึกจากหน้านี้ไปโผล่ใบงานจริง
+// ไม่ LINKED (เปิดจากแกลเลอรี design-mock ตรงๆ) → หน้านี้ทำงานเป็นแบบหน้าจอเดี่ยว ใช้ข้อมูลตัวอย่าง
 const fromNo = new URLSearchParams(location.search).get('no');
-if (fromNo) {
-  const el = $('fromJob');
-  el.textContent = 'ใบแจ้งซ่อม ' + fromNo + ' — หน้านี้ยังเป็นโครงเปล่า ยังไม่ได้ผูกกับใบงานจริง';
-  el.hidden = false;
+const JOB = fromNo ? MDJ.get(fromNo) : null;
+const LINKED = !!JOB;
+
+$('crumbNo').textContent = fromNo || 'BRD005678';
+$('pageTitle').textContent = 'หมายเลขเหตุการณ์ ' + (fromNo || 'BRD005678');
+if (!LINKED) $('demoNote').hidden = false;
+
+$('fJobNo').value = fromNo || 'BRD005678';
+$('fPlate').value = LINKED ? JOB.plate : '82-6789 ขอนแก่น';
+$('fCode').value = '–';
+$('fMake').value = '–';
+$('fModel').value = LINKED ? JOB.model : 'Isuzu FTR + กระเช้า Aichi SK17A';
+$('fOrg').value = LINKED ? JOB.org : 'กฟภ. เขต ฉ.1 ขอนแก่น';
+
+// ---------- รายชื่อผู้ลงนาม -------------------------------------------
+// ผู้ส่งมอบรถ = คนขับ/ผู้ใช้รถของใบงานนี้ (จาก JOB.driver ถ้าผูกจริง) · ผู้รับมอบ (กบค.) ใช้รายชื่อช่างชุดเดียว
+// กับหน้านัดหมาย (kbk-self-repair-appointment.html) — ยังไม่ได้ต่อ HR จริง เป็นข้อมูลจำลอง
+const RECEIVERS = [
+  { id: '538877', name: 'สุรชัย พันธ์ดี',    posi: 'หก.ซ่อมบำรุง' },
+  { id: '540118', name: 'ประสิทธิ์ แก้วมณี', posi: 'ช่างระดับ 6' },
+  { id: '541902', name: 'วิรัตน์ ศรีสุข',    posi: 'ช่างระดับ 5' },
+  { id: '546210', name: 'ธนพล อินทร์ทอง',   posi: 'ช่างระดับ 5' },
+  { id: '552341', name: 'อนุวัฒน์ คำแหง',   posi: 'ช่างระดับ 4' },
+];
+const senderName = LINKED && JOB.driver ? JOB.driver.name : 'พขร. อนุชิต ศรีสุข';
+$('signerSend').innerHTML = `<option value="">เลือกชื่อผู้ส่งมอบรถ</option><option value="${esc(senderName)}">${esc(senderName)}</option>`;
+$('signerRecv').innerHTML = `<option value="">เลือกชื่อผู้รับมอบ</option>` +
+  RECEIVERS.map(r => `<option value="${esc(r.name)}">${esc(r.name)} · ${esc(r.posi)}</option>`).join('');
+
+// ---------- ใบรับรถ (13 รายการ) ----------------------------------------
+const RECEIVE_LABELS = [
+  'แผ่นป้ายทะเบียนหน้า-หลัง',
+  'ป้ายทะเบียนติดกระจกและ พ.ร.บ.',
+  'กระจกมองข้างซ้าย-ขวา, กระจกมองหลัง',
+  'ยางอะไหล่',
+  null, // แถวที่ 5 = แบตเตอรี่ มีฟิลด์ยี่ห้อ/จำนวนแทรกในบรรทัด (เรนเดอร์แยก)
+  'เครื่องมือประจำรถ, แม่แรง, ประแจถอดล้อ',
+  'ฝาถังน้ำมัน',
+  'อุปกรณ์บนหน้าปัด, แตร',
+  'ใบปัดน้ำฝน',
+  'วิทยุ, ลำโพง, เสาอากาศ, วิทยุรับ-ส่ง',
+  'ระบบไฟแสงสว่าง',
+  'สภาพยาง',
+  'สภาพตัวถังและสี',
+];
+const RECEIVE_STATUSES = ['มี', 'ไม่มี', 'ชำรุด', 'ผิดรุ่น'];
+let receiveRows = RECEIVE_LABELS.map(label => ({ label: label || '', battery: label === null, brand: '', qty: '', status: '', note: '', custom: false }));
+
+function receiveLabelCell(r, i) {
+  if (r.battery) {
+    return `${i + 1}. แบตเตอรี่ยี่ห้อ ` +
+      `<input type="text" class="tbl-inline-md" value="${esc(r.brand)}" placeholder="ระบุยี่ห้อ" oninput="receiveRows[${i}].brand=this.value">` +
+      ` จำนวน <input type="number" min="0" class="tbl-inline-sm" value="${esc(r.qty)}" placeholder="0" oninput="receiveRows[${i}].qty=this.value">` +
+      ` ลูก`;
+  }
+  if (r.custom) {
+    return `${i + 1}. <input type="text" class="tbl-row-label" value="${esc(r.label)}" placeholder="ระบุรายการเพิ่มเติม" oninput="receiveRows[${i}].label=this.value">`;
+  }
+  return `${i + 1}. ${esc(r.label)}`;
 }
+
+function renderReceive() {
+  const rowsHtml = receiveRows.map((r, i) => `<tr>
+      <td>${receiveLabelCell(r, i)}</td>
+      ${RECEIVE_STATUSES.map(s => `<td class="num"><input type="radio" name="recv-${i}" value="${s}" ${r.status === s ? 'checked' : ''} onchange="receiveRows[${i}].status='${s}';updateGate()"></td>`).join('')}
+      <td><input type="text" value="${esc(r.note)}" placeholder="ระบุหมายเหตุ" oninput="receiveRows[${i}].note=this.value"></td>
+    </tr>`).join('');
+  $('tblReceive').innerHTML = `<thead><tr>
+      <th>รายการ</th><th class="num">มี</th><th class="num">ไม่มี</th><th class="num">ชำรุด</th><th class="num">ผิดรุ่น</th><th>หมายเหตุ</th>
+    </tr></thead><tbody>${rowsHtml}</tbody>`;
+}
+
+$('btnAddReceive').addEventListener('click', () => {
+  receiveRows.push({ label: '', battery: false, status: '', note: '', custom: true });
+  renderReceive();
+  updateGate();
+  const inputs = document.querySelectorAll('#tblReceive tbody tr:last-child td:first-child input[type=text]');
+  if (inputs.length) inputs[0].focus();
+});
+
+// ---------- ใบตรวจสภาพก่อนซ่อม (23 รายการ ชุดเครน/กระเช้า) --------------
+const INSPECT_LABELS = [
+  'ชุดเกียร์ PTO',
+  'ปั๊มน้ำมันไฮดรอลิค',
+  'น้ำมันและกรองไฮดรอลิค',
+  'ชุดกระบอกขาช้างหน้า ซ้าย ขวา',
+  'ชุดกระบอกขาช้างหลัง ซ้าย ขวา',
+  'ชุด CONTROL ด้านล่าง, ด้านบน',
+  'สายไฮดรอลิค, สายสัญญาณต่างๆ',
+  'ชุดโรตารี่',
+  'น้ำมันหล่อลื่นชุดหมุนฐานเครน',
+  'ชุดมอเตอร์หมุนฐานเครน',
+  'ชุดเฟืองหมุนฐานเครน',
+  'ชุดกระบอก UPPER BOOM',
+  'ชุดกระบอก LOWER BOOM',
+  'ชุดกระบอก EXTENSION',
+  'ชุดปรับดึงกระเช้า',
+  'ชุดปรับการหมุนของใบกระเช้า',
+  'ชุดวาล์วล็อคต่างๆ',
+  'BUCKET, LINER',
+  'รอกและเชือกวินซ์',
+  'ชุด LIFT รุ่น 115 kV',
+  'การอัดและเคลือบจาระบีตามจุดต่างๆ',
+  'ชุดยึดฐานเครน',
+  'เกจวัดต่างๆ',
+];
+const INSPECT_STATUSES = ['มี', 'ไม่มี'];
+let inspectRows = INSPECT_LABELS.map(label => ({ label, status: '', note: '', custom: false }));
+
+function inspectLabelCell(r, i) {
+  if (r.custom) {
+    return `${i + 1}. <input type="text" class="tbl-row-label" value="${esc(r.label)}" placeholder="ระบุรายการเพิ่มเติม" oninput="inspectRows[${i}].label=this.value">`;
+  }
+  return `${i + 1}. ${esc(r.label)}`;
+}
+
+function renderInspect() {
+  const rowsHtml = inspectRows.map((r, i) => `<tr>
+      <td>${inspectLabelCell(r, i)}</td>
+      ${INSPECT_STATUSES.map(s => `<td class="num"><input type="radio" name="insp-${i}" value="${s}" ${r.status === s ? 'checked' : ''} onchange="inspectRows[${i}].status='${s}';updateGate()"></td>`).join('')}
+      <td><input type="text" value="${esc(r.note)}" placeholder="ระบุหมายเหตุ" oninput="inspectRows[${i}].note=this.value"></td>
+    </tr>`).join('');
+  $('tblInspect').innerHTML = `<thead>
+      <tr><th rowspan="2">รายการ</th><th colspan="2" class="num">การทดสอบหลังซ่อม</th><th rowspan="2">หมายเหตุ</th></tr>
+      <tr><th class="num">มี</th><th class="num">ไม่มี</th></tr>
+    </thead><tbody>${rowsHtml}</tbody>`;
+}
+
+$('btnAddInspect').addEventListener('click', () => {
+  inspectRows.push({ label: '', status: '', note: '', custom: true });
+  renderInspect();
+  updateGate();
+  const inputs = document.querySelectorAll('#tblInspect tbody tr:last-child td:first-child input[type=text]');
+  if (inputs.length) inputs[0].focus();
+});
+
+// ---------- ลงนาม -------------------------------------------------------
+let signSend = { name: '', signed: false };
+let signRecv = { name: '', signed: false };
+
+$('signerSend').addEventListener('change', function () {
+  signSend.name = this.value; signSend.signed = false;
+  $('btnSignSend').disabled = !this.value;
+  $('btnSignSend').textContent = 'เซ็นลงนาม';
+  updateGate();
+});
+$('signerRecv').addEventListener('change', function () {
+  signRecv.name = this.value; signRecv.signed = false;
+  $('btnSignRecv').disabled = !this.value;
+  $('btnSignRecv').textContent = 'เซ็นลงนาม';
+  updateGate();
+});
+$('btnSignSend').addEventListener('click', () => {
+  signSend.signed = true;
+  $('btnSignSend').innerHTML = '<span class="ms">check</span> ลงนามแล้ว';
+  $('btnSignSend').disabled = true;
+  updateGate();
+});
+$('btnSignRecv').addEventListener('click', () => {
+  signRecv.signed = true;
+  $('btnSignRecv').innerHTML = '<span class="ms">check</span> ลงนามแล้ว';
+  $('btnSignRecv').disabled = true;
+  updateGate();
+});
+
+// ---------- gate ปุ่ม "ดำเนินการซ่อม" ------------------------------------
+// บังคับตรวจครบทุกรายการ + ลงนามครบ 2 ฝั่ง ก่อนเดินสถานะไปขั้นซ่อม (ตาม flow ที่ Diagram ระบุ
+// "บังคับบันทึกก่อนเดินสถานะซ่อม") — ต่างจากไฟล์เดิมที่ปุ่มถูก disable ค้างไว้เฉยๆ เพราะยังไม่มีฟอร์ม
+function updateGate() {
+  const receiveOk = receiveRows.every(r => r.status);
+  const inspectOk = inspectRows.every(r => r.status);
+  const signOk = signSend.signed && signRecv.signed;
+  const ok = receiveOk && inspectOk && signOk;
+  const btn = $('btnNext');
+  btn.disabled = !ok;
+  if (ok) {
+    btn.title = '';
+  } else if (!receiveOk) {
+    btn.title = 'กรุณาตรวจครบทุกรายการในใบรับรถก่อน';
+  } else if (!inspectOk) {
+    btn.title = 'กรุณาตรวจครบทุกรายการในใบตรวจสภาพก่อนซ่อมก่อน';
+  } else {
+    btn.title = 'กรุณาให้ผู้ส่งมอบรถและผู้รับมอบลงนามให้ครบก่อน';
+  }
+}
+
+$('btnNext').addEventListener('click', () => {
+  if ($('btnNext').disabled) return;
+  if (LINKED) {
+    MDJ.update(fromNo, j => {
+      j.preInspect = { receive: receiveRows, inspect: inspectRows, signSend, signRecv, at: nowStr() };
+      j.history.push({ t: nowStr(), label: 'กบค. บันทึกผลตรวจสภาพก่อนซ่อม (ขาเข้า) — พร้อมเริ่มดำเนินการซ่อม' });
+    });
+  }
+  toast('บันทึกผลตรวจสภาพก่อนซ่อมสำเร็จ');
+  setTimeout(() => goApp('kbk'), 900);
+});
 
 // ย้อนกลับ → ขั้น 2 นัดหมายวันซ่อม (แท็บเดิม) ส่ง ?no= กลับไปด้วย
 $('btnBack').addEventListener('click', () => {
   location.href = 'kbk-self-repair-appointment.html' + (fromNo ? '?no=' + encodeURIComponent(fromNo) : '');
 });
+
+renderReceive();
+renderInspect();
+updateGate();
 </script>
 </body>
 </html>
