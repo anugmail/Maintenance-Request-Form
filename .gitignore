@@ -9,4 +9,5 @@ design-system/.vms-runtime/
 # ผลลัพธ์ที่ generate ของ figma-export (dom-*.json, spec.json)
 figma-export/out/
 
+# scratch output ของ Playwright MCP browser tool (accessibility snapshot ราย request)
 .playwright-mcp/

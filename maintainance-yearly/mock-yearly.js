@@ -864,11 +864,10 @@ const MYD = {
     { id: 'filter',  label: 'เปลี่ยนตัวกรอง' },
   ],
 
-  // ตั้งต้นติ๊ก 2 งานน้ำมัน — ส่วนใหญ่ไปทำทั้งคู่ คนทำแผนค่อยติ๊กออกเฉพาะคันที่ทำอย่างเดียว
-  // ส่วน "เปลี่ยนตัวกรอง" ตั้งต้น**ไม่ติ๊ก** — เป็นงานที่เลือกเพิ่มรายคัน ไม่ได้ทำทุกคัน
+  // ตั้งต้นติ๊กทั้ง 3 งาน — ส่วนใหญ่ไปทำครบ คนทำแผนค่อยติ๊กออกเฉพาะคันที่ไม่ต้องทำบางงาน
   tripJobsOf(trip, vehicleId) {
     const j = (trip.jobs || {})[vehicleId];
-    return j || { change: true, inspect: true, filter: false };
+    return j || { change: true, inspect: true, filter: true };
   },
 
   tripJobsText(trip, vehicleId) {
@@ -877,9 +876,21 @@ const MYD = {
     return on.length ? on.join(' + ') : 'ยังไม่เลือกงาน';
   },
 
-  // ================= เฟส 4 · ดำเนินการบำรุงรักษา — ติ๊กงานที่ทำเสร็จแล้ว =================
-  // แยกจาก trip.jobs (นั่นคือ "งานที่ต้องทำ" เลือกไว้ตอนทำแผนเดินทาง เฟส 2) — อันนี้คือสถานะ "ทำเสร็จหรือยัง"
-  // plan.maintDone = { [vehicleId]: { [jobId]: true } }
+  // ================= เฟส 4 · ดำเนินการบำรุงรักษา =================
+  // ตัดรถออกจากตารางเฟส 4 พร้อมเหตุผล — "ตัดออก" ไม่ใช่ "ลบ": รถยังอยู่ในแผน/selectedVehicleIds เหมือนเดิม
+  // (selectedVehicleIds คำนวณจาก byQuarter อีกที — เขียนตัดออกตรงๆ จะถูก recompute ทับ) · 25 ส.ค. 2569
+  // plan.maintExcluded = { [vehicleId]: { reason, at } }
+  maintExcluded(plan, vehicleId) {
+    return (plan.maintExcluded || {})[vehicleId] || null;
+  },
+
+  excludeFromMaint(plan, vehicleId, reason, at) {
+    plan.maintExcluded = plan.maintExcluded || {};
+    plan.maintExcluded[vehicleId] = { reason, at };
+  },
+
+  // ติ๊กงานที่ทำเสร็จแล้ว — แยกจาก trip.jobs (นั่นคือ "งานที่ต้องทำ" เลือกไว้ตอนทำแผนเดินทาง เฟส 2)
+  // อันนี้คือสถานะ "ทำเสร็จหรือยัง" · plan.maintDone = { [vehicleId]: { [jobId]: true } }
   maintJobDone(plan, vehicleId, jobId) {
     return !!((plan.maintDone || {})[vehicleId] || {})[jobId];
   },
@@ -890,16 +901,41 @@ const MYD = {
     plan.maintDone[vehicleId][jobId] = !!done;
   },
 
+  // งานเสริมที่ไม่ต้องเลือกตอนทำแผนเดินทาง — ขึ้นเป็นช่องติ๊กให้รถทุกคันในหน้าดำเนินการบำรุงรักษาเสมอ (25 ส.ค. 2569)
+  MAINT_EXTRA_JOBS: [
+    { id: 'oilSample', label: 'เก็บตัวอย่างน้ำมัน' },
+  ],
+
+  // เช็คว่าใช้อะไหล่ที่เบิกไปครบหรือไม่ — ถ้าไม่ครบ บันทึกจำนวนที่คืนต่อรายการ (25 ส.ค. 2569)
+  // ยังไม่ตัดยอดคลังกลับอัตโนมัติ (ตรงกับข้อค้างเดิมใน 04-เฟส3-ตรวจรับ.md — "คืนอะไหล่ตัดยอดคลังกลับอัตโนมัติไหม")
+  // plan.partsUsage = { [vehicleId]: { complete: true|false|null, returns: { [itemId]: qty } } }
+  partsUsageOf(plan, vehicleId) {
+    return (plan.partsUsage || {})[vehicleId] || { complete: null, returns: {} };
+  },
+
+  setPartsComplete(plan, vehicleId, complete) {
+    plan.partsUsage = plan.partsUsage || {};
+    plan.partsUsage[vehicleId] = plan.partsUsage[vehicleId] || { complete: null, returns: {} };
+    plan.partsUsage[vehicleId].complete = complete;
+  },
+
+  setPartReturnQty(plan, vehicleId, itemId, qty) {
+    plan.partsUsage = plan.partsUsage || {};
+    plan.partsUsage[vehicleId] = plan.partsUsage[vehicleId] || { complete: null, returns: {} };
+    plan.partsUsage[vehicleId].returns = plan.partsUsage[vehicleId].returns || {};
+    plan.partsUsage[vehicleId].returns[itemId] = qty;
+  },
+
+  // รายการอะไหล่ที่เบิกไปสำหรับรถคันเดียว — ยกลอจิกเดิม (linesFor) มาใช้กับ vehicles ชุด 1 คัน
+  // เพื่อให้ตัวเลข "เบิกไปกี่หน่วย" ตรงกับที่ฝ่ายพัสดุเห็นในเอกสารเดียวกัน ไม่คำนวณแยกชุดใหม่
+  partsIssuedFor(plan, master, vehicle) {
+    return this.linesFor([vehicle], master, plan.itemAdj).filter(l => l.perVehicle > 0);
+  },
+
   // งานที่ต้องทำจริงของคันนี้ (เฉพาะที่ติ๊กไว้ตอนทำแผนเดินทาง) — ใช้นับว่าติ๊กเสร็จไปกี่จากกี่งาน
   maintJobsFor(trip, vehicleId) {
     const jobs = this.tripJobsOf(trip, vehicleId);
     return this.TRIP_JOBS.filter(j => jobs[j.id]);
-  },
-
-  maintDoneCount(plan, trip, vehicleId) {
-    const need = this.maintJobsFor(trip, vehicleId);
-    const done = need.filter(j => this.maintJobDone(plan, vehicleId, j.id)).length;
-    return { done, total: need.length };
   },
 
   // สถานที่บำรุงรักษาตั้งต้นของรถคันหนึ่ง (เจ้าของงาน 17 ส.ค. 2569)
@@ -967,6 +1003,13 @@ const MYD = {
     if (!f) return false;
     if (!f.signedDeliverAt || !f.signedReceiveAt) return false;
     return (f.items || []).length > 0 && (f.items || []).every(x => x.result === 'yes' || x.result === 'no');
+  },
+
+  // รับมอบรถแล้ว = เซ็นลงนามครบ 2 ฝั่ง — ไม่ต้องตอบครบทุกข้อตรวจ
+  // (ใช้เป็นเกณฑ์ขึ้นหน้าดำเนินการบำรุงรักษา เฟส 4 · inspectionDone ยังไว้ใช้กับหน้าตรวจสภาพเฟส 3 เอง)
+  vehicleReceived(plan, vehicleId) {
+    const f = (plan.inspections || {})[vehicleId];
+    return !!(f && f.signedDeliverAt && f.signedReceiveAt);
   },
 
   // ผู้ส่งมอบรถฝั่งหน่วยงานเจ้าของรถ — ⚠️ ข้อมูลจำลอง ของจริงต้อง join กับทะเบียนพนักงาน

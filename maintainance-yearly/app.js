@@ -218,15 +218,18 @@ function renderPlaceholder(id) {
 }
 
 // ================= เฟส 4 · ดำเนินการบำรุงรักษา =================
-// แสดง "งานที่จะทำ" ที่เลือกไว้ตอนทำแผนเดินทาง (ขั้น 1 ของเฟส 2 · แผนเดินทาง) มาให้ช่างเห็นหน้างาน
+// แสดง "รายละเอียดงาน" ที่เลือกไว้ตอนทำแผนเดินทาง (ขั้น 1 ของเฟส 2 · แผนเดินทาง) มาให้ช่างเห็นหน้างาน ติ๊กได้ทีละงาน
 // ยังไม่มีการบันทึกผลงานจริง — หน้านี้เป็นตัวส่งต่อข้อมูลอย่างเดียว
 function renderMaintenance() {
   const master = MYD.loadMaster();
   const byId = new Map(master.vehicles.map(v => [v.id, v]));
-  // แสดงเฉพาะคันที่ "ตรวจสภาพก่อนซ่อมเสร็จแล้ว" — รถที่ยังไม่รับมอบ/ตรวจไม่ครบ ยังลงมือซ่อมไม่ได้
+  // แสดงเฉพาะคันที่ "ลงนามรับมอบรถครบ 2 ฝั่งแล้ว" — ไม่ต้องตอบครบทุกข้อตรวจก็ขึ้นได้ (เจ้าของงานสั่ง 25 ส.ค. 2569)
   const joined = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
-  const ids = joined.filter(id => MYD.inspectionDone(PLAN, id));
-  const waiting = joined.length - ids.length;
+  const received = joined.filter(id => MYD.vehicleReceived(PLAN, id));
+  const waiting = joined.length - received.length;
+  // คันที่กดลบออก (มีเหตุผลบันทึกไว้) — หายจากตารางทำงาน ไปขึ้นเป็นรายการเหตุผลด้านล่างแทน (25 ส.ค. 2569)
+  const ids = received.filter(id => !MYD.maintExcluded(PLAN, id));
+  const excluded = received.filter(id => MYD.maintExcluded(PLAN, id));
 
   // นับว่ามีรถกี่คันที่ต้องทำแต่ละงาน — ช่วยเตรียมของก่อนออกหน้างาน
   const tally = MYD.TRIP_JOBS.map(j => ({
@@ -243,43 +246,68 @@ function renderMaintenance() {
     if (!v) return '';
     const t = MYD.tripOfVehicle(PLAN, id);
     const need = t ? MYD.maintJobsFor(t, id) : [];
-    totalJobs += need.length;
+    totalJobs += need.length + MYD.MAINT_EXTRA_JOBS.length;
     // ติ๊กได้จริง — ทำงานเสร็จข้อไหนกดติ๊กไว้ที่นี่ (แก้ "งานที่ต้องทำ" เองต้องไปหน้าแผนเดินทาง)
-    const chk = need.length ? `<div class="chk" style="margin:0">${need.map(j => {
+    const jobCheckbox = j => {
       const on = MYD.maintJobDone(PLAN, id, j.id);
       if (on) doneJobs++;
       return `<label><input type="checkbox" ${on ? 'checked' : ''}
         data-maint-v="${esc(id)}" data-maint-j="${esc(j.id)}">${esc(j.label)}</label>`;
-    }).join('')}</div>` : '<span class="badge b-low">ยังไม่เลือกงาน</span>';
+    };
+    // MAINT_EXTRA_JOBS ("เก็บตัวอย่างน้ำมัน") ไม่ต้องเลือกตอนทำแผนเดินทาง — ขึ้นให้ทุกคันเสมอ ไม่ขึ้นกับ need
+    // ห่อด้วย .stack.tight (8px) ให้ระยะระหว่างสองบล็อกเท่ากับ gap ภายใน .chk เอง — ไม่พึ่ง margin แยกตัว (README ข้อ 4)
+    const jobDetail = `<div class="stack tight">
+      ${need.length
+        ? `<div class="chk" style="margin:0">${need.map(jobCheckbox).join('')}</div>`
+        : '<span class="badge b-low">ยังไม่เลือกงาน</span>'}
+      <div class="chk" style="margin:0">${MYD.MAINT_EXTRA_JOBS.map(jobCheckbox).join('')}</div>
+    </div>`;
+
     return `<tr>
       <td><b>${esc(v.plate)}</b><div class="cell-sub">${esc(v.brand)}</div></td>
       <td>${esc(v.ownerDept)}<div class="cell-sub">${esc(MYD.quarterLabel(MYD.bucketOf(PLAN, id)) || '—')}</div></td>
-      <td>${chk}</td>
+      <td>${jobDetail}</td>
       <td>${t ? esc(MYD.tripPlaceOf(t, v)) : '—'}
           <div class="cell-sub">${t ? 'ใบ: ' + esc(t.name || 'แผนเดินทาง') : 'ยังไม่อยู่ในใบเดินทาง'}</div></td>
+      <td class="num"><button class="btn btn-t btn-sm" data-maint-exclude="${esc(id)}"
+        title="ลบรถออกจากแผนบำรุงรักษา"><span class="ms">delete</span></button></td>
     </tr>`;
+  }).join('');
+
+  // รายการรถที่ถูกลบออกแล้ว — โชว์ทะเบียน + เหตุผลไว้ตรวจสอบย้อนหลัง (ตัดออกจากตารางทำงานด้านบนแล้ว)
+  const excludedList = excluded.map(id => {
+    const v = byId.get(id);
+    const ex = MYD.maintExcluded(PLAN, id);
+    return `<div class="cell-sub">${esc(v ? v.plate : id)} — ${esc(ex.reason)}${ex.at ? ' · ' + esc(ex.at) : ''}</div>`;
   }).join('');
 
   $('phase').innerHTML = `
     <div class="card">
       <div class="sect">ดำเนินการบำรุงรักษา</div>
-      <div class="sub">แสดงเฉพาะรถที่<b>ตรวจสภาพก่อนซ่อมเสร็จแล้ว</b> (รับมอบรถครบ) — งานที่ต้องทำมาจากที่เลือกไว้
+      <div class="sub">แสดงเฉพาะรถที่<b>ลงนามรับมอบรถครบ 2 ฝั่งแล้ว</b> (ไม่ต้องตอบครบทุกข้อตรวจก็ขึ้นได้) — รายละเอียดงานมาจากที่เลือกไว้
         ตอนทำแผนเดินทาง (เฟส 2 · ขั้นที่ 1) แก้รายการงานได้ที่หน้านั้น — ที่นี่ติ๊กเมื่อทำเสร็จแล้ว</div>
       <div class="sub">พร้อมลงมือ <b>${ids.length}</b> จาก <b>${joined.length}</b> คัน${
-        ids.length ? ' · ' + tally.map(x => `${esc(x.label)} <b>${x.n}</b> คัน`).join(' · ') : ''}</div>
+        ids.length ? ' · ' + tally.map(x => `${esc(x.label)} <b>${x.n}</b> คัน`).join(' · ') : ''}${
+        excluded.length ? ` · ลบออกแล้ว <b>${excluded.length}</b> คัน` : ''}</div>
       ${totalJobs ? `<div class="sub">ติ๊กเสร็จแล้ว <b id="maintDoneCount">${doneJobs}</b> จาก <b>${totalJobs}</b> งาน</div>` : ''}
       ${waiting ? `<div class="note note-warn"><span class="ms">pending</span>
-        <div>อีก <b>${waiting}</b> คันยัง<b>ตรวจสภาพก่อนซ่อมไม่เสร็จ</b> จึงยังไม่ขึ้นที่นี่ —
-          กลับไปเฟส 3 เพื่อตรวจสภาพและลงนามรับมอบให้ครบก่อน</div></div>` : ''}
+        <div>อีก <b>${waiting}</b> คันยัง<b>ไม่ได้ลงนามรับมอบรถครบ 2 ฝั่ง</b> จึงยังไม่ขึ้นที่นี่ —
+          กลับไปเฟส 3 เพื่อลงนามรับมอบให้ครบก่อน</div></div>` : ''}
       <div class="note note-info"><span class="ms">science</span>
         <div>หน้านี้ให้<b>ติ๊กงานที่ทำเสร็จ</b>ได้ — ส่วนการบันทึกผลงานหน้างานแบบละเอียด (รูปก่อน/หลัง · อะไหล่ที่ใช้จริง ·
           เลขไมล์/ชม.เครื่อง) ยังไม่ได้ทำในต้นแบบ</div></div>
+      ${excluded.length ? `<div class="note note-warn"><span class="ms">delete</span>
+        <div><b>ลบออกจากแผนบำรุงรักษาแล้ว ${excluded.length} คัน</b>
+          <div class="stack tight" style="margin-top:6px">${excludedList}</div></div></div>` : ''}
       ${ids.length ? `<div class="tblwrap"><table class="tbl">
-        <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>งานที่จะทำ</th><th>สถานที่บำรุงรักษา</th></tr></thead>
+        <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>รายละเอียดงาน</th><th>สถานที่บำรุงรักษา</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
-        : `<div class="empty">${joined.length
-            ? 'ยังไม่มีรถที่ตรวจสภาพก่อนซ่อมเสร็จ — กลับไปเฟส 3 ตรวจสภาพก่อน'
-            : 'ยังไม่มีรถที่ยืนยันเข้าแผน'}</div>`}
+        : `<div class="empty">${
+            excluded.length && excluded.length === received.length
+              ? 'รถที่ลงนามรับมอบครบถูกลบออกจากแผนบำรุงรักษาหมดแล้ว — ดูเหตุผลด้านบน'
+              : joined.length
+              ? 'ยังไม่มีรถที่ลงนามรับมอบครบ — กลับไปเฟส 3 เพื่อลงนามรับมอบก่อน'
+              : 'ยังไม่มีรถที่ยืนยันเข้าแผน'}</div>`}
       <div class="actions">
         <button class="btn btn-p" id="btnPhaseNext">ถัดไป${nextPhaseLabel('maintenance')}</button>
       </div>
@@ -294,7 +322,145 @@ function renderMaintenance() {
     if (doneCountEl) doneCountEl.textContent = document.querySelectorAll('[data-maint-v]:checked').length;
   }));
 
+  document.querySelectorAll('[data-maint-exclude]').forEach(btn => btn.addEventListener('click', () => {
+    const id = btn.getAttribute('data-maint-exclude');
+    const v = byId.get(id);
+    openMaintExcludeModal(id, v ? MYD.plateFull(v) : id);
+  }));
+
   $('btnPhaseNext')?.addEventListener('click', () => finishPhase('maintenance'));
+}
+
+// Modal ลบรถออกจากแผนบำรุงรักษา — ต้องกรอกเหตุผลก่อนยืนยัน (แพตเทิร์นเดียวกับ showVehicleDetail ใน plan-new.js:
+// วาง HTML ลงตัวครอบ #maintModal ที่ว่างเปล่า แล้วเคลียร์ innerHTML ทิ้งตอนปิด)
+function openMaintExcludeModal(vehicleId, plateLabel) {
+  const host = $('maintModal');
+  host.innerHTML = `
+    <div class="modal-overlay" id="maintExcludeOverlay">
+      <div class="modal">
+        <div class="modal-head">
+          <h2>ลบรถออกจากแผนบำรุงรักษา</h2>
+          <button type="button" class="modal-close" id="maintExcludeClose"><span class="ms">close</span></button>
+        </div>
+        <div class="sub">${esc(plateLabel)}</div>
+        <div class="f"><label>เหตุผลที่ลบออก <small>(จำเป็น)</small></label>
+          <textarea id="maintExcludeReason" rows="3" placeholder="เช่น รถเสียหายจนซ่อมไม่ได้ อยู่ระหว่างจำหน่าย…"></textarea></div>
+        <div class="modal-foot">
+          <button type="button" class="btn btn-g" id="maintExcludeCancel">ยกเลิก</button>
+          <button type="button" class="btn btn-d" id="maintExcludeConfirm"><span class="ms">delete</span> ลบออกจากแผน</button>
+        </div>
+      </div>
+    </div>`;
+  const close = () => { host.innerHTML = ''; };
+  $('maintExcludeClose').addEventListener('click', close);
+  $('maintExcludeCancel').addEventListener('click', close);
+  $('maintExcludeOverlay').addEventListener('click', e => { if (e.target.id === 'maintExcludeOverlay') close(); });
+  $('maintExcludeConfirm').addEventListener('click', () => {
+    const ta = $('maintExcludeReason');
+    const reason = ta.value.trim();
+    if (!reason) { ta.focus(); toast('กรอกเหตุผลที่ลบออกก่อน'); return; }
+    MYD.excludeFromMaint(PLAN, vehicleId, reason, nowTh());
+    MYD.savePlan(PLAN);
+    close();
+    toast('ลบรถออกจากแผนบำรุงรักษาแล้ว');
+    renderMaintenance();
+  });
+}
+
+// ================= เฟส 5 · จัดทำรายงาน =================
+// เช็คว่าใช้อะไหล่ที่เบิกไปครบหรือไม่ต่อคัน — ตรงกับ node D{ใช้อะไหล่ครบ?} ในผัง 05-เฟส4-จัดทำรายงาน.md (25 ส.ค. 2569)
+// ยังไม่มีส่วนอื่นของหน้ารายงาน (ตรวจสภาพการทำงาน · ผลตรวจน้ำมัน · อนุมัติปิดงาน) — รอออกแบบเพิ่ม
+function renderReport() {
+  const master = MYD.loadMaster();
+  const byId = new Map(master.vehicles.map(v => [v.id, v]));
+  const joined = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
+  const received = joined.filter(id => MYD.vehicleReceived(PLAN, id));
+  const ids = received.filter(id => !MYD.maintExcluded(PLAN, id));
+
+  const rows = ids.map(id => {
+    const v = byId.get(id);
+    if (!v) return '';
+    return `<tr>
+      <td><b>${esc(v.plate)}</b><div class="cell-sub">${esc(v.brand)}</div></td>
+      <td>${esc(v.ownerDept)}</td>
+    </tr>`;
+  }).join('');
+
+  // หัวข้อแยกจากตารางรายการรถด้านบน — แต่ละคันเป็นบล็อกของตัวเอง ไม่ใช่คอลัมน์ในตาราง (25 ส.ค. 2569)
+  const partsBlocks = ids.map(id => {
+    const v = byId.get(id);
+    if (!v) return '';
+    // รายการอะไหล่ยกจาก partsIssuedFor (ลอจิกเดียวกับที่ฝ่ายพัสดุเห็น) ไม่ใช่คำนวณแยกชุดใหม่
+    const usage = MYD.partsUsageOf(PLAN, id);
+    const partsIssued = MYD.partsIssuedFor(PLAN, master, v);
+    // ตาราง ชื่ออะไหล่ / รายการเบิก / รายการคืน — ช่องกรอกคืน (แคบ) + หน่วยกำกับ ชิดกันเป็นกลุ่มเดียวในคอลัมน์ขวาสุด (25 ส.ค. 2569)
+    const partsRows = partsIssued.map(l => `
+      <tr>
+        <td>${esc(l.item.name)}</td>
+        <td class="num">${esc(l.perVehicle)} ${esc(l.item.unit)}</td>
+        <td class="num">
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:var(--space-1_5)">
+            <div class="in noic" style="width:72px"><input type="number" min="0" max="${esc(l.perVehicle)}" value="${esc(usage.returns[l.item.id] ?? 0)}"
+              data-parts-return-v="${esc(id)}" data-parts-return-item="${esc(l.item.id)}"></div>
+            <span class="cell-sub">${esc(l.item.unit)}</span>
+          </div>
+        </td>
+      </tr>`).join('');
+    // ห่อหัวป้ายทะเบียน + radio + รายการอะไหล่ด้วย .stack.tight ชั้นเดียวกัน ให้ทุกช่องว่างในบล็อกนี้เท่ากันหมด (8px)
+    // .chk มี margin:10px 0 ของตัวเอง ต้องล้างทิ้งไม่งั้นจะไปบวกกับ gap ของ stack (เคยพลาดมาแล้ว)
+    return `<div data-parts-block="${esc(id)}">
+      <div class="stack tight">
+        <div><b>${esc(v.plate)}</b> <span class="cell-sub">${esc(v.brand)} · ${esc(v.ownerDept)}</span></div>
+        <div class="chk" style="margin:0">
+          <label><input type="radio" name="partsComplete-${esc(id)}" value="complete" ${usage.complete === true ? 'checked' : ''}
+            data-parts-complete="${esc(id)}"> ครบ</label>
+          <label><input type="radio" name="partsComplete-${esc(id)}" value="incomplete" ${usage.complete === false ? 'checked' : ''}
+            data-parts-complete="${esc(id)}"> ไม่ครบ</label>
+        </div>
+        <div style="${usage.complete === false ? '' : 'display:none'}" data-parts-return-list>
+          ${partsIssued.length ? `<div class="tblwrap"><table class="tbl">
+            <thead><tr><th>ชื่ออะไหล่</th><th class="num">รายการเบิก</th><th class="num">รายการคืน</th></tr></thead>
+            <tbody>${partsRows}</tbody></table></div>`
+            : '<div class="cell-sub">ไม่มีรายการอะไหล่ที่เบิกสำหรับรถคันนี้</div>'}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  $('phase').innerHTML = `
+    <div class="card">
+      <div class="sect">จัดทำรายงาน</div>
+      <div class="sub">รถที่ผ่านเฟส 4 ดำเนินการบำรุงรักษามาแล้ว</div>
+      <div class="note note-info"><span class="ms">science</span>
+        <div>หน้านี้ยังมีแค่ส่วนตรวจอะไหล่ — ส่วนตรวจสภาพการทำงาน/ผลตรวจน้ำมัน/อนุมัติปิดงาน ยังไม่ได้ทำในต้นแบบ</div></div>
+      ${ids.length ? `<div class="tblwrap"><table class="tbl">
+        <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>
+
+        <div class="sect" style="margin-top:22px">ใช้อะไหล่ครบหรือไม่</div>
+        <div class="sub">เลือก "ไม่ครบ" แล้วกรอกจำนวนที่คืนต่อรายการ ต่อคัน</div>
+        <div class="stack">${partsBlocks}</div>`
+        : '<div class="empty">ยังไม่มีรถที่เข้าเกณฑ์ — กลับไปเฟส 4 ดำเนินการบำรุงรักษาก่อน</div>'}
+      <div class="actions">
+        <button class="btn btn-p" id="btnPhaseNext">ถัดไป${nextPhaseLabel('report')}</button>
+      </div>
+    </div>`;
+
+  document.querySelectorAll('[data-parts-complete]').forEach(el => el.addEventListener('change', e => {
+    const vid = el.dataset.partsComplete;
+    const complete = e.target.value === 'complete';
+    MYD.setPartsComplete(PLAN, vid, complete);
+    MYD.savePlan(PLAN);
+    const list = el.closest('[data-parts-block]')?.querySelector('[data-parts-return-list]');
+    if (list) list.style.display = complete ? 'none' : '';
+  }));
+
+  document.querySelectorAll('[data-parts-return-item]').forEach(el => el.addEventListener('input', e => {
+    MYD.setPartReturnQty(PLAN, el.dataset.partsReturnV, el.dataset.partsReturnItem, Number(e.target.value) || 0);
+    MYD.savePlan(PLAN);
+  }));
+
+  $('btnPhaseNext')?.addEventListener('click', () => finishPhase('report'));
 }
 
 // ================= เฟส 3 · ตรวจสภาพก่อนซ่อม =================
@@ -483,6 +649,7 @@ function renderPhaseBody() {
   if (currentPhase() === 'travel') { renderTravelPhase(); return; }
   if (currentPhase() === 'inspection') { renderInspection(); return; }
   if (currentPhase() === 'maintenance') { renderMaintenance(); return; }
+  if (currentPhase() === 'report') { renderReport(); return; }
   const id = currentPhase();
   $('phase').innerHTML = renderPlaceholder(id);
   $('btnPhaseNext')?.addEventListener('click', () => finishPhase(id));
