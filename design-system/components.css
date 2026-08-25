@@ -357,6 +357,19 @@ input:focus,textarea:focus{outline:none;border-color:var(--brand-500);box-shadow
 .wstep:not(:last-child)::before{top:0;transform-origin:bottom center;transform:rotate(-16deg)}
 .wstep:not(:last-child)::after{bottom:0;transform-origin:top center;transform:rotate(16deg)}
 
+/* ขั้นบน stepper กดได้ (ทุกหน้าที่ใช้ stepper ผูก onclick อยู่แล้ว) + ขั้นที่ยังเข้าไม่ได้
+   ยกขึ้นมาจาก <style> ของ index.html และ trip-plan.html ที่นิยามซ้ำกัน 25 ส.ค. 2569
+   (README v0.7 เคยเขียนว่ายก .wstep.locked ขึ้นมาแล้ว แต่จริง ๆ ยังค้างอยู่ในหน้า) */
+.wstep{cursor:pointer}
+.wstep.locked{opacity:.55;cursor:not-allowed}
+
+/* stepper ขนาดเล็ก — ใช้เป็น sub-stepper ของขั้นย่อยภายในเฟส (wizard ซ้อนใน stepper ใหญ่)
+   ยกขึ้นมาจาก <style> ของ index.html + trip-plan.html 25 ส.ค. 2569 */
+.wsteps.sm{margin-bottom:18px}
+.wsteps.sm .wstep{padding:10px 12px;font-size:var(--fs-text-xs);gap:8px}
+.wsteps.sm .wstep .num{width:24px;height:24px;font-size:12px}
+.wsteps.sm .wstep .lbl{display:block}
+
 /* ---------- หัวข้อ section แถบ magenta ---------- */
 .sect{display:flex;gap:10px;align-items:center;font-weight:700;color:var(--gray-900);font-size:17px;margin:8px 0 2px}
 .sect::before{content:'';width:4px;height:20px;background:var(--primary-600);border-radius:2px;flex-shrink:0}

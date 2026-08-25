@@ -26,7 +26,7 @@ const ROOT = path.join(__dirname, '..');
 const PHASES = [
   { n: 1, name: 'โฟลว์แจ้งซ่อม (หน้าหลัก)', files: ['mock/Maintenance-Request-Form.html'] },
   { n: 2, name: 'โฟลว์ กบค. + component กลาง', files: ['mock/Maintenance-Request-Form-flow2.html', 'ui-components.js', 'config.js'] },
-  { n: 3, name: 'โฟลว์บำรุงรักษาประจำปี', files: ['maintainance-yearly/index.html', 'maintainance-yearly/plan-new.html', 'maintainance-yearly/supplies.html', 'maintainance-yearly/confirm.html', 'maintainance-yearly/plan-skeleton.html', 'maintainance-yearly/app.js'] },
+  { n: 3, name: 'โฟลว์บำรุงรักษาประจำปี', files: ['maintainance-yearly/index.html', 'maintainance-yearly/plan-new.html', 'maintainance-yearly/supplies.html', 'maintainance-yearly/confirm.html', 'maintainance-yearly/plan-skeleton.html', 'maintainance-yearly/app.js', 'maintainance-yearly/trip-plan.html', 'maintainance-yearly/trip-plan.js', 'maintainance-yearly/trip-plan-page.js'] },
   { n: 4, name: 'หน้าวิเคราะห์/รายงาน', files: ['outcome-dashboard.html', 'parts-insights.html', 'executive-insights.html', 'repair-history.html'] },
   { n: 5, name: 'daily-record + นัดหมาย + design-mock', files: ['daily-record/index.html', 'daily-record/app.js', 'flow-นัดหมายรับรถ-prototype.html', 'design-mock/index.html', 'design-mock/kbk-self-repair-parts.html', 'design-mock/kbk-self-repair-appointment.html', 'design-mock/kbk-self-repair-inspection.html'] },
   { n: 6, name: 'ฮับ + เอกสาร + style guide', files: ['index.html', 'more.html', '05-review-milestones.html', '06-hierarchy-scope.html', '07-dept-size-bridge.html', 'design-system/index.html', 'design-system/buttons.html'] }

@@ -31,6 +31,8 @@
 const MASTER_KEY = 'maintaind.yearly.master.v1';
 const PLANS_KEY = 'maintaind.yearly.plans.v1';
 const SETTINGS_KEY = 'maintaind.yearly.settings.v1';
+// แผนเดินทางสายงานซ่อม — เก็บแยกจาก plans เพราะไม่ได้ผูกกับแผนบำรุงรักษาประจำปีใบไหน
+const REPAIR_TRIPS_KEY = 'maintaind.yearly.repairtrips.v1';
 const DEFAULT_SETTINGS = { confirmDueDays: 7 };   // ยังไม่ได้ค่าจริงจากเจ้าของงาน — แก้ได้จาก Admin
 
 // schema version ของโครงข้อมูลใน localStorage — เพิ่มเลขนี้เมื่อโครงข้อมูล
@@ -188,6 +190,46 @@ const SEED_VENDORS = [
   { id:'vd4', name:'บจ. อีสานไฮดรอลิก',          taxId:'0405xxxxxxxx4', contact:'คุณพรทิพย์', phone:'081-234-5674', zones:['west'] },
   { id:'vd5', name:'บจ. ทั่วไทยเซอร์วิส',         taxId:'0105xxxxxxxx5', contact:'คุณธนกร',   phone:'081-234-5675', zones:['north','east','south','west'] },
 ];
+
+// ใบแจ้งซ่อมที่ กบค. รับเรื่องแล้ว และเดินมาถึงขั้นเลือก "รูปแบบการซ่อม"
+// 🔑 เงื่อนไขเข้าแผนเดินทาง (เจ้าของงานเคาะ 25 ส.ค. 2569): เฉพาะใบที่เลือก **จัดซ่อมที่หน้างาน**
+//    repairMode:'onsite' = จัดซ่อมที่หน้างาน — กบค. เดินทางไปซ่อม ⇒ **เข้าพูลแผนเดินทาง**
+//    repairMode:'kbk'    = เข้าซ่อมที่ กบค. — นัดเจ้าของรถขนรถมาที่ สนญ. ⇒ **ไม่เข้าพูล**
+// ⚠️ ข้อมูลจำลอง — ของจริงมาจากต้นแบบแจ้งซ่อม (`mock/Maintenance-Request-Form.html` → JOBS[])
+// ยกมาเฉพาะฟิลด์ที่การทำแผนเดินทางต้องใช้ · ยกรูปทรง (เลขใบ/ทะเบียน/อาการ/หน่วยงาน) มาตรงๆ
+// สองต้นแบบเก็บข้อมูลคนละที่และห้ามลิงก์ข้ามโฟลเดอร์ จึง seed ไว้ที่นี่ให้หน้านี้ยืนได้เอง
+const SEED_REPAIR_JOBS = [
+  { no:'MTD-690716-031', plate:'82-6789 ขอนแก่น', model:'Isuzu FTR + กระเช้า Aichi SK17A',
+    ownerDept:'กฟจ.ขอนแก่น', province:'ขอนแก่น', target:'กระเช้า Aichi SK17A',
+    syms:['กระเช้าเอียง/ล็อกไม่อยู่'], urgency:'high',  reportedAt:'16 ก.ค. 2569' , repairMode:'onsite' },
+  { no:'MTD-690716-034', plate:'82-1145 ขอนแก่น', model:'Hino FC + กระเช้า Tadano AT-100',
+    ownerDept:'กฟอ.ชุมแพ', province:'ขอนแก่น', target:'กระเช้า Tadano AT-100',
+    syms:['ขาช้างไม่กาง'], urgency:'normal', reportedAt:'16 ก.ค. 2569' , repairMode:'onsite' },
+  { no:'MTD-690717-002', plate:'82-3390 ขอนแก่น', model:'Isuzu FVR + เครน Unic URV racks',
+    ownerDept:'กฟอ.น้ำพอง', province:'ขอนแก่น', target:'เครน Unic',
+    syms:['ปั๊มไฮดรอลิกเสียงดัง/แรงดันตก'], urgency:'normal', reportedAt:'17 ก.ค. 2569' , repairMode:'kbk' },
+  { no:'MTD-690714-011', plate:'83-4471 อุดรธานี', model:'Hino FG + กระเช้า Aichi SK21A',
+    ownerDept:'กฟจ.อุดรธานี', province:'อุดรธานี', target:'กระเช้า Aichi SK21A',
+    syms:['กระเช้าไม่ขึ้น'], urgency:'high', reportedAt:'14 ก.ค. 2569' , repairMode:'onsite' },
+  { no:'MTD-690715-006', plate:'83-2218 อุดรธานี', model:'Isuzu FTR + เครน Tadano TM-ZE',
+    ownerDept:'กฟอ.กุมภวาปี', province:'อุดรธานี', target:'เครน Tadano TM-ZE',
+    syms:['สลิงหลุดร่อง','รอกไม่ล็อก'], urgency:'normal', reportedAt:'15 ก.ค. 2569' , repairMode:'onsite' },
+  { no:'MTD-690718-003', plate:'84-9902 หนองคาย', model:'Hino FC + กระเช้า Aichi SK17A',
+    ownerDept:'กฟจ.หนองคาย', province:'หนองคาย', target:'กระเช้า Aichi SK17A',
+    syms:['ระบบไฟกระเช้าดับ'], urgency:'urgent', reportedAt:'18 ก.ค. 2569' , repairMode:'onsite' },
+  { no:'MTD-690712-027', plate:'84-5566 หนองคาย', model:'Isuzu FVR + รถขุด',
+    ownerDept:'กฟอ.ท่าบ่อ', province:'หนองคาย', target:'ตัวรถ',
+    syms:['เบรกไม่อยู่'], urgency:'high', reportedAt:'12 ก.ค. 2569' , repairMode:'kbk' },
+  { no:'MTD-690719-001', plate:'85-1177 เลย', model:'Hino FG + กระเช้า Tadano AT-120',
+    ownerDept:'กฟจ.เลย', province:'เลย', target:'กระเช้า Tadano AT-120',
+    syms:['บูมยืดไม่สุด'], urgency:'normal', reportedAt:'19 ก.ค. 2569' , repairMode:'onsite' },
+];
+
+const URGENCY = {
+  urgent: { cls:'b-out',   text:'ด่วนที่สุด' },
+  high:   { cls:'b-brand', text:'ด่วน' },
+  normal: { cls:'b-neutral', text:'ปกติ' },
+};
 
 const SEED_ITEMS = [
   { id:'p1', name:'ผ้าเบรก',              category:'part',   unit:'ชุด', appliesToTypes:['รถกระเช้า','รถเครน','รถขุด'], qtyPerVehicle:1,  triggerType:'mileage', interval:20000 },
@@ -423,6 +465,95 @@ const MYD = {
     const first = (OWNER_DEPTS_BY_REGION[r] || [])[0] || '';
     return first.replace(/^กฟจ\.\s*/, '') || `เขต ${r}`;
   },
+  // ================= แผนเดินทางสายงานซ่อม (SC-15) =================
+  // ต่างจากสายบำรุงรักษา: ไม่มีไตรมาส · ไม่ผูกกับแผนประจำปี · หน่วยของงานคือ "ใบแจ้งซ่อม" ไม่ใช่ "รถในแผน"
+  // เหมือนกัน: ใบหนึ่งรวมได้หลายงาน · เสนอเป็นช่วงเวลา · ทีมช่างหลายคน · ค่าใช้จ่ายระดับใบ
+  REPAIR_JOBS: SEED_REPAIR_JOBS,
+  URGENCY,
+
+  repairJobByNo(no) {
+    return SEED_REPAIR_JOBS.find(j => j.no === no) || null;
+  },
+
+  // ใบที่มีสิทธิ์เข้าแผนเดินทาง — เลือก "จัดซ่อมที่หน้างาน" เท่านั้น
+  // ใบที่เลือก "เข้าซ่อมที่ กบค." ไม่ต้องเดินทาง จึงไม่เข้าพูลนี้เลย
+  onsiteRepairJobs() {
+    return SEED_REPAIR_JOBS.filter(j => j.repairMode === 'onsite');
+  },
+
+  offsiteRepairJobs() {
+    return SEED_REPAIR_JOBS.filter(j => j.repairMode !== 'onsite');
+  },
+
+  loadRepairTrips() {
+    try {
+      const raw = localStorage.getItem(REPAIR_TRIPS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  },
+
+  saveRepairTrips(list) {
+    localStorage.setItem(REPAIR_TRIPS_KEY, JSON.stringify(list || []));
+  },
+
+  // ใบเดินทางสายซ่อม — ฟิลด์ตั้งต้นเหมือนสายบำรุงรักษา + 2 ช่องที่ UC-15.1 ขอ
+  emptyRepairTrip(id, name) {
+    return { id, name: name || '', location: '', windowFrom: '', windowTo: '',
+             pickupPoint: '',        // จุดนัดรับรถ — เฉพาะสายซ่อม (SC-15 · AC-3.5)
+             crewVehicle: '',        // รถที่ใช้เดินทางของทีมช่าง — UC-15.1 ขอ แต่สายบำรุงรักษายังไม่มี
+             note: '',
+             staff: [''], staffPerDiem: [0],
+             perDiem: 0, lodging: 0, travel: 0,
+             jobNos: [],             // ใบแจ้งซ่อมที่อยู่ในใบเดินทางนี้ (รวมได้หลายใบ)
+             sentAt: null };
+  },
+
+  repairTripOfJob(trips, no) {
+    return (trips || []).find(t => (t.jobNos || []).includes(no)) || null;
+  },
+
+  // ใบแจ้งซ่อมที่ยังไม่ถูกจัดเข้าใบเดินทางไหนเลย
+  unassignedRepairJobs(trips) {
+    return this.onsiteRepairJobs().filter(j => !this.repairTripOfJob(trips, j.no));
+  },
+
+  repairTripPerDiemSum(trip) {
+    return (trip.staffPerDiem || []).reduce((n, x) => n + (Number(x) || 0), 0);
+  },
+
+  repairTripCost(trip) {
+    return this.repairTripPerDiemSum(trip) + (Number(trip.lodging) || 0) + (Number(trip.travel) || 0);
+  },
+
+  repairTripDays(trip) {
+    if (!trip.windowFrom || !trip.windowTo) return 0;
+    const a = new Date(trip.windowFrom), b = new Date(trip.windowTo);
+    const n = Math.round((b - a) / 86400000) + 1;
+    return n > 0 ? n : 0;
+  },
+
+  repairTripDepts(trip) {
+    return [...new Set((trip.jobNos || []).map(no => (this.repairJobByNo(no) || {}).ownerDept).filter(Boolean))];
+  },
+
+  // เกณฑ์ส่งใบ — สะท้อนสิ่งที่ AC-3.1 ของการ์ด "ทำแผนการเดินทาง" เขียนไว้
+  // ⚠️ ต่างจากสายบำรุงรักษาตรง "รถที่ใช้เดินทาง" กับ "จุดนัดรับรถ" ที่บังคับเฉพาะสายซ่อม
+  repairTripBlockers(trip) {
+    const out = [];
+    if (!(trip.jobNos || []).length) out.push('ยังไม่มีใบแจ้งซ่อมในใบเดินทางนี้');
+    if (!String(trip.location || '').trim()) out.push('ยังไม่ระบุสถานที่');
+    if (!trip.windowFrom || !trip.windowTo) out.push('ยังไม่ระบุช่วงเวลาที่เสนอ');
+    if (trip.windowFrom && trip.windowTo && trip.windowTo < trip.windowFrom) out.push('วันสิ้นสุดมาก่อนวันเริ่ม');
+    if (!(trip.staff || []).some(x => String(x || '').trim())) out.push('ยังไม่ระบุช่างผู้รับผิดชอบอย่างน้อย 1 คน');
+    if (!String(trip.crewVehicle || '').trim()) out.push('ยังไม่ระบุรถที่ใช้เดินทาง');
+    if (!String(trip.pickupPoint || '').trim()) out.push('ยังไม่ระบุจุดนัดรับรถ');
+    return out;
+  },
+
+  repairTripSendable(trip) {
+    return this.repairTripBlockers(trip).length === 0;
+  },
+
   SEED_PLAN,
   SEED_PLAN_CF,
   SEED_VEHICLES,

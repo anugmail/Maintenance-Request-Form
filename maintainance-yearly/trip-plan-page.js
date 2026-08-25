@@ -30,6 +30,23 @@ function travelSummary(plan) {
            text: `${trips.length} ใบ · ตอบรับแล้ว ${accepted}` };
 }
 
+// แถบสลับสายงาน — ใช้ .seg/.sg จาก components.css (ตัวเลือกสั้น 2 ตัว ตามตารางข้อ 4.2)
+function sourceSeg(cur) {
+  const opt = (k, label, sub) =>
+    `<div class="sg ${cur === k ? 'sel' : ''}" data-src="${k}">${label}<div class="sg-sub">${sub}</div></div>`;
+  return `<div class="seg">
+    ${opt('plan', 'บำรุงรักษาตามวาระ', 'ทำแผนเดินทางจากแผนประจำปี')}
+    ${opt('repair', 'งานซ่อม', 'ออกซ่อมหน้างานตามใบแจ้งซ่อม')}
+  </div>`;
+}
+
+function bindSourceSeg() {
+  document.querySelectorAll('[data-src]').forEach(el => el.addEventListener('click', () => {
+    location.hash = el.dataset.src === 'repair' ? 'repair' : '';
+    if (el.dataset.src !== 'repair') route();   // ไป hash ว่าง hashchange อาจไม่ยิงถ้าอยู่ที่ว่างอยู่แล้ว
+  }));
+}
+
 function renderPicker() {
   PLAN = null;
   // ทำแผนเดินทางได้เฉพาะแผนที่ออกเลขงานแล้ว — แผนร่างยังไม่มีรถที่ยืนยันให้จัดเข้าใบ
@@ -52,6 +69,9 @@ function renderPicker() {
     <div class="page-title-row">
       <h1 class="page-title">ทำแผนการเดินทาง — กบค.</h1>
     </div>
+    <div class="stack">
+      ${sourceSeg('plan')}
+    </div>
     <div class="card">
       <div class="sub">เลือกแผนที่จะทำแผนเดินทาง — เลือกไตรมาสได้ในขั้นถัดไป
         · ข้อมูลชุดเดียวกับ <a href="index.html">รายการแผนบำรุงรักษา</a> สลับไปมาได้</div>
@@ -62,6 +82,7 @@ function renderPicker() {
         : `<div class="empty">ยังไม่มีแผนที่ออกเลขงานแล้ว —
              ไปที่ <a href="plan-new.html">ออกเลขงาน</a> เพื่อสร้างแผนก่อน</div>`}
     </div>`;
+  bindSourceSeg();
 }
 
 // ---------------------------------------------------------------- ตัว wizard
@@ -160,10 +181,38 @@ function renderConfirmed(plan) {
   TRIP.bindConfirmed();
 }
 
+// ------------------------------------------------- สายงานซ่อม (SC-15)
+// host ของโมดูล TRIP อีกตัว — โครงเดียวกับหน้าแผนบำรุงรักษา ตัดไตรมาสและปุ่มแยกอัตโนมัติออก
+// ตามที่เจ้าของงานสั่ง 25 ส.ค. 2569 · ขอบเขตรอบนี้จบที่ "ส่งแผนนัด" ยังไม่มีตอบรับ/อนุมัติ/ยืนยัน
+function renderRepair() {
+  PLAN = null;
+  $('crumbs').innerHTML = `<span class="ms">event_available</span>
+    <a href="#">ทำแผนการเดินทาง</a><span class="ms">chevron_right</span>
+    <span class="cur">งานซ่อม</span>`;
+
+  $('phase').innerHTML = `
+    <div class="page-title-row">
+      <h1 class="page-title">แผนการเดินทาง — งานซ่อม</h1>
+    </div>
+    <div class="stack">
+      ${sourceSeg('repair')}
+    </div>
+    <div class="card">
+      <div class="note note-info"><span class="ms">info</span>
+        <div><b>ขอบเขตของต้นแบบรอบนี้ = จังหวะสร้างแผนเท่านั้น</b> — จบที่ "ส่งแผนนัดให้หน่วยงาน"
+          ส่วนหน่วยงานตอบรับ · ขั้นขออนุมัติแผน · ยืนยันแผน ยังไม่ได้ทำ</div></div>
+      ${TRIP.renderRepairStep1()}
+    </div>`;
+
+  TRIP.bindRepairStep1({ onChange: renderRepair });
+  bindSourceSeg();
+}
+
 // ---------------------------------------------------------------- router
 function route() {
   const id = (location.hash || '').replace('#', '');
   if (!id) { renderPicker(); return; }
+  if (id === 'repair') { renderRepair(); window.scrollTo({ top: 0 }); return; }
   const p = MYD.getPlan(id);
   if (!p || !p.workNumber) { location.hash = ''; renderPicker(); return; }
   PLAN = p;

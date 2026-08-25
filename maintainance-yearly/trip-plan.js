@@ -35,6 +35,16 @@
     accepted: { cls: 'b-ok',    text: 'ตอบรับแล้ว' },
   };
 
+  // แผนเดินทางสายซ่อมถือเป็น "array ตัวเป็นๆ ตัวเดียว" ทั้งโมดูล แล้ว mutate ที่เดิม
+  // ⚠️ ห้ามโหลดสำเนาใหม่ทุกรอบ render — เคยทำแล้วเจอบั๊ก: handler ของ render รอบก่อน
+  // ยังถือสำเนาเก่าอยู่ พอมันเซฟ จะเขียนทับค่าที่เพิ่งกรอกไปในรอบใหม่ (crewVehicle หายเงียบๆ)
+  // ฝั่งบำรุงรักษาไม่เจอปัญหานี้เพราะ host ส่ง object `plan` ตัวเป็นๆ เข้ามาให้อยู่แล้ว
+  let REPAIR_TRIPS = null;
+  function repairTrips() {
+    if (!REPAIR_TRIPS) REPAIR_TRIPS = MYD.loadRepairTrips();
+    return REPAIR_TRIPS;
+  }
+
   // callback ที่ host ส่งมา — ตั้งต้นเป็น no-op เผื่อเรียกก่อน bindStep1()
   const HOST = { onChange() {}, onValidity() {} };
 
@@ -611,6 +621,296 @@
     if (next && opts.onNextPhase) next.addEventListener('click', opts.onNextPhase);
   }
 
+  // ==========================================================================
+  // สายงานซ่อม (SC-15 ออกซ่อมหน้างาน · UC-15.1 ทำแผนเดินทาง) — 25 ส.ค. 2569
+  // ==========================================================================
+  // เจ้าของงานสั่ง: "โครงสร้างเหมือนหน้า[แผนเดินทางบำรุงรักษา]ได้เลย ตัดตรงเลือกไตรมาสออกไป"
+  // + "เอาปุ่มแยกอัตโนมัติตามจังหวัดออก"
+  // ⇒ โครงกล่อง/ฟอร์ม/ตาราง ใช้ชุดเดียวกับสายบำรุงรักษาเป๊ะ ต่างกันแค่:
+  //   - ไม่มีตัวเลือกไตรมาส · ไม่มีปุ่มแยกอัตโนมัติ
+  //   - หน่วยของงานคือ "ใบแจ้งซ่อม" ไม่ใช่ "รถในแผนประจำปี" · 1 ใบเดินทางรวมได้หลายใบแจ้งซ่อม
+  //   - งานที่จะทำ = อาการเสียจากใบแจ้งซ่อม (อ่านอย่างเดียว) ไม่ใช่ติ๊กเอง
+  //   - เพิ่ม 2 ช่องที่ UC-15.1 ขอ: จุดนัดรับรถ · รถที่ใช้เดินทาง
+  // ⚠️ ขอบเขตรอบนี้ = "จังหวะสร้างแผน" เท่านั้น — จบที่ส่งแผนนัด
+  //    (ฝั่งหน่วยงานตอบรับ · ขั้นขออนุมัติ · ยืนยันแผน ยังไม่ทำ)
+
+  function repairTripBoxes(trips) {
+    return trips.map(trip => {
+      const locked = !!trip.sentAt;
+      const dis = locked ? 'disabled' : '';
+      const jobs = (trip.jobNos || []).map(no => MYD.repairJobByNo(no)).filter(Boolean);
+      const days = MYD.repairTripDays(trip);
+      const perDiemSum = MYD.repairTripPerDiemSum(trip) * (days || 1);
+      const grand = perDiemSum + (Number(trip.lodging) || 0) + (Number(trip.travel) || 0);
+      const blockers = MYD.repairTripBlockers(trip);
+
+      const rows = jobs.map(j => {
+        const u = MYD.URGENCY[j.urgency] || MYD.URGENCY.normal;
+        return `<tr>
+          <td><b>${esc(j.no)}</b><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
+          <td><b>${esc(j.plate)}</b><div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
+          <td>${esc(j.ownerDept)}<div class="cell-sub">${esc(j.province)}</div></td>
+          <td>${j.syms.map(x => `<span class="badge b-neutral">${esc(x)}</span>`).join(' ')}
+              <div class="cell-sub">${esc(j.target)}</div></td>
+          <td><span class="badge ${u.cls}">${esc(u.text)}</span></td>
+          <td class="num">${locked ? '' : `<button class="btn btn-g btn-sm" data-rdrop="${esc(trip.id)}" data-rjob="${esc(j.no)}">เอาออกจากใบนี้</button>`}</td>
+        </tr>`;
+      }).join('');
+
+      const pool = MYD.unassignedRepairJobs(trips);
+      const byProv = {};
+      pool.forEach(j => (byProv[j.province] = byProv[j.province] || []).push(j));
+      const addOpts = Object.keys(byProv).sort((a, b) => a.localeCompare(b, 'th')).map(prov =>
+        `<optgroup label="${esc(prov)} (${byProv[prov].length} ใบ)">${byProv[prov].map(j =>
+          `<option value="${esc(j.no)}">${esc(j.no)} · ${esc(j.plate)} — ${esc(j.ownerDept)}</option>`).join('')}</optgroup>`).join('');
+
+      return `
+      <div class="rzone">
+        <div class="rzone-head">
+          <span class="ms rzone-caret">event_available</span>
+          <b>${esc(trip.name || 'แผนเดินทางซ่อม')}</b>
+          <span class="rzone-count">${jobs.length} ใบแจ้งซ่อม · ${MYD.repairTripDepts(trip).length} หน่วยงาน · ${grand.toLocaleString('th-TH')} บาท</span>
+          <span class="badge ${locked ? 'b-low' : 'b-neutral'}">${locked ? 'รอตอบรับ' : 'ยังไม่ส่ง'}</span>
+        </div>
+        <div class="rzone-body">
+          <div class="fgrid">
+            <div class="f sp2"><label>ชื่อแผน</label>
+              <div class="in"><span class="ms">label</span>
+                <input type="text" value="${esc(trip.name || '')}" ${dis}
+                  placeholder="เช่น ขอนแก่น รอบ 1" data-rtrip="${esc(trip.id)}" data-field="name"></div></div>
+            <div class="f sp2"><label>สถานที่ซ่อม</label>
+              <div class="in"><span class="ms">place</span>
+                <input type="text" value="${esc(trip.location || '')}" ${dis}
+                  placeholder="เช่น กฟจ.ขอนแก่น" data-rtrip="${esc(trip.id)}" data-field="location"></div></div>
+            <div class="f"><label>ช่วงที่เสนอ — จากวันที่</label>
+              <div class="in noic"><input type="date" value="${esc(trip.windowFrom || '')}" ${dis}
+                data-rtrip="${esc(trip.id)}" data-field="windowFrom"></div></div>
+            <div class="f"><label>ถึงวันที่</label>
+              <div class="in noic"><input type="date" value="${esc(trip.windowTo || '')}" ${dis}
+                data-rtrip="${esc(trip.id)}" data-field="windowTo"></div></div>
+            <div class="f ro sp2"><label>รวมกี่วัน <small>คิดให้อัตโนมัติ</small></label>
+              <div class="in noic"><input type="text" value="${days ? days + ' วัน' : '—'}" readonly></div></div>
+          </div>
+
+          <div class="sect">ข้อมูลเฉพาะการออกซ่อมหน้างาน</div>
+          <div class="sub">สองช่องนี้มีเฉพาะสายงานซ่อม — สายบำรุงรักษาตามวาระไม่มี</div>
+          <div class="fgrid">
+            <div class="f sp2"><label>จุดนัดรับรถ</label>
+              <div class="in"><span class="ms">pin_drop</span>
+                <input type="text" value="${esc(trip.pickupPoint || '')}" ${dis}
+                  placeholder="เช่น สนง.ใหญ่ กบค." data-rtrip="${esc(trip.id)}" data-field="pickupPoint"></div></div>
+            <div class="f sp2"><label>รถที่ใช้เดินทาง</label>
+              <div class="in"><span class="ms">local_shipping</span>
+                <input type="text" value="${esc(trip.crewVehicle || '')}" ${dis}
+                  placeholder="เช่น กข-1234 กรุงเทพมหานคร (รถตู้ซ่อมบำรุง)" data-rtrip="${esc(trip.id)}" data-field="crewVehicle"></div></div>
+            <div class="f sp4"><label>รายละเอียดเพิ่มเติม <small>ไม่บังคับ</small></label>
+              <div class="in"><span class="ms">notes</span>
+                <input type="text" value="${esc(trip.note || '')}" ${dis}
+                  placeholder="เช่น นัดเวลา 09:00 ที่ป้อมยาม" data-rtrip="${esc(trip.id)}" data-field="note"></div></div>
+          </div>
+
+          <div class="sect">ช่างผู้รับผิดชอบ</div>
+          <div class="sub">ใส่ชื่อไว้เพื่อให้หน่วยงานเจ้าของรถรู้ว่าใครจะไป
+            · ค่าเบี้ยเลี้ยงกรอกเป็น<b>อัตราต่อวัน</b>รายคน ระบบคูณจำนวนวันของช่วงที่เสนอแล้วรวมให้ด้านล่าง</div>
+          <div class="fgrid">
+            ${(trip.staff || ['']).map((name, i) => `
+              <div class="f sp3"><label>คนที่ ${i + 1}</label>
+                <div class="in"><span class="ms">engineering</span>
+                  <input type="text" value="${esc(name || '')}" ${dis} placeholder="ชื่อ-สกุล"
+                    data-rstaff="${esc(trip.id)}" data-rstaff-i="${i}"></div></div>
+              <div class="f"><label>ค่าเบี้ยเลี้ยง/วัน (บาท)</label>
+                <div class="in noic"><input type="number" min="0" value="${esc((trip.staffPerDiem || [])[i] ?? 0)}" ${dis}
+                  data-rstaffpd="${esc(trip.id)}" data-rstaffpd-i="${i}"></div></div>`).join('')}
+          </div>
+          ${locked ? '' : `<div class="actions" style="justify-content:flex-start">
+            <button class="btn btn-t btn-sm" data-rstaff-add="${esc(trip.id)}"><span class="ms">add</span> เพิ่มคน</button>
+            ${(trip.staff || []).length > 1 ? `<button class="btn btn-t btn-sm" data-rstaff-del="${esc(trip.id)}"><span class="ms">remove</span> ลดคน</button>` : ''}
+          </div>`}
+
+          <div class="fgrid">
+            <div class="f ro"><label>ค่าเบี้ยเลี้ยงรวม (บาท) <small>คิดให้อัตโนมัติ</small></label>
+              <div class="in noic"><input type="number" value="${esc(perDiemSum)}" readonly></div>
+              <div class="cell-sub">${MYD.repairTripPerDiemSum(trip).toLocaleString('th-TH')} บาท/วัน × ${days || 1} วัน</div></div>
+            <div class="f"><label>ค่าที่พัก (บาท)</label>
+              <div class="in noic"><input type="number" min="0" value="${esc(trip.lodging ?? 0)}" ${dis}
+                data-rtrip="${esc(trip.id)}" data-field="lodging"></div></div>
+            <div class="f"><label>ค่าเดินทาง (บาท)</label>
+              <div class="in noic"><input type="number" min="0" value="${esc(trip.travel ?? 0)}" ${dis}
+                data-rtrip="${esc(trip.id)}" data-field="travel"></div></div>
+            <div class="f"><label>รวม</label><div><b>${grand.toLocaleString('th-TH')} บาท</b></div></div>
+          </div>
+
+          <div class="sect">ใบแจ้งซ่อมในแผนนี้</div>
+          <div class="sub">หนึ่งใบเดินทางรวมได้หลายใบแจ้งซ่อม — งานที่จะทำมาจากอาการที่แจ้งไว้ แก้ที่นี่ไม่ได้</div>
+          ${jobs.length ? `<div class="tblwrap"><table class="tbl">
+            <thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th>
+              <th>อาการที่แจ้ง</th><th>ความเร่งด่วน</th><th></th></tr></thead>
+            <tbody>${rows}</tbody></table></div>`
+            : `<div class="empty">ยังไม่มีใบแจ้งซ่อมในแผนนี้ — เลือกจากรายการด้านล่าง</div>`}
+
+          ${locked ? '' : `
+          <div class="fgrid">
+            <div class="f sp3"><label>เพิ่มใบแจ้งซ่อมเข้าแผนนี้ <small>เลือกจากใบที่ยังไม่ถูกจัด</small></label>
+              <div class="in"><span class="ms">build</span>
+                <select data-radd-sel="${esc(trip.id)}" ${addOpts ? '' : 'disabled'}>
+                  ${addOpts || '<option>— จัดครบทุกใบแล้ว —</option>'}</select></div></div>
+            <div class="f"><label>&nbsp;</label>
+              <button class="btn btn-s" data-radd="${esc(trip.id)}" ${addOpts ? '' : 'disabled'}>เพิ่ม</button></div>
+          </div>`}
+
+          <div data-rblockers="${esc(trip.id)}">${(!locked && blockers.length) ? `<div class="note note-warn"><span class="ms">error</span>
+            <div><b>ส่งแผนนัดยังไม่ได้</b> — ต้องเคลียร์ ${blockers.length} เรื่องนี้ก่อน
+              <ul style="margin:6px 0 0 18px">${blockers.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>` : ''}</div>
+
+          <div class="actions">
+            ${locked
+              ? `<button class="btn btn-g" disabled>ส่งแล้ว แก้ไม่ได้</button>`
+              : `<button class="btn btn-g" data-rdel="${esc(trip.id)}">ลบแผนนี้</button>
+                 <button class="btn btn-o" data-rsend="${esc(trip.id)}" ${MYD.repairTripSendable(trip) ? '' : 'disabled'}>
+                   <span class="ms">send</span> ส่งแผนนัดให้หน่วยงาน</button>`}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderRepairStep1() {
+    const trips = repairTrips();
+    // 🔑 เข้าพูลได้เฉพาะใบที่เลือก "จัดซ่อมที่หน้างาน" — ใบที่นัดเข้ามาซ่อมที่ กบค. ไม่ต้องเดินทาง
+    const onsite = MYD.onsiteRepairJobs();
+    const offsite = MYD.offsiteRepairJobs();
+    const unassigned = MYD.unassignedRepairJobs(trips);
+
+    const offsiteRows = offsite.map(j => `<tr>
+      <td><b>${esc(j.no)}</b><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
+      <td><b>${esc(j.plate)}</b><div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
+      <td>${esc(j.ownerDept)}<div class="cell-sub">${esc(j.province)}</div></td>
+      <td><span class="badge b-neutral">เข้าซ่อมที่ กบค.</span></td>
+    </tr>`).join('');
+
+    return `
+      <div class="sect">ขั้นที่ 1: ทำแผนเดินทาง</div>
+      <div class="sub"><b>มีรถที่ต้องออกไปซ่อม ${onsite.length} คัน</b>
+        — จัดเข้าใบแล้ว <b>${onsite.length - unassigned.length}</b> · ยังไม่จัด <b>${unassigned.length}</b>
+        · แผนเดินทาง <b>${trips.length}</b> ใบ</div>
+      <div class="note note-info"><span class="ms">filter_alt</span>
+        <div><b>นับเฉพาะใบที่เลือก "จัดซ่อมที่หน้างาน"</b> ในหัวข้อ <i>รูปแบบการซ่อม</i> ของใบแจ้งซ่อม
+          — ใบที่เลือก <i>เข้าซ่อมที่ กบค.</i> ไม่ต้องเดินทาง จึงไม่เข้าแผนนี้
+          ${offsite.length ? `(รอบนี้ถูกกันออก <b>${offsite.length}</b> ใบ ดูท้ายหน้า)` : ''}</div></div>
+      <div class="sub">หนึ่งใบเดินทางรวมใบแจ้งซ่อมได้หลายใบ · แต่ละใบเสนอเป็น<b>ช่วงเวลา</b>
+        แล้วหน่วยงานเจ้าของรถเลือกวันนัดภายในช่วงนั้นเอง (เหมือนสายบำรุงรักษา)</div>
+      <div class="actions" style="justify-content:flex-start">
+        <button class="btn btn-o" id="btnAddRepairTrip"><span class="ms">add</span> สร้างแผนเดินทางใหม่</button>
+      </div>
+      ${trips.length ? repairTripBoxes(trips) : `<div class="empty">ยังไม่มีแผนเดินทาง — กดสร้างแผนใหม่</div>`}
+      ${unassigned.length ? `<div class="empty">ยังมีใบแจ้งซ่อม ${unassigned.length} ใบที่ยังไม่ถูกจัดเข้าแผนใด</div>` : ''}
+      ${offsite.length ? `
+        <div class="sect">ใบแจ้งซ่อมที่ไม่เข้าแผนเดินทาง</div>
+        <div class="sub">เลือก <b>เข้าซ่อมที่ กบค.</b> — เจ้าของรถขนรถมาที่สำนักงานใหญ่ ไม่ต้องจัดทีมเดินทาง
+          · ถ้าเปลี่ยนรูปแบบการซ่อมเป็น <b>จัดซ่อมที่หน้างาน</b> ใบนั้นจะขึ้นมาให้จัดในแผนเดินทางเอง</div>
+        <div class="tblwrap"><table class="tbl">
+          <thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>รูปแบบการซ่อม</th></tr></thead>
+          <tbody>${offsiteRows}</tbody></table></div>` : ''}`;
+  }
+
+  function wireRepairStep1() {
+    const trips = repairTrips();
+    const find = id => trips.find(t => t.id === id);
+    const rerender = () => { MYD.saveRepairTrips(trips); HOST.onChange(); };
+
+    const add = $('btnAddRepairTrip');
+    if (add) add.addEventListener('click', () => {
+      trips.push(MYD.emptyRepairTrip('rtrip-' + Date.now().toString(36), `แผนเดินทางซ่อม ${trips.length + 1}`));
+      rerender();
+    });
+
+    // ⚠️ พิมพ์แล้ว **ห้าม re-render** — บันทึกทันทีแล้ว sync เฉพาะปุ่ม/กล่องเตือนพอ
+    // เป็นแพตเทิร์นเดียวกับสายบำรุงรักษา (syncSendBtn) · ตอนแรกผมทำเป็น re-render ทั้งหน้าตอน
+    // change แล้วเจอบั๊ก: การวาดใหม่ทับค่าที่เพิ่งกรอกลงไป ค่าหายเงียบๆ ทีละช่อง
+    const syncSend = t => {
+      const btn = document.querySelector(`[data-rsend="${t.id}"]`);
+      if (btn) btn.disabled = !MYD.repairTripSendable(t);
+      const box = document.querySelector(`[data-rblockers="${t.id}"]`);
+      if (box) {
+        const bl = MYD.repairTripBlockers(t);
+        box.innerHTML = bl.length ? `<div class="note note-warn"><span class="ms">error</span>
+          <div><b>ส่งแผนนัดยังไม่ได้</b> — ต้องเคลียร์ ${bl.length} เรื่องนี้ก่อน
+            <ul style="margin:6px 0 0 18px">${bl.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>` : '';
+      }
+    };
+
+    const onType = (sel, apply) => document.querySelectorAll(sel).forEach(el => {
+      el.addEventListener('input', () => {
+        const t = apply(el);
+        if (!t) return;
+        MYD.saveRepairTrips(trips);
+        syncSend(t);
+      });
+    });
+
+    onType('[data-rtrip]', el => {
+      const t = find(el.dataset.rtrip);
+      if (!t || t.sentAt) return null;
+      const f = el.dataset.field;
+      t[f] = (el.type === 'number') ? (Number(el.value) || 0) : el.value;
+      return t;
+    });
+
+    onType('[data-rstaff]', el => {
+      const t = find(el.dataset.rstaff);
+      if (!t || t.sentAt) return null;
+      t.staff[Number(el.dataset.rstaffI)] = el.value;
+      return t;
+    });
+
+    onType('[data-rstaffpd]', el => {
+      const t = find(el.dataset.rstaffpd);
+      if (!t || t.sentAt) return null;
+      t.staffPerDiem[Number(el.dataset.rstaffpdI)] = Number(el.value) || 0;
+      return t;
+    });
+
+    document.querySelectorAll('[data-rstaff-add]').forEach(b => b.addEventListener('click', () => {
+      const t = find(b.dataset.rstaffAdd);
+      if (!t) return;
+      t.staff.push(''); t.staffPerDiem.push(0); rerender();
+    }));
+    document.querySelectorAll('[data-rstaff-del]').forEach(b => b.addEventListener('click', () => {
+      const t = find(b.dataset.rstaffDel);
+      if (!t || t.staff.length <= 1) return;
+      t.staff.pop(); t.staffPerDiem.pop(); rerender();
+    }));
+
+    document.querySelectorAll('[data-radd]').forEach(b => b.addEventListener('click', () => {
+      const t = find(b.dataset.radd);
+      const sel = document.querySelector(`[data-radd-sel="${b.dataset.radd}"]`);
+      if (!t || !sel || !sel.value) return;
+      t.jobNos.push(sel.value);
+      rerender();
+    }));
+    document.querySelectorAll('[data-rdrop]').forEach(b => b.addEventListener('click', () => {
+      const t = find(b.dataset.rdrop);
+      if (!t) return;
+      t.jobNos = t.jobNos.filter(x => x !== b.dataset.rjob);
+      rerender();
+    }));
+
+    document.querySelectorAll('[data-rdel]').forEach(b => b.addEventListener('click', () => {
+      const i = trips.findIndex(t => t.id === b.dataset.rdel);
+      if (i < 0) return;
+      trips.splice(i, 1);
+      rerender();
+    }));
+
+    document.querySelectorAll('[data-rsend]').forEach(b => b.addEventListener('click', () => {
+      const t = find(b.dataset.rsend);
+      if (!t || !MYD.repairTripSendable(t)) return;
+      t.sentAt = nowTh();
+      toast('ส่งแผนนัดให้หน่วยงานแล้ว');
+      rerender();
+    }));
+  }
+
   window.TRIP = {
     state: S,
     blockers: travelBlockers,
@@ -626,5 +926,14 @@
     confirm: confirmTravelPlan,
     renderConfirmed: renderTravelConfirmed,
     bindConfirmed: bindTravelConfirmed,
+
+    // --- สายงานซ่อม (SC-15) — ขอบเขตรอบนี้: เฉพาะจังหวะสร้างแผน จบที่ส่งแผนนัด ---
+    renderRepairStep1,
+    bindRepairStep1(opts) {
+      opts = opts || {};
+      HOST.onChange = opts.onChange || function () {};
+      HOST.onValidity = opts.onValidity || function () {};
+      wireRepairStep1();
+    },
   };
 })();
