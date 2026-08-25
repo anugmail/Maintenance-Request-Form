@@ -21,9 +21,9 @@
 | 3 | แมป `components.css` ↔ component จริง | ✅ **เสร็จ** — `design-system/figma-map.json` 58 รายการ ตรวจผ่าน 58/58 |
 | 4 | ตั้งเป็นกฎบังคับอ่านก่อนออกแบบ | ✅ **เสร็จ** — `CLAUDE.md` + `design-system/README.md` |
 | 5 | รู้ว่าสร้าง instance ด้วยวิธีไหนได้ (import vs clone) | 🟡 **รอผล** — `build-test-plugin/` เขียนแล้ว รอเจ้าของงานรันแล้วบอกผล |
-| 6 | ตัวแปลง DOM → spec ที่อ้าง component จริง | ⬜ **ยังไม่ทำ** ← งานถัดไป (Task 2) |
-| 7 | ปลั๊กอินสร้าง instance จาก spec | ⬜ **ยังไม่ทำ** |
-| 8 | นำร่อง 1 หน้า (แผนเดินทางงานซ่อม) | ⬜ **ยังไม่ทำ** ← เป้าหมายรอบนี้ |
+| 6 | ตัวแปลง DOM → spec ที่อ้าง component จริง | ✅ **เสร็จ** — `7-map-components.js` · 278 instance |
+| 7 | ปลั๊กอินสร้าง instance จาก spec | ✅ **เสร็จ** — `component-plugin/` · เทส 11/11 |
+| 8 | นำร่อง 1 หน้า (แผนเดินทางงานซ่อม) | 🟡 **พร้อมให้กดในไฟล์จริง** — รอผลจากเจ้าของงาน |
 | 9 | ขยายทุกหน้า | ⬜ ยังไม่ทำ |
 
 ---
@@ -113,7 +113,7 @@ out/spec-components.json
 Section header 6 · Table header cell 5 · Table cell 5 · Alert 3 · Page header · Breadcrumbs ·
 Card item base · Nav button · Header navigation
 
-### Task 2 — ตัวแปลง DOM → spec v3
+### ✅ Task 2 — ตัวแปลง DOM → spec v3 (เสร็จ 25 ส.ค. 2569)
 
 `figma-export/7-map-components.js`
 
@@ -129,7 +129,7 @@ Card item base · Nav button · Header navigation
 **เสร็จเมื่อ:** `node figma-export/7-map-components.js` ได้ `out/spec-components.json`
 และรายงาน `instance กี่ตัว · frame กี่ตัว · unmapped กี่ตัว`
 
-### Task 3 — ปลั๊กอินสร้างของจริงในไฟล์ Figma
+### ✅ Task 3 — ปลั๊กอินสร้างของจริงในไฟล์ Figma (เสร็จ 25 ส.ค. 2569)
 
 `figma-export/component-plugin/` (แยกจาก `plugin/` เดิม ไม่ทับกัน)
 
@@ -142,7 +142,7 @@ Card item base · Nav button · Header navigation
 
 **เสร็จเมื่อ:** เปิดหน้าใน Figma แล้ว**คลิกที่ Page header/Alert/Table cell แล้ว panel ขวาโชว์ property ให้สลับได้**
 
-### Task 4 — เทสก่อนให้กดในไฟล์จริง
+### ✅ Task 4 — เทสก่อนให้กดในไฟล์จริง (เสร็จ 25 ส.ค. 2569)
 
 - `test-component-plugin.js` — mock Plugin API ทั้ง 2 ทาง (import ได้ / ถูกบล็อก)
 - ตรวจว่า spec ทุก instance อ้าง component + property ที่มีจริง
@@ -196,3 +196,27 @@ Card item base · Nav button · Header navigation
       ⇒ ถ้าจะใช้ ต้องให้ดีไซเนอร์วาง instance ไว้ในไฟล์ก่อน 1 ตัว
 - [ ] `.daterange` · `.toast` · `.empty` · `.rzone` — ไลบรารีไม่มีของเทียบ จะวาดเองหรือขอให้ออกแบบเพิ่ม
 - [ ] **11 คลาสที่ยังไม่แมป** — ส่วนใหญ่เป็น sub-part ของที่แมปแล้ว ตรวจอีกรอบตอนทำ Task 2
+
+
+---
+
+## 8. บันทึกผลนำร่อง (25 ส.ค. 2569)
+
+**ท่อเดินครบแล้ว** — `flow-repair-trip-extract.js` → `7-map-components.js` → `component-plugin/`
+
+| ตัวเลข | ค่า |
+|---|---|
+| DOM ที่เก็บ | 3 state · 1,512 node · 57 คลาส · **ยังไม่มีในแมป 0 ตัว** |
+| spec v3 | **instance 278** · frame 398 · text 205 · vector 29 · **ไม่มี hex หลุด** |
+| component ที่อ้าง | 12 ตัว — **มีจริงครบ** · property ที่ตั้ง **ถูกทุกตัว** |
+| เทส | `test-component-plugin.js` **11/11** (import ได้ / ถูกบล็อก / ไฟล์มีไม่ครบ) |
+
+**กติกาที่ต้องมีถึงจะแปลงถูก — เจอตอนทำจริง**
+
+1. **ตัวในสุดชนะ** — ถ้า node แมปเป็น component ได้แต่ข้างในยังมี component อื่น ให้ยกให้ตัวข้างใน
+   ไม่งั้น `.card` จะกลืนทุกอย่าง (เคยเหลือ instance แค่ 33 ตัวจาก 278)
+2. **ธง `absorbs`** — ยกเว้นให้ `.tbl td` เพราะ Table cell มี variant `Style=Badge/Action icons`
+   รองรับเนื้อในอยู่แล้ว ไม่ควรถูกยก
+3. **ข้อความหลักต้องไม่รวมบรรทัดรอง** — `.cell-sub`/`.sub` เป็น property แยก (`Supporting text`)
+   ไม่งั้นได้ `"MTD-690716-031แจ้งเมื่อ 16 ก.ค. 2569"` ติดกันเป็นก้อนเดียว
+4. **ช่องกรอกอ่านค่าจาก attribute** ไม่ใช่ textContent (`value` → ถ้าว่างใช้ `placeholder`)

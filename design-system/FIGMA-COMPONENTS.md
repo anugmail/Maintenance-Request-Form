@@ -24,7 +24,7 @@
 | `.page-title-row` | **Page header** | 206 | 11 | `hasButton` |
 | `.crumbs` | **Breadcrumbs** | 103 | 4 | — |
 | `.tbl th` | **Table header cell** | 290 | 7 | `.sortable` |
-| `.tbl td` | **Table cell** | 680 | 10 | `.cell-sub` · `hasBadge` · `hasButtons` |
+| `.tbl td` | **Table cell** | 680 | 10 | `hasCellSub` · `hasBadge` · `hasButtons` |
 | `.f .in input` | **Text input** | 1,076 | 14 | `hasIcon` · `.help` |
 | `.f .in select` | **Input dropdown** | 824 | 15 | — |
 | `.chk input` | **Checkbox** | 24 | 2 | `checked` · `disabled` |
@@ -46,7 +46,7 @@
 | `.veh` | **Card item base** | 116 | 8 | — |
 | `.job` | **_Content item base** | 2,002 | 8 | — |
 
-## 2. คลาสที่เป็นโครง/utility — ไม่ใช่ component (12)
+## 2. คลาสที่เป็นโครง/utility — ไม่ใช่ component (19)
 
 ใน Figma ทำเป็น **frame + auto-layout** ไม่ต้องหา component
 
@@ -62,8 +62,15 @@
 - `.list-toolbar` — แถบเหนือตาราง — ประกอบจาก .search + ปุ่ม
 - `.wgrp` — หัวกลุ่มของ stepper หลายกลุ่ม
 - `.vlist`
+- `.side` — แถบ sidebar — ตัวปุ่มข้างในคือ .side .nv
+- `.f` — ช่องกรอกหนึ่งช่อง — label + .in
+- `.in` — กรอบรอบ input
+- `.ms` — ไอคอน Material Symbols — ใน Figma เป็น instance ไอคอนของไลบรารี
+- `.noic` — ตัวแปรของ .in ที่ไม่มีไอคอนนำหน้า
+- `.tbl` — ตัวตาราง — เซลล์คือ .tbl td/th
+- `.cell-sub` — บรรทัดรองในเซลล์ — เป็น property Supporting ของ Table cell
 
-## 3. ของเราเอง — ไลบรารีไม่มีให้เทียบ (15)
+## 3. ของเราเอง — ไลบรารีไม่มีให้เทียบ (17)
 
 วาดเองตาม `components.css` · ถ้าจะเปลี่ยนต้องแจ้งเจ้าของงานก่อน
 
@@ -82,3 +89,5 @@
 - `.workno` — ป้ายเลขงานเฉพาะโฟลว์บำรุงรักษา ไม่มีในระบบจริง
 - `.page-back` — ปุ่มย้อนกลับหัวหน้า — ของเราเอง
 - `.tl` — ไทม์ไลน์ — ไลบรารีไม่มี
+- `.sg` — ตัวเลือกใน segmented — ไลบรารีไม่มี (ดู .seg)
+- `.vlogo` — โลโก้ VMS+ บน sidebar ของต้นแบบ

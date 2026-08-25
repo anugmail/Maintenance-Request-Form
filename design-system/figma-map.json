@@ -4,7 +4,8 @@
   "kinds": {
     "component": "มี component จริงให้ใช้ — สร้าง instance แล้ว setProperties",
     "layout": "ไม่ใช่ component — เป็นโครง auto-layout/utility ให้สร้างเป็น frame เปล่า",
-    "own": "ของเราเอง ไลบรารีไม่มีให้เทียบ — วาดเองตาม components.css"
+    "own": "ของเราเอง ไลบรารีไม่มีให้เทียบ — วาดเองตาม components.css",
+    "absorbs": "ธงเสริมของ kind=component — ไม่ต้องยกให้ตัวข้างในแม้ข้างในจะแมปได้"
   },
   "map": {
     ".btn.btn-p": {
@@ -146,7 +147,7 @@
         "Supporting#213:24": false
       },
       "when": {
-        ".cell-sub": {
+        "hasCellSub": {
           "Supporting#213:24": true,
           "_textProp": "Supporting text#2220:2"
         },
@@ -156,7 +157,9 @@
         "hasButtons": {
           "Style": "Action icons"
         }
-      }
+      },
+      "absorbs": true,
+      "comment": "absorbs: Table cell มี variant Style=Badge/Action icons รองรับเนื้อในอยู่แล้ว ไม่ต้องยกให้ตัวข้างใน"
     },
     ".f .in input": {
       "kind": "component",
@@ -424,6 +427,42 @@
     ".tl": {
       "kind": "own",
       "comment": "ไทม์ไลน์ — ไลบรารีไม่มี"
+    },
+    ".sg": {
+      "kind": "own",
+      "comment": "ตัวเลือกใน segmented — ไลบรารีไม่มี (ดู .seg)"
+    },
+    ".vlogo": {
+      "kind": "own",
+      "comment": "โลโก้ VMS+ บน sidebar ของต้นแบบ"
+    },
+    ".side": {
+      "kind": "layout",
+      "comment": "แถบ sidebar — ตัวปุ่มข้างในคือ .side .nv"
+    },
+    ".f": {
+      "kind": "layout",
+      "comment": "ช่องกรอกหนึ่งช่อง — label + .in"
+    },
+    ".in": {
+      "kind": "layout",
+      "comment": "กรอบรอบ input"
+    },
+    ".ms": {
+      "kind": "layout",
+      "comment": "ไอคอน Material Symbols — ใน Figma เป็น instance ไอคอนของไลบรารี"
+    },
+    ".noic": {
+      "kind": "layout",
+      "comment": "ตัวแปรของ .in ที่ไม่มีไอคอนนำหน้า"
+    },
+    ".tbl": {
+      "kind": "layout",
+      "comment": "ตัวตาราง — เซลล์คือ .tbl td/th"
+    },
+    ".cell-sub": {
+      "kind": "layout",
+      "comment": "บรรทัดรองในเซลล์ — เป็น property Supporting ของ Table cell"
     }
   }
 }
