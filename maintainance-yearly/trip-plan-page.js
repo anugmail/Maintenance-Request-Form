@@ -1,0 +1,180 @@
+// ============================================================================
+// trip-plan-page.js — ตัวคุมหน้าเดี่ยว "ทำแผนการเดินทาง" (trip-plan.html)
+// ============================================================================
+// สร้าง 25 ส.ค. 2569 พร้อมกับการยกโค้ดแผนเดินทางออกมาเป็นโมดูล trip-plan.js
+//
+// หน้านี้ทำหน้าที่เป็น "host" ให้โมดูล TRIP — เลือกแผน + ไตรมาส แล้วยื่น plan ให้โมดูล
+// ตัวมันเองไม่รู้เรื่องแผนเดินทางเลยสักนิด ตรรกะทั้งหมดอยู่ใน trip-plan.js
+// (host อีกตัวคือ app.js ซึ่งยื่น plan ตัวเดียวกันให้ในฐานะเฟส 2 ของ stepper 6 เฟส)
+//
+// ข้อมูลชุดเดียวกับหน้ารายการแผน (localStorage ผ่าน MYD) — กดสลับหน้าไปมาได้
+// ============================================================================
+'use strict';
+
+let PLAN = null;
+const state = { sub: 1 };
+
+const STEPS = [
+  { no: 1, label: 'ทำแผนเดินทาง' },
+  { no: 2, label: 'ทวน + ยืนยัน' },
+];
+
+// ---------------------------------------------------------------- เลือกแผน
+function travelSummary(plan) {
+  if (plan.travelConfirmed === true) return { cls: 'b-ok', text: 'ยืนยันแผนเดินทางแล้ว' };
+  const trips = MYD.ensureTrips(plan);
+  if (!trips.length) return { cls: 'b-neutral', text: 'ยังไม่มีใบเดินทาง' };
+  const master = MYD.loadMaster();
+  const accepted = trips.filter(t => MYD.tripStatus(t, master) === 'accepted').length;
+  return { cls: accepted === trips.length ? 'b-low' : 'b-neutral',
+           text: `${trips.length} ใบ · ตอบรับแล้ว ${accepted}` };
+}
+
+function renderPicker() {
+  PLAN = null;
+  // ทำแผนเดินทางได้เฉพาะแผนที่ออกเลขงานแล้ว — แผนร่างยังไม่มีรถที่ยืนยันให้จัดเข้าใบ
+  const plans = MYD.loadPlans().slice().reverse().filter(p => !!p.workNumber);
+
+  const rows = plans.map(p => {
+    const s = travelSummary(p);
+    return `<tr>
+      <td><b style="color:var(--gray-900)">${esc(planTitle(p))}</b>
+        <div class="cell-sub">${MYD.workNumberList(p).map(x => esc(x.no)).join(' · ')}</div></td>
+      <td class="num">${(p.selectedVehicleIds || []).length}</td>
+      <td>${quarterYearText(p)}</td>
+      <td><span class="badge ${s.cls}">${esc(s.text)}</span></td>
+      <td class="num"><a class="btn btn-s btn-sm" href="#${esc(p.id)}">ทำแผนเดินทาง</a></td>
+    </tr>`;
+  }).join('');
+
+  $('crumbs').innerHTML = `<span class="ms">event_available</span><span class="cur">ทำแผนการเดินทาง</span>`;
+  $('phase').innerHTML = `
+    <div class="page-title-row">
+      <h1 class="page-title">ทำแผนการเดินทาง — กบค.</h1>
+    </div>
+    <div class="card">
+      <div class="sub">เลือกแผนที่จะทำแผนเดินทาง — เลือกไตรมาสได้ในขั้นถัดไป
+        · ข้อมูลชุดเดียวกับ <a href="index.html">รายการแผนบำรุงรักษา</a> สลับไปมาได้</div>
+      ${plans.length ? `<div class="tblwrap"><table class="tbl">
+        <thead><tr><th>เลขงาน / ชื่อแผน</th><th class="num">รถ (คัน)</th><th>ไตรมาส/ปี</th>
+          <th>สถานะแผนเดินทาง</th><th></th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`
+        : `<div class="empty">ยังไม่มีแผนที่ออกเลขงานแล้ว —
+             ไปที่ <a href="plan-new.html">ออกเลขงาน</a> เพื่อสร้างแผนก่อน</div>`}
+    </div>`;
+}
+
+// ---------------------------------------------------------------- ตัว wizard
+function primaryReady(plan) {
+  if (state.sub === 1) return MYD.travelPlanReady(plan, MYD.loadMaster());
+  return true;
+}
+
+function updatePrimary(plan) {
+  const btn = $('btnPrimaryTrip');
+  if (btn) btn.disabled = !primaryReady(plan);
+}
+
+function goSub(n) {
+  if (n < 1 || n > STEPS.length) return;
+  if (n > state.sub && !primaryReady(PLAN)) {
+    toast('ทำขั้น "ทำแผนเดินทาง" ให้เสร็จก่อน ถึงจะไปขั้นถัดไปได้');
+    return;
+  }
+  state.sub = n;
+  renderWizard(PLAN);
+  window.scrollTo({ top: 0 });
+}
+
+function renderWizard(plan) {
+  const isLast = state.sub === STEPS.length;
+  const disabled = !primaryReady(plan);
+  const blockers = (state.sub === 1 && disabled) ? TRIP.blockers(plan) : [];
+
+  $('crumbs').innerHTML = `<span class="ms">event_available</span>
+    <a href="#">ทำแผนการเดินทาง</a><span class="ms">chevron_right</span>
+    <span class="cur">${esc(planTitle(plan))}</span>`;
+
+  $('phase').innerHTML = `
+    <div class="page-title-row">
+      <h1 class="page-title">${esc(planTitle(plan))}</h1>
+      <a class="btn btn-g" href="#" style="margin-left:auto">
+        <span class="ms">arrow_back</span> เปลี่ยนแผน</a>
+    </div>
+    ${plan.partsRequisitioned ? '' : `<div class="note note-info"><span class="ms">info</span>
+      <div><b>หน้านี้ข้ามมาที่ขั้นแผนเดินทางโดยตรง</b> — ในโฟลว์เต็ม แผนนี้ยังไม่ผ่าน
+        "ยืนยันรถเข้าร่วมแผน + เบิก/จัดหาอะไหล่" (เฟส 1) ทำที่นี่ได้เพื่อดูหน้าจอ
+        แต่เวลาใช้จริงต้องจบเฟส 1 ก่อน — ดูโฟลว์เต็มที่ <a href="index.html#${esc(plan.id)}">หน้ารายการแผน</a></div></div>`}
+    <div class="card">
+      <div class="wsteps sm">${STEPS.map(s => {
+        const cls = ['wstep'];
+        if (s.no === state.sub) cls.push('active');
+        if (s.no < state.sub) cls.push('passed');
+        if (s.no > state.sub) cls.push('locked');
+        return `<div class="${cls.join(' ')}" data-sub="${s.no}">
+          <span class="num">${s.no < state.sub ? '✓' : s.no}</span>
+          <span class="lbl">${esc(s.label)}</span>
+        </div>`;
+      }).join('')}</div>
+      <div id="tripBody">${state.sub === 1 ? TRIP.renderStep1(plan) : TRIP.renderStep2(plan)}</div>
+      ${blockers.length ? `<div class="note note-warn"><span class="ms">error</span>
+        <div><b>ยังไปขั้นถัดไปไม่ได้</b> — ต้องเคลียร์ ${blockers.length} เรื่องนี้ก่อน
+          <ul style="margin:6px 0 0 18px">${blockers.map(x => `<li>${x}</li>`).join('')}</ul></div></div>` : ''}
+      <div class="actions">
+        <button class="btn btn-g" id="btnBackTrip" ${state.sub === 1 ? 'disabled' : ''}>ย้อนกลับ</button>
+        <button class="btn btn-p" id="btnPrimaryTrip" ${disabled ? 'disabled' : ''}>
+          ${isLast ? 'ยืนยันแผนเดินทาง' : 'ถัดไป'}</button>
+      </div>
+    </div>`;
+
+  if (state.sub === 1) {
+    // callback ที่โมดูลใช้คุยกลับมา — โมดูลไม่รู้ว่า host หน้าตาเป็นยังไง
+    TRIP.bindStep1(plan, {
+      onChange: () => renderWizard(plan),
+      onValidity: () => updatePrimary(plan),
+    });
+  }
+
+  $('phase').querySelectorAll('.wstep').forEach(el =>
+    el.addEventListener('click', () => goSub(Number(el.dataset.sub))));
+  $('btnBackTrip').addEventListener('click', () => goSub(state.sub - 1));
+  $('btnPrimaryTrip').addEventListener('click', () => {
+    if (!isLast) { goSub(state.sub + 1); return; }
+    TRIP.confirm(plan);
+    renderConfirmed(plan);
+  });
+}
+
+// ---------------------------------------------------------------- ยืนยันแล้ว
+function renderConfirmed(plan) {
+  $('crumbs').innerHTML = `<span class="ms">event_available</span>
+    <a href="#">ทำแผนการเดินทาง</a><span class="ms">chevron_right</span>
+    <span class="cur">${esc(planTitle(plan))}</span>`;
+  // ไม่ส่ง onNextPhase — หน้าเดี่ยวไม่มีเฟสถัดไป ปุ่มนั้นจะไม่ถูกวาด
+  $('phase').innerHTML = `
+    <div class="page-title-row">
+      <h1 class="page-title">${esc(planTitle(plan))}</h1>
+      <a class="btn btn-g" href="#" style="margin-left:auto">
+        <span class="ms">arrow_back</span> เปลี่ยนแผน</a>
+    </div>` + TRIP.renderConfirmed(plan);
+  TRIP.bindConfirmed();
+}
+
+// ---------------------------------------------------------------- router
+function route() {
+  const id = (location.hash || '').replace('#', '');
+  if (!id) { renderPicker(); return; }
+  const p = MYD.getPlan(id);
+  if (!p || !p.workNumber) { location.hash = ''; renderPicker(); return; }
+  PLAN = p;
+  state.sub = 1;
+  if (p.travelConfirmed === true) renderConfirmed(p);
+  else renderWizard(p);
+  window.scrollTo({ top: 0 });
+}
+
+window.addEventListener('hashchange', route);
+document.addEventListener('DOMContentLoaded', () => {
+  renderTimeSim();
+  route();
+});

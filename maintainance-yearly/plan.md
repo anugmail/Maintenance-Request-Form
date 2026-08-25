@@ -751,3 +751,78 @@ browser: `verify-trips` **20** · `verify-cf-grouping` **16** · `verify-admin-c
 - [ ] เฟส 4–6 (ดำเนินการบำรุงรักษา · จัดทำรายงาน · คำนวณต้นทุน) ยังเป็นหน้าเปล่าเหมือนเดิม
 - [ ] `design-system/verify-tokens.js` + `compare-figma.js` รันไม่ได้บนเครื่องนี้ (ไม่มี `.figma-extract/`)
   — รอบนี้ไม่ได้แตะ CSS/token เลย (grep hex/emoji ว่างทั้งคู่)
+
+---
+
+## รอบแก้ 25 ส.ค. 2569 — แยก "ทำแผนการเดินทาง" เป็นโมดูล + หน้าเดี่ยว
+
+เจ้าของงานสั่ง: *"อยากให้แยก prototype ออกมา ตรงจังหวะการสร้างแผนการเดินทาง ของบำรุงรักษา"*
+เหตุผลปลายทาง — จะเอาจังหวะนี้ไปเสียบโฟลว์ **งานซ่อม** (`SC-15` ออกซ่อมหน้างาน · `UC-15.1` ทำแผนเดินทาง)
+
+**สิ่งที่ทำ = ยกโค้ดล้วนๆ ไม่แก้ลำดับ/กติกา/หน้าจอสักข้อ**
+
+| ไฟล์ | อะไร |
+|---|---|
+| 🆕 `trip-plan.js` | โมดูล `window.TRIP` — โค้ดขั้นแผนเดินทาง 558 บรรทัดที่ย้ายมาจาก `app.js` |
+| 🆕 `trip-plan.html` + `trip-plan-page.js` | หน้าเดี่ยว: เลือกแผน → เลือกไตรมาส → ทำแผนเดินทาง → ทวน + ยืนยัน |
+| `app.js` | **1,530 → 971 บรรทัด** — เรียกผ่าน `TRIP.*` แทน |
+| `common.js` | รับ `CF_VERDICT_LABELS` มาเก็บ (ใช้ทั้ง `app.js` และ `trip-plan.js`) |
+| 🆕 `test/verify-trip-plan-page.js` | เทสเบราว์เซอร์ของหน้าเดี่ยว (21 ข้อ) |
+
+**สัญญาของโมดูล — ไม่รู้จัก stepper / เฟส / router ของ host เลย**
+host คุยกับโมดูลผ่าน callback เท่านั้น ⇒ เสียบเข้าหน้าไหนก็ได้
+
+```
+TRIP.state                   { q } ไตรมาสที่กำลังดู (เดิมคือ state.travelQ ของ app.js)
+TRIP.blockers(plan)          เหตุผลที่ยังไปต่อไม่ได้ — สะท้อน MYD.travelPlanReady()
+TRIP.sendable(trip)          ใบนี้กดส่งได้หรือยัง
+TRIP.renderStep1(plan)       ขั้น 1 ทำแผนเดินทาง (html)
+TRIP.bindStep1(plan, opts)   opts.onChange   → host วาดใหม่ทั้งหน้า
+                             opts.onValidity → host ทวนสถานะปุ่ม "ถัดไป"
+TRIP.renderStep2(plan)       ขั้น 2 ทวน + ยืนยัน (อ่านอย่างเดียว)
+TRIP.confirm(plan)           ตั้ง travelConfirmed + save — host พาไปต่อเอง
+TRIP.renderConfirmed(plan, opts) / TRIP.bindConfirmed(opts)
+                             opts.onNextPhase — ไม่ส่งมา = ไม่มีปุ่ม "ไปเฟสถัดไป"
+```
+
+**2 host ที่ใช้โค้ดก้อนเดียวกัน**
+- `index.html` (`app.js`) — เฟส 2 ของ stepper 6 เฟส · ส่ง `onNextPhase` มา ⇒ ปุ่มไปเฟส 3 ยังอยู่เหมือนเดิม
+- `trip-plan.html` (`trip-plan-page.js`) — หน้าเดี่ยว · **ไม่ส่ง** `onNextPhase` ⇒ ไม่มีปุ่มนั้น
+  · เตือนด้วย `note-info` เมื่อแผนนั้นยังไม่ผ่านเฟส 1 (`partsRequisitioned` เป็น false) ว่า "ข้ามมาที่ขั้นนี้โดยตรง"
+  · ข้อมูลชุดเดียวกัน (localStorage ผ่าน `MYD`) — สร้างใบที่หน้าเดี่ยวแล้วเปิด `index.html` เห็นทันที
+
+**บั๊กที่เจอตอนแยก (ทั้งคู่เป็นของที่เคยซ่อนอยู่เพราะทุกอย่างอยู่ไฟล์เดียว)**
+1. `CF_VERDICT_LABELS` ประกาศซ้ำ — ย้ายไป `common.js` แล้วลืมลบตัวเดิมใน `app.js`
+   ⇒ `SyntaxError: Identifier has already been declared` ทั้งหน้าไม่เรนเดอร์
+2. `TRIP_STATUS_BADGE` ค้างอยู่ `app.js` ทั้งที่มีแต่โค้ดแผนเดินทางใช้
+   ⇒ หน้าเดี่ยว `ReferenceError` ตอนวาดใบเดินทาง · ย้ายเข้าโมดูลแล้ว
+   *(หา 2 ตัวนี้ด้วยการ diff รายชื่อ top-level declaration ของ `app.js` กับที่ `trip-plan.js` อ้างถึง — ไม่ใช่ไล่ด้วยตา)*
+
+**ผลเทส (รันครบทั้งชุด — 118 ข้อ ล้ม 0)**
+
+| เทส | ผล |
+|---|---|
+| `verify-trips.js` | **23 ผ่าน** — เท่าเดิมเป๊ะก่อน/หลังแยก |
+| `verify-trip-plan-page.js` 🆕 | **21 ผ่าน** |
+| `verify-proc-steps.js` | 31 ผ่าน |
+| `verify-admin-cf.js` · `verify-cf-grouping.js` · `verify-plan-new-select.js` | 11 · 16 · 16 ผ่าน |
+| `confirm.test.mjs` · `logic.test.mjs` | ผ่าน |
+
+⚠️ **วิธีรันเทสบนเครื่องนี้** — หัวไฟล์เดิมบอกให้ชี้ `/Applications/Google Chrome.app` ซึ่ง**ไม่มี**
+(เครื่องนี้ Chrome อยู่ที่ `Google Chrome 2.app`) · ใช้ chromium ของ playwright ได้:
+```
+python3 -m http.server 8123 --bind 127.0.0.1 &
+NODE_PATH=<ที่ที่ npm i playwright-core ไว้>/node_modules \
+CHROME_PATH=~/Library/Caches/ms-playwright/chromium_headless_shell-*/chrome-headless-shell-*/chrome-headless-shell \
+node maintainance-yearly/test/verify-trips.js
+```
+แก้หัวไฟล์ `verify-*.js` ให้จดวิธีนี้ไว้แล้ว และให้ `verify-plan-new-select.js` รับ `CHROME_PATH` ได้เหมือนไฟล์อื่น
+
+**พ่วง** — `Diagram/01-บำรุงรักษาตามวาระ/00-ภาพรวม.md` + `02-เฟส1-...md` · `more.html` เพิ่มการ์ดเข้าหน้าใหม่
+· sidebar ทุกหน้าใน `maintainance-yearly/` เพิ่มลิงก์ "ทำแผนการเดินทาง" · บั๊ม `?v=20260825-15`
+
+### ยังค้าง (รอบนี้)
+
+- [ ] เอาโมดูล `TRIP` ไปเสียบฝั่งงานซ่อมจริง — ต้องปรับ: 1 ใบต่อ 1 คัน · เพิ่ม "จุดนัดรับรถ" · เพิ่ม "รถที่ใช้เดินทาง"
+      (`UC-15.1` ต้องการ แต่**ยังไม่มีทั้งสองฝั่ง**) · ตัดไตรมาสออก · เคาะว่าต้องมีขั้นขออนุมัติแผนไหม
+      — รายละเอียดอยู่ที่ `clickup/ac-แผนเดินทาง.md` หัวข้อ "🔌 ตอนเอาไปใช้กับงานซ่อม"

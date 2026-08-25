@@ -112,6 +112,10 @@ const STATUS_BADGE_CLASS = {
 // หน้าจอแค่แปลง level เป็นสี · ใช้ทั้งหน้าสรุปแผน หน้าเอกสารพัสดุ และขั้นเบิกอะไหล่
 const STOCK_BADGE = { ok: 'b-ok', tight: 'b-low', short: 'b-out', unknown: 'b-neutral' };
 
+// คำตัดสินของ กบค. ต่อรถรายคันตอนยืนยันเข้าร่วมแผน — ใช้ทั้งขั้นยืนยันรถ (app.js)
+// และขั้นทวนแผนเดินทาง (trip-plan.js) จึงอยู่ที่ common.js
+const CF_VERDICT_LABELS = { keep: 'เข้าตามเดิม', drop: 'ตัดออกจากแผน', defer: 'เลื่อนรอบหน้า' };
+
 const STATUS_HISTORY_LABELS = {
   draft: 'ฉบับร่าง', issued: 'ออกเลขงาน', notified: 'แจ้งฝ่ายพัสดุ', acknowledged: 'ฝ่ายพัสดุรับทราบ',
 };

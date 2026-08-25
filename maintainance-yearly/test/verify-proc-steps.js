@@ -2,7 +2,10 @@
 // ไล่ทั้งสองเฟสด้วยการคลิกจริง + เช็ค gate ทั้งระดับเฟส (stepper บน) และระดับขั้น (wizard ย่อย)
 // รันจากรากโปรเจกต์ (playwright-core ไม่ได้อยู่ใน repo — ชี้ผ่าน NODE_PATH):
 //   python3 -m http.server 8123 --bind 127.0.0.1 &
-//   NODE_PATH=<ที่ที่ npm i playwright-core ไว้>/node_modules node maintainance-yearly/test/verify-proc-steps.js
+//   NODE_PATH=<ที่ที่ npm i playwright-core ไว้>/node_modules \
+//   CHROME_PATH=<เบราว์เซอร์> node maintainance-yearly/test/verify-proc-steps.js
+// CHROME_PATH ตั้งต้นชี้ Google Chrome — ถ้าเครื่องไม่มี ใช้ chromium ของ playwright แทนได้:
+//   ~/Library/Caches/ms-playwright/chromium_headless_shell-*/chrome-headless-shell-*/chrome-headless-shell
 const { chromium } = require('playwright-core');
 const BASE = 'http://127.0.0.1:8123/maintainance-yearly';
 const PLAN = 'plan-seed-2569-002';

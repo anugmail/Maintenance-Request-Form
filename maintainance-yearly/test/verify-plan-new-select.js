@@ -4,7 +4,7 @@ const U = 'http://127.0.0.1:8123/maintainance-yearly/plan-new.html';
 
 (async () => {
   const browser = await chromium.launch({
-    executablePath: '/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome',
+    executablePath: process.env.CHROME_PATH || '/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome',
     headless: true,
   });
   const ctx = await browser.newContext();
