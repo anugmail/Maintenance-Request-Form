@@ -8,3 +8,5 @@ design-system/.vms-runtime/
 
 # ผลลัพธ์ที่ generate ของ figma-export (dom-*.json, spec.json)
 figma-export/out/
+
+.playwright-mcp/
