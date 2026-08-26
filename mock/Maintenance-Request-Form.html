@@ -11,8 +11,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260825-ds25">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260825-ds25">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260825-ds31">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260825-ds31">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -2343,21 +2343,24 @@
             onclick="toggleFilter('kbk')"><span class="ms">filter_list</span> ตัวกรอง</button>
         </div>
       </div>
-      <div class="filter-panel" id="kbk-filter-panel">
-        <div class="filter-field">
-          <label for="kbk-status-filter">กรองตามสถานะ</label>
-          <select id="kbk-status-filter" onchange="renderKbkList()">
-            <option value="all">ทุกสถานะ</option>
-            <option value="pending">รอ กบค. รับเรื่อง</option>
-            <option value="quote">ส่งอู่ประเมินราคา</option>
-            <option value="returned">ส่งกลับ/ดำเนินการซ่อมโดยอู่</option>
-            <option value="gclosed">ปิดงาน — กรย./อู่</option>
-            <option value="work">กำลังดำเนินการซ่อม</option>
-            <option value="appt">นัดรับรถแล้ว</option>
-            <option value="closed">ปิดงานแล้ว</option>
-          </select>
+      <div class="filter-panel filter-drawer" id="kbk-filter-panel" onclick="if(event.target===this)toggleFilter('kbk')">
+        <div class="filter-drawer-sheet" role="dialog" aria-modal="true" aria-labelledby="kbk-filter-title">
+          <div class="filter-drawer-head">
+            <span class="filter-drawer-icon"><span class="ms">filter_list</span></span>
+            <div class="filter-drawer-title"><h2 id="kbk-filter-title">ตัวกรอง</h2><p>กรองข้อมูลให้แสดงเฉพาะข้อมูลที่ต้องการ</p></div>
+            <button type="button" class="filter-drawer-close" onclick="toggleFilter('kbk')" aria-label="ปิดตัวกรอง"><span class="ms">close</span></button>
+          </div>
+          <div class="filter-drawer-body">
+            <div class="filter-field"><label for="kbk-status-filter">สถานะเหตุการณ์</label>
+              <select id="kbk-status-filter"><option value="all">ทั้งหมด</option><option value="pending">รอ กบค. รับเรื่อง</option><option value="quote">ส่งอู่ประเมินราคา</option><option value="returned">ส่งกลับ/ดำเนินการซ่อมโดยอู่</option><option value="gclosed">ปิดงาน — กรย./อู่</option><option value="work">กำลังดำเนินการซ่อม</option><option value="appt">นัดรับรถแล้ว</option><option value="closed">ปิดงานแล้ว</option></select>
+            </div>
+            <div class="filter-field"><label for="kbk-brand-filter">ยี่ห้อรถ</label><select id="kbk-brand-filter"><option value="all">ทั้งหมด</option><option>Hino</option><option>Isuzu</option><option>Mitsubishi</option></select></div>
+            <div class="filter-field"><label for="kbk-model-filter">รุ่นเครื่องจักร</label><select id="kbk-model-filter"><option value="all">ทั้งหมด</option><option>SK17A</option><option>TM-ZE304</option><option>URV554</option></select></div>
+            <div class="filter-field"><label>สถานะรถ</label><div class="filter-checks"><label><input type="checkbox" id="kbk-usable-filter" value="yes"> ใช้งานได้</label><label><input type="checkbox" id="kbk-unusable-filter" value="no"> ใช้งานไม่ได้</label></div></div>
+            <div class="filter-field"><label for="kbk-date-filter">วันที่สร้าง</label><input type="date" id="kbk-date-filter"></div>
+          </div>
+          <div class="filter-drawer-foot"><button class="btn btn-link" onclick="clearFilter('kbk')">ล้างตัวกรอง</button><button class="btn btn-s" onclick="toggleFilter('kbk')">ยกเลิก</button><button class="btn btn-p" onclick="applyKbkFilter()">ตกลง</button></div>
         </div>
-        <button class="btn btn-t" onclick="clearFilter('kbk')"><span class="ms">filter_alt_off</span> ล้างตัวกรอง</button>
       </div>
       <div id="kbklist"></div>
     </main>
@@ -3246,6 +3249,7 @@
     // ================= VIEW SWITCH =================
     function switchView(v,remember=true) {
       if(v!==VIEW){if(remember)VIEW_HISTORY.push(VIEW);VIEW = v}
+      document.body.classList.toggle('incident-view',v==='step');
       // vhist = หน้าประวัติการซ่อม เปิดจากปุ่มในรายละเอียดงาน จึงไม่มีเมนูซ้ายของตัวเอง
       ['form', 'my', 'mydet', 'fuel', 'boss', 'kry', 'krydet', 'kbk', 'sup', 'stock', 'vhist', 'worth', 'step'].forEach(x => {
         $('view-' + x).classList.toggle('hidden', x !== v);
@@ -3764,12 +3768,19 @@ function toggleFilter(key){
 }
 function clearFilter(key){
   $(key+'-status-filter').value='all';
+  if(key==='kbk'){
+    $('kbk-brand-filter').value='all';$('kbk-model-filter').value='all';
+    $('kbk-usable-filter').checked=false;$('kbk-unusable-filter').checked=false;$('kbk-date-filter').value='';
+  }
   LIST_UI[key].page=1;LIST_RENDER[key]();
 }
+function applyKbkFilter(){LIST_UI.kbk.page=1;renderKbkList();toggleFilter('kbk')}
 // ปุ่ม "ตัวกรอง" โชว์จำนวนเงื่อนไขที่ใช้อยู่เสมอ รวมตอนเป็น 0 — ตามหน้าจริง
 // (ไม่ใช่ซ่อนป้ายตอนไม่มีเงื่อนไข) ⇒ ผู้ใช้รู้ทันทีว่าลิสต์ที่เห็นถูกกรองอยู่หรือไม่
 function markFilterBtn(key){
-  const n=$(key+'-status-filter').value!=='all'?1:0,btn=$(key+'-filter-btn');
+  let n=$(key+'-status-filter').value!=='all'?1:0;
+  if(key==='kbk')n+=[$('kbk-brand-filter').value!=='all',$('kbk-model-filter').value!=='all',$('kbk-usable-filter').checked||$('kbk-unusable-filter').checked,!!$('kbk-date-filter').value].filter(Boolean).length;
+  const btn=$(key+'-filter-btn');
   let b=btn.querySelector('.badge');
   if(!b){btn.insertAdjacentHTML('beforeend','<span class="badge b-neutral"></span>');b=btn.querySelector('.badge')}
   b.textContent=n;
@@ -4123,20 +4134,16 @@ function retPanel(j){
       renderKbkAcceptModal(no);
     }
     function renderKbkAcceptModal(no) {
-      openModal(`<div class="modal" role="dialog" aria-modal="true" aria-label="รับซ่อม">
-        <div class="modal-head"><h2>รับซ่อม</h2>
+      openModal(`<div class="modal" role="dialog" aria-modal="true" aria-label="เลือกวิธีซ่อม">
+        <div class="modal-head"><h2>เลือกวิธีซ่อม</h2>
           <button type="button" class="modal-close" onclick="closeModal()"><span class="ms">close</span></button></div>
-        <div class="sect" style="margin:0 0 8px">เลือกช่องทางการซ่อม</div>
-        <div class="kbkdec-tiles"><div class="decide" style="margin-top:0">
-          <div class="tile tile-magenta ${KBK_ACCEPT_ROUTE === 'self' ? 'sel' : ''}" onclick="KBK_ACCEPT_ROUTE='self';renderKbkAcceptModal('${no}')"><span class="ms">handyman</span><b>กบค. ซ่อมเอง</b><small>จัดรายการอะไหล่ ดำเนินการซ่อมเอง</small></div>
-          <div class="tile tile-blue ${KBK_ACCEPT_ROUTE === 'garage' ? 'sel' : ''}" onclick="KBK_ACCEPT_ROUTE='garage';renderKbkAcceptModal('${no}')"><span class="ms">request_quote</span><b>จ้างอู่ภายนอกซ่อมให้</b><small>ส่งอู่ประเมินราคาก่อนเริ่มซ่อม</small></div>
-        </div></div>
-        <div class="modal-foot">
-          <button type="button" class="btn btn-g" onclick="closeModal()">ปิด</button>
-          <button type="button" class="btn btn-p" onclick="confirmKbkAccept('${no}')"><span class="ms">task_alt</span> ยืนยัน</button>
+        <div class="repair-choice-list">
+          <button type="button" class="repair-choice" onclick="chooseKbkAccept('${no}','self')"><span><b>ซ่อมที่ กบค.</b><span>ทีมช่างของ กบค. เบิกอะไหล่และซ่อมเอง โดยผู้แจ้งเหตุจะเป็นผู้นำรถเข้ามาที่หน่วยงาน กบค. ด้วยตัวเอง</span></span><span class="ms">chevron_right</span></button>
+          <button type="button" class="repair-choice" onclick="chooseKbkAccept('${no}','garage')"><span><b>จ้างอู่ภายนอก</b><span>มอบหมายให้อู่ภายนอกดำเนินการจัดหาอะไหล่และทำการซ่อม</span></span><span class="ms">chevron_right</span></button>
         </div>
       </div>`);
     }
+    function chooseKbkAccept(no,route){KBK_ACCEPT_ROUTE=route;confirmKbkAccept(no)}
     function confirmKbkAccept(no) {
       if (!KBK_ACCEPT_ROUTE) { toast('เลือกช่องทางการซ่อมก่อน'); return }
       const route = KBK_ACCEPT_ROUTE;
@@ -4368,7 +4375,14 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
     function renderKbkList() {
       const phases=KBK_STATUS_PHASES[$('kbk-status-filter').value];
       const allJobs=JOBS.filter(j=>['pending','quote','work','appt','closed','returned','gclosed'].includes(j.phase));
-      renderJobList('kbk',phases?allJobs.filter(j=>phases.includes(j.phase)):allJobs,
+      const brand=$('kbk-brand-filter').value,model=$('kbk-model-filter').value;
+      const usable=$('kbk-usable-filter').checked,unusable=$('kbk-unusable-filter').checked,date=$('kbk-date-filter').value;
+      const dateParts=date?date.split('-'):[],thDate=date?`${dateParts[2]}/${dateParts[1]}/${+dateParts[0]+543}`:'';
+      const list=allJobs.filter(j=>(!phases||phases.includes(j.phase))
+        &&(brand==='all'||(j.model||'').includes(brand))&&(model==='all'||(j.model||'').includes(model))
+        &&((!usable&&!unusable)||(usable&&vehUsable(j))||(unusable&&!vehUsable(j)))
+        &&(!date||reportedParts(j).d===thDate));
+      renderJobList('kbk',list,
         {host:'kbklist',open:'openStep',empty:'ยังไม่มีงานเข้าคิว'});
     }
     // ============ ขั้นตอนทำงาน กบค. — แยกหน้าละขั้น ============
@@ -4426,9 +4440,10 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
       }
       // ---- หลังรับเรื่อง: เลือกว่า ซ่อมเองได้ หรือ ส่งอู่ประเมินราคา ----
       else if (j.phase === 'work' && !j.route) { action = routeChoiceHTML(no, j) }
-      // ---- ซ่อมเอง: จัดรายการอะไหล่ก่อนเริ่มงาน ----
-      else if (j.phase === 'work' && j.route === 'self' && !j.partsOK) { action = partsEditorHTML(no, j) }
-      else if (j.phase === 'quote') { action = quotePanelHTML(no, j) }
+      // ---- ซ่อมเอง: หน้ารายละเอียดไม่แก้รายการอะไหล่ — ไปทำต่อในหน้าเฉพาะ ----
+      else if (j.phase === 'work' && j.route === 'self' && !j.partsOK) {
+        action = '';
+      }
       // ---- ซ่อมเอง: ยังไม่มีวันนัดนำรถเข้าซ่อม = ยังตรวจสภาพขาเข้า/เดินสถานะไม่ได้ ----
       // เจ้าของงานสั่ง 19 ส.ค. 2569: ไม่ต้องแสดงแผงอะไรในช่วงนี้ — ป้ายสถานะหัวหน้าจอบอกอยู่แล้ว
       // ว่ารออะไรอยู่ ("รอ กบค. นัดวันเข้าซ่อม" / "รอผู้แจ้งเลือกวันเข้าซ่อม")
@@ -4524,15 +4539,87 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
       STEP.no = no;
       const st=statusInfo(j);
       try{history.replaceState(null,'','#kbk/'+encodeURIComponent(no)+'/'+stepOf(j))}catch(e){}
+      const at=j.at||{}, owner=j.owner||{}, tech=j.tech||{}, driver=j.driver||{}, use=j.use||{};
+      const firstEvent=j.history&&j.history[0]?j.history[0].t:'';
+      const eventDate=firstEvent.split(' ')[0]||'—';
+      const eventTime=firstEvent.split(' ').slice(-1)[0]||'—';
+      const incidentPhotos=[0,1,2,3].map((n,i)=>`<img class="incident-photo" src="../assets/incident-detail/image-${n}.png" alt="รูปภาพเหตุการณ์ ${i+1}">`).join('');
+      const phone=(name,tel)=>`<div class="incident-contact-row">
+        <div><div class="incident-entity-name">${esc(name||'')}</div><div class="incident-entity-meta">${esc(j.fromUnit||j.org||'')}</div></div>
+        <a class="incident-contact-link" href="tel:${esc(tel||'').replace(/[^0-9+]/g,'')}"><span class="ms">smartphone</span>${esc(tel||'—')}</a>
+        <a class="incident-contact-link" href="tel:${esc(tel||'').replace(/[^0-9+]/g,'')}"><span class="ms">call</span>ติดต่อ</a>
+      </div>`;
+      const actionButtons=j.phase==='pending'?`<div class="incident-actions">
+        <button type="button" class="btn btn-td" onclick="openKbkReturnModal('${j.no}')">ส่งคืนงานซ่อม</button>
+        <button type="button" class="btn btn-p" onclick="openKbkAcceptModal('${j.no}')"><span class="ms">build</span>รับงานซ่อม</button>
+      </div>`:(j.phase==='work'&&j.route==='self'&&!j.partsOK?`<div class="incident-actions">
+        <button type="button" class="btn btn-p" onclick="openKbkAcceptModal('${j.no}')"><span class="ms">build</span>รับงานซ่อม</button>
+      </div>`:'');
       $('stepbody').innerHTML = `
-    <div class="page-title-row">
-      <h1 class="page-title">${esc(j.no)}</h1>
-      <span class="badge ${st.cls}" style="margin-left:10px">${st.label}</span>
+    <div class="incident-head">
+      <h1 class="page-title">หมายเลขเหตุการณ์ ${esc(j.no)}</h1>
+      <span class="badge ${st.cls}">${st.label}</span>
+      ${actionButtons}
     </div>
-
-    <div class="reqinfo">${vehInfoTabs(j)}</div>
-
-    <div style="padding-top:8px">${kbkActionHTML(no,j)}</div>`;
+    <div class="tabs" role="tablist" aria-label="ข้อมูลเหตุการณ์">
+      <button type="button" class="tab-btn on" role="tab" aria-selected="true" aria-controls="incident-detail" onclick="switchVehTab(this,'incident',0)">รายละเอียดเหตุการณ์</button>
+      <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="incident-history" onclick="switchVehTab(this,'incident',1)">ประวัติการดำเนินการ</button>
+    </div>
+    <div class="tabpanel" id="incident-0" role="tabpanel">
+      <div class="incident-layout">
+        <div>
+          <section class="incident-section">
+            <h2 class="incident-section-title">รายละเอียดเหตุการณ์</h2>
+            <dl class="incident-summary">
+              <div class="incident-field"><dt>หน่วยงานที่แจ้งซ่อม</dt><dd>${esc(j.org||'')}</dd></div>
+              <div class="incident-field"><dt>สถานะรถ</dt><dd>${vehUsable(j)?'ใช้งานได้':'ใช้งานไม่ได้'}</dd></div>
+              <div class="incident-field"><dt>วันที่รถเสีย</dt><dd>${esc(eventDate)}</dd></div>
+              <div class="incident-field"><dt>เวลาที่รถเสีย</dt><dd>${esc(eventTime)}</dd></div>
+              <div class="incident-field wide"><dt>อาการของรถ</dt><dd>${esc((j.syms||[]).join(', '))}${j.desc?` ${esc(j.desc)}`:''}</dd></div>
+              <div class="incident-field wide"><dt>สถานที่ปฏิบัติงาน</dt><dd>${esc([at.amp,at.prov].filter(Boolean).join(' · ')||'—')}</dd></div>
+              <div class="incident-field wide"><dt>หมายเหตุ</dt><dd>${esc(j.reason||'-')}</dd></div>
+            </dl>
+          </section>
+          <section class="incident-section">
+            <h2 class="incident-section-title">รูปภาพเหตุการณ์</h2>
+            <div class="incident-gallery">${incidentPhotos}</div>
+          </section>
+        </div>
+        <aside class="incident-side">
+          <section>
+            <h2 class="incident-section-title">ยานพาหนะ</h2>
+            <div class="incident-card incident-vehicle">
+              <img class="incident-vehicle-photo" src="../assets/incident-detail/image-4.png" alt="${esc(j.plate)}">
+              <div>
+                <div class="incident-entity-name">${esc(j.plate)}</div>
+                <div class="incident-entity-meta"><b>${esc(j.model)}</b></div>
+                <div class="incident-entity-meta">${esc(j.org)}</div>
+                <div class="incident-metrics">
+                  <div class="incident-metric"><span class="ms">calendar_month</span><span>อายุการใช้งาน</span><output>1 ปี 2 เดือน</output></div>
+                  <div class="incident-metric"><span class="ms">speed</span><span>เลขไมล์ล่าสุด</span><output>${use.odo?use.odo.toLocaleString('th-TH'):'—'}</output></div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section>
+            <h2 class="incident-section-title">ผู้แจ้งเหตุ</h2>
+            <div class="incident-card incident-person">
+              <img class="incident-avatar" src="../assets/incident-detail/image-5.jpg" alt="ผู้แจ้งเหตุ">
+              <div><div class="incident-entity-name">${esc(owner.name||j.org||'')}</div><div class="incident-entity-meta">${esc(j.fromUnit||j.org||'')}</div></div>
+            </div>
+          </section>
+          <section>
+            <h2 class="incident-section-title">ข้อมูลติดต่อหน่วยงานที่แจ้งซ่อม</h2>
+            <div class="incident-contact-group">
+              <div class="incident-contact-label">ผู้ขับขี่</div>${phone(driver.name||owner.name,driver.tel||owner.tel)}
+              <div class="incident-contact-label">ช่างคุมรถ</div>${phone(tech.name,tech.tel)}
+            </div>
+          </section>
+        </aside>
+      </div>
+      <div class="stack incident-workflow">${kbkActionHTML(no,j)}</div>
+    </div>
+    <div class="tabpanel hidden" id="incident-1" role="tabpanel">${timelineBox(j)}</div>`;
       const dpk=document.getElementById('dpk');
       if(dpk)UIC.dayPicker.render(dpk,{variant:UI.slotPicker,days:Object.keys(K.slots),state:K,
         onToggleDay:iso=>chipDay(no,iso),
@@ -4568,7 +4655,6 @@ function routeChoiceHTML(no, j){
   return `<div class="sect" style="margin-top:24px">รับเรื่องแล้ว — จะดำเนินการอย่างไร <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— เลือกก่อนงานถึงจะเดินต่อ</span></div>
   <div class="kbkdec-tiles" style="margin-top:10px"><div class="decide" style="margin-top:0">
     <div class="tile tile-magenta" onclick="kbkSetRoute('${no}','self')"><span class="ms">handyman</span><b>ซ่อมเองได้</b><small>กบค. ซ่อมเอง — จัดรายการอะไหล่ต่อ</small></div>
-    <div class="tile tile-blue" onclick="kbkSetRoute('${no}','garage')"><span class="ms">request_quote</span><b>ส่งอู่ประเมินราคา</b><small>ให้อู่ภายนอกตีราคาก่อน</small></div>
   </div></div>`;
 }
 
@@ -4776,6 +4862,10 @@ function kbkSetRoute(no, r){
   if(r==='garage'){ j.phase='quote' } else { initJobParts(j) }
   j.history.push({t:nowStr(),label:r==='self'?'กบค. เลือกซ่อมเอง — จัดรายการอะไหล่':'กบค. เลือกส่งอู่ประเมินราคา'});
   updateBadge();renderKbkDetail(no);
+}
+function openKbkPartsPage(no){
+  updateBadge();
+  location.href='../design-mock/kbk-self-repair-parts.html?no='+encodeURIComponent(no);
 }
 function kbkPartQty(no, code, d){
   const j=JOBS.find(x=>x.no===no),it=j.parts.find(x=>x.code===code);
@@ -5133,8 +5223,10 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
     // deep-link: ถ้ามี #view ที่ถูกต้อง (เช่น #kbk หรือ #view-kbk) ให้เปิดหน้านั้น — ใช้โดยหน้า 05-review-milestones
     const VALID_VIEWS = ['form', 'my', 'fuel', 'boss', 'kry', 'kbk', 'sup', 'stock', 'vhist', 'worth', 'step'];
     const hashView = v => VALID_VIEWS.includes(v = (location.hash || '').replace(/^#\/?/, '').replace(/^view-/, '')) ? v : '';
-    const sv = hashView() || CFG.demo.startView || 'form';
+    const detailRoute=(location.hash||'').match(/^#kbk\/([^/]+)(?:\/[^/]+)?$/);
+    const sv = detailRoute?'step':(hashView() || CFG.demo.startView || 'form');
     switchView(menuOn(sv) ? sv : 'form');   // ถ้า startView ถูกปิดเมนู → เปิดหน้าแรก
+    if(detailRoute)renderKbkDetail(decodeURIComponent(detailRoute[1]));
     window.addEventListener('hashchange', () => { const v = hashView(); if (v && v !== VIEW && menuOn(v)) switchView(v); });
   </script>
 </body>
