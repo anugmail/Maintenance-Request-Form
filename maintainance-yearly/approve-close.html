@@ -3,28 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ฝ่ายพัสดุ — เอกสารแจ้งเตรียมอะไหล่ — Maintain-D (Mock)</title>
+<title>อนุมัติปิดแผน — Maintain-D (Mock)</title>
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="../design-system/tokens.css?v=20260825-ds31">
-<link rel="stylesheet" href="../design-system/components.css?v=20260825-ds31">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260825-ds25">
+<link rel="stylesheet" href="../design-system/components.css?v=20260825-ds25">
 <script src="../ui-components.js?v=20260825-15"></script><!-- shared components (window.UIC) จาก MRF -->
-<style>
-  /* เฉพาะหน้านี้ — ใช้ token เท่านั้น ไม่มีสี hardcode */
-  .tbl tfoot .sumrow td{background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:var(--fs-sm)}
-  .itbl{table-layout:fixed}
-  .itbl th,.itbl td{overflow:hidden;text-overflow:ellipsis}
-  /* คอลัมน์ที่ 6 เดิมเป็นปุ่มลบ (8%) — ตอนนี้เป็น "คงเหลือ (Smart Inventory)"
-     ที่มีทั้งตัวเลขและป้ายสถานะ จึงต้องกว้างขึ้น ไม่งั้นหัวตารางตกขอบ */
-  .itbl th:nth-child(1),.itbl td:nth-child(1){width:30%}
-  .itbl th:nth-child(2),.itbl td:nth-child(2),
-  .itbl th:nth-child(3),.itbl td:nth-child(3),
-  .itbl th:nth-child(4),.itbl td:nth-child(4){width:13%;text-align:center}
-  .itbl th:nth-child(5),.itbl td:nth-child(5){width:10%}
-  .itbl th:nth-child(6),.itbl td:nth-child(6){width:21%;text-align:center}
-</style>
 </head>
 <body>
 <div class="shell">
@@ -33,9 +19,9 @@
     <a class="nv" href="index.html" title="รายการแผนบำรุงรักษา"><span class="ms">list_alt</span><span class="nvlbl">รายการแผนบำรุงรักษา</span></a>
     <a class="nv" href="plan-new.html" title="ออกเลขงาน — สร้างแผนใหม่"><span class="ms">note_add</span><span class="nvlbl">ออกเลขงาน</span></a>
     <a class="nv" href="trip-plan.html" title="ทำแผนการเดินทาง (หน้าเดี่ยว)"><span class="ms">event_available</span><span class="nvlbl">ทำแผนการเดินทาง</span></a>
-    <a class="nv on" href="supplies.html" title="ฝ่ายพัสดุ"><span class="ms">inventory_2</span><span class="nvlbl">ฝ่ายพัสดุ</span></a>
+    <a class="nv" href="supplies.html" title="ฝ่ายพัสดุ"><span class="ms">inventory_2</span><span class="nvlbl">ฝ่ายพัสดุ</span></a>
     <a class="nv" href="confirm.html" title="หน่วยงานเจ้าของรถ — ยืนยันรถเข้าร่วมแผน"><span class="ms">fact_check</span><span class="nvlbl">ยืนยันรถเข้าร่วมแผน</span></a>
-    <a class="nv" href="approve-close.html" title="อนุมัติปิดแผน (ผู้บังคับบัญชา กบค.)"><span class="ms">task_alt</span><span class="nvlbl">อนุมัติปิดแผน</span></a>
+    <a class="nv on" href="approve-close.html" title="อนุมัติปิดแผน (ผู้บังคับบัญชา กบค.)"><span class="ms">task_alt</span><span class="nvlbl">อนุมัติปิดแผน</span></a>
     <a class="nv" href="admin.html" title="Admin — ข้อมูลหลัก"><span class="ms">settings</span><span class="nvlbl">ข้อมูลหลัก (Admin)</span></a>
     <a class="nv" href="plan-skeleton.html" title="โครงหน้าจอทั้งโฟลว์ (แก้ได้)"><span class="ms">dashboard_customize</span><span class="nvlbl">โครงหน้าจอทั้งโฟลว์</span></a>
   </aside>
@@ -44,14 +30,14 @@
     <div class="topbar">
       <span id="timeSim" style="display:flex;align-items:center;gap:8px;margin-right:auto"></span>
       <span class="ms">account_circle</span>
-      <span>ฝ่ายพัสดุ</span>
+      <span>ผู้บังคับบัญชา กบค.</span>
     </div>
 
     <main class="content">
-      <div class="draft">โหมดฝ่ายพัสดุ — รับเอกสารแจ้งเตรียม/สั่งอะไหล่ (ไม่ใช่ผู้อนุมัติเลขงาน)</div>
+      <div class="draft">โหมดผู้บังคับบัญชา กบค. — ต้นแบบไม่มีระบบ login จึงเห็นทุกแผน ของจริงต้องผ่านสิทธิ์อนุมัติ</div>
       <div class="crumbs" id="crumbs"></div>
-      <h1 class="page-title" id="supTitle">ฝ่ายพัสดุ — เอกสารแจ้งเตรียม/สั่งอะไหล่</h1>
-      <div id="supBody"></div>
+      <h1 class="page-title" id="apTitle">อนุมัติปิดแผน</h1>
+      <div id="apBody"></div>
     </main>
   </div>
 </div>
@@ -60,6 +46,6 @@
 
 <script src="common.js?v=20260825-15"></script>
 <script src="mock-yearly.js?v=20260825-19"></script>
-<script src="supplies.js?v=20260825-15"></script>
+<script src="approve-close.js?v=20260825-1"></script>
 </body>
 </html>

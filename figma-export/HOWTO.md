@@ -228,6 +228,49 @@ node figma-export/serve.js
 
 ---
 
+## 3.5 ท่อ C — ใช้ component จริงของ VMS Plus (25 ส.ค. 2569)
+
+**ปัญหา:** ท่อ B สร้าง component ขึ้นมาเองในไฟล์ ⇒ ค่าตรงแต่ไม่ได้ผูกกับ design system จริง
+ดีไซเนอร์กดสลับ property (Badge / Actions / State / Breakpoint) ไม่ได้
+
+**ทำไมไม่ import ตรงๆ:** `importComponentByKeyAsync` ต้องเปิดไลบรารีในไฟล์ ซึ่งต้อง Professional+
+ตรวจแล้ว 25 ส.ค. 2569 — บัญชี `anu@odds.team` มีที่นั่ง **Full เฉพาะทีม starter** ส่วน org `ODDS` เป็น **View**
+และ `get_libraries` ของไฟล์ PEA คืน `libraries_available_to_add: []` ⇒ **ไม่มีไลบรารีองค์กรให้เปิดเลย**
+
+**ทางออกที่ใช้ได้จริง — โคลนจาก instance ที่มีอยู่แล้วในไฟล์**
+
+```js
+const sample = /* instance ตัวอย่างของ component นั้น */;
+const copy = sample.clone();      // ยังผูก main component เดิม ⇒ property สลับได้ครบ
+copy.setProperties({ 'Title': '…', 'Badge': false });
+```
+
+`clone()` ไม่ต้องใช้สิทธิ์ไลบรารี ⇒ **ทำได้บน starter** · ข้อแม้: component ที่จะใช้ต้องมี instance
+อยู่ในไฟล์อย่างน้อย 1 ตัว
+
+### ขั้นที่ 1 — ดัมป์แคตตาล็อกว่าไฟล์นั้นมี component อะไรให้ใช้บ้าง
+
+ปลั๊กอิน **อ่านอย่างเดียว** ไม่แก้อะไรในไฟล์
+
+```bash
+node figma-export/serve.js        # ต้องรันค้างไว้ (รับ POST เขียนลง out/ แล้ว)
+```
+
+1. Figma desktop → เปิดไฟล์ที่จะใช้ (**ใช้ไฟล์ที่ duplicate มา ไม่ใช่ไฟล์งานจริงของทีม**)
+2. Plugins → Development → **Import plugin from manifest** → `figma-export/catalog-plugin/manifest.json`
+3. `⌘⌥P` → **"VMS Plus — ดัมป์แคตตาล็อก component"** → กด **"เริ่มอ่านไฟล์"**
+4. ได้ `figma-export/out/figma-catalog.json` — ต่อ component มี: ชื่อ · มาจากไลบรารีหรือ local ·
+   จำนวน instance · **property ทั้งหมดพร้อมตัวเลือก** · `sample.id` ของ instance ที่เอาไปโคลนได้
+
+> ถ้า POST ไม่ผ่าน (ลืมรัน `serve.js`) UI จะโชว์ JSON ให้ก๊อปแทน
+
+### ขั้นที่ 2–3 — ยังไม่ได้ทำ
+
+2. ทำตารางแมป `components.css` ↔ ชื่อ component จริง (`.tbl` → Table · `.crumbs` → Breadcrumbs …)
+3. แก้ `2-map.js` ให้สเปกอ้าง **ชื่อ component + ค่า property** แทนคำสั่งวาดกล่อง แล้วปลั๊กอิน clone + setProperties
+
+---
+
 ## 4. เพิ่มโฟลว์ใหม่เข้าบอร์ด — ต้องแตะ 3 ที่
 
 1. **เขียนสคริปต์ capture** — คัดลอกจาก `flow-plan-capture.js` แล้วแก้ลำดับการกด

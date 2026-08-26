@@ -1,0 +1,14 @@
+{
+  "name": "Maintain-D → Figma (component จริง)",
+  "id": "1471820935506372004",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "devAllowedDomains": ["http://localhost:8124"],
+    "reasoning": "โหลด spec ที่ generate จาก HTML prototype ในเครื่อง (serve.js) — ไม่ต่อออกอินเทอร์เน็ต"
+  }
+}

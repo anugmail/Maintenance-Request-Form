@@ -463,6 +463,100 @@ function renderReport() {
   $('btnPhaseNext')?.addEventListener('click', () => finishPhase('report'));
 }
 
+// ================= เฟส 6 · คำนวณต้นทุน =================
+// นำรถที่อยู่ในแผนมาขึ้นรายชื่อไว้ก่อน (25 ส.ค. 2569) — ยังไม่มีการคำนวณต้นทุนจริง รอออกแบบเพิ่ม
+function renderCost() {
+  const master = MYD.loadMaster();
+  const byId = new Map(master.vehicles.map(v => [v.id, v]));
+  const ids = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
+
+  // ต้นทุนค่าใช้จ่ายกรอกได้ต่อรถแต่ละคัน — แยกจาก trip.perDiem/lodging/travel ที่กรอกไว้ตอนทำแผนเดินทาง (เฟส 2 · ครอบทั้งใบ)
+  // ค่าที่กรอกที่นี่คือยอดจัดสรรจริงต่อคันสำหรับปิดงบ ไม่ใช่ยอดใบเดินทางซ้ำ — รวมแต่ละแถวเองจึงไม่นับซ้ำ (25 ส.ค. 2569)
+  let sumPerDiem = 0, sumLodging = 0, sumTravel = 0;
+  const numInput = (id, field, value) => `<div class="in noic" style="width:88px">
+    <input type="number" min="0" value="${esc(value)}" data-cost-v="${esc(id)}" data-cost-field="${field}"></div>`;
+  const rows = ids.map(id => {
+    const v = byId.get(id);
+    if (!v) return '';
+    const c = MYD.vehicleCostOf(PLAN, id);
+    const perDiem = Number(c.perDiem) || 0;
+    const lodging = Number(c.lodging) || 0;
+    const travel = Number(c.travel) || 0;
+    sumPerDiem += perDiem; sumLodging += lodging; sumTravel += travel;
+    const rowSum = perDiem + lodging + travel;
+    return `<tr>
+      <td><b>${esc(v.plate)}</b><div class="cell-sub">${esc(v.brand)}</div></td>
+      <td>${esc(v.ownerDept)}</td>
+      <td>${esc(MYD.quarterLabel(MYD.bucketOf(PLAN, id)) || '—')}</td>
+      <td class="num">${numInput(id, 'perDiem', perDiem)}</td>
+      <td class="num">${numInput(id, 'lodging', lodging)}</td>
+      <td class="num">${numInput(id, 'travel', travel)}</td>
+      <td class="num" data-cost-rowsum="${esc(id)}"><b>${rowSum.toLocaleString('th-TH')}</b></td>
+    </tr>`;
+  }).join('');
+  const grandTotal = sumPerDiem + sumLodging + sumTravel;
+  const totalCellStyle = 'background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:var(--fs-sm)';
+
+  const next = nextPhaseOf('cost');
+  const done = isPhaseComplete('cost');
+
+  $('phase').innerHTML = `
+    <div class="card">
+      <div class="sect">คำนวณต้นทุน</div>
+      <div class="sub">รถในแผนนี้ทั้งหมด <b>${ids.length}</b> คัน — กรอกค่าเบี้ยเลี้ยง/ที่พัก/เดินทางที่จัดสรรจริงต่อคันได้</div>
+      <div class="note note-info"><span class="ms">science</span>
+        <div>หน้านี้มีแค่รายชื่อรถในแผนกับต้นทุนค่าเบี้ยเลี้ยง/ที่พัก/เดินทางต่อคัน — ค่าจ้างเหมา (สายว่าจ้าง) และต้นทุนอะไหล่/น้ำมัน
+          ยังไม่ได้ทำในต้นแบบ</div></div>
+      ${ids.length ? `<div class="stack">
+        <div class="tblwrap"><table class="tbl">
+          <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>ไตรมาส</th>
+            <th class="num">ค่าเบี้ยเลี้ยง (บาท)</th><th class="num">ค่าที่พัก (บาท)</th>
+            <th class="num">ค่าเดินทาง (บาท)</th><th class="num">รวม (บาท)</th></tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr>
+            <td colspan="3" style="${totalCellStyle}"><b>ต้นทุนทั้งหมด</b></td>
+            <td class="num" style="${totalCellStyle}" id="costSumPerDiem">${sumPerDiem.toLocaleString('th-TH')}</td>
+            <td class="num" style="${totalCellStyle}" id="costSumLodging">${sumLodging.toLocaleString('th-TH')}</td>
+            <td class="num" style="${totalCellStyle}" id="costSumTravel">${sumTravel.toLocaleString('th-TH')}</td>
+            <td class="num" style="${totalCellStyle}"><b id="costGrandTotal">${grandTotal.toLocaleString('th-TH')}</b></td>
+          </tr></tfoot></table></div>
+        <div class="note note-warn"><span class="ms">help</span>
+          <div>เงื่อนไขการตัดงบประมาณเป็นยังไง เลือกการตัดงบประมาณอะไรได้บ้าง</div></div>
+      </div>`
+        : '<div class="empty">ยังไม่มีรถในแผนนี้</div>'}
+
+      <div class="actions">
+        ${next
+          ? `<button class="btn btn-p" id="btnPhaseNext">ถัดไป — ${esc(next.label)}</button>`
+          : `<button class="btn btn-p" id="btnPhaseNext" ${done ? 'disabled' : ''}>${done ? 'ส่งอนุมัติปิดแผนแล้ว' : 'ส่งอนุมัติปิดแผน'}</button>`}
+      </div>
+    </div>`;
+
+  // แก้ค่าต้นทุนต่อคัน — บันทึกทันที + ขยับผลรวมแถวนั้นกับยอดรวมท้ายตาราง โดยไม่ re-render ทั้งหน้า
+  document.querySelectorAll('[data-cost-v]').forEach(el => el.addEventListener('input', e => {
+    const vid = el.dataset.costV;
+    MYD.setVehicleCost(PLAN, vid, el.dataset.costField, Number(e.target.value) || 0);
+    MYD.savePlan(PLAN);
+
+    const c = MYD.vehicleCostOf(PLAN, vid);
+    const rowSum = (Number(c.perDiem) || 0) + (Number(c.lodging) || 0) + (Number(c.travel) || 0);
+    const rowCell = document.querySelector(`[data-cost-rowsum="${vid}"]`);
+    if (rowCell) rowCell.innerHTML = `<b>${rowSum.toLocaleString('th-TH')}</b>`;
+
+    let tPerDiem = 0, tLodging = 0, tTravel = 0;
+    ids.forEach(id => {
+      const cc = MYD.vehicleCostOf(PLAN, id);
+      tPerDiem += Number(cc.perDiem) || 0; tLodging += Number(cc.lodging) || 0; tTravel += Number(cc.travel) || 0;
+    });
+    $('costSumPerDiem').textContent = tPerDiem.toLocaleString('th-TH');
+    $('costSumLodging').textContent = tLodging.toLocaleString('th-TH');
+    $('costSumTravel').textContent = tTravel.toLocaleString('th-TH');
+    $('costGrandTotal').textContent = (tPerDiem + tLodging + tTravel).toLocaleString('th-TH');
+  }));
+
+  $('btnPhaseNext')?.addEventListener('click', () => finishPhase('cost'));
+}
+
 // ================= เฟส 3 · ตรวจสภาพก่อนซ่อม =================
 // รายการรถในแผน → กดปุ่มท้ายแถวเพื่อเปิดใบตรวจของคันนั้น (โครงตามแบบฟอร์มกระดาษของ กบค.)
 let INSP = { vehicleId: null };
@@ -639,7 +733,11 @@ function finishPhase(id) {
   PLAN.phaseDone[id] = true;
   MYD.savePlan(PLAN);
   if (next) { goPhase(next.id); toast(`ผ่านเฟส ${PHASES[idx].no} แล้ว — ต่อที่ ${next.label}`); return; }
-  toast(`จบแผนแล้ว — ครบทั้ง ${PHASES.length} เฟส`);
+  // เฟสสุดท้าย (คำนวณต้นทุน) — "ส่งอนุมัติปิดแผน" คือส่งคำขอให้ผู้บังคับบัญชา กบค. อนุมัติ ไม่ใช่ปิดแผนทันที
+  // ดูรายการรออนุมัติได้ที่ approve-close.html (เมนู "อนุมัติปิดแผน" ใน sidebar) · 25 ส.ค. 2569
+  PLAN.closeApproval = { status: 'pending', requestedAt: nowTh() };
+  MYD.savePlan(PLAN);
+  toast(`ส่งอนุมัติปิดแผนแล้ว — ครบทั้ง ${PHASES.length} เฟส`);
   renderStepper();
   renderPhaseBody();
 }
@@ -650,6 +748,7 @@ function renderPhaseBody() {
   if (currentPhase() === 'inspection') { renderInspection(); return; }
   if (currentPhase() === 'maintenance') { renderMaintenance(); return; }
   if (currentPhase() === 'report') { renderReport(); return; }
+  if (currentPhase() === 'cost') { renderCost(); return; }
   const id = currentPhase();
   $('phase').innerHTML = renderPlaceholder(id);
   $('btnPhaseNext')?.addEventListener('click', () => finishPhase(id));

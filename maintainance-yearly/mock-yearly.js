@@ -864,10 +864,12 @@ const MYD = {
     { id: 'filter',  label: 'เปลี่ยนตัวกรอง' },
   ],
 
-  // ตั้งต้นติ๊กทั้ง 3 งาน — ส่วนใหญ่ไปทำครบ คนทำแผนค่อยติ๊กออกเฉพาะคันที่ไม่ต้องทำบางงาน
+  // ตั้งต้นติ๊ก 2 งานน้ำมัน — ส่วนใหญ่ไปทำทั้งคู่ คนทำแผนค่อยติ๊กออกเฉพาะคันที่ทำอย่างเดียว
+  // ส่วน "เปลี่ยนตัวกรอง" ตั้งต้น**ไม่ติ๊ก** — เป็นงานที่เลือกเพิ่มรายคัน ไม่ได้ทำทุกคัน
+  // (เจ้าของงานเคาะ 21 ส.ค. 2569 · ยืนยันซ้ำ 25 ส.ค. 2569 หลัง 4e2f700 เปลี่ยนเป็น true)
   tripJobsOf(trip, vehicleId) {
     const j = (trip.jobs || {})[vehicleId];
-    return j || { change: true, inspect: true, filter: true };
+    return j || { change: true, inspect: true, filter: false };
   },
 
   tripJobsText(trip, vehicleId) {
@@ -930,6 +932,19 @@ const MYD = {
   // เพื่อให้ตัวเลข "เบิกไปกี่หน่วย" ตรงกับที่ฝ่ายพัสดุเห็นในเอกสารเดียวกัน ไม่คำนวณแยกชุดใหม่
   partsIssuedFor(plan, master, vehicle) {
     return this.linesFor([vehicle], master, plan.itemAdj).filter(l => l.perVehicle > 0);
+  },
+
+  // ================= เฟส 6 · คำนวณต้นทุน — ค่าใช้จ่ายต่อคัน =================
+  // แยกจาก trip.perDiem/lodging/travel (กรอกครอบทั้งใบเดินทางตอนเฟส 2) — อันนี้คือยอดจัดสรรจริงต่อคันตอนปิดงบ
+  // plan.vehicleCost = { [vehicleId]: { perDiem, lodging, travel } } · 25 ส.ค. 2569
+  vehicleCostOf(plan, vehicleId) {
+    return (plan.vehicleCost || {})[vehicleId] || { perDiem: 0, lodging: 0, travel: 0 };
+  },
+
+  setVehicleCost(plan, vehicleId, field, value) {
+    plan.vehicleCost = plan.vehicleCost || {};
+    plan.vehicleCost[vehicleId] = plan.vehicleCost[vehicleId] || { perDiem: 0, lodging: 0, travel: 0 };
+    plan.vehicleCost[vehicleId][field] = value;
   },
 
   // งานที่ต้องทำจริงของคันนี้ (เฉพาะที่ติ๊กไว้ตอนทำแผนเดินทาง) — ใช้นับว่าติ๊กเสร็จไปกี่จากกี่งาน
