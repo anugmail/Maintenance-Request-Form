@@ -369,6 +369,8 @@ function openMaintExcludeModal(vehicleId, plateLabel) {
 
 // ================= เฟส 5 · จัดทำรายงาน =================
 // เช็คว่าใช้อะไหล่ที่เบิกไปครบหรือไม่ต่อคัน — ตรงกับ node D{ใช้อะไหล่ครบ?} ในผัง 05-เฟส4-จัดทำรายงาน.md (25 ส.ค. 2569)
+// รวมช่องกรอกต้นทุน (เบี้ยเลี้ยง/ที่พัก/เดินทาง) เข้ามาด้วย (26 ส.ค. 2569 — เจ้าของงานสั่งย้ายมาจากเฟส 6
+// คำนวณต้นทุน) เพราะเป็นข้อมูลที่กรอกตอนปิดงานเช่นเดียวกับเช็คอะไหล่ · เฟส 6 เหลือแค่แสดงผลรวมอ่านอย่างเดียว
 // ยังไม่มีส่วนอื่นของหน้ารายงาน (ตรวจสภาพการทำงาน · ผลตรวจน้ำมัน · อนุมัติปิดงาน) — รอออกแบบเพิ่ม
 function renderReport() {
   const master = MYD.loadMaster();
@@ -427,55 +429,13 @@ function renderReport() {
     </div>`;
   }).join('');
 
-  $('phase').innerHTML = `
-    <div class="card">
-      <div class="sect">จัดทำรายงาน</div>
-      <div class="sub">รถที่ผ่านเฟส 4 ดำเนินการบำรุงรักษามาแล้ว</div>
-      <div class="note note-info"><span class="ms">science</span>
-        <div>หน้านี้ยังมีแค่ส่วนตรวจอะไหล่ — ส่วนตรวจสภาพการทำงาน/ผลตรวจน้ำมัน/อนุมัติปิดงาน ยังไม่ได้ทำในต้นแบบ</div></div>
-      ${ids.length ? `<div class="tblwrap"><table class="tbl">
-        <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th></tr></thead>
-        <tbody>${rows}</tbody></table></div>
-
-        <div class="sect" style="margin-top:22px">ใช้อะไหล่ครบหรือไม่</div>
-        <div class="sub">เลือก "ไม่ครบ" แล้วกรอกจำนวนที่คืนต่อรายการ ต่อคัน</div>
-        <div class="stack">${partsBlocks}</div>`
-        : '<div class="empty">ยังไม่มีรถที่เข้าเกณฑ์ — กลับไปเฟส 4 ดำเนินการบำรุงรักษาก่อน</div>'}
-      <div class="actions">
-        <button class="btn btn-p" id="btnPhaseNext">ถัดไป${nextPhaseLabel('report')}</button>
-      </div>
-    </div>`;
-
-  document.querySelectorAll('[data-parts-complete]').forEach(el => el.addEventListener('change', e => {
-    const vid = el.dataset.partsComplete;
-    const complete = e.target.value === 'complete';
-    MYD.setPartsComplete(PLAN, vid, complete);
-    MYD.savePlan(PLAN);
-    const list = el.closest('[data-parts-block]')?.querySelector('[data-parts-return-list]');
-    if (list) list.style.display = complete ? 'none' : '';
-  }));
-
-  document.querySelectorAll('[data-parts-return-item]').forEach(el => el.addEventListener('input', e => {
-    MYD.setPartReturnQty(PLAN, el.dataset.partsReturnV, el.dataset.partsReturnItem, Number(e.target.value) || 0);
-    MYD.savePlan(PLAN);
-  }));
-
-  $('btnPhaseNext')?.addEventListener('click', () => finishPhase('report'));
-}
-
-// ================= เฟส 6 · คำนวณต้นทุน =================
-// นำรถที่อยู่ในแผนมาขึ้นรายชื่อไว้ก่อน (25 ส.ค. 2569) — ยังไม่มีการคำนวณต้นทุนจริง รอออกแบบเพิ่ม
-function renderCost() {
-  const master = MYD.loadMaster();
-  const byId = new Map(master.vehicles.map(v => [v.id, v]));
-  const ids = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
-
   // ต้นทุนค่าใช้จ่ายกรอกได้ต่อรถแต่ละคัน — แยกจาก trip.perDiem/lodging/travel ที่กรอกไว้ตอนทำแผนเดินทาง (เฟส 2 · ครอบทั้งใบ)
   // ค่าที่กรอกที่นี่คือยอดจัดสรรจริงต่อคันสำหรับปิดงบ ไม่ใช่ยอดใบเดินทางซ้ำ — รวมแต่ละแถวเองจึงไม่นับซ้ำ (25 ส.ค. 2569)
+  // ขอบเขต = ids เดียวกับตารางอะไหล่ด้านบน (26 ส.ค. 2569)
   let sumPerDiem = 0, sumLodging = 0, sumTravel = 0;
   const numInput = (id, field, value) => `<div class="in noic" style="width:88px">
     <input type="number" min="0" value="${esc(value)}" data-cost-v="${esc(id)}" data-cost-field="${field}"></div>`;
-  const rows = ids.map(id => {
+  const costRows = ids.map(id => {
     const v = byId.get(id);
     if (!v) return '';
     const c = MYD.vehicleCostOf(PLAN, id);
@@ -497,22 +457,27 @@ function renderCost() {
   const grandTotal = sumPerDiem + sumLodging + sumTravel;
   const totalCellStyle = 'background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:var(--fs-sm)';
 
-  const next = nextPhaseOf('cost');
-  const done = isPhaseComplete('cost');
-
   $('phase').innerHTML = `
     <div class="card">
-      <div class="sect">คำนวณต้นทุน</div>
-      <div class="sub">รถในแผนนี้ทั้งหมด <b>${ids.length}</b> คัน — กรอกค่าเบี้ยเลี้ยง/ที่พัก/เดินทางที่จัดสรรจริงต่อคันได้</div>
+      <div class="sect">จัดทำรายงาน</div>
+      <div class="sub">รถที่ผ่านเฟส 4 ดำเนินการบำรุงรักษามาแล้ว</div>
       <div class="note note-info"><span class="ms">science</span>
-        <div>หน้านี้มีแค่รายชื่อรถในแผนกับต้นทุนค่าเบี้ยเลี้ยง/ที่พัก/เดินทางต่อคัน — ค่าจ้างเหมา (สายว่าจ้าง) และต้นทุนอะไหล่/น้ำมัน
-          ยังไม่ได้ทำในต้นแบบ</div></div>
-      ${ids.length ? `<div class="stack">
+        <div>หน้านี้มีแค่ส่วนตรวจอะไหล่กับคำนวณต้นทุน — ส่วนตรวจสภาพการทำงาน/ผลตรวจน้ำมัน/อนุมัติปิดงาน ยังไม่ได้ทำในต้นแบบ</div></div>
+      ${ids.length ? `<div class="tblwrap"><table class="tbl">
+        <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>
+
+        <div class="sect" style="margin-top:22px">ใช้อะไหล่ครบหรือไม่</div>
+        <div class="sub">เลือก "ไม่ครบ" แล้วกรอกจำนวนที่คืนต่อรายการ ต่อคัน</div>
+        <div class="stack">${partsBlocks}</div>
+
+        <div class="sect" style="margin-top:22px">คำนวณต้นทุน</div>
+        <div class="sub">กรอกค่าเบี้ยเลี้ยง/ที่พัก/เดินทางที่จัดสรรจริงต่อคันได้ — แยกจากยอดใบเดินทางที่กรอกไว้ตอนเฟส 2</div>
         <div class="tblwrap"><table class="tbl">
           <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>ไตรมาส</th>
             <th class="num">ค่าเบี้ยเลี้ยง (บาท)</th><th class="num">ค่าที่พัก (บาท)</th>
             <th class="num">ค่าเดินทาง (บาท)</th><th class="num">รวม (บาท)</th></tr></thead>
-          <tbody>${rows}</tbody>
+          <tbody>${costRows}</tbody>
           <tfoot><tr>
             <td colspan="3" style="${totalCellStyle}"><b>ต้นทุนทั้งหมด</b></td>
             <td class="num" style="${totalCellStyle}" id="costSumPerDiem">${sumPerDiem.toLocaleString('th-TH')}</td>
@@ -521,16 +486,26 @@ function renderCost() {
             <td class="num" style="${totalCellStyle}"><b id="costGrandTotal">${grandTotal.toLocaleString('th-TH')}</b></td>
           </tr></tfoot></table></div>
         <div class="note note-warn"><span class="ms">help</span>
-          <div>เงื่อนไขการตัดงบประมาณเป็นยังไง เลือกการตัดงบประมาณอะไรได้บ้าง</div></div>
-      </div>`
-        : '<div class="empty">ยังไม่มีรถในแผนนี้</div>'}
-
+          <div>เงื่อนไขการตัดงบประมาณเป็นยังไง เลือกการตัดงบประมาณอะไรได้บ้าง</div></div>`
+        : '<div class="empty">ยังไม่มีรถที่เข้าเกณฑ์ — กลับไปเฟส 4 ดำเนินการบำรุงรักษาก่อน</div>'}
       <div class="actions">
-        ${next
-          ? `<button class="btn btn-p" id="btnPhaseNext">ถัดไป — ${esc(next.label)}</button>`
-          : `<button class="btn btn-p" id="btnPhaseNext" ${done ? 'disabled' : ''}>${done ? 'ส่งอนุมัติปิดแผนแล้ว' : 'ส่งอนุมัติปิดแผน'}</button>`}
+        <button class="btn btn-p" id="btnPhaseNext">ถัดไป${nextPhaseLabel('report')}</button>
       </div>
     </div>`;
+
+  document.querySelectorAll('[data-parts-complete]').forEach(el => el.addEventListener('change', e => {
+    const vid = el.dataset.partsComplete;
+    const complete = e.target.value === 'complete';
+    MYD.setPartsComplete(PLAN, vid, complete);
+    MYD.savePlan(PLAN);
+    const list = el.closest('[data-parts-block]')?.querySelector('[data-parts-return-list]');
+    if (list) list.style.display = complete ? 'none' : '';
+  }));
+
+  document.querySelectorAll('[data-parts-return-item]').forEach(el => el.addEventListener('input', e => {
+    MYD.setPartReturnQty(PLAN, el.dataset.partsReturnV, el.dataset.partsReturnItem, Number(e.target.value) || 0);
+    MYD.savePlan(PLAN);
+  }));
 
   // แก้ค่าต้นทุนต่อคัน — บันทึกทันที + ขยับผลรวมแถวนั้นกับยอดรวมท้ายตาราง โดยไม่ re-render ทั้งหน้า
   document.querySelectorAll('[data-cost-v]').forEach(el => el.addEventListener('input', e => {
@@ -553,6 +528,74 @@ function renderCost() {
     $('costSumTravel').textContent = tTravel.toLocaleString('th-TH');
     $('costGrandTotal').textContent = (tPerDiem + tLodging + tTravel).toLocaleString('th-TH');
   }));
+
+  $('btnPhaseNext')?.addEventListener('click', () => finishPhase('report'));
+}
+
+// ================= เฟส 6 · คำนวณต้นทุน =================
+// อ่านอย่างเดียว (26 ส.ค. 2569 — เจ้าของงานสั่งย้ายช่องกรอกไปเฟส 5 จัดทำรายงานแล้ว) แสดงผลรวมต้นทุน
+// ต่อคันที่กรอกไว้จากเฟส 5 เท่านั้น ไม่มีช่องให้กรอกที่หน้านี้อีกต่อไป
+function renderCost() {
+  const master = MYD.loadMaster();
+  const byId = new Map(master.vehicles.map(v => [v.id, v]));
+  const ids = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
+
+  let sumPerDiem = 0, sumLodging = 0, sumTravel = 0;
+  const rows = ids.map(id => {
+    const v = byId.get(id);
+    if (!v) return '';
+    const c = MYD.vehicleCostOf(PLAN, id);
+    const perDiem = Number(c.perDiem) || 0;
+    const lodging = Number(c.lodging) || 0;
+    const travel = Number(c.travel) || 0;
+    sumPerDiem += perDiem; sumLodging += lodging; sumTravel += travel;
+    return `<tr>
+      <td><b>${esc(v.plate)}</b><div class="cell-sub">${esc(v.brand)}</div></td>
+      <td>${esc(v.ownerDept)}</td>
+      <td>${esc(MYD.quarterLabel(MYD.bucketOf(PLAN, id)) || '—')}</td>
+      <td class="num">${perDiem.toLocaleString('th-TH')}</td>
+      <td class="num">${lodging.toLocaleString('th-TH')}</td>
+      <td class="num">${travel.toLocaleString('th-TH')}</td>
+      <td class="num"><b>${(perDiem + lodging + travel).toLocaleString('th-TH')}</b></td>
+    </tr>`;
+  }).join('');
+  const grandTotal = sumPerDiem + sumLodging + sumTravel;
+  const totalCellStyle = 'background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:var(--fs-sm)';
+
+  const next = nextPhaseOf('cost');
+  const done = isPhaseComplete('cost');
+
+  $('phase').innerHTML = `
+    <div class="card">
+      <div class="sect">คำนวณต้นทุน</div>
+      <div class="sub">รถในแผนนี้ทั้งหมด <b>${ids.length}</b> คัน — สรุปต้นทุนค่าเบี้ยเลี้ยง/ที่พัก/เดินทางต่อคัน</div>
+      <div class="note note-info"><span class="ms">science</span>
+        <div>หน้านี้แสดงผลรวมต้นทุนที่กรอกไว้จากเฟส 5 จัดทำรายงานเท่านั้น — แก้ตัวเลขได้ที่เฟสนั้น
+          ค่าจ้างเหมา (สายว่าจ้าง) และต้นทุนอะไหล่/น้ำมัน ยังไม่ได้ทำในต้นแบบ</div></div>
+      ${ids.length ? `<div class="stack">
+        <div class="tblwrap"><table class="tbl">
+          <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>ไตรมาส</th>
+            <th class="num">ค่าเบี้ยเลี้ยง (บาท)</th><th class="num">ค่าที่พัก (บาท)</th>
+            <th class="num">ค่าเดินทาง (บาท)</th><th class="num">รวม (บาท)</th></tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr>
+            <td colspan="3" style="${totalCellStyle}"><b>ต้นทุนทั้งหมด</b></td>
+            <td class="num" style="${totalCellStyle}">${sumPerDiem.toLocaleString('th-TH')}</td>
+            <td class="num" style="${totalCellStyle}">${sumLodging.toLocaleString('th-TH')}</td>
+            <td class="num" style="${totalCellStyle}">${sumTravel.toLocaleString('th-TH')}</td>
+            <td class="num" style="${totalCellStyle}"><b>${grandTotal.toLocaleString('th-TH')}</b></td>
+          </tr></tfoot></table></div>
+        <div class="note note-warn"><span class="ms">help</span>
+          <div>เงื่อนไขการตัดงบประมาณเป็นยังไง เลือกการตัดงบประมาณอะไรได้บ้าง</div></div>
+      </div>`
+        : '<div class="empty">ยังไม่มีรถในแผนนี้</div>'}
+
+      <div class="actions">
+        ${next
+          ? `<button class="btn btn-p" id="btnPhaseNext">ถัดไป — ${esc(next.label)}</button>`
+          : `<button class="btn btn-p" id="btnPhaseNext" ${done ? 'disabled' : ''}>${done ? 'ส่งอนุมัติปิดแผนแล้ว' : 'ส่งอนุมัติปิดแผน'}</button>`}
+      </div>
+    </div>`;
 
   $('btnPhaseNext')?.addEventListener('click', () => finishPhase('cost'));
 }
