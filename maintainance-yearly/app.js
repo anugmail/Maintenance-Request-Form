@@ -559,7 +559,9 @@ function renderCost() {
 
 // ================= เฟส 3 · ตรวจสภาพก่อนซ่อม =================
 // รายการรถในแผน → กดปุ่มท้ายแถวเพื่อเปิดใบตรวจของคันนั้น (โครงตามแบบฟอร์มกระดาษของ กบค.)
-let INSP = { vehicleId: null };
+// แยกรายการตามไตรมาส + เลือกได้ว่าจะตรวจไตรมาสไหนก่อน (เจ้าของงานสั่ง 26 ส.ค. 2569 — ให้ตรงกับ
+// รูปแบบเดียวกับขั้นแผนเดินทาง เพราะงานตรวจสภาพก็ทยอยทำทีละไตรมาสตามรอบนัดจริงเหมือนกัน)
+let INSP = { vehicleId: null, q: 'Q1' };
 
 function renderInspection() {
   if (INSP.vehicleId) { renderInspectForm(INSP.vehicleId); return; }
@@ -571,15 +573,26 @@ function renderInspectList() {
   const ids = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
   const byId = new Map(master.vehicles.map(v => [v.id, v]));
   const done = ids.filter(id => MYD.inspectionDone(PLAN, id)).length;
+  if (!QUARTERS.some(q => q.q === INSP.q)) INSP.q = 'Q1';
 
-  const rows = ids.map(id => {
+  // แท็บไตรมาส — ป้าย sg-sub บอกช่วงเดือน + ความคืบหน้าของไตรมาสนั้น
+  const qSeg = QUARTERS.map(q => {
+    const qIds = ids.filter(id => MYD.bucketOf(PLAN, id) === q.q);
+    const qDone = qIds.filter(id => MYD.inspectionDone(PLAN, id)).length;
+    return `<div class="sg inspQSeg ${INSP.q === q.q ? 'sel' : ''}" data-q="${q.q}">
+      ${esc(MYD.quarterLabel(q.q))} · ${qIds.length} คัน
+      <div class="sg-sub">${esc(q.months)}${qIds.length ? ` · ตรวจแล้ว ${qDone}/${qIds.length}` : ''}</div>
+    </div>`;
+  }).join('');
+
+  const qIds = ids.filter(id => MYD.bucketOf(PLAN, id) === INSP.q);
+  const rows = qIds.map(id => {
     const v = byId.get(id);
     if (!v) return '';
     const ok = MYD.inspectionDone(PLAN, id);
-    const q = MYD.quarterLabel(MYD.bucketOf(PLAN, id)) || '—';
     return `<tr>
       <td><b>${esc(v.plate)}</b><div class="cell-sub">${esc(v.brand)}</div></td>
-      <td>${esc(v.ownerDept)}<div class="cell-sub">${esc(q)}</div></td>
+      <td>${esc(v.ownerDept)}</td>
       <td><span class="badge ${ok ? 'b-ok' : 'b-low'}">${ok ? 'ตรวจแล้ว' : 'ยังไม่ตรวจ'}</span></td>
       <td class="num"><button class="btn btn-s btn-sm" data-insp-open="${esc(id)}">
         <span class="ms">fact_check</span> ตรวจสภาพก่อนบำรุงรักษา</button></td>
@@ -590,16 +603,26 @@ function renderInspectList() {
     <div class="card">
       <div class="sect">ตรวจสภาพก่อนซ่อม</div>
       <div class="sub">ตรวจสภาพรถร่วมกับผู้ส่งมอบในวันนัด ก่อนเริ่มงานบำรุงรักษา — กดปุ่มท้ายแถวเพื่อเปิดใบตรวจของรถคันนั้น</div>
-      <div class="sub">ตรวจแล้ว <b>${done}</b> จาก <b>${ids.length}</b> คัน</div>
-      ${ids.length ? `<div class="tblwrap"><table class="tbl">
+      <div class="sub">ทั้งปี — ตรวจแล้ว <b>${done}</b> จาก <b>${ids.length}</b> คัน</div>
+      ${ids.length ? `
+      <div class="f" style="margin-bottom:14px">
+        <label>เลือกไตรมาสที่จะตรวจก่อน</label>
+        <div class="seg">${qSeg}</div>
+      </div>
+      ${qIds.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>สถานะ</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
+        : `<div class="empty">ไม่มีรถของ${esc(MYD.quarterLabel(INSP.q))}</div>`}`
         : '<div class="empty">ยังไม่มีรถที่ยืนยันเข้าแผน</div>'}
     </div>`;
 
   document.querySelectorAll('[data-insp-open]').forEach(b => b.addEventListener('click', () => {
     INSP.vehicleId = b.dataset.inspOpen;
     renderInspection();
+  }));
+  document.querySelectorAll('.inspQSeg').forEach(sg => sg.addEventListener('click', () => {
+    INSP.q = sg.dataset.q;
+    renderInspectList();
   }));
 }
 
@@ -874,8 +897,10 @@ function validateProcSub(plan, sub) {
   const m = masterStep(sub);
   if (m === 1) return MYD.confirmResolved(plan, plan.selectedVehicleIds || []);
   if (m === 2) return !!plan.partsRequisitioned;
-  // ขั้นแผนเดินทางจบเมื่อ: จัดรถเข้าใบครบทุกคัน + ทุกใบได้รับการตอบรับจากหน่วยงาน
-  if (m === 3) return MYD.travelPlanReady(plan, MYD.loadMaster());
+  // ขั้น "ถัดไป" ของแผนเดินทางไปต่อได้เมื่อทำแผนเดินทางครบทั้ง 4 ไตรมาสแล้ว (เจ้าของงานสั่ง 26 ส.ค. 2569)
+  if (m === 3) return MYD.allQuartersTravelReady(plan, MYD.loadMaster());
+  // ปุ่ม "ยืนยันแผนเดินทาง" (ขั้นสุดท้ายของเฟส) ยังต้องครบทุกไตรมาสเหมือนเดิม
+  if (m === 4) return MYD.travelPlanReady(plan, MYD.loadMaster());
   return true;
 }
 
@@ -912,12 +937,13 @@ function renderProcWizard(plan) {
       ${primaryDisabled && masterStep(state.sub) === 3 ? (() => {
         const bl = TRIP.blockers(plan);
         return bl.length ? `<div class="note note-warn"><span class="ms">error</span>
-          <div><b>ยังไปขั้นถัดไปไม่ได้</b> — ต้องเคลียร์ ${bl.length} เรื่องนี้ก่อน
+          <div><b>ยังไปขั้นถัดไปไม่ได้</b> — ต้องทำแผนเดินทางให้ครบทั้ง 4 ไตรมาสก่อน ตอนนี้แต่ละไตรมาสยังค้าง:
             <ul style="margin:6px 0 0 18px">${bl.map(x => `<li>${x}</li>`).join('')}</ul></div></div>` : '';
       })() : ''}
       <div class="actions">
         <button class="btn btn-g" id="btnBackProc" ${state.sub === 1 ? 'disabled' : ''}>ย้อนกลับ</button>
-        <button class="btn btn-p" id="btnPrimaryProc" ${primaryDisabled ? 'disabled' : ''}>${esc(primaryLabel)}</button>
+        <button class="btn btn-p" id="btnPrimaryProc" ${primaryDisabled ? 'disabled' : ''}
+          ${primaryDisabled && masterStep(state.sub) === 3 ? 'title="กรุณาทำแผนเดินทางครบทั้ง4ไตรมาส"' : ''}>${esc(primaryLabel)}</button>
       </div>
     </div>`;
 
@@ -948,7 +974,8 @@ function bindProcSubBody(plan) {
     onChange: () => renderProcWizard(plan),        // โมดูลขอให้วาดใหม่ทั้ง wizard
     onValidity: () => updateProcPrimaryEnabled(plan), // โมดูลขอให้ทวนสถานะปุ่ม "ถัดไป"
   });
-  // ขั้นทวน+ยืนยัน อ่านอย่างเดียว ไม่มี event ผูก (ปุ่มยืนยันอยู่ที่ actions footer)
+  // ขั้นทวน+ยืนยัน — มีแค่แท็บสลับไตรมาส ไม่กระทบสถานะปุ่ม "ยืนยัน" จึงไม่ต้องส่ง onValidity
+  else TRIP.bindStep2(plan, { onChange: () => renderProcWizard(plan) });
 }
 
 // ----- ขั้น 1 (ชื่อฟังก์ชันค้างจากตอนมี 3 ขั้น เนื้อหาจริงคือเบิกอะไหล่ เรียกเป็นขั้นที่ 2) -----

@@ -87,8 +87,10 @@ function renderPicker() {
 
 // ---------------------------------------------------------------- ตัว wizard
 function primaryReady(plan) {
-  if (state.sub === 1) return MYD.travelPlanReady(plan, MYD.loadMaster());
-  return true;
+  // ขั้น 1 "ถัดไป" ปลดล็อกเมื่อทำแผนเดินทางครบทั้ง 4 ไตรมาสแล้วเท่านั้น (เจ้าของงานสั่ง 26 ส.ค. 2569)
+  // ปุ่ม "ยืนยันแผนเดินทาง" ที่ขั้น 2 ใช้เกณฑ์เดียวกัน (travelPlanReady)
+  if (state.sub === 1) return MYD.allQuartersTravelReady(plan, MYD.loadMaster());
+  return MYD.travelPlanReady(plan, MYD.loadMaster());
 }
 
 function updatePrimary(plan) {
@@ -139,11 +141,12 @@ function renderWizard(plan) {
       }).join('')}</div>
       <div id="tripBody">${state.sub === 1 ? TRIP.renderStep1(plan) : TRIP.renderStep2(plan)}</div>
       ${blockers.length ? `<div class="note note-warn"><span class="ms">error</span>
-        <div><b>ยังไปขั้นถัดไปไม่ได้</b> — ต้องเคลียร์ ${blockers.length} เรื่องนี้ก่อน
+        <div><b>ยังไปขั้นถัดไปไม่ได้</b> — ต้องทำแผนเดินทางให้ครบทั้ง 4 ไตรมาสก่อน ตอนนี้แต่ละไตรมาสยังค้าง:
           <ul style="margin:6px 0 0 18px">${blockers.map(x => `<li>${x}</li>`).join('')}</ul></div></div>` : ''}
       <div class="actions">
         <button class="btn btn-g" id="btnBackTrip" ${state.sub === 1 ? 'disabled' : ''}>ย้อนกลับ</button>
-        <button class="btn btn-p" id="btnPrimaryTrip" ${disabled ? 'disabled' : ''}>
+        <button class="btn btn-p" id="btnPrimaryTrip" ${disabled ? 'disabled' : ''}
+          ${state.sub === 1 && disabled ? 'title="กรุณาทำแผนเดินทางครบทั้ง4ไตรมาส"' : ''}>
           ${isLast ? 'ยืนยันแผนเดินทาง' : 'ถัดไป'}</button>
       </div>
     </div>`;
@@ -154,6 +157,8 @@ function renderWizard(plan) {
       onChange: () => renderWizard(plan),
       onValidity: () => updatePrimary(plan),
     });
+  } else {
+    TRIP.bindStep2(plan, { onChange: () => renderWizard(plan) });
   }
 
   $('phase').querySelectorAll('.wstep').forEach(el =>

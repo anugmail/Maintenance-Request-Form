@@ -16,7 +16,8 @@
 //   TRIP.sendable(trip)          → ใบนี้กดส่งได้หรือยัง
 //   TRIP.renderStep1(plan)       → html · ขั้น 1 ทำแผนเดินทาง
 //   TRIP.bindStep1(plan, opts)   → ผูก event · opts = { onChange, onValidity }
-//   TRIP.renderStep2(plan)       → html · ขั้น 2 ทวน + ยืนยัน (อ่านอย่างเดียว)
+//   TRIP.renderStep2(plan)       → html · ขั้น 2 ทวน + ยืนยัน (แยกทีละไตรมาส)
+//   TRIP.bindStep2(plan, opts)   → ผูก event แท็บไตรมาส · opts = { onChange }
 //   TRIP.confirm(plan)           → ยืนยันแผนเดินทาง (host re-render เอง)
 //   TRIP.renderConfirmed(plan, opts) / TRIP.bindConfirmed(opts)  → หน้าสรุปหลังยืนยัน
 //                                  opts.onNextPhase — ไม่ส่งมา = ไม่มีปุ่ม "ไปเฟสถัดไป"
@@ -49,33 +50,48 @@
   const HOST = { onChange() {}, onValidity() {} };
 
   // เหตุผลที่ขั้นแผนเดินทางยังไปต่อไม่ได้ — คืนเป็นรายการข้อความ (ว่าง = ผ่าน)
-  // ต้องสะท้อน MYD.travelPlanReady() ให้ตรงเป๊ะ ไม่งั้นจะบอกผู้ใช้ผิด
+  // ต้องสะท้อน MYD.allQuartersTravelReady() ให้ตรงเป๊ะ ไม่งั้นจะบอกผู้ใช้ผิด — กล่องนี้โชว์เฉพาะตอน
+  // ปุ่ม "ถัดไป" ยัง disabled คือยังมีไตรมาสที่ไม่พร้อมอยู่ จึงแจกแจงทีละไตรมาสว่าติดอะไร
+  const TRIP_STATUS_TEXT = { draft: 'ยังไม่ได้ส่ง', waiting: 'รอหน่วยงานตอบรับ', rejected: 'ถูกปฏิเสธ — แก้แล้วส่งใหม่' };
   function travelBlockers(plan) {
     const master = MYD.loadMaster();
     const trips = MYD.ensureTrips(plan);
+    if (!trips.length) return ['ยังไม่มีใบเดินทางสักใบ — กด "สร้างแผนเดินทางใหม่" ก่อน'];
+
     const out = [];
-    if (!trips.length) { out.push('ยังไม่มีใบเดินทางสักใบ — กด "สร้างแผนเดินทางใหม่" ก่อน'); return out; }
+    MYD.QUARTER_KEYS.forEach(q => {
+      if (MYD.quarterTravelReady(plan, master, q)) return;   // ไตรมาสนี้พร้อมแล้ว ไม่ต้องแจ้ง
+      const ids = (plan.byQuarter[q] || []).filter(id => MYD.isVehicleIn(plan, id));
+      if (!ids.length) return;   // ไม่มีรถอยู่ในไตรมาสนี้ (พักไว้/ย้ายออกหมด) ไม่ต้องแจ้ง
 
-    // ค้างที่ไตรมาสไหนบ้าง — บอกให้รู้ว่าต้องไปกดแท็บไหน (ปัญหาเดิมคือจอโชว์เฉพาะไตรมาสที่เปิดอยู่)
-    const un = MYD.unassignedVehicleIds(plan);
-    if (un.length) {
-      const byQ = {};
-      un.forEach(id => { const q = MYD.bucketOf(plan, id); byQ[q] = (byQ[q] || 0) + 1; });
-      const detail = Object.keys(byQ).sort()
-        .map(q => `${esc(MYD.quarterLabel(q) || q)} ${byQ[q]} คัน`).join(' · ');
-      out.push(`ยังมีรถ <b>${un.length}</b> คันไม่ได้อยู่ในใบเดินทางไหนเลย — ${detail}`);
-    }
-
-    const ST = { draft: 'ยังไม่ได้ส่ง', waiting: 'รอหน่วยงานตอบรับ', rejected: 'ถูกปฏิเสธ — แก้แล้วส่งใหม่' };
-    const notOk = trips.filter(t => MYD.tripStatus(t, master) !== 'accepted');
-    notOk.forEach(t => out.push(
-      `ใบ "<b>${esc(t.name || 'แผนเดินทาง')}</b>" ${esc(ST[MYD.tripStatus(t, master)] || '')}`));
+      const unassigned = MYD.unassignedVehicleIdsInQuarter(plan, q);
+      const qTrips = trips.filter(t => (t.vehicleIds || []).some(id => ids.includes(id)));
+      const parts = [];
+      if (unassigned.length) parts.push(`รถ <b>${unassigned.length}</b> คันยังไม่อยู่ในใบเดินทางไหนเลย`);
+      if (!qTrips.length && !unassigned.length) parts.push('ยังไม่มีใบเดินทางของไตรมาสนี้');
+      qTrips.filter(t => MYD.tripStatus(t, master) !== 'accepted').forEach(t =>
+        parts.push(`ใบ "${esc(t.name || 'แผนเดินทาง')}" ${esc(TRIP_STATUS_TEXT[MYD.tripStatus(t, master)] || '')}`));
+      if (parts.length) out.push(`<b>${esc(MYD.quarterLabel(q))}</b>: ${parts.join(' · ')}`);
+    });
     return out;
   }
 
   function tripVehicles(trip, master) {
     const byId = new Map(master.vehicles.map(v => [v.id, v]));
     return (trip.vehicleIds || []).map(id => byId.get(id)).filter(Boolean);
+  }
+
+  // ไตรมาสเจ้าของใบเดินทาง — ใบใหม่ถูก tag ตอนสร้าง (trip.quarter) ตามไตรมาสที่กำลังดูอยู่
+  // (แยกทำทีละไตรมาสจริง เจ้าของงานสั่ง 26 ส.ค. 2569 — หน้านี้เคยโชว์ทุกใบรวมกันแม้สลับแท็บ)
+  // ใบเก่าก่อนมีฟีลด์นี้ → เดาจากไตรมาสของรถคันแรกในใบแทน
+  function tripQuarterOf(trip, plan) {
+    if (trip.quarter && MYD.QUARTER_KEYS.includes(trip.quarter)) return trip.quarter;
+    const firstId = (trip.vehicleIds || [])[0];
+    if (firstId) {
+      const b = MYD.bucketOf(plan, firstId);
+      if (MYD.QUARTER_KEYS.includes(b)) return b;
+    }
+    return null;
   }
 
   // 1 แผนบำรุงรักษามีแผนเดินทางได้หลายใบ — กบค. เลือกเองว่ารถคันไหนเข้าใบไหน
@@ -97,14 +113,20 @@
     const master = MYD.loadMaster();
     const trips = MYD.ensureTrips(plan);
     MYD.ensurePlanQuarters(plan);
-    // แผนเดินทางทำทีละไตรมาส (เจ้าของงานสั่ง 17 ส.ค. 2569) — เห็นเฉพาะรถของไตรมาสที่เลือก
-    // แล้วย้ายรถข้ามไตรมาส/พักไว้ยังไม่ระบุ ได้จากหน้านี้เลย
+    // แผนเดินทางทำทีละไตรมาส (เจ้าของงานสั่ง 17 ส.ค. 2569, ย้ำแยกใบตามไตรมาสจริง 26 ส.ค. 2569)
+    // — เห็นเฉพาะรถ + ใบเดินทางของไตรมาสที่เลือก แล้วย้ายรถข้ามไตรมาส/พักไว้ยังไม่ระบุ ได้จากหน้านี้เลย
     if (!MYD.QUARTER_KEYS.includes(S.q)) S.q = 'Q1';
     const travelQ = S.q;
     const inQuarter = new Set(MYD.planVehicleIds(plan, travelQ));
     const joining = MYD.planVehicleIds(plan, travelQ).filter(id => MYD.isVehicleIn(plan, id));
     const unassigned = MYD.unassignedVehicleIds(plan).filter(id => inQuarter.has(id));
     const accepted = trips.filter(t => MYD.tripStatus(t, master) === 'accepted').length;
+
+    // สถานะ "พร้อมแล้ว" รายไตรมาส — ต้องพร้อมครบทั้ง 4 ไตรมาสถึงจะปลดปุ่ม "ถัดไป" (เจ้าของงานสั่ง 26 ส.ค. 2569)
+    const qReadyBadges = MYD.QUARTER_KEYS.map(qk => {
+      const ready = MYD.quarterTravelReady(plan, master, qk);
+      return `<span class="badge ${ready ? 'b-ok' : 'b-neutral'}">${esc(MYD.quarterLabel(qk))} ${ready ? '· พร้อมแล้ว' : '· ยังไม่ครบ'}</span>`;
+    }).join(' ');
 
     const qSeg = ['Q1', 'Q2', 'Q3', 'Q4'].map(q => {
       const n = MYD.planVehicleIds(plan, q).length;
@@ -125,7 +147,10 @@
       return `<optgroup label="${esc(prov)} (${byProvince[prov].length} คัน)">${opts}</optgroup>`;
     }).join('');
 
-    const tripBoxes = trips.map(trip => {
+    // แสดงเฉพาะใบของไตรมาสที่กำลังดูอยู่ — สลับแท็บแล้วไม่ต้องเห็นใบของไตรมาสอื่นปนกัน
+    const quarterTrips = trips.filter(t => tripQuarterOf(t, plan) === travelQ);
+
+    const tripBoxes = quarterTrips.map(trip => {
       MYD.ensureTripPerDiem(trip);   // ใบเก่าที่มีแต่ยอดรวม → เกลี่ยลงรายคน + sync perDiem ให้ตรงผลรวมเสมอ
       const st = MYD.tripStatus(trip, master);
       const b = TRIP_STATUS_BADGE[st];
@@ -292,8 +317,10 @@
         แต่จะไม่โผล่ในไตรมาสไหนจนกว่าจะย้ายกลับเข้าไตรมาส</div></div>` : ''}
       <div class="sub"><b>${esc(MYD.quarterLabel(travelQ))}</b> (ที่กำลังดูอยู่): รถที่ยืนยันแล้ว <b>${joining.length}</b> คัน
         — จัดเข้าใบแล้ว <b>${joining.length - unassigned.length}</b> · ยังไม่จัด <b>${unassigned.length}</b></div>
-      <div class="sub"><b>ทั้งแผน</b> (ทุกไตรมาสรวมกัน — เกณฑ์ที่ใช้ปลดปุ่ม "ถัดไป"): แผนเดินทาง <b>${trips.length}</b> ใบ
-        · ตอบรับครบแล้ว <b>${accepted}</b> ใบ · รถที่ยังไม่อยู่ในใบไหนเลย <b>${MYD.unassignedVehicleIds(plan).length}</b> คัน
+      <div class="sub"><b>เกณฑ์ปลดปุ่ม "ถัดไป"</b>: ต้องพร้อมครบ <b>ทั้ง 4 ไตรมาส</b> (จัดรถเข้าใบครบทุกคัน + ทุกใบของแต่ละไตรมาสตอบรับแล้ว)
+        — ${qReadyBadges}</div>
+      <div class="sub">แผนเดินทางทั้งหมด <b>${trips.length}</b> ใบ · ตอบรับครบแล้ว <b>${accepted}</b> ใบ
+        · รถที่ยังไม่อยู่ในใบไหนเลย <b>${MYD.unassignedVehicleIds(plan).length}</b> คัน
         <small>(รถที่พักไว้แบบยังไม่ระบุไตรมาสไม่นับ)</small></div>
       <div class="sub">แผนหนึ่งมีได้หลายใบ — จะแยกตามจังหวัด หรือจังหวัดละหลายใบก็ได้ · แต่ละใบเสนอเป็น<b>ช่วงเวลา</b>
         แล้วหน่วยงานเจ้าของรถเลือกวันนัดของรถแต่ละคันภายในช่วงนั้นเอง</div>
@@ -302,7 +329,7 @@
         ${unassigned.length ? `<button class="btn btn-s" id="btnAutoTrips">
           <span class="ms">auto_awesome_motion</span> แยกอัตโนมัติตามจังหวัด</button>` : ''}
       </div>
-      ${trips.length ? tripBoxes : `<div class="empty">ยังไม่มีแผนเดินทาง — กดสร้างแผนใหม่ หรือให้ระบบแยกตามจังหวัดให้</div>`}
+      ${quarterTrips.length ? tripBoxes : `<div class="empty">ยังไม่มีแผนเดินทางของ${esc(MYD.quarterLabel(travelQ))} — กดสร้างแผนใหม่ หรือให้ระบบแยกตามจังหวัดให้</div>`}
       ${unassigned.length ? `<div class="empty">ยังมีรถ ${unassigned.length} คันที่ยังไม่ถูกจัดเข้าแผนใด — ต้องจัดครบก่อนไปขั้นถัดไป</div>` : ''}`;
   }
 
@@ -445,20 +472,26 @@
       });
     });
 
+    // ใบใหม่ tag ไตรมาสของแท็บที่กำลังดูอยู่เสมอ — กันไม่ให้ใบไปโผล่ผิดไตรมาสตอนแสดงผล
+    const quarterTripCount = () => trips.filter(t => tripQuarterOf(t, plan) === S.q).length;
+
     $('btnAddTrip')?.addEventListener('click', () => {
-      const t = MYD.emptyTrip('trip-' + Date.now().toString(36), `แผนเดินทาง ${trips.length + 1}`);
+      const t = MYD.emptyTrip('trip-' + Date.now().toString(36), `แผนเดินทาง ${quarterTripCount() + 1}`, S.q);
       trips.push(t);
       rerender();
     });
 
     // ทางลัด: หนึ่งจังหวัดหนึ่งใบ — เป็นแค่จุดตั้งต้น กบค. ยังแก้/แตกใบต่อได้
+    // ขอบเขตเฉพาะรถของไตรมาสที่กำลังดูอยู่ (เหมือนช่อง "เพิ่มรถเข้าแผนนี้" รายใบ) ไม่งั้นใบที่ได้จะมีรถ
+    // ข้ามไตรมาสปนกัน แล้วไปโผล่ผิดไตรมาสตอนแสดงผล
     $('btnAutoTrips')?.addEventListener('click', () => {
-      const unassigned = MYD.unassignedVehicleIds(plan);
+      const inQuarter = new Set(MYD.planVehicleIds(plan, S.q));
+      const unassigned = MYD.unassignedVehicleIds(plan).filter(id => inQuarter.has(id));
       const byRegion = {};
       master.vehicles.filter(v => unassigned.includes(v.id))
         .forEach(v => (byRegion[v.region] = byRegion[v.region] || []).push(v.id));
       Object.keys(byRegion).sort((a, b) => a - b).forEach(r => {
-        const t = MYD.emptyTrip('trip-' + Date.now().toString(36) + '-' + r, MYD.provinceOfRegion(Number(r)));
+        const t = MYD.emptyTrip('trip-' + Date.now().toString(36) + '-' + r, MYD.provinceOfRegion(Number(r)), S.q);
         t.vehicleIds = byRegion[r];
         trips.push(t);
       });
@@ -510,10 +543,14 @@
   }
 
   // ----- เฟส 2 (แผนเดินทาง) ขั้น 2: ทวน + ยืนยัน -----
+  // เจ้าของงานสั่ง 26 ส.ค. 2569: แยกดูทีละไตรมาสเหมือนขั้น 1 — พอทำไตรมาสไหนเสร็จแล้วกด "ถัดไป"
+  // มาจากขั้น 1 ต้องเห็นรายการของไตรมาสนั้นทันที (ใช้ S.q ตัวเดียวกับขั้น 1 เพราะเป็นแท็บที่กดมา)
   function renderProcStep3(plan) {
     const master3 = MYD.loadMaster();
     const trips = MYD.ensureTrips(plan);
     const grand = trips.reduce((n, t) => n + (t.perDiem || 0) + (t.lodging || 0) + (t.travel || 0), 0);
+    if (!MYD.QUARTER_KEYS.includes(S.q)) S.q = 'Q1';
+    const reviewQ = S.q;
 
     const outRows = (plan.selectedVehicleIds || [])
       .filter(id => !MYD.isVehicleIn(plan, id))
@@ -525,7 +562,7 @@
           <td>${esc(e.verdictWhy || e.reason || '—')}</td></tr>`;
       }).join('');
 
-    const tripBlocks = trips.map(t => {
+    const tripReviewBlock = t => {
       const vs = tripVehicles(t, master3);
       const sum = (t.perDiem || 0) + (t.lodging || 0) + (t.travel || 0);
       const rows = vs.map(v => `<tr>
@@ -546,17 +583,48 @@
             <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>วันนัด</th></tr></thead>
             <tbody>${rows}</tbody></table></div></div>
         </div>`;
+    };
+
+    // แท็บไตรมาส — ต้องยืนยันครบทั้ง 4 ไตรมาสก่อนกด "ยืนยันแผนเดินทาง" ได้จริง ป้าย "พร้อมแล้ว/ยังไม่ครบ"
+    // จึงต้องเห็นได้ทุกไตรมาสตั้งแต่แท็บ แม้ตอนนั้นจะดูอยู่แค่ไตรมาสเดียว
+    const qReviewTabs = MYD.QUARTER_KEYS.map(qk => {
+      const ready = MYD.quarterTravelReady(plan, master3, qk);
+      const n = MYD.planVehicleIds(plan, qk).length;
+      return `<div class="sg travelReviewQSeg ${reviewQ === qk ? 'sel' : ''}" data-q="${qk}">
+        ${esc(MYD.quarterLabel(qk))} · ${n} คัน
+        <div class="sg-sub">${ready ? 'พร้อมแล้ว' : 'ยังไม่ครบ'}</div>
+      </div>`;
     }).join('');
+
+    const qTrips = trips.filter(t => tripQuarterOf(t, plan) === reviewQ);
+    const qReady = MYD.quarterTravelReady(plan, master3, reviewQ);
+    const qVehCount = qTrips.reduce((n, t) => n + (t.vehicleIds || []).length, 0);
+    const qSum = qTrips.reduce((n, t) => n + (t.perDiem || 0) + (t.lodging || 0) + (t.travel || 0), 0);
 
     return `
       <div class="sect">ขั้นที่ 2: ทวนแผนเดินทาง + ยืนยัน</div>
-      <div class="sub">แผนเดินทาง <b>${trips.length}</b> ใบ · รวมค่าใช้จ่ายทั้งหมด <b>${grand.toLocaleString('th-TH')}</b> บาท</div>
-      ${tripBlocks || `<div class="empty">ยังไม่มีแผนเดินทาง</div>`}
+      <div class="sub">ทั้งปี — แผนเดินทาง <b>${trips.length}</b> ใบ · รวมค่าใช้จ่ายทั้งหมด <b>${grand.toLocaleString('th-TH')}</b> บาท</div>
+      <div class="f" style="margin-bottom:14px">
+        <label>ทวนทีละไตรมาส</label>
+        <div class="seg">${qReviewTabs}</div>
+      </div>
+      <div class="sect">${esc(MYD.quarterLabel(reviewQ))}
+        <span class="badge ${qReady ? 'b-ok' : 'b-neutral'}">${qReady ? 'พร้อมแล้ว' : 'ยังไม่ครบ'}</span>
+      </div>
+      <div class="sub">แผนเดินทาง <b>${qTrips.length}</b> ใบ · รถ <b>${qVehCount}</b> คัน · ค่าใช้จ่าย <b>${qSum.toLocaleString('th-TH')}</b> บาท</div>
+      ${qTrips.length ? qTrips.map(tripReviewBlock).join('') : `<div class="empty">ยังไม่มีแผนเดินทางของ${esc(MYD.quarterLabel(reviewQ))}</div>`}
       ${outRows ? `
       <div class="sect">รถที่ไม่เข้าแผนเดินทางรอบนี้</div>
       <div class="tblwrap"><table class="tbl">
         <thead><tr><th>ทะเบียน</th><th>คำตัดสิน กบค.</th><th>เหตุผล</th></tr></thead>
         <tbody>${outRows}</tbody></table></div>` : ''}`;
+  }
+
+  // สลับไตรมาสที่ทวนอยู่ — ไม่แตะข้อมูล แค่เปลี่ยนมุมมอง (เหมือน .travelQSeg ของขั้น 1)
+  function bindProcStep3() {
+    document.querySelectorAll('.travelReviewQSeg').forEach(sg => {
+      sg.addEventListener('click', () => { S.q = sg.dataset.q; HOST.onChange(); });
+    });
   }
 
   function confirmTravelPlan(plan) {
@@ -965,6 +1033,12 @@
       bindProcStep2(plan);
     },
     renderStep2: renderProcStep3,
+    bindStep2(plan, opts) {
+      opts = opts || {};
+      HOST.onChange = opts.onChange || function () {};
+      HOST.onValidity = opts.onValidity || function () {};
+      bindProcStep3();
+    },
     confirm: confirmTravelPlan,
     renderConfirmed: renderTravelConfirmed,
     bindConfirmed: bindTravelConfirmed,

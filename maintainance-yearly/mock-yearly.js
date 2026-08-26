@@ -833,16 +833,19 @@ const MYD = {
 
   // ----- แผนเดินทาง: หลายใบต่อหนึ่งแผนบำรุงรักษา (เคาะ 10 ส.ค. 2569) -----
   // "การสร้างจะอิสระ หมายถึงเลือกรถได้ เลือกแผน" — ใบไม่ผูกกับจังหวัด กบค. จัดเอง
-  // trip = { id, name, location, windowFrom, windowTo, perDiem, lodging, travel,
+  // trip = { id, name, quarter, location, windowFrom, windowTo, perDiem, lodging, travel,
   //          mode:'self'|'vendor', vendorId, hireCost, staff:[ชื่อพนักงาน กบค.],
   //          vehicleIds:[], dates:{[vehicleId]:'YYYY-MM-DD'},
   //          jobs:{[vehicleId]:{change,inspect}}, places:{[vehicleId]:'สถานที่'},
   //          sentAt, replies:{ [ownerDept]: {status,reason,by,at,history:[]} } }
   // วันนัดอยู่ระดับ "รายคัน" · ช่วงเวลาอยู่ระดับ "ใบ" · การตอบรับอยู่ระดับ "ใบ × หน่วยงาน"
   // (ใบหนึ่งอาจมีรถของหลายหน่วยงาน แต่ละหน่วยงานตอบเฉพาะรถของตัวเอง)
+  // quarter = ไตรมาสเจ้าของใบ — ตั้งตอนสร้างตามแท็บที่กำลังดูอยู่ (เจ้าของงานสั่ง 26 ส.ค. 2569
+  // ให้แผนเดินทางแยกรายไตรมาสจริง ไม่ใช่แค่กรองตอนเลือกรถ) · null = ใบเก่าก่อนมีฟีลด์นี้ →
+  // เดาไตรมาสจากรถคันแรกแทน (ดู tripQuarterOf() ใน trip-plan.js)
 
-  emptyTrip(id, name) {
-    return { id, name: name || '', location: '', windowFrom: '', windowTo: '',
+  emptyTrip(id, name, quarter) {
+    return { id, name: name || '', quarter: quarter || null, location: '', windowFrom: '', windowTo: '',
              perDiem: 0, lodging: 0, travel: 0,
              mode: 'self',           // 'self' = กบค. ตรวจเอง · 'vendor' = จ้างผู้รับจ้าง
              vendorId: null,         // ผู้รับจ้างที่ถูก assign ให้ใบนี้ (เมื่อ mode='vendor')
@@ -1164,12 +1167,42 @@ const MYD = {
     return true;
   },
 
-  // ขั้นแผนเดินทางจบเมื่อ: จัดรถเข้าใบครบทุกคัน + ทุกใบได้รับการตอบรับ
+  // เกณฑ์ "ยืนยันแผนเดินทางได้" (ปุ่มสุดท้ายที่ขั้น 2) — ต้องครบทุกไตรมาส: จัดรถเข้าใบครบทุกคัน
+  // + ทุกใบได้รับการตอบรับ · ปุ่ม "ถัดไป" ของขั้น 1 ใช้เกณฑ์เดียวกัน (ครบทุกไตรมาส) ดู allQuartersTravelReady ด้านล่าง
   travelPlanReady(plan, master) {
     const trips = this.ensureTrips(plan);
     if (!trips.length) return false;
     if (this.unassignedVehicleIds(plan).length) return false;
     return trips.every(t => this.tripStatus(t, master) === 'accepted');
+  },
+
+  // เวอร์ชันแยกรายไตรมาสของ unassignedVehicleIds() ด้านบน — ใช้เช็คว่า "ไตรมาสนี้" จัดรถเข้าใบครบหรือยัง
+  unassignedVehicleIdsInQuarter(plan, q) {
+    this.ensurePlanQuarters(plan);
+    const inTrips = new Set(this.ensureTrips(plan).flatMap(t => t.vehicleIds || []));
+    return (plan.byQuarter[q] || []).filter(id => this.isVehicleIn(plan, id) && !inTrips.has(id));
+  },
+
+  // ไตรมาสหนึ่ง "พร้อม" เมื่อ: มีรถอยู่ในไตรมาสนั้น + จัดรถเข้าใบครบ + ทุกใบที่มีรถไตรมาสนั้นตอบรับแล้ว
+  quarterTravelReady(plan, master, q) {
+    const ids = (plan.byQuarter[q] || []).filter(id => this.isVehicleIn(plan, id));
+    if (!ids.length) return false;
+    if (this.unassignedVehicleIdsInQuarter(plan, q).length) return false;
+    const trips = this.ensureTrips(plan).filter(t => (t.vehicleIds || []).some(id => ids.includes(id)));
+    if (!trips.length) return false;
+    return trips.every(t => this.tripStatus(t, master) === 'accepted');
+  },
+
+  // ปุ่ม "ถัดไป" ของขั้น 1 ปลดล็อกเมื่อทำแผนเดินทางครบทั้ง 4 ไตรมาสแล้วเท่านั้น (เจ้าของงานสั่ง 26 ส.ค. 2569
+  // ปรับกลับจากที่เคยให้ผ่านได้ตั้งแต่ไตรมาสเดียวพร้อม) — ไตรมาสที่ไม่มีรถอยู่เลย (พักไว้/ย้ายออกหมด)
+  // ถือว่าผ่านลอยตัว ไม่งั้นจะไปต่อไม่ได้เลยทั้งที่ไม่มีอะไรให้ทำในไตรมาสนั้น
+  allQuartersTravelReady(plan, master) {
+    this.ensurePlanQuarters(plan);
+    return this.QUARTER_KEYS.every(q => {
+      const ids = (plan.byQuarter[q] || []).filter(id => this.isVehicleIn(plan, id));
+      if (!ids.length) return true;
+      return this.quarterTravelReady(plan, master, q);
+    });
   },
 
   // ================= ปฏิทินปีงบ + รอบทบทวนแผน =================
