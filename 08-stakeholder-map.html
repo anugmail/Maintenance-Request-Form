@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maintain-D — ผู้เกี่ยวข้องในโฟลว์ซ่อมบำรุง (Stakeholder Map)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
+    rel="stylesheet">
+  <link rel="stylesheet" href="design-system/tokens.css?v=20260825-ds31">
+  <link rel="stylesheet" href="design-system/components.css?v=20260825-ds31">
+  <style>
+    /* โครงหน้าเอกสาร — ชุดเดียวกับ 05/06/07 (หน้าวิเคราะห์ ไม่ใช่หน้าจอในระบบ จึงไม่ใช้ .shell) */
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 36px 24px 72px }
+    .back { display: inline-flex; align-items: center; gap: 4px; color: var(--gray-500); text-decoration: none; font-size: var(--fs-text-sm); font-weight: 600; margin-bottom: 18px }
+    .back:hover { color: var(--primary-600) }
+    .back .ms { font-size: 18px }
+    .lg { font-weight: 800; font-size: 34px; color: var(--primary-600); line-height: 1 }
+    .lg em { color: var(--brand-accent); font-style: normal }
+    h1 { font-size: 26px; color: var(--gray-900); margin: 12px 0 6px }
+    .lead { color: var(--gray-500); margin-bottom: 22px; line-height: 1.6 }
+    .lead b { color: var(--gray-700) }
+    .blk { margin-top: 34px }
+    .blk > .sub { margin-top: 4px }
+
+    /* ── Swimlane ผังหน่วยงาน (data-visualization เฉพาะหน้านี้) ──────────
+       lane = สังกัด · กล่อง = จุดที่หน่วยนั้นลงมือ · ลูกศร = การส่งต่อ
+       เป็นแผนภาพ ไม่ใช่ไอคอน จึงใช้ inline SVG ได้ตามข้อยกเว้นของกฎข้อ 3   */
+    .svgwrap { overflow-x: auto }
+    .swim { width: 100%; height: auto; min-width: 900px; font-family: var(--font); display: block }
+    .swim .lnband { fill: var(--gray-50) }
+    .swim .lnband.alt { fill: var(--primary-25) }
+    .swim .lnline { stroke: var(--gray-200); stroke-width: 1 }
+    .swim .lnlbl, .swim .phase { font-size: 12px; font-weight: 700; fill: var(--gray-500) }
+    .swim .phase { text-anchor: middle }
+    .swim .bx { fill: #fff; stroke: var(--gray-300); stroke-width: 1.5 }
+    .swim .bx.norole { stroke: var(--error-500); stroke-width: 2 }
+    .swim .bx.soft { stroke: var(--gray-400); stroke-dasharray: 5 4 }
+    .swim .nm { font-size: 12px; font-weight: 700; fill: var(--gray-900); text-anchor: middle }
+    .swim .ds { font-size: 12px; fill: var(--gray-600); text-anchor: middle }
+    .swim .ed { stroke: var(--gray-400); stroke-width: 1.5; fill: none; marker-end: url(#ah) }
+    .swim .ed.two { marker-start: url(#ah-s) }
+    .swim .ed.soft { stroke: var(--gray-300); stroke-dasharray: 5 4 }
+    .swim .el { font-size: 12px; fill: var(--gray-500) }
+    .swim .gate { fill: var(--warning-600) }
+    .swim .gate.open { fill: #fff; stroke: var(--warning-600); stroke-width: 2 }
+    .swimkey { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; font-size: var(--fs-text-xs); color: var(--gray-600) }
+    .swimkey span { display: inline-flex; align-items: center; gap: 6px }
+    .swimkey i { width: 14px; height: 12px; border-radius: 3px; border: 2px solid var(--gray-300); display: inline-block; flex: 0 0 auto }
+    .swimkey i.norole { border-color: var(--error-500) }
+    .swimkey i.soft { border-color: var(--gray-400); border-style: dashed }
+    .swimkey i.dot { width: 10px; height: 10px; border-radius: var(--r-pill); border: 0; background: var(--warning-600) }
+    .swimkey i.dot.open { background: #fff; border: 2px solid var(--warning-600) }
+
+    /* ── ผังใครเป็นใคร ───────────────────────────────────────────────────
+       การ์ดรายบทบาทจัดกลุ่มตามสังกัด — เป็นผังของหน้านี้โดยเฉพาะ
+       ไม่ใช่คอมโพเนนต์ที่หน้าอื่นใช้ซ้ำได้ จึงอยู่ใน <style> ตามกฎข้อ 0    */
+    .gband { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 26px 0 10px }
+    .gband .ms { font-size: 20px; color: var(--primary-600); align-self: center }
+    .gband b { font-size: var(--fs-h1); color: var(--gray-900) }
+    .gband .gnote { font-size: var(--fs-text-xs); color: var(--gray-500); line-height: 18px }
+    .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px }
+    .board > .card { margin-bottom: 0 }   /* การ์ดอยู่ในกริด — ระยะมาจาก gap ไม่ใช่ margin ของการ์ด */
+    .rhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap }
+    .rhead b { font-size: var(--fs-text-md); color: var(--gray-900) }
+    .rfull { font-size: var(--fs-text-xs); color: var(--gray-500); line-height: 18px; margin: 2px 0 10px }
+    .rrow { display: flex; gap: 8px; padding: 8px 0; border-top: 1px solid var(--gray-200);
+            font-size: var(--fs-text-sm); line-height: 20px }
+    .rrow .ms { font-size: 18px; color: var(--gray-400); flex: 0 0 auto; margin-top: 1px }
+    .rrow .rk { color: var(--gray-500); flex: 0 0 68px }
+    .rrow .rv { color: var(--gray-800); min-width: 0 }
+    .rrow .rv b { color: var(--gray-900) }
+
+    /* ── แถบสัดส่วนการมีส่วนร่วม (data-visualization เฉพาะหน้านี้) ── */
+    .bars { display: grid; grid-template-columns: 150px 1fr 92px; gap: 8px 12px; align-items: center }
+    .bars .bname { font-size: var(--fs-text-sm); font-weight: 600; color: var(--gray-800); text-align: right }
+    .bar { display: flex; height: 22px; border-radius: var(--rounded-sm); overflow: hidden; background: var(--gray-100) }
+    .bar i { display: block; height: 100% }
+    .bar .k-act { background: var(--chart-6) } .bar .k-appr { background: var(--chart-4) }
+    .bar .k-see { background: var(--chart-3) } .bar .k-not { background: var(--chart-2) }
+    .bars .bnum { font-size: var(--fs-text-xs); color: var(--gray-600) }
+    .bars .bnum b { color: var(--gray-900); font-size: var(--fs-text-sm) }
+    .barkey { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; font-size: var(--fs-text-xs); color: var(--gray-600) }
+    .barkey span { display: inline-flex; align-items: center; gap: 5px }
+    .barkey i { width: 10px; height: 10px; border-radius: 2px; display: inline-block }
+    .barkey .k-act { background: var(--chart-6) } .barkey .k-appr { background: var(--chart-4) }
+    .barkey .k-see { background: var(--chart-3) } .barkey .k-not { background: var(--chart-2) }
+    @media (max-width: 640px) { .bars { grid-template-columns: 110px 1fr } .bars .bnum { grid-column: 2 } }
+
+    /* ── เส้นทางเดินของใบแจ้งซ่อม (data-visualization เฉพาะหน้านี้) ── */
+    .chain { display: flex; flex-direction: column }
+    .node { display: flex; align-items: center; gap: 12px; border: 1px solid var(--gray-200); border-radius: var(--rounded-md);
+            padding: 12px 14px; background: #fff }
+    .node.gate { border-color: var(--warning-200); background: var(--warning-50) }
+    .node.gate.soft { border-style: dashed }
+    .node.endp { border-color: var(--success-200); background: var(--success-25) }
+    .node .ms { font-size: 22px; color: var(--gray-500); flex: 0 0 auto }
+    .node.gate .ms { color: var(--warning-700) }
+    .node.endp .ms { color: var(--success-700) }
+    .node b { display: block; font-size: var(--fs-text-sm); color: var(--gray-900) }
+    .node .nsub { display: block; font-size: var(--fs-text-xs); color: var(--gray-600); line-height: 18px }
+    .node .nright { margin-left: auto; flex: 0 0 auto }
+    .link { display: flex; align-items: center; gap: 8px; padding: 8px 0 8px 26px; font-size: var(--fs-text-xs); color: var(--gray-600); line-height: 18px }
+    .link .ms { font-size: 18px; color: var(--gray-300); flex: 0 0 auto }
+    .branch { margin: 4px 0 4px 38px; border-left: 2px dotted var(--gray-300); padding-left: 14px; display: flex; flex-direction: column; gap: 8px }
+    .branch .node { padding: 9px 12px }
+
+    .foot { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--gray-200);
+            font-size: var(--fs-text-sm); color: var(--gray-500); line-height: 1.9 }
+    .foot a { color: var(--primary-600); font-weight: 600; text-decoration: none }
+    .foot a:hover { text-decoration: underline }
+  </style>
+</head>
+
+<body>
+  <div class="draft">ต้นแบบ / เอกสารวิเคราะห์ — ตัวเลขทุกตัวนับจาก flow-กบค. F1–F7 (66 ขั้น) ไม่ใช่การให้คะแนนเอง</div>
+  <div class="wrap">
+    <a class="back" href="more.html"><span class="ms">arrow_back</span> หน้าอื่นๆ ทั้งหมด</a>
+    <div class="lg">M<em>D</em></div>
+    <h1>ผู้เกี่ยวข้องในโฟลว์ซ่อมบำรุง — Stakeholder Map</h1>
+    <div class="lead">
+      ตอบว่า <b>ใครเกี่ยวข้องกับงานซ่อมบ้าง · แต่ละคนทำอะไร · เรื่องเดินจากมือใครไปมือใคร · ใครยังไม่มี role ในระบบ</b><br>
+      ทุกตัวเลขนับจากตาราง <b>ขั้นตอน × บทบาท</b> ของ flow-กบค. F1–F7 (66 ขั้น · จุดอนุมัติ 6 จุด) และโค้ดจริง — ไม่ใช่การให้คะแนนเอง
+    </div>
+
+    <div class="note note-warn">
+      <span class="ms">warning</span>
+      <span><b>คนที่ถืออำนาจสูงสุด 3 ราย ไม่มีที่ยืนในระบบเลย</b> — ผู้บังคับบัญชา กบค. · หัวหน้าหน่วยงานผู้แจ้ง · กรย.
+        ทั้งสามบล็อกงานได้คนละ 1 จุด รวมเป็น 3 ใน 6 จุดอนุมัติ แต่ไม่มี role และไม่มีหน้าจอฝั่งผู้อนุมัติ
+        ⇒ ถ้าเปิดใช้จริงตอนนี้ ใบแจ้งซ่อมจะค้างที่จุดแรกทันที</span>
+    </div>
+
+    <!-- 1 · Swimlane -->
+    <section class="blk">
+      <div class="sect">ผังหน่วยงาน — ใครอยู่กลุ่มไหน และเรื่องเดินยังไง</div>
+      <div class="sub">lane = สังกัด · กล่อง = จุดที่หน่วยนั้นลงมือ · ลูกศร = การส่งต่อ (เลขตรงกับแผนที่ความสัมพันธ์ด้านล่าง)</div>
+      <div class="card">
+        <div class="svgwrap">
+          <svg class="swim" viewBox="0 0 980 504" role="img"
+            aria-label="ผัง swimlane ของหน่วยงานที่เกี่ยวข้องกับงานซ่อม แบ่ง 4 lane ตามสังกัด">
+            <defs>
+              <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="var(--gray-400)" />
+              </marker>
+              <marker id="ah-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="var(--gray-400)" />
+              </marker>
+            </defs>
+
+            <!-- lane bands -->
+            <rect class="lnband" x="0" y="36" width="980" height="128" />
+            <rect class="lnband alt" x="0" y="164" width="980" height="128" />
+            <rect class="lnband" x="0" y="292" width="980" height="100" />
+            <rect class="lnband" x="0" y="392" width="980" height="112" opacity=".55" />
+            <line class="lnline" x1="0" y1="36" x2="980" y2="36" />
+            <line class="lnline" x1="0" y1="164" x2="980" y2="164" />
+            <line class="lnline" x1="0" y1="292" x2="980" y2="292" />
+            <line class="lnline" x1="0" y1="392" x2="980" y2="392" />
+            <line class="lnline" x1="128" y1="0" x2="128" y2="504" />
+
+            <!-- phase headers -->
+            <text class="phase" x="213" y="24">แจ้งปัญหา</text>
+            <text class="phase" x="383" y="24">อนุมัติ + คัดแยก</text>
+            <text class="phase" x="554" y="24">รับเรื่อง + ประเมิน</text>
+            <text class="phase" x="724" y="24">อะไหล่ + ซ่อม</text>
+            <text class="phase" x="895" y="24">ปิดงาน</text>
+
+            <!-- lane labels -->
+            <text class="lnlbl" x="14" y="94">หน่วยงาน</text>
+            <text class="lnlbl" x="14" y="112">เจ้าของรถ</text>
+            <text class="lnlbl" x="14" y="222">หน่วย</text>
+            <text class="lnlbl" x="14" y="240">ซ่อมบำรุง</text>
+            <text class="lnlbl" x="14" y="336">ภายนอก /</text>
+            <text class="lnlbl" x="14" y="354">สนับสนุน</text>
+            <text class="lnlbl" x="14" y="430">ยังไม่อยู่</text>
+            <text class="lnlbl" x="14" y="448">ใน flow</text>
+
+            <!-- edges (วาดก่อนกล่อง เพื่อให้กล่องทับหัวลูกศรไม่ได้) -->
+            <path class="ed" d="M283,100 L309,100" />
+            <text class="el" x="288" y="92">①</text>
+            <path class="ed" d="M383,127 L383,197" />
+            <text class="el" x="390" y="168">②</text>
+            <path class="ed" d="M383,255 L383,342 L480,342" />
+            <text class="el" x="392" y="336">③</text>
+            <path class="ed" d="M453,220 L480,220" />
+            <text class="el" x="458" y="212">⑤</text>
+            <path class="ed soft" d="M484,240 L457,240" />
+            <text class="el" x="458" y="256">⑥</text>
+            <path class="ed" d="M624,228 L650,228" />
+            <text class="el" x="629" y="220">⑦</text>
+            <path class="ed two" d="M724,259 L724,311" />
+            <text class="el" x="731" y="290">⑧⑨⑫</text>
+            <path class="ed soft" d="M694,197 L694,131" />
+            <text class="el" x="701" y="166">⑪</text>
+            <path class="ed" d="M794,220 L821,220" />
+            <text class="el" x="799" y="212">⑬</text>
+            <path class="ed soft" d="M825,240 L798,240" />
+            <text class="el" x="799" y="256">⑭</text>
+            <path class="ed" d="M895,197 L895,131" />
+            <text class="el" x="902" y="166">⑯</text>
+            <path class="ed soft" d="M500,255 L462,255 L462,436 L480,436" />
+            <text class="el" x="136" y="488">เส้นประลงล่าง = จุดอนุมัติวงเงินที่ flow ยังไม่ได้วาด</text>
+            <path class="ed soft" d="M624,436 L650,436" />
+
+            <!-- lane 1 · หน่วยงานเจ้าของรถ -->
+            <rect class="bx" x="143" y="73" width="140" height="54" rx="8" />
+            <text class="nm" x="213" y="94">ช่าง / คนใช้รถ</text>
+            <text class="ds" x="213" y="112">แจ้งปัญหา</text>
+
+            <rect class="bx norole" x="313" y="73" width="140" height="54" rx="8" />
+            <circle class="gate" cx="441" cy="85" r="5" />
+            <text class="nm" x="383" y="94">หัวหน้าหน่วยงาน</text>
+            <text class="ds" x="383" y="112">อนุมัติใบแจ้งซ่อม</text>
+
+            <rect class="bx" x="654" y="73" width="140" height="54" rx="8" />
+            <circle class="gate open" cx="782" cy="85" r="5" />
+            <text class="nm" x="724" y="94">ช่าง / คนใช้รถ</text>
+            <text class="ds" x="724" y="112">กดรับทราบอาการเพิ่ม</text>
+
+            <rect class="bx" x="825" y="73" width="140" height="54" rx="8" />
+            <text class="nm" x="895" y="94">ช่าง / คนใช้รถ</text>
+            <text class="ds" x="895" y="112">รับรถกลับ</text>
+
+            <!-- lane 2 · หน่วยซ่อมบำรุง -->
+            <rect class="bx norole" x="313" y="201" width="140" height="54" rx="8" />
+            <circle class="gate" cx="441" cy="213" r="5" />
+            <text class="nm" x="383" y="222">กรย.</text>
+            <text class="ds" x="383" y="240">คัดแยกช่องทางซ่อม</text>
+
+            <rect class="bx norole" x="484" y="201" width="140" height="54" rx="8" />
+            <circle class="gate" cx="612" cy="213" r="5" />
+            <text class="nm" x="554" y="222">กบค.</text>
+            <text class="ds" x="554" y="240">รับเรื่อง + ประเมิน</text>
+
+            <rect class="bx norole" x="654" y="201" width="140" height="54" rx="8" />
+            <text class="nm" x="724" y="222">กบค.</text>
+            <text class="ds" x="724" y="240">จัดอะไหล่ + ซ่อม</text>
+
+            <rect class="bx norole" x="825" y="201" width="140" height="54" rx="8" />
+            <circle class="gate" cx="953" cy="213" r="5" />
+            <text class="nm" x="895" y="222">ผบ. กบค.</text>
+            <text class="ds" x="895" y="240">อนุมัติปิดงาน</text>
+
+            <!-- lane 3 · ภายนอก / สนับสนุน -->
+            <rect class="bx norole" x="484" y="315" width="140" height="54" rx="8" />
+            <text class="nm" x="554" y="336">อู่ภายนอก</text>
+            <text class="ds" x="554" y="354">ซ่อมตามที่ กรย. สั่ง</text>
+
+            <rect class="bx norole" x="654" y="315" width="140" height="54" rx="8" />
+            <circle class="gate open" cx="782" cy="327" r="5" />
+            <text class="nm" x="724" y="336">คลังอะไหล่</text>
+            <text class="ds" x="724" y="354">จ่าย / รับคืนอะไหล่</text>
+
+            <!-- lane 4 · ยังไม่อยู่ใน flow -->
+            <rect class="bx soft" x="484" y="409" width="140" height="54" rx="8" />
+            <text class="nm" x="554" y="430">ผจก.กอง</text>
+            <text class="ds" x="554" y="448">อนุมัติ ≤ 500,000</text>
+
+            <rect class="bx soft" x="654" y="409" width="140" height="54" rx="8" />
+            <text class="nm" x="724" y="430">กองจัดซื้อ</text>
+            <text class="ds" x="724" y="448">เกิน 500,000 → e-GP</text>
+          </svg>
+        </div>
+        <div class="swimkey">
+          <span><i class="norole"></i>กรอบแดง = ยังไม่มี role ในระบบ (7 กล่อง)</span>
+          <span><i class="soft"></i>กรอบประ = ยังไม่อยู่ใน flow F1–F7</span>
+          <span><i class="dot"></i>จุดทึบ = บล็อกงานแน่นอน</span>
+          <span><i class="dot open"></i>จุดกลวง = ยังไม่เคาะว่าบล็อกไหม</span>
+          <span>เส้นประ = flow ยังไม่กำหนดปลายทาง</span>
+        </div>
+        <div class="note note-warn" style="margin:16px 0 0">
+          <span class="ms">warning</span>
+          <span>ทางแยกที่ไม่ได้วาดในผัง — <b>④ กรย. ซ่อมเอง</b> (เบิกอะไหล่ → ซ่อม → บันทึกประวัติ → ปิดงาน)
+            จบในกล่อง กรย. เองโดยไม่ผ่าน กบค. · และ <b>⑥ ส่งกลับ</b> ยังไม่เคาะว่าไปหา กรย. หรือผู้สร้างใบ</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 · ผังใครเป็นใคร -->
+    <section class="blk">
+      <div class="sect">ผังใครเป็นใคร</div>
+      <div class="sub">11 บทบาทจัดกลุ่มตามสังกัด — แต่ละการ์ดบอกว่าทำอะไร รับงานจากใคร ส่งต่อให้ใคร และมี role ในระบบรองรับหรือยัง</div>
+      <div id="board"></div>
+    </section>
+
+    <!-- 2 · เส้นทางเดินของใบแจ้งซ่อม -->
+    <section class="blk">
+      <div class="sect">แผนที่ความสัมพันธ์ — ใบแจ้งซ่อมเดินผ่านมือใครบ้าง</div>
+      <div class="sub">16 เส้นความสัมพันธ์ · เป็นจุดบล็อก 10 เส้น (+ อีก 1 เส้นยังไม่เคาะ) — โฟลว์นี้เป็นสายโซ่ ไม่ใช่ตาข่าย ขาดจุดใดจุดหนึ่งหยุดทั้งเส้น</div>
+      <div class="card">
+        <div class="chain" id="chain"></div>
+      </div>
+    </section>
+
+    <!-- 3 · ระดับการมีส่วนร่วม -->
+    <section class="blk">
+      <div class="sect">ระดับการมีส่วนร่วม — นับจากตาราง “ใครทำอะไร” โดยตรง</div>
+      <div class="sub">รวมทุกบทบาทได้ 129 เครื่องหมาย จาก 66 ขั้น — เฉลี่ยเกือบ 2 คนต่อหนึ่งขั้น โฟลว์นี้เป็นงานประสานงานมากกว่างานคีย์ข้อมูล</div>
+      <div class="card">
+        <div class="bars" id="bars"></div>
+        <div class="barkey">
+          <span><i class="k-act"></i>ลงมือทำ</span>
+          <span><i class="k-appr"></i>อนุมัติ / ตัดสิน</span>
+          <span><i class="k-see"></i>เห็นได้</span>
+          <span><i class="k-not"></i>ได้รับแจ้งเตือน</span>
+        </div>
+        <div class="note note-info" style="margin:16px 0 0">
+          <span class="ms">info</span>
+          <span>ตัวเลข <b>ลงมือทำ</b> กับ <b>จุดที่บล็อกงาน</b> ไม่ไปด้วยกันเลย — กบค. ทำเอง 38 ขั้นแต่บล็อกได้จุดเดียวแน่ ๆ
+            ส่วนหัวหน้าหน่วยงานไม่ทำเองสักขั้นแต่บล็อกได้ 1 จุดที่ต้นน้ำสุด ⇒ <b>คนที่ใช้ระบบบ่อยที่สุด กับคนที่ทำให้งานหยุดได้ ไม่ใช่คนเดียวกัน</b>
+            หน้าจอสองกลุ่มนี้จึงต้องออกแบบคนละแบบ</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · เรื่องที่ต้องตัดสินใจ -->
+    <section class="blk">
+      <div class="sect">เรื่องที่ต้องตัดสินใจ — เรียงตามที่บล็อกงานมากที่สุด</div>
+      <div class="sub">10 ข้อ · ตอบข้อ 1 ปลดล็อกงานได้มากที่สุดข้อเดียว (43 จาก 66 ขั้นค้างอยู่ที่คำตอบนี้)</div>
+      <div class="card">
+        <div class="tblwrap">
+          <table class="tbl" id="decisions"></table>
+        </div>
+      </div>
+    </section>
+
+    <div class="foot">
+      ที่มาของตัวเลขทั้งหมด: <b>flow-กบค. F1–F7</b> (66 ขั้น · จุดอนุมัติ 6 จุด) · โค้ดจริง <b>code-maintainD</b> (21 ส.ค. 2569) ·
+      บทถอดเสียงประชุม กฟภ. ครั้งที่ 4<br>
+      ต้นทางเอกสาร: <b>VMS-Plus-ผู้เกี่ยวข้อง-โฟลว์ซ่อมบำรุง.md</b> (มี <b>.xlsx</b> 6 ชีตให้ลูกค้าเปิดเติมมติ)<br>
+      <a href="more.html">&larr; หน้าอื่นๆ ทั้งหมด</a> &nbsp;·&nbsp;
+      <a href="06-hierarchy-scope.html">Hierarchy &amp; ขอบเขตการมองเห็น</a> &nbsp;·&nbsp;
+      <a href="05-review-milestones.html">เฟสรีวิว / เดโม 6 หมุด</a>
+    </div>
+  </div>
+
+  <script>
+    /* ── ข้อมูล: 11 บทบาท จัดกลุ่มตามสังกัด ─────────────────────────────
+       steps/act/appr/see/notify นับจากตาราง "ก. ขั้นตอน x บทบาท" (66 ขั้น) ตรง ๆ
+       from/to สรุปจากเส้นความสัมพันธ์ 16 เส้นในตาราง "ค."                  */
+    const SH = [
+      {
+        id: 'tech', g: 'owner', name: 'ช่าง / คนใช้รถ', full: 'ผู้ใช้รถของหน่วยงานเจ้าของรถ — เป็นทั้งต้นทางและปลายทางของเรื่อง',
+        status: 'ต้องแก้', act: 11, appr: 1, see: 16, notify: 7,
+        does: 'แจ้งปัญหาเข้าระบบ · ตัดสินใจซ่อมเอง/ส่งเรื่อง · นำรถเข้าซ่อมและรับรถกลับ · กดรับทราบอาการที่พบเพิ่ม',
+        from: 'กบค. — นัดวันเข้าซ่อม · แจ้งอาการและอะไหล่ที่เพิ่ม · คืนรถ',
+        to: 'หัวหน้าหน่วยงาน — ใบแจ้งซ่อมที่ได้เลขที่แล้ว',
+        blocks: 'UC-17.5 กดรับทราบอาการเพิ่ม — ยังไม่เคาะว่าไม่กดแล้วบล็อกปุ่ม “ซ่อมเสร็จสิ้น” ไหม',
+        role: '<b>driver</b> เท่านั้น — ผู้ใช้รถทั่วไปแจ้งซ่อมไม่ได้ ขัดกับ TOR ข้อ 6.1'
+      },
+      {
+        id: 'head', g: 'owner', name: 'หัวหน้าหน่วยงานผู้แจ้ง', full: 'ผู้อนุมัติต้นน้ำ — ใบแจ้งซ่อมผูกกับงบหน่วยงาน จึงต้องผ่านมือนี้ก่อน',
+        status: 'ต้องเคาะ', act: 0, appr: 1, see: 4, notify: 4,
+        does: 'อนุมัติใบแจ้งซ่อมก่อนเรื่องวิ่งไปปลายทาง — ไม่ลงมือทำเองเลยสักขั้น',
+        from: 'ช่าง / คนใช้รถ — ใบแจ้งซ่อม',
+        to: 'กรย. — ใบที่อนุมัติแล้ว',
+        blocks: 'AC-7 อนุมัติใบแจ้งซ่อม — ใบได้เลขที่แล้วแต่ไม่เดินต่อจนกว่าจะกด',
+        role: 'ไม่มี role — เก็บตัวผู้อนุมัติที่ <b>supervisor_id</b> แต่ยังไม่มีหน้าจอฝั่งผู้อนุมัติ'
+      },
+      {
+        id: 'kry', g: 'maint', name: 'กรย.', full: 'หน่วยดูแลรถประจำเขต · 12 เขต — ประตูบานเดียวของโฟลว์',
+        status: 'ต้องแก้', act: 6, appr: 2, see: 3, notify: 2,
+        does: 'รับเอกสารจากหน้างาน แล้วคัดแยกช่องทางซ่อม 3 ทาง — ซ่อมอู่ / กรย. ซ่อมเอง / ส่งต่อ กบค.',
+        from: 'หัวหน้าหน่วยงาน — ใบที่อนุมัติแล้ว',
+        to: 'อู่ภายนอก · ตัวเอง (ซ่อมเอง แล้วปิดงาน) · กบค.',
+        blocks: 'UC-03.1 · UC-05.1 คัดแยกช่องทาง — เรื่องทุกใบต้องผ่าน และไม่มีเส้นปฏิเสธใน flow',
+        role: 'ไม่มี role — ทำงานระดับเขต แต่ <b>admin-region</b> เข้าโมดูลซ่อมบำรุงไม่ได้เลย'
+      },
+      {
+        id: 'kbk', g: 'maint', name: 'กบค.', full: 'กองบำรุงรักษาเครื่องกล — รับงานจากกองผ่าน MOU ไม่ใช่สายบังคับบัญชาเดียวกัน',
+        status: 'ต้องแก้', act: 38, appr: 5, see: 4, notify: 4,
+        does: 'วิเคราะห์อาการ · ประเมินราคา · จัดการอะไหล่ · นัดหมายและรับรถ · ซ่อมและบันทึกผล · คำนวณต้นทุน',
+        from: 'กรย. — เอกสารส่งต่องานซ่อม · คลังอะไหล่ — อะไหล่และยอดคงเหลือ',
+        to: 'ผบ. กบค. — ผลซ่อม ประวัติ และ SUM ต้นทุน · ส่งกลับ กรย. ถ้าไม่รับเรื่อง',
+        blocks: 'UC-06.1 รับเรื่อง/ส่งกลับ (บล็อกแน่) · UC-10.1 ตัดสินว่าต้องซ่อมเองไหม (ยังไม่เคาะ)',
+        role: 'ไม่มี role — คำว่า “ไม่มี role กบค.” โผล่ 30 ครั้งในตาราง'
+      },
+      {
+        id: 'boss', g: 'maint', name: 'ผบ. กบค.', full: 'ผู้บังคับบัญชาของ กบค. — flow ต้นทางยังจดว่า “ใช่ไหม??” ยังไม่ยืนยันตำแหน่ง',
+        status: 'ต้องเคาะ', act: 1, appr: 2, see: 3, notify: 1,
+        does: 'ตรวจประวัติการซ่อมแล้วอนุมัติปิดงาน หรือตีกลับพร้อมเหตุผล',
+        from: 'กบค. — เรื่องรออนุมัติปิดงาน',
+        to: 'ปิดงาน → แจ้งทุกฝ่าย · หรือตีกลับให้ กบค. แก้แล้วส่งใหม่',
+        blocks: 'UC-20.3 · UC-21.1 อนุมัติปิดงาน — ไม่กด งานไม่ปิด ต้นทุนไม่เข้าประวัติรถ',
+        role: 'ไม่มี role — และยังไม่มีหน้าจอฝั่งผู้อนุมัติ'
+      },
+      {
+        id: 'shop', g: 'ext', name: 'อู่ภายนอก', full: 'อู่ / ผู้รับเหมาซ่อม — รับงานกรณี กรย. ตัดสินให้ซ่อมอู่',
+        status: 'ต้องเคาะ', act: 2, appr: 0, see: 0, notify: 1,
+        does: 'ซ่อมรถที่เจ้าของรถขับไปเอง และบันทึกการนำรถเข้าอู่',
+        from: 'กรย. — คำสั่งซ่อมอู่',
+        to: 'ยังไม่มีเส้นกลับเข้าโฟลว์ที่ระบบต้องรอ',
+        blocks: 'ไม่มีจุดอนุมัติ',
+        role: 'ไม่มี role — ยังไม่เคาะว่าจะให้เข้าระบบหรือไม่ ถ้าไม่ ต้องมีคนคีย์แทน'
+      },
+      {
+        id: 'store', g: 'ext', name: 'คลังอะไหล่', full: 'ยังไม่ยืนยันว่าเป็นคลังของหน่วยงานใด และอยู่ในระบบไหน',
+        status: 'ต้องเคาะ', act: 6, appr: 0, see: 4, notify: 1,
+        does: 'จ่ายอะไหล่ · รับคืนอะไหล่ที่ใช้ไม่หมด · แจ้งยอดคงเหลือ',
+        from: 'กบค. · กรย. — เรื่องเบิก/สั่งอะไหล่ และการคืนของ',
+        to: 'กบค. — อะไหล่และยอดคงเหลือ',
+        blocks: 'ไม่มีจุดอนุมัติ แต่บล็อกด้วยของจริง — 8 ขั้นติดสถานะ “ไม่มีแหล่งข้อมูลคลัง”',
+        role: 'ไม่มี role — และยังไม่รู้ว่าคลังอยู่ระบบไหน'
+      },
+      {
+        id: 'dept', g: 'off', name: 'ผจก.กอง / ผอ.กอง', full: 'เจ้าของงบหน่วยงาน — ที่มา: บทถอดเสียงประชุม กฟภ. ครั้งที่ 4',
+        status: 'ต้องเคาะ',
+        does: 'อนุมัติงานซ่อมวงเงินไม่เกิน 500,000 บาท (จ้างเฉพาะเจาะจง)',
+        from: 'กบค. — ราคาที่ประเมินไว้ที่ UC-06.4',
+        to: 'กบค. เดินหน้าจัดอะไหล่ · หรือส่งต่อกองจัดซื้อถ้าเกินเพดาน',
+        blocks: 'flow วาดเฉพาะเส้นทางเทคนิค (ใครซ่อม) ไม่ได้วาดเส้นทางเงิน (ใครจ่าย)',
+        role: 'ไม่มีใน flow — ต้องเคาะว่าจุดอนุมัติวงเงินแทรกตรงไหน น่าจะหลัง UC-06.4 ก่อนเข้า F4'
+      },
+      {
+        id: 'egp', g: 'off', name: 'กองจัดซื้อ / e-GP', full: 'ระบบจัดซื้อจัดจ้างภาครัฐ — ใช้เมื่อวงเงินเกินเพดาน',
+        status: 'ต้องเคาะ',
+        does: 'ดำเนินการจัดซื้อจัดจ้างเมื่อวงเงินซ่อมเกิน 500,000 บาท',
+        from: 'ผจก.กอง — งานที่เกินอำนาจอนุมัติ',
+        to: 'กลับเข้างานซ่อมเมื่อจัดจ้างเสร็จ',
+        blocks: 'flow ไม่มีสาขาวงเงินเกินเพดาน — งานเครนใหญ่มีโอกาสเกินจริง',
+        role: 'ไม่มีใน flow — ต้องเคาะว่า VMS+ แค่ส่งต่อและติดตามสถานะ หรือต้องพักงานรอ'
+      },
+      {
+        id: 'admin', g: 'off', name: 'ผู้ดูแลระบบส่วนกลาง', full: 'ที่มา: โค้ดจริง code-maintainD — role admin-super',
+        status: 'ใช้ได้',
+        does: 'เห็นทุกใบทั้งประเทศ (ไม่กรองเงื่อนไขใด ๆ) และเป็นผู้เปิด role ใหม่ให้ กบค./กรย.',
+        from: 'ไม่อยู่ในเส้นงาน — เป็นชั้นผู้ดูแล',
+        to: 'ไม่อยู่ในเส้นงาน',
+        blocks: 'ไม่มีจุดอนุมัติ แต่เป็นผู้ปลดล็อกเรื่องที่ 1 ของหน้านี้',
+        role: '<b>admin-super</b> — มีอยู่จริงและใช้ได้'
+      },
+      {
+        id: 'region', g: 'off', name: 'ผู้ดูแลระดับเขต', full: 'คู่ขนานธรรมชาติของ กรย. ที่ทำงาน 12 เขต — แต่ flow ไม่ได้เรียกชื่อนี้',
+        status: 'ต้องแก้',
+        does: '<i>ควรจะ</i> เห็นงานซ่อมของรถในเขตตัวเอง — โค้ดเขียนเงื่อนไขกรอง bureau_ba รอไว้แล้ว',
+        from: 'ไม่อยู่ในเส้นงาน — เป็นชั้นการมองเห็น',
+        to: 'ไม่อยู่ในเส้นงาน',
+        blocks: 'ตั้งค่าสิทธิ์ผิด ทำให้เข้าไม่ได้เลย 10 โมดูล',
+        role: '<b>admin-region</b> — ต้องยืนยันว่า กรย. คือ role นี้หรือเป็น role ใหม่'
+      }
+    ];
+
+    const GROUPS = [
+      { id: 'owner', ic: 'apartment', name: 'หน่วยงานเจ้าของรถ', note: 'ต้นทางของเรื่อง และเป็นคนรอผล — รวม 44 จาก 129 เครื่องหมาย' },
+      { id: 'maint', ic: 'build', name: 'หน่วยซ่อมบำรุง', note: 'เจ้าของงานตั้งแต่คัดแยกจนปิดงาน — รวม 71 จาก 129 เครื่องหมาย และไม่มี role รองรับสักราย' },
+      { id: 'ext', ic: 'local_shipping', name: 'ภายนอก / หน่วยสนับสนุน', note: 'ไม่ได้อยู่ในสายบังคับบัญชา แต่งานเดินต่อไม่ได้ถ้าขาด — รวม 14 จาก 129 เครื่องหมาย' },
+      { id: 'off', ic: 'help', name: 'ยังไม่อยู่ใน flow', note: 'ถืออำนาจจริงแต่ flow-กบค. F1–F7 ไม่ได้วาดไว้ — เป็นช่องว่างของ flow ต้นทาง ไม่ใช่ของระบบ' }
+    ];
+
+    const TOTAL_STEPS = 66;
+    const BCLASS = { 'ต้องแก้': 'b-out', 'ต้องเคาะ': 'b-low', 'ใช้ได้': 'b-ok' };
+    const total = s => s.act === undefined ? null : s.act + s.appr + s.see + s.notify;
+
+    /* ── ผังใครเป็นใคร ── */
+    const board = document.getElementById('board');
+    const row = (ic, k, v) => '<div class="rrow"><span class="ms">' + ic + '</span>' +
+      '<span class="rk">' + k + '</span><span class="rv">' + v + '</span></div>';
+    GROUPS.forEach(g => {
+      const cards = SH.filter(s => s.g === g.id).map(s => {
+        const n = total(s);
+        const steps = n === null
+          ? '<span class="badge b-neutral">ไม่มีใน flow</span>'
+          : '<span class="badge b-neutral">' + n + ' / 66 ขั้น</span>';
+        return '<div class="card">' +
+          '<div class="rhead"><b>' + s.name + '</b>' + steps +
+          '<span class="ml-auto"><span class="badge ' + BCLASS[s.status] + '">' + s.status + '</span></span></div>' +
+          '<div class="rfull">' + s.full + '</div>' +
+          row('assignment', 'ทำอะไร', s.does) +
+          row('call_received', 'รับจาก', s.from) +
+          row('call_made', 'ส่งต่อ', s.to) +
+          row('block', 'บล็อกงาน', s.blocks) +
+          row('key', 'role', s.role) +
+          '</div>';
+      }).join('');
+      board.insertAdjacentHTML('beforeend',
+        '<div class="gband"><span class="ms">' + g.ic + '</span><b>' + g.name + '</b>' +
+        '<span class="gnote">' + g.note + '</span></div>' +
+        '<div class="board">' + cards + '</div>');
+    });
+
+    /* ── แถบสัดส่วนการมีส่วนร่วม ── */
+    const bars = document.getElementById('bars');
+    /* เฉพาะ 7 บทบาทที่อยู่ในตาราง F1–F7 — อีก 4 รายอยู่นอก flow จึงไม่มีตัวเลขให้นับ */
+    SH.filter(s => total(s) !== null).sort((a, b) => total(b) - total(a)).forEach(s => {
+      const n = total(s), pct = Math.round(n / TOTAL_STEPS * 100);
+      const seg = (v, k) => v ? '<i class="' + k + '" style="width:' + (v / TOTAL_STEPS * 100) + '%"></i>' : '';
+      bars.insertAdjacentHTML('beforeend',
+        '<div class="bname">' + s.name + '</div>' +
+        '<div class="bar" title="' + s.name + ' — ' + n + ' ครั้งจาก 66 ขั้น">' +
+        seg(s.act, 'k-act') + seg(s.appr, 'k-appr') + seg(s.see, 'k-see') + seg(s.notify, 'k-not') +
+        '</div>' +
+        '<div class="bnum"><b>' + n + '</b> / 66 · ' + pct + '%</div>');
+    });
+
+    /* ── เส้นทางเดินของใบแจ้งซ่อม ── */
+    const CHAIN = [
+      { t: 'node', ic: 'engineering', name: 'ช่าง / คนใช้รถ', sub: 'แจ้งปัญหาเข้าระบบ — ใบได้เลขที่' },
+      { t: 'link', txt: '① ใบแจ้งซ่อม' },
+      { t: 'gate', ic: 'approval', name: 'หัวหน้าหน่วยงาน — อนุมัติใบแจ้งซ่อม', sub: 'AC-7 · ผูกกับงบหน่วยงาน จึงต้องผ่านหัวหน้าก่อน', tag: 'บล็อก', cls: 'b-low' },
+      { t: 'link', txt: '② ใบที่อนุมัติแล้ว' },
+      { t: 'gate', ic: 'call_split', name: 'กรย. — คัดแยกช่องทางซ่อม 3 ทาง', sub: 'UC-03.1 · UC-05.1 · ไม่มีเส้นปฏิเสธใน flow', tag: 'บล็อก', cls: 'b-low' },
+      {
+        t: 'branch', items: [
+          { ic: 'store', name: '③ ซ่อมอู่ → อู่ภายนอก', sub: 'เจ้าของรถขับรถไปเอง · UC-03.2–03.3' },
+          { ic: 'handyman', name: '④ กรย. ซ่อมเอง → ปิดงาน', sub: 'เบิกอะไหล่ → ซ่อม → บันทึกประวัติ · UC-04.1–04.4' }
+        ]
+      },
+      { t: 'link', txt: '⑤ ส่งต่อ กบค.' },
+      { t: 'gate', ic: 'inbox', name: 'กบค. — รับเรื่อง / ส่งกลับ', sub: 'UC-06.1 · ส่งกลับไปหาใคร ยังไม่เคาะ (เส้น ⑥)', tag: 'บล็อก', cls: 'b-low' },
+      { t: 'link', txt: '⑦ โทรหาหน้างานวิเคราะห์อาการ · ⑧⑨ เบิก/รออะไหล่จากคลัง · ⑩ นัดรับรถ + ใบตรวจสภาพ' },
+      { t: 'gate', soft: true, ic: 'thumb_up', name: 'ช่าง / คนใช้รถ — กดรับทราบอาการ + อะไหล่ที่เพิ่ม', sub: 'UC-17.5 · ไม่กดแล้วบล็อกปุ่ม “ซ่อมเสร็จสิ้น” ไหม ยังไม่เคาะ', tag: 'ยังไม่เคาะ', cls: 'b-low' },
+      { t: 'link', txt: '⑫ คืนอะไหล่เข้าคลัง · ⑬ ส่งผลซ่อม + ประวัติ + SUM ต้นทุน' },
+      { t: 'gate', ic: 'gavel', name: 'ผบ. กบค. — อนุมัติปิดงาน', sub: 'UC-20.3 · ไม่ผ่าน → ตีกลับให้ กบค. แก้แล้วส่งใหม่ (เส้น ⑭)', tag: 'บล็อก', cls: 'b-low' },
+      { t: 'link', txt: '⑮ Notification ปิดงานถึงทุกฝ่าย · ⑯ เจ้าของรถรับรถกลับ' },
+      { t: 'end', ic: 'task_alt', name: 'ปิดงาน', sub: 'ต้นทุนเข้าประวัติรถ · เจ้าของรถ · กรย. · กบค. ได้รับแจ้ง' }
+    ];
+    const chain = document.getElementById('chain');
+    CHAIN.forEach(s => {
+      if (s.t === 'link') {
+        chain.insertAdjacentHTML('beforeend',
+          '<div class="link"><span class="ms">south</span><span>' + s.txt + '</span></div>');
+      } else if (s.t === 'branch') {
+        chain.insertAdjacentHTML('beforeend', '<div class="branch">' + s.items.map(i =>
+          '<div class="node"><span class="ms">' + i.ic + '</span><span><b>' + i.name + '</b>' +
+          '<span class="nsub">' + i.sub + '</span></span></div>').join('') + '</div>');
+      } else {
+        const cls = s.t === 'gate' ? 'node gate' + (s.soft ? ' soft' : '') : (s.t === 'end' ? 'node endp' : 'node');
+        chain.insertAdjacentHTML('beforeend',
+          '<div class="' + cls + '"><span class="ms">' + s.ic + '</span><span><b>' + s.name + '</b>' +
+          '<span class="nsub">' + s.sub + '</span></span>' +
+          (s.tag ? '<span class="nright"><span class="badge ' + s.cls + '">' + s.tag + '</span></span>' : '') +
+          '</div>');
+      }
+    });
+
+    /* ── เรื่องที่ต้องตัดสินใจ ── */
+    const DEC = [
+      ['เปิด role ใหม่สำหรับ กบค. และ กรย. หรือใช้ role เดิม (admin-department / admin-region)?',
+        '43 จาก 66 ขั้นระบุว่า “ไม่มี role” — ทั้งโฟลว์ตั้งแต่ F2 เป็นต้นไปยังไม่มีเจ้าของสิทธิ์', 'กฟภ. เจ้าของระบบ + กบค. + ทีมพัฒนา'],
+      ['ยึด flow ต้นทาง หรือ AC-7? — จุดอนุมัติใบแจ้งซ่อมมีจริงไหม',
+        'flow ของ กบค. มี 6 บทบาท ไม่มีหัวหน้าหน่วยงานผู้แจ้งเลย แต่ AC-7 บอกว่าใบไม่เดินจนกว่าจะอนุมัติ — ขัดกันที่ประตูแรก', 'กฟภ. เจ้าของโฟลว์'],
+      ['ผู้บังคับบัญชาของ กบค. คือตำแหน่งไหน?',
+        'flow ต้นทางจดว่า “ใช่ไหม??” — ยังไม่ยืนยันตัวผู้อนุมัติปิดงาน ซึ่งเป็นคนบล็อกปลายทางทั้งเส้น', 'กบค.'],
+      ['คลังอะไหล่อยู่ระบบไหน — VMS+ / SAP / ระบบคลังแยก?',
+        '8 ขั้นค้างเพราะไม่มีแหล่งข้อมูล และเป็นตัวกำหนดว่า F4 ทั้งก้อนจะสร้างหน้าจอเองหรือแค่ดึงข้อมูลมาแสดง', 'กบค. + เจ้าของระบบคลัง'],
+      ['UC-17.5 ถ้าเจ้าของรถไม่กดรับทราบอาการเพิ่ม จะบล็อกปุ่ม “ซ่อมเสร็จสิ้น” ไหม?',
+        'ตัดสินว่าช่าง/คนใช้รถเป็นแค่ผู้รับแจ้ง หรือเป็นประตูอีกบานที่หยุดงานได้ — เปลี่ยนทั้งการออกแบบหน้าจอฝั่งผู้แจ้ง', 'กบค. + หน่วยงานเจ้าของรถ'],
+      ['จุดอนุมัติวงเงินซ่อม (≤ 500,000 บาท = ผจก.กอง · เกินนั้น = e-GP) แทรกตรงไหนของโฟลว์?',
+        'โฟลว์ F1–F7 ไม่มีจุดอนุมัติวงเงินเลย ทั้งที่ UC-06.4 ประเมินราคาไปแล้ว — ถ้าต้องมี ขอบเขตงานขยาย', 'ผจก.กอง + กบค. + กองจัดซื้อ'],
+      ['กบค. ควรเห็นใบแจ้งซ่อมกว้างแค่ไหน — ทั้งประเทศ / เขต / เฉพาะที่รับผิดชอบ?',
+        'กำหนดว่าจะ reuse เงื่อนไขกรองที่มีอยู่ได้ไหม หรือต้องเขียนชั้นกรองใหม่', 'กบค.'],
+      ['ผู้ดูแลระดับเขตควรเห็นงานซ่อมในเขตตัวเองไหม?',
+        'ตอนนี้ตั้งค่าสิทธิ์ผิดทำให้เข้าไม่ได้เลย 10 โมดูล ทั้งที่เขียนเงื่อนไขกรองรอไว้แล้ว — ถ้าตอบว่าควร แก้ได้เลย', 'กฟภ. เจ้าของระบบ'],
+      ['อู่ภายนอกเข้าระบบได้ไหม — ถ้าไม่ได้ ใครคีย์แทน?',
+        'UC-03.3 ให้อู่บันทึกการนำรถเข้า ถ้าอู่ไม่มี account ต้องย้ายงานนี้ไปที่ กรย. หรือเจ้าของรถ', 'กรย. + กบค.'],
+      ['เมื่อ กบค. ส่งเรื่องกลับที่ UC-06.1 เรื่องไปหาใคร — กรย. หรือผู้สร้างใบ?',
+        'เป็นเส้นเดียวในแผนที่ที่ไม่มีปลายทาง ทำให้ใบมีโอกาสหายจากระบบ', 'กรย. + กบค.']
+    ];
+    document.getElementById('decisions').innerHTML =
+      '<thead><tr><th style="width:44px">#</th><th>คำถาม</th><th>ทำไมต้องตอบก่อน</th><th>ใครเป็นคนตอบ</th></tr></thead><tbody>'
+      + DEC.map((r, i) => '<tr><td class="num">' + (i + 1) + '</td><td class="cell-key">' + r[0] + '</td><td>' + r[1] +
+        '</td><td>' + r[2] + '</td></tr>').join('') + '</tbody>';
+  </script>
+</body>
+
+</html>
