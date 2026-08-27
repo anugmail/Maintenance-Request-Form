@@ -390,8 +390,12 @@ function openMaintExcludeModal(vehicleId, plateLabel) {
 
 // Modal เตือนก่อนไปเฟส 6 (คำนวณต้นทุน) ตอนตรวจสภาพก่อนซ่อมยังไม่ครบทุกคัน — เจ้าของงานสั่ง 26 ส.ค. 2569
 // ไม่บล็อกเด็ดขาด (ปุ่ม "ไปต่อ" ยังกดผ่านได้) แค่เตือน + เสนอทางลัดกลับไปตรวจให้ครบก่อน
-function openInspectIncompleteModal(count, q, onProceed) {
+// opts.question/opts.proceedLabel ปรับข้อความ/ปุ่มยืนยันได้ตามจุดที่เรียก (27 ส.ค. 2569 — เพิ่มจุดเรียกที่ 2
+// คือปุ่ม "ส่งอนุมัติปิดแผนไตรมาส" ในเฟส 6 ซึ่งข้อความต้องพูดถึงการส่งอนุมัติ ไม่ใช่การไปขั้นคำนวณต้นทุน)
+function openInspectIncompleteModal(count, q, onProceed, opts = {}) {
   const host = $('maintModal');
+  const question = opts.question || 'จะไปขั้นคำนวณต้นทุนต่อเลยไหม?';
+  const proceedLabel = opts.proceedLabel || 'ไปต่อ — คำนวณต้นทุน';
   host.innerHTML = `
     <div class="modal-overlay" id="inspectWarnOverlay">
       <div class="modal">
@@ -400,10 +404,10 @@ function openInspectIncompleteModal(count, q, onProceed) {
           <button type="button" class="modal-close" id="inspectWarnClose"><span class="ms">close</span></button>
         </div>
         <div class="sub">ยังมีรถ <b>${count}</b> คันของ<b>${esc(MYD.quarterLabel(q))}</b>ที่ตรวจสภาพก่อนซ่อมยังไม่ครบ
-          (ยังไม่ได้ลงนามรับมอบครบ 2 ฝั่ง หรือยังตอบไม่ครบทุกรายการตรวจ) — จะไปขั้นคำนวณต้นทุนต่อเลยไหม?</div>
+          (ยังไม่ได้ลงนามรับมอบครบ 2 ฝั่ง หรือยังตอบไม่ครบทุกรายการตรวจ) — ${esc(question)}</div>
         <div class="modal-foot">
           <button type="button" class="btn btn-g" id="inspectWarnBack"><span class="ms">arrow_back</span> กลับไปตรวจสภาพก่อน</button>
-          <button type="button" class="btn btn-p" id="inspectWarnProceed">ไปต่อ — คำนวณต้นทุน</button>
+          <button type="button" class="btn btn-p" id="inspectWarnProceed">${esc(proceedLabel)}</button>
         </div>
       </div>
     </div>`;
@@ -424,6 +428,8 @@ function openInspectIncompleteModal(count, q, onProceed) {
 // รวมช่องกรอกต้นทุน (เบี้ยเลี้ยง/ที่พัก/เดินทาง) เข้ามาด้วย (26 ส.ค. 2569 — เจ้าของงานสั่งย้ายมาจากเฟส 6
 // คำนวณต้นทุน) เพราะเป็นข้อมูลที่กรอกตอนปิดงานเช่นเดียวกับเช็คอะไหล่ · เฟส 6 เหลือแค่แสดงผลรวมอ่านอย่างเดียว
 // ยังไม่มีส่วนอื่นของหน้ารายงาน (ตรวจสภาพการทำงาน · ผลตรวจน้ำมัน · อนุมัติปิดงาน) — รอออกแบบเพิ่ม
+// แยกแสดง/กรอกรายไตรมาส (27 ส.ค. 2569 — เจ้าของงานสั่งให้เห็นแค่รถของไตรมาสที่กำลังบำรุงอยู่ เหมือนขั้น
+// ตรวจสภาพก่อนซ่อมกับคำนวณต้นทุน) ใช้ COST.q ตัวเดียวกับเฟส 6 เพราะเป็น "ไตรมาสที่กำลังปิดงานอยู่" ตัวเดียวกัน
 function renderReport() {
   const master = MYD.loadMaster();
   const byId = new Map(master.vehicles.map(v => [v.id, v]));
@@ -431,7 +437,19 @@ function renderReport() {
   // บำรุงรักษา ดู MYD.inspectionDone)
   const joined = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
   const received = joined.filter(id => MYD.inspectionDone(PLAN, id));
-  const ids = received.filter(id => !MYD.maintExcluded(PLAN, id));
+  const all = received.filter(id => !MYD.maintExcluded(PLAN, id));
+  if (!QUARTERS.some(q => q.q === COST.q)) COST.q = 'Q1';
+
+  // แท็บไตรมาส — ป้าย sg-sub บอกช่วงเดือนของไตรมาสนั้น
+  const qSeg = QUARTERS.map(q => {
+    const qIds = all.filter(id => MYD.bucketOf(PLAN, id) === q.q);
+    return `<div class="sg reportQSeg ${COST.q === q.q ? 'sel' : ''}" data-q="${q.q}">
+      ${esc(MYD.quarterLabel(q.q))} · ${qIds.length} คัน
+      <div class="sg-sub">${esc(q.months)}</div>
+    </div>`;
+  }).join('');
+
+  const ids = all.filter(id => MYD.bucketOf(PLAN, id) === COST.q);
 
   const rows = ids.map(id => {
     const v = byId.get(id);
@@ -501,7 +519,6 @@ function renderReport() {
     return `<tr>
       <td><b>${esc(v.plate)}</b><div class="cell-sub">${esc(v.brand)}</div></td>
       <td>${esc(v.ownerDept)}</td>
-      <td>${esc(MYD.quarterLabel(MYD.bucketOf(PLAN, id)) || '—')}</td>
       <td class="num">${numInput(id, 'perDiem', perDiem)}</td>
       <td class="num">${numInput(id, 'lodging', lodging)}</td>
       <td class="num">${numInput(id, 'travel', travel)}</td>
@@ -514,9 +531,14 @@ function renderReport() {
   $('phase').innerHTML = `
     <div class="card">
       <div class="sect">จัดทำรายงาน</div>
-      <div class="sub">รถที่ผ่านเฟส 4 ดำเนินการบำรุงรักษามาแล้ว</div>
+      <div class="sub">รถที่ผ่านเฟส 4 ดำเนินการบำรุงรักษามาแล้ว — ทำทีละไตรมาสตามรอบที่กำลังปิดงานอยู่</div>
       <div class="note note-info"><span class="ms">science</span>
         <div>หน้านี้มีแค่ส่วนตรวจอะไหล่กับคำนวณต้นทุน — ส่วนตรวจสภาพการทำงาน/ผลตรวจน้ำมัน/อนุมัติปิดงาน ยังไม่ได้ทำในต้นแบบ</div></div>
+      ${all.length ? `
+      <div class="f" style="margin-bottom:14px">
+        <label>เลือกไตรมาสที่จะทำรายงาน</label>
+        <div class="seg">${qSeg}</div>
+      </div>
       ${ids.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th></tr></thead>
         <tbody>${rows}</tbody></table></div>
@@ -528,12 +550,12 @@ function renderReport() {
         <div class="sect" style="margin-top:22px">คำนวณต้นทุน</div>
         <div class="sub">กรอกค่าเบี้ยเลี้ยง/ที่พัก/เดินทางที่จัดสรรจริงต่อคันได้ — แยกจากยอดใบเดินทางที่กรอกไว้ตอนเฟส 2</div>
         <div class="tblwrap"><table class="tbl">
-          <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>ไตรมาส</th>
+          <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th>
             <th class="num">ค่าเบี้ยเลี้ยง (บาท)</th><th class="num">ค่าที่พัก (บาท)</th>
             <th class="num">ค่าเดินทาง (บาท)</th><th class="num">รวม (บาท)</th></tr></thead>
           <tbody>${costRows}</tbody>
           <tfoot><tr>
-            <td colspan="3" style="${totalCellStyle}"><b>ต้นทุนทั้งหมด</b></td>
+            <td colspan="2" style="${totalCellStyle}"><b>ต้นทุน${esc(MYD.quarterLabel(COST.q))}</b></td>
             <td class="num" style="${totalCellStyle}" id="costSumPerDiem">${sumPerDiem.toLocaleString('th-TH')}</td>
             <td class="num" style="${totalCellStyle}" id="costSumLodging">${sumLodging.toLocaleString('th-TH')}</td>
             <td class="num" style="${totalCellStyle}" id="costSumTravel">${sumTravel.toLocaleString('th-TH')}</td>
@@ -541,6 +563,7 @@ function renderReport() {
           </tr></tfoot></table></div>
         <div class="note note-warn"><span class="ms">help</span>
           <div>เงื่อนไขการตัดงบประมาณเป็นยังไง เลือกการตัดงบประมาณอะไรได้บ้าง</div></div>`
+        : `<div class="empty">ไม่มีรถของ${esc(MYD.quarterLabel(COST.q))}</div>`}`
         : '<div class="empty">ยังไม่มีรถที่เข้าเกณฑ์ — กลับไปเฟส 4 ดำเนินการบำรุงรักษาก่อน</div>'}
       <div class="actions" style="justify-content:space-between">
         <button class="btn btn-g" id="btnBackToInspect"><span class="ms">arrow_back</span> กลับไปเลือกรถตรวจสภาพก่อนซ่อม</button>
@@ -554,6 +577,11 @@ function renderReport() {
     INSP.vehicleId = null;
     goPhase('inspection');
   });
+
+  document.querySelectorAll('.reportQSeg').forEach(sg => sg.addEventListener('click', () => {
+    COST.q = sg.dataset.q;
+    renderReport();
+  }));
 
   document.querySelectorAll('[data-parts-complete]').forEach(el => el.addEventListener('change', e => {
     const vid = el.dataset.partsComplete;
@@ -591,9 +619,10 @@ function renderReport() {
     $('costGrandTotal').textContent = (tPerDiem + tLodging + tTravel).toLocaleString('th-TH');
   }));
 
-  // "ถัดไป — คำนวณต้นทุน" เตือนก่อนถ้าไตรมาสที่กำลังจะไปดู (COST.q — แท็บของเฟส 6) ยังตรวจสภาพก่อนซ่อม
-  // ไม่ครบ (26 ส.ค. 2569 · ปรับ 26 ส.ค. 2569 อีกรอบ: เดิมเช็คทั้งแผน 4 ไตรมาส ตอนนี้เช็คแค่ไตรมาสเดียว
-  // พอ เพราะคำนวณต้นทุนก็ดูทีละไตรมาสอยู่แล้ว) — เกณฑ์ความครบใช้ MYD.inspectionDone เหมือนหน้าตรวจสภาพเฟส 3
+  // "ถัดไป — คำนวณต้นทุน" เตือนก่อนถ้าไตรมาสที่กำลังจะไปดู (COST.q — แท็บเดียวกับที่เลือกอยู่ในหน้านี้
+  // และแท็บของเฟส 6) ยังตรวจสภาพก่อนซ่อมไม่ครบ (26 ส.ค. 2569 · ปรับ 26 ส.ค. 2569 อีกรอบ: เดิมเช็คทั้งแผน
+  // 4 ไตรมาส ตอนนี้เช็คแค่ไตรมาสเดียวพอ เพราะคำนวณต้นทุนก็ดูทีละไตรมาสอยู่แล้ว) — เกณฑ์ความครบใช้
+  // MYD.inspectionDone เหมือนหน้าตรวจสภาพเฟส 3
   $('btnPhaseNext')?.addEventListener('click', () => {
     if (!QUARTERS.some(q => q.q === COST.q)) COST.q = 'Q1';
     const qIds = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === COST.q);
@@ -705,12 +734,26 @@ function renderCost() {
     renderCost();
   }));
 
-  $('btnSendCloseQ')?.addEventListener('click', () => {
+  // ส่งอนุมัติปิดแผนไตรมาส — เตือนก่อนถ้ารถของไตรมาสนี้ตรวจสภาพก่อนซ่อมยังไม่ครบ (27 ส.ค. 2569 — เกณฑ์/modal
+  // เดียวกับปุ่ม "ถัดไป" ของเฟส 5 จัดทำรายงาน ดู openInspectIncompleteModal · กันส่งอนุมัติปิดงบไปทั้งที่ยังมี
+  // รถค้างตรวจสภาพอยู่ ไม่ใช่ block เด็ดขาด เพราะยังมีเคสที่ต้องส่งไปก่อนแล้วตามแก้ทีหลัง)
+  const sendCloseQ = () => {
     MYD.requestCloseApprovalQuarter(PLAN, COST.q, nowTh());
     MYD.savePlan(PLAN);
     toast(`ส่งอนุมัติปิดแผน${MYD.quarterLabel(COST.q)}แล้ว`);
     renderStepper();
     renderCost();
+  };
+  $('btnSendCloseQ')?.addEventListener('click', () => {
+    const notInspected = qIds.filter(id => !MYD.inspectionDone(PLAN, id)).length;
+    if (notInspected) {
+      openInspectIncompleteModal(notInspected, COST.q, sendCloseQ, {
+        question: 'จะส่งอนุมัติปิดแผนไตรมาสนี้ต่อเลยไหม?',
+        proceedLabel: 'ส่งอนุมัติปิดแผนต่อ',
+      });
+      return;
+    }
+    sendCloseQ();
   });
 }
 
