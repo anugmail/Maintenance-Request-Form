@@ -1047,11 +1047,22 @@ const MYD = {
   },
 
   // ตรวจครบ = ทุกรายการเลือก มี/ไม่มี แล้ว และลงนามครบทั้งสองฝั่ง
+  // ใช้เป็นเกณฑ์ "พร้อมปิดงาน" ของเฟส 5 จัดทำรายงาน/เฟส 6 คำนวณต้นทุน — ไม่ใช้ที่เฟส 4 อีกต่อไป
+  // (27 ส.ค. 2569 — เจ้าของงานสั่งแยกเกณฑ์ เพราะรถลงมือบำรุงรักษาได้ทันทีที่รับมอบตัวรถแล้ว
+  // ไม่ต้องรอกรอกเอกสารตรวจสภาพให้ครบทุกข้อก่อน ดู inspectionReceived ด้านล่าง)
   inspectionDone(plan, vehicleId) {
     const f = (plan.inspections || {})[vehicleId];
     if (!f) return false;
     if (!f.signedDeliverAt || !f.signedReceiveAt) return false;
     return (f.items || []).length > 0 && (f.items || []).every(x => x.result === 'yes' || x.result === 'no');
+  },
+
+  // รับมอบตัวรถแล้ว = ลงนามครบทั้งสองฝั่ง ไม่บังคับตอบครบทุกรายการตรวจ — เกณฑ์ที่เฟส 4
+  // ดำเนินการบำรุงรักษาใช้ตัดสินว่ารถคันไหนขึ้นตารางได้แล้ว (27 ส.ค. 2569)
+  inspectionReceived(plan, vehicleId) {
+    const f = (plan.inspections || {})[vehicleId];
+    if (!f) return false;
+    return !!(f.signedDeliverAt && f.signedReceiveAt);
   },
 
   // ผู้ส่งมอบรถฝั่งหน่วยงานเจ้าของรถ — ⚠️ ข้อมูลจำลอง ของจริงต้อง join กับทะเบียนพนักงาน

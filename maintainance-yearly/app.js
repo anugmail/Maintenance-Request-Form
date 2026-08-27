@@ -232,16 +232,18 @@ let MAINT = { vehicleId: null };
 function renderMaintenance() {
   const master = MYD.loadMaster();
   const byId = new Map(master.vehicles.map(v => [v.id, v]));
-  // แสดงเฉพาะคันที่ "ตรวจสภาพก่อนซ่อมครบแล้ว" (เจ้าของงานสั่ง 26 ส.ค. 2569 — เข้มกว่าเดิมที่แค่ลงนาม
-  // รับมอบ 2 ฝั่งก็ขึ้นได้ ตอนนี้ต้องตอบครบทุกข้อตรวจด้วย ดู MYD.inspectionDone)
+  // แสดงเฉพาะคันที่ "ลงนามรับมอบตัวรถครบ 2 ฝั่งแล้ว" (เจ้าของงานสั่ง 27 ส.ค. 2569 — ผ่อนกลับจากเดิมที่
+  // ต้องตอบครบทุกข้อตรวจ 23 ข้อก่อนด้วย (26 ส.ค. 2569) เพราะลงมือบำรุงรักษาได้ทันทีที่รับมอบตัวรถแล้ว
+  // ไม่ต้องรอกรอกเอกสารตรวจสภาพให้ครบ ดู MYD.inspectionReceived · เฟส 5/6 ยังใช้เกณฑ์เดิม (MYD.inspectionDone)
+  // เพราะตอนปิดงานเอกสารตรวจสภาพต้องครบจริง)
   const joined = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
-  const received = joined.filter(id => MYD.inspectionDone(PLAN, id));
+  const received = joined.filter(id => MYD.inspectionReceived(PLAN, id));
   const waiting = joined.length - received.length;
   // คันที่กดลบออก (มีเหตุผลบันทึกไว้) — หายจากตารางทำงาน ไปขึ้นเป็นรายการเหตุผลด้านล่างแทน (25 ส.ค. 2569)
   const ids = received.filter(id => !MYD.maintExcluded(PLAN, id));
   const excluded = received.filter(id => MYD.maintExcluded(PLAN, id));
 
-  // ถ้าคันที่โฟกัสไว้ไม่อยู่ใน ids แล้ว (ตรวจไม่ครบ/ถูกลบออก) ให้ตกกลับไปโชว์รายการทั้งหมดแทนเงียบๆ
+  // ถ้าคันที่โฟกัสไว้ไม่อยู่ใน ids แล้ว (ยังไม่ได้ลงนามรับมอบ/ถูกลบออก) ให้ตกกลับไปโชว์รายการทั้งหมดแทนเงียบๆ
   const focusId = MAINT.vehicleId && ids.includes(MAINT.vehicleId) ? MAINT.vehicleId : null;
   const focusV = focusId ? byId.get(focusId) : null;
   const viewIds = focusV ? [focusId] : ids;
@@ -303,15 +305,15 @@ function renderMaintenance() {
         ? `<div class="note note-info"><span class="ms">filter_alt</span>
             <div>กำลังแสดงเฉพาะ <b>${esc(focusV.plate)} ${esc(focusV.brand)}</b> — คันที่เพิ่งตรวจสภาพก่อนซ่อมเสร็จ
               <button type="button" class="btn btn-t btn-sm" id="btnMaintShowAll" style="margin-left:8px">ดูรถทั้งหมด (${ids.length} คัน)</button></div></div>`
-        : `<div class="sub">แสดงเฉพาะรถที่<b>ตรวจสภาพก่อนซ่อมครบแล้ว</b> — รายละเอียดงานมาจากที่เลือกไว้
+        : `<div class="sub">แสดงเฉพาะรถที่<b>ลงนามรับมอบตัวรถครบ 2 ฝั่งแล้ว</b> (ยังไม่ต้องตอบครบทุกข้อตรวจก็ลงมือได้) — รายละเอียดงานมาจากที่เลือกไว้
             ตอนทำแผนเดินทาง (เฟส 2 · ขั้นที่ 1) แก้รายการงานได้ที่หน้านั้น — ที่นี่ติ๊กเมื่อทำเสร็จแล้ว</div>
           <div class="sub">พร้อมลงมือ <b>${ids.length}</b> จาก <b>${joined.length}</b> คัน${
             ids.length ? ' · ' + tally.map(x => `${esc(x.label)} <b>${x.n}</b> คัน`).join(' · ') : ''}${
             excluded.length ? ` · ลบออกแล้ว <b>${excluded.length}</b> คัน` : ''}</div>`}
       ${totalJobs ? `<div class="sub">ติ๊กเสร็จแล้ว <b id="maintDoneCount">${doneJobs}</b> จาก <b>${totalJobs}</b> งาน</div>` : ''}
       ${waiting && !focusV ? `<div class="note note-warn"><span class="ms">pending</span>
-        <div>อีก <b>${waiting}</b> คันยัง<b>ตรวจสภาพก่อนซ่อมไม่ครบ</b> จึงยังไม่ขึ้นที่นี่ —
-          กลับไปเฟส 3 เพื่อตรวจสภาพให้ครบก่อน</div></div>` : ''}
+        <div>อีก <b>${waiting}</b> คันยัง<b>ไม่ได้ลงนามรับมอบตัวรถครบ 2 ฝั่ง</b> จึงยังไม่ขึ้นที่นี่ —
+          กลับไปเฟส 3 เพื่อลงนามรับมอบให้ครบก่อน</div></div>` : ''}
       <div class="note note-info"><span class="ms">science</span>
         <div>หน้านี้ให้<b>ติ๊กงานที่ทำเสร็จ</b>ได้ — ส่วนการบันทึกผลงานหน้างานแบบละเอียด (รูปก่อน/หลัง · อะไหล่ที่ใช้จริง ·
           เลขไมล์/ชม.เครื่อง) ยังไม่ได้ทำในต้นแบบ</div></div>
