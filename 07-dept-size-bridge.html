@@ -19,7 +19,10 @@
     .lead { color: var(--gray-600); font-size: var(--fs-body); margin: 6px 0 22px; line-height: var(--lh) }
     .panel { background: #fff; border: 1px solid var(--gray-200); border-radius: var(--r-lg);
              box-shadow: var(--shadow-app); padding: 20px; margin-bottom: 22px }
-    .note { background: var(--warning-50); border: 1px solid var(--warning-200); border-radius: var(--r-md);
+    /* หน้านี้มี .note ของตัวเองมาก่อน components.css จะมี .note — ของกลางเป็น display:flex
+       ซึ่งทำให้ข้อความในกล่อง (ที่นี่เป็น inline ล้วน ไม่มีไอคอนลูก) ไม่ยอมหดตามจอ แล้วดันหน้าล้น
+       จึงต้องประกาศ display:block ทับให้ชัด ไม่ปล่อยให้ตกไปใช้ flex ของกลาง */
+    .note { display: block; background: var(--warning-50); border: 1px solid var(--warning-200); border-radius: var(--r-md);
             padding: 12px 14px; font-size: var(--fs-sm); color: var(--warning-700); line-height: var(--lh) }
     .note.info { background: var(--primary-25); border-color: var(--gray-200); color: var(--gray-700) }
     .note + .note { margin-top: 10px }
@@ -52,7 +55,11 @@
     .stat { flex: 1; min-width: 130px; border: 1px solid var(--gray-200); border-radius: var(--r-md); padding: 12px 14px }
     .stat b { display: block; font-size: var(--fs-h2); color: var(--primary-600); line-height: 1.2 }
     .stat span { font-size: var(--fs-xs); color: var(--gray-600) }
-    code { background: var(--gray-100); padding: 1px 6px; border-radius: 4px; font-size: 12px }
+    /* จอแคบ: <code> ในกล่องหมายเหตุยาวเกินจอแล้วดันหน้าล้นแนวนอน (มีมาก่อนหน้านี้)
+       ให้ตัดคำได้ และกันไม่ให้ inline element ตัวไหนกว้างเกินกล่องแม่ */
+    code { background: var(--gray-100); padding: 1px 6px; border-radius: 4px; font-size: 12px;
+           overflow-wrap: anywhere; max-width: 100% }
+    .note, .sub, .lead { overflow-wrap: anywhere }
     .cnt { font-size: var(--fs-sm); color: var(--gray-600); margin: 12px 0 8px }
     h2 { font-size: var(--fs-h2); margin: 0 0 4px }
     .sub { font-size: var(--fs-sm); color: var(--gray-600); margin-bottom: 14px; line-height: var(--lh) }
@@ -82,6 +89,12 @@
         <code>ท่าตูม</code>×2 · <code>ท่าเรือ</code>×2 · <code>เฉลิมพระเกียรติ</code>×3
         ในระดับ (เวอร์ชัน + จังหวัด + key) ไม่ซ้ำเลยสักแถว
       </div>
+      <div class="note info">
+        <b>คอลัมน์ <code>resource_code</code> = รหัสประเภทหน่วยงานทางการ</b> — คำนวณจาก (ระดับ + ขนาด) ตาม data dictionary ของ
+        <code>mas_department</code> · กฟจ. มีแค่ <code>104</code>=L และ <code>105</code>=S · กฟส. มี <code>111</code>=L
+        <code>112</code>=M <code>113</code>=S <code>114</code>=XS
+        <b>ไม่ได้แทน <code>dept_sap</code></b> เพราะเป็นรหัส<i>ประเภท</i> ไม่ใช่ PK รายหน่วยงาน — ใช้ช่วยตรวจและแคบตัวเลือกตอน join เท่านั้น
+      </div>
       <div class="note">
         <b>คอลัมน์ ✓ = ยืนยันชื่อแล้วหรือยัง</b> — <span class="vf Y">Y</span> เฉพาะระดับ กฟจ. ที่เทียบกับรายชื่อ 74 จังหวัดจริงแล้ว ·
         <span class="vf N">N</span> คือชื่ออำเภอที่ยังยืนยันสระไม่ได้
@@ -107,6 +120,13 @@
           <label class="lbl" for="sz">ขนาด</label>
           <select id="sz"></select>
         </div>
+        <div class="f">
+          <label class="lbl" for="cf">ความสอดคล้อง</label>
+          <select id="cf">
+            <option value="">ทุกแถว</option>
+            <option value="Y">เฉพาะแถวที่ขัดกับโครงสร้างทางการ</option>
+          </select>
+        </div>
         <div class="f wide">
           <label class="lbl" for="q">ค้นหา (จังหวัด / ชื่อหน่วยงาน / key)</label>
           <input type="search" id="q" placeholder="เช่น เชียงใหม่ หรือ สารภี">
@@ -126,7 +146,7 @@
           <thead>
             <tr>
               <th>dept_sap</th><th>ระดับ</th><th>เขต</th><th>จังหวัด</th>
-              <th>ชื่อหน่วยงาน</th><th>match_key</th><th>ขนาด</th><th>✓</th><th>หมายเหตุ</th>
+              <th>ชื่อหน่วยงาน</th><th>match_key</th><th>ขนาด</th><th>resource_code</th><th>✓</th><th>หมายเหตุ</th>
             </tr>
           </thead>
           <tbody id="rows"></tbody>
@@ -143,12 +163,28 @@
       <h2>สรุปขนาดตามระดับ</h2>
       <div class="sub">
         ขนาดเป็น <b>เกรดภายในระดับ ไม่ใช่สเกลเดียวทั้งองค์กร</b> — กฟจ. มีแค่ L กับ S ไม่มี XS เลย
-        ⇒ กฎ “XS ส่ง กบค. ไม่ได้” กัดได้เฉพาะชั้น กฟส.
+        ⇒ กฎ “XS ส่ง กบค. ไม่ได้” กัดได้เฉพาะชั้น กฟส.<br>
+        ข้อนี้เดิมสรุปจากผัง PDF อย่างเดียว · ตอนนี้ <b><code>resource_code</code> ทางการยืนยันตรงกัน</b>
+        (จังหวัดมีแค่ <code>104</code>/<code>105</code> · สาขามี <code>111</code>–<code>114</code>)
       </div>
       <div class="scroll" style="max-height:none">
         <table>
           <thead><tr><th>ระดับ</th><th>จำนวน</th><th>L</th><th>M</th><th>S</th><th>XS</th><th>สัดส่วน XS</th></tr></thead>
           <tbody id="bylv"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>แถวที่ขัดกับโครงสร้างทางการ</h2>
+      <div class="sub">
+        แถวที่แมป <code>resource_code</code> ไม่ได้ — ขนาดที่อ่านจากผัง PDF ไม่มีรหัสรองรับในโครงสร้างทางการ
+        <b>ต้องยืนยันกับ กฟภ. ก่อนใช้ตารางนี้ join จริง</b>
+      </div>
+      <div class="scroll" style="max-height:none">
+        <table>
+          <thead><tr><th>โครงสร้าง</th><th>ระดับ</th><th>เขต</th><th>จังหวัด</th><th>ชื่อหน่วยงาน</th><th>ขนาด</th><th>ทำไมถึงขัด</th></tr></thead>
+          <tbody id="cfx"></tbody>
         </table>
       </div>
     </div>
@@ -216,12 +252,13 @@
 
     function filtered() {
       var v = $('ver').value, g = $('reg').value, l = $('lv').value, z = $('sz').value,
-          q = $('q').value.trim().toLowerCase();
+          cf = $('cf').value, q = $('q').value.trim().toLowerCase();
       return ROWS.filter(function (r) {
         if (v && r.structure_version !== v) return false;
         if (g && r.region !== g) return false;
         if (l && r.dept_level !== l) return false;
         if (z && r.dept_size !== z) return false;
+        if (cf && r.size_conflict !== cf) return false;
         if (q && (r.province + ' ' + r.dept_name_display + ' ' + r.dept_name_raw + ' ' + r.match_key)
                  .toLowerCase().indexOf(q) < 0) return false;
         return true;
@@ -243,6 +280,7 @@
           '<td>' + esc(r.dept_name_display) + '</td>' +
           '<td class="k">' + esc(r.match_key) + '</td>' +
           '<td><span class="sz ' + esc(r.dept_size) + '">' + esc(r.dept_size) + '</span></td>' +
+          '<td class="k">' + (r.resource_code || '<span class="empty">ไม่มี</span>') + '</td>' +
           '<td><span class="vf ' + esc(r.name_verified) + '">' + esc(r.name_verified) + '</span></td>' +
           '<td class="nt">' + esc(r.note) + '</td></tr>';
       }).join('');
@@ -274,7 +312,20 @@
           '<td>' + (o.XS ? Math.round(100 * o.XS / o.n) + '%' : '<span class="nt">ไม่มีเลย</span>') + '</td></tr>';
       }).join('');
 
-      var up = ROWS.filter(function (r) { return r.note });
+      /* กรองด้วยรูปแบบข้อความจริง ไม่ใช่ "มี note" — เพราะแถวที่ขัดกับโครงสร้างทางการก็มี note เหมือนกัน */
+      var cx = ROWS.filter(function (r) { return r.size_conflict === 'Y' });
+      $('cfx').innerHTML = cx.map(function (r) {
+        var why = r.dept_level === 'กฟจ.'
+          ? 'ระดับจังหวัดมีแค่ L (104) และ S (105) — ไม่มีขนาด ' + esc(r.dept_size)
+          : 'ระดับ ' + esc(r.dept_level) + ' ไม่มีใน resource_code ทางการเลย (มีแค่ เขต / จังหวัด / สาขา)';
+        return '<tr><td>' + esc(VER_LABEL[r.structure_version] || r.structure_version) + '</td>' +
+          '<td>' + esc(r.dept_level) + '</td><td>' + esc(r.region) + '</td><td>' + esc(r.province) + '</td>' +
+          '<td>' + esc(r.dept_name_display) + '</td>' +
+          '<td><span class="sz ' + esc(r.dept_size) + '">' + esc(r.dept_size) + '</span></td>' +
+          '<td class="nt">' + why + '</td></tr>';
+      }).join('');
+
+      var up = ROWS.filter(function (r) { return /ยกระดับจาก/.test(r.note) });
       $('upg').innerHTML = up.map(function (r) {
         var m = /ยกระดับจาก (.+?) \(ขนาดเดิม (\w+)\)/.exec(r.note) || [, '', ''];
         return '<tr><td>' + esc(r.province) + '</td><td>' + esc(r.region) + '</td>' +
@@ -295,7 +346,7 @@
       fillSel('reg', uniq('region'), 'ทุกเขต');
       fillSel('lv', uniq('dept_level'), 'ทุกระดับ');
       fillSel('sz', ['L', 'M', 'S', 'XS'], 'ทุกขนาด');
-      ['ver', 'reg', 'lv', 'sz'].forEach(function (id) { $(id).addEventListener('change', render) });
+      ['ver', 'reg', 'lv', 'sz', 'cf'].forEach(function (id) { $(id).addEventListener('change', render) });
       $('q').addEventListener('input', render);
       summaries();
       render();

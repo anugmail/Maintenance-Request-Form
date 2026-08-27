@@ -31,6 +31,17 @@ def fold(s):
 
 VER = {'เดิม': ('2568-10-01', '2568-10-01'), 'ใหม่': ('2569-01-01', '2569-01-01')}
 
+# รหัสประเภทหน่วยงานทางการ (resource_code) — จาก data dictionary ของ mas_department
+# ขนาด L/M/S/XS ของ กฟฟ. เข้ารหัสอยู่ในตัว resource_code อยู่แล้ว
+#   กฟจ. มีแค่ 2 ขนาด: 104 = จังหวัด(L) · 105 = จังหวัด(S)   ← ไม่มี M และไม่มี XS
+#   กฟส. มี 4 ขนาด:   111 = สาขา(L) · 112 = สาขา(M) · 113 = สาขา(S) · 114 = สาขา(XS)
+# แถวที่แมปไม่ได้ = ขนาดที่ผังต้นทางอ่านมาขัดกับโครงสร้างทางการ -> ติดธง size_conflict
+RESOURCE_CODE = {
+    ('กฟจ.', 'L'): '104', ('กฟจ.', 'S'): '105',
+    ('กฟส.', 'L'): '111', ('กฟส.', 'M'): '112',
+    ('กฟส.', 'S'): '113', ('กฟส.', 'XS'): '114',
+}
+
 rows = list(csv.DictReader(io.open(SRC, encoding='utf-8-sig')))
 
 # เขต -> จังหวัด เอาจาก hierarchy-data.json ที่ทำไว้แล้ว (โครงสร้างใหม่) แล้วใช้กับทั้งสองเวอร์ชัน
@@ -57,11 +68,17 @@ for r in rows:
     else:                                        # ชื่อสาขา = ชื่ออำเภอ ยังยืนยันสระไม่ได้
         display, verified = name_raw, 'N'
 
+    res_code = RESOURCE_CODE.get((lv, r['ขนาด']), '')
+    conflict = '' if res_code else 'Y'
+
     note = ''
+    if conflict:
+        note = 'ไม่มี resource_code ทางการสำหรับ %s ขนาด %s' % (lv, r['ขนาด'])
     if ver == 'ใหม่' and r['ระดับ'] == 'กฟจ':
         prev = old_by_key.get((fold(prov_raw), fold('กฟส.เมือง' + prov_raw)))
         if prev:
-            note = 'ยกระดับจาก %s (ขนาดเดิม %s)' % (prev['หน่วยงาน'], prev['ขนาด'])
+            up = 'ยกระดับจาก %s (ขนาดเดิม %s)' % (prev['หน่วยงาน'], prev['ขนาด'])
+            note = (note + ' · ' + up) if note else up
 
     out.append({
         'dept_sap': '',
@@ -75,6 +92,8 @@ for r in rows:
         'match_key': fold(name_raw),
         'dept_size': r['ขนาด'],
         'name_verified': verified,
+        'resource_code': res_code,
+        'size_conflict': conflict,
         'note': note,
     })
 
@@ -84,7 +103,7 @@ out.sort(key=lambda d: (d['structure_version'], d['region'], d['province'],
 
 cols = ['dept_sap', 'structure_version', 'effective_date', 'dept_level', 'region',
         'province', 'dept_name_display', 'dept_name_raw', 'match_key', 'dept_size',
-        'name_verified', 'note']
+        'name_verified', 'resource_code', 'size_conflict', 'note']
 with io.open(DEST, 'w', encoding='utf-8-sig', newline='') as f:
     w = csv.DictWriter(f, fieldnames=cols)
     w.writeheader()
@@ -96,7 +115,12 @@ print('เขียน %s (%.0f KB) — %d แถว' % (os.path.basename(DEST),
 print('เวอร์ชัน :', collections.Counter(d['structure_version'] for d in out))
 print('ระดับ    :', collections.Counter(d['dept_level'] for d in out))
 print('เขตว่าง  :', sum(1 for d in out if not d['region']))
-print('ยกระดับ  :', sum(1 for d in out if d['note']))
+print('ยกระดับ  :', sum(1 for d in out if 'ยกระดับจาก' in d['note']))
+print('มี resource_code:', sum(1 for d in out if d['resource_code']),
+      '· ติดธง size_conflict:', sum(1 for d in out if d['size_conflict']))
+for d in out:
+    if d['size_conflict']:
+        print('   ขัดกับโครงสร้างทางการ:', d['dept_level'], d['dept_size'], d['dept_name_display'], '|', d['province'])
 dup = [k for k, c in collections.Counter(
     (d['structure_version'], d['province'], d['match_key']) for d in out).items() if c > 1]
 print('match_key ซ้ำในจังหวัดเดียวกัน:', len(dup), dup[:3])
