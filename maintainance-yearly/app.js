@@ -49,6 +49,8 @@ function phaseCompleteOf(plan, id) {
       (MYD.confirmResolved(plan, plan.selectedVehicleIds || []) && plan.partsRequisitioned === true);
   }
   if (id === 'travel') return plan.travelConfirmed === true;
+  // คำนวณต้นทุน (26 ส.ค. 2569) — ส่งอนุมัติครบทุกไตรมาสที่มีรถแล้วถือว่าเสร็จ ไม่ต้องรอผู้บังคับบัญชาอนุมัติกลับ
+  if (id === 'cost') return MYD.allQuartersCloseRequested(plan);
   return !!(plan.phaseDone || {})[id];
 }
 
@@ -183,7 +185,7 @@ function renderStepper() {
   }).join('')}</div>`;
 }
 
-function goPhase(id) {
+function goPhase(id, opts = {}) {
   if (!canGoPhase(id)) {
     toast('ต้องทำเฟสก่อนหน้าให้เสร็จก่อน ถึงจะเข้าเฟสนี้ได้');
     return;
@@ -191,6 +193,9 @@ function goPhase(id) {
   PLAN.phase = id;
   MYD.savePlan(PLAN);
   state.sub = 1;
+  // เข้าเฟสดำเนินการบำรุงรักษา ต่อจากตรวจสภาพคันเดียว → โฟกัสคันนั้น (26 ส.ค. 2569)
+  // ทางอื่นที่เข้าเฟสนี้ (คลิก stepper ตรงๆ) ไม่ส่ง opts.vehicleId มา จึงเห็นรถทั้งหมดตามปกติ
+  if (id === 'maintenance') MAINT.vehicleId = opts.vehicleId || null;
   renderStepper();
   renderPhaseBody();
   window.scrollTo({ top: 0 });
@@ -220,28 +225,38 @@ function renderPlaceholder(id) {
 // ================= เฟส 4 · ดำเนินการบำรุงรักษา =================
 // แสดง "รายละเอียดงาน" ที่เลือกไว้ตอนทำแผนเดินทาง (ขั้น 1 ของเฟส 2 · แผนเดินทาง) มาให้ช่างเห็นหน้างาน ติ๊กได้ทีละงาน
 // ยังไม่มีการบันทึกผลงานจริง — หน้านี้เป็นตัวส่งต่อข้อมูลอย่างเดียว
+// MAINT.vehicleId = โฟกัสรถคันเดียว — ตั้งจาก goPhase('maintenance', {vehicleId}) ตอนกด "เสร็จสิ้น" ใบตรวจสภาพ
+// ของคันนั้น (26 ส.ค. 2569) ให้เห็นแค่งานของคันที่เพิ่งตรวจ ไม่ใช่ทุกคันปนกัน · ล้างเองถ้าออกจากเฟสนี้ (ดู goPhase)
+let MAINT = { vehicleId: null };
+
 function renderMaintenance() {
   const master = MYD.loadMaster();
   const byId = new Map(master.vehicles.map(v => [v.id, v]));
-  // แสดงเฉพาะคันที่ "ลงนามรับมอบรถครบ 2 ฝั่งแล้ว" — ไม่ต้องตอบครบทุกข้อตรวจก็ขึ้นได้ (เจ้าของงานสั่ง 25 ส.ค. 2569)
+  // แสดงเฉพาะคันที่ "ตรวจสภาพก่อนซ่อมครบแล้ว" (เจ้าของงานสั่ง 26 ส.ค. 2569 — เข้มกว่าเดิมที่แค่ลงนาม
+  // รับมอบ 2 ฝั่งก็ขึ้นได้ ตอนนี้ต้องตอบครบทุกข้อตรวจด้วย ดู MYD.inspectionDone)
   const joined = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
-  const received = joined.filter(id => MYD.vehicleReceived(PLAN, id));
+  const received = joined.filter(id => MYD.inspectionDone(PLAN, id));
   const waiting = joined.length - received.length;
   // คันที่กดลบออก (มีเหตุผลบันทึกไว้) — หายจากตารางทำงาน ไปขึ้นเป็นรายการเหตุผลด้านล่างแทน (25 ส.ค. 2569)
   const ids = received.filter(id => !MYD.maintExcluded(PLAN, id));
   const excluded = received.filter(id => MYD.maintExcluded(PLAN, id));
 
-  // นับว่ามีรถกี่คันที่ต้องทำแต่ละงาน — ช่วยเตรียมของก่อนออกหน้างาน
+  // ถ้าคันที่โฟกัสไว้ไม่อยู่ใน ids แล้ว (ตรวจไม่ครบ/ถูกลบออก) ให้ตกกลับไปโชว์รายการทั้งหมดแทนเงียบๆ
+  const focusId = MAINT.vehicleId && ids.includes(MAINT.vehicleId) ? MAINT.vehicleId : null;
+  const focusV = focusId ? byId.get(focusId) : null;
+  const viewIds = focusV ? [focusId] : ids;
+
+  // นับว่ามีรถกี่คันที่ต้องทำแต่ละงาน — ช่วยเตรียมของก่อนออกหน้างาน (นับเฉพาะรถที่กำลังแสดงอยู่)
   const tally = MYD.TRIP_JOBS.map(j => ({
     label: j.label,
-    n: ids.filter(id => {
+    n: viewIds.filter(id => {
       const t = MYD.tripOfVehicle(PLAN, id);
       return t && MYD.tripJobsOf(t, id)[j.id];
     }).length,
   }));
 
   let doneJobs = 0, totalJobs = 0;
-  const rows = ids.map(id => {
+  const rows = viewIds.map(id => {
     const v = byId.get(id);
     if (!v) return '';
     const t = MYD.tripOfVehicle(PLAN, id);
@@ -283,23 +298,27 @@ function renderMaintenance() {
 
   $('phase').innerHTML = `
     <div class="card">
-      <div class="sect">ดำเนินการบำรุงรักษา</div>
-      <div class="sub">แสดงเฉพาะรถที่<b>ลงนามรับมอบรถครบ 2 ฝั่งแล้ว</b> (ไม่ต้องตอบครบทุกข้อตรวจก็ขึ้นได้) — รายละเอียดงานมาจากที่เลือกไว้
-        ตอนทำแผนเดินทาง (เฟส 2 · ขั้นที่ 1) แก้รายการงานได้ที่หน้านั้น — ที่นี่ติ๊กเมื่อทำเสร็จแล้ว</div>
-      <div class="sub">พร้อมลงมือ <b>${ids.length}</b> จาก <b>${joined.length}</b> คัน${
-        ids.length ? ' · ' + tally.map(x => `${esc(x.label)} <b>${x.n}</b> คัน`).join(' · ') : ''}${
-        excluded.length ? ` · ลบออกแล้ว <b>${excluded.length}</b> คัน` : ''}</div>
+      <div class="sect">ดำเนินการบำรุงรักษา${focusV ? ` — ${esc(focusV.plate)}` : ''}</div>
+      ${focusV
+        ? `<div class="note note-info"><span class="ms">filter_alt</span>
+            <div>กำลังแสดงเฉพาะ <b>${esc(focusV.plate)} ${esc(focusV.brand)}</b> — คันที่เพิ่งตรวจสภาพก่อนซ่อมเสร็จ
+              <button type="button" class="btn btn-t btn-sm" id="btnMaintShowAll" style="margin-left:8px">ดูรถทั้งหมด (${ids.length} คัน)</button></div></div>`
+        : `<div class="sub">แสดงเฉพาะรถที่<b>ตรวจสภาพก่อนซ่อมครบแล้ว</b> — รายละเอียดงานมาจากที่เลือกไว้
+            ตอนทำแผนเดินทาง (เฟส 2 · ขั้นที่ 1) แก้รายการงานได้ที่หน้านั้น — ที่นี่ติ๊กเมื่อทำเสร็จแล้ว</div>
+          <div class="sub">พร้อมลงมือ <b>${ids.length}</b> จาก <b>${joined.length}</b> คัน${
+            ids.length ? ' · ' + tally.map(x => `${esc(x.label)} <b>${x.n}</b> คัน`).join(' · ') : ''}${
+            excluded.length ? ` · ลบออกแล้ว <b>${excluded.length}</b> คัน` : ''}</div>`}
       ${totalJobs ? `<div class="sub">ติ๊กเสร็จแล้ว <b id="maintDoneCount">${doneJobs}</b> จาก <b>${totalJobs}</b> งาน</div>` : ''}
-      ${waiting ? `<div class="note note-warn"><span class="ms">pending</span>
-        <div>อีก <b>${waiting}</b> คันยัง<b>ไม่ได้ลงนามรับมอบรถครบ 2 ฝั่ง</b> จึงยังไม่ขึ้นที่นี่ —
-          กลับไปเฟส 3 เพื่อลงนามรับมอบให้ครบก่อน</div></div>` : ''}
+      ${waiting && !focusV ? `<div class="note note-warn"><span class="ms">pending</span>
+        <div>อีก <b>${waiting}</b> คันยัง<b>ตรวจสภาพก่อนซ่อมไม่ครบ</b> จึงยังไม่ขึ้นที่นี่ —
+          กลับไปเฟส 3 เพื่อตรวจสภาพให้ครบก่อน</div></div>` : ''}
       <div class="note note-info"><span class="ms">science</span>
         <div>หน้านี้ให้<b>ติ๊กงานที่ทำเสร็จ</b>ได้ — ส่วนการบันทึกผลงานหน้างานแบบละเอียด (รูปก่อน/หลัง · อะไหล่ที่ใช้จริง ·
           เลขไมล์/ชม.เครื่อง) ยังไม่ได้ทำในต้นแบบ</div></div>
-      ${excluded.length ? `<div class="note note-warn"><span class="ms">delete</span>
+      ${excluded.length && !focusV ? `<div class="note note-warn"><span class="ms">delete</span>
         <div><b>ลบออกจากแผนบำรุงรักษาแล้ว ${excluded.length} คัน</b>
           <div class="stack tight" style="margin-top:6px">${excludedList}</div></div></div>` : ''}
-      ${ids.length ? `<div class="tblwrap"><table class="tbl">
+      ${viewIds.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>รายละเอียดงาน</th><th>สถานที่บำรุงรักษา</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
         : `<div class="empty">${
@@ -321,6 +340,8 @@ function renderMaintenance() {
     MYD.savePlan(PLAN);
     if (doneCountEl) doneCountEl.textContent = document.querySelectorAll('[data-maint-v]:checked').length;
   }));
+
+  $('btnMaintShowAll')?.addEventListener('click', () => { MAINT.vehicleId = null; renderMaintenance(); });
 
   document.querySelectorAll('[data-maint-exclude]').forEach(btn => btn.addEventListener('click', () => {
     const id = btn.getAttribute('data-maint-exclude');
@@ -367,6 +388,37 @@ function openMaintExcludeModal(vehicleId, plateLabel) {
   });
 }
 
+// Modal เตือนก่อนไปเฟส 6 (คำนวณต้นทุน) ตอนตรวจสภาพก่อนซ่อมยังไม่ครบทุกคัน — เจ้าของงานสั่ง 26 ส.ค. 2569
+// ไม่บล็อกเด็ดขาด (ปุ่ม "ไปต่อ" ยังกดผ่านได้) แค่เตือน + เสนอทางลัดกลับไปตรวจให้ครบก่อน
+function openInspectIncompleteModal(count, q, onProceed) {
+  const host = $('maintModal');
+  host.innerHTML = `
+    <div class="modal-overlay" id="inspectWarnOverlay">
+      <div class="modal">
+        <div class="modal-head">
+          <h2>ตรวจสภาพก่อนซ่อมยังไม่ครบ</h2>
+          <button type="button" class="modal-close" id="inspectWarnClose"><span class="ms">close</span></button>
+        </div>
+        <div class="sub">ยังมีรถ <b>${count}</b> คันของ<b>${esc(MYD.quarterLabel(q))}</b>ที่ตรวจสภาพก่อนซ่อมยังไม่ครบ
+          (ยังไม่ได้ลงนามรับมอบครบ 2 ฝั่ง หรือยังตอบไม่ครบทุกรายการตรวจ) — จะไปขั้นคำนวณต้นทุนต่อเลยไหม?</div>
+        <div class="modal-foot">
+          <button type="button" class="btn btn-g" id="inspectWarnBack"><span class="ms">arrow_back</span> กลับไปตรวจสภาพก่อน</button>
+          <button type="button" class="btn btn-p" id="inspectWarnProceed">ไปต่อ — คำนวณต้นทุน</button>
+        </div>
+      </div>
+    </div>`;
+  const close = () => { host.innerHTML = ''; };
+  $('inspectWarnClose').addEventListener('click', close);
+  $('inspectWarnOverlay').addEventListener('click', e => { if (e.target.id === 'inspectWarnOverlay') close(); });
+  $('inspectWarnBack').addEventListener('click', () => {
+    close();
+    INSP.vehicleId = null;
+    INSP.q = q;   // พาไปแท็บไตรมาสเดียวกับที่เตือน ไม่ต้องไปหาเอง
+    goPhase('inspection');
+  });
+  $('inspectWarnProceed').addEventListener('click', () => { close(); onProceed(); });
+}
+
 // ================= เฟส 5 · จัดทำรายงาน =================
 // เช็คว่าใช้อะไหล่ที่เบิกไปครบหรือไม่ต่อคัน — ตรงกับ node D{ใช้อะไหล่ครบ?} ในผัง 05-เฟส4-จัดทำรายงาน.md (25 ส.ค. 2569)
 // รวมช่องกรอกต้นทุน (เบี้ยเลี้ยง/ที่พัก/เดินทาง) เข้ามาด้วย (26 ส.ค. 2569 — เจ้าของงานสั่งย้ายมาจากเฟส 6
@@ -375,8 +427,10 @@ function openMaintExcludeModal(vehicleId, plateLabel) {
 function renderReport() {
   const master = MYD.loadMaster();
   const byId = new Map(master.vehicles.map(v => [v.id, v]));
+  // แสดงเฉพาะคันที่ "ตรวจสภาพก่อนซ่อมครบแล้ว" (เจ้าของงานสั่ง 26 ส.ค. 2569 — เกณฑ์เดียวกับเฟส 4 ดำเนินการ
+  // บำรุงรักษา ดู MYD.inspectionDone)
   const joined = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
-  const received = joined.filter(id => MYD.vehicleReceived(PLAN, id));
+  const received = joined.filter(id => MYD.inspectionDone(PLAN, id));
   const ids = received.filter(id => !MYD.maintExcluded(PLAN, id));
 
   const rows = ids.map(id => {
@@ -488,10 +542,18 @@ function renderReport() {
         <div class="note note-warn"><span class="ms">help</span>
           <div>เงื่อนไขการตัดงบประมาณเป็นยังไง เลือกการตัดงบประมาณอะไรได้บ้าง</div></div>`
         : '<div class="empty">ยังไม่มีรถที่เข้าเกณฑ์ — กลับไปเฟส 4 ดำเนินการบำรุงรักษาก่อน</div>'}
-      <div class="actions">
+      <div class="actions" style="justify-content:space-between">
+        <button class="btn btn-g" id="btnBackToInspect"><span class="ms">arrow_back</span> กลับไปเลือกรถตรวจสภาพก่อนซ่อม</button>
         <button class="btn btn-p" id="btnPhaseNext">ถัดไป${nextPhaseLabel('report')}</button>
       </div>
     </div>`;
+
+  // ทางลัดกลับไปเฟส 3 (ตรวจสภาพก่อนซ่อม) หน้ารายการรถ — เผื่อกลับไปแก้/ดูใบตรวจของคันไหนเพิ่ม
+  // เคลียร์ INSP.vehicleId ก่อนเสมอ ไม่งั้นถ้าค้างจากรอบก่อนจะเด้งเข้าใบตรวจคันเดิมแทนหน้ารายการรถ
+  $('btnBackToInspect')?.addEventListener('click', () => {
+    INSP.vehicleId = null;
+    goPhase('inspection');
+  });
 
   document.querySelectorAll('[data-parts-complete]').forEach(el => el.addEventListener('change', e => {
     const vid = el.dataset.partsComplete;
@@ -529,19 +591,51 @@ function renderReport() {
     $('costGrandTotal').textContent = (tPerDiem + tLodging + tTravel).toLocaleString('th-TH');
   }));
 
-  $('btnPhaseNext')?.addEventListener('click', () => finishPhase('report'));
+  // "ถัดไป — คำนวณต้นทุน" เตือนก่อนถ้าไตรมาสที่กำลังจะไปดู (COST.q — แท็บของเฟส 6) ยังตรวจสภาพก่อนซ่อม
+  // ไม่ครบ (26 ส.ค. 2569 · ปรับ 26 ส.ค. 2569 อีกรอบ: เดิมเช็คทั้งแผน 4 ไตรมาส ตอนนี้เช็คแค่ไตรมาสเดียว
+  // พอ เพราะคำนวณต้นทุนก็ดูทีละไตรมาสอยู่แล้ว) — เกณฑ์ความครบใช้ MYD.inspectionDone เหมือนหน้าตรวจสภาพเฟส 3
+  $('btnPhaseNext')?.addEventListener('click', () => {
+    if (!QUARTERS.some(q => q.q === COST.q)) COST.q = 'Q1';
+    const qIds = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === COST.q);
+    const notInspected = qIds.filter(id => !MYD.inspectionDone(PLAN, id)).length;
+    if (notInspected) { openInspectIncompleteModal(notInspected, COST.q, () => finishPhase('report')); return; }
+    finishPhase('report');
+  });
 }
 
 // ================= เฟส 6 · คำนวณต้นทุน =================
 // อ่านอย่างเดียว (26 ส.ค. 2569 — เจ้าของงานสั่งย้ายช่องกรอกไปเฟส 5 จัดทำรายงานแล้ว) แสดงผลรวมต้นทุน
 // ต่อคันที่กรอกไว้จากเฟส 5 เท่านั้น ไม่มีช่องให้กรอกที่หน้านี้อีกต่อไป
+// แยกแสดงรายไตรมาส (26 ส.ค. 2569 — เจ้าของงานสั่งให้โชว์แค่รถของไตรมาสที่กำลังดูอยู่ เหมือนขั้นตรวจสภาพก่อนซ่อม
+// เพราะบำรุงรักษาทำทีละไตรมาสตามรอบจริง ไม่ใช่ดูทั้งปีปนกัน)
+let COST = { q: 'Q1' };
+
 function renderCost() {
   const master = MYD.loadMaster();
   const byId = new Map(master.vehicles.map(v => [v.id, v]));
   const ids = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
+  if (!QUARTERS.some(q => q.q === COST.q)) COST.q = 'Q1';
 
+  // รวมต้นทุนของแต่ละคัน — ใช้ทั้งบรรทัดสรุปทั้งปีด้านบน และป้ายท้ายแท็บของแต่ละไตรมาส
+  const costTotalOf = id => {
+    const c = MYD.vehicleCostOf(PLAN, id);
+    return (Number(c.perDiem) || 0) + (Number(c.lodging) || 0) + (Number(c.travel) || 0);
+  };
+  const grandAll = ids.reduce((sum, id) => sum + costTotalOf(id), 0);
+
+  // แท็บไตรมาส — ป้าย sg-sub บอกช่วงเดือน + ต้นทุนรวมของไตรมาสนั้น
+  const qSeg = QUARTERS.map(q => {
+    const qIds = ids.filter(id => MYD.bucketOf(PLAN, id) === q.q);
+    const qSum = qIds.reduce((sum, id) => sum + costTotalOf(id), 0);
+    return `<div class="sg costQSeg ${COST.q === q.q ? 'sel' : ''}" data-q="${q.q}">
+      ${esc(MYD.quarterLabel(q.q))} · ${qIds.length} คัน
+      <div class="sg-sub">${esc(q.months)}${qIds.length ? ` · ${qSum.toLocaleString('th-TH')} บาท` : ''}</div>
+    </div>`;
+  }).join('');
+
+  const qIds = ids.filter(id => MYD.bucketOf(PLAN, id) === COST.q);
   let sumPerDiem = 0, sumLodging = 0, sumTravel = 0;
-  const rows = ids.map(id => {
+  const rows = qIds.map(id => {
     const v = byId.get(id);
     if (!v) return '';
     const c = MYD.vehicleCostOf(PLAN, id);
@@ -552,7 +646,6 @@ function renderCost() {
     return `<tr>
       <td><b>${esc(v.plate)}</b><div class="cell-sub">${esc(v.brand)}</div></td>
       <td>${esc(v.ownerDept)}</td>
-      <td>${esc(MYD.quarterLabel(MYD.bucketOf(PLAN, id)) || '—')}</td>
       <td class="num">${perDiem.toLocaleString('th-TH')}</td>
       <td class="num">${lodging.toLocaleString('th-TH')}</td>
       <td class="num">${travel.toLocaleString('th-TH')}</td>
@@ -562,24 +655,29 @@ function renderCost() {
   const grandTotal = sumPerDiem + sumLodging + sumTravel;
   const totalCellStyle = 'background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:var(--fs-sm)';
 
-  const next = nextPhaseOf('cost');
-  const done = isPhaseComplete('cost');
+  // ส่งอนุมัติปิดแผนแยกรายไตรมาส (26 ส.ค. 2569) — กดส่งของไตรมาสที่กำลังดูอยู่ ไม่กระทบไตรมาสอื่น
+  const approval = MYD.closeApprovalOf(PLAN, COST.q);
 
   $('phase').innerHTML = `
     <div class="card">
       <div class="sect">คำนวณต้นทุน</div>
-      <div class="sub">รถในแผนนี้ทั้งหมด <b>${ids.length}</b> คัน — สรุปต้นทุนค่าเบี้ยเลี้ยง/ที่พัก/เดินทางต่อคัน</div>
+      <div class="sub">รถในแผนนี้ทั้งหมด <b>${ids.length}</b> คัน — ต้นทุนรวมทั้งปี <b>${grandAll.toLocaleString('th-TH')}</b> บาท</div>
       <div class="note note-info"><span class="ms">science</span>
         <div>หน้านี้แสดงผลรวมต้นทุนที่กรอกไว้จากเฟส 5 จัดทำรายงานเท่านั้น — แก้ตัวเลขได้ที่เฟสนั้น
-          ค่าจ้างเหมา (สายว่าจ้าง) และต้นทุนอะไหล่/น้ำมัน ยังไม่ได้ทำในต้นแบบ</div></div>
-      ${ids.length ? `<div class="stack">
+          ค่าจ้างเหมา (สายว่าจ้าง) และต้นทุนอะไหล่/น้ำมัน ยังไม่ได้ทำในต้นแบบ · ส่งอนุมัติปิดแผนแยกได้ทีละไตรมาส</div></div>
+      ${ids.length ? `
+      <div class="f" style="margin-bottom:14px">
+        <label>เลือกไตรมาสที่จะดู</label>
+        <div class="seg">${qSeg}</div>
+      </div>
+      ${qIds.length ? `<div class="stack">
         <div class="tblwrap"><table class="tbl">
-          <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>ไตรมาส</th>
+          <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th>
             <th class="num">ค่าเบี้ยเลี้ยง (บาท)</th><th class="num">ค่าที่พัก (บาท)</th>
             <th class="num">ค่าเดินทาง (บาท)</th><th class="num">รวม (บาท)</th></tr></thead>
           <tbody>${rows}</tbody>
           <tfoot><tr>
-            <td colspan="3" style="${totalCellStyle}"><b>ต้นทุนทั้งหมด</b></td>
+            <td colspan="2" style="${totalCellStyle}"><b>ต้นทุน${esc(MYD.quarterLabel(COST.q))}</b></td>
             <td class="num" style="${totalCellStyle}">${sumPerDiem.toLocaleString('th-TH')}</td>
             <td class="num" style="${totalCellStyle}">${sumLodging.toLocaleString('th-TH')}</td>
             <td class="num" style="${totalCellStyle}">${sumTravel.toLocaleString('th-TH')}</td>
@@ -587,17 +685,33 @@ function renderCost() {
           </tr></tfoot></table></div>
         <div class="note note-warn"><span class="ms">help</span>
           <div>เงื่อนไขการตัดงบประมาณเป็นยังไง เลือกการตัดงบประมาณอะไรได้บ้าง</div></div>
+        ${approval
+          ? `<div class="note ${approval.status === 'approved' ? 'note-ok' : 'note-info'}">
+              <span class="ms">${approval.status === 'approved' ? 'check_circle' : 'schedule'}</span>
+              <div>${approval.status === 'approved'
+                ? `ผู้บังคับบัญชา กบค. อนุมัติปิดแผน${esc(MYD.quarterLabel(COST.q))}แล้ว เมื่อ ${esc(approval.approvedAt)}`
+                : `ส่งอนุมัติปิดแผน${esc(MYD.quarterLabel(COST.q))}แล้ว เมื่อ ${esc(approval.requestedAt)} — รอผู้บังคับบัญชา กบค. อนุมัติ`}</div>
+            </div>`
+          : `<div class="actions">
+              <button class="btn btn-p" id="btnSendCloseQ"><span class="ms">send</span> ส่งอนุมัติปิดแผน${esc(MYD.quarterLabel(COST.q))}</button>
+            </div>`}
       </div>`
+        : `<div class="empty">ไม่มีรถของ${esc(MYD.quarterLabel(COST.q))}</div>`}`
         : '<div class="empty">ยังไม่มีรถในแผนนี้</div>'}
-
-      <div class="actions">
-        ${next
-          ? `<button class="btn btn-p" id="btnPhaseNext">ถัดไป — ${esc(next.label)}</button>`
-          : `<button class="btn btn-p" id="btnPhaseNext" ${done ? 'disabled' : ''}>${done ? 'ส่งอนุมัติปิดแผนแล้ว' : 'ส่งอนุมัติปิดแผน'}</button>`}
-      </div>
     </div>`;
 
-  $('btnPhaseNext')?.addEventListener('click', () => finishPhase('cost'));
+  document.querySelectorAll('.costQSeg').forEach(sg => sg.addEventListener('click', () => {
+    COST.q = sg.dataset.q;
+    renderCost();
+  }));
+
+  $('btnSendCloseQ')?.addEventListener('click', () => {
+    MYD.requestCloseApprovalQuarter(PLAN, COST.q, nowTh());
+    MYD.savePlan(PLAN);
+    toast(`ส่งอนุมัติปิดแผน${MYD.quarterLabel(COST.q)}แล้ว`);
+    renderStepper();
+    renderCost();
+  });
 }
 
 // ================= เฟส 3 · ตรวจสภาพก่อนซ่อม =================
@@ -779,7 +893,8 @@ function bindInspectForm(vehicleId, f) {
     PLAN.phaseDone.inspection = true;
     MYD.savePlan(PLAN);
     INSP.vehicleId = null;
-    if (nx) goPhase(nx.id); else { renderStepper(); renderInspection(); }
+    // ส่ง vehicleId ต่อไปด้วย — ถ้าเฟสถัดไปคือดำเนินการบำรุงรักษา จะโฟกัสแค่คันที่เพิ่งตรวจสภาพเสร็จ (26 ส.ค. 2569)
+    if (nx) goPhase(nx.id, { vehicleId }); else { renderStepper(); renderInspection(); }
     toast(left
       ? `บันทึกแล้ว — ยังตรวจไม่ครบอีก ${left} คัน${nx ? ' · ข้ามไป' + nx.label : ''}`
       : `ตรวจครบทุกคันแล้ว${nx ? ' — ไป' + nx.label : ''}`);
@@ -799,11 +914,9 @@ function finishPhase(id) {
   PLAN.phaseDone[id] = true;
   MYD.savePlan(PLAN);
   if (next) { goPhase(next.id); toast(`ผ่านเฟส ${PHASES[idx].no} แล้ว — ต่อที่ ${next.label}`); return; }
-  // เฟสสุดท้าย (คำนวณต้นทุน) — "ส่งอนุมัติปิดแผน" คือส่งคำขอให้ผู้บังคับบัญชา กบค. อนุมัติ ไม่ใช่ปิดแผนทันที
-  // ดูรายการรออนุมัติได้ที่ approve-close.html (เมนู "อนุมัติปิดแผน" ใน sidebar) · 25 ส.ค. 2569
-  PLAN.closeApproval = { status: 'pending', requestedAt: nowTh() };
-  MYD.savePlan(PLAN);
-  toast(`ส่งอนุมัติปิดแผนแล้ว — ครบทั้ง ${PHASES.length} เฟส`);
+  // เฟสสุดท้าย (คำนวณต้นทุน) จบด้วยการส่งอนุมัติปิดแผนรายไตรมาสในหน้าของมันเอง (renderCost) ไม่ใช่ปุ่มนี้
+  // เหลือ fallback ไว้เผื่อเฟสอื่นเป็นเฟสสุดท้ายในอนาคต (ยังไม่มีตอนนี้)
+  toast(`ทำเฟส ${PHASES[idx].no} เสร็จแล้ว — ครบทั้ง ${PHASES.length} เฟส`);
   renderStepper();
   renderPhaseBody();
 }

@@ -952,6 +952,35 @@ const MYD = {
     plan.vehicleCost[vehicleId][field] = value;
   },
 
+  // ================= ส่งอนุมัติปิดแผน — แยกรายไตรมาส (26 ส.ค. 2569) =================
+  // เจ้าของงานสั่งแยกส่งอนุมัติปิดแผนเป็นรายไตรมาส แทนที่จะส่งทั้งแผนทีเดียวเหมือนเดิม เพราะบำรุงรักษา
+  // ทำทีละไตรมาส งบก็ควรปิดได้ทีละไตรมาสตามรอบเดียวกัน · เดิม plan.closeApproval เป็นก้อนเดียวทั้งแผน
+  // plan.closeApprovalByQuarter = { [q]: { status:'pending'|'approved', requestedAt, approvedAt, approvedBy } }
+  closeApprovalOf(plan, q) {
+    return (plan.closeApprovalByQuarter || {})[q] || null;
+  },
+
+  requestCloseApprovalQuarter(plan, q, at) {
+    plan.closeApprovalByQuarter = plan.closeApprovalByQuarter || {};
+    plan.closeApprovalByQuarter[q] = { status: 'pending', requestedAt: at };
+  },
+
+  approveCloseQuarter(plan, q, by, at) {
+    plan.closeApprovalByQuarter = plan.closeApprovalByQuarter || {};
+    plan.closeApprovalByQuarter[q] = { ...(plan.closeApprovalByQuarter[q] || {}), status: 'approved', approvedAt: at, approvedBy: by };
+  },
+
+  // เฟส "คำนวณต้นทุน" ถือว่าเสร็จ (✓ ที่ stepper) เมื่อทุกไตรมาสที่มีรถอยู่จริงถูกส่งอนุมัติแล้ว — ไม่ต้อง
+  // รอผู้บังคับบัญชากดอนุมัติกลับมาก่อน (เหมือนเกณฑ์ ✓ ของเฟสอื่นที่นับงานฝั่ง กบค. เป็นหลัก)
+  allQuartersCloseRequested(plan) {
+    this.ensurePlanQuarters(plan);
+    return this.QUARTER_KEYS.every(q => {
+      const ids = (plan.byQuarter[q] || []).filter(id => this.isVehicleIn(plan, id));
+      if (!ids.length) return true;
+      return !!this.closeApprovalOf(plan, q);
+    });
+  },
+
   // งานที่ต้องทำจริงของคันนี้ (เฉพาะที่ติ๊กไว้ตอนทำแผนเดินทาง) — ใช้นับว่าติ๊กเสร็จไปกี่จากกี่งาน
   maintJobsFor(trip, vehicleId) {
     const jobs = this.tripJobsOf(trip, vehicleId);
@@ -1023,13 +1052,6 @@ const MYD = {
     if (!f) return false;
     if (!f.signedDeliverAt || !f.signedReceiveAt) return false;
     return (f.items || []).length > 0 && (f.items || []).every(x => x.result === 'yes' || x.result === 'no');
-  },
-
-  // รับมอบรถแล้ว = เซ็นลงนามครบ 2 ฝั่ง — ไม่ต้องตอบครบทุกข้อตรวจ
-  // (ใช้เป็นเกณฑ์ขึ้นหน้าดำเนินการบำรุงรักษา เฟส 4 · inspectionDone ยังไว้ใช้กับหน้าตรวจสภาพเฟส 3 เอง)
-  vehicleReceived(plan, vehicleId) {
-    const f = (plan.inspections || {})[vehicleId];
-    return !!(f && f.signedDeliverAt && f.signedReceiveAt);
   },
 
   // ผู้ส่งมอบรถฝั่งหน่วยงานเจ้าของรถ — ⚠️ ข้อมูลจำลอง ของจริงต้อง join กับทะเบียนพนักงาน
