@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
 <link rel="stylesheet" href="../design-system/tokens.css?v=20260825-ds31">
-<link rel="stylesheet" href="../design-system/components.css?v=20260825-ds31">
+<link rel="stylesheet" href="../design-system/components.css?v=20260826-ds32">
 <script src="../job-store.js?v=20260819-jobstore"></script><!-- MDJ: อ่าน/เขียนใบงานร่วมกับแอปหลัก — หน้านี้อยู่คนละไฟล์ ถ้าไม่เขียนลง store คำนัดจะไม่ถึงผู้แจ้ง -->
 <!-- แบบหน้าจอเดี่ยว (design mock) — ขั้น 2 ของเส้น กบค. ซ่อมเอง
      14 ส.ค. 2569: ต่อเข้า flow แล้ว — หน้าเบิกอะไหล่ (kbk-self-repair-parts.html) กด "ยืนยันรายการเบิก"
@@ -451,8 +451,9 @@ $('btnSend').addEventListener('click', () => {
 });
 
 $('btnEdit').addEventListener('click', () => {
-  // แก้คำนัดใหม่ = ช่วงวันเปลี่ยน คำยืนยันเดิมใช้ไม่ได้แล้ว ต้องถอนออกจากใบงานด้วย
-  if (LINKED) MDJ.update(fromNo, j => { delete j.rslots; delete j.rappt });
+  // แก้คำนัดใหม่ = ช่วงวันเปลี่ยน คำยืนยันเดิม + สถานะรับรถเดิมใช้ไม่ได้แล้ว ต้องถอนออกจากใบงานด้วย
+  if (LINKED) MDJ.update(fromNo, j => { delete j.rslots; delete j.rappt; delete j.received });
+  RECEIVED = false;
   resetOwnerPick();
   $('waitCard').classList.add('hidden');
   $('formCard').classList.remove('hidden');
@@ -470,12 +471,8 @@ function showWaiting(req, appt) {
   $('wPlace').textContent = req.place + (req.note ? ` · ${req.note}` : '');
   if (appt) {
     $('wDays').textContent = 'ผู้แจ้งเลือก ' + appt.date;
-    $('wBadge').className = 'badge b-ok';
-    $('wBadge').textContent = 'ยืนยันวันแล้ว';
-    $('wHint').classList.add('hidden');
     $('btnSimPick').classList.add('hidden');
-    $('btnInspect').disabled = false;
-    $('btnInspect').title = '';
+    renderReceiveGate();
   } else {
     $('wDays').textContent = `ช่วงนี้มี ${req.days.length} วัน ให้ผู้แจ้งเลือก`;
     resetOwnerPick();
@@ -484,6 +481,29 @@ function showWaiting(req, appt) {
   $('outCard').classList.add('hidden');
   $('outDoneCard').classList.add('hidden');
   $('waitCard').classList.remove('hidden');
+}
+
+// ด่าน "รอรับรถ" ท้ายขั้น 2 — ผู้แจ้งยืนยันวันแล้วไม่ได้แปลว่ารถถึงแล้ว ต้องให้ กบค. กดรับรถจริง
+// ก่อนถึงจะไปขั้น 3 ตรวจสภาพก่อนซ่อมได้ (26 ส.ค. 2569 — ดู Diagram/02-แจ้งซ่อม-กบค/03-กบค-รับงาน-นัดรับ-ตรวจสภาพ.md)
+let RECEIVED = !!(LINKED && JOB.received);
+function renderReceiveGate() {
+  $('wBadge').className = 'badge ' + (RECEIVED ? 'b-ok' : 'b-low');
+  $('wBadge').textContent = RECEIVED ? 'รับรถแล้ว' : 'รอรับรถ';
+  $('wHint').textContent = 'ถึงวันนัดแล้ว ตรวจรับรถจากผู้แจ้งก่อน แล้วกด "รับรถแล้ว" เพื่อเข้าขั้นตรวจสภาพก่อนซ่อม';
+  $('wHint').classList.toggle('hidden', RECEIVED);
+  $('btnInspect').disabled = false;
+  $('btnInspect').title = '';
+  $('btnInspect').textContent = RECEIVED ? 'ไปขั้นตรวจสภาพก่อนซ่อม' : 'รับรถแล้ว';
+}
+function markReceived() {
+  if (RECEIVED) return;
+  RECEIVED = true;
+  if (LINKED) {
+    MDJ.update(fromNo, j => {
+      j.received = { at: nowStr() };
+      j.history.push({ t: nowStr(), label: 'กบค. รับรถเข้าซ่อมแล้ว — เข้าขั้นตรวจสภาพก่อนซ่อม' });
+    });
+  }
 }
 
 function resetOwnerPick() {
@@ -508,7 +528,9 @@ $('btnSimPick').addEventListener('click', () => {
 function goInspection() {
   location.href = 'kbk-self-repair-inspection.html' + (fromNo ? '?no=' + encodeURIComponent(fromNo) : '');
 }
-$('btnInspect').addEventListener('click', goInspection);
+// เส้น "นัดเข้ามา": กดครั้งแรก = บันทึกรับรถ (ถ้ายังไม่รับ) แล้วไปขั้น 3 ต่อในคลิกเดียว
+$('btnInspect').addEventListener('click', () => { markReceived(); goInspection(); });
+// เส้น "เดินทางไปซ่อม": ไม่มีด่านรับรถ — ทีมไปถึงหน้างานแล้วตรวจสภาพได้เลย
 $('btnInspectOut').addEventListener('click', goInspection);
 
 // ── ฝั่ง "เดินทางไปซ่อม" ──

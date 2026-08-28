@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
 <link rel="stylesheet" href="../design-system/tokens.css?v=20260825-ds31">
-<link rel="stylesheet" href="../design-system/components.css?v=20260825-ds31">
+<link rel="stylesheet" href="../design-system/components.css?v=20260826-ds32">
 <script src="../job-store.js?v=20260819-jobstore"></script><!-- MDJ: เขียนรายการเบิกกลับเข้าใบงาน ไม่งั้นกลับไปแอปหลักจะค้างที่ "กำลังจัดรายการอะไหล่" -->
 <!-- ขั้น 1 "เบิกอะไหล่" ของเส้น กบค. ซ่อมเอง (design mock)
      14 ส.ค. 2569: ต่อเข้า flow แล้ว — mock/Maintenance-Request-Form.html กด "รับซ่อม" → "กบค. ซ่อมเอง"
@@ -83,11 +83,18 @@
           </div>
         </section>
       </div>
+      <section class="parts-pane parts-purchase-pane">
+        <h2 class="parts-pane-title">รายการจัดซื้อ</h2>
+        <p class="parts-pane-sub">อะไหล่ที่เบิกเกินยอดคงคลังจะถูกเพิ่มเข้ามาให้อัตโนมัติ — เพิ่มรายการเองได้เช่นกัน</p>
+        <div class="tblwrap"><table class="tbl" id="tblPurchase"></table></div>
+        <button type="button" class="btn btn-o btn-sm parts-add-manual" id="btnAddPurchase"><span class="ms">add</span> เพิ่มรายการ</button>
+      </section>
       <div class="parts-page-actions"><button class="btn btn-p" id="btnConfirm">ยืนยันเบิกอะไหล่</button></div>
       </main>
     </div>
   </div>
 
+<input type="file" id="poFile" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
 <div class="toast" id="toast"></div>
 
 <script>
@@ -176,16 +183,7 @@ function renderPicked() {
     return `<div class="parts-picked-item"><div><b>${esc(p.name)}</b><div class="parts-line">${esc(p.code)} · ${baht(p.price)}/${esc(p.unit)}</div><div class="parts-source"><b>${p.stock?'Smart Inventory':p.alt?'คลังสำรอง':'จัดซื้อภายนอก'}</b> · มีในคลัง ${onHand(p)} ${esc(p.unit)}${toBuy?` &nbsp;|&nbsp; ต้องจัดซื้อ ${toBuy} ${esc(p.unit)}`:''}</div></div><div class="parts-picked-actions"><button class="btn btn-t btn-sm" data-del="${esc(code)}" aria-label="ลบ ${esc(p.name)}"><span class="ms">delete</span></button><span class="parts-price">${baht(p.price*qty)}</span><div class="qty"><button data-dec="${esc(code)}">−</button><span>${qty}</span><button data-inc="${esc(code)}">+</button></div></div></div>`;
   }).join('') : '';
   $('picked').className='parts-picked-list'+(codes.length?' has-items':'');
-
-  let stockCost = 0, buyCost = 0;
-  codes.forEach(code => {
-    const p = partOf(code), qty = picked[code];
-    stockCost += Math.min(qty, onHand(p)) * p.price;
-    buyCost += Math.max(0, qty - onHand(p)) * p.price;
-  });
-  $('sumStock').textContent = baht(stockCost);
-  $('sumBuy').textContent = baht(buyCost);
-  $('sumAll').textContent = baht(stockCost + buyCost);
+  updateTotals();
 
   $('picked').querySelectorAll('[data-inc]').forEach(b =>
     b.addEventListener('click', () => { picked[b.dataset.inc]++; renderAll(); }));
@@ -201,6 +199,74 @@ function renderPicked() {
   $('picked').querySelectorAll('[data-custom-name]').forEach(i=>i.addEventListener('input',()=>{partOf(i.dataset.customName).name=i.value}));
   $('picked').querySelectorAll('[data-custom-price]').forEach(i=>i.addEventListener('change',()=>{partOf(i.dataset.customPrice).price=+i.value||0;renderPicked()}));
 }
+
+// รวมยอด "เบิกจากคลัง" (จาก picked) + "ต้องจัดซื้อ" (จากตารางจัดซื้อ — แก้ราคาเองได้แล้ว ไม่ใช่ราคาคลังเสมอไป)
+function updateTotals() {
+  let stockCost = 0;
+  Object.keys(picked).forEach(code => {
+    const p = partOf(code), qty = picked[code];
+    stockCost += Math.min(qty, onHand(p)) * p.price;
+  });
+  const buyCost = purchaseRows.reduce((s, r) => s + r.qty * r.price, 0);
+  $('sumStock').textContent = baht(stockCost);
+  $('sumBuy').textContent = baht(buyCost);
+  $('sumAll').textContent = baht(stockCost + buyCost);
+}
+
+// ---------- ตารางจัดซื้อ — auto เพิ่มแถวให้ตอนเบิกเกินคงคลัง + เพิ่ม/ลบแถวเองได้ ----------
+// แถวที่ auto มาแล้ว ถือเป็นแถวปกติทันที (แก้ไขได้อิสระ) ไม่ sync ซ้ำแม้ picked จะเปลี่ยนอีก — กันข้อมูลที่กรอกไว้ (ร้านค้า/ไฟล์แนบ) หาย
+let purchaseRows = [];
+function syncPurchaseRows() {
+  Object.keys(picked).forEach(code => {
+    const p = partOf(code), toBuy = Math.max(0, picked[code] - onHand(p));
+    if (toBuy > 0 && !purchaseRows.some(r => r.code === code)) {
+      purchaseRows.push({ code, name: p.name, qty: toBuy, price: p.price, store: '', po: null });
+    }
+  });
+}
+function purchaseFileCellHTML(r, i) {
+  if (r.po) {
+    return `<div class="file-chip">
+      <span class="ms">check_circle</span>
+      <span class="file-chip-name" title="${esc(r.po.name)}">${esc(r.po.name)}</span>
+      <button type="button" class="file-chip-rm" onclick="removePO(${i})" aria-label="ลบไฟล์แนบ"><span class="ms">close</span></button>
+    </div>`;
+  }
+  return `<button type="button" class="btn btn-o btn-sm" onclick="pickPO(${i})"><span class="ms">upload_file</span> แนบไฟล์</button>`;
+}
+function renderPurchase() {
+  $('tblPurchase').innerHTML = purchaseRows.length ? `<thead><tr>
+      <th>ลำดับ</th><th>รายการ</th><th class="num">จำนวน</th><th class="num">ราคาต่อหน่วย</th><th class="num">ราคารวม</th><th>ร้านค้า</th><th>ใบสั่งซื้อ/จ้าง (Upload)</th><th></th>
+    </tr></thead><tbody>${purchaseRows.map((r, i) => `<tr>
+      <td class="num">${i + 1}</td>
+      <td><input type="text" class="tbl-row-label" placeholder="ระบุชื่อรายการ" value="${esc(r.name)}" oninput="purchaseRows[${i}].name=this.value"></td>
+      <td class="num"><input type="number" min="1" class="tbl-inline-sm" value="${r.qty}" oninput="purchaseRows[${i}].qty=+this.value||0;purchaseRowTotal(${i})"></td>
+      <td class="num"><input type="number" min="0" class="tbl-inline-md" value="${r.price}" oninput="purchaseRows[${i}].price=+this.value||0;purchaseRowTotal(${i})"></td>
+      <td class="num" id="prowTotal${i}">${baht(r.qty * r.price)}</td>
+      <td><input type="text" class="tbl-row-label" placeholder="ระบุชื่อร้านค้า" value="${esc(r.store)}" oninput="purchaseRows[${i}].store=this.value"></td>
+      <td>${purchaseFileCellHTML(r, i)}</td>
+      <td><button type="button" class="btn btn-t btn-sm" onclick="delPurchaseRow(${i})" aria-label="ลบรายการนี้"><span class="ms">delete</span></button></td>
+    </tr>`).join('')}</tbody>`
+    : '<tbody><tr><td colspan="8"><div class="empty">ยังไม่มีรายการจัดซื้อ — เบิกเกินยอดคงคลังแล้วจะเพิ่มให้อัตโนมัติ หรือกด "เพิ่มรายการ"</div></td></tr></tbody>';
+  updateTotals();
+}
+function purchaseRowTotal(i) {
+  $('prowTotal' + i).textContent = baht(purchaseRows[i].qty * purchaseRows[i].price);
+  updateTotals();
+}
+function delPurchaseRow(i) { purchaseRows.splice(i, 1); renderPurchase(); }
+$('btnAddPurchase').addEventListener('click', () => {
+  purchaseRows.push({ code: null, name: '', qty: 1, price: 0, store: '', po: null });
+  renderPurchase();
+});
+let poTarget = null;
+function pickPO(i) { poTarget = i; $('poFile').click(); }
+function removePO(i) { purchaseRows[i].po = null; renderPurchase(); }
+$('poFile').addEventListener('change', function () {
+  const f = this.files[0];
+  if (f && poTarget != null) { purchaseRows[poTarget].po = { name: f.name, size: f.size }; renderPurchase(); }
+  this.value = '';
+});
 
 function renderStock() {
   const q = ($('q').value || '').trim().toLowerCase();
@@ -221,7 +287,7 @@ function renderStock() {
     }));
 }
 
-function renderAll() { renderPicked(); renderStock(); $('btnConfirm').disabled=!Object.keys(picked).some(code=>picked[code]>0); }
+function renderAll() { syncPurchaseRows(); renderPicked(); renderStock(); renderPurchase(); $('btnConfirm').disabled=!Object.keys(picked).some(code=>picked[code]>0); }
 
 $('q').addEventListener('input', renderStock);
 $('btnAdd').addEventListener('click', () => { const code='CUSTOM-'+Date.now();PARTS.push({code,name:'',unit:'ชิ้น',stock:0,alt:0,price:0,custom:true});picked[code]=0;renderAll(); });
@@ -239,7 +305,9 @@ $('btnConfirm').addEventListener('click', () => {
         (p.stock >= picked[code] ? booked : ordered).push(row);
       });
       j.booked = booked; j.ordered = ordered; j.partsOK = true;
-      j.history.push({ t: nowStr(), label: `กบค. ยืนยันรายการเบิกอะไหล่ ${booked.length + ordered.length} รายการ` });
+      // เก็บตารางจัดซื้อ (ราคาจริง/ร้านค้า/ไฟล์ใบสั่งซื้อ) แยกจาก ordered — ordered เป็นแค่รายชื่อของที่ขาด ใช้ที่อื่นในแอปหลักอยู่แล้ว
+      j.purchase = purchaseRows.map(r => ({ name: r.name, qty: r.qty, price: r.price, store: r.store, po: r.po }));
+      j.history.push({ t: nowStr(), label: `กบค. ยืนยันรายการเบิกอะไหล่ ${booked.length + ordered.length} รายการ` + (purchaseRows.length ? ` · จัดซื้อ ${purchaseRows.length} รายการ` : '') });
     });
   }
   location.href = 'kbk-self-repair-appointment.html' + (fromNo ? '?no=' + encodeURIComponent(fromNo) : '');

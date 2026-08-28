@@ -164,9 +164,16 @@ d = json.load(open('design-system/.figma-extract/1-1380.json'))   # หน้า
 ### ง. ไลบรารีมี แต่เรายังไม่ได้ทำ — **ถ้าจะทำเมื่อไหร่ ให้ยกจาก node นี้ ห้ามออกแบบเอง**
 
 Modal `3:9` · Toggle `1:1382` · Avatar `1:1385` · Tooltip `1:1386` · Tabs `3:19` ·
-File upload `3:25` · Content divider `3:26` · Loading indicator `3:27` · Progress bar/circle `1:1387` ·
+File upload `3:25` (ทำแล้วบางส่วน 26 ส.ค. 2569 — ดูหมายเหตุด้านล่าง) · Content divider `3:26` · Loading indicator `3:27` · Progress bar/circle `1:1387` ·
 Slide out menu `3:13` · Metric item `3:12` · Checkbox card `589:205480` · Radio card `1:1384` ·
 Dropdown menu `1:1379` · Alert `3:22` · Card header `3:5`
+
+> 📌 **File upload `3:25` — ทำแล้วเฉพาะ "การ์ดไฟล์ที่แนบสำเร็จแล้ว"** (`.file-chip`, ยกจาก symbol
+> `15:77582` "File upload item · Icon type=File type · State=Completed" ผ่าน `get_design_context`/`get_screenshot`)
+> ใช้ในตารางจัดซื้อของหน้าเบิกอะไหล่ (คอลัมน์ "ใบสั่งซื้อ/จ้าง") — ตัดแถบ progress bar ออกเพราะไฟล์ในต้นแบบนี้
+> ไม่มี upload progress จริง (เลือกไฟล์แล้วถือว่าเสร็จทันที) ไอคอน SVG ของจริง (page/check-circle/trash/eye)
+> แปลงเป็น Material Symbols ตามกฎข้อ 3 ทั้งหมด · **ยังไม่ได้ทำ:** กล่อง drag-and-drop เปล่า (`State=Default`/`Hover`)
+> และแถบ progress ระหว่างอัปโหลดจริง — ยังไม่มีบริบทที่ต้องใช้ (ต้นแบบยังไม่มี backend อัปโหลดจริง)
 
 ## คอมโพเนนต์ — เทียบแล้ว 12 ส.ค. 2569 (`compare-figma.js`)
 

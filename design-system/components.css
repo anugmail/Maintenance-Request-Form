@@ -736,8 +736,23 @@ input.tbl-row-label{width:80%;display:inline-block}
 .parts-total-row{display:flex;justify-content:space-between;gap:var(--space-4);font-size:var(--fs-text-sm);color:var(--gray-600)}
 .parts-total-row.grand{font-weight:700;color:var(--gray-700)}
 .parts-page-actions{display:flex;justify-content:flex-end;margin-top:32px}
+.parts-purchase-pane{margin-top:var(--space-4)}
+.parts-purchase-pane .tbl input[type=text],.parts-purchase-pane .tbl input[type=number]{width:100%}
 @media(max-width:960px){.parts-workspace{grid-template-columns:1fr}.parts-pane{min-height:0}}
 @media(max-width:600px){.parts-manual-grid{grid-template-columns:1fr}.parts-manual-grid .wide{grid-column:auto}.parts-picked-item{grid-template-columns:1fr}.parts-picked-actions{align-items:stretch}.parts-page-actions .btn{width:100%}}
+
+/* ---------- File attach chip — ยกจาก Figma node 15:77582 "File upload item · Icon type=File type · State=Completed"
+   (SOURCES.md หมวด ง — ไลบรารีมีคอมโพเนนต์ File upload (3:25) แต่ยังไม่เคยทำ) ปรับให้พอดีเซลล์ตาราง:
+   ตัดแถบ progress bar ออก (ไฟล์แนบในต้นแบบนี้ไม่มี upload progress จริง — เลือกแล้วเสร็จทันที)
+   ไอคอนไฟล์/เช็ก/ถังขยะของจริงเป็น SVG แยกไฟล์ ⇒ ยกเป็น Material Symbols ตามกฎข้อ 3 (ห้าม inline svg) ---------- */
+.file-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:6px var(--space-2);
+  border:1px solid var(--gray-200);border-radius:var(--rounded-sm);background:#fff}
+.file-chip .ms{font-size:18px;flex-shrink:0;color:var(--success-500)}
+.file-chip-name{flex:1;min-width:0;font-size:var(--fs-text-xs);color:var(--gray-700);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-chip-rm{flex-shrink:0;display:flex;padding:0;border:0;background:none;color:var(--gray-500);cursor:pointer}
+.file-chip-rm:hover{color:var(--error-600)}
+.file-chip-rm .ms{color:inherit;font-size:16px}
 
 /* แถบท้ายตาราง — "แสดง x ถึง y จาก z รายการ" + จำนวนแถวต่อหน้า ซ้าย · เลขหน้าขวา
    เดิมหน้า style guide ประกอบเองด้วย .row + inline style ⇒ ยกเป็นคอมโพเนนต์ */
