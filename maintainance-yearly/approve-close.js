@@ -16,7 +16,7 @@ function quarterVehicleIds(plan, q) {
   return ((plan.byQuarter || {})[q] || []).filter(id => MYD.isVehicleIn(plan, id));
 }
 
-// ยอดต้นทุนรวมของไตรมาสหนึ่ง — sum จาก plan.vehicleCost เฉพาะรถของไตรมาสนั้น (ตัวเดียวกับที่ renderCost ใช้)
+// ยอดต้นทุนรวมของไตรมาสหนึ่ง — sum จาก MYD.vehicleCostOf (ดึงจากแผนเดินทาง) เฉพาะรถของไตรมาสนั้น (ตัวเดียวกับที่ renderCost ใช้)
 function quarterCostTotal(plan, q) {
   return quarterVehicleIds(plan, q).reduce((sum, id) => {
     const c = MYD.vehicleCostOf(plan, id);

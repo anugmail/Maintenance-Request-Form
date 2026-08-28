@@ -954,18 +954,22 @@ const MYD = {
   },
 
   // ================= ค่าใช้จ่ายต่อคัน (เบี้ยเลี้ยง/ที่พัก/เดินทาง) =================
-  // กรอกที่เฟส 5 จัดทำรายงาน · แสดงผลรวมอ่านอย่างเดียวที่เฟส 6 คำนวณต้นทุน (26 ส.ค. 2569 —
-  // เจ้าของงานสั่งย้ายช่องกรอกมาเฟส 5 เพราะเป็นขั้นปิดงานเดียวกับเช็คอะไหล่)
-  // แยกจาก trip.perDiem/lodging/travel (กรอกครอบทั้งใบเดินทางตอนเฟส 2) — อันนี้คือยอดจัดสรรจริงต่อคันตอนปิดงบ
-  // plan.vehicleCost = { [vehicleId]: { perDiem, lodging, travel } } · 25 ส.ค. 2569
+  // ดึงจาก trip.perDiem/lodging/travel (กรอกครอบทั้งใบตอนทำแผนเดินทาง เฟส 2) หารเฉลี่ยเท่ากันตามจำนวนรถ
+  // ในใบเดียวกัน — คันแรกของใบ (ตามลำดับ vehicleIds) รับเศษที่หารไม่ลงตัว เพื่อให้ผลรวมต่อคันบวกกันได้
+  // เท่ากับยอดใบเดินทางเป๊ะ ไม่มีช่องกรอกซ้ำที่เฟส 5/6 อีกต่อไป — แก้ได้ที่แผนเดินทางเท่านั้น (28 ส.ค. 2569 —
+  // เจ้าของงานสั่งให้ล็อคค่าเหล่านี้ไม่ให้แก้ซ้ำหลัง prefill จากแผนเดินทางแล้ว)
   vehicleCostOf(plan, vehicleId) {
-    return (plan.vehicleCost || {})[vehicleId] || { perDiem: 0, lodging: 0, travel: 0 };
-  },
-
-  setVehicleCost(plan, vehicleId, field, value) {
-    plan.vehicleCost = plan.vehicleCost || {};
-    plan.vehicleCost[vehicleId] = plan.vehicleCost[vehicleId] || { perDiem: 0, lodging: 0, travel: 0 };
-    plan.vehicleCost[vehicleId][field] = value;
+    const trip = this.tripOfVehicle(plan, vehicleId);
+    if (!trip) return { perDiem: 0, lodging: 0, travel: 0 };
+    const vids = trip.vehicleIds || [];
+    const n = vids.length || 1;
+    const isFirst = vids.indexOf(vehicleId) === 0;
+    const share = total => {
+      const t = Number(total) || 0;
+      const base = Math.floor(t / n);
+      return base + (isFirst ? t - base * n : 0);
+    };
+    return { perDiem: share(trip.perDiem), lodging: share(trip.lodging), travel: share(trip.travel) };
   },
 
   // ================= ส่งอนุมัติปิดแผน — แยกรายไตรมาส (26 ส.ค. 2569) =================

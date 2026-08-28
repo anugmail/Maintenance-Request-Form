@@ -491,8 +491,8 @@ function openInspectIncompleteModal(count, q, onProceed, opts = {}) {
 
 // ================= เฟส 5 · จัดทำรายงาน =================
 // เช็คว่าใช้อะไหล่ที่เบิกไปครบหรือไม่ต่อคัน — ตรงกับ node D{ใช้อะไหล่ครบ?} ในผัง 05-เฟส4-จัดทำรายงาน.md (25 ส.ค. 2569)
-// รวมช่องกรอกต้นทุน (เบี้ยเลี้ยง/ที่พัก/เดินทาง) เข้ามาด้วย (26 ส.ค. 2569 — เจ้าของงานสั่งย้ายมาจากเฟส 6
-// คำนวณต้นทุน) เพราะเป็นข้อมูลที่กรอกตอนปิดงานเช่นเดียวกับเช็คอะไหล่ · เฟส 6 เหลือแค่แสดงผลรวมอ่านอย่างเดียว
+// รวมตารางต้นทุน (เบี้ยเลี้ยง/ที่พัก/เดินทาง) เข้ามาด้วย — ค่าดึงมาจากแผนเดินทาง (เฟส 2) โดยตรง ล็อคแก้ไม่ได้
+// ทั้งที่นี่และเฟส 6 คำนวณต้นทุน (28 ส.ค. 2569 — เจ้าของงานสั่งเลิกให้กรอกซ้ำ ใช้ค่าจากแผนเดินทางแทน)
 // ยังไม่มีส่วนอื่นของหน้ารายงาน (ตรวจสภาพการทำงาน · ผลตรวจน้ำมัน · อนุมัติปิดงาน) — รอออกแบบเพิ่ม
 // แยกแสดง/กรอกรายไตรมาส (27 ส.ค. 2569 — เจ้าของงานสั่งให้เห็นแค่รถของไตรมาสที่กำลังบำรุงอยู่ เหมือนขั้น
 // ตรวจสภาพก่อนซ่อมกับคำนวณต้นทุน) ใช้ COST.q ตัวเดียวกับเฟส 6 เพราะเป็น "ไตรมาสที่กำลังปิดงานอยู่" ตัวเดียวกัน
@@ -579,12 +579,11 @@ function renderReport() {
     </div>`;
   }).join('');
 
-  // ต้นทุนค่าใช้จ่ายกรอกได้ต่อรถแต่ละคัน — แยกจาก trip.perDiem/lodging/travel ที่กรอกไว้ตอนทำแผนเดินทาง (เฟส 2 · ครอบทั้งใบ)
-  // ค่าที่กรอกที่นี่คือยอดจัดสรรจริงต่อคันสำหรับปิดงบ ไม่ใช่ยอดใบเดินทางซ้ำ — รวมแต่ละแถวเองจึงไม่นับซ้ำ (25 ส.ค. 2569)
+  // ต้นทุนต่อรถแต่ละคัน — prefill จาก trip.perDiem/lodging/travel ที่กรอกไว้ตอนทำแผนเดินทาง (เฟส 2 · ครอบทั้งใบ
+  // หารเฉลี่ยตามจำนวนรถในใบเดียวกัน ดู MYD.vehicleCostOf) ล็อคแก้ไม่ได้จากหน้านี้ — แก้ได้ที่แผนเดินทางเท่านั้น
+  // (28 ส.ค. 2569 — เจ้าของงานสั่งเลิกให้กรอกซ้ำที่นี่ ใช้ค่าจากแผนเดินทางแทน)
   // ขอบเขต = ids เดียวกับตารางอะไหล่ด้านบน (26 ส.ค. 2569)
   let sumPerDiem = 0, sumLodging = 0, sumTravel = 0;
-  const numInput = (id, field, value) => `<div class="in noic" style="width:88px">
-    <input type="number" min="0" value="${esc(value)}" data-cost-v="${esc(id)}" data-cost-field="${field}"></div>`;
   const costRows = ids.map(id => {
     const v = byId.get(id);
     if (!v) return '';
@@ -593,14 +592,13 @@ function renderReport() {
     const lodging = Number(c.lodging) || 0;
     const travel = Number(c.travel) || 0;
     sumPerDiem += perDiem; sumLodging += lodging; sumTravel += travel;
-    const rowSum = perDiem + lodging + travel;
     return `<tr>
       <td><b>${esc(v.plate)}</b><div class="cell-sub">${esc(v.brand)}</div></td>
       <td>${esc(v.ownerDept)}</td>
-      <td class="num">${numInput(id, 'perDiem', perDiem)}</td>
-      <td class="num">${numInput(id, 'lodging', lodging)}</td>
-      <td class="num">${numInput(id, 'travel', travel)}</td>
-      <td class="num" data-cost-rowsum="${esc(id)}"><b>${rowSum.toLocaleString('th-TH')}</b></td>
+      <td class="num">${perDiem.toLocaleString('th-TH')}</td>
+      <td class="num">${lodging.toLocaleString('th-TH')}</td>
+      <td class="num">${travel.toLocaleString('th-TH')}</td>
+      <td class="num"><b>${(perDiem + lodging + travel).toLocaleString('th-TH')}</b></td>
     </tr>`;
   }).join('');
   const grandTotal = sumPerDiem + sumLodging + sumTravel;
@@ -630,7 +628,7 @@ function renderReport() {
         <div class="stack">${partsBlocks}</div>
 
         <div class="sect" style="margin-top:22px">คำนวณต้นทุน</div>
-        <div class="sub">กรอกค่าเบี้ยเลี้ยง/ที่พัก/เดินทางที่จัดสรรจริงต่อคันได้ — แยกจากยอดใบเดินทางที่กรอกไว้ตอนเฟส 2</div>
+        <div class="sub">ค่าเบี้ยเลี้ยง/ที่พัก/เดินทางดึงมาจากแผนเดินทาง (เฟส 2) เฉลี่ยตามจำนวนรถในใบเดียวกัน — แก้ไขได้ที่แผนเดินทางเท่านั้น</div>
         <div class="tblwrap"><table class="tbl">
           <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th>
             <th class="num">ค่าเบี้ยเลี้ยง (บาท)</th><th class="num">ค่าที่พัก (บาท)</th>
@@ -638,10 +636,10 @@ function renderReport() {
           <tbody>${costRows}</tbody>
           <tfoot><tr>
             <td colspan="2" style="${totalCellStyle}"><b>ต้นทุน${esc(MYD.quarterLabel(COST.q))}</b></td>
-            <td class="num" style="${totalCellStyle}" id="costSumPerDiem">${sumPerDiem.toLocaleString('th-TH')}</td>
-            <td class="num" style="${totalCellStyle}" id="costSumLodging">${sumLodging.toLocaleString('th-TH')}</td>
-            <td class="num" style="${totalCellStyle}" id="costSumTravel">${sumTravel.toLocaleString('th-TH')}</td>
-            <td class="num" style="${totalCellStyle}"><b id="costGrandTotal">${grandTotal.toLocaleString('th-TH')}</b></td>
+            <td class="num" style="${totalCellStyle}">${sumPerDiem.toLocaleString('th-TH')}</td>
+            <td class="num" style="${totalCellStyle}">${sumLodging.toLocaleString('th-TH')}</td>
+            <td class="num" style="${totalCellStyle}">${sumTravel.toLocaleString('th-TH')}</td>
+            <td class="num" style="${totalCellStyle}"><b>${grandTotal.toLocaleString('th-TH')}</b></td>
           </tr></tfoot></table></div>
         <div class="note note-warn"><span class="ms">help</span>
           <div>เงื่อนไขการตัดงบประมาณเป็นยังไง เลือกการตัดงบประมาณอะไรได้บ้าง</div></div>`
@@ -681,28 +679,6 @@ function renderReport() {
     MYD.savePlan(PLAN);
   }));
 
-  // แก้ค่าต้นทุนต่อคัน — บันทึกทันที + ขยับผลรวมแถวนั้นกับยอดรวมท้ายตาราง โดยไม่ re-render ทั้งหน้า
-  document.querySelectorAll('[data-cost-v]').forEach(el => el.addEventListener('input', e => {
-    const vid = el.dataset.costV;
-    MYD.setVehicleCost(PLAN, vid, el.dataset.costField, Number(e.target.value) || 0);
-    MYD.savePlan(PLAN);
-
-    const c = MYD.vehicleCostOf(PLAN, vid);
-    const rowSum = (Number(c.perDiem) || 0) + (Number(c.lodging) || 0) + (Number(c.travel) || 0);
-    const rowCell = document.querySelector(`[data-cost-rowsum="${vid}"]`);
-    if (rowCell) rowCell.innerHTML = `<b>${rowSum.toLocaleString('th-TH')}</b>`;
-
-    let tPerDiem = 0, tLodging = 0, tTravel = 0;
-    ids.forEach(id => {
-      const cc = MYD.vehicleCostOf(PLAN, id);
-      tPerDiem += Number(cc.perDiem) || 0; tLodging += Number(cc.lodging) || 0; tTravel += Number(cc.travel) || 0;
-    });
-    $('costSumPerDiem').textContent = tPerDiem.toLocaleString('th-TH');
-    $('costSumLodging').textContent = tLodging.toLocaleString('th-TH');
-    $('costSumTravel').textContent = tTravel.toLocaleString('th-TH');
-    $('costGrandTotal').textContent = (tPerDiem + tLodging + tTravel).toLocaleString('th-TH');
-  }));
-
   // "ถัดไป — คำนวณต้นทุน" เตือนก่อนถ้าไตรมาสที่กำลังจะไปดู (COST.q — แท็บเดียวกับที่เลือกอยู่ในหน้านี้
   // และแท็บของเฟส 6) ยังตรวจสภาพก่อนซ่อมไม่ครบ (26 ส.ค. 2569 · ปรับ 26 ส.ค. 2569 อีกรอบ: เดิมเช็คทั้งแผน
   // 4 ไตรมาส ตอนนี้เช็คแค่ไตรมาสเดียวพอ เพราะคำนวณต้นทุนก็ดูทีละไตรมาสอยู่แล้ว) — เกณฑ์ความครบใช้
@@ -717,8 +693,8 @@ function renderReport() {
 }
 
 // ================= เฟส 6 · คำนวณต้นทุน =================
-// อ่านอย่างเดียว (26 ส.ค. 2569 — เจ้าของงานสั่งย้ายช่องกรอกไปเฟส 5 จัดทำรายงานแล้ว) แสดงผลรวมต้นทุน
-// ต่อคันที่กรอกไว้จากเฟส 5 เท่านั้น ไม่มีช่องให้กรอกที่หน้านี้อีกต่อไป
+// อ่านอย่างเดียว — แสดงผลรวมต้นทุนต่อคันที่ดึงมาจากแผนเดินทาง (เฟส 2 · ดู MYD.vehicleCostOf) เท่านั้น
+// ไม่มีช่องให้กรอกที่หน้านี้ (28 ส.ค. 2569 — เฟส 5 ก็ล็อคแก้ไม่ได้เช่นกันแล้ว)
 // แยกแสดงรายไตรมาส (26 ส.ค. 2569 — เจ้าของงานสั่งให้โชว์แค่รถของไตรมาสที่กำลังดูอยู่ เหมือนขั้นตรวจสภาพก่อนซ่อม
 // เพราะบำรุงรักษาทำทีละไตรมาสตามรอบจริง ไม่ใช่ดูทั้งปีปนกัน)
 let COST = { q: 'Q1' };
@@ -771,12 +747,20 @@ function renderCost() {
   // ส่งอนุมัติปิดแผนแยกรายไตรมาส (26 ส.ค. 2569) — กดส่งของไตรมาสที่กำลังดูอยู่ ไม่กระทบไตรมาสอื่น
   const approval = MYD.closeApprovalOf(PLAN, COST.q);
 
+  // ทางลัดไปตรวจสภาพก่อนซ่อมของไตรมาสถัดไป — โผล่เมื่อไตรมาสถัดไปยังมีรถที่ยังไม่ได้บำรุงรักษา
+  // (ยังตรวจสภาพก่อนซ่อมไม่ครบ) จะได้ไม่ต้องย้อนไปหาเองที่เฟส 3 (28 ส.ค. 2569)
+  // กดได้ก็ต่อเมื่อส่งอนุมัติปิดแผนของไตรมาสที่กำลังดูอยู่แล้วเท่านั้น (ดู approval ด้านบน) — เจ้าของงาน
+  // สั่ง 28 ส.ค. 2569: ต้องปิดไตรมาสนี้ให้เรียบร้อยก่อน ถึงจะไปเริ่มไตรมาสถัดไปได้
+  const nextQ = QUARTERS[QUARTERS.findIndex(q => q.q === COST.q) + 1];
+  const nextQIds = nextQ ? ids.filter(id => MYD.bucketOf(PLAN, id) === nextQ.q) : [];
+  const nextQPending = nextQIds.filter(id => !MYD.inspectionDone(PLAN, id)).length;
+
   $('phase').innerHTML = `
     <div class="card">
       <div class="sect">คำนวณต้นทุน</div>
       <div class="sub">รถในแผนนี้ทั้งหมด <b>${ids.length}</b> คัน — ต้นทุนรวมทั้งปี <b>${grandAll.toLocaleString('th-TH')}</b> บาท</div>
       <div class="note note-info"><span class="ms">science</span>
-        <div>หน้านี้แสดงผลรวมต้นทุนที่กรอกไว้จากเฟส 5 จัดทำรายงานเท่านั้น — แก้ตัวเลขได้ที่เฟสนั้น
+        <div>หน้านี้แสดงผลรวมต้นทุนเบี้ยเลี้ยง/ที่พัก/เดินทาง ซึ่งดึงมาจากแผนเดินทาง (เฟส 2) เท่านั้น — แก้ไขได้ที่แผนเดินทาง
           ค่าจ้างเหมา (สายว่าจ้าง) และต้นทุนอะไหล่/น้ำมัน ยังไม่ได้ทำในต้นแบบ · ส่งอนุมัติปิดแผนแยกได้ทีละไตรมาส</div></div>
       ${ids.length ? `
       <div class="f" style="margin-bottom:14px">
@@ -808,6 +792,11 @@ function renderCost() {
           : `<div class="actions">
               <button class="btn btn-p" id="btnSendCloseQ"><span class="ms">send</span> ส่งอนุมัติปิดแผน${esc(MYD.quarterLabel(COST.q))}</button>
             </div>`}
+        ${nextQ && nextQPending ? `<div class="actions">
+              <button class="btn btn-s" id="btnGoNextQInspect" ${approval ? '' : 'disabled'}><span class="ms">arrow_forward</span>
+                ไปตรวจสภาพก่อนซ่อม${esc(MYD.quarterLabel(nextQ.q))} — ยังไม่ได้บำรุงรักษา ${nextQPending} คัน</button>
+            </div>
+            ${approval ? '' : `<div class="sub">ส่งอนุมัติปิดแผน${esc(MYD.quarterLabel(COST.q))}ก่อน ถึงจะไปไตรมาสถัดไปได้</div>`}` : ''}
       </div>`
         : `<div class="empty">ไม่มีรถของ${esc(MYD.quarterLabel(COST.q))}</div>`}`
         : '<div class="empty">ยังไม่มีรถในแผนนี้</div>'}
@@ -817,6 +806,12 @@ function renderCost() {
     COST.q = sg.dataset.q;
     renderCost();
   }));
+
+  $('btnGoNextQInspect')?.addEventListener('click', () => {
+    INSP.vehicleId = null;
+    INSP.q = nextQ.q;
+    goPhase('inspection');
+  });
 
   // ส่งอนุมัติปิดแผนไตรมาส — เตือนก่อนถ้ารถของไตรมาสนี้ตรวจสภาพก่อนซ่อมยังไม่ครบ (27 ส.ค. 2569 — เกณฑ์/modal
   // เดียวกับปุ่ม "ถัดไป" ของเฟส 5 จัดทำรายงาน ดู openInspectIncompleteModal · กันส่งอนุมัติปิดงบไปทั้งที่ยังมี
