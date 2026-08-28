@@ -46,7 +46,8 @@ const PLAN = 'plan-seed-2569-002';
   // ไปเฟส 2 (แผนเดินทาง) ด้วยการคลิกจริงบน stepper หลัก — แยกเป็นคนละเฟสแล้ว 21 ส.ค. 2569
   await page.locator(`[onclick="goPhase('travel')"]`).click();
   await page.waitForTimeout(400);
-  ok(await page.locator('.sect', { hasText: 'ทำแผนเดินทาง' }).count() > 0, 'เข้าเฟส 2 · ขั้นที่ 1 แผนเดินทางได้');
+  // หัวข้อเปลี่ยนจาก "ขั้นที่ 1: ทำแผนเดินทาง" เป็น "แผนเดินทาง" ตอนย้าย stepper ย่อยเข้าไปในการ์ดไตรมาส (28 ส.ค. 2569 รอบ 3)
+  ok(await page.locator('.sect', { hasText: 'แผนเดินทาง' }).count() > 0, 'เข้าเฟส 2 · แผนเดินทางได้');
 
   console.log('\nสร้างแผนเดินทาง');
   ok(await page.locator('#btnPrimaryProc').count() === 0, 'เฟสแผนเดินทางไม่มีปุ่ม "ถัดไป" ของ shell แล้ว (28 ส.ค. 2569)');

@@ -1086,24 +1086,13 @@ function route() {
 // goPhase() รีเซ็ต state.sub เป็น 1 ทุกครั้งที่เปลี่ยนเฟส
 // เข้าเฟส "แผนเดินทาง" ครั้งใด ถ้า travelConfirmed แล้ว ข้าม wizard ไปแสดงสรุปยืนยันเลย
 
-const PROC_STEPS = [        // เฟส 1 · เบิก/จัดหา
+// เฟส 1 · เบิก/จัดหา — 2 ขั้น ยังใช้ wizard shell (stepper ระดับหน้า + ปุ่มย้อนกลับ/ถัดไป) เหมือนเดิม
+// เฟส "แผนเดินทาง" ไม่ใช้ PROC_STEPS/wizard shell นี้แล้ว (28 ส.ค. 2569 รอบ 3) — ย้าย stepper 2 ขั้นของตัวเอง
+// (แผนเดินทาง/ทวน+ยืนยัน) เข้าไปอยู่ในการ์ดของแต่ละไตรมาสแทน ดู TRIP.renderTravel/bindTravel ใน trip-plan.js
+const PROC_STEPS = [
   { no: 1, label: 'ยืนยันรถเข้าร่วมแผน' },
   { no: 2, label: 'เบิก/จัดหาอะไหล่' },
 ];
-const TRAVEL_STEPS = [      // เฟส 2 · แผนเดินทาง
-  { no: 1, label: 'แผนเดินทาง' },
-  { no: 2, label: 'ทวน + ยืนยัน' },
-];
-
-// ขั้นย่อยของเฟสปัจจุบัน (2 ขั้นเสมอ ไม่ว่าจะเฟส "เบิก/จัดหา" หรือ "แผนเดินทาง")
-function currentProcSteps() {
-  return currentPhase() === 'travel' ? TRAVEL_STEPS : PROC_STEPS;
-}
-
-// master step 1-4 อิงลำดับเดิม — ใช้คุม logic ที่ใช้ร่วมกันระหว่าง 2 เฟส (validate/render/bind)
-function masterStep(sub) {
-  return currentPhase() === 'travel' ? sub + 2 : sub;
-}
 
 function renderProcurement() {
   if (!state.sub) state.sub = 1;
@@ -1118,8 +1107,14 @@ function renderTravelPhase() {
     $('phase').innerHTML = TRIP.renderConfirmed(plan, {});
     TRIP.bindConfirmed({});
   } else {
-    if (!state.sub) state.sub = 1;
-    renderProcWizard(plan);
+    // ไม่มี stepper ระดับหน้าอีกแล้ว — สลับขั้น "แผนเดินทาง"/"ทวน+ยืนยัน" ทำในการ์ดของแต่ละไตรมาสเองแทน
+    // (28 ส.ค. 2569 รอบ 3 เจ้าของงานสั่ง) onChange เรียก renderTravelPhase() นี้ตรงๆ (ไม่ใช่แค่ส่วน wizard)
+    // เพราะรายการไตรมาสท้ายหน้าต้องวาดใหม่ทุกครั้งด้วย ไม่งั้นจะหายไปตอน re-render บางส่วน
+    $('phase').innerHTML = `<div class="card">${TRIP.renderTravel(plan, { showConfirm: true })}</div>`;
+    TRIP.bindTravel(plan, {
+      onChange: () => renderTravelPhase(),
+      onConfirm: (q) => { location.hash = `${plan.id}/${q}`; },
+    });
   }
   $('phase').insertAdjacentHTML('beforeend', renderQuarterList(plan));
 }
@@ -1169,13 +1164,12 @@ function renderQuarterList(plan) {
 // ข้ามเข้าขั้นที่ยังไม่ถึง (เจ้าของงานสั่ง 10 ส.ค. 2569: ต้องยืนยันรถให้ครบก่อนเบิกอะไหล่จริง
 // ปุ่ม "ถัดไป" อย่างเดียวกันได้ไม่พอ เพราะ node บน stepper คลิกข้ามได้ตรงๆ)
 function goProcSub(n) {
-  const steps = currentProcSteps();
-  if (n < 1 || n > steps.length) return;
+  if (n < 1 || n > PROC_STEPS.length) return;
   if (n > state.sub) {
     const plan = PLAN;
     for (let i = 1; i < n; i++) {
       if (!validateProcSub(plan, i)) {
-        toast(`ทำขั้น "${steps[i - 1].label}" ให้เสร็จก่อน ถึงจะไปขั้นถัดไปได้`);
+        toast(`ทำขั้น "${PROC_STEPS[i - 1].label}" ให้เสร็จก่อน ถึงจะไปขั้นถัดไปได้`);
         return;
       }
     }
@@ -1188,7 +1182,7 @@ function goProcSub(n) {
 function nextProcSub() {
   const plan = PLAN;
   if (!validateProcSub(plan, state.sub)) return;
-  if (state.sub >= currentProcSteps().length) return;
+  if (state.sub >= PROC_STEPS.length) return;
   goProcSub(state.sub + 1);
 }
 
@@ -1198,85 +1192,54 @@ function backProcSub() {
 }
 
 function validateProcSub(plan, sub) {
-  const m = masterStep(sub);
-  if (m === 1) return MYD.confirmResolved(plan, plan.selectedVehicleIds || []);
-  if (m === 2) return !!plan.partsRequisitioned;
-  // เฟส "แผนเดินทาง" (m===3/4) ไม่มีเกณฑ์ปิดกั้นแล้ว (เจ้าของงานสั่ง 28 ส.ค. 2569 — ตัดเกณฑ์
-  // "ต้องพร้อมครบทั้ง 4 ไตรมาส" ออก เดิมเช็ค MYD.allQuartersTravelReady/travelPlanReady ที่นี่)
-  // สลับขั้นย่อย/กดยืนยันแผนเดินทางได้เสมอ ไม่ว่าไตรมาสไหนจะยังไม่ครบ
-  return true;
+  if (sub === 1) return MYD.confirmResolved(plan, plan.selectedVehicleIds || []);
+  return !!plan.partsRequisitioned;
 }
 
-// ----- wizard shell -----
-// เฟส "แผนเดินทาง" ไม่มีปุ่ม "ย้อนกลับ"/"ถัดไป" ของ shell นี้แล้ว (เจ้าของงานสั่ง 28 ส.ค. 2569) —
-// สลับขั้นย่อยด้วยการกดหัวข้อ sub-stepper ด้านบนได้เลย ไม่ต้องผ่านเกณฑ์อะไรก่อน · ปุ่ม "ยืนยันแผนเดินทาง"
-// ย้ายไปอยู่ในเนื้อขั้น "ทวน + ยืนยัน" เอง (ดู renderProcStep3/bindProcStep3 ใน trip-plan.js)
+// ----- wizard shell (เฟส "เบิก/จัดหา" เท่านั้น — "แผนเดินทาง" ไม่ใช้ shell นี้แล้ว 28 ส.ค. 2569 รอบ 3) -----
 function renderProcWizard(plan) {
-  const steps = currentProcSteps();
-  const onTravel = currentPhase() === 'travel';
-  const isLastStep = state.sub === steps.length;
+  const isLastStep = state.sub === PROC_STEPS.length;
   const primaryLabel = isLastStep ? 'ไปเฟสถัดไป' : 'ถัดไป';
   const primaryDisabled = !validateProcSub(plan, state.sub);
 
   $('phase').innerHTML = `
     <div class="card">
-      <div class="wsteps sm">${steps.map(s => {
+      <div class="wsteps sm">${PROC_STEPS.map(s => {
         const active = s.no === state.sub;
         const passed = s.no < state.sub;
         const cls = ['wstep'];
         if (active) cls.push('active');
         if (passed) cls.push('passed');
-        // เฟส "แผนเดินทาง" คลิกข้ามขั้นได้เสมอ (ไม่มีเกณฑ์ปิดกั้นแล้ว) จึงไม่ติดสไตล์ .locked ให้ดูขัดกับ
-        // ของจริง — เฟสอื่นยังต้องผ่านขั้นก่อนหน้าก่อน จึงคงป้าย locked ไว้เหมือนเดิม
-        if (!onTravel && s.no > state.sub) cls.push('locked');
+        if (s.no > state.sub) cls.push('locked');
         return `<div class="${cls.join(' ')}" onclick="goProcSub(${s.no})">
           <span class="num">${passed ? '✓' : s.no}</span>
           <span class="lbl">${esc(s.label)}</span>
         </div>`;
       }).join('')}</div>
       <div id="procBody">${renderProcSubBody(plan)}</div>
-      ${onTravel ? '' : `
       <div class="actions">
         <button class="btn btn-g" id="btnBackProc" ${state.sub === 1 ? 'disabled' : ''}>ย้อนกลับ</button>
         <button class="btn btn-p" id="btnPrimaryProc" ${primaryDisabled ? 'disabled' : ''}>${esc(primaryLabel)}</button>
-      </div>`}
+      </div>
     </div>`;
 
   bindProcSubBody(plan);
 
-  if (!onTravel) {
-    $('btnBackProc').addEventListener('click', backProcSub);
-    $('btnPrimaryProc').addEventListener('click', () => {
-      if (!isLastStep) { nextProcSub(); return; }
-      const nx = nextPhaseOf('procurement');
-      if (nx) goPhase(nx.id);
-    });
-  }
+  $('btnBackProc').addEventListener('click', backProcSub);
+  $('btnPrimaryProc').addEventListener('click', () => {
+    if (!isLastStep) { nextProcSub(); return; }
+    const nx = nextPhaseOf('procurement');
+    if (nx) goPhase(nx.id);
+  });
 }
 
 function renderProcSubBody(plan) {
-  const m = masterStep(state.sub);
-  if (m === 1) return renderProcStepConfirm(plan);
-  if (m === 2) return renderProcStep1(plan);      // เบิก/จัดหาอะไหล่
-  if (m === 3) return TRIP.renderStep1(plan);     // แผนเดินทาง — โมดูล trip-plan.js
-  // ทวน + ยืนยัน — โมดูล trip-plan.js · shell ไม่มีปุ่ม "ถัดไป" ของขั้นนี้แล้ว จึงขอให้โมดูลวาด
-  // ปุ่ม "ยืนยันแผนเดินทาง" ไว้ในเนื้อขั้นเอง (showConfirm)
-  return TRIP.renderStep2(plan, { showConfirm: true });
+  return state.sub === 1 ? renderProcStepConfirm(plan) : renderProcStep1(plan);   // ขั้น 2 = เบิก/จัดหาอะไหล่
 }
 
 function bindProcSubBody(plan) {
-  const m = masterStep(state.sub);
-  if (m === 1) bindProcStepConfirm(plan);
-  else if (m === 2) bindProcStep1(plan);
-  // เฟสแผนเดินทาง (m===3/4) ไม่มีปุ่ม "ถัดไป" ของ shell แล้ว จึงไม่ต้องส่ง onValidity ให้โมดูลทวนสถานะปุ่มอีก
-  else if (m === 3) TRIP.bindStep1(plan, { onChange: () => renderProcWizard(plan) });
-  // ขั้นทวน+ยืนยัน — ปุ่ม "ยืนยัน<ไตรมาส>" อยู่ในเนื้อขั้นเอง ต่อไตรมาส (โมดูลเรียก onConfirm(q) กลับมาหลัง
-  // ยืนยันไตรมาสนั้นสำเร็จ) — กดยืนยันไตรมาสไหน พาเข้าหน้าไตรมาสนั้นตรงๆ เลย (28 ส.ค. 2569 เจ้าของงานสั่ง)
-  // เปลี่ยน hash แล้ว route() จะจัดการ render หน้าไตรมาสให้เอง ไม่ต้อง render เองตรงนี้
-  else TRIP.bindStep2(plan, {
-    onChange: () => renderProcWizard(plan),
-    onConfirm: (q) => { location.hash = `${plan.id}/${q}`; },
-  });
+  if (state.sub === 1) bindProcStepConfirm(plan);
+  else bindProcStep1(plan);
 }
 
 // ----- ขั้น 1 (ชื่อฟังก์ชันค้างจากตอนมี 3 ขั้น เนื้อหาจริงคือเบิกอะไหล่ เรียกเป็นขั้นที่ 2) -----

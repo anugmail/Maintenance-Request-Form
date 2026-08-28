@@ -84,23 +84,37 @@ const TAB_PROC   = `[onclick="goPhase('procurement')"]`;
   ok(await page.locator('.badge', { hasText: 'ส่งคำขอแล้ว' }).count() > 0, 'ส่งคำขอเบิกแล้ว');
   ok(!(await page.locator('#btnPrimaryProc').isDisabled()), 'ส่งคำขอแล้ว → ปุ่มหลักเปิด');
 
-  console.log('\nเฟส 2 · ขั้นที่ 1 = ทำแผนเดินทาง (shell ไม่มีปุ่ม ย้อนกลับ/ถัดไป แล้ว — 28 ส.ค. 2569)');
+  console.log('\nเฟส 2 · แผนเดินทาง — ไม่มี stepper 2 ขั้นระดับหน้าอีกแล้ว (28 ส.ค. 2569 รอบ 3)');
   await page.locator('#btnPrimaryProc').click(); await page.waitForTimeout(500);
-  subs = await subLabels();
-  console.log('   ', subs.join(' → '));
-  ok(subs.length === 2 && subs[0] === 'แผนเดินทาง' && subs[1] === 'ทวน + ยืนยัน', 'ขั้นของเฟส 2 ถูกต้อง');
-  ok(await page.locator('.sect', { hasText: 'ขั้นที่ 1: ทำแผนเดินทาง' }).count() > 0, 'ปุ่มท้ายเฟส 1 พาเข้าเฟส 2 จริง');
+  // ไตรมาส 1 กางไว้เป็นค่าเริ่มต้น จึงมี mini-stepper ของมันเองอยู่แล้ว 1 ตัว — เช็คว่าไม่มีตัวที่ลอยอยู่ "นอก" การ์ดไตรมาสใดๆ (ระดับหน้า) แทน
+  ok(await page.locator('.wsteps.sm').count() === 1 && await page.locator('[data-q] .wsteps.sm').count() === 1,
+    'ไม่มี sub-stepper ระดับหน้าของเฟสนี้แล้ว (มีแต่ตัวที่ฝังอยู่ในการ์ดไตรมาส 1 ที่กางไว้เป็นค่าเริ่มต้น)');
+  ok(await page.locator('.sect', { hasText: 'แผนเดินทาง' }).count() > 0, 'ปุ่มท้ายเฟส 1 พาเข้าเฟส 2 จริง');
   ok(await page.locator('#btnPrimaryProc').count() === 0, 'เฟสแผนเดินทางไม่มีปุ่ม "ถัดไป" ของ shell');
   ok(await page.locator('#btnBackProc').count() === 0, 'และไม่มีปุ่ม "ย้อนกลับ" ของ shell เช่นกัน');
 
-  console.log('\nสลับไปขั้น "ทวน + ยืนยัน" ได้ทันที แม้ยังไม่มีใบเดินทางเลย (ตัดเกณฑ์ครบไตรมาสออกแล้ว)');
-  await page.locator('[onclick="goProcSub(2)"]').click(); await page.waitForTimeout(400);
-  ok(await page.locator('.sect', { hasText: 'ขั้นที่ 2: ทวนแผนเดินทาง + ยืนยัน' }).count() > 0,
-    'ไปขั้นทวนได้เลยโดยไม่ต้องทำแผนเดินทางให้ครบก่อน');
-  ok(await page.locator('[data-confirm-q]').count() === 0,
-    'ยังไม่มีไตรมาสไหนพร้อม (quarterTravelReady) → ยังไม่มีปุ่ม "ยืนยัน<ไตรมาส>" ให้กด');
-  await page.locator('[onclick="goProcSub(1)"]').click(); await page.waitForTimeout(400);
-  ok(await page.locator('.sect', { hasText: 'ขั้นที่ 1: ทำแผนเดินทาง' }).count() > 0, 'กลับมาขั้น 1 ได้อิสระเหมือนกัน');
+  console.log('\nไตรมาส 1 กางไว้เป็นค่าเริ่มต้นอยู่แล้ว (S.q) — ข้างในมี mini-stepper 2 ขั้นของไตรมาสนั้นเอง (แผนเดินทาง / ทวน + ยืนยัน)');
+  const q1MiniLabels = await page.locator('[data-q="Q1"] .rzone-body .wsteps.sm .wstep .lbl').allTextContents();
+  ok(q1MiniLabels.length === 2 && q1MiniLabels[0] === 'แผนเดินทาง' && q1MiniLabels[1] === 'ทวน + ยืนยัน',
+    `mini-stepper ของไตรมาส 1 มี 2 ขั้นถูกต้อง (${q1MiniLabels.join(' → ')})`);
+  ok(await page.locator('[data-q="Q1"] [data-add-trip="Q1"]').count() > 0,
+    'ค่าเริ่มต้นอยู่ขั้น "แผนเดินทาง" — เห็นปุ่มสร้างแผนเดินทางใหม่ของไตรมาสนี้');
+
+  console.log('\nสลับไปขั้น "ทวน + ยืนยัน" ของไตรมาส 1 ได้ทันที แม้ยังไม่มีใบเดินทางเลย (ไม่มีเกณฑ์บล็อก)');
+  await page.locator('[data-qstep="Q1"][data-qstep-n="2"]').click(); await page.waitForTimeout(300);
+  ok(await page.locator('[data-q="Q1"] [data-add-trip="Q1"]').count() === 0,
+    'สลับไปขั้นทวน+ยืนยันแล้ว — ปุ่มสร้างแผนเดินทางของขั้น 1 หายไป');
+  ok(await page.locator('[data-q="Q1"] .empty', { hasText: 'ยังไม่มีแผนเดินทางของไตรมาส 1' }).count() > 0,
+    'ขั้นทวน+ยืนยันบอกว่ายังไม่มีแผนเดินทาง');
+  ok(await page.locator('[data-confirm-q="Q1"]').count() === 0,
+    'ไตรมาส 1 ยังไม่พร้อม (quarterTravelReady) → ยังไม่มีปุ่ม "ยืนยันไตรมาส 1" ให้กด');
+
+  console.log('\nไตรมาสอื่นเป็นอิสระ — ขยายไตรมาส 2 แล้วยังอยู่ขั้น "แผนเดินทาง" ค่าเริ่มต้น ไม่ผูกกับไตรมาส 1');
+  await page.locator('[data-toggle-q="Q2"]').click(); await page.waitForTimeout(300);
+  ok(await page.locator('[data-q="Q2"] [data-add-trip="Q2"]').count() > 0,
+    'ไตรมาส 2 ยังอยู่ขั้น "แผนเดินทาง" (ค่าเริ่มต้น) แม้ไตรมาส 1 ถูกสลับไปขั้นทวน+ยืนยันแล้ว');
+  ok(await page.locator('[data-q="Q1"] .empty', { hasText: 'ยังไม่มีแผนเดินทางของไตรมาส 1' }).count() > 0,
+    'ไตรมาส 1 ยังค้างอยู่ขั้นทวน+ยืนยันเหมือนเดิม ไม่ถูกรีเซ็ตตอนขยายไตรมาสอื่น');
 
   console.log('\nรายการไตรมาสท้ายเฟส "แผนเดินทาง" — ยังไม่มีไตรมาสไหนยืนยัน จึงเปิดดำเนินการไม่ได้สักไตรมาส');
   ok(await page.locator('.sect', { hasText: 'รายการไตรมาส' }).count() > 0, 'มีการ์ดรายการไตรมาส');
@@ -119,11 +133,11 @@ const TAB_PROC   = `[onclick="goPhase('procurement')"]`;
     p.trips = [t]; MYD.savePlan(p);
   }, PLAN);
   await page.reload(); await page.waitForSelector('.wsteps');
-  ok(await page.locator('.sect', { hasText: 'ขั้นที่ 1: ทำแผนเดินทาง' }).count() > 0, 'รีโหลดแล้วยังอยู่เฟส 2 (plan.phase ถูกบันทึก)');
+  ok(await page.locator('.sect', { hasText: 'แผนเดินทาง' }).count() > 0, 'รีโหลดแล้วยังอยู่เฟส 2 (plan.phase ถูกบันทึก)');
 
-  console.log('\nเฟส 2 · ขั้นที่ 2 = ทวน + ยืนยัน — ยืนยันไตรมาสเดียว (Q1) แล้วพาเข้าหน้าไตรมาสนั้นตรงๆ');
-  await page.locator('[onclick="goProcSub(2)"]').click(); await page.waitForTimeout(400);
-  ok(await page.locator('.sect', { hasText: 'ขั้นที่ 2: ทวนแผนเดินทาง + ยืนยัน' }).count() > 0, 'เข้าขั้นทวนได้');
+  console.log('\nยืนยันไตรมาส 1 จากขั้น "ทวน + ยืนยัน" ในการ์ดของมันเอง — พาเข้าหน้าไตรมาสนั้นตรงๆ');
+  // รีโหลดแล้ว S ในหน่วยความจำรีเซ็ต → ไตรมาส 1 กางไว้เป็นค่าเริ่มต้นอีกครั้ง ไม่ต้องคลิก toggle เอง (ไม่งั้นจะพับปิดแทน)
+  await page.locator('[data-qstep="Q1"][data-qstep-n="2"]').click(); await page.waitForTimeout(300);
   ok(await page.locator('[data-confirm-q="Q1"]').count() > 0, 'มีปุ่ม "ยืนยันไตรมาส 1" ให้กด (ไตรมาสนี้พร้อมแล้ว)');
 
   await page.locator('[data-confirm-q="Q1"]').click();
