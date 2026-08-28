@@ -1,23 +1,35 @@
-// app.js — รายการแผน + หน้าแผนรายใบ (stepper 6 เฟสปฏิบัติการ)
+// app.js — รายการแผน + หน้าแผนรายใบ (stepper 2 เฟสระดับแผน + stepper 4 เฟสระดับไตรมาส)
 //
 // ⚠️ โครงเปลี่ยน 8 ส.ค. 2569
 //   - "ออกเลขงาน" แยกไป plan-new.html แล้ว ไม่อยู่ใน stepper นี้
 //   - ระบบเก็บ "หลายแผน" (MYD.loadPlans()) แผนหนึ่ง = ประจำปีหนึ่งใบของ กบค.
 //   - เลขงาน (MT-ปี-ไตรมาส-NNN) คือหัวข้อของแผน · stepper เป็นของ "แต่ละแผน"
 //
-// routing: index.html         -> รายการแผน
-//          index.html#<planId> -> เปิดแผนนั้น + stepper 6 เฟส
+// ⚠️ โครงเปลี่ยนอีกรอบ 28 ส.ค. 2569 (เจ้าของงานสั่ง) — แยก "ตรวจสภาพก่อนซ่อม/ดำเนินการบำรุงรักษา/
+//   จัดทำรายงาน/คำนวณต้นทุน" ออกจาก stepper ของแผน ไปเป็น stepper แยกต่างหาก "ต่อไตรมาส" — เพราะ 4 เฟสนี้
+//   ทำทีละไตรมาสอยู่แล้วจริงๆ (มีแท็บ/ล็อกไตรมาสอยู่ในตัวเองมานานแล้ว) การผูกไว้กับ stepper ระดับแผนเดียว
+//   ทำให้ดูเหมือนต้องทำครบทุกไตรมาสพร้อมกันทั้งที่ไม่ใช่ · กด "ยืนยันไตรมาส" ที่ขั้นทวน+ยืนยันของแผนเดินทาง
+//   แล้วพาเข้าหน้าไตรมาสนั้นตรงๆ (ดู renderQuarterOps) — ไตรมาสอื่นที่ยังไม่ยืนยันดูได้จากรายการไตรมาส
+//   ท้ายเฟส "แผนเดินทาง" (renderQuarterList) ไม่ต้องรอไตรมาสอื่นให้ครบก่อน
+//
+// routing: index.html                  -> รายการแผน
+//          index.html#<planId>         -> เปิดแผนนั้น + stepper 2 เฟส (เบิก/จัดหา · แผนเดินทาง)
+//          index.html#<planId>/<Q1-4>  -> เปิดหน้าดำเนินการของไตรมาสนั้น + stepper 4 เฟส
 // ต้องโหลด common.js + mock-yearly.js ก่อนไฟล์นี้
 
-// ⚠️ แยกเฟส 21 ส.ค. 2569 — "เบิก/จัดหา + แผนเดินทาง" เดิมแตกเป็น 2 เฟส
-//   (เบิก/จัดหา · แผนเดินทาง) เฟส 2-5 เดิมจึงเลื่อนเป็น 3-6
+// ⚠️ แยกเฟส 21 ส.ค. 2569 — "เบิก/จัดหา + แผนเดินทาง" เดิมแตกเป็น 2 เฟส (เบิก/จัดหา · แผนเดินทาง)
+// PHASES = เฟสระดับ "แผน" (ทั้งปี ไม่แยกไตรมาส) — เหลือ 2 เฟสหลังแยก 4 เฟสท้ายออกไปเป็นระดับไตรมาส (28 ส.ค. 2569)
 const PHASES = [
   { id: 'procurement', no: 1, label: 'เบิก/จัดหา' },
   { id: 'travel',      no: 2, label: 'แผนเดินทาง' },
-  { id: 'inspection',  no: 3, label: 'ตรวจสภาพก่อนซ่อม' },
-  { id: 'maintenance', no: 4, label: 'ดำเนินการบำรุงรักษา' },
-  { id: 'report',      no: 5, label: 'จัดทำรายงาน' },
-  { id: 'cost',        no: 6, label: 'คำนวณต้นทุน' },
+];
+
+// QUARTER_PHASES = เฟสระดับ "ไตรมาส" — เข้าได้ต่อเมื่อไตรมาสนั้นยืนยันแผนเดินทางแล้ว (28 ส.ค. 2569)
+const QUARTER_PHASES = [
+  { id: 'inspection',  no: 1, label: 'ตรวจสภาพก่อนซ่อม' },
+  { id: 'maintenance', no: 2, label: 'ดำเนินการบำรุงรักษา' },
+  { id: 'report',      no: 3, label: 'จัดทำรายงาน' },
+  { id: 'cost',        no: 4, label: 'คำนวณต้นทุน' },
 ];
 
 // สถานะแผนเทียบกับปฏิทินปีงบ — แผนทำล่วงหน้า 2 ปี จึงมีช่วง "รอ" และ "รอบทบทวน"
@@ -34,6 +46,9 @@ const PLAN_STAGE_BADGE = {
 // travelQ = ไตรมาสที่กำลังทำแผนเดินทางอยู่ (memory เท่านั้น ไม่ผูกกับแผน เหมือน sub)
 const state = { sub: 1, travelQ: 'Q1' };
 let PLAN = null;   // แผนที่กำลังเปิดอยู่ (null = อยู่หน้ารายการ)
+// ไตรมาสที่กำลังดำเนินการอยู่ — ตั้งจาก route() เมื่อ hash เป็น #<planId>/<Q> เท่านั้น (null = อยู่หน้าแผน
+// ไม่ใช่หน้าไตรมาส) ใช้ล็อกหน้าตรวจสภาพ/บำรุงรักษา/รายงาน/ต้นทุน ให้เห็นแค่ไตรมาสนี้ไตรมาสเดียว (ล็อก INSP.q ด้วย)
+let QUARTER = null;
 
 // ================= PHASE COMPLETION / GUARD (ต่อแผน) =================
 // เฟส 1 จบด้วยการส่งคำขอเบิกอะไหล่ · เฟส 2 จบด้วยการยืนยันแผนเดินทางจริง
@@ -77,7 +92,10 @@ function nextPhaseLabel(id) {
 }
 
 function currentPhase() {
-  return (PLAN && PLAN.phase) || PHASES[0].id;
+  const p = (PLAN && PLAN.phase) || PHASES[0].id;
+  // กันแผนเก่าที่ยังมี plan.phase ค้างเป็นเฟสที่ย้ายไประดับไตรมาสไปแล้ว (inspection/maintenance/report/cost
+  // — 28 ส.ค. 2569) ตกกลับมาที่ 'travel' เพราะแปลว่าเฟส 1-2 ระดับแผนผ่านมาแล้วแน่ๆ ถึงเคยไปถึงเฟสพวกนั้นได้
+  return PHASES.some(x => x.id === p) ? p : 'travel';
 }
 
 // ================= รายการแผน =================
@@ -185,7 +203,7 @@ function renderStepper() {
   }).join('')}</div>`;
 }
 
-function goPhase(id, opts = {}) {
+function goPhase(id) {
   if (!canGoPhase(id)) {
     toast('ต้องทำเฟสก่อนหน้าให้เสร็จก่อน ถึงจะเข้าเฟสนี้ได้');
     return;
@@ -193,42 +211,86 @@ function goPhase(id, opts = {}) {
   PLAN.phase = id;
   MYD.savePlan(PLAN);
   state.sub = 1;
-  // เข้าเฟสดำเนินการบำรุงรักษา ต่อจากตรวจสภาพคันเดียว → โฟกัสคันนั้น (26 ส.ค. 2569)
-  // เข้าเฟสจัดทำรายงาน ต่อจากดำเนินการบำรุงรักษาคันเดียว → โฟกัสคันเดียวกันต่อ (28 ส.ค. 2569)
-  // ทางอื่นที่เข้าเฟสเหล่านี้ (คลิก stepper ตรงๆ) ไม่ส่ง opts.vehicleId มา จึงเห็นรถทั้งหมดตามปกติ
-  if (id === 'maintenance') MAINT.vehicleId = opts.vehicleId || null;
-  if (id === 'report') REPORT.vehicleId = opts.vehicleId || null;
   renderStepper();
   renderPhaseBody();
   window.scrollTo({ top: 0 });
 }
 
-function renderPlaceholder(id) {
-  const idx = PHASES.findIndex(p => p.id === id);
-  const phase = PHASES[idx];
-  const label = phase ? phase.label : id;
-  const next = nextPhaseOf(id);
-  const done = isPhaseComplete(id);
-  return `<div class="card">
-    <div class="sect">${esc(label)}</div>
-    <div class="note note-info"><span class="ms">science</span>
-      <div><b>หน้าจอของเฟสนี้ยังไม่ได้ทำ</b> — ปุ่มด้านล่างเป็น<b>ทางลัดของต้นแบบ</b>
-        ไว้เดินดูขั้นตอนถัดไปเท่านั้น ยังไม่มีการบันทึกงานจริงของเฟสนี้</div></div>
-    ${done ? `<div class="note note-ok"><span class="ms">check_circle</span>
-      <div>ทำเครื่องหมายว่าเฟสนี้เสร็จแล้ว — กดปุ่มเพื่อไปเฟสถัดไปได้เลย</div></div>` : ''}
-    <div class="actions">
-      ${next
-        ? `<button class="btn btn-p" id="btnPhaseNext">ถัดไป — ${esc(next.label)}</button>`
-        : `<button class="btn btn-p" id="btnPhaseNext" ${done ? 'disabled' : ''}>${done ? 'จบแผนแล้ว' : 'จบแผน'}</button>`}
-    </div>
-  </div>`;
+// ================= stepper ระดับไตรมาส (28 ส.ค. 2569) =================
+// เหมือน canGoPhase/goPhase/renderStepper ด้านบนทุกอย่าง แต่ผูกกับ "ไตรมาสที่กำลังดำเนินการอยู่" (QUARTER)
+// แทนที่จะเป็นของทั้งแผน — เข้าได้ต่อเมื่อ MYD.quarterTravelConfirmed(plan,q) แล้วเท่านั้น (เช็คที่ route())
+function currentQuarterPhase() {
+  return MYD.quarterOpsPhase(PLAN, QUARTER);
 }
 
-// ================= เฟส 4 · ดำเนินการบำรุงรักษา =================
+function canGoQuarterPhase(id) {
+  const idx = QUARTER_PHASES.findIndex(p => p.id === id);
+  if (idx <= 0) return true;
+  return MYD.quarterPhaseDone(PLAN, QUARTER, QUARTER_PHASES[idx - 1].id);
+}
+
+function nextQuarterPhaseOf(id) {
+  const i = QUARTER_PHASES.findIndex(p => p.id === id);
+  return i >= 0 ? QUARTER_PHASES[i + 1] || null : null;
+}
+
+function nextQuarterPhaseLabel(id) {
+  const nx = nextQuarterPhaseOf(id);
+  return nx ? ` — ${nx.label}` : '';
+}
+
+function renderQuarterStepper() {
+  const cur = currentQuarterPhase();
+  $('stepper').innerHTML = `<div class="wsteps">${QUARTER_PHASES.map(p => {
+    const active = p.id === cur;
+    const passed = MYD.quarterPhaseDone(PLAN, QUARTER, p.id);
+    const clickable = canGoQuarterPhase(p.id);
+    const cls = ['wstep'];
+    if (active) cls.push('active');
+    if (passed) cls.push('passed');
+    if (!clickable) cls.push('locked');
+    return `<div class="${cls.join(' ')}" onclick="goQuarterPhase('${p.id}')">
+      <span class="num">${passed ? '✓' : p.no}</span>
+      <span class="lbl">${esc(p.label)}</span>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function goQuarterPhase(id, opts = {}) {
+  if (!canGoQuarterPhase(id)) {
+    toast('ต้องทำเฟสก่อนหน้าให้เสร็จก่อน ถึงจะเข้าเฟสนี้ได้');
+    return;
+  }
+  MYD.setQuarterOpsPhase(PLAN, QUARTER, id);
+  MYD.savePlan(PLAN);
+  // เข้าเฟสดำเนินการบำรุงรักษา ต่อจากตรวจสภาพคันเดียว → โฟกัสคันนั้น (26 ส.ค. 2569)
+  // เข้าเฟสจัดทำรายงาน ต่อจากดำเนินการบำรุงรักษาคันเดียว → โฟกัสคันเดียวกันต่อ (28 ส.ค. 2569)
+  // ทางอื่นที่เข้าเฟสเหล่านี้ (คลิก stepper ตรงๆ) ไม่ส่ง opts.vehicleId มา จึงเห็นรถทั้งหมดตามปกติ
+  if (id === 'maintenance') MAINT.vehicleId = opts.vehicleId || null;
+  if (id === 'report') REPORT.vehicleId = opts.vehicleId || null;
+  renderQuarterStepper();
+  renderQuarterPhaseBody();
+  window.scrollTo({ top: 0 });
+}
+
+// ปุ่ม "ถัดไป" ทั่วไปของ 3 เฟสแรก (ตรวจสภาพก่อนซ่อม/ดำเนินการบำรุงรักษา/จัดทำรายงาน) เรียกอันนี้ — เฟส
+// "คำนวณต้นทุน" ไม่มีปุ่มถัดไป (จบด้วยส่งอนุมัติปิดแผนไตรมาสในหน้าตัวเอง ดู renderCost)
+function finishQuarterPhaseAndAdvance(id, opts = {}) {
+  MYD.finishQuarterPhase(PLAN, QUARTER, id);
+  MYD.savePlan(PLAN);
+  const nx = nextQuarterPhaseOf(id);
+  if (nx) { goQuarterPhase(nx.id, opts); return; }
+  renderQuarterStepper();
+  renderQuarterPhaseBody();
+}
+
+// ================= เฟสไตรมาส 2/4 · ดำเนินการบำรุงรักษา =================
 // แสดง "รายละเอียดงาน" ที่เลือกไว้ตอนทำแผนเดินทาง (ขั้น 1 ของเฟส 2 · แผนเดินทาง) มาให้ช่างเห็นหน้างาน ติ๊กได้ทีละงาน
 // ยังไม่มีการบันทึกผลงานจริง — หน้านี้เป็นตัวส่งต่อข้อมูลอย่างเดียว
-// MAINT.vehicleId = โฟกัสรถคันเดียว — ตั้งจาก goPhase('maintenance', {vehicleId}) ตอนกด "เสร็จสิ้น" ใบตรวจสภาพ
-// ของคันนั้น (26 ส.ค. 2569) ให้เห็นแค่งานของคันที่เพิ่งตรวจ ไม่ใช่ทุกคันปนกัน · ล้างเองถ้าออกจากเฟสนี้ (ดู goPhase)
+// เห็นเฉพาะรถของ QUARTER (ไตรมาสที่กำลังดำเนินการอยู่ — ล็อกจาก route()) เท่านั้น (28 ส.ค. 2569 — เดิมหน้านี้
+// ไม่แยกไตรมาสเลย โชว์ทุกคันในแผนปนกัน ตอนนี้เฟสนี้ย้ายไปอยู่ใต้หน้าไตรมาสแล้วจึงต้องกรองเอง)
+// MAINT.vehicleId = โฟกัสรถคันเดียว — ตั้งจาก goQuarterPhase('maintenance', {vehicleId}) ตอนกด "เสร็จสิ้น" ใบตรวจสภาพ
+// ของคันนั้น (26 ส.ค. 2569) ให้เห็นแค่งานของคันที่เพิ่งตรวจ ไม่ใช่ทุกคันปนกัน · ล้างเองถ้าออกจากเฟสนี้ (ดู goQuarterPhase)
 // แนบรูปหลักฐานต่อรายการงานได้ที่นี่ (27 ส.ค. 2569 — เจ้าของงานสั่งย้ายมาจากเฟส 5 จัดทำรายงาน เพราะรูปหลักฐาน
 // เป็นของ "ตอนลงมือทำงาน" ไม่ใช่ตอนปิดรายงาน) อยู่คอลัมน์ "รายละเอียดงาน" เดียวกับ checkbox ติ๊กงานเสร็จ
 // (28 ส.ค. 2569 — เคยแยกเป็นบล็อกต่างหากใต้ตารางไปรอบหนึ่ง แต่เจ้าของงานสั่งย้ายกลับมาคอลัมน์เดิม) —
@@ -264,7 +326,7 @@ function renderMaintenance() {
   // ต้องตอบครบทุกข้อตรวจ 23 ข้อก่อนด้วย (26 ส.ค. 2569) เพราะลงมือบำรุงรักษาได้ทันทีที่รับมอบตัวรถแล้ว
   // ไม่ต้องรอกรอกเอกสารตรวจสภาพให้ครบ · ต่อมาสั่งผ่อนเกณฑ์เดียวกันนี้ให้เฟส 5/6 ด้วย จึงเหลือเกณฑ์เดียว
   // (MYD.inspectionDone) ใช้ร่วมกันทุกเฟส)
-  const joined = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
+  const joined = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === QUARTER);
   const received = joined.filter(id => MYD.inspectionDone(PLAN, id));
   const waiting = joined.length - received.length;
   // คันที่กดลบออก (มีเหตุผลบันทึกไว้) — หายจากตารางทำงาน ไปขึ้นเป็นรายการเหตุผลด้านล่างแทน (25 ส.ค. 2569)
@@ -351,7 +413,7 @@ function renderMaintenance() {
       ${totalJobs ? `<div class="sub">ติ๊กเสร็จแล้ว <b id="maintDoneCount">${doneJobs}</b> จาก <b>${totalJobs}</b> งาน</div>` : ''}
       ${waiting && !focusV ? `<div class="note note-warn"><span class="ms">pending</span>
         <div>อีก <b>${waiting}</b> คันยัง<b>ไม่ได้ลงนามรับมอบตัวรถครบ 2 ฝั่ง</b> จึงยังไม่ขึ้นที่นี่ —
-          กลับไปเฟส 3 เพื่อลงนามรับมอบให้ครบก่อน</div></div>` : ''}
+          กลับไปขั้นตรวจสภาพก่อนซ่อมเพื่อลงนามรับมอบให้ครบก่อน</div></div>` : ''}
       <div class="note note-info"><span class="ms">science</span>
         <div>หน้านี้ให้<b>ติ๊กงานที่ทำเสร็จ</b>และ<b>แนบรูปหลักฐานต่อรายการ</b>ได้แล้ว — ส่วนการบันทึกผลงานหน้างานแบบละเอียด
           อื่น (อะไหล่ที่ใช้จริง · เลขไมล์/ชม.เครื่อง) ยังไม่ได้ทำในต้นแบบ</div></div>
@@ -365,10 +427,10 @@ function renderMaintenance() {
             excluded.length && excluded.length === received.length
               ? 'รถที่ลงนามรับมอบครบถูกลบออกจากแผนบำรุงรักษาหมดแล้ว — ดูเหตุผลด้านบน'
               : joined.length
-              ? 'ยังไม่มีรถที่ลงนามรับมอบครบ — กลับไปเฟส 3 เพื่อลงนามรับมอบก่อน'
-              : 'ยังไม่มีรถที่ยืนยันเข้าแผน'}</div>`}
+              ? 'ยังไม่มีรถที่ลงนามรับมอบครบ — กลับไปขั้นตรวจสภาพก่อนซ่อมก่อน'
+              : 'ยังไม่มีรถของไตรมาสนี้ที่ยืนยันเข้าแผน'}</div>`}
       <div class="actions">
-        <button class="btn btn-p" id="btnPhaseNext">ถัดไป${nextPhaseLabel('maintenance')}</button>
+        <button class="btn btn-p" id="btnPhaseNext">ถัดไป${nextQuarterPhaseLabel('maintenance')}</button>
       </div>
       <input type="file" id="jobPhotoFile" accept="image/*" capture="environment" class="hidden">
     </div>`;
@@ -414,8 +476,8 @@ function renderMaintenance() {
     openMaintExcludeModal(id, v ? MYD.plateFull(v) : id);
   }));
 
-  // ส่ง vehicleId ของคันที่โฟกัสอยู่ (ถ้ามี) ต่อไปให้เฟส 5 จัดทำรายงาน จะได้โฟกัสคันเดิมต่อ ไม่ใช่เห็นรถทุกคันปนกัน (28 ส.ค. 2569)
-  $('btnPhaseNext')?.addEventListener('click', () => finishPhase('maintenance', { vehicleId: focusId }));
+  // ส่ง vehicleId ของคันที่โฟกัสอยู่ (ถ้ามี) ต่อไปให้ขั้นจัดทำรายงาน จะได้โฟกัสคันเดิมต่อ ไม่ใช่เห็นรถทุกคันปนกัน (28 ส.ค. 2569)
+  $('btnPhaseNext')?.addEventListener('click', () => finishQuarterPhaseAndAdvance('maintenance', { vehicleId: focusId }));
 }
 
 // Modal ลบรถออกจากแผนบำรุงรักษา — ต้องกรอกเหตุผลก่อนยืนยัน (แพตเทิร์นเดียวกับ showVehicleDetail ใน plan-new.js:
@@ -483,8 +545,7 @@ function openInspectIncompleteModal(count, q, onProceed, opts = {}) {
   $('inspectWarnBack').addEventListener('click', () => {
     close();
     INSP.vehicleId = null;
-    INSP.q = q;   // พาไปแท็บไตรมาสเดียวกับที่เตือน ไม่ต้องไปหาเอง
-    goPhase('inspection');
+    goQuarterPhase('inspection');
   });
   $('inspectWarnProceed').addEventListener('click', () => { close(); onProceed(); });
 }
@@ -494,40 +555,27 @@ function openInspectIncompleteModal(count, q, onProceed, opts = {}) {
 // รวมตารางต้นทุน (เบี้ยเลี้ยง/ที่พัก/เดินทาง) เข้ามาด้วย — ค่าดึงมาจากแผนเดินทาง (เฟส 2) โดยตรง ล็อคแก้ไม่ได้
 // ทั้งที่นี่และเฟส 6 คำนวณต้นทุน (28 ส.ค. 2569 — เจ้าของงานสั่งเลิกให้กรอกซ้ำ ใช้ค่าจากแผนเดินทางแทน)
 // ยังไม่มีส่วนอื่นของหน้ารายงาน (ตรวจสภาพการทำงาน · ผลตรวจน้ำมัน · อนุมัติปิดงาน) — รอออกแบบเพิ่ม
-// แยกแสดง/กรอกรายไตรมาส (27 ส.ค. 2569 — เจ้าของงานสั่งให้เห็นแค่รถของไตรมาสที่กำลังบำรุงอยู่ เหมือนขั้น
-// ตรวจสภาพก่อนซ่อมกับคำนวณต้นทุน) ใช้ COST.q ตัวเดียวกับเฟส 6 เพราะเป็น "ไตรมาสที่กำลังปิดงานอยู่" ตัวเดียวกัน
-// REPORT.vehicleId = โฟกัสรถคันเดียว — ตั้งจาก goPhase('report', {vehicleId}) ตอนกด "ถัดไป — จัดทำรายงาน"
-// ขณะเฟส 4 กำลังโฟกัสคันเดียวอยู่ (28 ส.ค. 2569 — แพตเทิร์นเดียวกับ MAINT.vehicleId) ให้เห็นแค่คันที่เพิ่งทำ
-// เฟส 4 เสร็จ ไม่ใช่ทุกคันที่ตรวจครบแล้วปนกัน · ล้างเองถ้าออกจากเฟสนี้ (ดู goPhase)
+// เห็นเฉพาะรถของ QUARTER เท่านั้น (28 ส.ค. 2569 — เดิมมีแท็บสลับไตรมาสในหน้านี้เอง ใช้ COST.q ร่วมกับเฟส
+// คำนวณต้นทุน ตอนนี้เฟสนี้ย้ายไปอยู่ใต้หน้าไตรมาสแล้ว จึงล็อกไว้ที่ QUARTER แทน ไม่ต้องมีแท็บให้สลับอีก)
+// REPORT.vehicleId = โฟกัสรถคันเดียว — ตั้งจาก goQuarterPhase('report', {vehicleId}) ตอนกด "ถัดไป — จัดทำรายงาน"
+// ขณะเฟส "ดำเนินการบำรุงรักษา" กำลังโฟกัสคันเดียวอยู่ (28 ส.ค. 2569 — แพตเทิร์นเดียวกับ MAINT.vehicleId) ให้เห็น
+// แค่คันที่เพิ่งทำเสร็จ ไม่ใช่ทุกคันที่ตรวจครบแล้วปนกัน · ล้างเองถ้าออกจากเฟสนี้ (ดู goQuarterPhase)
 let REPORT = { vehicleId: null };
 
 function renderReport() {
   const master = MYD.loadMaster();
   const byId = new Map(master.vehicles.map(v => [v.id, v]));
   // แสดงเฉพาะคันที่ "ตรวจสภาพก่อนซ่อมครบแล้ว" (เจ้าของงานสั่ง 26 ส.ค. 2569 — เกณฑ์เดียวกับเฟส 4 ดำเนินการ
-  // บำรุงรักษา ดู MYD.inspectionDone)
-  const joined = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
+  // บำรุงรักษา ดู MYD.inspectionDone) ของไตรมาสนี้เท่านั้น
+  const joined = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === QUARTER);
   const received = joined.filter(id => MYD.inspectionDone(PLAN, id));
   const all = received.filter(id => !MYD.maintExcluded(PLAN, id));
 
-  // ถ้าคันที่โฟกัสไว้ไม่อยู่ใน all แล้ว (ยังไม่ผ่านเกณฑ์/ถูกลบออก) ให้ตกกลับไปโชว์รายการทั้งหมดแทนเงียบๆ
-  // (แพตเทิร์นเดียวกับ MAINT ใน renderMaintenance) — ล็อกแท็บไตรมาสไปที่ไตรมาสของคันที่โฟกัสด้วย จะได้ไม่ต้องเลือกเอง
+  // ถ้าคันที่โฟกัสไว้ไม่อยู่ใน all แล้ว (ยังไม่ผ่านเกณฑ์/ถูกลบออก) ให้ตกกลับไปโชว์รายการทั้งหมดแทนเงียบๆ (แพตเทิร์น
+  // เดียวกับ MAINT ใน renderMaintenance)
   const focusId = REPORT.vehicleId && all.includes(REPORT.vehicleId) ? REPORT.vehicleId : null;
   const focusV = focusId ? byId.get(focusId) : null;
-  if (focusV) COST.q = MYD.bucketOf(PLAN, focusId) || COST.q;
-  if (!QUARTERS.some(q => q.q === COST.q)) COST.q = 'Q1';
-
-  // แท็บไตรมาส — ป้าย sg-sub บอกช่วงเดือนของไตรมาสนั้น (ซ่อนตอนโฟกัสคันเดียว ไม่ต้องเลือกไตรมาสเอง)
-  const qSeg = QUARTERS.map(q => {
-    const qIds = all.filter(id => MYD.bucketOf(PLAN, id) === q.q);
-    return `<div class="sg reportQSeg ${COST.q === q.q ? 'sel' : ''}" data-q="${q.q}">
-      ${esc(MYD.quarterLabel(q.q))} · ${qIds.length} คัน
-      <div class="sg-sub">${esc(q.months)}</div>
-    </div>`;
-  }).join('');
-
-  const qIds = all.filter(id => MYD.bucketOf(PLAN, id) === COST.q);
-  const ids = focusV ? [focusId] : qIds;
+  const ids = focusV ? [focusId] : all;
 
   const rows = ids.map(id => {
     const v = byId.get(id);
@@ -609,16 +657,12 @@ function renderReport() {
       <div class="sect">จัดทำรายงาน${focusV ? ` — ${esc(focusV.plate)}` : ''}</div>
       ${focusV
         ? `<div class="note note-info"><span class="ms">filter_alt</span>
-            <div>กำลังแสดงเฉพาะ <b>${esc(focusV.plate)} ${esc(focusV.brand)}</b> — คันที่เพิ่งทำเฟส 4 ดำเนินการบำรุงรักษาเสร็จ
-              <button type="button" class="btn btn-t btn-sm" id="btnReportShowAll" style="margin-left:8px">ดูรถทั้งหมด (${qIds.length} คัน)</button></div></div>`
-        : `<div class="sub">รถที่ผ่านเฟส 4 ดำเนินการบำรุงรักษามาแล้ว — ทำทีละไตรมาสตามรอบที่กำลังปิดงานอยู่</div>`}
+            <div>กำลังแสดงเฉพาะ <b>${esc(focusV.plate)} ${esc(focusV.brand)}</b> — คันที่เพิ่งทำขั้นดำเนินการบำรุงรักษาเสร็จ
+              <button type="button" class="btn btn-t btn-sm" id="btnReportShowAll" style="margin-left:8px">ดูรถทั้งหมด (${all.length} คัน)</button></div></div>`
+        : `<div class="sub">รถของ${esc(MYD.quarterLabel(QUARTER))}ที่ผ่านขั้นดำเนินการบำรุงรักษามาแล้ว</div>`}
       <div class="note note-info"><span class="ms">science</span>
         <div>หน้านี้มีแค่ส่วนตรวจอะไหล่กับคำนวณต้นทุน — ส่วนตรวจสภาพการทำงาน/ผลตรวจน้ำมัน/อนุมัติปิดงาน ยังไม่ได้ทำในต้นแบบ</div></div>
       ${all.length ? `
-      ${!focusV ? `<div class="f" style="margin-bottom:14px">
-        <label>เลือกไตรมาสที่จะทำรายงาน</label>
-        <div class="seg">${qSeg}</div>
-      </div>` : ''}
       ${ids.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th></tr></thead>
         <tbody>${rows}</tbody></table></div>
@@ -635,7 +679,7 @@ function renderReport() {
             <th class="num">ค่าเดินทาง (บาท)</th><th class="num">รวม (บาท)</th></tr></thead>
           <tbody>${costRows}</tbody>
           <tfoot><tr>
-            <td colspan="2" style="${totalCellStyle}"><b>ต้นทุน${esc(MYD.quarterLabel(COST.q))}</b></td>
+            <td colspan="2" style="${totalCellStyle}"><b>ต้นทุน${esc(MYD.quarterLabel(QUARTER))}</b></td>
             <td class="num" style="${totalCellStyle}">${sumPerDiem.toLocaleString('th-TH')}</td>
             <td class="num" style="${totalCellStyle}">${sumLodging.toLocaleString('th-TH')}</td>
             <td class="num" style="${totalCellStyle}">${sumTravel.toLocaleString('th-TH')}</td>
@@ -643,25 +687,20 @@ function renderReport() {
           </tr></tfoot></table></div>
         <div class="note note-warn"><span class="ms">help</span>
           <div>เงื่อนไขการตัดงบประมาณเป็นยังไง เลือกการตัดงบประมาณอะไรได้บ้าง</div></div>`
-        : `<div class="empty">ไม่มีรถของ${esc(MYD.quarterLabel(COST.q))}</div>`}`
-        : '<div class="empty">ยังไม่มีรถที่เข้าเกณฑ์ — กลับไปเฟส 4 ดำเนินการบำรุงรักษาก่อน</div>'}
+        : `<div class="empty">ไม่มีรถของ${esc(MYD.quarterLabel(QUARTER))}</div>`}`
+        : '<div class="empty">ยังไม่มีรถที่เข้าเกณฑ์ — กลับไปขั้นดำเนินการบำรุงรักษาก่อน</div>'}
       <div class="actions" style="justify-content:space-between">
         <button class="btn btn-g" id="btnBackToInspect"><span class="ms">arrow_back</span> กลับไปเลือกรถตรวจสภาพก่อนซ่อม</button>
-        <button class="btn btn-p" id="btnPhaseNext">ถัดไป${nextPhaseLabel('report')}</button>
+        <button class="btn btn-p" id="btnPhaseNext">ถัดไป${nextQuarterPhaseLabel('report')}</button>
       </div>
     </div>`;
 
-  // ทางลัดกลับไปเฟส 3 (ตรวจสภาพก่อนซ่อม) หน้ารายการรถ — เผื่อกลับไปแก้/ดูใบตรวจของคันไหนเพิ่ม
+  // ทางลัดกลับไปขั้นตรวจสภาพก่อนซ่อม หน้ารายการรถ — เผื่อกลับไปแก้/ดูใบตรวจของคันไหนเพิ่ม
   // เคลียร์ INSP.vehicleId ก่อนเสมอ ไม่งั้นถ้าค้างจากรอบก่อนจะเด้งเข้าใบตรวจคันเดิมแทนหน้ารายการรถ
   $('btnBackToInspect')?.addEventListener('click', () => {
     INSP.vehicleId = null;
-    goPhase('inspection');
+    goQuarterPhase('inspection');
   });
-
-  document.querySelectorAll('.reportQSeg').forEach(sg => sg.addEventListener('click', () => {
-    COST.q = sg.dataset.q;
-    renderReport();
-  }));
 
   $('btnReportShowAll')?.addEventListener('click', () => { REPORT.vehicleId = null; renderReport(); });
 
@@ -679,50 +718,26 @@ function renderReport() {
     MYD.savePlan(PLAN);
   }));
 
-  // "ถัดไป — คำนวณต้นทุน" เตือนก่อนถ้าไตรมาสที่กำลังจะไปดู (COST.q — แท็บเดียวกับที่เลือกอยู่ในหน้านี้
-  // และแท็บของเฟส 6) ยังตรวจสภาพก่อนซ่อมไม่ครบ (26 ส.ค. 2569 · ปรับ 26 ส.ค. 2569 อีกรอบ: เดิมเช็คทั้งแผน
-  // 4 ไตรมาส ตอนนี้เช็คแค่ไตรมาสเดียวพอ เพราะคำนวณต้นทุนก็ดูทีละไตรมาสอยู่แล้ว) — เกณฑ์ความครบใช้
-  // MYD.inspectionDone เหมือนหน้าตรวจสภาพเฟส 3
+  // "ถัดไป — คำนวณต้นทุน" เตือนก่อนถ้ายังตรวจสภาพก่อนซ่อมของไตรมาสนี้ไม่ครบ (26 ส.ค. 2569) — เกณฑ์ความครบใช้
+  // MYD.inspectionDone เหมือนหน้าตรวจสภาพก่อนซ่อม
   $('btnPhaseNext')?.addEventListener('click', () => {
-    if (!QUARTERS.some(q => q.q === COST.q)) COST.q = 'Q1';
-    const qIds = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === COST.q);
+    const qIds = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === QUARTER);
     const notInspected = qIds.filter(id => !MYD.inspectionDone(PLAN, id)).length;
-    if (notInspected) { openInspectIncompleteModal(notInspected, COST.q, () => finishPhase('report')); return; }
-    finishPhase('report');
+    if (notInspected) { openInspectIncompleteModal(notInspected, QUARTER, () => finishQuarterPhaseAndAdvance('report')); return; }
+    finishQuarterPhaseAndAdvance('report');
   });
 }
 
 // ================= เฟส 6 · คำนวณต้นทุน =================
 // อ่านอย่างเดียว — แสดงผลรวมต้นทุนต่อคันที่ดึงมาจากแผนเดินทาง (เฟส 2 · ดู MYD.vehicleCostOf) เท่านั้น
 // ไม่มีช่องให้กรอกที่หน้านี้ (28 ส.ค. 2569 — เฟส 5 ก็ล็อคแก้ไม่ได้เช่นกันแล้ว)
-// แยกแสดงรายไตรมาส (26 ส.ค. 2569 — เจ้าของงานสั่งให้โชว์แค่รถของไตรมาสที่กำลังดูอยู่ เหมือนขั้นตรวจสภาพก่อนซ่อม
-// เพราะบำรุงรักษาทำทีละไตรมาสตามรอบจริง ไม่ใช่ดูทั้งปีปนกัน)
-let COST = { q: 'Q1' };
-
+// เห็นเฉพาะรถของ QUARTER เท่านั้น (28 ส.ค. 2569 — เดิมมีแท็บสลับไตรมาสในหน้านี้เอง ตอนนี้เฟสนี้ย้ายไปอยู่ใต้
+// หน้าไตรมาสแล้ว จึงล็อกไว้ที่ QUARTER แทน ไม่ต้องมีแท็บให้สลับอีก)
 function renderCost() {
   const master = MYD.loadMaster();
   const byId = new Map(master.vehicles.map(v => [v.id, v]));
-  const ids = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
-  if (!QUARTERS.some(q => q.q === COST.q)) COST.q = 'Q1';
+  const qIds = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === QUARTER);
 
-  // รวมต้นทุนของแต่ละคัน — ใช้ทั้งบรรทัดสรุปทั้งปีด้านบน และป้ายท้ายแท็บของแต่ละไตรมาส
-  const costTotalOf = id => {
-    const c = MYD.vehicleCostOf(PLAN, id);
-    return (Number(c.perDiem) || 0) + (Number(c.lodging) || 0) + (Number(c.travel) || 0);
-  };
-  const grandAll = ids.reduce((sum, id) => sum + costTotalOf(id), 0);
-
-  // แท็บไตรมาส — ป้าย sg-sub บอกช่วงเดือน + ต้นทุนรวมของไตรมาสนั้น
-  const qSeg = QUARTERS.map(q => {
-    const qIds = ids.filter(id => MYD.bucketOf(PLAN, id) === q.q);
-    const qSum = qIds.reduce((sum, id) => sum + costTotalOf(id), 0);
-    return `<div class="sg costQSeg ${COST.q === q.q ? 'sel' : ''}" data-q="${q.q}">
-      ${esc(MYD.quarterLabel(q.q))} · ${qIds.length} คัน
-      <div class="sg-sub">${esc(q.months)}${qIds.length ? ` · ${qSum.toLocaleString('th-TH')} บาท` : ''}</div>
-    </div>`;
-  }).join('');
-
-  const qIds = ids.filter(id => MYD.bucketOf(PLAN, id) === COST.q);
   let sumPerDiem = 0, sumLodging = 0, sumTravel = 0;
   const rows = qIds.map(id => {
     const v = byId.get(id);
@@ -744,29 +759,16 @@ function renderCost() {
   const grandTotal = sumPerDiem + sumLodging + sumTravel;
   const totalCellStyle = 'background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:var(--fs-sm)';
 
-  // ส่งอนุมัติปิดแผนแยกรายไตรมาส (26 ส.ค. 2569) — กดส่งของไตรมาสที่กำลังดูอยู่ ไม่กระทบไตรมาสอื่น
-  const approval = MYD.closeApprovalOf(PLAN, COST.q);
-
-  // ทางลัดไปตรวจสภาพก่อนซ่อมของไตรมาสถัดไป — โผล่เมื่อไตรมาสถัดไปยังมีรถที่ยังไม่ได้บำรุงรักษา
-  // (ยังตรวจสภาพก่อนซ่อมไม่ครบ) จะได้ไม่ต้องย้อนไปหาเองที่เฟส 3 (28 ส.ค. 2569)
-  // กดได้ก็ต่อเมื่อส่งอนุมัติปิดแผนของไตรมาสที่กำลังดูอยู่แล้วเท่านั้น (ดู approval ด้านบน) — เจ้าของงาน
-  // สั่ง 28 ส.ค. 2569: ต้องปิดไตรมาสนี้ให้เรียบร้อยก่อน ถึงจะไปเริ่มไตรมาสถัดไปได้
-  const nextQ = QUARTERS[QUARTERS.findIndex(q => q.q === COST.q) + 1];
-  const nextQIds = nextQ ? ids.filter(id => MYD.bucketOf(PLAN, id) === nextQ.q) : [];
-  const nextQPending = nextQIds.filter(id => !MYD.inspectionDone(PLAN, id)).length;
+  // ส่งอนุมัติปิดแผนของไตรมาสนี้ (26 ส.ค. 2569)
+  const approval = MYD.closeApprovalOf(PLAN, QUARTER);
 
   $('phase').innerHTML = `
     <div class="card">
-      <div class="sect">คำนวณต้นทุน</div>
-      <div class="sub">รถในแผนนี้ทั้งหมด <b>${ids.length}</b> คัน — ต้นทุนรวมทั้งปี <b>${grandAll.toLocaleString('th-TH')}</b> บาท</div>
+      <div class="sect">คำนวณต้นทุน${esc(MYD.quarterLabel(QUARTER))}</div>
+      <div class="sub">รถของไตรมาสนี้ <b>${qIds.length}</b> คัน — ต้นทุนรวม <b>${grandTotal.toLocaleString('th-TH')}</b> บาท</div>
       <div class="note note-info"><span class="ms">science</span>
         <div>หน้านี้แสดงผลรวมต้นทุนเบี้ยเลี้ยง/ที่พัก/เดินทาง ซึ่งดึงมาจากแผนเดินทาง (เฟส 2) เท่านั้น — แก้ไขได้ที่แผนเดินทาง
-          ค่าจ้างเหมา (สายว่าจ้าง) และต้นทุนอะไหล่/น้ำมัน ยังไม่ได้ทำในต้นแบบ · ส่งอนุมัติปิดแผนแยกได้ทีละไตรมาส</div></div>
-      ${ids.length ? `
-      <div class="f" style="margin-bottom:14px">
-        <label>เลือกไตรมาสที่จะดู</label>
-        <div class="seg">${qSeg}</div>
-      </div>
+          ค่าจ้างเหมา (สายว่าจ้าง) และต้นทุนอะไหล่/น้ำมัน ยังไม่ได้ทำในต้นแบบ</div></div>
       ${qIds.length ? `<div class="stack">
         <div class="tblwrap"><table class="tbl">
           <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th>
@@ -774,7 +776,7 @@ function renderCost() {
             <th class="num">ค่าเดินทาง (บาท)</th><th class="num">รวม (บาท)</th></tr></thead>
           <tbody>${rows}</tbody>
           <tfoot><tr>
-            <td colspan="2" style="${totalCellStyle}"><b>ต้นทุน${esc(MYD.quarterLabel(COST.q))}</b></td>
+            <td colspan="2" style="${totalCellStyle}"><b>ต้นทุน${esc(MYD.quarterLabel(QUARTER))}</b></td>
             <td class="num" style="${totalCellStyle}">${sumPerDiem.toLocaleString('th-TH')}</td>
             <td class="num" style="${totalCellStyle}">${sumLodging.toLocaleString('th-TH')}</td>
             <td class="num" style="${totalCellStyle}">${sumTravel.toLocaleString('th-TH')}</td>
@@ -786,47 +788,30 @@ function renderCost() {
           ? `<div class="note ${approval.status === 'approved' ? 'note-ok' : 'note-info'}">
               <span class="ms">${approval.status === 'approved' ? 'check_circle' : 'schedule'}</span>
               <div>${approval.status === 'approved'
-                ? `ผู้บังคับบัญชา กบค. อนุมัติปิดแผน${esc(MYD.quarterLabel(COST.q))}แล้ว เมื่อ ${esc(approval.approvedAt)}`
-                : `ส่งอนุมัติปิดแผน${esc(MYD.quarterLabel(COST.q))}แล้ว เมื่อ ${esc(approval.requestedAt)} — รอผู้บังคับบัญชา กบค. อนุมัติ`}</div>
+                ? `ผู้บังคับบัญชา กบค. อนุมัติปิดแผน${esc(MYD.quarterLabel(QUARTER))}แล้ว เมื่อ ${esc(approval.approvedAt)}`
+                : `ส่งอนุมัติปิดแผน${esc(MYD.quarterLabel(QUARTER))}แล้ว เมื่อ ${esc(approval.requestedAt)} — รอผู้บังคับบัญชา กบค. อนุมัติ`}</div>
             </div>`
           : `<div class="actions">
-              <button class="btn btn-p" id="btnSendCloseQ"><span class="ms">send</span> ส่งอนุมัติปิดแผน${esc(MYD.quarterLabel(COST.q))}</button>
+              <button class="btn btn-p" id="btnSendCloseQ"><span class="ms">send</span> ส่งอนุมัติปิดแผน${esc(MYD.quarterLabel(QUARTER))}</button>
             </div>`}
-        ${nextQ && nextQPending ? `<div class="actions">
-              <button class="btn btn-s" id="btnGoNextQInspect" ${approval ? '' : 'disabled'}><span class="ms">arrow_forward</span>
-                ไปตรวจสภาพก่อนซ่อม${esc(MYD.quarterLabel(nextQ.q))} — ยังไม่ได้บำรุงรักษา ${nextQPending} คัน</button>
-            </div>
-            ${approval ? '' : `<div class="sub">ส่งอนุมัติปิดแผน${esc(MYD.quarterLabel(COST.q))}ก่อน ถึงจะไปไตรมาสถัดไปได้</div>`}` : ''}
       </div>`
-        : `<div class="empty">ไม่มีรถของ${esc(MYD.quarterLabel(COST.q))}</div>`}`
-        : '<div class="empty">ยังไม่มีรถในแผนนี้</div>'}
+        : `<div class="empty">ไม่มีรถของ${esc(MYD.quarterLabel(QUARTER))}</div>`}
     </div>`;
-
-  document.querySelectorAll('.costQSeg').forEach(sg => sg.addEventListener('click', () => {
-    COST.q = sg.dataset.q;
-    renderCost();
-  }));
-
-  $('btnGoNextQInspect')?.addEventListener('click', () => {
-    INSP.vehicleId = null;
-    INSP.q = nextQ.q;
-    goPhase('inspection');
-  });
 
   // ส่งอนุมัติปิดแผนไตรมาส — เตือนก่อนถ้ารถของไตรมาสนี้ตรวจสภาพก่อนซ่อมยังไม่ครบ (27 ส.ค. 2569 — เกณฑ์/modal
   // เดียวกับปุ่ม "ถัดไป" ของเฟส 5 จัดทำรายงาน ดู openInspectIncompleteModal · กันส่งอนุมัติปิดงบไปทั้งที่ยังมี
   // รถค้างตรวจสภาพอยู่ ไม่ใช่ block เด็ดขาด เพราะยังมีเคสที่ต้องส่งไปก่อนแล้วตามแก้ทีหลัง)
   const sendCloseQ = () => {
-    MYD.requestCloseApprovalQuarter(PLAN, COST.q, nowTh());
+    MYD.requestCloseApprovalQuarter(PLAN, QUARTER, nowTh());
     MYD.savePlan(PLAN);
-    toast(`ส่งอนุมัติปิดแผน${MYD.quarterLabel(COST.q)}แล้ว`);
-    renderStepper();
+    toast(`ส่งอนุมัติปิดแผน${MYD.quarterLabel(QUARTER)}แล้ว`);
+    renderQuarterStepper();
     renderCost();
   };
   $('btnSendCloseQ')?.addEventListener('click', () => {
     const notInspected = qIds.filter(id => !MYD.inspectionDone(PLAN, id)).length;
     if (notInspected) {
-      openInspectIncompleteModal(notInspected, COST.q, sendCloseQ, {
+      openInspectIncompleteModal(notInspected, QUARTER, sendCloseQ, {
         question: 'จะส่งอนุมัติปิดแผนไตรมาสนี้ต่อเลยไหม?',
         proceedLabel: 'ส่งอนุมัติปิดแผนต่อ',
       });
@@ -836,10 +821,10 @@ function renderCost() {
   });
 }
 
-// ================= เฟส 3 · ตรวจสภาพก่อนซ่อม =================
-// รายการรถในแผน → กดปุ่มท้ายแถวเพื่อเปิดใบตรวจของคันนั้น (โครงตามแบบฟอร์มกระดาษของ กบค.)
-// แยกรายการตามไตรมาส + เลือกได้ว่าจะตรวจไตรมาสไหนก่อน (เจ้าของงานสั่ง 26 ส.ค. 2569 — ให้ตรงกับ
-// รูปแบบเดียวกับขั้นแผนเดินทาง เพราะงานตรวจสภาพก็ทยอยทำทีละไตรมาสตามรอบนัดจริงเหมือนกัน)
+// ================= เฟสไตรมาส 1/4 · ตรวจสภาพก่อนซ่อม =================
+// รายการรถของไตรมาสนี้ → กดปุ่มท้ายแถวเพื่อเปิดใบตรวจของคันนั้น (โครงตามแบบฟอร์มกระดาษของ กบค.)
+// เห็นเฉพาะรถของ QUARTER เท่านั้น (28 ส.ค. 2569 — เดิมมีแท็บสลับไตรมาสในหน้านี้เอง ตอนนี้เฟสนี้ย้ายไปอยู่ใต้
+// หน้าไตรมาสแล้ว จึงไม่ต้องมีแท็บให้สลับอีก — INSP.q ยังเก็บไว้เผื่อใช้ที่อื่น แต่ล็อกให้ตรง QUARTER เสมอ)
 let INSP = { vehicleId: null, q: 'Q1' };
 
 function renderInspection() {
@@ -849,22 +834,11 @@ function renderInspection() {
 
 function renderInspectList() {
   const master = MYD.loadMaster();
-  const ids = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
+  INSP.q = QUARTER;
+  const qIds = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === QUARTER);
   const byId = new Map(master.vehicles.map(v => [v.id, v]));
-  const done = ids.filter(id => MYD.inspectionDone(PLAN, id)).length;
-  if (!QUARTERS.some(q => q.q === INSP.q)) INSP.q = 'Q1';
+  const done = qIds.filter(id => MYD.inspectionDone(PLAN, id)).length;
 
-  // แท็บไตรมาส — ป้าย sg-sub บอกช่วงเดือน + ความคืบหน้าของไตรมาสนั้น
-  const qSeg = QUARTERS.map(q => {
-    const qIds = ids.filter(id => MYD.bucketOf(PLAN, id) === q.q);
-    const qDone = qIds.filter(id => MYD.inspectionDone(PLAN, id)).length;
-    return `<div class="sg inspQSeg ${INSP.q === q.q ? 'sel' : ''}" data-q="${q.q}">
-      ${esc(MYD.quarterLabel(q.q))} · ${qIds.length} คัน
-      <div class="sg-sub">${esc(q.months)}${qIds.length ? ` · ตรวจแล้ว ${qDone}/${qIds.length}` : ''}</div>
-    </div>`;
-  }).join('');
-
-  const qIds = ids.filter(id => MYD.bucketOf(PLAN, id) === INSP.q);
   const rows = qIds.map(id => {
     const v = byId.get(id);
     if (!v) return '';
@@ -880,28 +854,18 @@ function renderInspectList() {
 
   $('phase').innerHTML = `
     <div class="card">
-      <div class="sect">ตรวจสภาพก่อนซ่อม</div>
+      <div class="sect">ตรวจสภาพก่อนซ่อม${esc(MYD.quarterLabel(QUARTER))}</div>
       <div class="sub">ตรวจสภาพรถร่วมกับผู้ส่งมอบในวันนัด ก่อนเริ่มงานบำรุงรักษา — กดปุ่มท้ายแถวเพื่อเปิดใบตรวจของรถคันนั้น</div>
-      <div class="sub">ทั้งปี — ตรวจแล้ว <b>${done}</b> จาก <b>${ids.length}</b> คัน</div>
-      ${ids.length ? `
-      <div class="f" style="margin-bottom:14px">
-        <label>เลือกไตรมาสที่จะตรวจก่อน</label>
-        <div class="seg">${qSeg}</div>
-      </div>
+      <div class="sub">ตรวจแล้ว <b>${done}</b> จาก <b>${qIds.length}</b> คัน</div>
       ${qIds.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>สถานะ</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
-        : `<div class="empty">ไม่มีรถของ${esc(MYD.quarterLabel(INSP.q))}</div>`}`
-        : '<div class="empty">ยังไม่มีรถที่ยืนยันเข้าแผน</div>'}
+        : `<div class="empty">ยังไม่มีรถของ${esc(MYD.quarterLabel(QUARTER))}ที่ยืนยันเข้าแผน</div>`}
     </div>`;
 
   document.querySelectorAll('[data-insp-open]').forEach(b => b.addEventListener('click', () => {
     INSP.vehicleId = b.dataset.inspOpen;
     renderInspection();
-  }));
-  document.querySelectorAll('.inspQSeg').forEach(sg => sg.addEventListener('click', () => {
-    INSP.q = sg.dataset.q;
-    renderInspectList();
   }));
 }
 
@@ -973,7 +937,7 @@ function renderInspectForm(vehicleId) {
       </table></div>
       <div class="actions" style="justify-content:space-between;margin-top:10px">
         <button class="btn btn-t btn-sm" id="btnInspAdd"><span class="ms">add</span> เพิ่มรายการ</button>
-        <button class="btn btn-p" id="btnInspDone"><span class="ms">check</span> เสร็จสิ้น${nextPhaseLabel('inspection').replace(' — ', ' — ไป')}</button>
+        <button class="btn btn-p" id="btnInspDone"><span class="ms">check</span> เสร็จสิ้น${nextQuarterPhaseLabel('inspection').replace(' — ', ' — ไป')}</button>
       </div>
     </div>`;
 
@@ -982,7 +946,7 @@ function renderInspectForm(vehicleId) {
 
 function bindInspectForm(vehicleId, f) {
   const save = () => MYD.savePlan(PLAN);
-  const redraw = () => { save(); renderStepper(); renderInspectForm(vehicleId); };
+  const redraw = () => { save(); renderQuarterStepper(); renderInspectForm(vehicleId); };
 
   $('btnInspBack').addEventListener('click', () => { INSP.vehicleId = null; renderInspection(); });
 
@@ -1008,15 +972,12 @@ function bindInspectForm(vehicleId, f) {
   // ไม่บล็อกถ้ายังตรวจไม่ครบทุกคัน — แค่บอกให้รู้ว่าเหลือกี่คัน · กลับมาแก้ทีหลังได้จาก stepper
   $('btnInspDone').addEventListener('click', () => {
     save();
-    const ids = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id));
-    const left = ids.filter(id => !MYD.inspectionDone(PLAN, id)).length;
-    const nx = nextPhaseOf('inspection');
-    PLAN.phaseDone = PLAN.phaseDone || {};
-    PLAN.phaseDone.inspection = true;
-    MYD.savePlan(PLAN);
+    const qIds = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === QUARTER);
+    const left = qIds.filter(id => !MYD.inspectionDone(PLAN, id)).length;
+    const nx = nextQuarterPhaseOf('inspection');
     INSP.vehicleId = null;
     // ส่ง vehicleId ต่อไปด้วย — ถ้าเฟสถัดไปคือดำเนินการบำรุงรักษา จะโฟกัสแค่คันที่เพิ่งตรวจสภาพเสร็จ (26 ส.ค. 2569)
-    if (nx) goPhase(nx.id, { vehicleId }); else { renderStepper(); renderInspection(); }
+    finishQuarterPhaseAndAdvance('inspection', { vehicleId });
     toast(left
       ? `บันทึกแล้ว — ยังตรวจไม่ครบอีก ${left} คัน${nx ? ' · ข้ามไป' + nx.label : ''}`
       : `ตรวจครบทุกคันแล้ว${nx ? ' — ไป' + nx.label : ''}`);
@@ -1029,32 +990,19 @@ function bindInspectForm(vehicleId, f) {
 }
 
 // ติ๊กว่าเฟสนี้เสร็จ แล้วพาไปเฟสถัดไป (เฟสสุดท้ายแค่ติ๊กจบ ไม่มีที่ให้ไปต่อ)
-// opts ส่งต่อให้ goPhase ตรงๆ — ใช้ส่ง {vehicleId} ตอนกด "ถัดไป" ขณะโฟกัสรถคันเดียวอยู่ (28 ส.ค. 2569)
-// เพื่อให้เฟสถัดไปโฟกัสคันเดิมต่อ (ดู MAINT.vehicleId/REPORT.vehicleId)
-function finishPhase(id, opts = {}) {
-  const idx = PHASES.findIndex(p => p.id === id);
-  const next = PHASES[idx + 1];
-  PLAN.phaseDone = PLAN.phaseDone || {};
-  PLAN.phaseDone[id] = true;
-  MYD.savePlan(PLAN);
-  if (next) { goPhase(next.id, opts); toast(`ผ่านเฟส ${PHASES[idx].no} แล้ว — ต่อที่ ${next.label}`); return; }
-  // เฟสสุดท้าย (คำนวณต้นทุน) จบด้วยการส่งอนุมัติปิดแผนรายไตรมาสในหน้าของมันเอง (renderCost) ไม่ใช่ปุ่มนี้
-  // เหลือ fallback ไว้เผื่อเฟสอื่นเป็นเฟสสุดท้ายในอนาคต (ยังไม่มีตอนนี้)
-  toast(`ทำเฟส ${PHASES[idx].no} เสร็จแล้ว — ครบทั้ง ${PHASES.length} เฟส`);
-  renderStepper();
-  renderPhaseBody();
-}
-
 function renderPhaseBody() {
   if (currentPhase() === 'procurement') { renderProcurement(); return; }
-  if (currentPhase() === 'travel') { renderTravelPhase(); return; }
-  if (currentPhase() === 'inspection') { renderInspection(); return; }
-  if (currentPhase() === 'maintenance') { renderMaintenance(); return; }
-  if (currentPhase() === 'report') { renderReport(); return; }
-  if (currentPhase() === 'cost') { renderCost(); return; }
-  const id = currentPhase();
-  $('phase').innerHTML = renderPlaceholder(id);
-  $('btnPhaseNext')?.addEventListener('click', () => finishPhase(id));
+  renderTravelPhase();
+}
+
+// เฟสระดับไตรมาส (ตรวจสภาพก่อนซ่อม/ดำเนินการบำรุงรักษา/จัดทำรายงาน/คำนวณต้นทุน) — ใช้ต่อเมื่อ QUARTER ถูกตั้งแล้ว
+// (จาก route() เท่านั้น — ดู renderQuarterOps)
+function renderQuarterPhaseBody() {
+  const p = currentQuarterPhase();
+  if (p === 'inspection') { renderInspection(); return; }
+  if (p === 'maintenance') { renderMaintenance(); return; }
+  if (p === 'report') { renderReport(); return; }
+  renderCost();
 }
 
 function renderPlanHeader() {
@@ -1080,14 +1028,49 @@ function renderPlan() {
   renderPhaseBody();
 }
 
+// ================= หน้าไตรมาส (28 ส.ค. 2569) =================
+// เข้าทางเดียว: กด "ยืนยันไตรมาส X" ที่ขั้นทวน+ยืนยันของเฟสแผนเดินทาง (หรือลิงก์จากรายการไตรมาสท้ายเฟสนั้น
+// — ดู renderQuarterList) เห็นแค่รถของไตรมาสนี้ตลอดทั้ง 4 เฟส (QUARTER ล็อกไว้จาก route())
+function renderQuarterHeader() {
+  const n = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === QUARTER).length;
+  $('crumbs').innerHTML = `
+    <a href="index.html" style="color:inherit;text-decoration:none"><span class="ms">list_alt</span> รายการแผน</a>
+    <span class="sep">›</span><a href="#${esc(PLAN.id)}" style="color:inherit;text-decoration:none">${esc(planTitle(PLAN))}</a>
+    <span class="sep">›</span><span class="cur">${esc(MYD.quarterLabel(QUARTER))}</span>`;
+  $('planHead').innerHTML = `
+    <div class="page-title-row">
+      <h1 class="page-title">${esc(planTitle(PLAN))} — ${esc(MYD.quarterLabel(QUARTER))}</h1>
+      <a class="btn btn-t" href="#${esc(PLAN.id)}" style="margin-left:auto"><span class="ms">arrow_back</span> กลับไปหน้าแผน</a>
+    </div>
+    <div class="sub" style="margin-top:-12px;margin-bottom:16px">
+      ${esc(PLAN.planName || '—')} · รถของไตรมาสนี้ ${n} คัน</div>`;
+}
+
+function renderQuarterOps() {
+  renderQuarterHeader();
+  renderQuarterStepper();
+  renderQuarterPhaseBody();
+}
+
 // ================= ROUTER =================
+// hash รูปแบบ #<planId> = หน้าแผน (2 เฟส) · #<planId>/<Q1-4> = หน้าไตรมาส (4 เฟส — ดู renderQuarterOps)
 function route() {
-  const id = (location.hash || '').replace('#', '');
+  const raw = (location.hash || '').replace('#', '');
   $('planHead').innerHTML = '';
-  if (!id) { renderList(); return; }
+  if (!raw) { renderList(); return; }
+  const [id, q] = raw.split('/');
   const p = MYD.getPlan(id);
   if (!p || !p.workNumber) { location.hash = ''; renderList(); return; }
   PLAN = p;
+  // เข้าหน้าไตรมาสได้ต่อเมื่อไตรมาสนั้นยืนยันแผนเดินทางแล้วเท่านั้น (MYD.quarterTravelConfirmed) — ไม่งั้นตกกลับ
+  // ไปหน้าแผนแทน (เช่น แก้ hash เองมั่วๆ หรือลิงก์เก่าค้างมาจากก่อนยืนยัน)
+  if (q && MYD.QUARTER_KEYS.includes(q) && MYD.quarterTravelConfirmed(p, q)) {
+    QUARTER = q;
+    renderQuarterOps();
+    window.scrollTo({ top: 0 });
+    return;
+  }
+  QUARTER = null;
   state.sub = 1;
   renderPlan();
   window.scrollTo({ top: 0 });
@@ -1129,14 +1112,55 @@ function renderProcurement() {
 
 function renderTravelPhase() {
   const plan = PLAN;
+  // ไม่มี "ไปเฟสถัดไป" อีกแล้ว (เฟส "แผนเดินทาง" เป็นเฟสสุดท้ายระดับแผน — 4 เฟสท้ายย้ายไปเป็นระดับไตรมาส
+  // แล้ว 28 ส.ค. 2569) หลังยืนยันแผนเดินทาง ให้ไปต่อผ่านรายการไตรมาสด้านล่างแทน (renderQuarterList)
   if (plan.travelConfirmed === true) {
-    const opts = { onNextPhase: () => { const nx = nextPhaseOf('travel'); if (nx) goPhase(nx.id); } };
-    $('phase').innerHTML = TRIP.renderConfirmed(plan, opts);
-    TRIP.bindConfirmed(opts);
-    return;
+    $('phase').innerHTML = TRIP.renderConfirmed(plan, {});
+    TRIP.bindConfirmed({});
+  } else {
+    if (!state.sub) state.sub = 1;
+    renderProcWizard(plan);
   }
-  if (!state.sub) state.sub = 1;
-  renderProcWizard(plan);
+  $('phase').insertAdjacentHTML('beforeend', renderQuarterList(plan));
+}
+
+// รายการไตรมาส — แทนที่ 4 เฟส (ตรวจสภาพก่อนซ่อม/ดำเนินการบำรุงรักษา/จัดทำรายงาน/คำนวณต้นทุน) ที่เคยอยู่ใน
+// stepper ของแผน (28 ส.ค. 2569) แสดงท้ายเฟส "แผนเดินทาง" เสมอ — ไตรมาสไหนยืนยันแผนเดินทางแล้ว
+// (MYD.quarterTravelConfirmed) เปิดดำเนินการต่อได้เลย ไม่ต้องรอไตรมาสอื่นให้ยืนยันครบก่อน
+function renderQuarterList(plan) {
+  const rows = MYD.QUARTER_KEYS.map(q => {
+    const ids = MYD.planVehicleIds(plan, q).filter(id => MYD.isVehicleIn(plan, id));
+    if (!ids.length) return '';
+    const confirmedAt = (plan.travelConfirmedByQuarter || {})[q];
+    const opsIdx = QUARTER_PHASES.findIndex(p => p.id === MYD.quarterOpsPhase(plan, q));
+    const opsDone = QUARTER_PHASES.every(p => MYD.quarterPhaseDone(plan, q, p.id));
+    return `<tr>
+      <td><b>${esc(MYD.quarterLabel(q))}</b><div class="cell-sub">${esc((QUARTERS.find(x => x.q === q) || {}).months || '')}</div></td>
+      <td class="num">${ids.length}</td>
+      <td>${confirmedAt
+        ? '<span class="badge b-ok">ยืนยันแผนเดินทางแล้ว</span>'
+        : '<span class="badge b-neutral">ยังไม่ยืนยันแผนเดินทาง</span>'}</td>
+      <td>${confirmedAt
+        ? (opsDone
+          ? '<span class="badge b-ok">ดำเนินการครบแล้ว</span>'
+          : `เฟส ${opsIdx + 1}/${QUARTER_PHASES.length} · ${esc(QUARTER_PHASES[opsIdx].label)}`)
+        : '—'}</td>
+      <td class="num">${confirmedAt
+        ? `<a class="btn btn-s btn-sm" href="#${esc(plan.id)}/${q}">เปิดดำเนินการ</a>`
+        : `<button class="btn btn-t btn-sm" disabled title="ยืนยันแผนเดินทางไตรมาสนี้ก่อน (ที่ขั้นทวน + ยืนยัน)">เปิดดำเนินการ</button>`}</td>
+    </tr>`;
+  }).filter(Boolean).join('');
+
+  return `
+    <div class="card">
+      <div class="sect">รายการไตรมาส — ดำเนินการบำรุงรักษาต่อ</div>
+      <div class="sub">ตรวจสภาพก่อนซ่อม → ดำเนินการบำรุงรักษา → จัดทำรายงาน → คำนวณต้นทุน ทำแยกทีละไตรมาส —
+        ยืนยันแผนเดินทางไตรมาสไหนแล้ว เปิดดำเนินการของไตรมาสนั้นได้เลย ไม่ต้องรอไตรมาสอื่น</div>
+      ${rows ? `<div class="tblwrap"><table class="tbl">
+        <thead><tr><th>ไตรมาส</th><th class="num">รถ (คัน)</th><th>สถานะแผนเดินทาง</th><th>ความคืบหน้าดำเนินการ</th><th></th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`
+        : '<div class="empty">ยังไม่มีรถในแผนนี้</div>'}
+    </div>`;
 }
 
 // ----- sub-nav -----
@@ -1177,26 +1201,21 @@ function validateProcSub(plan, sub) {
   const m = masterStep(sub);
   if (m === 1) return MYD.confirmResolved(plan, plan.selectedVehicleIds || []);
   if (m === 2) return !!plan.partsRequisitioned;
-  // ขั้น "ถัดไป" ของแผนเดินทางไปต่อได้เมื่อทำแผนเดินทางครบทั้ง 4 ไตรมาสแล้ว (เจ้าของงานสั่ง 26 ส.ค. 2569)
-  if (m === 3) return MYD.allQuartersTravelReady(plan, MYD.loadMaster());
-  // ปุ่ม "ยืนยันแผนเดินทาง" (ขั้นสุดท้ายของเฟส) ยังต้องครบทุกไตรมาสเหมือนเดิม
-  if (m === 4) return MYD.travelPlanReady(plan, MYD.loadMaster());
+  // เฟส "แผนเดินทาง" (m===3/4) ไม่มีเกณฑ์ปิดกั้นแล้ว (เจ้าของงานสั่ง 28 ส.ค. 2569 — ตัดเกณฑ์
+  // "ต้องพร้อมครบทั้ง 4 ไตรมาส" ออก เดิมเช็ค MYD.allQuartersTravelReady/travelPlanReady ที่นี่)
+  // สลับขั้นย่อย/กดยืนยันแผนเดินทางได้เสมอ ไม่ว่าไตรมาสไหนจะยังไม่ครบ
   return true;
 }
 
-
-function updateProcPrimaryEnabled(plan) {
-  const btn = $('btnPrimaryProc');
-  if (!btn) return;
-  btn.disabled = !validateProcSub(plan, state.sub);
-}
-
 // ----- wizard shell -----
+// เฟส "แผนเดินทาง" ไม่มีปุ่ม "ย้อนกลับ"/"ถัดไป" ของ shell นี้แล้ว (เจ้าของงานสั่ง 28 ส.ค. 2569) —
+// สลับขั้นย่อยด้วยการกดหัวข้อ sub-stepper ด้านบนได้เลย ไม่ต้องผ่านเกณฑ์อะไรก่อน · ปุ่ม "ยืนยันแผนเดินทาง"
+// ย้ายไปอยู่ในเนื้อขั้น "ทวน + ยืนยัน" เอง (ดู renderProcStep3/bindProcStep3 ใน trip-plan.js)
 function renderProcWizard(plan) {
   const steps = currentProcSteps();
   const onTravel = currentPhase() === 'travel';
   const isLastStep = state.sub === steps.length;
-  const primaryLabel = isLastStep ? (onTravel ? 'ยืนยันแผนเดินทาง' : 'ไปเฟสถัดไป') : 'ถัดไป';
+  const primaryLabel = isLastStep ? 'ไปเฟสถัดไป' : 'ถัดไป';
   const primaryDisabled = !validateProcSub(plan, state.sub);
 
   $('phase').innerHTML = `
@@ -1207,35 +1226,32 @@ function renderProcWizard(plan) {
         const cls = ['wstep'];
         if (active) cls.push('active');
         if (passed) cls.push('passed');
-        if (s.no > state.sub) cls.push('locked');
+        // เฟส "แผนเดินทาง" คลิกข้ามขั้นได้เสมอ (ไม่มีเกณฑ์ปิดกั้นแล้ว) จึงไม่ติดสไตล์ .locked ให้ดูขัดกับ
+        // ของจริง — เฟสอื่นยังต้องผ่านขั้นก่อนหน้าก่อน จึงคงป้าย locked ไว้เหมือนเดิม
+        if (!onTravel && s.no > state.sub) cls.push('locked');
         return `<div class="${cls.join(' ')}" onclick="goProcSub(${s.no})">
           <span class="num">${passed ? '✓' : s.no}</span>
           <span class="lbl">${esc(s.label)}</span>
         </div>`;
       }).join('')}</div>
       <div id="procBody">${renderProcSubBody(plan)}</div>
-      ${primaryDisabled && masterStep(state.sub) === 3 ? (() => {
-        const bl = TRIP.blockers(plan);
-        return bl.length ? `<div class="note note-warn"><span class="ms">error</span>
-          <div><b>ยังไปขั้นถัดไปไม่ได้</b> — ต้องทำแผนเดินทางให้ครบทั้ง 4 ไตรมาสก่อน ตอนนี้แต่ละไตรมาสยังค้าง:
-            <ul style="margin:6px 0 0 18px">${bl.map(x => `<li>${x}</li>`).join('')}</ul></div></div>` : '';
-      })() : ''}
+      ${onTravel ? '' : `
       <div class="actions">
         <button class="btn btn-g" id="btnBackProc" ${state.sub === 1 ? 'disabled' : ''}>ย้อนกลับ</button>
-        <button class="btn btn-p" id="btnPrimaryProc" ${primaryDisabled ? 'disabled' : ''}
-          ${primaryDisabled && masterStep(state.sub) === 3 ? 'title="กรุณาทำแผนเดินทางครบทั้ง4ไตรมาส"' : ''}>${esc(primaryLabel)}</button>
-      </div>
+        <button class="btn btn-p" id="btnPrimaryProc" ${primaryDisabled ? 'disabled' : ''}>${esc(primaryLabel)}</button>
+      </div>`}
     </div>`;
 
   bindProcSubBody(plan);
 
-  $('btnBackProc').addEventListener('click', backProcSub);
-  $('btnPrimaryProc').addEventListener('click', () => {
-    if (!isLastStep) { nextProcSub(); return; }
-    if (onTravel) { TRIP.confirm(plan); renderStepper(); renderTravelPhase(); return; }
-    const nx = nextPhaseOf('procurement');
-    if (nx) goPhase(nx.id);
-  });
+  if (!onTravel) {
+    $('btnBackProc').addEventListener('click', backProcSub);
+    $('btnPrimaryProc').addEventListener('click', () => {
+      if (!isLastStep) { nextProcSub(); return; }
+      const nx = nextPhaseOf('procurement');
+      if (nx) goPhase(nx.id);
+    });
+  }
 }
 
 function renderProcSubBody(plan) {
@@ -1243,19 +1259,24 @@ function renderProcSubBody(plan) {
   if (m === 1) return renderProcStepConfirm(plan);
   if (m === 2) return renderProcStep1(plan);      // เบิก/จัดหาอะไหล่
   if (m === 3) return TRIP.renderStep1(plan);     // แผนเดินทาง — โมดูล trip-plan.js
-  return TRIP.renderStep2(plan);                   // ทวน + ยืนยัน — โมดูล trip-plan.js
+  // ทวน + ยืนยัน — โมดูล trip-plan.js · shell ไม่มีปุ่ม "ถัดไป" ของขั้นนี้แล้ว จึงขอให้โมดูลวาด
+  // ปุ่ม "ยืนยันแผนเดินทาง" ไว้ในเนื้อขั้นเอง (showConfirm)
+  return TRIP.renderStep2(plan, { showConfirm: true });
 }
 
 function bindProcSubBody(plan) {
   const m = masterStep(state.sub);
   if (m === 1) bindProcStepConfirm(plan);
   else if (m === 2) bindProcStep1(plan);
-  else if (m === 3) TRIP.bindStep1(plan, {
-    onChange: () => renderProcWizard(plan),        // โมดูลขอให้วาดใหม่ทั้ง wizard
-    onValidity: () => updateProcPrimaryEnabled(plan), // โมดูลขอให้ทวนสถานะปุ่ม "ถัดไป"
+  // เฟสแผนเดินทาง (m===3/4) ไม่มีปุ่ม "ถัดไป" ของ shell แล้ว จึงไม่ต้องส่ง onValidity ให้โมดูลทวนสถานะปุ่มอีก
+  else if (m === 3) TRIP.bindStep1(plan, { onChange: () => renderProcWizard(plan) });
+  // ขั้นทวน+ยืนยัน — ปุ่ม "ยืนยัน<ไตรมาส>" อยู่ในเนื้อขั้นเอง ต่อไตรมาส (โมดูลเรียก onConfirm(q) กลับมาหลัง
+  // ยืนยันไตรมาสนั้นสำเร็จ) — กดยืนยันไตรมาสไหน พาเข้าหน้าไตรมาสนั้นตรงๆ เลย (28 ส.ค. 2569 เจ้าของงานสั่ง)
+  // เปลี่ยน hash แล้ว route() จะจัดการ render หน้าไตรมาสให้เอง ไม่ต้อง render เองตรงนี้
+  else TRIP.bindStep2(plan, {
+    onChange: () => renderProcWizard(plan),
+    onConfirm: (q) => { location.hash = `${plan.id}/${q}`; },
   });
-  // ขั้นทวน+ยืนยัน — มีแค่แท็บสลับไตรมาส ไม่กระทบสถานะปุ่ม "ยืนยัน" จึงไม่ต้องส่ง onValidity
-  else TRIP.bindStep2(plan, { onChange: () => renderProcWizard(plan) });
 }
 
 // ----- ขั้น 1 (ชื่อฟังก์ชันค้างจากตอนมี 3 ขั้น เนื้อหาจริงคือเบิกอะไหล่ เรียกเป็นขั้นที่ 2) -----

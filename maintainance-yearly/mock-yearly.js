@@ -1252,6 +1252,63 @@ const MYD = {
     });
   },
 
+  // ================= ยืนยันแผนเดินทาง — แยกรายไตรมาส (28 ส.ค. 2569) =================
+  // เจ้าของงานสั่งให้ขั้น "ทวน + ยืนยัน" กดยืนยันได้ทีละไตรมาสตามที่พร้อม (quarterTravelReady) แทนปุ่ม
+  // เดียวยืนยันทั้งแผน — แพตเทิร์นเดียวกับ closeApprovalByQuarter ของ "ส่งอนุมัติปิดแผน" (คำนวณต้นทุน)
+  // plan.travelConfirmedByQuarter = { [q]: at }
+  quarterTravelConfirmed(plan, q) {
+    return !!(plan.travelConfirmedByQuarter || {})[q];
+  },
+
+  confirmTravelQuarter(plan, q, at) {
+    plan.travelConfirmedByQuarter = plan.travelConfirmedByQuarter || {};
+    plan.travelConfirmedByQuarter[q] = at;
+    // ไตรมาสสุดท้ายยืนยันครบ → ตั้ง plan.travelConfirmed ต่อให้ด้วย เพื่อให้ต่อเนื่องกับของเดิมทั้งระบบ
+    // ที่ยังอ่านธงก้อนนี้อยู่ (confirmLocked ที่ confirm.js ล็อกคำตอบยืนยันรถ · phaseCompleteOf ที่ปลดเฟส 3
+    // · trip-plan.html ซึ่งยังมีปุ่มยืนยันทั้งแผนของตัวเอง) ไม่ต้องแก้จุดอื่นเพิ่ม
+    if (this.allQuartersTravelConfirmed(plan)) plan.travelConfirmed = true;
+  },
+
+  // เฟส "แผนเดินทาง" ถือว่ายืนยันครบเมื่อทุกไตรมาสที่มีรถถูกยืนยันแล้ว — ไตรมาสที่ไม่มีรถอยู่เลยถือว่า
+  // ผ่านลอยตัว (แพตเทิร์นเดียวกับ allQuartersTravelReady/allQuartersCloseRequested ด้านบน)
+  allQuartersTravelConfirmed(plan) {
+    this.ensurePlanQuarters(plan);
+    return this.QUARTER_KEYS.every(q => {
+      const ids = (plan.byQuarter[q] || []).filter(id => this.isVehicleIn(plan, id));
+      if (!ids.length) return true;
+      return this.quarterTravelConfirmed(plan, q);
+    });
+  },
+
+  // ================= เฟสระดับไตรมาส — ตรวจสภาพก่อนซ่อม/ดำเนินการบำรุงรักษา/จัดทำรายงาน/คำนวณต้นทุน =================
+  // (28 ส.ค. 2569) แยกออกจาก stepper ระดับแผนแล้ว — แต่ละไตรมาสมี "เฟสที่กำลังทำอยู่" และธง "เฟสไหนเสร็จแล้ว"
+  // ของตัวเอง เหมือน plan.phase/plan.phaseDone เดิม แต่ซ้อนอีกชั้นด้วยไตรมาส ฟังก์ชันพวกนี้เป็นแค่ storage
+  // เก็บ/อ่าน generic (รับ phaseId เป็น string) — ไม่รู้จักลำดับ/รายชื่อเฟส ตัวนั้นเป็นเรื่องของ QUARTER_PHASES
+  // ใน app.js (host) ทั้งหมด — เก็บ id เป็น string เหมือนกัน
+  // plan.quarterPhase        = { [q]: phaseId }              — เฟสที่กำลังทำอยู่ของไตรมาสนั้น
+  // plan.quarterPhaseDone    = { [q]: { [phaseId]: true } }  — เฟสไหนของไตรมาสนั้นทำเสร็จแล้ว
+  quarterOpsPhase(plan, q) {
+    return (plan.quarterPhase || {})[q] || 'inspection';
+  },
+
+  setQuarterOpsPhase(plan, q, phaseId) {
+    plan.quarterPhase = plan.quarterPhase || {};
+    plan.quarterPhase[q] = phaseId;
+  },
+
+  // เฟส "คำนวณต้นทุน" ใช้ closeApprovalOf เป็นเกณฑ์เสร็จอยู่แล้ว (ส่งอนุมัติปิดแผนไตรมาส) ไม่ต้องมีธงแยก —
+  // ที่เหลือ (ตรวจสภาพก่อนซ่อม/ดำเนินการบำรุงรักษา/จัดทำรายงาน) อ่านจาก quarterPhaseDone ตรงๆ
+  quarterPhaseDone(plan, q, phaseId) {
+    if (phaseId === 'cost') return !!this.closeApprovalOf(plan, q);
+    return !!((plan.quarterPhaseDone || {})[q] || {})[phaseId];
+  },
+
+  finishQuarterPhase(plan, q, phaseId) {
+    plan.quarterPhaseDone = plan.quarterPhaseDone || {};
+    plan.quarterPhaseDone[q] = plan.quarterPhaseDone[q] || {};
+    plan.quarterPhaseDone[q][phaseId] = true;
+  },
+
   // ================= ปฏิทินปีงบ + รอบทบทวนแผน =================
   // ทั้งหมดเป็น pure — รับปี/เดือนเข้ามา ไม่เรียก Date เอง (กติกาหัวไฟล์)
   // นาฬิกา (ของจริงหรือที่จำลองไว้) อยู่ฝั่ง browser: common.js simNow()/fiscalNow()
