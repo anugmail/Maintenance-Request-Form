@@ -1309,6 +1309,33 @@ const MYD = {
     plan.quarterPhaseDone[q][phaseId] = true;
   },
 
+  // ================= เลือกรถที่จะดำเนินการต่อไตรมาส (28 ส.ค. 2569 รอบ 4 — เจ้าของงานสั่ง) =================
+  // ก่อนเข้าตรวจสภาพก่อนซ่อม (เฟส 1 ของไตรมาส) ให้เลือกก่อนว่ารอบนี้จะดำเนินการรถคันไหนบ้าง — กันเข้ามา
+  // บำรุงรักษารถคันเดียวกันซ้ำ (เช่น สองทีมเปิดดำเนินการไตรมาสเดียวกันคนละช่วง) เลือกครั้งเดียวต่อไตรมาส
+  // แล้วจำไว้ถาวร — ยังไม่มีปุ่มแก้ทีหลัง (ทางลัดของต้นแบบ ตามที่เจ้าของงานสั่งให้ทำแค่หน้าเลือกก่อนพอ)
+  // plan.opsPicked = { Q1:[ids], Q2:[ids], Q3:[ids], Q4:[ids] } — ไม่มีคีย์ของไตรมาสนั้น = ยังไม่เคยเลือก
+  quarterOpsPicked(plan, q) {
+    return Array.isArray((plan.opsPicked || {})[q]);
+  },
+
+  // รถที่ยืนยันเข้าไตรมาสนี้จริง (ผ่าน isVehicleIn) — ฐานที่หน้าเลือกรถใช้แสดงให้ติ๊ก
+  quarterConfirmedIds(plan, q) {
+    return this.planVehicleIds(plan, q).filter(id => this.isVehicleIn(plan, id));
+  },
+
+  // รถที่ถูกเลือกเข้าดำเนินการของไตรมาสนี้แล้ว — ใช้แทน quarterConfirmedIds ในทั้ง 4 เฟสของไตรมาส
+  // (กรองรถที่หลุดจากไตรมาส/ถูกตัดสิทธิ์ทีหลังทิ้งไปด้วย กันข้อมูลค้าง)
+  quarterOpsPickedIds(plan, q) {
+    const confirmed = new Set(this.quarterConfirmedIds(plan, q));
+    return ((plan.opsPicked || {})[q] || []).filter(id => confirmed.has(id));
+  },
+
+  // บันทึกรถที่เลือกดำเนินการของไตรมาสนี้ — เรียกครั้งเดียวตอนกด "เริ่มดำเนินการ" ที่หน้าเลือกรถ
+  pickQuarterOpsVehicles(plan, q, ids) {
+    plan.opsPicked = plan.opsPicked || {};
+    plan.opsPicked[q] = [...new Set(ids)];
+  },
+
   // ================= ปฏิทินปีงบ + รอบทบทวนแผน =================
   // ทั้งหมดเป็น pure — รับปี/เดือนเข้ามา ไม่เรียก Date เอง (กติกาหัวไฟล์)
   // นาฬิกา (ของจริงหรือที่จำลองไว้) อยู่ฝั่ง browser: common.js simNow()/fiscalNow()

@@ -144,7 +144,14 @@ const TAB_PROC   = `[onclick="goPhase('procurement')"]`;
   await page.waitForTimeout(600);
   ok(page.url().endsWith(`${PLAN}/Q1`), `กดยืนยันไตรมาส 1 แล้วพาเข้าหน้าไตรมาสนั้นตรงๆ (URL: ${page.url()})`);
 
-  console.log('\nหน้าไตรมาส — stepper แยกต่างหาก 4 เฟส เห็นแค่รถของไตรมาสนี้');
+  console.log('\nเข้าไตรมาสนี้ครั้งแรก —ต้องเจอหน้า "เลือกรถที่จะดำเนินการ" ก่อนเข้า stepper (28 ส.ค. 2569 รอบ 4 — กันบำรุงรักษาคันเดียวกันซ้ำ)');
+  ok(await page.locator('.sect', { hasText: 'เลือกรถที่จะดำเนินการ' }).count() > 0, 'เจอหน้าเลือกรถก่อนเข้าตรวจสภาพก่อนซ่อม');
+  ok(await page.locator('#stepper .wsteps').count() === 0, 'ยังไม่เห็น stepper 4 เฟส ระหว่างเลือกรถ');
+  ok(await page.locator('#chkPickAll').isChecked(), 'ตั้งต้นติ๊กรถทุกคันไว้ให้แล้ว');
+  await page.locator('#btnStartOps').click();
+  await page.waitForTimeout(400);
+
+  console.log('\nยืนยันเลือกรถแล้ว — ข้ามหน้าเลือกรถไปที่ stepper แยกต่างหาก 4 เฟส เห็นแค่รถของไตรมาสนี้');
   const qPhases = await page.locator('#stepper .wstep .lbl').allTextContents();
   console.log('   ', qPhases.join(' → '));
   ok(qPhases.length === 4 && qPhases[0] === 'ตรวจสภาพก่อนซ่อม' && qPhases[1] === 'ดำเนินการบำรุงรักษา'

@@ -44,7 +44,8 @@ const PLAN_STAGE_BADGE = {
 };
 
 // travelQ = ไตรมาสที่กำลังทำแผนเดินทางอยู่ (memory เท่านั้น ไม่ผูกกับแผน เหมือน sub)
-const state = { sub: 1, travelQ: 'Q1' };
+// pickExpanded = พับ/กางกลุ่มใบเดินทางที่หน้า "เลือกรถที่จะดำเนินการ" (ดู renderQuarterVehiclePick)
+const state = { sub: 1, travelQ: 'Q1', pickExpanded: {} };
 let PLAN = null;   // แผนที่กำลังเปิดอยู่ (null = อยู่หน้ารายการ)
 // ไตรมาสที่กำลังดำเนินการอยู่ — ตั้งจาก route() เมื่อ hash เป็น #<planId>/<Q> เท่านั้น (null = อยู่หน้าแผน
 // ไม่ใช่หน้าไตรมาส) ใช้ล็อกหน้าตรวจสภาพ/บำรุงรักษา/รายงาน/ต้นทุน ให้เห็นแค่ไตรมาสนี้ไตรมาสเดียว (ล็อก INSP.q ด้วย)
@@ -325,8 +326,8 @@ function renderMaintenance() {
   // แสดงเฉพาะคันที่ "ลงนามรับมอบตัวรถครบ 2 ฝั่งแล้ว" (เจ้าของงานสั่ง 27 ส.ค. 2569 — ผ่อนกลับจากเดิมที่
   // ต้องตอบครบทุกข้อตรวจ 23 ข้อก่อนด้วย (26 ส.ค. 2569) เพราะลงมือบำรุงรักษาได้ทันทีที่รับมอบตัวรถแล้ว
   // ไม่ต้องรอกรอกเอกสารตรวจสภาพให้ครบ · ต่อมาสั่งผ่อนเกณฑ์เดียวกันนี้ให้เฟส 5/6 ด้วย จึงเหลือเกณฑ์เดียว
-  // (MYD.inspectionDone) ใช้ร่วมกันทุกเฟส)
-  const joined = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === QUARTER);
+  // (MYD.inspectionDone) ใช้ร่วมกันทุกเฟส) — เฉพาะคันที่เลือกเข้าดำเนินการรอบนี้แล้วเท่านั้น (28 ส.ค. 2569 รอบ 4)
+  const joined = MYD.quarterOpsPickedIds(PLAN, QUARTER);
   const received = joined.filter(id => MYD.inspectionDone(PLAN, id));
   const waiting = joined.length - received.length;
   // คันที่กดลบออก (มีเหตุผลบันทึกไว้) — หายจากตารางทำงาน ไปขึ้นเป็นรายการเหตุผลด้านล่างแทน (25 ส.ค. 2569)
@@ -566,8 +567,8 @@ function renderReport() {
   const master = MYD.loadMaster();
   const byId = new Map(master.vehicles.map(v => [v.id, v]));
   // แสดงเฉพาะคันที่ "ตรวจสภาพก่อนซ่อมครบแล้ว" (เจ้าของงานสั่ง 26 ส.ค. 2569 — เกณฑ์เดียวกับเฟส 4 ดำเนินการ
-  // บำรุงรักษา ดู MYD.inspectionDone) ของไตรมาสนี้เท่านั้น
-  const joined = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === QUARTER);
+  // บำรุงรักษา ดู MYD.inspectionDone) ของไตรมาสนี้เท่านั้น — เฉพาะคันที่เลือกเข้าดำเนินการรอบนี้แล้วด้วย (28 ส.ค. 2569 รอบ 4)
+  const joined = MYD.quarterOpsPickedIds(PLAN, QUARTER);
   const received = joined.filter(id => MYD.inspectionDone(PLAN, id));
   const all = received.filter(id => !MYD.maintExcluded(PLAN, id));
 
@@ -721,7 +722,7 @@ function renderReport() {
   // "ถัดไป — คำนวณต้นทุน" เตือนก่อนถ้ายังตรวจสภาพก่อนซ่อมของไตรมาสนี้ไม่ครบ (26 ส.ค. 2569) — เกณฑ์ความครบใช้
   // MYD.inspectionDone เหมือนหน้าตรวจสภาพก่อนซ่อม
   $('btnPhaseNext')?.addEventListener('click', () => {
-    const qIds = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === QUARTER);
+    const qIds = MYD.quarterOpsPickedIds(PLAN, QUARTER);
     const notInspected = qIds.filter(id => !MYD.inspectionDone(PLAN, id)).length;
     if (notInspected) { openInspectIncompleteModal(notInspected, QUARTER, () => finishQuarterPhaseAndAdvance('report')); return; }
     finishQuarterPhaseAndAdvance('report');
@@ -736,7 +737,7 @@ function renderReport() {
 function renderCost() {
   const master = MYD.loadMaster();
   const byId = new Map(master.vehicles.map(v => [v.id, v]));
-  const qIds = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === QUARTER);
+  const qIds = MYD.quarterOpsPickedIds(PLAN, QUARTER);
 
   let sumPerDiem = 0, sumLodging = 0, sumTravel = 0;
   const rows = qIds.map(id => {
@@ -835,7 +836,7 @@ function renderInspection() {
 function renderInspectList() {
   const master = MYD.loadMaster();
   INSP.q = QUARTER;
-  const qIds = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === QUARTER);
+  const qIds = MYD.quarterOpsPickedIds(PLAN, QUARTER);
   const byId = new Map(master.vehicles.map(v => [v.id, v]));
   const done = qIds.filter(id => MYD.inspectionDone(PLAN, id)).length;
 
@@ -972,7 +973,7 @@ function bindInspectForm(vehicleId, f) {
   // ไม่บล็อกถ้ายังตรวจไม่ครบทุกคัน — แค่บอกให้รู้ว่าเหลือกี่คัน · กลับมาแก้ทีหลังได้จาก stepper
   $('btnInspDone').addEventListener('click', () => {
     save();
-    const qIds = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === QUARTER);
+    const qIds = MYD.quarterOpsPickedIds(PLAN, QUARTER);
     const left = qIds.filter(id => !MYD.inspectionDone(PLAN, id)).length;
     const nx = nextQuarterPhaseOf('inspection');
     INSP.vehicleId = null;
@@ -1031,8 +1032,142 @@ function renderPlan() {
 // ================= หน้าไตรมาส (28 ส.ค. 2569) =================
 // เข้าทางเดียว: กด "ยืนยันไตรมาส X" ที่ขั้นทวน+ยืนยันของเฟสแผนเดินทาง (หรือลิงก์จากรายการไตรมาสท้ายเฟสนั้น
 // — ดู renderQuarterList) เห็นแค่รถของไตรมาสนี้ตลอดทั้ง 4 เฟส (QUARTER ล็อกไว้จาก route())
+
+// PICK.ids = เซตรถที่ติ๊กไว้ที่หน้าเลือกรถ (ยังไม่บันทึกจนกว่าจะกด "เริ่มดำเนินการ") — reset ทุกครั้งที่เข้า
+// ไตรมาสใหม่ (ดู renderQuarterEntry) ไม่ผูกกับแผนจนกว่าจะยืนยัน
+let PICK = { q: null, ids: null };
+
+// จุดเข้าเดียวของหน้าไตรมาส — คั่นด้วยหน้า "เลือกรถที่จะดำเนินการ" ก่อนเข้า 4 เฟสเสมอถ้าไตรมาสนี้ยังไม่เคย
+// เลือก (MYD.quarterOpsPicked) กันเข้ามาบำรุงรักษารถคันเดียวกันซ้ำ (เจ้าของงานสั่ง 28 ส.ค. 2569 รอบ 4) —
+// เลือกครั้งเดียวต่อไตรมาสแล้วจำไว้ถาวร ครั้งต่อไปเข้าไตรมาสเดิมจะข้ามหน้านี้ไปที่ stepper ตรงๆ
+function renderQuarterEntry() {
+  if (!MYD.quarterOpsPicked(PLAN, QUARTER)) { renderQuarterVehiclePick(); return; }
+  renderQuarterOps();
+}
+
+// จัดกลุ่มรถที่ยืนยันเข้าไตรมาสตามใบเดินทาง (เจ้าของงานสั่ง — ทีมที่ไปแต่ละใบมักเป็นคนละทีมกัน) รถที่ไม่มี
+// ใบ (ไม่ควรเกิดขึ้นจริงเพราะยืนยันแผนเดินทางได้ต้องจัดรถเข้าใบครบก่อนแล้ว) กันไว้เป็นกลุ่มท้ายสุดแบบกันเหนียว
+function groupQuarterVehiclesByTrip(plan, q, ids) {
+  const byTrip = new Map();
+  const noTrip = [];
+  ids.forEach(id => {
+    const t = MYD.tripOfVehicle(plan, id);
+    if (!t) { noTrip.push(id); return; }
+    if (!byTrip.has(t.id)) byTrip.set(t.id, { trip: t, ids: [] });
+    byTrip.get(t.id).ids.push(id);
+  });
+  return { groups: [...byTrip.values()], noTrip };
+}
+
+function renderQuarterVehiclePick() {
+  renderQuarterHeader();
+  $('stepper').innerHTML = '';
+  const master = MYD.loadMaster();
+  const byId = new Map(master.vehicles.map(v => [v.id, v]));
+  const confirmedIds = MYD.quarterConfirmedIds(PLAN, QUARTER);
+
+  // เข้าไตรมาสใหม่ (หรือยังไม่เคยติ๊กอะไรเลย) → ตั้งต้นติ๊กทุกคัน ปลดติ๊กเองได้ถ้าจะให้ทีมอื่นดำเนินการ
+  if (PICK.q !== QUARTER || !PICK.ids) PICK = { q: QUARTER, ids: new Set(confirmedIds) };
+
+  const { groups, noTrip } = groupQuarterVehiclesByTrip(PLAN, QUARTER, confirmedIds);
+
+  const rowsOf = ids => ids.map(id => {
+    const v = byId.get(id);
+    if (!v) return '';
+    return `<tr data-id="${esc(id)}">
+      <td><input type="checkbox" class="rowChk" data-id="${esc(id)}" ${PICK.ids.has(id) ? 'checked' : ''}></td>
+      <td><b>${esc(v.plate)}</b><div class="cell-sub">${esc(v.brand)}</div></td>
+      <td>${esc(v.ownerDept)}</td>
+    </tr>`;
+  }).join('');
+
+  const groupHtml = (key, title, sub, ids) => {
+    const sel = ids.filter(id => PICK.ids.has(id)).length;
+    return `
+    <div class="rzone" data-pickgroup="${esc(key)}">
+      <div class="rzone-head" data-toggle-pick="${esc(key)}">
+        <span class="ms rzone-caret">${state.pickExpanded[key] === false ? 'chevron_right' : 'expand_more'}</span>
+        <b>${esc(title)}</b>
+        <span class="rzone-count">${sub} · เลือกแล้ว ${sel}/${ids.length} คัน</span>
+        <label class="rzone-allchk" onclick="event.stopPropagation()">
+          <input type="checkbox" class="groupAllChk" data-pickgroup="${esc(key)}" ${sel === ids.length ? 'checked' : ''}> เลือกทั้งใบ
+        </label>
+      </div>
+      ${state.pickExpanded[key] === false ? '' : `<div class="rzone-body">
+        <div class="tblwrap"><table class="tbl">
+          <thead><tr><th></th><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th></tr></thead>
+          <tbody>${rowsOf(ids)}</tbody></table></div>
+      </div>`}
+    </div>`;
+  };
+
+  const groupsHtml = groups.map(({ trip, ids }) =>
+    groupHtml(trip.id, trip.name || 'แผนเดินทาง', `${esc(trip.location || 'ไม่ระบุสถานที่')}`, ids)).join('');
+  const noTripHtml = noTrip.length ? groupHtml('__none', 'รถที่ไม่มีใบเดินทาง', '—', noTrip) : '';
+
+  const allChecked = confirmedIds.length > 0 && confirmedIds.every(id => PICK.ids.has(id));
+
+  $('phase').innerHTML = `
+    <div class="card">
+      <div class="sect">เลือกรถที่จะดำเนินการ${esc(MYD.quarterLabel(QUARTER))}</div>
+      <div class="sub">ก่อนเข้าขั้นตรวจสภาพก่อนซ่อม — เลือกเฉพาะรถที่จะลงมือดำเนินการรอบนี้ ปลดติ๊กคันที่ยังไม่พร้อม
+        หรือให้ทีมอื่นมาดำเนินการแทน กันเข้ามาบำรุงรักษารถคันเดียวกันซ้ำ · เลือกแล้วยืนยัน ระบบจะจำไว้ ไม่ถามซ้ำอีก</div>
+      ${confirmedIds.length ? `<div class="chk" style="margin-bottom:12px">
+        <label><input type="checkbox" id="chkPickAll" ${allChecked ? 'checked' : ''}> เลือกทั้งหมด — ${confirmedIds.length} คัน</label>
+      </div>
+      ${groupsHtml}${noTripHtml}
+      <div class="actions" style="margin-top:16px">
+        <button class="btn btn-p" id="btnStartOps"><span class="ms">play_arrow</span> เริ่มดำเนินการ</button>
+      </div>` : `<div class="empty">ยังไม่มีรถของ${esc(MYD.quarterLabel(QUARTER))}ที่ยืนยันเข้าแผน</div>`}
+    </div>`;
+
+  bindQuarterVehiclePick(confirmedIds);
+}
+
+function bindQuarterVehiclePick(confirmedIds) {
+  document.querySelectorAll('[data-toggle-pick]').forEach(head => {
+    head.addEventListener('click', () => {
+      const key = head.dataset.togglePick;
+      state.pickExpanded[key] = state.pickExpanded[key] === false;
+      renderQuarterVehiclePick();
+    });
+  });
+
+  $('chkPickAll')?.addEventListener('change', e => {
+    PICK.ids = e.target.checked ? new Set(confirmedIds) : new Set();
+    renderQuarterVehiclePick();
+  });
+
+  document.querySelectorAll('.groupAllChk').forEach(chk => {
+    chk.addEventListener('change', e => {
+      const key = chk.dataset.pickgroup;
+      const rows = document.querySelectorAll(`[data-pickgroup="${CSS.escape(key)}"] .rowChk`);
+      rows.forEach(r => { e.target.checked ? PICK.ids.add(r.dataset.id) : PICK.ids.delete(r.dataset.id); });
+      renderQuarterVehiclePick();
+    });
+  });
+
+  document.querySelectorAll('.rowChk').forEach(chk => {
+    chk.addEventListener('change', e => {
+      e.target.checked ? PICK.ids.add(chk.dataset.id) : PICK.ids.delete(chk.dataset.id);
+      renderQuarterVehiclePick();
+    });
+  });
+
+  $('btnStartOps')?.addEventListener('click', () => {
+    if (!PICK.ids.size) { toast('เลือกรถอย่างน้อย 1 คันก่อนเริ่มดำเนินการ'); return; }
+    MYD.pickQuarterOpsVehicles(PLAN, QUARTER, [...PICK.ids]);
+    MYD.savePlan(PLAN);
+    PICK = { q: null, ids: null };
+    renderQuarterOps();
+    window.scrollTo({ top: 0 });
+  });
+}
+
 function renderQuarterHeader() {
-  const n = (PLAN.selectedVehicleIds || []).filter(id => MYD.isVehicleIn(PLAN, id) && MYD.bucketOf(PLAN, id) === QUARTER).length;
+  // นับรถที่ยืนยันเข้าไตรมาสทั้งหมด (ไม่ใช่แค่ที่เลือกดำเนินการแล้ว) — หัวข้อนี้ใช้ปรับทิศทางทั้งหน้าเลือกรถ
+  // และหน้า 4 เฟส จึงต้องเป็นตัวเลขเดียวกันทั้งสองที่ ส่วนขอบเขต "เห็นแค่คันที่เลือก" อยู่ในแต่ละเฟสเอง
+  const n = MYD.quarterConfirmedIds(PLAN, QUARTER).length;
   $('crumbs').innerHTML = `
     <a href="index.html" style="color:inherit;text-decoration:none"><span class="ms">list_alt</span> รายการแผน</a>
     <span class="sep">›</span><a href="#${esc(PLAN.id)}" style="color:inherit;text-decoration:none">${esc(planTitle(PLAN))}</a>
@@ -1066,7 +1201,7 @@ function route() {
   // ไปหน้าแผนแทน (เช่น แก้ hash เองมั่วๆ หรือลิงก์เก่าค้างมาจากก่อนยืนยัน)
   if (q && MYD.QUARTER_KEYS.includes(q) && MYD.quarterTravelConfirmed(p, q)) {
     QUARTER = q;
-    renderQuarterOps();
+    renderQuarterEntry();
     window.scrollTo({ top: 0 });
     return;
   }
