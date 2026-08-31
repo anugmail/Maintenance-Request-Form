@@ -11,8 +11,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260825-ds31">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260825-ds31">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260831-ds32">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260831-ds32">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -2028,7 +2028,7 @@
       <div class="nv" id="nav-home" title="หน้าหลัก" onclick="toast('mock — ยังไม่มีหน้านี้')"><span
           class="ms">home</span></div>
       <div class="nv" id="nav-form" title="แจ้งซ่อม" onclick="switchView('form')"><span class="ms">build</span></div>
-      <div class="nv" id="nav-my" title="เรื่องแจ้งซ่อมของฉัน" onclick="switchView('my')"><span
+      <div class="nv" id="nav-my" title="จัดการงานซ่อม" onclick="switchView('my')"><span
           class="ms">assignment</span></div>
       <div class="nv" id="nav-fuel" title="เติมน้ำมัน + ชั่วโมงทำงาน" onclick="switchView('fuel')"><span
           class="ms">local_gas_station</span></div>
@@ -2225,13 +2225,12 @@
       <!-- ============ VIEW: เรื่องของฉัน ============ -->
       <main class="content hidden" id="view-my">
         <div class="crumbs"><span class="ms">home</span><span
-            class="sep">›</span><span>แจ้งซ่อมและบริหารงานซ่อม</span><span class="sep">›</span><span
-            class="cur">เรื่องแจ้งซ่อมของฉัน</span></div>
-        <h1 class="page-title">เรื่องแจ้งซ่อมของฉัน</h1>
+            class="sep">›</span><span class="cur">จัดการงานซ่อม</span></div>
+        <h1 class="page-title">จัดการงานซ่อม</h1>
         <div class="list-toolbar split">
           <div class="lt-search">
             <div class="search"><span class="ms">search</span>
-              <input type="search" id="my-q" placeholder="เลขที่ใบแจ้งซ่อม, ทะเบียนรถ" oninput="renderMyList()"></div>
+              <input type="search" id="my-q" placeholder="หมายเลขเหตุการณ์, เลขทะเบียน" oninput="renderMyList()"></div>
           </div>
           <div class="lt-actions">
             <button class="btn btn-s" id="my-filter-btn" aria-expanded="false" aria-controls="my-filter-panel"
@@ -2269,7 +2268,7 @@
       <!-- 18 ส.ค. 2569: ลิสต์เปลี่ยนเป็นตาราง กดแถวแล้วมาหน้านี้ ไม่กางในลิสต์แล้ว -->
       <main class="content hidden" id="view-mydet">
         <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><a href="#my"
-            onclick="switchView('my');return false" style="color:inherit;text-decoration:none">เรื่องแจ้งซ่อมของฉัน</a><span
+            onclick="switchView('my');return false" style="color:inherit;text-decoration:none">จัดการงานซ่อม</a><span
             class="sep">›</span><span class="cur">รายละเอียด</span></div>
         <h1 class="page-title" id="mydet-title"></h1>
         <div id="mydetail"></div>
@@ -3821,6 +3820,38 @@ function tblFoot(key,total,from,to,pages){
   </div>`;
 }
 // ตัวเรนเดอร์กลาง — jobs = งานที่กรองตามบทบาทมาแล้ว · opts.open = ฟังก์ชันเปิดรายละเอียด
+// ================= คอลัมน์ชุด "จัดการงานซ่อม" (อิง Figma Repair & Maintain / A1.1) =================
+// ทั้ง 3 ตัวนี้ derive จากข้อมูลที่ JOBS มีอยู่แล้ว — ไม่ได้เพิ่มฟิลด์ mock ใหม่
+// (กติกาเจ้าของงาน: ไม่มีข้อมูลจริง = ไม่ต้องมีใน UI)
+
+// ประเภทยานพาหนะ — แยกจาก model ที่เก็บรูปแบบ "<ตัวรถ> + <อุปกรณ์ต่อพ่วง>"
+// บรรทัดบน = ประเภทตามที่ Figma ใช้ · บรรทัดล่าง = รุ่นอุปกรณ์
+function vehCategory(j){
+  const parts=(j.model||'').split(' + ');
+  const base=parts[0]||'', at=parts[1]||'';
+  if(at.startsWith('กระเช้า')) return {name:'รถกระเช้าฉนวนกันไฟฟ้า', sub:at.replace(/^กระเช้า\s*/,'')||base};
+  if(at.startsWith('เครน'))    return {name:'รถบรรทุกติดเครนไฮดรอลิก', sub:at.replace(/^เครน\s*/,'')||base};
+  return {name:base||'—', sub:''};
+}
+
+// ผู้ดำเนินการ — "ตอนนี้ลูกอยู่ในมือใคร" คิดจาก phase ไม่ใช่ฟิลด์แยก
+function actorOf(j){
+  const p=j.phase;
+  if(p==='wait'||p==='reject') return {name:(j.approver&&j.approver.name)||'หัวหน้าหน่วยงาน', sub:'หน่วยงานผู้แจ้ง'};
+  if(p==='kry'||p==='krd')     return {name:j.fromUnit||'กรย.', sub:'กรย.'};
+  if(p==='self')               return {name:(j.owner&&j.owner.name)||'หน่วยงานผู้แจ้ง', sub:'หน่วยงานผู้แจ้ง'};
+  if(p==='returned'||p==='gclosed') return {name:'อู่ภายนอก', sub:'ผู้รับจ้างซ่อม'};
+  return {name:'กบค.', sub:'กองบำรุงรักษาเครื่องกล'};   // pending · quote · work · slots · appt · approve · closed
+}
+
+// วันที่อัพเดตสถานะล่าสุด = รายการ "ท้ายสุด" ของ history (ต่างจาก reportedParts ที่เป็นรายการแรก = วันที่แจ้ง)
+function updatedParts(j){
+  const h=j.history||[], t=h.length?h[h.length-1].t:'';
+  const m=t.match(/^(\d+)\s+(\S+)\s+(\d{4})\s+(\d{1,2}):(\d{2})$/);
+  if(!m)return{d:t||'—',tm:''};
+  return{d:`${m[1].padStart(2,'0')}/${String(TH_MONTHS.indexOf(m[2])+1).padStart(2,'0')}/${m[3]}`,tm:`${m[4].padStart(2,'0')}:${m[5]}`};
+}
+
 function renderJobList(key,jobs,opts){
   const host=$(opts.host);host.classList.remove('hidden');
   const ui=LIST_UI[key];
@@ -3839,7 +3870,50 @@ function renderJobList(key,jobs,opts){
   const total=jobs.length,pages=Math.max(1,Math.ceil(total/ui.size));
   if(ui.page>pages)ui.page=pages;
   const from=(ui.page-1)*ui.size,rows=jobs.slice(from,from+ui.size);
-  host.innerHTML=`<div class="tblwrap"><table class="tbl striped">
+  // สองชุดคอลัมน์: 'incident' = ชุดที่อิง Figma หน้า Repair & Maintain (A1.1)
+  //                ค่าเริ่มต้น    = ชุดเดิมที่หน้า กรย./คิว กบค. ยังใช้อยู่
+  host.innerHTML=(opts.cols==='incident'?incidentTable(key,rows,opts):legacyTable(key,rows,opts))
+    +tblFoot(key,total,from+1,from+rows.length,pages);
+}
+
+// ---- ชุดคอลัมน์ตาม Figma: Repair & Maintain / A1.1 Incident list ----
+// จุดที่ต่างจากชุดเดิมและตั้งใจให้ต่าง:
+//   · "สถานะรถ" เป็น .cell-state (ข้อความสีล้วน) ไม่ใช่ .badge — ตามดีไซน์
+//   · "สถานะเหตุการณ์" ยังเป็น .badge pill เพราะมีหลายค่า
+//   · วันที่มี 2 คอลัมน์คนละความหมาย: วันที่แจ้ง (แรกสุด) กับ วันที่อัพเดตสถานะ (ล่าสุด)
+function incidentTable(key,rows,opts){
+  return `<div class="tblwrap"><table class="tbl striped">
+    <thead><tr>
+      ${sortTh(key,'no','หมายเลขเหตุการณ์')}
+      ${sortTh(key,'date','วันที่แจ้ง')}
+      <th>เลขทะเบียน</th>
+      <th>ประเภทยานพาหนะ</th>
+      <th>สถานะรถ</th>
+      <th>สถานะเหตุการณ์</th>
+      <th>วันที่อัพเดตสถานะฯ</th>
+      <th>ผู้ดำเนินการ</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${rows.map(j=>{
+      const st=statusInfo(j),d=reportedParts(j),u=updatedParts(j);
+      const cat=vehCategory(j),ac=actorOf(j),ok=vehUsable(j);
+      return `<tr>
+        <td><div class="cell-key">${esc(j.no)}</div></td>
+        <td><div>${esc(d.d)}</div><div class="cell-sub">${esc(d.tm)}</div></td>
+        <td><div class="cell-clip" title="${esc(j.plate)}">${esc(j.plate)}</div></td>
+        <td><div class="cell-clip" title="${esc(cat.name)}">${esc(cat.name)}</div>${cat.sub?`<div class="cell-sub cell-clip" title="${esc(cat.sub)}">${esc(cat.sub)}</div>`:''}</td>
+        <td><span class="cell-state ${ok?'ok':'no'}">${ok?'ใช้งานได้':'ใช้งานไม่ได้'}</span></td>
+        <td><span class="badge ${st.cls}">${esc(st.label)}</span></td>
+        <td><div>${esc(u.d)}</div><div class="cell-sub">${esc(u.tm)}</div></td>
+        <td><div class="cell-clip" title="${esc(ac.name)}">${esc(ac.name)}</div>${ac.sub?`<div class="cell-sub cell-clip" title="${esc(ac.sub)}">${esc(ac.sub)}</div>`:''}</td>
+        <td><div class="dt-action"><button class="btn" title="ดูรายละเอียด" onclick="${opts.open}('${j.no}')"><span class="ms">quick_reference_all</span></button></div></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function legacyTable(key,rows,opts){
+  return `<div class="tblwrap"><table class="tbl striped">
     <thead><tr>
       ${sortTh(key,'no','เลขที่ใบแจ้งซ่อม')}
       <th>ยานพาหนะ</th><th>สังกัดยานพาหนะ</th>
@@ -3860,7 +3934,7 @@ function renderJobList(key,jobs,opts){
         <td><div class="dt-action"><button class="btn" title="ดูรายละเอียด" onclick="${opts.open}('${j.no}')"><span class="ms">quick_reference_all</span></button></div></td>
       </tr>`;
     }).join('')}</tbody>
-  </table></div>`+tblFoot(key,total,from+1,from+rows.length,pages);
+  </table></div>`;
 }
 
 // ================= VIEW: เรื่องของฉัน =================
@@ -3869,7 +3943,7 @@ function renderMyList(){
   R.jobNo=null;
   const phases=MY_STATUS_PHASES[$('my-status-filter').value];
   renderJobList('my',phases?JOBS.filter(j=>phases.includes(j.phase)):JOBS,
-    {host:'mylist',open:'openMy',empty:'ยังไม่มีเรื่องแจ้งซ่อม'});
+    {host:'mylist',open:'openMy',empty:'ยังไม่มีเรื่องแจ้งซ่อม',cols:'incident'});
 }
 let R={jobNo:null,photos:0,urls:[],returns:{},pc:'',lc:'',det:'',pick:null,docs:{invoice:false,contractor:false},rdate:''};
 // รายละเอียดเป็นหน้าเต็มแล้ว (view-mydet) — เดิมเป็น accordion กางในลิสต์

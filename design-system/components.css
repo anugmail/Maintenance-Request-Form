@@ -666,6 +666,16 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
    ต้องคู่กับ title="ค่าเต็ม" เสมอ ไม่งั้นค่าที่ถูกตัดจะอ่านไม่ได้เลย */
 .tbl .cell-clip{display:block;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+/* สถานะแบบ "ข้อความสี" — ไม่ใช่ .badge
+   Figma หน้า Repair & Maintain (A1.1 Incident list) ใช้สองแบบในตารางเดียวกัน:
+     คอลัมน์ "สถานะรถ"       → ข้อความสีล้วน ไม่มีพื้น ไม่มีขอบ   ← .cell-state
+     คอลัมน์ "สถานะเหตุการณ์" → pill มีพื้น+ขอบ                    ← .badge เดิม
+   แยกกันเพราะสถานะรถมีแค่ 2 ค่าตรงข้าม (ใช้ได้/ไม่ได้) ใช้สีบอกพอ
+   ส่วนสถานะเหตุการณ์มีสิบกว่าค่า ต้องมีกรอบช่วยแยกออกจากข้อความรอบข้าง */
+.tbl .cell-state{font-weight:600;white-space:nowrap}
+.tbl .cell-state.ok{color:var(--success-600)}
+.tbl .cell-state.no{color:var(--error-600)}
+
 /* ฟิลด์แทรกกลางบรรทัดในเซลล์ตารางรายการตรวจสภาพ — เกิดจากแถว "แบตเตอรี่ยี่ห้อ ___ จำนวน ___ ลูก"
    ในใบรับรถ (kbk-self-repair-inspection.html) ที่ต้องมีช่องกรอกสั้นๆ แทรกอยู่กลางข้อความรายการ
    .tbl-row-label = ช่องกรอกชื่อรายการเต็มบรรทัด ใช้ตอนกด "เพิ่มรายการ" เอง (ระบบไม่มีชื่อล่วงหน้าให้) */
