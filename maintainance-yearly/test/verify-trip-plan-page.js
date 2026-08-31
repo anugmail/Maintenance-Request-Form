@@ -63,25 +63,29 @@ const PLAN = 'plan-seed-2569-002';
   await page.waitForSelector('.wsteps');
 
   console.log('\nโมดูลเรียก callback ของ host ได้จริง');
-  await page.locator('#btnAutoTrips').click();     // → onChange → renderWizard ใหม่
+  // ไตรมาส 1 กางไว้เป็นค่าเริ่มต้น (28 ส.ค. 2569: เปลี่ยนจากแท็บสลับเป็นรายการพับ/กาง) — ปุ่มจึงมี data-q="Q1"
+  // .rzone ตอนนี้มี 2 ชั้น: กล่องไตรมาส (มี data-q) ห่อกล่องใบเดินทางแต่ละใบ (ไม่มี data-q) ไว้ข้างใน
+  const tripBoxes = () => page.locator('[data-q] .rzone-body .rzone');
+  await page.locator('[data-auto-trips="Q1"]').click();     // → onChange → renderWizard ใหม่
   await page.waitForTimeout(400);
-  const boxes = await page.locator('.rzone').count();
+  const boxes = await tripBoxes().count();
   ok(boxes === 2, `onChange ทำงาน — แยกอัตโนมัติได้ ${boxes} ใบ แล้ววาดหน้าใหม่`);
   ok(await page.locator('#btnPrimaryTrip').isDisabled(), 'ใบยังไม่ถูกตอบรับ → ปุ่มถัดไปยังปิด');
 
-  const box1 = page.locator('.rzone').first();
+  const box1 = tripBoxes().first();
   await box1.locator('[data-field="location"]').fill('จุดรวมงาน กฟจ. จันทบุรี');
   await box1.locator('[data-field="windowFrom"]').fill('2568-11-04');
   await box1.locator('[data-field="windowTo"]').fill('2568-11-08');
   await page.waitForTimeout(300);
   ok(await box1.locator('[data-trip-send]').isDisabled(), 'ยังไม่ระบุพนักงาน → ส่งใบไม่ได้ (เกณฑ์เดิมยังอยู่)');
 
-  console.log('\nสลับไตรมาสแล้วหน้าไม่พัง');
-  const segs = page.locator('.travelQSeg');   // ไม่ใช่ '.seg .sg' — ชนกับปุ่มสลับ ตรวจเอง/จ้าง
-  ok(await segs.count() === 4, 'มีตัวเลือกไตรมาส Q1–Q4');
-  await segs.nth(1).click();
+  console.log('\nขยายไตรมาสอื่นเพิ่มแล้วหน้าไม่พัง');
+  const heads = page.locator('[data-toggle-q]');   // หัวข้อไตรมาสแบบพับ/กาง (เดิมเป็นแท็บ .travelQSeg)
+  ok(await heads.count() === 4, 'มีหัวข้อไตรมาส Q1–Q4 ให้กด');
+  await heads.nth(1).click();   // กางไตรมาส 2 เพิ่ม — ไตรมาส 1 ที่กางอยู่แล้วต้องไม่ถูกปิด
   await page.waitForTimeout(300);
-  ok(await page.locator('.sect', { hasText: 'ทำแผนเดินทาง' }).count() > 0, 'สลับไตรมาสแล้วยังอยู่ขั้นเดิม');
+  ok(await page.locator('.sect', { hasText: 'ทำแผนเดินทาง' }).count() > 0, 'ขยายไตรมาสอื่นเพิ่มแล้วยังอยู่ขั้นเดิม');
+  ok(await tripBoxes().count() === 2, 'ไตรมาส 1 ที่กางไว้ก่อนยังเห็นใบเดินทางครบเหมือนเดิม (ไม่ได้ถูกพับปิด)');
 
   console.log('\nข้อมูลชุดเดียวกับหน้ารายการแผน');
   await page.goto(`${BASE}/index.html#${PLAN}`);
@@ -99,12 +103,15 @@ const PLAN = 'plan-seed-2569-002';
   ok(await page.locator('#btnGoNextPhaseProc').count() === 0, 'ไม่มีปุ่ม "ไปเฟสถัดไป" (ไม่ได้ส่ง onNextPhase)');
   ok(await page.locator('#btnPeaLife').count() === 1, 'ปุ่มทำใบนำจ่าย (PEA Life) ยังมี');
 
-  console.log('\nแต่ในหน้ารายการแผน (host ที่มี stepper) ปุ่มนั้นต้องมี');
+  console.log('\nหน้ารายการแผน (index.html) ก็ไม่มีปุ่มนี้เหมือนกันแล้ว (28 ส.ค. 2569 — เดิมเคยส่ง onNextPhase');
+  console.log('มาเพื่อไปเฟส "ตรวจสภาพก่อนซ่อม" แต่ 4 เฟสท้ายย้ายไปเป็นหน้าไตรมาสแยกแล้ว ไม่มี "เฟสถัดไป" ของแผนอีก)');
   await page.goto(`${BASE}/index.html#${PLAN}`);
   await page.waitForSelector('.wsteps');
   await page.locator(`[onclick="goPhase('travel')"]`).click();
   await page.waitForTimeout(400);
-  ok(await page.locator('#btnGoNextPhaseProc').count() === 1, 'host เดิมส่ง onNextPhase มา → ปุ่มโผล่ตามเดิม');
+  ok(await page.locator('#btnGoNextPhaseProc').count() === 0, 'index.html ก็ไม่ส่ง onNextPhase มาแล้วเหมือนกัน — ไม่มีปุ่ม');
+  ok(await page.locator('.sect', { hasText: 'รายการไตรมาส' }).count() > 0,
+    'แต่มีการ์ด "รายการไตรมาส" แทน — ไปต่อผ่านไตรมาสที่ยืนยันแผนเดินทางแล้วแทน');
 
   console.log('\npageerror:', errors.length ? errors.join(' | ') : '(ไม่มี)');
   ok(errors.length === 0, 'ไม่มี pageerror');
