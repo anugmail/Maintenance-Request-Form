@@ -3197,37 +3197,49 @@
     </div>`;
     }
 
+    // ---- สีป้ายสถานะ — อิง Figma หน้า Repair & Maintain / A1.1 Incident list ----
+    // Figma ใช้สีบอกว่า "เรื่องจบหรือยัง" ไม่ใช่ "เดินไปถึงขั้นไหน" จึงมีแค่ 3 สี:
+    //   เหลือง (b-low) = ยังไม่จบ ยังมีคนต้องทำอะไรต่อ  ← สถานะส่วนใหญ่อยู่กลุ่มนี้
+    //   แดง   (b-out) = ถูกปฏิเสธ/ตีกลับ ต้องแก้แล้วส่งใหม่
+    //   เขียว (b-ok)  = จบแล้ว ไม่มีใครต้องทำอะไรอีก
+    // เดิมใช้ b-brand (ชมพู) กับ "กำลังดำเนินการ" ซึ่งทำให้ผู้ใช้ต้องแยก 4 สี
+    // และไม่ตรงกับที่ กฟภ. ออกแบบไว้ — 31 ส.ค. 2569 เจ้าของงานสั่งให้ตรง Figma
+    //
+    // ⚠️ สถานะที่ Figma ไม่ได้แสดงตัวอย่างไว้ (ซ่อมเสร็จ · นัดรับรถ · รออนุมัติปิดงาน)
+    //    จัดเป็นเหลืองตามกฎข้างบน เพราะยังต้องมีคนทำต่อ — ถ้า กฟภ. ต้องการแยกสีค่อยปรับ
     function statusInfo(j) {
       if (j.phase === 'wait') return { label: 'รอ ' + j.approver.name + ' อนุมัติ', cls: 'b-low' };
-      if (j.phase === 'reject') return { label: 'ไม่อนุมัติ — ตีกลับให้แก้ไข', cls: 'b-low' };
-      if (j.phase === 'self') return { label: 'บันทึกแล้ว — ซ่อมเอง', cls: 'b-ok' };
-      if (j.phase === 'kry') return { label: 'รอ กรย. คัดแยกช่องทาง', cls: 'b-brand' };
-      if (j.phase === 'krd') return { label: 'กรย. รับไปซ่อมเอง', cls: 'b-brand' };
-      if (j.phase === 'pending') return { label: 'รอ กบค. รับเรื่อง', cls: 'b-brand' };
+      if (j.phase === 'reject') return { label: 'ไม่อนุมัติ — ตีกลับให้แก้ไข', cls: 'b-out' };
+      if (j.phase === 'self') return { label: 'บันทึกแล้ว — ซ่อมเอง', cls: 'b-low' };
+      if (j.phase === 'kry') return { label: 'รอ กรย. คัดแยกช่องทาง', cls: 'b-low' };
+      if (j.phase === 'krd') return { label: 'กรย. รับไปซ่อมเอง', cls: 'b-low' };
+      if (j.phase === 'pending') return { label: 'รอ กบค. รับเรื่อง', cls: 'b-low' };
       if (j.phase === 'returned') {
         const s = j.rstage || 0;
         const g = j.garageRoute;
-        if (s === 0) return { label: g ? 'กรย. ส่งซ่อมอู่ภายนอก' : 'กบค.ตีกลับ/ปฏิเสธ', cls: 'b-low' };
-        if (s === 1) return { label: 'ดำเนินการซ่อมโดยอู่', cls: 'b-brand' };
-        return { label: 'ซ่อมเสร็จแล้วโดยอู่ — รอบันทึกปิดงาน', cls: 'b-brand' };
+        // ส่งซ่อมอู่ = ส่งต่อ (เหลือง) · ตีกลับ/ปฏิเสธ = ถูกปฏิเสธ (แดง) — คนละความหมายแม้อยู่ phase เดียวกัน
+        if (s === 0) return g ? { label: 'กรย. ส่งซ่อมอู่ภายนอก', cls: 'b-low' } : { label: 'กบค.ตีกลับ/ปฏิเสธ', cls: 'b-out' };
+        if (s === 1) return { label: 'ดำเนินการซ่อมโดยอู่', cls: 'b-low' };
+        return { label: 'ซ่อมเสร็จแล้วโดยอู่ — รอบันทึกปิดงาน', cls: 'b-low' };
       }
       if (j.phase === 'gclosed') return { label: 'ปิดงาน — ซ่อมโดยอู่', cls: 'b-ok' };
-      if (j.phase === 'slots') return { label: 'ซ่อมเสร็จ — รอผู้แจ้งเลือกวันนัดรับ', cls: 'b-brand' };
+      if (j.phase === 'slots') return { label: 'ซ่อมเสร็จ — รอผู้แจ้งเลือกวันนัดรับ', cls: 'b-low' };
       if (j.phase === 'quote') return { label: j.quote && j.quote.sent ? 'รอใบเสนอราคาจากอู่' : 'ส่งอู่ประเมินราคา', cls: 'b-low' };
-      if (j.phase === 'work' && !j.route) return { label: 'รับเรื่องแล้ว — รอเลือกวิธีซ่อม', cls: 'b-brand' };
-      if (j.phase === 'work' && j.route === 'self' && !j.partsOK) return { label: 'กำลังจัดรายการอะไหล่', cls: 'b-brand' };
+      if (j.phase === 'work' && !j.route) return { label: 'รับเรื่องแล้ว — รอเลือกวิธีซ่อม', cls: 'b-low' };
+      if (j.phase === 'work' && j.route === 'self' && !j.partsOK) return { label: 'กำลังจัดรายการอะไหล่', cls: 'b-low' };
       // ---- ขั้นนัดวันนำรถเข้าซ่อม (คนละเรื่องกับ 'slots' ซึ่งเป็นนัดรับรถตอนซ่อมเสร็จ) ----
       if (j.phase === 'work' && j.route === 'self' && !j.rappt) {
         if (j.rslots) return { label: 'รอผู้แจ้งเลือกวันเข้าซ่อม', cls: 'b-low' };
-        return { label: 'รอ กบค. นัดวันเข้าซ่อม', cls: 'b-brand' };
+        return { label: 'รอ กบค. นัดวันเข้าซ่อม', cls: 'b-low' };
       }
-      if (j.phase === 'work' && j.rappt && j.wi === 0) return { label: 'นัดเข้าซ่อม ' + j.rappt.date, cls: 'b-brand' };
+      if (j.phase === 'work' && j.rappt && j.wi === 0) return { label: 'นัดเข้าซ่อม ' + j.rappt.date, cls: 'b-low' };
       if (j.phase === 'work') {
-        if (j.loc === 'onsite') return { label: 'ซ่อมหน้างาน: ' + ONSITE_STEPS[j.wi], cls: j.wi === 2 ? 'b-ok' : 'b-brand' };
-        return { label: KBK_STEPS[j.wi], cls: j.wi === 4 ? 'b-ok' : 'b-brand' };
+        // รวม 'ซ่อมเสร็จ' (ขั้นสุดท้ายของทั้งสองแทร็ก) ด้วย — ซ่อมเสร็จแล้วยังต้องนัดรับรถ/ปิดงาน จึงยังไม่เขียว
+        if (j.loc === 'onsite') return { label: 'ซ่อมหน้างาน: ' + ONSITE_STEPS[j.wi], cls: 'b-low' };
+        return { label: KBK_STEPS[j.wi], cls: 'b-low' };
       }
-      if (j.phase === 'appt') return { label: 'นัดรับรถ ' + j.appt.date + ' ' + j.appt.time, cls: 'b-brand' };
-      if (j.phase === 'approve') return { label: 'รออนุมัติปิดงาน (ผู้บังคับบัญชา)', cls: 'b-brand' };
+      if (j.phase === 'appt') return { label: 'นัดรับรถ ' + j.appt.date + ' ' + j.appt.time, cls: 'b-low' };
+      if (j.phase === 'approve') return { label: 'รออนุมัติปิดงาน (ผู้บังคับบัญชา)', cls: 'b-low' };
       if (j.loc === 'onsite') return { label: 'ปิดงาน — ซ่อมหน้างานเสร็จ', cls: 'b-ok' };
       return { label: 'ปิดงาน — ตรวจสภาพผ่าน ส่งมอบแล้ว', cls: 'b-ok' };
     }
