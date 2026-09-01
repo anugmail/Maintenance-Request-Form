@@ -219,9 +219,17 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
   border:1px solid var(--gray-300);border-radius:4px;background:#fff;color:transparent;
   transition:background-color .15s ease,border-color .15s ease,color .15s ease;
 }
-.chips.pick>.chip:hover::before{border-color:var(--gray-400)}
 .chips.pick>.chip.sel{background:#fff;border-color:var(--gray-300);color:var(--gray-700)}
 .chips.pick>.chip.sel::before{background:var(--primary-600);border-color:var(--primary-600);color:#fff}
+/* state ของกล่องติ๊ก — ยกตามไลบรารี `_Tag checkbox` (node 1:1378 · 24 variant Checked×Size×State) 1 ก.ย. 2569
+   · ยังไม่ติ๊ก + hover → ขอบ "คงเดิม" (ไลบรารี Checked=False,State=Hover ใช้ #D5D7DA เท่าตอน Default)
+     ⇒ ถอดของเดิมที่เข้มเป็น gray-400 ออก เพราะไลบรารีไม่มี state นี้
+   · ติ๊กแล้ว + hover → พื้น+ขอบเข้มลงเป็น brand-800 ชุดเดียวกับปุ่ม primary hover
+   · disabled → พื้นเทาอ่อน ขอบเทา เครื่องหมายถูกจาง (ไลบรารีใช้ #FAFAFA — ของเราใช้ token gray-50 ที่ใกล้สุด) */
+.chips.pick>.chip.sel:hover::before{background:var(--primary-800);border-color:var(--primary-800)}
+.chips.pick>.chip[aria-disabled=true]{cursor:not-allowed;color:var(--gray-400)}
+.chips.pick>.chip[aria-disabled=true]::before{background:var(--gray-50);border-color:var(--gray-300)}
+.chips.pick>.chip.sel[aria-disabled=true]::before{color:var(--gray-400)}
 /* .chip.plain — ป้ายบอกข้อมูลที่กดไม่ได้ (เช่นหัวแถววันในตารางเลือกช่วงเวลา) */
 .chips.pick>.chip.plain{padding-left:10px;cursor:default}
 .chips.pick>.chip.plain::before{display:none}
@@ -577,6 +585,34 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
 .veh .ic{width:44px;height:44px;border-radius:var(--rounded-md);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .veh b{color:var(--gray-900);font-size:var(--fs-body)}
 .veh .meta{font-size:var(--fs-text-xs);color:var(--gray-500)}
+
+/* ============================================================
+   v0.34 — Radio card (การ์ดตัวเลือกที่เลือกได้อันเดียว)
+   ยกออกจาก <style> ของ mock (ชื่อเดิม .ctlist / .ctopt / .ct-tx) 1 ก.ย. 2569 — เดิมผิดกฎข้อ 0
+   **ใช้เมื่อ** ตัวเลือกไม่กี่อัน (2–6) ที่แต่ละอันมีคำอธิบายกำกับ และเลือกได้อันเดียว
+   เช่น "งบที่จะตัด" ในขั้น 3 ของฟอร์มแจ้งซ่อม — ต่างจาก `.rads` (รายการวิทยุบรรทัดเดียว ไม่มีกรอบ)
+   และต่างจาก `.chips.pick` (เลือกได้หลายอัน)
+
+   โครงการ์ด = ภาษาเดียวกับการ์ดเลือกรถ `.veh` ของขั้น 1 (เจ้าของงานสั่ง 1 ก.ย. 2569
+   ว่าให้ยึดแบบเดียวกับขั้น 1–3 ของฟอร์ม): r-md · เส้น 1.5px gray-200 · hover primary-500 ·
+   เลือกแล้ว primary-600 + พื้น primary-25
+   จุดวิทยุยกตามไลบรารี `_Radio button base` (node 589:206913): 16×16 · กลม ·
+   ยังไม่เลือก = เส้น 1px gray-300 พื้นขาว · เลือกแล้ว = พื้น primary-600 + จุดในสีขาว 6px ·
+   disabled = พื้น gray-50 (ของเดิมวาดเอง 17px เส้น 2px แล้วพอเลือกดันเป็นเส้น 5px ซึ่งไลบรารีไม่มี)
+   ============================================================ */
+.radcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px;align-items:stretch}
+.radcard{display:flex;align-items:flex-start;gap:10px;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;background:#fff}
+.radcard:hover{border-color:var(--primary-500)}
+.radcard.sel{border-color:var(--primary-600);background:var(--primary-25)}
+.radcard .rdot{flex:none;width:16px;height:16px;margin-top:2px;border:1px solid var(--gray-300);border-radius:var(--r-pill);background:#fff;display:flex;align-items:center;justify-content:center}
+.radcard.sel .rdot{background:var(--primary-600);border-color:var(--primary-600)}
+.radcard.sel .rdot::after{content:'';width:6px;height:6px;border-radius:var(--r-pill);background:#fff}
+.radcard[aria-disabled=true]{cursor:not-allowed;background:var(--gray-50);color:var(--gray-400)}
+.radcard[aria-disabled=true] .rdot{background:var(--gray-50);border-color:var(--gray-300)}
+.radcard .rc-tx{min-width:0}
+.radcard .rc-tx b{display:block;font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);color:var(--gray-900)}
+.radcard .rc-tx small{display:block;margin-top:2px;font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);color:var(--gray-500)}
+@media(max-width:640px){.radcards{grid-template-columns:1fr}}
 
 /* ============================================================
    v0.5 — ตารางข้อมูล (เมนูคลังอะไหล่)

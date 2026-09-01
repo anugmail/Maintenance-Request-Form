@@ -11,8 +11,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260831-ds32">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260831-ds32">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260901-ds34">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260901-ds34">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -848,22 +848,11 @@
     .fsel{height:44px}
     .areanote{font-size:var(--fs-xs);color:var(--gray-600);margin:8px 0 0;line-height:var(--lh)}
     .areanote b{color:var(--primary-700)}
-    .ctlist{align-items:stretch}
-    .ctopt{align-items:center}
-    .ct-tx{min-width:0}
 
     .fsel{width:100%;padding:11px 12px;border:1px solid var(--gray-300);border-radius:var(--r-md);font-family:var(--font);font-size:var(--fs-body);background:#fff;color:var(--gray-900)}
-    .ctlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
-    .ctopt{display:flex;align-items:flex-start;gap:10px;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;background:#fff}
-    .ctopt:hover{border-color:var(--primary-500)}
-    .ctopt.sel{border-color:var(--primary-600);background:var(--primary-25)}
-    .ctopt .dot{width:17px;height:17px;border-radius:50%;border:2px solid var(--gray-300);flex:none;margin-top:2px}
-    .ctopt.sel .dot{border-color:var(--primary-600);border-width:5px}
-    .ct-tx b{display:block;font-size:14px;color:var(--gray-900)}
-    .ct-tx small{font-size:var(--fs-xs);color:var(--gray-500);line-height:1.45;display:block;margin-top:2px}
     #i-usable .sg{display:flex;align-items:center;justify-content:center;gap:6px}
     @media(max-width:1100px){.fgrid.ig{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:640px){.fgrid.ig{grid-template-columns:1fr}.ctlist{grid-template-columns:1fr}}
+    @media(max-width:640px){.fgrid.ig{grid-template-columns:1fr}}
     #i-usable .sg .ms{font-size:18px}
 
     /* .rowtop/.vdiv ถูกลบ 18 ส.ค. 2569 — คิวงานเปลี่ยนจากการ์ด 2 บรรทัดเป็นตาราง (.tbl) */
@@ -2150,7 +2139,7 @@
           </div>
 
           <div class="fsub">งบที่จะตัด <small>(จำเป็น)</small></div>
-          <div class="ctlist" id="i-costtypes"></div>
+          <div class="radcards" id="i-costtypes"></div>
           <div class="fgrid ig" id="i-costfields"></div>
           <div class="hint" style="margin-top:10px"><span class="ms" style="font-size:16px">info</span>
             โครงประเภทงบ (code 1–4) และช่องที่ต้องกรอกแต่ละแบบ อิงจาก <code>vms_ref_cost_type</code> ของระบบจริง —
@@ -2395,6 +2384,31 @@
             class="sep">›</span><span class="cur">อนุมัติใบแจ้งซ่อม</span></div>
         <h1 class="page-title">อนุมัติใบแจ้งซ่อม — หัวหน้าผู้แจ้ง</h1>
         <div class="hint" style="margin-bottom:14px">ขั้นนี้อยู่ <b>ก่อน</b> ส่งถึง กรย. — ใบแจ้งซ่อมที่ผู้แจ้งสร้างแล้วจะค้างที่นี่จนกว่าหัวหน้าที่ถูกเลือกไว้จะกดอนุมัติ</div>
+        <!-- 1 ก.ย. 2569: ลิสต์เปลี่ยนจากการ์ด .job เป็นตารางชุดเดียวกับ "จัดการงานซ่อม" (A1.1) — ค้นหา + ตัวกรอง + เรียง + แบ่งหน้า
+             #bosstools ห่อแถบเครื่องมือไว้เพื่อซ่อนพร้อมลิสต์ตอนกดเข้าไปดูรายละเอียด (หน้านี้กางรายละเอียดในวิวเดียวกัน ไม่ได้แยกหน้าแบบ #my) -->
+        <div id="bosstools">
+          <div class="list-toolbar split">
+            <div class="lt-search">
+              <div class="search"><span class="ms">search</span>
+                <input type="search" id="boss-q" placeholder="หมายเลขเหตุการณ์, เลขทะเบียน" oninput="renderBossList()"></div>
+            </div>
+            <div class="lt-actions">
+              <button class="btn btn-s" id="boss-filter-btn" aria-expanded="false" aria-controls="boss-filter-panel"
+                onclick="toggleFilter('boss')"><span class="ms">filter_list</span> ตัวกรอง</button>
+            </div>
+          </div>
+          <div class="filter-panel" id="boss-filter-panel">
+            <div class="filter-field">
+              <label for="boss-status-filter">กรองตามสถานะ</label>
+              <select id="boss-status-filter" onchange="renderBossList()">
+                <option value="all">ทุกสถานะ</option>
+                <option value="wait">รอฉันอนุมัติ</option>
+                <option value="reject">ไม่อนุมัติ — ตีกลับ</option>
+              </select>
+            </div>
+            <button class="btn btn-t" onclick="clearFilter('boss')"><span class="ms">filter_alt_off</span> ล้างตัวกรอง</button>
+          </div>
+        </div>
         <div id="bosslist"></div>
         <div id="bossdetail" class="hidden"></div>
       </main>
@@ -3500,9 +3514,9 @@ function goBackFromForm(){
     }
     function renderCostTypes(){
       $('i-costtypes').innerHTML=COST_TYPES.map(c=>`
-        <label class="ctopt ${S.costType===c.code?'sel':''}" onclick="setCostType('${c.code}')">
-          <span class="dot"></span>
-          <span class="ct-tx"><b>${esc(c.name)}</b>
+        <label class="radcard ${S.costType===c.code?'sel':''}" onclick="setCostType('${c.code}')">
+          <span class="rdot"></span>
+          <span class="rc-tx"><b>${esc(c.name)}</b>
             <small>ต้องระบุ: ${c.fields.map(f=>COST_FIELD[f].label).join(' · ')}${c.req==='any'?' (อย่างน้อย 1)':''}</small></span>
         </label>`).join('');
       const ct=COST_TYPES.find(c=>c.code===S.costType);
@@ -3755,9 +3769,9 @@ function goBackFromForm(){
 // ลิสต์ทั้งสาม (ของฉัน / คัดแยก กรย. / คิวงาน กบค.) เป็นงานชนิดเดียวกัน จึงใช้คอลัมน์ชุดเดียวกัน
 // ต่างกันแค่ชุดงานที่กรองเข้ามา กับปลายทางตอนกดแถว — ไม่มีการกางรายละเอียดในลิสต์แล้ว
 // คอลัมน์ที่รูปมีแต่เราไม่มีข้อมูลรองรับ ("สถานะรถทดแทน" + เลข RAM/RPL) ตัดออกตามกติกา no-data-no-ui
-const LIST_UI={my:{sort:'date',dir:'desc',page:1,size:10},kry:{sort:'date',dir:'desc',page:1,size:10},kbk:{sort:'date',dir:'desc',page:1,size:10}};
+const LIST_UI={my:{sort:'date',dir:'desc',page:1,size:10},boss:{sort:'date',dir:'desc',page:1,size:10},kry:{sort:'date',dir:'desc',page:1,size:10},kbk:{sort:'date',dir:'desc',page:1,size:10}};
 // เรียกกลับไปหาตัวเรนเดอร์ของแต่ละลิสต์ตอนกดเรียง/เปลี่ยนหน้า — ห่อ arrow ไว้กันปัญหาลำดับการประกาศ
-const LIST_RENDER={my:()=>renderMyList(),kry:()=>renderKryList(),kbk:()=>renderKbkList()};
+const LIST_RENDER={my:()=>renderMyList(),boss:()=>renderBossList(),kry:()=>renderKryList(),kbk:()=>renderKbkList()};
 const TH_MONTHS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 // วันที่แจ้ง = รายการแรกของ history · '16 ก.ค. 2569 14:20' → 256907161420 (พ.ศ. เรียงตรงๆ ได้ ไม่ต้องผ่าน Date)
 function reportedKey(j){
@@ -5127,18 +5141,15 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
 
     // ================= VIEW: อนุมัติปิดงาน (ผู้บังคับบัญชา) =================
     // ================= VIEW: อนุมัติใบแจ้งซ่อม (หัวหน้าผู้แจ้ง) =================
+    // หน้านี้เห็นเฉพาะใบที่ค้างอยู่ที่หัวหน้า (wait = รออนุมัติ · reject = ตีกลับแล้วรอผู้แจ้งแก้)
+    const BOSS_STATUS_PHASES = { wait: ['wait'], reject: ['reject'] };
     function renderBossList() {
-      $('bossdetail').classList.add('hidden'); $('bosslist').classList.remove('hidden');
-      const list = JOBS.filter(j => ['wait', 'reject'].includes(j.phase));
-      if (!list.length) { $('bosslist').innerHTML = '<div class="empty">ไม่มีใบแจ้งซ่อมรออนุมัติ — ลองสร้างใบใหม่จากเมนู “แจ้งซ่อม”</div>'; return }
-      $('bosslist').innerHTML = list.map(j => {
-        const st = statusInfo(j);
-        return `<div class="job" onclick="openBoss('${j.no}')">
-      <span class="ms" style="color:var(--primary-600)">how_to_reg</span>
-      <div class="sp"><div class="no">${j.no}</div><div class="meta">${esc(j.org)} · ${esc(j.plate)} · ขออนุมัติถึง ${esc(j.approver.name)}</div></div>
-      <span class="badge ${st.cls}">${st.label}</span>
-      <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
-      }).join('');
+      $('bossdetail').classList.add('hidden');
+      $('bosstools').classList.remove('hidden');
+      const phases = BOSS_STATUS_PHASES[$('boss-status-filter').value];
+      const list = JOBS.filter(j => ['wait', 'reject'].includes(j.phase) && (!phases || phases.includes(j.phase)));
+      renderJobList('boss', list,
+        { host: 'bosslist', open: 'openBoss', empty: 'ไม่มีใบแจ้งซ่อมรออนุมัติ — ลองสร้างใบใหม่จากเมนู “แจ้งซ่อม”', cols: 'incident' });
     }
     function openBoss(no) { renderBossDetail(no) }
     function renderBossDetail(no) {
@@ -5161,6 +5172,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
         action = `<div class="apptbox"><span class="ms" style="color:var(--error-600)">cancel</span> <b>ไม่อนุมัติ — ตีกลับให้ผู้แจ้งแก้ไข</b>${j.rejectReason ? '<br>เหตุผล: ' + esc(j.rejectReason) : ''}</div>${apbox}`;
       }
       $('bosslist').classList.add('hidden');
+      $('bosstools').classList.add('hidden');   // ซ่อนแถบค้นหา/ตัวกรองพร้อมลิสต์ (รายละเอียดกางในวิวเดียวกัน)
       $('bossdetail').classList.remove('hidden');
       $('bossdetail').innerHTML = `
     <div class="job" style="cursor:default"><span class="ms" style="color:var(--primary-600)">how_to_reg</span>

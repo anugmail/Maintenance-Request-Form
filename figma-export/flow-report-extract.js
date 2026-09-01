@@ -130,7 +130,7 @@ async function main() {
   await page.locator('#i-owntel').fill('044-221-100');
   await page.locator('#i-tech').fill('อดิศักดิ์ แก้วใส');
   await page.locator('#i-techtel').fill('081-234-5678');
-  await page.locator('#i-costtypes .ctopt').first().click();
+  await page.locator('#i-costtypes .radcard').first().click();
   await page.waitForTimeout(200);
   // ช่องงบที่ sample ไม่ได้เติมให้ — เติมเองให้ผ่านเงื่อนไข "จำเป็น"
   const nCost = await page.locator('#i-costfields input').count();
