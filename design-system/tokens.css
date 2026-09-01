@@ -13,10 +13,10 @@
   --brand-700:#8A0570;     /* ⚠ ไม่พบในไลบรารี — ค่ากลางระหว่าง 600 กับ 800 ที่เราใส่เอง */
   --brand-600:#A80689;     /* ✔ component/button/primary-bg — สีหลัก */
   --brand-500:#CF07AA;     /* ✔ ยืนยันจากไลบรารี ใช้ 841 ครั้ง · ใช้กับ gradient header เท่านั้น ไม่ใช่ hover */
-  --brand-200:#F8BFF4;     /* ✔ node 3:11 Charts (ramp ขั้นที่ 2) */
-  --brand-100:#FBD9F9;     /* ✔ node 1:1377 Badges — เส้นขอบ badge แบรนด์ (ใช้ 262 ครั้ง) */
-  --brand-50:#FDEEFC;      /* ✔ node 1:1377 Badges — พื้น badge แบรนด์ */
-  --brand-25:#FDF2FA;      /* ✔ node 1:1377 Badges — พื้นอ่อนสุด */
+  --brand-200:#FED8F6;      /* ✔ ไลบรารีใหม่ (ค่าเดียวกับ brand-100 — ไลบรารีมีโทนอ่อนแค่ 3 ระดับ) */
+  --brand-100:#FED8F6;      /* ✔ ไลบรารีใหม่ — ขอบ Pill outline (Color=Brand) · ใช้ 265 ครั้ง */
+  --brand-50:#FEEBFB;       /* ✔ ไลบรารีใหม่ — โทนรองของแบรนด์ (19 ครั้ง) */
+  --brand-25:#FFF5FD;       /* ✔ ไลบรารีใหม่ — พื้น Pill outline (Color=Brand) · Featured icon · ใช้ 350 ครั้ง */
   --brand-accent:#F5A623;  /* ⚠ ไม่พบในไลบรารี — ส้มในโลโก้ M(D) คนละแหล่ง ใช้เฉพาะโลโก้ */
 
   /* ---------- Gray (Untitled UI v1 — ramp ที่ "ระบบจริง" ใช้) ----------
@@ -24,9 +24,9 @@
      หลังพบว่าสองแหล่งขัดกันทั้งแถบ — Figma = v2 (#717680/#D5D7DA/…) · ระบบจริง = v1
      ทุกค่าที่กำกับ ✅ วัดจาก vmsplus-dev (ดู .vms-runtime/palette.json)
      v0.12 เคยย้ายไป v2 ตาม Figma — v0.13 ย้อนกลับมา v1 ตามของจริง           */
-  --gray-950:#0A0D12;      /* ✔ ไลบรารีมี (188 ครั้ง) · หน้าที่เก็บจาก runtime ยังไม่ใช้ตัวนี้ */
-  --gray-900:#181D27;      /* ✔ ไลบรารีมี (1427 ครั้ง) · runtime ใช้ #000 เป็นตัวอักษรหลักแทน (745 ครั้ง) */
-  --gray-800:#252B37;      /* ✔ ไลบรารีมี (94 ครั้ง) · หน้าที่เก็บจาก runtime ยังไม่ใช้ตัวนี้ */
+  --gray-950:#0C111D;       /* ✔ ไลบรารีใหม่ — Container · Table cell (397 ครั้ง) */
+  --gray-900:#161B26;       /* ✔ ไลบรารีใหม่ — ตัวอักษร Secondary button · Table cell (157 ครั้ง) */
+  --gray-800:#1F242F;       /* ✔ ไลบรารีใหม่ — Featured icon · swatch (94 ครั้ง) */
   --gray-700:#344054;      /* ✅ runtime — ตัวอักษร pill "ยกเลิก" */
   --gray-600:#475467;      /* ✅ runtime — ตัวอักษรปุ่มรอง · ไอคอน topbar (370 ครั้ง) */
   --gray-500:#667085;      /* ✅ runtime — ไอคอน sidebar · แท็บที่ไม่ได้เลือก (210 ครั้ง) */
@@ -35,17 +35,17 @@
   --gray-200:#EAECF0;      /* ✅ runtime — เส้นใต้แถวตาราง · ขอบ sidebar (495 ครั้ง) */
   --gray-100:#F2F4F7;      /* ✅ runtime — พื้นหัวตาราง · พื้นปุ่ม disabled (98 ครั้ง) */
   --gray-50:#F9FAFB;       /* ✅ runtime — พื้น form-card-body (276 ครั้ง) */
-  --gray-25:#FCFCFD;       /* ✅ runtime — พื้น pill "ยกเลิก" */
+  --gray-25:#FEFEFE;        /* ✔ ไลบรารีใหม่ (194 ครั้ง — อยู่ใน swatch เป็นหลัก) */
 
   /* ---------- Semantic palette ---------- */
-  --success-700:#027A48;   /* ✅ runtime — ตัวอักษร pill "เสร็จสิ้น" (Figma ให้ #067647 · runtime ชนะ) */
+  --success-700:#067647;    /* ✔ ไลบรารีใหม่ — ตัวอักษรสถานะสำเร็จ (24 ครั้ง) */
   --success-600:#17B26A;   /* ✅ runtime — badge-indicator badge-success · ตรงกับ Figma พอดี */
   --success-500:#079455;   /* ✔ node 3:16 Progress steps + 3:12 Metrics — ไม่พบใน runtime แต่ไม่ขัดกัน */
-  --success-200:#A6F4C5;   /* ✅ runtime — ขอบ pill success (Figma ให้ #ABEFC6) */
-  --success-100:#DCFAE6;   /* ✔ node 3:9 Modals — พื้นไอคอนสำเร็จ */
+  --success-200:#ABEFC6;    /* ✔ ไลบรารีใหม่ — Pill outline Color=Success (32 ครั้ง) */
+  --success-100:#DCFAE6;    /* ⚠ ไลบรารีใหม่ไม่มีโทนนี้ — ของเราเอง (ไม่ได้ใช้ในโปรเจกต์) */
   --success-50:#ECFDF3;    /* ✔ node 1:1377 Badges — ยังใช้ที่อื่น · พื้น badge ให้ใช้ --success-25 */
-  --success-25:#F6FEF9;    /* ✅ runtime — พื้น pill success */
-  --warning-800:#93370D;   /* ⚠ ไม่พบในไลบรารี — ตัวอักษรแถบ .draft (Untitled UI warning-800) เดิม hardcode ใน components.css */
+  --success-25:#F6FEF9;     /* ⚠ ไลบรารีใหม่ไม่มีโทนนี้ — ของเราเอง */
+  --warning-800:#93370D;    /* ✔ ไลบรารีใหม่ */
   --warning-700:#B54708;   /* ✔ ยืนยันจากไลบรารี ใช้ 52 ครั้ง */
   --warning-600:#F79009;   /* ✔ ยืนยันจากไลบรารี ใช้ 48 ครั้ง */
   --warning-200:#FEDF89;   /* ✔ ยืนยันจากไลบรารี ใช้ 58 ครั้ง */
@@ -59,7 +59,7 @@
   --info-700:#3538CD;      /* ✅ runtime — ตัวอักษร badge info ("บันทึกการเดินทาง") */
   --info-600:#6172F3;      /* ✅ runtime — จุดสถานะสีน้ำเงินในตาราง · ตรงกับ Figma พอดี */
   --info-200:#C7D7FE;      /* ✔ ยืนยันจากไลบรารี ใช้ 72 ครั้ง */
-  --info-100:#E0EAFF;      /* ✔ ยืนยันจากไลบรารี ใช้ 2 ครั้ง · เส้นขอบ/แทร็กของ info */
+  --info-100:#EEF4FF;       /* ✔ ไลบรารีใหม่ — Pill outline Color=Info · Featured icon (51 ครั้ง) */
   --info-50:#EEF4FF;       /* ✔ ยืนยันจากไลบรารี ใช้ 72 ครั้ง · พื้นอ่อนของ info */
   --info-25:#F5F8FF;       /* ⚠ ไม่พบในไลบรารี */
 
@@ -74,16 +74,16 @@
 
   /* ---------- Secondary (น้ำเงิน การ์ดรอง) ---------- */
   --secondary-700:#15409A; /* ⚠ ไม่พบในไลบรารี */
-  --secondary-600:#172B85; /* ✔ node 589:205480 Checkbox cards — สถานะเลือก (240 ครั้ง) · เดิมเราใส่ #1B4DB1 ซึ่งผิด */
+  --secondary-600:#172B85;  /* ⚠ ไลบรารีใหม่ไม่มีสีน้ำเงิน UI (ที่เจอเป็นสีเส้นบอกระยะในไฟล์) — ของเราเอง ใช้กับ .tile-blue */
   --secondary-50:#EEF3FF;  /* ⚠ ไม่พบในไลบรารี (ที่พบใกล้สุดคือ #EEF4FF = --info-50) */
 
   /* ---------- Chart palette (ramp แบรนด์สำหรับกราฟ) ✔ ทั้งชุด ----------
      ยกจาก node 3:11 "↳ Charts" ของไลบรารีจริง — เรียงจากอ่อนไปเข้ม
      ⚠️ #E134C1 เป็น "สีกราฟ" ไม่ใช่สีแบรนด์ อย่าเอาไปใช้กับปุ่ม/ลิงก์ */
-  --chart-1:#FDEEFC;        /* ✔ = brand-50 */
-  --chart-2:#F8BFF4;        /* ✔ = brand-200 */
-  --chart-3:#EF82E1;        /* ✔ node 3:11 Charts */
-  --chart-4:#E134C1;        /* ✔ node 3:11 Charts */
+  --chart-1:#FDEEFC;        /* ⚠ ไลบรารีใหม่ไม่มีหน้า Charts — ของเราเอง (ยังไม่ได้ใช้) */
+  --chart-2:#F8BFF4;        /* ⚠ ไลบรารีใหม่ไม่มีหน้า Charts — ของเราเอง (ยังไม่ได้ใช้) */
+  --chart-3:#EF82E1;        /* ⚠ ไลบรารีใหม่ไม่มีหน้า Charts — ของเราเอง (ยังไม่ได้ใช้) */
+  --chart-4:#E134C1;        /* ⚠ ไลบรารีใหม่ไม่มีหน้า Charts — ของเราเอง (ยังไม่ได้ใช้) */
   --chart-5:#A80689;        /* ✔ = brand-600 */
   --chart-6:#74045F;        /* ✔ = brand-800 */
 
@@ -102,7 +102,7 @@
 
   /* ---------- Radius ---------- */
   --rounded-xs:4px;        /* ✔ ไลบรารีใหม่ 1 ก.ย. 2569 — กล่อง Checkbox (r4) · ใช้ 1,585 ครั้ง */
-  --rounded-sm:6px;        /* ✔ tag / กล่อง checkbox (ใช้ 2,046 ครั้งในไลบรารี) */
+  --rounded-sm:6px;         /* ⚠ ไลบรารีใหม่ไม่มี 6px (สเกลจริง 4/8/12/16/9999) — เหลือใช้ที่ .chip ซึ่งเป็นของเราเอง */
   --rounded-md:8px;        /* ✔ รัศมีปุ่ม/อินพุต */
   --r-sm:8px;              /* alias เดิม = rounded-md */
   --r-md:12px;             /* ~ การ์ดย่อย, รายการ */
@@ -152,13 +152,13 @@
 
   /* ปุ่ม — Primary */
   --btn-primary-bg:var(--brand-600);                /* ✔ */
-  --btn-primary-bg-hover:var(--brand-800);          /* ✔ #74045F (เข้มลง) */
+  --btn-primary-bg-hover:var(--brand-500);          /* ✔ ไลบรารีใหม่ Primary button State=Hover = #CF07AA (สว่างขึ้น ไม่ใช่เข้มลง) */
   --btn-primary-border:var(--brand-600);            /* ✔ */
-  --btn-primary-border-hover:var(--brand-800);      /* ✔ */
+  --btn-primary-border-hover:var(--brand-500);      /* ✔ ไลบรารีใหม่ */
   --btn-primary-text:#FFFFFF;                       /* ✔ */
 
   /* ปุ่ม — Secondary / Tertiary / Disabled (✅ วัดจาก vmsplus-dev) */
-  --btn-secondary-text:var(--gray-600);             /* ✅ #475467 */
+  --btn-secondary-text:var(--gray-600);             /* ✔ ไลบรารีใหม่ #475467 */
   --btn-secondary-border:var(--gray-300);           /* ✅ #D0D5DD */
   --btn-tertiary-text:var(--gray-600);              /* ✅ #475467 */
   --btn-tertiary-brand-text:var(--brand-600);       /* ✅ #A80689 — ปุ่ม "แก้ไข" ในโมดัล */

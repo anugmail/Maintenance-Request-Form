@@ -859,6 +859,21 @@ token เป็น PAT scope `file_content:read` เก็บที่ `~/.figma
 ท้ายโมดัล 2 ปุ่ม **ปิด / ต่อไป** · ฝั่ง User/Driver เป็น **`Bottom sheet / New incident` 360×850** (มือถือ)
 ⇒ ต้นแบบเราเป็น **wizard 5 ขั้นเต็มหน้า** ซึ่งคนละโครงกันทั้งหมด · การเปลี่ยนกระทบ `plan.md` M1 · `Diagram/02-แจ้งซ่อม-กบค/` · หน้ารีวิว 05 ⇒ **รอเจ้าของงานเคาะก่อนลงมือ**
 
+**10) 🔧 ไล่จูนคอมโพเนนต์ทั้งชุดตามไลบรารีใหม่ (v0.40)**
+เจ้าของงานสั่ง *"ไล่ component ทั้งหมดให้ตรงของใหม่เลย"* · เขียน `design-system/lib-spec.js` เป็นตัวอ่านสเปกจริงรายคอมโพเนนต์ก่อน แล้วไล่แก้ทีละตัว
+- **token 18 ตัว** — แก้ค่าตามไลบรารีใหม่ (brand-25 `#FFF5FD` · brand-100 `#FED8F6` · gray-900 `#161B26` · gray-950 `#0C111D` · success-200 `#ABEFC6` · success-700 `#067647` · info-100 `#EEF4FF` ฯลฯ) · ตัวที่ไลบรารีใหม่ไม่มีคู่ (secondary-600 · success-25/100 · chart-1–4 · rounded-sm) ติดป้าย ⚠ พร้อมเหตุผล
+  <br>**ข้อควรระวังที่เจอ**: สีที่ใช้เยอะสุดหลายตัวในไฟล์เป็น **สีของเส้นบอกระยะ/annotation** ไม่ใช่สี UI (`#851F41` = Value/Variable collection · `#D9D9D9` = Bounding box · `#0D69D4` = Element outline · `#6B6B6B` = Raw value) ⇒ ห้ามหยิบมาใช้เป็น token
+- **ปุ่ม** pad 16→12 · gap 8→4 · `btn-lg` 44→48 · **hover primary จาก brand-800 (เข้มลง) → brand-500 `#CF07AA` (สว่างขึ้น)** · secondary hover พื้น `#EAECF0` · tertiary hover พื้น `#F2F4F7`
+- **ช่องกรอก/ดรอปดาวน์** h44→**40** · pad 14→12 · textarea 12/14→8/12
+- **Badge** `.b-ok` พื้น →`#ECFDF3` · `.b-neutral` →`#F9FAFB`/`#EAECF0`
+- **แท็บ** สีข้อความ →`#475467` · hover มีพื้น `#EAECF0` · **Breadcrumbs** 14/400→**12/Regular** สี →`#475467`
+- **Pagination** เลิกทำเป็นแถบกรอบติดกัน → ปุ่มละ **40×40 r4** · hover/active พื้น `#EAECF0` + r8
+- **Alert** pad →12 ทุกด้าน gap →12 · **Nav button** 48→**40×40** hover `#EAECF0` · **Modal footer** gap →12
+- **Checkbox ติ๊กแล้ว hover ไม่เข้มลงแล้ว** (ไลบรารีใหม่ใช้สีเดิม)
+- **ตรวจ**: `FIGMA_SRC=component verify-tokens.js` เหลือ 1 จุด (`--rounded-sm` 6px ที่ไลบรารีใหม่ไม่มี — เหลือใช้ที่ `.chip` ซึ่งเป็นของเราเอง) · `audit-usage` เหลือ 3 จุดเดิม · เรนเดอร์ Chrome หน้า `#form` และ `#my` ปกติ
+
+**ยังไม่ได้ทำ (รอเคาะ)** — **stepper**: ไลบรารีใหม่ `Horizontal step item` เป็นแถว 300×72 มีเส้น connector ส่วนของเราเป็นกล่องคั่นด้วย chevron (ยกมาจาก screenshot runtime เดิม) · **`.sect`**: ไลบรารีเป็นหัวข้อ + เส้นคั่น `#D0D5DD` ส่วนของเรามีแถบ magenta นำหน้า · **`.veh`/การ์ดเลือกรถ**: ไลบรารีมี `Card/select vehicle` 306×375 คนละทรงกับของเรา
+
 **ค้างต่อ** — `.veh`/`.radcard` ยังผูกกับ `Card item base` ในแผนที่ `figma-map.json` ทั้งที่ไฟล์ PEA มี `Vehicle card` / `Radio text card` อยู่จริง (รอภาพ/ลิงก์ node จากเจ้าของงาน)
 
 ---

@@ -110,10 +110,10 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
    · มีเงา shadow-xs — ของเดิมคุมความสูงด้วย padding แนวตั้ง (9/13) gap 4 lh 20 และไม่มีเงา */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;
-  gap:var(--space-2);
+  gap:var(--space-1);   /* ไลบรารีใหม่ Button: gap 4 */
   border:1px solid transparent;
   border-radius:var(--rounded-md);
-  height:40px;padding:0 var(--space-4);
+  height:40px;padding:0 var(--space-3);   /* ไลบรารีใหม่: md h40 · pad ซ้ายขวา 12 */
   font:inherit;font-weight:var(--font-weight-semibold);
   font-size:var(--fs-text-sm);line-height:14px;
   letter-spacing:var(--letter-spacing-normal);
@@ -126,8 +126,8 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 /* ---- Size ---- sm วัดจาก pagination ของจริง (h39 pad 0/12 — ปัดเป็น 36 ตามสเกลเดิมของเรา)
    lg/xl ไม่มีของเทียบใน runtime → คงระยะแนวนอนเดิมไว้ แค่เปลี่ยนมาคุมความสูงตรงๆ  */
 .btn-sm{height:36px;padding:0 var(--space-3)}
-.btn-md{height:40px;padding:0 var(--space-4)}
-.btn-lg{height:44px;padding:0 15px;font-size:var(--fs-text-md);line-height:var(--lh-text-md)}
+.btn-md{height:40px;padding:0 var(--space-3)}
+.btn-lg{height:48px;padding:0 var(--space-3);font-size:var(--fs-text-md);line-height:var(--lh-text-md)}   /* ไลบรารีใหม่: lg h48 · ตัวอักษร 16/SemiBold */
 .btn-xl{height:48px;padding:0 17px;font-size:var(--fs-text-md);line-height:var(--lh-text-md)}
 
 /* ---- Hierarchy: Primary ---- */
@@ -136,11 +136,11 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 
 /* ---- Hierarchy: Secondary (พื้นขาว ขอบเทา) ---- */
 .btn-s{background:var(--color-bg-primary);border-color:var(--btn-secondary-border);color:var(--btn-secondary-text)}
-.btn-s:hover{background:var(--color-bg-primary-hover);color:var(--color-text-secondary-hover)}
+.btn-s:hover{background:var(--gray-200);color:var(--color-text-secondary-hover)}   /* ไลบรารีใหม่ Secondary hover = พื้น #EAECF0 ขอบคงเดิม */
 
 /* ---- Hierarchy: Tertiary — ✅ ของจริงไม่มีทั้งขอบและเงา ---- */
 .btn-t{background:transparent;border-color:transparent;box-shadow:none;color:var(--btn-tertiary-text)}
-.btn-t:hover{background:var(--color-bg-primary-hover);color:var(--color-text-tertiary-hover)}
+.btn-t:hover{background:var(--gray-100);color:var(--color-text-tertiary-hover)}   /* ไลบรารีใหม่ Tertiary hover = พื้น #F2F4F7 */
 /* tertiary สีแบรนด์ / สีอันตราย — ระบบจริงมี เราเพิ่งเพิ่ม */
 .btn-tb{background:transparent;border-color:transparent;box-shadow:none;color:var(--btn-tertiary-brand-text)}
 .btn-tb:hover{background:var(--badge-brand-bg)}
@@ -246,7 +246,7 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .chks label.sel{color:var(--gray-900)}
 .chks label.sel .cbox{background:var(--primary-600);border-color:var(--primary-600);color:#fff}
 .chks label[aria-disabled=true] .cbox{background:var(--gray-200);border-color:var(--gray-300);color:var(--gray-300)}
-.chks label.sel:hover .cbox{background:var(--primary-800);border-color:var(--primary-800)}
+/* ไลบรารีใหม่: Checkbox State=Hover,Type=Selected ใช้สีเดิม (#A80689) ไม่เข้มลง ⇒ ไม่ต้องมีกฎ hover */
 .chks label:has(input:focus-visible) .cbox{outline:3px solid var(--primary-50);outline-offset:2px}
 
 /* .chip.plain — ป้ายบอกข้อมูลที่กดไม่ได้ (เช่นหัวแถววันในตารางเลือกช่วงเวลา) */
@@ -274,10 +274,11 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
    ใช้เมื่อต้องบอกผู้ใช้ว่า "ตอนนี้ยังทำอะไรไม่ได้ และต้องทำอะไรก่อน" หรือยืนยันว่าครบแล้ว
    ต่างจาก .draft (แถบคาดหัวหน้าบอกว่าเป็น mock) และ .sub (คำโปรยใต้หัวข้อ)
    โทนสีใช้ชุดเดียวกับ .badge เพื่อให้ความหมายสีทั้งระบบตรงกัน */
-.note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid;border-radius:var(--rounded-md);font-size:var(--fs-text-sm);line-height:20px;margin-bottom:14px}
+/* ไลบรารีใหม่ `Alert`: r8 · pad 12 ทุกด้าน · gap 12 · ไอคอน 24 · Brand #FFF5FD/#FED8F6 · Success #ECFDF3/#ABEFC6 */
+.note{display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid;border-radius:var(--rounded-md);font-size:var(--fs-text-sm);line-height:20px;margin-bottom:14px}
 .note .ms{font-size:20px;flex:0 0 auto}
 .note-warn{background:var(--warning-50);border-color:var(--warning-200);color:var(--warning-800)}
-.note-ok{background:var(--success-25);border-color:var(--success-200);color:var(--success-700)}
+.note-ok{background:var(--success-50);border-color:var(--success-200);color:var(--success-700)}
 .note-info{background:var(--info-50);border-color:var(--info-200);color:var(--info-700)}
 
 /* ---------- Badge สถานะ ----------------------------------------------
@@ -285,12 +286,12 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
    ของเดิมอิงไลบรารี Figma (pad 2/10 · 14/500) ซึ่งไม่ตรงกับที่รันอยู่จริง
    ramp แบรนด์ของ badge ก็คนละชุดกับ Figma → ใช้ --badge-brand-*                */
 .badge{display:inline-flex;align-items:center;gap:4px;border-radius:var(--r-pill);padding:4px 8px;font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);font-weight:600;letter-spacing:-.2px;border:1px solid transparent}
-.b-ok{background:var(--success-25);color:var(--success-700);border-color:var(--success-200)}
+.b-ok{background:var(--success-50);color:var(--success-700);border-color:var(--success-200)}   /* ไลบรารีใหม่ Pill outline Color=Success: พื้น #ECFDF3 ขอบ #ABEFC6 */
 .b-low{background:var(--warning-50);color:var(--warning-700);border-color:var(--warning-200)}
 .b-out{background:var(--error-50);color:var(--error-700);border-color:var(--error-200)}
 .b-brand{background:var(--badge-brand-bg);color:var(--brand-600);border-color:var(--badge-brand-border)}
 .b-info{background:var(--info-50);color:var(--info-700);border-color:var(--info-200)}
-.b-neutral{background:var(--badge-neutral-bg);color:var(--badge-neutral-text);border-color:var(--badge-neutral-border)}
+.b-neutral{background:var(--gray-50);color:var(--badge-neutral-text);border-color:var(--gray-200)}   /* ไลบรารีใหม่ Color=Gray: พื้น #F9FAFB ขอบ #EAECF0 */
 /* จุดสถานะนำหน้าข้อความ — ของจริงเป็นวงกลม 6px สีเดียวกับตัวอักษร */
 .badge .dot{width:6px;height:6px;border-radius:var(--r-pill);background:currentColor;flex:0 0 auto}
 
@@ -301,8 +302,8 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .tab-btn{font-family:inherit;background:#fff;border:none;border-bottom:1px solid var(--gray-300);
   height:48px;padding:12px 24px;margin-bottom:-1px;display:inline-flex;align-items:center;gap:8px;
   font-size:var(--fs-text-sm);font-weight:var(--font-weight-semibold);line-height:21px;
-  letter-spacing:-.2px;color:var(--gray-500);cursor:pointer}
-.tab-btn:hover{color:var(--gray-700)}
+  letter-spacing:-.2px;color:var(--gray-600);cursor:pointer}   /* ไลบรารีใหม่ Tab item: ข้อความ #475467 */
+.tab-btn:hover{background:var(--gray-200);color:#000}   /* ไลบรารีใหม่ State=Hover: พื้น #EAECF0 */
 .tab-btn.on{color:#000;border-bottom:4px solid var(--primary-600)}
 
 /* ---------- Modal — ไลบรารีมี Modal `3:9` (ดู SOURCES.md หมวด ง) แต่เครื่องนี้ไม่มี .figma-extract/
@@ -317,7 +318,7 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .modal-close{background:none;border:none;cursor:pointer;color:var(--gray-500);display:flex;padding:2px}
 .modal-close:hover{color:var(--gray-700)}
 .modal-close .ms{font-size:22px}
-.modal-foot{display:flex;gap:var(--space-2_5);justify-content:flex-end;flex-wrap:wrap;
+.modal-foot{display:flex;gap:var(--space-3);   /* ไลบรารีใหม่ Modal footer Actions gap 12 */justify-content:flex-end;flex-wrap:wrap;
   margin-top:var(--space-4_5);padding-top:var(--space-4);border-top:1px solid var(--gray-200)}
 .repair-choice-list{display:grid;gap:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--gray-200)}
 .repair-choice{width:100%;display:grid;grid-template-columns:1fr auto;align-items:center;gap:var(--space-4);padding:var(--space-4);border:1px solid var(--gray-200);border-radius:var(--r-lg);background:#fff;text-align:left;font:inherit;cursor:pointer}
@@ -374,10 +375,11 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 /* คอลัมน์กว้าง 80 — ตัวอักษร 26px ล้น จึงย่อให้พอดี (ของจริงเป็นโลโก้รูป เราไม่มีไฟล์ ใช้ wordmark แทน) */
 .side .vlogo{width:100%;text-align:center;font-weight:800;font-size:20px;color:var(--primary-600);line-height:1;margin-bottom:4px}
 .side .vlogo em{color:var(--brand-accent);font-style:normal}
-.side .nv{width:48px;height:48px;border-radius:var(--rounded-md);display:flex;align-items:center;justify-content:center;color:var(--gray-500);cursor:pointer;text-decoration:none;transition:background-color .18s ease,color .18s ease}
+/* ไลบรารีใหม่ `Nav button`: 40×40 · r8 · pad 8 · ไอคอน 24 · hover พื้น #EAECF0 */
+.side .nv{width:40px;height:40px;border-radius:var(--rounded-md);display:flex;align-items:center;justify-content:center;color:var(--gray-500);cursor:pointer;text-decoration:none;transition:background-color .18s ease,color .18s ease}
 .side .nv>.ms{font-size:24px;flex:0 0 auto}
-.side .nv:hover{background:var(--gray-100)}
-.side .nv.on{background:var(--gray-100);color:var(--primary-600)}
+.side .nv:hover{background:var(--gray-200)}
+.side .nv.on{background:var(--gray-200);color:var(--primary-600)}
 
 /* ---------- `.side.wide` — sidebar กางตอน hover พร้อมชื่อเมนูเต็ม ----------
    ที่มา: **ของเราเอง ไม่ใช่ไลบรารี** — ไลบรารีมีแต่ Application navigation `3:8` ซึ่งเป็น slide-out
@@ -413,13 +415,15 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 /* วัดจาก vmsplus-dev: 14/400 · padding 8px 0 · ลิงก์ brand-600
    ตัวคั่นของจริงไม่ใช่ไอคอน — เป็นสี่เหลี่ยม 6×6 หมุน 45° (DaisyUI .breadcrumbs > li + ::before)
    ของเดิมเป็น 14/600 gray-500 ตามไลบรารี Figma ซึ่งไม่ตรงกับที่รันอยู่จริง */
-.crumbs{display:flex;align-items:center;gap:8px;font-size:var(--fs-text-sm);font-weight:400;line-height:20px;color:#000;padding:8px 0;margin-bottom:6px;flex-wrap:wrap}
+/* ไลบรารีใหม่ `_Breadcrumbs item / Link`: ข้อความ 12/Regular · ลิงก์ #475467 · hover #344054 · หน้าปัจจุบัน #A80689 · pad 4 */
+.crumbs{display:flex;align-items:center;gap:8px;font-size:var(--fs-text-xs);font-weight:400;line-height:18px;color:var(--gray-600);padding:8px 0;margin-bottom:6px;flex-wrap:wrap}
 .crumbs .ms{font-size:20px;color:var(--gray-500)}
 .crumbs .sep{width:6px;height:6px;border-right:1px solid var(--gray-300);border-bottom:1px solid var(--gray-300);transform:rotate(-45deg);display:inline-block;flex:0 0 auto}
 .crumbs .cur{color:var(--primary-600)}
 /* ลิงก์ระดับกลางใน breadcrumb (ไม่ใช่ home ไม่ใช่ .cur) — สีดำเหมือนข้อความรอบข้าง ไม่ใช่สีลิงก์ browser
    เดิมเขียน style="color:inherit;text-decoration:none" ซ้ำทุกไฟล์ที่มี breadcrumb กดได้ (parts/appointment/inspection) */
 .crumbs a{color:inherit;text-decoration:none}
+.crumbs a:hover{color:var(--gray-700)}
 /* ของจริง .page-title-label = 32/600/lh48 สีดำ (ของเดิม 28/700 gray-900) */
 .page-title{font-size:32px;font-weight:600;line-height:48px;color:#000;margin-bottom:20px}
 .page-title-row{display:flex;align-items:center;gap:4px;margin-bottom:20px}
@@ -474,9 +478,10 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .f label small{color:var(--gray-500);font-weight:400}
 .f .in{position:relative}
 .f .in>.ms{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--gray-500);font-size:20px;pointer-events:none}
-.f .in input,.f .in select{height:44px;border-radius:var(--rounded-md);padding:0 14px 0 42px}
-.f .in.noic input{padding-left:14px}
-.f textarea{border-radius:var(--rounded-md);padding:12px 14px}
+/* ไลบรารีใหม่ Text input · Container Size=md: h40 · r8 · pad 12 ซ้ายขวา · ขอบ #D0D5DD · focus #CF07AA (lg = h48) */
+.f .in input,.f .in select{height:40px;border-radius:var(--rounded-md);padding:0 12px 0 40px}
+.f .in.noic input{padding-left:12px}
+.f textarea{border-radius:var(--rounded-md);padding:8px 12px}
 .f.ro .in input{background:var(--gray-50);color:var(--gray-700)}   /* = state Disabled ของไลบรารี (ขอบทึบ พื้น gray-50) */
 /* .daterange-field / .search input รวมด้วย — ช่องเลือกช่วงวันที่ และช่องค้นหาที่ใช้เป็นตัวเลือกรายการ
    ก็ต้องขึ้นกรอบแดงได้เหมือนช่องกรอกอื่น (14 ส.ค. 2569) */
@@ -732,13 +737,14 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
    ปุ่มติดกันเป็นแถบเดียว: radius 0 ตรงกลาง โค้ง 8px เฉพาะหัวท้าย · ซ้อนขอบด้วย margin-left -1
    สูง 39 · pad 0/12 · ขอบ gray-300 · ตัวที่เลือกอยู่พื้น gray-300                        */
 .pager{display:flex;align-items:center}
-.pager .pg{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:39px;
-  padding:0 var(--space-3);margin-left:-1px;background:#fff;border:1px solid var(--gray-300);border-radius:0;gap:var(--space-2);
-  font:inherit;font-size:var(--fs-text-sm);line-height:14px;color:var(--gray-600);cursor:pointer;box-shadow:none}
-.pager .pg:first-child{border-radius:var(--rounded-md) 0 0 var(--rounded-md);margin-left:0}
-.pager .pg:last-child{border-radius:0 var(--rounded-md) var(--rounded-md) 0}
-.pager .pg:hover:not(:disabled){background:var(--gray-50)}
-.pager .pg.on{background:var(--gray-300)}
+/* ไลบรารีใหม่ `_Pagination number base`: ปุ่มละ 40×40 · r4 · ข้อความ 14/Regular #475467
+   · hover/active = พื้น #EAECF0 + r8 · แต่ละปุ่มแยกกัน (ไม่ได้เชื่อมกรอบเป็นแถบเดียว) */
+.pager .pg{display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:40px;
+  padding:0 var(--space-2);margin-left:2px;background:#fff;border:1px solid transparent;border-radius:var(--rounded-xs);gap:var(--space-1);
+  font:inherit;font-size:var(--fs-text-sm);font-weight:400;line-height:21px;color:var(--gray-600);cursor:pointer;box-shadow:none}
+.pager .pg:first-child{margin-left:0}
+.pager .pg:hover:not(:disabled){background:var(--gray-200);border-radius:var(--rounded-md)}
+.pager .pg.on{background:var(--gray-200);border-radius:var(--rounded-md);font-weight:600;color:#000}
 .pager .pg:disabled{color:var(--gray-400);cursor:not-allowed}
 .pager .pg .ms{font-size:20px}
 
