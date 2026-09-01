@@ -5,14 +5,46 @@
 > เจ้าของงานกำหนด **8 ส.ค. 2569:** *"การออกแบบให้อิงจาก design system ด้วย"*
 > ย้ำอีกครั้ง **9 ส.ค. 2569:** *"ทำตาม design system ทั้งหมด ห้ามคิดเอง"*
 
+> 🔴 **เจ้าของงานสั่ง 1 ก.ย. 2569 — ตั้งแต่นี้ไป ยึดการออกแบบจาก Figma 2 ไฟล์นี้เท่านั้น**
+> | ไฟล์ | file key | ใช้ทำอะไร |
+> |---|---|---|
+> | **(Component) VMS Plus** | `VmOC07pKEsDkHZagOgcSU2` | คอมโพเนนต์/ไลบรารี (55 หน้า) |
+> | **(UI) VMS Plus – Release#2** | `fYD1yA1uzWsJSjHlcWKMNe` | หน้าจอจริง (42 หน้า) |
+>
+> ไฟล์เก่า `EXT_PEA_VMS_v1.0.2_Component` (`IMiHaWKCqp6j3lpWdCnYY8`) **เลิกใช้** — ค่าที่อ้างจากไฟล์นั้นถือว่าใช้ไม่ได้จนกว่าจะเทียบใหม่
+> วิธีดึง: ปลั๊กอิน `figma-export/dump-plugin/` (ไม่ใช่ REST — โดน rate limit) ดู `design-system/HOWTO-read-figma.md` ข้อ 0.1
+
+### 📐 สเต็ปบังคับก่อนออกแบบ/แก้ UI ทุกครั้ง (เพิ่ม 1 ก.ย. 2569 — กันออกแบบผิด)
+
+> ทุกค่าที่ใช้ **ต้องชี้กลับไปที่ Figma 2 ไฟล์ข้างบนได้เสมอ** ถ้าชี้ไม่ได้ = ยังไม่ใช่ของที่ใช้ได้
+
+| # | ทำอะไร | คำสั่ง/ไฟล์ |
+|---|---|---|
+| 1 | **หาหน้าจอจริงก่อน** ว่าของที่จะทำอยู่หน้าไหนของไฟล์ UI | `node design-system/figma-screens.js ui-release2 "Breakdown"` |
+| 2 | **เปิดดูโครงหน้าจอนั้น** ว่าเป็น modal / เต็มหน้า / bottom sheet · มีกี่ section · ปุ่มอะไร | `node design-system/figma-screens.js ui-release2 "<ชื่อหน้า>" --deep` |
+| 3 | **หา component ที่ใช้ในหน้านั้นจากไฟล์ Component** แล้วอ่านค่าจริงทีละ variant | `node design-system/figma-screens.js component "<ชื่อ component>" --deep` |
+| 4 | **เทียบกับ `components.css`** ว่ามีคลาสนั้นแล้วหรือยัง · ค่าตรงไหม (radius · เส้น · padding · gap · สี · ฟอนต์) | `design-system/components.css` + ตารางหัวข้อ 4 ของ README |
+| 5 | ค่าไหนไม่ตรง → **แก้ที่ `components.css`/`tokens.css` ให้ตรงไลบรารี** ไม่ใช่แก้เฉพาะหน้า · ไม่มี token ให้เพิ่ม token ก่อน | — |
+| 6 | ของที่**ไม่มีในไลบรารี** → หยุด แล้วถามเจ้าของงานก่อน ห้ามออกแบบเอง | — |
+| 7 | แก้ `components.css`/`tokens.css` แล้ว → **บั๊ม `?v=` ทุกหน้า** + เพิ่ม Changelog + แถวตารางหัวข้อ 4 | `design-system/README.md` |
+| 8 | **ตรวจก่อนบอกเสร็จ** — token · การใช้งาน · เรนเดอร์จริง | `FIGMA_SRC=component node design-system/verify-tokens.js` · `node design-system/audit-usage.js` · เรนเดอร์ Chrome |
+| 9 | เขียนที่มาไว้ในคอมเมนต์ CSS ว่า **มาจาก component ไหน หน้าไหน** (เช่น *"ตาม `Radio text card` ของไฟล์ Component"*) | — |
+
+**ห้ามทำ** — เดาค่าจากหน้าจอที่มีอยู่ · ก๊อปค่าจากไฟล์ Figma เก่า (ลบไปแล้ว) · ออกแบบ component ใหม่เองโดยไม่ถาม · ใช้ค่าที่ไม่มีใน token
+
 **ก่อนแตะ HTML/CSS ใดๆ ต้องอ่าน 4 ไฟล์นี้ก่อนเสมอ — ห้ามเดาจากแพตเทิร์นของหน้าที่มีอยู่**
 
 1. [`design-system/README.md`](design-system/README.md) — กฎบังคับอยู่ที่ **หัวข้อ 0** (มี "ขั้นตอนบังคับก่อนแตะงานออกแบบ" 7 ขั้น) · รายการคอมโพเนนต์อยู่ **หัวข้อ 4**
 2. [`design-system/components.css`](design-system/components.css) — คลาสจริงที่มีให้ใช้
-3. 🔴 [`design-system/FIGMA-COMPONENTS.md`](design-system/FIGMA-COMPONENTS.md) — **component จริงที่มีอยู่ใน Figma ของ VMS Plus** (อ่านจากไฟล์จริง 42,510 instance → 183 component) · ตารางแมป `components.css` ↔ ของจริง + property ทุกตัวพร้อมตัวเลือก · รายการเต็มเครื่องอ่านอยู่ที่ [`figma-components.json`](design-system/figma-components.json)
+3. 🔴 **ค่าจริงจากไลบรารี** — อ่านจาก `design-system/.figma-extract/<slug>/` ที่ดึงมาจาก Figma 2 ไฟล์ข้างบน
+   ```bash
+   node design-system/figma-screens.js component Checkbox --deep   # ดูสเปกของ component นั้นทีละ variant
+   FIGMA_SRC=component node design-system/verify-tokens.js          # ตรวจ token ของเราเทียบไลบรารี
+   ```
    > **เจ้าของงานสั่ง 25 ส.ค. 2569:** *"ทุกครั้งของการสร้าง prototype ให้มาอ่านจากของที่เพิ่งโหลดมา"*
-   > ⇒ จะทำหน้าจอใหม่ **ต้องเปิดไฟล์นี้ก่อน** แล้วเลือกใช้ component ที่ VMS Plus มีจริง
-   > ถ้าของที่จะทำ**ไม่มีในรายการ** ให้บอกเจ้าของงานก่อน อย่าออกแบบเอง
+   > ⇒ จะทำหน้าจอใหม่ **ต้องเปิดค่าจริงดูก่อน** แล้วเลือกใช้ component ที่ VMS Plus มีจริง
+   > ถ้าของที่จะทำ**ไม่มีในไลบรารี** ให้บอกเจ้าของงานก่อน อย่าออกแบบเอง
+   > ⚠️ `FIGMA-COMPONENTS.md` · `figma-components.json` · `figma-map.json` **ลบแล้ว 1 ก.ย. 2569** (มาจากไฟล์เก่าคนละไฟล์) — รอสร้างใหม่จาก 2 ไฟล์ปัจจุบัน
 4. [`design-system/SOURCES.md`](design-system/SOURCES.md) — **ตารางความครอบคลุม ก–ง**: ของไหนเทียบไลบรารี PEA แล้ว · ของไหนอิง screenshot · ของไหนไลบรารีมีแต่เรายังไม่ทำ (ถ้าจะทำ ให้ยกจาก node ที่ระบุไว้ ห้ามออกแบบเอง)
 
 > 🔴 **เจ้าของงานสั่ง 12 ส.ค. 2569:** *"ทุกครั้งที่จะ design ให้มาอ่านจากไฟล์ design system ก่อน ก่อนจะไปกำหนดแบบนั้น"*

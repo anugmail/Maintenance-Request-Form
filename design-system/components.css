@@ -230,6 +230,25 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .chips.pick>.chip[aria-disabled=true]{cursor:not-allowed;color:var(--gray-400)}
 .chips.pick>.chip[aria-disabled=true]::before{background:var(--gray-50);border-color:var(--gray-300)}
 .chips.pick>.chip.sel[aria-disabled=true]::before{color:var(--gray-400)}
+/* ============================================================
+   v0.38 — Checkbox list (`.chks`) — กลุ่ม checkbox เลือกได้หลายอัน ไหลต่อกันเป็นแถว
+   **ใช้เมื่อ** ตัวเลือกเยอะและเป็นข้อความล้วน เช่น "อาการเสีย" ในฟอร์มแจ้งซ่อม
+   ต่างจาก `.chips.pick` (ป้าย Tag ที่มีกล่องติ๊กอยู่ข้างใน) ตรงที่ **ไม่มีกรอบป้ายล้อม**
+   ⇒ อ่านง่ายกว่าเมื่อรายการยาว · เจ้าของงานเคาะ 1 ก.ย. 2569 ว่าให้อาการเสียใช้แบบนี้
+   กล่องยกตามไลบรารี `_Checkbox base` **md**: 20×20 · r6 (`--rounded-sm`) · ขอบ gray-300 ·
+   ติ๊กแล้ว = พื้น primary-600 + เครื่องหมายถูกสีขาว · hover ตอนติ๊กแล้ว = brand-800
+   ใช้ `<input type=checkbox>` จริงซ่อนไว้ (a11y/คีย์บอร์ด) เหมือน `.radcard`
+   ============================================================ */
+.chks{display:flex;flex-wrap:wrap;gap:10px 22px;margin:10px 0 2px}
+.chks label{position:relative;display:inline-flex;align-items:center;gap:10px;cursor:pointer;color:var(--gray-700);font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:500}
+.chks label input[type=checkbox]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.chks .cbox{flex:none;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:2px solid var(--gray-300);border-radius:var(--rounded-xs);background:#fff;color:transparent;font-family:'Material Symbols Outlined';font-size:18px;line-height:1;transition:background-color .15s ease,border-color .15s ease,color .15s ease}
+.chks label.sel{color:var(--gray-900)}
+.chks label.sel .cbox{background:var(--primary-600);border-color:var(--primary-600);color:#fff}
+.chks label[aria-disabled=true] .cbox{background:var(--gray-200);border-color:var(--gray-300);color:var(--gray-300)}
+.chks label.sel:hover .cbox{background:var(--primary-800);border-color:var(--primary-800)}
+.chks label:has(input:focus-visible) .cbox{outline:3px solid var(--primary-50);outline-offset:2px}
+
 /* .chip.plain — ป้ายบอกข้อมูลที่กดไม่ได้ (เช่นหัวแถววันในตารางเลือกช่วงเวลา) */
 .chips.pick>.chip.plain{padding-left:10px;cursor:default}
 .chips.pick>.chip.plain::before{display:none}
@@ -587,6 +606,53 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
 .veh .meta{font-size:var(--fs-text-xs);color:var(--gray-500)}
 
 /* ============================================================
+   v0.37 — Vehicle detail (การ์ด "รายละเอียดรถที่เลือก" ขั้น 1 ของฟอร์มแจ้งซ่อม)
+   ยกออกจาก <style> ของ `mock/Maintenance-Request-Form.html` 1 ก.ย. 2569 —
+   เดิมเขียนอยู่ในหน้า 21 คลาส ผิดกฎข้อ 0
+   ชื่อคลาสตั้งให้ตรงกับ component **`Vehicle detail`** ของไฟล์ Figma `PEA`
+   (แคตตาล็อกมีแค่ชื่อ+property ยังไม่มี geometry ⇒ ค่าปัจจุบันคือของเราเอง
+    รอภาพ/ลิงก์ node จากเจ้าของงานแล้วค่อยจูนให้ตรง)
+   **ใช้เมื่อ** เลือกรถได้แล้ว ต้องยืนยันว่าใช่คันนี้ + เลือกจุดที่จะแจ้งซ่อม
+   ตัวเลือก "จุดที่พบปัญหา" ใช้ `.radcards > .radcard` (+ `.rc-ic`) ตัวเดียวกับที่อื่นในโฟลว์
+   ============================================================ */
+.vehicle-detail-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:24px}
+.vehicle-detail-heading .sect{margin:0}
+.vehicle-sync-note{display:inline-flex;align-items:center;gap:5px;color:var(--gray-500);font-size:var(--fs-text-xs)}
+.vehicle-sync-note .ms{color:var(--success-600);font-size:18px}
+.vehicle-detail-card{overflow:hidden;margin:12px 0 26px;border:1px solid var(--gray-200);border-radius:var(--r-lg);background:#fff}
+.vehicle-detail-header{display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid var(--gray-200);background:linear-gradient(135deg,var(--primary-25),#fff 72%)}
+.vehicle-detail-icon{display:flex;width:48px;height:48px;flex:0 0 48px;align-items:center;justify-content:center;border-radius:var(--r-md);background:var(--primary-600);color:#fff}
+.vehicle-detail-icon .ms{font-size:24px}
+.vehicle-detail-title{min-width:0;flex:1}
+.vehicle-detail-title strong{display:block;overflow:hidden;color:var(--gray-900);font-size:var(--fs-h1);line-height:1.35;text-overflow:ellipsis;white-space:nowrap}
+.vehicle-detail-title small{display:block;overflow:hidden;margin-top:3px;color:var(--gray-500);font-size:var(--fs-text-xs);text-overflow:ellipsis;white-space:nowrap}
+.vehicle-selected-badge{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;padding:5px 9px;border:1px solid var(--success-200);border-radius:var(--r-pill);background:var(--success-50);color:var(--success-600);font-size:var(--fs-text-xs);font-weight:600}
+.vehicle-selected-badge .ms{font-size:16px}
+.vehicle-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0;padding:16px 20px}
+.vehicle-detail-item{display:grid;grid-template-columns:34px minmax(0,1fr);min-width:0;gap:10px;padding:12px;border:1px solid var(--gray-200);border-radius:var(--r-md);background:var(--gray-50)}
+.vehicle-detail-item>.ms{display:flex;width:34px;height:34px;align-items:center;justify-content:center;border-radius:var(--rounded-md);background:#fff;color:var(--primary-600);font-size:20px}
+.vehicle-detail-copy{min-width:0}
+.vehicle-detail-label{display:block;margin-bottom:3px;color:var(--gray-500);font-size:var(--fs-text-xs);font-weight:500}
+.vehicle-detail-value{display:block;margin:0;overflow-wrap:anywhere;color:var(--gray-800);font-size:var(--fs-text-sm);font-weight:600;line-height:1.45}
+.vehicle-target{min-width:0;margin:0;padding:18px 20px 20px;border:0;border-top:1px solid var(--gray-200);background:var(--gray-50)}
+.vehicle-target-legend{width:100%;padding:0;color:var(--gray-900);font-size:var(--fs-text-sm);font-weight:600}
+.vehicle-target-required{margin-left:5px;color:var(--primary-700);font-size:var(--fs-text-xs);font-weight:600}
+.vehicle-target-help{margin-top:2px;color:var(--gray-500);font-size:var(--fs-text-xs)}
+@media(max-width:760px){
+  .vehicle-detail-heading{align-items:flex-start;flex-direction:column}
+  .vehicle-detail-header{padding:14px}
+  .vehicle-selected-badge{padding:4px 7px}
+  .vehicle-detail-grid,.vehicle-target{padding:14px}
+  .vehicle-detail-grid{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .vehicle-detail-header{align-items:flex-start}
+  .vehicle-detail-icon{width:42px;height:42px;flex-basis:42px}
+  .vehicle-detail-title strong{font-size:var(--fs-text-md);white-space:normal}
+  .vehicle-detail-title small{white-space:normal}
+}
+
+/* ============================================================
    v0.34 — Radio card (การ์ดตัวเลือกที่เลือกได้อันเดียว)
    ยกออกจาก <style> ของ mock (ชื่อเดิม .ctlist / .ctopt / .ct-tx) 1 ก.ย. 2569 — เดิมผิดกฎข้อ 0
    **ใช้เมื่อ** ตัวเลือกไม่กี่อัน (2–6) ที่แต่ละอันมีคำอธิบายกำกับ และเลือกได้อันเดียว
@@ -601,17 +667,25 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
    disabled = พื้น gray-50 (ของเดิมวาดเอง 17px เส้น 2px แล้วพอเลือกดันเป็นเส้น 5px ซึ่งไลบรารีไม่มี)
    ============================================================ */
 .radcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px;align-items:stretch}
-.radcard{display:flex;align-items:flex-start;gap:10px;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;background:#fff}
-.radcard:hover{border-color:var(--primary-500)}
-.radcard.sel{border-color:var(--primary-600);background:var(--primary-25)}
-.radcard .rdot{flex:none;width:16px;height:16px;margin-top:2px;border:1px solid var(--gray-300);border-radius:var(--r-pill);background:#fff;display:flex;align-items:center;justify-content:center}
+.radcard{position:relative;display:flex;align-items:flex-start;gap:12px;border:1px solid var(--gray-300);border-radius:var(--rounded-md);padding:15px;cursor:pointer;background:#fff}
+.radcard:hover{border-color:var(--brand-500)}
+.radcard.sel{border:2px solid var(--primary-600);padding:14px}   /* ไลบรารี: เลือกแล้วเส้นหนา 2px พื้นยังขาว (ไม่เปลี่ยนสีพื้น) · หัก 1px ที่ padding กันการ์ดขยับ */
+.radcard .rdot{flex:none;width:20px;height:20px;margin-top:2px;border:2px solid var(--gray-300);border-radius:var(--r-pill);background:#fff;display:flex;align-items:center;justify-content:center}
 .radcard.sel .rdot{background:var(--primary-600);border-color:var(--primary-600)}
-.radcard.sel .rdot::after{content:'';width:6px;height:6px;border-radius:var(--r-pill);background:#fff}
+.radcard.sel .rdot::after{content:'';width:8px;height:8px;border-radius:var(--r-pill);background:#fff}
 .radcard[aria-disabled=true]{cursor:not-allowed;background:var(--gray-50);color:var(--gray-400)}
-.radcard[aria-disabled=true] .rdot{background:var(--gray-50);border-color:var(--gray-300)}
+.radcard[aria-disabled=true] .rdot{background:var(--gray-200);border-color:var(--gray-300)}
 .radcard .rc-tx{min-width:0}
 .radcard .rc-tx b{display:block;font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);color:var(--gray-900)}
 .radcard .rc-tx small{display:block;margin-top:2px;font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);color:var(--gray-500)}
+.radcards.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}   /* 3 ตัวเลือก เช่น คัดแยกช่องทางซ่อมของ กรย. */
+@media(max-width:900px){.radcards.cols-3{grid-template-columns:1fr}}
+/* ไอคอนนำหน้าในการ์ด (ไม่บังคับ) — ใช้ตอนตัวเลือกมีสัญลักษณ์ประจำตัว เช่น "จุดที่พบปัญหา" ตัวรถ/อุปกรณ์ติดตั้ง */
+.radcard .rc-ic{display:flex;width:40px;height:40px;flex:none;align-items:center;justify-content:center;border-radius:var(--rounded-md);background:var(--gray-100);color:var(--gray-500)}
+.radcard.sel .rc-ic{background:var(--primary-50);color:var(--primary-700)}
+/* รองรับ <input type=radio> จริงเพื่อ a11y/คีย์บอร์ด — ซ่อนตัวมันแล้ววาดวงกลมด้วย .rdot แทน */
+.radcard input[type=radio]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.radcard:has(input:focus-visible){outline:3px solid var(--primary-50);outline-offset:2px}
 @media(max-width:640px){.radcards{grid-template-columns:1fr}}
 
 /* ============================================================
@@ -782,6 +856,11 @@ input.tbl-row-label{width:80%;display:inline-block}
 .parts-total-row{display:flex;justify-content:space-between;gap:var(--space-4);font-size:var(--fs-text-sm);color:var(--gray-600)}
 .parts-total-row.grand{font-weight:700;color:var(--gray-700)}
 .parts-page-actions{display:flex;justify-content:flex-end;margin-top:32px}
+/* v0.35 — พื้นที่รายการที่เลื่อนในตัวเอง (modifier ของ .parts-pane)
+   **ใช้เมื่อ** รายการในคอลัมน์หนึ่งยาวจนดันหน้าให้ยืด แต่คอลัมน์ข้าง ๆ ยังสั้น
+   (เจอจริงที่ "คลังอะไหล่" ของขั้นอะไหล่ในฟอร์มแจ้งซ่อม — อะไหล่ทั้งคลังยาวลงไปเรื่อย ๆ)
+   ครอบเฉพาะกล่องรายการ ไม่ครอบหัวข้อ/ช่องค้นหา ⇒ ค้นหายังตรึงอยู่ด้านบนเสมอ */
+.parts-scroll{max-height:min(60vh,560px);overflow-y:auto;overscroll-behavior:contain;padding-right:var(--space-2)}
 @media(max-width:960px){.parts-workspace{grid-template-columns:1fr}.parts-pane{min-height:0}}
 @media(max-width:600px){.parts-manual-grid{grid-template-columns:1fr}.parts-manual-grid .wide{grid-column:auto}.parts-picked-item{grid-template-columns:1fr}.parts-picked-actions{align-items:stretch}.parts-page-actions .btn{width:100%}}
 

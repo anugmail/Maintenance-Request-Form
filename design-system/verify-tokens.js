@@ -21,7 +21,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const EX = path.join(__dirname, '.figma-extract');
+// FIGMA_SRC=component|ui-release2 เพื่อชี้ไปชุดใหม่ (1 ก.ย. 2569) · ไม่ใส่ = ชุดเก่าที่ราก
+const EX = path.join(__dirname, '.figma-extract', process.env.FIGMA_SRC || '');
 if (!fs.existsSync(EX)) {
   console.error('ไม่พบ .figma-extract/ — ต้องรันบนเครื่องที่สกัดไลบรารีไว้ (ดู SOURCES.md)');
   process.exit(1);
@@ -32,7 +33,8 @@ const css = fs.readFileSync(path.join(__dirname, 'tokens.css'), 'utf8');
 const libColors = new Map(Object.entries(lib.colors).map(([k, v]) => [k.toUpperCase(), v]));
 const libRadii = new Map(Object.entries(lib.radii).map(([k, v]) => [parseFloat(k), v]));
 const libFonts = Object.entries(lib.fonts)
-  .filter(([k]) => k.startsWith('Google Sans'))
+  // ไลบรารีเก่าใช้ Google Sans · ไลบรารีใหม่ (1 ก.ย. 2569) ใช้ Inter (ละติน) + IBM Plex Sans Thai (ไทย)
+  .filter(([k]) => /^(Google Sans|Inter|IBM Plex Sans Thai)\|/.test(k))
   .map(([k, v]) => { const [, size, weight, lh] = k.split('|'); return { size: +size, weight: +weight, lh: +lh, n: v }; });
 
 const rows = [];

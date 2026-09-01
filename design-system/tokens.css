@@ -101,6 +101,7 @@
   --space-6:24px;
 
   /* ---------- Radius ---------- */
+  --rounded-xs:4px;        /* ✔ ไลบรารีใหม่ 1 ก.ย. 2569 — กล่อง Checkbox (r4) · ใช้ 1,585 ครั้ง */
   --rounded-sm:6px;        /* ✔ tag / กล่อง checkbox (ใช้ 2,046 ครั้งในไลบรารี) */
   --rounded-md:8px;        /* ✔ รัศมีปุ่ม/อินพุต */
   --r-sm:8px;              /* alias เดิม = rounded-md */

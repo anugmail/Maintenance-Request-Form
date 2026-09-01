@@ -5,6 +5,50 @@
 
 ---
 
+## 0.1 🔴 แหล่งความจริงใหม่ 2 ไฟล์ (1 ก.ย. 2569) + สคริปต์ที่ใช้ดึง
+
+เจ้าของงานสั่งให้ใช้ **2 ไฟล์นี้เท่านั้น** (ของเดิม `IMiHaWKCqp6j3lpWdCnYY8` เลิกใช้):
+
+| ไฟล์ | file key | หน้า | ใช้ทำอะไร |
+|---|---|---|---|
+| **(Component) VMS Plus** | `VmOC07pKEsDkHZagOgcSU2` | 55 | คอมโพเนนต์/ไลบรารี — TEMPLATES · NAVIGATION · FORM · FEEDBACK · DISPLAY · MISC |
+| **(UI) VMS Plus - Release#2** | `fYD1yA1uzWsJSjHlcWKMNe` | 42 | **หน้าจอจริง** — `UI Screen (Hi-fi Wireframe)` 5.1–5.17 + `Components` + `Sitemap` |
+
+🔑 **ทางหลักคือ "ปลั๊กอิน" ไม่ใช่ REST (เคาะ 1 ก.ย. 2569)**
+
+`GET /v1/files/<key>` ของไฟล์ใหญ่โดน **429 ยาวเป็นชั่วโมง** จนแม้แต่ `?depth=1` ก็ติด ⇒ ดึงทั้งไฟล์ผ่าน REST **ไม่คุ้ม**
+ใช้ **`figma-export/dump-plugin/`** แทน — รันในแอป Figma อ่านทุกหน้าทุกโหนดรวดเดียว **ไม่กินโควตา REST เลย**
+
+```bash
+node figma-export/serve.js                      # 1) รับไฟล์ที่ปลั๊กอินส่งกลับ (พอร์ต 8124) — รันค้างไว้
+# 2) ในแอป Figma: Plugins → Development → Import plugin from manifest → figma-export/dump-plugin/manifest.json
+# 3) รันปลั๊กอิน ใส่ชื่อโฟลเดอร์ (component / ui-release2) แล้วกด "เริ่มดัมป์ทั้งไฟล์"
+node design-system/figma-dump-import.js         # 4) แปลงผลเข้ารูป .figma-extract/<slug>/ + ทำไฟล์สรุป
+FIGMA_SRC=component node design-system/verify-tokens.js   # 5) ตรวจ token เทียบไลบรารีใหม่
+```
+
+⚠️ ข้อควรระวังของปลั๊กอินโหมด `dynamic-page`: **ห้ามอ่าน `instance.mainComponent` แบบ sync** (ต้อง `getMainComponentAsync`)
+เจอจริง 1 ก.ย. 2569 — หน้าที่มี instance ล้มทั้งหน้า 41/55 · แก้แล้วโดยถอดการอ่านค่านั้นออก
+
+🚫 **token: เลิกใช้แล้ว** — ออกมาใช้ครั้งเดียว 1 ก.ย. 2569 แล้วลบ `~/.figma-token` ทิ้ง (เจ้าของงานสั่งหยุดอ่านผ่าน token)
+ถ้าจะกลับมาใช้ REST อีกให้ออก token ใหม่ตามข้อ 2 และ**เริ่มที่ `pull-figma-pages.js` เท่านั้น**
+
+**สคริปต์ในโปรเจกต์ (ใหม่ 1 ก.ย. 2569)**
+
+| ไฟล์ | ทำอะไร |
+|---|---|
+| `design-system/pull-figma-pages.js` | 🔑 **ตัวหลัก** — ไล่ดึง**ทีละหน้า** ผ่าน `/nodes?ids=` · resume ได้ · เจอ 429 ถอยเป็นขั้นถึง 10 นาที · เก็บทั้งค่าดีไซน์และแคตตาล็อกคอมโพเนนต์ (`00-components.json`) |
+| `design-system/figma-extract.js` | ตัวสกัด (เดิมอยู่แต่ในโค้ดบล็อกข้อ 5) — ใช้เป็นโมดูลหรือ CLI ก็ได้ |
+| `design-system/pull-figma.js` | ดึง**ทั้งไฟล์รวดเดียว** — เร็วกว่าถ้าโควตาว่าง แต่ไฟล์ใหญ่มัก 429 |
+| `design-system/figma-screens.js` | ไล่ดูว่ามีหน้าจอ/เฟรมอะไรบ้างในสิ่งที่ดึงมา |
+| `design-system/compare-figma-sources.js` | เทียบชุดใหม่กับไฟล์เก่า — สี · radius · ฟอนต์ · หน้า · คอมโพเนนต์ |
+
+⚠️ **บทเรียน 1 ก.ย. 2569 — `GET /v1/files/<key>` ของไฟล์ใหญ่กิน quota หนักมาก**
+ยิงครั้งเดียวแล้วโดน **429 ยาว** จนแม้แต่ `?depth=1` ก็ติดไปด้วยเป็นชั่วโมง
+⇒ **ให้เริ่มที่ `pull-figma-pages.js` เสมอ** (ทีละหน้า + ถอยเป็นขั้น + resume ได้) อย่าเพิ่งยิงทั้งไฟล์
+
+---
+
 ## 0. อ่านตรงนี้ก่อน — ส่วนใหญ่ไม่ต้องใช้ token เลย
 
 ไลบรารี PEA **ถูกสกัดเก็บไว้ในเครื่องครบแล้วตั้งแต่ 11 ส.ค. 2569** ที่ `design-system/.figma-extract/`
