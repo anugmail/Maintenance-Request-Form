@@ -11,8 +11,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260901-ds40">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260901-ds40">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260901-ds41">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260901-ds41">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -1761,11 +1761,18 @@
                ส่วนอะไหล่เปลี่ยนเป็นเลย์เอาต์ 2 คอลัมน์ชุดเดียวกับ design-mock/kbk-self-repair-parts.html (คลังอะไหล่ | อะไหล่ที่ต้องการใช้งาน) -->
           <div class="sect"><span id="head-parts">การตัดสินใจ</span> <span
               style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— งานนี้จะดำเนินการอย่างไร แล้วเลือกอะไหล่ที่คาดว่าต้องใช้ด้านล่าง</span></div>
-          <div class="rads" id="dcrads" style="margin-top:10px">
-            <label><input type="radio" name="decision" value="self" onchange="setDecision('self')">ซ่อมเอง
-              <small>— ซ่อมได้ที่หน้างาน/หน่วยงาน</small></label>
-            <label><input type="radio" name="decision" value="kry" onchange="setDecision('kry')">ส่งเรื่องให้ กรย.
-              <small>— ให้ กรย. คัดแยกช่องทางซ่อม</small></label>
+          <!-- 1 ก.ย. 2569: เปลี่ยนจาก .rads (วิทยุบรรทัดเดียว) เป็นการ์ด .radcards ชุดเดียวกับ "งบที่จะตัด" ตามที่เจ้าของงานสั่ง -->
+          <div class="radcards" id="dcrads" style="margin-top:10px">
+            <label class="radcard" id="dc-self" onclick="setDecision('self')">
+              <input type="radio" name="decision" value="self" onchange="setDecision('self')">
+              <span class="rdot"></span>
+              <span class="rc-tx"><b>ซ่อมเอง</b><small>ซ่อมได้ที่หน้างาน/หน่วยงาน</small></span>
+            </label>
+            <label class="radcard" id="dc-kry" onclick="setDecision('kry')">
+              <input type="radio" name="decision" value="kry" onchange="setDecision('kry')">
+              <span class="rdot"></span>
+              <span class="rc-tx"><b>ส่งเรื่องให้ กรย.</b><small>ให้ กรย. คัดแยกช่องทางซ่อม</small></span>
+            </label>
           </div>
           <div id="selfx" class="hidden dnote">
             <div class="f" style="margin-top:14px"><label>รายละเอียดการซ่อม</label><textarea id="selfnote"
@@ -3252,7 +3259,14 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
     }
 
     // radio คุม state เลือกเองแล้ว (checked) เหลือแค่เปิด/ปิดกล่องรายละเอียดของแต่ละทาง
-    function setDecision(d) { S.decision = d; $('selfx').classList.toggle('hidden', d !== 'self'); $('kryx').classList.toggle('hidden', d !== 'kry'); renderSummary() }
+    function setDecision(d) {
+      S.decision = d;
+      $('dc-self').classList.toggle('sel', d === 'self');
+      $('dc-kry').classList.toggle('sel', d === 'kry');
+      $('selfx').classList.toggle('hidden', d !== 'self');
+      $('kryx').classList.toggle('hidden', d !== 'kry');
+      renderSummary();
+    }
     function bookedArr() { return Object.entries(S.bookings).map(([c, q]) => { const p = PARTS.find(x => x.code === c); return { name: p.name, qty: q, unit: p.unit } }) }
     function orderedArr() {
       return Object.entries(S.orders).map(([c, q]) => { const p = PARTS.find(x => x.code === c); return { name: p.name, qty: q, unit: p.unit } })

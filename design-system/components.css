@@ -436,17 +436,25 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .page-back:focus-visible{outline:none;text-decoration:underline;text-underline-offset:3px}
 
 /* ---------- Stepper แบบลูกศร (chevron) ---------- */
-.wsteps{display:flex;background:#fff;border:1px solid var(--gray-200);border-radius:12px;margin-bottom:26px}
-.wstep{flex:1;display:flex;align-items:center;gap:12px;padding:17px 18px;position:relative;color:var(--gray-500);font-size:var(--fs-text-sm);min-width:0}
-.wstep .num{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--gray-300);display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;background:#fff}
-.wstep .num .ms{font-size:20px}   /* ขั้นที่ผ่านแล้วใช้ไอคอน check — เดิมเป็นตัวอักษร ✓ ผิดกฎไอคอน + ฟอนต์ไม่มี glyph นี้ */
-.wstep .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wstep.active{color:var(--primary-600);font-weight:600}
+/* ไลบรารีใหม่ `Horizontal step item` — ยกตามไลบรารี 1 ก.ย. 2569
+   แถวละ 300×72 · pad ซ้าย 24 บน-ล่าง 16 · gap 16 ระหว่างวงกลมกับข้อความ
+   วงกลม 40×40 ขอบ 1px: ยังไม่ถึง #D0D5DD (เลข #98A2B3) · ขั้นปัจจุบัน ขอบ+เลข #A80689
+   · ผ่านแล้ว พื้น #A80689 + เครื่องหมายถูกขาว
+   ข้อความ 16/SemiBold (#475467 → #A80689 ตอนอยู่ขั้นนี้ → #000 เมื่อผ่านแล้ว) · คำโปรย 12/Regular
+   เส้น connector 20px สีขอบ #D0D5DD อยู่ในช่อง padding ซ้ายของขั้นถัดไป
+   ⚠️ ทรงกล่องคั่นด้วย chevron แบบเดิมถอดออกแล้ว — ไลบรารีไม่มี */
+.wsteps{display:flex;background:transparent;border:0;border-radius:0;margin-bottom:26px;flex-wrap:wrap}
+.wstep{flex:1;min-width:0;display:flex;align-items:flex-start;gap:16px;padding:16px 8px 16px 24px;position:relative;
+  color:var(--gray-600);font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:600}
+.wstep:not(:first-child)::before{content:'';position:absolute;left:2px;top:36px;width:20px;height:1px;background:var(--gray-300)}
+.wstep .num{width:40px;height:40px;border-radius:var(--r-pill);border:1px solid var(--gray-300);display:flex;align-items:center;justify-content:center;
+  font-weight:600;font-size:var(--fs-text-md);color:var(--gray-400);flex-shrink:0;background:#fff}
+.wstep .num .ms{font-size:24px}
+.wstep .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-top:8px}
+.wstep.active{color:var(--primary-600)}
 .wstep.active .num{border-color:var(--primary-600);color:var(--primary-600)}
+.wstep.passed{color:#000}
 .wstep.passed .num{background:var(--primary-600);border-color:var(--primary-600);color:#fff}
-.wstep:not(:last-child)::before,.wstep:not(:last-child)::after{content:'';position:absolute;right:0;width:1px;height:52%;background:var(--gray-200)}
-.wstep:not(:last-child)::before{top:0;transform-origin:bottom center;transform:rotate(-16deg)}
-.wstep:not(:last-child)::after{bottom:0;transform-origin:top center;transform:rotate(16deg)}
 
 /* ขั้นบน stepper กดได้ (ทุกหน้าที่ใช้ stepper ผูก onclick อยู่แล้ว) + ขั้นที่ยังเข้าไม่ได้
    ยกขึ้นมาจาก <style> ของ index.html และ trip-plan.html ที่นิยามซ้ำกัน 25 ส.ค. 2569
@@ -462,8 +470,11 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .wsteps.sm .wstep .lbl{display:block}
 
 /* ---------- หัวข้อ section แถบ magenta ---------- */
-.sect{display:flex;gap:10px;align-items:center;font-weight:700;color:var(--gray-900);font-size:17px;margin:8px 0 2px}
-.sect::before{content:'';width:4px;height:20px;background:var(--primary-600);border-radius:2px;flex-shrink:0}
+/* ไลบรารีใหม่ `Section header` (Breakpoint=Desktop) — ยกตามไลบรารี 1 ก.ย. 2569
+   หัวข้อ 20/SemiBold สีดำ · คำโปรย 14/Regular #475467 · gap 12 · เส้นคั่นล่าง 1px #D0D5DD (ห่าง 20)
+   ⚠️ แถบ magenta นำหน้าแบบเดิมถอดออกแล้ว — ไลบรารีไม่มี */
+.sect{display:flex;gap:12px;align-items:center;font-weight:600;color:#000;font-size:var(--fs-h1);line-height:30px;
+  margin:8px 0 16px;padding-bottom:20px;border-bottom:1px solid var(--gray-300)}
 
 /* ---------- ฟอร์มแบบหน้าใน: label บน + ไอคอนในช่อง ----------
    ตามไลบรารี Input field (Size=md): ช่องสูง 44 · r8 · pad นอน 14 · เงา xs
@@ -599,16 +610,20 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
    ย้ายมาจาก style เฉพาะหน้า mock → ใช้ได้ทุกหน้า (mock/admin/อื่น ๆ)
    ============================================================ */
 /* ---------- การ์ดเลือกรถ (vehicleCard: list | grid) ---------- */
-.vlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin:14px 0 6px}
-.vlist.sq{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
-.vlist.sq .veh{flex-direction:column;text-align:center;aspect-ratio:1/1;justify-content:center;gap:6px;overflow:hidden}
-.vlist.sq .veh .meta{font-size:var(--fs-text-xs);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.veh{display:flex;gap:12px;align-items:center;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:12px;cursor:pointer;background:#fff}
-.veh:hover{border-color:var(--primary-500)}
-.veh.sel{border-color:var(--primary-600);background:var(--primary-25)}
-.veh .ic{width:44px;height:44px;border-radius:var(--rounded-md);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.veh b{color:var(--gray-900);font-size:var(--fs-body)}
-.veh .meta{font-size:var(--fs-text-xs);color:var(--gray-500)}
+/* ไลบรารีใหม่ `Card/select vehicle` (หน้า Cards) — ยกตามไลบรารี 1 ก.ย. 2569
+   การ์ด 306×375 · r16 · pad 12 · gap 16 · ขอบ 1px #EAECF0 · พื้นขาว
+   ในการ์ด: ช่องรูป r12 (เราไม่มีรูปจริง ⇒ ใช้พื้น gray-100 + ไอคอนรถแทน ตามกติกา no-data-no-ui)
+   · ชื่อ 16/SemiBold #000 · บรรทัดรอง 14/Regular #475467
+   ⚠️ ทรงแถวเตี้ยไอคอนซ้ายแบบเดิมถอดออกแล้ว — ไลบรารีไม่มี */
+.vlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin:14px 0 6px;align-items:stretch}
+.vlist.sq{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.veh{display:flex;flex-direction:column;gap:16px;border:1px solid var(--gray-200);border-radius:var(--r-lg);padding:12px;background:#fff;cursor:pointer}
+.veh:hover{border-color:var(--brand-500)}
+.veh.sel{border:2px solid var(--primary-600);padding:11px}
+.veh .ic{width:100%;height:170px;border-radius:var(--r-md);background:var(--gray-100);color:var(--gray-400);display:flex;align-items:center;justify-content:center;flex:none}
+.veh .ic .ms{font-size:48px}
+.veh b{color:#000;font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:600}
+.veh .meta{font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);color:var(--gray-600);margin-top:4px}
 
 /* ============================================================
    v0.37 — Vehicle detail (การ์ด "รายละเอียดรถที่เลือก" ขั้น 1 ของฟอร์มแจ้งซ่อม)

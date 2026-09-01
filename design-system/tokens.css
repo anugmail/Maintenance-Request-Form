@@ -125,7 +125,7 @@
   --fs-body:16px;      /* ✔ = text-md */
   --fs-sm:14px;        /* ✔ = text-sm */
   --fs-xs:12px;        /* ✔ = text-xs */
-  --fs-h1:18px;
+  --fs-h1:20px;        /* ✔ ไลบรารีใหม่ — หัวข้อ Section header (IBM Plex Sans Thai 20/600 · 276 ครั้ง) · 18px ไม่มีในสเกลใหม่ */
   --fs-h2:16px;
   --lh:1.5;            /* ✔ = 24/16 ของ text-md */
 
