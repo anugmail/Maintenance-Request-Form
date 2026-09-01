@@ -443,14 +443,19 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
    ข้อความ 16/SemiBold (#475467 → #A80689 ตอนอยู่ขั้นนี้ → #000 เมื่อผ่านแล้ว) · คำโปรย 12/Regular
    เส้น connector 20px สีขอบ #D0D5DD อยู่ในช่อง padding ซ้ายของขั้นถัดไป
    ⚠️ ทรงกล่องคั่นด้วย chevron แบบเดิมถอดออกแล้ว — ไลบรารีไม่มี */
-.wsteps{display:flex;background:transparent;border:0;border-radius:0;margin-bottom:26px;flex-wrap:wrap}
-.wstep{flex:1;min-width:0;display:flex;align-items:flex-start;gap:16px;padding:16px 8px 16px 24px;position:relative;
+.wsteps{display:flex;align-items:center;background:transparent;border:0;border-radius:0;margin-bottom:26px;flex-wrap:wrap;row-gap:8px}
+/* แต่ละขั้น = วงกลม + ข้อความ + เส้น connector ต่อไปขั้นถัดไป
+   ไลบรารีวางเป็นแถวกว้าง 300 (Content 248 + gap 8 + Connector 21) ⇒ ของเราให้เส้นยืดเต็มช่องว่างที่เหลือ
+   จะได้เชื่อมวงกลมถึงกันจริงเมื่อความกว้างไม่เท่า 300 */
+.wstep{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:16px;padding:16px 0;position:relative;
   color:var(--gray-600);font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:600}
-.wstep:not(:first-child)::before{content:'';position:absolute;left:2px;top:36px;width:20px;height:1px;background:var(--gray-300)}
+.wstep::after{content:'';flex:1 1 20px;min-width:20px;height:1px;background:var(--gray-300);margin-left:8px}
+.wstep:last-child{flex:0 0 auto}
+.wstep:last-child::after{display:none}
 .wstep .num{width:40px;height:40px;border-radius:var(--r-pill);border:1px solid var(--gray-300);display:flex;align-items:center;justify-content:center;
-  font-weight:600;font-size:var(--fs-text-md);color:var(--gray-400);flex-shrink:0;background:#fff}
+  font-weight:600;font-size:var(--fs-text-md);color:var(--gray-400);flex:0 0 40px;background:#fff}
 .wstep .num .ms{font-size:24px}
-.wstep .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-top:8px}
+.wstep .lbl{flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wstep.active{color:var(--primary-600)}
 .wstep.active .num{border-color:var(--primary-600);color:var(--primary-600)}
 .wstep.passed{color:#000}
