@@ -443,19 +443,26 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
    ข้อความ 16/SemiBold (#475467 → #A80689 ตอนอยู่ขั้นนี้ → #000 เมื่อผ่านแล้ว) · คำโปรย 12/Regular
    เส้น connector 20px สีขอบ #D0D5DD อยู่ในช่อง padding ซ้ายของขั้นถัดไป
    ⚠️ ทรงกล่องคั่นด้วย chevron แบบเดิมถอดออกแล้ว — ไลบรารีไม่มี */
-.wsteps{display:flex;align-items:center;background:transparent;border:0;border-radius:0;margin-bottom:26px;flex-wrap:wrap;row-gap:8px}
-/* แต่ละขั้น = วงกลม + ข้อความ + เส้น connector ต่อไปขั้นถัดไป
-   ไลบรารีวางเป็นแถวกว้าง 300 (Content 248 + gap 8 + Connector 21) ⇒ ของเราให้เส้นยืดเต็มช่องว่างที่เหลือ
-   จะได้เชื่อมวงกลมถึงกันจริงเมื่อความกว้างไม่เท่า 300 */
-.wstep{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:16px;padding:16px 0;position:relative;
-  color:var(--gray-600);font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:600}
-.wstep::after{content:'';flex:1 1 20px;min-width:20px;height:1px;background:var(--gray-300);margin-left:8px}
-.wstep:last-child{flex:0 0 auto}
-.wstep:last-child::after{display:none}
+/* ไลบรารีใหม่ — ยึดจาก **หน้าจอจริง** `(UI) VMS Plus – Release#2` → `Create vehicle (Step 1)`
+   (ตรวจซ้ำ 1 ก.ย. 2569 หลังเจ้าของงานทักว่าหน้าตาไม่เหมือนดีไซน์)
+   `Progress steps` = กล่องเดียว **r8 · ขอบ 1px #D0D5DD · พื้นขาว** ครอบทุกขั้น
+   แต่ละขั้น (`Horizontal step item`) pad ซ้าย 24 · บน-ล่าง 16 · gap 8
+     · Content gap 16 = วงกลม 40 (พื้นขาว · ขอบ #D0D5DD → #A80689 เมื่อเป็นขั้นปัจจุบัน)
+       + ข้อความ 16/SemiBold (#475467 → #A80689) + คำโปรย 12/Regular #475467
+     · Connector 21×72 = **VECTOR 20×72 เส้น 1px #D0D5DD** = ตัวคั่นทรง chevron “›” (ไม่ใช่เส้นตรง)
+       ยืนยันซ้ำกับเว็บ VMS Plus ตัวจริงที่เจ้าของงานส่งมา — หน้า "สร้างคำขอใช้ยานพาหนะ" ก็เป็น chevron
+   ⚠️ v0.41–0.42 เคยทำเป็นเส้นแนวนอนเชื่อมวงกลมและไม่มีกรอบ · v0.43 เป็นเส้นแบ่งแนวตั้ง — ผิดทั้งคู่
+      chevron กว้าง 20 สูง 72 ⇒ แต่ละครึ่งเอียง atan(20/36) ≈ 29° */
+.wsteps{display:flex;align-items:stretch;background:#fff;border:1px solid var(--gray-300);border-radius:var(--rounded-md);margin-bottom:26px;overflow:hidden}
+.wstep{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:16px;padding:16px 24px;position:relative;
+  color:var(--gray-600);font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:600;background:#fff}
+.wstep:not(:last-child)::before,.wstep:not(:last-child)::after{content:'';position:absolute;right:0;width:1px;height:50%;background:var(--gray-300)}
+.wstep:not(:last-child)::before{top:0;transform-origin:bottom center;transform:rotate(-29deg)}
+.wstep:not(:last-child)::after{bottom:0;transform-origin:top center;transform:rotate(29deg)}
 .wstep .num{width:40px;height:40px;border-radius:var(--r-pill);border:1px solid var(--gray-300);display:flex;align-items:center;justify-content:center;
   font-weight:600;font-size:var(--fs-text-md);color:var(--gray-400);flex:0 0 40px;background:#fff}
 .wstep .num .ms{font-size:24px}
-.wstep .lbl{flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wstep .lbl{flex:0 1 auto;min-width:0;white-space:normal}   /* ไลบรารีให้ข้อความขึ้นได้ 2 บรรทัด (หน้าจริง Text 140×48) ⇒ ไม่ตัดด้วย … */
 .wstep.active{color:var(--primary-600)}
 .wstep.active .num{border-color:var(--primary-600);color:var(--primary-600)}
 .wstep.passed{color:#000}
