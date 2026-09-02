@@ -23,13 +23,14 @@ const thLabel=iso=>{const d=new Date(iso+'T00:00:00');return`${THD[d.getDay()]} 
 const vehicleCard={
   key:'vehicleCard',
   name:'การ์ดเลือกรถ (ขั้นตอนที่ 1 ฟอร์มแจ้งซ่อม)',
-  variants:{list:'แถวแนวนอน (ผืนผ้า)',grid:'การ์ดจตุรัส'},
+  variants:{list:'แถวรายการ (คลิกทั้งแถว)',grid:'การ์ดใหญ่มีรูป'},
   render(el,props){
     const{variant='list',vehicles=[],selectedId=null,onPick}=props;
     el.innerHTML=`<div class="vlist ${variant==='grid'?'sq':''}">${vehicles.map(v=>`
       <div class="veh ${selectedId===v.id?'sel':''}" data-id="${v.id}">
         <div class="ic"><span class="ms">local_shipping</span></div>
-        <div><b>${esc(v.plate)}</b><div class="meta">${esc(v.model)}${v.attach?' · '+esc(v.attach):''}</div></div>
+        <div class="vtx"><b>${esc(v.plate)}</b><div class="meta">${esc(v.model)}${v.attach?' · '+esc(v.attach):''}${v.org?' · '+esc(v.org):''}</div></div>
+        <span class="ms vchk">${selectedId===v.id?'check_circle':'radio_button_unchecked'}</span>
       </div>`).join('')}</div>`;
     if(onPick)el.querySelectorAll('.veh').forEach(x=>x.addEventListener('click',()=>onPick(+x.dataset.id)));
   }
