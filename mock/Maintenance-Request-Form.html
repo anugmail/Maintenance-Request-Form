@@ -12,8 +12,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds51">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260902-ds51">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds52">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260902-ds52">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -1920,7 +1920,7 @@
       <div class="list-toolbar split">
         <div class="lt-search">
           <div class="search"><span class="ms">search</span>
-            <input type="search" id="kry-q" placeholder="เลขที่ใบแจ้งซ่อม, ทะเบียนรถ" oninput="renderKryList()"></div>
+            <input type="search" id="kry-q" placeholder="หมายเลขเหตุการณ์, เลขทะเบียน" oninput="renderKryList()"></div>
         </div>
         <div class="lt-actions">
           <button class="btn btn-s" id="kry-filter-btn" aria-expanded="false" aria-controls="kry-filter-panel"
@@ -1959,7 +1959,7 @@
       <div class="list-toolbar split">
         <div class="lt-search">
           <div class="search"><span class="ms">search</span>
-            <input type="search" id="kbk-q" placeholder="เลขที่ใบแจ้งซ่อม, ทะเบียนรถ" oninput="renderKbkList()"></div>
+            <input type="search" id="kbk-q" placeholder="หมายเลขเหตุการณ์, เลขทะเบียน" oninput="renderKbkList()"></div>
         </div>
         <div class="lt-actions">
           <button class="btn btn-s" id="kbk-filter-btn" aria-expanded="false" aria-controls="kbk-filter-panel"
@@ -3650,10 +3650,8 @@ function renderJobList(key,jobs,opts){
   const total=jobs.length,pages=Math.max(1,Math.ceil(total/ui.size));
   if(ui.page>pages)ui.page=pages;
   const from=(ui.page-1)*ui.size,rows=jobs.slice(from,from+ui.size);
-  // สองชุดคอลัมน์: 'incident' = ชุดที่อิง Figma หน้า Repair & Maintain (A1.1)
-  //                ค่าเริ่มต้น    = ชุดเดิมที่หน้า กรย./คิว กบค. ยังใช้อยู่
-  host.innerHTML=(opts.cols==='incident'?incidentTable(key,rows,opts):legacyTable(key,rows,opts))
-    +tblFoot(key,total,from+1,from+rows.length,pages);
+  // ทุกลิสต์ใช้ชุดคอลัมน์เดียวกันตาม Figma แล้ว (2 ก.ย. 2569 — เจ้าของงานสั่ง "คอลัมน์ตามนั้นเลย")
+  host.innerHTML=incidentTable(key,rows,opts)+tblFoot(key,total,from+1,from+rows.length,pages);
 }
 
 // ---- ชุดคอลัมน์ตาม Figma: Repair & Maintain / A1.1 Incident list ----
@@ -3686,31 +3684,6 @@ function incidentTable(key,rows,opts){
         <td><span class="badge ${st.cls}">${esc(st.label)}</span></td>
         <td title="${esc(u.d+' '+u.tm)}">${esc(u.d)}</td>
         <td><div class="cell-clip" title="${esc(ac.name)}">${esc(ac.name)}</div>${ac.sub?`<div class="cell-sub cell-clip" title="${esc(ac.sub)}">${esc(ac.sub)}</div>`:''}</td>
-        <td><div class="dt-action"><button class="btn" title="ดูรายละเอียด" onclick="${opts.open}('${j.no}')"><span class="ms">quick_reference_all</span></button></div></td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table></div>`;
-}
-
-function legacyTable(key,rows,opts){
-  return `<div class="tblwrap"><table class="tbl striped">
-    <thead><tr>
-      ${sortTh(key,'no','เลขที่ใบแจ้งซ่อม')}
-      <th>ยานพาหนะ</th><th>สังกัดยานพาหนะ</th>
-      ${sortTh(key,'date','วันที่แจ้ง')}
-      <th>ผู้แจ้ง</th><th>สถานะเรื่อง</th><th></th>
-    </tr></thead>
-    <tbody>${rows.map(j=>{
-      const st=statusInfo(j),d=reportedParts(j);
-      // บางใบยังไม่มีคนขับประจำ — ให้หน่วยงานเจ้าของรถขึ้นเป็นบรรทัดหลักแทน
-      const rp=reporterOf(j),rep=rp.name,repSub=rp.sub;
-      return `<tr>
-        <td><div class="cell-key">${esc(j.no)}</div></td>
-        <td><div>${esc(j.plate)}</div><div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
-        <td><div class="cell-clip" title="${esc(j.org)}">${esc(j.org)}</div></td>
-        <td><div>${esc(d.d)}</div><div class="cell-sub">${esc(d.tm)}</div></td>
-        <td><div class="cell-clip" title="${esc(rep)}">${esc(rep)}</div>${repSub?`<div class="cell-sub cell-clip" title="${esc(repSub)}">${esc(repSub)}</div>`:''}</td>
-        <td><span class="badge ${st.cls}"><span class="dot"></span>${esc(st.label)}</span></td>
         <td><div class="dt-action"><button class="btn" title="ดูรายละเอียด" onclick="${opts.open}('${j.no}')"><span class="ms">quick_reference_all</span></button></div></td>
       </tr>`;
     }).join('')}</tbody>
@@ -4084,7 +4057,7 @@ const KRY_STATUS_PHASES={kry:['kry'],krd:['krd']};
       const phases=KRY_STATUS_PHASES[$('kry-status-filter').value];
       const allJobs=JOBS.filter(j=>['kry','krd'].includes(j.phase));
       renderJobList('kry',phases?allJobs.filter(j=>phases.includes(j.phase)):allJobs,
-        {host:'krylist',open:'openKry',empty:'ยังไม่มีเรื่องรอคัดแยก'});
+        {host:'krylist',open:'openKry',empty:'ยังไม่มีเรื่องรอคัดแยก',cols:'incident'});
 }
 // รายละเอียดเป็นหน้าเต็มแล้ว (view-krydet) — เดิมเป็น accordion กางในลิสต์
 function kryDetail(){return $('krydetail')}
@@ -4238,7 +4211,7 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
         &&((!usable&&!unusable)||(usable&&vehUsable(j))||(unusable&&!vehUsable(j)))
         &&(!date||reportedParts(j).d===thDate));
       renderJobList('kbk',list,
-        {host:'kbklist',open:'openStep',empty:'ยังไม่มีงานเข้าคิว'});
+        {host:'kbklist',open:'openStep',empty:'ยังไม่มีงานเข้าคิว',cols:'incident'});
     }
     // ============ ขั้นตอนทำงาน กบค. — แยกหน้าละขั้น ============
     // 17 ส.ค. 2569: คิวงานไม่กางรายละเอียดในลิสต์แล้ว — กดแถวไหนไปหน้าขั้นตอนของใบนั้นเลย

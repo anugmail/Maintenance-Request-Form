@@ -127,6 +127,13 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   ok('ช่องยานพาหนะแยกทะเบียน/จังหวัด 2 บรรทัด',
     await page.locator('#mylist tbody tr').first().locator('td').nth(2).locator('.cell-sub').count() === 1);
 
+  // ---- คิวงาน กบค. ต้องใช้ชุดคอลัมน์เดียวกัน (ไม่เหลือตารางชุดเดิม) ----
+  await page.locator('#nav-kbk').click();
+  await page.waitForSelector('#kbklist table.tbl tbody tr');
+  const thKbk = (await page.locator('#kbklist thead th').allInnerTexts()).map(t => t.split('\n')[0].trim());
+  eq('คิวงาน กบค. ใช้ชุดคอลัมน์เดียวกับหน้าอื่น', thKbk.slice(0, 8).join(' | '), th.slice(0, 8).join(' | '));
+  eq('ไม่มีหัวคอลัมน์ชุดเดิมหลงเหลือ', await page.locator('th', { hasText: 'สังกัดยานพาหนะ' }).count(), 0);
+
   // ---- หัวหน้าอนุมัติ ----
   await page.locator('#nav-boss').click();
   await page.waitForSelector('#bosslist table.tbl tbody tr');
