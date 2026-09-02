@@ -12,8 +12,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds48">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260902-ds48">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds49">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260902-ds49">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -1655,19 +1655,11 @@
       </div>
 
       <!-- ============ VIEW: ฟอร์มแจ้งซ่อม ============ -->
-      <!-- ============ MODAL: สร้างใบแจ้งซ่อม ============
-           ไลบรารี `(Component) VMS Plus` › Modal `2:16` (Type=Form) · Size=xl 1140 เพราะขั้น "อะไหล่" เป็น 2 คอลัมน์
-           มือถือกางเป็น Bottom sheet ตามไลบรารี -->
-      <div class="modal-overlay hidden" id="view-form" role="dialog" aria-modal="true" aria-labelledby="fm-title"
-        onclick="if(event.target===this)closeForm()">
-        <div class="modal xl">
-          <div class="modal-hd">
-            <div class="modal-hd-c">
-              <h2 id="fm-title">สร้างใบแจ้งซ่อม</h2>
-              <button class="modal-x" type="button" onclick="closeForm()" aria-label="ปิด"><span class="ms">close</span></button>
-            </div>
-          </div>
-          <div class="modal-bd" id="fm-body">
+      <main class="content" id="view-form">
+        <div class="crumbs"><span class="ms">home</span><span
+            class="sep">›</span><span>แจ้งซ่อมและบริหารงานซ่อม</span><span class="sep">›</span><span
+            class="cur">สร้างใบแจ้งซ่อม</span></div>
+        <h1 class="page-title">สร้างใบแจ้งซ่อม</h1>
         <div class="wsteps-m" id="wstepsM"></div>
         <div class="wsteps" id="wsteps"></div>
 
@@ -1847,19 +1839,12 @@
             </div>
           </div>
         </section>
-          </div>
-          <div class="modal-ft">
-            <div class="modal-ft-a">
-              <button class="btn btn-t" type="button" id="fm-cancel" onclick="closeForm()">ยกเลิก</button>
-              <div class="modal-ft-r" id="footer">
-                <button class="btn btn-g" id="back" onclick="nav(-1)">ย้อนกลับ</button>
-                <button class="btn btn-p" id="next" onclick="nav(1)">ถัดไป</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
+        <div class="actions" id="footer">
+          <button class="btn btn-g" id="back" onclick="nav(-1)">ย้อนกลับ</button>
+          <button class="btn btn-p" id="next" onclick="nav(1)">ถัดไป</button>
+        </div>
+      </main>
 
       <!-- ============ VIEW: เรื่องของฉัน ============ -->
       <main class="content hidden" id="view-my">
@@ -2926,27 +2911,11 @@
     window.addEventListener('pagehide', () => MDJ.save(JOBS));
 
     // ================= VIEW SWITCH =================
-    // 'form' = โมดัลสร้างใบแจ้งซ่อม (ไลบรารี Modal) จึงซ้อนบนหน้าพื้นหลังแทนการสลับหน้า
-    const FORM_BG = 'my';
-    function openForm(){
-      if (VIEW === 'form') { switchView(FORM_BG, false); }
-      $('view-form').classList.remove('hidden');
-      document.body.classList.add('modal-open');
-      const el = $('nav-form'); if (el) el.classList.add('on');
-      $('fm-body').scrollTop = 0;
-    }
-    function closeForm(){
-      $('view-form').classList.add('hidden');
-      document.body.classList.remove('modal-open');
-      const el = $('nav-form'); if (el) el.classList.remove('on');
-    }
     function switchView(v,remember=true) {
-      if (v === 'form') { openForm(); return }
-      closeForm();
       if(v!==VIEW){if(remember)VIEW_HISTORY.push(VIEW);VIEW = v}
       document.body.classList.toggle('incident-view',v==='step');
       // vhist = หน้าประวัติการซ่อม เปิดจากปุ่มในรายละเอียดงาน จึงไม่มีเมนูซ้ายของตัวเอง
-      ['my', 'mydet', 'fuel', 'boss', 'kry', 'krydet', 'kbk', 'sup', 'stock', 'vhist', 'worth', 'step'].forEach(x => {
+      ['form', 'my', 'mydet', 'fuel', 'boss', 'kry', 'krydet', 'kbk', 'sup', 'stock', 'vhist', 'worth', 'step'].forEach(x => {
         $('view-' + x).classList.toggle('hidden', x !== v);
         const nav = $('nav-' + x); if (nav) nav.classList.toggle('on', x === v);
       });
@@ -3365,10 +3334,10 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
       if (S.step < 1) S.step = 1;
       if (S.step > WORDER.length) { submit(); return }
       showStepSection(WORDER[S.step - 1]);
-      $('back').classList.toggle('hidden', S.step === 1);   // ซ่อนจริง ไม่เว้นที่ว่าง — ท้ายโมดัลปุ่มจะเรียงเต็มแถว
+      $('back').style.visibility = S.step === 1 ? 'hidden' : 'visible';
       $('next').textContent = S.step === WORDER.length ? 'ส่งเรื่องแจ้งซ่อม' : 'ถัดไป';
       renderSteps();
-      $('fm-body').scrollTop = 0;
+      window.scrollTo({ top: 0 });
     }
     function validate() {
       const key = WORDER[S.step - 1];
@@ -3408,9 +3377,7 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
     function submit() {
       ['s1', 's2', 'sinfo', 's3', 's4'].forEach(id => $(id).classList.add('hidden'));
       $('footer').classList.add('hidden');
-      $('fm-cancel').textContent = 'ปิด';
       $('sdone').classList.remove('hidden');
-      $('fm-body').scrollTop = 0;
       const no = 'MTD-690717-0' + (++SEQ);
       const job = {
         no, plate: S.vehicle.plate, model: S.vehicle.model + (S.vehicle.attach ? ' + ' + S.vehicle.attach : ''), org: S.vehicle.org,
@@ -3450,9 +3417,9 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
       $('vinfo').classList.add('hidden'); $('vauto').innerHTML = '';
       $('dcrads').querySelectorAll('input[name=decision]').forEach(r => r.checked = false);
       $('selfx').classList.add('hidden'); $('kryx').classList.add('hidden');
-      $('sdone').classList.add('hidden'); $('footer').classList.remove('hidden'); $('fm-cancel').textContent = 'ยกเลิก';
+      $('sdone').classList.add('hidden'); $('footer').classList.remove('hidden');
       showStepSection(WORDER[0]);   // ขั้นแรกตามลำดับที่ตั้ง
-      $('back').classList.add('hidden'); $('next').textContent = WORDER.length === 1 ? 'ส่งเรื่องแจ้งซ่อม' : 'ถัดไป';
+      $('back').style.visibility = 'hidden'; $('next').textContent = WORDER.length === 1 ? 'ส่งเรื่องแจ้งซ่อม' : 'ถัดไป';
       renderSteps(); renderVehicles();
     }
 
@@ -5116,7 +5083,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
     fillProvinces();
     renderUsable(); renderCostTypes();
     renderSteps(); renderVehicles(); renderApprovers(); updateBadge();
-    $('back').classList.add('hidden');
+    $('back').style.visibility = 'hidden';
     // deep-link: ถ้ามี #view ที่ถูกต้อง (เช่น #kbk หรือ #view-kbk) ให้เปิดหน้านั้น — ใช้โดยหน้า 05-review-milestones
     const VALID_VIEWS = ['form', 'my', 'fuel', 'boss', 'kry', 'kbk', 'sup', 'stock', 'vhist', 'worth', 'step'];
     const hashView = v => VALID_VIEWS.includes(v = (location.hash || '').replace(/^#\/?/, '').replace(/^view-/, '')) ? v : '';
