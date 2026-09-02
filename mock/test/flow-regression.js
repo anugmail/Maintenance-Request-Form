@@ -99,11 +99,24 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   const docno = (await page.locator('#docno').textContent()).trim();
   ok('ส่งเรื่องสำเร็จ ได้เลขใบแจ้งซ่อม', /^MTD-/.test(docno), `ได้ "${docno}"`);
 
-  // ---- ใบงานต้องโผล่ในลิสต์ "จัดการงานซ่อม" ----
-  await page.locator('.side .nv[title="เรื่องแจ้งซ่อมของฉัน"], #nav-my').first().click();
+  // ---- ปิดโมดัลก่อน แล้วใบงานต้องโผล่ในลิสต์ "จัดการงานซ่อม" ----
+  ok('ส่งเรื่องแล้วยังอยู่ในโมดัล (ยังไม่ปิดเอง)', await page.locator('#view-form:not(.hidden)').count() === 1);
+  eq('ส่งเรื่องแล้วปุ่มซ้ายเปลี่ยนเป็น "ปิด"', (await page.locator('#fm-cancel').textContent()).trim(), 'ปิด');
+  await page.locator('#sdone .btn-p').click();                   // "ดูสถานะเรื่องของฉัน" → ปิดโมดัล
+  ok('กดดูสถานะแล้วโมดัลปิด', await page.locator('#view-form.hidden').count() === 1);
   await page.waitForSelector('#mylist table.tbl tbody tr');
   const inList = await page.locator('#mylist tbody tr', { hasText: docno }).count();
   ok('ใบที่เพิ่งสร้างอยู่ในตารางจัดการงานซ่อม', inList === 1);
+
+  // ---- ชุดคอลัมน์ตาราง "จัดการงานซ่อม" ต้องตรงกับ Figma (9 คอลัมน์) ----
+  const th = (await page.locator('#mylist thead th').allInnerTexts()).map(t => t.split('\n')[0].trim());
+  eq('ตารางมี 9 คอลัมน์', th.length, 9);
+  eq('ชื่อคอลัมน์ตรงตาม Figma',
+    th.slice(0, 8).join(' | '),
+    'หมายเลขเหตุการณ์ | วันที่สร้าง | ยานพาหนะ | ประเภทยานพาหนะ | สถานะรถ | สถานะเหตุการณ์ | วันที่อัพเดตสถานะฯ | ผู้ดำเนินการ');
+  eq('7 คอลัมน์แรกเรียงลำดับได้ (มีลูกศร)', await page.locator('#mylist thead th.sortable').count(), 7);
+  ok('ช่องยานพาหนะแยกทะเบียน/จังหวัด 2 บรรทัด',
+    await page.locator('#mylist tbody tr').first().locator('td').nth(2).locator('.cell-sub').count() === 1);
 
   // ---- หัวหน้าอนุมัติ ----
   await page.locator('#nav-boss').click();
@@ -124,10 +137,10 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   // ปุ่ม Primary — ไลบรารี: h40 · r8 · pad ซ้ายขวา 12 · gap 4 · พื้น #A80689
   eq('ปุ่ม .btn สูง 40', px(await cs('#next', 'height')), 40);
   eq('ปุ่ม .btn radius 8', px(await cs('#next', 'borderRadius')), 8);
-  // ปุ่มท้ายฟอร์มเป็น variant ของเราเอง (.actions .btn = min-width 170 · pad 24 · 16px) ยกมาจากหน้าจริงตอนแรก
   // ⇒ วัด padding จาก "ปุ่มปกติ" แทน (ไลบรารี Primary/Secondary button md = pad ซ้ายขวา 12)
   eq('ปุ่มปกติ pad ซ้ายขวา 12', px(await cs('#my-filter-btn', 'paddingLeft')), 12);
-  eq('ปุ่มท้ายฟอร์ม (variant ของเรา) กว้างขั้นต่ำ 170', px(await cs('#next', 'minWidth')), 170);
+  // ไลบรารี Modal footer › Primary and secondary actions: ปุ่มกว้าง 220
+  eq('ปุ่มท้ายโมดัล กว้าง 220', px(await cs('#next', 'minWidth')), 220);
   eq('ปุ่ม .btn-p พื้นสีแบรนด์', rgb(await cs('#next', 'backgroundColor')), HEX.brand600);
 
   // ช่องกรอก — ไลบรารี Text input Container md: h40 · r8 · ขอบ #D0D5DD
@@ -150,6 +163,20 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   ok('stepper มีตัวคั่น chevron (2 เส้นเอียง)',
     /rotate\(-?29deg\)|matrix/.test(await cs('.wstep:not(:last-child)', 'transform', '::before') || ''),
     'ไม่พบ transform บน ::before');
+
+  // Modal — ไลบรารี Modal `2:16`: กล่อง r12 · Size xl 1140 · overlay #000000
+  eq('โมดัล radius 12', px(await cs('#view-form .modal', 'borderRadius')), 12);
+  eq('โมดัล Size=xl กว้างสุด 1140', px(await cs('#view-form .modal', 'maxWidth')), 1140);
+  eq('โมดัล พื้นขาว', rgb(await cs('#view-form .modal', 'backgroundColor')), HEX.white);
+  ok('overlay เป็นดำโปร่ง', /rgba\(0,0,0,0?\.6\)/.test(rgb(await cs('#view-form', 'backgroundColor'))),
+    'ได้ ' + rgb(await cs('#view-form', 'backgroundColor')));
+  eq('หัวโมดัล เว้นซ้ายขวา 24', px(await cs('.modal-hd', 'paddingLeft')), 24);
+  eq('หัวโมดัล เนื้อในสูงอย่างน้อย 64', px(await cs('.modal-hd-c', 'minHeight')), 64);
+  eq('หัวโมดัล เว้นล่าง 16 ก่อนเนื้อ', px(await cs('.modal-hd', 'paddingBottom')), 16);
+  eq('ท้ายโมดัล Actions gap 12', px(await cs('.modal-ft-a', 'columnGap')), 12);
+  eq('ท้ายโมดัล ขอบล่าง 24', px(await cs('.modal-ft', 'paddingBottom')), 24);
+  eq('ปุ่มปิดมุมขวา 40px', px(await cs('.modal-x', 'width')), 40);
+  ok('เนื้อโมดัลเลื่อนได้เอง', ['auto', 'scroll'].includes(await cs('.modal-bd', 'overflowY')));
 
   // Sidebar nav — ไลบรารี Nav button 40×40 · r8
   eq('ปุ่มเมนูข้าง 40px', px(await cs('.side .nv', 'width')), 40);
@@ -176,6 +203,16 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   ok('มือถือ: กดแล้วกางเป็นรายการแนวตั้ง', await page.locator('.wsteps-m.open + .wsteps').isVisible());
   const ov = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   eq('มือถือ: ไม่ล้นแนวนอน', ov, 0);
+  // มือถือ = Bottom sheet ของไลบรารี — เต็มความกว้าง มุมบนมน มุมล่างตรง ปุ่มท้ายสูง 48
+  const sheet = await page.evaluate(() => {
+    const m = document.querySelector('#view-form .modal'), s = getComputedStyle(m);
+    return { w: m.getBoundingClientRect().width, tl: s.borderTopLeftRadius, bl: s.borderBottomLeftRadius,
+             bh: document.querySelector('#next').getBoundingClientRect().height };
+  });
+  eq('มือถือ: bottom sheet เต็มความกว้าง', Math.round(sheet.w), 390);
+  eq('มือถือ: มุมบนมน 12', px(sheet.tl), 12);
+  eq('มือถือ: มุมล่างตรง', px(sheet.bl), 0);
+  eq('มือถือ: ปุ่มท้ายสูง 48', Math.round(sheet.bh), 48);
   await page.setViewportSize({ width: 1440, height: 1000 });
 
   console.log('\n══════ D. ไม่มี error บนหน้า ══════');

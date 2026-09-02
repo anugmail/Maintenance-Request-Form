@@ -12,8 +12,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds47">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260902-ds47">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds48">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260902-ds48">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -1655,11 +1655,19 @@
       </div>
 
       <!-- ============ VIEW: ฟอร์มแจ้งซ่อม ============ -->
-      <main class="content" id="view-form">
-        <div class="crumbs"><span class="ms">home</span><span
-            class="sep">›</span><span>แจ้งซ่อมและบริหารงานซ่อม</span><span class="sep">›</span><span
-            class="cur">สร้างใบแจ้งซ่อม</span></div>
-        <h1 class="page-title">สร้างใบแจ้งซ่อม</h1>
+      <!-- ============ MODAL: สร้างใบแจ้งซ่อม ============
+           ไลบรารี `(Component) VMS Plus` › Modal `2:16` (Type=Form) · Size=xl 1140 เพราะขั้น "อะไหล่" เป็น 2 คอลัมน์
+           มือถือกางเป็น Bottom sheet ตามไลบรารี -->
+      <div class="modal-overlay hidden" id="view-form" role="dialog" aria-modal="true" aria-labelledby="fm-title"
+        onclick="if(event.target===this)closeForm()">
+        <div class="modal xl">
+          <div class="modal-hd">
+            <div class="modal-hd-c">
+              <h2 id="fm-title">สร้างใบแจ้งซ่อม</h2>
+              <button class="modal-x" type="button" onclick="closeForm()" aria-label="ปิด"><span class="ms">close</span></button>
+            </div>
+          </div>
+          <div class="modal-bd" id="fm-body">
         <div class="wsteps-m" id="wstepsM"></div>
         <div class="wsteps" id="wsteps"></div>
 
@@ -1839,12 +1847,19 @@
             </div>
           </div>
         </section>
-
-        <div class="actions" id="footer">
-          <button class="btn btn-g" id="back" onclick="nav(-1)">ย้อนกลับ</button>
-          <button class="btn btn-p" id="next" onclick="nav(1)">ถัดไป</button>
+          </div>
+          <div class="modal-ft">
+            <div class="modal-ft-a">
+              <button class="btn btn-t" type="button" id="fm-cancel" onclick="closeForm()">ยกเลิก</button>
+              <div class="modal-ft-r" id="footer">
+                <button class="btn btn-g" id="back" onclick="nav(-1)">ย้อนกลับ</button>
+                <button class="btn btn-p" id="next" onclick="nav(1)">ถัดไป</button>
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
+      </div>
+
 
       <!-- ============ VIEW: เรื่องของฉัน ============ -->
       <main class="content hidden" id="view-my">
@@ -2911,11 +2926,27 @@
     window.addEventListener('pagehide', () => MDJ.save(JOBS));
 
     // ================= VIEW SWITCH =================
+    // 'form' = โมดัลสร้างใบแจ้งซ่อม (ไลบรารี Modal) จึงซ้อนบนหน้าพื้นหลังแทนการสลับหน้า
+    const FORM_BG = 'my';
+    function openForm(){
+      if (VIEW === 'form') { switchView(FORM_BG, false); }
+      $('view-form').classList.remove('hidden');
+      document.body.classList.add('modal-open');
+      const el = $('nav-form'); if (el) el.classList.add('on');
+      $('fm-body').scrollTop = 0;
+    }
+    function closeForm(){
+      $('view-form').classList.add('hidden');
+      document.body.classList.remove('modal-open');
+      const el = $('nav-form'); if (el) el.classList.remove('on');
+    }
     function switchView(v,remember=true) {
+      if (v === 'form') { openForm(); return }
+      closeForm();
       if(v!==VIEW){if(remember)VIEW_HISTORY.push(VIEW);VIEW = v}
       document.body.classList.toggle('incident-view',v==='step');
       // vhist = หน้าประวัติการซ่อม เปิดจากปุ่มในรายละเอียดงาน จึงไม่มีเมนูซ้ายของตัวเอง
-      ['form', 'my', 'mydet', 'fuel', 'boss', 'kry', 'krydet', 'kbk', 'sup', 'stock', 'vhist', 'worth', 'step'].forEach(x => {
+      ['my', 'mydet', 'fuel', 'boss', 'kry', 'krydet', 'kbk', 'sup', 'stock', 'vhist', 'worth', 'step'].forEach(x => {
         $('view-' + x).classList.toggle('hidden', x !== v);
         const nav = $('nav-' + x); if (nav) nav.classList.toggle('on', x === v);
       });
@@ -3334,10 +3365,10 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
       if (S.step < 1) S.step = 1;
       if (S.step > WORDER.length) { submit(); return }
       showStepSection(WORDER[S.step - 1]);
-      $('back').style.visibility = S.step === 1 ? 'hidden' : 'visible';
+      $('back').classList.toggle('hidden', S.step === 1);   // ซ่อนจริง ไม่เว้นที่ว่าง — ท้ายโมดัลปุ่มจะเรียงเต็มแถว
       $('next').textContent = S.step === WORDER.length ? 'ส่งเรื่องแจ้งซ่อม' : 'ถัดไป';
       renderSteps();
-      window.scrollTo({ top: 0 });
+      $('fm-body').scrollTop = 0;
     }
     function validate() {
       const key = WORDER[S.step - 1];
@@ -3377,7 +3408,9 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
     function submit() {
       ['s1', 's2', 'sinfo', 's3', 's4'].forEach(id => $(id).classList.add('hidden'));
       $('footer').classList.add('hidden');
+      $('fm-cancel').textContent = 'ปิด';
       $('sdone').classList.remove('hidden');
+      $('fm-body').scrollTop = 0;
       const no = 'MTD-690717-0' + (++SEQ);
       const job = {
         no, plate: S.vehicle.plate, model: S.vehicle.model + (S.vehicle.attach ? ' + ' + S.vehicle.attach : ''), org: S.vehicle.org,
@@ -3417,9 +3450,9 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
       $('vinfo').classList.add('hidden'); $('vauto').innerHTML = '';
       $('dcrads').querySelectorAll('input[name=decision]').forEach(r => r.checked = false);
       $('selfx').classList.add('hidden'); $('kryx').classList.add('hidden');
-      $('sdone').classList.add('hidden'); $('footer').classList.remove('hidden');
+      $('sdone').classList.add('hidden'); $('footer').classList.remove('hidden'); $('fm-cancel').textContent = 'ยกเลิก';
       showStepSection(WORDER[0]);   // ขั้นแรกตามลำดับที่ตั้ง
-      $('back').style.visibility = 'hidden'; $('next').textContent = WORDER.length === 1 ? 'ส่งเรื่องแจ้งซ่อม' : 'ถัดไป';
+      $('back').classList.add('hidden'); $('next').textContent = WORDER.length === 1 ? 'ส่งเรื่องแจ้งซ่อม' : 'ถัดไป';
       renderSteps(); renderVehicles();
     }
 
@@ -3547,7 +3580,7 @@ function reporterOf(j){
 function sortIcon(key,col){
   const ui=LIST_UI[key];
   if(ui.sort!==col)return 'swap_vert';
-  return ui.dir==='asc'?'arrow_upward':'arrow_downward';
+  return ui.dir==='asc'?'arrow_upward_alt':'arrow_downward_alt';   // ไลบรารี Sort icon: Icon=Up/Down ใช้ตัว _alt
 }
 function sortTh(key,col,label){
   const ui=LIST_UI[key],on=ui.sort===col?' on':'';
@@ -3606,6 +3639,33 @@ function updatedParts(j){
   return{d:`${m[1].padStart(2,'0')}/${String(TH_MONTHS.indexOf(m[2])+1).padStart(2,'0')}/${m[3]}`,tm:`${m[4].padStart(2,'0')}:${m[5]}`};
 }
 
+// ยานพาหนะ — Figma แสดง 2 บรรทัด: เลขทะเบียน / จังหวัดที่จดทะเบียน (ข้อมูลอยู่ในสตริงเดียวของ j.plate)
+function plateParts(j){
+  const t=(j.plate||'').trim(), i=t.indexOf(' ');
+  return i<0?{no:t||'—',prov:''}:{no:t.slice(0,i),prov:t.slice(i+1)};
+}
+// คีย์เรียงของวันที่อัพเดตสถานะล่าสุด (คู่กับ reportedKey ที่เป็นวันที่แจ้ง)
+function updatedKey(j){
+  const h=j.history||[];
+  const m=(h.length?h[h.length-1].t:'').match(/^(\d+)\s+(\S+)\s+(\d{4})\s+(\d{1,2}):(\d{2})$/);
+  if(!m)return 0;
+  return +(m[3]+String(TH_MONTHS.indexOf(m[2])+1).padStart(2,'0')+m[1].padStart(2,'0')+m[4].padStart(2,'0')+m[5]);
+}
+// คีย์เรียงของทุกคอลัมน์ที่มีลูกศรใน Figma (ผู้ดำเนินการไม่มีลูกศร จึงไม่มีในนี้)
+const SORT_KEY={
+  no:j=>j.no,
+  date:j=>reportedKey(j),
+  veh:j=>plateParts(j).no,
+  cat:j=>vehCategory(j).name,
+  vstate:j=>vehUsable(j)?0:1,
+  status:j=>statusInfo(j).label,
+  updated:j=>updatedKey(j)
+};
+function cmpBy(col,a,b){
+  const f=SORT_KEY[col]||SORT_KEY.date, x=f(a), y=f(b);
+  return typeof x==='number'?x-y:String(x).localeCompare(String(y),'th');
+}
+
 function renderJobList(key,jobs,opts){
   const host=$(opts.host);host.classList.remove('hidden');
   const ui=LIST_UI[key];
@@ -3613,7 +3673,7 @@ function renderJobList(key,jobs,opts){
   const select=$(key+'-status-filter'),q=($(key+'-q').value||'').trim().toLowerCase();
   if(q)jobs=jobs.filter(j=>(j.no+' '+j.plate+' '+j.model+' '+j.org+' '+reporterOf(j).name).toLowerCase().includes(q));
   const dir=ui.dir==='asc'?1:-1;
-  jobs=jobs.slice().sort((a,b)=>ui.sort==='no'?a.no.localeCompare(b.no)*dir:(reportedKey(a)-reportedKey(b))*dir);
+  jobs=jobs.slice().sort((a,b)=>cmpBy(ui.sort,a,b)*dir);
   if(!jobs.length){
     const filtered=q||select.value!=='all';
     host.innerHTML=filtered
@@ -3639,26 +3699,26 @@ function incidentTable(key,rows,opts){
   return `<div class="tblwrap"><table class="tbl striped">
     <thead><tr>
       ${sortTh(key,'no','หมายเลขเหตุการณ์')}
-      ${sortTh(key,'date','วันที่แจ้ง')}
-      <th>เลขทะเบียน</th>
-      <th>ประเภทยานพาหนะ</th>
-      <th>สถานะรถ</th>
-      <th>สถานะเหตุการณ์</th>
-      <th>วันที่อัพเดตสถานะฯ</th>
+      ${sortTh(key,'date','วันที่สร้าง')}
+      ${sortTh(key,'veh','ยานพาหนะ')}
+      ${sortTh(key,'cat','ประเภทยานพาหนะ')}
+      ${sortTh(key,'vstate','สถานะรถ')}
+      ${sortTh(key,'status','สถานะเหตุการณ์')}
+      ${sortTh(key,'updated','วันที่อัพเดตสถานะฯ')}
       <th>ผู้ดำเนินการ</th>
       <th></th>
     </tr></thead>
     <tbody>${rows.map(j=>{
       const st=statusInfo(j),d=reportedParts(j),u=updatedParts(j);
-      const cat=vehCategory(j),ac=actorOf(j),ok=vehUsable(j);
+      const cat=vehCategory(j),ac=actorOf(j),ok=vehUsable(j),pl=plateParts(j);
       return `<tr>
         <td><div class="cell-key">${esc(j.no)}</div></td>
-        <td><div>${esc(d.d)}</div><div class="cell-sub">${esc(d.tm)}</div></td>
-        <td><div class="cell-clip" title="${esc(j.plate)}">${esc(j.plate)}</div></td>
-        <td><div class="cell-clip" title="${esc(cat.name)}">${esc(cat.name)}</div>${cat.sub?`<div class="cell-sub cell-clip" title="${esc(cat.sub)}">${esc(cat.sub)}</div>`:''}</td>
+        <td title="${esc(d.d+' '+d.tm)}">${esc(d.d)}</td>
+        <td><div class="cell-clip" title="${esc(j.plate)}">${esc(pl.no)}</div>${pl.prov?`<div class="cell-sub cell-clip">${esc(pl.prov)}</div>`:''}</td>
+        <td><div class="cell-clip" title="${esc(cat.name+(cat.sub?' · '+cat.sub:''))}">${esc(cat.name)}</div></td>
         <td><span class="cell-state ${ok?'ok':'no'}">${ok?'ใช้งานได้':'ใช้งานไม่ได้'}</span></td>
         <td><span class="badge ${st.cls}">${esc(st.label)}</span></td>
-        <td><div>${esc(u.d)}</div><div class="cell-sub">${esc(u.tm)}</div></td>
+        <td title="${esc(u.d+' '+u.tm)}">${esc(u.d)}</td>
         <td><div class="cell-clip" title="${esc(ac.name)}">${esc(ac.name)}</div>${ac.sub?`<div class="cell-sub cell-clip" title="${esc(ac.sub)}">${esc(ac.sub)}</div>`:''}</td>
         <td><div class="dt-action"><button class="btn" title="ดูรายละเอียด" onclick="${opts.open}('${j.no}')"><span class="ms">quick_reference_all</span></button></div></td>
       </tr>`;
@@ -5056,7 +5116,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
     fillProvinces();
     renderUsable(); renderCostTypes();
     renderSteps(); renderVehicles(); renderApprovers(); updateBadge();
-    $('back').style.visibility = 'hidden';
+    $('back').classList.add('hidden');
     // deep-link: ถ้ามี #view ที่ถูกต้อง (เช่น #kbk หรือ #view-kbk) ให้เปิดหน้านั้น — ใช้โดยหน้า 05-review-milestones
     const VALID_VIEWS = ['form', 'my', 'fuel', 'boss', 'kry', 'kbk', 'sup', 'stock', 'vhist', 'worth', 'step'];
     const hashView = v => VALID_VIEWS.includes(v = (location.hash || '').replace(/^#\/?/, '').replace(/^view-/, '')) ? v : '';

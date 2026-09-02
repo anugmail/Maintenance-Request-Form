@@ -306,13 +306,41 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .tab-btn:hover{background:var(--gray-200);color:#000}   /* ไลบรารีใหม่ State=Hover: พื้น #EAECF0 */
 .tab-btn.on{color:#000;border-bottom:4px solid var(--primary-600)}
 
-/* ---------- Modal — ไลบรารีมี Modal `3:9` (ดู SOURCES.md หมวด ง) แต่เครื่องนี้ไม่มี .figma-extract/
-   ให้ดึงค่าเทียบ จึงคุมด้วย pattern กลางของระบบไปก่อน (overlay มืด+เบลอเหมือน .shell::after ·
-   การ์ด r-lg + shadow-pop) — ต้องรัน compare-figma.js เทียบกับ node นี้ซ้ำเมื่อมีเครื่องที่ดึงข้อมูลได้ */
-.modal-overlay{position:fixed;inset:0;background:rgba(16,24,40,.45);-webkit-backdrop-filter:blur(2px);
-  backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;padding:20px;z-index:60}
-.modal{background:#fff;border-radius:var(--r-lg);box-shadow:var(--shadow-pop);
-  width:100%;max-width:480px;max-height:90vh;overflow:auto;padding:20px}
+/* ---------- Modal — ไลบรารี `(Component) VMS Plus` › Modal `2:16` (Type=Form, Size=md/lg/xl)
+   ค่าจริงจากไฟล์: กล่อง r12 พื้น #FFFFFF · ขนาด md 500 / lg 800 / xl 1140
+   Modal header 101 = Content 64 + Divider 21 + Padding bottom 16 · แถบหัวเว้นซ้ายขวา 24 (เนื้อใน 452)
+   Modal footer 109 = Padding top 24 + Divider 21 + Actions 40 (gap 12) + ขอบล่าง 24
+   Actions = Tertiary brand button (ซ้าย) + Primary and secondary actions (ขวา)
+   ⚠ overlay ไลบรารีเป็น #000000 แต่ดัมป์ไม่เก็บค่า opacity → ใช้ 60% (ทบทวนเมื่อดึงค่าได้) */
+body.modal-open{overflow:hidden}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;
+  justify-content:center;padding:24px;z-index:60;overflow:auto}
+.modal{background:#fff;border-radius:var(--rounded-lg);box-shadow:var(--shadow-pop);
+  width:100%;max-width:500px;max-height:calc(100dvh - 48px);overflow:auto;padding:20px}
+.modal.md{max-width:500px}
+.modal.lg{max-width:800px}
+.modal.xl{max-width:1140px}
+/* โครงเต็มรูปแบบ (หัว/เนื้อ/ท้าย แยกกัน · เนื้อเลื่อนได้) — ใช้เมื่อมี .modal-hd */
+.modal:has(>.modal-hd){padding:0;overflow:hidden;display:flex;flex-direction:column}
+.modal-hd{flex:0 0 auto;padding:0 24px 16px}
+.modal-hd-c{min-height:64px;display:flex;align-items:center;gap:8px}
+.modal-hd-c h2{flex:1 1 auto;min-width:0;font-size:var(--fs-h1);line-height:30px;font-weight:600;color:var(--gray-900)}
+.modal-hd-c .modal-sub{font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:400;color:var(--gray-600)}
+.modal-hd::after{content:"";display:block;height:1px;background:var(--gray-300);margin:10px 0}
+.modal-bd{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 24px;display:flex;flex-direction:column;gap:12px}
+.modal-bd>*{flex:0 0 auto}   /* กันเนื้อในถูกบีบเมื่อเนื้อหายาวกว่ากล่อง */
+.modal-ft{flex:0 0 auto;padding:0 24px 24px}
+.modal-ft::before{content:"";display:block;height:1px;background:var(--gray-300);margin:24px 0 20px}
+.modal-ft-a{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px;flex-wrap:wrap}
+.modal-ft-a .modal-ft-r{display:flex;align-items:center;gap:12px;margin-left:auto}
+/* ไลบรารี Modal footer › Primary and secondary actions = ปุ่มกว้าง 220 */
+.modal-ft-a .modal-ft-r>.btn{min-width:220px;justify-content:center}
+/* ปุ่มปิดมุมขวาบน = Tertiary button 40×40 ของไลบรารี */
+.modal-x{flex:0 0 auto;width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  background:none;border:none;border-radius:var(--rounded-md);color:var(--gray-500);cursor:pointer}
+.modal-x:hover{background:var(--gray-100);color:var(--gray-700)}
+.modal-x .ms{font-size:20px}
+/* หัวข้อเดิม (โมดัลแบบสั้นที่ยังไม่ได้ยกโครง) */
 .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .modal-head h2{font-size:var(--fs-h2);font-weight:600;color:var(--gray-900)}
 .modal-close{background:none;border:none;cursor:pointer;color:var(--gray-500);display:flex;padding:2px}
@@ -320,6 +348,16 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .modal-close .ms{font-size:22px}
 .modal-foot{display:flex;gap:var(--space-3);   /* ไลบรารีใหม่ Modal footer Actions gap 12 */justify-content:flex-end;flex-wrap:wrap;
   margin-top:var(--space-4_5);padding-top:var(--space-4);border-top:1px solid var(--gray-200)}
+/* มือถือ = `Bottom sheet` ของไลบรารี (360×850 · ปุ่มท้าย 156×48) — กางจากขอบล่าง เต็มความกว้าง */
+@media(max-width:760px){
+  .modal-overlay{padding:0;align-items:flex-end}
+  .modal{max-width:none;max-height:92dvh;border-radius:var(--rounded-lg) var(--rounded-lg) 0 0}
+  .modal-hd,.modal-bd,.modal-ft{padding-left:16px;padding-right:16px}
+  .modal-ft-a{gap:12px}
+  .modal-ft-a>.btn-t{display:none}   /* Bottom sheet ของไลบรารีมีปุ่มท้าย 2 ปุ่ม — ปุ่มปิดใช้ ✕ บนหัวแทน */
+  .modal-ft-a .modal-ft-r{width:100%}
+  .modal-ft-a .modal-ft-r>.btn{flex:1 1 0;min-width:0;height:48px}
+}
 .repair-choice-list{display:grid;gap:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--gray-200)}
 .repair-choice{width:100%;display:grid;grid-template-columns:1fr auto;align-items:center;gap:var(--space-4);padding:var(--space-4);border:1px solid var(--gray-200);border-radius:var(--r-lg);background:#fff;text-align:left;font:inherit;cursor:pointer}
 .repair-choice:hover,.repair-choice:focus-visible{border-color:var(--brand-600);outline:none;box-shadow:0 0 0 4px var(--focus-ring)}
@@ -360,7 +398,7 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .footer .btn{min-width:170px;padding:12px 24px;font-size:var(--fs-text-md)}
 
 /* ---------- Toast ---------- */
-.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--gray-900);color:#fff;border-radius:var(--rounded-md);padding:10px 18px;font-size:var(--fs-text-sm);z-index:50;opacity:0;transition:.25s;pointer-events:none;max-width:380px;text-align:center}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--gray-900);color:#fff;border-radius:var(--rounded-md);padding:10px 18px;font-size:var(--fs-text-sm);z-index:80;opacity:0;transition:.25s;pointer-events:none;max-width:380px;text-align:center}   /* > โมดัล (60) เพื่อให้เตือนทับได้ */
 .toast.show{opacity:1}
 
 /* ============================================================
