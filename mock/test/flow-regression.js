@@ -153,10 +153,10 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   // ปุ่ม Primary — ไลบรารี: h40 · r8 · pad ซ้ายขวา 12 · gap 4 · พื้น #A80689
   eq('ปุ่ม .btn สูง 40', px(await cs('#next', 'height')), 40);
   eq('ปุ่ม .btn radius 8', px(await cs('#next', 'borderRadius')), 8);
-  // ปุ่มท้ายฟอร์มเป็น variant ของเราเอง (.actions .btn = min-width 170 · pad 24 · 16px) ยกมาจากหน้าจริงตอนแรก
-  // ⇒ วัด padding จาก "ปุ่มปกติ" แทน (ไลบรารี Primary/Secondary button md = pad ซ้ายขวา 12)
+  // ไฟล์ UI (Release#2): ปุ่มท้ายหน้า Primary/Secondary = 100×40 · pad ซ้ายขวา 12 · r8 (มือถือ 156×48)
   eq('ปุ่มปกติ pad ซ้ายขวา 12', px(await cs('#my-filter-btn', 'paddingLeft')), 12);
-  eq('ปุ่มท้ายฟอร์ม (variant ของเรา) กว้างขั้นต่ำ 170', px(await cs('#next', 'minWidth')), 170);
+  eq('ปุ่มท้ายฟอร์ม pad ซ้ายขวา 12', px(await cs('#next', 'paddingLeft')), 12);
+  eq('ปุ่มท้ายฟอร์ม กว้างขั้นต่ำ 100', px(await cs('#next', 'minWidth')), 100);
   eq('ปุ่ม .btn-p พื้นสีแบรนด์', rgb(await cs('#next', 'backgroundColor')), HEX.brand600);
 
   // ช่องกรอก — ไลบรารี Text input Container md: h40 · r8 · ขอบ #D0D5DD

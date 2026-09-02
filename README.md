@@ -17,7 +17,6 @@ Mock v0.3 มี 2 บทบาทในไฟล์เดียว สลับ
 | ไฟล์/โฟลเดอร์ | เนื้อหา |
 |---|---|
 | [00-README.md](00-README.md) | ขอบเขตงาน บันทึกการตัดสินใจ ประเด็นเปิด |
-| [01-Design-Reference-VMSPlus.md](01-Design-Reference-VMSPlus.md) | Design tokens/component ที่สกัดจาก VMS Plus |
 | [02-Flow-and-Mock-Data.md](02-Flow-and-Mock-Data.md) | Flow ฝั่งผู้แจ้ง + mock data |
 | [03-Flow-KBK-Pickup-Inspection.md](03-Flow-KBK-Pickup-Inspection.md) | Flow ฝั่ง กบค.: รับงาน/ส่งกลับ+แนะนำอู่ · สถานะซ่อม · นัดรับ · ตรวจสภาพ |
 | [design-system/](design-system/) | Design system (tokens.css + components.css + [style guide](design-system/index.html) + [เอกสาร](design-system/README.md)) |

@@ -1,3 +1,6 @@
+> ⛔ **เอกสารเก่าเก็บเป็นประวัติ (2 ก.ย. 2569)** — แผนนี้ยึด "เว็บ vmsplus-dev ที่รันจริง" เป็นแหล่งค่า ซึ่ง**ยกเลิกแล้ว**
+> ตอนนี้แหล่งดีไซน์เดียวคือ Figma 2 ไฟล์ (ดู `design-system/SOURCES.md`) · `design-system/verify-runtime.js` ถูกลบทิ้งแล้ว
+
 # ปรับ design-system ให้ตรง VMS Plus ตัวจริง — Implementation Plan
 
 > **สำหรับผู้ลงมือ:** ใช้ `superpowers:subagent-driven-development` หรือ `superpowers:executing-plans` เดินทีละ task · ทุกขั้นเป็น checkbox

@@ -1,3 +1,6 @@
+> ⛔ **เอกสารเก่าเก็บไว้เป็นประวัติ (2 ก.ย. 2569)** — ไปป์ไลน์ `figma-map.json` / `figma-components.json` ที่เขียนไว้ในนี้ **ยกเลิกแล้ว**
+> ตอนนี้แหล่งดีไซน์คือ Figma 2 ไฟล์ ดึงด้วย `figma-export/dump-plugin/` → `design-system/figma-dump-import.js` (ดู `design-system/SOURCES.md`)
+
 # แผนงาน — export prototype เป็นไฟล์ Figma ที่ประกอบจาก component จริง
 
 > **Goal:** เอาหน้าจอจาก HTML prototype ไปเป็นไฟล์ Figma โดยหน้าจอนั้นประกอบขึ้นจาก
