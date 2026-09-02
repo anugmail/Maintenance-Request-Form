@@ -58,7 +58,7 @@ async function main() {
   await page.goto(BASE + '/mock/Maintenance-Request-Form.html', { waitUntil: 'networkidle' });
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
-  await page.waitForSelector('#vlist .veh');
+  await page.waitForSelector('#vlist .radcard');
 
   const worder = await page.evaluate(() => WORDER.join(','));
   if (worder !== 'vehicle,symptom,info,parts,decision') {
@@ -69,7 +69,7 @@ async function main() {
   await capture(page, 'ขั้น1-เลือกรถ', 'ขั้นที่ 1 เลือกรถ — ยังไม่เลือก',
     'ค้นหาทะเบียน หรือเลือกจากการ์ดรถของฉัน/รถในทีม');
 
-  await page.locator('#vlist .veh', { hasText: PLATE }).click();
+  await page.locator('#vlist .radcard', { hasText: PLATE }).click();
   await page.waitForSelector(visible('vinfo'));
   await page.locator('#vauto label.vehicle-target-option')
     .filter({ has: page.locator('input[value="vehicle"]') }).click();

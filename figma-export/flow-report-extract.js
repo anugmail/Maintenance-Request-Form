@@ -74,7 +74,7 @@ async function main() {
   await page.goto(BASE + '/mock/Maintenance-Request-Form.html', { waitUntil: 'networkidle' });
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
-  await page.waitForSelector('#vlist .veh');
+  await page.waitForSelector('#vlist .radcard');
 
   const worder = await page.evaluate(() => WORDER.join(','));
   if (worder !== 'vehicle,symptom,info,parts,decision') {
@@ -84,7 +84,7 @@ async function main() {
   // ---- ขั้น 1: เลือกรถ ----
   await extractState(page, 'report-01', 'ขั้นที่ 1 เลือกรถ — ยังไม่เลือก');
 
-  await page.locator('#vlist .veh', { hasText: PLATE }).click();
+  await page.locator('#vlist .radcard', { hasText: PLATE }).click();
   await page.waitForSelector(visible('vinfo'));
   // label ทับ radio ไว้ — ต้องคลิก label ไม่ใช่ input.check()
   await page.locator('#vauto label.vehicle-target-option')

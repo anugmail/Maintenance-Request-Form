@@ -17,25 +17,20 @@ const isoOf=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${S
 const thLabel=iso=>{const d=new Date(iso+'T00:00:00');return`${THD[d.getDay()]} ${d.getDate()} ${THM[d.getMonth()]}`};
 
 /* ============================================================
-   1) การ์ดเลือกรถ (vehicleCard) — variants: list | grid
-   props: {variant, vehicles:[{id,plate,model,attach}], selectedId, onPick(id)}
+   1) การ์ดเลือกรถ (vehicleCard) — การ์ดวิทยุเล็กแบบเดียว ไม่มี variant แล้ว
+   props: {vehicles:[{id,plate,model,attach}], selectedId, onPick(id)}
+   2 ก.ย. 2569: ตัด variant 'grid' (การ์ดใหญ่มีรูป) ทิ้ง — เจ้าของงานชี้ว่า "ผิด ต้องเป็นการ์ดเล็ก"
+   และการ์ดใหญ่มาจาก `Card/select vehicle` ของไลบรารีเก่าที่เลิกใช้แล้ว
+   ⇒ ค่าที่เคยบันทึกไว้เป็น 'grid' ใน localStorage จะถูกมองข้ามเอง (render ไม่อ่าน variant แล้ว)
    ============================================================ */
 const vehicleCard={
   key:'vehicleCard',
   name:'การ์ดเลือกรถ (ขั้นตอนที่ 1 ฟอร์มแจ้งซ่อม)',
-  variants:{list:'แถวรายการ (คลิกทั้งแถว)',grid:'การ์ดใหญ่มีรูป'},
   render(el,props){
-    const{variant='list',vehicles=[],selectedId=null,onPick}=props;
-    // variant 'list' = การ์ดวิทยุชุดเดียวกับ "งบที่จะตัด" (.radcards) ตามที่เจ้าของงานสั่ง 2 ก.ย. 2569
-    // variant 'grid' = การ์ดใหญ่มีรูปตาม `Card/select vehicle` ของไลบรารี
+    const{vehicles=[],selectedId=null,onPick}=props;
+    // การ์ดวิทยุชุดเดียวกับ "งบที่จะตัด" (.radcards) — Radio text card ของไลบรารี
     const sub=v=>[v.model, v.attach, v.org].filter(Boolean).map(esc).join(' · ');
-    el.innerHTML = variant==='grid'
-      ? `<div class="vlist sq">${vehicles.map(v=>`
-      <div class="veh ${selectedId===v.id?'sel':''}" data-id="${v.id}">
-        <div class="ic"><span class="ms">local_shipping</span></div>
-        <div class="vtx"><b>${esc(v.plate)}</b><div class="meta">${sub(v)}</div></div>
-      </div>`).join('')}</div>`
-      : `<div class="radcards">${vehicles.map(v=>`
+    el.innerHTML = `<div class="radcards">${vehicles.map(v=>`
       <label class="radcard ${selectedId===v.id?'sel':''}" data-id="${v.id}">
         <input type="radio" name="pick-vehicle" ${selectedId===v.id?'checked':''}>
         <span class="rdot"></span>
@@ -228,7 +223,7 @@ function sortable(listEl,opts){
 function arrMove(a,from,to){const x=a.splice(from,1)[0];a.splice(to,0,x);return a}
 
 window.UIC={
-  components:[vehicleCard,kbkDecision,dayPicker],   // decisionTile มีส่วนควบคุมเฉพาะที่เห็นเด่นชัดในหน้า admin
+  components:[kbkDecision,dayPicker],   // vehicleCard ไม่มี variant แล้ว จึงไม่ต้องมีสวิตช์ในหน้า admin
   vehicleCard,decisionTile,kbkDecision,dayPicker,thLabel,sortable,arrMove,
   get(key){return this.components.find(c=>c.key===key)}
 };

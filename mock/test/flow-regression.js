@@ -53,6 +53,7 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   await page.waitForSelector('#vlist .radcard');
   const cards = await page.locator('#vlist .radcard').count();
   ok('ขั้น 1 แสดงการ์ดเลือกรถ (radcard)', cards >= 4, `เจอ ${cards} ใบ`);
+  ok('ไม่มีการ์ดใหญ่แบบเก่าหลงเหลือ', await page.locator('#vlist .veh').count() === 0);
   await page.locator('#vlist .radcard').nth(2).click();          // 83-1122 (มีเครน)
   await page.waitForSelector('.vehicle-detail-card');
   ok('เลือกรถแล้วขึ้นการ์ดรายละเอียดรถ', await page.locator('.vehicle-detail-card').isVisible());
@@ -198,6 +199,17 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   const ov = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   eq('มือถือ: ไม่ล้นแนวนอน', ov, 0);
   await page.setViewportSize({ width: 1440, height: 1000 });
+
+  // ---- เครื่องที่เคยบันทึก variant 'grid' ไว้ ต้องไม่กลับไปเป็นการ์ดใหญ่ ----
+  await page.evaluate(() => {
+    const k = 'maintaind.admin.v1', j = JSON.parse(localStorage.getItem(k) || '{}');
+    j.variants = Object.assign({}, j.variants, { vehicleCard: 'grid' });
+    localStorage.setItem(k, JSON.stringify(j));
+  });
+  await page.goto(URL, { waitUntil: 'networkidle' });
+  await page.waitForSelector('#vlist .radcard');
+  eq('ค่าเก่า grid ใน localStorage ไม่ทำให้การ์ดใหญ่กลับมา', await page.locator('#vlist .veh').count(), 0);
+  await page.evaluate(() => localStorage.clear());
 
   console.log('\n══════ D. ไม่มี error บนหน้า ══════');
   ok('ไม่มี pageerror / console error', errors.length === 0, errors.slice(0, 5).join(' | '));
