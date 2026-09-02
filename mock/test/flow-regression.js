@@ -163,7 +163,22 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   eq('กล่องติ๊ก radius 4', px(await cs('#symcats .chks .cbox', 'borderRadius')), 4);
   eq('กล่องติ๊ก เส้น 2px', px(await cs('#symcats .chks .cbox', 'borderTopWidth')), 2);
 
-  console.log('\n══════ C. ไม่มี error บนหน้า ══════');
+  console.log('\n══════ C. มือถือ (390px) ══════');
+  await page.setViewportSize({ width: 390, height: 820 });
+  await page.goto(URL, { waitUntil: 'networkidle' });
+  await page.waitForSelector('.wsm-head');
+  ok('มือถือ: ซ่อน stepper แนวนอน', !(await page.locator('.wsteps').first().isVisible()));
+  ok('มือถือ: ใช้ Mobile progress steps แทน', await page.locator('.wsteps-m').isVisible());
+  const ringTxt = (await page.locator('.wsm-ring').textContent()).replace(/\s/g, '');
+  ok('มือถือ: วงแหวนบอก "ขั้นที่/ทั้งหมด"', /^\d+\/\d+$/.test(ringTxt), `ได้ "${ringTxt}"`);
+  ok('มือถือ: มีบรรทัด "ถัดไป:"', (await page.locator('.wsm-next').count()) === 1);
+  await page.locator('.wsm-head').click();
+  ok('มือถือ: กดแล้วกางเป็นรายการแนวตั้ง', await page.locator('.wsteps-m.open + .wsteps').isVisible());
+  const ov = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  eq('มือถือ: ไม่ล้นแนวนอน', ov, 0);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+
+  console.log('\n══════ D. ไม่มี error บนหน้า ══════');
   ok('ไม่มี pageerror / console error', errors.length === 0, errors.slice(0, 5).join(' | '));
   if (errors.length) { console.log('  รายละเอียดทั้งหมด:'); errors.forEach(e => console.log('    · ' + e)); }
 

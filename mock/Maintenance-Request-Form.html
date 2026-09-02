@@ -12,8 +12,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds46">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260902-ds46">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds47">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260902-ds47">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -1660,6 +1660,7 @@
             class="sep">›</span><span>แจ้งซ่อมและบริหารงานซ่อม</span><span class="sep">›</span><span
             class="cur">สร้างใบแจ้งซ่อม</span></div>
         <h1 class="page-title">สร้างใบแจ้งซ่อม</h1>
+        <div class="wsteps-m" id="wstepsM"></div>
         <div class="wsteps" id="wsteps"></div>
 
         <section id="s1">
@@ -2979,6 +2980,19 @@ function goBackFromForm(){
         const st = i + 1 === S.step ? 'active' : i + 1 < S.step ? 'passed' : '';
         return `<div class="wstep ${st}"><span class="num">${i + 1 < S.step ? '<span class=\"ms\">check</span>' : i + 1}</span><span class="lbl">${WZ[k].label}</span></div>`;
       }).join('');
+      renderStepsMobile();
+    }
+    // มือถือใช้คอมโพเนนต์คนละตัวตามไลบรารี (`Mobile progress steps`) — วงแหวน + ขั้นปัจจุบัน + ขั้นถัดไป
+    function renderStepsMobile() {
+      const total = WORDER.length, cur = Math.min(S.step, total);
+      const next = WORDER[cur] ? WZ[WORDER[cur]].label : null;
+      $('wstepsM').innerHTML = `
+        <div class="wsm-head" onclick="document.getElementById('wstepsM').classList.toggle('open')">
+          <span class="wsm-ring" style="--p:${Math.round(cur / total * 100)}"><span>${cur}<i>/</i>${total}</span></span>
+          <span class="wsm-tx"><b>${esc(WZ[WORDER[cur - 1]].label)}</b>
+            ${next ? `<span class="wsm-next"><b>ถัดไป:</b> ${esc(next)}</span>` : ''}</span>
+          <span class="ms">keyboard_arrow_down</span>
+        </div>`;
     }
     function showStepSection(key) {   // แสดง section ของขั้นปัจจุบัน + render เนื้อหาตาม key
       ['s1', 's2', 'sinfo', 's3', 's4'].forEach(id => $(id).classList.add('hidden'));

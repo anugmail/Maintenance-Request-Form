@@ -897,6 +897,13 @@ token เป็น PAT scope `file_content:read` เก็บที่ `~/.figma
 - **บั๊กที่เทสจับได้ทันทีรอบแรก**: `mock/Maintenance-Request-Form.html` ไม่มี `<link rel="icon">` ⇒ Chrome ยิง `/favicon.ico` แล้วได้ 404 ทุกครั้ง (console มี error ค้างมานาน ไม่เคยเห็น) — เพิ่มให้แล้ว
 - บันทึกวิธีรันไว้ใน `CLAUDE.md` หัวข้อ "เทสก่อนบอกว่าเสร็จ" เป็นข้อแรก
 
+**14) มือถือ: ใช้ `Mobile progress steps` ตามไลบรารี (v0.47)**
+เจ้าของงานส่งภาพมือถือมาว่า stepper พัง (ข้อความขั้นปัจจุบันทับ chevron) ⇒ ไปดูไลบรารีพบว่า **มีคอมโพเนนต์มือถือแยกต่างหาก** (`Mobile progress steps`)
+- **Collapsed** = กล่อง r8 · วงแหวน 72 บอก “ขั้น/ทั้งหมด” · ชื่อขั้นปัจจุบัน 16/SemiBold · บรรทัด “ถัดไป: …” · ปุ่ม chevron
+- **Expanded** = กางเป็นรายการแนวตั้ง (Vertical step item วงกลม 24)
+- เดิม media query แค่ย่อ stepper แนวนอน + ซ่อน label ที่ไม่ active ⇒ พอชื่อขั้นยาวเลยทับกัน
+- เพิ่มเทสมือถือใน `flow-regression.js` ด้วย (ซ่อน stepper แนวนอน · ใช้กล่องมือถือ · วงแหวนมีเลข x/y · มีบรรทัดถัดไป · กางได้ · ไม่ล้นแนวนอน) → **รวมเป็น 41 ผ่าน**
+
 **ค้างต่อ** — `.veh`/`.radcard` ยังผูกกับ `Card item base` ในแผนที่ `figma-map.json` ทั้งที่ไฟล์ PEA มี `Vehicle card` / `Radio text card` อยู่จริง (รอภาพ/ลิงก์ node จากเจ้าของงาน)
 
 ---
