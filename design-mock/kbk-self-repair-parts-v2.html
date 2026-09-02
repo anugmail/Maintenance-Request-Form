@@ -1,0 +1,340 @@
+จ<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>กบค. ซ่อมเอง — เบิกอะไหล่ + จัดซื้อ/จัดจ้าง — Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260825-ds24">
+<link rel="stylesheet" href="../design-system/components.css?v=20260825-ds24">
+</head>
+<!--
+  ไม่มี <style> ในหน้าโดยตั้งใจ — ใช้คอมโพเนนต์จาก design system เท่านั้น
+  หน้านี้ต่อยอดจาก kbk-self-repair-parts.html ตามคำสั่งเจ้าของงาน (โน้ตสีน้ำเงินบน Pick spare parts-01.pdf)
+  สิ่งที่เพิ่มจากของเดิม 6 อย่าง:
+    1. ค้นแล้วไม่เจอใน Smart Inventory → กด + ตรงช่องค้นได้เลย ไม่ต้องพิมพ์ใหม่
+    2. ของที่ไม่มีในคลังแต่ "เคยเบิก" ก็ขึ้นให้เลือก
+    3. แถวที่เลือกไว้ แยกให้เห็น เบิกจากคลัง X / ต้องจัดซื้อ Y
+    4. หัวข้อใหม่ "การจัดซื้อ / จัดจ้าง" — ตาราง รายการ·จำนวน·ราคาต่อหน่วย·ราคารวม·ร้านค้า
+       รายการฝั่งจัดซื้อไหลมาเองจากยอด "ต้องจัดซื้อ"
+    5. อัปโหลดใบสั่งซื้อ/สั่งจ้าง
+    6. ข้อความ "ใช้เวลา 30 วันทำการ" โผล่ต่อเมื่อมีใบสั่งซื้อแล้วเท่านั้น
+  ⚠️ ตัวอัปโหลดทำด้วย .btn + รายการไฟล์แบบ .job (ของเดิมล้วน)
+     คอมโพเนนต์ File upload ของไลบรารี (node 3:25) ยังไม่ได้ทำ — SOURCES.md หมวด ง สั่งว่าห้ามออกแบบเอง
+-->
+<body>
+  <div class="shell">
+    <aside class="side">
+      <div class="vlogo">M<em>D</em></div>
+      <div class="nv" title="หน้าหลัก" onclick="goApp('')"><span class="ms">home</span></div>
+      <div class="nv" title="แจ้งซ่อม" onclick="goApp('form')"><span class="ms">build</span></div>
+      <div class="nv" title="เรื่องแจ้งซ่อมของฉัน" onclick="goApp('my')"><span class="ms">assignment</span></div>
+      <div class="nv" title="เติมน้ำมัน + ชั่วโมงทำงาน" onclick="goApp('fuel')"><span class="ms">local_gas_station</span></div>
+      <div class="nv" title="อนุมัติใบแจ้งซ่อม (หัวหน้า)" onclick="goApp('boss')"><span class="ms">how_to_reg</span></div>
+      <div class="nv" title="งานคัดแยก กรย." onclick="goApp('kry')"><span class="ms">alt_route</span></div>
+      <div class="nv on" title="งานซ่อม กบค." onclick="goApp('kbk')"><span class="ms">engineering</span></div>
+      <div class="nv" title="อนุมัติปิดงาน (ผู้บังคับบัญชา)" onclick="goApp('sup')"><span class="ms">approval</span></div>
+      <div class="nv" title="คลังอะไหล่" onclick="goApp('stock')"><span class="ms">warehouse</span></div>
+      <div class="nv" title="รายงาน" onclick="toast('mock — ยังไม่มีหน้านี้')"><span class="ms">monitoring</span></div>
+    </aside>
+
+    <div class="work">
+      <div class="draft">แบบหน้าจอเดี่ยว (design mock) — ขั้น "เบิกอะไหล่" + จัดซื้อ/จัดจ้าง ของเส้น กบค. ซ่อมเอง</div>
+      <div class="topbar">
+        <span class="ms">light_mode</span>
+        <span class="ms">notifications</span>
+      </div>
+
+      <main class="content">
+      <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><a href="../mock/Maintenance-Request-Form.html#kbk" style="color:inherit;text-decoration:none">รายการงานซ่อม</a><span class="sep">›</span><span class="cur">RQ-2569-00184</span></div>
+
+      <div class="page-title-row">
+        <h1 class="page-title">รายละเอียดใบงานซ่อม</h1>
+        <span class="badge b-low" style="margin-left:10px"><span class="dot"></span>อยู่ระหว่างซ่อม</span>
+        <button class="btn btn-ds" style="margin-left:auto" onclick="toast('mock — ต้องระบุเหตุผลก่อนปิดงาน')">ปิดงานทันที</button>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="ใบงานซ่อม">
+        <button type="button" class="tab-btn" role="tab" aria-selected="false" onclick="toast('mock — อยู่คนละหน้า')">ข้อมูลการแจ้งซ่อม</button>
+        <button type="button" class="tab-btn" role="tab" aria-selected="false" onclick="toast('mock — อยู่คนละหน้า')">ประวัติการซ่อม</button>
+        <button type="button" class="tab-btn on" role="tab" aria-selected="true">งานซ่อม กบค.</button>
+      </div>
+
+      <div class="sect" style="margin-top:22px">กบค. ซ่อมเอง</div>
+
+      <div class="card"><div class="wsteps wrap">
+        <div class="wstep active"><span class="num">1</span><span class="lbl">เบิกอะไหล่</span></div>
+        <div class="wstep locked"><span class="num">2</span><span class="lbl">นัดหมายวันซ่อม</span></div>
+        <div class="wstep locked"><span class="num">3</span><span class="lbl">ตรวจสภาพก่อนซ่อม</span></div>
+        <div class="wstep locked"><span class="num">4</span><span class="lbl">ดำเนินการซ่อม</span></div>
+        <div class="wstep locked"><span class="num">5</span><span class="lbl">ตรวจสภาพรถหลังซ่อม</span></div>
+        <div class="wstep locked"><span class="num">6</span><span class="lbl">รายงานการปิดงาน</span></div>
+      </div></div>
+
+      <div class="sect">เลือกอะไหล่</div>
+
+      <div class="fgrid">
+        <div class="f sp2">
+          <div class="card">
+            <div class="stack">
+              <div class="sect">คลังอะไหล่</div>
+              <div class="sub">Smart Inventory และคลังสำรองเบิกได้เหมือนกัน — ไม่มีทั้งคู่ = ต้องสั่งซื้อภายนอก</div>
+              <div class="search"><span class="ms">search</span>
+                <input type="text" id="q" placeholder="ค้นหาชื่อหรือรหัสอะไหล่" oninput="renderStock()"></div>
+              <div id="noHit"></div>
+              <div id="stock"></div>
+              <div id="hist"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="f sp2">
+          <div class="card">
+            <div class="stack">
+              <div class="sect">รายการอะไหล่ที่ต้องการใช้งาน</div>
+              <div class="sub">จำนวนที่เกินยอดในคลัง จะถูกตั้งเป็นรายการจัดซื้อให้อัตโนมัติ</div>
+              <div id="picked"></div>
+              <button class="btn btn-s" style="width:100%" onclick="focusSearch()"><span class="ms">add</span> เพิ่มอะไหล่</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="stack">
+          <div class="sect">การจัดซื้อ / จัดจ้าง</div>
+          <div class="sub">จัดซื้อ = รายการที่ต้องซื้อเพราะไม่มีในคลังหรือของหมด · จัดจ้าง = จ้างซ่อมหรือสร้างอะไหล่ หรือซ่อมทั้งคัน</div>
+
+          <div class="seg" style="max-width:420px" id="mode">
+            <div class="sg sel" onclick="setMode('buy')"><span class="ms">shopping_cart</span> จัดซื้อ</div>
+            <div class="sg" onclick="setMode('hire')"><span class="ms">handyman</span> จัดจ้าง</div>
+          </div>
+
+          <div id="poHint" class="sub" hidden></div>
+          <div id="poTable"></div>
+          <button class="btn btn-s" id="btnAddPo"><span class="ms">add</span> เพิ่มรายการ</button>
+
+          <div class="sect">ใบสั่งซื้อ / ใบสั่งจ้าง</div>
+          <div class="sub">แนบไฟล์ใบสั่งซื้อหรือใบสั่งจ้างที่ออกแล้ว — ระบบจะเริ่มนับระยะเวลารอของหลังแนบไฟล์</div>
+          <div>
+            <button class="btn btn-o" onclick="mockUpload()"><span class="ms">upload_file</span> อัปโหลดใบสั่งซื้อ/สั่งจ้าง</button>
+          </div>
+          <div id="files"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="stack">
+          <div class="sect">รวมค่าอะไหล่</div>
+          <div id="sumRows"></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-g" onclick="goApp('kbk')"><span class="ms">arrow_back</span> ย้อนกลับ</button>
+        <button class="btn btn-o" onclick="printPick()"><span class="ms">print</span> พิมพ์แบบรายการเบิก</button>
+        <button class="btn btn-p" onclick="toast('mock — บันทึกรายการเบิกแล้ว')">เบิกอะไหล่</button>
+      </div>
+      </main>
+    </div>
+  </div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ข้อมูลอะไหล่ยกจาก config.js ของต้นแบบแจ้งซ่อม · stock = Smart Inventory · alt = คลังสำรอง
+const PARTS = [
+  { code:'SL-4402', name:'ชุดซีลกระบอกไฮดรอลิก',       unit:'ชุด',  stock:0,  alt:0,  price:1850  },
+  { code:'OL-0046', name:'น้ำมันไฮดรอลิก ISO VG46 18L', unit:'ถัง',  stock:6,  alt:4,  price:2400  },
+  { code:'FT-1108', name:'ไส้กรองไฮดรอลิก',             unit:'ชิ้น', stock:2,  alt:0,  price:650   },
+  { code:'HS-3808', name:'สายไฮดรอลิกแรงดันสูง 3/8"',   unit:'เส้น', stock:4,  alt:10, price:1200  },
+  { code:'PM-2210', name:'ปั๊มไฮดรอลิกเกียร์',           unit:'ตัว',  stock:0,  alt:0,  price:18500 },
+  { code:'WR-3350', name:'สลิงเครนไฮดรอลิก 10 ตัน',      unit:'เส้น', stock:3,  alt:0,  price:4500  },
+];
+// เคยเบิกมาก่อน แต่ไม่มีในคลังตอนนี้ — ต้องขึ้นให้เลือก (โน้ตข้อ 6 ของเจ้าของงาน)
+const HISTORY = [
+  { code:'BR-7781', name:'ผ้าเบรกหน้า ชุดใหญ่', unit:'ชุด', price:3200, lastJob:'RQ-2568-00902' },
+  { code:'CY-5510', name:'กระบอกไฮดรอลิกยกกระเช้า', unit:'ตัว', price:26000, lastJob:'RQ-2568-01144' },
+];
+const picked = { 'FT-1108': 3, 'PM-2210': 1 };
+const hire   = [{ name:'ซ่อมชุดซีลกระบอกไฮดรอลิก (จ้างกลึงใหม่)', qty:1, price:8500, shop:'' }];
+const buyShop = {};                 // code -> ชื่อร้านค้า
+const files  = [];                  // ใบสั่งซื้อ/สั่งจ้างที่แนบแล้ว
+let mode = 'buy';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const baht = n => n.toLocaleString('th-TH') + '฿';
+const partOf = c => PARTS.find(p => p.code === c) || HISTORY.find(p => p.code === c);
+const onHand = p => (p.stock || 0) + (p.alt || 0);
+const fromStock = (p, q) => Math.min(q, onHand(p));
+const toBuy     = (p, q) => Math.max(0, q - onHand(p));
+
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show');
+  clearTimeout(t._x); t._x=setTimeout(()=>t.classList.remove('show'),2400); }
+function goApp(v){ location.href='../mock/Maintenance-Request-Form.html' + (v?'#'+v:''); }
+function focusSearch(){ $('q').focus(); }
+
+function stockBadge(p){
+  if (onHand(p) === 0) return '<span class="badge b-out"><span class="dot"></span>ต้องจัดซื้อ</span>';
+  if (onHand(p) <= 3)  return '<span class="badge b-low"><span class="dot"></span>ใกล้หมด</span>';
+  return '<span class="badge b-ok"><span class="dot"></span>พร้อมเบิก</span>';
+}
+
+// ── ฝั่งซ้าย: คลัง + ค้นไม่เจอ + เคยเบิก ─────────────────────────────
+function renderStock(){
+  const q = $('q').value.trim().toLowerCase();
+  const hit = PARTS.filter(p => !q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q));
+  $('stock').innerHTML = hit.map(p => `
+    <div class="job">
+      <div class="sp">
+        <div>
+          <div><span class="badge b-info">แนะนำ</span> <b>${esc(p.name)}</b></div>
+          <div class="meta">${esc(p.code)} · คลัง SM Inventory : ${p.stock} ${esc(p.unit)}${p.alt ? ` · คลังสำรอง ${p.alt} ${esc(p.unit)}` : ''}</div>
+          <div class="meta">${baht(p.price)}/${esc(p.unit)} ${stockBadge(p)}</div>
+        </div>
+        <button class="btn btn-p btn-icon" onclick="pick('${p.code}')" title="เพิ่มเข้ารายการ"><span class="ms">add</span></button>
+      </div>
+    </div>`).join('') || '';
+
+  // โน้ตข้อ 6 — พิมพ์แล้วไม่มีในคลัง กด + ตรงนี้ได้เลย ไม่ต้องพิมพ์ใหม่
+  $('noHit').innerHTML = (q && hit.length === 0) ? `
+    <div class="job">
+      <div class="sp">
+        <div><b>“${esc($('q').value.trim())}”</b> <span class="badge b-out"><span class="dot"></span>ไม่มีใน Smart Inventory</span></div>
+        <button class="btn btn-p btn-sm" onclick="addTyped()"><span class="ms">add</span> เพิ่มรายการนี้</button>
+      </div>
+      <div class="meta">เพิ่มเข้ารายการที่ต้องการใช้งานได้เลย ระบบจะตั้งเป็นรายการจัดซื้อให้</div>
+    </div>` : '';
+
+  // ของที่ไม่มีในคลังแต่เคยเบิก — ขึ้นให้เลือก
+  const h = HISTORY.filter(p => !q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q));
+  $('hist').innerHTML = h.length ? `<div class="sub" style="margin-top:14px">เคยเบิกรายการนี้มาก่อน (ไม่มีในคลังตอนนี้)</div>` +
+    h.map(p => `
+    <div class="job">
+      <div class="sp">
+        <div>
+          <div><span class="badge b-brand">เคยเบิก</span> <b>${esc(p.name)}</b></div>
+          <div class="meta">${esc(p.code)} · เบิกล่าสุดใบ ${esc(p.lastJob)}</div>
+          <div class="meta">${baht(p.price)}/${esc(p.unit)}</div>
+        </div>
+        <button class="btn btn-p btn-icon" onclick="pick('${p.code}')" title="เพิ่มเข้ารายการ"><span class="ms">add</span></button>
+      </div>
+    </div>`).join('') : '';
+}
+
+function addTyped(){
+  const name = $('q').value.trim(); if (!name) return;
+  const code = 'NEW-' + String(HISTORY.length + PARTS.length + 1).padStart(4,'0');
+  HISTORY.push({ code, name, unit:'ชิ้น', price:0, lastJob:'—' });
+  picked[code] = 1; $('q').value = ''; renderAll();
+  toast('เพิ่ม “' + name + '” เข้ารายการแล้ว — ตั้งเป็นรายการจัดซื้อให้อัตโนมัติ');
+}
+function pick(c){ picked[c] = (picked[c] || 0) + 1; renderAll(); }
+function bump(c, d){ picked[c] = Math.max(0, (picked[c]||0) + d); if(!picked[c]) delete picked[c]; renderAll(); }
+function drop(c){ delete picked[c]; renderAll(); }
+
+// ── ฝั่งขวา: รายการที่เลือก + แยก เบิกจากคลัง / ต้องจัดซื้อ ──────────
+function renderPicked(){
+  const keys = Object.keys(picked);
+  $('picked').innerHTML = keys.length ? keys.map(c => {
+    const p = partOf(c), q = picked[c], s = fromStock(p,q), b = toBuy(p,q);
+    const split = b > 0
+      ? `เบิกจากคลัง : ${s} ${esc(p.unit)} · <b style="color:var(--error-700)">ต้องจัดซื้อ : ${b} ${esc(p.unit)}</b>`
+      : `เบิกจากคลัง : ${s} ${esc(p.unit)}`;
+    const note = (b > 0 && files.length)
+      ? `<div class="meta" style="color:var(--error-600)">อะไหล่ที่จัดซื้อจะใช้เวลา 30 วันทำการ</div>` : '';
+    return `<div class="job">
+      <div class="sp">
+        <div>
+          <div><span class="badge b-brand">เจ้าของรถแนะนำ</span> <b>${esc(p.name)}</b></div>
+          <div class="meta">${esc(p.code)} · ${split}</div>
+          <div class="meta">${baht(p.price)}/${esc(p.unit)} · <b style="color:var(--gray-900)">รวม ${baht(p.price*q)}</b></div>
+          ${note}
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="qty"><button onclick="bump('${c}',-1)">−</button><span>${q}</span><button onclick="bump('${c}',1)">+</button></div>
+          <button class="btn btn-s btn-icon" onclick="drop('${c}')" title="ลบออก"><span class="ms">close</span></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty">ยังไม่ได้เลือกอะไหล่</div>';
+}
+
+// ── การจัดซื้อ / จัดจ้าง ────────────────────────────────────────────
+function setMode(m){ mode = m;
+  [...$('mode').children].forEach((el,i) => el.classList.toggle('sel', (i===0) === (m==='buy')));
+  $('btnAddPo').hidden = (m === 'buy');   // ฝั่งจัดซื้อไหลมาเอง เพิ่มเองไม่ได้
+  renderPo();
+}
+function buyRows(){
+  return Object.keys(picked).map(c => {
+    const p = partOf(c), b = toBuy(p, picked[c]);
+    return b > 0 ? { code:c, name:p.name, unit:p.unit, qty:b, price:p.price } : null;
+  }).filter(Boolean);
+}
+function renderPo(){
+  const rows = mode === 'buy' ? buyRows() : hire;
+  const head = mode === 'buy' ? 'ไหลมาเองจากยอด “ต้องจัดซื้อ” ของรายการอะไหล่ที่เลือกไว้ แก้จำนวนได้ที่รายการอะไหล่'
+                              : 'จ้างซ่อมหรือสร้างอะไหล่ หรือจ้างซ่อมทั้งคัน — เพิ่มรายการเองได้';
+  $('poHint').hidden = false; $('poHint').textContent = head;
+  $('poTable').innerHTML = rows.length ? `<div class="tblwrap"><table class="tbl striped">
+    <thead><tr><th>รายการ</th><th class="num">จำนวน</th><th class="num">ราคาต่อหน่วย</th><th class="num">ราคารวม</th><th>ร้านค้า</th></tr></thead>
+    <tbody>${rows.map((r,i) => `<tr>
+      <td><span class="cell-key">${esc(r.name)}</span>${r.code ? `<span class="cell-sub">${esc(r.code)}</span>` : ''}</td>
+      <td class="num">${r.qty}${r.unit ? ' ' + esc(r.unit) : ''}</td>
+      <td class="num">${baht(r.price)}</td>
+      <td class="num">${baht(r.price * r.qty)}</td>
+      <td><input type="text" placeholder="ระบุร้านค้า" value="${esc(mode==='buy' ? (buyShop[r.code]||'') : (r.shop||''))}"
+           oninput="setShop(${i},'${r.code||''}',this.value)"></td>
+    </tr>`).join('')}</tbody></table></div>`
+    : `<div class="empty">${mode==='buy' ? 'ไม่มีรายการที่ต้องจัดซื้อ — ของในคลังพอทุกรายการ' : 'ยังไม่มีรายการจัดจ้าง'}</div>`;
+}
+function setShop(i, code, v){ if (mode==='buy') buyShop[code] = v; else hire[i].shop = v; }
+$('btnAddPo').onclick = () => { hire.push({ name:'รายการจัดจ้างใหม่', qty:1, price:0, shop:'' }); renderPo(); };
+
+// ── ใบสั่งซื้อ/สั่งจ้าง + ข้อความ 30 วันทำการ ────────────────────────
+function mockUpload(){
+  files.push({ name:'PO-2569-0142.pdf', at:'21/08/2569 14:05' });
+  renderFiles(); renderPicked(); renderSum();
+  toast('mock — แนบใบสั่งซื้อแล้ว เริ่มนับระยะเวลารอของ');
+}
+function renderFiles(){
+  $('files').innerHTML = files.length ? files.map((f,i) => `
+    <div class="job"><div class="sp">
+      <div><span class="ms" style="vertical-align:-5px;color:var(--gray-500)">description</span> <b>${esc(f.name)}</b></div>
+      <button class="btn btn-s" onclick="files.splice(${i},1);renderFiles();renderSum()" title="ลบไฟล์"><span class="ms">close</span></button>
+    </div><div class="meta">แนบเมื่อ ${esc(f.at)}</div></div>`).join('')
+    : '<div class="empty">ยังไม่ได้แนบใบสั่งซื้อ/สั่งจ้าง</div>';
+}
+
+function renderSum(){
+  let s = 0, b = 0;
+  Object.keys(picked).forEach(c => { const p = partOf(c), q = picked[c];
+    s += p.price * fromStock(p,q); b += p.price * toBuy(p,q); });
+  const h = hire.reduce((a,r) => a + r.price * r.qty, 0);
+  // แถวสรุป: ชื่อรายการซ้าย ตัวเลขขวา · ยอดรวมคั่นด้วยเส้นบนแล้วเน้นสีแบรนด์ (ตาม pattern ที่เจ้าของงานส่งมา)
+  const row = (k, v) => `<div style="display:flex;justify-content:space-between;padding:7px 0">
+      <span style="color:var(--gray-600)">${k}</span><span style="color:var(--gray-900)">${v}</span></div>`;
+  $('sumRows').innerHTML =
+      row('เบิกจากคลัง', baht(s))
+    + row('ต้องจัดซื้อ', baht(b))
+    + (h ? row('ค่าจัดจ้าง', baht(h)) : '')
+    + `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:12px 0 2px;margin-top:6px;border-top:1px solid var(--gray-200)">
+         <b style="color:var(--gray-900)">รวมทั้งหมด</b>
+         <b style="color:var(--primary-600);font-size:var(--fs-h2)">${baht(s + b + h)}</b></div>`;
+}
+
+function printPick(){
+  const n = Object.keys(picked).length, h = hire.length;
+  toast(`mock — พิมพ์แบบรายการเบิก ${n} รายการ` + (h ? ` + รายการที่เคยจ้าง ${h} รายการ` : ''));
+}
+
+function renderAll(){ renderStock(); renderPicked(); renderPo(); renderFiles(); renderSum(); }
+setMode('buy'); renderAll();
+</script>
+</body>
+</html>

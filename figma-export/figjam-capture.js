@@ -57,7 +57,6 @@ const GROUPS = [
   ] },
   { group: 'ฟอร์มแจ้งซ่อม (mock)', pages: [
     { slug: 'mock-form',        path: '/mock/Maintenance-Request-Form.html',       name: 'ฟอร์มแจ้งซ่อม' },
-    { slug: 'mock-form-flow2',  path: '/mock/Maintenance-Request-Form-flow2.html', name: 'ฟอร์มแจ้งซ่อม flow2' },
     { slug: 'design-mock',      path: '/design-mock/index.html',                   name: 'Design mock' },
     { slug: 'kbk-appointment',  path: '/design-mock/kbk-self-repair-appointment.html', name: 'กบค. นัดซ่อมเอง' },
     { slug: 'kbk-parts',        path: '/design-mock/kbk-self-repair-parts.html',   name: 'กบค. อะไหล่ซ่อมเอง' },

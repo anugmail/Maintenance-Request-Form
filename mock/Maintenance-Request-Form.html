@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">   <!-- กัน 404 /favicon.ico ที่ทำให้ console มี error (เจอจาก regression test 2 ก.ย. 2569) -->
   <title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.8)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap"
@@ -11,8 +12,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260825-ds31">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260826-ds32">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds47">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260902-ds47">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -39,329 +40,8 @@
     }
 
     /* ---------- สรุปรายละเอียดรถหลังเลือก ---------- */
-    .vehicle-detail-heading {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-top: 24px
-    }
-
-    .vehicle-detail-heading .sect {
-      margin: 0
-    }
-
-    .vehicle-sync-note {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      color: var(--gray-500);
-      font-size:var(--fs-text-xs)
-    }
-
-    .vehicle-sync-note .ms {
-      color: var(--success-600);
-      font-size: 18px
-    }
-
-    .vehicle-detail-card {
-      overflow: hidden;
-      margin: 12px 0 26px;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--r-lg);
-      background: #fff
-    }
-
-    .vehicle-detail-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 18px 20px;
-      border-bottom: 1px solid var(--gray-200);
-      background: linear-gradient(135deg, var(--primary-25), #fff 72%)
-    }
-
-    .vehicle-detail-icon {
-      display: flex;
-      width: 48px;
-      height: 48px;
-      flex: 0 0 48px;
-      align-items: center;
-      justify-content: center;
-      border-radius: var(--r-md);
-      background: var(--primary-600);
-      color: #fff
-    }
-
-    .vehicle-detail-icon .ms {
-      font-size: 24px
-    }
-
-    .vehicle-detail-title {
-      min-width: 0;
-      flex: 1
-    }
-
-    .vehicle-detail-title strong {
-      display: block;
-      overflow: hidden;
-      color: var(--gray-900);
-      font-size: 18px;
-      line-height: 1.35;
-      text-overflow: ellipsis;
-      white-space: nowrap
-    }
-
-    .vehicle-detail-title small {
-      display: block;
-      overflow: hidden;
-      margin-top: 3px;
-      color: var(--gray-500);
-      font-size:var(--fs-text-xs);
-      text-overflow: ellipsis;
-      white-space: nowrap
-    }
-
-    .vehicle-selected-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      flex: 0 0 auto;
-      padding: 5px 9px;
-      border: 1px solid var(--success-200);
-      border-radius: var(--r-pill);
-      background: var(--success-50);
-      color: var(--success-600);
-      font-size: 12px;
-      font-weight: 600
-    }
-
-    .vehicle-selected-badge .ms {
-      font-size: 16px
-    }
-
-    .vehicle-detail-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin: 0;
-      padding: 16px 20px
-    }
-
-    .vehicle-detail-item {
-      display: grid;
-      grid-template-columns: 34px minmax(0, 1fr);
-      min-width: 0;
-      gap: 10px;
-      padding: 12px;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--r-md);
-      background: var(--gray-50)
-    }
-
-    .vehicle-detail-item>.ms {
-      display: flex;
-      width: 34px;
-      height: 34px;
-      align-items: center;
-      justify-content: center;
-      border-radius: var(--rounded-md);
-      background: #fff;
-      color: var(--primary-600);
-      font-size: 20px
-    }
-
-    .vehicle-detail-copy {
-      min-width: 0
-    }
-
-    .vehicle-detail-label {
-      display: block;
-      margin-bottom: 3px;
-      color: var(--gray-500);
-      font-size:var(--fs-text-xs);
-      font-weight: 500
-    }
-
-    .vehicle-detail-value {
-      display: block;
-      margin: 0;
-      overflow-wrap: anywhere;
-      color: var(--gray-800);
-      font-size: 14px;
-      font-weight: 600;
-      line-height: 1.45
-    }
-
-    .vehicle-target {
-      min-width: 0;
-      margin: 0;
-      padding: 18px 20px 20px;
-      border: 0;
-      border-top: 1px solid var(--gray-200);
-      background: var(--gray-50)
-    }
-
-    .vehicle-target-legend {
-      width: 100%;
-      padding: 0;
-      color: var(--gray-900);
-      font-size: 14px;
-      font-weight: 600
-    }
-
-    .vehicle-target-required {
-      margin-left: 5px;
-      color: var(--primary-700);
-      font-size:var(--fs-text-xs);
-      font-weight: 600
-    }
-
-    .vehicle-target-help {
-      margin-top: 2px;
-      color: var(--gray-500);
-      font-size:var(--fs-text-xs)
-    }
-
-    .vehicle-target-options {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 12px
-    }
-
-    .vehicle-target-option {
-      position: relative;
-      display: grid;
-      grid-template-columns: 40px minmax(0, 1fr) 22px;
-      align-items: center;
-      gap: 11px;
-      min-width: 0;
-      padding: 13px;
-      border: 1px solid var(--gray-300);
-      border-radius: var(--r-md);
-      background: #fff;
-      color: var(--gray-700);
-      cursor: pointer;
-      transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease
-    }
-
-    .vehicle-target-option:hover {
-      border-color: var(--primary-500);
-      transform: translateY(-1px)
-    }
-
-    .vehicle-target-option.selected {
-      border-color: var(--primary-600);
-      background: var(--primary-25);
-      color: var(--primary-700);
-      box-shadow: inset 0 0 0 1px var(--primary-50)
-    }
-
-    .vehicle-target-option input {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
-      pointer-events: none
-    }
-
-    .vehicle-target-option:has(input:focus-visible) {
-      outline: 3px solid var(--primary-50);
-      outline-offset: 2px
-    }
-
-    .vehicle-target-option-icon {
-      display: flex;
-      width: 40px;
-      height: 40px;
-      align-items: center;
-      justify-content: center;
-      border-radius:var(--rounded-md);
-      background: var(--gray-100);
-      color: var(--gray-500)
-    }
-
-    .vehicle-target-option.selected .vehicle-target-option-icon {
-      background: var(--primary-50);
-      color: var(--primary-700)
-    }
-
-    .vehicle-target-option-copy {
-      min-width: 0
-    }
-
-    .vehicle-target-option-copy strong {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      line-height: 1.4;
-      overflow-wrap: anywhere
-    }
-
-    .vehicle-target-option-copy small {
-      display: block;
-      margin-top: 2px;
-      color: var(--gray-500);
-      font-size: 12px;
-      line-height: 1.45;
-      overflow-wrap: anywhere
-    }
-
-    .vehicle-target-check {
-      color: var(--gray-400);
-      font-size: 20px
-    }
-
-    .vehicle-target-option.selected .vehicle-target-check {
-      color: var(--primary-600)
-    }
-
-    @media(max-width:760px) {
-      .vehicle-detail-heading {
-        align-items: flex-start;
-        flex-direction: column
-      }
-
-      .vehicle-detail-header {
-        padding: 14px
-      }
-
-      .vehicle-selected-badge {
-        padding: 4px 7px
-      }
-
-      .vehicle-detail-grid,
-      .vehicle-target {
-        padding: 14px
-      }
-
-      .vehicle-detail-grid,
-      .vehicle-target-options {
-        grid-template-columns: 1fr
-      }
-    }
-
-    @media(max-width:480px) {
-      .vehicle-detail-header {
-        align-items: flex-start
-      }
-
-      .vehicle-detail-icon {
-        width: 42px;
-        height: 42px;
-        flex-basis: 42px
-      }
-
-      .vehicle-detail-title strong {
-        font-size: 16px;
-        white-space: normal
-      }
-
-      .vehicle-detail-title small {
-        white-space: normal
-      }
-    }
+    /* .vehicle-detail-* / .vehicle-target-* ย้ายไป design-system/components.css แล้ว (v0.37)
+       ตัวเลือก "จุดที่พบปัญหา" เปลี่ยนไปใช้ .radcards > .radcard ตัวกลาง */
 
     .photos {
       display: flex;
@@ -430,61 +110,7 @@
       grid-column: 1/-1
     }
 
-    .part {
-      border: 1px solid var(--gray-200);
-      border-radius: var(--r-md);
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      background: #fff
-    }
-
-    .part .top {
-      display: flex;
-      gap: 10px;
-      flex: 1
-    }
-
-    .part .pic {
-      width: 42px;
-      height: 42px;
-      border-radius:var(--rounded-md);
-      background: var(--gray-100);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--gray-500);
-      flex-shrink: 0
-    }
-
-    .part b {
-      color: var(--gray-900);
-      font-size: 14px
-    }
-
-    .part .code {
-      font-size: 12px;
-      color: var(--gray-400)
-    }
-
-    .part .need {
-      font-size:var(--fs-text-xs);
-      color: var(--gray-600);
-      margin-top: 2px
-    }
-
-    .part .stock {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px dashed var(--gray-200);
-      font-size:var(--fs-text-xs);
-      color: var(--gray-500);
-      flex-wrap: wrap;
-      gap: 6px
-    }
+    /* .part* (การ์ดอะไหล่แบบเดิม) ถอดออก 1 ก.ย. 2569 — ขั้นอะไหล่เปลี่ยนเป็น 2 คอลัมน์ที่ใช้ .parts-* จาก design system */
 
     .bk {
       display: flex;
@@ -848,22 +474,11 @@
     .fsel{height:44px}
     .areanote{font-size:var(--fs-xs);color:var(--gray-600);margin:8px 0 0;line-height:var(--lh)}
     .areanote b{color:var(--primary-700)}
-    .ctlist{align-items:stretch}
-    .ctopt{align-items:center}
-    .ct-tx{min-width:0}
 
     .fsel{width:100%;padding:11px 12px;border:1px solid var(--gray-300);border-radius:var(--r-md);font-family:var(--font);font-size:var(--fs-body);background:#fff;color:var(--gray-900)}
-    .ctlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
-    .ctopt{display:flex;align-items:flex-start;gap:10px;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;background:#fff}
-    .ctopt:hover{border-color:var(--primary-500)}
-    .ctopt.sel{border-color:var(--primary-600);background:var(--primary-25)}
-    .ctopt .dot{width:17px;height:17px;border-radius:50%;border:2px solid var(--gray-300);flex:none;margin-top:2px}
-    .ctopt.sel .dot{border-color:var(--primary-600);border-width:5px}
-    .ct-tx b{display:block;font-size:14px;color:var(--gray-900)}
-    .ct-tx small{font-size:var(--fs-xs);color:var(--gray-500);line-height:1.45;display:block;margin-top:2px}
     #i-usable .sg{display:flex;align-items:center;justify-content:center;gap:6px}
     @media(max-width:1100px){.fgrid.ig{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:640px){.fgrid.ig{grid-template-columns:1fr}.ctlist{grid-template-columns:1fr}}
+    @media(max-width:640px){.fgrid.ig{grid-template-columns:1fr}}
     #i-usable .sg .ms{font-size:18px}
 
     /* .rowtop/.vdiv ถูกลบ 18 ส.ค. 2569 — คิวงานเปลี่ยนจากการ์ด 2 บรรทัดเป็นตาราง (.tbl) */
@@ -1422,18 +1037,7 @@
       padding-top: 0
     }
 
-    .kry-route-options {
-      display: grid !important;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      max-width: none !important
-    }
-
-    .kry-route-options .tile {
-      width: 100%;
-      height: 100%;
-      min-width: 0
-    }
+    /* .kry-route-options ถอดออก 1 ก.ย. 2569 — ปุ่มคัดแยกใช้ .radcards.cols-3 ของ design system แทน */
 
     @media(max-width:1100px) {
       .ops-detail-layout {
@@ -1451,11 +1055,6 @@
       }
     }
 
-    @media(max-width:760px) {
-      .kry-route-options {
-        grid-template-columns: 1fr
-      }
-    }
 
     /* ============================================================
      v0.1 — ⛽ เติมน้ำมัน + ชั่วโมงทำงาน: mobile app-shell
@@ -2028,7 +1627,7 @@
       <div class="nv" id="nav-home" title="หน้าหลัก" onclick="toast('mock — ยังไม่มีหน้านี้')"><span
           class="ms">home</span></div>
       <div class="nv" id="nav-form" title="แจ้งซ่อม" onclick="switchView('form')"><span class="ms">build</span></div>
-      <div class="nv" id="nav-my" title="เรื่องแจ้งซ่อมของฉัน" onclick="switchView('my')"><span
+      <div class="nv" id="nav-my" title="จัดการงานซ่อม" onclick="switchView('my')"><span
           class="ms">assignment</span></div>
       <div class="nv" id="nav-fuel" title="เติมน้ำมัน + ชั่วโมงทำงาน" onclick="switchView('fuel')"><span
           class="ms">local_gas_station</span></div>
@@ -2061,6 +1660,7 @@
             class="sep">›</span><span>แจ้งซ่อมและบริหารงานซ่อม</span><span class="sep">›</span><span
             class="cur">สร้างใบแจ้งซ่อม</span></div>
         <h1 class="page-title">สร้างใบแจ้งซ่อม</h1>
+        <div class="wsteps-m" id="wstepsM"></div>
         <div class="wsteps" id="wsteps"></div>
 
         <section id="s1">
@@ -2150,7 +1750,7 @@
           </div>
 
           <div class="fsub">งบที่จะตัด <small>(จำเป็น)</small></div>
-          <div class="ctlist" id="i-costtypes"></div>
+          <div class="radcards" id="i-costtypes"></div>
           <div class="fgrid ig" id="i-costfields"></div>
           <div class="hint" style="margin-top:10px"><span class="ms" style="font-size:16px">info</span>
             โครงประเภทงบ (code 1–4) และช่องที่ต้องกรอกแต่ละแบบ อิงจาก <code>vms_ref_cost_type</code> ของระบบจริง —
@@ -2159,21 +1759,22 @@
         </section>
 
         <section id="s3" class="hidden">
-          <div class="sect"><span id="head-parts">อะไหล่ที่ระบบแนะนำ</span> <span
-              style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— เลือกอะไหล่ที่คาดว่าต้องใช้ · <b>ยังไม่ตัดสต็อก</b> — กบค. จะยืนยันรายการจริงอีกครั้งตอนรับเรื่อง<br>ของหมดก็เลือกได้ ระบบจะทำเป็นรายการที่ต้องสั่งซื้อ · อัปเดตล่าสุด 17 ก.ค. 2569
-              09:30</span></div>
-          <div id="parts"></div>
-        </section>
-
-        <section id="s4" class="hidden">
-          <div class="sect"><span id="head-decision">การตัดสินใจ</span> <span
-              style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— เห็นอะไหล่และของคงเหลือแล้ว
-              งานนี้จะดำเนินการอย่างไร</span></div>
-          <div class="rads" id="dcrads" style="margin-top:10px">
-            <label><input type="radio" name="decision" value="self" onchange="setDecision('self')">ซ่อมเอง
-              <small>— ซ่อมได้ที่หน้างาน/หน่วยงาน</small></label>
-            <label><input type="radio" name="decision" value="kry" onchange="setDecision('kry')">ส่งเรื่องให้ กรย.
-              <small>— ให้ กรย. คัดแยกช่องทางซ่อม</small></label>
+          <!-- 1 ก.ย. 2569: ย้าย "การตัดสินใจ" มาไว้บนสุดของขั้นอะไหล่ (เจ้าของงานสั่ง) — ตัดสินใจก่อน แล้วค่อยเลือกอะไหล่
+               ส่วนอะไหล่เปลี่ยนเป็นเลย์เอาต์ 2 คอลัมน์ชุดเดียวกับ design-mock/kbk-self-repair-parts.html (คลังอะไหล่ | อะไหล่ที่ต้องการใช้งาน) -->
+          <div class="sect"><span id="head-parts">การตัดสินใจ</span> <span
+              style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— งานนี้จะดำเนินการอย่างไร แล้วเลือกอะไหล่ที่คาดว่าต้องใช้ด้านล่าง</span></div>
+          <!-- 1 ก.ย. 2569: เปลี่ยนจาก .rads (วิทยุบรรทัดเดียว) เป็นการ์ด .radcards ชุดเดียวกับ "งบที่จะตัด" ตามที่เจ้าของงานสั่ง -->
+          <div class="radcards" id="dcrads" style="margin-top:10px">
+            <label class="radcard" id="dc-self" onclick="setDecision('self')">
+              <input type="radio" name="decision" value="self" onchange="setDecision('self')">
+              <span class="rdot"></span>
+              <span class="rc-tx"><b>ซ่อมเอง</b><small>ซ่อมได้ที่หน้างาน/หน่วยงาน</small></span>
+            </label>
+            <label class="radcard" id="dc-kry" onclick="setDecision('kry')">
+              <input type="radio" name="decision" value="kry" onchange="setDecision('kry')">
+              <span class="rdot"></span>
+              <span class="rc-tx"><b>ส่งเรื่องให้ กรย.</b><small>ให้ กรย. คัดแยกช่องทางซ่อม</small></span>
+            </label>
           </div>
           <div id="selfx" class="hidden dnote">
             <div class="f" style="margin-top:14px"><label>รายละเอียดการซ่อม</label><textarea id="selfnote"
@@ -2186,7 +1787,30 @@
                   เขต)</b><br>กรย. จะคัดแยกว่าให้ <b>ซ่อมที่อู่</b> · <b>กรย. ซ่อมเอง</b> · หรือ <b>ส่งต่อ กบค.</b> —
                 เอกสารแนบอาการ รูป และอะไหล่ที่เลือกไว้ให้อัตโนมัติ</span></div>
           </div>
-          <div class="sect" style="margin-top:26px">ผู้อนุมัติใบแจ้งซ่อม <span
+          <div class="parts-workspace" style="margin-top:22px">
+            <section class="parts-pane">
+              <h2 class="parts-pane-title">คลังอะไหล่</h2>
+              <p class="parts-pane-sub">อะไหล่ทั้งหมดจาก Smart Inventory และคลังสำรอง — ตัวที่ตรงกับอาการที่เลือกไว้จะติดป้าย “แนะนำ”</p>
+              <div class="search"><span class="ms">search</span><input type="text" id="pq" placeholder="ค้นหาชื่อหรือรหัสอะไหล่" oninput="renderStockPane()"></div>
+              <div id="parts-stock" class="parts-scroll"></div>
+            </section>
+            <section class="parts-pane">
+              <h2 class="parts-pane-title">อะไหล่ที่ต้องการใช้งาน</h2>
+              <p class="parts-pane-sub">จำนวนที่เกินยอดในคลัง จะถูกตั้งเป็นรายการจัดซื้อให้อัตโนมัติ · <b>ยังไม่ตัดสต็อก</b> — กบค. จะยืนยันรายการจริงอีกครั้งตอนรับเรื่อง</p>
+              <div id="parts-picked"></div>
+              <button type="button" class="btn btn-s parts-add-manual" onclick="addCustomPart()"><span class="ms">add</span> ระบุอะไหล่เพิ่มเติม</button>
+              <div class="parts-totals">
+                <h2 class="parts-pane-title">รวมค่าอะไหล่</h2>
+                <div class="parts-total-row"><span>เบิกจากคลัง</span><strong id="p-sum-stock">0 บาท</strong></div>
+                <div class="parts-total-row"><span>ต้องจัดซื้อ</span><strong id="p-sum-buy">0 บาท</strong></div>
+                <div class="parts-total-row grand"><span>รวมทั้งหมด</span><strong id="p-sum-all">0 บาท</strong></div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="s4" class="hidden">
+          <div class="sect"><span id="head-decision">ผู้อนุมัติใบแจ้งซ่อม</span> <span
               style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— <b>ต้องเลือกก่อนส่งเรื่อง</b> ·
               ใบแจ้งซ่อมจะยังไม่เดินต่อจนกว่าหัวหน้าจะอนุมัติ</span></div>
           <div class="apwrap">
@@ -2225,13 +1849,12 @@
       <!-- ============ VIEW: เรื่องของฉัน ============ -->
       <main class="content hidden" id="view-my">
         <div class="crumbs"><span class="ms">home</span><span
-            class="sep">›</span><span>แจ้งซ่อมและบริหารงานซ่อม</span><span class="sep">›</span><span
-            class="cur">เรื่องแจ้งซ่อมของฉัน</span></div>
-        <h1 class="page-title">เรื่องแจ้งซ่อมของฉัน</h1>
+            class="sep">›</span><span class="cur">จัดการงานซ่อม</span></div>
+        <h1 class="page-title">จัดการงานซ่อม</h1>
         <div class="list-toolbar split">
           <div class="lt-search">
             <div class="search"><span class="ms">search</span>
-              <input type="search" id="my-q" placeholder="เลขที่ใบแจ้งซ่อม, ทะเบียนรถ" oninput="renderMyList()"></div>
+              <input type="search" id="my-q" placeholder="หมายเลขเหตุการณ์, เลขทะเบียน" oninput="renderMyList()"></div>
           </div>
           <div class="lt-actions">
             <button class="btn btn-s" id="my-filter-btn" aria-expanded="false" aria-controls="my-filter-panel"
@@ -2269,7 +1892,7 @@
       <!-- 18 ส.ค. 2569: ลิสต์เปลี่ยนเป็นตาราง กดแถวแล้วมาหน้านี้ ไม่กางในลิสต์แล้ว -->
       <main class="content hidden" id="view-mydet">
         <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><a href="#my"
-            onclick="switchView('my');return false" style="color:inherit;text-decoration:none">เรื่องแจ้งซ่อมของฉัน</a><span
+            onclick="switchView('my');return false" style="color:inherit;text-decoration:none">จัดการงานซ่อม</a><span
             class="sep">›</span><span class="cur">รายละเอียด</span></div>
         <h1 class="page-title" id="mydet-title"></h1>
         <div id="mydetail"></div>
@@ -2396,6 +2019,31 @@
             class="sep">›</span><span class="cur">อนุมัติใบแจ้งซ่อม</span></div>
         <h1 class="page-title">อนุมัติใบแจ้งซ่อม — หัวหน้าผู้แจ้ง</h1>
         <div class="hint" style="margin-bottom:14px">ขั้นนี้อยู่ <b>ก่อน</b> ส่งถึง กรย. — ใบแจ้งซ่อมที่ผู้แจ้งสร้างแล้วจะค้างที่นี่จนกว่าหัวหน้าที่ถูกเลือกไว้จะกดอนุมัติ</div>
+        <!-- 1 ก.ย. 2569: ลิสต์เปลี่ยนจากการ์ด .job เป็นตารางชุดเดียวกับ "จัดการงานซ่อม" (A1.1) — ค้นหา + ตัวกรอง + เรียง + แบ่งหน้า
+             #bosstools ห่อแถบเครื่องมือไว้เพื่อซ่อนพร้อมลิสต์ตอนกดเข้าไปดูรายละเอียด (หน้านี้กางรายละเอียดในวิวเดียวกัน ไม่ได้แยกหน้าแบบ #my) -->
+        <div id="bosstools">
+          <div class="list-toolbar split">
+            <div class="lt-search">
+              <div class="search"><span class="ms">search</span>
+                <input type="search" id="boss-q" placeholder="หมายเลขเหตุการณ์, เลขทะเบียน" oninput="renderBossList()"></div>
+            </div>
+            <div class="lt-actions">
+              <button class="btn btn-s" id="boss-filter-btn" aria-expanded="false" aria-controls="boss-filter-panel"
+                onclick="toggleFilter('boss')"><span class="ms">filter_list</span> ตัวกรอง</button>
+            </div>
+          </div>
+          <div class="filter-panel" id="boss-filter-panel">
+            <div class="filter-field">
+              <label for="boss-status-filter">กรองตามสถานะ</label>
+              <select id="boss-status-filter" onchange="renderBossList()">
+                <option value="all">ทุกสถานะ</option>
+                <option value="wait">รอฉันอนุมัติ</option>
+                <option value="reject">ไม่อนุมัติ — ตีกลับ</option>
+              </select>
+            </div>
+            <button class="btn btn-t" onclick="clearFilter('boss')"><span class="ms">filter_alt_off</span> ล้างตัวกรอง</button>
+          </div>
+        </div>
         <div id="bosslist"></div>
         <div id="bossdetail" class="hidden"></div>
       </main>
@@ -3163,7 +2811,7 @@
     ];
 
     // ================= STATE =================
-    const S = { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, decision: null, approver: null,
+    const S = { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, customParts: [], customSeq: 0, decision: null, approver: null,
       usable: null, costType: null, costVals: {} };
     const COST_TYPES = MDC.data('costTypes');
     const COST_FIELD = { costCenter:{label:'ศูนย์ต้นทุน',ph:'เช่น B0002211',icon:'account_balance'},
@@ -3171,8 +2819,8 @@
       network:{label:'เลขที่โครงข่าย',ph:'เช่น NET-04412',icon:'lan'},
       activity:{label:'เลขที่กิจกรรม',ph:'เช่น A-0310',icon:'checklist'},
       pmOrder:{label:'เลขที่ใบสั่ง (PM Order)',ph:'เช่น PM690717-08',icon:'receipt_long'} };
-    const STEPS = ['เลือกรถ', 'อาการเสีย', 'อะไหล่ที่แนะนำ', 'ตัดสินใจและสรุป'];   // (คง fallback — ปัจจุบันใช้ WZ)
-    let WZ = { vehicle: { on: true, label: 'เลือกรถ' }, symptom: { on: true, label: 'อาการเสีย' }, parts: { on: true, label: 'อะไหล่ที่แนะนำ' }, decision: { on: true, label: 'ตัดสินใจและสรุป' } };
+    const STEPS = ['เลือกรถ', 'อาการเสีย', 'ตัดสินใจ + อะไหล่', 'สรุปและผู้อนุมัติ'];   // (คง fallback — ปัจจุบันใช้ WZ)
+    let WZ = { vehicle: { on: true, label: 'เลือกรถ' }, symptom: { on: true, label: 'อาการเสีย' }, parts: { on: true, label: 'ตัดสินใจ + อะไหล่' }, decision: { on: true, label: 'สรุปและผู้อนุมัติ' } };
     let WORDER = ['vehicle', 'symptom', 'parts', 'decision'];   // ลำดับขั้น wizard (จาก cfg.steps.wizard ที่ INIT)
     const SECT = { vehicle: 's1', symptom: 's2', info: 'sinfo', parts: 's3', decision: 's4' };   // key → id ของ section (คงที่)
     let VIEW = 'form';
@@ -3183,11 +2831,6 @@
     function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._x); t._x = setTimeout(() => t.classList.remove('show'), 2600) }
     function nowStr() { return new Date().toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace('พ.ศ. ', '') }
     function esc(s) { return (s || '').replace(/</g, '&lt;') }
-    function badge(p) {
-      if (p.stock === 0) return '<span class="badge b-out">หมด</span>';
-      if (p.stock <= 3) return '<span class="badge b-low">ใกล้หมด · เหลือ ' + p.stock + '</span>';
-      return '<span class="badge b-ok">พร้อมเบิก · เหลือ ' + p.stock + '</span>';
-    }
     // ---- รายละเอียดรถสำหรับแถวรายการงาน ----
     // ประเภทรถ: อ่านจากอุปกรณ์เสริมที่ต่อพ่วง (model = "รุ่นรถ + อุปกรณ์")
     function vehType(j) {
@@ -3207,37 +2850,49 @@
     </div>`;
     }
 
+    // ---- สีป้ายสถานะ — อิง Figma หน้า Repair & Maintain / A1.1 Incident list ----
+    // Figma ใช้สีบอกว่า "เรื่องจบหรือยัง" ไม่ใช่ "เดินไปถึงขั้นไหน" จึงมีแค่ 3 สี:
+    //   เหลือง (b-low) = ยังไม่จบ ยังมีคนต้องทำอะไรต่อ  ← สถานะส่วนใหญ่อยู่กลุ่มนี้
+    //   แดง   (b-out) = ถูกปฏิเสธ/ตีกลับ ต้องแก้แล้วส่งใหม่
+    //   เขียว (b-ok)  = จบแล้ว ไม่มีใครต้องทำอะไรอีก
+    // เดิมใช้ b-brand (ชมพู) กับ "กำลังดำเนินการ" ซึ่งทำให้ผู้ใช้ต้องแยก 4 สี
+    // และไม่ตรงกับที่ กฟภ. ออกแบบไว้ — 31 ส.ค. 2569 เจ้าของงานสั่งให้ตรง Figma
+    //
+    // ⚠️ สถานะที่ Figma ไม่ได้แสดงตัวอย่างไว้ (ซ่อมเสร็จ · นัดรับรถ · รออนุมัติปิดงาน)
+    //    จัดเป็นเหลืองตามกฎข้างบน เพราะยังต้องมีคนทำต่อ — ถ้า กฟภ. ต้องการแยกสีค่อยปรับ
     function statusInfo(j) {
       if (j.phase === 'wait') return { label: 'รอ ' + j.approver.name + ' อนุมัติ', cls: 'b-low' };
-      if (j.phase === 'reject') return { label: 'ไม่อนุมัติ — ตีกลับให้แก้ไข', cls: 'b-low' };
-      if (j.phase === 'self') return { label: 'บันทึกแล้ว — ซ่อมเอง', cls: 'b-ok' };
-      if (j.phase === 'kry') return { label: 'รอ กรย. คัดแยกช่องทาง', cls: 'b-brand' };
-      if (j.phase === 'krd') return { label: 'กรย. รับไปซ่อมเอง', cls: 'b-brand' };
-      if (j.phase === 'pending') return { label: 'รอ กบค. รับเรื่อง', cls: 'b-brand' };
+      if (j.phase === 'reject') return { label: 'ไม่อนุมัติ — ตีกลับให้แก้ไข', cls: 'b-out' };
+      if (j.phase === 'self') return { label: 'บันทึกแล้ว — ซ่อมเอง', cls: 'b-low' };
+      if (j.phase === 'kry') return { label: 'รอ กรย. คัดแยกช่องทาง', cls: 'b-low' };
+      if (j.phase === 'krd') return { label: 'กรย. รับไปซ่อมเอง', cls: 'b-low' };
+      if (j.phase === 'pending') return { label: 'รอ กบค. รับเรื่อง', cls: 'b-low' };
       if (j.phase === 'returned') {
         const s = j.rstage || 0;
         const g = j.garageRoute;
-        if (s === 0) return { label: g ? 'กรย. ส่งซ่อมอู่ภายนอก' : 'กบค.ตีกลับ/ปฏิเสธ', cls: 'b-low' };
-        if (s === 1) return { label: 'ดำเนินการซ่อมโดยอู่', cls: 'b-brand' };
-        return { label: 'ซ่อมเสร็จแล้วโดยอู่ — รอบันทึกปิดงาน', cls: 'b-brand' };
+        // ส่งซ่อมอู่ = ส่งต่อ (เหลือง) · ตีกลับ/ปฏิเสธ = ถูกปฏิเสธ (แดง) — คนละความหมายแม้อยู่ phase เดียวกัน
+        if (s === 0) return g ? { label: 'กรย. ส่งซ่อมอู่ภายนอก', cls: 'b-low' } : { label: 'กบค.ตีกลับ/ปฏิเสธ', cls: 'b-out' };
+        if (s === 1) return { label: 'ดำเนินการซ่อมโดยอู่', cls: 'b-low' };
+        return { label: 'ซ่อมเสร็จแล้วโดยอู่ — รอบันทึกปิดงาน', cls: 'b-low' };
       }
       if (j.phase === 'gclosed') return { label: 'ปิดงาน — ซ่อมโดยอู่', cls: 'b-ok' };
-      if (j.phase === 'slots') return { label: 'ซ่อมเสร็จ — รอผู้แจ้งเลือกวันนัดรับ', cls: 'b-brand' };
+      if (j.phase === 'slots') return { label: 'ซ่อมเสร็จ — รอผู้แจ้งเลือกวันนัดรับ', cls: 'b-low' };
       if (j.phase === 'quote') return { label: j.quote && j.quote.sent ? 'รอใบเสนอราคาจากอู่' : 'ส่งอู่ประเมินราคา', cls: 'b-low' };
-      if (j.phase === 'work' && !j.route) return { label: 'รับเรื่องแล้ว — รอเลือกวิธีซ่อม', cls: 'b-brand' };
-      if (j.phase === 'work' && j.route === 'self' && !j.partsOK) return { label: 'กำลังจัดรายการอะไหล่', cls: 'b-brand' };
+      if (j.phase === 'work' && !j.route) return { label: 'รับเรื่องแล้ว — รอเลือกวิธีซ่อม', cls: 'b-low' };
+      if (j.phase === 'work' && j.route === 'self' && !j.partsOK) return { label: 'กำลังจัดรายการอะไหล่', cls: 'b-low' };
       // ---- ขั้นนัดวันนำรถเข้าซ่อม (คนละเรื่องกับ 'slots' ซึ่งเป็นนัดรับรถตอนซ่อมเสร็จ) ----
       if (j.phase === 'work' && j.route === 'self' && !j.rappt) {
         if (j.rslots) return { label: 'รอผู้แจ้งเลือกวันเข้าซ่อม', cls: 'b-low' };
-        return { label: 'รอ กบค. นัดวันเข้าซ่อม', cls: 'b-brand' };
+        return { label: 'รอ กบค. นัดวันเข้าซ่อม', cls: 'b-low' };
       }
-      if (j.phase === 'work' && j.rappt && j.wi === 0) return { label: 'นัดเข้าซ่อม ' + j.rappt.date, cls: 'b-brand' };
+      if (j.phase === 'work' && j.rappt && j.wi === 0) return { label: 'นัดเข้าซ่อม ' + j.rappt.date, cls: 'b-low' };
       if (j.phase === 'work') {
-        if (j.loc === 'onsite') return { label: 'ซ่อมหน้างาน: ' + ONSITE_STEPS[j.wi], cls: j.wi === 2 ? 'b-ok' : 'b-brand' };
-        return { label: KBK_STEPS[j.wi], cls: j.wi === 4 ? 'b-ok' : 'b-brand' };
+        // รวม 'ซ่อมเสร็จ' (ขั้นสุดท้ายของทั้งสองแทร็ก) ด้วย — ซ่อมเสร็จแล้วยังต้องนัดรับรถ/ปิดงาน จึงยังไม่เขียว
+        if (j.loc === 'onsite') return { label: 'ซ่อมหน้างาน: ' + ONSITE_STEPS[j.wi], cls: 'b-low' };
+        return { label: KBK_STEPS[j.wi], cls: 'b-low' };
       }
-      if (j.phase === 'appt') return { label: 'นัดรับรถ ' + j.appt.date + ' ' + j.appt.time, cls: 'b-brand' };
-      if (j.phase === 'approve') return { label: 'รออนุมัติปิดงาน (ผู้บังคับบัญชา)', cls: 'b-brand' };
+      if (j.phase === 'appt') return { label: 'นัดรับรถ ' + j.appt.date + ' ' + j.appt.time, cls: 'b-low' };
+      if (j.phase === 'approve') return { label: 'รออนุมัติปิดงาน (ผู้บังคับบัญชา)', cls: 'b-low' };
       if (j.loc === 'onsite') return { label: 'ปิดงาน — ซ่อมหน้างานเสร็จ', cls: 'b-ok' };
       return { label: 'ปิดงาน — ตรวจสภาพผ่าน ส่งมอบแล้ว', cls: 'b-ok' };
     }
@@ -3334,6 +2989,19 @@ function goBackFromForm(){
         const st = i + 1 === S.step ? 'active' : i + 1 < S.step ? 'passed' : '';
         return `<div class="wstep ${st}"><span class="num">${i + 1 < S.step ? '<span class=\"ms\">check</span>' : i + 1}</span><span class="lbl">${WZ[k].label}</span></div>`;
       }).join('');
+      renderStepsMobile();
+    }
+    // มือถือใช้คอมโพเนนต์คนละตัวตามไลบรารี (`Mobile progress steps`) — วงแหวน + ขั้นปัจจุบัน + ขั้นถัดไป
+    function renderStepsMobile() {
+      const total = WORDER.length, cur = Math.min(S.step, total);
+      const next = WORDER[cur] ? WZ[WORDER[cur]].label : null;
+      $('wstepsM').innerHTML = `
+        <div class="wsm-head" onclick="document.getElementById('wstepsM').classList.toggle('open')">
+          <span class="wsm-ring" style="--p:${Math.round(cur / total * 100)}"><span>${cur}<i>/</i>${total}</span></span>
+          <span class="wsm-tx"><b>${esc(WZ[WORDER[cur - 1]].label)}</b>
+            ${next ? `<span class="wsm-next"><b>ถัดไป:</b> ${esc(next)}</span>` : ''}</span>
+          <span class="ms">keyboard_arrow_down</span>
+        </div>`;
     }
     function showStepSection(key) {   // แสดง section ของขั้นปัจจุบัน + render เนื้อหาตาม key
       ['s1', 's2', 'sinfo', 's3', 's4'].forEach(id => $(id).classList.add('hidden'));
@@ -3355,7 +3023,7 @@ function goBackFromForm(){
     function pickVehicle(id) {
       const isNew = !S.vehicle || S.vehicle.id !== id;
       S.vehicle = VEHICLES.find(v => v.id === id);
-      if (isNew) { S.target = S.vehicle.attach ? null : 'vehicle'; S.symptoms = []; S.bookings = {}; S.orders = {}; }
+      if (isNew) { S.target = S.vehicle.attach ? null : 'vehicle'; S.symptoms = []; S.bookings = {}; S.orders = {}; S.customParts = []; }
       renderVehicles();
       $('vinfo').classList.remove('hidden');
       renderVehicleInfo();
@@ -3394,19 +3062,19 @@ function goBackFromForm(){
       <fieldset class="vehicle-target" aria-describedby="vehicle-target-help">
         <legend class="vehicle-target-legend">จุดที่พบปัญหา <span class="vehicle-target-required">จำเป็น</span></legend>
         <div class="vehicle-target-help" id="vehicle-target-help">เลือกส่วนที่ต้องการแจ้งซ่อม ระบบจะกรองอาการและแนะนำอะไหล่ให้ตรงจุด</div>
-        <div class="vehicle-target-options">
-          ${opts.map(o => `<label class="vehicle-target-option ${S.target === o.key ? 'selected' : ''}">
+        <div class="radcards">
+          ${opts.map(o => `<label class="radcard ${S.target === o.key ? 'sel' : ''}">
             <input type="radio" name="target" value="${o.key}" ${S.target === o.key ? 'checked' : ''} required onchange="setTarget('${o.key}')">
-            <span class="vehicle-target-option-icon" aria-hidden="true"><span class="ms">${o.icon}</span></span>
-            <span class="vehicle-target-option-copy"><strong>${esc(o.name)}</strong><small>${o.help}</small></span>
-            <span class="ms vehicle-target-check" aria-hidden="true">${S.target === o.key ? 'check_circle' : 'radio_button_unchecked'}</span>
+            <span class="rdot"></span>
+            <span class="rc-ic" aria-hidden="true"><span class="ms">${o.icon}</span></span>
+            <span class="rc-tx"><b>${esc(o.name)}</b><small>${o.help}</small></span>
           </label>`).join('')}
         </div>
       </fieldset>
     </article>`;
     }
     function setTarget(k) {
-      if (S.target !== k) { S.target = k; S.symptoms = []; S.bookings = {}; S.orders = {}; }
+      if (S.target !== k) { S.target = k; S.symptoms = []; S.bookings = {}; S.orders = {}; S.customParts = []; }
       renderVehicleInfo();
     }
     function renderSymptoms() {
@@ -3416,7 +3084,7 @@ function goBackFromForm(){
       $('symcats').innerHTML = CATS.filter(c => scope.includes(c.for)).map(c => {
         const items = SYMPTOMS.filter(s => s.cat === c.key);
         return `<div class="cat"><span class="ms">${c.icon}</span>${c.name}</div>
-      <div class="chips pick">${items.map(s => `<div class="chip ${S.symptoms.includes(s.id) ? 'sel' : ''}" onclick="toggleSym('${s.id}')">${s.name}</div>`).join('')}</div>`;
+      <div class="chks">${items.map(s => `<label class="${S.symptoms.includes(s.id) ? 'sel' : ''}"><input type="checkbox" ${S.symptoms.includes(s.id) ? 'checked' : ''} onchange="toggleSym('${s.id}')"><span class="cbox" aria-hidden="true">check</span>${s.name}</label>`).join('')}</div>`;
       }).join('');
       $('othwrap').classList.toggle('hidden', !S.symptoms.includes('OTH'));
     }
@@ -3429,38 +3097,99 @@ function goBackFromForm(){
       renderSymptoms();
     }
     function partsFor() { return PARTS.filter(p => S.symptoms.includes(p.sym)) }
-    function renderParts() {
-      const list = partsFor();
-      if (!list.length) { $('parts').innerHTML = '<div class="empty">ยังไม่มีอะไหล่แนะนำ — อาการ "อื่นๆ" จะให้ช่าง กบค. ประเมินรายการอะไหล่ให้หลังรับเรื่อง</div>'; return }
-      $('parts').innerHTML = list.map(p => {
-        const bk = S.bookings[p.code], od = S.orders[p.code];
-        let act;
-        if (bk) {
-          act = `<div class="bk"><span class="booked"><span class="ms" style="font-size:18px">check_circle</span>เลือกไว้ ${bk} ${p.unit}</span>
-        <div class="qty"><button onclick="chgQty('${p.code}',-1)">−</button><span>${bk}</span><button onclick="chgQty('${p.code}',1)">+</button></div>
-        <button class="btn btn-g" style="padding:7px 10px;font-size:var(--fs-text-xs)" onclick="delete S.bookings['${p.code}'];renderParts()">ยกเลิก</button></div>`;
-        } else if (od) {
-          act = `<div class="bk"><span class="ordered"><span class="ms" style="font-size:18px">shopping_cart</span>เลือกไว้ ${od} ${p.unit} · ต้องสั่งซื้อ</span>
-        <div class="qty"><button onclick="chgOrd('${p.code}',-1)">−</button><span>${od}</span><button onclick="chgOrd('${p.code}',1)">+</button></div>
-        <button class="btn btn-g" style="padding:7px 10px;font-size:var(--fs-text-xs)" onclick="delete S.orders['${p.code}'];renderParts()">ยกเลิก</button></div>`;
-        } else if (p.stock > 0) {
-          act = `<div class="bk"><button class="btn btn-o" style="width:100%" onclick="book('${p.code}')"><span class="ms" style="font-size:18px">check_box</span> เลือกอะไหล่ (${Math.min(p.need, p.stock)} ${p.unit})</button></div>`;
-        } else {
-          act = `<div class="bk"><button class="btn btn-o" style="width:100%" onclick="order('${p.code}')"><span class="ms" style="font-size:18px">add_shopping_cart</span> เลือกไว้ (${p.need} ${p.unit}) — ของหมด ต้องสั่งซื้อ</button></div>`;
-        }
-        return `<div class="part">
-      <div class="top"><div class="pic"><span class="ms">${p.icon}</span></div>
-        <div style="flex:1"><b>${p.name}</b><div class="code">${p.code} · ${SYMPTOMS.find(s => s.id === p.sym).name}</div>
-        <div class="need">ต้องใช้ ${p.need} ${p.unit}/ครั้ง</div></div>
-        <div>${badge(p)}</div></div>
-      <div class="stock"><span><span class="ms" style="font-size:16px">warehouse</span> ${p.wh}</span><span>อัปเดต 17 ก.ค. 09:30</span></div>
-      ${act}</div>`;
-      }).join('');
+function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart Inventory ก่อน ไม่มีค่อยดูคลังสำรอง (กติกาเดียวกับ design-mock)
+    function srcOf(p) { return p.stock ? 'Smart Inventory' : p.stockAlt ? 'คลังสำรอง' : 'ไม่มีในคลัง' }
+    function pickQty(code) { return (S.bookings[code] || 0) + (S.orders[code] || 0) }
+    // จำนวนที่เลือกเก็บเป็นก้อนเดียว แล้วแตกเป็น "เบิกจากคลัง" กับ "ต้องจัดซื้อ" ให้เอง
+    // (คงโครง S.bookings/S.orders ไว้เพราะ summary · submit · หน้า กบค. ใช้ต่อ)
+    function setPickQty(code, q) {
+      const p = PARTS.find(x => x.code === code); if (!p) return;
+      if (q <= 0) { delete S.bookings[code]; delete S.orders[code]; renderPartsAll(); return }
+      const bk = Math.min(q, onHandOf(p)), od = q - bk;
+      if (bk) S.bookings[code] = bk; else delete S.bookings[code];
+      if (od) S.orders[code] = od; else delete S.orders[code];
+      renderPartsAll();
     }
-    function book(code) { const p = PARTS.find(x => x.code === code); S.bookings[code] = Math.min(p.need, p.stock); toast('จอง ' + p.name + ' แล้ว (mock — ยังไม่ตัดสต็อกจริง)'); renderParts() }
-    function order(code) { const p = PARTS.find(x => x.code === code); S.orders[code] = p.need; toast('เลือก ' + p.name + ' ไว้แล้ว (ของหมด — ต้องสั่งซื้อ)'); renderParts() }
-    function chgQty(code, d) { const p = PARTS.find(x => x.code === code); const v = (S.bookings[code] || 1) + d; if (v < 1) return; if (v > p.stock) { toast('เกินจำนวนคงเหลือในคลัง (' + p.stock + ')'); return } S.bookings[code] = v; renderParts() }
-    function chgOrd(code, d) { const v = (S.orders[code] || 1) + d; if (v < 1) return; S.orders[code] = v; renderParts() }
+    function addPart(code) { const p = PARTS.find(x => x.code === code); setPickQty(code, pickQty(code) + 1); toast('เพิ่ม ' + p.name + ' แล้ว') }
+    function chgPick(code, d) { setPickQty(code, pickQty(code) + d) }
+    function delPick(code) { setPickQty(code, 0); toast('เอาออกจากรายการแล้ว') }
+    // อะไหล่นอกระบบที่ผู้แจ้งพิมพ์เอง — ไม่มีในคลังเสมอ จึงนับเป็น "ต้องจัดซื้อ" ทั้งจำนวน
+    function addCustomPart() { S.customParts.push({ id: 'C' + (++S.customSeq), name: '', unit: 'ชิ้น', price: 0, qty: 1 }); renderPickedPane() }
+    function setCustom(id, field, val) {
+      const c = S.customParts.find(x => x.id === id); if (!c) return;
+      c[field] = (field === 'name' || field === 'unit' || field === 'code') ? val : (+val || 0);
+      if (field !== 'name' && field !== 'code') renderPickedPane();
+      renderSummary();
+    }
+    function chgCustom(id, d) {
+      const c = S.customParts.find(x => x.id === id); if (!c) return;
+      c.qty = Math.max(1, (c.qty || 1) + d); renderPickedPane(); renderSummary();
+    }
+    function delCustom(id) { S.customParts = S.customParts.filter(x => x.id !== id); renderPickedPane(); renderSummary() }
+
+    function renderPartsAll() { renderStockPane(); renderPickedPane(); renderSummary() }
+    function renderParts() { renderPartsAll() }   // ชื่อเดิมที่ nav() เรียก
+
+    // ---- คอลัมน์ซ้าย: คลังอะไหล่ทั้งหมด (ตัวที่ตรงอาการติดป้าย "แนะนำ") ----
+    function renderStockPane() {
+      const q = ($('pq').value || '').trim().toLowerCase();
+      const rec = partsFor().map(p => p.code);
+      const list = PARTS.filter(p => !q || p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q))
+        .sort((x, y) => (rec.includes(y.code) ? 1 : 0) - (rec.includes(x.code) ? 1 : 0));
+      $('parts-stock').innerHTML = list.length
+        ? `<div class="parts-stock-list">${list.map(p => `
+          <div class="parts-stock-item">
+            <div><b>${esc(p.name)}${rec.includes(p.code) ? ' <span class="badge b-info">แนะนำ</span>' : ''}</b>
+              <div class="parts-line">${esc(p.code)} · ${baht(p.price)} บาท/${esc(p.unit)}</div>
+              <div class="parts-source"><b>${srcOf(p)}</b>${onHandOf(p) ? ` : มีในคลัง ${onHandOf(p)} ${esc(p.unit)}` : ' — ต้องสั่งซื้อภายนอก'}</div></div>
+            <button type="button" class="btn" title="เพิ่มเข้ารายการ" onclick="addPart('${p.code}')"><span class="ms">add</span></button>
+          </div>`).join('')}</div>`
+        : `<div class="parts-empty"><b>ไม่พบรายการ</b><span>ลองค้นด้วยชื่อหรือรหัสอะไหล่อื่น</span></div>`;
+    }
+
+    // ---- คอลัมน์ขวา: อะไหล่ที่เลือกไว้ + อะไหล่ที่พิมพ์เอง + ยอดรวม ----
+    function renderPickedPane() {
+      const codes = PARTS.filter(p => pickQty(p.code) > 0).map(p => p.code);
+      const rows = codes.map(code => {
+        const p = PARTS.find(x => x.code === code), qty = pickQty(code), buy = Math.max(0, qty - onHandOf(p));
+        return `<div class="parts-picked-item">
+          <div><b>${esc(p.name)}</b>
+            <div class="parts-line">${esc(p.code)} · ${baht(p.price)} บาท/${esc(p.unit)}</div>
+            <div class="parts-source"><b>${srcOf(p)}</b>${buy ? ` · ต้องจัดซื้อ ${buy} ${esc(p.unit)}` : ''}</div></div>
+          <div class="parts-picked-actions">
+            <button type="button" class="btn btn-t btn-sm" title="เอาออกจากรายการ" onclick="delPick('${p.code}')"><span class="ms">delete</span></button>
+            <span class="parts-price">${baht(p.price * qty)} บาท</span>
+            <div class="qty"><button type="button" onclick="chgPick('${p.code}',-1)">−</button><span>${qty}</span><button type="button" onclick="chgPick('${p.code}',1)">+</button></div>
+          </div></div>`;
+      });
+      // แถวอะไหล่นอกระบบ — ชุดช่องเดียวกับ design-mock/kbk-self-repair-parts.html (ชื่อ · รหัส(ถ้ามี) · ราคาต่อชิ้น)
+      const customRows = S.customParts.map(c => `<div class="parts-picked-item">
+        <div class="parts-manual-grid">
+          <div class="f wide"><label>ชื่ออะไหล่</label><input type="text" placeholder="ระบุชื่ออะไหล่" value="${esc(c.name)}" oninput="setCustom('${c.id}','name',this.value)"></div>
+          <div class="f"><label>รหัสอะไหล่ <small>(ถ้ามี)</small></label><input type="text" placeholder="ระบุรหัสอะไหล่" value="${esc(c.code || '')}" oninput="setCustom('${c.id}','code',this.value)"></div>
+          <div class="f"><label>ราคาอะไหล่ต่อชิ้น <small>(ถ้ามี)</small></label><input type="number" min="0" placeholder="ระบุราคาอะไหล่ต่อชิ้น" value="${c.price || ''}" onchange="setCustom('${c.id}','price',this.value)"></div>
+        </div>
+        <div class="parts-picked-actions">
+          <button type="button" class="btn btn-t btn-sm" title="เอาออกจากรายการ" onclick="delCustom('${c.id}')"><span class="ms">delete</span></button>
+          <span class="parts-price">${baht((c.price || 0) * (c.qty || 0))} บาท</span>
+          <div class="qty"><button type="button" onclick="chgCustom('${c.id}',-1)">−</button><span>${c.qty}</span><button type="button" onclick="chgCustom('${c.id}',1)">+</button></div>
+        </div></div>`);
+      const all = rows.concat(customRows);
+      const host = $('parts-picked');
+      host.className = 'parts-picked-list' + (all.length ? ' has-items' : '');
+      host.innerHTML = all.length ? all.join('')
+        : `<div class="parts-empty"><b>ยังไม่ได้เลือกอะไหล่</b><span>กด + จากคลังอะไหล่ทางซ้าย หรือกด “ระบุอะไหล่เพิ่มเติม”</span></div>`;
+      let stockCost = 0, buyCost = 0;
+      codes.forEach(code => {
+        const p = PARTS.find(x => x.code === code), qty = pickQty(code);
+        stockCost += Math.min(qty, onHandOf(p)) * p.price;
+        buyCost += Math.max(0, qty - onHandOf(p)) * p.price;
+      });
+      S.customParts.forEach(c => { buyCost += (c.qty || 0) * (c.price || 0) });
+      $('p-sum-stock').textContent = baht(stockCost) + ' บาท';
+      $('p-sum-buy').textContent = baht(buyCost) + ' บาท';
+      $('p-sum-all').textContent = baht(stockCost + buyCost) + ' บาท';
+    }
 
     // ---------- ขั้น "ข้อมูลติดต่อ · สถานที่ · งบ" ----------
     const AREAS = MDC.data('areas');
@@ -3498,9 +3227,9 @@ function goBackFromForm(){
     }
     function renderCostTypes(){
       $('i-costtypes').innerHTML=COST_TYPES.map(c=>`
-        <label class="ctopt ${S.costType===c.code?'sel':''}" onclick="setCostType('${c.code}')">
-          <span class="dot"></span>
-          <span class="ct-tx"><b>${esc(c.name)}</b>
+        <label class="radcard ${S.costType===c.code?'sel':''}" onclick="setCostType('${c.code}')">
+          <span class="rdot"></span>
+          <span class="rc-tx"><b>${esc(c.name)}</b>
             <small>ต้องระบุ: ${c.fields.map(f=>COST_FIELD[f].label).join(' · ')}${c.req==='any'?' (อย่างน้อย 1)':''}</small></span>
         </label>`).join('');
       const ct=COST_TYPES.find(c=>c.code===S.costType);
@@ -3554,9 +3283,20 @@ function goBackFromForm(){
     }
 
     // radio คุม state เลือกเองแล้ว (checked) เหลือแค่เปิด/ปิดกล่องรายละเอียดของแต่ละทาง
-    function setDecision(d) { S.decision = d; $('selfx').classList.toggle('hidden', d !== 'self'); $('kryx').classList.toggle('hidden', d !== 'kry'); renderSummary() }
+    function setDecision(d) {
+      S.decision = d;
+      $('dc-self').classList.toggle('sel', d === 'self');
+      $('dc-kry').classList.toggle('sel', d === 'kry');
+      $('selfx').classList.toggle('hidden', d !== 'self');
+      $('kryx').classList.toggle('hidden', d !== 'kry');
+      renderSummary();
+    }
     function bookedArr() { return Object.entries(S.bookings).map(([c, q]) => { const p = PARTS.find(x => x.code === c); return { name: p.name, qty: q, unit: p.unit } }) }
-    function orderedArr() { return Object.entries(S.orders).map(([c, q]) => { const p = PARTS.find(x => x.code === c); return { name: p.name, qty: q, unit: p.unit } }) }
+    function orderedArr() {
+      return Object.entries(S.orders).map(([c, q]) => { const p = PARTS.find(x => x.code === c); return { name: p.name, qty: q, unit: p.unit } })
+        // อะไหล่ที่ผู้แจ้งพิมพ์เอง = ไม่มีในคลัง ⇒ นับรวมเป็นรายการต้องจัดซื้อ
+        .concat(S.customParts.filter(c => (c.name || '').trim()).map(c => ({ name: c.name.trim() + ' (ระบุเอง)', qty: c.qty, unit: c.unit })));
+    }
     function renderSummary() {
       if (!S.vehicle) { $('summary').innerHTML = '<div class="hint" style="padding:10px 0">ยังไม่ได้เลือกรถ — กลับไปขั้น "เลือกรถ" ก่อนส่งเรื่อง</div>'; return }
       const bk = bookedArr().map(x => `${x.name} ×${x.qty}`), od = orderedArr().map(x => `${x.name} ×${x.qty}`);
@@ -3624,8 +3364,12 @@ function goBackFromForm(){
         if (ct.req === 'any' && !ct.fields.some(f => (S.costVals[f] || '').trim())) {
           toast('กรุณาระบุ ' + ct.fields.map(f => COST_FIELD[f].label).join(' หรือ ') + ' อย่างน้อย 1 ช่อง'); return false }
       }
-      if (key === 'decision') {
+      // การตัดสินใจย้ายมาอยู่หัวขั้น "อะไหล่" แล้ว (1 ก.ย. 2569) การตรวจจึงย้ายตามมา
+      if (key === 'parts') {
         if (!S.decision) { toast('กรุณาเลือก ซ่อมเอง หรือ ส่งเรื่องให้ กรย.'); return false }
+      }
+      if (key === 'decision') {
+        if (!S.decision) { toast('กรุณาเลือก ซ่อมเอง หรือ ส่งเรื่องให้ กรย. ที่ขั้นอะไหล่'); return false }
         if (!S.approver) { toast('กรุณาเลือกผู้อนุมัติใบแจ้งซ่อมก่อนส่งเรื่อง'); return false }
       }
       return true;
@@ -3664,7 +3408,7 @@ function goBackFromForm(){
       renderSteps();
     }
     function resetForm() {
-      Object.assign(S, { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, decision: null, approver: null, usable: null, costType: null, costVals: {} });
+      Object.assign(S, { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, customParts: [], customSeq: 0, decision: null, approver: null, usable: null, costType: null, costVals: {} });
       ['i-prov','i-amp','i-odo','i-crane','i-own','i-owntel','i-tech','i-techtel','i-drv','i-drvtel'].forEach(id => { const e = $(id); if (e) e.value = '' });
       renderUsable(); renderCostTypes();
       ['vq', 'desc', 'othtext', 'selfnote', 'kryreason', 'apq'].forEach(id => $(id).value = '');
@@ -3753,9 +3497,9 @@ function goBackFromForm(){
 // ลิสต์ทั้งสาม (ของฉัน / คัดแยก กรย. / คิวงาน กบค.) เป็นงานชนิดเดียวกัน จึงใช้คอลัมน์ชุดเดียวกัน
 // ต่างกันแค่ชุดงานที่กรองเข้ามา กับปลายทางตอนกดแถว — ไม่มีการกางรายละเอียดในลิสต์แล้ว
 // คอลัมน์ที่รูปมีแต่เราไม่มีข้อมูลรองรับ ("สถานะรถทดแทน" + เลข RAM/RPL) ตัดออกตามกติกา no-data-no-ui
-const LIST_UI={my:{sort:'date',dir:'desc',page:1,size:10},kry:{sort:'date',dir:'desc',page:1,size:10},kbk:{sort:'date',dir:'desc',page:1,size:10}};
+const LIST_UI={my:{sort:'date',dir:'desc',page:1,size:10},boss:{sort:'date',dir:'desc',page:1,size:10},kry:{sort:'date',dir:'desc',page:1,size:10},kbk:{sort:'date',dir:'desc',page:1,size:10}};
 // เรียกกลับไปหาตัวเรนเดอร์ของแต่ละลิสต์ตอนกดเรียง/เปลี่ยนหน้า — ห่อ arrow ไว้กันปัญหาลำดับการประกาศ
-const LIST_RENDER={my:()=>renderMyList(),kry:()=>renderKryList(),kbk:()=>renderKbkList()};
+const LIST_RENDER={my:()=>renderMyList(),boss:()=>renderBossList(),kry:()=>renderKryList(),kbk:()=>renderKbkList()};
 const TH_MONTHS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 // วันที่แจ้ง = รายการแรกของ history · '16 ก.ค. 2569 14:20' → 256907161420 (พ.ศ. เรียงตรงๆ ได้ ไม่ต้องผ่าน Date)
 function reportedKey(j){
@@ -3830,6 +3574,38 @@ function tblFoot(key,total,from,to,pages){
   </div>`;
 }
 // ตัวเรนเดอร์กลาง — jobs = งานที่กรองตามบทบาทมาแล้ว · opts.open = ฟังก์ชันเปิดรายละเอียด
+// ================= คอลัมน์ชุด "จัดการงานซ่อม" (อิง Figma Repair & Maintain / A1.1) =================
+// ทั้ง 3 ตัวนี้ derive จากข้อมูลที่ JOBS มีอยู่แล้ว — ไม่ได้เพิ่มฟิลด์ mock ใหม่
+// (กติกาเจ้าของงาน: ไม่มีข้อมูลจริง = ไม่ต้องมีใน UI)
+
+// ประเภทยานพาหนะ — แยกจาก model ที่เก็บรูปแบบ "<ตัวรถ> + <อุปกรณ์ต่อพ่วง>"
+// บรรทัดบน = ประเภทตามที่ Figma ใช้ · บรรทัดล่าง = รุ่นอุปกรณ์
+function vehCategory(j){
+  const parts=(j.model||'').split(' + ');
+  const base=parts[0]||'', at=parts[1]||'';
+  if(at.startsWith('กระเช้า')) return {name:'รถกระเช้าฉนวนกันไฟฟ้า', sub:at.replace(/^กระเช้า\s*/,'')||base};
+  if(at.startsWith('เครน'))    return {name:'รถบรรทุกติดเครนไฮดรอลิก', sub:at.replace(/^เครน\s*/,'')||base};
+  return {name:base||'—', sub:''};
+}
+
+// ผู้ดำเนินการ — "ตอนนี้ลูกอยู่ในมือใคร" คิดจาก phase ไม่ใช่ฟิลด์แยก
+function actorOf(j){
+  const p=j.phase;
+  if(p==='wait'||p==='reject') return {name:(j.approver&&j.approver.name)||'หัวหน้าหน่วยงาน', sub:'หน่วยงานผู้แจ้ง'};
+  if(p==='kry'||p==='krd')     return {name:j.fromUnit||'กรย.', sub:'กรย.'};
+  if(p==='self')               return {name:(j.owner&&j.owner.name)||'หน่วยงานผู้แจ้ง', sub:'หน่วยงานผู้แจ้ง'};
+  if(p==='returned'||p==='gclosed') return {name:'อู่ภายนอก', sub:'ผู้รับจ้างซ่อม'};
+  return {name:'กบค.', sub:'กองบำรุงรักษาเครื่องกล'};   // pending · quote · work · slots · appt · approve · closed
+}
+
+// วันที่อัพเดตสถานะล่าสุด = รายการ "ท้ายสุด" ของ history (ต่างจาก reportedParts ที่เป็นรายการแรก = วันที่แจ้ง)
+function updatedParts(j){
+  const h=j.history||[], t=h.length?h[h.length-1].t:'';
+  const m=t.match(/^(\d+)\s+(\S+)\s+(\d{4})\s+(\d{1,2}):(\d{2})$/);
+  if(!m)return{d:t||'—',tm:''};
+  return{d:`${m[1].padStart(2,'0')}/${String(TH_MONTHS.indexOf(m[2])+1).padStart(2,'0')}/${m[3]}`,tm:`${m[4].padStart(2,'0')}:${m[5]}`};
+}
+
 function renderJobList(key,jobs,opts){
   const host=$(opts.host);host.classList.remove('hidden');
   const ui=LIST_UI[key];
@@ -3848,7 +3624,50 @@ function renderJobList(key,jobs,opts){
   const total=jobs.length,pages=Math.max(1,Math.ceil(total/ui.size));
   if(ui.page>pages)ui.page=pages;
   const from=(ui.page-1)*ui.size,rows=jobs.slice(from,from+ui.size);
-  host.innerHTML=`<div class="tblwrap"><table class="tbl striped">
+  // สองชุดคอลัมน์: 'incident' = ชุดที่อิง Figma หน้า Repair & Maintain (A1.1)
+  //                ค่าเริ่มต้น    = ชุดเดิมที่หน้า กรย./คิว กบค. ยังใช้อยู่
+  host.innerHTML=(opts.cols==='incident'?incidentTable(key,rows,opts):legacyTable(key,rows,opts))
+    +tblFoot(key,total,from+1,from+rows.length,pages);
+}
+
+// ---- ชุดคอลัมน์ตาม Figma: Repair & Maintain / A1.1 Incident list ----
+// จุดที่ต่างจากชุดเดิมและตั้งใจให้ต่าง:
+//   · "สถานะรถ" เป็น .cell-state (ข้อความสีล้วน) ไม่ใช่ .badge — ตามดีไซน์
+//   · "สถานะเหตุการณ์" ยังเป็น .badge pill เพราะมีหลายค่า
+//   · วันที่มี 2 คอลัมน์คนละความหมาย: วันที่แจ้ง (แรกสุด) กับ วันที่อัพเดตสถานะ (ล่าสุด)
+function incidentTable(key,rows,opts){
+  return `<div class="tblwrap"><table class="tbl striped">
+    <thead><tr>
+      ${sortTh(key,'no','หมายเลขเหตุการณ์')}
+      ${sortTh(key,'date','วันที่แจ้ง')}
+      <th>เลขทะเบียน</th>
+      <th>ประเภทยานพาหนะ</th>
+      <th>สถานะรถ</th>
+      <th>สถานะเหตุการณ์</th>
+      <th>วันที่อัพเดตสถานะฯ</th>
+      <th>ผู้ดำเนินการ</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${rows.map(j=>{
+      const st=statusInfo(j),d=reportedParts(j),u=updatedParts(j);
+      const cat=vehCategory(j),ac=actorOf(j),ok=vehUsable(j);
+      return `<tr>
+        <td><div class="cell-key">${esc(j.no)}</div></td>
+        <td><div>${esc(d.d)}</div><div class="cell-sub">${esc(d.tm)}</div></td>
+        <td><div class="cell-clip" title="${esc(j.plate)}">${esc(j.plate)}</div></td>
+        <td><div class="cell-clip" title="${esc(cat.name)}">${esc(cat.name)}</div>${cat.sub?`<div class="cell-sub cell-clip" title="${esc(cat.sub)}">${esc(cat.sub)}</div>`:''}</td>
+        <td><span class="cell-state ${ok?'ok':'no'}">${ok?'ใช้งานได้':'ใช้งานไม่ได้'}</span></td>
+        <td><span class="badge ${st.cls}">${esc(st.label)}</span></td>
+        <td><div>${esc(u.d)}</div><div class="cell-sub">${esc(u.tm)}</div></td>
+        <td><div class="cell-clip" title="${esc(ac.name)}">${esc(ac.name)}</div>${ac.sub?`<div class="cell-sub cell-clip" title="${esc(ac.sub)}">${esc(ac.sub)}</div>`:''}</td>
+        <td><div class="dt-action"><button class="btn" title="ดูรายละเอียด" onclick="${opts.open}('${j.no}')"><span class="ms">quick_reference_all</span></button></div></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function legacyTable(key,rows,opts){
+  return `<div class="tblwrap"><table class="tbl striped">
     <thead><tr>
       ${sortTh(key,'no','เลขที่ใบแจ้งซ่อม')}
       <th>ยานพาหนะ</th><th>สังกัดยานพาหนะ</th>
@@ -3869,7 +3688,7 @@ function renderJobList(key,jobs,opts){
         <td><div class="dt-action"><button class="btn" title="ดูรายละเอียด" onclick="${opts.open}('${j.no}')"><span class="ms">quick_reference_all</span></button></div></td>
       </tr>`;
     }).join('')}</tbody>
-  </table></div>`+tblFoot(key,total,from+1,from+rows.length,pages);
+  </table></div>`;
 }
 
 // ================= VIEW: เรื่องของฉัน =================
@@ -3878,7 +3697,7 @@ function renderMyList(){
   R.jobNo=null;
   const phases=MY_STATUS_PHASES[$('my-status-filter').value];
   renderJobList('my',phases?JOBS.filter(j=>phases.includes(j.phase)):JOBS,
-    {host:'mylist',open:'openMy',empty:'ยังไม่มีเรื่องแจ้งซ่อม'});
+    {host:'mylist',open:'openMy',empty:'ยังไม่มีเรื่องแจ้งซ่อม',cols:'incident'});
 }
 let R={jobNo:null,photos:0,urls:[],returns:{},pc:'',lc:'',det:'',pick:null,docs:{invoice:false,contractor:false},rdate:''};
 // รายละเอียดเป็นหน้าเต็มแล้ว (view-mydet) — เดิมเป็น accordion กางในลิสต์
@@ -4254,10 +4073,10 @@ function renderKryDetail(no){
   let action='';
   if(j.phase==='kry'){
     action=`<div class="sect" style="margin-top:24px">คัดแยกช่องทางซ่อม — กรย.</div>
-    <div class="decide kry-route-options">
-      <div class="tile tile-blue ${KE.mode === 'garage' ? 'sel' : ''}" onclick="KE.mode='garage';renderKryDetail('${no}')"><span class="ms">garage</span><b>ซ่อมที่อู่</b><small>เจ้าของรถขับไปอู่ภายนอก</small></div>
-      <div class="tile tile-magenta ${KE.mode === 'self' ? 'sel' : ''}" onclick="KE.mode='self';renderKryDetail('${no}')"><span class="ms">handyman</span><b>กรย. ซ่อมเอง</b><small>เบิกอะไหล่จากคลัง ซ่อมที่ กรย.</small></div>
-      <div class="tile tile-blue ${KE.mode === 'kbk' ? 'sel' : ''}" onclick="KE.mode='kbk';renderKryDetail('${no}')"><span class="ms">engineering</span><b>ส่งต่อ กบค.</b><small>งานเครื่องเสริม เช่น เครน/กระเช้า</small></div>
+    <div class="radcards cols-3">
+      <label class="radcard ${KE.mode === 'garage' ? 'sel' : ''}" onclick="KE.mode='garage';renderKryDetail('${no}')"><span class="rdot"></span><span class="rc-tx"><b>ซ่อมที่อู่</b><small>เจ้าของรถขับไปอู่ภายนอก</small></span></label>
+      <label class="radcard ${KE.mode === 'self' ? 'sel' : ''}" onclick="KE.mode='self';renderKryDetail('${no}')"><span class="rdot"></span><span class="rc-tx"><b>กรย. ซ่อมเอง</b><small>เบิกอะไหล่จากคลัง ซ่อมที่ กรย.</small></span></label>
+      <label class="radcard ${KE.mode === 'kbk' ? 'sel' : ''}" onclick="KE.mode='kbk';renderKryDetail('${no}')"><span class="rdot"></span><span class="rc-tx"><b>ส่งต่อ กบค.</b><small>งานเครื่องเสริม เช่น เครน/กระเช้า</small></span></label>
     </div>`;
         if (KE.mode === 'garage') {
           action += `<div class="panel">
@@ -5061,18 +4880,15 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
 
     // ================= VIEW: อนุมัติปิดงาน (ผู้บังคับบัญชา) =================
     // ================= VIEW: อนุมัติใบแจ้งซ่อม (หัวหน้าผู้แจ้ง) =================
+    // หน้านี้เห็นเฉพาะใบที่ค้างอยู่ที่หัวหน้า (wait = รออนุมัติ · reject = ตีกลับแล้วรอผู้แจ้งแก้)
+    const BOSS_STATUS_PHASES = { wait: ['wait'], reject: ['reject'] };
     function renderBossList() {
-      $('bossdetail').classList.add('hidden'); $('bosslist').classList.remove('hidden');
-      const list = JOBS.filter(j => ['wait', 'reject'].includes(j.phase));
-      if (!list.length) { $('bosslist').innerHTML = '<div class="empty">ไม่มีใบแจ้งซ่อมรออนุมัติ — ลองสร้างใบใหม่จากเมนู “แจ้งซ่อม”</div>'; return }
-      $('bosslist').innerHTML = list.map(j => {
-        const st = statusInfo(j);
-        return `<div class="job" onclick="openBoss('${j.no}')">
-      <span class="ms" style="color:var(--primary-600)">how_to_reg</span>
-      <div class="sp"><div class="no">${j.no}</div><div class="meta">${esc(j.org)} · ${esc(j.plate)} · ขออนุมัติถึง ${esc(j.approver.name)}</div></div>
-      <span class="badge ${st.cls}">${st.label}</span>
-      <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
-      }).join('');
+      $('bossdetail').classList.add('hidden');
+      $('bosstools').classList.remove('hidden');
+      const phases = BOSS_STATUS_PHASES[$('boss-status-filter').value];
+      const list = JOBS.filter(j => ['wait', 'reject'].includes(j.phase) && (!phases || phases.includes(j.phase)));
+      renderJobList('boss', list,
+        { host: 'bosslist', open: 'openBoss', empty: 'ไม่มีใบแจ้งซ่อมรออนุมัติ — ลองสร้างใบใหม่จากเมนู “แจ้งซ่อม”', cols: 'incident' });
     }
     function openBoss(no) { renderBossDetail(no) }
     function renderBossDetail(no) {
@@ -5095,6 +4911,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
         action = `<div class="apptbox"><span class="ms" style="color:var(--error-600)">cancel</span> <b>ไม่อนุมัติ — ตีกลับให้ผู้แจ้งแก้ไข</b>${j.rejectReason ? '<br>เหตุผล: ' + esc(j.rejectReason) : ''}</div>${apbox}`;
       }
       $('bosslist').classList.add('hidden');
+      $('bosstools').classList.add('hidden');   // ซ่อนแถบค้นหา/ตัวกรองพร้อมลิสต์ (รายละเอียดกางในวิวเดียวกัน)
       $('bossdetail').classList.remove('hidden');
       $('bossdetail').innerHTML = `
     <div class="job" style="cursor:default"><span class="ms" style="color:var(--primary-600)">how_to_reg</span>
@@ -5250,5 +5067,3 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
     window.addEventListener('hashchange', () => { const v = hashView(); if (v && v !== VIEW && menuOn(v)) switchView(v); });
   </script>
 </body>
-
-</html>

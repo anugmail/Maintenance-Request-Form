@@ -31,8 +31,8 @@ const WIZARD_DEFAULT=[
   {key:'vehicle', label:'เลือกรถ',         heading:'ข้อมูลรถ',            on:true},
   {key:'symptom', label:'อาการเสีย',       heading:'อาการเสีย',          on:true},
   {key:'info',    label:'ข้อมูลติดต่อ/งบ',  heading:'ข้อมูลติดต่อ · สถานที่ · งบ', on:true},
-  {key:'parts',   label:'อะไหล่ที่แนะนำ',   heading:'อะไหล่ที่ระบบแนะนำ',  on:true},
-  {key:'decision',label:'ตัดสินใจและสรุป',  heading:'การตัดสินใจ',        on:true}
+  {key:'parts',   label:'ตัดสินใจ + อะไหล่', heading:'การตัดสินใจ',         on:true},
+  {key:'decision',label:'สรุปและผู้อนุมัติ', heading:'ผู้อนุมัติใบแจ้งซ่อม', on:true}
 ];
 const KBK_STEPS_DEFAULT=['รับเรื่องซ่อม','จัดหาอะไหล่','อะไหล่พร้อม','ดำเนินการซ่อม','ซ่อมเสร็จ'];
 

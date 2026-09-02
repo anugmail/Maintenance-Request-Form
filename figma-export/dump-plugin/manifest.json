@@ -1,0 +1,14 @@
+{
+  "name": "VMS Plus — ดัมป์ทั้งไฟล์ (ทุกหน้า ทุกโหนด)",
+  "id": "1471820935506372003",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "devAllowedDomains": ["http://localhost:8124"],
+    "reasoning": "ส่งค่าดีไซน์ที่อ่านจากไฟล์กลับมาเขียนลงเครื่องผ่าน serve.js — ไม่ต่อออกอินเทอร์เน็ต"
+  }
+}

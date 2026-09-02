@@ -110,10 +110,10 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
    · มีเงา shadow-xs — ของเดิมคุมความสูงด้วย padding แนวตั้ง (9/13) gap 4 lh 20 และไม่มีเงา */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;
-  gap:var(--space-2);
+  gap:var(--space-1);   /* ไลบรารีใหม่ Button: gap 4 */
   border:1px solid transparent;
   border-radius:var(--rounded-md);
-  height:40px;padding:0 var(--space-4);
+  height:40px;padding:0 var(--space-3);   /* ไลบรารีใหม่: md h40 · pad ซ้ายขวา 12 */
   font:inherit;font-weight:var(--font-weight-semibold);
   font-size:var(--fs-text-sm);line-height:14px;
   letter-spacing:var(--letter-spacing-normal);
@@ -126,8 +126,8 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 /* ---- Size ---- sm วัดจาก pagination ของจริง (h39 pad 0/12 — ปัดเป็น 36 ตามสเกลเดิมของเรา)
    lg/xl ไม่มีของเทียบใน runtime → คงระยะแนวนอนเดิมไว้ แค่เปลี่ยนมาคุมความสูงตรงๆ  */
 .btn-sm{height:36px;padding:0 var(--space-3)}
-.btn-md{height:40px;padding:0 var(--space-4)}
-.btn-lg{height:44px;padding:0 15px;font-size:var(--fs-text-md);line-height:var(--lh-text-md)}
+.btn-md{height:40px;padding:0 var(--space-3)}
+.btn-lg{height:48px;padding:0 var(--space-3);font-size:var(--fs-text-md);line-height:var(--lh-text-md)}   /* ไลบรารีใหม่: lg h48 · ตัวอักษร 16/SemiBold */
 .btn-xl{height:48px;padding:0 17px;font-size:var(--fs-text-md);line-height:var(--lh-text-md)}
 
 /* ---- Hierarchy: Primary ---- */
@@ -136,11 +136,11 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 
 /* ---- Hierarchy: Secondary (พื้นขาว ขอบเทา) ---- */
 .btn-s{background:var(--color-bg-primary);border-color:var(--btn-secondary-border);color:var(--btn-secondary-text)}
-.btn-s:hover{background:var(--color-bg-primary-hover);color:var(--color-text-secondary-hover)}
+.btn-s:hover{background:var(--gray-200);color:var(--color-text-secondary-hover)}   /* ไลบรารีใหม่ Secondary hover = พื้น #EAECF0 ขอบคงเดิม */
 
 /* ---- Hierarchy: Tertiary — ✅ ของจริงไม่มีทั้งขอบและเงา ---- */
 .btn-t{background:transparent;border-color:transparent;box-shadow:none;color:var(--btn-tertiary-text)}
-.btn-t:hover{background:var(--color-bg-primary-hover);color:var(--color-text-tertiary-hover)}
+.btn-t:hover{background:var(--gray-100);color:var(--color-text-tertiary-hover)}   /* ไลบรารีใหม่ Tertiary hover = พื้น #F2F4F7 */
 /* tertiary สีแบรนด์ / สีอันตราย — ระบบจริงมี เราเพิ่งเพิ่ม */
 .btn-tb{background:transparent;border-color:transparent;box-shadow:none;color:var(--btn-tertiary-brand-text)}
 .btn-tb:hover{background:var(--badge-brand-bg)}
@@ -219,9 +219,36 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
   border:1px solid var(--gray-300);border-radius:4px;background:#fff;color:transparent;
   transition:background-color .15s ease,border-color .15s ease,color .15s ease;
 }
-.chips.pick>.chip:hover::before{border-color:var(--gray-400)}
 .chips.pick>.chip.sel{background:#fff;border-color:var(--gray-300);color:var(--gray-700)}
 .chips.pick>.chip.sel::before{background:var(--primary-600);border-color:var(--primary-600);color:#fff}
+/* state ของกล่องติ๊ก — ยกตามไลบรารี `_Tag checkbox` (node 1:1378 · 24 variant Checked×Size×State) 1 ก.ย. 2569
+   · ยังไม่ติ๊ก + hover → ขอบ "คงเดิม" (ไลบรารี Checked=False,State=Hover ใช้ #D5D7DA เท่าตอน Default)
+     ⇒ ถอดของเดิมที่เข้มเป็น gray-400 ออก เพราะไลบรารีไม่มี state นี้
+   · ติ๊กแล้ว + hover → พื้น+ขอบเข้มลงเป็น brand-800 ชุดเดียวกับปุ่ม primary hover
+   · disabled → พื้นเทาอ่อน ขอบเทา เครื่องหมายถูกจาง (ไลบรารีใช้ #FAFAFA — ของเราใช้ token gray-50 ที่ใกล้สุด) */
+.chips.pick>.chip.sel:hover::before{background:var(--primary-800);border-color:var(--primary-800)}
+.chips.pick>.chip[aria-disabled=true]{cursor:not-allowed;color:var(--gray-400)}
+.chips.pick>.chip[aria-disabled=true]::before{background:var(--gray-50);border-color:var(--gray-300)}
+.chips.pick>.chip.sel[aria-disabled=true]::before{color:var(--gray-400)}
+/* ============================================================
+   v0.38 — Checkbox list (`.chks`) — กลุ่ม checkbox เลือกได้หลายอัน ไหลต่อกันเป็นแถว
+   **ใช้เมื่อ** ตัวเลือกเยอะและเป็นข้อความล้วน เช่น "อาการเสีย" ในฟอร์มแจ้งซ่อม
+   ต่างจาก `.chips.pick` (ป้าย Tag ที่มีกล่องติ๊กอยู่ข้างใน) ตรงที่ **ไม่มีกรอบป้ายล้อม**
+   ⇒ อ่านง่ายกว่าเมื่อรายการยาว · เจ้าของงานเคาะ 1 ก.ย. 2569 ว่าให้อาการเสียใช้แบบนี้
+   กล่องยกตามไลบรารี `_Checkbox base` **md**: 20×20 · r6 (`--rounded-sm`) · ขอบ gray-300 ·
+   ติ๊กแล้ว = พื้น primary-600 + เครื่องหมายถูกสีขาว · hover ตอนติ๊กแล้ว = brand-800
+   ใช้ `<input type=checkbox>` จริงซ่อนไว้ (a11y/คีย์บอร์ด) เหมือน `.radcard`
+   ============================================================ */
+.chks{display:flex;flex-wrap:wrap;gap:10px 22px;margin:10px 0 2px}
+.chks label{position:relative;display:inline-flex;align-items:center;gap:10px;cursor:pointer;color:var(--gray-700);font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:500}
+.chks label input[type=checkbox]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.chks .cbox{flex:none;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:2px solid var(--gray-300);border-radius:var(--rounded-xs);background:#fff;color:transparent;font-family:'Material Symbols Outlined';font-size:18px;line-height:1;transition:background-color .15s ease,border-color .15s ease,color .15s ease}
+.chks label.sel{color:var(--gray-900)}
+.chks label.sel .cbox{background:var(--primary-600);border-color:var(--primary-600);color:#fff}
+.chks label[aria-disabled=true] .cbox{background:var(--gray-200);border-color:var(--gray-300);color:var(--gray-300)}
+/* ไลบรารีใหม่: Checkbox State=Hover,Type=Selected ใช้สีเดิม (#A80689) ไม่เข้มลง ⇒ ไม่ต้องมีกฎ hover */
+.chks label:has(input:focus-visible) .cbox{outline:3px solid var(--primary-50);outline-offset:2px}
+
 /* .chip.plain — ป้ายบอกข้อมูลที่กดไม่ได้ (เช่นหัวแถววันในตารางเลือกช่วงเวลา) */
 .chips.pick>.chip.plain{padding-left:10px;cursor:default}
 .chips.pick>.chip.plain::before{display:none}
@@ -247,10 +274,11 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
    ใช้เมื่อต้องบอกผู้ใช้ว่า "ตอนนี้ยังทำอะไรไม่ได้ และต้องทำอะไรก่อน" หรือยืนยันว่าครบแล้ว
    ต่างจาก .draft (แถบคาดหัวหน้าบอกว่าเป็น mock) และ .sub (คำโปรยใต้หัวข้อ)
    โทนสีใช้ชุดเดียวกับ .badge เพื่อให้ความหมายสีทั้งระบบตรงกัน */
-.note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid;border-radius:var(--rounded-md);font-size:var(--fs-text-sm);line-height:20px;margin-bottom:14px}
+/* ไลบรารีใหม่ `Alert`: r8 · pad 12 ทุกด้าน · gap 12 · ไอคอน 24 · Brand #FFF5FD/#FED8F6 · Success #ECFDF3/#ABEFC6 */
+.note{display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid;border-radius:var(--rounded-md);font-size:var(--fs-text-sm);line-height:20px;margin-bottom:14px}
 .note .ms{font-size:20px;flex:0 0 auto}
 .note-warn{background:var(--warning-50);border-color:var(--warning-200);color:var(--warning-800)}
-.note-ok{background:var(--success-25);border-color:var(--success-200);color:var(--success-700)}
+.note-ok{background:var(--success-50);border-color:var(--success-200);color:var(--success-700)}
 .note-info{background:var(--info-50);border-color:var(--info-200);color:var(--info-700)}
 
 /* ---------- Badge สถานะ ----------------------------------------------
@@ -258,12 +286,12 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
    ของเดิมอิงไลบรารี Figma (pad 2/10 · 14/500) ซึ่งไม่ตรงกับที่รันอยู่จริง
    ramp แบรนด์ของ badge ก็คนละชุดกับ Figma → ใช้ --badge-brand-*                */
 .badge{display:inline-flex;align-items:center;gap:4px;border-radius:var(--r-pill);padding:4px 8px;font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);font-weight:600;letter-spacing:-.2px;border:1px solid transparent}
-.b-ok{background:var(--success-25);color:var(--success-700);border-color:var(--success-200)}
+.b-ok{background:var(--success-50);color:var(--success-700);border-color:var(--success-200)}   /* ไลบรารีใหม่ Pill outline Color=Success: พื้น #ECFDF3 ขอบ #ABEFC6 */
 .b-low{background:var(--warning-50);color:var(--warning-700);border-color:var(--warning-200)}
 .b-out{background:var(--error-50);color:var(--error-700);border-color:var(--error-200)}
 .b-brand{background:var(--badge-brand-bg);color:var(--brand-600);border-color:var(--badge-brand-border)}
 .b-info{background:var(--info-50);color:var(--info-700);border-color:var(--info-200)}
-.b-neutral{background:var(--badge-neutral-bg);color:var(--badge-neutral-text);border-color:var(--badge-neutral-border)}
+.b-neutral{background:var(--gray-50);color:var(--badge-neutral-text);border-color:var(--gray-200)}   /* ไลบรารีใหม่ Color=Gray: พื้น #F9FAFB ขอบ #EAECF0 */
 /* จุดสถานะนำหน้าข้อความ — ของจริงเป็นวงกลม 6px สีเดียวกับตัวอักษร */
 .badge .dot{width:6px;height:6px;border-radius:var(--r-pill);background:currentColor;flex:0 0 auto}
 
@@ -274,8 +302,8 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .tab-btn{font-family:inherit;background:#fff;border:none;border-bottom:1px solid var(--gray-300);
   height:48px;padding:12px 24px;margin-bottom:-1px;display:inline-flex;align-items:center;gap:8px;
   font-size:var(--fs-text-sm);font-weight:var(--font-weight-semibold);line-height:21px;
-  letter-spacing:-.2px;color:var(--gray-500);cursor:pointer}
-.tab-btn:hover{color:var(--gray-700)}
+  letter-spacing:-.2px;color:var(--gray-600);cursor:pointer}   /* ไลบรารีใหม่ Tab item: ข้อความ #475467 */
+.tab-btn:hover{background:var(--gray-200);color:#000}   /* ไลบรารีใหม่ State=Hover: พื้น #EAECF0 */
 .tab-btn.on{color:#000;border-bottom:4px solid var(--primary-600)}
 
 /* ---------- Modal — ไลบรารีมี Modal `3:9` (ดู SOURCES.md หมวด ง) แต่เครื่องนี้ไม่มี .figma-extract/
@@ -290,7 +318,7 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .modal-close{background:none;border:none;cursor:pointer;color:var(--gray-500);display:flex;padding:2px}
 .modal-close:hover{color:var(--gray-700)}
 .modal-close .ms{font-size:22px}
-.modal-foot{display:flex;gap:var(--space-2_5);justify-content:flex-end;flex-wrap:wrap;
+.modal-foot{display:flex;gap:var(--space-3);   /* ไลบรารีใหม่ Modal footer Actions gap 12 */justify-content:flex-end;flex-wrap:wrap;
   margin-top:var(--space-4_5);padding-top:var(--space-4);border-top:1px solid var(--gray-200)}
 .repair-choice-list{display:grid;gap:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--gray-200)}
 .repair-choice{width:100%;display:grid;grid-template-columns:1fr auto;align-items:center;gap:var(--space-4);padding:var(--space-4);border:1px solid var(--gray-200);border-radius:var(--r-lg);background:#fff;text-align:left;font:inherit;cursor:pointer}
@@ -347,10 +375,11 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 /* คอลัมน์กว้าง 80 — ตัวอักษร 26px ล้น จึงย่อให้พอดี (ของจริงเป็นโลโก้รูป เราไม่มีไฟล์ ใช้ wordmark แทน) */
 .side .vlogo{width:100%;text-align:center;font-weight:800;font-size:20px;color:var(--primary-600);line-height:1;margin-bottom:4px}
 .side .vlogo em{color:var(--brand-accent);font-style:normal}
-.side .nv{width:48px;height:48px;border-radius:var(--rounded-md);display:flex;align-items:center;justify-content:center;color:var(--gray-500);cursor:pointer;text-decoration:none;transition:background-color .18s ease,color .18s ease}
+/* ไลบรารีใหม่ `Nav button`: 40×40 · r8 · pad 8 · ไอคอน 24 · hover พื้น #EAECF0 */
+.side .nv{width:40px;height:40px;border-radius:var(--rounded-md);display:flex;align-items:center;justify-content:center;color:var(--gray-500);cursor:pointer;text-decoration:none;transition:background-color .18s ease,color .18s ease}
 .side .nv>.ms{font-size:24px;flex:0 0 auto}
-.side .nv:hover{background:var(--gray-100)}
-.side .nv.on{background:var(--gray-100);color:var(--primary-600)}
+.side .nv:hover{background:var(--gray-200)}
+.side .nv.on{background:var(--gray-200);color:var(--primary-600)}
 
 /* ---------- `.side.wide` — sidebar กางตอน hover พร้อมชื่อเมนูเต็ม ----------
    ที่มา: **ของเราเอง ไม่ใช่ไลบรารี** — ไลบรารีมีแต่ Application navigation `3:8` ซึ่งเป็น slide-out
@@ -386,13 +415,15 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 /* วัดจาก vmsplus-dev: 14/400 · padding 8px 0 · ลิงก์ brand-600
    ตัวคั่นของจริงไม่ใช่ไอคอน — เป็นสี่เหลี่ยม 6×6 หมุน 45° (DaisyUI .breadcrumbs > li + ::before)
    ของเดิมเป็น 14/600 gray-500 ตามไลบรารี Figma ซึ่งไม่ตรงกับที่รันอยู่จริง */
-.crumbs{display:flex;align-items:center;gap:8px;font-size:var(--fs-text-sm);font-weight:400;line-height:20px;color:#000;padding:8px 0;margin-bottom:6px;flex-wrap:wrap}
+/* ไลบรารีใหม่ `_Breadcrumbs item / Link`: ข้อความ 12/Regular · ลิงก์ #475467 · hover #344054 · หน้าปัจจุบัน #A80689 · pad 4 */
+.crumbs{display:flex;align-items:center;gap:8px;font-size:var(--fs-text-xs);font-weight:400;line-height:18px;color:var(--gray-600);padding:8px 0;margin-bottom:6px;flex-wrap:wrap}
 .crumbs .ms{font-size:20px;color:var(--gray-500)}
 .crumbs .sep{width:6px;height:6px;border-right:1px solid var(--gray-300);border-bottom:1px solid var(--gray-300);transform:rotate(-45deg);display:inline-block;flex:0 0 auto}
 .crumbs .cur{color:var(--primary-600)}
 /* ลิงก์ระดับกลางใน breadcrumb (ไม่ใช่ home ไม่ใช่ .cur) — สีดำเหมือนข้อความรอบข้าง ไม่ใช่สีลิงก์ browser
    เดิมเขียน style="color:inherit;text-decoration:none" ซ้ำทุกไฟล์ที่มี breadcrumb กดได้ (parts/appointment/inspection) */
 .crumbs a{color:inherit;text-decoration:none}
+.crumbs a:hover{color:var(--gray-700)}
 /* ของจริง .page-title-label = 32/600/lh48 สีดำ (ของเดิม 28/700 gray-900) */
 .page-title{font-size:32px;font-weight:600;line-height:48px;color:#000;margin-bottom:20px}
 .page-title-row{display:flex;align-items:center;gap:4px;margin-bottom:20px}
@@ -405,17 +436,57 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .page-back:focus-visible{outline:none;text-decoration:underline;text-underline-offset:3px}
 
 /* ---------- Stepper แบบลูกศร (chevron) ---------- */
-.wsteps{display:flex;background:#fff;border:1px solid var(--gray-200);border-radius:12px;margin-bottom:26px}
-.wstep{flex:1;display:flex;align-items:center;gap:12px;padding:17px 18px;position:relative;color:var(--gray-500);font-size:var(--fs-text-sm);min-width:0}
-.wstep .num{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--gray-300);display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;background:#fff}
-.wstep .num .ms{font-size:20px}   /* ขั้นที่ผ่านแล้วใช้ไอคอน check — เดิมเป็นตัวอักษร ✓ ผิดกฎไอคอน + ฟอนต์ไม่มี glyph นี้ */
-.wstep .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wstep.active{color:var(--primary-600);font-weight:600}
+/* ไลบรารีใหม่ `Horizontal step item` — ยกตามไลบรารี 1 ก.ย. 2569
+   แถวละ 300×72 · pad ซ้าย 24 บน-ล่าง 16 · gap 16 ระหว่างวงกลมกับข้อความ
+   วงกลม 40×40 ขอบ 1px: ยังไม่ถึง #D0D5DD (เลข #98A2B3) · ขั้นปัจจุบัน ขอบ+เลข #A80689
+   · ผ่านแล้ว พื้น #A80689 + เครื่องหมายถูกขาว
+   ข้อความ 16/SemiBold (#475467 → #A80689 ตอนอยู่ขั้นนี้ → #000 เมื่อผ่านแล้ว) · คำโปรย 12/Regular
+   เส้น connector 20px สีขอบ #D0D5DD อยู่ในช่อง padding ซ้ายของขั้นถัดไป
+   ⚠️ ทรงกล่องคั่นด้วย chevron แบบเดิมถอดออกแล้ว — ไลบรารีไม่มี */
+/* ไลบรารีใหม่ — ยึดจาก **หน้าจอจริง** `(UI) VMS Plus – Release#2` → `Create vehicle (Step 1)`
+   (ตรวจซ้ำ 1 ก.ย. 2569 หลังเจ้าของงานทักว่าหน้าตาไม่เหมือนดีไซน์)
+   `Progress steps` = กล่องเดียว **r8 · ขอบ 1px #D0D5DD · พื้นขาว** ครอบทุกขั้น
+   แต่ละขั้น (`Horizontal step item`) pad ซ้าย 24 · บน-ล่าง 16 · gap 8
+     · Content gap 16 = วงกลม 40 (พื้นขาว · ขอบ #D0D5DD → #A80689 เมื่อเป็นขั้นปัจจุบัน)
+       + ข้อความ 16/SemiBold (#475467 → #A80689) + คำโปรย 12/Regular #475467
+     · Connector 21×72 = **VECTOR 20×72 เส้น 1px #D0D5DD** = ตัวคั่นทรง chevron “›” (ไม่ใช่เส้นตรง)
+       ยืนยันซ้ำกับเว็บ VMS Plus ตัวจริงที่เจ้าของงานส่งมา — หน้า "สร้างคำขอใช้ยานพาหนะ" ก็เป็น chevron
+   ⚠️ v0.41–0.42 เคยทำเป็นเส้นแนวนอนเชื่อมวงกลมและไม่มีกรอบ · v0.43 เป็นเส้นแบ่งแนวตั้ง — ผิดทั้งคู่
+      chevron กว้าง 20 สูง 72 ⇒ แต่ละครึ่งเอียง atan(20/36) ≈ 29° */
+.wsteps{display:flex;align-items:stretch;background:#fff;border:1px solid var(--gray-300);border-radius:var(--rounded-md);margin-bottom:26px;overflow:hidden}
+.wstep{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:16px;padding:16px 24px;position:relative;
+  color:var(--gray-600);font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:600;background:#fff}
+.wstep:not(:last-child)::before,.wstep:not(:last-child)::after{content:'';position:absolute;right:0;width:1px;height:50%;background:var(--gray-300)}
+.wstep:not(:last-child)::before{top:0;transform-origin:bottom center;transform:rotate(-29deg)}
+.wstep:not(:last-child)::after{bottom:0;transform-origin:top center;transform:rotate(29deg)}
+.wstep .num{width:40px;height:40px;border-radius:var(--r-pill);border:1px solid var(--gray-300);display:flex;align-items:center;justify-content:center;
+  font-weight:600;font-size:var(--fs-text-md);color:var(--gray-400);flex:0 0 40px;background:#fff}
+.wstep .num .ms{font-size:24px}
+.wstep .lbl{flex:0 1 auto;min-width:0;white-space:normal}
+
+/* ---- มือถือ: ไลบรารีมี `Mobile progress steps` แยกต่างหาก (ยกตาม 2 ก.ย. 2569) ----
+   กล่อง 328×104 · r8 · ขอบ #D0D5DD · pad 16 · gap 16
+     · วงแหวนความคืบหน้า 72×72 (Track #D0D5DD + Progress #A80689) ตรงกลางเป็น "ขั้นปัจจุบัน / ทั้งหมด" 12/SemiBold
+     · ข้อความ: ชื่อขั้นปัจจุบัน 16/SemiBold + บรรทัด "ถัดไป: <ขั้นถัดไป>" (12/SemiBold + 12/Regular #475467)
+     · ปุ่ม chevron 20 กดขยายเป็นรายการแนวตั้ง (Collapsed=False → Vertical step item สูง 52/ขั้น) */
+.wsteps-m{display:none;border:1px solid var(--gray-300);border-radius:var(--rounded-md);background:#fff;margin-bottom:18px;overflow:hidden}
+.wsm-head{display:flex;align-items:center;gap:16px;padding:16px;cursor:pointer}
+.wsm-ring{width:72px;height:72px;flex:none;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;
+  background:conic-gradient(var(--primary-600) calc(var(--p,0) * 1%),var(--gray-300) 0)}
+.wsm-ring>span{width:60px;height:60px;border-radius:var(--r-pill);background:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);color:#000;font-weight:600}
+.wsm-ring i{color:var(--gray-400);font-style:normal;font-weight:400;margin:0 2px}
+.wsm-tx{flex:1;min-width:0}
+.wsm-tx b{display:block;font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:600;color:#000}
+.wsm-next{display:block;margin-top:8px;font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);color:var(--gray-600)}
+.wsm-next b{display:inline;font-size:inherit;font-weight:600;color:var(--gray-600)}
+.wsm-head .ms{color:var(--gray-500);transition:transform .15s ease}
+.wsteps-m.open .wsm-head .ms{transform:rotate(180deg)}
+   /* ไลบรารีให้ข้อความขึ้นได้ 2 บรรทัด (หน้าจริง Text 140×48) ⇒ ไม่ตัดด้วย … */
+.wstep.active{color:var(--primary-600)}
 .wstep.active .num{border-color:var(--primary-600);color:var(--primary-600)}
+.wstep.passed{color:#000}
 .wstep.passed .num{background:var(--primary-600);border-color:var(--primary-600);color:#fff}
-.wstep:not(:last-child)::before,.wstep:not(:last-child)::after{content:'';position:absolute;right:0;width:1px;height:52%;background:var(--gray-200)}
-.wstep:not(:last-child)::before{top:0;transform-origin:bottom center;transform:rotate(-16deg)}
-.wstep:not(:last-child)::after{bottom:0;transform-origin:top center;transform:rotate(16deg)}
 
 /* ขั้นบน stepper กดได้ (ทุกหน้าที่ใช้ stepper ผูก onclick อยู่แล้ว) + ขั้นที่ยังเข้าไม่ได้
    ยกขึ้นมาจาก <style> ของ index.html และ trip-plan.html ที่นิยามซ้ำกัน 25 ส.ค. 2569
@@ -431,8 +502,11 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .wsteps.sm .wstep .lbl{display:block}
 
 /* ---------- หัวข้อ section แถบ magenta ---------- */
-.sect{display:flex;gap:10px;align-items:center;font-weight:700;color:var(--gray-900);font-size:17px;margin:8px 0 2px}
-.sect::before{content:'';width:4px;height:20px;background:var(--primary-600);border-radius:2px;flex-shrink:0}
+/* ไลบรารีใหม่ `Section header` (Breakpoint=Desktop) — ยกตามไลบรารี 1 ก.ย. 2569
+   หัวข้อ 20/SemiBold สีดำ · คำโปรย 14/Regular #475467 · gap 12 · เส้นคั่นล่าง 1px #D0D5DD (ห่าง 20)
+   ⚠️ แถบ magenta นำหน้าแบบเดิมถอดออกแล้ว — ไลบรารีไม่มี */
+.sect{display:flex;gap:12px;align-items:center;font-weight:600;color:#000;font-size:var(--fs-h1);line-height:30px;
+  margin:8px 0 16px;padding-bottom:20px;border-bottom:1px solid var(--gray-300)}
 
 /* ---------- ฟอร์มแบบหน้าใน: label บน + ไอคอนในช่อง ----------
    ตามไลบรารี Input field (Size=md): ช่องสูง 44 · r8 · pad นอน 14 · เงา xs
@@ -447,9 +521,10 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .f label small{color:var(--gray-500);font-weight:400}
 .f .in{position:relative}
 .f .in>.ms{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--gray-500);font-size:20px;pointer-events:none}
-.f .in input,.f .in select{height:44px;border-radius:var(--rounded-md);padding:0 14px 0 42px}
-.f .in.noic input{padding-left:14px}
-.f textarea{border-radius:var(--rounded-md);padding:12px 14px}
+/* ไลบรารีใหม่ Text input · Container Size=md: h40 · r8 · pad 12 ซ้ายขวา · ขอบ #D0D5DD · focus #CF07AA (lg = h48) */
+.f .in input,.f .in select{height:40px;border-radius:var(--rounded-md);padding:0 12px 0 40px}
+.f .in.noic input{padding-left:12px}
+.f textarea{border-radius:var(--rounded-md);padding:8px 12px}
 .f.ro .in input{background:var(--gray-50);color:var(--gray-700)}   /* = state Disabled ของไลบรารี (ขอบทึบ พื้น gray-50) */
 /* .daterange-field / .search input รวมด้วย — ช่องเลือกช่วงวันที่ และช่องค้นหาที่ใช้เป็นตัวเลือกรายการ
    ก็ต้องขึ้นกรอบแดงได้เหมือนช่องกรอกอื่น (14 ส.ค. 2569) */
@@ -503,10 +578,15 @@ input[type=radio]:focus{outline:none;box-shadow:0 0 0 4px var(--focus-ring)}
   .page-title-row{margin-bottom:14px}
   .page-title-row .page-title{margin-bottom:0}
   .fgrid{grid-template-columns:1fr;gap:14px}
-  .wsteps{margin-bottom:18px}
-  .wstep{padding:12px 10px;gap:8px}
-  .wstep .lbl{display:none}
-  .wstep.active .lbl{display:block}
+  .wsteps{display:none}
+  .wsteps-m{display:block}
+  /* กางแล้ว = รายการแนวตั้ง (Vertical step item 52/ขั้น) */
+  .wsteps-m.open+.wsteps{display:block;border:0;border-top:1px solid var(--gray-300);border-radius:0;margin:-18px 0 18px;padding:8px 16px 12px}
+  .wsteps-m.open+.wsteps .wstep{flex:none;width:100%;padding:8px 0;gap:8px}
+  .wsteps-m.open+.wsteps .wstep::before,.wsteps-m.open+.wsteps .wstep::after{display:none}
+  .wsteps-m.open+.wsteps .wstep .num{width:24px;height:24px;flex-basis:24px;font-size:var(--fs-text-xs)}
+  .wsteps-m.open+.wsteps .wstep .num .ms{font-size:16px}
+  .wsteps-m.open+.wsteps .wstep .lbl{display:block;font-size:var(--fs-text-sm)}
   .actions{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--gray-200);padding:12px 16px;z-index:20}
   .actions .btn{flex:1;min-width:0}
 }
@@ -567,16 +647,112 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
    ย้ายมาจาก style เฉพาะหน้า mock → ใช้ได้ทุกหน้า (mock/admin/อื่น ๆ)
    ============================================================ */
 /* ---------- การ์ดเลือกรถ (vehicleCard: list | grid) ---------- */
-.vlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin:14px 0 6px}
-.vlist.sq{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
-.vlist.sq .veh{flex-direction:column;text-align:center;aspect-ratio:1/1;justify-content:center;gap:6px;overflow:hidden}
-.vlist.sq .veh .meta{font-size:var(--fs-text-xs);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.veh{display:flex;gap:12px;align-items:center;border:1.5px solid var(--gray-200);border-radius:var(--r-md);padding:12px;cursor:pointer;background:#fff}
-.veh:hover{border-color:var(--primary-500)}
-.veh.sel{border-color:var(--primary-600);background:var(--primary-25)}
-.veh .ic{width:44px;height:44px;border-radius:var(--rounded-md);background:var(--primary-50);color:var(--primary-600);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.veh b{color:var(--gray-900);font-size:var(--fs-body)}
-.veh .meta{font-size:var(--fs-text-xs);color:var(--gray-500)}
+/* การ์ดเลือกรถในขั้น 1 ของฟอร์มแจ้งซ่อม — เจ้าของงานเลือก "แบบ ข" 2 ก.ย. 2569
+   ค่าเริ่มต้น = **แถวรายการ** (คลิกทั้งแถวเพื่อเลือก) เพราะขั้นนี้เลือกรถคันเดียวจากรถของฉัน/รถในทีม
+   ปกติไม่เกิน ~10 คัน · หน้า `Vehicle list` ของดีไซน์จริงเป็น "ตาราง" ซึ่งเหมาะกับงานจัดการข้อมูลมากกว่า
+   ⇒ แถวนี้ประกอบจากของที่มีในไลบรารี (กล่องไอคอน + ข้อความ 2 บรรทัด + ไอคอนสถานะเลือก)
+   variant `.vlist.sq` = การ์ดใหญ่ตาม `Card/select vehicle` (r16 · ช่องรูป r12) สลับได้จาก Admin */
+.vlist{display:grid;gap:8px;margin:14px 0 6px}
+.veh{display:flex;align-items:center;gap:16px;padding:12px 16px;border:1px solid var(--gray-300);border-radius:var(--rounded-md);background:#fff;cursor:pointer}
+.veh:hover{border-color:var(--brand-500)}
+.veh.sel{border:2px solid var(--primary-600);padding:11px 15px}
+.veh .ic{width:40px;height:40px;flex:none;border-radius:var(--rounded-md);background:var(--gray-100);color:var(--gray-500);display:flex;align-items:center;justify-content:center}
+.veh .ic .ms{font-size:24px}
+.veh .vtx{flex:1;min-width:0}
+.veh b{display:block;color:#000;font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:600}
+.veh .meta{font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);color:var(--gray-600);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.veh .vchk{flex:none;color:var(--gray-300);font-size:24px}
+.veh.sel .vchk{color:var(--primary-600)}
+/* variant การ์ดใหญ่ — ตาม `Card/select vehicle` ของไลบรารี (306×375 · r16 · pad 12 · gap 16 · ช่องรูป r12) */
+.vlist.sq{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.vlist.sq .veh{flex-direction:column;align-items:stretch;gap:16px;padding:12px;border-radius:var(--r-lg);border-color:var(--gray-200)}
+.vlist.sq .veh.sel{padding:11px}
+.vlist.sq .veh .ic{width:100%;height:170px;border-radius:var(--r-md)}
+.vlist.sq .veh .ic .ms{font-size:48px}
+.vlist.sq .veh .vchk{display:none}
+
+/* ============================================================
+   v0.37 — Vehicle detail (การ์ด "รายละเอียดรถที่เลือก" ขั้น 1 ของฟอร์มแจ้งซ่อม)
+   ยกออกจาก <style> ของ `mock/Maintenance-Request-Form.html` 1 ก.ย. 2569 —
+   เดิมเขียนอยู่ในหน้า 21 คลาส ผิดกฎข้อ 0
+   ชื่อคลาสตั้งให้ตรงกับ component **`Vehicle detail`** ของไฟล์ Figma `PEA`
+   (แคตตาล็อกมีแค่ชื่อ+property ยังไม่มี geometry ⇒ ค่าปัจจุบันคือของเราเอง
+    รอภาพ/ลิงก์ node จากเจ้าของงานแล้วค่อยจูนให้ตรง)
+   **ใช้เมื่อ** เลือกรถได้แล้ว ต้องยืนยันว่าใช่คันนี้ + เลือกจุดที่จะแจ้งซ่อม
+   ตัวเลือก "จุดที่พบปัญหา" ใช้ `.radcards > .radcard` (+ `.rc-ic`) ตัวเดียวกับที่อื่นในโฟลว์
+   ============================================================ */
+.vehicle-detail-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:24px}
+.vehicle-detail-heading .sect{margin:0}
+.vehicle-sync-note{display:inline-flex;align-items:center;gap:5px;color:var(--gray-500);font-size:var(--fs-text-xs)}
+.vehicle-sync-note .ms{color:var(--success-600);font-size:18px}
+.vehicle-detail-card{overflow:hidden;margin:12px 0 26px;border:1px solid var(--gray-200);border-radius:var(--r-lg);background:#fff}
+.vehicle-detail-header{display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid var(--gray-200);background:linear-gradient(135deg,var(--primary-25),#fff 72%)}
+.vehicle-detail-icon{display:flex;width:48px;height:48px;flex:0 0 48px;align-items:center;justify-content:center;border-radius:var(--r-md);background:var(--primary-600);color:#fff}
+.vehicle-detail-icon .ms{font-size:24px}
+.vehicle-detail-title{min-width:0;flex:1}
+.vehicle-detail-title strong{display:block;overflow:hidden;color:var(--gray-900);font-size:var(--fs-h1);line-height:1.35;text-overflow:ellipsis;white-space:nowrap}
+.vehicle-detail-title small{display:block;overflow:hidden;margin-top:3px;color:var(--gray-500);font-size:var(--fs-text-xs);text-overflow:ellipsis;white-space:nowrap}
+.vehicle-selected-badge{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;padding:5px 9px;border:1px solid var(--success-200);border-radius:var(--r-pill);background:var(--success-50);color:var(--success-600);font-size:var(--fs-text-xs);font-weight:600}
+.vehicle-selected-badge .ms{font-size:16px}
+.vehicle-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0;padding:16px 20px}
+.vehicle-detail-item{display:grid;grid-template-columns:34px minmax(0,1fr);min-width:0;gap:10px;padding:12px;border:1px solid var(--gray-200);border-radius:var(--r-md);background:var(--gray-50)}
+.vehicle-detail-item>.ms{display:flex;width:34px;height:34px;align-items:center;justify-content:center;border-radius:var(--rounded-md);background:#fff;color:var(--primary-600);font-size:20px}
+.vehicle-detail-copy{min-width:0}
+.vehicle-detail-label{display:block;margin-bottom:3px;color:var(--gray-500);font-size:var(--fs-text-xs);font-weight:500}
+.vehicle-detail-value{display:block;margin:0;overflow-wrap:anywhere;color:var(--gray-800);font-size:var(--fs-text-sm);font-weight:600;line-height:1.45}
+.vehicle-target{min-width:0;margin:0;padding:18px 20px 20px;border:0;border-top:1px solid var(--gray-200);background:var(--gray-50)}
+.vehicle-target-legend{width:100%;padding:0;color:var(--gray-900);font-size:var(--fs-text-sm);font-weight:600}
+.vehicle-target-required{margin-left:5px;color:var(--primary-700);font-size:var(--fs-text-xs);font-weight:600}
+.vehicle-target-help{margin-top:2px;color:var(--gray-500);font-size:var(--fs-text-xs)}
+@media(max-width:760px){
+  .vehicle-detail-heading{align-items:flex-start;flex-direction:column}
+  .vehicle-detail-header{padding:14px}
+  .vehicle-selected-badge{padding:4px 7px}
+  .vehicle-detail-grid,.vehicle-target{padding:14px}
+  .vehicle-detail-grid{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .vehicle-detail-header{align-items:flex-start}
+  .vehicle-detail-icon{width:42px;height:42px;flex-basis:42px}
+  .vehicle-detail-title strong{font-size:var(--fs-text-md);white-space:normal}
+  .vehicle-detail-title small{white-space:normal}
+}
+
+/* ============================================================
+   v0.34 — Radio card (การ์ดตัวเลือกที่เลือกได้อันเดียว)
+   ยกออกจาก <style> ของ mock (ชื่อเดิม .ctlist / .ctopt / .ct-tx) 1 ก.ย. 2569 — เดิมผิดกฎข้อ 0
+   **ใช้เมื่อ** ตัวเลือกไม่กี่อัน (2–6) ที่แต่ละอันมีคำอธิบายกำกับ และเลือกได้อันเดียว
+   เช่น "งบที่จะตัด" ในขั้น 3 ของฟอร์มแจ้งซ่อม — ต่างจาก `.rads` (รายการวิทยุบรรทัดเดียว ไม่มีกรอบ)
+   และต่างจาก `.chips.pick` (เลือกได้หลายอัน)
+
+   โครงการ์ด = ภาษาเดียวกับการ์ดเลือกรถ `.veh` ของขั้น 1 (เจ้าของงานสั่ง 1 ก.ย. 2569
+   ว่าให้ยึดแบบเดียวกับขั้น 1–3 ของฟอร์ม): r-md · เส้น 1.5px gray-200 · hover primary-500 ·
+   เลือกแล้ว primary-600 + พื้น primary-25
+   จุดวิทยุยกตามไลบรารี `_Radio button base` (node 589:206913): 16×16 · กลม ·
+   ยังไม่เลือก = เส้น 1px gray-300 พื้นขาว · เลือกแล้ว = พื้น primary-600 + จุดในสีขาว 6px ·
+   disabled = พื้น gray-50 (ของเดิมวาดเอง 17px เส้น 2px แล้วพอเลือกดันเป็นเส้น 5px ซึ่งไลบรารีไม่มี)
+   ============================================================ */
+.radcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px;align-items:stretch}
+.radcard{position:relative;display:flex;align-items:flex-start;gap:12px;border:1px solid var(--gray-300);border-radius:var(--rounded-md);padding:15px;cursor:pointer;background:#fff}
+.radcard:hover{border-color:var(--brand-500)}
+.radcard.sel{border:2px solid var(--primary-600);padding:14px}   /* ไลบรารี: เลือกแล้วเส้นหนา 2px พื้นยังขาว (ไม่เปลี่ยนสีพื้น) · หัก 1px ที่ padding กันการ์ดขยับ */
+.radcard .rdot{flex:none;width:20px;height:20px;margin-top:2px;border:2px solid var(--gray-300);border-radius:var(--r-pill);background:#fff;display:flex;align-items:center;justify-content:center}
+.radcard.sel .rdot{background:var(--primary-600);border-color:var(--primary-600)}
+.radcard.sel .rdot::after{content:'';width:8px;height:8px;border-radius:var(--r-pill);background:#fff}
+.radcard[aria-disabled=true]{cursor:not-allowed;background:var(--gray-50);color:var(--gray-400)}
+.radcard[aria-disabled=true] .rdot{background:var(--gray-200);border-color:var(--gray-300)}
+.radcard .rc-tx{min-width:0}
+.radcard .rc-tx b{display:block;font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);color:var(--gray-900)}
+.radcard .rc-tx small{display:block;margin-top:2px;font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);color:var(--gray-500)}
+.radcards.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}   /* 3 ตัวเลือก เช่น คัดแยกช่องทางซ่อมของ กรย. */
+@media(max-width:900px){.radcards.cols-3{grid-template-columns:1fr}}
+/* ไอคอนนำหน้าในการ์ด (ไม่บังคับ) — ใช้ตอนตัวเลือกมีสัญลักษณ์ประจำตัว เช่น "จุดที่พบปัญหา" ตัวรถ/อุปกรณ์ติดตั้ง */
+.radcard .rc-ic{display:flex;width:40px;height:40px;flex:none;align-items:center;justify-content:center;border-radius:var(--rounded-md);background:var(--gray-100);color:var(--gray-500)}
+.radcard.sel .rc-ic{background:var(--primary-50);color:var(--primary-700)}
+/* รองรับ <input type=radio> จริงเพื่อ a11y/คีย์บอร์ด — ซ่อนตัวมันแล้ววาดวงกลมด้วย .rdot แทน */
+.radcard input[type=radio]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.radcard:has(input:focus-visible){outline:3px solid var(--primary-50);outline-offset:2px}
+@media(max-width:640px){.radcards{grid-template-columns:1fr}}
 
 /* ============================================================
    v0.5 — ตารางข้อมูล (เมนูคลังอะไหล่)
@@ -622,13 +798,14 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
    ปุ่มติดกันเป็นแถบเดียว: radius 0 ตรงกลาง โค้ง 8px เฉพาะหัวท้าย · ซ้อนขอบด้วย margin-left -1
    สูง 39 · pad 0/12 · ขอบ gray-300 · ตัวที่เลือกอยู่พื้น gray-300                        */
 .pager{display:flex;align-items:center}
-.pager .pg{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:39px;
-  padding:0 var(--space-3);margin-left:-1px;background:#fff;border:1px solid var(--gray-300);border-radius:0;gap:var(--space-2);
-  font:inherit;font-size:var(--fs-text-sm);line-height:14px;color:var(--gray-600);cursor:pointer;box-shadow:none}
-.pager .pg:first-child{border-radius:var(--rounded-md) 0 0 var(--rounded-md);margin-left:0}
-.pager .pg:last-child{border-radius:0 var(--rounded-md) var(--rounded-md) 0}
-.pager .pg:hover:not(:disabled){background:var(--gray-50)}
-.pager .pg.on{background:var(--gray-300)}
+/* ไลบรารีใหม่ `_Pagination number base`: ปุ่มละ 40×40 · r4 · ข้อความ 14/Regular #475467
+   · hover/active = พื้น #EAECF0 + r8 · แต่ละปุ่มแยกกัน (ไม่ได้เชื่อมกรอบเป็นแถบเดียว) */
+.pager .pg{display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:40px;
+  padding:0 var(--space-2);margin-left:2px;background:#fff;border:1px solid transparent;border-radius:var(--rounded-xs);gap:var(--space-1);
+  font:inherit;font-size:var(--fs-text-sm);font-weight:400;line-height:21px;color:var(--gray-600);cursor:pointer;box-shadow:none}
+.pager .pg:first-child{margin-left:0}
+.pager .pg:hover:not(:disabled){background:var(--gray-200);border-radius:var(--rounded-md)}
+.pager .pg.on{background:var(--gray-200);border-radius:var(--rounded-md);font-weight:600;color:#000}
 .pager .pg:disabled{color:var(--gray-400);cursor:not-allowed}
 .pager .pg .ms{font-size:20px}
 
@@ -665,6 +842,16 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
 /* ค่ายาวกว่าคอลัมน์ → ตัดด้วย … บรรทัดเดียว (หน้าจริงตัดทั้ง "สังกัดยานพาหนะ" และ "ผู้แจ้งเหตุ")
    ต้องคู่กับ title="ค่าเต็ม" เสมอ ไม่งั้นค่าที่ถูกตัดจะอ่านไม่ได้เลย */
 .tbl .cell-clip{display:block;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* สถานะแบบ "ข้อความสี" — ไม่ใช่ .badge
+   Figma หน้า Repair & Maintain (A1.1 Incident list) ใช้สองแบบในตารางเดียวกัน:
+     คอลัมน์ "สถานะรถ"       → ข้อความสีล้วน ไม่มีพื้น ไม่มีขอบ   ← .cell-state
+     คอลัมน์ "สถานะเหตุการณ์" → pill มีพื้น+ขอบ                    ← .badge เดิม
+   แยกกันเพราะสถานะรถมีแค่ 2 ค่าตรงข้าม (ใช้ได้/ไม่ได้) ใช้สีบอกพอ
+   ส่วนสถานะเหตุการณ์มีสิบกว่าค่า ต้องมีกรอบช่วยแยกออกจากข้อความรอบข้าง */
+.tbl .cell-state{font-weight:600;white-space:nowrap}
+.tbl .cell-state.ok{color:var(--success-600)}
+.tbl .cell-state.no{color:var(--error-600)}
 
 /* ฟิลด์แทรกกลางบรรทัดในเซลล์ตารางรายการตรวจสภาพ — เกิดจากแถว "แบตเตอรี่ยี่ห้อ ___ จำนวน ___ ลูก"
    ในใบรับรถ (kbk-self-repair-inspection.html) ที่ต้องมีช่องกรอกสั้นๆ แทรกอยู่กลางข้อความรายการ
@@ -738,6 +925,11 @@ input.tbl-row-label{width:80%;display:inline-block}
 .parts-page-actions{display:flex;justify-content:flex-end;margin-top:32px}
 .parts-purchase-pane{margin-top:var(--space-4)}
 .parts-purchase-pane .tbl input[type=text],.parts-purchase-pane .tbl input[type=number]{width:100%}
+/* v0.35 — พื้นที่รายการที่เลื่อนในตัวเอง (modifier ของ .parts-pane)
+   **ใช้เมื่อ** รายการในคอลัมน์หนึ่งยาวจนดันหน้าให้ยืด แต่คอลัมน์ข้าง ๆ ยังสั้น
+   (เจอจริงที่ "คลังอะไหล่" ของขั้นอะไหล่ในฟอร์มแจ้งซ่อม — อะไหล่ทั้งคลังยาวลงไปเรื่อย ๆ)
+   ครอบเฉพาะกล่องรายการ ไม่ครอบหัวข้อ/ช่องค้นหา ⇒ ค้นหายังตรึงอยู่ด้านบนเสมอ */
+.parts-scroll{max-height:min(60vh,560px);overflow-y:auto;overscroll-behavior:contain;padding-right:var(--space-2)}
 @media(max-width:960px){.parts-workspace{grid-template-columns:1fr}.parts-pane{min-height:0}}
 @media(max-width:600px){.parts-manual-grid{grid-template-columns:1fr}.parts-manual-grid .wide{grid-column:auto}.parts-picked-item{grid-template-columns:1fr}.parts-picked-actions{align-items:stretch}.parts-page-actions .btn{width:100%}}
 

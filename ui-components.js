@@ -23,15 +23,25 @@ const thLabel=iso=>{const d=new Date(iso+'T00:00:00');return`${THD[d.getDay()]} 
 const vehicleCard={
   key:'vehicleCard',
   name:'การ์ดเลือกรถ (ขั้นตอนที่ 1 ฟอร์มแจ้งซ่อม)',
-  variants:{list:'แถวแนวนอน (ผืนผ้า)',grid:'การ์ดจตุรัส'},
+  variants:{list:'แถวรายการ (คลิกทั้งแถว)',grid:'การ์ดใหญ่มีรูป'},
   render(el,props){
     const{variant='list',vehicles=[],selectedId=null,onPick}=props;
-    el.innerHTML=`<div class="vlist ${variant==='grid'?'sq':''}">${vehicles.map(v=>`
+    // variant 'list' = การ์ดวิทยุชุดเดียวกับ "งบที่จะตัด" (.radcards) ตามที่เจ้าของงานสั่ง 2 ก.ย. 2569
+    // variant 'grid' = การ์ดใหญ่มีรูปตาม `Card/select vehicle` ของไลบรารี
+    const sub=v=>[v.model, v.attach, v.org].filter(Boolean).map(esc).join(' · ');
+    el.innerHTML = variant==='grid'
+      ? `<div class="vlist sq">${vehicles.map(v=>`
       <div class="veh ${selectedId===v.id?'sel':''}" data-id="${v.id}">
         <div class="ic"><span class="ms">local_shipping</span></div>
-        <div><b>${esc(v.plate)}</b><div class="meta">${esc(v.model)}${v.attach?' · '+esc(v.attach):''}</div></div>
-      </div>`).join('')}</div>`;
-    if(onPick)el.querySelectorAll('.veh').forEach(x=>x.addEventListener('click',()=>onPick(+x.dataset.id)));
+        <div class="vtx"><b>${esc(v.plate)}</b><div class="meta">${sub(v)}</div></div>
+      </div>`).join('')}</div>`
+      : `<div class="radcards">${vehicles.map(v=>`
+      <label class="radcard ${selectedId===v.id?'sel':''}" data-id="${v.id}">
+        <input type="radio" name="pick-vehicle" ${selectedId===v.id?'checked':''}>
+        <span class="rdot"></span>
+        <span class="rc-tx"><b>${esc(v.plate)}</b><small>${sub(v)}</small></span>
+      </label>`).join('')}</div>`;
+    if(onPick)el.querySelectorAll('[data-id]').forEach(x=>x.addEventListener('click',()=>onPick(+x.dataset.id)));
   }
 };
 

@@ -18,7 +18,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const EX = path.join(__dirname, '.figma-extract');
+// FIGMA_SRC=component|ui-release2 เพื่อชี้ไปชุดใหม่ (1 ก.ย. 2569) · ไม่ใส่ = ชุดเก่าที่ราก
+const EX = path.join(__dirname, '.figma-extract', process.env.FIGMA_SRC || '');
 if (!fs.existsSync(EX)) {
   console.error('ไม่พบ .figma-extract/ — ข้อมูลอยู่นอก git ต้องใช้เครื่องที่สกัดไว้ (ดู SOURCES.md)');
   process.exit(1);

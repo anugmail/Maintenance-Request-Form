@@ -1,0 +1,31 @@
+<style>
+  body{font:12px/1.5 -apple-system,"IBM Plex Sans Thai",sans-serif;margin:0;padding:14px;color:#1b1b1b}
+  input{width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid #d5d5d5;border-radius:6px;font:inherit}
+  button{margin-top:10px;padding:8px 14px;border:0;border-radius:6px;background:#a80689;color:#fff;font:inherit;cursor:pointer}
+  #log{margin-top:10px;height:210px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
+</style>
+<p>ชื่อโฟลเดอร์ปลายทาง (ใต้ <code>out/figma-dump/</code>)</p>
+<input id="slug" value="component">
+<p style="margin:8px 0 0">ปลายทาง <code>http://localhost:8124</code> — ต้องรัน <code>node figma-export/serve.js</code> ค้างไว้</p>
+<button id="go">เริ่มดัมป์ทั้งไฟล์</button>
+<div id="log"></div>
+<script>
+const log = (s) => { const d = document.getElementById('log'); d.textContent += s + '\n'; d.scrollTop = d.scrollHeight; };
+let total = 0, ok = 0, fail = 0;
+document.getElementById('go').onclick = () => { document.getElementById('log').textContent=''; ok=fail=0; parent.postMessage({pluginMessage:{type:'start'}}, '*'); };
+onmessage = async (e) => {
+  const m = e.data.pluginMessage; if (!m) return;
+  const slug = (document.getElementById('slug').value || 'dump').trim();
+  if (m.type === 'total') { total = m.total; log('ไฟล์: ' + m.file + ' · ' + total + ' หน้า'); }
+  if (m.type === 'error') { fail++; log('✗ ' + m.name + ' — ' + m.message); }
+  if (m.type === 'page') {
+    try {
+      const r = await fetch('http://localhost:8124/figma-dump/' + slug + '/' + m.id + '.json',
+        { method: 'POST', body: JSON.stringify(m.data) });
+      const j = await r.json();
+      ok++; log('[' + (m.i + 1) + '/' + total + '] ' + m.name + ' — ' + (j.bytes || 0).toLocaleString() + ' ไบต์');
+    } catch (err) { fail++; log('✗ ส่งไม่ได้ ' + m.name + ' — ' + err.message + '  (รัน serve.js หรือยัง?)'); }
+  }
+  if (m.type === 'done') log('— จบ — สำเร็จ ' + ok + ' หน้า · ล้มเหลว ' + fail);
+};
+</script>
