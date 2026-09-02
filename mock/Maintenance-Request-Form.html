@@ -12,8 +12,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds49">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260902-ds49">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds50">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260902-ds50">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -3154,12 +3154,11 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
         const p = PARTS.find(x => x.code === code), qty = pickQty(code), buy = Math.max(0, qty - onHandOf(p));
         return `<div class="parts-picked-item">
           <div><b>${esc(p.name)}</b>
-            <div class="parts-line">${esc(p.code)} · ${baht(p.price)} บาท/${esc(p.unit)}</div>
-            <div class="parts-source"><b>${srcOf(p)}</b>${buy ? ` · ต้องจัดซื้อ ${buy} ${esc(p.unit)}` : ''}</div></div>
+            <div class="parts-line">${esc(p.code)} · ${baht(p.price)} บาท/${esc(p.unit)} · <b>${srcOf(p)}</b>${buy ? ` · ต้องจัดซื้อ ${buy} ${esc(p.unit)}` : ''}</div></div>
           <div class="parts-picked-actions">
-            <button type="button" class="btn btn-t btn-sm" title="เอาออกจากรายการ" onclick="delPick('${p.code}')"><span class="ms">delete</span></button>
             <span class="parts-price">${baht(p.price * qty)} บาท</span>
             <div class="qty"><button type="button" onclick="chgPick('${p.code}',-1)">−</button><span>${qty}</span><button type="button" onclick="chgPick('${p.code}',1)">+</button></div>
+            <button type="button" class="btn btn-t btn-sm" title="เอาออกจากรายการ" onclick="delPick('${p.code}')"><span class="ms">delete</span></button>
           </div></div>`;
       });
       // แถวอะไหล่นอกระบบ — ชุดช่องเดียวกับ design-mock/kbk-self-repair-parts.html (ชื่อ · รหัส(ถ้ามี) · ราคาต่อชิ้น)
@@ -3170,9 +3169,9 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
           <div class="f"><label>ราคาอะไหล่ต่อชิ้น <small>(ถ้ามี)</small></label><input type="number" min="0" placeholder="ระบุราคาอะไหล่ต่อชิ้น" value="${c.price || ''}" onchange="setCustom('${c.id}','price',this.value)"></div>
         </div>
         <div class="parts-picked-actions">
-          <button type="button" class="btn btn-t btn-sm" title="เอาออกจากรายการ" onclick="delCustom('${c.id}')"><span class="ms">delete</span></button>
           <span class="parts-price">${baht((c.price || 0) * (c.qty || 0))} บาท</span>
           <div class="qty"><button type="button" onclick="chgCustom('${c.id}',-1)">−</button><span>${c.qty}</span><button type="button" onclick="chgCustom('${c.id}',1)">+</button></div>
+          <button type="button" class="btn btn-t btn-sm" title="เอาออกจากรายการ" onclick="delCustom('${c.id}')"><span class="ms">delete</span></button>
         </div></div>`);
       const all = rows.concat(customRows);
       const host = $('parts-picked');

@@ -87,6 +87,17 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   await page.waitForSelector('#parts-stock .parts-stock-item');
   await page.locator('#parts-stock .parts-stock-item button').first().click();
   ok('กด + แล้วอะไหล่เข้ารายการขวา', await page.locator('#parts-picked .parts-picked-item').count() >= 1);
+  // แถวอะไหล่ที่เลือก = แถวเดียว ราคา → จำนวน → ถังขยะ (ถังขยะหลังสุด) · การ์ดต้องไม่สูงเกิน 88
+  const picked = await page.evaluate(() => {
+    const row = document.querySelector('.parts-picked-item');
+    const act = row.querySelector('.parts-picked-actions');
+    return { h: Math.round(row.getBoundingClientRect().height),
+             last: act.lastElementChild.querySelector('.ms')?.textContent.trim(),
+             order: [...act.children].map(e => e.className.split(' ')[0]).join(',') };
+  });
+  eq('อะไหล่ที่เลือก: ถังขยะอยู่หลังสุด', picked.last, 'delete');
+  eq('อะไหล่ที่เลือก: เรียง ราคา → จำนวน → ปุ่มลบ', picked.order, 'parts-price,qty,btn');
+  ok('อะไหล่ที่เลือก: การ์ดกะทัดรัด (≤88px)', picked.h <= 88, `สูง ${picked.h}px`);
   const sumAll = await page.locator('#p-sum-all').textContent();
   ok('ยอดรวมค่าอะไหล่คำนวณแล้ว', /[1-9]/.test(sumAll), `ได้ "${sumAll}"`);
   await page.locator('#next').click();

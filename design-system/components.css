@@ -197,7 +197,7 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 
 /* ---------- Qty stepper ---------- */
 .qty{display:flex;align-items:center;border:1px solid var(--gray-300);border-radius:var(--r-sm);overflow:hidden}
-.qty button{border:none;background:#fff;width:32px;height:34px;font-size:17px;cursor:pointer;color:var(--primary-600)}
+.qty button{border:none;background:#fff;width:30px;height:32px;font-size:17px;cursor:pointer;color:var(--primary-600)}
 .qty span{min-width:34px;text-align:center;font-weight:600;color:var(--gray-900)}
 
 /* ---------- Chip (multi-select) ---------- */
@@ -952,9 +952,10 @@ input.tbl-row-label{width:80%;display:inline-block}
 .parts-empty{min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--gray-500)}
 .parts-empty-image{display:block;width:148px;height:128px;object-fit:contain;margin-bottom:var(--space-4)}
 .parts-empty b{color:var(--color-text-primary);font-size:var(--fs-text-md)}
-.parts-picked-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-4);padding:var(--space-4);border:1px solid var(--gray-200);border-radius:var(--r-md)}
-.parts-picked-actions{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:var(--space-3)}
-.parts-price{font-size:var(--fs-text-sm);font-weight:600;color:var(--gray-700)}
+.parts-picked-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border:1px solid var(--gray-200);border-radius:var(--r-md)}
+/* แถวเดียวเรียงซ้าย→ขวา: ราคา · จำนวน · ถังขยะ (ถังขยะอยู่หลังสุดเสมอ) */
+.parts-picked-actions{display:flex;flex-direction:row;align-items:center;gap:var(--space-3)}
+.parts-price{font-size:var(--fs-text-sm);font-weight:600;color:var(--gray-700);white-space:nowrap}
 .parts-manual-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);margin-top:var(--space-3)}
 .parts-manual-grid .wide{grid-column:1/-1}
 .parts-totals{display:grid;gap:var(--space-3);padding-top:var(--space-4);margin-top:var(--space-4);border-top:1px solid var(--gray-200)}
@@ -969,7 +970,7 @@ input.tbl-row-label{width:80%;display:inline-block}
    ครอบเฉพาะกล่องรายการ ไม่ครอบหัวข้อ/ช่องค้นหา ⇒ ค้นหายังตรึงอยู่ด้านบนเสมอ */
 .parts-scroll{max-height:min(60vh,560px);overflow-y:auto;overscroll-behavior:contain;padding-right:var(--space-2)}
 @media(max-width:960px){.parts-workspace{grid-template-columns:1fr}.parts-pane{min-height:0}}
-@media(max-width:600px){.parts-manual-grid{grid-template-columns:1fr}.parts-manual-grid .wide{grid-column:auto}.parts-picked-item{grid-template-columns:1fr}.parts-picked-actions{align-items:stretch}.parts-page-actions .btn{width:100%}}
+@media(max-width:600px){.parts-manual-grid{grid-template-columns:1fr}.parts-manual-grid .wide{grid-column:auto}.parts-picked-item{grid-template-columns:1fr}.parts-picked-actions{justify-content:space-between}.parts-page-actions .btn{width:100%}}
 
 /* ---------- File attach chip — ยกจาก Figma node 15:77582 "File upload item · Icon type=File type · State=Completed"
    (SOURCES.md หมวด ง — ไลบรารีมีคอมโพเนนต์ File upload (3:25) แต่ยังไม่เคยทำ) ปรับให้พอดีเซลล์ตาราง:
