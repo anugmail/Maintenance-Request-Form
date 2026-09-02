@@ -109,6 +109,11 @@ grep -rnP '[\x{1F300}-\x{1FAFF}]' --include='*.html' --include='*.js' \
 
 ```bash
 python3 -m http.server 8123 --bind 127.0.0.1        # ห้ามใช้ file://
+
+# 🔴 regression ของโฟลว์แจ้งซ่อม — ต้องผ่านก่อนส่งงานทุกครั้ง (เพิ่ม 2 ก.ย. 2569)
+#    เดินฟอร์มครบ 5 ขั้น → ส่งเรื่อง → เช็กใบเข้าลิสต์/หน้าอนุมัติ + วัดค่าคอมโพเนนต์เทียบไลบรารี
+NODE_PATH=<ที่ npm i playwright-core ไว้>/node_modules node mock/test/flow-regression.js
+
 node maintainance-yearly/test/skeleton-data.test.js  # โครงข้อมูล skeleton
 
 # ระยะห่างคอมโพเนนต์ — grep จับไม่ได้ ต้องเรนเดอร์แล้ววัด
