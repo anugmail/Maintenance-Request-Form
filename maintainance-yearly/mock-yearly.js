@@ -833,16 +833,19 @@ const MYD = {
 
   // ----- แผนเดินทาง: หลายใบต่อหนึ่งแผนบำรุงรักษา (เคาะ 10 ส.ค. 2569) -----
   // "การสร้างจะอิสระ หมายถึงเลือกรถได้ เลือกแผน" — ใบไม่ผูกกับจังหวัด กบค. จัดเอง
-  // trip = { id, name, location, windowFrom, windowTo, perDiem, lodging, travel,
+  // trip = { id, name, quarter, location, windowFrom, windowTo, perDiem, lodging, travel,
   //          mode:'self'|'vendor', vendorId, hireCost, staff:[ชื่อพนักงาน กบค.],
   //          vehicleIds:[], dates:{[vehicleId]:'YYYY-MM-DD'},
   //          jobs:{[vehicleId]:{change,inspect}}, places:{[vehicleId]:'สถานที่'},
   //          sentAt, replies:{ [ownerDept]: {status,reason,by,at,history:[]} } }
   // วันนัดอยู่ระดับ "รายคัน" · ช่วงเวลาอยู่ระดับ "ใบ" · การตอบรับอยู่ระดับ "ใบ × หน่วยงาน"
   // (ใบหนึ่งอาจมีรถของหลายหน่วยงาน แต่ละหน่วยงานตอบเฉพาะรถของตัวเอง)
+  // quarter = ไตรมาสเจ้าของใบ — ตั้งตอนสร้างตามแท็บที่กำลังดูอยู่ (เจ้าของงานสั่ง 26 ส.ค. 2569
+  // ให้แผนเดินทางแยกรายไตรมาสจริง ไม่ใช่แค่กรองตอนเลือกรถ) · null = ใบเก่าก่อนมีฟีลด์นี้ →
+  // เดาไตรมาสจากรถคันแรกแทน (ดู tripQuarterOf() ใน trip-plan.js)
 
-  emptyTrip(id, name) {
-    return { id, name: name || '', location: '', windowFrom: '', windowTo: '',
+  emptyTrip(id, name, quarter) {
+    return { id, name: name || '', quarter: quarter || null, location: '', windowFrom: '', windowTo: '',
              perDiem: 0, lodging: 0, travel: 0,
              mode: 'self',           // 'self' = กบค. ตรวจเอง · 'vendor' = จ้างผู้รับจ้าง
              vendorId: null,         // ผู้รับจ้างที่ถูก assign ให้ใบนี้ (เมื่อ mode='vendor')
@@ -903,6 +906,22 @@ const MYD = {
     plan.maintDone[vehicleId][jobId] = !!done;
   },
 
+  // รูปแนบต่อรายการงาน — แนบตอนเฟส 4 ดำเนินการบำรุงรักษา ในคอลัมน์ "รายละเอียดงาน" เดียวกับ checkbox
+  // ติ๊กงานเสร็จ (27 ส.ค. 2569 เจ้าของงานสั่ง — เดิมอยู่เฟส 5 จัดทำรายงาน แล้วย้ายมาที่นี่ในวันเดียวกัน
+  // เพราะรูปหลักฐานเป็นของ "ตอนลงมือทำงาน" ไม่ใช่ตอนปิดรายงาน) UI เป็นแค่ปุ่มแนบ + ชื่อไฟล์ ไม่มีกรอบพรีวิวรูป
+  // (28 ส.ค. 2569 เจ้าของงานสั่งตัดกรอบพรีวิวออก — ใช้ปุ่ม .btn ธรรมดา ไม่ต้องมี component ใหม่)
+  // เก็บ dataURL เป็น thumbnail ย่อไว้เผื่อใช้ภายหลัง (กัน localStorage ล้น) แต่ไม่ได้เอามาแสดงเป็นรูปในหน้านี้
+  // plan.jobPhotos = { [vehicleId]: { [jobId]: {name, dataUrl}|null } }
+  jobPhotoOf(plan, vehicleId, jobId) {
+    return ((plan.jobPhotos || {})[vehicleId] || {})[jobId] || null;
+  },
+
+  setJobPhoto(plan, vehicleId, jobId, photo) {
+    plan.jobPhotos = plan.jobPhotos || {};
+    plan.jobPhotos[vehicleId] = plan.jobPhotos[vehicleId] || {};
+    plan.jobPhotos[vehicleId][jobId] = photo;
+  },
+
   // งานเสริมที่ไม่ต้องเลือกตอนทำแผนเดินทาง — ขึ้นเป็นช่องติ๊กให้รถทุกคันในหน้าดำเนินการบำรุงรักษาเสมอ (25 ส.ค. 2569)
   MAINT_EXTRA_JOBS: [
     { id: 'oilSample', label: 'เก็บตัวอย่างน้ำมัน' },
@@ -934,17 +953,52 @@ const MYD = {
     return this.linesFor([vehicle], master, plan.itemAdj).filter(l => l.perVehicle > 0);
   },
 
-  // ================= เฟส 6 · คำนวณต้นทุน — ค่าใช้จ่ายต่อคัน =================
-  // แยกจาก trip.perDiem/lodging/travel (กรอกครอบทั้งใบเดินทางตอนเฟส 2) — อันนี้คือยอดจัดสรรจริงต่อคันตอนปิดงบ
-  // plan.vehicleCost = { [vehicleId]: { perDiem, lodging, travel } } · 25 ส.ค. 2569
+  // ================= ค่าใช้จ่ายต่อคัน (เบี้ยเลี้ยง/ที่พัก/เดินทาง) =================
+  // ดึงจาก trip.perDiem/lodging/travel (กรอกครอบทั้งใบตอนทำแผนเดินทาง เฟส 2) หารเฉลี่ยเท่ากันตามจำนวนรถ
+  // ในใบเดียวกัน — คันแรกของใบ (ตามลำดับ vehicleIds) รับเศษที่หารไม่ลงตัว เพื่อให้ผลรวมต่อคันบวกกันได้
+  // เท่ากับยอดใบเดินทางเป๊ะ ไม่มีช่องกรอกซ้ำที่เฟส 5/6 อีกต่อไป — แก้ได้ที่แผนเดินทางเท่านั้น (28 ส.ค. 2569 —
+  // เจ้าของงานสั่งให้ล็อคค่าเหล่านี้ไม่ให้แก้ซ้ำหลัง prefill จากแผนเดินทางแล้ว)
   vehicleCostOf(plan, vehicleId) {
-    return (plan.vehicleCost || {})[vehicleId] || { perDiem: 0, lodging: 0, travel: 0 };
+    const trip = this.tripOfVehicle(plan, vehicleId);
+    if (!trip) return { perDiem: 0, lodging: 0, travel: 0 };
+    const vids = trip.vehicleIds || [];
+    const n = vids.length || 1;
+    const isFirst = vids.indexOf(vehicleId) === 0;
+    const share = total => {
+      const t = Number(total) || 0;
+      const base = Math.floor(t / n);
+      return base + (isFirst ? t - base * n : 0);
+    };
+    return { perDiem: share(trip.perDiem), lodging: share(trip.lodging), travel: share(trip.travel) };
   },
 
-  setVehicleCost(plan, vehicleId, field, value) {
-    plan.vehicleCost = plan.vehicleCost || {};
-    plan.vehicleCost[vehicleId] = plan.vehicleCost[vehicleId] || { perDiem: 0, lodging: 0, travel: 0 };
-    plan.vehicleCost[vehicleId][field] = value;
+  // ================= ส่งอนุมัติปิดแผน — แยกรายไตรมาส (26 ส.ค. 2569) =================
+  // เจ้าของงานสั่งแยกส่งอนุมัติปิดแผนเป็นรายไตรมาส แทนที่จะส่งทั้งแผนทีเดียวเหมือนเดิม เพราะบำรุงรักษา
+  // ทำทีละไตรมาส งบก็ควรปิดได้ทีละไตรมาสตามรอบเดียวกัน · เดิม plan.closeApproval เป็นก้อนเดียวทั้งแผน
+  // plan.closeApprovalByQuarter = { [q]: { status:'pending'|'approved', requestedAt, approvedAt, approvedBy } }
+  closeApprovalOf(plan, q) {
+    return (plan.closeApprovalByQuarter || {})[q] || null;
+  },
+
+  requestCloseApprovalQuarter(plan, q, at) {
+    plan.closeApprovalByQuarter = plan.closeApprovalByQuarter || {};
+    plan.closeApprovalByQuarter[q] = { status: 'pending', requestedAt: at };
+  },
+
+  approveCloseQuarter(plan, q, by, at) {
+    plan.closeApprovalByQuarter = plan.closeApprovalByQuarter || {};
+    plan.closeApprovalByQuarter[q] = { ...(plan.closeApprovalByQuarter[q] || {}), status: 'approved', approvedAt: at, approvedBy: by };
+  },
+
+  // เฟส "คำนวณต้นทุน" ถือว่าเสร็จ (✓ ที่ stepper) เมื่อทุกไตรมาสที่มีรถอยู่จริงถูกส่งอนุมัติแล้ว — ไม่ต้อง
+  // รอผู้บังคับบัญชากดอนุมัติกลับมาก่อน (เหมือนเกณฑ์ ✓ ของเฟสอื่นที่นับงานฝั่ง กบค. เป็นหลัก)
+  allQuartersCloseRequested(plan) {
+    this.ensurePlanQuarters(plan);
+    return this.QUARTER_KEYS.every(q => {
+      const ids = (plan.byQuarter[q] || []).filter(id => this.isVehicleIn(plan, id));
+      if (!ids.length) return true;
+      return !!this.closeApprovalOf(plan, q);
+    });
   },
 
   // งานที่ต้องทำจริงของคันนี้ (เฉพาะที่ติ๊กไว้ตอนทำแผนเดินทาง) — ใช้นับว่าติ๊กเสร็จไปกี่จากกี่งาน
@@ -1012,19 +1066,15 @@ const MYD = {
     return f;
   },
 
-  // ตรวจครบ = ทุกรายการเลือก มี/ไม่มี แล้ว และลงนามครบทั้งสองฝั่ง
+  // ตรวจครบ = ลงนามรับมอบตัวรถครบทั้งสองฝั่ง — ไม่บังคับตอบครบทุกรายการตรวจ (เจ้าของงานสั่ง 27 ส.ค. 2569
+  // ผ่อนเกณฑ์นี้ให้เฟส 4 ดำเนินการบำรุงรักษาก่อน — ตอนนั้นเฟส 5 จัดทำรายงาน/เฟส 6 คำนวณต้นทุนยังใช้เกณฑ์เข้ม
+  // (ต้องตอบครบทุกข้อด้วย) แยกจากกัน · ต่อมาสั่งผ่อนเกณฑ์เดียวกันนี้ให้ทุกเฟสถัดไปด้วย เพราะแค่รับมอบตัวรถก็
+  // ถือว่าตรวจสภาพก่อนซ่อมแล้ว ไม่ต้องรอกรอกรายการตรวจให้ครบ — เดิมมีฟังก์ชันแยก `inspectionReceived` ไว้ใช้
+  // เฉพาะเฟส 4 พอเกณฑ์เท่ากันหมดแล้วเลยรวมเหลือฟังก์ชันเดียว
   inspectionDone(plan, vehicleId) {
     const f = (plan.inspections || {})[vehicleId];
     if (!f) return false;
-    if (!f.signedDeliverAt || !f.signedReceiveAt) return false;
-    return (f.items || []).length > 0 && (f.items || []).every(x => x.result === 'yes' || x.result === 'no');
-  },
-
-  // รับมอบรถแล้ว = เซ็นลงนามครบ 2 ฝั่ง — ไม่ต้องตอบครบทุกข้อตรวจ
-  // (ใช้เป็นเกณฑ์ขึ้นหน้าดำเนินการบำรุงรักษา เฟส 4 · inspectionDone ยังไว้ใช้กับหน้าตรวจสภาพเฟส 3 เอง)
-  vehicleReceived(plan, vehicleId) {
-    const f = (plan.inspections || {})[vehicleId];
-    return !!(f && f.signedDeliverAt && f.signedReceiveAt);
+    return !!(f.signedDeliverAt && f.signedReceiveAt);
   },
 
   // ผู้ส่งมอบรถฝั่งหน่วยงานเจ้าของรถ — ⚠️ ข้อมูลจำลอง ของจริงต้อง join กับทะเบียนพนักงาน
@@ -1164,12 +1214,126 @@ const MYD = {
     return true;
   },
 
-  // ขั้นแผนเดินทางจบเมื่อ: จัดรถเข้าใบครบทุกคัน + ทุกใบได้รับการตอบรับ
+  // เกณฑ์ "ยืนยันแผนเดินทางได้" (ปุ่มสุดท้ายที่ขั้น 2) — ต้องครบทุกไตรมาส: จัดรถเข้าใบครบทุกคัน
+  // + ทุกใบได้รับการตอบรับ · ปุ่ม "ถัดไป" ของขั้น 1 ใช้เกณฑ์เดียวกัน (ครบทุกไตรมาส) ดู allQuartersTravelReady ด้านล่าง
   travelPlanReady(plan, master) {
     const trips = this.ensureTrips(plan);
     if (!trips.length) return false;
     if (this.unassignedVehicleIds(plan).length) return false;
     return trips.every(t => this.tripStatus(t, master) === 'accepted');
+  },
+
+  // เวอร์ชันแยกรายไตรมาสของ unassignedVehicleIds() ด้านบน — ใช้เช็คว่า "ไตรมาสนี้" จัดรถเข้าใบครบหรือยัง
+  unassignedVehicleIdsInQuarter(plan, q) {
+    this.ensurePlanQuarters(plan);
+    const inTrips = new Set(this.ensureTrips(plan).flatMap(t => t.vehicleIds || []));
+    return (plan.byQuarter[q] || []).filter(id => this.isVehicleIn(plan, id) && !inTrips.has(id));
+  },
+
+  // ไตรมาสหนึ่ง "พร้อม" เมื่อ: มีรถอยู่ในไตรมาสนั้น + จัดรถเข้าใบครบ + ทุกใบที่มีรถไตรมาสนั้นตอบรับแล้ว
+  quarterTravelReady(plan, master, q) {
+    const ids = (plan.byQuarter[q] || []).filter(id => this.isVehicleIn(plan, id));
+    if (!ids.length) return false;
+    if (this.unassignedVehicleIdsInQuarter(plan, q).length) return false;
+    const trips = this.ensureTrips(plan).filter(t => (t.vehicleIds || []).some(id => ids.includes(id)));
+    if (!trips.length) return false;
+    return trips.every(t => this.tripStatus(t, master) === 'accepted');
+  },
+
+  // ปุ่ม "ถัดไป" ของขั้น 1 ปลดล็อกเมื่อทำแผนเดินทางครบทั้ง 4 ไตรมาสแล้วเท่านั้น (เจ้าของงานสั่ง 26 ส.ค. 2569
+  // ปรับกลับจากที่เคยให้ผ่านได้ตั้งแต่ไตรมาสเดียวพร้อม) — ไตรมาสที่ไม่มีรถอยู่เลย (พักไว้/ย้ายออกหมด)
+  // ถือว่าผ่านลอยตัว ไม่งั้นจะไปต่อไม่ได้เลยทั้งที่ไม่มีอะไรให้ทำในไตรมาสนั้น
+  allQuartersTravelReady(plan, master) {
+    this.ensurePlanQuarters(plan);
+    return this.QUARTER_KEYS.every(q => {
+      const ids = (plan.byQuarter[q] || []).filter(id => this.isVehicleIn(plan, id));
+      if (!ids.length) return true;
+      return this.quarterTravelReady(plan, master, q);
+    });
+  },
+
+  // ================= ยืนยันแผนเดินทาง — แยกรายไตรมาส (28 ส.ค. 2569) =================
+  // เจ้าของงานสั่งให้ขั้น "ทวน + ยืนยัน" กดยืนยันได้ทีละไตรมาสตามที่พร้อม (quarterTravelReady) แทนปุ่ม
+  // เดียวยืนยันทั้งแผน — แพตเทิร์นเดียวกับ closeApprovalByQuarter ของ "ส่งอนุมัติปิดแผน" (คำนวณต้นทุน)
+  // plan.travelConfirmedByQuarter = { [q]: at }
+  quarterTravelConfirmed(plan, q) {
+    return !!(plan.travelConfirmedByQuarter || {})[q];
+  },
+
+  confirmTravelQuarter(plan, q, at) {
+    plan.travelConfirmedByQuarter = plan.travelConfirmedByQuarter || {};
+    plan.travelConfirmedByQuarter[q] = at;
+    // ไตรมาสสุดท้ายยืนยันครบ → ตั้ง plan.travelConfirmed ต่อให้ด้วย เพื่อให้ต่อเนื่องกับของเดิมทั้งระบบ
+    // ที่ยังอ่านธงก้อนนี้อยู่ (confirmLocked ที่ confirm.js ล็อกคำตอบยืนยันรถ · phaseCompleteOf ที่ปลดเฟส 3
+    // · trip-plan.html ซึ่งยังมีปุ่มยืนยันทั้งแผนของตัวเอง) ไม่ต้องแก้จุดอื่นเพิ่ม
+    if (this.allQuartersTravelConfirmed(plan)) plan.travelConfirmed = true;
+  },
+
+  // เฟส "แผนเดินทาง" ถือว่ายืนยันครบเมื่อทุกไตรมาสที่มีรถถูกยืนยันแล้ว — ไตรมาสที่ไม่มีรถอยู่เลยถือว่า
+  // ผ่านลอยตัว (แพตเทิร์นเดียวกับ allQuartersTravelReady/allQuartersCloseRequested ด้านบน)
+  allQuartersTravelConfirmed(plan) {
+    this.ensurePlanQuarters(plan);
+    return this.QUARTER_KEYS.every(q => {
+      const ids = (plan.byQuarter[q] || []).filter(id => this.isVehicleIn(plan, id));
+      if (!ids.length) return true;
+      return this.quarterTravelConfirmed(plan, q);
+    });
+  },
+
+  // ================= เฟสระดับไตรมาส — ตรวจสภาพก่อนซ่อม/ดำเนินการบำรุงรักษา/จัดทำรายงาน/คำนวณต้นทุน =================
+  // (28 ส.ค. 2569) แยกออกจาก stepper ระดับแผนแล้ว — แต่ละไตรมาสมี "เฟสที่กำลังทำอยู่" และธง "เฟสไหนเสร็จแล้ว"
+  // ของตัวเอง เหมือน plan.phase/plan.phaseDone เดิม แต่ซ้อนอีกชั้นด้วยไตรมาส ฟังก์ชันพวกนี้เป็นแค่ storage
+  // เก็บ/อ่าน generic (รับ phaseId เป็น string) — ไม่รู้จักลำดับ/รายชื่อเฟส ตัวนั้นเป็นเรื่องของ QUARTER_PHASES
+  // ใน app.js (host) ทั้งหมด — เก็บ id เป็น string เหมือนกัน
+  // plan.quarterPhase        = { [q]: phaseId }              — เฟสที่กำลังทำอยู่ของไตรมาสนั้น
+  // plan.quarterPhaseDone    = { [q]: { [phaseId]: true } }  — เฟสไหนของไตรมาสนั้นทำเสร็จแล้ว
+  quarterOpsPhase(plan, q) {
+    return (plan.quarterPhase || {})[q] || 'inspection';
+  },
+
+  setQuarterOpsPhase(plan, q, phaseId) {
+    plan.quarterPhase = plan.quarterPhase || {};
+    plan.quarterPhase[q] = phaseId;
+  },
+
+  // เฟส "คำนวณต้นทุน" ใช้ closeApprovalOf เป็นเกณฑ์เสร็จอยู่แล้ว (ส่งอนุมัติปิดแผนไตรมาส) ไม่ต้องมีธงแยก —
+  // ที่เหลือ (ตรวจสภาพก่อนซ่อม/ดำเนินการบำรุงรักษา/จัดทำรายงาน) อ่านจาก quarterPhaseDone ตรงๆ
+  quarterPhaseDone(plan, q, phaseId) {
+    if (phaseId === 'cost') return !!this.closeApprovalOf(plan, q);
+    return !!((plan.quarterPhaseDone || {})[q] || {})[phaseId];
+  },
+
+  finishQuarterPhase(plan, q, phaseId) {
+    plan.quarterPhaseDone = plan.quarterPhaseDone || {};
+    plan.quarterPhaseDone[q] = plan.quarterPhaseDone[q] || {};
+    plan.quarterPhaseDone[q][phaseId] = true;
+  },
+
+  // ================= เลือกรถที่จะดำเนินการต่อไตรมาส (28 ส.ค. 2569 รอบ 4 — เจ้าของงานสั่ง) =================
+  // ก่อนเข้าตรวจสภาพก่อนซ่อม (เฟส 1 ของไตรมาส) ให้เลือกก่อนว่ารอบนี้จะดำเนินการรถคันไหนบ้าง — กันเข้ามา
+  // บำรุงรักษารถคันเดียวกันซ้ำ (เช่น สองทีมเปิดดำเนินการไตรมาสเดียวกันคนละช่วง) เลือกครั้งเดียวต่อไตรมาส
+  // แล้วจำไว้ถาวร — ยังไม่มีปุ่มแก้ทีหลัง (ทางลัดของต้นแบบ ตามที่เจ้าของงานสั่งให้ทำแค่หน้าเลือกก่อนพอ)
+  // plan.opsPicked = { Q1:[ids], Q2:[ids], Q3:[ids], Q4:[ids] } — ไม่มีคีย์ของไตรมาสนั้น = ยังไม่เคยเลือก
+  quarterOpsPicked(plan, q) {
+    return Array.isArray((plan.opsPicked || {})[q]);
+  },
+
+  // รถที่ยืนยันเข้าไตรมาสนี้จริง (ผ่าน isVehicleIn) — ฐานที่หน้าเลือกรถใช้แสดงให้ติ๊ก
+  quarterConfirmedIds(plan, q) {
+    return this.planVehicleIds(plan, q).filter(id => this.isVehicleIn(plan, id));
+  },
+
+  // รถที่ถูกเลือกเข้าดำเนินการของไตรมาสนี้แล้ว — ใช้แทน quarterConfirmedIds ในทั้ง 4 เฟสของไตรมาส
+  // (กรองรถที่หลุดจากไตรมาส/ถูกตัดสิทธิ์ทีหลังทิ้งไปด้วย กันข้อมูลค้าง)
+  quarterOpsPickedIds(plan, q) {
+    const confirmed = new Set(this.quarterConfirmedIds(plan, q));
+    return ((plan.opsPicked || {})[q] || []).filter(id => confirmed.has(id));
+  },
+
+  // บันทึกรถที่เลือกดำเนินการของไตรมาสนี้ — เรียกครั้งเดียวตอนกด "เริ่มดำเนินการ" ที่หน้าเลือกรถ
+  pickQuarterOpsVehicles(plan, q, ids) {
+    plan.opsPicked = plan.opsPicked || {};
+    plan.opsPicked[q] = [...new Set(ids)];
   },
 
   // ================= ปฏิทินปีงบ + รอบทบทวนแผน =================

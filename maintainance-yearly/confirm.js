@@ -58,18 +58,17 @@ function render() {
 }
 
 function renderList() {
-  const reqs = buildRequests();
+  // ปิดรับคำตอบแล้ว = ตอบไม่ได้อีกต่อไป — ไม่ต้องแสดงในรายการที่ต้องดำเนินการ
+  const reqs = buildRequests().filter(r => !MYD.confirmLocked(r.plan));
   const rows = reqs.map(r => {
     const answered = r.vehicles.filter(v => MYD.vehicleConfirm(r.plan, v.id).answer !== 'pending').length;
-    const locked = MYD.confirmLocked(r.plan);
     return `<tr>
       <td><b style="color:var(--gray-900)">${esc(r.dept)}</b>
         <div class="sub">${esc(r.plan.workNumber)} · ${esc(r.plan.planName || '—')}</div></td>
       <td class="num">${r.vehicles.length}</td>
       <td class="num">${answered}</td>
       <td>${dateTh(r.plan.confirm.dueAt)}</td>
-      <td>${locked ? `<span class="badge b-brand">ปิดรับคำตอบ</span>`
-            : answered === r.vehicles.length ? `<span class="badge b-ok">ตอบครบแล้ว</span>`
+      <td>${answered === r.vehicles.length ? `<span class="badge b-ok">ตอบครบแล้ว</span>`
             : `<span class="badge b-low">รอตอบ ${r.vehicles.length - answered}</span>`}</td>
       <td class="num"><a class="btn btn-s btn-sm" href="#${esc(r.plan.id)}/${r.deptIdx}">เปิดคำขอ</a></td>
     </tr>`;
@@ -91,11 +90,12 @@ function renderList() {
 
 // การ์ดที่ 2: แผนนัดหมายที่ต้องตอบรับ (คนละเรื่องกับการยืนยันรถ)
 function renderInviteListCard() {
-  const invites = buildTripInvites();
+  // ตอบรับแล้ว = จบเรื่องนี้ไปแล้ว — ไม่ต้องแสดงในรายการที่ต้องดำเนินการ
+  const invites = buildTripInvites().filter(i => MYD.tripReply(i.trip, i.dept).status !== 'accepted');
   const rows = invites.map(i => {
     const r = MYD.tripReply(i.trip, i.dept);
-    const b = r.status === 'accepted' ? 'b-ok' : r.status === 'rejected' ? 'b-brand' : 'b-low';
-    const t = r.status === 'accepted' ? 'ตอบรับแล้ว' : r.status === 'rejected' ? 'ปฏิเสธแล้ว' : 'รอตอบรับ';
+    const b = r.status === 'rejected' ? 'b-brand' : 'b-low';
+    const t = r.status === 'rejected' ? 'ปฏิเสธแล้ว' : 'รอตอบรับ';
     return `<tr>
       <td><b style="color:var(--gray-900)">${esc(i.dept)}</b>
         <div class="sub">${esc(i.plan.workNumber)} · ${esc(i.trip.name || 'แผนเดินทาง')}</div></td>

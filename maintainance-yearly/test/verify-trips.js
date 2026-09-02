@@ -46,21 +46,25 @@ const PLAN = 'plan-seed-2569-002';
   // ไปเฟส 2 (แผนเดินทาง) ด้วยการคลิกจริงบน stepper หลัก — แยกเป็นคนละเฟสแล้ว 21 ส.ค. 2569
   await page.locator(`[onclick="goPhase('travel')"]`).click();
   await page.waitForTimeout(400);
-  ok(await page.locator('.sect', { hasText: 'ทำแผนเดินทาง' }).count() > 0, 'เข้าเฟส 2 · ขั้นที่ 1 แผนเดินทางได้');
+  // หัวข้อเปลี่ยนจาก "ขั้นที่ 1: ทำแผนเดินทาง" เป็น "แผนเดินทาง" ตอนย้าย stepper ย่อยเข้าไปในการ์ดไตรมาส (28 ส.ค. 2569 รอบ 3)
+  ok(await page.locator('.sect', { hasText: 'แผนเดินทาง' }).count() > 0, 'เข้าเฟส 2 · แผนเดินทางได้');
 
   console.log('\nสร้างแผนเดินทาง');
-  ok(await page.locator('#btnPrimaryProc').isDisabled(), 'ยังไม่มีแผน → ปุ่มถัดไปปิดอยู่');
-  await page.locator('#btnAutoTrips').click();
+  ok(await page.locator('#btnPrimaryProc').count() === 0, 'เฟสแผนเดินทางไม่มีปุ่ม "ถัดไป" ของ shell แล้ว (28 ส.ค. 2569)');
+  // ไตรมาส 1 กางไว้เป็นค่าเริ่มต้น (28 ส.ค. 2569: เปลี่ยนจากแท็บสลับเป็นรายการพับ/กาง) — ปุ่มจึงมี data-q="Q1"
+  // .rzone ตอนนี้มี 2 ชั้น: กล่องไตรมาส (มี data-q) ห่อกล่องใบเดินทางแต่ละใบ (ไม่มี data-q) ไว้ข้างใน
+  const tripBoxes = () => page.locator('[data-q] .rzone-body .rzone');
+  await page.locator('[data-auto-trips="Q1"]').click();
   await page.waitForTimeout(400);
-  const boxes = await page.locator('.rzone').count();
+  const boxes = await tripBoxes().count();
   ok(boxes === 2, `แยกอัตโนมัติได้ 2 ใบตามจังหวัด (ได้ ${boxes})`);
-  const names = await page.locator('.rzone-head b').allTextContents();
+  const names = await tripBoxes().locator('.rzone-head b').allTextContents();
   ok(names.join('|').includes('จันทบุรี') && names.join('|').includes('กาญจนบุรี'),
     'ชื่อใบเป็นชื่อจังหวัด — ' + names.join(' | '));
   ok((await page.locator('.empty', { hasText: 'ยังไม่ถูกจัดเข้าแผน' }).count()) === 0, 'จัดรถครบทุกคันแล้ว');
 
   console.log('\nกรอกรายละเอียดใบที่ 1');
-  const box1 = page.locator('.rzone').first();
+  const box1 = tripBoxes().first();
   await box1.locator('[data-field="location"]').fill('จุดรวมงาน กฟจ. จันทบุรี');
   await box1.locator('[data-field="windowFrom"]').fill('2568-11-04');
   await box1.locator('[data-field="windowTo"]').fill('2568-11-08');
@@ -69,7 +73,7 @@ const PLAN = 'plan-seed-2569-002';
 
   // ⚠️ วันนัดรายคันไม่ได้อยู่จอนี้แล้ว — หน่วยงานเจ้าของรถเลือกเองตอนตอบรับ (17 ส.ค. 2569)
   // เกณฑ์ส่งใบตอนนี้ = สถานที่ + ช่วงวัน + ผู้ดำเนินการ (พนักงาน กบค./ผู้รับจ้าง) + ทุกคันเลือกงานอย่างน้อย 1
-  const trip1 = () => page.locator('.rzone').first();
+  const trip1 = () => tripBoxes().first();
   await trip1().locator('[data-staff-trip]').first().fill('ช่างสมชาย');
   await page.waitForTimeout(400);
   ok(!(await trip1().locator('[data-trip-send]').isDisabled()), 'ครบเกณฑ์ (สถานที่+ช่วง+พนักงาน+งานรายคัน) → ส่งได้');
@@ -96,10 +100,10 @@ const PLAN = 'plan-seed-2569-002';
   ok(!(await trip1().locator('[data-trip-send]').isDisabled()), 'ติ๊กงานกลับ → ส่งได้อีกครั้ง');
 
   console.log('\nส่งแผนนัด');
-  await page.locator('.rzone').first().locator('[data-trip-send]').click();
+  await tripBoxes().first().locator('[data-trip-send]').click();
   await page.waitForTimeout(500);
   ok(await page.locator('.badge', { hasText: 'รอตอบรับ' }).count() > 0, 'ใบที่ 1 เป็นสถานะรอตอบรับ');
-  ok(await page.locator('.rzone').first().locator('[data-field="location"]').isDisabled(), 'ส่งแล้วฟอร์มล็อก');
+  ok(await tripBoxes().first().locator('[data-field="location"]').isDisabled(), 'ส่งแล้วฟอร์มล็อก');
 
   console.log('\nฝั่งหน่วยงาน: ตอบรับ / ปฏิเสธ');
   await page.goto(`${BASE}/confirm.html`);
@@ -134,9 +138,8 @@ const PLAN = 'plan-seed-2569-002';
   await page.locator(`[onclick="goPhase('travel')"]`).click();
   await page.waitForTimeout(400);
   ok(await page.locator('.badge', { hasText: 'ถูกปฏิเสธ' }).count() > 0, 'ใบขึ้นสถานะถูกปฏิเสธ');
-  ok(!(await page.locator('.rzone').first().locator('[data-field="location"]').isDisabled()), 'ปลดล็อกให้แก้ได้อีกครั้ง');
+  ok(!(await tripBoxes().first().locator('[data-field="location"]').isDisabled()), 'ปลดล็อกให้แก้ได้อีกครั้ง');
   ok(await page.locator('[data-trip-send]').first().textContent().then(t => /ส่งใหม่/.test(t)), 'ปุ่มเปลี่ยนเป็น "แก้แล้วส่งใหม่"');
-  ok(await page.locator('#btnPrimaryProc').isDisabled(), 'ยังตอบรับไม่ครบ → ปุ่มถัดไปยังปิด');
 
   console.log('\npageerror:', errors.length ? errors.join(' | ') : '(ไม่มี)');
   ok(errors.length === 0, 'ไม่มี pageerror');

@@ -450,7 +450,7 @@ function computePlanSummary(plan) {
   const byQuarter = QUARTERS.map(q => {
     const ids = MYD.planVehicleIds(plan, q.q);
     const vs = master.vehicles.filter(v => ids.includes(v.id));
-    return { q: q.q, months: q.months, count: vs.length, lines: computeLines(vs, master, planAdj(plan)) };
+    return { q: q.q, months: q.months, count: vs.length, vehicles: vs, lines: computeLines(vs, master, planAdj(plan)) };
   });
   const catSummary = ['part', 'oil', 'filter']
     .map(cat => {
@@ -463,6 +463,43 @@ function computePlanSummary(plan) {
   // ข้อความจึงไม่ตรงกับหน้ารายการแผนเวลาข้อความเปลี่ยน
   const periodText = `ปีงบประมาณ ${esc(plan.year)} (ต.ค.–ก.ย.) — ครบทั้ง 4 ไตรมาส`;
   return { master, selectedVehicles, lines, byQuarter, catSummary, periodText };
+}
+
+// รายการรถของไตรมาสหนึ่ง แบบพับ/กาง — ใช้คอมโพเนนต์เดียวกับ .rzone ในขั้นที่ 1
+// (state.expandedSumQ อยู่ใน memory เท่านั้น เหมือน state.expandedRegions)
+function toggleSumQ(q) {
+  if (!state.expandedSumQ) state.expandedSumQ = {};
+  state.expandedSumQ[q] = !state.expandedSumQ[q];
+  renderWizard(PLAN);
+}
+
+function renderQuarterVehicleBlock(qData) {
+  const expanded = !!(state.expandedSumQ && state.expandedSumQ[qData.q]);
+  const rows = qData.vehicles.map(v => {
+    const region = MYD.REGIONS.find(r => r.id === v.region);
+    return `<tr>
+      <td>${esc(MYD.plateFull(v))}<div class="cell-sub">${esc(v.assetCode)}</div></td>
+      <td>${esc(v.vehicleType)}</td>
+      <td>${esc(v.province)}</td>
+      <td>${region ? esc(region.name) : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <div class="rzone" data-q="${qData.q}">
+      <div class="rzone-head" onclick="toggleSumQ('${qData.q}')">
+        <span class="ms rzone-caret">${expanded ? 'expand_more' : 'chevron_right'}</span>
+        <b>${esc(MYD.quarterLabel(qData.q))}</b>
+        <span class="rzone-count">${esc(qData.months)} · ${qData.count} คัน · อะไหล่ ${qData.lines.length} รายการ</span>
+      </div>
+      ${expanded ? `
+      <div class="rzone-body">
+        <div class="tblwrap"><table class="tbl">
+          <thead><tr><th>ทะเบียน</th><th>ประเภท</th><th>จังหวัด</th><th>เขต</th></tr></thead>
+          <tbody>${rows || `<tr><td colspan="4" class="empty">ไม่มีรถ</td></tr>`}</tbody>
+        </table></div>
+      </div>` : ''}
+    </div>`;
 }
 
 // ----- ขั้น 2 (ขั้นสุดท้าย): สรุปแผน + ออกเลขงาน -----
@@ -500,22 +537,11 @@ function renderStepSummary(plan) {
     </div>
 
     <div class="sect">แจกแจงรายไตรมาส — เลขงานจะออก 1 ใบต่อไตรมาส</div>
-    <div class="tblwrap"><table class="tbl itbl">
-      <thead><tr><th>ไตรมาส</th><th colspan="2">ช่วงเดือน</th><th>จำนวนรถ</th><th>รายการอะไหล่</th><th></th></tr></thead>
-      <tbody>${byQuarter.map(q => `<tr>
-        <td><b>${esc(MYD.quarterLabel(q.q))}</b></td>
-        <td colspan="2">${esc(q.months)}</td>
-        <td class="num"><b>${q.count}</b> คัน</td>
-        <td class="num">${q.lines.length} รายการ</td>
-        <td></td>
-      </tr>`).join('')}</tbody>
-      <tfoot><tr class="sumrow">
-        <td><b>รวมทั้งปี</b></td>
-        <td colspan="2">ต.ค.–ก.ย.</td>
-        <td class="num"><b>${selectedVehicles.length}</b> คัน</td>
-        <td class="num">${lines.length} รายการ</td>
-        <td></td>
-      </tr></tfoot></table></div>
+    <div class="sub">กดที่แต่ละไตรมาสเพื่อดูรายการรถ</div>
+    ${byQuarter.map(q => renderQuarterVehicleBlock(q)).join('')}
+    <div class="note note-info" style="margin-top:8px"><span class="ms">info</span>
+      <div><b>รวมทั้งปี</b> (ต.ค.–ก.ย.) — <b>${selectedVehicles.length}</b> คัน · อะไหล่ <b>${lines.length}</b> รายการ</div>
+    </div>
 
     <div class="sect">รถที่เลือกเข้าแผน — แยกตามภาค</div>
     <div class="tblwrap"><table class="tbl itbl">
