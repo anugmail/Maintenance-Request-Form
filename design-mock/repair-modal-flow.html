@@ -54,9 +54,9 @@
   <div class="work" style="width:1360;margin:0 auto">
     <main class="content">
       <div class="zone-note">พรีวิวแบบ (ยังไม่ใช่หน้าจริง) — หน้ารวมแจ้งซ่อม: คอลัมน์ชุดเดิม + ไอคอน "แจ้งซ่อมคันนี้"
-        ท้ายแถว (ตัวเลข = เรื่องที่ยังไม่ปิดของคันนั้น) · <b>กดไอคอนรถท้ายแถว</b> = modal แจ้งซ่อมรถคันนั้น (เริ่มขั้น
-        1) · <b>ปุ่ม "แจ้งซ่อมใหม่"</b> = modal แบบมีขั้นเลือกรถก่อน (รถที่ยังไม่มีเรื่องในตาราง) · โฟลว์ใน modal:
-        เลือกรถ → ข้อมูลทั่วไป → อาการเสีย (หลายจุด) → ตัดสินใจ+อะไหล่ → สรุปและผู้อนุมัติ → ส่งเรื่อง</div>
+        ท้ายแถว (ตัวเลข = เรื่องที่ยังไม่ปิดของคันนั้น) · <b>กดไอคอนรถท้ายแถว</b> = modal เติมรถให้แล้ว ·
+        <b>ปุ่ม "แจ้งซ่อมใหม่"</b> = modal เดียวกัน แต่ช่อง "ยานพาหนะ" (dropdown) ยังว่างให้เลือก · โฟลว์ใน modal:
+        ข้อมูลทั่วไป (เลือกรถจาก dropdown) → อาการเสีย (หลายจุด) → ตัดสินใจ+อะไหล่ → สรุปและผู้อนุมัติ → ส่งเรื่อง</div>
 
       <div class="crumbs"><span class="ms">home</span><span class="sep"></span><span
           class="cur">จัดการงานซ่อม</span></div>
@@ -210,39 +210,27 @@
       </div>
       <div class="modal-bd" style="padding-top:8px;padding-bottom:8px">
 
-        <!-- Step 0: เลือกรถ (เฉพาะเข้าจากปุ่ม "แจ้งซ่อมใหม่" — รถที่ยังไม่มีเรื่องในตาราง) -->
-        <div id="mstep0" class="hidden">
-          <div class="step-title">เลือกรถที่ต้องการแจ้งซ่อม</div>
-          <div class="mfield" style="margin:10px 0 12px;max-width:520px">
-            <div class="search" style="display:flex;width:100%"><span class="ms">search</span>
-              <input type="text" placeholder="ค้นหาทะเบียน หรือเลือกจากรายการด้านล่าง…"></div>
-            <div class="hint" style="font-size:var(--fs-sm);color:var(--gray-500);margin-top:4px">
-              รายการ: รถของฉัน/รถในทีม — ถ้ารถไม่อยู่ในระบบ ติดต่อผู้ดูแลข้อมูลรถ (กรย./กบค.)</div>
-          </div>
-          <div class="radcards">
-            <label class="radcard sel" onclick="pickVeh(this,'81-2345 นครราชสีมา','เครน Tadano TM-ZE304')"><input
-                type="radio" name="mveh" checked><span class="rdot"></span><span class="rc-tx"><b>81-2345
-                  นครราชสีมา</b><small>Hino FM8J 6 ล้อ · เครน Tadano TM-ZE304 · กฟภ. เขต ฉ.3
-                  นครราชสีมา</small></span></label>
-            <label class="radcard" onclick="pickVeh(this,'82-6789 ขอนแก่น','กระเช้า Aichi SK17A')"><input type="radio"
-                name="mveh"><span class="rdot"></span><span class="rc-tx"><b>82-6789 ขอนแก่น</b><small>Isuzu FTR ·
-                  กระเช้า Aichi SK17A · กฟภ. เขต ฉ.1 ขอนแก่น</small></span></label>
-            <label class="radcard" onclick="pickVeh(this,'83-1122 กรุงเทพมหานคร','เครน Unic URV554')"><input
-                type="radio" name="mveh"><span class="rdot"></span><span class="rc-tx"><b>83-1122
-                  กรุงเทพมหานคร</b><small>Mitsubishi Fuso FI · เครน Unic URV554 ·
-                  สำนักงานใหญ่ (กบค.)</small></span></label>
-            <label class="radcard" onclick="pickVeh(this,'80-5566 เชียงใหม่',null)"><input type="radio"
-                name="mveh"><span class="rdot"></span><span class="rc-tx"><b>80-5566 เชียงใหม่</b><small>Hino XZU
-                  กระบะยกสูง · กฟภ. เขต น.1 เชียงใหม่</small></span></label>
-          </div>
-        </div>
-
         <!-- Step 1 -->
         <div id="mstep1">
           <div class="step-title">ขั้นที่ 1: ข้อมูลทั่วไป</div>
-          <div class="vsum" style="margin:10px 0 16px">
+
+          <div class="mfield" style="margin:10px 0 16px">
+            <label class="flabel">ยานพาหนะ</label>
+            <select id="m-veh-select" style="max-width:100%" onchange="onVehSelect(this.value)">
+              <option value="" selected disabled>เลือกรถ — รถของฉัน/รถในทีม</option>
+              <option value="81-2345 นครราชสีมา">81-2345 นครราชสีมา — Hino FM8J 6 ล้อ · เครน Tadano TM-ZE304</option>
+              <option value="82-6789 ขอนแก่น">82-6789 ขอนแก่น — Isuzu FTR · กระเช้า Aichi SK17A</option>
+              <option value="83-1122 กรุงเทพมหานคร">83-1122 กรุงเทพมหานคร — Mitsubishi Fuso FI · เครน Unic URV554
+              </option>
+              <option value="80-5566 เชียงใหม่">80-5566 เชียงใหม่ — Hino XZU กระบะยกสูง</option>
+            </select>
+            <div class="hint" style="font-size:var(--fs-sm);color:var(--gray-500);margin-top:4px">
+              ถ้ารถไม่อยู่ในระบบ ติดต่อผู้ดูแลข้อมูลรถ (กรย./กบค.)</div>
+          </div>
+
+          <div class="vsum" id="m-vsum" style="margin:10px 0 16px">
             <div><div class="k">ทะเบียน</div><div class="v" id="m-plate">81-2345 นครราชสีมา</div></div>
-            <div><div class="k">สังกัด</div><div class="v">กฟภ. เขต ฉ.3 นครราชสีมา</div></div>
+            <div><div class="k">สังกัด</div><div class="v" id="m-org">กฟภ. เขต ฉ.3 นครราชสีมา</div></div>
             <div><div class="k">ผู้ขับขี่</div><div class="v">อนุชิต ลิ้มกิมฮวย</div></div>
             <div><div class="k">ช่างคุมรถ</div><div class="v">อนุชิต ลิ้มกิมฮวย, นรค.9 กอพ.1 ฝพจ.</div></div>
           </div>
@@ -450,8 +438,18 @@
   </div>
 
   <script>
-    /* JS เฉพาะพรีวิว — เปิด/ปิด modal + สลับขั้น (0=เลือกรถ เฉพาะปุ่ม "แจ้งซ่อมใหม่") */
-    let step = 1, fromNew = false;
+    /* JS เฉพาะพรีวิว — เปิด/ปิด modal + สลับขั้น · เลือกรถผ่าน dropdown "ยานพาหนะ" ในขั้นที่ 1 */
+    let step = 1;
+    const VEHS = {
+      '81-2345 นครราชสีมา': { attach: 'เครน Tadano TM-ZE304', org: 'กฟภ. เขต ฉ.3 นครราชสีมา' },
+      '82-6789 ขอนแก่น': { attach: 'กระเช้า Aichi SK17A', org: 'กฟภ. เขต ฉ.1 ขอนแก่น' },
+      '83-1122 กรุงเทพมหานคร': { attach: 'เครน Unic URV554', org: 'สำนักงานใหญ่ (กบค.)' },
+      '80-5566 เชียงใหม่': { attach: null, org: 'กฟภ. เขต น.1 เชียงใหม่' },
+    };
+    function onVehSelect(plate) {
+      const v = VEHS[plate];
+      if (v) setVehicle(plate, v.attach);
+    }
 
     // ติ๊กแล้วภาพต้องเปลี่ยน — toggle .sel ตาม input ทุก checkbox/radio ในพรีวิว
     document.addEventListener('change', e => {
@@ -470,6 +468,9 @@
     function setVehicle(plate, attach) {
       document.getElementById('m-title').textContent = 'แจ้งซ่อม — ' + plate;
       document.getElementById('m-plate').textContent = plate;
+      document.getElementById('m-org').textContent = (VEHS[plate] || {}).org || '-';
+      document.getElementById('m-veh-select').value = plate;
+      document.getElementById('m-vsum').classList.remove('hidden');
       const att = document.getElementById('m-t-att'), g2 = document.getElementById('m-g2');
       if (attach) {
         att.classList.remove('hidden');
@@ -481,40 +482,36 @@
       } else { att.classList.add('hidden'); att.classList.remove('sel'); g2.classList.add('hidden'); }
     }
     function openModal(plate, attach, cnt) {
-      fromNew = false;
       setVehicle(plate, attach);
       showStep(1);
       document.getElementById('mo').classList.remove('hidden');
     }
     function openModalNew() {
-      fromNew = true;
+      // เข้าจากปุ่ม "แจ้งซ่อมใหม่" — ยังไม่เลือกรถ: dropdown ว่าง ซ่อนกล่องสรุป + การ์ดเครน
       document.getElementById('m-title').textContent = 'แจ้งซ่อม';
-      showStep(0);
+      document.getElementById('m-veh-select').value = '';
+      document.getElementById('m-vsum').classList.add('hidden');
+      document.getElementById('m-t-att').classList.add('hidden');
+      showStep(1);
       document.getElementById('mo').classList.remove('hidden');
-    }
-    function pickVeh(el, plate, attach) {
-      document.querySelectorAll('#mstep0 .radcard').forEach(c => c.classList.remove('sel'));
-      el.classList.add('sel');
-      setVehicle(plate, attach);
     }
     function closeModal() { document.getElementById('mo').classList.add('hidden'); }
     function showStep(n) {
       step = n;
-      [0, 1, 2, 3, 4].forEach(i => document.getElementById('mstep' + i).classList.toggle('hidden', n !== i));
+      [1, 2, 3, 4].forEach(i => document.getElementById('mstep' + i).classList.toggle('hidden', n !== i));
       // ขั้นอะไหล่ workspace กว้าง — ขยาย modal เป็น xl
       const m = document.querySelector('#mo .modal');
       m.classList.toggle('lg', n !== 3);
       m.classList.toggle('xl', n === 3);
       const back = document.getElementById('m-back'), next = document.getElementById('m-next');
-      const first = fromNew ? 0 : 1;
-      back.textContent = n === first ? 'ปิด' : 'ย้อนกลับ';
-      back.onclick = n === first ? closeModal : () => showStep(n - 1);
+      back.textContent = n === 1 ? 'ปิด' : 'ย้อนกลับ';
+      back.onclick = n === 1 ? closeModal : () => showStep(n - 1);
       next.textContent = n === 3 ? 'ต่อไป (สรุปและผู้อนุมัติ)' : n === 4 ? 'ส่งเรื่อง' : 'ต่อไป';
       next.onclick = n === 4 ? closeModal : () => showStep(n + 1);
     }
-    const H = { '#new': 0, '#modal': 1, '#modal2': 2, '#modal3': 3, '#modal4': 4 };
+    const H = { '#new': 1, '#modal': 1, '#modal2': 2, '#modal3': 3, '#modal4': 4 };
     if (location.hash in H) {
-      if (location.hash === '#new') { openModalNew(); setVehicle('81-2345 นครราชสีมา', 'เครน Tadano TM-ZE304'); }
+      if (location.hash === '#new') openModalNew();
       else { openModal('81-2345 นครราชสีมา', 'เครน Tadano TM-ZE304', 2); showStep(H[location.hash]); }
     }
   </script>
