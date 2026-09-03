@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
+  <title>พรีวิวแบบ — หน้ารวมแจ้งซ่อม (ตาราง) + modal แจ้งซ่อมครบโฟลว์</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
+    rel="stylesheet">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds53">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260902-ds53">
+  <style>
+    /* ไฟล์พรีวิวชั่วคราวเพื่อเคาะแบบ — ลบทิ้งหลังเคาะ
+       ใช้ class จริงของระบบทั้งหมด (list-toolbar/tbl/dt-action/pager/modal) ยกเว้นด้านล่างที่ยังไม่มีของกลาง:
+       .act-badge = เลขจำนวนเรื่องบนไอคอนแจ้งซ่อมท้ายแถว (อิง .nv .cnt ของ sidebar)
+       .b-* = สี badge สถานะเฉพาะพรีวิว (ของจริงใช้ statusInfo().cls ของ mock)
+       .cell-state = สถานะรถข้อความสีล้วน (ก๊อปแนวจาก mock)
+       .vsum = กล่องสรุปรถใน modal (gray-50 r8 — ตาม Step 1 ของหน้าจอจริง VMS Plus) */
+    body { margin: 0; background: #fff }
+    .cell-state.ok { color: var(--success-700); font-weight: 500 }
+    .cell-state.no { color: var(--error-600); font-weight: 500 }
+    .b-warn { background: var(--warning-50); border-color: var(--warning-200); color: var(--warning-700) }
+    .b-info { background: var(--info-50); border-color: var(--info-200); color: var(--info-700) }
+    .b-brand { background: var(--badge-brand-bg); border-color: var(--badge-brand-border); color: var(--brand-600) }
+    .b-ok { background: var(--success-25); border-color: var(--success-200); color: var(--success-700) }
+    .b-neu { background: var(--badge-neutral-bg); border-color: var(--badge-neutral-border); color: var(--badge-neutral-text) }
+    .dt-action .btn { position: relative }
+    .act-badge { position: absolute; top: 2px; right: 2px; background: var(--error-500); color: #fff; font-size: 10px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700 }
+    .vsum { background: var(--gray-50); border-radius: var(--rounded-md); padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px }
+    .vsum .k { font-size: var(--fs-text-sm); line-height: var(--lh-text-sm); font-weight: 600; color: #000 }
+    .vsum .v { font-size: var(--fs-text-md); line-height: var(--lh-text-md); color: var(--gray-700); margin-top: 2px }
+    .vsum .wide { grid-column: 1/-1 }
+    .step-title { font-size: var(--fs-text-md); line-height: var(--lh-text-md); font-weight: 600; color: #000; margin: 4px 0 }
+    .mfield label.flabel { display: block; font-size: var(--fs-text-sm); font-weight: 500; color: var(--gray-700); margin-bottom: 6px }
+    .cat { display: flex; align-items: center; gap: 8px; font-weight: 600; margin: 14px 0 2px; color: var(--gray-900) }
+    .cat .ms { color: var(--primary-600); font-size: 20px }
+    .tgroup-head { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-200); font-size: var(--fs-text-md); font-weight: 600; color: #000; margin-top: 8px }
+    .tgroup-head .ms { font-size: 22px; color: var(--gray-500) }
+    .zone-note { background: var(--warning-50); border: 1px solid var(--warning-200); color: var(--warning-800); font-size: var(--fs-text-xs); padding: 6px 16px; border-radius: var(--rounded-md); margin-bottom: 18px; text-align: center }
+    .hidden { display: none !important }
+  </style>
+</head>
+
+<body>
+  <div class="work" style="width:1360;margin:0 auto">
+    <main class="content">
+      <div class="zone-note">พรีวิวแบบ (ยังไม่ใช่หน้าจริง) — หน้ารวมแจ้งซ่อม: คอลัมน์ชุดเดิม + ไอคอน "แจ้งซ่อมคันนี้"
+        ท้ายแถว (ตัวเลข = เรื่องที่ยังไม่ปิดของคันนั้น) · <b>กดไอคอนรถท้ายแถว</b> = modal แจ้งซ่อมรถคันนั้น (เริ่มขั้น
+        1) · <b>ปุ่ม "แจ้งซ่อมใหม่"</b> = modal แบบมีขั้นเลือกรถก่อน (รถที่ยังไม่มีเรื่องในตาราง) · โฟลว์ใน modal:
+        เลือกรถ → ข้อมูลทั่วไป → อาการเสีย (หลายจุด) → ตัดสินใจ+อะไหล่ → สรุปและผู้อนุมัติ → ส่งเรื่อง</div>
+
+      <div class="crumbs"><span class="ms">home</span><span class="sep"></span><span
+          class="cur">จัดการงานซ่อม</span></div>
+      <h1 class="page-title">จัดการงานซ่อม</h1>
+
+      <div class="list-toolbar split">
+        <div class="lt-search">
+          <div class="search"><span class="ms">search</span>
+            <input type="search" placeholder="หมายเลขเหตุการณ์, เลขทะเบียน"></div>
+        </div>
+        <div class="lt-actions">
+          <button class="btn btn-s"><span class="ms">filter_list</span> ตัวกรอง</button>
+          <button class="btn btn-p" onclick="openModalNew()"><span class="ms">note_add</span> แจ้งซ่อมใหม่</button>
+        </div>
+      </div>
+
+      <div class="tblwrap">
+        <table class="tbl striped">
+          <thead>
+            <tr>
+              <th>หมายเลขเหตุการณ์</th>
+              <th>วันที่สร้าง</th>
+              <th>ยานพาหนะ</th>
+              <th>ประเภทยานพาหนะ</th>
+              <th>สถานะรถ</th>
+              <th>สถานะเหตุการณ์</th>
+              <th>วันที่อัพเดตสถานะฯ</th>
+              <th>ผู้ดำเนินการ</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="cell-key">MTD-690718-044</div></td>
+              <td>18 ก.ค. 2569</td>
+              <td><div>81-2345</div><div class="cell-sub">นครราชสีมา</div></td>
+              <td>รถบรรทุกติดเครน</td>
+              <td><span class="cell-state no">ใช้งานไม่ได้</span></td>
+              <td><span class="badge b-brand">รอ กบค. รับเรื่อง</span></td>
+              <td>20 ก.ค. 2569</td>
+              <td><div>สมศักดิ์ เรืองรอง</div><div class="cell-sub">กบค.</div></td>
+              <td>
+                <div class="dt-action">
+                  <button class="btn" title="ดูรายละเอียด"><span class="ms">quick_reference_all</span></button>
+                  <button class="btn" title="แจ้งซ่อมคันนี้"
+                    onclick="openModal('81-2345 นครราชสีมา','เครน Tadano TM-ZE304',2)"><span
+                      class="ms">car_repair</span><span class="act-badge">2</span></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="cell-key">MTD-690716-028</div></td>
+              <td>16 ก.ค. 2569</td>
+              <td><div>81-2345</div><div class="cell-sub">นครราชสีมา</div></td>
+              <td>รถบรรทุกติดเครน</td>
+              <td><span class="cell-state ok">ใช้งานได้</span></td>
+              <td><span class="badge b-info">กำลังดำเนินการซ่อม</span></td>
+              <td>19 ก.ค. 2569</td>
+              <td><div>อนุชิต ลิ้มกิมฮวย</div><div class="cell-sub">กบค.</div></td>
+              <td>
+                <div class="dt-action">
+                  <button class="btn" title="ดูรายละเอียด"><span class="ms">quick_reference_all</span></button>
+                  <button class="btn" title="แจ้งซ่อมคันนี้"
+                    onclick="openModal('81-2345 นครราชสีมา','เครน Tadano TM-ZE304',2)"><span
+                      class="ms">car_repair</span><span class="act-badge">2</span></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="cell-key">MTD-690712-019</div></td>
+              <td>12 ก.ค. 2569</td>
+              <td><div>82-6789</div><div class="cell-sub">ขอนแก่น</div></td>
+              <td>รถกระเช้า</td>
+              <td><span class="cell-state ok">ใช้งานได้</span></td>
+              <td><span class="badge b-warn">รอหัวหน้าอนุมัติ</span></td>
+              <td>12 ก.ค. 2569</td>
+              <td><div>ธนพล วิจารณ์ปรีชา</div><div class="cell-sub">หน่วยงาน</div></td>
+              <td>
+                <div class="dt-action">
+                  <button class="btn" title="ดูรายละเอียด"><span class="ms">quick_reference_all</span></button>
+                  <button class="btn" title="แจ้งซ่อมคันนี้"
+                    onclick="openModal('82-6789 ขอนแก่น','กระเช้า Aichi SK17A',1)"><span
+                      class="ms">car_repair</span><span class="act-badge">1</span></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="cell-key">MTD-690708-011</div></td>
+              <td>8 ก.ค. 2569</td>
+              <td><div>80-5566</div><div class="cell-sub">เชียงใหม่</div></td>
+              <td>รถกระบะยกสูง</td>
+              <td><span class="cell-state ok">ใช้งานได้</span></td>
+              <td><span class="badge b-ok">ซ่อมเสร็จ — รอเลือกวันนัดรับ</span></td>
+              <td>17 ก.ค. 2569</td>
+              <td><div>พิมพ์ลักษณ์ บุญชูกุศล</div><div class="cell-sub">กรย.</div></td>
+              <td>
+                <div class="dt-action">
+                  <button class="btn" title="ดูรายละเอียด"><span class="ms">quick_reference_all</span></button>
+                  <button class="btn" title="แจ้งซ่อมคันนี้" onclick="openModal('80-5566 เชียงใหม่',null,1)"><span
+                      class="ms">car_repair</span><span class="act-badge">1</span></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="cell-key">MTD-690705-003</div></td>
+              <td>5 ก.ค. 2569</td>
+              <td><div>83-1122</div><div class="cell-sub">กรุงเทพมหานคร</div></td>
+              <td>รถบรรทุกติดเครน</td>
+              <td><span class="cell-state ok">ใช้งานได้</span></td>
+              <td><span class="badge b-neu">ปิดงานแล้ว</span></td>
+              <td>15 ก.ค. 2569</td>
+              <td><div>วิทยา สว่างวงษ์</div><div class="cell-sub">กรย.</div></td>
+              <td>
+                <div class="dt-action">
+                  <button class="btn" title="ดูรายละเอียด"><span class="ms">quick_reference_all</span></button>
+                  <button class="btn" title="แจ้งซ่อมคันนี้"
+                    onclick="openModal('83-1122 กรุงเทพมหานคร','เครน Unic URV554',0)"><span
+                      class="ms">car_repair</span></button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tblfoot">
+        <div class="tf-left"><span>แสดง 1 ถึง 5 จาก 5 รายการ</span>
+          <select class="select-inline" aria-label="จำนวนแถวต่อหน้า">
+            <option selected>10</option>
+            <option>25</option>
+            <option>50</option>
+          </select></div>
+        <div class="pager">
+          <button class="pg" disabled><span class="ms">chevron_left</span></button>
+          <button class="pg on">1</button>
+          <button class="pg"><span class="ms">chevron_right</span></button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ═══════════ Modal แจ้งซ่อม ═══════════ -->
+  <div class="modal-overlay hidden" id="mo" onclick="if(event.target===this)closeModal()">
+    <div class="modal lg" role="dialog" aria-modal="true">
+      <div class="modal-hd">
+        <div class="modal-hd-c">
+          <h2 id="m-title">แจ้งซ่อม</h2>
+          <button class="btn btn-t btn-icon" onclick="closeModal()" aria-label="ปิด"><span
+              class="ms">close</span></button>
+        </div>
+      </div>
+      <div class="modal-bd" style="padding-top:8px;padding-bottom:8px">
+
+        <!-- Step 0: เลือกรถ (เฉพาะเข้าจากปุ่ม "แจ้งซ่อมใหม่" — รถที่ยังไม่มีเรื่องในตาราง) -->
+        <div id="mstep0" class="hidden">
+          <div class="step-title">เลือกรถที่ต้องการแจ้งซ่อม</div>
+          <div class="mfield" style="margin:10px 0 12px;max-width:520px">
+            <div class="search" style="display:flex;width:100%"><span class="ms">search</span>
+              <input type="text" placeholder="ค้นหาทะเบียน หรือเลือกจากรายการด้านล่าง…"></div>
+            <div class="hint" style="font-size:var(--fs-sm);color:var(--gray-500);margin-top:4px">
+              รายการ: รถของฉัน/รถในทีม — ถ้ารถไม่อยู่ในระบบ ติดต่อผู้ดูแลข้อมูลรถ (กรย./กบค.)</div>
+          </div>
+          <div class="radcards">
+            <label class="radcard sel" onclick="pickVeh(this,'81-2345 นครราชสีมา','เครน Tadano TM-ZE304')"><input
+                type="radio" name="mveh" checked><span class="rdot"></span><span class="rc-tx"><b>81-2345
+                  นครราชสีมา</b><small>Hino FM8J 6 ล้อ · เครน Tadano TM-ZE304 · กฟภ. เขต ฉ.3
+                  นครราชสีมา</small></span></label>
+            <label class="radcard" onclick="pickVeh(this,'82-6789 ขอนแก่น','กระเช้า Aichi SK17A')"><input type="radio"
+                name="mveh"><span class="rdot"></span><span class="rc-tx"><b>82-6789 ขอนแก่น</b><small>Isuzu FTR ·
+                  กระเช้า Aichi SK17A · กฟภ. เขต ฉ.1 ขอนแก่น</small></span></label>
+            <label class="radcard" onclick="pickVeh(this,'83-1122 กรุงเทพมหานคร','เครน Unic URV554')"><input
+                type="radio" name="mveh"><span class="rdot"></span><span class="rc-tx"><b>83-1122
+                  กรุงเทพมหานคร</b><small>Mitsubishi Fuso FI · เครน Unic URV554 ·
+                  สำนักงานใหญ่ (กบค.)</small></span></label>
+            <label class="radcard" onclick="pickVeh(this,'80-5566 เชียงใหม่',null)"><input type="radio"
+                name="mveh"><span class="rdot"></span><span class="rc-tx"><b>80-5566 เชียงใหม่</b><small>Hino XZU
+                  กระบะยกสูง · กฟภ. เขต น.1 เชียงใหม่</small></span></label>
+          </div>
+        </div>
+
+        <!-- Step 1 -->
+        <div id="mstep1">
+          <div class="step-title">ขั้นที่ 1: ข้อมูลทั่วไป</div>
+          <div class="vsum" style="margin:10px 0 16px">
+            <div><div class="k">ทะเบียน</div><div class="v" id="m-plate">81-2345 นครราชสีมา</div></div>
+            <div><div class="k">สังกัด</div><div class="v">กฟภ. เขต ฉ.3 นครราชสีมา</div></div>
+            <div><div class="k">ผู้ขับขี่</div><div class="v">อนุชิต ลิ้มกิมฮวย</div></div>
+            <div><div class="k">ช่างคุมรถ</div><div class="v">อนุชิต ลิ้มกิมฮวย, นรค.9 กอพ.1 ฝพจ.</div></div>
+          </div>
+
+          <div class="mfield" style="margin-bottom:16px">
+            <label class="flabel">ส่วนที่ต้องการแจ้งซ่อม — เลือกได้มากกว่า 1 จุด</label>
+            <div class="chks" style="margin-top:4px">
+              <label class="sel" id="m-t-veh"><input type="checkbox" checked><span class="cbox">check</span>ตัวรถ</label>
+              <label class="sel" id="m-t-att"><input type="checkbox" checked><span class="cbox">check</span><span
+                  id="m-attach">เครน Tadano TM-ZE304</span></label>
+            </div>
+          </div>
+
+          <div class="mfield" style="margin-bottom:16px">
+            <label class="flabel">งบที่ตัด</label>
+            <select style="max-width:100%">
+              <option selected disabled>เลือกงบที่ตัด</option>
+              <option>งบทำการ (ค่าซ่อมยานพาหนะ)</option>
+              <option>งบลงทุน</option>
+            </select>
+          </div>
+
+          <div class="mfield" style="margin-bottom:16px">
+            <label class="flabel">ผู้แจ้งเหตุ</label>
+            <div class="rads" style="min-height:32px">
+              <label><input type="radio" name="rep" checked> พนักงาน กฟภ.</label>
+              <label><input type="radio" name="rep"> พนักงานขับรถ</label>
+            </div>
+            <select style="max-width:100%">
+              <option selected>วิทยา สว่างวงษ์ — นรค.9 กอพ.1 ฝพจ.</option>
+            </select>
+          </div>
+
+          <div class="mfield">
+            <label class="flabel">ผู้รับรายงานอุบัติเหตุ</label>
+            <select style="max-width:100%">
+              <option selected disabled>ค้นหาชื่อ-นามสกุล, รหัสพนักงาน</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div id="mstep2" class="hidden">
+          <div class="step-title">ขั้นที่ 2: อาการเสีย — เลือกได้หลายอาการ จากทุกจุดที่ระบุไว้</div>
+
+          <div class="tgroup-head"><span class="ms">directions_car</span>ตัวรถ</div>
+          <div class="cat"><span class="ms">settings</span>เครื่องยนต์</div>
+          <div class="chks">
+            <label class="sel"><input type="checkbox" checked><span class="cbox">check</span>สตาร์ทไม่ติด</label>
+            <label><input type="checkbox"><span class="cbox">check</span>ควันดำ/กำลังตก</label>
+          </div>
+          <div class="cat"><span class="ms">bolt</span>ระบบไฟฟ้า</div>
+          <div class="chks">
+            <label><input type="checkbox"><span class="cbox">check</span>รีโมทคอนโทรลไม่ทำงาน</label>
+            <label><input type="checkbox"><span class="cbox">check</span>ไฟเตือน load sensor ขึ้น</label>
+          </div>
+
+          <div class="tgroup-head" id="m-g2"><span class="ms">construction</span><span id="m-g2-name">เครน Tadano
+              TM-ZE304</span></div>
+          <div class="cat"><span class="ms">water_drop</span>ระบบไฮดรอลิก</div>
+          <div class="chks">
+            <label><input type="checkbox"><span class="cbox">check</span>กระบอกไฮดรอลิกรั่ว/ซึม</label>
+            <label class="sel"><input type="checkbox" checked><span class="cbox">check</span>สายไฮดรอลิกแตก/รั่ว</label>
+          </div>
+          <div class="cat"><span class="ms">construction</span>บูม/กระเช้า</div>
+          <div class="chks">
+            <label><input type="checkbox"><span class="cbox">check</span>บูมยืด-หดสะดุด</label>
+            <label><input type="checkbox"><span class="cbox">check</span>ลวดสลิงหย่อน/เส้นใยขาด</label>
+          </div>
+        </div>
+
+        <!-- Step 3: ตัดสินใจ + อะไหล่ (ยกจากขั้นเดิมของ wizard ทั้งชุด) -->
+        <div id="mstep3" class="hidden">
+          <div class="step-title">ขั้นที่ 3: ตัดสินใจ + อะไหล่</div>
+
+          <div class="radcards" style="margin:10px 0 0">
+            <label class="radcard sel"><input type="radio" name="mdec" checked><span class="rdot"></span><span
+                class="rc-tx"><b>ซ่อมเอง</b><small>ซ่อมได้ที่หน้างาน/หน่วยงาน</small></span></label>
+            <label class="radcard"><input type="radio" name="mdec"><span class="rdot"></span><span
+                class="rc-tx"><b>ส่งเรื่องให้ กรย.</b><small>ให้ กรย. คัดแยกช่องทางซ่อม</small></span></label>
+          </div>
+
+          <div class="parts-workspace">
+            <section class="parts-pane">
+              <h2 class="parts-pane-title">คลังอะไหล่</h2>
+              <p class="parts-pane-sub">อะไหล่ทั้งหมดจาก Smart Inventory และคลังสำรอง —
+                ตัวที่ตรงกับอาการที่เลือกไว้จะติดป้าย “แนะนำ”</p>
+              <div class="search"><span class="ms">search</span><input type="text"
+                  placeholder="ค้นหาชื่อหรือรหัสอะไหล่"></div>
+              <div class="parts-stock-list">
+                <div class="parts-stock-item">
+                  <div><b>สายไฮดรอลิกแรงดันสูง 3/8" <span class="badge b-info">แนะนำ</span></b>
+                    <div class="parts-line">HS-3808 · 1,200 บาท/เส้น</div>
+                    <div class="parts-source"><b>คลังเขต</b> : มีในคลัง 4 เส้น</div>
+                  </div>
+                  <button type="button" class="btn" title="เพิ่มเข้ารายการ"><span class="ms">add</span></button>
+                </div>
+                <div class="parts-stock-item">
+                  <div><b>ข้อต่อไฮดรอลิก <span class="badge b-info">แนะนำ</span></b>
+                    <div class="parts-line">FT-2205 · 320 บาท/ตัว</div>
+                    <div class="parts-source"><b>คลังเขต</b> : มีในคลัง 3 ตัว</div>
+                  </div>
+                  <button type="button" class="btn" title="เพิ่มเข้ารายการ"><span class="ms">add</span></button>
+                </div>
+                <div class="parts-stock-item">
+                  <div><b>ชุดซีลกระบอกไฮดรอลิก</b>
+                    <div class="parts-line">SL-4402 · 1,850 บาท/ชุด</div>
+                    <div class="parts-source"><b>กบค. สนญ.</b> : มีในคลัง 6 ชุด</div>
+                  </div>
+                  <button type="button" class="btn" title="เพิ่มเข้ารายการ"><span class="ms">add</span></button>
+                </div>
+                <div class="parts-stock-item">
+                  <div><b>แบตเตอรี่รีโมท</b>
+                    <div class="parts-line">BT-0912 · 120 บาท/ก้อน</div>
+                    <div class="parts-source"><b>คลังเขต</b> : มีในคลัง 15 ก้อน</div>
+                  </div>
+                  <button type="button" class="btn" title="เพิ่มเข้ารายการ"><span class="ms">add</span></button>
+                </div>
+              </div>
+            </section>
+            <section class="parts-pane">
+              <h2 class="parts-pane-title">อะไหล่ที่ต้องการใช้งาน</h2>
+              <p class="parts-pane-sub">จำนวนที่เกินยอดในคลัง จะถูกตั้งเป็นรายการจัดซื้อให้อัตโนมัติ ·
+                <b>ยังไม่ตัดสต็อก</b> — กบค. จะยืนยันรายการจริงอีกครั้งตอนรับเรื่อง</p>
+              <div class="parts-picked-list has-items">
+                <div class="parts-picked-item">
+                  <div><b>สายไฮดรอลิกแรงดันสูง 3/8"</b>
+                    <div class="parts-line">HS-3808 · 1,200 บาท/เส้น · <b>คลังเขต</b></div>
+                  </div>
+                  <div class="parts-picked-actions">
+                    <span class="parts-price">2,400 บาท</span>
+                    <div class="qty"><button type="button">−</button><span>2</span><button type="button">+</button></div>
+                    <button type="button" class="btn btn-t btn-sm" title="เอาออกจากรายการ"><span
+                        class="ms">delete</span></button>
+                  </div>
+                </div>
+                <div class="parts-picked-item">
+                  <div><b>ข้อต่อไฮดรอลิก</b>
+                    <div class="parts-line">FT-2205 · 320 บาท/ตัว · <b>คลังเขต</b> · ต้องจัดซื้อ 1 ตัว</div>
+                  </div>
+                  <div class="parts-picked-actions">
+                    <span class="parts-price">1,280 บาท</span>
+                    <div class="qty"><button type="button">−</button><span>4</span><button type="button">+</button></div>
+                    <button type="button" class="btn btn-t btn-sm" title="เอาออกจากรายการ"><span
+                        class="ms">delete</span></button>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-s parts-add-manual"><span class="ms">add</span>
+                ระบุอะไหล่เพิ่มเติม</button>
+              <div class="parts-totals">
+                <h2 class="parts-pane-title">รวมค่าอะไหล่</h2>
+                <div class="parts-total-row"><span>เบิกจากคลัง</span><strong>3,360 บาท</strong></div>
+                <div class="parts-total-row"><span>ต้องจัดซื้อ</span><strong>320 บาท</strong></div>
+                <div class="parts-total-row grand"><span>รวมทั้งหมด</span><strong>3,680 บาท</strong></div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <!-- Step 4: สรุปและผู้อนุมัติ (ยกจากขั้นเดิม s4 ของ wizard) -->
+        <div id="mstep4" class="hidden">
+          <div class="step-title">ขั้นที่ 4: สรุปและผู้อนุมัติ</div>
+
+          <div class="vsum" style="margin:10px 0 16px">
+            <div><div class="k">ยานพาหนะ</div><div class="v">81-2345 นครราชสีมา — Hino FM8J 6 ล้อ</div></div>
+            <div><div class="k">จุดที่มีปัญหา</div><div class="v">ตัวรถ · เครน Tadano TM-ZE304</div></div>
+            <div><div class="k">อาการ (ตัวรถ)</div><div class="v">สตาร์ทไม่ติด</div></div>
+            <div><div class="k">อาการ (เครน Tadano TM-ZE304)</div><div class="v">สายไฮดรอลิกแตก/รั่ว</div></div>
+            <div><div class="k">การตัดสินใจ</div><div class="v">ซ่อมเอง — ที่หน้างาน/หน่วยงาน</div></div>
+            <div><div class="k">อะไหล่</div><div class="v">2 รายการ · เบิกจากคลัง 3,360 บาท · จัดซื้อ 320 บาท ·
+                รวม 3,680 บาท</div></div>
+          </div>
+
+          <div class="mfield">
+            <label class="flabel">ผู้อนุมัติใบแจ้งซ่อม — <b>ต้องเลือกก่อนส่งเรื่อง</b> ·
+              ใบแจ้งซ่อมจะยังไม่เดินต่อจนกว่าหัวหน้าจะอนุมัติ</label>
+            <div class="search" style="display:flex;width:100%;margin-bottom:10px"><span class="ms">search</span>
+              <input type="text" placeholder="ค้นหาชื่อ / รหัสพนักงาน / หน่วยงาน…"></div>
+            <div class="radcards">
+              <label class="radcard sel"><input type="radio" name="map" checked><span class="rdot"></span><span
+                  class="rc-tx"><b>สมหมาย ตั้งใจดี (501122)</b><small>หัวหน้าสายบังคับบัญชา · นรค.9 กอพ.1
+                    ฝพจ.</small></span></label>
+              <label class="radcard"><input type="radio" name="map"><span class="rdot"></span><span
+                  class="rc-tx"><b>ประสิทธิ์ ตรวจสอบดี (502233)</b><small>แอดมินหน่วยงานของรถ · กฟภ. เขต ฉ.3
+                    นครราชสีมา</small></span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-ft">
+        <div class="modal-ft-a">
+          <div class="modal-ft-r">
+            <button class="btn btn-s" id="m-back" onclick="showStep(1)">ปิด</button>
+            <button class="btn btn-p" id="m-next" onclick="showStep(2)">ต่อไป</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* JS เฉพาะพรีวิว — เปิด/ปิด modal + สลับขั้น (0=เลือกรถ เฉพาะปุ่ม "แจ้งซ่อมใหม่") */
+    let step = 1, fromNew = false;
+    function setVehicle(plate, attach) {
+      document.getElementById('m-title').textContent = 'แจ้งซ่อม — ' + plate;
+      document.getElementById('m-plate').textContent = plate;
+      const att = document.getElementById('m-t-att'), g2 = document.getElementById('m-g2');
+      if (attach) {
+        att.classList.remove('hidden');
+        g2.classList.remove('hidden');
+        document.getElementById('m-attach').textContent = attach;
+        document.getElementById('m-g2-name').textContent = attach;
+      } else { att.classList.add('hidden'); g2.classList.add('hidden'); }
+    }
+    function openModal(plate, attach, cnt) {
+      fromNew = false;
+      setVehicle(plate, attach);
+      showStep(1);
+      document.getElementById('mo').classList.remove('hidden');
+    }
+    function openModalNew() {
+      fromNew = true;
+      document.getElementById('m-title').textContent = 'แจ้งซ่อม';
+      showStep(0);
+      document.getElementById('mo').classList.remove('hidden');
+    }
+    function pickVeh(el, plate, attach) {
+      document.querySelectorAll('#mstep0 .radcard').forEach(c => c.classList.remove('sel'));
+      el.classList.add('sel');
+      setVehicle(plate, attach);
+    }
+    function closeModal() { document.getElementById('mo').classList.add('hidden'); }
+    function showStep(n) {
+      step = n;
+      [0, 1, 2, 3, 4].forEach(i => document.getElementById('mstep' + i).classList.toggle('hidden', n !== i));
+      // ขั้นอะไหล่ workspace กว้าง — ขยาย modal เป็น xl
+      const m = document.querySelector('#mo .modal');
+      m.classList.toggle('lg', n !== 3);
+      m.classList.toggle('xl', n === 3);
+      const back = document.getElementById('m-back'), next = document.getElementById('m-next');
+      const first = fromNew ? 0 : 1;
+      back.textContent = n === first ? 'ปิด' : 'ย้อนกลับ';
+      back.onclick = n === first ? closeModal : () => showStep(n - 1);
+      next.textContent = n === 3 ? 'ต่อไป (สรุปและผู้อนุมัติ)' : n === 4 ? 'ส่งเรื่อง' : 'ต่อไป';
+      next.onclick = n === 4 ? closeModal : () => showStep(n + 1);
+    }
+    const H = { '#new': 0, '#modal': 1, '#modal2': 2, '#modal3': 3, '#modal4': 4 };
+    if (location.hash in H) {
+      if (location.hash === '#new') { openModalNew(); setVehicle('81-2345 นครราชสีมา', 'เครน Tadano TM-ZE304'); }
+      else { openModal('81-2345 นครราชสีมา', 'เครน Tadano TM-ZE304', 2); showStep(H[location.hash]); }
+    }
+  </script>
+</body>
+
+</html>
