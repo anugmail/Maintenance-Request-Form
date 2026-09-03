@@ -99,9 +99,10 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .search:focus-within{border-color:var(--brand-500);box-shadow:0 0 0 4px var(--focus-ring)}
 
 /* ---------- Buttons ----------------------------------------------------
-   ตรงตาม Figma EXT_PEA_VMS_v1.0.2_Component หน้า "↳ Buttons" (node 1:1375)
-   แกนของไลบรารีจริง: Size × Hierarchy × State
-     Size       sm · md(ค่าเริ่มต้น) · lg · xl
+   ตรงตามไลบรารีใหม่ "(Component) VMS Plus" (VmOC07pKEsDkHZagOgcSU2) หน้า "✅ Button" (node 2:5)
+   — อัปเดตอ้างอิง 3 ก.ย. 2569 · ไฟล์เก่า EXT_PEA_VMS_v1.0.2 (node 1:1375) เลิกใช้แล้ว
+   แกนของไลบรารีใหม่: Hierarchy × State(4) × Size(md 40 · lg 48) — sm/xl เป็นส่วนขยายของต้นแบบ
+     Size       sm(⚠ runtime) · md(ค่าเริ่มต้น) · lg · xl(⚠ ของเดิม)
      Hierarchy  Primary · Secondary · Tertiary · Link color · Link gray
                 + ชุด Destructive
      State      Default · Hover · Focused · Disabled · Loading
