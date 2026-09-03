@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
+  <title>พรีวิวแบบ — หน้าอนุมัติใบแจ้งซ่อม (หัวหน้า) แบบหน้ารายละเอียดเหตุการณ์</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
+    rel="stylesheet">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds53">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260902-ds53">
+  <style>
+    /* ไฟล์พรีวิวชั่วคราวเพื่อเคาะแบบหน้าผู้อนุมัติ — โครงยกจากหน้า "รายละเอียดเหตุการณ์" ของระบบจริง (VMS Plus)
+       ใช้ .incident-* / .tabs / .radcards ของกลางทั้งหมด · สไตล์ล่างนี้เฉพาะของพรีวิว:
+       .b-warn = สี badge สถานะ (ของจริงใช้ statusInfo().cls ของ mock)
+       .photo-ph = ช่องรูปที่ยังไม่มีรูปจริงใน mock (ระบบจริงมีรูปรถ/รูปเหตุการณ์)
+       .contact-row = แถวผู้ติดต่อ + เบอร์ ตามการ์ด "ข้อมูลติดต่อหน่วยงานที่แจ้งซ่อม" ของหน้าจริง */
+    body { margin: 0; background: #fff }
+    .b-warn { background: var(--warning-50); border-color: var(--warning-200); color: var(--warning-700) }
+    .photo-ph { display: flex; align-items: center; justify-content: center; color: var(--gray-400) }
+    .photo-ph .ms { font-size: 34px }
+    .contact-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--gray-100); flex-wrap: wrap }
+    .contact-row:last-child { border-bottom: 0 }
+    .contact-tel { display: flex; align-items: center; gap: 16px; font-size: var(--fs-text-sm); color: var(--gray-700) }
+    .contact-tel .ms { font-size: 18px; color: var(--brand-600); vertical-align: -3px }
+    .route-hint { font-size: var(--fs-text-sm); color: var(--gray-500); margin-bottom: 10px }
+    .route-hint b { color: var(--gray-700) }
+    .parts-mini { border: 1px solid var(--gray-200); border-radius: var(--rounded-md); padding: 4px 16px; margin-top: 4px }
+    .parts-mini-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--gray-100); font-size: var(--fs-text-sm); color: var(--gray-700) }
+    .parts-mini-row:last-child { border-bottom: 0 }
+    .parts-mini-row.total { font-weight: 600; color: #000 }
+    .zone-note { background: var(--warning-50); border: 1px solid var(--warning-200); color: var(--warning-800); font-size: var(--fs-text-xs); padding: 6px 16px; border-radius: var(--rounded-md); margin-bottom: 6px; text-align: center }
+    .hidden { display: none !important }
+  </style>
+</head>
+
+<body>
+  <div class="work" style="width:1360;margin:0 auto">
+    <main class="content">
+      <div class="zone-note">พรีวิวแบบ (ยังไม่ใช่หน้าจริง) — หน้าอนุมัติของหัวหน้า โครงตามหน้า "รายละเอียดเหตุการณ์"
+        ของระบบจริง + เพิ่มบล็อก <b>ช่องทางการซ่อม</b> ที่หัวหน้าเลือก/แก้ได้ก่อนกดอนุมัติ</div>
+
+      <div class="crumbs"><span class="ms">home</span><span class="sep"></span><span>งานที่รอฉันอนุมัติ</span><span
+          class="sep"></span><span class="cur">หมายเลขเหตุการณ์ MTD-690712-019</span></div>
+
+      <div class="incident-head">
+        <h1 class="page-title">หมายเลขเหตุการณ์ MTD-690712-019</h1>
+        <span class="badge b-warn">รอหัวหน้าอนุมัติ</span>
+        <div class="incident-actions">
+          <button class="btn btn-td">ไม่อนุมัติ</button>
+          <button class="btn btn-p">อนุมัติ</button>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab-btn on" role="tab" onclick="swTab(this,0)">ข้อมูลการซ่อม</button>
+        <button type="button" class="tab-btn" role="tab" onclick="swTab(this,1)">ประวัติการดำเนินการ</button>
+      </div>
+
+      <div id="tp0">
+        <div class="incident-layout">
+          <div>
+            <section class="incident-section">
+              <h2 class="incident-section-title">ข้อมูลการซ่อม</h2>
+              <dl class="incident-summary">
+                <div class="incident-field">
+                  <dt>วันที่สร้าง</dt>
+                  <dd>12 ก.ค. 2569</dd>
+                </div>
+                <div class="incident-field">
+                  <dt>วันที่อัพเดตสถานะ</dt>
+                  <dd>12 ก.ค. 2569</dd>
+                </div>
+                <div class="incident-field">
+                  <dt>หน่วยงานที่แจ้งซ่อม</dt>
+                  <dd>กฟภ. เขต ฉ.1 ขอนแก่น</dd>
+                </div>
+                <div class="incident-field">
+                  <dt>สถานะรถ</dt>
+                  <dd>ใช้งานได้</dd>
+                </div>
+                <div class="incident-field wide">
+                  <dt>อาการของรถ</dt>
+                  <dd>ตัวรถ — สตาร์ทไม่ติด · กระเช้า Aichi SK17A — สายไฮดรอลิกแตก/รั่ว</dd>
+                </div>
+                <div class="incident-field wide">
+                  <dt>สถานที่ปฏิบัติงาน</dt>
+                  <dd>กฟฟ. บ้านไผ่ อ.บ้านไผ่ จ.ขอนแก่น</dd>
+                </div>
+                <div class="incident-field wide">
+                  <dt>หมายเหตุ</dt>
+                  <dd>-</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section class="incident-section">
+              <h2 class="incident-section-title">ช่องทางการซ่อม</h2>
+              <div class="route-hint">ผู้แจ้งเสนอ: <b>ซ่อมเอง</b> — หัวหน้าปรับเปลี่ยนช่องทางได้ก่อนกดอนุมัติ</div>
+              <div class="radcards cols-3">
+                <label class="radcard sel"><input type="radio" name="route" checked><span class="rdot"></span><span
+                    class="rc-ic"><span class="ms">build</span></span><span
+                    class="rc-tx"><b>ซ่อมเอง</b><small>ซ่อมได้ที่หน้างาน/หน่วยงาน</small></span></label>
+                <label class="radcard"><input type="radio" name="route"><span class="rdot"></span><span
+                    class="rc-ic"><span class="ms">garage_home</span></span><span
+                    class="rc-tx"><b>ส่งซ่อมอู่</b><small>ส่งอู่ประเมินราคาก่อนซ่อม</small></span></label>
+                <label class="radcard"><input type="radio" name="route"><span class="rdot"></span><span
+                    class="rc-ic"><span class="ms">alt_route</span></span><span class="rc-tx"><b>ส่งต่อให้
+                      กรย.</b><small>ให้ กรย. คัดแยกช่องทางซ่อม</small></span></label>
+              </div>
+            </section>
+
+            <section class="incident-section">
+              <h2 class="incident-section-title">อะไหล่ที่ผู้แจ้งเลือกไว้</h2>
+              <div class="parts-mini">
+                <div class="parts-mini-row"><span>สายไฮดรอลิกแรงดันสูง 3/8" × 2 เส้น · คลังเขต</span><span>2,400
+                    บาท</span></div>
+                <div class="parts-mini-row"><span>ข้อต่อไฮดรอลิก × 4 ตัว · คลังเขต (จัดซื้อ 1 ตัว)</span><span>1,280
+                    บาท</span></div>
+                <div class="parts-mini-row total"><span>รวม — เบิกจากคลัง 3,360 บาท · จัดซื้อ 320
+                    บาท</span><span>3,680 บาท</span></div>
+              </div>
+            </section>
+
+            <section class="incident-section">
+              <h2 class="incident-section-title">รูปภาพเหตุการณ์</h2>
+              <div class="incident-gallery">
+                <div class="incident-photo photo-ph"><span class="ms">image</span></div>
+                <div class="incident-photo photo-ph"><span class="ms">image</span></div>
+                <div class="incident-photo photo-ph"><span class="ms">image</span></div>
+                <div class="incident-photo photo-ph"><span class="ms">image</span></div>
+              </div>
+            </section>
+          </div>
+
+          <div>
+            <section class="incident-section" style="margin-top:0">
+              <h2 class="incident-section-title">ยานพาหนะ</h2>
+              <div class="incident-card">
+                <div class="incident-vehicle">
+                  <div class="incident-vehicle-photo photo-ph"><span class="ms">local_shipping</span></div>
+                  <div>
+                    <div class="incident-entity-name">82-6789 ขอนแก่น</div>
+                    <div class="incident-entity-meta">Isuzu FTR · กระเช้า Aichi SK17A</div>
+                    <div class="incident-entity-meta">กฟภ. เขต ฉ.1 ขอนแก่น</div>
+                    <div class="incident-entity-meta" style="margin-top:10px"><span class="ms"
+                        style="font-size:18px;vertical-align:-4px">event</span> อายุการใช้งาน 3 ปี 4 เดือน</div>
+                    <div class="incident-entity-meta"><span class="ms"
+                        style="font-size:18px;vertical-align:-4px">speed</span> เลขไมล์ล่าสุด 45,210</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="incident-section">
+              <h2 class="incident-section-title">ผู้แจ้งเหตุ</h2>
+              <div class="incident-card">
+                <div style="display:flex;gap:12px;align-items:center">
+                  <div class="photo-ph"
+                    style="width:56px;height:56px;border-radius:var(--r-pill);background:var(--gray-100);flex:none">
+                    <span class="ms">person</span>
+                  </div>
+                  <div>
+                    <div class="incident-entity-name">ธนพล วิจารณ์ปรีชา</div>
+                    <div class="incident-entity-meta">504312 | นรค.6 กอพ.1 ฝพจ.</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="incident-section">
+              <h2 class="incident-section-title">ข้อมูลติดต่อหน่วยงานที่แจ้งซ่อม</h2>
+              <div class="incident-card">
+                <div class="contact-row">
+                  <div>
+                    <div class="incident-entity-name" style="font-weight:600">ผู้ขับขี่ — มงคล สมดี</div>
+                    <div class="incident-entity-meta">นอบ.4 กอพ.1 ฝพจ.</div>
+                  </div>
+                  <div class="contact-tel"><span><span class="ms">smartphone</span> 091-234-5678</span><span><span
+                        class="ms">call</span> 6032</span></div>
+                </div>
+                <div class="contact-row">
+                  <div>
+                    <div class="incident-entity-name" style="font-weight:600">ช่างคุมรถ — สิริกานต์ ธรรมรักษา</div>
+                    <div class="incident-entity-meta">นรค.6 กอพ.1 ฝพจ.</div>
+                  </div>
+                  <div class="contact-tel"><span><span class="ms">smartphone</span> 091-234-5678</span><span><span
+                        class="ms">call</span> 6032</span></div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <div id="tp1" class="hidden">
+        <div class="incident-layout" style="grid-template-columns:1fr">
+          <section class="incident-section">
+            <h2 class="incident-section-title">ประวัติการดำเนินการ</h2>
+            <div class="parts-mini">
+              <div class="parts-mini-row"><span>12 ก.ค. 2569 14:02 — ผู้แจ้งส่งเรื่อง (เลือกซ่อมเอง + อะไหล่ 2
+                  รายการ)</span><span>ธนพล วิจารณ์ปรีชา</span></div>
+              <div class="parts-mini-row"><span>12 ก.ค. 2569 14:02 — ส่งให้หัวหน้าอนุมัติ</span><span>ระบบ</span></div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    /* JS เฉพาะพรีวิว — สลับแท็บ + toggle .sel ของ radio */
+    function swTab(btn, i) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      document.getElementById('tp0').classList.toggle('hidden', i !== 0);
+      document.getElementById('tp1').classList.toggle('hidden', i !== 1);
+    }
+    document.addEventListener('change', e => {
+      const t = e.target;
+      if (t.type === 'radio' && t.name) {
+        document.querySelectorAll(`input[name="${t.name}"]`).forEach(x => {
+          const l = x.closest('label');
+          if (l) l.classList.toggle('sel', x.checked);
+        });
+      }
+    });
+  </script>
+</body>
+
+</html>

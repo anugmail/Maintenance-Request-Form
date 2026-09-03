@@ -43,6 +43,20 @@
     .tgroup-head .ms { font-size: 22px; color: var(--gray-500) }
     .zone-note { background: var(--warning-50); border: 1px solid var(--warning-200); color: var(--warning-800); font-size: var(--fs-text-xs); padding: 6px 16px; border-radius: var(--rounded-md); margin-bottom: 18px; text-align: center }
     .hidden { display: none !important }
+    /* .msel = ทรง `Input dropdown with badges` ของไลบรารี (ช่อง r8 ขอบ gray-300 + badge มี ✕ + เมนู checkbox) */
+    .msel { position: relative; display: flex; align-items: center; gap: 8px; min-height: 40px; border: 1px solid var(--gray-300); border-radius: var(--rounded-md); background: #fff; box-shadow: var(--shadow-xs); padding: 4px 40px 4px 8px; cursor: pointer; flex-wrap: wrap }
+    .msel-chev { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-500); font-size: 20px }
+    .msel-ph { color: var(--gray-400); font-size: var(--fs-text-md); padding-left: 4px }
+    .msel-badges { display: flex; gap: 6px; flex-wrap: wrap }
+    .msel-badge { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 6px 0 10px; border: 1px solid var(--gray-300); border-radius: var(--rounded-sm); background: #fff; font-size: var(--fs-text-sm); font-weight: 500; color: var(--gray-700) }
+    .msel-badge .ms { font-size: 16px; color: var(--gray-400); cursor: pointer }
+    .msel-badge .ms:hover { color: var(--gray-600) }
+    .msel-menu { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30; background: #fff; border: 1px solid var(--gray-200); border-radius: var(--rounded-md); box-shadow: var(--shadow-pop); padding: 6px; display: flex; flex-direction: column; gap: 2px }
+    .msel-opt { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--rounded-sm); cursor: pointer; font-size: var(--fs-text-md); color: var(--gray-700) }
+    .msel-opt:hover { background: var(--gray-50) }
+    .msel-opt .cbox { flex: none; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--gray-300); border-radius: var(--rounded-xs); background: #fff; color: transparent; font-family: 'Material Symbols Outlined'; font-size: 18px; line-height: 1 }
+    .msel-opt.sel .cbox { background: var(--primary-600); border-color: var(--primary-600); color: #fff }
+    .msel-opt.sel { color: var(--gray-900); font-weight: 500 }
   </style>
 </head>
 
@@ -245,10 +259,16 @@
 
           <div class="mfield" style="margin-bottom:16px">
             <label class="flabel">ส่วนที่ต้องการแจ้งซ่อม — เลือกได้มากกว่า 1 จุด</label>
-            <div class="chks" style="margin-top:4px">
-              <label class="sel" id="m-t-veh"><input type="checkbox" checked><span class="cbox">check</span>ตัวรถ</label>
-              <label class="sel" id="m-t-att"><input type="checkbox" checked><span class="cbox">check</span><span
-                  id="m-attach">เครน Tadano TM-ZE304</span></label>
+            <!-- ทรง Input dropdown with badges ของไลบรารี: ช่องเดียว ตัวที่เลือกเป็น badge มีปุ่มเอาออก -->
+            <div class="msel" id="msel" onclick="toggleMsel(event)">
+              <div class="msel-badges" id="msel-badges"></div>
+              <span class="msel-ph hidden" id="msel-ph">เลือกส่วนที่ต้องการแจ้งซ่อม</span>
+              <span class="ms msel-chev">keyboard_arrow_down</span>
+              <div class="msel-menu hidden" id="msel-menu">
+                <label class="msel-opt sel" data-k="veh"><span class="cbox">check</span>ตัวรถ</label>
+                <label class="msel-opt sel" data-k="att" id="m-t-att"><span class="cbox">check</span><span
+                    id="m-attach">เครน Tadano TM-ZE304</span></label>
+              </div>
             </div>
           </div>
 
@@ -443,16 +463,62 @@
   <script>
     /* JS เฉพาะพรีวิว — เปิด/ปิด modal + สลับขั้น (0=เลือกรถ เฉพาะปุ่ม "แจ้งซ่อมใหม่") */
     let step = 1, fromNew = false;
+
+    // ติ๊กแล้วภาพต้องเปลี่ยน — toggle .sel ตาม input ทุก checkbox/radio ในพรีวิว
+    document.addEventListener('change', e => {
+      const t = e.target;
+      if (t.type === 'checkbox') {
+        const lb = t.closest('label');
+        if (lb) lb.classList.toggle('sel', t.checked);
+      } else if (t.type === 'radio' && t.name) {
+        document.querySelectorAll(`input[name="${t.name}"]`).forEach(i => {
+          const l = i.closest('label');
+          if (l) l.classList.toggle('sel', i.checked);
+        });
+      }
+    });
+
+    // dropdown "ส่วนที่ต้องการแจ้งซ่อม" (ทรง Input dropdown with badges)
+    function toggleMsel(e) {
+      const menu = document.getElementById('msel-menu');
+      const opt = e.target.closest('.msel-opt');
+      if (opt) {
+        opt.classList.toggle('sel');
+        renderMsel();
+        e.stopPropagation();
+        return;
+      }
+      if (e.target.closest('.msel-badge')) return; // ปุ่ม ✕ จัดการเอง
+      menu.classList.toggle('hidden');
+    }
+    function removeMsel(k, e) {
+      e.stopPropagation();
+      const opt = document.querySelector(`.msel-opt[data-k="${k}"]`);
+      if (opt) opt.classList.remove('sel');
+      renderMsel();
+    }
+    function renderMsel() {
+      const opts = [...document.querySelectorAll('.msel-opt')].filter(o => !o.classList.contains('hidden'));
+      const sel = opts.filter(o => o.classList.contains('sel'));
+      document.getElementById('msel-badges').innerHTML = sel.map(o =>
+        `<span class="msel-badge">${o.textContent.replace('check', '').trim()}<span class="ms" title="เอาออก" onclick="removeMsel('${o.dataset.k}',event)">close</span></span>`).join('');
+      document.getElementById('msel-ph').classList.toggle('hidden', sel.length > 0);
+    }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.msel')) document.getElementById('msel-menu')?.classList.add('hidden');
+    });
     function setVehicle(plate, attach) {
       document.getElementById('m-title').textContent = 'แจ้งซ่อม — ' + plate;
       document.getElementById('m-plate').textContent = plate;
       const att = document.getElementById('m-t-att'), g2 = document.getElementById('m-g2');
       if (attach) {
         att.classList.remove('hidden');
+        att.classList.add('sel');
         g2.classList.remove('hidden');
         document.getElementById('m-attach').textContent = attach;
         document.getElementById('m-g2-name').textContent = attach;
-      } else { att.classList.add('hidden'); g2.classList.add('hidden'); }
+      } else { att.classList.add('hidden'); att.classList.remove('sel'); g2.classList.add('hidden'); }
+      renderMsel();
     }
     function openModal(plate, attach, cnt) {
       fromNew = false;
