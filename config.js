@@ -44,7 +44,7 @@ const DEFAULT_CFG={
   menu:MENU_DEFAULT.map(k=>({key:k,on:true})),
   steps:{wizard:clone0(WIZARD_DEFAULT),kbk:KBK_STEPS_DEFAULT.slice()},
   data:{vehicles:null,parts:null,garages:null,costTypes:null,areas:null},   // null = ใช้ค่า default ด้านล่าง
-  demo:{jobs:null,seq:null,scenario:'default',startView:'form'}
+  demo:{jobs:null,seq:null,scenario:'default',startView:'my'}   // 3 ก.ย. 2569: 'form' ไม่ใช่หน้าเต็มแล้ว (เป็น modal) — เริ่มที่ตารางจัดการงานซ่อม
 };
 function clone0(o){return JSON.parse(JSON.stringify(o))}
 const WKEYS=WIZARD_DEFAULT.map(s=>s.key);

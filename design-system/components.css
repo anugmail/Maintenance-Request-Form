@@ -1105,3 +1105,29 @@ input.tbl-row-label{width:80%;display:inline-block}
 .cal-day.edge{background:var(--primary-600);color:#fff;font-weight:600}
 .cal-foot{display:flex;align-items:center;gap:8px;margin-top:10px}
 .cal-foot .hint{flex:1;font-size:var(--fs-text-xs);color:var(--gray-500)}
+
+/* ============================================================
+   v0.55 — โฟลว์แจ้งซ่อมเป็น modal (เจ้าของงานเคาะ 3 ก.ย. 2569 จากดีไซน์ VMS Plus จริง)
+   ============================================================ */
+
+/* การ์ดติ๊กได้หลายตัวเลือก (checkbox card) — โครง `Radio text card` ของไลบรารี
+   + กล่องติ๊กตาม `Checkbox` ของไลบรารี (20×20 · r4 · เส้น 2px — ชุดเดียวกับ .chks .cbox)
+   ใช้กับ "จุดที่พบปัญหา" ใน modal แจ้งซ่อม (เลือกได้ทั้งตัวรถและส่วนเสริมในใบเดียว) */
+.radcard.ckcard input[type=checkbox]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.radcard.ckcard .cbox{flex:none;width:20px;height:20px;margin-top:2px;display:flex;align-items:center;justify-content:center;border:2px solid var(--gray-300);border-radius:var(--rounded-xs);background:#fff;color:transparent;font-family:'Material Symbols Outlined';font-size:18px;line-height:1}
+.radcard.ckcard.sel .cbox{background:var(--primary-600);border-color:var(--primary-600);color:#fff}
+
+/* หัวกลุ่มอาการตามจุดที่พบปัญหา — อิงโครง `List header item` ของไลบรารี
+   แสดงเฉพาะเมื่อติ๊กมากกว่า 1 จุด (จุดเดียวหน้าตาเหมือนเดิมไม่มีหัวกลุ่ม) */
+.symgroup-head{display:flex;align-items:center;gap:10px;margin:22px 0 2px;padding-bottom:10px;border-bottom:1px solid var(--gray-200);font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:600;color:#000}
+#symcats .symgroup-head:first-child{margin-top:8px}
+.symgroup-head .ms{font-size:22px;color:var(--gray-500)}
+.symgroup-head .badge{margin-left:4px}
+
+/* ป้ายจำนวนเรื่องบนปุ่มไอคอนท้ายแถวตาราง (เช่น "แจ้งซ่อมคันนี้") — ชุดเดียวกับ .nv .cnt ของเมนูข้าง */
+.dt-action .btn{position:relative}
+.dt-action .btn .cnt{position:absolute;top:0;right:0;background:var(--error-500);color:#fff;font-size:10px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700}
+
+/* หัวขั้นใน modal แจ้งซ่อม — "ขั้นที่ n: ชื่อขั้น (n/ทั้งหมด)" ตามหน้าจอจริง (Step 1: ข้อมูลทั่วไป) */
+.modal-step-title{font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:600;color:#000;margin:2px 0 4px}
+.modal-step-title:empty{display:none}

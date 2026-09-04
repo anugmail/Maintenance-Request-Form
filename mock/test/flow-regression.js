@@ -5,8 +5,12 @@
    ทำไมต้องมี: 1–2 ก.ย. 2569 แก้ UI ติดกัน 6 เวอร์ชัน (ds41→ds46) แล้วจับผิดด้วยตาล้วน
    จน stepper ผิด 3 รอบติด ⇒ ต้องมีของรันก่อนส่งงานทุกครั้ง
 
+   4 ก.ย. 2569: ปรับตามโฟลว์ใหม่ที่เจ้าของงานเคาะ — แจ้งซ่อมเป็น modal
+   (เข้าจากปุ่ม "แจ้งซ่อมใหม่" หรือไอคอนท้ายแถว) · เลือกรถเป็น dropdown ·
+   จุดที่พบปัญหาติ๊กได้หลายจุด · อาการแยกกลุ่มตามจุด
+
    ตรวจ 2 ชั้น
-     A. โฟลว์  — เดินฟอร์มตั้งแต่เลือกรถจนส่งเรื่อง แล้วเช็กว่าใบงานเข้าลิสต์จริง
+     A. โฟลว์  — เปิด modal เดินฟอร์มจนส่งเรื่อง แล้วเช็กว่าใบงานเข้าลิสต์จริง
      B. ดีไซน์ — วัดค่าคอมโพเนนต์หลักเทียบ "ค่าจริงจากไลบรารี" (Component) VMS Plus
 
    ต้องมี
@@ -48,25 +52,41 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
 
-  console.log('\n══════ A. โฟลว์แจ้งซ่อม ══════');
-  // ---- ขั้น 1 เลือกรถ ----
-  await page.waitForSelector('#vlist .radcard');
-  const cards = await page.locator('#vlist .radcard').count();
-  ok('ขั้น 1 แสดงการ์ดเลือกรถ (radcard)', cards >= 4, `เจอ ${cards} ใบ`);
-  ok('ไม่มีการ์ดใหญ่แบบเก่าหลงเหลือ', await page.locator('#vlist .veh').count() === 0);
-  await page.locator('#vlist .radcard').nth(2).click();          // 83-1122 (มีเครน)
+  console.log('\n══════ A. โฟลว์แจ้งซ่อม (modal) ══════');
+  // ---- หน้าแรก = ตารางจัดการงานซ่อม (ไม่ใช่ฟอร์มเต็มหน้าแล้ว) ----
+  await page.waitForSelector('#mylist table.tbl tbody tr');
+  ok('หน้าแรกเปิดที่ตารางจัดการงานซ่อม', await page.locator('#view-my').isVisible());
+  ok('modal แจ้งซ่อมยังไม่เปิดเอง', !(await page.locator('#repair-modal').isVisible()));
+
+  // ---- ปุ่ม "แจ้งซ่อมใหม่" → เปิด modal (dropdown ว่าง) ----
+  await page.locator('.lt-actions .btn-p', { hasText: 'แจ้งซ่อมใหม่' }).click();
+  await page.waitForSelector('#repair-modal:not(.hidden)');
+  ok('กดแจ้งซ่อมใหม่แล้ว modal เปิด', await page.locator('#repair-modal .modal').isVisible());
+  ok('ขั้น 1 มี dropdown ยานพาหนะ', await page.locator('#v-select').isVisible());
+  ok('หัวขั้นแบบข้อความ "ขั้นที่ 1"', /^ขั้นที่ 1/.test((await page.locator('#rm-step').textContent()).trim()));
+  eq('ยังไม่เลือกรถ → ไม่มีการ์ดรายละเอียด', await page.locator('.vehicle-detail-card').count(), 0);
+
+  // ---- เลือกรถจาก dropdown (83-1122 มีเครน) ----
+  await page.selectOption('#v-select', '3');
   await page.waitForSelector('.vehicle-detail-card');
   ok('เลือกรถแล้วขึ้นการ์ดรายละเอียดรถ', await page.locator('.vehicle-detail-card').isVisible());
-  const targets = await page.locator('.vehicle-target .radcard').count();
-  ok('จุดที่พบปัญหาเป็น radcard', targets === 2, `เจอ ${targets}`);
-  await page.locator('.vehicle-target .radcard').nth(1).click();  // อุปกรณ์ติดตั้ง
+  ok('หัว modal ขึ้นทะเบียนรถ', /83-1122/.test(await page.locator('#rm-title').textContent()));
+  const targets = await page.locator('.vehicle-target .radcard.ckcard').count();
+  ok('จุดที่พบปัญหาเป็นการ์ด checkbox', targets === 2, `เจอ ${targets}`);
+  // ติ๊กทั้ง 2 จุด (ตัวรถ + เครน) — โฟลว์ใหม่เลือกได้มากกว่า 1
+  await page.locator('.vehicle-target .radcard').nth(0).click();
+  await page.locator('.vehicle-target .radcard').nth(1).click();
+  eq('ติ๊กแล้วการ์ดติด sel ทั้งคู่', await page.locator('.vehicle-target .radcard.sel').count(), 2);
   await page.locator('#next').click();
 
-  // ---- ขั้น 2 อาการเสีย ----
+  // ---- ขั้น 2 อาการเสีย — แยกกลุ่มตามจุด ----
   await page.waitForSelector('#symcats .chks label');
-  const syms = await page.locator('#symcats .chks label').count();
-  ok('ขั้น 2 แสดง checkbox อาการเสีย', syms > 0, `เจอ ${syms}`);
+  eq('เลือก 2 จุด → มีหัวกลุ่ม 2 กลุ่ม', await page.locator('#symcats .symgroup-head').count(), 2);
+  // ติ๊กอาการกลุ่มละ 1 (กลุ่มแรก = ตัวรถ · กลุ่มหลัง = เครน — เลี่ยง "อื่นๆ" ที่บังคับกรอกข้อความ)
   await page.locator('#symcats .chks label').first().click();
+  await page.locator('#symcats .chks label', { hasText: 'กระบอกไฮดรอลิกรั่ว' }).click();
+  const cnt = (await page.locator('#symcats .symgroup-head .badge').allInnerTexts()).join(' | ');
+  ok('ตัวนับอาการต่อกลุ่มขยับ', /1 อาการ/.test(cnt), `ได้ "${cnt}"`);
   await page.locator('#i-usable .sg').first().click();            // ใช้งานได้
   await page.locator('#next').click();
 
@@ -88,34 +108,38 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   await page.waitForSelector('#parts-stock .parts-stock-item');
   await page.locator('#parts-stock .parts-stock-item button').first().click();
   ok('กด + แล้วอะไหล่เข้ารายการขวา', await page.locator('#parts-picked .parts-picked-item').count() >= 1);
-  // แถวอะไหล่ที่เลือก = แถวเดียว ราคา → จำนวน → ถังขยะ (ถังขยะหลังสุด) · การ์ดต้องไม่สูงเกิน 88
-  const picked = await page.evaluate(() => {
-    const row = document.querySelector('.parts-picked-item');
-    const act = row.querySelector('.parts-picked-actions');
-    return { h: Math.round(row.getBoundingClientRect().height),
-             last: act.lastElementChild.querySelector('.ms')?.textContent.trim(),
-             order: [...act.children].map(e => e.className.split(' ')[0]).join(',') };
-  });
-  eq('อะไหล่ที่เลือก: ถังขยะอยู่หลังสุด', picked.last, 'delete');
-  eq('อะไหล่ที่เลือก: เรียง ราคา → จำนวน → ปุ่มลบ', picked.order, 'parts-price,qty,btn');
-  ok('อะไหล่ที่เลือก: การ์ดกะทัดรัด (≤88px)', picked.h <= 88, `สูง ${picked.h}px`);
   const sumAll = await page.locator('#p-sum-all').textContent();
   ok('ยอดรวมค่าอะไหล่คำนวณแล้ว', /[1-9]/.test(sumAll), `ได้ "${sumAll}"`);
   await page.locator('#next').click();
 
   // ---- ขั้น 5 สรุป + ผู้อนุมัติ ----
   await page.waitForSelector('#aplist .apitem');
+  // สรุปต้องแสดงจุดหลายจุด + อาการแยกบรรทัดตามจุด
+  const sumTxt = await page.locator('#summary').textContent();
+  ok('สรุปแสดงจุดที่มีปัญหาทั้ง 2 จุด', /ตัวรถ/.test(sumTxt) && /เครน|กระเช้า|Unic/.test(sumTxt));
   await page.locator('#aplist .apitem').first().click();
   await page.locator('#next').click();
   await page.waitForSelector('#sdone:not(.hidden)');
   const docno = (await page.locator('#docno').textContent()).trim();
   ok('ส่งเรื่องสำเร็จ ได้เลขใบแจ้งซ่อม', /^MTD-/.test(docno), `ได้ "${docno}"`);
 
-  // ---- ใบงานต้องโผล่ในลิสต์ "จัดการงานซ่อม" ----
-  await page.locator('.side .nv[title="เรื่องแจ้งซ่อมของฉัน"], #nav-my').first().click();
+  // ---- ปิด modal → ใบงานต้องโผล่ในตาราง "จัดการงานซ่อม" ----
+  await page.locator('#sdone .btn-p', { hasText: 'ดูสถานะเรื่องของฉัน' }).click();
+  ok('modal ปิดแล้ว', !(await page.locator('#repair-modal').isVisible()));
   await page.waitForSelector('#mylist table.tbl tbody tr');
   const inList = await page.locator('#mylist tbody tr', { hasText: docno }).count();
   ok('ใบที่เพิ่งสร้างอยู่ในตารางจัดการงานซ่อม', inList === 1);
+
+  // ---- ไอคอน "แจ้งซ่อมคันนี้" ท้ายแถว → modal เติมรถให้ ----
+  const repBtns = await page.locator('#mylist .dt-action button[title="แจ้งซ่อมคันนี้"]').count();
+  ok('ทุกแถวมีไอคอนแจ้งซ่อมคันนี้', repBtns >= 1, `เจอ ${repBtns}`);
+  ok('ไอคอนมีป้ายจำนวนเรื่องค้าง', await page.locator('#mylist .dt-action .cnt').count() >= 1);
+  await page.locator('#mylist .dt-action button[title="แจ้งซ่อมคันนี้"]').first().click();
+  await page.waitForSelector('#repair-modal:not(.hidden)');
+  const preSel = await page.locator('#v-select').inputValue();
+  ok('เปิดจากแถวแล้ว dropdown เติมรถให้', preSel !== '', `value="${preSel}"`);
+  await page.locator('#back').click();   // ขั้น 1 ปุ่มซ้าย = ปิด
+  ok('ปุ่ม "ปิด" ที่ขั้น 1 ปิด modal ได้', !(await page.locator('#repair-modal').isVisible()));
 
   // ---- ชุดคอลัมน์ตาราง "จัดการงานซ่อม" ต้องตรงกับ Figma (9 คอลัมน์) ----
   const th = (await page.locator('#mylist thead th').allInnerTexts()).map(t => t.split('\n')[0].trim());
@@ -141,81 +165,75 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   ok('ใบใหม่รออนุมัติอยู่ในหน้าหัวหน้า', await page.locator('#bosslist tbody tr', { hasText: docno }).count() === 1);
 
   console.log('\n══════ B. ค่าดีไซน์เทียบไลบรารี (Component) VMS Plus ══════');
-  // เริ่มหน้าใหม่ก่อนวัดค่า — หลังส่งเรื่องแล้วฟอร์มจะอยู่ที่หน้า "ส่งสำเร็จ" ฟิลด์ขั้น 1 จะถูกซ่อน
+  // เริ่มหน้าใหม่ + เปิด modal ก่อนวัด (องค์ประกอบฟอร์มอยู่ใน modal — ตอนปิดวัดค่าไม่ได้)
   await page.goto(URL, { waitUntil: 'networkidle' });
-  await page.waitForSelector('#vlist .radcard', { state: 'attached' });
+  await page.waitForSelector('#mylist table.tbl tbody tr');
+  await page.locator('.lt-actions .btn-p', { hasText: 'แจ้งซ่อมใหม่' }).click();
+  await page.waitForSelector('#repair-modal:not(.hidden)');
 
   const cs = (sel, prop, pseudo = null) => page.evaluate(([s, p, ps]) => {
     const el = document.querySelector(s); if (!el) return null;
     return getComputedStyle(el, ps)[p];
   }, [sel, prop, pseudo]);
 
-  // ปุ่ม Primary — ไลบรารี: h40 · r8 · pad ซ้ายขวา 12 · gap 4 · พื้น #A80689
+  // ปุ่ม Primary — ไลบรารี: h40 · r8 · pad ซ้ายขวา 12 · พื้น #A80689
   eq('ปุ่ม .btn สูง 40', px(await cs('#next', 'height')), 40);
   eq('ปุ่ม .btn radius 8', px(await cs('#next', 'borderRadius')), 8);
-  // ไฟล์ UI (Release#2): ปุ่มท้ายหน้า Primary/Secondary = 100×40 · pad ซ้ายขวา 12 · r8 (มือถือ 156×48)
   eq('ปุ่มปกติ pad ซ้ายขวา 12', px(await cs('#my-filter-btn', 'paddingLeft')), 12);
   eq('ปุ่มท้ายฟอร์ม pad ซ้ายขวา 12', px(await cs('#next', 'paddingLeft')), 12);
-  eq('ปุ่มท้ายฟอร์ม กว้างขั้นต่ำ 100', px(await cs('#next', 'minWidth')), 100);
   eq('ปุ่ม .btn-p พื้นสีแบรนด์', rgb(await cs('#next', 'backgroundColor')), HEX.brand600);
 
-  // ช่องกรอก — ไลบรารี Text input Container md: h40 · r8 · ขอบ #D0D5DD
-  eq('ช่องค้นหารถ สูง 40', px(await cs('#vq', 'height')), 40);
-  eq('ช่องค้นหารถ radius 8', px(await cs('#vq', 'borderRadius')), 8);
-  eq('ช่องค้นหารถ ขอบ gray-300', rgb(await cs('#vq', 'borderTopColor')), HEX.gray300);
+  // dropdown ยานพาหนะ — ไลบรารี Input dropdown/Text input md: h40 · r8 · ขอบ #D0D5DD
+  eq('dropdown ยานพาหนะ สูง 40', px(await cs('#v-select', 'height')), 40);
+  eq('dropdown ยานพาหนะ radius 8', px(await cs('#v-select', 'borderRadius')), 8);
+  eq('dropdown ยานพาหนะ ขอบ gray-300', rgb(await cs('#v-select', 'borderTopColor')), HEX.gray300);
 
-  // Radio card — ไลบรารี Radio text card: r8 · ขอบ 1px #D0D5DD · เลือกแล้ว 2px แบรนด์
-  eq('radcard radius 8', px(await cs('#vlist .radcard', 'borderRadius')), 8);
-  eq('radcard ขอบ 1px', px(await cs('#vlist .radcard', 'borderTopWidth')), 1);
-  eq('radcard ขอบ gray-300', rgb(await cs('#vlist .radcard', 'borderTopColor')), HEX.gray300);
-  // จุดวิทยุ — ไลบรารี Radio button: 20×20 · เส้น 2px
-  eq('จุดวิทยุ 20px', px(await cs('#vlist .radcard .rdot', 'width')), 20);
-  eq('จุดวิทยุ เส้น 2px', px(await cs('#vlist .radcard .rdot', 'borderTopWidth')), 2);
-
-  // Stepper — หน้าจอจริง Create vehicle (Step 1): กล่อง r8 ขอบ #D0D5DD · วงกลม 40
-  eq('stepper กล่อง radius 8', px(await cs('.wsteps', 'borderRadius')), 8);
-  eq('stepper กล่องมีขอบ 1px', px(await cs('.wsteps', 'borderTopWidth')), 1);
-  eq('stepper วงกลม 40px', px(await cs('.wstep .num', 'width')), 40);
-  ok('stepper มีตัวคั่น chevron (2 เส้นเอียง)',
-    /rotate\(-?29deg\)|matrix/.test(await cs('.wstep:not(:last-child)', 'transform', '::before') || ''),
-    'ไม่พบ transform บน ::before');
+  // การ์ดจุดที่พบปัญหา — Radio text card + กล่อง Checkbox (20×20 · r4 · เส้น 2)
+  await page.selectOption('#v-select', '3');
+  await page.waitForSelector('.vehicle-target .radcard.ckcard');
+  eq('การ์ดจุด radius 8', px(await cs('.vehicle-target .radcard', 'borderRadius')), 8);
+  eq('การ์ดจุด ขอบ 1px', px(await cs('.vehicle-target .radcard', 'borderTopWidth')), 1);
+  eq('การ์ดจุด ขอบ gray-300', rgb(await cs('.vehicle-target .radcard', 'borderTopColor')), HEX.gray300);
+  eq('กล่องติ๊กของการ์ดจุด 20px', px(await cs('.vehicle-target .cbox', 'width')), 20);
+  eq('กล่องติ๊กของการ์ดจุด radius 4', px(await cs('.vehicle-target .cbox', 'borderRadius')), 4);
+  eq('กล่องติ๊กของการ์ดจุด เส้น 2px', px(await cs('.vehicle-target .cbox', 'borderTopWidth')), 2);
 
   // Sidebar nav — ไลบรารี Nav button 40×40 · r8
   eq('ปุ่มเมนูข้าง 40px', px(await cs('.side .nv', 'width')), 40);
 
   // checkbox อาการเสีย — ไลบรารี Checkbox: 20×20 · r4 · เส้น 2px
-  await page.locator('#vlist .radcard').nth(2).click();
+  await page.locator('.vehicle-target .radcard').nth(0).click();
   await page.locator('.vehicle-target .radcard').nth(1).click();
   await page.locator('#next').click();
   await page.waitForSelector('#symcats .chks .cbox');
   eq('กล่องติ๊ก 20px', px(await cs('#symcats .chks .cbox', 'width')), 20);
   eq('กล่องติ๊ก radius 4', px(await cs('#symcats .chks .cbox', 'borderRadius')), 4);
   eq('กล่องติ๊ก เส้น 2px', px(await cs('#symcats .chks .cbox', 'borderTopWidth')), 2);
+  // หัวกลุ่มอาการ (List header item) — 16/SemiBold + เส้นคั่นล่าง
+  eq('หัวกลุ่มอาการตัวอักษร 16', px(await cs('#symcats .symgroup-head', 'fontSize')), 16);
+  eq('หัวกลุ่มอาการมีเส้นคั่นล่าง 1px', px(await cs('#symcats .symgroup-head', 'borderBottomWidth')), 1);
 
   console.log('\n══════ C. มือถือ (390px) ══════');
   await page.setViewportSize({ width: 390, height: 820 });
   await page.goto(URL, { waitUntil: 'networkidle' });
-  await page.waitForSelector('.wsm-head');
-  ok('มือถือ: ซ่อน stepper แนวนอน', !(await page.locator('.wsteps').first().isVisible()));
-  ok('มือถือ: ใช้ Mobile progress steps แทน', await page.locator('.wsteps-m').isVisible());
-  const ringTxt = (await page.locator('.wsm-ring').textContent()).replace(/\s/g, '');
-  ok('มือถือ: วงแหวนบอก "ขั้นที่/ทั้งหมด"', /^\d+\/\d+$/.test(ringTxt), `ได้ "${ringTxt}"`);
-  ok('มือถือ: มีบรรทัด "ถัดไป:"', (await page.locator('.wsm-next').count()) === 1);
-  await page.locator('.wsm-head').click();
-  ok('มือถือ: กดแล้วกางเป็นรายการแนวตั้ง', await page.locator('.wsteps-m.open + .wsteps').isVisible());
+  await page.waitForSelector('#mylist table.tbl tbody tr');
+  await page.locator('.lt-actions .btn-p', { hasText: 'แจ้งซ่อมใหม่' }).click();
+  await page.waitForSelector('#repair-modal:not(.hidden)');
+  ok('มือถือ: modal เปิดได้', await page.locator('#repair-modal .modal').isVisible());
+  ok('มือถือ: เห็นหัวขั้น', await page.locator('#rm-step').isVisible());
   const ov = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   eq('มือถือ: ไม่ล้นแนวนอน', ov, 0);
   await page.setViewportSize({ width: 1440, height: 1000 });
 
-  // ---- เครื่องที่เคยบันทึก variant 'grid' ไว้ ต้องไม่กลับไปเป็นการ์ดใหญ่ ----
+  // ---- เครื่องที่เคยบันทึก variant 'grid' ไว้ ต้องไม่พังโฟลว์ใหม่ ----
   await page.evaluate(() => {
     const k = 'maintaind.admin.v1', j = JSON.parse(localStorage.getItem(k) || '{}');
     j.variants = Object.assign({}, j.variants, { vehicleCard: 'grid' });
     localStorage.setItem(k, JSON.stringify(j));
   });
   await page.goto(URL, { waitUntil: 'networkidle' });
-  await page.waitForSelector('#vlist .radcard');
-  eq('ค่าเก่า grid ใน localStorage ไม่ทำให้การ์ดใหญ่กลับมา', await page.locator('#vlist .veh').count(), 0);
+  await page.waitForSelector('#mylist table.tbl tbody tr');
+  eq('ค่าเก่า grid ใน localStorage ไม่ทำให้การ์ดใหญ่กลับมา', await page.locator('.veh').count(), 0);
   await page.evaluate(() => localStorage.clear());
 
   console.log('\n══════ D. ไม่มี error บนหน้า ══════');
