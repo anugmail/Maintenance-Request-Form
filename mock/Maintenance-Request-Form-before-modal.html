@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:,">   <!-- กัน 404 /favicon.ico ที่ทำให้ console มี error (เจอจาก regression test 2 ก.ย. 2569) -->
-  <title>Maintain-D — แจ้งซ่อม (เวอร์ชันก่อนเป็น modal · สแนปช็อตไว้เทียบ)</title>
+  <title>Maintain-D — แจ้งซ่อม (flow เก่า: ลิสต์ชุดใหม่ → วิซาร์ดเต็มหน้า)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap"
     rel="stylesheet">
@@ -1643,7 +1643,7 @@
     </aside>
 
     <div class="work">
-      <div class="draft"><span class="ms">history</span> <b>สแนปช็อตเวอร์ชันก่อนเป็น modal (แช่แข็ง 4 ก.ย. 2569 — ไว้เทียบ ไม่พัฒนาต่อ)</b> · เวอร์ชันปัจจุบัน: <a href="Maintenance-Request-Form.html" style="color:inherit;font-weight:700">Maintenance-Request-Form.html</a> · ต้นแบบ Mock v0.15 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง → <b>หัวหน้า (อนุมัติใบแจ้งซ่อม)</b> → กรย. → กบค. → ผู้บังคับบัญชา
+      <div class="draft"><span class="ms">history</span> <b>เวอร์ชัน flow เก่า — ลิสต์ชุดเดียวกับเวอร์ชันหลัก แต่กดแล้วเข้าวิซาร์ดเต็มหน้า (ไว้เทียบ)</b> · เวอร์ชัน modal: <a href="Maintenance-Request-Form.html" style="color:inherit;font-weight:700">Maintenance-Request-Form.html</a> · ต้นแบบ Mock v0.15 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง → <b>หัวหน้า (อนุมัติใบแจ้งซ่อม)</b> → กรย. → กบค. → ผู้บังคับบัญชา
         ได้จากเมนูซ้าย · ปรับแต่งได้จาก Admin Control Panel</div>
       <div class="topbar">
         <span class="ms">light_mode</span>
@@ -3403,6 +3403,13 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
         + '" อัตโนมัติ — ทดลองกดอนุมัติได้ที่เมนู "อนุมัติใบแจ้งซ่อม (หัวหน้า)"';
       renderSteps();
     }
+    // เวอร์ชัน flow เก่า (4 ก.ย. 2569): ไอคอนท้ายแถวเปิดวิซาร์ดเต็มหน้าพร้อมเลือกรถของแถวนั้นให้
+    function openRepairForm(plate) {
+      resetForm();
+      switchView('form');
+      const v = VEHICLES.find(x => x.plate === plate);
+      if (v) pickVehicle(v.id);
+    }
     function resetForm() {
       Object.assign(S, { step: 1, vehicle: null, target: null, symptoms: [], sev: null, photos: 0, bookings: {}, orders: {}, customParts: [], customSeq: 0, decision: null, approver: null, usable: null, costType: null, costVals: {} });
       ['i-prov','i-amp','i-odo','i-crane','i-own','i-owntel','i-tech','i-techtel','i-drv','i-drvtel'].forEach(id => { const e = $(id); if (e) e.value = '' });
@@ -3681,7 +3688,10 @@ function incidentTable(key,rows,opts){
         <td><span class="badge ${st.cls}">${esc(st.label)}</span></td>
         <td title="${esc(u.d+' '+u.tm)}">${esc(u.d)}</td>
         <td><div class="cell-clip" title="${esc(ac.name)}">${esc(ac.name)}</div>${ac.sub?`<div class="cell-sub cell-clip" title="${esc(ac.sub)}">${esc(ac.sub)}</div>`:''}</td>
-        <td><div class="dt-action"><button class="btn" title="ดูรายละเอียด" onclick="${opts.open}('${j.no}')"><span class="ms">quick_reference_all</span></button></div></td>
+        <td><div class="dt-action"><button class="btn" title="ดูรายละเอียด" onclick="${opts.open}('${j.no}')"><span class="ms">quick_reference_all</span></button>${opts.report ? (() => {
+          const n = JOBS.filter(x => x.plate === j.plate && x.phase !== 'closed').length;
+          return `<button class="btn" title="แจ้งซ่อมคันนี้" onclick="openRepairForm('${esc(j.plate)}')"><span class="ms">car_repair</span>${n ? `<span class="cnt">${n}</span>` : ''}</button>`;
+        })() : ''}</div></td>
       </tr>`;
     }).join('')}</tbody>
   </table></div>`;
@@ -3693,7 +3703,7 @@ function renderMyList(){
   R.jobNo=null;
   const phases=MY_STATUS_PHASES[$('my-status-filter').value];
   renderJobList('my',phases?JOBS.filter(j=>phases.includes(j.phase)):JOBS,
-    {host:'mylist',open:'openMy',empty:'ยังไม่มีเรื่องแจ้งซ่อม',cols:'incident'});
+    {host:'mylist',open:'openMy',empty:'ยังไม่มีเรื่องแจ้งซ่อม',cols:'incident',report:true});
 }
 let R={jobNo:null,photos:0,urls:[],returns:{},pc:'',lc:'',det:'',pick:null,docs:{invoice:false,contractor:false},rdate:''};
 // รายละเอียดเป็นหน้าเต็มแล้ว (view-mydet) — เดิมเป็น accordion กางในลิสต์
