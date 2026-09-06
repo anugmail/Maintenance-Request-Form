@@ -24,19 +24,24 @@ const thLabel=iso=>{const d=new Date(iso+'T00:00:00');return`${THD[d.getDay()]} 
    ⇒ ค่าที่เคยบันทึกไว้เป็น 'grid' ใน localStorage จะถูกมองข้ามเอง (render ไม่อ่าน variant แล้ว)
    ============================================================ */
 const vehicleCard={
-  key:'vehicleCard',
-  name:'การ์ดเลือกรถ (ขั้นตอนที่ 1 ฟอร์มแจ้งซ่อม)',
+  key:'vehicleCard',   // คง key เดิมเพื่อไม่กระทบผู้เรียก (mock หลัก + เวอร์ชัน flow เก่า)
+  name:'ตารางเลือกรถ (ขั้นตอนที่ 1 ฟอร์มแจ้งซ่อม)',
   render(el,props){
     const{vehicles=[],selectedId=null,onPick}=props;
-    // การ์ดวิทยุชุดเดียวกับ "งบที่จะตัด" (.radcards) — Radio text card ของไลบรารี
-    const sub=v=>[v.model, v.attach, v.org].filter(Boolean).map(esc).join(' · ');
-    el.innerHTML = `<div class="radcards">${vehicles.map(v=>`
-      <label class="radcard ${selectedId===v.id?'sel':''}" data-id="${v.id}">
-        <input type="radio" name="pick-vehicle" ${selectedId===v.id?'checked':''}>
-        <span class="rdot"></span>
-        <span class="rc-tx"><b>${esc(v.plate)}</b><small>${sub(v)}</small></span>
-      </label>`).join('')}</div>`;
-    if(onPick)el.querySelectorAll('[data-id]').forEach(x=>x.addEventListener('click',()=>onPick(+x.dataset.id)));
+    // 4 ก.ย. 2569: การ์ดวิทยุ → ตารางรายการ (เจ้าของงานขอให้เป็นลิสต์แบบหน้าจัดการงานซ่อม)
+    // ใช้ .tbl ของกลาง + จุดวิทยุชุดเดียวกับ .radcard — สไตล์แถวเลือกอยู่ที่ .vtbl ใน components.css
+    el.innerHTML = `<div class="tblwrap"><table class="tbl vtbl">
+      <thead><tr><th style="width:48px"></th><th>ยานพาหนะ</th><th>ประเภท / รุ่น</th><th>อุปกรณ์ติดตั้ง</th><th>สังกัด</th></tr></thead>
+      <tbody>${vehicles.map(v=>{
+        const parts=esc(v.plate).split(' ');
+        return `<tr class="${selectedId===v.id?'sel':''}" data-id="${v.id}">
+          <td><span class="rdot"></span></td>
+          <td><div class="cell-key">${parts[0]}</div>${parts.length>1?`<div class="cell-sub">${parts.slice(1).join(' ')}</div>`:''}</td>
+          <td>${esc(v.model)}</td>
+          <td>${v.attach?esc(v.attach):'<span class="cell-sub">—</span>'}</td>
+          <td>${esc(v.org)}</td>
+        </tr>`}).join('')}</tbody></table></div>`;
+    if(onPick)el.querySelectorAll('tr[data-id]').forEach(x=>x.addEventListener('click',()=>onPick(+x.dataset.id)));
   }
 };
 

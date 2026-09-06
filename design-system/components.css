@@ -1131,3 +1131,17 @@ input.tbl-row-label{width:80%;display:inline-block}
 /* หัวขั้นใน modal แจ้งซ่อม — "ขั้นที่ n: ชื่อขั้น (n/ทั้งหมด)" ตามหน้าจอจริง (Step 1: ข้อมูลทั่วไป) */
 .modal-step-title{font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:600;color:#000;margin:2px 0 4px}
 .modal-step-title:empty{display:none}
+
+/* ============================================================
+   v0.56 — ตารางเลือกรถ ขั้น 1 ฟอร์มแจ้งซ่อม (เจ้าของงานขอ 4 ก.ย. 2569:
+   "หน้าเลือกรถทั้ง modal และวิซาร์ด อยากให้เป็นลิสต์แบบหน้าจัดการงานซ่อม")
+   ใช้กับ UIC.vehicleCard (ui-components.js) — โครง .tbl ของกลาง + แถวกดเลือกได้
+   จุดวิทยุชุดเดียวกับ .radcard (20×20 เส้น 2 · เลือกแล้ว primary-600 + จุดขาว 8)
+   พื้นแถวที่เลือก = primary-25 ตามตระกูล radcard เดิม
+   ============================================================ */
+.vtbl tbody tr{cursor:pointer}
+.vtbl .rdot{display:flex;width:20px;height:20px;border:2px solid var(--gray-300);border-radius:var(--r-pill);background:#fff;align-items:center;justify-content:center}
+.vtbl tbody tr:hover td{background:var(--gray-50)}
+.tbl.vtbl tbody tr.sel td{background:var(--primary-25)}
+.vtbl tr.sel .rdot{background:var(--primary-600);border-color:var(--primary-600)}
+.vtbl tr.sel .rdot::after{content:'';width:8px;height:8px;border-radius:var(--r-pill);background:#fff}

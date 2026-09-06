@@ -12,11 +12,11 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260904-ds55">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260904-ds55">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260904-ds56">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260904-ds56">
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
-  <script src="../ui-components.js?v=20260806-kbk-detail"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
+  <script src="../ui-components.js?v=20260904-vt1"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
   <script src="../job-store.js?v=20260819-jobstore"></script><!-- MDJ: เก็บใบงานข้ามไฟล์ (หน้า design-mock ขั้นซ่อมเองอยู่คนละไฟล์) -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <!-- OCR อ่านเลขที่สลิปเติมน้ำมัน ⛽ — รันฝั่ง client ล้วน ใช้ได้แม้ไม่มีเน็ต -->
@@ -1667,13 +1667,17 @@
             <div class="modal-step-title" id="rm-step"></div>
 
         <section id="s1">
+          <!-- 4 ก.ย. 2569 บ่าย: dropdown → ตารางลิสต์ (เจ้าของงานขอให้เหมือนหน้าจัดการงานซ่อม ทั้ง modal และวิซาร์ด) -->
           <div class="fgrid">
             <div class="f sp2">
-              <label>ยานพาหนะ <small>(จำเป็น)</small></label>
-              <select id="v-select" onchange="onVehSelect(this.value)"></select>
+              <label>ค้นหารถที่มีปัญหา</label>
+              <div class="in"><span class="ms">search</span><input type="text" id="vq"
+                  placeholder="ค้นหาทะเบียน หรือเลือกจากรายการด้านล่าง…" oninput="renderVehicles()"></div>
               <div class="hint">รายการ: รถของฉัน/รถในทีม — ถ้ารถไม่อยู่ในระบบ ติดต่อผู้ดูแลข้อมูลรถ (กรย./กบค.)</div>
             </div>
           </div>
+          <div id="vlist"></div><!-- mount จุดของ UIC.vehicleCard (ตารางเลือกรถ) -->
+          <div class="empty hidden" id="vnone">ไม่พบรถที่ค้นหา</div>
           <div id="vinfo" class="hidden">
             <div class="vehicle-detail-heading">
               <div class="sect">รายละเอียดรถที่เลือก</div>
@@ -3005,16 +3009,21 @@ function goBackView(){
       if (key === 'parts') renderParts();
       if (key === 'decision') renderSummary();
     }
-    // 3 ก.ย. 2569: เลือกรถเป็น dropdown (เจ้าของงานเคาะแทนการ์ด+ช่องค้นหา) — ตัวเลือกตาม Input dropdown ของไลบรารี
-    function renderVehicleOptions() {
-      $('v-select').innerHTML = '<option value="" selected disabled>เลือกรถ — รถของฉัน/รถในทีม</option>'
-        + VEHICLES.map(v => `<option value="${v.id}" ${S.vehicle && S.vehicle.id === v.id ? 'selected' : ''}>${esc(v.plate)} — ${esc([v.model, v.attach].filter(Boolean).join(' · '))}</option>`).join('');
+    // 4 ก.ย. 2569 บ่าย: เลือกรถเป็นตารางลิสต์ (UIC.vehicleCard) — เจ้าของงานขอแทน dropdown
+    function renderVehicles() {
+      const q = $('vq').value.trim();
+      const list = VEHICLES.filter(v => !q || v.plate.includes(q) || v.model.includes(q));
+      $('vnone').classList.toggle('hidden', list.length > 0);
+      UIC.vehicleCard.render($('vlist'), {
+        vehicles: list,
+        selectedId: S.vehicle ? S.vehicle.id : null, onPick: pickVehicle
+      });
     }
-    function onVehSelect(id) {
-      const isNew = !S.vehicle || String(S.vehicle.id) !== String(id);
-      S.vehicle = VEHICLES.find(v => String(v.id) === String(id));
+    function pickVehicle(id) {
+      const isNew = !S.vehicle || S.vehicle.id !== id;
+      S.vehicle = VEHICLES.find(v => v.id === id);
       if (isNew) { S.targets = S.vehicle.attach ? [] : ['vehicle']; S.symptoms = []; S.symsBy = { vehicle: [], attach: [] }; S.bookings = {}; S.orders = {}; S.customParts = []; }
-      renderVehicleOptions();
+      renderVehicles();
       $('vinfo').classList.remove('hidden');
       renderVehicleInfo();
       $('rm-title').textContent = 'แจ้งซ่อม — ' + S.vehicle.plate;
@@ -3430,14 +3439,14 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
       Object.assign(S, { step: 1, vehicle: null, targets: [], symptoms: [], symsBy: { vehicle: [], attach: [] }, sev: null, photos: 0, bookings: {}, orders: {}, customParts: [], customSeq: 0, decision: null, approver: null, usable: null, costType: null, costVals: {} });
       ['i-prov','i-amp','i-odo','i-crane','i-own','i-owntel','i-tech','i-techtel','i-drv','i-drvtel'].forEach(id => { const e = $(id); if (e) e.value = '' });
       renderUsable(); renderCostTypes();
-      ['desc', 'othtext', 'selfnote', 'kryreason', 'apq'].forEach(id => $(id).value = '');
+      ['vq', 'desc', 'othtext', 'selfnote', 'kryreason', 'apq'].forEach(id => $(id).value = '');
       renderApprovers();
       document.querySelectorAll('#photos .ph').forEach(e => e.remove());
       $('vinfo').classList.add('hidden'); $('vauto').innerHTML = '';
       $('dcrads').querySelectorAll('input[name=decision]').forEach(r => r.checked = false);
       $('selfx').classList.add('hidden'); $('kryx').classList.add('hidden');
       $('sdone').classList.add('hidden'); $('footer').classList.remove('hidden');
-      renderVehicleOptions();
+      renderVehicles();
       showStepSection(WORDER[0]);   // ขั้นแรกตามลำดับที่ตั้ง
       $('next').textContent = WORDER.length === 1 ? 'ส่งเรื่องแจ้งซ่อม' : 'ถัดไป';
       renderSteps();
@@ -3449,7 +3458,7 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
       resetForm();
       if (plate) {
         const v = VEHICLES.find(x => x.plate === plate);
-        if (v) onVehSelect(String(v.id));
+        if (v) pickVehicle(v.id);
       }
       $('repair-modal').classList.remove('hidden');
       document.body.classList.add('modal-open');
@@ -5095,7 +5104,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
     $('next').textContent = WORDER.length === 1 ? 'ส่งเรื่องแจ้งซ่อม' : 'ถัดไป';
     fillProvinces();
     renderUsable(); renderCostTypes();
-    renderSteps(); renderVehicleOptions(); renderApprovers(); updateBadge();
+    renderSteps(); renderVehicles(); renderApprovers(); updateBadge();
     // deep-link: ถ้ามี #view ที่ถูกต้อง (เช่น #kbk หรือ #view-kbk) ให้เปิดหน้านั้น — ใช้โดยหน้า 05-review-milestones
     const VALID_VIEWS = ['form', 'my', 'fuel', 'boss', 'kry', 'kbk', 'sup', 'stock', 'vhist', 'worth', 'step'];
     const hashView = v => VALID_VIEWS.includes(v = (location.hash || '').replace(/^#\/?/, '').replace(/^view-/, '')) ? v : '';

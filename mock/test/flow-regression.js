@@ -6,7 +6,7 @@
    จน stepper ผิด 3 รอบติด ⇒ ต้องมีของรันก่อนส่งงานทุกครั้ง
 
    4 ก.ย. 2569: ปรับตามโฟลว์ใหม่ที่เจ้าของงานเคาะ — แจ้งซ่อมเป็น modal
-   (เข้าจากปุ่ม "แจ้งซ่อมใหม่" หรือไอคอนท้ายแถว) · เลือกรถเป็น dropdown ·
+   (เข้าจากปุ่ม "แจ้งซ่อมใหม่" หรือไอคอนท้ายแถว) · เลือกรถเป็นตารางลิสต์ (บ่าย 4 ก.ย. — เดิม dropdown ช่วงเช้า) ·
    จุดที่พบปัญหาติ๊กได้หลายจุด · อาการแยกกลุ่มตามจุด
 
    ตรวจ 2 ชั้น
@@ -62,14 +62,15 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   await page.locator('.lt-actions .btn-p', { hasText: 'แจ้งซ่อมใหม่' }).click();
   await page.waitForSelector('#repair-modal:not(.hidden)');
   ok('กดแจ้งซ่อมใหม่แล้ว modal เปิด', await page.locator('#repair-modal .modal').isVisible());
-  ok('ขั้น 1 มี dropdown ยานพาหนะ', await page.locator('#v-select').isVisible());
+  ok('ขั้น 1 มีช่องค้นหา + ตารางเลือกรถ', await page.locator('#vq').isVisible() && await page.locator('#vlist .vtbl tbody tr').count() >= 4);
   ok('หัวขั้นแบบข้อความ "ขั้นที่ 1"', /^ขั้นที่ 1/.test((await page.locator('#rm-step').textContent()).trim()));
   eq('ยังไม่เลือกรถ → ไม่มีการ์ดรายละเอียด', await page.locator('.vehicle-detail-card').count(), 0);
 
-  // ---- เลือกรถจาก dropdown (83-1122 มีเครน) ----
-  await page.selectOption('#v-select', '3');
+  // ---- เลือกรถจากตาราง (83-1122 มีเครน) ----
+  await page.locator('#vlist .vtbl tr[data-id="3"]').click();
   await page.waitForSelector('.vehicle-detail-card');
   ok('เลือกรถแล้วขึ้นการ์ดรายละเอียดรถ', await page.locator('.vehicle-detail-card').isVisible());
+  ok('แถวที่เลือกติดสถานะ sel', await page.locator('#vlist .vtbl tr.sel[data-id="3"]').count() === 1);
   ok('หัว modal ขึ้นทะเบียนรถ', /83-1122/.test(await page.locator('#rm-title').textContent()));
   const targets = await page.locator('.vehicle-target .radcard.ckcard').count();
   ok('จุดที่พบปัญหาเป็นการ์ด checkbox', targets === 2, `เจอ ${targets}`);
@@ -136,8 +137,7 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   ok('ไอคอนมีป้ายจำนวนเรื่องค้าง', await page.locator('#mylist .dt-action .cnt').count() >= 1);
   await page.locator('#mylist .dt-action button[title="แจ้งซ่อมคันนี้"]').first().click();
   await page.waitForSelector('#repair-modal:not(.hidden)');
-  const preSel = await page.locator('#v-select').inputValue();
-  ok('เปิดจากแถวแล้ว dropdown เติมรถให้', preSel !== '', `value="${preSel}"`);
+  ok('เปิดจากแถวแล้วตารางเลือกรถให้', await page.locator('#vlist .vtbl tr.sel').count() === 1);
   await page.locator('#back').click();   // ขั้น 1 ปุ่มซ้าย = ปิด
   ok('ปุ่ม "ปิด" ที่ขั้น 1 ปิด modal ได้', !(await page.locator('#repair-modal').isVisible()));
 
@@ -183,13 +183,17 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   eq('ปุ่มท้ายฟอร์ม pad ซ้ายขวา 12', px(await cs('#next', 'paddingLeft')), 12);
   eq('ปุ่ม .btn-p พื้นสีแบรนด์', rgb(await cs('#next', 'backgroundColor')), HEX.brand600);
 
-  // dropdown ยานพาหนะ — ไลบรารี Input dropdown/Text input md: h40 · r8 · ขอบ #D0D5DD
-  eq('dropdown ยานพาหนะ สูง 40', px(await cs('#v-select', 'height')), 40);
-  eq('dropdown ยานพาหนะ radius 8', px(await cs('#v-select', 'borderRadius')), 8);
-  eq('dropdown ยานพาหนะ ขอบ gray-300', rgb(await cs('#v-select', 'borderTopColor')), HEX.gray300);
+  // ช่องค้นหารถ — ไลบรารี Text input md: h40 · r8 · ขอบ #D0D5DD
+  eq('ช่องค้นหารถ สูง 40', px(await cs('#vq', 'height')), 40);
+  eq('ช่องค้นหารถ radius 8', px(await cs('#vq', 'borderRadius')), 8);
+  eq('ช่องค้นหารถ ขอบ gray-300', rgb(await cs('#vq', 'borderTopColor')), HEX.gray300);
+
+  // ตารางเลือกรถ — จุดวิทยุชุดเดียวกับ Radio button ของไลบรารี (20×20 · เส้น 2)
+  eq('จุดวิทยุในตาราง 20px', px(await cs('#vlist .vtbl .rdot', 'width')), 20);
+  eq('จุดวิทยุในตาราง เส้น 2px', px(await cs('#vlist .vtbl .rdot', 'borderTopWidth')), 2);
 
   // การ์ดจุดที่พบปัญหา — Radio text card + กล่อง Checkbox (20×20 · r4 · เส้น 2)
-  await page.selectOption('#v-select', '3');
+  await page.locator('#vlist .vtbl tr[data-id="3"]').click();
   await page.waitForSelector('.vehicle-target .radcard.ckcard');
   eq('การ์ดจุด radius 8', px(await cs('.vehicle-target .radcard', 'borderRadius')), 8);
   eq('การ์ดจุด ขอบ 1px', px(await cs('.vehicle-target .radcard', 'borderTopWidth')), 1);
