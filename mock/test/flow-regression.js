@@ -141,12 +141,14 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
     /ตัวรถ —/.test(await page.locator('#bossdetail').textContent()));
   eq('ช่องทางการซ่อมเลือกได้ 2 ทาง (ซ่อมเอง/ส่งต่อ กรย.)',
     await page.locator('#bossdetail .radcard').count(), 2);
-  // 7 ก.ย. 2569 (คำสั่งล่าสุด): section "อะไหล่ที่แนะนำ" ถูกตัด — เหลือ "อะไหล่ที่ผู้แจ้งเลือกไว้" อย่างเดียว
-  eq('เหลือบล็อกอะไหล่เดียว (เลือกไว้) — แนะนำถูกตัดแล้ว', await page.locator('#bossdetail .parts-flat').count(), 1);
+  // 7 ก.ย. 2569 (คำสั่งล่าสุด): เหลือ "อะไหล่ที่ผู้แจ้งเลือกไว้" เป็นการ์ดแบบขั้น 4 — หัวหน้าปรับจำนวน/ลบได้ก่อนอนุมัติ
   eq('ไม่มี section อะไหล่ที่แนะนำ', await page.locator('#bossdetail .incident-section-title', { hasText: 'อะไหล่ที่แนะนำ' }).count(), 0);
-  ok('อะไหล่ที่เลือกไว้: หัวมีป้าย "แนะนำ" + แถวแบน',
+  ok('อะไหล่ที่เลือกไว้เป็นการ์ดแบบขั้น 4 + หัวมีป้าย "แนะนำ"',
     /แนะนำ/.test(await page.locator('#bossdetail .incident-section-title', { hasText: 'อะไหล่ที่ผู้แจ้งเลือกไว้' }).textContent())
-    && await page.locator('#bossdetail .parts-flat').first().locator('.pf-row').count() >= 1);
+    && await page.locator('#bossdetail .parts-rec-item').count() >= 1);
+  await page.locator('#bossdetail .parts-rec-item .qty button').nth(1).click();   // หัวหน้ากด +
+  eq('หัวหน้าปรับจำนวนอะไหล่ได้ (ก่อนอนุมัติ)',
+    (await page.locator('#bossdetail .parts-rec-item .qty span').first().textContent()).trim(), '2');
   // ---- แก้ไขงบที่ตัด (7 ก.ย. 2569) ----
   await page.locator('#bossdetail button', { hasText: 'แก้ไข' }).click();
   await page.waitForSelector('#boss-budget-modal:not(.hidden)');
