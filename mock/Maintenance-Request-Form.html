@@ -14,6 +14,10 @@
     rel="stylesheet">
   <link rel="stylesheet" href="../design-system/tokens.css?v=20260907-ds57">
   <link rel="stylesheet" href="../design-system/components.css?v=20260907-ds57">
+  <!-- Tailwind (7 ก.ย. 2569 — เจ้าของงานสั่ง "ถัดจากนี้ปรับเป็น Tailwind"): Play CDN + theme จาก tokens.css
+       preflight ปิด · คลาส component กลาง (components.css) ใช้ต่อตามเดิมแบบ DaisyUI · งานใหม่เขียน utility -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../design-system/tailwind-theme.js?v=20260907-tw2"></script>
   <script src="../config.js?v=20260806-kbk-detail"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260904-vt1"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -1674,40 +1678,40 @@
             <select id="v-select" onchange="pickVehicle(+this.value)">
             </select>
           </div>
-          <div id="vinfo" class="hidden" style="margin-top:14px">
+          <div id="vinfo" class="hidden mt-3.5">
             <dl class="incident-summary" id="vsum"></dl>
           </div>
-          <div class="f" style="margin-top:16px">
+          <div class="f mt-4">
             <label>สถานะรถตอนนี้</label>
-            <div class="rads" style="min-height:32px">
+            <div class="rads min-h-8">
               <label><input type="radio" name="r-usable" onchange="setUsable(true)"> ใช้งานได้</label>
               <label><input type="radio" name="r-usable" onchange="setUsable(false)"> ใช้งานไม่ได้</label>
             </div>
           </div>
           <div class="f">
             <label>รูปแบบการซ่อม</label>
-            <div class="rads" style="min-height:32px">
+            <div class="rads min-h-8">
               <label><input type="radio" name="r-decision" onchange="setDecision('self')"> ดำเนินการซ่อมเอง</label>
               <label><input type="radio" name="r-decision" onchange="setDecision('kry')"> ส่งเรื่องให้ กรย.</label>
             </div>
           </div>
           <div class="f hidden" id="target-wrap">
             <label>ส่วนที่ต้องการแจ้งซ่อม <small>(เลือกได้มากกว่า 1)</small></label>
-            <div class="chks" id="target-chks" style="margin-top:4px"></div>
+            <div class="chks mt-1" id="target-chks"></div>
           </div>
           <div class="f">
             <label>งบที่ตัด</label>
             <select id="i-costsel" onchange="setCostType(this.value)"></select>
             <div class="hint" id="i-costhint"></div>
           </div>
-          <div class="fgrid ig" id="i-costfields" style="margin:8px 0 4px"></div>
-          <div class="f" style="margin-top:12px">
+          <div class="fgrid ig mt-2 mb-1" id="i-costfields"></div>
+          <div class="f mt-3">
             <label>ผู้แจ้งเหตุ</label>
-            <div class="rads" style="min-height:32px">
+            <div class="rads min-h-8">
               <label><input type="radio" name="r-reporter" checked onchange="setReporter('pea')"> พนักงาน กฟภ.</label>
               <label><input type="radio" name="r-reporter" onchange="setReporter('driver')"> พนักงานขับรถ</label>
             </div>
-            <select id="i-reporter" style="margin-top:8px"></select>
+            <select id="i-reporter" class="mt-2"></select>
           </div>
           <div class="f">
             <label>ผู้รับรายงานอุบัติเหตุ <small>(ถ้ามี)</small></label>
@@ -1733,13 +1737,13 @@
         <section id="sinfo" class="hidden">
           <!-- 7 ก.ย. 2569: เจ้าของงานสั่งตัด "สถานที่เกิดเหตุ" กับ "รายละเอียดเหตุการณ์" ออก —
                เหลือ เลขไมล์ · ชั่วโมงเครื่องจักร · รูปภาพเหตุการณ์ · หมายเหตุ (จังหวัด/ผู้ติดต่อ/งบ ย้าย-ตัดตามสเปกใหม่) -->
-          <div class="fgrid ig" style="margin-top:4px">
+          <div class="fgrid ig mt-1">
             <div class="f"><label>เลขไมล์ปัจจุบัน</label>
               <div class="in"><span class="ms">speed</span><input type="number" min="0" id="i-odo" placeholder="ระบุเลขไมล์ปัจจุบัน"></div></div>
             <div class="f"><label id="lbl-crane">ชั่วโมงใช้งานเครื่องจักร</label>
               <div class="in"><span class="ms">schedule</span><input type="number" min="0" id="i-crane" placeholder="ระบุชั่วโมงใช้งานเครื่องจักร"></div></div>
           </div>
-          <div class="f" style="margin-top:14px" id="f-photos">
+          <div class="f mt-3.5" id="f-photos">
             <label>รูปภาพเหตุการณ์ <small>(ถ้ามี)</small></label>
             <div class="photos" id="photos">
               <div class="addph" onclick="document.getElementById('file').click()"><span
@@ -1748,7 +1752,7 @@
             </div>
             <input type="file" id="file" accept="image/*" multiple class="hidden" onchange="addFiles(this.files)">
           </div>
-          <div class="f" style="margin-top:14px;max-width:720px"><label for="desc">หมายเหตุ <small>(ถ้ามี)</small></label>
+          <div class="f mt-3.5 max-w-[720px]"><label for="desc">หมายเหตุ <small>(ถ้ามี)</small></label>
             <textarea id="desc" rows="2" placeholder="ระบุหมายเหตุ"></textarea></div>
         </section>
 
@@ -1759,7 +1763,7 @@
               style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">—
               จำนวนที่เกินยอดในคลัง จะถูกตั้งเป็นรายการจัดซื้อให้อัตโนมัติ</span></div>
           <div id="parts-rec" class="parts-rec-list"></div>
-          <div class="parts-totals" style="max-width:420px;margin-left:auto">
+          <div class="parts-totals ml-auto max-w-[420px]">
             <div class="parts-total-row"><span>เบิกจากคลัง</span><strong id="p-sum-stock">0 บาท</strong></div>
             <div class="parts-total-row"><span>ต้องจัดซื้อ</span><strong id="p-sum-buy">0 บาท</strong></div>
             <div class="parts-total-row grand"><span>รวมทั้งหมด</span><strong id="p-sum-all">0 บาท</strong></div>
@@ -1807,6 +1811,25 @@
           <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r" style="margin:0 auto">
             <button class="btn btn-s" onclick="closeBossModals()">ไม่ใช่ตอนนี้</button>
             <button class="btn btn-p" onclick="bossApprove()">อนุมัติคำขอ</button>
+          </div></div></div>
+        </div>
+      </div>
+      <!-- แก้ไขงบที่ตัด (หัวหน้าแก้ได้ก่อนอนุมัติ — เจ้าของงานขอ 7 ก.ย. 2569) · ชุด dropdown+ช่องกรอกเดียวกับฟอร์มผู้แจ้ง -->
+      <div class="modal-overlay hidden" id="boss-budget-modal">
+        <div class="modal md" role="dialog" aria-modal="true">
+          <div class="modal-hd"><div class="modal-hd-c"><h2>แก้ไขงบที่ตัด</h2>
+            <button class="btn btn-t btn-icon" onclick="closeBossModals()" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+          <div class="modal-bd">
+            <div class="f"><label>งบที่ตัด</label>
+              <select id="bb-costsel" onchange="bbSetType(this.value)"></select>
+              <div class="hint" id="bb-costhint"></div>
+            </div>
+            <div class="fgrid ig mt-2" id="bb-costfields"></div>
+            <div class="hint mt-3">การแก้ไขจะบันทึกลงแท็บ "ประวัติการดำเนินการ" ให้ผู้แจ้งเห็น</div>
+          </div>
+          <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r">
+            <button class="btn btn-s" onclick="closeBossModals()">ปิด</button>
+            <button class="btn btn-p" onclick="bbSave()">บันทึก</button>
           </div></div></div>
         </div>
       </div>
@@ -3118,11 +3141,24 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
         tech:{name:'สิริกานต์ ธรรมรักษา',tel:'091-234-5678'},
         driver:{name:'มงคล สมดี',tel:'091-234-5678'} };
     }
-    function costSummaryText(){
-      const ct=COST_TYPES.find(c=>c.code===S.costType);
+    function costText(code, vals){
+      const ct=COST_TYPES.find(c=>c.code===code);
       if(!ct)return '';
-      const ref=ct.fields.map(f=>S.costVals[f]?`${COST_FIELD[f].label} ${S.costVals[f]}`:null).filter(Boolean).join(' · ');
+      const ref=ct.fields.map(f=>vals[f]?`${COST_FIELD[f].label} ${vals[f]}`:null).filter(Boolean).join(' · ');
       return ct.name+(ref?' — '+ref:'');
+    }
+    function costSummaryText(){ return costText(S.costType, S.costVals) }
+    // ตรวจช่องบังคับของงบแต่ละแบบ — คืนข้อความ error หรือ null (ใช้ทั้งฟอร์มผู้แจ้งและ modal แก้งบของหัวหน้า)
+    function costError(code, vals){
+      if(!code) return 'กรุณาเลือกงบที่ตัด';
+      const ct=COST_TYPES.find(c=>c.code===code);
+      if(ct.req==='all'&&ct.fields.some(f=>!(vals[f]||'').trim()))
+        return 'กรุณากรอก '+ct.fields.map(f=>COST_FIELD[f].label).join(' และ ');
+      if(ct.req!=='all'&&ct.req!=='any'&&!(vals[ct.req]||'').trim())
+        return 'กรุณาระบุ'+COST_FIELD[ct.req].label;
+      if(ct.req==='any'&&!ct.fields.some(f=>(vals[f]||'').trim()))
+        return 'กรุณาระบุ '+ct.fields.map(f=>COST_FIELD[f].label).join(' หรือ ')+' อย่างน้อย 1 ช่อง';
+      return null;
     }
 
     // ---------- ผู้แจ้งเหตุ (7 ก.ย. 2569 — ขั้นเลือกผู้อนุมัติถูกตัด ผู้อนุมัติ = หัวหน้าหน่วยงานอัตโนมัติ) ----------
@@ -3180,14 +3216,8 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
         if (S.usable === null) { toast('กรุณาระบุสถานะรถ (ใช้งานได้ / ใช้งานไม่ได้)'); return false }
         if (!S.decision) { toast('กรุณาเลือกรูปแบบการซ่อม'); return false }
         if (!S.targets.length) { toast('กรุณาติ๊กส่วนที่ต้องการแจ้งซ่อมอย่างน้อย 1 จุด'); return false }
-        if (!S.costType) { toast('กรุณาเลือกงบที่ตัด'); return false }
-        const ct = COST_TYPES.find(c => c.code === S.costType);
-        if (ct.req === 'all' && ct.fields.some(f => !(S.costVals[f] || '').trim())) {
-          toast('กรุณากรอก ' + ct.fields.map(f => COST_FIELD[f].label).join(' และ ')); return false }
-        if (ct.req !== 'all' && ct.req !== 'any' && !(S.costVals[ct.req] || '').trim()) {
-          toast('กรุณาระบุ' + COST_FIELD[ct.req].label); return false }
-        if (ct.req === 'any' && !ct.fields.some(f => (S.costVals[f] || '').trim())) {
-          toast('กรุณาระบุ ' + ct.fields.map(f => COST_FIELD[f].label).join(' หรือ ') + ' อย่างน้อย 1 ช่อง'); return false }
+        const ce = costError(S.costType, S.costVals);
+        if (ce) { toast(ce); return false }
       }
       // ขั้น info (ไมล์/ชั่วโมง/รูป/หมายเหตุ) ไม่มีช่องบังคับ
       if (key === 'symptom') {
@@ -4776,7 +4806,9 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
               <div class="incident-field wide"><dt>อาการของรถ (${esc(j.target)})</dt><dd>${j.syms.join(', ') || '-'}</dd></div>
               <div class="incident-field"><dt>เลขไมล์ปัจจุบัน</dt><dd>${j.use && j.use.odo ? j.use.odo.toLocaleString() : '-'}</dd></div>
               <div class="incident-field"><dt>ชั่วโมงใช้งานเครื่องจักร</dt><dd>${j.use && j.use.crane ? j.use.crane.toLocaleString() : '-'}</dd></div>
-              <div class="incident-field wide"><dt>งบที่ตัด</dt><dd>${esc(j.budget || '-')}</dd></div>
+              <div class="incident-field wide"><dt>งบที่ตัด</dt>
+                <dd class="flex flex-wrap items-center gap-2">${esc(j.budget || '-')}${wait ? `
+                  <button class="btn btn-tb btn-sm" onclick="openBossBudget()"><span class="ms">edit</span> แก้ไข</button>` : ''}</dd></div>
               <div class="incident-field wide"><dt>หมายเหตุ</dt><dd>${j.desc || '-'}</dd></div>
             </dl>
           </section>
@@ -4878,7 +4910,46 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
     }
     function openBossReject() { $('boss-reason').value = ''; $('boss-reject-ok').disabled = true; $('boss-reject-modal').classList.remove('hidden'); }
     function openBossApprove() { $('boss-approve-modal').classList.remove('hidden'); }
-    function closeBossModals() { $('boss-reject-modal').classList.add('hidden'); $('boss-approve-modal').classList.add('hidden'); }
+    function closeBossModals() { ['boss-reject-modal', 'boss-approve-modal', 'boss-budget-modal'].forEach(id => $(id).classList.add('hidden')); }
+    // ---------- แก้ไขงบที่ตัด (หัวหน้า) ----------
+    let BB = { costType: null, costVals: {} };
+    function openBossBudget() {
+      const j = JOBS.find(x => x.no === BOSSSEL);
+      BB = { costType: j.costType || null, costVals: { ...(j.costVals || {}) } };
+      bbRender();
+      $('boss-budget-modal').classList.remove('hidden');
+    }
+    function bbSetType(code) {
+      BB.costType = code; BB.costVals = {};
+      const ct = COST_TYPES.find(c => c.code === code);
+      if (ct && ct.sample) Object.assign(BB.costVals, ct.sample);
+      bbRender();
+    }
+    function bbRender() {
+      $('bb-costsel').innerHTML = '<option value="" disabled ' + (BB.costType ? '' : 'selected') + '>เลือกงบที่ตัด</option>'
+        + COST_TYPES.map(c => `<option value="${c.code}" ${BB.costType === c.code ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
+      const ct = COST_TYPES.find(c => c.code === BB.costType);
+      $('bb-costhint').textContent = !ct ? '' : ('ต้องระบุ: ' + ct.fields.map(f => COST_FIELD[f].label).join(', ') + (ct.req === 'any' ? ' (อย่างน้อย 1 ช่อง)' : ''));
+      $('bb-costfields').innerHTML = !ct ? '' : ct.fields.map(f => {
+        const m = COST_FIELD[f], must = (ct.req === 'all') || (ct.req === f);
+        return `<div class="f"><label>${m.label} ${must ? '' : '<small>(ถ้ามี)</small>'}</label>
+          <div class="in noic"><input type="text" value="${esc(BB.costVals[f] || '')}" placeholder="${m.ph}"
+              oninput="BB.costVals['${f}']=this.value"></div></div>`;
+      }).join('');
+    }
+    function bbSave() {
+      const j = JOBS.find(x => x.no === BOSSSEL);
+      if (j.phase !== 'wait') { toast('เรื่องเดินต่อแล้ว — แก้งบไม่ได้'); closeBossModals(); return }
+      const ce = costError(BB.costType, BB.costVals);
+      if (ce) { toast(ce); return }
+      const before = j.budget || '-';
+      j.costType = BB.costType; j.costVals = { ...BB.costVals };
+      j.budget = costText(j.costType, j.costVals);
+      j.history.push({ t: nowStr(), label: `${j.approver.name} แก้ไขงบที่ตัด: ${before} → ${j.budget}` });
+      closeBossModals();
+      toast('บันทึกงบที่ตัดแล้ว');
+      renderBossDetail(BOSSSEL);
+    }
     function bossApprove() {
       const j = JOBS.find(x => x.no === BOSSSEL);
       j.phase = j.nextPhase; j.approvedByBoss = true;

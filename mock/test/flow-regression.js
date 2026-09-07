@@ -139,6 +139,15 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   eq('ช่องทางการซ่อมเลือกได้ 2 ทาง (ซ่อมเอง/ส่งต่อ กรย.)',
     await page.locator('#bossdetail .radcard').count(), 2);
   eq('อะไหล่ที่แนะนำ 10 รายการเป็น default', await page.locator('#bossdetail .parts-rec-item').count(), 10);
+  // ---- แก้ไขงบที่ตัด (7 ก.ย. 2569) ----
+  await page.locator('#bossdetail button', { hasText: 'แก้ไข' }).click();
+  await page.waitForSelector('#boss-budget-modal:not(.hidden)');
+  await page.selectOption('#bb-costsel', '1');
+  await page.fill('#bb-costfields input', 'B0007777');
+  await page.locator('#boss-budget-modal .btn-p', { hasText: 'บันทึก' }).click();
+  await page.waitForSelector('#boss-budget-modal.hidden', { state: 'attached' });
+  ok('หัวหน้าแก้งบที่ตัดได้ (ค่าอัปเดต + ลงประวัติ)',
+    /งบประจำหน่วยงาน.*B0007777/.test(await page.locator('#bossdetail .incident-field', { hasText: 'งบที่ตัด' }).textContent()));
   ok('มีทั้งป้าย "แนะนำ" (ตรงอาการ) และ "แนะนำทั่วไป"',
     await page.locator('#bossdetail .parts-rec-item .badge.b-info').count() >= 1
     && await page.locator('#bossdetail .parts-rec-item .badge.b-neutral').count() >= 1);
