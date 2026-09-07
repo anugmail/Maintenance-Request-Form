@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:,">   <!-- กัน 404 /favicon.ico ที่ทำให้ console มี error (เจอจาก regression test 2 ก.ย. 2569) -->
-  <title>Maintain-D — แจ้งซ่อม + งาน กบค. (Mock v0.8)</title>
+  <title>Maintain-D — แจ้งซ่อม (เวอร์ชันหน้าเต็ม: ลิสต์ → ฟอร์ม 4 ขั้น + stepper)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap"
     rel="stylesheet">
@@ -1647,7 +1647,7 @@
     </aside>
 
     <div class="work">
-      <div class="draft"><span class="ms">science</span> ต้นแบบ Mock v0.15 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง → <b>หัวหน้า (อนุมัติใบแจ้งซ่อม)</b> → กรย. → กบค. → ผู้บังคับบัญชา
+      <div class="draft"><span class="ms">web_asset</span> <b>เวอร์ชันหน้าเต็ม — ลิสต์ชุดเดียวกับเวอร์ชันหลัก แต่กด "แจ้งซ่อม" แล้วเข้าฟอร์ม 4 ขั้นเต็มหน้า (สเปกเดียวกับ modal ไว้เทียบ)</b> · เวอร์ชัน modal: <a href="Maintenance-Request-Form.html" class="text-inherit font-bold">Maintenance-Request-Form.html</a> · ต้นแบบ Mock v0.15 · ข้อมูลจำลองทั้งหมด · สลับบทบาท ผู้แจ้ง → <b>หัวหน้า (อนุมัติใบแจ้งซ่อม)</b> → กรย. → กบค. → ผู้บังคับบัญชา
         ได้จากเมนูซ้าย · ปรับแต่งได้จาก Admin Control Panel</div>
       <div class="topbar">
         <span class="ms">light_mode</span>
@@ -1655,20 +1655,16 @@
             style="position:absolute;top:0;right:0;width:8px;height:8px;border-radius:var(--r-pill);background:var(--success-600)"></i></span>
       </div>
 
-      <!-- ============ MODAL: ฟอร์มแจ้งซ่อม (7 ก.ย. 2569 เจ้าของงานส่งสเปกเต็มชุดจากดีไซน์จริง:
-           4 ขั้น — ①ข้อมูลยานพาหนะและผู้แจ้ง (รวม สถานะรถ/รูปแบบการซ่อม/จุดที่แจ้ง/งบ/ผู้แจ้งเหตุ)
-           ②รายละเอียดเหตุการณ์และสถานที่ (ไมล์/ชั่วโมงเครื่องจักร/รูป/หมายเหตุ) ③อาการเสีย ④อะไหล่ที่แนะนำ → ส่งอนุมัติ
-           ผู้อนุมัติ = หัวหน้าหน่วยงานอัตโนมัติ ไม่มีขั้นเลือกเอง · เข้าจากปุ่ม "แจ้งซ่อม" บนหน้ารวมเท่านั้น ============ -->
-      <div class="modal-overlay hidden" id="repair-modal">
-        <div class="modal lg" role="dialog" aria-modal="true" aria-labelledby="rm-title">
-          <div class="modal-hd">
-            <div class="modal-hd-c">
-              <h2 id="rm-title">แจ้งซ่อม</h2>
-              <button class="btn btn-t btn-icon" onclick="closeRepairModal()" aria-label="ปิด"><span
-                  class="ms">close</span></button>
-            </div>
-          </div>
-          <div class="modal-bd" id="rm-body">
+      <!-- ============ VIEW: ฟอร์มแจ้งซ่อมเต็มหน้า (เวอร์ชันหน้าเต็ม 7 ก.ย. 2569 — เนื้อหา 4 ขั้น
+           สเปกเดียวกับ modal ใน mock หลักทุกอย่าง ต่างแค่การนำเสนอ: เข้าจากปุ่ม "แจ้งซ่อม" แล้ว
+           นำทางมาหน้านี้ มี stepper (.wsteps) ด้านบนแบบเดียวกับวิซาร์ด flow เก่า ============ -->
+      <main class="content hidden" id="view-form">
+        <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>จัดการงานซ่อม</span><span
+            class="sep">›</span><span class="cur">แจ้งซ่อม</span></div>
+        <h1 class="page-title" id="rm-title">แจ้งซ่อม</h1>
+        <div class="wsteps-m" id="wstepsM"></div>
+        <div class="wsteps" id="wsteps"></div>
+        <div id="rm-body" class="max-w-[880px]">
             <div class="modal-step-title" id="rm-step"></div>
 
         <section id="s1">
@@ -1773,17 +1769,12 @@
         <!-- 7 ก.ย. 2569: ขั้น "สรุปและผู้อนุมัติ" ถูกตัดตามสเปกใหม่ — ส่งอนุมัติตรงจากขั้นอะไหล่
              ผู้อนุมัติ = หัวหน้าหน่วยงานของผู้แจ้งอัตโนมัติ (APPROVERS ตัวแรกจากสาย HR) · ส่งแล้วปิด modal + toast -->
 
-          </div>
-          <div class="modal-ft">
-            <div class="modal-ft-a" id="footer">
-              <div class="modal-ft-r">
-                <button class="btn btn-s" id="back" onclick="nav(-1)">ปิด</button>
-                <button class="btn btn-p" id="next" onclick="nav(1)">ถัดไป</button>
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
+        <div class="actions max-w-[880px]" id="footer">
+          <button class="btn btn-g" id="back" onclick="nav(-1)">ยกเลิก</button>
+          <button class="btn btn-p" id="next" onclick="nav(1)">ถัดไป</button>
+        </div>
+      </main>
 
       <!-- ============ MODAL: ผู้อนุมัติ — ไม่อนุมัติ (กรอกเหตุผล) / ยืนยันการอนุมัติ (สเปกภาพ 7 ก.ย. 2569) ============ -->
       <div class="modal-overlay hidden" id="boss-reject-modal">
@@ -2901,13 +2892,12 @@
 
     // ================= VIEW SWITCH =================
     function switchView(v,remember=true) {
-      // 'form' ไม่ใช่ view เต็มหน้าแล้ว (3 ก.ย. 2569) — เปิดหน้ารวม + modal แจ้งซ่อมแทน
-      // คง key 'form' ไว้เพื่อให้ startView/hash/เมนูแอดมินเดิมใช้ต่อได้
-      if (v === 'form') { switchView('my', remember); openRepairModal(); return }
+      // เวอร์ชันหน้าเต็ม: 'form' เป็น view จริง — เข้าหน้าฟอร์ม = เริ่มใบใหม่เสมอ
+      if (v === 'form' && VIEW !== 'form') resetForm();
       if(v!==VIEW){if(remember)VIEW_HISTORY.push(VIEW);VIEW = v}
       document.body.classList.toggle('incident-view',v==='step');
       // vhist = หน้าประวัติการซ่อม เปิดจากปุ่มในรายละเอียดงาน จึงไม่มีเมนูซ้ายของตัวเอง
-      ['my', 'mydet', 'fuel', 'boss', 'kry', 'krydet', 'kbk', 'sup', 'stock', 'vhist', 'worth', 'step'].forEach(x => {
+      ['form', 'my', 'mydet', 'fuel', 'boss', 'kry', 'krydet', 'kbk', 'sup', 'stock', 'vhist', 'worth', 'step'].forEach(x => {
         $('view-' + x).classList.toggle('hidden', x !== v);
         const nav = $('nav-' + x); if (nav) nav.classList.toggle('on', x === v);
       });
@@ -2977,6 +2967,23 @@ function goBackView(){
     function renderSteps() {
       const cur = Math.min(S.step, WORDER.length);
       $('rm-step').textContent = `ขั้นที่ ${cur}: ${WZ[WORDER[cur - 1]].label} (${cur}/${WORDER.length})`;
+      $('wsteps').innerHTML = WORDER.map((k, i) => {
+        const st = i + 1 === S.step ? 'active' : i + 1 < S.step ? 'passed' : '';
+        return `<div class="wstep ${st}"><span class="num">${i + 1 < S.step ? '<span class=\"ms\">check</span>' : i + 1}</span><span class="lbl">${WZ[k].label}</span></div>`;
+      }).join('');
+      renderStepsMobile();
+    }
+    // มือถือใช้คอมโพเนนต์คนละตัวตามไลบรารี (`Mobile progress steps`) — วงแหวน + ขั้นปัจจุบัน + ขั้นถัดไป
+    function renderStepsMobile() {
+      const total = WORDER.length, cur = Math.min(S.step, total);
+      const next = WORDER[cur] ? WZ[WORDER[cur]].label : null;
+      $('wstepsM').innerHTML = `
+        <div class="wsm-head" onclick="document.getElementById('wstepsM').classList.toggle('open')">
+          <span class="wsm-ring" style="--p:${Math.round(cur / total * 100)}"><span>${cur}<i>/</i>${total}</span></span>
+          <span class="wsm-tx"><b>${esc(WZ[WORDER[cur - 1]].label)}</b>
+            ${next ? `<span class="wsm-next"><b>ถัดไป:</b> ${esc(next)}</span>` : ''}</span>
+          <span class="ms">keyboard_arrow_down</span>
+        </div>`;
     }
     function showStepSection(key) {   // แสดง section ของขั้นปัจจุบัน + render เนื้อหาตาม key
       ['s1', 's2', 'sinfo', 's3'].forEach(id => $(id).classList.add('hidden'));
@@ -3201,13 +3208,13 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
     function nav(d) {
       if (d > 0 && !validate()) return;
       S.step += d;
-      if (S.step < 1) { S.step = 1; closeRepairModal(); return }   // ปุ่มซ้ายที่ขั้น 1 = ปิด modal
+      if (S.step < 1) { S.step = 1; closeRepairModal(); return }   // ปุ่มซ้ายที่ขั้น 1 = ยกเลิก กลับหน้ารวม
       if (S.step > WORDER.length) { submit(); return }
       showStepSection(WORDER[S.step - 1]);
-      $('back').textContent = S.step === 1 ? 'ปิด' : 'ย้อนกลับ';
+      $('back').textContent = S.step === 1 ? 'ยกเลิก' : 'ย้อนกลับ';
       $('next').textContent = S.step === WORDER.length ? 'ส่งอนุมัติ' : 'ถัดไป';
       renderSteps();
-      $('rm-body').scrollTop = 0;
+      window.scrollTo({ top: 0 });
     }
     function validate() {
       const key = WORDER[S.step - 1];
@@ -3269,27 +3276,20 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
       renderVehicleOptions(); renderVehicleInfo();
       $('rm-title').textContent = 'แจ้งซ่อม';
       showStepSection(WORDER[0]);
-      $('back').textContent = 'ปิด';
+      $('back').textContent = 'ยกเลิก';
       $('next').textContent = WORDER.length === 1 ? 'ส่งอนุมัติ' : 'ถัดไป';
       renderSteps();
     }
 
-    // ---------- modal แจ้งซ่อม (3 ก.ย. 2569 — แทนวิซาร์ดเต็มหน้า) ----------
-    // เปิดว่าง (จากปุ่ม "แจ้งซ่อมใหม่"/เมนูข้าง) หรือเปิดพร้อมรถของแถวนั้น (ไอคอนท้ายแถว)
+    // ---------- หน้าแจ้งซ่อมเต็มหน้า (เวอร์ชันนี้) — คงชื่อฟังก์ชันเดิมของ mock หลักไว้ ----------
     function openRepairModal(plate) {
-      resetForm();
+      switchView('form');   // เข้าหน้าฟอร์ม = resetForm ใน switchView
       if (plate) {
         const v = VEHICLES.find(x => x.plate === plate);
         if (v) pickVehicle(v.id);
       }
-      $('repair-modal').classList.remove('hidden');
-      document.body.classList.add('modal-open');
-      $('rm-body').scrollTop = 0;
     }
-    function closeRepairModal() {
-      $('repair-modal').classList.add('hidden');
-      document.body.classList.remove('modal-open');
-    }
+    function closeRepairModal() { if (VIEW === 'form') switchView('my') }
 
     // ================= ส่วนกลาง: การ์ดข้อมูลเรื่อง =================
     function jobInfoBox(j) {

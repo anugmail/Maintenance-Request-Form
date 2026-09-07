@@ -107,7 +107,8 @@ tailwind.config = {
     "white": "#fff",
     "black": "#000",
     "transparent": "transparent",
-    "current": "currentColor"
+    "current": "currentColor",
+    "inherit": "inherit"
   },
   "borderRadius": {
     "xs": "var(--rounded-xs)",

@@ -38,7 +38,7 @@ for (const n of names) {
 
 // colors ด้านบนทับชุด default ของ Tailwind ทั้งหมด — เติมค่าพื้นฐานที่จำเป็นกลับเข้าไป
 colors.white = '#fff'; colors.black = '#000';
-colors.transparent = 'transparent'; colors.current = 'currentColor';
+colors.transparent = 'transparent'; colors.current = 'currentColor'; colors.inherit = 'inherit';
 
 radius.full = '9999px';   // คืนค่า default ของ Tailwind ที่โดน object นี้ทับ
 
