@@ -71,7 +71,7 @@ function renderList() {
     <div class="card">
       <div class="sect">แผนที่ส่งอนุมัติปิดแผนมา (แยกรายไตรมาส)
         ${waiting ? `<span class="badge b-low ml-2">รออนุมัติ ${waiting}</span>` : ''}</div>
-      <div class="sub">ส่งมาจากหน้าคำนวณต้นทุน (เฟส 6) — กบค. ส่งอนุมัติได้ทีละไตรมาส · เลขงานคือหัวข้อของแผน</div>
+      
       ${rows.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>เลขงาน / ชื่อแผน</th><th>ไตรมาส</th><th class="num">รถ (คัน)</th><th class="num">ต้นทุนรวม (บาท)</th>
           <th>สถานะ</th><th></th></tr></thead>

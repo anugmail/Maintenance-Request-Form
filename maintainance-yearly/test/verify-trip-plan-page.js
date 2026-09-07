@@ -56,8 +56,9 @@ const PLAN = 'plan-seed-2569-002';
   await page.evaluate(p => { const x = MYD.getPlan(p); x.partsRequisitioned = false; MYD.savePlan(x); }, PLAN);
   await page.reload();
   await page.waitForSelector('.wsteps');
-  ok(await page.locator('.note-info', { hasText: 'ข้ามมาที่ขั้นแผนเดินทางโดยตรง' }).count() > 0,
-    'แผนที่ยังไม่ผ่านเฟส 1 → เตือนว่าหน้านี้ข้ามมาที่ขั้นแผนเดินทางโดยตรง');
+  // 7 ก.ย. 2569: เจ้าของงานสั่งเอาคำเตือนอธิบายออกทั้งหมด — กล่องนี้ถูกถอดแล้ว (ทั้งสองสถานะจึงต้องไม่มี)
+  ok(await page.locator('.note-info', { hasText: 'ข้ามมาที่ขั้นแผนเดินทางโดยตรง' }).count() === 0,
+    'ไม่มีกล่องคำเตือน "ข้ามมาที่ขั้นแผนเดินทางโดยตรง" แล้ว');
   await page.evaluate(p => { const x = MYD.getPlan(p); x.partsRequisitioned = true; MYD.savePlan(x); }, PLAN);
   await page.reload();
   await page.waitForSelector('.wsteps');

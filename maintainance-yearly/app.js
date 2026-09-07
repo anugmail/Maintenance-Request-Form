@@ -463,8 +463,7 @@ function renderMaintenance() {
         ? `<div class="note note-info"><span class="ms">filter_alt</span>
             <div>กำลังแสดงเฉพาะ <b>${esc(focusV.plate)} ${esc(focusV.brand)}</b> — คันที่เพิ่งตรวจสภาพก่อนซ่อมเสร็จ
               <button type="button" class="btn btn-t btn-sm" id="btnMaintShowAll" class="ml-2">ดูรถทั้งหมด (${ids.length} คัน)</button></div></div>`
-        : `<div class="sub">แสดงเฉพาะรถที่<b>ลงนามรับมอบตัวรถครบ 2 ฝั่งแล้ว</b> (ยังไม่ต้องตอบครบทุกข้อตรวจก็ลงมือได้) — รายละเอียดงานมาจากที่เลือกไว้
-            ตอนทำแผนเดินทาง (เฟส 2 · ขั้นที่ 1) แก้รายการงานได้ที่หน้านั้น — ที่นี่ติ๊กเมื่อทำเสร็จแล้ว</div>
+        : `
           <div class="sub">พร้อมลงมือ <b>${ids.length}</b> จาก <b>${joined.length}</b> คัน${
             ids.length ? ' · ' + tally.map(x => `${esc(x.label)} <b>${x.n}</b> คัน`).join(' · ') : ''}${
             excluded.length ? ` · ลบออกแล้ว <b>${excluded.length}</b> คัน` : ''}</div>`}
@@ -472,9 +471,7 @@ function renderMaintenance() {
       ${waiting && !focusV ? `<div class="note note-warn"><span class="ms">pending</span>
         <div>อีก <b>${waiting}</b> คันยัง<b>ไม่ได้ลงนามรับมอบตัวรถครบ 2 ฝั่ง</b> จึงยังไม่ขึ้นที่นี่ —
           กลับไปขั้นตรวจสภาพก่อนซ่อมเพื่อลงนามรับมอบให้ครบก่อน</div></div>` : ''}
-      <div class="note note-info"><span class="ms">science</span>
-        <div>หน้านี้ให้<b>ติ๊กงานที่ทำเสร็จ</b>และ<b>แนบรูปหลักฐานต่อรายการ</b>ได้แล้ว — ส่วนการบันทึกผลงานหน้างานแบบละเอียด
-          อื่น (อะไหล่ที่ใช้จริง · เลขไมล์/ชม.เครื่อง) ยังไม่ได้ทำในต้นแบบ</div></div>
+      
       ${excluded.length && !focusV ? `<div class="note note-warn"><span class="ms">delete</span>
         <div><b>ลบออกจากแผนบำรุงรักษาแล้ว ${excluded.length} คัน</b>
           <div class="stack tight mt-1.5">${excludedList}</div></div></div>` : ''}
@@ -718,19 +715,18 @@ function renderReport() {
             <div>กำลังแสดงเฉพาะ <b>${esc(focusV.plate)} ${esc(focusV.brand)}</b> — คันที่เพิ่งทำขั้นดำเนินการบำรุงรักษาเสร็จ
               <button type="button" class="btn btn-t btn-sm" id="btnReportShowAll" class="ml-2">ดูรถทั้งหมด (${all.length} คัน)</button></div></div>`
         : `<div class="sub">รถของ${esc(MYD.quarterLabel(QUARTER))}ที่ผ่านขั้นดำเนินการบำรุงรักษามาแล้ว</div>`}
-      <div class="note note-info"><span class="ms">science</span>
-        <div>หน้านี้มีแค่ส่วนตรวจอะไหล่กับคำนวณต้นทุน — ส่วนตรวจสภาพการทำงาน/ผลตรวจน้ำมัน/อนุมัติปิดงาน ยังไม่ได้ทำในต้นแบบ</div></div>
+      
       ${all.length ? `
       ${ids.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th></tr></thead>
         <tbody>${rows}</tbody></table></div>
 
         <div class="sect mt-[22px]">ใช้อะไหล่ครบหรือไม่</div>
-        <div class="sub">เลือก "ไม่ครบ" แล้วกรอกจำนวนที่คืนต่อรายการ ต่อคัน</div>
+        
         <div class="stack">${partsBlocks}</div>
 
         <div class="sect mt-[22px]">คำนวณต้นทุน</div>
-        <div class="sub">ค่าเบี้ยเลี้ยง/ที่พัก/เดินทางดึงมาจากแผนเดินทาง (เฟส 2) เฉลี่ยตามจำนวนรถในใบเดียวกัน — แก้ไขได้ที่แผนเดินทางเท่านั้น</div>
+        
         <div class="tblwrap"><table class="tbl">
           <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th>
             <th class="num">ค่าเบี้ยเลี้ยง (บาท)</th><th class="num">ค่าที่พัก (บาท)</th>
@@ -824,9 +820,7 @@ function renderCost() {
     <div class="card">
       <div class="sect">คำนวณต้นทุน${esc(MYD.quarterLabel(QUARTER))}</div>
       <div class="sub">รถของไตรมาสนี้ <b>${qIds.length}</b> คัน — ต้นทุนรวม <b>${grandTotal.toLocaleString('th-TH')}</b> บาท</div>
-      <div class="note note-info"><span class="ms">science</span>
-        <div>หน้านี้แสดงผลรวมต้นทุนเบี้ยเลี้ยง/ที่พัก/เดินทาง ซึ่งดึงมาจากแผนเดินทาง (เฟส 2) เท่านั้น — แก้ไขได้ที่แผนเดินทาง
-          ค่าจ้างเหมา (สายว่าจ้าง) และต้นทุนอะไหล่/น้ำมัน ยังไม่ได้ทำในต้นแบบ</div></div>
+      
       ${qIds.length ? `<div class="stack">
         <div class="tblwrap"><table class="tbl">
           <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th>
@@ -913,7 +907,7 @@ function renderInspectList() {
   $('phase').innerHTML = `
     <div class="card">
       <div class="sect">ตรวจสภาพก่อนซ่อม${esc(MYD.quarterLabel(QUARTER))}</div>
-      <div class="sub">ตรวจสภาพรถร่วมกับผู้ส่งมอบในวันนัด ก่อนเริ่มงานบำรุงรักษา — กดปุ่มท้ายแถวเพื่อเปิดใบตรวจของรถคันนั้น</div>
+      
       <div class="sub">ตรวจแล้ว <b>${done}</b> จาก <b>${qIds.length}</b> คัน</div>
       ${qIds.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>สถานะ</th><th></th></tr></thead>
@@ -1167,8 +1161,7 @@ function renderQuarterVehiclePick() {
   $('phase').innerHTML = `
     <div class="card">
       <div class="sect">เลือกรถที่จะดำเนินการ${esc(MYD.quarterLabel(QUARTER))}</div>
-      <div class="sub">ก่อนเข้าขั้นตรวจสภาพก่อนซ่อม — เลือกเฉพาะรถที่จะลงมือดำเนินการรอบนี้ ปลดติ๊กคันที่ยังไม่พร้อม
-        หรือให้ทีมอื่นมาดำเนินการแทน กันเข้ามาบำรุงรักษารถคันเดียวกันซ้ำ · เลือกแล้วยืนยัน ระบบจะจำไว้ ไม่ถามซ้ำอีก</div>
+      
       ${confirmedIds.length ? `<div class="chk mb-3">
         <label><input type="checkbox" id="chkPickAll" ${allChecked ? 'checked' : ''}> เลือกทั้งหมด — ${confirmedIds.length} คัน</label>
       </div>
@@ -1341,8 +1334,7 @@ function renderQuarterList(plan) {
   return `
     <div class="card">
       <div class="sect">รายการไตรมาส — ดำเนินการบำรุงรักษาต่อ</div>
-      <div class="sub">ตรวจสภาพก่อนซ่อม → ดำเนินการบำรุงรักษา → จัดทำรายงาน → คำนวณต้นทุน ทำแยกทีละไตรมาส —
-        ยืนยันแผนเดินทางไตรมาสไหนแล้ว เปิดดำเนินการของไตรมาสนั้นได้เลย ไม่ต้องรอไตรมาสอื่น</div>
+      
       ${rows ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>ไตรมาส</th><th class="num">รถ (คัน)</th><th>สถานะแผนเดินทาง</th><th>ความคืบหน้าดำเนินการ</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
@@ -1523,8 +1515,7 @@ function renderProcStepConfirm(plan) {
     const depts = new Set(vehicles.map(v => v.ownerDept));
     return `
       <div class="sect">ขั้นที่ 1: ยืนยันรถเข้าร่วมแผน</div>
-      <div class="sub">ส่งรายการรถให้หน่วยงานเจ้าของรถยืนยันว่าเข้าบำรุงรักษาได้จริง
-        — ต้องรู้จำนวนรถที่แน่นอนก่อนวางแผนเดินทาง</div>
+      
       <div class="card">
         <div>จะส่งคำขอไป <b>${depts.size}</b> หน่วยงาน รวม <b>${vehicles.length}</b> คัน</div>
         <div class="sub">กำหนดตอบภายใน ${days} วัน (แก้ได้ที่หน้า Admin)</div>

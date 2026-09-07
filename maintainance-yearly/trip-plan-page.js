@@ -74,8 +74,7 @@ function renderPicker() {
       ${sourceSeg('plan')}
     </div>
     <div class="card">
-      <div class="sub">เลือกแผนที่จะทำแผนเดินทาง — เลือกไตรมาสได้ในขั้นถัดไป
-        · ข้อมูลชุดเดียวกับ <a href="index.html">รายการแผนบำรุงรักษา</a> สลับไปมาได้</div>
+      
       ${plans.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>เลขงาน / ชื่อแผน</th><th class="num">รถ (คัน)</th><th>ไตรมาส/ปี</th>
           <th>สถานะแผนเดินทาง</th><th></th></tr></thead>
@@ -125,10 +124,7 @@ function renderWizard(plan) {
       <a class="btn btn-g" href="#" class="ml-auto">
         <span class="ms">arrow_back</span> เปลี่ยนแผน</a>
     </div>
-    ${plan.partsRequisitioned ? '' : `<div class="note note-info"><span class="ms">info</span>
-      <div><b>หน้านี้ข้ามมาที่ขั้นแผนเดินทางโดยตรง</b> — ในโฟลว์เต็ม แผนนี้ยังไม่ผ่าน
-        "ยืนยันรถเข้าร่วมแผน + เบิก/จัดหาอะไหล่" (เฟส 1) ทำที่นี่ได้เพื่อดูหน้าจอ
-        แต่เวลาใช้จริงต้องจบเฟส 1 ก่อน — ดูโฟลว์เต็มที่ <a href="index.html#${esc(plan.id)}">หน้ารายการแผน</a></div></div>`}
+    ${plan.partsRequisitioned ? '' : ``}
     <div class="card">
       <div class="wsteps sm">${STEPS.map(s => {
         const cls = ['wstep'];
@@ -204,9 +200,7 @@ function renderRepair() {
       ${sourceSeg('repair')}
     </div>
     <div class="card">
-      <div class="note note-info"><span class="ms">info</span>
-        <div><b>ขอบเขตของต้นแบบรอบนี้ = จังหวะสร้างแผนเท่านั้น</b> — จบที่ "ส่งแผนนัดให้หน่วยงาน"
-          ส่วนหน่วยงานตอบรับ · ขั้นขออนุมัติแผน · ยืนยันแผน ยังไม่ได้ทำ</div></div>
+      
       ${TRIP.renderRepairStep1()}
     </div>`;
 

@@ -310,7 +310,7 @@ function renderDemo() {
   $('adminBody').innerHTML = `
     <div class="card">
       <div class="sect">จัดการเดโม — หน้าบำรุงรักษาตามวาระ</div>
-      <div class="sub">ใช้ตอนสาธิตให้ลูกค้า เพื่อล้างข้อมูลแล้วเริ่ม flow ใหม่</div>
+      
       <div class="fgrid">
         <div class="f sp2"><label>แผนทั้งหมด</label><div>${plans.length} แผน</div></div>
         <div class="f sp2"><label>ออกเลขงานแล้ว</label><div>${issued.length} แผน</div></div>
@@ -334,15 +334,13 @@ function renderDemo() {
 
     <div class="card">
       <div class="sect">ค่าตั้งค่าโฟลว์</div>
-      <div class="sub">กำหนดให้หน่วยงานเจ้าของรถตอบคำขอยืนยันรถภายในกี่วัน
-        — ยังไม่ได้ค่าจริงจากเจ้าของงาน ตั้ง 7 วันไว้ก่อน</div>
+      
       <div class="fgrid">
         <div class="f sp2"><label>กำหนดตอบภายใน <small>วัน</small></label>
           <div class="in"><span class="ms">event_available</span>
             <input type="number" id="cfDays" min="1" max="60" value="${MYD.loadSettings().confirmDueDays}"></div></div>
       </div>
-      <div class="sub">เปลี่ยนค่านี้มีผลกับคำขอที่ส่ง<b>หลังจากนี้</b>เท่านั้น
-        — คำขอที่ส่งไปแล้วคำนวณวันครบกำหนดตอนกดส่ง จะไม่ถูกแก้ย้อนหลัง</div>
+      
       <div class="actions">
         <button class="btn btn-p" id="btnSaveSettings">บันทึกค่าตั้งค่า</button>
       </div>

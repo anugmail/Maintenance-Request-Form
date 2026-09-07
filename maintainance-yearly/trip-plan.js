@@ -220,8 +220,7 @@
 
             ${trip.mode === 'vendor' ? '' : `
             <div class="sect">พนักงาน กบค. ที่ออกไปซ่อม</div>
-            <div class="sub">ปกติ 2-3 คนต่อใบ — ใส่ชื่อไว้เพื่อให้หน่วยงานเจ้าของรถรู้ว่าใครจะไป
-              · ค่าเบี้ยเลี้ยงกรอกเป็น<b>อัตราต่อวัน</b>รายคน ระบบคูณจำนวนวันของช่วงที่เสนอแล้วรวมให้ในช่องด้านล่าง</div>
+            
             <div class="fgrid">
               ${(trip.staff || ['']).map((name, i) => `
                 <div class="f sp3"><label>คนที่ ${i + 1}</label>
@@ -253,7 +252,7 @@
             `}
 
             <div class="sect">รถในแผนนี้</div>
-            <div class="sub">วันนัดรายคันไม่ได้กำหนดที่นี่ — หน่วยงานเจ้าของรถเป็นคนเลือกวันเองภายในช่วงที่เสนอ ตอนตอบรับแผนนัด</div>
+            
             ${vs.length ? `<div class="tblwrap"><table class="tbl">
               <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>งานที่จะทำ</th><th>สถานที่บำรุงรักษา</th><th></th></tr></thead>
               <tbody>${rows}</tbody></table></div>`
@@ -360,13 +359,12 @@
       ${noneIds.length ? `<div class="note note-info"><span class="ms">inbox</span>
         <div>มีรถ <b>${noneIds.length}</b> คันถูกพักไว้แบบ <b>ยังไม่ระบุไตรมาส</b> — ยังอยู่ในแผน
         แต่จะไม่โผล่ในไตรมาสไหนจนกว่าจะย้ายกลับเข้าไตรมาส</div></div>` : ''}
-      <div class="sub"><b>เกณฑ์ปลดปุ่ม "ถัดไป"</b>: ต้องพร้อมครบ <b>ทั้ง 4 ไตรมาส</b> (จัดรถเข้าใบครบทุกคัน + ทุกใบของแต่ละไตรมาสตอบรับแล้ว) — ดูป้ายที่แต่ละไตรมาสด้านล่าง</div>
+      
       <div class="sub">แผนเดินทางทั้งหมด <b>${trips.length}</b> ใบ · ตอบรับครบแล้ว <b>${accepted}</b> ใบ
         · รถที่ยังไม่อยู่ในใบไหนเลย <b>${MYD.unassignedVehicleIds(plan).length}</b> คัน
         <small>(รถที่พักไว้แบบยังไม่ระบุไตรมาสไม่นับ)</small></div>
-      <div class="sub">แผนหนึ่งมีได้หลายใบ — จะแยกตามจังหวัด หรือจังหวัดละหลายใบก็ได้ · แต่ละใบเสนอเป็น<b>ช่วงเวลา</b>
-        แล้วหน่วยงานเจ้าของรถเลือกวันนัดของรถแต่ละคันภายในช่วงนั้นเอง</div>
-      <div class="sub">กดที่แต่ละไตรมาสด้านล่างเพื่อขยายดู/แก้ไขแผนเดินทาง — ปิดได้เมื่อทำเสร็จแล้ว</div>
+      
+      
       <div class="stack">${qBlocks}</div>`;
   }
 
@@ -687,7 +685,7 @@
     return `
       <div class="sect">ขั้นที่ 2: ทวนแผนเดินทาง + ยืนยัน</div>
       <div class="sub">ทั้งปี — แผนเดินทาง <b>${trips.length}</b> ใบ · รวมค่าใช้จ่ายทั้งหมด <b>${grand.toLocaleString('th-TH')}</b> บาท</div>
-      <div class="sub">กดที่แต่ละไตรมาสด้านล่างเพื่อขยายทวนรายละเอียด — ปิดได้เมื่อทวนเสร็จแล้ว</div>
+      
       <div class="stack">${qBlocks}</div>
       ${outRows ? `
       <div class="sect">รถที่ไม่เข้าแผนเดินทางรอบนี้</div>
@@ -796,9 +794,8 @@
         · รวมค่าใช้จ่ายทั้งหมด <b>${grand.toLocaleString('th-TH')}</b> บาท
         · รถที่ยังไม่อยู่ในใบไหนเลย <b>${MYD.unassignedVehicleIds(plan).length}</b> คัน
         <small>(รถที่พักไว้แบบยังไม่ระบุไตรมาสไม่นับ)</small></div>
-      <div class="sub">แผนหนึ่งมีได้หลายใบ — จะแยกตามจังหวัด หรือจังหวัดละหลายใบก็ได้ · แต่ละใบเสนอเป็น<b>ช่วงเวลา</b>
-        แล้วหน่วยงานเจ้าของรถเลือกวันนัดของรถแต่ละคันภายในช่วงนั้นเอง</div>
-      <div class="sub">กดที่แต่ละไตรมาสด้านล่างเพื่อขยายดู — ข้างในมีขั้น "แผนเดินทาง" / "ทวน + ยืนยัน" ของไตรมาสนั้นให้สลับเอง</div>
+      
+      
       <div class="stack">${qBlocks}</div>
       ${outRows ? `
       <div class="sect">รถที่ไม่เข้าแผนเดินทางรอบนี้</div>
@@ -862,7 +859,7 @@
       </div>
       <div class="card">
         <div class="sect"><span class="ms">mail</span> ส่ง Noti แจ้งเจ้าของรถ ${joiningCount} คัน + กรย. วันที่เข้าตรวจ</div>
-        <div class="sub">ระบบส่งการแจ้งเตือนอัตโนมัติแล้ว (mock)</div>
+        
       </div>
       <div class="card">
         <div class="actions">
@@ -1020,7 +1017,7 @@
 
           <section class="incident-section">
             <h2 class="incident-section-title">ช่างผู้รับผิดชอบ</h2>
-            <div class="sub">ค่าเบี้ยเลี้ยงกรอกเป็น<b>อัตราต่อวัน</b>รายคน — ระบบคูณจำนวนวันให้เอง</div>
+            
           <div class="fgrid">
             ${(trip.staff || ['']).map((name, i) => `
               <div class="f sp3"><label>คนที่ ${i + 1}</label>
@@ -1132,14 +1129,11 @@
       <div class="sub"><b>มีรถที่ต้องออกไปซ่อม ${onsite.length} คัน</b>
         — จัดเข้าใบแล้ว <b>${onsite.length - all.length}</b> · ยังไม่จัด <b>${all.length}</b>
         · แผนเดินทาง <b>${trips.length}</b> ใบ</div>
-      <div class="note note-info"><span class="ms">filter_alt</span>
-        <div><b>นับเฉพาะใบที่เลือก "จัดซ่อมที่หน้างาน"</b> ในหัวข้อ <i>รูปแบบการซ่อม</i> ของใบแจ้งซ่อม
-          — ใบที่เลือก <i>เข้าซ่อมที่ กบค.</i> ไม่ต้องเดินทาง จึงไม่เข้าแผนนี้
-          ${offsite.length ? `(รอบนี้ถูกกันออก <b>${offsite.length}</b> ใบ ดูท้ายหน้า)` : ''}</div></div>
+      
       ${trips.length ? repairTripBoxes(trips) : `<div class="empty">ยังไม่มีแผนเดินทาง — กดสร้างแผนใหม่</div>`}
       ${all.length ? `
         <div class="sect">ใบแจ้งซ่อมที่ยังไม่ถูกจัดเข้าแผน — แยกตามจังหวัด</div>
-        <div class="sub">ทีมหนึ่งมักออกทริปเดียวเก็บงานในจังหวัดเดียวกัน — จึงแยกกล่องตามจังหวัดไว้ให้</div>
+        
         <div class="list-toolbar split">
           <div class="lt-search">
             <div class="search"><span class="ms">search</span>
@@ -1181,8 +1175,7 @@
              <button class="btn btn-p" id="btnAddRepairTrip"><span class="ms">add</span> สร้างแผนเดินทางใหม่</button></div>`}
       ${offsite.length ? `
         <div class="sect">ใบแจ้งซ่อมที่ไม่เข้าแผนเดินทาง</div>
-        <div class="sub">เลือก <b>เข้าซ่อมที่ กบค.</b> — เจ้าของรถขนรถมาที่สำนักงานใหญ่ ไม่ต้องจัดทีมเดินทาง
-          · ถ้าเปลี่ยนรูปแบบการซ่อมเป็น <b>จัดซ่อมที่หน้างาน</b> ใบนั้นจะขึ้นมาให้จัดในแผนเดินทางเอง</div>
+        
         <div class="tblwrap"><table class="tbl striped">
           <thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ยานพาหนะ</th><th>หน่วยงานเจ้าของรถ</th><th>รูปแบบการซ่อม</th></tr></thead>
           <tbody>${offsite.map(j => `<tr>

@@ -281,7 +281,7 @@ function showVehicleDetail(vehicleId) {
           </div>
           <button class="modal-close" id="vehClose"><span class="ms">close</span></button>
         </div>
-        <div class="sub">ข้อมูลระบุตัวรถ — ฟิลด์ตามแบบฟอร์มตรวจสภาพบำรุงรักษา</div>
+        
         <div class="fgrid">${rows}</div>
         <div class="fgrid">
           <div class="f sp2"><label>สถานะปัจจุบัน</label>
@@ -526,7 +526,7 @@ function renderStepSummary(plan) {
 
   return `
     <div class="sect">ขั้นที่ 2: สรุปแผน</div>
-    <div class="sub">ทวนสอบก่อนส่งขออนุมัติเลขงานกับฝ่ายพัสดุ</div>
+    
 
     <div class="fgrid">
       <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
@@ -537,7 +537,7 @@ function renderStepSummary(plan) {
     </div>
 
     <div class="sect">แจกแจงรายไตรมาส — เลขงานจะออก 1 ใบต่อไตรมาส</div>
-    <div class="sub">กดที่แต่ละไตรมาสเพื่อดูรายการรถ</div>
+    
     ${byQuarter.map(q => renderQuarterVehicleBlock(q)).join('')}
     <div class="note note-info mt-2"><span class="ms">info</span>
       <div><b>รวมทั้งปี</b> (ต.ค.–ก.ย.) — <b>${selectedVehicles.length}</b> คัน · อะไหล่ <b>${lines.length}</b> รายการ</div>

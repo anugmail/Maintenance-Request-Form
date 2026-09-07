@@ -78,7 +78,7 @@ function renderList() {
   $('cfBody').innerHTML = `
     <div class="card">
       <div class="sect">คำขอยืนยันรถเข้าร่วมแผน จาก กบค.</div>
-      <div class="sub">แต่ละแถวคือคำขอของหน่วยงานหนึ่งในแผนหนึ่ง — ตอบว่ารถแต่ละคันเข้าบำรุงรักษาได้ไหม</div>
+      
       ${reqs.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>หน่วยงาน / แผน</th><th class="num">รถ (คัน)</th><th class="num">ตอบแล้ว</th>
           <th>กำหนดตอบ</th><th>สถานะ</th><th></th></tr></thead>
@@ -111,8 +111,7 @@ function renderInviteListCard() {
   return `
     <div class="card">
       <div class="sect">แผนนัดหมายเข้าบำรุงรักษา จาก กบค.</div>
-      <div class="sub">กบค. เสนอเป็น<b>ช่วงเวลา</b> — เลือกวันนัดของรถแต่ละคันได้ภายในช่วงนั้นเท่านั้น
-        หรือปฏิเสธพร้อมเหตุผล · เอกสารชุดเดียวกันส่งสำเนาถึง กรย. ด้วย</div>
+      
       ${invites.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>หน่วยงาน / แผนเดินทาง</th><th>สถานที่</th><th>ช่วงที่เสนอ</th>
           <th class="num">รถ (คัน)</th><th>สถานะ</th><th></th></tr></thead>
@@ -156,7 +155,7 @@ function renderTripInvite(inv) {
         · รอ กบค. ดำเนินการต่อ</div>` : ''}
     <div class="card">
       <div class="sect">รถของ ${esc(dept)} ในแผนนัดนี้</div>
-      <div class="sub">เลือกวันได้เฉพาะภายในช่วงที่เสนอ — ถ้าไม่สะดวกทั้งช่วง ให้ปฏิเสธพร้อมเหตุผล</div>
+      
       <div class="tblwrap"><table class="tbl">
         <thead><tr><th>ทะเบียน</th><th>สถานะรถ</th><th>วันนัด</th></tr></thead>
         <tbody>${rows}</tbody></table></div>
@@ -260,7 +259,7 @@ function renderRequest(req) {
         <tbody>${rows}</tbody></table></div>
       ${locked ? '' : `
         <div class="sect">ผู้ตอบ</div>
-        <div class="sub">ยังไม่ได้เคาะว่าใครในหน่วยงานเป็นผู้มีสิทธิ์กด — ต้นแบบให้พิมพ์ชื่อไปก่อน</div>
+        
         <input type="text" id="cfBy" placeholder="ชื่อผู้ตอบ">
         <button class="btn btn-o" id="btnAnswer"><span class="ms">send</span> ส่งคำตอบ</button>`}`;
 
