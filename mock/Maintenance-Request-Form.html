@@ -13,7 +13,7 @@
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
   <link rel="stylesheet" href="../design-system/tokens.css?v=20260907-ds57">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260907-ds60">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260907-ds61">
   <!-- Tailwind (7 ก.ย. 2569 — เจ้าของงานสั่ง "ถัดจากนี้ปรับเป็น Tailwind"): Play CDN + theme จาก tokens.css
        preflight ปิด · คลาส component กลาง (components.css) ใช้ต่อตามเดิมแบบ DaisyUI · งานใหม่เขียน utility -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -4927,16 +4927,16 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
       }
       renderBossDetail(BOSSSEL);
     }
-    function openBossReject() { $('boss-reason').value = ''; $('boss-reject-ok').disabled = true; $('boss-reject-modal').classList.remove('hidden'); }
-    function openBossApprove() { $('boss-approve-modal').classList.remove('hidden'); }
-    function closeBossModals() { ['boss-reject-modal', 'boss-approve-modal', 'boss-budget-modal'].forEach(id => $(id).classList.add('hidden')); }
+    function openBossReject() { $('boss-reason').value = ''; $('boss-reject-ok').disabled = true; $('boss-reject-modal').classList.remove('hidden'); document.body.classList.add('modal-open'); }
+    function openBossApprove() { $('boss-approve-modal').classList.remove('hidden'); document.body.classList.add('modal-open'); }
+    function closeBossModals() { ['boss-reject-modal', 'boss-approve-modal', 'boss-budget-modal'].forEach(id => $(id).classList.add('hidden')); document.body.classList.remove('modal-open'); }
     // ---------- แก้ไขงบที่ตัด (หัวหน้า) ----------
     let BB = { costType: null, costVals: {} };
     function openBossBudget() {
       const j = JOBS.find(x => x.no === BOSSSEL);
       BB = { costType: j.costType || null, costVals: { ...(j.costVals || {}) } };
       bbRender();
-      $('boss-budget-modal').classList.remove('hidden');
+      $('boss-budget-modal').classList.remove('hidden'); document.body.classList.add('modal-open');
     }
     function bbSetType(code) {
       BB.costType = code; BB.costVals = {};

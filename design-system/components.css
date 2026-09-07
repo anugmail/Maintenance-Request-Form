@@ -1184,3 +1184,9 @@ input.tbl-row-label{width:80%;display:inline-block}
 .parts-rec-item .qty{border-radius:var(--rounded-md)}
 .parts-rec-item .qty button{width:44px;height:42px;font-size:18px;color:var(--gray-700)}
 .parts-rec-item .qty span{min-width:44px}
+
+/* ---- v0.61 (7 ก.ย. 2569) จัด modal กลางจอแบบทนทุกเคส — margin:auto ใน flex overlay:
+   modal เตี้ยกว่าจอ = กลางจอพอดี · สูงกว่าจอ = เลื่อนดูได้โดยหัวไม่โดนตัด
+   (align-items:center เดิมตัดหัว modal ที่สูงเกิน viewport) ---- */
+.modal-overlay{align-items:flex-start}
+.modal{margin:auto}
