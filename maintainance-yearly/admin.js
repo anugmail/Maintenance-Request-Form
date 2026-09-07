@@ -320,7 +320,7 @@ function renderDemo() {
       ${issued.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>เลขงาน</th><th>ชื่อแผน</th><th class="num">รถ</th></tr></thead>
         <tbody>${issued.slice().reverse().map(p => `<tr>
-          <td><b style="color:var(--gray-900)">${esc(p.workNumber)}</b></td>
+          <td><b class="text-gray-900">${esc(p.workNumber)}</b></td>
           <td>${esc(p.planName || '—')}</td>
           <td class="num">${(p.selectedVehicleIds || []).length}</td>
         </tr>`).join('')}</tbody></table></div>` : ''}

@@ -313,7 +313,7 @@
     return `
       <div class="sub">รถที่ยืนยันแล้ว <b>${joiningQ.length}</b> คัน
         — จัดเข้าใบแล้ว <b>${joiningQ.length - unassignedQ.length}</b> · ยังไม่จัด <b>${unassignedQ.length}</b></div>
-      <div class="actions" style="justify-content:flex-start">
+      <div class="actions justify-start">
         <button class="btn btn-o" data-add-trip="${q}"><span class="ms">add</span> สร้างแผนเดินทางใหม่</button>
         ${unassignedQ.length ? `<button class="btn btn-s" data-auto-trips="${q}">
           <span class="ms">auto_awesome_motion</span> แยกอัตโนมัติตามจังหวัด</button>` : ''}
@@ -770,7 +770,7 @@
           <span class="num">${passed ? '✓' : n}</span><span class="lbl">${label}</span></div>`;
       };
       const body = !expanded ? '' : `
-        <div class="wsteps sm" style="margin-bottom:14px">${miniStep(1, 'แผนเดินทาง')}${miniStep(2, 'ทวน + ยืนยัน')}</div>
+        <div class="wsteps sm mb-3.5">${miniStep(1, 'แผนเดินทาง')}${miniStep(2, 'ทวน + ยืนยัน')}</div>
         ${step === 1
           ? renderTravelStep1Content(plan, master, trips, q)
           : renderTravelStep2Content(plan, master, trips, q, opts)}`;
@@ -853,7 +853,7 @@
       <div class="card">
         <div class="sect">แผนเดินทาง — ยืนยันแล้ว</div>
         <span class="badge b-ok" style="font-size:var(--fs-body);padding:6px 16px">แผนเดินทางยืนยันแล้ว</span>
-        <div class="sub" style="margin-top:12px">แผนเดินทาง <b>${trips.length}</b> ใบ
+        <div class="sub mt-3">แผนเดินทาง <b>${trips.length}</b> ใบ
           · รวมค่าใช้จ่าย <b>${grand.toLocaleString('th-TH')}</b> บาท · ทุกใบได้รับการตอบรับจากหน่วยงานแล้ว</div>
         ${trips.length ? `<div class="tblwrap"><table class="tbl">
           <thead><tr><th>แผน / สถานที่</th><th>ช่วงที่นัด</th><th class="num">รถ</th>
@@ -996,7 +996,7 @@
                 <div class="in noic"><input type="number" min="0" value="${esc((trip.staffPerDiem || [])[i] ?? 0)}" ${dis}
                   data-rstaffpd="${esc(trip.id)}" data-rstaffpd-i="${i}"></div></div>`).join('')}
           </div>
-          ${locked ? '' : `<div class="actions" style="justify-content:flex-start">
+          ${locked ? '' : `<div class="actions justify-start">
             <button class="btn btn-t btn-sm" data-rstaff-add="${esc(trip.id)}"><span class="ms">add</span> เพิ่มคน</button>
             ${(trip.staff || []).length > 1 ? `<button class="btn btn-t btn-sm" data-rstaff-del="${esc(trip.id)}"><span class="ms">remove</span> ลดคน</button>` : ''}
           </div>`}
@@ -1034,7 +1034,7 @@
 
           <div data-rblockers="${esc(trip.id)}">${(!locked && blockers.length) ? `<div class="note note-warn"><span class="ms">error</span>
             <div><b>ส่งแผนนัดยังไม่ได้</b> — ต้องเคลียร์ ${blockers.length} เรื่องนี้ก่อน
-              <ul style="margin:6px 0 0 18px">${blockers.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>` : ''}</div>
+              <ul class="mt-1.5 mb-0 ml-[18px] mr-0">${blockers.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>` : ''}</div>
 
           <div class="actions">
             ${locked
@@ -1075,7 +1075,7 @@
           ${offsite.length ? `(รอบนี้ถูกกันออก <b>${offsite.length}</b> ใบ ดูท้ายหน้า)` : ''}</div></div>
       <div class="sub">หนึ่งใบเดินทางรวมใบแจ้งซ่อมได้หลายใบ · แต่ละใบเสนอเป็น<b>ช่วงเวลา</b>
         แล้วหน่วยงานเจ้าของรถเลือกวันนัดภายในช่วงนั้นเอง (เหมือนสายบำรุงรักษา)</div>
-      <div class="actions" style="justify-content:flex-start">
+      <div class="actions justify-start">
         <button class="btn btn-o" id="btnAddRepairTrip"><span class="ms">add</span> สร้างแผนเดินทางใหม่</button>
       </div>
       ${trips.length ? repairTripBoxes(trips) : `<div class="empty">ยังไม่มีแผนเดินทาง — กดสร้างแผนใหม่</div>`}
@@ -1139,7 +1139,7 @@
         const bl = MYD.repairTripBlockers(t);
         box.innerHTML = bl.length ? `<div class="note note-warn"><span class="ms">error</span>
           <div><b>ส่งแผนนัดยังไม่ได้</b> — ต้องเคลียร์ ${bl.length} เรื่องนี้ก่อน
-            <ul style="margin:6px 0 0 18px">${bl.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>` : '';
+            <ul class="mt-1.5 mb-0 ml-[18px] mr-0">${bl.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>` : '';
       }
     };
 

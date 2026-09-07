@@ -189,7 +189,7 @@ function renderStep1(plan) {
 
     <div class="sect">เลือกรถเข้า${esc(MYD.quarterLabel(activeQ))}${activeInfo ? ' (' + esc(activeInfo.months) + ')' : ''}</div>
     <div class="sub">ไตรมาสนี้เลือกแล้ว ${selected.size} คัน จาก ${regionsSelected.size} เขต · เลือกได้ทุกสถานะ — ดูคำเตือนใต้ป้ายสถานะแล้วติ๊กออกเองได้</div>
-    <div class="chk" style="margin-bottom:12px">
+    <div class="chk mb-3">
       <label><input type="checkbox" id="chkAllZones" ${allSelected ? 'checked' : ''} ${joinableAll.length === 0 ? 'disabled' : ''}> เลือกทั้งหมด (ทุกเขต) — ${joinableAll.length} คัน</label>
     </div>
     ${zonesHtml || `<div class="empty">ไม่มีรถ</div>`}`;
@@ -438,7 +438,7 @@ function lineTable(lines) {
       <tbody>${lines.map(l => lineRow(l)).join('')}</tbody>
       <tfoot><tr class="sumrow">
         <td><b>รวมทั้งแผน</b> · ${lines.length} รายการ</td>
-        <td colspan="5" style="text-align:right">${unitTotals(lines)}</td>
+        <td colspan="5" class="text-right">${unitTotals(lines)}</td>
       </tr></tfoot>
     </table></div>`;
 }
@@ -531,15 +531,15 @@ function renderStepSummary(plan) {
     <div class="fgrid">
       <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
       <div class="f sp2"><label>ช่วงเวลา</label><div>${periodText}</div></div>
-      <div class="f sp2"><label>รถเข้าแผนบำรุงรักษา</label><div><b style="font-size:20px">${selectedVehicles.length}</b> คัน</div></div>
-      <div class="f sp2"><label>รายการอะไหล่ที่ต้องใช้</label><div><b style="font-size:20px">${lines.length}</b> รายการ</div></div>
+      <div class="f sp2"><label>รถเข้าแผนบำรุงรักษา</label><div><b class="text-[20px]">${selectedVehicles.length}</b> คัน</div></div>
+      <div class="f sp2"><label>รายการอะไหล่ที่ต้องใช้</label><div><b class="text-[20px]">${lines.length}</b> รายการ</div></div>
       <div class="f sp4"><label>แยกตามหมวด</label><div>${catSummary || 'ไม่มีรายการ'}</div></div>
     </div>
 
     <div class="sect">แจกแจงรายไตรมาส — เลขงานจะออก 1 ใบต่อไตรมาส</div>
     <div class="sub">กดที่แต่ละไตรมาสเพื่อดูรายการรถ</div>
     ${byQuarter.map(q => renderQuarterVehicleBlock(q)).join('')}
-    <div class="note note-info" style="margin-top:8px"><span class="ms">info</span>
+    <div class="note note-info mt-2"><span class="ms">info</span>
       <div><b>รวมทั้งปี</b> (ต.ค.–ก.ย.) — <b>${selectedVehicles.length}</b> คัน · อะไหล่ <b>${lines.length}</b> รายการ</div>
     </div>
 
@@ -585,7 +585,7 @@ function renderStepSummary(plan) {
     })()}
     ${lineTable(lines)}
 
-    <div class="sub" style="margin-top:14px">
+    <div class="sub mt-3.5">
       <span class="ms" style="font-size:16px">info</span>
       กดออกเลขงานแล้ว ระบบจะ<b>ส่งเอกสารแจ้งฝ่ายพัสดุ</b>ให้ทราบว่าต้องเตรียม/สั่งอะไหล่อะไรบ้าง
     </div>`;
@@ -642,10 +642,10 @@ function renderDone(plan) {
           <div class="workno-q">${esc(MYD.quarterLabel(x.q))} · ${MYD.planVehicleIds(plan, x.q).length} คัน</div>
           <span class="badge b-ok">${esc(x.no)}</span>
         </div>`).join('')}</div>
-      <div class="sub" style="margin-top:14px">
+      <div class="sub mt-3.5">
         แผนใบนี้ครอบ<b>ทั้งปีงบประมาณ ${esc(plan.year)}</b> — เลขงานแยกรายไตรมาส ฝ่ายพัสดุได้เอกสารแยกตามรอบ
       </div>
-      <div class="fgrid" style="margin-top:12px">
+      <div class="fgrid mt-3">
         <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
         <div class="f sp2"><label>รถเข้าแผนทั้งปี</label><div><b>${plan.selectedVehicleIds.length}</b> คัน</div></div>
       </div>

@@ -55,7 +55,7 @@ function renderPicker() {
   const rows = plans.map(p => {
     const s = travelSummary(p);
     return `<tr>
-      <td><b style="color:var(--gray-900)">${esc(planTitle(p))}</b>
+      <td><b class="text-gray-900">${esc(planTitle(p))}</b>
         <div class="cell-sub">${MYD.workNumberList(p).map(x => esc(x.no)).join(' · ')}</div></td>
       <td class="num">${(p.selectedVehicleIds || []).length}</td>
       <td>${quarterYearText(p)}</td>
@@ -121,7 +121,7 @@ function renderWizard(plan) {
   $('phase').innerHTML = `
     <div class="page-title-row">
       <h1 class="page-title">${esc(planTitle(plan))}</h1>
-      <a class="btn btn-g" href="#" style="margin-left:auto">
+      <a class="btn btn-g" href="#" class="ml-auto">
         <span class="ms">arrow_back</span> เปลี่ยนแผน</a>
     </div>
     ${plan.partsRequisitioned ? '' : `<div class="note note-info"><span class="ms">info</span>
@@ -142,7 +142,7 @@ function renderWizard(plan) {
       <div id="tripBody">${state.sub === 1 ? TRIP.renderStep1(plan) : TRIP.renderStep2(plan)}</div>
       ${blockers.length ? `<div class="note note-warn"><span class="ms">error</span>
         <div><b>ยังไปขั้นถัดไปไม่ได้</b> — ต้องทำแผนเดินทางให้ครบทั้ง 4 ไตรมาสก่อน ตอนนี้แต่ละไตรมาสยังค้าง:
-          <ul style="margin:6px 0 0 18px">${blockers.map(x => `<li>${x}</li>`).join('')}</ul></div></div>` : ''}
+          <ul class="mt-1.5 mb-0 ml-[18px] mr-0">${blockers.map(x => `<li>${x}</li>`).join('')}</ul></div></div>` : ''}
       <div class="actions">
         <button class="btn btn-g" id="btnBackTrip" ${state.sub === 1 ? 'disabled' : ''}>ย้อนกลับ</button>
         <button class="btn btn-p" id="btnPrimaryTrip" ${disabled ? 'disabled' : ''}
@@ -180,7 +180,7 @@ function renderConfirmed(plan) {
   $('phase').innerHTML = `
     <div class="page-title-row">
       <h1 class="page-title">${esc(planTitle(plan))}</h1>
-      <a class="btn btn-g" href="#" style="margin-left:auto">
+      <a class="btn btn-g" href="#" class="ml-auto">
         <span class="ms">arrow_back</span> เปลี่ยนแผน</a>
     </div>` + TRIP.renderConfirmed(plan);
   TRIP.bindConfirmed();

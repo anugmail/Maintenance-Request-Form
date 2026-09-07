@@ -34,8 +34,8 @@ function renderList() {
     const { vehicles, lines } = MYD.planLines(p, master);
     const acked = !!p.suppliesAckAt;
     return `<tr>
-      <td><b style="color:var(--gray-900)">${esc(p.workNumber)}</b>
-        <div style="font-size:12px;color:var(--gray-500)">${esc(p.planName || '—')}</div></td>
+      <td><b class="text-gray-900">${esc(p.workNumber)}</b>
+        <div class="text-xs text-gray-500">${esc(p.planName || '—')}</div></td>
       <td class="num">${vehicles.length}</td>
       <td class="num">${lines.length}</td>
       <td>${quarterYearText(p)}</td>
@@ -53,7 +53,7 @@ function renderList() {
   $('supBody').innerHTML = `
     <div class="card">
       <div class="sect">เอกสารที่ส่งมาจาก กบค.
-        ${waiting ? `<span class="badge b-low" style="margin-left:8px">รอรับทราบ ${waiting}</span>` : ''}</div>
+        ${waiting ? `<span class="badge b-low ml-2">รอรับทราบ ${waiting}</span>` : ''}</div>
       <div class="sub">แต่ละใบคือแผนบำรุงรักษาประจำปีหนึ่งแผน — เลขงานคือหัวข้อของแผน</div>
       ${docs.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>เลขงาน / ชื่อแผน</th><th class="num">รถ (คัน)</th><th class="num">อะไหล่ (รายการ)</th><th>ไตรมาส/ปี</th><th>สถานะ</th><th></th></tr></thead>
@@ -106,30 +106,30 @@ function renderDoc(plan) {
         <tbody>${rows}</tbody>
         <tfoot><tr class="sumrow">
           <td><b>รวมกลุ่มนี้</b> · ${catLines.length} รายการ</td>
-          <td colspan="5" style="text-align:right">${unitTotals(catLines)}</td>
+          <td colspan="5" class="text-right">${unitTotals(catLines)}</td>
         </tr></tfoot></table></div>`;
   }).join('');
 
   $('crumbs').innerHTML = `
-    <a href="supplies.html" style="color:inherit;text-decoration:none"><span class="ms">inventory_2</span> รายการเอกสาร</a>
+    <a href="supplies.html" class="text-inherit no-underline"><span class="ms">inventory_2</span> รายการเอกสาร</a>
     <span class="sep">›</span><span class="cur">${esc(plan.workNumber)}</span>`;
   $('supTitle').textContent = plan.workNumber;
 
   $('supBody').innerHTML = `
     <div class="card">
-      <div class="page-title-row" style="margin-bottom:10px">
-        <div class="sect" style="margin:0">เอกสารแจ้งเตรียม/สั่งอะไหล่</div>
+      <div class="page-title-row mb-2.5">
+        <div class="sect m-0">เอกสารแจ้งเตรียม/สั่งอะไหล่</div>
         ${acked
-          ? `<span class="badge b-ok" style="margin-left:10px">รับทราบแล้ว · ${esc(plan.suppliesAckAt)}</span>`
-          : `<span class="badge b-low" style="margin-left:10px">รอรับทราบ</span>`}
-        <a class="btn btn-t" href="supplies.html" style="margin-left:auto"><span class="ms">arrow_back</span> รายการเอกสาร</a>
+          ? `<span class="badge b-ok ml-2.5">รับทราบแล้ว · ${esc(plan.suppliesAckAt)}</span>`
+          : `<span class="badge b-low ml-2.5">รอรับทราบ</span>`}
+        <a class="btn btn-t" href="supplies.html" class="ml-auto"><span class="ms">arrow_back</span> รายการเอกสาร</a>
       </div>
 
       <div class="fgrid">
         <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName || '—')}</div></div>
         <div class="f sp2"><label>ไตรมาสที่ออกเลขงาน</label><div>${quarterYearText(plan)}</div></div>
-        <div class="f sp2"><label>รถเข้าแผนบำรุงรักษา</label><div><b style="font-size:20px">${vehicles.length}</b> คัน</div></div>
-        <div class="f sp2"><label>รายการอะไหล่ที่ต้องเตรียม</label><div><b style="font-size:20px">${lines.length}</b> รายการ</div></div>
+        <div class="f sp2"><label>รถเข้าแผนบำรุงรักษา</label><div><b class="text-[20px]">${vehicles.length}</b> คัน</div></div>
+        <div class="f sp2"><label>รายการอะไหล่ที่ต้องเตรียม</label><div><b class="text-[20px]">${lines.length}</b> รายการ</div></div>
       </div>
 
       <div class="sect">รถแยกตามภาค</div>
@@ -147,7 +147,7 @@ function renderDoc(plan) {
       <div class="tblwrap"><table class="tbl itbl">
         <thead><tr><th>ยี่ห้อ/รุ่นอุปกรณ์</th><th colspan="2">ชนิดรถ</th><th>จำนวนรถ</th><th>หน่วย</th><th></th></tr></thead>
         <tbody>${byBrand.map(b => `<tr>
-          <td><b>${esc(b.brand)}</b>${b.chassis && b.chassis !== '—' ? `<div style="font-size:12px;color:var(--gray-500)">${esc(b.chassis)}</div>` : ''}</td>
+          <td><b>${esc(b.brand)}</b>${b.chassis && b.chassis !== '—' ? `<div class="text-xs text-gray-500">${esc(b.chassis)}</div>` : ''}</td>
           <td colspan="2">${esc(b.type)}</td><td class="num"><b>${b.n}</b></td><td>คัน</td><td></td>
         </tr>`).join('')}</tbody>
         <tfoot><tr class="sumrow"><td><b>รวม</b> · ${byBrand.length} ยี่ห้อ</td><td colspan="2"></td>

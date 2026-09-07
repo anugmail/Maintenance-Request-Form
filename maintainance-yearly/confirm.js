@@ -63,7 +63,7 @@ function renderList() {
   const rows = reqs.map(r => {
     const answered = r.vehicles.filter(v => MYD.vehicleConfirm(r.plan, v.id).answer !== 'pending').length;
     return `<tr>
-      <td><b style="color:var(--gray-900)">${esc(r.dept)}</b>
+      <td><b class="text-gray-900">${esc(r.dept)}</b>
         <div class="sub">${esc(r.plan.workNumber)} · ${esc(r.plan.planName || '—')}</div></td>
       <td class="num">${r.vehicles.length}</td>
       <td class="num">${answered}</td>
@@ -97,7 +97,7 @@ function renderInviteListCard() {
     const b = r.status === 'rejected' ? 'b-brand' : 'b-low';
     const t = r.status === 'rejected' ? 'ปฏิเสธแล้ว' : 'รอตอบรับ';
     return `<tr>
-      <td><b style="color:var(--gray-900)">${esc(i.dept)}</b>
+      <td><b class="text-gray-900">${esc(i.dept)}</b>
         <div class="sub">${esc(i.plan.workNumber)} · ${esc(i.trip.name || 'แผนเดินทาง')}</div></td>
       <td>${esc(i.trip.location || '—')}</td>
       <td>${dateTh(i.trip.windowFrom)} – ${dateTh(i.trip.windowTo)}</td>
@@ -136,7 +136,7 @@ function renderTripInvite(inv) {
     </tr>`;
   }).join('');
 
-  $('crumbs').innerHTML = `<a href="confirm.html" style="color:inherit;text-decoration:none">
+  $('crumbs').innerHTML = `<a href="confirm.html" class="text-inherit no-underline">
       <span class="ms">fact_check</span> รายการคำขอ</a>
     <span class="sep">›</span><span class="cur">แผนนัด — ${esc(dept)}</span>`;
 
@@ -144,7 +144,7 @@ function renderTripInvite(inv) {
     <div class="card">
       <div class="sect">${esc(plan.workNumber)} — ${esc(trip.name || 'แผนเดินทาง')}</div>
       <div class="sub">หน่วยงานผู้ขอ: กบค. · ส่งเมื่อ ${esc(trip.sentAt || '—')}</div>
-      <div class="fgrid" style="margin-top:12px">
+      <div class="fgrid mt-3">
         <div class="f sp2"><label>สถานที่บำรุงรักษา</label><div>${esc(trip.location || '—')}</div></div>
         <div class="f sp2"><label>ช่วงเวลาที่ กบค. เสนอ</label>
           <div><b>${dateTh(trip.windowFrom)} – ${dateTh(trip.windowTo)}</b></div></div>
@@ -240,7 +240,7 @@ function renderRequest(req) {
     </tr>`;
   }).join('');
 
-  $('crumbs').innerHTML = `<a href="confirm.html" style="color:inherit;text-decoration:none">
+  $('crumbs').innerHTML = `<a href="confirm.html" class="text-inherit no-underline">
       <span class="ms">fact_check</span> รายการคำขอ</a>
     <span class="sep">›</span><span class="cur">${esc(dept)}</span>`;
   $('cfBody').innerHTML = `

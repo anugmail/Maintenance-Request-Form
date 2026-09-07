@@ -74,7 +74,7 @@ function renderTimeSim() {
   })();
   const f = fiscalNow();
   host.innerHTML = `
-    <div class="in noic" style="width:auto">
+    <div class="in noic w-auto">
       <select id="timeSimSel" title="จำลองวันที่ เพื่อดูรอบทบทวนแผนที่อยู่ในอนาคต">
         ${TIME_MARKS.map(m => `<option value="${m.iso || ''}" ${(m.iso || '') === cur ? 'selected' : ''}>${esc(m.label)}</option>`).join('')}
       </select>

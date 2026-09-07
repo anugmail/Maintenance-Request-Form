@@ -1190,3 +1190,7 @@ input.tbl-row-label{width:80%;display:inline-block}
    (align-items:center เดิมตัดหัว modal ที่สูงเกิน viewport) ---- */
 .modal-overlay{align-items:flex-start}
 .modal{margin:auto}
+
+/* ---- v0.62 (7 ก.ย. 2569) .badge สูงคงที่ 24px แต่ไม่มี nowrap — ข้อความยาว
+   (เช่น "ปีนี้มีผล — ออกปฏิบัติงาน" ในลิสต์แผนบำรุงรักษา) จึงตัดบรรทัดแล้วทะลุกรอบ ---- */
+.badge{white-space:nowrap}
