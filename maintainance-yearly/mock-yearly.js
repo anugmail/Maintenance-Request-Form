@@ -505,6 +505,9 @@ const MYD = {
              staff: [''], staffPerDiem: [0],
              perDiem: 0, lodging: 0, travel: 0,
              jobNos: [],             // ใบแจ้งซ่อมที่อยู่ในใบเดินทางนี้ (รวมได้หลายใบ)
+             // นัดรายคัน (7 ก.ย. 2569 — เจ้าของงานสั่ง "อยากให้นัดแบบรายคันได้"):
+             // { [เลขที่ใบ]: { date, time, receiver, tel } } · เว้นว่าง = ใช้ช่วงของแผนตามเดิม
+             appt: {},
              sentAt: null };
   },
 
@@ -532,6 +535,18 @@ const MYD = {
     return n > 0 ? n : 0;
   },
 
+  // นัดรายคันของใบแจ้งซ่อมหนึ่งใบในแผนเดินทางนี้
+  repairJobAppt(trip, no) { return ((trip.appt || {})[no]) || { date: '', time: '', receiver: '', tel: '' } },
+  // วันนัดต้องอยู่ในช่วงที่เสนอ — ใช้ทั้งตอนแสดงเตือนและตอนตรวจก่อนส่ง
+  repairApptOutOfWindow(trip, no) {
+    const a = this.repairJobAppt(trip, no);
+    if (!a.date || !trip.windowFrom || !trip.windowTo) return false;
+    return a.date < trip.windowFrom || a.date > trip.windowTo;
+  },
+  repairApptCount(trip) {
+    return (trip.jobNos || []).filter(no => this.repairJobAppt(trip, no).date).length;
+  },
+
   repairTripDepts(trip) {
     return [...new Set((trip.jobNos || []).map(no => (this.repairJobByNo(no) || {}).ownerDept).filter(Boolean))];
   },
@@ -547,6 +562,9 @@ const MYD = {
     if (!(trip.staff || []).some(x => String(x || '').trim())) out.push('ยังไม่ระบุช่างผู้รับผิดชอบอย่างน้อย 1 คน');
     if (!String(trip.crewVehicle || '').trim()) out.push('ยังไม่ระบุรถที่ใช้เดินทาง');
     if (!String(trip.pickupPoint || '').trim()) out.push('ยังไม่ระบุจุดนัดรับรถ');
+    // นัดรายคันไม่บังคับ (เว้นว่าง = ใช้ช่วงของแผน) แต่ถ้าระบุแล้วต้องอยู่ในช่วงที่เสนอ
+    const bad = (trip.jobNos || []).filter(no => this.repairApptOutOfWindow(trip, no));
+    if (bad.length) out.push(`วันนัดรายคันอยู่นอกช่วงที่เสนอ ${bad.length} ใบ`);
     return out;
   },
 

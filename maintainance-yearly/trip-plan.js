@@ -918,16 +918,42 @@
       const grand = perDiemSum + (Number(trip.lodging) || 0) + (Number(trip.travel) || 0);
       const blockers = MYD.repairTripBlockers(trip);
 
+      // นัดรายคัน (7 ก.ย. 2569) — แต่ละใบกำหนดวัน/เวลา/ผู้รับมอบรถของตัวเองได้
+      // เว้นว่าง = ใช้ช่วงที่เสนอของแผนตามเดิม · วันที่จำกัดอยู่ในช่วงของแผน (min/max)
       const rows = jobs.map(j => {
         const u = MYD.URGENCY[j.urgency] || MYD.URGENCY.normal;
+        const a = MYD.repairJobAppt(trip, j.no);
+        const outOfWindow = MYD.repairApptOutOfWindow(trip, j.no);
+        const apptCell = locked
+          ? (a.date ? `<div class="cell-key">${esc(a.date)}${a.time ? ' ' + esc(a.time) : ''}</div>
+               ${a.receiver ? `<div class="cell-sub">ผู้รับมอบรถ ${esc(a.receiver)}${a.tel ? ' · ' + esc(a.tel) : ''}</div>` : ''}`
+             : '<span class="cell-sub">ตามช่วงของแผน</span>')
+          : `<div class="f m-0"><div class="in noic">
+               <input type="date" value="${esc(a.date)}" ${trip.windowFrom ? `min="${esc(trip.windowFrom)}"` : ''} ${trip.windowTo ? `max="${esc(trip.windowTo)}"` : ''}
+                 aria-label="วันนัดของ ${esc(j.plate)}" data-rappt="${esc(trip.id)}" data-rjob="${esc(j.no)}" data-afield="date"></div></div>
+             <div class="f m-0 mt-1"><div class="in noic">
+               <input type="time" value="${esc(a.time)}" aria-label="เวลานัดของ ${esc(j.plate)}"
+                 data-rappt="${esc(trip.id)}" data-rjob="${esc(j.no)}" data-afield="time"></div></div>
+             ${outOfWindow ? '<div class="cell-sub text-error-600">อยู่นอกช่วงที่เสนอ</div>' : (a.date ? '' : '<div class="cell-sub">เว้นว่าง = ตามช่วงของแผน</div>')}`;
+        const recvCell = locked
+          ? `${esc(a.receiver || '—')}${a.tel ? `<div class="cell-sub">${esc(a.tel)}</div>` : ''}`
+          : `<div class="f m-0"><div class="in"><span class="ms">person</span>
+               <input type="text" value="${esc(a.receiver)}" placeholder="ชื่อผู้รับมอบรถ" aria-label="ผู้รับมอบรถของ ${esc(j.plate)}"
+                 data-rappt="${esc(trip.id)}" data-rjob="${esc(j.no)}" data-afield="receiver"></div></div>
+             <div class="f m-0 mt-1"><div class="in"><span class="ms">smartphone</span>
+               <input type="tel" value="${esc(a.tel)}" placeholder="เบอร์โทรศัพท์" aria-label="เบอร์โทรผู้รับมอบรถของ ${esc(j.plate)}"
+                 data-rappt="${esc(trip.id)}" data-rjob="${esc(j.no)}" data-afield="tel"></div></div>`;
         return `<tr>
-          <td><b>${esc(j.no)}</b><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
-          <td><b>${esc(j.plate)}</b><div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
-          <td>${esc(j.ownerDept)}<div class="cell-sub">${esc(j.province)}</div></td>
+          <td><div class="cell-key">${esc(j.no)}</div><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
+          <td><div class="cell-clip" title="${esc(j.plate)}">${esc(j.plate)}</div>
+            <div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
+          <td><div class="cell-clip">${esc(j.ownerDept)}</div><div class="cell-sub">${esc(j.province)}</div></td>
           <td>${j.syms.map(x => `<span class="badge b-neutral">${esc(x)}</span>`).join(' ')}
               <div class="cell-sub">${esc(j.target)}</div></td>
           <td><span class="badge ${u.cls}">${esc(u.text)}</span></td>
-          <td class="num">${locked ? '' : `<button class="btn btn-g btn-sm" data-rdrop="${esc(trip.id)}" data-rjob="${esc(j.no)}">เอาออกจากใบนี้</button>`}</td>
+          <td>${apptCell}</td>
+          <td>${recvCell}</td>
+          <td class="num">${locked ? '' : `<div class="dt-action"><button class="btn" title="เอาออกจากใบนี้" data-rdrop="${esc(trip.id)}" data-rjob="${esc(j.no)}"><span class="ms">playlist_remove</span></button></div>`}</td>
         </tr>`;
       }).join('');
 
@@ -1014,11 +1040,19 @@
             <div class="f"><label>รวม</label><div><b>${grand.toLocaleString('th-TH')} บาท</b></div></div>
           </div>
 
-          <div class="sect">ใบแจ้งซ่อมในแผนนี้</div>
-          <div class="sub">หนึ่งใบเดินทางรวมได้หลายใบแจ้งซ่อม — งานที่จะทำมาจากอาการที่แจ้งไว้ แก้ที่นี่ไม่ได้</div>
-          ${jobs.length ? `<div class="tblwrap"><table class="tbl">
-            <thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th>
-              <th>อาการที่แจ้ง</th><th>ความเร่งด่วน</th><th></th></tr></thead>
+          <div class="sect">ใบแจ้งซ่อมในแผนนี้ <span class="badge b-neutral">นัดรายคันได้</span></div>
+          <div class="sub">หนึ่งใบเดินทางรวมได้หลายใบแจ้งซ่อม — <b>กำหนดวัน/เวลานัดแยกรายคันได้</b>
+            (เว้นว่างไว้ = ใช้ช่วงที่เสนอของแผนตามเดิม) · วันนัดต้องอยู่ในช่วงที่เสนอ
+            ${jobs.length ? `· ระบุแล้ว <b>${MYD.repairApptCount(trip)}</b>/${jobs.length} คัน` : ''}</div>
+          ${jobs.length ? `${locked ? '' : `<div class="actions justify-start mb-2">
+              <button class="btn btn-s btn-sm" data-rappt-fill="${esc(trip.id)}" ${trip.windowFrom ? '' : 'disabled'}>
+                <span class="ms">event_repeat</span> เติมวันนัดทุกคันเป็นวันแรกของช่วง</button>
+              <button class="btn btn-t btn-sm" data-rappt-clear="${esc(trip.id)}">
+                <span class="ms">event_busy</span> ล้างวันนัดรายคัน</button>
+            </div>`}
+            <div class="tblwrap"><table class="tbl striped">
+            <thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ยานพาหนะ</th><th>หน่วยงานเจ้าของรถ</th>
+              <th>อาการที่แจ้ง</th><th>ความเร่งด่วน</th><th>วัน/เวลานัดรายคัน</th><th>ผู้รับมอบรถ</th><th></th></tr></thead>
             <tbody>${rows}</tbody></table></div>`
             : `<div class="empty">ยังไม่มีใบแจ้งซ่อมในแผนนี้ — เลือกจากรายการด้านล่าง</div>`}
 
@@ -1252,11 +1286,42 @@
       rerender();
     }));
 
+    // นัดรายคัน — พิมพ์แล้วเก็บทันทีโดยไม่วาดใหม่ (กันเคอร์เซอร์เด้ง) · วาดใหม่ตอน blur เพื่ออัปเดตตัวนับ/คำเตือน
+    document.querySelectorAll('[data-rappt]').forEach(el => {
+      const apply = () => {
+        const t = find(el.dataset.rappt); if (!t) return;
+        t.appt = t.appt || {};
+        const cur = t.appt[el.dataset.rjob] || { date: '', time: '', receiver: '', tel: '' };
+        t.appt[el.dataset.rjob] = { ...cur, [el.dataset.afield]: el.value };
+        MYD.saveRepairTrips(trips);
+      };
+      el.addEventListener('input', apply);
+      el.addEventListener('change', () => { apply(); rerender(); });
+    });
+    document.querySelectorAll('[data-rapptFill], [data-rappt-fill]').forEach(b => b.addEventListener('click', () => {
+      const t = find(b.dataset.rapptFill || b.getAttribute('data-rappt-fill'));
+      if (!t || !t.windowFrom) return;
+      t.appt = t.appt || {};
+      (t.jobNos || []).forEach(no => {
+        const cur = t.appt[no] || { date: '', time: '', receiver: '', tel: '' };
+        if (!cur.date) t.appt[no] = { ...cur, date: t.windowFrom };
+      });
+      toast('เติมวันนัดให้คันที่ยังไม่ระบุแล้ว');
+      rerender();
+    }));
+    document.querySelectorAll('[data-rappt-clear]').forEach(b => b.addEventListener('click', () => {
+      const t = find(b.getAttribute('data-rappt-clear')); if (!t) return;
+      t.appt = {};
+      toast('ล้างวันนัดรายคันแล้ว — จะใช้ช่วงที่เสนอของแผนแทน');
+      rerender();
+    }));
+
     document.querySelectorAll('[data-rsend]').forEach(b => b.addEventListener('click', () => {
       const t = find(b.dataset.rsend);
       if (!t || !MYD.repairTripSendable(t)) return;
       t.sentAt = nowTh();
-      toast('ส่งแผนนัดให้หน่วยงานแล้ว');
+      const n = MYD.repairApptCount(t);
+      toast(n ? `ส่งแผนนัดให้หน่วยงานแล้ว — นัดรายคัน ${n} คัน` : 'ส่งแผนนัดให้หน่วยงานแล้ว');
       rerender();
     }));
   }
