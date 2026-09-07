@@ -4798,47 +4798,20 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
         </div>
       </div>`;
     }
-    // รวม booked+ordered เป็นจำนวนเดียวต่อชื่อ — ตอนบันทึกแตกกลับเป็น เบิกคลัง/จัดซื้อ ตามคงคลัง (กติกาเดียวกับฟอร์ม)
-    function bossParts(j) {
-      const m = new Map();
-      j.booked.concat(j.ordered).forEach(x => m.set(x.name, (m.get(x.name) || 0) + x.qty));
-      return [...m.entries()].map(([name, qty]) => ({ name, qty }));
-    }
-    function bossPartSet(name, qty) {
-      const j = JOBS.find(x => x.no === BOSSSEL); if (!j || j.phase !== 'wait') return;
-      const p = PARTS.find(x => x.name === name); if (!p) return;
-      j.booked = j.booked.filter(x => x.name !== name);
-      j.ordered = j.ordered.filter(x => x.name !== name);
-      if (qty > 0) {
-        const bk = Math.min(qty, onHandOf(p)), od = qty - bk;
-        if (bk) j.booked.push({ name, qty: bk, unit: p.unit });
-        if (od) j.ordered.push({ name, qty: od, unit: p.unit });
-      }
-      // ลงประวัติครั้งแรกครั้งเดียว — กันสแปมจากการกด +/- หลายที
-      if (!j.partsEdited) { j.partsEdited = true; j.history.push({ t: nowStr(), label: `${j.approver.name} ปรับรายการอะไหล่ที่ผู้แจ้งเลือกไว้` }); }
-      updateBadge(); renderBossDetail(BOSSSEL);
-    }
-    function bossPartQty(name, d) { const r = bossParts(JOBS.find(x => x.no === BOSSSEL)).find(x => x.name === name); bossPartSet(name, Math.max(0, (r ? r.qty : 0) + d)) }
-    function bossPartDel(name) { bossPartSet(name, 0) }
     function renderBossDetail(no) {
       BOSSSEL = no;
       const j = JOBS.find(x => x.no === no);
       const st = statusInfo(j), wait = j.phase === 'wait';
       const d = reportedParts(j), u = updatedParts(j);
-      // การ์ดชุดเดียวกับขั้น 4 ของฟอร์ม (สเปกภาพ 7 ก.ย. 2569) — หัวหน้าปรับจำนวน/ลบได้ก่อนอนุมัติ
-      const pickCards = bossParts(j).map(r => {
-        const p = PARTS.find(x => x.name === r.name) || { price: 0, unit: '', need: 1, code: '-' };
-        const buy = Math.max(0, r.qty - onHandOf(p));
-        return `<div class="parts-rec-item">
-          <div class="pr-head"><b>${esc(r.name)}</b>${wait ? `
-            <button type="button" class="pr-del" title="เอารายการนี้ออก" onclick="bossPartDel('${esc(r.name)}')"><span class="ms">delete</span></button>` : ''}</div>
-          <div class="parts-line">${esc(p.code)} · ${p.need || 1} ${esc(p.unit || 'หน่วย')} | ${baht(p.price)} บาท</div>
-          <div class="parts-source"><b>${buy ? 'ซื้อเพิ่มเติม' : srcOf(p)}</b>${onHandOf(p) ? ` : มีในคลัง ${onHandOf(p)} ${esc(p.unit || '')}` : ' — ต้องสั่งซื้อภายนอก'}${buy ? ` · จัดซื้อ ${buy} ${esc(p.unit || '')}` : ''}</div>
-          <div class="pr-foot"><span class="parts-price">${baht(p.price * r.qty)} บาท</span>
-            ${wait ? `<div class="qty"><button type="button" onclick="bossPartQty('${esc(r.name)}',-1)">−</button><span>${r.qty}</span><button type="button" onclick="bossPartQty('${esc(r.name)}',1)">+</button></div>`
-    : `<span class="text-gray-600">จำนวน ${r.qty} ${esc(p.unit || '')}</span>`}
-          </div></div>`;
+      // แถวแบนตามสเปกภาพสุดท้าย 7 ก.ย. 2569 ("เป็นแบบนี้ ล่าสุด"): พาเนลเทา ชื่อหนา xจำนวน /
+      // ราคารวมขวา / บรรทัดแหล่งคลัง (เหลือ 0 = สีแดง) + แถว "รวมทั้งหมด" ท้ายพาเนล
+      const pkMap = new Map();
+      j.booked.concat(j.ordered).forEach(x => pkMap.set(x.name, (pkMap.get(x.name) || 0) + x.qty));
+      const pick = [...pkMap.entries()].map(([name, qty]) => {
+        const p = PARTS.find(x => x.name === name) || { price: 0 };
+        return { name, qty, price: p.price || 0, onHand: onHandOf(p), src: srcOf(p), buy: Math.max(0, qty - onHandOf(p)) };
       });
+      const sumAll = pick.reduce((a, r) => a + r.qty * r.price, 0);
       // 7 ก.ย. 2569 (คำสั่งล่าสุด): section "อะไหล่ที่แนะนำ" ถูกตัดออก — เหลือเฉพาะ "อะไหล่ที่ผู้แจ้งเลือกไว้"
       $('bosslist').classList.add('hidden');
       $('bosstools').classList.add('hidden');
@@ -4891,7 +4864,12 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
           </section>
           <section class="incident-section">
             <h2 class="incident-section-title">อะไหล่ที่ผู้แจ้งเลือกไว้ <span class="badge b-info">แนะนำ</span></h2>
-            ${pickCards.length ? `<div class="parts-rec-list">${pickCards.join('')}</div>` : '<div class="parts-flat"><div class="pf-empty">ไม่มีอะไหล่ที่เลือก</div></div>'}
+            <div class="parts-flat">${pick.length ? pick.map(r => `
+              <div class="pf-row"><span class="pf-name">${esc(r.name)} x${r.qty}</span><span class="pf-price">${baht(r.qty * r.price)} บาท</span>
+                <div class="pf-src"><b>${r.src}</b> : <span class="${r.onHand ? '' : 'text-error-600'}">มีในคลัง ${r.onHand} ${esc((PARTS.find(x => x.name === r.name) || {}).unit || 'ชิ้น')}</span></div>
+              </div>`).join('') + `
+              <div class="pf-row"><span class="pf-name">รวมทั้งหมด</span><span class="pf-price">${baht(sumAll)} บาท</span></div>`
+            : '<div class="pf-empty">ไม่มีอะไหล่ที่เลือก</div>'}</div>
           </section>
           <section class="incident-section">
             <h2 class="incident-section-title">รูปภาพเหตุการณ์</h2>

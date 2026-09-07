@@ -141,14 +141,13 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
     /ตัวรถ —/.test(await page.locator('#bossdetail').textContent()));
   eq('ช่องทางการซ่อมเลือกได้ 2 ทาง (ซ่อมเอง/ส่งต่อ กรย.)',
     await page.locator('#bossdetail .radcard').count(), 2);
-  // 7 ก.ย. 2569 (คำสั่งล่าสุด): เหลือ "อะไหล่ที่ผู้แจ้งเลือกไว้" เป็นการ์ดแบบขั้น 4 — หัวหน้าปรับจำนวน/ลบได้ก่อนอนุมัติ
+  // 7 ก.ย. 2569 (คำสั่งล่าสุด): อะไหล่ที่เลือกไว้เป็นตาราง + สรุปเบิกคลัง (ดีไซน์ตารางตามภาพ) — อ่านอย่างเดียว
   eq('ไม่มี section อะไหล่ที่แนะนำ', await page.locator('#bossdetail .incident-section-title', { hasText: 'อะไหล่ที่แนะนำ' }).count(), 0);
-  ok('อะไหล่ที่เลือกไว้เป็นการ์ดแบบขั้น 4 + หัวมีป้าย "แนะนำ"',
+  ok('อะไหล่ที่เลือกไว้: หัวมีป้าย "แนะนำ" + แถวแบน + แถวรวมทั้งหมด',
     /แนะนำ/.test(await page.locator('#bossdetail .incident-section-title', { hasText: 'อะไหล่ที่ผู้แจ้งเลือกไว้' }).textContent())
-    && await page.locator('#bossdetail .parts-rec-item').count() >= 1);
-  await page.locator('#bossdetail .parts-rec-item .qty button').nth(1).click();   // หัวหน้ากด +
-  eq('หัวหน้าปรับจำนวนอะไหล่ได้ (ก่อนอนุมัติ)',
-    (await page.locator('#bossdetail .parts-rec-item .qty span').first().textContent()).trim(), '2');
+    && await page.locator('#bossdetail .parts-flat .pf-row').count() >= 2
+    && /รวมทั้งหมด/.test(await page.locator('#bossdetail .parts-flat').textContent()));
+  eq('ฝั่งผู้อนุมัติไม่มีตัวปรับจำนวน/ถังขยะ', await page.locator('#bossdetail .qty, #bossdetail .pr-del').count(), 0);
   // ---- แท็บประวัติการดำเนินการ = ตารางประวัติการซ่อม (สเปกภาพ 7 ก.ย. 2569) ----
   await page.locator('#bossdetail .tab-btn', { hasText: 'ประวัติการดำเนินการ' }).click();
   eq('ตารางประวัติการซ่อม 5 แถวตามสเปกภาพ', await page.locator('#bosshist tbody tr').count(), 5);
