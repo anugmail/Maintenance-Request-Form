@@ -149,6 +149,14 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   await page.locator('#bossdetail .parts-rec-item .qty button').nth(1).click();   // หัวหน้ากด +
   eq('หัวหน้าปรับจำนวนอะไหล่ได้ (ก่อนอนุมัติ)',
     (await page.locator('#bossdetail .parts-rec-item .qty span').first().textContent()).trim(), '2');
+  // ---- แท็บประวัติการดำเนินการ = ตารางประวัติการซ่อม (สเปกภาพ 7 ก.ย. 2569) ----
+  await page.locator('#bossdetail .tab-btn', { hasText: 'ประวัติการดำเนินการ' }).click();
+  eq('ตารางประวัติการซ่อม 5 แถวตามสเปกภาพ', await page.locator('#bosshist tbody tr').count(), 5);
+  ok('มีหัวเรียงได้ + แถบท้าย แสดง 1 ถึง 5', await page.locator('#bosshist th.sortable').count() === 1
+    && /แสดง 1 ถึง 5 จาก 5 รายการ/.test(await page.locator('#bosshist').textContent()));
+  await page.locator('#bosshist th.sortable button').click();
+  ok('กดหัวคอลัมน์แล้วสลับทิศเรียง', /VMS001234/.test(await page.locator('#bosshist tbody tr').first().textContent()));
+  await page.locator('#bossdetail .tab-btn', { hasText: 'ข้อมูลการซ่อม' }).click();
   // ---- แก้ไขงบที่ตัด (7 ก.ย. 2569) ----
   await page.locator('#bossdetail button', { hasText: 'แก้ไข' }).click();
   await page.waitForSelector('#boss-budget-modal:not(.hidden)');

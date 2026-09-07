@@ -4766,6 +4766,38 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
     // 7 ก.ย. 2569: หน้ารายละเอียดผู้อนุมัติ ยกเป็นโครงหน้า "รายละเอียดเหตุการณ์" ตามสเปกภาพ —
     // ปุ่ม ไม่อนุมัติ/อนุมัติ อยู่บนขวา · แท็บข้อมูล/ประวัติ · หัวหน้าเปลี่ยนช่องทางการซ่อม (ซ่อมเอง/ส่งต่อ กรย.) ได้ก่อนอนุมัติ
     let BOSSSEL = null;
+    // ตารางประวัติการซ่อมในแท็บ "ประวัติการดำเนินการ" (สเปกภาพ 7 ก.ย. 2569) — ข้อมูลจำลองตามภาพจากระบบจริง
+    const BOSS_VHIST = [
+      { id: 'VMS005678', det: 'รถเบรกมีเสียงดัง', tech: 'วิทยา สว่างวงษ์', unit: 'นรค.9 กอพ.1 ฝพจ.', done: '20/08/2569', est: 15000, note: '-' },
+      { id: 'VMS004567', det: 'ระบบเบรกหลังผิดปกติ', tech: 'วิทยา สว่างวงษ์', unit: 'นรค.9 กอพ.1 ฝพจ.', done: '31/12/2569', est: 4000, note: '-' },
+      { id: 'VMS003456', det: 'เครื่องสะดุด', tech: 'วิทยา สว่างวงษ์', unit: 'นรค.9 กอพ.1 ฝพจ.', done: '05/10/2569', est: 6500, note: '-' },
+      { id: 'VMS002345', det: 'เพลาหัก', tech: 'วิทยา สว่างวงษ์', unit: 'นรค.9 กอพ.1 ฝพจ.', done: '12/06/2569', est: 30000, note: '-' },
+      { id: 'VMS001234', det: 'สลักหาย', tech: 'วิทยา สว่างวงษ์', unit: 'นรค.9 กอพ.1 ฝพจ.', done: '15/09/2568', est: 40000, note: '-' },
+    ];
+    let BOSSHIST_DESC = true;
+    function bossHistSort() { BOSSHIST_DESC = !BOSSHIST_DESC; renderBossHist() }
+    function renderBossHist() {
+      const rows = [...BOSS_VHIST].sort((a, b) => BOSSHIST_DESC ? b.id.localeCompare(a.id) : a.id.localeCompare(b.id));
+      $('bosshist').innerHTML = `<div class="tblwrap"><table class="tbl">
+        <thead><tr>
+          <th class="sortable on"><button type="button" onclick="bossHistSort()">หมายเลขเหตุการณ์ <span class="ms">${BOSSHIST_DESC ? 'arrow_downward' : 'arrow_upward'}</span></button></th>
+          <th>รายละเอียดอาการ</th><th>ช่างซ่อม</th><th>วันที่ซ่อมเสร็จ</th><th>ราคาประเมิน</th><th>หมายเหตุ</th>
+        </tr></thead>
+        <tbody>${rows.map(r => `<tr>
+          <td class="cell-key">${r.id}</td><td>${esc(r.det)}</td>
+          <td>${esc(r.tech)}<div class="cell-sub">${esc(r.unit)}</div></td>
+          <td>${r.done}</td><td>${baht(r.est)}</td><td>${esc(r.note)}</td></tr>`).join('')}</tbody>
+      </table></div>
+      <div class="flex flex-wrap items-center gap-3 mt-3 text-sm text-gray-700">
+        <span>แสดง 1 ถึง ${rows.length} จาก ${rows.length} รายการ</span>
+        <select class="select-inline"><option>10</option><option>25</option></select>
+        <div class="pager ml-auto">
+          <button type="button" class="pg" disabled><span class="ms">chevron_left</span></button>
+          <button type="button" class="pg on">1</button>
+          <button type="button" class="pg" disabled><span class="ms">chevron_right</span></button>
+        </div>
+      </div>`;
+    }
     // รวม booked+ordered เป็นจำนวนเดียวต่อชื่อ — ตอนบันทึกแตกกลับเป็น เบิกคลัง/จัดซื้อ ตามคงคลัง (กติกาเดียวกับฟอร์ม)
     function bossParts(j) {
       const m = new Map();
@@ -4907,9 +4939,13 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
         </div>
       </div>
     </div>
-    <div id="btab1" class="hidden">${timelineBox(j)}</div>
+    <div id="btab1" class="hidden">
+      <div id="bosshist"></div>
+      <section class="incident-section">${timelineBox(j)}</section>
+    </div>
     <div class="rowbtns justify-start mt-3">
       <button class="btn btn-g" onclick="renderBossList()"><span class="ms">arrow_back</span> กลับรายการ</button></div>`;
+      renderBossHist();
     }
     function bossTab(btn, i) {
       document.querySelectorAll('#bossdetail .tab-btn').forEach(b => b.classList.remove('on'));
