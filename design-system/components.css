@@ -1169,3 +1169,18 @@ input.tbl-row-label{width:80%;display:inline-block}
 .pf-src{flex-basis:100%;margin-top:6px;color:var(--gray-700)}
 .pf-src b{color:var(--gray-900)}
 .pf-empty{padding:14px 0;color:var(--gray-500)}
+
+/* ---- v0.60 (7 ก.ย. 2569) การ์ดอะไหล่ขั้น 4 ตามสเปกภาพ (desktop+mobile โครงเดียวกัน):
+   ชื่อ+ถังขยะแถวบน / บรรทัด meta / บรรทัดแหล่งคลัง / แถวท้าย ราคารวมซ้าย + ตัวปรับจำนวนขวา
+   การ์ดซ้อนแนวตั้ง จึงลงจอแคบได้เอง (แถวท้าย flex-wrap กันชนกรณีแคบมาก) ---- */
+.parts-rec-item{display:block;border-radius:var(--rounded-lg);padding:16px 20px}
+.parts-rec-item .pr-head{display:flex;align-items:flex-start;gap:12px}
+.parts-rec-item .pr-head>b{flex:1;min-width:0;font-size:var(--fs-text-md);line-height:var(--lh-text-md);color:var(--gray-900)}
+.pr-del{border:none;background:none;cursor:pointer;color:var(--gray-500);padding:2px;border-radius:var(--rounded-sm);flex:none}
+.pr-del:hover{color:var(--error-600);background:var(--gray-50)}
+.pr-del .ms{font-size:20px}
+.parts-rec-item .pr-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-top:16px}
+.parts-rec-item .pr-foot .parts-price{font-weight:700;font-size:var(--fs-text-md);color:var(--gray-700)}
+.parts-rec-item .qty{border-radius:var(--rounded-md)}
+.parts-rec-item .qty button{width:44px;height:42px;font-size:18px;color:var(--gray-700)}
+.parts-rec-item .qty span{min-width:44px}

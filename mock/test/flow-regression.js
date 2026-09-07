@@ -109,6 +109,9 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   await page.locator('#parts-rec .parts-rec-item .qty button').nth(1).click();   // + รายการแรก
   const sumAll = await page.locator('#p-sum-all').textContent();
   ok('ยอดรวมค่าอะไหล่ขยับ', /[1-9]/.test(sumAll), `ได้ "${sumAll}"`);
+  const nRec = await page.locator('#parts-rec .parts-rec-item').count();
+  await page.locator('#parts-rec .parts-rec-item .pr-del').last().click();
+  eq('ถังขยะเอารายการออกจากลิสต์ได้', await page.locator('#parts-rec .parts-rec-item').count(), nRec - 1);
   eq('ปุ่มขั้นสุดท้าย = ส่งอนุมัติ', (await page.locator('#next').textContent()).trim(), 'ส่งอนุมัติ');
   await page.locator('#next').click();
 

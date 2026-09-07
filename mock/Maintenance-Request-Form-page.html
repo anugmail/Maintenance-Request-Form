@@ -13,7 +13,7 @@
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
   <link rel="stylesheet" href="../design-system/tokens.css?v=20260907-ds57">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260907-ds59">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260907-ds60">
   <!-- Tailwind (7 ก.ย. 2569 — เจ้าของงานสั่ง "ถัดจากนี้ปรับเป็น Tailwind"): Play CDN + theme จาก tokens.css
        preflight ปิด · คลาส component กลาง (components.css) ใช้ต่อตามเดิมแบบ DaisyUI · งานใหม่เขียน utility -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -2791,7 +2791,7 @@
     // ================= STATE =================
     // 3 ก.ย. 2569: target เดี่ยว → targets หลายจุด (เลือกได้ทั้งตัวรถและส่วนเสริมในใบเดียว)
     // S.symsBy = อาการแยกตามจุด (ที่มาของความจริง) · S.symptoms = union ของ id ไว้ให้ partsFor/โค้ดเดิมใช้ต่อ
-    const S = { step: 1, vehicle: null, targets: [], symptoms: [], symsBy: { vehicle: [], attach: [] }, sev: null, photos: 0, bookings: {}, orders: {}, customParts: [], customSeq: 0, decision: null, approver: null,
+    const S = { step: 1, vehicle: null, targets: [], symptoms: [], symsBy: { vehicle: [], attach: [] }, sev: null, photos: 0, bookings: {}, orders: {}, customParts: [], customSeq: 0, removedParts: [], decision: null, approver: null,
       usable: null, costType: null, costVals: {} };
     const COST_TYPES = MDC.data('costTypes');
     const COST_FIELD = { costCenter:{label:'ศูนย์ต้นทุน',ph:'เช่น B0002211',icon:'account_balance'},
@@ -3063,7 +3063,8 @@ function goBackView(){
       syncSymptoms();
       renderSymptoms();
     }
-    function partsFor() { return PARTS.filter(p => S.symptoms.includes(p.sym)) }
+    function partsFor() { return PARTS.filter(p => S.symptoms.includes(p.sym) && !(S.removedParts || []).includes(p.code)) }
+    function removePick(code) { (S.removedParts = S.removedParts || []).push(code); setPickQty(code, 0) }
 function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart Inventory ก่อน ไม่มีค่อยดูคลังสำรอง (กติกาเดียวกับ design-mock)
     function srcOf(p) { return p.stock ? 'Smart Inventory' : p.stockAlt ? 'คลังสำรอง' : 'ไม่มีในคลัง' }
     function pickQty(code) { return (S.bookings[code] || 0) + (S.orders[code] || 0) }
@@ -3088,11 +3089,11 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
       $('parts-rec').innerHTML = rec.length ? rec.map(p => {
         const q = pickQty(p.code), buy = Math.max(0, q - onHandOf(p));
         return `<div class="parts-rec-item">
-          <div class="pr-info"><b>${esc(p.name)} <span class="badge b-info">แนะนำ</span></b>
-            <div class="parts-line">${esc(p.code)} · ต้องใช้ ${p.need} ${esc(p.unit)}/ครั้ง | ${baht(p.price)} บาท/${esc(p.unit)}</div>
-            <div class="parts-source"><b>${srcOf(p)}</b>${onHandOf(p) ? ` : มีในคลัง ${onHandOf(p)} ${esc(p.unit)}` : ' — ต้องสั่งซื้อภายนอก'}${buy ? ` · <b>จัดซื้อ ${buy} ${esc(p.unit)}</b>` : ''}</div>
-          </div>
-          <div class="pr-actions"><span class="parts-price">${baht(p.price * q)} บาท</span>
+          <div class="pr-head"><b>${esc(p.name)} <span class="badge b-info">แนะนำ</span></b>
+            <button type="button" class="pr-del" title="เอารายการนี้ออก" onclick="removePick('${p.code}')"><span class="ms">delete</span></button></div>
+          <div class="parts-line">${esc(p.code)} · ${p.need} ${esc(p.unit)} | ${baht(p.price)} บาท</div>
+          <div class="parts-source"><b>${buy ? 'ซื้อเพิ่มเติม' : srcOf(p)}</b>${onHandOf(p) ? ` : มีในคลัง ${onHandOf(p)} ${esc(p.unit)}` : ' — ต้องสั่งซื้อภายนอก'}${buy ? ` · จัดซื้อ ${buy} ${esc(p.unit)}` : ''}</div>
+          <div class="pr-foot"><span class="parts-price">${baht(p.price * q)} บาท</span>
             <div class="qty"><button type="button" onclick="chgPick('${p.code}',-1)">−</button><span>${q}</span><button type="button" onclick="chgPick('${p.code}',1)">+</button></div>
           </div></div>`;
       }).join('') : '<div class="empty">ยังไม่มีอะไหล่แนะนำ — เลือกอาการเสียในขั้นก่อน แล้วระบบจะแนะนำให้อัตโนมัติ</div>';
@@ -3267,7 +3268,7 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
       if (VIEW === 'my') renderMyList();
     }
     function resetForm() {
-      Object.assign(S, { step: 1, vehicle: null, targets: [], symptoms: [], symsBy: { vehicle: [], attach: [] }, sev: null, photos: 0, bookings: {}, orders: {}, customParts: [], customSeq: 0, decision: null, approver: null, usable: null, costType: null, costVals: {}, reporterType: 'pea' });
+      Object.assign(S, { step: 1, vehicle: null, targets: [], symptoms: [], symsBy: { vehicle: [], attach: [] }, sev: null, photos: 0, bookings: {}, orders: {}, customParts: [], customSeq: 0, removedParts: [], decision: null, approver: null, usable: null, costType: null, costVals: {}, reporterType: 'pea' });
       ['i-odo', 'i-crane', 'desc', 'othtext'].forEach(id => { const e = $(id); if (e) e.value = '' });
       $('i-accrecv').value = '';
       document.querySelectorAll('#s1 input[type=radio]').forEach(r => r.checked = false);
