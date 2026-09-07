@@ -56,11 +56,23 @@ const PLAN = 'plan-seed-2569-002';
   const tripBoxes = () => page.locator('[data-q] .rzone-body .rzone');
   await page.locator('[data-auto-trips="Q1"]').click();
   await page.waitForTimeout(400);
+  // seed แบ่งรถของแผนนี้เป็นจังหวัดละไตรมาส (Q1–Q3 = จันทบุรี · Q4 = กาญจนบุรี) ⇒ Q1 แยกได้ 1 ใบ
+  // ปุ่มแยกอัตโนมัติทำงานในขอบเขตไตรมาสของปุ่มที่กด (กันรถข้ามไตรมาสปนกัน)
+  // เทสเดิมคาด 2 ใบ เพราะเขียนไว้ก่อนแยกรายไตรมาส 28 ส.ค. 2569 — แก้ให้ตรงพฤติกรรมจริง 7 ก.ย. 2569
   const boxes = await tripBoxes().count();
-  ok(boxes === 2, `แยกอัตโนมัติได้ 2 ใบตามจังหวัด (ได้ ${boxes})`);
+  ok(boxes === 1, `แยกอัตโนมัติของ Q1 ได้ 1 ใบตามจังหวัดที่มีในไตรมาสนั้น (ได้ ${boxes})`);
   const names = await tripBoxes().locator('.rzone-head b').allTextContents();
-  ok(names.join('|').includes('จันทบุรี') && names.join('|').includes('กาญจนบุรี'),
-    'ชื่อใบเป็นชื่อจังหวัด — ' + names.join(' | '));
+  ok(names.join('|').includes('จันทบุรี'), 'ชื่อใบเป็นชื่อจังหวัด — ' + names.join(' | '));
+  // ครอบคลุมจังหวัดที่สองด้วย: Q4 ของแผนเดียวกันเป็นรถกาญจนบุรี
+  await page.locator('[data-toggle-q]').nth(3).click();
+  await page.waitForTimeout(300);
+  await page.locator('[data-auto-trips="Q4"]').click();
+  await page.waitForTimeout(400);
+  const q4Names = await page.locator('[data-q="Q4"] .rzone-body .rzone .rzone-head b').allTextContents();
+  ok(q4Names.join('|').includes('กาญจนบุรี'), 'ไตรมาส 4 แยกได้ใบชื่อ กาญจนบุรี — ' + q4Names.join(' | '));
+  // กลับมาทำงานต่อที่ไตรมาส 1 (พับ Q4 กลับ กันตัวเลือกด้านล่างชนกัน)
+  await page.locator('[data-toggle-q]').nth(3).click();
+  await page.waitForTimeout(300);
   ok((await page.locator('.empty', { hasText: 'ยังไม่ถูกจัดเข้าแผน' }).count()) === 0, 'จัดรถครบทุกคันแล้ว');
 
   console.log('\nกรอกรายละเอียดใบที่ 1');

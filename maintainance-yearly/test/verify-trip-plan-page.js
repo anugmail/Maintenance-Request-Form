@@ -68,8 +68,12 @@ const PLAN = 'plan-seed-2569-002';
   const tripBoxes = () => page.locator('[data-q] .rzone-body .rzone');
   await page.locator('[data-auto-trips="Q1"]').click();     // → onChange → renderWizard ใหม่
   await page.waitForTimeout(400);
+  // seed แบ่งไตรมาสไว้จังหวัดละไตรมาส (Q1–Q3 = จันทบุรี · Q4 = กาญจนบุรี) ⇒ แยกอัตโนมัติของ Q1 ได้ 1 ใบ
+  // (เทสเดิมเขียนไว้ก่อนแยกรายไตรมาส 28 ส.ค. 2569 จึงคาด 2 ใบ — แก้ให้ตรงพฤติกรรมจริง 7 ก.ย. 2569)
   const boxes = await tripBoxes().count();
-  ok(boxes === 2, `onChange ทำงาน — แยกอัตโนมัติได้ ${boxes} ใบ แล้ววาดหน้าใหม่`);
+  ok(boxes === 1, `onChange ทำงาน — แยกอัตโนมัติได้ ${boxes} ใบ แล้ววาดหน้าใหม่`);
+  const q1Names = await tripBoxes().locator('.rzone-head b').allTextContents();
+  ok(q1Names.join('|').includes('จันทบุรี'), 'ชื่อใบเป็นชื่อจังหวัดของไตรมาสนั้น — ' + q1Names.join(' | '));
   ok(await page.locator('#btnPrimaryTrip').isDisabled(), 'ใบยังไม่ถูกตอบรับ → ปุ่มถัดไปยังปิด');
 
   const box1 = tripBoxes().first();
@@ -85,13 +89,13 @@ const PLAN = 'plan-seed-2569-002';
   await heads.nth(1).click();   // กางไตรมาส 2 เพิ่ม — ไตรมาส 1 ที่กางอยู่แล้วต้องไม่ถูกปิด
   await page.waitForTimeout(300);
   ok(await page.locator('.sect', { hasText: 'ทำแผนเดินทาง' }).count() > 0, 'ขยายไตรมาสอื่นเพิ่มแล้วยังอยู่ขั้นเดิม');
-  ok(await tripBoxes().count() === 2, 'ไตรมาส 1 ที่กางไว้ก่อนยังเห็นใบเดินทางครบเหมือนเดิม (ไม่ได้ถูกพับปิด)');
+  ok(await tripBoxes().count() === 1, 'ไตรมาส 1 ที่กางไว้ก่อนยังเห็นใบเดินทางครบเหมือนเดิม (ไม่ได้ถูกพับปิด)');
 
   console.log('\nข้อมูลชุดเดียวกับหน้ารายการแผน');
   await page.goto(`${BASE}/index.html#${PLAN}`);
   await page.waitForSelector('.wsteps');
   const sameData = await page.evaluate(p => MYD.ensureTrips(MYD.getPlan(p)).length, PLAN);
-  ok(sameData === 2, `ใบเดินทางที่สร้างจากหน้าเดี่ยว มองเห็นจาก index.html ด้วย (${sameData} ใบ)`);
+  ok(sameData === 1, `ใบเดินทางที่สร้างจากหน้าเดี่ยว มองเห็นจาก index.html ด้วย (${sameData} ใบ)`);
 
   console.log('\nหน้าเดี่ยวไม่มีปุ่ม "ไปเฟสถัดไป"');
   await page.goto(`${BASE}/trip-plan.html#${PLAN}`);
