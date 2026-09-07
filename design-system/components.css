@@ -1157,3 +1157,15 @@ input.tbl-row-label{width:80%;display:inline-block}
 .parts-rec-item .pr-actions{display:flex;align-items:center;gap:var(--space-4);flex:none}
 /* .chks ที่อยู่ในกลุ่มฟิลด์ (.f) — กัน .f label{display:block} ทับจนกล่องติ๊กกับข้อความแตกบรรทัด */
 .f .chks label{display:inline-flex;margin-bottom:0}
+
+/* ---- v0.59 (7 ก.ย. 2569) บล็อกอะไหล่หน้าอนุมัติแบบแถวแบน — สเปกภาพจากระบบจริง:
+   พาเนลพื้นเทาอ่อนใบเดียว แถวไม่มีเส้นคั่น ชื่อหนา×จำนวน ซ้าย / ราคารวมขวา /
+   บรรทัดแหล่งคลังใต้ชื่อ · ไม่มีรายการ = ข้อความ muted ในพาเนลเดียวกัน ---- */
+.parts-flat{background:var(--gray-50);border-radius:var(--rounded-md);padding:10px 24px}
+.pf-row{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:16px;padding:14px 0}
+.pf-name{font-weight:700;font-size:var(--fs-text-md);color:var(--gray-900)}
+.pf-name .badge{vertical-align:2px}
+.pf-price{margin-left:auto;font-weight:700;color:var(--gray-600);white-space:nowrap}
+.pf-src{flex-basis:100%;margin-top:6px;color:var(--gray-700)}
+.pf-src b{color:var(--gray-900)}
+.pf-empty{padding:14px 0;color:var(--gray-500)}

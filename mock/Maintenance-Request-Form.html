@@ -13,7 +13,7 @@
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
   <link rel="stylesheet" href="../design-system/tokens.css?v=20260907-ds57">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260907-ds57">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260907-ds59">
   <!-- Tailwind (7 ก.ย. 2569 — เจ้าของงานสั่ง "ถัดจากนี้ปรับเป็น Tailwind"): Play CDN + theme จาก tokens.css
        preflight ปิด · คลาส component กลาง (components.css) ใช้ต่อตามเดิมแบบ DaisyUI · งานใหม่เขียน utility -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -1725,11 +1725,11 @@
 
         <section id="s2" class="hidden">
           <div class="sect"><span id="head-symptom">อาการเสีย</span> <span
-              style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— เลือกได้หลายอาการ
+              class="font-normal text-sm text-gray-500">— เลือกได้หลายอาการ
               จากรายการมาตรฐานที่กรองตามจุดที่เลือก</span></div>
           <div id="symcats"></div>
           <div id="othwrap" class="hidden">
-            <div class="f" style="margin-top:12px"><label>ระบุอาการเอง</label><textarea id="othtext" rows="2"
+            <div class="f mt-3"><label>ระบุอาการเอง</label><textarea id="othtext" rows="2"
                 placeholder="อธิบายอาการที่พบ…"></textarea></div>
           </div>
         </section>
@@ -1760,7 +1760,7 @@
           <!-- 7 ก.ย. 2569: การตัดสินใจย้ายไปขั้น 1 ("รูปแบบการซ่อม") · เลย์เอาต์ 2 คอลัมน์เปลี่ยนเป็น
                รายการอะไหล่ที่แนะนำจากอาการ (ตามสเปกภาพ) — เกินคงคลังตั้งเป็นรายการจัดซื้ออัตโนมัติ -->
           <div class="sect"><span id="head-parts">อะไหล่ที่แนะนำ</span> <span
-              style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">—
+              class="font-normal text-sm text-gray-500">—
               จำนวนที่เกินยอดในคลัง จะถูกตั้งเป็นรายการจัดซื้อให้อัตโนมัติ</span></div>
           <div id="parts-rec" class="parts-rec-list"></div>
           <div class="parts-totals ml-auto max-w-[420px]">
@@ -4451,7 +4451,7 @@ function partsEditorHTML(no, j){
   return `<div class="sect" style="margin-top:24px">รายการอะไหล่ที่จะใช้ <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— ตั้งต้นจากที่ผู้แจ้งเลือกมา · แก้จำนวน เพิ่ม หรือลบได้</span></div>
   <div class="panel">
     ${partsRowsHTML(no, list, true)}
-    <div class="rowbtns" style="justify-content:flex-start;margin-top:12px">
+    <div class="rowbtns justify-start mt-3">
       <button class="btn btn-o" onclick="E.addOpen=!E.addOpen;renderKbkDetail('${no}')">
         <span class="ms" style="font-size:18px">${E.addOpen?'expand_less':'add'}</span> เพิ่มอะไหล่จากคลัง</button>
     </div>
@@ -4770,7 +4770,10 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
       const j = JOBS.find(x => x.no === no);
       const st = statusInfo(j), wait = j.phase === 'wait';
       const d = reportedParts(j), u = updatedParts(j);
-      const partsRows = j.booked.map(b => `${esc(b.name)} ×${b.qty}`).concat(j.ordered.map(o => `${esc(o.name)} ×${o.qty} (จัดซื้อ)`));
+      // แถวแบนตามสเปกภาพ 7 ก.ย. 2569: ชื่อหนา xจำนวน / ราคารวมขวา / บรรทัดแหล่งคลัง
+      const pfRow = (name, qty, price, src) => `<div class="pf-row"><span class="pf-name">${name} x${qty}</span><span class="pf-price">${baht(price)} บาท</span><div class="pf-src">${src}</div></div>`;
+      const pickRows = j.booked.map(b => { const p = PARTS.find(x => x.name === b.name) || {}; return pfRow(esc(b.name), b.qty, (p.price || 0) * b.qty, `<b>${srcOf(p)}</b>${onHandOf(p) ? ` : มีในคลัง ${onHandOf(p)} ${esc(p.unit || '')}` : ''}`) })
+        .concat(j.ordered.map(o => { const p = PARTS.find(x => x.name === o.name) || {}; return pfRow(esc(o.name), o.qty, (p.price || 0) * o.qty, '<b>จัดซื้อ</b> : เกินยอดคงคลัง ตั้งเป็นรายการจัดซื้อให้อัตโนมัติ') }));
       // อะไหล่ที่แนะนำ ~10 รายการเป็น default (เจ้าของงานขอ 7 ก.ย. 2569) —
       // ตัวที่ตรงอาการของใบนี้ติดป้าย "แนะนำ" · ที่เหลือเติมจากคลังเป็น "แนะนำทั่วไป" ให้เห็นภาพครบ 10
       const symIds = j.symIds || [];
@@ -4781,7 +4784,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
       $('bosstools').classList.add('hidden');
       $('bossdetail').classList.remove('hidden');
       $('bossdetail').innerHTML = `
-    <div class="incident-head" style="margin:4px 0 8px">
+    <div class="incident-head mt-1 mb-2">
       <h1 class="page-title">หมายเลขเหตุการณ์ ${j.no}</h1>
       <span class="badge ${st.cls}">${st.label}</span>
       <div class="incident-actions">${wait ? `
@@ -4796,7 +4799,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
     <div id="btab0">
       <div class="incident-layout">
         <div>
-          <section class="incident-section" style="margin-top:0">
+          <section class="incident-section mt-0">
             <h2 class="incident-section-title">ข้อมูลการซ่อม</h2>
             <dl class="incident-summary">
               <div class="incident-field"><dt>วันที่สร้าง</dt><dd>${esc(d.d)}</dd></div>
@@ -4814,7 +4817,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
           </section>
           <section class="incident-section">
             <h2 class="incident-section-title">ช่องทางการซ่อม</h2>
-            <div class="hint" style="margin-bottom:10px">ผู้แจ้งเสนอ: <b>${j.nextPhase === 'kry' ? 'ส่งเรื่องให้ กรย.' : 'ดำเนินการซ่อมเอง'}</b>${wait ? ' — หัวหน้าปรับเปลี่ยนได้ก่อนกดอนุมัติ' : ' (เรื่องเดินต่อแล้ว เปลี่ยนไม่ได้)'}</div>
+            <div class="hint mb-2.5">ผู้แจ้งเสนอ: <b>${j.nextPhase === 'kry' ? 'ส่งเรื่องให้ กรย.' : 'ดำเนินการซ่อมเอง'}</b>${wait ? ' — หัวหน้าปรับเปลี่ยนได้ก่อนกดอนุมัติ' : ' (เรื่องเดินต่อแล้ว เปลี่ยนไม่ได้)'}</div>
             <div class="radcards">
               <label class="radcard ${j.nextPhase !== 'kry' ? 'sel' : ''}" onclick="bossRoute('self')">
                 <input type="radio" name="bossroute" ${j.nextPhase !== 'kry' ? 'checked' : ''}><span class="rdot"></span>
@@ -4827,45 +4830,42 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
             </div>
           </section>
           <section class="incident-section">
-            <h2 class="incident-section-title">อะไหล่ที่ผู้แจ้งเลือกไว้</h2>
-            ${partsRows.length ? `<div class="sumbox">${partsRows.map(r => `<div class="sumrow"><span>${r}</span></div>`).join('')}</div>` : '<div class="empty" style="text-align:left;padding:6px 0">ไม่มี</div>'}
+            <h2 class="incident-section-title">อะไหล่ที่ผู้แจ้งเลือกไว้ <span class="badge b-info">แนะนำ</span></h2>
+            <div class="parts-flat">${pickRows.length ? pickRows.join('') : '<div class="pf-empty">ไม่มีอะไหล่ที่เลือก</div>'}</div>
           </section>
           <section class="incident-section">
-            <h2 class="incident-section-title">อะไหล่ที่แนะนำ <span style="font-weight:400;font-size:var(--fs-text-sm);color:var(--gray-500)">— ${recAll.length} รายการ · จากอาการที่แจ้ง + รายการใช้บ่อยของรถประเภทนี้</span></h2>
-            <div class="parts-rec-list">${recAll.map(p => `
-              <div class="parts-rec-item">
-                <div class="pr-info"><b>${esc(p.name)} <span class="badge ${recHit.includes(p) ? 'b-info' : 'b-neutral'}">${recHit.includes(p) ? 'แนะนำ' : 'แนะนำทั่วไป'}</span></b>
-                  <div class="parts-line">${esc(p.code)} · ต้องใช้ ${p.need} ${esc(p.unit)}/ครั้ง | ${baht(p.price)} บาท/${esc(p.unit)}</div>
-                  <div class="parts-source"><b>${srcOf(p)}</b>${onHandOf(p) ? ` : มีในคลัง ${onHandOf(p)} ${esc(p.unit)}` : ' — ต้องสั่งซื้อภายนอก'}</div>
-                </div>
-                <div class="pr-actions"><span class="parts-price">${baht(p.price * p.need)} บาท</span></div>
+            <h2 class="incident-section-title">อะไหล่ที่แนะนำ <span class="font-normal text-sm text-gray-500">— ${recAll.length} รายการ · จากอาการที่แจ้ง + รายการใช้บ่อยของรถประเภทนี้</span></h2>
+            <div class="parts-flat">${recAll.map(p => `
+              <div class="pf-row"><span class="pf-name">${esc(p.name)} x${p.need} <span class="badge ${recHit.includes(p) ? 'b-info' : 'b-neutral'}">${recHit.includes(p) ? 'แนะนำ' : 'แนะนำทั่วไป'}</span></span>
+                <span class="pf-price">${baht(p.price * p.need)} บาท</span>
+                <div class="pf-src"><b>${srcOf(p)}</b>${onHandOf(p) ? ` : มีในคลัง ${onHandOf(p)} ${esc(p.unit)}` : ' — ต้องสั่งซื้อภายนอก'}</div>
               </div>`).join('')}
             </div>
           </section>
           <section class="incident-section">
             <h2 class="incident-section-title">รูปภาพเหตุการณ์</h2>
             ${j.photos ? `<div class="incident-gallery">${Array.from({ length: Math.min(j.photos, 4) }, () =>
-              '<div class="incident-photo" style="display:flex;align-items:center;justify-content:center;color:var(--gray-400)"><span class="ms" style="font-size:34px">image</span></div>').join('')}</div>`
-            : '<div class="empty" style="text-align:left;padding:6px 0">ไม่มีรูปแนบ</div>'}
+              '<div class="incident-photo flex items-center justify-center text-gray-400"><span class="ms text-[34px]">image</span></div>').join('')}</div>`
+            : '<div class="empty text-left py-1.5">ไม่มีรูปแนบ</div>'}
           </section>
         </div>
         <div>
-          <section class="incident-section" style="margin-top:0">
+          <section class="incident-section mt-0">
             <h2 class="incident-section-title">ยานพาหนะ</h2>
             <div class="incident-card"><div class="incident-vehicle">
-              <div class="incident-vehicle-photo" style="display:flex;align-items:center;justify-content:center;color:var(--gray-400)"><span class="ms" style="font-size:34px">local_shipping</span></div>
+              <div class="incident-vehicle-photo flex items-center justify-center text-gray-400"><span class="ms text-[34px]">local_shipping</span></div>
               <div>
                 <div class="incident-entity-name">${esc(j.plate)}</div>
                 <div class="incident-entity-meta">${esc(j.model)}</div>
                 <div class="incident-entity-meta">${esc(j.org)}</div>
-                <div class="incident-entity-meta" style="margin-top:8px"><span class="ms" style="font-size:18px;vertical-align:-4px">speed</span> เลขไมล์ล่าสุด ${j.use && j.use.odo ? j.use.odo.toLocaleString() : '-'}</div>
+                <div class="incident-entity-meta mt-2"><span class="ms text-[18px] align-[-4px]">speed</span> เลขไมล์ล่าสุด ${j.use && j.use.odo ? j.use.odo.toLocaleString() : '-'}</div>
               </div>
             </div></div>
           </section>
           <section class="incident-section">
             <h2 class="incident-section-title">ผู้แจ้งเหตุ</h2>
-            <div class="incident-card"><div style="display:flex;gap:12px;align-items:center">
-              <div style="width:48px;height:48px;flex:none;border-radius:var(--r-pill);background:var(--gray-100);display:flex;align-items:center;justify-content:center;color:var(--gray-400)"><span class="ms">person</span></div>
+            <div class="incident-card"><div class="flex gap-3 items-center">
+              <div class="w-12 h-12 flex-none rounded-pill bg-gray-100 flex items-center justify-center text-gray-400"><span class="ms">person</span></div>
               <div>
                 <div class="incident-entity-name">${esc(j.reporter ? j.reporter.name : (j.owner ? j.owner.name : '-'))}</div>
                 <div class="incident-entity-meta">${esc(j.reporter ? j.reporter.posi : '')}</div>
@@ -4875,13 +4875,13 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
           <section class="incident-section">
             <h2 class="incident-section-title">ข้อมูลติดต่อหน่วยงานที่แจ้งซ่อม</h2>
             <div class="incident-card">
-              <div style="padding:4px 0 10px;border-bottom:1px solid var(--gray-100)">
-                <div class="incident-entity-name" style="font-weight:600">ผู้ขับขี่ — ${esc((j.driver && j.driver.name) || '-')}</div>
-                <div class="incident-entity-meta"><span class="ms" style="font-size:16px;vertical-align:-3px;color:var(--brand-600)">smartphone</span> ${esc((j.driver && j.driver.tel) || '-')}</div>
+              <div class="pt-1 pb-2.5 [border-bottom:1px_solid_var(--gray-100)]">
+                <div class="incident-entity-name font-semibold">ผู้ขับขี่ — ${esc((j.driver && j.driver.name) || '-')}</div>
+                <div class="incident-entity-meta"><span class="ms text-[16px] align-[-3px] text-brand-600">smartphone</span> ${esc((j.driver && j.driver.tel) || '-')}</div>
               </div>
-              <div style="padding:10px 0 4px">
-                <div class="incident-entity-name" style="font-weight:600">ช่างคุมรถ — ${esc((j.tech && j.tech.name) || '-')}</div>
-                <div class="incident-entity-meta"><span class="ms" style="font-size:16px;vertical-align:-3px;color:var(--brand-600)">smartphone</span> ${esc((j.tech && j.tech.tel) || '-')}</div>
+              <div class="pt-2.5 pb-1">
+                <div class="incident-entity-name font-semibold">ช่างคุมรถ — ${esc((j.tech && j.tech.name) || '-')}</div>
+                <div class="incident-entity-meta"><span class="ms text-[16px] align-[-3px] text-brand-600">smartphone</span> ${esc((j.tech && j.tech.tel) || '-')}</div>
               </div>
             </div>
           </section>
@@ -4889,7 +4889,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
       </div>
     </div>
     <div id="btab1" class="hidden">${timelineBox(j)}</div>
-    <div class="rowbtns" style="justify-content:flex-start;margin-top:12px">
+    <div class="rowbtns justify-start mt-3">
       <button class="btn btn-g" onclick="renderBossList()"><span class="ms">arrow_back</span> กลับรายการ</button></div>`;
     }
     function bossTab(btn, i) {
