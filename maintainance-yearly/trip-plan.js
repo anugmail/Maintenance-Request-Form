@@ -925,7 +925,7 @@
         const a = MYD.repairJobAppt(trip, j.no);
         const outOfWindow = MYD.repairApptOutOfWindow(trip, j.no);
         const apptCell = locked
-          ? (a.date ? `<div class="cell-key">${esc(a.date)}${a.time ? ' ' + esc(a.time) : ''}</div>
+          ? (a.date ? `<div class="cell-key">${dateTh(a.date)}${a.time ? ' ' + esc(a.time) : ''}</div>
                ${a.receiver ? `<div class="cell-sub">ผู้รับมอบรถ ${esc(a.receiver)}${a.tel ? ' · ' + esc(a.tel) : ''}</div>` : ''}`
              : '<span class="cell-sub">ตามช่วงของแผน</span>')
           : `<div class="f m-0"><div class="in noic">
@@ -971,8 +971,15 @@
           <b>${esc(trip.name || 'แผนเดินทางซ่อม')}</b>
           <span class="rzone-count">${jobs.length} ใบแจ้งซ่อม · ${MYD.repairTripDepts(trip).length} หน่วยงาน · ${grand.toLocaleString('th-TH')} บาท</span>
           <span class="badge ${locked ? 'b-low' : 'b-neutral'}">${locked ? 'รอตอบรับ' : 'ยังไม่ส่ง'}</span>
+          <div class="incident-actions">${locked
+            ? '<button class="btn btn-g" disabled>ส่งแล้ว แก้ไม่ได้</button>'
+            : `<button class="btn btn-td" data-rdel="${esc(trip.id)}">ลบแผนนี้</button>
+               <button class="btn btn-p" data-rsend="${esc(trip.id)}" ${MYD.repairTripSendable(trip) ? '' : 'disabled'}>
+                 <span class="ms">send</span> ส่งแผนนัดให้หน่วยงาน</button>`}</div>
         </div>
         <div class="rzone-body">
+          <section class="incident-section mt-0">
+            <h2 class="incident-section-title">รายละเอียดแผนเดินทาง</h2>
           <div class="fgrid">
             <div class="f sp2"><label>ชื่อแผน</label>
               <div class="in"><span class="ms">label</span>
@@ -988,12 +995,11 @@
             <div class="f"><label>ถึงวันที่</label>
               <div class="in noic"><input type="date" value="${esc(trip.windowTo || '')}" ${dis}
                 data-rtrip="${esc(trip.id)}" data-field="windowTo"></div></div>
-            <div class="f ro sp2"><label>รวมกี่วัน <small>คิดให้อัตโนมัติ</small></label>
-              <div class="in noic"><input type="text" value="${days ? days + ' วัน' : '—'}" readonly></div></div>
           </div>
+          </section>
 
-          <div class="sect">ข้อมูลเฉพาะการออกซ่อมหน้างาน</div>
-          <div class="sub">สองช่องนี้มีเฉพาะสายงานซ่อม — สายบำรุงรักษาตามวาระไม่มี</div>
+          <section class="incident-section">
+            <h2 class="incident-section-title">ข้อมูลการออกซ่อมหน้างาน</h2>
           <div class="fgrid">
             <div class="f sp2"><label>จุดนัดรับรถ</label>
               <div class="in"><span class="ms">pin_drop</span>
@@ -1009,9 +1015,12 @@
                   placeholder="เช่น นัดเวลา 09:00 ที่ป้อมยาม" data-rtrip="${esc(trip.id)}" data-field="note"></div></div>
           </div>
 
-          <div class="sect">ช่างผู้รับผิดชอบ</div>
-          <div class="sub">ใส่ชื่อไว้เพื่อให้หน่วยงานเจ้าของรถรู้ว่าใครจะไป
-            · ค่าเบี้ยเลี้ยงกรอกเป็น<b>อัตราต่อวัน</b>รายคน ระบบคูณจำนวนวันของช่วงที่เสนอแล้วรวมให้ด้านล่าง</div>
+          </div>
+          </section>
+
+          <section class="incident-section">
+            <h2 class="incident-section-title">ช่างผู้รับผิดชอบ</h2>
+            <div class="sub">ค่าเบี้ยเลี้ยงกรอกเป็น<b>อัตราต่อวัน</b>รายคน — ระบบคูณจำนวนวันให้เอง</div>
           <div class="fgrid">
             ${(trip.staff || ['']).map((name, i) => `
               <div class="f sp3"><label>คนที่ ${i + 1}</label>
@@ -1027,23 +1036,33 @@
             ${(trip.staff || []).length > 1 ? `<button class="btn btn-t btn-sm" data-rstaff-del="${esc(trip.id)}"><span class="ms">remove</span> ลดคน</button>` : ''}
           </div>`}
 
+          </section>
+
+          <section class="incident-section">
+            <h2 class="incident-section-title">ค่าใช้จ่าย</h2>
           <div class="fgrid">
-            <div class="f ro"><label>ค่าเบี้ยเลี้ยงรวม (บาท) <small>คิดให้อัตโนมัติ</small></label>
-              <div class="in noic"><input type="number" value="${esc(perDiemSum)}" readonly></div>
-              <div class="cell-sub">${MYD.repairTripPerDiemSum(trip).toLocaleString('th-TH')} บาท/วัน × ${days || 1} วัน</div></div>
             <div class="f"><label>ค่าที่พัก (บาท)</label>
               <div class="in noic"><input type="number" min="0" value="${esc(trip.lodging ?? 0)}" ${dis}
                 data-rtrip="${esc(trip.id)}" data-field="lodging"></div></div>
             <div class="f"><label>ค่าเดินทาง (บาท)</label>
               <div class="in noic"><input type="number" min="0" value="${esc(trip.travel ?? 0)}" ${dis}
                 data-rtrip="${esc(trip.id)}" data-field="travel"></div></div>
-            <div class="f"><label>รวม</label><div><b>${grand.toLocaleString('th-TH')} บาท</b></div></div>
           </div>
+          <dl class="incident-summary mt-3">
+            <div class="incident-field"><dt>ช่วงที่เสนอ</dt>
+              <dd>${trip.windowFrom && trip.windowTo ? dateTh(trip.windowFrom) + ' — ' + dateTh(trip.windowTo) : '—'}</dd></div>
+            <div class="incident-field"><dt>รวมกี่วัน</dt><dd>${days ? days + ' วัน' : '—'}</dd></div>
+            <div class="incident-field"><dt>ค่าเบี้ยเลี้ยงรวม</dt>
+              <dd>${perDiemSum.toLocaleString('th-TH')} บาท
+                <div class="cell-sub">${MYD.repairTripPerDiemSum(trip).toLocaleString('th-TH')} บาท/วัน × ${days || 1} วัน</div></dd></div>
+            <div class="incident-field"><dt>รวมทั้งหมด</dt><dd><b>${grand.toLocaleString('th-TH')} บาท</b></dd></div>
+          </dl>
+          </section>
 
-          <div class="sect">ใบแจ้งซ่อมในแผนนี้ <span class="badge b-neutral">นัดรายคันได้</span></div>
-          <div class="sub">หนึ่งใบเดินทางรวมได้หลายใบแจ้งซ่อม — <b>กำหนดวัน/เวลานัดแยกรายคันได้</b>
-            (เว้นว่างไว้ = ใช้ช่วงที่เสนอของแผนตามเดิม) · วันนัดต้องอยู่ในช่วงที่เสนอ
-            ${jobs.length ? `· ระบุแล้ว <b>${MYD.repairApptCount(trip)}</b>/${jobs.length} คัน` : ''}</div>
+          <section class="incident-section">
+            <h2 class="incident-section-title">ใบแจ้งซ่อมในแผนนี้ <span class="badge b-neutral">นัดรายคันได้</span></h2>
+            <div class="sub">กำหนด<b>วัน/เวลานัดแยกรายคัน</b>ได้ — เว้นว่าง = ใช้ช่วงที่เสนอของแผน · ต้องอยู่ในช่วงที่เสนอ
+              ${jobs.length ? `· ระบุแล้ว <b>${MYD.repairApptCount(trip)}</b>/${jobs.length} คัน` : ''}</div>
           ${jobs.length ? `${locked ? '' : `<div class="actions justify-start mb-2">
               <button class="btn btn-s btn-sm" data-rappt-fill="${esc(trip.id)}" ${trip.windowFrom ? '' : 'disabled'}>
                 <span class="ms">event_repeat</span> เติมวันนัดทุกคันเป็นวันแรกของช่วง</button>
@@ -1065,18 +1084,12 @@
             <div class="f"><label>&nbsp;</label>
               <button class="btn btn-s" data-radd="${esc(trip.id)}" ${addOpts ? '' : 'disabled'}>เพิ่ม</button></div>
           </div>`}
+          </section>
 
           <div data-rblockers="${esc(trip.id)}">${(!locked && blockers.length) ? `<div class="note note-warn"><span class="ms">error</span>
             <div><b>ส่งแผนนัดยังไม่ได้</b> — ต้องเคลียร์ ${blockers.length} เรื่องนี้ก่อน
               <ul class="mt-1.5 mb-0 ml-[18px] mr-0">${blockers.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>` : ''}</div>
 
-          <div class="actions">
-            ${locked
-              ? `<button class="btn btn-g" disabled>ส่งแล้ว แก้ไม่ได้</button>`
-              : `<button class="btn btn-g" data-rdel="${esc(trip.id)}">ลบแผนนี้</button>
-                 <button class="btn btn-o" data-rsend="${esc(trip.id)}" ${MYD.repairTripSendable(trip) ? '' : 'disabled'}>
-                   <span class="ms">send</span> ส่งแผนนัดให้หน่วยงาน</button>`}
-          </div>
         </div>
       </div>`;
     }).join('');
