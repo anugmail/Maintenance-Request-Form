@@ -3217,6 +3217,7 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
         ...infoVals(), fromUnit: 'กรย. ' + S.vehicle.org,
         budget: costSummaryText(), costType: S.costType, costVals: { ...S.costVals },
         booked: bookedArr(), ordered: orderedArr(),
+        symIds: [...S.symptoms],   // ไว้ให้หน้าผู้อนุมัติแสดง "อะไหล่ที่แนะนำ" จากอาการ
         reason: '',
         phase: 'wait', nextPhase: S.decision === 'kry' ? 'kry' : 'self', wi: 0,
         approver,
@@ -4740,6 +4741,12 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
       const st = statusInfo(j), wait = j.phase === 'wait';
       const d = reportedParts(j), u = updatedParts(j);
       const partsRows = j.booked.map(b => `${esc(b.name)} ×${b.qty}`).concat(j.ordered.map(o => `${esc(o.name)} ×${o.qty} (จัดซื้อ)`));
+      // อะไหล่ที่แนะนำ ~10 รายการเป็น default (เจ้าของงานขอ 7 ก.ย. 2569) —
+      // ตัวที่ตรงอาการของใบนี้ติดป้าย "แนะนำ" · ที่เหลือเติมจากคลังเป็น "แนะนำทั่วไป" ให้เห็นภาพครบ 10
+      const symIds = j.symIds || [];
+      const recHit = PARTS.filter(p => symIds.includes(p.sym));
+      const recPad = PARTS.filter(p => !recHit.includes(p)).slice(0, Math.max(0, 10 - recHit.length));
+      const recAll = recHit.concat(recPad).slice(0, 10);
       $('bosslist').classList.add('hidden');
       $('bosstools').classList.add('hidden');
       $('bossdetail').classList.remove('hidden');
@@ -4790,6 +4797,18 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
           <section class="incident-section">
             <h2 class="incident-section-title">อะไหล่ที่ผู้แจ้งเลือกไว้</h2>
             ${partsRows.length ? `<div class="sumbox">${partsRows.map(r => `<div class="sumrow"><span>${r}</span></div>`).join('')}</div>` : '<div class="empty" style="text-align:left;padding:6px 0">ไม่มี</div>'}
+          </section>
+          <section class="incident-section">
+            <h2 class="incident-section-title">อะไหล่ที่แนะนำ <span style="font-weight:400;font-size:var(--fs-text-sm);color:var(--gray-500)">— ${recAll.length} รายการ · จากอาการที่แจ้ง + รายการใช้บ่อยของรถประเภทนี้</span></h2>
+            <div class="parts-rec-list">${recAll.map(p => `
+              <div class="parts-rec-item">
+                <div class="pr-info"><b>${esc(p.name)} <span class="badge ${recHit.includes(p) ? 'b-info' : 'b-neutral'}">${recHit.includes(p) ? 'แนะนำ' : 'แนะนำทั่วไป'}</span></b>
+                  <div class="parts-line">${esc(p.code)} · ต้องใช้ ${p.need} ${esc(p.unit)}/ครั้ง | ${baht(p.price)} บาท/${esc(p.unit)}</div>
+                  <div class="parts-source"><b>${srcOf(p)}</b>${onHandOf(p) ? ` : มีในคลัง ${onHandOf(p)} ${esc(p.unit)}` : ' — ต้องสั่งซื้อภายนอก'}</div>
+                </div>
+                <div class="pr-actions"><span class="parts-price">${baht(p.price * p.need)} บาท</span></div>
+              </div>`).join('')}
+            </div>
           </section>
           <section class="incident-section">
             <h2 class="incident-section-title">รูปภาพเหตุการณ์</h2>

@@ -138,6 +138,10 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
     /ตัวรถ —/.test(await page.locator('#bossdetail').textContent()));
   eq('ช่องทางการซ่อมเลือกได้ 2 ทาง (ซ่อมเอง/ส่งต่อ กรย.)',
     await page.locator('#bossdetail .radcard').count(), 2);
+  eq('อะไหล่ที่แนะนำ 10 รายการเป็น default', await page.locator('#bossdetail .parts-rec-item').count(), 10);
+  ok('มีทั้งป้าย "แนะนำ" (ตรงอาการ) และ "แนะนำทั่วไป"',
+    await page.locator('#bossdetail .parts-rec-item .badge.b-info').count() >= 1
+    && await page.locator('#bossdetail .parts-rec-item .badge.b-neutral').count() >= 1);
 
   // ---- เปลี่ยนช่องทาง ----
   await page.locator('#bossdetail .radcard', { hasText: 'ส่งต่อให้ กรย.' }).click();
