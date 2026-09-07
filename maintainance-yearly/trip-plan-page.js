@@ -64,7 +64,8 @@ function renderPicker() {
     </tr>`;
   }).join('');
 
-  $('crumbs').innerHTML = `<span class="ms">event_available</span><span class="cur">ทำแผนการเดินทาง</span>`;
+  $('crumbs').innerHTML = `<span class="ms">home</span><span class="sep">›</span>
+    <span class="cur">ทำแผนการเดินทาง</span>`;
   $('phase').innerHTML = `
     <div class="page-title-row">
       <h1 class="page-title">ทำแผนการเดินทาง — กบค.</h1>
@@ -114,8 +115,8 @@ function renderWizard(plan) {
   const disabled = !primaryReady(plan);
   const blockers = (state.sub === 1 && disabled) ? TRIP.blockers(plan) : [];
 
-  $('crumbs').innerHTML = `<span class="ms">event_available</span>
-    <a href="#">ทำแผนการเดินทาง</a><span class="ms">chevron_right</span>
+  $('crumbs').innerHTML = `<span class="ms">home</span><span class="sep">›</span>
+    <a href="#">ทำแผนการเดินทาง</a><span class="sep">›</span>
     <span class="cur">${esc(planTitle(plan))}</span>`;
 
   $('phase').innerHTML = `
@@ -173,8 +174,8 @@ function renderWizard(plan) {
 
 // ---------------------------------------------------------------- ยืนยันแล้ว
 function renderConfirmed(plan) {
-  $('crumbs').innerHTML = `<span class="ms">event_available</span>
-    <a href="#">ทำแผนการเดินทาง</a><span class="ms">chevron_right</span>
+  $('crumbs').innerHTML = `<span class="ms">home</span><span class="sep">›</span>
+    <a href="#">ทำแผนการเดินทาง</a><span class="sep">›</span>
     <span class="cur">${esc(planTitle(plan))}</span>`;
   // ไม่ส่ง onNextPhase — หน้าเดี่ยวไม่มีเฟสถัดไป ปุ่มนั้นจะไม่ถูกวาด
   $('phase').innerHTML = `
@@ -191,8 +192,8 @@ function renderConfirmed(plan) {
 // ตามที่เจ้าของงานสั่ง 25 ส.ค. 2569 · ขอบเขตรอบนี้จบที่ "ส่งแผนนัด" ยังไม่มีตอบรับ/อนุมัติ/ยืนยัน
 function renderRepair() {
   PLAN = null;
-  $('crumbs').innerHTML = `<span class="ms">event_available</span>
-    <a href="#">ทำแผนการเดินทาง</a><span class="ms">chevron_right</span>
+  $('crumbs').innerHTML = `<span class="ms">home</span><span class="sep">›</span>
+    <a href="#" class="text-inherit no-underline">ทำแผนการเดินทาง</a><span class="sep">›</span>
     <span class="cur">งานซ่อม</span>`;
 
   $('phase').innerHTML = `

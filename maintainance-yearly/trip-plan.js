@@ -1048,42 +1048,70 @@
     }).join('');
   }
 
+  // สถานะลิสต์ใบแจ้งซ่อมรอจัดแผน — ชุดเดียวกับ LIST_UI ของโฟลว์แจ้งซ่อม (ค้นหา + กรองความเร่งด่วน)
+  const RLIST = { q: '', urg: 'all' };
+
+  // แถวใบแจ้งซ่อม — คอลัมน์/คลาสชุดเดียวกับตารางลิสต์ของโฟลว์แจ้งซ่อม
+  function repairJobRow(j) {
+    const u = MYD.URGENCY[j.urgency] || MYD.URGENCY.normal;
+    return `<tr>
+      <td><div class="cell-key">${esc(j.no)}</div><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
+      <td><div class="cell-clip" title="${esc(j.plate)}">${esc(j.plate)}</div>
+        <div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
+      <td><div class="cell-clip" title="${esc(j.ownerDept)}">${esc(j.ownerDept)}</div></td>
+      <td>${j.syms.map(x => `<span class="badge b-neutral">${esc(x)}</span>`).join(' ')}</td>
+      <td><span class="badge ${u.cls}">${esc(u.text)}</span></td>
+    </tr>`;
+  }
+  const RLIST_HEAD = `<thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ยานพาหนะ</th><th>หน่วยงานเจ้าของรถ</th>
+    <th>อาการที่แจ้ง</th><th>ความเร่งด่วน</th></tr></thead>`;
+
   function renderRepairStep1() {
     const trips = repairTrips();
     // 🔑 เข้าพูลได้เฉพาะใบที่เลือก "จัดซ่อมที่หน้างาน" — ใบที่นัดเข้ามาซ่อมที่ กบค. ไม่ต้องเดินทาง
     const onsite = MYD.onsiteRepairJobs();
     const offsite = MYD.offsiteRepairJobs();
-    const unassigned = MYD.unassignedRepairJobs(trips);
-
-    const offsiteRows = offsite.map(j => `<tr>
-      <td><b>${esc(j.no)}</b><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
-      <td><b>${esc(j.plate)}</b><div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
-      <td>${esc(j.ownerDept)}<div class="cell-sub">${esc(j.province)}</div></td>
-      <td><span class="badge b-neutral">เข้าซ่อมที่ กบค.</span></td>
-    </tr>`).join('');
+    const all = MYD.unassignedRepairJobs(trips);
+    const q = RLIST.q.trim().toLowerCase();
+    const unassigned = all.filter(j =>
+      (RLIST.urg === 'all' || (j.urgency || 'normal') === RLIST.urg) &&
+      (!q || (j.no + ' ' + j.plate + ' ' + j.model + ' ' + j.ownerDept + ' ' + j.province).toLowerCase().includes(q)));
+    const filtering = !!q || RLIST.urg !== 'all';
+    const urgOpts = [['all', 'ทุกระดับ']].concat(Object.entries(MYD.URGENCY).map(([k, v]) => [k, v.text]))
+      .map(([k, t]) => `<option value="${k}"${k === RLIST.urg ? ' selected' : ''}>${esc(t)}</option>`).join('');
 
     return `
       <div class="sect">ขั้นที่ 1: ทำแผนเดินทาง</div>
       <div class="sub"><b>มีรถที่ต้องออกไปซ่อม ${onsite.length} คัน</b>
-        — จัดเข้าใบแล้ว <b>${onsite.length - unassigned.length}</b> · ยังไม่จัด <b>${unassigned.length}</b>
+        — จัดเข้าใบแล้ว <b>${onsite.length - all.length}</b> · ยังไม่จัด <b>${all.length}</b>
         · แผนเดินทาง <b>${trips.length}</b> ใบ</div>
-      ${unassigned.length ? `<div class="sub">ที่ยังไม่จัด แยกตามจังหวัด:
-        ${provinceOrder(unassigned).map(pv => `<b>${esc(pv)}</b> ${groupByProvince(unassigned)[pv].length} ใบ`).join(' · ')}</div>` : ''}
       <div class="note note-info"><span class="ms">filter_alt</span>
         <div><b>นับเฉพาะใบที่เลือก "จัดซ่อมที่หน้างาน"</b> ในหัวข้อ <i>รูปแบบการซ่อม</i> ของใบแจ้งซ่อม
           — ใบที่เลือก <i>เข้าซ่อมที่ กบค.</i> ไม่ต้องเดินทาง จึงไม่เข้าแผนนี้
           ${offsite.length ? `(รอบนี้ถูกกันออก <b>${offsite.length}</b> ใบ ดูท้ายหน้า)` : ''}</div></div>
-      <div class="sub">หนึ่งใบเดินทางรวมใบแจ้งซ่อมได้หลายใบ · แต่ละใบเสนอเป็น<b>ช่วงเวลา</b>
-        แล้วหน่วยงานเจ้าของรถเลือกวันนัดภายในช่วงนั้นเอง (เหมือนสายบำรุงรักษา)</div>
-      <div class="actions justify-start">
-        <button class="btn btn-o" id="btnAddRepairTrip"><span class="ms">add</span> สร้างแผนเดินทางใหม่</button>
-      </div>
       ${trips.length ? repairTripBoxes(trips) : `<div class="empty">ยังไม่มีแผนเดินทาง — กดสร้างแผนใหม่</div>`}
-      ${unassigned.length ? `
+      ${all.length ? `
         <div class="sect">ใบแจ้งซ่อมที่ยังไม่ถูกจัดเข้าแผน — แยกตามจังหวัด</div>
-        <div class="sub">ทีมหนึ่งมักออกทริปเดียวเก็บงานในจังหวัดเดียวกัน — ดูตรงนี้ว่าจังหวัดไหนมีกี่ใบ
-          แล้วค่อยตัดสินว่าจะรวมเป็นทริปเดียวหรือแยก</div>
-        <div class="stack">
+        <div class="sub">ทีมหนึ่งมักออกทริปเดียวเก็บงานในจังหวัดเดียวกัน — จึงแยกกล่องตามจังหวัดไว้ให้</div>
+        <div class="list-toolbar split">
+          <div class="lt-search">
+            <div class="search"><span class="ms">search</span>
+              <input type="search" id="rlist-q" placeholder="เลขที่ใบแจ้งซ่อม, ทะเบียน, หน่วยงาน" value="${esc(RLIST.q)}"></div>
+          </div>
+          <div class="lt-actions">
+            <button class="btn btn-s" id="rlist-filter-btn" aria-expanded="false" aria-controls="rlist-filter-panel">
+              <span class="ms">filter_list</span> ตัวกรอง<span class="badge b-neutral">${RLIST.urg !== 'all' ? 1 : 0}</span></button>
+            <button class="btn btn-p" id="btnAddRepairTrip"><span class="ms">add</span> สร้างแผนเดินทางใหม่</button>
+          </div>
+        </div>
+        <div class="filter-panel${RLIST.urg !== 'all' ? ' open' : ''}" id="rlist-filter-panel">
+          <div class="filter-field">
+            <label for="rlist-urg">กรองตามความเร่งด่วน</label>
+            <select id="rlist-urg">${urgOpts}</select>
+          </div>
+          <button class="btn btn-t" id="rlist-clear"><span class="ms">filter_alt_off</span> ล้างตัวกรอง</button>
+        </div>
+        ${unassigned.length ? `<div class="stack">
         ${provinceOrder(unassigned).map(pv => {
           const js = groupByProvince(unassigned)[pv];
           return `<div class="rzone">
@@ -1092,35 +1120,53 @@
               <b>${esc(pv)}</b>
               <span class="rzone-count">${js.length} ใบแจ้งซ่อม · ${new Set(js.map(j => j.ownerDept)).size} หน่วยงาน</span>
             </div>
-            <div class="rzone-body flush"><div class="tblwrap"><table class="tbl">
-              <thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th>
-                <th>อาการที่แจ้ง</th><th>ความเร่งด่วน</th></tr></thead>
-              <tbody>${js.map(j => {
-                const u = MYD.URGENCY[j.urgency] || MYD.URGENCY.normal;
-                return `<tr>
-                  <td><b>${esc(j.no)}</b><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
-                  <td><b>${esc(j.plate)}</b><div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
-                  <td>${esc(j.ownerDept)}</td>
-                  <td>${j.syms.map(x => `<span class="badge b-neutral">${esc(x)}</span>`).join(' ')}</td>
-                  <td><span class="badge ${u.cls}">${esc(u.text)}</span></td>
-                </tr>`;
-              }).join('')}</tbody></table></div></div>
+            <div class="rzone-body flush"><div class="tblwrap"><table class="tbl striped">
+              ${RLIST_HEAD}
+              <tbody>${js.map(repairJobRow).join('')}</tbody></table></div></div>
           </div>`;
         }).join('')}
-        </div>` : ''}
+        </div>`
+        : `<div class="filter-empty"><span class="ms">filter_alt_off</span><b>ไม่พบใบแจ้งซ่อมตามเงื่อนไขนี้</b>
+             <span>${q ? `ไม่มีใบที่ตรงกับคำค้น “${esc(q)}”` : 'ยังไม่มีใบในระดับความเร่งด่วนที่เลือก'}</span></div>`}
+        ${filtering ? `<div class="tblfoot"><div class="tf-left">
+          <span>แสดง ${unassigned.length} จาก ${all.length} ใบที่ยังไม่จัดเข้าแผน</span></div></div>` : ''}`
+        : `<div class="actions justify-start">
+             <button class="btn btn-p" id="btnAddRepairTrip"><span class="ms">add</span> สร้างแผนเดินทางใหม่</button></div>`}
       ${offsite.length ? `
         <div class="sect">ใบแจ้งซ่อมที่ไม่เข้าแผนเดินทาง</div>
         <div class="sub">เลือก <b>เข้าซ่อมที่ กบค.</b> — เจ้าของรถขนรถมาที่สำนักงานใหญ่ ไม่ต้องจัดทีมเดินทาง
           · ถ้าเปลี่ยนรูปแบบการซ่อมเป็น <b>จัดซ่อมที่หน้างาน</b> ใบนั้นจะขึ้นมาให้จัดในแผนเดินทางเอง</div>
-        <div class="tblwrap"><table class="tbl">
-          <thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>รูปแบบการซ่อม</th></tr></thead>
-          <tbody>${offsiteRows}</tbody></table></div>` : ''}`;
+        <div class="tblwrap"><table class="tbl striped">
+          <thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ยานพาหนะ</th><th>หน่วยงานเจ้าของรถ</th><th>รูปแบบการซ่อม</th></tr></thead>
+          <tbody>${offsite.map(j => `<tr>
+            <td><div class="cell-key">${esc(j.no)}</div><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
+            <td><div class="cell-clip" title="${esc(j.plate)}">${esc(j.plate)}</div>
+              <div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
+            <td><div class="cell-clip">${esc(j.ownerDept)}</div><div class="cell-sub">${esc(j.province)}</div></td>
+            <td><span class="badge b-neutral">เข้าซ่อมที่ กบค.</span></td>
+          </tr>`).join('')}</tbody></table></div>` : ''}`;
   }
 
   function wireRepairStep1() {
     const trips = repairTrips();
     const find = id => trips.find(t => t.id === id);
     const rerender = () => { MYD.saveRepairTrips(trips); HOST.onChange(); };
+
+    // ค้นหา/ตัวกรอง — re-render ทั้งขั้นแล้วคืนโฟกัส+ตำแหน่งเคอร์เซอร์ให้ช่องค้นหา (แบบเดียวกับลิสต์แผน)
+    const qEl = $('rlist-q');
+    if (qEl) {
+      qEl.addEventListener('input', e => { RLIST.q = e.target.value; HOST.onChange(); });
+      if (RLIST.q) { qEl.focus(); qEl.setSelectionRange(qEl.value.length, qEl.value.length) }
+    }
+    const fbtn = $('rlist-filter-btn');
+    if (fbtn) fbtn.addEventListener('click', () => {
+      const panel = $('rlist-filter-panel');
+      fbtn.setAttribute('aria-expanded', panel.classList.toggle('open'));
+    });
+    const urg = $('rlist-urg');
+    if (urg) urg.addEventListener('change', e => { RLIST.urg = e.target.value; HOST.onChange(); });
+    const clr = $('rlist-clear');
+    if (clr) clr.addEventListener('click', () => { RLIST.urg = 'all'; HOST.onChange(); });
 
     const add = $('btnAddRepairTrip');
     if (add) add.addEventListener('click', () => {
