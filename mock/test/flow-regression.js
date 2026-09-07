@@ -5,20 +5,18 @@
    ทำไมต้องมี: 1–2 ก.ย. 2569 แก้ UI ติดกัน 6 เวอร์ชัน (ds41→ds46) แล้วจับผิดด้วยตาล้วน
    จน stepper ผิด 3 รอบติด ⇒ ต้องมีของรันก่อนส่งงานทุกครั้ง
 
-   4 ก.ย. 2569: ปรับตามโฟลว์ใหม่ที่เจ้าของงานเคาะ — แจ้งซ่อมเป็น modal
-   (เข้าจากปุ่ม "แจ้งซ่อมใหม่" หรือไอคอนท้ายแถว) · เลือกรถเป็นตารางลิสต์ (บ่าย 4 ก.ย. — เดิม dropdown ช่วงเช้า) ·
-   จุดที่พบปัญหาติ๊กได้หลายจุด · อาการแยกกลุ่มตามจุด
+   7 ก.ย. 2569: ปรับตามสเปกภาพชุดเต็มที่เจ้าของงานส่ง — modal 4 ขั้น
+   (①ข้อมูลยานพาหนะและผู้แจ้ง = dropdown รถ + สถานะรถ + รูปแบบการซ่อม + จุดที่แจ้ง
+    + งบ dropdown + ผู้แจ้งเหตุ · ②ไมล์/ชั่วโมงเครื่องจักร/รูป/หมายเหตุ · ③อาการเสีย ·
+    ④อะไหล่ที่แนะนำ → ส่งอนุมัติ) · ผู้อนุมัติ = หัวหน้าหน่วยงานอัตโนมัติ ·
+   ฝั่งผู้อนุมัติ: รายการอนุมัติ → รายละเอียดแบบหน้าเหตุการณ์ → modal ไม่อนุมัติ/ยืนยันอนุมัติ
 
    ตรวจ 2 ชั้น
-     A. โฟลว์  — เปิด modal เดินฟอร์มจนส่งเรื่อง แล้วเช็กว่าใบงานเข้าลิสต์จริง
-     B. ดีไซน์ — วัดค่าคอมโพเนนต์หลักเทียบ "ค่าจริงจากไลบรารี" (Component) VMS Plus
-
-   ต้องมี
-     node figma-export/serve.js  หรือ  python3 -m http.server 8123   (เสิร์ฟที่ราก repo)
-     npm i playwright-core  (ไว้ที่ scratchpad แล้วส่ง NODE_PATH เข้ามา)
+     A/B. โฟลว์ — ผู้แจ้งส่งอนุมัติ + ผู้อนุมัติอนุมัติผ่าน modal แล้วใบหายจากรายการ
+     C.   ดีไซน์ — วัดค่าคอมโพเนนต์หลักเทียบ "ค่าจริงจากไลบรารี" (Component) VMS Plus
 
    รัน
-     NODE_PATH=<ที่ติดตั้ง>/node_modules node mock/test/flow-regression.js
+     NODE_PATH=<ที่ติดตั้ง playwright-core>/node_modules node mock/test/flow-regression.js
      BASE=http://127.0.0.1:8123 CHROME="/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome"
    ============================================================================ */
 const { chromium } = require('playwright-core');   // CJS เพราะ ESM ไม่อ่าน NODE_PATH
@@ -52,123 +50,131 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
 
-  console.log('\n══════ A. โฟลว์แจ้งซ่อม (modal) ══════');
-  // ---- หน้าแรก = ตารางจัดการงานซ่อม (ไม่ใช่ฟอร์มเต็มหน้าแล้ว) ----
+  console.log('\n══════ A. โฟลว์แจ้งซ่อม (modal 4 ขั้น) ══════');
   await page.waitForSelector('#mylist table.tbl tbody tr');
   ok('หน้าแรกเปิดที่ตารางจัดการงานซ่อม', await page.locator('#view-my').isVisible());
   ok('modal แจ้งซ่อมยังไม่เปิดเอง', !(await page.locator('#repair-modal').isVisible()));
+  eq('แถวไม่มีไอคอนแจ้งซ่อมแล้ว (เข้าจากปุ่มบนเท่านั้น)',
+    await page.locator('#mylist .dt-action button[title="แจ้งซ่อมคันนี้"]').count(), 0);
 
-  // ---- ปุ่ม "แจ้งซ่อมใหม่" → เปิด modal (dropdown ว่าง) ----
-  await page.locator('.lt-actions .btn-p', { hasText: 'แจ้งซ่อมใหม่' }).click();
+  // ---- เปิด modal จากปุ่ม "แจ้งซ่อม" ----
+  await page.locator('.lt-actions .btn-p', { hasText: 'แจ้งซ่อม' }).click();
   await page.waitForSelector('#repair-modal:not(.hidden)');
-  ok('กดแจ้งซ่อมใหม่แล้ว modal เปิด', await page.locator('#repair-modal .modal').isVisible());
-  ok('ขั้น 1 มีช่องค้นหา + ตารางเลือกรถ', await page.locator('#vq').isVisible() && await page.locator('#vlist .vtbl tbody tr').count() >= 4);
-  ok('หัวขั้นแบบข้อความ "ขั้นที่ 1"', /^ขั้นที่ 1/.test((await page.locator('#rm-step').textContent()).trim()));
-  eq('ยังไม่เลือกรถ → ไม่มีการ์ดรายละเอียด', await page.locator('.vehicle-detail-card').count(), 0);
+  ok('หัวขั้น = ข้อมูลยานพาหนะและผู้แจ้ง',
+    /ขั้นที่ 1: ข้อมูลยานพาหนะและผู้แจ้ง/.test(await page.locator('#rm-step').textContent()));
+  ok('มี dropdown ยานพาหนะ', await page.locator('#v-select').isVisible());
+  eq('ยังไม่เลือกรถ → ไม่มีกล่องสรุป/จุดที่แจ้ง', await page.locator('#vinfo:not(.hidden)').count(), 0);
 
-  // ---- เลือกรถจากตาราง (83-1122 มีเครน) ----
-  await page.locator('#vlist .vtbl tr[data-id="3"]').click();
-  await page.waitForSelector('.vehicle-detail-card');
-  ok('เลือกรถแล้วขึ้นการ์ดรายละเอียดรถ', await page.locator('.vehicle-detail-card').isVisible());
-  ok('แถวที่เลือกติดสถานะ sel', await page.locator('#vlist .vtbl tr.sel[data-id="3"]').count() === 1);
-  ok('หัว modal ขึ้นทะเบียนรถ', /83-1122/.test(await page.locator('#rm-title').textContent()));
-  const targets = await page.locator('.vehicle-target .radcard.ckcard').count();
-  ok('จุดที่พบปัญหาเป็นการ์ด checkbox', targets === 2, `เจอ ${targets}`);
-  // ติ๊กทั้ง 2 จุด (ตัวรถ + เครน) — โฟลว์ใหม่เลือกได้มากกว่า 1
-  await page.locator('.vehicle-target .radcard').nth(0).click();
-  await page.locator('.vehicle-target .radcard').nth(1).click();
-  eq('ติ๊กแล้วการ์ดติด sel ทั้งคู่', await page.locator('.vehicle-target .radcard.sel').count(), 2);
+  // ---- ขั้น 1: เลือกรถ + สถานะ + รูปแบบ + จุด + งบ ----
+  await page.selectOption('#v-select', '1');           // 81-2345 มีเครน
+  await page.waitForSelector('#vsum .incident-field');
+  ok('กล่องสรุปรถขึ้น (ทะเบียน/จังหวัด/ผู้ขับขี่/ช่างคุมรถ)',
+    await page.locator('#vsum .incident-field').count() === 4);
+  await page.locator('input[name="r-usable"]').first().check();
+  await page.locator('label', { hasText: 'ดำเนินการซ่อมเอง' }).first().click();
+  eq('จุดที่แจ้งเป็น checkbox 2 ตัว (ตัวรถ+เครน)', await page.locator('#target-chks label').count(), 2);
+  await page.locator('#target-chks label', { hasText: 'ตัวรถ' }).click();
+  await page.locator('#target-chks label', { hasText: 'เครน' }).click();
+  // งบ 4 แบบ + ช่องกรอกตามแบบ
+  eq('งบที่ตัดเป็น dropdown 4 แบบ', await page.locator('#i-costsel option:not([disabled])').count(), 4);
+  await page.selectOption('#i-costsel', '1');
+  eq('งบประจำหน่วยงาน → 1 ช่อง (ศูนย์ต้นทุน)', await page.locator('#i-costfields .f').count(), 1);
+  await page.selectOption('#i-costsel', '3');
+  eq('งบโครงการ WBS → 3 ช่อง', await page.locator('#i-costfields .f').count(), 3);
+  ok('hint บอกช่องที่ต้องระบุ', /ต้องระบุ/.test(await page.locator('#i-costhint').textContent()));
+  ok('ผู้แจ้งเหตุ default พนักงาน กฟภ.', /วิทยา/.test(await page.locator('#i-reporter').textContent()));
   await page.locator('#next').click();
 
-  // ---- ขั้น 2 อาการเสีย — แยกกลุ่มตามจุด ----
+  // ---- ขั้น 2: ไมล์/ชั่วโมง/รูป/หมายเหตุ (สถานที่เกิดเหตุ+รายละเอียดถูกตัด) ----
+  await page.waitForSelector('#sinfo:not(.hidden)');
+  ok('หัวขั้น 2 = รายละเอียดเหตุการณ์ และสถานที่', /ขั้นที่ 2/.test(await page.locator('#rm-step').textContent()));
+  ok('มีช่องเลขไมล์ + ชั่วโมงเครื่องจักร', await page.locator('#i-odo').isVisible() && await page.locator('#i-crane').isVisible());
+  eq('ไม่มีช่องจังหวัด/ผู้ติดต่อแล้ว', await page.locator('#i-prov, #i-owntel').count(), 0);
+  await page.fill('#i-odo', '84120');
+  await page.locator('.addph', { hasText: 'รูปตัวอย่าง' }).click();
+  await page.locator('#next').click();
+
+  // ---- ขั้น 3: อาการเสีย แยกกลุ่มตามจุด ----
   await page.waitForSelector('#symcats .chks label');
-  eq('เลือก 2 จุด → มีหัวกลุ่ม 2 กลุ่ม', await page.locator('#symcats .symgroup-head').count(), 2);
-  // ติ๊กอาการกลุ่มละ 1 (กลุ่มแรก = ตัวรถ · กลุ่มหลัง = เครน — เลี่ยง "อื่นๆ" ที่บังคับกรอกข้อความ)
+  eq('เลือก 2 จุด → หัวกลุ่ม 2 กลุ่ม', await page.locator('#symcats .symgroup-head').count(), 2);
   await page.locator('#symcats .chks label').first().click();
   await page.locator('#symcats .chks label', { hasText: 'กระบอกไฮดรอลิกรั่ว' }).click();
-  const cnt = (await page.locator('#symcats .symgroup-head .badge').allInnerTexts()).join(' | ');
-  ok('ตัวนับอาการต่อกลุ่มขยับ', /1 อาการ/.test(cnt), `ได้ "${cnt}"`);
-  await page.locator('#i-usable .sg').first().click();            // ใช้งานได้
   await page.locator('#next').click();
 
-  // ---- ขั้น 3 ข้อมูลติดต่อ · สถานที่ · งบ ----
-  await page.waitForSelector('#i-costtypes .radcard');
-  await page.selectOption('#i-prov', { index: 1 });
-  await page.fill('#i-owntel', '043-221-100');
-  const budgets = await page.locator('#i-costtypes .radcard').count();
-  ok('งบที่จะตัดเป็น radcard', budgets === 4, `เจอ ${budgets}`);
-  await page.locator('#i-costtypes .radcard').first().click();
-  await page.fill('#i-costfields input', 'B0002211');
-  await page.locator('#next').click();
-
-  // ---- ขั้น 4 ตัดสินใจ + อะไหล่ ----
-  await page.waitForSelector('#dcrads .radcard');
-  ok('การตัดสินใจเป็น radcard', await page.locator('#dcrads .radcard').count() === 2);
-  await page.locator('#dc-self').click();
-  ok('เลือกซ่อมเองแล้วการ์ดติดสถานะ sel', await page.locator('#dc-self.sel').count() === 1);
-  await page.waitForSelector('#parts-stock .parts-stock-item');
-  await page.locator('#parts-stock .parts-stock-item button').first().click();
-  ok('กด + แล้วอะไหล่เข้ารายการขวา', await page.locator('#parts-picked .parts-picked-item').count() >= 1);
+  // ---- ขั้น 4: อะไหล่ที่แนะนำ → ส่งอนุมัติ ----
+  await page.waitForSelector('#parts-rec .parts-rec-item');
+  ok('มีรายการอะไหล่แนะนำจากอาการ', await page.locator('#parts-rec .parts-rec-item').count() >= 2);
+  ok('ทุกรายการติดป้าย "แนะนำ"',
+    await page.locator('#parts-rec .parts-rec-item .badge').count() === await page.locator('#parts-rec .parts-rec-item').count());
+  await page.locator('#parts-rec .parts-rec-item .qty button').nth(1).click();   // + รายการแรก
   const sumAll = await page.locator('#p-sum-all').textContent();
-  ok('ยอดรวมค่าอะไหล่คำนวณแล้ว', /[1-9]/.test(sumAll), `ได้ "${sumAll}"`);
+  ok('ยอดรวมค่าอะไหล่ขยับ', /[1-9]/.test(sumAll), `ได้ "${sumAll}"`);
+  eq('ปุ่มขั้นสุดท้าย = ส่งอนุมัติ', (await page.locator('#next').textContent()).trim(), 'ส่งอนุมัติ');
   await page.locator('#next').click();
 
-  // ---- ขั้น 5 สรุป + ผู้อนุมัติ ----
-  await page.waitForSelector('#aplist .apitem');
-  // สรุปต้องแสดงจุดหลายจุด + อาการแยกบรรทัดตามจุด
-  const sumTxt = await page.locator('#summary').textContent();
-  ok('สรุปแสดงจุดที่มีปัญหาทั้ง 2 จุด', /ตัวรถ/.test(sumTxt) && /เครน|กระเช้า|Unic/.test(sumTxt));
-  await page.locator('#aplist .apitem').first().click();
-  await page.locator('#next').click();
-  await page.waitForSelector('#sdone:not(.hidden)');
-  const docno = (await page.locator('#docno').textContent()).trim();
-  ok('ส่งเรื่องสำเร็จ ได้เลขใบแจ้งซ่อม', /^MTD-/.test(docno), `ได้ "${docno}"`);
-
-  // ---- ปิด modal → ใบงานต้องโผล่ในตาราง "จัดการงานซ่อม" ----
-  await page.locator('#sdone .btn-p', { hasText: 'ดูสถานะเรื่องของฉัน' }).click();
-  ok('modal ปิดแล้ว', !(await page.locator('#repair-modal').isVisible()));
+  // ---- ส่งแล้ว: modal ปิด + ใบเข้าลิสต์สถานะใหม่ ----
+  await page.waitForSelector('#repair-modal.hidden', { state: 'attached' });
   await page.waitForSelector('#mylist table.tbl tbody tr');
-  const inList = await page.locator('#mylist tbody tr', { hasText: docno }).count();
-  ok('ใบที่เพิ่งสร้างอยู่ในตารางจัดการงานซ่อม', inList === 1);
+  const newRows = await page.locator('#mylist tbody tr', { hasText: 'รอหัวหน้าหน่วยงานอนุมัติ' }).count();
+  ok('ใบใหม่อยู่ในตาราง สถานะ "รอหัวหน้าหน่วยงานอนุมัติ"', newRows >= 1, `เจอ ${newRows}`);
+  const docno = (await page.locator('#mylist tbody tr', { hasText: 'รอหัวหน้าหน่วยงานอนุมัติ' }).first()
+    .locator('.cell-key').textContent()).trim();
 
-  // ---- ไอคอน "แจ้งซ่อมคันนี้" ท้ายแถว → modal เติมรถให้ ----
-  const repBtns = await page.locator('#mylist .dt-action button[title="แจ้งซ่อมคันนี้"]').count();
-  ok('ทุกแถวมีไอคอนแจ้งซ่อมคันนี้', repBtns >= 1, `เจอ ${repBtns}`);
-  ok('ไอคอนมีป้ายจำนวนเรื่องค้าง', await page.locator('#mylist .dt-action .cnt').count() >= 1);
-  await page.locator('#mylist .dt-action button[title="แจ้งซ่อมคันนี้"]').first().click();
-  await page.waitForSelector('#repair-modal:not(.hidden)');
-  ok('เปิดจากแถวแล้วตารางเลือกรถให้', await page.locator('#vlist .vtbl tr.sel').count() === 1);
-  await page.locator('#back').click();   // ขั้น 1 ปุ่มซ้าย = ปิด
-  ok('ปุ่ม "ปิด" ที่ขั้น 1 ปิด modal ได้', !(await page.locator('#repair-modal').isVisible()));
-
-  // ---- ชุดคอลัมน์ตาราง "จัดการงานซ่อม" ต้องตรงกับ Figma (9 คอลัมน์) ----
-  const th = (await page.locator('#mylist thead th').allInnerTexts()).map(t => t.split('\n')[0].trim());
-  eq('ตารางมี 9 คอลัมน์', th.length, 9);
-  eq('ชื่อคอลัมน์ตรงตาม Figma',
-    th.slice(0, 8).join(' | '),
-    'หมายเลขเหตุการณ์ | วันที่สร้าง | ยานพาหนะ | ประเภทยานพาหนะ | สถานะรถ | สถานะเหตุการณ์ | วันที่อัพเดตสถานะฯ | ผู้ดำเนินการ');
-  eq('7 คอลัมน์แรกเรียงลำดับได้ (มีลูกศร)', await page.locator('#mylist thead th.sortable').count(), 7);
-  ok('ช่องยานพาหนะแยกทะเบียน/จังหวัด 2 บรรทัด',
-    await page.locator('#mylist tbody tr').first().locator('td').nth(2).locator('.cell-sub').count() === 1);
-
-  // ---- คิวงาน กบค. ต้องใช้ชุดคอลัมน์เดียวกัน (ไม่เหลือตารางชุดเดิม) ----
-  await page.locator('#nav-kbk').click();
-  await page.waitForSelector('#kbklist table.tbl tbody tr');
-  const thKbk = (await page.locator('#kbklist thead th').allInnerTexts()).map(t => t.split('\n')[0].trim());
-  eq('คิวงาน กบค. ใช้ชุดคอลัมน์เดียวกับหน้าอื่น', thKbk.slice(0, 8).join(' | '), th.slice(0, 8).join(' | '));
-  eq('ไม่มีหัวคอลัมน์ชุดเดิมหลงเหลือ', await page.locator('th', { hasText: 'สังกัดยานพาหนะ' }).count(), 0);
-
-  // ---- หัวหน้าอนุมัติ ----
+  console.log('\n══════ B. ฝั่งผู้อนุมัติ (หัวหน้าหน่วยงาน) ══════');
   await page.locator('#nav-boss').click();
   await page.waitForSelector('#bosslist table.tbl tbody tr');
-  ok('หน้าอนุมัติเป็นตาราง (ไม่ใช่การ์ดเดิม)', await page.locator('#bosslist table.tbl').count() === 1);
-  ok('ใบใหม่รออนุมัติอยู่ในหน้าหัวหน้า', await page.locator('#bosslist tbody tr', { hasText: docno }).count() === 1);
+  ok('หัวหน้าเห็นหน้ารวมแบบเดียวกัน (รายการอนุมัติ)', /รายการอนุมัติ/.test(await page.locator('#view-boss .page-title').first().textContent()));
+  ok('ใบที่เพิ่งส่งอยู่ในรายการอนุมัติ', await page.locator('#bosslist tbody tr', { hasText: docno }).count() === 1);
 
-  console.log('\n══════ B. ค่าดีไซน์เทียบไลบรารี (Component) VMS Plus ══════');
-  // เริ่มหน้าใหม่ + เปิด modal ก่อนวัด (องค์ประกอบฟอร์มอยู่ใน modal — ตอนปิดวัดค่าไม่ได้)
+  // ---- เปิดรายละเอียด ----
+  await page.locator('#bosslist tbody tr', { hasText: docno }).locator('.dt-action .btn').click();
+  await page.waitForSelector('#bossdetail:not(.hidden) .incident-head');
+  ok('รายละเอียดเป็นโครงหน้าเหตุการณ์ (หัวเรื่อง+badge+แท็บ)',
+    await page.locator('#bossdetail .tabs .tab-btn').count() === 2);
+  ok('ปุ่ม ไม่อนุมัติ/อนุมัติ อยู่ด้านบน',
+    await page.locator('#bossdetail .incident-actions .btn-td').isVisible()
+    && await page.locator('#bossdetail .incident-actions .btn-p').isVisible());
+  ok('อาการแสดงผูกจุด (ตัวรถ — … · เครน — …)',
+    /ตัวรถ —/.test(await page.locator('#bossdetail').textContent()));
+  eq('ช่องทางการซ่อมเลือกได้ 2 ทาง (ซ่อมเอง/ส่งต่อ กรย.)',
+    await page.locator('#bossdetail .radcard').count(), 2);
+
+  // ---- เปลี่ยนช่องทาง ----
+  await page.locator('#bossdetail .radcard', { hasText: 'ส่งต่อให้ กรย.' }).click();
+  await page.waitForSelector('#bossdetail .radcard.sel');
+  ok('หัวหน้าเปลี่ยนช่องทางเป็น ส่งต่อ กรย. ได้',
+    await page.locator('#bossdetail .radcard.sel', { hasText: 'ส่งต่อให้ กรย.' }).count() === 1);
+
+  // ---- ไม่อนุมัติ: modal ต้องกรอกเหตุผล ----
+  await page.locator('#bossdetail .incident-actions .btn-td').click();
+  await page.waitForSelector('#boss-reject-modal:not(.hidden)');
+  ok('modal ไม่อนุมัติ: ปุ่มยืนยัน disabled จนกรอกเหตุผล', await page.locator('#boss-reject-ok').isDisabled());
+  await page.fill('#boss-reason', 'ทดสอบ');
+  ok('กรอกแล้วปุ่มยืนยัน enabled', !(await page.locator('#boss-reject-ok').isDisabled()));
+  await page.locator('#boss-reject-modal .btn-s', { hasText: 'ปิด' }).click();   // ไม่ตีกลับจริง
+
+  // ---- อนุมัติ: modal ยืนยัน → ใบหายจากรายการ ----
+  await page.locator('#bossdetail .incident-actions .btn-p', { hasText: 'อนุมัติ' }).click();
+  await page.waitForSelector('#boss-approve-modal:not(.hidden)');
+  ok('modal ยืนยันการอนุมัติขึ้น', /ยืนยันการอนุมัติ/.test(await page.locator('#boss-approve-modal').textContent()));
+  await page.locator('#boss-approve-modal .btn-s', { hasText: 'ไม่ใช่ตอนนี้' }).click();
+  ok('กด "ไม่ใช่ตอนนี้" แล้ว modal ปิด ใบยังอยู่', !(await page.locator('#boss-approve-modal').isVisible()));
+  await page.locator('#bossdetail .incident-actions .btn-p', { hasText: 'อนุมัติ' }).click();
+  await page.locator('#boss-approve-modal .btn-p', { hasText: 'อนุมัติคำขอ' }).click();
+  await page.waitForSelector('#bosslist:not(.hidden)');
+  ok('อนุมัติแล้วกลับหน้ารายการ + toast', await page.locator('#toast.show').count() === 1);
+  eq('ใบที่อนุมัติแล้วหายจากรายการอนุมัติ',
+    await page.locator('#bosslist tbody tr', { hasText: docno }).count(), 0);
+  // ยังเห็นรายละเอียดได้จากเมนูจัดการงานซ่อม (สถานะเดินตามช่องทางที่หัวหน้าเปลี่ยน)
+  await page.locator('#nav-my').click();
+  await page.waitForSelector('#mylist table.tbl tbody tr');
+  ok('ใบเดิมยังเห็นในจัดการงานซ่อม สถานะเดินต่อ (รอ กรย. พิจารณา)',
+    await page.locator('#mylist tbody tr', { hasText: docno }).locator('.badge', { hasText: 'รอ กรย. พิจารณา' }).count() === 1);
+
+  console.log('\n══════ C. ค่าดีไซน์เทียบไลบรารี (Component) VMS Plus ══════');
   await page.goto(URL, { waitUntil: 'networkidle' });
   await page.waitForSelector('#mylist table.tbl tbody tr');
-  await page.locator('.lt-actions .btn-p', { hasText: 'แจ้งซ่อมใหม่' }).click();
+  await page.locator('.lt-actions .btn-p', { hasText: 'แจ้งซ่อม' }).click();
   await page.waitForSelector('#repair-modal:not(.hidden)');
 
   const cs = (sel, prop, pseudo = null) => page.evaluate(([s, p, ps]) => {
@@ -176,71 +182,33 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
     return getComputedStyle(el, ps)[p];
   }, [sel, prop, pseudo]);
 
-  // ปุ่ม Primary — ไลบรารี: h40 · r8 · pad ซ้ายขวา 12 · พื้น #A80689
   eq('ปุ่ม .btn สูง 40', px(await cs('#next', 'height')), 40);
   eq('ปุ่ม .btn radius 8', px(await cs('#next', 'borderRadius')), 8);
-  eq('ปุ่มปกติ pad ซ้ายขวา 12', px(await cs('#my-filter-btn', 'paddingLeft')), 12);
-  eq('ปุ่มท้ายฟอร์ม pad ซ้ายขวา 12', px(await cs('#next', 'paddingLeft')), 12);
   eq('ปุ่ม .btn-p พื้นสีแบรนด์', rgb(await cs('#next', 'backgroundColor')), HEX.brand600);
-
-  // ช่องค้นหารถ — ไลบรารี Text input md: h40 · r8 · ขอบ #D0D5DD
-  eq('ช่องค้นหารถ สูง 40', px(await cs('#vq', 'height')), 40);
-  eq('ช่องค้นหารถ radius 8', px(await cs('#vq', 'borderRadius')), 8);
-  eq('ช่องค้นหารถ ขอบ gray-300', rgb(await cs('#vq', 'borderTopColor')), HEX.gray300);
-
-  // ตารางเลือกรถ — จุดวิทยุชุดเดียวกับ Radio button ของไลบรารี (20×20 · เส้น 2)
-  eq('จุดวิทยุในตาราง 20px', px(await cs('#vlist .vtbl .rdot', 'width')), 20);
-  eq('จุดวิทยุในตาราง เส้น 2px', px(await cs('#vlist .vtbl .rdot', 'borderTopWidth')), 2);
-
-  // การ์ดจุดที่พบปัญหา — Radio text card + กล่อง Checkbox (20×20 · r4 · เส้น 2)
-  await page.locator('#vlist .vtbl tr[data-id="3"]').click();
-  await page.waitForSelector('.vehicle-target .radcard.ckcard');
-  eq('การ์ดจุด radius 8', px(await cs('.vehicle-target .radcard', 'borderRadius')), 8);
-  eq('การ์ดจุด ขอบ 1px', px(await cs('.vehicle-target .radcard', 'borderTopWidth')), 1);
-  eq('การ์ดจุด ขอบ gray-300', rgb(await cs('.vehicle-target .radcard', 'borderTopColor')), HEX.gray300);
-  eq('กล่องติ๊กของการ์ดจุด 20px', px(await cs('.vehicle-target .cbox', 'width')), 20);
-  eq('กล่องติ๊กของการ์ดจุด radius 4', px(await cs('.vehicle-target .cbox', 'borderRadius')), 4);
-  eq('กล่องติ๊กของการ์ดจุด เส้น 2px', px(await cs('.vehicle-target .cbox', 'borderTopWidth')), 2);
-
-  // Sidebar nav — ไลบรารี Nav button 40×40 · r8
+  eq('dropdown ยานพาหนะ สูง 40', px(await cs('#v-select', 'height')), 40);
+  eq('dropdown ยานพาหนะ radius 8', px(await cs('#v-select', 'borderRadius')), 8);
+  eq('dropdown ยานพาหนะ ขอบ gray-300', rgb(await cs('#v-select', 'borderTopColor')), HEX.gray300);
   eq('ปุ่มเมนูข้าง 40px', px(await cs('.side .nv', 'width')), 40);
 
-  // checkbox อาการเสีย — ไลบรารี Checkbox: 20×20 · r4 · เส้น 2px
-  await page.locator('.vehicle-target .radcard').nth(0).click();
-  await page.locator('.vehicle-target .radcard').nth(1).click();
-  await page.locator('#next').click();
-  await page.waitForSelector('#symcats .chks .cbox');
-  eq('กล่องติ๊ก 20px', px(await cs('#symcats .chks .cbox', 'width')), 20);
-  eq('กล่องติ๊ก radius 4', px(await cs('#symcats .chks .cbox', 'borderRadius')), 4);
-  eq('กล่องติ๊ก เส้น 2px', px(await cs('#symcats .chks .cbox', 'borderTopWidth')), 2);
-  // หัวกลุ่มอาการ (List header item) — 16/SemiBold + เส้นคั่นล่าง
-  eq('หัวกลุ่มอาการตัวอักษร 16', px(await cs('#symcats .symgroup-head', 'fontSize')), 16);
-  eq('หัวกลุ่มอาการมีเส้นคั่นล่าง 1px', px(await cs('#symcats .symgroup-head', 'borderBottomWidth')), 1);
+  // checkbox จุดที่แจ้ง — ไลบรารี Checkbox: 20×20 · r4 · เส้น 2px · อยู่แถวเดียวกับข้อความ
+  await page.selectOption('#v-select', '1');
+  await page.waitForSelector('#target-chks label');
+  eq('กล่องติ๊กจุดที่แจ้ง 20px', px(await cs('#target-chks .cbox', 'width')), 20);
+  eq('กล่องติ๊กจุดที่แจ้ง radius 4', px(await cs('#target-chks .cbox', 'borderRadius')), 4);
+  eq('กล่องติ๊กจุดที่แจ้ง เส้น 2px', px(await cs('#target-chks .cbox', 'borderTopWidth')), 2);
+  // label ใน flex container ถูก blockify: inline-flex → computed 'flex' — สิ่งที่ต้องกันคือ 'block' (.f label ทับ)
+  ok('label ติ๊กอยู่แถวเดียว (ไม่โดน .f label ทับเป็น block)', /flex/.test(await cs('#target-chks label', 'display')));
 
-  console.log('\n══════ C. มือถือ (390px) ══════');
+  console.log('\n══════ D. มือถือ (390px) + ไม่มี error ══════');
   await page.setViewportSize({ width: 390, height: 820 });
   await page.goto(URL, { waitUntil: 'networkidle' });
   await page.waitForSelector('#mylist table.tbl tbody tr');
-  await page.locator('.lt-actions .btn-p', { hasText: 'แจ้งซ่อมใหม่' }).click();
+  await page.locator('.lt-actions .btn-p', { hasText: 'แจ้งซ่อม' }).click();
   await page.waitForSelector('#repair-modal:not(.hidden)');
   ok('มือถือ: modal เปิดได้', await page.locator('#repair-modal .modal').isVisible());
-  ok('มือถือ: เห็นหัวขั้น', await page.locator('#rm-step').isVisible());
   const ov = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   eq('มือถือ: ไม่ล้นแนวนอน', ov, 0);
-  await page.setViewportSize({ width: 1440, height: 1000 });
 
-  // ---- เครื่องที่เคยบันทึก variant 'grid' ไว้ ต้องไม่พังโฟลว์ใหม่ ----
-  await page.evaluate(() => {
-    const k = 'maintaind.admin.v1', j = JSON.parse(localStorage.getItem(k) || '{}');
-    j.variants = Object.assign({}, j.variants, { vehicleCard: 'grid' });
-    localStorage.setItem(k, JSON.stringify(j));
-  });
-  await page.goto(URL, { waitUntil: 'networkidle' });
-  await page.waitForSelector('#mylist table.tbl tbody tr');
-  eq('ค่าเก่า grid ใน localStorage ไม่ทำให้การ์ดใหญ่กลับมา', await page.locator('.veh').count(), 0);
-  await page.evaluate(() => localStorage.clear());
-
-  console.log('\n══════ D. ไม่มี error บนหน้า ══════');
   ok('ไม่มี pageerror / console error', errors.length === 0, errors.slice(0, 5).join(' | '));
   if (errors.length) { console.log('  รายละเอียดทั้งหมด:'); errors.forEach(e => console.log('    · ' + e)); }
 

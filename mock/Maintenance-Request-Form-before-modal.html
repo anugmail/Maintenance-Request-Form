@@ -1856,7 +1856,7 @@
           <div class="lt-actions">
             <button class="btn btn-s" id="my-filter-btn" aria-expanded="false" aria-controls="my-filter-panel"
               onclick="toggleFilter('my')"><span class="ms">filter_list</span> ตัวกรอง</button>
-            <button class="btn btn-p" onclick="switchView('form')"><span class="ms">note_add</span> แจ้งซ่อมใหม่</button>
+            <button class="btn btn-p" onclick="switchView('form')"><span class="ms">note_add</span> แจ้งซ่อม</button>
           </div>
         </div>
         <div class="filter-panel" id="my-filter-panel">
@@ -2858,11 +2858,11 @@
     // ⚠️ สถานะที่ Figma ไม่ได้แสดงตัวอย่างไว้ (ซ่อมเสร็จ · นัดรับรถ · รออนุมัติปิดงาน)
     //    จัดเป็นเหลืองตามกฎข้างบน เพราะยังต้องมีคนทำต่อ — ถ้า กฟภ. ต้องการแยกสีค่อยปรับ
     function statusInfo(j) {
-      if (j.phase === 'wait') return { label: 'รอ ' + j.approver.name + ' อนุมัติ', cls: 'b-low' };
-      if (j.phase === 'reject') return { label: 'ไม่อนุมัติ — ตีกลับให้แก้ไข', cls: 'b-out' };
-      if (j.phase === 'self') return { label: 'บันทึกแล้ว — ซ่อมเอง', cls: 'b-low' };
-      if (j.phase === 'kry') return { label: 'รอ กรย. คัดแยกช่องทาง', cls: 'b-low' };
-      if (j.phase === 'krd') return { label: 'กรย. รับไปซ่อมเอง', cls: 'b-low' };
+      if (j.phase === 'wait') return { label: 'รอหัวหน้าหน่วยงานอนุมัติ', cls: 'b-low' };
+      if (j.phase === 'reject') return { label: 'ไม่อนุมัติ', cls: 'b-out' };
+      if (j.phase === 'self') return { label: 'ดำเนินการซ่อมเอง', cls: 'b-low' };
+      if (j.phase === 'kry') return { label: 'รอ กรย. พิจารณา', cls: 'b-low' };
+      if (j.phase === 'krd') return { label: 'กรย. เห็นชอบ ซ่อมเอง', cls: 'b-low' };
       if (j.phase === 'pending') return { label: 'รอ กบค. รับเรื่อง', cls: 'b-low' };
       if (j.phase === 'returned') {
         const s = j.rstage || 0;
@@ -3703,7 +3703,7 @@ function renderMyList(){
   R.jobNo=null;
   const phases=MY_STATUS_PHASES[$('my-status-filter').value];
   renderJobList('my',phases?JOBS.filter(j=>phases.includes(j.phase)):JOBS,
-    {host:'mylist',open:'openMy',empty:'ยังไม่มีเรื่องแจ้งซ่อม',cols:'incident',report:true});
+    {host:'mylist',open:'openMy',empty:'ยังไม่มีเรื่องแจ้งซ่อม',cols:'incident'});
 }
 let R={jobNo:null,photos:0,urls:[],returns:{},pc:'',lc:'',det:'',pick:null,docs:{invoice:false,contractor:false},rdate:''};
 // รายละเอียดเป็นหน้าเต็มแล้ว (view-mydet) — เดิมเป็น accordion กางในลิสต์
