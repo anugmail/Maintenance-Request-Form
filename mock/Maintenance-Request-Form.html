@@ -4774,12 +4774,7 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
       const pfRow = (name, qty, price, src) => `<div class="pf-row"><span class="pf-name">${name} x${qty}</span><span class="pf-price">${baht(price)} บาท</span><div class="pf-src">${src}</div></div>`;
       const pickRows = j.booked.map(b => { const p = PARTS.find(x => x.name === b.name) || {}; return pfRow(esc(b.name), b.qty, (p.price || 0) * b.qty, `<b>${srcOf(p)}</b>${onHandOf(p) ? ` : มีในคลัง ${onHandOf(p)} ${esc(p.unit || '')}` : ''}`) })
         .concat(j.ordered.map(o => { const p = PARTS.find(x => x.name === o.name) || {}; return pfRow(esc(o.name), o.qty, (p.price || 0) * o.qty, '<b>จัดซื้อ</b> : เกินยอดคงคลัง ตั้งเป็นรายการจัดซื้อให้อัตโนมัติ') }));
-      // อะไหล่ที่แนะนำ ~10 รายการเป็น default (เจ้าของงานขอ 7 ก.ย. 2569) —
-      // ตัวที่ตรงอาการของใบนี้ติดป้าย "แนะนำ" · ที่เหลือเติมจากคลังเป็น "แนะนำทั่วไป" ให้เห็นภาพครบ 10
-      const symIds = j.symIds || [];
-      const recHit = PARTS.filter(p => symIds.includes(p.sym));
-      const recPad = PARTS.filter(p => !recHit.includes(p)).slice(0, Math.max(0, 10 - recHit.length));
-      const recAll = recHit.concat(recPad).slice(0, 10);
+      // 7 ก.ย. 2569 (คำสั่งล่าสุด): section "อะไหล่ที่แนะนำ" ถูกตัดออก — เหลือเฉพาะ "อะไหล่ที่ผู้แจ้งเลือกไว้"
       $('bosslist').classList.add('hidden');
       $('bosstools').classList.add('hidden');
       $('bossdetail').classList.remove('hidden');
@@ -4832,15 +4827,6 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
           <section class="incident-section">
             <h2 class="incident-section-title">อะไหล่ที่ผู้แจ้งเลือกไว้ <span class="badge b-info">แนะนำ</span></h2>
             <div class="parts-flat">${pickRows.length ? pickRows.join('') : '<div class="pf-empty">ไม่มีอะไหล่ที่เลือก</div>'}</div>
-          </section>
-          <section class="incident-section">
-            <h2 class="incident-section-title">อะไหล่ที่แนะนำ <span class="font-normal text-sm text-gray-500">— ${recAll.length} รายการ · จากอาการที่แจ้ง + รายการใช้บ่อยของรถประเภทนี้</span></h2>
-            <div class="parts-flat">${recAll.map(p => `
-              <div class="pf-row"><span class="pf-name">${esc(p.name)} x${p.need} <span class="badge ${recHit.includes(p) ? 'b-info' : 'b-neutral'}">${recHit.includes(p) ? 'แนะนำ' : 'แนะนำทั่วไป'}</span></span>
-                <span class="pf-price">${baht(p.price * p.need)} บาท</span>
-                <div class="pf-src"><b>${srcOf(p)}</b>${onHandOf(p) ? ` : มีในคลัง ${onHandOf(p)} ${esc(p.unit)}` : ' — ต้องสั่งซื้อภายนอก'}</div>
-              </div>`).join('')}
-            </div>
           </section>
           <section class="incident-section">
             <h2 class="incident-section-title">รูปภาพเหตุการณ์</h2>

@@ -138,7 +138,9 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
     /ตัวรถ —/.test(await page.locator('#bossdetail').textContent()));
   eq('ช่องทางการซ่อมเลือกได้ 2 ทาง (ซ่อมเอง/ส่งต่อ กรย.)',
     await page.locator('#bossdetail .radcard').count(), 2);
-  eq('อะไหล่ที่แนะนำ 10 รายการเป็น default (แถวแบน)', await page.locator('#bossdetail .parts-flat').nth(1).locator('.pf-row').count(), 10);
+  // 7 ก.ย. 2569 (คำสั่งล่าสุด): section "อะไหล่ที่แนะนำ" ถูกตัด — เหลือ "อะไหล่ที่ผู้แจ้งเลือกไว้" อย่างเดียว
+  eq('เหลือบล็อกอะไหล่เดียว (เลือกไว้) — แนะนำถูกตัดแล้ว', await page.locator('#bossdetail .parts-flat').count(), 1);
+  eq('ไม่มี section อะไหล่ที่แนะนำ', await page.locator('#bossdetail .incident-section-title', { hasText: 'อะไหล่ที่แนะนำ' }).count(), 0);
   ok('อะไหล่ที่เลือกไว้: หัวมีป้าย "แนะนำ" + แถวแบน',
     /แนะนำ/.test(await page.locator('#bossdetail .incident-section-title', { hasText: 'อะไหล่ที่ผู้แจ้งเลือกไว้' }).textContent())
     && await page.locator('#bossdetail .parts-flat').first().locator('.pf-row').count() >= 1);
@@ -151,9 +153,6 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   await page.waitForSelector('#boss-budget-modal.hidden', { state: 'attached' });
   ok('หัวหน้าแก้งบที่ตัดได้ (ค่าอัปเดต + ลงประวัติ)',
     /งบประจำหน่วยงาน.*B0007777/.test(await page.locator('#bossdetail .incident-field', { hasText: 'งบที่ตัด' }).textContent()));
-  ok('มีทั้งป้าย "แนะนำ" (ตรงอาการ) และ "แนะนำทั่วไป"',
-    await page.locator('#bossdetail .pf-row .badge.b-info').count() >= 1
-    && await page.locator('#bossdetail .pf-row .badge.b-neutral').count() >= 1);
 
   // ---- เปลี่ยนช่องทาง ----
   await page.locator('#bossdetail .radcard', { hasText: 'ส่งต่อให้ กรย.' }).click();
