@@ -7,7 +7,7 @@
 // โครงข้อมูล (plain objects):
 // vehicle: { id, plate, plateProvince, vehicleType, rigBrand, rigModel, truckBrand, truckModel,
 //            assetCode, serialNo, hcNo, brand(derived), chassis(derived), ownerDept, ownerLevel,
-//            province, criteria, region(1-12), status, mileage, engineHours }
+//            province, criteria, region(1-12), status, mileage, engineHours, firstUseYear }
 //   ฟิลด์ระบุตัวรถยกตาม "แบบฟอร์มตรวจสภาพบำรุงรักษารถกระเช้า" ที่เจ้าของงานส่งมา 17 ส.ค. 2569
 // item:    { id, name, category, oilKind?, unit, appliesToTypes:[], qtyPerVehicle }
 // plan:    { id, createdAt, phase, planName, byQuarter:{Q1..Q4,none}, selectedVehicleIds:[],
@@ -36,11 +36,27 @@ const SETTINGS_KEY = 'maintaind.yearly.settings.v1';
 const REPAIR_TRIPS_KEY = 'maintaind.yearly.repairtrips.v1';
 const DEFAULT_SETTINGS = { confirmDueDays: 7 };   // ยังไม่ได้ค่าจริงจากเจ้าของงาน — แก้ได้จาก Admin
 
+// ================= เกณฑ์เข้าข่าย Overhaul (8 ก.ย. 2569) =================
+// ⚠️ ตัวเลขทั้งหมดเป็น "ค่าตั้งต้นที่เสนอ" ยังไม่ใช่เกณฑ์จริงของ กฟภ. — เจ้าของงานยกตัวอย่าง
+// ไว้ข้อเดียวคือ "อายุเกิน 15 ปี" ที่เหลือประมาณจากช่วงข้อมูลรถในต้นแบบ · แก้ได้จากหน้า Admin
+// ขอบเขต: เฉพาะรถขนาดใหญ่ที่อยู่ในโฟลว์นี้ (กระเช้า/เครน/รถขุด) ยังไม่รวมรถเล็ก
+//
+// อายุใช้งานใช้เกณฑ์เดียวทุกชนิดรถ · ไมล์/ชั่วโมง/ต้นทุนสะสม แยกตามชนิดเพราะสึกหรอคนละแบบ
+const OVERHAUL_DEFAULTS = {
+  ageYears: 15,
+  byType: {
+    'รถกระเช้า': { mileage: 150000, engineHours: 6000, maintCost: 200000 },
+    'รถเครน':    { mileage: 160000, engineHours: 7000, maintCost: 250000 },
+    'รถขุด':     { mileage: 120000, engineHours: 8000, maintCost: 220000 },
+  },
+  nearRatio: 0.8,   // ถึงกี่ส่วนของเกณฑ์ถือว่า "ใกล้เกณฑ์"
+};
+
 // schema version ของโครงข้อมูลใน localStorage — เพิ่มเลขนี้เมื่อโครงข้อมูล
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 15;  // 15 = ส่งคำขอยืนยันแยกรายไตรมาส (confirm.sent[q] แทน confirm.requestedAt เดี่ยว)
+const SCHEMA_VERSION = 16;  // 16 = รถมี firstUseYear (ปีที่เริ่มใช้งาน) — ฐานเกณฑ์อายุของ Overhaul
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -171,6 +187,10 @@ function genSeedVehicles() {
         status: VEHICLE_STATUS_CYCLE[(r * 5 + i * 3) % VEHICLE_STATUS_CYCLE.length],
         mileage: 40000 + ((r * 1000 + i * 137) % 120000),
         engineHours: 1500 + ((r * 97 + i * 53) % 5000),
+        // ปีที่เริ่มใช้งาน (พ.ศ.) — ฐานของเกณฑ์อายุใน Overhaul (8 ก.ย. 2569)
+        // กระจาย 2552–2569 แบบคงที่ ให้มีทั้งคันที่เกิน 15 ปีและยังไม่เกิน แต่ไม่ให้คันเก่า
+        // เยอะเกินจริง (ถ้ากระจายกว้างกว่านี้ รถเกือบครึ่งกองจะเข้าข่ายพร้อมกัน ซึ่งไม่สมจริง)
+        firstUseYear: 2552 + ((r * 3 + i * 7) % 18),
       });
     }
   }
@@ -1654,6 +1674,67 @@ const MYD = {
     this.ensurePlanQuarters(plan);
     plan.workNumber = this.workNumber(plan.year, seq);
     return plan.workNumber;
+  },
+
+  // ================= Overhaul — คัดว่ารถคันไหนเข้าข่าย (8 ก.ย. 2569) =================
+  OVERHAUL_DEFAULTS,
+
+  overhaulConfig() {
+    const s = this.loadSettings();
+    const cfg = s.overhaul || {};
+    return {
+      ageYears: Number(cfg.ageYears) || OVERHAUL_DEFAULTS.ageYears,
+      nearRatio: Number(cfg.nearRatio) || OVERHAUL_DEFAULTS.nearRatio,
+      byType: { ...OVERHAUL_DEFAULTS.byType, ...(cfg.byType || {}) },
+    };
+  },
+
+  saveOverhaulConfig(cfg) {
+    const s = this.loadSettings();
+    this.saveSettings({ ...s, overhaul: cfg });
+    return cfg;
+  },
+
+  // ต้นทุนบำรุงรักษาสะสมของรถคันหนึ่ง — รวมทุกแผน/ทุกไตรมาสที่รถคันนั้นอยู่ในใบเดินทาง
+  // (ต้นแบบยังไม่มีประวัติค่าซ่อมจริงรายคัน ใช้ยอดที่โฟลว์นี้บันทึกไว้เป็นตัวแทนไปก่อน)
+  vehicleMaintCostTotal(vehicleId, plans) {
+    return (plans || this.loadPlans()).reduce((sum, plan) => {
+      const c = this.vehicleCostOf(plan, vehicleId);
+      return sum + (c.perDiem || 0) + (c.lodging || 0) + (c.travel || 0);
+    }, 0);
+  },
+
+  vehicleAgeYears(vehicle, fiscalYearNow) {
+    if (!vehicle || !vehicle.firstUseYear) return null;
+    return Math.max(0, fiscalYearNow - vehicle.firstUseYear);
+  },
+
+  // ประเมินรถคันเดียว — pure: รับค่าที่คำนวณมาแล้วทั้งหมด ไม่แตะ storage เอง จึงเทสได้ตรงๆ
+  //   คืน { level:'due'|'near'|'ok', reasons:[…], metrics:[…], disposalFlag }
+  //   due  = มีอย่างน้อย 1 ข้อถึง/เกินเกณฑ์
+  //   near = ยังไม่ถึงสักข้อ แต่มีข้ออย่างน้อย 1 ที่ถึง nearRatio ของเกณฑ์
+  overhaulAssess(vehicle, cfg, ctx) {
+    ctx = ctx || {};
+    const c = cfg || this.overhaulConfig();
+    const t = c.byType[vehicle.vehicleType] || {};
+    const age = this.vehicleAgeYears(vehicle, ctx.fiscalYearNow);
+    const metrics = [
+      { key: 'age',    label: 'อายุใช้งาน',           unit: 'ปี',    value: age,                       limit: c.ageYears },
+      { key: 'mileage', label: 'เลขไมล์',             unit: 'กม.',   value: vehicle.mileage,           limit: t.mileage },
+      { key: 'hours',  label: 'ชั่วโมงเครื่องจักร',    unit: 'ชม.',   value: vehicle.engineHours,       limit: t.engineHours },
+      { key: 'cost',   label: 'ต้นทุนบำรุงรักษาสะสม', unit: 'บาท',   value: ctx.maintCost || 0,         limit: t.maintCost },
+    ].filter(m => m.value != null && m.limit)
+     .map(m => ({ ...m, ratio: m.value / m.limit, over: m.value >= m.limit }));
+
+    const reasons = metrics.filter(m => m.over);
+    const near = !reasons.length && metrics.some(m => m.ratio >= c.nearRatio);
+    return {
+      level: reasons.length ? 'due' : (near ? 'near' : 'ok'),
+      metrics,
+      reasons,
+      // รถที่หมดสภาพ/รอจำหน่ายอยู่แล้ว — overhaul อาจไม่คุ้ม ควรชี้ให้เห็นแยก ไม่ใช่กลบไปกับเกณฑ์
+      disposalFlag: vehicle.status === 'decommissioned' || vehicle.status === 'disposal',
+    };
   },
 
   // ----- เงื่อนไข trigger ของ item (display only — ไม่คำนวณ due) -----

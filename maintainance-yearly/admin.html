@@ -31,6 +31,7 @@
     <div class="vlogo">VMS<em>+</em></div>
     <a class="nv" href="index.html" title="รายการแผนบำรุงรักษา"><span class="ms">list_alt</span><span class="nvlbl">รายการแผนบำรุงรักษา</span></a>
     <a class="nv" href="plan-new.html" title="ออกเลขงาน — สร้างแผนใหม่"><span class="ms">note_add</span><span class="nvlbl">ออกเลขงาน</span></a>
+    <a class="nv" href="overhaul.html" title="Overhaul — รถที่เข้าข่ายยกเครื่อง"><span class="ms">build_circle</span><span class="nvlbl">Overhaul</span></a>
     <a class="nv" href="trip-plan.html" title="ทำแผนการเดินทาง (หน้าเดี่ยว)"><span class="ms">event_available</span><span class="nvlbl">ทำแผนการเดินทาง</span></a>
     <div class="nv on" id="nav-admin" title="Admin — ข้อมูลหลัก"><span class="ms">settings</span><span class="nvlbl">ข้อมูลหลัก (Admin)</span></div>
     <a class="nv" href="supplies.html" id="nav-supplies" title="ฝ่ายพัสดุ"><span class="ms">inventory_2</span><span class="nvlbl">ฝ่ายพัสดุ</span></a>
@@ -52,6 +53,7 @@
       <div class="seg max-w-[640px]" id="adminTabs">
         <div class="sg sel" data-tab="vehicles">ข้อมูลรถ</div>
         <div class="sg" data-tab="items">อะไหล่ · น้ำมัน · ไส้กรอง</div>
+        <div class="sg" data-tab="overhaul">เกณฑ์ Overhaul</div>
         <div class="sg" data-tab="demo">จัดการเดโม (Yearly)</div>
       </div>
       <div id="adminBody"></div>
@@ -62,7 +64,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="common.js?v=20260908-2"></script><!-- หน้านี้เคยตกไป ⇒ admin.js เรียก renderTimeSim() แล้ว pageerror + แถบจำลองวันที่ไม่ขึ้น -->
-<script src="mock-yearly.js?v=20260908-3"></script>
-<script src="admin.js?v=20260908-3"></script>
+<script src="mock-yearly.js?v=20260908-4"></script>
+<script src="admin.js?v=20260908-4"></script>
 </body>
 </html>

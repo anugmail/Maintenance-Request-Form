@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>อนุมัติปิดแผน — Maintain-D (Mock)</title>
+<title>Overhaul — รถที่เข้าข่ายยกเครื่อง | Maintain-D (Mock)</title>
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -12,7 +12,6 @@
 <link rel="stylesheet" href="../design-system/components.css?v=20260908-ds64">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="../design-system/tailwind-theme.js?v=20260907-tw3"></script>
-<script src="../ui-components.js?v=20260825-15"></script><!-- shared components (window.UIC) จาก MRF -->
 </head>
 <body>
 <div class="shell">
@@ -20,11 +19,11 @@
     <div class="vlogo">VMS<em>+</em></div>
     <a class="nv" href="index.html" title="รายการแผนบำรุงรักษา"><span class="ms">list_alt</span><span class="nvlbl">รายการแผนบำรุงรักษา</span></a>
     <a class="nv" href="plan-new.html" title="ออกเลขงาน — สร้างแผนใหม่"><span class="ms">note_add</span><span class="nvlbl">ออกเลขงาน</span></a>
-    <a class="nv" href="overhaul.html" title="Overhaul — รถที่เข้าข่ายยกเครื่อง"><span class="ms">build_circle</span><span class="nvlbl">Overhaul</span></a>
+    <a class="nv on" href="overhaul.html" title="Overhaul — รถที่เข้าข่ายยกเครื่อง"><span class="ms">build_circle</span><span class="nvlbl">Overhaul</span></a>
     <a class="nv" href="trip-plan.html" title="ทำแผนการเดินทาง (หน้าเดี่ยว)"><span class="ms">event_available</span><span class="nvlbl">ทำแผนการเดินทาง</span></a>
     <a class="nv" href="supplies.html" title="ฝ่ายพัสดุ"><span class="ms">inventory_2</span><span class="nvlbl">ฝ่ายพัสดุ</span></a>
     <a class="nv" href="confirm.html" title="หน่วยงานเจ้าของรถ — ยืนยันรถเข้าร่วมแผน"><span class="ms">fact_check</span><span class="nvlbl">ยืนยันรถเข้าร่วมแผน</span></a>
-    <a class="nv on" href="approve-close.html" title="อนุมัติปิดแผน (ผู้บังคับบัญชา กบค.)"><span class="ms">task_alt</span><span class="nvlbl">อนุมัติปิดแผน</span></a>
+    <a class="nv" href="approve-close.html" title="อนุมัติปิดแผน (ผู้บังคับบัญชา กบค.)"><span class="ms">task_alt</span><span class="nvlbl">อนุมัติปิดแผน</span></a>
     <a class="nv" href="admin.html" title="Admin — ข้อมูลหลัก"><span class="ms">settings</span><span class="nvlbl">ข้อมูลหลัก (Admin)</span></a>
     <a class="nv" href="plan-skeleton.html" title="โครงหน้าจอทั้งโฟลว์ (แก้ได้)"><span class="ms">dashboard_customize</span><span class="nvlbl">โครงหน้าจอทั้งโฟลว์</span></a>
   </aside>
@@ -33,14 +32,14 @@
     <div class="topbar">
       <span id="timeSim" class="flex items-center gap-2 mr-auto"></span>
       <span class="ms">account_circle</span>
-      <span>ผู้บังคับบัญชา กบค.</span>
+      <span>กบค. — ผู้ทำแผน</span>
     </div>
 
     <main class="content">
-      <div class="draft">โหมดผู้บังคับบัญชา กบค. — ต้นแบบไม่มีระบบ login จึงเห็นทุกแผน ของจริงต้องผ่านสิทธิ์อนุมัติ</div>
+      <div class="draft">Prototype (Mock) — เกณฑ์เข้าข่าย Overhaul เป็นค่าที่เสนอไว้ก่อน แก้ได้ที่ Admin › เกณฑ์ Overhaul</div>
       <div class="crumbs" id="crumbs"></div>
-      <h1 class="page-title" id="apTitle">อนุมัติปิดแผน</h1>
-      <div id="apBody"></div>
+      <div id="ovHead"></div>
+      <div id="ovBody"></div>
     </main>
   </div>
 </div>
@@ -49,6 +48,6 @@
 
 <script src="common.js?v=20260908-2"></script>
 <script src="mock-yearly.js?v=20260908-4"></script>
-<script src="approve-close.js?v=20260908-3"></script>
+<script src="overhaul.js?v=20260908-1"></script>
 </body>
 </html>

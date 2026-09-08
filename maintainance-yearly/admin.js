@@ -37,7 +37,69 @@ function initTabs() {
 function renderBody() {
   if (state.tab === 'vehicles') renderVehicles();
   else if (state.tab === 'items') renderItems();
+  else if (state.tab === 'overhaul') renderOverhaulCfg();
   else renderDemo();
+}
+
+// ================= เกณฑ์ Overhaul (8 ก.ย. 2569) =================
+// ⚠️ ตัวเลขตั้งต้นเป็นค่าที่เสนอไว้ ไม่ใช่เกณฑ์จริงของ กฟภ. — หน้านี้มีไว้ให้แก้เป็นของจริง
+// อายุใช้งานเป็นเกณฑ์เดียวทุกชนิดรถ (เจ้าของงานยกตัวอย่าง "เกิน 15 ปี")
+// ไมล์/ชั่วโมง/ต้นทุนสะสม แยกตามชนิดรถ
+function renderOverhaulCfg() {
+  const cfg = MYD.overhaulConfig();
+  const types = Object.keys(cfg.byType);
+  const rows = types.map(t => `
+    <tr data-type="${esc(t)}">
+      <td><b>${esc(t)}</b></td>
+      <td><input type="number" min="0" class="w-full" data-ov="mileage" data-type="${esc(t)}" value="${esc(cfg.byType[t].mileage)}"></td>
+      <td><input type="number" min="0" class="w-full" data-ov="engineHours" data-type="${esc(t)}" value="${esc(cfg.byType[t].engineHours)}"></td>
+      <td><input type="number" min="0" class="w-full" data-ov="maintCost" data-type="${esc(t)}" value="${esc(cfg.byType[t].maintCost)}"></td>
+    </tr>`).join('');
+
+  $('adminBody').innerHTML = `
+    <div class="card">
+      <div class="sect">เกณฑ์เข้าข่าย Overhaul</div>
+      <div class="sub">รถถือว่า <b>เข้าข่าย</b> เมื่อถึงหรือเกินเกณฑ์อย่างน้อย 1 ข้อ ·
+        <b>ใกล้เกณฑ์</b> เมื่อยังไม่ถึงสักข้อ แต่มีข้อที่ถึงสัดส่วนที่ตั้งไว้</div>
+      <div class="fgrid">
+        <div class="f sp2"><label>อายุใช้งาน (ปี) <small>ทุกชนิดรถ</small></label>
+          <div class="in"><span class="ms">event</span>
+            <input type="number" id="ovAge" min="1" max="60" value="${esc(cfg.ageYears)}"></div></div>
+        <div class="f sp2"><label>ถือว่า "ใกล้เกณฑ์" ที่กี่ % ของเกณฑ์</label>
+          <div class="in"><span class="ms">percent</span>
+            <input type="number" id="ovNear" min="10" max="99" value="${Math.round(cfg.nearRatio * 100)}"></div></div>
+      </div>
+      <div class="sect">เกณฑ์แยกตามชนิดรถ</div>
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr><th>ชนิดรถ</th><th>เลขไมล์ (กม.)</th><th>ชั่วโมงเครื่องจักร (ชม.)</th><th>ต้นทุนบำรุงรักษาสะสม (บาท)</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>
+      <div class="actions">
+        <button class="btn btn-g" id="btnOvReset">คืนค่าตั้งต้น</button>
+        <button class="btn btn-p" id="btnOvSave">บันทึกเกณฑ์</button>
+      </div>
+    </div>`;
+
+  $('btnOvSave').addEventListener('click', () => {
+    const byType = {};
+    types.forEach(t => {
+      const pick = key => Number(document.querySelector(`[data-ov="${key}"][data-type="${CSS.escape(t)}"]`).value) || 0;
+      byType[t] = { mileage: pick('mileage'), engineHours: pick('engineHours'), maintCost: pick('maintCost') };
+    });
+    MYD.saveOverhaulConfig({
+      ageYears: Number($('ovAge').value) || MYD.OVERHAUL_DEFAULTS.ageYears,
+      nearRatio: (Number($('ovNear').value) || 80) / 100,
+      byType,
+    });
+    toast('บันทึกเกณฑ์ Overhaul แล้ว');
+    renderOverhaulCfg();
+  });
+
+  $('btnOvReset').addEventListener('click', () => {
+    if (!confirm('คืนเกณฑ์ Overhaul กลับเป็นค่าตั้งต้น?')) return;
+    MYD.saveOverhaulConfig(null);
+    toast('คืนค่าตั้งต้นแล้ว');
+    renderOverhaulCfg();
+  });
 }
 
 // ================= VEHICLES: READ =================
@@ -56,6 +118,7 @@ function renderVehicles() {
       <td><span class="badge ${statusBadgeClass(v.status)}">${esc(MYD.STATUS_LABELS[v.status] || v.status)}</span></td>
       <td class="num">${esc(v.mileage)}</td>
       <td class="num">${esc(v.engineHours)}</td>
+      <td class="num">${esc(v.firstUseYear || '—')}</td>
       <td>
         <div class="rowline">
           <button class="iconbtn" data-act="edit-vehicle" data-id="${esc(v.id)}" title="แก้ไข"><span class="ms">edit</span></button>
@@ -79,7 +142,7 @@ function renderVehicles() {
     <div class="tblwrap">
       <table class="tbl">
         <thead><tr>
-          <th>ทะเบียน</th><th>ประเภท</th><th>เกณฑ์</th><th>เขต</th><th>หน่วยงานเจ้าของรถ</th><th>สถานะ</th><th>เลขไมล์</th><th>ชม.เครื่อง</th><th>จัดการ</th>
+          <th>ทะเบียน</th><th>ประเภท</th><th>เกณฑ์</th><th>เขต</th><th>หน่วยงานเจ้าของรถ</th><th>สถานะ</th><th>เลขไมล์</th><th>ชม.เครื่อง</th><th>เริ่มใช้ (พ.ศ.)</th><th>จัดการ</th>
         </tr></thead>
         <tbody>${rows || `<tr><td colspan="9" class="empty">ไม่มีรถในเขตที่เลือก</td></tr>`}</tbody>
       </table>
@@ -110,7 +173,7 @@ function openVehicleModal(id) {
   const master = MYD.loadMaster();
   const editing = id ? master.vehicles.find(v => v.id === id) : null;
   const defaultRegion = state.regionFilter !== 'all' ? Number(state.regionFilter) : 1;
-  const v = editing || { plate: '', vehicleType: VEHICLE_TYPES[0], criteria: 'truck', region: defaultRegion, ownerDept: '', status: 'available', mileage: 0, engineHours: 0 };
+  const v = editing || { plate: '', vehicleType: VEHICLE_TYPES[0], criteria: 'truck', region: defaultRegion, ownerDept: '', status: 'available', mileage: 0, engineHours: 0, firstUseYear: '' };
 
   const ov = document.createElement('div');
   ov.className = 'modal-ov';
@@ -130,6 +193,8 @@ function openVehicleModal(id) {
           <div class="f sp2"><label>สถานะ</label><div class="in"><span class="ms">flag</span><select name="status">${Object.entries(MYD.STATUS_LABELS).map(([k, l]) => `<option value="${k}" ${v.status === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div></div>
           <div class="f sp2"><label>เลขไมล์</label><div class="in"><span class="ms">speed</span><input type="number" name="mileage" min="0" value="${esc(v.mileage)}"></div></div>
           <div class="f sp2"><label>ชม.เครื่อง</label><div class="in"><span class="ms">schedule</span><input type="number" name="engineHours" min="0" value="${esc(v.engineHours)}"></div></div>
+          <div class="f sp2"><label>ปีที่เริ่มใช้งาน <small>พ.ศ. — ใช้คิดอายุในหน้า Overhaul</small></label>
+            <div class="in"><span class="ms">event</span><input type="number" name="firstUseYear" min="2500" max="2600" value="${esc(v.firstUseYear || '')}"></div></div>
         </div>
         <div class="actions">
           <button type="button" class="btn btn-g" id="btnCancelVehicle">ยกเลิก</button>
@@ -154,6 +219,7 @@ function openVehicleModal(id) {
       status: fd.get('status'),
       mileage: Number(fd.get('mileage')) || 0,
       engineHours: Number(fd.get('engineHours')) || 0,
+      firstUseYear: Number(fd.get('firstUseYear')) || null,
     };
     const m = MYD.loadMaster();
     if (editing) {
