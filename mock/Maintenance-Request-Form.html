@@ -4836,6 +4836,20 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
       <div class="incident-layout">
         <div>
           <section class="incident-section mt-0">
+            <h2 class="incident-section-title">ช่องทางการซ่อม</h2>
+            <div class="hint mb-2.5">ผู้แจ้งเสนอ: <b>${j.nextPhase === 'kry' ? 'ส่งเรื่องให้ กรย.' : 'ดำเนินการซ่อมเอง'}</b>${wait ? ' — หัวหน้าปรับเปลี่ยนได้ก่อนกดอนุมัติ' : ' (เรื่องเดินต่อแล้ว เปลี่ยนไม่ได้)'}</div>
+            <div class="radcards">
+              <label class="radcard ${j.nextPhase !== 'kry' ? 'sel' : ''}" onclick="bossRoute('self')">
+                <input type="radio" name="bossroute" ${j.nextPhase !== 'kry' ? 'checked' : ''}><span class="rdot"></span>
+                <span class="rc-ic"><span class="ms">build</span></span>
+                <span class="rc-tx"><b>ซ่อมเอง (อู่ของหน่วยงาน)</b><small>ดำเนินการซ่อมที่หน้างาน/หน่วยงาน</small></span></label>
+              <label class="radcard ${j.nextPhase === 'kry' ? 'sel' : ''}" onclick="bossRoute('kry')">
+                <input type="radio" name="bossroute" ${j.nextPhase === 'kry' ? 'checked' : ''}><span class="rdot"></span>
+                <span class="rc-ic"><span class="ms">alt_route</span></span>
+                <span class="rc-tx"><b>ส่งต่อให้ กรย.</b><small>ให้ กรย. คัดแยก ซ่อมที่อู่ / กรย. ซ่อมเอง / ส่งต่อ กบค.</small></span></label>
+            </div>
+          </section>
+          <section class="incident-section">
             <h2 class="incident-section-title">ข้อมูลการซ่อม</h2>
             <dl class="incident-summary">
               <div class="incident-field"><dt>วันที่สร้าง</dt><dd>${esc(d.d)}</dd></div>
@@ -4850,20 +4864,6 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
                   <button class="btn btn-tb btn-sm" onclick="openBossBudget()"><span class="ms">edit</span> แก้ไข</button>` : ''}</dd></div>
               <div class="incident-field wide"><dt>หมายเหตุ</dt><dd>${j.desc || '-'}</dd></div>
             </dl>
-          </section>
-          <section class="incident-section">
-            <h2 class="incident-section-title">ช่องทางการซ่อม</h2>
-            <div class="hint mb-2.5">ผู้แจ้งเสนอ: <b>${j.nextPhase === 'kry' ? 'ส่งเรื่องให้ กรย.' : 'ดำเนินการซ่อมเอง'}</b>${wait ? ' — หัวหน้าปรับเปลี่ยนได้ก่อนกดอนุมัติ' : ' (เรื่องเดินต่อแล้ว เปลี่ยนไม่ได้)'}</div>
-            <div class="radcards">
-              <label class="radcard ${j.nextPhase !== 'kry' ? 'sel' : ''}" onclick="bossRoute('self')">
-                <input type="radio" name="bossroute" ${j.nextPhase !== 'kry' ? 'checked' : ''}><span class="rdot"></span>
-                <span class="rc-ic"><span class="ms">build</span></span>
-                <span class="rc-tx"><b>ซ่อมเอง (อู่ของหน่วยงาน)</b><small>ดำเนินการซ่อมที่หน้างาน/หน่วยงาน</small></span></label>
-              <label class="radcard ${j.nextPhase === 'kry' ? 'sel' : ''}" onclick="bossRoute('kry')">
-                <input type="radio" name="bossroute" ${j.nextPhase === 'kry' ? 'checked' : ''}><span class="rdot"></span>
-                <span class="rc-ic"><span class="ms">alt_route</span></span>
-                <span class="rc-tx"><b>ส่งต่อให้ กรย.</b><small>ให้ กรย. คัดแยก ซ่อมที่อู่ / กรย. ซ่อมเอง / ส่งต่อ กบค.</small></span></label>
-            </div>
           </section>
           <section class="incident-section">
             <h2 class="incident-section-title">อะไหล่ที่ผู้แจ้งเลือกไว้ <span class="badge b-info">แนะนำ</span></h2>
