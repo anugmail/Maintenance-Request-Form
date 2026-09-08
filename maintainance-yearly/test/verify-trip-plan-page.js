@@ -94,7 +94,7 @@ const PLAN = 'plan-seed-2569-002';
 
   console.log('\nข้อมูลชุดเดียวกับหน้ารายการแผน');
   await page.goto(`${BASE}/index.html#${PLAN}`);
-  await page.waitForSelector('.wsteps');
+  await page.waitForSelector('.tab-btn');
   const sameData = await page.evaluate(p => MYD.ensureTrips(MYD.getPlan(p)).length, PLAN);
   ok(sameData === 1, `ใบเดินทางที่สร้างจากหน้าเดี่ยว มองเห็นจาก index.html ด้วย (${sameData} ใบ)`);
 
@@ -111,8 +111,8 @@ const PLAN = 'plan-seed-2569-002';
   console.log('\nหน้ารายการแผน (index.html) ก็ไม่มีปุ่มนี้เหมือนกันแล้ว (28 ส.ค. 2569 — เดิมเคยส่ง onNextPhase');
   console.log('มาเพื่อไปเฟส "ตรวจสภาพก่อนซ่อม" แต่ 4 เฟสท้ายย้ายไปเป็นหน้าไตรมาสแยกแล้ว ไม่มี "เฟสถัดไป" ของแผนอีก)');
   await page.goto(`${BASE}/index.html#${PLAN}`);
-  await page.waitForSelector('.wsteps');
-  await page.locator(`[onclick="goPhase('travel')"]`).click();
+  await page.waitForSelector('.tab-btn');
+  await page.locator(`[data-plan-tab="travel"]`).click();
   await page.waitForTimeout(400);
   ok(await page.locator('#btnGoNextPhaseProc').count() === 0, 'index.html ก็ไม่ส่ง onNextPhase มาแล้วเหมือนกัน — ไม่มีปุ่ม');
   ok(await page.locator('.sect', { hasText: 'รายการไตรมาส' }).count() > 0,

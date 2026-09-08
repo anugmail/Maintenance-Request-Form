@@ -15,8 +15,10 @@
 const { chromium } = require('playwright-core');
 const BASE = 'http://127.0.0.1:8123/maintainance-yearly';
 const PLAN = 'plan-seed-2569-002';
-const TAB_TRAVEL = `[onclick="goPhase('travel')"]`;
-const TAB_PROC   = `[onclick="goPhase('procurement')"]`;
+// 8 ก.ย. 2569: stepper 2 ชั้นถูกยุบเป็นแถบแท็บเดียว (ยืนยันรถ · เบิก/จัดหาอะไหล่ · แผนเดินทาง)
+const TAB_TRAVEL  = '[data-plan-tab="travel"]';
+const TAB_CONFIRM = '[data-plan-tab="confirm"]';
+const TAB_PARTS   = '[data-plan-tab="parts"]';
 
 (async () => {
   const browser = await chromium.launch({
@@ -29,36 +31,38 @@ const TAB_PROC   = `[onclick="goPhase('procurement')"]`;
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text().split('\n')[0]); });
   let pass = 0, fail = 0;
   const ok = (c, m) => c ? (pass++, console.log('  ✓', m)) : (fail++, console.log('  ✗', m));
-  const subLabels = () => page.locator('.wsteps.sm .wstep .lbl').allTextContents();
+  const tabLabels = () => page.locator('#stepper .tab-btn').evaluateAll(
+    els => els.map(e => (e.childNodes[0].textContent || '').trim()));
 
   await page.goto(`${BASE}/index.html#${PLAN}`);
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await page.waitForSelector('.wsteps');
+  await page.waitForSelector('.tab-btn');
 
-  console.log('stepper หลักของแผน — เหลือ 2 เฟส (4 เฟสท้ายย้ายไปเป็นของไตรมาสแล้ว — 28 ส.ค. 2569)');
-  const phases = await page.locator('#stepper .wstep .lbl').allTextContents();
-  console.log('   ', phases.join(' → '));
-  ok(phases[0] === 'เบิก/จัดหา', 'เฟส 1 = เบิก/จัดหา');
-  ok(phases[1] === 'แผนเดินทาง', 'เฟส 2 = แผนเดินทาง');
-  ok(phases.length === 2, `มี 2 เฟส (ได้ ${phases.length})`);
+  console.log('แถบแท็บของแผน — 3 แท็บ (ยุบ stepper 2 ชั้นเมื่อ 8 ก.ย. 2569)');
+  const tabs = await tabLabels();
+  console.log('   ', tabs.join(' · '));
+  ok(tabs.length === 3, `มี 3 แท็บ (ได้ ${tabs.length})`);
+  ok(tabs[0] === 'ยืนยันรถเข้าร่วมแผน' && tabs[1] === 'เบิก/จัดหาอะไหล่' && tabs[2] === 'แผนเดินทาง',
+    'ชื่อแท็บถูกต้อง');
+  ok(await page.locator('#stepper .wsteps').count() === 0, 'ไม่มี stepper เหลืออยู่ในหน้าแผนแล้ว');
+  ok(await page.locator(TAB_CONFIRM + '.on').count() === 1, 'เปิดมาอยู่แท็บยืนยันรถ');
 
-  console.log('\nเฟส 1 มี 2 ขั้น: ยืนยันรถ → เบิกอะไหล่');
-  let subs = await subLabels();
-  console.log('   ', subs.join(' → '));
-  ok(subs.length === 2 && subs[0] === 'ยืนยันรถเข้าร่วมแผน' && subs[1] === 'เบิก/จัดหาอะไหล่',
-    'ขั้นของเฟส 1 ถูกต้อง');
-  ok(await page.locator('.sect', { hasText: 'ขั้นที่ 1: ยืนยันรถ' }).count() > 0, 'เปิดมาอยู่ขั้นที่ 1');
+  console.log('\nเปิดแท็บไหนก็ได้ ไม่ล็อก — แต่ปุ่มลงมือของแท็บที่ยังไม่พร้อมต้องปิด');
+  // แผนตัวอย่างนี้ partsRequisitioned=true มาแล้ว — ล้างธงก่อน จะได้เห็นปุ่มจริงตอนยังยืนยันรถไม่ครบ
+  await page.evaluate((planId) => {
+    const p = MYD.getPlan(planId); p.partsRequisitioned = false; MYD.savePlan(p);
+  }, PLAN);
+  await page.reload(); await page.waitForSelector('.tab-btn');
+  await page.locator(TAB_PARTS).click(); await page.waitForTimeout(300);
+  ok(await page.locator(TAB_PARTS + '.on').count() === 1, 'เข้าแท็บเบิกอะไหล่ได้แม้ยังยืนยันรถไม่ครบ');
+  ok(await page.locator('.note-warn', { hasText: 'ยังส่งคำขอเบิกไม่ได้' }).count() > 0,
+    'มีกล่องบอกว่ายังส่งคำขอเบิกไม่ได้');
+  ok(await page.locator('#btnRequisition').isDisabled(), 'ปุ่มส่งคำขอเบิกอะไหล่ปิดอยู่');
 
-  console.log('\ngate ระดับขั้น: ยังยืนยันรถไม่ครบ → ข้ามไปขั้นเบิกไม่ได้');
-  await page.locator('[onclick="goProcSub(2)"]').click(); await page.waitForTimeout(300);
-  ok(await page.locator('.sect', { hasText: 'ขั้นที่ 1: ยืนยันรถ' }).count() > 0, 'ยังค้างที่ขั้น 1');
-  ok(await page.locator('.toast.show').count() > 0, 'มี toast บอกว่าต้องทำขั้นก่อนหน้าก่อน');
-
-  console.log('\ngate ระดับเฟส: เฟส 1 ยังไม่จบ → เข้าเฟส 2 ไม่ได้');
-  // แผนตัวอย่างนี้ partsRequisitioned=true อยู่แล้ว แต่ยังยืนยันรถไม่ครบ ⇒ ต้องยังเข้าเฟส 2 ไม่ได้
   await page.locator(TAB_TRAVEL).click(); await page.waitForTimeout(300);
-  ok(await page.locator('.sect', { hasText: 'ขั้นที่ 1: ยืนยันรถ' }).count() > 0, 'ยังค้างอยู่เฟส 1');
+  ok(await page.locator(TAB_TRAVEL + '.on').count() === 1, 'เข้าแท็บแผนเดินทางได้เช่นกัน');
+  await page.locator(TAB_CONFIRM).click(); await page.waitForTimeout(300);
 
   // ผ่านขั้นยืนยันรถ + ล้างธงเบิกอะไหล่ เพื่อไล่ขั้นที่ 2 จริง
   await page.evaluate((planId) => {
@@ -72,26 +76,27 @@ const TAB_PROC   = `[onclick="goPhase('procurement')"]`;
     p.partsRequisitioned = false;
     MYD.savePlan(p);
   }, PLAN);
-  await page.reload(); await page.waitForSelector('.wsteps');
+  await page.reload(); await page.waitForSelector('.tab-btn');
 
-  console.log('\nเฟส 1 · ขั้นที่ 2 = เบิก/จัดหาอะไหล่');
-  await page.locator('[onclick="goProcSub(2)"]').click(); await page.waitForTimeout(400);
-  ok(await page.locator('.sect', { hasText: 'ขั้นที่ 2: เบิก/จัดหาอะไหล่' }).count() > 0, 'เข้าขั้นเบิกอะไหล่ได้');
-  ok(await page.locator('#btnPrimaryProc').isDisabled(), 'ยังไม่ส่งคำขอ → ปุ่มหลักปิด');
-  ok((await page.locator('#btnPrimaryProc').textContent()).includes('ไปเฟสถัดไป'),
-    'ปุ่มท้ายเฟส 1 = "ไปเฟสถัดไป" (ไม่ใช่ "ยืนยันแผนเดินทาง")');
+  console.log('\nยืนยันรถครบแล้ว → แท็บเบิก/จัดหาอะไหล่ส่งคำขอได้');
+  await page.locator(TAB_PARTS).click(); await page.waitForTimeout(400);
+  ok(await page.locator(TAB_PARTS + '.on').count() === 1, 'เข้าแท็บเบิกอะไหล่ได้');
+  ok(await page.locator('.note-warn', { hasText: 'ยังส่งคำขอเบิกไม่ได้' }).count() === 0,
+    'กล่องกันส่งคำขอหายไปแล้ว');
+  ok(!(await page.locator('#btnRequisition').isDisabled()), 'ปุ่มส่งคำขอเบิกอะไหล่เปิดแล้ว');
   await page.locator('#btnRequisition').click(); await page.waitForTimeout(400);
   ok(await page.locator('.badge', { hasText: 'ส่งคำขอแล้ว' }).count() > 0, 'ส่งคำขอเบิกแล้ว');
-  ok(!(await page.locator('#btnPrimaryProc').isDisabled()), 'ส่งคำขอแล้ว → ปุ่มหลักเปิด');
+  ok(await page.locator(TAB_PARTS + ' .badge', { hasText: 'ส่งคำขอแล้ว' }).count() > 0,
+    'ป้ายสถานะบนแท็บอัปเดตตามด้วย');
 
-  console.log('\nเฟส 2 · แผนเดินทาง — ไม่มี stepper 2 ขั้นระดับหน้าอีกแล้ว (28 ส.ค. 2569 รอบ 3)');
-  await page.locator('#btnPrimaryProc').click(); await page.waitForTimeout(500);
+  console.log('\nแท็บแผนเดินทาง — ไม่มี sub-stepper ระดับหน้า');
+  await page.locator(TAB_TRAVEL).click(); await page.waitForTimeout(500);
   // ไตรมาส 1 กางไว้เป็นค่าเริ่มต้น จึงมี mini-stepper ของมันเองอยู่แล้ว 1 ตัว — เช็คว่าไม่มีตัวที่ลอยอยู่ "นอก" การ์ดไตรมาสใดๆ (ระดับหน้า) แทน
   ok(await page.locator('.wsteps.sm').count() === 1 && await page.locator('[data-q] .wsteps.sm').count() === 1,
     'ไม่มี sub-stepper ระดับหน้าของเฟสนี้แล้ว (มีแต่ตัวที่ฝังอยู่ในการ์ดไตรมาส 1 ที่กางไว้เป็นค่าเริ่มต้น)');
-  ok(await page.locator('.sect', { hasText: 'แผนเดินทาง' }).count() > 0, 'ปุ่มท้ายเฟส 1 พาเข้าเฟส 2 จริง');
-  ok(await page.locator('#btnPrimaryProc').count() === 0, 'เฟสแผนเดินทางไม่มีปุ่ม "ถัดไป" ของ shell');
-  ok(await page.locator('#btnBackProc').count() === 0, 'และไม่มีปุ่ม "ย้อนกลับ" ของ shell เช่นกัน');
+  ok(await page.locator('.sect', { hasText: 'แผนเดินทาง' }).count() > 0, 'แท็บแผนเดินทางเปิดเนื้อของมันจริง');
+  ok(await page.locator('#btnPrimaryProc').count() === 0, 'ไม่มีปุ่ม "ถัดไป" ของ wizard shell แล้ว');
+  ok(await page.locator('#btnBackProc').count() === 0, 'และไม่มีปุ่ม "ย้อนกลับ" เช่นกัน');
 
   console.log('\nไตรมาส 1 กางไว้เป็นค่าเริ่มต้นอยู่แล้ว (S.q) — ข้างในมี mini-stepper 2 ขั้นของไตรมาสนั้นเอง (แผนเดินทาง / ทวน + ยืนยัน)');
   const q1MiniLabels = await page.locator('[data-q="Q1"] .rzone-body .wsteps.sm .wstep .lbl').allTextContents();
@@ -132,8 +137,8 @@ const TAB_PROC   = `[onclick="goPhase('procurement')"]`;
     t.replies = {}; MYD.tripDepts(t, m).forEach(d => { t.replies[d] = { status: 'accepted', reason: '', by: 'x', at: 'x', history: [] }; });
     p.trips = [t]; MYD.savePlan(p);
   }, PLAN);
-  await page.reload(); await page.waitForSelector('.wsteps');
-  ok(await page.locator('.sect', { hasText: 'แผนเดินทาง' }).count() > 0, 'รีโหลดแล้วยังอยู่เฟส 2 (plan.phase ถูกบันทึก)');
+  await page.reload(); await page.waitForSelector('.tab-btn');
+  ok(await page.locator('.sect', { hasText: 'แผนเดินทาง' }).count() > 0, 'รีโหลดแล้วยังอยู่แท็บแผนเดินทาง (plan.phase ถูกบันทึก)');
 
   console.log('\nยืนยันไตรมาส 1 จากขั้น "ทวน + ยืนยัน" ในการ์ดของมันเอง — พาเข้าหน้าไตรมาสนั้นตรงๆ');
   // รีโหลดแล้ว S ในหน่วยความจำรีเซ็ต → ไตรมาส 1 กางไว้เป็นค่าเริ่มต้นอีกครั้ง ไม่ต้องคลิก toggle เอง (ไม่งั้นจะพับปิดแทน)
@@ -146,16 +151,17 @@ const TAB_PROC   = `[onclick="goPhase('procurement')"]`;
 
   console.log('\nเข้าไตรมาสนี้ครั้งแรก —ต้องเจอหน้า "เลือกรถที่จะดำเนินการ" ก่อนเข้า stepper (28 ส.ค. 2569 รอบ 4 — กันบำรุงรักษาคันเดียวกันซ้ำ)');
   ok(await page.locator('.sect', { hasText: 'เลือกรถที่จะดำเนินการ' }).count() > 0, 'เจอหน้าเลือกรถก่อนเข้าตรวจสภาพก่อนซ่อม');
-  ok(await page.locator('#stepper .wsteps').count() === 0, 'ยังไม่เห็น stepper 4 เฟส ระหว่างเลือกรถ');
+  ok(await page.locator('#stepper .tabs').count() === 0, 'ยังไม่เห็นแท็บ 4 เฟส ระหว่างเลือกรถ');
   ok(await page.locator('#chkPickAll').isChecked(), 'ตั้งต้นติ๊กรถทุกคันไว้ให้แล้ว');
   await page.locator('#btnStartOps').click();
   await page.waitForTimeout(400);
 
-  console.log('\nยืนยันเลือกรถแล้ว — ข้ามหน้าเลือกรถไปที่ stepper แยกต่างหาก 4 เฟส เห็นแค่รถของไตรมาสนี้');
-  const qPhases = await page.locator('#stepper .wstep .lbl').allTextContents();
-  console.log('   ', qPhases.join(' → '));
+  console.log('\nยืนยันเลือกรถแล้ว — ข้ามหน้าเลือกรถไปที่แถบแท็บ 4 เฟสของไตรมาส เห็นแค่รถของไตรมาสนี้');
+  const qPhases = await tabLabels();
+  console.log('   ', qPhases.join(' · '));
   ok(qPhases.length === 4 && qPhases[0] === 'ตรวจสภาพก่อนซ่อม' && qPhases[1] === 'ดำเนินการบำรุงรักษา'
     && qPhases[2] === 'จัดทำรายงาน' && qPhases[3] === 'คำนวณต้นทุน', '4 เฟสของไตรมาสถูกต้อง');
+  ok(await page.locator('#stepper .wsteps').count() === 0, 'หน้าไตรมาสไม่มี stepper เหลืออยู่แล้ว');
   ok(await page.locator('.cur', { hasText: 'ไตรมาส 1' }).count() > 0, 'crumbs บอกว่าอยู่ไตรมาส 1');
 
   console.log('\nเปิดใบตรวจของคันแรก + กด "เสร็จสิ้น" (ปุ่มเดียวจบ ข้ามไปขั้นถัดไปทันทีแม้ยังตรวจไม่ครบทุกคัน — ของเดิม)');
@@ -175,8 +181,8 @@ const TAB_PROC   = `[onclick="goPhase('procurement')"]`;
   await page.waitForTimeout(400);
   ok(await page.locator('.sect', { hasText: 'ดำเนินการบำรุงรักษา' }).count() > 0,
     'ตรวจคันแรกเสร็จ → ข้ามไปขั้นดำเนินการบำรุงรักษาอัตโนมัติ');
-  ok((await page.locator('.wsteps .wstep').first().getAttribute('class') || '').includes('passed'),
-    'ขั้นตรวจสภาพก่อนซ่อมของไตรมาสนี้ขึ้น passed แล้ว');
+  ok(await page.locator('[data-q-tab="inspection"] .badge', { hasText: 'เสร็จแล้ว' }).count() > 0,
+    'แท็บตรวจสภาพก่อนซ่อมขึ้นป้าย "เสร็จแล้ว"');
 
   console.log('\nไล่ต่อ: ดำเนินการบำรุงรักษา → จัดทำรายงาน → คำนวณต้นทุน');
   await page.locator('#btnMaintShowAll').click().catch(() => {});
@@ -193,8 +199,9 @@ const TAB_PROC   = `[onclick="goPhase('procurement')"]`;
   const proceedBtn = page.locator('#inspectWarnProceed');
   if (await proceedBtn.count()) { await proceedBtn.click(); await page.waitForTimeout(300); }
   ok(await page.locator('.note', { hasText: 'ส่งอนุมัติปิดแผน' }).count() > 0, 'ส่งอนุมัติปิดแผนไตรมาส 1 แล้ว');
-  const qStepClasses = await page.locator('.wsteps .wstep').evaluateAll(els => els.map(e => e.className));
-  ok(qStepClasses.every(c => c.includes('passed')), `ทั้ง 4 เฟสของไตรมาส 1 ผ่านหมดแล้ว (${qStepClasses.join(' | ')})`);
+  const qDone = await page.locator('#stepper .tab-btn .badge').allTextContents();
+  ok(qDone.length === 4 && qDone.every(t => t.includes('เสร็จแล้ว')),
+    `ทั้ง 4 แท็บของไตรมาส 1 ขึ้น "เสร็จแล้ว" หมด (${qDone.join(' | ')})`);
 
   console.log('\nกลับหน้าแผน — รายการไตรมาสต้องเห็นไตรมาส 1 ดำเนินการครบแล้ว + เปิดดำเนินการซ้ำได้');
   await page.locator('a', { hasText: 'กลับไปหน้าแผน' }).click();
@@ -206,9 +213,10 @@ const TAB_PROC   = `[onclick="goPhase('procurement')"]`;
   ok(await page.locator('tr', { hasText: 'ไตรมาส 1' }).locator('a', { hasText: 'เปิดดำเนินการ' }).count() > 0,
     'ยังกดเปิดดำเนินการซ้ำเพื่อย้อนดูได้');
 
-  console.log('\nถอยกลับดูเฟส 1 ของแผนได้ตามปกติ');
-  await page.locator(TAB_PROC).click(); await page.waitForTimeout(400);
-  ok(await page.locator('.sect', { hasText: 'ขั้นที่ 1: ยืนยันรถ' }).count() > 0, 'กลับเฟส 1 แล้วเริ่มที่ขั้น 1');
+  console.log('\nถอยกลับดูแท็บยืนยันรถได้ตามปกติ');
+  await page.locator(TAB_CONFIRM).click(); await page.waitForTimeout(400);
+  ok(await page.locator(TAB_CONFIRM + '.on').count() === 1, 'กลับมาที่แท็บยืนยันรถได้');
+  ok(await page.locator('.sect', { hasText: 'สรุปการยืนยัน' }).count() > 0, 'เห็นเนื้อของแท็บยืนยันรถ');
 
   console.log('\npageerror:', errors.length ? errors.join(' | ') : '(ไม่มี)');
   ok(errors.length === 0, 'ไม่มี pageerror');

@@ -28,7 +28,7 @@ const PLAN = 'plan-seed-2569-002';
   await page.goto(`${BASE}/index.html#${PLAN}`);
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await page.waitForSelector('.wsteps');
+  await page.waitForSelector('.tab-btn');
   await page.evaluate((planId) => {
     const p = MYD.getPlan(planId);
     (p.selectedVehicleIds || []).forEach(id => {
@@ -41,10 +41,10 @@ const PLAN = 'plan-seed-2569-002';
     MYD.savePlan(p);
   }, PLAN);
   await page.reload();
-  await page.waitForSelector('.wsteps');
+  await page.waitForSelector('.tab-btn');
 
   // ไปเฟส 2 (แผนเดินทาง) ด้วยการคลิกจริงบน stepper หลัก — แยกเป็นคนละเฟสแล้ว 21 ส.ค. 2569
-  await page.locator(`[onclick="goPhase('travel')"]`).click();
+  await page.locator(`[data-plan-tab="travel"]`).click();
   await page.waitForTimeout(400);
   // หัวข้อเปลี่ยนจาก "ขั้นที่ 1: ทำแผนเดินทาง" เป็น "แผนเดินทาง" ตอนย้าย stepper ย่อยเข้าไปในการ์ดไตรมาส (28 ส.ค. 2569 รอบ 3)
   ok(await page.locator('.sect', { hasText: 'แผนเดินทาง' }).count() > 0, 'เข้าเฟส 2 · แผนเดินทางได้');
@@ -146,8 +146,8 @@ const PLAN = 'plan-seed-2569-002';
 
   console.log('\nกลับฝั่ง กบค. — ใบถูกปฏิเสธต้องแก้แล้วส่งใหม่ได้');
   await page.goto(`${BASE}/index.html#${PLAN}`);
-  await page.waitForSelector('.wsteps');
-  await page.locator(`[onclick="goPhase('travel')"]`).click();
+  await page.waitForSelector('.tab-btn');
+  await page.locator(`[data-plan-tab="travel"]`).click();
   await page.waitForTimeout(400);
   ok(await page.locator('.badge', { hasText: 'ถูกปฏิเสธ' }).count() > 0, 'ใบขึ้นสถานะถูกปฏิเสธ');
   ok(!(await tripBoxes().first().locator('[data-field="location"]').isDisabled()), 'ปลดล็อกให้แก้ได้อีกครั้ง');
