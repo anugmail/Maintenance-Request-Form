@@ -816,6 +816,19 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
    opt-in ไม่ใส่ให้ .tbl ทุกตัว เพราะตารางที่วัดไว้ตอน v0.18 (.dataTable หน้าอื่น) ไม่มีแถบสลับสี */
 .tbl.striped tbody tr:nth-child(even) td{background:var(--gray-50)}
 .tbl.striped tbody tr:hover td{background:var(--gray-100)}
+
+/* แถวสรุปรวมท้ายตาราง + ตารางรายการอะไหล่คอลัมน์คงที่ (.itbl) — เดิมนิยามซ้ำใน
+   maintainance-yearly/index.html · plan-new.html · supplies.html ยกขึ้นมาที่เดียว 8 ก.ย. 2569
+   (กติกา: ของที่ใช้ซ้ำหลายหน้าอยู่ components.css · สไตล์เฉพาะจุดเขียนเป็น utility) */
+.tbl tfoot .sumrow td{background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:var(--fs-sm)}
+.itbl{table-layout:fixed}
+.itbl th,.itbl td{overflow:hidden;text-overflow:ellipsis}
+.itbl th:nth-child(1),.itbl td:nth-child(1){width:30%}
+.itbl th:nth-child(2),.itbl td:nth-child(2),
+.itbl th:nth-child(3),.itbl td:nth-child(3),
+.itbl th:nth-child(4),.itbl td:nth-child(4){width:13%;text-align:center}
+.itbl th:nth-child(5),.itbl td:nth-child(5){width:10%}
+.itbl th:nth-child(6),.itbl td:nth-child(6){width:21%;text-align:center}
 /* บรรทัดรองในเซลล์ — ข้อมูลขยายความของค่าหลัก (ยี่ห้อใต้ชนิดรถ · หน่วยงานใต้จังหวัด ·
    เหตุผลใต้ป้ายสถานะ) ใช้เมื่อค่าสองชั้นควรอยู่เซลล์เดียวกัน ไม่ใช่แตกคอลัมน์เพิ่ม
    ต่างจาก .sub ที่เป็นคำโปรยใต้หัวข้อของ section (14px + margin ล่าง) */

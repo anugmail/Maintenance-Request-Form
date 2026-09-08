@@ -1,21 +1,26 @@
 // confirm.js — หน้าหน่วยงานเจ้าของรถ: ตอบคำขอยืนยันรถเข้าร่วมแผน
 //
-// routing: confirm.html                     -> รายการคำขอ (ทุกหน่วยงาน × ทุกแผนที่ส่งคำขอแล้ว)
-//          confirm.html#<planId>/<deptIdx>  -> เปิดคำขอของหน่วยงานนั้น
+// routing: confirm.html                        -> รายการคำขอ (ทุกหน่วยงาน × ทุกไตรมาสที่ส่งคำขอแล้ว)
+//          confirm.html#<planId>/<q>/<deptIdx> -> เปิดคำขอของหน่วยงานนั้นในไตรมาสนั้น
+// 8 ก.ย. 2569: คำขอผูกกับ "ไตรมาส" ไม่ใช่ทั้งแผน — กบค. ส่งคำขอตอนเปิดดำเนินการไตรมาสนั้น
 // ต้นแบบไม่มี login — ของจริงจะกรองด้วยหน่วยงานของผู้ใช้
 // ต้องโหลด common.js + mock-yearly.js ก่อนไฟล์นี้
 
-// คำขอ = คู่ (แผน, หน่วยงาน) — 1 หน่วยงานอาจมีรถหลายคันในแผนเดียว
+// คำขอ = ชุด (แผน, ไตรมาส, หน่วยงาน) — 1 หน่วยงานอาจมีรถหลายคันในไตรมาสเดียว
 function buildRequests() {
   const master = MYD.loadMaster();
   const out = [];
   MYD.loadPlans().forEach(plan => {
-    if (!plan.confirm || !plan.confirm.requestedAt) return;
-    const vehicles = master.vehicles.filter(v => (plan.selectedVehicleIds || []).includes(v.id));
-    const byDept = {};
-    vehicles.forEach(v => { (byDept[v.ownerDept] = byDept[v.ownerDept] || []).push(v); });
-    Object.keys(byDept).sort((a, b) => a.localeCompare(b, 'th')).forEach((dept, i) => {
-      out.push({ plan, dept, deptIdx: i, vehicles: byDept[dept] });
+    MYD.QUARTER_KEYS.forEach(q => {
+      const sent = MYD.confirmSentOf(plan, q);
+      if (!sent || !sent.requestedAt) return;
+      const ids = MYD.planVehicleIds(plan, q);
+      const vehicles = master.vehicles.filter(v => ids.includes(v.id));
+      const byDept = {};
+      vehicles.forEach(v => { (byDept[v.ownerDept] = byDept[v.ownerDept] || []).push(v); });
+      Object.keys(byDept).sort((a, b) => a.localeCompare(b, 'th')).forEach((dept, i) => {
+        out.push({ plan, q, sent, dept, deptIdx: i, vehicles: byDept[dept] });
+      });
     });
   });
   return out;
@@ -51,26 +56,26 @@ function render() {
     return;
   }
 
-  const [planId, idx] = hash.split('/');
-  const req = buildRequests().find(r => r.plan.id === planId && String(r.deptIdx) === idx);
+  const [planId, q, idx] = hash.split('/');
+  const req = buildRequests().find(r => r.plan.id === planId && r.q === q && String(r.deptIdx) === idx);
   if (!req) { location.hash = ''; renderList(); return; }
   renderRequest(req);
 }
 
 function renderList() {
   // ปิดรับคำตอบแล้ว = ตอบไม่ได้อีกต่อไป — ไม่ต้องแสดงในรายการที่ต้องดำเนินการ
-  const reqs = buildRequests().filter(r => !MYD.confirmLocked(r.plan));
+  const reqs = buildRequests().filter(r => !MYD.confirmLockedQuarter(r.plan, r.q));
   const rows = reqs.map(r => {
     const answered = r.vehicles.filter(v => MYD.vehicleConfirm(r.plan, v.id).answer !== 'pending').length;
     return `<tr>
       <td><b class="text-gray-900">${esc(r.dept)}</b>
-        <div class="sub">${esc(r.plan.workNumber)} · ${esc(r.plan.planName || '—')}</div></td>
+        <div class="sub">${esc(r.plan.workNumber)} · ${esc(MYD.quarterLabel(r.q))} · ${esc(r.plan.planName || '—')}</div></td>
       <td class="num">${r.vehicles.length}</td>
       <td class="num">${answered}</td>
-      <td>${dateTh(r.plan.confirm.dueAt)}</td>
+      <td>${dateTh(r.sent.dueAt)}</td>
       <td>${answered === r.vehicles.length ? `<span class="badge b-ok">ตอบครบแล้ว</span>`
             : `<span class="badge b-low">รอตอบ ${r.vehicles.length - answered}</span>`}</td>
-      <td class="num"><a class="btn btn-s btn-sm" href="#${esc(r.plan.id)}/${r.deptIdx}">เปิดคำขอ</a></td>
+      <td class="num"><a class="btn btn-s btn-sm" href="#${esc(r.plan.id)}/${esc(r.q)}/${r.deptIdx}">เปิดคำขอ</a></td>
     </tr>`;
   }).join('');
 
@@ -83,7 +88,7 @@ function renderList() {
         <thead><tr><th>หน่วยงาน / แผน</th><th class="num">รถ (คัน)</th><th class="num">ตอบแล้ว</th>
           <th>กำหนดตอบ</th><th>สถานะ</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
-        : `<div class="empty">ยังไม่มีคำขอ — รอ กบค. กด "ส่งคำขอยืนยัน" ในเฟส 1 ของแผน</div>`}
+        : `<div class="empty">ยังไม่มีคำขอ</div>`}
     </div>
     ${renderInviteListCard()}`;
 }
@@ -116,7 +121,7 @@ function renderInviteListCard() {
         <thead><tr><th>หน่วยงาน / แผนเดินทาง</th><th>สถานที่</th><th>ช่วงที่เสนอ</th>
           <th class="num">รถ (คัน)</th><th>สถานะ</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
-        : `<div class="empty">ยังไม่มีแผนนัด — รอ กบค. ส่งแผนเดินทางมาในเฟส 2 · แผนเดินทาง</div>`}
+        : `<div class="empty">ยังไม่มีแผนนัด</div>`}
     </div>`;
 }
 
@@ -214,8 +219,8 @@ function bindTripInvite(inv) {
 
 // ----- เปิดคำขอรายใบ: รถของหน่วยงานนี้ในแผนนี้ -----
 function renderRequest(req) {
-  const { plan, dept, vehicles } = req;
-  const locked = MYD.confirmLocked(plan);
+  const { plan, q, sent, dept, vehicles } = req;
+  const locked = MYD.confirmLockedQuarter(plan, q);
   const today = todayIso();
 
   const rows = vehicles.map(v => {
@@ -244,15 +249,15 @@ function renderRequest(req) {
     <span class="sep">›</span><span class="cur">${esc(dept)}</span>`;
   $('cfBody').innerHTML = `
     <div class="card">
-      <div class="sect">${esc(plan.workNumber)} — ${esc(plan.planName || '—')}</div>
-      <div class="sub">หน่วยงานผู้ขอ: กบค. · ส่งคำขอ ${dateTh(plan.confirm.requestedAt)}
-        · กำหนดตอบ ${dateTh(plan.confirm.dueAt)}
-        ${today > plan.confirm.dueAt && !locked ? ' · <b>เลยกำหนดแล้ว</b>' : ''}</div>
+      <div class="sect">${esc(plan.workNumber)} · ${esc(MYD.quarterLabel(q))} — ${esc(plan.planName || '—')}</div>
+      <div class="sub">หน่วยงานผู้ขอ: กบค. · ส่งคำขอ ${dateTh(sent.requestedAt)}
+        · กำหนดตอบ ${dateTh(sent.dueAt)}
+        ${today > sent.dueAt && !locked ? ' · <b>เลยกำหนดแล้ว</b>' : ''}</div>
     </div>
     ${locked ? `<div class="empty">แผนเดินทางถูกยืนยันแล้ว — ปิดรับการแก้คำตอบ
         หากมีการเปลี่ยนแปลงกรุณาติดต่อ กบค. โดยตรง</div>` : ''}
     <div class="card">
-      <div class="sect">รถของ ${esc(dept)} ในแผนนี้</div>
+      <div class="sect">รถของ ${esc(dept)} ใน${esc(MYD.quarterLabel(q))}</div>
       <div class="tblwrap"><table class="tbl">
         <thead><tr><th>ทะเบียน</th><th>สถานะรถ</th><th>คำตอบ</th>
           <th>เหตุผลถ้าไม่พร้อม</th><th>จุดนัดรับ</th><th>ตอบเมื่อ</th></tr></thead>

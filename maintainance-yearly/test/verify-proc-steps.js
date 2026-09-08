@@ -1,24 +1,18 @@
-// แยก "เบิก/จัดหา" (เฟส 1) กับ "แผนเดินทาง" (เฟส 2) ออกจากกัน — เจ้าของงานสั่ง 21 ส.ค. 2569
-// ไล่ทั้งสองเฟสด้วยการคลิกจริง + เช็ค gate ทั้งระดับเฟส (stepper บน) และระดับขั้น (wizard ย่อย)
+// โครงหน้าของโฟลว์บำรุงรักษา — เดินด้วยการคลิกจริงตั้งแต่หน้าแผนจนจบไตรมาส
 //
-// ⚠️ 28 ส.ค. 2569 — เจ้าของงานสั่งย้าย "ตรวจสภาพก่อนซ่อม/ดำเนินการบำรุงรักษา/จัดทำรายงาน/คำนวณต้นทุน"
-// ออกจาก stepper ของแผน ไปเป็น stepper แยกต่างหาก "ต่อไตรมาส" (index.html#<planId>/<Q>) — กด "ยืนยัน<ไตรมาส>"
-// ที่ขั้นทวน+ยืนยันแล้วพาเข้าหน้าไตรมาสนั้นตรงๆ ทันที (ไม่รอไตรมาสอื่น) จึงต้องแยกเทสส่วนนี้ไล่ทีละไตรมาส —
-// ทดสอบนี้ยืนยันแค่ไตรมาสเดียว (Q1) แล้วไล่ stepper 4 เฟสของไตรมาสนั้นให้ครบ
+// 8 ก.ย. 2569 (เจ้าของงานสั่ง "ตอนที่เป็น master plan ยังไม่มีการส่งนัด หรือส่งยืนยันกับหน่วยงาน"):
+//   หน้าแผน   = 2 แท็บ — เบิก/จัดหาอะไหล่ · รายการไตรมาส   (ไม่ส่งอะไรหาหน่วยงานเลย)
+//   หน้าไตรมาส = 6 แท็บ — ยืนยันรถ · แผนเดินทาง · ตรวจสภาพก่อนซ่อม · ดำเนินการบำรุงรักษา ·
+//                 จัดทำรายงาน · คำนวณต้นทุน   (การส่งทุกอย่างเกิดที่นี่)
+//   หน้า "เลือกรถที่จะดำเนินการ" คั่นก่อนเข้า 4 แท็บหลัง ไม่ใช่กั้นทั้งหน้าไตรมาสแล้ว
 //
 // รันจากรากโปรเจกต์ (playwright-core ไม่ได้อยู่ใน repo — ชี้ผ่าน NODE_PATH):
 //   python3 -m http.server 8123 --bind 127.0.0.1 &
 //   NODE_PATH=<ที่ที่ npm i playwright-core ไว้>/node_modules \
 //   CHROME_PATH=<เบราว์เซอร์> node maintainance-yearly/test/verify-proc-steps.js
-// CHROME_PATH ตั้งต้นชี้ Google Chrome — ถ้าเครื่องไม่มี ใช้ chromium ของ playwright แทนได้:
-//   ~/Library/Caches/ms-playwright/chromium_headless_shell-*/chrome-headless-shell-*/chrome-headless-shell
 const { chromium } = require('playwright-core');
 const BASE = 'http://127.0.0.1:8123/maintainance-yearly';
 const PLAN = 'plan-seed-2569-002';
-// 8 ก.ย. 2569: stepper 2 ชั้นถูกยุบเป็นแถบแท็บเดียว (ยืนยันรถ · เบิก/จัดหาอะไหล่ · แผนเดินทาง)
-const TAB_TRAVEL  = '[data-plan-tab="travel"]';
-const TAB_CONFIRM = '[data-plan-tab="confirm"]';
-const TAB_PARTS   = '[data-plan-tab="parts"]';
 
 (async () => {
   const browser = await chromium.launch({
@@ -33,141 +27,122 @@ const TAB_PARTS   = '[data-plan-tab="parts"]';
   const ok = (c, m) => c ? (pass++, console.log('  ✓', m)) : (fail++, console.log('  ✗', m));
   const tabLabels = () => page.locator('#stepper .tab-btn').evaluateAll(
     els => els.map(e => (e.childNodes[0].textContent || '').trim()));
+  const openQuarter = async (q) => {
+    await page.goto(`${BASE}/index.html#${PLAN}/${q}`);
+    await page.waitForSelector('.tab-btn');
+  };
 
   await page.goto(`${BASE}/index.html#${PLAN}`);
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.waitForSelector('.tab-btn');
 
-  console.log('แถบแท็บของแผน — 3 แท็บ (ยุบ stepper 2 ชั้นเมื่อ 8 ก.ย. 2569)');
-  const tabs = await tabLabels();
-  console.log('   ', tabs.join(' · '));
-  ok(tabs.length === 3, `มี 3 แท็บ (ได้ ${tabs.length})`);
-  ok(tabs[0] === 'ยืนยันรถเข้าร่วมแผน' && tabs[1] === 'เบิก/จัดหาอะไหล่' && tabs[2] === 'แผนเดินทาง',
-    'ชื่อแท็บถูกต้อง');
-  ok(await page.locator('#stepper .wsteps').count() === 0, 'ไม่มี stepper เหลืออยู่ในหน้าแผนแล้ว');
-  ok(await page.locator(TAB_CONFIRM + '.on').count() === 1, 'เปิดมาอยู่แท็บยืนยันรถ');
+  console.log('หน้าแผน — 2 แท็บ ไม่มีการส่งอะไรหาหน่วยงาน');
+  const planTabs = await tabLabels();
+  console.log('   ', planTabs.join(' · '));
+  ok(planTabs.length === 2 && planTabs[0] === 'เบิก/จัดหาอะไหล่' && planTabs[1] === 'รายการไตรมาส',
+    'หน้าแผนมี 2 แท็บถูกต้อง');
+  ok(await page.locator('#stepper .wsteps').count() === 0, 'ไม่มี stepper เหลืออยู่');
+  ok(await page.locator('#btnSendConfirm').count() === 0, 'หน้าแผนไม่มีปุ่มส่งคำขอยืนยัน');
+  ok(await page.locator('[data-add-trip]').count() === 0, 'หน้าแผนไม่มีปุ่มสร้างแผนเดินทาง');
 
-  console.log('\nเปิดแท็บไหนก็ได้ ไม่ล็อก — แต่ปุ่มลงมือของแท็บที่ยังไม่พร้อมต้องปิด');
-  // แผนตัวอย่างนี้ partsRequisitioned=true มาแล้ว — ล้างธงก่อน จะได้เห็นปุ่มจริงตอนยังยืนยันรถไม่ครบ
+  console.log('\nแท็บเบิก/จัดหาอะไหล่ — ส่งคำขอได้เลย (เกณฑ์เดิมผูกกับการยืนยันรถ ย้ายไปไตรมาสแล้ว)');
   await page.evaluate((planId) => {
     const p = MYD.getPlan(planId); p.partsRequisitioned = false; MYD.savePlan(p);
   }, PLAN);
   await page.reload(); await page.waitForSelector('.tab-btn');
-  await page.locator(TAB_PARTS).click(); await page.waitForTimeout(300);
-  ok(await page.locator(TAB_PARTS + '.on').count() === 1, 'เข้าแท็บเบิกอะไหล่ได้แม้ยังยืนยันรถไม่ครบ');
-  ok(await page.locator('.note-warn', { hasText: 'ยังส่งคำขอเบิกไม่ได้' }).count() > 0,
-    'มีกล่องบอกว่ายังส่งคำขอเบิกไม่ได้');
-  ok(await page.locator('#btnRequisition').isDisabled(), 'ปุ่มส่งคำขอเบิกอะไหล่ปิดอยู่');
+  ok(!(await page.locator('#btnRequisition').isDisabled()), 'ปุ่มส่งคำขอเบิกอะไหล่เปิดอยู่');
+  await page.locator('#btnRequisition').click(); await page.waitForTimeout(400);
+  ok(await page.locator('.badge', { hasText: 'ส่งคำขอแล้ว' }).count() > 0, 'ส่งคำขอเบิกแล้ว');
+  ok(await page.locator('[data-plan-tab="parts"] .badge', { hasText: 'ส่งคำขอแล้ว' }).count() > 0,
+    'ป้ายบนแท็บอัปเดตตาม');
 
-  await page.locator(TAB_TRAVEL).click(); await page.waitForTimeout(300);
-  ok(await page.locator(TAB_TRAVEL + '.on').count() === 1, 'เข้าแท็บแผนเดินทางได้เช่นกัน');
-  await page.locator(TAB_CONFIRM).click(); await page.waitForTimeout(300);
+  console.log('\nแท็บรายการไตรมาส — เปิดดำเนินการได้ทุกไตรมาสที่มีรถ (ไม่ต้องรอยืนยันแผนเดินทาง)');
+  await page.locator('[data-plan-tab="quarters"]').click(); await page.waitForTimeout(400);
+  const openLinks = await page.locator('a', { hasText: 'เปิดดำเนินการ' }).count();
+  ok(openLinks === 4, `มีลิงก์เปิดดำเนินการครบ 4 ไตรมาส (ได้ ${openLinks})`);
 
-  // ผ่านขั้นยืนยันรถ + ล้างธงเบิกอะไหล่ เพื่อไล่ขั้นที่ 2 จริง
+  console.log('\nหน้าไตรมาส 1 — 6 แท็บ เปิดมาที่ "ยืนยันรถเข้าร่วมแผน"');
+  await openQuarter('Q1');
+  const qTabs = await tabLabels();
+  console.log('   ', qTabs.join(' · '));
+  ok(qTabs.length === 6 && qTabs[0] === 'ยืนยันรถเข้าร่วมแผน' && qTabs[1] === 'แผนเดินทาง'
+    && qTabs[5] === 'คำนวณต้นทุน', '6 แท็บของไตรมาสถูกต้อง');
+  ok(await page.locator('[data-q-tab="confirm"].on').count() === 1, 'เปิดมาอยู่แท็บยืนยันรถ');
+  ok(await page.locator('.cur', { hasText: 'ไตรมาส 1' }).count() > 0, 'crumbs บอกว่าอยู่ไตรมาส 1');
+
+  console.log('\nส่งคำขอยืนยันของไตรมาสนี้ — เฉพาะรถของไตรมาสนี้เท่านั้น');
+  // แผนเดโมส่งคำขอมาแล้วทุกไตรมาส — ล้างของ Q1 ทิ้งก่อน จะได้เห็นปุ่มส่งจริง
+  await page.evaluate((planId) => {
+    const p = MYD.getPlan(planId); delete p.confirm.sent.Q1; MYD.savePlan(p);
+  }, PLAN);
+  await page.reload(); await page.waitForSelector('.tab-btn');
+  const askText = (await page.locator('#phase').textContent()) || '';
+  ok(/จะส่งคำขอไป/.test(askText), 'ยังไม่ส่ง → เห็นกล่องส่งคำขอ');
+  const q1Count = await page.evaluate(p => MYD.planVehicleIds(MYD.getPlan(p), 'Q1').length, PLAN);
+  ok(askText.includes(`${q1Count} คัน`), `นับเฉพาะรถของไตรมาส 1 (${q1Count} คัน) ไม่ใช่ทั้งแผน`);
+  await page.locator('#btnSendConfirm').click(); await page.waitForTimeout(400);
+  ok(await page.locator('.sect', { hasText: 'สรุปการยืนยัน' }).count() > 0, 'ส่งแล้วเห็นตารางสรุปการยืนยัน');
+  const otherSent = await page.evaluate(p => !!MYD.confirmSentOf(MYD.getPlan(p), 'Q2'), PLAN);
+  ok(otherSent, 'คำขอของไตรมาสอื่นไม่ถูกแตะ');
+
+  console.log('\nฝั่งหน่วยงาน — รายการคำขอแยกรายไตรมาส');
+  await page.goto(`${BASE}/confirm.html`);
+  await page.waitForSelector('.card');
+  const cfLinks = await page.locator(`a[href^="#${PLAN}/Q1/"]`).count();
+  ok(cfLinks > 0, `มีคำขอของไตรมาส 1 ให้ตอบ ${cfLinks} รายการ (ลิงก์มีไตรมาสกำกับ)`);
+
+  console.log('\nแท็บแผนเดินทางของไตรมาส 1');
   await page.evaluate((planId) => {
     const p = MYD.getPlan(planId);
-    (p.selectedVehicleIds || []).forEach(id => {
+    MYD.planVehicleIds(p, 'Q1').forEach(id => {
       const e = MYD.vehicleConfirm(p, id);
       if (!(e.answer === 'ready' || e.verdict)) {
         p.confirm.byVehicle[id] = { ...MYD.emptyConfirmEntry(), ...e, verdict: 'keep', verdictWhy: 'ตั้งต้นเทส', verdictAt: 'x' };
       }
     });
-    p.partsRequisitioned = false;
     MYD.savePlan(p);
   }, PLAN);
-  await page.reload(); await page.waitForSelector('.tab-btn');
+  await openQuarter('Q1');
+  await page.locator('[data-q-tab="travel"]').click(); await page.waitForTimeout(400);
+  ok(await page.locator('[data-add-trip="Q1"]').count() > 0, 'มีปุ่มสร้างแผนเดินทางของไตรมาสนี้');
+  ok(await page.locator('[data-add-trip="Q2"]').count() === 0, 'ไม่มีของไตรมาสอื่นปนมา');
+  ok(await page.locator('.wsteps').count() === 0, 'ไม่มี mini-stepper ซ้อนในแท็บนี้');
+  await page.locator('[data-auto-trips="Q1"]').click(); await page.waitForTimeout(400);
+  ok(await page.locator('#phase .rzone').count() >= 1, 'แยกใบเดินทางอัตโนมัติได้');
 
-  console.log('\nยืนยันรถครบแล้ว → แท็บเบิก/จัดหาอะไหล่ส่งคำขอได้');
-  await page.locator(TAB_PARTS).click(); await page.waitForTimeout(400);
-  ok(await page.locator(TAB_PARTS + '.on').count() === 1, 'เข้าแท็บเบิกอะไหล่ได้');
-  ok(await page.locator('.note-warn', { hasText: 'ยังส่งคำขอเบิกไม่ได้' }).count() === 0,
-    'กล่องกันส่งคำขอหายไปแล้ว');
-  ok(!(await page.locator('#btnRequisition').isDisabled()), 'ปุ่มส่งคำขอเบิกอะไหล่เปิดแล้ว');
-  await page.locator('#btnRequisition').click(); await page.waitForTimeout(400);
-  ok(await page.locator('.badge', { hasText: 'ส่งคำขอแล้ว' }).count() > 0, 'ส่งคำขอเบิกแล้ว');
-  ok(await page.locator(TAB_PARTS + ' .badge', { hasText: 'ส่งคำขอแล้ว' }).count() > 0,
-    'ป้ายสถานะบนแท็บอัปเดตตามด้วย');
+  console.log('\nยืนยันแผนเดินทางของไตรมาสนี้');
+  // ⚠️ ต้องมิวเทตตัวแปร PLAN ที่หน้ากำลังถืออยู่ตรงๆ ไม่ใช่ MYD.getPlan() ซึ่งเป็นสำเนาใหม่ —
+  // ไม่งั้นการ save ครั้งต่อไปของหน้า (เช่นตอนคลิกแท็บ) จะเขียนทับของที่เพิ่งแก้ทิ้งเงียบๆ
+  await openQuarter('Q1');
+  await page.evaluate(() => {
+    const m = MYD.loadMaster();
+    const q1 = new Set(MYD.planVehicleIds(PLAN, 'Q1'));
+    MYD.ensureTrips(PLAN).filter(t => (t.vehicleIds || []).some(id => q1.has(id))).forEach(t => {
+      t.location = 'จุดรวมงานทดสอบ'; t.windowFrom = '2568-11-04'; t.windowTo = '2568-11-08'; t.sentAt = 'x';
+      t.replies = {}; MYD.tripDepts(t, m).forEach(d => {
+        t.replies[d] = { status: 'accepted', reason: '', by: 'x', at: 'x', history: [] };
+      });
+    });
+    MYD.savePlan(PLAN);
+  });
+  await page.locator('[data-q-tab="travel"]').click(); await page.waitForTimeout(400);
+  ok(await page.locator('[data-confirm-q="Q1"]').count() > 0, 'ไตรมาสพร้อมแล้ว → มีปุ่มยืนยันไตรมาส 1');
+  await page.locator('[data-confirm-q="Q1"]').click(); await page.waitForTimeout(500);
+  ok(await page.locator('.note-ok', { hasText: 'ยืนยันแผนเดินทางไตรมาส 1แล้ว' }).count() > 0,
+    'ยืนยันแล้วขึ้นกล่องยืนยัน');
+  ok(await page.locator('[data-q-tab="travel"] .badge', { hasText: 'เสร็จแล้ว' }).count() > 0,
+    'ป้ายบนแท็บแผนเดินทางขึ้น "เสร็จแล้ว"');
 
-  console.log('\nแท็บแผนเดินทาง — ไม่มี sub-stepper ระดับหน้า');
-  await page.locator(TAB_TRAVEL).click(); await page.waitForTimeout(500);
-  // ไตรมาส 1 กางไว้เป็นค่าเริ่มต้น จึงมี mini-stepper ของมันเองอยู่แล้ว 1 ตัว — เช็คว่าไม่มีตัวที่ลอยอยู่ "นอก" การ์ดไตรมาสใดๆ (ระดับหน้า) แทน
-  ok(await page.locator('.wsteps.sm').count() === 1 && await page.locator('[data-q] .wsteps.sm').count() === 1,
-    'ไม่มี sub-stepper ระดับหน้าของเฟสนี้แล้ว (มีแต่ตัวที่ฝังอยู่ในการ์ดไตรมาส 1 ที่กางไว้เป็นค่าเริ่มต้น)');
-  ok(await page.locator('.sect', { hasText: 'แผนเดินทาง' }).count() > 0, 'แท็บแผนเดินทางเปิดเนื้อของมันจริง');
-  ok(await page.locator('#btnPrimaryProc').count() === 0, 'ไม่มีปุ่ม "ถัดไป" ของ wizard shell แล้ว');
-  ok(await page.locator('#btnBackProc').count() === 0, 'และไม่มีปุ่ม "ย้อนกลับ" เช่นกัน');
-
-  console.log('\nไตรมาส 1 กางไว้เป็นค่าเริ่มต้นอยู่แล้ว (S.q) — ข้างในมี mini-stepper 2 ขั้นของไตรมาสนั้นเอง (แผนเดินทาง / ทวน + ยืนยัน)');
-  const q1MiniLabels = await page.locator('[data-q="Q1"] .rzone-body .wsteps.sm .wstep .lbl').allTextContents();
-  ok(q1MiniLabels.length === 2 && q1MiniLabels[0] === 'แผนเดินทาง' && q1MiniLabels[1] === 'ทวน + ยืนยัน',
-    `mini-stepper ของไตรมาส 1 มี 2 ขั้นถูกต้อง (${q1MiniLabels.join(' → ')})`);
-  ok(await page.locator('[data-q="Q1"] [data-add-trip="Q1"]').count() > 0,
-    'ค่าเริ่มต้นอยู่ขั้น "แผนเดินทาง" — เห็นปุ่มสร้างแผนเดินทางใหม่ของไตรมาสนี้');
-
-  console.log('\nสลับไปขั้น "ทวน + ยืนยัน" ของไตรมาส 1 ได้ทันที แม้ยังไม่มีใบเดินทางเลย (ไม่มีเกณฑ์บล็อก)');
-  await page.locator('[data-qstep="Q1"][data-qstep-n="2"]').click(); await page.waitForTimeout(300);
-  ok(await page.locator('[data-q="Q1"] [data-add-trip="Q1"]').count() === 0,
-    'สลับไปขั้นทวน+ยืนยันแล้ว — ปุ่มสร้างแผนเดินทางของขั้น 1 หายไป');
-  ok(await page.locator('[data-q="Q1"] .empty', { hasText: 'ยังไม่มีแผนเดินทางของไตรมาส 1' }).count() > 0,
-    'ขั้นทวน+ยืนยันบอกว่ายังไม่มีแผนเดินทาง');
-  ok(await page.locator('[data-confirm-q="Q1"]').count() === 0,
-    'ไตรมาส 1 ยังไม่พร้อม (quarterTravelReady) → ยังไม่มีปุ่ม "ยืนยันไตรมาส 1" ให้กด');
-
-  console.log('\nไตรมาสอื่นเป็นอิสระ — ขยายไตรมาส 2 แล้วยังอยู่ขั้น "แผนเดินทาง" ค่าเริ่มต้น ไม่ผูกกับไตรมาส 1');
-  await page.locator('[data-toggle-q="Q2"]').click(); await page.waitForTimeout(300);
-  ok(await page.locator('[data-q="Q2"] [data-add-trip="Q2"]').count() > 0,
-    'ไตรมาส 2 ยังอยู่ขั้น "แผนเดินทาง" (ค่าเริ่มต้น) แม้ไตรมาส 1 ถูกสลับไปขั้นทวน+ยืนยันแล้ว');
-  ok(await page.locator('[data-q="Q1"] .empty', { hasText: 'ยังไม่มีแผนเดินทางของไตรมาส 1' }).count() > 0,
-    'ไตรมาส 1 ยังค้างอยู่ขั้นทวน+ยืนยันเหมือนเดิม ไม่ถูกรีเซ็ตตอนขยายไตรมาสอื่น');
-
-  console.log('\nรายการไตรมาสท้ายเฟส "แผนเดินทาง" — ยังไม่มีไตรมาสไหนยืนยัน จึงเปิดดำเนินการไม่ได้สักไตรมาส');
-  ok(await page.locator('.sect', { hasText: 'รายการไตรมาส' }).count() > 0, 'มีการ์ดรายการไตรมาส');
-  ok(await page.locator('a', { hasText: 'เปิดดำเนินการ' }).count() === 0,
-    'ยังไม่มีลิงก์ "เปิดดำเนินการ" ที่กดได้เลยสักไตรมาส (ทุกไตรมาสเป็นปุ่ม disabled)');
-
-  // ทำแผนเดินทางให้ครบทุกไตรมาสมีรถอยู่ในใบเดียวกัน (ใบเดียวครอบคลุมทุกไตรมาส) — ให้ทุกไตรมาส "พร้อม" พร้อมกัน
-  await page.evaluate((planId) => {
-    const p = MYD.getPlan(planId), m = MYD.loadMaster();
-    MYD.ensurePlanQuarters(p); MYD.ensureTrips(p);
-    const un = MYD.unassignedVehicleIds(p);
-    const t = MYD.emptyTrip('trip-all', 'ใบรวมทดสอบ');
-    t.location = 'จุดรวมงานทดสอบ'; t.windowFrom = '2568-11-04'; t.windowTo = '2568-11-08';
-    t.vehicleIds = un; t.sentAt = 'x';
-    t.replies = {}; MYD.tripDepts(t, m).forEach(d => { t.replies[d] = { status: 'accepted', reason: '', by: 'x', at: 'x', history: [] }; });
-    p.trips = [t]; MYD.savePlan(p);
-  }, PLAN);
-  await page.reload(); await page.waitForSelector('.tab-btn');
-  ok(await page.locator('.sect', { hasText: 'แผนเดินทาง' }).count() > 0, 'รีโหลดแล้วยังอยู่แท็บแผนเดินทาง (plan.phase ถูกบันทึก)');
-
-  console.log('\nยืนยันไตรมาส 1 จากขั้น "ทวน + ยืนยัน" ในการ์ดของมันเอง — พาเข้าหน้าไตรมาสนั้นตรงๆ');
-  // รีโหลดแล้ว S ในหน่วยความจำรีเซ็ต → ไตรมาส 1 กางไว้เป็นค่าเริ่มต้นอีกครั้ง ไม่ต้องคลิก toggle เอง (ไม่งั้นจะพับปิดแทน)
-  await page.locator('[data-qstep="Q1"][data-qstep-n="2"]').click(); await page.waitForTimeout(300);
-  ok(await page.locator('[data-confirm-q="Q1"]').count() > 0, 'มีปุ่ม "ยืนยันไตรมาส 1" ให้กด (ไตรมาสนี้พร้อมแล้ว)');
-
-  await page.locator('[data-confirm-q="Q1"]').click();
-  await page.waitForTimeout(600);
-  ok(page.url().endsWith(`${PLAN}/Q1`), `กดยืนยันไตรมาส 1 แล้วพาเข้าหน้าไตรมาสนั้นตรงๆ (URL: ${page.url()})`);
-
-  console.log('\nเข้าไตรมาสนี้ครั้งแรก —ต้องเจอหน้า "เลือกรถที่จะดำเนินการ" ก่อนเข้า stepper (28 ส.ค. 2569 รอบ 4 — กันบำรุงรักษาคันเดียวกันซ้ำ)');
-  ok(await page.locator('.sect', { hasText: 'เลือกรถที่จะดำเนินการ' }).count() > 0, 'เจอหน้าเลือกรถก่อนเข้าตรวจสภาพก่อนซ่อม');
-  ok(await page.locator('#stepper .tabs').count() === 0, 'ยังไม่เห็นแท็บ 4 เฟส ระหว่างเลือกรถ');
+  console.log('\nเข้าแท็บตรวจสภาพครั้งแรก — ต้องเจอหน้า "เลือกรถที่จะดำเนินการ" คั่นก่อน');
+  await page.locator('[data-q-tab="inspection"]').click(); await page.waitForTimeout(500);
+  ok(await page.locator('.sect', { hasText: 'เลือกรถที่จะดำเนินการ' }).count() > 0, 'เจอหน้าเลือกรถ');
+  ok(await page.locator('#stepper .tabs').count() === 0, 'ระหว่างเลือกรถยังไม่เห็นแถบแท็บ');
   ok(await page.locator('#chkPickAll').isChecked(), 'ตั้งต้นติ๊กรถทุกคันไว้ให้แล้ว');
-  await page.locator('#btnStartOps').click();
-  await page.waitForTimeout(400);
+  await page.locator('#btnStartOps').click(); await page.waitForTimeout(500);
+  ok(await page.locator('[data-q-tab="inspection"].on').count() === 1, 'ยืนยันเลือกรถแล้วเข้าแท็บตรวจสภาพ');
 
-  console.log('\nยืนยันเลือกรถแล้ว — ข้ามหน้าเลือกรถไปที่แถบแท็บ 4 เฟสของไตรมาส เห็นแค่รถของไตรมาสนี้');
-  const qPhases = await tabLabels();
-  console.log('   ', qPhases.join(' · '));
-  ok(qPhases.length === 4 && qPhases[0] === 'ตรวจสภาพก่อนซ่อม' && qPhases[1] === 'ดำเนินการบำรุงรักษา'
-    && qPhases[2] === 'จัดทำรายงาน' && qPhases[3] === 'คำนวณต้นทุน', '4 เฟสของไตรมาสถูกต้อง');
-  ok(await page.locator('#stepper .wsteps').count() === 0, 'หน้าไตรมาสไม่มี stepper เหลืออยู่แล้ว');
-  ok(await page.locator('.cur', { hasText: 'ไตรมาส 1' }).count() > 0, 'crumbs บอกว่าอยู่ไตรมาส 1');
-
-  console.log('\nเปิดใบตรวจของคันแรก + กด "เสร็จสิ้น" (ปุ่มเดียวจบ ข้ามไปขั้นถัดไปทันทีแม้ยังตรวจไม่ครบทุกคัน — ของเดิม)');
-  // ⚠️ ต้องมิวเทตตัวแปร PLAN ที่หน้ากำลังใช้อยู่ตรงๆ (global let ไม่ได้ห่อ IIFE เหมือน trip-plan.js) ไม่ใช่
-  // MYD.getPlan(id) ซึ่งอ่านสำเนาใหม่จาก localStorage ทุกครั้ง — เคยพลาดมาแล้ว: sav ต่อไปของหน้าจากตัวแปร
-  // PLAN เดิมจะเขียนทับสำเนาที่เพิ่งแก้ทิ้งเงียบๆ ทำให้ signedDeliverAt/signedReceiveAt หายไป
+  console.log('\nไล่ 4 แท็บหลัง: ตรวจสภาพ → ดำเนินการ → รายงาน → ต้นทุน');
   await page.evaluate(() => {
     MYD.planVehicleIds(PLAN, 'Q1').forEach(id => {
       const f = MYD.ensureInspection(PLAN, id);
@@ -175,48 +150,36 @@ const TAB_PARTS   = '[data-plan-tab="parts"]';
     });
     MYD.savePlan(PLAN);
   });
-  await page.locator('[data-insp-open]').first().click();
-  await page.waitForTimeout(300);
-  await page.locator('#btnInspDone').click();
-  await page.waitForTimeout(400);
+  await page.locator('[data-insp-open]').first().click(); await page.waitForTimeout(300);
+  await page.locator('#btnInspDone').click(); await page.waitForTimeout(400);
   ok(await page.locator('.sect', { hasText: 'ดำเนินการบำรุงรักษา' }).count() > 0,
-    'ตรวจคันแรกเสร็จ → ข้ามไปขั้นดำเนินการบำรุงรักษาอัตโนมัติ');
+    'ตรวจคันแรกเสร็จ → ข้ามไปแท็บดำเนินการบำรุงรักษาอัตโนมัติ');
   ok(await page.locator('[data-q-tab="inspection"] .badge', { hasText: 'เสร็จแล้ว' }).count() > 0,
-    'แท็บตรวจสภาพก่อนซ่อมขึ้นป้าย "เสร็จแล้ว"');
+    'แท็บตรวจสภาพขึ้นป้าย "เสร็จแล้ว"');
 
-  console.log('\nไล่ต่อ: ดำเนินการบำรุงรักษา → จัดทำรายงาน → คำนวณต้นทุน');
   await page.locator('#btnMaintShowAll').click().catch(() => {});
   await page.waitForTimeout(300);
-  await page.locator('#btnPhaseNext').click();
-  await page.waitForTimeout(400);
-  ok(await page.locator('.sect', { hasText: 'จัดทำรายงาน' }).count() > 0, 'ไปขั้นจัดทำรายงานได้');
-  await page.locator('#btnPhaseNext').click();
-  await page.waitForTimeout(400);
-  ok(await page.locator('.sect', { hasText: 'คำนวณต้นทุน' }).count() > 0, 'ไปขั้นคำนวณต้นทุนได้');
+  await page.locator('#btnPhaseNext').click(); await page.waitForTimeout(400);
+  ok(await page.locator('.sect', { hasText: 'จัดทำรายงาน' }).count() > 0, 'ไปแท็บจัดทำรายงานได้');
+  await page.locator('#btnPhaseNext').click(); await page.waitForTimeout(400);
+  ok(await page.locator('.sect', { hasText: 'คำนวณต้นทุน' }).count() > 0, 'ไปแท็บคำนวณต้นทุนได้');
 
-  await page.locator('#btnSendCloseQ').click();
-  await page.waitForTimeout(300);
+  await page.locator('#btnSendCloseQ').click(); await page.waitForTimeout(300);
   const proceedBtn = page.locator('#inspectWarnProceed');
   if (await proceedBtn.count()) { await proceedBtn.click(); await page.waitForTimeout(300); }
   ok(await page.locator('.note', { hasText: 'ส่งอนุมัติปิดแผน' }).count() > 0, 'ส่งอนุมัติปิดแผนไตรมาส 1 แล้ว');
   const qDone = await page.locator('#stepper .tab-btn .badge').allTextContents();
-  ok(qDone.length === 4 && qDone.every(t => t.includes('เสร็จแล้ว')),
-    `ทั้ง 4 แท็บของไตรมาส 1 ขึ้น "เสร็จแล้ว" หมด (${qDone.join(' | ')})`);
+  ok(qDone.length === 6 && qDone.every(t => t.includes('เสร็จแล้ว')),
+    `ทั้ง 6 แท็บของไตรมาส 1 ขึ้น "เสร็จแล้ว" หมด (ได้ ${qDone.length} ป้าย)`);
 
-  console.log('\nกลับหน้าแผน — รายการไตรมาสต้องเห็นไตรมาส 1 ดำเนินการครบแล้ว + เปิดดำเนินการซ้ำได้');
-  await page.locator('a', { hasText: 'กลับไปหน้าแผน' }).click();
-  await page.waitForTimeout(400);
-  ok(page.url().endsWith(`#${PLAN}`), 'กลับมาที่หน้าแผน (ไม่ใช่หน้าไตรมาสแล้ว)');
-  await page.locator(TAB_TRAVEL).click(); await page.waitForTimeout(400);
+  console.log('\nกลับหน้าแผน — รายการไตรมาสต้องเห็นไตรมาส 1 ครบแล้ว');
+  await page.locator('a', { hasText: 'กลับไปหน้าแผน' }).click(); await page.waitForTimeout(400);
+  ok(page.url().endsWith(`#${PLAN}`), 'กลับมาที่หน้าแผน');
+  await page.locator('[data-plan-tab="quarters"]').click(); await page.waitForTimeout(400);
   ok(await page.locator('tr', { hasText: 'ไตรมาส 1' }).locator('.badge', { hasText: 'ดำเนินการครบแล้ว' }).count() > 0,
-    'แถวไตรมาส 1 ในรายการไตรมาสขึ้นว่าดำเนินการครบแล้ว');
+    'แถวไตรมาส 1 ขึ้นว่าดำเนินการครบแล้ว');
   ok(await page.locator('tr', { hasText: 'ไตรมาส 1' }).locator('a', { hasText: 'เปิดดำเนินการ' }).count() > 0,
     'ยังกดเปิดดำเนินการซ้ำเพื่อย้อนดูได้');
-
-  console.log('\nถอยกลับดูแท็บยืนยันรถได้ตามปกติ');
-  await page.locator(TAB_CONFIRM).click(); await page.waitForTimeout(400);
-  ok(await page.locator(TAB_CONFIRM + '.on').count() === 1, 'กลับมาที่แท็บยืนยันรถได้');
-  ok(await page.locator('.sect', { hasText: 'สรุปการยืนยัน' }).count() > 0, 'เห็นเนื้อของแท็บยืนยันรถ');
 
   console.log('\npageerror:', errors.length ? errors.join(' | ') : '(ไม่มี)');
   ok(errors.length === 0, 'ไม่มี pageerror');

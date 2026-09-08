@@ -267,7 +267,7 @@ function showVehicleDetail(vehicleId) {
   const host = $('vehModal');
   host.innerHTML = `
     <div class="modal-overlay" id="vehOverlay">
-      <div class="modal" style="max-width:720px">
+      <div class="modal max-w-[720px]">
         <div class="modal-head">
           <div>
             <b>${esc(MYD.plateFull(v))}</b>

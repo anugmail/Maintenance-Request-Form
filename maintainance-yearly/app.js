@@ -26,19 +26,22 @@ const PHASES = [
 
 // แท็บระดับแผน (8 ก.ย. 2569) — ยุบ stepper 2 ชั้น (เฟส + ขั้นย่อยของเฟส "เบิก/จัดหา") เหลือแถบเดียว
 // เจ้าของงานยืนยันว่างานจริง "วนกลับไปมาตลอดระหว่างรอหน่วยงานตอบ" ⇒ ไม่ใช่วิซาร์ดเดินหน้าอย่างเดียว
-// แต่ละแท็บ map กลับไปที่ (plan.phase, state.sub) เดิม — logic/สถานะที่บันทึกไว้ไม่เปลี่ยน
+// แต่ละแท็บ map กลับไปที่ plan.phase เดิม — logic/สถานะที่บันทึกไว้ไม่เปลี่ยน
 const PLAN_TABS = [
-  { id: 'confirm', label: 'ยืนยันรถเข้าร่วมแผน', phase: 'procurement', sub: 1 },
-  { id: 'parts',   label: 'เบิก/จัดหาอะไหล่',    phase: 'procurement', sub: 2 },
-  { id: 'travel',  label: 'แผนเดินทาง',          phase: 'travel',      sub: 1 },
+  { id: 'parts',    label: 'เบิก/จัดหาอะไหล่', phase: 'procurement' },
+  { id: 'quarters', label: 'รายการไตรมาส',     phase: 'travel' },
 ];
 
 // QUARTER_PHASES = เฟสระดับ "ไตรมาส" — เข้าได้ต่อเมื่อไตรมาสนั้นยืนยันแผนเดินทางแล้ว (28 ส.ค. 2569)
+// 8 ก.ย. 2569: "ยืนยันรถ" กับ "แผนเดินทาง" ย้ายลงมาจากระดับแผน — เจ้าของงานบอกว่าตอนเป็น
+// master plan ยังไม่มีการส่งนัด/ส่งยืนยันกับหน่วยงาน การส่งทุกอย่างเกิดที่ระดับไตรมาส
 const QUARTER_PHASES = [
-  { id: 'inspection',  no: 1, label: 'ตรวจสภาพก่อนซ่อม' },
-  { id: 'maintenance', no: 2, label: 'ดำเนินการบำรุงรักษา' },
-  { id: 'report',      no: 3, label: 'จัดทำรายงาน' },
-  { id: 'cost',        no: 4, label: 'คำนวณต้นทุน' },
+  { id: 'confirm',     no: 1, label: 'ยืนยันรถเข้าร่วมแผน' },
+  { id: 'travel',      no: 2, label: 'แผนเดินทาง' },
+  { id: 'inspection',  no: 3, label: 'ตรวจสภาพก่อนซ่อม' },
+  { id: 'maintenance', no: 4, label: 'ดำเนินการบำรุงรักษา' },
+  { id: 'report',      no: 5, label: 'จัดทำรายงาน' },
+  { id: 'cost',        no: 6, label: 'คำนวณต้นทุน' },
 ];
 
 // สถานะแผนเทียบกับปฏิทินปีงบ — แผนทำล่วงหน้า 2 ปี จึงมีช่วง "รอ" และ "รอบทบทวน"
@@ -252,28 +255,24 @@ function renderList() {
 }
 
 // ================= หน้าแผนรายใบ =================
-// แท็บไหนกำลังเปิดอยู่ — อ่านจาก (plan.phase, state.sub) ที่เก็บไว้เดิม
+// แท็บไหนกำลังเปิดอยู่ — อ่านจาก plan.phase ที่เก็บไว้เดิม
 function currentPlanTab() {
-  if (currentPhase() === 'travel') return 'travel';
-  return state.sub === 2 ? 'parts' : 'confirm';
+  return currentPhase() === 'travel' ? 'quarters' : 'parts';
 }
 
 // ป้ายสถานะบนแท็บ — เหตุผลที่คนกลับเข้าหน้านี้คือมาดูสถานะ จึงต้องอ่านได้จากแถบเลย
 function planTabBadge(id) {
   const plan = PLAN;
-  const ids = plan.selectedVehicleIds || [];
-  if (id === 'confirm') {
-    if (!plan.confirm || !plan.confirm.requestedAt) return null;
-    if (MYD.confirmResolved(plan, ids)) return { cls: 'b-ok', text: 'ตอบครบแล้ว' };
-    const s = MYD.confirmSummary(plan, ids, todayIso());
-    return { cls: 'b-low', text: `ตอบแล้ว ${s.total - s.waiting}/${s.total}` };
-  }
   if (id === 'parts') {
     return plan.partsRequisitioned ? { cls: 'b-ok', text: 'ส่งคำขอแล้ว' } : null;
   }
-  if (plan.travelConfirmed) return { cls: 'b-ok', text: 'ยืนยันแล้ว' };
-  const n = (plan.trips || []).length;
-  return n ? { cls: 'b-low', text: `${n} ใบ` } : null;
+  // รายการไตรมาส — บอกว่าดำเนินการครบไปกี่ไตรมาสจากไตรมาสที่มีรถ
+  const qs = MYD.QUARTER_KEYS.filter(q => MYD.planVehicleIds(plan, q).length);
+  if (!qs.length) return null;
+  const done = qs.filter(q => QUARTER_PHASES.every(ph => MYD.quarterPhaseDone(plan, q, ph.id))).length;
+  return done === qs.length
+    ? { cls: 'b-ok', text: 'ครบทุกไตรมาส' }
+    : { cls: 'b-low', text: `${done}/${qs.length} ไตรมาส` };
 }
 
 function renderPlanTabs() {
@@ -295,7 +294,6 @@ function goPlanTab(id) {
   if (!t) return;
   PLAN.phase = t.phase;
   MYD.savePlan(PLAN);
-  state.sub = t.sub;
   renderPlanTabs();
   renderPhaseBody();
   window.scrollTo({ top: 0 });
@@ -308,7 +306,6 @@ function goPhase(id) {
   }
   PLAN.phase = id;
   MYD.savePlan(PLAN);
-  state.sub = 1;
   renderPlanTabs();
   renderPhaseBody();
   window.scrollTo({ top: 0 });
@@ -349,6 +346,7 @@ function renderQuarterTabs() {
 function goQuarterPhase(id, opts = {}) {
   MYD.setQuarterOpsPhase(PLAN, QUARTER, id);
   MYD.savePlan(PLAN);
+  if (needsVehiclePick(id)) { renderQuarterVehiclePick(); window.scrollTo({ top: 0 }); return; }
   // เข้าเฟสดำเนินการบำรุงรักษา ต่อจากตรวจสภาพคันเดียว → โฟกัสคันนั้น (26 ส.ค. 2569)
   // เข้าเฟสจัดทำรายงาน ต่อจากดำเนินการบำรุงรักษาคันเดียว → โฟกัสคันเดียวกันต่อ (28 ส.ค. 2569)
   // ทางอื่นที่เข้าเฟสเหล่านี้ (คลิก stepper ตรงๆ) ไม่ส่ง opts.vehicleId มา จึงเห็นรถทั้งหมดตามปกติ
@@ -699,7 +697,7 @@ function renderReport() {
           <label><input type="radio" name="partsComplete-${esc(id)}" value="incomplete" ${usage.complete === false ? 'checked' : ''}
             data-parts-complete="${esc(id)}"> ไม่ครบ</label>
         </div>
-        <div style="${usage.complete === false ? '' : 'display:none'}" data-parts-return-list>
+        <div class="${usage.complete === false ? '' : 'hidden'}" data-parts-return-list>
           ${partsIssued.length ? `<div class="tblwrap"><table class="tbl">
             <thead><tr><th>ชื่ออะไหล่</th><th class="num">รายการเบิก</th><th class="num">รายการคืน</th></tr></thead>
             <tbody>${partsRows}</tbody></table></div>`
@@ -732,7 +730,7 @@ function renderReport() {
     </tr>`;
   }).join('');
   const grandTotal = sumPerDiem + sumLodging + sumTravel;
-  const totalCellStyle = 'background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:var(--fs-sm)';
+  const totalCellClass = 'bg-gray-50 border-t-2 border-gray-200 text-gray-700 text-sm';
 
   $('phase').innerHTML = `
     <div class="card">
@@ -760,16 +758,16 @@ function renderReport() {
             <th class="num">ค่าเดินทาง (บาท)</th><th class="num">รวม (บาท)</th></tr></thead>
           <tbody>${costRows}</tbody>
           <tfoot><tr>
-            <td colspan="2" style="${totalCellStyle}"><b>ต้นทุน${esc(MYD.quarterLabel(QUARTER))}</b></td>
-            <td class="num" style="${totalCellStyle}">${sumPerDiem.toLocaleString('th-TH')}</td>
-            <td class="num" style="${totalCellStyle}">${sumLodging.toLocaleString('th-TH')}</td>
-            <td class="num" style="${totalCellStyle}">${sumTravel.toLocaleString('th-TH')}</td>
-            <td class="num" style="${totalCellStyle}"><b>${grandTotal.toLocaleString('th-TH')}</b></td>
+            <td colspan="2" class="${totalCellClass}"><b>ต้นทุน${esc(MYD.quarterLabel(QUARTER))}</b></td>
+            <td class="num ${totalCellClass}">${sumPerDiem.toLocaleString('th-TH')}</td>
+            <td class="num ${totalCellClass}">${sumLodging.toLocaleString('th-TH')}</td>
+            <td class="num ${totalCellClass}">${sumTravel.toLocaleString('th-TH')}</td>
+            <td class="num ${totalCellClass}"><b>${grandTotal.toLocaleString('th-TH')}</b></td>
           </tr></tfoot></table></div>
 `
         : `<div class="empty">ไม่มีรถของ${esc(MYD.quarterLabel(QUARTER))}</div>`}`
         : '<div class="empty">ยังไม่มีรถที่เข้าเกณฑ์</div>'}
-      <div class="actions" style="justify-content:space-between">
+      <div class="actions justify-between">
         <button class="btn btn-g" id="btnBackToInspect"><span class="ms">arrow_back</span> กลับไปเลือกรถตรวจสภาพก่อนซ่อม</button>
         <button class="btn btn-p" id="btnPhaseNext">ถัดไป${nextQuarterPhaseLabel('report')}</button>
       </div>
@@ -837,7 +835,7 @@ function renderCost() {
     </tr>`;
   }).join('');
   const grandTotal = sumPerDiem + sumLodging + sumTravel;
-  const totalCellStyle = 'background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:var(--fs-sm)';
+  const totalCellClass = 'bg-gray-50 border-t-2 border-gray-200 text-gray-700 text-sm';
 
   // ส่งอนุมัติปิดแผนของไตรมาสนี้ (26 ส.ค. 2569)
   const approval = MYD.closeApprovalOf(PLAN, QUARTER);
@@ -854,11 +852,11 @@ function renderCost() {
             <th class="num">ค่าเดินทาง (บาท)</th><th class="num">รวม (บาท)</th></tr></thead>
           <tbody>${rows}</tbody>
           <tfoot><tr>
-            <td colspan="2" style="${totalCellStyle}"><b>ต้นทุน${esc(MYD.quarterLabel(QUARTER))}</b></td>
-            <td class="num" style="${totalCellStyle}">${sumPerDiem.toLocaleString('th-TH')}</td>
-            <td class="num" style="${totalCellStyle}">${sumLodging.toLocaleString('th-TH')}</td>
-            <td class="num" style="${totalCellStyle}">${sumTravel.toLocaleString('th-TH')}</td>
-            <td class="num" style="${totalCellStyle}"><b>${grandTotal.toLocaleString('th-TH')}</b></td>
+            <td colspan="2" class="${totalCellClass}"><b>ต้นทุน${esc(MYD.quarterLabel(QUARTER))}</b></td>
+            <td class="num ${totalCellClass}">${sumPerDiem.toLocaleString('th-TH')}</td>
+            <td class="num ${totalCellClass}">${sumLodging.toLocaleString('th-TH')}</td>
+            <td class="num ${totalCellClass}">${sumTravel.toLocaleString('th-TH')}</td>
+            <td class="num ${totalCellClass}"><b>${grandTotal.toLocaleString('th-TH')}</b></td>
           </tr></tfoot></table></div>
 
         ${approval
@@ -987,7 +985,7 @@ function renderInspectForm(vehicleId) {
             </select></div>
           <div class="actions justify-start mt-2">
             ${f.signedDeliverAt
-              ? `<span class="badge b-ok"><span class="ms" style="font-size:var(--fs-body)">check_circle</span> เซ็นแล้ว ${esc(f.signedDeliverAt)}</span>`
+              ? `<span class="badge b-ok"><span class="ms text-md">check_circle</span> เซ็นแล้ว ${esc(f.signedDeliverAt)}</span>`
               : `<button class="btn btn-s btn-sm" id="btnSignDeliver" ${f.deliverBy ? '' : 'disabled'}>เซ็นลงนาม</button>`}
           </div></div>
 
@@ -999,7 +997,7 @@ function renderInspectForm(vehicleId) {
             </select></div>
           <div class="actions justify-start mt-2">
             ${f.signedReceiveAt
-              ? `<span class="badge b-ok"><span class="ms" style="font-size:var(--fs-body)">check_circle</span> เซ็นแล้ว ${esc(f.signedReceiveAt)}</span>`
+              ? `<span class="badge b-ok"><span class="ms text-md">check_circle</span> เซ็นแล้ว ${esc(f.signedReceiveAt)}</span>`
               : `<button class="btn btn-s btn-sm" id="btnSignReceive" ${f.receiveBy ? '' : 'disabled'}>เซ็นลงนาม</button>`}
           </div></div>
       </div>
@@ -1012,7 +1010,7 @@ function renderInspectForm(vehicleId) {
         </thead>
         <tbody>${itemRows}</tbody>
       </table></div>
-      <div class="actions" style="justify-content:space-between;margin-top:10px">
+      <div class="actions justify-between mt-2.5">
         <button class="btn btn-t btn-sm" id="btnInspAdd"><span class="ms">add</span> เพิ่มรายการ</button>
         <button class="btn btn-p" id="btnInspDone"><span class="ms">check</span> เสร็จสิ้น${nextQuarterPhaseLabel('inspection').replace(' — ', ' — ไป')}</button>
       </div>
@@ -1068,14 +1066,16 @@ function bindInspectForm(vehicleId, f) {
 
 // ติ๊กว่าเฟสนี้เสร็จ แล้วพาไปเฟสถัดไป (เฟสสุดท้ายแค่ติ๊กจบ ไม่มีที่ให้ไปต่อ)
 function renderPhaseBody() {
-  if (currentPhase() === 'procurement') { renderProcurement(); return; }
-  renderTravelPhase();
+  if (currentPhase() === 'procurement') { renderPartsTab(); return; }
+  renderQuartersTab();
 }
 
 // เฟสระดับไตรมาส (ตรวจสภาพก่อนซ่อม/ดำเนินการบำรุงรักษา/จัดทำรายงาน/คำนวณต้นทุน) — ใช้ต่อเมื่อ QUARTER ถูกตั้งแล้ว
 // (จาก route() เท่านั้น — ดู renderQuarterOps)
 function renderQuarterPhaseBody() {
   const p = currentQuarterPhase();
+  if (p === 'confirm') { renderQuarterConfirmTab(); return; }
+  if (p === 'travel') { renderQuarterTravelTab(); return; }
   if (p === 'inspection') { renderInspection(); return; }
   if (p === 'maintenance') { renderMaintenance(); return; }
   if (p === 'report') { renderReport(); return; }
@@ -1116,8 +1116,16 @@ let PICK = { q: null, ids: null };
 // จุดเข้าเดียวของหน้าไตรมาส — คั่นด้วยหน้า "เลือกรถที่จะดำเนินการ" ก่อนเข้า 4 เฟสเสมอถ้าไตรมาสนี้ยังไม่เคย
 // เลือก (MYD.quarterOpsPicked) กันเข้ามาบำรุงรักษารถคันเดียวกันซ้ำ (เจ้าของงานสั่ง 28 ส.ค. 2569 รอบ 4) —
 // เลือกครั้งเดียวต่อไตรมาสแล้วจำไว้ถาวร ครั้งต่อไปเข้าไตรมาสเดิมจะข้ามหน้านี้ไปที่ stepper ตรงๆ
+// 4 เฟสหลัง (ตรวจสภาพ→ต้นทุน) ต้องเลือกก่อนว่ารอบนี้จะดำเนินการรถคันไหน — 2 เฟสหน้า
+// (ยืนยันรถ/แผนเดินทาง) เข้าได้เลย เพราะยังไม่ถึงขั้นลงมือกับตัวรถ (8 ก.ย. 2569)
+const OPS_PHASES = ['inspection', 'maintenance', 'report', 'cost'];
+
+function needsVehiclePick(phaseId) {
+  return OPS_PHASES.includes(phaseId) && !MYD.quarterOpsPicked(PLAN, QUARTER);
+}
+
 function renderQuarterEntry() {
-  if (!MYD.quarterOpsPicked(PLAN, QUARTER)) { renderQuarterVehiclePick(); return; }
+  if (needsVehiclePick(currentQuarterPhase())) { renderQuarterVehiclePick(); return; }
   renderQuarterOps();
 }
 
@@ -1252,8 +1260,23 @@ function renderQuarterHeader() {
       <h1 class="page-title">${esc(planTitle(PLAN))} — ${esc(MYD.quarterLabel(QUARTER))}</h1>
       <a class="btn btn-t" href="#${esc(PLAN.id)}" class="ml-auto"><span class="ms">arrow_back</span> กลับไปหน้าแผน</a>
     </div>
-    <div class="sub" style="margin-top:-12px;margin-bottom:16px">
+    <div class="sub -mt-3 mb-4">
       ${esc(PLAN.planName || '—')} · รถของไตรมาสนี้ ${n} คัน</div>`;
+}
+
+function renderQuarterConfirmTab() {
+  renderQuarterTabs();
+  $('phase').innerHTML = renderQuarterConfirm(PLAN, QUARTER);
+  bindQuarterConfirm(PLAN, QUARTER);
+}
+
+function renderQuarterTravelTab() {
+  renderQuarterTabs();
+  $('phase').innerHTML = TRIP.renderQuarterTravel(PLAN, QUARTER);
+  TRIP.bindQuarterTravel(PLAN, {
+    onChange: () => renderQuarterTravelTab(),
+    onConfirm: () => renderQuarterTravelTab(),
+  });
 }
 
 function renderQuarterOps() {
@@ -1272,52 +1295,34 @@ function route() {
   const p = MYD.getPlan(id);
   if (!p || !p.workNumber) { location.hash = ''; renderList(); return; }
   PLAN = p;
-  // เข้าหน้าไตรมาสได้ต่อเมื่อไตรมาสนั้นยืนยันแผนเดินทางแล้วเท่านั้น (MYD.quarterTravelConfirmed) — ไม่งั้นตกกลับ
-  // ไปหน้าแผนแทน (เช่น แก้ hash เองมั่วๆ หรือลิงก์เก่าค้างมาจากก่อนยืนยัน)
-  if (q && MYD.QUARTER_KEYS.includes(q) && MYD.quarterTravelConfirmed(p, q)) {
+  // 8 ก.ย. 2569: เข้าหน้าไตรมาสได้ตั้งแต่ไตรมาสนั้นมีรถ — เพราะการยืนยันรถกับแผนเดินทางย้ายเข้ามา
+  // อยู่ในหน้านี้แล้ว (เดิมต้องยืนยันแผนเดินทางก่อนถึงจะเข้าได้ ซึ่งกลายเป็นไก่กับไข่)
+  if (q && MYD.QUARTER_KEYS.includes(q) && MYD.planVehicleIds(p, q).length) {
     QUARTER = q;
     renderQuarterEntry();
     window.scrollTo({ top: 0 });
     return;
   }
   QUARTER = null;
-  state.sub = 1;
   renderPlan();
   window.scrollTo({ top: 0 });
 }
 
 // ================================================================
-// ============ เนื้อของแท็บระดับแผน (ยืนยันรถ · เบิก/จัดหาอะไหล่ · แผนเดินทาง) ============
+// ============ เนื้อของแท็บระดับแผน (เบิก/จัดหาอะไหล่ · รายการไตรมาส) ============
 // ================================================================
-// 8 ก.ย. 2569: เลิกใช้ wizard shell (stepper 2 ชั้น + ปุ่มย้อนกลับ/ถัดไป) แล้ว — แถบแท็บ
-// ระดับหน้า (PLAN_TABS/renderPlanTabs) เป็นตัวเดินแทน ส่วน state.sub ยังเก็บว่าอยู่แท็บย่อย
-// ไหนของเฟส "เบิก/จัดหา" (1 = ยืนยันรถ · 2 = เบิกอะไหล่) เพื่อไม่ต้องแตะข้อมูลที่บันทึกไว้
-// เข้าแท็บ "แผนเดินทาง" ถ้า travelConfirmed แล้ว จะแสดงสรุปยืนยันแทน
+// 8 ก.ย. 2569: "ยืนยันรถ" กับ "แผนเดินทาง" ย้ายลงไปหน้าไตรมาสแล้ว — ระดับ master plan
+// ไม่ส่งอะไรหาหน่วยงานเลย เหลือแค่รายการอะไหล่ (แจ้งพัสดุ) กับทางเข้าไตรมาส
 
-function renderProcurement() {
-  if (!state.sub) state.sub = 1;
-  renderProcWizard(PLAN);
+function renderPartsTab() {
+  renderPlanTabs();
+  $('phase').innerHTML = `<div class="card">${renderProcStep1(PLAN)}</div>`;
+  bindProcStep1(PLAN);
 }
 
-function renderTravelPhase() {
-  const plan = PLAN;
-  renderPlanTabs();   // เช่นเดียวกับแท็บอื่น — จำนวนใบ/สถานะยืนยันเปลี่ยนแล้วป้ายต้องตาม
-  // ไม่มี "ไปเฟสถัดไป" อีกแล้ว (เฟส "แผนเดินทาง" เป็นเฟสสุดท้ายระดับแผน — 4 เฟสท้ายย้ายไปเป็นระดับไตรมาส
-  // แล้ว 28 ส.ค. 2569) หลังยืนยันแผนเดินทาง ให้ไปต่อผ่านรายการไตรมาสด้านล่างแทน (renderQuarterList)
-  if (plan.travelConfirmed === true) {
-    $('phase').innerHTML = TRIP.renderConfirmed(plan, {});
-    TRIP.bindConfirmed({});
-  } else {
-    // ไม่มี stepper ระดับหน้าอีกแล้ว — สลับขั้น "แผนเดินทาง"/"ทวน+ยืนยัน" ทำในการ์ดของแต่ละไตรมาสเองแทน
-    // (28 ส.ค. 2569 รอบ 3 เจ้าของงานสั่ง) onChange เรียก renderTravelPhase() นี้ตรงๆ (ไม่ใช่แค่ส่วน wizard)
-    // เพราะรายการไตรมาสท้ายหน้าต้องวาดใหม่ทุกครั้งด้วย ไม่งั้นจะหายไปตอน re-render บางส่วน
-    $('phase').innerHTML = `<div class="card">${TRIP.renderTravel(plan, { showConfirm: true })}</div>`;
-    TRIP.bindTravel(plan, {
-      onChange: () => renderTravelPhase(),
-      onConfirm: (q) => { location.hash = `${plan.id}/${q}`; },
-    });
-  }
-  $('phase').insertAdjacentHTML('beforeend', renderQuarterList(plan));
+function renderQuartersTab() {
+  renderPlanTabs();
+  $('phase').innerHTML = renderQuarterList(PLAN);
 }
 
 // รายการไตรมาส — แทนที่ 4 เฟส (ตรวจสภาพก่อนซ่อม/ดำเนินการบำรุงรักษา/จัดทำรายงาน/คำนวณต้นทุน) ที่เคยอยู่ใน
@@ -1325,69 +1330,39 @@ function renderTravelPhase() {
 // (MYD.quarterTravelConfirmed) เปิดดำเนินการต่อได้เลย ไม่ต้องรอไตรมาสอื่นให้ยืนยันครบก่อน
 function renderQuarterList(plan) {
   const rows = MYD.QUARTER_KEYS.map(q => {
-    const ids = MYD.planVehicleIds(plan, q).filter(id => MYD.isVehicleIn(plan, id));
+    const ids = MYD.planVehicleIds(plan, q);
     if (!ids.length) return '';
-    const confirmedAt = (plan.travelConfirmedByQuarter || {})[q];
-    const opsIdx = QUARTER_PHASES.findIndex(p => p.id === MYD.quarterOpsPhase(plan, q));
-    const opsDone = QUARTER_PHASES.every(p => MYD.quarterPhaseDone(plan, q, p.id));
+    const joining = ids.filter(id => MYD.isVehicleIn(plan, id)).length;
+    const opsIdx = Math.max(0, QUARTER_PHASES.findIndex(p => p.id === MYD.quarterOpsPhase(plan, q)));
+    const allDone = QUARTER_PHASES.every(p => MYD.quarterPhaseDone(plan, q, p.id));
+    const doneCount = QUARTER_PHASES.filter(p => MYD.quarterPhaseDone(plan, q, p.id)).length;
     return `<tr>
-      <td><b>${esc(MYD.quarterLabel(q))}</b><div class="cell-sub">${esc((QUARTERS.find(x => x.q === q) || {}).months || '')}</div></td>
-      <td class="num">${ids.length}</td>
-      <td>${confirmedAt
-        ? '<span class="badge b-ok">ยืนยันแผนเดินทางแล้ว</span>'
-        : '<span class="badge b-neutral">ยังไม่ยืนยันแผนเดินทาง</span>'}</td>
-      <td>${confirmedAt
-        ? (opsDone
-          ? '<span class="badge b-ok">ดำเนินการครบแล้ว</span>'
-          : `เฟส ${opsIdx + 1}/${QUARTER_PHASES.length} · ${esc(QUARTER_PHASES[opsIdx].label)}`)
-        : '—'}</td>
-      <td class="num">${confirmedAt
-        ? `<a class="btn btn-s btn-sm" href="#${esc(plan.id)}/${q}">เปิดดำเนินการ</a>`
-        : `<button class="btn btn-t btn-sm" disabled>เปิดดำเนินการ</button>`}</td>
+      <td><div class="cell-key">${esc(MYD.quarterLabel(q))}</div>
+        <div class="cell-sub">${esc((QUARTERS.find(x => x.q === q) || {}).months || '')}</div></td>
+      <td class="num">${ids.length}
+        ${joining !== ids.length ? `<div class="cell-sub">ยืนยันเข้าร่วม ${joining}</div>` : ''}</td>
+      <td>${allDone
+        ? '<span class="badge b-ok">ดำเนินการครบแล้ว</span>'
+        : `<span class="badge b-low">${esc(QUARTER_PHASES[opsIdx].label)}</span>
+           <div class="cell-sub">เสร็จแล้ว ${doneCount}/${QUARTER_PHASES.length} ขั้น</div>`}</td>
+      <td class="num"><a class="btn btn-s btn-sm" href="#${esc(plan.id)}/${q}">เปิดดำเนินการ</a></td>
     </tr>`;
   }).filter(Boolean).join('');
 
   return `
     <div class="card">
-      <div class="sect">รายการไตรมาส — ดำเนินการบำรุงรักษาต่อ</div>
-      
-      ${rows ? `<div class="tblwrap"><table class="tbl">
-        <thead><tr><th>ไตรมาส</th><th class="num">รถ (คัน)</th><th>สถานะแผนเดินทาง</th><th>ความคืบหน้าดำเนินการ</th><th></th></tr></thead>
+      <div class="incident-section-title">รายการไตรมาส</div>
+      ${rows ? `<div class="tblwrap"><table class="tbl striped">
+        <thead><tr><th>ไตรมาส</th><th class="num">รถ (คัน)</th><th>ความคืบหน้า</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
         : '<div class="empty">ยังไม่มีรถในแผนนี้</div>'}
     </div>`;
 }
 
-// เกณฑ์ความพร้อมของแต่ละแท็บ — ไม่ได้ใช้ล็อกการเปิดแท็บแล้ว (8 ก.ย. 2569 เปลี่ยนเป็นแท็บ เปิดอ่านได้เสมอ)
-// แต่ยังใช้กั้น "ปุ่มลงมือ" ของแท็บนั้น เช่น ต้องยืนยันรถครบก่อนจึงกดส่งคำขอเบิกอะไหล่ได้
-// (เจ้าของงานสั่ง 10 ส.ค. 2569)
-function validateProcSub(plan, sub) {
-  if (sub === 1) return MYD.confirmResolved(plan, plan.selectedVehicleIds || []);
-  return !!plan.partsRequisitioned;
-}
-
-// ----- wizard shell (เฟส "เบิก/จัดหา" เท่านั้น — "แผนเดินทาง" ไม่ใช้ shell นี้แล้ว 28 ส.ค. 2569 รอบ 3) -----
-// เนื้อของแท็บ "ยืนยันรถ" / "เบิก/จัดหาอะไหล่" — เดินแท็บที่แถบบน ปุ่มลงมือจริงอยู่ในเนื้อแต่ละแท็บเอง
-// (ส่งคำขอยืนยัน · ส่งคำขอเบิกอะไหล่) จึงไม่มีปุ่มย้อนกลับ/ถัดไปอีก
-function renderProcWizard(plan) {
-  renderPlanTabs();   // ป้ายสถานะบนแท็บอ่านจากแผน — ต้องวาดใหม่ทุกครั้งที่เนื้อในเปลี่ยน
-  $('phase').innerHTML = `
-    <div class="card">
-      <div id="procBody">${renderProcSubBody(plan)}</div>
-    </div>`;
-  bindProcSubBody(plan);
-}
-
-function renderProcSubBody(plan) {
-  return state.sub === 1 ? renderProcStepConfirm(plan) : renderProcStep1(plan);   // ขั้น 2 = เบิก/จัดหาอะไหล่
-}
-
-function bindProcSubBody(plan) {
-  if (state.sub === 1) bindProcStepConfirm(plan);
-  else bindProcStep1(plan);
-}
-
-// ----- ขั้น 1 (ชื่อฟังก์ชันค้างจากตอนมี 3 ขั้น เนื้อหาจริงคือเบิกอะไหล่ เรียกเป็นขั้นที่ 2) -----
+// ⚠️ ระยะ 2 (ยังไม่ทำ): เกณฑ์เดิม "ต้องยืนยันรถครบก่อนจึงกดส่งคำขอเบิกอะไหล่ได้" (10 ส.ค. 2569)
+// บังคับที่ระดับแผนไม่ได้แล้ว เพราะการยืนยันย้ายลงไปอยู่ในไตรมาส — ระยะ 2 จะแทนด้วยเกณฑ์เวลา
+// (แจ้งอะไหล่ได้เมื่อถึงรอบทบทวน = ปีถัดจากปีที่สร้างแผน) ตอนนี้จึงยังไม่มีเกณฑ์กั้น
+// ----- แท็บ "เบิก/จัดหาอะไหล่" ของหน้าแผน -----
 function renderProcStep1(plan) {
   const master = MYD.loadMaster();
   // นับเฉพาะคันที่ผ่านขั้นยืนยันแล้ว — เจ้าของงานสั่ง 10 ส.ค. 2569:
@@ -1396,7 +1371,6 @@ function renderProcStep1(plan) {
     (plan.selectedVehicleIds || []).includes(v.id) && MYD.isVehicleIn(plan, v.id));
   const lines = MYD.deriveItems(selectedVehicles, master.items);
   const dropped = (plan.selectedVehicleIds || []).length - selectedVehicles.length;
-  const confirmDone = validateProcSub(plan, 1);
 
   const groups = ['part', 'oil', 'filter'].map(cat => {
     const catLines = lines.filter(l => l.item.category === cat);
@@ -1439,13 +1413,10 @@ function renderProcStep1(plan) {
       return `<div class="note note-ok"><span class="ms">inventory</span><div>คลังพอทุกรายการ เบิกได้ครบ</div></div>`;
     })()}
     ${groups || `<div class="empty">ไม่มีรายการที่เกี่ยวข้องกับรถที่เลือก</div>`}
-    ${plan.partsRequisitioned || confirmDone ? '' : `<div class="note note-warn mt-3.5"><span class="ms">error</span>
-      <div><b>ยังส่งคำขอเบิกไม่ได้</b>
-        <ul class="mt-1.5 mb-0 ml-[18px] mr-0"><li>ยังยืนยันรถเข้าร่วมแผนไม่ครบ</li></ul></div></div>`}
     <div class="mt-3.5">
       ${plan.partsRequisitioned
         ? `<span class="badge b-ok">ส่งคำขอแล้ว</span>`
-        : `<button class="btn btn-o" id="btnRequisition" ${confirmDone ? '' : 'disabled'}>ส่งคำขอเบิกอะไหล่</button>`}
+        : `<button class="btn btn-o" id="btnRequisition">ส่งคำขอเบิกอะไหล่</button>`}
     </div>`;
 }
 
@@ -1456,11 +1427,11 @@ function bindProcStep1(plan) {
     plan.partsRequisitioned = true;
     MYD.savePlan(plan);
     toast('ส่งคำขอเบิกอะไหล่สำเร็จ');
-    renderProcWizard(plan);
+    renderPartsTab();
   });
 }
 
-// ----- ขั้น 1: ยืนยันรถเข้าร่วมแผน (ฟังก์ชันชื่อ renderProcStepConfirm) -----
+// ----- แท็บ "ยืนยันรถเข้าร่วมแผน" ของหน้าไตรมาส (ย้ายลงมาจากระดับแผน 8 ก.ย. 2569) -----
 const CF_STATUS_BADGE = {
   ready:    { cls: 'b-ok',    text: 'พร้อม' },
   notready: { cls: 'b-brand', text: 'ไม่พร้อม' },
@@ -1469,13 +1440,14 @@ const CF_STATUS_BADGE = {
 };
 // CF_VERDICT_LABELS ย้ายไป common.js แล้ว (25 ส.ค. 2569) — ใช้ทั้งที่นี่และ trip-plan.js
 
-function renderProcStepConfirm(plan) {
+function renderQuarterConfirm(plan, q) {
   const master = MYD.loadMaster();
-  const ids = plan.selectedVehicleIds || [];
+  const ids = MYD.planVehicleIds(plan, q);
   const vehicles = master.vehicles.filter(v => ids.includes(v.id));
   const days = MYD.loadSettings().confirmDueDays;
+  const sent = MYD.confirmSentOf(plan, q);
 
-  if (!plan.confirm || !plan.confirm.requestedAt) {
+  if (!sent || !sent.requestedAt) {
     const depts = new Set(vehicles.map(v => v.ownerDept));
     return `
       <div class="card">
@@ -1556,9 +1528,9 @@ function renderProcStepConfirm(plan) {
   }).length;
 
   return `
-    <div class="sub">ส่งคำขอเมื่อ ${dateTh(plan.confirm.requestedAt)}
-      · ครบกำหนดตอบ ${dateTh(plan.confirm.dueAt)}
-      ${plan.confirm.remindedAt ? `· เตือนซ้ำล่าสุด ${esc(plan.confirm.remindedAt)}` : ''}</div>
+    <div class="sub">ส่งคำขอเมื่อ ${dateTh(sent.requestedAt)}
+      · ครบกำหนดตอบ ${dateTh(sent.dueAt)}
+      ${sent.remindedAt ? `· เตือนซ้ำล่าสุด ${esc(sent.remindedAt)}` : ''}</div>
     <div class="card">
       <div class="sect">สรุปการยืนยัน</div>
       <div>
@@ -1568,7 +1540,7 @@ function renderProcStepConfirm(plan) {
         <span class="badge b-low">เลยกำหนด ${s.overdue}</span>
       </div>
       <div class="sub mt-2">
-        เข้าทริปนี้ <b>${s.joining}</b> คัน จากรถในแผน ${s.total} คัน</div>
+        เข้าทริปนี้ <b>${s.joining}</b> คัน จากรถของ${esc(MYD.quarterLabel(q))} ${s.total} คัน</div>
       <button class="btn btn-g btn-sm" id="btnRemind">
         <span class="ms">notifications</span> ส่งเตือนซ้ำ</button>
     </div>
@@ -1576,32 +1548,28 @@ function renderProcStepConfirm(plan) {
     ${left ? `<div class="empty">เหลืออีก ${left} คันที่ยังไม่มีข้อสรุป — ทำแผนเดินทางต่อไม่ได้จนกว่าจะครบ</div>` : ''}`;
 }
 
-function bindProcStepConfirm(plan) {
+function bindQuarterConfirm(plan, q) {
   const send = $('btnSendConfirm');
   if (send) {
     send.addEventListener('click', () => {
       // เขียน storage ตอนกดเท่านั้น — ห้ามสร้างตั้งแต่ render (บทเรียน plan-new.html)
-      const c = MYD.ensureConfirm(plan);
       const days = MYD.loadSettings().confirmDueDays;
       const d = new Date(); d.setDate(d.getDate() + days);
-      c.requestedAt = todayIso();
-      c.dueAt = toIsoBE(d);
-      (plan.selectedVehicleIds || []).forEach(id => {
-        if (!c.byVehicle[id]) c.byVehicle[id] = MYD.emptyConfirmEntry();
-      });
+      MYD.requestConfirmQuarter(plan, q, todayIso(), toIsoBE(d));
       MYD.savePlan(plan);
-      toast('ส่งคำขอยืนยันแล้ว');
-      renderProcWizard(plan);
+      toast(`ส่งคำขอยืนยัน${MYD.quarterLabel(q)}แล้ว`);
+      renderQuarterConfirmTab();
     });
   }
 
   const remind = $('btnRemind');
   if (remind) {
     remind.addEventListener('click', () => {
-      MYD.ensureConfirm(plan).remindedAt = nowTh();
+      const sent = MYD.confirmSentOf(plan, q);
+      if (sent) sent.remindedAt = nowTh();
       MYD.savePlan(plan);
       toast('ส่งเตือนซ้ำแล้ว (ต้นแบบยังไม่มีระบบแจ้งเตือนจริง)');
-      renderProcWizard(plan);
+      renderQuarterConfirmTab();
     });
   }
 
@@ -1640,7 +1608,7 @@ function openVerdictRow(plan, vehicleId) {
     e.verdictAt = nowTh();
     MYD.savePlan(plan);
     toast('บันทึกคำตัดสินแล้ว');
-    renderProcWizard(plan);
+    renderQuarterConfirmTab();
   });
 }
 

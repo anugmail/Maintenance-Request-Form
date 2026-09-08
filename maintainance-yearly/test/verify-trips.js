@@ -43,17 +43,20 @@ const PLAN = 'plan-seed-2569-002';
   await page.reload();
   await page.waitForSelector('.tab-btn');
 
-  // ไปเฟส 2 (แผนเดินทาง) ด้วยการคลิกจริงบน stepper หลัก — แยกเป็นคนละเฟสแล้ว 21 ส.ค. 2569
-  await page.locator(`[data-plan-tab="travel"]`).click();
-  await page.waitForTimeout(400);
-  // หัวข้อเปลี่ยนจาก "ขั้นที่ 1: ทำแผนเดินทาง" เป็น "แผนเดินทาง" ตอนย้าย stepper ย่อยเข้าไปในการ์ดไตรมาส (28 ส.ค. 2569 รอบ 3)
-  ok(await page.locator('.sect', { hasText: 'แผนเดินทาง' }).count() > 0, 'เข้าเฟส 2 · แผนเดินทางได้');
+  // 8 ก.ย. 2569: แผนเดินทางย้ายไปอยู่ในหน้าไตรมาส — เปิดไตรมาส 1 แล้วไปแท็บ "แผนเดินทาง"
+  const openQuarterTravel = async (q) => {
+    await page.goto(`${BASE}/index.html#${PLAN}/${q}`);
+    await page.waitForSelector('.tab-btn');
+    await page.locator('[data-q-tab="travel"]').click();
+    await page.waitForTimeout(400);
+  };
+  await openQuarterTravel('Q1');
+  ok(await page.locator('[data-q-tab="travel"].on').count() === 1, 'เข้าแท็บแผนเดินทางของไตรมาส 1 ได้');
 
   console.log('\nสร้างแผนเดินทาง');
-  ok(await page.locator('#btnPrimaryProc').count() === 0, 'เฟสแผนเดินทางไม่มีปุ่ม "ถัดไป" ของ shell แล้ว (28 ส.ค. 2569)');
-  // ไตรมาส 1 กางไว้เป็นค่าเริ่มต้น (28 ส.ค. 2569: เปลี่ยนจากแท็บสลับเป็นรายการพับ/กาง) — ปุ่มจึงมี data-q="Q1"
-  // .rzone ตอนนี้มี 2 ชั้น: กล่องไตรมาส (มี data-q) ห่อกล่องใบเดินทางแต่ละใบ (ไม่มี data-q) ไว้ข้างใน
-  const tripBoxes = () => page.locator('[data-q] .rzone-body .rzone');
+  ok(await page.locator('#btnPrimaryProc').count() === 0, 'ไม่มีปุ่ม "ถัดไป" ของ wizard shell แล้ว');
+  // แท็บนี้แสดงเฉพาะไตรมาสเดียว — กล่องใบเดินทางอยู่ใน #phase ตรงๆ ไม่มีชั้นกล่องไตรมาสห่ออีกที
+  const tripBoxes = () => page.locator('#phase .rzone');
   await page.locator('[data-auto-trips="Q1"]').click();
   await page.waitForTimeout(400);
   // seed แบ่งรถของแผนนี้เป็นจังหวัดละไตรมาส (Q1–Q3 = จันทบุรี · Q4 = กาญจนบุรี) ⇒ Q1 แยกได้ 1 ใบ
@@ -64,15 +67,13 @@ const PLAN = 'plan-seed-2569-002';
   const names = await tripBoxes().locator('.rzone-head b').allTextContents();
   ok(names.join('|').includes('จันทบุรี'), 'ชื่อใบเป็นชื่อจังหวัด — ' + names.join(' | '));
   // ครอบคลุมจังหวัดที่สองด้วย: Q4 ของแผนเดียวกันเป็นรถกาญจนบุรี
-  await page.locator('[data-toggle-q]').nth(3).click();
-  await page.waitForTimeout(300);
+  await openQuarterTravel('Q4');
   await page.locator('[data-auto-trips="Q4"]').click();
   await page.waitForTimeout(400);
-  const q4Names = await page.locator('[data-q="Q4"] .rzone-body .rzone .rzone-head b').allTextContents();
+  const q4Names = await tripBoxes().locator('.rzone-head b').allTextContents();
   ok(q4Names.join('|').includes('กาญจนบุรี'), 'ไตรมาส 4 แยกได้ใบชื่อ กาญจนบุรี — ' + q4Names.join(' | '));
-  // กลับมาทำงานต่อที่ไตรมาส 1 (พับ Q4 กลับ กันตัวเลือกด้านล่างชนกัน)
-  await page.locator('[data-toggle-q]').nth(3).click();
-  await page.waitForTimeout(300);
+  // กลับมาทำงานต่อที่ไตรมาส 1
+  await openQuarterTravel('Q1');
   ok((await page.locator('.empty', { hasText: 'ยังไม่ถูกจัดเข้าแผน' }).count()) === 0, 'จัดรถครบทุกคันแล้ว');
 
   console.log('\nกรอกรายละเอียดใบที่ 1');
@@ -145,10 +146,7 @@ const PLAN = 'plan-seed-2569-002';
   ok(await page.locator('.empty', { hasText: 'ปฏิเสธแล้ว' }).count() > 0, 'ปฏิเสธสำเร็จ + แสดงเหตุผล');
 
   console.log('\nกลับฝั่ง กบค. — ใบถูกปฏิเสธต้องแก้แล้วส่งใหม่ได้');
-  await page.goto(`${BASE}/index.html#${PLAN}`);
-  await page.waitForSelector('.tab-btn');
-  await page.locator(`[data-plan-tab="travel"]`).click();
-  await page.waitForTimeout(400);
+  await openQuarterTravel('Q1');
   ok(await page.locator('.badge', { hasText: 'ถูกปฏิเสธ' }).count() > 0, 'ใบขึ้นสถานะถูกปฏิเสธ');
   ok(!(await tripBoxes().first().locator('[data-field="location"]').isDisabled()), 'ปลดล็อกให้แก้ได้อีกครั้ง');
   ok(await page.locator('[data-trip-send]').first().textContent().then(t => /ส่งใหม่/.test(t)), 'ปุ่มเปลี่ยนเป็น "แก้แล้วส่งใหม่"');

@@ -65,8 +65,8 @@ function renderVehicles() {
     </tr>`).join('');
 
   $('adminBody').innerHTML = `
-    <div class="actions" style="padding-top:0;margin-bottom:2px;justify-content:space-between">
-      <div class="f" style="margin:0;max-width:220px">
+    <div class="actions pt-0 mb-0.5 justify-between">
+      <div class="f m-0 max-w-[220px]">
         <div class="in"><span class="ms">filter_alt</span>
           <select id="fRegionFilter">
             <option value="all" ${regionFilter === 'all' ? 'selected' : ''}>ทุกเขต</option>
@@ -201,7 +201,7 @@ function renderItems() {
   }).join('');
 
   $('adminBody').innerHTML = `
-    <div class="actions" style="padding-top:0;margin-bottom:2px">
+    <div class="actions pt-0 mb-0.5">
       <button class="btn btn-p" id="btnAddItem">+ เพิ่มรายการ</button>
     </div>
     ${sections}`;
@@ -237,11 +237,11 @@ function openItemModal(id) {
         <div class="fgrid">
           <div class="f sp2"><label>ชื่อ</label><div class="in"><span class="ms">inventory_2</span><input type="text" name="name" required value="${esc(it.name)}"></div></div>
           <div class="f sp2"><label>หมวด</label><div class="in"><span class="ms">category</span><select name="category" id="fCategory">${Object.entries(MYD.CATEGORY_LABELS).map(([k, l]) => `<option value="${k}" ${it.category === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div></div>
-          <div class="f sp2" id="fOilKindWrap" style="${it.category === 'oil' ? '' : 'display:none'}"><label>ชนิดน้ำมัน</label><div class="in"><span class="ms">opacity</span><select name="oilKind">${Object.entries(MYD.OILKIND_LABELS).map(([k, l]) => `<option value="${k}" ${it.oilKind === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div></div>
+          <div class="f sp2" id="fOilKindWrap" class="${it.category === 'oil' ? '' : 'hidden'}"><label>ชนิดน้ำมัน</label><div class="in"><span class="ms">opacity</span><select name="oilKind">${Object.entries(MYD.OILKIND_LABELS).map(([k, l]) => `<option value="${k}" ${it.oilKind === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div></div>
           <div class="f sp2"><label>หน่วย</label><div class="in"><span class="ms">straighten</span><input type="text" name="unit" value="${esc(it.unit)}"></div></div>
           <div class="f sp2"><label>จำนวนต่อคัน</label><div class="in"><span class="ms">numbers</span><input type="number" name="qtyPerVehicle" min="0" value="${esc(it.qtyPerVehicle)}"></div></div>
           <div class="f sp2"><label>เงื่อนไข</label><div class="in"><span class="ms">rule</span><select name="triggerType" id="fTriggerType">${Object.entries(MYD.TRIGGER_LABELS).map(([k, l]) => `<option value="${k}" ${it.triggerType === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div></div>
-          <div class="f sp2" id="fIntervalWrap" style="${(it.triggerType === 'hours' || it.triggerType === 'mileage') ? '' : 'display:none'}"><label>ทุก (ชม./กม.)</label><div class="in"><span class="ms">timer</span><input type="number" name="interval" min="0" value="${esc(it.interval || 0)}"></div></div>
+          <div class="f sp2" id="fIntervalWrap" class="${(it.triggerType === 'hours' || it.triggerType === 'mileage') ? '' : 'hidden'}"><label>ทุก (ชม./กม.)</label><div class="in"><span class="ms">timer</span><input type="number" name="interval" min="0" value="${esc(it.interval || 0)}"></div></div>
         </div>
         <div class="f"><label>ประเภทรถที่ใช้</label></div>
         <div class="chk">

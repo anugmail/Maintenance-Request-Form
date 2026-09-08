@@ -13,7 +13,8 @@
 // plan:    { id, createdAt, phase, planName, byQuarter:{Q1..Q4,none}, selectedVehicleIds:[],
 //            itemAdj:{}, year, workNumber, approvalStatus:'draft'|'issued',
 //            suppliesAckAt:null|string, partsRequisitioned,
-//            confirm:{...}|null, trips:[trip], travelConfirmed, statusHistory:[] }
+//            confirm:{sent:{[q]:{requestedAt,dueAt,remindedAt}}, byVehicle:{}}|null,
+//            trips:[trip], travelConfirmed, statusHistory:[] }
 // trip:    { id, name, location, windowFrom, windowTo, perDiem, lodging, travel,
 //            vehicleIds:[], dates:{[vehicleId]:'YYYY-MM-DD'}, sentAt,
 //            replies:{[ownerDept]:{status,reason,by,at,history:[]}} }
@@ -39,7 +40,7 @@ const DEFAULT_SETTINGS = { confirmDueDays: 7 };   // ยังไม่ได้
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 14;  // 14 = 1 แผน = 1 เลขงาน (ถอด plan.workNumbers รายไตรมาสออก · 8 ก.ย. 2569)
+const SCHEMA_VERSION = 15;  // 15 = ส่งคำขอยืนยันแยกรายไตรมาส (confirm.sent[q] แทน confirm.requestedAt เดี่ยว)
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -265,7 +266,7 @@ const INITIAL_PLAN = {
   suppliesAckAt: null,    // ฝ่ายพัสดุกดรับทราบเมื่อไหร่
   statusHistory: [],
   partsRequisitioned: false,
-  confirm: null,          // ตั้งค่าเมื่อ กบค. กด "ส่งคำขอยืนยัน" (ห้ามสร้างตั้งแต่เปิดหน้า)
+  confirm: null,          // ตั้งค่าเมื่อ กบค. กด "ส่งคำขอยืนยัน" ของไตรมาสใดไตรมาสหนึ่ง (ห้ามสร้างตั้งแต่เปิดหน้า)
   trips: [],              // แผนเดินทางหลายใบ — กบค. สร้างเองอิสระ เลือกรถเข้าแต่ละใบ
   travelConfirmed: false,
 };
@@ -311,7 +312,12 @@ const SEED_PLAN = {
   ],
   partsRequisitioned: true,
   confirm: {
-    requestedAt: '2568-10-06', dueAt: '2568-10-13', remindedAt: null,
+    sent: {
+      Q1: { requestedAt: '2568-10-06', dueAt: '2568-10-13', remindedAt: null },
+      Q2: { requestedAt: '2568-10-06', dueAt: '2568-10-13', remindedAt: null },
+      Q3: { requestedAt: '2568-10-06', dueAt: '2568-10-13', remindedAt: null },
+      Q4: { requestedAt: '2568-10-06', dueAt: '2568-10-13', remindedAt: null },
+    },
     byVehicle: [3, 4].reduce((acc, r) => {
       [1, 2, 3, 4, 5, 6].forEach(i => {
         acc[`v-${r}-${i}`] = { answer: 'ready', reason: '', meetPoint: 'จุดรวมงาน กฟฉ. เขต 3',
@@ -394,7 +400,12 @@ const SEED_PLAN_CF = {
   ],
   partsRequisitioned: true,
   confirm: {
-    requestedAt: '2568-10-05', dueAt: '2568-10-12', remindedAt: null,
+    sent: {
+      Q1: { requestedAt: '2568-10-05', dueAt: '2568-10-12', remindedAt: null },
+      Q2: { requestedAt: '2568-10-05', dueAt: '2568-10-12', remindedAt: null },
+      Q3: { requestedAt: '2568-10-05', dueAt: '2568-10-12', remindedAt: null },
+      Q4: { requestedAt: '2568-10-05', dueAt: '2568-10-12', remindedAt: null },
+    },
     byVehicle: CF_VEHICLE_IDS.reduce((acc, id, idx) => {
       const base = { reason: '', meetPoint: '', by: '', at: '',
                      history: [], verdict: null, verdictWhy: '', verdictAt: '' };
@@ -783,12 +794,33 @@ const MYD = {
   },
 
   // สร้างโครงในหน่วยความจำเฉยๆ — ไม่เขียน storage (เขียนตอนกดส่งคำขอเท่านั้น)
+  // 8 ก.ย. 2569: ส่งคำขอแยกรายไตรมาส (ระดับ master plan ไม่ส่งอะไรหาหน่วยงานแล้ว)
+  //   confirm.sent[q] = { requestedAt, dueAt, remindedAt }  — วันที่ส่ง/ครบกำหนดของไตรมาสนั้น
+  //   confirm.byVehicle[รถ]                                  — คำตอบรายคัน (คงเดิม รถ 1 คันอยู่ไตรมาสเดียว)
   ensureConfirm(plan) {
-    if (!plan.confirm) {
-      plan.confirm = { requestedAt: null, dueAt: null, remindedAt: null, byVehicle: {} };
-    }
+    if (!plan.confirm) plan.confirm = { sent: {}, byVehicle: {} };
     if (!plan.confirm.byVehicle) plan.confirm.byVehicle = {};
+    if (!plan.confirm.sent) plan.confirm.sent = {};
     return plan.confirm;
+  },
+
+  confirmSentOf(plan, q) {
+    return (((plan.confirm || {}).sent) || {})[q] || null;
+  },
+
+  confirmRequested(plan, q) {
+    const s = this.confirmSentOf(plan, q);
+    return !!(s && s.requestedAt);
+  },
+
+  // กด "ส่งคำขอยืนยัน" ของไตรมาสหนึ่ง — เปิดช่องคำตอบให้รถของไตรมาสนั้น
+  requestConfirmQuarter(plan, q, requestedAtIso, dueAtIso) {
+    const c = this.ensureConfirm(plan);
+    c.sent[q] = { requestedAt: requestedAtIso, dueAt: dueAtIso, remindedAt: null };
+    this.planVehicleIds(plan, q).forEach(id => {
+      if (!c.byVehicle[id]) c.byVehicle[id] = this.emptyConfirmEntry();
+    });
+    return c.sent[q];
   },
 
   vehicleConfirm(plan, vehicleId) {
@@ -799,7 +831,9 @@ const MYD = {
   confirmStatus(plan, vehicleId, todayIso) {
     const e = this.vehicleConfirm(plan, vehicleId);
     if (e.answer === 'ready' || e.answer === 'notready') return e.answer;
-    const due = plan.confirm && plan.confirm.dueAt;
+    // กำหนดตอบมาจากไตรมาสของรถคันนั้น (ส่งคำขอแยกรายไตรมาส)
+    const sent = this.confirmSentOf(plan, this.bucketOf(plan, vehicleId));
+    const due = sent && sent.dueAt;
     // ยังไม่ส่งคำขอ (ไม่มี dueAt) → ยังไม่เริ่มนับ ไม่ใช่เลยกำหนด
     if (due && todayIso && todayIso > due) return 'overdue';
     return 'pending';
@@ -836,6 +870,11 @@ const MYD = {
   },
 
   // ยืนยันแผนเดินทางแล้ว = ล็อกการแก้คำตอบ (เคาะกับเจ้าของงาน 10 ส.ค. 2569)
+  // 8 ก.ย. 2569: ล็อกเป็นรายไตรมาส เพราะแผนเดินทางยืนยันทีละไตรมาส
+  confirmLockedQuarter(plan, q) {
+    return this.quarterTravelConfirmed(plan, q);
+  },
+
   confirmLocked(plan) {
     return plan.travelConfirmed === true;
   },
@@ -1297,7 +1336,7 @@ const MYD = {
   // plan.quarterPhase        = { [q]: phaseId }              — เฟสที่กำลังทำอยู่ของไตรมาสนั้น
   // plan.quarterPhaseDone    = { [q]: { [phaseId]: true } }  — เฟสไหนของไตรมาสนั้นทำเสร็จแล้ว
   quarterOpsPhase(plan, q) {
-    return (plan.quarterPhase || {})[q] || 'inspection';
+    return (plan.quarterPhase || {})[q] || 'confirm';
   },
 
   setQuarterOpsPhase(plan, q, phaseId) {
@@ -1309,6 +1348,11 @@ const MYD = {
   // ที่เหลือ (ตรวจสภาพก่อนซ่อม/ดำเนินการบำรุงรักษา/จัดทำรายงาน) อ่านจาก quarterPhaseDone ตรงๆ
   quarterPhaseDone(plan, q, phaseId) {
     if (phaseId === 'cost') return !!this.closeApprovalOf(plan, q);
+    // 2 เฟสหน้าที่ย้ายลงมาจากระดับแผน (8 ก.ย. 2569) มีเกณฑ์เสร็จของตัวเองอยู่แล้ว ไม่ต้องมีธงแยก
+    if (phaseId === 'confirm') {
+      return this.confirmRequested(plan, q) && this.confirmResolved(plan, this.planVehicleIds(plan, q));
+    }
+    if (phaseId === 'travel') return this.quarterTravelConfirmed(plan, q);
     return !!((plan.quarterPhaseDone || {})[q] || {})[phaseId];
   },
 

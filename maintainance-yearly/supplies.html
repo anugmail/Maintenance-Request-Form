@@ -9,24 +9,10 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
 <link rel="stylesheet" href="../design-system/tokens.css?v=20260907-ds62">
-<link rel="stylesheet" href="../design-system/components.css?v=20260908-ds63">
+<link rel="stylesheet" href="../design-system/components.css?v=20260908-ds64">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="../design-system/tailwind-theme.js?v=20260907-tw3"></script>
 <script src="../ui-components.js?v=20260825-15"></script><!-- shared components (window.UIC) จาก MRF -->
-<style>
-  /* เฉพาะหน้านี้ — ใช้ token เท่านั้น ไม่มีสี hardcode */
-  .tbl tfoot .sumrow td{background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:var(--fs-sm)}
-  .itbl{table-layout:fixed}
-  .itbl th,.itbl td{overflow:hidden;text-overflow:ellipsis}
-  /* คอลัมน์ที่ 6 เดิมเป็นปุ่มลบ (8%) — ตอนนี้เป็น "คงเหลือ (Smart Inventory)"
-     ที่มีทั้งตัวเลขและป้ายสถานะ จึงต้องกว้างขึ้น ไม่งั้นหัวตารางตกขอบ */
-  .itbl th:nth-child(1),.itbl td:nth-child(1){width:30%}
-  .itbl th:nth-child(2),.itbl td:nth-child(2),
-  .itbl th:nth-child(3),.itbl td:nth-child(3),
-  .itbl th:nth-child(4),.itbl td:nth-child(4){width:13%;text-align:center}
-  .itbl th:nth-child(5),.itbl td:nth-child(5){width:10%}
-  .itbl th:nth-child(6),.itbl td:nth-child(6){width:21%;text-align:center}
-</style>
 </head>
 <body>
 <div class="shell">
@@ -61,7 +47,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="common.js?v=20260908-2"></script>
-<script src="mock-yearly.js?v=20260908-2"></script>
-<script src="supplies.js?v=20260825-15"></script>
+<script src="mock-yearly.js?v=20260908-3"></script>
+<script src="supplies.js?v=20260908-3"></script>
 </body>
 </html>

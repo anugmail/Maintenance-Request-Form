@@ -108,15 +108,19 @@ const PLAN = 'plan-seed-2569-002';
   ok(await page.locator('#btnGoNextPhaseProc').count() === 0, 'ไม่มีปุ่ม "ไปเฟสถัดไป" (ไม่ได้ส่ง onNextPhase)');
   ok(await page.locator('#btnPeaLife').count() === 1, 'ปุ่มทำใบนำจ่าย (PEA Life) ยังมี');
 
-  console.log('\nหน้ารายการแผน (index.html) ก็ไม่มีปุ่มนี้เหมือนกันแล้ว (28 ส.ค. 2569 — เดิมเคยส่ง onNextPhase');
-  console.log('มาเพื่อไปเฟส "ตรวจสภาพก่อนซ่อม" แต่ 4 เฟสท้ายย้ายไปเป็นหน้าไตรมาสแยกแล้ว ไม่มี "เฟสถัดไป" ของแผนอีก)');
+  console.log('\nหน้าแผนใน index.html — 8 ก.ย. 2569 เหลือ 2 แท็บ แผนเดินทางย้ายไปหน้าไตรมาสแล้ว');
   await page.goto(`${BASE}/index.html#${PLAN}`);
   await page.waitForSelector('.tab-btn');
-  await page.locator(`[data-plan-tab="travel"]`).click();
+  const planTabs = await page.locator('#stepper .tab-btn').evaluateAll(
+    els => els.map(e => (e.childNodes[0].textContent || '').trim()));
+  ok(planTabs.length === 2 && planTabs[0] === 'เบิก/จัดหาอะไหล่' && planTabs[1] === 'รายการไตรมาส',
+    `หน้าแผนเหลือ 2 แท็บ — ${planTabs.join(' · ')}`);
+  ok(await page.locator('[data-plan-tab="travel"]').count() === 0, 'ไม่มีแท็บแผนเดินทางที่ระดับแผนแล้ว');
+  await page.locator('[data-plan-tab="quarters"]').click();
   await page.waitForTimeout(400);
-  ok(await page.locator('#btnGoNextPhaseProc').count() === 0, 'index.html ก็ไม่ส่ง onNextPhase มาแล้วเหมือนกัน — ไม่มีปุ่ม');
-  ok(await page.locator('.sect', { hasText: 'รายการไตรมาส' }).count() > 0,
-    'แต่มีการ์ด "รายการไตรมาส" แทน — ไปต่อผ่านไตรมาสที่ยืนยันแผนเดินทางแล้วแทน');
+  ok(await page.locator('#btnGoNextPhaseProc').count() === 0, 'index.html ไม่ส่ง onNextPhase — ไม่มีปุ่ม');
+  ok(await page.locator('.incident-section-title', { hasText: 'รายการไตรมาส' }).count() > 0,
+    'มีการ์ด "รายการไตรมาส" เป็นทางเข้าไตรมาส');
 
   console.log('\npageerror:', errors.length ? errors.join(' | ') : '(ไม่มี)');
   ok(errors.length === 0, 'ไม่มี pageerror');

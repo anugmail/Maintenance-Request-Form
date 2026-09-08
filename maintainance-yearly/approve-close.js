@@ -107,7 +107,7 @@ function renderDetail(plan, q) {
     </tr>`;
   }).join('');
   const grandTotal = sumPerDiem + sumLodging + sumTravel;
-  const totalCellStyle = 'background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:var(--fs-sm)';
+  const totalCellClass = 'bg-gray-50 border-t-2 border-gray-200 text-gray-700 text-sm';
 
   $('crumbs').innerHTML = `
     <a href="approve-close.html" class="text-inherit no-underline"><span class="ms">task_alt</span> รายการแผน</a>
@@ -138,11 +138,11 @@ function renderDetail(plan, q) {
           <th class="num">ค่าเดินทาง (บาท)</th><th class="num">รวม (บาท)</th></tr></thead>
         <tbody>${rows}</tbody>
         <tfoot><tr>
-          <td colspan="2" style="${totalCellStyle}"><b>ต้นทุนทั้งหมด</b></td>
-          <td class="num" style="${totalCellStyle}">${sumPerDiem.toLocaleString('th-TH')}</td>
-          <td class="num" style="${totalCellStyle}">${sumLodging.toLocaleString('th-TH')}</td>
-          <td class="num" style="${totalCellStyle}">${sumTravel.toLocaleString('th-TH')}</td>
-          <td class="num" style="${totalCellStyle}"><b>${grandTotal.toLocaleString('th-TH')}</b></td>
+          <td colspan="2" class="${totalCellClass}"><b>ต้นทุนทั้งหมด</b></td>
+          <td class="num ${totalCellClass}">${sumPerDiem.toLocaleString('th-TH')}</td>
+          <td class="num ${totalCellClass}">${sumLodging.toLocaleString('th-TH')}</td>
+          <td class="num ${totalCellClass}">${sumTravel.toLocaleString('th-TH')}</td>
+          <td class="num ${totalCellClass}"><b>${grandTotal.toLocaleString('th-TH')}</b></td>
         </tr></tfoot></table></div>`
         : `<div class="empty">ไม่มีรถในไตรมาสนี้</div>`}
 

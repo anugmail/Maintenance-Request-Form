@@ -231,7 +231,7 @@
                   <div class="in noic"><input type="number" min="0" value="${esc((trip.staffPerDiem || [])[i] ?? 0)}" ${dis}
                     data-staffpd-trip="${esc(trip.id)}" data-staffpd-i="${i}"></div></div>`).join('')}
             </div>
-            ${locked ? '' : `<div class="actions" style="justify-content:flex-start;margin-top:-6px">
+            ${locked ? '' : `<div class="actions justify-start -mt-1.5">
               <button class="btn btn-t btn-sm" data-staff-add="${esc(trip.id)}"><span class="ms">add</span> เพิ่มคน</button>
               ${(trip.staff || []).length > 1 ? `<button class="btn btn-t btn-sm" data-staff-del="${esc(trip.id)}"><span class="ms">remove</span> ลดคน</button>` : ''}
             </div>`}
@@ -626,14 +626,34 @@
 
     return `
       ${qTrips.length ? qTrips.map(tripReviewBlock).join('') : `<div class="empty">ยังไม่มีแผนเดินทางของ${esc(MYD.quarterLabel(q))}</div>`}
-      ${opts.showConfirm ? (confirmedAt
-        ? `<div class="note note-ok"><span class="ms">check_circle</span>
-            <div>ยืนยันแผนเดินทาง${esc(MYD.quarterLabel(q))}แล้ว เมื่อ ${esc(confirmedAt)}</div></div>`
-        : ready
-          ? `<div class="actions">
-              <button class="btn btn-p" data-confirm-q="${q}">ยืนยัน${esc(MYD.quarterLabel(q))}</button>
-            </div>`
-          : '') : ''}`;
+      ${opts.showConfirm ? travelConfirmActionHTML(plan, master, q) : ''}`;
+  }
+
+  // ปุ่ม/ป้าย "ยืนยัน<ไตรมาส>" — แยกออกมาเพราะหน้าไตรมาส (index.html#แผน/Q) ใช้ต่อท้ายขั้นทำแผนเดินทาง
+  // โดยไม่ต้องเอาบล็อก "ทวน" ที่ซ้ำกับรายการใบด้านบนมาด้วย
+  function travelConfirmActionHTML(plan, master, q) {
+    const confirmedAt = (plan.travelConfirmedByQuarter || {})[q];
+    if (confirmedAt) {
+      return `<div class="note note-ok"><span class="ms">check_circle</span>
+        <div>ยืนยันแผนเดินทาง${esc(MYD.quarterLabel(q))}แล้ว เมื่อ ${esc(confirmedAt)}</div></div>`;
+    }
+    if (!MYD.quarterTravelReady(plan, master, q)) return '';
+    return `<div class="actions">
+      <button class="btn btn-p" data-confirm-q="${q}">ยืนยัน${esc(MYD.quarterLabel(q))}</button>
+    </div>`;
+  }
+
+  // ----- แผนเดินทางของไตรมาสเดียว (8 ก.ย. 2569) -----
+  // ใช้ในหน้าไตรมาส ที่มีแท็บของตัวเองอยู่แล้ว จึงไม่มี mini-stepper/รายการไตรมาสอื่นมาซ้อน
+  function renderQuarterTravel(plan, q) {
+    const master = MYD.loadMaster();
+    const trips = MYD.ensureTrips(plan);
+    MYD.ensurePlanQuarters(plan);
+    S.q = q;
+    return `<div class="card">
+      ${renderTravelStep1Content(plan, master, trips, q)}
+      ${travelConfirmActionHTML(plan, master, q)}
+    </div>`;
   }
 
   // ----- เฟส 2 (แผนเดินทาง) ขั้น 2: ทวน + ยืนยัน — หน้าระดับ "ขั้น" เดิมของ trip-plan.html เท่านั้น -----
@@ -847,7 +867,7 @@
     return `
       <div class="card">
         <div class="sect">แผนเดินทาง — ยืนยันแล้ว</div>
-        <span class="badge b-ok" style="font-size:var(--fs-body);padding:6px 16px">แผนเดินทางยืนยันแล้ว</span>
+        <span class="badge b-ok text-md py-1.5 px-4">แผนเดินทางยืนยันแล้ว</span>
         <div class="sub mt-3">แผนเดินทาง <b>${trips.length}</b> ใบ
           · รวมค่าใช้จ่าย <b>${grand.toLocaleString('th-TH')}</b> บาท · ทุกใบได้รับการตอบรับจากหน่วยงานแล้ว</div>
         ${trips.length ? `<div class="tblwrap"><table class="tbl">
@@ -1356,6 +1376,15 @@
       HOST.onChange = opts.onChange || function () {};
       HOST.onConfirm = opts.onConfirm || function () {};
       bindTravelAccordion(plan);
+    },
+    // แผนเดินทางของไตรมาสเดียว — สำหรับหน้าไตรมาส (8 ก.ย. 2569)
+    renderQuarterTravel,
+    bindQuarterTravel(plan, opts) {
+      opts = opts || {};
+      HOST.onChange = opts.onChange || function () {};
+      HOST.onConfirm = opts.onConfirm || function () {};
+      bindProcStep2(plan);   // สร้าง/แก้/ส่งใบเดินทาง
+      bindProcStep3(plan);   // ปุ่มยืนยัน<ไตรมาส>
     },
     confirm: confirmTravelPlan,
     renderConfirmed: renderTravelConfirmed,

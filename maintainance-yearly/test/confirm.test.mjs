@@ -3,10 +3,15 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const MYD = require('../mock-yearly.js');
 
-// แผนจำลอง: 4 คัน · ส่งคำขอแล้ว · ครบกำหนด 2568-10-08
+// แผนจำลอง: 4 คัน อยู่ไตรมาส 1 · ส่งคำขอของไตรมาสนั้นแล้ว · ครบกำหนด 2568-10-08
+// (8 ก.ย. 2569: ส่งคำขอแยกรายไตรมาส — วันครบกำหนดของรถคันหนึ่งมาจากไตรมาสของรถคันนั้น)
 const mk = (byVehicle, travelConfirmed = false) => ({
   id: 'p1', selectedVehicleIds: ['a', 'b', 'c', 'd'], travelConfirmed,
-  confirm: { requestedAt: '2568-10-01', dueAt: '2568-10-08', remindedAt: null, byVehicle },
+  byQuarter: { Q1: ['a', 'b', 'c', 'd'], Q2: [], Q3: [], Q4: [], none: [] },
+  confirm: {
+    sent: { Q1: { requestedAt: '2568-10-01', dueAt: '2568-10-08', remindedAt: null } },
+    byVehicle,
+  },
 });
 const ids = ['a', 'b', 'c', 'd'];
 const entry = o => Object.assign(
@@ -26,7 +31,7 @@ const entry = o => Object.assign(
 }
 // ยังไม่ส่งคำขอ → ทุกคัน pending ไม่ว่าวันไหน
 {
-  const p = { id: 'p1', selectedVehicleIds: ids, confirm: null };
+  const p = { id: 'p1', selectedVehicleIds: ids, byQuarter: { Q1: ids, Q2: [], Q3: [], Q4: [], none: [] }, confirm: null };
   assert.equal(MYD.confirmStatus(p, 'a', '2570-01-01'), 'pending', 'ยังไม่ส่งคำขอ = รอตอบ ไม่ใช่เลยกำหนด');
 }
 
@@ -80,6 +85,26 @@ const entry = o => Object.assign(
 assert.equal(MYD.confirmLocked(mk({}, false)), false);
 assert.equal(MYD.confirmLocked(mk({}, true)), true, 'ยืนยันแผนเดินทางแล้ว = ล็อก');
 
+// ---------- ล็อกรายไตรมาส (8 ก.ย. 2569) ----------
+{
+  const p = mk({});
+  assert.equal(MYD.confirmLockedQuarter(p, 'Q1'), false, 'ยังไม่ยืนยันแผนเดินทางไตรมาสนี้ = ยังแก้ได้');
+  p.travelConfirmedByQuarter = { Q1: '1 ต.ค. 2568' };
+  assert.equal(MYD.confirmLockedQuarter(p, 'Q1'), true, 'ยืนยันไตรมาส 1 แล้ว = ล็อกเฉพาะไตรมาสนั้น');
+  assert.equal(MYD.confirmLockedQuarter(p, 'Q2'), false, 'ไตรมาสอื่นไม่ถูกล็อกตาม');
+}
+
+// ---------- ส่งคำขอรายไตรมาส ----------
+{
+  const p = mk({});
+  assert.equal(MYD.confirmRequested(p, 'Q1'), true);
+  assert.equal(MYD.confirmRequested(p, 'Q2'), false, 'ไตรมาสที่ยังไม่ส่ง = ยังไม่มีคำขอ');
+  MYD.requestConfirmQuarter(p, 'Q2', '2568-11-01', '2568-11-08');
+  assert.equal(MYD.confirmRequested(p, 'Q2'), true);
+  assert.equal(MYD.confirmSentOf(p, 'Q2').dueAt, '2568-11-08');
+  assert.equal(MYD.confirmSentOf(p, 'Q1').dueAt, '2568-10-08', 'ไตรมาสเดิมไม่ถูกทับ');
+}
+
 // ---------- settings ----------
 assert.equal(MYD.loadSettings().confirmDueDays, 7, 'ค่าตั้งต้น 7 วัน');
 
@@ -91,7 +116,7 @@ assert.ok(!MYD.SEED_VEHICLES.some(v => /^เขต /.test(v.ownerDept)),
 {
   const cf = MYD.SEED_PLAN_CF;
   assert.equal(cf.travelConfirmed, false, 'แผนเดโม CF ต้องยังไม่ยืนยันแผนเดินทาง');
-  assert.ok(cf.confirm && cf.confirm.requestedAt, 'ส่งคำขอไปแล้ว');
+  assert.ok(MYD.confirmRequested(cf, 'Q1'), 'ส่งคำขอไตรมาส 1 ไปแล้ว');
   const n = id => cf.selectedVehicleIds.filter(v => MYD.confirmStatus(cf, v, '2570-01-01') === id).length;
   assert.equal(n('ready'), 8, 'พร้อม 8');
   assert.equal(n('notready'), 2, 'ไม่พร้อม 2');

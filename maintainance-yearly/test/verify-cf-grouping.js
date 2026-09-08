@@ -6,7 +6,9 @@
 // CHROME_PATH ตั้งต้นชี้ Google Chrome — ถ้าเครื่องไม่มี ใช้ chromium ของ playwright แทนได้:
 //   ~/Library/Caches/ms-playwright/chromium_headless_shell-*/chrome-headless-shell-*/chrome-headless-shell
 const { chromium } = require('playwright-core');
-const URL = 'http://127.0.0.1:8123/maintainance-yearly/index.html#plan-seed-2569-002';
+// 8 ก.ย. 2569: การยืนยันรถย้ายไปอยู่ในหน้าไตรมาส — ใช้ไตรมาส 4 ของแผนเดโม (6 คัน:
+// ตอบพร้อม 2 · ไม่พร้อม 2 · ไม่ตอบ 2) ครอบเคสเดียวกับที่เคยเช็คทั้งแผน
+const URL = 'http://127.0.0.1:8123/maintainance-yearly/index.html#plan-seed-2569-002/Q4';
 
 (async () => {
   const browser = await chromium.launch({
@@ -32,8 +34,10 @@ const URL = 'http://127.0.0.1:8123/maintainance-yearly/index.html#plan-seed-2569
   ok(zoneHeads.length >= 1, `มีหัวข้อภาค ${zoneHeads.length} กลุ่ม — ${zoneHeads.join(' | ')}`);
   ok(zoneHeads.every(t => /คัน/.test(t)), 'หัวข้อภาคมีสรุปจำนวนคัน');
 
+  // ⚠️ seed ปัจจุบันแบ่งรถ "จังหวัดละไตรมาส" (แผน 002: Q1–Q3 เขต 5 · Q4 เขต 6) ไตรมาสเดียวจึงมี
+  // จังหวัดเดียวเสมอ — เคสหลายจังหวัดในไตรมาสเดียวยังไม่มีข้อมูลให้ทดสอบ ตรวจได้แค่โครงของกล่อง
   const provHeads = await page.locator('.rzone-head').allTextContents();
-  ok(provHeads.length >= 2, `มีกล่องจังหวัด ${provHeads.length} กล่อง`);
+  ok(provHeads.length >= 1, `มีกล่องจังหวัด ${provHeads.length} กล่อง`);
   ok(provHeads.every(t => /เขต \d/.test(t)), 'ทุกกล่องบอกเขตกำกับ');
   // ชื่อจังหวัดอยู่ใน <b> — ไม่ใช้ textContent ของหัวกล่องเพราะจะติดชื่อ ligature ของไอคอนมาด้วย
   const provNames = await page.locator('.rzone-head b').allTextContents();
@@ -42,7 +46,7 @@ const URL = 'http://127.0.0.1:8123/maintainance-yearly/index.html#plan-seed-2569
 
   console.log('\nความถูกต้องของตัวเลข');
   const perTableRows = await page.locator('.rzone-body table tbody tr').count();
-  ok(perTableRows === 12, `รวมทุกกล่องได้ 12 แถว = รถในแผน (ได้ ${perTableRows})`);
+  ok(perTableRows === 6, `รวมทุกกล่องได้ 6 แถว = รถของไตรมาส 4 (ได้ ${perTableRows})`);
   const plates = await page.locator('.rzone-body table tbody tr td:first-child').allTextContents();
   ok(new Set(plates).size === plates.length, 'ไม่มีรถซ้ำข้ามกล่อง');
 
@@ -63,7 +67,7 @@ const URL = 'http://127.0.0.1:8123/maintainance-yearly/index.html#plan-seed-2569
   };
   const before = await page.locator('[data-verdict-for]').count();
   ok(before === 4, `มีปุ่มตัดสิน ${before} ปุ่ม (ไม่พร้อม 2 + เลยกำหนด 2)`);
-  ok(await joining() === 8, 'ตั้งต้นเข้าทริป 8 คัน (ตอบพร้อม 8 · อีก 4 ยังไม่ตัดสิน)');
+  ok(await joining() === 2, 'ตั้งต้นเข้าทริป 2 คัน (ตอบพร้อม 2 · อีก 4 ยังไม่ตัดสิน)');
 
   const decide = async (value, why) => {
     await page.locator('[data-verdict-for]').first().click();
@@ -77,16 +81,16 @@ const URL = 'http://127.0.0.1:8123/maintainance-yearly/index.html#plan-seed-2569
   // ตัดคันที่ตอบ "ไม่พร้อม" ออก — เดิมก็ไม่ได้เข้าทริปอยู่แล้ว ยอดต้องไม่ขยับ
   await decide('drop', 'ทดสอบตัดออก');
   ok(await page.locator('[data-verdict-for]').count() === before - 1, 'ตัดสินแล้วปุ่มลดลง 1');
-  ok(await joining() === 8, 'ตัด(drop)คันที่ไม่พร้อม → ยอดเข้าทริปคงที่ 8');
+  ok(await joining() === 2, 'ตัด(drop)คันที่ไม่พร้อม → ยอดเข้าทริปคงที่ 2');
 
   // สั่ง "เข้าตามเดิม" ให้คันที่ไม่พร้อม — verdict ต้องชนะคำตอบ ยอดต้องเพิ่ม
   await decide('keep', 'ทดสอบให้เข้าตามเดิม');
-  ok(await joining() === 9, 'สั่ง(keep)คันที่ไม่พร้อม → ยอดเข้าทริปเพิ่มเป็น 9');
+  ok(await joining() === 3, 'สั่ง(keep)คันที่ไม่พร้อม → ยอดเข้าทริปเพิ่มเป็น 3');
 
   await page.reload();
   await page.waitForSelector('.rzone');
   ok(await page.locator('[data-verdict-for]').count() === before - 2, 'รีโหลดแล้วคำตัดสินทั้ง 2 ครั้งยังอยู่');
-  ok(await joining() === 9, 'รีโหลดแล้วยอดเข้าทริปยังเป็น 9');
+  ok(await joining() === 3, 'รีโหลดแล้วยอดเข้าทริปยังเป็น 3');
 
   console.log('\npageerror:', errors.length ? errors.join(' | ') : '(ไม่มี)');
   ok(errors.length === 0, 'ไม่มี pageerror');
