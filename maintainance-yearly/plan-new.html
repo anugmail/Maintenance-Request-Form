@@ -13,9 +13,8 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="../design-system/tailwind-theme.js?v=20260907-tw3"></script>
 <style>
-  /* เฉพาะหน้านี้ — ใช้ token เท่านั้น ไม่มีสี hardcode */
-  .wstep{cursor:pointer}
-  .wstep.locked{opacity:.55;cursor:not-allowed}
+  /* เฉพาะหน้านี้ — ใช้ token เท่านั้น ไม่มีสี hardcode
+     (กฎ .wstep/.wsteps.sm ถอดออก 7 ก.ย. 2569 — หน้านี้ไม่มี stepper แล้ว ตามโฟลว์แจ้งซ่อม) */
   /* แถวสรุปรวมท้ายตาราง */
   .tbl tfoot .sumrow td{background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:var(--fs-sm)}
   .itbl{table-layout:fixed}
@@ -28,10 +27,6 @@
   .itbl th:nth-child(4),.itbl td:nth-child(4){width:13%;text-align:center}
   .itbl th:nth-child(5),.itbl td:nth-child(5){width:10%}
   .itbl th:nth-child(6),.itbl td:nth-child(6){width:21%;text-align:center}
-  .wsteps.sm{margin-bottom:18px}
-  .wsteps.sm .wstep{padding:10px 12px;font-size:var(--fs-text-xs);gap:8px}
-  .wsteps.sm .wstep .num{width:24px;height:24px;font-size:12px}
-  .wsteps.sm .wstep .lbl{display:block}
 </style>
 </head>
 <body>
@@ -56,7 +51,7 @@
     </div>
 
     <main class="content">
-      <div class="draft">Prototype (Mock) — ออกเลขงาน แยกจาก stepper ปฏิบัติการแล้ว</div>
+      <div class="draft">Prototype (Mock) — ออกเลขงาน แยกจาก stepper ปฏิบัติการแล้ว · โครงหน้าตามโฟลว์แจ้งซ่อม</div>
       <div class="crumbs">
         <a href="index.html" class="text-inherit no-underline"><span class="ms">list_alt</span> รายการแผน</a>
         <span class="sep">›</span><span class="cur">ออกเลขงาน</span>
@@ -72,6 +67,6 @@
 
 <script src="common.js?v=20260825-15"></script>
 <script src="mock-yearly.js?v=20260828-1"></script>
-<script src="plan-new.js?v=20260826-1"></script>
+<script src="plan-new.js?v=20260907-2"></script>
 </body>
 </html>

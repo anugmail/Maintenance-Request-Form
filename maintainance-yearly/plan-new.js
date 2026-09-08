@@ -65,24 +65,18 @@ function renderWizard(plan) {
       — แก้รถ/ไตรมาสได้ แล้วกด "สรุปแผนก่อนออกปฏิบัติงาน" · <b>เลขงานเดิมไม่เปลี่ยน</b></div>
     </div>` : '';
 
+  // 7 ก.ย. 2569 — ยกโครงตามโฟลว์แจ้งซ่อม: ฟอร์มแจ้งซ่อมถอด stepper ทิ้ง
+  // เหลือแค่บรรทัดบอกขั้น (.modal-step-title 16/600) หน้านี้จึงทำเหมือนกัน —
+  // เดินขั้นด้วยปุ่ม ย้อนกลับ/ถัดไป ท้ายหน้าอย่างเดียว
+  const stepLabel = (SUB_STEPS.find(s => s.no === state.sub) || {}).label || '';
+
   $('planNewBody').innerHTML = `
     <div class="card">
       ${reviseBanner}
-      <div class="wsteps sm">${SUB_STEPS.map(s => {
-        const active = s.no === state.sub;
-        const passed = s.no < state.sub;
-        const cls = ['wstep'];
-        if (active) cls.push('active');
-        if (passed) cls.push('passed');
-        if (s.no > state.sub) cls.push('locked');
-        return `<div class="${cls.join(' ')}" onclick="goSub(${s.no})">
-          <span class="num">${passed ? '✓' : s.no}</span>
-          <span class="lbl">${esc(s.label)}</span>
-        </div>`;
-      }).join('')}</div>
+      <div class="incident-section-title">ขั้นที่ ${state.sub}: ${esc(stepLabel)} (${state.sub}/${LAST_SUB})</div>
       <div id="subBody">${renderSubBody(plan)}</div>
       <div class="actions">
-        <button class="btn btn-g" id="btnBackSub" ${state.sub === 1 ? 'disabled' : ''}>ย้อนกลับ</button>
+        <button class="btn btn-s" id="btnBackSub" ${state.sub === 1 ? 'disabled' : ''}>ย้อนกลับ</button>
         <button class="btn btn-p" id="btnPrimarySub" ${primaryDisabled ? 'disabled' : ''}>${esc(primaryLabel)}</button>
       </div>
     </div>`;
@@ -141,9 +135,9 @@ function renderStep1(plan) {
     const zoneChecked = zoneJoinable.length > 0 && zoneSel === zoneJoinable.length;
 
     const blocks = regions.map(r => renderRegionBlock(r, master, selected, plan)).join('');
-    return `<div class="sect">
-      <span style="margin-right:auto">${esc(MYD.ZONE_LABELS[zone])} <span style="font-weight:400;color:var(--gray-500);font-size:14px">(${zoneJoinable.length} คัน)</span></span>
-      <label class="rzone-allchk" style="font-weight:500" onclick="event.stopPropagation()"><input type="checkbox" class="zoneAllChk" data-zone="${zone}" ${zoneJoinable.length === 0 ? 'disabled' : ''} ${zoneChecked ? 'checked' : ''}> เลือกทั้งภาค</label>
+    return `<div class="incident-section-title flex items-center gap-3 mt-6">
+      <span class="mr-auto">${esc(MYD.ZONE_LABELS[zone])} <span class="font-normal text-gray-500 text-sm">(${zoneJoinable.length} คัน)</span></span>
+      <label class="rzone-allchk font-medium" onclick="event.stopPropagation()"><input type="checkbox" class="zoneAllChk" data-zone="${zone}" ${zoneJoinable.length === 0 ? 'disabled' : ''} ${zoneChecked ? 'checked' : ''}> เลือกทั้งภาค</label>
     </div>${blocks}`;
   }).join('');
 
@@ -163,7 +157,6 @@ function renderStep1(plan) {
   const activeInfo = QUARTERS.find(q => q.q === activeQ);
 
   return `
-    <div class="sect">ขั้นที่ 1: ชื่อแผน + จัดรถเข้าไตรมาส</div>
     <div class="fgrid">
       <div class="f sp4">
         <label>ชื่อแผน</label>
@@ -187,7 +180,7 @@ function renderStep1(plan) {
     ${noneCount ? `<div class="note note-info"><span class="ms">inbox</span>
       <div>มีรถ <b>${noneCount}</b> คันอยู่ในแผนแต่<b>ยังไม่ระบุไตรมาส</b> — ถูกพักไว้ตอนแก้แผนเดินทาง ยังไม่ถูกนับเข้าไตรมาสไหน</div></div>` : ''}
 
-    <div class="sect">เลือกรถเข้า${esc(MYD.quarterLabel(activeQ))}${activeInfo ? ' (' + esc(activeInfo.months) + ')' : ''}</div>
+    <div class="incident-section-title mt-6 mb-1">เลือกรถเข้า${esc(MYD.quarterLabel(activeQ))}${activeInfo ? ' (' + esc(activeInfo.months) + ')' : ''}</div>
     <div class="sub">ไตรมาสนี้เลือกแล้ว ${selected.size} คัน จาก ${regionsSelected.size} เขต · เลือกได้ทุกสถานะ — ดูคำเตือนใต้ป้ายสถานะแล้วติ๊กออกเองได้</div>
     <div class="chk mb-3">
       <label><input type="checkbox" id="chkAllZones" ${allSelected ? 'checked' : ''} ${joinableAll.length === 0 ? 'disabled' : ''}> เลือกทั้งหมด (ทุกเขต) — ${joinableAll.length} คัน</label>
@@ -525,26 +518,25 @@ function renderStepSummary(plan) {
   });
 
   return `
-    <div class="sect">ขั้นที่ 2: สรุปแผน</div>
-    
+    <dl class="incident-summary">
+      <div class="incident-field"><dt>ชื่อแผน</dt><dd>${esc(plan.planName)}</dd></div>
+      <div class="incident-field"><dt>ช่วงเวลา</dt><dd>${periodText}</dd></div>
+      <div class="incident-field"><dt>รถเข้าแผนบำรุงรักษา</dt><dd><b>${selectedVehicles.length}</b> คัน</dd></div>
+      <div class="incident-field"><dt>รายการอะไหล่ที่ต้องใช้</dt><dd><b>${lines.length}</b> รายการ</dd></div>
+      <div class="incident-field wide"><dt>แยกตามหมวด</dt><dd>${catSummary || 'ไม่มีรายการ'}</dd></div>
+    </dl>
 
-    <div class="fgrid">
-      <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
-      <div class="f sp2"><label>ช่วงเวลา</label><div>${periodText}</div></div>
-      <div class="f sp2"><label>รถเข้าแผนบำรุงรักษา</label><div><b class="text-[20px]">${selectedVehicles.length}</b> คัน</div></div>
-      <div class="f sp2"><label>รายการอะไหล่ที่ต้องใช้</label><div><b class="text-[20px]">${lines.length}</b> รายการ</div></div>
-      <div class="f sp4"><label>แยกตามหมวด</label><div>${catSummary || 'ไม่มีรายการ'}</div></div>
-    </div>
+    <section class="incident-section mt-6">
+      <div class="incident-section-title">แจกแจงรายไตรมาส — เลขงานจะออก 1 ใบต่อไตรมาส</div>
+      ${byQuarter.map(q => renderQuarterVehicleBlock(q)).join('')}
+      <div class="note note-info mt-2"><span class="ms">info</span>
+        <div><b>รวมทั้งปี</b> (ต.ค.–ก.ย.) — <b>${selectedVehicles.length}</b> คัน · อะไหล่ <b>${lines.length}</b> รายการ</div>
+      </div>
+    </section>
 
-    <div class="sect">แจกแจงรายไตรมาส — เลขงานจะออก 1 ใบต่อไตรมาส</div>
-    
-    ${byQuarter.map(q => renderQuarterVehicleBlock(q)).join('')}
-    <div class="note note-info mt-2"><span class="ms">info</span>
-      <div><b>รวมทั้งปี</b> (ต.ค.–ก.ย.) — <b>${selectedVehicles.length}</b> คัน · อะไหล่ <b>${lines.length}</b> รายการ</div>
-    </div>
-
-    <div class="sect">รถที่เลือกเข้าแผน — แยกตามภาค</div>
-    <div class="tblwrap"><table class="tbl itbl">
+    <section class="incident-section">
+      <div class="incident-section-title">รถที่เลือกเข้าแผน — แยกตามภาค</div>
+      <div class="tblwrap"><table class="tbl itbl">
       <thead><tr><th>ภาค</th><th colspan="2">เขตที่มีรถเข้าแผน</th><th>จำนวนรถ</th><th>หน่วย</th><th></th></tr></thead>
       <tbody>${byZone.map(z => `<tr>
         <td>${esc(z.label)}</td>
@@ -558,9 +550,11 @@ function renderStepSummary(plan) {
         <td class="num"><b>${selectedVehicles.length}</b></td>
         <td>คัน</td><td></td>
       </tr></tfoot></table></div>
+    </section>
 
-    <div class="sect">รถที่เลือกเข้าแผน — แยกตามยี่ห้อ/รุ่นอุปกรณ์</div>
-    <div class="tblwrap"><table class="tbl itbl">
+    <section class="incident-section">
+      <div class="incident-section-title">รถที่เลือกเข้าแผน — แยกตามยี่ห้อ/รุ่นอุปกรณ์</div>
+      <div class="tblwrap"><table class="tbl itbl">
       <thead><tr><th>ยี่ห้อ/รุ่นอุปกรณ์</th><th colspan="2">ชนิดรถ</th><th>จำนวนรถ</th><th>หน่วย</th><th></th></tr></thead>
       <tbody>${byBrand.map(b => `<tr>
         <td><b>${esc(b.brand)}</b>${b.chassis && b.chassis !== '—' ? `<div class="cell-sub">${esc(b.chassis)}</div>` : ''}</td>
@@ -572,8 +566,10 @@ function renderStepSummary(plan) {
         <td><b>รวม</b> · ${byBrand.length} ยี่ห้อ</td><td colspan="2"></td>
         <td class="num"><b>${selectedVehicles.length}</b></td><td>คัน</td><td></td>
       </tr></tfoot></table></div>
+    </section>
 
-    <div class="sect">อะไหล่ที่ต้องใช้ทั้งปี (ระบบคำนวณจากรถที่เลือก) · เทียบยอดคงเหลือจาก Smart Inventory</div>
+    <section class="incident-section">
+      <div class="incident-section-title">อะไหล่ที่ต้องใช้ทั้งปี (ระบบคำนวณจากรถที่เลือก) · เทียบยอดคงเหลือจาก Smart Inventory</div>
     ${(() => {
       const sm = MYD.stockSummary(lines);
       if (sm.short.length) return `<div class="note note-warn"><span class="ms">inventory</span>
@@ -584,9 +580,10 @@ function renderStepSummary(plan) {
       return `<div class="note note-ok"><span class="ms">inventory</span><div>คลังพอทุกรายการ</div></div>`;
     })()}
     ${lineTable(lines)}
+    </section>
 
     <div class="sub mt-3.5">
-      <span class="ms" style="font-size:16px">info</span>
+      <span class="ms text-md">info</span>
       กดออกเลขงานแล้ว ระบบจะ<b>ส่งเอกสารแจ้งฝ่ายพัสดุ</b>ให้ทราบว่าต้องเตรียม/สั่งอะไหล่อะไรบ้าง
     </div>`;
 }
@@ -636,7 +633,7 @@ function commitRevise(plan) {
 function renderDone(plan) {
   $('planNewBody').innerHTML = `
     <div class="card">
-      <div class="sect">ออกเลขงานเรียบร้อย — ${MYD.workNumberList(plan).length} ใบ</div>
+      <div class="incident-section-title">ออกเลขงานเรียบร้อย — ${MYD.workNumberList(plan).length} ใบ</div>
       <div class="worknos">${MYD.workNumberList(plan).map(x => `
         <div class="workno">
           <div class="workno-q">${esc(MYD.quarterLabel(x.q))} · ${MYD.planVehicleIds(plan, x.q).length} คัน</div>
