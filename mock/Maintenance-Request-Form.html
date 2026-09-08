@@ -1695,6 +1695,20 @@
               <label><input type="radio" name="r-decision" onchange="setDecision('kry')"> ส่งเรื่องให้ กรย.</label>
             </div>
           </div>
+          <!-- 8 ก.ย. 2569: เลือก "ดำเนินการซ่อมเอง" แล้วแนบไฟล์ได้ (รูป JPG/PNG หรือ PDF)
+               ใช้ .file-chip ของ design system (ยกจาก Figma "File upload item") — ไม่ใช่ของใหม่ -->
+          <div class="f hidden" id="self-doc-wrap">
+            <label>เอกสารแนบ <small>(รูปภาพ JPG/PNG หรือ PDF · ถ้ามี)</small></label>
+            <div class="stack tight">
+              <div id="self-docs" class="flex flex-wrap gap-2"></div>
+              <div>
+                <button type="button" class="btn btn-s btn-sm" onclick="$('self-doc-file').click()">
+                  <span class="ms">attach_file</span> แนบไฟล์</button>
+                <input type="file" id="self-doc-file" class="hidden" multiple
+                  accept="image/jpeg,image/png,application/pdf" onchange="addSelfDocs(this.files)">
+              </div>
+            </div>
+          </div>
           <div class="f hidden" id="target-wrap">
             <label>ส่วนที่ต้องการแจ้งซ่อม <small>(เลือกได้มากกว่า 1)</small></label>
             <div class="chks mt-1" id="target-chks"></div>
@@ -2802,7 +2816,7 @@
     // ================= STATE =================
     // 3 ก.ย. 2569: target เดี่ยว → targets หลายจุด (เลือกได้ทั้งตัวรถและส่วนเสริมในใบเดียว)
     // S.symsBy = อาการแยกตามจุด (ที่มาของความจริง) · S.symptoms = union ของ id ไว้ให้ partsFor/โค้ดเดิมใช้ต่อ
-    const S = { step: 1, vehicle: null, targets: [], symptoms: [], symsBy: { vehicle: [], attach: [] }, sev: null, photos: 0, bookings: {}, orders: {}, customParts: [], customSeq: 0, removedParts: [], decision: null, approver: null,
+    const S = { step: 1, vehicle: null, targets: [], symptoms: [], symsBy: { vehicle: [], attach: [] }, sev: null, photos: 0, bookings: {}, orders: {}, customParts: [], customSeq: 0, removedParts: [], selfDocs: [], decision: null, approver: null,
       usable: null, costType: null, costVals: {} };
     const COST_TYPES = MDC.data('costTypes');
     const COST_FIELD = { costCenter:{label:'ศูนย์ต้นทุน',ph:'เช่น B0002211',icon:'account_balance'},
@@ -3180,6 +3194,34 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
       S.decision = d;
       const r=document.querySelectorAll('input[name="r-decision"]');
       if(r.length){ r[0].checked=d==='self'; r[1].checked=d==='kry' }
+      // ช่องแนบไฟล์โผล่เฉพาะเส้น "ซ่อมเอง" (8 ก.ย. 2569)
+      const w = $('self-doc-wrap');
+      if (w) w.classList.toggle('hidden', d !== 'self');
+    }
+
+    // ----- เอกสารแนบของเส้นซ่อมเอง — รูป (JPG/PNG) หรือ PDF -----
+    // ต้นแบบเก็บแค่ชื่อ/ขนาด/ชนิดไฟล์ ยังไม่มีที่เก็บไฟล์จริง (แพตเทิร์นเดียวกับใบสั่งซื้อที่หน้าเบิกอะไหล่)
+    const SELF_DOC_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
+    function addSelfDocs(files) {
+      let bad = 0;
+      [...files].forEach(f => {
+        if (!SELF_DOC_TYPES.includes(f.type)) { bad++; return }
+        S.selfDocs.push({ name: f.name, size: f.size, type: f.type });
+      });
+      if (bad) toast('แนบได้เฉพาะรูปภาพ JPG/PNG หรือ PDF');
+      $('self-doc-file').value = '';
+      renderSelfDocs();
+    }
+    function rmSelfDoc(i) { S.selfDocs.splice(i, 1); renderSelfDocs() }
+    function selfDocIcon(t) { return t === 'application/pdf' ? 'picture_as_pdf' : 'image' }
+    function renderSelfDocs() {
+      const box = $('self-docs');
+      if (!box) return;
+      box.innerHTML = S.selfDocs.map((d, i) => `<div class="file-chip">
+        <span class="ms">${selfDocIcon(d.type)}</span>
+        <span class="file-chip-name" title="${esc(d.name)}">${esc(d.name)}</span>
+        <button type="button" class="file-chip-rm" onclick="rmSelfDoc(${i})" aria-label="ลบไฟล์แนบ"><span class="ms">close</span></button>
+      </div>`).join('');
     }
     function bookedArr() { return Object.entries(S.bookings).map(([c, q]) => { const p = PARTS.find(x => x.code === c); return { name: p.name, qty: q, unit: p.unit } }) }
     function orderedArr() {
@@ -3246,6 +3288,7 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
               (id === 'OTH' ? 'อื่นๆ: ' + esc($('othtext').value.trim()) : SYMPTOMS.find(x => x.id === id).name)))
           : S.symptoms.map(id => id === 'OTH' ? ('อื่นๆ: ' + esc($('othtext').value.trim())) : SYMPTOMS.find(x => x.id === id).name)),
         usable: S.usable !== false, photos: S.photos, desc: esc($('desc').value.trim()),
+        selfDocs: S.decision === 'self' ? S.selfDocs.map(d => ({ ...d })) : [],
         reporter: { type: S.reporterType || 'pea', name: rep.name, posi: rep.posi },
         accReceiver: esc(acc),
         ...infoVals(), fromUnit: 'กรย. ' + S.vehicle.org,
@@ -3264,12 +3307,13 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
       if (VIEW === 'my') renderMyList();
     }
     function resetForm() {
-      Object.assign(S, { step: 1, vehicle: null, targets: [], symptoms: [], symsBy: { vehicle: [], attach: [] }, sev: null, photos: 0, bookings: {}, orders: {}, customParts: [], customSeq: 0, removedParts: [], decision: null, approver: null, usable: null, costType: null, costVals: {}, reporterType: 'pea' });
+      Object.assign(S, { step: 1, vehicle: null, targets: [], symptoms: [], symsBy: { vehicle: [], attach: [] }, sev: null, photos: 0, bookings: {}, orders: {}, customParts: [], customSeq: 0, removedParts: [], selfDocs: [], decision: null, approver: null, usable: null, costType: null, costVals: {}, reporterType: 'pea' });
       ['i-odo', 'i-crane', 'desc', 'othtext'].forEach(id => { const e = $(id); if (e) e.value = '' });
       $('i-accrecv').value = '';
       document.querySelectorAll('#s1 input[type=radio]').forEach(r => r.checked = false);
       renderCostTypes(); renderReporter(); renderUsable();
       document.querySelectorAll('#photos .ph').forEach(e => e.remove());
+      renderSelfDocs(); $('self-doc-wrap').classList.add('hidden');
       renderVehicleOptions(); renderVehicleInfo();
       $('rm-title').textContent = 'แจ้งซ่อม';
       showStepSection(WORDER[0]);
@@ -4848,6 +4892,13 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
                 <span class="rc-ic"><span class="ms">alt_route</span></span>
                 <span class="rc-tx"><b>ส่งต่อให้ กรย.</b><small>ให้ กรย. คัดแยก ซ่อมที่อู่ / กรย. ซ่อมเอง / ส่งต่อ กบค.</small></span></label>
             </div>
+            ${(j.selfDocs || []).length ? `<div class="stack tight mt-3">
+              <div class="hint">เอกสารแนบจากผู้แจ้ง</div>
+              <div class="flex flex-wrap gap-2">${j.selfDocs.map(dc => `<div class="file-chip">
+                <span class="ms">${dc.type === 'application/pdf' ? 'picture_as_pdf' : 'image'}</span>
+                <span class="file-chip-name" title="${esc(dc.name)}">${esc(dc.name)}</span>
+              </div>`).join('')}</div>
+            </div>` : ''}
           </section>
           <section class="incident-section">
             <h2 class="incident-section-title">ข้อมูลการซ่อม</h2>

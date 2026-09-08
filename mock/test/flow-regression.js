@@ -71,7 +71,25 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   ok('กล่องสรุปรถขึ้น (ทะเบียน/จังหวัด/ผู้ขับขี่/ช่างคุมรถ)',
     await page.locator('#vsum .incident-field').count() === 4);
   await page.locator('input[name="r-usable"]').first().check();
+  await page.locator('label', { hasText: 'ส่งเรื่องให้ กรย.' }).first().click();
+  eq('เส้น กรย. ไม่มีช่องแนบไฟล์', await page.locator('#self-doc-wrap:not(.hidden)').count(), 0);
   await page.locator('label', { hasText: 'ดำเนินการซ่อมเอง' }).first().click();
+  // ---- แนบไฟล์เฉพาะเส้น "ซ่อมเอง" — รูป JPG/PNG หรือ PDF (8 ก.ย. 2569) ----
+  eq('เลือกซ่อมเอง → มีช่องแนบไฟล์', await page.locator('#self-doc-wrap:not(.hidden)').count(), 1);
+  await page.setInputFiles('#self-doc-file', [
+    { name: 'ใบเสนอราคา.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 test') },
+    { name: 'รูปหน้างาน.jpg', mimeType: 'image/jpeg', buffer: Buffer.from([0xff, 0xd8, 0xff, 0xdb, 0, 0]) },
+  ]);
+  await page.waitForTimeout(250);
+  eq('แนบ PDF + JPG ได้ 2 ไฟล์', await page.locator('#self-docs .file-chip').count(), 2);
+  ok('ไอคอนแยกชนิดไฟล์ (pdf/รูป)',
+    (await page.locator('#self-docs .file-chip > .ms').allTextContents()).join('|') === 'picture_as_pdf|image');
+  await page.setInputFiles('#self-doc-file', [{ name: 'ห้าม.txt', mimeType: 'text/plain', buffer: Buffer.from('x') }]);
+  await page.waitForTimeout(250);
+  eq('ชนิดอื่นแนบไม่ได้ (ยังเหลือ 2 ไฟล์)', await page.locator('#self-docs .file-chip').count(), 2);
+  await page.locator('#self-docs .file-chip-rm').first().click();
+  await page.waitForTimeout(200);
+  eq('ลบไฟล์แนบทีละอันได้', await page.locator('#self-docs .file-chip').count(), 1);
   eq('จุดที่แจ้งเป็น checkbox 2 ตัว (ตัวรถ+เครน)', await page.locator('#target-chks label').count(), 2);
   await page.locator('#target-chks label', { hasText: 'ตัวรถ' }).click();
   await page.locator('#target-chks label', { hasText: 'เครน' }).click();
@@ -136,6 +154,7 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   await page.waitForSelector('#bossdetail:not(.hidden) .incident-head');
   ok('รายละเอียดเป็นโครงหน้าเหตุการณ์ (หัวเรื่อง+badge+แท็บ)',
     await page.locator('#bossdetail .tabs .tab-btn').count() === 2);
+  eq('หน้าอนุมัติเห็นไฟล์แนบจากผู้แจ้ง', await page.locator('#bossdetail .file-chip').count(), 1);
   ok('ปุ่ม ไม่อนุมัติ/อนุมัติ อยู่ด้านบน',
     await page.locator('#bossdetail .incident-actions .btn-td').isVisible()
     && await page.locator('#bossdetail .incident-actions .btn-p').isVisible());
