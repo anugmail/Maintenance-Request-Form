@@ -776,6 +776,8 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
 .radcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px;align-items:stretch}
 .radcard{position:relative;display:flex;align-items:flex-start;gap:12px;border:1px solid var(--gray-300);border-radius:var(--rounded-md);padding:15px;cursor:pointer;background:#fff}
 .radcard:hover{border-color:var(--brand-500)}
+.radcard.is-readonly{cursor:default}   /* ตัดสินใจไปแล้ว — ยังเห็นตัวเลือกทั้งหมดและอันที่เลือก แต่กดเปลี่ยนไม่ได้ (8 ก.ย. 2569) */
+.radcard.is-readonly:not(.sel):hover{border-color:var(--gray-300)}
 .radcard.sel{border:2px solid var(--primary-600);padding:14px}   /* ไลบรารี: เลือกแล้วเส้นหนา 2px พื้นยังขาว (ไม่เปลี่ยนสีพื้น) · หัก 1px ที่ padding กันการ์ดขยับ */
 .radcard .rdot{flex:none;width:20px;height:20px;margin-top:2px;border:2px solid var(--gray-300);border-radius:var(--r-pill);background:#fff;display:flex;align-items:center;justify-content:center}
 .radcard.sel .rdot{background:var(--primary-600);border-color:var(--primary-600)}

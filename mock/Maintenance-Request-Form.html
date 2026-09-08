@@ -4025,16 +4025,28 @@ function renderKryDetail(no){
     { id: 'self',   icon: 'build',       title: 'กรย. ซ่อมเอง',  sub: 'เบิกอะไหล่จากคลัง ซ่อมที่ กรย.' },
     { id: 'kbk',    icon: 'engineering', title: 'ส่งต่อ กบค.',   sub: 'งานเครื่องเสริม เช่น เครน/กระเช้า' },
   ];
+  // การ์ด 3 ตัวเลือกแสดงตลอด (เจ้าของงานสั่ง 8 ก.ย. 2569 "ต้องให้เลือกว่าส่งไปที่ไหนได้บ้าง
+  // เหมือนของเดิม") — คัดแยกไปแล้วก็ยังเห็นว่ามีทางไหนบ้างและไปทางไหน แค่กดเปลี่ยนไม่ได้
+  // แพตเทิร์นเดียวกับบล็อก "ช่องทางการซ่อม" ของหน้าอนุมัติ
+  const doneMode = j.phase === 'krd' ? 'self'
+    : j.phase === 'returned' ? 'garage'
+    : (j.phase === 'pending' || j.phase === 'work' || j.phase === 'slots' || j.phase === 'appt'
+       || j.phase === 'approve' || j.phase === 'closed') ? 'kbk'
+    : null;
+  const activeMode = sorting ? KE.mode : doneMode;
+  const cards = `<div class="radcards cols-3">${MODES.map(m => `
+    <label class="radcard ${activeMode === m.id ? 'sel' : ''}${sorting ? '' : ' is-readonly'}"
+      ${sorting ? `onclick="kryMode('${m.id}')"` : ''}>
+      <input type="radio" name="kryroute" ${activeMode === m.id ? 'checked' : ''} ${sorting ? '' : 'disabled'}><span class="rdot"></span>
+      <span class="rc-ic"><span class="ms">${m.icon}</span></span>
+      <span class="rc-tx"><b>${m.title}</b><small>${m.sub}</small></span></label>`).join('')}
+  </div>`;
+
   let routeBlock = '';
   if (sorting) {
     routeBlock = `
       <div class="hint mb-2.5">เลือกช่องทางที่จะส่งเรื่องต่อ แล้วกด "ยืนยันคัดแยก" ด้านบน</div>
-      <div class="radcards cols-3">${MODES.map(m => `
-        <label class="radcard ${KE.mode === m.id ? 'sel' : ''}" onclick="kryMode('${m.id}')">
-          <input type="radio" name="kryroute" ${KE.mode === m.id ? 'checked' : ''}><span class="rdot"></span>
-          <span class="rc-ic"><span class="ms">${m.icon}</span></span>
-          <span class="rc-tx"><b>${m.title}</b><small>${m.sub}</small></span></label>`).join('')}
-      </div>`;
+      ${cards}`;
     if (KE.mode === 'garage') {
       routeBlock += `<div class="stack mt-3.5">
         <div class="f"><label>บันทึก/เหตุผลการส่งซ่อมอู่ <small>(ถ้ามี)</small></label>
@@ -4057,7 +4069,11 @@ function renderKryDetail(no){
         <textarea id="krynote3" rows="2" placeholder="เช่น งานเครน ต้องใช้ช่างเฉพาะทางของ กบค.…">${esc(KE.note || '')}</textarea></div>`;
     }
   } else {
-    routeBlock = `<div class="hint">คัดแยกไปแล้ว — ${esc(st.label)}</div>`;
+    routeBlock = `
+      <div class="hint mb-2.5">${doneMode
+        ? 'คัดแยกไปแล้ว — เปลี่ยนช่องทางไม่ได้'
+        : 'ใบนี้ไม่ได้อยู่ในขั้นคัดแยกของ กรย. — สถานะปัจจุบัน: ' + esc(st.label)}</div>
+      ${cards}`;
   }
 
   // ----- งานที่ กรย. รับมาซ่อมเอง / ปิดงานแล้ว: คงพาเนลเดิมไว้ท้ายคอลัมน์ซ้าย -----
@@ -5051,12 +5067,12 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
             <h2 class="incident-section-title">ช่องทางการซ่อม</h2>
             <div class="hint mb-2.5">ผู้แจ้งเสนอ: <b>${j.nextPhase === 'kry' ? 'ส่งเรื่องให้ กรย.' : 'ดำเนินการซ่อมเอง'}</b>${wait ? ' — หัวหน้าปรับเปลี่ยนได้ก่อนกดอนุมัติ' : ' (เรื่องเดินต่อแล้ว เปลี่ยนไม่ได้)'}</div>
             <div class="radcards">
-              <label class="radcard ${j.nextPhase !== 'kry' ? 'sel' : ''}" onclick="bossRoute('self')">
-                <input type="radio" name="bossroute" ${j.nextPhase !== 'kry' ? 'checked' : ''}><span class="rdot"></span>
+              <label class="radcard ${j.nextPhase !== 'kry' ? 'sel' : ''}${wait ? '' : ' is-readonly'}" ${wait ? `onclick="bossRoute('self')"` : ''}>
+                <input type="radio" name="bossroute" ${j.nextPhase !== 'kry' ? 'checked' : ''} ${wait ? '' : 'disabled'}><span class="rdot"></span>
                 <span class="rc-ic"><span class="ms">build</span></span>
                 <span class="rc-tx"><b>ซ่อมเอง (อู่ของหน่วยงาน)</b><small>ดำเนินการซ่อมที่หน้างาน/หน่วยงาน</small></span></label>
-              <label class="radcard ${j.nextPhase === 'kry' ? 'sel' : ''}" onclick="bossRoute('kry')">
-                <input type="radio" name="bossroute" ${j.nextPhase === 'kry' ? 'checked' : ''}><span class="rdot"></span>
+              <label class="radcard ${j.nextPhase === 'kry' ? 'sel' : ''}${wait ? '' : ' is-readonly'}" ${wait ? `onclick="bossRoute('kry')"` : ''}>
+                <input type="radio" name="bossroute" ${j.nextPhase === 'kry' ? 'checked' : ''} ${wait ? '' : 'disabled'}><span class="rdot"></span>
                 <span class="rc-ic"><span class="ms">alt_route</span></span>
                 <span class="rc-tx"><b>ส่งต่อให้ กรย.</b><small>ให้ กรย. คัดแยก ซ่อมที่อู่ / กรย. ซ่อมเอง / ส่งต่อ กบค.</small></span></label>
             </div>

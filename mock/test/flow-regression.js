@@ -238,6 +238,8 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   await page.locator('#krydetail .radcard', { hasText: 'ซ่อมที่อู่' }).click();
   await page.waitForTimeout(300);
   ok('เลือกช่องทางแล้วปุ่มยืนยันเปิด', !(await page.locator('#krydetail .incident-actions .btn-p').isDisabled()));
+  eq('การ์ดตัวเลือกมี 3 ทาง (อู่ / กรย. ซ่อมเอง / ส่งต่อ กบค.)', await page.locator('#krydetail .radcard').count(), 3);
+  eq('ยังคัดแยกไม่เสร็จ → การ์ดยังกดได้', await page.locator('#krydetail .radcard.is-readonly').count(), 0);
   ok('เส้นซ่อมที่อู่มีช่องบันทึก + รายการอู่แนะนำ',
     await page.locator('#krynote').count() === 1 && await page.locator('.garage').count() > 0);
   await page.locator('#krydetail .tab-btn').nth(1).click();
@@ -246,7 +248,23 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   await page.locator('#krydetail .tab-btn').nth(0).click();
   await page.waitForTimeout(200);
 
+  console.log('\n────── คัดแยกแล้วยังเห็นตัวเลือกครบ 3 ทาง (เจ้าของงานสั่ง 8 ก.ย. 2569) ──────');
+  await page.locator('#krydetail .radcard', { hasText: 'กรย. ซ่อมเอง' }).click();
+  await page.waitForTimeout(250);
+  await page.locator('#krydetail .incident-actions .btn-p').click();
+  await page.waitForTimeout(600);
+  eq('คัดแยกแล้วยังเห็นตัวเลือกครบ 3 ทาง', await page.locator('#krydetail .radcard').count(), 3);
+  eq('คัดแยกแล้วการ์ดเป็นอ่านอย่างเดียวทั้งหมด', await page.locator('#krydetail .radcard.is-readonly').count(), 3);
+  eq('การ์ดที่เลือกไว้ยังไฮไลต์อยู่',
+    (await page.locator('#krydetail .radcard.sel .rc-tx b').textContent()).trim(), 'กรย. ซ่อมเอง');
+
   console.log('\n────── กรย. ตีกลับ (บังคับกรอกเหตุผล) ──────');
+  // ย้อนใบกลับมาขั้นคัดแยกเพื่อทดสอบเส้นตีกลับด้วยใบเดียวกัน (fixture ของเทส)
+  await page.evaluate(no => { const j = JOBS.find(x => x.no === no); j.phase = 'kry'; }, docno);
+  await page.locator('#nav-kry').click();
+  await page.waitForSelector('#krylist table.tbl tbody tr');
+  await page.locator('#krylist tbody tr', { hasText: docno }).locator('.dt-action .btn').click();
+  await page.waitForSelector('#krydetail .incident-head');
   await page.locator('#krydetail .btn-td').click();
   await page.waitForSelector('#kry-return-modal:not(.hidden)');
   ok('ยังไม่กรอกเหตุผล → ปุ่มยืนยันปิด', await page.locator('#kry-return-ok').isDisabled());
