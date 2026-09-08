@@ -1821,6 +1821,23 @@
           </div></div></div>
         </div>
       </div>
+      <!-- กรย. ตีกลับ (8 ก.ย. 2569) — โครงเดียวกับ modal "ไม่อนุมัติ" ของหัวหน้า บังคับกรอกเหตุผล -->
+      <div class="modal-overlay hidden" id="kry-return-modal">
+        <div class="modal md" role="dialog" aria-modal="true">
+          <div class="modal-hd"><div class="modal-hd-c"><h2>ตีกลับ</h2>
+            <button class="btn btn-t btn-icon" onclick="closeKryModals()" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+          <div class="modal-bd">
+            <div class="f"><label>ระบุเหตุผล</label>
+              <textarea id="kry-reason" rows="4" placeholder="ระบุเหตุผลที่ตีกลับ…"
+                oninput="$('kry-return-ok').disabled=!this.value.trim()"></textarea></div>
+          </div>
+          <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r">
+            <button class="btn btn-s" onclick="closeKryModals()">ปิด</button>
+            <button class="btn btn-p" id="kry-return-ok" disabled onclick="kryReturn()">ยืนยัน</button>
+          </div></div></div>
+        </div>
+      </div>
+
       <!-- แก้ไขงบที่ตัด (หัวหน้าแก้ได้ก่อนอนุมัติ — เจ้าของงานขอ 7 ก.ย. 2569) · ชุด dropdown+ช่องกรอกเดียวกับฟอร์มผู้แจ้ง -->
       <div class="modal-overlay hidden" id="boss-budget-modal">
         <div class="modal md" role="dialog" aria-modal="true">
@@ -1941,9 +1958,8 @@
       <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><a href="#kry"
           onclick="switchView('kry');return false" style="color:inherit;text-decoration:none">งานคัดแยก กรย.</a><span
           class="sep">›</span><span class="cur">รายละเอียด</span></div>
-      <h1 class="page-title" id="krydet-title"></h1>
       <div id="krydetail"></div>
-      <div class="rowbtns" style="justify-content:flex-start;margin-top:18px">
+      <div class="rowbtns justify-start mt-[18px]">
         <button class="btn btn-g" onclick="switchView('kry')"><span class="ms">arrow_back</span> กลับรายการ</button></div>
     </main>
 
@@ -2858,7 +2874,9 @@
     //    จัดเป็นเหลืองตามกฎข้างบน เพราะยังต้องมีคนทำต่อ — ถ้า กฟภ. ต้องการแยกสีค่อยปรับ
     function statusInfo(j) {
       if (j.phase === 'wait') return { label: 'รอหัวหน้าหน่วยงานอนุมัติ', cls: 'b-low' };
-      if (j.phase === 'reject') return { label: 'ไม่อนุมัติ', cls: 'b-out' };
+      // 8 ก.ย. 2569: กรย. ตีกลับใช้สถานะ 'reject' ชุดเดียวกัน แต่ป้ายต้องบอกว่าใครตีกลับ —
+      // ผู้แจ้งเห็น "ไม่อนุมัติ" ทั้งที่หัวหน้าอนุมัติไปแล้วจะสับสน
+      if (j.phase === 'reject') return { label: j.returnedBy === 'kry' ? 'กรย. ตีกลับ' : 'ไม่อนุมัติ', cls: 'b-out' };
       if (j.phase === 'self') return { label: 'ดำเนินการซ่อมเอง', cls: 'b-low' };
       if (j.phase === 'kry') return { label: 'รอ กรย. พิจารณา', cls: 'b-low' };
       if (j.phase === 'krd') return { label: 'กรย. เห็นชอบ ซ่อมเอง', cls: 'b-low' };
@@ -3970,7 +3988,8 @@ function retPanel(j){
     }
 
     // ================= VIEW: งานคัดแยก กรย. =================
-    let KE = { jobNo:null,mode: null, garages: [] };
+    let KE = { jobNo:null,mode: null, garages: [], note: '' };
+    let KRYSEL = null;   // ใบที่เปิดอยู่ในหน้ารายละเอียด กรย. (คู่กับ BOSSSEL ของฝั่งหัวหน้า)
 const KRY_STATUS_PHASES={kry:['kry'],krd:['krd']};
     function renderKryList() {
       KE.jobNo=null;
@@ -3982,57 +4001,206 @@ const KRY_STATUS_PHASES={kry:['kry'],krd:['krd']};
 // รายละเอียดเป็นหน้าเต็มแล้ว (view-krydet) — เดิมเป็น accordion กางในลิสต์
 function kryDetail(){return $('krydetail')}
 function openKry(no){
-  KE={jobNo:no,mode:null,garages:[]};
-  $('krydet-title').textContent=no;
+  KE={jobNo:no,mode:null,garages:[],note:''};
   switchView('krydet');
   renderKryDetail(no);
 }
 function renderKryDetail(no){
   const j=JOBS.find(x=>x.no===no);
-  let action='';
-  if(j.phase==='kry'){
-    action=`<div class="sect" style="margin-top:24px">คัดแยกช่องทางซ่อม — กรย.</div>
-    <div class="radcards cols-3">
-      <label class="radcard ${KE.mode === 'garage' ? 'sel' : ''}" onclick="KE.mode='garage';renderKryDetail('${no}')"><span class="rdot"></span><span class="rc-tx"><b>ซ่อมที่อู่</b><small>เจ้าของรถขับไปอู่ภายนอก</small></span></label>
-      <label class="radcard ${KE.mode === 'self' ? 'sel' : ''}" onclick="KE.mode='self';renderKryDetail('${no}')"><span class="rdot"></span><span class="rc-tx"><b>กรย. ซ่อมเอง</b><small>เบิกอะไหล่จากคลัง ซ่อมที่ กรย.</small></span></label>
-      <label class="radcard ${KE.mode === 'kbk' ? 'sel' : ''}" onclick="KE.mode='kbk';renderKryDetail('${no}')"><span class="rdot"></span><span class="rc-tx"><b>ส่งต่อ กบค.</b><small>งานเครื่องเสริม เช่น เครน/กระเช้า</small></span></label>
-    </div>`;
-        if (KE.mode === 'garage') {
-          action += `<div class="panel">
-        <div class="f"><label>บันทึก/เหตุผลการส่งซ่อมอู่ <small>(ถ้ามี)</small></label><textarea id="krynote" rows="2" placeholder="เช่น อาการซ่อมได้ที่อู่ทั่วไป ไม่ต้องใช้เครื่องมือเฉพาะ…"></textarea></div>
-        <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin-top:12px">แนะนำอู่ใกล้เคียง <small style="color:var(--gray-500);font-weight:400">(เลือกได้หลายแห่ง)</small></label>
-        ${GARAGES.map(g => `<label class="garage"><input type="checkbox" ${KE.garages.includes(g.id) ? 'checked' : ''} onchange="kryToggleGarage('${g.id}')"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></label>`).join('')}
-        <div class="rowbtns"><button class="btn btn-p" onclick="kryGarage('${no}')">ยืนยันส่งซ่อมอู่</button></div></div>`;
-        }
-        if (KE.mode === 'self') {
-          action += `<div class="panel"><div class="f"><label>บันทึกการรับงาน <small>(ถ้ามี)</small></label><textarea id="krynote2" rows="2" placeholder="เช่น เบิกอะไหล่จากคลังเขต ซ่อมภายในสัปดาห์นี้…"></textarea></div>
-        <div class="rowbtns"><button class="btn btn-p" onclick="kryToSelf('${no}')">รับไปซ่อมเอง (กรย.)</button></div></div>`;
-        }
-        if (KE.mode === 'kbk') {
-          action += `<div class="panel"><div class="f"><label>บันทึกถึง กบค. <small>(ถ้ามี)</small></label><textarea id="krynote3" rows="2" placeholder="เช่น งานเครน ต้องใช้ช่างเฉพาะทางของ กบค.…"></textarea></div>
-        <div class="rowbtns"><button class="btn btn-p" onclick="kryToKbk('${no}')">ส่งต่อให้ กบค.</button></div></div>`;
-        }
-      }
-      if (j.phase === 'krd') {
-        action = `<div class="sect" style="margin-top:24px">กรย. ดำเนินการซ่อมเอง</div>
-    <div class="panel">
-      ${j.booked.length ? `<b style="color:var(--gray-900);font-size:14px">อะไหล่ที่เบิก</b>` + j.booked.map(b => `<div class="hint" style="margin-top:4px"><span class="ms" style="font-size:16px">check_circle</span> ${b.name} ×${b.qty} ${b.unit || ''}</div>`).join('') : '<div class="hint">ผู้แจ้งไม่ได้เลือกอะไหล่ไว้</div>'}
-      <div class="f" style="margin-top:12px"><label>บันทึกผลการซ่อม <small>(จำเป็น)</small></label><textarea id="krddet" rows="2" placeholder="เช่น เปลี่ยนแบตเตอรี่และตรวจระบบไฟ ทดสอบปกติ…"></textarea></div>
-      <div class="fgrid" style="margin:4px 0 8px;max-width:560px">
-        <div class="f sp2"><label>ค่าอะไหล่ (บาท)</label><div class="in"><span class="ms">settings</span><input type="number" min="0" id="krdpc" placeholder="0"></div></div>
-        <div class="f sp2"><label>ค่าแรง (บาท)</label><div class="in"><span class="ms">engineering</span><input type="number" min="0" id="krdlc" placeholder="0"></div></div>
-      </div>
-      <div class="rowbtns"><button class="btn btn-p" onclick="krdClose('${no}')">บันทึกการซ่อมและปิดงาน</button></div></div>`;
+  KRYSEL = no;
+  const st = statusInfo(j), sorting = j.phase === 'kry';
+  const d = reportedParts(j), u = updatedParts(j);
+  // อะไหล่ที่ผู้แจ้งเลือกไว้ — แถวแบนชุดเดียวกับหน้าอนุมัติ (7 ก.ย. 2569)
+  const pkMap = new Map();
+  j.booked.concat(j.ordered).forEach(x => pkMap.set(x.name, (pkMap.get(x.name) || 0) + x.qty));
+  const pick = [...pkMap.entries()].map(([name, qty]) => {
+    const p = PARTS.find(x => x.name === name) || { price: 0 };
+    return { name, qty, price: p.price || 0, onHand: onHandOf(p), src: srcOf(p) };
+  });
+  const sumAll = pick.reduce((a, r) => a + r.qty * r.price, 0);
+
+  // ----- บล็อกคัดแยกช่องทาง (แทนที่ "ช่องทางการซ่อม" ของหน้าอนุมัติ) -----
+  const MODES = [
+    { id: 'garage', icon: 'garage',      title: 'ซ่อมที่อู่',     sub: 'เจ้าของรถขับไปอู่ภายนอก' },
+    { id: 'self',   icon: 'build',       title: 'กรย. ซ่อมเอง',  sub: 'เบิกอะไหล่จากคลัง ซ่อมที่ กรย.' },
+    { id: 'kbk',    icon: 'engineering', title: 'ส่งต่อ กบค.',   sub: 'งานเครื่องเสริม เช่น เครน/กระเช้า' },
+  ];
+  let routeBlock = '';
+  if (sorting) {
+    routeBlock = `
+      <div class="hint mb-2.5">เลือกช่องทางที่จะส่งเรื่องต่อ แล้วกด "ยืนยันคัดแยก" ด้านบน</div>
+      <div class="radcards cols-3">${MODES.map(m => `
+        <label class="radcard ${KE.mode === m.id ? 'sel' : ''}" onclick="kryMode('${m.id}')">
+          <input type="radio" name="kryroute" ${KE.mode === m.id ? 'checked' : ''}><span class="rdot"></span>
+          <span class="rc-ic"><span class="ms">${m.icon}</span></span>
+          <span class="rc-tx"><b>${m.title}</b><small>${m.sub}</small></span></label>`).join('')}
+      </div>`;
+    if (KE.mode === 'garage') {
+      routeBlock += `<div class="stack mt-3.5">
+        <div class="f"><label>บันทึก/เหตุผลการส่งซ่อมอู่ <small>(ถ้ามี)</small></label>
+          <textarea id="krynote" rows="2" placeholder="เช่น อาการซ่อมได้ที่อู่ทั่วไป ไม่ต้องใช้เครื่องมือเฉพาะ…">${esc(KE.note || '')}</textarea></div>
+        <div>
+          <label class="text-sm font-semibold text-gray-900 block mb-1.5">แนะนำอู่ใกล้เคียง
+            <small class="text-gray-500 font-normal">(เลือกได้หลายแห่ง)</small></label>
+          ${GARAGES.map(g => `<label class="garage"><input type="checkbox" ${KE.garages.includes(g.id) ? 'checked' : ''}
+            onchange="kryToggleGarage('${g.id}')"><span class="ms">garage</span>
+            <div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></label>`).join('')}
+        </div>
+      </div>`;
+    }
+    if (KE.mode === 'self') {
+      routeBlock += `<div class="f mt-3.5"><label>บันทึกการรับงาน <small>(ถ้ามี)</small></label>
+        <textarea id="krynote2" rows="2" placeholder="เช่น เบิกอะไหล่จากคลังเขต ซ่อมภายในสัปดาห์นี้…">${esc(KE.note || '')}</textarea></div>`;
+    }
+    if (KE.mode === 'kbk') {
+      routeBlock += `<div class="f mt-3.5"><label>บันทึกถึง กบค. <small>(ถ้ามี)</small></label>
+        <textarea id="krynote3" rows="2" placeholder="เช่น งานเครน ต้องใช้ช่างเฉพาะทางของ กบค.…">${esc(KE.note || '')}</textarea></div>`;
+    }
+  } else {
+    routeBlock = `<div class="hint">คัดแยกไปแล้ว — ${esc(st.label)}</div>`;
   }
-  if(j.phase==='gclosed')action=recordPanel(j);
-  const detail=kryDetail();
-  detail.innerHTML=`
-    <div class="ops-detail-layout">
-      <div class="ops-detail-main">${jobInfoBox(j)}${action}</div>
-      <aside class="ops-detail-side">
-        ${timelineBox(j)}
-      </aside>
+
+  // ----- งานที่ กรย. รับมาซ่อมเอง / ปิดงานแล้ว: คงพาเนลเดิมไว้ท้ายคอลัมน์ซ้าย -----
+  let opsBlock = '';
+  if (j.phase === 'krd') {
+    opsBlock = `<section class="incident-section">
+      <h2 class="incident-section-title">กรย. ดำเนินการซ่อมเอง</h2>
+      <div class="stack">
+        ${j.booked.length ? `<div><b class="text-gray-900 text-sm">อะไหล่ที่เบิก</b>${j.booked.map(b =>
+          `<div class="hint mt-1"><span class="ms text-[16px]">check_circle</span> ${esc(b.name)} ×${b.qty} ${esc(b.unit || '')}</div>`).join('')}</div>`
+          : '<div class="hint">ผู้แจ้งไม่ได้เลือกอะไหล่ไว้</div>'}
+        <div class="f"><label>บันทึกผลการซ่อม <small>(จำเป็น)</small></label>
+          <textarea id="krddet" rows="2" placeholder="เช่น เปลี่ยนแบตเตอรี่และตรวจระบบไฟ ทดสอบปกติ…"></textarea></div>
+        <div class="fgrid max-w-[560px]">
+          <div class="f sp2"><label>ค่าอะไหล่ (บาท)</label><div class="in"><span class="ms">settings</span><input type="number" min="0" id="krdpc" placeholder="0"></div></div>
+          <div class="f sp2"><label>ค่าแรง (บาท)</label><div class="in"><span class="ms">engineering</span><input type="number" min="0" id="krdlc" placeholder="0"></div></div>
+        </div>
+        <div class="rowbtns justify-start"><button class="btn btn-p" onclick="krdClose('${no}')">บันทึกการซ่อมและปิดงาน</button></div>
+      </div>
+    </section>`;
+  }
+  if (j.phase === 'gclosed') opsBlock = `<section class="incident-section">${recordPanel(j)}</section>`;
+
+  kryDetail().innerHTML = `
+    <div class="incident-head mt-1 mb-2">
+      <h1 class="page-title">หมายเลขเหตุการณ์ ${j.no}</h1>
+      <span class="badge ${st.cls}">${st.label}</span>
+      <div class="incident-actions">${sorting ? `
+        <button class="btn btn-td" onclick="openKryReturn()">ตีกลับ</button>
+        <button class="btn btn-p" ${KE.mode ? '' : 'disabled'} onclick="kryConfirm('${no}')">ยืนยันคัดแยก</button>` : ''}
+      </div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab-btn on" role="tab" onclick="kryTab(this,0)">ข้อมูลการซ่อม</button>
+      <button type="button" class="tab-btn" role="tab" onclick="kryTab(this,1)">ประวัติการดำเนินการ</button>
+    </div>
+    <div id="ktab0">
+      <div class="incident-layout">
+        <div>
+          <section class="incident-section mt-0">
+            <h2 class="incident-section-title">คัดแยกช่องทางซ่อม — กรย.</h2>
+            ${routeBlock}
+            ${(j.selfDocs || []).length ? `<div class="stack tight mt-3">
+              <div class="hint">เอกสารแนบจากผู้แจ้ง</div>
+              <div class="flex flex-wrap gap-2">${j.selfDocs.map(dc => `<div class="file-chip">
+                <span class="ms">${dc.type === 'application/pdf' ? 'picture_as_pdf' : 'image'}</span>
+                <span class="file-chip-name" title="${esc(dc.name)}">${esc(dc.name)}</span>
+              </div>`).join('')}</div>
+            </div>` : ''}
+          </section>
+          <section class="incident-section">
+            <h2 class="incident-section-title">ข้อมูลการซ่อม</h2>
+            <dl class="incident-summary">
+              <div class="incident-field"><dt>วันที่สร้าง</dt><dd>${esc(d.d)}</dd></div>
+              <div class="incident-field"><dt>วันที่อัพเดตสถานะ</dt><dd>${esc(u.d)}</dd></div>
+              <div class="incident-field"><dt>หน่วยงานที่แจ้งซ่อม</dt><dd>${esc(j.org)}</dd></div>
+              <div class="incident-field"><dt>สถานะรถ</dt><dd>${j.usable ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</dd></div>
+              <div class="incident-field wide"><dt>อาการของรถ (${esc(j.target)})</dt><dd>${j.syms.join(', ') || '-'}</dd></div>
+              <div class="incident-field"><dt>เลขไมล์ปัจจุบัน</dt><dd>${j.use && j.use.odo ? j.use.odo.toLocaleString() : '-'}</dd></div>
+              <div class="incident-field"><dt>ชั่วโมงใช้งานเครื่องจักร</dt><dd>${j.use && j.use.crane ? j.use.crane.toLocaleString() : '-'}</dd></div>
+              <div class="incident-field wide"><dt>งบที่ตัด</dt><dd>${esc(j.budget || '-')}</dd></div>
+              <div class="incident-field wide"><dt>หมายเหตุ</dt><dd>${j.desc || '-'}</dd></div>
+            </dl>
+          </section>
+          <section class="incident-section">
+            <h2 class="incident-section-title">อะไหล่ที่ผู้แจ้งเลือกไว้ <span class="badge b-info">แนะนำ</span></h2>
+            <div class="parts-flat">${pick.length ? pick.map(r => `
+              <div class="pf-row"><span class="pf-name">${esc(r.name)} x${r.qty}</span><span class="pf-price">${baht(r.qty * r.price)} บาท</span>
+                <div class="pf-src"><b>${r.src}</b> : <span class="${r.onHand ? '' : 'text-error-600'}">มีในคลัง ${r.onHand} ${esc((PARTS.find(x => x.name === r.name) || {}).unit || 'ชิ้น')}</span></div>
+              </div>`).join('') + `
+              <div class="pf-row"><span class="pf-name">รวมทั้งหมด</span><span class="pf-price">${baht(sumAll)} บาท</span></div>`
+            : '<div class="pf-empty">ไม่มีอะไหล่ที่เลือก</div>'}</div>
+          </section>
+          <section class="incident-section">
+            <h2 class="incident-section-title">รูปภาพเหตุการณ์</h2>
+            ${j.photos ? `<div class="incident-gallery">${Array.from({ length: Math.min(j.photos, 4) }, () =>
+              '<div class="incident-photo flex items-center justify-center text-gray-400"><span class="ms text-[34px]">image</span></div>').join('')}</div>`
+            : '<div class="empty text-left py-1.5">ไม่มีรูปแนบ</div>'}
+          </section>
+          ${opsBlock}
+        </div>
+        <div>
+          <section class="incident-section mt-0">
+            <h2 class="incident-section-title">ยานพาหนะ</h2>
+            <div class="incident-card"><div class="incident-vehicle">
+              <div class="incident-vehicle-photo flex items-center justify-center text-gray-400"><span class="ms text-[34px]">local_shipping</span></div>
+              <div>
+                <div class="incident-entity-name">${esc(j.plate)}</div>
+                <div class="incident-entity-meta">${esc(j.model)}</div>
+                <div class="incident-entity-meta">${esc(j.org)}</div>
+                <div class="incident-entity-meta mt-2"><span class="ms text-[18px] align-[-4px]">speed</span> เลขไมล์ล่าสุด ${j.use && j.use.odo ? j.use.odo.toLocaleString() : '-'}</div>
+              </div>
+            </div></div>
+          </section>
+          <section class="incident-section">
+            <h2 class="incident-section-title">ผู้แจ้งเหตุ</h2>
+            <div class="incident-card"><div class="flex gap-3 items-center">
+              <div class="w-12 h-12 flex-none rounded-pill bg-gray-100 flex items-center justify-center text-gray-400"><span class="ms">person</span></div>
+              <div>
+                <div class="incident-entity-name">${esc(j.reporter ? j.reporter.name : (j.owner ? j.owner.name : '-'))}</div>
+                <div class="incident-entity-meta">${esc(j.reporter ? j.reporter.posi : '')}</div>
+              </div>
+            </div></div>
+          </section>
+          <section class="incident-section">
+            <h2 class="incident-section-title">ข้อมูลติดต่อหน่วยงานที่แจ้งซ่อม</h2>
+            <div class="incident-card">
+              <div class="pt-1 pb-2.5 [border-bottom:1px_solid_var(--gray-100)]">
+                <div class="incident-entity-name font-semibold">ผู้ขับขี่ — ${esc((j.driver && j.driver.name) || '-')}</div>
+                <div class="incident-entity-meta"><span class="ms text-[16px] align-[-3px] text-brand-600">smartphone</span> ${esc((j.driver && j.driver.tel) || '-')}</div>
+              </div>
+              <div class="pt-2.5 pb-1">
+                <div class="incident-entity-name font-semibold">ช่างคุมรถ — ${esc((j.tech && j.tech.name) || '-')}</div>
+                <div class="incident-entity-meta"><span class="ms text-[16px] align-[-3px] text-brand-600">smartphone</span> ${esc((j.tech && j.tech.tel) || '-')}</div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div id="ktab1" class="hidden">
+      <section class="incident-section">${timelineBox(j)}</section>
     </div>`;
+}
+function kryTab(btn, i) {
+  document.querySelectorAll('#krydetail .tab-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  $('ktab0').classList.toggle('hidden', i !== 0);
+  $('ktab1').classList.toggle('hidden', i !== 1);
+}
+// เก็บบันทึกที่พิมพ์ไว้ก่อนวาดใหม่ ไม่งั้นสลับช่องทางแล้วข้อความหาย
+function kryMode(m) {
+  const t = $('krynote') || $('krynote2') || $('krynote3');
+  KE.note = t ? t.value : '';
+  KE.mode = m;
+  renderKryDetail(KRYSEL);
+}
+// ปุ่มเดียวบนขวา — ส่งต่อไปตามช่องทางที่เลือก (ตัวจัดการเดิมของแต่ละเส้นยังใช้ตัวเดิม)
+function kryConfirm(no) {
+  if (KE.mode === 'garage') return kryGarage(no);
+  if (KE.mode === 'self') return kryToSelf(no);
+  if (KE.mode === 'kbk') return kryToKbk(no);
+  toast('เลือกช่องทางการซ่อมก่อน');
 }
 function kryToggleGarage(id){KE.garages.includes(id)?KE.garages=KE.garages.filter(x=>x!==id):KE.garages.push(id)}
 function kryGarage(no){
@@ -5055,6 +5223,22 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
       closeBossModals(); updateBadge();
       toast('ไม่อนุมัติ — ตีกลับให้ผู้แจ้งแก้ไขแล้ว');
       renderBossList();
+    }
+
+    // ---------- กรย. ตีกลับ ----------
+    // ใช้สถานะ 'reject' ชุดเดียวกับตอนหัวหน้าไม่อนุมัติ — ใบกลับไปอยู่ที่ผู้แจ้งในสถานะ "ตีกลับ"
+    // (ไม่สร้างสถานะใหม่ เพื่อให้ตัวกรอง/ป้ายสถานะเดิมใช้ต่อได้ทั้งระบบ)
+    function openKryReturn() { $('kry-reason').value = ''; $('kry-return-ok').disabled = true; $('kry-return-modal').classList.remove('hidden'); document.body.classList.add('modal-open'); }
+    function closeKryModals() { $('kry-return-modal').classList.add('hidden'); document.body.classList.remove('modal-open'); }
+    function kryReturn() {
+      const j = JOBS.find(x => x.no === KRYSEL);
+      const r = ($('kry-reason').value || '').trim();
+      if (!r) { toast('กรุณาระบุเหตุผลที่ตีกลับ'); return }
+      j.phase = 'reject'; j.rejectReason = esc(r); j.returnedBy = 'kry';
+      j.history.push({ t: nowStr(), label: `กรย. ตีกลับ · เหตุผล: ${esc(r)}` });
+      closeKryModals(); updateBadge();
+      toast('ตีกลับให้ผู้แจ้งแก้ไขแล้ว');
+      switchView('kry');
     }
 
     function renderSupList() {

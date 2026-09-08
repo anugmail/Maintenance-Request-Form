@@ -219,6 +219,47 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   ok('ใบเดิมยังเห็นในจัดการงานซ่อม สถานะเดินต่อ (รอ กรย. พิจารณา)',
     await page.locator('#mylist tbody tr', { hasText: docno }).locator('.badge', { hasText: 'รอ กรย. พิจารณา' }).count() === 1);
 
+  console.log('\n────── หน้า กรย. — โครงเดียวกับหน้าอนุมัติ (8 ก.ย. 2569) ──────');
+  await page.locator('#nav-kry').click();
+  await page.waitForSelector('#krylist table.tbl tbody tr');
+  await page.locator('#krylist tbody tr', { hasText: docno }).locator('.dt-action .btn').click();
+  await page.waitForSelector('#krydetail .incident-head');
+  eq('หัวข้อ + ป้ายสถานะ + ปุ่มบนขวา (โครงเดียวกับหน้าอนุมัติ)',
+    (await page.locator('#krydetail .incident-actions .btn').allTextContents()).map(t => t.trim()).join('|'),
+    'ตีกลับ|ยืนยันคัดแยก');
+  eq('มีแท็บ 2 แท็บ', await page.locator('#krydetail .tab-btn').count(), 2);
+  eq('คอลัมน์ซ้ายเริ่มที่บล็อกคัดแยกช่องทาง',
+    (await page.locator('#ktab0 .incident-layout > div:first-child .incident-section-title').first().textContent()).trim(),
+    'คัดแยกช่องทางซ่อม — กรย.');
+  eq('คอลัมน์ขวามี 3 บล็อก (ยานพาหนะ/ผู้แจ้งเหตุ/ติดต่อ)',
+    await page.locator('#ktab0 .incident-layout > div:last-child .incident-section').count(), 3);
+  ok('ยังไม่เลือกช่องทาง → ปุ่มยืนยันคัดแยกปิดอยู่',
+    await page.locator('#krydetail .incident-actions .btn-p').isDisabled());
+  await page.locator('#krydetail .radcard', { hasText: 'ซ่อมที่อู่' }).click();
+  await page.waitForTimeout(300);
+  ok('เลือกช่องทางแล้วปุ่มยืนยันเปิด', !(await page.locator('#krydetail .incident-actions .btn-p').isDisabled()));
+  ok('เส้นซ่อมที่อู่มีช่องบันทึก + รายการอู่แนะนำ',
+    await page.locator('#krynote').count() === 1 && await page.locator('.garage').count() > 0);
+  await page.locator('#krydetail .tab-btn').nth(1).click();
+  await page.waitForTimeout(200);
+  ok('แท็บประวัติมี timeline', await page.locator('#ktab1 .tl li').count() > 0);
+  await page.locator('#krydetail .tab-btn').nth(0).click();
+  await page.waitForTimeout(200);
+
+  console.log('\n────── กรย. ตีกลับ (บังคับกรอกเหตุผล) ──────');
+  await page.locator('#krydetail .btn-td').click();
+  await page.waitForSelector('#kry-return-modal:not(.hidden)');
+  ok('ยังไม่กรอกเหตุผล → ปุ่มยืนยันปิด', await page.locator('#kry-return-ok').isDisabled());
+  await page.fill('#kry-reason', 'ข้อมูลไม่พอ ขอรายละเอียดเพิ่ม');
+  await page.waitForTimeout(150);
+  await page.locator('#kry-return-ok').click();
+  await page.waitForTimeout(500);
+  ok('ตีกลับแล้วกลับมาที่ลิสต์ กรย.', await page.locator('#view-kry:not(.hidden)').count() === 1);
+  await page.locator('#nav-my').click();
+  await page.waitForSelector('#mylist table.tbl tbody tr');
+  ok('ใบกลับไปอยู่ที่ผู้แจ้ง ป้ายบอกว่า "กรย. ตีกลับ" (ไม่ใช่ "ไม่อนุมัติ" ของหัวหน้า)',
+    await page.locator('#mylist tbody tr', { hasText: docno }).locator('.badge', { hasText: 'กรย. ตีกลับ' }).count() === 1);
+
   console.log('\n══════ C. ค่าดีไซน์เทียบไลบรารี (Component) VMS Plus ══════');
   await page.goto(URL, { waitUntil: 'networkidle' });
   await page.waitForSelector('#mylist table.tbl tbody tr');
