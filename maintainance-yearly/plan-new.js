@@ -60,9 +60,8 @@ function renderWizard(plan) {
 
   const reviseBanner = revising ? `
     <div class="note note-warn"><span class="ms">event_repeat</span>
-      <div><b>รอบทบทวนแผน ครั้งที่ ${state.reviseRound.no} — ${esc(state.reviseRound.label)}</b><br>
-      แผนนี้ออกเลขงานไว้แล้วสำหรับ<b>ปีงบ ${esc(plan.year)}</b> · ตอนนี้ถึงรอบสรุปแผนก่อนออกปฏิบัติงาน
-      — แก้รถ/ไตรมาสได้ แล้วกด "สรุปแผนก่อนออกปฏิบัติงาน" · <b>เลขงานเดิมไม่เปลี่ยน</b></div>
+      <div><b>รอบทบทวนแผน ครั้งที่ ${state.reviseRound.no} — ${esc(state.reviseRound.label)}</b>
+      · ปีงบ ${esc(plan.year)} · ออกเลขงานแล้ว</div>
     </div>` : '';
 
   // 7 ก.ย. 2569 — ยกโครงตามโฟลว์แจ้งซ่อม: ฟอร์มแจ้งซ่อมถอด stepper ทิ้ง
@@ -70,11 +69,21 @@ function renderWizard(plan) {
   // เดินขั้นด้วยปุ่ม ย้อนกลับ/ถัดไป ท้ายหน้าอย่างเดียว
   const stepLabel = (SUB_STEPS.find(s => s.no === state.sub) || {}).label || '';
 
+  // สิ่งที่ยังค้างอยู่ล่างสุดเหนือปุ่ม — ที่เดียวกับหน้าแผนเดินทาง (trip-plan-page)
+  // ไม่แทรกคำอธิบายเงื่อนไขกลางหน้าอีก (เจ้าของงานสั่ง 8 ก.ย. 2569)
+  const blockers = state.sub === 1 ? [
+    ...(plan.planName && plan.planName.trim() ? [] : ['ยังไม่ได้ตั้งชื่อแผน']),
+    ...MYD.quartersMissing(plan).map(q => 'ยังไม่ได้จัดรถเข้า' + MYD.quarterLabel(q)),
+  ] : [];
+
   $('planNewBody').innerHTML = `
     <div class="card">
       ${reviseBanner}
       <div class="incident-section-title">ขั้นที่ ${state.sub}: ${esc(stepLabel)} (${state.sub}/${LAST_SUB})</div>
       <div id="subBody">${renderSubBody(plan)}</div>
+      ${blockers.length ? `<div class="note note-warn"><span class="ms">error</span>
+        <div><b>ยังไปขั้นถัดไปไม่ได้</b>
+          <ul class="mt-1.5 mb-0 ml-[18px] mr-0">${blockers.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>` : ''}
       <div class="actions">
         <button class="btn btn-s" id="btnBackSub" ${state.sub === 1 ? 'disabled' : ''}>ย้อนกลับ</button>
         <button class="btn btn-p" id="btnPrimarySub" ${primaryDisabled ? 'disabled' : ''}>${esc(primaryLabel)}</button>
@@ -152,7 +161,6 @@ function renderStep1(plan) {
     </div>`;
   }).join('');
 
-  const missing = MYD.quartersMissing(plan);
   const noneCount = MYD.planVehicleIds(plan, 'none').length;
   const activeInfo = QUARTERS.find(q => q.q === activeQ);
 
@@ -165,23 +173,16 @@ function renderStep1(plan) {
         </div>
       </div>
       <div class="f sp4">
-        <label>ไตรมาส (ปีงบประมาณ ${esc(plan.year)}) — เลือกให้ครบทุกไตรมาสจึงจะไปขั้นถัดไปได้</label>
+        <label>ไตรมาส (ปีงบประมาณ ${esc(plan.year)})</label>
         <div class="seg">${qSeg}</div>
       </div>
     </div>
 
-    ${missing.length
-      ? `<div class="note note-warn"><span class="ms">warning</span>
-           <div>ยังไม่ได้จัดรถเข้า <b>${missing.map(q => esc(MYD.quarterLabel(q))).join(' · ')}</b> — ต้องมีรถอย่างน้อยไตรมาสละ 1 คัน จึงจะไปขั้นสรุปได้</div>
-         </div>`
-      : `<div class="note note-ok"><span class="ms">check_circle</span>
-           <div>จัดรถครบทั้ง 4 ไตรมาสแล้ว รวม <b>${plan.selectedVehicleIds.length}</b> คัน — ไปขั้นสรุปได้</div>
-         </div>`}
     ${noneCount ? `<div class="note note-info"><span class="ms">inbox</span>
-      <div>มีรถ <b>${noneCount}</b> คันอยู่ในแผนแต่<b>ยังไม่ระบุไตรมาส</b> — ถูกพักไว้ตอนแก้แผนเดินทาง ยังไม่ถูกนับเข้าไตรมาสไหน</div></div>` : ''}
+      <div>มีรถ <b>${noneCount}</b> คันในแผนที่ยังไม่ระบุไตรมาส</div></div>` : ''}
 
     <div class="incident-section-title mt-6 mb-1">เลือกรถเข้า${esc(MYD.quarterLabel(activeQ))}${activeInfo ? ' (' + esc(activeInfo.months) + ')' : ''}</div>
-    <div class="sub">ไตรมาสนี้เลือกแล้ว ${selected.size} คัน จาก ${regionsSelected.size} เขต · เลือกได้ทุกสถานะ — ดูคำเตือนใต้ป้ายสถานะแล้วติ๊กออกเองได้</div>
+    <div class="sub">ไตรมาสนี้เลือกแล้ว ${selected.size} คัน จาก ${regionsSelected.size} เขต</div>
     <div class="chk mb-3">
       <label><input type="checkbox" id="chkAllZones" ${allSelected ? 'checked' : ''} ${joinableAll.length === 0 ? 'disabled' : ''}> เลือกทั้งหมด (ทุกเขต) — ${joinableAll.length} คัน</label>
     </div>
@@ -527,7 +528,7 @@ function renderStepSummary(plan) {
     </dl>
 
     <section class="incident-section mt-6">
-      <div class="incident-section-title">แจกแจงรายไตรมาส — เลขงานจะออก 1 ใบต่อไตรมาส</div>
+      <div class="incident-section-title">แจกแจงรายไตรมาส</div>
       ${byQuarter.map(q => renderQuarterVehicleBlock(q)).join('')}
       <div class="note note-info mt-2"><span class="ms">info</span>
         <div><b>รวมทั้งปี</b> (ต.ค.–ก.ย.) — <b>${selectedVehicles.length}</b> คัน · อะไหล่ <b>${lines.length}</b> รายการ</div>
@@ -580,12 +581,7 @@ function renderStepSummary(plan) {
       return `<div class="note note-ok"><span class="ms">inventory</span><div>คลังพอทุกรายการ</div></div>`;
     })()}
     ${lineTable(lines)}
-    </section>
-
-    <div class="sub mt-3.5">
-      <span class="ms text-md">info</span>
-      กดออกเลขงานแล้ว ระบบจะ<b>ส่งเอกสารแจ้งฝ่ายพัสดุ</b>ให้ทราบว่าต้องเตรียม/สั่งอะไหล่อะไรบ้าง
-    </div>`;
+    </section>`;
 }
 
 // กบค. ออกเลขงานเอง — ฝ่ายพัสดุ "รับทราบ" เพื่อเตรียม/สั่งอะไหล่ ไม่ได้เป็นผู้อนุมัติ
@@ -639,9 +635,6 @@ function renderDone(plan) {
           <div class="workno-q">${esc(MYD.quarterLabel(x.q))} · ${MYD.planVehicleIds(plan, x.q).length} คัน</div>
           <span class="badge b-ok">${esc(x.no)}</span>
         </div>`).join('')}</div>
-      <div class="sub mt-3.5">
-        แผนใบนี้ครอบ<b>ทั้งปีงบประมาณ ${esc(plan.year)}</b> — เลขงานแยกรายไตรมาส ฝ่ายพัสดุได้เอกสารแยกตามรอบ
-      </div>
       <div class="fgrid mt-3">
         <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
         <div class="f sp2"><label>รถเข้าแผนทั้งปี</label><div><b>${plan.selectedVehicleIds.length}</b> คัน</div></div>

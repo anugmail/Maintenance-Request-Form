@@ -270,7 +270,7 @@
 
             ${sent ? `
               <div class="sect">การตอบรับรายหน่วยงาน</div>
-              <div class="sub">ส่งเมื่อ ${esc(trip.sentAt)} · เอกสารส่งถึงเจ้าของรถและ กรย. (กรย. รับสำเนา ไม่ต้องกดตอบ)</div>
+              <div class="sub">ส่งเมื่อ ${esc(trip.sentAt)}</div>
               <div class="tblwrap"><table class="tbl">
                 <thead><tr><th>หน่วยงาน</th><th>สถานะ</th><th>เหตุผลที่ปฏิเสธ</th><th>ตอบเมื่อ</th></tr></thead>
                 <tbody>${replyRows}</tbody></table></div>` : ''}
@@ -357,12 +357,11 @@
     return `
       <div class="sect">ขั้นที่ 1: ทำแผนเดินทาง</div>
       ${noneIds.length ? `<div class="note note-info"><span class="ms">inbox</span>
-        <div>มีรถ <b>${noneIds.length}</b> คันถูกพักไว้แบบ <b>ยังไม่ระบุไตรมาส</b> — ยังอยู่ในแผน
-        แต่จะไม่โผล่ในไตรมาสไหนจนกว่าจะย้ายกลับเข้าไตรมาส</div></div>` : ''}
+        <div>มีรถ <b>${noneIds.length}</b> คันในแผนที่ยังไม่ระบุไตรมาส</div></div>` : ''}
       
       <div class="sub">แผนเดินทางทั้งหมด <b>${trips.length}</b> ใบ · ตอบรับครบแล้ว <b>${accepted}</b> ใบ
         · รถที่ยังไม่อยู่ในใบไหนเลย <b>${MYD.unassignedVehicleIds(plan).length}</b> คัน
-        <small>(รถที่พักไว้แบบยังไม่ระบุไตรมาสไม่นับ)</small></div>
+        </div>
       
       
       <div class="stack">${qBlocks}</div>`;
@@ -788,12 +787,11 @@
     return `
       <div class="sect">แผนเดินทาง</div>
       ${noneIds.length ? `<div class="note note-info"><span class="ms">inbox</span>
-        <div>มีรถ <b>${noneIds.length}</b> คันถูกพักไว้แบบ <b>ยังไม่ระบุไตรมาส</b> — ยังอยู่ในแผน
-        แต่จะไม่โผล่ในไตรมาสไหนจนกว่าจะย้ายกลับเข้าไตรมาส</div></div>` : ''}
+        <div>มีรถ <b>${noneIds.length}</b> คันในแผนที่ยังไม่ระบุไตรมาส</div></div>` : ''}
       <div class="sub">แผนเดินทางทั้งหมด <b>${trips.length}</b> ใบ · ตอบรับครบแล้ว <b>${accepted}</b> ใบ
         · รวมค่าใช้จ่ายทั้งหมด <b>${grand.toLocaleString('th-TH')}</b> บาท
         · รถที่ยังไม่อยู่ในใบไหนเลย <b>${MYD.unassignedVehicleIds(plan).length}</b> คัน
-        <small>(รถที่พักไว้แบบยังไม่ระบุไตรมาสไม่นับ)</small></div>
+        </div>
       
       
       <div class="stack">${qBlocks}</div>
@@ -1058,8 +1056,7 @@
 
           <section class="incident-section">
             <h2 class="incident-section-title">ใบแจ้งซ่อมในแผนนี้ <span class="badge b-neutral">นัดรายคันได้</span></h2>
-            <div class="sub">กำหนด<b>วัน/เวลานัดแยกรายคัน</b>ได้ — เว้นว่าง = ใช้ช่วงที่เสนอของแผน · ต้องอยู่ในช่วงที่เสนอ
-              ${jobs.length ? `· ระบุแล้ว <b>${MYD.repairApptCount(trip)}</b>/${jobs.length} คัน` : ''}</div>
+            ${jobs.length ? `<div class="sub">ระบุแล้ว <b>${MYD.repairApptCount(trip)}</b>/${jobs.length} คัน</div>` : ''}
           ${jobs.length ? `${locked ? '' : `<div class="actions justify-start mb-2">
               <button class="btn btn-s btn-sm" data-rappt-fill="${esc(trip.id)}" ${trip.windowFrom ? '' : 'disabled'}>
                 <span class="ms">event_repeat</span> เติมวันนัดทุกคันเป็นวันแรกของช่วง</button>

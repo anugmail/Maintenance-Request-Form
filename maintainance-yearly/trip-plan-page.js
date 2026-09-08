@@ -138,12 +138,12 @@ function renderWizard(plan) {
       }).join('')}</div>
       <div id="tripBody">${state.sub === 1 ? TRIP.renderStep1(plan) : TRIP.renderStep2(plan)}</div>
       ${blockers.length ? `<div class="note note-warn"><span class="ms">error</span>
-        <div><b>ยังไปขั้นถัดไปไม่ได้</b> — ต้องทำแผนเดินทางให้ครบทั้ง 4 ไตรมาสก่อน ตอนนี้แต่ละไตรมาสยังค้าง:
+        <div><b>ยังไปขั้นถัดไปไม่ได้</b>
           <ul class="mt-1.5 mb-0 ml-[18px] mr-0">${blockers.map(x => `<li>${x}</li>`).join('')}</ul></div></div>` : ''}
       <div class="actions">
         <button class="btn btn-g" id="btnBackTrip" ${state.sub === 1 ? 'disabled' : ''}>ย้อนกลับ</button>
         <button class="btn btn-p" id="btnPrimaryTrip" ${disabled ? 'disabled' : ''}
-          ${state.sub === 1 && disabled ? 'title="กรุณาทำแผนเดินทางครบทั้ง4ไตรมาส"' : ''}>
+          >
           ${isLast ? 'ยืนยันแผนเดินทาง' : 'ถัดไป'}</button>
       </div>
     </div>`;
