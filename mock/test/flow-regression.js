@@ -85,23 +85,25 @@ const HEX = { brand600: 'rgb(168,6,137)', gray300: 'rgb(208,213,221)', white: 'r
   ok('ผู้แจ้งเหตุ default พนักงาน กฟภ.', /วิทยา/.test(await page.locator('#i-reporter').textContent()));
   await page.locator('#next').click();
 
-  // ---- ขั้น 2: ไมล์/ชั่วโมง/รูป/หมายเหตุ (สถานที่เกิดเหตุ+รายละเอียดถูกตัด) ----
-  await page.waitForSelector('#sinfo:not(.hidden)');
-  ok('หัวขั้น 2 = รายละเอียดเหตุการณ์ และสถานที่', /ขั้นที่ 2/.test(await page.locator('#rm-step').textContent()));
+  // ---- ขั้น 2: อาการเสีย + รายละเอียดเหตุการณ์ อยู่ขั้นเดียวกัน (รวม 8 ก.ย. 2569) ----
+  await page.waitForSelector('#s2:not(.hidden)');
+  ok('หัวขั้น 2 = อาการเสียและรายละเอียดเหตุการณ์',
+    /ขั้นที่ 2: อาการเสียและรายละเอียดเหตุการณ์ \(2\/3\)/.test(await page.locator('#rm-step').textContent()));
+  ok('อาการเสียกับรายละเอียดเหตุการณ์แสดงพร้อมกันในขั้นเดียว',
+    await page.locator('#s2:not(.hidden)').count() === 1 && await page.locator('#sinfo:not(.hidden)').count() === 1);
+  eq('แบ่งเป็น 2 บล็อกด้วยหัวข้อของ design system', await page.locator('#s2 .incident-section-title, #sinfo .incident-section-title').count(), 2);
+  ok('อาการเสียมาก่อนรายละเอียดเหตุการณ์',
+    await page.evaluate(() => document.getElementById('s2').compareDocumentPosition(document.getElementById('sinfo')) === 4));
   ok('มีช่องเลขไมล์ + ชั่วโมงเครื่องจักร', await page.locator('#i-odo').isVisible() && await page.locator('#i-crane').isVisible());
   eq('ไม่มีช่องจังหวัด/ผู้ติดต่อแล้ว', await page.locator('#i-prov, #i-owntel').count(), 0);
+  eq('เลือก 2 จุด → หัวกลุ่มอาการ 2 กลุ่ม', await page.locator('#symcats .symgroup-head').count(), 2);
+  await page.locator('#symcats .chks label').first().click();
+  await page.locator('#symcats .chks label', { hasText: 'กระบอกไฮดรอลิกรั่ว' }).click();
   await page.fill('#i-odo', '84120');
   await page.locator('.addph', { hasText: 'รูปตัวอย่าง' }).click();
   await page.locator('#next').click();
 
-  // ---- ขั้น 3: อาการเสีย แยกกลุ่มตามจุด ----
-  await page.waitForSelector('#symcats .chks label');
-  eq('เลือก 2 จุด → หัวกลุ่ม 2 กลุ่ม', await page.locator('#symcats .symgroup-head').count(), 2);
-  await page.locator('#symcats .chks label').first().click();
-  await page.locator('#symcats .chks label', { hasText: 'กระบอกไฮดรอลิกรั่ว' }).click();
-  await page.locator('#next').click();
-
-  // ---- ขั้น 4: อะไหล่ที่แนะนำ → ส่งอนุมัติ ----
+  // ---- ขั้น 3 (สุดท้าย): อะไหล่ที่แนะนำ → ส่งอนุมัติ ----
   await page.waitForSelector('#parts-rec .parts-rec-item');
   ok('มีรายการอะไหล่แนะนำจากอาการ', await page.locator('#parts-rec .parts-rec-item').count() >= 2);
   ok('ทุกรายการติดป้าย "แนะนำ"',

@@ -18,7 +18,7 @@
        preflight ปิด · คลาส component กลาง (components.css) ใช้ต่อตามเดิมแบบ DaisyUI · งานใหม่เขียน utility -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="../design-system/tailwind-theme.js?v=20260907-tw3"></script>
-  <script src="../config.js?v=20260806-kbk-detail"></script>
+  <script src="../config.js?v=20260908-1"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260904-vt1"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
   <script src="../job-store.js?v=20260819-jobstore"></script><!-- MDJ: เก็บใบงานข้ามไฟล์ (หน้า design-mock ขั้นซ่อมเองอยู่คนละไฟล์) -->
@@ -1719,10 +1719,11 @@
           </div>
         </section>
 
-        <section id="s2" class="hidden">
-          <div class="sect"><span id="head-symptom">อาการเสีย</span> <span
-              class="font-normal text-sm text-gray-500">— เลือกได้หลายอาการ
-              จากรายการมาตรฐานที่กรองตามจุดที่เลือก</span></div>
+        <!-- 8 ก.ย. 2569: เจ้าของงานสั่งรวม "รายละเอียดเหตุการณ์" กับ "อาการเสีย" เป็นขั้นเดียว
+             ⇒ s2 กับ sinfo แสดงพร้อมกันในขั้นเดียว แบ่งด้วย .incident-section ของ design system
+             (อาการมาก่อน — เป็นเนื้อของเรื่องและเป็นตัวกำหนดอะไหล่ในขั้นถัดไป) -->
+        <section id="s2" class="hidden incident-section">
+          <div class="incident-section-title" id="head-symptom">อาการเสีย</div>
           <div id="symcats"></div>
           <div id="othwrap" class="hidden">
             <div class="f mt-3"><label>ระบุอาการเอง</label><textarea id="othtext" rows="2"
@@ -1730,10 +1731,11 @@
           </div>
         </section>
 
-        <section id="sinfo" class="hidden">
+        <section id="sinfo" class="hidden incident-section">
           <!-- 7 ก.ย. 2569: เจ้าของงานสั่งตัด "สถานที่เกิดเหตุ" กับ "รายละเอียดเหตุการณ์" ออก —
                เหลือ เลขไมล์ · ชั่วโมงเครื่องจักร · รูปภาพเหตุการณ์ · หมายเหตุ (จังหวัด/ผู้ติดต่อ/งบ ย้าย-ตัดตามสเปกใหม่) -->
-          <div class="fgrid ig mt-1">
+          <div class="incident-section-title">รายละเอียดเหตุการณ์</div>
+          <div class="fgrid ig">
             <div class="f"><label>เลขไมล์ปัจจุบัน</label>
               <div class="in"><span class="ms">speed</span><input type="number" min="0" id="i-odo" placeholder="ระบุเลขไมล์ปัจจุบัน"></div></div>
             <div class="f"><label id="lbl-crane">ชั่วโมงใช้งานเครื่องจักร</label>
@@ -1755,7 +1757,7 @@
         <section id="s3" class="hidden">
           <!-- 7 ก.ย. 2569: การตัดสินใจย้ายไปขั้น 1 ("รูปแบบการซ่อม") · เลย์เอาต์ 2 คอลัมน์เปลี่ยนเป็น
                รายการอะไหล่ที่แนะนำจากอาการ (ตามสเปกภาพ) — เกินคงคลังตั้งเป็นรายการจัดซื้ออัตโนมัติ -->
-          <div class="sect"><span id="head-parts">อะไหล่ที่แนะนำ</span> <span
+          <div class="incident-section-title" id="head-parts">อะไหล่ที่แนะนำ <span
               class="font-normal text-sm text-gray-500">—
               จำนวนที่เกินยอดในคลัง จะถูกตั้งเป็นรายการจัดซื้อให้อัตโนมัติ</span></div>
           <div id="parts-rec" class="parts-rec-list"></div>
@@ -2800,8 +2802,8 @@
       activity:{label:'เลขที่กิจกรรม',ph:'เช่น A-0310',icon:'checklist'},
       pmOrder:{label:'เลขที่ใบสั่ง (PM Order)',ph:'เช่น PM690717-08',icon:'receipt_long'} };
     const STEPS = ['เลือกรถ', 'อาการเสีย', 'ตัดสินใจ + อะไหล่', 'สรุปและผู้อนุมัติ'];   // (คง fallback — ปัจจุบันใช้ WZ)
-    let WZ = { vehicle: { on: true, label: 'เลือกรถ' }, symptom: { on: true, label: 'อาการเสีย' }, parts: { on: true, label: 'ตัดสินใจ + อะไหล่' }, decision: { on: true, label: 'สรุปและผู้อนุมัติ' } };
-    let WORDER = ['vehicle', 'symptom', 'parts', 'decision'];   // ลำดับขั้น wizard (จาก cfg.steps.wizard ที่ INIT)
+    let WZ = { vehicle: { on: true, label: 'ข้อมูลยานพาหนะและผู้แจ้ง' }, symptom: { on: true, label: 'อาการเสียและรายละเอียดเหตุการณ์' }, parts: { on: true, label: 'อะไหล่ที่แนะนำ' } };
+    let WORDER = ['vehicle', 'symptom', 'parts'];   // ลำดับขั้น wizard (จาก cfg.steps.wizard ที่ INIT)
     const SECT = { vehicle: 's1', symptom: 's2', info: 'sinfo', parts: 's3', decision: 's4' };   // key → id ของ section (คงที่)
     let VIEW = 'form';
     let VIEW_HISTORY = [];   // stack ปุ่มย้อนกลับ (switchView/goBackView) — เพิ่มการประกาศที่ขาดหาย ทำให้สลับเมนูไม่ได้
@@ -2988,8 +2990,9 @@ function goBackView(){
     function showStepSection(key) {   // แสดง section ของขั้นปัจจุบัน + render เนื้อหาตาม key
       ['s1', 's2', 'sinfo', 's3'].forEach(id => $(id).classList.add('hidden'));
       $(SECT[key]).classList.remove('hidden');
-      if (key === 'info') prefillInfo();
-      if (key === 'symptom') renderSymptoms();
+      // ขั้น "อาการเสียและรายละเอียดเหตุการณ์" = 2 บล็อกในขั้นเดียว (8 ก.ย. 2569)
+      if (key === 'symptom') { $('sinfo').classList.remove('hidden'); renderSymptoms(); prefillInfo(); }
+      if (key === 'info') prefillInfo();   // คงไว้เผื่อ config เก่าที่ยังแยกขั้น
       if (key === 'parts') renderParts();
     }
     // 7 ก.ย. 2569: ขั้น 1 ตามสเปกภาพชุดเต็ม — dropdown รถ + กล่องสรุป (ทะเบียน/จังหวัด/ผู้ขับขี่/ช่างคุมรถ)
