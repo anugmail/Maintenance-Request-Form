@@ -1,7 +1,7 @@
 // plan-new.js — หน้า "ออกเลขงาน" (แยกออกจาก stepper ปฏิบัติการแล้ว)
 //
 // หน้านี้ทำเรื่องเดียว: สร้างแผนบำรุงรักษาประจำปีของ กบค. แล้วออกเลขงาน
-// wizard 2 ขั้น: ชื่อแผน+จัดรถเข้าไตรมาส → สรุปแผน → [ออกเลขงาน 4 ใบ]
+// wizard 2 ขั้น: ชื่อแผน+จัดรถเข้าไตรมาส → สรุปแผน → [ออกเลขงาน 1 เลขต่อแผน]
 // 1 แผน = ทั้งปีงบ · รถแยกรายไตรมาส · ต้องมีรถครบทุกไตรมาสจึงจะไปขั้นสรุปได้
 // ขั้น "เลือก/แก้รายการอะไหล่" ถูกตัดออก 17 ส.ค. 2569 ตามคำสั่งเจ้าของงาน
 // ระบบยังคำนวณรายการอะไหล่จากรถที่เลือกให้เอง (ใช้ในสรุป + เอกสารพัสดุ) แค่ไม่ให้แก้ตอนทำแผน
@@ -585,22 +585,21 @@ function renderStepSummary(plan) {
 }
 
 // กบค. ออกเลขงานเอง — ฝ่ายพัสดุ "รับทราบ" เพื่อเตรียม/สั่งอะไหล่ ไม่ได้เป็นผู้อนุมัติ
-// ออกครบ 4 ใบพร้อมกัน 1 ใบต่อไตรมาส (เจ้าของงานเคาะ 17 ส.ค. 2569)
+// 1 แผน = 1 เลขงาน (เจ้าของงานสั่ง 8 ก.ย. 2569 — เดิมออก 4 ใบ ไตรมาสละ 1 ใบ)
 function issueWorkNumber(plan) {
   const missing = MYD.quartersMissing(plan);
   if (missing.length) { toast('ยังจัดรถไม่ครบ — ขาด ' + missing.map(q => MYD.quarterLabel(q)).join(' · ')); return; }
-  if (!confirm('ยืนยันออกเลขงานสำหรับแผนนี้? (ได้เลขงาน 4 ใบ ไตรมาสละ 1 ใบ)')) return;
+  if (!confirm('ยืนยันออกเลขงานสำหรับแผนนี้?')) return;
 
-  const numbers = MYD.issueWorkNumbers(plan, 1);
-  const list = MYD.workNumberList(plan).map(x => x.no).join(' · ');
+  const no = MYD.issueWorkNumber(plan, 1);
   plan.approvalStatus = 'issued';
   plan.statusHistory = [...(plan.statusHistory || []), {
-    status: 'issued', at: nowTh(), note: 'กบค. ออกเลขงาน ' + Object.keys(numbers).length + ' ใบ — ' + list,
+    status: 'issued', at: nowTh(), note: 'กบค. ออกเลขงาน ' + no,
   }, {
     status: 'notified', at: nowTh(), note: 'ส่งเอกสารแจ้งฝ่ายพัสดุ — แจ้งรายการอะไหล่ที่ต้องเตรียม/สั่ง แยกรายไตรมาส',
   }];
   persist(plan);
-  toast('ออกเลขงานสำเร็จ ' + Object.keys(numbers).length + ' ใบ — ส่งเอกสารแจ้งฝ่ายพัสดุแล้ว');
+  toast('ออกเลขงานสำเร็จ ' + no + ' — ส่งเอกสารแจ้งฝ่ายพัสดุแล้ว');
   render();
 }
 
@@ -629,16 +628,13 @@ function commitRevise(plan) {
 function renderDone(plan) {
   $('planNewBody').innerHTML = `
     <div class="card">
-      <div class="incident-section-title">ออกเลขงานเรียบร้อย — ${MYD.workNumberList(plan).length} ใบ</div>
-      <div class="worknos">${MYD.workNumberList(plan).map(x => `
-        <div class="workno">
-          <div class="workno-q">${esc(MYD.quarterLabel(x.q))} · ${MYD.planVehicleIds(plan, x.q).length} คัน</div>
-          <span class="badge b-ok">${esc(x.no)}</span>
-        </div>`).join('')}</div>
-      <div class="fgrid mt-3">
-        <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName)}</div></div>
-        <div class="f sp2"><label>รถเข้าแผนทั้งปี</label><div><b>${plan.selectedVehicleIds.length}</b> คัน</div></div>
-      </div>
+      <div class="incident-section-title">ออกเลขงานเรียบร้อย</div>
+      <dl class="incident-summary">
+        <div class="incident-field"><dt>เลขงาน</dt><dd><b>${esc(plan.workNumber)}</b></dd></div>
+        <div class="incident-field"><dt>ชื่อแผน</dt><dd>${esc(plan.planName)}</dd></div>
+        <div class="incident-field"><dt>รถเข้าแผนทั้งปี</dt><dd><b>${plan.selectedVehicleIds.length}</b> คัน</dd></div>
+        <div class="incident-field"><dt>ปีงบประมาณ</dt><dd>${esc(plan.year)}</dd></div>
+      </dl>
       ${renderTimelineHtml(plan.statusHistory)}
       <div class="actions">
         <a class="btn btn-s" href="plan-new.html">สร้างแผนใหม่อีกใบ</a>

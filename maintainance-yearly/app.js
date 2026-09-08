@@ -3,7 +3,7 @@
 // ⚠️ โครงเปลี่ยน 8 ส.ค. 2569
 //   - "ออกเลขงาน" แยกไป plan-new.html แล้ว ไม่อยู่ใน stepper นี้
 //   - ระบบเก็บ "หลายแผน" (MYD.loadPlans()) แผนหนึ่ง = ประจำปีหนึ่งใบของ กบค.
-//   - เลขงาน (MT-ปี-ไตรมาส-NNN) คือหัวข้อของแผน · stepper เป็นของ "แต่ละแผน"
+//   - เลขงาน (MT-ปี-NNN — 1 เลขต่อแผน) คือหัวข้อของแผน · แท็บเป็นของ "แต่ละแผน"
 //
 // ⚠️ โครงเปลี่ยนอีกรอบ 28 ส.ค. 2569 (เจ้าของงานสั่ง) — แยก "ตรวจสภาพก่อนซ่อม/ดำเนินการบำรุงรักษา/
 //   จัดทำรายงาน/คำนวณต้นทุน" ออกจาก stepper ของแผน ไปเป็น stepper แยกต่างหาก "ต่อไตรมาส" — เพราะ 4 เฟสนี้
@@ -157,8 +157,7 @@ function renderList() {
   let plans = all.filter(p => {
     if (PLAN_LIST_UI.stage !== 'all' && MYD.planStage(p, f0.fy, f0.month) !== PLAN_LIST_UI.stage) return false;
     if (!q) return true;
-    const nos = MYD.workNumberList(p).map(x => x.no).join(' ');
-    return (planTitle(p) + ' ' + nos).toLowerCase().includes(q);
+    return (planTitle(p) + ' ' + (p.workNumber || '')).toLowerCase().includes(q);
   });
   const total = plans.length, pages = Math.max(1, Math.ceil(total / PLAN_LIST_UI.size));
   if (PLAN_LIST_UI.page > pages) PLAN_LIST_UI.page = pages;
@@ -175,7 +174,7 @@ function renderList() {
     return `<tr>
       <td><div class="cell-key">${esc(planTitle(p))}</div>
         <div class="cell-sub">${issued
-            ? MYD.workNumberList(p).map(x => esc(x.no)).join(' · ') + (p.createdAt ? ' · ' : '')
+            ? esc(p.workNumber) + (p.createdAt ? ' · ' : '')
             : ''}${p.createdAt ? 'สร้าง ' + esc(p.createdAt) : ''}</div>
       </td>
       <td class="num">${n}</td>

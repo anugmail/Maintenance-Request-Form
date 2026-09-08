@@ -56,7 +56,7 @@ function renderPicker() {
     const s = travelSummary(p);
     return `<tr>
       <td><b class="text-gray-900">${esc(planTitle(p))}</b>
-        <div class="cell-sub">${MYD.workNumberList(p).map(x => esc(x.no)).join(' · ')}</div></td>
+        <div class="cell-sub">${esc(p.workNumber)}</div></td>
       <td class="num">${(p.selectedVehicleIds || []).length}</td>
       <td>${quarterYearText(p)}</td>
       <td><span class="badge ${s.cls}">${esc(s.text)}</span></td>

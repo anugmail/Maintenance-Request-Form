@@ -11,7 +11,7 @@
 //   ฟิลด์ระบุตัวรถยกตาม "แบบฟอร์มตรวจสภาพบำรุงรักษารถกระเช้า" ที่เจ้าของงานส่งมา 17 ส.ค. 2569
 // item:    { id, name, category, oilKind?, unit, appliesToTypes:[], qtyPerVehicle }
 // plan:    { id, createdAt, phase, planName, byQuarter:{Q1..Q4,none}, selectedVehicleIds:[],
-//            itemAdj:{}, year, workNumbers:{Q1..Q4}, workNumber, approvalStatus:'draft'|'issued',
+//            itemAdj:{}, year, workNumber, approvalStatus:'draft'|'issued',
 //            suppliesAckAt:null|string, partsRequisitioned,
 //            confirm:{...}|null, trips:[trip], travelConfirmed, statusHistory:[] }
 // trip:    { id, name, location, windowFrom, windowTo, perDiem, lodging, travel,
@@ -39,7 +39,7 @@ const DEFAULT_SETTINGS = { confirmDueDays: 7 };   // ยังไม่ได้
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 13;  // 13 = แผนเดินทางเลือกจ้างผู้รับจ้างได้รายใบ (mode/vendorId/hireCost)
+const SCHEMA_VERSION = 14;  // 14 = 1 แผน = 1 เลขงาน (ถอด plan.workNumbers รายไตรมาสออก · 8 ก.ย. 2569)
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -260,7 +260,6 @@ const INITIAL_PLAN = {
   createdFY: 2569,        // ปีงบที่ทำแผน — ใช้คำนวณว่ามีรอบทบทวนกี่รอบ
   revisions: [],          // [{no, fy, at, added, removed, moved, byQuarter}] — รอบทบทวนที่ปิดแล้ว
   itemAdj: {},            // การแก้มือรายการอะไหล่ { [itemId]: {qty, off, added} }
-  workNumbers: {},        // { Q1:'MT-2569-Q1-001', … } ออกครบ 4 ใบพร้อมกันตอนกดออกเลขงาน
   workNumber: null,       // = เลขของไตรมาสแรกที่มีรถ — ใช้เป็นหัวข้อแผนในลิสต์/ไทม์ไลน์
   approvalStatus: 'draft',// draft -> issued
   suppliesAckAt: null,    // ฝ่ายพัสดุกดรับทราบเมื่อไหร่
@@ -302,15 +301,11 @@ const SEED_PLAN = {
   year: 2569,
   createdFY: 2567,
   revisions: [],
-  workNumbers: {
-    Q1: 'MT-2569-Q1-001', Q2: 'MT-2569-Q2-001',
-    Q3: 'MT-2569-Q3-001', Q4: 'MT-2569-Q4-001',
-  },
-  workNumber: 'MT-2569-Q1-001',
+  workNumber: 'MT-2569-001',
   approvalStatus: 'issued',
   suppliesAckAt: '3 ต.ค. 2568 14:20',
   statusHistory: [
-    { status: 'issued',       at: '1 ต.ค. 2568 10:05', note: 'กบค. ออกเลขงาน MT-2569-Q1-001' },
+    { status: 'issued',       at: '1 ต.ค. 2568 10:05', note: 'กบค. ออกเลขงาน MT-2569-001' },
     { status: 'notified',     at: '1 ต.ค. 2568 10:05', note: 'ส่งเอกสารแจ้งฝ่ายพัสดุ — แจ้งรายการอะไหล่ที่ต้องเตรียม/สั่ง' },
     { status: 'acknowledged', at: '3 ต.ค. 2568 14:20', note: 'ฝ่ายพัสดุรับทราบ — เตรียม/สั่งอะไหล่ตามรายการ' },
   ],
@@ -389,15 +384,11 @@ const SEED_PLAN_CF = {
   year: 2569,
   createdFY: 2567,
   revisions: [],
-  workNumbers: {
-    Q1: 'MT-2569-Q1-002', Q2: 'MT-2569-Q2-002',
-    Q3: 'MT-2569-Q3-002', Q4: 'MT-2569-Q4-002',
-  },
-  workNumber: 'MT-2569-Q1-002',
+  workNumber: 'MT-2569-002',
   approvalStatus: 'issued',
   suppliesAckAt: '4 ต.ค. 2568 11:10',
   statusHistory: [
-    { status: 'issued',       at: '2 ต.ค. 2568 10:15', note: 'กบค. ออกเลขงาน MT-2569-Q1-002' },
+    { status: 'issued',       at: '2 ต.ค. 2568 10:15', note: 'กบค. ออกเลขงาน MT-2569-002' },
     { status: 'notified',     at: '2 ต.ค. 2568 10:15', note: 'ส่งเอกสารแจ้งฝ่ายพัสดุ' },
     { status: 'acknowledged', at: '4 ต.ค. 2568 11:10', note: 'ฝ่ายพัสดุรับทราบ' },
   ],
@@ -1448,7 +1439,7 @@ const MYD = {
   QUARTER_KEYS: ['Q1', 'Q2', 'Q3', 'Q4'],
 
   // ป้ายไตรมาสที่แสดงบนหน้าจอ — เจ้าของงานสั่ง 17 ส.ค. 2569 ให้ใช้ "ไตรมาส 1"
-  // ไม่ใช่ "Q1" · คีย์ในข้อมูลและ "เลขงาน" (MT-2569-Q1-001) ยังเป็น Q1 เหมือนเดิม
+  // ไม่ใช่ "Q1" · คีย์ในข้อมูลยังเป็น Q1 เหมือนเดิม
   // เพราะเป็นรหัส ไม่ใช่ข้อความให้คนอ่าน ⇒ แปลงที่จุดแสดงผลเท่านั้น
   quarterLabel(q) {
     if (q === 'none') return 'ยังไม่ระบุไตรมาส';
@@ -1606,29 +1597,19 @@ const MYD = {
     return 'Q4';
   },
 
-  workNumber(quarter, year, seq) {
-    return `MT-${year}-${quarter}-${String(seq).padStart(3, '0')}`;
+  // ⚠️ รูปแบบเลขชั่วคราว — เจ้าของงานแจ้งว่ามีเกณฑ์การออกเลขของจริงอยู่แล้ว รอส่งมา
+  // เปลี่ยนรูปแบบทีหลังแก้ที่ฟังก์ชันนี้ที่เดียว
+  workNumber(year, seq) {
+    return `MT-${year}-${String(seq).padStart(3, '0')}`;
   },
 
-  // ออกเลขงานครบ 4 ใบพร้อมกัน — 1 ใบต่อไตรมาส (เจ้าของงานเคาะ 17 ส.ค. 2569)
-  // ไตรมาสที่ไม่มีรถจะไม่ได้เลข แต่ตามกติกา "ต้องเลือกให้ครบ" จึงไม่ควรเกิด
-  // seq ต่อไตรมาส = นับจากแผนที่ออกเลขไปแล้วในปีเดียวกัน (mock: ไม่มี counter กลาง)
-  issueWorkNumbers(plan, seq) {
+  // 1 แผน = 1 เลขงาน (เจ้าของงานสั่ง 8 ก.ย. 2569 — เดิมออก 4 ใบ ไตรมาสละ 1 ใบ)
+  // แผนยังครอบทั้งปีงบและแจกแจงรายไตรมาสเหมือนเดิม แค่เลขงานเป็นของแผนทั้งใบ
+  // seq = นับจากแผนที่ออกเลขไปแล้วในปีเดียวกัน (mock: ไม่มี counter กลาง)
+  issueWorkNumber(plan, seq) {
     this.ensurePlanQuarters(plan);
-    const numbers = {};
-    this.QUARTER_KEYS.forEach(q => {
-      if (plan.byQuarter[q].length) numbers[q] = this.workNumber(q, plan.year, seq);
-    });
-    plan.workNumbers = numbers;
-    plan.workNumber = numbers[this.QUARTER_KEYS.find(q => numbers[q])] || null;
-    return numbers;
-  },
-
-  // เลขงานทุกใบของแผน เรียงตามไตรมาส — ใช้แสดงในลิสต์/เอกสาร
-  workNumberList(plan) {
-    return this.QUARTER_KEYS
-      .filter(q => plan.workNumbers && plan.workNumbers[q])
-      .map(q => ({ q, no: plan.workNumbers[q] }));
+    plan.workNumber = this.workNumber(plan.year, seq);
+    return plan.workNumber;
   },
 
   // ----- เงื่อนไข trigger ของ item (display only — ไม่คำนวณ due) -----

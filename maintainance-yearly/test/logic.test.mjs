@@ -18,9 +18,19 @@ assert.equal(lines.find(l=>l.item.id==='o1').totalQty, 36);
 assert.equal(lines.find(l=>l.item.id==='p1').totalQty, 2);
 assert.deepEqual(MYD.deriveItems([], items), [], 'ไม่มีรถ → []');
 
-// workNumber
-assert.equal(MYD.workNumber('Q3',2569,1), 'MT-2569-Q3-001');
-assert.equal(MYD.workNumber('Q1',2570,42), 'MT-2570-Q1-042');
-assert.equal(MYD.workNumber('Q4',2569,123), 'MT-2569-Q4-123');
+// workNumber — 1 แผน = 1 เลขงาน (8 ก.ย. 2569) ไม่มีส่วนไตรมาสในเลขแล้ว
+assert.equal(MYD.workNumber(2569,1), 'MT-2569-001');
+assert.equal(MYD.workNumber(2570,42), 'MT-2570-042');
+assert.equal(MYD.workNumber(2569,123), 'MT-2569-123');
+
+// ออกเลขให้แผน — ได้เลขเดียว เก็บที่ plan.workNumber
+{
+  const plan = MYD.newPlan('1 ต.ค. 2568 09:00');
+  plan.year = 2571;
+  const no = MYD.issueWorkNumber(plan, 7);
+  assert.equal(no, 'MT-2571-007');
+  assert.equal(plan.workNumber, 'MT-2571-007');
+  assert.equal(plan.workNumbers, undefined, 'ไม่มีเลขรายไตรมาสแล้ว');
+}
 
 console.log('OK: all logic tests passed');
