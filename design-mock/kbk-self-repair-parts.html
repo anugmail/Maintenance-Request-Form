@@ -9,13 +9,14 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
 <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds47">
-<link rel="stylesheet" href="../design-system/components.css?v=20260902-ds47">
+<link rel="stylesheet" href="../design-system/components.css?v=20260903-ds51">
 <script src="../job-store.js?v=20260819-jobstore"></script><!-- MDJ: เขียนรายการเบิกกลับเข้าใบงาน ไม่งั้นกลับไปแอปหลักจะค้างที่ "กำลังจัดรายการอะไหล่" -->
 <!-- ขั้น 1 "เบิกอะไหล่" ของเส้น กบค. ซ่อมเอง (design mock)
-     14 ส.ค. 2569: ต่อเข้า flow แล้ว — mock/Maintenance-Request-Form.html กด "รับซ่อม" → "กบค. ซ่อมเอง"
-     พามาที่นี่ในแท็บเดิม พร้อม ?no=<เลขใบแจ้งซ่อม> · กด "ยืนยันรายการเบิก" ไปต่อขั้น 2
-     (kbk-self-repair-appointment.html) · ⚠️ JOBS ฝั่งต้นแบบอยู่ใน memory ล้วน ออกจากหน้าโน้นแล้วสถานะหาย
-     ข้อมูลอะไหล่ในหน้านี้ยังเป็นชุดตัวอย่างของตัวเอง ยังไม่ได้ผูกกับใบงานจริงที่ส่งมา
+     ⚠️ 2 ก.ย. 2569 — เลิกเชื่อมจาก flow หลักแล้ว! mock/Maintenance-Request-Form.html เดิมกด "รับซ่อม" → "กบค. ซ่อมเอง"
+     แล้ว location.href มาหน้านี้ — เจ้าของงานทักว่า flow กระโดดคนละไฟล์ไม่ควรแยก จึงย้ายไปใช้ partsEditorHTML()
+     ที่ฝังอยู่ใน mock/Maintenance-Request-Form.html เองแทน (ข้อมูลจริงจาก PARTS = MDC.data('parts') ผูกกับ j.parts)
+     ไฟล์นี้เหลือไว้เป็น **design reference เท่านั้น** เปิดเดี่ยวๆ ได้ปกติแต่ไม่มีอะไรลิงก์มาแล้ว
+     ข้อมูลอะไหล่ในหน้านี้ยังเป็นชุดตัวอย่างของตัวเอง ไม่ได้ผูกกับใบงานจริง
      ไม่มี <style> ในหน้าโดยตั้งใจ — ใช้คอมโพเนนต์จาก design system เท่านั้น:
      .shell/.side/.nv/.work/.topbar · .content · .crumbs · .wsteps/.wstep · .card/.sect/.sub · .fgrid/.f/.sp2/.sp4
      .job/.sp/.no/.meta · .qty · .badge/.b-ok/.b-low/.b-out · .search · .btn · .empty · .actions · .modal* · .toast -->
@@ -59,8 +60,8 @@
         <div class="wstep locked"><span class="num">2</span><span class="lbl">นัดหมายวันซ่อม</span></div>
         <div class="wstep locked"><span class="num">3</span><span class="lbl">ตรวจสภาพก่อนซ่อม</span></div>
         <div class="wstep locked"><span class="num">4</span><span class="lbl">ดำเนินการซ่อม</span></div>
-        <div class="wstep locked"><span class="num">5</span><span class="lbl">ตรวจสภาพรถหลังซ่อม</span></div>
-        <div class="wstep locked"><span class="num">6</span><span class="lbl">รายงานการปิดงาน</span></div>
+        <div class="wstep locked"><span class="num">5</span><span class="lbl">ตรวจสภาพหลังซ่อม</span></div>
+        <div class="wstep locked"><span class="num">6</span><span class="lbl">รายงานปิดงาน</span></div>
       </div>
 
       <div class="parts-workspace">

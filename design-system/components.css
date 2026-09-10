@@ -517,6 +517,12 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .fgrid.ig{gap:16px 20px;align-items:end;margin:12px 0 0}
 .fgrid.ig .f{min-width:0}
 .fgrid.ig .f label{margin-bottom:7px;line-height:1.35}
+/* .fgrid.cols-3 — แถว 3 ช่องเท่ากันเต็มแถว (ตาม figma/นัดหมายเข้าซ่อมสำนักงาน-*.jpg "รายละเอียดการนัดหมาย":
+   ช่วงเวลาที่รับมอบรถ · ช่างซ่อม · เบอร์โทรศัพท์) — .fgrid ปกติ 4 คอลัมน์ ใส่ .f เปล่า 3 ตัวจะเหลือช่องว่างคอลัมน์ที่ 4
+   ตั้งชื่อ modifier ตามแบบ .radcards.cols-3 ที่มีอยู่แล้ว (3 ก.ย. 2569) */
+.fgrid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:1100px){.fgrid.cols-3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.fgrid.cols-3{grid-template-columns:1fr}}
 .f label{display:block;font-size:var(--fs-text-sm);font-weight:500;color:var(--gray-700);margin-bottom:6px}
 .f label small{color:var(--gray-500);font-weight:400}
 .f .in{position:relative}
@@ -526,6 +532,11 @@ input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--bra
 .f .in.noic input{padding-left:12px}
 .f textarea{border-radius:var(--rounded-md);padding:8px 12px}
 .f.ro .in input{background:var(--gray-50);color:var(--gray-700)}   /* = state Disabled ของไลบรารี (ขอบทึบ พื้น gray-50) */
+/* .f.ro.dash — ช่องอ่านอย่างเดียวที่ auto-fill ค่ามาจากรายการอื่น (เช่น เบอร์โทรของช่างซ่อมที่เลือกไว้)
+   ยกพิกเซลจริงจาก figma/นัดหมายคืนรถ.jpg + นัดหมายเข้าซ่อมสำนักงาน-{default,filled}.* (3 ก.ย. 2569):
+   ขอบเส้นประ (ต่างจาก .f.ro ทั่วไปที่ขอบทึบ) + พื้น #F2F4F7 (--gray-100) — ยังไม่เคยเทียบกับ Figma component
+   ตัวจริง (สเปกนี้วัดจากภาพหน้าจอ ไม่ใช่ไฟล์ไลบรารี) ไม่มีไอคอนนำหน้า (ใช้คู่กับ .in.noic) */
+.f.ro.dash .in input{background:var(--gray-100);border-style:dashed}
 /* .daterange-field / .search input รวมด้วย — ช่องเลือกช่วงวันที่ และช่องค้นหาที่ใช้เป็นตัวเลือกรายการ
    ก็ต้องขึ้นกรอบแดงได้เหมือนช่องกรอกอื่น (14 ส.ค. 2569) */
 .f.err .in input,.f.err textarea,.f.err .daterange-field,.f.err .search input{border-color:var(--error-300)}
@@ -746,6 +757,10 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
 .radcard .rc-tx small{display:block;margin-top:2px;font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);color:var(--gray-500)}
 .radcards.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}   /* 3 ตัวเลือก เช่น คัดแยกช่องทางซ่อมของ กรย. */
 @media(max-width:900px){.radcards.cols-3{grid-template-columns:1fr}}
+/* .radcards.cols-5 — คะแนนประเมิน 1-5 (ขั้น "ตรวจสภาพหลังซ่อม") ยกจาก
+   figma/ตรวจสภาพหลังซ่อม - เข้าซ่อมที่ กบค.-{default,filled}.jpg (7 ก.ย. 2569) — การ์ดเดียวกัน แค่ 5 คอลัมน์ */
+.radcards.cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:900px){.radcards.cols-5{grid-template-columns:1fr}}
 /* ไอคอนนำหน้าในการ์ด (ไม่บังคับ) — ใช้ตอนตัวเลือกมีสัญลักษณ์ประจำตัว เช่น "จุดที่พบปัญหา" ตัวรถ/อุปกรณ์ติดตั้ง */
 .radcard .rc-ic{display:flex;width:40px;height:40px;flex:none;align-items:center;justify-content:center;border-radius:var(--rounded-md);background:var(--gray-100);color:var(--gray-500)}
 .radcard.sel .rc-ic{background:var(--primary-50);color:var(--primary-700)}
@@ -861,6 +876,11 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
 input.tbl-inline-sm{width:64px;display:inline-block}
 input.tbl-inline-md{width:120px;display:inline-block}
 input.tbl-row-label{width:80%;display:inline-block}
+/* input.tbl-cell-ro — ช่องตัวเลขอ่านอย่างเดียว/คำนวณอัตโนมัติในเซลล์ตาราง (ขอบเส้นประ พื้น gray-100
+   หลักการเดียวกับ .f.ro.dash แต่ย่อขนาดให้พอดีเซลล์) ยกพิกเซลจาก figma/ตรวจสภาพหลังซ่อม -
+   เข้าซ่อมที่ กบค.-filled.jpg (7 ก.ย. 2569) คอลัมน์ "จำนวนที่คืน/ราคาต่อหน่วย/ราคารวม" ของตาราง
+   "รายการสภาพวัสดุอะไหล่" — ยังไม่เคยเทียบกับ Figma component ตัวจริง (วัดจากภาพหน้าจอ) */
+input.tbl-cell-ro{width:100px;display:inline-block;background:var(--gray-100);border:1px dashed var(--gray-300);color:var(--gray-700)}
 
 /* แผงตัวกรอง — กางจากปุ่ม "ตัวกรอง" บนแถบเครื่องมือ
    ⚠️ ภาพหน้าจริงมีแต่ปุ่ม (ปิดอยู่) ไม่เห็นตอนกาง ⇒ ตัวแผงประกอบจาก .filter-field + token ที่มีอยู่ */
@@ -915,7 +935,10 @@ input.tbl-row-label{width:80%;display:inline-block}
 .parts-empty-image{display:block;width:148px;height:128px;object-fit:contain;margin-bottom:var(--space-4)}
 .parts-empty b{color:var(--color-text-primary);font-size:var(--fs-text-md)}
 .parts-picked-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-4);padding:var(--space-4);border:1px solid var(--gray-200);border-radius:var(--r-md)}
-.parts-picked-actions{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:var(--space-3)}
+/* delete+ราคารวมอยู่กลุ่มบน ตัวปรับจำนวนตกไปกลุ่มล่างสุด (margin-top:auto) — ยกพิกเซลจริงจาก
+   figma/หน้าเบิกอะไหล่-filled.jpg 3 ก.ย. 2569 ไม่ใช่กระจายเท่ากันแบบ space-between */
+.parts-picked-actions{display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:var(--space-3)}
+.parts-picked-actions .qty{margin-top:auto}
 .parts-price{font-size:var(--fs-text-sm);font-weight:600;color:var(--gray-700)}
 .parts-manual-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);margin-top:var(--space-3)}
 .parts-manual-grid .wide{grid-column:1/-1}
@@ -1063,3 +1086,43 @@ input.tbl-row-label{width:80%;display:inline-block}
 .cal-day.edge{background:var(--primary-600);color:#fff;font-weight:600}
 .cal-foot{display:flex;align-items:center;gap:8px;margin-top:10px}
 .cal-foot .hint{flex:1;font-size:var(--fs-text-xs);color:var(--gray-500)}
+
+/* ---------- .combo : ช่องกดเปิดรายการค้นหา-เลือก 1 ค่า (เช่น "ช่างซ่อม") ----------
+   ตาม figma/นัดหมายเข้าซ่อมสำนักงาน-*.jpg 3 ก.ย. 2569 — ช่องปิดแสดงค่าที่เลือก + ไอคอน expand_more
+   กดแล้วกางรายการค้นหาด้านล่าง (ใช้การ์ด .job ชุดเดียวกับที่อื่นในระบบ) เอาโครง .daterange/.cal มาใช้ซ้ำ
+   (ค่าเดียวกันทั้ง 44px/gray-300/primary-50 outline) เพราะเป็นกลไก "กดช่องเพื่อกางแผง" แบบเดียวกัน
+   ยังไม่มีภาพอ้างอิงตอนกางแผง — ใช้ลิสต์ .job ที่ยืนยันแล้วจากขั้นอื่น (นัดหมายวันคืนรถ/เดินทางไปซ่อม) แทนการเดาเอง */
+.combo{position:relative}
+.combo-field{display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;
+           border:1px solid var(--gray-300);border-radius:var(--r-sm);background:#fff;
+           box-shadow:var(--shadow-xs);cursor:pointer;color:var(--gray-900);user-select:none}
+.combo-field:hover{border-color:var(--gray-400)}
+.combo.open .combo-field{outline:2px solid var(--primary-50);border-color:var(--primary-500)}
+.combo-field .ms{color:var(--gray-500);flex-shrink:0}
+.combo-field .val{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.combo-field .val.ph{color:var(--gray-400)}
+.combo-list{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;display:none;
+     background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-md);
+     box-shadow:var(--shadow-pop);padding:14px;max-height:320px;overflow-y:auto}
+.combo.open .combo-list{display:block}
+
+/* ============================================================
+   v0.48 — Mobile table item — การ์ดแทนตารางบนมือถือ (≤760px)
+   อิงสเปกที่มีบันทึกไว้ใน SOURCES.md ("Mobile table item: การ์ด r8 · เส้น #D0D5DD" = --gray-300)
+   + โครง label/value ยกจากสกรีนช็อตจริง VMS+.com "จัดการงานซ่อม" (figma/กบครับซ่อม-mobile.jpg, 2 ก.ย. 2569)
+   ใช้คู่กับ .tblwrap เดิม — .tbl-cards ซ่อนอยู่บนจอกว้าง โผล่แทน .tblwrap เฉพาะจอแคบ
+   ============================================================ */
+.tbl-cards{display:none}
+@media(max-width:760px){
+  .tblwrap{display:none}
+  .tbl-cards{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+  .tbl-card{background:#fff;border:1px solid var(--gray-300);border-radius:var(--rounded-md);padding:16px}
+  .tbl-card-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+       padding:10px 0;border-bottom:1px solid var(--gray-200)}
+  .tbl-card-row:first-child{padding-top:0}
+  .tbl-card-row:last-of-type{border-bottom:0}
+  .tbl-card-label{font-size:var(--fs-text-sm);color:var(--gray-500);flex-shrink:0}
+  .tbl-card-value{font-size:var(--fs-text-sm);color:var(--gray-900);font-weight:600;text-align:right}
+  .tbl-card-value .cell-sub{font-weight:400;text-align:right}
+  .tbl-card-foot{display:flex;justify-content:flex-end;padding-top:10px}
+}

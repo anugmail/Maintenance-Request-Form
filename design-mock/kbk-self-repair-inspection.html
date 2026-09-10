@@ -9,9 +9,13 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
 <link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds47">
-<link rel="stylesheet" href="../design-system/components.css?v=20260902-ds47">
+<link rel="stylesheet" href="../design-system/components.css?v=20260903-ds51">
 <script src="../job-store.js?v=20260819-jobstore"></script><!-- MDJ: อ่าน/เขียนใบงานร่วมกับแอปหลัก — หน้านี้อยู่คนละไฟล์ ถ้าไม่เขียนลง store ผลตรวจสภาพจะไม่ถึงขั้นถัดไป -->
 <!-- แบบหน้าจอเดี่ยว (design mock) — ขั้น 3 ของเส้น กบค. ซ่อมเอง
+     ⚠️ 2 ก.ย. 2569 — เนื้อหายกเข้า mock/Maintenance-Request-Form.html แล้ว (preInspectFormHTML/postInspectFormHTML)
+     ใช้กับรถกลุ่มเครน/กระเช้าเท่านั้น (craneVehicle(j)) ตาราง 23 รายการใช้ร่วมกันขั้น 3 (baseline) และขั้น 5 (เทียบผล)
+     ตามที่ plan.md หัวข้อ 700/712 บันทึกไว้ · ไฟล์นี้เหลือไว้เป็น design reference เท่านั้น ไม่มีอะไรลิงก์มาจาก flow หลักแล้ว
+     (เดิมมาจาก kbk-self-repair-appointment.html ซึ่งก็เลิกเชื่อมจาก flow หลักไปแล้วเช่นกัน)
      24 ส.ค. 2569: ใส่เนื้อฟอร์มจริงตามภาพหน้าจอ "จัดการเหตุรถเสีย" ที่เจ้าของงานส่งมา (ใบรับรถ 13 รายการ
      + ใบตรวจสภาพก่อนซ่อม 23 รายการชุดเครน/กระเช้า + ลงนามรับ-ส่งมอบ) — breadcrumb/หัวข้อ/badge/แท็บ
      เปลี่ยนให้ตรงภาพตามที่เจ้าของงานยืนยัน แต่ "สเต็ปเปอร์ขั้น 1" ยังไม่เปลี่ยนป้ายจาก "เบิกอะไหล่" เป็น
@@ -84,8 +88,8 @@
         <div class="wstep passed"><span class="num"><span class="ms">check</span></span><span class="lbl">นัดหมายวันซ่อม</span></div>
         <div class="wstep active"><span class="num">3</span><span class="lbl">ตรวจสภาพก่อนซ่อม</span></div>
         <div class="wstep locked"><span class="num">4</span><span class="lbl">ดำเนินการซ่อม</span></div>
-        <div class="wstep locked"><span class="num">5</span><span class="lbl">ตรวจสภาพรถหลังซ่อม</span></div>
-        <div class="wstep locked"><span class="num">6</span><span class="lbl">รายงานการปิดงาน</span></div>
+        <div class="wstep locked"><span class="num">5</span><span class="lbl">ตรวจสภาพหลังซ่อม</span></div>
+        <div class="wstep locked"><span class="num">6</span><span class="lbl">รายงานปิดงาน</span></div>
       </div>
 
       <div class="card">
