@@ -14,6 +14,10 @@ const deep = flags.includes('--deep');
 const dir = path.join(DIR, slug);
 if (!fs.existsSync(dir)) { console.error(`ไม่พบ ${path.relative(process.cwd(), dir)} — รัน pull-figma-pages.js ก่อน`); process.exit(1); }
 
+const compTag = (n) => n.component
+  ? ` ← ${n.component.name}${n.component.variant ? ` [${n.component.variant}]` : ''}${n.component.remote ? ' (lib)' : ''}`
+  : '';
+
 const re = filter ? new RegExp(filter, 'i') : null;
 const files = fs.readdirSync(dir).filter(f => /^\d+-\d+\.json$/.test(f));
 let pages = 0, frames = 0;
@@ -24,10 +28,10 @@ for (const f of files.sort()) {
   console.log(`\n═══ ${d.page}  (${d.node}) · ${d.sets.length} โหนดบนสุด`);
   for (const s of d.sets) {
     const sz = s.w ? `${s.w}×${s.h}` : '';
-    console.log(`  · ${(s.name || '').slice(0, 60).padEnd(62)} ${String(s.type).padEnd(14)} ${sz}`);
+    console.log(`  · ${(s.name || '').slice(0, 60).padEnd(62)} ${String(s.type).padEnd(14)} ${sz}${compTag(s)}`);
     frames++;
     if (deep) for (const k of (s.kids || []).slice(0, 25))
-      console.log(`      ↳ ${(k.name || '').slice(0, 54).padEnd(56)} ${String(k.type).padEnd(12)} ${k.w ? k.w + '×' + k.h : ''}`);
+      console.log(`      ↳ ${(k.name || '').slice(0, 54).padEnd(56)} ${String(k.type).padEnd(12)} ${k.w ? k.w + '×' + k.h : ''}${compTag(k)}`);
   }
 }
 console.log(`\nรวม ${pages} หน้า · ${frames} โหนดบนสุด`);

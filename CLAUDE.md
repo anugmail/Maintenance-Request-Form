@@ -14,6 +14,12 @@
 > ไฟล์เก่า `EXT_PEA_VMS_v1.0.2_Component` (`IMiHaWKCqp6j3lpWdCnYY8`) **เลิกใช้** — ค่าที่อ้างจากไฟล์นั้นถือว่าใช้ไม่ได้จนกว่าจะเทียบใหม่
 > วิธีดึง: ปลั๊กอิน `figma-export/dump-plugin/` (ไม่ใช่ REST — โดน rate limit) ดู `design-system/HOWTO-read-figma.md` ข้อ 0.1
 
+> 🔴 **เจ้าของงานสั่ง 14 ก.ย. 2569 — element ที่จะใช้ ต้องมีชื่อ component ติดมาด้วยเสมอ + ห้ามเขียน CSS เอง ใช้ Tailwind ทั้งหมด**
+> - ก่อนวาง element ใดลง UI **ต้องเช็คว่ามันชี้กลับไปยัง component จริงในไลบรารีได้** — ดูจาก `← ชื่อ component` ที่ `node design-system/figma-screens.js component "<หน้า>" --deep` โชว์ให้ (หรือเลือก element นั้นใน Figma แล้วดู "Instance of" ที่ panel ขวา) ถ้าไม่มีชื่อ component ติดมา = ยังไม่ยืนยันว่าเป็นของจริงจากไลบรารี ห้ามใช้ (`figma-export/dump-plugin/code.js` ดักค่านี้จาก `instance.getMainComponentAsync()` มาให้อัตโนมัติแล้วตั้งแต่ 14 ก.ย. 2569)
+> - **ห้ามออกแบบโดยคิดเอง** — ใช้ **Tailwind utility classes** ในการจัดวาง/สไตล์ทั้งหมด (ไม่ใช่แค่โฟลว์แจ้งซ่อมที่แปลงไปแล้ว) ตามสถาปัตยกรรมในหัวข้อ Tailwind ด้านล่าง
+> - **ก่อนออกแบบ pattern/สไตล์ใดๆ ต้องเช็คก่อนว่าไฟล์ UI Release#2 (หน้าจอจริงทั้ง 42 หน้า) เคยออกแบบเรื่องนี้ไว้แล้วหรือยัง** — ไม่ใช่แค่หน้าเป้าหมายที่กำลังทำ ให้ไล่หาทั้งไฟล์ก่อนด้วย `node design-system/figma-screens.js ui-release2 "<คำค้น>"` ถ้ามีของเดิมอยู่แล้วต้องยึดตามนั้น **ห้ามออกแบบโดยไม่อ้างอิงทั้งสองไฟล์ (Component + UI Release#2) เด็ดขาด**
+> - **ทำเสร็จแล้วต้องระบุที่มาทั้งสองไฟล์** — คอมเมนต์/PR note บอกทั้ง component ที่ใช้ (จากไฟล์ Component) **และ** หน้า UI Release#2 ที่อ้างอิง (เช่น *"ตาม `Badge/Pill color` ของไฟล์ Component + หน้า `5.3 Vehicle Breakdown` ของ UI Release#2"*) ไม่ใช่ระบุแค่ component เพียงไฟล์เดียวแบบเดิม
+
 ### 📐 สเต็ปบังคับก่อนออกแบบ/แก้ UI ทุกครั้ง (เพิ่ม 1 ก.ย. 2569 — กันออกแบบผิด)
 
 > ทุกค่าที่ใช้ **ต้องชี้กลับไปที่ Figma 2 ไฟล์ข้างบนได้เสมอ** ถ้าชี้ไม่ได้ = ยังไม่ใช่ของที่ใช้ได้
@@ -22,13 +28,13 @@
 |---|---|---|
 | 1 | **หาหน้าจอจริงก่อน** ว่าของที่จะทำอยู่หน้าไหนของไฟล์ UI | `node design-system/figma-screens.js ui-release2 "Breakdown"` |
 | 2 | **เปิดดูโครงหน้าจอนั้น** ว่าเป็น modal / เต็มหน้า / bottom sheet · มีกี่ section · ปุ่มอะไร | `node design-system/figma-screens.js ui-release2 "<ชื่อหน้า>" --deep` |
-| 3 | **หา component ที่ใช้ในหน้านั้นจากไฟล์ Component** แล้วอ่านค่าจริงทีละ variant | `node design-system/figma-screens.js component "<ชื่อ component>" --deep` |
+| 3 | **หา component ที่ใช้ในหน้านั้นจากไฟล์ Component** แล้วอ่านค่าจริงทีละ variant · เช็คว่า element ที่จะใช้มี `← ชื่อ component` ติดมาด้วย (เพิ่ม 14 ก.ย. 2569) ไม่มี = ห้ามใช้ | `node design-system/figma-screens.js component "<ชื่อ component>" --deep` |
 | 4 | **เทียบกับ `components.css`** ว่ามีคลาสนั้นแล้วหรือยัง · ค่าตรงไหม (radius · เส้น · padding · gap · สี · ฟอนต์) | `design-system/components.css` + ตารางหัวข้อ 4 ของ README |
 | 5 | ค่าไหนไม่ตรง → **แก้ที่ `components.css`/`tokens.css` ให้ตรงไลบรารี** ไม่ใช่แก้เฉพาะหน้า · ไม่มี token ให้เพิ่ม token ก่อน | — |
 | 6 | ของที่**ไม่มีในไลบรารี** → หยุด แล้วถามเจ้าของงานก่อน ห้ามออกแบบเอง | — |
 | 7 | แก้ `components.css`/`tokens.css` แล้ว → **บั๊ม `?v=` ทุกหน้า** + เพิ่ม Changelog + แถวตารางหัวข้อ 4 | `design-system/README.md` |
 | 8 | **ตรวจก่อนบอกเสร็จ** — token · การใช้งาน · เรนเดอร์จริง | `FIGMA_SRC=component node design-system/verify-tokens.js` · `node design-system/audit-usage.js` · เรนเดอร์ Chrome |
-| 9 | เขียนที่มาไว้ในคอมเมนต์ CSS ว่า **มาจาก component ไหน หน้าไหน** (เช่น *"ตาม `Radio text card` ของไฟล์ Component"*) | — |
+| 9 | เขียนที่มาไว้ในคอมเมนต์ CSS ว่า **มาจาก component ไหนของไฟล์ Component + หน้าไหนของไฟล์ UI Release#2** (เพิ่มอ้างอิง UI Release#2 บังคับ 14 ก.ย. 2569) เช่น *"ตาม `Radio text card` ของไฟล์ Component + หน้า `5.3 Vehicle Breakdown` ของ UI Release#2"* | — |
 
 **ห้ามทำ** — เดาค่าจากหน้าจอที่มีอยู่ · ก๊อปค่าจากไฟล์ Figma เก่า (ลบไปแล้ว) · ออกแบบ component ใหม่เองโดยไม่ถาม · ใช้ค่าที่ไม่มีใน token
 
@@ -103,6 +109,7 @@ grep -rnP '[\x{1F300}-\x{1FAFF}]' --include='*.html' --include='*.js' \
 - **คลาส component กลาง (.btn/.badge/.tbl/.modal/…) ใช้จาก components.css ต่อตามเดิม** — utilities มีไว้เสริม layout/spacing
   ไม่ใช่มาแทน component · ของใหม่ที่ใช้ซ้ำหลายที่ยังต้องลง components.css ตามกติกาเดิม
 - แปลงหน้าเดิมทีละโฟลว์ — โฟลว์แจ้งซ่อม (mock หลัก) ทำแล้ว 7 ก.ย. 2569 · หน้าอื่นแปลงเมื่อแตะงานนั้น
+- 🔴 **เจ้าของงานย้ำ 14 ก.ย. 2569:** งาน UI ใหม่/จุดที่แตะทุกจุดนับจากนี้ **ต้องใช้ Tailwind utility ทั้งหมด ห้ามออกแบบโดยคิดเอง** — ค่าที่ไม่มีใน utility/component กลาง ให้กลับไปทำตามสเต็ปบังคับหัวข้อบน (เช็คไลบรารี → เพิ่ม token/class → ค่อยใช้) ไม่ใช่เขียน `style=`/`<style>` เฉพาะหน้าไปก่อน
 
 ## 🔴 แก้ flow ในต้นแบบ → อัปเดตผังในคอมมิตเดียวกัน
 

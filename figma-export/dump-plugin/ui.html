@@ -6,13 +6,19 @@
 </style>
 <p>ชื่อโฟลเดอร์ปลายทาง (ใต้ <code>out/figma-dump/</code>)</p>
 <input id="slug" value="component">
+<p style="margin:8px 0 0">กรองเฉพาะหน้าที่ชื่อมีคำนี้ (ว่าง = ทั้งไฟล์) — ใช้ตอนอยากทดสอบทีละหน้าก่อนดัมป์เต็ม</p>
+<input id="pagefilter" placeholder="เช่น Badge">
 <p style="margin:8px 0 0">ปลายทาง <code>http://localhost:8124</code> — ต้องรัน <code>node figma-export/serve.js</code> ค้างไว้</p>
-<button id="go">เริ่มดัมป์ทั้งไฟล์</button>
+<button id="go">เริ่มดัมป์</button>
 <div id="log"></div>
 <script>
 const log = (s) => { const d = document.getElementById('log'); d.textContent += s + '\n'; d.scrollTop = d.scrollHeight; };
 let total = 0, ok = 0, fail = 0;
-document.getElementById('go').onclick = () => { document.getElementById('log').textContent=''; ok=fail=0; parent.postMessage({pluginMessage:{type:'start'}}, '*'); };
+document.getElementById('go').onclick = () => {
+  document.getElementById('log').textContent=''; ok=fail=0;
+  const pageFilter = document.getElementById('pagefilter').value || '';
+  parent.postMessage({pluginMessage:{type:'start', pageFilter}}, '*');
+};
 onmessage = async (e) => {
   const m = e.data.pluginMessage; if (!m) return;
   const slug = (document.getElementById('slug').value || 'dump').trim();
