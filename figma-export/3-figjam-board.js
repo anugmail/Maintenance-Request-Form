@@ -10,6 +10,7 @@
      node figma-export/3-figjam-board.js --maint    + เฟส 2 ดำเนินการบำรุงรักษา (ผัง + capture ถ้ามี)
      node figma-export/3-figjam-board.js --swimlane + swimlane โฟลว์แจ้งซ่อมทั้งเส้น 19 สถานะ (ผังล้วน)
      node figma-export/3-figjam-board.js --state    + ผังสถานะ/เงื่อนไขการเปลี่ยนสถานะ (ผังล้วน)
+     node figma-export/3-figjam-board.js --swimlane --only   เอาเฉพาะ swimlane อย่างเดียว (ไม่เอาชุดตั้งต้น)
      node figma-export/3-figjam-board.js --pages    + หน้ารวมทุกหน้าจัดหมวด
      node figma-export/3-figjam-board.js --all      ทุกชุด
 
@@ -48,9 +49,13 @@ function flowSection(name, color, dir, manifest) {
 function main() {
   const args = new Set(process.argv.slice(2));
   const all = args.has('--all');
+  // --only = เอาเฉพาะ section ที่สั่งมาเท่านั้น ไม่เอาชุดตั้งต้น (ผัง+3 โฟลว์ทีละหน้าจอ)
+  // ใช้ตอนอยากขึ้นบอร์ดทีละผัง เช่น  node figma-export/3-figjam-board.js --swimlane --only
+  const only = args.has('--only');
 
   const sections = [];
 
+  if (!only) {
   const diagFile = path.join(OUT, 'diagram-plan.json');
   if (!fs.existsSync(diagFile)) {
     console.error('ไม่พบ out/diagram-plan.json — รัน 4-figjam-diagram.js ก่อน');
@@ -72,6 +77,7 @@ function main() {
 
   sections.push(flowSection('โฟลว์แจ้งซ่อม — ฝั่งผู้แจ้ง ทีละหน้าจอ', COLORS.yellow, 'flow-report',
     read(path.join(FJ, 'flow-report', 'manifest.json'))));
+  }
 
   if (all || args.has('--after')) {
     sections.push(flowSection('โฟลว์หลังออกเลขงาน — พัสดุรับทราบ + ยืนยันรถ', COLORS.teal,

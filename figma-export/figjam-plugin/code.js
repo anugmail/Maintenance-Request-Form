@@ -179,7 +179,12 @@ async function buildDiagram(sec, y, font, made) {
   s.name = sec.name;
   s.fills = [{ type: 'SOLID', color: { r: sec.color[0] / 255, g: sec.color[1] / 255, b: sec.color[2] / 255 } }];
 
-  // เลนก่อน — จะได้อยู่ใต้ node
+  /* เลนก่อน — จะได้อยู่ใต้ node
+     **ล็อกพื้นหลังไว้** (เจ้าของงานสั่ง 15 ก.ย. 2569) — แถบเลนเป็นกล่องใหญ่กินพื้นที่ทั้งแถว
+     ถ้าไม่ล็อก คลิกที่ว่างในเลนแล้วลากจะกลายเป็นลากเลนทั้งแถบแทนที่จะเลือก node
+     ปลดล็อกได้เองใน Figma: คลิกขวา → Unlock (หรือ ⌘⇧L) */
+  const lock = (n) => { try { n.locked = true; } catch (e) { /* node ชนิดที่ล็อกไม่ได้ — ข้าม */ } };
+
   d.clusters.forEach((cl, i) => {
     const lane = figma.createShapeWithText();
     lane.shapeType = 'SQUARE';
@@ -196,6 +201,27 @@ async function buildDiagram(sec, y, font, made) {
     lt.characters = cl.label;
     s.appendChild(lt);
     lt.x = PAD + cl.x + 24; lt.y = PAD + cl.y + 14;
+
+    /* รวมแถบเลน + ชื่อเลน เป็นก้อนเดียว แล้วล็อกทั้งก้อน
+       (เจ้าของงานเลือกแบบนี้ 15 ก.ย. 2569) — ย้าย/ซ่อนทีเดียวได้ และไม่โดนลากโดยไม่ตั้งใจ
+       group ไม่ได้ก็ปล่อยเป็นสองชิ้นแล้วล็อกแยก ไม่ให้ทั้งผังพังเพราะเรื่องนี้ */
+    let g = null;
+    try { g = figma.group([lane, lt], s); } catch (e) { g = null; }
+    if (g) { g.name = 'lane / ' + cl.label; lock(g); }
+    else { lock(lane); lock(lt); }
+  });
+
+  /* หัวคอลัมน์ช่วงงาน — สเปกจาก 5-swimlane.js ส่ง `phases` มาให้ แต่เดิมปลั๊กอินไม่ได้อ่าน
+     ทำให้ผังบนบอร์ดไม่มีแกนนอนบอกว่าอยู่ช่วงไหน (เจอ 15 ก.ย. 2569) · ล็อกเหมือนพื้นหลัง */
+  (d.phases || []).forEach((ph) => {
+    const ht = figma.createText();
+    ht.fontName = font;
+    ht.fontSize = 28;
+    ht.characters = ph.label;
+    ht.name = 'phase / ' + ph.label;
+    s.appendChild(ht);
+    ht.x = PAD + ph.x; ht.y = PAD + ph.y;
+    lock(ht);
   });
 
   const byId = {};

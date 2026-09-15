@@ -1651,8 +1651,7 @@
         ได้จากเมนูซ้าย · ปรับแต่งได้จาก Admin Control Panel</div>
       <div class="topbar">
         <span class="ms">light_mode</span>
-        <span class="ms" style="position:relative">notifications<i
-            style="position:absolute;top:0;right:0;width:8px;height:8px;border-radius:var(--r-pill);background:var(--success-600)"></i></span>
+        <span class="ms relative">notifications<i class="absolute top-0 right-0 w-2 h-2 rounded-pill bg-success-600"></i></span>
       </div>
 
       <!-- ============ MODAL: ฟอร์มแจ้งซ่อม (7 ก.ย. 2569 เจ้าของงานส่งสเปกเต็มชุดจากดีไซน์จริง:
@@ -1822,12 +1821,15 @@
       </div>
       <div class="modal-overlay hidden" id="boss-approve-modal">
         <div class="modal md" role="dialog" aria-modal="true">
-          <div class="modal-bd" style="text-align:center;padding-top:28px">
-            <div style="width:56px;height:56px;margin:0 auto 14px;border-radius:var(--r-pill);background:var(--brand-25);display:flex;align-items:center;justify-content:center;color:var(--brand-600)"><span class="ms" style="font-size:30px">task_alt</span></div>
-            <div style="font-size:var(--fs-h1);line-height:30px;font-weight:600;color:#000">ยืนยันการอนุมัติ</div>
-            <div class="hint" style="margin-top:6px">คุณต้องการอนุมัติคำขอนี้หรือไม่ ?</div>
+          <!-- 15 ก.ย. 2569 เลิกใช้ style= → Tailwind utility · ค่าที่ไม่มีในสเกลปัดเข้าสเกลไลบรารี:
+               padding-top 28px → pt-6 (24px · สเกลระยะจบที่ 24) · ไอคอน font-size 30px ไม่มีในสเกล
+               → ถอดออก ใช้ขนาดฐาน .ms (22px) ของ components.css แทน -->
+          <div class="modal-bd text-center pt-6">
+            <div class="w-14 h-14 mt-0 mb-3.5 mx-auto rounded-pill bg-brand-25 flex items-center justify-center text-brand-600"><span class="ms">task_alt</span></div>
+            <div class="text-h1 font-semibold text-color-text-primary">ยืนยันการอนุมัติ</div>
+            <div class="hint mt-1.5">คุณต้องการอนุมัติคำขอนี้หรือไม่ ?</div>
           </div>
-          <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r" style="margin:0 auto">
+          <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r my-0 mx-auto">
             <button class="btn btn-s" onclick="closeBossModals()">ไม่ใช่ตอนนี้</button>
             <button class="btn btn-p" onclick="bossApprove()">อนุมัติคำขอ</button>
           </div></div></div>
@@ -1916,11 +1918,11 @@
       <!-- 18 ส.ค. 2569: ลิสต์เปลี่ยนเป็นตาราง กดแถวแล้วมาหน้านี้ ไม่กางในลิสต์แล้ว -->
       <main class="content hidden" id="view-mydet">
         <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><a href="#my"
-            onclick="switchView('my');return false" style="color:inherit;text-decoration:none">จัดการงานซ่อม</a><span
+            onclick="switchView('my');return false" class="text-inherit no-underline">จัดการงานซ่อม</a><span
             class="sep">›</span><span class="cur">รายละเอียด</span></div>
         <h1 class="page-title" id="mydet-title"></h1>
         <div id="mydetail"></div>
-        <div class="rowbtns" style="justify-content:flex-start;margin-top:18px">
+        <div class="rowbtns justify-start mt-tk-4.5">
           <button class="btn btn-g" onclick="switchView('my')"><span class="ms">arrow_back</span> กลับรายการ</button></div>
       </main>
 
@@ -1929,9 +1931,8 @@
         <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><span>บันทึกประจำวันคนขับ</span><span
             class="sep">›</span><span class="cur">เติมน้ำมัน + ชั่วโมงทำงาน</span></div>
         <h1 class="page-title">เติมน้ำมัน + ชั่วโมงทำงาน</h1>
-        <div class="hint" style="margin:-8px 0 18px;max-width:420px">ออกแบบไว้ใช้บนมือถือหน้างานเป็นหลัก (offline-first)
-          — เดโมด้านล่างจำลองแอปมือถือจริง กดไอคอน <span class="ms"
-            style="font-size:var(--fs-body);vertical-align:middle">wifi</span> มุมขวาบนเพื่อจำลองสถานะไม่มีเน็ต</div>
+        <div class="hint -mt-2 mb-tk-4.5 mx-0 max-w-[420px]">ออกแบบไว้ใช้บนมือถือหน้างานเป็นหลัก (offline-first)
+          — เดโมด้านล่างจำลองแอปมือถือจริง กดไอคอน <span class="ms text-md leading-none align-middle">wifi</span> มุมขวาบนเพื่อจำลองสถานะไม่มีเน็ต</div>
         <div class="pf-shell">
           <div class="pf-phone" id="pfPhone"></div>
         </div>
@@ -1968,10 +1969,10 @@
     <!-- ============ VIEW: รายละเอียดงานคัดแยก กรย. (เต็มหน้า) ============ -->
     <main class="content hidden" id="view-krydet">
       <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><a href="#kry"
-          onclick="switchView('kry');return false" style="color:inherit;text-decoration:none">งานคัดแยก กรย.</a><span
+          onclick="switchView('kry');return false" class="text-inherit no-underline">งานคัดแยก กรย.</a><span
           class="sep">›</span><span class="cur">รายละเอียด</span></div>
       <div id="krydetail"></div>
-      <div class="rowbtns justify-start mt-[18px]">
+      <div class="rowbtns justify-start mt-tk-4.5">
         <button class="btn btn-g" onclick="switchView('kry')"><span class="ms">arrow_back</span> กลับรายการ</button></div>
     </main>
 
@@ -2014,10 +2015,10 @@
     <!-- ============ VIEW: ขั้นตอนทำงาน กบค. (แยกหน้าละขั้น) ============ -->
     <main class="content hidden" id="view-step">
       <div class="crumbs"><span class="ms">home</span><span class="sep">›</span><a href="#kbk"
-          onclick="backToQueue();return false" style="color:inherit;text-decoration:none">งานซ่อม กบค.</a><span
+          onclick="backToQueue();return false" class="text-inherit no-underline">งานซ่อม กบค.</a><span
           class="sep">›</span><span class="cur">ดำเนินการ</span></div>
       <div id="stepbody"></div>
-      <div class="rowbtns" style="justify-content:flex-start;margin-top:18px">
+      <div class="rowbtns justify-start mt-tk-4.5">
         <button class="btn btn-g" onclick="backToQueue()"><span class="ms">arrow_back</span> กลับคิวงาน</button></div>
     </main>
 
@@ -2268,23 +2269,26 @@
       const queued = monthEntries.filter(e => e.sync === 'queued').length;
       const recent = [...entries].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).slice(0, 3);
       return `
-    <div style="font-weight:700;font-size:16px;color:var(--gray-900);margin-bottom:2px">สวัสดี</div>
-    <div class="sub" style="margin-bottom:14px">บันทึกประจำวัน · เติมน้ำมัน/ชั่วโมงทำงาน</div>
-    <button class="btn btn-p" style="width:100%;margin-bottom:8px;display:flex;justify-content:center;gap:6px;align-items:center" onclick="pfStartFuel()"><span class="ms" style="font-size:18px">local_gas_station</span> เติมน้ำมัน</button>
-    <button class="btn btn-o" style="width:100%;margin-bottom:16px;display:flex;justify-content:center;gap:6px;align-items:center" onclick="pfStartDaily()"><span class="ms" style="font-size:18px">schedule</span> บันทึกชั่วโมงทำงาน</button>
+    <!-- 15 ก.ย. 2569: ไอคอนในปุ่มเคยถูก override เป็น font-size:18px ซึ่ง "18px ไม่มีในสเกลใหม่" (tokens.css)
+         ⇒ ถอด override ทิ้งทั้งไฟล์ (6 จุด) ให้กลับไปใช้ 20px ตามกฎ .btn .ms ของ components.css
+         ที่กำกับไว้ว่า "ไอคอน 20px คงที่ทุกขนาด — ตามไลบรารี" · 20px = ค่าเดียวกับ text-h1 ของสเกลตัวอักษร -->
+    <div class="font-bold text-md text-gray-900 mb-0.5">สวัสดี</div>
+    <div class="sub mb-3.5">บันทึกประจำวัน · เติมน้ำมัน/ชั่วโมงทำงาน</div>
+    <button class="btn btn-p w-full mb-2 flex justify-center gap-1.5 items-center" onclick="pfStartFuel()"><span class="ms">local_gas_station</span> เติมน้ำมัน</button>
+    <button class="btn btn-o w-full mb-4 flex justify-center gap-1.5 items-center" onclick="pfStartDaily()"><span class="ms">schedule</span> บันทึกชั่วโมงทำงาน</button>
     <div class="pf-stat-grid">
       <div class="pf-stat"><div class="num">${monthEntries.length}</div><div class="lbl">รายการเดือนนี้</div></div>
       <div class="pf-stat"><div class="num">${queued}</div><div class="lbl">รอ sync</div></div>
     </div>
-    <div style="font-weight:600;font-size:14px;color:var(--gray-900);margin-bottom:8px">รายการล่าสุด</div>
+    <div class="font-semibold text-sm text-gray-900 mb-2">รายการล่าสุด</div>
     ${recent.length === 0 ? `<div class="empty">ยังไม่มีรายการ</div>` : recent.map(pfEntryHtml).join('')}
   `;
     }
     function pfList() {
       const sorted = [...pfLoadEntries()].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
       return `
-    <div style="font-weight:700;font-size:var(--fs-body);color:var(--gray-900);margin-bottom:4px">รายการของฉัน</div>
-    <div class="sub" style="margin-bottom:14px">เติมน้ำมัน + ชั่วโมงทำงานที่บันทึกไว้ทั้งหมด</div>
+    <div class="font-bold text-md text-gray-900 mb-1">รายการของฉัน</div>
+    <div class="sub mb-3.5">เติมน้ำมัน + ชั่วโมงทำงานที่บันทึกไว้ทั้งหมด</div>
     ${sorted.length === 0 ? `<div class="empty">ยังไม่มีรายการ</div>` : sorted.map(pfEntryHtml).join('')}
   `;
     }
@@ -2302,12 +2306,12 @@
       return `<div class="pf-sheet-backdrop" id="pfSheetBackdrop"></div>
     <div class="pf-sheet-panel">
       <div class="pf-sheet-handle"></div>
-      <div class="pf-sheet-header"><h3>เลือกรถที่ใช้</h3><button class="pf-icon-btn" style="background:var(--gray-100);color:var(--gray-700)" id="pfSheetClose"><span class="ms">close</span></button></div>
+      <div class="pf-sheet-header"><h3>เลือกรถที่ใช้</h3><button class="pf-icon-btn bg-gray-100 text-gray-700" id="pfSheetClose"><span class="ms">close</span></button></div>
       <div class="pf-sheet-list">${VEHICLES.map(v => `
         <div class="pf-select-card ${curId == v.id ? 'sel' : ''}" data-pf-pick-veh="${v.id}">
           <div class="ic"><span class="ms">local_shipping</span></div>
           <div class="meta"><b>${esc(v.plate)}</b><div class="sub">${esc(v.model)}${v.attach ? ' · ' + esc(v.attach) : ''}</div></div>
-          ${curId == v.id ? '<span class="ms" style="color:var(--primary-600)">check_circle</span>' : ''}
+          ${curId == v.id ? '<span class="ms text-primary-600">check_circle</span>' : ''}
         </div>`).join('')}</div>
     </div>`;
     }
@@ -2315,12 +2319,12 @@
     // ---------- render: quick action sheet (ปุ่ม + กลาง bottom-nav) ----------
     function pfQuickSheetHtml() {
       return `<div class="pf-sheet-backdrop" id="pfQuickBackdrop"></div>
-    <div class="pf-sheet-panel" style="max-height:none">
+    <div class="pf-sheet-panel max-h-none">
       <div class="pf-sheet-handle"></div>
-      <div class="pf-sheet-header"><h3>บันทึกข้อมูลหน้างาน</h3><button class="pf-icon-btn" style="background:var(--gray-100);color:var(--gray-700)" id="pfQuickClose"><span class="ms">close</span></button></div>
+      <div class="pf-sheet-header"><h3>บันทึกข้อมูลหน้างาน</h3><button class="pf-icon-btn bg-gray-100 text-gray-700" id="pfQuickClose"><span class="ms">close</span></button></div>
       <div class="pf-sheet-list">
-        <div class="pf-quick-opt" id="pfQuickFuel"><div class="ic"><span class="ms">local_gas_station</span></div><div class="meta"><b>เติมน้ำมัน</b><div class="sub">ถ่ายรูปสลิป อ่านเลขที่อัตโนมัติ แล้วกรอกรายละเอียด</div></div><span class="ms" style="color:var(--gray-400)">chevron_right</span></div>
-        <div class="pf-quick-opt" id="pfQuickDaily"><div class="ic"><span class="ms">schedule</span></div><div class="meta"><b>บันทึกชั่วโมงทำงาน</b><div class="sub">เลขไมล์ + ชั่วโมงทำงาน (และชั่วโมงเครน/กระเช้าถ้ามี)</div></div><span class="ms" style="color:var(--gray-400)">chevron_right</span></div>
+        <div class="pf-quick-opt" id="pfQuickFuel"><div class="ic"><span class="ms">local_gas_station</span></div><div class="meta"><b>เติมน้ำมัน</b><div class="sub">ถ่ายรูปสลิป อ่านเลขที่อัตโนมัติ แล้วกรอกรายละเอียด</div></div><span class="ms text-gray-400">chevron_right</span></div>
+        <div class="pf-quick-opt" id="pfQuickDaily"><div class="ic"><span class="ms">schedule</span></div><div class="meta"><b>บันทึกชั่วโมงทำงาน</b><div class="sub">เลขไมล์ + ชั่วโมงทำงาน (และชั่วโมงเครน/กระเช้าถ้ามี)</div></div><span class="ms text-gray-400">chevron_right</span></div>
       </div>
     </div>`;
     }
@@ -2329,7 +2333,7 @@
     function pfWizHead(title, step) {
       const dots = [1, 2, 3, 4, 5].map(n => `<span class="${n === step ? 'on' : ''}"></span>`).join('');
       return `<div class="pf-wizard-head"><button class="pf-wizard-back" id="pfBack"><span class="ms">chevron_left</span></button>
-    <div style="font-weight:600;font-size:var(--fs-body);color:var(--gray-900)">${title}</div>
+    <div class="font-semibold text-md text-gray-900">${title}</div>
     <div class="pf-wizard-dots">${dots}</div></div>`;
     }
     function pfFuelFlow() {
@@ -2344,20 +2348,20 @@
     function pfStepPhoto() {
       const d = pfDraft;
       return `${pfWizHead('ถ่ายรูปสลิป', 1)}
-    <div class="sub" style="margin-bottom:12px">ถ่ายรูปสลิปตอนเติมเสร็จ — ระบบอ่านเลขที่สลิปให้อัตโนมัติ (ทำงานในเครื่อง ใช้ได้แม้ไม่มีเน็ต)</div>
+    <div class="sub mb-3">ถ่ายรูปสลิปตอนเติมเสร็จ — ระบบอ่านเลขที่สลิปให้อัตโนมัติ (ทำงานในเครื่อง ใช้ได้แม้ไม่มีเน็ต)</div>
     ${d.photoDataUrl ? `
       <img src="${d.photoDataUrl}" class="pf-receipt-preview">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div class="flex items-center gap-2 mb-3">
         ${d.ocrStatus === 'processing' ? `<span class="ocr-spin"></span><span class="sub">กำลังอ่านเลขที่สลิป...</span>` : ''}
-        ${d.ocrStatus === 'found' ? `<span class="pf-ocr-tag"><span class="ms" style="font-size:var(--fs-sm)">auto_awesome</span> อ่านได้: ${esc(d.receiptNumber)}</span>` : ''}
+        ${d.ocrStatus === 'found' ? `<span class="pf-ocr-tag"><span class="ms text-sm leading-none">auto_awesome</span> อ่านได้: ${esc(d.receiptNumber)}</span>` : ''}
         ${d.ocrStatus === 'notfound' ? `<span class="sub">อ่านอัตโนมัติไม่เจอ — พิมพ์เองที่ขั้นถัดไปได้</span>` : ''}
       </div>
-      <button class="btn btn-o" style="width:100%;margin-bottom:12px" id="pfRetake"><span class="ms" style="font-size:16px">refresh</span> ถ่ายใหม่</button>
-      <div class="chk" style="margin-bottom:14px"><label><input type="checkbox" id="pfAckPhoto" ${d.ackPhoto ? 'checked' : ''}><span>ยืนยันว่าภาพสลิปนี้ชัดเจน อ่านตัวเลขได้ครบถ้วน</span></label></div>
-      <button class="btn btn-p" style="width:100%" id="pfNext1" ${d.ackPhoto ? '' : 'disabled'}>ถัดไป</button>
+      <button class="btn btn-o w-full mb-3" id="pfRetake"><span class="ms">refresh</span> ถ่ายใหม่</button>
+      <div class="chk mb-3.5"><label><input type="checkbox" id="pfAckPhoto" ${d.ackPhoto ? 'checked' : ''}><span>ยืนยันว่าภาพสลิปนี้ชัดเจน อ่านตัวเลขได้ครบถ้วน</span></label></div>
+      <button class="btn btn-p w-full" id="pfNext1" ${d.ackPhoto ? '' : 'disabled'}>ถัดไป</button>
     `: `
       <div class="pf-camera-drop"><span class="ms">photo_camera</span><div>ยังไม่มีรูปสลิป</div></div>
-      <button class="btn btn-p" style="width:100%" id="pfOpenCamera"><span class="ms" style="font-size:16px">photo_camera</span> เปิดกล้องถ่ายสลิป</button>
+      <button class="btn btn-p w-full" id="pfOpenCamera"><span class="ms">photo_camera</span> เปิดกล้องถ่ายสลิป</button>
     `}
     <input type="file" accept="image/*" capture="environment" id="pfCameraInput" class="hidden">`;
     }
@@ -2365,14 +2369,14 @@
       const id = pfDraft.vehicleId || pfGetLastVehicle();
       const v = pfVeh(id) || {};
       return `${pfWizHead('ยืนยันรถ', 2)}
-    <div class="sub" style="margin-bottom:10px">เช็คว่าเป็นรถคันที่ใช้อยู่ตอนนี้ — ค่าเริ่มต้นคือรถคันล่าสุดที่ใช้</div>
+    <div class="sub mb-2.5">เช็คว่าเป็นรถคันที่ใช้อยู่ตอนนี้ — ค่าเริ่มต้นคือรถคันล่าสุดที่ใช้</div>
     ${pfVehTrigger(v, 'fuel')}
-    <button class="btn btn-p" style="width:100%;margin-top:14px" id="pfConfirmVeh">ใช้รถคันนี้ ถัดไป</button>`;
+    <button class="btn btn-p w-full mt-3.5" id="pfConfirmVeh">ใช้รถคันนี้ ถัดไป</button>`;
     }
     function pfStepPayment() {
       const d = pfDraft;
       return `${pfWizHead('วิธีชำระเงิน', 3)}
-    <div class="decide" style="margin-top:0">
+    <div class="decide mt-0">
       <div class="tile tile-magenta ${d.paymentMethod === 'fleetcard' ? 'sel' : ''}" data-pf-pay="fleetcard">
         <span class="ms">credit_card</span><b>Fleet Card</b><small>รูดบัตรที่ปั๊ม — reconcile กับธนาคารรายเดือน</small>
       </div>
@@ -2393,7 +2397,7 @@
     <div class="pf-field-row">
       <div class="pf-field"><label>วันที่ในสลิป</label><input type="date" id="pfDate" value="${d.receiptDate}"></div>
       <div class="pf-field"><label>เลขที่สลิป</label><input type="text" id="pfReceiptNo" value="${esc(d.receiptNumber)}" placeholder="พิมพ์ถ้า OCR ไม่เจอ">
-      ${d.receiptFromOcr ? `<div class="pf-field-hint" style="color:var(--info-600)">อ่านจากภาพสลิป — แก้ไขได้ถ้าไม่ตรง</div>` : ''}</div>
+      ${d.receiptFromOcr ? `<div class="pf-field-hint text-info-600">อ่านจากภาพสลิป — แก้ไขได้ถ้าไม่ตรง</div>` : ''}</div>
     </div>
     <div class="pf-field-row">
       <div class="pf-field"><label>ราคา/ลิตร (บาท)</label><input type="number" inputmode="decimal" step="0.01" id="pfPrice" value="${esc(d.pricePerLiter)}" placeholder="0.00"></div>
@@ -2401,13 +2405,13 @@
     </div>
     <div class="pf-field"><label>ยอดรวม (บาท)</label><input type="number" inputmode="decimal" step="0.01" id="pfTotal" value="${esc(d.totalAmount)}">
       <div class="pf-field-hint">คำนวณจากราคา × ลิตรอัตโนมัติ — แก้เองได้ถ้ายอดจริงไม่ตรง</div></div>
-    <button class="btn btn-p" style="width:100%" id="pfNext4" ${ok ? '' : 'disabled'}>ไปหน้าสรุป</button>`;
+    <button class="btn btn-p w-full" id="pfNext4" ${ok ? '' : 'disabled'}>ไปหน้าสรุป</button>`;
     }
     function pfStepSummary() {
       const d = pfDraft, v = pfVeh(d.vehicleId) || {};
       const payLabel = d.paymentMethod === 'fleetcard' ? 'บัตรเติมน้ำมัน (Fleet Card)' : 'เงินสดสำรองจ่าย';
       return `${pfWizHead('สรุปและบันทึก', 5)}
-    ${d.photoDataUrl ? `<img src="${d.photoDataUrl}" class="pf-receipt-preview" style="max-height:140px">` : ''}
+    ${d.photoDataUrl ? `<img src="${d.photoDataUrl}" class="pf-receipt-preview max-h-[140px]">` : ''}
     <div class="sumbox">
       <div class="sumrow"><span>รถ</span><span>${esc(v.plate || '-')}</span></div>
       <div class="sumrow"><span>วิธีชำระเงิน</span><span>${payLabel}</span></div>
@@ -2420,8 +2424,8 @@
       <div class="sumrow"><span>จำนวนลิตร</span><span>${esc(d.liters || '-')}</span></div>
       <div class="sumrow"><span>ยอดรวม</span><span>${pfBaht(d.totalAmount)} บาท</span></div>
     </div>
-    <div class="chk" style="margin:14px 0"><label><input type="checkbox" id="pfAckReceipt" ${d.ackReceipt ? 'checked' : ''}><span>เก็บสลิปตัวจริงไว้เป็นหลักฐานแล้ว (ใช้ reconcile กับ Statement ธนาคารตอนสิ้นเดือน)</span></label></div>
-    <button class="btn btn-p" style="width:100%" id="pfSaveFuel" ${d.ackReceipt ? '' : 'disabled'}><span class="ms" style="font-size:16px">save</span> บันทึก</button>`;
+    <div class="chk my-3.5 mx-0"><label><input type="checkbox" id="pfAckReceipt" ${d.ackReceipt ? 'checked' : ''}><span>เก็บสลิปตัวจริงไว้เป็นหลักฐานแล้ว (ใช้ reconcile กับ Statement ธนาคารตอนสิ้นเดือน)</span></label></div>
+    <button class="btn btn-p w-full" id="pfSaveFuel" ${d.ackReceipt ? '' : 'disabled'}><span class="ms">save</span> บันทึก</button>`;
     }
 
     // ---------- render: บันทึกชั่วโมงทำงาน (T6 — แยกชั่วโมงเครื่องยนต์ vs เครน/กระเช้า) ----------
@@ -2434,24 +2438,24 @@
       const ok = d.date && d.mileage && d.startTime && d.endTime && (!needsEquip || d.equipmentHours);
       return `
     <div class="pf-wizard-head"><button class="pf-wizard-back" id="pfBackDaily"><span class="ms">chevron_left</span></button>
-      <div style="font-weight:600;font-size:var(--fs-body);color:var(--gray-900)">ชั่วโมงทำงาน</div></div>
-    <div class="sub" style="margin-bottom:12px">บันทึกทุกวันที่ออกหน้างาน — แยกชั่วโมงเครื่องยนต์กับชั่วโมงเครน/กระเช้าให้อัตโนมัติ</div>
+      <div class="font-semibold text-md text-gray-900">ชั่วโมงทำงาน</div></div>
+    <div class="sub mb-3">บันทึกทุกวันที่ออกหน้างาน — แยกชั่วโมงเครื่องยนต์กับชั่วโมงเครน/กระเช้าให้อัตโนมัติ</div>
     ${pfVehTrigger(v, 'daily')}
-    <div class="pf-field" style="margin-top:14px"><label>เลขไมล์ปัจจุบัน</label><input type="number" inputmode="numeric" id="pfDMileage" value="${esc(d.mileage)}" placeholder="เช่น 45230"></div>
+    <div class="pf-field mt-3.5"><label>เลขไมล์ปัจจุบัน</label><input type="number" inputmode="numeric" id="pfDMileage" value="${esc(d.mileage)}" placeholder="เช่น 45230"></div>
     <div class="pf-field"><label>วันที่</label><input type="date" id="pfDDate" value="${d.date}"></div>
     <div class="pf-field-row">
       <div class="pf-field"><label>เวลาเริ่มงาน</label><input type="time" id="pfDStart" value="${d.startTime}"></div>
       <div class="pf-field"><label>เวลาเลิกงาน</label><input type="time" id="pfDEnd" value="${d.endTime}"></div>
     </div>
-    <div class="sub" id="pfHoursPreview" style="margin:-8px 0 14px">รวมชั่วโมงทำงาน ${h.label}</div>
+    <div class="sub -mt-2 mb-3.5 mx-0" id="pfHoursPreview">รวมชั่วโมงทำงาน ${h.label}</div>
     ${needsEquip ? `
       <div class="pf-field">
-        <label>ชั่วโมงมิเตอร์เครน/กระเช้า (Hour Meter) <span style="color:var(--error-600)">*</span></label>
+        <label>ชั่วโมงมิเตอร์เครน/กระเช้า (Hour Meter) <span class="text-error-600">*</span></label>
         <input type="number" inputmode="decimal" step="0.1" id="pfEquip" value="${esc(d.equipmentHours)}" placeholder="อ่านจากมิเตอร์ เช่น 1234.5">
         <div class="pf-field-hint">รถคันนี้มีอุปกรณ์เสริม — บันทึกแยกจากชั่วโมงทำงานรวมด้านบนเสมอ (TOR ข้อ 2 / T6)</div>
       </div>`: ''}
     <div class="pf-field"><label>หมายเหตุ (ถ้ามี)</label><input type="text" id="pfDNote" value="${esc(d.note)}" placeholder="เช่น ออกซ่อมสายเคเบิล ภ.12"></div>
-    <button class="btn btn-p" style="width:100%" id="pfSaveDaily" ${ok ? '' : 'disabled'}><span class="ms" style="font-size:16px">save</span> บันทึก</button>`;
+    <button class="btn btn-p w-full" id="pfSaveDaily" ${ok ? '' : 'disabled'}><span class="ms">save</span> บันทึก</button>`;
     }
 
     // ---------- render: success ----------
@@ -2460,11 +2464,11 @@
       const isDaily = pfState.lastType === 'daily';
       return `<div class="pf-success">
     <div class="ic"><span class="ms">check</span></div>
-    <div style="font-weight:700;font-size:16px;color:var(--gray-900)">บันทึกสำเร็จ</div>
-    <div class="sub" style="margin:6px 0 16px">${isDaily ? 'ข้อมูลชั่วโมงทำงานถูกบันทึกเรียบร้อย' : 'ข้อมูลเติมน้ำมันถูกบันทึกเรียบร้อย'}</div>
-    <div style="margin-bottom:20px"><span class="badge ${online ? 'b-ok' : 'b-low'}">${online ? 'sync แล้ว' : 'บันทึกในเครื่อง รอ sync'}</span></div>
-    <button class="btn btn-p" style="width:100%;margin-bottom:8px" id="pfBackHome">กลับหน้าหลัก</button>
-    <button class="btn btn-o" style="width:100%" id="pfViewList">ดูรายการของฉัน</button>
+    <div class="font-bold text-md text-gray-900">บันทึกสำเร็จ</div>
+    <div class="sub mt-1.5 mb-4 mx-0">${isDaily ? 'ข้อมูลชั่วโมงทำงานถูกบันทึกเรียบร้อย' : 'ข้อมูลเติมน้ำมันถูกบันทึกเรียบร้อย'}</div>
+    <div class="mb-5"><span class="badge ${online ? 'b-ok' : 'b-low'}">${online ? 'sync แล้ว' : 'บันทึกในเครื่อง รอ sync'}</span></div>
+    <button class="btn btn-p w-full mb-2" id="pfBackHome">กลับหน้าหลัก</button>
+    <button class="btn btn-o w-full" id="pfViewList">ดูรายการของฉัน</button>
   </div>`;
     }
 
@@ -2870,7 +2874,7 @@
       return `<div class="vline">
       <span class="vplate">${esc(j.plate)}</span>
       <span class="vchip ${t.cls}"><span class="ms">${t.icon}</span>${t.name}</span>
-      <span class="badge ${ok ? 'b-ok' : 'b-out'}"><span class="ms" style="font-size:var(--fs-body)">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span>
+      <span class="badge ${ok ? 'b-ok' : 'b-out'}"><span class="ms text-md leading-none">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span>
     </div>`;
     }
 
@@ -2979,32 +2983,36 @@ function goBackView(){
         const go = ['kry', 'krd'].includes(j.phase)
           ? `switchView('kry');openKry('${j.no}')`
           : `openStep('${j.no}')`;
-        return `<a href="#" style="color:var(--primary-600);font-weight:600;text-decoration:none" onclick="${go};return false">${j.no}</a>`;
+        // 15 ก.ย. 2569: เดิมเขียน inline text-decoration:none ทับกฎ .tbl td a ของ components.css (ขีดเส้นใต้)
+        // แปลงเป็น utility แล้ว component rule ชนะตามลำดับความจำเพาะ ⇒ ลิงก์ในตารางกลับมาขีดเส้นใต้ตาม design system
+        return `<a href="#" class="text-primary-600 font-semibold no-underline" onclick="${go};return false">${j.no}</a>`;
       };
       const stBadge = j => { const s = statusInfo(j); return `<span class="badge ${s.cls}">${s.label}</span>` };
       $('stockbody').innerHTML = `
-    <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+    <div class="row flex gap-2.5 flex-wrap mb-1.5">
       <span class="badge b-brand">จองรวม ${held.reduce((s, x) => s + x.b.qty, 0)} ชิ้น (${held.length} รายการ)</span>
       <span class="badge b-low">ต้องสั่งซื้อ ${orders.reduce((s, x) => s + x.o.qty, 0)} ชิ้น (${orders.length} รายการ)</span>
       <span class="badge b-ok">คืนเข้าคลังแล้ว ${rets.reduce((s, x) => s + x.r.qty, 0)} ชิ้น (${rets.length} รายการ)</span>
     </div>
 
-    <div class="sect" style="margin-top:18px">อะไหล่ที่ถูกเลือกไว้ในใบแจ้งซ่อม <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— ยังไม่ตัดสต็อกจริง · ตัดจริงตอน กบค. ยืนยันรายการ</span></div>
+    <div class="sect mt-tk-4.5">อะไหล่ที่ถูกเลือกไว้ในใบแจ้งซ่อม <span class="font-normal text-sm text-gray-500">— ยังไม่ตัดสต็อกจริง · ตัดจริงตอน กบค. ยืนยันรายการ</span></div>
     ${held.length ? `<div class="tblwrap"><table class="tbl">
       <thead><tr><th>อะไหล่</th><th class="num">จำนวน</th><th>เลขที่ใบแจ้งซ่อม</th><th>หน่วยงานผู้แจ้ง</th><th>สถานะเรื่อง</th></tr></thead>
-      <tbody>${held.map(x => `<tr><td><b style="color:var(--gray-900)">${x.b.name}</b></td><td class="num">${x.b.qty} ${x.b.unit || ''}</td><td>${link(x.j)}</td><td>${x.j.org}</td><td>${stBadge(x.j)}</td></tr>`).join('')}</tbody>
+      <tbody>${held.map(x => `<tr><td><b class="text-gray-900">${x.b.name}</b></td><td class="num">${x.b.qty} ${x.b.unit || ''}</td><td>${link(x.j)}</td><td>${x.j.org}</td><td>${stBadge(x.j)}</td></tr>`).join('')}</tbody>
     </table></div>`: '<div class="empty">ยังไม่มีรายการจอง</div>'}
 
-    <div class="sect" style="margin-top:26px">รายการที่ต้องสั่งซื้อ <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— อะไหล่ที่หมดคลังแต่ถูกเลือกไว้ในใบแจ้งซ่อม</span></div>
+    <!-- mt-6 = 24px — เดิม margin-top:26px ซึ่งไม่มีในสเกลระยะของไลบรารี (2–24px) จึงปัดเข้าค่าที่ใกล้สุด -->
+    <div class="sect mt-6">รายการที่ต้องสั่งซื้อ <span class="font-normal text-sm text-gray-500">— อะไหล่ที่หมดคลังแต่ถูกเลือกไว้ในใบแจ้งซ่อม</span></div>
     ${orders.length ? `<div class="tblwrap"><table class="tbl">
       <thead><tr><th>อะไหล่</th><th class="num">จำนวน</th><th>เลขที่ใบแจ้งซ่อม</th><th>หน่วยงานผู้แจ้ง</th><th>สถานะเรื่อง</th></tr></thead>
-      <tbody>${orders.map(x => `<tr><td><b style="color:var(--gray-900)">${x.o.name}</b></td><td class="num">${x.o.qty} ${x.o.unit || ''}</td><td>${link(x.j)}</td><td>${x.j.org}</td><td>${stBadge(x.j)}</td></tr>`).join('')}</tbody>
+      <tbody>${orders.map(x => `<tr><td><b class="text-gray-900">${x.o.name}</b></td><td class="num">${x.o.qty} ${x.o.unit || ''}</td><td>${link(x.j)}</td><td>${x.j.org}</td><td>${stBadge(x.j)}</td></tr>`).join('')}</tbody>
     </table></div>`: '<div class="empty">ยังไม่มีรายการที่ต้องสั่งซื้อ</div>'}
 
-    <div class="sect" style="margin-top:26px">การคืนอะไหล่เข้าคลัง <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— เหลือจากงานที่ปิดแบบซ่อมโดยอู่</span></div>
+    <!-- mt-6 = 24px — เดิม margin-top:26px (ไม่มีในสเกล) ปัดเข้าค่าที่ใกล้สุดเช่นเดียวกับบล็อกบน -->
+    <div class="sect mt-6">การคืนอะไหล่เข้าคลัง <span class="font-normal text-sm text-gray-500">— เหลือจากงานที่ปิดแบบซ่อมโดยอู่</span></div>
     ${rets.length ? `<div class="tblwrap"><table class="tbl">
       <thead><tr><th>อะไหล่</th><th class="num">จำนวนคืน</th><th>เลขที่ใบแจ้งซ่อม</th><th>หน่วยงานผู้แจ้ง</th></tr></thead>
-      <tbody>${rets.map(x => `<tr><td><b style="color:var(--gray-900)">${x.r.name}</b></td><td class="num">${x.r.qty} ${x.r.unit || ''}</td><td>${link(x.j)}</td><td>${x.j.org}</td></tr>`).join('')}</tbody>
+      <tbody>${rets.map(x => `<tr><td><b class="text-gray-900">${x.r.name}</b></td><td class="num">${x.r.qty} ${x.r.unit || ''}</td><td>${link(x.j)}</td><td>${x.j.org}</td></tr>`).join('')}</tbody>
     </table></div>`: '<div class="empty">ยังไม่มีการคืนอะไหล่</div>'}`;
     }
 
@@ -3380,7 +3388,7 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
     // รายละเอียดการแจ้งซ่อม (หน้า กบค.) — สถานะใบงานไม่อยู่ในนี้ อยู่ที่ป้ายบนหัวการ์ดที่เดียว
     // เบอร์โทรทำเป็นลิงก์ tel: — กบค. ต้องโทรหาผู้ติดต่อบ่อย บนมือถือกดโทรได้เลย
     const telLink = t => t
-      ? `<a href="tel:${esc(t).replace(/[^0-9+]/g, '')}" style="color:var(--primary-600);text-decoration:none">${esc(t)}</a>`
+      ? `<a href="tel:${esc(t).replace(/[^0-9+]/g, '')}" class="text-primary-600 no-underline">${esc(t)}</a>`
       : '';
 
     // รายละเอียดใบแจ้งซ่อม (ฝั่ง กบค.) — 14 หัวข้อตามลำดับที่เจ้าของงานกำหนด 19 ส.ค. 2569
@@ -3398,10 +3406,10 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
                      use.crane ? use.crane.toLocaleString() + ' ชม. (เครน/กระเช้า)' : null]
                      .filter(Boolean).join(' · ');
       const syms = j.syms && j.syms.length
-        ? `<div style="display:flex;gap:6px;flex-wrap:wrap">${j.syms.map(s => `<span class="vchip">${esc(s)}</span>`).join('')}</div>` : '';
+        ? `<div class="flex gap-1.5 flex-wrap">${j.syms.map(s => `<span class="vchip">${esc(s)}</span>`).join('')}</div>` : '';
       const photos = j.photos
-        ? `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${Array.from({ length: j.photos }, () => '<div class="phz"><span class="ms">image</span></div>').join('')}<span style="font-size:var(--fs-sm);color:var(--gray-500);font-weight:400">${j.photos} รูป</span></div>` : '';
-      const status = `<span class="badge ${ok ? 'b-ok' : 'b-out'}"><span class="ms" style="font-size:var(--fs-body)">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span>`;
+        ? `<div class="flex gap-2 flex-wrap items-center">${Array.from({ length: j.photos }, () => '<div class="phz"><span class="ms">image</span></div>').join('')}<span class="text-sm text-gray-500 font-normal">${j.photos} รูป</span></div>` : '';
+      const status = `<span class="badge ${ok ? 'b-ok' : 'b-out'}"><span class="ms text-md leading-none">${ok ? 'check_circle' : 'do_not_disturb_on'}</span>${ok ? 'ใช้งานได้' : 'ใช้งานไม่ได้'}</span>`;
 
       return `<div class="stack">
       ${group('ใบแจ้งซ่อมและสภาพรถ', [
@@ -3427,8 +3435,8 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
     </div>`;
     }
     function timelineBox(j) {
-      return `<div class="sect" style="margin-top:24px">สถานะใบงาน</div>
-    <ul class="tl" style="margin-top:12px">${j.history.map((h, i) => `<li class="${i === j.history.length - 1 ? 'on' : ''}">${h.label}<div class="when">${h.t}</div></li>`).join('')}</ul>`;
+      return `<div class="sect mt-6">สถานะใบงาน</div>
+    <ul class="tl mt-3">${j.history.map((h, i) => `<li class="${i === j.history.length - 1 ? 'on' : ''}">${h.label}<div class="when">${h.t}</div></li>`).join('')}</ul>`;
     }
 
 // ================= ตารางรายการงาน — ใช้ร่วมกันทั้ง 3 ลิสต์ =================
@@ -3674,21 +3682,21 @@ function confirmRepairSlot(no){
   toast('ยืนยันวันเข้าซ่อมแล้ว — กบค. เห็นวันที่เลือก');renderMyDetail(no);
 }
 function retPanel(j){
-  return`<div class="panel"><div class="sect" style="margin:0 0 8px">เหตุผล</div>
-    <div style="font-size:14px">${j.ret.reason}</div>
-    ${j.ret.garages.length ? `<div style="font-size:14px;margin-top:10px"><b>อู่ใกล้เคียงที่ กบค. แนะนำ:</b></div>` + j.ret.garages.map(g => `<div class="garage" style="cursor:default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join('') : ''}
+  return`<div class="panel"><div class="sect mt-0 mb-2 mx-0">เหตุผล</div>
+    <div class="text-sm">${j.ret.reason}</div>
+    ${j.ret.garages.length ? `<div class="text-sm mt-2.5"><b>อู่ใกล้เคียงที่ กบค. แนะนำ:</b></div>` + j.ret.garages.map(g => `<div class="garage cursor-default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join('') : ''}
   </div>`;
     }
     function recordPanel(j) {
       const total = (j.record.pc + j.record.lc).toLocaleString();
       const rets = j.record.returns.filter(r => r.qty > 0);
-      return `<div class="panel"><div class="sect" style="margin:0 0 8px">บันทึกการซ่อม (ปิดงานแล้ว)</div>
-    <div style="font-size:14px"><b>รายละเอียดการซ่อม:</b> ${j.record.det}</div>
-    <div style="font-size:14px;margin-top:6px"><b>รูปประกอบ:</b> ${j.record.photos} รูป</div>
-    <div style="font-size:14px;margin-top:6px"><b>ค่าใช้จ่าย:</b> ค่าอะไหล่ ${j.record.pc.toLocaleString()} บาท · ค่าแรง ${j.record.lc.toLocaleString()} บาท · <b>รวม ${total} บาท</b></div>
-    ${j.record.rdate ? `<div style="font-size:14px;margin-top:6px"><b>วันที่ซ่อมเสร็จ:</b> ${j.record.rdate}</div>` : ''}
-    ${j.record.docs ? `<div style="font-size:14px;margin-top:6px"><b>เอกสารประกอบ:</b> ${[j.record.docs.invoice ? 'ใบแจ้งหนี้' : '', j.record.docs.contractor ? 'เอกสารผู้รับจ้าง' : ''].filter(Boolean).join(' · ') || '—'}</div>` : ''}
-    <div style="font-size:14px;margin-top:6px"><b>คืนอะไหล่เข้าคลัง กบค.:</b> ${rets.length ? rets.map(r => `${r.name} ×${r.qty}`).join(', ') : 'ไม่มี'}</div>
+      return `<div class="panel"><div class="sect mt-0 mb-2 mx-0">บันทึกการซ่อม (ปิดงานแล้ว)</div>
+    <div class="text-sm"><b>รายละเอียดการซ่อม:</b> ${j.record.det}</div>
+    <div class="text-sm mt-1.5"><b>รูปประกอบ:</b> ${j.record.photos} รูป</div>
+    <div class="text-sm mt-1.5"><b>ค่าใช้จ่าย:</b> ค่าอะไหล่ ${j.record.pc.toLocaleString()} บาท · ค่าแรง ${j.record.lc.toLocaleString()} บาท · <b>รวม ${total} บาท</b></div>
+    ${j.record.rdate ? `<div class="text-sm mt-1.5"><b>วันที่ซ่อมเสร็จ:</b> ${j.record.rdate}</div>` : ''}
+    ${j.record.docs ? `<div class="text-sm mt-1.5"><b>เอกสารประกอบ:</b> ${[j.record.docs.invoice ? 'ใบแจ้งหนี้' : '', j.record.docs.contractor ? 'เอกสารผู้รับจ้าง' : ''].filter(Boolean).join(' · ') || '—'}</div>` : ''}
+    <div class="text-sm mt-1.5"><b>คืนอะไหล่เข้าคลัง กบค.:</b> ${rets.length ? rets.map(r => `${r.name} ×${r.qty}`).join(', ') : 'ไม่มี'}</div>
   </div>`;
     }
     function renderMyDetail(no) {
@@ -3698,37 +3706,37 @@ function retPanel(j){
         extra = '';
         const s = j.rstage || 0;
         if (s === 0) {
-          extra += `<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="retAdvance('${no}',1)">เริ่มดำเนินการซ่อมโดยอู่</button></div>`;
+          extra += `<div class="rowbtns justify-start"><button class="btn btn-p" onclick="retAdvance('${no}',1)">เริ่มดำเนินการซ่อมโดยอู่</button></div>`;
         } else if (s === 1) {
-          extra += `<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="retAdvance('${no}',2)">บันทึกว่าซ่อมเสร็จแล้ว (โดยอู่)</button></div>`;
+          extra += `<div class="rowbtns justify-start"><button class="btn btn-p" onclick="retAdvance('${no}',2)">บันทึกว่าซ่อมเสร็จแล้ว (โดยอู่)</button></div>`;
         } else {
-          extra += `<div class="sect" style="margin-top:24px">บันทึกการซ่อม + ปิดงาน</div>
+          extra += `<div class="sect mt-6">บันทึกการซ่อม + ปิดงาน</div>
       <div class="panel">
         <div class="f"><label>รายละเอียดการซ่อม <small>(จำเป็น)</small></label><textarea id="cdet" rows="3" placeholder="เช่น อู่เปลี่ยนชุดล็อกกระเช้าและปรับตั้งระบบ ทดสอบยกแล้วปกติ…" oninput="R.det=this.value">${R.det}</textarea></div>
-        <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin:12px 0 6px">รูปภาพหลังซ่อม</label>
+        <label class="text-sm font-semibold text-gray-900 block mt-3 mb-1.5 mx-0">รูปภาพหลังซ่อม</label>
         <div class="photos" id="cphotos">
           ${R.urls.map((u, i) => `<div class="ph">${u ? `<img src="${u}">` : ''}<div class="rm" onclick="cRmPhoto(${i})"><span class="ms">close</span></div></div>`).join('')}
           <div class="addph" onclick="document.getElementById('cfile').click()"><span class="ms">photo_camera</span>ถ่าย/แนบรูป</div>
           <div class="addph" onclick="cAddPhoto(null)"><span class="ms">add_photo_alternate</span>รูปตัวอย่าง</div>
         </div>
         <input type="file" id="cfile" accept="image/*" multiple class="hidden" onchange="[...this.files].forEach(f=>cAddPhoto(URL.createObjectURL(f)));this.value=''">
-        <div class="fgrid" style="margin:14px 0 4px;max-width:760px">
+        <div class="fgrid mt-3.5 mb-1 mx-0 max-w-[760px]">
           <div class="f sp2"><label>ค่าอะไหล่ (บาท)</label><div class="in"><span class="ms">settings</span><input type="number" min="0" id="cpc" value="${R.pc}" placeholder="0" oninput="R.pc=this.value;cTotal()"></div></div>
           <div class="f sp2"><label>ค่าแรง (บาท)</label><div class="in"><span class="ms">engineering</span><input type="number" min="0" id="clc" value="${R.lc}" placeholder="0" oninput="R.lc=this.value;cTotal()"></div></div>
         </div>
-        <div style="font-size:14px;color:var(--gray-900)"><b>รวมค่าใช้จ่าย: <span id="ctot">0</span> บาท</b></div>
-        <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin:16px 0 4px">คืนอะไหล่ที่เบิกจาก กบค. <small style="color:var(--gray-500);font-weight:400">— เหลือจากการซ่อม ระบุจำนวนคืนเข้าคลัง</small></label>
+        <div class="text-sm text-gray-900"><b>รวมค่าใช้จ่าย: <span id="ctot">0</span> บาท</b></div>
+        <label class="text-sm font-semibold text-gray-900 block mt-4 mb-1 mx-0">คืนอะไหล่ที่เบิกจาก กบค. <small class="text-gray-500 font-normal">— เหลือจากการซ่อม ระบุจำนวนคืนเข้าคลัง</small></label>
         ${j.booked.length ? j.booked.map(b => `
-          <div class="bk" style="border:1px dashed var(--gray-200);border-radius:var(--rounded-md);padding:8px 12px;max-width:560px">
-            <span style="flex:1;font-size:14px">${b.name} <span class="hint" style="display:inline">(เบิกไป ${b.qty} ${b.unit})</span></span>
+          <div class="bk border border-dashed border-gray-200 rounded-md py-2 px-3 max-w-[560px]">
+            <span class="flex-1 text-sm">${b.name} <span class="hint inline">(เบิกไป ${b.qty} ${b.unit})</span></span>
             <div class="qty"><button onclick="retChg('${no}','${b.name}',-1)">−</button><span>${R.returns[b.name] || 0}</span><button onclick="retChg('${no}','${b.name}',1)">+</button></div>
             <span class="hint">คืน</span>
           </div>`).join('') : '<div class="hint">ไม่มีอะไหล่ที่เบิกจาก กบค.</div>'}
-        <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin:16px 0 6px">เอกสารประกอบการจ้างซ่อม <small style="color:var(--warning-700);font-weight:600">(จำเป็นก่อนปิดงาน)</small></label>
-        <div class="hint" style="margin:0 0 8px">อ้างอิงเรื่องเดิม: <b>${j.no}</b> — ซ่อมโดยผู้รับจ้าง/อู่ภายนอก แนบเอกสารให้ครบก่อนปิดงาน</div>
-        <div class="f" style="max-width:260px"><label>วันที่ซ่อมเสร็จ</label><div class="in"><span class="ms">event</span><input type="date" id="crdate" value="${R.rdate}" oninput="R.rdate=this.value"></div></div>
-        <label class="garage" style="max-width:560px"><input type="checkbox" ${R.docs.invoice ? 'checked' : ''} onchange="R.docs.invoice=this.checked"><span class="ms">receipt_long</span><div><b>ใบแจ้งหนี้ / ใบเสร็จจากผู้รับจ้าง</b><div class="meta">ยืนยันว่ามีเอกสารแนบ</div></div></label>
-        <label class="garage" style="max-width:560px"><input type="checkbox" ${R.docs.contractor ? 'checked' : ''} onchange="R.docs.contractor=this.checked"><span class="ms">description</span><div><b>เอกสารผู้รับจ้าง (สัญญา/ใบเสนอราคา)</b><div class="meta">ยืนยันว่ามีเอกสารแนบ</div></div></label>
+        <label class="text-sm font-semibold text-gray-900 block mt-4 mb-1.5 mx-0">เอกสารประกอบการจ้างซ่อม <small class="text-warning-700 font-semibold">(จำเป็นก่อนปิดงาน)</small></label>
+        <div class="hint mt-0 mb-2 mx-0">อ้างอิงเรื่องเดิม: <b>${j.no}</b> — ซ่อมโดยผู้รับจ้าง/อู่ภายนอก แนบเอกสารให้ครบก่อนปิดงาน</div>
+        <div class="f max-w-[260px]"><label>วันที่ซ่อมเสร็จ</label><div class="in"><span class="ms">event</span><input type="date" id="crdate" value="${R.rdate}" oninput="R.rdate=this.value"></div></div>
+        <label class="garage max-w-[560px]"><input type="checkbox" ${R.docs.invoice ? 'checked' : ''} onchange="R.docs.invoice=this.checked"><span class="ms">receipt_long</span><div><b>ใบแจ้งหนี้ / ใบเสร็จจากผู้รับจ้าง</b><div class="meta">ยืนยันว่ามีเอกสารแนบ</div></div></label>
+        <label class="garage max-w-[560px]"><input type="checkbox" ${R.docs.contractor ? 'checked' : ''} onchange="R.docs.contractor=this.checked"><span class="ms">description</span><div><b>เอกสารผู้รับจ้าง (สัญญา/ใบเสนอราคา)</b><div class="meta">ยืนยันว่ามีเอกสารแนบ</div></div></label>
         <div class="rowbtns"><button class="btn btn-p" onclick="closeSelf('${no}')">บันทึกและปิดงาน</button></div>
       </div>`;
         }
@@ -3737,23 +3745,23 @@ function retPanel(j){
       // ---- เลือกวันนำรถ "เข้า" ซ่อม — กบค. เสนอวันมาจากขั้นนัดหมาย (design-mock/kbk-self-repair-appointment.html) ----
       if (j.rslots && !j.rappt) {
         const r = j.rslots;
-        extra += `<div class="sect" style="margin-top:24px">เลือกวันเข้าซ่อม</div>
+        extra += `<div class="sect mt-6">เลือกวันเข้าซ่อม</div>
     <div class="hint">กบค. เสนอวันสำหรับ<b>นำรถเข้าซ่อม</b> — เลือก 1 วัน แล้วกดยืนยัน (คนละรายการกับวันนัดรับรถตอนซ่อมเสร็จ)</div>
     <div class="panel">
       <div class="chips">${r.days.map((d, di) => { const id = 'r::' + di; return `<div class="chip ${R.pick === id ? 'sel' : ''}" onclick="pickSlot('${no}','${id}')">${d.label}</div>` }).join('')}</div>
-      <div class="hint" style="margin-top:12px"><b>ผู้ประสานงาน:</b> ${r.coord} · ${r.tel}<br><b>สถานที่:</b> ${r.place}${r.note ? '<br><b>หมายเหตุ:</b> ' + r.note : ''}</div>
+      <div class="hint mt-3"><b>ผู้ประสานงาน:</b> ${r.coord} · ${r.tel}<br><b>สถานที่:</b> ${r.place}${r.note ? '<br><b>หมายเหตุ:</b> ' + r.note : ''}</div>
       <div class="rowbtns"><button class="btn btn-p" onclick="confirmRepairSlot('${no}')">ยืนยันวันเข้าซ่อม</button></div>
     </div>`;
       }
       if (j.rappt) {
-        extra += `<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>วันนำรถเข้าซ่อม:</b> ${j.rappt.date}${j.rappt.mode === 'out' ? ' — ทีม กบค. เดินทางไปซ่อมที่หน้างาน' : ' · ' + j.rappt.place}</div>`;
+        extra += `<div class="apptbox"><span class="ms text-primary-600">event</span> <b>วันนำรถเข้าซ่อม:</b> ${j.rappt.date}${j.rappt.mode === 'out' ? ' — ทีม กบค. เดินทางไปซ่อมที่หน้างาน' : ' · ' + j.rappt.place}</div>`;
       }
       if (j.phase === 'slots') {
-        extra += `<div class="sect" style="margin-top:24px">เลือกวันนัดรับรถ</div>
+        extra += `<div class="sect mt-6">เลือกวันนัดรับรถ</div>
     <div class="hint">กบค. ซ่อมเสร็จแล้ว และเปิด<b>ตารางว่าง</b>ให้เลือก — เลือก 1 ช่วงเวลา แล้วกดยืนยัน (วันนัดมีการตรวจสภาพหลังการซ่อมร่วมกัน)</div>
     <div class="panel">
-      ${j.slots.map((s, si) => `<div style="margin-bottom:12px"><b style="color:var(--gray-900)">${s.label}</b>
-        <div class="chips" style="margin-top:6px">${s.times.map(t => { const id = si + '::' + t; return `<div class="chip ${R.pick === id ? 'sel' : ''}" onclick="pickSlot('${no}','${id}')">${t}</div>` }).join('')}</div></div>`).join('')}
+      ${j.slots.map((s, si) => `<div class="mb-3"><b class="text-gray-900">${s.label}</b>
+        <div class="chips mt-1.5">${s.times.map(t => { const id = si + '::' + t; return `<div class="chip ${R.pick === id ? 'sel' : ''}" onclick="pickSlot('${no}','${id}')">${t}</div>` }).join('')}</div></div>`).join('')}
       ${j.slotNote ? `<div class="hint">หมายเหตุจาก กบค.: ${j.slotNote}</div>` : ''}
       <div class="rowbtns"><button class="btn btn-p" onclick="confirmSlot('${no}')">ยืนยันวันนัดรับ</button></div>
     </div>`;
@@ -3762,10 +3770,10 @@ function retPanel(j){
         extra += inspViewPanel('ตรวจสภาพรับรถเข้าซ่อม (ขาเข้า)', j.inspIn);
       }
       if ((j.phase === 'appt' || j.phase === 'closed') && j.appt) {
-        extra += `<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note ? '· ' + j.appt.note : ''} — วันนัดมีการ<b>ตรวจสภาพตอนรับรถคืน (ขาออก)</b> เทียบกับขาเข้าร่วมกัน</div>`;
+        extra += `<div class="apptbox"><span class="ms text-primary-600">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note ? '· ' + j.appt.note : ''} — วันนัดมีการ<b>ตรวจสภาพตอนรับรถคืน (ขาออก)</b> เทียบกับขาเข้าร่วมกัน</div>`;
       }
       if (j.phase === 'closed' && j.loc === 'onsite') {
-        extra += `<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ซ่อมหน้างานเสร็จ</b>${j.onsite && j.onsite.site ? ' @ ' + j.onsite.site : ''}${j.sat ? ` · ความพึงพอใจ ${'<span class="ms">star</span>'.repeat(j.sat)}` : ''}</div>`;
+        extra += `<div class="apptbox"><span class="ms text-success-600">task_alt</span> <b>ซ่อมหน้างานเสร็จ</b>${j.onsite && j.onsite.site ? ' @ ' + j.onsite.site : ''}${j.sat ? ` · ความพึงพอใจ ${'<span class="ms">star</span>'.repeat(j.sat)}` : ''}</div>`;
       }
       if (j.phase === 'closed' && j.inspOut) {
         extra += inspViewPanel('ตรวจสภาพขาออก (ตอนรับรถคืน) — <span class="badge b-ok">ผ่าน — รับมอบรถแล้ว</span>', j.inspOut);
@@ -3834,21 +3842,21 @@ function retPanel(j){
           <th>อาการเสีย</th>
           <th>อะไหล่ที่ใช้</th>
           <th>ผู้ซ่อม</th>
-          <th style="text-align:right">ชั่วโมงใช้งาน</th>
-          <th style="text-align:right">เลขไมล์</th>
+          <th class="text-right">ชั่วโมงใช้งาน</th>
+          <th class="text-right">เลขไมล์</th>
         </tr></thead>
         <tbody>${rows.map(x => {
         const parts = x.usedParts && x.usedParts.length ? x.usedParts.map(p => `${esc(p.name)} ×${p.qty} ${esc(p.unit || '')}`).join('<br>')
-          : (x.booked && x.booked.length ? x.booked.map(p => `${esc(p.name)} ×${p.qty} ${esc(p.unit || '')}`).join('<br>') : '<span style="color:var(--gray-400)">ไม่ได้ใช้อะไหล่</span>');
+          : (x.booked && x.booked.length ? x.booked.map(p => `${esc(p.name)} ×${p.qty} ${esc(p.unit || '')}`).join('<br>') : '<span class="text-gray-400">ไม่ได้ใช้อะไหล่</span>');
         const by = x.by || (x.record && x.record.by) || 'กบค.';
         const dt = x.date || (x.history && x.history[0] ? x.history[0].t : '—');
         return `<tr>
-          <td><b>${esc(x.no)}</b><div style="font-size:12px;color:var(--gray-500)">${esc(dt)}</div></td>
-          <td>${esc(x.syms.join(', '))}${x.record ? `<div style="font-size:12px;color:var(--gray-500)">${esc(x.record.det)}</div>` : ''}</td>
+          <td><b>${esc(x.no)}</b><div class="text-xs text-gray-500">${esc(dt)}</div></td>
+          <td>${esc(x.syms.join(', '))}${x.record ? `<div class="text-xs text-gray-500">${esc(x.record.det)}</div>` : ''}</td>
           <td>${parts}</td>
           <td>${byBadge(by)}</td>
-          <td style="text-align:right">${x.hours ? x.hours.toLocaleString() + ' ชม.' : '<span style="color:var(--gray-400)">—</span>'}</td>
-          <td style="text-align:right">${x.odo ? x.odo.toLocaleString() + ' กม.' : '<span style="color:var(--gray-400)">—</span>'}</td>
+          <td class="text-right">${x.hours ? x.hours.toLocaleString() + ' ชม.' : '<span class="text-gray-400">—</span>'}</td>
+          <td class="text-right">${x.odo ? x.odo.toLocaleString() + ' กม.' : '<span class="text-gray-400">—</span>'}</td>
         </tr>`;
       }).join('')}</tbody>
       </table></div>`
@@ -3866,7 +3874,7 @@ function retPanel(j){
         <button type="button" class="tab-btn on" role="tab" aria-selected="true" aria-controls="${uid}-0" onclick="switchVehTab(this,'${uid}',0)">รายละเอียดการซ่อม</button>
         <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="${uid}-1" onclick="switchVehTab(this,'${uid}',1)">ประวัติการซ่อม</button>
       </div>
-      <div class="tabpanel" id="${uid}-0" role="tabpanel" style="margin-top:16px">
+      <div class="tabpanel mt-4" id="${uid}-0" role="tabpanel">
         <div class="ops-detail-layout in-tab">
           <div class="ops-detail-main">${vehInfoBox(j)}
             <div class="rowbtns">
@@ -3877,7 +3885,7 @@ function retPanel(j){
           <aside class="ops-detail-side">${timelineBox(j)}</aside>
         </div>
       </div>
-      <div class="tabpanel hidden" id="${uid}-1" role="tabpanel" style="margin-top:16px">${vehHistoryPanel(j)}</div>`;
+      <div class="tabpanel hidden mt-4" id="${uid}-1" role="tabpanel">${vehHistoryPanel(j)}</div>`;
     }
     // กลไก modal กลาง — เปิดได้ทีละใบ (id เดียวกันทุกครั้ง) ปิดได้ด้วยปุ่ม ✕ / คลิกนอกกรอบ / Esc
     let KBK_MODAL_ESC = null;
@@ -3984,11 +3992,11 @@ function retPanel(j){
       const v = VEHICLES.find(x => x.plate === plate);
       $('vhistbody').innerHTML = `
     <h1 class="page-title">ประวัติการซ่อม — ${esc(plate)}</h1>
-    <div class="lead" style="color:var(--gray-600);margin:4px 0 18px">${v ? esc(v.model + (v.attach ? ' + ' + v.attach : '')) : ''} · ${esc((v && v.org) || '')} — ข้อมูลจำลองจาก VMS+</div>
+    <div class="lead text-gray-600 mt-1 mb-tk-4.5 mx-0">${v ? esc(v.model + (v.attach ? ' + ' + v.attach : '')) : ''} · ${esc((v && v.org) || '')} — ข้อมูลจำลองจาก VMS+</div>
     ${vehHistoryTable(rows)}
     <div class="todo"><span class="ms">pending_actions</span><span><b>TODO — ชั่วโมงใช้งาน / เลขไมล์ ยังไม่ได้ต่อของจริง</b>
       ตอนนี้เป็นค่าที่ใส่ไว้ในข้อมูลจำลอง ของจริงต้องดึงจากบันทึกเติมน้ำมัน/ชั่วโมงทำงานใน VMS+ ณ วันปิดงาน</span></div>
-    <div class="rowbtns" style="justify-content:flex-start;margin-top:18px">
+    <div class="rowbtns justify-start mt-tk-4.5">
       <button class="btn btn-g" onclick="switchView('${VH.back}')"><span class="ms">arrow_back</span> กลับหน้างานซ่อม</button></div>`;
     }
 
@@ -4268,13 +4276,13 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
     function inspFormHTML(no, kind, j) {
       const I = K.insp;
       return `<div class="panel">
-    <div style="font-weight:600;color:var(--gray-900);font-size:14px;margin-bottom:8px">① ความผิดปกติรอบตัวรถ <span class="hint" style="display:inline;margin:0">— แตะ "มีตำหนิ" แล้วระบุรายละเอียด</span></div>
+    <div class="font-semibold text-gray-900 text-sm mb-2">① ความผิดปกติรอบตัวรถ <span class="hint inline m-0">— แตะ "มีตำหนิ" แล้วระบุรายละเอียด</span></div>
     ${I.zones.map((z, zi) => `<div class="dayrow">
-      <span style="flex:0 0 210px;font-size:var(--fs-text-sm)">${z.name}</span>
-      <div class="seg" style="flex:0 0 172px"><div class="sg ${!z.bad ? 'sel' : ''}" onclick="zSet('${no}',${zi},false)">ปกติ</div><div class="sg ${z.bad ? 'sel' : ''}" onclick="zSet('${no}',${zi},true)">มีตำหนิ</div></div>
-      ${z.bad ? `<input type="text" style="flex:1;min-width:170px" placeholder="เช่น รอยบุบ ขีดข่วน สนิม รอยรั่ว…" value="${z.note}" oninput="K.insp.zones[${zi}].note=this.value">` : ''}
+      <span class="flex-[0_0_210px] text-sm">${z.name}</span>
+      <div class="seg flex-[0_0_172px]"><div class="sg ${!z.bad ? 'sel' : ''}" onclick="zSet('${no}',${zi},false)">ปกติ</div><div class="sg ${z.bad ? 'sel' : ''}" onclick="zSet('${no}',${zi},true)">มีตำหนิ</div></div>
+      ${z.bad ? `<input type="text" class="flex-1 min-w-[170px]" placeholder="เช่น รอยบุบ ขีดข่วน สนิม รอยรั่ว…" value="${z.note}" oninput="K.insp.zones[${zi}].note=this.value">` : ''}
     </div>`).join('')}
-    <div class="fgrid" style="margin:14px 0 0;max-width:680px">
+    <div class="fgrid mt-3.5 mb-0 mx-0 max-w-[680px]">
       <div class="f sp2"><label>② ระดับน้ำมัน</label><div class="seg">${FUELS.map(f => `<div class="sg ${I.fuel === f ? 'sel' : ''}" onclick="fuelSet('${no}','${f}')">${f}</div>`).join('')}</div></div>
       <div class="f sp2"><label>เลขไมล์ (กม.)</label><div class="in"><span class="ms">speed</span><input type="number" value="${I.odo}" placeholder="เช่น 84120" oninput="K.insp.odo=this.value"></div></div>
     </div>
@@ -4304,9 +4312,9 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
       toast('บันทึกตรวจสภาพขาเข้าแล้ว — เดินสถานะซ่อมต่อได้'); renderKbkDetail(no);
     }
     function inspViewPanel(title, rec) {
-      return `<div class="panel"><div class="sect" style="margin:0 0 8px">${title}</div>
-    <div style="font-size:14px">น้ำมัน: <b>${rec.fuel}</b> · เลขไมล์: <b>${rec.odo || '—'}</b> กม. · บันทึกเมื่อ ${rec.t}</div>
-    <div style="font-size:14px;margin-top:6px"><b>ตำหนิรอบตัวรถ:</b> ${rec.defects.length ? rec.defects.map(d => `${d.zone}${d.note ? ' (' + d.note + ')' : ''}`).join(' · ') : 'ไม่มี'}</div>
+      return `<div class="panel"><div class="sect mt-0 mb-2 mx-0">${title}</div>
+    <div class="text-sm">น้ำมัน: <b>${rec.fuel}</b> · เลขไมล์: <b>${rec.odo || '—'}</b> กม. · บันทึกเมื่อ ${rec.t}</div>
+    <div class="text-sm mt-1.5"><b>ตำหนิรอบตัวรถ:</b> ${rec.defects.length ? rec.defects.map(d => `${d.zone}${d.note ? ' (' + d.note + ')' : ''}`).join(' · ') : 'ไม่มี'}</div>
     ${rec.extra ? `<div class="hint">เพิ่มเติม: ${rec.extra}</div>` : ''}</div>`;
     }
     function renderKbkList() {
@@ -4354,22 +4362,22 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
       // รายละเอียดใบแจ้งซ่อมด้านบน (vehInfoTabs) แล้วเปิดเป็น modal ทั้งคู่ (17 ส.ค. 2569)
 
       if (j.phase === 'work' && j.loc === 'onsite') {   // ---- แทร็กงานเล็ก (ซ่อมหน้างาน) ----
-        action = `<div class="sect" style="margin-top:24px">ซ่อมหน้างาน (งานเล็ก) <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— ช่างออกไปซ่อมที่หน้างาน</span></div>
+        action = `<div class="sect mt-6">ซ่อมหน้างาน (งานเล็ก) <span class="font-normal text-sm text-gray-500">— ช่างออกไปซ่อมที่หน้างาน</span></div>
     <div class="panel">
-      <div style="font-size:14px"><b>ทีมช่าง:</b> ${j.onsite && j.onsite.team || '—'}</div>
-      <div style="font-size:14px;margin-top:4px"><b>สถานที่:</b> ${j.onsite && j.onsite.site || '—'} · <b>ช่วงวันเดินทาง:</b> ${j.onsite && j.onsite.trip || '—'}</div>
+      <div class="text-sm"><b>ทีมช่าง:</b> ${j.onsite && j.onsite.team || '—'}</div>
+      <div class="text-sm mt-1"><b>สถานที่:</b> ${j.onsite && j.onsite.site || '—'} · <b>ช่วงวันเดินทาง:</b> ${j.onsite && j.onsite.trip || '—'}</div>
     </div>
-    <div class="wsteps" style="margin-top:14px">${ONSITE_STEPS.map((s, i) => `<div class="wstep ${i === j.wi ? 'active' : i < j.wi ? 'passed' : ''}"><span class="num">${i < j.wi ? '<span class=\"ms\">check</span>' : i + 1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
+    <div class="wsteps mt-3.5">${ONSITE_STEPS.map((s, i) => `<div class="wstep ${i === j.wi ? 'active' : i < j.wi ? 'passed' : ''}"><span class="num">${i < j.wi ? '<span class=\"ms\">check</span>' : i + 1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
         if (j.wi < 2) {
-          action += `<div class="rowbtns" style="justify-content:flex-start;flex-wrap:wrap">
+          action += `<div class="rowbtns justify-start flex-wrap">
         <button class="btn btn-p" onclick="onsiteAdvance('${no}')">อัปเดตสถานะ → ${ONSITE_STEPS[j.wi + 1]}</button>
-        <button class="btn btn-o" onclick="onsiteFindMore('${no}')"><span class="ms" style="font-size:18px">report</span> พบชำรุดเพิ่ม → เบิกอะไหล่</button></div>`;
+        <button class="btn btn-o" onclick="onsiteFindMore('${no}')"><span class="ms">report</span> พบชำรุดเพิ่ม → เบิกอะไหล่</button></div>`;
         } else {
-          action += `<div class="sect" style="margin-top:20px">หน่วยงานรับทราบและประเมินความพึงพอใจ <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— ทำร่วมกับหน่วยงานเจ้าของรถที่หน้างาน</span></div>
+          action += `<div class="sect mt-5">หน่วยงานรับทราบและประเมินความพึงพอใจ <span class="font-normal text-sm text-gray-500">— ทำร่วมกับหน่วยงานเจ้าของรถที่หน้างาน</span></div>
       <div class="panel">
-        <div class="chk" style="margin:0 0 10px"><label><input type="checkbox" id="os-ack" ${K.ack ? 'checked' : ''} onchange="K.ack=this.checked"> หน่วยงานเจ้าของรถรับทราบผลการซ่อม (ใบตรวจสภาพอะไหล่ · ก่อน/หลัง)</label></div>
-        <label style="font-size:14px;font-weight:600;color:var(--gray-900);display:block;margin-bottom:6px">ความพึงพอใจ</label>
-        <div class="seg" id="os-sat" style="max-width:520px">${[1, 2, 3, 4, 5].map(n => `<div class="sg ${K.sat === n ? 'sel' : ''}" onclick="K.sat=${n};renderKbkDetail('${no}')">${'<span class="ms">star</span>'.repeat(n)}</div>`).join('')}</div>
+        <div class="chk mt-0 mb-2.5 mx-0"><label><input type="checkbox" id="os-ack" ${K.ack ? 'checked' : ''} onchange="K.ack=this.checked"> หน่วยงานเจ้าของรถรับทราบผลการซ่อม (ใบตรวจสภาพอะไหล่ · ก่อน/หลัง)</label></div>
+        <label class="text-sm font-semibold text-gray-900 block mb-1.5">ความพึงพอใจ</label>
+        <div class="seg max-w-[520px]" id="os-sat">${[1, 2, 3, 4, 5].map(n => `<div class="sg ${K.sat === n ? 'sel' : ''}" onclick="K.sat=${n};renderKbkDetail('${no}')">${'<span class="ms">star</span>'.repeat(n)}</div>`).join('')}</div>
         ${costFieldsHTML()}
         <div class="rowbtns"><button class="btn btn-p" onclick="onsiteClose('${no}')">ส่งขออนุมัติปิดงาน</button></div>
       </div>`;
@@ -4393,71 +4401,71 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
         const selfIdx = (TG.inspection && !j.inspIn) ? 2 : (j.wi < 4 ? 3 : 4);
         action = selfStepsHTML(selfIdx)
           + partsSummaryHTML(j)
-          + (j.rappt ? `<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>วันนำรถเข้าซ่อม:</b> ${j.rappt.date}${j.rappt.mode === 'out' ? ' — ทีมเดินทางไปซ่อมหน้างาน' + (j.rappt.tech ? ' · ช่าง ' + j.rappt.tech : '') : ' · ' + j.rappt.place} <span class="hint" style="display:inline;margin:0">(ผู้แจ้งยืนยันแล้ว)</span></div>` : '')
-          + `<div class="sect" style="margin-top:24px">สถานะงานซ่อม <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— สถานะแสดงที่ฝั่งผู้แจ้งด้วย</span></div>
-    <div class="wsteps" style="margin-top:14px">${KBK_STEPS.map((s, i) => `<div class="wstep ${i === j.wi ? 'active' : i < j.wi ? 'passed' : ''}"><span class="num">${i < j.wi ? '<span class=\"ms\">check</span>' : i + 1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
+          + (j.rappt ? `<div class="apptbox"><span class="ms text-primary-600">event</span> <b>วันนำรถเข้าซ่อม:</b> ${j.rappt.date}${j.rappt.mode === 'out' ? ' — ทีมเดินทางไปซ่อมหน้างาน' + (j.rappt.tech ? ' · ช่าง ' + j.rappt.tech : '') : ' · ' + j.rappt.place} <span class="hint inline m-0">(ผู้แจ้งยืนยันแล้ว)</span></div>` : '')
+          + `<div class="sect mt-6">สถานะงานซ่อม <span class="font-normal text-sm text-gray-500">— สถานะแสดงที่ฝั่งผู้แจ้งด้วย</span></div>
+    <div class="wsteps mt-3.5">${KBK_STEPS.map((s, i) => `<div class="wstep ${i === j.wi ? 'active' : i < j.wi ? 'passed' : ''}"><span class="num">${i < j.wi ? '<span class=\"ms\">check</span>' : i + 1}</span><span class="lbl">${s}</span></div>`).join('')}</div>`;
         if (TG.inspection) {   // ปิด toggle ตรวจสภาพ → ข้ามฟอร์ม/แผงตรวจสภาพขาเข้าทั้งหมด
           if (j.inspIn) {
             action += inspViewPanel('ตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) ✓', j.inspIn);
           } else if (j.wi === 0) {
             if (!K.insp) K.insp = initInsp();
-            action += `<div class="sect" style="margin-top:24px">ตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— ต้องบันทึกก่อนเดินสถานะซ่อม · ตรวจร่วมกับผู้ส่งรถ</span></div>` + inspFormHTML(no, 'in', j);
+            action += `<div class="sect mt-6">ตรวจสภาพรับรถเข้าซ่อม (ขาเข้า) <span class="font-normal text-sm text-gray-500">— ต้องบันทึกก่อนเดินสถานะซ่อม · ตรวจร่วมกับผู้ส่งรถ</span></div>` + inspFormHTML(no, 'in', j);
           }
         }
         if (j.wi === 1 && j.ordered.length) {
-          action += `<div class="panel"><b style="color:var(--gray-900);font-size:14px">รายการที่รอสั่ง/รอของเข้า</b>${j.ordered.map(x => `<div class="hint" style="margin-top:6px"><span class="ms" style="font-size:16px">shopping_cart</span> ${x.name} ×${x.qty}</div>`).join('')}</div>`;
+          action += `<div class="panel"><b class="text-gray-900 text-sm">รายการที่รอสั่ง/รอของเข้า</b>${j.ordered.map(x => `<div class="hint mt-1.5"><span class="ms text-md leading-none">shopping_cart</span> ${x.name} ×${x.qty}</div>`).join('')}</div>`;
         }
         if (j.wi < 4) {
-          action += `<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="kbkAdvance('${no}')">อัปเดตสถานะ → ${KBK_STEPS[j.wi + 1]}</button></div>`;
+          action += `<div class="rowbtns justify-start"><button class="btn btn-p" onclick="kbkAdvance('${no}')">อัปเดตสถานะ → ${KBK_STEPS[j.wi + 1]}</button></div>`;
         } else {
           const sortedDays = Object.entries(K.slots).sort((a, b) => a[0] < b[0] ? -1 : 1);
           // "ขั้น 1" คือ shared component UIC.dayPicker — mount ที่ #dpk หลังตั้ง innerHTML (ท้ายฟังก์ชัน)
-          action += `<div class="sect" style="margin-top:24px">นัดรับรถ — เปิดตารางว่างของ กบค.</div>
+          action += `<div class="sect mt-6">นัดรับรถ — เปิดตารางว่างของ กบค.</div>
       <div class="hint"><b>ขั้น 1</b> ${UI.slotPicker === 'chips' ? 'แตะเลือกวันจากชิพด้านล่าง' : 'เลือกวันด้วย date picker (เพิ่มเป็น<b>ช่วงวันที่</b> หรือ<b>ทีละวัน</b>)'} → <b>ขั้น 2</b> เลือก<b>ช่วงเวลา</b>ของแต่ละวัน — ตารางว่างจะไปแสดงที่หน้าจอนัดรับรถของผู้แจ้ง ให้เลือกยืนยัน 1 ช่วง</div>
       <div class="panel">
         <div id="dpk"></div>
 
-        <div style="margin-top:16px;font-weight:600;color:var(--gray-900);font-size:14px">ขั้น 2 · วันที่เปิดว่างไว้ (${sortedDays.length} วัน) — แตะช่วงเวลาเพื่อเปิด/ปิด</div>
-        ${sortedDays.length ? sortedDays.map(([key, s]) => `<div class="dayrow chips pick" style="margin-top:8px">
-          <div class="chip sel plain" style="min-width:112px;text-align:center">${s.label}</div>
+        <div class="mt-4 font-semibold text-gray-900 text-sm">ขั้น 2 · วันที่เปิดว่างไว้ (${sortedDays.length} วัน) — แตะช่วงเวลาเพื่อเปิด/ปิด</div>
+        ${sortedDays.length ? sortedDays.map(([key, s]) => `<div class="dayrow chips pick mt-2">
+          <div class="chip sel plain min-w-[112px] text-center">${s.label}</div>
           ${SLOT_TIMES.map(t => `<div class="chip ${s.times.includes(t) ? 'sel' : ''}" onclick="toggleSlot('${no}','${key}','${t}')">${t}</div>`).join('')}
-          <span class="ms" style="color:var(--gray-400);cursor:pointer" title="ลบวันนี้ออก" onclick="removeDay('${no}','${key}')">delete</span>
+          <span class="ms text-gray-400 cursor-pointer" title="ลบวันนี้ออก" onclick="removeDay('${no}','${key}')">delete</span>
         </div>`).join('') : '<div class="empty">ยังไม่ได้เลือกวัน — เพิ่มจาก date picker ด้านบน</div>'}
 
-        <div class="f" style="margin-top:12px"><label>หมายเหตุ <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="slnote" value="${K.note}" oninput="K.note=this.value" placeholder="เช่น จุดรับรถ ลานจอด กบค. อาคาร 3"></div></div>
+        <div class="f mt-3"><label>หมายเหตุ <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="slnote" value="${K.note}" oninput="K.note=this.value" placeholder="เช่น จุดรับรถ ลานจอด กบค. อาคาร 3"></div></div>
         <div class="rowbtns"><button class="btn btn-p" onclick="kbkSendSlots('${no}')">ส่งตารางว่างให้ผู้แจ้งเลือก</button></div>
       </div>`;
         }
       }
 
       if (j.phase === 'slots') {   // เฉพาะเส้นซ่อมเอง (นำรถเข้า สนญ.) — กำลังเปิดตารางว่างรอผู้แจ้งเลือกวันนัดรับ ก่อนถึงขั้นตรวจสภาพรถหลังซ่อม
-        action = selfStepsHTML(4) + `<div class="sect" style="margin-top:24px">ตารางว่างนัดรับที่เปิดไว้ — รอผู้แจ้งเลือกยืนยัน</div>
+        action = selfStepsHTML(4) + `<div class="sect mt-6">ตารางว่างนัดรับที่เปิดไว้ — รอผู้แจ้งเลือกยืนยัน</div>
     <div class="panel">
-      ${j.slots.map(s => `<div style="margin-bottom:8px"><b style="color:var(--gray-900)">${s.label}</b> <span class="hint" style="display:inline;margin:0">· ${s.times.join(' · ')}</span></div>`).join('')}
+      ${j.slots.map(s => `<div class="mb-2"><b class="text-gray-900">${s.label}</b> <span class="hint inline m-0">· ${s.times.join(' · ')}</span></div>`).join('')}
       ${j.slotNote ? `<div class="hint">หมายเหตุ: ${j.slotNote}</div>` : ''}
-      <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="editSlots('${no}')">แก้ไขตารางว่าง</button></div>
+      <div class="rowbtns justify-start"><button class="btn btn-g" onclick="editSlots('${no}')">แก้ไขตารางว่าง</button></div>
     </div>`;
       }
 
       if (j.phase === 'appt') {   // เฉพาะเส้นซ่อมเอง — วันนัดรับรถแล้ว กำลังตรวจสภาพรถหลังซ่อม (ขาออก)
-        action = selfStepsHTML(4) + `<div class="apptbox"><span class="ms" style="color:var(--primary-600)">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note ? '· ' + j.appt.note : ''}</div>`;
+        action = selfStepsHTML(4) + `<div class="apptbox"><span class="ms text-primary-600">event</span> <b>นัดรับรถ:</b> ${j.appt.date} เวลา ${j.appt.time} น. ${j.appt.note ? '· ' + j.appt.note : ''}</div>`;
         if (TG.inspection) {
           if (!K.insp) K.insp = initInsp();
           action += `${j.inspIn ? inspViewPanel('เทียบกับตรวจสภาพขาเข้า (ตอนส่งรถซ่อม)', j.inspIn) : ''}
-      <div class="sect" style="margin-top:24px">ตรวจสภาพตอนรับรถคืน (ขาออก) <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— ทำร่วมกันวันนัดรับ เทียบกับขาเข้าก่อนส่งมอบ</span></div>`
+      <div class="sect mt-6">ตรวจสภาพตอนรับรถคืน (ขาออก) <span class="font-normal text-sm text-gray-500">— ทำร่วมกันวันนัดรับ เทียบกับขาเข้าก่อนส่งมอบ</span></div>`
             + inspFormHTML(no, 'out', j);
         } else {   // ไม่มีตรวจสภาพ → ปิดงานได้ทันทีในวันนัด
-          action += `<div class="panel">${costFieldsHTML()}<div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-p" onclick="kbkCloseSimple('${no}')">ส่งมอบรถ · ส่งขออนุมัติปิดงาน</button></div></div>`;
+          action += `<div class="panel">${costFieldsHTML()}<div class="rowbtns justify-start"><button class="btn btn-p" onclick="kbkCloseSimple('${no}')">ส่งมอบรถ · ส่งขออนุมัติปิดงาน</button></div></div>`;
         }
       }
 
       if (j.phase === 'returned') {
         const s = j.rstage || 0;
         const RSTEPS = ['กบค.ตีกลับ/ปฏิเสธ', 'ดำเนินการซ่อมโดยอู่', 'ซ่อมเสร็จแล้วโดยอู่'];
-        action = `<div class="panel"><div class="sect" style="margin:0 0 8px">ส่งกลับให้หน่วยงานผู้แจ้งซ่อมเองแล้ว — ติดตามสถานะ</div>
-      <div style="font-size:14px"><b>เหตุผล:</b> ${j.ret.reason}</div>
-      ${j.ret.garages.length ? j.ret.garages.map(g => `<div class="garage" style="cursor:default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join('') : ''}</div>
-    <div class="wsteps" style="margin-top:14px">${RSTEPS.map((x, i) => `<div class="wstep ${i === s ? 'active' : i < s ? 'passed' : ''}"><span class="num">${i < s ? '<span class=\"ms\">check</span>' : i + 1}</span><span class="lbl">${x}</span></div>`).join('')}</div>
+        action = `<div class="panel"><div class="sect mt-0 mb-2 mx-0">ส่งกลับให้หน่วยงานผู้แจ้งซ่อมเองแล้ว — ติดตามสถานะ</div>
+      <div class="text-sm"><b>เหตุผล:</b> ${j.ret.reason}</div>
+      ${j.ret.garages.length ? j.ret.garages.map(g => `<div class="garage cursor-default"><span class="ms">garage</span><div><b>${g.name}</b><div class="meta">${g.dist} · ${g.tags}</div></div></div>`).join('') : ''}</div>
+    <div class="wsteps mt-3.5">${RSTEPS.map((x, i) => `<div class="wstep ${i === s ? 'active' : i < s ? 'passed' : ''}"><span class="num">${i < s ? '<span class=\"ms\">check</span>' : i + 1}</span><span class="lbl">${x}</span></div>`).join('')}</div>
     <div class="hint">หน่วยงานผู้แจ้งเป็นผู้อัปเดตสถานะและบันทึกปิดงาน — กบค. เห็นความคืบหน้าที่นี่ตลอด${s === 2 ? ' · <b>รอบันทึกปิดงานจากผู้แจ้ง</b>' : ''}</div>`;
       }
       if (j.phase === 'gclosed') {
@@ -4466,8 +4474,8 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
       if (j.phase === 'closed') {
         action = (j.loc === 'onsite' ? '' : selfStepsHTML(null))   // เส้นซ่อมเอง (นำรถเข้า สนญ.) เท่านั้นที่มีสเต็ปเปอร์ 6 ขั้นนี้ — งานหน้างานใช้ ONSITE_STEPS แยกต่างหาก
           + (j.loc === 'onsite'
-          ? `<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ปิดงานแล้ว</b> — ซ่อมหน้างานเสร็จ${j.onsite && j.onsite.site ? ' @ ' + j.onsite.site : ''}${j.sat ? ` · ความพึงพอใจ ${'<span class="ms">star</span>'.repeat(j.sat)}` : ''}</div>`
-          : `<div class="apptbox"><span class="ms" style="color:var(--success-600)">task_alt</span> <b>ปิดงานแล้ว</b> — ส่งมอบรถวันที่ ${j.appt.date} ${j.appt.time} น.</div>`)
+          ? `<div class="apptbox"><span class="ms text-success-600">task_alt</span> <b>ปิดงานแล้ว</b> — ซ่อมหน้างานเสร็จ${j.onsite && j.onsite.site ? ' @ ' + j.onsite.site : ''}${j.sat ? ` · ความพึงพอใจ ${'<span class="ms">star</span>'.repeat(j.sat)}` : ''}</div>`
+          : `<div class="apptbox"><span class="ms text-success-600">task_alt</span> <b>ปิดงานแล้ว</b> — ส่งมอบรถวันที่ ${j.appt.date} ${j.appt.time} น.</div>`)
           + (j.inspIn ? inspViewPanel('ตรวจสภาพขาเข้า (ตอนส่งรถซ่อม)', j.inspIn) : '')
           + (j.inspOut ? inspViewPanel('ตรวจสภาพขาออก (ตอนรับรถคืน) — ผ่าน ✓', j.inspOut) : '')
           + costPanel(j);
@@ -4606,8 +4614,8 @@ function initJobParts(j){
 function partsTotal(list){return list.reduce((s,x)=>s+(x.price||0)*x.qty,0)}
 
 function routeChoiceHTML(no, j){
-  return `<div class="sect" style="margin-top:24px">รับเรื่องแล้ว — จะดำเนินการอย่างไร <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— เลือกก่อนงานถึงจะเดินต่อ</span></div>
-  <div class="kbkdec-tiles" style="margin-top:10px"><div class="decide" style="margin-top:0">
+  return `<div class="sect mt-6">รับเรื่องแล้ว — จะดำเนินการอย่างไร <span class="font-normal text-sm text-gray-500">— เลือกก่อนงานถึงจะเดินต่อ</span></div>
+  <div class="kbkdec-tiles mt-2.5"><div class="decide mt-0">
     <div class="tile tile-magenta" onclick="kbkSetRoute('${no}','self')"><span class="ms">handyman</span><b>ซ่อมเองได้</b><small>กบค. ซ่อมเอง — จัดรายการอะไหล่ต่อ</small></div>
   </div></div>`;
 }
@@ -4636,7 +4644,7 @@ function invCell(x){
 }
 
 function partsRowsHTML(no, list, editable){
-  if(!list.length)return '<div class="hint" style="margin:0">ยังไม่มีรายการอะไหล่</div>';
+  if(!list.length)return '<div class="hint m-0">ยังไม่มีรายการอะไหล่</div>';
   const cols=editable?5:4;   // อะไหล่ · คลัง · จำนวน · ราคา (+ ปุ่มลบ) — ก่อนคอลัมน์ "รวม"
   const G={si:[],alt:[],buy:[]};
   list.forEach(x=>G[partSource(x).src.key].push(x));
@@ -4659,20 +4667,20 @@ function partsRowsHTML(no, list, editable){
         <div class="pmeta">${esc(x.code)} · ${esc(x.unit)}
           ${x.src==='req'?'<span class="ptag req">ผู้แจ้งเลือกมา</span>':'<span class="ptag add">กบค. เพิ่ม</span>'}</div></td>
       <td>${invCell(x)}</td>
-      <td style="text-align:center">${editable
+      <td class="text-center">${editable
         ?`<span class="qty"><button onclick="kbkPartQty('${no}','${x.code}',-1)">−</button><span>${x.qty}</span><button onclick="kbkPartQty('${no}','${x.code}',1)">+</button></span>`
         :x.qty}</td>
-      <td style="text-align:right">${x.price?baht(x.price):'<span style="color:var(--gray-400)">—</span>'}</td>
-      <td style="text-align:right"><b>${baht((x.price||0)*x.qty)}</b></td>
-      ${editable?`<td style="text-align:right"><button class="pdel" title="ลบออกจากรายการ" onclick="kbkPartDel('${no}','${x.code}')"><span class="ms">delete</span></button></td>`:''}
+      <td class="text-right">${x.price?baht(x.price):'<span class="text-gray-400">—</span>'}</td>
+      <td class="text-right"><b>${baht((x.price||0)*x.qty)}</b></td>
+      ${editable?`<td class="text-right"><button class="pdel" title="ลบออกจากรายการ" onclick="kbkPartDel('${no}','${x.code}')"><span class="ms">delete</span></button></td>`:''}
     </tr>`).join('');
   };
 
-  return bar+`<div class="scrollx" style="overflow-x:auto"><table class="tbl ptab">
-    <thead><tr><th>อะไหล่</th><th>คลัง</th><th style="text-align:center">จำนวน</th><th style="text-align:right">ราคา/หน่วย</th><th style="text-align:right">รวม</th>${editable?'<th></th>':''}</tr></thead>
+  return bar+`<div class="scrollx overflow-x-auto"><table class="tbl ptab">
+    <thead><tr><th>อะไหล่</th><th>คลัง</th><th class="text-center">จำนวน</th><th class="text-right">ราคา/หน่วย</th><th class="text-right">รวม</th>${editable?'<th></th>':''}</tr></thead>
     <tbody>${['si','alt','buy'].map(group).join('')}</tbody>
-    <tfoot><tr><td colspan="${cols-1}" style="text-align:right">รวมค่าอะไหล่ทั้งหมด</td>
-      <td style="text-align:right"><b>${baht(partsTotal(list))} บาท</b></td>${editable?'<td></td>':''}</tr></tfoot>
+    <tfoot><tr><td colspan="${cols-1}" class="text-right">รวมค่าอะไหล่ทั้งหมด</td>
+      <td class="text-right"><b>${baht(partsTotal(list))} บาท</b></td>${editable?'<td></td>':''}</tr></tfoot>
   </table></div>`;
 }
 
@@ -4692,12 +4700,12 @@ function partsEditorHTML(no, j){
   const list=initJobParts(j);
   const eq=equipOfJob(j);
   if(E.equip===undefined)E.equip=eq?eq.key:'all';   // ตั้งต้นตามรุ่นอุปกรณ์ของรถคันนี้
-  return `<div class="sect" style="margin-top:24px">รายการอะไหล่ที่จะใช้ <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— ตั้งต้นจากที่ผู้แจ้งเลือกมา · แก้จำนวน เพิ่ม หรือลบได้</span></div>
+  return `<div class="sect mt-6">รายการอะไหล่ที่จะใช้ <span class="font-normal text-sm text-gray-500">— ตั้งต้นจากที่ผู้แจ้งเลือกมา · แก้จำนวน เพิ่ม หรือลบได้</span></div>
   <div class="panel">
     ${partsRowsHTML(no, list, true)}
     <div class="rowbtns justify-start mt-3">
       <button class="btn btn-o" onclick="E.addOpen=!E.addOpen;renderKbkDetail('${no}')">
-        <span class="ms" style="font-size:18px">${E.addOpen?'expand_less':'add'}</span> เพิ่มอะไหล่จากคลัง</button>
+        <span class="ms">${E.addOpen?'expand_less':'add'}</span> เพิ่มอะไหล่จากคลัง</button>
     </div>
     ${E.addOpen?`<div class="addwrap">
       <div class="addctl">
@@ -4713,10 +4721,10 @@ function partsEditorHTML(no, j){
       </div>
       <div class="addbox" id="addbox-${no}">${addListHTML(no, j)}</div>
     </div>`:''}
-    <div class="todo" style="margin-top:14px"><span class="ms">inventory_2</span><span><b>TODO — ยังไม่ตัด/คืนยอดในคลังอะไหล่จริง</b>
+    <div class="todo mt-3.5"><span class="ms">inventory_2</span><span><b>TODO — ยังไม่ตัด/คืนยอดในคลังอะไหล่จริง</b>
       ลบของที่ผู้แจ้งจองไว้ ควรคืนยอดเข้าคลัง และเพิ่มของใหม่ควรตัดยอด/ตั้งเรื่องสั่งซื้อ — หน้าคลังอะไหล่ยังไม่ผูกกับตรงนี้</span></div>
     <div class="rowbtns">
-      <button class="btn btn-o" onclick="openWorth('${no}')"><span class="ms" style="font-size:18px">balance</span> ประเมินความคุ้มค่าในการซ่อม</button>
+      <button class="btn btn-o" onclick="openWorth('${no}')"><span class="ms">balance</span> ประเมินความคุ้มค่าในการซ่อม</button>
       <button class="btn btn-p" onclick="kbkPartsConfirm('${no}')">ยืนยันรายการอะไหล่ — เริ่มงานซ่อม</button></div>
   </div>`;
 }
@@ -4730,19 +4738,19 @@ function renderWorth(){
   const t = vehType(j), parts = j.parts || [];
   $('worthbody').innerHTML = `
     <h1 class="page-title">ประเมินความคุ้มค่าในการซ่อม</h1>
-    <div class="lead" style="color:var(--gray-600);margin:4px 0 18px">${esc(j.no)} · ${esc(j.plate)} · ${t.name}</div>
+    <div class="lead text-gray-600 mt-1 mb-tk-4.5 mx-0">${esc(j.no)} · ${esc(j.plate)} · ${t.name}</div>
     <div class="vgrid">
       <div class="vcell"><label>ค่าอะไหล่ที่ประเมินไว้</label><div class="val">${baht(partsTotal(parts))} บาท</div></div>
       <div class="vcell"><label>จำนวนรายการอะไหล่</label><div class="val">${parts.length} รายการ</div></div>
-      <div class="vcell"><label>เลขไมล์ / ชม.ใช้งาน</label><div class="val" style="font-size:14px">${j.use && j.use.odo ? baht(j.use.odo) + ' กม.' : '—'}${j.use && j.use.crane ? ' · ' + baht(j.use.crane) + ' ชม.' : ''}</div></div>
+      <div class="vcell"><label>เลขไมล์ / ชม.ใช้งาน</label><div class="val text-sm">${j.use && j.use.odo ? baht(j.use.odo) + ' กม.' : '—'}${j.use && j.use.crane ? ' · ' + baht(j.use.crane) + ' ชม.' : ''}</div></div>
     </div>
-    <div class="todo" style="margin-top:18px"><span class="ms">construction</span><span><b>TODO — หน้านี้ยังเป็นโครงเปล่า</b>
+    <div class="todo mt-tk-4.5"><span class="ms">construction</span><span><b>TODO — หน้านี้ยังเป็นโครงเปล่า</b>
       ตั้งใจไว้ให้เทียบว่า <b>ซ่อมคุ้มกว่าจำหน่ายหรือไม่</b> แต่ยังไม่ได้ทำ เพราะต้องเคาะก่อนว่า:<br>
       • ใช้เกณฑ์อะไรตัดสิน (ค่าซ่อมเทียบราคาประเมินรถ กี่ % · อายุรถ · ประวัติซ่อมสะสม)<br>
       • ต้นทุนที่เอามาคิดรวมค่าแรง/ค่าเดินทางด้วยมั้ย<br>
       • ถ้าไม่คุ้ม → ไปเส้นจำหน่ายเลย หรือส่งใครอนุมัติก่อน<br>
       • ใครเป็นคนกดตัดสิน (กบค. เอง หรือผู้บังคับบัญชา)</span></div>
-    <div class="rowbtns" style="justify-content:flex-start;margin-top:18px">
+    <div class="rowbtns justify-start mt-tk-4.5">
       <button class="btn btn-g" onclick="switchView('${WORTH.back}')"><span class="ms">arrow_back</span> กลับหน้างานซ่อม</button></div>`;
 }
 
@@ -4770,7 +4778,7 @@ function addListHTML(no, j){
           ${own?'<span class="ptag fit">ตรงรุ่น</span>':'<span class="ptag gen">ของกลาง</span>'}
           <span class="ptag src-${k}"><span class="ms">${SRC[k].icon}</span>${k==='si'?'Smart Inventory':k==='alt'?'คลังสำรอง':'ต้องสั่งซื้อ'}</span></span></div>
       <span class="ar-price">${baht(p.price)} / ${esc(p.unit)}</span>
-      <span class="ms" style="color:var(--primary-600)">add_circle</span>
+      <span class="ms text-primary-600">add_circle</span>
     </div>`;
   }).join('');
 }
@@ -4782,26 +4790,26 @@ function renderAddList(no){
 
 function partsSummaryHTML(j){
   if(!j.parts||!j.parts.length)return '';
-  return `<div class="sect" style="margin-top:24px">อะไหล่ที่ใช้ในงานนี้ <span style="font-weight:400;font-size:var(--fs-sm);color:var(--gray-500)">— ยืนยันแล้ว รวม ${baht(partsTotal(j.parts))} บาท</span></div>
+  return `<div class="sect mt-6">อะไหล่ที่ใช้ในงานนี้ <span class="font-normal text-sm text-gray-500">— ยืนยันแล้ว รวม ${baht(partsTotal(j.parts))} บาท</span></div>
   <div class="panel">${partsRowsHTML(j.no, j.parts, false)}</div>`;
 }
 
 function quotePanelHTML(no, j){
   if(j.quote&&j.quote.sent){
-    return `<div class="sect" style="margin-top:24px">ส่งอู่ประเมินราคา</div>
-    <div class="apptbox"><span class="ms" style="color:var(--warning-700)">hourglass_top</span>
+    return `<div class="sect mt-6">ส่งอู่ประเมินราคา</div>
+    <div class="apptbox"><span class="ms text-warning-700">hourglass_top</span>
       <b>ส่งให้ ${esc(j.quote.garage)} ประเมินราคาแล้ว — รอใบเสนอราคา</b>${j.quote.note?'<br>'+esc(j.quote.note):''}</div>
     <div class="todo"><span class="ms">flag</span><span><b>TODO — ยังไม่ได้ทำขั้นตอนหลังได้ใบเสนอราคา</b>
       ต้องเคาะก่อนว่าใบเสนอราคากลับมาแล้วใครอนุมัติ (กบค. เอง / ผู้บังคับบัญชา) และถ้าราคาสูงเกินเกณฑ์ต้องทำอย่างไร</span></div>`;
   }
-  return `<div class="sect" style="margin-top:24px">ส่งอู่ประเมินราคา</div>
+  return `<div class="sect mt-6">ส่งอู่ประเมินราคา</div>
   <div class="panel">
-    <div class="fgrid" style="margin:0;max-width:620px">
+    <div class="fgrid m-0 max-w-[620px]">
       <div class="f sp2"><label>อู่ที่จะส่งประเมิน</label><div class="in"><span class="ms">garage</span>
         <input list="garagelist" type="text" id="q-garage" placeholder="พิมพ์ชื่ออู่ หรือเลือกจากรายการ"></div>
         <datalist id="garagelist">${GARAGES.map(g=>`<option value="${esc(g.name)}">`).join('')}</datalist></div>
     </div>
-    <div class="f" style="margin-top:12px"><label>หมายเหตุถึงอู่ <small>(ถ้ามี)</small></label><textarea id="q-note" rows="2" placeholder="เช่น ขอใบเสนอราคาแยกค่าแรง/ค่าอะไหล่…"></textarea></div>
+    <div class="f mt-3"><label>หมายเหตุถึงอู่ <small>(ถ้ามี)</small></label><textarea id="q-note" rows="2" placeholder="เช่น ขอใบเสนอราคาแยกค่าแรง/ค่าอะไหล่…"></textarea></div>
     <div class="rowbtns">
       <button class="btn btn-g" onclick="kbkSetRoute('${no}',null)"><span class="ms">arrow_back</span> เปลี่ยนเป็นซ่อมเอง</button>
       <button class="btn btn-p" onclick="kbkSendGarage('${no}')">ยืนยันส่งอู่ประเมินราคา</button></div>
@@ -4967,20 +4975,21 @@ function kbkFail(no){
 // ---- ช่วงที่ 7: ต้นทุน + อนุมัติปิดงาน ----
 function readCost(){return{labor:+(($('cst-labor')||{}).value)||0,parts:+(($('cst-parts')||{}).value)||0,travel:+(($('cst-travel')||{}).value)||0,lodging:+(($('cst-lodging')||{}).value)||0}}
 function costSum(c){return c?(c.labor+c.parts+c.travel+c.lodging):0}
-function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">สรุปต้นทุนการซ่อม (ช่วงที่ 7)</div>
-  <div class="fgrid" style="max-width:680px">
+function costFieldsHTML(){return`<div class="sect mt-5">สรุปต้นทุนการซ่อม (ช่วงที่ 7)</div>
+  <div class="fgrid max-w-[680px]">
     <div class="f sp2"><label>ค่าแรง (บาท)</label><div class="in"><span class="ms">engineering</span><input type="number" min="0" id="cst-labor" placeholder="0"></div></div>
     <div class="f sp2"><label>ค่าอะไหล่ (บาท)</label><div class="in"><span class="ms">settings</span><input type="number" min="0" id="cst-parts" placeholder="0"></div></div>
     <div class="f sp2"><label>ค่าเดินทาง (บาท)</label><div class="in"><span class="ms">local_shipping</span><input type="number" min="0" id="cst-travel" placeholder="0"></div></div>
     <div class="f sp2"><label>ค่าที่พัก (บาท)</label><div class="in"><span class="ms">hotel</span><input type="number" min="0" id="cst-lodging" placeholder="0"></div></div>
   </div>`}
-    const CROW = (k, v) => `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px"><span style="color:var(--gray-500)">${k}</span><span style="color:var(--gray-900)">${(v || 0).toLocaleString()} บาท</span></div>`;
+    const CROW = (k, v) => `<div class="flex justify-between py-1.5 px-0 text-sm"><span class="text-gray-500">${k}</span><span class="text-gray-900">${(v || 0).toLocaleString()} บาท</span></div>`;
     function costPanel(j) {
       const c = j.cost || { labor: 0, parts: 0, travel: 0, lodging: 0 };
-      return `<div class="panel"><div class="sect" style="margin:0 0 6px">ต้นทุนการซ่อม (SUM)</div>
+      return `<div class="panel"><div class="sect mt-0 mb-1.5 mx-0">ต้นทุนการซ่อม (SUM)</div>
     ${CROW('ค่าแรง', c.labor)}${CROW('ค่าอะไหล่', c.parts)}${CROW('ค่าเดินทาง', c.travel)}${CROW('ค่าที่พัก', c.lodging)}
-    <div style="display:flex;justify-content:space-between;padding:9px 0 2px;border-top:1px solid var(--gray-200);margin-top:4px"><b style="color:var(--gray-900)">รวมทั้งสิ้น</b><b style="color:var(--primary-600);font-size:16px">${costSum(c).toLocaleString()} บาท</b></div>
-    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-o" onclick="exportCost('${j.no}')"><span class="ms" style="font-size:18px">download</span> Export ต้นทุน (CSV)</button></div>
+    <!-- pt-2 = 8px — เดิม padding-top:9px ซึ่งไม่มีในสเกลระยะ จึงปัดเข้าค่าที่ใกล้สุด (pb-0.5 = 2px ตรงสเกลอยู่แล้ว) -->
+    <div class="flex justify-between pt-2 pb-0.5 px-0 border-t border-solid border-gray-200 mt-1"><b class="text-gray-900">รวมทั้งสิ้น</b><b class="text-primary-600 text-md">${costSum(c).toLocaleString()} บาท</b></div>
+    <div class="rowbtns justify-start"><button class="btn btn-o" onclick="exportCost('${j.no}')"><span class="ms">download</span> Export ต้นทุน (CSV)</button></div>
   </div>`;
     }
     function exportCost(no) {
@@ -5276,10 +5285,10 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
       $('suplist').innerHTML = list.map(j => {
         const st = statusInfo(j);
         return `<div class="job" onclick="openSup('${j.no}')">
-      <span class="ms" style="color:var(--primary-600)">approval</span>
+      <span class="ms text-primary-600">approval</span>
       <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org} · ${j.plate} · ต้นทุนรวม ${costSum(j.cost).toLocaleString()} บาท</div></div>
       <span class="badge ${st.cls}">${st.label}</span>
-      <span class="ms" style="color:var(--gray-300)">chevron_right</span></div>`;
+      <span class="ms text-gray-300">chevron_right</span></div>`;
       }).join('');
     }
     function openSup(no) { renderSupDetail(no) }
@@ -5288,22 +5297,22 @@ function costFieldsHTML(){return`<div class="sect" style="margin-top:20px">ส�
       const st = statusInfo(j);
       let action;
       if (j.phase === 'approve') {
-        action = `<div class="sect" style="margin-top:24px">ตรวจสอบและอนุมัติปิดงาน</div>
+        action = `<div class="sect mt-6">ตรวจสอบและอนุมัติปิดงาน</div>
       <div class="hint">ตรวจสอบประวัติการซ่อมและต้นทุนก่อนอนุมัติ (ช่วงที่ 6)</div>
       ${j.record ? recordPanel(j) : ''}${costPanel(j)}
       <div class="panel"><div class="f"><label>ความเห็น/เหตุผล <small>(กรณีตีกลับ)</small></label><textarea id="sup-reason" rows="2" placeholder="เช่น ต้นทุนค่าแรงสูงผิดปกติ ขอเอกสารเพิ่ม…"></textarea></div>
         <div class="rowbtns"><button class="btn btn-g" onclick="supReject('${no}')">ตีกลับให้แก้ไข</button><button class="btn btn-p" onclick="supApprove('${no}')">อนุมัติปิดงาน</button></div></div>`;
       } else {
-        action = `<div class="apptbox"><span class="ms" style="color:var(--success-600)">verified</span> <b>อนุมัติปิดงานแล้ว</b> — ส่ง Notification ถึงผู้แจ้ง · ผู้บังคับบัญชา · เจ้าของรถ</div>${costPanel(j)}`;
+        action = `<div class="apptbox"><span class="ms text-success-600">verified</span> <b>อนุมัติปิดงานแล้ว</b> — ส่ง Notification ถึงผู้แจ้ง · ผู้บังคับบัญชา · เจ้าของรถ</div>${costPanel(j)}`;
       }
       $('suplist').classList.add('hidden');
       $('supdetail').classList.remove('hidden');
       $('supdetail').innerHTML = `
-    <div class="job" style="cursor:default"><span class="ms" style="color:var(--primary-600)">approval</span>
+    <div class="job cursor-default"><span class="ms text-primary-600">approval</span>
       <div class="sp"><div class="no">${j.no}</div><div class="meta">${j.org}</div></div>
       <span class="badge ${st.cls}">${st.label}</span></div>
     ${jobInfoBox(j)}${action}${timelineBox(j)}
-    <div class="rowbtns" style="justify-content:flex-start"><button class="btn btn-g" onclick="renderSupList()"><span class="ms">arrow_back</span> กลับรายการ</button></div>`;
+    <div class="rowbtns justify-start"><button class="btn btn-g" onclick="renderSupList()"><span class="ms">arrow_back</span> กลับรายการ</button></div>`;
     }
     function supApprove(no) {
       const j = JOBS.find(x => x.no === no);
