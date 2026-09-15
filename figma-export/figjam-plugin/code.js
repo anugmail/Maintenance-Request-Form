@@ -15,13 +15,34 @@
 
 figma.showUI(__html__, { width: 420, height: 560, themeColors: true });
 
+/* ตัวบอกว่ากำลังทำขั้นไหน — ใช้ตอน error เพื่อชี้ตำแหน่งที่พังในไฟล์จริง */
+const STEP = { now: '' };
+const step = (t) => { STEP.now = t; };
+
 const ARROW = { r: 0xF8 / 255, g: 0x49 / 255, b: 0xC1 / 255 }; // ชมพู palette ของ FigJam
 
 function post(text, cls) {
   figma.ui.postMessage({ type: 'log', text, cls });
 }
 
+/* ตรวจก่อนลงมือ: ปลั๊กอินนี้ใช้ API เฉพาะของ FigJam
+   ถ้าเปิดในไฟล์ Figma Design จะไม่มีฟังก์ชันพวกนี้ แล้วไปตายกลางทางเป็น "not a function"
+   ซึ่งอ่านไม่ออกว่าเกิดอะไรขึ้น (เจ้าของงานเจอ 15 ก.ย. 2569 — เสียเวลาไล่หาอยู่นาน)
+   ⇒ ฟ้องตั้งแต่ต้นว่าเปิดผิดชนิดไฟล์ */
+function assertFigJam() {
+  const need = ['createShapeWithText', 'createConnector', 'createSection'];
+  const missing = need.filter((fn) => typeof figma[fn] !== 'function');
+  if (!missing.length) return;
+  const kind = (figma.editorType || 'ไม่ทราบชนิด');
+  throw new Error(
+    'ไฟล์ที่เปิดอยู่ไม่ใช่ FigJam (editorType = "' + kind + '") — ปลั๊กอินนี้ต้องรันในไฟล์ FigJam เท่านั้น · ' +
+    'ฟังก์ชันที่ขาด: ' + missing.join(', ') + ' · ' +
+    'วิธีแก้: เปิดไฟล์ FigJam (ไฟล์บอร์ด) แล้วรันใหม่ — ถ้าอยากได้ผังในไฟล์ Figma design ต้องใช้ปลั๊กอิน "Maintain-D → Figma" แทน'
+  );
+}
+
 async function build(spec, images) {
+  assertFigJam();
   const warnings = [];
   const byteMap = new Map(images.map(i => [i.src, i.bytes]));
 
@@ -62,6 +83,7 @@ async function build(spec, images) {
       post('✓ ' + sec.name + ' (ผัง ' + sec.diagram.nodes.length + ' node)');
       continue;
     }
+    step('สร้าง section "' + sec.name + '"');
     const s = figma.createSection();
     s.name = sec.name;
     s.fills = [{ type: 'SOLID', color: { r: sec.color[0] / 255, g: sec.color[1] / 255, b: sec.color[2] / 255 } }];
@@ -71,6 +93,7 @@ async function build(spec, images) {
     const anchors = [];
 
     for (const col of sec.cols) {
+      step('ป้ายชื่อคอลัมน์ "' + col.label + '"');
       const label = figma.createText();
       label.fontName = font;
       label.fontSize = 36;
@@ -84,6 +107,7 @@ async function build(spec, images) {
       for (const im of col.images) {
         const bytes = byteMap.get(im.src);
         if (!bytes) throw new Error('ไม่มี bytes ของ ' + im.src);
+        step('ใส่รูป ' + im.src);
         const image = figma.createImage(bytes);
         const shape = figma.createShapeWithText();
         shape.shapeType = 'SQUARE';
@@ -91,7 +115,11 @@ async function build(spec, images) {
         s.appendChild(shape);
         shape.resize(im.w, im.h);
         shape.fills = [{ type: 'IMAGE', imageHash: image.hash, scaleMode: 'FILL' }];
-        shape.strokes = [];
+        // เส้นขอบจางไว้เสมอ — ถ้า copy บอร์ดข้ามไฟล์ imageHash จะ resolve ไม่ได้ (bytes อยู่ในคลังรูป
+        // ของไฟล์ต้นทาง ไม่ตามไปด้วย) กล่องที่ไม่มีขอบจะกลายเป็นโปร่งใสสนิท มองไม่เห็นว่ามีอะไรอยู่
+        // (เจ้าของงานเจอ 15 ก.ย. 2569) ⇒ มีขอบไว้อย่างน้อยเห็นว่ากล่องยังอยู่ แค่รูปไม่มา
+        shape.strokes = [{ type: 'SOLID', color: { r: 0.816, g: 0.835, b: 0.867 } }];
+        shape.strokeWeight = 1;
         shape.x = x; shape.y = yy;
         yy += im.h;
         colW = Math.max(colW, im.w);
@@ -103,6 +131,7 @@ async function build(spec, images) {
       x += (colW || 1440) + 160;
     }
 
+    step('ปรับขนาด section "' + sec.name + '"');
     s.resizeWithoutConstraints(x - 160 + 80, 176 + maxColH + 80);
     s.x = 0; s.y = y;
     y += s.height + 320;
@@ -220,7 +249,15 @@ figma.ui.onmessage = async (msg) => {
     figma.notify('บอร์ดเสร็จ: ' + result.sections + ' section · รูป ' + result.shapes +
       ' · ลูกศร ' + result.connectors);
   } catch (e) {
-    figma.ui.postMessage({ type: 'error', message: String(e && e.message ? e.message : e) });
+    // ส่ง stack กลับไปด้วย — ข้อความอย่างเดียว ("not a function") บอกไม่ได้ว่าพังบรรทัดไหน
+    // และ mock ใน test-figjam-plugin.js จับไม่เจอเพราะมันนิยามเมธอดครบกว่า Figma จริง
+    // (เจ้าของงานเจอ 15 ก.ย. 2569 — เทส mock ผ่านแต่ของจริงพัง)
+    const detail = [
+      String(e && e.message ? e.message : e),
+      STEP.now ? 'ขั้นที่ทำอยู่: ' + STEP.now : '',
+      e && e.stack ? String(e.stack).split('\n').slice(0, 4).join(' ⏎ ') : ''
+    ].filter(Boolean).join(' · ');
+    figma.ui.postMessage({ type: 'error', message: detail });
     figma.notify('สร้างบอร์ดไม่สำเร็จ — ดูรายละเอียดในหน้าต่างปลั๊กอิน', { error: true });
   }
 };

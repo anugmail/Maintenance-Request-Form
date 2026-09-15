@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คำร้องขอเปลี่ยนสังกัดยานพาหนะ | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260907-ds62">
+<link rel="stylesheet" href="../design-system/components.css?v=20260914-ds66">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20260907-tw3"></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="../index.html" title="หน้าแรก"><span class="ms">home</span><span class="nvlbl">หน้าแรก</span></a>
+    <a class="nv on" href="transfer-request.html" title="คำร้องเปลี่ยนสังกัด"><span class="ms">swap_horiz</span><span class="nvlbl">คำร้องเปลี่ยนสังกัด</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นายอนุรักษ์ คล่องไชยชน — อก.จย.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft">Prototype (Mock) — คำร้องขอเปลี่ยนสังกัดยานพาหนะ · ยังไม่เชื่อมระบบจริง</div>
+
+      <div class="crumbs">
+        <span class="ms">directions_car</span><a href="#">ข้อมูลยานพาหนะ</a>
+        <span class="sep"></span><a href="#">3ขพ 6153 กรุงเทพมหานคร</a>
+        <span class="sep"></span><span class="cur">คำร้องขอเปลี่ยนสังกัด</span>
+      </div>
+
+      <div class="page-title-row">
+        <h1 class="page-title">คำร้องขอเปลี่ยนสังกัดยานพาหนะ</h1>
+        <span class="badge b-neutral">ร่าง</span>
+      </div>
+      <div class="sub -mt-3 mb-4">กรอกคำร้องเพื่อขอย้ายรถไปสังกัดหน่วยงานใหม่ · เมื่อส่งแล้วจะเข้าสู่ขั้นอนุมัติ</div>
+
+      <div class="max-w-[880px]">
+
+        <!-- ═══ 1. ยานพาหนะที่ขอเปลี่ยนสังกัด — อ่านอย่างเดียว ═══
+             ฟิลด์ยกมาจาก card "ข้อมูลสังกัดยานพาหนะ" ของหน้า 5.2 Vehicle Management -->
+        <div class="card">
+          <div class="incident-section-title">ยานพาหนะที่ขอเปลี่ยนสังกัด</div>
+          <dl class="incident-summary">
+            <div class="incident-field"><dt>เลขทะเบียน</dt><dd>3ขพ 6153 กรุงเทพมหานคร</dd></div>
+            <div class="incident-field"><dt>รหัสทรัพย์สิน</dt><dd>513021567839</dd></div>
+            <div class="incident-field"><dt>ประเภทยานพาหนะ</dt><dd>กระเช้าฮอทไลน์ 115 KV</dd></div>
+            <div class="incident-field"><dt>รหัสข้างรถ</dt><dd>กจย. - 25 - 1850</dd></div>
+          </dl>
+        </div>
+
+        <!-- ═══ 2. สังกัดเดิม → สังกัดใหม่ ═══
+             โครงฟิลด์ยกมาจาก Modal / Vehicle transfer ตรงตัว -->
+        <div class="card">
+          <div class="incident-section-title">สังกัดเดิม</div>
+          <dl class="incident-summary mb-0">
+            <div class="incident-field wide"><dt>สังกัดยานพาหนะเดิม</dt><dd>กจย. ฝจบ. ผชก.(ล) สายงาน ล</dd></div>
+            <div class="incident-field wide"><dt>เจ้าของยานพาหนะเดิม</dt><dd>นายอนุรักษ์ คล่องไชยชน อก.จย.</dd></div>
+          </dl>
+
+          <div class="incident-section-title mt-7">สังกัดใหม่ที่ขอย้ายไป</div>
+          <div class="fgrid grid-cols-2 mb-0">
+            <div class="f">
+              <label>สังกัดยานพาหนะใหม่ <small>(จำเป็น)</small></label>
+              <div class="in"><span class="ms">search</span>
+                <select id="new-dept">
+                  <option value="" selected disabled>เลือกสังกัด</option>
+                  <option>กอพ.1 ฝพจ. ผชก.(ดส-ท) สายงาน ดส</option>
+                  <option>กอพ.2 ฝพจ. ผชก.(ดส-ท) สายงาน ดส</option>
+                  <option>กฟอ.แม่ใจ จ.พะเยา — กฟน.1</option>
+                </select>
+              </div>
+            </div>
+            <div class="f">
+              <label>เจ้าของยานพาหนะใหม่ <small>(จำเป็น)</small></label>
+              <div class="in"><span class="ms">person</span>
+                <select id="new-owner">
+                  <option value="" selected disabled>เลือกเจ้าของยานพาหนะ</option>
+                  <option>นายสมศักดิ์ สง่าอินทร์ อก.อพ.1</option>
+                  <option>นายวีระชัย ทองสุข อก.อพ.2</option>
+                </select>
+              </div>
+            </div>
+            <div class="f">
+              <label>รหัสข้างรถใหม่</label>
+              <div class="flex items-center gap-2">
+                <input type="text" value="กอพ.1" aria-label="หน่วยงาน" class="max-w-[110px]">
+                <span class="text-gray-500">-</span>
+                <input type="text" value="25" aria-label="หมวดหมู่" class="max-w-[70px]">
+                <span class="text-gray-500">-</span>
+                <input type="text" value="1850" aria-label="ลำดับ" class="max-w-[100px]">
+              </div>
+              <div class="sub mt-1.5 mb-0">หมวดหมู่ยานพาหนะ (25) รถเช่าแบบลีสซิ่ง</div>
+            </div>
+            <div class="f">
+              <label>วันที่ต้องการให้มีผล <small>(จำเป็น)</small></label>
+              <div class="in noic"><input type="date" value="2026-10-01"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ 3. เหตุผล + เอกสารแนบ ═══
+             ⚠️ ส่วนนี้ไม่มีในดีไซน์ PEA — เป็นของที่คำร้องต้องมีตามระเบียบพัสดุ รอเจ้าของงานเคาะ -->
+        <div class="card">
+          <div class="incident-section-title">เหตุผลในการขอเปลี่ยนสังกัด</div>
+          <div class="f">
+            <label>ประเภทการโอนย้าย <small>(จำเป็น)</small></label>
+            <div class="in noic">
+              <select id="transfer-type">
+                <option value="" selected disabled>เลือกประเภท</option>
+                <option>โอนถาวร — เปลี่ยนเจ้าของในทะเบียนทรัพย์สิน</option>
+                <option>ยืมใช้ชั่วคราว — ไม่เปลี่ยนเจ้าของ</option>
+                <option>คืนรถกลับหน่วยงานเดิม</option>
+              </select>
+            </div>
+            <div class="sub mt-1.5 mb-0">ผูกกับตาราง <code>vms_ref_vehicle_transfer</code> ของระบบจริง</div>
+          </div>
+          <div class="f mt-4">
+            <label>เหตุผล / ความจำเป็น <small>(จำเป็น)</small></label>
+            <textarea rows="3" placeholder="เช่น หน่วยงานปลายทางขาดแคลนรถกระเช้าสำหรับงานฮอทไลน์"></textarea>
+          </div>
+          <div class="f mt-4">
+            <label>เอกสารแนบ <small>(JPG · PNG · PDF)</small></label>
+            <div class="flex flex-wrap gap-2">
+              <span class="file-chip"><span class="ms">picture_as_pdf</span>
+                <span class="file-chip-name">บันทึกขออนุมัติ-โอนย้าย.pdf</span>
+                <button class="file-chip-rm" aria-label="ลบไฟล์"><span class="ms">close</span></button></span>
+              <button class="btn btn-s btn-sm"><span class="ms">attach_file</span> แนบไฟล์</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ 4. ผู้อนุมัติ ═══ -->
+        <div class="card">
+          <div class="incident-section-title">ผู้อนุมัติ</div>
+          <div class="f">
+            <label>หัวหน้าหน่วยงานต้นทาง <small>(จำเป็น)</small></label>
+            <div class="in"><span class="ms">person</span>
+              <select><option value="" selected disabled>เลือกผู้อนุมัติ</option>
+                <option>นายประเสริฐ มั่นคง — ผอ.กจย.</option></select>
+            </div>
+          </div>
+          <div class="note note-info mt-4"><span class="ms">info</span>
+            <div>เมื่อส่งคำร้องแล้ว เรื่องจะไปที่หัวหน้าหน่วยงานต้นทางก่อน จากนั้นจึงส่งให้<b>หน่วยงานปลายทางยืนยันรับโอน</b> และฝ่ายพัสดุปรับปรุงทะเบียนทรัพย์สินเป็นขั้นสุดท้าย</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-s">บันทึกร่าง</button>
+          <button class="btn btn-p">ส่งคำร้อง</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

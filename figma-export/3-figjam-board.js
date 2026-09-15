@@ -8,6 +8,8 @@
      node figma-export/3-figjam-board.js            ผังโฟลว์สร้างแผน + capture 8 หน้าจอ
      node figma-export/3-figjam-board.js --after    + โฟลว์หลังออกเลขงาน (พัสดุ/ยืนยันรถ)
      node figma-export/3-figjam-board.js --maint    + เฟส 2 ดำเนินการบำรุงรักษา (ผัง + capture ถ้ามี)
+     node figma-export/3-figjam-board.js --swimlane + swimlane โฟลว์แจ้งซ่อมทั้งเส้น 19 สถานะ (ผังล้วน)
+     node figma-export/3-figjam-board.js --state    + ผังสถานะ/เงื่อนไขการเปลี่ยนสถานะ (ผังล้วน)
      node figma-export/3-figjam-board.js --pages    + หน้ารวมทุกหน้าจัดหมวด
      node figma-export/3-figjam-board.js --all      ทุกชุด
 
@@ -97,6 +99,39 @@ function main() {
     } else {
       console.log('— ยังไม่มี capture เฟส 2 (out/figjam/flow-maint/) ลงเฉพาะผัง');
     }
+  }
+
+  // Swimlane โฟลว์แจ้งซ่อมทั้งเส้น 19 สถานะ (15 ก.ย. 2569) — ผังล้วน ไม่มี capture คู่
+  // ต้นทาง: Diagram/02-แจ้งซ่อม-กบค/06-swimlane-โฟลว์ซ่อมทั้งเส้น.md
+  if (all || args.has('--swimlane')) {
+    const swimFile = path.join(OUT, 'diagram-repair-swimlane.json');
+    if (!fs.existsSync(swimFile)) {
+      console.error('ไม่พบ out/diagram-repair-swimlane.json — รัน  node figma-export/5-swimlane.js');
+      process.exit(1);
+    }
+    sections.push({
+      name: 'Swimlane — โฟลว์แจ้งซ่อมทั้งเส้น (21 สถานะ)',
+      color: COLORS.teal,
+      kind: 'diagram',
+      diagram: read(swimFile)
+    });
+  }
+
+  // ผังสถานะ + เงื่อนไขการเปลี่ยนสถานะ (15 ก.ย. 2569) — คู่กับ swimlane
+  // swimlane บอก "ใบอยู่ในมือใคร" · ผังนี้บอก "อะไรทำให้สถานะเปลี่ยน"
+  if (all || args.has('--state')) {
+    const stFile = path.join(OUT, 'diagram-repair-state.json');
+    if (!fs.existsSync(stFile)) {
+      console.error('ไม่พบ out/diagram-repair-state.json — รัน\n' +
+        '  node figma-export/4-figjam-diagram.js --src="Diagram/02-แจ้งซ่อม-กบค/07-state-เงื่อนไขเปลี่ยนสถานะ.md" --out=diagram-repair-state.json');
+      process.exit(1);
+    }
+    sections.push({
+      name: 'ผังสถานะ + เงื่อนไขการเปลี่ยนสถานะ — ใบแจ้งซ่อม',
+      color: COLORS.violet,
+      kind: 'diagram',
+      diagram: read(stFile)
+    });
   }
 
   if (all || args.has('--pages')) {

@@ -96,16 +96,36 @@ async function main() {
   data.nodes.forEach(n => { n.kind = kindOf(n.id); });
 
   // ---- เส้นเชื่อมจากซอร์สทีละบรรทัด — ลำดับ/ป้าย/สไตล์ตรงร้อยเปอร์เซ็นต์ ----
+  /* ปลายเส้นเขียนได้ทั้ง "S1" เปล่าๆ และ "S1[\"ป้าย\"]" ที่มีนิยามรูปทรงติดมาด้วย
+     ⇒ ต้องยอมให้มีวงเล็บ/ปีกกาต่อท้าย id ไม่งั้นเส้นที่นิยาม node ในบรรทัดเดียวกันจะหลุด
+     (เจอ 15 ก.ย. 2569: swimlane หลุด 5 เส้น · ผัง state หลุด 19 จาก 24) */
+  const NODE = '(\\w+)(?:\\(\\[[^\\]]*\\]\\)|\\[\\[[^\\]]*\\]\\]|\\(\\([^)]*\\)\\)|\\{[^}]*\\}|\\[[^\\]]*\\]|\\([^)]*\\))?';
+  const RE_DOT   = new RegExp(NODE + '\\s*-\\.\\s*(.*?)\\s*\\.->\\s*' + NODE);
+  const RE_LABEL = new RegExp(NODE + '\\s*(--|==)\\s+(.+?)\\s+(-->|==>)\\s*' + NODE);
+  const RE_PLAIN = new RegExp(NODE + '\\s*(-->|==>)\\s*(?:\\|([^|]*)\\|\\s*)?' + NODE);
+
   const edges = [];
+  const dropped = [];
   for (const line of code.split('\n')) {
     let em;
-    if ((em = line.match(/(\w+)\s*-\.\s*(.*?)\s*\.->\s*(\w+)/))) {
+    if ((em = line.match(RE_DOT))) {
       edges.push({ from: em[1], to: em[3], label: em[2], style: 'dotted' });
-    } else if ((em = line.match(/(\w+)\s*(-->|==>)\s*(?:\|([^|]*)\|\s*)?(\w+)/))) {
+    // A -- ป้าย --> B / A == ป้าย ==> B — ต้องมีช่องว่างคร่อมป้าย จึงไม่ชนกับ A --> B
+    } else if ((em = line.match(RE_LABEL))) {
+      edges.push({ from: em[1], to: em[5], label: em[3], style: em[4] === '==>' ? 'thick' : 'solid' });
+    } else if ((em = line.match(RE_PLAIN))) {
       edges.push({ from: em[1], to: em[4], label: em[3] || '', style: em[2] === '==>' ? 'thick' : 'solid' });
+    } else if (/(-->|==>|\.->)/.test(line) && !/^\s*%%/.test(line)) {
+      dropped.push(line.trim());   // หน้าตาเหมือนเส้นแต่แยกไม่ออก — ต้องฟ้อง ไม่ใช่ทิ้งเงียบ
     }
   }
   data.edges = edges;
+
+  if (dropped.length) {
+    console.error('🔴 มีบรรทัดที่เหมือนเส้นเชื่อมแต่แยกไม่ออก ' + dropped.length + ' บรรทัด — ผังจะขาดเส้น:');
+    dropped.slice(0, 10).forEach(l => console.error('   ' + l.slice(0, 110)));
+    process.exit(1);
+  }
 
   const ids = new Set(data.nodes.map(n => n.id));
   const bad = edges.filter(e => !ids.has(e.from) || !ids.has(e.to));
