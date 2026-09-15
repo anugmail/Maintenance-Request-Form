@@ -72,6 +72,14 @@ class MNode {
   resizeWithoutConstraints(w, h) { this.width = w; this.height = h; }
   rescale(f) { this.width *= f; this.height *= f; }
   setBoundVariable(field, v) { this.boundVariables[field] = v ? { type: 'VARIABLE_ALIAS', id: v.id } : undefined; }
+  setPluginData(k, v) { (this._plugin = this._plugin || {})[k] = v; }
+  getPluginData(k) { return (this._plugin || {})[k] || ''; }
+  findAllWithCriteria({ types }) { return this.findAll((n) => !types || types.includes(n.type)); }
+  // mock ของ instance.setProperties — สะท้อน Color ลงชื่อ ไว้ให้เทสตรวจว่าตั้ง variant ถูกจริง
+  setProperties(props) {
+    this._props = Object.assign(this._props || {}, props);
+    if (props.Color) this.name = /Color=\w+/.test(this.name) ? this.name.replace(/Color=\w+/, 'Color=' + props.Color) : this.name + ' Color=' + props.Color;
+  }
   // ranges ของข้อความที่รวม inline element — mock เก็บไว้ให้เทสตรวจว่าอยู่ในช่วงจริง
   setRangeFontName(s, e, f) { (this.ranges = this.ranges || []).push({ s, e, f }); }
   setRangeFills(s, e, p) { (this.ranges = this.ranges || []).push({ s, e, p }); }
@@ -109,6 +117,7 @@ class MNode {
 const notifications = [];
 const collections = [];
 const variables = [];
+const NO_PAGE = process.argv.includes('--nopage');
 const page1 = new MNode('PAGE'); page1.name = 'Page 1';
 const root = new MNode('DOCUMENT'); root.appendChild(page1);
 
@@ -123,7 +132,12 @@ const figma = {
   loadAllPagesAsync: async () => {},
   setCurrentPageAsync: async (p) => { figma.currentPage = p; },
   loadFontAsync: async () => {},
-  createPage() { const p = new MNode('PAGE'); root.appendChild(p); return p; },
+  // --nopage = จำลองไฟล์ที่ชนเพดาน 3 page ของแพลนฟรี (ไฟล์ไลบรารีที่ duplicate มามี 55 หน้า)
+  createPage() {
+    if (NO_PAGE) throw new Error('Cannot create page: free plan limit reached');
+    const p = new MNode('PAGE'); root.appendChild(p); return p;
+  },
+  createSection() { const s = new MNode('SECTION'); figma.currentPage.appendChild(s); return s; },
   createFrame() { const f = new MNode('FRAME'); figma.currentPage.appendChild(f); return f; },
   createText() { const t = new MNode('TEXT'); figma.currentPage.appendChild(t); return t; },
   createRectangle() { return new MNode('RECTANGLE'); },
@@ -172,12 +186,38 @@ const figma = {
   }
 };
 
+/* ---------- จำลอง "instance จริงอยู่ในไฟล์แล้ว" — ท่อ C โคลนจากตัวนี้แทนการ import ข้ามไฟล์
+   (import ต้อง Professional+ ใช้ไม่ได้บนแพลนฟรี ยืนยันแล้ว 14 ก.ย. 2569 — ดู HOWTO.md §3.5) ---------- */
+const pillVariant = new MNode('COMPONENT'); pillVariant.name = 'Color=Brand';
+const pillText = new MNode('TEXT'); pillText.characters = 'Badge'; pillVariant.appendChild(pillText);
+page1.appendChild(pillVariant);
+const pillSet = figma.combineAsVariants([pillVariant], page1);
+pillSet.name = 'Pill outline';
+const pillPlanted = pillVariant.createInstance();
+pillPlanted.name = 'Pill outline (Color=Brand)';
+page1.appendChild(pillPlanted);
+
+/* --tpl-on-page = จำลองเคสที่ผู้ใช้ก๊อปต้นแบบมาวางบน "หน้าเดียวกับที่ปลั๊กอินสร้างของ"
+   ซึ่งรันซ้ำแล้วเคยโดนล้างหายไป (เจ้าของงานเจอจริง 14 ก.ย. 2569) — ต้องรอดทั้งสองรอบ */
+let userNote = null;
+if (process.argv.includes('--tpl-on-page')) {
+  const fPage = new MNode('PAGE'); fPage.name = 'Foundations & Components';
+  root.appendChild(fPage);
+  fPage.appendChild(pillSet);
+  fPage.appendChild(pillPlanted);
+  // ของที่ผู้ใช้ก๊อปมาวางเอง (สเปก/โน้ตจากไลบรารี) ที่ไม่เกี่ยวกับ REAL_COMPONENTS เลย
+  // ปลั๊กอิน "ต้องไม่ลบ" ตามคำสั่งเจ้าของงาน 14 ก.ย. 2569 — อ่านอย่างเดียว
+  userNote = new MNode('FRAME'); userNote.name = 'Badges — spec ที่ก๊อปมาจากไลบรารี';
+  fPage.appendChild(userNote);
+}
+
 /* ---------- โหลด code.js แล้วยิง build ---------- */
 const code = fs.readFileSync(path.join(__dirname, 'plugin', 'code.js'), 'utf8');
 vm.runInNewContext(code, { figma, __html__: '', console });
 
-// --report = เทสสเปกโฟลว์แจ้งซ่อม (spec-report.json) — สองสเปกเป็นคนละไฟล์ ไม่ทับกัน
-const specFile = process.argv.includes('--report') ? 'spec-report.json' : 'spec.json';
+// --report = เทสสเปกโฟลว์แจ้งซ่อม (spec-report.json) · --overhaul = สเปกทดสอบ 1 หน้า (spec-overhaul.json)
+const OVERHAUL_TEST = process.argv.includes('--overhaul');
+const specFile = process.argv.includes('--report') ? 'spec-report.json' : OVERHAUL_TEST ? 'spec-overhaul.json' : 'spec.json';
 const spec = JSON.parse(fs.readFileSync(path.join(__dirname, 'out', specFile), 'utf8'));
 
 /* ค่าคาดหวังจาก spec — ข้อความที่ต้องเห็นบนหน้าจอ (multiset) */
@@ -216,8 +256,14 @@ const ok = (msg) => console.log('✓ ' + msg);
   });
   unset.length === 0 ? ok('alias ครบ ' + aliasDefs.length) : fail('alias ไม่มีค่า: ' + unset.map(d => d.name).join(','));
 
+  /* หา "ที่อยู่ของผลลัพธ์" ตามชื่อ — ปกติเป็น page แต่ถ้าไฟล์ชนเพดาน 3 page ของแพลนฟรี
+     ปลั๊กอินจะลงใน section ชื่อเดียวกันบนหน้าปัจจุบันแทน (ดู resolvePage ใน plugin/code.js) */
+  const hostOf = (name) => root.children.find(p => p.name === name)
+    || (figma.currentPage.children || []).find(n => n.name === name)
+    || { children: [] };
+
   /* ข้อความบนหน้าจอครบตัวต่อตัว (เฉพาะที่ visible) */
-  const screensPage = root.children.find(p => p.name === spec.pageName);
+  const screensPage = hostOf(spec.pageName);
   const gotTexts = [];
   (function collect(n, hidden) {
     for (const c of n.children) {
@@ -251,27 +297,54 @@ const ok = (msg) => console.log('✓ ' + msg);
   (function scan2(n) { if (n.boundVariables.topLeftRadius) rbound++; n.children.forEach(scan2); })(root);
   rbound > 0 ? ok('radius ผูก variable ' + rbound + ' จุด') : fail('radius ไม่ถูกผูกเลย');
 
-  /* หน้า Foundations ครบ: icons grid + ชุด + specimen */
-  const fPage = root.children.find(p => p.name === spec.components.pageName);
-  const wantTop = 1 + spec.components.sets.length + spec.components.specimens.length;
-  fPage && fPage.children.length === wantTop
+  /* หน้า Foundations ครบ: icons grid + ชุด (โคลนของจริงนับเป็น instance แยกทีละ variant ไม่ใช่ 1 component-set) + specimen */
+  const REAL_SETS = ['badge'];   // ต้องตรงกับ key ใน REAL_COMPONENTS ของ plugin/code.js
+  const fPage = hostOf(spec.components.pageName);
+  const setTopCount = spec.components.sets.reduce((sum, s) =>
+    sum + ((pillPlanted && REAL_SETS.includes(s.set)) ? s.variants.length : 1), 0);
+  const wantTop = 1 + setTopCount + spec.components.specimens.length;
+  // โหมด --tpl-on-page วางต้นแบบไว้บนหน้านี้เอง ซึ่งปลั๊กอิน "ต้องไม่ลบ" ⇒ นับแยกออกจากของที่สร้าง
+  const madeTop = fPage ? fPage.children.filter(c => c !== pillSet && c !== pillPlanted && c !== userNote).length : 0;
+  madeTop === wantTop
     ? ok('หน้า Foundations มี ' + wantTop + ' ก้อน')
-    : fail('หน้า Foundations มี ' + (fPage ? fPage.children.length : 0) + ' คาด ' + wantTop);
+    : fail('หน้า Foundations มี ' + madeTop + ' คาด ' + wantTop);
 
   if (r.warnings.length) {
     console.log('\nคำเตือนจากปลั๊กอิน ' + r.warnings.length + ' รายการ:');
     r.warnings.slice(0, 10).forEach(w => console.log('   ' + w));
   }
 
-  /* chevron ของ stepper — ต้องหมุนและอยู่ขอบขวา ไม่ใช่แท่งตรงหน้าเลขขั้น */
-  const fPage2 = root.children.find(p => p.name === spec.components.pageName);
+  /* badge ต้องเป็น instance ที่โคลนมาจาก "Pill outline" จริงที่ปลูกไว้ในไฟล์ (ไม่ใช่ component ที่สร้างเอง) */
+  if (pillPlanted) {
+    const badgeInstances = [];
+    (function scanBadges(n) {
+      if (n.type === 'INSTANCE' && n.mainComponent === pillVariant) badgeInstances.push(n);
+      n.children.forEach(scanBadges);
+    })(root);
+    badgeInstances.length
+      ? ok('badge ใช้ Pill outline จริง (โคลนจาก instance ที่มีอยู่แล้ว) ' + badgeInstances.length + ' จุด (variant: ' + [...new Set(badgeInstances.map(b => b.name))].join(', ') + ')')
+      : fail('ไม่มี badge ไหนใช้ Pill outline จริงเลย (fallback ไปสร้างเองหมด?)');
+    const foundationsBadgeSet = hostOf(spec.components.pageName)
+      .children.find(c => c.name === 'badge');
+    foundationsBadgeSet
+      ? fail('badge ยังถูกสร้างเองในหน้า Foundations ด้วย — ควรข้ามไปเมื่อใช้ของจริงได้แล้ว')
+      : ok('ไม่มี badge สร้างเองซ้ำในหน้า Foundations');
+  }
+
+  /* chevron ของ stepper — ต้องหมุนและอยู่ขอบขวา ไม่ใช่แท่งตรงหน้าเลขขั้น
+     (เฉพาะสเปกที่มี wizard stepper — spec-overhaul.json เป็นหน้าตาราง ไม่มี .wstep เลย ข้ามส่วนนี้) */
+  const fPage2 = hostOf(spec.components.pageName);
   let chev = [];
   (function findChev(n) {
     if (/::(before|after)$/.test(n.name || '') && /wstep/.test(n.name || '')) chev.push(n);
     n.children.forEach(findChev);
   })(fPage2);
 
-  if (!chev.length) fail('ไม่เจอ node chevron ของ .wstep เลย');
+  /* สเปกไหนไม่มี .wstep เลย = ไม่ใช่วิซาร์ดเต็มหน้า (หน้าตาราง หรือโฟลว์ที่ย้ายไปเป็น modal
+     ตั้งแต่ 1 ก.ย. 2569) — ข้ามได้ ตัดสินจากตัวสเปกเอง ไม่ใช่จากแฟล็กที่ส่งมา */
+  const specHasWstep = JSON.stringify(spec.screens || []).includes('wstep');
+  if (!chev.length && !specHasWstep) ok('ข้าม chevron check (สเปกนี้ไม่มี .wstep — ไม่ใช่วิซาร์ดเต็มหน้า)');
+  else if (!chev.length) fail('ไม่เจอ node chevron ของ .wstep เลย');
   else {
     const rotated = chev.filter(c => Math.abs(c.rotation) > 1);
     rotated.length === chev.length
@@ -296,6 +369,20 @@ const ok = (msg) => console.log('✓ ' + msg);
   const res2 = figma._last;
   res2.type === 'done' ? ok('รันซ้ำผ่าน') : fail('รันซ้ำพัง: ' + JSON.stringify(res2));
   variables.length === varCount1 ? ok('รันซ้ำ variable ไม่งอก (' + variables.length + ')') : fail('รันซ้ำ variable งอกเป็น ' + variables.length);
+
+  /* ต้นแบบที่ผู้ใช้ก๊อปมาวางต้องไม่ถูกล้างทิ้งตอนรันซ้ำ — ไม่งั้นรอบถัดไปหาไม่เจอ ตกไปสร้างเอง */
+  const alive = (n) => { while (n) { if (n.type === 'DOCUMENT') return true; n = n.parent; } return false; };
+  (!pillSet.removed && alive(pillSet))
+    ? ok('ต้นแบบ "Pill outline" ยังอยู่หลังรันซ้ำ')
+    : fail('ต้นแบบ "Pill outline" โดนล้างทิ้งตอนรันซ้ำ — รอบหน้าจะหาไม่เจอแล้วตกไปสร้างเอง');
+
+  /* ของที่ผู้ใช้วางเองบนหน้าเดียวกัน (ไม่เกี่ยวกับ component ที่ปลั๊กอินใช้) ก็ต้องไม่โดนลบ
+     — "ต้องไม่ไปยุ่งกับ Foundations & Components ไปอ่านเฉยๆ" (เจ้าของงาน 14 ก.ย. 2569) */
+  if (userNote) {
+    (!userNote.removed && alive(userNote))
+      ? ok('ของที่ผู้ใช้วางเองไม่โดนลบ')
+      : fail('ปลั๊กอินลบของที่ผู้ใช้วางเองใน Foundations & Components');
+  }
 
   console.log(process.exitCode ? '\nมีข้อผิดพลาด' : '\nผ่านทุกข้อ');
 })();

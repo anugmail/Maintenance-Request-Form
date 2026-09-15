@@ -174,16 +174,59 @@ node figma-export/serve.js        # พอร์ต 8124
 ### 3.1 ภาพรวมท่อ
 
 ```
-หน้า HTML (JS-rendered)
+design-system/.figma-extract/          ← dump ของไฟล์ Figma จริง (ไฟล์ในเครื่อง ไม่ต้องต่อเน็ต)
+   │ build-library-geometry.js         อ่าน "ตัวนิยาม COMPONENT_SET" → ค่าจริงราย variant
+   ▼ figma-export/library-geometry.json
+                                       ╲
+หน้า HTML (JS-rendered)                 ╲
    │ 1-extract.js / flow-report-extract.js   เดิน DOM เก็บ rect + computed style + pseudo-element
-   ▼ out/dom-*.json  (+ out/shot-*.png)
+   ▼ out/dom-*.json  (+ out/shot-*.png)      ╲
    │ 2-map.js        geometry บอกโครง · CSS บอกหน้าตา
+   │                 + **ค่าไลบรารีทับค่าที่วัดได้** ตรงจุดที่ไลบรารีระบุไว้ชัด
    │                 + tokens-vars.js อ่าน tokens.css → Variables 3 collection
    │                 + components-map.js ยกของซ้ำเป็น component แล้วแทนด้วย instance
-   ▼ out/spec.json หรือ out/spec-report.json  (+ out/map-report.json)
+   ▼ out/spec.json หรือ out/spec-report.json หรือ out/spec-overhaul.json  (+ out/map-report.json)
    │ serve.js
    ▼ plugin/ → สร้าง Variables → หน้า Foundations & Components → หน้าจอ
 ```
+
+### 3.1.1 ค่าไลบรารีทับค่าที่วัดได้ (เพิ่ม 14 ก.ย. 2569)
+
+**ปัญหาที่เจอ:** ค่าที่วัดจากหน้าเว็บที่เรนเดอร์แล้วคลาดจากสเปกไลบรารีเสมอ — กล่องข้อความของ
+เบราว์เซอร์ไม่ได้อยู่กึ่งกลางเป๊ะ ทำให้ badge ได้ `padding 2/9/3/9` แทน `4/8/4/8` ของจริง
+และความกว้างที่วัดได้กลายเป็น `FIXED 54` ทั้งที่ไลบรารีเป็น **Hug**
+
+**ทางแก้:** ยึด `design-system/.figma-extract/` (dump ของไฟล์ Figma จริง เก็บเป็นไฟล์ในเครื่อง)
+เป็นแหล่งความจริง — **ไม่ต้องต่อ Figma ตอนแปลง** อ่านจาก **ตัวนิยาม COMPONENT_SET**
+ไม่ใช่ instance ที่กระจายตามหน้า (instance ถูกยืด/บีบ/override มาแล้ว) ⇒ ได้ทั้ง geometry
+และ **สีราย variant** จริง
+
+```bash
+node figma-export/build-library-geometry.js   # → figma-export/library-geometry.json
+```
+
+รันเมื่อ: **ไลบรารีเปลี่ยน** (dump ใหม่ด้วย `dump-plugin/` แล้วรันตัวนี้) — นอกนั้นไม่ต้องรันซ้ำ
+`2-map.js` โหลดไฟล์นี้เองอัตโนมัติ · ถ้าไม่มีไฟล์จะเตือนแล้วใช้ค่าที่วัดได้ตามเดิม (ไม่พัง)
+
+สคริปต์พิมพ์**บัญชีของที่ไลบรารีมี** ให้ทุกครั้ง — เห็นเลยว่าตระกูล badge/pill มี 16 ชุด
+แต่ท่อ export ใช้อยู่ชุดเดียว (`Pill outline`) เพราะโค้ดเรามี `.badge` คลาสเดียว
+จะใช้ชุดอื่นต้องเพิ่มคลาสในโค้ดก่อน แล้วค่อยเพิ่มบรรทัดใน `FAMILY_MAP`
+
+### 3.1.2 หน้า Overhaul
+
+```bash
+python3 -m http.server 8123 --bind 127.0.0.1 &
+export NODE_PATH=~/pw/node_modules
+
+ONLY=overhaul node figma-export/1-extract.js   # เก็บ DOM เฉพาะหน้านี้
+node figma-export/0-icons.js
+node figma-export/build-library-geometry.js    # ข้ามได้ถ้า library-geometry.json มีอยู่แล้ว
+node figma-export/2-map.js --overhaul          # → out/spec-overhaul.json
+node figma-export/test-plugin.js
+node figma-export/serve.js
+```
+
+ในไฟล์ Figma design → แก้ช่อง URL เป็น `http://localhost:8124/spec-overhaul.json` → **"โหลด + สร้าง"**
 
 ### 3.2 แบบที่ 1 — ชุด yearly (4 หน้าจอ)
 

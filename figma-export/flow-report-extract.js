@@ -29,7 +29,12 @@ const PLATE = '81-2345';   // Hino FM8J + เครน Tadano — จังห�
 const summary = [];
 const errors = [];
 
-async function extractState(page, slug, name) {
+/* UNTIL=report-01 — หยุดหลังเก็บ state ที่ระบุ (ไม่ต้องไล่กดครบทั้ง 8 ขั้น)
+   ใช้ตอนอยากลอง export ทีละหน้า หรือตอนจังหวะกดขั้นหลังยังไม่ตรงโฟลว์ปัจจุบัน */
+const UNTIL = (process.env.UNTIL || '').trim();
+const STOP = Symbol('stop');
+
+async function extractState(page, slug, name, rootSel) {
   await page.evaluate(() => document.fonts.ready);
   // toast auto-hide 2.6s — รอให้หายก่อน ไม่ให้ติดเป็น node เกินใน DOM ที่เก็บ
   await page.waitForFunction(() => !document.getElementById('toast').classList.contains('show'),
@@ -40,7 +45,7 @@ async function extractState(page, slug, name) {
   await page.setViewportSize({ width: WIDTH, height: Math.min(Math.max(h, 900), 8000) });
   await page.waitForTimeout(200);
 
-  const data = await page.evaluate(walkDom);
+  const data = await page.evaluate(walkDom, rootSel || null);
   await page.screenshot({ path: path.join(OUT, 'shot-' + slug + '.png') });
   await page.setViewportSize({ width: WIDTH, height: 1000 });
 
@@ -49,7 +54,7 @@ async function extractState(page, slug, name) {
     slug,
     name,
     source: '/mock/Maintenance-Request-Form.html',
-    viewport: { width: WIDTH, height: data.docHeight },
+    viewport: { width: WIDTH, height: rootSel ? data.rootHeight : data.docHeight },
     extractedAt: new Date().toISOString(),
     root: data.root
   };
@@ -58,6 +63,7 @@ async function extractState(page, slug, name) {
   const kb = Math.round(fs.statSync(file).size / 1024);
   summary.push({ slug, nodes: data.counted, height: data.docHeight, kb });
   console.log('✓ ' + slug.padEnd(12) + String(data.counted).padStart(5) + ' node · สูง ' + data.docHeight + 'px · ' + kb + 'KB · ' + name);
+  if (UNTIL && slug === UNTIL) throw STOP;
 }
 
 const visible = (id) => '#' + id + ':not(.hidden)';
@@ -74,15 +80,22 @@ async function main() {
   await page.goto(BASE + '/mock/Maintenance-Request-Form.html', { waitUntil: 'networkidle' });
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
-  await page.waitForSelector('#vlist .radcard');
-
-  const worder = await page.evaluate(() => WORDER.join(','));
-  if (worder !== 'vehicle,symptom,info,parts,decision') {
-    throw new Error('ลำดับขั้น wizard ไม่ตรงที่คาด: ' + worder);
-  }
+  /* 🔴 โฟลว์แจ้งซ่อมเปลี่ยนไปแล้ว (1 ก.ย. 2569 เป็นต้นมา):
+       เดิม = วิซาร์ดเต็มหน้า 5 ขั้น เริ่มที่การ์ดเลือกรถ `#vlist .radcard`
+       ตอนนี้ = หน้าแรกคือตาราง "จัดการงานซ่อม" (#view-my) แล้วกดปุ่ม "แจ้งซ่อม"
+                เปิด **modal 4 ขั้น** (#repair-modal) · ขั้นเลือกรถเป็น dropdown #v-select
+     ⇒ จังหวะกดของ state 02–08 ข้างล่างยัง**ไม่ได้อัปเดต** ใช้ UNTIL=report-01 ไปก่อน
+     ตัวจับยึดชุดเดียวกับ mock/test/flow-regression.js ซึ่งเป็นเทสที่ดูแลอยู่จริง */
+  await page.waitForSelector('#mylist table.tbl tbody tr');
+  await page.locator('.lt-actions .btn-p', { hasText: 'แจ้งซ่อม' }).click();
+  await page.waitForSelector('#repair-modal:not(.hidden)');
+  await page.waitForSelector('#v-select');
 
   // ---- ขั้น 1: เลือกรถ ----
-  await extractState(page, 'report-01', 'ขั้นที่ 1 เลือกรถ — ยังไม่เลือก');
+  // เอาเฉพาะตัว modal — ไม่เอา .modal-overlay (ฉากหลังดำโปร่ง) กับหน้าตารางที่อยู่ข้างหลัง
+  // ไม่งั้นเฟรมใน Figma จะเป็นหน้าเต็มที่ถูกคลุมด้วยสีดำโปร่ง (เจ้าของงานเจอ 14 ก.ย. 2569)
+  await extractState(page, 'report-01', 'ขั้นที่ 1 ข้อมูลยานพาหนะและผู้แจ้ง — ยังไม่เลือกรถ',
+    '#repair-modal .modal');
 
   await page.locator('#vlist .radcard', { hasText: PLATE }).click();
   await page.waitForSelector(visible('vinfo'));
@@ -186,4 +199,12 @@ async function main() {
   if (errors.length) process.exitCode = 1;
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch(async (e) => {
+  if (e === STOP) {
+    fs.writeFileSync(path.join(OUT, 'extract-report-summary.json'), JSON.stringify({ summary, errors }, null, 2));
+    console.log('\nหยุดที่ UNTIL=' + UNTIL + ' · ' + summary.length + ' state');
+    process.exit(0);
+  }
+  console.error(e);
+  process.exit(1);
+});

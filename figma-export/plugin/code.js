@@ -353,7 +353,7 @@ function recolorVectors(root, hex) {
 
 /* ---------- component registry ----------
    เติมโดย buildComponents ก่อนสร้างหน้าจอ — หน้าจออ้างผ่านชื่อชุด+key */
-const REG = { icons: {}, sets: {} };
+const REG = { icons: {}, sets: {}, realSources: {}, protected: new Set() };
 
 async function buildNode(spec, parent) {
   if (spec.type === 'svg') {
@@ -398,7 +398,8 @@ async function buildNode(spec, parent) {
    index ของ override นับจากตัวนิยามแบบ pre-order (2-map.js นับมาให้)
    ตรงกับลำดับ findAll ของ Figma พอดี — node ที่ถูกซ่อนก็ยังอยู่ในลำดับ */
 async function buildInstance(spec, parent, comp) {
-  const inst = comp.createInstance();
+  // comp เป็นได้ทั้ง COMPONENT ที่สร้างเอง (createInstance) หรือ INSTANCE จริงที่โคลนมา (clone — cloneRealSet)
+  const inst = comp.type === 'INSTANCE' ? comp.clone() : comp.createInstance();
   parent.appendChild(inst);
   inst.name = spec.name || comp.name;
   const ov = spec.overrides || {};
@@ -446,20 +447,208 @@ function WEIGHT_OF(tn) {
   return 400;
 }
 
+/* ---------- component จริงจากไลบรารี (แทนที่จะสร้างเองจาก DOM ที่เรนเดอร์) ----------
+   ⚠️ 14 ก.ย. 2569 ยืนยันแล้วว่า importComponentByKeyAsync/importComponentSetByKeyAsync
+   ใช้ไม่ได้บนแพลนฟรี (ต้อง Professional+ ถึงเปิดไลบรารีข้ามไฟล์ได้ — ดู HOWTO.md §3.5 เคยตรวจไว้
+   25 ส.ค. 2569 แล้วเจอเหมือนกัน) ⇒ ใช้วิธี "โคลนจาก instance ที่มีอยู่แล้วในไฟล์" แทน — ไม่ต้องใช้สิทธิ์
+   ไลบรารีเลย ใช้ได้บนแพลนฟรี ข้อแม้เดียวคือไฟล์ปลายทางต้องมี instance ของ component นั้นวางอยู่แล้ว
+   อย่างน้อย 1 ตัว (ผู้ใช้แปะหน้าจอจริงจาก VMS Plus ไว้เทียบ) */
+const REAL_COMPONENTS = {
+  badge: {
+    familyName: 'Pill outline',   // ชื่อ component set จริงตามไลบรารี "(Component) VMS Plus"
+    colorProp: 'Color',
+    colorOf: (status) => ({
+      success: 'Success', warning: 'Warning', error: 'Error',
+      brand: 'Brand', neutral: 'Gray', info: 'Info',
+    }[status] || 'Gray'),
+  },
+};
+
+/* หาของจริงในไฟล์ปัจจุบัน — คืนได้ 2 แบบ
+     { kind:'set', node }       COMPONENT_SET/COMPONENT ตัวจริงอยู่ในไฟล์นี้เลย
+                                (กรณีรันในไฟล์ไลบรารีเอง เช่น "(Component) VMS Plus (Copy)")
+                                ⇒ ดีที่สุด: createInstance() ได้ instance ที่ผูกกับตัวนิยามจริง
+     { kind:'instance', node }  มีแค่ instance ที่ใครสักคนแปะไว้ ⇒ clone() เอา
+
+   ไล่ทุกหน้า (loadAllPagesAsync ทำไว้แล้วใน buildSpec ก่อนเรียก buildComponents)
+   ใช้ getMainComponentAsync เสมอ (documentAccess: dynamic-page ห้ามอ่าน mainComponent แบบ sync)
+
+   ⚠️ Plugin API อ่านข้ามไฟล์ไม่ได้เด็ดขาด — ของต้องอยู่ในไฟล์เดียวกับที่รันปลั๊กอิน
+   (importComponentByKeyAsync ที่ข้ามไฟล์ได้ ต้อง Professional+ ดู HOWTO §3.5) */
+async function findRealSource(familyName) {
+  // 1) ตัวนิยามจริงในไฟล์นี้ — ดีกว่า instance เพราะได้ variant ครบและไม่ต้องเดา property
+  for (const page of figma.root.children) {
+    let sets;
+    try { sets = page.findAllWithCriteria({ types: ['COMPONENT_SET', 'COMPONENT'] }); }
+    catch (e) { continue; }
+    for (const n of sets) {
+      if (n.name !== familyName) continue;
+      if (n.type === 'COMPONENT' && n.parent && n.parent.type === 'COMPONENT_SET') continue;  // variant ย่อย ไม่ใช่ตัวชุด
+      return { kind: 'set', node: n };
+    }
+  }
+  // 2) ไม่มีตัวนิยาม — หา instance ที่แปะไว้ในไฟล์แทน
+  for (const page of figma.root.children) {
+    let instances;
+    try { instances = page.findAllWithCriteria({ types: ['INSTANCE'] }); }
+    catch (e) { continue; }
+    for (const inst of instances) {
+      try {
+        const main = typeof inst.getMainComponentAsync === 'function'
+          ? await inst.getMainComponentAsync() : inst.mainComponent;
+        if (!main) continue;
+        let holder = main;
+        try { if (main.parent && main.parent.type === 'COMPONENT_SET') holder = main.parent; } catch (e2) {}
+        if (holder.name === familyName) return { kind: 'instance', node: inst };
+      } catch (e3) { /* instance นี้เข้าไม่ถึง main component (remote ที่ดึงไม่ได้ ฯลฯ) — ข้าม */ }
+    }
+  }
+  return null;
+}
+
+/* คืน { nodes } ถ้าโคลนของจริงแทน setDef นี้ได้สำเร็จ (เติม REG.sets ให้ครบเอง) —
+   null = ไม่มี instance ต้นแบบให้โคลนในไฟล์นี้ หรือตั้ง variant ไม่ได้ → ให้ตกไปสร้างเองตามเดิม */
+/* หาต้นแบบของจริงให้ครบ **ก่อน** จะไปล้าง page ใดๆ แล้วติดธงห้ามลบไว้
+   ต้องทำก่อนเสมอ ไม่งั้นต้นแบบที่วางอยู่บนหน้าที่กำลังจะล้าง จะหายไปก่อนได้ใช้ */
+async function preloadRealSources() {
+  REG.realSources = {};
+  REG.protected = new Set();
+  for (const [setName, real] of Object.entries(REAL_COMPONENTS)) {
+    const src = await findRealSource(real.familyName);
+    if (!src) continue;
+    REG.realSources[setName] = src;
+    // กันทั้งตัวมันเองและสายพ่อขึ้นไป (ต้นแบบอาจอยู่ในเฟรม/section ที่จะโดนล้างทั้งก้อน)
+    let n = src.node;
+    while (n && n.type !== 'PAGE' && n.type !== 'DOCUMENT') { REG.protected.add(n.id); n = n.parent; }
+  }
+}
+
+async function cloneRealSet(setDef) {
+  const real = REAL_COMPONENTS[setDef.set];
+  if (!real) return null;
+  const src = REG.realSources[setDef.set];
+  if (!src) {
+    warn('ในไฟล์นี้ไม่มี "' + real.familyName + '" เลย (ต้องมีตัวนิยาม COMPONENT_SET หรือ instance '
+      + 'อย่างน้อย 1 ตัว) — ใช้แบบสร้างเองแทน · วิธีแก้: ก๊อป "' + real.familyName
+      + '" จากไฟล์ไลบรารีมาวางในไฟล์นี้ครั้งเดียว แล้วรันซ้ำ');
+    return null;
+  }
+
+  /* ตัวนิยามอยู่ในไฟล์ → หยิบ variant ที่ต้องการมา createInstance() ตรงๆ
+     (ห้าม appendChild ตัวนิยามเองเข้าหน้า Foundations — จะเป็นการ "ย้าย" ของจริงออกจากที่เดิม) */
+  const fromSet = (wantColor) => {
+    const set = src.node;
+    if (set.type === 'COMPONENT') return set.createInstance();
+    const want = real.colorProp + '=' + wantColor;
+    const exact = (set.children || []).find(c => c.type === 'COMPONENT' && c.name === want);
+    if (exact) return exact.createInstance();
+    // ไม่มี variant ที่ขอ — ใช้ตัวแรกแทนแต่ต้องเตือน ไม่งั้นสีผิดแบบเงียบๆ
+    const any = (set.children || []).find(c => c.type === 'COMPONENT');
+    if (!any) return null;
+    warn('"' + real.familyName + '" ไม่มี variant ' + want + ' — ใช้ ' + any.name + ' แทน (สีจะไม่ตรง)');
+    return any.createInstance();
+  };
+
+  const nodes = [];
+  for (const v of setDef.variants || []) {
+    const status = (String(v.key).split('=')[1] || '').trim();
+    const wantColor = real.colorOf(status);
+    let node;
+    try {
+      if (src.kind === 'set') {
+        node = fromSet(wantColor);
+        if (!node) { warn('ไม่พบ variant ' + real.colorProp + '=' + wantColor + ' ใน "' + real.familyName + '"'); continue; }
+      } else {
+        node = src.node.clone();
+        node.setProperties({ [real.colorProp]: wantColor });
+      }
+    } catch (e) {
+      warn('ตั้ง ' + real.colorProp + '=' + wantColor + ' ของ "' + real.familyName + '" ไม่ได้ (' + (e && e.message || e) + ')');
+      if (node) { try { node.remove(); } catch (e2) {} }
+      continue;
+    }
+    node.name = real.familyName + ' (' + real.colorProp + '=' + wantColor + ')';
+    REG.sets[setDef.set + '§' + v.key] = node;
+    nodes.push(node);
+  }
+  return nodes.length ? { nodes, kind: src.kind } : null;
+}
+
 /* ---------- หน้า Foundations & Components ----------
    ไอคอน → ชุด variant → specimen (ลำดับนี้เพราะชุดหลังใช้ของชุดแรกได้) */
+/* หา/สร้าง page ตามชื่อ — แพลนฟรีจำกัด 3 page/ไฟล์ ถ้าสร้างไม่ได้ให้ลงหน้าปัจจุบันแทน
+   (ไฟล์ไลบรารีที่ duplicate มามี 55 หน้าอยู่แล้ว สร้างหน้าที่ 56 ไม่ได้ — เจอ 14 ก.ย. 2569)
+   ของที่ลงหน้าปัจจุบันจะห่อใน frame ชื่อเดียวกับ page เพื่อให้รันซ้ำล้างของเดิมได้ตรงกลุ่ม */
+/* ---------- กติกาการล้างตอนรันซ้ำ: "ลบเฉพาะของที่ปลั๊กอินสร้างเอง" ----------
+   เจ้าของงานสั่ง 14 ก.ย. 2569: *"ต้องไม่ไปยุ่งกับ Foundations & Components
+   หมายถึงต้องไม่ไปลบ ไปอ่านเฉยๆ"* — ผู้ใช้ก๊อปสเปกจริงจากไลบรารีมาวางไว้เป็นตัวอ้างอิง
+   แล้วรันซ้ำทีไรก็โดนล้างหายหมด
+
+   ⇒ ทุก node ที่ปลั๊กอินสร้างจะถูกติดตรา pluginData ไว้ · ตอนล้างจะลบ**เฉพาะตัวที่มีตรา**
+   ของที่คนอื่นวางไว้ (ต้นแบบ/โน้ต/สเปกที่ก๊อปมา) อยู่รอดเสมอ ไม่ต้องพึ่งว่าวางหน้าไหน
+
+   ⚠ ของที่ปลั๊กอินสร้างไว้**ก่อน**เวอร์ชันนี้ไม่มีตรา ⇒ รอบแรกหลังอัปเดตจะไม่ถูกล้าง
+   ต้องลบมือครั้งเดียว (ยอมรกดีกว่าเผลอลบของผู้ใช้) */
+const MARK_KEY = 'maintaind';
+const MARK_VALUE = 'generated';
+
+function markMine(node) {
+  try { node.setPluginData(MARK_KEY, MARK_VALUE); } catch (e) { /* node ชนิดที่ตั้งไม่ได้ — ข้าม */ }
+  return node;
+}
+
+function isMine(node) {
+  try { return node.getPluginData(MARK_KEY) === MARK_VALUE; } catch (e) { return false; }
+}
+
+function clearExcept(node) {
+  let kept = 0;
+  for (const child of node.children.slice()) {
+    if (REG.protected.has(child.id) || !isMine(child)) { kept++; continue; }
+    child.remove();
+  }
+  if (kept) warn('ไม่แตะของที่ไม่ได้สร้างเอง ' + kept + ' ชิ้นใน "' + node.name + '"');
+}
+
+function resolvePage(pageName) {
+  const existing = figma.root.children.find(p => p.name === pageName);
+  if (existing) {
+    clearExcept(existing);
+    return { page: existing, host: existing };
+  }
+  try {
+    const page = figma.createPage();
+    page.name = pageName;
+    return { page, host: page };
+  } catch (e) {
+    // สร้าง page ไม่ได้ (เพดานแพลนฟรี) → ใช้หน้าปัจจุบัน แล้วคุมขอบเขตด้วย section แทน
+    const page = figma.currentPage;
+    const old = page.children.filter(n => n.name === pageName);
+    for (const n of old) n.remove();
+    warn('สร้าง page "' + pageName + '" ไม่ได้ (เพดาน 3 page ของแพลนฟรี) — ลงในหน้าปัจจุบันแทน '
+      + 'ภายใต้ section ชื่อเดียวกัน');
+    let host;
+    try {
+      host = figma.createSection();
+      host.name = pageName;
+      page.appendChild(host);
+      markMine(host);
+    } catch (e2) {
+      host = figma.createFrame();
+      host.name = pageName;
+      page.appendChild(host);
+      markMine(host);
+    }
+    return { page, host };
+  }
+}
+
 async function buildComponents(comp) {
   REG.icons = {}; REG.sets = {};
   if (!comp) return { sets: 0, icons: 0 };
 
   const pageName = comp.pageName || 'Foundations & Components';
-  let page = figma.root.children.find(p => p.name === pageName);
-  if (page) {
-    for (const child of page.children.slice()) child.remove();   // รันซ้ำ = ล้างแล้วสร้างใหม่
-  } else {
-    page = figma.createPage();
-    page.name = pageName;
-  }
+  const page = resolvePage(pageName).host;
 
   let y = 0;
 
@@ -467,6 +656,7 @@ async function buildComponents(comp) {
     const grid = figma.createFrame();
     grid.name = 'icons';
     page.appendChild(grid);
+    markMine(grid);
     grid.layoutMode = 'HORIZONTAL';
     grid.layoutWrap = 'WRAP';
     grid.itemSpacing = 24;
@@ -494,6 +684,18 @@ async function buildComponents(comp) {
   }
 
   for (const setDef of comp.sets || []) {
+    const cloned = await cloneRealSet(setDef);   // มี instance จริงในไฟล์ให้โคลนได้ → ข้ามสร้างเอง
+    if (cloned) {
+      let cx = 0;
+      for (const n of cloned.nodes) {
+        page.appendChild(n);
+        markMine(n);
+        n.x = cx; n.y = y;
+        cx += n.width + 24;
+      }
+      y += Math.max(...cloned.nodes.map((n) => n.height)) + 120;
+      continue;
+    }
     const variantNodes = [];
     for (const v of setDef.variants || []) {
       const c = figma.createComponent();
@@ -515,6 +717,7 @@ async function buildComponents(comp) {
       shown = figma.combineAsVariants(variantNodes, page);
       shown.name = setDef.set;
     }
+    markMine(shown);
     shown.x = 0; shown.y = y;
     y += shown.height + 120;
   }
@@ -527,6 +730,7 @@ async function buildComponents(comp) {
     applyPaint(c, sp.root);
     for (const child of sp.root.children || []) await buildNode(child, c);
     applySizing(c, sp.root);
+    markMine(c);
     c.x = 0; c.y = y;
     y += c.height + 120;
   }
@@ -539,25 +743,23 @@ async function buildSpec(spec) {
   warnings.length = 0;
   await figma.loadAllPagesAsync();
 
+  // ต้องหาต้นแบบจริงก่อนล้าง page — ไม่งั้นต้นแบบที่ผู้ใช้ก๊อปมาวางจะโดนล้างไปก่อนได้ใช้
+  await preloadRealSources();
+
   // ลำดับสำคัญ: variables → components → หน้าจอ (instance ชี้หา component ที่เพิ่งสร้าง)
   const varCount = await syncVariables(spec.variables);
   const compInfo = await buildComponents(spec.components);
 
   const pageName = spec.pageName || 'Maintain-D';
-  let page = figma.root.children.find(p => p.name === pageName);
-  if (page) {
-    // รันซ้ำ = ล้างของเดิมแล้วสร้างใหม่ ไม่ให้หน้าซ้อนกันรก
-    for (const child of page.children.slice()) child.remove();
-  } else {
-    page = figma.createPage();
-    page.name = pageName;
-  }
-  await figma.setCurrentPageAsync(page);
+  const resolved = resolvePage(pageName);
+  const page = resolved.host;
+  await figma.setCurrentPageAsync(resolved.page);
 
   const made = [];
   let x = 0;
   for (const screen of spec.screens || []) {
     const frame = await buildNode(screen.root, page);
+    markMine(frame);
     frame.name = screen.name || frame.name;
     frame.x = x;
     frame.y = 0;

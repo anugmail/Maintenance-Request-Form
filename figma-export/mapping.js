@@ -19,7 +19,7 @@ const BTN_HIERARCHY = {
 const BTN_SIZE = { 'btn-sm': 'sm', 'btn-md': 'md', 'btn-lg': 'lg', 'btn-xl': 'xl' };
 
 /* ---------- Badge: สถานะอ่านจากคลาส ---------- */
-const BADGE_STATUS = { 'b-ok': 'success', 'b-low': 'warning', 'b-out': 'error', 'b-brand': 'brand' };
+const BADGE_STATUS = { 'b-ok': 'success', 'b-low': 'warning', 'b-out': 'error', 'b-brand': 'brand', 'b-neutral': 'neutral', 'b-info': 'info' };
 
 /* ---------- คลาสที่ตั้งชื่อตรงๆ ได้เลย ----------
    ค่าคือชื่อที่จะใช้ใน Figma · เรียงตามลำดับความจำเพาะ (เจาะจงก่อนกว้าง) */
@@ -44,6 +44,11 @@ const SIMPLE = [
   ['seg', 'segmented'], ['chips', 'chips'], ['chip', 'chip'],
   ['tl', 'timeline'], ['qty', 'qty stepper'], ['numfld', 'number field'],
   ['st', 'step status'], ['toolbar', 'toolbar'], ['done', 'done'], ['todo', 'todo'],
+  ['cell-key', 'cell key'], ['cell-sub', 'cell sub'],
+  // โมดัล — โฟลว์แจ้งซ่อมย้ายมาเป็น modal ตั้งแต่ 1 ก.ย. 2569 (เทียบ `Modal` ของไลบรารี)
+  ['modal-hd-c', 'modal header content'], ['modal-hd', 'modal header'],
+  ['modal-bd', 'modal body'], ['modal-ft-a', 'modal footer actions'], ['modal-ft', 'modal footer'],
+  ['modal-step-title', 'modal step title'], ['modal-overlay', 'modal overlay'], ['modal', 'modal'],
   ['ms', 'icon'], ['lbl', 'label'], ['num', 'number'], ['sep', 'separator'],
   ['cur', 'current'], ['in', 'input wrap'], ['f', 'form field']
 ];
@@ -102,6 +107,12 @@ function nameFor(node, ctx) {
   }
 
   for (const [cls, name] of SIMPLE) if (has(cls)) return name;
+  // th ตัวแรก/ตัวสุดท้ายของแถวมีมุมมนจริง (.tbl th:first-child/:last-child) — ต้องแยกชื่อ
+  // ไม่งั้น components-map.js รวมเป็น component เดียว แล้วมุมมนของขอบไปเลอะกับ th กลางแถว
+  if (node.tag === 'th' && ctx) {
+    if (ctx.thFirst) return 'header cell / first';
+    if (ctx.thLast) return 'header cell / last';
+  }
   if (TAG_NAME[node.tag]) return TAG_NAME[node.tag];
   return node.tag;
 }

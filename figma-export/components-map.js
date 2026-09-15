@@ -30,7 +30,9 @@ const SETS = [
   { set: 'badge', def: 'rich', re: /^badge \/ ([a-z-]+)$/, props: (m) => ({ Status: m[1] }) },
   { set: 'sidebar item', def: 'rich', re: /^sidebar item( \/ active)?$/, props: (m) => ({ State: m[1] ? 'active' : 'default' }) },
   { set: 'stepper step', def: 'rich', re: /^stepper step( \/ (active|passed|locked))?$/, props: (m) => ({ State: m[2] || 'default' }) },
-  { set: 'header cell', def: 'common', re: /^header cell$/, props: () => ({}) },
+  // มุมมนจริงต่างกันแค่ th แรก/สุดท้ายของแถว (.tbl th:first-child/:last-child) — แยก variant
+  // กันมุมมนของขอบแถวไปเลอะกับ th กลางที่ควรเหลี่ยม (เจอจริง 14 ก.ย. 2569)
+  { set: 'header cell', def: 'common', re: /^header cell( \/ (first|last))?$/, props: (m) => ({ Position: m[2] || 'middle' }) },
   { set: 'cell', def: 'common', re: /^cell$/, props: () => ({}) }
 ];
 

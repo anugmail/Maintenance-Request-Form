@@ -24,6 +24,8 @@ const { chromium } = require('playwright-core');
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
 const CHROME = process.env.CHROME || '/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome';
+// ONLY=my-overhaul หรือ ONLY=my-overhaul,my-index — capture แค่ slug ที่ระบุ (ว่าง = ทุกหน้าเหมือนเดิม)
+const ONLY = (process.env.ONLY || '').split(',').map((s) => s.trim()).filter(Boolean);
 const OUT = path.join(__dirname, 'out', 'figjam');
 const WIDTH = 1440;
 const SLICE_H = 4000;       // เพดานความสูงต่อรูป (ลิมิต Figma 4096 เผื่อขอบ)
@@ -33,6 +35,7 @@ const VIEW_MAX = 8000;      // เพดาน viewport ของ Chromium ท�
 const GROUPS = [
   { group: 'โฟลว์บำรุงรักษาประจำปี', pages: [
     { slug: 'my-index',         path: '/maintainance-yearly/index.html',         name: 'รายการแผนบำรุงรักษา' },
+    { slug: 'my-overhaul',      path: '/maintainance-yearly/overhaul.html',      name: 'Overhaul — รถที่เข้าข่ายยกเครื่อง' },
     { slug: 'my-plan-new',      path: '/maintainance-yearly/plan-new.html',      name: 'ออกเลขงาน' },
     { slug: 'my-supplies',      path: '/maintainance-yearly/supplies.html',      name: 'ฝ่ายพัสดุ' },
     { slug: 'my-confirm',       path: '/maintainance-yearly/confirm.html',       name: 'ยืนยันรถเข้าร่วมแผน' },
@@ -87,6 +90,7 @@ async function main() {
   for (const g of GROUPS) {
     const mg = { group: g.group, pages: [] };
     for (const p of g.pages) {
+      if (ONLY.length && !ONLY.includes(p.slug)) continue;
       const page = await context.newPage();
       page.on('pageerror', (e) => errors.push(p.slug + ': ' + e.message));
 
