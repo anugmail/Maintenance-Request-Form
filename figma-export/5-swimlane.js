@@ -16,6 +16,9 @@
    (ผัง mermaid ที่อ่านง่ายสำหรับ GitHub ยังอยู่ที่
     Diagram/02-แจ้งซ่อม-กบค/06-swimlane-โฟลว์ซ่อมทั้งเส้น.md — แก้ทั้งสองที่ให้ตรงกัน)
 
+   ⚠️ label ไม่ใส่เลข S นำหน้า (เจ้าของงานสั่ง 15 ก.ย. 2569 — รกเวลาคนทั่วไปอ่าน)
+      แต่ `id` ยังเป็น S1..S21 ตรงกับแถวในตาราง 21 สถานะ ใช้อ้างอิงข้าม map-03/map-04 ได้เหมือนเดิม
+
    รัน:  node figma-export/5-swimlane.js
    ============================================================ */
 
@@ -45,33 +48,33 @@ const PHASES = [
    cf = รอเจ้าของงาน CF แต่ทำก่อนได้ (S7/S9/S11) */
 const NODES = [
   { id: 'A0',  lane: 'unit', col: 0,  kind: 'circle',  label: 'กรอกใบแจ้งซ่อม' },
-  { id: 'S1',  lane: 'boss', col: 1,  label: 'S1 รอหัวหน้าหน่วยงานอนุมัติ' },
+  { id: 'S1',  lane: 'boss', col: 1,  label: 'รอหัวหน้าหน่วยงานอนุมัติ' },
 
-  { id: 'S3',  lane: 'unit', col: 1,  kind: 'stadium', label: 'S3 ไม่อนุมัติ' },
-  { id: 'S4',  lane: 'unit', col: 1,  label: 'S4 รอผู้แจ้งซ่อมดำเนินการ (ตีกลับ)' },
-  { id: 'S2',  lane: 'unit', col: 2,  label: 'S2 รอหน่วยงานดำเนินการซ่อมเอง' },
+  { id: 'S3',  lane: 'unit', col: 1,  kind: 'stadium', label: 'ไม่อนุมัติ' },
+  { id: 'S4',  lane: 'unit', col: 1,  label: 'รอผู้แจ้งซ่อมดำเนินการ (ตีกลับ)' },
+  { id: 'S2',  lane: 'unit', col: 2,  label: 'รอหน่วยงานดำเนินการซ่อมเอง' },
 
-  { id: 'S6',  lane: 'kry',  col: 2,  label: 'S6 รอ กรย. พิจารณา' },
-  { id: 'S5',  lane: 'unit', col: 2,  label: 'S5 ส่งกลับต้นทางซ่อมเอง' },
-  { id: 'S7',  lane: 'kry',  col: 3,  cf: true, label: 'S7 กรย. เห็นชอบ — รอหน่วยงานซ่อมเอง' },
-  { id: 'S8',  lane: 'kry',  col: 3,  label: 'S8 รอ กรย. ดำเนินการ' },
-  { id: 'S9',  lane: 'kry',  col: 3,  cf: true, label: 'S9 กรย. ส่งซ่อมศูนย์บริการ/อู่' },
+  { id: 'S6',  lane: 'kry',  col: 2,  label: 'รอ กรย. พิจารณา' },
+  { id: 'S5',  lane: 'unit', col: 2,  label: 'ส่งกลับต้นทางซ่อมเอง' },
+  { id: 'S7',  lane: 'kry',  col: 3,  cf: true, label: 'กรย. เห็นชอบ — รอหน่วยงานซ่อมเอง' },
+  { id: 'S8',  lane: 'kry',  col: 3,  label: 'รอ กรย. ดำเนินการ' },
+  { id: 'S9',  lane: 'kry',  col: 3,  cf: true, label: 'กรย. ส่งซ่อมศูนย์บริการ/อู่' },
 
-  { id: 'S10', lane: 'kbk',  col: 3,  label: 'S10 รอ กบค. พิจารณา (routing ประเภทรถ × ภาค)' },
-  { id: 'S11', lane: 'kbk',  col: 3,  cf: true, label: 'S11 กบค. เห็นชอบ — รอหน่วยงานซ่อมเอง' },
-  { id: 'S12', lane: 'kbk',  col: 4,  label: 'S12 รอเตรียมอะไหล่' },
+  { id: 'S10', lane: 'kbk',  col: 3,  label: 'รอ กบค. พิจารณา (routing ประเภทรถ × ภาค)' },
+  { id: 'S11', lane: 'kbk',  col: 3,  cf: true, label: 'กบค. เห็นชอบ — รอหน่วยงานซ่อมเอง' },
+  { id: 'S12', lane: 'kbk',  col: 4,  label: 'รอเตรียมอะไหล่' },
   { id: 'B1',  lane: 'sup',  col: 4,  label: 'จัดอะไหล่ตามรายการที่เบิก' },
-  { id: 'S13', lane: 'unit', col: 5,  label: 'S13 รอต้นทางยืนยันนัดหมาย' },
-  { id: 'S14', lane: 'kbk',  col: 5,  label: 'S14 พร้อมดำเนินการซ่อม' },
-  { id: 'S15', lane: 'kbk',  col: 6,  label: 'S15 อยู่ระหว่างดำเนินการซ่อม' },
+  { id: 'S13', lane: 'unit', col: 5,  label: 'รอต้นทางยืนยันนัดหมาย' },
+  { id: 'S14', lane: 'kbk',  col: 5,  label: 'พร้อมดำเนินการซ่อม' },
+  { id: 'S15', lane: 'kbk',  col: 6,  label: 'อยู่ระหว่างดำเนินการซ่อม' },
 
-  { id: 'S17', lane: 'kbk',  col: 6, label: 'S17 พบอาการเพิ่มเติม — รอ กบค. ประเมิน' },
-  { id: 'S18', lane: 'unit', col: 6, label: 'S18 รอต้นทางพิจารณาอาการเพิ่มเติม' },
-  { id: 'S16', lane: 'kbk',  col: 7, label: 'S16 ซ่อมเสร็จ — รอส่งมอบรถ' },
+  { id: 'S17', lane: 'kbk',  col: 6, label: 'พบอาการเพิ่มเติม — รอ กบค. ประเมิน' },
+  { id: 'S18', lane: 'unit', col: 6, label: 'รอต้นทางพิจารณาอาการเพิ่มเติม' },
+  { id: 'S16', lane: 'kbk',  col: 7, label: 'ซ่อมเสร็จ — รอส่งมอบรถ' },
 
-  { id: 'S19', lane: 'unit', col: 7, label: 'S19 รอต้นทางยืนยันรับรถ' },
-  { id: 'S20', lane: 'unit', col: 7, label: 'S20 รอต้นทางรับรถกลับไปใช้งาน' },
-  { id: 'S21', lane: 'kbk',  col: 8, kind: 'stadium', label: 'S21 ปิดงาน' }
+  { id: 'S19', lane: 'unit', col: 7, label: 'รอต้นทางยืนยันรับรถ' },
+  { id: 'S20', lane: 'unit', col: 7, label: 'รอต้นทางรับรถกลับไปใช้งาน' },
+  { id: 'S21', lane: 'kbk',  col: 8, kind: 'stadium', label: 'ปิดงาน' }
 ];
 
 const EDGES = [
@@ -112,10 +115,11 @@ const EDGES = [
 
 /* ---------- ขนาด/ระยะ (หน่วยเดียวกับที่ 4-figjam-diagram.js ส่งให้ปลั๊กอิน) ---------- */
 const LANE_LABEL_W = 420;   // แถบชื่อเลนทางซ้าย
-const COL_W = 460;          // ความกว้างหนึ่งคอลัมน์ (รวมช่องไฟ)
-const NODE_W = 380;
+const COL_W = 700;          // ความกว้างหนึ่งคอลัมน์ — เว้นกว้างไว้ให้เส้นเดินไม่ทับกัน
+                            // (เจ้าของงานสั่ง 15 ก.ย. 2569: ลากยาวไปทางขวาได้ ขอแค่เส้นไม่ทับ)
+const NODE_W = 420;
 const NODE_H = 130;
-const ROW_GAP = 40;         // ช่องไฟระหว่างกล่องที่อยู่เลน+คอลัมน์เดียวกัน
+const ROW_GAP = 70;         // ช่องไฟระหว่างกล่องที่อยู่เลน+คอลัมน์เดียวกัน
 const LANE_PAD = 40;
 
 function main() {
