@@ -113,6 +113,10 @@ const PARTS = [
   { code:'FT-0330', name:'ไส้กรองอากาศ',                 unit:'ชิ้น', stock:9,  alt:0,  price:540  },
 ];
 
+const HIGH_VALUE_THRESHOLD = 5000;   // ราคารวมต่อรายการจัดซื้อ ≥ นี้ = ราคาสูง ต้องแจ้งต้นทางยืนยันก่อนเบิก
+const isHighValue = r => r.qty * r.price >= HIGH_VALUE_THRESHOLD;
+const purchaseStatusBadge = r => r.po ? '<span class="badge b-ok">มีใบสั่งซื้อแล้ว</span>' : '<span class="badge b-low">รอดำเนินการจัดซื้อ</span>';
+
 const DEMO_CASE = new URLSearchParams(location.search).get('case');
 const picked = DEMO_CASE==='1'||DEMO_CASE==='2' ? {} : { 'FT-0330': 10, 'OL-0046': 2 };
 
@@ -238,22 +242,24 @@ function purchaseFileCellHTML(r, i) {
 }
 function renderPurchase() {
   $('tblPurchase').innerHTML = purchaseRows.length ? `<thead><tr>
-      <th>ลำดับ</th><th>รายการ</th><th class="num">จำนวน</th><th class="num">ราคาต่อหน่วย</th><th class="num">ราคารวม</th><th>ร้านค้า</th><th>ใบสั่งซื้อ/จ้าง (Upload)</th><th></th>
+      <th>ลำดับ</th><th>รายการ</th><th class="num">จำนวน</th><th class="num">ราคาต่อหน่วย</th><th class="num">ราคารวม</th><th>ร้านค้า</th><th>ใบสั่งซื้อ/จ้าง (Upload)</th><th>สถานะ</th><th></th>
     </tr></thead><tbody>${purchaseRows.map((r, i) => `<tr>
       <td class="num">${i + 1}</td>
       <td><input type="text" class="tbl-row-label" placeholder="ระบุชื่อรายการ" value="${esc(r.name)}" oninput="purchaseRows[${i}].name=this.value"></td>
       <td class="num"><input type="number" min="1" class="tbl-inline-sm" value="${r.qty}" oninput="purchaseRows[${i}].qty=+this.value||0;purchaseRowTotal(${i})"></td>
       <td class="num"><input type="number" min="0" class="tbl-inline-md" value="${r.price}" oninput="purchaseRows[${i}].price=+this.value||0;purchaseRowTotal(${i})"></td>
-      <td class="num" id="prowTotal${i}">${baht(r.qty * r.price)}</td>
+      <td class="num" id="prowTotal${i}">${baht(r.qty * r.price)}${isHighValue(r) ? ' <span class="badge b-low">ราคาสูง</span>' : ''}</td>
       <td><input type="text" class="tbl-row-label" placeholder="ระบุชื่อร้านค้า" value="${esc(r.store)}" oninput="purchaseRows[${i}].store=this.value"></td>
       <td>${purchaseFileCellHTML(r, i)}</td>
+      <td>${purchaseStatusBadge(r)}</td>
       <td><button type="button" class="btn btn-t btn-sm" onclick="delPurchaseRow(${i})" aria-label="ลบรายการนี้"><span class="ms">delete</span></button></td>
     </tr>`).join('')}</tbody>`
-    : '<tbody><tr><td colspan="8"><div class="empty">ยังไม่มีรายการจัดซื้อ — เบิกเกินยอดคงคลังแล้วจะเพิ่มให้อัตโนมัติ หรือกด "เพิ่มรายการ"</div></td></tr></tbody>';
+    : '<tbody><tr><td colspan="9"><div class="empty">ยังไม่มีรายการจัดซื้อ — เบิกเกินยอดคงคลังแล้วจะเพิ่มให้อัตโนมัติ หรือกด "เพิ่มรายการ"</div></td></tr></tbody>';
   updateTotals();
 }
 function purchaseRowTotal(i) {
-  $('prowTotal' + i).textContent = baht(purchaseRows[i].qty * purchaseRows[i].price);
+  const r = purchaseRows[i];
+  $('prowTotal' + i).innerHTML = baht(r.qty * r.price) + (isHighValue(r) ? ' <span class="badge b-low">ราคาสูง</span>' : '');
   updateTotals();
 }
 function delPurchaseRow(i) { purchaseRows.splice(i, 1); renderPurchase(); }
@@ -295,9 +301,9 @@ $('q').addEventListener('input', renderStock);
 $('btnAdd').addEventListener('click', () => { const code='CUSTOM-'+Date.now();PARTS.push({code,name:'',unit:'ชิ้น',stock:0,alt:0,price:0,custom:true});picked[code]=0;renderAll(); });
 
 // ยืนยันรายการเบิก → ไปขั้น 2 "นัดหมายวันซ่อม" ในแท็บเดิม · ส่ง ?no= ต่อให้รู้ว่ามาจากใบไหน
-$('btnConfirm').addEventListener('click', () => {
-  const selectedCodes=Object.keys(picked).filter(code=>picked[code]>0);
-  if (!selectedCodes.length) { toast('ยังไม่ได้เลือกอะไหล่ — เลือกอย่างน้อย 1 รายการก่อน'); return; }
+function submitParts() {
+  const selectedCodes = Object.keys(picked).filter(code => picked[code] > 0);
+  const buyCost = purchaseRows.reduce((s, r) => s + r.qty * r.price, 0);
   // เขียนกลับเข้าใบงานจริง (ถ้าเปิดมาจากแอปหลัก) — ของมีในคลัง = booked · ของขาด = ordered ตาม shape ของ mock
   if (fromNo) {
     MDJ.update(fromNo, j => {
@@ -310,9 +316,37 @@ $('btnConfirm').addEventListener('click', () => {
       // เก็บตารางจัดซื้อ (ราคาจริง/ร้านค้า/ไฟล์ใบสั่งซื้อ) แยกจาก ordered — ordered เป็นแค่รายชื่อของที่ขาด ใช้ที่อื่นในแอปหลักอยู่แล้ว
       j.purchase = purchaseRows.map(r => ({ name: r.name, qty: r.qty, price: r.price, store: r.store, po: r.po }));
       j.history.push({ t: nowStr(), label: `กบค. ยืนยันรายการเบิกอะไหล่ ${booked.length + ordered.length} รายการ` + (purchaseRows.length ? ` · จัดซื้อ ${purchaseRows.length} รายการ` : '') });
+      // แจ้งต้นทางให้รับทราบค่าใช้จ่ายอะไหล่ที่ต้องจัดซื้อ (ถ้ามี) — บันทึกลงประวัติเพื่อให้ต้นทางเห็นความเคลื่อนไหว
+      if (buyCost > 0) j.history.push({ t: nowStr(), label: `แจ้งเตือนต้นทางให้รับทราบค่าใช้จ่ายอะไหล่ที่ต้องจัดซื้อ ${baht(buyCost)}` });
     });
   }
+  toast(buyCost > 0 ? 'ยืนยันเบิกอะไหล่แล้ว — ส่งแจ้งเตือนต้นทางให้รับทราบค่าใช้จ่ายแล้ว' : 'ยืนยันเบิกอะไหล่แล้ว');
   location.href = 'kbk-self-repair-appointment.html' + (fromNo ? '?no=' + encodeURIComponent(fromNo) : '');
+}
+
+$('btnConfirm').addEventListener('click', () => {
+  const selectedCodes = Object.keys(picked).filter(code => picked[code] > 0);
+  if (!selectedCodes.length) { toast('ยังไม่ได้เลือกอะไหล่ — เลือกอย่างน้อย 1 รายการก่อน'); return; }
+  // อะไหล่ราคาสูงที่ต้องจัดซื้อ (≥ HIGH_VALUE_THRESHOLD) — ต้องส่งแจ้งต้นทางให้รับทราบค่าใช้จ่ายก่อนเบิกจริง
+  const highValueRows = purchaseRows.filter(isHighValue);
+  if (highValueRows.length) {
+    const ov = openModal(`<div class="modal" role="dialog" aria-modal="true" aria-label="ยืนยันแจ้งต้นทาง">
+      <div class="modal-head"><h2>แจ้งต้นทางก่อนสั่งซื้ออะไหล่ราคาสูง</h2>
+        <button type="button" class="modal-close" data-cancel aria-label="ปิด"><span class="ms">close</span></button></div>
+      <div class="stack">
+        <div>อะไหล่ต่อไปนี้ราคาสูง ต้องส่งแจ้งต้นทางให้รับทราบค่าใช้จ่ายก่อนดำเนินการเบิก/สั่งซื้อ</div>
+        ${highValueRows.map(r => `<div class="parts-picked-item"><div><b>${esc(r.name)}</b><div class="parts-line">จำนวน ${r.qty} · ${baht(r.price)}/หน่วย</div></div><span class="parts-price">${baht(r.qty * r.price)}</span></div>`).join('')}
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-g" data-cancel>ยกเลิก</button>
+        <button type="button" class="btn btn-p" data-confirm><span class="ms">notifications</span> ส่งแจ้งเตือนต้นทางและยืนยันเบิก</button>
+      </div>
+    </div>`);
+    ov.querySelectorAll('[data-cancel]').forEach(b => b.addEventListener('click', closeModal));
+    ov.querySelector('[data-confirm]').addEventListener('click', () => { closeModal(); submitParts(); });
+    return;
+  }
+  submitParts();
 });
 
 // มาจากต้นแบบ (กด "รับซ่อม" → "กบค. ซ่อมเอง") จะมี ?no=<เลขใบแจ้งซ่อม> ติดมา — โชว์ให้รู้ว่ากำลังเบิกของใบไหน

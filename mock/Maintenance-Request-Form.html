@@ -1778,7 +1778,10 @@
           <div class="incident-section-title" id="head-parts">อะไหล่ที่แนะนำ <span
               class="font-normal text-sm text-gray-500">—
               จำนวนที่เกินยอดในคลัง จะถูกตั้งเป็นรายการจัดซื้อให้อัตโนมัติ</span></div>
-          <div id="parts-rec" class="parts-rec-list"></div>
+          <div class="stack">
+            <div class="search max-w-[420px]"><span class="ms">search</span><input type="text" id="parts-q" placeholder="ค้นหาชื่อหรือรหัสอะไหล่" oninput="partsQ=this.value;renderParts()"></div>
+            <div id="parts-rec" class="parts-rec-list"></div>
+          </div>
           <div class="parts-totals ml-auto max-w-[420px]">
             <div class="parts-total-row"><span>เบิกจากคลัง</span><strong id="p-sum-stock">0 บาท</strong></div>
             <div class="parts-total-row"><span>ต้องจัดซื้อ</span><strong id="p-sum-buy">0 บาท</strong></div>
@@ -3092,6 +3095,7 @@ function goBackView(){
       renderSymptoms();
     }
     function partsFor() { return PARTS.filter(p => S.symptoms.includes(p.sym) && !(S.removedParts || []).includes(p.code)) }
+    let partsQ = '';   // ค้นหาในลิสต์ "อะไหล่ที่แนะนำ" — กรองต่อจาก partsFor() ไม่แตะ logic แนะนำเดิม
     function removePick(code) { (S.removedParts = S.removedParts || []).push(code); setPickQty(code, 0) }
 function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart Inventory ก่อน ไม่มีค่อยดูคลังสำรอง (กติกาเดียวกับ design-mock)
     function srcOf(p) { return p.stock ? 'Smart Inventory' : p.stockAlt ? 'คลังสำรอง' : 'ไม่มีในคลัง' }
@@ -3113,7 +3117,8 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
     function renderPartsAll() { renderParts() }
     // 7 ก.ย. 2569: รายการอะไหล่ที่แนะนำจากอาการ (แทนเลย์เอาต์ 2 คอลัมน์ คลัง/ที่เลือก) — สเปกภาพชุดเต็ม
     function renderParts() {
-      const rec = partsFor();
+      const query = partsQ.trim().toLowerCase();
+      const rec = partsFor().filter(p => !query || p.name.toLowerCase().includes(query) || p.code.toLowerCase().includes(query));
       $('parts-rec').innerHTML = rec.length ? rec.map(p => {
         const q = pickQty(p.code), buy = Math.max(0, q - onHandOf(p));
         return `<div class="parts-rec-item">
@@ -3124,7 +3129,7 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
           <div class="pr-foot"><span class="parts-price">${baht(p.price * q)} บาท</span>
             <div class="qty"><button type="button" onclick="chgPick('${p.code}',-1)">−</button><span>${q}</span><button type="button" onclick="chgPick('${p.code}',1)">+</button></div>
           </div></div>`;
-      }).join('') : '<div class="empty">ยังไม่มีอะไหล่แนะนำ — เลือกอาการเสียในขั้นก่อน แล้วระบบจะแนะนำให้อัตโนมัติ</div>';
+      }).join('') : `<div class="empty">${query ? 'ไม่พบอะไหล่ที่ค้นหา — ลองคำอื่น' : 'ยังไม่มีอะไหล่แนะนำ — เลือกอาการเสียในขั้นก่อน แล้วระบบจะแนะนำให้อัตโนมัติ'}</div>`;
       let stockCost = 0, buyCost = 0;
       Object.keys({ ...S.bookings, ...S.orders }).forEach(code => {
         const p = PARTS.find(x => x.code === code), q = pickQty(code);
@@ -4554,6 +4559,13 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
               <div class="incident-contact-label">ผู้ขับขี่</div>${phone(driver.name||owner.name,driver.tel||owner.tel)}
               <div class="incident-contact-label">ช่างคุมรถ</div>${phone(tech.name,tech.tel)}
             </div>
+          </section>
+          <section>
+            <h2 class="incident-section-title">อะไหล่</h2>
+            ${(j.booked&&j.booked.length)||(j.ordered&&j.ordered.length)?`<div class="stack">
+              ${(j.booked||[]).map(b=>`<div class="incident-contact-row"><div><div class="incident-entity-name">${esc(b.name)}</div><div class="incident-entity-meta">จำนวน ${b.qty} ${esc(b.unit)}</div></div><span class="badge b-ok">เบิกจากคลังแล้ว</span></div>`).join('')}
+              ${(j.ordered||[]).map(o=>`<div class="incident-contact-row"><div><div class="incident-entity-name">${esc(o.name)}</div><div class="incident-entity-meta">จำนวน ${o.qty} ${esc(o.unit)}</div></div><span class="badge b-low">กำลังจัดเตรียม</span></div>`).join('')}
+            </div>`:`<div class="incident-card"><span class="incident-entity-meta">ยังไม่มีรายการอะไหล่</span></div>`}
           </section>
         </aside>
       </div>
