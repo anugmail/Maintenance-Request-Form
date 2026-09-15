@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เปรียบเทียบ: บอกที่มาของอะไหล่ที่แนะนำ — แบบ ข / แบบ ค</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260907-ds62">
+<link rel="stylesheet" href="../design-system/components.css?v=20260914-ds66">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20260907-tw3"></script>
+<style>
+  /* เฉพาะหน้าเทียบแบบนี้เท่านั้น — ไม่ใช่ของที่จะเข้า components.css
+     (กติกา CLAUDE.md: <style> เก็บได้เฉพาะสิ่งที่เป็นของหน้านี้จริงๆ ใช้ที่อื่นไม่ได้) */
+  .cmp{max-width:560px}
+</style>
+</head>
+<body class="bg-white">
+<main class="p-8">
+
+  <!-- ============ แบบ ข — บรรทัด "แนะนำจาก" ใต้รหัสอะไหล่ ============ -->
+  <section id="opt-b" class="cmp">
+    <div class="sect"><h2>แบบ ข — บอกที่มาเป็นบรรทัดใต้รหัสอะไหล่</h2></div>
+    <p class="sub">แต่ละการ์ดบอกเองว่ามาจากอาการไหน · โครงหน้าเดิมทั้งหมด เพิ่มแค่ 1 บรรทัด</p>
+
+    <div class="parts-rec-list">
+      <div class="parts-rec-item">
+        <div class="pr-head"><b>ชุดซีลกระบอกไฮดรอลิก <span class="badge b-info">แนะนำ</span></b>
+          <button type="button" class="pr-del"><span class="ms">delete</span></button></div>
+        <div class="parts-line">SL-4402 · 1 ชุด | 1,850 บาท</div>
+        <div class="parts-source"><b>แนะนำจาก</b> : กระบอกไฮดรอลิกรั่ว/ซึม</div>
+        <div class="parts-source"><b>Smart Inventory</b> : มีในคลัง 6 ชุด</div>
+        <div class="pr-foot"><span class="parts-price">1,850 บาท</span>
+          <div class="qty"><button type="button">−</button><span>1</span><button type="button">+</button></div>
+        </div>
+      </div>
+
+      <div class="parts-rec-item">
+        <div class="pr-head"><b>น้ำมันไฮดรอลิก ISO VG46 18L <span class="badge b-info">แนะนำ</span></b>
+          <button type="button" class="pr-del"><span class="ms">delete</span></button></div>
+        <div class="parts-line">OL-0046 · 1 ถัง | 2,400 บาท</div>
+        <div class="parts-source"><b>แนะนำจาก</b> : กระบอกไฮดรอลิกรั่ว/ซึม</div>
+        <div class="parts-source"><b>Smart Inventory</b> : มีในคลัง 2 ถัง · จัดซื้อ 1 ถัง</div>
+        <div class="pr-foot"><span class="parts-price">7,200 บาท</span>
+          <div class="qty"><button type="button">−</button><span>3</span><button type="button">+</button></div>
+        </div>
+      </div>
+
+      <div class="parts-rec-item">
+        <div class="pr-head"><b>ไส้กรองไฮดรอลิก <span class="badge b-info">แนะนำ</span></b>
+          <button type="button" class="pr-del"><span class="ms">delete</span></button></div>
+        <div class="parts-line">FT-1108 · 2 ชิ้น | 650 บาท</div>
+        <div class="parts-source"><b>แนะนำจาก</b> : ปั๊มไฮดรอลิกเสียงดัง/แรงดันตก</div>
+        <div class="parts-source"><b>Smart Inventory</b> : มีในคลัง 12 ชิ้น</div>
+        <div class="pr-foot"><span class="parts-price">1,300 บาท</span>
+          <div class="qty"><button type="button">−</button><span>2</span><button type="button">+</button></div>
+        </div>
+      </div>
+
+      <div class="parts-rec-item">
+        <div class="pr-head"><b>สายไฮดรอลิกแรงดันสูง 3/8" <span class="badge b-info">แนะนำ</span></b>
+          <button type="button" class="pr-del"><span class="ms">delete</span></button></div>
+        <div class="parts-line">HS-3808 · 2 เส้น | 1,200 บาท</div>
+        <div class="parts-source"><b>แนะนำจาก</b> : สายไฮดรอลิกแตก/รั่ว</div>
+        <div class="parts-source"><b>คลังสำรอง</b> : มีในคลัง 10 เส้น</div>
+        <div class="pr-foot"><span class="parts-price">2,400 บาท</span>
+          <div class="qty"><button type="button">−</button><span>2</span><button type="button">+</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ แบบ ค — จัดกลุ่มตามอาการ ============ -->
+  <section id="opt-c" class="cmp mt-10">
+    <div class="sect"><h2>แบบ ค — จัดกลุ่มการ์ดตามอาการที่เลือกมา</h2></div>
+    <p class="sub">เห็นภาพรวมว่าอาการไหนกินอะไหล่กี่รายการ/เท่าไร · ไม่ต้องมีบรรทัดที่มาในทุกการ์ด</p>
+
+    <div class="stack">
+      <!-- กลุ่มที่ 1 -->
+      <div>
+        <div class="symgroup-head flex items-center gap-2 mb-2.5">
+          <span class="ms text-gray-500">build_circle</span>
+          <b class="text-md text-gray-900">กระบอกไฮดรอลิกรั่ว/ซึม</b>
+          <span class="badge b-neutral">2 รายการ</span>
+          <span class="ml-auto text-sm text-gray-500">9,050 บาท</span>
+        </div>
+        <div class="parts-rec-list mt-0">
+          <div class="parts-rec-item">
+            <div class="pr-head"><b>ชุดซีลกระบอกไฮดรอลิก</b>
+              <button type="button" class="pr-del"><span class="ms">delete</span></button></div>
+            <div class="parts-line">SL-4402 · 1 ชุด | 1,850 บาท</div>
+            <div class="parts-source"><b>Smart Inventory</b> : มีในคลัง 6 ชุด</div>
+            <div class="pr-foot"><span class="parts-price">1,850 บาท</span>
+              <div class="qty"><button type="button">−</button><span>1</span><button type="button">+</button></div>
+            </div>
+          </div>
+          <div class="parts-rec-item">
+            <div class="pr-head"><b>น้ำมันไฮดรอลิก ISO VG46 18L</b>
+              <button type="button" class="pr-del"><span class="ms">delete</span></button></div>
+            <div class="parts-line">OL-0046 · 1 ถัง | 2,400 บาท</div>
+            <div class="parts-source"><b>Smart Inventory</b> : มีในคลัง 2 ถัง · จัดซื้อ 1 ถัง</div>
+            <div class="pr-foot"><span class="parts-price">7,200 บาท</span>
+              <div class="qty"><button type="button">−</button><span>3</span><button type="button">+</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- กลุ่มที่ 2 -->
+      <div class="mt-5">
+        <div class="symgroup-head flex items-center gap-2 mb-2.5">
+          <span class="ms text-gray-500">build_circle</span>
+          <b class="text-md text-gray-900">ปั๊มไฮดรอลิกเสียงดัง/แรงดันตก</b>
+          <span class="badge b-neutral">1 รายการ</span>
+          <span class="ml-auto text-sm text-gray-500">1,300 บาท</span>
+        </div>
+        <div class="parts-rec-list mt-0">
+          <div class="parts-rec-item">
+            <div class="pr-head"><b>ไส้กรองไฮดรอลิก</b>
+              <button type="button" class="pr-del"><span class="ms">delete</span></button></div>
+            <div class="parts-line">FT-1108 · 2 ชิ้น | 650 บาท</div>
+            <div class="parts-source"><b>Smart Inventory</b> : มีในคลัง 12 ชิ้น</div>
+            <div class="pr-foot"><span class="parts-price">1,300 บาท</span>
+              <div class="qty"><button type="button">−</button><span>2</span><button type="button">+</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- กลุ่มที่ 3 -->
+      <div class="mt-5">
+        <div class="symgroup-head flex items-center gap-2 mb-2.5">
+          <span class="ms text-gray-500">build_circle</span>
+          <b class="text-md text-gray-900">สายไฮดรอลิกแตก/รั่ว</b>
+          <span class="badge b-neutral">1 รายการ</span>
+          <span class="ml-auto text-sm text-gray-500">2,400 บาท</span>
+        </div>
+        <div class="parts-rec-list mt-0">
+          <div class="parts-rec-item">
+            <div class="pr-head"><b>สายไฮดรอลิกแรงดันสูง 3/8"</b>
+              <button type="button" class="pr-del"><span class="ms">delete</span></button></div>
+            <div class="parts-line">HS-3808 · 2 เส้น | 1,200 บาท</div>
+            <div class="parts-source"><b>คลังสำรอง</b> : มีในคลัง 10 เส้น</div>
+            <div class="pr-foot"><span class="parts-price">2,400 บาท</span>
+              <div class="qty"><button type="button">−</button><span>2</span><button type="button">+</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>
