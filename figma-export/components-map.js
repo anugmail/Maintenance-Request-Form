@@ -23,10 +23,21 @@
    'rich'   — โครงลูกแบน (icon/text ใต้รากตรงๆ) เอา occurrence ที่ node เยอะสุด
               ตัวที่จนกว่าจะ match แบบซ่อนส่วนเกินได้ (ปุ่มไม่มีไอคอน = ซ่อนไอคอน)
    'common' — โครงข้างในหลากหลาย (เซลล์ตาราง) เอาโครงที่พบบ่อยสุดเป็นตัวนิยาม
-              ตัวประหลาด (เซลล์มี badge/ปุ่ม/checkbox) คงเป็น frame ไป */
+              ตัวประหลาด (เซลล์มี badge/ปุ่ม/checkbox) คงเป็น frame ไป
+
+   🔴 btn ย้ายจาก 'rich' → 'common' (16 ก.ย. 2569) — เจ้าของงานเจอใน Figma จริงว่า
+   ปุ่ม "ย้อนกลับ"/"ส่งอนุมัติ" ท้าย modal มีไอคอนโผล่มาทั้งที่ต้นแบบไม่มี แล้วข้อความ
+   ถูกบีบจนตัดบรรทัด/ไม่ตรงกลาง
+     สาเหตุ: 'rich' เอา occurrence ที่ node เยอะสุดของ **ทั้งชุดหน้าจอ** เป็นตัวนิยาม
+     ⇒ btn/secondary/md ได้ตัวนิยามเป็นปุ่ม "ตัวกรอง" (มี filter_list) จากหน้าลิสต์
+     แล้วปุ่มที่ไม่มีไอคอนต้องพึ่ง overrides.hidden ซ่อนเอา — กลไกนั้นผ่านบน mock
+     แต่ไม่ทำงานในไฟล์จริง ไอคอน default เลยค้างและกินความกว้าง
+     'common' จับกลุ่มด้วย skeleton ก่อน ⇒ ปุ่มที่ไม่มีไอคอนได้ตัวนิยามของตัวเอง
+     ไม่ต้องพึ่งการซ่อนเลย (วัดแล้ว: btn ที่พึ่ง hidden 9 → 0 · แลก instance รวม 91 → 90)
+     ตัวที่โครงไม่ตรงกลุ่มหลักจะคงเป็น frame ธรรมดา ซึ่งเรนเดอร์เหมือนเดิมทุกอย่าง */
 const SETS = [
   // ' (actions)' กับ ' / disabled' ไม่เข้า pattern โดยตั้งใจ — หน้าตาต่างจาก variant หลัก
-  { set: 'btn', def: 'rich', re: /^btn \/ ([a-z-]+) \/ ([a-z]+)$/, props: (m) => ({ Hierarchy: m[1], Size: m[2] }) },
+  { set: 'btn', def: 'common', re: /^btn \/ ([a-z-]+) \/ ([a-z]+)$/, props: (m) => ({ Hierarchy: m[1], Size: m[2] }) },
   { set: 'badge', def: 'rich', re: /^badge \/ ([a-z-]+)$/, props: (m) => ({ Status: m[1] }) },
   { set: 'sidebar item', def: 'rich', re: /^sidebar item( \/ active)?$/, props: (m) => ({ State: m[1] ? 'active' : 'default' }) },
   { set: 'stepper step', def: 'rich', re: /^stepper step( \/ (active|passed|locked))?$/, props: (m) => ({ State: m[2] || 'default' }) },

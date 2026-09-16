@@ -35,7 +35,21 @@ class MNode {
     this.counterAxisSpacing = 0;
     this.paddingTop = this.paddingRight = this.paddingBottom = this.paddingLeft = 0;
     this.primaryAxisAlignItems = 'MIN';
-    this.counterAxisAlignItems = 'MIN';
+    // กฎจริงของ Figma: BASELINE ตั้งได้เฉพาะตอน layoutMode === 'HORIZONTAL'
+    // ทำเป็น setter ให้ mock พังแบบเดียวกับของจริง (16 ก.ย. 2569 — เจอบั๊กนี้ตอน export m390
+    // แล้ว mock จับไม่ได้เพราะเดิมเป็นฟิลด์เฉยๆ)
+    this._counterAxisAlignItems = 'MIN';
+    Object.defineProperty(this, 'counterAxisAlignItems', {
+      enumerable: true, configurable: true,
+      get() { return this._counterAxisAlignItems; },
+      set(v) {
+        if (v === 'BASELINE' && this.layoutMode !== 'HORIZONTAL') {
+          throw new Error('in set_counterAxisAlignItems: counterAxisAlignItems = BASELINE ' +
+            'can only be set when layoutMode === HORIZONTAL');
+        }
+        this._counterAxisAlignItems = v;
+      }
+    });
     this.layoutWrap = 'NO_WRAP';
     this.layoutSizingHorizontal = 'FIXED';
     this.layoutSizingVertical = 'FIXED';
@@ -217,7 +231,9 @@ vm.runInNewContext(code, { figma, __html__: '', console });
 
 // --report = เทสสเปกโฟลว์แจ้งซ่อม (spec-report.json) · --overhaul = สเปกทดสอบ 1 หน้า (spec-overhaul.json)
 const OVERHAUL_TEST = process.argv.includes('--overhaul');
-const specFile = process.argv.includes('--report') ? 'spec-report.json' : OVERHAUL_TEST ? 'spec-overhaul.json' : 'spec.json';
+// VARIANT=m390 → เทส spec-report-m390.json (เดิม hardcode spec-report.json ⇒ เทส mobile ไปอ่านไฟล์ web)
+const VS = (process.env.VARIANT || '').trim() ? '-' + process.env.VARIANT.trim() : '';
+const specFile = process.argv.includes('--report') ? 'spec-report' + VS + '.json' : OVERHAUL_TEST ? 'spec-overhaul.json' : 'spec.json';
 const spec = JSON.parse(fs.readFileSync(path.join(__dirname, 'out', specFile), 'utf8'));
 
 /* ค่าคาดหวังจาก spec — ข้อความที่ต้องเห็นบนหน้าจอ (multiset) */
@@ -367,6 +383,22 @@ const ok = (msg) => console.log('✓ ' + msg);
   const varCount1 = variables.length;
   await figma.ui.onmessage({ type: 'build', spec });
   const res2 = figma._last;
+  /* ปุ่มต้องไม่พึ่ง overrides.hidden ซ่อนไอคอน — กลไกนั้นผ่านบน mock แต่ไม่ทำงานในไฟล์ Figma จริง
+     (16 ก.ย. 2569: เจ้าของงานเจอไอคอน filter_list โผล่บนปุ่ม "ย้อนกลับ" ท้าย modal)
+     ถ้ามีจุดไหนกลับมาพึ่งอีก แปลว่า def ของ btn ถอยกลับไปเป็น 'rich' — ดู components-map.js */
+  {
+    const leaky = [];
+    (function scan(n) {
+      if (n && n.type === 'instance' && n.set === 'btn' && ((n.overrides || {}).hidden || []).length) {
+        leaky.push(((n.overrides.texts || [])[0] || {}).chars || n.name);
+      }
+      (n && n.children || []).forEach(scan);
+    })({ children: spec.screens.map(x => x.root) });
+    leaky.length === 0
+      ? ok('ไม่มีปุ่มที่พึ่ง overrides.hidden ซ่อนไอคอน')
+      : fail('ปุ่ม ' + leaky.length + ' จุดยังพึ่งการซ่อนไอคอน (ไฟล์จริงซ่อนไม่สำเร็จ): ' + leaky.slice(0, 4).join(' · '));
+  }
+
   res2.type === 'done' ? ok('รันซ้ำผ่าน') : fail('รันซ้ำพัง: ' + JSON.stringify(res2));
   variables.length === varCount1 ? ok('รันซ้ำ variable ไม่งอก (' + variables.length + ')') : fail('รันซ้ำ variable งอกเป็น ' + variables.length);
 

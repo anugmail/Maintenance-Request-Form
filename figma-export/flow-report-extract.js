@@ -13,6 +13,10 @@
      python3 -m http.server 8123 --bind 127.0.0.1 &
      NODE_PATH=<ที่ npm i playwright-core>/node_modules node figma-export/flow-report-extract.js
    ผลลัพธ์: out/dom-report-NN.json + out/shot-report-NN.png
+
+   จอมือถือ (เพิ่ม 16 ก.ย. 2569):
+     WIDTH=390 VARIANT=m390 NODE_PATH=… node figma-export/flow-report-extract.js
+     → out/dom-report-m390-NN.json (คนละชุดกับ web ไม่ทับกัน)
    ============================================================ */
 
 const fs = require('fs');
@@ -23,7 +27,13 @@ const { walkDom } = require('./dom-walk');
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
 const CHROME = process.env.CHROME || '/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome';
 const OUT = path.join(__dirname, 'out');
-const WIDTH = 1440;
+/* ความกว้างจอที่ extract — 16 ก.ย. 2569 เพิ่มให้ทำ mobile ได้
+   WIDTH=390 VARIANT=m390 node figma-export/flow-report-extract.js
+   VARIANT ทำให้ไฟล์ออกเป็น dom-report-m390-NN.json แยกจากชุด web ไม่ทับกัน
+   ไม่ใส่อะไรเลย = 1440 + ชื่อไฟล์เดิม (ของเก่าไม่กระทบ) */
+const WIDTH = Number(process.env.WIDTH) || 1440;
+const VARIANT = (process.env.VARIANT || '').trim();
+const vslug = (slug) => VARIANT ? slug.replace(/^report-/, 'report-' + VARIANT + '-') : slug;
 const PLATE = '81-2345';   // Hino FM8J + เครน Tadano — จังหวัดบนป้ายอยู่ในผัง AREAS ทำให้ระบบ prefill ให้เห็นจริง
 
 const summary = [];
@@ -34,7 +44,8 @@ const errors = [];
 const UNTIL = (process.env.UNTIL || '').trim();
 const STOP = Symbol('stop');
 
-async function extractState(page, slug, name, rootSel) {
+async function extractState(page, rawSlug, name, rootSel) {
+  const slug = vslug(rawSlug);
   await page.evaluate(() => document.fonts.ready);
   // toast auto-hide 2.6s — รอให้หายก่อน ไม่ให้ติดเป็น node เกินใน DOM ที่เก็บ
   await page.waitForFunction(() => !document.getElementById('toast').classList.contains('show'),
@@ -63,7 +74,7 @@ async function extractState(page, slug, name, rootSel) {
   const kb = Math.round(fs.statSync(file).size / 1024);
   summary.push({ slug, nodes: data.counted, height: data.docHeight, kb });
   console.log('✓ ' + slug.padEnd(12) + String(data.counted).padStart(5) + ' node · สูง ' + data.docHeight + 'px · ' + kb + 'KB · ' + name);
-  if (UNTIL && slug === UNTIL) throw STOP;
+  if (UNTIL && rawSlug === UNTIL) throw STOP;
 }
 
 const visible = (id) => '#' + id + ':not(.hidden)';
@@ -80,120 +91,94 @@ async function main() {
   await page.goto(BASE + '/mock/Maintenance-Request-Form.html', { waitUntil: 'networkidle' });
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
-  /* 🔴 โฟลว์แจ้งซ่อมเปลี่ยนไปแล้ว (1 ก.ย. 2569 เป็นต้นมา):
-       เดิม = วิซาร์ดเต็มหน้า 5 ขั้น เริ่มที่การ์ดเลือกรถ `#vlist .radcard`
-       ตอนนี้ = หน้าแรกคือตาราง "จัดการงานซ่อม" (#view-my) แล้วกดปุ่ม "แจ้งซ่อม"
-                เปิด **modal 4 ขั้น** (#repair-modal) · ขั้นเลือกรถเป็น dropdown #v-select
-     ⇒ จังหวะกดของ state 02–08 ข้างล่างยัง**ไม่ได้อัปเดต** ใช้ UNTIL=report-01 ไปก่อน
-     ตัวจับยึดชุดเดียวกับ mock/test/flow-regression.js ซึ่งเป็นเทสที่ดูแลอยู่จริง */
+  /* จังหวะกด = ชุดเดียวกับ mock/test/flow-regression.js (เทสที่ดูแลอยู่จริง)
+     ซ่อม 16 ก.ย. 2569 — ของเดิมยังกด `#vlist .radcard` / `#symcats .chip` / `#i-costtypes .radcard`
+     ซึ่งถูกถอดไปตั้งแต่ 7 ก.ย. ⇒ เดินไม่จบมาตลอด (คอมเมนต์เดิมบอกให้ใช้ UNTIL=report-01 ไปก่อน)
+     วิซาร์ดตอนนี้เหลือ **3 ขั้น** + 2 หน้าหลังส่ง ⇒ เก็บ 6 state */
   await page.waitForSelector('#mylist table.tbl tbody tr');
   await page.locator('.lt-actions .btn-p', { hasText: 'แจ้งซ่อม' }).click();
   await page.waitForSelector('#repair-modal:not(.hidden)');
   await page.waitForSelector('#v-select');
 
-  // ---- ขั้น 1: เลือกรถ ----
+  // ---- ขั้น 1: ข้อมูลยานพาหนะและผู้แจ้ง ----
   // เอาเฉพาะตัว modal — ไม่เอา .modal-overlay (ฉากหลังดำโปร่ง) กับหน้าตารางที่อยู่ข้างหลัง
   // ไม่งั้นเฟรมใน Figma จะเป็นหน้าเต็มที่ถูกคลุมด้วยสีดำโปร่ง (เจ้าของงานเจอ 14 ก.ย. 2569)
   await extractState(page, 'report-01', 'ขั้นที่ 1 ข้อมูลยานพาหนะและผู้แจ้ง — ยังไม่เลือกรถ',
     '#repair-modal .modal');
 
-  await page.locator('#vlist .radcard', { hasText: PLATE }).click();
-  await page.waitForSelector(visible('vinfo'));
-  // label ทับ radio ไว้ — ต้องคลิก label ไม่ใช่ input.check()
-  await page.locator('#vauto label.vehicle-target-option')
-    .filter({ has: page.locator('input[value="vehicle"]') }).click();
-  await page.waitForTimeout(250);
-  await extractState(page, 'report-02', 'เลือกรถแล้ว — รายละเอียด + จุดที่พบปัญหา');
-
-  // ---- ขั้น 2: อาการเสีย ----
-  await page.locator('#next').click();
-  await page.waitForSelector(visible('s2'));
-  // เลือกเฉพาะอาการที่มีอะไหล่แนะนำ — ขั้นอะไหล่จะได้ไม่ว่าง
-  const symNames = await page.evaluate(() => {
-    const scope = ['vehicle', 'both'];
-    const cats = CATS.filter(c => scope.includes(c.for)).map(c => c.key);
-    return SYMPTOMS.filter(s => cats.includes(s.cat) && PARTS.some(p => p.sym === s.id))
-      .slice(0, 2).map(s => s.name);
-  });
-  if (!symNames.length) throw new Error('ไม่พบอาการที่มีอะไหล่แนะนำ');
-  for (const n of symNames) {
-    await page.locator('#symcats .chip').filter({ hasText: n }).first().click();
-    await page.waitForTimeout(150);
-  }
-  await page.locator('#i-usable .sg').first().click();
-  await page.locator('#desc').fill('เสียงดังผิดปกติตอนสตาร์ต และมีน้ำมันซึมใต้ท้องรถ');
-  await page.locator('.addph', { hasText: 'รูปตัวอย่าง' }).click();
-  await page.locator('.addph', { hasText: 'รูปตัวอย่าง' }).click();
-  await page.waitForTimeout(200);
-  await extractState(page, 'report-03', 'ขั้นที่ 2 อาการเสีย — เลือกอาการ + สถานะรถ');
-
-  // ---- ขั้น 3: ข้อมูลติดต่อ · สถานที่ · งบ ----
-  await page.locator('#next').click();
-  await page.waitForSelector(visible('sinfo'));
-  if (!await page.locator('#i-prov').inputValue()) {
-    await page.locator('#i-prov').selectOption({ index: 1 });
-    await page.waitForTimeout(200);
-  }
-  const amp = page.locator('#i-amp');
-  if (!await amp.inputValue() && await amp.locator('option').count() > 1) {
-    await amp.selectOption({ index: 1 });
-  }
-  await page.locator('#i-odo').fill('84120');
-  await page.locator('#i-crane').fill('3210');
-  await page.locator('#i-owntel').fill('044-221-100');
-  await page.locator('#i-tech').fill('อดิศักดิ์ แก้วใส');
-  await page.locator('#i-techtel').fill('081-234-5678');
-  await page.locator('#i-costtypes .radcard').first().click();
-  await page.waitForTimeout(200);
-  // ช่องงบที่ sample ไม่ได้เติมให้ — เติมเองให้ผ่านเงื่อนไข "จำเป็น"
+  await page.selectOption('#v-select', '1');                 // 81-2345 Hino FM8J + เครน Tadano
+  await page.waitForSelector('#vsum .incident-field');
+  await page.locator('input[name="r-usable"]').first().check();
+  await page.locator('label', { hasText: 'ส่งเรื่องให้ กรย.' }).first().click();
+  for (const t of ['ตัวรถ', 'เครน']) await page.locator('#target-chks label', { hasText: t }).click();
+  await page.selectOption('#i-costsel', '1');
   const nCost = await page.locator('#i-costfields input').count();
   for (let i = 0; i < nCost; i++) {
     const el = page.locator('#i-costfields input').nth(i);
     if (!await el.inputValue()) await el.fill('อ้างอิงตัวอย่าง 2569/104');
   }
-  await extractState(page, 'report-04', 'ขั้นที่ 3 ข้อมูลติดต่อ · สถานที่ · งบ');
-
-  // ---- ขั้น 4: อะไหล่ที่แนะนำ ----
-  await page.locator('#next').click();
-  await page.waitForSelector(visible('s3'));
-  for (let i = 0; i < 2; i++) {
-    const btn = page.locator('#parts button', { hasText: 'เลือกอะไหล่' });
-    if (!await btn.count()) break;
-    await btn.first().click();          // คลิกแล้ว #parts re-render — คว้า locator ใหม่ทุกรอบ
-    await page.waitForTimeout(250);
-  }
-  await extractState(page, 'report-05', 'ขั้นที่ 4 อะไหล่ที่ระบบแนะนำ — เลือกไว้ล่วงหน้า');
-
-  // ---- ขั้น 5: ตัดสินใจ + สรุป ----
-  await page.locator('#next').click();
-  await page.waitForSelector(visible('s4'));
-  await page.locator('#dckry').click();
-  await page.locator('#kryreason').fill('ต้องใช้เครื่องมือพิเศษถอดชุดไฮดรอลิก ซ่อมเองที่หน่วยงานไม่ได้');
-  await page.locator('#aplist .apitem').first().click();
   await page.waitForTimeout(250);
-  await extractState(page, 'report-06', 'ขั้นที่ 5 ตัดสินใจ + เลือกผู้อนุมัติ + สรุป');
+  await extractState(page, 'report-02', 'ขั้นที่ 1 เลือกรถแล้ว — สรุปรถ · จุดที่แจ้ง · งบ',
+    '#repair-modal .modal');
 
-  // ---- ส่งเรื่อง ----
+  // ---- ขั้น 2: อาการเสีย + รายละเอียดเหตุการณ์ ----
   await page.locator('#next').click();
-  await page.waitForSelector(visible('sdone'));
-  const docno = await page.locator('#docno').textContent();
-  if (!docno || !docno.trim()) errors.push('ส่งเรื่องแล้วแต่ไม่มีเลขที่ใบแจ้งซ่อม');
-  await extractState(page, 'report-07', 'ส่งเรื่องเรียบร้อย — ได้เลขที่ใบแจ้งซ่อม');
-
-  // ---- เรื่องของฉัน: ใบใหม่สถานะรอหัวหน้าอนุมัติ ----
-  await page.locator('#sdone button', { hasText: 'ดูสถานะเรื่องของฉัน' }).click();
-  await page.waitForSelector(visible('view-my'));
-  const hasWait = await page.locator('#view-my', { hasText: docno.trim() }).count();
-  if (!hasWait) errors.push('ไม่พบใบ ' + docno + ' ในเรื่องของฉัน');
-  await extractState(page, 'report-08', 'เรื่องของฉัน — ใบใหม่รอหัวหน้าอนุมัติ');
-
-  await browser.close();
-
-  if (errors.length) {
-    console.log('\n⚠ ปัญหา ' + errors.length + ' รายการ:');
-    errors.forEach(e => console.log('  ' + e));
+  await page.waitForSelector(visible('s2'));
+  // เลือก 3 อาการที่ "มีอะไหล่แนะนำ" — ขั้นอะไหล่จะได้เห็นการจัดกลุ่มแบบ ค ครบ 3 กลุ่ม
+  const symNames = await page.evaluate(() => {
+    const withParts = new Set(PARTS.map(p => p.sym));
+    return SYMPTOMS.filter(s => withParts.has(s.id)).slice(0, 3).map(s => s.name);
+  });
+  if (symNames.length < 2) throw new Error('อาการที่มีอะไหล่แนะนำน้อยกว่า 2 — จัดกลุ่มแบบ ค ไม่เห็นผล');
+  for (const n of symNames) {
+    await page.locator('#symcats .chks label', { hasText: n }).first().click();
+    await page.waitForTimeout(120);
   }
-  fs.writeFileSync(path.join(OUT, 'extract-report-summary.json'), JSON.stringify({ summary, errors }, null, 2));
+  await page.locator('#i-odo').fill('84120');
+  await page.locator('#i-crane').fill('3210');
+  await page.locator('#desc').fill('เสียงดังผิดปกติตอนสตาร์ต และมีน้ำมันซึมใต้ท้องรถ').catch(() => {});
+  await page.locator('.addph', { hasText: 'รูปตัวอย่าง' }).click();
+  await page.waitForTimeout(200);
+  await extractState(page, 'report-03', 'ขั้นที่ 2 อาการเสียและรายละเอียดเหตุการณ์',
+    '#repair-modal .modal');
+
+  // ---- ขั้น 3: อะไหล่ที่แนะนำ — "แบบ ค" จัดกลุ่มการ์ดตามอาการ (เจ้าของงานเลือก 16 ก.ย. 2569) ----
+  await page.locator('#next').click();
+  await page.waitForSelector('#parts-rec .parts-rec-item');
+  const nGroups = await page.locator('#parts-rec .symgroup-head').count();
+  if (nGroups < 2) errors.push('ขั้นอะไหล่จัดกลุ่มได้ ' + nGroups + ' กลุ่ม — คาดว่าอย่างน้อย 2');
+  // กดเพิ่มจำนวนให้ยอดรวมต่อกลุ่มไม่เป็น 0 (หัวกลุ่มจะได้โชว์ตัวเลขจริงตอนส่งเข้า Figma)
+  const nPlus = Math.min(3, await page.locator('#parts-rec .parts-rec-item').count());
+  for (let i = 0; i < nPlus; i++) {
+    await page.locator('#parts-rec .parts-rec-item').nth(i).locator('.qty button').nth(1).click();
+    await page.waitForTimeout(120);
+  }
+  await extractState(page, 'report-04',
+    'ขั้นที่ 3 อะไหล่ที่แนะนำ — จัดกลุ่มตามอาการ (แบบ ค) · ' + nGroups + ' กลุ่ม',
+    '#repair-modal .modal');
+
+  // ---- ส่งเรื่อง → กลับเข้าตาราง "เรื่องของฉัน" ----
+  await page.locator('#next').click();
+  await page.waitForSelector('#repair-modal.hidden', { state: 'attached' });
+  await page.waitForSelector('#mylist table.tbl tbody tr');
+  const row = page.locator('#mylist tbody tr', { hasText: 'รอหัวหน้าหน่วยงานอนุมัติ' }).first();
+  if (!await row.count()) errors.push('ส่งเรื่องแล้วไม่พบใบสถานะ "รอหัวหน้าหน่วยงานอนุมัติ"');
+  const docno = (await row.locator('.cell-key').textContent() || '').trim();
+  await extractState(page, 'report-05', 'เรื่องของฉัน — ใบใหม่ ' + docno + ' รอหัวหน้าอนุมัติ');
+
+  // ---- หน้าอนุมัติของหัวหน้า: รายละเอียดใบ (มีบล็อกอะไหล่ที่ผู้แจ้งเลือกไว้) ----
+  // เมนูข้าง (.nv) ถูกซ่อนด้วย media query ที่จอแคบ ⇒ คลิกไม่ได้ตอน WIDTH=390/360
+  // ตัวนี้ไม่ได้มาเทสเมนู เลยเรียกสิ่งที่ปุ่มเรียกตรงๆ ให้เดินได้ทุกความกว้าง
+  await page.evaluate(() => switchView('boss'));
+  await page.waitForSelector('#bosslist table.tbl tbody tr');
+  await page.locator('#bosslist tbody tr', { hasText: docno }).locator('.dt-action .btn').click();
+  await page.waitForSelector('#bossdetail:not(.hidden) .incident-head');
+  await page.waitForTimeout(250);
+  await extractState(page, 'report-06', 'หัวหน้าหน่วยงาน — รายละเอียดใบ ' + docno + ' + อะไหล่ที่เลือกไว้',
+    '#bossdetail');
+
+  await browser.close();   // 16 ก.ย. 2569: ไม่มีบรรทัดนี้ node ไม่ยอมจบ (เดิมรอดเพราะ UNTIL= เรียก process.exit)
+  fs.writeFileSync(path.join(OUT, 'extract-report-summary' + (VARIANT ? '-' + VARIANT : '') + '.json'), JSON.stringify({ summary, errors }, null, 2));
   console.log('\nรวม ' + summary.length + ' state · node รวม ' + summary.reduce((a, s) => a + s.nodes, 0) +
     ' → ' + path.relative(process.cwd(), OUT) + '/dom-report-*.json');
   if (errors.length) process.exitCode = 1;
@@ -201,7 +186,7 @@ async function main() {
 
 main().catch(async (e) => {
   if (e === STOP) {
-    fs.writeFileSync(path.join(OUT, 'extract-report-summary.json'), JSON.stringify({ summary, errors }, null, 2));
+    fs.writeFileSync(path.join(OUT, 'extract-report-summary' + (VARIANT ? '-' + VARIANT : '') + '.json'), JSON.stringify({ summary, errors }, null, 2));
     console.log('\nหยุดที่ UNTIL=' + UNTIL + ' · ' + summary.length + ' state');
     process.exit(0);
   }

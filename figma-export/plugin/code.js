@@ -208,7 +208,9 @@ function applyLayout(node, spec) {
   node.paddingBottom = p[2] || 0;
   node.paddingLeft = p[3] || 0;
   if (L.align) node.primaryAxisAlignItems = L.align;
-  if (L.cross) node.counterAxisAlignItems = L.cross;
+  // กันสเปกเก่า/สเปกมือที่ยังมี BASELINE คู่กับ VERTICAL — Figma throw ทั้งไฟล์ถ้าเจอ
+  if (L.cross) node.counterAxisAlignItems =
+    (L.cross === 'BASELINE' && node.layoutMode !== 'HORIZONTAL') ? 'MIN' : L.cross;
   if (L.wrap && node.layoutMode === 'HORIZONTAL') node.layoutWrap = 'WRAP';
   node.clipsContent = spec.clip !== false;
 }

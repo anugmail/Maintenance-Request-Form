@@ -29,13 +29,18 @@ const OVERHAUL = process.argv.includes('--overhaul');
 // ONLY=report-01 หรือ ONLY=report-01,report-03 — ทำสเปกเฉพาะ state ที่ระบุ
 // (คู่กับ UNTIL= ของ flow-report-extract.js — ใช้ตอนอยาก export ทีละหน้า)
 const ONLY = (process.env.ONLY || '').split(',').map(x => x.trim()).filter(Boolean);
+// VARIANT=m390 → อ่าน dom-report-m390-NN.json แล้วออกเป็น spec-report-m390.json + page คนละหน้า
+// (16 ก.ย. 2569 · ไม่ใส่ = ชุด web เดิมทุกอย่าง)
+const VARIANT = (process.env.VARIANT || '').trim();
+const VS = VARIANT ? '-' + VARIANT : '';
 const ALL_SLUGS = REPORT
-  ? Array.from({ length: 8 }, (_, i) => 'report-0' + (i + 1))
+  ? fs.readdirSync(OUT).map(f => (f.match(new RegExp('^dom-(report' + VS + '-\\d+)\\.json$')) || [])[1])
+      .filter(Boolean).sort()
   : OVERHAUL ? ['overhaul']
   : ['index', 'plan-new', 'supplies', 'confirm'];
 const SLUGS = ONLY.length ? ALL_SLUGS.filter(s => ONLY.includes(s)) : ALL_SLUGS;
-const PAGE_NAME = REPORT ? 'Screens — แจ้งซ่อม (ฝั่งผู้แจ้ง)' : OVERHAUL ? 'Screens — Overhaul (ทดสอบ 1 หน้า)' : 'Screens — บำรุงรักษาประจำปี';
-const OUT_FILE = REPORT ? 'spec-report.json' : OVERHAUL ? 'spec-overhaul.json' : 'spec.json';
+const PAGE_NAME = REPORT ? 'Screens — แจ้งซ่อม (ฝั่งผู้แจ้ง)' + (VARIANT ? ' · ' + VARIANT : '') : OVERHAUL ? 'Screens — Overhaul (ทดสอบ 1 หน้า)' : 'Screens — บำรุงรักษาประจำปี';
+const OUT_FILE = REPORT ? 'spec-report' + VS + '.json' : OVERHAUL ? 'spec-overhaul.json' : 'spec.json';
 
 const ICONS = (() => {
   const f = path.join(OUT, 'icons.json');
@@ -99,6 +104,14 @@ function strokeOf(s) {
 
 const FIGMA_ALIGN = { 'flex-start': 'MIN', 'start': 'MIN', 'center': 'CENTER', 'flex-end': 'MAX', 'end': 'MAX', 'space-between': 'SPACE_BETWEEN' };
 const FIGMA_CROSS = { 'flex-start': 'MIN', 'start': 'MIN', 'center': 'CENTER', 'flex-end': 'MAX', 'end': 'MAX', 'baseline': 'BASELINE', 'stretch': 'MIN', 'normal': 'MIN' };
+/* 16 ก.ย. 2569 — Figma ยอม counterAxisAlignItems = BASELINE เฉพาะตอน layoutMode === 'HORIZONTAL'
+   แถวที่ CSS เป็น align-items:baseline + flex-wrap:wrap (เช่น .pf-row บล็อกอะไหล่หน้าอนุมัติ)
+   พอ extract ที่จอแคบมันตัดบรรทัดจนถูกจัดเป็น VERTICAL ⇒ ปลั๊กอิน throw ทั้งไฟล์
+   (เจอตอน export m390 · ชุด web 1440 ไม่เจอเพราะยังเป็น HORIZONTAL อยู่) */
+const crossFor = (alignItems, mode) => {
+  const v = FIGMA_CROSS[alignItems] || 'MIN';
+  return (v === 'BASELINE' && mode !== 'HORIZONTAL') ? 'MIN' : v;
+};
 
 /* ---------- geometry: ลูกเรียงแบบไหน ---------- */
 function rectOf(n) { return n.rect || { x: 0, y: 0, w: 0, h: 0 }; }
@@ -301,7 +314,7 @@ function convert(node, parentRect, ctx) {
         gap: 0,
         padding: measuredPadding(r, ordered.map(k => rectOf(k.src))),
         align: 'SPACE_BETWEEN',
-        cross: FIGMA_CROSS[s.alignItems] || 'MIN'
+        cross: crossFor(s.alignItems, cls.mode)
       };
       stats.spaceBetween++;
     } else if (gaps.length === 0 || spread <= GAP_SPREAD_OK) {
@@ -312,7 +325,7 @@ function convert(node, parentRect, ctx) {
         gap,
         padding: measuredPadding(r, ordered.map(k => rectOf(k.src))),
         align: FIGMA_ALIGN[s.justifyContent] || 'MIN',
-        cross: FIGMA_CROSS[s.alignItems] || 'MIN'
+        cross: crossFor(s.alignItems, cls.mode)
       };
       if (s.flexWrap === 'wrap' && cls.mode === 'HORIZONTAL') layout.wrap = true;
     } else {
@@ -641,7 +654,7 @@ function main() {
     stats.absolute.slice(0, 12).forEach(a => console.log('   ' + a));
     if (stats.absolute.length > 12) console.log('   … อีก ' + (stats.absolute.length - 12));
   }
-  fs.writeFileSync(path.join(OUT, 'map-report.json'), JSON.stringify(stats, null, 2));
+  fs.writeFileSync(path.join(OUT, 'map-report' + VS + '.json'), JSON.stringify(stats, null, 2));
   console.log('\nเขียน ' + path.relative(process.cwd(), outFile) + ' (' + Math.round(fs.statSync(outFile).size / 1024) + 'KB)');
 }
 

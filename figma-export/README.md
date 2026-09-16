@@ -12,19 +12,36 @@
 > **สองท่อนี้แยกไฟล์กันเด็ดขาด ไม่ทับกัน:** ท่อ FigJam ใช้ `board.json` + `figjam-plugin/` ·
 > ท่อ design ใช้ `spec.json` / `spec-report.json` + `plugin/` — `serve.js` ตัวเดียวเสิร์ฟทั้งหมด
 
-## ท่อ design กับโฟลว์แจ้งซ่อม (ฝั่งผู้แจ้ง 8 state)
+## ท่อ design กับโฟลว์แจ้งซ่อม (ฝั่งผู้แจ้ง 6 state · web + mobile)
 
 `flow-report-extract.js` เป็นคู่แฝดของ `flow-report-capture.js` — ไล่กด wizard เส้นเดียวกันเป๊ะ
 แต่แทนที่จะถ่ายภาพ มันรัน `walkDom` (แชร์จาก `dom-walk.js`) เก็บ DOM + computed style ทีละ state
-→ `out/dom-report-01..08.json` แล้ว `2-map.js --report` แปลงเป็น `out/spec-report.json`
-(หน้า Figma ชื่อ `Screens — แจ้งซ่อม (ฝั่งผู้แจ้ง)` · node รวม 1,729 — หนักสุด 342/state ไม่ชนเพดานแบบ admin)
+→ `out/dom-report-01..06.json` แล้ว `2-map.js --report` แปลงเป็น `out/spec-report.json`
+
+> ✏️ **ซ่อม + ต่อ mobile 16 ก.ย. 2569**
+> - **จังหวะกดค้างของเก่า** — ยังกด `#vlist .radcard` · `#symcats .chip` · `#i-costtypes .radcard`
+>   ที่ถอดไปตั้งแต่ 7 ก.ย. ⇒ เดินไม่จบมาตลอด (คอมเมนต์เดิมยอมรับเองว่าให้ใช้ `UNTIL=report-01`)
+>   ตอนนี้ยึดจังหวะจาก `mock/test/flow-regression.js` · วิซาร์ดเหลือ **3 ขั้น** ⇒ **6 state** (ไม่ใช่ 8)
+> - **ไม่มี `browser.close()`** ⇒ node ไม่ยอมจบ (รอดมาเพราะ `UNTIL=` เรียก `process.exit`)
+> - **เมนูข้าง `.nv` ซ่อนตอนจอแคบ** ⇒ state สุดท้ายเรียก `switchView('boss')` แทนการคลิก
+> - **รองรับหลายความกว้าง** — `WIDTH` (viewport) กับ `VARIANT` (คำต่อท้ายชื่อไฟล์/ชื่อ page) แยกกัน
+>   ไม่ใส่ = ชุด web 1440 เดิมทุกอย่าง · `2-map.js --report` เลิก fix จำนวน state แล้ว
+>   มันไล่อ่าน `dom-report<variant>-NN.json` ที่มีจริงในโฟลเดอร์
 
 ```bash
-NODE_PATH=… node figma-export/flow-report-extract.js   # ต้องมี :8123 รันอยู่
+NODE_PATH=… node figma-export/flow-report-extract.js   # ต้องมี :8123 รันอยู่ → web 1440
 node figma-export/0-icons.js                           # เก็บไอคอนของ mock เพิ่ม (58 ตัว)
 node figma-export/2-map.js --report                    # → out/spec-report.json (ไม่แตะ spec.json)
-node figma-export/test-plugin.js --report              # เทสบน mock Plugin API ก่อนเปิด Figma
+
+WIDTH=390 VARIANT=m390 node figma-export/flow-report-extract.js   # → dom-report-m390-*.json
+VARIANT=m390 node figma-export/2-map.js --report                  # → spec-report-m390.json
 ```
+
+**ความกว้าง mobile** — ต้นแบบยึด **390** (ชุดเทส `มือถือ (390px)`) ส่วน**ไลบรารี Figma ยึด 360**
+(`Section header`/`Section label` มี variant `Breakpoint=Mobile` · เฟรม `Mirror` หน้า *Section headers*
+เป็น 360×800 · content 328 = 360 − gutter 16×2) ⇒ ท่อรับทั้งคู่ `WIDTH=360 VARIANT=m360` ก็ได้
+
+⚠ **แพลนฟรีจำกัด 3 page/ไฟล์** — web + mobile = 2 page ถ้ามี page ชุดอื่นค้างต้องลบก่อน
 
 ในไฟล์ **Figma design** (ไม่ใช่ FigJam): import `figma-export/plugin/manifest.json` → กด **"โหลด + สร้าง"**
 (ค่าเริ่มต้นของช่องที่อยู่สเปกชี้ `spec-report.json` อยู่แล้ว — จะเอาชุด yearly ให้พิมพ์เปลี่ยนเป็น `spec.json`)

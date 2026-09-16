@@ -1776,7 +1776,7 @@
               จำนวนที่เกินยอดในคลัง จะถูกตั้งเป็นรายการจัดซื้อให้อัตโนมัติ</span></div>
           <div class="stack">
             <div class="search max-w-[420px]"><span class="ms">search</span><input type="text" id="parts-q" placeholder="ค้นหาชื่อหรือรหัสอะไหล่" oninput="partsQ=this.value;renderParts()"></div>
-            <div id="parts-rec" class="parts-rec-list"></div>
+            <div id="parts-rec"></div>
           </div>
           <div class="parts-totals ml-auto max-w-[420px]">
             <div class="parts-total-row"><span>เบิกจากคลัง</span><strong id="p-sum-stock">0 บาท</strong></div>
@@ -3123,19 +3123,41 @@ function onHandOf(p) { return p.stock || p.stockAlt || 0 }            // Smart I
     // อะไหล่นอกระบบที่ผู้แจ้งพิมพ์เอง — ไม่มีในคลังเสมอ จึงนับเป็น "ต้องจัดซื้อ" ทั้งจำนวน
     function renderPartsAll() { renderParts() }
     // 7 ก.ย. 2569: รายการอะไหล่ที่แนะนำจากอาการ (แทนเลย์เอาต์ 2 คอลัมน์ คลัง/ที่เลือก) — สเปกภาพชุดเต็ม
+    // 16 ก.ย. 2569 "แบบ ค": จัดกลุ่มการ์ดตามอาการที่เลือกมา แทนลิสต์เรียบ — เจ้าของงานเลือกจาก
+    //   design-mock/_compare-parts-source.html (แบบ ข = บรรทัดที่มาในทุกการ์ด · แบบ ค = จัดกลุ่ม)
+    //   หัวกลุ่มใช้ .symgroup-head ชุดเดียวกับหมวดอาการขั้น 2 + ไอคอนจาก CATS ของอาการนั้น
+    //   ⇒ การ์ดไม่ต้องมีบรรทัด "แนะนำจาก" เพราะหัวกลุ่มบอกที่มาให้แล้ว
+    function partsRecCard(p) {
+      const q = pickQty(p.code), buy = Math.max(0, q - onHandOf(p));
+      return `<div class="parts-rec-item">
+        <div class="pr-head"><b>${esc(p.name)} <span class="badge b-info">แนะนำ</span></b>
+          <button type="button" class="pr-del" title="เอารายการนี้ออก" onclick="removePick('${p.code}')"><span class="ms">delete</span></button></div>
+        <div class="parts-line">${esc(p.code)} · ${p.need} ${esc(p.unit)} | ${baht(p.price)} บาท</div>
+        <div class="parts-source"><b>${buy ? 'ซื้อเพิ่มเติม' : srcOf(p)}</b>${onHandOf(p) ? ` : มีในคลัง ${onHandOf(p)} ${esc(p.unit)}` : ' — ต้องสั่งซื้อภายนอก'}${buy ? ` · จัดซื้อ ${buy} ${esc(p.unit)}` : ''}</div>
+        <div class="pr-foot"><span class="parts-price">${baht(p.price * q)} บาท</span>
+          <div class="qty"><button type="button" onclick="chgPick('${p.code}',-1)">−</button><span>${q}</span><button type="button" onclick="chgPick('${p.code}',1)">+</button></div>
+        </div></div>`;
+    }
     function renderParts() {
       const query = partsQ.trim().toLowerCase();
       const rec = partsFor().filter(p => !query || p.name.toLowerCase().includes(query) || p.code.toLowerCase().includes(query));
-      $('parts-rec').innerHTML = rec.length ? rec.map(p => {
-        const q = pickQty(p.code), buy = Math.max(0, q - onHandOf(p));
-        return `<div class="parts-rec-item">
-          <div class="pr-head"><b>${esc(p.name)} <span class="badge b-info">แนะนำ</span></b>
-            <button type="button" class="pr-del" title="เอารายการนี้ออก" onclick="removePick('${p.code}')"><span class="ms">delete</span></button></div>
-          <div class="parts-line">${esc(p.code)} · ${p.need} ${esc(p.unit)} | ${baht(p.price)} บาท</div>
-          <div class="parts-source"><b>${buy ? 'ซื้อเพิ่มเติม' : srcOf(p)}</b>${onHandOf(p) ? ` : มีในคลัง ${onHandOf(p)} ${esc(p.unit)}` : ' — ต้องสั่งซื้อภายนอก'}${buy ? ` · จัดซื้อ ${buy} ${esc(p.unit)}` : ''}</div>
-          <div class="pr-foot"><span class="parts-price">${baht(p.price * q)} บาท</span>
-            <div class="qty"><button type="button" onclick="chgPick('${p.code}',-1)">−</button><span>${q}</span><button type="button" onclick="chgPick('${p.code}',1)">+</button></div>
-          </div></div>`;
+      // เรียงกลุ่มตามลำดับอาการที่ผู้แจ้งเลือก · กลุ่มที่ค้นหาแล้วไม่เหลือรายการจะไม่ขึ้น
+      const groups = S.symptoms.map(id => ({
+        sym: SYMPTOMS.find(s => s.id === id),
+        items: rec.filter(p => p.sym === id)
+      })).filter(g => g.sym && g.items.length);
+      $('parts-rec').innerHTML = groups.length ? groups.map(g => {
+        const sum = g.items.reduce((t, p) => t + p.price * pickQty(p.code), 0);
+        const icon = (CATS.find(c => c.key === g.sym.cat) || {}).icon || 'build_circle';
+        // flex-1/min-w-0 ที่ชื่อ + nowrap ที่ป้าย/ยอด = ชื่ออาการยาวตัดบรรทัดได้เอง
+        // โดยป้ายกับยอดรวมไม่ถูกบีบจนแตกบรรทัด (เห็นตอนเทสจอ 390)
+        return `<div class="symgroup-head first:mt-2">
+            <span class="ms">${icon}</span>
+            <span class="flex-1 min-w-0">${esc(g.sym.name)}</span>
+            <span class="badge b-neutral whitespace-nowrap">${g.items.length} รายการ</span>
+            <span class="text-sm font-normal text-gray-500 whitespace-nowrap">${baht(sum)} บาท</span>
+          </div>
+          <div class="parts-rec-list mt-0">${g.items.map(partsRecCard).join('')}</div>`;
       }).join('') : `<div class="empty">${query ? 'ไม่พบอะไหล่ที่ค้นหา — ลองคำอื่น' : 'ยังไม่มีอะไหล่แนะนำ — เลือกอาการเสียในขั้นก่อน แล้วระบบจะแนะนำให้อัตโนมัติ'}</div>`;
       let stockCost = 0, buyCost = 0;
       Object.keys({ ...S.bookings, ...S.orders }).forEach(code => {
