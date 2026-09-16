@@ -1,0 +1,28 @@
+@startsalt
+scale 1.45
+{#
+<b><back:#DBEAFE>สถานะใบแจ้งซ่อม (22)                 | <b><back:#DBEAFE>เจ้าของ | <b><back:#FFEDD5>ต้นทาง | <b><back:#FFFAEB>หัวหน้า | <b><back:#FFF6ED>กรย. | <b><back:#ECFDF3>กบค. | <b><back:#DBEAFE>เห็น
+<back:#FFFAEB>S1 รอหัวหน้าหน่วยงานอนุมัติ             | หัวหน้า | <back:#F8FAFC>  —  | <back:#ECFDF3>  ✔  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#EEF4FF> ด่าน 1
+<back:#EEF4FF>S2 รอหน่วยงานดำเนินการซ่อมเอง            | ต้นทาง | <back:#ECFDF3>  ✔  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#EEF4FF> ด่าน 1
+<back:#F2F4F7>S3 ไม่อนุมัติ  (ปลายทาง)                 | — จบ — | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#EEF4FF> ด่าน 1
+<back:#F2F4F7>S4 ตีกลับเอกสาร  (ปลายทาง)               | — จบ — | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#EEF4FF> ด่าน 1
+<back:#EEF4FF>S5 ส่งกลับต้นทางซ่อมเอง                  | ต้นทาง | <back:#ECFDF3>  ✔  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#EEF4FF> ด่าน 1
+<back:#FFF6ED>S6 รอ กรย. พิจารณา                       | กรย. | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#ECFDF3>  ✔  | <back:#F8FAFC>  —  | <back:#EEF4FF> ด่าน 1
+<back:#FFF6ED>S7 กรย. เห็นชอบ — รับเรื่องซ่อมเอง        | กรย. | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#ECFDF3>  ✔  | <back:#F8FAFC>  —  | <back:#EEF4FF> ด่าน 1
+<back:#FFF6ED>S8 รอ กรย. ดำเนินการ                     | กรย. | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#ECFDF3>  ✔  | <back:#F8FAFC>  —  | <back:#EEF4FF> ด่าน 1
+<back:#FFF6ED>S9 กรย. ส่งซ่อมศูนย์บริการ/อู่             | กรย. | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#ECFDF3>  ✔  | <back:#F8FAFC>  —  | <back:#EEF4FF> ด่าน 1
+<back:#ECFDF3>S10 รอ กบค. พิจารณา                      | กบค. | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#ECFDF3>  ✔  | <back:#EEF4FF> ด่าน 1
+<back:#ECFDF3>S11 กบค. เห็นชอบ — รับเรื่องซ่อมเอง       | กบค. | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#ECFDF3>  ✔  | <back:#EEF4FF> ด่าน 1
+<back:#ECFDF3>S12 รอเตรียมอะไหล่                       | กบค. | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#ECFDF3>  ✔  | <back:#EEF4FF> ด่าน 1
+<back:#EEF4FF>S13 รอต้นทางยืนยันนัดหมาย                | ต้นทาง | <back:#ECFDF3>  ✔  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#FFFAEB> ✔ * | <back:#EEF4FF> ด่าน 1
+<back:#ECFDF3>S14 พร้อมดำเนินการซ่อม                   | กบค. | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#ECFDF3>  ✔  | <back:#EEF4FF> ด่าน 1
+<back:#ECFDF3>S15 อยู่ระหว่างดำเนินการซ่อม              | กบค. | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#ECFDF3>  ✔  | <back:#EEF4FF> ด่าน 1
+<back:#ECFDF3>S16 ซ่อมเสร็จ — รอส่งมอบรถ                | กบค. | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#ECFDF3>  ✔  | <back:#EEF4FF> ด่าน 1
+<back:#ECFDF3>S17 พบอาการเพิ่มเติม — รอ กบค. ประเมิน     | กบค. | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#ECFDF3>  ✔  | <back:#EEF4FF> ด่าน 1
+<back:#EEF4FF>S18 รอต้นทางพิจารณาอาการเพิ่มเติม         | ต้นทาง | <back:#ECFDF3>  ✔  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#EEF4FF> ด่าน 1
+<back:#EEF4FF>S19 รอต้นทางยืนยันรับรถ                   | ต้นทาง | <back:#ECFDF3>  ✔  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#FFFAEB> ✔ * | <back:#EEF4FF> ด่าน 1
+<back:#EEF4FF>S20 รอต้นทางรับรถกลับไปใช้งาน             | ต้นทาง | <back:#ECFDF3>  ✔  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#FFFAEB> ✔ * | <back:#EEF4FF> ด่าน 1
+<back:#F2F4F7>S21 ปิดงาน  (ปลายทาง)                    | — จบ — | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#EEF4FF> ด่าน 1
+<back:#F9FAFB>S22 กบค. ส่งซ่อมศูนย์บริการ/อู่  ❓          | กบค. | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#F8FAFC>  —  | <back:#ECFDF3>  ✔  | <back:#EEF4FF> ด่าน 1
+}
+@endsalt

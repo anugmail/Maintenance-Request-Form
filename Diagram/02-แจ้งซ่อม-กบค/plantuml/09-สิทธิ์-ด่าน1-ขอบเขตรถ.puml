@@ -1,0 +1,26 @@
+@startuml
+!pragma layout smetana
+title ด่าน 1 · ขอบเขตรถ — ใครเห็น/แจ้งซ่อมรถคันไหนได้ (ตามสังกัด)
+skinparam defaultFontName "Thonburi"
+skinparam defaultFontSize 13
+skinparam TitleFontSize 17
+skinparam shadowing false
+skinparam rectangleBorderColor #98A2B3
+skinparam rectangleFontSize 14
+
+rectangle "ระดับ 3 · รถทั้งประเทศ (รวมสำนักงานใหญ่)\n<size:12><i>กจย · ผยค.กกฟ.1 · ผยค.กกฟ.2 · กบค. · กฝซ.</i></size>" #EEF4FF {
+  rectangle "ระดับ 2 · รถหน่วยงานอื่น ภายในเขตเดียวกัน\n<size:12><i>กรย เขต (เฉพาะ ผยค.) · อำนวยการ เขต</i></size>" #FFF6ED {
+    rectangle "ระดับ 1 · รถภายในหน่วยงานตัวเอง\n<size:12><i>หน่วยงานที่มีรถเป็นของตัวเอง (ทั้ง สนญ. และ เขต)</i></size>" #ECFDF3 {
+      rectangle "  รถของหน่วยงานตัวเอง  " #FFFFFF
+    }
+  }
+}
+
+rectangle "ระดับ 0 · ไม่มีสิทธิ์เลย\n<size:12><i>พขร.(บ) พนักงาน Outsource</i></size>" as L0 #FEF3F2
+
+note bottom of L0
+  <b>ขอบเขตซ้อนกันเป็นชั้น</b> — อยู่วงนอก เห็นวงในทั้งหมด
+  <b>"แจ้งซ่อม" กับ "เห็นรถ" ให้ค่าตรงกันทุกช่อง</b> ในตารางที่เจ้าของงานส่งมา
+  ⇒ ยุบเป็นค่าเดียวได้ = <b>ระดับการเข้าถึง</b> ต่อบทบาท
+end note
+@enduml
