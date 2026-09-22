@@ -1,0 +1,178 @@
+  <!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายการยานพาหนะ — เปลี่ยนสังกัด (ขั้น 1) | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260907-ds62">
+<link rel="stylesheet" href="../design-system/components.css?v=20260914-ds66">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20260907-tw3"></script>
+<!-- ที่มา: โครงหน้า + ตาราง ยกจาก `Vehicle list` ของหน้า `5.2 Vehicle Management` (UI Release#2 · node 11:45256)
+     component ที่ใช้ (ไฟล์ Component VMS Plus): Header [Type=Subheader] · Table · Badge · Tertiary button
+     คลาสกลางจาก components.css: .shell/.side.wide/.work/.topbar/.content · .crumbs · .page-title-row
+     .list-toolbar · .search · .tblwrap/.tbl.striped · .dt-action · .badge · .pager · .note
+     ไม่มี <style> ในหน้า — layout/spacing ใช้ Tailwind utility ตามกติกา 14 ก.ย. 2569 -->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="transfer-01-list.html" title="รายการยานพาหนะ"><span class="ms">directions_car</span><span class="nvlbl">1 · รายการยานพาหนะ</span></a>
+    <a class="nv" href="transfer-request.html" title="คำร้องเปลี่ยนสังกัด"><span class="ms">swap_horiz</span><span class="nvlbl">2 · คำร้องเปลี่ยนสังกัด</span></a>
+    <a class="nv" href="transfer-03-receive.html" title="ปลายทางตรวจรับ"><span class="ms">how_to_reg</span><span class="nvlbl">3 · ปลายทางตรวจรับ</span></a>
+    <a class="nv" href="transfer-04-code.html" title="คิวงาน กจย."><span class="ms">label</span><span class="nvlbl">4 · คิวงาน กจย.</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นายอนุรักษ์ คล่องไชยชน — อก.จย.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft">Prototype (Mock) · ขั้น 1/4 — จุดเข้าโฟลว์เปลี่ยนสังกัด · ข้อมูลจำลองทั้งหมด ยังไม่เชื่อมระบบจริง</div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep">›</span><span class="cur">ข้อมูลยานพาหนะ</span>
+      </div>
+
+      <div class="page-title-row">
+        <h1 class="page-title">ข้อมูลยานพาหนะ</h1>
+        <span class="badge b-neutral">หน่วยงานของฉัน · กจย.</span>
+      </div>
+      <div class="sub -mt-3 mb-4">เลือกคันที่ต้องการทำเรื่องเปลี่ยนสังกัด แล้วกดไอคอนท้ายแถว —
+        <b>หน่วยงานต้นทางเป็นผู้เปิดเรื่องเสมอ</b> (เคาะ 22 ก.ย. 2569)</div>
+
+      <div class="note note-info mb-4"><span class="ms">info</span>
+        <div><b>เคสปลายทางอยากได้รถ (pull)</b> เข้าทาง “คำขอรถจากหน่วยงานอื่น” ด้านล่าง —
+          เป็นเพียงสัญญาณความต้องการ <b>ยังไม่สร้างใบโอน</b> ต้นทางกดรับเรื่องแล้วระบบจึงเปิดใบจริงให้</div>
+      </div>
+
+      <div class="list-toolbar mb-3">
+        <div class="search"><span class="ms">search</span><input type="text" placeholder="ค้นหาทะเบียน · รหัสทรัพย์สิน · รหัสข้างรถ"></div>
+        <button class="btn btn-s btn-sm"><span class="ms">filter_list</span> ตัวกรอง</button>
+      </div>
+
+      <div class="tblwrap">
+        <table class="tbl striped">
+          <thead>
+            <tr>
+              <th>เลขทะเบียน</th>
+              <th>รหัสข้างรถ</th>
+              <th>ประเภทยานพาหนะ</th>
+              <th>สังกัดปัจจุบัน</th>
+              <th>สถานะรถ</th>
+              <th>รายการค้าง</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>3ขพ 6153 กรุงเทพมหานคร</td>
+              <td>กจย. - 25 - 1850</td>
+              <td>กระเช้าฮอทไลน์ 115 KV</td>
+              <td>กจย. ฝจบ. ผชก.(ล)</td>
+              <td><span class="badge b-ok">พร้อมใช้งาน</span></td>
+              <td><span class="badge b-neutral">ไม่มี</span></td>
+              <td>
+                <div class="dt-action">
+                  <a class="btn btn-s btn-icon" href="transfer-request.html" title="ทำเรื่องเปลี่ยนสังกัด"><span class="ms">swap_horiz</span></a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>82-4471 กรุงเทพมหานคร</td>
+              <td>กจย. - 09 - 0231</td>
+              <td>รถปั้นจั่น (ไฮดรอลิคเครน)</td>
+              <td>กจย. ฝจบ. ผชก.(ล)</td>
+              <td><span class="badge b-low">ซ่อมอยู่</span></td>
+              <td>
+                <span class="badge b-out">2 รายการ</span>
+              </td>
+              <td>
+                <div class="dt-action">
+                  <a class="btn btn-s btn-icon" href="transfer-request.html#pending" title="ทำเรื่องเปลี่ยนสังกัด (มีรายการค้าง)"><span class="ms">swap_horiz</span><span class="cnt">2</span></a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>3ขข 1140 กรุงเทพมหานคร</td>
+              <td>กจย. - 04 - 0912</td>
+              <td>รถบรรทุกขนาดใหญ่ (HOTLINE)</td>
+              <td>กจย. ฝจบ. ผชก.(ล)</td>
+              <td><span class="badge b-ok">พร้อมใช้งาน</span></td>
+              <td><span class="badge b-neutral">ไม่มี</span></td>
+              <td>
+                <div class="dt-action">
+                  <a class="btn btn-s btn-icon" href="transfer-request.html" title="ทำเรื่องเปลี่ยนสังกัด"><span class="ms">swap_horiz</span></a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>ฮด 8823 กรุงเทพมหานคร</td>
+              <td>กจย. - 25 - 2014</td>
+              <td>รถเช่าแบบลีสซิ่ง</td>
+              <td>กจย. ฝจบ. ผชก.(ล)</td>
+              <td><span class="badge b-ok">พร้อมใช้งาน</span></td>
+              <td><span class="badge b-neutral">ไม่มี</span></td>
+              <td>
+                <div class="dt-action">
+                  <button class="btn btn-s btn-icon" disabled title="รถเช่า (รหัสประเภท 25) — ยังไม่เคาะว่าเปลี่ยนสังกัดได้ไหม"><span class="ms">swap_horiz</span></button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="tblfoot">
+          <span>แสดง 4 จาก 4 รายการ</span>
+        </div>
+      </div>
+
+      <div class="stack loose mt-8">
+        <div class="card">
+          <div class="stack">
+            <div class="sect">คำขอรถจากหน่วยงานอื่น (เคส pull · T0a)</div>
+            <div class="sub">หน่วยงานอื่นแจ้งความต้องการเข้ามา — <b>ยังไม่ใช่ใบโอน</b> กดรับเรื่องแล้วระบบจะเปิดใบให้พร้อมข้อมูลจากคำขอ</div>
+            <div class="tblwrap">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>หน่วยงานที่ขอ</th>
+                    <th>ประเภทที่ต้องการ</th>
+                    <th>เหตุผล</th>
+                    <th>วันที่แจ้ง</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>กฟอ.แม่ใจ จ.พะเยา — กฟน.1</td>
+                    <td>กระเช้าฮอทไลน์</td>
+                    <td>รถเดิมหมดสภาพ รอจำหน่าย ยังไม่มีทดแทน</td>
+                    <td>18 ก.ย. 2569</td>
+                    <td>
+                      <div class="dt-action">
+                        <a class="btn btn-s btn-sm" href="transfer-request.html"><span class="ms">add</span> รับเรื่อง · เปิดใบโอน</a>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+</body>
+</html>

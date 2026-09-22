@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ปลายทางตรวจรับและรับโอน (ขั้น 3) | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260907-ds62">
+<link rel="stylesheet" href="../design-system/components.css?v=20260914-ds66">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20260907-tw3"></script>
+<!-- ⚠️ ไลบรารี PEA ไม่มีหน้า "ตรวจรับการโอน" — เคาะ 22 ก.ย. 2569 ให้ประกอบจาก component ที่มี ไม่ออกแบบใหม่
+     โครง 2 คอลัมน์ยกจาก `Incident detail` (หน้า 5.3 Vehicle Breakdown ของ UI Release#2)
+     component ที่ใช้ (ไฟล์ Component VMS Plus): Modal [Type=Form] · Checkbox · Badge · File upload chip · Button
+     คลาสกลางจาก components.css: .incident-layout/.incident-view/.incident-side/.incident-card/.incident-summary
+     .incident-field · .chks/.cbox · .file-chip · .note · .tl · .modal-overlay/.modal/.modal-hd-c/.modal-bd/.modal-ft-a
+     ไม่มี <style> ในหน้า — layout/spacing ใช้ Tailwind utility -->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv" href="transfer-01-list.html" title="รายการยานพาหนะ"><span class="ms">directions_car</span><span class="nvlbl">1 · รายการยานพาหนะ</span></a>
+    <a class="nv" href="transfer-request.html" title="คำร้องเปลี่ยนสังกัด"><span class="ms">swap_horiz</span><span class="nvlbl">2 · คำร้องเปลี่ยนสังกัด</span></a>
+    <a class="nv on" href="transfer-03-receive.html" title="ปลายทางตรวจรับ"><span class="ms">how_to_reg</span><span class="nvlbl">3 · ปลายทางตรวจรับ</span></a>
+    <a class="nv" href="transfer-04-code.html" title="คิวงาน กจย."><span class="ms">label</span><span class="nvlbl">4 · คิวงาน กจย.</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นายสมศักดิ์ สง่าอินทร์ — อก.อพ.1 (หน่วยงานปลายทาง)</span>
+    </div>
+
+    <main class="content">
+      <div class="draft">Prototype (Mock) · ขั้น 3/4 — ฝั่งหน่วยงานปลายทาง (ผู้รับโอน) · ไลบรารี PEA ไม่มีหน้านี้ ประกอบจากคอมโพเนนต์ที่มี</div>
+
+      <div class="crumbs">
+        <span class="ms">swap_horiz</span><a href="transfer-01-list.html">งานเปลี่ยนสังกัด</a>
+        <span class="sep">›</span><a href="#">TRF-2569-0114</a>
+        <span class="sep">›</span><span class="cur">ตรวจรับและรับโอน</span>
+      </div>
+
+      <div class="page-title-row">
+        <h1 class="page-title">ตรวจรับและรับโอนยานพาหนะ</h1>
+        <span class="badge b-low">รอปลายทางตอบรับ</span>
+      </div>
+      <div class="sub -mt-3 mb-4">เลขที่คำร้อง TRF-2569-0114 · หน่วยงานต้นทาง กจย. ฝจบ. ผชก.(ล) เสนอโอนเมื่อ 20 ก.ย. 2569</div>
+
+      <div class="incident-layout">
+
+        <div class="incident-view">
+          <div class="stack loose">
+
+            <div class="card">
+              <div class="incident-section-title">ยานพาหนะที่เสนอโอน</div>
+              <dl class="incident-summary">
+                <div class="incident-field"><dt>เลขทะเบียน</dt><dd>3ขพ 6153 กรุงเทพมหานคร</dd></div>
+                <div class="incident-field"><dt>รหัสทรัพย์สิน</dt><dd>513021567839</dd></div>
+                <div class="incident-field"><dt>ประเภทยานพาหนะ</dt><dd>กระเช้าฮอทไลน์ 115 KV</dd></div>
+                <div class="incident-field"><dt>รหัสข้างรถเดิม</dt><dd>กจย. - 25 - 1850</dd></div>
+                <div class="incident-field"><dt>ปีที่เริ่มใช้งาน</dt><dd>2555 (อายุ 14 ปี)</dd></div>
+                <div class="incident-field"><dt>เลขไมล์ / ชั่วโมงกระเช้า</dt><dd>184,220 กม. / 6,180 ชม.</dd></div>
+                <div class="incident-field wide"><dt>เหตุผลที่ขอโอน</dt><dd>หน่วยงานปลายทางขาดแคลนรถกระเช้าสำหรับงานฮอทไลน์ · ต้นทางมีรถทดแทนแล้ว</dd></div>
+              </dl>
+            </div>
+
+            <div class="card">
+              <div class="incident-section-title">ประวัติซ่อม 12 เดือนล่าสุด</div>
+              <div class="sub">ข้อมูลประกอบการตัดสินใจรับโอน — ดึงจากประวัติของรถคันนี้โดยตรง</div>
+              <div class="tblwrap">
+                <table class="tbl">
+                  <thead><tr><th>วันที่</th><th>อาการ</th><th>ช่องทาง</th><th>ค่าซ่อม</th></tr></thead>
+                  <tbody>
+                    <tr><td>12 มิ.ย. 2569</td><td>ชุดควบคุมกระเช้าไม่ตอบสนอง</td><td>กบค. ซ่อมเอง</td><td>18,400 บาท</td></tr>
+                    <tr><td>03 ก.พ. 2569</td><td>ซีลไฮดรอลิกรั่ว</td><td>อู่ภายนอก</td><td>32,900 บาท</td></tr>
+                    <tr><td>21 ต.ค. 2568</td><td>PM 1,000 ชั่วโมง</td><td>กบค. ซ่อมเอง</td><td>9,750 บาท</td></tr>
+                  </tbody>
+                </table>
+                <div class="tblfoot"><span>รวมค่าซ่อม 12 เดือน 61,050 บาท</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="incident-section-title">ผลตรวจรับสภาพ ณ วันโอน</div>
+              <div class="sub">DB ยังไม่มีตารางเก็บผลตรวจรับ (`vms_trn_vehicle_transfer` มีแค่ remark) — รอเคาะว่าจะเก็บที่ไหน</div>
+              <div class="stack">
+                <div class="chks">
+                  <label class="sel"><input type="checkbox" checked><span class="cbox">check</span>ตัวรถและตัวถังครบถ้วน ไม่มีความเสียหายเกินจากที่แจ้ง</label>
+                  <label class="sel"><input type="checkbox" checked><span class="cbox">check</span>ชุดกระเช้า/เครนทำงานปกติ ผ่านการทดสอบยก</label>
+                  <label><input type="checkbox"><span class="cbox">check</span>เอกสารประจำรถครบ (คู่มือจดทะเบียน · พ.ร.บ. · ประกันภัย)</label>
+                  <label class="sel"><input type="checkbox" checked><span class="cbox">check</span>อุปกรณ์ประจำรถครบตามบัญชี (ไม้หมอน · ป้ายสัญญาณ · เครื่องมือ)</label>
+                  <label><input type="checkbox"><span class="cbox">check</span>ใบรับรองการตรวจสอบความปลอดภัยเครน/กระเช้าประจำปียังไม่หมดอายุ</label>
+                </div>
+                <div class="f">
+                  <label>บันทึกเพิ่มเติมจากการตรวจรับ</label>
+                  <textarea rows="3" placeholder="เช่น สีตัวถังซีดด้านขวา · ยางหน้าซ้ายดอกเหลือ 40%"></textarea>
+                </div>
+                <div class="f">
+                  <label>รูปถ่ายประกอบการตรวจรับ <small>(JPG · PNG)</small></label>
+                  <div class="flex flex-wrap gap-2">
+                    <span class="file-chip"><span class="ms">image</span>
+                      <span class="file-chip-name">ตรวจรับ-ด้านหน้า.jpg</span>
+                      <button class="file-chip-rm" aria-label="ลบไฟล์"><span class="ms">close</span></button></span>
+                    <span class="file-chip"><span class="ms">image</span>
+                      <span class="file-chip-name">ตรวจรับ-ชุดกระเช้า.jpg</span>
+                      <button class="file-chip-rm" aria-label="ลบไฟล์"><span class="ms">close</span></button></span>
+                    <button class="btn btn-s btn-sm"><span class="ms">add_a_photo</span> เพิ่มรูป</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="note note-warn"><span class="ms">warning</span>
+              <div><b>ยังไม่เคาะ: ปลายทางปฏิเสธการรับโอนได้ไหม</b> — หลักเกณฑ์ยานพาหนะ 2569 ไม่ได้เขียนไว้
+                ปุ่ม “ไม่รับโอน” ด้านล่างจึงเป็นข้อเสนอ ยังไม่ใช่ของที่ยืนยันแล้ว</div>
+            </div>
+
+            <div class="actions">
+              <button class="btn btn-g">ไม่รับโอน · ระบุเหตุผล</button>
+              <button class="btn btn-p" onclick="document.getElementById('cf').classList.remove('hidden')">ยืนยันรับโอน</button>
+            </div>
+
+          </div>
+        </div>
+
+        <aside class="incident-side">
+          <div class="stack loose">
+            <div class="incident-card">
+              <div class="incident-section-title">การเปลี่ยนสังกัด</div>
+              <dl class="incident-summary">
+                <div class="incident-field wide"><dt>สังกัดเดิม</dt><dd>กจย. ฝจบ. ผชก.(ล) สายงาน ล</dd></div>
+                <div class="incident-field wide"><dt>สังกัดใหม่</dt><dd>กอพ.1 ฝพจ. ผชก.(ดส-ท) สายงาน ดส</dd></div>
+                <div class="incident-field wide"><dt>เจ้าของยานพาหนะใหม่</dt><dd>นายสมศักดิ์ สง่าอินทร์ — อก.อพ.1</dd></div>
+                <div class="incident-field wide"><dt>วันที่ขอให้มีผล</dt><dd>1 ต.ค. 2569</dd></div>
+              </dl>
+            </div>
+
+            <div class="incident-card">
+              <div class="incident-section-title">ความคืบหน้า</div>
+              <ul class="tl">
+                <li>ต้นทางเปิดคำร้อง<div class="when">20 ก.ย. 2569 · 09:14</div></li>
+                <li>ตรวจรายการค้าง — ไม่พบรายการค้าง<div class="when">20 ก.ย. 2569 · 09:15</div></li>
+                <li class="on">รอปลายทางตรวจรับและตอบรับ<div class="when">ขั้นปัจจุบัน</div></li>
+                <li>แจ้ง กจย. ขอรหัสสังกัดใหม่ (ภายใน 7 วันทำการ)<div class="when">รอดำเนินการ</div></li>
+                <li>ประทับตรารหัสใหม่ (ภายใน 7 วันทำการ)<div class="when">รอดำเนินการ</div></li>
+              </ul>
+            </div>
+
+            <div class="note note-info"><span class="ms">gavel</span>
+              <div>เมื่อกดรับโอนแล้ว <b>หน่วยงานปลายทางเป็นผู้แจ้ง กจย. ภายใน 7 วันทำการ</b> ตามข้อ 8.3
+                ของหลักเกณฑ์ยานพาหนะ พ.ศ. 2569 — ไม่ใช่หน้าที่ของต้นทาง</div>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- modal ยืนยัน — โครงตาม Modal [Type=Form] md 500 ของไลบรารี -->
+<div class="modal-overlay hidden" id="cf">
+  <div class="modal md">
+    <div class="modal-hd">
+      <div class="modal-hd-c">
+        <span>ยืนยันรับโอนยานพาหนะ</span>
+        <button class="modal-x" onclick="document.getElementById('cf').classList.add('hidden')" aria-label="ปิด"><span class="ms">close</span></button>
+      </div>
+    </div>
+    <div class="modal-bd">
+      <div class="stack">
+        <div>ยืนยันรับโอน <b>3ขพ 6153 กรุงเทพมหานคร</b> เข้าสังกัด <b>กอพ.1 ฝพจ. ผชก.(ดส-ท)</b> มีผลวันที่ 1 ต.ค. 2569</div>
+        <div class="note note-warn"><span class="ms">schedule</span>
+          <div>เมื่อยืนยันแล้ว ระบบจะเริ่มนับ <b>7 วันทำการ</b> สำหรับการแจ้ง กจย. ขอรหัสสังกัดใหม่ —
+            ครบกำหนด <b>2 ต.ค. 2569</b></div>
+        </div>
+        <div class="note note-info"><span class="ms">description</span>
+          <div>ผลตรวจรับที่บันทึกไว้ 3 จาก 5 ข้อ · ข้อที่ยังไม่ติ๊กจะถูกบันทึกเป็น “ยังไม่ได้ตรวจ”</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <div class="modal-ft-a">
+        <button class="btn btn-t" onclick="document.getElementById('cf').classList.add('hidden')">ยกเลิก</button>
+        <div class="modal-ft-r">
+          <a class="btn btn-p" href="transfer-04-code.html">ยืนยันรับโอน</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

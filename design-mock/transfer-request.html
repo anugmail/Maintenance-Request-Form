@@ -17,8 +17,11 @@
 <div class="shell">
   <aside class="side wide">
     <div class="vlogo">VMS<em>+</em></div>
-    <a class="nv" href="../index.html" title="หน้าแรก"><span class="ms">home</span><span class="nvlbl">หน้าแรก</span></a>
-    <a class="nv on" href="transfer-request.html" title="คำร้องเปลี่ยนสังกัด"><span class="ms">swap_horiz</span><span class="nvlbl">คำร้องเปลี่ยนสังกัด</span></a>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv" href="transfer-01-list.html" title="รายการยานพาหนะ"><span class="ms">directions_car</span><span class="nvlbl">1 · รายการยานพาหนะ</span></a>
+    <a class="nv on" href="transfer-request.html" title="คำร้องเปลี่ยนสังกัด"><span class="ms">swap_horiz</span><span class="nvlbl">2 · คำร้องเปลี่ยนสังกัด</span></a>
+    <a class="nv" href="transfer-03-receive.html" title="ปลายทางตรวจรับ"><span class="ms">how_to_reg</span><span class="nvlbl">3 · ปลายทางตรวจรับ</span></a>
+    <a class="nv" href="transfer-04-code.html" title="คิวงาน กจย."><span class="ms">label</span><span class="nvlbl">4 · คิวงาน กจย.</span></a>
   </aside>
 
   <div class="work">
@@ -29,7 +32,7 @@
     </div>
 
     <main class="content">
-      <div class="draft">Prototype (Mock) — คำร้องขอเปลี่ยนสังกัดยานพาหนะ · ยังไม่เชื่อมระบบจริง</div>
+      <div class="draft">Prototype (Mock) · ขั้น 2/4 — คำร้องขอเปลี่ยนสังกัดยานพาหนะ · ยังไม่เชื่อมระบบจริง</div>
 
       <div class="crumbs">
         <span class="ms">directions_car</span><a href="#">ข้อมูลยานพาหนะ</a>
@@ -41,9 +44,52 @@
         <h1 class="page-title">คำร้องขอเปลี่ยนสังกัดยานพาหนะ</h1>
         <span class="badge b-neutral">ร่าง</span>
       </div>
-      <div class="sub -mt-3 mb-4">กรอกคำร้องเพื่อขอย้ายรถไปสังกัดหน่วยงานใหม่ · เมื่อส่งแล้วจะเข้าสู่ขั้นอนุมัติ</div>
+      <div class="sub -mt-3 mb-4">กรอกคำร้องเพื่อขอย้ายรถไปสังกัดหน่วยงานใหม่ ·
+        <b>หน่วยงานต้นทางเป็นผู้เปิดเรื่องเสมอ</b> (เคาะ 22 ก.ย. 2569)</div>
+
+      <!-- แถบขั้นทั้งโฟลว์ — .wsteps ของ components.css (ผ่านแล้ว = วงกลม magenta ✓) -->
+      <div class="wsteps wrap mb-6">
+        <a class="wstep passed" href="transfer-01-list.html"><span class="num"><span class="ms">check</span></span><span class="lbl">เลือกรถ</span></a>
+        <div class="wstep active"><span class="num">2</span><span class="lbl">ต้นทางเปิดคำร้อง</span></div>
+        <a class="wstep" href="transfer-03-receive.html"><span class="num">3</span><span class="lbl">ปลายทางตรวจรับ</span></a>
+        <a class="wstep" href="transfer-04-code.html"><span class="num">4</span><span class="lbl">กจย. ออกรหัสสังกัด</span></a>
+      </div>
 
       <div class="max-w-[880px]">
+
+        <!-- ═══ 0. T5 ตรวจรายการค้างก่อนโอน ═══
+             SC-F13-02 · ⚠️ ไลบรารีไม่มีบล็อกนี้ — ประกอบจาก .note.note-warn + .tbl ตามที่เคาะ 22 ก.ย. 2569
+             ⚠️ DB ยังไม่มีที่เก็บผลตรวจ (vms_trn_vehicle_transfer มีแค่ remark) -->
+        <div class="note note-warn mb-4"><span class="ms">warning</span>
+          <div><b>รถคันนี้มีรายการค้าง 2 รายการ</b> — ต้องปิดก่อนจึงจะโอนได้
+            <b>หรือ</b> บันทึกข้อตกลงส่งมอบพร้อมรายการค้าง
+            <span class="badge b-out">ยังไม่เคาะว่าบล็อกหรือแค่เตือน</span></div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="incident-section-title">รายการค้างที่ระบบตรวจพบ</div>
+          <div class="tblwrap">
+            <table class="tbl">
+              <thead><tr><th>ประเภท</th><th>เลขที่</th><th>สถานะ</th><th></th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>ใบแจ้งซ่อม</td><td>BRK-2569-0882</td>
+                  <td><span class="badge b-low">รอ กบค. พิจารณา</span></td>
+                  <td><div class="dt-action"><a class="btn btn-s btn-sm" href="#">เปิดใบ</a></div></td>
+                </tr>
+                <tr>
+                  <td>รอบบิล Fleet card</td><td>FC-2569-09</td>
+                  <td><span class="badge b-low">ยังไม่เคลียร์</span></td>
+                  <td><div class="dt-action"><a class="btn btn-s btn-sm" href="#">เปิดรอบบิล</a></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="rads mt-4">
+            <label><input type="radio" name="pending" checked> ปิดรายการค้างให้ครบก่อนส่งคำร้อง</label>
+            <label><input type="radio" name="pending"> บันทึกข้อตกลงส่งมอบพร้อมรายการค้าง</label>
+          </div>
+        </div>
 
         <!-- ═══ 1. ยานพาหนะที่ขอเปลี่ยนสังกัด — อ่านอย่างเดียว ═══
              ฟิลด์ยกมาจาก card "ข้อมูลสังกัดยานพาหนะ" ของหน้า 5.2 Vehicle Management -->
@@ -117,11 +163,13 @@
               <select id="transfer-type">
                 <option value="" selected disabled>เลือกประเภท</option>
                 <option>โอนถาวร — เปลี่ยนเจ้าของในทะเบียนทรัพย์สิน</option>
-                <option>ยืมใช้ชั่วคราว — ไม่เปลี่ยนเจ้าของ</option>
                 <option>คืนรถกลับหน่วยงานเดิม</option>
               </select>
             </div>
-            <div class="sub mt-1.5 mb-0">ผูกกับตาราง <code>vms_ref_vehicle_transfer</code> ของระบบจริง</div>
+            <div class="sub mt-1.5 mb-0">ผูกกับตาราง <code>vms_ref_vehicle_transfer</code> ของระบบจริง —
+              <b>ยังไม่เห็นค่าจริงใน lookup</b> (ไม่มี seed ในโค้ด ต้องต่อ DB)
+              · <b>ถอด “ยืมใช้ชั่วคราว” ออกแล้ว</b> เพราะหลักเกณฑ์ 2569 จัดไว้คนละหมวด
+              (ข้อ 11.2.5 การใช้รถข้ามหน่วยงาน · ไม่แตะรหัสสังกัด · สายอนุมัติคนละชุด)</div>
           </div>
           <div class="f mt-4">
             <label>เหตุผล / ความจำเป็น <small>(จำเป็น)</small></label>
@@ -154,8 +202,9 @@
         </div>
 
         <div class="actions">
+          <a class="btn btn-g" href="transfer-01-list.html">ย้อนกลับ</a>
           <button class="btn btn-s">บันทึกร่าง</button>
-          <button class="btn btn-p">ส่งคำร้อง</button>
+          <a class="btn btn-p" href="transfer-03-receive.html">ส่งคำร้อง</a>
         </div>
       </div>
     </main>

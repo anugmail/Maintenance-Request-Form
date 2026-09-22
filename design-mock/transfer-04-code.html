@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คิวงาน กจย. — ออกรหัสสังกัดใหม่ (ขั้น 4) | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260907-ds62">
+<link rel="stylesheet" href="../design-system/components.css?v=20260914-ds66">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20260907-tw3"></script>
+<!-- ⚠️ ไลบรารี PEA ไม่มีหน้า "คิวงาน กจย." — เคาะ 22 ก.ย. 2569 ให้ประกอบจาก component ที่มี ไม่ออกแบบใหม่
+     โครงคิวงาน + ตาราง ยกจากหน้า `5.5 Repair & Maintenance Job (Admin)` ของ UI Release#2 (node 1013:134411)
+     ช่องรหัสข้างรถ 3 ท่อน ยกจาก `Modal / Vehicle transfer` หน้า `5.2 Vehicle Management` (node 11:45256)
+     component ที่ใช้ (ไฟล์ Component VMS Plus): Table · Badge · Tabs · Modal [Type=Form] · Text input · Button
+     คลาสกลางจาก components.css: .tabs/.tab-btn · .tblwrap/.tbl.striped · .badge · .note
+     .modal-overlay/.modal/.modal-hd-c/.modal-bd/.modal-ft-a · .fgrid/.f/.in/.ro · .stack
+     ไม่มี <style> ในหน้า — layout/spacing ใช้ Tailwind utility -->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv" href="transfer-01-list.html" title="รายการยานพาหนะ"><span class="ms">directions_car</span><span class="nvlbl">1 · รายการยานพาหนะ</span></a>
+    <a class="nv" href="transfer-request.html" title="คำร้องเปลี่ยนสังกัด"><span class="ms">swap_horiz</span><span class="nvlbl">2 · คำร้องเปลี่ยนสังกัด</span></a>
+    <a class="nv" href="transfer-03-receive.html" title="ปลายทางตรวจรับ"><span class="ms">how_to_reg</span><span class="nvlbl">3 · ปลายทางตรวจรับ</span></a>
+    <a class="nv on" href="transfer-04-code.html" title="คิวงาน กจย."><span class="ms">label</span><span class="nvlbl">4 · คิวงาน กจย.</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>เจ้าหน้าที่ทะเบียนรหัส — กองวางแผนและจัดการยานพาหนะ (กจย.)</span>
+    </div>
+
+    <main class="content">
+      <div class="draft">Prototype (Mock) · ขั้น 4/4 — ฝั่ง กจย. เจ้าของทะเบียนรหัสสังกัด (ข้อ 8.1) · ไลบรารี PEA ไม่มีหน้านี้ ประกอบจากคอมโพเนนต์ที่มี</div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep">›</span><span class="cur">คิวงานรหัสยานพาหนะ</span>
+      </div>
+
+      <div class="page-title-row">
+        <h1 class="page-title">คิวงานรหัสยานพาหนะ</h1>
+        <span class="badge b-out">เกินกำหนด 1</span>
+      </div>
+      <div class="sub -mt-3 mb-4">งานที่เข้ามาจากการเปลี่ยนสังกัด — <b>กจย. เป็นผู้กำหนดรหัสยานพาหนะ</b> ตามข้อ 8.1
+        ของหลักเกณฑ์ยานพาหนะ พ.ศ. 2569 หน่วยงานแก้เองไม่ได้</div>
+
+      <div class="note note-info mb-4"><span class="ms">schedule</span>
+        <div><b>นาฬิกา 2 ตัว นับแยกกัน</b> — (1) ปลายทางแจ้ง กจย. ภายใน <b>7 วันทำการ</b> นับจากตกลงโอน ·
+          (2) ปลายทางประทับตรารหัสใหม่ภายใน <b>7 วันทำการ</b> <u>นับถัดจากวันที่ได้รับรหัส</u> ⇒ ตัวที่ 2 เริ่มนับเมื่อ กจย. ออกรหัสเสร็จ
+          · นับเฉพาะวันทำการ ไม่รวมเสาร์-อาทิตย์และวันหยุด</div>
+      </div>
+
+      <div class="tabs mb-4">
+        <button class="tab-btn on">รอออกรหัส <span class="badge b-brand">3</span></button>
+        <button class="tab-btn">รอประทับตรา <span class="badge b-neutral">2</span></button>
+        <button class="tab-btn">เสร็จแล้ว</button>
+      </div>
+
+      <div class="tblwrap">
+        <table class="tbl striped">
+          <thead>
+            <tr>
+              <th>เลขที่คำร้อง</th>
+              <th>เลขทะเบียน</th>
+              <th>ประเภท (รหัส)</th>
+              <th>สังกัดเดิม → ใหม่</th>
+              <th>ปลายทางแจ้งเมื่อ</th>
+              <th>ครบกำหนด</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>TRF-2569-0114</td>
+              <td>3ขพ 6153 กรุงเทพมหานคร</td>
+              <td>รถเช่าแบบลีสซิ่ง (25)</td>
+              <td>กจย. → กอพ.1</td>
+              <td>22 ก.ย. 2569</td>
+              <td><span class="badge b-ok">เหลือ 6 วันทำการ</span></td>
+              <td>
+                <div class="dt-action">
+                  <button class="btn btn-s btn-sm" onclick="document.getElementById('mk').classList.remove('hidden')"><span class="ms">label</span> ออกรหัส</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>TRF-2569-0109</td>
+              <td>82-4471 กรุงเทพมหานคร</td>
+              <td>รถปั้นจั่น (09)</td>
+              <td>กจย. → กฟอ.แม่ใจ</td>
+              <td>17 ก.ย. 2569</td>
+              <td><span class="badge b-low">เหลือ 2 วันทำการ</span></td>
+              <td>
+                <div class="dt-action">
+                  <button class="btn btn-s btn-sm"><span class="ms">label</span> ออกรหัส</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>TRF-2569-0098</td>
+              <td>3ขข 1140 กรุงเทพมหานคร</td>
+              <td>รถบรรทุกขนาดใหญ่ (04)</td>
+              <td>กจย. → กอพ.2</td>
+              <td>08 ก.ย. 2569</td>
+              <td><span class="badge b-out">เกินกำหนด 3 วันทำการ</span></td>
+              <td>
+                <div class="dt-action">
+                  <button class="btn btn-s btn-sm"><span class="ms">label</span> ออกรหัส</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="tblfoot"><span>แสดง 3 จาก 3 รายการ</span></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- modal ออกรหัส — โครงตาม Modal [Type=Form] md 500 · ช่องรหัส 3 ท่อนยกจาก Modal / Vehicle transfer ของจริง -->
+<div class="modal-overlay hidden" id="mk">
+  <div class="modal md">
+    <div class="modal-hd">
+      <div class="modal-hd-c">
+        <span>ออกรหัสสังกัดใหม่</span>
+        <button class="modal-x" onclick="document.getElementById('mk').classList.add('hidden')" aria-label="ปิด"><span class="ms">close</span></button>
+      </div>
+    </div>
+    <div class="modal-bd">
+      <div class="stack">
+        <div class="fgrid grid-cols-2">
+          <div class="f ro">
+            <label>เลขทะเบียน</label>
+            <div class="in"><span class="ms">directions_car</span><input value="3ขพ 6153 กรุงเทพมหานคร" readonly></div>
+          </div>
+          <div class="f ro">
+            <label>รหัสข้างรถเดิม</label>
+            <div class="in"><span class="ms">tag</span><input value="กจย. - 25 - 1850" readonly></div>
+          </div>
+        </div>
+
+        <div class="f">
+          <label>รหัสข้างรถใหม่ <small>(จำเป็น)</small></label>
+          <div class="flex items-center gap-2">
+            <input type="text" value="กอพ.1" aria-label="รหัสสังกัด" class="max-w-[110px]">
+            <span class="text-gray-500">-</span>
+            <input type="text" value="25" aria-label="รหัสประเภท" readonly class="max-w-[70px]">
+            <span class="text-gray-500">-</span>
+            <input type="text" value="0004" aria-label="ลำดับ" class="max-w-[100px]">
+          </div>
+          <div class="sub mt-1.5 mb-0">รหัสประเภทเติมให้เองจากประเภทรถ — <b>25 รถเช่าแบบลีสซิ่ง</b>
+            (ผนวก ง ของหลักเกณฑ์ 2569 · มี 14 ประเภท 01–10, 20, 25, 30, 40) แก้ไม่ได้</div>
+        </div>
+
+        <div class="note note-info"><span class="ms">straighten</span>
+          <div>ตัวอย่างรูปแบบตามผนวก ง: <b>น.1-25-0004</b> · ตรา กฟภ. วงกลม Ø20 ซม. · ตัวอักษรสูง 4 ซม.
+            ฟอนต์ BrowalliaUPC 290 ตัวหนา · สีดำ (ถ้าตัวรถสีเข้มใช้สีขาว)</div>
+        </div>
+
+        <div class="note note-warn"><span class="ms">schedule</span>
+          <div>เมื่อออกรหัสแล้ว ระบบจะเริ่มนับ <b>7 วันทำการชุดที่ 2</b> ให้หน่วยงานปลายทางประทับตรา —
+            ครบกำหนด <b>2 ต.ค. 2569</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <div class="modal-ft-a">
+        <button class="btn btn-t" onclick="document.getElementById('mk').classList.add('hidden')">ยกเลิก</button>
+        <div class="modal-ft-r">
+          <button class="btn btn-p" onclick="document.getElementById('mk').classList.add('hidden')">ออกรหัสและแจ้งปลายทาง</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
