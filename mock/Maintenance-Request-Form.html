@@ -12,12 +12,12 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0"
     rel="stylesheet">
-  <link rel="stylesheet" href="../design-system/tokens.css?v=20260907-ds62">
-  <link rel="stylesheet" href="../design-system/components.css?v=20260914-ds66">
+  <link rel="stylesheet" href="../design-system/tokens.css?v=20260923-ds64">
+  <link rel="stylesheet" href="../design-system/components.css?v=20260923-ds64">
   <!-- Tailwind (7 ก.ย. 2569 — เจ้าของงานสั่ง "ถัดจากนี้ปรับเป็น Tailwind"): Play CDN + theme จาก tokens.css
        preflight ปิด · คลาส component กลาง (components.css) ใช้ต่อตามเดิมแบบ DaisyUI · งานใหม่เขียน utility -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="../design-system/tailwind-theme.js?v=20260907-tw3"></script>
+  <script src="../design-system/tailwind-theme.js?v=20260923-ds64"></script>
   <script src="../config.js?v=20260908-1"></script>
   <!-- Admin config: ธีม/toggle/ข้อมูล จาก admin-config.html — apply ธีมก่อน paint -->
   <script src="../ui-components.js?v=20260904-vt1"></script><!-- shared components (UIC): การ์ดเลือกรถ, ตัวเลือกวันนัด -->
@@ -1825,7 +1825,7 @@
                padding-top 28px → pt-6 (24px · สเกลระยะจบที่ 24) · ไอคอน font-size 30px ไม่มีในสเกล
                → ถอดออก ใช้ขนาดฐาน .ms (22px) ของ components.css แทน -->
           <div class="modal-bd text-center pt-6">
-            <div class="w-14 h-14 mt-0 mb-3.5 mx-auto rounded-pill bg-brand-25 flex items-center justify-center text-brand-600"><span class="ms">task_alt</span></div>
+            <div class="w-14 h-14 mt-0 mb-3.5 mx-auto rounded-pill bg-brand-50 flex items-center justify-center text-brand-900"><span class="ms">task_alt</span></div>
             <div class="text-h1 font-semibold text-color-text-primary">ยืนยันการอนุมัติ</div>
             <div class="hint mt-1.5">คุณต้องการอนุมัติคำขอนี้หรือไม่ ?</div>
           </div>
@@ -4218,11 +4218,11 @@ function renderKryDetail(no){
             <div class="incident-card">
               <div class="pt-1 pb-2.5 [border-bottom:1px_solid_var(--gray-100)]">
                 <div class="incident-entity-name font-semibold">ผู้ขับขี่ — ${esc((j.driver && j.driver.name) || '-')}</div>
-                <div class="incident-entity-meta"><span class="ms text-[16px] align-[-3px] text-brand-600">smartphone</span> ${esc((j.driver && j.driver.tel) || '-')}</div>
+                <div class="incident-entity-meta"><span class="ms text-[16px] align-[-3px] text-brand-900">smartphone</span> ${esc((j.driver && j.driver.tel) || '-')}</div>
               </div>
               <div class="pt-2.5 pb-1">
                 <div class="incident-entity-name font-semibold">ช่างคุมรถ — ${esc((j.tech && j.tech.name) || '-')}</div>
-                <div class="incident-entity-meta"><span class="ms text-[16px] align-[-3px] text-brand-600">smartphone</span> ${esc((j.tech && j.tech.tel) || '-')}</div>
+                <div class="incident-entity-meta"><span class="ms text-[16px] align-[-3px] text-brand-900">smartphone</span> ${esc((j.tech && j.tech.tel) || '-')}</div>
               </div>
             </div>
           </section>
@@ -5187,11 +5187,11 @@ function costFieldsHTML(){return`<div class="sect mt-5">สรุปต้นท
             <div class="incident-card">
               <div class="pt-1 pb-2.5 [border-bottom:1px_solid_var(--gray-100)]">
                 <div class="incident-entity-name font-semibold">ผู้ขับขี่ — ${esc((j.driver && j.driver.name) || '-')}</div>
-                <div class="incident-entity-meta"><span class="ms text-[16px] align-[-3px] text-brand-600">smartphone</span> ${esc((j.driver && j.driver.tel) || '-')}</div>
+                <div class="incident-entity-meta"><span class="ms text-[16px] align-[-3px] text-brand-900">smartphone</span> ${esc((j.driver && j.driver.tel) || '-')}</div>
               </div>
               <div class="pt-2.5 pb-1">
                 <div class="incident-entity-name font-semibold">ช่างคุมรถ — ${esc((j.tech && j.tech.name) || '-')}</div>
-                <div class="incident-entity-meta"><span class="ms text-[16px] align-[-3px] text-brand-600">smartphone</span> ${esc((j.tech && j.tech.tel) || '-')}</div>
+                <div class="incident-entity-meta"><span class="ms text-[16px] align-[-3px] text-brand-900">smartphone</span> ${esc((j.tech && j.tech.tel) || '-')}</div>
               </div>
             </div>
           </section>

@@ -102,9 +102,9 @@ grep -rnP '[\x{1F300}-\x{1FAFF}]' --include='*.html' --include='*.js' \
 - หน้าที่ใช้ Tailwind ติด 2 บรรทัดหลัง `<link components.css>`:
   `<script src="https://cdn.tailwindcss.com"></script>` + `<script src="../design-system/tailwind-theme.js?v=…"></script>`
 - `tailwind-theme.js` **generate จาก tokens.css** ด้วย `node design-system/build-tailwind-theme.js` — **ห้ามแก้มือ** ·
-  สีทุกตัวชี้ CSS var (`bg-brand-600` = `var(--brand-600)`) ⇒ แหล่งความจริงยังอยู่ tokens.css ที่เดียว ·
+  สีทุกตัวชี้ CSS var (`bg-brand-900` = `var(--brand-900)`) ⇒ แหล่งความจริงยังอยู่ tokens.css ที่เดียว ·
   regenerate เฉพาะตอนเพิ่ม/ลบชื่อ token · preflight ปิดไว้ (กันรีเซ็ตทับ components.css)
-- **สไตล์เฉพาะจุดเขียนเป็น utility** (`mt-4` `bg-brand-25` `rounded-pill` `max-w-[720px]`) — เลิกใช้ `style="…"`
+- **สไตล์เฉพาะจุดเขียนเป็น utility** (`mt-4` `bg-brand-50` `rounded-pill` `max-w-[720px]`) — เลิกใช้ `style="…"`
   และเลิกเพิ่ม CSS เฉพาะหน้าใน `<style>` · ขนาดตัวอักษรใช้ `text-xs/sm/md` (map สเกลไลบรารี 12/14/16 แล้ว)
 - **คลาส component กลาง (.btn/.badge/.tbl/.modal/…) ใช้จาก components.css ต่อตามเดิม** — utilities มีไว้เสริม layout/spacing
   ไม่ใช่มาแทน component · ของใหม่ที่ใช้ซ้ำหลายที่ยังต้องลง components.css ตามกติกาเดิม

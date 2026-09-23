@@ -164,8 +164,8 @@ node figma-export/serve.js                          # เสิร์ฟให�
 
 **Variables** — `tokens-vars.js` อ่าน `tokens.css` ทั้งไฟล์ แยกเป็น 3 collection ตามชั้นในไฟล์
 (`primitive` / `semantic` / `component`) · `var(--x)` กลายเป็น alias จริงใน Figma
-⇒ แก้ `brand/600` ที่เดียวทั้งไฟล์เปลี่ยน เทียบเท่า `var(--brand-600)` ในโค้ด
-ชื่อ variable = ชื่อ CSS ตรงๆ เปลี่ยน `-` เป็น `/` (`--brand-600` → `brand/600`) — map กลับหาโค้ดได้เสมอ
+⇒ แก้ `brand/900` ที่เดียวทั้งไฟล์เปลี่ยน เทียบเท่า `var(--brand-900)` ในโค้ด
+ชื่อ variable = ชื่อ CSS ตรงๆ เปลี่ยน `-` เป็น `/` (`--brand-900` → `brand/900`) — map กลับหาโค้ดได้เสมอ
 ปลั๊กอิน**ผูก fill / stroke / สี text / radius เข้ากับ variable** ทุกจุดที่ค่าตรง token (สีดูจากชั้น primitive · #FFFFFF ไม่ผูกเพราะไม่มีชื่อ primitive ถือ)
 รันซ้ำ = อัปเดตค่าตัวเดิม ไม่สร้างซ้ำ (เทสยืนยันแล้ว)
 

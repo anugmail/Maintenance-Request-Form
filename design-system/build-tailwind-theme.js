@@ -6,7 +6,7 @@
    แบบระบบจริง (Tailwind + DaisyUI-style): Tailwind ให้ utilities · theme map
    จาก tokens.css · คลาส component กลาง (components.css) ใช้ต่อตามเดิม
 
-   หลักการ: ค่าสีใน theme ชี้ CSS variable (var(--brand-600)) ไม่ก๊อปค่า hex
+   หลักการ: ค่าสีใน theme ชี้ CSS variable (var(--brand-900)) ไม่ก๊อปค่า hex
    ⇒ แหล่งความจริงยังอยู่ที่ tokens.css ที่เดียว — แก้สีแล้ว utility เปลี่ยนตาม
    ไม่ต้อง regenerate (regenerate เมื่อ "เพิ่ม/ลบชื่อ token" เท่านั้น)
 
@@ -20,7 +20,7 @@ const tokens = fs.readFileSync(path.join(__dirname, 'tokens.css'), 'utf8');
 // เก็บชื่อตัวแปรทั้งหมดใน :root (ไม่สนค่า — theme ชี้ var())
 const names = [...tokens.matchAll(/--([a-z0-9-_]+)\s*:/gi)].map(m => m[1]);
 
-const colors = {};      // --brand-600 → colors['brand-600'] = 'var(--brand-600)'
+const colors = {};      // --brand-900 → colors['brand-600'] = 'var(--brand-900)'
 const radius = {};      // --rounded-md → borderRadius['md']
 const spacing = {};     // --space-3 → spacing['3'] (ตามสเกล 4px ของไลบรารี)
 for (const n of names) {
@@ -43,7 +43,7 @@ colors.transparent = 'transparent'; colors.current = 'currentColor'; colors.inhe
 radius.full = '9999px';   // คืนค่า default ของ Tailwind ที่โดน object นี้ทับ
 
 const theme = {
-  colors,                                   // ใช้เป็น bg-brand-600 · text-gray-500 · border-gray-300 ฯลฯ
+  colors,                                   // ใช้เป็น bg-brand-900 · text-gray-500 · border-gray-300 ฯลฯ
   borderRadius: { ...radius, DEFAULT: 'var(--rounded-md)' },
   fontFamily: { sans: ["'IBM Plex Sans Thai'", 'sans-serif'] },
   fontSize: {                               // สเกลตามไลบรารี (text-xs/sm/md 12/14/16 + h1 20)

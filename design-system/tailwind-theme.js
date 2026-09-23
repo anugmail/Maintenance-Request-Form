@@ -9,10 +9,15 @@ tailwind.config = {
   corePlugins: { preflight: false },
   theme: {
   "colors": {
+    "brand-950": "var(--brand-950)",
+    "brand-925": "var(--brand-925)",
+    "brand-900": "var(--brand-900)",
     "brand-800": "var(--brand-800)",
     "brand-700": "var(--brand-700)",
     "brand-600": "var(--brand-600)",
     "brand-500": "var(--brand-500)",
+    "brand-400": "var(--brand-400)",
+    "brand-300": "var(--brand-300)",
     "brand-200": "var(--brand-200)",
     "brand-100": "var(--brand-100)",
     "brand-50": "var(--brand-50)",

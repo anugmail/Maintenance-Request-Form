@@ -53,7 +53,7 @@ function metricRow(m) {
   const pct = Math.round(m.ratio * 100);
   return `<div class="ov-metric grid grid-cols-[200px_1fr_56px] items-center gap-3 py-1">
     <span>${esc(m.label)}</span>
-    <span class="${m.over ? 'font-semibold text-brand-600' : ''}">${num(m.value)} / ${num(m.limit)} ${esc(m.unit)}</span>
+    <span class="${m.over ? 'font-semibold text-brand-900' : ''}">${num(m.value)} / ${num(m.limit)} ${esc(m.unit)}</span>
     <span class="badge ${m.over ? 'b-brand' : 'b-neutral'}">${pct}%</span>
   </div>`;
 }

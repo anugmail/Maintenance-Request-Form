@@ -12,15 +12,26 @@
 
   /* ══════════ ชั้น 1 · PRIMITIVE ══════════ */
 
-  /* ---------- Brand (magenta PEA) ---------- */
-  --brand-800:#74045F;     /* ✔ component/button/primary-bg-hover */
-  --brand-700:#8A0570;     /* ⚠ ไม่พบในไลบรารี — ค่ากลางระหว่าง 600 กับ 800 ที่เราใส่เอง */
-  --brand-600:#A80689;     /* ✔ component/button/primary-bg — สีหลัก */
-  --brand-500:#CF07AA;     /* ✔ ยืนยันจากไลบรารี ใช้ 841 ครั้ง · ใช้กับ gradient header เท่านั้น ไม่ใช่ hover */
-  --brand-200:#FED8F6;      /* ✔ ไลบรารีใหม่ (ค่าเดียวกับ brand-100 — ไลบรารีมีโทนอ่อนแค่ 3 ระดับ) */
-  --brand-100:#FED8F6;      /* ✔ ไลบรารีใหม่ — ขอบ Pill outline (Color=Brand) · ใช้ 265 ครั้ง */
-  --brand-50:#FEEBFB;       /* ✔ ไลบรารีใหม่ — โทนรองของแบรนด์ (19 ครั้ง) */
-  --brand-25:#FFF5FD;       /* ✔ ไลบรารีใหม่ — พื้น Pill outline (Color=Brand) · Featured icon · ใช้ 350 ครั้ง */
+  /* ---------- Brand (magenta PEA) ----------
+     🔴 เลขสเกลยึดตาม "แอปจริง" vms-plus-uat.odds.team/maintain-d (23 ก.ย. 2569)
+     เดิมเลขของเราเลื่อนจากของจริง 300 ระดับ (ของเรา brand-600 = ของจริง brand-900)
+     ⇒ ก๊อป class จากแอปจริง เช่น bg-brand-900 มาวางแล้วสีหายเงียบๆ
+     ตารางแปลงเลขเก่า→ใหม่อยู่ที่ design-system/README.md หัวข้อ 8 (v0.64)
+     ค่าสีไม่มีตัวไหนเปลี่ยน — เปลี่ยนแค่ชื่อ                                          */
+  --brand-950:#74045F;     /* ✔ component/button/primary-bg-hover              (เดิม --brand-800) */
+  --brand-925:#8A0570;     /* ⚠ ไม่มีทั้งในไลบรารีและสเกลแอปจริง — ค่ากลางที่เราใส่เอง
+                              ตั้งเลข 925 คาบไว้ระหว่าง 900 กับ 950 เพื่อไม่ชนสเกลจริง (เดิม --brand-700) */
+  --brand-900:#A80689;     /* ✔ component/button/primary-bg — สีหลัก              (เดิม --brand-600) */
+  --brand-800:#CF07AA;     /* ✔ ไลบรารีใช้ 841 ครั้ง · gradient header + hover ปุ่ม   (เดิม --brand-500) */
+  --brand-700:#F712CC;     /* ✅ สเกลแอปจริง — ไลบรารี Figma ไม่มี · ต้นแบบยังไม่ได้ใช้ */
+  --brand-600:#F835D3;     /* ✅ สเกลแอปจริง — ไลบรารี Figma ไม่มี · ต้นแบบยังไม่ได้ใช้ */
+  --brand-500:#FA6BDF;     /* ✅ สเกลแอปจริง — ไลบรารี Figma ไม่มี · ต้นแบบยังไม่ได้ใช้ */
+  --brand-400:#FB8EE7;     /* ✅ สเกลแอปจริง — ไลบรารี Figma ไม่มี · ต้นแบบยังไม่ได้ใช้ */
+  --brand-300:#FDBAF0;     /* ✅ สเกลแอปจริง — ไลบรารี Figma ไม่มี · ต้นแบบยังไม่ได้ใช้ */
+  --brand-200:#FED8F6;     /* ✔ ขอบ Pill outline (Color=Brand) · ใช้ 265 ครั้ง   (เดิม --brand-100/200 ซ้ำค่า ยุบเหลือตัวเดียว) */
+  --brand-100:#FEEBFB;     /* ✔ โทนรองของแบรนด์ (19 ครั้ง)                     (เดิม --brand-50) */
+  --brand-50:#FFF5FD;      /* ✔ พื้น Pill outline (Color=Brand) · Featured icon · 350 ครั้ง (เดิม --brand-25) */
+  --brand-25:#FFFAFE;      /* ✅ สเกลแอปจริง — ไลบรารี Figma ไม่มี (เดิมเราใช้ชื่อนี้กับ #FFF5FD) */
   --brand-accent:#F5A623;  /* ⚠ ไม่พบในไลบรารี — ส้มในโลโก้ M(D) คนละแหล่ง ใช้เฉพาะโลโก้ */
 
   /* ---------- Gray (Untitled UI v1 — ramp ที่ "ระบบจริง" ใช้) ----------
@@ -88,8 +99,8 @@
   --chart-2:#F8BFF4;        /* ⚠ ไลบรารีใหม่ไม่มีหน้า Charts — ของเราเอง (ยังไม่ได้ใช้) */
   --chart-3:#EF82E1;        /* ⚠ ไลบรารีใหม่ไม่มีหน้า Charts — ของเราเอง (ยังไม่ได้ใช้) */
   --chart-4:#E134C1;        /* ⚠ ไลบรารีใหม่ไม่มีหน้า Charts — ของเราเอง (ยังไม่ได้ใช้) */
-  --chart-5:#A80689;        /* ✔ = brand-600 */
-  --chart-6:#74045F;        /* ✔ = brand-800 */
+  --chart-5:#A80689;        /* ✔ = brand-900 */
+  --chart-6:#74045F;        /* ✔ = brand-950 */
 
   /* ---------- Space scale (ฐาน 4px มีครึ่งขั้น) ✔ ทั้งชุด ---------- */
   --space-0_5:2px;
@@ -156,17 +167,17 @@
   /* ══════════ ชั้น 3 · COMPONENT (ชื่อตามไลบรารีจริง) ══════════ */
 
   /* ปุ่ม — Primary */
-  --btn-primary-bg:var(--brand-600);                /* ✔ */
-  --btn-primary-bg-hover:var(--brand-500);          /* ✔ ไลบรารีใหม่ Primary button State=Hover = #CF07AA (สว่างขึ้น ไม่ใช่เข้มลง) */
-  --btn-primary-border:var(--brand-600);            /* ✔ */
-  --btn-primary-border-hover:var(--brand-500);      /* ✔ ไลบรารีใหม่ */
+  --btn-primary-bg:var(--brand-900);                /* ✔ */
+  --btn-primary-bg-hover:var(--brand-800);          /* ✔ ไลบรารีใหม่ Primary button State=Hover = #CF07AA (สว่างขึ้น ไม่ใช่เข้มลง) */
+  --btn-primary-border:var(--brand-900);            /* ✔ */
+  --btn-primary-border-hover:var(--brand-800);      /* ✔ ไลบรารีใหม่ */
   --btn-primary-text:#FFFFFF;                       /* ✔ */
 
   /* ปุ่ม — Secondary / Tertiary / Disabled (✅ วัดจาก vmsplus-dev) */
   --btn-secondary-text:var(--gray-600);             /* ✔ ไลบรารีใหม่ #475467 */
   --btn-secondary-border:var(--gray-300);           /* ✅ #D0D5DD */
   --btn-tertiary-text:var(--gray-600);              /* ✅ #475467 */
-  --btn-tertiary-brand-text:var(--brand-600);       /* ✅ #A80689 — ปุ่ม "แก้ไข" ในโมดัล */
+  --btn-tertiary-brand-text:var(--brand-900);       /* ✅ #A80689 — ปุ่ม "แก้ไข" ในโมดัล */
   --btn-tertiary-danger-text:var(--error-600);      /* ✅ #D92D20 — ปุ่ม "ยกเลิกคำขอ" */
   --btn-disabled-bg:var(--gray-100);                /* ✅ #F2F4F7 */
   --btn-disabled-text:var(--gray-400);              /* ✅ #98A2B3 */
@@ -177,21 +188,23 @@
   --btn-destructive-text:#FFFFFF;                   /* ✔ */
 
   /* ปุ่ม — Link */
-  --btn-link-text:var(--brand-600);                 /* ⚠ ยังไม่ยืนยัน */
-  --btn-link-text-hover:var(--brand-800);           /* ⚠ ยังไม่ยืนยัน */
+  --btn-link-text:var(--brand-900);                 /* ⚠ ยังไม่ยืนยัน */
+  --btn-link-text-hover:var(--brand-950);           /* ⚠ ยังไม่ยืนยัน */
 
   /* วงแหวน focus */
-  --focus-ring:rgba(168,6,137,.24);                 /* ⚠ ประมาณจาก brand-600 */
+  --focus-ring:rgba(168,6,137,.24);                 /* ⚠ ประมาณจาก brand-900 · แอปจริงใช้ #a806891f (อัลฟา .12) */
   --focus-ring-error:rgba(217,45,32,.24);           /* ⚠ */
 
 
-  /* ══════════ alias เดิม — ห้ามลบ (ใช้อยู่ทั่วต้นแบบ) ══════════ */
-  --primary-800:var(--brand-800);
-  --primary-700:var(--brand-700);
-  --primary-600:var(--brand-600);
-  --primary-500:var(--brand-500);
-  --primary-50:var(--brand-50);
-  --primary-25:var(--brand-25);
+  /* ══════════ alias เดิม — ห้ามลบ (ใช้อยู่ทั่วต้นแบบ ~350 จุด) ══════════
+     เลขชุดนี้ "ไม่ได้" ขยับตามสเกลแอปจริง (23 ก.ย. 2569) — มันเป็นชื่อ semantic ของต้นแบบ
+     (primary-600 = สีปุ่มหลัก) คนละเรื่องกับ ramp · งานใหม่ให้ใช้ --brand-* โดยตรง */
+  --primary-800:var(--brand-950);
+  --primary-700:var(--brand-925);
+  --primary-600:var(--brand-900);
+  --primary-500:var(--brand-800);
+  --primary-50:var(--brand-100);
+  --primary-25:var(--brand-50);
 
 
   /* ---------- Effects ---------- */
@@ -199,5 +212,5 @@
   --shadow-app:0 0 40px rgba(16,24,40,.12);
   --shadow-pop:0 4px 14px rgba(16,24,40,.25);
   --shadow-card:0 1px 2px rgba(16,24,40,.06),0 10px 30px rgba(16,24,40,.07);  /* การ์ดหน้าวิเคราะห์ */
-  --grad-header:linear-gradient(135deg,var(--brand-600),var(--brand-500));
+  --grad-header:linear-gradient(135deg,var(--brand-900),var(--brand-800));
 }
