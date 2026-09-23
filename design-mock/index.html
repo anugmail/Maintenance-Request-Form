@@ -204,6 +204,48 @@
 
       <div class="card">
         <div class="stack">
+          <div class="sect">โฟลว์ใช้รถข้ามหน่วยงาน — 3 หน้าจอ ต่อกันได้</div>
+          <div class="sub">ร่างแรก 22 ก.ย. 2569 · อิง <b>หลักเกณฑ์ยานพาหนะ พ.ศ. 2569</b> (ครอบคลุม use case 87%)
+            + ตารางจริง <code>vms_trn_request</code> · ผัง B0–B21 ที่
+            <code>Diagram/05-เปลี่ยนสังกัด-ยืมใช้รถ/02-ยืมใช้ชั่วคราว.md</code> ·
+            <b>ทำแบบหน้าจอจริง ไม่มีแบนเนอร์/คำเตือน/ป้ายสถานะร่าง</b></div>
+          <div class="gallery">
+            <div class="gcard">
+              <div class="gframe"><iframe src="crossunit-01-request.html" loading="lazy" title="สร้างคำขอใช้ยานพาหนะ" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">1 · สร้างคำขอใช้ยานพาหนะ</span>
+                <div class="meta">ต้นสังกัดเป็นผู้เปิด · เลือกรถได้หลายคัน + พขร. น้อยกว่าจำนวนรถ (ตามที่หน่วยงานอธิบาย) ·
+                  งบที่ตัด 4 ประเภทจาก <code>ref/cost-type</code> · ฟิลด์ยกจาก <code>vms_trn_request</code></div>
+                <a class="btn btn-s btn-sm" href="crossunit-01-request.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="crossunit-02-approve.html" loading="lazy" title="อนุมัติคำขอ" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">2 · อนุมัติคำขอ</span>
+                <div class="meta">คิวของผู้มีอำนาจอนุมัติ · คอลัมน์ "ลักษณะการใช้" สะท้อนกฎ 9 เคส
+                  (ในเขต/ข้ามเขต/ขนส่งพัสดุ/ฉุกเฉินรายงานย้อนหลัง) · กดตรวจสอบ → modal สรุปทั้งใบ</div>
+                <a class="btn btn-s btn-sm" href="crossunit-02-approve.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="crossunit-03-record.html" loading="lazy" title="บันทึกการใช้ยานพาหนะ" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">3 · บันทึกการใช้ยานพาหนะ (ยพ.6)</span>
+                <div class="meta">คอลัมน์ยกจากแบบฟอร์ม <b>ยพ.6-ป.46</b> ของจริง (ผนวก ง) ครบ 11 ช่อง
+                  รวม <b>หน่วยงานที่ใช้ยานพาหนะ</b> รายเที่ยว · แถวรถเสียต่างพื้นที่ (ข้อ 13.3) · ส่งรับรองปิดรอบ</div>
+                <a class="btn btn-s btn-sm" href="crossunit-03-record.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="stack">
           <div class="sect">โฟลว์เปลี่ยนสังกัดยานพาหนะ (โอนถาวร) — 4 หน้าจอ ต่อกันได้</div>
           <div class="sub">ร่างแรก 22 ก.ย. 2569 · อิง <b>หลักเกณฑ์ยานพาหนะ พ.ศ. 2569</b> + DB จริง + ผัง
             <code>Diagram/05-เปลี่ยนสังกัด-ยืมใช้รถ/01-เปลี่ยนสังกัดถาวร.md</code> (T0–T13) ·

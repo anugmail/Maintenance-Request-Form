@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>อนุมัติคำขอใช้ยานพาหนะ | VMS Plus</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260907-ds62">
+<link rel="stylesheet" href="../design-system/components.css?v=20260914-ds66">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20260907-tw3"></script>
+<!-- ผู้อนุมัติของแต่ละคำขอมาจากกฎ 9 เคสของหลักเกณฑ์ยานพาหนะ พ.ศ. 2569
+     ข้อ 11.2.5.1 กฟส. S/XS → หัวหน้า กฟส. S/XS · 11.2.5.2 ไป กฟข. → หัวหน้า กฟส. L/M-S
+     11.2.5.3 ข้ามเขต → ผชก. เขตที่ยานพาหนะสังกัด · 11.2.5.4 ขนส่งพัสดุ → ผชก. เขต
+     11.2.4 ฉุกเฉินนอกเขต → ใช้ก่อนแล้วรายงานขออนุมัติย้อนหลัง
+     11.1.3 สนญ. ในเขต กทม. → หัวหน้าหน่วยงาน · นอกเขต → ผอ.ฝ่าย · 11.1.4 ค้างแรม → ผอ.ฝ่าย
+     11.1.5 Carpool สนญ. → อก.จย.
+     component: .tabs/.tab-btn · .list-toolbar/.search · .tblwrap/.tbl.striped · .badge · .dt-action
+     .modal-overlay/.modal/.modal-hd-c/.modal-bd/.modal-ft-a · .incident-summary/.incident-field · .pager
+     ไม่มี <style> ในหน้า — layout/spacing ใช้ Tailwind utility -->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="crossunit-01-request.html" title="สร้างคำขอใช้ยานพาหนะ"><span class="ms">add_circle</span><span class="nvlbl">สร้างคำขอใช้ยานพาหนะ</span></a>
+    <a class="nv on" href="crossunit-02-approve.html" title="อนุมัติคำขอ"><span class="ms">approval</span><span class="nvlbl">อนุมัติคำขอ</span><span class="cnt">3</span></a>
+    <a class="nv" href="crossunit-03-record.html" title="บันทึกการใช้ยานพาหนะ"><span class="ms">edit_note</span><span class="nvlbl">บันทึกการใช้ยานพาหนะ</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">notifications</span>
+      <span class="ms">account_circle</span>
+      <span>นายสุรชัย เที่ยงธรรม — ผู้ช่วยผู้ว่าการ กฟน.1</span>
+    </div>
+
+    <main class="content">
+      <div class="crumbs">
+        <span class="ms">home</span><a href="#">หน้าแรก</a>
+        <span class="sep">›</span><span class="cur">อนุมัติคำขอใช้ยานพาหนะ</span>
+      </div>
+
+      <div class="page-title-row">
+        <h1 class="page-title">อนุมัติคำขอใช้ยานพาหนะ</h1>
+      </div>
+
+      <div class="tabs mb-4">
+        <button class="tab-btn on">รออนุมัติ <span class="badge b-brand">3</span></button>
+        <button class="tab-btn">อนุมัติแล้ว</button>
+        <button class="tab-btn">ไม่อนุมัติ</button>
+        <button class="tab-btn">ทั้งหมด</button>
+      </div>
+
+      <div class="list-toolbar mb-3">
+        <div class="search"><span class="ms">search</span><input type="text" placeholder="ค้นหาเลขที่คำขอ · หน่วยงาน · ทะเบียนรถ"></div>
+        <button class="btn btn-s btn-sm"><span class="ms">filter_list</span> ตัวกรอง</button>
+      </div>
+
+      <div class="tblwrap">
+        <table class="tbl striped">
+          <thead>
+            <tr>
+              <th>เลขที่คำขอ</th>
+              <th>หน่วยงานผู้ใช้</th>
+              <th>ยานพาหนะ</th>
+              <th>ช่วงเวลาที่ขอใช้</th>
+              <th>ลักษณะการใช้</th>
+              <th>วันที่ยื่น</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>REQ-2569-10-0184</td>
+              <td>กฟส.แม่ใจ จ.พะเยา</td>
+              <td>82-4471 พะเยา<div class="sub mb-0">และอีก 1 คัน</div></td>
+              <td>6–10 ต.ค. 2569</td>
+              <td><span class="badge b-neutral">ข้ามเขต</span></td>
+              <td>22 ก.ย. 2569</td>
+              <td>
+                <div class="dt-action">
+                  <button class="btn btn-s btn-sm" onclick="document.getElementById('ap').classList.remove('hidden')">ตรวจสอบ</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>REQ-2569-10-0181</td>
+              <td>กฟอ.ดอกคำใต้ จ.พะเยา</td>
+              <td>บบ 7719 พะเยา</td>
+              <td>3–4 ต.ค. 2569</td>
+              <td><span class="badge b-neutral">ขนส่งพัสดุในภาค</span></td>
+              <td>21 ก.ย. 2569</td>
+              <td>
+                <div class="dt-action">
+                  <button class="btn btn-s btn-sm">ตรวจสอบ</button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>REQ-2569-09-0177</td>
+              <td>กฟจ.เชียงราย</td>
+              <td>บฉ 9083 พะเยา</td>
+              <td>18 ก.ย. 2569</td>
+              <td><span class="badge b-low">ฉุกเฉิน · รายงานย้อนหลัง</span></td>
+              <td>19 ก.ย. 2569</td>
+              <td>
+                <div class="dt-action">
+                  <button class="btn btn-s btn-sm">ตรวจสอบ</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="tblfoot"><span>แสดง 3 จาก 3 รายการ</span></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="ap">
+  <div class="modal lg">
+    <div class="modal-hd">
+      <div class="modal-hd-c">
+        <span>REQ-2569-10-0184</span>
+        <button class="modal-x" onclick="document.getElementById('ap').classList.add('hidden')" aria-label="ปิด"><span class="ms">close</span></button>
+      </div>
+    </div>
+    <div class="modal-bd">
+      <div class="stack loose">
+        <div>
+          <div class="incident-section-title">ผู้ขอใช้</div>
+          <dl class="incident-summary">
+            <div class="incident-field"><dt>หน่วยงานผู้ใช้</dt><dd>กฟส.แม่ใจ จ.พะเยา — กฟน.1</dd></div>
+            <div class="incident-field"><dt>หน่วยงานเจ้าของรถ</dt><dd>กฟจ.พะเยา — กฟน.1</dd></div>
+            <div class="incident-field"><dt>ผู้ใช้ยานพาหนะ</dt><dd>นายอนุรักษ์ คล่องไชยชน · 091-234-5678</dd></div>
+            <div class="incident-field"><dt>จำนวนผู้โดยสาร</dt><dd>4 คน</dd></div>
+          </dl>
+        </div>
+
+        <div>
+          <div class="incident-section-title">การปฏิบัติงาน</div>
+          <dl class="incident-summary">
+            <div class="incident-field wide"><dt>สถานที่</dt><dd>สถานีไฟฟ้าแม่ใจ · ต.ศรีถ้อย อ.แม่ใจ จ.พะเยา</dd></div>
+            <div class="incident-field wide"><dt>ลักษณะงาน</dt><dd>ปรับปรุงระบบจำหน่ายแรงต่ำ ช่วงเสา 12–28</dd></div>
+            <div class="incident-field"><dt>ช่วงเวลา</dt><dd>6 ต.ค. 2569 07:30 – 10 ต.ค. 2569 17:00</dd></div>
+            <div class="incident-field"><dt>ลักษณะการเดินทาง</dt><dd>ไป-กลับ</dd></div>
+          </dl>
+        </div>
+
+        <div>
+          <div class="incident-section-title">ยานพาหนะและพนักงานขับ</div>
+          <div class="tblwrap">
+            <table class="tbl">
+              <thead><tr><th>เลขทะเบียน</th><th>รหัสข้างรถ</th><th>ประเภท</th></tr></thead>
+              <tbody>
+                <tr><td>82-4471 พะเยา</td><td>น.1 - 09 - 0231</td><td>รถปั้นจั่น (ไฮดรอลิคเครน)</td></tr>
+                <tr><td>บบ 7719 พะเยา</td><td>น.1 - 03 - 1188</td><td>รถบรรทุกขนาดเล็ก (บริการแก้ไฟ)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <dl class="incident-summary mt-4">
+            <div class="incident-field"><dt>พนักงานขับยานพาหนะ</dt><dd>นายมงคล สมดี · นายวีระ ตั้งใจ</dd></div>
+            <div class="incident-field"><dt>ผู้ควบคุมการใช้</dt><dd>นายอนุรักษ์ คล่องไชยชน</dd></div>
+          </dl>
+        </div>
+
+        <div>
+          <div class="incident-section-title">งบที่ตัด</div>
+          <dl class="incident-summary">
+            <div class="incident-field"><dt>ประเภทงบ</dt><dd>งบโครงการ (ตาม WBS)</dd></div>
+            <div class="incident-field"><dt>ศูนย์ต้นทุน</dt><dd>B0002211 กฟส.แม่ใจ</dd></div>
+            <div class="incident-field"><dt>เลขที่ WBS</dt><dd>WBS-2569-0142</dd></div>
+            <div class="incident-field"><dt>โครงข่าย / กิจกรรม</dt><dd>NET-04412 / A-0310</dd></div>
+          </dl>
+        </div>
+
+        <div>
+          <div class="incident-section-title">เอกสารอ้างอิง</div>
+          <div class="flex flex-wrap gap-2">
+            <span class="file-chip"><span class="ms">picture_as_pdf</span>
+              <span class="file-chip-name">แผนปฏิบัติงาน-ต.ค.2569.pdf</span></span>
+            <span class="sub mb-0 self-center">เลขที่หนังสือ กฟน.1(บร)/2569-1184</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <div class="modal-ft-a">
+        <button class="btn btn-t" onclick="document.getElementById('ap').classList.add('hidden')">ไม่อนุมัติ</button>
+        <div class="modal-ft-r">
+          <a class="btn btn-p" href="crossunit-03-record.html">อนุมัติ</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

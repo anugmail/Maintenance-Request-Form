@@ -12,6 +12,7 @@ if [ ! -f "$JAR" ]; then
   curl -sSL -o "$JAR" "https://github.com/plantuml/plantuml/releases/download/$VER/plantuml-${VER#v}.jar"
 fi
 mkdir -p out
-java -jar "$JAR" -tpng -o out ./*.puml
-java -jar "$JAR" -tsvg -o out ./*.puml
+# ผังแนวนอนกว้างเกิน 4096px (ค่า default) จะถูกตัดขอบ — ขยาย limit ให้พอ
+java -DPLANTUML_LIMIT_SIZE=16384 -jar "$JAR" -tpng -o out ./*.puml
+java -DPLANTUML_LIMIT_SIZE=16384 -jar "$JAR" -tsvg -o out ./*.puml
 ls -la out/

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สร้างคำขอใช้ยานพาหนะ | VMS Plus</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260907-ds62">
+<link rel="stylesheet" href="../design-system/components.css?v=20260914-ds66">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20260907-tw3"></script>
+<!-- โครงฟิลด์ยกจากตารางจริง `vms_trn_request` (code-maintainD/api/.../models/request_model.go)
+     work_place · work_description · reserve_start/end_datetime · number_of_passengers
+     ref_cost_type_code + cost_center/wbs_no/network_no/activity_no/pm_order_no
+     vehicle_user_* (หน่วยงานผู้ใช้ แยกจาก vehicle_owner_dept_sap) · driver_emp_* · doc_no/doc_file
+     งบที่ตัด: ตัวเลือกจาก API `GET /api/ref/cost-type?emp_id=` (ref_handler.go ListCostType)
+     1 ใบมีรถได้หลายคัน + พขร. น้อยกว่าจำนวนรถ — ตามที่หน่วยงานอธิบายในประชุมครั้งที่ 4
+     component: .shell/.side.wide/.work/.topbar/.content · .crumbs · .page-title-row · .card/.sect
+     .fgrid/.f/.in/.ro · .tbl/.tblwrap · .chks/.cbox · .seg/.sg · .file-chip · .actions · .stack
+     ไม่มี <style> ในหน้า — layout/spacing ใช้ Tailwind utility -->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv on" href="crossunit-01-request.html" title="สร้างคำขอใช้ยานพาหนะ"><span class="ms">add_circle</span><span class="nvlbl">สร้างคำขอใช้ยานพาหนะ</span></a>
+    <a class="nv" href="crossunit-02-approve.html" title="อนุมัติคำขอ"><span class="ms">approval</span><span class="nvlbl">อนุมัติคำขอ</span><span class="cnt">3</span></a>
+    <a class="nv" href="crossunit-03-record.html" title="บันทึกการใช้ยานพาหนะ"><span class="ms">edit_note</span><span class="nvlbl">บันทึกการใช้ยานพาหนะ</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">notifications</span>
+      <span class="ms">account_circle</span>
+      <span>นายอนุรักษ์ คล่องไชยชน — กฟส.แม่ใจ</span>
+    </div>
+
+    <main class="content">
+      <div class="crumbs">
+        <span class="ms">home</span><a href="#">หน้าแรก</a>
+        <span class="sep">›</span><a href="#">คำขอใช้ยานพาหนะ</a>
+        <span class="sep">›</span><span class="cur">สร้างคำขอ</span>
+      </div>
+
+      <div class="page-title-row">
+        <h1 class="page-title">สร้างคำขอใช้ยานพาหนะ</h1>
+      </div>
+
+      <div class="max-w-[980px]">
+        <div class="stack loose">
+
+          <div class="card">
+            <div class="sect">หน่วยงานผู้ใช้ยานพาหนะ</div>
+            <div class="fgrid">
+              <div class="f sp2">
+                <label>หน่วยงานที่ขอใช้</label>
+                <div class="in"><span class="ms">apartment</span>
+                  <select>
+                    <option selected>กฟส.แม่ใจ จ.พะเยา — กฟน.1</option>
+                    <option>กฟอ.ดอกคำใต้ จ.พะเยา — กฟน.1</option>
+                    <option>กฟจ.พะเยา — กฟน.1</option>
+                  </select>
+                </div>
+              </div>
+              <div class="f ro">
+                <label>หน่วยงานเจ้าของรถ</label>
+                <div class="in"><span class="ms">directions_car</span><input value="กฟจ.พะเยา — กฟน.1" readonly></div>
+              </div>
+              <div class="f sp2">
+                <label>ผู้ใช้ยานพาหนะ</label>
+                <div class="in"><span class="ms">person</span>
+                  <select>
+                    <option selected>นายอนุรักษ์ คล่องไชยชน — หัวหน้าแผนกปฏิบัติการและบำรุงรักษา</option>
+                    <option>นายสมชาย ใจดี — ช่างระดับ 5</option>
+                  </select>
+                </div>
+              </div>
+              <div class="f">
+                <label>เบอร์ติดต่อ</label>
+                <div class="in"><span class="ms">call</span><input type="tel" value="091-234-5678"></div>
+              </div>
+              <div class="f">
+                <label>จำนวนผู้โดยสาร</label>
+                <div class="numfld"><button type="button">−</button><input type="number" value="4"><button type="button">+</button></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="sect">รายละเอียดการปฏิบัติงาน</div>
+            <div class="fgrid">
+              <div class="f sp2">
+                <label>สถานที่ปฏิบัติงาน</label>
+                <div class="in"><span class="ms">place</span><input type="text" value="สถานีไฟฟ้าแม่ใจ · ต.ศรีถ้อย อ.แม่ใจ จ.พะเยา"></div>
+              </div>
+              <div class="f sp2">
+                <label>ลักษณะงาน</label>
+                <div class="in"><span class="ms">work</span><input type="text" value="ปรับปรุงระบบจำหน่ายแรงต่ำ ช่วงเสา 12–28"></div>
+              </div>
+              <div class="f">
+                <label>วันที่–เวลาเริ่ม</label>
+                <div class="in noic"><input type="datetime-local" value="2026-10-06T07:30"></div>
+              </div>
+              <div class="f">
+                <label>วันที่–เวลาสิ้นสุด</label>
+                <div class="in noic"><input type="datetime-local" value="2026-10-10T17:00"></div>
+              </div>
+              <div class="f sp2">
+                <label>ลักษณะการเดินทาง</label>
+                <div class="seg">
+                  <div class="sg sel">ไป-กลับ</div>
+                  <div class="sg">ค้างแรม</div>
+                  <div class="sg">เร่งด่วนฉุกเฉิน</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="sect">ยานพาหนะที่ขอใช้</div>
+            <div class="sub">เลือกได้มากกว่า 1 คัน</div>
+            <div class="tblwrap">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th class="w-12"></th>
+                    <th>เลขทะเบียน</th>
+                    <th>รหัสข้างรถ</th>
+                    <th>ประเภทยานพาหนะ</th>
+                    <th>สังกัด</th>
+                    <th>สถานะ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><div class="chks"><label class="sel"><input type="checkbox" checked><span class="cbox">check</span></label></div></td>
+                    <td>82-4471 พะเยา</td>
+                    <td>น.1 - 09 - 0231</td>
+                    <td>รถปั้นจั่น (ไฮดรอลิคเครน)</td>
+                    <td>กฟจ.พะเยา</td>
+                    <td><span class="badge b-ok">ว่าง</span></td>
+                  </tr>
+                  <tr>
+                    <td><div class="chks"><label class="sel"><input type="checkbox" checked><span class="cbox">check</span></label></div></td>
+                    <td>บบ 7719 พะเยา</td>
+                    <td>น.1 - 03 - 1188</td>
+                    <td>รถบรรทุกขนาดเล็ก (บริการแก้ไฟ)</td>
+                    <td>กฟจ.พะเยา</td>
+                    <td><span class="badge b-ok">ว่าง</span></td>
+                  </tr>
+                  <tr>
+                    <td><div class="chks"><label><input type="checkbox"><span class="cbox">check</span></label></div></td>
+                    <td>บย 2240 พะเยา</td>
+                    <td>น.1 - 07 - 0455</td>
+                    <td>รถพ่วงบรรทุกสายไฟ (REEL TRAILER)</td>
+                    <td>กฟจ.พะเยา</td>
+                    <td><span class="badge b-ok">ว่าง</span></td>
+                  </tr>
+                  <tr>
+                    <td><div class="chks"><label><input type="checkbox" disabled><span class="cbox">check</span></label></div></td>
+                    <td>บฉ 9083 พะเยา</td>
+                    <td>น.1 - 04 - 0912</td>
+                    <td>รถบรรทุกขนาดใหญ่ (HOTLINE)</td>
+                    <td>กฟจ.พะเยา</td>
+                    <td><span class="badge b-low">มีคำขอในช่วงเวลาเดียวกัน</span></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="tblfoot"><span>เลือกแล้ว 2 คัน</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="sect">พนักงานขับยานพาหนะ</div>
+            <div class="fgrid">
+              <div class="f sp2">
+                <label>พนักงานขับยานพาหนะ</label>
+                <div class="in"><span class="ms">badge</span>
+                  <select>
+                    <option selected>นายมงคล สมดี — ใบอนุญาต ท.2 · พขร. ประจำ กฟจ.พะเยา</option>
+                    <option>นายวีระ ตั้งใจ — ใบอนุญาต ท.3</option>
+                  </select>
+                </div>
+              </div>
+              <div class="f sp2">
+                <label>พนักงานขับยานพาหนะ (คนที่ 2)</label>
+                <div class="in"><span class="ms">badge</span>
+                  <select>
+                    <option selected>นายวีระ ตั้งใจ — ใบอนุญาต ท.3 · พขร. ประจำ กฟจ.พะเยา</option>
+                    <option value="">ไม่ระบุ</option>
+                  </select>
+                </div>
+              </div>
+              <div class="f sp4">
+                <label>ผู้ควบคุมการใช้ยานพาหนะ</label>
+                <div class="in"><span class="ms">supervisor_account</span>
+                  <select><option selected>นายอนุรักษ์ คล่องไชยชน — หัวหน้าแผนกปฏิบัติการและบำรุงรักษา</option></select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="sect">งบที่ตัด</div>
+            <div class="fgrid">
+              <div class="f sp2">
+                <label>ประเภทงบ</label>
+                <div class="in noic">
+                  <select>
+                    <option>งบประจำหน่วยงาน</option>
+                    <option>งบส่วนกลาง (กบค.)</option>
+                    <option selected>งบโครงการ (ตาม WBS)</option>
+                    <option>งบซ่อมบำรุงตามใบสั่ง (PM Order)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="f sp2">
+                <label>ศูนย์ต้นทุน</label>
+                <div class="in"><span class="ms">account_balance</span><input type="text" value="B0002211  กฟส.แม่ใจ"></div>
+              </div>
+              <div class="f">
+                <label>เลขที่ WBS</label>
+                <div class="in"><span class="ms">tag</span><input type="text" value="WBS-2569-0142"></div>
+              </div>
+              <div class="f">
+                <label>เลขที่โครงข่าย</label>
+                <div class="in"><span class="ms">lan</span><input type="text" value="NET-04412"></div>
+              </div>
+              <div class="f">
+                <label>เลขที่กิจกรรม</label>
+                <div class="in"><span class="ms">checklist</span><input type="text" value="A-0310"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="sect">เอกสารอ้างอิง</div>
+            <div class="fgrid">
+              <div class="f sp2">
+                <label>เลขที่หนังสือ</label>
+                <div class="in"><span class="ms">description</span><input type="text" value="กฟน.1(บร)/2569-1184"></div>
+              </div>
+              <div class="f sp4">
+                <label>ไฟล์แนบ</label>
+                <div class="flex flex-wrap gap-2">
+                  <span class="file-chip"><span class="ms">picture_as_pdf</span>
+                    <span class="file-chip-name">แผนปฏิบัติงาน-ต.ค.2569.pdf</span>
+                    <button class="file-chip-rm" aria-label="ลบไฟล์"><span class="ms">close</span></button></span>
+                  <button class="btn btn-s btn-sm"><span class="ms">attach_file</span> แนบไฟล์</button>
+                </div>
+              </div>
+              <div class="f sp4">
+                <label>หมายเหตุ</label>
+                <textarea rows="2" placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-g">ยกเลิก</button>
+            <button class="btn btn-s">บันทึกร่าง</button>
+            <a class="btn btn-p" href="crossunit-02-approve.html">ส่งคำขอ</a>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>
