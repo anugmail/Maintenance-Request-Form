@@ -4277,7 +4277,7 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
 
     function openStep(no){
       const j=JOBS.find(x=>x.no===no); if(!j)return;
-      E.garages=[]; E.q='';
+      E.garages=[]; E.q=''; E.partsTab=0;
       K={slots:{},note:'',mode:'range',from:'',to:'',one:'',insp:null,sat:null,ack:false,closeReport:null,appt:null,preinsp:null,postinsp:null,retn:null,outp:null};
       STEP={no};
       switchView('step');
@@ -4573,17 +4573,27 @@ function routeChoiceHTML(no, j){
 
 // ---- แหล่งอะไหล่: Smart Inventory → คลังสำรอง → สั่งซื้อภายนอก ----
 // 2 คลังแรกเบิกได้เหมือนกัน ต่างแค่ที่เก็บ · ไม่มีทั้งคู่ถึงจะต้องสั่งซื้อ
+// 7 ก.ย. 2569: เจ้าของงานสั่งให้ 2 คลัง "เลือกเบิกได้ทั้ง 2" แทนที่ระบบ priority-fallback เดิม (เช็ค SI ก่อนเสมอ
+// มีก็ใช้ SI อย่างเดียว ไม่มีค่อยดูคลังสำรอง) — ของจริงส่วนใหญ่มีของทั้ง 2 คลังพร้อมกัน (ดู config.js PARTS_DEFAULT)
+// ผู้ใช้ต้อง "เลือกเอง" ว่าจะเบิกจากคลังไหนตอนกด + จากฝั่งซ้าย ไม่ใช่ให้ระบบเดาให้ — และผลต่างสำคัญคือ:
+// คลังที่ 1 (Smart Inventory) ขาด → ระบบจัดซื้อ/เติมสต๊อกให้เองหลังบ้าน (ไม่ต้องทำอะไรเพิ่ม)
+// คลังที่ 2 (คลังสำรอง) ขาด → ต้องซื้อเองทันที (ไม่มีระบบหลังบ้านรองรับ)
+// ⚠️ ยังไม่มีภาพอ้างอิง Figma สำหรับ interaction นี้ (เลือกคลังตอนเพิ่ม + ป้ายเตือนต้องซื้อเอง) — ออกแบบจาก
+// component ที่มีอยู่แล้วในไลบรารี (.btn/.badge/.parts-stock-item) ไม่ได้คิด component ใหม่ รอเจ้าของงานตรวจสอบ
 const SRC = {
-  si:  { key:'si',  label:'เบิกจาก Smart Inventory', icon:'inventory_2',  cls:'si'  },
-  alt: { key:'alt', label:'เบิกจากคลังสำรอง',        icon:'warehouse',    cls:'alt' },
+  si:  { key:'si',  label:'คลังที่ 1 · Smart Inventory', icon:'inventory_2',  cls:'si'  },
+  alt: { key:'alt', label:'คลังที่ 2 · คลังสำรอง',        icon:'warehouse',    cls:'alt' },
   buy: { key:'buy', label:'ต้องสั่งซื้อจากภายนอก',   icon:'shopping_cart',cls:'buy' }
 };
 function partSource(x){
   const p=PARTS.find(q=>q.code===x.code);
-  if(!p)return { src:SRC.buy, have:0, short:x.qty, where:'ไม่พบในทะเบียนอะไหล่' };
-  if(p.stock>0)  return { src:SRC.si,  have:p.stock,    short:Math.max(0,x.qty-p.stock),    where:p.wh, unit:p.unit };
-  if(p.stockAlt) return { src:SRC.alt, have:p.stockAlt, short:Math.max(0,x.qty-p.stockAlt), where:'คลังสำรอง', unit:p.unit };
-  return { src:SRC.buy, have:0, short:x.qty, where:'ไม่มีทั้ง 2 คลัง', unit:p.unit };
+  if(!p)return { src:SRC.buy, have:0, short:x.qty, where:'ไม่พบในทะเบียนอะไหล่', selfBuy:true };
+  // x.wh = คลังที่เลือกไว้ตอนกด + (ของใหม่ตั้งแต่ 7 ก.ย. 2569) — ของเก่าที่เพิ่มไว้ก่อนหน้านี้ไม่มีค่านี้
+  // เดากลับด้วย priority เดิม (SI ก่อน) ไว้กันของเก่าพังทั้งที่ยังไม่เคยถามผู้ใช้จริง (backward-compat เท่านั้น)
+  const wh = x.wh || (p.stock>0?'si':p.stockAlt>0?'alt':null);
+  if(wh==='si')  return { src:SRC.si,  have:p.stock||0,    short:Math.max(0,x.qty-(p.stock||0)),    where:p.wh, unit:p.unit, selfBuy:false };
+  if(wh==='alt') return { src:SRC.alt, have:p.stockAlt||0, short:Math.max(0,x.qty-(p.stockAlt||0)), where:'คลังสำรอง', unit:p.unit, selfBuy:true };
+  return { src:SRC.buy, have:0, short:x.qty, where:'ไม่มีทั้ง 2 คลัง', unit:p.unit, selfBuy:true };
 }
 function invCell(x){
   const s=partSource(x), u=esc(s.unit||x.unit);
@@ -4671,7 +4681,8 @@ function partsEditorHTML(no, j){
       <div class="parts-totals">
         <h2 class="parts-pane-title">รวมค่าอะไหล่</h2>
         <div class="parts-total-row"><span>เบิกจากคลัง</span><strong id="kp-sum-stock-${no}">${baht(t.stock)} บาท</strong></div>
-        <div class="parts-total-row"><span>ต้องจัดซื้อ</span><strong id="kp-sum-buy-${no}">${baht(t.buy)} บาท</strong></div>
+        <div class="parts-total-row"><span>ระบบจัดซื้อให้ (คลังที่ 1 ขาด)</span><strong id="kp-sum-buyauto-${no}">${baht(t.buyAuto)} บาท</strong></div>
+        <div class="parts-total-row"><span>ต้องซื้อเอง (คลังที่ 2 ขาด/นอกทะเบียน)</span><strong id="kp-sum-buyself-${no}">${baht(t.buySelf)} บาท</strong></div>
         <div class="parts-total-row grand"><span>รวมทั้งหมด</span><strong id="kp-sum-all-${no}">${baht(t.all)} บาท</strong></div>
       </div>
     </section>
@@ -4722,31 +4733,71 @@ function partsStockPaneHTML(no, j){
     .filter(p=>!inList.has(p.code))
     .filter(p=>!q||(p.name+' '+p.code).toLowerCase().includes(q))
     .sort((a,b)=>(rec.has(b.code)?1:0)-(rec.has(a.code)?1:0));
-  if(!rows.length)return `<div class="parts-empty"><img class="parts-empty-image" src="../assets/parts-requisition/screen-1-image-0.png" alt=""><b>ไม่พบรายการ</b><span>กรุณาค้นหาอะไหล่</span></div>`;
-  return `<div class="parts-stock-list">${rows.map(p=>{
-    const have=p.stock||p.stockAlt||0, wh=p.stock?esc(p.wh):p.stockAlt?'คลังสำรอง':null;
+  // 7 ก.ย. 2569: การ์ดเดิมมีปุ่ม + เดียว (ระบบเลือกคลังให้เองแบบ priority) — ตอนนี้ต้องให้ผู้ใช้เลือกเองว่าจะเบิกจาก
+  // คลังไหนใน 2 คลัง เพราะผลต่างกัน (คลังที่ 1 ขาด = ระบบจัดซื้อให้ / คลังที่ 2 ขาด = ต้องซื้อเอง)
+  // 10 ก.ย. 2569 (v0.72): เจ้าของงานทัก "ปรับซ้ายมือเป็นบวกเหมือนเดิม" — ปุ่มกลับเป็นไอคอน + เฉยๆ (ตอนนั้นยังมี 2 ปุ่ม)
+  // 11 ก.ย. 2569 (v0.73): เจ้าของงานทัก "ปุ่มบวกเหลืออันเดียว แต่กด tab smart จะแอดเข้า smart กด tab ซื้อเอง
+  // ของก็เข้าซื้อเอง" — ยุบเหลือปุ่ม + เดียวต่ออะไหล่ ไม่ต้องเลือกคลังตรงปุ่มอีกต่อไป คลังปลายทางอ่านจาก
+  // "แท็บที่เลือกอยู่ฝั่งขวา" (E.partsTab) แทน — ดู kbkPartAdd()
+  // 11 ก.ย. 2569 (v0.74): เจ้าของงานทัก "ด้านซ้ายต้องบอกว่าอยู่ในคลังไหน และจำนวนเท่าไหร่" — v0.73 ตัดปุ่ม + เหลือ
+  // อันเดียวแล้วปัดคลังปลายทางไปผูกกับแท็บฝั่งขวาล้วนๆ แต่ฝั่งซ้ายไม่มีอะไรบอกเลยว่าตอนนี้กำลังจะเบิกเข้าคลังไหน
+  // (บรรทัด .parts-source เดิมโชว์ทั้ง 2 คลังปนกันเฉยๆ ไม่ผูกกับโหมดที่เลือกอยู่) — เพิ่มแถบบอกโหมดที่ใช้งานอยู่
+  // ด้านบนสุดของลิสต์ ("กำลังเบิกจาก: <คลัง> — สลับได้ที่แท็บฝั่งขวา") ใช้ badge .b-info/.b-out ชุดเดียวกับที่ใช้
+  // แยกประเภทในตะกร้าอยู่แล้ว (คลังที่ 1→b-info, คลังที่ 2→b-out) + แก้บรรทัด .parts-source ต่อรายการให้โชว์
+  // แค่คลัง+จำนวนของ "คลังที่กำลังใช้งานอยู่" อันเดียว (ไม่ปนทั้ง 2 คลังเหมือนเดิม) ต้องให้ renderKbkPartsStock
+  // รีเฟรชตามด้วยทุกครั้งที่สลับแท็บ — แก้ kbkPartsTabShow ให้เรียกคู่กับ renderKbkPartsPicked
+  if(E.partsTab==null)E.partsTab=0;
+  const wh=(E.partsTab===1)?'alt':'si';
+  const modeSrc=wh==='alt'?SRC.alt:SRC.si;
+  const modeBadgeCls=wh==='alt'?'b-out':'b-info';
+  const modeBanner=`<p class="parts-pane-sub" style="margin:-4px 0 12px"><span class="ms" style="font-size:16px;vertical-align:-3px">${modeSrc.icon}</span> กำลังเบิกจาก <span class="badge ${modeBadgeCls}">${esc(modeSrc.label)}</span> — สลับได้ที่แท็บ "อะไหล่ที่ต้องการใช้งาน" ฝั่งขวา</p>`;
+  if(!rows.length)return modeBanner+`<div class="parts-empty"><img class="parts-empty-image" src="../assets/parts-requisition/screen-1-image-0.png" alt=""><b>ไม่พบรายการ</b><span>กรุณาค้นหาอะไหล่</span></div>`;
+  return modeBanner+`<div class="parts-stock-list">${rows.map(p=>{
+    const qty=wh==='alt'?(p.stockAlt||0):(p.stock||0);
+    const whName=wh==='alt'?'คลังสำรอง (คลังที่ 2)':`${p.wh} (คลังที่ 1)`;
     return `<div class="parts-stock-item">
       <div><b>${esc(p.name)}${rec.has(p.code)?' <span class="badge b-info">แนะนำ</span>':''}</b>
         <div class="parts-line">${esc(p.code)} · ${baht(p.price)} บาท/${esc(p.unit)}</div>
-        <div class="parts-source">${wh?`<b>${wh}</b> : มีในคลัง ${baht(have)} ${esc(p.unit)}`:'ต้องสั่งซื้อภายนอก'}</div></div>
-      <button type="button" class="btn" title="เพิ่มเข้ารายการ" onclick="kbkPartAdd('${no}','${p.code}')"><span class="ms">add</span></button>
+        <div class="parts-source"><b>${esc(whName)}</b>: มี ${baht(qty)} ${esc(p.unit)}</div></div>
+      <button type="button" class="btn btn-o btn-sm" title="เพิ่มเข้ารายการ" onclick="kbkPartAdd('${no}','${p.code}')"><span class="ms">add</span></button>
     </div>`;
   }).join('')}</div>`;
 }
 // คอลัมน์ขวา "อะไหล่ที่ต้องการใช้งาน" — j.parts (มาจากคลัง/ผู้แจ้ง) + j.customParts (กบค. พิมพ์เอง ไม่มีในทะเบียน)
+// 7 ก.ย. 2569: เพิ่มป้ายเตือนชัดเจนต่อรายการ แยก "ระบบจัดซื้อให้อัตโนมัติ" (คลังที่ 1 ขาด) กับ "ต้องซื้อเอง"
+// (คลังที่ 2 ขาด/อะไหล่นอกทะเบียน) — แก้ปัญหาที่เจ้าของงานทัก "ก็จะไม่รู้ว่าอันไหนต้องซื้อเอง" เพราะของเดิมมีแค่
+// ข้อความ "ต้องจัดซื้อ" กลางๆ ไม่แยกว่าต้องซื้อเองหรือระบบจัดการให้
+// 7 ก.ย. 2569 (รอบ 2): เจ้าของงานสั่งแยกฝั่งขวาเป็น 2 แท็บ "เบิกคลัง" / "จัดซื้อเอง" — ใช้ selfBuy flag เดียวกับ
+// ป้ายเตือนที่เพิ่งทำ (รอบ 1) แบ่งกลุ่ม: selfBuy=false (คลังที่ 1) → แท็บ "เบิกคลัง" · selfBuy=true (คลังที่ 2 +
+// อะไหล่นอกทะเบียน) → แท็บ "จัดซื้อเอง" — ปุ่ม + จากฝั่งซ้าย/ปุ่ม "ระบุอะไหล่เพิ่มเติม" ยังทำงานเหมือนเดิมทุกอย่าง
+// แค่เพิ่มพฤติกรรม auto-สลับไปแท็บที่รายการเพิ่งเพิ่มเข้าไปให้เห็นผลทันที (ดู kbkPartAdd/kbkPartAddCustom)
+// ใช้ .tabs/.tab-btn/.tabpanel ชุดเดียวกับแท็บ "กระบวนการซ่อม/ข้อมูลการซ่อม/ประวัติ" ของหน้ารายละเอียดเหตุการณ์
+// ไม่ได้คิด component แท็บใหม่ — สถานะแท็บที่เลือกเก็บที่ E.partsTab (reset เป็น 0 ทุกครั้งเปิดใบใหม่ใน openStep)
+// 11 ก.ย. 2569 (v0.73): เจ้าของงานสั่งยุบปุ่ม + ฝั่งซ้ายเหลืออันเดียว แล้วให้ "แท็บที่เลือกอยู่" เป็นตัวกำหนด
+// คลังปลายทางแทน (แท็บ "เบิกคลัง" = คลังที่ 1/Smart · แท็บ "จัดซื้อเอง" = คลังที่ 2) — แท็บจึงต้อง**โชว์ตลอด**
+// แม้ทั้ง 2 กลุ่มว่างเปล่า (เดิมถ้าว่างทั้งคู่จะไม่โชว์แท็บเลย กลับไปใช้ข้อความรวม "ยังไม่ได้เลือกอะไหล่") เพราะ
+// ผู้ใช้ต้องเลือกโหมดได้ตั้งแต่ก่อนกดอะไหล่ตัวแรกด้วย — ตัดเงื่อนไข early-return ทิ้ง ให้แต่ละแท็บที่ว่างโชว์ hint
+// สั้นๆ ของตัวเองแทน (เหมือนกรณีว่างแค่กลุ่มเดียวที่ทำไว้แล้ว)
 function partsPickedPaneHTML(no, j){
+  if(E.partsTab==null)E.partsTab=0;
   const rec=kbkPartsRecSet(j);
-  const stockRows=(j.parts||[]).map(x=>{
-    const s=partSource(x), buy=s.short, wh=s.src.key==='si'?'Smart Inventory':s.src.key==='alt'?'คลังสำรอง':null;
-    return `<div class="parts-picked-item">
+  const whRows=[], selfRows=[];
+  (j.parts||[]).forEach(x=>{
+    const s=partSource(x), short=s.short, wh=s.src.key==='si'?SRC.si.label:s.src.key==='alt'?SRC.alt.label:null;
+    const shortBadge=short?(s.selfBuy
+      ?`<span class="badge b-out"><span class="ms" style="font-size:14px">priority_high</span> ต้องซื้อเอง ${baht(short)} ${esc(x.unit)}</span>`
+      :`<span class="badge b-info"><span class="ms" style="font-size:14px">autorenew</span> ระบบจัดซื้อให้ ${baht(short)} ${esc(x.unit)}</span>`):'';
+    const html=`<div class="parts-picked-item">
       <div><b>${esc(x.name)}${rec.has(x.code)?' <span class="badge b-info">แนะนำ</span>':''}</b>
         <div class="parts-line">${esc(x.code)} · ${baht(x.price)} บาท/${esc(x.unit)}</div>
-        <div class="parts-source">${wh?`<b>${wh}</b> : มีในคลัง ${baht(s.have)} ${esc(x.unit)}`:'ต้องสั่งซื้อภายนอก'}${buy&&wh?` | ต้องจัดซื้อ ${baht(buy)} ${esc(x.unit)}`:''}</div></div>
+        <div class="parts-source">${wh?`<b>${esc(wh)}</b> : มีในคลัง ${baht(s.have)} ${esc(x.unit)}`:'ต้องสั่งซื้อภายนอก'}</div>
+        ${shortBadge?`<div style="margin-top:6px">${shortBadge}</div>`:''}</div>
       <div class="parts-picked-actions">
         <button type="button" class="btn btn-t btn-sm" title="เอาออกจากรายการ" onclick="kbkPartDel('${no}','${x.code}')"><span class="ms">delete</span></button>
         <span class="parts-price">${baht((x.price||0)*x.qty)} บาท</span>
         <div class="qty"><button type="button" onclick="kbkPartQty('${no}','${x.code}',-1)">−</button><span>${x.qty}</span><button type="button" onclick="kbkPartQty('${no}','${x.code}',1)">+</button></div>
       </div></div>`;
+    (s.selfBuy?selfRows:whRows).push(html);
   });
   const customRows=(j.customParts||[]).map(c=>`<div class="parts-picked-item">
     <div class="parts-manual-grid">
@@ -4759,16 +4810,29 @@ function partsPickedPaneHTML(no, j){
       <span class="parts-price">${baht((c.price||0)*(c.qty||0))} บาท</span>
       <div class="qty"><button type="button" onclick="kbkCustomQty('${no}','${c.id}',-1)">−</button><span>${c.qty}</span><button type="button" onclick="kbkCustomQty('${no}','${c.id}',1)">+</button></div>
     </div></div>`);
-  const all=stockRows.concat(customRows);
-  return all.length
-    ? `<div class="parts-picked-list has-items">${all.join('')}</div>`
-    : `<div class="parts-empty"><b>ยังไม่ได้เลือกอะไหล่</b><span>กด + จากคลังอะไหล่ทางซ้าย หรือกด “ระบุอะไหล่เพิ่มเติม”</span></div>`;
+  const selfAll=selfRows.concat(customRows);
+  const uid='kbkparts-'+no;
+  const tabDefs=[
+    ['เบิกคลัง', whRows.length, `<div class="parts-picked-list has-items">${whRows.join('')}</div>`, 'ยังไม่มีอะไหล่ที่เบิกจากคลังในตอนนี้ — กด + จากคลังอะไหล่ทางซ้ายขณะอยู่แท็บนี้ จะเบิกจากคลังที่ 1 (Smart Inventory)'],
+    ['จัดซื้อเอง', selfAll.length, `<div class="parts-picked-list has-items">${selfAll.join('')}</div>`, 'ยังไม่มีอะไหล่ที่ต้องจัดซื้อเองในตอนนี้ — กด + จากคลังอะไหล่ทางซ้ายขณะอยู่แท็บนี้ จะเบิกจากคลังที่ 2 (คลังสำรอง)']
+  ];
+  return `<div class="tabs" role="tablist" aria-label="อะไหล่ที่ต้องการใช้งาน">
+    ${tabDefs.map((t,i)=>`<button type="button" class="tab-btn ${E.partsTab===i?'on':''}" role="tab" aria-selected="${E.partsTab===i}" aria-controls="${uid}-${i}" onclick="kbkPartsTabShow('${no}',${i})">${t[0]} <span class="badge b-neutral">${t[1]}</span></button>`).join('')}
+  </div>
+  ${tabDefs.map((t,i)=>`<div class="tabpanel ${E.partsTab===i?'':'hidden'}" id="${uid}-${i}" role="tabpanel">${t[1]?t[2]:`<div class="hint" style="margin:16px 0">${t[3]}</div>`}</div>`).join('')}`;
 }
+function kbkPartsTabShow(no, idx){ E.partsTab=idx; renderKbkPartsStock(no); renderKbkPartsPicked(no); }
+// 7 ก.ย. 2569: แยก "ต้องจัดซื้อ" เดิมเป็น 2 ก้อนตามคลัง — buyAuto (คลังที่ 1 ขาด ระบบจัดซื้อให้เอง)
+// กับ buySelf (คลังที่ 2 ขาด + อะไหล่นอกทะเบียน — ต้องซื้อเอง) ยัง export buy รวมไว้เผื่อโค้ดเก่าที่อ้างอิงอยู่
 function partsTotalsCalc(j){
-  let stock=0, buy=0;
-  (j.parts||[]).forEach(x=>{ const s=partSource(x); stock+=(x.price||0)*(x.qty-s.short); buy+=(x.price||0)*s.short; });
-  (j.customParts||[]).forEach(c=>{ buy+=(c.price||0)*(c.qty||0) });   // อะไหล่นอกทะเบียน ไม่มีในคลังเสมอ นับเป็น "ต้องจัดซื้อ" ทั้งจำนวน
-  return {stock, buy, all:stock+buy};
+  let stock=0, buyAuto=0, buySelf=0;
+  (j.parts||[]).forEach(x=>{
+    const s=partSource(x);
+    stock+=(x.price||0)*(x.qty-s.short);
+    if(s.selfBuy) buySelf+=(x.price||0)*s.short; else buyAuto+=(x.price||0)*s.short;
+  });
+  (j.customParts||[]).forEach(c=>{ buySelf+=(c.price||0)*(c.qty||0) });   // อะไหล่นอกทะเบียน ไม่มีในคลังเสมอ ต้องซื้อเองทั้งจำนวน
+  return {stock, buyAuto, buySelf, buy:buyAuto+buySelf, all:stock+buyAuto+buySelf};
 }
 // อัปเดตเฉพาะคอลัมน์ซ้าย ไม่ re-render ทั้งหน้า — ไม่งั้นพิมพ์ค้นหาแล้ว focus หลุด
 function renderKbkPartsStock(no){
@@ -4780,9 +4844,10 @@ function renderKbkPartsPicked(no){
   const j=JOBS.find(x=>x.no===no); if(!j)return;
   const el=$('kbk-parts-picked-'+no); if(el)el.innerHTML=partsPickedPaneHTML(no, j);
   const t=partsTotalsCalc(j);
-  const a=$('kp-sum-stock-'+no), b=$('kp-sum-buy-'+no), c=$('kp-sum-all-'+no), btn=$('kp-confirm-'+no);
+  const a=$('kp-sum-stock-'+no), ba=$('kp-sum-buyauto-'+no), bs=$('kp-sum-buyself-'+no), c=$('kp-sum-all-'+no), btn=$('kp-confirm-'+no);
   if(a)a.textContent=baht(t.stock)+' บาท';
-  if(b)b.textContent=baht(t.buy)+' บาท';
+  if(ba)ba.textContent=baht(t.buyAuto)+' บาท';
+  if(bs)bs.textContent=baht(t.buySelf)+' บาท';
   if(c)c.textContent=baht(t.all)+' บาท';
   if(btn)btn.disabled=!(j.parts.length||j.customParts.length);
 }
@@ -4834,10 +4899,13 @@ function kbkPartDel(no, code){
   j.parts=j.parts.filter(x=>x.code!==code);
   renderKbkPartsStock(no); renderKbkPartsPicked(no);   // ลบแล้วอาจกลับไปโผล่ในคอลัมน์ซ้ายอีกครั้ง
 }
-function kbkPartAdd(no, code){
+function kbkPartAdd(no, code, wh){
   const j=JOBS.find(x=>x.no===no),p=PARTS.find(x=>x.code===code);
   if(!p||j.parts.some(x=>x.code===code))return;
-  j.parts.push({code:p.code,name:p.name,unit:p.unit,qty:p.need||1,price:p.price||0,src:'kbk',
+  // wh = คลังปลายทาง ('si'/'alt') — 11 ก.ย. 2569 (v0.73): ปุ่มฝั่งซ้ายเหลืออันเดียว ไม่ส่ง wh มาอีกต่อไป
+  // จึงอ่านจาก "แท็บที่เลือกอยู่" ฝั่งขวาแทน (E.partsTab: 0=เบิกคลัง/คลังที่ 1 · 1=จัดซื้อเอง/คลังที่ 2)
+  if(!wh) wh=(E.partsTab===1)?'alt':'si';
+  j.parts.push({code:p.code,name:p.name,unit:p.unit,qty:p.need||1,price:p.price||0,src:'kbk',wh:wh,
     ready:p.stock>0});
   renderKbkPartsStock(no); renderKbkPartsPicked(no);
 }
@@ -4846,7 +4914,8 @@ function kbkPartAddCustom(no){
   const j=JOBS.find(x=>x.no===no); if(!j.customParts)j.customParts=[];
   j.customSeq=(j.customSeq||0)+1;
   j.customParts.push({id:'KC'+j.customSeq,name:'',code:'',unit:'ชิ้น',qty:1,price:0});
-  renderKbkPartsPicked(no);
+  E.partsTab=1;   // อะไหล่นอกทะเบียน = ต้องจัดซื้อเองเสมอ → แท็บ "จัดซื้อเอง"
+  renderKbkPartsStock(no); renderKbkPartsPicked(no);   // รีเฟรชซ้ายด้วย ให้แถบ "กำลังเบิกจาก" ตรงกับแท็บที่สลับไป
 }
 function kbkCustomSet(no, id, field, val){
   const j=JOBS.find(x=>x.no===no),c=(j.customParts||[]).find(x=>x.id===id); if(!c)return;
