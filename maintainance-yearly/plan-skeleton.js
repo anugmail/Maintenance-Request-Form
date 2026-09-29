@@ -108,9 +108,9 @@ function fieldRow(secId, fd, i, len) {
   return `<tr>
     <td>
       ${editMode
-        ? `<input value="${esc(fd.label)}" oninput="setField('${secId}',${i},'label',this.value)" style="width:100%">`
+        ? `<input value="${esc(fd.label)}" oninput="setField('${secId}',${i},'label',this.value)" class="w-full">`
         : `<b>${esc(fd.label)}</b>`}
-      ${fd.done ? '' : '<span class="badge b-low" style="margin-top:4px;display:inline-block">ยังไม่ทำในหน้าจริง</span>'}
+      ${fd.done ? '' : '<span class="badge b-low mt-1 inline-block">ยังไม่ทำในหน้าจริง</span>'}
     </td>
     <td class="num">
       ${editMode
@@ -119,7 +119,7 @@ function fieldRow(secId, fd, i, len) {
     </td>
     <td>
       ${editMode
-        ? `<select onchange="setField('${secId}',${i},'src',this.value)" style="width:100%">
+        ? `<select onchange="setField('${secId}',${i},'src',this.value)" class="w-full">
              ${Object.keys(SRC_LABELS).map(k => `<option value="${k}" ${fd.src === k ? 'selected' : ''}>${esc(SRC_LABELS[k])}</option>`).join('')}
            </select>`
         : (fd.src ? esc(SRC_LABELS[fd.src] || fd.src) : '—')}
@@ -128,9 +128,9 @@ function fieldRow(secId, fd, i, len) {
           ? `<code>${esc(smp)}</code>`
           : '<span class="badge b-out">รอข้อมูล</span>'}</td>
     <td>${editMode
-          ? `<input value="${esc(fd.note)}" placeholder="โน้ตจากเจ้าของงาน…" oninput="setField('${secId}',${i},'note',this.value)" style="width:100%">`
+          ? `<input value="${esc(fd.note)}" placeholder="โน้ตจากเจ้าของงาน…" oninput="setField('${secId}',${i},'note',this.value)" class="w-full">`
           : esc(fd.note || '—')}</td>
-    <td class="num" style="white-space:nowrap">
+    <td class="num whitespace-nowrap">
       ${editMode ? `
         <button class="btn btn-t btn-sm" onclick="moveField('${secId}',${i},-1)" ${i === 0 ? 'disabled' : ''} title="เลื่อนขึ้น"><span class="ms">arrow_upward</span></button>
         <button class="btn btn-t btn-sm" onclick="moveField('${secId}',${i},1)" ${i === len - 1 ? 'disabled' : ''} title="เลื่อนลง"><span class="ms">arrow_downward</span></button>
@@ -156,7 +156,7 @@ function preview(sec) {
       const s = sampleFor(x.src);
       return `<td>${s !== null ? esc(s) : '<span class="badge b-out">รอข้อมูล</span>'}</td>`;
     }).join('')}</tr>
-    <tr><td colspan="${on.length}" class="empty" style="padding:8px">…แถวที่เหลือใช้รูปแบบเดียวกัน</td></tr></tbody>
+    <tr><td colspan="${on.length}" class="empty p-2">…แถวที่เหลือใช้รูปแบบเดียวกัน</td></tr></tbody>
   </table></div>`;
 }
 
@@ -165,28 +165,28 @@ function renderAsks() {
   const asks = sc.asks || [];
   const nAgreed = asks.filter(a => a.status === 'agreed').length;
   return `<div class="card">
-    <div class="page-title-row" style="margin-bottom:6px">
-      <h2 style="margin:0"><span class="ms">build</span> เงื่อนไขที่ต้องเคาะ</h2>
-      <span class="badge ${nAgreed === asks.length && asks.length ? 'b-ok' : 'b-out'}" style="margin-left:10px">เคาะแล้ว ${nAgreed}/${asks.length}</span>
+    <div class="page-title-row mb-1.5">
+      <h2 class="m-0"><span class="ms">build</span> เงื่อนไขที่ต้องเคาะ</h2>
+      <span class="badge ${nAgreed === asks.length && asks.length ? 'b-ok' : 'b-out'}" class="ml-2.5">เคาะแล้ว ${nAgreed}/${asks.length}</span>
     </div>
     ${asks.length ? `<div class="tblwrap"><table class="tbl">
       <thead><tr>
-        <th style="width:6%">ข้อ</th>
-        <th style="width:40%">คำถาม</th>
-        <th style="width:34%">คำตอบ</th>
-        <th style="width:14%">สถานะ</th>
-        <th style="width:6%"></th>
+        <th class="w-[6%]">ข้อ</th>
+        <th class="w-[40%]">คำถาม</th>
+        <th class="w-[34%]">คำตอบ</th>
+        <th class="w-[14%]">สถานะ</th>
+        <th class="w-[6%]"></th>
       </tr></thead>
       <tbody>${asks.map((a, i) => `<tr>
         <td><code>${esc(a.id)}</code></td>
         <td>${editMode
-              ? `<input value="${esc(a.q)}" oninput="setAsk(${i},'q',this.value)" style="width:100%">`
+              ? `<input value="${esc(a.q)}" oninput="setAsk(${i},'q',this.value)" class="w-full">`
               : esc(a.q)}</td>
         <td>${editMode
-              ? `<input value="${esc(a.ans)}" placeholder="คำตอบจากเจ้าของงาน…" oninput="setAsk(${i},'ans',this.value)" style="width:100%">`
+              ? `<input value="${esc(a.ans)}" placeholder="คำตอบจากเจ้าของงาน…" oninput="setAsk(${i},'ans',this.value)" class="w-full">`
               : esc(a.ans || '—')}</td>
         <td>${editMode
-              ? `<select onchange="setAsk(${i},'status',this.value)" style="width:100%">
+              ? `<select onchange="setAsk(${i},'status',this.value)" class="w-full">
                    ${Object.keys(ASK_STATUS).map(k => `<option value="${k}" ${a.status === k ? 'selected' : ''}>${esc(ASK_STATUS[k])}</option>`).join('')}
                  </select>`
               : `<span class="badge ${ASK_BADGE[a.status]}">${esc(ASK_STATUS[a.status])}</span>`}</td>
@@ -194,7 +194,7 @@ function renderAsks() {
               ? `<button class="btn btn-t btn-sm" onclick="delAsk(${i})" title="ลบ"><span class="ms">delete</span></button>` : ''}</td>
       </tr>`).join('')}</tbody>
     </table></div>` : '<div class="empty">ยังไม่มีคำถามค้างในหน้าจอนี้</div>'}
-    ${editMode ? `<div class="actions" style="margin-top:10px">
+    ${editMode ? `<div class="actions mt-2.5">
       <button class="btn btn-s btn-sm" onclick="addAsk()"><span class="ms">add</span> เพิ่มคำถาม</button>
     </div>` : ''}
   </div>`;
@@ -204,35 +204,35 @@ function renderBody() {
   const sc = screenNow();
   $('body').innerHTML = sc.sections.map(sec => `
     <div class="card">
-      <div class="page-title-row" style="margin-bottom:6px">
+      <div class="page-title-row mb-1.5">
         ${editMode
           ? `<input value="${esc(sec.title)}" oninput="setSecTitle('${sec.id}',this.value)"
-               style="font-size:16px;font-weight:600;width:100%;max-width:520px">`
-          : `<h2 style="margin:0">${esc(sec.title)}</h2>`}
-        <span class="badge b-ok" style="margin-left:10px">${sec.fields.filter(x => x.show).length}/${sec.fields.length} ฟิลด์</span>
-        ${editMode ? `<button class="btn btn-t btn-sm" style="margin-left:auto" onclick="delSection('${sec.id}')" title="ลบหัวข้อนี้"><span class="ms">delete</span> ลบหัวข้อ</button>` : ''}
+               class="text-md font-semibold w-full max-w-[520px]">`
+          : `<h2 class="m-0">${esc(sec.title)}</h2>`}
+        <span class="badge b-ok ml-2.5">${sec.fields.filter(x => x.show).length}/${sec.fields.length} ฟิลด์</span>
+        ${editMode ? `<button class="btn btn-t btn-sm ml-auto" onclick="delSection('${sec.id}')" title="ลบหัวข้อนี้"><span class="ms">delete</span> ลบหัวข้อ</button>` : ''}
       </div>
 
       <div class="tblwrap"><table class="tbl">
         <thead><tr>
-          <th style="width:24%">ชื่อฟิลด์ / คอลัมน์</th>
-          <th style="width:7%" class="num">แสดง</th>
-          <th style="width:20%">ข้อมูลจากไหน</th>
-          <th style="width:17%">ตัวอย่างจริง</th>
-          <th style="width:22%">โน้ต</th>
-          <th style="width:10%"></th>
+          <th class="w-[24%]">ชื่อฟิลด์ / คอลัมน์</th>
+          <th class="num w-[7%]">แสดง</th>
+          <th class="w-[20%]">ข้อมูลจากไหน</th>
+          <th class="w-[17%]">ตัวอย่างจริง</th>
+          <th class="w-[22%]">โน้ต</th>
+          <th class="w-[10%]"></th>
         </tr></thead>
         <tbody>${sec.fields.map((fd, i) => fieldRow(sec.id, fd, i, sec.fields.length)).join('')}</tbody>
       </table></div>
 
-      ${editMode ? `<div class="actions" style="margin-top:10px">
+      ${editMode ? `<div class="actions mt-2.5">
         <button class="btn btn-s btn-sm" onclick="addField('${sec.id}')"><span class="ms">add</span> เพิ่มฟิลด์</button>
       </div>` : ''}
 
-      <div class="sect" style="margin-top:18px">พรีวิว</div>
+      <div class="sect mt-[18px]">พรีวิว</div>
       ${preview(sec)}
     </div>`).join('') +
-    (editMode ? `<div class="actions" style="margin-bottom:18px">
+    (editMode ? `<div class="actions mb-[18px]">
       <button class="btn btn-s" onclick="addSection()"><span class="ms">add</span> เพิ่มหัวข้อในหน้านี้</button>
     </div>` : '') +
     renderAsks();

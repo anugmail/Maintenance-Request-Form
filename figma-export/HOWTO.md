@@ -174,16 +174,59 @@ node figma-export/serve.js        # พอร์ต 8124
 ### 3.1 ภาพรวมท่อ
 
 ```
-หน้า HTML (JS-rendered)
+design-system/.figma-extract/          ← dump ของไฟล์ Figma จริง (ไฟล์ในเครื่อง ไม่ต้องต่อเน็ต)
+   │ build-library-geometry.js         อ่าน "ตัวนิยาม COMPONENT_SET" → ค่าจริงราย variant
+   ▼ figma-export/library-geometry.json
+                                       ╲
+หน้า HTML (JS-rendered)                 ╲
    │ 1-extract.js / flow-report-extract.js   เดิน DOM เก็บ rect + computed style + pseudo-element
-   ▼ out/dom-*.json  (+ out/shot-*.png)
+   ▼ out/dom-*.json  (+ out/shot-*.png)      ╲
    │ 2-map.js        geometry บอกโครง · CSS บอกหน้าตา
+   │                 + **ค่าไลบรารีทับค่าที่วัดได้** ตรงจุดที่ไลบรารีระบุไว้ชัด
    │                 + tokens-vars.js อ่าน tokens.css → Variables 3 collection
    │                 + components-map.js ยกของซ้ำเป็น component แล้วแทนด้วย instance
-   ▼ out/spec.json หรือ out/spec-report.json  (+ out/map-report.json)
+   ▼ out/spec.json หรือ out/spec-report.json หรือ out/spec-overhaul.json  (+ out/map-report.json)
    │ serve.js
    ▼ plugin/ → สร้าง Variables → หน้า Foundations & Components → หน้าจอ
 ```
+
+### 3.1.1 ค่าไลบรารีทับค่าที่วัดได้ (เพิ่ม 14 ก.ย. 2569)
+
+**ปัญหาที่เจอ:** ค่าที่วัดจากหน้าเว็บที่เรนเดอร์แล้วคลาดจากสเปกไลบรารีเสมอ — กล่องข้อความของ
+เบราว์เซอร์ไม่ได้อยู่กึ่งกลางเป๊ะ ทำให้ badge ได้ `padding 2/9/3/9` แทน `4/8/4/8` ของจริง
+และความกว้างที่วัดได้กลายเป็น `FIXED 54` ทั้งที่ไลบรารีเป็น **Hug**
+
+**ทางแก้:** ยึด `design-system/.figma-extract/` (dump ของไฟล์ Figma จริง เก็บเป็นไฟล์ในเครื่อง)
+เป็นแหล่งความจริง — **ไม่ต้องต่อ Figma ตอนแปลง** อ่านจาก **ตัวนิยาม COMPONENT_SET**
+ไม่ใช่ instance ที่กระจายตามหน้า (instance ถูกยืด/บีบ/override มาแล้ว) ⇒ ได้ทั้ง geometry
+และ **สีราย variant** จริง
+
+```bash
+node figma-export/build-library-geometry.js   # → figma-export/library-geometry.json
+```
+
+รันเมื่อ: **ไลบรารีเปลี่ยน** (dump ใหม่ด้วย `dump-plugin/` แล้วรันตัวนี้) — นอกนั้นไม่ต้องรันซ้ำ
+`2-map.js` โหลดไฟล์นี้เองอัตโนมัติ · ถ้าไม่มีไฟล์จะเตือนแล้วใช้ค่าที่วัดได้ตามเดิม (ไม่พัง)
+
+สคริปต์พิมพ์**บัญชีของที่ไลบรารีมี** ให้ทุกครั้ง — เห็นเลยว่าตระกูล badge/pill มี 16 ชุด
+แต่ท่อ export ใช้อยู่ชุดเดียว (`Pill outline`) เพราะโค้ดเรามี `.badge` คลาสเดียว
+จะใช้ชุดอื่นต้องเพิ่มคลาสในโค้ดก่อน แล้วค่อยเพิ่มบรรทัดใน `FAMILY_MAP`
+
+### 3.1.2 หน้า Overhaul
+
+```bash
+python3 -m http.server 8123 --bind 127.0.0.1 &
+export NODE_PATH=~/pw/node_modules
+
+ONLY=overhaul node figma-export/1-extract.js   # เก็บ DOM เฉพาะหน้านี้
+node figma-export/0-icons.js
+node figma-export/build-library-geometry.js    # ข้ามได้ถ้า library-geometry.json มีอยู่แล้ว
+node figma-export/2-map.js --overhaul          # → out/spec-overhaul.json
+node figma-export/test-plugin.js
+node figma-export/serve.js
+```
+
+ในไฟล์ Figma design → แก้ช่อง URL เป็น `http://localhost:8124/spec-overhaul.json` → **"โหลด + สร้าง"**
 
 ### 3.2 แบบที่ 1 — ชุด yearly (4 หน้าจอ)
 
@@ -205,22 +248,81 @@ node figma-export/serve.js         # เสิร์ฟพอร์ต 8124
 → **แก้ช่อง URL เป็น `http://localhost:8124/spec.json`** (ค่าเริ่มต้นชี้ `spec-report.json`)
 → กด **"โหลด + สร้าง"**
 
-### 3.3 แบบที่ 2 — โฟลว์แจ้งซ่อม ฝั่งผู้แจ้ง (8 state)
+### 3.3 แบบที่ 2 — โฟลว์แจ้งซ่อม ฝั่งผู้แจ้ง (6 state · web + mobile)
 
 `flow-report-extract.js` เป็นคู่แฝดของ `flow-report-capture.js` — ไล่กด wizard เส้นเดียวกันเป๊ะ
 แต่แทนที่จะถ่ายภาพ มันเก็บ DOM + computed style ทีละ state
 
+> ✏️ **ซ่อม 16 ก.ย. 2569** — ของเดิมยังกด `#vlist .radcard` · `#symcats .chip` · `#i-costtypes .radcard`
+> ซึ่งถูกถอดไปตั้งแต่ 7 ก.ย. ⇒ เดินไม่จบมาตลอด (ได้แค่ `UNTIL=report-01`) และไม่มี `browser.close()`
+> ทำให้ node ไม่ยอมจบ · ตอนนี้จังหวะกดตรงกับ `mock/test/flow-regression.js` แล้ว
+> **วิซาร์ดเหลือ 3 ขั้น** ⇒ เก็บ 6 state (เดิมเขียนไว้ 8 ตามวิซาร์ดเก่า)
+
+| state | เนื้อหา |
+|---|---|
+| `report-01` | ขั้น 1 — ยังไม่เลือกรถ |
+| `report-02` | ขั้น 1 — เลือกรถแล้ว (สรุปรถ · จุดที่แจ้ง · งบ) |
+| `report-03` | ขั้น 2 — อาการเสียและรายละเอียดเหตุการณ์ |
+| **`report-04`** | **ขั้น 3 — อะไหล่ที่แนะนำ "แบบ ค" จัดกลุ่มตามอาการ (3 กลุ่ม)** |
+| `report-05` | เรื่องของฉัน — ใบใหม่รอหัวหน้าอนุมัติ |
+| `report-06` | หน้าอนุมัติของหัวหน้า — รายละเอียดใบ + อะไหล่ที่เลือกไว้ |
+
 ```bash
 export NODE_PATH=~/pw/node_modules
-node figma-export/flow-report-extract.js    # ต้องมี :8123 รันอยู่ → out/dom-report-01..08.json
-node figma-export/0-icons.js                # ไอคอนของ mock เพิ่ม (58 ตัว)
-node figma-export/2-map.js --report         # → out/spec-report.json (ไม่แตะ spec.json)
-node figma-export/test-plugin.js --report   # เทสก่อนเปิด Figma
+python3 -m http.server 8123 --bind 127.0.0.1 &
+
+# --- web 1440 (ค่าเริ่มต้น ไม่ต้องใส่อะไร) ---
+node figma-export/flow-report-extract.js          # → out/dom-report-01..06.json
+node figma-export/0-icons.js                      # ไอคอนของ mock เพิ่ม (58 ตัว)
+node figma-export/2-map.js --report               # → out/spec-report.json
+
+# --- mobile 390 (เพิ่ม 16 ก.ย. 2569) ---
+WIDTH=390 VARIANT=m390 node figma-export/flow-report-extract.js   # → out/dom-report-m390-01..06.json
+VARIANT=m390 node figma-export/2-map.js --report                  # → out/spec-report-m390.json
+
 node figma-export/serve.js
 ```
 
-ในไฟล์ Figma design → กด **"โหลด + สร้าง"** ได้เลย (ค่าเริ่มต้นชี้ `spec-report.json` อยู่แล้ว)
-ได้หน้าชื่อ `Screens — แจ้งซ่อม (ฝั่งผู้แจ้ง)` · node รวม 1,729 (หนักสุด 342/state)
+**เทสก่อนเปิด Figma** — `test-plugin.js` ก็รับ `VARIANT` แล้ว (เดิม hardcode `spec-report.json`
+⇒ สั่งเทส mobile ไปอ่านไฟล์ web แล้วขึ้นผ่านทั้งที่ไม่ได้เทสจริง · แก้ 16 ก.ย. 2569)
+
+```bash
+node figma-export/test-plugin.js --report                 # web
+VARIANT=m390 node figma-export/test-plugin.js --report    # mobile
+```
+
+**`WIDTH` กับ `VARIANT` แยกกัน** — `WIDTH` คือความกว้าง viewport ตอน extract ·
+`VARIANT` คือคำต่อท้ายชื่อไฟล์/ชื่อ page ใน Figma (ไม่ใส่ = ชุด web เดิมทุกอย่าง ไม่ทับกัน)
+`2-map.js --report` ไม่ fix จำนวน state แล้ว — มันไล่อ่าน `dom-report<variant>-NN.json` ที่มีจริงในโฟลเดอร์
+
+ในไฟล์ Figma design → กด **"โหลด + สร้าง"**
+ช่อง URL: `http://localhost:8124/spec-report.json` (web) · `…/spec-report-m390.json` (mobile)
+ได้ page ชื่อ `Screens — แจ้งซ่อม (ฝั่งผู้แจ้ง)` และ `Screens — แจ้งซ่อม (ฝั่งผู้แจ้ง) · m390`
+
+> ⚠️ **แพลนฟรีจำกัด 3 page/ไฟล์** — web + mobile = 2 page แล้ว ถ้าในไฟล์มี page ชุดอื่นค้างอยู่ต้องลบก่อน
+> ไม่งั้นสร้าง page ที่สองไม่ได้
+
+> 🐞 **บั๊กที่เจอตอน export mobile ครั้งแรก (16 ก.ย. 2569) — แก้แล้ว**
+> `counterAxisAlignItems = BASELINE can only be set when layoutMode === HORIZONTAL`
+> แถวที่ CSS เป็น `align-items:baseline` + `flex-wrap:wrap` (เช่น `.pf-row` บล็อกอะไหล่หน้าอนุมัติ)
+> พอจอแคบมันตัดบรรทัดจนถูกจัดเป็น VERTICAL ⇒ ปลั๊กอิน throw ทั้งไฟล์ (ชุด web 1440 ไม่เจอ)
+> แก้ 3 ชั้น: `2-map.js` มี `crossFor()` ลดเป็น MIN ตั้งแต่ตอนทำสเปก · `plugin/code.js` กันซ้ำตอนสร้าง ·
+> `test-plugin.js` ทำ `counterAxisAlignItems` เป็น setter ที่บังคับกฎเดียวกับ Figma จริง จะได้ดักได้ก่อนเปิดไฟล์
+
+> 🐞 **ไอคอนโผล่บนปุ่มที่ไม่ควรมี (16 ก.ย. 2569) — แก้แล้ว**
+> ปุ่ม "ย้อนกลับ"/"ส่งอนุมัติ" ท้าย modal ขึ้นไอคอน `filter_list` / ไอคอนเอกสาร แล้วข้อความ
+> ถูกบีบจนตัดบรรทัดและไม่ตรงกลาง · สาเหตุคือ `components-map.js` ตั้ง `btn` เป็น `def: 'rich'`
+> ซึ่งเอา occurrence ที่ node เยอะสุดของ**ทั้งชุดหน้าจอ**เป็นตัวนิยาม ⇒ `btn/secondary/md`
+> ได้ตัวนิยามเป็นปุ่ม "ตัวกรอง" จากหน้าลิสต์ แล้วปุ่มที่ไม่มีไอคอนต้องพึ่ง `overrides.hidden`
+> ซ่อนเอา — กลไกนั้น**ผ่านบน mock แต่ไม่ทำงานในไฟล์จริง**
+> ⇒ ย้าย `btn` เป็น `def: 'common'` (จับกลุ่มด้วย skeleton ก่อน) ปุ่มที่ไม่มีไอคอนได้ตัวนิยามของตัวเอง
+> **ไม่พึ่งการซ่อนเลย** · วัดแล้ว btn ที่พึ่ง `hidden` **9 → 0** แลก instance รวม 91 → 90
+> · `test-plugin.js` มี assertion `ไม่มีปุ่มที่พึ่ง overrides.hidden ซ่อนไอคอน` กันถอยกลับ
+
+> ℹ️ **ความกว้าง mobile 390 มาจากต้นแบบ** (ชุดเทส `มือถือ (390px)` ใน `mock/test/flow-regression.js`)
+> ส่วน**ไลบรารี Figma ใช้ 360** — `Section header/label` มี variant `Breakpoint=Mobile` และ
+> เฟรม `Mirror` ในหน้า *Section headers* เป็น **360×800** (content 328 = 360 − gutter 16×2)
+> ⇒ ถ้าจะให้ตรงไลบรารีเป๊ะ รันเป็น `WIDTH=360 VARIANT=m360` แทน (ท่อรองรับทั้งคู่)
 
 ### 3.4 ไม่อยากรัน server
 

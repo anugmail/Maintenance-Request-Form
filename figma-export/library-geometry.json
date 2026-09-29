@@ -1,0 +1,364 @@
+{
+  "generatedAt": "2026-09-14T14:06:53.030Z",
+  "source": "design-system/.figma-extract/component (ตัวนิยาม COMPONENT_SET)",
+  "families": {
+    "badge": {
+      "libraryComponent": "Pill outline",
+      "h": 24,
+      "padding": [
+        4,
+        8,
+        4,
+        8
+      ],
+      "mode": "VERTICAL",
+      "cross": "CENTER",
+      "gap": 0,
+      "radius": 9999,
+      "wMode": "HUG",
+      "variants": {
+        "Color=Brand": {
+          "h": 24,
+          "padding": [
+            4,
+            8,
+            4,
+            8
+          ],
+          "mode": "VERTICAL",
+          "cross": "CENTER",
+          "gap": 0,
+          "radius": 9999,
+          "wMode": "HUG",
+          "fill": "#FFF5FD",
+          "stroke": "#FED8F6",
+          "strokeWeight": 1,
+          "text": {
+            "color": "#A80689",
+            "size": 12,
+            "family": "IBM Plex Sans Thai",
+            "style": "SemiBold"
+          }
+        },
+        "Color=Gray": {
+          "h": 24,
+          "padding": [
+            4,
+            8,
+            4,
+            8
+          ],
+          "mode": "VERTICAL",
+          "cross": "CENTER",
+          "gap": 0,
+          "radius": 9999,
+          "wMode": "HUG",
+          "fill": "#F9FAFB",
+          "stroke": "#EAECF0",
+          "strokeWeight": 1,
+          "text": {
+            "color": "#344054",
+            "size": 12,
+            "family": "IBM Plex Sans Thai",
+            "style": "SemiBold"
+          }
+        },
+        "Color=Info": {
+          "h": 24,
+          "padding": [
+            4,
+            8,
+            4,
+            8
+          ],
+          "mode": "VERTICAL",
+          "cross": "CENTER",
+          "gap": 0,
+          "radius": 9999,
+          "wMode": "HUG",
+          "fill": "#EEF4FF",
+          "stroke": "#C7D7FE",
+          "strokeWeight": 1,
+          "text": {
+            "color": "#3538CD",
+            "size": 12,
+            "family": "IBM Plex Sans Thai",
+            "style": "SemiBold"
+          }
+        },
+        "Color=Success": {
+          "h": 24,
+          "padding": [
+            4,
+            8,
+            4,
+            8
+          ],
+          "mode": "VERTICAL",
+          "cross": "CENTER",
+          "gap": 0,
+          "radius": 9999,
+          "wMode": "HUG",
+          "fill": "#ECFDF3",
+          "stroke": "#ABEFC6",
+          "strokeWeight": 1,
+          "text": {
+            "color": "#067647",
+            "size": 12,
+            "family": "IBM Plex Sans Thai",
+            "style": "SemiBold"
+          }
+        },
+        "Color=Warning": {
+          "h": 24,
+          "padding": [
+            4,
+            8,
+            4,
+            8
+          ],
+          "mode": "VERTICAL",
+          "cross": "CENTER",
+          "gap": 0,
+          "radius": 9999,
+          "wMode": "HUG",
+          "fill": "#FFFAEB",
+          "stroke": "#FEDF89",
+          "strokeWeight": 1,
+          "text": {
+            "color": "#B54708",
+            "size": 12,
+            "family": "IBM Plex Sans Thai",
+            "style": "SemiBold"
+          }
+        },
+        "Color=Error": {
+          "h": 24,
+          "padding": [
+            4,
+            8,
+            4,
+            8
+          ],
+          "mode": "VERTICAL",
+          "cross": "CENTER",
+          "gap": 0,
+          "radius": 9999,
+          "wMode": "HUG",
+          "fill": "#FEF3F2",
+          "stroke": "#FECDCA",
+          "strokeWeight": 1,
+          "text": {
+            "color": "#B42318",
+            "size": 12,
+            "family": "IBM Plex Sans Thai",
+            "style": "SemiBold"
+          }
+        },
+        "Color=Disabled": {
+          "h": 24,
+          "padding": [
+            4,
+            8,
+            4,
+            8
+          ],
+          "mode": "VERTICAL",
+          "cross": "CENTER",
+          "gap": 0,
+          "radius": 9999,
+          "wMode": "HUG",
+          "fill": "#F2F4F7",
+          "stroke": "#D0D5DD",
+          "strokeWeight": 1,
+          "text": {
+            "color": "#98A2B3",
+            "size": 12,
+            "family": "IBM Plex Sans Thai",
+            "style": "SemiBold"
+          }
+        },
+        "Color=Purple": {
+          "h": 24,
+          "padding": [
+            4,
+            8,
+            4,
+            8
+          ],
+          "mode": "VERTICAL",
+          "cross": "CENTER",
+          "gap": 0,
+          "radius": 9999,
+          "wMode": "HUG",
+          "fill": "#F5F3FF",
+          "stroke": "#DDD6FE",
+          "strokeWeight": 1,
+          "text": {
+            "color": "#6927DA",
+            "size": 12,
+            "family": "IBM Plex Sans Thai",
+            "style": "SemiBold"
+          }
+        }
+      }
+    }
+  },
+  "catalog": {
+    "Pill color": {
+      "type": "COMPONENT_SET",
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Info",
+        "Color=Success",
+        "Color=Warning",
+        "Color=Error",
+        "Color=Disabled"
+      ]
+    },
+    "Pill color with icon only": {
+      "type": "COMPONENT_SET",
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Info",
+        "Color=Success",
+        "Color=Warning",
+        "Color=Error",
+        "Color=Disabled"
+      ]
+    },
+    "Pill color with leading icon": {
+      "type": "COMPONENT_SET",
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Info",
+        "Color=Success",
+        "Color=Warning",
+        "Color=Error",
+        "Color=Disabled"
+      ]
+    },
+    "Pill outline": {
+      "type": "COMPONENT_SET",
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Info",
+        "Color=Success",
+        "Color=Warning",
+        "Color=Error",
+        "Color=Disabled",
+        "Color=Purple"
+      ]
+    },
+    "Pill outline with icon only": {
+      "type": "COMPONENT_SET",
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Info",
+        "Color=Success",
+        "Color=Warning",
+        "Color=Error",
+        "Color=Disabled"
+      ]
+    },
+    "Badge color": {
+      "type": "COMPONENT",
+      "variants": []
+    },
+    "Indicator": {
+      "type": "COMPONENT_SET",
+      "variants": [
+        "Size=sm",
+        "Size=md",
+        "Size=lg"
+      ]
+    },
+    "Badge outline with indicator": {
+      "type": "COMPONENT_SET",
+      "variants": [
+        "Color=Gray",
+        "Color=Brand",
+        "Color=Info",
+        "Color=Success",
+        "Color=Warning",
+        "Color=Error"
+      ]
+    },
+    "Badge outline with remove icon": {
+      "type": "COMPONENT_SET",
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Disabled"
+      ]
+    },
+    "Badge outline with leading instant and remove icon": {
+      "type": "COMPONENT_SET",
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Disabled"
+      ]
+    },
+    "Badge outline with leading icon": {
+      "type": "COMPONENT_SET",
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Disabled",
+        "Color=Success",
+        "Color=Error"
+      ]
+    },
+    "Badge color with remove icon": {
+      "type": "COMPONENT_SET",
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Disabled"
+      ]
+    },
+    "Badge outline": {
+      "type": "COMPONENT_SET",
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Disabled",
+        "Color=Success",
+        "Color=Error"
+      ]
+    },
+    "Pill outline with leading icon": {
+      "type": "COMPONENT_SET",
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Info",
+        "Color=Success",
+        "Color=Warning",
+        "Color=Error",
+        "Color=Disabled"
+      ]
+    },
+    "Pill outline md": {
+      "type": "COMPONENT_SET",
+      "variants": [
+        "Color=Brand",
+        "Color=Gray",
+        "Color=Info",
+        "Color=Success",
+        "Color=Warning",
+        "Color=Error"
+      ]
+    },
+    "Indicator pagination": {
+      "type": "COMPONENT",
+      "variants": []
+    }
+  }
+}

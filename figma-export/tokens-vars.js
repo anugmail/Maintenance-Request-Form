@@ -8,7 +8,7 @@
    ไม่เดาจากชื่อตัวแปร เพราะไฟล์คือเจ้าของความจริงเรื่องชั้นอยู่แล้ว
 
    ชื่อ variable = ชื่อ CSS var ตรงๆ เปลี่ยน '-' เป็น '/' (กลุ่มใน Figma)
-     --brand-600            → brand/600
+     --brand-900            → brand/900
      --color-text-secondary → color/text/secondary
    กติกาเดียวกับชื่อ layer: ต้อง map กลับไปหาโค้ดได้เสมอ
 

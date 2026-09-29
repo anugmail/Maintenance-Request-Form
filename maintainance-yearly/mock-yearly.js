@@ -7,13 +7,14 @@
 // โครงข้อมูล (plain objects):
 // vehicle: { id, plate, plateProvince, vehicleType, rigBrand, rigModel, truckBrand, truckModel,
 //            assetCode, serialNo, hcNo, brand(derived), chassis(derived), ownerDept, ownerLevel,
-//            province, criteria, region(1-12), status, mileage, engineHours }
+//            province, criteria, region(1-12), status, mileage, engineHours, firstUseYear }
 //   ฟิลด์ระบุตัวรถยกตาม "แบบฟอร์มตรวจสภาพบำรุงรักษารถกระเช้า" ที่เจ้าของงานส่งมา 17 ส.ค. 2569
 // item:    { id, name, category, oilKind?, unit, appliesToTypes:[], qtyPerVehicle }
 // plan:    { id, createdAt, phase, planName, byQuarter:{Q1..Q4,none}, selectedVehicleIds:[],
-//            itemAdj:{}, year, workNumbers:{Q1..Q4}, workNumber, approvalStatus:'draft'|'issued',
+//            itemAdj:{}, year, workNumber, approvalStatus:'draft'|'issued',
 //            suppliesAckAt:null|string, partsRequisitioned,
-//            confirm:{...}|null, trips:[trip], travelConfirmed, statusHistory:[] }
+//            confirm:{sent:{[q]:{requestedAt,dueAt,remindedAt}}, byVehicle:{}}|null,
+//            trips:[trip], travelConfirmed, statusHistory:[] }
 // trip:    { id, name, location, windowFrom, windowTo, perDiem, lodging, travel,
 //            vehicleIds:[], dates:{[vehicleId]:'YYYY-MM-DD'}, sentAt,
 //            replies:{[ownerDept]:{status,reason,by,at,history:[]}} }
@@ -35,11 +36,27 @@ const SETTINGS_KEY = 'maintaind.yearly.settings.v1';
 const REPAIR_TRIPS_KEY = 'maintaind.yearly.repairtrips.v1';
 const DEFAULT_SETTINGS = { confirmDueDays: 7 };   // ยังไม่ได้ค่าจริงจากเจ้าของงาน — แก้ได้จาก Admin
 
+// ================= เกณฑ์เข้าข่าย Overhaul (8 ก.ย. 2569) =================
+// ⚠️ ตัวเลขทั้งหมดเป็น "ค่าตั้งต้นที่เสนอ" ยังไม่ใช่เกณฑ์จริงของ กฟภ. — เจ้าของงานยกตัวอย่าง
+// ไว้ข้อเดียวคือ "อายุเกิน 15 ปี" ที่เหลือประมาณจากช่วงข้อมูลรถในต้นแบบ · แก้ได้จากหน้า Admin
+// ขอบเขต: เฉพาะรถขนาดใหญ่ที่อยู่ในโฟลว์นี้ (กระเช้า/เครน/รถขุด) ยังไม่รวมรถเล็ก
+//
+// อายุใช้งานใช้เกณฑ์เดียวทุกชนิดรถ · ไมล์/ชั่วโมง/ต้นทุนสะสม แยกตามชนิดเพราะสึกหรอคนละแบบ
+const OVERHAUL_DEFAULTS = {
+  ageYears: 15,
+  byType: {
+    'รถกระเช้า': { mileage: 150000, engineHours: 6000, maintCost: 200000 },
+    'รถเครน':    { mileage: 160000, engineHours: 7000, maintCost: 250000 },
+    'รถขุด':     { mileage: 120000, engineHours: 8000, maintCost: 220000 },
+  },
+  nearRatio: 0.8,   // ถึงกี่ส่วนของเกณฑ์ถือว่า "ใกล้เกณฑ์"
+};
+
 // schema version ของโครงข้อมูลใน localStorage — เพิ่มเลขนี้เมื่อโครงข้อมูล
 // เปลี่ยนแบบ breaking (เช่น vehicle id เปลี่ยนจาก v1..v8 เป็น v-{region}-{i}
 // ตอนเปลี่ยนเป็น 12 เขต) เพื่อให้ storage เก่า (ไม่มี _v หรือ _v ไม่ตรง) ถูก
 // auto-reset กลับไปใช้ seed/ค่าเริ่มต้นแทนที่จะแสดงข้อมูลผิดพลาด (เช่น "0 คัน")
-const SCHEMA_VERSION = 13;  // 13 = แผนเดินทางเลือกจ้างผู้รับจ้างได้รายใบ (mode/vendorId/hireCost)
+const SCHEMA_VERSION = 16;  // 16 = รถมี firstUseYear (ปีที่เริ่มใช้งาน) — ฐานเกณฑ์อายุของ Overhaul
 
 // ----- กรย. 12 เขต จัดกลุ่มเป็น 4 ภาค (mockup mapping) -----
 // เขต 1-3 เหนือ, 4-6 ตะวันออก, 7-9 ใต้, 10-12 ตะวันตก
@@ -170,6 +187,10 @@ function genSeedVehicles() {
         status: VEHICLE_STATUS_CYCLE[(r * 5 + i * 3) % VEHICLE_STATUS_CYCLE.length],
         mileage: 40000 + ((r * 1000 + i * 137) % 120000),
         engineHours: 1500 + ((r * 97 + i * 53) % 5000),
+        // ปีที่เริ่มใช้งาน (พ.ศ.) — ฐานของเกณฑ์อายุใน Overhaul (8 ก.ย. 2569)
+        // กระจาย 2552–2569 แบบคงที่ ให้มีทั้งคันที่เกิน 15 ปีและยังไม่เกิน แต่ไม่ให้คันเก่า
+        // เยอะเกินจริง (ถ้ากระจายกว้างกว่านี้ รถเกือบครึ่งกองจะเข้าข่ายพร้อมกัน ซึ่งไม่สมจริง)
+        firstUseYear: 2552 + ((r * 3 + i * 7) % 18),
       });
     }
   }
@@ -260,13 +281,12 @@ const INITIAL_PLAN = {
   createdFY: 2569,        // ปีงบที่ทำแผน — ใช้คำนวณว่ามีรอบทบทวนกี่รอบ
   revisions: [],          // [{no, fy, at, added, removed, moved, byQuarter}] — รอบทบทวนที่ปิดแล้ว
   itemAdj: {},            // การแก้มือรายการอะไหล่ { [itemId]: {qty, off, added} }
-  workNumbers: {},        // { Q1:'MT-2569-Q1-001', … } ออกครบ 4 ใบพร้อมกันตอนกดออกเลขงาน
   workNumber: null,       // = เลขของไตรมาสแรกที่มีรถ — ใช้เป็นหัวข้อแผนในลิสต์/ไทม์ไลน์
   approvalStatus: 'draft',// draft -> issued
   suppliesAckAt: null,    // ฝ่ายพัสดุกดรับทราบเมื่อไหร่
   statusHistory: [],
   partsRequisitioned: false,
-  confirm: null,          // ตั้งค่าเมื่อ กบค. กด "ส่งคำขอยืนยัน" (ห้ามสร้างตั้งแต่เปิดหน้า)
+  confirm: null,          // ตั้งค่าเมื่อ กบค. กด "ส่งคำขอยืนยัน" ของไตรมาสใดไตรมาสหนึ่ง (ห้ามสร้างตั้งแต่เปิดหน้า)
   trips: [],              // แผนเดินทางหลายใบ — กบค. สร้างเองอิสระ เลือกรถเข้าแต่ละใบ
   travelConfirmed: false,
 };
@@ -302,21 +322,22 @@ const SEED_PLAN = {
   year: 2569,
   createdFY: 2567,
   revisions: [],
-  workNumbers: {
-    Q1: 'MT-2569-Q1-001', Q2: 'MT-2569-Q2-001',
-    Q3: 'MT-2569-Q3-001', Q4: 'MT-2569-Q4-001',
-  },
-  workNumber: 'MT-2569-Q1-001',
+  workNumber: 'MT-2569-001',
   approvalStatus: 'issued',
   suppliesAckAt: '3 ต.ค. 2568 14:20',
   statusHistory: [
-    { status: 'issued',       at: '1 ต.ค. 2568 10:05', note: 'กบค. ออกเลขงาน MT-2569-Q1-001' },
+    { status: 'issued',       at: '1 ต.ค. 2568 10:05', note: 'กบค. ออกเลขงาน MT-2569-001' },
     { status: 'notified',     at: '1 ต.ค. 2568 10:05', note: 'ส่งเอกสารแจ้งฝ่ายพัสดุ — แจ้งรายการอะไหล่ที่ต้องเตรียม/สั่ง' },
     { status: 'acknowledged', at: '3 ต.ค. 2568 14:20', note: 'ฝ่ายพัสดุรับทราบ — เตรียม/สั่งอะไหล่ตามรายการ' },
   ],
   partsRequisitioned: true,
   confirm: {
-    requestedAt: '2568-10-06', dueAt: '2568-10-13', remindedAt: null,
+    sent: {
+      Q1: { requestedAt: '2568-10-06', dueAt: '2568-10-13', remindedAt: null },
+      Q2: { requestedAt: '2568-10-06', dueAt: '2568-10-13', remindedAt: null },
+      Q3: { requestedAt: '2568-10-06', dueAt: '2568-10-13', remindedAt: null },
+      Q4: { requestedAt: '2568-10-06', dueAt: '2568-10-13', remindedAt: null },
+    },
     byVehicle: [3, 4].reduce((acc, r) => {
       [1, 2, 3, 4, 5, 6].forEach(i => {
         acc[`v-${r}-${i}`] = { answer: 'ready', reason: '', meetPoint: 'จุดรวมงาน กฟฉ. เขต 3',
@@ -389,21 +410,22 @@ const SEED_PLAN_CF = {
   year: 2569,
   createdFY: 2567,
   revisions: [],
-  workNumbers: {
-    Q1: 'MT-2569-Q1-002', Q2: 'MT-2569-Q2-002',
-    Q3: 'MT-2569-Q3-002', Q4: 'MT-2569-Q4-002',
-  },
-  workNumber: 'MT-2569-Q1-002',
+  workNumber: 'MT-2569-002',
   approvalStatus: 'issued',
   suppliesAckAt: '4 ต.ค. 2568 11:10',
   statusHistory: [
-    { status: 'issued',       at: '2 ต.ค. 2568 10:15', note: 'กบค. ออกเลขงาน MT-2569-Q1-002' },
+    { status: 'issued',       at: '2 ต.ค. 2568 10:15', note: 'กบค. ออกเลขงาน MT-2569-002' },
     { status: 'notified',     at: '2 ต.ค. 2568 10:15', note: 'ส่งเอกสารแจ้งฝ่ายพัสดุ' },
     { status: 'acknowledged', at: '4 ต.ค. 2568 11:10', note: 'ฝ่ายพัสดุรับทราบ' },
   ],
   partsRequisitioned: true,
   confirm: {
-    requestedAt: '2568-10-05', dueAt: '2568-10-12', remindedAt: null,
+    sent: {
+      Q1: { requestedAt: '2568-10-05', dueAt: '2568-10-12', remindedAt: null },
+      Q2: { requestedAt: '2568-10-05', dueAt: '2568-10-12', remindedAt: null },
+      Q3: { requestedAt: '2568-10-05', dueAt: '2568-10-12', remindedAt: null },
+      Q4: { requestedAt: '2568-10-05', dueAt: '2568-10-12', remindedAt: null },
+    },
     byVehicle: CF_VEHICLE_IDS.reduce((acc, id, idx) => {
       const base = { reason: '', meetPoint: '', by: '', at: '',
                      history: [], verdict: null, verdictWhy: '', verdictAt: '' };
@@ -505,6 +527,9 @@ const MYD = {
              staff: [''], staffPerDiem: [0],
              perDiem: 0, lodging: 0, travel: 0,
              jobNos: [],             // ใบแจ้งซ่อมที่อยู่ในใบเดินทางนี้ (รวมได้หลายใบ)
+             // นัดรายคัน (7 ก.ย. 2569 — เจ้าของงานสั่ง "อยากให้นัดแบบรายคันได้"):
+             // { [เลขที่ใบ]: { date, time, receiver, tel } } · เว้นว่าง = ใช้ช่วงของแผนตามเดิม
+             appt: {},
              sentAt: null };
   },
 
@@ -532,6 +557,18 @@ const MYD = {
     return n > 0 ? n : 0;
   },
 
+  // นัดรายคันของใบแจ้งซ่อมหนึ่งใบในแผนเดินทางนี้
+  repairJobAppt(trip, no) { return ((trip.appt || {})[no]) || { date: '', time: '', receiver: '', tel: '' } },
+  // วันนัดต้องอยู่ในช่วงที่เสนอ — ใช้ทั้งตอนแสดงเตือนและตอนตรวจก่อนส่ง
+  repairApptOutOfWindow(trip, no) {
+    const a = this.repairJobAppt(trip, no);
+    if (!a.date || !trip.windowFrom || !trip.windowTo) return false;
+    return a.date < trip.windowFrom || a.date > trip.windowTo;
+  },
+  repairApptCount(trip) {
+    return (trip.jobNos || []).filter(no => this.repairJobAppt(trip, no).date).length;
+  },
+
   repairTripDepts(trip) {
     return [...new Set((trip.jobNos || []).map(no => (this.repairJobByNo(no) || {}).ownerDept).filter(Boolean))];
   },
@@ -547,6 +584,9 @@ const MYD = {
     if (!(trip.staff || []).some(x => String(x || '').trim())) out.push('ยังไม่ระบุช่างผู้รับผิดชอบอย่างน้อย 1 คน');
     if (!String(trip.crewVehicle || '').trim()) out.push('ยังไม่ระบุรถที่ใช้เดินทาง');
     if (!String(trip.pickupPoint || '').trim()) out.push('ยังไม่ระบุจุดนัดรับรถ');
+    // นัดรายคันไม่บังคับ (เว้นว่าง = ใช้ช่วงของแผน) แต่ถ้าระบุแล้วต้องอยู่ในช่วงที่เสนอ
+    const bad = (trip.jobNos || []).filter(no => this.repairApptOutOfWindow(trip, no));
+    if (bad.length) out.push(`วันนัดรายคันอยู่นอกช่วงที่เสนอ ${bad.length} ใบ`);
     return out;
   },
 
@@ -774,12 +814,33 @@ const MYD = {
   },
 
   // สร้างโครงในหน่วยความจำเฉยๆ — ไม่เขียน storage (เขียนตอนกดส่งคำขอเท่านั้น)
+  // 8 ก.ย. 2569: ส่งคำขอแยกรายไตรมาส (ระดับ master plan ไม่ส่งอะไรหาหน่วยงานแล้ว)
+  //   confirm.sent[q] = { requestedAt, dueAt, remindedAt }  — วันที่ส่ง/ครบกำหนดของไตรมาสนั้น
+  //   confirm.byVehicle[รถ]                                  — คำตอบรายคัน (คงเดิม รถ 1 คันอยู่ไตรมาสเดียว)
   ensureConfirm(plan) {
-    if (!plan.confirm) {
-      plan.confirm = { requestedAt: null, dueAt: null, remindedAt: null, byVehicle: {} };
-    }
+    if (!plan.confirm) plan.confirm = { sent: {}, byVehicle: {} };
     if (!plan.confirm.byVehicle) plan.confirm.byVehicle = {};
+    if (!plan.confirm.sent) plan.confirm.sent = {};
     return plan.confirm;
+  },
+
+  confirmSentOf(plan, q) {
+    return (((plan.confirm || {}).sent) || {})[q] || null;
+  },
+
+  confirmRequested(plan, q) {
+    const s = this.confirmSentOf(plan, q);
+    return !!(s && s.requestedAt);
+  },
+
+  // กด "ส่งคำขอยืนยัน" ของไตรมาสหนึ่ง — เปิดช่องคำตอบให้รถของไตรมาสนั้น
+  requestConfirmQuarter(plan, q, requestedAtIso, dueAtIso) {
+    const c = this.ensureConfirm(plan);
+    c.sent[q] = { requestedAt: requestedAtIso, dueAt: dueAtIso, remindedAt: null };
+    this.planVehicleIds(plan, q).forEach(id => {
+      if (!c.byVehicle[id]) c.byVehicle[id] = this.emptyConfirmEntry();
+    });
+    return c.sent[q];
   },
 
   vehicleConfirm(plan, vehicleId) {
@@ -790,7 +851,9 @@ const MYD = {
   confirmStatus(plan, vehicleId, todayIso) {
     const e = this.vehicleConfirm(plan, vehicleId);
     if (e.answer === 'ready' || e.answer === 'notready') return e.answer;
-    const due = plan.confirm && plan.confirm.dueAt;
+    // กำหนดตอบมาจากไตรมาสของรถคันนั้น (ส่งคำขอแยกรายไตรมาส)
+    const sent = this.confirmSentOf(plan, this.bucketOf(plan, vehicleId));
+    const due = sent && sent.dueAt;
     // ยังไม่ส่งคำขอ (ไม่มี dueAt) → ยังไม่เริ่มนับ ไม่ใช่เลยกำหนด
     if (due && todayIso && todayIso > due) return 'overdue';
     return 'pending';
@@ -827,6 +890,11 @@ const MYD = {
   },
 
   // ยืนยันแผนเดินทางแล้ว = ล็อกการแก้คำตอบ (เคาะกับเจ้าของงาน 10 ส.ค. 2569)
+  // 8 ก.ย. 2569: ล็อกเป็นรายไตรมาส เพราะแผนเดินทางยืนยันทีละไตรมาส
+  confirmLockedQuarter(plan, q) {
+    return this.quarterTravelConfirmed(plan, q);
+  },
+
   confirmLocked(plan) {
     return plan.travelConfirmed === true;
   },
@@ -1288,7 +1356,7 @@ const MYD = {
   // plan.quarterPhase        = { [q]: phaseId }              — เฟสที่กำลังทำอยู่ของไตรมาสนั้น
   // plan.quarterPhaseDone    = { [q]: { [phaseId]: true } }  — เฟสไหนของไตรมาสนั้นทำเสร็จแล้ว
   quarterOpsPhase(plan, q) {
-    return (plan.quarterPhase || {})[q] || 'inspection';
+    return (plan.quarterPhase || {})[q] || 'confirm';
   },
 
   setQuarterOpsPhase(plan, q, phaseId) {
@@ -1300,6 +1368,11 @@ const MYD = {
   // ที่เหลือ (ตรวจสภาพก่อนซ่อม/ดำเนินการบำรุงรักษา/จัดทำรายงาน) อ่านจาก quarterPhaseDone ตรงๆ
   quarterPhaseDone(plan, q, phaseId) {
     if (phaseId === 'cost') return !!this.closeApprovalOf(plan, q);
+    // 2 เฟสหน้าที่ย้ายลงมาจากระดับแผน (8 ก.ย. 2569) มีเกณฑ์เสร็จของตัวเองอยู่แล้ว ไม่ต้องมีธงแยก
+    if (phaseId === 'confirm') {
+      return this.confirmRequested(plan, q) && this.confirmResolved(plan, this.planVehicleIds(plan, q));
+    }
+    if (phaseId === 'travel') return this.quarterTravelConfirmed(plan, q);
     return !!((plan.quarterPhaseDone || {})[q] || {})[phaseId];
   },
 
@@ -1430,7 +1503,7 @@ const MYD = {
   QUARTER_KEYS: ['Q1', 'Q2', 'Q3', 'Q4'],
 
   // ป้ายไตรมาสที่แสดงบนหน้าจอ — เจ้าของงานสั่ง 17 ส.ค. 2569 ให้ใช้ "ไตรมาส 1"
-  // ไม่ใช่ "Q1" · คีย์ในข้อมูลและ "เลขงาน" (MT-2569-Q1-001) ยังเป็น Q1 เหมือนเดิม
+  // ไม่ใช่ "Q1" · คีย์ในข้อมูลยังเป็น Q1 เหมือนเดิม
   // เพราะเป็นรหัส ไม่ใช่ข้อความให้คนอ่าน ⇒ แปลงที่จุดแสดงผลเท่านั้น
   quarterLabel(q) {
     if (q === 'none') return 'ยังไม่ระบุไตรมาส';
@@ -1588,29 +1661,80 @@ const MYD = {
     return 'Q4';
   },
 
-  workNumber(quarter, year, seq) {
-    return `MT-${year}-${quarter}-${String(seq).padStart(3, '0')}`;
+  // ⚠️ รูปแบบเลขชั่วคราว — เจ้าของงานแจ้งว่ามีเกณฑ์การออกเลขของจริงอยู่แล้ว รอส่งมา
+  // เปลี่ยนรูปแบบทีหลังแก้ที่ฟังก์ชันนี้ที่เดียว
+  workNumber(year, seq) {
+    return `MT-${year}-${String(seq).padStart(3, '0')}`;
   },
 
-  // ออกเลขงานครบ 4 ใบพร้อมกัน — 1 ใบต่อไตรมาส (เจ้าของงานเคาะ 17 ส.ค. 2569)
-  // ไตรมาสที่ไม่มีรถจะไม่ได้เลข แต่ตามกติกา "ต้องเลือกให้ครบ" จึงไม่ควรเกิด
-  // seq ต่อไตรมาส = นับจากแผนที่ออกเลขไปแล้วในปีเดียวกัน (mock: ไม่มี counter กลาง)
-  issueWorkNumbers(plan, seq) {
+  // 1 แผน = 1 เลขงาน (เจ้าของงานสั่ง 8 ก.ย. 2569 — เดิมออก 4 ใบ ไตรมาสละ 1 ใบ)
+  // แผนยังครอบทั้งปีงบและแจกแจงรายไตรมาสเหมือนเดิม แค่เลขงานเป็นของแผนทั้งใบ
+  // seq = นับจากแผนที่ออกเลขไปแล้วในปีเดียวกัน (mock: ไม่มี counter กลาง)
+  issueWorkNumber(plan, seq) {
     this.ensurePlanQuarters(plan);
-    const numbers = {};
-    this.QUARTER_KEYS.forEach(q => {
-      if (plan.byQuarter[q].length) numbers[q] = this.workNumber(q, plan.year, seq);
-    });
-    plan.workNumbers = numbers;
-    plan.workNumber = numbers[this.QUARTER_KEYS.find(q => numbers[q])] || null;
-    return numbers;
+    plan.workNumber = this.workNumber(plan.year, seq);
+    return plan.workNumber;
   },
 
-  // เลขงานทุกใบของแผน เรียงตามไตรมาส — ใช้แสดงในลิสต์/เอกสาร
-  workNumberList(plan) {
-    return this.QUARTER_KEYS
-      .filter(q => plan.workNumbers && plan.workNumbers[q])
-      .map(q => ({ q, no: plan.workNumbers[q] }));
+  // ================= Overhaul — คัดว่ารถคันไหนเข้าข่าย (8 ก.ย. 2569) =================
+  OVERHAUL_DEFAULTS,
+
+  overhaulConfig() {
+    const s = this.loadSettings();
+    const cfg = s.overhaul || {};
+    return {
+      ageYears: Number(cfg.ageYears) || OVERHAUL_DEFAULTS.ageYears,
+      nearRatio: Number(cfg.nearRatio) || OVERHAUL_DEFAULTS.nearRatio,
+      byType: { ...OVERHAUL_DEFAULTS.byType, ...(cfg.byType || {}) },
+    };
+  },
+
+  saveOverhaulConfig(cfg) {
+    const s = this.loadSettings();
+    this.saveSettings({ ...s, overhaul: cfg });
+    return cfg;
+  },
+
+  // ต้นทุนบำรุงรักษาสะสมของรถคันหนึ่ง — รวมทุกแผน/ทุกไตรมาสที่รถคันนั้นอยู่ในใบเดินทาง
+  // (ต้นแบบยังไม่มีประวัติค่าซ่อมจริงรายคัน ใช้ยอดที่โฟลว์นี้บันทึกไว้เป็นตัวแทนไปก่อน)
+  vehicleMaintCostTotal(vehicleId, plans) {
+    return (plans || this.loadPlans()).reduce((sum, plan) => {
+      const c = this.vehicleCostOf(plan, vehicleId);
+      return sum + (c.perDiem || 0) + (c.lodging || 0) + (c.travel || 0);
+    }, 0);
+  },
+
+  vehicleAgeYears(vehicle, fiscalYearNow) {
+    if (!vehicle || !vehicle.firstUseYear) return null;
+    return Math.max(0, fiscalYearNow - vehicle.firstUseYear);
+  },
+
+  // ประเมินรถคันเดียว — pure: รับค่าที่คำนวณมาแล้วทั้งหมด ไม่แตะ storage เอง จึงเทสได้ตรงๆ
+  //   คืน { level:'due'|'near'|'ok', reasons:[…], metrics:[…], disposalFlag }
+  //   due  = มีอย่างน้อย 1 ข้อถึง/เกินเกณฑ์
+  //   near = ยังไม่ถึงสักข้อ แต่มีข้ออย่างน้อย 1 ที่ถึง nearRatio ของเกณฑ์
+  overhaulAssess(vehicle, cfg, ctx) {
+    ctx = ctx || {};
+    const c = cfg || this.overhaulConfig();
+    const t = c.byType[vehicle.vehicleType] || {};
+    const age = this.vehicleAgeYears(vehicle, ctx.fiscalYearNow);
+    const metrics = [
+      { key: 'age',    label: 'อายุใช้งาน',           unit: 'ปี',    value: age,                       limit: c.ageYears },
+      { key: 'mileage', label: 'เลขไมล์',             unit: 'กม.',   value: vehicle.mileage,           limit: t.mileage },
+      { key: 'hours',  label: 'ชั่วโมงเครื่องจักร',    unit: 'ชม.',   value: vehicle.engineHours,       limit: t.engineHours },
+      { key: 'cost',   label: 'ต้นทุนบำรุงรักษาสะสม', unit: 'บาท',   value: ctx.maintCost || 0,         limit: t.maintCost },
+    ].filter(m => m.value != null && m.limit)
+     .map(m => ({ ...m, ratio: m.value / m.limit, over: m.value >= m.limit }));
+
+    const reasons = metrics.filter(m => m.over);
+    const near = !reasons.length && metrics.some(m => m.ratio >= c.nearRatio);
+    return {
+      level: reasons.length ? 'due' : (near ? 'near' : 'ok'),
+      metrics,
+      reasons,
+      // รถที่หมดสภาพ/รอจำหน่ายอยู่แล้ว — overhaul อาจไม่คุ้ม ควรชี้ให้เห็นแยก ไม่ใช่กลบไปกับเกณฑ์
+      disposalFlag: vehicle.status === 'decommissioned' || vehicle.status === 'disposal',
+    };
   },
 
   // ----- เงื่อนไข trigger ของ item (display only — ไม่คำนวณ due) -----

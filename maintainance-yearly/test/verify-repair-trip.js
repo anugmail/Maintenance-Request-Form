@@ -39,7 +39,8 @@ const BASE = 'http://127.0.0.1:8123/maintainance-yearly';
   const head = (await page.locator('.sub').first().textContent()).replace(/\s+/g, ' ');
   ok(/มีรถที่ต้องออกไปซ่อม\s*6\s*คัน/.test(head), 'นับเฉพาะใบที่เลือกจัดซ่อมที่หน้างาน (6 จาก 8) — ' + head.trim());
   ok(/ยังไม่จัด\s*6/.test(head), 'ตอนเริ่มยังไม่จัดเข้าใบเลยทั้ง 6');
-  ok(await page.locator('.note-info', { hasText: 'จัดซ่อมที่หน้างาน' }).count() > 0,
+  // 7 ก.ย. 2569: เจ้าของงานสั่ง "คำเตือนต่างๆ เอาออกให้หมด" — กล่องอธิบายกติกาถูกถอดออกแล้ว
+  ok(await page.locator('.note-info', { hasText: 'จัดซ่อมที่หน้างาน' }).count() === 0,
     'บอกเงื่อนไขเข้าแผนไว้บนหน้า (นับเฉพาะใบที่เลือกจัดซ่อมที่หน้างาน)');
   // นับเฉพาะแถวที่ติดป้าย 'เข้าซ่อมที่ กบค.' — '.tbl tbody tr' เฉยๆ ชนกับตารางรายจังหวัดด้วย
   const offRows = await page.locator('.tbl tbody tr').filter({ has: page.locator('.badge', { hasText: 'เข้าซ่อมที่ กบค.' }) }).count();

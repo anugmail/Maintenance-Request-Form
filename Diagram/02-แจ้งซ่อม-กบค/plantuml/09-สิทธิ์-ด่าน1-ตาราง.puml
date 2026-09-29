@@ -1,0 +1,12 @@
+@startsalt
+scale 1.45
+{#
+.                                                            | <b><back:#DCFCE7>ในหน่วยงาน | <b><back:#DCFCE7>ในหน่วยงาน | <b><back:#DCFCE7>ในเขตเดียวกัน | <b><back:#DCFCE7>ในเขตเดียวกัน | <b><back:#DCFCE7>ทั้งประเทศ | <b><back:#DCFCE7>ทั้งประเทศ
+<b><back:#DBEAFE>บทบาท                                       | <b><back:#EEF4FF>แจ้งซ่อม | <b><back:#EEF4FF>เห็นรถ | <b><back:#EEF4FF>แจ้งซ่อม | <b><back:#EEF4FF>เห็นรถ | <b><back:#EEF4FF>แจ้งซ่อม | <b><back:#EEF4FF>เห็นรถ
+<back:#F8FAFC>กจย · ผยค.กกฟ.1 · ผยค.กกฟ.2 · กบค. · กฝซ.      | <back:#ECFDF3>   ✔   | <back:#ECFDF3>   ✔   | <back:#ECFDF3>   ✔   | <back:#ECFDF3>   ✔   | <back:#ECFDF3>   ✔   | <back:#ECFDF3>   ✔
+<back:#F8FAFC>กรย เขต (เฉพาะ ผยค. เท่านั้น)                   | <back:#ECFDF3>   ✔   | <back:#ECFDF3>   ✔   | <back:#ECFDF3>   ✔   | <back:#ECFDF3>   ✔   | <back:#FEF3F2>   ✘   | <back:#FEF3F2>   ✘
+<back:#FEE2E2>อำนวยการ เขต                                    | <back:#ECFDF3>   ✔   | <back:#ECFDF3>   ✔   | <back:#ECFDF3>   ✔   | <back:#ECFDF3>   ✔   | <back:#FEF3F2>   ✘   | <back:#FEF3F2>   ✘
+<back:#F8FAFC>หน่วยงานที่มีรถเป็นของตัวเอง (ทั้ง สนญ. และ เขต) | <back:#ECFDF3>   ✔   | <back:#ECFDF3>   ✔   | <back:#FEF3F2>   ✘   | <back:#FEF3F2>   ✘   | <back:#FEF3F2>   ✘   | <back:#FEF3F2>   ✘
+<back:#F8FAFC>พขร.(บ) — พนักงาน Outsource                     | <back:#FEF3F2>   ✘   | <back:#FEF3F2>   ✘   | <back:#FEF3F2>   ✘   | <back:#FEF3F2>   ✘   | <back:#FEF3F2>   ✘   | <back:#FEF3F2>   ✘
+}
+@endsalt

@@ -1,21 +1,26 @@
 // confirm.js — หน้าหน่วยงานเจ้าของรถ: ตอบคำขอยืนยันรถเข้าร่วมแผน
 //
-// routing: confirm.html                     -> รายการคำขอ (ทุกหน่วยงาน × ทุกแผนที่ส่งคำขอแล้ว)
-//          confirm.html#<planId>/<deptIdx>  -> เปิดคำขอของหน่วยงานนั้น
+// routing: confirm.html                        -> รายการคำขอ (ทุกหน่วยงาน × ทุกไตรมาสที่ส่งคำขอแล้ว)
+//          confirm.html#<planId>/<q>/<deptIdx> -> เปิดคำขอของหน่วยงานนั้นในไตรมาสนั้น
+// 8 ก.ย. 2569: คำขอผูกกับ "ไตรมาส" ไม่ใช่ทั้งแผน — กบค. ส่งคำขอตอนเปิดดำเนินการไตรมาสนั้น
 // ต้นแบบไม่มี login — ของจริงจะกรองด้วยหน่วยงานของผู้ใช้
 // ต้องโหลด common.js + mock-yearly.js ก่อนไฟล์นี้
 
-// คำขอ = คู่ (แผน, หน่วยงาน) — 1 หน่วยงานอาจมีรถหลายคันในแผนเดียว
+// คำขอ = ชุด (แผน, ไตรมาส, หน่วยงาน) — 1 หน่วยงานอาจมีรถหลายคันในไตรมาสเดียว
 function buildRequests() {
   const master = MYD.loadMaster();
   const out = [];
   MYD.loadPlans().forEach(plan => {
-    if (!plan.confirm || !plan.confirm.requestedAt) return;
-    const vehicles = master.vehicles.filter(v => (plan.selectedVehicleIds || []).includes(v.id));
-    const byDept = {};
-    vehicles.forEach(v => { (byDept[v.ownerDept] = byDept[v.ownerDept] || []).push(v); });
-    Object.keys(byDept).sort((a, b) => a.localeCompare(b, 'th')).forEach((dept, i) => {
-      out.push({ plan, dept, deptIdx: i, vehicles: byDept[dept] });
+    MYD.QUARTER_KEYS.forEach(q => {
+      const sent = MYD.confirmSentOf(plan, q);
+      if (!sent || !sent.requestedAt) return;
+      const ids = MYD.planVehicleIds(plan, q);
+      const vehicles = master.vehicles.filter(v => ids.includes(v.id));
+      const byDept = {};
+      vehicles.forEach(v => { (byDept[v.ownerDept] = byDept[v.ownerDept] || []).push(v); });
+      Object.keys(byDept).sort((a, b) => a.localeCompare(b, 'th')).forEach((dept, i) => {
+        out.push({ plan, q, sent, dept, deptIdx: i, vehicles: byDept[dept] });
+      });
     });
   });
   return out;
@@ -51,26 +56,26 @@ function render() {
     return;
   }
 
-  const [planId, idx] = hash.split('/');
-  const req = buildRequests().find(r => r.plan.id === planId && String(r.deptIdx) === idx);
+  const [planId, q, idx] = hash.split('/');
+  const req = buildRequests().find(r => r.plan.id === planId && r.q === q && String(r.deptIdx) === idx);
   if (!req) { location.hash = ''; renderList(); return; }
   renderRequest(req);
 }
 
 function renderList() {
   // ปิดรับคำตอบแล้ว = ตอบไม่ได้อีกต่อไป — ไม่ต้องแสดงในรายการที่ต้องดำเนินการ
-  const reqs = buildRequests().filter(r => !MYD.confirmLocked(r.plan));
+  const reqs = buildRequests().filter(r => !MYD.confirmLockedQuarter(r.plan, r.q));
   const rows = reqs.map(r => {
     const answered = r.vehicles.filter(v => MYD.vehicleConfirm(r.plan, v.id).answer !== 'pending').length;
     return `<tr>
-      <td><b style="color:var(--gray-900)">${esc(r.dept)}</b>
-        <div class="sub">${esc(r.plan.workNumber)} · ${esc(r.plan.planName || '—')}</div></td>
+      <td><b class="text-gray-900">${esc(r.dept)}</b>
+        <div class="sub">${esc(r.plan.workNumber)} · ${esc(MYD.quarterLabel(r.q))} · ${esc(r.plan.planName || '—')}</div></td>
       <td class="num">${r.vehicles.length}</td>
       <td class="num">${answered}</td>
-      <td>${dateTh(r.plan.confirm.dueAt)}</td>
+      <td>${dateTh(r.sent.dueAt)}</td>
       <td>${answered === r.vehicles.length ? `<span class="badge b-ok">ตอบครบแล้ว</span>`
             : `<span class="badge b-low">รอตอบ ${r.vehicles.length - answered}</span>`}</td>
-      <td class="num"><a class="btn btn-s btn-sm" href="#${esc(r.plan.id)}/${r.deptIdx}">เปิดคำขอ</a></td>
+      <td class="num"><a class="btn btn-s btn-sm" href="#${esc(r.plan.id)}/${esc(r.q)}/${r.deptIdx}">เปิดคำขอ</a></td>
     </tr>`;
   }).join('');
 
@@ -78,12 +83,12 @@ function renderList() {
   $('cfBody').innerHTML = `
     <div class="card">
       <div class="sect">คำขอยืนยันรถเข้าร่วมแผน จาก กบค.</div>
-      <div class="sub">แต่ละแถวคือคำขอของหน่วยงานหนึ่งในแผนหนึ่ง — ตอบว่ารถแต่ละคันเข้าบำรุงรักษาได้ไหม</div>
+      
       ${reqs.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>หน่วยงาน / แผน</th><th class="num">รถ (คัน)</th><th class="num">ตอบแล้ว</th>
           <th>กำหนดตอบ</th><th>สถานะ</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
-        : `<div class="empty">ยังไม่มีคำขอ — รอ กบค. กด "ส่งคำขอยืนยัน" ในเฟส 1 ของแผน</div>`}
+        : `<div class="empty">ยังไม่มีคำขอ</div>`}
     </div>
     ${renderInviteListCard()}`;
 }
@@ -97,7 +102,7 @@ function renderInviteListCard() {
     const b = r.status === 'rejected' ? 'b-brand' : 'b-low';
     const t = r.status === 'rejected' ? 'ปฏิเสธแล้ว' : 'รอตอบรับ';
     return `<tr>
-      <td><b style="color:var(--gray-900)">${esc(i.dept)}</b>
+      <td><b class="text-gray-900">${esc(i.dept)}</b>
         <div class="sub">${esc(i.plan.workNumber)} · ${esc(i.trip.name || 'แผนเดินทาง')}</div></td>
       <td>${esc(i.trip.location || '—')}</td>
       <td>${dateTh(i.trip.windowFrom)} – ${dateTh(i.trip.windowTo)}</td>
@@ -111,13 +116,12 @@ function renderInviteListCard() {
   return `
     <div class="card">
       <div class="sect">แผนนัดหมายเข้าบำรุงรักษา จาก กบค.</div>
-      <div class="sub">กบค. เสนอเป็น<b>ช่วงเวลา</b> — เลือกวันนัดของรถแต่ละคันได้ภายในช่วงนั้นเท่านั้น
-        หรือปฏิเสธพร้อมเหตุผล · เอกสารชุดเดียวกันส่งสำเนาถึง กรย. ด้วย</div>
+      
       ${invites.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>หน่วยงาน / แผนเดินทาง</th><th>สถานที่</th><th>ช่วงที่เสนอ</th>
           <th class="num">รถ (คัน)</th><th>สถานะ</th><th></th></tr></thead>
         <tbody>${rows}</tbody></table></div>`
-        : `<div class="empty">ยังไม่มีแผนนัด — รอ กบค. ส่งแผนเดินทางมาในเฟส 2 · แผนเดินทาง</div>`}
+        : `<div class="empty">ยังไม่มีแผนนัด</div>`}
     </div>`;
 }
 
@@ -136,7 +140,7 @@ function renderTripInvite(inv) {
     </tr>`;
   }).join('');
 
-  $('crumbs').innerHTML = `<a href="confirm.html" style="color:inherit;text-decoration:none">
+  $('crumbs').innerHTML = `<a href="confirm.html" class="text-inherit no-underline">
       <span class="ms">fact_check</span> รายการคำขอ</a>
     <span class="sep">›</span><span class="cur">แผนนัด — ${esc(dept)}</span>`;
 
@@ -144,7 +148,7 @@ function renderTripInvite(inv) {
     <div class="card">
       <div class="sect">${esc(plan.workNumber)} — ${esc(trip.name || 'แผนเดินทาง')}</div>
       <div class="sub">หน่วยงานผู้ขอ: กบค. · ส่งเมื่อ ${esc(trip.sentAt || '—')}</div>
-      <div class="fgrid" style="margin-top:12px">
+      <div class="fgrid mt-3">
         <div class="f sp2"><label>สถานที่บำรุงรักษา</label><div>${esc(trip.location || '—')}</div></div>
         <div class="f sp2"><label>ช่วงเวลาที่ กบค. เสนอ</label>
           <div><b>${dateTh(trip.windowFrom)} – ${dateTh(trip.windowTo)}</b></div></div>
@@ -156,7 +160,7 @@ function renderTripInvite(inv) {
         · รอ กบค. ดำเนินการต่อ</div>` : ''}
     <div class="card">
       <div class="sect">รถของ ${esc(dept)} ในแผนนัดนี้</div>
-      <div class="sub">เลือกวันได้เฉพาะภายในช่วงที่เสนอ — ถ้าไม่สะดวกทั้งช่วง ให้ปฏิเสธพร้อมเหตุผล</div>
+      
       <div class="tblwrap"><table class="tbl">
         <thead><tr><th>ทะเบียน</th><th>สถานะรถ</th><th>วันนัด</th></tr></thead>
         <tbody>${rows}</tbody></table></div>
@@ -215,8 +219,8 @@ function bindTripInvite(inv) {
 
 // ----- เปิดคำขอรายใบ: รถของหน่วยงานนี้ในแผนนี้ -----
 function renderRequest(req) {
-  const { plan, dept, vehicles } = req;
-  const locked = MYD.confirmLocked(plan);
+  const { plan, q, sent, dept, vehicles } = req;
+  const locked = MYD.confirmLockedQuarter(plan, q);
   const today = todayIso();
 
   const rows = vehicles.map(v => {
@@ -240,27 +244,27 @@ function renderRequest(req) {
     </tr>`;
   }).join('');
 
-  $('crumbs').innerHTML = `<a href="confirm.html" style="color:inherit;text-decoration:none">
+  $('crumbs').innerHTML = `<a href="confirm.html" class="text-inherit no-underline">
       <span class="ms">fact_check</span> รายการคำขอ</a>
     <span class="sep">›</span><span class="cur">${esc(dept)}</span>`;
   $('cfBody').innerHTML = `
     <div class="card">
-      <div class="sect">${esc(plan.workNumber)} — ${esc(plan.planName || '—')}</div>
-      <div class="sub">หน่วยงานผู้ขอ: กบค. · ส่งคำขอ ${dateTh(plan.confirm.requestedAt)}
-        · กำหนดตอบ ${dateTh(plan.confirm.dueAt)}
-        ${today > plan.confirm.dueAt && !locked ? ' · <b>เลยกำหนดแล้ว</b>' : ''}</div>
+      <div class="sect">${esc(plan.workNumber)} · ${esc(MYD.quarterLabel(q))} — ${esc(plan.planName || '—')}</div>
+      <div class="sub">หน่วยงานผู้ขอ: กบค. · ส่งคำขอ ${dateTh(sent.requestedAt)}
+        · กำหนดตอบ ${dateTh(sent.dueAt)}
+        ${today > sent.dueAt && !locked ? ' · <b>เลยกำหนดแล้ว</b>' : ''}</div>
     </div>
     ${locked ? `<div class="empty">แผนเดินทางถูกยืนยันแล้ว — ปิดรับการแก้คำตอบ
         หากมีการเปลี่ยนแปลงกรุณาติดต่อ กบค. โดยตรง</div>` : ''}
     <div class="card">
-      <div class="sect">รถของ ${esc(dept)} ในแผนนี้</div>
+      <div class="sect">รถของ ${esc(dept)} ใน${esc(MYD.quarterLabel(q))}</div>
       <div class="tblwrap"><table class="tbl">
         <thead><tr><th>ทะเบียน</th><th>สถานะรถ</th><th>คำตอบ</th>
           <th>เหตุผลถ้าไม่พร้อม</th><th>จุดนัดรับ</th><th>ตอบเมื่อ</th></tr></thead>
         <tbody>${rows}</tbody></table></div>
       ${locked ? '' : `
         <div class="sect">ผู้ตอบ</div>
-        <div class="sub">ยังไม่ได้เคาะว่าใครในหน่วยงานเป็นผู้มีสิทธิ์กด — ต้นแบบให้พิมพ์ชื่อไปก่อน</div>
+        
         <input type="text" id="cfBy" placeholder="ชื่อผู้ตอบ">
         <button class="btn btn-o" id="btnAnswer"><span class="ms">send</span> ส่งคำตอบ</button>`}`;
 

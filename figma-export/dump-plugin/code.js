@@ -9,7 +9,7 @@
 const hex = (c) => '#' + [c.r, c.g, c.b].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join('').toUpperCase();
 const solids = (arr) => (Array.isArray(arr) ? arr : []).filter((p) => p.visible !== false && p.type === 'SOLID').map((p) => hex(p.color));
 
-function trim(n, depth) {
+async function trim(n, depth) {
   const o = { name: n.name, type: n.type };
   if (typeof n.width === 'number') { o.w = Math.round(n.width); o.h = Math.round(n.height); }
   if (n.paddingLeft) o.pl = n.paddingLeft;
@@ -41,9 +41,34 @@ function trim(n, depth) {
     try { o.props = n.componentPropertyDefinitions; } catch (e) {}
   }
   if (n.type === 'COMPONENT' && n.variantProperties) o.variant = n.variantProperties;
-  // ⚠️ ห้ามอ่าน n.mainComponent แบบ sync ภายใต้ documentAccess: dynamic-page (Figma โยน error)
-  //    ถ้าอยากได้ชื่อ component ต้นทางของ instance ต้องใช้ getMainComponentAsync ซึ่ง trim() เป็น sync จึงข้ามไป
-  if (n.children && n.children.length && depth < 12) o.kids = n.children.map((k) => trim(k, depth + 1));
+  if (n.type === 'INSTANCE') {
+    // ค่า variant/property ปัจจุบันของ "instance ตัวนี้" — sync, คู่ความหมายกับ o.variant ของ COMPONENT
+    try {
+      const cp = n.componentProperties;
+      if (cp && Object.keys(cp).length) {
+        const v = {};
+        for (const k in cp) v[k] = (cp[k] && 'value' in cp[k]) ? cp[k].value : cp[k];
+        o.variant = v;
+      }
+    } catch (e) {}
+    // component ต้นทางของ instance นี้ — async (ตามแพตเทิร์นที่ใช้จริงใน catalog-plugin/code.js)
+    // กัน throw แยกทุกจุด: instance ตัวไหนเข้าไม่ถึง main component (remote/ถูกลบ) จะแค่ไม่มี o.component
+    // ไม่ทำให้ trim() reject และไม่ลาม Promise.all ของทั้งหน้า (เจอจริง 1 ก.ย. 2569 — อ่านแบบ sync ล้มทั้งหน้า 41/55 หน้า)
+    try {
+      const main = typeof n.getMainComponentAsync === 'function'
+        ? await n.getMainComponentAsync() : n.mainComponent;
+      if (main) {
+        let holder = main;
+        try { if (main.parent && main.parent.type === 'COMPONENT_SET') holder = main.parent; } catch (e2) {}
+        const info = { name: holder.name };
+        try { info.key = holder.key || null; } catch (e3) {}
+        try { info.remote = !!holder.remote; } catch (e4) {}
+        if (holder !== main) { try { info.variant = main.name; } catch (e5) {} }
+        o.component = info;
+      }
+    } catch (e) { /* เข้าไม่ถึง main component — ข้ามไป */ }
+  }
+  if (n.children && n.children.length && depth < 12) o.kids = await Promise.all(n.children.map((k) => trim(k, depth + 1)));
   return o;
 }
 
@@ -52,13 +77,14 @@ figma.showUI(__html__, { width: 460, height: 380 });
 figma.ui.onmessage = async (msg) => {
   if (msg.type !== 'start') return;
   await figma.loadAllPagesAsync();
-  const pages = figma.root.children;
+  const filter = (msg.pageFilter || '').trim().toLowerCase();
+  const pages = filter ? figma.root.children.filter((p) => p.name.toLowerCase().includes(filter)) : figma.root.children;
   figma.ui.postMessage({ type: 'total', total: pages.length, file: figma.root.name });
   for (let i = 0; i < pages.length; i++) {
     const p = pages[i];
     try {
       await p.loadAsync();
-      const data = { node: p.id, page: p.name, sets: p.children.map((c) => trim(c, 0)) };
+      const data = { node: p.id, page: p.name, sets: await Promise.all(p.children.map((c) => trim(c, 0))) };
       figma.ui.postMessage({ type: 'page', i, id: p.id.replace(':', '-'), name: p.name, data });
     } catch (e) {
       figma.ui.postMessage({ type: 'error', i, name: p.name, message: String(e && e.message || e) });

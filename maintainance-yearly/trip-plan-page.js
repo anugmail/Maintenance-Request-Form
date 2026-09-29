@@ -55,8 +55,8 @@ function renderPicker() {
   const rows = plans.map(p => {
     const s = travelSummary(p);
     return `<tr>
-      <td><b style="color:var(--gray-900)">${esc(planTitle(p))}</b>
-        <div class="cell-sub">${MYD.workNumberList(p).map(x => esc(x.no)).join(' · ')}</div></td>
+      <td><b class="text-gray-900">${esc(planTitle(p))}</b>
+        <div class="cell-sub">${esc(p.workNumber)}</div></td>
       <td class="num">${(p.selectedVehicleIds || []).length}</td>
       <td>${quarterYearText(p)}</td>
       <td><span class="badge ${s.cls}">${esc(s.text)}</span></td>
@@ -64,7 +64,8 @@ function renderPicker() {
     </tr>`;
   }).join('');
 
-  $('crumbs').innerHTML = `<span class="ms">event_available</span><span class="cur">ทำแผนการเดินทาง</span>`;
+  $('crumbs').innerHTML = `<span class="ms">home</span><span class="sep">›</span>
+    <span class="cur">ทำแผนการเดินทาง</span>`;
   $('phase').innerHTML = `
     <div class="page-title-row">
       <h1 class="page-title">ทำแผนการเดินทาง — กบค.</h1>
@@ -73,8 +74,7 @@ function renderPicker() {
       ${sourceSeg('plan')}
     </div>
     <div class="card">
-      <div class="sub">เลือกแผนที่จะทำแผนเดินทาง — เลือกไตรมาสได้ในขั้นถัดไป
-        · ข้อมูลชุดเดียวกับ <a href="index.html">รายการแผนบำรุงรักษา</a> สลับไปมาได้</div>
+      
       ${plans.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>เลขงาน / ชื่อแผน</th><th class="num">รถ (คัน)</th><th>ไตรมาส/ปี</th>
           <th>สถานะแผนเดินทาง</th><th></th></tr></thead>
@@ -114,20 +114,17 @@ function renderWizard(plan) {
   const disabled = !primaryReady(plan);
   const blockers = (state.sub === 1 && disabled) ? TRIP.blockers(plan) : [];
 
-  $('crumbs').innerHTML = `<span class="ms">event_available</span>
-    <a href="#">ทำแผนการเดินทาง</a><span class="ms">chevron_right</span>
+  $('crumbs').innerHTML = `<span class="ms">home</span><span class="sep">›</span>
+    <a href="#">ทำแผนการเดินทาง</a><span class="sep">›</span>
     <span class="cur">${esc(planTitle(plan))}</span>`;
 
   $('phase').innerHTML = `
     <div class="page-title-row">
       <h1 class="page-title">${esc(planTitle(plan))}</h1>
-      <a class="btn btn-g" href="#" style="margin-left:auto">
+      <a class="btn btn-g" href="#" class="ml-auto">
         <span class="ms">arrow_back</span> เปลี่ยนแผน</a>
     </div>
-    ${plan.partsRequisitioned ? '' : `<div class="note note-info"><span class="ms">info</span>
-      <div><b>หน้านี้ข้ามมาที่ขั้นแผนเดินทางโดยตรง</b> — ในโฟลว์เต็ม แผนนี้ยังไม่ผ่าน
-        "ยืนยันรถเข้าร่วมแผน + เบิก/จัดหาอะไหล่" (เฟส 1) ทำที่นี่ได้เพื่อดูหน้าจอ
-        แต่เวลาใช้จริงต้องจบเฟส 1 ก่อน — ดูโฟลว์เต็มที่ <a href="index.html#${esc(plan.id)}">หน้ารายการแผน</a></div></div>`}
+    ${plan.partsRequisitioned ? '' : ``}
     <div class="card">
       <div class="wsteps sm">${STEPS.map(s => {
         const cls = ['wstep'];
@@ -141,12 +138,12 @@ function renderWizard(plan) {
       }).join('')}</div>
       <div id="tripBody">${state.sub === 1 ? TRIP.renderStep1(plan) : TRIP.renderStep2(plan)}</div>
       ${blockers.length ? `<div class="note note-warn"><span class="ms">error</span>
-        <div><b>ยังไปขั้นถัดไปไม่ได้</b> — ต้องทำแผนเดินทางให้ครบทั้ง 4 ไตรมาสก่อน ตอนนี้แต่ละไตรมาสยังค้าง:
-          <ul style="margin:6px 0 0 18px">${blockers.map(x => `<li>${x}</li>`).join('')}</ul></div></div>` : ''}
+        <div><b>ยังไปขั้นถัดไปไม่ได้</b>
+          <ul class="mt-1.5 mb-0 ml-[18px] mr-0">${blockers.map(x => `<li>${x}</li>`).join('')}</ul></div></div>` : ''}
       <div class="actions">
         <button class="btn btn-g" id="btnBackTrip" ${state.sub === 1 ? 'disabled' : ''}>ย้อนกลับ</button>
         <button class="btn btn-p" id="btnPrimaryTrip" ${disabled ? 'disabled' : ''}
-          ${state.sub === 1 && disabled ? 'title="กรุณาทำแผนเดินทางครบทั้ง4ไตรมาส"' : ''}>
+          >
           ${isLast ? 'ยืนยันแผนเดินทาง' : 'ถัดไป'}</button>
       </div>
     </div>`;
@@ -173,14 +170,14 @@ function renderWizard(plan) {
 
 // ---------------------------------------------------------------- ยืนยันแล้ว
 function renderConfirmed(plan) {
-  $('crumbs').innerHTML = `<span class="ms">event_available</span>
-    <a href="#">ทำแผนการเดินทาง</a><span class="ms">chevron_right</span>
+  $('crumbs').innerHTML = `<span class="ms">home</span><span class="sep">›</span>
+    <a href="#">ทำแผนการเดินทาง</a><span class="sep">›</span>
     <span class="cur">${esc(planTitle(plan))}</span>`;
   // ไม่ส่ง onNextPhase — หน้าเดี่ยวไม่มีเฟสถัดไป ปุ่มนั้นจะไม่ถูกวาด
   $('phase').innerHTML = `
     <div class="page-title-row">
       <h1 class="page-title">${esc(planTitle(plan))}</h1>
-      <a class="btn btn-g" href="#" style="margin-left:auto">
+      <a class="btn btn-g" href="#" class="ml-auto">
         <span class="ms">arrow_back</span> เปลี่ยนแผน</a>
     </div>` + TRIP.renderConfirmed(plan);
   TRIP.bindConfirmed();
@@ -191,8 +188,8 @@ function renderConfirmed(plan) {
 // ตามที่เจ้าของงานสั่ง 25 ส.ค. 2569 · ขอบเขตรอบนี้จบที่ "ส่งแผนนัด" ยังไม่มีตอบรับ/อนุมัติ/ยืนยัน
 function renderRepair() {
   PLAN = null;
-  $('crumbs').innerHTML = `<span class="ms">event_available</span>
-    <a href="#">ทำแผนการเดินทาง</a><span class="ms">chevron_right</span>
+  $('crumbs').innerHTML = `<span class="ms">home</span><span class="sep">›</span>
+    <a href="#" class="text-inherit no-underline">ทำแผนการเดินทาง</a><span class="sep">›</span>
     <span class="cur">งานซ่อม</span>`;
 
   $('phase').innerHTML = `
@@ -203,9 +200,7 @@ function renderRepair() {
       ${sourceSeg('repair')}
     </div>
     <div class="card">
-      <div class="note note-info"><span class="ms">info</span>
-        <div><b>ขอบเขตของต้นแบบรอบนี้ = จังหวะสร้างแผนเท่านั้น</b> — จบที่ "ส่งแผนนัดให้หน่วยงาน"
-          ส่วนหน่วยงานตอบรับ · ขั้นขออนุมัติแผน · ยืนยันแผน ยังไม่ได้ทำ</div></div>
+      
       ${TRIP.renderRepairStep1()}
     </div>`;
 

@@ -8,7 +8,9 @@
    กับ flow-report-extract.js (เก็บทีละ state ของ wizard แจ้งซ่อม)
    ============================================================ */
 
-function walkDom() {
+/* rootSel — เลือกจุดตั้งต้นเอง (ใช้ตอนอยากได้เฉพาะบางส่วนของหน้า เช่นตัว modal
+   โดยไม่เอาฉากหลังที่ถูกคลุมด้วย .modal-overlay สีดำโปร่ง) · ไม่ส่ง = ทั้ง .shell เหมือนเดิม */
+function walkDom(rootSel) {
   /* style ที่เก็บ — เลือกเฉพาะที่มีผลกับการสร้าง node ใน Figma
      เก็บเกินก็แค่ไฟล์ใหญ่ แต่เก็บขาดแล้วต้องเปิด Chromium ใหม่ทั้งรอบ */
   const PROPS = [
@@ -128,10 +130,13 @@ function walkDom() {
     return node;
   }
 
-  const root = document.querySelector('.shell') || document.body;
+  const root = (rootSel && document.querySelector(rootSel)) || document.querySelector('.shell') || document.body;
+  const box = root.getBoundingClientRect();
   return {
     root: walk(root),
+    // เก็บทั้งสูงของเอกสารและสูงของ root ที่เลือก — ตัวหลังคือค่าที่ควรใช้เวลาเจาะเฉพาะส่วน
     docHeight: document.documentElement.scrollHeight,
+    rootHeight: Math.round(box.height),
     counted: counter
   };
 }

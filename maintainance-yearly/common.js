@@ -74,7 +74,7 @@ function renderTimeSim() {
   })();
   const f = fiscalNow();
   host.innerHTML = `
-    <div class="in noic" style="width:auto">
+    <div class="in noic w-auto">
       <select id="timeSimSel" title="จำลองวันที่ เพื่อดูรอบทบทวนแผนที่อยู่ในอนาคต">
         ${TIME_MARKS.map(m => `<option value="${m.iso || ''}" ${(m.iso || '') === cur ? 'selected' : ''}>${esc(m.label)}</option>`).join('')}
       </select>
@@ -152,8 +152,8 @@ function dateTh(v) {
 }
 
 // หัวข้อของแผน = เลขงาน · ถ้ายังไม่ออกเลขให้ใช้ชื่อแผนไปก่อน
-// แผนหนึ่งใบมีเลขงาน 4 ใบแล้ว (ไตรมาสละใบ) — ใช้ "ชื่อแผน" เป็นหัวข้อแทนเลขงานเดี่ยว
-// เลขงานทุกใบแสดงแยกด้วย MYD.workNumberList() ตรงที่ต้องเห็นครบ
+// ใช้ "ชื่อแผน" เป็นหัวข้อ ถ้ายังไม่ตั้งชื่อค่อยตกมาที่เลขงาน
+// 1 แผน = 1 เลขงาน (8 ก.ย. 2569) — แสดงจาก plan.workNumber ตรงๆ
 function planTitle(plan) {
   return plan.planName || plan.workNumber || '(แผนใหม่ ยังไม่ตั้งชื่อ)';
 }

@@ -20,9 +20,12 @@ const BASE = process.env.BASE || 'http://127.0.0.1:8123';
 const CHROME = process.env.CHROME || '/Applications/Google Chrome 2.app/Contents/MacOS/Google Chrome';
 const OUT = path.join(__dirname, 'out');
 const WIDTH = 1440;
+// ONLY=overhaul หรือ ONLY=overhaul,index — extract แค่ slug ที่ระบุ (ว่าง = ทุกหน้าเหมือนเดิม)
+const ONLY = (process.env.ONLY || '').split(',').map((s) => s.trim()).filter(Boolean);
 
 const PAGES = [
   { slug: 'index',         path: '/maintainance-yearly/index.html',         name: 'รายการแผนบำรุงรักษา' },
+  { slug: 'overhaul',      path: '/maintainance-yearly/overhaul.html',      name: 'Overhaul — รถที่เข้าข่ายยกเครื่อง' },
   { slug: 'plan-new',      path: '/maintainance-yearly/plan-new.html',      name: 'ออกเลขงาน' },
   { slug: 'supplies',      path: '/maintainance-yearly/supplies.html',      name: 'ฝ่ายพัสดุ' },
   { slug: 'confirm',       path: '/maintainance-yearly/confirm.html',       name: 'ยืนยันรถเข้าร่วมแผน' },
@@ -30,7 +33,7 @@ const PAGES = [
   // admin.html ตัดออก — 3,770 node · JSON 5.6MB · ส่งผ่าน postMessage แล้ว Figma อืด
   // ถ้าจะเอากลับ ต้องตัดแถวตารางให้เหลือตัวอย่างไม่กี่แถวก่อน
 
-];
+].filter((p) => !ONLY.length || ONLY.includes(p.slug));
 
 /* walkDom แยกไปอยู่ dom-walk.js — แชร์กับ flow-report-extract.js */
 const { walkDom } = require('./dom-walk');

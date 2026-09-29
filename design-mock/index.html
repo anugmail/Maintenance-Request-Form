@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="../design-system/tokens.css?v=20260902-ds47">
-<link rel="stylesheet" href="../design-system/components.css?v=20260903-ds51">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20260923-ds64">
+<link rel="stylesheet" href="../design-system/components.css?v=20260923-ds64">
 <!-- ไม่มี <style> ในหน้าโดยตั้งใจ — ใช้คอมโพเนนต์จาก design system เท่านั้น:
      .content · .card/.sect/.sub · .stack · .gallery/.gcard/.gframe/.gcard-body
      .badge/.b-ok/.b-low/.b-brand · .btn · .page-title -->
@@ -20,6 +20,67 @@
     <h1 class="page-title">แกลเลอรีแบบหน้าจอ — Maintain-D</h1>
 
     <div class="stack loose">
+
+      <div class="card">
+        <div class="stack">
+          <div class="sect">โฟลว์แจ้งซ่อมแบบใหม่ — ตารางรวม + modal (พรีวิวแบบ)</div>
+          <div class="sub">เคาะแบบ 3 ก.ย. 2569 · หน้ารวมคอลัมน์ชุดเดิม + ไอคอน "แจ้งซ่อมคันนี้" ท้ายแถว → modal
+            ครบโฟลว์: เลือกรถ → ข้อมูลทั่วไป → อาการเสีย (เลือกได้ทั้งตัวรถ+ส่วนเสริม) → ตัดสินใจ+อะไหล่ →
+            สรุปและผู้อนุมัติ · <b>ยังไม่ได้ลงมือแก้หน้า mock จริง</b></div>
+          <div class="gallery">
+            <div class="gcard">
+              <div class="gframe"><iframe src="repair-modal-flow.html" loading="lazy" title="โฟลว์แจ้งซ่อมแบบใหม่"
+                  scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">หน้ารวมแจ้งซ่อม + modal</span>
+                <span class="badge b-low">พรีวิว · กดไล่โฟลว์ได้</span>
+                <div class="meta">กดไอคอนรถท้ายแถว = แจ้งซ่อมคันนั้น · ปุ่ม "แจ้งซ่อมใหม่" = มีขั้นเลือกรถก่อน ·
+                  ทางลัด: #modal #modal2 #modal3 #modal4 #new</div>
+                <a class="btn btn-s btn-sm" href="repair-modal-flow.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="approver-incident-detail.html" loading="lazy"
+                  title="หน้าอนุมัติของหัวหน้า" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">หน้าอนุมัติของหัวหน้า</span>
+                <span class="badge b-low">พรีวิว · เลือกช่องทางได้</span>
+                <div class="meta">โครงตามหน้า "รายละเอียดเหตุการณ์" ระบบจริง + บล็อกช่องทางการซ่อม
+                  (ซ่อมเอง/ส่งซ่อมอู่/ส่งต่อ กรย.) ที่หัวหน้าแก้ได้ก่อนกดอนุมัติ</div>
+                <a class="btn btn-s btn-sm" href="approver-incident-detail.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="../mock/Maintenance-Request-Form-page.html" loading="lazy"
+                  title="เวอร์ชันหน้าเต็ม (สเปกใหม่ ไม่ใช่ modal)" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">เวอร์ชันหน้าเต็ม — ฟอร์ม 4 ขั้น + stepper</span>
+                <span class="badge b-neutral">เวอร์ชันเทียบ</span>
+                <div class="meta">สเปก 4 ขั้นชุดเดียวกับ modal ทุกอย่าง แต่กด "แจ้งซ่อม" แล้วนำทางเข้า
+                  ฟอร์มเต็มหน้าพร้อม stepper ด้านบน (ไม่ใช่ modal — เจ้าของงานขอไว้เทียบ 7 ก.ย. 2569)</div>
+                <a class="btn btn-s btn-sm" href="../mock/Maintenance-Request-Form-page.html" target="_blank"
+                  rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="../mock/Maintenance-Request-Form-before-modal.html" loading="lazy"
+                  title="เวอร์ชันก่อนเป็น modal" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">flow เก่า — ลิสต์ใหม่ → วิซาร์ดเต็มหน้า</span>
+                <span class="badge b-neutral">เวอร์ชันเทียบ</span>
+                <div class="meta">ลิสต์ชุดเดียวกับเวอร์ชันหลัก (ไอคอนแจ้งซ่อมท้ายแถว + badge) แต่กดแล้วเข้า
+                  วิซาร์ดเต็มหน้า 5 ขั้นแบบเดิม (stepper + การ์ดเลือกรถ) · เวอร์ชัน modal ใช้ mock หลัก</div>
+                <a class="btn btn-s btn-sm" href="../mock/Maintenance-Request-Form-before-modal.html" target="_blank"
+                  rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="card">
         <div class="stack">
@@ -143,6 +204,103 @@
 
       <div class="card">
         <div class="stack">
+          <div class="sect">โฟลว์ใช้รถข้ามหน่วยงาน — 3 หน้าจอ ต่อกันได้</div>
+          <div class="sub">ร่างแรก 22 ก.ย. 2569 · อิง <b>หลักเกณฑ์ยานพาหนะ พ.ศ. 2569</b> (ครอบคลุม use case 87%)
+            + ตารางจริง <code>vms_trn_request</code> · ผัง B0–B21 ที่
+            <code>Diagram/05-เปลี่ยนสังกัด-ยืมใช้รถ/02-ยืมใช้ชั่วคราว.md</code> ·
+            <b>ทำแบบหน้าจอจริง ไม่มีแบนเนอร์/คำเตือน/ป้ายสถานะร่าง</b></div>
+          <div class="gallery">
+            <div class="gcard">
+              <div class="gframe"><iframe src="crossunit-01-request.html" loading="lazy" title="สร้างคำขอใช้ยานพาหนะ" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">1 · สร้างคำขอใช้ยานพาหนะ</span>
+                <div class="meta">ต้นสังกัดเป็นผู้เปิด · เลือกรถได้หลายคัน + พขร. น้อยกว่าจำนวนรถ (ตามที่หน่วยงานอธิบาย) ·
+                  งบที่ตัด 4 ประเภทจาก <code>ref/cost-type</code> · ฟิลด์ยกจาก <code>vms_trn_request</code></div>
+                <a class="btn btn-s btn-sm" href="crossunit-01-request.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="crossunit-02-approve.html" loading="lazy" title="อนุมัติคำขอ" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">2 · อนุมัติคำขอ</span>
+                <div class="meta">คิวของผู้มีอำนาจอนุมัติ · คอลัมน์ "ลักษณะการใช้" สะท้อนกฎ 9 เคส
+                  (ในเขต/ข้ามเขต/ขนส่งพัสดุ/ฉุกเฉินรายงานย้อนหลัง) · กดตรวจสอบ → modal สรุปทั้งใบ</div>
+                <a class="btn btn-s btn-sm" href="crossunit-02-approve.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="crossunit-03-record.html" loading="lazy" title="บันทึกการใช้ยานพาหนะ" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">3 · บันทึกการใช้ยานพาหนะ (ยพ.6)</span>
+                <div class="meta">คอลัมน์ยกจากแบบฟอร์ม <b>ยพ.6-ป.46</b> ของจริง (ผนวก ง) ครบ 11 ช่อง
+                  รวม <b>หน่วยงานที่ใช้ยานพาหนะ</b> รายเที่ยว · แถวรถเสียต่างพื้นที่ (ข้อ 13.3) · ส่งรับรองปิดรอบ</div>
+                <a class="btn btn-s btn-sm" href="crossunit-03-record.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="stack">
+          <div class="sect">โฟลว์เปลี่ยนสังกัดยานพาหนะ (โอนถาวร) — 4 หน้าจอ ต่อกันได้</div>
+          <div class="sub">ร่างแรก 22 ก.ย. 2569 · อิง <b>หลักเกณฑ์ยานพาหนะ พ.ศ. 2569</b> + DB จริง + ผัง
+            <code>Diagram/05-เปลี่ยนสังกัด-ยืมใช้รถ/01-เปลี่ยนสังกัดถาวร.md</code> (T0–T13) ·
+            <b>ต้นทางเปิดเรื่องเสมอ</b> · หน้า 3 และ 4 ไลบรารี PEA ไม่มีของเทียบ ประกอบจากคอมโพเนนต์ที่มีตามที่เคาะไว้</div>
+          <div class="gallery">
+            <div class="gcard">
+              <div class="gframe"><iframe src="transfer-01-list.html" loading="lazy" title="รายการยานพาหนะ" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">1 · รายการยานพาหนะ (ต้นทาง)</span>
+                <span class="badge b-low">จุดเข้าโฟลว์</span>
+                <div class="meta">ไอคอนท้ายแถว = ทำเรื่องเปลี่ยนสังกัด · แถวที่มีรายการค้างขึ้นเลขกำกับ ·
+                  รถเช่า (รหัส 25) ปิดปุ่มไว้เพราะยังไม่เคาะ · ท้ายหน้ามีคิว “คำขอรถจากหน่วยงานอื่น” (เคส pull · T0a)</div>
+                <a class="btn btn-s btn-sm" href="transfer-01-list.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="transfer-request.html" loading="lazy" title="คำร้องเปลี่ยนสังกัด" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">2 · คำร้องเปลี่ยนสังกัด (ต้นทางเปิด)</span>
+                <span class="badge b-low">มี stepper 4 ขั้น</span>
+                <div class="meta">ฟิลด์ยกจาก <code>Modal / Vehicle transfer</code> ของจริง + บล็อก <b>T5 ตรวจรายการค้าง</b>
+                  (ใบแจ้งซ่อม · รอบบิล Fleet card) · ถอด “ยืมใช้ชั่วคราว” ออกจาก dropdown แล้วเพราะเป็นคนละกระบวนการ</div>
+                <a class="btn btn-s btn-sm" href="transfer-request.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="transfer-03-receive.html" loading="lazy" title="ปลายทางตรวจรับ" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">3 · ปลายทางตรวจรับและรับโอน</span>
+                <span class="badge b-out">ไลบรารีไม่มีของเทียบ</span>
+                <div class="meta">โครง 2 คอลัมน์ยกจาก Incident detail · ข้อมูลรถ + ประวัติซ่อม 12 เดือน +
+                  เช็กลิสต์ตรวจรับ 5 ข้อ + รูป · modal ยืนยันเริ่มนับ 7 วันทำการให้แจ้ง กจย.</div>
+                <a class="btn btn-s btn-sm" href="transfer-03-receive.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="transfer-04-code.html" loading="lazy" title="คิวงาน กจย." scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">4 · คิวงาน กจย. — ออกรหัสสังกัด</span>
+                <span class="badge b-out">ไลบรารีไม่มีของเทียบ</span>
+                <div class="meta">คิวงานพร้อมนาฬิกา <b>7 วันทำการ 2 ตัวนับแยกกัน</b> (แจ้ง / ประทับตรา) ·
+                  modal ออกรหัส 3 ท่อน รหัสประเภทเติมเองจาก 14 ประเภทของผนวก ง</div>
+                <a class="btn btn-s btn-sm" href="transfer-04-code.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="stack">
           <div class="sect">Design System</div>
           <div class="sub">แหล่งความจริงเดียวของสี/ฟอนต์/ระยะ/คอมโพเนนต์ — ทุกหน้าข้างบนดึงจากที่นี่</div>
           <div class="gallery">
@@ -159,7 +317,7 @@
               <div class="gframe"><iframe src="../design-system/buttons.html" loading="lazy" title="ปุ่มทุก variant" scrolling="no"></iframe></div>
               <div class="gcard-body">
                 <span class="nm">ปุ่มครบทุก variant</span>
-                <div class="meta">4 ขนาด × 5 ระดับ × 5 สถานะ + ชุด destructive · ดึงค่าจาก Figma ไลบรารีจริง</div>
+                <div class="meta">อิงไลบรารีใหม่ (Component) VMS Plus หน้า Button: md/lg × 4 สถานะ × Primary/Secondary/Tertiary + ชุด danger/brand · ระบุชัดว่าอะไรเป็นส่วนขยายของต้นแบบ</div>
                 <a class="btn btn-s btn-sm" href="../design-system/buttons.html" target="_blank" rel="noopener">
                   <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
               </div>

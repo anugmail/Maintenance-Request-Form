@@ -56,8 +56,9 @@ const PLAN = 'plan-seed-2569-002';
   await page.evaluate(p => { const x = MYD.getPlan(p); x.partsRequisitioned = false; MYD.savePlan(x); }, PLAN);
   await page.reload();
   await page.waitForSelector('.wsteps');
-  ok(await page.locator('.note-info', { hasText: 'ข้ามมาที่ขั้นแผนเดินทางโดยตรง' }).count() > 0,
-    'แผนที่ยังไม่ผ่านเฟส 1 → เตือนว่าหน้านี้ข้ามมาที่ขั้นแผนเดินทางโดยตรง');
+  // 7 ก.ย. 2569: เจ้าของงานสั่งเอาคำเตือนอธิบายออกทั้งหมด — กล่องนี้ถูกถอดแล้ว (ทั้งสองสถานะจึงต้องไม่มี)
+  ok(await page.locator('.note-info', { hasText: 'ข้ามมาที่ขั้นแผนเดินทางโดยตรง' }).count() === 0,
+    'ไม่มีกล่องคำเตือน "ข้ามมาที่ขั้นแผนเดินทางโดยตรง" แล้ว');
   await page.evaluate(p => { const x = MYD.getPlan(p); x.partsRequisitioned = true; MYD.savePlan(x); }, PLAN);
   await page.reload();
   await page.waitForSelector('.wsteps');
@@ -68,8 +69,12 @@ const PLAN = 'plan-seed-2569-002';
   const tripBoxes = () => page.locator('[data-q] .rzone-body .rzone');
   await page.locator('[data-auto-trips="Q1"]').click();     // → onChange → renderWizard ใหม่
   await page.waitForTimeout(400);
+  // seed แบ่งไตรมาสไว้จังหวัดละไตรมาส (Q1–Q3 = จันทบุรี · Q4 = กาญจนบุรี) ⇒ แยกอัตโนมัติของ Q1 ได้ 1 ใบ
+  // (เทสเดิมเขียนไว้ก่อนแยกรายไตรมาส 28 ส.ค. 2569 จึงคาด 2 ใบ — แก้ให้ตรงพฤติกรรมจริง 7 ก.ย. 2569)
   const boxes = await tripBoxes().count();
-  ok(boxes === 2, `onChange ทำงาน — แยกอัตโนมัติได้ ${boxes} ใบ แล้ววาดหน้าใหม่`);
+  ok(boxes === 1, `onChange ทำงาน — แยกอัตโนมัติได้ ${boxes} ใบ แล้ววาดหน้าใหม่`);
+  const q1Names = await tripBoxes().locator('.rzone-head b').allTextContents();
+  ok(q1Names.join('|').includes('จันทบุรี'), 'ชื่อใบเป็นชื่อจังหวัดของไตรมาสนั้น — ' + q1Names.join(' | '));
   ok(await page.locator('#btnPrimaryTrip').isDisabled(), 'ใบยังไม่ถูกตอบรับ → ปุ่มถัดไปยังปิด');
 
   const box1 = tripBoxes().first();
@@ -85,13 +90,13 @@ const PLAN = 'plan-seed-2569-002';
   await heads.nth(1).click();   // กางไตรมาส 2 เพิ่ม — ไตรมาส 1 ที่กางอยู่แล้วต้องไม่ถูกปิด
   await page.waitForTimeout(300);
   ok(await page.locator('.sect', { hasText: 'ทำแผนเดินทาง' }).count() > 0, 'ขยายไตรมาสอื่นเพิ่มแล้วยังอยู่ขั้นเดิม');
-  ok(await tripBoxes().count() === 2, 'ไตรมาส 1 ที่กางไว้ก่อนยังเห็นใบเดินทางครบเหมือนเดิม (ไม่ได้ถูกพับปิด)');
+  ok(await tripBoxes().count() === 1, 'ไตรมาส 1 ที่กางไว้ก่อนยังเห็นใบเดินทางครบเหมือนเดิม (ไม่ได้ถูกพับปิด)');
 
   console.log('\nข้อมูลชุดเดียวกับหน้ารายการแผน');
   await page.goto(`${BASE}/index.html#${PLAN}`);
-  await page.waitForSelector('.wsteps');
+  await page.waitForSelector('.tab-btn');
   const sameData = await page.evaluate(p => MYD.ensureTrips(MYD.getPlan(p)).length, PLAN);
-  ok(sameData === 2, `ใบเดินทางที่สร้างจากหน้าเดี่ยว มองเห็นจาก index.html ด้วย (${sameData} ใบ)`);
+  ok(sameData === 1, `ใบเดินทางที่สร้างจากหน้าเดี่ยว มองเห็นจาก index.html ด้วย (${sameData} ใบ)`);
 
   console.log('\nหน้าเดี่ยวไม่มีปุ่ม "ไปเฟสถัดไป"');
   await page.goto(`${BASE}/trip-plan.html#${PLAN}`);
@@ -103,15 +108,19 @@ const PLAN = 'plan-seed-2569-002';
   ok(await page.locator('#btnGoNextPhaseProc').count() === 0, 'ไม่มีปุ่ม "ไปเฟสถัดไป" (ไม่ได้ส่ง onNextPhase)');
   ok(await page.locator('#btnPeaLife').count() === 1, 'ปุ่มทำใบนำจ่าย (PEA Life) ยังมี');
 
-  console.log('\nหน้ารายการแผน (index.html) ก็ไม่มีปุ่มนี้เหมือนกันแล้ว (28 ส.ค. 2569 — เดิมเคยส่ง onNextPhase');
-  console.log('มาเพื่อไปเฟส "ตรวจสภาพก่อนซ่อม" แต่ 4 เฟสท้ายย้ายไปเป็นหน้าไตรมาสแยกแล้ว ไม่มี "เฟสถัดไป" ของแผนอีก)');
+  console.log('\nหน้าแผนใน index.html — 8 ก.ย. 2569 เหลือ 2 แท็บ แผนเดินทางย้ายไปหน้าไตรมาสแล้ว');
   await page.goto(`${BASE}/index.html#${PLAN}`);
-  await page.waitForSelector('.wsteps');
-  await page.locator(`[onclick="goPhase('travel')"]`).click();
+  await page.waitForSelector('.tab-btn');
+  const planTabs = await page.locator('#stepper .tab-btn').evaluateAll(
+    els => els.map(e => (e.childNodes[0].textContent || '').trim()));
+  ok(planTabs.length === 2 && planTabs[0] === 'เบิก/จัดหาอะไหล่' && planTabs[1] === 'รายการไตรมาส',
+    `หน้าแผนเหลือ 2 แท็บ — ${planTabs.join(' · ')}`);
+  ok(await page.locator('[data-plan-tab="travel"]').count() === 0, 'ไม่มีแท็บแผนเดินทางที่ระดับแผนแล้ว');
+  await page.locator('[data-plan-tab="quarters"]').click();
   await page.waitForTimeout(400);
-  ok(await page.locator('#btnGoNextPhaseProc').count() === 0, 'index.html ก็ไม่ส่ง onNextPhase มาแล้วเหมือนกัน — ไม่มีปุ่ม');
-  ok(await page.locator('.sect', { hasText: 'รายการไตรมาส' }).count() > 0,
-    'แต่มีการ์ด "รายการไตรมาส" แทน — ไปต่อผ่านไตรมาสที่ยืนยันแผนเดินทางแล้วแทน');
+  ok(await page.locator('#btnGoNextPhaseProc').count() === 0, 'index.html ไม่ส่ง onNextPhase — ไม่มีปุ่ม');
+  ok(await page.locator('.incident-section-title', { hasText: 'รายการไตรมาส' }).count() > 0,
+    'มีการ์ด "รายการไตรมาส" เป็นทางเข้าไตรมาส');
 
   console.log('\npageerror:', errors.length ? errors.join(' | ') : '(ไม่มี)');
   ok(errors.length === 0, 'ไม่มี pageerror');

@@ -51,7 +51,7 @@ function renderList() {
     const n = quarterVehicleIds(p, q).length;
     const approved = entry.status === 'approved';
     return `<tr>
-      <td><b style="color:var(--gray-900)">${esc(p.workNumber || '—')}</b>
+      <td><b class="text-gray-900">${esc(p.workNumber || '—')}</b>
         <div class="cell-sub">${esc(p.planName || '—')}</div></td>
       <td>${esc(MYD.quarterLabel(q))}</td>
       <td class="num">${n}</td>
@@ -70,8 +70,8 @@ function renderList() {
   $('apBody').innerHTML = `
     <div class="card">
       <div class="sect">แผนที่ส่งอนุมัติปิดแผนมา (แยกรายไตรมาส)
-        ${waiting ? `<span class="badge b-low" style="margin-left:8px">รออนุมัติ ${waiting}</span>` : ''}</div>
-      <div class="sub">ส่งมาจากหน้าคำนวณต้นทุน (เฟส 6) — กบค. ส่งอนุมัติได้ทีละไตรมาส · เลขงานคือหัวข้อของแผน</div>
+        ${waiting ? `<span class="badge b-low ml-2">รออนุมัติ ${waiting}</span>` : ''}</div>
+      
       ${rows.length ? `<div class="tblwrap"><table class="tbl">
         <thead><tr><th>เลขงาน / ชื่อแผน</th><th>ไตรมาส</th><th class="num">รถ (คัน)</th><th class="num">ต้นทุนรวม (บาท)</th>
           <th>สถานะ</th><th></th></tr></thead>
@@ -107,28 +107,28 @@ function renderDetail(plan, q) {
     </tr>`;
   }).join('');
   const grandTotal = sumPerDiem + sumLodging + sumTravel;
-  const totalCellStyle = 'background:var(--gray-50);border-top:2px solid var(--gray-200);color:var(--gray-700);font-size:var(--fs-sm)';
+  const totalCellClass = 'bg-gray-50 border-t-2 border-gray-200 text-gray-700 text-sm';
 
   $('crumbs').innerHTML = `
-    <a href="approve-close.html" style="color:inherit;text-decoration:none"><span class="ms">task_alt</span> รายการแผน</a>
+    <a href="approve-close.html" class="text-inherit no-underline"><span class="ms">task_alt</span> รายการแผน</a>
     <span class="sep">›</span><span class="cur">${esc(plan.workNumber || planTitle(plan))} · ${esc(MYD.quarterLabel(q))}</span>`;
   $('apTitle').textContent = `${plan.workNumber || planTitle(plan)} · ${MYD.quarterLabel(q)}`;
 
   $('apBody').innerHTML = `
     <div class="card">
-      <div class="page-title-row" style="margin-bottom:10px">
-        <div class="sect" style="margin:0">สรุปต้นทุน${esc(MYD.quarterLabel(q))}เพื่ออนุมัติปิดแผน</div>
+      <div class="page-title-row mb-2.5">
+        <div class="sect m-0">สรุปต้นทุน${esc(MYD.quarterLabel(q))}เพื่ออนุมัติปิดแผน</div>
         ${approved
-          ? `<span class="badge b-ok" style="margin-left:10px">อนุมัติแล้ว · ${esc(entry.approvedAt)}</span>`
-          : `<span class="badge b-low" style="margin-left:10px">รออนุมัติ · ส่งมา ${esc(entry.requestedAt)}</span>`}
-        <a class="btn btn-t" href="approve-close.html" style="margin-left:auto"><span class="ms">arrow_back</span> รายการแผน</a>
+          ? `<span class="badge b-ok ml-2.5">อนุมัติแล้ว · ${esc(entry.approvedAt)}</span>`
+          : `<span class="badge b-low ml-2.5">รออนุมัติ · ส่งมา ${esc(entry.requestedAt)}</span>`}
+        <a class="btn btn-t" href="approve-close.html" class="ml-auto"><span class="ms">arrow_back</span> รายการแผน</a>
       </div>
 
       <div class="fgrid">
         <div class="f sp2"><label>ชื่อแผน</label><div>${esc(plan.planName || '—')}</div></div>
         <div class="f sp2"><label>ไตรมาสที่ขออนุมัติ</label><div>${esc(MYD.quarterLabel(q))}</div></div>
-        <div class="f sp2"><label>รถในไตรมาสนี้</label><div><b style="font-size:20px">${ids.length}</b> คัน</div></div>
-        <div class="f sp2"><label>ต้นทุนรวมไตรมาสนี้</label><div><b style="font-size:20px">${grandTotal.toLocaleString('th-TH')}</b> บาท</div></div>
+        <div class="f sp2"><label>รถในไตรมาสนี้</label><div><b class="text-[20px]">${ids.length}</b> คัน</div></div>
+        <div class="f sp2"><label>ต้นทุนรวมไตรมาสนี้</label><div><b class="text-[20px]">${grandTotal.toLocaleString('th-TH')}</b> บาท</div></div>
       </div>
 
       <div class="sect">ต้นทุนต่อคัน</div>
@@ -138,11 +138,11 @@ function renderDetail(plan, q) {
           <th class="num">ค่าเดินทาง (บาท)</th><th class="num">รวม (บาท)</th></tr></thead>
         <tbody>${rows}</tbody>
         <tfoot><tr>
-          <td colspan="2" style="${totalCellStyle}"><b>ต้นทุนทั้งหมด</b></td>
-          <td class="num" style="${totalCellStyle}">${sumPerDiem.toLocaleString('th-TH')}</td>
-          <td class="num" style="${totalCellStyle}">${sumLodging.toLocaleString('th-TH')}</td>
-          <td class="num" style="${totalCellStyle}">${sumTravel.toLocaleString('th-TH')}</td>
-          <td class="num" style="${totalCellStyle}"><b>${grandTotal.toLocaleString('th-TH')}</b></td>
+          <td colspan="2" class="${totalCellClass}"><b>ต้นทุนทั้งหมด</b></td>
+          <td class="num ${totalCellClass}">${sumPerDiem.toLocaleString('th-TH')}</td>
+          <td class="num ${totalCellClass}">${sumLodging.toLocaleString('th-TH')}</td>
+          <td class="num ${totalCellClass}">${sumTravel.toLocaleString('th-TH')}</td>
+          <td class="num ${totalCellClass}"><b>${grandTotal.toLocaleString('th-TH')}</b></td>
         </tr></tfoot></table></div>`
         : `<div class="empty">ไม่มีรถในไตรมาสนี้</div>`}
 

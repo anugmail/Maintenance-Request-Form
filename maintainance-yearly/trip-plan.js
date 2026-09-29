@@ -220,8 +220,7 @@
 
             ${trip.mode === 'vendor' ? '' : `
             <div class="sect">พนักงาน กบค. ที่ออกไปซ่อม</div>
-            <div class="sub">ปกติ 2-3 คนต่อใบ — ใส่ชื่อไว้เพื่อให้หน่วยงานเจ้าของรถรู้ว่าใครจะไป
-              · ค่าเบี้ยเลี้ยงกรอกเป็น<b>อัตราต่อวัน</b>รายคน ระบบคูณจำนวนวันของช่วงที่เสนอแล้วรวมให้ในช่องด้านล่าง</div>
+            
             <div class="fgrid">
               ${(trip.staff || ['']).map((name, i) => `
                 <div class="f sp3"><label>คนที่ ${i + 1}</label>
@@ -232,7 +231,7 @@
                   <div class="in noic"><input type="number" min="0" value="${esc((trip.staffPerDiem || [])[i] ?? 0)}" ${dis}
                     data-staffpd-trip="${esc(trip.id)}" data-staffpd-i="${i}"></div></div>`).join('')}
             </div>
-            ${locked ? '' : `<div class="actions" style="justify-content:flex-start;margin-top:-6px">
+            ${locked ? '' : `<div class="actions justify-start -mt-1.5">
               <button class="btn btn-t btn-sm" data-staff-add="${esc(trip.id)}"><span class="ms">add</span> เพิ่มคน</button>
               ${(trip.staff || []).length > 1 ? `<button class="btn btn-t btn-sm" data-staff-del="${esc(trip.id)}"><span class="ms">remove</span> ลดคน</button>` : ''}
             </div>`}
@@ -253,7 +252,7 @@
             `}
 
             <div class="sect">รถในแผนนี้</div>
-            <div class="sub">วันนัดรายคันไม่ได้กำหนดที่นี่ — หน่วยงานเจ้าของรถเป็นคนเลือกวันเองภายในช่วงที่เสนอ ตอนตอบรับแผนนัด</div>
+            
             ${vs.length ? `<div class="tblwrap"><table class="tbl">
               <thead><tr><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>งานที่จะทำ</th><th>สถานที่บำรุงรักษา</th><th></th></tr></thead>
               <tbody>${rows}</tbody></table></div>`
@@ -271,7 +270,7 @@
 
             ${sent ? `
               <div class="sect">การตอบรับรายหน่วยงาน</div>
-              <div class="sub">ส่งเมื่อ ${esc(trip.sentAt)} · เอกสารส่งถึงเจ้าของรถและ กรย. (กรย. รับสำเนา ไม่ต้องกดตอบ)</div>
+              <div class="sub">ส่งเมื่อ ${esc(trip.sentAt)}</div>
               <div class="tblwrap"><table class="tbl">
                 <thead><tr><th>หน่วยงาน</th><th>สถานะ</th><th>เหตุผลที่ปฏิเสธ</th><th>ตอบเมื่อ</th></tr></thead>
                 <tbody>${replyRows}</tbody></table></div>` : ''}
@@ -313,7 +312,7 @@
     return `
       <div class="sub">รถที่ยืนยันแล้ว <b>${joiningQ.length}</b> คัน
         — จัดเข้าใบแล้ว <b>${joiningQ.length - unassignedQ.length}</b> · ยังไม่จัด <b>${unassignedQ.length}</b></div>
-      <div class="actions" style="justify-content:flex-start">
+      <div class="actions justify-start">
         <button class="btn btn-o" data-add-trip="${q}"><span class="ms">add</span> สร้างแผนเดินทางใหม่</button>
         ${unassignedQ.length ? `<button class="btn btn-s" data-auto-trips="${q}">
           <span class="ms">auto_awesome_motion</span> แยกอัตโนมัติตามจังหวัด</button>` : ''}
@@ -358,15 +357,13 @@
     return `
       <div class="sect">ขั้นที่ 1: ทำแผนเดินทาง</div>
       ${noneIds.length ? `<div class="note note-info"><span class="ms">inbox</span>
-        <div>มีรถ <b>${noneIds.length}</b> คันถูกพักไว้แบบ <b>ยังไม่ระบุไตรมาส</b> — ยังอยู่ในแผน
-        แต่จะไม่โผล่ในไตรมาสไหนจนกว่าจะย้ายกลับเข้าไตรมาส</div></div>` : ''}
-      <div class="sub"><b>เกณฑ์ปลดปุ่ม "ถัดไป"</b>: ต้องพร้อมครบ <b>ทั้ง 4 ไตรมาส</b> (จัดรถเข้าใบครบทุกคัน + ทุกใบของแต่ละไตรมาสตอบรับแล้ว) — ดูป้ายที่แต่ละไตรมาสด้านล่าง</div>
+        <div>มีรถ <b>${noneIds.length}</b> คันในแผนที่ยังไม่ระบุไตรมาส</div></div>` : ''}
+      
       <div class="sub">แผนเดินทางทั้งหมด <b>${trips.length}</b> ใบ · ตอบรับครบแล้ว <b>${accepted}</b> ใบ
         · รถที่ยังไม่อยู่ในใบไหนเลย <b>${MYD.unassignedVehicleIds(plan).length}</b> คัน
-        <small>(รถที่พักไว้แบบยังไม่ระบุไตรมาสไม่นับ)</small></div>
-      <div class="sub">แผนหนึ่งมีได้หลายใบ — จะแยกตามจังหวัด หรือจังหวัดละหลายใบก็ได้ · แต่ละใบเสนอเป็น<b>ช่วงเวลา</b>
-        แล้วหน่วยงานเจ้าของรถเลือกวันนัดของรถแต่ละคันภายในช่วงนั้นเอง</div>
-      <div class="sub">กดที่แต่ละไตรมาสด้านล่างเพื่อขยายดู/แก้ไขแผนเดินทาง — ปิดได้เมื่อทำเสร็จแล้ว</div>
+        </div>
+      
+      
       <div class="stack">${qBlocks}</div>`;
   }
 
@@ -629,14 +626,34 @@
 
     return `
       ${qTrips.length ? qTrips.map(tripReviewBlock).join('') : `<div class="empty">ยังไม่มีแผนเดินทางของ${esc(MYD.quarterLabel(q))}</div>`}
-      ${opts.showConfirm ? (confirmedAt
-        ? `<div class="note note-ok"><span class="ms">check_circle</span>
-            <div>ยืนยันแผนเดินทาง${esc(MYD.quarterLabel(q))}แล้ว เมื่อ ${esc(confirmedAt)}</div></div>`
-        : ready
-          ? `<div class="actions">
-              <button class="btn btn-p" data-confirm-q="${q}">ยืนยัน${esc(MYD.quarterLabel(q))}</button>
-            </div>`
-          : '') : ''}`;
+      ${opts.showConfirm ? travelConfirmActionHTML(plan, master, q) : ''}`;
+  }
+
+  // ปุ่ม/ป้าย "ยืนยัน<ไตรมาส>" — แยกออกมาเพราะหน้าไตรมาส (index.html#แผน/Q) ใช้ต่อท้ายขั้นทำแผนเดินทาง
+  // โดยไม่ต้องเอาบล็อก "ทวน" ที่ซ้ำกับรายการใบด้านบนมาด้วย
+  function travelConfirmActionHTML(plan, master, q) {
+    const confirmedAt = (plan.travelConfirmedByQuarter || {})[q];
+    if (confirmedAt) {
+      return `<div class="note note-ok"><span class="ms">check_circle</span>
+        <div>ยืนยันแผนเดินทาง${esc(MYD.quarterLabel(q))}แล้ว เมื่อ ${esc(confirmedAt)}</div></div>`;
+    }
+    if (!MYD.quarterTravelReady(plan, master, q)) return '';
+    return `<div class="actions">
+      <button class="btn btn-p" data-confirm-q="${q}">ยืนยัน${esc(MYD.quarterLabel(q))}</button>
+    </div>`;
+  }
+
+  // ----- แผนเดินทางของไตรมาสเดียว (8 ก.ย. 2569) -----
+  // ใช้ในหน้าไตรมาส ที่มีแท็บของตัวเองอยู่แล้ว จึงไม่มี mini-stepper/รายการไตรมาสอื่นมาซ้อน
+  function renderQuarterTravel(plan, q) {
+    const master = MYD.loadMaster();
+    const trips = MYD.ensureTrips(plan);
+    MYD.ensurePlanQuarters(plan);
+    S.q = q;
+    return `<div class="card">
+      ${renderTravelStep1Content(plan, master, trips, q)}
+      ${travelConfirmActionHTML(plan, master, q)}
+    </div>`;
   }
 
   // ----- เฟส 2 (แผนเดินทาง) ขั้น 2: ทวน + ยืนยัน — หน้าระดับ "ขั้น" เดิมของ trip-plan.html เท่านั้น -----
@@ -687,7 +704,7 @@
     return `
       <div class="sect">ขั้นที่ 2: ทวนแผนเดินทาง + ยืนยัน</div>
       <div class="sub">ทั้งปี — แผนเดินทาง <b>${trips.length}</b> ใบ · รวมค่าใช้จ่ายทั้งหมด <b>${grand.toLocaleString('th-TH')}</b> บาท</div>
-      <div class="sub">กดที่แต่ละไตรมาสด้านล่างเพื่อขยายทวนรายละเอียด — ปิดได้เมื่อทวนเสร็จแล้ว</div>
+      
       <div class="stack">${qBlocks}</div>
       ${outRows ? `
       <div class="sect">รถที่ไม่เข้าแผนเดินทางรอบนี้</div>
@@ -770,7 +787,7 @@
           <span class="num">${passed ? '✓' : n}</span><span class="lbl">${label}</span></div>`;
       };
       const body = !expanded ? '' : `
-        <div class="wsteps sm" style="margin-bottom:14px">${miniStep(1, 'แผนเดินทาง')}${miniStep(2, 'ทวน + ยืนยัน')}</div>
+        <div class="wsteps sm mb-3.5">${miniStep(1, 'แผนเดินทาง')}${miniStep(2, 'ทวน + ยืนยัน')}</div>
         ${step === 1
           ? renderTravelStep1Content(plan, master, trips, q)
           : renderTravelStep2Content(plan, master, trips, q, opts)}`;
@@ -790,15 +807,13 @@
     return `
       <div class="sect">แผนเดินทาง</div>
       ${noneIds.length ? `<div class="note note-info"><span class="ms">inbox</span>
-        <div>มีรถ <b>${noneIds.length}</b> คันถูกพักไว้แบบ <b>ยังไม่ระบุไตรมาส</b> — ยังอยู่ในแผน
-        แต่จะไม่โผล่ในไตรมาสไหนจนกว่าจะย้ายกลับเข้าไตรมาส</div></div>` : ''}
+        <div>มีรถ <b>${noneIds.length}</b> คันในแผนที่ยังไม่ระบุไตรมาส</div></div>` : ''}
       <div class="sub">แผนเดินทางทั้งหมด <b>${trips.length}</b> ใบ · ตอบรับครบแล้ว <b>${accepted}</b> ใบ
         · รวมค่าใช้จ่ายทั้งหมด <b>${grand.toLocaleString('th-TH')}</b> บาท
         · รถที่ยังไม่อยู่ในใบไหนเลย <b>${MYD.unassignedVehicleIds(plan).length}</b> คัน
-        <small>(รถที่พักไว้แบบยังไม่ระบุไตรมาสไม่นับ)</small></div>
-      <div class="sub">แผนหนึ่งมีได้หลายใบ — จะแยกตามจังหวัด หรือจังหวัดละหลายใบก็ได้ · แต่ละใบเสนอเป็น<b>ช่วงเวลา</b>
-        แล้วหน่วยงานเจ้าของรถเลือกวันนัดของรถแต่ละคันภายในช่วงนั้นเอง</div>
-      <div class="sub">กดที่แต่ละไตรมาสด้านล่างเพื่อขยายดู — ข้างในมีขั้น "แผนเดินทาง" / "ทวน + ยืนยัน" ของไตรมาสนั้นให้สลับเอง</div>
+        </div>
+      
+      
       <div class="stack">${qBlocks}</div>
       ${outRows ? `
       <div class="sect">รถที่ไม่เข้าแผนเดินทางรอบนี้</div>
@@ -852,8 +867,8 @@
     return `
       <div class="card">
         <div class="sect">แผนเดินทาง — ยืนยันแล้ว</div>
-        <span class="badge b-ok" style="font-size:var(--fs-body);padding:6px 16px">แผนเดินทางยืนยันแล้ว</span>
-        <div class="sub" style="margin-top:12px">แผนเดินทาง <b>${trips.length}</b> ใบ
+        <span class="badge b-ok text-md py-1.5 px-4">แผนเดินทางยืนยันแล้ว</span>
+        <div class="sub mt-3">แผนเดินทาง <b>${trips.length}</b> ใบ
           · รวมค่าใช้จ่าย <b>${grand.toLocaleString('th-TH')}</b> บาท · ทุกใบได้รับการตอบรับจากหน่วยงานแล้ว</div>
         ${trips.length ? `<div class="tblwrap"><table class="tbl">
           <thead><tr><th>แผน / สถานที่</th><th>ช่วงที่นัด</th><th class="num">รถ</th>
@@ -862,7 +877,7 @@
       </div>
       <div class="card">
         <div class="sect"><span class="ms">mail</span> ส่ง Noti แจ้งเจ้าของรถ ${joiningCount} คัน + กรย. วันที่เข้าตรวจ</div>
-        <div class="sub">ระบบส่งการแจ้งเตือนอัตโนมัติแล้ว (mock)</div>
+        
       </div>
       <div class="card">
         <div class="actions">
@@ -918,16 +933,42 @@
       const grand = perDiemSum + (Number(trip.lodging) || 0) + (Number(trip.travel) || 0);
       const blockers = MYD.repairTripBlockers(trip);
 
+      // นัดรายคัน (7 ก.ย. 2569) — แต่ละใบกำหนดวัน/เวลา/ผู้รับมอบรถของตัวเองได้
+      // เว้นว่าง = ใช้ช่วงที่เสนอของแผนตามเดิม · วันที่จำกัดอยู่ในช่วงของแผน (min/max)
       const rows = jobs.map(j => {
         const u = MYD.URGENCY[j.urgency] || MYD.URGENCY.normal;
+        const a = MYD.repairJobAppt(trip, j.no);
+        const outOfWindow = MYD.repairApptOutOfWindow(trip, j.no);
+        const apptCell = locked
+          ? (a.date ? `<div class="cell-key">${dateTh(a.date)}${a.time ? ' ' + esc(a.time) : ''}</div>
+               ${a.receiver ? `<div class="cell-sub">ผู้รับมอบรถ ${esc(a.receiver)}${a.tel ? ' · ' + esc(a.tel) : ''}</div>` : ''}`
+             : '<span class="cell-sub">ตามช่วงของแผน</span>')
+          : `<div class="f m-0"><div class="in noic">
+               <input type="date" value="${esc(a.date)}" ${trip.windowFrom ? `min="${esc(trip.windowFrom)}"` : ''} ${trip.windowTo ? `max="${esc(trip.windowTo)}"` : ''}
+                 aria-label="วันนัดของ ${esc(j.plate)}" data-rappt="${esc(trip.id)}" data-rjob="${esc(j.no)}" data-afield="date"></div></div>
+             <div class="f m-0 mt-1"><div class="in noic">
+               <input type="time" value="${esc(a.time)}" aria-label="เวลานัดของ ${esc(j.plate)}"
+                 data-rappt="${esc(trip.id)}" data-rjob="${esc(j.no)}" data-afield="time"></div></div>
+             ${outOfWindow ? '<div class="cell-sub text-error-600">อยู่นอกช่วงที่เสนอ</div>' : (a.date ? '' : '<div class="cell-sub">เว้นว่าง = ตามช่วงของแผน</div>')}`;
+        const recvCell = locked
+          ? `${esc(a.receiver || '—')}${a.tel ? `<div class="cell-sub">${esc(a.tel)}</div>` : ''}`
+          : `<div class="f m-0"><div class="in"><span class="ms">person</span>
+               <input type="text" value="${esc(a.receiver)}" placeholder="ชื่อผู้รับมอบรถ" aria-label="ผู้รับมอบรถของ ${esc(j.plate)}"
+                 data-rappt="${esc(trip.id)}" data-rjob="${esc(j.no)}" data-afield="receiver"></div></div>
+             <div class="f m-0 mt-1"><div class="in"><span class="ms">smartphone</span>
+               <input type="tel" value="${esc(a.tel)}" placeholder="เบอร์โทรศัพท์" aria-label="เบอร์โทรผู้รับมอบรถของ ${esc(j.plate)}"
+                 data-rappt="${esc(trip.id)}" data-rjob="${esc(j.no)}" data-afield="tel"></div></div>`;
         return `<tr>
-          <td><b>${esc(j.no)}</b><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
-          <td><b>${esc(j.plate)}</b><div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
-          <td>${esc(j.ownerDept)}<div class="cell-sub">${esc(j.province)}</div></td>
+          <td><div class="cell-key">${esc(j.no)}</div><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
+          <td><div class="cell-clip" title="${esc(j.plate)}">${esc(j.plate)}</div>
+            <div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
+          <td><div class="cell-clip">${esc(j.ownerDept)}</div><div class="cell-sub">${esc(j.province)}</div></td>
           <td>${j.syms.map(x => `<span class="badge b-neutral">${esc(x)}</span>`).join(' ')}
               <div class="cell-sub">${esc(j.target)}</div></td>
           <td><span class="badge ${u.cls}">${esc(u.text)}</span></td>
-          <td class="num">${locked ? '' : `<button class="btn btn-g btn-sm" data-rdrop="${esc(trip.id)}" data-rjob="${esc(j.no)}">เอาออกจากใบนี้</button>`}</td>
+          <td>${apptCell}</td>
+          <td>${recvCell}</td>
+          <td class="num">${locked ? '' : `<div class="dt-action"><button class="btn" title="เอาออกจากใบนี้" data-rdrop="${esc(trip.id)}" data-rjob="${esc(j.no)}"><span class="ms">playlist_remove</span></button></div>`}</td>
         </tr>`;
       }).join('');
 
@@ -945,8 +986,15 @@
           <b>${esc(trip.name || 'แผนเดินทางซ่อม')}</b>
           <span class="rzone-count">${jobs.length} ใบแจ้งซ่อม · ${MYD.repairTripDepts(trip).length} หน่วยงาน · ${grand.toLocaleString('th-TH')} บาท</span>
           <span class="badge ${locked ? 'b-low' : 'b-neutral'}">${locked ? 'รอตอบรับ' : 'ยังไม่ส่ง'}</span>
+          <div class="incident-actions">${locked
+            ? '<button class="btn btn-g" disabled>ส่งแล้ว แก้ไม่ได้</button>'
+            : `<button class="btn btn-td" data-rdel="${esc(trip.id)}">ลบแผนนี้</button>
+               <button class="btn btn-p" data-rsend="${esc(trip.id)}" ${MYD.repairTripSendable(trip) ? '' : 'disabled'}>
+                 <span class="ms">send</span> ส่งแผนนัดให้หน่วยงาน</button>`}</div>
         </div>
         <div class="rzone-body">
+          <section class="incident-section mt-0">
+            <h2 class="incident-section-title">รายละเอียดแผนเดินทาง</h2>
           <div class="fgrid">
             <div class="f sp2"><label>ชื่อแผน</label>
               <div class="in"><span class="ms">label</span>
@@ -962,12 +1010,11 @@
             <div class="f"><label>ถึงวันที่</label>
               <div class="in noic"><input type="date" value="${esc(trip.windowTo || '')}" ${dis}
                 data-rtrip="${esc(trip.id)}" data-field="windowTo"></div></div>
-            <div class="f ro sp2"><label>รวมกี่วัน <small>คิดให้อัตโนมัติ</small></label>
-              <div class="in noic"><input type="text" value="${days ? days + ' วัน' : '—'}" readonly></div></div>
           </div>
+          </section>
 
-          <div class="sect">ข้อมูลเฉพาะการออกซ่อมหน้างาน</div>
-          <div class="sub">สองช่องนี้มีเฉพาะสายงานซ่อม — สายบำรุงรักษาตามวาระไม่มี</div>
+          <section class="incident-section">
+            <h2 class="incident-section-title">ข้อมูลการออกซ่อมหน้างาน</h2>
           <div class="fgrid">
             <div class="f sp2"><label>จุดนัดรับรถ</label>
               <div class="in"><span class="ms">pin_drop</span>
@@ -983,9 +1030,12 @@
                   placeholder="เช่น นัดเวลา 09:00 ที่ป้อมยาม" data-rtrip="${esc(trip.id)}" data-field="note"></div></div>
           </div>
 
-          <div class="sect">ช่างผู้รับผิดชอบ</div>
-          <div class="sub">ใส่ชื่อไว้เพื่อให้หน่วยงานเจ้าของรถรู้ว่าใครจะไป
-            · ค่าเบี้ยเลี้ยงกรอกเป็น<b>อัตราต่อวัน</b>รายคน ระบบคูณจำนวนวันของช่วงที่เสนอแล้วรวมให้ด้านล่าง</div>
+          </div>
+          </section>
+
+          <section class="incident-section">
+            <h2 class="incident-section-title">ช่างผู้รับผิดชอบ</h2>
+            
           <div class="fgrid">
             ${(trip.staff || ['']).map((name, i) => `
               <div class="f sp3"><label>คนที่ ${i + 1}</label>
@@ -996,29 +1046,46 @@
                 <div class="in noic"><input type="number" min="0" value="${esc((trip.staffPerDiem || [])[i] ?? 0)}" ${dis}
                   data-rstaffpd="${esc(trip.id)}" data-rstaffpd-i="${i}"></div></div>`).join('')}
           </div>
-          ${locked ? '' : `<div class="actions" style="justify-content:flex-start">
+          ${locked ? '' : `<div class="actions justify-start">
             <button class="btn btn-t btn-sm" data-rstaff-add="${esc(trip.id)}"><span class="ms">add</span> เพิ่มคน</button>
             ${(trip.staff || []).length > 1 ? `<button class="btn btn-t btn-sm" data-rstaff-del="${esc(trip.id)}"><span class="ms">remove</span> ลดคน</button>` : ''}
           </div>`}
 
+          </section>
+
+          <section class="incident-section">
+            <h2 class="incident-section-title">ค่าใช้จ่าย</h2>
           <div class="fgrid">
-            <div class="f ro"><label>ค่าเบี้ยเลี้ยงรวม (บาท) <small>คิดให้อัตโนมัติ</small></label>
-              <div class="in noic"><input type="number" value="${esc(perDiemSum)}" readonly></div>
-              <div class="cell-sub">${MYD.repairTripPerDiemSum(trip).toLocaleString('th-TH')} บาท/วัน × ${days || 1} วัน</div></div>
             <div class="f"><label>ค่าที่พัก (บาท)</label>
               <div class="in noic"><input type="number" min="0" value="${esc(trip.lodging ?? 0)}" ${dis}
                 data-rtrip="${esc(trip.id)}" data-field="lodging"></div></div>
             <div class="f"><label>ค่าเดินทาง (บาท)</label>
               <div class="in noic"><input type="number" min="0" value="${esc(trip.travel ?? 0)}" ${dis}
                 data-rtrip="${esc(trip.id)}" data-field="travel"></div></div>
-            <div class="f"><label>รวม</label><div><b>${grand.toLocaleString('th-TH')} บาท</b></div></div>
           </div>
+          <dl class="incident-summary mt-3">
+            <div class="incident-field"><dt>ช่วงที่เสนอ</dt>
+              <dd>${trip.windowFrom && trip.windowTo ? dateTh(trip.windowFrom) + ' — ' + dateTh(trip.windowTo) : '—'}</dd></div>
+            <div class="incident-field"><dt>รวมกี่วัน</dt><dd>${days ? days + ' วัน' : '—'}</dd></div>
+            <div class="incident-field"><dt>ค่าเบี้ยเลี้ยงรวม</dt>
+              <dd>${perDiemSum.toLocaleString('th-TH')} บาท
+                <div class="cell-sub">${MYD.repairTripPerDiemSum(trip).toLocaleString('th-TH')} บาท/วัน × ${days || 1} วัน</div></dd></div>
+            <div class="incident-field"><dt>รวมทั้งหมด</dt><dd><b>${grand.toLocaleString('th-TH')} บาท</b></dd></div>
+          </dl>
+          </section>
 
-          <div class="sect">ใบแจ้งซ่อมในแผนนี้</div>
-          <div class="sub">หนึ่งใบเดินทางรวมได้หลายใบแจ้งซ่อม — งานที่จะทำมาจากอาการที่แจ้งไว้ แก้ที่นี่ไม่ได้</div>
-          ${jobs.length ? `<div class="tblwrap"><table class="tbl">
-            <thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th>
-              <th>อาการที่แจ้ง</th><th>ความเร่งด่วน</th><th></th></tr></thead>
+          <section class="incident-section">
+            <h2 class="incident-section-title">ใบแจ้งซ่อมในแผนนี้ <span class="badge b-neutral">นัดรายคันได้</span></h2>
+            ${jobs.length ? `<div class="sub">ระบุแล้ว <b>${MYD.repairApptCount(trip)}</b>/${jobs.length} คัน</div>` : ''}
+          ${jobs.length ? `${locked ? '' : `<div class="actions justify-start mb-2">
+              <button class="btn btn-s btn-sm" data-rappt-fill="${esc(trip.id)}" ${trip.windowFrom ? '' : 'disabled'}>
+                <span class="ms">event_repeat</span> เติมวันนัดทุกคันเป็นวันแรกของช่วง</button>
+              <button class="btn btn-t btn-sm" data-rappt-clear="${esc(trip.id)}">
+                <span class="ms">event_busy</span> ล้างวันนัดรายคัน</button>
+            </div>`}
+            <div class="tblwrap"><table class="tbl striped">
+            <thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ยานพาหนะ</th><th>หน่วยงานเจ้าของรถ</th>
+              <th>อาการที่แจ้ง</th><th>ความเร่งด่วน</th><th>วัน/เวลานัดรายคัน</th><th>ผู้รับมอบรถ</th><th></th></tr></thead>
             <tbody>${rows}</tbody></table></div>`
             : `<div class="empty">ยังไม่มีใบแจ้งซ่อมในแผนนี้ — เลือกจากรายการด้านล่าง</div>`}
 
@@ -1031,59 +1098,78 @@
             <div class="f"><label>&nbsp;</label>
               <button class="btn btn-s" data-radd="${esc(trip.id)}" ${addOpts ? '' : 'disabled'}>เพิ่ม</button></div>
           </div>`}
+          </section>
 
           <div data-rblockers="${esc(trip.id)}">${(!locked && blockers.length) ? `<div class="note note-warn"><span class="ms">error</span>
             <div><b>ส่งแผนนัดยังไม่ได้</b> — ต้องเคลียร์ ${blockers.length} เรื่องนี้ก่อน
-              <ul style="margin:6px 0 0 18px">${blockers.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>` : ''}</div>
+              <ul class="mt-1.5 mb-0 ml-[18px] mr-0">${blockers.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>` : ''}</div>
 
-          <div class="actions">
-            ${locked
-              ? `<button class="btn btn-g" disabled>ส่งแล้ว แก้ไม่ได้</button>`
-              : `<button class="btn btn-g" data-rdel="${esc(trip.id)}">ลบแผนนี้</button>
-                 <button class="btn btn-o" data-rsend="${esc(trip.id)}" ${MYD.repairTripSendable(trip) ? '' : 'disabled'}>
-                   <span class="ms">send</span> ส่งแผนนัดให้หน่วยงาน</button>`}
-          </div>
         </div>
       </div>`;
     }).join('');
   }
+
+  // สถานะลิสต์ใบแจ้งซ่อมรอจัดแผน — ชุดเดียวกับ LIST_UI ของโฟลว์แจ้งซ่อม (ค้นหา + กรองความเร่งด่วน)
+  const RLIST = { q: '', urg: 'all' };
+
+  // แถวใบแจ้งซ่อม — คอลัมน์/คลาสชุดเดียวกับตารางลิสต์ของโฟลว์แจ้งซ่อม
+  function repairJobRow(j) {
+    const u = MYD.URGENCY[j.urgency] || MYD.URGENCY.normal;
+    return `<tr>
+      <td><div class="cell-key">${esc(j.no)}</div><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
+      <td><div class="cell-clip" title="${esc(j.plate)}">${esc(j.plate)}</div>
+        <div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
+      <td><div class="cell-clip" title="${esc(j.ownerDept)}">${esc(j.ownerDept)}</div></td>
+      <td>${j.syms.map(x => `<span class="badge b-neutral">${esc(x)}</span>`).join(' ')}</td>
+      <td><span class="badge ${u.cls}">${esc(u.text)}</span></td>
+    </tr>`;
+  }
+  const RLIST_HEAD = `<thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ยานพาหนะ</th><th>หน่วยงานเจ้าของรถ</th>
+    <th>อาการที่แจ้ง</th><th>ความเร่งด่วน</th></tr></thead>`;
 
   function renderRepairStep1() {
     const trips = repairTrips();
     // 🔑 เข้าพูลได้เฉพาะใบที่เลือก "จัดซ่อมที่หน้างาน" — ใบที่นัดเข้ามาซ่อมที่ กบค. ไม่ต้องเดินทาง
     const onsite = MYD.onsiteRepairJobs();
     const offsite = MYD.offsiteRepairJobs();
-    const unassigned = MYD.unassignedRepairJobs(trips);
-
-    const offsiteRows = offsite.map(j => `<tr>
-      <td><b>${esc(j.no)}</b><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
-      <td><b>${esc(j.plate)}</b><div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
-      <td>${esc(j.ownerDept)}<div class="cell-sub">${esc(j.province)}</div></td>
-      <td><span class="badge b-neutral">เข้าซ่อมที่ กบค.</span></td>
-    </tr>`).join('');
+    const all = MYD.unassignedRepairJobs(trips);
+    const q = RLIST.q.trim().toLowerCase();
+    const unassigned = all.filter(j =>
+      (RLIST.urg === 'all' || (j.urgency || 'normal') === RLIST.urg) &&
+      (!q || (j.no + ' ' + j.plate + ' ' + j.model + ' ' + j.ownerDept + ' ' + j.province).toLowerCase().includes(q)));
+    const filtering = !!q || RLIST.urg !== 'all';
+    const urgOpts = [['all', 'ทุกระดับ']].concat(Object.entries(MYD.URGENCY).map(([k, v]) => [k, v.text]))
+      .map(([k, t]) => `<option value="${k}"${k === RLIST.urg ? ' selected' : ''}>${esc(t)}</option>`).join('');
 
     return `
       <div class="sect">ขั้นที่ 1: ทำแผนเดินทาง</div>
       <div class="sub"><b>มีรถที่ต้องออกไปซ่อม ${onsite.length} คัน</b>
-        — จัดเข้าใบแล้ว <b>${onsite.length - unassigned.length}</b> · ยังไม่จัด <b>${unassigned.length}</b>
+        — จัดเข้าใบแล้ว <b>${onsite.length - all.length}</b> · ยังไม่จัด <b>${all.length}</b>
         · แผนเดินทาง <b>${trips.length}</b> ใบ</div>
-      ${unassigned.length ? `<div class="sub">ที่ยังไม่จัด แยกตามจังหวัด:
-        ${provinceOrder(unassigned).map(pv => `<b>${esc(pv)}</b> ${groupByProvince(unassigned)[pv].length} ใบ`).join(' · ')}</div>` : ''}
-      <div class="note note-info"><span class="ms">filter_alt</span>
-        <div><b>นับเฉพาะใบที่เลือก "จัดซ่อมที่หน้างาน"</b> ในหัวข้อ <i>รูปแบบการซ่อม</i> ของใบแจ้งซ่อม
-          — ใบที่เลือก <i>เข้าซ่อมที่ กบค.</i> ไม่ต้องเดินทาง จึงไม่เข้าแผนนี้
-          ${offsite.length ? `(รอบนี้ถูกกันออก <b>${offsite.length}</b> ใบ ดูท้ายหน้า)` : ''}</div></div>
-      <div class="sub">หนึ่งใบเดินทางรวมใบแจ้งซ่อมได้หลายใบ · แต่ละใบเสนอเป็น<b>ช่วงเวลา</b>
-        แล้วหน่วยงานเจ้าของรถเลือกวันนัดภายในช่วงนั้นเอง (เหมือนสายบำรุงรักษา)</div>
-      <div class="actions" style="justify-content:flex-start">
-        <button class="btn btn-o" id="btnAddRepairTrip"><span class="ms">add</span> สร้างแผนเดินทางใหม่</button>
-      </div>
+      
       ${trips.length ? repairTripBoxes(trips) : `<div class="empty">ยังไม่มีแผนเดินทาง — กดสร้างแผนใหม่</div>`}
-      ${unassigned.length ? `
+      ${all.length ? `
         <div class="sect">ใบแจ้งซ่อมที่ยังไม่ถูกจัดเข้าแผน — แยกตามจังหวัด</div>
-        <div class="sub">ทีมหนึ่งมักออกทริปเดียวเก็บงานในจังหวัดเดียวกัน — ดูตรงนี้ว่าจังหวัดไหนมีกี่ใบ
-          แล้วค่อยตัดสินว่าจะรวมเป็นทริปเดียวหรือแยก</div>
-        <div class="stack">
+        
+        <div class="list-toolbar split">
+          <div class="lt-search">
+            <div class="search"><span class="ms">search</span>
+              <input type="search" id="rlist-q" placeholder="เลขที่ใบแจ้งซ่อม, ทะเบียน, หน่วยงาน" value="${esc(RLIST.q)}"></div>
+          </div>
+          <div class="lt-actions">
+            <button class="btn btn-s" id="rlist-filter-btn" aria-expanded="false" aria-controls="rlist-filter-panel">
+              <span class="ms">filter_list</span> ตัวกรอง<span class="badge b-neutral">${RLIST.urg !== 'all' ? 1 : 0}</span></button>
+            <button class="btn btn-p" id="btnAddRepairTrip"><span class="ms">add</span> สร้างแผนเดินทางใหม่</button>
+          </div>
+        </div>
+        <div class="filter-panel${RLIST.urg !== 'all' ? ' open' : ''}" id="rlist-filter-panel">
+          <div class="filter-field">
+            <label for="rlist-urg">กรองตามความเร่งด่วน</label>
+            <select id="rlist-urg">${urgOpts}</select>
+          </div>
+          <button class="btn btn-t" id="rlist-clear"><span class="ms">filter_alt_off</span> ล้างตัวกรอง</button>
+        </div>
+        ${unassigned.length ? `<div class="stack">
         ${provinceOrder(unassigned).map(pv => {
           const js = groupByProvince(unassigned)[pv];
           return `<div class="rzone">
@@ -1092,35 +1178,52 @@
               <b>${esc(pv)}</b>
               <span class="rzone-count">${js.length} ใบแจ้งซ่อม · ${new Set(js.map(j => j.ownerDept)).size} หน่วยงาน</span>
             </div>
-            <div class="rzone-body flush"><div class="tblwrap"><table class="tbl">
-              <thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th>
-                <th>อาการที่แจ้ง</th><th>ความเร่งด่วน</th></tr></thead>
-              <tbody>${js.map(j => {
-                const u = MYD.URGENCY[j.urgency] || MYD.URGENCY.normal;
-                return `<tr>
-                  <td><b>${esc(j.no)}</b><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
-                  <td><b>${esc(j.plate)}</b><div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
-                  <td>${esc(j.ownerDept)}</td>
-                  <td>${j.syms.map(x => `<span class="badge b-neutral">${esc(x)}</span>`).join(' ')}</td>
-                  <td><span class="badge ${u.cls}">${esc(u.text)}</span></td>
-                </tr>`;
-              }).join('')}</tbody></table></div></div>
+            <div class="rzone-body flush"><div class="tblwrap"><table class="tbl striped">
+              ${RLIST_HEAD}
+              <tbody>${js.map(repairJobRow).join('')}</tbody></table></div></div>
           </div>`;
         }).join('')}
-        </div>` : ''}
+        </div>`
+        : `<div class="filter-empty"><span class="ms">filter_alt_off</span><b>ไม่พบใบแจ้งซ่อมตามเงื่อนไขนี้</b>
+             <span>${q ? `ไม่มีใบที่ตรงกับคำค้น “${esc(q)}”` : 'ยังไม่มีใบในระดับความเร่งด่วนที่เลือก'}</span></div>`}
+        ${filtering ? `<div class="tblfoot"><div class="tf-left">
+          <span>แสดง ${unassigned.length} จาก ${all.length} ใบที่ยังไม่จัดเข้าแผน</span></div></div>` : ''}`
+        : `<div class="actions justify-start">
+             <button class="btn btn-p" id="btnAddRepairTrip"><span class="ms">add</span> สร้างแผนเดินทางใหม่</button></div>`}
       ${offsite.length ? `
         <div class="sect">ใบแจ้งซ่อมที่ไม่เข้าแผนเดินทาง</div>
-        <div class="sub">เลือก <b>เข้าซ่อมที่ กบค.</b> — เจ้าของรถขนรถมาที่สำนักงานใหญ่ ไม่ต้องจัดทีมเดินทาง
-          · ถ้าเปลี่ยนรูปแบบการซ่อมเป็น <b>จัดซ่อมที่หน้างาน</b> ใบนั้นจะขึ้นมาให้จัดในแผนเดินทางเอง</div>
-        <div class="tblwrap"><table class="tbl">
-          <thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ทะเบียน</th><th>หน่วยงานเจ้าของรถ</th><th>รูปแบบการซ่อม</th></tr></thead>
-          <tbody>${offsiteRows}</tbody></table></div>` : ''}`;
+        
+        <div class="tblwrap"><table class="tbl striped">
+          <thead><tr><th>เลขที่ใบแจ้งซ่อม</th><th>ยานพาหนะ</th><th>หน่วยงานเจ้าของรถ</th><th>รูปแบบการซ่อม</th></tr></thead>
+          <tbody>${offsite.map(j => `<tr>
+            <td><div class="cell-key">${esc(j.no)}</div><div class="cell-sub">แจ้งเมื่อ ${esc(j.reportedAt)}</div></td>
+            <td><div class="cell-clip" title="${esc(j.plate)}">${esc(j.plate)}</div>
+              <div class="cell-sub cell-clip" title="${esc(j.model)}">${esc(j.model)}</div></td>
+            <td><div class="cell-clip">${esc(j.ownerDept)}</div><div class="cell-sub">${esc(j.province)}</div></td>
+            <td><span class="badge b-neutral">เข้าซ่อมที่ กบค.</span></td>
+          </tr>`).join('')}</tbody></table></div>` : ''}`;
   }
 
   function wireRepairStep1() {
     const trips = repairTrips();
     const find = id => trips.find(t => t.id === id);
     const rerender = () => { MYD.saveRepairTrips(trips); HOST.onChange(); };
+
+    // ค้นหา/ตัวกรอง — re-render ทั้งขั้นแล้วคืนโฟกัส+ตำแหน่งเคอร์เซอร์ให้ช่องค้นหา (แบบเดียวกับลิสต์แผน)
+    const qEl = $('rlist-q');
+    if (qEl) {
+      qEl.addEventListener('input', e => { RLIST.q = e.target.value; HOST.onChange(); });
+      if (RLIST.q) { qEl.focus(); qEl.setSelectionRange(qEl.value.length, qEl.value.length) }
+    }
+    const fbtn = $('rlist-filter-btn');
+    if (fbtn) fbtn.addEventListener('click', () => {
+      const panel = $('rlist-filter-panel');
+      fbtn.setAttribute('aria-expanded', panel.classList.toggle('open'));
+    });
+    const urg = $('rlist-urg');
+    if (urg) urg.addEventListener('change', e => { RLIST.urg = e.target.value; HOST.onChange(); });
+    const clr = $('rlist-clear');
+    if (clr) clr.addEventListener('click', () => { RLIST.urg = 'all'; HOST.onChange(); });
 
     const add = $('btnAddRepairTrip');
     if (add) add.addEventListener('click', () => {
@@ -1139,7 +1242,7 @@
         const bl = MYD.repairTripBlockers(t);
         box.innerHTML = bl.length ? `<div class="note note-warn"><span class="ms">error</span>
           <div><b>ส่งแผนนัดยังไม่ได้</b> — ต้องเคลียร์ ${bl.length} เรื่องนี้ก่อน
-            <ul style="margin:6px 0 0 18px">${bl.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>` : '';
+            <ul class="mt-1.5 mb-0 ml-[18px] mr-0">${bl.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>` : '';
       }
     };
 
@@ -1206,11 +1309,42 @@
       rerender();
     }));
 
+    // นัดรายคัน — พิมพ์แล้วเก็บทันทีโดยไม่วาดใหม่ (กันเคอร์เซอร์เด้ง) · วาดใหม่ตอน blur เพื่ออัปเดตตัวนับ/คำเตือน
+    document.querySelectorAll('[data-rappt]').forEach(el => {
+      const apply = () => {
+        const t = find(el.dataset.rappt); if (!t) return;
+        t.appt = t.appt || {};
+        const cur = t.appt[el.dataset.rjob] || { date: '', time: '', receiver: '', tel: '' };
+        t.appt[el.dataset.rjob] = { ...cur, [el.dataset.afield]: el.value };
+        MYD.saveRepairTrips(trips);
+      };
+      el.addEventListener('input', apply);
+      el.addEventListener('change', () => { apply(); rerender(); });
+    });
+    document.querySelectorAll('[data-rapptFill], [data-rappt-fill]').forEach(b => b.addEventListener('click', () => {
+      const t = find(b.dataset.rapptFill || b.getAttribute('data-rappt-fill'));
+      if (!t || !t.windowFrom) return;
+      t.appt = t.appt || {};
+      (t.jobNos || []).forEach(no => {
+        const cur = t.appt[no] || { date: '', time: '', receiver: '', tel: '' };
+        if (!cur.date) t.appt[no] = { ...cur, date: t.windowFrom };
+      });
+      toast('เติมวันนัดให้คันที่ยังไม่ระบุแล้ว');
+      rerender();
+    }));
+    document.querySelectorAll('[data-rappt-clear]').forEach(b => b.addEventListener('click', () => {
+      const t = find(b.getAttribute('data-rappt-clear')); if (!t) return;
+      t.appt = {};
+      toast('ล้างวันนัดรายคันแล้ว — จะใช้ช่วงที่เสนอของแผนแทน');
+      rerender();
+    }));
+
     document.querySelectorAll('[data-rsend]').forEach(b => b.addEventListener('click', () => {
       const t = find(b.dataset.rsend);
       if (!t || !MYD.repairTripSendable(t)) return;
       t.sentAt = nowTh();
-      toast('ส่งแผนนัดให้หน่วยงานแล้ว');
+      const n = MYD.repairApptCount(t);
+      toast(n ? `ส่งแผนนัดให้หน่วยงานแล้ว — นัดรายคัน ${n} คัน` : 'ส่งแผนนัดให้หน่วยงานแล้ว');
       rerender();
     }));
   }
@@ -1242,6 +1376,15 @@
       HOST.onChange = opts.onChange || function () {};
       HOST.onConfirm = opts.onConfirm || function () {};
       bindTravelAccordion(plan);
+    },
+    // แผนเดินทางของไตรมาสเดียว — สำหรับหน้าไตรมาส (8 ก.ย. 2569)
+    renderQuarterTravel,
+    bindQuarterTravel(plan, opts) {
+      opts = opts || {};
+      HOST.onChange = opts.onChange || function () {};
+      HOST.onConfirm = opts.onConfirm || function () {};
+      bindProcStep2(plan);   // สร้าง/แก้/ส่งใบเดินทาง
+      bindProcStep3(plan);   // ปุ่มยืนยัน<ไตรมาส>
     },
     confirm: confirmTravelPlan,
     renderConfirmed: renderTravelConfirmed,

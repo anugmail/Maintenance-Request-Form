@@ -24,12 +24,23 @@ const { collectComponents } = require('./components-map');
 
 const OUT = path.join(__dirname, 'out');
 const REPORT = process.argv.includes('--report');
+const OVERHAUL = process.argv.includes('--overhaul');
 // plan-skeleton พักไว้ก่อนตามที่เจ้าของงานสั่ง 11 ส.ค. 2569 · admin ตัดออกเพราะใหญ่เกิน (3,770 node)
-const SLUGS = REPORT
-  ? Array.from({ length: 8 }, (_, i) => 'report-0' + (i + 1))
+// ONLY=report-01 หรือ ONLY=report-01,report-03 — ทำสเปกเฉพาะ state ที่ระบุ
+// (คู่กับ UNTIL= ของ flow-report-extract.js — ใช้ตอนอยาก export ทีละหน้า)
+const ONLY = (process.env.ONLY || '').split(',').map(x => x.trim()).filter(Boolean);
+// VARIANT=m390 → อ่าน dom-report-m390-NN.json แล้วออกเป็น spec-report-m390.json + page คนละหน้า
+// (16 ก.ย. 2569 · ไม่ใส่ = ชุด web เดิมทุกอย่าง)
+const VARIANT = (process.env.VARIANT || '').trim();
+const VS = VARIANT ? '-' + VARIANT : '';
+const ALL_SLUGS = REPORT
+  ? fs.readdirSync(OUT).map(f => (f.match(new RegExp('^dom-(report' + VS + '-\\d+)\\.json$')) || [])[1])
+      .filter(Boolean).sort()
+  : OVERHAUL ? ['overhaul']
   : ['index', 'plan-new', 'supplies', 'confirm'];
-const PAGE_NAME = REPORT ? 'Screens — แจ้งซ่อม (ฝั่งผู้แจ้ง)' : 'Screens — บำรุงรักษาประจำปี';
-const OUT_FILE = REPORT ? 'spec-report.json' : 'spec.json';
+const SLUGS = ONLY.length ? ALL_SLUGS.filter(s => ONLY.includes(s)) : ALL_SLUGS;
+const PAGE_NAME = REPORT ? 'Screens — แจ้งซ่อม (ฝั่งผู้แจ้ง)' + (VARIANT ? ' · ' + VARIANT : '') : OVERHAUL ? 'Screens — Overhaul (ทดสอบ 1 หน้า)' : 'Screens — บำรุงรักษาประจำปี';
+const OUT_FILE = REPORT ? 'spec-report' + VS + '.json' : OVERHAUL ? 'spec-overhaul.json' : 'spec.json';
 
 const ICONS = (() => {
   const f = path.join(OUT, 'icons.json');
@@ -93,6 +104,14 @@ function strokeOf(s) {
 
 const FIGMA_ALIGN = { 'flex-start': 'MIN', 'start': 'MIN', 'center': 'CENTER', 'flex-end': 'MAX', 'end': 'MAX', 'space-between': 'SPACE_BETWEEN' };
 const FIGMA_CROSS = { 'flex-start': 'MIN', 'start': 'MIN', 'center': 'CENTER', 'flex-end': 'MAX', 'end': 'MAX', 'baseline': 'BASELINE', 'stretch': 'MIN', 'normal': 'MIN' };
+/* 16 ก.ย. 2569 — Figma ยอม counterAxisAlignItems = BASELINE เฉพาะตอน layoutMode === 'HORIZONTAL'
+   แถวที่ CSS เป็น align-items:baseline + flex-wrap:wrap (เช่น .pf-row บล็อกอะไหล่หน้าอนุมัติ)
+   พอ extract ที่จอแคบมันตัดบรรทัดจนถูกจัดเป็น VERTICAL ⇒ ปลั๊กอิน throw ทั้งไฟล์
+   (เจอตอน export m390 · ชุด web 1440 ไม่เจอเพราะยังเป็น HORIZONTAL อยู่) */
+const crossFor = (alignItems, mode) => {
+  const v = FIGMA_CROSS[alignItems] || 'MIN';
+  return (v === 'BASELINE' && mode !== 'HORIZONTAL') ? 'MIN' : v;
+};
 
 /* ---------- geometry: ลูกเรียงแบบไหน ---------- */
 function rectOf(n) { return n.rect || { x: 0, y: 0, w: 0, h: 0 }; }
@@ -255,8 +274,16 @@ function convert(node, parentRect, ctx) {
 
   const kids = [];
   // ย่อหน้าที่มีตัวหนา/<code> ปนกับข้อความ → รวมช่วงที่ติดกันเป็น text เดียว (กันกล่องซ้อนกัน)
-  for (const ch of mergeInlineChildren(node)) {
-    const spec = convert(ch, r, childCtx);
+  // แถวตาราง (tr): th ตัวแรก/ตัวสุดท้ายมีมุมมนจริง (.tbl th:first-child/:last-child ใน components.css)
+  // ต้องส่งตำแหน่งไปให้ nameFor เห็น ไม่งั้น component "header cell" รวมทุกตัวเป็นชิ้นเดียว
+  // แล้วมุมมนของตัวแรกจะไปเลอะกับตัวกลาง (เจอจริง — ดูคอมเมนต์ที่ nameFor ใน mapping.js)
+  const mergedRowKids = mergeInlineChildren(node);
+  const thKids = node.tag === 'tr' ? mergedRowKids.filter((k) => k.tag === 'th') : [];
+  for (const ch of mergedRowKids) {
+    const kidCtx = (ch.tag === 'th' && thKids.length > 1)
+      ? Object.assign({}, childCtx, { thFirst: ch === thKids[0], thLast: ch === thKids[thKids.length - 1] })
+      : childCtx;
+    const spec = convert(ch, r, kidCtx);
     if (spec) kids.push({ spec, src: ch });
   }
   // ::before / ::after ที่มีภาพจริง — DOM ไม่มี node ให้เดิน สร้างเพิ่มเอง
@@ -287,7 +314,7 @@ function convert(node, parentRect, ctx) {
         gap: 0,
         padding: measuredPadding(r, ordered.map(k => rectOf(k.src))),
         align: 'SPACE_BETWEEN',
-        cross: FIGMA_CROSS[s.alignItems] || 'MIN'
+        cross: crossFor(s.alignItems, cls.mode)
       };
       stats.spaceBetween++;
     } else if (gaps.length === 0 || spread <= GAP_SPREAD_OK) {
@@ -298,7 +325,7 @@ function convert(node, parentRect, ctx) {
         gap,
         padding: measuredPadding(r, ordered.map(k => rectOf(k.src))),
         align: FIGMA_ALIGN[s.justifyContent] || 'MIN',
-        cross: FIGMA_CROSS[s.alignItems] || 'MIN'
+        cross: crossFor(s.alignItems, cls.mode)
       };
       if (s.flexWrap === 'wrap' && cls.mode === 'HORIZONTAL') layout.wrap = true;
     } else {
@@ -336,8 +363,38 @@ function convert(node, parentRect, ctx) {
   // ทำให้ป้ายที่ browser ย่อด้วย ellipsis กลายเป็นข้อความโดนหั่นกลางคำใน Figma
   // (เจ้าของงานเจอที่ stepper 12 ส.ค. 2569) · Figma ไม่มี text-overflow อยู่แล้ว
   if (!/auto|scroll/.test(s.overflow || '')) spec.clip = false;
+  normalizeToLibrary(spec);
   spec._rect = r;
   return spec;
+}
+
+/* ---------- บังคับค่าของ component ที่ไลบรารีกำหนดไว้แล้ว ----------
+   ค่าที่วัดจากพิกัดที่เรนเดอร์จริงคลาดจากสเปกไลบรารีเล็กน้อยเสมอ (กล่องข้อความของ
+   เบราว์เซอร์ไม่ได้อยู่กึ่งกลางเป๊ะ → padding ออกมา 2/9/3/9 แทนที่จะเป็น 4/8/4/8)
+   และความกว้างที่วัดได้ทำให้กลายเป็น FIXED ทั้งที่ของจริงเป็น Hug
+   ⇒ ตัวไหนที่ไลบรารีระบุค่าไว้ชัดแล้ว ให้ยึดค่าไลบรารี ไม่ใช่ค่าที่วัดได้
+
+   ค่าอ้างอิงไม่ได้เขียนมือ — อ่านจาก `library-geometry.json` ที่ generate จาก
+   `design-system/.figma-extract/` (dump ของไฟล์ Figma จริง เก็บเป็นไฟล์ในเครื่อง)
+   ด้วย `node figma-export/build-library-geometry.js` ⇒ **ไม่ต้องต่อ Figma ตอนแปลง**
+   ไลบรารีเปลี่ยนเมื่อไหร่ค่อย dump ใหม่แล้วรัน generator ซ้ำรอบเดียว */
+let LIBRARY_GEOMETRY = {};
+try {
+  LIBRARY_GEOMETRY = require('./library-geometry.json').families || {};
+} catch (e) {
+  console.warn('⚠ ไม่มี library-geometry.json — ใช้ค่าที่วัดจากหน้าเว็บล้วน '
+    + '(รัน `node figma-export/build-library-geometry.js` เพื่อยึดค่าไลบรารี)');
+}
+
+function normalizeToLibrary(spec) {
+  const family = String(spec.name || '').split(' / ')[0];
+  const g = LIBRARY_GEOMETRY[family];
+  if (!g) return;
+  spec.layout = Object.assign({}, spec.layout, {
+    mode: g.mode, gap: g.gap, padding: g.padding.slice(), align: 'CENTER', cross: g.cross
+  });
+  spec.size = Object.assign({}, spec.size, { h: g.h, hMode: 'FIXED', wMode: g.wMode });
+  if (g.radius != null) spec.radius = g.radius;
 }
 
 /* หาช่องว่างที่โตผิดพวกเพียงช่องเดียว และของต้องเต็มความยาวกล่องพอดี
@@ -597,7 +654,7 @@ function main() {
     stats.absolute.slice(0, 12).forEach(a => console.log('   ' + a));
     if (stats.absolute.length > 12) console.log('   … อีก ' + (stats.absolute.length - 12));
   }
-  fs.writeFileSync(path.join(OUT, 'map-report.json'), JSON.stringify(stats, null, 2));
+  fs.writeFileSync(path.join(OUT, 'map-report' + VS + '.json'), JSON.stringify(stats, null, 2));
   console.log('\nเขียน ' + path.relative(process.cwd(), outFile) + ' (' + Math.round(fs.statSync(outFile).size / 1024) + 'KB)');
 }
 
