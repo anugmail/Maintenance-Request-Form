@@ -875,6 +875,28 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
 .pager .pg .ms{font-size:20px}
 
 /* ============================================================
+   v0.48 — Mobile table item — การ์ดแทนตารางบนมือถือ (≤768px) — กู้คืน v0.65: หายไปตอน merge 9a94659
+   อิงสเปกที่มีบันทึกไว้ใน SOURCES.md ("Mobile table item: การ์ด r8 · เส้น #D0D5DD" = --gray-300)
+   + โครง label/value ยกจากสกรีนช็อตจริง VMS+.com "จัดการงานซ่อม" (figma/กบครับซ่อม-mobile.jpg, 2 ก.ย. 2569)
+   ใช้คู่กับ .tblwrap เดิม — .tbl-cards ซ่อนอยู่บนจอกว้าง โผล่แทน .tblwrap เฉพาะจอแคบ
+   ============================================================ */
+.tbl-cards{display:none}
+@media(max-width:768px){
+  /* ซ่อนเฉพาะตารางที่มีการ์ดคู่กัน — ตารางที่ไม่มี .tbl-cards (เช่น overhaul.js) ยังเลื่อนแนวนอนได้ตามเดิม */
+  .tblwrap:has(+.tbl-cards){display:none}
+  .tbl-cards{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+  .tbl-card{background:#fff;border:1px solid var(--gray-300);border-radius:var(--rounded-md);padding:16px}
+  .tbl-card-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+       padding:10px 0;border-bottom:1px solid var(--gray-200)}
+  .tbl-card-row:first-child{padding-top:0}
+  .tbl-card-row:last-of-type{border-bottom:0}
+  .tbl-card-label{font-size:var(--fs-text-sm);color:var(--gray-500);flex-shrink:0}
+  .tbl-card-value{font-size:var(--fs-text-sm);color:var(--gray-900);font-weight:600;text-align:right}
+  .tbl-card-value .cell-sub{font-weight:400;text-align:right}
+  .tbl-card-foot{display:flex;justify-content:flex-end;padding-top:10px}
+}
+
+/* ============================================================
    v0.22 — หน้ารายการ (list page) ครบชุด
    ✅ จาก screenshot หน้าจริง VMS Plus "งานแจ้งซ่อม" (จัดการเหตุรถเสีย) — 18 ส.ค. 2569
    ปิดช่องว่างข้อ 9 ของ README ที่ค้างไว้ว่า "ตาราง list ยังเข้าไม่ได้ (401)"
@@ -978,8 +1000,9 @@ input.tbl-cell-ro{width:100px;display:inline-block;background:var(--gray-100);bo
 .parts-picked-list.has-items+.parts-add-manual{margin-top:var(--space-4)}
 .parts-stock-item{display:grid;grid-template-columns:1fr auto;align-items:center;gap:var(--space-3);padding:var(--space-4);border:1px solid var(--gray-200);border-radius:var(--r-md)}
 .parts-stock-item b,.parts-picked-item b{font-size:var(--fs-text-md);line-height:var(--lh-text-md)}
-.parts-line{font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);color:var(--gray-700)}
-.parts-source{font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);color:var(--gray-500);margin-top:2px}
+/* v0.68: บรรทัดรหัส·ราคา 16 · บรรทัดแหล่งคลัง 14 — วัดจาก figma/หน้าเบิกอะไหล่-filled.jpg (ความกว้างข้อความ "FT-0330 · 650 บาท/ชิ้น" = 16px · "Smart Inventory : มีในคลัง…" = 14px) เดิม 14/12 เล็กกว่าภาพ */
+.parts-line{font-size:var(--fs-text-md);line-height:var(--lh-text-md);color:var(--gray-700)}
+.parts-source{font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);color:var(--gray-500);margin-top:2px}
 .parts-source b{font-size:inherit;color:var(--gray-700)}
 .parts-empty{min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--gray-500)}
 .parts-empty-image{display:block;width:148px;height:128px;object-fit:contain;margin-bottom:var(--space-4)}
@@ -1001,6 +1024,25 @@ input.tbl-cell-ro{width:100px;display:inline-block;background:var(--gray-100);bo
    (เจอจริงที่ "คลังอะไหล่" ของขั้นอะไหล่ในฟอร์มแจ้งซ่อม — อะไหล่ทั้งคลังยาวลงไปเรื่อย ๆ)
    ครอบเฉพาะกล่องรายการ ไม่ครอบหัวข้อ/ช่องค้นหา ⇒ ค้นหายังตรึงอยู่ด้านบนเสมอ */
 .parts-scroll{max-height:min(60vh,560px);overflow-y:auto;overscroll-behavior:contain;padding-right:var(--space-2)}
+
+/* ---- v0.68 (1 ต.ค. 2569) การ์ด "อะไหล่ที่ต้องการใช้งาน" แบบภาพออกแบบจริง — figma/หน้าเบิกอะไหล่-filled.jpg
+   (เจ้าของงานสั่ง "แก้หน้าอะไหล่เอาตาม design จริง") วัดพิกเซล: การ์ด pad 16 · ห่างกัน 16 · ขอบ gray-200 r8
+   ซ้าย = ชื่อ(+แนะนำ) / รหัส·ราคา ด้านบน — บรรทัดแหล่งคลังชิดล่าง · ขวา = ถังขยะบนสุด — ราคารวม + ตัวปรับจำนวน 120×40 ชิดล่าง (ห่าง 8)
+   .stacked เป็น modifier — .parts-picked-item ฐาน (แถวเดียว ราคา·จำนวน·ถังขยะ v0.50) ยังใช้ในฟอร์มแจ้งซ่อมเดิมตามที่เจ้าของงานเคยขอ */
+.parts-picked-item.stacked{grid-template-columns:minmax(0,1fr) auto;align-items:stretch;gap:var(--space-4);padding:var(--space-4)}
+.parts-picked-item.stacked .pp-main{display:flex;flex-direction:column;min-width:0}
+.parts-picked-item.stacked .pp-main .parts-source{margin-top:auto;padding-top:var(--space-4)}
+.parts-picked-item.stacked .pp-side{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:var(--space-2)}
+.parts-picked-item.stacked .pp-side .pp-bottom{display:flex;flex-direction:column;align-items:flex-end;gap:var(--space-2)}
+.parts-picked-item.stacked .parts-price{font-size:var(--fs-text-md);line-height:var(--lh-text-md)}
+.parts-picked-item.stacked .parts-manual-grid{margin-top:0}
+/* ตัวปรับจำนวนขนาดภาพออกแบบ 120×40 · ขอบ gray-300 r8 · ปุ่ม −/+ สี gray-500 (ปิดใช้เมื่อเบิกคลังสำรองครบยอด) */
+.qty.lg{width:120px;height:40px;border-radius:var(--rounded-md);justify-content:space-between}
+.qty.lg button{width:40px;height:38px;color:var(--gray-500);font-size:20px}
+.qty.lg button:disabled{color:var(--gray-300);cursor:not-allowed}
+.qty.lg span{font-weight:400;font-size:var(--fs-text-md)}
+/* รวมค่าอะไหล่ท้ายคอลัมน์ขวาของหน้าเบิกอะไหล่ — แถวห่าง 16 ตามภาพ (ใน modal สรุปยังห่าง 8 ตาม figma/สรุปรายการอะไหล่.svg) */
+.parts-pane .psum-total{gap:var(--space-4)}
 @media(max-width:960px){.parts-workspace{grid-template-columns:1fr}.parts-pane{min-height:0}}
 @media(max-width:600px){.parts-manual-grid{grid-template-columns:1fr}.parts-manual-grid .wide{grid-column:auto}.parts-picked-item{grid-template-columns:1fr}.parts-picked-actions{justify-content:space-between}.parts-page-actions .btn{width:100%}}
 
@@ -1016,6 +1058,20 @@ input.tbl-cell-ro{width:100px;display:inline-block;background:var(--gray-100);bo
 .file-chip-rm{flex-shrink:0;display:flex;padding:0;border:0;background:none;color:var(--gray-500);cursor:pointer}
 .file-chip-rm:hover{color:var(--error-600)}
 .file-chip-rm .ms{color:inherit;font-size:16px}
+
+/* ---- v0.67 (1 ต.ค. 2569) ช่องอัพโหลดเอกสารแนบ — ยกจากภาพระบบจริง flow/repair (UAT maintain-d ขั้น "รายงานปิดงาน"
+   ตาราง "บันทึกตรวจสอบเอกสารปิดงาน" คอลัมน์ "เอกสารแนบ") · วัดจากพิกเซลภาพ:
+   กล่อง 320×50 · ขอบ 1px gray-300 (#D0D5DD) · r8 · ไอคอนคลิปหนีบกระดาษซ้าย ห่างขอบ 24 · ข้อความ "อัพโหลดเอกสารแนบ" 16 gray-400
+   ปิดใช้ (แถวที่ไม่ได้เลือก "มี") = พื้น gray-100 (#F2F4F7) · ใช้ได้ = พื้นขาว + คำแนะนำใต้กล่อง 12 gray-700 ห่าง 4
+   เลือกไฟล์แล้วแสดงเป็น .file-chip ตามเดิม · ⚠️ ยังไม่ได้เทียบชื่อ component ในไลบรารี (อ้างอิงภาพระบบจริงเท่านั้น) ---- */
+.upload-field{position:relative;display:flex;align-items:center;gap:var(--space-3);width:100%;max-width:320px;height:50px;
+  padding:0 var(--space-6);border:1px solid var(--gray-300);border-radius:var(--rounded-md);background:#fff;
+  color:var(--gray-400);font-size:var(--fs-text-md);line-height:var(--lh-text-md);cursor:pointer;margin:0}
+.upload-field .ms{font-size:24px;color:var(--gray-500);flex-shrink:0}
+.upload-field input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.upload-field:focus-within{border-color:var(--brand-500);box-shadow:0 0 0 4px var(--focus-ring)}
+.upload-field[aria-disabled=true]{background:var(--gray-100);cursor:not-allowed}
+.upload-hint{margin-top:var(--space-1);font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);color:var(--gray-700);max-width:320px}
 
 /* แถบท้ายตาราง — "แสดง x ถึง y จาก z รายการ" + จำนวนแถวต่อหน้า ซ้าย · เลขหน้าขวา
    เดิมหน้า style guide ประกอบเองด้วย .row + inline style ⇒ ยกเป็นคอมโพเนนต์ */
@@ -1198,6 +1254,32 @@ input.tbl-cell-ro{width:100px;display:inline-block;background:var(--gray-100);bo
 .pf-src{flex-basis:100%;margin-top:6px;color:var(--gray-700)}
 .pf-src b{color:var(--gray-900)}
 .pf-empty{padding:14px 0;color:var(--gray-500)}
+
+/* ---- v0.66 (30 ก.ย. 2569) สรุปรายการอะไหล่ — modal ที่ขึ้นก่อนยืนยันเบิกอะไหล่ ----
+   ยกจาก figma/สรุปรายการอะไหล่.svg (+ -mobile.svg) ที่เจ้าของงานส่งมา 30 ก.ย. 2569 · วัดค่าจาก path ใน SVG:
+   · โครง modal .modal.md (กว้าง 500) > .modal-hd/.modal-bd/.modal-ft · ปุ่มท้าย "ปิด"/"ยืนยัน" กว้าง 100
+   · .psum-sect หัวส่วน ("อะไหล่ที่เบิก"/"อะไหล่ที่จัดซื้อ") 16/600 ห่างกล่อง 16 · ส่วนถัดไปห่าง 32
+   · .psum-box กล่องพื้น gray-50 (#F9FAFB) r8 pad 24
+   · .psum-grp กลุ่มตามแหล่ง (เบิกที่ Smart Inventory/คลังสำรอง · จัดซื้อโดย Smart Inventory/กบค.) หัวกลุ่ม 14/600 gray-700
+     กลุ่มถัดไปคั่นเส้น 1px gray-300 (#D0D5DD) เว้นบน/ล่าง 16
+   · .psum-row แถว "ชื่อ xจำนวน … ราคา บาท" 14/400 gray-600 (#475467) ห่างกัน 8
+   · .psum-total บล็อก "รวมค่าอะไหล่" — หัวเรื่องใช้ .parts-pane-title (แถบ brand-900 4×24) · ค่าหนา 600 · แถว .grand 16/700
+   ⚠️ ยังไม่ได้เทียบชื่อ component ในไลบรารี VMS Plus (เครื่องนี้ไม่มี .figma-extract) — อ้างอิงภาพหน้าจอ Figma เท่านั้น */
+.psum-sect{font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:600;color:var(--gray-900);margin-bottom:var(--space-4)}
+.psum-box+.psum-sect,.psum-box+.psum-total{margin-top:var(--space-8)}
+.psum-box{background:var(--gray-50);border-radius:var(--rounded-md);padding:var(--space-6)}
+.psum-grp{display:grid;gap:var(--space-2)}
+.psum-grp+.psum-grp{border-top:1px solid var(--gray-300);margin-top:var(--space-4);padding-top:var(--space-4)}
+.psum-grp>b{font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);font-weight:600;color:var(--gray-700)}
+.psum-row{display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-4);font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);color:var(--gray-600)}
+.psum-row>span:last-child{white-space:nowrap}
+.psum-empty{font-size:var(--fs-text-sm);color:var(--gray-500)}
+.psum-total{display:grid;gap:var(--space-2)}
+.psum-total .psum-row>span:last-child{font-weight:600}
+.psum-total .psum-row.grand{font-size:var(--fs-text-md);line-height:var(--lh-text-md)}
+.psum-total .psum-row.grand>span:first-child{font-size:var(--fs-text-sm);font-weight:600}
+.psum-total .psum-row.grand>span:last-child{font-weight:700}
+.psum-modal .modal-ft-a .modal-ft-r>.btn{min-width:100px}
 
 /* ---- v0.60 (7 ก.ย. 2569) การ์ดอะไหล่ขั้น 4 ตามสเปกภาพ (desktop+mobile โครงเดียวกัน):
    ชื่อ+ถังขยะแถวบน / บรรทัด meta / บรรทัดแหล่งคลัง / แถวท้าย ราคารวมซ้าย + ตัวปรับจำนวนขวา

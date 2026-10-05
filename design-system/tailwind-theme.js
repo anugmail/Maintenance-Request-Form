@@ -163,7 +163,8 @@ tailwind.config = {
       "tk-4": "var(--space-4)",
       "tk-4.5": "var(--space-4_5)",
       "tk-5": "var(--space-5)",
-      "tk-6": "var(--space-6)"
+      "tk-6": "var(--space-6)",
+      "tk-8": "var(--space-8)"
     }
   }
 }

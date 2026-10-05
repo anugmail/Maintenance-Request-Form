@@ -1,0 +1,9 @@
+/* ลำดับ layer ของ Tailwind v4: theme → base → components → utilities
+   CSS ของ design system เข้า layer "components" — เป็นฐานหน้าตาคอมโพเนนต์ (.btn .tbl .wsteps …) ตามเดิม
+   แต่ utility ของ Tailwind (mt-6, mb-8, gap-…) ทับได้ตามที่ตั้งใจ
+   (เดิม import แบบไม่มี layer ⇒ `*{margin:0;padding:0}` บรรทัด 10 ของ components.css ชนะ utility ทุกตัว
+   margin/padding ที่ใส่ด้วย Tailwind จึงหายเงียบทั้งแอป — แก้ 1 ต.ค. 2569)
+   กติกา CLAUDE.md: หน้าตาคอมโพเนนต์ต้องมาจาก components.css · Tailwind ใช้จัด layout/spacing เท่านั้น */
+@import "tailwindcss";
+@import "../../../design-system/tokens.css";
+@import "../../../design-system/components.css" layer(components);
