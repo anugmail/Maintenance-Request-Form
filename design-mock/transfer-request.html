@@ -14,7 +14,7 @@
 <script src="../design-system/tailwind-theme.js?v=20261001-ds68"></script>
 <!--
   5 ต.ค. 2569 — ปรับหน้าใหม่ทั้งหน้าให้ตรง design system (README ข้อ 4)
-  ที่เปลี่ยนจากฉบับเดิม (สำรองไว้ที่ transfer-request-backup-20261005.html):
+  ที่เปลี่ยนจากฉบับเดิม (ไฟล์สำรอง transfer-request-backup-20261005.html ลบแล้ว 6 ต.ค. 2569 — ดูฉบับเดิมได้ที่คอมมิต dcbb99e):
    · หัวข้อแต่ละส่วน .incident-section-title → .sect (Section header ของไลบรารี)
    · ข้อมูลอ่านอย่างเดียว <dl.incident-summary> → .f.ro ใน .fgrid — ตรงกับ Modal / Vehicle transfer
      ใน Figma ที่แสดงสังกัดเดิม/รหัสทรัพย์สิน/เจ้าของเดิมเป็นช่องกรอกแบบ disabled
@@ -31,7 +31,12 @@
    · ถอด .wsteps ออก — 4 ขั้นนั้นเป็นงานของคนละหน่วยงานคนละวัน (ต้นทาง · ปลายทาง · กจย.) ไม่ใช่ขั้นที่ผู้กรอกคนเดียวเดินต่อกัน
      จึงเป็น "สถานะของเรื่อง" ไม่ใช่ wizard (แนวทาง UX-5 · NN/g Wizards) · ลำดับของเรื่องยังบอกไว้ที่บรรทัดใต้ชื่อหน้า
      และกล่อง "หลังส่งคำร้อง" ท้ายฟอร์ม · สถานะปัจจุบันดูจากป้ายข้างชื่อหน้า
-   · เติม type="text" ให้ช่องอ่านอย่างเดียว 7 ช่อง — เดิมไม่มี type จึงไม่เข้ากฎ input[type=text] ของ components.css
+   · 6 ต.ค. 2569 (รอบค่ำ) — เจ้าของงานทักว่า "component display แสดงไม่ถูกต้อง" พร้อมภาพอ้างอิงกล่องแสดงข้อมูล (ป้ายเล็กอยู่บน ค่าอยู่ล่าง ในกล่องพื้นเทา)
+     ⇒ ส่วน "ยานพาหนะและสังกัดเดิม" เปลี่ยนจากช่องกรอกอ่านอย่างเดียว (.f.ro) กลับเป็น dl.incident-summary > .incident-field (dt/dd)
+     จัด 3 คอลัมน์ด้วย md:grid-cols-3 (คลาสกลางตั้งต้น 2 คอลัมน์) · ข้อความยาวตกบรรทัดเอง ไม่ถูกตัด
+     ⚠️ น้ำหนักตัวอักษรยังไม่ตรงภาพอ้างอิง: ภาพ = ป้ายเทาตัวปกติ + ค่าตัวหนา · คลาสกลาง/ไลบรารี Content item = ป้ายตัวหนา + ค่าตัวปกติ — รอเคาะว่ายึดแบบไหน
+     · ช่อง "รหัสข้างรถใหม่" ยังเป็น .f.ro เพราะอยู่ในกลุ่มช่องกรอกของส่วนสังกัดใหม่
+   · เติม type="text" ให้ช่องอ่านอย่างเดียว 7 ช่อง (เหลือใช้จริง 1 ช่องหลังเปลี่ยนส่วนข้างบนเป็นกล่องแสดงข้อมูล) — เดิมไม่มี type จึงไม่เข้ากฎ input[type=text] ของ components.css
      ได้ขอบ 2px inset กับความกว้างตั้งต้นของเบราว์เซอร์แทน (ข้อความถูกตัด)
 -->
 </head>
@@ -111,23 +116,17 @@
           </div>
         </div>
 
-        <!-- ═══ 2. ยานพาหนะและสังกัดเดิม — อ่านอย่างเดียว · ฟิลด์ตาม Modal / Vehicle transfer ═══ -->
+        <!-- ═══ 2. ยานพาหนะและสังกัดเดิม — ข้อมูลแสดงอย่างเดียว ใช้กล่องแสดงข้อมูล dl.incident-summary (ไลบรารี Cards › Content item) ไม่ใช่ช่องกรอก ═══ -->
         <div class="card">
           <div class="sect mt-0">ยานพาหนะและสังกัดเดิม</div>
-          <div class="fgrid mb-0">
-            <div class="f ro"><label>เลขทะเบียน</label>
-              <div class="in"><span class="ms">directions_car</span><input type="text" value="3ขพ 6153 กรุงเทพมหานคร" readonly></div></div>
-            <div class="f ro"><label>รหัสทรัพย์สิน</label>
-              <div class="in"><span class="ms">tag</span><input type="text" value="513021567839" readonly></div></div>
-            <div class="f ro"><label>ประเภทยานพาหนะ</label>
-              <div class="in"><span class="ms">category</span><input type="text" value="กระเช้าฮอทไลน์ 115 KV" readonly></div></div>
-            <div class="f ro"><label>รหัสข้างรถเดิม</label>
-              <div class="in"><span class="ms">label</span><input type="text" value="กจย. - 25 - 1850" readonly></div></div>
-            <div class="f ro sp2"><label>สังกัดยานพาหนะเดิม</label>
-              <div class="in"><span class="ms">apartment</span><input type="text" value="กจย. ฝจบ. ผชก.(ล) สายงาน ล" readonly></div></div>
-            <div class="f ro sp2"><label>เจ้าของยานพาหนะเดิม</label>
-              <div class="in"><span class="ms">person</span><input type="text" value="นายอนุรักษ์ คล่องไชยชน อก.จย." readonly></div></div>
-          </div>
+          <dl class="incident-summary md:grid-cols-3 mb-0">
+            <div class="incident-field"><dt>เลขทะเบียน</dt><dd>3ขพ 6153 กรุงเทพมหานคร</dd></div>
+            <div class="incident-field"><dt>รหัสทรัพย์สิน</dt><dd>513021567839</dd></div>
+            <div class="incident-field"><dt>ประเภทยานพาหนะ</dt><dd>กระเช้าฮอทไลน์ 115 KV</dd></div>
+            <div class="incident-field"><dt>รหัสข้างรถเดิม</dt><dd>กจย. - 25 - 1850</dd></div>
+            <div class="incident-field"><dt>สังกัดยานพาหนะเดิม</dt><dd>กจย. ฝจบ. ผชก.(ล) สายงาน ล</dd></div>
+            <div class="incident-field"><dt>เจ้าของยานพาหนะเดิม</dt><dd>นายอนุรักษ์ คล่องไชยชน อก.จย.</dd></div>
+          </dl>
         </div>
 
         <!-- ═══ 3. สังกัดใหม่ — ฟิลด์ตาม Modal / Vehicle transfer ═══ -->
