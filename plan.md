@@ -245,8 +245,9 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
 
 **ลำดับงานบังคับ:** หลักการที่ค้นมา → เทียบกับคอมโพเนนต์ใน `design-system/` → แล้วค่อยออกแบบ/แก้หน้าจอ
 
-**สถานะ ณ 6 ต.ค. 2569:** ศึกษาหลักการครบ 9 หัวข้อ (เปิดอ่านแหล่งต้นทาง 29 หน้า รายชื่อท้ายหัวข้อนี้) · เทียบคอมโพเนนต์เสร็จเฉพาะ UX-1 ·
-สำรวจการใช้ตัวเลือกในหน้าจอเดิมแล้ว (ยังไม่ได้ตัดสินว่าจุดไหนต้องแก้) · ยังไม่ได้สร้างหน้าแนวทาง · ยังไม่ได้แก้หน้าจอใด
+**สถานะ ณ 6 ต.ค. 2569 (รอบค่ำ):** ศึกษาหลักการครบ 9 หัวข้อ (เปิดอ่านแหล่งต้นทาง 33 หน้า รายชื่อท้ายหัวข้อนี้) · **เทียบคอมโพเนนต์ครบทั้ง 9 หัวข้อ** ·
+หน้าแนวทาง `design-system/ux-guidelines.html` ขึ้นแล้ว ลิงก์จาก `design-system/index.html` และ README (ขั้น 1.1 ของขั้นตอนบังคับ) ·
+สำรวจการใช้ตัวเลือกในหน้าจอเดิมแล้ว (ยังไม่ได้ตัดสินว่าจุดไหนต้องแก้) · **ยังไม่ได้แก้หน้าจอใด — รอเจ้าของงานเคาะที่จุดหยุด**
 
 ⚠️ เลขและข้อความจากแหล่งอ้างอิงอ่านผ่านเครื่องมือสรุปหน้าเว็บ — **ต้องเปิดเทียบกับหน้าต้นทางอีกรอบตอนทำหน้าแนวทาง** ก่อนถือเป็นกฎ
 
@@ -255,20 +256,23 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
 | # | หัวข้อ | คอมโพเนนต์ที่เกี่ยว | ศึกษาหลักการ | เทียบคอมโพเนนต์ |
 |---|---|---|---|---|
 | UX-1 | เลือกจากชุดตัวเลือก | `select` · `.rads` · `.radcards` · `.chks` · `.chips.pick` · `.seg` · `.tabs` · `.tile` · `.search` | ✅ | ✅ |
-| UX-2 | ช่องกรอกและการตรวจความถูกต้อง | `.fgrid` · `.f` · `.in` · `.f.ro` · `.f.err` · `.help` | ✅ | ⬜ |
-| UX-3 | ตาราง หน้ารายการ ตัวกรอง แบ่งหน้า | `.list-toolbar` · `.tbl` · `th.sortable` · `.tblfoot` · `.pager` · `.filter-panel` · `.tbl-cards` | ✅ | ⬜ |
-| UX-4 | Modal และการยืนยัน | `.modal` (`.md`/`.lg`/`.xl`) | ✅ | ⬜ |
-| UX-5 | งานหลายขั้น | `.wsteps` · `.wstep` | ✅ | ⬜ |
-| UX-6 | ปุ่มและลำดับความสำคัญ | `.btn` + `.btn-p`/`-s`/`-t`/`-link`/`-d` | ✅ | ⬜ |
-| UX-7 | สถานะและข้อความตอบกลับ | `.badge` · `.toast` · `.note` · `.empty` · `.cell-state` · `.btn.is-loading` | ✅ | ⬜ |
-| UX-8 | แนบไฟล์ | `.upload-field` · `.file-chip` | ✅ | ⬜ |
-| UX-9 | Dashboard และตัวเลขสรุป | `.card` (ส่วนกราฟยังไม่มีคลาสกลาง) | ✅ | ⬜ |
+| UX-2 | ช่องกรอกและการตรวจความถูกต้อง | `.fgrid` · `.f` · `.in` · `.f.ro` · `.f.err` · `.help` | ✅ | ✅ |
+| UX-3 | ตาราง หน้ารายการ ตัวกรอง แบ่งหน้า | `.list-toolbar` · `.tbl` · `th.sortable` · `.tblfoot` · `.pager` · `.filter-panel` · `.tbl-cards` | ✅ | ✅ |
+| UX-4 | Modal และการยืนยัน | `.modal` (`.md`/`.lg`/`.xl`) | ✅ | ✅ |
+| UX-5 | งานหลายขั้น | `.wsteps` · `.wstep` | ✅ | ✅ |
+| UX-6 | ปุ่มและลำดับความสำคัญ | `.btn` + `.btn-p`/`-s`/`-t`/`-link`/`-d` | ✅ | ✅ |
+| UX-7 | สถานะและข้อความตอบกลับ | `.badge` · `.toast` · `.note` · `.empty` · `.cell-state` · `.btn.is-loading` | ✅ | ✅ |
+| UX-8 | แนบไฟล์ | `.upload-field` · `.file-chip` | ✅ | ✅ |
+| UX-9 | Dashboard และตัวเลขสรุป | `.card` (ส่วนกราฟยังไม่มีคลาสกลาง) | ✅ | ✅ |
 
 ### งานถัดไป (ตามลำดับ)
 
-- [ ] **ขั้น A** — เทียบคอมโพเนนต์ของ UX-2 ถึง UX-9 ให้ได้รายการช่องว่างแบบเดียวกับ G1–G9 ของ UX-1 · หัวข้อที่หลักการยังบาง (แบ่งหน้า · ตัวกรอง · จอมือถือ) ค้นแหล่งต้นทางเพิ่มก่อนเทียบ
-- [ ] **ขั้น B** — สร้างหน้าแนวทาง `design-system/ux-guidelines.html` (โครงตาม `buttons.html`) · ลิงก์จาก `design-system/index.html` และ README · เติมเกณฑ์จำนวนในคอลัมน์ "ใช้เมื่อ" ของ README ข้อ 4 · เพิ่มขั้นตอนบังคับใน README ข้อ 0 ว่าต้องเปิดหน้าแนวทางก่อนเลือกคอมโพเนนต์
+- [x] **ขั้น A (เสร็จ 6 ต.ค. 2569)** — เทียบคอมโพเนนต์ของ UX-2 ถึง UX-9 ให้ได้รายการช่องว่างแบบเดียวกับ G1–G9 ของ UX-1 · หัวข้อที่หลักการยังบาง (แบ่งหน้า · ตัวกรอง · จอมือถือ) ค้นแหล่งต้นทางเพิ่มก่อนเทียบ
+- [x] **ขั้น B (เสร็จ 6 ต.ค. 2569 ยกเว้น 1 ข้อ)** — ⬜ **ยังไม่ได้เติมเกณฑ์จำนวนลงคอลัมน์ "ใช้เมื่อ" ของ README ข้อ 4** เพราะเลขยังเป็นข้อเสนอ รอเคาะ · ไม่มี `<style>` ในหน้า ใช้คลาสกลาง + Tailwind · ตรวจแล้ว: Chrome ที่ 390/768/1440 ไม่ล้นแนวนอน ไม่มี pageerror · `audit-usage.js` ผ่าน · ลิงก์แหล่งอ้างอิง 33 ลิงก์เปิดได้ครบ · ไม่ได้แตะ `tokens.css`/`components.css` จึงไม่บั๊ม `?v=` · แก้ข้อขัดกันใน README แล้ว 2 จุด (G5 · G7) — สร้างหน้าแนวทาง `design-system/ux-guidelines.html` (โครงตาม `buttons.html`) · ลิงก์จาก `design-system/index.html` และ README · เติมเกณฑ์จำนวนในคอลัมน์ "ใช้เมื่อ" ของ README ข้อ 4 · เพิ่มขั้นตอนบังคับใน README ข้อ 0 ว่าต้องเปิดหน้าแนวทางก่อนเลือกคอมโพเนนต์
 - [ ] 🔴 **จุดหยุดให้เจ้าของงานเคาะ** — เลขเกณฑ์ที่เสนอ · G6 ใช้แบบไหน · จะสร้างคอมโพเนนต์ที่ขาด (G2, G8) หรือไม่ · **ยังไม่แตะหน้าจอต้นแบบก่อนจุดนี้**
+      · เพิ่มจากผลเทียบ UX-2…9: **F2** เครื่องหมายช่องจำเป็น ("(จำเป็น)" ของเรา กับ "(ถ้ามี)" ของไลบรารีและแอปจริง) · **F9** จังหวะตรวจความถูกต้อง ·
+      **S6** จำนวนขั้นและ modal/หน้าเต็มของฟอร์มแจ้งซ่อม · และรายการ "ขาด" ที่ต้องสร้างคอมโพเนนต์: กล่องยืนยันแบบอันตราย (M3) · สถานะว่างที่มีปุ่ม (T9, N4) ·
+      สถานะกำลังโหลด (T10, N5) · คลาสกลางของ dashboard (D1) · สถานะผิดพลาดของช่องแนบไฟล์ (U2)
 - [ ] **ขั้น C** — ตรวจทุกจุดที่มีการเลือกค่าในหน้าจอเดิมเทียบแนวทาง ลงเป็น checkbox: หน้า · ช่อง · คอมโพเนนต์ที่ใช้ · จำนวนตัวเลือก · ตรง/ไม่ตรง · ควรเป็นอะไร
 - [ ] **ขั้น D** — แก้หน้าจอเดิมเฉพาะจุดที่แก้ได้ด้วยคอมโพเนนต์ที่มีอยู่ · จุดที่ต้องพึ่งคอมโพเนนต์ที่ยังไม่มีให้ค้างไว้ที่นี่
 
@@ -302,9 +306,9 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
 - [ ] 🔴 **G2** เกิน 15 ตัวเลือกต้องพิมพ์กรองได้ (USWDS · PatternFly) → dropdown แบบเปิด / dropdown search / multi-select → **ขาด** ทั้งที่ไลบรารี Figma มี `Input dropdown` 16 สถานะ + `Dropdown list item` + `Input dropdown with badges` (`.figma-extract/component/2-8.json` · README ข้อ 9 จดไว้ว่ายังไม่ทำ) → **รอเคาะว่าจะสร้างหรือไม่** ยังไม่ลงมือ
 - [ ] **G3** ช่องที่ผิดต้องเห็นชัดที่ตัวช่อง (NN/g Errors in Forms) → `select` → **ขาด** สถานะ focus / error / disabled (`.f.err` กับ `:focus` ไม่ครอบ `select` — `components.css` L85–91, L583) → เพิ่มสถานะให้ครบเท่า `input`
 - [ ] **G4** ตัวเลือกที่ใช้ไม่ได้ให้เป็นสีเทา ไม่ลบทิ้ง (NN/g Dropdowns) → `.rads` · `.seg` · `.tabs` → **ขาด** สถานะปิดใช้ · `.tabs` ไม่มี focus (`components.css` L591, L263, L303) → เพิ่มสถานะ
-- [ ] **G5** → `.chips.pick` กับ `.chks` → **ขัด** README เขียน "อาการเสีย" ไว้ทั้งสองแถว (L262–263) ทั้งที่ย้ายไป `.chks` แล้ว → แก้ README
+- [x] **G5 (แก้แล้ว 6 ต.ค. 2569)** → `.chips.pick` กับ `.chks` → **ขัด** README เขียน "อาการเสีย" ไว้ทั้งสองแถว (L262–263) ทั้งที่ย้ายไป `.chks` แล้ว → แก้ README
 - [ ] 🔴 **G6** ไม่เกิน 5 ตัวเลือกใช้ radio (NN/g) → ระดับความรุนแรง 4 ค่า → **ขัด** README ข้อ 5 บอกใช้ `.rads` · หน้าตัวอย่าง `index.html` L247 ใช้ `.seg` · แอปจริงใช้ dropdown search → **รอเคาะ** ว่าใช้แบบไหน
-- [ ] **G7** → `.search` → **ขัด** README L208 เรียก "ช่องกรอกในฟอร์ม ไม่ใช่หัวลิสต์" แต่ `components.css` L92 เรียก "ช่องค้นหาของลิสต์" → เขียนบทบาทให้ตรงกันที่เดียว
+- [x] **G7 (แก้แล้ว 6 ต.ค. 2569 ฝั่ง README)** → `.search` → **ขัด** README L208 เรียก "ช่องกรอกในฟอร์ม ไม่ใช่หัวลิสต์" แต่ `components.css` L92 เรียก "ช่องค้นหาของลิสต์" → เขียนบทบาทให้ตรงกันที่เดียว
 - [ ] 🔴 **G8** → toggle · time picker · ปฏิทินวันเดียว → **ขาด** ในคลาสกลาง (ไลบรารี Figma มีทั้งสามในหน้า Toggle / Date picker) → **รอเคาะว่าจะสร้างหรือไม่**
 - [ ] **G9** ต้องมีสถานะกำลังโหลด (PatternFly) → dropdown search ของแอปจริง → **ขาด** — `customSelectOnSearch.tsx` ประกาศ `loading` (L22) แต่ไม่ได้แสดงผล → ถ้าสร้าง G2 ให้ทำสถานะนี้ให้ครบ และแจ้งทีมแอปจริง
 
@@ -402,7 +406,18 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
 - ไม่ใช้ placeholder แทน label — NN/g Placeholders (2014)
 - ทำเครื่องหมายช่องจำเป็นทุกช่องด้วย * · ระบุ "ไม่บังคับ" ช่วยลดภาระ — NN/g Required Fields (2019)
 - ตรวจเมื่อออกจากช่อง ไม่ตรวจระหว่างพิมพ์ · ข้อความอยู่ติดช่อง · ใช้สีคู่กับไอคอน · ไม่ใช้ tooltip แจ้งข้อผิดพลาด · มีสรุปรวมได้แต่ห้ามเป็นที่เดียว · เก็บค่าที่กรอกไว้ — NN/g Errors in Forms (2019)
-- [ ] ⬜ ยังไม่ได้เทียบกับ `.fgrid` · `.f` · `.in` · `.f.ro` · `.f.err` · `.help`
+
+**ผลเทียบคอมโพเนนต์** (สำรวจ 6 ต.ค. 2569 — `components.css` · README · ไลบรารี Figma · แอปจริง)
+
+- [x] **F1** **มีแล้ว** — label อยู่เหนือช่องและเห็นตลอด (`.f label`) แต่ไม่มีกฎห้ามใช้ placeholder แทน label · `.select-inline` กับ `.search` บนแถบเครื่องมือไม่มี label → `components.css` L567 · README L213, L290 — เติมกฎ
+- [ ] 🔴 **F2** **รอเคาะ** — ไม่มีวิธีทำเครื่องหมายช่องจำเป็น/ไม่บังคับในคลาสกลาง · ไลบรารี Figma มีแต่ `Optional` ที่แสดง “(ถ้ามี)” · แอปจริงทำเครื่องหมายเฉพาะช่องไม่บังคับ (83 จุด) ช่องจำเป็นไม่มีเครื่องหมาย · ต้นแบบของเราเขียน “(จำเป็น)” · หลักการแนะนำให้ทำเครื่องหมายช่องจำเป็นทุกช่อง → `components.css` L568 (`.f label small`) — รอเคาะว่าใช้แบบไหน
+- [ ] **F3** **มีบางส่วน** — สถานะผิดพลาดมีแค่สีขอบกับข้อความใต้ช่อง ไม่มีไอคอน · ไม่ครอบ `select` `.numfld` `.rads` `.chks` `.radcards` `.upload-field` · ขอบแดงของ `.search input` มองไม่เห็นเพราะตัว input ไม่มีขอบ → `components.css` L583–584, L97 · สีขอบผิดพลาดต่างกัน 3 ที่: ของเรา `--error-300` · ไลบรารี error-500 · แอปจริงสองระดับ
+- [ ] **F4** **ขาด** — ไม่มีข้อความแนะนำสีกลางใน `.f` — `.help` เป็นสีแดงเสมอ จึงบอกรูปแบบล่วงหน้าไม่ได้ · ไลบรารีมี `Helper text` ทุกช่อง → `components.css` L584
+- [ ] **F5** **ขัดกัน** — `.fgrid` ตั้งต้น 4 คอลัมน์ (เหลือ 2 ที่จอ 1100 และ 1 ที่ 768) ขัดกับหลักคอลัมน์เดียว · ไม่มีกฎว่าเมื่อไรใช้หลายคอลัมน์ · `.fgrid.cols-3` ยังตัดที่ 760 ไม่ใช่ 768 → `components.css` L555, L566, L618, L632 — โครงนี้ยกมาจากหน้าจริงของ VMS Plus จึงต้องเขียนกฎกำกับ ไม่ใช่รื้อ
+- [ ] **F6** **มีบางส่วน** — ความกว้างช่องคุมได้แค่ด้วยจำนวนคอลัมน์ที่กิน (`.sp2` `.sp3` `.sp4`) → `components.css` L616
+- [ ] **F7** **ขัดกัน** — ไม่มีสไตล์ปิดใช้ของ input · textarea · select · README กับหน้าตัวอย่างบอกว่า `.f.ro` เป็นเส้นประ แต่ CSS เป็นเส้นทึบ · เส้นประในแอปจริงแปลว่าปิดใช้ ส่วนของเรา (`.f.ro.dash`) แปลว่าค่าที่ระบบเติมให้ → `components.css` L575, L580 · README L214 กับ L402 · `index.html` L303
+- [ ] **F8** **ขาด** — ไม่มีตัวนับตัวอักษรหรือข้อตกลงความยาวสูงสุดของช่องข้อความยาว (ไลบรารีก็ไม่มี · แอปจริงจำกัดความยาวแต่ไม่แสดงตัวนับ) → ลำดับความสำคัญต่ำ
+- [ ] 🔴 **F9** **รอเคาะ** — จังหวะตรวจ: หลักการให้ตรวจเมื่อออกจากช่อง · แอปจริงตรวจทุกครั้งที่พิมพ์ (23 จาก 24 ฟอร์ม) และปิดปุ่มส่งจนกว่าจะครบ · ต้นแบบของเราตรวจตอนกดส่ง → รอเคาะว่าต้นแบบจะแสดงพฤติกรรมแบบไหน
 - [ ] ที่เห็นแล้วระหว่างงานอื่น: `design-mock/transfer-request.html` จัดช่องอ่านอย่างเดียว 4 คอลัมน์ ข้อความถูกตัดที่จอ 1440 — ขัดกับ "คอลัมน์เดียว ยกเว้นช่องสั้น"
 
 ### UX-3 ตาราง หน้ารายการ ตัวกรอง แบ่งหน้า
@@ -412,21 +427,57 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
 - แก้ไขแถวเดียว: modal บังแถวข้างเคียง ให้ใช้แผงข้างหรือหน้ารายละเอียดเมื่อต้องอ้างข้อมูลแถวอื่น — NN/g Data Tables
 - การกระทำรายแถวน้อยกว่า 3 อย่าง วางเป็นปุ่มไอคอนในแถว · มากกว่านั้นเข้าเมนู — Carbon Data Table
 - หัวคอลัมน์ยาวให้ขึ้น 2 บรรทัดแล้วค่อยตัด · ความสูงแถวมาตรฐาน 40px — Carbon Data Table
-- [ ] ⬜ ยังไม่ได้เทียบกับ `.list-toolbar` · `.tbl` · `th.sortable` · `.tblfoot` · `.pager` · `.filter-panel` · `.tbl-cards`
-- [ ] ⬜ หลักการยังบาง: ขนาดหน้าเริ่มต้นของการแบ่งหน้า · แบ่งหน้าหรือเลื่อนต่อเนื่อง · ตารางบนจอมือถือ — ต้องค้นเพิ่ม
+
+**ผลเทียบคอมโพเนนต์** (สำรวจ 6 ต.ค. 2569 — `components.css` · README · ไลบรารี Figma · แอปจริง)
+
+- [x] **T1** **มีแล้ว** — คอลัมน์แรกเป็นเลขที่งาน/รหัสอ้างอิง ตัวหนาด้วย `.cell-key` และมีกฎเขียนไว้ → `components.css` L925–927 · README L280
+- [ ] **T2** **ขาด** — หัวตารางไม่ตรึงเมื่อเลื่อน · แอปจริงตรึงหัวและจำกัดตัวตารางที่ 10 แถว → `components.css` L824
+- [ ] **T3** **มีบางส่วน** — ไฮไลต์แถวเมื่อชี้เป็นค่าตั้งต้น · แถบสลับสีต้องใส่ `.tbl.striped` เอง ขณะที่ไลบรารีและแอปจริงสลับสีเป็นค่าตั้งต้น → `components.css` L830–835
+- [ ] **T4** **ขัดกัน** — ตัวเลขในตาราง: คลาสกลาง `.tbl .num` จัดกึ่งกลาง แต่หน้า dashboard จัดชิดขวา · หลักการข้อนี้ยังไม่ได้หาแหล่งอ้างอิง → `components.css` L831 · `parts-insights.html` L34–35
+- [ ] **T5** **มีบางส่วน** — มีสถานะเรียงครบ (ยังไม่เรียง · เรียงอยู่) แต่ไม่มีกฎว่าคอลัมน์ไหนเรียงได้ · ทิศลูกศรของ “น้อยไปมาก” ในไลบรารีกับแอปจริงกลับกัน → `components.css` L915–923 · README L279
+- [ ] **T6** **มีบางส่วน** — ตัวกรองเปิดจากปุ่ม “ตัวกรอง” มีป้ายนับเงื่อนไขและปุ่มล้าง · แผงข้างมีปุ่ม ล้างตัวกรอง/ยกเลิก/ตกลง ตรงกับไลบรารี แอปจริง และหลักกรองเมื่อกดตกลง · ยังไม่มีป้ายบอกเงื่อนไขที่ใช้อยู่ทีละอัน · README L423 ยังเขียนว่าแผงตัวกรองยังไม่ทำ → README L283–284 · `components.css` L963–978
+- [ ] **T7** **มีบางส่วน** — ปุ่มไอคอนรายแถว `.dt-action` มีแล้ว แต่ปุ่มสามจุดไม่มีเมนูให้เปิด (เกี่ยวกับ G2) → `components.css` L853–860 · `index.html` L191–192
+- [ ] **T8** **มีบางส่วน** — แถบท้ายตารางแสดงช่วงรายการกับจำนวนทั้งหมดแล้ว · ตัวเลือกจำนวนต่อหน้าไม่ตรงกัน 3 ที่: ต้นแบบ 10/25/50 · ไลบรารี 10/20/30/40/50 · แอปจริง 10/25/50/100 · ไม่มีกฎค่าตั้งต้นและกฎย่อเลขหน้า → `components.css` L1076–1079 · `index.html` L153–160
+- [ ] **T9** **มีบางส่วน** — มีแต่สถานะ “กรองแล้วไม่พบ” (`.filter-empty`) ไม่มีที่วางปุ่ม · ไม่มีสถานะ “ยังไม่มีข้อมูล” · ไลบรารีและแอปจริงมีทั้งสองแบบ แยกข้อความและปุ่มชัดเจน → `components.css` L672–675, L16
+- [ ] **T10** **ขาด** — ไม่มีสถานะกำลังโหลดของตาราง (แอปจริงก็ไม่มี แสดงหน้าว่างระหว่างรอ) → `components.css` L193–199 มีแค่ปุ่ม
+- [ ] **T11** **มีบางส่วน** — จอแคบกว่า 768 สลับเป็นการ์ดเฉพาะตารางที่มี `.tbl-cards` ตามหลัง ตารางอื่นเลื่อนข้าง · README เขียน 760 · ไม่มีกฎว่าคอลัมน์ไหนต้องเหลือ → `components.css` L883–897 · README L278
+- [x] **T12** **มีแล้ว** — ข้อความยาวตัดบรรทัดเดียวด้วย `.cell-clip` และบังคับใส่ title ค่าเต็ม → `components.css` L929–931 · README L281
+- ค้นเพิ่ม 6 ต.ค. 2569: ตัวกรองหลายเงื่อนไขหรือบนมือถือ ให้กรองเมื่อกด "ตกลง" · สำรวจทีละเงื่อนไขให้กรองทันที — NN/g Filter Design (2016)
+- แถบแบ่งหน้าแสดง: จำนวนต่อหน้า · ช่วงรายการกับจำนวนทั้งหมด · หน้าปัจจุบันกับจำนวนหน้า · วางใต้ตาราง — Carbon Pagination
+- จอมือถือ: คอลัมน์กว้างพออ่านโดยไม่ต้องซูม · ตรึงหัวและคอลัมน์แรก · บอกว่าเลื่อนข้างได้ · ไม่บังคับหมุนจอ — NN/g Mobile Tables (2017)
+- [ ] ⬜ หลักการยังบาง: ขนาดหน้าเริ่มต้นของการแบ่งหน้า (Carbon ไม่ระบุ) · การจัดแนวตัวเลขในตาราง — ยังไม่มีแหล่งอ้างอิง
 
 ### UX-4 Modal และการยืนยัน
 
 - ใช้ modal เมื่องานจะเสียหายหรือย้อนไม่ได้ · เมื่อขาดข้อมูลจำเป็นต่อการไปต่อ · ไม่ใช้กับเรื่องที่ต้องไปดูข้อมูลที่อื่นประกอบ — NN/g Modal & Nonmodal (2017)
 - ยืนยันเฉพาะผลร้ายแรง ไม่ใช้กับงานประจำ · บอกผลที่จะเกิด ไม่ถามว่า "แน่ใจไหม" · ปุ่มเป็นคำกริยาเจาะจง ไม่ใช่ ใช่/ไม่ · ไม่ตั้งค่าเริ่มต้นที่ปุ่มอันตราย · ถ้าทำได้ให้มี undo แทน — NN/g Confirmation Dialogs (2018)
-- [ ] ⬜ ยังไม่ได้เทียบกับ `.modal` (`.md`/`.lg`/`.xl`) · `.modal-step-title`
+
+**ผลเทียบคอมโพเนนต์** (สำรวจ 6 ต.ค. 2569 — `components.css` · README · ไลบรารี Figma · แอปจริง)
+
+- [ ] **M1** **มีบางส่วน** — ไม่มีกฎรวมว่าเมื่อไรใช้ modal · หน้าเต็ม · แผงข้าง มีแต่ข้อความกระจายอยู่ 3 จุด → README L262, L277, L284
+- [ ] **M2** **มีบางส่วน** — มี 3 ขนาด (`.md` 500 · `.lg` 800 · `.xl` 1140) แต่ไม่บอกว่าแต่ละขนาดใช้กับเนื้อหาแบบไหน → `components.css` L322–324 · README L261
+- [ ] **M3** **ขาด** — ไม่มีรูปแบบกล่องยืนยันการกระทำที่ย้อนไม่ได้ ทั้งที่ README L420 ติ๊กว่าทำแล้ว · ไลบรารีมี (หัวข้อ “ยืนยันยกเลิกคำขอ” · บอกผลที่จะเกิด · ช่องเหตุผล · ปุ่ม “ไม่ใช่ตอนนี้” กับ “ยกเลิกคำขอ”) ซึ่งตรงหลักการ → `components.css` L311 · `.figma-extract/component/2-16.json`
+- [ ] **M4** **ขาด** — ไม่มีกฎว่าปุ่มไหนเป็นปุ่มหลักในกล่องยืนยันแบบอันตราย · ไลบรารีใช้ปุ่มรองคู่กับปุ่มหลักสีแดง → `components.css` L336–339, L165
+- [ ] **M5** **มีบางส่วน** — ปิดได้ด้วยปุ่มกากบาทอย่างเดียว · ไม่ได้กำหนดการปิดด้วย Esc คลิกพื้นหลัง และการคืนโฟกัส · ปุ่มกากบาทไม่มีวงโฟกัส → `components.css` L341–350
+- [x] **M6** **มีแล้ว** — เนื้อหายาวเลื่อนเฉพาะส่วนกลาง หัวและท้ายอยู่กับที่ · สูงไม่เกินจอลบ 48 → `components.css` L321, L326, L332
+- [ ] **M7** **ขัดกัน** — บนมือถือเอกสารบอกว่าเป็นแผ่นเลื่อนขึ้นจากล่าง แต่กฎท้ายไฟล์น่าจะทับให้ไปอยู่กลางจอ (อ่านจาก CSS ยังไม่ได้เปิดดูจริง) · ปุ่มยกเลิกในท้าย modal ถูกซ่อนบนมือถือ เหลือกากบาทเป็นทางออกเดียว → `components.css` L353–361 กับ L1302–1303
+- [ ] **M8** **มีบางส่วน** — งานหลายขั้นใน modal ใช้ `.modal-step-title` แทน stepper · ฟอร์มแจ้งซ่อมมี 4 ขั้นใน modal ขนาด xl · ไม่มีกฎว่ากี่ขั้นจึงควรเป็นหน้าเต็ม → `components.css` L1216–1218 · README L268, L360
+- [ ] **M9** **ขัดกัน** — ความทึบของพื้นหลัง modal: ของเรา 60% · ไลบรารีและแอปจริง 40% → `components.css` L316–318
 - [ ] ที่ต้องดูเป็นพิเศษ: ฟอร์มแจ้งซ่อมของต้นแบบเป็น modal 4 ขั้น ขณะที่แอปจริงเป็นหน้าเต็ม 3 ขั้น (ค้างเดิม รอเคาะ)
 
 ### UX-5 งานหลายขั้น
 
 - เหมาะกับงานที่ทำไม่บ่อยหรือผู้ใช้ไม่คุ้น · ไม่เหมาะกับงานซ้ำของผู้ชำนาญ — NN/g Wizards (2017)
 - แสดงรายการขั้นและขั้นปัจจุบัน · บังคับลำดับ · ป้ายขั้นบอกเนื้อหา · ออกกลางทางแล้วกลับมาทำต่อได้ · แต่ละขั้นมีข้อมูลครบในตัว — NN/g Wizards
-- [ ] ⬜ ยังไม่ได้เทียบกับ `.wsteps` · `.wstep`
+
+**ผลเทียบคอมโพเนนต์** (สำรวจ 6 ต.ค. 2569 — `components.css` · README · ไลบรารี Figma · แอปจริง)
+
+- [x] **S1** **มีแล้ว** — แสดงทุกขั้น · ขั้นปัจจุบัน `.wstep.active` · ขั้นที่ผ่านแล้ว `.wstep.passed` · จอแคบสลับเป็น `.wsteps-m` ที่บอก “ขั้นที่/ทั้งหมด” และขั้นถัดไป → `components.css` L497–530, L633–641 · `index.html` L295–299
+- [ ] **S2** **มีบางส่วน** — มี `.wstep.locked` และกฎว่าต้องกันคลิกในโค้ดด้วย แต่ทุกขั้นยังเป็นเคอร์เซอร์มือ · หน้าเบิกอะไหล่ยกเลิกการจางของขั้นที่ล็อก · ไม่มีตัวอย่าง · ไลบรารีไม่มีสถานะล็อก → `components.css` L535–536, L993 · README L201
+- [ ] **S3** **มีบางส่วน** — ไม่มีกฎการตั้งชื่อขั้น มีแต่ตัวอย่าง · ไลบรารีมีบรรทัดอธิบายใต้ชื่อขั้น (`Supporting text`) ที่ CSS ยังไม่มี · README L324 อธิบาย stepper จอแคบไม่ตรงกับ CSS แล้ว → `components.css` L506, L1102 · README L324
+- [ ] **S4** **มีบางส่วน** — แถวปุ่ม `.actions` ชิดขวา และตรึงขอบล่างบนมือถือ แต่ไม่มีกฎลำดับ ย้อนกลับ/ถัดไป · README ให้ “ย้อนกลับ” ใช้ `.btn-g` ส่วนหน้าตัวอย่างใช้ `.btn-t` · ไม่มีตัวอย่างของ `.actions` → `components.css` L612–613, L642 · README L218, L253 · `index.html` L122
+- [ ] **S5** **ขาด** — ไม่มีข้อตกลงเรื่องบันทึกร่างแล้วกลับมาทำต่อ (`.draft` คือแถบบอกว่าเป็นต้นแบบ ไม่ใช่สถานะร่าง) · แอปจริงก็ไม่มีหน้าจอร่าง เก็บค่าไว้ในเครื่องเงียบ ๆ → `components.css` L65 · README L293
+- [ ] 🔴 **S6** **รอเคาะ** — จำนวนขั้นและภาชนะไม่ตรงกับแอปจริง: แจ้งเหตุเสียในแอปจริงเป็น 2 ขั้นใน modal กว้าง 500 ไม่มี stepper · คำขอใช้รถเป็น 4 ขั้นแบบหน้าเต็ม · ฟอร์มแจ้งซ่อมของต้นแบบเป็น modal 4 ขั้น → ค้างเดิมใน `plan.md` — รอเคาะ
 
 ### UX-6 ปุ่มและลำดับความสำคัญ
 
@@ -435,7 +486,16 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
 - ป้าย = คำกริยา + คำนาม ยกเว้นคำสามัญ (ยกเลิก ปิด เพิ่ม ลบ) — Carbon Button · NN/g OK-Cancel (2008)
 - ปุ่มไอคอนล้วนใช้น้อย ต้องมี tooltip · ปุ่มอันตรายห้ามเป็นไอคอนล้วน — Carbon Button
 - ปุ่มที่เลือกบ่อยสุดเป็นค่าเริ่มต้น ยกเว้นการกระทำอันตราย — NN/g OK-Cancel
-- [ ] ⬜ ยังไม่ได้เทียบกับ `.btn` + `.btn-p`/`-s`/`-t`/`-link`/`-d` และหน้า `design-system/buttons.html`
+
+**ผลเทียบคอมโพเนนต์** (สำรวจ 6 ต.ค. 2569 — `components.css` · README · ไลบรารี Figma · แอปจริง)
+
+- [ ] **B1** **ขาด** — ไม่มีกฎว่าหนึ่งจอมีปุ่มหลักได้ปุ่มเดียว มีแต่คำอธิบายว่า `.btn-p` คือ action หลักของหน้า → README L251
+- [ ] **B2** **มีบางส่วน** — ท้าย modal มีกฎ (ปุ่มรองซ้าย ปุ่มหลักขวา) · ท้ายหน้ามีแค่ชิดขวา ไม่มีกฎลำดับ · ไม่มีตัวอย่างท้ายหน้าหรือท้าย modal · ไลบรารีใช้ปุ่ม Tertiary สีแบรนด์ฝั่งซ้าย ของเราใช้ `.btn-t` สีเทา → README L260, L218 · `components.css` L336–339, L612 — หลัก “หน้าเต็มปุ่มหลักชิดซ้าย” ของ Carbon ไม่ตรงกับไลบรารี PEA และแอปจริง จึงยึดไลบรารี
+- [x] **B3** **มีแล้ว** — ปุ่มอันตรายมีครบ 3 ระดับ (`.btn-d` `.btn-ds` `.btn-td`) · ยังไม่ได้กำหนดว่าปุ่มอันตรายแบบไอคอนล้วนใช้ได้หรือไม่ → `components.css` L150–151, L165–168 · `buttons.html` L141–151
+- [ ] **B4** **ขาด** — ไม่มีกฎว่าปุ่มไอคอนล้วนต้องมี title หรือ aria-label · หน้าตัวอย่างมีบ้างไม่มีบ้าง · ไม่มีคลาส tooltip ทั้งที่ไลบรารีมีหน้า Tooltips → `index.html` L185–186 (มี) กับ L133–135, L150 (ไม่มี)
+- [ ] **B5** **ขาด** — ไม่มีกฎการตั้งป้ายปุ่ม มีแต่กฎของปุ่มที่ปิดใช้ (ต้องบอกเหตุผลในตัวปุ่ม) → README L254
+- [x] **B6** **มีแล้ว** — ปิดใช้กับกำลังโหลดแยกกันชัด (`.btn:disabled` กับ `.btn.is-loading`) · สถานะกำลังโหลดเป็นส่วนขยายของต้นแบบ ไลบรารีไม่มี → `components.css` L183–199 · `buttons.html` L94
+- [ ] **B7** **ขัดกัน** — README ข้อ 0 บังคับ `.btn-p` `.btn-s` `.btn-t` แต่ตาราง “ใช้เมื่อ” ข้อ 4.2 ยังแนะนำ `.btn-o` กับ `.btn-g` ซึ่งเป็นส่วนขยายเก่าที่ไลบรารีไม่มี · หน้าตัวอย่างใช้ `.btn-s` `.btn-t` กับป้ายเดียวกัน → README L19 กับ L251–253 · `buttons.html` L165–174 — แก้ตารางข้อ 4.2
 
 ### UX-7 สถานะและข้อความตอบกลับ
 
@@ -444,28 +504,54 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
 - toast หายเองที่ 5 วินาที · ข้อความไม่เกิน 2 บรรทัด · ข้อความในงานวางเหนือปุ่มส่ง — Carbon Notification
 - สถานะว่างต้องบอก 3 อย่าง: ระบบทำเสร็จแล้วหรือยัง · ตรงนี้จะมีอะไร · ปุ่มไปทำงานถัดไป — NN/g Empty States (2021)
 - ต่ำกว่า 1 วินาทีไม่ต้องมีตัวบอก · 2–10 วินาทีใช้ตัวหมุน · 10 วินาทีขึ้นไปใช้แถบเปอร์เซ็นต์ — NN/g Progress Indicators (2014)
-- [ ] ⬜ ยังไม่ได้เทียบกับ `.badge` · `.toast` · `.note` · `.empty` · `.cell-state` · `.btn.is-loading`
+- โหลดทั้งหน้าใช้โครงร่าง (skeleton) · โหลดชิ้นเดียวใช้ตัวหมุน — NN/g Skeleton Screens (2023)
+
+**ผลเทียบคอมโพเนนต์** (สำรวจ 6 ต.ค. 2569 — `components.css` · README · ไลบรารี Figma · แอปจริง)
+
+- [ ] **N1** **มีบางส่วน** — ป้ายสถานะมี 6 สี มีข้อความกำกับเสมอ แต่ไม่มีแบบมีไอคอน (มีแค่จุดสีเดียวกัน) · `.cell-state.ok` เป็นตัวอักษรเขียวบนพื้นขาว อัตราส่วนความต่างประมาณ 2.8:1 ต่ำกว่าเกณฑ์ 4.5:1 · README ระบุป้าย 4 จาก 6 สี → `components.css` L291–298, L939–941 · README L258
+- [ ] **N2** **มีบางส่วน** — toast มีแบบเดียว (พื้นเข้ม กลางบน) ไม่แยกสำเร็จ/ผิดพลาด ไม่มีปุ่มปิด · ระยะเวลาไม่ตรงกัน: README 2.5 วินาที · หน้าตัวอย่าง 2.2 · แอปจริง 3 · หลักการ 5 → `components.css` L403–404 · README L293 · `index.html` L290
+- [ ] **N3** **มีบางส่วน** — ข้อความในงานใช้ `.note` ได้ 3 แบบ (เตือน · สำเร็จ · ข้อมูล) ไม่มีแบบผิดพลาด · ไม่อยู่ในตาราง README ข้อ 4 · หน้า style guide เขียนทับ `.note` เป็นคำบรรยายสีเทา จึงไม่มีตัวอย่างของจริง → `components.css` L276–285 · `index.html` L24
+- [ ] **N4** **ขาด** — สถานะว่างมี 5 คลาส ไม่มีอันไหนมีที่วางปุ่มไปทำงานถัดไป และไม่มีข้อความมาตรฐาน → `components.css` L16, L672, L1007, L1256, L1276
+- [ ] **N5** **ขาด** — ตัวบอกว่ากำลังโหลดมีแค่ในปุ่ม (`.btn.is-loading`) ไม่มีโครงร่าง ตัวหมุนระดับหน้า หรือแถบความคืบหน้า → `components.css` L193–199
+- [ ] **N6** **ขาด** — ไม่มีตารางจับคู่ “สถานะงาน → สีป้าย” ที่เดียว มีแต่ของสถานะคลังอะไหล่ · สีของสถานะงานรู้ได้จากหน้าตัวอย่างเท่านั้น · แอปจริงมีตารางจับคู่ในโค้ด → README L307–310 · `index.html` L235–239 · `statusPoint.tsx`
 
 ### UX-8 แนบไฟล์
 
 - ขอไฟล์เฉพาะเมื่อจำเป็นต่องาน — GOV.UK File upload
 - ข้อความผิดพลาดต้องครบ: ยังไม่เลือกไฟล์ · ชนิดไม่ถูก (บอกชนิดที่รับ) · ใหญ่เกิน (บอกขนาดสูงสุด) · ไฟล์ว่าง · อัปโหลดไม่สำเร็จให้ลองใหม่ · เกินจำนวน — GOV.UK File upload
-- [ ] ⬜ ยังไม่ได้เทียบกับ `.upload-field` · `.file-chip`
+
+**ผลเทียบคอมโพเนนต์** (สำรวจ 6 ต.ค. 2569 — `components.css` · README · ไลบรารี Figma · แอปจริง)
+
+- [ ] **U1** **มีบางส่วน** — มีที่วางคำแนะนำใต้กล่อง (`.upload-hint`) แต่ไม่มีกฎว่าต้องบอกชนิดไฟล์และขนาดสูงสุด และไม่มีตัวอย่าง → `components.css` L1074 · README L287
+- [ ] **U2** **ขาด** — ไม่มีสถานะผิดพลาดของ `.upload-field` และ `.file-chip` · ไลบรารีมี (ขอบแดง · “อัปโหลดไม่สำเร็จ” · ปุ่ม “อัปโหลดใหม่”) → `components.css` L583, L1067–1073
+- [ ] **U3** **มีบางส่วน** — ไฟล์ที่เลือกแสดงเป็น `.file-chip` มีปุ่มลบ แต่ไม่มีรายการหลายไฟล์ ไม่แสดงขนาด ไม่มีปุ่มดาวน์โหลด (ไลบรารีมีครบ) → `components.css` L1053–1060 · README L287–288
+- [ ] **U4** **ขาด** — ไม่มีแถบความคืบหน้า — ตัดออกโดยตั้งใจเพราะต้นแบบไม่ได้อัปโหลดจริง · ไลบรารีมีสถานะกำลังอัปโหลด → `components.css` L1051
+- [ ] **U5** **ขาด** — ไม่มีพื้นที่ลากไฟล์มาวาง — `.upload-field` เป็นช่องกดเลือกขนาด 320×50 ที่วัดจากภาพระบบจริง · ไลบรารีมีพื้นที่ลากวาง 400×124 → `components.css` L1067–1073
+- [ ] **U6** **ขัดกัน** — แอปจริงไม่ตรงหลักการ: ไม่บอกขนาดสูงสุดข้างช่อง · แจ้งข้อผิดพลาดด้วยกล่อง alert ของเบราว์เซอร์ ส่วนใหญ่เป็นภาษาอังกฤษ · ไม่มีค่ากลางของชนิดและขนาดไฟล์ (ช่องเล็กจำกัด 10 MB · รูปถูกบีบเป้า 1 MB) → `smallFileUploader.tsx` · `uploadFileProgress.tsx` — ต้นแบบควรแสดงแบบที่ถูกหลักการ และแจ้งทีมแอปจริง
 
 ### UX-9 Dashboard และตัวเลขสรุป
 
 - ความยาวและตำแหน่งอ่านค่าได้แม่นสุด ให้ใช้กราฟแท่ง · พื้นที่ มุม สี อ่านค่าไม่แม่น ให้เลี่ยงวงกลม/โดนัท · ไม่ใช้ 3 มิติ · สีไม่ใช้แทนปริมาณ — NN/g Dashboards (2017)
 - ดูปราดเดียวรู้เรื่อง ใช้การโต้ตอบน้อยที่สุด — NN/g Dashboards
-- [ ] ⬜ ยังไม่ได้เทียบกับ `.card` และส่วนกราฟใน `outcome-dashboard.html` · `executive-insights.html` · `design-mock/equipment-dashboard.html`
+
+**ผลเทียบคอมโพเนนต์** (สำรวจ 6 ต.ค. 2569 — `components.css` · README · ไลบรารี Figma · แอปจริง)
+
+- [ ] **D1** **ขาด** — ไม่มีคลาสกลางของกล่องตัวเลขสรุปและกราฟ — หน้า dashboard 3 หน้าเขียนสไตล์เองในหน้า และ 2 หน้าไม่ได้ลิงก์ `components.css` · ไลบรารีมี `Metric item` แต่ไม่มีหน้ากราฟ · ตัวแปรสีกราฟ `--chart-1` ถึง `--chart-6` ยังไม่มีใครใช้ → `components.css` L79 · `tokens.css` L95–103 · README L45
+- [x] **D2** **มีแล้ว** — หน้า dashboard ของต้นแบบใช้กราฟแท่งแนวนอนและกราฟจุด 1 ชิ้น ไม่มีวงกลม โดนัท หรือ 3 มิติ → `executive-insights.html` L140 · `parts-insights.html` L248, L266
+- [ ] **D3** **ขัดกัน** — แอป dashboard จริงของ VMS Plus ใช้กราฟโดนัท 4 ชิ้นในหน้ายานพาหนะ และกำหนดสีกราฟตายตัวในโค้ด ไม่ตรงหลักการ — ต้นแบบไม่ควรลอกแบบนี้ → `VehicleCarTypePieChart.tsx` · `VehicleStatusChart.tsx`
+- [ ] **D4** **มีบางส่วน** — กราฟแท่งมีป้ายกับค่าและหน่วยกำกับ ไม่มีแกน · แท่งในตารางของหน้าเครื่องมือกลไม่มีหน่วยและไม่มีข้อความแทนสำหรับโปรแกรมอ่านจอ → `executive-insights.html` L144–145
+- [ ] **D5** **มีบางส่วน** — ไม่มีกล่องตัวเลขไหนเทียบกับช่วงก่อนหรือเป้าหมาย · ข้อความ “ข้อมูล ณ วันที่” มีหน้าเดียว → `design-mock/equipment-dashboard.html` L35
+- [ ] **D6** **มีบางส่วน** — กดเจาะลึกได้บางหน้า: กล่องตัวเลขเป็นลิงก์แต่ไม่มีอะไรบอกว่ากดได้ (`.card` ไม่มีสถานะชี้) · จุดในกราฟของหน้าอะไหล่เป็นเคอร์เซอร์มือแต่กดแล้วไม่เกิดอะไร → `parts-insights.html` L290
+- [x] **D7** **มีแล้ว** — สีในหน้า dashboard ของต้นแบบมาจากตัวแปรใน `tokens.css` (ยกเว้นสีขาวที่เขียนตรงบางจุด) → `parts-insights.html` L17–31
 - [ ] ใช้กับ "Dashboard ประวัติซ่อมตามยี่ห้อ" ที่กำลังออกแบบ (ดูรายการใน Backlog) — โครงที่เคาะแล้วใช้กราฟแท่งทั้งหมด ตรงหลักการนี้
 
 ### แหล่งอ้างอิง (เปิดอ่าน 6 ต.ค. 2569)
 
-- NN/g — [Dropdowns: Design Guidelines](https://www.nngroup.com/articles/drop-down-menus/) (Li, 2017) · [Listboxes vs. Dropdown Lists](https://www.nngroup.com/articles/listbox-dropdown/) (Kaley, 2020) · [Website Forms Usability: Top 10](https://www.nngroup.com/articles/web-form-design/) (Whitenton, 2016) · [Placeholders in Form Fields Are Harmful](https://www.nngroup.com/articles/form-design-placeholders/) (Sherwin, 2014) · [Marking Required Fields](https://www.nngroup.com/articles/required-fields/) (Budiu, 2019) · [Reporting Errors in Forms](https://www.nngroup.com/articles/errors-forms-design-guidelines/) (Krause, 2019) · [Data Tables: Four Major User Tasks](https://www.nngroup.com/articles/data-tables/) (Laubheimer, 2022) · [Modal & Nonmodal Dialogs](https://www.nngroup.com/articles/modal-nonmodal-dialog/) (Fessenden, 2017) · [Confirmation Dialogs](https://www.nngroup.com/articles/confirmation-dialog/) (Nielsen, 2018) · [Wizards](https://www.nngroup.com/articles/wizards/) (Budiu, 2017) · [OK-Cancel or Cancel-OK?](https://www.nngroup.com/articles/ok-cancel-or-cancel-ok/) (Nielsen, 2008) · [Empty States](https://www.nngroup.com/articles/empty-state-interface-design/) (Kaplan, 2021) · [Indicators, Validations, and Notifications](https://www.nngroup.com/articles/indicators-validations-notifications/) (Flaherty, 2024) · [Progress Indicators](https://www.nngroup.com/articles/progress-indicators/) (Sherwin, 2014) · [Dashboards](https://www.nngroup.com/articles/dashboards-preattentive/) (Laubheimer, 2017)
+- NN/g — [Dropdowns: Design Guidelines](https://www.nngroup.com/articles/drop-down-menus/) (Li, 2017) · [Listboxes vs. Dropdown Lists](https://www.nngroup.com/articles/listbox-dropdown/) (Kaley, 2020) · [Website Forms Usability: Top 10](https://www.nngroup.com/articles/web-form-design/) (Whitenton, 2016) · [Placeholders in Form Fields Are Harmful](https://www.nngroup.com/articles/form-design-placeholders/) (Sherwin, 2014) · [Marking Required Fields](https://www.nngroup.com/articles/required-fields/) (Budiu, 2019) · [Reporting Errors in Forms](https://www.nngroup.com/articles/errors-forms-design-guidelines/) (Krause, 2019) · [Data Tables: Four Major User Tasks](https://www.nngroup.com/articles/data-tables/) (Laubheimer, 2022) · [Modal & Nonmodal Dialogs](https://www.nngroup.com/articles/modal-nonmodal-dialog/) (Fessenden, 2017) · [Confirmation Dialogs](https://www.nngroup.com/articles/confirmation-dialog/) (Nielsen, 2018) · [Wizards](https://www.nngroup.com/articles/wizards/) (Budiu, 2017) · [OK-Cancel or Cancel-OK?](https://www.nngroup.com/articles/ok-cancel-or-cancel-ok/) (Nielsen, 2008) · [Empty States](https://www.nngroup.com/articles/empty-state-interface-design/) (Kaplan, 2021) · [Indicators, Validations, and Notifications](https://www.nngroup.com/articles/indicators-validations-notifications/) (Flaherty, 2024) · [Progress Indicators](https://www.nngroup.com/articles/progress-indicators/) (Sherwin, 2014) · [Dashboards](https://www.nngroup.com/articles/dashboards-preattentive/) (Laubheimer, 2017) · [Mobile Tables](https://www.nngroup.com/articles/mobile-tables/) (Schade, 2017) · [User Intent Affects Filter Design](https://www.nngroup.com/articles/applying-filters/) (Sherwin, 2016) · [Skeleton Screens 101](https://www.nngroup.com/articles/skeleton-screens/) (Tankala, 2023)
 - Baymard — [Drop-Down Usability](https://baymard.com/blog/drop-down-usability) (2018, ปรับ 2025) · [Autocomplete Design](https://baymard.com/blog/autocomplete-design) (2022)
 - GOV.UK Design System — [Select](https://design-system.service.gov.uk/components/select/) · [File upload](https://design-system.service.gov.uk/components/file-upload/)
 - USWDS — [Select](https://designsystem.digital.gov/components/select/) · [Combo box](https://designsystem.digital.gov/components/combo-box/)
-- Carbon — [Dropdown](https://carbondesignsystem.com/components/dropdown/usage/) · [Button](https://carbondesignsystem.com/components/button/usage/) · [Notification](https://carbondesignsystem.com/components/notification/usage/) · [Data table](https://carbondesignsystem.com/components/data-table/usage/)
+- Carbon — [Dropdown](https://carbondesignsystem.com/components/dropdown/usage/) · [Button](https://carbondesignsystem.com/components/button/usage/) · [Notification](https://carbondesignsystem.com/components/notification/usage/) · [Data table](https://carbondesignsystem.com/components/data-table/usage/) · [Pagination](https://carbondesignsystem.com/components/pagination/usage/)
 - PatternFly — [Select](https://www.patternfly.org/components/menus/select/design-guidelines) · Atlassian — [Select](https://atlassian.design/components/select/usage) · Ant Design — [Select](https://ant.design/components/select)
 - W3C — [ARIA APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/)
 
