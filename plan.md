@@ -238,6 +238,238 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
 
 ---
 
+## แนวทาง UX: หลักการ × คอมโพเนนต์ (เริ่ม 6 ต.ค. 2569)
+
+> เจ้าของงานสั่ง 6 ต.ค. 2569: _"อยากให้ศึกษาการออกแบบ ไม่ใช่ออกแบบมามั่วๆ และอิงจาก Design systems มาด้วย"_ ·
+> _"หลักการที่ไปค้นหามา ก็เอามาเทียบกับ component มาแล้วค่อยเริ่มออกแบบ"_ · _"เก็บเป็นข้อมูลไว้ใน plan.md ด้วย และเป็น todo list ในการออกแบบ และตรง component ด้วย"_
+
+**ลำดับงานบังคับ:** หลักการที่ค้นมา → เทียบกับคอมโพเนนต์ใน `design-system/` → แล้วค่อยออกแบบ/แก้หน้าจอ
+
+**สถานะ ณ 6 ต.ค. 2569:** ศึกษาหลักการครบ 9 หัวข้อ (เปิดอ่านแหล่งต้นทาง 29 หน้า รายชื่อท้ายหัวข้อนี้) · เทียบคอมโพเนนต์เสร็จเฉพาะ UX-1 ·
+สำรวจการใช้ตัวเลือกในหน้าจอเดิมแล้ว (ยังไม่ได้ตัดสินว่าจุดไหนต้องแก้) · ยังไม่ได้สร้างหน้าแนวทาง · ยังไม่ได้แก้หน้าจอใด
+
+⚠️ เลขและข้อความจากแหล่งอ้างอิงอ่านผ่านเครื่องมือสรุปหน้าเว็บ — **ต้องเปิดเทียบกับหน้าต้นทางอีกรอบตอนทำหน้าแนวทาง** ก่อนถือเป็นกฎ
+
+**วิธีอ่านรายการ todo:** `หลักการ (แหล่ง) → คลาส → มีแล้ว / ขาด / ขัด → งานที่ต้องทำ`
+
+| # | หัวข้อ | คอมโพเนนต์ที่เกี่ยว | ศึกษาหลักการ | เทียบคอมโพเนนต์ |
+|---|---|---|---|---|
+| UX-1 | เลือกจากชุดตัวเลือก | `select` · `.rads` · `.radcards` · `.chks` · `.chips.pick` · `.seg` · `.tabs` · `.tile` · `.search` | ✅ | ✅ |
+| UX-2 | ช่องกรอกและการตรวจความถูกต้อง | `.fgrid` · `.f` · `.in` · `.f.ro` · `.f.err` · `.help` | ✅ | ⬜ |
+| UX-3 | ตาราง หน้ารายการ ตัวกรอง แบ่งหน้า | `.list-toolbar` · `.tbl` · `th.sortable` · `.tblfoot` · `.pager` · `.filter-panel` · `.tbl-cards` | ✅ | ⬜ |
+| UX-4 | Modal และการยืนยัน | `.modal` (`.md`/`.lg`/`.xl`) | ✅ | ⬜ |
+| UX-5 | งานหลายขั้น | `.wsteps` · `.wstep` | ✅ | ⬜ |
+| UX-6 | ปุ่มและลำดับความสำคัญ | `.btn` + `.btn-p`/`-s`/`-t`/`-link`/`-d` | ✅ | ⬜ |
+| UX-7 | สถานะและข้อความตอบกลับ | `.badge` · `.toast` · `.note` · `.empty` · `.cell-state` · `.btn.is-loading` | ✅ | ⬜ |
+| UX-8 | แนบไฟล์ | `.upload-field` · `.file-chip` | ✅ | ⬜ |
+| UX-9 | Dashboard และตัวเลขสรุป | `.card` (ส่วนกราฟยังไม่มีคลาสกลาง) | ✅ | ⬜ |
+
+### งานถัดไป (ตามลำดับ)
+
+- [ ] **ขั้น A** — เทียบคอมโพเนนต์ของ UX-2 ถึง UX-9 ให้ได้รายการช่องว่างแบบเดียวกับ G1–G9 ของ UX-1 · หัวข้อที่หลักการยังบาง (แบ่งหน้า · ตัวกรอง · จอมือถือ) ค้นแหล่งต้นทางเพิ่มก่อนเทียบ
+- [ ] **ขั้น B** — สร้างหน้าแนวทาง `design-system/ux-guidelines.html` (โครงตาม `buttons.html`) · ลิงก์จาก `design-system/index.html` และ README · เติมเกณฑ์จำนวนในคอลัมน์ "ใช้เมื่อ" ของ README ข้อ 4 · เพิ่มขั้นตอนบังคับใน README ข้อ 0 ว่าต้องเปิดหน้าแนวทางก่อนเลือกคอมโพเนนต์
+- [ ] 🔴 **จุดหยุดให้เจ้าของงานเคาะ** — เลขเกณฑ์ที่เสนอ · G6 ใช้แบบไหน · จะสร้างคอมโพเนนต์ที่ขาด (G2, G8) หรือไม่ · **ยังไม่แตะหน้าจอต้นแบบก่อนจุดนี้**
+- [ ] **ขั้น C** — ตรวจทุกจุดที่มีการเลือกค่าในหน้าจอเดิมเทียบแนวทาง ลงเป็น checkbox: หน้า · ช่อง · คอมโพเนนต์ที่ใช้ · จำนวนตัวเลือก · ตรง/ไม่ตรง · ควรเป็นอะไร
+- [ ] **ขั้น D** — แก้หน้าจอเดิมเฉพาะจุดที่แก้ได้ด้วยคอมโพเนนต์ที่มีอยู่ · จุดที่ต้องพึ่งคอมโพเนนต์ที่ยังไม่มีให้ค้างไว้ที่นี่
+
+### UX-1 เลือกจากชุดตัวเลือก
+
+**เลขเกณฑ์ที่เสนอ — 🔴 รอเจ้าของงานเคาะ** (แหล่งอ้างอิงให้เลขไม่ตรงกัน: 5 กับ 7 · 10 กับ 15 จึงต้องเลือกเลขของโปรเจกต์เอง)
+
+| จำนวนตัวเลือก | เลือกเดียว | เลือกหลายค่า | เหตุผล |
+|---|---|---|---|
+| 2 ทางใหญ่ที่เปลี่ยนเส้นทางงาน | `.tile` | — | กฎเดิมใน README ข้อ 4 |
+| 2–4 ป้ายสั้น | `.seg` | `.chips.pick` | กฎเดิมใน README (2–4) |
+| 2–6 ต้องมีคำอธิบายกำกับ | `.radcards` | `.radcard.ckcard` | กฎเดิมใน README (2–6) |
+| ไม่เกิน 5 ป้ายสั้น ไม่มีคำอธิบาย | `.rads` | `.chks` | NN/g · Ant Design · PatternFly ตรงกันที่ 5 |
+| 6–15 | `select` ใน `.f .in` | `.chks` ในกล่องเลื่อน | NN/g 5–15 · USWDS 7–15 |
+| เกิน 15 หรือมาจากข้อมูลหลัก (สังกัด รถ พนักงาน อะไหล่) | dropdown search — **ยังไม่มีคลาสกลาง (G2)** | multi-select search — **ยังไม่มี (G2)** | USWDS เกิน 15 ใช้ combo box · แอปจริงใช้แบบนี้กับข้อมูลหลักทุกตัว |
+
+**ข้อกำหนดข้อมูลของ dropdown search** (ตอบคำถาม "ต้องมีข้อมูลแบบไหน")
+
+1. ค่าอ้างอิงคงที่ (id/รหัส) แยกจากป้ายที่แสดง
+2. ป้ายหลักบรรทัดเดียว เป็นคำที่ผู้ใช้เรียกและพิมพ์หา (USWDS · Atlassian)
+3. บรรทัดรองเมื่อป้ายหลักซ้ำกันได้ ไม่เกิน 2 บรรทัด (PatternFly) — แอปจริงใช้ `dept_short` คู่ `dept_full`
+4. ฟิลด์ที่ค้นได้ต้องมากกว่าหนึ่ง (Ant Design) — แอปจริงค้น `full_name` · `dept_sap` · `dept_sap_short`
+5. ขนาดชุดข้อมูลกำหนดวิธีค้น: โหลดมาทั้งชุดได้ ให้กรองฝั่งหน้าจอตั้งแต่ตัวอักษรแรก · ใหญ่กว่านั้นค้นที่ API ขั้นต่ำ 3 ตัวอักษร หน่วง 500 ms (ค่าจริงใน `vms-plus-main-fe/components/customSelectOnSearch.tsx` L82–97)
+6. ก่อนพิมพ์แสดงรายการตั้งต้นได้ (แอปจริงใช้ 12 แถว) · รายการสูงสุด 256px ประมาณ 6 แถว ตรงกับ Carbon ที่ให้เริ่มเลื่อนที่แถวที่ 6
+7. ต้องมีสถานะครบ: กำลังโหลด · ไม่พบข้อมูล (แอปจริงใช้คำว่า "ไม่พบข้อมูล") · ปุ่มล้างค่า · ปิดใช้พร้อมเหตุผล
+8. จับคำแบบ "มีคำนี้อยู่" ไม่ใช่ "ขึ้นต้นด้วย" — **ข้อนี้เป็นข้อสรุปของผู้ทำเอง ไม่ได้มาจากแหล่งอ้างอิง** เหตุผลคือชื่อสังกัดขึ้นต้นซ้ำกัน (กฟ…)
+
+**Todo ผูกกับคอมโพเนนต์** (ผลเทียบ `components.css` + README + ไลบรารี Figma + แอปจริง)
+
+- [ ] **G1** จำนวนตัวเลือกกำหนดคอมโพเนนต์ (NN/g · USWDS · Baymard) → `select` → **ขาด** — README ข้อ 4 ไม่มีกฎจำนวนตัวเลือกของ `select` เลย → เติมเกณฑ์ในคอลัมน์ "ใช้เมื่อ" หลังเคาะเลข
+- [ ] 🔴 **G2** เกิน 15 ตัวเลือกต้องพิมพ์กรองได้ (USWDS · PatternFly) → dropdown แบบเปิด / dropdown search / multi-select → **ขาด** ทั้งที่ไลบรารี Figma มี `Input dropdown` 16 สถานะ + `Dropdown list item` + `Input dropdown with badges` (`.figma-extract/component/2-8.json` · README ข้อ 9 จดไว้ว่ายังไม่ทำ) → **รอเคาะว่าจะสร้างหรือไม่** ยังไม่ลงมือ
+- [ ] **G3** ช่องที่ผิดต้องเห็นชัดที่ตัวช่อง (NN/g Errors in Forms) → `select` → **ขาด** สถานะ focus / error / disabled (`.f.err` กับ `:focus` ไม่ครอบ `select` — `components.css` L85–91, L583) → เพิ่มสถานะให้ครบเท่า `input`
+- [ ] **G4** ตัวเลือกที่ใช้ไม่ได้ให้เป็นสีเทา ไม่ลบทิ้ง (NN/g Dropdowns) → `.rads` · `.seg` · `.tabs` → **ขาด** สถานะปิดใช้ · `.tabs` ไม่มี focus (`components.css` L591, L263, L303) → เพิ่มสถานะ
+- [ ] **G5** → `.chips.pick` กับ `.chks` → **ขัด** README เขียน "อาการเสีย" ไว้ทั้งสองแถว (L262–263) ทั้งที่ย้ายไป `.chks` แล้ว → แก้ README
+- [ ] 🔴 **G6** ไม่เกิน 5 ตัวเลือกใช้ radio (NN/g) → ระดับความรุนแรง 4 ค่า → **ขัด** README ข้อ 5 บอกใช้ `.rads` · หน้าตัวอย่าง `index.html` L247 ใช้ `.seg` · แอปจริงใช้ dropdown search → **รอเคาะ** ว่าใช้แบบไหน
+- [ ] **G7** → `.search` → **ขัด** README L208 เรียก "ช่องกรอกในฟอร์ม ไม่ใช่หัวลิสต์" แต่ `components.css` L92 เรียก "ช่องค้นหาของลิสต์" → เขียนบทบาทให้ตรงกันที่เดียว
+- [ ] 🔴 **G8** → toggle · time picker · ปฏิทินวันเดียว → **ขาด** ในคลาสกลาง (ไลบรารี Figma มีทั้งสามในหน้า Toggle / Date picker) → **รอเคาะว่าจะสร้างหรือไม่**
+- [ ] **G9** ต้องมีสถานะกำลังโหลด (PatternFly) → dropdown search ของแอปจริง → **ขาด** — `customSelectOnSearch.tsx` ประกาศ `loading` (L22) แต่ไม่ได้แสดงผล → ถ้าสร้าง G2 ให้ทำสถานะนี้ให้ครบ และแจ้งทีมแอปจริง
+
+**หลักการและแหล่ง**
+
+| เกณฑ์ | แหล่ง |
+|---|---|
+| ไม่เกิน 5 ตัวเลือกใช้ radio (เลือกเดียว) หรือ checkbox (หลายค่า) | NN/g Listboxes 2020 · Ant Design (น้อยกว่า 5) · PatternFly (น้อยกว่า 5) |
+| น้อยกว่า 7 ใช้ radio | USWDS Select |
+| dropdown ที่มีน้อยกว่า 5 หรือมากกว่า 10 ตัวเลือกเป็นทางเลือกที่แย่ · 55% ของผู้ทดสอบเปิด dropdown แค่เพื่อดูว่ามีอะไร | Baymard Drop-Down Usability |
+| 2 ตัวเลือกห้ามใช้ dropdown | Carbon Dropdown · NN/g Forms Top 10 (2–3 ตัวเลือก) |
+| ช่วงของ dropdown: 5–15 (NN/g) · ประมาณ 7–15 (USWDS) · 5–10 (Baymard) | ตามชื่อ |
+| เกิน 15 ใช้ combo box พิมพ์กรอง | USWDS Combo box |
+| เกิน 10 แนะนำพิมพ์กรอง | PatternFly Select |
+| เกิน 20 แบบไม่จัดกลุ่ม ผู้ใช้สับสน | Baymard Drop-Down Usability |
+| รายการที่พิมพ์เร็วกว่าเลือก (จังหวัด ประเทศ) ไม่ใช้ dropdown · ข้อมูลที่คุ้นอยู่แล้ว (วันเดือนปีเกิด) ไม่ใช้ dropdown | NN/g Dropdowns 2017 |
+| เลี่ยงเมนูที่ตัวเลือกเปลี่ยนตามอีกเมนู | NN/g Dropdowns 2017 · USWDS |
+| ตัวเลือกที่ใช้ไม่ได้ให้เป็นสีเทา ไม่ลบทิ้ง | NN/g Dropdowns 2017 |
+| เรียงตามตรรกะ: จัดกลุ่ม / ใช้บ่อยขึ้นก่อน / ตัวอักษร · ตัวเลขและวันที่เรียงตามลำดับ | NN/g Listboxes 2020 · Carbon (แนะนำตัวอักษร) · Atlassian (แนะนำตามความถี่) |
+| ตั้งค่าเริ่มต้นเมื่อคนส่วนใหญ่เลือกค่าเดียวกัน · ห้ามเลือกแล้วส่งฟอร์มเองอัตโนมัติ | USWDS Select |
+| รายการเริ่มเลื่อนที่แถวที่ 6 และโผล่ครึ่งแถวสุดท้ายให้รู้ว่ามีต่อ | Carbon Dropdown |
+| รายการแนะนำไม่เกิน 10 บนจอใหญ่ · 4–8 บนมือถือ · เลี่ยงแถบเลื่อน | Baymard Autocomplete |
+| ป้ายตัวเลือกใช้คำที่ผู้ใช้พิมพ์หา · บรรทัดเดียว · ไม่พึ่ง placeholder แทน label | USWDS Combo box · Atlassian Select |
+| คำอธิบายใต้ตัวเลือกเฉพาะเมื่อป้ายไม่ชัด ไม่เกิน 2 บรรทัด | PatternFly Select |
+| ค้นได้มากกว่าหนึ่งฟิลด์ | Ant Design Select (`optionFilterProp`) |
+| ต้องมีข้อความ "ไม่พบผลลัพธ์" | PatternFly · Ant Design (`notFoundContent`) |
+| เกิน 20 รายการและโหลดหนัก ให้โหลดทีละส่วน ("ดูเพิ่ม") | PatternFly Select |
+| จัดกลุ่มเมื่อทุกรายการเข้ากลุ่มได้ ไม่มีกลุ่มที่มีรายการเดียว | Atlassian Select |
+| คีย์บอร์ด: ลูกศรขึ้นลง · Enter · Esc · `role=combobox` · `aria-expanded` · `aria-activedescendant` | W3C ARIA APG Combobox |
+| select เป็นทางเลือกสุดท้าย — ผู้ใช้พยายามพิมพ์ลงไป · ไม่รู้ว่าเลื่อนได้ · ปิดไม่เป็น | GOV.UK Select |
+
+**ที่แอปจริง (VMS Plus) ทำอยู่** — `code-maintainD/web/vms-plus-main-fe/components/`
+- เขียนคอมโพเนนต์เองทั้งหมด: `customSelect` (ไม่มีค้น) · `customSelectSerch` (กรองฝั่งหน้าจอ จับ label + desc) · `customSelectOnSearch` (ค้นที่ API) · `customMultiSelect`
+- ไม่มีตรรกะ "ตัวเลือกเกิน N ให้เปิดค้น" — เปิด/ปิดค้นเป็นรายจุด
+- ตัวอย่างการจับคู่: เลขทะเบียน · สังกัด · พนักงาน ใช้ค้นที่ API · จังหวัด · ระดับความรุนแรง ใช้กรองฝั่งหน้าจอ · ประเภทผู้แจ้ง 2 ค่าใช้ radio
+
+### ผลนับตัวเลือกในหน้าจอเดิม (สำรวจ 6 ต.ค. 2569 — ข้อมูลตั้งต้นของขั้น C)
+
+สำรวจทุกจุดที่มีการเลือกค่าใน `mock/` · `design-mock/` · `maintainance-yearly/` · `daily-record/` · `admin-config.html` · `repair-history.html` · `flow-นัดหมายรับรถ-prototype.html` · `app/src/` (ไม่รวมไฟล์ backup) · **ยังไม่ได้ตัดสินว่าจุดไหนต้องแก้ — รอเคาะเลขเกณฑ์ก่อน**
+
+| คอมโพเนนต์ | จำนวนจุดที่ใช้ | ตัวเลือกน้อยสุด–มากสุด | ที่พบบ่อย |
+|---|---|---|---|
+| `select` ในฟอร์ม | ประมาณ 45 | 0–49 | 2–5 |
+| `select` เป็นตัวกรองรายการ | ประมาณ 17 | 2–14 (ไม่นับ "ทั้งหมด") | 3 |
+| `.rads` | 6 | 2–3 | 2 |
+| `.radcards` | ประมาณ 20 | 1–5 | 2 |
+| `.seg` | ประมาณ 25 | 2–5 | 2 |
+| `.tabs` | ประมาณ 18 | 2–6 | 2–3 |
+| ช่องค้น + รายการ/ตาราง | ประมาณ 14 | 2–30 | 4–8 |
+| `.combo` (ค้นใน dropdown — เขียนเฉพาะใน mock ไม่ใช่คลาสกลาง) | 4 | 5 | 5 |
+| `.chks` / checkbox | ประมาณ 10 | 1–11 | 3–5 |
+| ตารางติ๊กเลือก | 4 | 4–132 | — |
+
+**จุดที่อยู่นอกช่วงที่หลักการแนะนำ** (ตรวจเทียบเลขเกณฑ์ที่เสนอ — ยังไม่ได้แก้)
+
+- [ ] `select` ที่ตัวเลือกเกิน 15: 49 ตัวเลือก (`maintainance-yearly/plan-skeleton.js:122`) · 37 และ 28 (`mock/Maintenance-Request-Form-before-modal.html:1725` หน่วยงานในพื้นที่)
+- [ ] `select` ช่วง 10–14 ที่ป้ายยาว: สถานะงาน 14 (`mock/Maintenance-Request-Form.html:1780`) · สถานะงาน Overhaul 12 (`app/src/app/overhaul-jobs/page.tsx:199`) · เขต 12 (`maintainance-yearly/admin.js:134`, `:188`) · อาการ 10 (`admin-config.html:500`)
+- [ ] `select` ที่มีตัวเลือกเดียวหรือไม่มีเลย: `mock/…Form.html:1613` · `design-mock/repair-modal-flow.html:274` · `crossunit-01-request.html:201` · `crossunit-03-record.html:194` · `transfer-request.html:216` · `app/src/components/overhaul-exec/common.tsx` (`DELIVERERS`)
+- [ ] `select` 2–4 ตัวเลือกที่ควรเป็น radio/segmented ตามเกณฑ์ (จุดที่พบบ่อยที่สุดของ `select` คือ 2–5 ตัวเลือก) — ต้องไล่รายจุดในขั้น C
+- [ ] ช่องค้นหาบนรายการไม่เกิน 5: `.combo` ช่างซ่อม 5 คน (4 จุดใน mock) · ผู้อนุมัติ 5 คน · รถ 4 คัน (`repair-history.html`) · ผู้อนุมัติ 2 คน (`repair-modal-flow.html:416`) — เป็นข้อมูลตัวอย่าง ของจริงมาจากข้อมูลหลัก จึงอาจถูกต้องอยู่แล้ว ต้องดูรายจุด
+- [ ] รายการใหญ่ที่ไม่มีช่องค้น: ตารางติ๊กเลือกรถ 132 คัน (`maintainance-yearly/plan-new.js`)
+- [ ] `.seg` 5 ตัวเลือก เกินกฎ 2–4 ของ README: ระดับน้ำมัน และ ความพึงพอใจ (`mock/…Form.html:4319`, `:4430`) · ชนิดการกรอก (`admin-config.html:238`)
+- [ ] `.seg` ใช้เป็นแท็บของหน้า: `maintainance-yearly/admin.html:53`
+- [ ] `select` ที่ placeholder เขียนว่า "ค้นหา…" แต่ค้นไม่ได้: ยานพาหนะ (`mock/…Form.html:1563`) · ผู้รับรายงานอุบัติเหตุ (`:1617`) · สังกัดใหม่ที่มีไอคอนค้นหา (`design-mock/transfer-request.html:140`)
+
+**ข้อมูลชนิดเดียวกันแต่ใช้คอมโพเนนต์ต่างกัน**
+
+- [ ] รถ — 8 แบบ: `select` · `select` จัดกลุ่มตามจังหวัด · ค้น + ตาราง · รายการในแผ่นล่าง · พิมพ์ค้นแล้วขึ้นการ์ด · ตารางติ๊กเลือก · คอลัมน์ติ๊ก · ค้นแล้วขึ้นบรรทัดผล
+- [ ] บุคคล — 7 แบบ: `.combo` · `select` · ค้น + รายการ · ค้น + `.radcards` · `select` ที่เขียนว่าค้นหา · พิมพ์ข้อความอิสระ
+- [ ] สังกัด/หน่วยงาน — 5 แบบ: `select` 3 ตัวเลือก · `select` ผูกกัน 2 ชั้น · datalist + พิมพ์อิสระ · พิมพ์ข้อความอิสระ · `select` ตัวกรอง
+- [ ] งบที่ตัด (4 ค่า) — `select` กับ `.radcards` · และ `repair-modal-flow.html:254` ใช้ชุดตัวเลือกอีกชุด (2 ค่า)
+- [ ] รูปแบบการซ่อม/นัด (2 ค่า) — `.seg` · `.radcards` · `.tile`
+- [ ] สถานะรถตอนนี้ (2 ค่า) — `.seg` · `.rads` · checkbox 2 ตัวในตัวกรอง
+- [ ] คะแนน 1–5 — `.seg` กับ `.radcards.cols-5`
+- [ ] ตัวกรองสถานะ — `select` ในแผงตัวกรอง · `.tabs` มีป้ายจำนวน · chip
+- [ ] ช่วงวันที่ — `.daterange` · ช่องวันที่ 2 ช่อง · chip รายวัน · พิมพ์ข้อความ
+- [ ] จำนวนแถวต่อหน้า — 10/25/50 (ส่วนใหญ่) · 10/25 · 10/25/50/100
+
+**ขนาดจริงของชุดข้อมูล** (ใช้ตัดสินว่าช่องไหนต้องเป็น dropdown search)
+
+| ชุดข้อมูล | ขนาด | หลักฐาน |
+|---|---|---|
+| จังหวัดของ กฟภ. | 74 | `hierarchy-data.json` |
+| เขต | 12 (เขตละ 4–8 จังหวัด) | `hierarchy-data.json` |
+| สำนักงานหน้างาน (โครงสร้าง 1 ม.ค. 2569) | 948 = กฟจ. 74 + กฟส. 873 + กฟอ. 1 | `pea-dept-size-bridge.csv` |
+| สำนักงานต่อจังหวัด | น้อยสุด 3 · กลาง 12 · มากสุด 37 | `pea-dept-size-bridge.csv` |
+| เครื่องมือกล (จำนวนเครื่อง · ประเภท · รุ่น) | มีตัวเลขจริงแล้ว แต่ไม่ลงที่นี่ | มาจากไฟล์ HC ภายใน — อยู่ใน `design-mock/equipment-dashboard.html` ที่กันไว้ยังไม่ push |
+| หน่วยงานทั้งหมด · รถทั้งหมด · พนักงาน · อะไหล่ | **ยังไม่รู้** | มีแค่ schema ยังไม่มีข้อมูลส่งออก · อะไหล่มาจาก API ของ SAP ที่ค้นได้ทีละ matcode ไม่มีทางดึงรายการ |
+
+ชื่อซ้ำที่ต้องมีบรรทัดรองแยก: กฟส.ท่าตูม 2 แห่ง · กฟส.ท่าเรือ 2 แห่ง · กฟส.เฉลิมพระเกียรติ 3 แห่ง (ต้องดูจังหวัด) · รุ่นเครื่องมือกลบางรุ่นชื่อต่างกันแค่ตัวเลขท้าย
+
+### UX-2 ช่องกรอกและการตรวจความถูกต้อง
+
+- ตัดช่องที่ไม่จำเป็น · จัดคอลัมน์เดียว ยกเว้นช่องสั้นที่เกี่ยวกัน · label อยู่เหนือช่อง · บอกรูปแบบที่ต้องกรอกล่วงหน้า · ไม่มีปุ่มล้างฟอร์ม — NN/g Forms Top 10 (2016)
+- ไม่ใช้ placeholder แทน label — NN/g Placeholders (2014)
+- ทำเครื่องหมายช่องจำเป็นทุกช่องด้วย * · ระบุ "ไม่บังคับ" ช่วยลดภาระ — NN/g Required Fields (2019)
+- ตรวจเมื่อออกจากช่อง ไม่ตรวจระหว่างพิมพ์ · ข้อความอยู่ติดช่อง · ใช้สีคู่กับไอคอน · ไม่ใช้ tooltip แจ้งข้อผิดพลาด · มีสรุปรวมได้แต่ห้ามเป็นที่เดียว · เก็บค่าที่กรอกไว้ — NN/g Errors in Forms (2019)
+- [ ] ⬜ ยังไม่ได้เทียบกับ `.fgrid` · `.f` · `.in` · `.f.ro` · `.f.err` · `.help`
+- [ ] ที่เห็นแล้วระหว่างงานอื่น: `design-mock/transfer-request.html` จัดช่องอ่านอย่างเดียว 4 คอลัมน์ ข้อความถูกตัดที่จอ 1440 — ขัดกับ "คอลัมน์เดียว ยกเว้นช่องสั้น"
+
+### UX-3 ตาราง หน้ารายการ ตัวกรอง แบ่งหน้า
+
+- คอลัมน์แรกเป็นตัวระบุที่คนอ่านออก ไม่ใช่รหัสที่ระบบสร้าง · เรียงคอลัมน์ตามความสำคัญ · ตัวกรองต้องหาเจอง่ายและเห็นเงื่อนไขที่ใช้อยู่ — NN/g Data Tables (2022)
+- ตรึงหัวตารางเมื่อยาวเกินจอ · แถบสลับสีหรือไฮไลต์แถวช่วยไล่สายตา — NN/g Data Tables
+- แก้ไขแถวเดียว: modal บังแถวข้างเคียง ให้ใช้แผงข้างหรือหน้ารายละเอียดเมื่อต้องอ้างข้อมูลแถวอื่น — NN/g Data Tables
+- การกระทำรายแถวน้อยกว่า 3 อย่าง วางเป็นปุ่มไอคอนในแถว · มากกว่านั้นเข้าเมนู — Carbon Data Table
+- หัวคอลัมน์ยาวให้ขึ้น 2 บรรทัดแล้วค่อยตัด · ความสูงแถวมาตรฐาน 40px — Carbon Data Table
+- [ ] ⬜ ยังไม่ได้เทียบกับ `.list-toolbar` · `.tbl` · `th.sortable` · `.tblfoot` · `.pager` · `.filter-panel` · `.tbl-cards`
+- [ ] ⬜ หลักการยังบาง: ขนาดหน้าเริ่มต้นของการแบ่งหน้า · แบ่งหน้าหรือเลื่อนต่อเนื่อง · ตารางบนจอมือถือ — ต้องค้นเพิ่ม
+
+### UX-4 Modal และการยืนยัน
+
+- ใช้ modal เมื่องานจะเสียหายหรือย้อนไม่ได้ · เมื่อขาดข้อมูลจำเป็นต่อการไปต่อ · ไม่ใช้กับเรื่องที่ต้องไปดูข้อมูลที่อื่นประกอบ — NN/g Modal & Nonmodal (2017)
+- ยืนยันเฉพาะผลร้ายแรง ไม่ใช้กับงานประจำ · บอกผลที่จะเกิด ไม่ถามว่า "แน่ใจไหม" · ปุ่มเป็นคำกริยาเจาะจง ไม่ใช่ ใช่/ไม่ · ไม่ตั้งค่าเริ่มต้นที่ปุ่มอันตราย · ถ้าทำได้ให้มี undo แทน — NN/g Confirmation Dialogs (2018)
+- [ ] ⬜ ยังไม่ได้เทียบกับ `.modal` (`.md`/`.lg`/`.xl`) · `.modal-step-title`
+- [ ] ที่ต้องดูเป็นพิเศษ: ฟอร์มแจ้งซ่อมของต้นแบบเป็น modal 4 ขั้น ขณะที่แอปจริงเป็นหน้าเต็ม 3 ขั้น (ค้างเดิม รอเคาะ)
+
+### UX-5 งานหลายขั้น
+
+- เหมาะกับงานที่ทำไม่บ่อยหรือผู้ใช้ไม่คุ้น · ไม่เหมาะกับงานซ้ำของผู้ชำนาญ — NN/g Wizards (2017)
+- แสดงรายการขั้นและขั้นปัจจุบัน · บังคับลำดับ · ป้ายขั้นบอกเนื้อหา · ออกกลางทางแล้วกลับมาทำต่อได้ · แต่ละขั้นมีข้อมูลครบในตัว — NN/g Wizards
+- [ ] ⬜ ยังไม่ได้เทียบกับ `.wsteps` · `.wstep`
+
+### UX-6 ปุ่มและลำดับความสำคัญ
+
+- ปุ่มหลักหนึ่งปุ่มต่อจอ (ไม่นับ modal และแผงข้าง) · ปุ่มรองต้องมาคู่ปุ่มหลัก — Carbon Button
+- หน้าเต็ม: ปุ่มหลักชิดซ้าย · wizard และ dialog: ปุ่มหลักชิดขวา — Carbon Button
+- ป้าย = คำกริยา + คำนาม ยกเว้นคำสามัญ (ยกเลิก ปิด เพิ่ม ลบ) — Carbon Button · NN/g OK-Cancel (2008)
+- ปุ่มไอคอนล้วนใช้น้อย ต้องมี tooltip · ปุ่มอันตรายห้ามเป็นไอคอนล้วน — Carbon Button
+- ปุ่มที่เลือกบ่อยสุดเป็นค่าเริ่มต้น ยกเว้นการกระทำอันตราย — NN/g OK-Cancel
+- [ ] ⬜ ยังไม่ได้เทียบกับ `.btn` + `.btn-p`/`-s`/`-t`/`-link`/`-d` และหน้า `design-system/buttons.html`
+
+### UX-7 สถานะและข้อความตอบกลับ
+
+- แยก 3 ชนิด: indicator (เน้นองค์ประกอบ) · validation (เกี่ยวกับค่าที่กรอก) · notification (เหตุการณ์ของระบบ) — NN/g (2024)
+- toast ใช้กับข่าวที่ไม่ต้องทำอะไรต่อ · ห้ามใช้แจ้งข้อผิดพลาดเพราะหายก่อนอ่านทัน — NN/g (2024)
+- toast หายเองที่ 5 วินาที · ข้อความไม่เกิน 2 บรรทัด · ข้อความในงานวางเหนือปุ่มส่ง — Carbon Notification
+- สถานะว่างต้องบอก 3 อย่าง: ระบบทำเสร็จแล้วหรือยัง · ตรงนี้จะมีอะไร · ปุ่มไปทำงานถัดไป — NN/g Empty States (2021)
+- ต่ำกว่า 1 วินาทีไม่ต้องมีตัวบอก · 2–10 วินาทีใช้ตัวหมุน · 10 วินาทีขึ้นไปใช้แถบเปอร์เซ็นต์ — NN/g Progress Indicators (2014)
+- [ ] ⬜ ยังไม่ได้เทียบกับ `.badge` · `.toast` · `.note` · `.empty` · `.cell-state` · `.btn.is-loading`
+
+### UX-8 แนบไฟล์
+
+- ขอไฟล์เฉพาะเมื่อจำเป็นต่องาน — GOV.UK File upload
+- ข้อความผิดพลาดต้องครบ: ยังไม่เลือกไฟล์ · ชนิดไม่ถูก (บอกชนิดที่รับ) · ใหญ่เกิน (บอกขนาดสูงสุด) · ไฟล์ว่าง · อัปโหลดไม่สำเร็จให้ลองใหม่ · เกินจำนวน — GOV.UK File upload
+- [ ] ⬜ ยังไม่ได้เทียบกับ `.upload-field` · `.file-chip`
+
+### UX-9 Dashboard และตัวเลขสรุป
+
+- ความยาวและตำแหน่งอ่านค่าได้แม่นสุด ให้ใช้กราฟแท่ง · พื้นที่ มุม สี อ่านค่าไม่แม่น ให้เลี่ยงวงกลม/โดนัท · ไม่ใช้ 3 มิติ · สีไม่ใช้แทนปริมาณ — NN/g Dashboards (2017)
+- ดูปราดเดียวรู้เรื่อง ใช้การโต้ตอบน้อยที่สุด — NN/g Dashboards
+- [ ] ⬜ ยังไม่ได้เทียบกับ `.card` และส่วนกราฟใน `outcome-dashboard.html` · `executive-insights.html` · `design-mock/equipment-dashboard.html`
+- [ ] ใช้กับ "Dashboard ประวัติซ่อมตามยี่ห้อ" ที่กำลังออกแบบ (ดูรายการใน Backlog) — โครงที่เคาะแล้วใช้กราฟแท่งทั้งหมด ตรงหลักการนี้
+
+### แหล่งอ้างอิง (เปิดอ่าน 6 ต.ค. 2569)
+
+- NN/g — [Dropdowns: Design Guidelines](https://www.nngroup.com/articles/drop-down-menus/) (Li, 2017) · [Listboxes vs. Dropdown Lists](https://www.nngroup.com/articles/listbox-dropdown/) (Kaley, 2020) · [Website Forms Usability: Top 10](https://www.nngroup.com/articles/web-form-design/) (Whitenton, 2016) · [Placeholders in Form Fields Are Harmful](https://www.nngroup.com/articles/form-design-placeholders/) (Sherwin, 2014) · [Marking Required Fields](https://www.nngroup.com/articles/required-fields/) (Budiu, 2019) · [Reporting Errors in Forms](https://www.nngroup.com/articles/errors-forms-design-guidelines/) (Krause, 2019) · [Data Tables: Four Major User Tasks](https://www.nngroup.com/articles/data-tables/) (Laubheimer, 2022) · [Modal & Nonmodal Dialogs](https://www.nngroup.com/articles/modal-nonmodal-dialog/) (Fessenden, 2017) · [Confirmation Dialogs](https://www.nngroup.com/articles/confirmation-dialog/) (Nielsen, 2018) · [Wizards](https://www.nngroup.com/articles/wizards/) (Budiu, 2017) · [OK-Cancel or Cancel-OK?](https://www.nngroup.com/articles/ok-cancel-or-cancel-ok/) (Nielsen, 2008) · [Empty States](https://www.nngroup.com/articles/empty-state-interface-design/) (Kaplan, 2021) · [Indicators, Validations, and Notifications](https://www.nngroup.com/articles/indicators-validations-notifications/) (Flaherty, 2024) · [Progress Indicators](https://www.nngroup.com/articles/progress-indicators/) (Sherwin, 2014) · [Dashboards](https://www.nngroup.com/articles/dashboards-preattentive/) (Laubheimer, 2017)
+- Baymard — [Drop-Down Usability](https://baymard.com/blog/drop-down-usability) (2018, ปรับ 2025) · [Autocomplete Design](https://baymard.com/blog/autocomplete-design) (2022)
+- GOV.UK Design System — [Select](https://design-system.service.gov.uk/components/select/) · [File upload](https://design-system.service.gov.uk/components/file-upload/)
+- USWDS — [Select](https://designsystem.digital.gov/components/select/) · [Combo box](https://designsystem.digital.gov/components/combo-box/)
+- Carbon — [Dropdown](https://carbondesignsystem.com/components/dropdown/usage/) · [Button](https://carbondesignsystem.com/components/button/usage/) · [Notification](https://carbondesignsystem.com/components/notification/usage/) · [Data table](https://carbondesignsystem.com/components/data-table/usage/)
+- PatternFly — [Select](https://www.patternfly.org/components/menus/select/design-guidelines) · Atlassian — [Select](https://atlassian.design/components/select/usage) · Ant Design — [Select](https://ant.design/components/select)
+- W3C — [ARIA APG Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/)
+
+
 ## Backlog
 
 ### เคาะแล้ว 4 ส.ค. 2569 — พร้อมลงมือ (ดู AC-D1…D5)
