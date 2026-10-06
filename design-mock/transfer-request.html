@@ -12,6 +12,21 @@
 <link rel="stylesheet" href="../design-system/components.css?v=20261001-ds68">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="../design-system/tailwind-theme.js?v=20261001-ds68"></script>
+<!--
+  5 ต.ค. 2569 — ปรับหน้าใหม่ทั้งหน้าให้ตรง design system (README ข้อ 4)
+  ที่เปลี่ยนจากฉบับเดิม (สำรองไว้ที่ transfer-request-backup-20261005.html):
+   · หัวข้อแต่ละส่วน .incident-section-title → .sect (Section header ของไลบรารี)
+   · ข้อมูลอ่านอย่างเดียว <dl.incident-summary> → .f.ro ใน .fgrid — ตรงกับ Modal / Vehicle transfer
+     ใน Figma ที่แสดงสังกัดเดิม/รหัสทรัพย์สิน/เจ้าของเดิมเป็นช่องกรอกแบบ disabled
+   · ฟอร์ม grid-cols-2 ของ tailwind → .fgrid + .sp2/.sp4 ของกลาง (ย่อ 4→2→1 คอลัมน์เอง)
+   · ประเภทการโอน <select> → .radcards (ตัวเลือก 2 อันที่มีคำอธิบาย เลือกได้อันเดียว)
+   · ทางเลือกรายการค้าง .rads → .radcards (มีคำอธิบายกำกับ)
+   · รหัสข้างรถใหม่ แก้เองไม่ได้แล้ว → .f.ro "รอ กจย. ออก" เพราะหลักเกณฑ์ 2569 ข้อ 8.3
+     ให้ กจย. เป็นผู้ออกรหัสสังกัดใหม่ (ขั้น 4) ไม่ใช่ต้นทางพิมพ์เอง
+   · ช่องที่จำเป็นตรวจตอนกดส่ง → .f.err + .help
+  ⚠️ ส่วนที่ Figma ไม่มี (ต้องให้เจ้าของงานเคาะ): รายการค้าง · ประเภทการโอน · เหตุผล · เอกสารแนบ · ผู้อนุมัติ
+  ไม่มี <style> ในหน้า — ใช้คลาสจาก components.css ทั้งหมด
+-->
 </head>
 <body>
 <div class="shell">
@@ -25,6 +40,7 @@
   </aside>
 
   <div class="work">
+    <div class="draft"><span class="ms">science</span> Prototype (Mock) · ขั้น 2/4 — คำร้องขอเปลี่ยนสังกัดยานพาหนะ · ข้อมูลจำลอง ยังไม่เชื่อมระบบจริง</div>
     <div class="topbar">
       <span class="mr-auto"></span>
       <span class="ms">account_circle</span>
@@ -32,100 +48,105 @@
     </div>
 
     <main class="content">
-      <div class="draft">Prototype (Mock) · ขั้น 2/4 — คำร้องขอเปลี่ยนสังกัดยานพาหนะ · ยังไม่เชื่อมระบบจริง</div>
-
       <div class="crumbs">
         <span class="ms">directions_car</span><a href="#">ข้อมูลยานพาหนะ</a>
         <span class="sep"></span><a href="#">3ขพ 6153 กรุงเทพมหานคร</a>
         <span class="sep"></span><span class="cur">คำร้องขอเปลี่ยนสังกัด</span>
       </div>
 
-      <div class="page-title-row">
+      <div class="flex items-center gap-3 flex-wrap">
         <h1 class="page-title">คำร้องขอเปลี่ยนสังกัดยานพาหนะ</h1>
-        <span class="badge b-neutral">ร่าง</span>
+        <span class="badge b-neutral" id="st-badge">ร่าง</span>
       </div>
-      <div class="sub -mt-3 mb-4">กรอกคำร้องเพื่อขอย้ายรถไปสังกัดหน่วยงานใหม่ ·
-        <b>หน่วยงานต้นทางเป็นผู้เปิดเรื่องเสมอ</b> (เคาะ 22 ก.ย. 2569)</div>
+      <div class="sub mt-1 mb-4">หน่วยงานต้นทางเป็นผู้เปิดคำร้อง → หน่วยงานปลายทางตรวจรับ → กจย. ออกรหัสสังกัดใหม่</div>
 
-      <!-- แถบขั้นทั้งโฟลว์ — .wsteps ของ components.css (ผ่านแล้ว = วงกลม magenta ✓) -->
-      <div class="wsteps wrap mb-6">
+      <div class="wsteps wrap">
         <a class="wstep passed" href="transfer-01-list.html"><span class="num"><span class="ms">check</span></span><span class="lbl">เลือกรถ</span></a>
         <div class="wstep active"><span class="num">2</span><span class="lbl">ต้นทางเปิดคำร้อง</span></div>
-        <a class="wstep" href="transfer-03-receive.html"><span class="num">3</span><span class="lbl">ปลายทางตรวจรับ</span></a>
-        <a class="wstep" href="transfer-04-code.html"><span class="num">4</span><span class="lbl">กจย. ออกรหัสสังกัด</span></a>
+        <div class="wstep locked"><span class="num">3</span><span class="lbl">ปลายทางตรวจรับ</span></div>
+        <div class="wstep locked"><span class="num">4</span><span class="lbl">กจย. ออกรหัสสังกัด</span></div>
       </div>
 
-      <div class="max-w-[880px]">
+      <div class="max-w-[960px]">
 
-        <!-- ═══ 0. T5 ตรวจรายการค้างก่อนโอน ═══
-             SC-F13-02 · ⚠️ ไลบรารีไม่มีบล็อกนี้ — ประกอบจาก .note.note-warn + .tbl ตามที่เคาะ 22 ก.ย. 2569
-             ⚠️ DB ยังไม่มีที่เก็บผลตรวจ (vms_trn_vehicle_transfer มีแค่ remark) -->
-        <div class="note note-warn mb-4"><span class="ms">warning</span>
-          <div><b>รถคันนี้มีรายการค้าง 2 รายการ</b> — ต้องปิดก่อนจึงจะโอนได้
-            <b>หรือ</b> บันทึกข้อตกลงส่งมอบพร้อมรายการค้าง
-            <span class="badge b-out">ยังไม่เคาะว่าบล็อกหรือแค่เตือน</span></div>
-        </div>
-
-        <div class="card mb-4">
-          <div class="incident-section-title">รายการค้างที่ระบบตรวจพบ</div>
+        <!-- ═══ 1. รายการค้างก่อนโอน (SC-F13-02) — ⚠️ ไม่มีใน Figma ═══ -->
+        <div class="card" id="sec-pending">
+          <div class="sect mt-0">รายการค้างของรถคันนี้</div>
+          <div class="note note-warn"><span class="ms">warning</span>
+            <div><b>พบรายการค้าง 2 รายการ</b> — ต้องปิดให้ครบก่อนส่งคำร้อง หรือเลือกส่งมอบพร้อมรายการค้างและระบุผู้รับผิดชอบ</div>
+          </div>
           <div class="tblwrap">
             <table class="tbl">
               <thead><tr><th>ประเภท</th><th>เลขที่</th><th>สถานะ</th><th></th></tr></thead>
               <tbody>
                 <tr>
-                  <td>ใบแจ้งซ่อม</td><td>BRK-2569-0882</td>
+                  <td>ใบแจ้งซ่อม</td><td class="cell-key">BRK-2569-0882</td>
                   <td><span class="badge b-low">รอ กบค. พิจารณา</span></td>
                   <td><div class="dt-action"><a class="btn btn-s btn-sm" href="#">เปิดใบ</a></div></td>
                 </tr>
                 <tr>
-                  <td>รอบบิล Fleet card</td><td>FC-2569-09</td>
+                  <td>รอบบิล Fleet card</td><td class="cell-key">FC-2569-09</td>
                   <td><span class="badge b-low">ยังไม่เคลียร์</span></td>
                   <td><div class="dt-action"><a class="btn btn-s btn-sm" href="#">เปิดรอบบิล</a></div></td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div class="rads mt-4">
-            <label><input type="radio" name="pending" checked> ปิดรายการค้างให้ครบก่อนส่งคำร้อง</label>
-            <label><input type="radio" name="pending"> บันทึกข้อตกลงส่งมอบพร้อมรายการค้าง</label>
+          <div class="f mt-5" id="f-pending">
+            <label>จัดการรายการค้างอย่างไร <small>(จำเป็น)</small></label>
+            <div class="radcards" data-group="pending">
+              <label class="radcard" data-value="close"><input type="radio" name="pending" value="close"><span class="rdot"></span>
+                <span class="rc-ic"><span class="ms">task_alt</span></span>
+                <span class="rc-tx"><b>ปิดรายการค้างให้ครบก่อน</b><small>ส่งคำร้องได้เมื่อทุกรายการปิดแล้ว</small></span></label>
+              <label class="radcard" data-value="handover"><input type="radio" name="pending" value="handover"><span class="rdot"></span>
+                <span class="rc-ic"><span class="ms">assignment_return</span></span>
+                <span class="rc-tx"><b>ส่งมอบพร้อมรายการค้าง</b><small>ระบุว่าใครรับผิดชอบรายการที่ยังไม่ปิด</small></span></label>
+            </div>
+            <div class="help hidden">กรุณาเลือกวิธีจัดการรายการค้าง</div>
+          </div>
+          <div class="f mt-4 hidden" id="f-handover">
+            <label>ข้อตกลงการส่งมอบรายการค้าง <small>(จำเป็น)</small></label>
+            <textarea rows="2" placeholder="เช่น ต้นทางรับผิดชอบค่าซ่อมใบ BRK-2569-0882 จนปิดงาน · รอบบิล FC-2569-09 ต้นทางเคลียร์ภายในเดือนนี้"></textarea>
+            <div class="help hidden">กรุณาระบุข้อตกลงการส่งมอบ</div>
           </div>
         </div>
 
-        <!-- ═══ 1. ยานพาหนะที่ขอเปลี่ยนสังกัด — อ่านอย่างเดียว ═══
-             ฟิลด์ยกมาจาก card "ข้อมูลสังกัดยานพาหนะ" ของหน้า 5.2 Vehicle Management -->
+        <!-- ═══ 2. ยานพาหนะและสังกัดเดิม — อ่านอย่างเดียว · ฟิลด์ตาม Modal / Vehicle transfer ═══ -->
         <div class="card">
-          <div class="incident-section-title">ยานพาหนะที่ขอเปลี่ยนสังกัด</div>
-          <dl class="incident-summary">
-            <div class="incident-field"><dt>เลขทะเบียน</dt><dd>3ขพ 6153 กรุงเทพมหานคร</dd></div>
-            <div class="incident-field"><dt>รหัสทรัพย์สิน</dt><dd>513021567839</dd></div>
-            <div class="incident-field"><dt>ประเภทยานพาหนะ</dt><dd>กระเช้าฮอทไลน์ 115 KV</dd></div>
-            <div class="incident-field"><dt>รหัสข้างรถ</dt><dd>กจย. - 25 - 1850</dd></div>
-          </dl>
+          <div class="sect mt-0">ยานพาหนะและสังกัดเดิม</div>
+          <div class="fgrid mb-0">
+            <div class="f ro"><label>เลขทะเบียน</label>
+              <div class="in"><span class="ms">directions_car</span><input value="3ขพ 6153 กรุงเทพมหานคร" readonly></div></div>
+            <div class="f ro"><label>รหัสทรัพย์สิน</label>
+              <div class="in"><span class="ms">tag</span><input value="513021567839" readonly></div></div>
+            <div class="f ro"><label>ประเภทยานพาหนะ</label>
+              <div class="in"><span class="ms">category</span><input value="กระเช้าฮอทไลน์ 115 KV" readonly></div></div>
+            <div class="f ro"><label>รหัสข้างรถเดิม</label>
+              <div class="in"><span class="ms">label</span><input value="กจย. - 25 - 1850" readonly></div></div>
+            <div class="f ro sp2"><label>สังกัดยานพาหนะเดิม</label>
+              <div class="in"><span class="ms">apartment</span><input value="กจย. ฝจบ. ผชก.(ล) สายงาน ล" readonly></div></div>
+            <div class="f ro sp2"><label>เจ้าของยานพาหนะเดิม</label>
+              <div class="in"><span class="ms">person</span><input value="นายอนุรักษ์ คล่องไชยชน อก.จย." readonly></div></div>
+          </div>
         </div>
 
-        <!-- ═══ 2. สังกัดเดิม → สังกัดใหม่ ═══
-             โครงฟิลด์ยกมาจาก Modal / Vehicle transfer ตรงตัว -->
+        <!-- ═══ 3. สังกัดใหม่ — ฟิลด์ตาม Modal / Vehicle transfer ═══ -->
         <div class="card">
-          <div class="incident-section-title">สังกัดเดิม</div>
-          <dl class="incident-summary mb-0">
-            <div class="incident-field wide"><dt>สังกัดยานพาหนะเดิม</dt><dd>กจย. ฝจบ. ผชก.(ล) สายงาน ล</dd></div>
-            <div class="incident-field wide"><dt>เจ้าของยานพาหนะเดิม</dt><dd>นายอนุรักษ์ คล่องไชยชน อก.จย.</dd></div>
-          </dl>
-
-          <div class="incident-section-title mt-7">สังกัดใหม่ที่ขอย้ายไป</div>
-          <div class="fgrid grid-cols-2 mb-0">
-            <div class="f">
+          <div class="sect mt-0">สังกัดใหม่ที่ขอย้ายไป</div>
+          <div class="fgrid mb-0">
+            <div class="f sp2" id="f-dept">
               <label>สังกัดยานพาหนะใหม่ <small>(จำเป็น)</small></label>
               <div class="in"><span class="ms">search</span>
                 <select id="new-dept">
                   <option value="" selected disabled>เลือกสังกัด</option>
-                  <option>กอพ.1 ฝพจ. ผชก.(ดส-ท) สายงาน ดส</option>
-                  <option>กอพ.2 ฝพจ. ผชก.(ดส-ท) สายงาน ดส</option>
-                  <option>กฟอ.แม่ใจ จ.พะเยา — กฟน.1</option>
+                  <option value="กอพ.1">กอพ.1 ฝพจ. ผชก.(ดส-ท) สายงาน ดส</option>
+                  <option value="กอพ.2">กอพ.2 ฝพจ. ผชก.(ดส-ท) สายงาน ดส</option>
+                  <option value="กฟอ.แม่ใจ">กฟอ.แม่ใจ จ.พะเยา — กฟน.1</option>
                 </select>
               </div>
+              <div class="help hidden">กรุณาเลือกสังกัดใหม่</div>
             </div>
-            <div class="f">
+            <div class="f sp2" id="f-owner">
               <label>เจ้าของยานพาหนะใหม่ <small>(จำเป็น)</small></label>
               <div class="in"><span class="ms">person</span>
                 <select id="new-owner">
@@ -134,81 +155,131 @@
                   <option>นายวีระชัย ทองสุข อก.อพ.2</option>
                 </select>
               </div>
+              <div class="help hidden">กรุณาเลือกเจ้าของยานพาหนะใหม่</div>
             </div>
-            <div class="f">
+            <div class="f ro sp2">
               <label>รหัสข้างรถใหม่</label>
-              <div class="flex items-center gap-2">
-                <input type="text" value="กอพ.1" aria-label="หน่วยงาน" class="max-w-[110px]">
-                <span class="text-gray-500">-</span>
-                <input type="text" value="25" aria-label="หมวดหมู่" class="max-w-[70px]">
-                <span class="text-gray-500">-</span>
-                <input type="text" value="1850" aria-label="ลำดับ" class="max-w-[100px]">
-              </div>
-              <div class="sub mt-1.5 mb-0">หมวดหมู่ยานพาหนะ (25) รถเช่าแบบลีสซิ่ง</div>
+              <div class="in"><span class="ms">label</span><input id="new-code" value="— - 25 - รอ กจย. ออกเลข" readonly></div>
+              <div class="sub mt-1.5 mb-0">กจย. เป็นผู้ออกรหัสสังกัดใหม่หลังปลายทางรับโอน (หลักเกณฑ์ยานพาหนะ 2569 ข้อ 8.3)</div>
             </div>
-            <div class="f">
+            <div class="f" id="f-date">
               <label>วันที่ต้องการให้มีผล <small>(จำเป็น)</small></label>
-              <div class="in noic"><input type="date" value="2026-10-01"></div>
+              <div class="in"><span class="ms">calendar_month</span><input type="date" id="eff-date"></div>
+              <div class="help hidden">กรุณาระบุวันที่</div>
             </div>
           </div>
         </div>
 
-        <!-- ═══ 3. เหตุผล + เอกสารแนบ ═══
-             ⚠️ ส่วนนี้ไม่มีในดีไซน์ PEA — เป็นของที่คำร้องต้องมีตามระเบียบพัสดุ รอเจ้าของงานเคาะ -->
+        <!-- ═══ 4. ประเภทและเหตุผล — ⚠️ ไม่มีใน Figma (ระเบียบพัสดุ) ═══ -->
         <div class="card">
-          <div class="incident-section-title">เหตุผลในการขอเปลี่ยนสังกัด</div>
-          <div class="f">
-            <label>ประเภทการโอนย้าย <small>(จำเป็น)</small></label>
-            <div class="in noic">
-              <select id="transfer-type">
-                <option value="" selected disabled>เลือกประเภท</option>
-                <option>โอนถาวร — เปลี่ยนเจ้าของในทะเบียนทรัพย์สิน</option>
-                <option>คืนรถกลับหน่วยงานเดิม</option>
-              </select>
+          <div class="sect mt-0">ประเภทและเหตุผลการโอนย้าย</div>
+          <div class="stack loose">
+            <div class="f" id="f-type">
+              <label>ประเภทการโอนย้าย <small>(จำเป็น)</small></label>
+              <div class="radcards" data-group="type">
+                <label class="radcard" data-value="permanent"><input type="radio" name="ttype" value="permanent"><span class="rdot"></span>
+                  <span class="rc-ic"><span class="ms">swap_horiz</span></span>
+                  <span class="rc-tx"><b>โอนถาวร</b><small>เปลี่ยนสังกัดและเจ้าของในทะเบียนทรัพย์สิน</small></span></label>
+                <label class="radcard" data-value="return"><input type="radio" name="ttype" value="return"><span class="rdot"></span>
+                  <span class="rc-ic"><span class="ms">u_turn_left</span></span>
+                  <span class="rc-tx"><b>คืนรถกลับหน่วยงานเดิม</b><small>รถเคยโอนมาจากหน่วยงานอื่น ขอส่งกลับ</small></span></label>
+              </div>
+              <div class="help hidden">กรุณาเลือกประเภทการโอนย้าย</div>
             </div>
-            <div class="sub mt-1.5 mb-0">ผูกกับตาราง <code>vms_ref_vehicle_transfer</code> ของระบบจริง —
-              <b>ยังไม่เห็นค่าจริงใน lookup</b> (ไม่มี seed ในโค้ด ต้องต่อ DB)
-              · <b>ถอด “ยืมใช้ชั่วคราว” ออกแล้ว</b> เพราะหลักเกณฑ์ 2569 จัดไว้คนละหมวด
-              (ข้อ 11.2.5 การใช้รถข้ามหน่วยงาน · ไม่แตะรหัสสังกัด · สายอนุมัติคนละชุด)</div>
-          </div>
-          <div class="f mt-4">
-            <label>เหตุผล / ความจำเป็น <small>(จำเป็น)</small></label>
-            <textarea rows="3" placeholder="เช่น หน่วยงานปลายทางขาดแคลนรถกระเช้าสำหรับงานฮอทไลน์"></textarea>
-          </div>
-          <div class="f mt-4">
-            <label>เอกสารแนบ <small>(JPG · PNG · PDF)</small></label>
-            <div class="flex flex-wrap gap-2">
-              <span class="file-chip"><span class="ms">picture_as_pdf</span>
-                <span class="file-chip-name">บันทึกขออนุมัติ-โอนย้าย.pdf</span>
-                <button class="file-chip-rm" aria-label="ลบไฟล์"><span class="ms">close</span></button></span>
-              <button class="btn btn-s btn-sm"><span class="ms">attach_file</span> แนบไฟล์</button>
+            <div class="note note-info mb-0"><span class="ms">info</span>
+              <div>ถ้าต้องการ<b>ยืมรถไปใช้ชั่วคราว</b> ไม่ต้องเปลี่ยนสังกัด — ใช้คำขอใช้รถข้ามหน่วยงานแทน (หลักเกณฑ์ข้อ 11.2.5)</div>
+            </div>
+            <div class="f" id="f-reason">
+              <label>เหตุผล / ความจำเป็น <small>(จำเป็น)</small></label>
+              <textarea id="reason" rows="3" placeholder="เช่น หน่วยงานปลายทางขาดรถกระเช้าสำหรับงานฮอทไลน์ ส่วนต้นทางได้รถทดแทนแล้ว"></textarea>
+              <div class="help hidden">กรุณาระบุเหตุผล</div>
+            </div>
+            <div class="f mb-0">
+              <label>เอกสารแนบ <small>(JPG · PNG · PDF · ถ้ามี)</small></label>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="file-chip"><span class="ms">picture_as_pdf</span>
+                  <span class="file-chip-name">บันทึกขออนุมัติ-โอนย้าย.pdf</span>
+                  <button class="file-chip-rm" type="button" aria-label="ลบไฟล์"><span class="ms">close</span></button></span>
+                <button class="btn btn-s btn-sm" type="button"><span class="ms">attach_file</span> แนบไฟล์</button>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- ═══ 4. ผู้อนุมัติ ═══ -->
+        <!-- ═══ 5. ผู้อนุมัติ — ⚠️ ไม่มีใน Figma · สายอนุมัติยังไม่เคาะ ═══ -->
         <div class="card">
-          <div class="incident-section-title">ผู้อนุมัติ</div>
-          <div class="f">
-            <label>หัวหน้าหน่วยงานต้นทาง <small>(จำเป็น)</small></label>
-            <div class="in"><span class="ms">person</span>
-              <select><option value="" selected disabled>เลือกผู้อนุมัติ</option>
-                <option>นายประเสริฐ มั่นคง — ผอ.กจย.</option></select>
+          <div class="sect mt-0">ผู้อนุมัติ</div>
+          <div class="fgrid">
+            <div class="f sp2" id="f-approver">
+              <label>หัวหน้าหน่วยงานต้นทาง <small>(จำเป็น)</small></label>
+              <div class="in"><span class="ms">person</span>
+                <select id="approver"><option value="" selected disabled>เลือกผู้อนุมัติ</option>
+                  <option>นายประเสริฐ มั่นคง — ผอ.กจย.</option></select>
+              </div>
+              <div class="help hidden">กรุณาเลือกผู้อนุมัติ</div>
             </div>
           </div>
-          <div class="note note-info mt-4"><span class="ms">info</span>
-            <div>เมื่อส่งคำร้องแล้ว เรื่องจะไปที่หัวหน้าหน่วยงานต้นทางก่อน จากนั้นจึงส่งให้<b>หน่วยงานปลายทางยืนยันรับโอน</b> และฝ่ายพัสดุปรับปรุงทะเบียนทรัพย์สินเป็นขั้นสุดท้าย</div>
+          <div class="note note-info mb-0"><span class="ms">info</span>
+            <div>หลังส่งคำร้อง: หัวหน้าต้นทางอนุมัติ → <b>ปลายทางตรวจรับรถ</b> → ปลายทางแจ้ง กจย. ภายใน <b>7 วันทำการ</b> →
+              กจย. ออกรหัสสังกัดใหม่ → ปลายทางประทับตรารหัสใหม่ภายใน <b>7 วันทำการ</b></div>
           </div>
         </div>
 
         <div class="actions">
           <a class="btn btn-g" href="transfer-01-list.html">ย้อนกลับ</a>
-          <button class="btn btn-s">บันทึกร่าง</button>
-          <a class="btn btn-p" href="transfer-03-receive.html">ส่งคำร้อง</a>
+          <button class="btn btn-s" type="button" id="btn-draft">บันทึกร่าง</button>
+          <button class="btn btn-p" type="button" id="btn-submit">ส่งคำร้อง</button>
         </div>
       </div>
     </main>
   </div>
 </div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* การ์ดตัวเลือก (.radcards) — เลือกได้อันเดียวต่อกลุ่ม */
+document.querySelectorAll('.radcards').forEach(g=>{
+  g.querySelectorAll('.radcard').forEach(c=>c.addEventListener('click',()=>{
+    g.querySelectorAll('.radcard').forEach(x=>x.classList.toggle('sel',x===c));
+    c.querySelector('input').checked=true;
+    clearErr(c.closest('.f'));
+    if(g.dataset.group==='pending')
+      document.getElementById('f-handover').classList.toggle('hidden',c.dataset.value!=='handover');
+  }));
+});
+
+/* พรีวิวรหัสข้างรถใหม่ — ส่วนหน่วยงานตามสังกัดที่เลือก เลขลำดับรอ กจย. */
+document.getElementById('new-dept').addEventListener('change',e=>{
+  document.getElementById('new-code').value=`${e.target.value} - 25 - รอ กจย. ออกเลข`;
+});
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+function setErr(f,on){if(!f)return;f.classList.toggle('err',on);const h=f.querySelector(':scope > .help');if(h)h.classList.toggle('hidden',!on)}
+function clearErr(f){setErr(f,false)}
+document.querySelectorAll('.f select,.f textarea,.f input').forEach(x=>x.addEventListener('input',()=>clearErr(x.closest('.f'))));
+
+document.getElementById('btn-draft').addEventListener('click',()=>toast('บันทึกร่างแล้ว (mock)'));
+document.getElementById('btn-submit').addEventListener('click',()=>{
+  const checks=[
+    ['f-pending', ()=>!!document.querySelector('input[name=pending]:checked')],
+    ['f-handover',()=>document.querySelector('input[name=pending]:checked')?.value!=='handover'
+                     || document.querySelector('#f-handover textarea').value.trim()!==''],
+    ['f-dept',    ()=>!!document.getElementById('new-dept').value],
+    ['f-owner',   ()=>!!document.getElementById('new-owner').value],
+    ['f-date',    ()=>!!document.getElementById('eff-date').value],
+    ['f-type',    ()=>!!document.querySelector('input[name=ttype]:checked')],
+    ['f-reason',  ()=>document.getElementById('reason').value.trim()!==''],
+    ['f-approver',()=>!!document.getElementById('approver').value],
+  ];
+  let first=null;
+  checks.forEach(([id,ok])=>{const f=document.getElementById(id),bad=!ok();setErr(f,bad);if(bad&&!first)first=f});
+  if(first){first.scrollIntoView({behavior:'smooth',block:'center'});toast('กรอกข้อมูลที่จำเป็นให้ครบก่อนส่ง');return}
+  if(document.querySelector('input[name=pending]:checked').value==='close'){
+    toast('ยังมีรายการค้าง 2 รายการ — ปิดให้ครบก่อนจึงส่งได้');return;
+  }
+  const b=document.getElementById('st-badge');b.textContent='รอหัวหน้าอนุมัติ';b.className='badge b-low';
+  toast('ส่งคำร้องแล้ว — รอหัวหน้าหน่วยงานต้นทางอนุมัติ');
+});
+</script>
 </body>
 </html>
