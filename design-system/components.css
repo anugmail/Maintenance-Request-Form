@@ -448,9 +448,13 @@ body.modal-open{overflow:hidden}
 .shell:has(>.side.wide)::after{content:"";position:fixed;inset:0;background:rgba(16,24,40,.18);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .32s cubic-bezier(.22,1,.36,1);z-index:35}
 .shell:has(>.side.wide:hover)::after{opacity:1;pointer-events:auto}
 
-.work{flex:1;min-width:0;display:flex;flex-direction:column;background:#fff}
+/* v0.69 (6 ต.ค. 2569) — ความกว้างพื้นที่ทำงานตามแอปจริง: คอลัมน์ทำงานของ vms-plus-uat `/maintain-d` คือ
+   `flex-1 min-w-0 flex flex-col max-w-screen-2xl mx-auto` = กว้างสุด 1536px แล้วจัดกึ่งกลางในพื้นที่ทางขวาของ sidebar
+   เดิมเราจำกัดที่ .content 1500px ชิดซ้าย — บนจอกว้างกว่า ~1580px เหลือที่ว่างด้านขวาด้านเดียว (เจ้าของงานทัก "ไม่เต็มหน้า" 2 ครั้ง
+   แล้วเลือก "ตามแอปจริง: 1536px จัดกึ่งกลาง") · ไลบรารี Figma วาดเฟรมที่ 1440 จึงไม่มีค่าของจอที่กว้างกว่านี้ให้เทียบ */
+.work{flex:1;min-width:0;max-width:1536px;margin:0 auto;display:flex;flex-direction:column;background:#fff}
 .topbar{background:#fff;border-bottom:1px solid var(--badge-neutral-border);padding:12px 28px;display:flex;justify-content:flex-end;align-items:center;gap:4px;color:var(--gray-600)}
-.content{padding:22px 32px 48px;width:100%;max-width:1500px}
+.content{padding:22px 32px 48px;width:100%}
 
 /* ---------- Breadcrumb + ชื่อหน้า ---------- */
 /* ไลบรารี `Breadcrumbs`: 12/Regular · สี #475467 · ลิงก์ปัจจุบันเป็นแบรนด์
@@ -815,7 +819,9 @@ input[type=checkbox]{accent-color:var(--primary-600);width:20px;height:20px;curs
 /* ============================================================
    v0.5 — ตารางข้อมูล (เมนูคลังอะไหล่)
    ============================================================ */
-.tblwrap{overflow-x:auto;margin-top:12px}
+/* v0.69: overflow-y:hidden — overflow-x:auto ทำให้แกนตั้งกลายเป็น auto ไปด้วย และกล่องที่มี .tblfoot สูงเกิน 1px
+   เครื่องที่ตั้งค่า "แสดงแถบเลื่อนเสมอ" จึงเห็นแถบเลื่อนแนวตั้งข้างทุกตาราง (เห็นจากภาพหน้าจอของเจ้าของงาน 6 ต.ค. 2569) */
+.tblwrap{overflow-x:auto;overflow-y:hidden;margin-top:12px}
 /* ✅ ค่าจากไลบรารี Table
    · `Table header cell` 44 สูง · พื้น #F2F4F7 · pad 16/12 · 14/SemiBold · ตัวอักษรดำ
    · `Table cell` 56 สูง · pad 16/8 · เส้นล่าง #EAECF0 · แถวสลับ #F9FAFB
