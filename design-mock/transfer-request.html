@@ -27,6 +27,18 @@
   ⚠️ ส่วนที่ Figma ไม่มี (ต้องให้เจ้าของงานเคาะ): รายการค้าง · ประเภทการโอน · เหตุผล · เอกสารแนบ · ผู้อนุมัติ
   ไม่มี <style> ในหน้า — ใช้คลาสจาก components.css ทั้งหมด
 
+  6 ต.ค. 2569 (รอบดึก 2) — ปรับตามผังโอนย้ายที่เจ้าของงานส่งมา (เคาะ "โอเค ลงมือเลย")
+   · ลำดับของเรื่องเหลือ: เปิดคำร้อง → หัวหน้าหน่วยงานอนุมัติ → เปลี่ยนข้อมูล VMS+ → เลขข้างรถ → ทะเบียน (ถ้าข้ามจังหวัด) → BA
+     ตัด "ปลายทางตรวจรับ" ออกจากข้อความและเมนูข้าง (หน้า transfer-03-receive.html พักไว้ ยังไม่ลบ)
+   · เพิ่ม BA / ศูนย์ต้นทุนเดิมในกล่องข้อมูลรถ · BA / ศูนย์ต้นทุนใหม่ดึงตามสังกัดที่เลือก (ค่าตัวอย่าง ยังไม่รู้รูปแบบจริง)
+   · เตือน "ย้ายข้ามจังหวัด ต้องเปลี่ยนทะเบียนและภาษี" เมื่อสังกัดใหม่อยู่คนละจังหวัดกับทะเบียน
+   · หน้าถัดไปของเรื่อง = transfer-approved.html (หลังได้รับอนุมัติ)
+   · ยังคงไว้แม้ไม่อยู่ในผัง (เจ้าของงานรับทราบแล้ว): ส่วนรายการค้าง · ประเภทการโอน
+
+  6 ต.ค. 2569 (รอบดึก) — เจ้าของงานสั่ง "เอากรอบการ์ดออก ทำตามของจริงเลย"
+   · ถอด .card ที่ล้อมแต่ละส่วนออกทั้ง 5 ส่วน — ฟอร์มแจ้งซ่อมจริงบน UAT วางช่องบนพื้นขาวตรง ๆ (section.w-full) ไม่มีกรอบ
+     แต่ละส่วนยังแบ่งด้วยหัวข้อ .sect (มีเส้นใต้) · ระยะห่างระหว่างส่วน 32px (.stack + gap-8) — ไม่มีกรอบแล้วต้องเว้นมากกว่าตอนเป็นการ์ด
+
   6 ต.ค. 2569 — เจ้าของงานสั่ง "ไม่เอา stepper เลย เป็นฟอร์มยาวๆ"
    · ถอด .wsteps ออก — 4 ขั้นนั้นเป็นงานของคนละหน่วยงานคนละวัน (ต้นทาง · ปลายทาง · กจย.) ไม่ใช่ขั้นที่ผู้กรอกคนเดียวเดินต่อกัน
      จึงเป็น "สถานะของเรื่อง" ไม่ใช่ wizard (แนวทาง UX-5 · NN/g Wizards) · ลำดับของเรื่องยังบอกไว้ที่บรรทัดใต้ชื่อหน้า
@@ -47,7 +59,7 @@
     <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
     <a class="nv" href="transfer-01-list.html" title="รายการยานพาหนะ"><span class="ms">directions_car</span><span class="nvlbl">1 · รายการยานพาหนะ</span></a>
     <a class="nv on" href="transfer-request.html" title="คำร้องเปลี่ยนสังกัด"><span class="ms">swap_horiz</span><span class="nvlbl">2 · คำร้องเปลี่ยนสังกัด</span></a>
-    <a class="nv" href="transfer-03-receive.html" title="ปลายทางตรวจรับ"><span class="ms">how_to_reg</span><span class="nvlbl">3 · ปลายทางตรวจรับ</span></a>
+    <a class="nv" href="transfer-approved.html" title="หลังได้รับอนุมัติ"><span class="ms">task_alt</span><span class="nvlbl">3 · หลังได้รับอนุมัติ</span></a>
     <a class="nv" href="transfer-04-code.html" title="คิวงาน กจย."><span class="ms">label</span><span class="nvlbl">4 · คิวงาน กจย.</span></a>
   </aside>
 
@@ -70,12 +82,12 @@
         <h1 class="page-title">คำร้องขอเปลี่ยนสังกัดยานพาหนะ</h1>
         <span class="badge b-neutral" id="st-badge">ร่าง</span>
       </div>
-      <div class="sub mt-1 mb-4">หน่วยงานต้นทางเป็นผู้เปิดคำร้อง → หน่วยงานปลายทางตรวจรับ → กจย. ออกรหัสสังกัดใหม่</div>
+      <div class="sub mt-1 mb-4">เปิดคำร้อง → หัวหน้าหน่วยงานอนุมัติ → เปลี่ยนข้อมูลใน VMS+ → เปลี่ยนเลขข้างรถ → เปลี่ยนทะเบียน (ถ้าข้ามจังหวัด) → เปลี่ยน BA</div>
 
-      <div class="w-full"><!-- 6 ต.ค. 2569: เลิกจำกัดความกว้างฟอร์ม (เดิม max-w-[960px]) — ฟอร์มจริงบน UAT ใช้ w-full เต็มพื้นที่เนื้อหา และ design system จำกัดแค่ .content 1500px -->
+      <div class="w-full stack gap-8 mt-2"><!-- 6 ต.ค. 2569: เลิกจำกัดความกว้างฟอร์ม (เดิม max-w-[960px]) — ฟอร์มจริงบน UAT ใช้ w-full เต็มพื้นที่เนื้อหา และ design system จำกัดแค่ .content 1500px -->
 
         <!-- ═══ 1. รายการค้างก่อนโอน (SC-F13-02) — ⚠️ ไม่มีใน Figma ═══ -->
-        <div class="card" id="sec-pending">
+        <div class="w-full" id="sec-pending">
           <div class="sect mt-0">รายการค้างของรถคันนี้</div>
           <div class="note note-warn"><span class="ms">warning</span>
             <div><b>พบรายการค้าง 2 รายการ</b> — ต้องปิดให้ครบก่อนส่งคำร้อง หรือเลือกส่งมอบพร้อมรายการค้างและระบุผู้รับผิดชอบ</div>
@@ -117,7 +129,7 @@
         </div>
 
         <!-- ═══ 2. ยานพาหนะและสังกัดเดิม — ข้อมูลแสดงอย่างเดียว ใช้กล่องแสดงข้อมูล dl.incident-summary (ไลบรารี Cards › Content item) ไม่ใช่ช่องกรอก ═══ -->
-        <div class="card">
+        <div class="w-full">
           <div class="sect mt-0">ยานพาหนะและสังกัดเดิม</div>
           <dl class="incident-summary md:grid-cols-3 mb-0">
             <div class="incident-field"><dt>เลขทะเบียน</dt><dd>3ขพ 6153 กรุงเทพมหานคร</dd></div>
@@ -126,11 +138,12 @@
             <div class="incident-field"><dt>รหัสข้างรถเดิม</dt><dd>กจย. - 25 - 1850</dd></div>
             <div class="incident-field"><dt>สังกัดยานพาหนะเดิม</dt><dd>กจย. ฝจบ. ผชก.(ล) สายงาน ล</dd></div>
             <div class="incident-field"><dt>เจ้าของยานพาหนะเดิม</dt><dd>นายอนุรักษ์ คล่องไชยชน อก.จย.</dd></div>
+            <div class="incident-field"><dt>BA / ศูนย์ต้นทุนเดิม</dt><dd>BA Z000 · ศูนย์ต้นทุน Z000100100</dd></div>
           </dl>
         </div>
 
         <!-- ═══ 3. สังกัดใหม่ — ฟิลด์ตาม Modal / Vehicle transfer ═══ -->
-        <div class="card">
+        <div class="w-full">
           <div class="sect mt-0">สังกัดใหม่ที่ขอย้ายไป</div>
           <div class="fgrid mb-0">
             <div class="f sp2" id="f-dept">
@@ -138,9 +151,9 @@
               <div class="in"><span class="ms">search</span>
                 <select id="new-dept">
                   <option value="" selected disabled>เลือกสังกัด</option>
-                  <option value="กอพ.1">กอพ.1 ฝพจ. ผชก.(ดส-ท) สายงาน ดส</option>
-                  <option value="กอพ.2">กอพ.2 ฝพจ. ผชก.(ดส-ท) สายงาน ดส</option>
-                  <option value="กฟอ.แม่ใจ">กฟอ.แม่ใจ จ.พะเยา — กฟน.1</option>
+                  <option value="กอพ.1" data-prov="กรุงเทพมหานคร" data-ba="BA Z000 · ศูนย์ต้นทุน Z000300100">กอพ.1 ฝพจ. ผชก.(ดส-ท) สายงาน ดส</option>
+                  <option value="กอพ.2" data-prov="กรุงเทพมหานคร" data-ba="BA Z000 · ศูนย์ต้นทุน Z000300200">กอพ.2 ฝพจ. ผชก.(ดส-ท) สายงาน ดส</option>
+                  <option value="กฟอ.แม่ใจ" data-prov="พะเยา" data-ba="BA A000 · ศูนย์ต้นทุน A000200300">กฟอ.แม่ใจ จ.พะเยา — กฟน.1</option>
                 </select>
               </div>
               <div class="help hidden">กรุณาเลือกสังกัดใหม่</div>
@@ -159,7 +172,12 @@
             <div class="f ro sp2">
               <label>รหัสข้างรถใหม่</label>
               <div class="in"><span class="ms">label</span><input type="text" id="new-code" value="— - 25 - รอ กจย. ออกเลข" readonly></div>
-              <div class="sub mt-1.5 mb-0">กจย. เป็นผู้ออกรหัสสังกัดใหม่หลังปลายทางรับโอน (หลักเกณฑ์ยานพาหนะ 2569 ข้อ 8.3)</div>
+              <div class="sub mt-1.5 mb-0">หลังได้รับอนุมัติ กจย. ออกเลขใหม่ให้ แล้วเอาเลขเดิมออกใส่เลขใหม่แทน (หลักเกณฑ์ยานพาหนะ 2569 ข้อ 8.1)</div>
+            </div>
+            <div class="f ro sp2">
+              <label>BA / ศูนย์ต้นทุนใหม่</label>
+              <div class="in"><span class="ms">account_balance</span><input type="text" id="new-ba" value="เลือกสังกัดใหม่ก่อน" readonly></div>
+              <div class="sub mt-1.5 mb-0">ระบบดึงจากสังกัดใหม่ให้เอง</div>
             </div>
             <div class="f" id="f-date">
               <label>วันที่ต้องการให้มีผล <small>(จำเป็น)</small></label>
@@ -167,10 +185,13 @@
               <div class="help hidden">กรุณาระบุวันที่</div>
             </div>
           </div>
+          <div class="note note-warn mt-4 mb-0 hidden" id="prov-note"><span class="ms">warning</span>
+            <div><b>ย้ายข้ามจังหวัด</b> — <span id="prov-text"></span> หลังได้รับอนุมัติต้องเปลี่ยนทะเบียนรถและภาษีด้วย</div>
+          </div>
         </div>
 
         <!-- ═══ 4. ประเภทและเหตุผล — ⚠️ ไม่มีใน Figma (ระเบียบพัสดุ) ═══ -->
-        <div class="card">
+        <div class="w-full">
           <div class="sect mt-0">ประเภทและเหตุผลการโอนย้าย</div>
           <div class="stack loose">
             <div class="f" id="f-type">
@@ -206,7 +227,7 @@
         </div>
 
         <!-- ═══ 5. ผู้อนุมัติ — ⚠️ ไม่มีใน Figma · สายอนุมัติยังไม่เคาะ ═══ -->
-        <div class="card">
+        <div class="w-full">
           <div class="sect mt-0">ผู้อนุมัติ</div>
           <div class="fgrid">
             <div class="f sp2" id="f-approver">
@@ -219,8 +240,9 @@
             </div>
           </div>
           <div class="note note-info mb-0"><span class="ms">info</span>
-            <div>หลังส่งคำร้อง: หัวหน้าต้นทางอนุมัติ → <b>ปลายทางตรวจรับรถ</b> → ปลายทางแจ้ง กจย. ภายใน <b>7 วันทำการ</b> →
-              กจย. ออกรหัสสังกัดใหม่ → ปลายทางประทับตรารหัสใหม่ภายใน <b>7 วันทำการ</b></div>
+            <div>หลังส่งคำร้อง: <b>หัวหน้าหน่วยงานอนุมัติ</b> → ระบบเปลี่ยนสังกัดใน VMS+ (รหัสทรัพย์สินเดิม) → กจย. ออกเลขข้างรถใหม่ →
+              เปลี่ยนทะเบียนและภาษีถ้าย้ายข้ามจังหวัด → เปลี่ยน BA (ศูนย์ต้นทุน) · ดาวน์โหลดเอกสารอนุมัติได้ที่หน้า
+              <a href="transfer-approved.html">หลังได้รับอนุมัติ</a></div>
           </div>
         </div>
 
@@ -248,8 +270,15 @@ document.querySelectorAll('.radcards').forEach(g=>{
 });
 
 /* พรีวิวรหัสข้างรถใหม่ — ส่วนหน่วยงานตามสังกัดที่เลือก เลขลำดับรอ กจย. */
+const PLATE_PROV='กรุงเทพมหานคร';   // จังหวัดของทะเบียนรถคันนี้
 document.getElementById('new-dept').addEventListener('change',e=>{
+  const o=e.target.selectedOptions[0];
   document.getElementById('new-code').value=`${e.target.value} - 25 - รอ กจย. ออกเลข`;
+  document.getElementById('new-ba').value=o.dataset.ba;
+  /* ผัง "เปลี่ยนทะเบียนรถ" — เตือนตั้งแต่ตอนกรอกเมื่อสังกัดใหม่อยู่คนละจังหวัดกับทะเบียน */
+  const cross=o.dataset.prov!==PLATE_PROV;
+  document.getElementById('prov-text').textContent=`ทะเบียนรถอยู่${PLATE_PROV} สังกัดใหม่อยู่${o.dataset.prov}`;
+  document.getElementById('prov-note').classList.toggle('hidden',!cross);
 });
 
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
@@ -277,7 +306,7 @@ document.getElementById('btn-submit').addEventListener('click',()=>{
     toast('ยังมีรายการค้าง 2 รายการ — ปิดให้ครบก่อนจึงส่งได้');return;
   }
   const b=document.getElementById('st-badge');b.textContent='รอหัวหน้าอนุมัติ';b.className='badge b-low';
-  toast('ส่งคำร้องแล้ว — รอหัวหน้าหน่วยงานต้นทางอนุมัติ');
+  toast('ส่งคำร้องแล้ว — รอหัวหน้าหน่วยงานอนุมัติ');
 });
 </script>
 </body>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คำร้องเปลี่ยนสังกัด — หลังได้รับอนุมัติ (ขั้น 3) | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261001-ds68">
+<link rel="stylesheet" href="../design-system/components.css?v=20261001-ds68">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261001-ds68"></script>
+<!--
+  6 ต.ค. 2569 — หน้าใหม่ตามผังโอนย้ายที่เจ้าของงานส่งมา (เจ้าของงานเคาะ "โอเค ลงมือเลย")
+  ผัง: โอนย้าย → ขออนุมัติหัวหน้าหน่วยงาน → ได้รับอนุมัติ →
+       เปลี่ยนข้อมูล VMS+ (ใช้เลขทรัพย์สินเหมือนเดิม) → เปลี่ยนรหัสประจำรถ → เปลี่ยนทะเบียนรถ → เปลี่ยน BA (ศูนย์ต้นทุน)
+       และแขนง "บัญชีโอนย้าย": วันที่ได้มาครั้งแรกจะเปลี่ยน · export ไฟล์อนุมัติได้ · ส่งหน่วยงาน
+  คำตอบของเจ้าของงานที่ใช้ทำหน้านี้
+   · เลขข้างรถ = เลขที่แสดงหน่วยงานสังกัด — เปลี่ยน = เอาของเดิมออกแล้วใส่ของใหม่แทน
+   · เปลี่ยนทะเบียน = เฉพาะรถที่ย้ายข้ามจังหวัด ต้องเปลี่ยนทะเบียนและภาษี
+   · export ไฟล์ = เอกสารขออนุมัติ หรือเอกสารตอบรับอนุมัติ — มีปุ่มดาวน์โหลด ยังไม่ต้องโหลดได้จริง
+   · แจ้งหยุดใช้รถ ไม่อยู่ในเรื่องโอนย้าย (ไปอยู่เรื่องจำหน่าย) · ปลายทางตรวจรับยังไม่ต้องทำ
+  ⚠️ ไลบรารี PEA ไม่มีหน้านี้ — ประกอบจากคอมโพเนนต์ที่มี ไม่สร้างคอมโพเนนต์ใหม่ (เจ้าของงานอนุมัติให้ประกอบ 6 ต.ค. 2569)
+  ที่มา · ไฟล์ Component: Page header · Breadcrumbs · Badge outline with indicator (.badge + .dot) · Section header (.sect) ·
+           Content item / Content item row (dl.incident-summary) · Table / Table header cell / Table cell (.tbl) ·
+           Secondary button (.btn-s) · Toast (.toast)
+        · ไฟล์ UI Release#2: หน้า "5.2 Vehicle Management" — Modal / Vehicle transfer (ชื่อช่อง สังกัดเดิม/ใหม่ เจ้าของ รหัสข้างรถ)
+           และเฟรม "Vehicle transfer - Success" ซึ่งของจริงกลับไปหน้าข้อมูลยานพาหนะที่มีปุ่ม "เปลี่ยนเลขทะเบียน" / "เปลี่ยนสังกัด"
+           — ของจริงไม่มีหน้าติดตามงานหลังอนุมัติ หน้านี้จึงเป็นของต้นแบบ
+  ⚠️ ค่าตัวอย่างที่ยังไม่รู้ของจริง: รูปแบบรหัส BA และศูนย์ต้นทุน · วันที่ได้มาครั้งแรกหลังโอน (ผังบอกแค่ว่า "จะเปลี่ยน")
+     · ยังไม่รู้ว่าใครเป็นผู้ทำงานเปลี่ยนทะเบียนและเปลี่ยน BA จึงแสดงเป็นสถานะ ไม่ระบุผู้ทำ
+  ไม่มีบล็อกสไตล์ในหน้า · ไม่มีกรอบการ์ดล้อมส่วน (ตามฟอร์มจริงบน UAT) · เต็มพื้นที่เนื้อหา
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv" href="transfer-01-list.html" title="รายการยานพาหนะ"><span class="ms">directions_car</span><span class="nvlbl">1 · รายการยานพาหนะ</span></a>
+    <a class="nv" href="transfer-request.html" title="คำร้องเปลี่ยนสังกัด"><span class="ms">swap_horiz</span><span class="nvlbl">2 · คำร้องเปลี่ยนสังกัด</span></a>
+    <a class="nv on" href="transfer-approved.html" title="หลังได้รับอนุมัติ"><span class="ms">task_alt</span><span class="nvlbl">3 · หลังได้รับอนุมัติ</span></a>
+    <a class="nv" href="transfer-04-code.html" title="คิวงาน กจย."><span class="ms">label</span><span class="nvlbl">4 · คิวงาน กจย.</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="draft"><span class="ms">science</span> Prototype (Mock) · ขั้น 3/4 — หลังได้รับอนุมัติ · ข้อมูลจำลอง · รหัส BA และศูนย์ต้นทุนเป็นค่าตัวอย่าง ยังไม่รู้รูปแบบจริง</div>
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นายอนุรักษ์ คล่องไชยชน — อก.จย.</span>
+    </div>
+
+    <main class="content">
+      <div class="crumbs">
+        <span class="ms">directions_car</span><a href="transfer-01-list.html">ข้อมูลยานพาหนะ</a>
+        <span class="sep"></span><a href="#">3ขพ 6153 กรุงเทพมหานคร</a>
+        <span class="sep"></span><span class="cur">คำร้องขอเปลี่ยนสังกัด</span>
+      </div>
+
+      <div class="flex items-center gap-3 flex-wrap">
+        <h1 class="page-title">คำร้องขอเปลี่ยนสังกัดยานพาหนะ</h1>
+        <span class="badge b-ok"><span class="dot"></span>ได้รับอนุมัติ</span>
+      </div>
+      <div class="sub mt-1 mb-4">เลขที่คำร้อง TRF-2569-0114 · หัวหน้าหน่วยงานอนุมัติเมื่อ 6 ต.ค. 2569 · งานเปลี่ยนข้อมูลเสร็จแล้ว 1 จาก 4</div>
+
+      <div class="w-full stack gap-8 mt-2">
+
+        <!-- ═══ 1. เอกสาร — ผัง: "export ไฟล์ อนุมัติได้" ═══ -->
+        <div class="w-full">
+          <div class="sect mt-0">เอกสาร</div>
+          <div class="flex flex-wrap gap-3">
+            <button class="btn btn-s" type="button" data-doc="เอกสารขออนุมัติ"><span class="ms">download</span>ดาวน์โหลดเอกสารขออนุมัติ</button>
+            <button class="btn btn-s" type="button" data-doc="เอกสารตอบรับอนุมัติ"><span class="ms">download</span>ดาวน์โหลดเอกสารตอบรับอนุมัติ</button>
+          </div>
+        </div>
+
+        <!-- ═══ 2. สรุปการโอนย้าย — ข้อมูลแสดงอย่างเดียว ใช้กล่องแสดงข้อมูล ═══ -->
+        <div class="w-full">
+          <div class="sect mt-0">สรุปการโอนย้าย</div>
+          <dl class="incident-summary md:grid-cols-3 mb-0">
+            <div class="incident-field"><dt>เลขทะเบียน</dt><dd>3ขพ 6153 กรุงเทพมหานคร</dd></div>
+            <div class="incident-field"><dt>รหัสทรัพย์สิน (คงเดิม)</dt><dd>513021567839</dd></div>
+            <div class="incident-field"><dt>ประเภทยานพาหนะ</dt><dd>กระเช้าฮอทไลน์ 115 KV</dd></div>
+            <div class="incident-field"><dt>สังกัดเดิม</dt><dd>กจย. ฝจบ. ผชก.(ล) สายงาน ล</dd></div>
+            <div class="incident-field"><dt>สังกัดใหม่</dt><dd>กฟอ.แม่ใจ จ.พะเยา — กฟน.1</dd></div>
+            <div class="incident-field"><dt>วันที่มีผล</dt><dd>13 ต.ค. 2569</dd></div>
+          </dl>
+        </div>
+
+        <!-- ═══ 3. งานหลังอนุมัติ — ผัง: เปลี่ยนข้อมูล VMS+ → รหัสประจำรถ → ทะเบียนรถ → BA ═══ -->
+        <div class="w-full">
+          <div class="sect mt-0">งานที่ต้องทำต่อหลังอนุมัติ</div>
+          <div class="tblwrap mt-0">
+            <table class="tbl">
+              <thead><tr><th>งาน</th><th>ของเดิม</th><th>ของใหม่</th><th>สถานะ</th><th></th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><div class="cell-key">1 · เปลี่ยนข้อมูลใน VMS+</div><div class="cell-sub">สังกัดและเจ้าของยานพาหนะ · ใช้รหัสทรัพย์สินเหมือนเดิม</div></td>
+                  <td>กจย. ฝจบ. ผชก.(ล) สายงาน ล<div class="cell-sub">นายอนุรักษ์ คล่องไชยชน อก.จย.</div></td>
+                  <td>กฟอ.แม่ใจ จ.พะเยา — กฟน.1<div class="cell-sub">นายสมศักดิ์ สง่าอินทร์</div></td>
+                  <td><span class="badge b-ok">เสร็จแล้ว</span></td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td><div class="cell-key">2 · เปลี่ยนเลขข้างรถ</div><div class="cell-sub">เอาเลขเดิมออก แล้วใส่เลขใหม่แทน · กจย. เป็นผู้ออกเลข</div></td>
+                  <td>กจย. - 25 - 1850</td>
+                  <td>กฟอ.แม่ใจ - 25 - รอออกเลข</td>
+                  <td><span class="badge b-low">รอ กจย. ออกเลข</span></td>
+                  <td><a href="transfer-04-code.html">ไปคิวงาน กจย.</a></td>
+                </tr>
+                <tr>
+                  <td><div class="cell-key">3 · เปลี่ยนทะเบียนรถและภาษี</div><div class="cell-sub">ทำเฉพาะรถที่ย้ายข้ามจังหวัด — คันนี้ย้ายจากกรุงเทพมหานครไปพะเยา</div></td>
+                  <td>3ขพ 6153 กรุงเทพมหานคร</td>
+                  <td>ทะเบียนจังหวัดพะเยา — ยังไม่ได้เลข</td>
+                  <td><span class="badge b-low">รอดำเนินการ</span></td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td><div class="cell-key">4 · เปลี่ยน BA (ศูนย์ต้นทุน)</div><div class="cell-sub">ย้ายไปศูนย์ต้นทุนของสังกัดใหม่</div></td>
+                  <td>BA Z000 · ศูนย์ต้นทุน Z000100100</td>
+                  <td>BA A000 · ศูนย์ต้นทุน A000200300</td>
+                  <td><span class="badge b-low">รอดำเนินการ</span></td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ═══ 4. บัญชีโอนย้าย — ผัง: วันที่ได้มาครั้งแรกจะเปลี่ยน · ส่งหน่วยงาน ═══ -->
+        <div class="w-full">
+          <div class="sect mt-0">บัญชีโอนย้าย</div>
+          <div class="tblwrap mt-0">
+            <table class="tbl">
+              <thead><tr><th>งาน</th><th>ของเดิม</th><th>ของใหม่</th><th>สถานะ</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><div class="cell-key">วันที่ได้มาครั้งแรก</div><div class="cell-sub">เมื่อบัญชีบันทึกการโอนย้าย วันที่ได้มาครั้งแรกจะเปลี่ยน</div></td>
+                  <td>12 มี.ค. 2558</td>
+                  <td>ยังไม่บันทึก</td>
+                  <td><span class="badge b-low">รอดำเนินการ</span></td>
+                </tr>
+                <tr>
+                  <td><div class="cell-key">ส่งหน่วยงาน</div><div class="cell-sub">ส่งเรื่องโอนย้ายให้หน่วยงาน</div></td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td><span class="badge b-low">ยังไม่ได้ส่ง</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="btn btn-s" href="transfer-01-list.html">กลับรายการยานพาหนะ</a>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+/* ปุ่มดาวน์โหลด — เจ้าของงานให้มีปุ่มไว้ก่อน ยังไม่ต้องโหลดได้จริง */
+document.querySelectorAll('[data-doc]').forEach(b=>b.addEventListener('click',()=>toast(b.dataset.doc+' — ต้นแบบยังดาวน์โหลดไฟล์จริงไม่ได้')));
+</script>
+</body>
+</html>
