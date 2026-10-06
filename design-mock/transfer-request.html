@@ -26,6 +26,13 @@
    · ช่องที่จำเป็นตรวจตอนกดส่ง → .f.err + .help
   ⚠️ ส่วนที่ Figma ไม่มี (ต้องให้เจ้าของงานเคาะ): รายการค้าง · ประเภทการโอน · เหตุผล · เอกสารแนบ · ผู้อนุมัติ
   ไม่มี <style> ในหน้า — ใช้คลาสจาก components.css ทั้งหมด
+
+  6 ต.ค. 2569 — เจ้าของงานสั่ง "ไม่เอา stepper เลย เป็นฟอร์มยาวๆ"
+   · ถอด .wsteps ออก — 4 ขั้นนั้นเป็นงานของคนละหน่วยงานคนละวัน (ต้นทาง · ปลายทาง · กจย.) ไม่ใช่ขั้นที่ผู้กรอกคนเดียวเดินต่อกัน
+     จึงเป็น "สถานะของเรื่อง" ไม่ใช่ wizard (แนวทาง UX-5 · NN/g Wizards) · ลำดับของเรื่องยังบอกไว้ที่บรรทัดใต้ชื่อหน้า
+     และกล่อง "หลังส่งคำร้อง" ท้ายฟอร์ม · สถานะปัจจุบันดูจากป้ายข้างชื่อหน้า
+   · เติม type="text" ให้ช่องอ่านอย่างเดียว 7 ช่อง — เดิมไม่มี type จึงไม่เข้ากฎ input[type=text] ของ components.css
+     ได้ขอบ 2px inset กับความกว้างตั้งต้นของเบราว์เซอร์แทน (ข้อความถูกตัด)
 -->
 </head>
 <body>
@@ -59,13 +66,6 @@
         <span class="badge b-neutral" id="st-badge">ร่าง</span>
       </div>
       <div class="sub mt-1 mb-4">หน่วยงานต้นทางเป็นผู้เปิดคำร้อง → หน่วยงานปลายทางตรวจรับ → กจย. ออกรหัสสังกัดใหม่</div>
-
-      <div class="wsteps wrap">
-        <a class="wstep passed" href="transfer-01-list.html"><span class="num"><span class="ms">check</span></span><span class="lbl">เลือกรถ</span></a>
-        <div class="wstep active"><span class="num">2</span><span class="lbl">ต้นทางเปิดคำร้อง</span></div>
-        <div class="wstep locked"><span class="num">3</span><span class="lbl">ปลายทางตรวจรับ</span></div>
-        <div class="wstep locked"><span class="num">4</span><span class="lbl">กจย. ออกรหัสสังกัด</span></div>
-      </div>
 
       <div class="max-w-[960px]">
 
@@ -116,17 +116,17 @@
           <div class="sect mt-0">ยานพาหนะและสังกัดเดิม</div>
           <div class="fgrid mb-0">
             <div class="f ro"><label>เลขทะเบียน</label>
-              <div class="in"><span class="ms">directions_car</span><input value="3ขพ 6153 กรุงเทพมหานคร" readonly></div></div>
+              <div class="in"><span class="ms">directions_car</span><input type="text" value="3ขพ 6153 กรุงเทพมหานคร" readonly></div></div>
             <div class="f ro"><label>รหัสทรัพย์สิน</label>
-              <div class="in"><span class="ms">tag</span><input value="513021567839" readonly></div></div>
+              <div class="in"><span class="ms">tag</span><input type="text" value="513021567839" readonly></div></div>
             <div class="f ro"><label>ประเภทยานพาหนะ</label>
-              <div class="in"><span class="ms">category</span><input value="กระเช้าฮอทไลน์ 115 KV" readonly></div></div>
+              <div class="in"><span class="ms">category</span><input type="text" value="กระเช้าฮอทไลน์ 115 KV" readonly></div></div>
             <div class="f ro"><label>รหัสข้างรถเดิม</label>
-              <div class="in"><span class="ms">label</span><input value="กจย. - 25 - 1850" readonly></div></div>
+              <div class="in"><span class="ms">label</span><input type="text" value="กจย. - 25 - 1850" readonly></div></div>
             <div class="f ro sp2"><label>สังกัดยานพาหนะเดิม</label>
-              <div class="in"><span class="ms">apartment</span><input value="กจย. ฝจบ. ผชก.(ล) สายงาน ล" readonly></div></div>
+              <div class="in"><span class="ms">apartment</span><input type="text" value="กจย. ฝจบ. ผชก.(ล) สายงาน ล" readonly></div></div>
             <div class="f ro sp2"><label>เจ้าของยานพาหนะเดิม</label>
-              <div class="in"><span class="ms">person</span><input value="นายอนุรักษ์ คล่องไชยชน อก.จย." readonly></div></div>
+              <div class="in"><span class="ms">person</span><input type="text" value="นายอนุรักษ์ คล่องไชยชน อก.จย." readonly></div></div>
           </div>
         </div>
 
@@ -159,7 +159,7 @@
             </div>
             <div class="f ro sp2">
               <label>รหัสข้างรถใหม่</label>
-              <div class="in"><span class="ms">label</span><input id="new-code" value="— - 25 - รอ กจย. ออกเลข" readonly></div>
+              <div class="in"><span class="ms">label</span><input type="text" id="new-code" value="— - 25 - รอ กจย. ออกเลข" readonly></div>
               <div class="sub mt-1.5 mb-0">กจย. เป็นผู้ออกรหัสสังกัดใหม่หลังปลายทางรับโอน (หลักเกณฑ์ยานพาหนะ 2569 ข้อ 8.3)</div>
             </div>
             <div class="f" id="f-date">
