@@ -175,7 +175,8 @@ $('steps').addEventListener('click',e=>{const s=e.target.closest('.wstep');if(!s
 /* ---------- ชิ้นส่วนร่วม ---------- */
 const sect=(t,right)=>`<div class="sect mt-8 first:mt-0"><span>${t}</span>${right?`<span class="ml-auto">${right}</span>`:''}</div>`;
 const kv=(rows)=>`<dl class="incident-summary lg:grid-cols-3 mt-4">${rows.map(([k,v,w])=>`<div class="incident-field${w?' wide':''}"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
-const actions=(btns)=>`<div class="flex items-center gap-3 mt-8"><button class="btn btn-s btn-lg" type="button" data-act="back">ย้อนกลับ</button>${btns}</div>`;
+/* แถวปุ่มท้าย: ย้อนกลับชิดซ้าย · ปุ่มทำงานชิดขวา (เจ้าของงานแก้ในแบบจริง 19 ต.ค. 2569) */
+const actions=(btns)=>`<div class="flex items-center justify-between gap-3 mt-8"><button class="btn btn-s btn-lg" type="button" data-act="back">ย้อนกลับ</button>${btns}</div>`;
 let leaveTo=null;
 function goBack(){const go=()=>{location.href=backUrl};if(dirtyForm&&dirtyForm()){leaveTo=go;oh2Modal('m-leave',true)}else go()}
 $('m-leave-ok').addEventListener('click',()=>{oh2Modal('m-leave',false);dirtyForm=null;(leaveTo||(()=>{location.href=backUrl}))()});

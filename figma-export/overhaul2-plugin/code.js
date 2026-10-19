@@ -464,7 +464,8 @@ async function pageHead(o) {
   wrap.appendChild(ab);
   return wrap;
 }
-const btnRow = (list) => row('Actions', list.map(b => btn(b[0], b[1], b[2] || {})), { gap: 12, hug: true });
+/* แถวปุ่มท้ายหน้า: 2 ปุ่มขึ้นไป = ปุ่มแรก (ย้อนกลับ/ยกเลิก) ชิดซ้าย ปุ่มสุดท้ายชิดขวา — เจ้าของงานแก้ในแบบจริง 19 ต.ค. 2569 */
+const btnRow = (list) => { const r = row('Actions', list.map(b => btn(b[0], b[1], b[2] || {})), { gap: 12, hug: true }); if (list.length > 1) r.primaryAxisAlignItems = 'SPACE_BETWEEN'; return r; };
 
 /* ---------- ชั้นบน ---------- */
 function overlay(scr, node, x, y) { scr.appendChild(node); node.layoutPositioning = 'ABSOLUTE'; node.x = x; node.y = y; return node; }
