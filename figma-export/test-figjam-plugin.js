@@ -68,12 +68,18 @@ class MNode {
   }
   resize(w, h) { this.width = w; this.height = h; }
   resizeWithoutConstraints(w, h) { this.width = w; this.height = h; }
+  findAll(fn) { const out = []; const w = (n) => (n.children || []).forEach(c => { if (!fn || fn(c)) out.push(c); w(c); }); w(this); return out; }   // SectionNode.findAll ของจริง
 }
 
 const page = new MNode('PAGE');
 // จำลองรูปที่เคยอัปโหลดค้างไว้ 3 ใบ — ปลั๊กอินต้องเก็บกวาด (เฉพาะเมื่อ spec มี section รูป)
 // วางไว้ที่ y 0–2000 จะได้ใช้เช็ค anchor:'below' ด้วย (บอร์ดจริงมีงานคนอื่นอยู่ก่อน)
 for (let i = 0; i < 3; i++) { const m = new MNode('MEDIA'); m.y = i * 900; m.x = -500; page.appendChild(m); }
+// ลูกศร "flow →" ของ flow อื่นบนบอร์ด (ผูกกับรูปของคนอื่น) — โหมด anchor below ห้ามลบ
+const foreignA = new MNode('MEDIA'), foreignB = new MNode('MEDIA');
+const foreignConn = new MNode('CONNECTOR'); foreignConn.name = 'flow →';
+foreignConn.connectorStart = { endpointNodeId: foreignA.id }; foreignConn.connectorEnd = { endpointNodeId: foreignB.id };
+page.appendChild(foreignConn);
 
 const notifications = [];
 const figma = {
@@ -133,10 +139,13 @@ const ok = (m) => console.log('✓ ' + m);
   /* MEDIA: spec ที่มีรูป → เก็บกวาดรูปค้าง · spec ผังล้วน → ห้ามแตะ (เป็นรูปที่คนวางเองบนบอร์ด) */
   const hasImages = spec.sections.some(s => Array.isArray(s.cols));
   const nMedia = page.children.filter(n => n.type === 'MEDIA').length;
-  if (hasImages) nMedia === 0 ? ok('MEDIA เร่ร่อนถูกเก็บกวาด') : fail('MEDIA ค้าง');
+  if (spec.anchor === 'below') {
+    nMedia === 3 ? ok('anchor below — ไม่แตะ MEDIA ของคนอื่น (เหลือ 3)') : fail('anchor below แต่ลบ MEDIA ไป ' + (3 - nMedia));
+    page.children.indexOf(foreignConn) >= 0 ? ok('anchor below — ลูกศรของ flow อื่นยังอยู่') : fail('anchor below ลบลูกศรของ flow อื่น');
+  } else if (hasImages) nMedia === 0 ? ok('MEDIA เร่ร่อนถูกเก็บกวาด') : fail('MEDIA ค้าง');
   else nMedia === 3 ? ok('ผังล้วน — ไม่แตะ MEDIA ของคนอื่น (เหลือ 3)') : fail('ผังล้วนแต่ลบ MEDIA ไป ' + (3 - nMedia));
 
-  if (spec.anchor === 'below' && !hasImages) {
+  if (spec.anchor === 'below') {
     const secs = page.children.filter(n => n.type === 'SECTION');
     secs.every(s => s.y >= 1900 + 100 && s.x === -500)
       ? ok('anchor below — วางใต้ของเดิม ชิดซ้ายเท่าของเดิม') : fail('anchor below วางทับของเดิม');
@@ -193,7 +202,7 @@ const ok = (m) => console.log('✓ ' + m);
   overflow === 0 ? ok('section ครอบลูกครบ') : fail('ลูกล้น section ' + overflow + ' ชิ้น');
 
   // ลูกศรผูกกับรูปแรกของคอลัมน์ที่ติดกันจริง
-  const conns = page.children.filter(n => n.type === 'CONNECTOR' && n.name === 'flow →');
+  const conns = page.children.filter(n => n.type === 'CONNECTOR' && n.name === 'flow →' && n !== foreignConn);
   const bad = conns.filter(c => !c.connectorStart || !c.connectorEnd ||
     c.connectorEndStrokeCap !== 'ARROW_LINES');
   bad.length === 0 ? ok('ลูกศรผูกปลายครบ') : fail('ลูกศรผูกไม่ครบ ' + bad.length);

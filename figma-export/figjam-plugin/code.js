@@ -53,7 +53,18 @@ async function build(spec, images) {
      ถ้าล้างทุกครั้ง แค่รันผังล้วนก็ลบรูปของเขาทิ้ง (เจอ 5 ต.ค. 2569 ก่อนรันจริง) */
   const hasImages = spec.sections.some(s => Array.isArray(s.cols));
   let cleaned = 0;
-  for (const n of figma.currentPage.children.slice()) {
+  if (spec.anchor === 'below') {
+    /* โหมดวางต่อใต้ของเดิม = หน้านี้มีงานคนอื่นอยู่ (19 ต.ค. 2569 — ชุด Overhaul v2 ลงหน้าที่มีข้อมูลแล้ว)
+       ⇒ ลบเฉพาะของชุดนี้เอง: section ชื่อเดียวกับใน spec + ลูกศรที่ปลายข้างใดข้างหนึ่งต่อกับของใน section นั้น
+       ไม่แตะ MEDIA · ลูกศร flow อื่น · shape ระดับบนสุดของคนอื่น */
+    const mine = figma.currentPage.children.filter(n => n.type === 'SECTION' && names.has(n.name));
+    const ids = new Set();
+    mine.forEach(sec => { ids.add(sec.id); (sec.findAll ? sec.findAll(() => true) : []).forEach(k => ids.add(k.id)); });
+    const touches = (c) => [c.connectorStart, c.connectorEnd].some(e => e && e.endpointNodeId && ids.has(e.endpointNodeId));
+    for (const n of figma.currentPage.children.slice()) {
+      if ((n.type === 'CONNECTOR' && n.name === 'flow →' && touches(n)) || mine.indexOf(n) >= 0) { n.remove(); cleaned++; }
+    }
+  } else for (const n of figma.currentPage.children.slice()) {
     if ((n.type === 'SECTION' && names.has(n.name)) ||
         (hasImages && n.type === 'MEDIA') ||
         (n.type === 'CONNECTOR' && n.name === 'flow →') ||
