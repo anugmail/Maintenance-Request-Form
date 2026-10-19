@@ -570,7 +570,15 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
 - [x] ~~เพิ่ม validation ช่องเหตุผล~~ — **ยกเลิก** ตั้งใจให้ไม่บังคับ (AC-D4)
 
 ### ยังรอเจ้าของงานเคาะ
-- [ ] 🛠️ **Overhaul v2 — ทดลองหน้าแรก "จัดการงาน Overhaul" + เตรียมลง Figma ด้วย component จริง (18–19 ต.ค. 2569 · push แล้ว `6d51665`) · ⬜ รอเจ้าของงาน duplicate ไฟล์ Component** —
+- [ ] 🛠️ **Overhaul v2 — HTML mock ครบ 6 หน้า 14 scenario + ปลั๊กอิน Figma จาก component จริง (18–19 ต.ค. 2569 · push แล้ว `c40b97f` `15e2ae7`) · ⬜ ปลั๊กอินยังสร้างเฉพาะหน้า 1 (8 state)** —
+      ✅ 19 ต.ค.: HTML ครบ — `overhaul-v2-01-plans` · `-02-plan-form` · `-03-plan-detail` · `-04-po-form` · `-05-po-detail` · `-06-job` (6 ขั้น) · การ์ดใน `design-mock/index.html` ·
+        design-system v0.71–v0.72 (select ไม่มีไอคอน · ชื่อไฟล์ · input time) · ตรวจ Chrome ครบทุกหน้าไม่มี pageerror
+      ✅ 19 ต.ค.: ปลั๊กอิน `figma-export/overhaul2-plugin/` รันจริงในไฟล์ Maintain-D ได้ 8 หน้าจอ · instance นำเข้าจากไลบรารีไฟล์ "component" ที่เราอ่านค่ามา
+        (เจ้าของงาน publish ไฟล์ component + เพิ่มไลบรารีในไฟล์ Maintain-D แล้ว) ⇒ Go to main component พาไปไฟล์ component · ตัวทดสอบ `figma-export/test-overhaul2-plugin.js`
+      · ดัมป์ไฟล์ Maintain-D (9 หน้า มีบอร์ด userflow ตัวจริง "Final Userflow Overhaul #14/10/2026") อยู่ `figma-export/out/figma-dump/maintain-d/` (นอก git)
+      - [ ] ปลั๊กอิน: สร้างจอที่เหลือของ S1–S14 จัด Section ละ scenario บนหน้า overhaul-1 (เจ้าของงานเลือก 19 ต.ค.)
+      - [ ] เตรียมชุด FigJam (capture จอเดียวกัน จัด Section ละ scenario) — "เตรียมไว้เฉยๆ ยังไม่ใช้" ห้ามสร้าง board.json ทับของเดิมจนกว่าจะสั่ง
+      - [ ] label ของ `.f` ยังเป็นสเปกไลบรารีเก่า (14/500) — ไลบรารีใหม่ Input label 16/600 gray-600 · รอเคาะว่าแก้ทั้งระบบไหม
       เจ้าของงานสั่ง _"ถ้าต้องการให้สร้าง ui ให้ตรง component เตรียม เดี๋ยวจะเอาไปลงใน figma figjam"_ → เลือก HTML + ยกคอมโพเนนต์ที่ขาดจากไลบรารี + ครบ 14 scenario ·
       แล้วขอ _"ลองทำ mock ให้ดู 1 หน้าก่อน"_ · _"ลองก่อน 1 หน้า ไว้รีวิว flow กับเจ้าของงาน"_ · _"อยากลง figma เลย"_ · _"อ่านจาก component จริงเท่านั้นนะ"_
       · design-system v0.70: ยกคอมโพเนนต์ 8 ตัวจากไลบรารี ปิดข้อ G2 · T6 · T7 · M3 · M4 · N2 · U2 · U3 (ดูหัวข้อแนวทาง UX) · บั๊ม `?v=20261019-ds70`
