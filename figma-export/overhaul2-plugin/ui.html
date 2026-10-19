@@ -3,13 +3,17 @@
   button{padding:8px 14px;border:0;border-radius:6px;background:#a80689;color:#fff;font:inherit;cursor:pointer}
   #log{margin-top:10px;height:300px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
 </style>
-<p>สร้างหน้าจอ Overhaul v2 <b>ครบ 14 scenario (56 จอ)</b> จัด Section ละ scenario บนหน้า overhaul-1 — ทุกชิ้นเป็น instance ของ component จริง (นำเข้าจากไลบรารีไฟล์ component)<br>
-รันซ้ำได้ — ลบชุดเดิม ("OH2 /" และ section "OH2 ·") ก่อนสร้างใหม่ · ใช้เวลาราว 1–3 นาที</p>
+<p>สร้างหน้าจอ Overhaul v2 <b>ครบ 14 scenario · 56 จอ × 2 ขนาด (desktop 1440 + mobile 402×874 วางคู่กัน)</b> scenario ละแถว บนหน้า overhaul-1 — ทุกชิ้นเป็น instance ของ component จริง (นำเข้าจากไลบรารีไฟล์ component)<br>
+รันซ้ำได้ — ลบชุดเดิม ("OH2 /" และ section "OH2 ·") ก่อนสร้างใหม่ · ใช้เวลาราว 2–5 นาที</p>
 <button id="go">สร้างครบ 14 scenario</button> <button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button>
+<p style="margin:14px 0 6px"><b>แก้เฉพาะส่วน</b> — ไม่สร้างจอใหม่ ที่แก้มือไว้ไม่หาย (ใช้กับเฟรมที่เลือกไว้ ถ้าไม่เลือกใช้ทุกเฟรม "OH2 /" ในหน้านี้)</p>
+<button id="pdiv" style="background:#475467">ปิด divider ในจอที่มีอยู่</button> <button id="pwbs" style="background:#475467">ย้าย WBS มาแถววงเงินอนุมัติ</button>
 <div id="log"></div>
 <script>
 const log = (s) => { const d = document.getElementById('log'); d.textContent += s + '\n'; d.scrollTop = d.scrollHeight; };
 document.getElementById('go').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'build' } }, '*'); };
 document.getElementById('chk').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'check' } }, '*'); };
+document.getElementById('pdiv').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'patch-dividers' } }, '*'); };
+document.getElementById('pwbs').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'patch-wbs' } }, '*'); };
 onmessage = (e) => { const m = e.data.pluginMessage; if (m && m.type === 'log') log(m.text); };
 </script>

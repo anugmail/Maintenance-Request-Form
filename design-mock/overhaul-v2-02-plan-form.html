@@ -70,16 +70,12 @@
       <form class="flex flex-col gap-8" id="form" novalidate>
         <section>
           <div class="sect">ข้อมูลแผน</div>
-          <div class="fgrid gap-y-8 mb-0">
-            <div class="f sp2" data-req><label for="name">ชื่อแผน</label><div class="in noic"><input type="text" id="name" placeholder="เช่น Overhaul ประจำปีงบ 2570 — รถเครน"></div><div class="help hidden"></div></div>
-            <div class="f" data-req><label for="year">ประจำปีงบประมาณ</label><div class="in noic"><select id="year"></select></div><div class="help hidden"></div></div>
-            <div class="f" data-req><label for="budget">วงเงินอนุมัติ (บาท)</label><div class="in noic"><input type="text" id="budget" inputmode="decimal" placeholder="0"></div><div class="help hidden"></div></div>
-          </div>
-        </section>
-
-        <section>
-          <div class="sect">งบโครงการตาม WBS</div>
-          <div class="fgrid gap-y-8 mb-0">
+          <!-- วงเงินอนุมัติ + WBS 3 ช่อง แถวเดียว (เจ้าของงานส่งตัวอย่าง 19 ต.ค. 2569): จอกว้าง 6 ส่วน = วงเงิน 3 · WBS/โครงข่าย/กิจกรรม ละ 1 ·
+               แท็บเล็ต 3 ส่วน = วงเงินเต็มแถว แล้ว 3 ช่องเรียงใต้ · มือถือ 1 คอลัมน์ -->
+          <div class="fgrid gap-y-8 mb-0 grid-cols-1 md:grid-cols-3 xl:grid-cols-6">
+            <div class="f md:col-span-2 xl:col-span-4" data-req><label for="name">ชื่อแผน</label><div class="in noic"><input type="text" id="name" placeholder="เช่น Overhaul ประจำปีงบ 2570 — รถเครน"></div><div class="help hidden"></div></div>
+            <div class="f xl:col-span-2" data-req><label for="year">ประจำปีงบประมาณ</label><div class="in noic"><select id="year"></select></div><div class="help hidden"></div></div>
+            <div class="f md:col-span-3" data-req><label for="budget">วงเงินอนุมัติ (บาท)</label><div class="in noic"><input type="text" id="budget" inputmode="decimal" placeholder="0"></div><div class="help hidden"></div></div>
             <div class="f" data-req><label for="wbs">เลข WBS</label><div class="in noic"><input type="text" id="wbs" placeholder="เช่น C-70-OH-0003"></div><div class="help hidden"></div></div>
             <div class="f" data-req><label for="net">เลขโครงข่าย</label><div class="in noic"><input type="text" id="net" inputmode="numeric" placeholder="เช่น 60002103"></div><div class="help hidden"></div></div>
             <div class="f" data-req><label for="act">เลขกิจกรรม</label><div class="in noic"><input type="text" id="act" inputmode="numeric" placeholder="เช่น 0010"></div><div class="help hidden"></div></div>
@@ -88,7 +84,7 @@
 
         <section>
           <div class="sect">เอกสาร</div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+          <div class="flex flex-col gap-6 mt-4">   <!-- กล่องอัปโหลด 1 คอลัมน์ (เจ้าของงานเคาะ 19 ต.ค. 2569 — เดิม 2 คอลัมน์) -->
             <div class="f" data-files="approve" data-req><label>หนังสืออนุมัติหลักการ</label>
               <label class="fu"><input type="file" multiple accept=".pdf,.jpg,.jpeg,application/pdf,image/jpeg"><span class="ficon sm gray"><span class="ms">cloud_upload</span></span>
                 <span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PDF, JPG · สูงสุด 10 ไฟล์ · <span class="fu-count"></span></small></span></label>
@@ -106,7 +102,7 @@
 
         <div class="flex items-center justify-between gap-3">   <!-- ยกเลิกชิดซ้าย · บันทึกชิดขวา (เจ้าของงานแก้ในแบบจริง 19 ต.ค. 2569) -->
           <button class="btn btn-s btn-lg hidden" type="button" id="cancel">ยกเลิก</button>
-          <button class="btn btn-p btn-lg" type="submit" id="save">บันทึก</button>
+          <button class="btn btn-p btn-lg ml-auto" type="submit" id="save">บันทึก</button>   <!-- ปุ่มเดียวก็ชิดขวา (เจ้าของงานเคาะ 19 ต.ค. 2569) -->
         </div>
       </form>
     </main>

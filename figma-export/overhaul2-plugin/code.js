@@ -19,6 +19,13 @@ const warn = (where, e) => { const m = where + ' — ' + (e && e.message ? e.mes
    ทั้ง 3 ทางได้ instance ที่ผูกกับ component จริง ไม่มีการวาดเอง */
 /* key ของ component ต้นฉบับในไฟล์ "component" ที่เราอ่านค่ามา (ดัมป์ 19 ต.ค. 2569 10:52 · เก็บ key ของ main component ตรงๆ) · [key, เป็น component set ไหม] */
 const KEYS = {
+  "Mobile table": ["4ca09b73532ee1f8f21e3e0a6f2c7f151839ee62", true],
+  "Mobile table item": ["754d62b4c29ea0f402f67950cfe7a4eae279e591", true],
+  "Mobile progress steps": ["9154edd850c0be2201a44213fe6e94163a7a1516", true],
+  "Step circles / 5 steps": ["998a4238f9644a495a163c6153656f3cad2442e2", true],
+  "Bottom sheet header": ["8b8c40f9f3a569cf24b0c2207402d4cf6d2df6ff", false],
+  "Bottom sheet footer": ["0f09ce0ff9507963e6129019503d00e0cf52c50d", false],
+  "Modal header": ["8eebbafefb7a0db78e062e96c6cbb2feb9b5841a", true],
   "Sidebar navigation": ["44614a4b2e944d2921a8735bf39d89755dc08929", true],
   "Content divider": ["5df7bd211099b5c13967ca55809923011c1695b8", true],
   "Checkbox": ["431aec9aa85f5271ad209a8baf7c667d89394db1", true],
@@ -99,12 +106,14 @@ const DIRECT = ['Sidebar navigation', 'Header navigation', 'Page header', 'Secti
   'Tertiary button', 'Dropdown menu', 'Dropdown list', 'Background overlay', 'Side panel header', 'Side panel footer', 'Checkbox with badge',
   'Modal', 'Notification', 'Empty state/Search not found', 'Empty state/Data empty',
   'add-24-300-round', 'filter_list-24-400-round', 'more_horiz-20-400-round', 'quick_reference_all-24-300-round', 'stylus-24-300-round',
-  'delete-24-300-round', 'search-24-300-round', 'keyboard_arrow_right-20-400-round', 'keyboard_arrow_left-20-400-round', 'cloud_upload-24-300-round'];
+  'delete-24-300-round', 'search-24-300-round', 'keyboard_arrow_right-20-400-round', 'keyboard_arrow_left-20-400-round', 'cloud_upload-24-300-round',
+  // mobile (19 ต.ค. 2569)
+  'Mobile table', 'Mobile progress steps', 'Bottom sheet header', 'Bottom sheet footer', 'Modal header'];
 /* ตัวที่ใช้แค่เป็นชิ้นซ้อนใน component อื่น (แก้ property ของตัวที่ซ้อนอยู่) — ขาดได้ไม่หยุด
    (เช่น _Dropdown menu item ที่ Figma ไม่ publish เพราะชื่อขึ้นต้น "_" · Primary danger button ที่มากับ Modal Destructive) */
 const NESTED = ['Nav button', 'Sort icon', 'Badge outline with remove icon', 'Button groups pagination item', 'Tertiary brand button',
   'Primary danger button', '_Dropdown menu item', 'Dropdown list item', '_Content item base', '_File upload item base',
-  'List with checkbox item', 'List header item', 'Checkbox', 'Card form row', 'Badge outline'];
+  'List with checkbox item', 'List header item', 'Checkbox', 'Card form row', 'Badge outline', 'Mobile table item', 'Step circles / 5 steps'];
 const NEEDED = DIRECT.concat(NESTED);
 const NESTED_ONLY = new Set(NESTED);
 const FUTURE = [];
@@ -281,6 +290,14 @@ const CHECKLIST = ['สำเนาคู่มือจดทะเบียน
 const STEPS = ['นัดเอารถเข้าอู่', 'ตรวจรับรถ', 'ติดตามงานซ่อม', 'ตรวจสภาพ', 'นัดรับรถ', 'ปิดงาน'];
 const VENDOR = ['บริษัท มิตซูบิชิ ฟูโซ่ ทรัค จำกัด', '02-111-2203', 'อ.บางพลี สมุทรปราการ'];
 
+/* ---------- mobile (เจ้าของงานเคาะ 19 ต.ค. 2569) ----------
+   ใช้กับจอ < 768 (รวม tablet) · ออกแบบเฟรม 402×874 (เจ้าของงานเปลี่ยนจาก 360×850 วันเดียวกัน) · component Breakpoint=Mobile ยืดเต็มกว้าง เว้นขอบ 16
+   ตาราง → การ์ด Mobile table · กล่องเด้ง → bottom sheet (Background overlay + Bottom sheet header + เนื้อหา + Bottom sheet footer)
+   ทุกฟังก์ชันประกอบหน้าดูตัวแปร MOB — สร้างจอ desktop แล้วสลับ MOB สร้างจอ mobile ด้วยข้อมูลชุดเดียวกัน */
+let MOB = false;
+const BP = () => (MOB ? 'Mobile' : 'Desktop');
+const VW = () => (MOB ? 402 : 1440), VH = () => (MOB ? 874 : 1024);
+
 /* ---------- ตัวช่วยประกอบ ---------- */
 function btn(kind, label, o) {
   o = o || {};
@@ -291,6 +308,11 @@ function btn(kind, label, o) {
   return inst(kind, variant, props);
 }
 function row(name, kids, o) {
+  if (MOB && !(o && o.keep)) {   // mobile: แถวช่องกรอกเรียงลงล่าง เต็มกว้าง (ตัด Spacer ทิ้ง)
+    const c = frame(name || 'Row', 'VERTICAL', { gap: 16 });
+    kids.forEach(k => { if (!k) return; if (k.type === 'FRAME' && k.name === 'Spacer') { k.remove(); return; } add(c, k, 'h'); });
+    return c;
+  }
   const r = frame(name || 'Row', 'HORIZONTAL', { gap: (o && o.gap) != null ? o.gap : 24 });
   r.counterAxisAlignItems = (o && o.align) || 'MIN';
   kids.forEach(k => { if (k) { r.appendChild(k); if (!(o && o.hug)) k.layoutGrow = 1; } });
@@ -321,7 +343,7 @@ function area(label, value, o) {
 }
 async function section(title, o) {   // Section header + ปุ่มขวา
   o = o || {};
-  const sh = inst('Section header', { Breakpoint: 'Desktop' }, { Title: title, Badge: o.badge != null, 'Supporting text': false,
+  const sh = inst('Section header', { Breakpoint: BP() }, { Title: title, Badge: o.badge != null, 'Supporting text': false,
     Actions: !!(o.buttons && o.buttons.length), 'More actions': false });
   if (o.badge != null) { const b = find(sh, 'Badge outline'); if (b) setProps(b, { Text: String(o.badge) }); }
   const acts = find(sh, 'Actions');
@@ -332,8 +354,8 @@ async function section(title, o) {   // Section header + ปุ่มขวา
   });
   return sh;
 }
-function kv(pairs, perRow) {   // Content item row ละ 4 ช่อง (Type=Text with label)
-  perRow = perRow || 4;
+function kv(pairs, perRow) {   // Content item row ละ 4 ช่อง (Type=Text with label) · mobile แถวละ 2
+  perRow = MOB ? 2 : (perRow || 4);
   const box = frame('Content item', 'VERTICAL', { gap: 8 });
   for (let i = 0; i < pairs.length; i += perRow) {
     const r = inst('Content item row', { 'Column width': 'Full' });
@@ -367,7 +389,45 @@ async function upload(label, files, o) {   // File upload Type=Default
   });
   return u;
 }
+function mobileCards(cols, rows) {   // mobile: 1 แถวตาราง = 1 การ์ด Mobile table (หัวข้อ–ค่า เรียงลง · แถวสุดท้ายเป็นปุ่ม)
+  if (rows.some(r => r.some(v => v && v.check != null))) {   // checklist → List with checkbox
+    const l = inst('List with checkbox');
+    const hd = find(l, 'List header item'); if (hd) { const b = find(hd, 'Badge outline'); if (b) b.visible = false; const cb = find(hd, 'Checkbox'); if (cb) setProps(cb, { Type: rows.every(r => r[0].check) ? 'Selected' : 'Unselected' }); }
+    l.children.filter(c => c.name === 'List with checkbox item').forEach((it, i) => {
+      if (i >= rows.length) { it.visible = false; return; }
+      setProps(it, { State: rows[i][0].check ? 'Selected' : 'Default' });
+      setProps(it, { Text: rows[i][0].text, Avatar: false, Supporting: false, 'Supporting 2': false });
+    });
+    const sc = find(l, 'Vertical scrollbar'); if (sc) sc.visible = false;
+    l._title = cols[0][0];
+    return l;
+  }
+  const box = frame('Mobile table', 'VERTICAL', { gap: 12 });
+  rows.forEach((r, ri) => {
+    const card = inst('Mobile table', { 'Alternating fills': 'False' });
+    const items = card.children.filter(c => c.name === 'Mobile table item');
+    const data = [], acts = [];
+    cols.forEach(([head], ci) => { const v = r[ci]; if (v && (v.menu || v.icons)) acts.push(v); else if (head) data.push([head, v]); });
+    items.forEach((it, i) => {
+      const last = i === items.length - 1;
+      if (last) {
+        if (!acts.length) { it.visible = false; return; }
+        const ic = acts[0].menu ? ['more_horiz-20-400-round'] : acts[0].icons;
+        setProps(it, { View: ic.length > 0, Edit: ic.length > 1, Print: false, Delete: false });
+        it.findAll(n => n.name === 'Tertiary button').forEach((b, k) => { if (ic[k]) setProps(b, { 'Leading icon swap': icon(ic[k]) }); });
+        return;
+      }
+      if (i >= data.length) { it.visible = false; return; }
+      const [head, v] = data[i];
+      if (v && v.pill) { setProps(it, { Style: 'Badge' }); setProps(it, { Header: head }); const p = find(it, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
+      else { setProps(it, { Style: i === 0 ? 'Lead text' : 'Text' }); setProps(it, { Header: head, Text: v == null ? '' : String(v), Supporting: false }); }
+    });
+    add(box, card, 'h');
+  });
+  return box;
+}
 function tbl(cols, rows) {   // cols: [หัว, กว้าง, Style, เรียงได้] · ช่อง: ข้อความ | {pill:[t,สี]} | {menu:1} | {icons:[..]} | {check:bool,text}
+  if (MOB) return mobileCards(cols, rows);
   const t = frame('Table', 'HORIZONTAL');
   cols.forEach(([head, w, style, sort], ci) => {
     const c = frame('Column', 'VERTICAL');
@@ -411,6 +471,14 @@ async function listCheck(title, items, ticked) {   // List with checkbox (หั
   return l;
 }
 function stepper(cur, allDone) {   // Horizontal step item × 6 (Progress steps ของไลบรารีมีได้สูงสุด 4 ขั้น)
+  if (MOB) {   // Mobile progress steps — วงกลมในไลบรารีมีสูงสุด 5 ขั้น ⇒ ใช้ 5 ขั้น แล้วแก้ตัวเลขเป็น x/6 (เส้นรอบวงไม่ตรงสัดส่วน 6 ขั้น)
+    const m = inst('Mobile progress steps', { Collapsed: 'True' }, { Text: STEPS[cur - 1], Supporting: cur < STEPS.length, 'Supporting text': STEPS[cur] || '' });
+    const circ = main('Step circles / 5 steps', { Step: String(Math.min(cur, 5)) });
+    setProps(m, { 'Stepper item swap': circ.id });
+    const c = m.findAll(n => n.type === 'INSTANCE' && /^Step circles/.test(n.name))[0];
+    if (c) { text(c, 'Current', String(allDone ? 6 : cur)); text(c, 'Total', '6'); }
+    return m;
+  }
   const r = frame('Progress steps', 'HORIZONTAL');
   STEPS.forEach((s, i) => {
     const n = i + 1, st = allDone || n < cur ? 'Completed' : n === cur ? 'Current' : 'Incomplete';
@@ -426,6 +494,15 @@ function pill(t, color) { return inst('Pill outline', { Color: color }, { Text: 
 
 /* ---------- โครงหน้า: Sidebar + Header navigation + Page (ตาม Contract list) ---------- */
 async function shell(name, o) {
+  if (MOB) {   // mobile: ไม่มี Sidebar · Header navigation Mobile · หน้าเว้นขอบ 16
+    const scr = frame('OH2 / ' + name, 'VERTICAL', { fill: WHITE });
+    scr.counterAxisSizingMode = 'FIXED'; scr.resize(VW(), VH()); scr.primaryAxisSizingMode = 'AUTO'; scr.minHeight = VH(); scr.clipsContent = true;
+    add(scr, inst('Header navigation', { Breakpoint: 'Mobile' }), 'h');
+    const page = frame('Page', 'VERTICAL', { gap: 24, pad: [16, 16], fill: WHITE });
+    add(scr, page, 'h');
+    add(page, await pageHead(o), 'h');
+    return { scr, page };
+  }
   const scr = frame('OH2 / ' + name, 'HORIZONTAL', { fill: WHITE });
   scr.primaryAxisSizingMode = 'FIXED'; scr.resize(1440, 1024); scr.counterAxisSizingMode = 'AUTO'; scr.minHeight = 1024; scr.clipsContent = true;
   const sb = inst('Sidebar navigation', { State: 'Collapsed' });
@@ -441,7 +518,7 @@ async function shell(name, o) {
 }
 /* Page header: crumbs = ลิงก์ระดับกลาง · ปุ่มขวาตาม o.primary (Actions ของ Page header) หรือ o.actions (กรอบแยก — ปุ่มลบสีแดงไม่มีใน Page header) */
 async function pageHead(o) {
-  const ph = inst('Page header', { Breakpoint: 'Desktop' }, { Title: o.title, 'Supporting text': false, Badge: !!o.badge,
+  const ph = inst('Page header', { Breakpoint: BP() }, { Title: o.title, 'Supporting text': false, Badge: !!o.badge,
     'Back action': !!o.back, 'Copy action': false, 'More actions': false, Actions: !!o.primary });
   const crumbs = ['จัดการงาน Overhaul'].concat(o.crumbs || []);
   for (const [i, n] of ['Link 1', 'Link 2', 'Link 3'].entries()) {
@@ -458,6 +535,14 @@ async function pageHead(o) {
     setProps(b, { Text: o.primary, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') });
   }
   if (!o.actions) return ph;
+  if (MOB) {   // mobile: ปุ่มของหน้าเรียงใต้หัวหน้า แบ่งครึ่ง
+    const w = frame('Page header', 'VERTICAL', { gap: 16 });
+    add(w, ph, 'h');
+    const ab = frame('Actions', 'HORIZONTAL', { gap: 12 });
+    o.actions.forEach(a => { const b = btn(a[0], a[1], { icon: a[2] }); ab.appendChild(b); b.layoutGrow = 1; });
+    add(w, ab, 'h');
+    return w;
+  }
   const wrap = row('Page header', [], { gap: 12, hug: true, align: 'MAX' });
   wrap.appendChild(ph); ph.layoutGrow = 1;
   const ab = row('Actions', o.actions.map(a => btn(a[0], a[1], { icon: a[2] })), { gap: 12, hug: true });
@@ -465,16 +550,57 @@ async function pageHead(o) {
   return wrap;
 }
 /* แถวปุ่มท้ายหน้า: 2 ปุ่มขึ้นไป = ปุ่มแรก (ย้อนกลับ/ยกเลิก) ชิดซ้าย ปุ่มสุดท้ายชิดขวา — เจ้าของงานแก้ในแบบจริง 19 ต.ค. 2569 */
-const btnRow = (list) => { const r = row('Actions', list.map(b => btn(b[0], b[1], b[2] || {})), { gap: 12, hug: true }); if (list.length > 1) r.primaryAxisAlignItems = 'SPACE_BETWEEN'; return r; };
+const btnRow = (list) => {
+  if (MOB) {   // mobile: ปุ่มเต็มแถว แบ่งเท่ากัน (แบบ Bottom sheet footer ของไลบรารี)
+    const r = frame('Actions', 'HORIZONTAL', { gap: 16 });
+    list.forEach(b => { const n = btn(b[0], b[1], Object.assign({}, b[2] || {}, { size: 'lg' })); r.appendChild(n); n.layoutGrow = 1; });
+    return r;
+  }
+  const r = row('Actions', list.map(b => btn(b[0], b[1], b[2] || {})), { gap: 12, hug: true, keep: true });
+  r.primaryAxisAlignItems = list.length > 1 ? 'SPACE_BETWEEN' : 'MAX';   // ปุ่มเดียวก็ชิดขวา
+  return r;
+};
 
 /* ---------- ชั้นบน ---------- */
 function overlay(scr, node, x, y) { scr.appendChild(node); node.layoutPositioning = 'ABSOLUTE'; node.x = x; node.y = y; return node; }
 function notify(scr, title, err) {
-  const n = inst('Notification', { Type: err ? 'Error' : 'Success', Breakpoint: 'Desktop' }, { Text: title, Actions: false });
+  const n = inst('Notification', { Type: err ? 'Error' : 'Success', Breakpoint: BP() }, { Text: title, Actions: false });
   const sup = find(n, 'Supporting text'); if (sup) sup.visible = false;
-  overlay(scr, n, 1440 - n.width, 1024 - n.height);
+  overlay(scr, n, VW() - n.width, VH() - n.height);
 }
-async function confirm(scr, o) {   // Modal กลาง — danger = Destructive · อื่น = Centered image (ซ่อนรูป)
+/* bottom sheet ประกอบจากชิ้นไลบรารี (Bottom sheet ของไลบรารีล็อกเนื้อหาตายตัว) — แบบเดียวกับที่ UI Release#2 ประกอบแผงตัวกรอง */
+async function sheet(scr, o) {
+  overlay(scr, inst('Background overlay'), 0, 0).resize(VW(), VH());
+  const sh = frame('Sheet', 'VERTICAL', { fill: WHITE });
+  sh.topLeftRadius = sh.topRightRadius = 24;
+  overlay(scr, sh, 0, 0); sh.counterAxisSizingMode = 'FIXED'; sh.resize(VW(), sh.height);
+  const hd = inst('Bottom sheet header'); add(sh, hd, 'h');
+  const ta = find(hd, 'Text and action');
+  if (o.title && ta) {
+    await text(ta, 'Text', o.title);
+    const tb = find(ta, 'Tertiary button'); if (tb) tb.visible = false;
+    const br = find(ta, 'Tertiary brand button'); if (br) { if (o.action) setProps(br, { Text: o.action, 'Leading icon': false, 'Trailing icon': false }); else br.visible = false; }
+  } else { if (ta) ta.visible = false; const dv = find(hd, 'Divider'); if (dv) dv.visible = false; }
+  const body = frame('Content', 'VERTICAL', { gap: 16, pad: [0, 16] });
+  add(sh, body, 'h');
+  for (const n of (o.content || [])) add(body, n, 'h');
+  const ft = inst('Bottom sheet footer'); add(sh, ft, 'h');
+  const sb = find(ft, 'Secondary button'); if (sb) setProps(sb, { Text: o.cancel || 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false });
+  let pb = find(ft, 'Primary button');
+  if (pb && o.danger) { try { pb.swapComponent(main('Primary danger button', { State: 'Default', Size: 'lg' })); } catch (e) { warn('ปุ่มลบสีแดงใน bottom sheet', e); } }
+  if (pb) setProps(pb, { Text: o.ok || 'ยืนยัน', 'Leading icon': false, 'Trailing icon': false });
+  sh.y = VH() - sh.height;
+  return { sh, body };
+}
+async function confirm(scr, o) {   // Modal กลาง — danger = Destructive · อื่น = Centered image (ซ่อนรูป) · mobile = bottom sheet
+  if (MOB) {
+    const mh = inst('Modal header', { Alignment: 'Center' });
+    await text(mh, 'Text', o.title); await text(mh, 'Supporting text', o.sub);
+    const x = find(mh, 'Tertiary button'); if (x) x.visible = false; const dv = find(mh, 'Divider'); if (dv) dv.visible = false;
+    const r = await sheet(scr, { content: [mh], danger: o.danger, ok: o.ok, cancel: o.cancel });
+    r.body.paddingLeft = r.body.paddingRight = 0;
+    return;
+  }
   const m = inst('Modal', { Type: o.danger ? 'Destructive centered image with input' : 'Centered image', Size: 'md' });
   overlay(scr, m, 0, 0);
   hide(m, 'Content'); if (o.danger) hide(m, 'Form');
@@ -484,6 +610,7 @@ async function confirm(scr, o) {   // Modal กลาง — danger = Destructiv
   const pb = find(m, o.danger ? 'Primary danger button' : 'Primary button'); if (pb) setProps(pb, { Text: o.ok || 'ยืนยัน', 'Leading icon': false, 'Trailing icon': false });
 }
 async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 สลับเป็น Text area ด้วย property "Input 1 swap" ของ Card form row
+  if (MOB) { await sheet(scr, { title: o.title, content: o.fields.map(f => f.area ? area(f.label, f.value) : field(f.label, f.value)), ok: 'บันทึก' }); return; }
   const m = inst('Modal', { Type: 'Form', Size: 'md' });
   overlay(scr, m, 0, 0);
   const hd = find(m, 'Modal header');
@@ -505,7 +632,18 @@ async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 
     else b.visible = false;
   });
 }
-function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "…"
+function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "…" · mobile = bottom sheet ที่มีรายการเมนู
+  if (MOB) {
+    overlay(scr, inst('Background overlay'), 0, 0).resize(VW(), VH());
+    const sh = frame('Sheet', 'VERTICAL', { fill: WHITE, pad: [0, 0] }); sh.topLeftRadius = sh.topRightRadius = 24;
+    overlay(scr, sh, 0, 0); sh.counterAxisSizingMode = 'FIXED'; sh.resize(VW(), sh.height);
+    const hd = inst('Bottom sheet header'); add(sh, hd, 'h'); const ta = find(hd, 'Text and action'); if (ta) ta.visible = false; const dv = find(hd, 'Divider'); if (dv) dv.visible = false;
+    const m = inst('Dropdown menu'); add(sh, m, 'h'); hide(m, '_Dropdown menu header');
+    const list = (find(m, 'Menu items') || m).children; const want = { 0: items[0], 1: items[1], 3: 'divider', 4: items[2] };
+    list.forEach((it, i) => { const w = want[i]; if (!w) { it.visible = false; return; } if (w !== 'divider') setProps(it, { Text: w[0], Shortcut: false, Icon: true, 'Icon swap': icon(w[1]) }); });
+    m.strokes = []; sh.y = VH() - sh.height;
+    return m;
+  }
   const m = inst('Dropdown menu');
   hide(m, '_Dropdown menu header');
   const list = (find(m, 'Menu items') || m).children;
@@ -538,7 +676,7 @@ const PLAN_COLS = [['เลขแผน', 112, 'Lead text', 'Down'], ['ชื่
   ['Purchase Order', 128], ['จำนวนรถที่ Overhaul', 168], ['สถานะ', 136, 'Badge', 'Swap'], ['วันที่สร้าง', 112], ['', 60]];
 const planRow = (p) => [p[0], p[1], p[2], p[3], p[4], p[5], { pill: STATUS[p[6]] }, p[7], { menu: 1 }];
 async function tableHeader(o) {
-  const th = inst('Table header', { Breakpoint: 'Desktop' }, { 'Table title': false, Badge: false, 'Supporting text': false, 'More actions': false, Filters: !!(o.chips && o.chips.length) });
+  const th = inst('Table header', { Breakpoint: BP() }, { 'Table title': false, Badge: false, 'Supporting text': false, 'More actions': false, Filters: !!(o.chips && o.chips.length) });
   const ti = find(th, 'Text input');
   if (ti) setProps(ti, { Label: false, Helper: false, 'Trailing icon': false, Text: o.query || 'ค้นหาเลขแผน, ชื่อแผน, เลขศูนย์ต้นทุน', State: o.query ? 'Filled' : 'Default' });
   const acts = find(th, 'Actions');
@@ -549,8 +687,8 @@ async function tableHeader(o) {
   return th;
 }
 async function pagination(n) {
-  const pg = inst('Table pagination', { Breakpoint: 'Desktop' });
-  await text(pg, 'Text', 'แสดง 1 ถึง ' + n + ' จาก ' + n + ' รายการ');
+  const pg = inst('Table pagination', { Breakpoint: BP() });
+  const tx = find(pg, 'Text'); if (tx && tx.type === 'TEXT') await text(pg, tx, 'แสดง 1 ถึง ' + n + ' จาก ' + n + ' รายการ');
   const items = pg.findAll(x => x.name === 'Button groups pagination item');
   items.forEach((it, i) => { if (i === 0 || i === items.length - 1) setProps(it, { State: 'Disabled' }); else if (i === 1) setProps(it, { Number: '1' }); else it.visible = false; });
   return pg;
@@ -577,6 +715,15 @@ async function listScreen(name, o) {
 }
 const firstMenuCell = (scr) => scr.findAll(n => n.type === 'INSTANCE' && n.name === 'Table cell' && n.variantProperties && n.variantProperties.Style === 'Action icons')[0];
 async function filterPanel(scr) {
+  if (MOB) {   // mobile: bottom sheet ตัวกรอง (ตาม Bottom sheet Type=Filter ของไลบรารี)
+    const st = col('Section', [], 12);
+    const lb = inst('Input label'); add(st, lb, 'h'); await text(lb, 'Label', 'สถานะ'); hide(lb, '(ถ้ามี)'); hide(lb, 'info-24-300-round'); hide(lb, 'Tertiary brand button');
+    for (const k of ['P1', 'P2', 'P3']) { const cb = inst('Checkbox with badge'); st.appendChild(cb); const p = find(cb, 'Pill outline'); if (p) setProps(p, { Color: STATUS[k][1], Text: STATUS[k][0] }); }
+    const car = dropdown('รถ', 'สงขลา', { state: 'Focused', lead: 'search-24-300-round' });
+    await sheet(scr, { title: 'ตัวกรอง', action: 'ล้างตัวกรอง', content: [dropdown('งบประมาณ', 'ทั้งหมด'), st, car, dropdown('ศูนย์ต้นทุน', 'ทั้งหมด')], ok: 'ตกลง' });
+    comboAt(scr, car.findOne(n => n.name === 'Container') || car, [['72-6648 สงขลา', 'HINO FG1J · รถกระเช้า']]);
+    return;
+  }
   overlay(scr, inst('Background overlay'), 0, 0).resize(1440, 1024);
   const panel = frame('Panel', 'VERTICAL', { gap: 24, fill: WHITE });
   overlay(scr, panel, 960, 0); panel.primaryAxisSizingMode = 'FIXED'; panel.counterAxisSizingMode = 'FIXED'; panel.resize(480, 1024);
@@ -595,18 +742,23 @@ async function filterPanel(scr) {
 }
 
 /* ---------- หน้า 2 ฟอร์มแผน ---------- */
+/* แถววงเงิน + WBS: desktop วงเงินครึ่งซ้าย + กลุ่ม "WBS" ครึ่งขวา (3 ช่องเท่ากัน) — Figma รับ layoutGrow แค่ 0/1 จึงใช้ซ้อนกลุ่มแทนสัดส่วน 3:1:1:1
+   · mobile เรียงลงต่อกันในแถวเดียว */
+function wbsRow(budget, w) { return MOB ? row('Row', [budget].concat(w)) : row('Row', [budget, row('WBS', w)]); }
 async function planForm(name, o) {
   const edit = !!o.edit, v = o.values || {};
   const { scr, page } = await shell(name, { title: edit ? 'แก้ไขแผน 123456' : 'สร้างแผน Overhaul', back: true, crumbs: [edit ? 'แก้ไขแผน 123456' : 'สร้างแผน Overhaul'] });
   const E = (k, m) => o.errors ? m : '';
   add(page, col('Content', [
+    // วงเงินอนุมัติ + WBS 3 ช่อง แถวเดียว (เจ้าของงานส่งตัวอย่าง 19 ต.ค. 2569): วงเงินครึ่งซ้าย · WBS/โครงข่าย/กิจกรรม แบ่งครึ่งขวา
     col('Section', [await section('ข้อมูลแผน'), row('Row', [field('ชื่อแผน', v.name, { placeholder: 'เช่น Overhaul ประจำปีงบ 2570 — รถเครน', error: E('n', 'กรุณาระบุชื่อแผน') }),
-      dropdown('ประจำปีงบประมาณ', v.year || '2569'), field('วงเงินอนุมัติ (บาท)', v.budget, { placeholder: '0', error: E('b', 'กรุณาระบุวงเงินอนุมัติ (บาท)') })])], 16),
-    col('Section', [await section('งบโครงการตาม WBS'), row('Row', [field('เลข WBS', v.wbs, { placeholder: 'เช่น C-70-OH-0003', error: E('w', 'กรุณาระบุเลข WBS') }),
+      dropdown('ประจำปีงบประมาณ', v.year || '2569')]), wbsRow(field('วงเงินอนุมัติ (บาท)', v.budget, { placeholder: '0', error: E('b', 'กรุณาระบุวงเงินอนุมัติ (บาท)') }), [
+      field('เลข WBS', v.wbs, { placeholder: 'เช่น C-70-OH-0003', error: E('w', 'กรุณาระบุเลข WBS') }),
       field('เลขโครงข่าย', v.net, { placeholder: 'เช่น 60002103', error: E('n', 'กรุณาระบุเลขโครงข่าย') }), field('เลขกิจกรรม', v.act, { placeholder: 'เช่น 0010', error: E('a', 'กรุณาระบุเลขกิจกรรม') })])], 16),
-    col('Section', [await section('เอกสาร'), row('Row', [await upload('หนังสืออนุมัติหลักการ', v.approve || [], { error: E('', 'กรุณาแนบหนังสืออนุมัติหลักการ') }),
-      await upload('เอกสารอนุมัติงบ', v.budgetDoc || [], { error: E('', 'กรุณาแนบเอกสารอนุมัติงบ') })]),
-      row('Row', [await upload('อื่นๆ', v.other || [], { optional: true }), frame('Spacer', 'VERTICAL')])], 16),
+    // กล่องอัปโหลด 1 คอลัมน์ (เจ้าของงานเคาะ 19 ต.ค. 2569)
+    col('Section', [await section('เอกสาร'), await upload('หนังสืออนุมัติหลักการ', v.approve || [], { error: E('', 'กรุณาแนบหนังสืออนุมัติหลักการ') }),
+      await upload('เอกสารอนุมัติงบ', v.budgetDoc || [], { error: E('', 'กรุณาแนบเอกสารอนุมัติงบ') }),
+      await upload('อื่นๆ', v.other || [], { optional: true })], 16),
     btnRow(edit ? [['Secondary button', 'ยกเลิก', { size: 'lg' }], ['Primary button', 'บันทึก', { size: 'lg' }]] : [['Primary button', 'บันทึก', { size: 'lg' }]]),
   ], 32), 'h');
   return scr;
@@ -650,15 +802,16 @@ async function poForm(name, o) {
   const sel = o.sel || [];
   const left = ALL_CARS.filter((_, i) => sel.indexOf(i) < 0), right = ALL_CARS.filter((_, i) => sel.indexOf(i) >= 0);
   const vendorF = dropdown('ศูนย์บริการ/อู่', o.vendor || '', { placeholder: 'ค้นหาชื่อศูนย์บริการ/อู่', lead: 'search-24-300-round', state: o.vendorOpen ? 'Focused' : undefined, error: o.errors ? 'กรุณาเลือกศูนย์บริการ/อู่' : '' });
-  const mid = col('Actions', [btn('Secondary button', 'เพิ่ม', { disabled: !(o.tick && o.tick.length) }), btn('Secondary button', 'นำออก', { disabled: true })], 12);
+  const mid = MOB ? row('Actions', [btn('Secondary button', 'เพิ่ม', { disabled: !(o.tick && o.tick.length) }), btn('Secondary button', 'นำออก', { disabled: true })], { gap: 12, keep: true })
+    : col('Actions', [btn('Secondary button', 'เพิ่ม', { disabled: !(o.tick && o.tick.length) }), btn('Secondary button', 'นำออก', { disabled: true })], 12);
   mid.layoutGrow = 0;
   const shown = o.query ? left.filter(c => c[1].indexOf(o.query) >= 0 || c[0].indexOf(o.query) >= 0) : left;   // จอ "ค้นแล้วติ๊ก" กรองตามคำค้น
   const L = await listCheck('รายการรถทั้งหมด', shown, o.tick || []), R = await listCheck('เลือกแล้ว', right, []);
-  const dual = row('Dual list', [L, mid, R], { gap: 16 }); mid.layoutGrow = 0; mid.primaryAxisAlignItems = 'CENTER';
+  const dual = row('Dual list', [L, mid, R], { gap: 16 }); mid.layoutGrow = 0; if (!MOB) mid.primaryAxisAlignItems = 'CENTER';
   add(page, col('Content', [
     col('Section', [await section('รายละเอียด Purchase Order'), row('Row', [field('ชื่อ Purchase Order', o.name, { placeholder: 'เช่น ซ่อมระบบแอร์', error: o.errors ? 'กรุณาระบุชื่อ Purchase Order' : '' }), vendorF])], 16),
     col('Section', [await section('เลือกรถ'), row('Row', [field('ค้นหารถ', o.query, { placeholder: 'ค้นหาทะเบียน, รุ่น/ยี่ห้อ', lead: 1 }), frame('Spacer', 'VERTICAL')]), dual], 16),
-    col('Section', [await section('เอกสาร'), row('Row', [await upload('ใบสั่งจ้าง', o.order || [], { error: o.errors ? 'กรุณาแนบใบสั่งจ้าง' : '' }), await upload('อื่นๆ', [], { optional: true })])], 16),
+    col('Section', [await section('เอกสาร'), await upload('ใบสั่งจ้าง', o.order || [], { error: o.errors ? 'กรุณาแนบใบสั่งจ้าง' : '' }), await upload('อื่นๆ', [], { optional: true })], 16),
     btnRow(edit ? [['Secondary button', 'ยกเลิก', { size: 'lg' }], ['Primary button', 'บันทึก', { size: 'lg' }]] : [['Primary button', 'บันทึก', { size: 'lg' }]]),
   ], 32), 'h');
   if (o.vendorOpen) comboAt(scr, vendorF.findOne(n => n.name === 'Container') || vendorF, [['บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', '02-111-2202 · เขตพระนคร กรุงเทพฯ']]);
@@ -734,7 +887,7 @@ async function logs(list) {
   return [sec, btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ซ่อมสำเร็จ', { size: 'lg', disabled: !list.length }]])];
 }
 async function safety(files) {
-  return [col('Section', [await section('เอกสาร Safety Inspection'), row('Row', [await upload('อัปโหลดเอกสาร Safety Inspection', files), frame('Spacer', 'VERTICAL')])], 16),
+  return [col('Section', [await section('เอกสาร Safety Inspection'), await upload('อัปโหลดเอกสาร Safety Inspection', files)], 16),
     btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันการตรวจสอบ', { size: 'lg' }]])];
 }
 const PARTS = [['ชุดลูกสูบพร้อมแหวน', '6', 'ชุด'], ['กรองน้ำมันเครื่อง', '2', 'ชิ้น'], ['น้ำมันเครื่อง 15W-40', '18', 'ลิตร']];
@@ -827,6 +980,74 @@ const SCENARIOS = [
     ['ปิดงานแล้ว', async () => { const s = await job('S14 ปิดงานแล้ว', 'V11', () => closeJob(PARTS, true)); notify(s, 'ปิดงานสำเร็จ'); return s; }]]],
 ];
 
+/* ปิดเส้นคั่นทุกจุดในจอ (เจ้าของงานสั่ง 19 ต.ค. 2569 "disable divider ออกให้หมด")
+   1) component ที่มี property Divider (BOOLEAN) → false  2) เส้นคั่นที่ฝังในชิ้นอื่น (layer "Divider" / "Content divider") → ซ่อน
+   3) รายการเมนูแบบ Divider=True → ซ่อน — ยังเป็น instance เดิม แค่ปิดส่วนนั้น */
+function stripDividers(root) {
+  let n = 0;
+  const all = [root].concat(root.findAll(() => true));
+  for (const node of all) {
+    if (node.type === 'INSTANCE') {
+      const cp = node.componentProperties || {};
+      const key = Object.keys(cp).find(k => k.split('#')[0] === 'Divider');
+      if (key && cp[key].type === 'BOOLEAN' && cp[key].value !== false) { try { node.setProperties({ [key]: false }); n++; } catch (e) { warn('ปิด Divider ' + node.name, e); } }
+      if (key && cp[key].type === 'VARIANT' && cp[key].value === 'True') { node.visible = false; n++; }
+    }
+    if ((node.name === 'Divider' || node.name === 'Content divider') && node.visible !== false && node !== root) { node.visible = false; n++; }
+  }
+  return n;
+}
+
+/* แก้เฉพาะจุด: ย้ายช่อง WBS 3 ช่องมาแถวเดียวกับวงเงินอนุมัติ (19 ต.ค. 2569) — ย้าย instance เดิม ไม่สร้างใหม่ ⇒ ที่แก้มือในช่องไม่หาย */
+const labelOf = (n) => { try { const cp = n.componentProperties || {}; const k = Object.keys(cp).find(x => x.split('#')[0] === 'Label text'); return k ? cp[k].value : ''; } catch (e) { return ''; } };
+async function patchWbs() {
+  const sel = figma.currentPage.selection.filter(n => n.type === 'FRAME');
+  const targets = sel.length ? sel : figma.currentPage.children.filter(n => n.type === 'FRAME' && n.name.indexOf('OH2') === 0);
+  let done = 0, skip = 0;
+  for (const f of targets) {
+    const fields = f.findAll(n => n.type === 'INSTANCE' && n.name === 'Text input');
+    const by = (t) => fields.find(n => labelOf(n) === t);
+    const budget = by('วงเงินอนุมัติ (บาท)'), w = [by('เลข WBS'), by('เลขโครงข่าย'), by('เลขกิจกรรม')];
+    if (!budget || w.some(x => !x)) continue;
+    const mobile = f.width <= 500;
+    if (mobile ? w[0].parent === budget.parent : (w[0].parent.name === 'WBS' && w[0].parent.parent === budget.parent)) { skip++; continue; }   // แก้ไปแล้ว
+    const oldSec = w[0].parent && w[0].parent.parent;          // Section "งบโครงการตาม WBS"
+    let r;
+    if (mobile) {                                               // mobile: ช่องเรียงลงอยู่แล้ว — ต่อท้ายวงเงิน
+      r = budget.parent;
+      const at = r.children.indexOf(budget) + 1;
+      w.forEach((x, i) => { r.insertChild(at + i, x); x.layoutGrow = 0; x.layoutSizingHorizontal = 'FILL'; });
+    } else {
+      // แถวเดิมมีช่องอื่นด้วย (ชื่อแผน · ปีงบ) → แยกวงเงินออกมาแถวใหม่ · ถ้ารอบก่อนหยุดกลางทางจนแถวเหลือวงเงินตัวเดียว ใช้แถวนั้นต่อ
+      r = budget.parent;
+      if (r.children.length > 1) {
+        const sec = r.parent;
+        const nr = frame('Row', 'HORIZONTAL', { gap: 24 }); nr.counterAxisAlignItems = 'MIN';
+        sec.insertChild(sec.children.indexOf(r) + 1, nr); nr.layoutSizingHorizontal = 'FILL';
+        nr.appendChild(budget); r = nr;
+      }
+      budget.layoutGrow = 1;
+      const g = frame('WBS', 'HORIZONTAL', { gap: 24 }); g.counterAxisAlignItems = 'MIN';
+      r.appendChild(g); g.layoutGrow = 1;
+      w.forEach(x => { g.appendChild(x); x.layoutGrow = 1; });
+    }
+    if (oldSec && oldSec.type === 'FRAME' && oldSec.name === 'Section' && !oldSec.findAll(n => n.type === 'INSTANCE' && n.name === 'Text input').length) oldSec.remove();
+    done++;
+  }
+  log('ย้ายช่อง WBS มาแถวเดียวกับวงเงินอนุมัติ ' + done + ' จอ' + (skip ? ' · แก้ไปแล้ว ' + skip + ' จอ' : '') + ' · ไม่ได้สร้างจอใหม่');
+}
+
+/* แก้เฉพาะส่วน — ไม่สร้างจอใหม่ (เจ้าของงานถาม 19 ต.ค. 2569 "export แค่ส่วนที่แก้ได้ไหม")
+   ไล่เฟรมที่เลือกไว้ (ถ้ามี) หรือทุกเฟรม "OH2 /" ในหน้าปัจจุบัน แล้วปิดเส้นคั่น — ที่แก้มือไว้ในจออื่นไม่หาย */
+async function patchDividers() {
+  const sel = figma.currentPage.selection.filter(n => n.type === 'FRAME' || n.type === 'INSTANCE' || n.type === 'SECTION');
+  const targets = sel.length ? sel : figma.currentPage.children.filter(n => n.name.indexOf('OH2') === 0);
+  if (!targets.length) { log('ไม่พบเฟรม "OH2 /" ในหน้านี้ — เปิดหน้า overhaul-1 ก่อน หรือเลือกเฟรมที่จะแก้'); return; }
+  let n = 0;
+  for (const t of targets) n += stripDividers(t);
+  log('ปิดเส้นคั่น ' + n + ' จุด ใน ' + targets.length + (sel.length ? ' ชิ้นที่เลือก' : ' เฟรม') + ' · ไม่ได้สร้างจอใหม่');
+}
+
 /* ---------- สร้างทั้งหมด ---------- */
 async function build() {
   errors.length = 0;
@@ -853,14 +1074,20 @@ async function build() {
   for (const [title, screens] of SCENARIOS) {
     let x = 0, h = 0;
     for (const [label, fn] of screens) {
-      try {
-        const s = await fn();
-        s.name = 'OH2 / ' + title.split(' · ')[0] + ' — ' + label;
-        page.insertChild(0, s); s.x = x; s.y = y;
-        x += 1440 + GAP_X; h = Math.max(h, s.height);
-        made.push(s);
-        log('  · ' + made.length + '/' + TOTAL + ' ' + s.name);
-      } catch (e) { warn(title + ' / ' + label, e); }
+      // คู่ desktop + mobile วางข้างกัน (เจ้าของงานสั่ง 19 ต.ค. 2569)
+      for (const mob of [false, true]) {
+        MOB = mob;
+        try {
+          const s = await fn();
+          stripDividers(s);
+          s.name = 'OH2 / ' + title.split(' · ')[0] + ' — ' + label + (mob ? ' · mobile' : '');
+          page.insertChild(0, s); s.x = x; s.y = y;
+          x += (mob ? VW() + GAP_X : 1440 + 80); h = Math.max(h, s.height);
+          made.push(s);
+          log('  · ' + made.length + '/' + TOTAL * 2 + ' ' + s.name);
+        } catch (e) { warn(title + ' / ' + label + (mob ? ' (mobile)' : ''), e); }
+      }
+      MOB = false;
     }
     y += h + GAP_Y;
     log('✓ ' + title + ' (' + screens.length + ' จอ)');
@@ -887,5 +1114,7 @@ figma.ui.onmessage = async (msg) => {
   try {
     if (msg.type === 'build') await build();
     if (msg.type === 'check') { log('— เช็ค component (ไม่สร้างอะไร) —'); await resolveAll(NEEDED, true); }
+    if (msg.type === 'patch-dividers') await patchDividers();
+    if (msg.type === 'patch-wbs') await patchWbs();
   } catch (e) { log('✗ หยุด — ' + (e && e.message ? e.message : e)); }
 };

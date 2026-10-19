@@ -304,7 +304,7 @@ $('m-del-ok').addEventListener('click',()=>{job.logs.splice(delIdx,1);save();oh2
 function safetyPanel(){
   const ro=stepNow()>4;
   if(ro)return sect('เอกสาร Safety Inspection')+`<div class="mt-4">${oh2FilesRO(job.safety)}</div><div class="note note-ok mt-4"><span class="ms">check_circle</span>ยืนยันการตรวจสอบแล้ว</div>`;
-  return sect('เอกสาร Safety Inspection')+`<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4"><div class="f" id="sf"><label>อัปโหลดเอกสาร Safety Inspection</label>
+  return sect('เอกสาร Safety Inspection')+`<div class="flex flex-col gap-6 mt-4"><div class="f" id="sf"><label>อัปโหลดเอกสาร Safety Inspection</label>
     <label class="fu"><input type="file" multiple accept=".pdf,.jpg,.jpeg,application/pdf,image/jpeg"><span class="ficon sm gray"><span class="ms">cloud_upload</span></span>
     <span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PDF, JPG · สูงสุด 10 ไฟล์ · <span class="fu-count"></span></small></span></label>
     <div class="help hidden"></div><div class="fu-list"></div></div></div>`+actions(`<button class="btn btn-p btn-lg" type="button" data-act="safety">ยืนยันการตรวจสอบ</button>`);

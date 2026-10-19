@@ -98,7 +98,7 @@
 
         <section>
           <div class="sect">เอกสาร</div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+          <div class="flex flex-col gap-6 mt-4">   <!-- กล่องอัปโหลด 1 คอลัมน์ (เจ้าของงานเคาะ 19 ต.ค. 2569 — เดิม 2 คอลัมน์) -->
             <div class="f" data-files="order" data-req><label>ใบสั่งจ้าง</label>
               <label class="fu"><input type="file" multiple accept=".pdf,.jpg,.jpeg,application/pdf,image/jpeg"><span class="ficon sm gray"><span class="ms">cloud_upload</span></span>
                 <span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PDF, JPG · สูงสุด 10 ไฟล์ · <span class="fu-count"></span></small></span></label>
@@ -112,7 +112,7 @@
 
         <div class="flex items-center justify-between gap-3">   <!-- ยกเลิกชิดซ้าย · บันทึกชิดขวา (เจ้าของงานแก้ในแบบจริง 19 ต.ค. 2569) -->
           <button class="btn btn-s btn-lg hidden" type="button" id="cancel">ยกเลิก</button>
-          <button class="btn btn-p btn-lg" type="submit" id="save">บันทึก</button>
+          <button class="btn btn-p btn-lg ml-auto" type="submit" id="save">บันทึก</button>   <!-- ปุ่มเดียวก็ชิดขวา (เจ้าของงานเคาะ 19 ต.ค. 2569) -->
         </div>
       </form>
     </main>

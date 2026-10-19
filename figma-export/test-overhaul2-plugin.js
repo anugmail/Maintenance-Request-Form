@@ -46,6 +46,8 @@ class Node {
   get layoutSizingHorizontal() { return this._lsh; }
   set layoutSizingVertical(v) { if (!this.parent || !this.parent.layoutMode) throw new Error('layoutSizingVertical ต้องอยู่ใน auto-layout: ' + this.name); this._lsv = v; }
   get layoutSizingVertical() { return this._lsv; }
+  set layoutGrow(v) { if (v !== 0 && v !== 1) throw new Error('layoutGrow รับแค่ 0 หรือ 1 (ได้ ' + v + '): ' + this.name); this._lg = v; }   // ตาม Figma จริง
+  get layoutGrow() { return this._lg; }
 }
 
 /* ---------- โหลดดัมป์ → ต้นไม้ component ---------- */
@@ -125,6 +127,7 @@ function hydrate(n) {
     }
   };
   n.getMainComponentAsync = async () => n._main;
+  n.swapComponent = (comp) => { if (!comp || comp.type !== 'COMPONENT') throw new Error('swapComponent ต้องได้ COMPONENT'); n._main = null; n._mainName = (comp.parent && comp.parent.type === 'COMPONENT_SET') ? comp.parent.name : comp.name; n._variant = comp.variantProperties; n.name = n._mainName; hydrate(n); };
 }
 const ALL = new Set(root.findAll(n => n.type === 'COMPONENT').map(n => n.id));
 for (const n of root.findAll(n => n.type === 'COMPONENT')) n.createInstance = () => makeInstance(n);
@@ -136,7 +139,7 @@ const pages = [];
 const figma = {
   mixed: MIXED,
   root: Object.assign(root, { children: root.children }),
-  currentPage: root.children[0],
+  currentPage: Object.assign(root.children[0], { selection: [] }),
   showUI() {},
   ui: { postMessage: (m) => logs.push(m.text), set onmessage(f) { uiHandler = f; } },
   async loadAllPagesAsync() {},
@@ -169,12 +172,45 @@ vm.runInNewContext(code, { figma, __html__: '', console, Set, Map, Promise, Obje
 
 const MODE_CHECK = process.env.MODE === 'check';
 (async () => {
-  await uiHandler({ type: process.env.MODE || 'build' });
+  await uiHandler({ type: process.env.MODE === 'patch' ? 'build' : (process.env.MODE || 'build') });
+  if (process.env.MODE === 'patch') {   // สร้างแบบเก่า (CODE=ไฟล์เก่า) แล้วแก้เฉพาะส่วนด้วยโค้ดปัจจุบัน · PATCH=ชื่อข้อความ (ค่าเริ่ม patch-dividers)
+    figma.currentPage.selection = [];
+    const ctx = () => ({ figma, __html__: '', console, Set, Map, Promise, Object, Array, JSON, Math, Symbol, Error });
+    if (process.env.BROKEN) {   // จำลองรอบที่พังกลางทาง (เช่น layoutGrow=3 ของ 19 ต.ค.) ให้รอบถัดไปต้องกู้ต่อได้
+      vm.runInNewContext(fs.readFileSync(process.env.BROKEN, 'utf8'), ctx());
+      for (const t of (process.env.PATCH || 'patch-dividers').split(',')) await uiHandler({ type: t }).catch(e => console.log('(รอบพัง) ' + e.message));
+    }
+    if (process.env.CODE) vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'overhaul2-plugin', 'code.js'), 'utf8'), ctx());
+    for (const t of (process.env.PATCH || 'patch-dividers').split(',')) await uiHandler({ type: t });
+  }
   logs.forEach(l => console.log(l));
   const page = pages[0] || figma.currentPage;
   const screens = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf('OH2 / ') === 0);
   const sections = [...new Set(screens.map(n => n.y))];   // แถว = scenario
+  // ไม่เหลือเส้นคั่นที่มองเห็น (เจ้าของงานสั่งปิด divider ทั้งหมด 19 ต.ค. 2569)
+  const shown = (n) => { for (let p = n; p; p = p.parent) if (p.visible === false) return false; return true; };
+  let divs = 0;
+  screens.forEach(sc => sc.findAll(n => shown(n) && ((n.name === 'Divider' || n.name === 'Content divider') ||
+    (n.type === 'INSTANCE' && n.componentProperties && Object.keys(n.componentProperties).some(k => k.split('#')[0] === 'Divider' && (n.componentProperties[k].value === true || n.componentProperties[k].value === 'True'))))).forEach(() => divs++));
+  if (divs) logs.push('⚠ ยังเห็นเส้นคั่น ' + divs + ' จุด'); else console.log('ไม่เหลือเส้นคั่นที่มองเห็น ✓');
   if (page.children.some(n => n.type === 'SECTION')) logs.push('⚠ ยังมี section บนหน้า');
+  // วงเงินอนุมัติ + WBS 3 ช่อง ต้องอยู่แถวเดียวกัน · ไม่เหลือหัวข้อ "งบโครงการตาม WBS" ที่ว่าง (19 ต.ค. 2569)
+  const lbl = (n) => { const cp = n.componentProperties || {}; const k = Object.keys(cp).find(x => x.split('#')[0] === 'Label text'); return k ? cp[k].value : ''; };
+  let wbs = 0;
+  screens.forEach(sc => {
+    const f = sc.findAll(n => n.type === 'INSTANCE' && n.name === 'Text input');
+    const g = (t) => f.find(n => lbl(n) === t);
+    const b = g('วงเงินอนุมัติ (บาท)'), w = ['เลข WBS', 'เลขโครงข่าย', 'เลขกิจกรรม'].map(g);
+    if (!b) return; wbs++;
+    const desk = sc.width > 500;   // desktop: Row > [วงเงิน, WBS > 3 ช่อง] ครึ่งต่อครึ่ง · mobile: ช่องต่อกันใน Row เดียว
+    const box = desk ? w[0] && w[0].parent : b.parent;
+    if (w.some(x => !x || x.parent !== box) || (desk ? (box.name !== 'WBS' || box.parent !== b.parent) : false)) { logs.push('⚠ ช่อง WBS ไม่อยู่แถวเดียวกับวงเงินอนุมัติ: ' + sc.name); return; }
+    const r = desk ? b.parent.children : box.children, o = desk ? r.indexOf(box) - r.indexOf(b) - 1 : 0;
+    if (desk ? (o !== 0 || box.children.map(x => x).join() !== w.join()) : (r.indexOf(w[0]) !== r.indexOf(b) + 1 || r.indexOf(w[2]) !== r.indexOf(b) + 3)) logs.push('⚠ ลำดับช่อง WBS ผิด: ' + sc.name);
+    if (desk && (b.layoutGrow !== 1 || box.layoutGrow !== 1 || w.some(x => x.layoutGrow !== 1))) logs.push('⚠ วงเงิน/WBS ไม่ได้แบ่งครึ่ง: ' + sc.name);
+    if (sc.findAll(n => n.type === 'TEXT' && n.characters === 'งบโครงการตาม WBS').length) logs.push('⚠ ยังเหลือหัวข้อ งบโครงการตาม WBS: ' + sc.name);
+  });
+  if (wbs) console.log('ตรวจแถววงเงิน + WBS ' + wbs + ' จอ' + (logs.some(l => /^⚠.*WBS/.test(l)) ? '' : ' ✓'));
   // แผง Layers ของ Figma แสดงลูกตัวสุดท้ายไว้บนสุด ⇒ จอแรกของ userflow ต้องเป็นตัวสุดท้าย
   const top = screens[screens.length - 1];
   if (top && top.name.indexOf('หน้ารายการแผน') < 0) logs.push('⚠ แผง Layers ไม่ได้เรียงจอแรกไว้บนสุด: ' + top.name);
