@@ -32,6 +32,8 @@ const LABEL: Record<FieldKey, string> = {
   net: "เลขโครงข่าย",
   act: "เลขกิจกรรม",
 };
+/** ช่องไม่บังคับ (แสดง "(ถ้ามี)") — เจ้าของงานเคาะ 19 ต.ค. 2569: เลข WBS · เลขโครงข่าย · เลขกิจกรรม ไม่บังคับ */
+const OPTIONAL: FieldKey[] = ["wbs", "net", "act"];
 /** กล่องเอกสาร (1 คอลัมน์) — required = ต้องมีอย่างน้อย 1 ไฟล์ */
 const DOCS: { key: DocKey; err?: ErrKey; label: string }[] = [
   { key: "approve", err: "approve", label: "หนังสืออนุมัติหลักการ" },
@@ -101,7 +103,7 @@ export function PlanForm({ plan, backHref, savedHref, createdHref }: PlanFormPro
     const next: Partial<Record<ErrKey, string>> = {};
     for (const f of FIELDS) {
       const v = values[f].trim();
-      if (!v) next[f] = "กรุณาระบุ" + LABEL[f];
+      if (!v) { if (!OPTIONAL.includes(f)) next[f] = "กรุณาระบุ" + LABEL[f]; }
       else if (f === "budget" && !(money(v) > 0)) next[f] = "วงเงินต้องเป็นตัวเลขมากกว่า 0";
     }
     for (const d of DOCS) if (d.err && !docs[d.key].length) next[d.err] = "กรุณาแนบ" + d.label;
@@ -159,6 +161,7 @@ export function PlanForm({ plan, backHref, savedHref, createdHref }: PlanFormPro
     <TextField
       id={fid(k)}
       label={LABEL[k]}
+      optional={OPTIONAL.includes(k)}
       value={values[k]}
       onChange={(e) => setField(k, e.target.value)}
       error={errors[k]}
