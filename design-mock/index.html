@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="../design-system/tokens.css?v=20261001-ds68">
-<link rel="stylesheet" href="../design-system/components.css?v=20261001-ds68">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
 <!-- ไม่มี <style> ในหน้าโดยตั้งใจ — ใช้คอมโพเนนต์จาก design system เท่านั้น:
      .content · .card/.sect/.sub · .stack · .gallery/.gcard/.gframe/.gcard-body
      .badge/.b-ok/.b-low/.b-brand · .btn · .page-title -->
@@ -49,32 +49,6 @@
                 <div class="meta">โครงตามหน้า "รายละเอียดเหตุการณ์" ระบบจริง + บล็อกช่องทางการซ่อม
                   (ซ่อมเอง/ส่งซ่อมอู่/ส่งต่อ กรย.) ที่หัวหน้าแก้ได้ก่อนกดอนุมัติ</div>
                 <a class="btn btn-s btn-sm" href="approver-incident-detail.html" target="_blank" rel="noopener">
-                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
-              </div>
-            </div>
-            <div class="gcard">
-              <div class="gframe"><iframe src="../mock/Maintenance-Request-Form-page.html" loading="lazy"
-                  title="เวอร์ชันหน้าเต็ม (สเปกใหม่ ไม่ใช่ modal)" scrolling="no"></iframe></div>
-              <div class="gcard-body">
-                <span class="nm">เวอร์ชันหน้าเต็ม — ฟอร์ม 4 ขั้น + stepper</span>
-                <span class="badge b-neutral">เวอร์ชันเทียบ</span>
-                <div class="meta">สเปก 4 ขั้นชุดเดียวกับ modal ทุกอย่าง แต่กด "แจ้งซ่อม" แล้วนำทางเข้า
-                  ฟอร์มเต็มหน้าพร้อม stepper ด้านบน (ไม่ใช่ modal — เจ้าของงานขอไว้เทียบ 7 ก.ย. 2569)</div>
-                <a class="btn btn-s btn-sm" href="../mock/Maintenance-Request-Form-page.html" target="_blank"
-                  rel="noopener">
-                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
-              </div>
-            </div>
-            <div class="gcard">
-              <div class="gframe"><iframe src="../mock/Maintenance-Request-Form-before-modal.html" loading="lazy"
-                  title="เวอร์ชันก่อนเป็น modal" scrolling="no"></iframe></div>
-              <div class="gcard-body">
-                <span class="nm">flow เก่า — ลิสต์ใหม่ → วิซาร์ดเต็มหน้า</span>
-                <span class="badge b-neutral">เวอร์ชันเทียบ</span>
-                <div class="meta">ลิสต์ชุดเดียวกับเวอร์ชันหลัก (ไอคอนแจ้งซ่อมท้ายแถว + badge) แต่กดแล้วเข้า
-                  วิซาร์ดเต็มหน้า 5 ขั้นแบบเดิม (stepper + การ์ดเลือกรถ) · เวอร์ชัน modal ใช้ mock หลัก</div>
-                <a class="btn btn-s btn-sm" href="../mock/Maintenance-Request-Form-before-modal.html" target="_blank"
-                  rel="noopener">
                   <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
               </div>
             </div>
@@ -247,17 +221,17 @@
       <div class="card">
         <div class="stack">
           <div class="sect">โฟลว์เปลี่ยนสังกัดยานพาหนะ (โอนถาวร) — 4 หน้าจอ ต่อกันได้</div>
-          <div class="sub">ร่างแรก 22 ก.ย. 2569 · อิง <b>หลักเกณฑ์ยานพาหนะ พ.ศ. 2569</b> + DB จริง + ผัง
-            <code>Diagram/05-เปลี่ยนสังกัด-ยืมใช้รถ/01-เปลี่ยนสังกัดถาวร.md</code> (T0–T13) ·
-            <b>ต้นทางเปิดเรื่องเสมอ</b> · หน้า 3 และ 4 ไลบรารี PEA ไม่มีของเทียบ ประกอบจากคอมโพเนนต์ที่มีตามที่เคาะไว้</div>
+          <div class="sub"><b>ปรับ 6 ต.ค. 2569 ตามผังโอนย้ายของเจ้าของงาน</b>: เปิดคำร้อง → หัวหน้าหน่วยงานอนุมัติ → เปลี่ยนข้อมูล VMS+ →
+            เลขข้างรถ → ทะเบียน (ถ้าข้ามจังหวัด) → BA · ผังสถานะ <code>Diagram/05-เปลี่ยนสังกัด-ยืมใช้รถ/05-สถานะคำร้องโอนย้าย.md</code> ·
+            ร่างแรก 22 ก.ย. 2569 อิงหลักเกณฑ์ยานพาหนะ พ.ศ. 2569 + DB จริง · หน้า 3 และ 4 ไลบรารี PEA ไม่มีของเทียบ ประกอบจากคอมโพเนนต์ที่มี</div>
           <div class="gallery">
             <div class="gcard">
-              <div class="gframe"><iframe src="transfer-01-list.html" loading="lazy" title="รายการยานพาหนะ" scrolling="no"></iframe></div>
+              <div class="gframe"><iframe src="transfer-01-list.html" loading="lazy" title="ค้นหารถเพื่อขอโอน" scrolling="no"></iframe></div>
               <div class="gcard-body">
-                <span class="nm">1 · รายการยานพาหนะ (ต้นทาง)</span>
+                <span class="nm">1 · ค้นหารถเพื่อขอโอน (ฝั่งอยากได้รถ)</span>
                 <span class="badge b-low">จุดเข้าโฟลว์</span>
-                <div class="meta">ไอคอนท้ายแถว = ทำเรื่องเปลี่ยนสังกัด · แถวที่มีรายการค้างขึ้นเลขกำกับ ·
-                  รถเช่า (รหัส 25) ปิดปุ่มไว้เพราะยังไม่เคาะ · ท้ายหน้ามีคิว “คำขอรถจากหน่วยงานอื่น” (เคส pull · T0a)</div>
+                <div class="meta">ปรับ 6 ต.ค. 2569 — ฝั่งอยากได้รถเป็นผู้เปิดเรื่อง · เลือกหน่วยงานก่อน แล้วเห็นรถของหน่วยงานนั้น ·
+                  ปุ่ม “ขอโอนคันนี้” ท้ายแถว · รถเช่า (รหัส 25) ปิดปุ่มพร้อมเหตุผล · ⚠️ หน้า 2–4 ยังเป็นแบบเดิม กำลังปรับทีละหน้า</div>
                 <a class="btn btn-s btn-sm" href="transfer-01-list.html" target="_blank" rel="noopener">
                   <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
               </div>
@@ -265,7 +239,7 @@
             <div class="gcard">
               <div class="gframe"><iframe src="transfer-request.html" loading="lazy" title="คำร้องเปลี่ยนสังกัด" scrolling="no"></iframe></div>
               <div class="gcard-body">
-                <span class="nm">2 · คำร้องเปลี่ยนสังกัด (ต้นทางเปิด)</span>
+                <span class="nm">2 · คำร้องเปลี่ยนสังกัด</span>
                 <span class="badge b-low">มี stepper 4 ขั้น</span>
                 <div class="meta">ฟิลด์ยกจาก <code>Modal / Vehicle transfer</code> ของจริง + บล็อก <b>T5 ตรวจรายการค้าง</b>
                   (ใบแจ้งซ่อม · รอบบิล Fleet card) · ถอด “ยืมใช้ชั่วคราว” ออกจาก dropdown แล้วเพราะเป็นคนละกระบวนการ</div>
@@ -274,13 +248,14 @@
               </div>
             </div>
             <div class="gcard">
-              <div class="gframe"><iframe src="transfer-03-receive.html" loading="lazy" title="ปลายทางตรวจรับ" scrolling="no"></iframe></div>
+              <div class="gframe"><iframe src="transfer-approved.html" loading="lazy" title="หลังได้รับอนุมัติ" scrolling="no"></iframe></div>
               <div class="gcard-body">
-                <span class="nm">3 · ปลายทางตรวจรับและรับโอน</span>
+                <span class="nm">3 · หลังได้รับอนุมัติ</span>
                 <span class="badge b-out">ไลบรารีไม่มีของเทียบ</span>
-                <div class="meta">โครง 2 คอลัมน์ยกจาก Incident detail · ข้อมูลรถ + ประวัติซ่อม 12 เดือน +
-                  เช็กลิสต์ตรวจรับ 5 ข้อ + รูป · modal ยืนยันเริ่มนับ 7 วันทำการให้แจ้ง กจย.</div>
-                <a class="btn btn-s btn-sm" href="transfer-03-receive.html" target="_blank" rel="noopener">
+                <div class="meta">ตามผังโอนย้าย 6 ต.ค. 2569 · ปุ่มดาวน์โหลดเอกสารขออนุมัติ/ตอบรับอนุมัติ · งานหลังอนุมัติ 4 อย่าง
+                  (ข้อมูล VMS+ · เลขข้างรถ · ทะเบียน · BA) · บัญชีโอนย้าย · หน้า "ปลายทางตรวจรับ" เดิมพักไว้
+                  (<a href="transfer-03-receive.html" target="_blank" rel="noopener">transfer-03-receive.html</a>)</div>
+                <a class="btn btn-s btn-sm" href="transfer-approved.html" target="_blank" rel="noopener">
                   <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
               </div>
             </div>
@@ -301,29 +276,152 @@
 
       <div class="card">
         <div class="stack">
-          <div class="sect">Overhaul — รายการรถ / รายการแผน (2 แบบให้เลือก)</div>
-          <div class="sub">เทียบ 2 มุมมองของข้อมูลชุดเดียวกัน (6 ต.ค. 2569) · โครงตารางยกจาก <code>Vehicle list</code> หน้า 5.2 ของ UI Release#2
-            ชุดเดียวกับหน้าเปลี่ยนสังกัด · ผังที่มา: <code>Diagram/01-บำรุงรักษาตามวาระ/08-overhaul-ใครทำอะไร.md</code></div>
+          <div class="sect">โฟลว์ Overhaul v2 — userflow 14 scenario · 6 หน้าจอ กดต่อกันได้</div>
+          <div class="sub"><b>19 ต.ค. 2569 · ใช้แทนชุด 12 ต.ค.</b> (เจ้าของงานเคาะ 16 ต.ค.: PO ผูกแผน · หน้างานรายคัน 6 ขั้น) ·
+            ทุกส่วนจับคู่กับ component จริงของไฟล์ (Component) VMS Plus + หน้าอ้างอิงใน UI Release#2 (ดูคอมเมนต์หัวไฟล์แต่ละหน้า) ·
+            สถานะร่างตาม <code>Diagram/01-บำรุงรักษาตามวาระ/12-overhaul-สถานะ.md</code> · ข้อมูลเก็บในเบราว์เซอร์ เดินงานได้จนปิดงาน</div>
           <div class="gallery">
             <div class="gcard">
-              <div class="gframe"><iframe src="overhaul-01-vehicles.html" loading="lazy" title="รายการรถ + สถานะ Overhaul" scrolling="no"></iframe></div>
+              <div class="gframe"><iframe src="overhaul-v2-01-plans.html" loading="lazy" title="จัดการงาน Overhaul" scrolling="no"></iframe></div>
               <div class="gcard-body">
-                <span class="nm">A · รายการรถ (มองจากตัวรถ)</span>
-                <span class="badge b-info">อยู่ระหว่าง Overhaul</span>
-                <div class="meta">คอลัมน์ <b>สถานะรถ</b> (+ ขั้นปัจจุบัน) · <b>Ref. แผน Overhaul</b> (กดเปิดแผน) ·
-                  <b>ประกันหลัง Overhaul</b> 180 วัน (อยู่ในประกัน / ใกล้หมด ≤ 30 วัน [เสนอ] / หมดประกัน)</div>
-                <a class="btn btn-s btn-sm" href="overhaul-01-vehicles.html" target="_blank" rel="noopener">
+                <span class="nm">1 · จัดการงาน Overhaul (S1–S3)</span>
+                <span class="badge b-low">จุดเข้าโฟลว์</span>
+                <div class="meta">รายการแผน · ค้นหา · เรียง · ตัวกรอง + ป้ายตัวกรอง · เมนู “…” · ลบแผน · หน้าว่าง/ค้นไม่เจอ</div>
+                <a class="btn btn-s btn-sm" href="overhaul-v2-01-plans.html" target="_blank" rel="noopener">
                   <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
               </div>
             </div>
             <div class="gcard">
-              <div class="gframe"><iframe src="overhaul-02-plans.html" loading="lazy" title="รายการแผน Overhaul" scrolling="no"></iframe></div>
+              <div class="gframe"><iframe src="overhaul-v2-02-plan-form.html" loading="lazy" title="สร้างแผน Overhaul" scrolling="no"></iframe></div>
               <div class="gcard-body">
-                <span class="nm">B · รายการแผน (มองจากแผน)</span>
-                <span class="badge b-neutral">การ์ดต่อแผน</span>
-                <div class="meta">1 การ์ด = 1 แผน (เลขที่ · สถานะ · ปิดงาน x/n · งบ / ใช้ไป) + ตารางรถในแผน
-                  (สถานะ · ค่าใช้จ่ายเทียบ % มูลค่ารถ · ประกัน) · แผนรออนุมัติปิดปุ่มเปิดงานรายคัน</div>
-                <a class="btn btn-s btn-sm" href="overhaul-02-plans.html" target="_blank" rel="noopener">
+                <span class="nm">2 · สร้าง/แก้ไขแผน (S1–S2)</span>
+                <span class="badge b-neutral">ฟอร์ม + อัปโหลด 3 กล่อง</span>
+                <div class="meta">ปีงบไม่มีย้อนหลัง · WBS/โครงข่าย/กิจกรรม · วงเงิน · PDF/JPG สูงสุด 10 ไฟล์ · ยืนยันการออก/ยืนยันแก้ไข · general error</div>
+                <a class="btn btn-s btn-sm" href="overhaul-v2-02-plan-form.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="overhaul-v2-03-plan-detail.html?id=123456" loading="lazy" title="รายละเอียดแผน" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">3 · รายละเอียดแผน (S1 · S3 · S4 · S6)</span>
+                <span class="badge b-neutral">3 ส่วน</span>
+                <div class="meta">รายละเอียด + เอกสาร · ตาราง Purchase Order + เมนู “…” · อะไหล่จากคลัง (จองไว้) · ลบแผน/ลบ PO</div>
+                <a class="btn btn-s btn-sm" href="overhaul-v2-03-plan-detail.html?id=123456" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="overhaul-v2-04-po-form.html?plan=123456" loading="lazy" title="เพิ่ม Purchase Order" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">4 · สร้าง/แก้ไข PO (S4–S5)</span>
+                <span class="badge b-neutral">dual list</span>
+                <div class="meta">อู่แบบพิมพ์ค้น · เลือกรถ 2 คอลัมน์ (ค้นทะเบียน/รุ่น) · ใบสั่งจ้าง + อื่นๆ</div>
+                <a class="btn btn-s btn-sm" href="overhaul-v2-04-po-form.html?plan=123456" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="overhaul-v2-05-po-detail.html?plan=123456&amp;po=PO-690101" loading="lazy" title="รายละเอียด PO" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">5 · รายละเอียด PO (S4–S7)</span>
+                <span class="badge b-neutral">รายการรถ</span>
+                <div class="meta">ข้อมูล PO + อู่ · เอกสาร · รถใน PO พร้อมสถานะงาน → หน้างาน</div>
+                <a class="btn btn-s btn-sm" href="overhaul-v2-05-po-detail.html?plan=123456&amp;po=PO-690101" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="overhaul-v2-06-job.html?plan=123456&amp;car=c1" loading="lazy" title="หน้างานรายคัน" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">6 · หน้างานรายคัน 6 ขั้น (S7–S14)</span>
+                <span class="badge b-low">stepper 6 ขั้น</span>
+                <div class="meta">นัดเข้าอู่ (รอตอบ/ปฏิเสธ) · ตรวจรับ + ลงนาม 2 ฝ่าย · ติดตาม เพิ่ม/แก้/ลบ · Safety · นัดรับรถ · ปิดงาน + อะไหล่ที่ใช้</div>
+                <a class="btn btn-s btn-sm" href="overhaul-v2-06-job.html?plan=123456&amp;car=c1" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="stack">
+          <div class="sect">โฟลว์ Overhaul (หลังอนุมัติ) — 3 หน้าจอ · ⚠️ ถูกแทนด้วย v2 ด้านบน (16 ต.ค. 2569)</div>
+          <div class="sub"><b>ร่างแรก 12 ต.ค. 2569 ตามผังหน้าจอของเจ้าของงาน</b>: จัดการ Overhaul → รายละเอียด → 5 ขั้น
+            (บันทึก PO · ติดตามงาน · เบิกอะไหล่ · นัดหมายรับรถ · ปิดงาน) + แท็บประวัติการซ่อม / ประวัติการ Overhaul ·
+            สถานะเก็บในเบราว์เซอร์ กดเดินงานได้จนปิดงาน · ไฟล์ UI Release#2 ไม่มีหน้าจอ Overhaul ประกอบจากคอมโพเนนต์ที่มี ·
+            ⚠️ จุดที่ผังไม่ได้ระบุเป็นการตีความของผู้ทำ 7 ข้อ จดไว้ที่หัวไฟล์หน้า 2 รอเจ้าของงานเคาะ</div>
+          <div class="gallery">
+            <div class="gcard">
+              <div class="gframe"><iframe src="overhaul-01-list.html" loading="lazy" title="จัดการ Overhaul" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">1 · จัดการ Overhaul</span>
+                <span class="badge b-low">จุดเข้าโฟลว์</span>
+                <div class="meta">รายการรถในงาน Overhaul 5 คัน อยู่คนละขั้น · ป้ายสถานะตามขั้นที่งานค้าง · ปุ่ม “คืนค่าข้อมูลตัวอย่าง” เริ่มเดโมใหม่</div>
+                <a class="btn btn-s btn-sm" href="overhaul-01-list.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="overhaul-02-detail.html?id=v1" loading="lazy" title="รายละเอียดงาน Overhaul" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">2 · รายละเอียดงาน Overhaul — 5 ขั้น</span>
+                <span class="badge b-out">ไลบรารีไม่มีของเทียบ</span>
+                <div class="meta">ข้อมูลยานพาหนะ + 3 แท็บ · แถบขั้น 5 ขั้น (มือถือใช้ Mobile progress steps) · เพิ่ม/แก้/ลบบันทึกติดตาม · เบิกอะไหล่ · นัดหมาย → รอตอบ → ยืนยัน/ปฏิเสธ → รับรถ · ปิดงานพร้อมเอกสาร อะไหล่ที่ใช้ และประกัน</div>
+                <a class="btn btn-s btn-sm" href="overhaul-02-detail.html?id=v1" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="overhaul-03-po.html?id=v1" loading="lazy" title="เพิ่มใบ PO" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">3 · เพิ่มใบ PO</span>
+                <span class="badge b-neutral">ฟอร์ม 6 ช่อง</span>
+                <div class="meta">ผู้รับจ้างจากรายชื่อ vendor · ระยะเวลาที่จะทำ · วันที่เริ่มต้น/สิ้นสุดสัญญา · งบประมาณตั้งต้นจากวงเงินของคัน แก้ได้ · บันทึกแล้วกลับไปหน้า 2</div>
+                <a class="btn btn-s btn-sm" href="overhaul-03-po.html?id=v1" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="stack">
+          <div class="sect">ทะเบียนเครื่องมือกล — 3 หน้าจอ + modal เพิ่มเครื่องมือกล</div>
+          <div class="sub"><b>ทำไว้ 29 ก.ย. 2569</b>: ภาพรวม → ทะเบียน (กำหนดรหัสทรัพย์สิน/รหัสย่อย) → รายละเอียด ·
+            ไลบรารี PEA ไม่มีหน้าทะเบียนเครื่องมือกล ประกอบจากคอมโพเนนต์ที่มี ·
+            ข้อมูลทั้งหมดเป็นค่าสมมติ (เลข HC · ทะเบียน · รหัสรถ ใช้ช่วง 9xxx)</div>
+          <div class="gallery">
+            <div class="gcard">
+              <div class="gframe"><iframe src="equipment-dashboard.html" loading="lazy" title="ภาพรวมเครื่องมือกล" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">1 · ภาพรวมเครื่องมือกล</span>
+                <span class="badge b-low">จุดเข้าโฟลว์</span>
+                <div class="meta">การ์ดสรุป 4 ใบ · แยกตามประเภท · รุ่นที่ยังไม่มีสเปค (กรอกสเปคครั้งเดียวต่อรุ่น)</div>
+                <a class="btn btn-s btn-sm" href="equipment-dashboard.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="equipment-asset-code.html" loading="lazy" title="ทะเบียนเครื่องมือกล" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">2 · ทะเบียนเครื่องมือกล</span>
+                <span class="badge b-out">ไลบรารีไม่มีของเทียบ</span>
+                <div class="meta">แท็บสถานะ · ค้นหา · modal กำหนดรหัส (เช็กรหัสย่อยซ้ำ) · modal เพิ่มเครื่องมือกล
+                  (<a href="equipment-asset-code.html#add" target="_blank" rel="noopener">#add</a>) · ดาวน์โหลดแบบฟอร์ม / นำเข้า Excel</div>
+                <a class="btn btn-s btn-sm" href="equipment-asset-code.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="equipment-detail.html" loading="lazy" title="รายละเอียดเครื่องมือกล" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">3 · รายละเอียดเครื่องมือกล</span>
+                <span class="badge b-neutral">โครงจากหน้ารายละเอียดเหตุการณ์</span>
+                <div class="meta">ข้อมูลทรัพย์สิน · ข้อมูลทางเทคนิค (ผูกกับรุ่น) · รถที่ติดตั้ง · อุปกรณ์อื่นบนรถคันเดียวกัน</div>
+                <a class="btn btn-s btn-sm" href="equipment-detail.html" target="_blank" rel="noopener">
                   <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
               </div>
             </div>

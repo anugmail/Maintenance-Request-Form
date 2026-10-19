@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เพิ่มใบ PO (หน้า 3) | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  12 ต.ค. 2569 — หน้าเพิ่มใบ PO · ผังหน้าจอของเจ้าของงาน: ขั้นบันทึก PO → ยังไม่มีใบ PO → เพิ่ม PO → หน้านี้ → บันทึก
+  ช่องตามผัง: ระยะเวลาที่จะทำ · ผู้รับจ้าง (dropdown รายชื่อ vendor) · ระยะเวลาว่าจ้าง (วันที่เริ่มต้น/สิ้นสุดสัญญา) · งบประมาณ (แก้ไขได้)
+  ⚠️ "เลขที่ใบ PO" เป็นการตีความคำว่า "ระบุข้อมูลใบ PO" ของผู้ทำ — ผังไม่ได้แจกแจงช่อง
+  ⚠️ ผู้รับจ้างใช้ select เพราะรายชื่อตัวอย่างมี 6 ราย · ของจริงเกิน 15 รายต้องเป็น dropdown แบบพิมพ์ค้น ซึ่งคลาสกลางยังไม่มี (ข้อ G2 ในแนวทาง UX)
+  งบประมาณตั้งต้นจากวงเงินของคันนั้น แล้วแก้ได้ตามผัง
+
+  ที่มา · ไฟล์ Component: Page header · Breadcrumbs · Content item (.incident-summary) · Text input / Select (.f .in) ·
+           Primary button (.btn-p) · Gray button (.btn-g)
+        · ไฟล์ UI Release#2: ไม่มีหน้าจอ Overhaul (ค้น "Overhaul" ได้ 0 หน้า) — ยึดโครงฟอร์มเต็มพื้นที่เนื้อหาแบบหน้า transfer-request
+  คลาสกลาง: .shell/.side.wide/.work/.topbar/.content · .draft · .crumbs · .page-title · .sect · .incident-summary/.incident-field ·
+            .fgrid/.f/.in/.sp2/.help · .actions · .btn · .toast · .stack
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility · ข้อมูลจำลองทั้งหมด
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="overhaul-01-list.html" title="จัดการ Overhaul"><span class="ms">build_circle</span><span class="nvlbl">Overhaul</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นางสาวกนกวรรณ ใจมั่น — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft">Prototype (Mock) · หน้า 3 — เพิ่มใบ PO · ข้อมูลจำลองทั้งหมด ยังไม่เชื่อมระบบจริง</div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep"></span><a href="overhaul-01-list.html">จัดการ Overhaul</a>
+        <span class="sep"></span><a href="#" id="crumb-veh"></a>
+        <span class="sep"></span><span class="cur">เพิ่มใบ PO</span>
+      </div>
+
+      <h1 class="page-title">เพิ่มใบ PO</h1>
+
+      <div class="w-full stack gap-8 mt-2">
+        <div class="w-full">
+          <div class="sect mt-0">ข้อมูลยานพาหนะ</div>
+          <dl class="incident-summary lg:grid-cols-4" id="veh"></dl>
+        </div>
+
+        <div class="w-full">
+          <div class="sect mt-0">ข้อมูลใบ PO</div>
+          <div class="fgrid mb-0">
+            <div class="f sp2" id="f-no">
+              <label for="po-no">เลขที่ใบ PO <small>(จำเป็น)</small></label>
+              <div class="in"><span class="ms">receipt_long</span><input type="text" id="po-no" placeholder="เช่น PO-4500219004"></div>
+              <div class="help hidden">กรุณาระบุเลขที่ใบ PO</div>
+            </div>
+            <div class="f sp2" id="f-vendor">
+              <label for="po-vendor">ผู้รับจ้าง <small>(จำเป็น)</small></label>
+              <div class="in"><span class="ms">apartment</span>
+                <select id="po-vendor"><option value="" selected disabled>เลือกผู้รับจ้าง</option></select>
+              </div>
+              <div class="help hidden">กรุณาเลือกผู้รับจ้าง</div>
+            </div>
+            <div class="f" id="f-days">
+              <label for="po-days">ระยะเวลาที่จะทำ (วัน) <small>(จำเป็น)</small></label>
+              <div class="in"><span class="ms">timer</span><input type="number" id="po-days" min="1" inputmode="numeric" placeholder="เช่น 90"></div>
+              <div class="help hidden">กรุณาระบุจำนวนวัน</div>
+            </div>
+            <div class="f" id="f-start">
+              <label for="po-start">วันที่เริ่มต้นสัญญา <small>(จำเป็น)</small></label>
+              <div class="in"><span class="ms">calendar_month</span><input type="date" id="po-start"></div>
+              <div class="help hidden">กรุณาระบุวันที่เริ่มต้นสัญญา</div>
+            </div>
+            <div class="f" id="f-end">
+              <label for="po-end">วันที่สิ้นสุดสัญญา <small>(จำเป็น)</small></label>
+              <div class="in"><span class="ms">event</span><input type="date" id="po-end"></div>
+              <div class="help hidden" id="end-help">กรุณาระบุวันที่สิ้นสุดสัญญา</div>
+            </div>
+            <div class="f" id="f-budget">
+              <label for="po-budget">งบประมาณ (บาท) <small>(จำเป็น · แก้ไขได้)</small></label>
+              <div class="in"><span class="ms">payments</span><input type="number" id="po-budget" min="0" step="0.01" inputmode="decimal"></div>
+              <div class="help hidden">กรุณาระบุงบประมาณ</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="btn btn-g !no-underline" href="#" id="btn-back">ยกเลิก</a>
+          <button class="btn btn-p" type="button" id="btn-save">บันทึก</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="overhaul-mock.js?v=20261012-1"></script>
+<script>
+const $=id=>document.getElementById(id);
+const id=ohParamId(), v=ohVehicle(id), state=ohLoad(), job=state[id];
+const back=`overhaul-02-detail.html?id=${id}`;
+
+$('crumb-veh').textContent=v.plate;$('crumb-veh').href=back;$('btn-back').href=back;
+$('veh').innerHTML=[['เลขทะเบียน',v.plate],['รหัสรถ',v.code],['ประเภทยานพาหนะ',v.type],['สังกัด',v.dept]]
+  .map(([k,x])=>`<div class="incident-field"><dt>${k}</dt><dd>${ohEsc(x)}</dd></div>`).join('');
+$('po-vendor').insertAdjacentHTML('beforeend',OH_VENDORS.map(x=>`<option>${ohEsc(x)}</option>`).join(''));
+$('po-budget').value=v.budget;   /* ตั้งต้นจากวงเงินของคันนี้ แก้ได้ */
+
+document.querySelectorAll('.f input,.f select').forEach(x=>x.addEventListener('input',()=>ohErr(x.closest('.f'),false)));
+
+$('btn-save').addEventListener('click',()=>{
+  const start=$('po-start').value, end=$('po-end').value;
+  $('end-help').textContent=end&&start&&end<start?'วันที่สิ้นสุดสัญญาต้องไม่ก่อนวันที่เริ่มต้น':'กรุณาระบุวันที่สิ้นสุดสัญญา';
+  const checks=[
+    ['f-no',    $('po-no').value.trim()!==''],
+    ['f-vendor',!!$('po-vendor').value],
+    ['f-days',  Number($('po-days').value)>0],
+    ['f-start', !!start],
+    ['f-end',   !!end&&(!start||end>=start)],
+    ['f-budget',$('po-budget').value!==''&&Number($('po-budget').value)>=0],
+  ];
+  let first=null;
+  checks.forEach(([fid,ok])=>{ohErr($(fid),!ok);if(!ok&&!first)first=$(fid)});
+  if(first){first.querySelector('input,select').focus();return}
+  job.pos.push({no:$('po-no').value.trim(),vendor:$('po-vendor').value,days:Number($('po-days').value),start,end,budget:Number($('po-budget').value)});
+  ohSave(state);
+  location.href=back+'&saved=po';
+});
+</script>
+</body>
+</html>

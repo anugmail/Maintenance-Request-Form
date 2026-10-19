@@ -51,6 +51,11 @@
   --gray-100:#F2F4F7;      /* ✅ runtime — พื้นหัวตาราง · พื้นปุ่ม disabled (98 ครั้ง) */
   --gray-50:#F9FAFB;       /* ✅ runtime — พื้น form-card-body (276 ครั้ง) */
   --gray-25:#FEFEFE;        /* ✔ ไลบรารีใหม่ (194 ครั้ง — อยู่ใน swatch เป็นหลัก) */
+  /* 🆕 v0.70 (18 ต.ค. 2569) gray โหมดมืด — ใช้เฉพาะ `Notification` (ไฟล์ Component หน้า Notifications 1873-44383)
+     กล่องพื้น gray-950 · ขอบ #61646C · หัวข้อ #F5F5F6 · ข้อความรอง/ไอคอนปิด #CECFD2 */
+  --gray-dark-50:#F5F5F6;   /* ✔ Notification · Text */
+  --gray-dark-300:#CECFD2;  /* ✔ Notification · Supporting text + ปุ่มปิด */
+  --gray-dark-600:#61646C;  /* ✔ Notification · ขอบกล่อง */
 
   /* ---------- Semantic palette ---------- */
   --success-700:#067647;    /* ✔ ไลบรารีใหม่ — ตัวอักษรสถานะสำเร็จ (24 ครั้ง) */

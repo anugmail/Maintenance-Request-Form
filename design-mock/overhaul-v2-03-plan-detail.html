@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายละเอียดแผน Overhaul | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  19 ต.ค. 2569 — Overhaul v2 หน้า 3: รายละเอียดแผน (?id=<เลขแผน>)
+  userflow: S1 (ปลายทางหลังสร้าง/ดูรายละเอียด) · S2 แก้ไข (จุดเข้าจากหน้านี้) · S3 ลบแผน (จุดเข้าจากหน้านี้) · S4 + PO · S5 แก้ไข PO · S6 ลบ PO
+  "รายละเอียดแผน - Condition": รายละเอียดแผนดึงจากหน้าสร้างแผน · purchase order และอะไหล่ "จอง section เฉยๆ" · ปุ่มย้อนกลับไม่มี CF modal
+  รายการ PO (userflow): ชื่อ PO · ชื่อศูนย์บริการ/อู่ · จำนวนรถที่เข้าร่วม · Action list ดูรายละเอียด/แก้ไข/ลบ
+
+  ที่มา · ไฟล์ Component: Page header (Back action · Actions) · Breadcrumbs · Section label/Section header (.sect) ·
+           Content item row + _Content item base Type=Text with label (.incident-summary/.incident-field) ·
+           _File upload item base (.fu-item อ่านอย่างเดียว) · Table / Table header cell / Table cell (.tbl) ·
+           Dropdown menu (.dd-menu) · Empty state/Data empty (.filter-empty) · Modal Destructive centered · Notification ·
+           Secondary danger button (.btn-ds) · Secondary button · Primary button
+        · ไฟล์ UI Release#2: หน้า "5.1 Rental Contract Management" เฟรม `Rental contract info` (Page header Page=Info + Section label +
+          Content item row 4 คอลัมน์ + เอกสาร) · `Contract list` (ตาราง PO + เมนู "…" ตาม userflow)
+  ตีความเอง (รอเคาะ): แสดง 3 ส่วนเรียงในหน้าเดียว (userflow เรียก "section") ไม่ใช่แท็บ · ข้อความหลังลบ PO "ลบ purchase order สำเร็จ" ·
+          ส่วนอะไหล่ยังไม่มีขั้นตอน — ปุ่ม "+ เบิก" แจ้งว่ายังไม่ทำ
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility · ข้อมูลจำลองทั้งหมด
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="overhaul-v2-01-plans.html" title="จัดการงาน Overhaul"><span class="ms">build_circle</span><span class="nvlbl">จัดการงาน Overhaul</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นางสาวกนกวรรณ ใจมั่น — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft">Prototype (Mock) · Overhaul v2 หน้า 3 — รายละเอียดแผน · ข้อมูลจำลองทั้งหมด</div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep"></span><a href="overhaul-v2-01-plans.html">จัดการงาน Overhaul</a>
+        <span class="sep"></span><span class="cur" id="crumb"></span>
+      </div>
+
+      <div class="page-title-row flex-wrap">
+        <a class="btn btn-t btn-icon !no-underline" href="overhaul-v2-01-plans.html" aria-label="ย้อนกลับ"><span class="ms">arrow_back</span></a>
+        <h1 class="page-title mb-0" id="title"></h1>
+        <span id="status"></span>
+        <span class="ml-auto flex gap-3">
+          <button class="btn btn-ds" type="button" id="del-plan"><span class="ms">delete</span>ลบแผน</button>
+          <a class="btn btn-s !no-underline" id="edit-plan"><span class="ms">edit</span>แก้ไข</a>
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-8" id="body">
+        <section>
+          <div class="sect">รายละเอียดแผน</div>
+          <dl class="incident-summary lg:grid-cols-4 mt-4" id="info"></dl>
+        </section>
+
+        <section>
+          <div class="sect">เอกสาร</div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+            <div><div class="text-sm font-semibold mb-2">หนังสืออนุมัติหลักการ</div><div id="doc-approve"></div></div>
+            <div><div class="text-sm font-semibold mb-2">เอกสารอนุมัติงบ</div><div id="doc-budget"></div></div>
+            <div><div class="text-sm font-semibold mb-2">อื่นๆ</div><div id="doc-other"></div></div>
+          </div>
+        </section>
+
+        <section>
+          <div class="sect"><span>Purchase Order</span><span class="badge sq" id="po-count"></span>
+            <span class="ml-auto"><a class="btn btn-p btn-sm !no-underline" id="add-po"><span class="ms">add</span>PO</a></span></div>
+          <div class="tblwrap mt-4" id="po-wrap">
+            <table class="tbl striped">
+              <thead><tr><th>หมายเลข PO</th><th>ชื่อ PO</th><th>ศูนย์บริการ/อู่</th><th class="num">จำนวนรถ</th><th class="w-[72px]" aria-label="จัดการ"></th></tr></thead>
+              <tbody id="po-body"></tbody>
+            </table>
+          </div>
+          <div class="filter-empty hidden mt-4" id="po-empty">
+            <span class="ms">receipt_long</span>
+            <b>ยังไม่มี Purchase Order</b>
+            <span>เพิ่ม PO เพื่อเลือกรถที่จะเข้า Overhaul และเริ่มงานรายคัน</span>
+          </div>
+        </section>
+
+        <section>
+          <div class="sect"><span>อะไหล่จากคลัง</span>
+            <span class="ml-auto"><button class="btn btn-s btn-sm" type="button" id="add-part"><span class="ms">add</span>เบิก</button></span></div>
+          <div class="filter-empty mt-4">
+            <span class="ms">inventory_2</span>
+            <b>ยังไม่มีรายการเบิกอะไหล่</b>
+            <span>ส่วนนี้จองไว้ตาม userflow — ขั้นตอนเบิกอะไหล่จากคลังยังไม่ได้ออกแบบ</span>
+          </div>
+        </section>
+      </div>
+
+      <div class="filter-empty hidden" id="notfound">
+        <span class="ms">search_off</span><b>ไม่พบแผนนี้</b><span>แผนอาจถูกลบไปแล้ว</span>
+        <a class="btn btn-s btn-sm mt-2 !no-underline" href="overhaul-v2-01-plans.html">กลับหน้ารายการแผน</a>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ยืนยันการลบแผน / ลบ PO — Modal Destructive centered -->
+<div class="modal-overlay hidden" id="m-del">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-del-t">
+    <div class="modal-hd center">
+      <div class="modal-hd-c"><span class="ficon"><span class="ms">info</span></span><h2 id="m-del-t"></h2><div class="modal-sub" id="m-del-s"></div></div>
+      <button class="modal-x" type="button" data-close="m-del" aria-label="ปิด"><span class="ms">close</span></button>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-del">ยกเลิก</button>
+      <button class="btn btn-d" type="button" id="m-del-ok">ยืนยัน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="overhaul-v2-mock.js?v=20261019-4"></script>
+<script>
+const $=id=>document.getElementById(id);
+const q=new URLSearchParams(location.search);
+let S=oh2Load();
+const id=q.get('id');
+let del=null;   // {type:'plan'} | {type:'po', id}
+
+function render(){
+  const p=oh2Plan(S,id);
+  $('body').classList.toggle('hidden',!p);$('notfound').classList.toggle('hidden',!!p);
+  document.querySelectorAll('.page-title-row .ml-auto').forEach(x=>x.classList.toggle('hidden',!p));
+  if(!p){$('title').textContent='ไม่พบแผน';$('crumb').textContent='รายละเอียดแผน';return}
+  $('title').textContent=`หมายเลขแผน ${p.id}`;$('crumb').textContent=`แผน ${p.id}`;document.title=`แผน ${p.id} | Maintain-D (Mock)`;
+  $('status').innerHTML=oh2Badge(OH2_PLAN,oh2PlanStatus(S,p));
+  $('edit-plan').href=`overhaul-v2-02-plan-form.html?id=${p.id}&from=detail`;
+  $('add-po').href=`overhaul-v2-04-po-form.html?plan=${p.id}`;
+  const f=(k,v,wide)=>`<div class="incident-field${wide?' wide':''}"><dt>${k}</dt><dd>${v}</dd></div>`;
+  $('info').innerHTML=f('ชื่อแผน',oh2Esc(p.name),true)+f('ประจำปีงบประมาณ',p.year)+f('วงเงินอนุมัติ (บาท)',oh2Money(p.budget))+
+    f('จำนวนรถที่ Overhaul',oh2PlanCars(p).length+' คัน')+f('วันที่สร้าง',oh2Date(p.created))+
+    f('เลข WBS (ศูนย์ต้นทุน)',oh2Esc(p.wbs))+f('เลขโครงข่าย',oh2Esc(p.net))+f('เลขกิจกรรม',oh2Esc(p.act));
+  $('doc-approve').innerHTML=oh2FilesRO(p.docs.approve);$('doc-budget').innerHTML=oh2FilesRO(p.docs.budget);$('doc-other').innerHTML=oh2FilesRO(p.docs.other);
+  $('po-count').textContent=p.pos.length;
+  $('po-body').innerHTML=p.pos.map(o=>`<tr>
+      <td><div class="cell-key">${oh2Esc(o.id)}</div></td><td>${oh2Esc(o.name)}</td><td>${oh2Esc(OH2_VENDORS[o.vendor].name)}</td><td class="num">${o.cars.length}</td>
+      <td class="dt-action">${oh2Menu('จัดการ '+o.id,[
+        {label:'ดูรายละเอียด',icon:'visibility',href:`overhaul-v2-05-po-detail.html?plan=${p.id}&po=${o.id}`},
+        {label:'แก้ไข',icon:'edit',href:`overhaul-v2-04-po-form.html?plan=${p.id}&po=${o.id}`},'-',
+        {label:'ลบ',icon:'delete',attr:`data-delpo="${oh2Esc(o.id)}"`}])}</td></tr>`).join('');
+  $('po-wrap').classList.toggle('hidden',!p.pos.length);$('po-empty').classList.toggle('hidden',!!p.pos.length);
+}
+
+/* S3 ลบแผน · S6 ลบ PO — modal ยืนยัน (Destructive centered) */
+$('del-plan').addEventListener('click',()=>{
+  const p=oh2Plan(S,id);del={type:'plan'};
+  $('m-del-t').textContent='ยืนยันการลบแผน';
+  $('m-del-s').textContent=`แผน ${p.id} "${p.name}"${p.pos.length?` และ Purchase Order ${p.pos.length} ใบในแผนนี้`:''} จะถูกลบ`;
+  oh2Modal('m-del',true);
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-delpo]');if(!b)return;b.closest('details').open=false;
+  const p=oh2Plan(S,id),o=p.pos.find(x=>x.id===b.dataset.delpo);del={type:'po',id:o.id};
+  $('m-del-t').textContent='ยืนยันการลบ PO';
+  $('m-del-s').textContent=`PO ${o.id} "${o.name}" และงานของรถ ${o.cars.length} คันใน PO นี้จะถูกลบ`;
+  oh2Modal('m-del',true);
+});
+$('m-del-ok').addEventListener('click',()=>{
+  oh2Modal('m-del',false);
+  if(del.type==='plan'){S.plans=S.plans.filter(p=>p.id!==id);oh2Save(S);location.href='overhaul-v2-01-plans.html?saved=delete';return}
+  const p=oh2Plan(S,id);p.pos=p.pos.filter(o=>o.id!==del.id);oh2Save(S);render();oh2Notify('ลบ purchase order สำเร็จ');
+});
+$('add-part').addEventListener('click',()=>oh2Notify('เบิกอะไหล่จากคลัง — ยังไม่ได้ออกแบบ',{sub:'userflow จอง section ไว้เท่านั้น'}));
+
+const saved=q.get('saved');
+if(saved){oh2Notify({edit:'บันทึกการแก้ไขแผนสำเร็จ',po:'การสร้าง purchase order สำเร็จ',poedit:'บันทึกการแก้ไข PO สำเร็จ',podel:'ลบ purchase order สำเร็จ'}[saved]||'บันทึกสำเร็จ');
+  history.replaceState(null,'',location.pathname+'?id='+id)}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ภาพรวมเครื่องมือกล | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!-- ขั้น 1/4 ของ flow เครื่องมือกล: ภาพรวม → ทะเบียน (รายการ) → รายละเอียด → เพิ่มเครื่องมือกล
+     ไลบรารีไม่มีหน้า dashboard เครื่องมือกล — ประกอบจาก .card · .tbl · .badge · .btn · .note (+ Tailwind layout)
+     ตัวเลขทุกตัวเป็นค่าสมมติ — เดิมยกจากไฟล์ HC ภายใน เปลี่ยนเป็นค่าสมมติ 15 ต.ค. 2569 เพราะรีโปเป็น public
+     ชื่อประเภทและยี่ห้อ/รุ่นเป็นรุ่นที่มีขายทั่วไป · จำนวนต่อประเภท/รุ่นไม่ใช่ของจริง -->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="equipment-dashboard.html" title="ภาพรวมเครื่องมือกล"><span class="ms">dashboard</span><span class="nvlbl">ภาพรวมเครื่องมือกล</span></a>
+    <a class="nv" href="equipment-asset-code.html" title="ทะเบียนเครื่องมือกล"><span class="ms">precision_manufacturing</span><span class="nvlbl">ทะเบียนเครื่องมือกล</span></a>
+  </aside>
+  <div class="work">
+    <div class="topbar"><span class="mr-auto"></span><span class="ms">account_circle</span><span>ผู้ดูแลข้อมูลยานพาหนะ — กบค.</span></div>
+    <main class="content">
+      <div class="draft">Prototype (Mock) · ขั้น 1/4 ภาพรวมเครื่องมือกล · ตัวเลขทั้งหมดเป็นค่าสมมติ</div>
+      <div class="crumbs"><span class="ms">home</span><a href="index.html">หน้าแรก</a><span class="sep">›</span><span class="cur">ภาพรวมเครื่องมือกล</span></div>
+      <div class="page-title-row">
+        <h1 class="page-title">ภาพรวมเครื่องมือกล</h1>
+        <span class="sub mb-0 ml-auto">ข้อมูล ณ 29 ก.ย. 2569 14:30 น.</span>
+      </div>
+
+      <div class="grid grid-cols-4 gap-4 mb-6">
+        <a class="card mb-0 no-underline" href="equipment-asset-code.html">
+          <div class="flex items-center gap-2 text-sm text-gray-600"><span class="ms">precision_manufacturing</span>เครื่องมือกลทั้งหมด</div>
+          <div class="text-h1 font-bold text-gray-900 mt-2">1,200</div>
+          <div class="sub mb-0">15 ประเภท · 110 รุ่น</div>
+        </a>
+        <a class="card mb-0 no-underline" href="equipment-asset-code.html">
+          <div class="flex items-center gap-2 text-sm text-gray-600"><span class="ms">sell</span>มีรหัสทรัพย์สินแล้ว</div>
+          <div class="text-h1 font-bold text-gray-900 mt-2">1,152</div>
+          <div class="sub mb-0"><span class="badge b-ok">96%</span></div>
+        </a>
+        <a class="card mb-0 no-underline border-warning-300" href="equipment-asset-code.html">
+          <div class="flex items-center gap-2 text-sm text-gray-600"><span class="ms">label_off</span>ยังไม่มีรหัสทรัพย์สิน</div>
+          <div class="text-h1 font-bold text-gray-900 mt-2">48</div>
+          <div class="sub mb-0 text-brand-900">ไปกำหนดรหัส ›</div>
+        </a>
+        <a class="card mb-0 no-underline" href="equipment-asset-code.html">
+          <div class="flex items-center gap-2 text-sm text-gray-600"><span class="ms">rule</span>ข้อมูลทางเทคนิคไม่ครบ</div>
+          <div class="text-h1 font-bold text-gray-900 mt-2">1,200</div>
+          <div class="sub mb-0">ยังไม่มีช่วงยก · ระยะเอื้อม · น้ำหนักเครื่อง</div>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6">
+        <section>
+          <h2 class="incident-section-title">แยกตามประเภท</h2>
+          <div class="tblwrap">
+            <table class="tbl">
+              <thead><tr><th>ประเภท</th><th class="w-2/5"></th><th class="text-right">จำนวน</th></tr></thead>
+              <tbody>
+                <tr><td>รถบรรทุกติดเครน</td><td><div class="h-2 rounded-full bg-brand-600" style="width:100%"></div></td><td class="text-right">780</td></tr>
+                <tr><td>รถกระเช้าแก้กระแสไฟฟ้า</td><td><div class="h-2 rounded-full bg-brand-600" style="width:19.2%"></div></td><td class="text-right">150</td></tr>
+                <tr><td>รถบรรทุกติดเครนพร้อมสว่านขุดเจาะ</td><td><div class="h-2 rounded-full bg-brand-600" style="width:15.4%"></div></td><td class="text-right">120</td></tr>
+                <tr><td>รถกระเช้าฮอทไลน์ 22-33 kV</td><td><div class="h-2 rounded-full bg-brand-600" style="width:6.4%"></div></td><td class="text-right">50</td></tr>
+                <tr><td>รถเครน 25 ตัน</td><td><div class="h-2 rounded-full bg-brand-600" style="width:5.1%"></div></td><td class="text-right">40</td></tr>
+                <tr><td>รถกระเช้าฮอทไลน์ 115 kV</td><td><div class="h-2 rounded-full bg-brand-600" style="width:2.6%"></div></td><td class="text-right">20</td></tr>
+                <tr><td>อื่น ๆ (9 ประเภท)</td><td><div class="h-2 rounded-full bg-gray-400" style="width:5.1%"></div></td><td class="text-right">40</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section>
+          <h2 class="incident-section-title">รุ่นที่ใช้มากที่สุด — ยังไม่มีสเปค</h2>
+          <div class="note note-info"><span class="ms">lightbulb</span><div>กรอกสเปค<b>ครั้งเดียวต่อรุ่น</b> ระบบใช้กับทุกเครื่องในรุ่นนั้น — 110 รุ่น แทนที่จะกรอก 1,200 เครื่อง</div></div>
+          <div class="tblwrap">
+            <table class="tbl">
+              <thead><tr><th>ยี่ห้อ / รุ่น</th><th class="text-right">จำนวนเครื่อง</th><th>สเปค</th></tr></thead>
+              <tbody>
+                <tr><td><b>PM 10022</b></td><td class="text-right">60</td><td><span class="badge b-low">ยังไม่ครบ</span></td></tr>
+                <tr><td><b>PALFINGER PK15500A</b></td><td class="text-right">55</td><td><span class="badge b-low">ยังไม่ครบ</span></td></tr>
+                <tr><td><a href="equipment-detail.html"><b>HIAB 140AW</b></a></td><td class="text-right">50</td><td><span class="badge b-low">ยังไม่ครบ</span></td></tr>
+                <tr><td><b>PM 10023</b></td><td class="text-right">45</td><td><span class="badge b-low">ยังไม่ครบ</span></td></tr>
+                <tr><td><b>VERSALIFT SST37EIH</b></td><td class="text-right">40</td><td><span class="badge b-low">ยังไม่ครบ</span></td></tr>
+                <tr><td><b>UNIC U300R</b></td><td class="text-right">35</td><td><span class="badge b-low">ยังไม่ครบ</span></td></tr>
+              </tbody>
+            </table>
+            <div class="tblfoot"><div class="tf-left"><span>แสดง 6 จาก 110 รุ่น</span></div><a class="btn btn-link btn-sm" href="equipment-asset-code.html">ดูทั้งหมด ›</a></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

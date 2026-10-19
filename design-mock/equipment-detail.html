@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HC - 9007 · HIAB 140AW — รายละเอียดเครื่องมือกล | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!-- ขั้น 3/4: รายละเอียดเครื่องมือกล — โครงยกจากหน้า "รายละเอียดเหตุการณ์" (approver-incident-detail.html)
+     .incident-head · .tabs · .incident-layout · .incident-section · .incident-summary/.incident-field · .incident-card
+     ค่าสมมติทั้งหน้า (เปลี่ยน 15 ต.ค. 2569 เพราะรีโปเป็น public): เลข HC · ทะเบียน · รหัสรถ · S/N ใช้ช่วง 9xxx
+     รหัสทรัพย์สิน · ประวัติซ่อม · จำนวนเครื่องต่อรุ่น ก็เป็นค่าสมมติ -->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv" href="equipment-dashboard.html" title="ภาพรวมเครื่องมือกล"><span class="ms">dashboard</span><span class="nvlbl">ภาพรวมเครื่องมือกล</span></a>
+    <a class="nv on" href="equipment-asset-code.html" title="ทะเบียนเครื่องมือกล"><span class="ms">precision_manufacturing</span><span class="nvlbl">ทะเบียนเครื่องมือกล</span></a>
+  </aside>
+  <div class="work">
+    <div class="topbar"><span class="mr-auto"></span><span class="ms">account_circle</span><span>ผู้ดูแลข้อมูลยานพาหนะ — กบค.</span></div>
+    <main class="content">
+      <div class="draft">Prototype (Mock) · ขั้น 3/4 รายละเอียดเครื่องมือกล · ข้อมูลทั้งหมดเป็นค่าสมมติ</div>
+      <div class="crumbs"><span class="ms">home</span><a href="equipment-dashboard.html">ภาพรวมเครื่องมือกล</a><span class="sep">›</span><a href="equipment-asset-code.html">ทะเบียนเครื่องมือกล</a><span class="sep">›</span><span class="cur">HC - 9007</span></div>
+
+      <div class="incident-head">
+        <a class="page-back" href="equipment-asset-code.html" aria-label="กลับ"><span class="ms">arrow_back</span></a>
+        <h1 class="page-title">HC - 9007 · HIAB 140AW</h1>
+        <span class="badge b-ok"><span class="dot"></span>มีรหัสแล้ว</span>
+        <span class="badge b-low"><span class="dot"></span>สเปคไม่ครบ</span>
+        <div class="incident-actions">
+          <button class="btn btn-s"><span class="ms">edit</span> แก้ไขข้อมูล</button>
+          <button class="btn btn-p"><span class="ms">build</span> แจ้งซ่อม</button>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn on">ข้อมูลเครื่องมือกล</button>
+        <button class="tab-btn">ประวัติการซ่อม <span class="badge b-neutral">4</span></button>
+        <button class="tab-btn">ประวัติการแก้ไข</button>
+      </div>
+
+      <div class="incident-layout">
+        <div>
+          <section class="incident-section">
+            <h2 class="incident-section-title">ข้อมูลทรัพย์สิน</h2>
+            <dl class="incident-summary">
+              <div class="incident-field"><dt>รหัสทรัพย์สิน</dt><dd>500000284417</dd></div>
+              <div class="incident-field"><dt>รหัสทรัพย์สินย่อย</dt><dd>0001</dd></div>
+              <div class="incident-field"><dt>ประเภท</dt><dd>รถบรรทุกติดเครน</dd></div>
+              <div class="incident-field"><dt>หน่วยงานเจ้าของ</dt><dd>กกร.1</dd></div>
+              <div class="incident-field"><dt>ยี่ห้อ / รุ่น</dt><dd>HIAB 140AW</dd></div>
+              <div class="incident-field"><dt>หมายเลขเครื่อง (Serial No.)</dt><dd>90007</dd></div>
+            </dl>
+          </section>
+
+          <section class="incident-section">
+            <div class="flex items-center mb-4">
+              <h2 class="incident-section-title mb-0">ข้อมูลทางเทคนิค</h2>
+              <button class="btn btn-s btn-sm ml-auto"><span class="ms">edit_note</span> กรอกสเปครุ่นนี้</button>
+            </div>
+            <div class="note note-warn"><span class="ms">info</span><div>สเปคผูกกับ<b>รุ่น HIAB 140AW</b> — กรอกครั้งเดียว ใช้กับ <b>50 เครื่อง</b>ในรุ่นนี้</div></div>
+            <dl class="incident-summary">
+              <div class="incident-field"><dt>พิกัดโมเมนต์ยก</dt><dd>13.0 ตัน-เมตร</dd></div>
+              <div class="incident-field"><dt>น้ำหนักยกสูงสุด</dt><dd><span class="badge b-low">ยังไม่มีข้อมูล</span></dd></div>
+              <div class="incident-field"><dt>ช่วงยก / ความสูงยกสูงสุด</dt><dd><span class="badge b-low">ยังไม่มีข้อมูล</span></dd></div>
+              <div class="incident-field"><dt>ระยะเอื้อมสูงสุด</dt><dd><span class="badge b-low">ยังไม่มีข้อมูล</span></dd></div>
+              <div class="incident-field"><dt>น้ำหนักเครื่องมือกล</dt><dd><span class="badge b-low">ยังไม่มีข้อมูล</span></dd></div>
+            </dl>
+          </section>
+
+          <section class="incident-section">
+            <h2 class="incident-section-title">ซ่อมล่าสุด</h2>
+            <div class="tblwrap">
+              <table class="tbl">
+                <thead><tr><th>หมายเลขเหตุการณ์</th><th>วันที่แจ้ง</th><th>อาการ</th><th class="text-right">ค่าอะไหล่</th></tr></thead>
+                <tbody>
+                  <tr><td>VMS005811</td><td>12/09/2569</td><td>กระบอกยกรั่วซึม</td><td class="text-right">4,800</td></tr>
+                  <tr><td>VMS004912</td><td>02/05/2569</td><td>เบรกวินซ์รั่วซึม</td><td class="text-right">3,450</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <div class="incident-side">
+          <section class="incident-section">
+            <h2 class="incident-section-title">ติดตั้งบนรถ</h2>
+            <div class="incident-card">
+              <div class="incident-vehicle">
+                <div class="incident-vehicle-photo photo-ph"><span class="ms">local_shipping</span></div>
+                <div>
+                  <div class="incident-entity-name">80-9007 กท.</div>
+                  <div class="incident-entity-meta">ISUZU FVM32PR · รหัสรถ กร.1-04-9007</div>
+                  <div class="incident-entity-meta">รหัสทรัพย์สิน 500000284417 - 0000</div>
+                  <div class="incident-entity-meta">สังกัด กกร.1</div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="incident-section">
+            <h2 class="incident-section-title">อุปกรณ์อื่นบนรถคันนี้</h2>
+            <div class="tblwrap">
+              <table class="tbl">
+                <thead><tr><th>รหัสย่อย</th><th>รายการ</th></tr></thead>
+                <tbody>
+                  <tr><td>0000</td><td>ตัวรถ ISUZU FVM32PR</td></tr>
+                  <tr><td><b>0001</b></td><td><b>HIAB 140AW (หน้านี้)</b></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

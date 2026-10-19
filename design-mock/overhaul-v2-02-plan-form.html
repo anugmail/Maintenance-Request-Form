@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สร้าง/แก้ไขแผน Overhaul | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  19 ต.ค. 2569 — Overhaul v2 หน้า 2: สร้างแผน (S1) / แก้ไขแผน (S2 · ?id=<เลขแผน>[&from=detail])
+  เงื่อนไขตาม userflow "Create Plan - Condition" / "Edit plan - Condition":
+   · ชื่อแผน freetext · ประจำปีงบประมาณ dropdown ค่าตั้งต้นปี พ.ศ. ปัจจุบัน นับไปข้างหน้า (ไม่มีปีย้อนหลัง)
+   · งบโครงการตาม WBS: เลข WBS · เลขโครงข่าย · เลขกิจกรรม · วงเงินอนุมัติ (บาท)
+   · อัปโหลด 3 กล่อง (หนังสืออนุมัติหลักการ · เอกสารอนุมัติงบ · อื่นๆ) สูงสุด 10 ไฟล์ · PDF/JPEG · ดาวน์โหลด · ดูตัวอย่าง
+   · ย้อนกลับ/ยกเลิก: มีการแก้ไข → modal ยืนยันการออก · ไม่มีการแก้ไข → ออกเลย
+   · บันทึก (สร้าง): สำเร็จ "การสร้างแผน overhaul สำเร็จ" · ไม่สำเร็จ "general error"
+   · บันทึก (แก้ไข): มีการแก้ไข → modal ยืนยันการแก้ไขแผน · ไม่มีการแก้ไข → ออกเลย
+  ตีความเอง (รอเคาะ): ช่องจำเป็น = ทุกช่องยกเว้น "อื่นๆ" · ตรวจตอนกดบันทึก (F9) · ข้อความหลังแก้ไข "บันทึกการแก้ไขแผนสำเร็จ" ·
+          ขนาดไฟล์ "ตามของเดิม" ยังไม่รู้ค่า จึงไม่ใส่ในคำแนะนำ · บันทึกแล้วกลับหน้ารายการ (แก้ไขจากหน้ารายละเอียด → กลับหน้ารายละเอียด)
+
+  ที่มา · ไฟล์ Component: Page header (Back action) · Breadcrumbs · Section header (.sect) · Text input / Input dropdown (.f .in) ·
+           File upload Type=Default = Input label + _File upload base + _File upload item base (.fu/.fu-item) · Featured icon ·
+           Primary button Size=lg · Secondary button · Modal Centered (.modal-hd.center) · Notification (.notif)
+        · ไฟล์ UI Release#2: หน้า "5.1 Rental Contract Management" เฟรม `Create rental contract` / `- Filled`
+          (Page header → Section header + แถวช่องกรอก 4 ช่อง ห่าง 24 · แถวห่าง 32 → กล่องอัปโหลด 2 ช่องต่อแถว → ปุ่มหลัก lg ท้ายหน้า)
+          · `Modal / Edit contract` (ยืนยันแก้ไข)
+  ⚠️ label ของ .f ยังเป็นสเปกไลบรารีเก่า (14/500 gray-700) — ไลบรารีใหม่ `Input label` = 16/600 gray-600 + "(ถ้ามี)" 16 gray-400
+     ต้องแก้ที่ components.css ทั้งระบบ (รอเคาะ) · ใน Figma ใช้ Text input จริงอยู่แล้ว
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility · ข้อมูลจำลองทั้งหมด
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="overhaul-v2-01-plans.html" title="จัดการงาน Overhaul"><span class="ms">build_circle</span><span class="nvlbl">จัดการงาน Overhaul</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นางสาวกนกวรรณ ใจมั่น — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft flex items-center gap-3 flex-wrap">
+        <span class="mr-auto">Prototype (Mock) · Overhaul v2 หน้า 2 — สร้าง/แก้ไขแผน · ข้อมูลจำลองทั้งหมด</span>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="simfail">จำลองบันทึกไม่สำเร็จ</label>
+      </div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep"></span><a href="overhaul-v2-01-plans.html">จัดการงาน Overhaul</a>
+        <span class="sep"></span><span class="cur" id="crumb">สร้างแผน Overhaul</span>
+      </div>
+
+      <div class="page-title-row">
+        <button class="btn btn-t btn-icon" type="button" id="back" aria-label="ย้อนกลับ"><span class="ms">arrow_back</span></button>
+        <h1 class="page-title mb-0" id="title">สร้างแผน Overhaul</h1>
+      </div>
+
+      <form class="flex flex-col gap-8" id="form" novalidate>
+        <section>
+          <div class="sect">ข้อมูลแผน</div>
+          <div class="fgrid gap-y-8 mb-0">
+            <div class="f sp2" data-req><label for="name">ชื่อแผน</label><div class="in noic"><input type="text" id="name" placeholder="เช่น Overhaul ประจำปีงบ 2570 — รถเครน"></div><div class="help hidden"></div></div>
+            <div class="f" data-req><label for="year">ประจำปีงบประมาณ</label><div class="in noic"><select id="year"></select></div><div class="help hidden"></div></div>
+            <div class="f" data-req><label for="budget">วงเงินอนุมัติ (บาท)</label><div class="in noic"><input type="text" id="budget" inputmode="decimal" placeholder="0"></div><div class="help hidden"></div></div>
+          </div>
+        </section>
+
+        <section>
+          <div class="sect">งบโครงการตาม WBS</div>
+          <div class="fgrid gap-y-8 mb-0">
+            <div class="f" data-req><label for="wbs">เลข WBS</label><div class="in noic"><input type="text" id="wbs" placeholder="เช่น C-70-OH-0003"></div><div class="help hidden"></div></div>
+            <div class="f" data-req><label for="net">เลขโครงข่าย</label><div class="in noic"><input type="text" id="net" inputmode="numeric" placeholder="เช่น 60002103"></div><div class="help hidden"></div></div>
+            <div class="f" data-req><label for="act">เลขกิจกรรม</label><div class="in noic"><input type="text" id="act" inputmode="numeric" placeholder="เช่น 0010"></div><div class="help hidden"></div></div>
+          </div>
+        </section>
+
+        <section>
+          <div class="sect">เอกสาร</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+            <div class="f" data-files="approve" data-req><label>หนังสืออนุมัติหลักการ</label>
+              <label class="fu"><input type="file" multiple accept=".pdf,.jpg,.jpeg,application/pdf,image/jpeg"><span class="ficon sm gray"><span class="ms">cloud_upload</span></span>
+                <span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PDF, JPG · สูงสุด 10 ไฟล์ · <span class="fu-count"></span></small></span></label>
+              <div class="help hidden"></div><div class="fu-list"></div></div>
+            <div class="f" data-files="budget" data-req><label>เอกสารอนุมัติงบ</label>
+              <label class="fu"><input type="file" multiple accept=".pdf,.jpg,.jpeg,application/pdf,image/jpeg"><span class="ficon sm gray"><span class="ms">cloud_upload</span></span>
+                <span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PDF, JPG · สูงสุด 10 ไฟล์ · <span class="fu-count"></span></small></span></label>
+              <div class="help hidden"></div><div class="fu-list"></div></div>
+            <div class="f" data-files="other"><label>อื่นๆ <small>(ถ้ามี)</small></label>
+              <label class="fu"><input type="file" multiple accept=".pdf,.jpg,.jpeg,application/pdf,image/jpeg"><span class="ficon sm gray"><span class="ms">cloud_upload</span></span>
+                <span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PDF, JPG · สูงสุด 10 ไฟล์ · <span class="fu-count"></span></small></span></label>
+              <div class="help hidden"></div><div class="fu-list"></div></div>
+          </div>
+        </section>
+
+        <div class="flex items-center gap-3">
+          <button class="btn btn-s btn-lg hidden" type="button" id="cancel">ยกเลิก</button>
+          <button class="btn btn-p btn-lg" type="submit" id="save">บันทึก</button>
+        </div>
+      </form>
+    </main>
+  </div>
+</div>
+
+<!-- ยืนยันการออก (มีการแก้ไขแล้วกดย้อนกลับ/ยกเลิก) — wireframe "หน้ายืนยันการออก" ปุ่ม ปิด / ยืนยัน -->
+<div class="modal-overlay hidden" id="m-leave">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-leave-t">
+    <div class="modal-hd center">
+      <div class="modal-hd-c"><span class="ficon"><span class="ms">info</span></span><h2 id="m-leave-t">ยืนยันการออก</h2><div class="modal-sub">ข้อมูลที่แก้ไขไว้จะไม่ถูกบันทึก</div></div>
+      <button class="modal-x" type="button" data-close="m-leave" aria-label="ปิด"><span class="ms">close</span></button>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-leave">ปิด</button>
+      <button class="btn btn-p" type="button" id="m-leave-ok">ยืนยัน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<!-- ยืนยันการแก้ไขแผน (S2 · มีการแก้ไขแล้วกดบันทึก) -->
+<div class="modal-overlay hidden" id="m-edit">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-edit-t">
+    <div class="modal-hd center">
+      <div class="modal-hd-c"><span class="ficon"><span class="ms">info</span></span><h2 id="m-edit-t">ยืนยันการแก้ไขแผน</h2><div class="modal-sub" id="m-edit-s"></div></div>
+      <button class="modal-x" type="button" data-close="m-edit" aria-label="ปิด"><span class="ms">close</span></button>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-edit">ยกเลิก</button>
+      <button class="btn btn-p" type="button" id="m-edit-ok">ยืนยัน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="overhaul-v2-mock.js?v=20261019-4"></script>
+<script>
+const $=id=>document.getElementById(id);
+const q=new URLSearchParams(location.search);
+let S=oh2Load();
+const editId=q.get('id');
+const plan=editId?S.plans.find(p=>p.id===editId):null;
+const backTo=q.get('from')==='detail'&&plan?`overhaul-v2-03-plan-detail.html?id=${plan.id}`:'overhaul-v2-01-plans.html';
+const FIELDS=['name','year','budget','wbs','net','act'];
+
+/* ปีงบ — ปีปัจจุบันเป็นค่าตั้งต้น · แผนเดิมที่เป็นปีก่อนหน้า (แก้ไข) ให้เห็นปีเดิมด้วย ไม่เลือกปีอื่นย้อนหลังได้ */
+const years=oh2Years(5);
+if(plan&&!years.includes(plan.year))years.unshift(plan.year);
+$('year').innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join('');
+
+const docs=plan?JSON.parse(JSON.stringify(plan.docs)):{approve:[],budget:[],other:[]};
+if(plan){
+  $('title').textContent=`แก้ไขแผน ${plan.id}`;$('crumb').textContent=`แก้ไขแผน ${plan.id}`;document.title=`แก้ไขแผน ${plan.id} | Maintain-D (Mock)`;
+  $('name').value=plan.name;$('year').value=plan.year;$('budget').value=oh2Money(plan.budget);
+  $('wbs').value=plan.wbs;$('net').value=plan.net;$('act').value=plan.act;
+  $('cancel').classList.remove('hidden');
+} else if(editId){oh2Notify(`ไม่พบแผน ${editId}`,{err:true});}
+
+const snap=()=>JSON.stringify([FIELDS.map(f=>$(f).value.trim()),docs]);
+const start=snap();
+const dirty=()=>snap()!==start;
+
+document.querySelectorAll('[data-files]').forEach(el=>oh2Upload(el,docs[el.dataset.files],()=>clearErr(el)));
+
+/* ตรวจตอนกดบันทึก (F9) — ช่องที่ data-req ต้องมีค่า · วงเงินต้องเป็นตัวเลขมากกว่า 0 · กล่องเอกสารที่จำเป็นต้องมีอย่างน้อย 1 ไฟล์ */
+function setErr(el,msg){el.classList.add('err');const h=el.querySelector('.help');h.textContent=msg;h.classList.remove('hidden');const fu=el.querySelector('.fu');if(fu)fu.classList.add('err')}
+function clearErr(el){el.classList.remove('err');const h=el.querySelector('.help');if(h)h.classList.add('hidden');const fu=el.querySelector('.fu');if(fu)fu.classList.remove('err')}
+const money=v=>Number(String(v).replace(/,/g,''));
+function validate(){
+  let first=null;
+  document.querySelectorAll('[data-req]').forEach(el=>{
+    clearErr(el);
+    if(el.dataset.files){if(!docs[el.dataset.files].length){setErr(el,'กรุณาแนบ'+el.querySelector('label').textContent);first=first||el}return}
+    const inp=el.querySelector('input,select');const v=inp.value.trim();
+    if(!v){setErr(el,'กรุณาระบุ'+el.querySelector('label').textContent);first=first||el;return}
+    if(inp.id==='budget'&&!(money(v)>0)){setErr(el,'วงเงินต้องเป็นตัวเลขมากกว่า 0');first=first||el}
+  });
+  if(first){first.scrollIntoView({block:'center',behavior:'smooth'});const i=first.querySelector('input:not([type=file]),select');if(i)i.focus()}
+  return !first;
+}
+FIELDS.forEach(f=>$(f).addEventListener('input',()=>clearErr($(f).closest('.f'))));
+$('budget').addEventListener('blur',()=>{const n=money($('budget').value);if(n>0)$('budget').value=oh2Money(n)});
+
+function commit(){
+  if($('simfail').checked){oh2Notify('general error',{err:true});return false}
+  const data={name:$('name').value.trim(),year:+$('year').value,budget:money($('budget').value),wbs:$('wbs').value.trim(),net:$('net').value.trim(),act:$('act').value.trim(),docs};
+  if(plan)Object.assign(plan,data);
+  else S.plans.push(Object.assign({id:oh2NextPlanId(S),created:new Date().toISOString().slice(0,10),pos:[]},data));
+  oh2Save(S);return true;
+}
+$('form').addEventListener('submit',e=>{
+  e.preventDefault();
+  if(!validate())return;
+  if(plan){
+    if(!dirty()){location.href=backTo;return}            // ไม่มีการแก้ไข → ไม่มี cf change
+    $('m-edit-s').textContent=`บันทึกการเปลี่ยนแปลงของแผน ${plan.id} "${$('name').value.trim()}"`;
+    oh2Modal('m-edit',true);return;
+  }
+  if(commit())location.href='overhaul-v2-01-plans.html?saved=create';
+});
+$('m-edit-ok').addEventListener('click',()=>{oh2Modal('m-edit',false);if(commit())location.href=backTo+(backTo.includes('?')?'&':'?')+'saved=edit'});
+
+/* ย้อนกลับ / ยกเลิก — มีการแก้ไขเท่านั้นถึงถาม */
+const leave=()=>{if(dirty())oh2Modal('m-leave',true);else location.href=backTo};
+$('back').addEventListener('click',leave);$('cancel').addEventListener('click',leave);
+$('m-leave-ok').addEventListener('click',()=>{location.href=backTo});
+</script>
+</body>
+</html>

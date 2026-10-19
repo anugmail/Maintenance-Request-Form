@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ทะเบียนเครื่องมือกล — กำหนดรหัสทรัพย์สิน/รหัสย่อย | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!-- โจทย์ (sticky): "กำหนดรหัสทรัพย์สิน/รหัสทรัพย์สินย่อยของเครื่องมือกล (Dev)"
+     ⚠️ ไลบรารี PEA ไม่มีหน้าทะเบียนเครื่องมือกล — ประกอบจาก component ที่มี ตามแนวเดียวกับ transfer-04-code.html
+     component ที่ใช้: Table · Badge · Tabs · Modal [Type=Form] · Text input · Button · Note
+     คลาสกลาง: .tabs/.tab-btn · .list-toolbar/.search · .tblwrap/.tbl.striped · .badge · .note
+     .modal-overlay/.modal/.modal-hd-c/.modal-bd/.modal-ft-a · .fgrid/.f/.in/.ro · .stack
+     ไม่มี <style> ในหน้า — layout/spacing ใช้ Tailwind utility
+     สมมติฐานที่ต้องยืนยันกับลูกค้า:
+       (1) รหัสทรัพย์สินหลัก = รหัสของตัวรถ · รหัสย่อย 0000 = ตัวรถ · 0001 ขึ้นไป = เครื่องมือกลที่ติดตั้งบนรถ
+       (2) รหัสทรัพย์สิน 12 หลัก / รหัสย่อย 4 หลัก (รูปแบบ SAP) — ข้อมูลในหน้านี้เป็นค่าสมมติ
+       (3) Pagination: .tblfoot + .pager ตาม repair-modal-flow.html · เลขหน้าเกิน 7 ให้ย่อเป็น 1 2 3 … 173
+       (4) เลข HC · ทะเบียน · รหัสรถ · S/N เป็นค่าสมมติช่วง 9xxx (เปลี่ยน 15 ต.ค. 2569 เพราะรีโปเป็น public) · ยี่ห้อ/รุ่นเป็นรุ่นที่มีขายทั่วไป -->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv" href="transfer-01-list.html" title="รายการยานพาหนะ"><span class="ms">directions_car</span><span class="nvlbl">รายการยานพาหนะ</span></a>
+    <a class="nv" href="equipment-dashboard.html" title="ภาพรวมเครื่องมือกล"><span class="ms">dashboard</span><span class="nvlbl">ภาพรวมเครื่องมือกล</span></a>
+    <a class="nv on" href="equipment-asset-code.html" title="ทะเบียนเครื่องมือกล"><span class="ms">precision_manufacturing</span><span class="nvlbl">ทะเบียนเครื่องมือกล</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>ผู้ดูแลข้อมูลยานพาหนะ — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft">Prototype (Mock) · ขั้น 2/4 ทะเบียนเครื่องมือกล (กดแถว → รายละเอียด) · กำหนดรหัสทรัพย์สิน/รหัสทรัพย์สินย่อยของเครื่องมือกล · ไลบรารี PEA ไม่มีหน้านี้ ประกอบจากคอมโพเนนต์ที่มี · ข้อมูลทั้งหมดเป็นค่าสมมติ</div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="equipment-dashboard.html">ภาพรวมเครื่องมือกล</a>
+        <span class="sep">›</span><span class="cur">ทะเบียนเครื่องมือกล</span>
+      </div>
+
+      <div class="page-title-row">
+        <h1 class="page-title">ทะเบียนเครื่องมือกล</h1>
+        <span class="badge b-low">ยังไม่มีรหัส 48</span>
+      </div>
+      <div class="sub -mt-3 mb-4">เครื่องมือกลที่ติดตั้งบนรถ (เครน · กระเช้า · หัวจับเสา ฯลฯ) ต้องมี <b>รหัสทรัพย์สิน + รหัสย่อย</b> ของตัวเอง
+        เพื่อใช้อ้างอิงตอนแจ้งซ่อม เบิกอะไหล่ และตรวจสภาพ แยกจากตัวรถ</div>
+
+      <div class="note note-info mb-4"><span class="ms">account_tree</span>
+        <div><b>หลักการรหัส</b> — รหัสทรัพย์สินหลักใช้ของ<b>ตัวรถ</b> · รหัสย่อย <b>0000 = ตัวรถ</b> ·
+          <b>0001 ขึ้นไป = เครื่องมือกล</b>ที่ติดตั้งบนรถคันนั้น เรียงตามลำดับ · รหัสหลัก + รหัสย่อย ต้องไม่ซ้ำทั้งระบบ</div>
+      </div>
+
+      <div class="tabs mb-4">
+        <button class="tab-btn on">ยังไม่มีรหัส <span class="badge b-low">48</span></button>
+        <button class="tab-btn">มีรหัสแล้ว <span class="badge b-neutral">1,152</span></button>
+        <button class="tab-btn">ทั้งหมด</button>
+      </div>
+
+      <div class="list-toolbar mb-3 gap-2">
+        <div class="search mr-auto"><span class="ms">search</span><input type="text" placeholder="ค้นหา HC · ทะเบียน · รหัสรถ · รหัสทรัพย์สิน · ยี่ห้อ/รุ่น"></div>
+        <button class="btn btn-s btn-sm"><span class="ms">filter_list</span> ตัวกรอง</button>
+        <button class="btn btn-s btn-sm" title="vms_lifting-equipment-template_YYYYMMDD-HHmmss.xlsx"><span class="ms">download</span> ดาวน์โหลดแบบฟอร์ม</button>
+        <button class="btn btn-s btn-sm"><span class="ms">upload</span> นำเข้าจาก Excel</button>
+        <button class="btn btn-p btn-sm" onclick="openAdd()"><span class="ms">add</span> เพิ่มเครื่องมือกล</button>
+      </div>
+
+      <div class="tblwrap">
+        <table class="tbl striped">
+          <thead>
+            <tr>
+              <th>HC</th>
+              <th>เครื่องมือกล</th>
+              <th>ประเภท</th>
+              <th>ติดตั้งบนรถ</th>
+              <th>รหัสทรัพย์สิน</th>
+              <th>รหัสย่อย</th>
+              <th>สถานะ</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="cursor-pointer" onclick="if(!event.target.closest('button'))location.href='equipment-detail.html'">
+              <td>HC - 9001</td>
+              <td><b>UNIC K70A</b><div class="sub mb-0">พิกัด 7.0 ตัน</div></td>
+              <td>รถบรรทุกติดเครน</td>
+              <td>80-9001 อบ.<div class="sub mb-0">ฉ.2-09-9001 · ISUZU TWD80</div></td>
+              <td class="text-gray-400">—</td>
+              <td class="text-gray-400">—</td>
+              <td><span class="badge b-low"><span class="dot"></span>ยังไม่มีรหัส</span></td>
+              <td><div class="dt-action"><button class="btn btn-s btn-sm" onclick="openM()"><span class="ms">sell</span> กำหนดรหัส</button></div></td>
+            </tr>
+            <tr class="cursor-pointer" onclick="if(!event.target.closest('button'))location.href='equipment-detail.html'">
+              <td>HC - 9002</td>
+              <td><b>UNIC K70A</b><div class="sub mb-0">พิกัด 7.0 ตัน</div></td>
+              <td>รถบรรทุกติดเครน</td>
+              <td>80-9002 ลป.<div class="sub mb-0">น.1-09-9002 · ISUZU</div></td>
+              <td class="text-gray-400">—</td>
+              <td class="text-gray-400">—</td>
+              <td><span class="badge b-low"><span class="dot"></span>ยังไม่มีรหัส</span></td>
+              <td><div class="dt-action"><button class="btn btn-s btn-sm" onclick="openM()"><span class="ms">sell</span> กำหนดรหัส</button></div></td>
+            </tr>
+            <tr class="cursor-pointer" onclick="if(!event.target.closest('button'))location.href='equipment-detail.html'">
+              <td>HC - 9003</td>
+              <td><b>HIAB 650</b><div class="sub mb-0">พิกัด 6.0 ตัน-เมตร</div></td>
+              <td>รถบรรทุกติดเครน</td>
+              <td>80-9003 กท.<div class="sub mb-0">ต.1-04-9003 · HINO KL340</div></td>
+              <td class="text-gray-400">—</td>
+              <td class="text-gray-400">—</td>
+              <td><span class="badge b-low"><span class="dot"></span>ยังไม่มีรหัส</span></td>
+              <td><div class="dt-action"><button class="btn btn-s btn-sm" onclick="openM()"><span class="ms">sell</span> กำหนดรหัส</button></div></td>
+            </tr>
+            <tr class="cursor-pointer" onclick="if(!event.target.closest('button'))location.href='equipment-detail.html'">
+              <td>HC - 9004</td>
+              <td><b>KAWANISHI CH30-1A</b><div class="sub mb-0">พิกัด 3.0 ตัน</div></td>
+              <td>รถบรรทุกติดเครนพร้อมสว่านขุดเจาะ</td>
+              <td>80-9004 พบ.<div class="sub mb-0">ต.1-09-9004 · ISUZU</div></td>
+              <td class="text-gray-400">—</td>
+              <td class="text-gray-400">—</td>
+              <td><span class="badge b-low"><span class="dot"></span>ยังไม่มีรหัส</span></td>
+              <td><div class="dt-action"><button class="btn btn-s btn-sm" onclick="openM()"><span class="ms">sell</span> กำหนดรหัส</button></div></td>
+            </tr>
+            <tr class="cursor-pointer" onclick="if(!event.target.closest('button'))location.href='equipment-detail.html'">
+              <td>HC - 9005</td>
+              <td><b>KATO NK250M-III</b><div class="sub mb-0">พิกัด 25.0 ตัน</div></td>
+              <td>รถเครน 25 ตัน</td>
+              <td>80-9005 ปจ.<div class="sub mb-0">ก.1-09-9005 · MITSUBISHI</div></td>
+              <td class="text-gray-400">—</td>
+              <td class="text-gray-400">—</td>
+              <td><span class="badge b-low"><span class="dot"></span>ยังไม่มีรหัส</span></td>
+              <td><div class="dt-action"><button class="btn btn-s btn-sm" onclick="openM()"><span class="ms">sell</span> กำหนดรหัส</button></div></td>
+            </tr>
+            <tr class="cursor-pointer" onclick="if(!event.target.closest('button'))location.href='equipment-detail.html'">
+              <td>HC - 9006</td>
+              <td><b>TECO V50C-50IP-4TRS2</b><div class="sub mb-0">ไม่ระบุพิกัด</div></td>
+              <td>รถกระเช้าฮอทไลน์ 22-33 kV</td>
+              <td>80-9006 นฐ.<div class="sub mb-0">ก.3-06-9006 · INTER</div></td>
+              <td class="text-gray-400">—</td>
+              <td class="text-gray-400">—</td>
+              <td><span class="badge b-low"><span class="dot"></span>ยังไม่มีรหัส</span></td>
+              <td><div class="dt-action"><button class="btn btn-s btn-sm" onclick="openM()"><span class="ms">sell</span> กำหนดรหัส</button></div></td>
+            </tr>
+            <tr class="cursor-pointer" onclick="if(!event.target.closest('button'))location.href='equipment-detail.html'">
+              <td>HC - 9007</td>
+              <td><b>HIAB 140AW</b><div class="sub mb-0">พิกัด 13.0 ตัน-เมตร</div></td>
+              <td>รถบรรทุกติดเครน</td>
+              <td>80-9007 กท.<div class="sub mb-0">กร.1-04-9007 · ISUZU</div></td>
+              <td class="text-gray-400">—</td>
+              <td class="text-gray-400">—</td>
+              <td><span class="badge b-low"><span class="dot"></span>ยังไม่มีรหัส</span></td>
+              <td><div class="dt-action"><button class="btn btn-s btn-sm" onclick="openM()"><span class="ms">sell</span> กำหนดรหัส</button></div></td>
+            </tr>
+            <tr class="cursor-pointer" onclick="if(!event.target.closest('button'))location.href='equipment-detail.html'">
+              <td>HC - 9008</td>
+              <td><b>HIAB 215-5</b><div class="sub mb-0">พิกัด 18.0 ตัน-เมตร</div></td>
+              <td>รถหัวลากติดเครน</td>
+              <td>80-9008 มค.<div class="sub mb-0">ผภ.-06-9008 · VOLVO</div></td>
+              <td class="text-gray-400">—</td>
+              <td class="text-gray-400">—</td>
+              <td><span class="badge b-low"><span class="dot"></span>ยังไม่มีรหัส</span></td>
+              <td><div class="dt-action"><button class="btn btn-s btn-sm" onclick="openM()"><span class="ms">sell</span> กำหนดรหัส</button></div></td>
+            </tr>
+            <tr class="cursor-pointer" onclick="if(!event.target.closest('button'))location.href='equipment-detail.html'">
+              <td>HC - 9009</td>
+              <td><b>EPSILON E20.79</b><div class="sub mb-0">พิกัด 20.0 ตัน-เมตร</div></td>
+              <td>รถบรรทุกติดเครนพร้อมหัวจับเสา</td>
+              <td>80-9009 กท.<div class="sub mb-0">กร.1-04-9009 · BENZ</div></td>
+              <td class="text-gray-400">—</td>
+              <td class="text-gray-400">—</td>
+              <td><span class="badge b-low"><span class="dot"></span>ยังไม่มีรหัส</span></td>
+              <td><div class="dt-action"><button class="btn btn-s btn-sm" onclick="openM()"><span class="ms">sell</span> กำหนดรหัส</button></div></td>
+            </tr>
+            <tr class="cursor-pointer" onclick="if(!event.target.closest('button'))location.href='equipment-detail.html'">
+              <td>HC - 9010</td>
+              <td><b>ALTEC AT35G</b><div class="sub mb-0">up to 46 kV</div></td>
+              <td>รถกระเช้าแก้กระแสไฟฟ้า</td>
+              <td>80-9010 กทม.<div class="sub mb-0">ต.3-09-9010 · MITSUBISHI</div></td>
+              <td class="text-gray-400">—</td>
+              <td class="text-gray-400">—</td>
+              <td><span class="badge b-low"><span class="dot"></span>ยังไม่มีรหัส</span></td>
+              <td><div class="dt-action"><button class="btn btn-s btn-sm" onclick="openM()"><span class="ms">sell</span> กำหนดรหัส</button></div></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="tblfoot">
+          <div class="tf-left"><span>แสดง 1 ถึง 10 จาก 48 รายการ</span>
+            <select class="select-inline" aria-label="จำนวนแถวต่อหน้า">
+              <option selected>10</option>
+              <option>25</option>
+              <option>50</option>
+              <option>100</option>
+            </select></div>
+          <div class="pager">
+            <button class="pg" disabled aria-label="หน้าก่อน"><span class="ms">chevron_left</span></button>
+            <button class="pg on">1</button>
+            <button class="pg">2</button>
+            <button class="pg">3</button>
+            <button class="pg">4</button>
+            <button class="pg">5</button>
+            <button class="pg" aria-label="หน้าถัดไป"><span class="ms">chevron_right</span></button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- modal กำหนดรหัส — Modal [Type=Form] md -->
+<div class="modal-overlay hidden" id="mk">
+  <div class="modal md">
+    <div class="modal-hd">
+      <div class="modal-hd-c">
+        <span>กำหนดรหัสทรัพย์สินเครื่องมือกล</span>
+        <button class="modal-x" onclick="closeM()" aria-label="ปิด"><span class="ms">close</span></button>
+      </div>
+    </div>
+    <div class="modal-bd">
+      <div class="stack">
+        <div class="fgrid grid-cols-2">
+          <div class="f ro">
+            <label>เครื่องมือกล</label>
+            <div class="in"><span class="ms">precision_manufacturing</span><input value="HC - 9001 · UNIC K70A" readonly></div>
+          </div>
+          <div class="f ro">
+            <label>ติดตั้งบนรถ</label>
+            <div class="in"><span class="ms">directions_car</span><input value="80-9001 อบ. · ฉ.2-09-9001" readonly></div>
+          </div>
+        </div>
+
+        <div class="fgrid grid-cols-[1fr_120px]">
+          <div class="f">
+            <label>รหัสทรัพย์สิน <small>(จำเป็น)</small></label>
+            <input type="text" id="main" value="500000123456" inputmode="numeric" maxlength="12" oninput="chk()">
+          </div>
+          <div class="f">
+            <label>รหัสย่อย <small>(จำเป็น)</small></label>
+            <input type="text" id="subno" value="0002" inputmode="numeric" maxlength="4" oninput="chk()">
+          </div>
+        </div>
+        <div class="sub -mt-2 mb-0">เติมรหัสทรัพย์สินของ<b>ตัวรถ</b>ให้อัตโนมัติ และเสนอรหัสย่อยถัดไปที่ยังว่าง — แก้ได้ถ้าทะเบียนทรัพย์สินจริงต่างจากนี้</div>
+
+        <div>
+          <div class="text-sm font-semibold mb-2">รหัสย่อยที่ใช้แล้วภายใต้ 500000123456</div>
+          <div class="tblwrap">
+            <table class="tbl">
+              <thead><tr><th>รหัสย่อย</th><th>รายการ</th></tr></thead>
+              <tbody>
+                <tr><td>0000</td><td>ตัวรถ ISUZU TWD80 · 80-9001 อบ.</td></tr>
+                <tr><td>0001</td><td>สว่านขุดเจาะ (ถอดออกแล้ว)</td></tr>
+                <tr id="newrow"><td><b id="newsub">0002</b></td><td><span class="badge b-brand">ใหม่</span> UNIC K70A · HC - 9001</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="note note-ok" id="okmsg"><span class="ms">check_circle</span>
+          <div>500000123456 - 0002 ยังไม่มีในระบบ ใช้ได้</div></div>
+        <div class="note note-warn hidden" id="dupmsg"><span class="ms">error</span>
+          <div><b>รหัสซ้ำ</b> — 500000123456 - <span id="dupno"></span> ถูกใช้แล้ว กรุณาเลือกรหัสย่อยอื่น</div></div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <div class="modal-ft-a">
+        <button class="btn btn-t" onclick="closeM()">ยกเลิก</button>
+        <div class="modal-ft-r">
+          <button class="btn btn-p" id="save" onclick="closeM()">บันทึกรหัส</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const used=['0000','0001'];
+function openM(){document.getElementById('mk').classList.remove('hidden')}
+function closeM(){document.getElementById('mk').classList.add('hidden')}
+function chk(){
+  const s=document.getElementById('subno').value.padStart(4,'0'), dup=used.includes(s);
+  document.getElementById('newsub').textContent=s;
+  document.getElementById('dupno').textContent=s;
+  document.getElementById('okmsg').classList.toggle('hidden',dup);
+  document.getElementById('dupmsg').classList.toggle('hidden',!dup);
+  document.getElementById('okmsg').querySelector('div').textContent='500000123456 - '+s+' ยังไม่มีในระบบ ใช้ได้';
+  document.getElementById('save').disabled=dup;
+}
+if(location.hash==='#modal') openM();
+</script>
+
+<!-- ขั้น 4/4: modal เพิ่มเครื่องมือกล — Modal [Type=Form] lg · ฟิลด์ตามแบบฟอร์ม Excel (vms_lifting-equipment-template) -->
+<div class="modal-overlay hidden" id="add">
+  <div class="modal lg">
+    <div class="modal-hd"><div class="modal-hd-c"><span>เพิ่มเครื่องมือกล</span>
+      <button class="modal-x" onclick="closeAdd()" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd">
+      <div class="stack">
+        <div class="text-sm font-semibold">1 · ติดตั้งบนรถ</div>
+        <div class="f">
+          <label>ทะเบียนรถ / รหัสรถ <small>(จำเป็น)</small></label>
+          <div class="search w-full"><span class="ms">search</span><input type="text" value="80-9007 กท."></div>
+          <div class="sub mt-1.5 mb-0">พบ: <b>ISUZU FVM32PR</b> · รหัสรถ กร.1-04-9007 · สังกัด กกร.1 · รหัสทรัพย์สิน 500000284417</div>
+        </div>
+
+        <div class="text-sm font-semibold mt-2">2 · ข้อมูลเครื่องมือกล</div>
+        <div class="fgrid grid-cols-3">
+          <div class="f"><label>ประเภท <small>(จำเป็น)</small></label>
+            <select><option selected>รถบรรทุกติดเครน</option><option>รถบรรทุกติดเครนพร้อมสว่านขุดเจาะ</option><option>รถกระเช้าแก้กระแสไฟฟ้า</option></select></div>
+          <div class="f"><label>ยี่ห้อ <small>(จำเป็น)</small></label>
+            <select><option selected>HIAB</option><option>PALFINGER</option><option>UNIC</option></select></div>
+          <div class="f"><label>รุ่น <small>(จำเป็น)</small></label>
+            <select><option selected>140AW</option><option>650</option><option>215-5</option></select></div>
+          <div class="f"><label>เลข HC</label><input type="text" value="HC - 9011"></div>
+          <div class="f"><label>หมายเลขเครื่อง (Serial No.)</label><input type="text" placeholder="เช่น 90007"></div>
+          <div class="f"><label>พิกัด</label><input type="text" value="13.0 ตัน-เมตร"></div>
+        </div>
+
+        <div class="text-sm font-semibold mt-2">3 · ข้อมูลทางเทคนิค</div>
+        <div class="note note-info mb-0"><span class="ms">info</span><div>รุ่น <b>HIAB 140AW</b> ยังไม่มีสเปคในระบบ — ค่าที่กรอกครั้งนี้จะบันทึกเป็นสเปคของรุ่น และใช้กับอีก <b>50 เครื่อง</b>ในรุ่นเดียวกัน</div></div>
+        <div class="fgrid grid-cols-4">
+          <div class="f"><label>น้ำหนักยกสูงสุด (ตัน)</label><input type="text" inputmode="decimal" placeholder="0.00"></div>
+          <div class="f"><label>ช่วงยก (ม.)</label><input type="text" inputmode="decimal" placeholder="0.00"></div>
+          <div class="f"><label>ระยะเอื้อม (ม.)</label><input type="text" inputmode="decimal" placeholder="0.00"></div>
+          <div class="f"><label>น้ำหนักเครื่อง (กก.)</label><input type="text" inputmode="numeric" placeholder="0"></div>
+        </div>
+
+        <div class="text-sm font-semibold mt-2">4 · รหัสทรัพย์สิน</div>
+        <div class="fgrid grid-cols-[1fr_120px]">
+          <div class="f ro"><label>รหัสทรัพย์สิน (ของตัวรถ)</label><div class="in"><span class="ms">sell</span><input value="500000284417" readonly></div></div>
+          <div class="f"><label>รหัสย่อย <small>(จำเป็น)</small></label><input type="text" value="0002" maxlength="4"></div>
+        </div>
+        <div class="sub -mt-2 mb-0">ใช้แล้ว: 0000 ตัวรถ · 0001 HIAB 140AW (HC - 9007) → เสนอ <b>0002</b></div>
+      </div>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a">
+      <button class="btn btn-t" onclick="closeAdd()">ยกเลิก</button>
+      <div class="modal-ft-r"><button class="btn btn-s" onclick="closeAdd()">บันทึกและเพิ่มอีก</button><button class="btn btn-p" onclick="closeAdd()">บันทึก</button></div>
+    </div></div>
+  </div>
+</div>
+<script>
+function openAdd(){document.getElementById('add').classList.remove('hidden')}
+function closeAdd(){document.getElementById('add').classList.add('hidden')}
+if(location.hash==='#add') openAdd();
+</script>
+</body>
+</html>

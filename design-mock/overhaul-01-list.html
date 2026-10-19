@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการ Overhaul (หน้า 1) | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  12 ต.ค. 2569 — หน้าจัดการ Overhaul · จุดเข้าของผังหน้าจอที่เจ้าของงานส่งมา (กดเมนู Overhaul → หน้าจัดการ Overhaul → ดูรายละเอียด)
+  1 แถว = 1 คันที่อยู่ในงาน Overhaul · ป้ายสถานะคิดจากขั้นที่งานค้างอยู่ (overhaul-mock.js ohStage)
+  คอลัมน์ข้อมูลรถเลือกเฉพาะที่มีแหล่งในฐานข้อมูล VMS Plus: ทะเบียน · รหัสรถ · ประเภท · ยี่ห้อ/รุ่น · สังกัด · วันที่ได้มา (คิดอายุ) · เลขไมล์สะสม
+  ⚠️ สถานะงาน · ผู้รับจ้าง ยังไม่มีตารางในฐานข้อมูล ต้องเป็นข้อมูลของโมดูล Overhaul เอง
+
+  ที่มา · ไฟล์ Component: Page header · Breadcrumbs · Text input (.search) · Table / Table header cell / Table cell (.tbl) ·
+           Badge outline (.badge) · Secondary button (.btn-s)
+        · ไฟล์ UI Release#2: หน้า "5.2 Vehicle Management" เฟรม `Vehicle list` (ช่องค้น + ตารางรถ + ปุ่มท้ายแถว) —
+          ไฟล์ UI Release#2 ไม่มีหน้าจอ Overhaul (ค้น "Overhaul" ได้ 0 หน้า) จึงยึดโครงหน้ารายการรถ
+  คลาสกลาง: .shell/.side.wide/.work/.topbar/.content · .draft · .crumbs · .page-title-row · .list-toolbar · .search ·
+            .tblwrap/.tbl.striped · .cell-key/.cell-sub · .badge · .btn · .tblfoot · .filter-empty
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility · ข้อมูลจำลองทั้งหมด
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="overhaul-01-list.html" title="จัดการ Overhaul"><span class="ms">build_circle</span><span class="nvlbl">Overhaul</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นางสาวกนกวรรณ ใจมั่น — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft">Prototype (Mock) · หน้า 1 — จัดการ Overhaul · ข้อมูลจำลองทั้งหมด ยังไม่เชื่อมระบบจริง</div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep"></span><span class="cur">จัดการ Overhaul</span>
+      </div>
+
+      <div class="page-title-row">
+        <h1 class="page-title">จัดการ Overhaul</h1>
+      </div>
+
+      <div class="w-full stack">
+        <div class="list-toolbar split mb-0">
+          <div class="lt-search"><div class="search"><span class="ms">search</span><input type="search" id="q" placeholder="ค้นหาทะเบียน, รหัสรถ, ประเภท, สังกัด" aria-label="ค้นหารถ"></div></div>
+          <div class="lt-actions"><button class="btn btn-t btn-sm" type="button" id="reset"><span class="ms">restart_alt</span>คืนค่าข้อมูลตัวอย่าง</button></div>
+        </div>
+        <div class="tblwrap mt-0" id="wrap">
+          <table class="tbl striped">
+            <thead>
+              <tr><th>เลขทะเบียน</th><th>รหัสรถ</th><th>ประเภทยานพาหนะ</th><th>สังกัด</th><th>อายุใช้งาน</th><th>เลขไมล์สะสม</th><th>ผู้รับจ้าง</th><th>สถานะงาน</th><th></th></tr>
+            </thead>
+            <tbody id="body"></tbody>
+          </table>
+          <div class="tblfoot"><span id="foot"></span></div>
+        </div>
+        <div class="filter-empty hidden" id="empty">
+          <span class="ms">search_off</span>
+          <b>ไม่พบรถ</b>
+          <span>ไม่มีรถที่ตรงกับคำค้น</span>
+          <button class="btn btn-s btn-sm mt-2" type="button" id="clear">ล้างคำค้น</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="overhaul-mock.js?v=20261012-1"></script>
+<script>
+const $=id=>document.getElementById(id);
+let state=ohLoad();
+
+function render(){
+  const q=$('q').value.trim().toLowerCase();
+  const list=OH_VEHICLES.filter(v=>!q||[v.plate,v.code,v.type,v.brand,v.dept].some(x=>x.toLowerCase().includes(q)));
+  $('body').innerHTML=list.map(v=>{
+    const j=state[v.id];
+    const vendors=[...new Set(j.pos.map(p=>p.vendor))];
+    return `<tr>
+      <td><div class="cell-key">${ohEsc(v.plate)}</div><div class="cell-sub">${ohEsc(v.brand)}</div></td>
+      <td>${ohEsc(v.code)}</td><td>${ohEsc(v.type)}</td><td>${ohEsc(v.dept)}</td>
+      <td>${ohAge(v.getDate)} ปี</td><td>${ohNum(v.mileage)} กม.</td>
+      <td>${vendors.length?ohEsc(vendors[0])+(vendors.length>1?` <span class="badge b-neutral">+${vendors.length-1}</span>`:''):'—'}</td>
+      <td>${ohBadge(j)}</td>
+      <td><a class="btn btn-s btn-sm !no-underline" href="overhaul-02-detail.html?id=${v.id}">ดูรายละเอียด</a></td></tr>`;
+  }).join('');
+  $('foot').textContent=`แสดง ${list.length} จาก ${OH_VEHICLES.length} รายการ`;
+  $('wrap').classList.toggle('hidden',!list.length);
+  $('empty').classList.toggle('hidden',!!list.length);
+}
+
+$('q').addEventListener('input',render);
+$('clear').addEventListener('click',()=>{$('q').value='';render();$('q').focus()});
+$('reset').addEventListener('click',()=>{ohReset();state=ohLoad();render();ohToast('คืนค่าข้อมูลตัวอย่างแล้ว')});
+render();
+</script>
+</body>
+</html>
