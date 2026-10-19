@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { PlanStoreProvider } from "@/lib/store";
+import { OverhaulV2Provider } from "@/lib/storeV2";
 import { Shell } from "@/components/Shell";
 
 export const metadata: Metadata = {
@@ -26,7 +27,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <PlanStoreProvider>
-          <Shell>{children}</Shell>
+          <OverhaulV2Provider>
+            <Shell>{children}</Shell>
+          </OverhaulV2Provider>
         </PlanStoreProvider>
       </body>
     </html>

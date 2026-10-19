@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายการยานพาหนะ — สถานะ Overhaul (แบบ A) | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261001-ds68">
+<link rel="stylesheet" href="../design-system/components.css?v=20261001-ds68">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261001-ds68"></script>
+<!-- ที่มา: โครงหน้า + ตาราง ยกจาก `Vehicle list` ของหน้า `5.2 Vehicle Management` (UI Release#2 · node 11:45256)
+     ชุดเดียวกับ transfer-01-list.html — component (ไฟล์ Component VMS Plus): Header [Type=Subheader] · Table · Badge · Tertiary button
+     คลาสกลางจาก components.css: .shell/.side.wide/.work/.topbar/.content · .crumbs · .page-title-row · .list-toolbar · .search
+     .tblwrap/.tbl.striped · .cell-sub · .dt-action · .badge (.b-ok/.b-low/.b-info/.b-brand/.b-neutral) · .note · .draft
+     สถานะแผน + สีป้าย ยึด app/src/lib/overhaul.ts (STATUS_LABEL / STATUS_BADGE) · เลขที่แผนรูปแบบ OVH-ปี-ลำดับ ตามแอป
+     ⚠️ 6 ต.ค. 2569: เครื่องนี้ไม่มี design-system/.figma-extract → ยังค้น UI Release#2 ว่ามีหน้า Overhaul ไหมไม่ได้
+     ไม่มี <style> ในหน้า — layout/spacing ใช้ Tailwind utility ตามกติกา 14 ก.ย. 2569 -->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="overhaul-01-vehicles.html" title="รายการรถ + สถานะ Overhaul"><span class="ms">directions_car</span><span class="nvlbl">A · รายการรถ</span></a>
+    <a class="nv" href="overhaul-02-plans.html" title="รายการแผน Overhaul"><span class="ms">event_note</span><span class="nvlbl">B · รายการแผน</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นายวิชัย ช่างกล — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft">Prototype (Mock) · แบบ A — มองจากตัวรถ · ข้อมูลจำลองทั้งหมด ยังไม่เชื่อมระบบจริง</div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep">›</span><span class="cur">ข้อมูลยานพาหนะ</span>
+      </div>
+
+      <div class="page-title-row">
+        <h1 class="page-title">ข้อมูลยานพาหนะ</h1>
+        <span class="badge b-neutral">รถติดตั้งเครื่องมือกล · 7 คัน</span>
+      </div>
+      <div class="sub -mt-3 mb-4">ดูได้ทันทีว่าคันไหน<b>อยู่ระหว่าง Overhaul</b> อยู่ในแผนไหน และยังอยู่ใน<b>ประกันหลัง Overhaul</b>หรือไม่ —
+        กดเลขที่แผนเพื่อเปิดแผนนั้น</div>
+
+      <div class="note note-info mb-4"><span class="ms">info</span>
+        <div><b>คอลัมน์ "ประกัน" = รับประกันหลัง Overhaul 180 วัน</b> นับจากวันออกใบรับรองความปลอดภัย (JO 7.4.2-04) ·
+          ป้าย "ใกล้หมดประกัน" ตั้งไว้ที่ ≤ 30 วัน <b>[เสนอ]</b> · ถ้าหมายถึงประกันภัย / พ.ร.บ. ต้องเปลี่ยนเป็นคอลัมน์ของระบบประกัน</div>
+      </div>
+
+      <div class="list-toolbar mb-3">
+        <div class="search"><span class="ms">search</span><input type="text" placeholder="ค้นหาทะเบียน · รหัสข้างรถ · เลขที่แผน"></div>
+        <button class="btn btn-s btn-sm"><span class="ms">filter_list</span> ตัวกรอง</button>
+      </div>
+
+      <div class="tblwrap">
+        <table class="tbl striped">
+          <thead>
+            <tr>
+              <th>เลขทะเบียน</th>
+              <th>ประเภทยานพาหนะ</th>
+              <th>สังกัดปัจจุบัน</th>
+              <th>สถานะรถ</th>
+              <th>Ref. แผน Overhaul</th>
+              <th>ประกันหลัง Overhaul</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>3ขพ 6153 กรุงเทพมหานคร<div class="cell-sub">กจย. - 25 - 1850</div></td>
+              <td>กระเช้าฮอทไลน์ 115 KV<div class="cell-sub">Aichi SH15A</div></td>
+              <td>กจย. ฝจบ. ผชก.(ล)</td>
+              <td><span class="badge b-info">อยู่ระหว่าง Overhaul</span><div class="cell-sub">④ ดำเนินการ Overhaul</div></td>
+              <td><a href="overhaul-02-plans.html#OVH-2569-004">OVH-2569-004</a><div class="cell-sub">อนุมัติแล้ว · ปิดงาน 0/2</div></td>
+              <td><span class="badge b-neutral">ยังไม่เริ่ม</span><div class="cell-sub">เริ่มเมื่อออกใบรับรอง</div></td>
+              <td>
+                <div class="dt-action">
+                  <a class="btn btn-s btn-icon" href="overhaul-02-plans.html#OVH-2569-004" title="ดูแผน OVH-2569-004"><span class="ms">visibility</span></a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>82-4471 กรุงเทพมหานคร<div class="cell-sub">กจย. - 09 - 0231</div></td>
+              <td>รถปั้นจั่น (ไฮดรอลิคเครน)<div class="cell-sub">Tadano TR-250M</div></td>
+              <td>กฟจ.ลำปาง กฟน.1</td>
+              <td><span class="badge b-info">อยู่ระหว่าง Overhaul</span><div class="cell-sub">② รอต้นทางยืนยันนัดหมาย</div></td>
+              <td><a href="overhaul-02-plans.html#OVH-2569-004">OVH-2569-004</a><div class="cell-sub">อนุมัติแล้ว · ปิดงาน 0/2</div></td>
+              <td><span class="badge b-neutral">ยังไม่เริ่ม</span><div class="cell-sub">เริ่มเมื่อออกใบรับรอง</div></td>
+              <td>
+                <div class="dt-action">
+                  <a class="btn btn-s btn-icon" href="overhaul-02-plans.html#OVH-2569-004" title="ดูแผน OVH-2569-004"><span class="ms">visibility</span></a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>3ขข 1140 กรุงเทพมหานคร<div class="cell-sub">กจย. - 04 - 0912</div></td>
+              <td>รถบรรทุกขนาดใหญ่ (HOTLINE)<div class="cell-sub">Hino FM8J + กระเช้า</div></td>
+              <td>กจย. ฝจบ. ผชก.(ล)</td>
+              <td><span class="badge b-brand">รอ Overhaul</span><div class="cell-sub">อยู่ในแผน · แผนรออนุมัติ</div></td>
+              <td><a href="overhaul-02-plans.html#OVH-2570-001">OVH-2570-001</a><div class="cell-sub">รออนุมัติ</div></td>
+              <td><span class="badge b-neutral">ยังไม่เริ่ม</span></td>
+              <td>
+                <div class="dt-action">
+                  <a class="btn btn-s btn-icon" href="overhaul-02-plans.html#OVH-2570-001" title="ดูแผน OVH-2570-001"><span class="ms">visibility</span></a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>70-1234 เชียงใหม่<div class="cell-sub">กฟน.1 - 25 - 0447</div></td>
+              <td>กระเช้าฮอทไลน์ 22 KV<div class="cell-sub">Aichi SH12A</div></td>
+              <td>กฟจ.เชียงใหม่ กฟน.1</td>
+              <td><span class="badge b-ok">พร้อมใช้งาน</span><div class="cell-sub">Overhaul เสร็จ 18 มิ.ย. 2569</div></td>
+              <td><a href="overhaul-02-plans.html#OVH-2568-002">OVH-2568-002</a><div class="cell-sub">ปิดแผนแล้ว</div></td>
+              <td><span class="badge b-ok">อยู่ในประกัน</span><div class="cell-sub">ถึง 15 ธ.ค. 2569 · เหลือ 70 วัน</div></td>
+              <td>
+                <div class="dt-action">
+                  <a class="btn btn-s btn-icon" href="overhaul-02-plans.html#OVH-2568-002" title="ดูแผน OVH-2568-002"><span class="ms">visibility</span></a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>70-5678 ลำพูน<div class="cell-sub">กฟน.1 - 09 - 0118</div></td>
+              <td>รถปั้นจั่น (ไฮดรอลิคเครน)<div class="cell-sub">Kato KR-25H</div></td>
+              <td>กฟจ.ลำพูน กฟน.1</td>
+              <td><span class="badge b-ok">พร้อมใช้งาน</span><div class="cell-sub">Overhaul เสร็จ 23 เม.ย. 2569</div></td>
+              <td><a href="overhaul-02-plans.html#OVH-2568-002">OVH-2568-002</a><div class="cell-sub">ปิดแผนแล้ว</div></td>
+              <td><span class="badge b-low">ใกล้หมดประกัน</span><div class="cell-sub">ถึง 20 ต.ค. 2569 · เหลือ 14 วัน</div></td>
+              <td>
+                <div class="dt-action">
+                  <a class="btn btn-s btn-icon" href="overhaul-02-plans.html#OVH-2568-002" title="ดูแผน OVH-2568-002"><span class="ms">visibility</span></a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>81-9900 นครราชสีมา<div class="cell-sub">กฟฉ.2 - 31 - 0052</div></td>
+              <td>รถขุดตักไฮดรอลิก<div class="cell-sub">Komatsu PC130</div></td>
+              <td>กฟจ.นครราชสีมา กฟฉ.2</td>
+              <td><span class="badge b-ok">พร้อมใช้งาน</span><div class="cell-sub">Overhaul เสร็จ 4 ก.ย. 2567</div></td>
+              <td><a href="overhaul-02-plans.html#OVH-2567-001">OVH-2567-001</a><div class="cell-sub">ปิดแผนแล้ว</div></td>
+              <td><span class="badge b-neutral">หมดประกัน</span><div class="cell-sub">สิ้นสุด 3 มี.ค. 2568</div></td>
+              <td>
+                <div class="dt-action">
+                  <a class="btn btn-s btn-icon" href="overhaul-02-plans.html#OVH-2567-001" title="ดูแผน OVH-2567-001"><span class="ms">visibility</span></a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>3ขค 2210 กรุงเทพมหานคร<div class="cell-sub">กจย. - 25 - 1902</div></td>
+              <td>กระเช้าฮอทไลน์ 115 KV<div class="cell-sub">Aichi SH15A</div></td>
+              <td>กจย. ฝจบ. ผชก.(ล)</td>
+              <td><span class="badge b-low">ซ่อมอยู่</span><div class="cell-sub">ใบแจ้งซ่อม BRK-2569-0911</div></td>
+              <td><span class="cell-sub">ไม่อยู่ในแผน</span></td>
+              <td><span class="cell-sub">—</span></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="tblfoot">
+          <span>แสดง 7 จาก 7 รายการ</span>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+</body>
+</html>

@@ -48,10 +48,14 @@ async function build(spec, images) {
 
   // ---- ล้างของเดิม ----
   const names = new Set(spec.sections.map(s => s.name));
+  /* เก็บกวาด MEDIA ระดับบนสุดเฉพาะตอนที่ spec มี section รูปเท่านั้น
+     — บอร์ดของคนอื่น (เช่น Planning 1-2) มีรูปที่คนวางไว้เองเป็น MEDIA ระดับบนสุด
+     ถ้าล้างทุกครั้ง แค่รันผังล้วนก็ลบรูปของเขาทิ้ง (เจอ 5 ต.ค. 2569 ก่อนรันจริง) */
+  const hasImages = spec.sections.some(s => Array.isArray(s.cols));
   let cleaned = 0;
   for (const n of figma.currentPage.children.slice()) {
     if ((n.type === 'SECTION' && names.has(n.name)) ||
-        n.type === 'MEDIA' ||
+        (hasImages && n.type === 'MEDIA') ||
         (n.type === 'CONNECTOR' && n.name === 'flow →') ||
         (n.type === 'SHAPE_WITH_TEXT' && n.name.indexOf('shot /') === 0)) {
       n.remove();
@@ -74,12 +78,23 @@ async function build(spec, images) {
     try { await figma.loadFontAsync(f); } catch (e) { /* ไม่มีก็ปล่อย — เจอจริงค่อยฟ้องตอนตั้งค่า */ }
   }
 
-  const made = { sections: 0, shapes: 0, connectors: 0, warnings };
+  const made = { sections: 0, shapes: 0, connectors: 0, stickies: 0, warnings };
   let y = 0;
+  /* anchor: 'below' — วางต่อใต้ของที่มีอยู่บนบอร์ดแล้ว ชิดซ้ายเท่าของเดิม
+     ใช้ตอนเขียนลงบอร์ดที่มีงานคนอื่นอยู่ (ค่าเดิม = เริ่มที่ 0,0 ซึ่งจะทับของเขา) */
+  let x0 = 0;
+  if (spec.anchor === 'below') {
+    const rest = figma.currentPage.children;
+    if (rest.length) {
+      y = Math.max(...rest.map(n => n.y + n.height)) + 400;
+      x0 = Math.min(...rest.map(n => n.x));
+    }
+  }
+  const built = [];
 
   for (const sec of spec.sections) {
     if (sec.kind === 'diagram') {
-      y = await buildDiagram(sec, y, font, made);
+      y = await buildDiagram(sec, y, font, made, x0, built);
       post('✓ ' + sec.name + ' (ผัง ' + sec.diagram.nodes.length + ' node)');
       continue;
     }
@@ -133,7 +148,8 @@ async function build(spec, images) {
 
     step('ปรับขนาด section "' + sec.name + '"');
     s.resizeWithoutConstraints(x - 160 + 80, 176 + maxColH + 80);
-    s.x = 0; s.y = y;
+    s.x = x0; s.y = y;
+    built.push(s);
     y += s.height + 320;
     made.sections++;
 
@@ -154,7 +170,7 @@ async function build(spec, images) {
     post('✓ ' + sec.name + ' (' + sec.cols.length + ' หน้าจอ)');
   }
 
-  figma.viewport.scrollAndZoomIntoView(figma.currentPage.children);
+  figma.viewport.scrollAndZoomIntoView(built.length ? built : figma.currentPage.children);
   return made;
 }
 
@@ -163,7 +179,9 @@ async function build(spec, images) {
    (ลาก node แล้วเส้นตามมา — แก้ผังต่อบนบอร์ดได้เลย) · เลน = shape สีอ่อนรองพื้น */
 const DIAGRAM_SHAPE = {
   process: 'ROUNDED_RECTANGLE', decision: 'DIAMOND', stadium: 'ELLIPSE',
-  subroutine: 'SQUARE', circle: 'ELLIPSE'
+  subroutine: 'SQUARE', circle: 'ELLIPSE',
+  // ชุด Template ของบอร์ด Planning 1-2 (start/End · Action · Display · Decision)
+  end: 'ELLIPSE', action: 'ELLIPSE', display: 'SQUARE'
 };
 const LANE_TINTS = [
   { r: 0xFF / 255, g: 0xF7 / 255, b: 0xF0 / 255 },   // ส้มอ่อน (palette FigJam)
@@ -172,8 +190,15 @@ const LANE_TINTS = [
 const INK = { r: 0x75 / 255, g: 0x75 / 255, b: 0x75 / 255 };
 const WHITE = { r: 1, g: 1, b: 1 };
 
-async function buildDiagram(sec, y, font, made) {
+async function buildDiagram(sec, y, font, made, x0, built) {
   const d = sec.diagram;
+  /* สไตล์ต่อ node/เส้น (ไม่ใส่ = หน้าตาเดิม): node.fill/stroke/strokeWeight/fontSize ·
+     edge.color/weight/dash/ms/me/lineType · diagram.font · diagram.stickies
+     — ใช้กับผังที่ต้องออกหน้าตาตาม Template ของบอร์ดปลายทาง */
+  if (d.font) {
+    try { await figma.loadFontAsync(d.font); font = d.font; }
+    catch (e) { made.warnings.push('ฟอนต์ผัง ' + d.font.family + ' ' + d.font.style + ' ไม่มี → ใช้ ' + font.family); }
+  }
   const PAD = 80;
   const s = figma.createSection();
   s.name = sec.name;
@@ -231,32 +256,45 @@ async function buildDiagram(sec, y, font, made) {
     sh.name = n.id + ' / ' + (n.label.split('\n')[0] || n.kind);
     s.appendChild(sh);
     sh.resize(n.w, n.h);
-    sh.fills = [{ type: 'SOLID', color: WHITE }];
-    sh.strokes = [{ type: 'SOLID', color: INK }];
-    sh.strokeWeight = 2;
+    sh.fills = [{ type: 'SOLID', color: n.fill || WHITE }];
+    sh.strokes = [{ type: 'SOLID', color: n.stroke || INK }];
+    sh.strokeWeight = n.strokeWeight || 2;
     sh.text.fontName = font;
     sh.text.characters = n.label;
-    sh.text.fontSize = n.kind === 'decision' ? 26 : 24;
+    sh.text.fontSize = n.fontSize || (n.kind === 'decision' ? 26 : 24);
     sh.x = PAD + n.x; sh.y = PAD + n.y;
     byId[n.id] = sh;
     made.shapes++;
   }
 
+  for (const st of (d.stickies || [])) {
+    step('sticky "' + st.text.slice(0, 20) + '"');
+    const k = figma.createSticky();
+    s.appendChild(k);
+    await figma.loadFontAsync(k.text.fontName);
+    k.text.characters = st.text;
+    if (st.color) k.fills = [{ type: 'SOLID', color: st.color }];
+    k.x = PAD + st.x; k.y = PAD + st.y;
+    made.stickies++;
+  }
+
   s.resizeWithoutConstraints(d.w + PAD * 2, d.h + PAD * 2);
-  s.x = 0; s.y = y;
+  s.x = x0 || 0; s.y = y;
+  if (built) built.push(s);
   made.sections++;
 
   for (const e of d.edges) {
     if (!byId[e.from] || !byId[e.to]) continue;
     const c = figma.createConnector();
     c.name = 'flow →';
-    c.connectorStart = { endpointNodeId: byId[e.from].id, magnet: 'AUTO' };
-    c.connectorEnd = { endpointNodeId: byId[e.to].id, magnet: 'AUTO' };
+    c.connectorStart = { endpointNodeId: byId[e.from].id, magnet: e.ms || 'AUTO' };
+    c.connectorEnd = { endpointNodeId: byId[e.to].id, magnet: e.me || 'AUTO' };
+    if (e.lineType) c.connectorLineType = e.lineType;
     c.connectorStartStrokeCap = 'NONE';
     c.connectorEndStrokeCap = 'ARROW_LINES';
-    c.strokes = [{ type: 'SOLID', color: e.style === 'thick' ? ARROW : INK }];
-    c.strokeWeight = e.style === 'thick' ? 4 : 2;
-    if (e.style === 'dotted') c.dashPattern = [8, 8];
+    c.strokes = [{ type: 'SOLID', color: e.color || (e.style === 'thick' ? ARROW : INK) }];
+    c.strokeWeight = e.weight || (e.style === 'thick' ? 4 : 2);
+    if (e.style === 'dotted') c.dashPattern = e.dash || [8, 8];
     if (e.label) {
       c.text.fontName = font;
       c.text.characters = e.label;

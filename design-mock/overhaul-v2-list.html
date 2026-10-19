@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overhaul — รายการยานพาหนะ | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261001-ds68">
+<link rel="stylesheet" href="../design-system/components.css?v=20261001-ds68">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261001-ds68"></script>
+<script src="overhaul-v2-data.js?v=20261012-ovh2"></script>
+<!-- Overhaul v2 (12 ต.ค. 2569) — หน้ารายการรถ ผู้ใช้ = กบค.
+     เรียง: อายุ ≥ 10 ปีอยู่บน (เก่าสุดก่อน) → อายุไม่ถึงอยู่ล่าง · คอลัมน์ประกัน = วันเริ่ม–วันสิ้นสุด + สถานะ
+     ที่มา: โครงหน้า + ตาราง ยกจาก `Vehicle list` ของหน้า `5.2 Vehicle Management` (UI Release#2 · node 11:45256)
+     ชุดเดียวกับ overhaul-01-vehicles.html / transfer-01-list.html — component (ไฟล์ Component VMS Plus):
+     Header [Type=Subheader] · Table · Badge · Tertiary button
+     คลาสกลาง: .shell/.side.wide/.work/.topbar/.content · .crumbs · .page-title-row · .list-toolbar.split · .search
+     .seg · .tblwrap/.tbl.striped · .tbl th.sortable · .cell-key/.cell-sub · .dt-action · .badge · .tblfoot · .toast
+     ⚠️ เครื่องนี้ไม่มี design-system/.figma-extract → ยังค้น UI Release#2 ว่ามีหน้า Overhaul ไหมไม่ได้ (เหมือน 6 ต.ค.)
+     ไม่มี <style> ในหน้า — layout/spacing ใช้ Tailwind utility -->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="overhaul-v2-list.html" title="Overhaul"><span class="ms">build_circle</span><span class="nvlbl">Overhaul</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">notifications</span>
+      <span class="ms">account_circle</span>
+      <span>นายวิชัย ช่างกล — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft">Prototype (Mock) · Overhaul v2 — ข้อมูลจำลองทั้งหมด ยังไม่เชื่อมระบบจริง</div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep">›</span><span class="cur">Overhaul</span>
+      </div>
+
+      <div class="page-title-row">
+        <h1 class="page-title">Overhaul ยานพาหนะ</h1>
+        <button type="button" class="btn btn-g btn-sm ml-auto" id="btnReset"><span class="ms">restart_alt</span> เริ่มเดโมใหม่</button>
+      </div>
+
+      <div class="list-toolbar split mb-3">
+        <div class="lt-search">
+          <div class="search"><span class="ms">search</span><input type="text" id="q" placeholder="ค้นหาทะเบียน · รหัสข้างรถ · รุ่น · เลขงาน"></div>
+        </div>
+        <div class="lt-actions">
+          <div class="seg" id="seg">
+            <div class="sg sel" data-f="all">ทั้งหมด</div>
+            <div class="sg" data-f="due">ครบ 10 ปี</div>
+            <div class="sg" data-f="wip">กำลังดำเนินการ</div>
+            <div class="sg" data-f="warr">อยู่ในประกัน</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tblwrap">
+        <table class="tbl striped">
+          <thead>
+            <tr>
+              <th>เลขทะเบียน</th>
+              <th>ประเภทยานพาหนะ</th>
+              <th>สังกัดปัจจุบัน</th>
+              <th class="sortable on"><button type="button">อายุรถ <span class="ms">swap_vert</span></button></th>
+              <th>สถานะ</th>
+              <th>ประกันหลัง Overhaul</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div class="tblfoot"><span id="foot"></span></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+let S = OVH2.load();
+let filter = 'all';
+
+function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._x); t._x = setTimeout(() => t.classList.remove('show'), 2400); }
+
+function rowsData() {
+  return S.vehicles.map(v => ({ v, j: S.jobs[v.id], age: OVH2.ageYears(v.reg) }))
+    // อายุครบเกณฑ์อยู่บนสุด · ในกลุ่มเดียวกันเรียงเก่าสุดก่อน
+    .sort((a, b) => ((b.age >= OVH2.AGE_LIMIT) - (a.age >= OVH2.AGE_LIMIT)) || (b.age - a.age));
+}
+
+function match(r, q) {
+  if (q && ![r.v.plate, r.v.code, r.v.model, r.v.type, r.j.jobNo].some(x => String(x).toLowerCase().includes(q))) return false;
+  if (filter === 'due') return r.age >= OVH2.AGE_LIMIT;
+  if (filter === 'wip') return r.j.step >= 1 && r.j.step <= 5;
+  if (filter === 'warr') { const w = OVH2.warranty(r.j); return w && w.left >= 0; }
+  return true;
+}
+
+function render() {
+  const q = $('q').value.trim().toLowerCase();
+  const all = rowsData(), list = all.filter(r => match(r, q));
+  let html = '', crossed = false;
+  list.forEach(r => {
+    const { v, j, age } = r;
+    // เส้นแบ่งกลุ่ม — แถวแรกที่อายุไม่ถึงเกณฑ์
+    if (age < OVH2.AGE_LIMIT && !crossed) {
+      crossed = true;
+      html += `<tr><td colspan="7" class="bg-gray-50"><span class="cell-sub">อายุไม่ถึง ${OVH2.AGE_LIMIT} ปี</span></td></tr>`;
+    }
+    const st = OVH2.status(v, j), w = OVH2.warranty(j);
+    const warr = w
+      ? `<span class="badge ${w.badge}">${w.text}</span>
+         <div class="cell-sub">${OVH2.thDate(j.warrantyStart)} – ${OVH2.thDate(j.warrantyEnd)}</div>
+         <div class="cell-sub">${w.left >= 0 ? 'เหลือ ' + w.left + ' วัน' : 'สิ้นสุดแล้ว'} · ${j.safety.warrantyDays} วัน</div>`
+      : `<span class="cell-sub">${j.step >= 1 ? 'เริ่มนับเมื่อเจ้าของรถรับรถ' : '—'}</span>`;
+    const ageCell = age >= OVH2.AGE_LIMIT
+      ? `<span class="cell-key">${age} ปี</span><div class="cell-sub">จดทะเบียน ${OVH2.thDate(v.reg)}</div>`
+      : `${age} ปี<div class="cell-sub">จดทะเบียน ${OVH2.thDate(v.reg)}</div>`;
+    const href = 'overhaul-v2-job.html?v=' + v.id;
+    const act = j.step === 0
+      ? `<a class="btn btn-${age >= OVH2.AGE_LIMIT ? 'p' : 's'} btn-icon" href="${href}" title="เริ่ม Overhaul"><span class="ms">build</span></a>`
+      : `<a class="btn btn-s btn-icon" href="${href}" title="เปิดงาน ${esc(j.jobNo)}"><span class="ms">visibility</span></a>`;
+    html += `<tr>
+      <td><span class="cell-key">${esc(v.plate)}</span><div class="cell-sub">${esc(v.code)}</div></td>
+      <td>${esc(v.type)}<div class="cell-sub">${esc(v.model)}</div></td>
+      <td>${esc(v.org)}</td>
+      <td>${ageCell}</td>
+      <td><span class="badge ${st.badge}">${st.text}</span><div class="cell-sub">${j.jobNo ? esc(j.jobNo) + ' · ' : ''}${esc(st.sub)}</div></td>
+      <td>${warr}</td>
+      <td><div class="dt-action">${act}</div></td>
+    </tr>`;
+  });
+  $('rows').innerHTML = html || '<tr><td colspan="7"><div class="empty">ไม่พบรายการ</div></td></tr>';
+  $('foot').textContent = `แสดง ${list.length} จาก ${all.length} รายการ · ครบเกณฑ์ ${all.filter(r => r.age >= OVH2.AGE_LIMIT).length} คัน`;
+}
+
+$('q').addEventListener('input', render);
+$('seg').addEventListener('click', e => {
+  const sg = e.target.closest('.sg'); if (!sg) return;
+  filter = sg.dataset.f;
+  [...$('seg').children].forEach(el => el.classList.toggle('sel', el === sg));
+  render();
+});
+$('btnReset').onclick = () => { OVH2.reset(); S = OVH2.load(); render(); toast('ล้างข้อมูลเดโมกลับค่าเริ่มต้นแล้ว'); };
+render();
+</script>
+</body>
+</html>

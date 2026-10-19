@@ -4,7 +4,7 @@ Next.js 16 (App Router) + React 19 + Tailwind 4 — ตาม stack ใน `../J
 
 ```bash
 npm i
-npm run dev        # http://localhost:3000 → /overhaul
+npm run dev        # http://localhost:3000 → /overhaul-v2
 npm run build
 ```
 
@@ -12,6 +12,8 @@ npm run build
 
 | เส้นทาง | หน้าจอ | อิงสเปก |
 |---|---|---|
+| `/overhaul-v2` | **เมนู Overhaul (ฉบับล่าสุด 12 ต.ค. 2569)** — รายการรถ อายุ ≥ 10 ปีอยู่บน · สถานะ · ประกัน (วันเริ่ม–สิ้นสุด) · ยกจาก `../design-mock/overhaul-v2-list.html` | เจ้าของงานเคาะ 12 ต.ค. |
+| `/overhaul-v2/[vehicleId]` | งานรายคัน: แท็บ กระบวนการ · ประวัติการซ่อม · ประวัติการดำเนินการ · 5 ขั้น ① เบิกอะไหล่ (ข้ามได้) ② บันทึก PO (หลายบริษัท/หลาย PO · รายการงาน · วันเริ่ม + ระยะเวลา → วันสิ้นสุดสัญญา · งบประมาณแก้ได้) ③ ติดตามงาน (บันทึกตรวจงานเพิ่มได้เรื่อยๆ) ④ นัดเจ้าของรถรับรถที่บริษัท ⑤ ปิดงาน (safety inspection + วันรับประกัน) · ยกจาก `../design-mock/overhaul-v2-job.html` | เจ้าของงานเคาะ 12 ต.ค. · บอร์ด flow overhaul 7 ต.ค. |
 | `/overhaul` | รายการแผน Overhaul (ค้นหา · กรองสถานะ · ดู · แก้ไข · สร้างแผน) | 6.1 |
 | `/overhaul/[id]` | รายละเอียดแผน + รถที่เข้าแผน | 6.1, 6.2 |
 | `/overhaul/new` · `/overhaul/[id]/edit` | สร้าง/แก้ไขแผน · เลือกรถ + เกณฑ์คัดเลือก · ยกเลิกแผน (ต้องมีเหตุผล) | 6.1, 6.2 |
@@ -28,4 +30,5 @@ npm run build
   ⇒ `mt-*` `mb-*` `p*-*` ทุกตัวในแอปหายเงียบ · ตอนนี้ utility ทับได้ ไม่ต้องใส่ `!` เพื่อเว้นระยะอีก
 - **ระยะห่างหน้าดำเนินการ Overhaul ยึดภาพระบบจริง `../flow/repair`** (วัดพิกเซล): หัวข้อส่วน ↔ เนื้อหา 24 ·
   แท็บ → stepper 24 · stepper → เนื้อหา 32 · breadcrumb → ชื่อหน้า `mb-6`
-- ข้อมูลเป็น mock (`src/lib/overhaul.ts`) เก็บใน `localStorage` key `vms-overhaul-plans-v3` — ปุ่ม "เริ่มเดโมใหม่" ล้างกลับค่าเริ่มต้น
+- ข้อมูล Overhaul v2 เป็น mock (`src/lib/overhaulV2.ts` · store `src/lib/storeV2.tsx`) เก็บใน `localStorage` key `vms-overhaul-v2`
+- ข้อมูลแผนเดิมเป็น mock (`src/lib/overhaul.ts`) เก็บใน `localStorage` key `vms-overhaul-plans-v3` — ปุ่ม "เริ่มเดโมใหม่" ล้างกลับค่าเริ่มต้น

@@ -10,6 +10,8 @@
      node figma-export/3-figjam-board.js --maint    + เฟส 2 ดำเนินการบำรุงรักษา (ผัง + capture ถ้ามี)
      node figma-export/3-figjam-board.js --swimlane + swimlane โฟลว์แจ้งซ่อมทั้งเส้น 19 สถานะ (ผังล้วน)
      node figma-export/3-figjam-board.js --state    + ผังสถานะ/เงื่อนไขการเปลี่ยนสถานะ (ผังล้วน)
+     node figma-export/3-figjam-board.js --disposal + flow จำหน่ายยานพาหนะ (ผังล้วน · ตาม Template บอร์ด Planning 1-2)
+     node figma-export/3-figjam-board.js --inventory + flow เบิกวัสดุผ่าน Smart Inventory (swimlane 5 เลน · Template เดียวกัน)
      node figma-export/3-figjam-board.js --swimlane --only   เอาเฉพาะ swimlane อย่างเดียว (ไม่เอาชุดตั้งต้น)
      node figma-export/3-figjam-board.js --pages    + หน้ารวมทุกหน้าจัดหมวด
      node figma-export/3-figjam-board.js --all      ทุกชุด
@@ -140,6 +142,39 @@ function main() {
     });
   }
 
+  // Flow จำหน่ายยานพาหนะ (5 ต.ค. 2569) — หน้าตาตาม Template ของบอร์ด Planning 1-2 หน้า "โอนย้าย--จำหน่าย"
+  // ต้นทาง: Diagram/06-จำหน่ายทรัพย์สิน/01-จำหน่ายยานพาหนะ.md · สเปกจาก 6-flow-disposal.js
+  // บอร์ดนั้นมีงานคนอื่นอยู่แล้ว ⇒ ตั้ง anchor = below ให้ปลั๊กอินวางต่อใต้ของเดิม ไม่ทับ
+  if (all || args.has('--disposal')) {
+    const dispFile = path.join(OUT, 'diagram-disposal.json');
+    if (!fs.existsSync(dispFile)) {
+      console.error('ไม่พบ out/diagram-disposal.json — รัน  node figma-export/6-flow-disposal.js');
+      process.exit(1);
+    }
+    sections.push({
+      name: 'จำหน่ายยานพาหนะ — ร่าง 5 ต.ค. 2569 (หลักเกณฑ์ยานพาหนะ 2569 หมวด 8 ข้อ 24–25 · ❓/เส้นประ = ยังไม่ยืนยัน)',
+      color: [255, 255, 255],
+      kind: 'diagram',
+      diagram: read(dispFile)
+    });
+  }
+
+  // Flow เบิกวัสดุผ่าน Smart Inventory (9 ต.ค. 2569) — ต้นทาง "flow-smart inventory.pdf" (sequence diagram)
+  // สเปกจาก 7-flow-smart-inventory.js · หน้าตาตาม Template เดียวกับ flow จำหน่าย
+  if (all || args.has('--inventory')) {
+    const invFile = path.join(OUT, 'diagram-smart-inventory.json');
+    if (!fs.existsSync(invFile)) {
+      console.error('ไม่พบ out/diagram-smart-inventory.json — รัน  node figma-export/7-flow-smart-inventory.js');
+      process.exit(1);
+    }
+    sections.push({
+      name: 'เบิกวัสดุผ่าน Smart Inventory — 9 ต.ค. 2569 (เลือกวัสดุ → จอง → คลังเบิก → SAP ตัด Stock → Callback)',
+      color: [255, 255, 255],
+      kind: 'diagram',
+      diagram: read(invFile)
+    });
+  }
+
   if (all || args.has('--pages')) {
     const pages = read(path.join(FJ, 'manifest.json'));
     const groupColor = {
@@ -161,6 +196,7 @@ function main() {
 
   const board = {
     version: 1,
+    anchor: (args.has('--disposal') || args.has('--inventory')) ? 'below' : undefined,
     generatedAt: new Date().toISOString(),
     font: { family: 'IBM Plex Sans Thai', style: 'Medium' },
     fallbackFont: { family: 'Inter', style: 'Medium' },

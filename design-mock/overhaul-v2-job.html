@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overhaul — งานรายคัน | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261001-ds68">
+<link rel="stylesheet" href="../design-system/components.css?v=20261001-ds68">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261001-ds68"></script>
+<script src="overhaul-v2-data.js?v=20261012-ovh2"></script>
+<!-- Overhaul v2 (12 ต.ค. 2569) — งาน Overhaul รายคัน ผู้ใช้ = กบค. · เปิดจาก overhaul-v2-list.html?v=<id>
+     5 ขั้น: ① เบิกอะไหล่ (ข้ามได้) → ② บันทึก PO (เพิ่มได้หลายบริษัท) → ③ ติดตามงาน (บันทึกตรวจงานเพิ่มได้เรื่อยๆ)
+            → ④ นัดหมายเจ้าของรถมารับรถที่บริษัท → ⑤ ปิดงาน (safety inspection checklist + วันรับประกัน)
+     ที่มา: โครงหน้า (crumbs · ชื่อหน้า · แท็บ · stepper · การ์ดตามขั้น · แถวปุ่มท้าย) ยกจากหน้างานซ่อมระบบจริง `flow/repair`
+     (เบิกอะไหล่ · นัดหมาย · ตรวจสภาพ) ชุดเดียวกับ kbk-self-repair-*.html
+     component (ไฟล์ Component VMS Plus): Header · Tabs · Stepper · Table · Badge · Input · Radio · Modal (Type=Form 2:16)
+     · File upload (3:25) · Button (Primary/Secondary/Tertiary)
+     คลาสกลาง: .wsteps/.wstep(.passed/.active/.locked) · .tabs/.tab-btn · .card/.stack/.sect/.sub · .fgrid/.f/.f.ro/.in
+     .tblwrap/.tbl · .qty · .job/.sp/.meta · .badge · .note · .upload-field/.file-chip · .modal-overlay/.modal.lg
+     · .actions · .empty · .toast
+     ⚠️ รายการ safety inspection เป็นค่าจำลอง (overhaul-v2-data.js SAFETY_ITEMS) — รอแบบฟอร์มจริงจาก กบค.
+     ⚠️ เครื่องนี้ไม่มี design-system/.figma-extract → ยังค้น UI Release#2 ว่ามีหน้า Overhaul ไหมไม่ได้
+     ไม่มี <style> ในหน้า — layout/spacing ใช้ Tailwind utility -->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="overhaul-v2-list.html" title="Overhaul"><span class="ms">build_circle</span><span class="nvlbl">Overhaul</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">notifications</span>
+      <span class="ms">account_circle</span>
+      <span>นายวิชัย ช่างกล — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft">Prototype (Mock) · Overhaul v2 — ข้อมูลจำลองทั้งหมด ยังไม่เชื่อมระบบจริง</div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep">›</span><a href="overhaul-v2-list.html">Overhaul</a>
+        <span class="sep">›</span><span class="cur" id="crumbCur"></span>
+      </div>
+
+      <div class="page-title-row mb-6">
+        <h1 class="page-title" id="title"></h1>
+        <span id="titleBadge"></span>
+      </div>
+
+      <div class="card mb-6">
+        <div class="stack">
+          <div class="sect">ข้อมูลยานพาหนะ</div>
+          <div class="fgrid" id="vinfo"></div>
+        </div>
+      </div>
+
+      <div>
+        <!-- แท็บชุดเดียวกับหน้ารับงานซ่อม กบค. (flow/repair): กระบวนการ · ประวัติการซ่อม · ประวัติการดำเนินการ -->
+        <div class="tabs mb-6" role="tablist" aria-label="งาน Overhaul">
+          <button type="button" class="tab-btn on" role="tab" aria-selected="true" data-tab="flow">กระบวนการ Overhaul</button>
+          <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="repair">ประวัติการซ่อม</button>
+          <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="hist">ประวัติการดำเนินการ</button>
+        </div>
+
+        <div id="tabFlow">
+          <div id="startBox"></div>
+          <div id="jobBox" class="hidden">
+            <div class="wsteps wrap mb-8" id="steps"></div>
+            <div id="panel"></div>
+          </div>
+        </div>
+
+        <div id="tabRepair" class="hidden">
+          <div class="card"><div class="stack" id="repairHist"></div></div>
+        </div>
+
+        <div id="tabHist" class="hidden">
+          <div class="card"><div class="stack" id="hist"></div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ── Modal: เพิ่ม PO / บริษัทผู้รับจ้าง ── -->
+<div class="modal-overlay hidden" id="mPo">
+  <div class="modal lg" role="dialog" aria-modal="true" aria-labelledby="mPoT">
+    <div class="modal-hd"><div class="modal-hd-c"><div class="flex-1 min-w-0"><h2 id="mPoT">เพิ่ม PO</h2><div class="modal-sub" id="mPoSub"></div></div>
+      <button type="button" class="modal-x" data-close="mPo" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd">
+      <div class="fgrid">
+        <div class="f sp4" id="poVendorWrap"><label>บริษัทผู้รับจ้าง</label>
+          <select id="poVendor"></select></div>
+        <div class="f sp4 hidden" id="poNewWrap"><label>ชื่อบริษัทใหม่</label>
+          <div class="in"><span class="ms">domain_add</span><input type="text" id="poNew" placeholder="เช่น บจก. ตัวอย่าง เอ็นจิเนียริ่ง"></div></div>
+        <div class="f sp2"><label>เลขที่ PO</label>
+          <div class="in"><span class="ms">tag</span><input type="text" id="poNo" placeholder="PO-2569-xxxxx"></div></div>
+        <div class="f sp2"><label>วันที่ PO</label>
+          <div class="in"><span class="ms">event</span><input type="date" id="poDate"></div></div>
+        <div class="f sp4"><label>รายการงานที่บริษัทรับทำ</label>
+          <div class="stack tight" id="poItems"></div>
+          <div class="mt-2"><button type="button" class="btn btn-s btn-sm" id="poItemAdd"><span class="ms">add</span> เพิ่มรายการงาน</button></div></div>
+        <div class="f sp4"><div class="sect">ระยะเวลาสัญญา</div></div>
+        <div class="f"><label>วันเริ่มสัญญา</label>
+          <div class="in"><span class="ms">event</span><input type="date" id="poStart"></div></div>
+        <div class="f"><label>ระยะเวลาว่าจ้าง (วัน)</label>
+          <div class="in"><span class="ms">timelapse</span><input type="number" min="1" id="poDays" placeholder="เช่น 90"></div></div>
+        <div class="f ro sp2"><label>วันสิ้นสุดสัญญา</label>
+          <div class="in"><span class="ms">event_available</span><input type="text" id="poEnd" readonly placeholder="คำนวณจากวันเริ่ม + ระยะเวลา"></div></div>
+        <div class="f sp2"><label>งบประมาณ (บาท)</label>
+          <div class="in"><span class="ms">payments</span><input type="number" min="0" id="poAmt" placeholder="0"></div></div>
+        <div class="f sp4"><label>ไฟล์ใบสั่งจ้าง (PO)</label>
+          <label class="upload-field"><span class="ms">upload_file</span><span id="poFileTx">เลือกไฟล์</span><input type="file" id="poFile" accept=".pdf,.jpg,.png"></label>
+          <div class="upload-hint">PDF / JPG / PNG · งบประมาณบันทึกไว้อ้างอิงเท่านั้น ไม่ส่งเข้า SAP</div></div>
+      </div>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r">
+      <button type="button" class="btn btn-s" data-close="mPo">ยกเลิก</button>
+      <button type="button" class="btn btn-p" id="poSave">บันทึก PO</button>
+    </div></div></div>
+  </div>
+</div>
+
+<!-- ── Modal: บันทึกตรวจงาน ── -->
+<div class="modal-overlay hidden" id="mLog">
+  <div class="modal lg" role="dialog" aria-modal="true" aria-labelledby="mLogT">
+    <div class="modal-hd"><div class="modal-hd-c"><h2 id="mLogT">บันทึกการตรวจงาน</h2>
+      <button type="button" class="modal-x" data-close="mLog" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd">
+      <div class="fgrid">
+        <div class="f sp2"><label>วันที่ไปตรวจงาน</label>
+          <div class="in"><span class="ms">event</span><input type="date" id="lgDate"></div></div>
+        <div class="f sp2"><label>ความคืบหน้า (%)</label>
+          <div class="in"><span class="ms">percent</span><input type="number" min="0" max="100" id="lgPct" placeholder="0–100"></div></div>
+        <div class="f sp4"><label>PO / บริษัทที่ไปตรวจ</label>
+          <select id="lgPo"></select></div>
+        <div class="f sp4"><label>ผลการตรวจ / สิ่งที่พบ</label>
+          <textarea id="lgNote" rows="4" placeholder="เช่น ถอดชุดปั๊มแล้ว พบซีลแตก 3 จุด"></textarea></div>
+        <div class="f sp2"><label>ผู้ตรวจ</label>
+          <div class="in"><span class="ms">person</span><input type="text" id="lgBy"></div></div>
+        <div class="f sp2"><label>รูปภาพ / ไฟล์แนบ <small>ถ้ามี</small></label>
+          <label class="upload-field"><span class="ms">add_photo_alternate</span><span>เลือกไฟล์</span><input type="file" id="lgFile" multiple accept="image/*,.pdf"></label>
+          <div class="flex flex-wrap gap-2 mt-2" id="lgFiles"></div></div>
+      </div>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r">
+      <button type="button" class="btn btn-s" data-close="mLog">ยกเลิก</button>
+      <button type="button" class="btn btn-p" id="lgSave">บันทึก</button>
+    </div></div></div>
+  </div>
+</div>
+
+<!-- ── Modal: ยืนยันปิดงาน ── -->
+<div class="modal-overlay hidden" id="mClose">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="mCloseT">
+    <div class="modal-hd"><div class="modal-hd-c"><h2 id="mCloseT">ยืนยันปิดงาน Overhaul</h2>
+      <button type="button" class="modal-x" data-close="mClose" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd" id="mCloseBd"></div>
+    <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r">
+      <button type="button" class="btn btn-s" data-close="mClose">ยกเลิก</button>
+      <button type="button" class="btn btn-p" id="closeOk">ปิดงาน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+const baht = n => Number(n || 0).toLocaleString('th-TH') + ' ฿';
+const ME = 'นายวิชัย ช่างกล';
+const STEPS = ['เบิกอะไหล่', 'บันทึก PO', 'ติดตามงาน', 'นัดหมายรับรถ', 'ปิดงาน'];
+
+let S = OVH2.load();
+const vid = new URLSearchParams(location.search).get('v') || 'V01';
+const V = S.vehicles.find(x => x.id === vid) || S.vehicles[0];
+const J = S.jobs[V.id];
+let view = Math.min(J.step || 1, 5);        // ขั้นที่กำลังดู (กดขั้นที่ผ่านแล้วเพื่อย้อนดูได้)
+let lgFiles = [];
+
+function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._x); t._x = setTimeout(() => t.classList.remove('show'), 2400); }
+function log(text) { J.history.push({ at: OVH2.nowStamp(), text }); }
+function commit(msg) { OVH2.save(S); if (msg) toast(msg); render(); }
+function openM(id) { $(id).classList.remove('hidden'); document.body.classList.add('modal-open'); }
+function closeM(id) { $(id).classList.add('hidden'); document.body.classList.remove('modal-open'); }
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closeM(b.dataset.close));
+const poOf = id => J.pos.find(p => p.id === id);
+const fileChip = (name, rm) => `<span class="file-chip"><span class="ms">description</span><span class="file-chip-name">${esc(name)}</span>${rm || ''}</span>`;
+const ro = (label, val, cls) => `<div class="f ro ${cls || ''}"><label>${label}</label><div class="in noic"><input type="text" readonly value="${esc(val)}"></div></div>`;
+
+// ── หัวหน้า + ข้อมูลรถ ─────────────────────────────────────────────
+function renderHead() {
+  const st = OVH2.status(V, J);
+  $('crumbCur').textContent = J.jobNo || V.plate;
+  $('title').textContent = J.jobNo ? 'งาน Overhaul ' + J.jobNo : V.plate;
+  $('titleBadge').innerHTML = `<span class="badge ${st.badge}">${st.text}</span>`;
+  const age = OVH2.ageYears(V.reg);
+  $('vinfo').innerHTML =
+    ro('หมายเลขทะเบียน', V.plate) + ro('รหัสข้างรถ', V.code) + ro('ประเภท', V.type) + ro('ยี่ห้อ / รุ่น', V.model) +
+    ro('ใช้งานประจำ', V.org) + ro('อายุรถ', age + ' ปี (จดทะเบียน ' + OVH2.thDate(V.reg) + ')') +
+    ro('ผู้ดูแลรถ (เจ้าของรถ)', V.owner) + ro('เบอร์โทร', V.ownerTel);
+}
+
+// ── ยังไม่เริ่ม ─────────────────────────────────────────────────────
+function renderStart() {
+  const age = OVH2.ageYears(V.reg), due = age >= OVH2.AGE_LIMIT;
+  $('startBox').innerHTML = J.step ? '' : `
+    <div class="card"><div class="stack">
+      <div class="sect">ยังไม่ได้เริ่มงาน Overhaul</div>
+      ${due ? '' : `<div class="note note-warn"><span class="ms">warning</span><div>รถคันนี้อายุ ${age} ปี — ยังไม่ถึงเกณฑ์ ${OVH2.AGE_LIMIT} ปี</div></div>`}
+      <div class="actions">
+        <a class="btn btn-g" href="overhaul-v2-list.html"><span class="ms">arrow_back</span> ย้อนกลับ</a>
+        <button type="button" class="btn btn-p" id="btnStart">เริ่มงาน Overhaul</button>
+      </div>
+    </div></div>`;
+  $('jobBox').classList.toggle('hidden', !J.step);
+  if (!J.step) $('btnStart').onclick = () => {
+    const n = Math.max(0, ...Object.values(S.jobs).filter(j => j.jobNo.startsWith('OVH-2569')).map(j => Number(j.jobNo.slice(-4)))) + 1;
+    J.jobNo = 'OVH-2569-' + String(n).padStart(4, '0');
+    J.step = 1; view = 1;
+    J.parts = OVH2.PART_KIT.map(p => ({ ...p }));
+    log('เริ่มงาน Overhaul — ออกเลขงาน ' + J.jobNo);
+    commit('ออกเลขงาน ' + J.jobNo + ' แล้ว');
+  };
+}
+
+// ── stepper ────────────────────────────────────────────────────────
+function renderSteps() {
+  const cur = Math.min(J.step, 6);
+  $('steps').innerHTML = STEPS.map((lbl, i) => {
+    const n = i + 1, passed = n < cur, active = n === view;
+    const cls = active ? 'active' : passed ? 'passed' : n === cur ? '' : 'locked';
+    const num = passed && !active ? '<span class="ms">check</span>' : n;
+    const sub = n === 1 && J.partsSkipped ? ' (ข้าม)' : '';
+    return `<div class="wstep ${cls}" data-n="${n}" ${n <= Math.min(cur, 5) ? 'role="button" tabindex="0"' : ''}><span class="num">${num}</span><span class="lbl">${lbl}${sub}</span></div>`;
+  }).join('');
+  $('steps').querySelectorAll('[role=button]').forEach(el => el.onclick = () => { view = Number(el.dataset.n); render(); });
+}
+
+// ── ① เบิกอะไหล่ ───────────────────────────────────────────────────
+function stepParts(readOnly) {
+  if (J.partsSkipped) return `<div class="card"><div class="stack">
+      <div class="sect">เบิกอะไหล่</div>
+      <div class="note note-info"><span class="ms">info</span><div>ข้ามขั้นนี้ — ไม่เบิกอะไหล่จากคลัง กฟภ.</div></div>
+      ${readOnly ? '' : `<div class="actions"><button type="button" class="btn btn-s" id="btnUnskip">กลับมาเบิกอะไหล่</button></div>`}
+    </div></div>`;
+  const rows = J.parts || [];
+  const total = rows.reduce((a, p) => a + p.qty * p.price, 0);
+  return `<div class="card"><div class="stack">
+      <div class="sect">เบิกอะไหล่</div>
+      <div class="sub">ตั้งต้นจากชุดอะไหล่ประจำรุ่น ${esc(V.model)} · ปรับจำนวนได้ · ไม่ต้องเบิกให้กด "ข้ามขั้นนี้"</div>
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr><th>รายการ</th><th class="num">คงคลัง</th><th class="num">จำนวนเบิก</th><th class="num">ราคาต่อหน่วย</th><th class="num">รวม</th>${readOnly ? '' : '<th></th>'}</tr></thead>
+        <tbody>${rows.map((p, i) => `<tr>
+          <td><span class="cell-key">${esc(p.name)}</span><div class="cell-sub">${esc(p.code)}</div></td>
+          <td class="num">${p.stock} ${esc(p.unit)}${p.qty > p.stock ? '<div class="cell-sub"><span class="badge b-out">ไม่พอ</span></div>' : ''}</td>
+          <td class="num">${readOnly ? p.qty + ' ' + esc(p.unit)
+            : `<div class="qty inline-flex"><button type="button" data-q="${i}" data-d="-1">−</button><span>${p.qty}</span><button type="button" data-q="${i}" data-d="1">+</button></div>`}</td>
+          <td class="num">${baht(p.price)}</td>
+          <td class="num">${baht(p.qty * p.price)}</td>
+          ${readOnly ? '' : `<td><button type="button" class="btn btn-t btn-icon" data-rm="${i}" title="ลบ"><span class="ms">delete</span></button></td>`}
+        </tr>`).join('') || `<tr><td colspan="6"><div class="empty">ไม่มีรายการ</div></td></tr>`}</tbody>
+      </table></div>
+      <div class="flex justify-between font-semibold"><span>รวมค่าอะไหล่</span><span>${baht(total)}</span></div>
+      ${readOnly ? '' : `<div class="actions">
+        <a class="btn btn-g" href="overhaul-v2-list.html"><span class="ms">arrow_back</span> ย้อนกลับ</a>
+        <button type="button" class="btn btn-o" id="btnSkip">ข้ามขั้นนี้</button>
+        <button type="button" class="btn btn-p" id="btnPick" ${rows.length ? '' : 'disabled'}>เบิกอะไหล่</button>
+      </div>`}
+    </div></div>`;
+}
+function bindParts() {
+  document.querySelectorAll('[data-q]').forEach(b => b.onclick = () => {
+    const p = J.parts[b.dataset.q]; p.qty = Math.max(1, p.qty + Number(b.dataset.d)); commit();
+  });
+  document.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { J.parts.splice(Number(b.dataset.rm), 1); commit(); });
+  const go = () => { J.step = 2; view = 2; };
+  if ($('btnSkip')) $('btnSkip').onclick = () => { J.partsSkipped = true; go(); log('ข้ามขั้นเบิกอะไหล่'); commit('ข้ามขั้นเบิกอะไหล่แล้ว'); };
+  if ($('btnPick')) $('btnPick').onclick = () => { go(); log('เบิกอะไหล่ ' + J.parts.length + ' รายการ'); commit('ส่งรายการเบิกอะไหล่แล้ว'); };
+  if ($('btnUnskip')) $('btnUnskip').onclick = () => { J.partsSkipped = false; J.parts = J.parts || OVH2.PART_KIT.map(p => ({ ...p })); J.step = 1; view = 1; commit(); };
+}
+
+// ── ตาราง PO (ใช้ทั้งขั้น ② และ ③) ──────────────────────────────────
+function poTable(mode) {   // mode: 'edit' (ขั้น ②) · 'track' (ขั้น ③) · 'ro' — จัดกลุ่มตามบริษัท แต่ละบริษัทเพิ่ม PO ได้หลายใบ
+  const total = J.pos.reduce((a, p) => a + Number(p.amount || 0), 0);
+  const vendors = [...new Set(J.pos.map(p => p.vendor))];
+  const block = (v, vi) => {
+    const list = J.pos.filter(p => p.vendor === v), sub = list.reduce((a, p) => a + Number(p.amount || 0), 0);
+    return `<div class="card"><div class="stack">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="ms text-gray-500">domain</span>
+        <b class="mr-auto">${esc(v)}</b>
+        <span class="badge b-neutral">${list.length} PO · งบ ${baht(sub)}</span>
+        ${mode === 'ro' && J.step > 3 ? '' : `<button type="button" class="btn btn-o btn-sm" data-addpo="${vi}"><span class="ms">add</span> เพิ่ม PO</button>`}
+      </div>
+      <div class="tblwrap"><table class="tbl striped">
+        <thead><tr><th>เลขที่ PO</th><th>รายการงานที่รับทำ</th><th>ระยะเวลาสัญญา</th><th class="num">งบประมาณ</th><th>สถานะ</th><th></th></tr></thead>
+        <tbody>${list.map(p => {
+          const done = p.status === 'done';
+          const edit = J.step < 6 ? `<button type="button" class="btn btn-t btn-icon" data-editpo="${p.id}" title="แก้ไข PO / งบประมาณ"><span class="ms">edit</span></button>` : '';
+          const act = mode === 'edit' && J.step === 2 ? `<button type="button" class="btn btn-t btn-icon" data-delpo="${p.id}" title="ลบ PO"><span class="ms">delete</span></button>`
+            : mode === 'track' && !done ? `<button type="button" class="btn btn-o btn-sm" data-donepo="${p.id}">ส่งมอบงานแล้ว</button>` : '';
+          const left = OVH2.daysBetween(OVH2.today(), p.end);
+          const due = done ? '' : left < 0 ? `<span class="badge b-out">เกินสัญญา ${-left} วัน</span>` : `<span class="cell-sub">เหลือ ${left} วัน</span>`;
+          return `<tr>
+            <td><span class="cell-key">${esc(p.poNo)}</span><div class="cell-sub">${OVH2.thDate(p.poDate)}</div>${p.file ? '<div class="mt-1">' + fileChip(p.file) + '</div>' : ''}</td>
+            <td>${p.items.map((t, i) => `<div>${i + 1}. ${esc(t)}</div>`).join('')}</td>
+            <td>${OVH2.thDate(p.start)} – ${OVH2.thDate(p.end)}<div class="cell-sub">${p.days} วัน</div>${due}</td>
+            <td class="num">${baht(p.amount)}</td>
+            <td>${done ? `<span class="badge b-ok">เสร็จแล้ว</span><div class="cell-sub">${OVH2.thDate(p.doneAt)}</div>` : `<span class="badge b-info">กำลังดำเนินการ</span>`}</td>
+            <td><div class="flex items-center gap-1">${edit}${act}</div></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>
+    </div></div>`;
+  };
+  poVendorsShown = vendors;
+  return (vendors.map(block).join('') || `<div class="empty">ยังไม่มี PO — กด "เพิ่ม PO"</div>`) +
+    `<div class="flex justify-between font-semibold"><span>รวมงบประมาณ (${vendors.length} บริษัท · ${J.pos.length} ใบ)</span><span>${baht(total)}</span></div>`;
+}
+let poVendorsShown = [], poFixedVendor = '';
+function bindPoButtons() {
+  if ($('btnAddPo')) $('btnAddPo').onclick = () => openPo('');
+  document.querySelectorAll('[data-addpo]').forEach(b => b.onclick = () => openPo(poVendorsShown[b.dataset.addpo]));
+  document.querySelectorAll('[data-editpo]').forEach(b => b.onclick = () => openPo('', b.dataset.editpo));
+}
+
+// ── ② บันทึก PO ────────────────────────────────────────────────────
+function stepPo(readOnly) {
+  return `<div class="card"><div class="stack">
+      <div class="sect">บันทึกข้อมูล PO</div>
+      <div class="sub">เพิ่มได้หลายบริษัท · แต่ละบริษัทเพิ่ม PO ได้หลายใบ</div>
+      ${J.step <= 3 ? `<div><button type="button" class="btn btn-p" id="btnAddPo"><span class="ms">add</span> เพิ่ม PO</button></div>` : ''}
+      ${poTable(J.step <= 3 ? 'edit' : 'ro')}
+      ${readOnly ? '' : `<div class="actions">
+        <button type="button" class="btn btn-g" id="btnBack1"><span class="ms">arrow_back</span> ย้อนกลับ</button>
+        <button type="button" class="btn btn-p" id="btnSend" ${J.pos.length ? '' : 'disabled title="เพิ่ม PO อย่างน้อย 1 ใบก่อน"'}>ส่งรถให้บริษัทดำเนินการ</button>
+      </div>`}
+    </div></div>`;
+}
+function bindPo() {
+  bindPoButtons();
+  document.querySelectorAll('[data-delpo]').forEach(b => b.onclick = () => { J.pos = J.pos.filter(p => p.id !== b.dataset.delpo); commit('ลบ PO แล้ว'); });
+  if ($('btnBack1')) $('btnBack1').onclick = () => { view = 1; render(); };
+  if ($('btnSend')) $('btnSend').onclick = () => { J.step = 3; view = 3; log('บันทึก PO ' + J.pos.length + ' ใบ — ส่งรถให้บริษัทดำเนินการ'); commit('ส่งรถให้บริษัทดำเนินการแล้ว'); };
+}
+let poEditId = '', poItemsDraft = [];
+function openPo(vendor, editId) {   // vendor = เพิ่ม PO ให้บริษัทนั้น · '' = เลือก/เพิ่มบริษัท · editId = แก้ไข PO เดิม
+  poEditId = editId || '';
+  const e = poEditId ? poOf(poEditId) : null;
+  poFixedVendor = e ? '' : (vendor || '');
+  const sel = $('poVendor');
+  const used = [...new Set(J.pos.map(p => p.vendor))];
+  const others = OVH2.VENDORS.concat(S.extraVendors || []).filter(v => !used.includes(v));
+  const opt = v => `<option ${e && e.vendor === v ? 'selected' : ''}>${esc(v)}</option>`;
+  sel.innerHTML = '<option value="">เลือกบริษัท (vendor list)</option>'
+    + (used.length ? `<optgroup label="บริษัทในงานนี้">${used.map(opt).join('')}</optgroup>` : '')
+    + `<optgroup label="บริษัทอื่น">${others.map(opt).join('')}</optgroup>`
+    + '<option value="__new">+ เพิ่มบริษัทใหม่</option>';
+  $('poNew').value = '';
+  $('poNo').value = e ? e.poNo : '';
+  $('poDate').value = e ? e.poDate : OVH2.today();
+  $('poStart').value = e ? e.start : OVH2.today();
+  $('poDays').value = e ? e.days : '';
+  $('poAmt').value = e ? e.amount : '';
+  poItemsDraft = e ? e.items.slice() : [''];
+  $('poFile').value = ''; $('poFileTx').textContent = e && e.file ? e.file : 'เลือกไฟล์';
+  $('poNewWrap').classList.add('hidden');
+  $('poVendorWrap').classList.toggle('hidden', !!poFixedVendor);
+  $('mPoT').textContent = e ? 'แก้ไข PO ' + e.poNo : 'เพิ่ม PO';
+  $('mPoSub').textContent = e ? e.vendor : (poFixedVendor || 'เลือกบริษัทจาก vendor list หรือเพิ่มบริษัทใหม่');
+  $('poSave').textContent = e ? 'บันทึกการแก้ไข' : 'บันทึก PO';
+  renderPoItems(); calcPoEnd();
+  openM('mPo');
+}
+function renderPoItems() {
+  $('poItems').innerHTML = poItemsDraft.map((t, i) => `<div class="flex items-center gap-2">
+      <span class="w-6 text-right text-gray-500">${i + 1}.</span>
+      <div class="in noic flex-1"><input type="text" data-it="${i}" value="${esc(t)}" placeholder="เช่น Overhaul ระบบไฮดรอลิกทั้งชุด"></div>
+      <button type="button" class="btn btn-t btn-icon" data-itrm="${i}" title="ลบรายการ" ${poItemsDraft.length < 2 ? 'disabled' : ''}><span class="ms">delete</span></button>
+    </div>`).join('');
+  $('poItems').querySelectorAll('[data-it]').forEach(el => el.oninput = () => poItemsDraft[el.dataset.it] = el.value);
+  $('poItems').querySelectorAll('[data-itrm]').forEach(b => b.onclick = () => { poItemsDraft.splice(Number(b.dataset.itrm), 1); renderPoItems(); });
+}
+$('poItemAdd').onclick = () => { poItemsDraft.push(''); renderPoItems(); $('poItems').querySelector(`[data-it="${poItemsDraft.length - 1}"]`).focus(); };
+// วันสิ้นสุดสัญญา = วันเริ่ม + ระยะเวลาว่าจ้าง
+function calcPoEnd() {
+  const st = $('poStart').value, d = Number($('poDays').value);
+  $('poEnd').value = st && d > 0 ? OVH2.thDate(OVH2.addDays(st, d)) : '';
+}
+$('poStart').oninput = calcPoEnd; $('poDays').oninput = calcPoEnd;
+$('poVendor').onchange = () => $('poNewWrap').classList.toggle('hidden', $('poVendor').value !== '__new');
+$('poFile').onchange = () => $('poFileTx').textContent = $('poFile').files[0] ? $('poFile').files[0].name : 'เลือกไฟล์';
+$('poSave').onclick = () => {
+  let vendor = poFixedVendor || $('poVendor').value;
+  if (vendor === '__new') {
+    vendor = $('poNew').value.trim();
+    if (vendor && !(S.extraVendors || []).includes(vendor)) S.extraVendors = (S.extraVendors || []).concat(vendor);
+  }
+  const items = poItemsDraft.map(t => t.trim()).filter(Boolean);
+  const days = Number($('poDays').value);
+  if (!vendor || !$('poNo').value.trim() || !items.length || !$('poStart').value || !(days > 0) || $('poAmt').value === '') {
+    toast('กรอกบริษัท · เลขที่ PO · รายการงาน · วันเริ่มสัญญา · ระยะเวลา · งบประมาณ ให้ครบ'); return;
+  }
+  const data = { vendor, poNo: $('poNo').value.trim(), poDate: $('poDate').value, items, start: $('poStart').value, days,
+    end: OVH2.addDays($('poStart').value, days), amount: Number($('poAmt').value) };
+  if (poEditId) {
+    const p = poOf(poEditId), was = p.amount;
+    Object.assign(p, data, $('poFile').files[0] ? { file: $('poFile').files[0].name } : {});
+    log('แก้ไข PO ' + p.poNo + (was !== p.amount ? ' — งบประมาณ ' + baht(was) + ' → ' + baht(p.amount) : ''));
+  } else {
+    J.pos.push({ id: 'P' + Date.now(), ...data, file: $('poFile').files[0] ? $('poFile').files[0].name : '', status: 'open', doneAt: '' });
+    if (J.step >= 3) log('เพิ่ม PO ' + data.poNo + ' — ' + vendor);
+  }
+  closeM('mPo'); commit(poEditId ? 'บันทึกการแก้ไข PO แล้ว' : 'บันทึก PO แล้ว');
+};
+
+// ── ③ ติดตามงาน + บันทึกตรวจงาน ────────────────────────────────────
+function stepTrack(readOnly) {
+  const allDone = J.pos.length && J.pos.every(p => p.status === 'done');
+  const logs = J.logs.slice().sort((a, b) => b.date.localeCompare(a.date));
+  return `<div class="stack">
+    <div class="card"><div class="stack">
+      <div class="sect">งานของแต่ละบริษัท</div>
+      ${J.step <= 3 ? `<div><button type="button" class="btn btn-p" id="btnAddPo"><span class="ms">add</span> เพิ่ม PO</button></div>` : ''}
+      ${poTable(readOnly ? 'ro' : 'track')}
+    </div></div>
+    <div class="card"><div class="stack">
+      <div class="sect">บันทึกการตรวจงาน (${J.logs.length} ครั้ง)</div>
+      ${readOnly ? '' : `<div><button type="button" class="btn btn-p" id="btnAddLog"><span class="ms">add</span> เพิ่มบันทึกตรวจงาน</button></div>`}
+      ${logs.map(l => {
+        const p = poOf(l.poId), n = J.logs.indexOf(l) + 1;
+        return `<div class="job">
+          <div class="sp">
+            <div><b>ครั้งที่ ${n}</b> · ${OVH2.thDate(l.date)} · ${esc(p ? p.vendor : '—')}</div>
+            <div class="meta">${esc(p ? p.poNo : '')} · ผู้ตรวจ ${esc(l.inspector)}</div>
+            <div class="mt-2">${esc(l.note)}</div>
+            ${l.files.length ? `<div class="flex flex-wrap gap-2 mt-2">${l.files.map(f => fileChip(f)).join('')}</div>` : ''}
+          </div>
+          <span class="badge ${l.progress >= 100 ? 'b-ok' : 'b-info'}">${l.progress}%</span>
+        </div>`;
+      }).join('') || '<div class="empty">ยังไม่มีบันทึกการตรวจงาน</div>'}
+    </div></div>
+    ${readOnly ? '' : `<div class="actions">
+      <button type="button" class="btn btn-g" id="btnBack2"><span class="ms">arrow_back</span> ย้อนกลับ</button>
+      <button type="button" class="btn btn-p" id="btnToAppt" ${allDone ? '' : 'disabled title="ทุก PO ต้องส่งมอบงานแล้ว"'}>นัดหมายเจ้าของรถมารับรถ</button>
+    </div>`}
+  </div>`;
+}
+function bindTrack() {
+  bindPoButtons();
+  document.querySelectorAll('[data-donepo]').forEach(b => b.onclick = () => {
+    const p = poOf(b.dataset.donepo); p.status = 'done'; p.doneAt = OVH2.today();
+    log('บริษัทส่งมอบงาน ' + p.poNo + ' — ' + p.vendor); commit('บันทึกส่งมอบงาน ' + p.poNo + ' แล้ว');
+  });
+  if ($('btnAddLog')) $('btnAddLog').onclick = openLog;
+  if ($('btnBack2')) $('btnBack2').onclick = () => { view = 2; render(); };
+  if ($('btnToAppt')) $('btnToAppt').onclick = () => { J.step = 4; view = 4; log('งานเสร็จครบทุก PO'); commit(); };
+}
+function openLog() {
+  $('lgDate').value = OVH2.today(); $('lgPct').value = ''; $('lgNote').value = ''; $('lgBy').value = ME;
+  $('lgPo').innerHTML = J.pos.map(p => `<option value="${p.id}">${esc(p.vendor)} · ${esc(p.poNo)}</option>`).join('');
+  lgFiles = []; $('lgFile').value = ''; renderLgFiles();
+  openM('mLog');
+}
+function renderLgFiles() {
+  $('lgFiles').innerHTML = lgFiles.map((f, i) => fileChip(f, `<button type="button" class="file-chip-rm" data-lgrm="${i}" aria-label="ลบไฟล์"><span class="ms">close</span></button>`)).join('');
+  $('lgFiles').querySelectorAll('[data-lgrm]').forEach(b => b.onclick = () => { lgFiles.splice(Number(b.dataset.lgrm), 1); renderLgFiles(); });
+}
+$('lgFile').onchange = () => { lgFiles = lgFiles.concat([...$('lgFile').files].map(f => f.name)); $('lgFile').value = ''; renderLgFiles(); };
+$('lgSave').onclick = () => {
+  const pct = Number($('lgPct').value);
+  if (!$('lgDate').value || !$('lgNote').value.trim() || $('lgPct').value === '' || pct < 0 || pct > 100) { toast('กรอกวันที่ · ความคืบหน้า 0–100 · ผลการตรวจ ให้ครบ'); return; }
+  J.logs.push({ id: 'L' + Date.now(), date: $('lgDate').value, poId: $('lgPo').value, progress: pct, inspector: $('lgBy').value.trim() || ME, note: $('lgNote').value.trim(), files: lgFiles.slice() });
+  log('บันทึกตรวจงานครั้งที่ ' + J.logs.length);
+  closeM('mLog'); commit('บันทึกการตรวจงานแล้ว');
+};
+
+// ── ④ นัดหมายเจ้าของรถมารับรถที่บริษัท ─────────────────────────────
+function stepAppt(readOnly) {
+  const a = J.appt;
+  if (a && a.sentAt) {
+    const p = poOf(a.poId);
+    return `<div class="card"><div class="stack">
+      <div class="sect">${a.pickedUpAt ? 'เจ้าของรถรับรถแล้ว' : 'รอเจ้าของรถมารับรถ'}</div>
+      <div class="job"><div class="sp">
+        <div>
+          <div class="no">${OVH2.thDate(a.date)} · ${esc(a.time)} น.</div>
+          <div class="meta">ที่ ${esc(p ? p.vendor : '—')}</div>
+          <div class="meta">ผู้ประสานงานบริษัท ${esc(a.contact)} · ${esc(a.tel)}</div>
+          ${a.note ? `<div class="meta">${esc(a.note)}</div>` : ''}
+        </div>
+        ${a.pickedUpAt ? `<span class="badge b-ok">รับรถแล้ว ${OVH2.thDate(a.pickedUpAt)}</span>` : '<span class="badge b-low">รอรับรถ</span>'}
+      </div></div>
+      <div class="fgrid">${ro('ผู้รับรถ (เจ้าของรถ)', V.owner) + ro('เบอร์โทร', V.ownerTel) + ro('ส่งนัดหมายเมื่อ', OVH2.thDate(a.sentAt))}</div>
+      ${readOnly || a.pickedUpAt ? '' : `
+      <div class="fgrid">
+        <div class="f sp2"><label>วันที่เจ้าของรถรับรถจริง</label>
+          <div class="in"><span class="ms">event_available</span><input type="date" id="pickDate" value="${OVH2.today()}"></div></div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-g" id="btnEditAppt">แก้นัดหมาย</button>
+        <button type="button" class="btn btn-s" id="btnRemind"><span class="ms">notifications</span> ส่งเตือนซ้ำ</button>
+        <button type="button" class="btn btn-p" id="btnPicked">บันทึกเจ้าของรถรับรถแล้ว</button>
+      </div>`}
+    </div></div>`;
+  }
+  const opts = J.pos.map(p => `<option value="${p.id}" ${a && a.poId === p.id ? 'selected' : ''}>${esc(p.vendor)}</option>`).join('');
+  return `<div class="card"><div class="stack">
+      <div class="sect">นัดหมายเจ้าของรถมารับรถ</div>
+      <div class="sub">เจ้าของรถรับรถที่บริษัทผู้รับจ้าง · วันที่รับรถจริงคือวันเริ่มนับรับประกัน</div>
+      <div class="fgrid">
+        <div class="f sp4"><label>สถานที่รับรถ (บริษัท)</label><select id="apPo">${opts}</select></div>
+        <div class="f sp2"><label>วันที่นัด</label><div class="in"><span class="ms">event</span><input type="date" id="apDate" value="${a ? a.date : ''}"></div></div>
+        <div class="f sp2"><label>เวลา</label><div class="in"><span class="ms">schedule</span><input type="time" id="apTime" value="${a ? a.time : '09:00'}"></div></div>
+        <div class="f sp2"><label>ผู้ประสานงานของบริษัท</label><div class="in"><span class="ms">person</span><input type="text" id="apContact" value="${esc(a ? a.contact : '')}" placeholder="ชื่อผู้ติดต่อที่บริษัท"></div></div>
+        <div class="f sp2"><label>เบอร์โทร</label><div class="in"><span class="ms">call</span><input type="tel" id="apTel" value="${esc(a ? a.tel : '')}" placeholder="0x-xxx-xxxx"></div></div>
+        <div class="f sp4"><label>รายละเอียดเพิ่มเติม <small>ถ้ามี</small></label><div class="in"><span class="ms">edit_note</span><input type="text" id="apNote" value="${esc(a ? a.note : '')}" placeholder="เช่น นำใบนำตัวมาด้วย"></div></div>
+        ${ro('ผู้รับรถ (เจ้าของรถ)', V.owner, 'sp2')}${ro('เบอร์โทร', V.ownerTel, 'sp2')}
+      </div>
+      ${readOnly ? '' : `<div class="actions">
+        <button type="button" class="btn btn-g" id="btnBack3"><span class="ms">arrow_back</span> ย้อนกลับ</button>
+        <button type="button" class="btn btn-p" id="btnSendAppt">ส่งนัดหมายให้เจ้าของรถ</button>
+      </div>`}
+    </div></div>`;
+}
+function bindAppt() {
+  if ($('btnBack3')) $('btnBack3').onclick = () => { view = 3; render(); };
+  if ($('btnSendAppt')) $('btnSendAppt').onclick = () => {
+    if (!$('apDate').value || !$('apTime').value || !$('apContact').value.trim()) { toast('กรอกวันที่ · เวลา · ผู้ประสานงาน ให้ครบ'); return; }
+    J.appt = { poId: $('apPo').value, date: $('apDate').value, time: $('apTime').value, contact: $('apContact').value.trim(),
+      tel: $('apTel').value.trim(), note: $('apNote').value.trim(), sentAt: OVH2.nowStamp(), pickedUpAt: '' };
+    log('ส่งนัดหมายรับรถให้เจ้าของรถ — ' + OVH2.thDate(J.appt.date) + ' ' + J.appt.time);
+    commit('ส่งนัดหมายให้ ' + V.owner + ' แล้ว');
+  };
+  if ($('btnEditAppt')) $('btnEditAppt').onclick = () => { J.appt.sentAt = ''; render(); };
+  if ($('btnRemind')) $('btnRemind').onclick = () => toast('ส่งเตือนนัดหมายถึง ' + V.owner + ' อีกครั้งแล้ว');
+  if ($('btnPicked')) $('btnPicked').onclick = () => {
+    if (!$('pickDate').value) { toast('ระบุวันที่รับรถ'); return; }
+    J.appt.pickedUpAt = $('pickDate').value; J.step = 5; view = 5;
+    log('เจ้าของรถรับรถแล้ว — ' + OVH2.thDate(J.appt.pickedUpAt));
+    commit('บันทึกการรับรถแล้ว');
+  };
+}
+
+// ── ⑤ ปิดงาน: safety inspection + รับประกัน ─────────────────────────
+function ensureSafety() {
+  if (!J.safety) J.safety = { rows: OVH2.SAFETY_ITEMS.map(label => ({ label, res: '', note: '' })), file: '', inspector: ME, warrantyDays: '' };
+  return J.safety;
+}
+function closeGate(s) {
+  if (s.rows.some(r => !r.res)) return 'ตรวจให้ครบทุกรายการ';
+  if (s.rows.some(r => r.res === 'fail')) return 'มีรายการไม่ผ่าน';
+  if (!s.file) return 'แนบใบ checklist';
+  if (!(Number(s.warrantyDays) > 0)) return 'ระบุจำนวนวันรับประกัน';
+  return '';
+}
+function stepClose(readOnly) {
+  const s = ensureSafety(), start = J.warrantyStart || (J.appt && J.appt.pickedUpAt);
+  const closed = J.step === 6, lock = readOnly || closed;
+  const end = start && Number(s.warrantyDays) > 0 ? OVH2.addDays(start, s.warrantyDays) : '';
+  const fails = s.rows.filter(r => r.res === 'fail').length, gate = closeGate(s);
+  const w = OVH2.warranty(J);
+  return `<div class="stack">
+    ${closed ? `<div class="note note-ok"><span class="ms">check_circle</span><div><b>ปิดงานแล้ว ${OVH2.thDate(J.closedAt)}</b> · รถพร้อมใช้งาน ·
+      รับประกัน ${OVH2.thDate(J.warrantyStart)} – ${OVH2.thDate(J.warrantyEnd)} (${w.text}${w.left >= 0 ? ' · เหลือ ' + w.left + ' วัน' : ''}) ·
+      แจ้งเตือนก่อนหมดประกัน ${OVH2.WARN_DAYS} วัน (${OVH2.thDate(OVH2.addDays(J.warrantyEnd, -OVH2.WARN_DAYS))})</div></div>` : ''}
+    <div class="card"><div class="stack">
+      <div class="sect">Safety Inspection Checklist</div>
+      ${lock ? '' : '<div><button type="button" class="btn btn-s btn-sm" id="btnAllPass"><span class="ms">done_all</span> ผ่านทั้งหมด</button></div>'}
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr><th>รายการตรวจ</th><th class="num">ผ่าน</th><th class="num">ไม่ผ่าน</th><th>หมายเหตุ</th></tr></thead>
+        <tbody>${s.rows.map((r, i) => `<tr>
+          <td>${i + 1}. ${esc(r.label)}</td>
+          ${['pass', 'fail'].map(v => `<td class="num"><input type="radio" name="sf${i}" value="${v}" data-sf="${i}" ${r.res === v ? 'checked' : ''} ${lock ? 'disabled' : ''}></td>`).join('')}
+          <td><input type="text" data-sfn="${i}" value="${esc(r.note)}" placeholder="ระบุหมายเหตุ" ${lock ? 'readonly' : ''}></td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+      ${fails ? `<div class="note note-warn"><span class="ms">warning</span><div>ไม่ผ่าน ${fails} รายการ — ปิดงานไม่ได้ ให้บริษัทแก้ไขแล้วตรวจซ้ำ</div></div>` : ''}
+      <div class="fgrid">
+        <div class="f sp2"><label>ใบ checklist ที่ลงนามแล้ว</label>
+          ${s.file ? `<div>${fileChip(s.file, lock ? '' : '<button type="button" class="file-chip-rm" id="sfRm" aria-label="ลบไฟล์"><span class="ms">close</span></button>')}</div>`
+            : `<label class="upload-field"><span class="ms">upload_file</span><span>เลือกไฟล์</span><input type="file" id="sfFile" accept=".pdf,image/*"></label>`}</div>
+        <div class="f sp2"><label>ผู้ตรวจ</label>
+          <div class="in"><span class="ms">person</span><input type="text" id="sfBy" value="${esc(s.inspector)}" ${lock ? 'readonly' : ''}></div></div>
+      </div>
+    </div></div>
+    <div class="card"><div class="stack">
+      <div class="sect">ระยะรับประกัน</div>
+      <div class="fgrid">
+        <div class="f"><label>จำนวนวันรับประกัน</label>
+          <div class="in"><span class="ms">verified_user</span><input type="number" min="1" id="sfDays" value="${esc(s.warrantyDays)}" placeholder="เช่น 180" ${lock ? 'readonly' : ''}></div></div>
+        ${ro('วันเริ่ม (วันที่เจ้าของรถรับรถ)', OVH2.thDate(start))}
+        ${ro('วันสิ้นสุด', end ? OVH2.thDate(end) : '—')}
+        ${ro('รวมงบประมาณ PO', baht(J.pos.reduce((a, p) => a + Number(p.amount || 0), 0)))}
+      </div>
+    </div></div>
+    ${lock ? '' : `<div class="actions">
+      <button type="button" class="btn btn-g" id="btnBack4"><span class="ms">arrow_back</span> ย้อนกลับ</button>
+      <button type="button" class="btn btn-p" id="btnClose" ${gate ? `disabled title="${gate}"` : ''}>ปิดงาน</button>
+    </div>`}
+  </div>`;
+}
+function bindClose() {
+  const s = J.safety; if (!s) return;
+  document.querySelectorAll('[data-sf]').forEach(el => el.onchange = () => { s.rows[el.dataset.sf].res = el.value; commit(); });
+  document.querySelectorAll('[data-sfn]').forEach(el => el.onchange = () => { s.rows[el.dataset.sfn].note = el.value; OVH2.save(S); });
+  if ($('btnAllPass')) $('btnAllPass').onclick = () => { s.rows.forEach(r => r.res = 'pass'); commit(); };
+  if ($('sfFile')) $('sfFile').onchange = () => { if ($('sfFile').files[0]) { s.file = $('sfFile').files[0].name; commit(); } };
+  if ($('sfRm')) $('sfRm').onclick = () => { s.file = ''; commit(); };
+  if ($('sfBy')) $('sfBy').onchange = () => { s.inspector = $('sfBy').value.trim(); OVH2.save(S); };
+  if ($('sfDays')) $('sfDays').onchange = () => { s.warrantyDays = $('sfDays').value; commit(); };
+  if ($('btnBack4')) $('btnBack4').onclick = () => { view = 4; render(); };
+  if ($('btnClose')) $('btnClose').onclick = () => {
+    const start = J.appt.pickedUpAt, end = OVH2.addDays(start, s.warrantyDays);
+    $('mCloseBd').innerHTML = `<div class="stack tight">
+      <div>Safety inspection ผ่าน ${s.rows.length}/${s.rows.length} รายการ</div>
+      <div>PO เสร็จครบ ${J.pos.length} ใบ · รวม ${baht(J.pos.reduce((a, p) => a + Number(p.amount || 0), 0))}</div>
+      <div>รับประกัน ${s.warrantyDays} วัน · ${OVH2.thDate(start)} – ${OVH2.thDate(end)}</div>
+      <div>สถานะรถจะเปลี่ยนเป็น <span class="badge b-ok">พร้อมใช้งาน</span></div>
+    </div>`;
+    openM('mClose');
+  };
+}
+$('closeOk').onclick = () => {
+  const s = J.safety;
+  J.warrantyStart = J.appt.pickedUpAt; J.warrantyEnd = OVH2.addDays(J.warrantyStart, s.warrantyDays);
+  J.closedAt = OVH2.today(); J.step = 6; view = 5;
+  log('ปิดงาน — ผ่าน safety inspection · รับประกัน ' + s.warrantyDays + ' วัน · รถพร้อมใช้งาน');
+  closeM('mClose'); commit('ปิดงานแล้ว — รถพร้อมใช้งาน');
+};
+
+// ── ประวัติการซ่อมย้อนหลัง — คอลัมน์ตาม vehHistoryTable() ของหน้ารับงานซ่อม (mock/Maintenance-Request-Form.html) ──
+function renderRepairHist() {
+  const rows = (OVH2.REPAIRS[V.id] || []).slice();
+  // งาน Overhaul ที่ปิดแล้วของรถคันนี้ ขึ้นในประวัติด้วย
+  if (J.step === 6) rows.unshift({ no: J.jobNo, date: J.closedAt, syms: ['Overhaul'], detail: J.pos.flatMap(p => p.items).join(' · '),
+    parts: (J.parts && !J.partsSkipped ? J.parts.map(p => [p.name, p.qty, p.unit]) : []), by: [...new Set(J.pos.map(p => p.vendor))].join(', ') || 'กบค.', hours: 0, odo: 0 });
+  rows.sort((a, b) => b.date.localeCompare(a.date));
+  const byBadge = b => `<span class="badge ${/อู่|บจก|หจก/.test(b) ? 'b-low' : /กบค|กรย/.test(b) ? 'b-brand' : 'b-ok'}">${esc(b)}</span>`;
+  const num = n => n ? Number(n).toLocaleString('th-TH') : '';
+  $('repairHist').innerHTML = `<div class="sect">ประวัติการซ่อม</div>` + (rows.length ? `
+    <div class="sub">ทั้งหมด ${rows.length} ครั้ง · ล่าสุด ${OVH2.thDate(rows[0].date)}</div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>เลขที่ใบแจ้งซ่อม · วันที่</th><th>อาการเสีย</th><th>อะไหล่ที่ใช้</th><th>ผู้ซ่อม</th><th class="num">ชั่วโมงใช้งาน</th><th class="num">เลขไมล์</th></tr></thead>
+      <tbody>${rows.map(x => `<tr>
+        <td><span class="cell-key">${esc(x.no)}</span><div class="cell-sub">${OVH2.thDate(x.date)}</div></td>
+        <td>${esc(x.syms.join(', '))}${x.detail ? `<div class="cell-sub">${esc(x.detail)}</div>` : ''}</td>
+        <td>${x.parts.length ? x.parts.map(p => `<div>${esc(p[0])} ×${p[1]} ${esc(p[2])}</div>`).join('') : '<span class="cell-sub">ไม่ได้ใช้อะไหล่</span>'}</td>
+        <td>${byBadge(x.by)}</td>
+        <td class="num">${x.hours ? num(x.hours) + ' ชม.' : '—'}</td>
+        <td class="num">${x.odo ? num(x.odo) + ' กม.' : '—'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>` : '<div class="empty">ไม่พบประวัติการซ่อมย้อนหลังของรถคันนี้</div>');
+}
+
+// ── ประวัติ ─────────────────────────────────────────────────────────
+function renderHist() {
+  $('hist').innerHTML = '<div class="sect">ประวัติการดำเนินการ</div>' + (J.history.slice().reverse().map(h => `
+    <div class="job"><div class="sp"><div>${esc(h.text)}</div><div class="meta">${OVH2.thDate(h.at)}</div></div></div>`).join('') || '<div class="empty">ยังไม่มีประวัติ</div>');
+}
+document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('[data-tab]').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b); });
+  $('tabFlow').classList.toggle('hidden', b.dataset.tab !== 'flow');
+  $('tabHist').classList.toggle('hidden', b.dataset.tab !== 'hist');
+  $('tabRepair').classList.toggle('hidden', b.dataset.tab !== 'repair');
+});
+
+// ── render ─────────────────────────────────────────────────────────
+function render() {
+  renderHead(); renderStart(); renderRepairHist(); renderHist();
+  if (!J.step) return;
+  renderSteps();
+  const readOnly = view < J.step;
+  const [html, bind] = [[stepParts, bindParts], [stepPo, bindPo], [stepTrack, bindTrack], [stepAppt, bindAppt], [stepClose, bindClose]][view - 1];
+  $('panel').innerHTML = html(readOnly);
+  bind();
+}
+render();
+</script>
+</body>
+</html>

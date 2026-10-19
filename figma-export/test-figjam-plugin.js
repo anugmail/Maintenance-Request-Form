@@ -49,6 +49,7 @@ class MNode {
       this.shapeType = 'SQUARE';
       this.text = textSublayer();          // default Inter Medium — จำลองกติกา unloaded font
     }
+    if (type === 'STICKY') { this.text = textSublayer(); this.width = 240; this.height = 240; }
     if (type === 'CONNECTOR') {
       this.connectorStart = null; this.connectorEnd = null;
       this.connectorStartStrokeCap = 'NONE'; this.connectorEndStrokeCap = 'ARROW_LINES';
@@ -70,8 +71,9 @@ class MNode {
 }
 
 const page = new MNode('PAGE');
-// จำลองรูปที่เคยอัปโหลดค้างไว้ 3 ใบ — ปลั๊กอินต้องเก็บกวาด
-for (let i = 0; i < 3; i++) page.appendChild(new MNode('MEDIA'));
+// จำลองรูปที่เคยอัปโหลดค้างไว้ 3 ใบ — ปลั๊กอินต้องเก็บกวาด (เฉพาะเมื่อ spec มี section รูป)
+// วางไว้ที่ y 0–2000 จะได้ใช้เช็ค anchor:'below' ด้วย (บอร์ดจริงมีงานคนอื่นอยู่ก่อน)
+for (let i = 0; i < 3; i++) { const m = new MNode('MEDIA'); m.y = i * 900; m.x = -500; page.appendChild(m); }
 
 const notifications = [];
 const figma = {
@@ -93,6 +95,7 @@ const figma = {
   },
   createText() { const n = new MNode('TEXT'); page.appendChild(n); return n; },
   createConnector() { const n = new MNode('CONNECTOR'); page.appendChild(n); return n; },
+  createSticky() { const n = new MNode('STICKY'); page.appendChild(n); return n; },
   createShapeWithText() { const n = new MNode('SHAPE_WITH_TEXT'); page.appendChild(n); return n; },
   createImage(bytes) {
     if (!(bytes instanceof Uint8Array) || !bytes.length) throw new Error('bytes เพี้ยน');
@@ -127,8 +130,25 @@ const ok = (m) => console.log('✓ ' + m);
   r.shapes === wantShapes ? ok('รูป ' + r.shapes) : fail('รูปได้ ' + r.shapes + ' คาด ' + wantShapes);
   r.connectors === wantConn ? ok('ลูกศร ' + r.connectors) : fail('ลูกศรได้ ' + r.connectors + ' คาด ' + wantConn);
 
-  page.children.filter(n => n.type === 'MEDIA').length === 0
-    ? ok('MEDIA เร่ร่อนถูกเก็บกวาด') : fail('MEDIA ค้าง');
+  /* MEDIA: spec ที่มีรูป → เก็บกวาดรูปค้าง · spec ผังล้วน → ห้ามแตะ (เป็นรูปที่คนวางเองบนบอร์ด) */
+  const hasImages = spec.sections.some(s => Array.isArray(s.cols));
+  const nMedia = page.children.filter(n => n.type === 'MEDIA').length;
+  if (hasImages) nMedia === 0 ? ok('MEDIA เร่ร่อนถูกเก็บกวาด') : fail('MEDIA ค้าง');
+  else nMedia === 3 ? ok('ผังล้วน — ไม่แตะ MEDIA ของคนอื่น (เหลือ 3)') : fail('ผังล้วนแต่ลบ MEDIA ไป ' + (3 - nMedia));
+
+  if (spec.anchor === 'below' && !hasImages) {
+    const secs = page.children.filter(n => n.type === 'SECTION');
+    secs.every(s => s.y >= 1900 + 100 && s.x === -500)
+      ? ok('anchor below — วางใต้ของเดิม ชิดซ้ายเท่าของเดิม') : fail('anchor below วางทับของเดิม');
+  }
+
+  const wantSticky = diagSecs.reduce((a, s) => a + (s.diagram.stickies || []).length, 0);
+  if (wantSticky) {
+    const st = [];
+    page.children.filter(n => n.type === 'SECTION').forEach(s => st.push(...s.children.filter(c => c.type === 'STICKY')));
+    st.length === wantSticky && st.every(k => k.text.characters)
+      ? ok('sticky ' + st.length + ' ใบ มีข้อความครบ') : fail('sticky ได้ ' + st.length + ' คาด ' + wantSticky);
+  }
 
   // ป้ายชื่อครบทุกคอลัมน์ และอยู่ใน section
   // ชื่อเลนถูกรวมเข้า group แล้ว (15 ก.ย. 2569) ⇒ ต้องไล่ลูกลึกลงไป ไม่ใช่แค่ชั้นเดียว
@@ -152,7 +172,8 @@ const ok = (m) => console.log('✓ ' + m);
        (เกณฑ์เดิม >= 3 ชนิด ตั้งไว้ตอนมีแต่ผัง mermaid ที่มี decision diamond
         พอมี swimlane ที่ใช้แค่ process + circle/stadium เทสก็ตกทั้งที่ถูกต้อง — เจอ 15 ก.ย. 2569) */
     const SHAPE_OF = { process: 'ROUNDED_RECTANGLE', decision: 'DIAMOND', stadium: 'ELLIPSE',
-                       subroutine: 'SQUARE', circle: 'ELLIPSE' };
+                       subroutine: 'SQUARE', circle: 'ELLIPSE',
+                       end: 'ELLIPSE', action: 'ELLIPSE', display: 'SQUARE' };
     const wantKinds = new Set(diagSecs.flatMap(s => s.diagram.nodes.map(n => SHAPE_OF[n.kind] || 'ROUNDED_RECTANGLE')));
     const gotKinds = new Set(diagShapes.map(sh => sh.shapeType));
     const missing = [...wantKinds].filter(k => !gotKinds.has(k));
