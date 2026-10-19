@@ -1,0 +1,161 @@
+/* ============================================================
+   Overhaul v2 (Next.js) — Tailwind 4 theme ที่ชี้ token ของ design system
+   - ค่าทุกตัวอยู่ที่ src/styles/tokens.css (ก๊อปจาก design-system/tokens.css 19 ต.ค. 2569)
+   - @theme inline ⇒ utility เช่น bg-brand-900 ออกมาเป็น var(--brand-900) ตรงๆ (แก้สีที่ tokens ที่เดียว)
+   - ล้าง palette/ขนาด/รัศมี/เงา ตั้งต้นของ Tailwind ทิ้ง (initial) ⇒ ใช้ได้เฉพาะค่าจาก token
+     กันเผลอใช้ bg-red-500 / text-2xl ที่ไม่มีในไลบรารี
+   - ชื่อ token ที่ชนกับ namespace ของ Tailwind (--shadow-xs, --color-text-primary ฯลฯ)
+     ตั้งชื่อใหม่ในธีม (shadow-field, shadow-float) เพื่อไม่ให้ var อ้างตัวเองวนลูป
+   - light เท่านั้น ไม่มี dark mode
+   ============================================================ */
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+@theme inline {
+  /* ---------- สี: primitive ทั้งหมดจาก tokens.css ---------- */
+  --color-*: initial;
+  --color-white: #fff;
+  --color-black: #000;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-brand-950: var(--brand-950);
+  --color-brand-925: var(--brand-925);
+  --color-brand-900: var(--brand-900);
+  --color-brand-800: var(--brand-800);
+  --color-brand-700: var(--brand-700);
+  --color-brand-600: var(--brand-600);
+  --color-brand-500: var(--brand-500);
+  --color-brand-400: var(--brand-400);
+  --color-brand-300: var(--brand-300);
+  --color-brand-200: var(--brand-200);
+  --color-brand-100: var(--brand-100);
+  --color-brand-50: var(--brand-50);
+  --color-brand-25: var(--brand-25);
+  --color-brand-accent: var(--brand-accent);
+
+  --color-gray-950: var(--gray-950);
+  --color-gray-900: var(--gray-900);
+  --color-gray-800: var(--gray-800);
+  --color-gray-700: var(--gray-700);
+  --color-gray-600: var(--gray-600);
+  --color-gray-500: var(--gray-500);
+  --color-gray-400: var(--gray-400);
+  --color-gray-300: var(--gray-300);
+  --color-gray-200: var(--gray-200);
+  --color-gray-100: var(--gray-100);
+  --color-gray-50: var(--gray-50);
+  --color-gray-25: var(--gray-25);
+  --color-gray-dark-50: var(--gray-dark-50);
+  --color-gray-dark-300: var(--gray-dark-300);
+  --color-gray-dark-600: var(--gray-dark-600);
+
+  --color-success-700: var(--success-700);
+  --color-success-600: var(--success-600);
+  --color-success-500: var(--success-500);
+  --color-success-200: var(--success-200);
+  --color-success-50: var(--success-50);
+  --color-warning-800: var(--warning-800);
+  --color-warning-700: var(--warning-700);
+  --color-warning-600: var(--warning-600);
+  --color-warning-200: var(--warning-200);
+  --color-warning-50: var(--warning-50);
+  --color-error-700: var(--error-700);
+  --color-error-600: var(--error-600);
+  --color-error-500: var(--error-500);
+  --color-error-300: var(--error-300);
+  --color-error-200: var(--error-200);
+  --color-error-50: var(--error-50);
+  --color-info-700: var(--info-700);
+  --color-info-600: var(--info-600);
+  --color-info-200: var(--info-200);
+  --color-info-100: var(--info-100);
+  --color-info-50: var(--info-50);
+
+  /* component token (ชื่อตามไลบรารีจริง) */
+  --color-badge-brand-bg: var(--badge-brand-bg);
+  --color-badge-brand-border: var(--badge-brand-border);
+  --color-badge-neutral-text: var(--badge-neutral-text);
+  --color-badge-neutral-border: var(--badge-neutral-border);
+  --color-btn-primary-bg: var(--btn-primary-bg);
+  --color-btn-primary-bg-hover: var(--btn-primary-bg-hover);
+  --color-btn-primary-border: var(--btn-primary-border);
+  --color-btn-primary-border-hover: var(--btn-primary-border-hover);
+  --color-btn-primary-text: var(--btn-primary-text);
+  --color-btn-secondary-text: var(--btn-secondary-text);
+  --color-btn-secondary-border: var(--btn-secondary-border);
+  --color-btn-tertiary-text: var(--btn-tertiary-text);
+  --color-btn-tertiary-brand-text: var(--btn-tertiary-brand-text);
+  --color-btn-tertiary-danger-text: var(--btn-tertiary-danger-text);
+  --color-btn-disabled-bg: var(--btn-disabled-bg);
+  --color-btn-disabled-text: var(--btn-disabled-text);
+  --color-btn-destructive-bg: var(--btn-destructive-bg);
+  --color-btn-destructive-bg-hover: var(--btn-destructive-bg-hover);
+  --color-btn-destructive-text: var(--btn-destructive-text);
+
+  /* ---------- ตัวอักษร: สเกล 12/14/16 ของไลบรารี + หัวข้อ ---------- */
+  --text-*: initial;
+  --text-xs: var(--fs-text-xs);
+  --text-xs--line-height: var(--lh-text-xs);
+  --text-sm: var(--fs-text-sm);
+  --text-sm--line-height: var(--lh-text-sm);
+  --text-md: var(--fs-text-md);
+  --text-md--line-height: var(--lh-text-md);
+  --text-lg: var(--fs-h1);            /* 20/30 — Section header · Modal/Bottom sheet title */
+  --text-lg--line-height: 30px;
+  --text-title: 32px;                 /* .page-title — Page header Title 32/600/48 (components.css) */
+  --text-title--line-height: 48px;
+  --text-title-m: 22px;               /* .page-title บนมือถือ (components.css @media ≤768) */
+  --text-title-m--line-height: 32px;
+
+  /* ---------- รัศมี ---------- */
+  --radius-*: initial;
+  --radius-xs: var(--rounded-xs);     /* 4  Checkbox · Badge outline · Table pagination item */
+  --radius-sm: var(--rounded-sm);     /* 6 */
+  --radius-md: var(--rounded-md);     /* 8  ปุ่ม/ช่องกรอก/การ์ด */
+  --radius-lg: var(--rounded-lg);     /* 12 Modal · Notification · filter-empty (--r-md) */
+  --radius-xl: var(--r-lg);           /* 16 */
+  --radius-sheet: 24px;               /* ✔ Bottom sheet › Sheet r[24,24,0,0] ของไลบรารี (tokens.css ยังไม่มีค่านี้) */
+
+  /* ---------- เงา (ตั้งชื่อใหม่ กันชน --shadow-xs ของ tokens) ---------- */
+  --shadow-*: initial;
+  --shadow-field: var(--shadow-xs);
+  --shadow-float: var(--shadow-pop);
+  --shadow-shell: var(--shadow-app);
+  --shadow-ring: 0 0 0 4px var(--focus-ring);
+  --shadow-ring-error: 0 0 0 4px var(--focus-ring-error);
+  --shadow-field-focus: var(--shadow-xs), 0 0 0 4px var(--focus-ring);
+  --shadow-field-focus-error: var(--shadow-xs), 0 0 0 4px var(--focus-ring-error);
+  --shadow-side: 12px 0 30px color-mix(in srgb, var(--gray-900) 14%, transparent);   /* .side.wide:hover */
+
+  /* ---------- การเคลื่อนไหว ---------- */
+  --animate-sheet-up: sheet-up 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-drawer-in: drawer-in 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-drawer-left: drawer-left 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-spin-fast: spin 0.6s linear infinite;   /* .btn.is-loading */
+
+  @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  @keyframes drawer-left { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+  @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes spin { to { transform: rotate(1turn); } }
+}
+
+/* ฟอนต์ไม่ใช้ inline (preflight อ่าน --font-sans เป็น var จริง) */
+@theme {
+  --font-*: initial;
+  --font-sans: var(--font);
+}
+
+@layer base {
+  /* body พื้นขาว ตัวอักษรดำ ตามหน้าจอ UI Release#2 (components.css .body) — light เท่านั้น */
+  html { color-scheme: light; }
+  body {
+    background-color: #fff;
+    color: #000;
+    font-family: var(--font);
+    font-size: var(--fs-body);
+    line-height: var(--lh);
+  }
+}

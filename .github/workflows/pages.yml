@@ -34,6 +34,30 @@ jobs:
           done
           echo "ไฟล์ทั้งหมดที่จะ deploy: $(find . -type f -not -path './.git/*' | wc -l) ไฟล์"
 
+      # ต้นแบบ Next.js "จัดการงาน Overhaul" 14 scenario (19 ต.ค. 2569) — build เป็น static แล้ววางที่ /overhaul-v2-app/
+      # build พังไม่ให้ทั้ง deploy ล้ม (หน้า mock อื่นของทีมยังขึ้นตามปกติ) แต่ขึ้นคำเตือนใน log
+      - uses: actions/setup-node@v4
+        if: hashFiles('overhaul-next/package-lock.json') != ''
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: overhaul-next/package-lock.json
+
+      - name: build ต้นแบบ Next.js → overhaul-v2-app/
+        if: hashFiles('overhaul-next/package-lock.json') != ''
+        continue-on-error: true
+        run: |
+          set -e
+          cd overhaul-next
+          npm ci
+          NEXT_PUBLIC_BASE_PATH=/${{ github.event.repository.name }}/overhaul-v2-app npm run build || { echo "::warning::build overhaul-next ไม่ผ่าน — ข้ามการ deploy ต้นแบบ Next.js รอบนี้"; exit 1; }
+          cd ..
+          rm -rf overhaul-v2-app && cp -r overhaul-next/out overhaul-v2-app
+
+      - name: ไม่อัปโหลดของ build ของ Next.js
+        if: always()
+        run: rm -rf overhaul-next/node_modules overhaul-next/.next overhaul-next/out
+
       - uses: actions/configure-pages@v5
 
       # อัปโหลดทั้ง repo ตามที่เป็น — ไม่ผ่าน Jekyll จึงไม่มีขั้นแปลงไฟล์

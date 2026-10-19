@@ -1,0 +1,227 @@
+/* ============================================================
+   ก๊อปมาจาก design-system/tokens.css (19 ต.ค. 2569) — ห้ามแก้ไฟล์นี้มือ
+   แหล่งความจริงยังอยู่ที่ design-system/tokens.css ของรีโปนี้ แก้ที่นั่นแล้วก๊อปทับใหม่
+   (Tailwind theme ใน src/app/globals.css ชี้ CSS var ในไฟล์นี้ทั้งหมด ไม่ใส่ค่าสีซ้ำ)
+   ============================================================ */
+/* ============================================================
+   Maintain-D Design Tokens
+   ที่มาของค่า (อัปเดต 3 ก.ย. 2569 — ยึดไลบรารีชุดใหม่ที่เจ้าของงานเคาะ 1 ก.ย. 2569):
+     ✔ = ยืนยันว่ามีใช้จริงในไลบรารี "(Component) VMS Plus" (VmOC07pKEsDkHZagOgcSU2)
+         — คำว่า "ไลบรารีใหม่" ในคอมเมนต์รายบรรทัดหมายถึงไฟล์นี้ · ตรวจซ้ำด้วย verify-tokens.js
+     ✅ = วัดจากระบบจริง vmsplus-dev (runtime เหนือ Figma — เจ้าของงานเคาะ 14 ส.ค. 2569)
+     ⚠ = ไม่พบทั้งในไลบรารีและ runtime — เป็นค่าที่เราใส่เอง
+   (ไฟล์เก่า EXT_PEA_VMS_v1.0.2_Component เลิกใช้แล้ว 1 ก.ย. 2569)
+   แก้สีที่ไฟล์นี้ไฟล์เดียว — ห้าม hardcode สีในหน้าจอ
+   ============================================================ */
+:root{
+
+  /* ══════════ ชั้น 1 · PRIMITIVE ══════════ */
+
+  /* ---------- Brand (magenta PEA) ----------
+     🔴 เลขสเกลยึดตาม "แอปจริง" vms-plus-uat.odds.team/maintain-d (23 ก.ย. 2569)
+     เดิมเลขของเราเลื่อนจากของจริง 300 ระดับ (ของเรา brand-600 = ของจริง brand-900)
+     ⇒ ก๊อป class จากแอปจริง เช่น bg-brand-900 มาวางแล้วสีหายเงียบๆ
+     ตารางแปลงเลขเก่า→ใหม่อยู่ที่ design-system/README.md หัวข้อ 8 (v0.64)
+     ค่าสีไม่มีตัวไหนเปลี่ยน — เปลี่ยนแค่ชื่อ                                          */
+  --brand-950:#74045F;     /* ✔ component/button/primary-bg-hover              (เดิม --brand-800) */
+  --brand-925:#8A0570;     /* ⚠ ไม่มีทั้งในไลบรารีและสเกลแอปจริง — ค่ากลางที่เราใส่เอง
+                              ตั้งเลข 925 คาบไว้ระหว่าง 900 กับ 950 เพื่อไม่ชนสเกลจริง (เดิม --brand-700) */
+  --brand-900:#A80689;     /* ✔ component/button/primary-bg — สีหลัก              (เดิม --brand-600) */
+  --brand-800:#CF07AA;     /* ✔ ไลบรารีใช้ 841 ครั้ง · gradient header + hover ปุ่ม   (เดิม --brand-500) */
+  --brand-700:#F712CC;     /* ✅ สเกลแอปจริง — ไลบรารี Figma ไม่มี · ต้นแบบยังไม่ได้ใช้ */
+  --brand-600:#F835D3;     /* ✅ สเกลแอปจริง — ไลบรารี Figma ไม่มี · ต้นแบบยังไม่ได้ใช้ */
+  --brand-500:#FA6BDF;     /* ✅ สเกลแอปจริง — ไลบรารี Figma ไม่มี · ต้นแบบยังไม่ได้ใช้ */
+  --brand-400:#FB8EE7;     /* ✅ สเกลแอปจริง — ไลบรารี Figma ไม่มี · ต้นแบบยังไม่ได้ใช้ */
+  --brand-300:#FDBAF0;     /* ✅ สเกลแอปจริง — ไลบรารี Figma ไม่มี · ต้นแบบยังไม่ได้ใช้ */
+  --brand-200:#FED8F6;     /* ✔ ขอบ Pill outline (Color=Brand) · ใช้ 265 ครั้ง   (เดิม --brand-100/200 ซ้ำค่า ยุบเหลือตัวเดียว) */
+  --brand-100:#FEEBFB;     /* ✔ โทนรองของแบรนด์ (19 ครั้ง)                     (เดิม --brand-50) */
+  --brand-50:#FFF5FD;      /* ✔ พื้น Pill outline (Color=Brand) · Featured icon · 350 ครั้ง (เดิม --brand-25) */
+  --brand-25:#FFFAFE;      /* ✅ สเกลแอปจริง — ไลบรารี Figma ไม่มี (เดิมเราใช้ชื่อนี้กับ #FFF5FD) */
+  --brand-accent:#F5A623;  /* ⚠ ไม่พบในไลบรารี — ส้มในโลโก้ M(D) คนละแหล่ง ใช้เฉพาะโลโก้ */
+
+  /* ---------- Gray (Untitled UI v1 — ramp ที่ "ระบบจริง" ใช้) ----------
+     🔴 14 ส.ค. 2569 เจ้าของงานเคาะ: ยึด runtime จริงเหนือ Figma library
+     หลังพบว่าสองแหล่งขัดกันทั้งแถบ — Figma = v2 (#717680/#D5D7DA/…) · ระบบจริง = v1
+     ทุกค่าที่กำกับ ✅ วัดจาก vmsplus-dev (ดู .vms-runtime/palette.json)
+     v0.12 เคยย้ายไป v2 ตาม Figma — v0.13 ย้อนกลับมา v1 ตามของจริง           */
+  --gray-950:#0C111D;       /* ✔ ไลบรารีใหม่ — Container · Table cell (397 ครั้ง) */
+  --gray-900:#161B26;       /* ✔ ไลบรารีใหม่ — ตัวอักษร Secondary button · Table cell (157 ครั้ง) */
+  --gray-800:#1F242F;       /* ✔ ไลบรารีใหม่ — Featured icon · swatch (94 ครั้ง) */
+  --gray-700:#344054;      /* ✅ runtime — ตัวอักษร pill "ยกเลิก" */
+  --gray-600:#475467;      /* ✅ runtime — ตัวอักษรปุ่มรอง · ไอคอน topbar (370 ครั้ง) */
+  --gray-500:#667085;      /* ✅ runtime — ไอคอน sidebar · แท็บที่ไม่ได้เลือก (210 ครั้ง) */
+  --gray-400:#98A2B3;      /* ✅ runtime — ตัวอักษร disabled */
+  --gray-300:#D0D5DD;      /* ✅ runtime — ขอบ input/ปุ่มรอง/pagination (222 ครั้ง) */
+  --gray-200:#EAECF0;      /* ✅ runtime — เส้นใต้แถวตาราง · ขอบ sidebar (495 ครั้ง) */
+  --gray-100:#F2F4F7;      /* ✅ runtime — พื้นหัวตาราง · พื้นปุ่ม disabled (98 ครั้ง) */
+  --gray-50:#F9FAFB;       /* ✅ runtime — พื้น form-card-body (276 ครั้ง) */
+  --gray-25:#FEFEFE;        /* ✔ ไลบรารีใหม่ (194 ครั้ง — อยู่ใน swatch เป็นหลัก) */
+  /* 🆕 v0.70 (18 ต.ค. 2569) gray โหมดมืด — ใช้เฉพาะ `Notification` (ไฟล์ Component หน้า Notifications 1873-44383)
+     กล่องพื้น gray-950 · ขอบ #61646C · หัวข้อ #F5F5F6 · ข้อความรอง/ไอคอนปิด #CECFD2 */
+  --gray-dark-50:#F5F5F6;   /* ✔ Notification · Text */
+  --gray-dark-300:#CECFD2;  /* ✔ Notification · Supporting text + ปุ่มปิด */
+  --gray-dark-600:#61646C;  /* ✔ Notification · ขอบกล่อง */
+
+  /* ---------- Semantic palette ---------- */
+  --success-700:#067647;    /* ✔ ไลบรารีใหม่ — ตัวอักษรสถานะสำเร็จ (24 ครั้ง) */
+  --success-600:#17B26A;   /* ✅ runtime — badge-indicator badge-success · ตรงกับ Figma พอดี */
+  --success-500:#079455;   /* ✔ node 3:16 Progress steps + 3:12 Metrics — ไม่พบใน runtime แต่ไม่ขัดกัน */
+  --success-200:#ABEFC6;    /* ✔ ไลบรารีใหม่ — Pill outline Color=Success (32 ครั้ง) */
+  --success-100:#DCFAE6;    /* ⚠ ไลบรารีใหม่ไม่มีโทนนี้ — ของเราเอง (ไม่ได้ใช้ในโปรเจกต์) */
+  --success-50:#ECFDF3;    /* ✔ node 1:1377 Badges — ยังใช้ที่อื่น · พื้น badge ให้ใช้ --success-25 */
+  --success-25:#F6FEF9;     /* ⚠ ไลบรารีใหม่ไม่มีโทนนี้ — ของเราเอง */
+  --warning-800:#93370D;    /* ✔ ไลบรารีใหม่ */
+  --warning-700:#B54708;   /* ✔ ยืนยันจากไลบรารี ใช้ 52 ครั้ง */
+  --warning-600:#F79009;   /* ✔ ยืนยันจากไลบรารี ใช้ 48 ครั้ง */
+  --warning-200:#FEDF89;   /* ✔ ยืนยันจากไลบรารี ใช้ 58 ครั้ง */
+  --warning-50:#FFFAEB;    /* ✔ ยืนยันจากไลบรารี ใช้ 46 ครั้ง */
+  --error-700:#B42318;     /* ✔ ยืนยันจากไลบรารี ใช้ 148 ครั้ง · ใช้เป็น destructive hover — ยังไม่ยืนยัน */
+  --error-600:#D92D20;     /* ✔ component/button/destructive-primary-bg */
+  --error-500:#F04438;     /* ✔ ยืนยันจากไลบรารี ใช้ 368 ครั้ง */
+  --error-300:#FDA29B;     /* ✔ เส้นขอบช่องกรอก state error (104 ครั้ง) */
+  --error-200:#FECDCA;     /* ✔ ยืนยันจากไลบรารี ใช้ 66 ครั้ง */
+  --error-50:#FEF3F2;      /* ✔ ยืนยันจากไลบรารี ใช้ 118 ครั้ง */
+  --info-700:#3538CD;      /* ✅ runtime — ตัวอักษร badge info ("บันทึกการเดินทาง") */
+  --info-600:#6172F3;      /* ✅ runtime — จุดสถานะสีน้ำเงินในตาราง · ตรงกับ Figma พอดี */
+  --info-200:#C7D7FE;      /* ✔ ยืนยันจากไลบรารี ใช้ 72 ครั้ง */
+  --info-100:#EEF4FF;       /* ✔ ไลบรารีใหม่ — Pill outline Color=Info · Featured icon (51 ครั้ง) */
+  --info-50:#EEF4FF;       /* ✔ ยืนยันจากไลบรารี ใช้ 72 ครั้ง · พื้นอ่อนของ info */
+  --info-25:#F5F8FF;       /* ⚠ ไม่พบในไลบรารี */
+
+  /* ---------- Badge (วัดจาก runtime — pill outline) ✅ ทั้งบล็อก ----------
+     ระบบจริงใช้ ramp แบรนด์อ่อนคนละชุดกับ Figma สำหรับ badge โดยเฉพาะ
+     (Figma: พื้น #FDEEFC ขอบ #F8BFF4 · runtime: พื้น #FFF5FD ขอบ #FED8F6)  */
+  --badge-brand-bg:#FFF5FD;        /* ✅ runtime — พื้น badge แบรนด์ (ชิปนับบนแท็บ) */
+  --badge-brand-border:#FED8F6;    /* ✅ runtime — ขอบ badge แบรนด์ */
+  --badge-neutral-text:var(--gray-700);
+  --badge-neutral-bg:var(--gray-25);
+  --badge-neutral-border:#E4E7EC;  /* ✅ runtime — ขอบ pill "ยกเลิก" · ขอบล่าง topbar (ไม่ตรง gray-200) */
+
+  /* ---------- Secondary (น้ำเงิน การ์ดรอง) ---------- */
+  --secondary-700:#15409A; /* ⚠ ไม่พบในไลบรารี */
+  --secondary-600:#172B85;  /* ⚠ ไลบรารีใหม่ไม่มีสีน้ำเงิน UI (ที่เจอเป็นสีเส้นบอกระยะในไฟล์) — ของเราเอง ใช้กับ .tile-blue */
+  --secondary-50:#EEF3FF;  /* ⚠ ไม่พบในไลบรารี (ที่พบใกล้สุดคือ #EEF4FF = --info-50) */
+
+  /* ---------- Chart palette (ramp แบรนด์สำหรับกราฟ) ✔ ทั้งชุด ----------
+     ยกจาก node 3:11 "↳ Charts" ของไลบรารีจริง — เรียงจากอ่อนไปเข้ม
+     ⚠️ #E134C1 เป็น "สีกราฟ" ไม่ใช่สีแบรนด์ อย่าเอาไปใช้กับปุ่ม/ลิงก์ */
+  --chart-1:#FDEEFC;        /* ⚠ ไลบรารีใหม่ไม่มีหน้า Charts — ของเราเอง (ยังไม่ได้ใช้) */
+  --chart-2:#F8BFF4;        /* ⚠ ไลบรารีใหม่ไม่มีหน้า Charts — ของเราเอง (ยังไม่ได้ใช้) */
+  --chart-3:#EF82E1;        /* ⚠ ไลบรารีใหม่ไม่มีหน้า Charts — ของเราเอง (ยังไม่ได้ใช้) */
+  --chart-4:#E134C1;        /* ⚠ ไลบรารีใหม่ไม่มีหน้า Charts — ของเราเอง (ยังไม่ได้ใช้) */
+  --chart-5:#A80689;        /* ✔ = brand-900 */
+  --chart-6:#74045F;        /* ✔ = brand-950 */
+
+  /* ---------- Space scale (ฐาน 4px มีครึ่งขั้น) ✔ ทั้งชุด ---------- */
+  --space-0_5:2px;
+  --space-1:4px;
+  --space-1_5:6px;
+  --space-2:8px;
+  --space-2_5:10px;
+  --space-3:12px;
+  --space-3_5:14px;
+  --space-4:16px;
+  --space-4_5:18px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-8:32px;          /* 🆕 v0.66 — ระยะระหว่างส่วนใน modal "สรุปรายการอะไหล่" (วัดจาก figma/สรุปรายการอะไหล่.svg) */
+
+  /* ---------- Radius ---------- */
+  --rounded-xs:4px;        /* ✔ ไลบรารีใหม่ 1 ก.ย. 2569 — กล่อง Checkbox (r4) · ใช้ 1,585 ครั้ง */
+  --rounded-sm:6px;         /* ⚠ ไลบรารีใหม่ไม่มี 6px (สเกลจริง 4/8/12/16/9999) — เหลือใช้ที่ .chip ซึ่งเป็นของเราเอง */
+  --rounded-md:8px;        /* ✔ รัศมีปุ่ม/อินพุต */
+  --rounded-lg:12px;       /* ✔ ไลบรารีใหม่ — Modal r12 (สเกลจริง 4/8/12/16/9999) */
+  --r-sm:8px;              /* alias เดิม = rounded-md */
+  --r-md:12px;             /* ~ การ์ดย่อย, รายการ */
+  --r-lg:16px;             /* ~ การ์ดหลัก, tile */
+  --r-pill:9999px;         /* ✅ runtime — ค่าที่ระบบจริงใช้จริง (เดิมเราใส่ 99px ซึ่งกลมเท่ากันแต่ไม่ตรงตัวเลข) */
+
+  /* ---------- Typography ---------- */
+  /* ฟอนต์ไลบรารีจริงคือ Google Sans (✔) — เราคง IBM Plex Sans Thai
+     ไว้เพราะต้องรองรับภาษาไทย ส่วนขนาด/line-height ใช้ตามไลบรารี   */
+  --font:'IBM Plex Sans Thai',sans-serif;
+  --font-body-figma:'Google Sans',sans-serif;   /* ✔ อ้างอิงเฉยๆ ไม่ได้ใช้ */
+
+  --fs-text-xs:12px;   --lh-text-xs:18px;   /* ✔ badge sm / หัวตาราง (12/18 ใช้ ~1,500 ครั้ง) */
+  --fs-text-sm:14px;   --lh-text-sm:20px;   /* ✔ ใช้กับปุ่ม sm/md · label · hint (14/20 ใช้ ~6,900 ครั้ง) */
+  --fs-text-md:16px;   --lh-text-md:24px;   /* ✔ ใช้กับปุ่ม lg/xl · ตัวอักษรในช่องกรอก (16/24 ใช้ ~2,200 ครั้ง) */
+  --letter-spacing-normal:0px;              /* ✔ */
+  --font-weight-semibold:600;               /* ✔ */
+
+  /* alias เดิมของโปรเจกต์ — 12 ส.ค. 2569 จูนเข้าสเกลไลบรารี (เดิม 15/13/11 ไม่มีในไลบรารี) */
+  --fs-body:16px;      /* ✔ = text-md */
+  --fs-sm:14px;        /* ✔ = text-sm */
+  --fs-xs:12px;        /* ✔ = text-xs */
+  --fs-h1:20px;        /* ✔ ไลบรารีใหม่ — หัวข้อ Section header (IBM Plex Sans Thai 20/600 · 276 ครั้ง) · 18px ไม่มีในสเกลใหม่ */
+  --fs-h2:16px;
+  --lh:1.5;            /* ✔ = 24/16 ของ text-md */
+
+
+  /* ══════════ ชั้น 2 · SEMANTIC (ชื่อตามไลบรารีจริง) ══════════ */
+
+  /* หมายเหตุ hex ในคอมเมนต์ท้ายบรรทัดอัปเดตตาม gray ramp v1 แล้ว (v0.13) */
+  --color-bg-primary:#FFFFFF;                       /* ✔ */
+  --color-bg-primary-hover:var(--gray-50);          /* ✅ #F9FAFB */
+  --color-bg-disabled:var(--gray-100);              /* ✅ #F2F4F7 — พื้นปุ่ม disabled ของจริง */
+
+  --color-border-primary:var(--gray-300);           /* ✅ #D0D5DD */
+  --color-border-disabled-subtle:var(--gray-200);   /* ✅ #EAECF0 */
+
+  --color-text-primary:#000000;                     /* ✅ runtime — ระบบจริงใช้ดำสนิท ไม่ใช่ gray-900 */
+  --color-text-secondary:var(--gray-700);           /* ✅ #344054 */
+  --color-text-secondary-hover:var(--gray-800);     /* ✔ #252B37 (ไลบรารี · runtime ไม่มีของเทียบ) */
+  --color-text-tertiary:var(--gray-600);            /* ✅ #475467 */
+  --color-text-tertiary-hover:var(--gray-700);      /* ✅ #344054 */
+  --color-fg-disabled:var(--gray-400);              /* ✅ #98A2B3 */
+
+
+  /* ══════════ ชั้น 3 · COMPONENT (ชื่อตามไลบรารีจริง) ══════════ */
+
+  /* ปุ่ม — Primary */
+  --btn-primary-bg:var(--brand-900);                /* ✔ */
+  --btn-primary-bg-hover:var(--brand-800);          /* ✔ ไลบรารีใหม่ Primary button State=Hover = #CF07AA (สว่างขึ้น ไม่ใช่เข้มลง) */
+  --btn-primary-border:var(--brand-900);            /* ✔ */
+  --btn-primary-border-hover:var(--brand-800);      /* ✔ ไลบรารีใหม่ */
+  --btn-primary-text:#FFFFFF;                       /* ✔ */
+
+  /* ปุ่ม — Secondary / Tertiary / Disabled (✅ วัดจาก vmsplus-dev) */
+  --btn-secondary-text:var(--gray-600);             /* ✔ ไลบรารีใหม่ #475467 */
+  --btn-secondary-border:var(--gray-300);           /* ✅ #D0D5DD */
+  --btn-tertiary-text:var(--gray-600);              /* ✅ #475467 */
+  --btn-tertiary-brand-text:var(--brand-900);       /* ✅ #A80689 — ปุ่ม "แก้ไข" ในโมดัล */
+  --btn-tertiary-danger-text:var(--error-600);      /* ✅ #D92D20 — ปุ่ม "ยกเลิกคำขอ" */
+  --btn-disabled-bg:var(--gray-100);                /* ✅ #F2F4F7 */
+  --btn-disabled-text:var(--gray-400);              /* ✅ #98A2B3 */
+
+  /* ปุ่ม — Destructive */
+  --btn-destructive-bg:var(--error-600);            /* ✔ #D92D20 */
+  --btn-destructive-bg-hover:var(--error-700);      /* ⚠ ยังไม่ยืนยัน */
+  --btn-destructive-text:#FFFFFF;                   /* ✔ */
+
+  /* ปุ่ม — Link */
+  --btn-link-text:var(--brand-900);                 /* ⚠ ยังไม่ยืนยัน */
+  --btn-link-text-hover:var(--brand-950);           /* ⚠ ยังไม่ยืนยัน */
+
+  /* วงแหวน focus */
+  --focus-ring:rgba(168,6,137,.24);                 /* ⚠ ประมาณจาก brand-900 · แอปจริงใช้ #a806891f (อัลฟา .12) */
+  --focus-ring-error:rgba(217,45,32,.24);           /* ⚠ */
+
+
+  /* ══════════ alias เดิม — ห้ามลบ (ใช้อยู่ทั่วต้นแบบ ~350 จุด) ══════════
+     เลขชุดนี้ "ไม่ได้" ขยับตามสเกลแอปจริง (23 ก.ย. 2569) — มันเป็นชื่อ semantic ของต้นแบบ
+     (primary-600 = สีปุ่มหลัก) คนละเรื่องกับ ramp · งานใหม่ให้ใช้ --brand-* โดยตรง */
+  --primary-800:var(--brand-950);
+  --primary-700:var(--brand-925);
+  --primary-600:var(--brand-900);
+  --primary-500:var(--brand-800);
+  --primary-50:var(--brand-100);
+  --primary-25:var(--brand-50);
+
+
+  /* ---------- Effects ---------- */
+  --shadow-xs:0 1px 2px rgba(10,13,18,.05);  /* ✔ เงาช่องกรอก/ตารางตามไลบรารี (#0A0D12 5%) */
+  --shadow-app:0 0 40px rgba(16,24,40,.12);
+  --shadow-pop:0 4px 14px rgba(16,24,40,.25);
+  --shadow-card:0 1px 2px rgba(16,24,40,.06),0 10px 30px rgba(16,24,40,.07);  /* การ์ดหน้าวิเคราะห์ */
+  --grad-header:linear-gradient(135deg,var(--brand-900),var(--brand-800));
+}
