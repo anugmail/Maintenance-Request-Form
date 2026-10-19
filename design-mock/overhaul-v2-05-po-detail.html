@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายละเอียด Purchase Order | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  19 ต.ค. 2569 — Overhaul v2 หน้า 5: รายละเอียด Purchase Order (?plan=<เลขแผน>&po=<เลข PO>)
+  userflow: S4 (ปลายทางดูรายละเอียด PO) · S5 แก้ไข (จุดเข้า "มาจาก 2 ทาง" หน้านี้คือทางที่ 2) · S6 ลบ PO (จุดเข้า) ·
+            S7 เริ่มที่นี่ — "ดูรายละเอียด → รถ → หน้างาน Overhaul"
+  wireframe "รายละเอียด Purchase Order": ชื่อแผน · ชื่อ PO · ศูนย์บริการ/อู่ · เอกสาร (ใบสั่งจ้าง · อื่นๆ) · รายการรถ (จำนวน xx) แถวรถ ทะเบียน เลขไมล์ อายุการใช้งาน
+
+  ที่มา · ไฟล์ Component: Page header (Back action · Actions) · Breadcrumbs · Section header (.sect) · Badge outline (.badge.sq) ·
+           Content item row + _Content item base (.incident-summary) · _File upload item base (.fu-item) ·
+           Table / Table header cell / Table cell Style=Text|Badge (.tbl + Pill outline) · Secondary button sm ·
+           Secondary danger button (.btn-ds) · Modal Destructive centered · Notification
+        · ไฟล์ UI Release#2: "5.1 Rental Contract Management" เฟรม `Rental contract info` (รายละเอียด + เอกสาร) ·
+          `Contract vehicle list` (ตารางรถของสัญญา + Pill สถานะ)
+  ตีความเอง (รอเคาะ): ปุ่มท้ายแถวรถ "หน้างาน" ไปหน้างานรายคันตรง (userflow มี "หน้ารายละเอียดรถ" คั่น แต่ไม่บอกเนื้อหา — รวมไว้ที่ส่วนข้อมูลยานพาหนะของหน้างาน)
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility · ข้อมูลจำลองทั้งหมด
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="overhaul-v2-01-plans.html" title="จัดการงาน Overhaul"><span class="ms">build_circle</span><span class="nvlbl">จัดการงาน Overhaul</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นางสาวกนกวรรณ ใจมั่น — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft">Prototype (Mock) · Overhaul v2 หน้า 5 — รายละเอียด Purchase Order · ข้อมูลจำลองทั้งหมด</div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep"></span><a href="overhaul-v2-01-plans.html">จัดการงาน Overhaul</a>
+        <span class="sep"></span><a id="crumb-plan"></a>
+        <span class="sep"></span><span class="cur" id="crumb"></span>
+      </div>
+
+      <div class="page-title-row flex-wrap">
+        <a class="btn btn-t btn-icon !no-underline" id="back" aria-label="ย้อนกลับ"><span class="ms">arrow_back</span></a>
+        <h1 class="page-title mb-0" id="title"></h1>
+        <span class="ml-auto flex gap-3" id="actions">
+          <button class="btn btn-ds" type="button" id="del"><span class="ms">delete</span>ลบ PO</button>
+          <a class="btn btn-s !no-underline" id="edit"><span class="ms">edit</span>แก้ไข</a>
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-8" id="body">
+        <section>
+          <div class="sect">รายละเอียด Purchase Order</div>
+          <dl class="incident-summary lg:grid-cols-4 mt-4" id="info"></dl>
+        </section>
+        <section>
+          <div class="sect">เอกสาร</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+            <div><div class="text-sm font-semibold mb-2">ใบสั่งจ้าง</div><div id="doc-order"></div></div>
+            <div><div class="text-sm font-semibold mb-2">อื่นๆ</div><div id="doc-other"></div></div>
+          </div>
+        </section>
+        <section>
+          <div class="sect"><span>รายการรถ</span><span class="badge sq" id="n-cars"></span></div>
+          <div class="tblwrap mt-4">
+            <table class="tbl striped">
+              <thead><tr><th>ทะเบียน</th><th>ยี่ห้อ/รุ่น · ประเภท</th><th class="num">เลขไมล์ (กม.)</th><th class="num">อายุการใช้งาน</th><th>สถานะงาน</th><th class="w-[120px]" aria-label="หน้างาน"></th></tr></thead>
+              <tbody id="cars"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <div class="filter-empty hidden" id="notfound">
+        <span class="ms">search_off</span><b>ไม่พบ Purchase Order นี้</b><span>PO อาจถูกลบไปแล้ว</span>
+        <a class="btn btn-s btn-sm mt-2 !no-underline" href="overhaul-v2-01-plans.html">กลับหน้ารายการแผน</a>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="m-del">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-del-t">
+    <div class="modal-hd center">
+      <div class="modal-hd-c"><span class="ficon"><span class="ms">info</span></span><h2 id="m-del-t">ยืนยันการลบ PO</h2><div class="modal-sub" id="m-del-s"></div></div>
+      <button class="modal-x" type="button" data-close="m-del" aria-label="ปิด"><span class="ms">close</span></button>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-del">ยกเลิก</button>
+      <button class="btn btn-d" type="button" id="m-del-ok">ยืนยัน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="overhaul-v2-mock.js?v=20261019-4"></script>
+<script>
+const $=id=>document.getElementById(id);
+const q=new URLSearchParams(location.search);
+let S=oh2Load();
+const plan=oh2Plan(S,q.get('plan'));
+const po=plan?plan.pos.find(o=>o.id===q.get('po')):null;
+const planUrl=plan?`overhaul-v2-03-plan-detail.html?id=${plan.id}`:'overhaul-v2-01-plans.html';
+$('back').href=planUrl;$('crumb-plan').href=planUrl;$('crumb-plan').textContent=plan?`แผน ${plan.id}`:'แผน';
+
+if(!po){$('body').classList.add('hidden');$('actions').classList.add('hidden');$('notfound').classList.remove('hidden');$('title').textContent='ไม่พบ Purchase Order';$('crumb').textContent='Purchase Order'}
+else{
+  $('title').textContent=`หมายเลข ${po.id}`;$('crumb').textContent=po.id;document.title=`${po.id} | Maintain-D (Mock)`;
+  $('edit').href=`overhaul-v2-04-po-form.html?plan=${plan.id}&po=${po.id}&from=po`;
+  const v=OH2_VENDORS[po.vendor];
+  const f=(k,val,wide)=>`<div class="incident-field${wide?' wide':''}"><dt>${k}</dt><dd>${val}</dd></div>`;
+  $('info').innerHTML=f('ชื่อแผน',oh2Esc(plan.name),true)+f('ชื่อ Purchase Order',oh2Esc(po.name))+f('ศูนย์บริการ/อู่',oh2Esc(v.name))+
+    f('เบอร์โทรอู่',oh2Esc(v.tel))+f('ที่อยู่',oh2Esc(v.addr));
+  $('doc-order').innerHTML=oh2FilesRO(po.docs.order);$('doc-other').innerHTML=oh2FilesRO(po.docs.other);
+  $('n-cars').textContent=po.cars.length;
+  $('cars').innerHTML=po.cars.map(id=>{const c=oh2Car(id);const j=S.jobs[plan.id+':'+id]||{stage:'V1'};return `<tr>
+    <td><div class="cell-key">${oh2Esc(c.plate)}</div></td><td>${oh2Esc(c.brand)} · ${oh2Esc(c.type)}</td>
+    <td class="num">${oh2Num(c.mileage)}</td><td class="num">${c.age} ปี</td><td>${oh2Badge(OH2_JOB,j.stage)}</td>
+    <td><a class="btn btn-s btn-sm !no-underline" href="overhaul-v2-06-job.html?plan=${plan.id}&car=${id}&po=${po.id}">หน้างาน</a></td></tr>`}).join('');
+}
+$('del').addEventListener('click',()=>{$('m-del-s').textContent=`PO ${po.id} "${po.name}" และงานของรถ ${po.cars.length} คันใน PO นี้จะถูกลบ`;oh2Modal('m-del',true)});
+$('m-del-ok').addEventListener('click',()=>{plan.pos=plan.pos.filter(o=>o.id!==po.id);oh2Save(S);location.href=planUrl+'&saved=podel'});
+const saved=q.get('saved');
+if(saved){oh2Notify(saved==='poedit'?'บันทึกการแก้ไข PO สำเร็จ':'บันทึกสำเร็จ');history.replaceState(null,'',location.pathname+`?plan=${plan.id}&po=${po.id}`)}
+</script>
+</body>
+</html>

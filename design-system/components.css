@@ -82,12 +82,12 @@ header h1{font-size:var(--fs-h1);font-weight:600;flex:1}
 
 /* ---------- Form ---------- */
 label.fl{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--gray-700);margin:12px 0 6px}
-input[type=text],input[type=number],input[type=tel],input[type=email],input[type=date],input[type=search],textarea,select{width:100%;border:1px solid var(--gray-300);border-radius:var(--r-sm);padding:10px 14px;font:inherit;color:var(--gray-900);background:#fff;box-shadow:var(--shadow-xs)}
+input[type=text],input[type=number],input[type=tel],input[type=email],input[type=date],input[type=time],input[type=datetime-local],input[type=search],textarea,select{width:100%;border:1px solid var(--gray-300);border-radius:var(--r-sm);padding:10px 14px;font:inherit;color:var(--gray-900);background:#fff;box-shadow:var(--shadow-xs)}
 /* focus ตามไลบรารี (Input field State=Focused): ขอบ brand-500 + วงแหวน
    ยกเว้น radio — เดิม input:focus ทั่วไปให้วงแหวนสี่เหลี่ยมทับปุ่มวงกลม ดูเพี้ยน (เจอจริงกับ radio ในตารางตรวจสภาพ)
    checkbox ไม่ยกเว้น เพราะเป็นสี่เหลี่ยมมุมโค้งอยู่แล้ว วงแหวนสี่เหลี่ยมตรงทรงพอดี ไม่มีปัญหาแบบ radio */
 /* ไลบรารี Text input / Dropdown (Size=md): สูง 40 — เดิมคุมด้วย padding ทำให้บางที่ได้ 44 */
-input[type=text],input[type=number],input[type=tel],input[type=email],input[type=date],input[type=search],select{height:40px;padding:0 12px}
+input[type=text],input[type=number],input[type=tel],input[type=email],input[type=date],input[type=time],input[type=datetime-local],input[type=search],select{height:40px;padding:0 12px}   /* v0.72 + time/datetime-local (บันทึกความคืบหน้างานซ่อม) */
 input:not([type=radio]):focus,textarea:focus{outline:none;border-color:var(--brand-800);box-shadow:var(--shadow-xs),0 0 0 4px var(--focus-ring)}
 /* ช่องค้นหาของ "ลิสต์" (คนละตัวกับ .in ที่เป็นช่องมีไอคอนในฟอร์ม)
    ✅ ตรงกับไลบรารี `Text input` (Size=md): กล่องสูง 40 · ขอบ 1px #D0D5DD · r8 · pad 0/12 · gap 8
@@ -574,7 +574,7 @@ body.modal-open{overflow:hidden}
 .f .in>.ms{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--gray-500);font-size:20px;pointer-events:none}
 /* ไลบรารีใหม่ Text input · Container Size=md: h40 · r8 · pad 12 ซ้ายขวา · ขอบ #D0D5DD · focus #CF07AA (lg = h48) */
 .f .in input,.f .in select{height:40px;border-radius:var(--rounded-md);padding:0 12px 0 40px}
-.f .in.noic input{padding-left:12px}
+.f .in.noic input,.f .in.noic select{padding-left:12px}   /* v0.71: select ไม่มีไอคอนนำหน้าก็ต้องชิดซ้าย 12 เหมือน input */
 .f textarea{border-radius:var(--rounded-md);padding:8px 12px}
 .f.ro .in input{background:var(--gray-50);color:var(--gray-700)}   /* = state Disabled ของไลบรารี (ขอบทึบ พื้น gray-50) */
 /* .f.ro.dash — ช่องอ่านอย่างเดียวที่ auto-fill ค่ามาจากรายการอื่น (เช่น เบอร์โทรของช่างซ่อมที่เลือกไว้)
@@ -1433,6 +1433,9 @@ input.tbl-cell-ro{width:100px;display:inline-block;background:var(--gray-100);bo
 .fu-item-tx{flex:1;min-width:0;display:flex;flex-direction:column}
 .fu-item-tx b{font-size:var(--fs-text-sm);line-height:21px;font-weight:600;color:var(--gray-600);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fu-item-tx small{font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);color:var(--gray-600)}
+/* v0.71: ชื่อไฟล์กดดูตัวอย่างได้ (userflow "preview ได้") แต่หน้าตายังเป็นชื่อไฟล์ตามไลบรารี ไม่ใช่ลิงก์สีน้ำเงิน · ขีดเส้นใต้ตอนชี้ */
+.fu-item-tx b a{color:inherit;text-decoration:none}
+.fu-item-tx b a:hover{text-decoration:underline}
 .fu-item-act{flex:none;display:flex;margin:-8px -8px 0 0}
 .fu-item.err{border-color:var(--error-500)}
 .fu-item.err .fu-item-tx small{color:var(--error-600)}

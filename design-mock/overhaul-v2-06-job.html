@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>หน้างาน Overhaul | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  19 ต.ค. 2569 — Overhaul v2 หน้า 6: หน้างานรายคัน 6 ขั้น (?plan=<เลขแผน>&car=<รหัสรถ>[&po=<เลข PO>])
+  userflow S7–S14:
+   S7 นัดหมายหน่วยงานนำรถเข้า (ขั้น 1) · S8 ตรวจรับรถก่อน Overhaul (ขั้น 2) · S9–S11 เพิ่ม/แก้ไข/ลบความคืบหน้า (ขั้น 3) ·
+   S12 upload เอกสารความปลอดภัย (ขั้น 4) · S13 นัดหมายหน่วยงานรับรถคืน (ขั้น 5) · S14 ปิดงาน (ขั้น 6)
+  เงื่อนไข "Appointment" ของ userflow: ข้อมูลยานพาหนะรายคัน (ทะเบียน · เลขไมล์สะสม · ชั่วโมงสะสม · อายุการใช้งาน) ·
+   ช่วงวันนำรถเข้า date range เลือกก่อนวันนี้ไม่ได้ · ผู้ประสานงาน (กบค.) search select · เบอร์ผู้ประสานงานดึงมาแสดง ·
+   ชื่ออู่/เบอร์อู่/ที่อยู่ แสดงจาก PO · ย้อนกลับมีการแก้ไข → confirm modal · ยืนยันนัดหมาย สำเร็จ "การสร้าง นัดหมาย สำเร็จ" /
+   ไม่สำเร็จ "ไม่สามารถสร้าง นัดหมาย" · แก้ไขนัดหมายได้เมื่อปลายทางยังไม่ตอบรับ · ถูกปฏิเสธ แสดงหมายเหตุที่ปฏิเสธ
+  ขั้น 3: ปุ่มลบความคืบหน้ามีเมื่อมีมากกว่า 1 รายการ · ยังไม่มีความคืบหน้า ปุ่ม "ซ่อมสำเร็จ" กดไม่ได้
+  ขั้น 6: ต้องระบุอะไหล่ที่ใช้ก่อนปิดงาน (ทางแยก "ระบุอะไหล่ที่ใช้ ?") · นำเข้าไฟล์ได้
+  ตีความเอง (รอเคาะ): ช่วงวันใช้ช่องวันที่ 2 ช่อง (เริ่ม–ถึง) · รายการตรวจรับ 7 ข้อเป็นตัวอย่าง · ยืนยันรับรถได้เมื่อติ๊กครบ + ลงนามครบ 2 ฝ่าย ·
+          ข้อความแจ้งผลขั้น 2–6 (userflow ไม่ระบุ) · หน่วยงานตอบรับ/ปฏิเสธนัดจากหน้าของหน่วยงาน (ยังไม่มีใน userflow) — หน้านี้จำลองด้วยกล่อง "เฉพาะต้นแบบ"
+
+  ที่มา · ไฟล์ Component: Page header · Breadcrumbs · Content item row + _Content item base (.incident-summary) ·
+           Progress steps Type=Horizontal + Horizontal step item (.wsteps) / Mobile progress steps (.wsteps-m) ·
+           Section header (.sect) · Text input / Input dropdown (.f .in · .combo) · Text area · Checkbox · Table (.tbl) ·
+           File upload (.fu/.fu-item) · Alert (.note) · Pill outline (.badge) · Modal Form (.modal-hd/.modal-bd/.modal-ft) ·
+           Modal Destructive centered · Notification · Primary/Secondary/Tertiary button
+        · ไฟล์ UI Release#2: "5.2 Vehicle Management" `Create vehicle (Step 1)` (stepper แนวนอน) · "5.4 Maintenance Appointment"
+          `Modal / Create appointment` (ฟอร์มนัด + ข้อมูลอู่แบบอ่านอย่างเดียว) · "5.3" `Incident log` (ตารางบันทึกตามเวลา) ·
+          "5.6 Replacement Vehicle" `Modal / Receive Car` (รับรถ)
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility · ข้อมูลจำลองทั้งหมด
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="overhaul-v2-01-plans.html" title="จัดการงาน Overhaul"><span class="ms">build_circle</span><span class="nvlbl">จัดการงาน Overhaul</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นางสาวกนกวรรณ ใจมั่น — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft flex items-center gap-3 flex-wrap">
+        <span class="mr-auto">Prototype (Mock) · Overhaul v2 หน้า 6 — หน้างานรายคัน · ข้อมูลจำลองทั้งหมด</span>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="simfail">จำลองบันทึกไม่สำเร็จ</label>
+      </div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep"></span><a href="overhaul-v2-01-plans.html">จัดการงาน Overhaul</a>
+        <span class="sep"></span><a id="crumb-plan"></a>
+        <span class="sep"></span><a id="crumb-po"></a>
+        <span class="sep"></span><span class="cur" id="crumb"></span>
+      </div>
+
+      <div class="page-title-row flex-wrap">
+        <a class="btn btn-t btn-icon !no-underline" id="back" aria-label="ย้อนกลับ"><span class="ms">arrow_back</span></a>
+        <h1 class="page-title mb-0" id="title"></h1>
+        <span id="status"></span>
+      </div>
+
+      <div class="flex flex-col gap-8" id="body">
+        <section>
+          <div class="sect">ข้อมูลยานพาหนะ</div>
+          <dl class="incident-summary lg:grid-cols-4 mt-4" id="info"></dl>
+        </section>
+        <section>
+          <div class="wsteps wrap" id="steps" role="tablist" aria-label="ขั้นตอนงาน Overhaul"></div>
+          <div class="wsteps-m" id="steps-m"></div>
+        </section>
+        <section id="panel"></section>
+      </div>
+
+      <div class="filter-empty hidden" id="notfound">
+        <span class="ms">search_off</span><b>ไม่พบงานของรถคันนี้</b><span>ตรวจสอบแผนและรถอีกครั้ง</span>
+        <a class="btn btn-s btn-sm mt-2 !no-underline" href="overhaul-v2-01-plans.html">กลับหน้ารายการแผน</a>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ยืนยันการออก (ฟอร์มมีการแก้ไข) -->
+<div class="modal-overlay hidden" id="m-leave">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-leave-t">
+    <div class="modal-hd center">
+      <div class="modal-hd-c"><span class="ficon"><span class="ms">info</span></span><h2 id="m-leave-t">ยืนยันการออก</h2><div class="modal-sub">ข้อมูลที่แก้ไขไว้จะไม่ถูกบันทึก</div></div>
+      <button class="modal-x" type="button" data-close="m-leave" aria-label="ปิด"><span class="ms">close</span></button>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-leave">ปิด</button>
+      <button class="btn btn-p" type="button" id="m-leave-ok">ยืนยัน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<!-- เพิ่ม/แก้ไขความคืบหน้า (S9 · S10) — Modal Type=Form -->
+<div class="modal-overlay hidden" id="m-log">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-log-t">
+    <div class="modal-hd"><div class="modal-hd-c"><h2 id="m-log-t">เพิ่มความคืบหน้า</h2>
+      <button class="modal-x" type="button" data-close="m-log" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd">
+      <div class="f"><label for="log-at">วันที่/เวลา</label><div class="in noic"><input type="datetime-local" id="log-at"></div><div class="help hidden"></div></div>
+      <div class="f"><label for="log-note">รายละเอียด</label><textarea id="log-note" rows="4" placeholder="ระบุความคืบหน้าของงานซ่อม"></textarea><div class="help hidden"></div></div>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a"><button class="btn btn-t" type="button" data-close="m-log">ยกเลิก</button>
+      <div class="modal-ft-r"><button class="btn btn-p" type="button" id="m-log-ok">บันทึก</button></div></div></div>
+  </div>
+</div>
+
+<!-- ยืนยันการลบความคืบหน้า (S11) -->
+<div class="modal-overlay hidden" id="m-del">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-del-t">
+    <div class="modal-hd center">
+      <div class="modal-hd-c"><span class="ficon"><span class="ms">info</span></span><h2 id="m-del-t">ยืนยันการลบความคืบหน้า</h2><div class="modal-sub" id="m-del-s"></div></div>
+      <button class="modal-x" type="button" data-close="m-del" aria-label="ปิด"><span class="ms">close</span></button>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-del">ยกเลิก</button>
+      <button class="btn btn-d" type="button" id="m-del-ok">ยืนยัน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="overhaul-v2-mock.js?v=20261019-4"></script>
+<script>
+const $=id=>document.getElementById(id);
+const q=new URLSearchParams(location.search);
+let S=oh2Load();
+const plan=oh2Plan(S,q.get('plan'));
+const car=oh2Car(q.get('car'));
+const po=plan&&car?(plan.pos.find(o=>o.id===q.get('po')&&o.cars.includes(car.id))||plan.pos.find(o=>o.cars.includes(car.id))):null;
+const backUrl=po?`overhaul-v2-05-po-detail.html?plan=${plan.id}&po=${po.id}`:(plan?`overhaul-v2-03-plan-detail.html?id=${plan.id}`:'overhaul-v2-01-plans.html');
+const UNIT_STAFF=['นายประวิทย์ แสงทอง','นางสาวพิมพ์ชนก ศรีสุข','นายธนากร บุญมา'];   // ผู้แทนหน่วยงานเจ้าของรถ (สมมติ)
+let job=null, view=1, dirtyForm=null;   // dirtyForm() → true ถ้าฟอร์มขั้นปัจจุบันมีการแก้ไข
+
+const save=()=>oh2Save(S);
+const stepNow=()=>OH2_STEP_OF[job.stage];
+const today=oh2Iso(new Date());
+const staff=id=>OH2_STAFF.find(s=>s.id===id)||{name:'—',tel:'—'};
+function setStage(v,msg){job.stage=v;save();view=stepNow();render();if(msg)oh2Notify(msg);window.scrollTo({top:$('steps').offsetTop-80,behavior:'smooth'})}
+
+/* ---------- หัวหน้า + ข้อมูลยานพาหนะ + stepper ---------- */
+function renderHead(){
+  $('title').textContent=car.plate;$('crumb').textContent=car.plate;document.title=`หน้างาน ${car.plate} | Maintain-D (Mock)`;
+  $('status').innerHTML=oh2Badge(OH2_JOB,job.stage);
+  const f=(k,v)=>`<div class="incident-field"><dt>${k}</dt><dd>${v}</dd></div>`;
+  const v=OH2_VENDORS[po.vendor];
+  $('info').innerHTML=f('ทะเบียน',oh2Esc(car.plate))+f('ยี่ห้อ/รุ่น',oh2Esc(car.brand))+f('ประเภท',oh2Esc(car.type))+f('อายุการใช้งาน',car.age+' ปี')+
+    f('เลขไมล์สะสม',oh2Num(car.mileage)+' กม.')+f('ชั่วโมงสะสม',oh2Num(car.hours)+' ชม.')+f('Purchase Order',`${oh2Esc(po.id)} · ${oh2Esc(po.name)}`)+f('ศูนย์บริการ/อู่',oh2Esc(v.name));
+  const cur=stepNow(),done=job.stage==='V11';
+  $('steps').innerHTML=OH2_STEPS.map((lbl,i)=>{const n=i+1,passed=n<cur||done,locked=n>cur;
+    return `<div class="wstep ${n===view?'active':''} ${passed?'passed':''} ${locked?'locked':''}" data-step="${n}" role="tab" tabindex="${locked?-1:0}" aria-selected="${n===view}" ${locked?'aria-disabled="true"':''}>
+      <span class="num">${passed?'<span class="ms">check</span>':n}</span><span class="lbl">${lbl}</span></div>`}).join('');
+  $('steps-m').innerHTML=`<div class="wsm-head"><span class="wsm-ring"><span>${view}<i>/</i>${OH2_STEPS.length}</span></span>
+    <span class="wsm-tx"><b>${OH2_STEPS[view-1]}</b>${OH2_STEPS[view]?`<span class="wsm-next"><b>ถัดไป:</b> ${OH2_STEPS[view]}</span>`:''}</span></div>`;
+  $('steps-m').querySelector('.wsm-ring').style.setProperty('--p',Math.round(view/OH2_STEPS.length*100));
+}
+$('steps').addEventListener('click',e=>{const s=e.target.closest('.wstep');if(!s||s.classList.contains('locked'))return;
+  const go=()=>{view=+s.dataset.step;dirtyForm=null;render()};
+  if(dirtyForm&&dirtyForm()){leaveTo=go;oh2Modal('m-leave',true)}else go()});
+
+/* ---------- ชิ้นส่วนร่วม ---------- */
+const sect=(t,right)=>`<div class="sect mt-8 first:mt-0"><span>${t}</span>${right?`<span class="ml-auto">${right}</span>`:''}</div>`;
+const kv=(rows)=>`<dl class="incident-summary lg:grid-cols-3 mt-4">${rows.map(([k,v,w])=>`<div class="incident-field${w?' wide':''}"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
+const actions=(btns)=>`<div class="flex items-center gap-3 mt-8"><button class="btn btn-s btn-lg" type="button" data-act="back">ย้อนกลับ</button>${btns}</div>`;
+let leaveTo=null;
+function goBack(){const go=()=>{location.href=backUrl};if(dirtyForm&&dirtyForm()){leaveTo=go;oh2Modal('m-leave',true)}else go()}
+$('m-leave-ok').addEventListener('click',()=>{oh2Modal('m-leave',false);dirtyForm=null;(leaveTo||(()=>{location.href=backUrl}))()});
+$('back').addEventListener('click',e=>{e.preventDefault();goBack()});
+
+/* ---------- ขั้น 1 / ขั้น 5 นัดหมาย (S7 · S13) ---------- */
+function apptSummary(a,isRet){
+  const st=staff(a.coord),v=OH2_VENDORS[po.vendor];
+  return kv([[isRet?'ช่วงวันนัดรับรถ':'ช่วงวันนำรถเข้า',`${oh2Date(a.from)} – ${oh2Date(a.to)}`],['ผู้ประสานงาน (กบค.)',oh2Esc(st.name)],['เบอร์โทรผู้ประสานงาน (กบค.)',oh2Esc(st.tel)],
+    ['ชื่ออู่',oh2Esc(v.name)],['เบอร์อู่',oh2Esc(v.tel)],['ที่อยู่',oh2Esc(v.addr)],['หมายเหตุ',a.remark?oh2Esc(a.remark):'—',true]]);
+}
+function apptPanel(isRet){
+  const field=isRet?'ret':'appt',[F,W,R]=isRet?['V7','V8','V9']:['V1','V2','V3'];
+  const a=job[field],title=isRet?'นัดหมายรับรถ':'นัดหมายนำรถเข้าอู่';
+  const n=+job.stage.slice(1),mine=OH2_STEP_OF[job.stage]===(isRet?5:1);
+  if(!mine||n>+W.slice(1)&&job.stage!==R){   // ผ่านขั้นนี้แล้ว — อ่านอย่างเดียว
+    return sect(title)+apptSummary(a,isRet)+`<div class="note note-ok mt-4"><span class="ms">check_circle</span>หน่วยงานเจ้าของรถยืนยันนัดแล้ว ${a.reply?oh2Date(a.reply.at):''}</div>`;
+  }
+  if(job.stage===F||editing)return apptForm(isRet);
+  const edit=`<button class="btn btn-s" type="button" data-act="edit-appt">แก้ไขนัดหมาย</button>`;
+  if(job.stage===W){
+    return sect(title)+`<div class="note note-info mt-4"><span class="ms">schedule</span>ส่งนัดหมายแล้ว ${oh2Date(a.sentAt)} · รอหน่วยงานเจ้าของรถตอบกลับ — แก้ไขนัดหมายได้จนกว่าหน่วยงานจะตอบรับ</div>`+
+      apptSummary(a,isRet)+actions(edit)+
+      `<div class="note note-warn mt-8 flex-col items-start gap-3"><b>เฉพาะต้นแบบ — จำลองคำตอบจากหน่วยงานเจ้าของรถ</b>
+        <div class="f w-full"><div class="in noic"><input type="text" id="rej-remark" placeholder="หมายเหตุที่ปฏิเสธ (ถ้าปฏิเสธ)"></div></div>
+        <span class="flex gap-3"><button class="btn btn-s btn-sm" type="button" data-act="reply-ok">หน่วยงานยืนยันนัด</button>
+        <button class="btn btn-ds btn-sm" type="button" data-act="reply-no">หน่วยงานปฏิเสธนัด</button></span></div>`;
+  }
+  return sect(title)+`<div class="note note-warn mt-4"><span class="ms">event_busy</span><span><b>หน่วยงานปฏิเสธนัดหมาย</b> ${oh2Date(a.reply.at)} · หมายเหตุ: ${oh2Esc(a.reply.remark)}</span></div>`+
+    apptSummary(a,isRet)+actions(edit);
+}
+let editing=false;
+function apptForm(isRet){
+  const field=isRet?'ret':'appt',a=job[field]||{},v=OH2_VENDORS[po.vendor];
+  return sect(isRet?'นัดหมายรับรถ':'นัดหมายนำรถเข้าอู่')+`
+    <div class="fgrid cols-3 gap-y-8 mb-0" id="apf">
+      <div class="f"><label for="ap-from">${isRet?'นัดรับรถตั้งแต่วันที่':'นำรถเข้าตั้งแต่วันที่'}</label><div class="in noic"><input type="date" id="ap-from" min="${today}" value="${a.from&&a.from>=today?a.from:''}"></div><div class="help hidden"></div></div>
+      <div class="f"><label for="ap-to">ถึงวันที่</label><div class="in noic"><input type="date" id="ap-to" min="${today}" value="${a.to&&a.to>=today?a.to:''}"></div><div class="help hidden"></div></div>
+      <div></div>
+      <div class="f combo" id="ap-coord"><label for="ap-coord-in">ผู้ประสานงาน (กบค.)</label>
+        <div class="in"><span class="ms">search</span><input type="text" id="ap-coord-in" placeholder="ค้นหาชื่อผู้ประสานงาน" autocomplete="off" value="${a.coord?oh2Esc(staff(a.coord).name):''}"><span class="ms combo-arrow">keyboard_arrow_down</span></div>
+        <div class="combo-list" hidden></div><div class="help hidden"></div></div>
+      <div class="f ro dash"><label for="ap-tel">เบอร์โทรผู้ประสานงาน (กบค.)</label><div class="in noic"><input type="text" id="ap-tel" readonly value="${a.coord?oh2Esc(staff(a.coord).tel):''}" placeholder="แสดงเมื่อเลือกผู้ประสานงาน"></div></div>
+      <div></div>
+      <div class="f ro dash"><label>ชื่ออู่${isRet?' (ค่าตั้งต้นจาก PO)':''}</label><div class="in noic"><input type="text" readonly value="${oh2Esc(v.name)}"></div></div>
+      <div class="f ro dash"><label>เบอร์อู่</label><div class="in noic"><input type="text" readonly value="${oh2Esc(v.tel)}"></div></div>
+      <div class="f ro dash"><label>ที่อยู่</label><div class="in noic"><input type="text" readonly value="${oh2Esc(v.addr)}"></div></div>
+      <div class="f sp3"><label for="ap-remark">หมายเหตุ <small>(ถ้ามี)</small></label><textarea id="ap-remark" rows="3">${oh2Esc(a.remark||'')}</textarea></div>
+    </div>`+actions(`<button class="btn btn-p btn-lg" type="button" data-act="send-appt" data-ret="${isRet?1:0}">ยืนยันนัดหมาย</button>`);
+}
+function wireApptForm(isRet){
+  if(!$('apf'))return;
+  const field=isRet?'ret':'appt',a=job[field]||{};
+  let coord=a.coord||'';
+  oh2Combo($('ap-coord'),OH2_STAFF.map(s=>({value:s.id,label:s.name,sub:`${s.pos} · ${s.tel}`})),v=>{coord=v;$('ap-tel').value=v?staff(v).tel:'';clr($('ap-coord'))});
+  const snap=()=>JSON.stringify([$('ap-from').value,$('ap-to').value,coord,$('ap-remark').value]);const s0=snap();
+  dirtyForm=()=>snap()!==s0;
+  ['ap-from','ap-to'].forEach(id=>$(id).addEventListener('input',()=>clr($(id).closest('.f'))));
+  document.querySelector('[data-act=send-appt]').onclick=()=>{
+    const fr=$('ap-from').value,to=$('ap-to').value;let bad=false;
+    if(!fr||fr<today){err($('ap-from').closest('.f'),fr?'เลือกวันที่ก่อนวันนี้ไม่ได้':'กรุณาเลือกวันที่เริ่ม');bad=true}
+    if(!to||to<fr){err($('ap-to').closest('.f'),to?'วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่ม':'กรุณาเลือกวันที่สิ้นสุด');bad=true}
+    if(!coord){err($('ap-coord'),'กรุณาเลือกผู้ประสานงาน');bad=true}
+    if(bad)return;
+    if($('simfail').checked){oh2Notify('ไม่สามารถสร้าง นัดหมาย',{err:true});return}
+    job[field]={from:fr,to,coord,remark:$('ap-remark').value.trim(),sentAt:today,reply:null};editing=false;dirtyForm=null;
+    setStage(isRet?'V8':'V2','การสร้าง นัดหมาย สำเร็จ');
+  };
+}
+
+/* ---------- ขั้น 2 ตรวจรับรถ (S8) ---------- */
+let ck=null;
+function checkinPanel(){
+  const ro=stepNow()>2;
+  if(ro){const c=job.checkin;
+    return sect('รายการตรวจสอบก่อนซ่อม')+`<div class="tblwrap mt-4"><table class="tbl striped"><thead><tr><th>รายการตรวจสอบ</th><th>ผลตรวจ</th><th>หมายเหตุ</th></tr></thead><tbody>${
+      c.items.map(i=>`<tr><td>${oh2Esc(i.label)}</td><td>${i.ok?'<span class="badge b-ok"><span class="ms">check</span>ตรวจแล้ว</span>':'—'}</td><td>${oh2Esc(i.remark||'—')}</td></tr>`).join('')}</tbody></table></div>`+
+      sect('ลงนามรับรถ')+kv([['กบค.',`${oh2Esc(staff(c.sign.kbk.who).name)} · ลงนาม ${oh2Date(c.sign.kbk.at)}`],['หน่วยงานเจ้าของรถ',`${oh2Esc(c.sign.unit.who)} · ลงนาม ${oh2Date(c.sign.unit.at)}`]]);
+  }
+  ck=ck||{items:OH2_CHECKLIST.map(l=>({label:l,ok:false,remark:''})),sign:{kbk:null,unit:null}};
+  const sign=(side,label,opts)=>{const s=ck.sign[side];return `<div class="f" data-sign="${side}"><label>${label}</label>${s?
+    `<div class="flex items-center gap-3 flex-wrap"><span class="font-medium">${oh2Esc(s.name)}</span><span class="badge b-ok"><span class="ms">draw</span>ลงนามแล้ว ${oh2Date(s.at)}</span></div>`:
+    `<div class="flex gap-3"><div class="in noic flex-1"><select id="sg-${side}"><option value="">เลือกผู้ลงนาม</option>${opts.map(o=>`<option>${oh2Esc(o)}</option>`).join('')}</select></div>
+     <button class="btn btn-s" type="button" data-act="sign" data-side="${side}"><span class="ms">draw</span>เซ็น</button></div>`}<div class="help hidden"></div></div>`};
+  return sect('รายการตรวจสอบก่อนซ่อม')+`<div class="tblwrap mt-4"><table class="tbl striped"><thead><tr><th class="w-[56px]" aria-label="ตรวจแล้ว"></th><th>รายการตรวจสอบ</th><th>หมายเหตุ</th></tr></thead><tbody>${
+    ck.items.map((i,x)=>`<tr><td><input type="checkbox" data-ck="${x}" ${i.ok?'checked':''} aria-label="ตรวจแล้ว ${oh2Esc(i.label)}"></td><td>${oh2Esc(i.label)}</td>
+      <td><input type="text" class="tbl-inline-md" data-ckr="${x}" value="${oh2Esc(i.remark)}" placeholder="หมายเหตุ (ถ้ามี)"></td></tr>`).join('')}</tbody></table></div>
+    <div class="f mt-2" id="ck-help"><div class="help hidden"></div></div>`+
+    sect('ลงนามรับรถ')+`<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">${sign('kbk','กบค.',OH2_STAFF.map(s=>s.name))}${sign('unit','หน่วยงานเจ้าของรถ',UNIT_STAFF)}</div>`+
+    actions(`<button class="btn btn-p btn-lg" type="button" data-act="checkin">ยืนยันรับรถ</button>`);
+}
+
+/* ---------- ขั้น 3 ติดตามงานซ่อม (S9–S11) ---------- */
+function logsPanel(){
+  const ro=stepNow()>3,L=job.logs;
+  const rows=L.map((l,i)=>`<tr><td class="whitespace-nowrap">${oh2Date(l.at.slice(0,10))} ${l.at.slice(11,16)} น.</td><td>${oh2Esc(l.note)}</td>${ro?'':`<td class="dt-action">
+    <button class="btn btn-t" type="button" data-act="log-edit" data-i="${i}" aria-label="แก้ไข"><span class="ms">edit</span></button>
+    ${L.length>1?`<button class="btn btn-td" type="button" data-act="log-del" data-i="${i}" aria-label="ลบ"><span class="ms">delete</span></button>`:''}</td>`}</tr>`).join('');
+  return sect('รายละเอียดการติดตาม',ro?'':`<button class="btn btn-s btn-sm" type="button" data-act="log-add"><span class="ms">add</span>ความคืบหน้า</button>`)+
+    (L.length?`<div class="tblwrap mt-4"><table class="tbl striped"><thead><tr><th class="w-[200px]">วันที่/เวลา</th><th>รายละเอียด</th>${ro?'':'<th class="w-[104px]" aria-label="จัดการ"></th>'}</tr></thead><tbody>${rows}</tbody></table></div>`:
+      `<div class="filter-empty mt-4"><span class="ms">build</span><b>ยังไม่มีความคืบหน้า</b><span>เพิ่มความคืบหน้าอย่างน้อย 1 รายการก่อนกด "ซ่อมสำเร็จ"</span></div>`)+
+    (ro?`<div class="note note-ok mt-4"><span class="ms">check_circle</span>ซ่อมสำเร็จแล้ว</div>`:
+      actions(`<button class="btn btn-p btn-lg" type="button" data-act="repaired" ${L.length?'':'disabled title="ต้องมีความคืบหน้าอย่างน้อย 1 รายการ"'}>ซ่อมสำเร็จ</button>`));
+}
+let logIdx=-1;
+function openLog(i){
+  logIdx=i;const l=i>=0?job.logs[i]:{at:new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,16),note:''};
+  $('m-log-t').textContent=i>=0?'แก้ไขความคืบหน้า':'เพิ่มความคืบหน้า';$('log-at').value=l.at;$('log-note').value=l.note;
+  ['log-at','log-note'].forEach(id=>clr($(id).closest('.f')));oh2Modal('m-log',true);
+}
+$('m-log-ok').addEventListener('click',()=>{
+  let bad=false;if(!$('log-at').value){err($('log-at').closest('.f'),'กรุณาระบุวันที่/เวลา');bad=true}
+  if(!$('log-note').value.trim()){err($('log-note').closest('.f'),'กรุณาระบุรายละเอียด');bad=true}
+  if(bad)return;
+  if($('simfail').checked){oh2Notify('general error',{err:true});return}
+  const l={at:$('log-at').value,note:$('log-note').value.trim()};
+  if(logIdx>=0)job.logs[logIdx]=l;else job.logs.push(l);
+  job.logs.sort((a,b)=>a.at.localeCompare(b.at));save();oh2Modal('m-log',false);render();
+  oh2Notify(logIdx>=0?'แก้ไขความคืบหน้าสำเร็จ':'เพิ่มความคืบหน้าสำเร็จ');
+});
+let delIdx=-1;
+$('m-del-ok').addEventListener('click',()=>{job.logs.splice(delIdx,1);save();oh2Modal('m-del',false);render();oh2Notify('ลบความคืบหน้าสำเร็จ')});
+
+/* ---------- ขั้น 4 ตรวจสภาพ Safety Inspection (S12) ---------- */
+function safetyPanel(){
+  const ro=stepNow()>4;
+  if(ro)return sect('เอกสาร Safety Inspection')+`<div class="mt-4">${oh2FilesRO(job.safety)}</div><div class="note note-ok mt-4"><span class="ms">check_circle</span>ยืนยันการตรวจสอบแล้ว</div>`;
+  return sect('เอกสาร Safety Inspection')+`<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4"><div class="f" id="sf"><label>อัปโหลดเอกสาร Safety Inspection</label>
+    <label class="fu"><input type="file" multiple accept=".pdf,.jpg,.jpeg,application/pdf,image/jpeg"><span class="ficon sm gray"><span class="ms">cloud_upload</span></span>
+    <span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PDF, JPG · สูงสุด 10 ไฟล์ · <span class="fu-count"></span></small></span></label>
+    <div class="help hidden"></div><div class="fu-list"></div></div></div>`+actions(`<button class="btn btn-p btn-lg" type="button" data-act="safety">ยืนยันการตรวจสอบ</button>`);
+}
+
+/* ---------- ขั้น 6 ปิดงาน (S14) ---------- */
+function closePanel(){
+  const ro=job.stage==='V11',P=job.parts;
+  const rows=P.map((p,i)=>`<tr><td>${oh2Esc(p.name)}</td><td class="num">${oh2Num(p.qty)}</td><td>${oh2Esc(p.unit)}</td>${ro?'':`<td class="dt-action"><button class="btn btn-td" type="button" data-act="part-del" data-i="${i}" aria-label="ลบ"><span class="ms">delete</span></button></td>`}</tr>`).join('');
+  return sect('รายการอะไหล่ที่ใช้',ro?'':`<label class="btn btn-s btn-sm cursor-pointer"><input type="file" class="hidden" id="part-file" accept=".xlsx,.xls,.csv"><span class="ms">upload_file</span>นำเข้าไฟล์</label>`)+
+    (ro?'':`<div class="fgrid gap-y-8 mb-0 items-end" id="partf">
+      <div class="f sp2"><label for="pt-name">ชื่ออะไหล่</label><div class="in noic"><input type="text" id="pt-name" placeholder="เช่น ชุดลูกสูบพร้อมแหวน"></div><div class="help hidden"></div></div>
+      <div class="f"><label for="pt-qty">จำนวน</label><div class="in noic"><input type="number" id="pt-qty" min="1" value="1"></div><div class="help hidden"></div></div>
+      <div class="f"><label for="pt-unit">หน่วย</label><div class="flex gap-3"><div class="in noic flex-1"><select id="pt-unit"><option>ชิ้น</option><option>ชุด</option><option>ลิตร</option><option>เส้น</option></select></div>
+        <button class="btn btn-s" type="button" data-act="part-add"><span class="ms">add</span>เพิ่ม</button></div></div></div>`)+
+    (P.length?`<div class="tblwrap mt-4"><table class="tbl striped"><thead><tr><th>ชื่ออะไหล่</th><th class="num">จำนวน</th><th>หน่วย</th>${ro?'':'<th class="w-[72px]" aria-label="ลบ"></th>'}</tr></thead><tbody>${rows}</tbody></table></div>`:
+      `<div class="filter-empty mt-4"><span class="ms">inventory_2</span><b>ยังไม่ได้ระบุอะไหล่ที่ใช้</b><span>เพิ่มทีละรายการหรือนำเข้าไฟล์ — ต้องมีอย่างน้อย 1 รายการจึงปิดงานได้</span></div>`)+
+    `<div class="f" id="part-help"><div class="help hidden"></div></div>`+
+    (ro?`<div class="note note-ok mt-4"><span class="ms">task_alt</span>ปิดงานแล้ว ${oh2Date(job.closedAt)} — รถคันนี้จบรอบ Overhaul</div>`:
+      actions(`<button class="btn btn-p btn-lg" type="button" data-act="close">ปิดงาน</button>`));
+}
+
+/* ---------- ประกอบหน้า ---------- */
+function render(){
+  renderHead();dirtyForm=null;
+  const p=$('panel');
+  p.innerHTML=[null,()=>apptPanel(false),checkinPanel,logsPanel,safetyPanel,()=>apptPanel(true),closePanel][view]();
+  if(view===1||view===5)wireApptForm(view===5);
+  if(view===4&&$('sf'))oh2Upload($('sf'),job.safety,()=>{clr($('sf'));save()});
+}
+function err(el,m){el.classList.add('err');const h=[...el.querySelectorAll('.help')].pop();if(h){h.textContent=m;h.classList.remove('hidden')}const fu=el.querySelector('.fu');if(fu)fu.classList.add('err')}
+function clr(el){if(!el)return;el.classList.remove('err');el.querySelectorAll('.help').forEach(h=>h.classList.add('hidden'));const fu=el.querySelector('.fu');if(fu)fu.classList.remove('err')}
+
+$('panel').addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.ck!==undefined){ck.items[+t.dataset.ck].ok=t.checked;clr($('ck-help'))}
+  if(t.id==='part-file'&&t.files.length){
+    [{name:'กรองน้ำมันเครื่อง',qty:2,unit:'ชิ้น'},{name:'น้ำมันเครื่อง 15W-40',qty:18,unit:'ลิตร'},{name:'สายพานไทม์มิ่ง',qty:1,unit:'เส้น'}].forEach(x=>job.parts.push(x));
+    save();render();oh2Notify('นำเข้าไฟล์ '+t.files[0].name+' สำเร็จ',{sub:'ต้นแบบ — เพิ่มรายการตัวอย่าง 3 รายการ'});
+  }
+});
+$('panel').addEventListener('input',e=>{if(e.target.dataset.ckr!==undefined)ck.items[+e.target.dataset.ckr].remark=e.target.value});
+$('panel').addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
+  if(a==='back')return goBack();
+  if(a==='edit-appt'){editing=true;render();return}
+  if(a==='reply-ok'||a==='reply-no'){
+    const isRet=view===5,f=isRet?'ret':'appt',ok=a==='reply-ok';
+    job[f].reply={ok,remark:ok?'':($('rej-remark').value.trim()||'วันดังกล่าวไม่สะดวก ขอเลื่อนนัด'),at:today};
+    setStage(ok?(isRet?'V10':'V4'):(isRet?'V9':'V3'),ok?'หน่วยงานยืนยันนัดหมายแล้ว':'หน่วยงานปฏิเสธนัดหมาย');return;
+  }
+  if(a==='sign'){const side=b.dataset.side,sel=$('sg-'+side);
+    if(!sel.value){err(b.closest('.f'),'กรุณาเลือกผู้ลงนาม');return}
+    ck.sign[side]={name:sel.value,at:today};render();return}
+  if(a==='checkin'){
+    const miss=ck.items.filter(i=>!i.ok).length;let bad=false;
+    if(miss){err($('ck-help'),`ยังตรวจไม่ครบ ${miss} รายการ`);bad=true}
+    ['kbk','unit'].forEach(s=>{if(!ck.sign[s]){err(document.querySelector(`[data-sign=${s}]`),'กรุณาลงนาม');bad=true}});
+    if(bad)return;
+    if($('simfail').checked){oh2Notify('general error',{err:true});return}
+    const kb=OH2_STAFF.find(s=>s.name===ck.sign.kbk.name);
+    job.checkin={items:ck.items,sign:{kbk:{who:kb?kb.id:'s1',at:ck.sign.kbk.at},unit:{who:ck.sign.unit.name,at:ck.sign.unit.at}},at:today};
+    setStage('V5','ยืนยันรับรถสำเร็จ');return;
+  }
+  if(a==='log-add')return openLog(-1);
+  if(a==='log-edit')return openLog(+b.dataset.i);
+  if(a==='log-del'){delIdx=+b.dataset.i;const l=job.logs[delIdx];$('m-del-s').textContent=`ความคืบหน้า ${oh2Date(l.at.slice(0,10))} ${l.at.slice(11,16)} น. จะถูกลบ`;oh2Modal('m-del',true);return}
+  if(a==='repaired'){if($('simfail').checked){oh2Notify('general error',{err:true});return}setStage('V6','บันทึกซ่อมสำเร็จ');return}
+  if(a==='safety'){if(!job.safety.length){err($('sf'),'กรุณาอัปโหลดเอกสาร Safety Inspection');return}
+    if($('simfail').checked){oh2Notify('general error',{err:true});return}setStage('V7','ยืนยันการตรวจสอบสำเร็จ');return}
+  if(a==='part-add'){const n=$('pt-name').value.trim(),qn=+$('pt-qty').value;
+    if(!n){err($('pt-name').closest('.f'),'กรุณาระบุชื่ออะไหล่');return}
+    if(!(qn>0)){err($('pt-qty').closest('.f'),'จำนวนต้องมากกว่า 0');return}
+    job.parts.push({name:n,qty:qn,unit:$('pt-unit').value});save();render();return}
+  if(a==='part-del'){job.parts.splice(+b.dataset.i,1);save();render();return}
+  if(a==='close'){if(!job.parts.length){err($('part-help'),'กรุณาระบุอะไหล่ที่ใช้อย่างน้อย 1 รายการ');return}
+    if($('simfail').checked){oh2Notify('general error',{err:true});return}
+    job.closedAt=today;setStage('V11','ปิดงานสำเร็จ');return}
+});
+
+/* ---------- เริ่ม ---------- */
+if(!plan||!car||!po){$('body').classList.add('hidden');$('notfound').classList.remove('hidden');$('title').textContent='ไม่พบงาน';$('crumb').textContent='หน้างาน'}
+else{
+  job=oh2Job(S,plan.id,car.id);save();
+  $('back').href=backUrl;$('crumb-plan').href=`overhaul-v2-03-plan-detail.html?id=${plan.id}`;$('crumb-plan').textContent=`แผน ${plan.id}`;
+  $('crumb-po').href=backUrl;$('crumb-po').textContent=po.id;
+  view=+q.get('step')||stepNow();if(view>stepNow())view=stepNow();
+  render();
+}
+</script>
+</body>
+</html>

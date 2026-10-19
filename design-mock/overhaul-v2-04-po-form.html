@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สร้าง/แก้ไข Purchase Order | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  19 ต.ค. 2569 — Overhaul v2 หน้า 4: สร้าง PO (S4 · ?plan=<เลขแผน>) / แก้ไข PO (S5 · ?plan=&po=<เลข PO>[&from=po])
+  userflow "รายลเอียด purchase order" + "Edit Purchase order - Condition":
+   · ชื่อ purchase order freetext (เช่น ซ่อมระบบแอร์) · ศูนย์บริการ/อู่ search select (vendor list — mockup)
+   · เลือกรถ (multi select): เห็นรายการรถทุกคัน · ค้นหาได้ (ทะเบียน · รุ่น/ยี่ห้อ) · เพิ่ม/ลบรถจากรายการที่เลือก · แถวรถแสดง ทะเบียน เลขไมล์ อายุการใช้งาน
+   · อัปโหลด ใบสั่งจ้าง · อื่นๆ — สูงสุด 10 ไฟล์ · PDF/JPEG · ดาวน์โหลด · ดูตัวอย่าง
+   · ย้อนกลับ: มีการแก้ไข → modal ยืนยันการออก · บันทึก: สำเร็จ "การสร้าง purchase order สำเร็จ" · ไม่สำเร็จ "general error"
+   · แก้ไข: บันทึกมีการแก้ไข → modal ยืนยันการแก้ไข PO · ยกเลิกมีการแก้ไข → modal ยืนยันการออก
+  ตีความเอง (รอเคาะ): ช่องจำเป็น = ชื่อ PO · อู่ · รถอย่างน้อย 1 คัน · ใบสั่งจ้างอย่างน้อย 1 ไฟล์ · บันทึกแล้วกลับหน้ารายละเอียดแผน ·
+          dual list ใช้ checkbox + ปุ่มย้ายกลางตามไลบรารี (wireframe วาดปุ่มเพิ่ม/ลบท้ายทุกแถว) · ข้อความหลังแก้ไข "บันทึกการแก้ไข PO สำเร็จ"
+
+  ที่มา · ไฟล์ Component: Page header · Breadcrumbs · Section header (.sect) · Text input (.f .in) · Input dropdown + Dropdown list (.combo) ·
+           List with checkbox + List header item + Badge outline (.dual/.lchk/.badge.sq) · Text input ค้นหา (.search) ·
+           File upload Type=Default (.fu/.fu-item) · Secondary/Primary button · Modal Centered · Notification
+        · ไฟล์ UI Release#2: "5.1 Rental Contract Management" เฟรม `Create rental contract` (โครงฟอร์ม) · `Contract vehicle list`
+          (รายการรถของสัญญา) · "5.4" `Modal / Create appointment` (search select)
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility · ข้อมูลจำลองทั้งหมด
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="overhaul-v2-01-plans.html" title="จัดการงาน Overhaul"><span class="ms">build_circle</span><span class="nvlbl">จัดการงาน Overhaul</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นางสาวกนกวรรณ ใจมั่น — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft flex items-center gap-3 flex-wrap">
+        <span class="mr-auto">Prototype (Mock) · Overhaul v2 หน้า 4 — สร้าง/แก้ไข Purchase Order · ข้อมูลจำลองทั้งหมด</span>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="simfail">จำลองบันทึกไม่สำเร็จ</label>
+      </div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep"></span><a href="overhaul-v2-01-plans.html">จัดการงาน Overhaul</a>
+        <span class="sep"></span><a id="crumb-plan"></a>
+        <span class="sep"></span><span class="cur" id="crumb">เพิ่ม Purchase Order</span>
+      </div>
+
+      <div class="page-title-row">
+        <button class="btn btn-t btn-icon" type="button" id="back" aria-label="ย้อนกลับ"><span class="ms">arrow_back</span></button>
+        <h1 class="page-title mb-0" id="title">เพิ่ม Purchase Order</h1>
+      </div>
+
+      <form class="flex flex-col gap-8" id="form" novalidate>
+        <section>
+          <div class="sect">รายละเอียด Purchase Order</div>
+          <div class="fgrid gap-y-8 mb-0">
+            <div class="f sp2" data-req><label for="name">ชื่อ Purchase Order</label><div class="in noic"><input type="text" id="name" placeholder="เช่น ซ่อมระบบแอร์"></div><div class="help hidden"></div></div>
+            <div class="f sp2 combo" data-req id="vendor"><label for="vendor-in">ศูนย์บริการ/อู่</label>
+              <div class="in"><span class="ms">search</span><input type="text" id="vendor-in" placeholder="ค้นหาชื่อศูนย์บริการ/อู่" autocomplete="off"><span class="ms combo-arrow">keyboard_arrow_down</span></div>
+              <div class="combo-list" hidden></div><div class="help hidden"></div></div>
+          </div>
+        </section>
+
+        <section data-req id="cars-field">
+          <div class="sect">เลือกรถ</div>
+          <div class="dual mt-4">
+            <div class="flex flex-col gap-3 min-w-0">
+              <div class="search w-full"><span class="ms">search</span><input type="search" id="car-q" placeholder="ค้นหาทะเบียน, รุ่น/ยี่ห้อ" aria-label="ค้นหารถ"></div>
+              <div class="lchk"><div class="lchk-hd"><b>รายการรถทั้งหมด <span class="badge sq" id="n-all"></span></b><input type="checkbox" id="all-l" aria-label="เลือกทั้งหมด"></div>
+                <div class="lchk-body" id="list-l"></div></div>
+            </div>
+            <div class="dual-mid">
+              <button class="btn btn-s btn-sm" type="button" id="to-r">เพิ่ม<span class="ms">chevron_right</span></button>
+              <button class="btn btn-s btn-sm" type="button" id="to-l"><span class="ms">chevron_left</span>นำออก</button>
+            </div>
+            <div class="flex flex-col gap-3 min-w-0">
+              <div class="h-10 hidden md:block"></div>
+              <div class="lchk"><div class="lchk-hd"><b>เลือกแล้ว <span class="badge sq" id="n-sel"></span></b><input type="checkbox" id="all-r" aria-label="เลือกทั้งหมด"></div>
+                <div class="lchk-body" id="list-r"></div></div>
+            </div>
+          </div>
+          <div class="f"><div class="help hidden"></div></div>   <!-- .f ห่อเฉพาะข้อความ error — ถ้าใส่ที่ section, .f label{display:block} จะทับแถว .lchk-item -->
+        </section>
+
+        <section>
+          <div class="sect">เอกสาร</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+            <div class="f" data-files="order" data-req><label>ใบสั่งจ้าง</label>
+              <label class="fu"><input type="file" multiple accept=".pdf,.jpg,.jpeg,application/pdf,image/jpeg"><span class="ficon sm gray"><span class="ms">cloud_upload</span></span>
+                <span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PDF, JPG · สูงสุด 10 ไฟล์ · <span class="fu-count"></span></small></span></label>
+              <div class="help hidden"></div><div class="fu-list"></div></div>
+            <div class="f" data-files="other"><label>อื่นๆ <small>(ถ้ามี)</small></label>
+              <label class="fu"><input type="file" multiple accept=".pdf,.jpg,.jpeg,application/pdf,image/jpeg"><span class="ficon sm gray"><span class="ms">cloud_upload</span></span>
+                <span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PDF, JPG · สูงสุด 10 ไฟล์ · <span class="fu-count"></span></small></span></label>
+              <div class="help hidden"></div><div class="fu-list"></div></div>
+          </div>
+        </section>
+
+        <div class="flex items-center gap-3">
+          <button class="btn btn-s btn-lg hidden" type="button" id="cancel">ยกเลิก</button>
+          <button class="btn btn-p btn-lg" type="submit" id="save">บันทึก</button>
+        </div>
+      </form>
+    </main>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="m-leave">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-leave-t">
+    <div class="modal-hd center">
+      <div class="modal-hd-c"><span class="ficon"><span class="ms">info</span></span><h2 id="m-leave-t">ยืนยันการออก</h2><div class="modal-sub">ข้อมูลที่แก้ไขไว้จะไม่ถูกบันทึก</div></div>
+      <button class="modal-x" type="button" data-close="m-leave" aria-label="ปิด"><span class="ms">close</span></button>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-leave">ปิด</button>
+      <button class="btn btn-p" type="button" id="m-leave-ok">ยืนยัน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="m-edit">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-edit-t">
+    <div class="modal-hd center">
+      <div class="modal-hd-c"><span class="ficon"><span class="ms">info</span></span><h2 id="m-edit-t">ยืนยันการแก้ไข PO</h2><div class="modal-sub" id="m-edit-s"></div></div>
+      <button class="modal-x" type="button" data-close="m-edit" aria-label="ปิด"><span class="ms">close</span></button>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-edit">ยกเลิก</button>
+      <button class="btn btn-p" type="button" id="m-edit-ok">ยืนยัน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="overhaul-v2-mock.js?v=20261019-4"></script>
+<script>
+const $=id=>document.getElementById(id);
+const q=new URLSearchParams(location.search);
+let S=oh2Load();
+const plan=oh2Plan(S,q.get('plan'));
+const po=plan&&q.get('po')?plan.pos.find(o=>o.id===q.get('po')):null;
+const backTo=!plan?'overhaul-v2-01-plans.html':(q.get('from')==='po'&&po?`overhaul-v2-05-po-detail.html?plan=${plan.id}&po=${po.id}`:`overhaul-v2-03-plan-detail.html?id=${plan.id}`);
+if(!plan)oh2Notify('ไม่พบแผน',{err:true});
+
+$('crumb-plan').textContent=plan?`แผน ${plan.id}`:'แผน';$('crumb-plan').href=backTo;
+let vendor=po?String(po.vendor):'';
+const sel=new Set(po?po.cars:[]);
+const docs=po?JSON.parse(JSON.stringify(po.docs)):{order:[],other:[]};
+if(po){
+  $('title').textContent=`แก้ไข ${po.id}`;$('crumb').textContent=`แก้ไข ${po.id}`;document.title=`แก้ไข ${po.id} | Maintain-D (Mock)`;
+  $('name').value=po.name;$('vendor-in').value=OH2_VENDORS[po.vendor].name;$('cancel').classList.remove('hidden');
+}
+
+/* ศูนย์บริการ/อู่ — search select */
+const vc=oh2Combo($('vendor'),OH2_VENDORS.map((v,i)=>({value:String(i),label:v.name,sub:v.tel+' · '+v.addr})),v=>{vendor=v;clearErr($('vendor'))});
+if(po)vc.value;   // ค่าเริ่มต้นอยู่ใน vendor แล้ว
+
+/* dual list — ซ้าย: รถทุกคันที่ยังไม่เลือก (ค้นได้) · ขวา: รถที่เลือกแล้ว · ติ๊กแล้วกดปุ่มกลางเพื่อย้าย */
+const tick={l:new Set(),r:new Set()};
+const row=(v,side)=>`<label class="lchk-item${tick[side].has(v.id)?' sel':''}"><span class="lchk-tx"><b>${oh2Esc(v.plate)}</b>
+  <small>${oh2Esc(v.brand)} · ${oh2Esc(v.type)} <i></i> เลขไมล์ ${oh2Num(v.mileage)} กม. <i></i> อายุ ${v.age} ปี</small></span>
+  <input type="checkbox" data-side="${side}" value="${v.id}"${tick[side].has(v.id)?' checked':''} aria-label="เลือก ${oh2Esc(v.plate)}"></label>`;
+function drawCars(){
+  const qq=$('car-q').value.trim().toLowerCase();
+  const left=OH2_VEHICLES.filter(v=>!sel.has(v.id)&&(!qq||[v.plate,v.brand,v.type].some(x=>x.toLowerCase().includes(qq))));
+  const right=OH2_VEHICLES.filter(v=>sel.has(v.id));
+  $('list-l').innerHTML=left.length?left.map(v=>row(v,'l')).join(''):`<div class="lchk-empty">${qq?'ไม่พบรถที่ตรงกับคำค้น':'เลือกครบทุกคันแล้ว'}</div>`;
+  $('list-r').innerHTML=right.length?right.map(v=>row(v,'r')).join(''):'<div class="lchk-empty">ยังไม่ได้เลือกรถ</div>';
+  $('n-all').textContent=left.length;$('n-sel').textContent=right.length;
+  for(const [side,list] of [['l',left],['r',right]]){
+    const all=$('all-'+side),n=list.filter(v=>tick[side].has(v.id)).length;
+    all.checked=!!list.length&&n===list.length;all.indeterminate=n>0&&n<list.length;all.disabled=!list.length;
+  }
+  $('to-r').disabled=!tick.l.size;$('to-l').disabled=!tick.r.size;
+}
+document.querySelector('.dual').addEventListener('change',e=>{
+  const c=e.target;if(c.dataset.side){c.checked?tick[c.dataset.side].add(c.value):tick[c.dataset.side].delete(c.value);drawCars();return}
+  if(c.id==='all-l'||c.id==='all-r'){const side=c.id.slice(-1);
+    document.querySelectorAll(`[data-side="${side}"]`).forEach(x=>c.checked?tick[side].add(x.value):tick[side].delete(x.value));drawCars()}
+});
+$('to-r').addEventListener('click',()=>{tick.l.forEach(id=>sel.add(id));tick.l.clear();clearErr($('cars-field'));drawCars()});
+$('to-l').addEventListener('click',()=>{tick.r.forEach(id=>sel.delete(id));tick.r.clear();drawCars()});
+$('car-q').addEventListener('input',drawCars);
+drawCars();
+
+document.querySelectorAll('[data-files]').forEach(el=>oh2Upload(el,docs[el.dataset.files],()=>clearErr(el)));
+
+const snap=()=>JSON.stringify([$('name').value.trim(),vendor,[...sel].sort(),docs]);
+const start=snap();const dirty=()=>snap()!==start;
+
+function setErr(el,msg){el.classList.add('err');const h=[...el.querySelectorAll('.help')].pop();h.textContent=msg;h.classList.remove('hidden');const fu=el.querySelector('.fu');if(fu)fu.classList.add('err')}
+function clearErr(el){el.classList.remove('err');el.querySelectorAll('.help').forEach(h=>h.classList.add('hidden'));const fu=el.querySelector('.fu');if(fu)fu.classList.remove('err')}
+function validate(){
+  let first=null;const bad=(el,m)=>{setErr(el,m);first=first||el};
+  document.querySelectorAll('[data-req]').forEach(clearErr);
+  if(!$('name').value.trim())bad($('name').closest('.f'),'กรุณาระบุชื่อ Purchase Order');
+  if(vendor==='')bad($('vendor'),'กรุณาเลือกศูนย์บริการ/อู่');
+  if(!sel.size)bad($('cars-field'),'กรุณาเลือกรถอย่างน้อย 1 คัน');
+  if(!docs.order.length)bad(document.querySelector('[data-files=order]'),'กรุณาแนบใบสั่งจ้าง');
+  if(first){first.scrollIntoView({block:'center',behavior:'smooth'})}
+  return !first;
+}
+$('name').addEventListener('input',()=>clearErr($('name').closest('.f')));
+
+function commit(){
+  if($('simfail').checked){oh2Notify('general error',{err:true});return false}
+  const data={name:$('name').value.trim(),vendor:+vendor,cars:OH2_VEHICLES.map(v=>v.id).filter(id=>sel.has(id)),docs};
+  if(po)Object.assign(po,data);else plan.pos.push(Object.assign({id:oh2NextPoId(S)},data));
+  oh2EnsureJobs(S,plan.id,data.cars);oh2Save(S);return true;
+}
+$('form').addEventListener('submit',e=>{
+  e.preventDefault();if(!plan||!validate())return;
+  if(po){
+    if(!dirty()){location.href=backTo;return}
+    $('m-edit-s').textContent=`บันทึกการเปลี่ยนแปลงของ ${po.id} "${$('name').value.trim()}"`;oh2Modal('m-edit',true);return;
+  }
+  if(commit())location.href=backTo+'&saved=po';
+});
+$('m-edit-ok').addEventListener('click',()=>{oh2Modal('m-edit',false);if(commit())location.href=backTo+'&saved=poedit'});
+const leave=()=>{if(dirty())oh2Modal('m-leave',true);else location.href=backTo};
+$('back').addEventListener('click',leave);$('cancel').addEventListener('click',leave);
+$('m-leave-ok').addEventListener('click',()=>{location.href=backTo});
+</script>
+</body>
+</html>

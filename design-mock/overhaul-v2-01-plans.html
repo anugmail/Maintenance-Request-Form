@@ -8,10 +8,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds70">
-<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds70">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="../design-system/tailwind-theme.js?v=20261019-ds70"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
 <!--
   18 ต.ค. 2569 — Overhaul v2 หน้า 1: รายการแผน "จัดการงาน Overhaul" (url จริง /overhaul-utility-vehicle)
   userflow 14 scenario ของเจ้าของงาน — หน้านี้ครอบ S1 สร้างแผน (จุดเข้า) · S2 แก้ไขแผน (จุดเข้า) · S3 ลบแผน
@@ -65,7 +65,7 @@
 
       <div class="page-title-row">
         <h1 class="page-title mb-0 mr-auto">จัดการงาน Overhaul</h1>
-        <button class="btn btn-p" type="button" data-todo="หน้าสร้างแผน"><span class="ms">add</span>สร้างแผน Overhaul</button>
+        <a class="btn btn-p !no-underline" href="overhaul-v2-02-plan-form.html"><span class="ms">add</span>สร้างแผน Overhaul</a>
       </div>
 
       <div class="w-full stack">
@@ -116,7 +116,7 @@
           <span class="ms">inventory_2</span>
           <b>ยังไม่มีแผน Overhaul</b>
           <span>สร้างแผนเพื่อเริ่มเพิ่ม Purchase Order และติดตามงานรายคัน</span>
-          <button class="btn btn-p btn-sm mt-2" type="button" data-todo="หน้าสร้างแผน"><span class="ms">add</span>สร้างแผน Overhaul</button>
+          <a class="btn btn-p btn-sm mt-2 !no-underline" href="overhaul-v2-02-plan-form.html"><span class="ms">add</span>สร้างแผน Overhaul</a>
         </div>
       </div>
     </main>
@@ -160,7 +160,7 @@
   </div>
 </div>
 
-<script src="overhaul-v2-mock.js?v=20261018-1"></script>
+<script src="overhaul-v2-mock.js?v=20261019-4"></script>
 <script>
 const $=id=>document.getElementById(id);
 let S=oh2Load();
@@ -196,8 +196,8 @@ function render(){
       <td class="dt-action">
         <details class="dd"><summary class="btn btn-t btn-icon" aria-label="จัดการแผน ${oh2Esc(p.id)}"><span class="ms">more_horiz</span></summary>
           <div class="dd-menu">
-            <button class="dd-item" type="button" data-todo="หน้ารายละเอียดแผน"><span><span class="ms">visibility</span>ดูรายละเอียด</span></button>
-            <button class="dd-item" type="button" data-todo="หน้าแก้ไขแผน"><span><span class="ms">edit</span>แก้ไข</span></button>
+            <a class="dd-item !no-underline" href="overhaul-v2-03-plan-detail.html?id=${oh2Esc(p.id)}"><span><span class="ms">visibility</span>ดูรายละเอียด</span></a>
+            <a class="dd-item !no-underline" href="overhaul-v2-02-plan-form.html?id=${oh2Esc(p.id)}"><span><span class="ms">edit</span>แก้ไข</span></a>
             <div class="dd-sep"></div>
             <button class="dd-item" type="button" data-del="${oh2Esc(p.id)}"><span><span class="ms">delete</span>ลบ</span></button>
           </div></details>
@@ -263,6 +263,10 @@ $('m-del-ok').addEventListener('click',()=>{
   S.plans=S.plans.filter(p=>p.id!==delId);oh2Save(S);oh2Modal('m-del',false);render();
   oh2Notify('ลบแผน overhaul สำเร็จ');
 });
+
+/* แจ้งผลหลังกลับมาจากหน้าฟอร์ม (S1 สร้าง · S2 แก้ไข) */
+const saved=new URLSearchParams(location.search).get('saved');
+if(saved){oh2Notify({create:'การสร้างแผน overhaul สำเร็จ',edit:'บันทึกการแก้ไขแผนสำเร็จ',delete:'ลบแผน overhaul สำเร็จ'}[saved]||'บันทึกสำเร็จ');history.replaceState(null,'',location.pathname)}
 
 $('reset').addEventListener('click',()=>{S=oh2Reset();render();oh2Notify('คืนค่าข้อมูลตัวอย่างแล้ว')});
 $('wipe').addEventListener('click',()=>{S.plans=[];oh2Save(S);render()});
