@@ -577,7 +577,7 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
 - [x] ~~เพิ่ม validation ช่องเหตุผล~~ — **ยกเลิก** ตั้งใจให้ไม่บังคับ (AC-D4)
 
 ### ยังรอเจ้าของงานเคาะ
-- [ ] 🛠️ **Overhaul v2 — HTML mock ครบ 6 หน้า 14 scenario + ปลั๊กอิน Figma จาก component จริง (18–19 ต.ค. 2569 · push แล้ว `c40b97f` `15e2ae7`) · ⬜ ปลั๊กอินยังสร้างเฉพาะหน้า 1 (8 state)** —
+- [ ] 🛠️ **Overhaul v2 — HTML mock ครบ 6 หน้า 14 scenario + ปลั๊กอิน Figma จาก component จริง (18–19 ต.ค. 2569 · push แล้ว `c40b97f` `15e2ae7` … `1ade95d`) · ปลั๊กอินครบ 14 scenario 56 จอ + mobile** —
       ✅ 19 ต.ค.: HTML ครบ — `overhaul-v2-01-plans` · `-02-plan-form` · `-03-plan-detail` · `-04-po-form` · `-05-po-detail` · `-06-job` (6 ขั้น) · การ์ดใน `design-mock/index.html` ·
         design-system v0.71–v0.72 (select ไม่มีไอคอน · ชื่อไฟล์ · input time) · ตรวจ Chrome ครบทุกหน้าไม่มี pageerror
       ✅ 19 ต.ค.: ปลั๊กอิน `figma-export/overhaul2-plugin/` รันจริงในไฟล์ Maintain-D ได้ 8 หน้าจอ · instance นำเข้าจากไลบรารีไฟล์ "component" ที่เราอ่านค่ามา
@@ -587,6 +587,10 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
       - [x] ชุด FigJam 56 จอ (19 ต.ค.): `figma-export/flow-overhaul2-capture.js` → `3-figjam-board.js --overhaul2 --only --out=board-overhaul2.json`
             (15 section ละ scenario · ลูกศรต่อจอ · anchor below วางต่อใต้ของเดิม · ไม่ทับ board.json) · ปลั๊กอิน FigJam รับชื่อไฟล์ .json อื่นในช่องที่อยู่ได้ ·
             `SPEC=board-overhaul2.json node figma-export/test-figjam-plugin.js` ผ่าน · ⚠ ปลั๊กอินลบลูกศร "flow →" ทุกเส้นบนหน้า — ให้ลงหน้า/ไฟล์ FigJam ว่าง
+      - [x] รอบแก้ตามแบบจริง 19 ต.ค. (`123154c` `1ade95d`): ปุ่มท้ายหน้าแยกซ้าย–ขวา ปุ่มเดียวชิดขวา · อัปโหลด 1 คอลัมน์ · **จอ mobile 402×874 วางข้างจอ desktop ทุกจอ** (112 เฟรม) ·
+            ปิด divider ทั้งหมด · แถววงเงินอนุมัติ + WBS (ข้อ F10) · ปุ่ม "แก้เฉพาะจุด" ในปลั๊กอิน 2 ปุ่ม (ปิด divider · ย้าย WBS) ไม่ต้องสร้างจอใหม่ — เจ้าของงานรันจริงแล้ว
+      - [x] skill `userflow` (`5021b0e`): userflow คืออะไร · อ่านข้อความจากบอร์ด · ลำดับ 7 ขั้นจาก userflow ถึง FigJam · วิธีเขียน userflow ใหม่ — ข้อความดิบเก็บนอกรีโป `~/PEA/Maintain-D/userflow/`
+      - [ ] mock HTML + ชุด FigJam ยังไม่มีจอ mobile (ทำใน Figma ก่อนตามที่เจ้าของงานสั่ง)
       - [ ] 🔴 มี mock Overhaul v2 อีกชุดของเพื่อนร่วมทีม (`595fe72`: `design-mock/overhaul-v2-list.html` · `overhaul-v2-job.html` · `overhaul-v2-data.js` · แอป `app/src/app/overhaul-v2/`)
             ทำขนานกับชุด `overhaul-v2-0*.html` นี้ — ต้องคุยว่าใช้ชุดไหนเป็นหลัก
       - [ ] label ของ `.f` ยังเป็นสเปกไลบรารีเก่า (14/500) — ไลบรารีใหม่ Input label 16/600 gray-600 · รอเคาะว่าแก้ทั้งระบบไหม
