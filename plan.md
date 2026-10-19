@@ -591,6 +591,11 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
             ปิด divider ทั้งหมด · แถววงเงินอนุมัติ + WBS (ข้อ F10) · ปุ่ม "แก้เฉพาะจุด" ในปลั๊กอิน 2 ปุ่ม (ปิด divider · ย้าย WBS) ไม่ต้องสร้างจอใหม่ — เจ้าของงานรันจริงแล้ว
       - [x] skill `userflow` (`5021b0e`): userflow คืออะไร · อ่านข้อความจากบอร์ด · ลำดับ 7 ขั้นจาก userflow ถึง FigJam · วิธีเขียน userflow ใหม่ — ข้อความดิบเก็บนอกรีโป `~/PEA/Maintain-D/userflow/`
       - [ ] mock HTML + ชุด FigJam ยังไม่มีจอ mobile (ทำใน Figma ก่อนตามที่เจ้าของงานสั่ง)
+      - [x] 🌐 **ต้นแบบ Next.js เล่นได้ (19 ต.ค. `70308f1`)** — https://anugmail.github.io/Maintenance-Request-Form/overhaul-v2-app/ · โค้ด `overhaul-next/`
+            (Next 16 + Tailwind 4 · ข้อมูลจำลอง localStorage · ครบ 14 scenario · ชุด UI `/kit` ยกค่าจากไลบรารี · ทำตาม `figma-export/component-rules.md`) ·
+            pages.yml build static export ทุก push (build พังไม่ล้ม deploy หน้าอื่น) · ตรวจ: tsc · build · Chrome 1440/402 ทุกหน้าไม่มี error ทั้ง local และบน Pages
+      - [ ] ต้นแบบ Next.js: ขาด Alert กลาง (หน้างานทำ JobAlert เฉพาะหน้า) · ช่องเลือกช่วงวันแบบช่องเดียวยังเป็นของประกอบเอง (Dual date picker ไลบรารียังไม่ทำ) · Combobox ไม่มีช่อง supporting text
+      - [ ] 🔴 รอเคาะ: จับคู่ช่องนัดหมายแบบงานซ่อม → ช่องของ Overhaul (ใช้ตามที่เสนอไปก่อน) · หน้างานรายคันนับเป็นหน้า Detail ไหม · Table 8 คอลัมน์ vs หน้ารายการแผน 9
       - [ ] 🔴 มี mock Overhaul v2 อีกชุดของเพื่อนร่วมทีม (`595fe72`: `design-mock/overhaul-v2-list.html` · `overhaul-v2-job.html` · `overhaul-v2-data.js` · แอป `app/src/app/overhaul-v2/`)
             ทำขนานกับชุด `overhaul-v2-0*.html` นี้ — ต้องคุยว่าใช้ชุดไหนเป็นหลัก
       - [ ] label ของ `.f` ยังเป็นสเปกไลบรารีเก่า (14/500) — ไลบรารีใหม่ Input label 16/600 gray-600 · รอเคาะว่าแก้ทั้งระบบไหม
