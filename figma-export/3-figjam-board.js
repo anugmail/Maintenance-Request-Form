@@ -13,6 +13,9 @@
      node figma-export/3-figjam-board.js --disposal + flow จำหน่ายยานพาหนะ (ผังล้วน · ตาม Template บอร์ด Planning 1-2)
      node figma-export/3-figjam-board.js --inventory + flow เบิกวัสดุผ่าน Smart Inventory (swimlane 5 เลน · Template เดียวกัน)
      node figma-export/3-figjam-board.js --swimlane --only   เอาเฉพาะ swimlane อย่างเดียว (ไม่เอาชุดตั้งต้น)
+     node figma-export/3-figjam-board.js --overhaul2 --only --out=board-overhaul2.json
+                                                    Overhaul v2 ครบ 14 scenario (section ละ scenario · capture จาก flow-overhaul2-capture.js)
+                                                    --out= เขียนไฟล์ชื่ออื่น ไม่ทับ board.json (ปลั๊กอินใส่ชื่อไฟล์ในช่องที่อยู่ได้)
      node figma-export/3-figjam-board.js --pages    + หน้ารวมทุกหน้าจัดหมวด
      node figma-export/3-figjam-board.js --all      ทุกชุด
 
@@ -175,6 +178,23 @@ function main() {
     });
   }
 
+  // Overhaul v2 ครบ 14 scenario (19 ต.ค. 2569) — 1 section ต่อ scenario เรียงตาม userflow · ลูกศรต่อจอในแต่ละ section
+  // ไฟล์ Figma design ทำด้วย component จริงที่ overhaul2-plugin/ · บอร์ดนี้ใช้รีวิว flow (ภาพ capture จาก HTML)
+  if (all || args.has('--overhaul2')) {
+    const mf = path.join(FJ, 'flow-overhaul2', 'manifest.json');
+    if (!fs.existsSync(mf)) { console.error('ไม่พบ ' + mf + ' — รัน flow-overhaul2-capture.js ก่อน'); process.exit(1); }
+    const m = read(mf);
+    const order = [...new Set(m.shots.map(s => s.scenario))];
+    const tint = [COLORS.violet, COLORS.blue, COLORS.teal, COLORS.yellow, COLORS.pink, COLORS.green, COLORS.gray];
+    order.forEach((sc, i) => {
+      const shots = m.shots.filter(s => s.scenario === sc);
+      sections.push({
+        name: 'Overhaul v2 · ' + sc, color: tint[i % tint.length], connect: 'sequence',
+        cols: shots.map((s, j) => ({ label: (j + 1) + ' · ' + s.name, note: '', images: [{ src: 'figjam/flow-overhaul2/' + s.file, w: s.w, h: s.h }] }))
+      });
+    });
+  }
+
   if (all || args.has('--pages')) {
     const pages = read(path.join(FJ, 'manifest.json'));
     const groupColor = {
@@ -196,17 +216,19 @@ function main() {
 
   const board = {
     version: 1,
-    anchor: (args.has('--disposal') || args.has('--inventory')) ? 'below' : undefined,
+    anchor: (args.has('--disposal') || args.has('--inventory') || args.has('--overhaul2')) ? 'below' : undefined,   // วางต่อใต้ของเดิมบนบอร์ด ไม่ทับ
     generatedAt: new Date().toISOString(),
     font: { family: 'IBM Plex Sans Thai', style: 'Medium' },
     fallbackFont: { family: 'Inter', style: 'Medium' },
     sections
   };
 
-  fs.writeFileSync(path.join(OUT, 'board.json'), JSON.stringify(board));
+  const outArg = [...args].find(a => a.indexOf('--out=') === 0);
+  const outFile = outArg ? outArg.slice(6) : 'board.json';
+  fs.writeFileSync(path.join(OUT, outFile), JSON.stringify(board));
   const nImg = sections.reduce((a, s) => a + (s.cols || []).reduce((b, c) => b + c.images.length, 0), 0);
   const nDiag = sections.filter(s => s.kind === 'diagram').length;
-  console.log('board.json: ' + sections.length + ' section (ผัง ' + nDiag + ') · ' +
+  console.log(outFile + ': ' + sections.length + ' section (ผัง ' + nDiag + ') · ' +
     sections.reduce((a, s) => a + (s.cols || []).length, 0) + ' หน้าจอ · ' + nImg + ' รูป');
 }
 

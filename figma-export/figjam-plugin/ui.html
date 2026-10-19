@@ -60,9 +60,12 @@ function log(msg, cls) {
 $btn.addEventListener('click', async () => {
   $btn.disabled = true;
   try {
-    const base = document.getElementById('url').value.replace(/board\.json$/, '');
-    log('— กำลังโหลด board.json');
-    const spec = await (await fetch(base + 'board.json')).json();
+    /* ช่องที่อยู่รับได้ทั้งโฟลเดอร์ (เดิม) และไฟล์ .json ชื่ออื่น เช่น …/board-overhaul2.json (19 ต.ค. 2569 — ชุด Overhaul v2 แยกไฟล์ไม่ทับ board.json) */
+    const url = document.getElementById('url').value.trim();
+    const specUrl = /\.json$/.test(url) ? url : url.replace(/\/?$/, '/') + 'board.json';
+    const base = specUrl.replace(/[^/]*$/, '');
+    log('— กำลังโหลด ' + specUrl.replace(base, ''));
+    const spec = await (await fetch(specUrl)).json();
 
     const srcs = [...new Set(spec.sections.flatMap(s => (s.cols || []).flatMap(c => c.images.map(i => i.src))))];
     log('— รูปทั้งหมด ' + srcs.length + ' ไฟล์');

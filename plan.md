@@ -576,8 +576,12 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
       ✅ 19 ต.ค.: ปลั๊กอิน `figma-export/overhaul2-plugin/` รันจริงในไฟล์ Maintain-D ได้ 8 หน้าจอ · instance นำเข้าจากไลบรารีไฟล์ "component" ที่เราอ่านค่ามา
         (เจ้าของงาน publish ไฟล์ component + เพิ่มไลบรารีในไฟล์ Maintain-D แล้ว) ⇒ Go to main component พาไปไฟล์ component · ตัวทดสอบ `figma-export/test-overhaul2-plugin.js`
       · ดัมป์ไฟล์ Maintain-D (9 หน้า มีบอร์ด userflow ตัวจริง "Final Userflow Overhaul #14/10/2026") อยู่ `figma-export/out/figma-dump/maintain-d/` (นอก git)
-      - [ ] ปลั๊กอิน: สร้างจอที่เหลือของ S1–S14 จัด Section ละ scenario บนหน้า overhaul-1 (เจ้าของงานเลือก 19 ต.ค.)
-      - [ ] เตรียมชุด FigJam (capture จอเดียวกัน จัด Section ละ scenario) — "เตรียมไว้เฉยๆ ยังไม่ใช้" ห้ามสร้าง board.json ทับของเดิมจนกว่าจะสั่ง
+      - [x] ปลั๊กอิน: ครบ 14 scenario 56 จอ (`2ce1fa6`) · 1 จอ = 1 เฟรมพื้นขาว (เจ้าของงานสั่ง "1 จอ หนึ่งพื้นหลัง") · scenario ละแถว · รันจริงแล้ว
+      - [x] ชุด FigJam 56 จอ (19 ต.ค.): `figma-export/flow-overhaul2-capture.js` → `3-figjam-board.js --overhaul2 --only --out=board-overhaul2.json`
+            (15 section ละ scenario · ลูกศรต่อจอ · anchor below วางต่อใต้ของเดิม · ไม่ทับ board.json) · ปลั๊กอิน FigJam รับชื่อไฟล์ .json อื่นในช่องที่อยู่ได้ ·
+            `SPEC=board-overhaul2.json node figma-export/test-figjam-plugin.js` ผ่าน · ⚠ ปลั๊กอินลบลูกศร "flow →" ทุกเส้นบนหน้า — ให้ลงหน้า/ไฟล์ FigJam ว่าง
+      - [ ] 🔴 มี mock Overhaul v2 อีกชุดของเพื่อนร่วมทีม (`595fe72`: `design-mock/overhaul-v2-list.html` · `overhaul-v2-job.html` · `overhaul-v2-data.js` · แอป `app/src/app/overhaul-v2/`)
+            ทำขนานกับชุด `overhaul-v2-0*.html` นี้ — ต้องคุยว่าใช้ชุดไหนเป็นหลัก
       - [ ] label ของ `.f` ยังเป็นสเปกไลบรารีเก่า (14/500) — ไลบรารีใหม่ Input label 16/600 gray-600 · รอเคาะว่าแก้ทั้งระบบไหม
       เจ้าของงานสั่ง _"ถ้าต้องการให้สร้าง ui ให้ตรง component เตรียม เดี๋ยวจะเอาไปลงใน figma figjam"_ → เลือก HTML + ยกคอมโพเนนต์ที่ขาดจากไลบรารี + ครบ 14 scenario ·
       แล้วขอ _"ลองทำ mock ให้ดู 1 หน้าก่อน"_ · _"ลองก่อน 1 หน้า ไว้รีวิว flow กับเจ้าของงาน"_ · _"อยากลง figma เลย"_ · _"อ่านจาก component จริงเท่านั้นนะ"_

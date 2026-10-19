@@ -5,7 +5,7 @@
    ลูกศรเฉพาะ section ที่ connect=sequence · รันซ้ำไม่ซ้อน (ล้างของเดิม)
    · MEDIA เร่ร่อน (รูปอัปโหลดค้าง) ถูกเก็บกวาด
 
-   รัน:  node figma-export/test-figjam-plugin.js   (ต้องมี out/board.json)
+   รัน:  node figma-export/test-figjam-plugin.js   (ต้องมี out/board.json · SPEC=board-overhaul2.json สำหรับไฟล์อื่น)
    ============================================================ */
 
 const fs = require('fs');
@@ -106,7 +106,7 @@ const figma = {
 const code = fs.readFileSync(path.join(__dirname, 'figjam-plugin', 'code.js'), 'utf8');
 vm.runInNewContext(code, { figma, __html__: '', console });
 
-const spec = JSON.parse(fs.readFileSync(path.join(__dirname, 'out', 'board.json'), 'utf8'));
+const spec = JSON.parse(fs.readFileSync(path.join(__dirname, 'out', process.env.SPEC || 'board.json'), 'utf8'));   // SPEC=board-overhaul2.json ทดสอบไฟล์อื่น
 const srcs = [...new Set(spec.sections.flatMap(s => (s.cols || []).flatMap(c => c.images.map(i => i.src))))];
 const images = srcs.map(src => ({ src, bytes: new Uint8Array([1, 2, 3]) }));
 
