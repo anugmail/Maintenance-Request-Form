@@ -1311,3 +1311,163 @@ input.tbl-cell-ro{width:100px;display:inline-block;background:var(--gray-100);bo
 /* ---- v0.62 (7 ก.ย. 2569) .badge สูงคงที่ 24px แต่ไม่มี nowrap — ข้อความยาว
    (เช่น "ปีนี้มีผล — ออกปฏิบัติงาน" ในลิสต์แผนบำรุงรักษา) จึงตัดบรรทัดแล้วทะลุกรอบ ---- */
 .badge{white-space:nowrap}
+
+/* ============================================================================
+   v0.70 (18 ต.ค. 2569) — คอมโพเนนต์ที่โฟลว์ Overhaul v2 ต้องใช้ ยกค่าจากไลบรารีตรงๆ
+   (ปิดข้อ G2 · T7 · M3 · M4 · N2 · U2 · U3 ในแนวทาง UX ของ plan.md — เจ้าของงานเลือก "ยกจากไลบรารีลง components.css")
+   ทุกค่าอ่านจาก design-system/.figma-extract/component/ ด้วย figma-screens.js / lib-spec.js
+   ============================================================================ */
+
+/* ---- Featured icon — ตาม `Featured icon` (Color=Brand|Gray|Error|Success, Size=md|sm) ของไฟล์ Component (2861-54686)
+   + ใช้จริงใน `Modal header` Alignment=Center และ `_File icon` · md = วงกลม 48 · sm = 36 · ไอคอน 24 ---- */
+.ficon{flex:none;width:48px;height:48px;border-radius:var(--r-pill);display:inline-flex;align-items:center;justify-content:center;
+  background:var(--brand-50);color:var(--brand-900)}
+.ficon .ms{font-size:24px}
+.ficon.sm{width:36px;height:36px}
+.ficon.gray{background:var(--gray-100);color:var(--gray-500)}
+.ficon.err{background:var(--error-50);color:var(--error-500)}
+.ficon.ok{background:var(--success-50);color:var(--success-600)}
+
+/* ---- Dropdown menu (เมนู "…" ในแถวตาราง) — ตาม `Dropdown menu` + `_Dropdown menu item` (Type=Shortcut) ของไฟล์ Component
+   (Dropdowns 2-8) + หน้า `Contract list` ของ UI Release#2 (5.1 Rental Contract Management)
+   กล่อง w240 · r8 · ขอบ gray-200 · เมนูมีระยะบนล่าง 4 · รายการ: ขอบนอก 4 ซ้ายขวา · ด้านใน r8 pad 8/12 · ไอคอน 16 gray-500 + ข้อความ 14/500
+   hover = พื้น gray-100 · focus = gray-50 · disabled = ตัวอักษร gray-400 · เส้นคั่น = รายการ Divider=True (1px gray-200 ระยะบนล่าง 4)
+   ไลบรารีไม่ได้ทำหัวเมนู (_Dropdown menu header) ในเมนูแถวตาราง ⇒ ไม่ใส่ · ใช้ <details class="dd"> ให้เปิด/ปิดได้โดยไม่ต้องมี JS ---- */
+.dd{position:relative;display:inline-block}
+.dd>summary{list-style:none;cursor:pointer}
+.dd>summary::-webkit-details-marker{display:none}
+.dd-menu{position:absolute;right:0;top:calc(100% + 4px);z-index:40;width:240px;padding:4px 0;background:#fff;
+  border:1px solid var(--gray-200);border-radius:var(--rounded-md);box-shadow:var(--shadow-pop);text-align:left}
+.dd-item{display:block;width:100%;padding:0 4px;border:0;background:none;font:inherit;cursor:pointer;text-decoration:none}
+.dd-item>span{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--rounded-md);
+  font-size:var(--fs-text-sm);line-height:24px;font-weight:500;color:#000}
+.dd-item .ms{font-size:16px;color:var(--gray-500)}
+.dd-item:hover>span{background:var(--gray-100)}
+.dd-item:focus-visible{outline:none}
+.dd-item:focus-visible>span{background:var(--gray-50)}
+.dd-item[disabled]{cursor:not-allowed}
+.dd-item[disabled]>span{color:var(--gray-400)}
+.dd-sep{height:1px;margin:4px 0;background:var(--gray-200)}
+
+/* ---- Search-select (Input dropdown + Dropdown list) — ตาม `Input dropdown` (Size=md) + `Dropdown list` / `Dropdown list item`
+   ของไฟล์ Component (Dropdowns 2-8) + หน้า `Modal / Create appointment` ของ UI Release#2 (5.4 Maintenance Appointment)
+   ช่องใช้ .f .in เดิม (h40 · r8 · ขอบ gray-300 · focus brand-800 = State=Focused) + ลูกศร 20 ขวา (keyboard_arrow_down / _up ตอนเปิด)
+   รายการ: กล่อง r8 · ขอบ gray-300 · pad 12/8 · ห่างกัน 8 · สูงสุด 256 แล้วเลื่อน · แถว h40 r4 pad 8 ซ้ายขวา ข้อความ 16
+   hover = พื้น gray-200 · เลือกแล้ว = ตัวอักษร brand-900 + ติ๊ก brand-900 ขวา · ข้อความรอง 12 gray-600 (Supporting text) ---- */
+.combo{position:relative}
+.combo .in>.combo-arrow{position:absolute;right:12px;left:auto;top:50%;transform:translateY(-50%);font-size:20px;color:var(--gray-500);pointer-events:none}
+.combo .in input{padding-right:40px}
+.combo-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:40;display:flex;flex-direction:column;gap:8px;
+  max-height:256px;overflow-y:auto;padding:12px 8px;background:#fff;border:1px solid var(--gray-300);border-radius:var(--rounded-md);box-shadow:var(--shadow-pop)}
+.combo-list[hidden]{display:none}
+.combo-opt{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 8px;border:0;border-radius:var(--rounded-xs);background:#fff;
+  font:inherit;text-align:left;cursor:pointer;color:#000}
+.combo-opt:hover{background:var(--gray-200)}
+.combo-opt-tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.combo-opt-tx b{font-weight:400;font-size:var(--fs-text-md);line-height:var(--lh-text-md)}
+.combo-opt-tx small{font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);color:var(--gray-600)}
+.combo-opt .ms{font-size:24px;color:var(--brand-900);visibility:hidden}
+.combo-opt.sel b{color:var(--brand-900)}
+.combo-opt.sel .ms{visibility:visible}
+.combo-empty{padding:8px;font-size:var(--fs-text-sm);color:var(--gray-500)}
+
+/* ---- Modal แบบกลาง (ยืนยัน · ยืนยันลบ) — ตาม `Modal` Type=Centered image / Destructive centered image with input (Size=md)
+   ของไฟล์ Component (Modals 2-16) = `Modal header` Alignment=Center + `Modal footer` Alignment=Horizontal fill
+   + หน้า `Contract list`/`Modal` ของ UI Release#2 (5.1) · หัว: Featured icon md (Brand) → หัวข้อ 20/600 ดำ → ข้อความ 16 gray-600 ห่าง 4
+   ระยะหัว 24/24/0 ห่าง 16 · ท้ายปุ่มเต็มแถวแบ่งเท่ากัน ห่าง 12 · แบบลบ = ปุ่มหลักเป็น Primary danger (.btn-d) ปุ่มรอง Secondary (M4)
+   ไลบรารีใช้ Featured icon สี Brand แม้เป็นแบบลบ ⇒ คงตามนั้น · ไม่ใส่ภาพ (Images เป็นส่วนเสริมของ Type=Centered image) ---- */
+/* ไลบรารีปิดเส้นคั่นของทั้งหัวและท้ายใน Type นี้ (หัวสูง 82 = เนื้อหาล้วน · ท้ายสูง 88 = 24+40+24) ⇒ ไม่มีเส้น · ท้ายเว้นบน 24 */
+.modal-hd.center{padding-top:24px;padding-bottom:0}
+.modal-hd.center::after{display:none}
+.modal:has(>.modal-hd.center) .modal-ft::before{background:none;height:0;margin:24px 0 0}
+.modal:has(>.modal-hd.center) .modal-bd{padding-top:16px}   /* Destructive …with input: หัวมี Padding bottom 16 ก่อนช่องกรอก */
+.modal-hd.center .modal-hd-c{flex-direction:column;align-items:center;gap:16px;text-align:center;min-height:0}
+.modal-hd.center .modal-hd-c h2{flex:none;width:100%;color:#000}
+.modal-hd.center .modal-hd-c .modal-sub{margin-top:-12px}   /* หัวข้อ→ข้อความรอง ห่าง 4 (ชดเชย gap 16 ของกลุ่ม) */
+.modal-hd.center .modal-x{position:absolute;top:16px;right:16px}
+.modal:has(>.modal-hd.center){position:relative}
+.modal-ft-a.fill .modal-ft-r{width:100%;margin-left:0}
+.modal-ft-a.fill .modal-ft-r>.btn{flex:1 1 0;min-width:0}
+
+/* ---- Notification (แจ้งผลบันทึก สำเร็จ/ไม่สำเร็จ) — ตาม `Notification` (Type=Success|Error, Breakpoint=Desktop)
+   ของไฟล์ Component (Notifications 1873-44383) + `Create contract - Success` / `Notification / Create contract` ของ UI Release#2 (5.1)
+   วางมุมขวาล่าง ห่างขอบ 24 · กล่อง w400 · r12 · ขอบ gray-dark-600 · พื้น gray-950 · pad 16 · ห่าง 16
+   ไอคอน 24 (check_circle เขียว success-600 / cancel แดง error-500) · หัวข้อ 16/600 gray-dark-50 · ข้อความ 14 gray-dark-300 · ปุ่มปิด tertiary 40
+   ใช้แทน .toast เดิม (ไลบรารีบอกว่า `Toast` ยังไม่เสร็จและไม่มีหน้าจอไหนใช้) · ระยะแสดงกำหนดใน JS ของหน้า ---- */
+.notif{position:fixed;right:24px;bottom:24px;z-index:80;width:400px;max-width:calc(100vw - 32px);display:flex;align-items:flex-start;gap:16px;
+  padding:16px;background:var(--gray-950);border:1px solid var(--gray-dark-600);border-radius:var(--rounded-lg);box-shadow:var(--shadow-pop);
+  opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none}
+.notif.show{opacity:1;transform:none;pointer-events:auto}
+.notif-ic{flex:none;font-size:24px;color:var(--success-600);font-variation-settings:'FILL' 1}
+.notif.err .notif-ic{color:var(--error-500)}
+.notif-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.notif-tx b{font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:600;color:var(--gray-dark-50)}
+.notif-tx span{font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);color:var(--gray-dark-300)}
+.notif-tx span:empty{display:none}
+.notif-x{flex:none;width:40px;height:40px;margin:-8px -8px 0 0;display:flex;align-items:center;justify-content:center;border:0;border-radius:var(--rounded-md);
+  background:none;color:var(--gray-dark-300);cursor:pointer}
+.notif-x .ms{font-size:20px}
+@media(max-width:600px){.notif{right:16px;left:16px;bottom:16px;width:auto}}
+
+/* ---- File upload (กล่องลากวาง + รายการไฟล์) — ตาม `_File upload base` + `_File upload item base` (State=Completed|Error)
+   ของไฟล์ Component (File upload 2123-5261) + `Create rental contract` (5.1) / `Modal / Edit Job` Content=Document (5.5) ของ UI Release#2
+   กล่อง: r8 · ขอบ gray-300 (hover/focus brand-800 · error error-500 · disabled พื้น gray-50) · pad 16 · กลาง · Featured icon sm Gray (cloud_upload)
+   "คลิกเพื่อเลือกไฟล์" 14/600 brand-900 + "หรือลากไฟล์มาวางบริเวณนี้" 14 gray-600 · บรรทัดชนิดไฟล์ 12 gray-600
+   รายการไฟล์: r8 · ขอบ gray-300 · pad 16 · Featured icon sm Gray (draft) ห่าง 12 · ชื่อ 14/600 gray-600 · ขนาด 12 gray-600
+   ปุ่ม tertiary 40 ขวาบน (ดาวน์โหลด · ลบ) · Error = ขอบ error-500 + ข้อความ error-600 "อัปโหลดไม่สำเร็จ" + ปุ่มลองใหม่
+   Progress bar ปิดไว้ (prop `Progress bar` ของไลบรารี) เพราะต้นแบบไม่มีการอัปโหลดจริง ----
+   ใช้แทน .upload-field/.file-chip เมื่อเป็นกล่องเอกสารเต็มแถว (สองตัวเดิมยังใช้ในเซลล์ตาราง) */
+.fu{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;padding:16px;text-align:center;cursor:pointer;margin:0;
+  background:#fff;border:1px solid var(--gray-300);border-radius:var(--rounded-md)}
+.fu:hover,.fu:focus-within{border-color:var(--brand-800)}
+.fu:focus-within{box-shadow:0 0 0 4px var(--focus-ring)}
+.fu.err{border-color:var(--error-500)}
+.fu[aria-disabled=true]{background:var(--gray-50);cursor:not-allowed}
+.fu input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.fu-tx{display:flex;flex-direction:column;gap:4px;font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);color:var(--gray-600)}
+.fu-tx b{font-weight:600;color:var(--brand-900)}
+.fu-tx small{font-size:var(--fs-text-xs);line-height:var(--lh-text-xs)}
+.fu-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.fu-list:empty{display:none}
+.fu-item{display:flex;align-items:flex-start;gap:12px;padding:16px;background:#fff;border:1px solid var(--gray-300);border-radius:var(--rounded-md)}
+.fu-item-tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.fu-item-tx b{font-size:var(--fs-text-sm);line-height:21px;font-weight:600;color:var(--gray-600);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fu-item-tx small{font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);color:var(--gray-600)}
+.fu-item-act{flex:none;display:flex;margin:-8px -8px 0 0}
+.fu-item.err{border-color:var(--error-500)}
+.fu-item.err .fu-item-tx small{color:var(--error-600)}
+
+/* ---- Dual list เลือกรถ — 2 กล่อง `List with checkbox` วางคู่ ตาม `List with checkbox` / `List with checkbox item` / `List header item`
+   ของไฟล์ Component (List 3285-58382) + `Contract vehicle list` ของ UI Release#2 (5.1) · ปุ่มย้ายตรงกลางเป็น Secondary button
+   หัว: h40 · r4 · พื้น gray-200 · pad 16 ซ้ายขวา · หัวข้อ 16/600 ดำ + Badge outline Gray (จำนวน) · checkbox ขวา (เลือกทั้งหมด / Indeterminate)
+   แถว: pad 8/16 · ห่าง 16 · เส้นล่าง gray-200 · ข้อความ 16 ดำ (เลือกแล้ว = brand-900) · ข้อความรอง 12 gray-600 คั่นด้วยเส้น 8px gray-300
+   checkbox 20 · r4 · ขอบ 2 gray-300 · ติ๊ก = พื้น brand-900 · ปิด Avatar (prop `Avatar` ของไลบรารี) เพราะรถไม่มีรูปประจำตัว ---- */
+.dual{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:16px;align-items:start}
+.dual-mid{display:flex;flex-direction:column;gap:12px;align-self:center}
+.lchk{display:flex;flex-direction:column;border:1px solid var(--gray-200);border-radius:var(--rounded-md);overflow:hidden;background:#fff}
+.lchk-hd{display:flex;align-items:center;gap:16px;min-height:40px;padding:0 16px;background:var(--gray-200);border-radius:var(--rounded-xs)}
+.lchk-hd>b{flex:1;min-width:0;display:flex;align-items:center;gap:12px;font-size:var(--fs-text-md);line-height:var(--lh-text-md);font-weight:600;color:#000}
+.lchk-body{max-height:348px;overflow-y:auto}
+.lchk-item{display:flex;align-items:center;gap:16px;padding:8px 16px;border-bottom:1px solid var(--gray-200);cursor:pointer;background:#fff;margin:0}
+.lchk-item:hover{background:var(--gray-50)}
+.lchk-tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.lchk-tx b{font-weight:400;font-size:var(--fs-text-md);line-height:var(--lh-text-md);color:#000}
+.lchk-item.sel .lchk-tx b{color:var(--brand-900)}
+.lchk-tx small{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);color:var(--gray-600)}
+.lchk-tx small i{display:inline-block;width:8px;height:1px;background:var(--gray-300)}
+.lchk-empty{padding:16px;font-size:var(--fs-text-sm);color:var(--gray-500);text-align:center}
+@media(max-width:900px){.dual{grid-template-columns:1fr}.dual-mid{flex-direction:row;justify-content:center}}
+/* Badge outline (Color=Gray) — ตัวนับในหัว List header item: r4 · พื้นขาว · ขอบ gray-300 · 12/600 gray-600 (ต่างจาก Pill outline ที่ขอบมน) */
+.badge.sq{border-radius:var(--rounded-xs);background:#fff;border-color:var(--gray-300);color:var(--gray-600)}
+
+/* ---- ป้ายตัวกรองที่ใช้อยู่ (กดลบได้) — ตาม `Badge outline with remove icon` Color=Brand ของไฟล์ Component (Badge 2-13)
+   + แถว `Filters` ใน `Table header` ของหน้า `Contract list` UI Release#2 (5.1) · เจ้าของงานเคาะ 19 ต.ค. 2569 ให้ใช้แทนตัวเลขบนปุ่มตัวกรอง
+   สูง 24 · r4 · ขอบ brand-200 · พื้น brand-50 · ข้อความ 12/600 brand-900 · pad ซ้าย 8 ขวา 4 · ห่างไอคอน 4 · ไอคอน close_small 12 brand-800
+   แถวป้ายห่างกัน 12 (Filters gap12) ---- */
+.fchips{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.fchips:empty{display:none}
+.fchip{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 4px 0 8px;white-space:nowrap;
+  border:1px solid var(--brand-200);border-radius:var(--rounded-xs);background:var(--brand-50);
+  color:var(--brand-900);font-size:var(--fs-text-xs);line-height:var(--lh-text-xs);font-weight:600}
+.fchip-x{display:flex;align-items:center;justify-content:center;width:12px;height:12px;padding:0;border:0;background:none;color:var(--brand-800);cursor:pointer}
+.fchip-x .ms{font-size:16px}

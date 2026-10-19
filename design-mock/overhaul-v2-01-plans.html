@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการงาน Overhaul | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds70">
+<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds70">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds70"></script>
+<!--
+  18 ต.ค. 2569 — Overhaul v2 หน้า 1: รายการแผน "จัดการงาน Overhaul" (url จริง /overhaul-utility-vehicle)
+  userflow 14 scenario ของเจ้าของงาน — หน้านี้ครอบ S1 สร้างแผน (จุดเข้า) · S2 แก้ไขแผน (จุดเข้า) · S3 ลบแผน
+  1 แถว = 1 แผน · สถานะแผนเป็นร่าง P1–P3 ตาม Diagram/01-บำรุงรักษาตามวาระ/12-overhaul-สถานะ.md
+  สิทธิ์ตาม userflow: กบค. ดู+แก้ไข · หน่วยงานดูอย่างเดียว (หน้านี้แสดงมุม กบค.)
+
+  ที่มา · ไฟล์ Component: Page header + Breadcrumbs · Primary/Secondary/Tertiary button · Text input (.search) ·
+           Table / Table header cell / Table cell Style=Text|Badge (.tbl) · Sort icon (th.sortable) · Pill outline (.badge) ·
+           Table pagination (.tblfoot/.pager) · Dropdown menu + _Dropdown menu item (.dd-menu — เมนู "…") ·
+           Side panel (.filter-drawer) · Input dropdown + Dropdown list item (.combo — ตัวกรองรถ) ·
+           Modal Type=Destructive centered (.modal-hd.center + .modal-ft-a.fill + .btn-d) · Featured icon (.ficon) · Notification (.notif) ·
+           Empty state/Data empty + Search not found (.filter-empty)
+        · ไฟล์ UI Release#2: หน้า "5.1 Rental Contract Management" เฟรม `Contract list` (Page header + Table header ค้นหา/ปุ่ม +
+          ตาราง + Table pagination) · `Contract list - Empty` / `Search not found` · `Filter Side panel` · `Create contract - Success`
+          ⚠️ ไฟล์ UI Release#2 ไม่มีหน้าจอ Overhaul — ยึดโครงหน้ารายการสัญญาที่มีครบทุก state
+  ต่างจากหน้าอ้างอิง (ตาม userflow): คอลัมน์ท้ายเป็นเมนู "…" (ดูรายละเอียด · แก้ไข · ลบ) แทนไอคอนเรียงกัน ·
+          ไม่มี checkbox หน้าแถว (userflow ไม่มีการเลือกหลายแผน)
+  เคาะแล้ว 19 ต.ค. 2569 (ตามหน้าจริง): ตัวกรองที่ใช้อยู่เป็นป้ายกดลบได้ (Badge outline with remove icon · .fchip) ·
+          ตัวกรองสถานะเป็น Checkbox with badge · หน้าว่างซ่อนแถบค้นหา/ตัวกรอง · เมนูซ้ายแบบหุบ · ปุ่มท้ายแถวคงเมนู "…" ตาม userflow
+  จับคู่ทุกส่วนกับ component จริง: figma-export/overhaul-v2-component-map.md
+  ตีความเอง: ตัวกรอง "งบประมาณ" เป็นช่วงวงเงิน · ข้อความแจ้งหลังลบ "ลบแผน overhaul สำเร็จ" (userflow ไม่ได้ระบุ)
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility · ข้อมูลจำลองทั้งหมด
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="overhaul-v2-01-plans.html" title="จัดการงาน Overhaul"><span class="ms">build_circle</span><span class="nvlbl">จัดการงาน Overhaul</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นางสาวกนกวรรณ ใจมั่น — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft flex items-center gap-3 flex-wrap">
+        <span class="mr-auto">Prototype (Mock) · Overhaul v2 หน้า 1 — จัดการงาน Overhaul · ข้อมูลจำลองทั้งหมด</span>
+        <button class="btn btn-t btn-sm" type="button" id="reset"><span class="ms">restart_alt</span>คืนค่าข้อมูลตัวอย่าง</button>
+        <button class="btn btn-t btn-sm" type="button" id="wipe"><span class="ms">delete_sweep</span>ดูหน้าว่าง</button>
+      </div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep"></span><span class="cur">จัดการงาน Overhaul</span>
+      </div>
+
+      <div class="page-title-row">
+        <h1 class="page-title mb-0 mr-auto">จัดการงาน Overhaul</h1>
+        <button class="btn btn-p" type="button" data-todo="หน้าสร้างแผน"><span class="ms">add</span>สร้างแผน Overhaul</button>
+      </div>
+
+      <div class="w-full stack">
+        <div class="list-toolbar split mb-0" id="toolbar">
+          <div class="lt-search"><div class="search"><span class="ms">search</span><input type="search" id="q" placeholder="ค้นหาเลขแผน, ชื่อแผน, เลขศูนย์ต้นทุน" aria-label="ค้นหาแผน"></div></div>
+          <div class="lt-actions"><button class="btn btn-s" type="button" id="fbtn" aria-controls="fpanel"><span class="ms">filter_list</span>ตัวกรอง</button></div>
+        </div>
+
+        <div class="fchips" id="fchips" aria-label="ตัวกรองที่ใช้อยู่"></div>
+
+        <div class="tblwrap mt-0" id="wrap">
+          <table class="tbl striped">
+            <thead>
+              <tr>
+                <th class="sortable" data-k="id"><button type="button">เลขแผน<span class="ms">swap_vert</span></button></th>
+                <th class="sortable" data-k="name"><button type="button">ชื่อแผน<span class="ms">swap_vert</span></button></th>
+                <th class="sortable" data-k="wbs"><button type="button">ศูนย์ต้นทุน<span class="ms">swap_vert</span></button></th>
+                <th class="num">งบประมาณ (บาท)</th>
+                <th class="num">Purchase Order</th>
+                <th class="num">จำนวนรถที่ Overhaul</th>
+                <th class="sortable" data-k="status"><button type="button">สถานะ<span class="ms">swap_vert</span></button></th>
+                <th>วันที่สร้าง</th>
+                <th class="w-[72px]" aria-label="จัดการ"></th>
+              </tr>
+            </thead>
+            <tbody id="body"></tbody>
+          </table>
+          <div class="tblfoot">
+            <div class="tf-left"><span id="foot"></span>
+              <select class="select-inline" aria-label="จำนวนแถวต่อหน้า"><option selected>10</option><option>25</option><option>50</option></select></div>
+            <div class="pager">
+              <button class="pg" type="button" disabled aria-label="หน้าก่อน"><span class="ms">chevron_left</span></button>
+              <button class="pg on" type="button">1</button>
+              <button class="pg" type="button" disabled aria-label="หน้าถัดไป"><span class="ms">chevron_right</span></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty state/Search not found -->
+        <div class="filter-empty hidden" id="notfound">
+          <span class="ms">search_off</span>
+          <b>ไม่พบแผน Overhaul</b>
+          <span>ไม่มีแผนที่ตรงกับคำค้นหรือตัวกรอง</span>
+          <button class="btn btn-s btn-sm mt-2" type="button" id="clear">ล้างคำค้นและตัวกรอง</button>
+        </div>
+        <!-- Empty state/Data empty -->
+        <div class="filter-empty hidden" id="empty">
+          <span class="ms">inventory_2</span>
+          <b>ยังไม่มีแผน Overhaul</b>
+          <span>สร้างแผนเพื่อเริ่มเพิ่ม Purchase Order และติดตามงานรายคัน</span>
+          <button class="btn btn-p btn-sm mt-2" type="button" data-todo="หน้าสร้างแผน"><span class="ms">add</span>สร้างแผน Overhaul</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ตัวกรอง — Side panel (ตาม `Filter Side panel` ของ UI Release#2 5.1) · ช่องตาม userflow: งบประมาณ · สถานะ · รถ · ศูนย์ต้นทุน -->
+<div class="filter-panel filter-drawer" id="fpanel">
+  <div class="filter-drawer-sheet" role="dialog" aria-modal="true" aria-labelledby="ftitle">
+    <div class="filter-drawer-head">
+      <span class="filter-drawer-icon"><span class="ms">filter_list</span></span>
+      <div class="filter-drawer-title"><h2 id="ftitle">ตัวกรอง</h2><p>กรองข้อมูลให้แสดงเฉพาะข้อมูลที่ต้องการ</p></div>
+      <button type="button" class="filter-drawer-close" id="fclose" aria-label="ปิดตัวกรอง"><span class="ms">close</span></button>
+    </div>
+    <div class="filter-drawer-body">
+      <div class="filter-field"><label for="f-budget">งบประมาณ</label>
+        <select id="f-budget"><option value="">ทั้งหมด</option><option value="0-5000000">ไม่เกิน 5 ล้านบาท</option><option value="5000000-20000000">5–20 ล้านบาท</option><option value="20000000-">มากกว่า 20 ล้านบาท</option></select></div>
+      <div class="filter-field"><label>สถานะ</label>
+        <div class="filter-checks" id="f-status"></div></div>
+      <div class="filter-field f combo" id="f-car"><label for="f-car-in">รถ</label>
+        <div class="in"><span class="ms">search</span><input type="text" id="f-car-in" placeholder="ค้นหาทะเบียน" autocomplete="off"><span class="ms combo-arrow">keyboard_arrow_down</span></div>
+        <div class="combo-list" hidden></div></div>
+      <div class="filter-field"><label for="f-wbs">ศูนย์ต้นทุน</label>
+        <select id="f-wbs"><option value="">ทั้งหมด</option></select></div>
+    </div>
+    <div class="filter-drawer-foot"><button class="btn btn-link" type="button" id="fclear">ล้างตัวกรอง</button><button class="btn btn-s" type="button" id="fcancel">ยกเลิก</button><button class="btn btn-p" type="button" id="fapply">ตกลง</button></div>
+  </div>
+</div>
+
+<!-- ยืนยันการลบแผน — Modal Type=Destructive centered (ไลบรารี) -->
+<div class="modal-overlay hidden" id="m-del">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-del-t">
+    <div class="modal-hd center">
+      <div class="modal-hd-c"><span class="ficon"><span class="ms">info</span></span><h2 id="m-del-t">ยืนยันการลบแผน</h2><div class="modal-sub" id="m-del-s"></div></div>
+      <button class="modal-x" type="button" data-close="m-del" aria-label="ปิด"><span class="ms">close</span></button>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-del">ยกเลิก</button>
+      <button class="btn btn-d" type="button" id="m-del-ok">ยืนยัน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="overhaul-v2-mock.js?v=20261018-1"></script>
+<script>
+const $=id=>document.getElementById(id);
+let S=oh2Load();
+let sort={k:'id',dir:-1};
+let F={budget:'',status:[],car:'',wbs:''};   // ตัวกรองที่ใช้อยู่
+let draftCar='';
+let delId=null;
+
+const statusOf=p=>oh2PlanStatus(S,p);
+function rows(){
+  const q=$('q').value.trim().toLowerCase();
+  return S.plans.filter(p=>{
+    if(q&&![p.id,p.name,p.wbs].some(x=>String(x).toLowerCase().includes(q)))return false;
+    if(F.budget){const [a,b]=F.budget.split('-').map(Number);if(p.budget<a||(b&&p.budget>b))return false}
+    if(F.status.length&&!F.status.includes(statusOf(p)))return false;
+    if(F.car&&!oh2PlanCars(p).includes(F.car))return false;
+    if(F.wbs&&p.wbs!==F.wbs)return false;
+    return true;
+  }).sort((a,b)=>{const v=x=>sort.k==='status'?statusOf(x):String(x[sort.k]);return v(a).localeCompare(v(b),'th')*sort.dir});
+}
+
+function render(){
+  const list=rows();
+  $('body').innerHTML=list.map(p=>`<tr>
+      <td><div class="cell-key">${oh2Esc(p.id)}</div></td>
+      <td>${oh2Esc(p.name)}</td>
+      <td>${oh2Esc(p.wbs)}</td>
+      <td class="num">${oh2Money(p.budget)}</td>
+      <td class="num">${p.pos.length}</td>
+      <td class="num">${oh2PlanCars(p).length}</td>
+      <td>${oh2Badge(OH2_PLAN,statusOf(p))}</td>
+      <td>${oh2Date(p.created)}</td>
+      <td class="dt-action">
+        <details class="dd"><summary class="btn btn-t btn-icon" aria-label="จัดการแผน ${oh2Esc(p.id)}"><span class="ms">more_horiz</span></summary>
+          <div class="dd-menu">
+            <button class="dd-item" type="button" data-todo="หน้ารายละเอียดแผน"><span><span class="ms">visibility</span>ดูรายละเอียด</span></button>
+            <button class="dd-item" type="button" data-todo="หน้าแก้ไขแผน"><span><span class="ms">edit</span>แก้ไข</span></button>
+            <div class="dd-sep"></div>
+            <button class="dd-item" type="button" data-del="${oh2Esc(p.id)}"><span><span class="ms">delete</span>ลบ</span></button>
+          </div></details>
+      </td></tr>`).join('');
+  $('foot').textContent=list.length?`แสดง 1 ถึง ${list.length} จาก ${list.length} รายการ`:'';
+  const none=!S.plans.length;
+  $('wrap').classList.toggle('hidden',!list.length);
+  $('empty').classList.toggle('hidden',!none);
+  $('notfound').classList.toggle('hidden',none||!!list.length);
+  document.querySelectorAll('th.sortable').forEach(th=>{const on=th.dataset.k===sort.k;th.classList.toggle('on',on);
+    th.querySelector('.ms').textContent=on?(sort.dir>0?'arrow_upward':'arrow_downward'):'swap_vert';
+    th.setAttribute('aria-sort',on?(sort.dir>0?'ascending':'descending'):'none')});
+  /* ป้ายตัวกรองที่ใช้อยู่ — 1 ป้ายต่อเงื่อนไข กด ✕ เพื่อเอาเงื่อนไขนั้นออก (Badge outline with remove icon) */
+  const chips=[];
+  if(F.budget)chips.push(['budget','',$('f-budget').querySelector(`option[value="${F.budget}"]`).textContent]);
+  F.status.forEach(k=>chips.push(['status',k,OH2_PLAN[k][0]]));
+  if(F.car)chips.push(['car','',OH2_VEHICLES.find(v=>v.id===F.car).plate]);
+  if(F.wbs)chips.push(['wbs','',F.wbs]);
+  $('fchips').innerHTML=chips.map(([k,v,t])=>`<span class="fchip">${oh2Esc(t)}<button class="fchip-x" type="button" data-rm="${k}" data-v="${oh2Esc(v)}" aria-label="เอาตัวกรอง ${oh2Esc(t)} ออก"><span class="ms">close_small</span></button></span>`).join('');
+  /* หน้าว่าง: ซ่อนแถบค้นหา/ตัวกรอง ตาม Contract list - Empty state (เจ้าของงานเคาะ 19 ต.ค. 2569) */
+  $('toolbar').classList.toggle('hidden',none);$('fchips').classList.toggle('hidden',none);
+}
+
+/* เรียงลำดับ — คอลัมน์ที่ userflow ให้เรียงได้: เลขแผน · ชื่อแผน · สถานะ · ศูนย์ต้นทุน */
+document.querySelectorAll('th.sortable>button').forEach(b=>b.addEventListener('click',()=>{
+  const k=b.parentElement.dataset.k;sort=sort.k===k?{k,dir:-sort.dir}:{k,dir:1};render()}));
+$('q').addEventListener('input',render);
+
+/* ตัวกรอง */
+/* สถานะ — Checkbox with badge (checkbox + Pill outline สีเดียวกับในตาราง · เจ้าของงานเคาะ 19 ต.ค. 2569) */
+$('f-status').innerHTML=Object.keys(OH2_PLAN).map(k=>`<label><input type="checkbox" value="${k}" aria-label="${oh2Esc(OH2_PLAN[k][0])}">${oh2Badge(OH2_PLAN,k)}</label>`).join('');
+$('f-wbs').innerHTML+= [...new Set(S.plans.map(p=>p.wbs))].sort().map(w=>`<option>${oh2Esc(w)}</option>`).join('');
+const carCombo=oh2Combo($('f-car'),OH2_VEHICLES.map(v=>({value:v.id,label:v.plate,sub:`${v.brand} · ${v.type}`})),v=>{draftCar=v});
+function openFilter(o){
+  $('fpanel').classList.toggle('open',o);document.body.classList.toggle('modal-open',o);
+  if(!o)return;
+  $('f-budget').value=F.budget;$('f-wbs').value=F.wbs;
+  $('f-status').querySelectorAll('input').forEach(i=>i.checked=F.status.includes(i.value));
+  draftCar=F.car;$('f-car-in').value=F.car?OH2_VEHICLES.find(v=>v.id===F.car).plate:'';
+}
+$('fbtn').addEventListener('click',()=>openFilter(true));
+['fclose','fcancel'].forEach(id=>$(id).addEventListener('click',()=>openFilter(false)));
+$('fpanel').addEventListener('click',e=>{if(e.target===$('fpanel'))openFilter(false)});
+$('fclear').addEventListener('click',()=>{$('f-budget').value='';$('f-wbs').value='';$('f-status').querySelectorAll('input').forEach(i=>i.checked=false);carCombo.clear()});
+$('fapply').addEventListener('click',()=>{
+  F={budget:$('f-budget').value,wbs:$('f-wbs').value,car:draftCar,status:[...$('f-status').querySelectorAll('input:checked')].map(i=>i.value)};
+  openFilter(false);render()});
+$('fchips').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;const k=b.dataset.rm;
+  if(k==='status')F.status=F.status.filter(x=>x!==b.dataset.v);else F[k]='';render()});
+$('clear').addEventListener('click',()=>{$('q').value='';F={budget:'',status:[],car:'',wbs:''};render();$('q').focus()});
+
+/* ลบแผน — S3: กดลบ (จากเมนู "…") → modal ยืนยัน → ลบ + แจ้งผล */
+document.addEventListener('click',e=>{
+  const d=e.target.closest('[data-del]');
+  if(d){delId=d.dataset.del;d.closest('details').open=false;
+    const p=S.plans.find(x=>x.id===delId);
+    $('m-del-s').textContent=`แผน ${p.id} "${p.name}"${p.pos.length?` และ Purchase Order ${p.pos.length} ใบในแผนนี้`:''} จะถูกลบ`;
+    oh2Modal('m-del',true);return}
+  const t=e.target.closest('[data-todo]');
+  if(t){const dd=t.closest('details');if(dd)dd.open=false;oh2Notify(`${t.dataset.todo} — ยังไม่ได้ทำในรอบตัวอย่างนี้`,{sub:'ต้นแบบรอบนี้ทำเฉพาะหน้ารายการแผน'})}
+});
+$('m-del-ok').addEventListener('click',()=>{
+  S.plans=S.plans.filter(p=>p.id!==delId);oh2Save(S);oh2Modal('m-del',false);render();
+  oh2Notify('ลบแผน overhaul สำเร็จ');
+});
+
+$('reset').addEventListener('click',()=>{S=oh2Reset();render();oh2Notify('คืนค่าข้อมูลตัวอย่างแล้ว')});
+$('wipe').addEventListener('click',()=>{S.plans=[];oh2Save(S);render()});
+render();
+</script>
+</body>
+</html>
