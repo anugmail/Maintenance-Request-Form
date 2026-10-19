@@ -597,6 +597,23 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
             pages.yml build static export ทุก push (build พังไม่ล้ม deploy หน้าอื่น) · ตรวจ: tsc · build · Chrome 1440/402 ทุกหน้าไม่มี error ทั้ง local และบน Pages
       - [ ] ต้นแบบ Next.js: ขาด Alert กลาง (หน้างานทำ JobAlert เฉพาะหน้า) · ช่องเลือกช่วงวันแบบช่องเดียวยังเป็นของประกอบเอง (Dual date picker ไลบรารียังไม่ทำ) · Combobox ไม่มีช่อง supporting text
       - [ ] 🔴 รอเคาะ: จับคู่ช่องนัดหมายแบบงานซ่อม → ช่องของ Overhaul (ใช้ตามที่เสนอไปก่อน) · หน้างานรายคันนับเป็นหน้า Detail ไหม · Table 8 คอลัมน์ vs หน้ารายการแผน 9
+      - [ ] 🛠️ **ปลั๊กอิน Figma รอบรีวิว 19 ต.ค. — ทำเสร็จ เทสต์ผ่าน ⬜ รอเจ้าของงานกดใน Figma แล้วยืนยัน ⇒ ค่อย commit** (ยังไม่ commit:
+            `figma-export/overhaul2-plugin/{code.js,ui.html,manifest.json}` · `figma-export/test-overhaul2-plugin.js` · `figma-export/component-rules.{md,json}` ·
+            `figma-export/check-component-rules.js` · `CLAUDE.md` · `.claude/skills/userflow/SKILL.md`)
+            ปุ่มแก้เฉพาะจุดในปลั๊กอิน (ปิดแล้วเปิดปลั๊กอินใหม่ก่อน · อยู่หน้า overhaul-1):
+            1. **"ส่งออกเฉพาะการนัดหมาย (S7 · S13) + stepper"** — ⚠️ อัปเดตไลบรารีในไฟล์ Maintain-D ก่อน (Progress steps เพิ่มเป็น 7 ช่องแล้ว)
+               · นัดหมาย 10 จอ → `RepairAppointmentStep` (component ในไฟล์ Maintain-D หน้า Design · RepairMethod ปิด · Type In/Wating · State Default/Filled/ReturnReason) · ปุ่ม "ส่งนัดหมาย"
+               · stepper 23 จอ → instance `Progress steps` Type=Horizontal (6 ขั้น ซ่อนช่อง 7 · เลข 01–06) · ไลบรารียังไม่อัปเดต = เฟรมมีกรอบชั่วคราว + log บอก
+            2. **"แถว WBS (ย้ายแถว · ช่อง WBS ไม่บังคับ)"** — วงเงินครึ่งซ้าย + 3 ช่อง WBS ครึ่งขวา · 3 ช่อง WBS "(ถ้ามี)" ไม่มี error
+            3. **"แก้ตามรีวิว 19 ต.ค."** (แทนปุ่มปิด divider เดิม) — Header navigation Desktop→Tablet (ตัวที่แก้มือแล้วไม่แตะ) · ปิด Info icon (ตัวที่โผล่คือ `Input label` ซ้อนใน) ·
+               กล่องแสดงข้อมูลตามตัวอย่าง VehicleInfo · หน้า Detail ใช้ Section label · ตารางประกอบเอง → component `Table` · stepper → Progress steps
+            สร้างใหม่ทั้งหมดก็ได้ผลเดียวกัน · harness: สร้างใหม่ / จอเก่า+ปุ่ม / กดซ้ำ / ไลบรารีอัปเดตทีหลัง / ไฟล์ไม่มี component — ตรงกติกาทุกกรณี
+      - [x] 📐 **กติกาสร้างจอ R1–R18 (19 ต.ค.)** — `figma-export/component-rules.md` (คนอ่าน) + `component-rules.json` (เทสต์บังคับใน test-overhaul2-plugin.js · ผิด = ไม่ผ่าน) · CLAUDE.md สั่งอ่านก่อนสร้างจอทุกครั้ง
+            เจ้าของงานสั่ง _"การสร้างครั้งต่อไปของโปรเจ็คนี้จะใช้เงื่อนไข component ที่ถูกต้องเท่านั้น"_ · ที่มา: รีวิวทีมออกแบบ (Header Tablet · ไม่มี divider · Section header เฉพาะ Create/Edit ·
+            Section label หน้า Detail · ปิด Info icon · Table/Progress steps ทั้งก้อน · Content/เลือกรถ ทีมออกแบบทำเอง) + ตัวอย่างกล่องแสดงข้อมูล + นัดหมายแบบงานซ่อม + 3 ช่อง WBS ไม่บังคับ
+      - [ ] 🔴 ตารางหน้ารายการแผนมี 9 คอลัมน์ (ข้อมูล 8 + เมนู "…") แต่ component `Table` มี 8 ⇒ ยังประกอบเองไว้ (เทสต์ขึ้น "รอเคาะ") — ตัด 1 คอลัมน์ หรือทีมออกแบบขยาย Table
+      - [ ] Next.js / Figma ยังเห็นโลโก้ VMS+ ซ้ำ (Header navigation แบบ Tablet มีโลโก้ + Sidebar) — รอเจ้าของงานบอกว่าจะให้เป็นแบบไหน
+      - [ ] `RepairAppointmentStep` ไม่มี variant มือถือ ⇒ จอ mobile นัดหมายยังเป็นแบบเดิม · ไม่มีช่องหมายเหตุ (userflow มี) · mock HTML หน้า 06 ยังเป็นนัดหมายแบบเดิม
       - [ ] 🔴 มี mock Overhaul v2 อีกชุดของเพื่อนร่วมทีม (`595fe72`: `design-mock/overhaul-v2-list.html` · `overhaul-v2-job.html` · `overhaul-v2-data.js` · แอป `app/src/app/overhaul-v2/`)
             ทำขนานกับชุด `overhaul-v2-0*.html` นี้ — ต้องคุยว่าใช้ชุดไหนเป็นหลัก
       - [ ] label ของ `.f` ยังเป็นสเปกไลบรารีเก่า (14/500) — ไลบรารีใหม่ Input label 16/600 gray-600 · รอเคาะว่าแก้ทั้งระบบไหม
