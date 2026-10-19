@@ -41,6 +41,9 @@ async function trim(n, depth) {
     try { o.props = n.componentPropertyDefinitions; } catch (e) {}
   }
   if (n.type === 'COMPONENT' && n.variantProperties) o.variant = n.variantProperties;
+  // 19 ต.ค. 2569: เก็บ key ของ component ต้นฉบับด้วย — ปลั๊กอินสร้างหน้าจอ (overhaul2-plugin) ใช้นำเข้าจากไลบรารีที่ publish ไฟล์นี้
+  // (เดิมได้ key เฉพาะ component ที่มี instance อยู่ในไฟล์ · ตัวที่ไม่เคยถูกวางเลยจึงไม่มี key)
+  if (n.type === 'COMPONENT' || n.type === 'COMPONENT_SET') { try { if (n.key) o.key = n.key; } catch (e) {} }
   if (n.type === 'INSTANCE') {
     // ค่า variant/property ปัจจุบันของ "instance ตัวนี้" — sync, คู่ความหมายกับ o.variant ของ COMPONENT
     try {

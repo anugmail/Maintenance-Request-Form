@@ -1,0 +1,15 @@
+<style>
+  body{font:12px/1.5 -apple-system,"IBM Plex Sans Thai",sans-serif;margin:0;padding:14px;color:#1b1b1b}
+  button{padding:8px 14px;border:0;border-radius:6px;background:#a80689;color:#fff;font:inherit;cursor:pointer}
+  #log{margin-top:10px;height:300px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
+</style>
+<p>สร้างหน้า "จัดการงาน Overhaul" 8 state จาก <b>component จริงในไฟล์นี้</b> (createInstance) — ไม่วาดกล่องเอง<br>
+ต้องรันในไฟล์ (Component) VMS Plus ฉบับ duplicate · รันซ้ำได้ (ลบชุดเดิมที่ขึ้นต้นด้วย "OH2 /" ก่อนสร้างใหม่)</p>
+<button id="go">สร้าง 8 หน้าจอ</button> <button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button>
+<div id="log"></div>
+<script>
+const log = (s) => { const d = document.getElementById('log'); d.textContent += s + '\n'; d.scrollTop = d.scrollHeight; };
+document.getElementById('go').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'build' } }, '*'); };
+document.getElementById('chk').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'check' } }, '*'); };
+onmessage = (e) => { const m = e.data.pluginMessage; if (m && m.type === 'log') log(m.text); };
+</script>

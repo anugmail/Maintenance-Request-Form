@@ -1,0 +1,10 @@
+{
+  "name": "Maintain-D — Overhaul v2 (component จริง)",
+  "id": "1471820935506372101",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": { "allowedDomains": ["none"], "reasoning": "ข้อมูลหน้าจออยู่ใน code.js ทั้งหมด ไม่ต่อเครือข่าย" }
+}
