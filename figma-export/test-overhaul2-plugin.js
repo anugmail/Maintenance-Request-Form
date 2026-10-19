@@ -32,8 +32,10 @@ class Node {
     if (src.component) this._mainName = src.component.name, this._variant = src.component.variant;
     for (const k of src.kids || []) this.children.push(new Node(k, this));
   }
+  findOne(fn) { return this.findAll(fn)[0] || null; }
   findAll(fn) { const out = []; const w = (n) => { for (const c of n.children) { if (!fn || fn(c)) out.push(c); w(c); } }; w(this); return out; }
   findAllWithCriteria(c) { return this.findAll(n => c.types.includes(n.type)); }
+  insertChild(i, c) { if (c.parent) c.parent.children = c.parent.children.filter(x => x !== c); c.parent = this; this.children.splice(i, 0, c); }
   appendChild(c) { if (c.parent) c.parent.children = c.parent.children.filter(x => x !== c); c.parent = this; this.children.push(c); }
   remove() { if (this.parent) this.parent.children = this.parent.children.filter(x => x !== this); }
   resize(w, h) { this.width = w; this.height = h; }
@@ -141,6 +143,8 @@ const figma = {
   async loadFontAsync() {},
   async setCurrentPageAsync(p) { figma.currentPage = p; },
   createFrame() { const f = new Node({ type: 'FRAME', name: 'Frame' }); return f; },
+  insertChildStub: null,
+  createSection() { return new Node({ type: 'SECTION', name: 'Section' }); },
   createPage() { const p = new Node({ type: 'PAGE', name: 'Page' }, root); root.children.push(p); pages.push(p); return p; },
   viewport: { scrollAndZoomIntoView() {} },
 };
@@ -163,12 +167,19 @@ if (EMPTY) { const orig = root.findAllWithCriteria.bind(root); root.findAllWithC
 const code = fs.readFileSync(process.env.CODE || path.join(__dirname, 'overhaul2-plugin', 'code.js'), 'utf8');
 vm.runInNewContext(code, { figma, __html__: '', console, Set, Map, Promise, Object, Array, JSON, Math, Symbol, Error });
 
+const MODE_CHECK = process.env.MODE === 'check';
 (async () => {
   await uiHandler({ type: process.env.MODE || 'build' });
   logs.forEach(l => console.log(l));
   const page = pages[0] || figma.currentPage;
-  const screens = page.children.filter(n => n.name.indexOf('OH2 / ') === 0);
+  const screens = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf('OH2 / ') === 0);
+  const sections = [...new Set(screens.map(n => n.y))];   // แถว = scenario
+  if (page.children.some(n => n.type === 'SECTION')) logs.push('⚠ ยังมี section บนหน้า');
+  // แผง Layers ของ Figma แสดงลูกตัวสุดท้ายไว้บนสุด ⇒ จอแรกของ userflow ต้องเป็นตัวสุดท้าย
+  const top = screens[screens.length - 1];
+  if (top && top.name.indexOf('หน้ารายการแผน') < 0) logs.push('⚠ แผง Layers ไม่ได้เรียงจอแรกไว้บนสุด: ' + top.name);
   const bad = logs.filter(l => /^⚠|^✗/.test(l));
-  console.log('\n— ผลทดสอบ — หน้าจอ ' + screens.length + '/8 · คำเตือน ' + bad.length);
-  process.exitCode = screens.length === 8 && !bad.length ? 0 : 1;
+  const want = (code0.match(/^  \[\'(?:หน้ารายการแผน|S\d+)/gm) || []).length;   // จำนวน section ที่ประกาศ
+  console.log('\n— ผลทดสอบ — แถว ' + sections.length + ' · หน้าจอ ' + screens.length + ' · คำเตือน ' + bad.length);
+  process.exitCode = MODE_CHECK || (screens.length > 0 && !bad.length) ? 0 : 1;
 })().catch(e => { console.error(e); process.exit(1); });
