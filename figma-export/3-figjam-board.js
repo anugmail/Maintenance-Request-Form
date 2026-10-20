@@ -16,6 +16,9 @@
      node figma-export/3-figjam-board.js --overhaul2 --only --out=board-overhaul2.json
                                                     Overhaul v2 ครบ 14 scenario (section ละ scenario · capture จาก flow-overhaul2-capture.js)
                                                     --out= เขียนไฟล์ชื่ออื่น ไม่ทับ board.json (ปลั๊กอินใส่ชื่อไฟล์ในช่องที่อยู่ได้)
+     node figma-export/3-figjam-board.js --maintainance --only --out=board-maintainance.json
+                                                    userflow บำรุงรักษาตามวาระ 17 scenario (section ละ scenario · ผังรูปทรง Template
+                                                    จาก Diagram/01-…/14-บำรุงรักษา-userflow.md ผ่าน 8-flow-userflow.js — ไม่มีรูป capture)
      node figma-export/3-figjam-board.js --pages    + หน้ารวมทุกหน้าจัดหมวด
      node figma-export/3-figjam-board.js --all      ทุกชุด
 
@@ -195,6 +198,22 @@ function main() {
     });
   }
 
+  // userflow บำรุงรักษาตามวาระ (19 ต.ค. 2569) — 17 scenario ที่เขียนตามบอร์ดเจ้าของงาน · ผังล้วน ไม่มีรูป capture
+  // ต้นทาง: Diagram/01-บำรุงรักษาตามวาระ/14-บำรุงรักษา-userflow.md → 8-flow-userflow.js → out/diagram-userflow-maintainance.json
+  // แยกไฟล์จากชุดซ่อม (board.json) และ Overhaul (board-overhaul2.json) ตามคำสั่ง "ซ่อมอันนึง บำรุงอันนึง"
+  if (all || args.has('--maintainance')) {
+    const uf = path.join(OUT, 'diagram-userflow-maintainance.json');
+    if (!fs.existsSync(uf)) {
+      console.error('ไม่พบ ' + uf + ' — รัน  node figma-export/8-flow-userflow.js  ก่อน');
+      process.exit(1);
+    }
+    const u = read(uf);
+    const tint = [COLORS.violet, COLORS.blue, COLORS.teal, COLORS.yellow, COLORS.pink, COLORS.green, COLORS.gray];
+    u.sections.forEach((sec, i) => sections.push({
+      name: sec.name, color: i === 0 ? [255, 255, 255] : tint[(i - 1) % tint.length], kind: 'diagram', diagram: sec.diagram
+    }));
+  }
+
   if (all || args.has('--pages')) {
     const pages = read(path.join(FJ, 'manifest.json'));
     const groupColor = {
@@ -216,7 +235,7 @@ function main() {
 
   const board = {
     version: 1,
-    anchor: (args.has('--disposal') || args.has('--inventory') || args.has('--overhaul2')) ? 'below' : undefined,   // วางต่อใต้ของเดิมบนบอร์ด ไม่ทับ
+    anchor: (args.has('--disposal') || args.has('--inventory') || args.has('--overhaul2') || args.has('--maintainance')) ? 'below' : undefined,   // วางต่อใต้ของเดิมบนบอร์ด ไม่ทับ
     generatedAt: new Date().toISOString(),
     font: { family: 'IBM Plex Sans Thai', style: 'Medium' },
     fallbackFont: { family: 'Inter', style: 'Medium' },

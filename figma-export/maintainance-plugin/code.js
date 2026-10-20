@@ -1,0 +1,1532 @@
+/* ⚠ ไฟล์นี้ประกอบอัตโนมัติจาก plugin-lib/core.js + maintainance-plugin/screens.js ด้วย build-plugin.js — แก้ที่ต้นทางแล้วรัน  node figma-export/build-plugin.js maintainance-plugin  (2026-10-20) */
+
+/* ============================================================================
+   plugin-lib/core.js — โค้ดส่วนกลางของปลั๊กอินสร้างจอจาก component จริง (แยกจาก overhaul2-plugin 20 ต.ค. 2569)
+   ----------------------------------------------------------------------------
+   ยกมาจาก overhaul2-plugin/code.js ฉบับ 19 ต.ค. 2569 (ตัดส่วนที่เป็นของ Overhaul: ข้อมูล · จอ · stepper · ปุ่มแก้เฉพาะจุด)
+   ใช้ประกอบเป็น code.js ของปลั๊กอินแต่ละเรื่องด้วย  node figma-export/build-plugin.js <โฟลเดอร์ปลั๊กอิน>
+   (Figma โหลด code.js ไฟล์เดียว ไม่มี require) · ปลั๊กอิน Overhaul ยังใช้สำเนาของตัวเองอยู่ จะย้ายมาใช้ไฟล์นี้หลัง commit รอบรีวิว 19 ต.ค.
+
+   screens.js ของแต่ละปลั๊กอินต้องประกาศ: PLUGIN { prefix, page, menu, searchHint } · DIRECT · NESTED · LOCAL_OPTIONAL · NEEDED · NESTED_ONLY · SCENARIOS · build()
+   กติกาที่โค้ดนี้ทำให้ (component-rules.md): R1 Header Tablet · R2/R13 ไม่มี divider · R4 ปิด Info icon · R6–R7 ช่องกรอก · R8–R9 Table ทั้งก้อน (เกินขนาดค่อยประกอบ) ·
+   R12 กล่องแสดงข้อมูล · R14 เฟรม 1440×1024 / 402×874 · ปุ่มท้ายซ้าย–ขวา · อัปโหลด 1 คอลัมน์ · mobile = การ์ด Mobile table / bottom sheet
+   ============================================================================ */
+
+figma.showUI(__html__, { width: 460, height: 520 });
+const log = (text) => figma.ui.postMessage({ type: 'log', text });
+const errors = [];
+const warn = (where, e) => {   // แนบบรรทัดใน code.js ที่พัง — ข้อความอย่างเดียวบอกไม่ได้ว่าพังตรงไหน (20 ต.ค. 2569)
+  const at = e && e.stack ? String(e.stack).split('\n').find(l => /code\.js|<anonymous>|at /.test(l) && !/warn/.test(l)) : '';
+  const m = where + ' — ' + (e && e.message ? e.message : e) + (at ? '  [' + at.trim().slice(0, 90) + ']' : '');
+  errors.push(m); log('⚠ ' + m);
+};
+/* ---------- หา component — 3 ทาง (19 ต.ค. 2569: ไฟล์ Maintain-D มี component ในตัวแค่บางส่วน) · รายชื่อที่ต้องใช้ (NEEDED · NESTED_ONLY · LOCAL_OPTIONAL) ประกาศใน screens.js ----------
+   1) มีในไฟล์นี้เอง (local)  2) มี instance ของมันอยู่ในไฟล์แล้ว (ไลบรารี) → ใช้ main component ของ instance นั้น
+   3) นำเข้าจากไลบรารี VMS Plus ด้วย key — ไฟล์ต้องเปิดใช้ไลบรารีนั้นอยู่ (Assets → Libraries)
+   ทั้ง 3 ทางได้ instance ที่ผูกกับ component จริง ไม่มีการวาดเอง */
+/* key ของ component ต้นฉบับในไฟล์ "component" ที่เราอ่านค่ามา (ดัมป์ 19 ต.ค. 2569 10:52 · เก็บ key ของ main component ตรงๆ) · [key, เป็น component set ไหม] */
+const KEYS = {
+  "Mobile table": ["4ca09b73532ee1f8f21e3e0a6f2c7f151839ee62", true],
+  "Mobile table item": ["754d62b4c29ea0f402f67950cfe7a4eae279e591", true],
+  "Mobile progress steps": ["9154edd850c0be2201a44213fe6e94163a7a1516", true],
+  "Step circles / 5 steps": ["998a4238f9644a495a163c6153656f3cad2442e2", true],
+  "Bottom sheet header": ["8b8c40f9f3a569cf24b0c2207402d4cf6d2df6ff", false],
+  "Bottom sheet footer": ["0f09ce0ff9507963e6129019503d00e0cf52c50d", false],
+  "Modal header": ["8eebbafefb7a0db78e062e96c6cbb2feb9b5841a", true],
+  "Sidebar navigation": ["44614a4b2e944d2921a8735bf39d89755dc08929", true],
+  "Content divider": ["5df7bd211099b5c13967ca55809923011c1695b8", true],
+  "Checkbox": ["431aec9aa85f5271ad209a8baf7c667d89394db1", true],
+  "Modal header": ["8eebbafefb7a0db78e062e96c6cbb2feb9b5841a", true],
+  "Featured icon": ["7924204fcda3126999753512ecb890a13a586498", true],
+  "Card form row": ["838a872eb4065425e9335a11ad6377782e722d36", true],
+  "Number input": ["ab8ab9ec5b4725d353971d3843b9e6325ec256ca", true],
+  "Badge outline": ["8a652f68828860d38ce4b04953c826f6f2748d84", true],
+  "Section label": ["a9baa20a14b45ef90e3e74cd5eef8ae17adac1c0", true],
+  "Tabs": ["abbfc528e17b049b49dfa1dcc3c7bc26ab1cb76f", false],
+  "Tab item": ["efb1391effff741a0bd41f92c8b8ebb5f7ae8fdc", true],
+  "Progress steps": ["ad140301ab65437a50300845a46a423e4c7e3952", true],
+  "Table": ["f1bf4ff71490cea64e92f210d8941eecb1d236e3", true],
+  "Horizontal step item": ["c7f7e148cc3b16706d96e1c487f01c989bd6bd82", true],
+  "Alert": ["2f2e06fa7d21aa4fff19dfce8881d3116c05b18e", true],
+  "Progress bar": ["7896062a5845c131efe81e39c373d335102da12f", true],
+  "_File upload item base": ["114c601616d02bb1afec21af83e4ece8bc9e10d6", true],
+  "_File icon": ["d8c1ddb33805d573b0a431b159cd94e0e20e3fb4", true],
+  "Modal footer": ["78e84b8dfd520b686df45c5219feaf5f64a4bcec", true],
+  "Text area": ["7c785b9589252e678fd93790a7f7e14a5c4295ef", true],
+  "Tertiary danger button": ["9bb3414bf62bfc8b4b678a17a539fbf0a8aa1660", true],
+  "Section header": ["0c9fb1c08a612abd000d804a95c1c03b0a765462", true],
+  "_File upload base": ["db2705beaf011d82fd9d2c9f3fd4b4209dbb7112", true],
+  "File upload": ["82991026baf7e7e4063dc8b837e282678c3a252e", true],
+  "_Content item base": ["a131ef189e777d69cebddfe4c9062fa42045b5ce", true],
+  "Content item row": ["e8c610799a7f365e0cad447fa9b42d1fea9103dc", true],
+  "List header item": ["3407ff1533898ceb3de86bd3fe73e6bc65d9b690", false],
+  "List with checkbox item": ["3a4c16006b31a6a874d6a42f58798196d493e0c1", true],
+  "List with checkbox": ["9a7807cf30ce63f749dd5041b49f444ea73816d8", false],
+  "Date picker": ["aec5697b4e4cea8ef26f19f2803c0518c8d44498", true],
+  "Secondary button": ["707d8f051bf2eb42aecb6b2b0af9ae1552b387b8", true],
+  "Primary button": ["cf8aa9f0a6181051108f4dc3f32529ce3bf6520f", true],
+  "Tertiary button": ["54f378df2a98f217edb5f4afdc06b8e4d17964b0", true],
+  "Tertiary brand button": ["ae32e68f4168736350672eec7a8922acb0046b99", true],
+  "Background overlay": ["7508216023c093b6775ecbdc8da566f002c42b35", false],
+  "Input label": ["100b172084b1ad5149031c2be07b944e763d0614", false],
+  "Checkbox with badge": ["56110090d18655cb65f9f66d5bb63de68ca14813", false],
+  "Pill outline": ["9b2ab6144dd44edbe96c5f23607ecda2b649d353", true],
+  "Text input": ["ee163422d91020d39770ea1da8b3b7029591f5c9", true],
+  "Table header": ["4c2192715fe57cede2ebb34c09c440e480d326a8", true],
+  "search-24-300-round": ["2686cdef98896d918405092d40c6c08ea6b6406a", false],
+  "Input dropdown": ["8cacaddc8403f16136cdd9eef163fd7dc5efe835", true],
+  "filter_list-24-400-round": ["5e274a00f056dc8b4802e262a414017f4725f40c", false],
+  "Badge outline with remove icon": ["a285551749934eae24da851c1acf1247dd5e7c99", true],
+  "Notification": ["fc959d9835c4148fa850540cf242c2167e05e9f0", true],
+  "Side panel header": ["3ea502c415f48f8c0ecd06f1d68853d3ed4e7b6e", false],
+  "Side panel footer": ["5c7bb5aaeee5919a801447690f4717e085eab59d", false],
+  "more_horiz-20-400-round": ["eaff13f98af363da8bd768280924ecdf6713af2f", false],
+  "Page header": ["69471f2ac8d0daf0fe58a85fddac8ac2d79fbd35", true],
+  "Header navigation": ["7f45afc3a183edd34cdd943b3b6641ab1f71dd2b", true],
+  "Nav button": ["fb0cf06df292e5bff53d7503855a3b943fb8225b", true],
+  "quick_reference_all-24-300-round": ["9ed6481ba385035617f2491e6e7b5d6a58e9997c", false],
+  "stylus-24-300-round": ["803aec7e2947f42a48164aa843ea6078b14cae1f", false],
+  "delete-24-300-round": ["d0a4abe7a062d89630de6bd7cb8ce325d1fd8336", false],
+  "Table cell": ["2c5b641cf63a8a66f18d2a702c0fddf3fe3b2b20", true],
+  "Table header cell": ["d689fd327ddac63e712a5bb5a3b4f3e39fab435e", true],
+  "Sort icon": ["928313a87632334f23fdab3838bfa254beea6487", true],
+  "Table pagination": ["11f4baa0cf668c7223365b87083857c061746379", true],
+  "Button groups pagination item": ["5e1bc247e077b6c16b789d24c6d7f00b12dad97c", true],
+  "add-24-300-round": ["47c602564a20cd47b2a10f3c87a5e752321eeca4", false],
+  "Dropdown list": ["e702e9f249a6bb7225014ce050e03b13a2b965ed", false],
+  "Dropdown list item": ["74ddf5510c3e2082fb7324804c0f1500f532947b", true],
+  "Primary danger button": ["b3e8e8e49e99d7d98f1b3865880a63c410e1566e", true],
+  "Modal": ["34dca4d1ae5102bbe6181fb4524d5cf6b6e82fe1", true],
+  "_Dropdown menu item": ["fbe755b4b02920368151d62c89564c2e38376b62", true],
+  "Empty state/Search not found": ["32ec03005ee4bc44e7b30227d21bcfd04fa21ce6", false],
+  "Empty state/Data empty": ["15a4fa89592939d4234a5e4f03760a76dc7f0a11", false],
+  "Dropdown menu": ["640a71ed325bbbbd32290c9e81dfcd431fe2d6b2", false],
+  "Secondary danger button": ["bb23b83c2d5b8b890f4a2990ffc4d4e4e6be25af", true],
+  "keyboard_arrow_right-20-400-round": ["a01b27c1070404627f9a1e8127466603a83eb12c", false],
+  "keyboard_arrow_left-20-400-round": ["32933c0651c04a63cb2aa78648cf8b15ebc7c266", false],
+  "cloud_upload-24-300-round": ["bb12332b86d47144684d92bf7d358b9c2b7a4e50", false],
+};
+const ALIAS = {};   // 19 ต.ค.: Sidebar navigation มี key ของไฟล์ component แล้ว ไม่ต้องอ้างชื่อ Sidebar ของ UI Release#2
+const INDEX = new Map();     // ชื่อ → COMPONENT_SET / COMPONENT ที่ใช้ได้
+const ROUTE = {};            // ชื่อ → ได้มาทางไหน
+let IMPORT_ERR = '';
+const holderOf = (c) => (c.parent && c.parent.type === 'COMPONENT_SET') ? c.parent : c;
+async function resolveAll(list, checkOnly) {
+  list = list || NEEDED;
+  await figma.loadAllPagesAsync();
+  const local = new Map();
+  for (const n of figma.root.findAllWithCriteria({ types: ['COMPONENT_SET', 'COMPONENT'] })) {
+    if (n.type === 'COMPONENT' && n.parent && n.parent.type === 'COMPONENT_SET') continue;
+    if (!local.has(n.name)) local.set(n.name, n);
+  }
+  log('component ในไฟล์นี้เอง ' + local.size + ' ตัว');
+  /* ยืมจาก instance ในไฟล์ = ทางสุดท้าย — สแกนเฉพาะเมื่อมีตัวที่นำเข้าไม่ได้ (เดิมสแกนทุกรอบ: ไฟล์มี instance หลายพันตัว ช้ามาก) */
+  const viaInst = new Map();
+  let scanned = false;
+  const scanInstances = async () => {
+    if (scanned) return; scanned = true;
+    log('กำลังสแกน instance ในไฟล์ (มีตัวที่นำเข้าจากไลบรารีไม่ได้)…');
+    const insts = figma.root.findAllWithCriteria({ types: ['INSTANCE'] });
+    for (const i of insts) {
+      try {
+        const mc = await i.getMainComponentAsync();
+        if (!mc) continue;
+        const h = holderOf(mc);
+        if (!viaInst.has(h.name)) viaInst.set(h.name, h);
+      } catch (e) { /* ข้าม instance ที่เข้าไม่ถึง */ }
+    }
+  };
+  const missing = [];
+  for (const name of list) {
+    const names = [name].concat(ALIAS[name] || []);
+    let got = null, how = '';
+    /* 19 ต.ค. 2569 เจ้าของงานต้องการให้ "Go to main component" พาไปไฟล์ (Component) VMS Plus ที่เราอ่านค่ามา
+       ⇒ นำเข้าด้วย key (key ทั้งหมดอ่านจากไฟล์นั้น) มาก่อน · ยืมจาก instance ในไฟล์เป็นทางสุดท้าย (อาจชี้ไลบรารีอื่นที่เปิดไม่ได้) */
+    // ลำดับ (19 ต.ค. 2569): นำเข้าจากไลบรารีไฟล์ component ก่อนเสมอ — แม้ไฟล์นี้มีสำเนาชื่อเดียวกัน (เช่น Page header ของ Maintain-D)
+    // เพราะสำเนาในไฟล์กด Go to main component แล้ววนอยู่ในไฟล์นี้ ไม่ไปไฟล์ที่อ่านค่ามา
+    let importErr = '';
+    if (!got) for (const x of names) {
+      const k = KEYS[x]; if (!k) continue;
+      try { got = k[1] ? await figma.importComponentSetByKeyAsync(k[0]) : await figma.importComponentByKeyAsync(k[0]); how = 'นำเข้าจากไลบรารี'; break; }
+      catch (e) { importErr = (e && e.message) || String(e); }
+    }
+    if (!got) for (const x of names) { if (local.has(x)) { got = local.get(x); how = 'สำเนาในไฟล์นี้ ⚠ ลิงก์วนในไฟล์นี้'; break; } }
+    if (!got) await scanInstances();
+    if (!got) for (const x of names) { if (viaInst.has(x)) { got = viaInst.get(x); how = 'จาก instance ในไฟล์ ⚠ อาจลิงก์ไปไลบรารีที่เปิดไม่ได้'; break; } }
+    if (!got && importErr) how = 'นำเข้าไม่ได้: ' + importErr;
+    if (importErr && !IMPORT_ERR && !NESTED_ONLY.has(name)) IMPORT_ERR = importErr;   // ชิ้นส่วนซ้อน (เช่น _Dropdown menu item ที่ Figma ไม่ publish) ไม่ต้องเตือน
+    if (got) { INDEX.set(name, got); ROUTE[name] = how + (got.name !== name ? ' (ชื่อ ' + got.name + ')' : ''); }
+    else missing.push(name + (how ? ' — ' + how : ''));
+  }
+  if (IMPORT_ERR) log('⚠ นำเข้าจากไลบรารีไม่ได้ (' + IMPORT_ERR + ') — ตัวที่ได้ "จาก instance ในไฟล์" จะกด Go to main component ไปไฟล์ Component ที่อ่านมาไม่ได้ · เปิดใช้ไลบรารี (Component) VMS Plus ในไฟล์นี้ (Assets → Libraries) แล้วรันใหม่');
+  const by = {};
+  for (const n of Object.keys(ROUTE)) { const r = ROUTE[n].split(' (')[0]; by[r] = (by[r] || 0) + 1; }
+ log('หา component ได้ ' + list.filter(n => INDEX.has(n)).length + '/' + list.length + ' · ' + Object.keys(by).map(k => k + ' ' + by[k]).join(' · '));
+  if (checkOnly) {
+    if (!missing.length) log('✓ มีครบ ไม่ต้องเตรียมเพิ่ม');
+    else { log('ยังไม่มีในไฟล์ ' + missing.length + ' ตัว — ลากจาก Assets มาวางในไฟล์อย่างละ 1 ชิ้น (หน้าไหนก็ได้):'); missing.forEach(m => log('  ✗ ' + m.split(' — ')[0])); }
+    return;
+  }
+  const soft = missing.filter(m => NESTED_ONLY.has(m.split(' — ')[0]));
+  missing.filter(m => LOCAL_OPTIONAL.includes(m.split(' — ')[0])).forEach(m => log('  · ไม่พบ ' + m.split(' — ')[0] + ' ในไฟล์นี้ (component ของไฟล์ Maintain-D) — ใช้แบบเดิมแทน'));
+  const hard = missing.filter(m => !NESTED_ONLY.has(m.split(' — ')[0]) && !LOCAL_OPTIONAL.includes(m.split(' — ')[0]));
+  soft.forEach(m => log('  · ไม่พบ ' + m.split(' — ')[0] + ' — ไม่เป็นไร ใช้ตัวที่ซ้อนอยู่ใน component อื่น'));
+  if (hard.length) {
+    log('ไม่พบ ' + hard.length + ' ตัวที่ต้องสร้างเอง:');
+    hard.forEach(m => log('  ✗ ' + m));
+    throw new Error('component ไม่ครบ — ถ้าขึ้น "นำเข้าไม่ได้" ให้เปิดใช้ไลบรารี VMS Plus ในไฟล์นี้ (Assets → Libraries) แล้วรันใหม่');
+  }
+}
+function main(name, variant) {
+  const n = INDEX.get(name);
+  if (!n) throw new Error('ไม่พบ component "' + name + '"');
+  if (n.type === 'COMPONENT') return n;
+  const want = variant || {};
+  const hit = n.children.find(c => Object.keys(want).every(k => c.variantProperties && c.variantProperties[k] === want[k]));
+  if (!hit) throw new Error('ไม่พบ variant ' + JSON.stringify(want) + ' ของ "' + name + '"');
+  return hit;
+}
+const icon = (name) => main(name).id;   // ใช้กับ property ชนิด INSTANCE_SWAP
+
+/* ---------- ตัวช่วยแก้ instance ---------- */
+function setProps(node, obj) {
+  const cp = node.componentProperties || {};
+  const out = {};
+  for (const k of Object.keys(obj)) {
+    const full = Object.keys(cp).find(x => x === k || x.split('#')[0].trim() === k);
+    if (!full) { warn(node.name, 'ไม่มี property "' + k + '"'); continue; }
+    out[full] = obj[k];
+  }
+  try { if (Object.keys(out).length) node.setProperties(out); } catch (e) { warn(node.name + ' setProperties ' + JSON.stringify(obj), e); }
+}
+const USED = new Set();
+/* ชิ้นที่สร้างระหว่างประกอบจอปัจจุบัน (เฟรม + instance) — Figma วาง node ใหม่ไว้ที่ (0,0) ของหน้าจนกว่าจะถูก appendChild เข้าจอ
+   ถ้าประกอบจอพังกลางทาง ชิ้นเหล่านี้จะค้างซ้อนกันที่มุมหน้า (เจ้าของงานเจอ 20 ต.ค. 2569) ⇒ build() ล้างด้วย dropCreated() */
+let CREATED = [];
+let PLACE = null;   // ตำแหน่งที่จอปัจจุบันจะไปอยู่ — shell() วางเฟรมจอทันทีที่สร้าง ไม่รอจบ
+const INNER_FRAMES = new Set(['Section', 'Row', 'Content', 'Content item', 'Actions', 'Dual list', 'Gallery', 'Table', 'Page', 'Container', 'WBS', 'Sheet', 'Panel', 'Radio', 'Sign', 'Signed', 'Spacer', 'Mobile table', 'Page header']);
+function sweepOrphans(page, names) {   // รอบก่อนพังกลางทาง → ชิ้นส่วนค้างซ้อนกันที่ (0,0) ของหน้าปลั๊กอิน (ไม่ใช่เฟรมจอ) — ลบเฉพาะที่เข้าเกณฑ์นี้บนหน้าของปลั๊กอินเท่านั้น
+  let n = 0;
+  for (const node of page.children.slice()) {
+    if (node.x !== 0 || node.y !== 0) continue;
+    if (node.name.indexOf(PLUGIN.prefix + ' / ') === 0) continue;
+    const orphan = (node.type === 'FRAME' && INNER_FRAMES.has(node.name)) || (node.type === 'INSTANCE' && names.has(node.name));
+    if (orphan) { try { node.remove(); n++; } catch (e) { /* ลบไม่ได้ ข้าม */ } }
+  }
+  return n;
+}
+function dropCreated(page) {
+  let n = 0;
+  for (const node of CREATED) { try { if (node.parent === page) { node.remove(); n++; } } catch (e) { /* ลบไปแล้ว */ } }
+  CREATED = [];
+  return n;
+}
+function inst(name, variant, props) {
+  USED.add(name);
+  const n = main(name, variant).createInstance();
+  CREATED.push(n);
+  if (props) setProps(n, props);
+  return n;
+}
+const find = (root, name, nth) => {
+  const all = root.findAll(n => n.name === name);
+  return all[nth || 0] || null;
+};
+const FONTS = new Set();
+/* ฟอนต์สำรองเมื่อ component ใช้ฟอนต์ที่เครื่องไม่มี (เจ้าของงานเจอ 20 ต.ค. 2569: แถบ Header/State ของทีมออกแบบใช้ LINE Seed Sans → แก้ข้อความไม่ได้ ป้ายเลยไม่ตรง scenario) */
+let FALLBACK_FONT, FONT_SWAPPED = 0;
+async function fallbackFont() {
+  if (FALLBACK_FONT) return FALLBACK_FONT;
+  for (const f of [{ family: 'IBM Plex Sans Thai', style: 'Bold' }, { family: 'IBM Plex Sans Thai', style: 'Medium' }, { family: 'Inter', style: 'Bold' }, { family: 'Inter', style: 'Regular' }]) {
+    try { await figma.loadFontAsync(f); return (FALLBACK_FONT = f); } catch (e) { /* ลองตัวถัดไป */ }
+  }
+  return null;
+}
+async function text(root, layer, value, nth) {
+  const t = typeof layer === 'string' ? find(root, layer, nth) : layer;
+  if (!t || t.type !== 'TEXT') { warn(root.name, 'ไม่พบข้อความ "' + layer + '"'); return false; }
+  try {
+    const fonts = t.fontName === figma.mixed ? t.getRangeAllFontNames(0, t.characters.length) : [t.fontName];
+    let missing = false;
+    for (const f of fonts) { const k = f.family + '|' + f.style; if (FONTS.has(k)) continue; try { await figma.loadFontAsync(f); FONTS.add(k); } catch (e) { missing = true; } }   // โหลดฟอนต์ละครั้งเดียว
+    if (missing) {   // ฟอนต์ของ component ไม่มีในเครื่อง → สลับเป็นฟอนต์ที่มี แล้วค่อยใส่ข้อความ
+      const fb = await fallbackFont();
+      if (!fb) throw new Error('ฟอนต์ ' + fonts.map(f => f.family + ' ' + f.style).join(', ') + ' ไม่มีในเครื่อง และไม่มีฟอนต์สำรอง');
+      t.fontName = fb; FONT_SWAPPED++;
+    }
+    t.characters = value;
+    return true;
+  } catch (e) { warn('ข้อความ ' + (typeof layer === 'string' ? layer : layer.name), e); return false; }
+}
+function hide(root, name, all) {
+  const list = root.findAll(n => n.name === name);
+  if (!list.length) { warn(root.name, 'ไม่พบ layer "' + name + '" ให้ซ่อน'); return; }
+  (all ? list : [list[0]]).forEach(n => { n.visible = false; });
+}
+function frame(name, dir, o) {
+  const f = figma.createFrame();
+  CREATED.push(f);
+  f.name = name;
+  f.fills = o && o.fill ? [{ type: 'SOLID', color: o.fill }] : [];
+  if (dir) {
+    f.layoutMode = dir;
+    f.itemSpacing = (o && o.gap) || 0;
+    const p = (o && o.pad) || 0;
+    f.paddingTop = f.paddingBottom = Array.isArray(p) ? p[0] : p;
+    f.paddingLeft = f.paddingRight = Array.isArray(p) ? p[1] : p;
+    f.primaryAxisSizingMode = 'AUTO';
+    f.counterAxisSizingMode = 'AUTO';
+  }
+  return f;
+}
+function add(parent, child, fill) {
+  parent.appendChild(child);
+  if (fill === 'h' || fill === 'both') child.layoutSizingHorizontal = 'FILL';
+  if (fill === 'v' || fill === 'both') child.layoutSizingVertical = 'FILL';
+  return child;
+}
+const WHITE = { r: 1, g: 1, b: 1 };
+
+/* สีป้ายสถานะ (Badge outline มีแค่ 5 สี) */
+const BADGE_OF = { Gray: 'Gray', Info: 'Brand', Success: 'Success', Warning: 'Brand', Error: 'Error', Brand: 'Brand' };   // Badge outline มีแค่ 5 สี
+/* ---------- mobile (เจ้าของงานเคาะ 19 ต.ค. 2569) ----------
+   ใช้กับจอ < 768 (รวม tablet) · ออกแบบเฟรม 402×874 (เจ้าของงานเปลี่ยนจาก 360×850 วันเดียวกัน) · component Breakpoint=Mobile ยืดเต็มกว้าง เว้นขอบ 16
+   ตาราง → การ์ด Mobile table · กล่องเด้ง → bottom sheet (Background overlay + Bottom sheet header + เนื้อหา + Bottom sheet footer)
+   ทุกฟังก์ชันประกอบหน้าดูตัวแปร MOB — สร้างจอ desktop แล้วสลับ MOB สร้างจอ mobile ด้วยข้อมูลชุดเดียวกัน */
+let MOB = false;
+const BP = () => (MOB ? 'Mobile' : 'Desktop');
+const VW = () => (MOB ? 402 : 1440), VH = () => (MOB ? 874 : 1024);
+
+/* ---------- ตัวช่วยประกอบ ---------- */
+function btn(kind, label, o) {
+  o = o || {};
+  const variant = { State: o.disabled ? 'Disabled' : 'Default' };
+  if (kind !== 'Tertiary brand button') variant.Size = o.size || 'md';   // Tertiary brand button ไม่มี Size
+  const props = { Text: label, 'Leading icon': !!o.icon, 'Trailing icon': false };
+  if (o.icon) props['Leading icon swap'] = icon(o.icon);
+  return inst(kind, variant, props);
+}
+function row(name, kids, o) {
+  if (MOB && !(o && o.keep)) {   // mobile: แถวช่องกรอกเรียงลงล่าง เต็มกว้าง (ตัด Spacer ทิ้ง)
+    const c = frame(name || 'Row', 'VERTICAL', { gap: 16 });
+    kids.forEach(k => { if (!k) return; if (k.type === 'FRAME' && k.name === 'Spacer') { k.remove(); return; } add(c, k, 'h'); });
+    return c;
+  }
+  const r = frame(name || 'Row', 'HORIZONTAL', { gap: (o && o.gap) != null ? o.gap : 24 });
+  r.counterAxisAlignItems = (o && o.align) || 'MIN';
+  kids.forEach(k => { if (k) { r.appendChild(k); if (!(o && o.hug)) k.layoutGrow = 1; } });
+  return r;
+}
+function col(name, kids, gap) { const c = frame(name || 'Content', 'VERTICAL', { gap: gap == null ? 32 : gap }); kids.forEach(k => { if (k) add(c, k, 'h'); }); return c; }
+/* ป้ายที่เห็นคือ Input label ที่ซ้อนอยู่ในช่อง (property ชั้นบนคุมป้ายชุดเก่าที่ซ่อนอยู่) ⇒ ตั้งทั้งสองชั้นให้ตรงกัน */
+function syncLabel(n, label, optional) {
+  const l = n && find(n, 'Input label');
+  if (l) setProps(l, { 'Label text': label, Optional: !!optional, 'Info icon': false });
+  return n;
+}
+function field(label, value, o) {   // Text input
+  o = o || {};
+  const st = o.state || (o.error ? 'Error' : value ? 'Filled' : 'Default');
+  const n = inst('Text input', { State: st, Size: 'md' }, { 'Label text': label, Text: value || o.placeholder || '', Optional: !!o.optional,
+    Helper: !!o.error, 'Helper text': o.error || '', 'Info icon': false, 'Leading icon': !!o.lead, 'Trailing icon': false,
+    'Show Placeholder': !value });
+  if (o.lead) setProps(n, { 'Leading icon swap': icon(typeof o.lead === 'string' ? o.lead : 'search-24-300-round') });
+  return syncLabel(n, label, o.optional);
+}
+function dropdown(label, value, o) {   // Input dropdown
+  o = o || {};
+  const st = o.state || (o.error ? 'Error' : value ? 'Selected' : 'Default');
+  const p = { 'Label text': label, Text: value || o.placeholder || 'เลือก', Optional: false, Helper: !!o.error, 'Helper text': o.error || '',
+    'Info icon': false, 'Leading icon': !!o.lead, Supporting: false };
+  if (o.lead) p['Leading icon swap'] = icon(o.lead);
+  return syncLabel(inst('Input dropdown', { State: st, Size: 'md' }, p), label, false);
+}
+function area(label, value, o) {
+  o = o || {};
+  return syncLabel(inst('Text area', { State: value ? 'Filled' : 'Default', Size: 'md' }, { 'Label text': label, Text: value || o.placeholder || '',
+    Optional: !!o.optional, Helper: false, 'Info icon': false, 'Trailing icon': false, 'Show Placeholder': !value }), label, o.optional);
+}
+async function section(title, o) {   // Section header + ปุ่มขวา
+  o = o || {};
+  const sh = inst('Section header', { Breakpoint: BP() }, { Title: title, Badge: o.badge != null, 'Supporting text': false,
+    Actions: !!(o.buttons && o.buttons.length), 'More actions': false });
+  if (o.badge != null) { const b = find(sh, 'Badge outline'); if (b) setProps(b, { Text: String(o.badge) }); }
+  const acts = find(sh, 'Actions');
+  if (acts) acts.children.forEach(c => { c.visible = false; });
+  (o.buttons || []).forEach((b, i) => {
+    const slot = acts && acts.children.filter(c => c.name === b.kind)[i] || (acts && acts.children.find(c => c.name === b.kind && !c.visible));
+    if (slot) { slot.visible = true; setProps(slot, { Text: b.text, 'Leading icon': !!b.icon, 'Trailing icon': false }); if (b.icon) setProps(slot, { 'Leading icon swap': icon(b.icon) }); }
+  });
+  return sh;
+}
+/* Section label — หัวข้อของหน้า Detail (รีวิว 19 ต.ค. 2569: Section header ใช้เฉพาะหน้า Create/Edit)
+   ไม่มี Badge ⇒ จำนวนต่อท้ายชื่อ "(n)" ตาม wireframe "รายการรถ (จำนวน xx)" · ปุ่ม: Primary action = Tertiary brand button · Secondary action = Tertiary button */
+async function sectionLabel(title, o) {
+  o = o || {};
+  const bs = o.buttons || [];
+  const pri = bs.find(b => b.kind === 'Primary button'), sec = bs.find(b => b.kind !== 'Primary button');
+  const sl = inst('Section label', { Breakpoint: BP() }, { Title: o.badge != null ? title + ' (' + o.badge + ')' : title, Supporting: false, 'Info icon': false,
+    'More actions': false, Actions: !!(pri || sec), 'Primary action': !!pri, 'Secondary action': !!sec });
+  const put = (b, node) => { if (b && node) setProps(node, { Text: b.text, 'Leading icon': !!b.icon, 'Trailing icon': false, ...(b.icon ? { 'Leading icon swap': icon(b.icon) } : {}) }); };
+  put(pri, find(sl, 'Tertiary brand button')); put(sec, find(sl, 'Tertiary button'));
+  return sl;
+}
+/* กล่องแสดงข้อมูล (display) ตามตัวอย่างที่เจ้าของงานส่ง 19 ต.ค. 2569 (Maintain-D หน้า "Flow การซ่อม" — VehicleInfo > Content):
+   พื้น Color/surface/secondary-subtle (gray-50) · มุม 8 · ขอบใน 24 · ระยะแถว 24 · แถวละ 4 ช่อง Content item row (Text with label ไม่มีไอคอน) */
+const SURFACE_SUB = { r: 249 / 255, g: 250 / 255, b: 251 / 255 };
+let SURFACE_VAR;
+async function surfaceVar() {   // ผูกสีกับตัวแปรของไลบรารีถ้าหาได้ ไม่ได้ก็ใช้ค่าสีเดียวกัน
+  if (SURFACE_VAR !== undefined) return SURFACE_VAR;
+  SURFACE_VAR = null;
+  const ok = (v) => /^Color\/surface\/secondary-sub/i.test(v.name);
+  try { const l = (await figma.variables.getLocalVariablesAsync('COLOR')).find(ok); if (l) return (SURFACE_VAR = l); } catch (e) { /* ไม่มี API */ }
+  try {
+    for (const c of await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()) {
+      const v = (await figma.teamLibrary.getVariablesInLibraryCollectionAsync(c.key)).find(ok);
+      if (v) return (SURFACE_VAR = await figma.variables.importVariableByKeyAsync(v.key));
+    }
+  } catch (e) { /* ไม่มีสิทธิ์ teamlibrary — ใช้ค่าสี */ }
+  return SURFACE_VAR;
+}
+async function displayBox(box) {
+  box.name = 'Content';
+  box.itemSpacing = 24; box.paddingTop = box.paddingBottom = box.paddingLeft = box.paddingRight = 24; box.cornerRadius = 8;
+  let paint = { type: 'SOLID', color: SURFACE_SUB };
+  const v = await surfaceVar();
+  if (v) try { paint = figma.variables.setBoundVariableForPaint(paint, 'color', v); } catch (e) { /* ใช้ค่าสี */ }
+  box.fills = [paint];
+  return box;
+}
+function kv(pairs, perRow) {   // Content item row ละ 4 ช่อง (Type=Text with label) · mobile แถวละ 2
+  perRow = MOB ? 2 : (perRow || 4);
+  const box = frame('Content item', 'VERTICAL', { gap: 8 });   // displayBox() แต่งเป็นกล่องแสดงข้อมูลตอนสร้างจอเสร็จ (ต้อง await ตัวแปรสี)
+  for (let i = 0; i < pairs.length; i += perRow) {
+    const r = inst('Content item row', { 'Column width': 'Full' });
+    const items = r.children.filter(c => c.name === '_Content item base');
+    const slice = pairs.slice(i, i + perRow);
+    items.forEach((it, j) => {
+      if (j >= slice.length) return;
+      setProps(it, { Type: 'Text with label' });
+      setProps(it, { Label: slice[j][0], Text: slice[j][1], Supporting: false, 'Leading icon': false });
+    });
+    setProps(r, { 'Item 2': slice.length > 1, 'Item 3': slice.length > 2, 'Item 4': slice.length > 3 });
+    add(box, r, 'h');
+  }
+  return box;
+}
+async function upload(label, files, o) {   // File upload Type=Default
+  o = o || {};
+  const u = inst('File upload', { Type: 'Default' }, { 'File queue': files.length > 0, Helper: !!o.error, 'Helper text': o.error || '',
+    'File upload': !o.readonly });   // หน้ารายละเอียด: แสดงเฉพาะรายการไฟล์ ไม่มีกล่องอัปโหลด
+  const lb = find(u, 'Input label');
+  if (lb) { await text(lb, 'Label', label); const op = find(lb, '(ถ้ามี)'); if (op) op.visible = !!o.optional; const ic = find(lb, 'info-24-300-round'); if (ic) ic.visible = false; const tb = find(lb, 'Tertiary brand button'); if (tb) tb.visible = false; }
+  const base = find(u, '_File upload base'); if (base && o.error) setProps(base, { State: 'Error' });
+  if (base) { await text(base, 'Supporting text', (o.hint || 'PDF, JPG · สูงสุด 10 ไฟล์') + ' · ' + files.length + '/10 ไฟล์'); }
+  const items = u.findAll(n => n.name === '_File upload item base');
+  items.forEach((it, i) => {
+    if (i >= files.length) { it.visible = false; return; }
+    const f = files[i];
+    setProps(it, { State: f.err ? 'Error' : 'Completed' });
+    setProps(it, { 'File name': f.name, 'File size': f.err ? 'อัปโหลดไม่สำเร็จ — รับเฉพาะไฟล์ PDF หรือ JPG' : f.size, 'Progress bar': false,
+      Actions: true, 'Download action': !f.err && !o.readonly, 'Delete action': !o.readonly });
+  });
+  return u;
+}
+function mobileCards(cols, rows) {   // mobile: 1 แถวตาราง = 1 การ์ด Mobile table (หัวข้อ–ค่า เรียงลง · แถวสุดท้ายเป็นปุ่ม)
+  if (rows.some(r => r.some(v => v && v.check != null))) {   // checklist → List with checkbox
+    const l = inst('List with checkbox');
+    const hd = find(l, 'List header item'); if (hd) { const b = find(hd, 'Badge outline'); if (b) b.visible = false; const cb = find(hd, 'Checkbox'); if (cb) setProps(cb, { Type: rows.every(r => r[0].check) ? 'Selected' : 'Unselected' }); }
+    l.children.filter(c => c.name === 'List with checkbox item').forEach((it, i) => {
+      if (i >= rows.length) { it.visible = false; return; }
+      setProps(it, { State: rows[i][0].check ? 'Selected' : 'Default' });
+      setProps(it, { Text: rows[i][0].text, Avatar: false, Supporting: false, 'Supporting 2': false });
+    });
+    const sc = find(l, 'Vertical scrollbar'); if (sc) sc.visible = false;
+    l._title = cols[0][0];
+    return l;
+  }
+  const box = frame('Mobile table', 'VERTICAL', { gap: 12 });
+  rows.forEach((r, ri) => {
+    const card = inst('Mobile table', { 'Alternating fills': 'False' });
+    const items = card.children.filter(c => c.name === 'Mobile table item');
+    const data = [], acts = [];
+    cols.forEach(([head], ci) => { const v = r[ci]; if (v && (v.menu || v.icons)) acts.push(v); else if (head) data.push([head, v]); });
+    items.forEach((it, i) => {
+      const last = i === items.length - 1;
+      if (last) {
+        if (!acts.length) { it.visible = false; return; }
+        const ic = acts[0].menu ? ['more_horiz-20-400-round'] : acts[0].icons;
+        setProps(it, { View: ic.length > 0, Edit: ic.length > 1, Print: false, Delete: false });
+        it.findAll(n => n.name === 'Tertiary button').forEach((b, k) => { if (ic[k]) setProps(b, { 'Leading icon swap': icon(ic[k]) }); });
+        return;
+      }
+      if (i >= data.length) { it.visible = false; return; }
+      const [head, v] = data[i];
+      if (v && v.pill) { setProps(it, { Style: 'Badge' }); setProps(it, { Header: head }); const p = find(it, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
+      else { setProps(it, { Style: i === 0 ? 'Lead text' : 'Text' }); setProps(it, { Header: head, Text: v == null ? '' : String(v), Supporting: false }); }
+    });
+    add(box, card, 'h');
+  });
+  return box;
+}
+/* ตารางประกอบเองแบบเดิม — ใช้เฉพาะตารางที่เกินขนาด component Table ของไลบรารี (8 คอลัมน์ × 10 แถว) */
+function tblComposed(cols, rows) {   // cols: [หัว, กว้าง, Style, เรียงได้] · ช่อง: ข้อความ | {pill:[t,สี]} | {menu:1} | {icons:[..]} | {check:bool,text}
+  const t = frame('Table', 'HORIZONTAL');
+  cols.forEach(([head, w, style, sort], ci) => {
+    const c = frame('Column', 'VERTICAL');
+    t.appendChild(c);
+    if (w) { c.layoutSizingHorizontal = 'FIXED'; c.resize(w, c.height); } else c.layoutGrow = 1;
+    const hc = inst('Table header cell', { Checkbox: 'False' }, { Text: head || ' ', 'Sort icon': !!sort, 'Header text': !!head });
+    add(c, hc, 'h');
+    if (sort) { const s = find(hc, 'Sort icon'); if (s) setProps(s, { Icon: sort }); }
+    rows.forEach((r, ri) => {
+      const v = r[ci], alt = ri % 2 ? 'True' : 'False';
+      const st = v && v.check != null ? 'Lead checkbox' : v && v.pill ? 'Badge' : v && (v.menu || v.icons) ? 'Action icons' : style || 'Text';
+      const cell = inst('Table cell', { Style: st, 'Alternating fills': alt });
+      add(c, cell, 'h');
+      if (st === 'Badge') { const p = find(cell, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
+      else if (st === 'Action icons') {
+        const ic = v.menu ? ['more_horiz-20-400-round'] : v.icons;
+        setProps(cell, { View: ic.length > 0, Edit: ic.length > 1, Print: false, Delete: false });
+        const bs = cell.findAll(n => n.name === 'Tertiary button');
+        ic.forEach((name, i) => { if (bs[i]) setProps(bs[i], { 'Leading icon swap': icon(name) }); });
+      } else if (st === 'Lead checkbox') {
+        setProps(cell, { Text: v.text, Supporting: false });
+        const cb = find(cell, 'Checkbox'); if (cb) setProps(cb, { Type: v.check ? 'Selected' : 'Unselected' });
+      } else setProps(cell, { Text: v == null ? '' : String(v), Supporting: false });
+    });
+  });
+  return t;
+}
+/* ช่องตาราง 1 ช่อง — ใช้ทั้งกับ Table cell ที่ซ้อนใน Table (รีวิว 19 ต.ค. 2569) และ mobile */
+function fillCell(cell, v, style, alt) {
+  const st = v && v.check != null ? 'Lead checkbox' : v && v.pill ? 'Badge' : v && (v.menu || v.icons) ? 'Action icons' : style || 'Text';
+  setProps(cell, { Style: st, 'Alternating fills': alt });
+  if (st === 'Badge') { const p = find(cell, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
+  else if (st === 'Action icons') {
+    const ic = v.menu ? ['more_horiz-20-400-round'] : v.icons;
+    setProps(cell, { View: ic.length > 0, Edit: ic.length > 1, Print: false, Delete: false });
+    const bs = cell.findAll(n => n.name === 'Tertiary button');
+    ic.forEach((name, i) => { if (bs[i]) setProps(bs[i], { 'Leading icon swap': icon(name) }); });
+  } else if (st === 'Lead checkbox') {
+    setProps(cell, { Text: v.text, Supporting: false });
+    const cb = find(cell, 'Checkbox'); if (cb) setProps(cb, { Type: v.check ? 'Selected' : 'Unselected' });
+  } else setProps(cell, { Text: v == null ? '' : String(v), Supporting: false });
+}
+/* กว้างคอลัมน์ใน instance: w = คงที่ · 0 = ยืดเต็ม — Figma ยอมให้ override ขนาดลูกใน instance ที่เป็น auto layout */
+function sizeCol(c, w) {
+  try {
+    if (w) { c.layoutSizingHorizontal = 'FIXED'; c.resize(w, c.height); } else c.layoutSizingHorizontal = 'FILL';
+    c.children.forEach(x => { x.layoutSizingHorizontal = 'FILL'; });
+  } catch (e) { warn('ปรับกว้างคอลัมน์ ' + c.name, e); }
+}
+/* ตาราง = instance ของ component "Table" (รีวิว 19 ต.ค. 2569: เดิมประกอบเองจาก Table cell/Table header cell ⇒ ไม่มีกรอบตาราง)
+   Table ของไลบรารีมี 8 คอลัมน์ × 10 แถว ⇒ ซ่อนส่วนที่เกิน · ปิด Scrollbar · Pagination ตาม o.pagination (จำนวนรายการ) */
+const TABLE_MAX = { cols: 8, rows: 10 };   // ขนาด component Table ของไลบรารี
+const OVERSIZE = [];
+async function tbl(cols, rows, o) {   // cols: [หัว, กว้าง, Style, เรียงได้] · ช่อง: ข้อความ | {pill:[t,สี]} | {menu:1} | {icons:[..]} | {check:bool,text}
+  o = o || {};
+  if (MOB) {
+    const m = mobileCards(cols, rows);
+    if (!o.pagination) return m;
+    const box = col('Table', [m], 20); add(box, await pagination(o.pagination), 'h'); return box;
+  }
+  if (cols.length > TABLE_MAX.cols || rows.length > TABLE_MAX.rows) {   // ไลบรารีขยายไม่ได้ (instance เพิ่มคอลัมน์/แถวไม่ได้) ⇒ คงแบบเดิม แล้วรายงาน
+    OVERSIZE.push(cols.length + ' คอลัมน์ × ' + rows.length + ' แถว');
+    const box = col('Table', [tblComposed(cols, rows)], 20); if (o.pagination) add(box, await pagination(o.pagination), 'h'); return box;
+  }
+  const t = inst('Table', { 'Alternating fills': 'True' }, { Scrollbar: false, Pagination: !!o.pagination });
+  t.name = 'Table';
+  const wrap = find(t, 'Content with scrollbar'), content = wrap && wrap.children.find(c => c.name === 'Content');
+  try { if (wrap) wrap.layoutSizingHorizontal = 'FILL'; if (content) content.layoutSizingHorizontal = 'FILL'; } catch (e) { warn('ยืดตารางเต็มกว้าง', e); }
+  const columns = content ? content.children.filter(c => c.name === 'Column') : [];
+  if (cols.length > columns.length) warn('Table', 'มี ' + cols.length + ' คอลัมน์ เกิน ' + columns.length + ' ของไลบรารี');
+  columns.forEach((c, ci) => {
+    if (ci >= cols.length) { c.visible = false; return; }
+    const [head, w, style, sort] = cols[ci];
+    const [hc, ...cells] = c.children;
+    setProps(hc, { Text: head || ' ', 'Sort icon': !!sort, 'Header text': !!head });
+    if (sort) { const si = find(hc, 'Sort icon'); if (si) setProps(si, { Icon: sort }); }
+    if (rows.length > cells.length) warn('Table', 'มี ' + rows.length + ' แถว เกิน ' + cells.length + ' ของไลบรารี');
+    cells.forEach((cell, ri) => { if (ri >= rows.length) { cell.visible = false; return; } fillCell(cell, rows[ri][ci], style, ri % 2 ? 'True' : 'False'); });
+    sizeCol(c, w);
+  });
+  if (o.pagination) { const pg = find(t, 'Table pagination'); if (pg) await fillPagination(pg, o.pagination); }
+  return t;
+}
+async function listCheck(title, items, ticked) {   // List with checkbox (หัว + รายการ)
+  const l = inst('List with checkbox');
+  const hd = find(l, 'List header item');
+  if (hd) { await text(hd, 'Text', title); const b = find(hd, 'Badge outline'); if (b) setProps(b, { Text: String(items.length) });
+    const cb = find(hd, 'Checkbox'); if (cb) setProps(cb, { Type: ticked.length === 0 ? 'Unselected' : ticked.length === items.length ? 'Selected' : 'Indeterminate' }); }
+  const rows = l.children.filter(c => c.name === 'List with checkbox item');
+  rows.forEach((r, i) => {
+    if (i >= items.length) { r.visible = false; return; }
+    const on = ticked.indexOf(i) >= 0;
+    setProps(r, { State: on ? 'Selected' : 'Default' });
+    setProps(r, { Text: items[i][0], 'Supporting text': items[i][1] || '', 'Supporting 2': !!items[i][2], 'Supporting text 2': items[i][2] || '', Avatar: false, Supporting: !!items[i][1] });
+  });
+  const sc = find(l, 'Vertical scrollbar'); if (sc) sc.visible = false;
+  return l;
+}
+function alertBox(color, title, sub) {
+  return inst('Alert', { Color: color }, { Text: title, 'Supporting text': sub || '', Supporting: !!sub, 'Leading icon': true, 'Close icon': false });
+}
+function pill(t, color) { return inst('Pill outline', { Color: color }, { Text: t }); }
+
+/* ---------- โครงหน้า: Sidebar + Header navigation + Page (ตาม Contract list) ---------- */
+async function shell(name, o) {
+  if (MOB) {   // mobile: ไม่มี Sidebar · Header navigation Mobile · หน้าเว้นขอบ 16
+    const scr = frame(PLUGIN.prefix + ' / ' + name, 'VERTICAL', { fill: WHITE });
+    if (PLACE) { scr.x = PLACE.x; scr.y = PLACE.y; }
+    scr.counterAxisSizingMode = 'FIXED'; scr.resize(VW(), VH()); scr.primaryAxisSizingMode = 'AUTO'; scr.minHeight = VH(); scr.clipsContent = true;
+    add(scr, inst('Header navigation', { Breakpoint: 'Mobile' }), 'h');
+    const page = frame('Page', 'VERTICAL', { gap: 24, pad: [16, 16], fill: WHITE });
+    add(scr, page, 'h');
+    add(page, await pageHead(o), 'h');
+    return { scr, page };
+  }
+  const scr = frame(PLUGIN.prefix + ' / ' + name, 'HORIZONTAL', { fill: WHITE });
+  if (PLACE) { scr.x = PLACE.x; scr.y = PLACE.y; }
+  scr.primaryAxisSizingMode = 'FIXED'; scr.resize(1440, 1024); scr.counterAxisSizingMode = 'AUTO'; scr.minHeight = 1024; scr.clipsContent = true;
+  const sb = inst('Sidebar navigation', { State: 'Collapsed' });
+  scr.appendChild(sb); try { sb.layoutSizingVertical = 'FILL'; } catch (e) { /* สูงตามตัวเองก็ได้ */ }
+  const navs = sb.findAll(n => n.name === 'Nav button'); if (navs[0]) setProps(navs[0], { State: 'Active' });
+  const ctn = frame('Container', 'VERTICAL', { fill: WHITE });
+  scr.appendChild(ctn); ctn.layoutGrow = 1;
+  add(ctn, inst('Header navigation', { Breakpoint: 'Tablet' }), 'h');   // รีวิว 19 ต.ค. 2569: จอ desktop ใช้ Header navigation แบบ Tablet
+  const page = frame('Page', 'VERTICAL', { gap: 32, pad: 32, fill: WHITE });
+  add(ctn, page, 'h');
+  add(page, await pageHead(o), 'h');
+  return { scr, page };
+}
+/* Page header: crumbs = ลิงก์ระดับกลาง · ปุ่มขวาตาม o.primary (Actions ของ Page header) หรือ o.actions (กรอบแยก — ปุ่มลบสีแดงไม่มีใน Page header) */
+async function pageHead(o) {
+  const ph = inst('Page header', { Breakpoint: BP() }, { Title: o.title, 'Supporting text': false, Badge: !!o.badge,
+    'Back action': !!o.back, 'Copy action': false, 'More actions': false, Actions: !!o.primary });
+  const crumbs = [PLUGIN.menu].concat(o.crumbs || []);
+  for (const [i, n] of ['Link 1', 'Link 2', 'Link 3'].entries()) {
+    const l = find(ph, n); if (!l) continue;
+    if (i < crumbs.length - 1) { const lk = find(l, 'Link'); if (lk) await text(l, lk, crumbs[i]); } else l.visible = false;
+  }
+  const tr = find(ph, 'Truncate link'); if (tr) tr.visible = false;
+  const cur = find(ph, 'Current link'); if (cur) await text(cur, 'Link', crumbs[crumbs.length - 1]);
+  if (crumbs.length === 1) { /* หน้าแรกของเมนู: ลิงก์ปัจจุบันคือชื่อเมนูเอง */ }
+  if (o.badge) { const b = find(ph, 'Badge outline'); if (b) setProps(b, { Color: BADGE_OF[o.badge[1]] || 'Gray', Text: o.badge[0] }); }
+  const acts = find(ph, 'Actions');
+  if (acts && o.primary) for (const b of acts.children) {
+    if (b.name !== 'Primary button') { b.visible = false; continue; }
+    setProps(b, { Text: o.primary, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') });
+  }
+  if (!o.actions) return ph;
+  if (MOB) {   // mobile: ปุ่มของหน้าเรียงใต้หัวหน้า แบ่งครึ่ง
+    const w = frame('Page header', 'VERTICAL', { gap: 16 });
+    add(w, ph, 'h');
+    const ab = frame('Actions', 'HORIZONTAL', { gap: 12 });
+    o.actions.forEach(a => { const b = btn(a[0], a[1], { icon: a[2] }); ab.appendChild(b); b.layoutGrow = 1; });
+    add(w, ab, 'h');
+    return w;
+  }
+  const wrap = row('Page header', [], { gap: 12, hug: true, align: 'MAX' });
+  wrap.appendChild(ph); ph.layoutGrow = 1;
+  const ab = row('Actions', o.actions.map(a => btn(a[0], a[1], { icon: a[2] })), { gap: 12, hug: true });
+  wrap.appendChild(ab);
+  return wrap;
+}
+/* แถวปุ่มท้ายหน้า: 2 ปุ่มขึ้นไป = ปุ่มแรก (ย้อนกลับ/ยกเลิก) ชิดซ้าย ปุ่มสุดท้ายชิดขวา — เจ้าของงานแก้ในแบบจริง 19 ต.ค. 2569 */
+const btnRow = (list) => {
+  if (MOB) {   // mobile: ปุ่มเต็มแถว แบ่งเท่ากัน (แบบ Bottom sheet footer ของไลบรารี)
+    const r = frame('Actions', 'HORIZONTAL', { gap: 16 });
+    list.forEach(b => { const n = btn(b[0], b[1], Object.assign({}, b[2] || {}, { size: 'lg' })); r.appendChild(n); n.layoutGrow = 1; });
+    return r;
+  }
+  const r = row('Actions', list.map(b => btn(b[0], b[1], b[2] || {})), { gap: 12, hug: true, keep: true });
+  r.primaryAxisAlignItems = list.length > 1 ? 'SPACE_BETWEEN' : 'MAX';   // ปุ่มเดียวก็ชิดขวา
+  return r;
+};
+
+/* ---------- ชั้นบน ---------- */
+function overlay(scr, node, x, y) { scr.appendChild(node); node.layoutPositioning = 'ABSOLUTE'; node.x = x; node.y = y; return node; }
+function notify(scr, title, err) {
+  const n = inst('Notification', { Type: err ? 'Error' : 'Success', Breakpoint: BP() }, { Text: title, Actions: false });
+  const sup = find(n, 'Supporting text'); if (sup) sup.visible = false;
+  overlay(scr, n, VW() - n.width, VH() - n.height);
+}
+/* bottom sheet ประกอบจากชิ้นไลบรารี (Bottom sheet ของไลบรารีล็อกเนื้อหาตายตัว) — แบบเดียวกับที่ UI Release#2 ประกอบแผงตัวกรอง */
+async function sheet(scr, o) {
+  overlay(scr, inst('Background overlay'), 0, 0).resize(VW(), VH());
+  const sh = frame('Sheet', 'VERTICAL', { fill: WHITE });
+  sh.topLeftRadius = sh.topRightRadius = 24;
+  overlay(scr, sh, 0, 0); sh.counterAxisSizingMode = 'FIXED'; sh.resize(VW(), sh.height);
+  const hd = inst('Bottom sheet header'); add(sh, hd, 'h');
+  const ta = find(hd, 'Text and action');
+  if (o.title && ta) {
+    await text(ta, 'Text', o.title);
+    const tb = find(ta, 'Tertiary button'); if (tb) tb.visible = false;
+    const br = find(ta, 'Tertiary brand button'); if (br) { if (o.action) setProps(br, { Text: o.action, 'Leading icon': false, 'Trailing icon': false }); else br.visible = false; }
+  } else { if (ta) ta.visible = false; const dv = find(hd, 'Divider'); if (dv) dv.visible = false; }
+  const body = frame('Content', 'VERTICAL', { gap: 16, pad: [0, 16] });
+  add(sh, body, 'h');
+  for (const n of (o.content || [])) add(body, n, 'h');
+  const ft = inst('Bottom sheet footer'); add(sh, ft, 'h');
+  const sb = find(ft, 'Secondary button'); if (sb) setProps(sb, { Text: o.cancel || 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false });
+  let pb = find(ft, 'Primary button');
+  if (pb && o.danger) { try { pb.swapComponent(main('Primary danger button', { State: 'Default', Size: 'lg' })); } catch (e) { warn('ปุ่มลบสีแดงใน bottom sheet', e); } }
+  if (pb) setProps(pb, { Text: o.ok || 'ยืนยัน', 'Leading icon': false, 'Trailing icon': false });
+  sh.y = VH() - sh.height;
+  return { sh, body };
+}
+async function confirm(scr, o) {   // Modal กลาง — danger = Destructive · อื่น = Centered image (ซ่อนรูป) · mobile = bottom sheet
+  if (MOB) {
+    const mh = inst('Modal header', { Alignment: 'Center' });
+    await text(mh, 'Text', o.title); await text(mh, 'Supporting text', o.sub);
+    const x = find(mh, 'Tertiary button'); if (x) x.visible = false; const dv = find(mh, 'Divider'); if (dv) dv.visible = false;
+    const r = await sheet(scr, { content: [mh], danger: o.danger, ok: o.ok, cancel: o.cancel });
+    r.body.paddingLeft = r.body.paddingRight = 0;
+    return;
+  }
+  const m = inst('Modal', { Type: o.danger ? 'Destructive centered image with input' : 'Centered image', Size: 'md' });
+  overlay(scr, m, 0, 0);
+  hide(m, 'Content'); if (o.danger) hide(m, 'Form');
+  const hd = find(m, 'Modal header');
+  if (hd) { await text(hd, 'Text', o.title); await text(hd, 'Supporting text', o.sub); }
+  const sb = find(m, 'Secondary button'); if (sb) setProps(sb, { Text: o.cancel || 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false });
+  const pb = find(m, o.danger ? 'Primary danger button' : 'Primary button'); if (pb) setProps(pb, { Text: o.ok || 'ยืนยัน', 'Leading icon': false, 'Trailing icon': false });
+}
+async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 สลับเป็น Text area ด้วย property "Input 1 swap" ของ Card form row
+  if (MOB) { await sheet(scr, { title: o.title, content: o.fields.map(f => f.area ? area(f.label, f.value) : field(f.label, f.value)), ok: 'บันทึก' }); return; }
+  const m = inst('Modal', { Type: 'Form', Size: 'md' });
+  overlay(scr, m, 0, 0);
+  const hd = find(m, 'Modal header');
+  if (hd) { await text(hd, 'Text', o.title); const sup = find(hd, 'Supporting text'); if (sup) sup.visible = false; }
+  const rows = (find(m, 'Form') || m).children.filter(c => c.name === 'Card form row');
+  rows.forEach((r, i) => {
+    if (i >= o.fields.length) { r.visible = false; return; }
+    const f = o.fields[i];
+    setProps(r, { 'Input 2': false });
+    if (f.area) setProps(r, { 'Input 1 swap': main('Text area', { State: 'Filled', Size: 'md' }).id });
+    const inp = r.children.find(c => c.type === 'INSTANCE' && c.visible !== false);
+    if (inp) setProps(inp, { State: f.value ? 'Filled' : 'Default' });
+    if (inp) setProps(inp, { 'Label text': f.label, Text: f.value || '', Optional: false, Helper: false, 'Info icon': false, 'Show Placeholder': !f.value });
+  });
+  const ft = m.findAll(n => n.type === 'INSTANCE' && /button/.test(n.name) && n.parent && n.parent.name === 'Actions');
+  ft.forEach(b => {
+    if (b.name === 'Primary button') setProps(b, { Text: 'บันทึก', 'Leading icon': false, 'Trailing icon': false });
+    else if (b.name === 'Secondary button') setProps(b, { Text: 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false });
+    else b.visible = false;
+  });
+}
+function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "…" · mobile = bottom sheet ที่มีรายการเมนู
+  if (MOB) {
+    overlay(scr, inst('Background overlay'), 0, 0).resize(VW(), VH());
+    const sh = frame('Sheet', 'VERTICAL', { fill: WHITE, pad: [0, 0] }); sh.topLeftRadius = sh.topRightRadius = 24;
+    overlay(scr, sh, 0, 0); sh.counterAxisSizingMode = 'FIXED'; sh.resize(VW(), sh.height);
+    const hd = inst('Bottom sheet header'); add(sh, hd, 'h'); const ta = find(hd, 'Text and action'); if (ta) ta.visible = false; const dv = find(hd, 'Divider'); if (dv) dv.visible = false;
+    const m = inst('Dropdown menu'); add(sh, m, 'h'); hide(m, '_Dropdown menu header');
+    const list = (find(m, 'Menu items') || m).children; const want = { 0: items[0], 1: items[1], 3: 'divider', 4: items[2] };
+    list.forEach((it, i) => { const w = want[i]; if (!w) { it.visible = false; return; } if (w !== 'divider') setProps(it, { Text: w[0], Shortcut: false, Icon: true, 'Icon swap': icon(w[1]) }); });
+    m.strokes = []; sh.y = VH() - sh.height;
+    return m;
+  }
+  const m = inst('Dropdown menu');
+  hide(m, '_Dropdown menu header');
+  const list = (find(m, 'Menu items') || m).children;
+  const want = { 0: items[0], 1: items[1], 3: 'divider', 4: items[2] };
+  list.forEach((it, i) => {
+    const w = want[i];
+    if (!w) { it.visible = false; return; }
+    if (w !== 'divider') setProps(it, { Text: w[0], Shortcut: false, Icon: true, 'Icon swap': icon(w[1]) });
+  });
+  overlay(scr, m, 0, 0);
+  if (anchor) { const sb = scr.absoluteBoundingBox, ab = anchor.absoluteBoundingBox; m.x = ab.x - sb.x + ab.width - m.width - 16; m.y = ab.y - sb.y + ab.height - 8; }
+  return m;
+}
+const MENU = [['ดูรายละเอียด', 'quick_reference_all-24-300-round'], ['แก้ไข', 'stylus-24-300-round'], ['ลบ', 'delete-24-300-round']];
+function comboAt(scr, anchor, items) {   // Dropdown list ใต้ช่องพิมพ์ค้น
+  const l = inst('Dropdown list');
+  const rows = l.children.filter(n => n.name === 'Dropdown list item');
+  rows.forEach((it, i) => {
+    if (i >= items.length) { it.visible = false; return; }
+    setProps(it, { State: items[i][2] ? 'Selected' : 'Default' });
+    setProps(it, { Text: items[i][0], 'Supporting text': items[i][1], Avatar: false, 'Supporting 2': false, Supporting: true });
+  });
+  const sc = find(l, 'Vertical scrollbar'); if (sc) sc.visible = false;
+  overlay(scr, l, 0, 0);
+  if (anchor) { const sb = scr.absoluteBoundingBox, ab = anchor.absoluteBoundingBox; l.resize(ab.width, l.height); l.x = ab.x - sb.x; l.y = ab.y - sb.y + ab.height + 4; }
+}
+
+/* ---------- แถบค้นหา + แบ่งหน้า (ตาม Table header / Table pagination ของไลบรารี) ---------- */
+async function tableHeader(o) {
+  const th = inst('Table header', { Breakpoint: BP() }, { 'Table title': false, Badge: false, 'Supporting text': false, 'More actions': false, Filters: !!(o.chips && o.chips.length) });
+  const ti = find(th, 'Text input');
+  if (ti) setProps(ti, { Label: false, Helper: false, 'Trailing icon': false, Text: o.query || o.placeholder || PLUGIN.searchHint, State: o.query ? 'Filled' : 'Default' });
+  const acts = find(th, 'Actions');
+  if (acts) { let first = true; for (const b of acts.children) {
+    if (b.name === 'Secondary button' && first) { first = false; setProps(b, { Text: 'ตัวกรอง', 'Leading icon': true, 'Leading icon swap': icon('filter_list-24-400-round') }); const p = find(b, 'Pill outline'); if (p) p.visible = false; }
+    else b.visible = false; } }
+  th.findAll(n => n.name === 'Badge outline with remove icon').forEach((c, i) => { if (o.chips && i < o.chips.length) setProps(c, { Text: o.chips[i] }); else c.visible = false; });
+  return th;
+}
+async function pagination(n) { return fillPagination(inst('Table pagination', { Breakpoint: BP() }), n); }
+async function fillPagination(pg, n) {
+  const tx = find(pg, 'Text'); if (tx && tx.type === 'TEXT') await text(pg, tx, 'แสดง 1 ถึง ' + n + ' จาก ' + n + ' รายการ');
+  const items = pg.findAll(x => x.name === 'Button groups pagination item');
+  items.forEach((it, i) => { if (i === 0 || i === items.length - 1) setProps(it, { State: 'Disabled' }); else if (i === 1) setProps(it, { Number: '1' }); else it.visible = false; });
+  return pg;
+}
+const firstMenuCell = (scr) => scr.findAll(n => n.type === 'INSTANCE' && n.name === 'Table cell' && n.variantProperties && n.variantProperties.Style === 'Action icons')[0];
+
+/* ปิดเส้นคั่นทุกจุดในจอ (เจ้าของงานสั่ง 19 ต.ค. 2569 "disable divider ออกให้หมด") — property Divider → false · layer Divider/Content divider → ซ่อน */
+function stripDividers(root) {
+  let n = 0;
+  const all = [root].concat(root.findAll(() => true));
+  for (const node of all) {
+    if (node.type === 'INSTANCE') {
+      const cp = node.componentProperties || {};
+      const key = Object.keys(cp).find(k => k.split('#')[0] === 'Divider');
+      if (key && cp[key].type === 'BOOLEAN' && cp[key].value !== false) { try { node.setProperties({ [key]: false }); n++; } catch (e) { warn('ปิด Divider ' + node.name, e); } }
+      if (key && cp[key].type === 'VARIANT' && cp[key].value === 'True') { node.visible = false; n++; }
+    }
+    if ((node.name === 'Divider' || node.name === 'Content divider') && node.visible !== false && node !== root) { node.visible = false; n++; }
+  }
+  return n;
+}
+
+/* แต่งจอตามรีวิว 19 ต.ค. 2569: ปิด Info icon ของ Input label · กล่องแสดงข้อมูล (display) */
+async function polish(root) {
+  let info = 0, disp = 0;
+  for (const l of root.findAll(n => n.type === 'INSTANCE' && n.name === 'Input label')) {
+    const cp = l.componentProperties || {}, k = Object.keys(cp).find(x => x.split('#')[0] === 'Info icon');
+    if (k && cp[k].value !== false) { setProps(l, { 'Info icon': false }); info++; }
+  }
+  for (const n of root.findAll(n => n.type === 'INSTANCE' && (n.name === 'Text input' || n.name === 'Input dropdown' || n.name === 'Text area'))) {
+    const cp = n.componentProperties || {}, k = Object.keys(cp).find(x => x.split('#')[0] === 'Info icon');
+    if (k && cp[k].value !== false) { setProps(n, { 'Info icon': false }); info++; }
+  }
+  // R5: Section label / Section header ที่ยืมมาจาก component ของ flow อื่น อาจเปิด Info icon / More actions ไว้ — ปิดให้ทุกตัว (20 ต.ค. 2569)
+  for (const n of root.findAll(n => n.type === 'INSTANCE' && (n.name === 'Section label' || n.name === 'Section header'))) {
+    const cp = n.componentProperties || {};
+    const fix = {};
+    for (const k of ['Info icon', 'More actions']) { const key = Object.keys(cp).find(x => x.split('#')[0] === k); if (key && cp[key].value !== false) fix[k] = false; }
+    if (Object.keys(fix).length) { setProps(n, fix); info++; }
+  }
+  for (const b of root.findAll(n => n.type === 'FRAME' && n.name === 'Content item' && n.children.some(c => c.name === 'Content item row'))) { await displayBox(b); disp++; }
+  return { info, disp };
+}
+
+/* รายงานตารางที่เกินขนาด component Table ของไลบรารี (ต้องประกอบเอง — รอเจ้าของงานเคาะ) */
+function reportOversize() {
+  if (!OVERSIZE.length) return;
+  const by = {}; OVERSIZE.forEach(x => { by[x] = (by[x] || 0) + 1; });
+  log('· ตารางที่ใหญ่กว่า component Table ของไลบรารี (' + TABLE_MAX.cols + ' คอลัมน์ × ' + TABLE_MAX.rows + ' แถว) คงแบบประกอบเองไว้ ' + OVERSIZE.length + ' ตาราง: ' + Object.keys(by).map(k => k + ' ×' + by[k]).join(' · ') + ' — รอเจ้าของงานเคาะ');
+  OVERSIZE.length = 0;
+}
+function findInstanceAncestor(n) { let p = n.parent; while (p) { if (p.type === 'INSTANCE') return p; p = p.parent; } return null; }
+
+/* ---------- จัดวางจอแบบตาราง flow ของทีมออกแบบ (เจ้าของงานสั่ง 20 ต.ค. 2569: "ต่อไปสร้างให้ทำแบบนี้ จนกว่าจะมีการเปลี่ยนแปลง") ----------
+   แถบตัวอักษร (Header › State=Default ดำ) → แถบย่อย (State=Sub Flow เทา) → ป้าย state รายคอลัมน์ (State=Sub Flow 2 ฟ้า)
+   → แถว Desktop (1440) → แถว Mobile (402) ใต้คอลัมน์เดียวกัน · ป้ายข้างซ้าย = component "Component 1" ของทีมออกแบบ (Type=Header "Device" · Desktop · Mobile)
+   ตัวอย่างต้นแบบ: หน้า Flow การซ่อม ไฟล์ Maintain-D (B นัดหมายวันซ่อม › B1 เข้าซ่อมที่… › B1.1 Default …) · ป้ายทุกตัวชื่อ "<prefix> · …" ปลั๊กอินล้างตอนรันซ้ำ
+   Header/State เป็น component จากอีกไลบรารี (หาได้จาก instance ในไฟล์) — เปิดไม่ได้ → วาดแถบธรรมดาสีเดียวกัน (อยู่นอกจอ ไม่กระทบกติกา "ทุกชิ้นในจอเป็น instance") */
+const GRID = { side: 300, gap: 80, colW: 1440, colGap: 200, rowGap: 160, groupGap: 400, barH: 120, stateW: 344, mobW: 402, deskH: 1024, mobH: 874 };
+const BAR_FILL = { Default: '#101828', 'Sub Flow': '#667085', 'Sub Flow 2': '#9CACCC' };
+let HEADER_BROKEN = false;   // แถบ Header ของทีมออกแบบใส่ข้อความไม่ได้ (ฟอนต์หาย) → ใช้แถบธรรมดาตลอดรอบ
+const rgbOf = (hex) => ({ r: parseInt(hex.slice(1, 3), 16) / 255, g: parseInt(hex.slice(3, 5), 16) / 255, b: parseInt(hex.slice(5, 7), 16) / 255 });
+let LABEL_FONT;
+async function labelText(chars, size, hex) {
+  if (!LABEL_FONT) LABEL_FONT = (await fallbackFont()) || { family: 'Inter', style: 'Regular' };
+  const t = figma.createText(); CREATED.push(t);
+  t.fontName = LABEL_FONT; t.fontSize = size; t.characters = chars; t.fills = [{ type: 'SOLID', color: rgbOf(hex) }];
+  return t;
+}
+function fixed(f, w, h) { f.primaryAxisSizingMode = 'FIXED'; f.counterAxisSizingMode = 'FIXED'; f.resize(w, h); return f; }
+async function flowBar(prefix, code, title, state, width) {
+  let bar = null;
+  if (INDEX.has('Header') && !HEADER_BROKEN) {
+    bar = inst('Header', { Type: 'Subheader' });
+    const st = find(bar, 'State');
+    if (st) setProps(st, { State: state });
+    // Flow เป็น property ข้อความที่ผูกฟอนต์ของ component (LINE Seed Sans) — ตั้งตัวอักษรตรงๆ ผ่าน text() ที่สลับฟอนต์สำรองให้เมื่อเครื่องไม่มี
+    const okCode = st ? await text(st, 'Text', code) : false;
+    const det = find(bar, 'Detail'); const ts = det ? det.children.filter(c => c.type === 'TEXT') : [];
+    const okTitle = ts[0] ? await text(det, ts[0], title) : false;
+    if (ts[1]) ts[1].visible = false;   // บรรทัด "เงื่อนไข" ของทีมออกแบบ — ไม่ใช้
+    if (!(okCode && okTitle)) {   // ใส่ข้อความไม่ได้ (ฟอนต์/โครง) → ป้ายจะไม่ตรง scenario ⇒ ถอยไปแถบธรรมดาทั้งชุด
+      try { bar.remove(); } catch (e) { /* ลบไม่ได้ ปล่อย */ }
+      bar = null; HEADER_BROKEN = true;
+      log('⚠ แถบ Header ของทีมออกแบบใส่ข้อความไม่ได้ (ฟอนต์ของ component ไม่มีในเครื่อง) — ใช้แถบธรรมดาสีเดียวกันแทนทั้งชุด');
+    } else { try { bar.resize(width, bar.height); } catch (e) { warn('ปรับกว้างแถบ ' + code, e); } }
+  }
+  if (!bar) {
+    bar = fixed(frame('Header', 'HORIZONTAL'), width, GRID.barH);
+    const st = fixed(frame('State', 'HORIZONTAL', { fill: rgbOf(BAR_FILL[state] || BAR_FILL.Default), pad: [0, 40] }), GRID.stateW, GRID.barH);
+    st.primaryAxisAlignItems = 'CENTER'; st.counterAxisAlignItems = 'CENTER'; st.appendChild(await labelText(code, 64, '#FFFFFF')); bar.appendChild(st);
+    const det = frame('Detail', 'HORIZONTAL', { fill: WHITE, pad: [0, 40] }); det.counterAxisAlignItems = 'CENTER'; bar.appendChild(det); det.layoutGrow = 1; det.layoutSizingVertical = 'FILL';
+    det.appendChild(await labelText(title, 48, '#101828'));
+  }
+  bar.name = prefix + ' · ' + code + ' ' + title;
+  return bar;
+}
+async function deviceLabel(prefix, type, height) {
+  let n;
+  if (INDEX.has('Component 1')) { n = inst('Component 1', { Type: type }); try { n.resize(GRID.side, height); } catch (e) { warn('ปรับสูงป้าย ' + type, e); } }
+  else { n = fixed(frame('Device', 'VERTICAL', { fill: rgbOf('#667085') }), GRID.side, height); n.primaryAxisAlignItems = 'CENTER'; n.counterAxisAlignItems = 'CENTER'; n.appendChild(await labelText(type === 'Header' ? 'Device' : type, 48, '#FFFFFF')); }
+  n.name = prefix + ' · ' + (type === 'Header' ? 'Device' : type);
+  return n;
+}
+
+/* หน้าปลายทาง = หน้าใหม่ทุกครั้ง ไม่แตะชุดเดิม (เจ้าของงานสั่ง 20 ต.ค. 2569 "สร้างใหม่เลย ไม่รบกวนของเดิม"):
+   ใช้หน้า <base>-N ที่ยังว่าง (ไม่มีเฟรม/ป้ายของปลั๊กอิน) · ไม่มีก็สร้าง <base>-(N+1) · สร้างหน้าไม่ได้ (แพลนจำกัด) → หน้าปัจจุบัน วางต่อใต้ของเดิม ไม่ลบอะไร */
+async function targetPage(base, prefix) {
+  const lower = (p) => p.name.trim().toLowerCase();
+  const re = new RegExp('^' + base + '-(\\d+)$');
+  const pages = figma.root.children.filter(p => re.test(lower(p)));
+  const mine = (n) => n.name.indexOf(prefix + ' / ') === 0 || n.name.indexOf(prefix + ' · ') === 0;
+  const empty = pages.find(p => !p.children.some(mine));
+  if (empty) return { page: empty, fresh: true };
+  const next = pages.reduce((m, p) => Math.max(m, +lower(p).match(re)[1]), 0) + 1;
+  try { const p = figma.createPage(); p.name = base + '-' + next; return { page: p, fresh: true }; }
+  catch (e) { return { page: figma.currentPage, fresh: false }; }
+}
+
+/* GROUPS = [{ code: 'B', title: 'แผน Overhaul', subs: [{ code: 'B1', title: 'กบค. สร้างแผน', tag: 'S1', screens: [[label, fn], …] }] }]
+   fn() สร้างจอตามตัวแปร MOB · จอชื่อ "<prefix> / B1.2 · S1 — <label>[ · mobile]" · คืน { made, y } */
+async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
+  opts = opts || {};   // opts.reuse(sub, i, label, mob) → เฟรมเดิมที่จะย้ายเข้าผังแทนการสร้างใหม่ (ปุ่ม "จัดวางใหม่" · ที่แก้มือไว้ไม่หาย)
+  const made = []; let y = y0; const x0 = GRID.side + GRID.gap; const pitch = GRID.colW + GRID.colGap; const skipped = [];
+  const put = (n, x, yy) => { page.insertChild(0, n); n.x = x; n.y = yy; return n; };
+  for (const g of GROUPS) {
+    const nCols = Math.max(...g.subs.map(s => s.screens.length));
+    CREATED = []; put(await flowBar(prefix, g.code, g.title, 'Default', nCols * GRID.colW + (nCols - 1) * GRID.colGap), x0, y);
+    y += GRID.barH + GRID.gap;
+    for (const sub of g.subs) {
+      const n = sub.screens.length, w = n * GRID.colW + (n - 1) * GRID.colGap;
+      if (sub.code !== g.code) {   // แถบย่อย (B1 B2) เฉพาะเมื่อกลุ่มมีหลาย scenario · เจ้าของงานเคาะ 20 ต.ค. 2569: 1 scenario = 1 บล็อก ⇒ ไม่มีแถบย่อย ป้าย state = A.1 A.2 …
+        put(await flowBar(prefix, sub.code, sub.title, 'Sub Flow', w), x0, y);
+        y += GRID.barH + GRID.gap;
+      }
+      put(await deviceLabel(prefix, 'Header', GRID.barH), 0, y);
+      for (const [i, [label]] of sub.screens.entries()) put(await flowBar(prefix, sub.code + '.' + (i + 1), label, 'Sub Flow 2', GRID.colW), x0 + i * pitch, y);
+      y += GRID.barH + GRID.gap;
+      for (const mob of [false, true]) {
+        MOB = mob; let h = 0; const rowY = y;
+        for (const [i, [label, fn]] of sub.screens.entries()) {
+          const x = x0 + i * pitch;
+          CREATED = []; PLACE = { x, y: rowY };   // เฟรมจอไปอยู่ตำแหน่งจริงทันทีที่สร้าง · ชิ้นที่สร้างระหว่างทางถูกติดตามไว้
+          try {
+            const name = prefix + ' / ' + sub.code + '.' + (i + 1) + ' · ' + sub.tag + ' — ' + label + (mob ? ' · mobile' : '');
+            let s = opts.reuse ? opts.reuse(sub, i, label, mob) : null;
+            if (opts.reuse && !s) { skipped.push(name); CREATED = []; PLACE = null; continue; }   // โหมดจัดวางใหม่: ไม่มีจอนี้บนหน้า → เว้นช่องไว้ ไม่สร้างใหม่
+            if (!s) { s = await fn(); stripDividers(s); await polish(s); }
+            s.name = name;
+            put(s, x, rowY); h = Math.max(h, s.height); made.push(s);
+            log('  · ' + made.length + '/' + total + ' ' + s.name);
+          } catch (e) {
+            warn(sub.code + '.' + (i + 1) + ' ' + label + (mob ? ' (mobile)' : ''), e);
+            const k = dropCreated(page); if (k) log('    ลบชิ้นที่ค้างจากจอที่พัง ' + k + ' ชิ้น');
+          }
+          CREATED = []; PLACE = null;
+        }
+        MOB = false;
+        const rowH = Math.max(h, mob ? GRID.mobH : GRID.deskH);
+        CREATED = []; put(await deviceLabel(prefix, mob ? 'Mobile' : 'Desktop', rowH), 0, rowY);
+        y = rowY + rowH + GRID.rowGap;
+      }
+      y += GRID.groupGap - GRID.rowGap;
+      log('✓ ' + sub.code + ' ' + sub.title + ' (' + n + ' state)');
+    }
+  }
+  CREATED = [];
+  if (skipped.length) log('· ไม่พบจอบนหน้านี้ ' + skipped.length + ' จอ (เว้นช่องไว้ — กดสร้างใหม่ทั้งชุดถ้าต้องการ): ' + skipped.slice(0, 5).map(n => n.split(' / ')[1]).join(' · ') + (skipped.length > 5 ? ' …' : ''));
+  return { made, y, skipped };
+}
+/* ปุ่ม "จัดวางใหม่เป็นตาราง flow" — ย้ายเฟรมจอที่มีอยู่บนหน้าปัจจุบันเข้าผัง R19 โดยไม่สร้างจอใหม่ (ที่แก้มือไว้ไม่หาย)
+   จับคู่จอจากชื่อ "<prefix> / <tag> — <state>" (ชื่อเดิม) หรือ "<prefix> / B1.2 · <tag> — <state>" (ชื่อใหม่) · ป้ายสร้างใหม่ทุกครั้ง · จอที่ไม่อยู่ในผังย้ายไปแถวท้าย */
+async function patchLayout(page, prefix, GROUPS) {
+  const frames = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(prefix + ' / ') === 0);
+  if (!frames.length) { log('ไม่พบเฟรม "' + prefix + ' /" บนหน้านี้ — ใช้ปุ่มสร้างทั้งชุดแทน'); return; }
+  const strip = (n) => n.replace(new RegExp('^' + prefix + ' / (?:[A-Z]\\d*\\.\\d+ · )?'), '');
+  const byKey = new Map(); frames.forEach(f => { const k = strip(f.name); if (!byKey.has(k)) byKey.set(k, f); });
+  const used = new Set();
+  const reuse = (sub, i, label, mob) => {   // ชื่อตรง → ไม่ตรงก็เอาจอของ scenario เดียวกันที่ลงท้ายด้วย state เดียวกัน (ป้าย state เคยเปลี่ยนถ้อยคำ)
+    const suf = (mob ? ' · mobile' : '');
+    let f = byKey.get(sub.tag + ' — ' + label + suf) || null;
+    if (!f) for (const [k, v] of byKey) { if (!used.has(v) && k.indexOf(sub.tag + ' — ') === 0 && k.endsWith(' — ' + label + suf) === true) { f = v; break; } }
+    if (!f) for (const [k, v] of byKey) { if (!used.has(v) && k.indexOf(sub.tag + ' — ') === 0 && (mob ? / · mobile$/.test(k) : !/ · mobile$/.test(k)) && k.indexOf(label) >= 0) { f = v; break; } }
+    if (f) used.add(f);
+    return f;
+  };
+  page.children.filter(n => n.name.indexOf(prefix + ' · ') === 0).forEach(n => n.remove());
+  const swept = sweepOrphans(page, new Set(NEEDED)); if (swept) log('เก็บชิ้นส่วนที่ค้าง ' + swept + ' ชิ้น');
+  const y0 = Math.min(...frames.map(f => f.y));
+  log(INDEX.has('Header') ? 'แถบรหัส flow: component Header ของทีมออกแบบ' : 'แถบรหัส flow: ไม่พบ component Header ในไฟล์ — วาดแถบธรรมดาสีเดียวกันแทน');
+  const r = await buildGrid(page, prefix, GROUPS, y0, frames.length, { reuse });
+  const rest = frames.filter(f => !used.has(f));
+  if (rest.length) {   // จอที่ไม่อยู่ในผัง (ชื่อไม่ตรง scenario/state ใด) — ย้ายไปแถวท้าย ไม่ลบ
+    let x = GRID.side + GRID.gap, yy = r.y;
+    page.insertChild(0, await flowBar(prefix, '?', 'จอที่ไม่อยู่ในผัง (ชื่อไม่ตรง) ' + rest.length + ' จอ', 'Sub Flow', Math.max(GRID.colW, rest.length * (GRID.colW + GRID.colGap) - GRID.colGap)));
+    page.children[0].x = x; page.children[0].y = yy; yy += GRID.barH + GRID.gap;
+    rest.forEach(f => { f.x = x; f.y = yy; x += f.width + GRID.colGap; });
+    log('· จอที่ไม่อยู่ในผัง ' + rest.length + ' จอ ย้ายไปแถวท้าย: ' + rest.slice(0, 4).map(f => f.name.split(' / ')[1]).join(' · ') + (rest.length > 4 ? ' …' : ''));
+  }
+  log('จัดวางใหม่แล้ว ' + r.made.length + ' จอ · ' + GROUPS.length + ' กลุ่ม · ไม่ได้สร้างจอใหม่' + (r.skipped.length ? ' · เว้นช่อง ' + r.skipped.length : ''));
+}
+
+/* ======================== maintainance-plugin/screens.js ======================== */
+/* ============================================================================
+   Maintain-D — บำรุงรักษาตามวาระ · จอตาม userflow 18 scenario (รอบแรก: เส้นของ กบค. 9 scenario) จาก component จริง
+   ----------------------------------------------------------------------------
+   เจ้าของงานสั่ง 20 ต.ค. 2569: "ขึ้น ui figma … แยกออกจากเรื่อง overhaul" และ
+   "ลองขึ้นโดยอาศัย component และการ[ออกแบบ]ของ flow อื่น มาประกอบกัน"
+   ⇒ ทุกชิ้นเป็น instance: (1) component ไลบรารี (Component) VMS Plus นำเข้าด้วย key · (2) component ที่ทีมออกแบบทำไว้ใน flow งานซ่อม
+      ของไฟล์ Maintain-D (local): PartRequestStepPanel (เบิกอะไหล่ Smart Inventory) · IncidentPhotoGallery (ภาพ) · VehicleAndReporterInfo (ข้อมูลรถ) ·
+      SummaryRequestedParts (สรุปรายการเบิก) — ไฟล์ที่ไม่มี component เหล่านี้ ปลั๊กอินใช้แบบสำรองจากไลบรารีแล้วรายงาน
+   ต้นทาง: Diagram/01-บำรุงรักษาตามวาระ/14-บำรุงรักษา-userflow.md · ตารางจับคู่: figma-export/maintainance-component-map.md
+   กติกา: figma-export/component-rules.md (R1–R18) · ตารางไม่เกิน 8 คอลัมน์ทุกตาราง (ใช้ component Table ทั้งก้อนได้)
+   ============================================================================ */
+
+const PLUGIN = { prefix: 'MT', page: 'maintainance-1', menu: 'บำรุงรักษาตามวาระ', searchHint: 'ค้นหาเลขงาน, ชื่อแผน' };
+
+/* ---------- component ที่ใช้ — ขาดตัวไหนหยุด (ไลบรารี) · NESTED = ชิ้นซ้อนใน component อื่น · LOCAL_OPTIONAL = ของไฟล์ Maintain-D ไม่มีก็ใช้แบบสำรอง ---------- */
+const DIRECT = ['Sidebar navigation', 'Header navigation', 'Page header', 'Section header', 'Section label', 'Table', 'Content item row', 'Table header',
+  'Table pagination', 'Text input', 'Input dropdown', 'Text area', 'Number input', 'File upload', 'Input label', 'List with checkbox', 'Alert', 'Pill outline',
+  'Primary button', 'Secondary button', 'Secondary danger button', 'Tertiary button', 'Dropdown list', 'Background overlay', 'Modal', 'Notification',
+  'Empty state/Data empty', 'Radio text card', 'Images', 'Date picker', 'Checkbox with description',
+  'add-24-300-round', 'filter_list-24-400-round', 'more_horiz-20-400-round', 'delete-24-300-round', 'search-24-300-round', 'keyboard_arrow_right-20-400-round',
+  'cloud_upload-24-300-round', 'stylus-24-300-round',
+  'Mobile table', 'Bottom sheet header', 'Bottom sheet footer', 'Modal header'];
+const NESTED = ['Nav button', 'Sort icon', 'Badge outline with remove icon', 'Button groups pagination item', 'Tertiary brand button', 'Primary danger button',
+  '_Content item base', '_File upload item base', 'List with checkbox item', 'List header item', 'Checkbox', 'Badge outline', 'Mobile table item', 'Table cell', 'Table header cell', 'Radio button'];
+const LOCAL_OPTIONAL = ['PartRequestStepPanel', 'PartsInventoryPanel', 'RequestedPartsPanel', 'Spare Part Card Item', 'IncidentPhotoGallery', 'VehicleAndReporterInfo', 'SummaryRequestedParts',
+  'Component 1', 'Header'];   // Component 1 = ป้าย Device/Desktop/Mobile · Header = แถบรหัส flow ของทีมออกแบบ (ไลบรารีอื่น หาจาก instance ในไฟล์)
+const NEEDED = DIRECT.concat(NESTED, LOCAL_OPTIONAL);
+const NESTED_ONLY = new Set(NESTED);
+const has = (n) => INDEX.has(n);
+
+/* key เพิ่มของไลบรารี (ดัมป์ 19 ต.ค. 2569) — ตัวที่ core ยังไม่มี */
+/* รูปแบบบรรทัดต้องเหมือน KEYS ใน core ("ชื่อ": ["key", set]) — test harness อ่าน key ด้วย regex จากซอร์ส */
+Object.assign(KEYS, {
+  "Images": ["39fe2574c3dcfeebe3eded7a76fecbc04ee41ef7", true],
+  "Radio text card": ["e4510738f989bb24dbfb70fe6acfbf5705dcd60b", true],
+  "Radio button": ["b29b98831c56216e005bb1c403e3f833d5e0f1cf", true],
+  "Checkbox with description": ["dfc323f6bb605f586c4928ecb08c77acfb241f53", false],
+  "Rating": ["1d3c2e045977bc6b2b407cdd2c82eb43dc00325a", true],
+  "Checkbox text card": ["a29fe414b23f6ac84089cc837b8f2ff06ac561a3", true]
+});
+
+/* ---------- ข้อมูลตัวอย่าง (ยกชื่อรถ/หน่วยงาน/จังหวัดจาก maintainance-yearly/mock-yearly.js — ค่าสมมติทั้งหมด) ---------- */
+const PST = { review: ['รอ ผพจ. ตรวจสอบ', 'Warning'], returned: ['ส่งกลับแก้ไข', 'Error'], approved: ['อนุมัติแล้ว', 'Brand'], active: ['ดำเนินการ', 'Info'],
+  hist: ['รอหัวหน้าตรวจสอบ', 'Warning'], passed: ['ประวัติผ่านแล้ว', 'Success'], closed: ['ปิดงานแล้ว', 'Gray'] };
+const PLANS = [   // เลขงาน · ชื่อแผน · ปีงบ · ไตรมาส · จำนวนรถ · สถานะ · วันที่สร้าง
+  ['MT-2570-001', 'บำรุงรักษาตามวาระ ปีงบ 2570 รถกระเช้า ภาค 1 (เหนือ)', '2570', 'Q1', '12', 'active', '03/10/2569'],
+  ['MT-2570-002', 'บำรุงรักษาตามวาระ ปีงบ 2570 รถเครน ภาค 2 (อีสาน)', '2570', 'Q2', '8', 'approved', '05/10/2569'],
+  ['—', 'บำรุงรักษาตามวาระ ปีงบ 2570 รถขุด ภาค 3 (กลาง)', '2570', 'Q1', '6', 'review', '17/10/2569'],
+  ['—', 'บำรุงรักษาตามวาระ ปีงบ 2570 รถกระเช้า ภาค 4 (ใต้)', '2570', 'Q3', '9', 'returned', '12/10/2569'],
+  ['MT-2569-011', 'บำรุงรักษาตามวาระ ปีงบ 2569 รถกระเช้า ภาค 1 (เหนือ)', '2569', 'Q4', '10', 'closed', '02/06/2569']];
+const NEW_PLAN = ['—', 'บำรุงรักษาตามวาระ ปีงบ 2570 รถกระเช้า ภาค 2 (อีสาน)', '2570', 'Q2', '7', 'review', '20/10/2569'];
+const P = PLANS[0];
+const PLAN_KV = [['ชื่อแผน', P[1]], ['ปีงบประมาณ', P[2]], ['ไตรมาส', P[3]], ['จำนวนรถ', P[4] + ' คัน'], ['เลขงาน', P[0]], ['ผู้สร้างแผน', 'นายวิชัย ทองดี (กบค.)'], ['วันที่สร้าง', P[6]], ['ผพจ. อนุมัติ', '08/10/2569']];
+const VST = { ok: ['ปกติ', 'Success'], repair: ['ซ่อม', 'Warning'], transfer: ['โอน', 'Error'], dispose: ['รอยุบ', 'Error'] };
+const RDY = { ready: ['พร้อม', 'Success'], notready: ['ไม่พร้อม', 'Error'], pending: ['ยังไม่ตอบ', 'Gray'] };
+const VEH = [   // ทะเบียน · ยี่ห้อ/รุ่น · หน่วยงานเจ้าของรถ · สถานะรถ · ความพร้อม
+  ['82-6789 ขอนแก่น', 'Isuzu FTR + กระเช้า Aichi SK17A', 'กฟฉ.1 ขอนแก่น', 'ok', 'ready'],
+  ['82-1145 ขอนแก่น', 'Hino FC + กระเช้า Tadano AT-100', 'กฟฉ.1 ขอนแก่น', 'ok', 'ready'],
+  ['80-5738 น่าน', 'Isuzu FRR + กระเช้า Aichi SK10A', 'กฟน.2 น่าน', 'repair', 'notready'],
+  ['81-2210 เชียงใหม่', 'Hino FG + กระเช้า Tadano AT-146', 'กฟน.1 เชียงใหม่', 'transfer', 'pending'],
+  ['80-9981 ลำปาง', 'Isuzu FTR + กระเช้า Aichi SH15A', 'กฟน.1 ลำปาง', 'ok', 'ready'],
+  ['82-3302 อุดรธานี', 'Hino FC + กระเช้า Tadano AT-100', 'กฟฉ.1 อุดรธานี', 'ok', 'pending']];
+const V = VEH[0];
+const VEH_KV = [['ทะเบียน', V[0]], ['ยี่ห้อ/รุ่น', V[1]], ['ประเภท', 'รถกระเช้า'], ['หน่วยงานเจ้าของรถ', V[2]], ['เลขไมล์สะสม', '182,400 กม.'], ['ชั่วโมงเครื่องจักรสะสม', '6,120 ชม.'], ['แผน', P[0]], ['แผนเดินทาง', 'จุดรวมงาน กฟฉ.1 ขอนแก่น · 03–07/11/2569']];
+const PSTAT = { ok: ['พร้อม', 'Success'], short: ['ขาด', 'Error'], reserved: ['จองแล้ว', 'Info'] };
+const PARTS = [   // รายการ · รหัส · หมวด · จำนวนตามแผน · หน่วย · คงเหลือ · สถานะเมื่อจอง
+  ['น้ำมันไฮโดรลิก ISO VG 46', 'OL-0011', 'น้ำมัน', '180', 'ลิตร', '420', 'ok'],
+  ['ไส้กรองไฮโดรลิก', 'FL-0022', 'ไส้กรอง', '12', 'ชิ้น', '3', 'short'],
+  ['ไส้กรองน้ำมันเครื่อง', 'FL-0031', 'ไส้กรอง', '12', 'ชิ้น', '40', 'ok'],
+  ['น้ำมันเครื่อง 15W-40', 'OL-0046', 'น้ำมัน', '216', 'ลิตร', '600', 'ok'],
+  ['จาระบีอเนกประสงค์', 'GR-0007', 'หล่อลื่น', '24', 'กก.', '10', 'short']];
+const TST = { sent: ['ส่งแจ้งแล้ว', 'Info'], done: ['ดำเนินการแล้ว', 'Success'] };
+const TRIP = { place: 'จุดรวมงาน กฟฉ.1 ขอนแก่น', d1: '03/11/2569', d2: '07/11/2569', staff: ['นายวิชัย ทองดี', 'นางสาวกนกวรรณ ใจมั่น', 'นายสมชาย พูลสุข'], perDiem: '7,200', lodging: '9,600', travel: '4,850' };
+const TRIPS = [[TRIP.place, TRIP.d1 + ' – ' + TRIP.d2, '6', 'กบค. (ตรวจเอง)', 'sent']];
+const WORK = [   // รายการงาน · อะไหล่ · ตามแผน · ใช้จริง · หน่วย
+  ['เปลี่ยนน้ำมันไฮโดรลิก', 'น้ำมันไฮโดรลิก ISO VG 46', '30', '30', 'ลิตร'],
+  ['เปลี่ยนไส้กรองไฮโดรลิก', 'ไส้กรองไฮโดรลิก', '2', '2', 'ชิ้น'],
+  ['เปลี่ยนน้ำมันเครื่องและไส้กรอง', 'น้ำมันเครื่อง 15W-40 · ไส้กรองน้ำมันเครื่อง', '36 · 2', '36 · 2', 'ลิตร · ชิ้น'],
+  ['อัดจาระบีจุดหมุนบูม', 'จาระบีอเนกประสงค์', '4', '3', 'กก.']];
+const BEFORE = ['รูปรถ + ทะเบียน', 'อะไหล่ใหม่'];
+const AFTER = ['รูปรถ + ทะเบียน', 'อะไหล่เก่า', 'อะไหล่ใหม่ที่เหลือ', 'จุดที่บำรุงรักษา (อะไหล่ใหม่)'];
+const WSTAT = { todo: ['ยังไม่ทำ', 'Gray'], done: ['ทำแล้ว', 'Success'], cannot: ['ทำไม่ได้', 'Error'] };
+const ACC = { wait: ['รอหน่วยงานยอมรับ', 'Warning'], ok: ['หน่วยงานยอมรับแล้ว', 'Success'] };
+const pdf = (name, size) => ({ name, size: size || '1.2 MB' });
+const jpg = (name) => ({ name: name + '.jpg', size: '2.4 MB' });
+
+/* ---------- ตัวช่วยเฉพาะเรื่อง ---------- */
+/* หน้า Detail (หัว "หมายเลขแผน …") ใช้ Section label ตาม R5/R11 · หน้า Create/Edit ใช้ Section header ตาม R3 */
+async function detail(name, o) {
+  const { scr, page } = await shell(name, { title: 'หมายเลขแผน ' + P[0], back: true, crumbs: ['แผน ' + P[0]].concat(o.crumbs || []), badge: PST[o.status || 'active'], actions: o.actions });
+  return { scr, page };
+}
+/* ทางเลือก 2 ทาง = Section header + Radio text card (ตามแบบ RadioSelection / AdditionalPartRequest ของงานซ่อม) */
+async function radioPick(title, options, sel, o) {
+  o = o || {};
+  const r = MOB ? col('Radio', [], 12) : row('Radio', [], { gap: 16 });
+  options.forEach((t, i) => {
+    const c = inst('Radio text card', { State: o.disabled ? 'Disabled' : 'Default', Selected: i === sel ? 'True' : 'False' }, { Text: t, Supporting: false });
+    if (MOB) add(r, c, 'h'); else { r.appendChild(c); c.layoutGrow = 1; }
+  });
+  return col('Section', [await (o.label ? sectionLabel(title) : section(title)), r], 16);
+}
+/* กล่องข้อมูลรถ — ยืม VehicleAndReporterInfo (หน้า รายละเอียดงานซ่อม): Section label + Content item row แถวละ 4 · ไม่มี/mobile → Section label + กล่องแสดงข้อมูล (R12) */
+async function vehicleInfo(pairs, title) {
+  title = title || 'ข้อมูลยานพาหนะ';
+  if (!MOB && has('VehicleAndReporterInfo')) {
+    const v = inst('VehicleAndReporterInfo'); v.name = 'VehicleAndReporterInfo';
+    const sl = find(v, 'Section label'); if (sl) setProps(sl, { Title: title, Supporting: false, 'Info icon': false, Actions: false, 'More actions': false });
+    v.findAll(n => n.type === 'INSTANCE' && n.name === 'BudgetSource').forEach(b => { b.visible = false; });
+    const rows = v.findAll(n => n.type === 'INSTANCE' && n.name === 'Content item row' && !findInstanceAncestor(n).name.startsWith('BudgetSource'));
+    let k = 0;
+    for (const r of rows) {
+      const items = r.children.filter(c => c.name === '_Content item base');
+      const slice = pairs.slice(k, k + items.length);
+      if (!slice.length) { r.visible = false; continue; }
+      items.forEach((it, j) => { if (j < slice.length) { setProps(it, { Type: 'Text with label' }); setProps(it, { Label: slice[j][0], Text: slice[j][1], Supporting: false, 'Leading icon': false }); } });
+      setProps(r, { 'Item 2': slice.length > 1, 'Item 3': slice.length > 2, 'Item 4': slice.length > 3 });
+      k += items.length;
+    }
+    return v;
+  }
+  return col('Section', [await sectionLabel(title), kv(pairs)], 16);
+}
+/* แถวภาพ — ยืม IncidentPhotoGallery (หน้า รายละเอียดงานซ่อม): Section label + Images sm × 4 + ปุ่มเลื่อน · ไม่มี/mobile → Section label + Images จากไลบรารี */
+async function photoGallery(title, count) {
+  if (!MOB && has('IncidentPhotoGallery')) {
+    const g = inst('IncidentPhotoGallery'); g.name = 'IncidentPhotoGallery';
+    const sl = find(g, 'Section label'); if (sl) setProps(sl, { Title: title, Supporting: false, 'Info icon': false, Actions: false, 'More actions': false });
+    g.findAll(n => n.type === 'INSTANCE' && n.name === 'Images').forEach((im, i) => { if (i >= count) im.visible = false; else setProps(im, { Buttons: false, 'Indicator pagination': false }); });
+    const ib = find(g, 'Icon button'); if (ib) ib.visible = count > 4;
+    return g;
+  }
+  const r = frame('Gallery', 'HORIZONTAL', { gap: 16 });
+  for (let i = 0; i < Math.min(count, MOB ? 2 : 4); i++) r.appendChild(inst('Images', { Size: 'sm', Type: 'Image' }, { Buttons: false, 'Indicator pagination': false }));
+  return col('Section', [await sectionLabel(title), r], 16);
+}
+/* ช่องอัปโหลดภาพ 1 คอลัมน์ (กติกาอัปโหลด) — ช่องละภาพตามรายการบนบอร์ด */
+async function photoUploads(list, filled, errors) {
+  const nodes = [];
+  for (const [i, label] of list.entries()) nodes.push(await upload(label, filled ? [jpg(label.replace(/\s|\+|\(|\)/g, '-') + '-' + (i + 1))] : [], { hint: 'JPG, PNG · 1 ภาพ', error: errors ? 'กรุณาอัปโหลด' + label : '' }));
+  return nodes;
+}
+const partRow = (p, i, o) => [p[0], p[1], p[2], p[3], p[4], p[5], { pill: o && o.result ? PSTAT[o.result === 'short' ? p[6] : 'ok'] : o && o.picked && o.picked.indexOf(i) >= 0 ? PSTAT.reserved : [' ', 'Gray'] }];
+const PART_COLS = [['รายการอะไหล่', 0, 'Lead text', 'Swap'], ['รหัส', 100], ['หมวด', 110], ['ตามแผน', 100], ['หน่วย', 90], ['คงเหลือในคลัง', 130], ['สถานะ', 140, 'Badge']];
+/* เบิก/จองอะไหล่ — ยืม PartRequestStepPanel (ขั้นเบิกอะไหล่ของงานซ่อม = PartsInventoryPanel "คลังอะไหล่" Smart Inventory + RequestedPartsPanel "อะไหล่ที่ต้องการใช้งาน")
+   · mobile / ไฟล์ที่ไม่มี component → ตาราง Table ของไลบรารี */
+async function partsPanel(o) {
+  o = o || {};
+  const picked = o.picked || [];
+  if (!MOB && has('PartRequestStepPanel')) {
+    const p = inst('PartRequestStepPanel'); p.name = 'PartRequestStepPanel';
+    const inv = find(p, 'PartsInventoryPanel'), req = find(p, 'RequestedPartsPanel');
+    if (inv) {
+      setProps(inv, { State: 'Default' });
+      const sh = find(inv, 'Section header');
+      if (sh) { setProps(sh, { Title: 'คลังอะไหล่', 'Supporting text': true, 'More actions': false, Badge: false, Actions: false }); await text(sh, 'Supporting text', 'อะไหล่ตามแผนจาก Smart Inventory และคลังสำรอง'); }
+      const ti = find(inv, 'Text input'); if (ti) setProps(ti, { Text: 'ค้นหาชื่อหรือรหัสอะไหล่', Label: false, Helper: false, 'Info icon': false });
+      const cards = inv.findAll(n => n.type === 'INSTANCE' && n.name === 'Spare Part Card Item');
+      for (const [i, c] of cards.entries()) {
+        const part = PARTS[i];
+        if (!part) { c.visible = false; continue; }
+        setProps(c, { Suggestion: false, Select: picked.indexOf(i) >= 0, Add: picked.indexOf(i) < 0, 'จัดซื้อเพิ่ม': false, 'เลือกผู้จัดซื้อ': false });
+        await text(c, 'Name', part[0]);
+        await text(c, 'Supporting text', part[1] + ' · ' + part[2], 0);
+        await text(c, 'Supporting text', 'Smart Inventory : คงเหลือ ' + part[5] + ' ' + part[4] + ' · ตามแผน ' + part[3] + ' ' + part[4], 1);
+        const inf = find(c, 'Info'); if (inf) inf.visible = false;
+      }
+    }
+    if (req) {
+      setProps(req, { State: picked.length ? 'Filled' : 'Default' });
+      const sh = find(req, 'Section header');
+      if (sh) { setProps(sh, { Title: 'อะไหล่ที่ต้องใช้ตามแผน', 'Supporting text': true, 'More actions': false, Badge: picked.length > 0, Actions: false }); await text(sh, 'Supporting text', 'ระบบคำนวณจากรถในแผน · เบิก/จองผ่านระบบจองอะไหล่'); const b = find(sh, 'Badge outline'); if (b && picked.length) setProps(b, { Text: String(picked.length) }); }
+      const cards = req.findAll(n => n.type === 'INSTANCE' && n.name === 'Spare Part Card Item');
+      let k = 0;
+      for (const c of cards) {
+        const vp = (c.variantProperties || {})['อะไหล่'];
+        if (vp === 'เพิ่มอะไหล่') { c.visible = false; continue; }
+        const part = PARTS[picked[k++]];
+        if (!part) { c.visible = false; continue; }
+        setProps(c, { Suggestion: false, 'จัดซื้อเพิ่ม': false, 'เลือกผู้จัดซื้อ': false });
+        const nm = find(c, 'Name'); if (nm) await text(c, nm, part[0]);
+        await text(c, 'Supporting text', 'Smart Inventory : คงเหลือ ' + part[5] + ' ' + part[4], 0);
+        const num = find(c, 'Number input'); if (num) setProps(num, { Number: part[3], Label: false, Helper: false });
+        const price = find(c, 'Text'); if (price && price.type === 'TEXT') await text(c, price, part[3] + ' ' + part[4]);
+      }
+      const addBtn = find(req, 'Secondary button'); if (addBtn) setProps(addBtn, { Text: 'ระบุอะไหล่เพิ่มเติม' });
+    }
+    return p;
+  }
+  return col('Section', [await section('รายการอะไหล่ที่ต้องใช้ตามแผน', { badge: PARTS.length }), await tbl(PART_COLS, PARTS.map((p, i) => partRow(p, i, o)))], 16);
+}
+/* สรุปรายการเบิก/จอง — ยืม SummaryRequestedParts (modal สรุปรายการอะไหล่ของงานซ่อม) · ไม่มี/mobile → Modal ยืนยัน */
+async function partsSummary(scr, o) {
+  if (!MOB && has('SummaryRequestedParts')) {
+    const m = inst('SummaryRequestedParts'); overlay(scr, m, 0, 0); m.name = 'SummaryRequestedParts';
+    const hd = find(m, 'Modal header'); if (hd) setProps(hd, { Title: 'สรุปรายการเบิก/จองอะไหล่', Supporting: false, 'Back icon': false, 'Featured icon': false });
+    const labels = m.findAll(n => n.type === 'INSTANCE' && n.name === 'Section label');
+    if (labels[0]) setProps(labels[0], { Title: 'เบิกจากคลัง Smart Inventory (' + o.stock + ' รายการ)', Supporting: false, Actions: false, 'More actions': false });
+    if (labels[1]) setProps(labels[1], { Title: 'คงเหลือไม่พอ — รอจัดซื้อ ผพจ. (' + o.buy + ' รายการ)', Supporting: false, Actions: false, 'More actions': false });
+    const info = find(m, '_Modal content');
+    if (info) {
+      const pairs = [['แผน', P[1]], ['เลขงาน', P[0]], ['ไตรมาส', P[3]], ['จำนวนรถ', P[4] + ' คัน']];
+      const rows = info.findAll(n => n.type === 'INSTANCE' && n.name === 'Content item row');
+      rows.forEach((r, i) => {
+        if (i > 0) { r.visible = false; return; }
+        setProps(r, { 'Item 2': true, 'Item 3': true, 'Item 4': true });
+        r.children.filter(c => c.name === '_Content item base').forEach((it, j) => { if (pairs[j]) setProps(it, { Label: pairs[j][0], Text: pairs[j][1], Supporting: false, 'Leading icon': false }); });
+      });
+    }
+    const ft = m.findAll(n => n.type === 'INSTANCE' && /button/.test(n.name) && n.parent && n.parent.name === 'Actions');
+    ft.forEach(b => { if (b.name === 'Primary button') setProps(b, { Text: 'ยืนยันเบิก/จอง', 'Leading icon': false, 'Trailing icon': false }); else if (b.name === 'Secondary button') setProps(b, { Text: 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false }); else b.visible = false; });
+    return;
+  }
+  await confirm(scr, { title: 'ยืนยันการเบิก/จองอะไหล่', sub: 'เบิกจากคลัง ' + o.stock + ' รายการ · คงเหลือไม่พอรอจัดซื้อ ' + o.buy + ' รายการ', ok: 'ยืนยันเบิก/จอง' });
+}
+
+/* ---------- S1 หน้ารายการแผน + ฟอร์มสร้างแผน ---------- */
+const PLAN_COLS = [['เลขงาน', 130, 'Lead text', 'Down'], ['ชื่อแผน', 0, 'Text', 'Swap'], ['ปีงบประมาณ', 120], ['ไตรมาส', 100], ['จำนวนรถ', 110], ['สถานะ', 180, 'Badge', 'Swap'], ['วันที่สร้าง', 120], ['', 60]];
+const planRow = (p) => [p[0], p[1], p[2], p[3], p[4], { pill: PST[p[5]] }, p[6], { menu: 1 }];
+async function listScreen(name, o) {
+  o = o || {};
+  const { scr, page } = await shell(name, { title: 'บำรุงรักษาตามวาระ', primary: 'สร้างแผน' });
+  const sec = col('Section', [], 24); add(page, sec, 'h');
+  add(sec, await tableHeader(o), 'h');
+  add(sec, await tbl(PLAN_COLS, (o.rows || PLANS).map(planRow), { pagination: (o.rows || PLANS).length }), 'h');
+  return scr;
+}
+const CARS = VEH.map(v => [v[0], v[1], v[2]]);
+async function planForm(name, o) {
+  o = o || {};
+  const v = o.values || {}, E = (m) => o.errors ? m : '';
+  const { scr, page } = await shell(name, { title: 'สร้างแผนบำรุงรักษา', back: true, crumbs: ['สร้างแผน'] });
+  const sel = o.sel || [];
+  const left = CARS.filter((_, i) => sel.indexOf(i) < 0), right = CARS.filter((_, i) => sel.indexOf(i) >= 0);
+  const mid = MOB ? row('Actions', [btn('Secondary button', 'เพิ่ม'), btn('Secondary button', 'นำออก', { disabled: !sel.length })], { gap: 12, keep: true })
+    : col('Actions', [btn('Secondary button', 'เพิ่ม'), btn('Secondary button', 'นำออก', { disabled: !sel.length })], 12);
+  const L = await listCheck('รถที่เข้าเกณฑ์ (' + left.length + ')', left, []), R = await listCheck('เลือกเข้าแผนแล้ว (' + right.length + ')', right, []);
+  const dual = row('Dual list', [L, mid, R], { gap: 16 }); mid.layoutGrow = 0; if (!MOB) mid.primaryAxisAlignItems = 'CENTER';
+  const partsSec = col('Section', [await section('รายการอะไหล่ที่ต้องใช้ (ระบบคำนวณจากรถที่เลือก)', { badge: sel.length ? PARTS.length : null })], 16);
+  if (sel.length) add(partsSec, await tbl(PART_COLS.slice(0, 5), PARTS.map(p => [p[0], p[1], p[2], p[3], p[4]])), 'h');
+  else { const es = inst('Empty state/Data empty'); add(partsSec, es, 'h'); await text(es, 'Text', 'ยังไม่มีรายการอะไหล่'); await text(es, 'Supporting text', 'เลือกรถเข้าแผนก่อน ระบบจะคำนวณน้ำมัน ไส้กรอง และอะไหล่ตามรอบให้เอง'); const a = find(es, 'Actions'); if (a) a.visible = false; }
+  add(page, col('Content', [
+    col('Section', [await section('ข้อมูลแผน'),
+      row('Row', [field('ชื่อแผน', v.name, { placeholder: 'เช่น บำรุงรักษาตามวาระ ปีงบ 2570 รถกระเช้า ภาค 2', error: E('กรุณาระบุชื่อแผน') }), dropdown('ปีงบประมาณ', v.year || '2570')]),
+      row('Row', [dropdown('ไตรมาส', v.q || '', { placeholder: 'เลือกไตรมาส', error: E('กรุณาเลือกไตรมาส') }), dropdown('เกณฑ์เลือกรถ', v.rule || '', { placeholder: 'ทรัค / เนต', error: E('กรุณาเลือกเกณฑ์เลือกรถ') })])], 16),
+    col('Section', [await section('เลือกรถเข้าแผน', { badge: right.length }), row('Row', [field('ค้นหารถ', o.query, { placeholder: 'ค้นหาทะเบียน, รุ่น, หน่วยงาน', lead: 1 }), frame('Spacer', 'VERTICAL')]), dual], 16),
+    partsSec,
+    btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'บันทึกและส่งตรวจสอบ', { size: 'lg' }]])
+  ], 32), 'h');
+  return scr;
+}
+const FILLED = { name: NEW_PLAN[1], year: '2570', q: 'Q2', rule: 'ทรัค' };
+
+/* ---------- S4 ตรวจสอบจำนวนรถปัจจุบันตามแผน ---------- */
+const VEH_COLS = [['ทะเบียน', 170, 'Lead text', 'Swap'], ['ยี่ห้อ/รุ่น', 0], ['หน่วยงานเจ้าของรถ', 200], ['สถานะรถ', 120, 'Badge', 'Swap'], ['ความพร้อม', 140, 'Badge', 'Swap'], ['', 72]];
+async function vehiclesScreen(name, o) {
+  o = o || {};
+  const rows = o.removed ? VEH.filter(v => v[3] !== 'transfer') : VEH;
+  const bad = rows.filter(v => v[3] === 'transfer' || v[3] === 'dispose').length;
+  const { scr, page } = await detail(name, { crumbs: ['ตรวจสอบจำนวนรถ'], status: 'approved' });
+  const cnt = (k) => rows.filter(v => v[4] === k).length;
+  const summary = kv([['รถตามแผน', P[4] + ' คัน'], ['อยู่ในแผนตอนนี้', rows.length + ' คัน'], ['พร้อม', cnt('ready') + ' คัน'], ['ไม่พร้อม / ยังไม่ตอบ', cnt('notready') + ' / ' + cnt('pending') + ' คัน']]);
+  const nodes = [col('Section', [await sectionLabel('สรุปความพร้อมของรถ'), summary], 16)];
+  if (bad) nodes.push(alertBox('Error', 'มีรถสถานะโอน/รอยุบ ' + bad + ' คัน', 'บอร์ด: สถานะต้องไม่ใช่ รอยุบ หรือ โอน — นำออกจากแผนก่อนยืนยันจำนวนรถ'));
+  nodes.push(col('Section', [await sectionLabel('รายการรถในแผน', { badge: rows.length }),
+    await tbl(VEH_COLS, rows.map(v => [v[0], v[1], v[2], { pill: VST[v[3]] }, { pill: RDY[v[4]] }, { icons: ['delete-24-300-round'] }]), { pagination: rows.length })], 16));
+  nodes.push(btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันจำนวนรถ', { size: 'lg', disabled: bad > 0 }]]));
+  add(page, col('Content', nodes, 32), 'h');
+  return scr;
+}
+
+/* ---------- S5 ตรวจสอบและเบิกอะไหล่ผ่านระบบจองอะไหล่ ---------- */
+async function partsScreen(name, o) {
+  o = o || {};
+  const { scr, page } = await shell(name, { title: 'เบิก/จองอะไหล่ · ' + P[0], back: true, crumbs: ['แผน ' + P[0], 'เบิก/จองอะไหล่'] });
+  const nodes = [];
+  if (o.result === 'short') nodes.push(alertBox('Warning', 'ระบบจองอะไหล่ตอบกลับ: จองได้ 3 รายการ · คงเหลือไม่พอ 2 รายการ', 'ไส้กรองไฮโดรลิก · จาระบีอเนกประสงค์ — ส่งรายการให้ ผพจ. จัดซื้อ (S3) แล้ว รอของเข้าคลัง'));
+  if (o.result === 'ok') nodes.push(alertBox('Success', 'มีอะไหล่พร้อมครบตามแผน', 'จองผ่านระบบจองอะไหล่แล้ว 5 รายการ · เลือกรูปแบบดำเนินการเพื่อไปทำแผนเดินทาง'));
+  if (o.result) nodes.push(col('Section', [await section('รายการอะไหล่ที่ต้องใช้ตามแผน', { badge: PARTS.length }), await tbl(PART_COLS, PARTS.map((p, i) => partRow(p, i, o)))], 16));
+  else nodes.push(await partsPanel(o));
+  if (o.result === 'ok') nodes.push(await radioPick('รูปแบบดำเนินการ', ['กบค. ดำเนินการเอง — ทำแผนเดินทาง (S6)', 'ว่าจ้างผู้รับจ้าง — ผู้รับจ้างทำแผนเดินทาง (S7)'], o.hire ? 1 : 0));
+  nodes.push(btnRow(o.result === 'ok' ? [['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ไปทำแผนเดินทาง', { size: 'lg' }]]
+    : o.result === 'short' ? [['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ไปทำแผนเดินทาง', { size: 'lg', disabled: true }]]
+    : [['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'เบิก/จองอะไหล่', { size: 'lg', disabled: !(o.picked && o.picked.length) }]]));
+  add(page, col('Content', nodes, 32), 'h');
+  return scr;
+}
+
+/* ---------- S6 แผนเดินทาง (ตรวจเอง) ---------- */
+const TRIP_COLS = [['จุดรวมงาน / สถานที่', 0, 'Lead text'], ['ช่วงวันเดินทาง', 220], ['รถ (คัน)', 100], ['ผู้ดำเนินการ', 180], ['สถานะ', 150, 'Badge'], ['', 72]];
+async function tripList(name, o) {
+  o = o || {};
+  const { scr, page } = await detail(name, { crumbs: ['แผนเดินทาง'], status: 'active' });
+  const sec = col('Section', [await sectionLabel('แผนเดินทาง', { badge: (o.rows || []).length, buttons: [{ kind: 'Primary button', text: 'สร้างแผนเดินทาง', icon: 'add-24-300-round' }] })], 16);
+  if (o.rows && o.rows.length) add(sec, await tbl(TRIP_COLS, o.rows.map(t => [t[0], t[1], t[2], t[3], { pill: TST[t[4]] }, { icons: ['keyboard_arrow_right-20-400-round'] }])), 'h');
+  else { const es = inst('Empty state/Data empty'); add(sec, es, 'h'); await text(es, 'Text', 'ยังไม่มีแผนเดินทาง'); await text(es, 'Supporting text', 'สร้างแผนเดินทางเพื่อนัดวันเข้าตรวจ แจ้งเจ้าของรถและ กรย.'); const s2 = find(es, 'Secondary button'); if (s2) s2.visible = false; const pb = find(es, 'Primary button'); if (pb) setProps(pb, { Text: 'สร้างแผนเดินทาง', 'Leading icon swap': icon('add-24-300-round') }); }
+  add(page, col('Content', [await vehicleInfo(PLAN_KV, 'รายละเอียดแผน'), sec], 32), 'h');
+  return scr;
+}
+async function tripForm(name, o) {
+  o = o || {};
+  const v = o.values || {}, E = (m) => o.errors ? m : '';
+  const { scr, page } = await shell(name, { title: 'สร้างแผนเดินทาง', back: true, crumbs: ['แผน ' + P[0], 'สร้างแผนเดินทาง'] });
+  const sel = o.sel || [];
+  const left = CARS.filter((_, i) => sel.indexOf(i) < 0), right = CARS.filter((_, i) => sel.indexOf(i) >= 0);
+  const mid = MOB ? row('Actions', [btn('Secondary button', 'เพิ่ม'), btn('Secondary button', 'นำออก', { disabled: !sel.length })], { gap: 12, keep: true })
+    : col('Actions', [btn('Secondary button', 'เพิ่ม'), btn('Secondary button', 'นำออก', { disabled: !sel.length })], 12);
+  const L = await listCheck('รถในแผน (' + left.length + ')', left, []), R = await listCheck('รถที่จะบำรุงรักษาในใบนี้ (' + right.length + ')', right, []);
+  const dual = row('Dual list', [L, mid, R], { gap: 16 }); mid.layoutGrow = 0; if (!MOB) mid.primaryAxisAlignItems = 'CENTER';
+  const d1 = field('วันที่เดินทาง ตั้งแต่', v.d1, { placeholder: 'วว/ดด/ปปปป', error: E('กรุณาเลือกวันที่เริ่ม'), state: o.dateOpen ? 'Focused' : undefined });
+  const d2 = field('ถึงวันที่', v.d2, { placeholder: 'วว/ดด/ปปปป', error: E('กรุณาเลือกวันที่สิ้นสุด') });
+  const place = dropdown('สถานที่บำรุงรักษา (จุดรวมงาน)', v.place, { placeholder: 'ค้นหาจุดรวมงาน', lead: 'search-24-300-round', error: E('กรุณาเลือกสถานที่บำรุงรักษา') });
+  const staff = [0, 1, 2].map(i => dropdown('พนักงาน กบค. ซ่อม คนที่ ' + (i + 1) + (i === 2 ? ' (ถ้ามี)' : ''), v.staff ? v.staff[i] : '', { placeholder: 'ค้นหาชื่อ-นามสกุล, รหัสพนักงาน', lead: 'search-24-300-round', error: i < 2 ? E('กรุณาเลือกพนักงาน') : '' }));
+  add(page, col('Content', [
+    col('Section', [await section('รายละเอียดแผนเดินทาง'), row('Row', [place, d1, d2])], 16),
+    col('Section', [await section('เลือกรถที่จะบำรุงรักษา', { badge: right.length }), dual], 16),
+    col('Section', [await section('พนักงาน กบค. ซ่อม (2-3 คน)'), row('Row', staff)], 16),
+    col('Section', [await section('ค่าใช้จ่าย (บาท)'), row('Row', [field('ค่าเบี้ยเลี้ยง', v.perDiem, { placeholder: '0', error: E('กรุณาระบุค่าเบี้ยเลี้ยง') }), field('ค่าที่พัก', v.lodging, { placeholder: '0', error: E('กรุณาระบุค่าที่พัก') }), field('ค่าเดินทาง', v.travel, { placeholder: '0', error: E('กรุณาระบุค่าเดินทาง') })])], 16),
+    btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันการสร้างแผนเดินทาง', { size: 'lg' }]])
+  ], 32), 'h');
+  if (o.dateOpen && !MOB) {   // ปฏิทินช่วงวัน = Date picker Type=Dual ของไลบรารี วางใต้ช่องวันที่
+    const dp = inst('Date picker', { Type: 'Dual' }, { 'Time picker': false });
+    overlay(scr, dp, 0, 0);
+    const sb = scr.absoluteBoundingBox, ab = d1.absoluteBoundingBox; dp.x = ab.x - sb.x; dp.y = ab.y - sb.y + ab.height + 4;
+  }
+  return scr;
+}
+const TRIP_FILLED = { place: TRIP.place, d1: TRIP.d1, d2: TRIP.d2, staff: TRIP.staff, perDiem: TRIP.perDiem, lodging: TRIP.lodging, travel: TRIP.travel };
+
+/* ---------- S10 บันทึกงานบำรุงรักษารายคัน ---------- */
+const WORK_COLS = [['ทะเบียน', 170, 'Lead text'], ['ยี่ห้อ/รุ่น', 0], ['หน่วยงานเจ้าของรถ', 200], ['สถานะงาน', 150, 'Badge'], ['', 72]];
+async function workList(name, o) {
+  o = o || {};
+  const rows = VEH.slice(0, 4).map((v, i) => [v[0], v[1], v[2], { pill: WSTAT[(o.done || []).indexOf(i) >= 0 ? 'done' : (o.cannot || []).indexOf(i) >= 0 ? 'cannot' : 'todo'] }, { icons: ['keyboard_arrow_right-20-400-round'] }]);
+  const { scr, page } = await detail(name, { crumbs: ['แผนเดินทาง ' + TRIP.place], status: 'active' });
+  add(page, col('Content', [
+    await vehicleInfo([['จุดรวมงาน', TRIP.place], ['ช่วงวันเดินทาง', TRIP.d1 + ' – ' + TRIP.d2], ['พนักงาน กบค.', TRIP.staff.join(' · ')], ['รถในใบเดินทาง', rows.length + ' คัน']], 'รายละเอียดแผนเดินทาง'),
+    col('Section', [await sectionLabel('รายการรถตามแผนเดินทาง', { badge: rows.length }), await tbl(WORK_COLS, rows)], 16)
+  ], 32), 'h');
+  return scr;
+}
+const WORK_COLS2 = [['รายการงาน', 0], ['อะไหล่ที่ใช้', 320], ['จำนวนตามแผน', 140], ['จำนวนที่ใช้จริง', 140], ['หน่วย', 110]];
+async function workForm(name, o) {
+  o = o || {};
+  const E = (m) => o.errors ? m : '';
+  const { scr, page } = await shell(name, { title: 'บันทึกงานบำรุงรักษา · ' + V[0], back: true, crumbs: ['แผนเดินทาง ' + TRIP.place, V[0]] });
+  const nodes = [await vehicleInfo(VEH_KV), await radioPick('บำรุงรักษาได้หรือไม่', ['บำรุงรักษาได้', 'บำรุงรักษาไม่ได้ — ระบุสาเหตุ'], o.cannot ? 1 : 0)];
+  if (o.cannot) {
+    nodes.push(col('Section', [await section('สาเหตุที่ไม่สามารถบำรุงรักษาได้'), area('สาเหตุ', o.reason || '', { placeholder: 'เช่น รถติดภารกิจ ไม่อยู่ที่หน่วยงาน · เครื่องยนต์เสียต้องส่งซ่อม' })], 16));
+  } else {
+    nodes.push(col('Section', [await section('ภาพก่อนเริ่มงาน')].concat(await photoUploads(BEFORE, o.filled, o.errors)), 16));
+    const workRows = WORK.map((w) => MOB ? [w[0], w[1], w[2], o.filled ? w[3] : '—', w[4], { pill: o.filled ? ['ทำแล้ว', 'Success'] : ['ยังไม่ทำ', 'Gray'] }]
+      : [{ check: !!o.filled, text: w[0] }, w[1], w[2], o.filled ? w[3] : '', w[4]]);   // mobile: การ์ด Mobile table เห็นครบทุกช่อง (List with checkbox เห็นแค่ชื่องาน)
+    const oil = inst('Checkbox with description'); const cb = find(oil, 'Checkbox'); if (cb) setProps(cb, { Type: o.filled ? 'Selected' : 'Unselected' });
+    await text(oil, 'Text', 'เก็บตัวอย่างน้ำมันไฮโดรลิกไปทดสอบแล้ว'); await text(oil, 'Supporting text', 'บันทึกผลตรวจการนำไฟฟ้าในขั้นตรวจรับ (S12)');
+    nodes.push(col('Section', [await section('รายการงานและอะไหล่ที่ใช้ (ยืนยันจำนวนที่ใช้จริง)', { badge: WORK.length }), await tbl(MOB ? WORK_COLS2.concat([['สถานะ', 120, 'Badge']]) : WORK_COLS2, workRows), oil], 16));
+    nodes.push(col('Section', [await section('ภาพตอนจบงาน')].concat(await photoUploads(AFTER, o.filled, o.errors), [
+      row('Row', [field('เลขไมล์รถ (กม.)', o.filled ? '182,640' : '', { placeholder: '0', error: E('กรุณาระบุเลขไมล์รถ') }),
+        field('ชั่วโมงเครื่องจักร (ชม.)', o.filled ? '6,131' : '', { placeholder: '0', error: E('กรุณาระบุชั่วโมงเครื่องจักร') })]),
+      await upload('ภาพชั่วโมงเครื่องจักร (ถ้ามี)', o.filled ? [jpg('hour-meter')] : [], { optional: true, hint: 'JPG, PNG · 1 ภาพ' })]), 16));
+  }
+  nodes.push(btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'บันทึก', { size: 'lg' }]]));
+  add(page, col('Content', nodes, 32), 'h');
+  return scr;
+}
+async function workDetail(name, o) {
+  o = o || {};
+  const { scr, page } = await shell(name, { title: 'หมายเลขแผน ' + P[0], back: true, crumbs: ['แผนเดินทาง ' + TRIP.place, V[0]], badge: WSTAT.done,
+    actions: o.oilBtn ? [['Secondary button', 'บันทึกผลตรวจน้ำมัน', 'stylus-24-300-round']] : undefined });
+  const nodes = [await vehicleInfo(VEH_KV.concat([['วันที่บำรุงรักษา', '04/11/2569 10:20 น.'], ['ผู้บันทึก', TRIP.staff[0] + ' (กบค.)'], ['เลขไมล์หลังทำ', '182,640 กม.'], ['ชั่วโมงเครื่องจักรหลังทำ', '6,131 ชม.']]), 'ข้อมูลยานพาหนะและงาน'),
+    await photoGallery('ภาพก่อนเริ่มงาน (' + BEFORE.length + ')', BEFORE.length),
+    col('Section', [await sectionLabel('รายการงานและอะไหล่ที่ใช้จริง', { badge: WORK.length }), await tbl(WORK_COLS2, WORK.map(w => [w[0], w[1], w[2], w[3], w[4]]))], 16),
+    await photoGallery('ภาพตอนจบงาน (' + AFTER.length + ')', AFTER.length)];
+  if (o.oil) nodes.push(col('Section', [await sectionLabel('ผลตรวจน้ำมันไฮโดรลิก'), kv([['วันที่เก็บตัวอย่าง', '04/11/2569'], ['วันที่ตรวจ', '11/11/2569'], ['ค่าการนำไฟฟ้า', '1,250 pS/m'], ['ผล', 'ผ่านเกณฑ์'], ['แจ้งเจ้าของรถ', '11/11/2569 14:02 น. (e-mail + VMS+)'], ['ใบผลแล็บ', 'oil-test-82-6789.pdf']])], 16));
+  else nodes.push(col('Section', [await sectionLabel('ผลตรวจน้ำมันไฮโดรลิก'), alertBox('Info', 'เก็บตัวอย่างแล้ว 04/11/2569 · รอผลตรวจการนำไฟฟ้า', 'กด "บันทึกผลตรวจน้ำมัน" เมื่อได้ผลจากห้องทดสอบ')], 16));
+  add(page, col('Content', nodes, 32), 'h');
+  return scr;
+}
+
+/* ---------- S12 บันทึกผลตรวจน้ำมันไฮโดรลิก ---------- */
+async function oilForm(name, o) {
+  o = o || {};
+  const E = (m) => o.errors ? m : '';
+  const { scr, page } = await shell(name, { title: 'บันทึกผลตรวจน้ำมันไฮโดรลิก · ' + V[0], back: true, crumbs: ['แผนเดินทาง ' + TRIP.place, V[0], 'ผลตรวจน้ำมัน'] });
+  add(page, col('Content', [
+    await vehicleInfo([['ทะเบียน', V[0]], ['ยี่ห้อ/รุ่น', V[1]], ['วันที่เก็บตัวอย่าง', '04/11/2569'], ['ผู้เก็บตัวอย่าง', TRIP.staff[0] + ' (กบค.)']]),
+    col('Section', [await section('ผลตรวจการนำไฟฟ้าน้ำมันไฮโดรลิก'),
+      row('Row', [field('วันที่ตรวจ', o.v ? '11/11/2569' : '', { placeholder: 'วว/ดด/ปปปป', error: E('กรุณาระบุวันที่ตรวจ') }), field('ค่าการนำไฟฟ้า (pS/m)', o.v ? '1,250' : '', { placeholder: '0', error: E('กรุณาระบุค่าการนำไฟฟ้า') }), dropdown('ผล', o.v ? 'ผ่านเกณฑ์' : '', { placeholder: 'ผ่านเกณฑ์ / ไม่ผ่านเกณฑ์', error: E('กรุณาเลือกผล') })]),
+      await upload('ใบผลตรวจจากห้องทดสอบ', o.v ? [pdf('oil-test-82-6789.pdf', '420 KB')] : [], { hint: 'PDF, JPG · สูงสุด 10 ไฟล์' }),
+      area('หมายเหตุ', '', { optional: true, placeholder: 'ระบุหมายเหตุ' })], 16),
+    alertBox('Info', 'บันทึกแล้วระบบจะแจ้งเตือนเจ้าของรถทาง e-mail และ VMS+', 'ตามบอร์ด: "เจ้าของรถได้รับแจ้งเตือนผลตรวจน้ำมันไฮโดรลิก"'),
+    btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'บันทึกและแจ้งเจ้าของรถ', { size: 'lg' }]])
+  ], 32), 'h');
+  return scr;
+}
+
+/* ---------- S15 ประวัติงานบำรุงรักษา · S17 รายงานผล/ปิดงาน · S18 ต้นทุน ---------- */
+const HIST_COLS = [['ทะเบียน', 160, 'Lead text', 'Swap'], ['วันที่ทำ', 120], ['งานที่ทำ', 0], ['อะไหล่ที่ใช้', 220], ['ผลน้ำมัน', 110, 'Badge'], ['ผู้ทำ', 150], ['การยอมรับ', 190, 'Badge']];
+const HIST = VEH.slice(0, 4).map((v, i) => [v[0], '0' + (4 + i) + '/11/2569', 'เปลี่ยนน้ำมันไฮโดรลิก · ไส้กรอง · น้ำมันเครื่อง · อัดจาระบี', '30 ลิตร · 2 ชิ้น · 36 ลิตร · 3 กก.',
+  { pill: i === 2 ? ['ไม่ผ่าน', 'Error'] : ['ผ่าน', 'Success'] }, TRIP.staff[i % 3], { pill: i < 3 ? ACC.ok : ACC.wait }]);
+async function progressScreen(name, o) {
+  o = o || {};
+  const done = o.done || 10, total = +P[4];
+  const { scr, page } = await detail(name, { crumbs: ['ประวัติงานบำรุงรักษา'], status: 'active' });
+  add(page, col('Content', [
+    await vehicleInfo(PLAN_KV, 'รายละเอียดแผน'),
+    col('Section', [await sectionLabel('ความคืบหน้ารายคัน'), kv([['บำรุงรักษาแล้ว', done + ' / ' + total + ' คัน'], ['ทำไม่ได้', '0 คัน'], ['รอทำ', (total - done) + ' คัน'], ['หน่วยงานยอมรับแล้ว', (done - 1) + ' คัน']]),
+      alertBox('Warning', 'ยังบำรุงรักษาไม่ครบทุกคันตามแผน (เหลือ ' + (total - done) + ' คัน)', 'บอร์ด: "บำรุงรักษาเสร็จทั้งหมดหรือไม่?" — ครบแล้วจึงบันทึกและส่งประวัติให้หัวหน้า กบค. ตรวจสอบได้')], 16),
+    col('Section', [await sectionLabel('ประวัติงานบำรุงรักษา', { badge: HIST.length }), await tbl(HIST_COLS, HIST)], 16),
+    btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ส่งประวัติให้หัวหน้าตรวจสอบ', { size: 'lg', disabled: true }]])
+  ], 32), 'h');
+  return scr;
+}
+async function historyScreen(name, o) {
+  o = o || {};
+  const total = +P[4];
+  const { scr, page } = await detail(name, { crumbs: ['ประวัติงานบำรุงรักษา'], status: o.sent ? 'hist' : 'active' });
+  const nodes = [await vehicleInfo(PLAN_KV, 'รายละเอียดแผน'),
+    col('Section', [await sectionLabel('ความคืบหน้ารายคัน'), kv([['บำรุงรักษาแล้ว', total + ' / ' + total + ' คัน'], ['ทำไม่ได้', '0 คัน'], ['รอทำ', '0 คัน'], ['หน่วยงานยอมรับแล้ว', total + ' คัน']])], 16),
+    col('Section', [await sectionLabel('ประวัติงานบำรุงรักษาทั้งหมด', { badge: total }), await tbl(HIST_COLS, HIST, { pagination: total })], 16)];
+  if (o.sent) nodes.push(alertBox('Info', 'ส่งประวัติให้หัวหน้า กบค. ตรวจสอบแล้ว 12/11/2569', 'แก้ไขไม่ได้จนกว่าหัวหน้าจะตีกลับ (S16)'));
+  nodes.push(btnRow(o.sent ? [['Secondary button', 'ย้อนกลับ', { size: 'lg' }]] : [['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ส่งประวัติให้หัวหน้าตรวจสอบ', { size: 'lg' }]]));
+  add(page, col('Content', nodes, 32), 'h');
+  return scr;
+}
+async function reportScreen(name, o) {
+  o = o || {};
+  const { scr, page } = await detail(name, { crumbs: ['รายงานผลการบำรุงรักษา'], status: o.closed ? 'closed' : 'passed',
+    actions: [['Secondary button', 'ดาวน์โหลดรายงาน', 'cloud_upload-24-300-round']] });
+  const nodes = [await vehicleInfo(PLAN_KV.concat([['หัวหน้า กบค. ตรวจประวัติ', 'ผ่าน · 13/11/2569'], ['ผู้ตรวจ', 'นายประเสริฐ มั่นคง']]), 'รายละเอียดแผน'),
+    col('Section', [await sectionLabel('สรุปรายงานผลการบำรุงรักษา'), kv([['รถตามแผน', P[4] + ' คัน'], ['บำรุงรักษาแล้ว', P[4] + ' คัน'], ['ทำไม่ได้', '0 คัน'], ['ใบเดินทาง', '2 ใบ'],
+      ['อะไหล่ที่ใช้', '5 รายการ · คืนคลัง 1 รายการ'], ['ผลน้ำมันไฮโดรลิก', 'ผ่าน 11 · ไม่ผ่าน 1'], ['หน่วยงานยอมรับผล', P[4] + ' / ' + P[4] + ' คัน'], ['ช่วงดำเนินการ', '03/11/2569 – 12/11/2569']])], 16)];
+  if (o.closed) nodes.push(alertBox('Success', 'ปิดงานแล้ว 14/11/2569', 'ไปขั้นคำนวณต้นทุน (S18) ได้'));
+  nodes.push(btnRow(o.closed ? [['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'คำนวณต้นทุน', { size: 'lg' }]] : [['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ปิดงาน', { size: 'lg' }]]));
+  add(page, col('Content', nodes, 32), 'h');
+  return scr;
+}
+const COST_COLS = [['ใบเดินทาง / จุดรวมงาน', 0, 'Lead text'], ['รถ (คัน)', 100], ['ค่าแรง (เบี้ยเลี้ยง)', 160], ['ค่าที่พัก', 140], ['ค่าเดินทาง', 140], ['รวม (บาท)', 150]];
+const COSTS = [[TRIP.place, '6', '7,200', '9,600', '4,850', '21,650'], ['จุดรวมงาน กฟน.2 น่าน', '6', '7,200', '12,800', '6,320', '26,320']];
+async function costScreen(name) {
+  const { scr, page } = await detail(name, { crumbs: ['ต้นทุนการบำรุงรักษา'], status: 'closed', actions: [['Secondary button', 'ดาวน์โหลด Excel', 'cloud_upload-24-300-round']] });
+  add(page, col('Content', [
+    await vehicleInfo(PLAN_KV, 'รายละเอียดแผน'),
+    col('Section', [await sectionLabel('ต้นทุนการบำรุงรักษา รายใบเดินทาง', { badge: COSTS.length }), await tbl(COST_COLS, COSTS)], 16),
+    col('Section', [await sectionLabel('Summary ของต้นทุน'), kv([['ค่าแรง (เบี้ยเลี้ยง)', '14,400 บาท'], ['ค่าที่พัก', '22,400 บาท'], ['ค่าเดินทาง', '11,170 บาท'], ['รวมทั้งแผน', '47,970 บาท'], ['เฉลี่ยต่อคัน', '3,997.50 บาท'], ['จำนวนคัน', P[4] + ' คัน']])], 16),
+    alertBox('Info', 'ค่าแรงใช้ยอดเบี้ยเลี้ยงจากแผนเดินทาง (S6) · ยังไม่รวมค่าอะไหล่', 'รอเคาะ Q26 — "ค่าแรง" กับ "ค่าเบี้ยเลี้ยง" รายการเดียวกันไหม · ต้นทุนรวมอะไหล่/ค่าจ้างไหม')
+  ], 32), 'h');
+  return scr;
+}
+
+/* ---------- รายการจอแยกตาม scenario (ชื่อ = scenario ใน 14-บำรุงรักษา-userflow.md) ---------- */
+const SCENARIOS = [
+  ['S1 · กบค. สร้างแผนบำรุงรักษา', [
+    ['รายการแผน', () => listScreen('S1 รายการแผน', { rows: PLANS })],
+    ['ฟอร์มสร้างแผน (ว่าง)', () => planForm('S1 ฟอร์มสร้างแผน', {})],
+    ['กดบันทึกโดยยังไม่ครบ', () => planForm('S1 ยังไม่ครบ', { errors: true })],
+    ['เลือกรถแล้ว — ระบบคำนวณอะไหล่', () => planForm('S1 เลือกรถแล้ว', { values: FILLED, sel: [0, 1, 4, 5] })],
+    ['ย้อนกลับ — ยืนยันการออก', async () => { const s = await planForm('S1 ยืนยันการออก', { values: FILLED, sel: [0, 1] }); await confirm(s, { title: 'ยืนยันการออก', sub: 'ข้อมูลที่กรอกไว้จะไม่ถูกบันทึก', cancel: 'ปิด', ok: 'ออก' }); return s; }],
+    ['บันทึกไม่สำเร็จ', async () => { const s = await planForm('S1 บันทึกไม่สำเร็จ', { values: FILLED, sel: [0, 1, 4, 5] }); notify(s, 'general error', true); return s; }],
+    ['บันทึกสำเร็จ — รอ ผพจ. ตรวจสอบ', async () => { const s = await listScreen('S1 บันทึกสำเร็จ', { rows: [NEW_PLAN].concat(PLANS) }); notify(s, 'การสร้างแผนบำรุงรักษาสำเร็จ'); return s; }]]],
+  ['S4 · กบค. ตรวจสอบจำนวนรถปัจจุบันตามแผน', [
+    ['รายการรถในแผน — มีรถสถานะโอน', () => vehiclesScreen('S4 รายการรถ', {})],
+    ['ยืนยันนำรถออกจากแผน', async () => { const s = await vehiclesScreen('S4 ยืนยันนำรถออก', {}); await confirm(s, { danger: true, title: 'ยืนยันการนำรถออกจากแผน', sub: '81-2210 เชียงใหม่ สถานะ "โอน" จะถูกนำออกจากแผน ' + P[0] + ' และระบบจะปรับรายการอะไหล่ให้', ok: 'นำออก' }); return s; }],
+    ['นำรถออกแล้ว', async () => { const s = await vehiclesScreen('S4 นำรถออกแล้ว', { removed: true }); notify(s, 'นำรถออกจากแผนแล้ว'); return s; }],
+    ['ยืนยันจำนวนรถ', async () => { const s = await vehiclesScreen('S4 ยืนยันจำนวนรถ', { removed: true }); await confirm(s, { title: 'ยืนยันจำนวนรถตามแผน', sub: 'รถในแผน 5 คัน · พร้อม 3 · ไม่พร้อม 1 · ยังไม่ตอบ 1 — ไปขั้นเบิกอะไหล่ (S5)', ok: 'ยืนยัน' }); return s; }]]],
+  ['S5 · กบค. ตรวจสอบและเบิกอะไหล่ผ่านระบบจองอะไหล่', [
+    ['คลังอะไหล่ + อะไหล่ตามแผน (ยังไม่เลือก)', () => partsScreen('S5 คลังอะไหล่', {})],
+    ['เลือกอะไหล่ครบตามแผน', () => partsScreen('S5 เลือกครบ', { picked: [0, 1, 2, 3, 4] })],
+    ['สรุปรายการเบิก/จอง', async () => { const s = await partsScreen('S5 สรุปรายการ', { picked: [0, 1, 2, 3, 4] }); await partsSummary(s, { stock: 3, buy: 2 }); return s; }],
+    ['ผลจอง — คงเหลือไม่พอ 2 รายการ', () => partsScreen('S5 อะไหล่ขาด', { picked: [0, 1, 2, 3, 4], result: 'short' })],
+    ['อะไหล่พร้อมครบ — เลือกรูปแบบดำเนินการ', () => partsScreen('S5 อะไหล่พร้อม', { picked: [0, 1, 2, 3, 4], result: 'ok' })]]],
+  ['S6 · กบค. ทำแผนเดินทาง (ตรวจเอง)', [
+    ['แผนเดินทางของแผนนี้ (ยังไม่มี)', () => tripList('S6 แผนเดินทาง (ว่าง)', { rows: [] })],
+    ['ฟอร์มสร้างแผนเดินทาง (ว่าง)', () => tripForm('S6 ฟอร์มแผนเดินทาง', {})],
+    ['เลือกช่วงวันเดินทาง', () => tripForm('S6 เลือกช่วงวัน', { values: { place: TRIP.place }, dateOpen: true })],
+    ['กดยืนยันโดยยังไม่ครบ', () => tripForm('S6 ยังไม่ครบ', { errors: true })],
+    ['กรอกครบ', () => tripForm('S6 กรอกครบ', { values: TRIP_FILLED, sel: [0, 1, 4, 5] })],
+    ['ยืนยันแล้ว — ส่ง Notification', async () => { const s = await tripList('S6 ยืนยันแล้ว', { rows: TRIPS }); notify(s, 'สร้างแผนเดินทางสำเร็จ · แจ้งเจ้าของรถและ กรย. แล้ว'); return s; }]]],
+  ['S10 · กบค./ผู้รับจ้าง บันทึกงานบำรุงรักษารายคัน', [
+    ['รายการรถตามแผนเดินทาง', () => workList('S10 รายการรถ', {})],
+    ['บันทึกงาน (ว่าง)', () => workForm('S10 บันทึกงาน', {})],
+    ['บำรุงรักษาไม่ได้ — ระบุสาเหตุ', () => workForm('S10 ทำไม่ได้', { cannot: true, reason: 'รถติดภารกิจซ่อมสายส่งฉุกเฉิน ไม่อยู่ที่หน่วยงานในวันนัด' })],
+    ['กดบันทึกโดยยังไม่ครบ', () => workForm('S10 ยังไม่ครบ', { errors: true })],
+    ['กรอกครบ', () => workForm('S10 กรอกครบ', { filled: true })],
+    ['บันทึกสำเร็จ', async () => { const s = await workList('S10 บันทึกสำเร็จ', { done: [0] }); notify(s, 'บันทึกงานบำรุงรักษาสำเร็จ'); return s; }],
+    ['ดูงานที่บันทึกแล้ว — ภาพก่อน/หลัง', () => workDetail('S10 งานที่บันทึกแล้ว', {})]]],
+  ['S12 · กบค. บันทึกผลตรวจน้ำมันไฮโดรลิก', [
+    ['งานรายคัน — รอผลตรวจน้ำมัน', () => workDetail('S12 รอผลตรวจ', { oilBtn: true })],
+    ['ฟอร์มบันทึกผลตรวจ (ว่าง)', () => oilForm('S12 ฟอร์มผลตรวจ', {})],
+    ['กรอกครบ', () => oilForm('S12 กรอกครบ', { v: true })],
+    ['บันทึกสำเร็จ — แจ้งเจ้าของรถ', async () => { const s = await workDetail('S12 บันทึกสำเร็จ', { oil: true }); notify(s, 'บันทึกผลตรวจน้ำมันไฮโดรลิกสำเร็จ · แจ้งเตือนเจ้าของรถแล้ว'); return s; }]]],
+  ['S15 · กบค. บันทึกและส่งประวัติงานบำรุงรักษา', [
+    ['ความคืบหน้ารายคัน (ยังไม่ครบ)', () => progressScreen('S15 ยังไม่ครบ', { done: 10 })],
+    ['ครบทุกคัน — ประวัติงานบำรุงรักษา', () => historyScreen('S15 ครบทุกคัน', {})],
+    ['ยืนยันส่งประวัติ', async () => { const s = await historyScreen('S15 ยืนยันส่ง', {}); await confirm(s, { title: 'ส่งประวัติให้หัวหน้า กบค. ตรวจสอบ', sub: 'ประวัติงานบำรุงรักษา ' + P[4] + ' คันของแผน ' + P[0] + ' จะแก้ไขไม่ได้จนกว่าหัวหน้าจะตรวจเสร็จ', ok: 'ส่งประวัติ' }); return s; }],
+    ['ส่งแล้ว — รอหัวหน้าตรวจสอบ', async () => { const s = await historyScreen('S15 ส่งแล้ว', { sent: true }); notify(s, 'ส่งประวัติงานบำรุงรักษาให้หัวหน้าตรวจสอบแล้ว'); return s; }]]],
+  ['S17 · กบค. ออกรายงานผลและปิดงาน', [
+    ['รายงานผล (ประวัติผ่านแล้ว)', () => reportScreen('S17 รายงานผล', {})],
+    ['ยืนยันปิดงาน', async () => { const s = await reportScreen('S17 ยืนยันปิดงาน', {}); await confirm(s, { title: 'ยืนยันปิดงาน', sub: 'แผน ' + P[0] + ' จะเปลี่ยนสถานะเป็น "ปิดงานแล้ว" และแก้ไขข้อมูลไม่ได้อีก', ok: 'ปิดงาน' }); return s; }],
+    ['ปิดงานแล้ว', async () => { const s = await reportScreen('S17 ปิดงานแล้ว', { closed: true }); notify(s, 'ปิดงานสำเร็จ'); return s; }]]],
+  ['S18 · กบค. คำนวณต้นทุนการบำรุงรักษา', [
+    ['ต้นทุนการบำรุงรักษา + Summary', () => costScreen('S18 ต้นทุน')],
+    ['ดาวน์โหลด Excel แล้ว', async () => { const s = await costScreen('S18 ดาวน์โหลดแล้ว'); notify(s, 'ดาวน์โหลดไฟล์ Excel แล้ว'); return s; }]]],
+];
+
+
+/* ---------- กลุ่ม = scenario (แพทเทิร์นเดียวกับ Overhaul — เจ้าของงานเคาะ 20 ต.ค. 2569: 1 scenario = 1 บล็อก · แถว Desktop แล้ว Mobile) ---------- */
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const GROUPS = SCENARIOS.map(([title, screens], i) => {
+  const code = LETTERS[i], tag = title.split(' · ')[0], rest = title.split(' · ').slice(1).join(' · ');
+  return { code, title: tag + ' ' + rest, subs: [{ code, title: rest, tag, screens }] };
+});
+
+/* ---------- สร้างทั้งหมด (โครงเดียวกับ Overhaul: 1 จอ = 1 เฟรมพื้นขาว · scenario ละแถว · desktop + mobile คู่กัน) ---------- */
+async function build() {
+  errors.length = 0;
+  const t0 = Date.now();
+  log('นำเข้า component จากไลบรารี + ยืมจาก flow งานซ่อมในไฟล์นี้…');
+  await resolveAll();
+  const borrowed = LOCAL_OPTIONAL.filter(has);
+  log('component จาก flow งานซ่อมที่ใช้ได้: ' + (borrowed.length ? borrowed.join(' · ') : 'ไม่มี — ใช้แบบสำรองจากไลบรารีทุกจุด'));
+  log('นำเข้าเสร็จใน ' + Math.round((Date.now() - t0) / 1000) + ' วินาที · เริ่มสร้างจอ');
+  // หน้าปลายทาง = หน้าใหม่ maintainance-N ไม่แตะชุดเดิม (แพทเทิร์นเดียวกับ Overhaul — เจ้าของงานสั่ง 20 ต.ค. 2569)
+  const tp = await targetPage('maintainance', PLUGIN.prefix);
+  const page = tp.page;
+  log(tp.fresh ? 'วางในหน้าใหม่ "' + page.name + '" — ชุดเดิมบนหน้าอื่นไม่ถูกแตะ' : '⚠ สร้างหน้าใหม่ไม่ได้ (แพลนจำกัดจำนวนหน้า) — วางต่อใต้ของเดิมในหน้า "' + page.name + '" ไม่ลบอะไร');
+  await figma.setCurrentPageAsync(page);
+  const swept = tp.fresh ? 0 : sweepOrphans(page, new Set(NEEDED));
+  if (swept) log('เก็บชิ้นส่วนที่ค้างจากรอบก่อน (ซ้อนอยู่ที่มุมหน้า) ' + swept + ' ชิ้น');
+  let y = 0;
+  page.children.forEach(n => { if (n.absoluteBoundingBox) y = Math.max(y, n.absoluteBoundingBox.y + n.absoluteBoundingBox.height + 400); });
+  const TOTAL = SCENARIOS.reduce((a, x) => a + x[1].length, 0);
+  log(INDEX.has('Header') ? 'แถบรหัส flow: component Header ของทีมออกแบบ' : 'แถบรหัส flow: ไม่พบ component Header ในไฟล์ — วาดแถบธรรมดาสีเดียวกันแทน');
+  const { made } = await buildGrid(page, PLUGIN.prefix, GROUPS, y, TOTAL * 2);
+  let instances = 0, loose = 0;
+  for (const s of made) for (const n of s.findAll(x => !findInstanceAncestor(x))) {
+    if (n.type === 'INSTANCE') instances++;
+    else if (n.type !== 'FRAME') loose++;
+  }
+  figma.viewport.scrollAndZoomIntoView(made.slice(0, 6));
+  log('');
+  log('สร้าง ' + made.length + ' จอ · ' + GROUPS.length + ' บล็อก scenario (A–' + GROUPS[GROUPS.length - 1].code + ') · instance ชั้นบนสุด ' + instances + ' ชิ้น');
+  log('ชิ้นที่ไม่ใช่ instance/กรอบ: ' + loose + (loose ? ' ⚠ ต้องเป็น 0' : ' ✓'));
+  log('component ที่ใช้ (' + USED.size + '): ' + [...USED].sort().join(' · '));
+  log(errors.length ? '⚠ เตือน ' + errors.length + ' จุด (รายการด้านบน) — ส่งข้อความนี้กลับมาให้ตรวจ' : 'ไม่มีคำเตือน ✓');
+  if (FONT_SWAPPED) log('· ข้อความที่ต้องสลับเป็นฟอนต์สำรอง (component ใช้ฟอนต์ที่เครื่องไม่มี) ' + FONT_SWAPPED + ' จุด — ฟอนต์ ' + (FALLBACK_FONT ? FALLBACK_FONT.family + ' ' + FALLBACK_FONT.style : '-'));
+  reportOversize();
+  log('ใช้เวลารวม ' + Math.round((Date.now() - t0) / 1000) + ' วินาที');
+}
+
+figma.ui.onmessage = async (msg) => {
+  try {
+    if (msg.type === 'build') await build();
+    if (msg.type === 'check') { log('— เช็ค component (ไม่สร้างอะไร) —'); await resolveAll(NEEDED, true); }
+    if (msg.type === 'patch-layout') { await resolveAll(['Component 1', 'Header']); await patchLayout(figma.currentPage, PLUGIN.prefix, GROUPS); }
+  } catch (e) { log('✗ หยุด — ' + (e && e.message ? e.message : e)); }
+};

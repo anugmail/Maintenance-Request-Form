@@ -65,7 +65,10 @@ $btn.addEventListener('click', async () => {
     const specUrl = /\.json$/.test(url) ? url : url.replace(/\/?$/, '/') + 'board.json';
     const base = specUrl.replace(/[^/]*$/, '');
     log('— กำลังโหลด ' + specUrl.replace(base, ''));
-    const spec = await (await fetch(specUrl)).json();
+    const r0 = await fetch(specUrl);
+    if (!r0.ok) throw new Error('ไม่พบไฟล์สเปก ' + specUrl.replace(base, '') + ' (' + r0.status + ') — เช็คชื่อไฟล์ใน figma-export/out/ (เช่น board.json · board-overhaul2.json · board-maintainance.json)');
+    const spec = await r0.json();
+    if (!spec || !Array.isArray(spec.sections)) throw new Error('ไฟล์นี้ไม่ใช่สเปกบอร์ด (ไม่มี sections) — ' + specUrl.replace(base, ''));
 
     const srcs = [...new Set(spec.sections.flatMap(s => (s.cols || []).flatMap(c => c.images.map(i => i.src))))];
     log('— รูปทั้งหมด ' + srcs.length + ' ไฟล์');

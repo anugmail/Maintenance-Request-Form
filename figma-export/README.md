@@ -12,6 +12,18 @@
 > **สองท่อนี้แยกไฟล์กันเด็ดขาด ไม่ทับกัน:** ท่อ FigJam ใช้ `board.json` + `figjam-plugin/` ·
 > ท่อ design ใช้ `spec.json` / `spec-report.json` + `plugin/` — `serve.js` ตัวเดียวเสิร์ฟทั้งหมด
 
+## ปลั๊กอินสร้างจอจาก component จริง — แยกเรื่องละปลั๊กอิน (20 ต.ค. 2569)
+
+| เรื่อง | ปลั๊กอิน | หน้าใน Figma · ชื่อเฟรม | ตารางจับคู่ | เทส |
+|---|---|---|---|---|
+| Overhaul v2 (14 scenario · 56 จอ × 2) | `overhaul2-plugin/` (code.js ไฟล์เดียว ฉบับ 19 ต.ค.) | `overhaul-1` · `OH2 / …` | `overhaul-v2-component-map.md` | `node figma-export/test-overhaul2-plugin.js` |
+| Overhaul v2 · toast + notification (บล็อก P · Q · 8 จอ × 2) — ปุ่ม "สร้างชุด toast + notification" ในปลั๊กอินเดียวกัน (20 ต.ค. 2569) | `overhaul2-plugin/` (`NOTI_SCENARIOS` · `toast()` · `bell()` · `notiPanel()`) | `overhaul-noti-1` · `OH2 / P.1 · toast — …` | สเปก `Diagram/01-บำรุงรักษาตามวาระ/16-overhaul-toast-notification.md` | `MODE=build-noti FIRST='สำเร็จ บนหน้ารายการแผน' node figma-export/test-overhaul2-plugin.js` |
+| บำรุงรักษาตามวาระ (รอบแรก 9 scenario · 41 จอ × 2) | `maintainance-plugin/` = `plugin-lib/core.js` + `screens.js` → `build-plugin.js` ประกอบเป็น `code.js` | `maintainance-1` · `MT / …` | `maintainance-component-map.md` | `node figma-export/build-plugin.js maintainance-plugin && node figma-export/test-maintainance-plugin.js` |
+
+- `plugin-lib/core.js` = โค้ดส่วนกลาง (หา component 3 ทาง · instance helpers · ฟอร์ม/ตาราง/กล่องข้อมูล/modal/เปลือกหน้า · กติกา R1–R14) — ปลั๊กอินใหม่เขียนแค่ `screens.js` (PLUGIN · DIRECT/NESTED/LOCAL_OPTIONAL · ข้อมูล · จอ · SCENARIOS · build) แล้วรัน build-plugin.js · **ห้ามแก้ code.js ที่ประกอบแล้วตรงๆ**
+- `LOCAL_OPTIONAL` = component ที่ยืมจาก flow อื่นในไฟล์ Maintain-D (เช่น PartRequestStepPanel · IncidentPhotoGallery · VehicleAndReporterInfo ของงานซ่อม) — ไฟล์ที่ไม่มี ปลั๊กอินใช้แบบสำรองจากไลบรารี · harness รับ `LOCAL=ชื่อ,ชื่อ` และสแกนดัมป์ `out/figma-dump/maintain-d/*.json` ทุกหน้า
+- harness `test-overhaul2-plugin.js` ใช้กับปลั๊กอินอื่นได้ด้วย env `CODE=` (ไฟล์ code.js) · `PREFIX=` (คำนำหน้าเฟรม) · `FIRST=` (ชื่อจอแรกที่ต้องอยู่บนสุดของ Layers) · `EMPTY=1` (ไฟล์ไม่มี component ในตัว)
+
 ## ท่อ design กับโฟลว์แจ้งซ่อม (ฝั่งผู้แจ้ง 6 state · web + mobile)
 
 `flow-report-extract.js` เป็นคู่แฝดของ `flow-report-capture.js` — ไล่กด wizard เส้นเดียวกันเป๊ะ
@@ -66,10 +78,14 @@ flow-report-capture.js       โฟลว์แจ้งซ่อม ฝั่�
                                เช่น --src=Diagram/01-…/03-เฟส2-ดำเนินการบำรุงรักษา.md
                                     --out=diagram-maint.json
                              (geometry จาก SVG ที่ mermaid จัด layout · เส้น/ชนิด node parse จากซอร์สตรงๆ)
+8-flow-userflow.js           userflow .md (Diagram/<เรื่อง>/NN-<เรื่อง>-userflow.md · สัญลักษณ์ 4 แบบของบอร์ดเจ้าของงาน)
+                             → out/diagram-userflow-<เรื่อง>.json · section ละ scenario · รูปทรง Template (วงกลม/สี่เหลี่ยม/ข้าวหลามตัด)
+                             จัดวางเอง ไม่พึ่ง mermaid · %% Q: ในผัง = sticky คำถาม · ค่าเริ่มต้น = บำรุงรักษาตามวาระ 18 scenario (19 ต.ค. 2569)
    ▼ out/figjam/**/*.png + manifest.json + out/diagram-*.json
 3-figjam-board.js            → out/board.json · ค่าเริ่มต้น = ผังโฟลว์สร้างแผน + capture สร้างแผน 8 จอ
                              + วางแผนการเดินทาง 8 จอ + แจ้งซ่อมฝั่งผู้แจ้ง 8 จอ (เจ้าของงานสั่งทีละโฟลว์)
                              เพิ่มชุดอื่นด้วย --after / --maint / --pages / --all
+                             --maintainance --only --out=board-maintainance.json = บอร์ด userflow บำรุงรักษา (แยกไฟล์จากชุดซ่อม/Overhaul)
                              --maint = ผังเฟส 2 (+ capture out/figjam/flow-maint/ ถ้ามี · ไม่มีก็ลงผังอย่างเดียว)
 serve.js                     เสิร์ฟ board.json + รูป (รองรับ path ย่อยแล้ว)
    ▼

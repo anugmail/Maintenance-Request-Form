@@ -3,17 +3,23 @@
   button{padding:8px 14px;border:0;border-radius:6px;background:#a80689;color:#fff;font:inherit;cursor:pointer}
   #log{margin-top:10px;height:300px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
 </style>
-<p>สร้างหน้าจอ Overhaul v2 <b>ครบ 14 scenario · 56 จอ × 2 ขนาด (desktop 1440 + mobile 402×874 วางคู่กัน)</b> scenario ละแถว บนหน้า overhaul-1 — ทุกชิ้นเป็น instance ของ component จริง (นำเข้าจากไลบรารีไฟล์ component)<br>
-รันซ้ำได้ — ลบชุดเดิม ("OH2 /" และ section "OH2 ·") ก่อนสร้างใหม่ · ใช้เวลาราว 2–5 นาที</p>
+<p>สร้างหน้าจอ Overhaul v2 <b>ครบ 14 scenario · 56 จอ × 2 ขนาด (desktop 1440 · mobile 402×874)</b> บนหน้า overhaul-1 — ทุกชิ้นเป็น instance ของ component จริง (นำเข้าจากไลบรารีไฟล์ component)<br>
+<b>จัดวางแบบตาราง flow ของทีมออกแบบ (R19 · 20 ต.ค.)</b>: 1 scenario = 1 บล็อก (แถบตัวอักษร A–O) → ป้าย A.1 A.2 … = state → แถว Desktop → แถว Mobile ใต้คอลัมน์เดียวกัน + ป้าย Device/Desktop/Mobile<br>
+<b>กดแล้วสร้างบนหน้าใหม่ overhaul-2, -3, … ไม่แตะชุดเดิม</b> (ของเดิมบน overhaul-1 ที่ย้าย/แก้มือไว้คงอยู่) · ชุดใหม่มีทุกอย่างที่เคยแก้ไว้แล้ว (ปิด divider · Header Tablet · Section label · Info icon · Table/Progress steps ทั้งก้อน · นัดหมายแบบงานซ่อม · แถว WBS) · ใช้เวลาราว 2–5 นาที</p>
 <button id="go">สร้างครบ 14 scenario</button> <button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button>
-<p style="margin:14px 0 6px"><b>แก้เฉพาะส่วน</b> — ไม่สร้างจอใหม่ ที่แก้มือไว้ไม่หาย (ใช้กับเฟรมที่เลือกไว้ ถ้าไม่เลือกใช้ทุกเฟรม "OH2 /" ในหน้านี้)</p>
-<button id="pdiv" style="background:#475467">ปิด divider ในจอที่มีอยู่</button> <button id="pwbs" style="background:#475467">ย้าย WBS มาแถววงเงินอนุมัติ</button>
+<p style="margin:14px 0 6px"><b>toast + notification</b> (สเปก <code>Diagram/01-บำรุงรักษาตามวาระ/16-overhaul-toast-notification.md</code> · 20 ต.ค.) — ชุดแยก 8 จอ × 2 ขนาด บนหน้าใหม่ <b>overhaul-noti-N</b> ไม่แตะชุด 14 scenario: บล็อก <b>P</b> toast (Notification Success/Error ขวาล่าง · 4 state) · บล็อก <b>Q</b> notification (กระดิ่งจุดแดง · Notification card ใต้กระดิ่ง · mobile = bottom sheet · 4 state)</p>
+<button id="noti" style="background:#0f766e">สร้างชุด toast + notification (บล็อก P · Q)</button>
+<p style="margin:14px 0 6px"><b>แก้เฉพาะส่วน</b> — ไม่สร้างจอใหม่ ที่แก้มือไว้ไม่หาย (ใช้กับทุกเฟรม "OH2 /" ในหน้านี้)</p>
+<button id="playout" style="background:#1d4ed8">จัดวางใหม่เป็นตาราง flow (ย้ายจอเดิม ไม่สร้างใหม่)</button>
+<button id="pdev" style="background:#475467">เปลี่ยนป้ายข้างจอเป็น Device Type (แทนป้ายเดิมที่เดิม ไม่แตะจอ)</button> <button id="pclip" style="background:#475467">ปิด Clip content ทุกจอบนหน้านี้ (ไม่สร้างใหม่)</button>
 <div id="log"></div>
 <script>
 const log = (s) => { const d = document.getElementById('log'); d.textContent += s + '\n'; d.scrollTop = d.scrollHeight; };
 document.getElementById('go').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'build' } }, '*'); };
 document.getElementById('chk').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'check' } }, '*'); };
-document.getElementById('pdiv').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'patch-dividers' } }, '*'); };
-document.getElementById('pwbs').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'patch-wbs' } }, '*'); };
+document.getElementById('noti').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'build-noti' } }, '*'); };
+document.getElementById('playout').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'patch-layout' } }, '*'); };
+document.getElementById('pdev').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'patch-device' } }, '*'); };
+document.getElementById('pclip').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'patch-clip' } }, '*'); };
 onmessage = (e) => { const m = e.data.pluginMessage; if (m && m.type === 'log') log(m.text); };
 </script>

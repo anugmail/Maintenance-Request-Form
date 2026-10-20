@@ -16,6 +16,23 @@ const vm = require('vm');
 const SLUG = process.argv[2] || 'component';
 const DUMP = path.join(__dirname, 'out', 'figma-dump', SLUG);
 const MIXED = Symbol('mixed');
+/* ไฟล์ดัมป์ที่โหลด: ทั้งโฟลเดอร์ <slug> + component ในตัวไฟล์ Maintain-D ที่ปลั๊กอินใช้ (RepairAppointmentStep — หน้า Design) */
+const LOCAL_FROM_MAINTAIN_D = (process.env.LOCAL || 'RepairAppointmentStep,Device Type,Component 1').split(',').map(s => s.trim()).filter(Boolean);   // LOCAL=ชื่อ,ชื่อ สำหรับปลั๊กอินอื่น (20 ต.ค. 2569) · Device Type = ป้ายข้างจอชุดใหม่ (ดัมป์ Maintain-D ต้องดึงใหม่ถึงจะมี — ไม่มีก็ถอยไป Component 1)
+const DUMPS = fs.readdirSync(DUMP).filter(f => f.endsWith('.json')).map(f => Object.assign({ file: f }, JSON.parse(fs.readFileSync(path.join(DUMP, f), 'utf8'))));
+(() => {   // สแกนทุกหน้าของไฟล์ Maintain-D — component ที่ยืมจาก flow อื่นกระจายอยู่หลายหน้า (Design · Local Component · รายละเอียดงานซ่อม)
+  const dir = path.join(__dirname, 'out', 'figma-dump', 'maintain-d');
+  if (!fs.existsSync(dir)) return;
+  const got = new Set();
+  for (const f of fs.readdirSync(dir).filter(x => x.endsWith('.json')).sort()) {
+    const j = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+    const sets = [];
+    const walk = (n) => { if ((n.type === 'COMPONENT_SET' || n.type === 'COMPONENT') && LOCAL_FROM_MAINTAIN_D.includes(n.name) && !got.has(n.name)) { got.add(n.name); sets.push(n); } else (n.kids || []).forEach(walk); };
+    (j.sets || []).forEach(walk);
+    if (sets.length) DUMPS.push({ file: 'maintain-d/' + f, page: (j.page || f) + ' (Maintain-D)', sets });
+  }
+  const miss = LOCAL_FROM_MAINTAIN_D.filter(n => !got.has(n));
+  if (miss.length) console.log('(ดัมป์ Maintain-D ไม่มี local component: ' + miss.join(', ') + ' — ปลั๊กอินต้องใช้แบบสำรองแทน)');
+})();
 let uid = 0;
 
 class Node {
@@ -30,6 +47,8 @@ class Node {
     this.children = [];
     if (this.type === 'TEXT') { this.characters = src.text || ''; this.fontName = { family: 'IBM Plex Sans Thai', style: 'Regular' }; }
     if (src.component) this._mainName = src.component.name, this._variant = src.component.variant;
+    if (src.dir) this._lm = src.dir;
+    if (src.type === 'INSTANCE' && src.variant && typeof src.variant === 'object') this._pv = src.variant;   // ค่า property ของ instance ซ้อน (ดัมป์)   // auto layout ของดัมป์ — ให้ตั้ง layoutSizing ลูกได้เหมือนจริง
     for (const k of src.kids || []) this.children.push(new Node(k, this));
   }
   findOne(fn) { return this.findAll(fn)[0] || null; }
@@ -53,8 +72,8 @@ class Node {
 /* ---------- โหลดดัมป์ → ต้นไม้ component ---------- */
 const root = new Node({ type: 'DOCUMENT', name: 'doc' });
 const SETS = new Map();     // ชื่อ → node ของ COMPONENT_SET / COMPONENT
-for (const f of fs.readdirSync(DUMP).filter(f => f.endsWith('.json'))) {
-  const d = JSON.parse(fs.readFileSync(path.join(DUMP, f), 'utf8'));
+for (const d of DUMPS) {
+  const f = d.file;
   const page = new Node({ type: 'PAGE', name: (d.page || f).trim() }, root);
   root.children.push(page);
   for (const s of d.sets) {
@@ -72,8 +91,7 @@ for (const f of fs.readdirSync(DUMP).filter(f => f.endsWith('.json'))) {
     (src.kids || []).forEach((k, i) => walk(k, node.children[i]));
   };
   let pi = 0;
-  for (const f of fs.readdirSync(DUMP).filter(f => f.endsWith('.json'))) {
-    const d = JSON.parse(fs.readFileSync(path.join(DUMP, f), 'utf8'));
+  for (const d of DUMPS) {
     const page = root.children[pi++];
     d.sets.forEach((s, i) => walk(s, page.children[i]));
   }
@@ -87,11 +105,11 @@ const propsOf = (comp) => (comp.parent && comp.parent.type === 'COMPONENT_SET' ?
 function makeInstance(comp) {
   const n = new Node({ type: 'INSTANCE', name: comp.parent && comp.parent.type === 'COMPONENT_SET' ? comp.parent.name : comp.name });
   n._main = comp;
-  n.width = comp.width; n.height = comp.height;
+  n.width = comp.width; n.height = comp.height; n._lm = comp._lm;
   n.variantProperties = comp.variantProperties;
   // ลูกในต้นไม้ = สำเนาของ component (เฉพาะชื่อ/ชนิด)
-  const clone = (src, parent) => { const c = new Node({ type: src.type, name: src.name, w: src.width, h: src.height, text: src.characters }, parent);
-    c._mainName = src._mainName; c._variant = src._variant; c.children = src.children.map(k => clone(k, c));
+  const clone = (src, parent) => { const c = new Node({ type: src.type, name: src.name, w: src.width, h: src.height, text: src.characters, dir: src._lm }, parent);
+    c._mainName = src._mainName; c._variant = src._variant; c._pv = src._pv; c.children = src.children.map(k => clone(k, c));
     if (c.type === 'INSTANCE') hydrate(c); return c; };
   n.children = comp.children.map(k => clone(k, n));
   hydrate(n);
@@ -107,7 +125,9 @@ function hydrate(n) {
   })();
   n._main = comp;
   if (comp) n.variantProperties = comp.variantProperties;
-  const props = comp ? propsOf(comp) : {};
+  let props = comp ? propsOf(comp) : {};
+  if (!Object.keys(props).length && n._pv) props = Object.fromEntries(Object.entries(n._pv).filter(([k]) => k.indexOf('#') > 0)   // component เดี่ยวที่ดัมป์ไม่มี props — เดาจากค่าใน instance
+    .map(([k, v]) => [k, { type: typeof v === 'boolean' ? 'BOOLEAN' : /^\d+:\d+$/.test(v) ? 'INSTANCE_SWAP' : 'TEXT', defaultValue: v }]));
   n.componentProperties = {};
   for (const [k, v] of Object.entries(props)) n.componentProperties[k] = { type: v.type, value: v.type === 'VARIANT' ? (comp.variantProperties || {})[k] : v.defaultValue };
   n.setProperties = (obj) => {
@@ -119,8 +139,15 @@ function hydrate(n) {
         const want = Object.assign({}, comp.variantProperties, { [k]: v });
         const hit = set.children.find(c => Object.keys(want).every(x => c.variantProperties[x] === want[x]));
         if (!hit) throw new Error('setProperties: variant ' + JSON.stringify(want) + ' ไม่มีใน ' + set.name);
+        if (hit !== comp) {   // เปลี่ยน variant = ลูกเปลี่ยนตาม variant ใหม่ (เหมือน Figma) · ค่า property อื่นคงเดิม
+          const keep = n.componentProperties, fresh = makeInstance(hit);
+          n.children = fresh.children; n.children.forEach(c => { c.parent = n; });
+          n._main = hit; hydrate(n);
+          for (const x of Object.keys(keep)) if (keep[x].type !== 'VARIANT' && n.componentProperties[x]) n.componentProperties[x].value = keep[x].value;
+          return n.setProperties(Object.fromEntries(Object.entries(obj).filter(([x]) => x !== k)));
+        }
       }
-      if (p.type === 'INSTANCE_SWAP' && !ALL.has(v)) throw new Error('setProperties: instance swap id ' + v + ' ไม่ใช่ component');
+      if (p.type === 'INSTANCE_SWAP' && !ALL.has(v) && v !== p.value) throw new Error('setProperties: instance swap id ' + v + ' ไม่ใช่ component');
       if (p.type === 'BOOLEAN' && typeof v !== 'boolean') throw new Error('setProperties: ' + k + ' ต้องเป็น boolean');
       if (p.type === 'TEXT' && typeof v !== 'string') throw new Error('setProperties: ' + k + ' ต้องเป็น string');
       p.value = v;
@@ -146,6 +173,7 @@ const figma = {
   async loadFontAsync() {},
   async setCurrentPageAsync(p) { figma.currentPage = p; },
   createFrame() { const f = new Node({ type: 'FRAME', name: 'Frame' }); return f; },
+  createText() { const t = new Node({ type: 'TEXT', name: 'Text' }); t.fontName = { family: 'Inter', style: 'Regular' }; return t; },   // ป้ายรหัส flow แบบสำรอง (20 ต.ค. 2569)
   insertChildStub: null,
   createSection() { return new Node({ type: 'SECTION', name: 'Section' }); },
   createPage() { const p = new Node({ type: 'PAGE', name: 'Page' }, root); root.children.push(p); pages.push(p); return p; },
@@ -157,7 +185,7 @@ Object.defineProperty(Node.prototype, 'layoutMode', { get() { return this._lm; }
 const EMPTY = !!process.env.EMPTY;
 const code0 = fs.readFileSync(process.env.CODE || path.join(__dirname, 'overhaul2-plugin', 'code.js'), 'utf8');
 const BYKEY = {};
-for (const m of code0.matchAll(/"([^"]+)": \["([0-9a-f]{40})", (true|false)\]/g)) BYKEY[m[2]] = m[1] === 'Sidebar' ? 'Sidebar navigation' : m[1];
+for (const m of (code0 + fs.readFileSync(path.join(__dirname, 'overhaul2-plugin', 'code.js'), 'utf8')).matchAll(/"([^"]+)": \["([0-9a-f]{40})", (true|false)\]/g)) BYKEY[m[2]] = m[1] === 'Sidebar' ? 'Sidebar navigation' : m[1];
 const imp = (set) => async (key) => {
   const name = BYKEY[key]; const n = name && SETS.get(name);
   if (!n) throw new Error('key ' + key + ' ไม่อยู่ในไลบรารีที่เปิดใช้');
@@ -170,11 +198,30 @@ if (EMPTY) { const orig = root.findAllWithCriteria.bind(root); root.findAllWithC
 const code = fs.readFileSync(process.env.CODE || path.join(__dirname, 'overhaul2-plugin', 'code.js'), 'utf8');
 vm.runInNewContext(code, { figma, __html__: '', console, Set, Map, Promise, Object, Array, JSON, Math, Symbol, Error });
 
+// PS_SLOTS=7: จำลองไลบรารีหลังเจ้าของงานเพิ่มช่อง Progress steps เป็น 7 + publish (19 ต.ค. 2569)
+function extendPS(n) {
+  const h = SETS.get('Progress steps').children.find(c => c.variantProperties && c.variantProperties.Type === 'Horizontal');
+  const items = h.children.filter(c => c.name === 'Horizontal step item');
+  while (h.children.filter(c => c.name === 'Horizontal step item').length < n) {
+    const src = items[items.length - 1], c = new Node({ type: 'INSTANCE', name: src.name }, h);
+    c._mainName = src._mainName; c._variant = src._variant; c._pv = src._pv; h.children.push(c);
+  }
+}
+if (process.env.PS_SLOTS) extendPS(+process.env.PS_SLOTS);
+// REF_STEPPER=1: จำลองหน้างานซ่อมที่มีเฟรม "Progress steps" 7 ขั้น (มีกรอบ มุม 12 เส้นสีแดง) ⇒ ปลั๊กอินต้องลอกกรอบนี้
+if (process.env.REF_STEPPER) {
+  const pg = new Node({ type: 'PAGE', name: 'Flow การซ่อม' }, root); root.children.push(pg);
+  const fr = new Node({ type: 'FRAME', name: 'Progress steps', dir: 'HORIZONTAL' }, pg); pg.children.push(fr);
+  fr.cornerRadius = 12; fr.strokes = [{ type: 'SOLID', color: { r: 1, g: 0, b: 0 } }]; fr.strokeWeight = 2;
+  const hs = SETS.get('Horizontal step item');
+  for (let i = 0; i < 7; i++) { const it = makeInstance(hs.children[0]); it.parent = fr; fr.children.push(it); }
+}
 const MODE_CHECK = process.env.MODE === 'check';
 (async () => {
   await uiHandler({ type: process.env.MODE === 'patch' ? 'build' : (process.env.MODE || 'build') });
   if (process.env.MODE === 'patch') {   // สร้างแบบเก่า (CODE=ไฟล์เก่า) แล้วแก้เฉพาะส่วนด้วยโค้ดปัจจุบัน · PATCH=ชื่อข้อความ (ค่าเริ่ม patch-dividers)
     figma.currentPage.selection = [];
+    if (process.env.PS_SLOTS_AFTER) extendPS(+process.env.PS_SLOTS_AFTER);   // ไลบรารีอัปเดตหลังสร้างจอแล้ว
     const ctx = () => ({ figma, __html__: '', console, Set, Map, Promise, Object, Array, JSON, Math, Symbol, Error });
     if (process.env.BROKEN) {   // จำลองรอบที่พังกลางทาง (เช่น layoutGrow=3 ของ 19 ต.ค.) ให้รอบถัดไปต้องกู้ต่อได้
       vm.runInNewContext(fs.readFileSync(process.env.BROKEN, 'utf8'), ctx());
@@ -185,7 +232,8 @@ const MODE_CHECK = process.env.MODE === 'check';
   }
   logs.forEach(l => console.log(l));
   const page = pages[0] || figma.currentPage;
-  const screens = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf('OH2 / ') === 0);
+  const PREFIX = (process.env.PREFIX || 'OH2') + ' / ';   // ปลั๊กอินอื่นตั้ง PREFIX= (เช่น MT) · FIRST= ชื่อจอแรกของ userflow (20 ต.ค. 2569)
+  const screens = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(PREFIX) === 0);
   const sections = [...new Set(screens.map(n => n.y))];   // แถว = scenario
   // ไม่เหลือเส้นคั่นที่มองเห็น (เจ้าของงานสั่งปิด divider ทั้งหมด 19 ต.ค. 2569)
   const shown = (n) => { for (let p = n; p; p = p.parent) if (p.visible === false) return false; return true; };
@@ -210,10 +258,49 @@ const MODE_CHECK = process.env.MODE === 'check';
     if (desk && (b.layoutGrow !== 1 || box.layoutGrow !== 1 || w.some(x => x.layoutGrow !== 1))) logs.push('⚠ วงเงิน/WBS ไม่ได้แบ่งครึ่ง: ' + sc.name);
     if (sc.findAll(n => n.type === 'TEXT' && n.characters === 'งบโครงการตาม WBS').length) logs.push('⚠ ยังเหลือหัวข้อ งบโครงการตาม WBS: ' + sc.name);
   });
+  // รีวิว 19 ต.ค. 2569: ตารางต้องเป็น component Table · หน้า Detail ใช้ Section label · Info icon ปิด · กล่องแสดงข้อมูล
+  let nT = 0, nL = 0;
+  screens.forEach(sc => {
+    sc.findAll(n => n.type === 'FRAME' && n.name === 'Table' && n.children.some(x => x.name === 'Column')).forEach(t => {   // ยอมเฉพาะตารางที่เกินขนาด Table ของไลบรารี
+      const cs = t.children.filter(x => x.name === 'Column');
+      if (cs.length <= 8 && cs[0].children.length - 1 <= 10) logs.push('⚠ ยังมีตารางประกอบเอง: ' + sc.name);
+    });
+    nT += sc.findAll(n => n.type === 'INSTANCE' && n._main && n._main.parent && n._main.parent.name === 'Table').length;
+    const ph = sc.findAll(n => n.type === 'INSTANCE' && n.name === 'Page header')[0];
+    const tk = ph && Object.keys(ph.componentProperties).find(x => x.split('#')[0] === 'Title');
+    if (tk && /^หมายเลข/.test(ph.componentProperties[tk].value)) {
+      if (sc.findAll(n => n.type === 'INSTANCE' && n.name === 'Section header').length) logs.push('⚠ หน้า Detail ยังใช้ Section header: ' + sc.name);
+      nL += sc.findAll(n => n.type === 'INSTANCE' && n.name === 'Section label').length;
+    }
+    sc.findAll(n => n.type === 'INSTANCE' && n.name === 'Input label').forEach(l => { const k = Object.keys(l.componentProperties).find(x => x.split('#')[0] === 'Info icon'); if (k && l.componentProperties[k].value !== false && shown(l)) logs.push('⚠ Info icon ยังเปิด: ' + sc.name); });
+    if (sc.findAll(n => n.type === 'FRAME' && n.name === 'Content item').length) logs.push('⚠ กล่องแสดงข้อมูลยังไม่ได้แต่ง: ' + sc.name);
+  });
+  if (process.env.SHOW) screens.filter(sc => sc.name.indexOf(process.env.SHOW) >= 0).forEach(sc => sc.findAll(n => n.type === 'INSTANCE' && n.name === 'Table').forEach(t => {
+    const v = (n, k) => { const x = Object.keys(n.componentProperties || {}).find(y => y.split('#')[0] === k); return x ? n.componentProperties[x].value : ''; };
+    t.findAll(n => n.name === 'Column' && n.visible !== false).forEach(c => console.log('  | ' + c.children.filter(x => x.visible !== false).map(x => (v(x, 'Style') || 'H') + ':' + (v(x, 'Text') || '')).join(' | ')));
+  }));
+  // กติกา component-rules.json (19 ต.ค. 2569) — ผิดกติกา = ไม่ผ่าน · ข้อยกเว้นที่รอเคาะแสดงแยก
+  const rc = require('./check-component-rules').check(screens);
+  rc.fails.slice(0, 40).forEach(f => { logs.push('⚠ กติกา ' + f); console.log('⚠ กติกา ' + f); }); if (rc.fails.length > 40) logs.push('⚠ กติกา … อีก ' + (rc.fails.length - 40) + ' จุด');
+  console.log(rc.fails.length ? 'ผิดกติกา component ' + rc.fails.length + ' จุด' : 'ตรงกติกา component-rules.json ✓');
+  rc.pending.forEach(p => console.log('  รอเคาะ: ' + p));
+  console.log('ตาราง Table ' + nT + ' · Section label ในหน้า Detail ' + nL);
   if (wbs) console.log('ตรวจแถววงเงิน + WBS ' + wbs + ' จอ' + (logs.some(l => /^⚠.*WBS/.test(l)) ? '' : ' ✓'));
   // แผง Layers ของ Figma แสดงลูกตัวสุดท้ายไว้บนสุด ⇒ จอแรกของ userflow ต้องเป็นตัวสุดท้าย
   const top = screens[screens.length - 1];
-  if (top && top.name.indexOf('หน้ารายการแผน') < 0) logs.push('⚠ แผง Layers ไม่ได้เรียงจอแรกไว้บนสุด: ' + top.name);
+  if (top && top.name.indexOf(process.env.FIRST || 'หน้ารายการแผน') < 0) logs.push('⚠ แผง Layers ไม่ได้เรียงจอแรกไว้บนสุด: ' + top.name);
+  // R19 แพทเทิร์นจัดวาง (เจ้าของงานสั่ง 20 ต.ค. 2569): ป้ายรหัส flow "<prefix> · …" ต้องมี · จอ mobile อยู่ใต้จอ desktop คอลัมน์เดียวกัน (x เท่ากัน · y มากกว่า)
+  const labels = page.children.filter(n => n.name.indexOf((process.env.PREFIX || 'OH2') + ' · ') === 0);
+  if (!labels.length) logs.push('⚠ R19 ไม่มีป้ายรหัส flow (แถบตัวอักษร/ย่อย/state · Device/Desktop/Mobile)');
+  let pairs = 0;
+  for (const m of screens.filter(n => / · mobile$/.test(n.name))) {
+    const d = screens.find(n => n.name === m.name.replace(/ · mobile$/, ''));
+    if (!d) { logs.push('⚠ R19 จอ mobile ไม่มีคู่ desktop: ' + m.name); continue; }
+    if (d.x !== m.x || !(d.y < m.y)) logs.push('⚠ R19 จอ mobile ไม่ได้อยู่ใต้ desktop คอลัมน์เดียวกัน: ' + m.name);
+    pairs++;
+  }
+  console.log('R19 จัดวางแบบตาราง flow: ป้าย ' + labels.length + ' · คู่ desktop/mobile ' + pairs + (logs.some(l => /R19/.test(l)) ? '' : ' ✓'));
+  if (process.env.DUMP_LAYOUT) fs.writeFileSync(process.env.DUMP_LAYOUT, JSON.stringify(page.children.map(n => ({ name: n.name, type: n.type, x: n.x, y: n.y, w: n.width, h: n.height }))));
   const bad = logs.filter(l => /^⚠|^✗/.test(l));
   const want = (code0.match(/^  \[\'(?:หน้ารายการแผน|S\d+)/gm) || []).length;   // จำนวน section ที่ประกาศ
   console.log('\n— ผลทดสอบ — แถว ' + sections.length + ' · หน้าจอ ' + screens.length + ' · คำเตือน ' + bad.length);

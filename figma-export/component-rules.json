@@ -1,0 +1,246 @@
+{
+  "_about": "กติกาการสร้างจอด้วย component จริงของไลบรารี (Component) VMS Plus — ตัวทดสอบ test-overhaul2-plugin.js อ่านไฟล์นี้แล้วตรวจทุกจอ · ผิดกติกา = ทดสอบไม่ผ่าน · คำอธิบายรายข้ออยู่ที่ component-rules.md · แก้กติกาต้องแก้ทั้ง 2 ไฟล์",
+  "_updated": "2026-10-19 (R10 stepper แบบหน้างานซ่อม · R16–R17 นัดหมาย)",
+  "library": {
+    "Table": {
+      "cols": 8,
+      "rows": 10
+    },
+    "Progress steps": {
+      "steps": 7,
+      "_note": "เจ้าของงานเพิ่มเป็น 7 ช่อง + publish 19 ต.ค. 2569 (เดิม 5)"
+    }
+  },
+  "variants": [
+    {
+      "id": "R1",
+      "component": "Header navigation",
+      "desktop": {
+        "Breakpoint": "Tablet"
+      },
+      "mobile": {
+        "Breakpoint": "Mobile"
+      },
+      "source": "รีวิว 19 ต.ค. 2569"
+    },
+    {
+      "id": "R15",
+      "component": "Progress steps",
+      "desktop": {
+        "Type": "Horizontal"
+      },
+      "source": "เจ้าของงานส่งภาพ component Progress steps 19 ต.ค. 2569 — stepper ใช้ component นี้ทั้งก้อน"
+    }
+  ],
+  "props": [
+    {
+      "id": "R2",
+      "component": "Page header",
+      "must": {
+        "Divider": false
+      },
+      "source": "รีวิว 19 ต.ค. 2569 + คำสั่งปิด divider ทั้งหมด"
+    },
+    {
+      "id": "R3",
+      "component": "Section header",
+      "must": {
+        "Divider": false
+      },
+      "source": "คำสั่งปิด divider ทั้งหมด 19 ต.ค. 2569"
+    },
+    {
+      "id": "R4",
+      "component": "Input label",
+      "must": {
+        "Info icon": false
+      },
+      "source": "รีวิว 19 ต.ค. 2569 (Text input > ปิด Info icon — ตัวที่โผล่คือ Input label ที่ซ้อนอยู่)"
+    },
+    {
+      "id": "R5",
+      "component": "Section label",
+      "must": {
+        "Info icon": false,
+        "More actions": false
+      },
+      "source": "รีวิว 19 ต.ค. 2569"
+    },
+    {
+      "id": "R6",
+      "component": "Text input",
+      "must": {
+        "Info icon": false
+      },
+      "onlyIf": {
+        "Label": true
+      },
+      "skipInside": [
+        "Header navigation"
+      ],
+      "source": "รีวิว 19 ต.ค. 2569 · ช่องค้นหาในตัว Header navigation เป็นของไลบรารี ไม่แตะ"
+    },
+    {
+      "id": "R18",
+      "component": "Text input",
+      "labels": [
+        "เลข WBS",
+        "เลขโครงข่าย",
+        "เลขกิจกรรม"
+      ],
+      "must": {
+        "Optional": true,
+        "Helper": false
+      },
+      "source": "เจ้าของงานเคาะ 19 ต.ค. 2569 — 3 ช่อง WBS ไม่บังคับ แสดง (ถ้ามี)"
+    },
+    {
+      "id": "R16",
+      "component": "RepairAppointmentStep",
+      "must": {
+        "RepairMethod": false
+      },
+      "source": "เจ้าของงานสั่ง 19 ต.ค. 2569 — นัดหมายใช้แบบงานซ่อม ไม่มี section รูปแบบการซ่อม"
+    },
+    {
+      "id": "R7",
+      "component": "Input dropdown",
+      "must": {
+        "Info icon": false
+      },
+      "onlyIf": {
+        "Label": true
+      },
+      "source": "รีวิว 19 ต.ค. 2569"
+    }
+  ],
+  "insideOnly": [
+    {
+      "id": "R8",
+      "component": "Table cell",
+      "parent": "Table",
+      "allowWhenOversize": "Table",
+      "source": "รีวิว 19 ต.ค. 2569 (ต้องเรียก component Table ทั้งก้อน)"
+    },
+    {
+      "id": "R9",
+      "component": "Table header cell",
+      "parent": "Table",
+      "allowWhenOversize": "Table",
+      "source": "รีวิว 19 ต.ค. 2569"
+    },
+    {
+      "id": "R10",
+      "component": "Horizontal step item",
+      "parent": "Progress steps",
+      "allowInStyledFrame": true,
+      "source": "รีวิว 19 ต.ค. 2569 — ต้องเป็น instance ของ Progress steps (ไลบรารีมี 7 ช่องแล้ว) · เฟรมมีกรอบใช้ได้เฉพาะไฟล์ที่ยังไม่อัปเดตไลบรารี"
+    }
+  ],
+  "pages": [
+    {
+      "id": "R11",
+      "when": "detail",
+      "detailTitle": "^หมายเลข",
+      "forbid": [
+        "Section header"
+      ],
+      "use": "Section label",
+      "source": "รีวิว 19 ต.ค. 2569 (Section header ใช้เฉพาะ Create/Edit)"
+    }
+  ],
+  "screensUse": [
+    {
+      "id": "R17",
+      "screens": "^OH2 / S(7|13) — ",
+      "desktopOnly": true,
+      "component": "RepairAppointmentStep",
+      "forbidSectionTitles": [
+        "นัดหมายนำรถเข้าอู่",
+        "นัดหมายรับรถ"
+      ],
+      "source": "เจ้าของงานสั่ง 19 ต.ค. 2569 — การนัดหมายเข้าซ่อม/รับรถใช้ component นัดหมายของงานซ่อม (ไฟล์ Maintain-D หน้า Design)"
+    }
+  ],
+  "displayBox": {
+    "id": "R12",
+    "frame": "Content",
+    "contains": "Content item row",
+    "fill": "#F9FAFB",
+    "radius": 8,
+    "padding": 24,
+    "gap": 24,
+    "source": "ตัวอย่างเจ้าของงาน 19 ต.ค. 2569 — Maintain-D หน้า Flow การซ่อม · VehicleInfo > Content"
+  },
+  "noVisibleDivider": {
+    "id": "R13",
+    "source": "คำสั่งปิด divider ทั้งหมด 19 ต.ค. 2569"
+  },
+  "screen": {
+    "id": "R14",
+    "desktop": [
+      1440,
+      1024
+    ],
+    "mobile": [
+      402,
+      874
+    ],
+    "sections": false,
+    "source": "1 จอ 1 พื้นหลัง · mobile 402×874 วางคู่ (19 ต.ค. 2569)"
+  },
+  "layout": {
+    "id": "R19",
+    "title": "จัดวางแบบตาราง flow ของทีมออกแบบ (20 ต.ค. 2569 — ใช้ทุกครั้งจนกว่าจะเปลี่ยน)",
+    "letter": "scenario (1 scenario = 1 บล็อก)",
+    "number": "ไม่ใช้แถบย่อย (ใช้เฉพาะกลุ่มที่มีหลาย scenario)",
+    "state": "A.1 A.2 … = state ของจอ",
+    "bars": {
+      "letter": {
+        "component": "Header",
+        "State": "Default",
+        "fill": "#101828"
+      },
+      "sub": {
+        "component": "Header",
+        "State": "Sub Flow",
+        "fill": "#667085"
+      },
+      "state": {
+        "component": "Header",
+        "State": "Sub Flow 2",
+        "fill": "#9CACCC",
+        "width": 1440
+      }
+    },
+    "side": {
+      "component": "Device Type",
+      "fallback": "Component 1",
+      "property": "Type",
+      "types": [
+        "Device",
+        "Desktop",
+        "Mobile"
+      ],
+      "width": 300,
+      "note": "20 ต.ค. 2569 เย็น: ป้ายข้างจออ่านจาก component set Device Type ของทีมออกแบบ · Component 1 ชุดเก่าเป็นตัวสำรอง · ปลั๊กอินจับชื่อ variant ไม่สนตัวพิมพ์"
+    },
+    "rows": [
+      "desktop",
+      "mobile"
+    ],
+    "mobileUnderDesktopSameColumn": true,
+    "noSection": true,
+    "grid": {
+      "side": 300,
+      "gap": 80,
+      "colW": 1440,
+      "colGap": 200,
+      "rowGap": 160,
+      "groupGap": 400,
+      "barH": 120
+    },
+    "checkedBy": "test-overhaul2-plugin.js (ป้ายต้องมี · mobile ใต้ desktop คอลัมน์เดียวกัน)",
+    "freshPage": "สร้างบนหน้า <base>-N ใหม่ทุกครั้ง ไม่ลบ/ไม่แตะชุดเดิม"
+  }
+}
