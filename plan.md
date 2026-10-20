@@ -578,7 +578,7 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
 - [x] ~~เพิ่ม validation ช่องเหตุผล~~ — **ยกเลิก** ตั้งใจให้ไม่บังคับ (AC-D4)
 
 ### ยังรอเจ้าของงานเคาะ
-- [ ] 🛠️ **จัดวางจอ Figma แบบตาราง flow ของทีมออกแบบ — ทั้ง Overhaul และบำรุงรักษา (20 ต.ค. 2569 · R19 · ⬜ ยังไม่ commit · รอเจ้าของงานกดปลั๊กอินแล้วรีวิว)** —
+- [x] 🛠️ **จัดวางจอ Figma แบบตาราง flow ของทีมออกแบบ — ทั้ง Overhaul และบำรุงรักษา (20 ต.ค. 2569 · R19 · ✅ commit `a8c7e01` · ป้ายข้างจอเปลี่ยนเป็น component set `Device Type` ของทีมออกแบบแล้ว · ⬜ รอเจ้าของงานรีวิวผลใน Figma)** —
       เจ้าของงานส่งภาพหน้า Flow การซ่อม (B นัดหมายวันซ่อม › B1 เข้าซ่อมที่… › B1.1 Default · B1.2 Filled … · แถว Desktop / Mobile มีป้าย Device ซ้าย) สั่ง _"กลับมาเรื่อง Overhaul อยากให้แบ่ง แตกรายละเอียดเป็นแบบรูปตัวอย่าง"_ · _"ลองทำให้หน่อย ตามแบบ"_ ·
       _"เห็นมีส่วนที่แยก desktop mobile ด้วย อยากให้จำแพทเทิร์นด้วย ว่าต่อไปจะสร้างให้ทำแบบนี้ จนกว่าจะมีการเปลี่ยนแปลง"_ ⇒ ตั้งเป็นกติกา **R19** (`component-rules.md` 5.1 + `.json` layout) · skill userflow · memory
       · ป้ายใช้ของทีมออกแบบเอง: `Header` Type=Subheader › `State` (Default ดำ = ตัวอักษร · Sub Flow เทา = ย่อย · Sub Flow 2 ฟ้า = state) + `Component 1` (Device · Desktop · Mobile) — Header/State อยู่อีกไลบรารี หาจาก instance ในไฟล์ ไม่ได้ก็วาดแถบสีเดียวกัน
@@ -597,7 +597,7 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
       · ✅ **เคาะใหม่ 20 ต.ค. (เย็น):** _"เจตนาคืออยากแยก scen ออกจากกัน และอยากแยก mobile และ desktop"_ → เลือก **1 scenario = 1 บล็อก** (ตัวอักษร = scenario: Overhaul A รายการแผน · B S1 … O S14 · บำรุงรักษา A S1 … I S18) · ป้าย state = A.1 A.2 … · ไม่มีแถบย่อย · แถว Desktop แล้ว Mobile ต่อบล็อก — แทนกลุ่มตามหน้า/ขั้นที่เสนอตอนแรก (โค้ดยังรองรับถ้ากลับไปใช้: GROUPS หลาย sub)
       · ✅ _"อยากให้สร้างใหม่เลย ไม่รบกวนของเดิม รวมถึงปรับแก้สิ่งที่ปรับในของเดิมด้วย เช่นเรื่อง divider"_ → ปลั๊กอิน**เลิกลบชุดเดิม** สร้างบนหน้าใหม่ `overhaul-N` / `maintainance-N` ที่ว่าง (สร้างหน้าไม่ได้ → วางต่อใต้ของเดิม ไม่ลบ) · ชุดใหม่มีทุกอย่างที่เคยแก้ของเดิม (R1–R18 อยู่ในตัวสร้างจอ · เทสต์กติกาผ่าน) · กติกา R19/skill/memory แก้ตามแล้ว
       - [ ] 🔴 เจ้าของงานกดปลั๊กอิน Overhaul (ปุ่ม "สร้างครบ 14 scenario" → ได้หน้า overhaul-2 ชุดใหม่เป็นตาราง ชุดเดิมคงอยู่) และปลั๊กอินบำรุงรักษา → ส่ง log ⚠ กลับมา
-- [ ] 🛠️ **บำรุงรักษาตามวาระ — ปลั๊กอิน Figma แยกเรื่อง `maintainance-plugin/` รอบแรก 9 scenario ของ กบค. 41 จอ × 2 ขนาด = 84 เฟรม จาก component จริง + ของที่ออกแบบไว้ใน flow งานซ่อม (20 ต.ค. 2569 · ⬜ ยังไม่ commit · รอเจ้าของงานกดใน Figma แล้วรีวิว)** —
+- [ ] 🛠️ **บำรุงรักษาตามวาระ — ปลั๊กอิน Figma แยกเรื่อง `maintainance-plugin/` รอบแรก 9 scenario ของ กบค. 41 จอ × 2 ขนาด = 84 เฟรม จาก component จริง + ของที่ออกแบบไว้ใน flow งานซ่อม (20 ต.ค. 2569 · ✅ commit `a8c7e01` · ⬜ รอเจ้าของงานกดใน Figma แล้วรีวิว)** —
       เจ้าของงานยืนยันบอร์ด FigJam บำรุงรักษา _"ขึ้นบอร์ดได้ ถูกต้อง"_ แล้วสั่ง _"อยากให้ขึ้น ui figma และทำสำหรับ export ให้ โดยแยกออกจากเรื่อง overhaul … แยกออกเป็นสองเรื่อง"_ ·
       _"ลองขึ้นโดยอาศัย component และการ[ออกแบบ]ของ flow อื่น มาประกอบกัน"_ · ขอบเขตรอบแรก (ผู้ทำเสนอ เจ้าของงานถาม "export ได้หรือยัง" = ให้เริ่ม): S1 สร้างแผน · S4 ตรวจรถ · S5 เบิกอะไหล่ · S6 แผนเดินทาง · S10 บันทึกงานรายคัน · S12 น้ำมันไฮโดรลิก · S15 ประวัติ · S17 ปิดงาน · S18 ต้นทุน
       · **แยกเป็นสองเรื่องจริง:** ปลั๊กอินคนละตัว (`overhaul2-plugin/` หน้า overhaul-1 เฟรม `OH2 /` ↔ `maintainance-plugin/` หน้า `maintainance-1` เฟรม `MT /`) · ตารางจับคู่คนละไฟล์ (`maintainance-component-map.md`) · บอร์ด FigJam คนละไฟล์ (`board-maintainance.json`)
@@ -616,7 +616,7 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
       - [ ] รอบสอง 9 scenario ที่เหลือ (S2–S3 ผพจ. · S7–S8 ผู้รับจ้าง · S9 กรย. · S11 · S13–S14 หน่วยงาน · S16 หัวหน้า) — รอคำตอบ Q1 ผพจ. · Q7 ใครตอบรถพร้อม · Q28 ยอมรับ 2 รอบ ก่อน
       - [ ] ย้าย `overhaul2-plugin` มาใช้ `plugin-lib/core.js` หลัง commit รอบรีวิว 19 ต.ค. (ตอนนี้โค้ดส่วนกลางซ้ำกัน 2 ที่ — แก้ core แล้วต้องเทียบกลับ)
       - [ ] commit เมื่อเจ้าของงานยืนยัน — ชุดนี้: `plugin-lib/core.js` · `build-plugin.js` · `maintainance-plugin/{manifest.json,ui.html,screens.js,code.js}` · `test-maintainance-plugin.js` · `test-overhaul2-plugin.js` (env ใหม่) · `maintainance-component-map.md` · README/skill/plan.md
-- [ ] 🛠️ **บำรุงรักษาตามวาระ — userflow 18 scenario ตามบอร์ดเจ้าของงาน + บอร์ด FigJam แยกไฟล์ `board-maintainance.json` (19 ต.ค. 2569 · ⬜ ยังไม่ commit · รอเจ้าของงานตรวจ userflow แล้วค่อยออกแบบ UI)** —
+- [ ] 🛠️ **บำรุงรักษาตามวาระ — userflow 18 scenario ตามบอร์ดเจ้าของงาน + บอร์ด FigJam แยกไฟล์ `board-maintainance.json` (19 ต.ค. 2569 · ✅ commit `a8c7e01` · ⬜ รอเจ้าของงานตรวจ userflow แล้วค่อยออกแบบ UI)** —
       เจ้าของงานสั่ง: _"ปรับ export flow การซ่อม การบำรุงรักษา โดยแยกออกจากกัน ซ่อมอันนึง บำรุงอันนึง"_ · _"ทำ user flow ของงานบำรุงรักษาก่อน ให้พร้อม export figjam"_ ·
       วางข้อความบอร์ด *User Journey — Smart Mechanical Service Management (บำรุงรักษา To-be)* (6 เลน กบค. · ผพจ. · กรย. · ผู้รับจ้าง · หน่วยงาน · เจ้าของรถ × 8 ช่วงงาน) แล้วสั่ง
       _"ลองเขียน userflow ขึ้นตาม flow ที่ส่งให้ ให้พร้อม export figjam"_ · _"หลังจากสร้าง userflow แล้วจะไปดูว่าถูกต้องหรือไม่ แล้วจะเอาไปออกแบบ ui ต่อ ดังนั้นต้องอ่านรายละเอียดให้ดี"_ · ชื่อไฟล์บอร์ด `board-maintainance.json` ตามที่พิมพ์ในปลั๊กอิน
@@ -653,9 +653,9 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
             pages.yml build static export ทุก push (build พังไม่ล้ม deploy หน้าอื่น) · ตรวจ: tsc · build · Chrome 1440/402 ทุกหน้าไม่มี error ทั้ง local และบน Pages
       - [ ] ต้นแบบ Next.js: ขาด Alert กลาง (หน้างานทำ JobAlert เฉพาะหน้า) · ช่องเลือกช่วงวันแบบช่องเดียวยังเป็นของประกอบเอง (Dual date picker ไลบรารียังไม่ทำ) · Combobox ไม่มีช่อง supporting text
       - [ ] 🔴 รอเคาะ: จับคู่ช่องนัดหมายแบบงานซ่อม → ช่องของ Overhaul (ใช้ตามที่เสนอไปก่อน) · หน้างานรายคันนับเป็นหน้า Detail ไหม · Table 8 คอลัมน์ vs หน้ารายการแผน 9
-      - [ ] 🛠️ **ปลั๊กอิน Figma รอบรีวิว 19 ต.ค. — ทำเสร็จ เทสต์ผ่าน ⬜ รอเจ้าของงานกดใน Figma แล้วยืนยัน ⇒ ค่อย commit** (ยังไม่ commit:
-            `figma-export/overhaul2-plugin/{code.js,ui.html,manifest.json}` · `figma-export/test-overhaul2-plugin.js` · `figma-export/component-rules.{md,json}` ·
-            `figma-export/check-component-rules.js` · `CLAUDE.md` · `.claude/skills/userflow/SKILL.md`)
+      - [x] 🛠️ **ปลั๊กอิน Figma รอบรีวิว 19 ต.ค. — เจ้าของงานกดครบ 3 ปุ่มแล้ว ⇒ ถอดปุ่มออก 20 ต.ค. (สั่ง "ส่วนนี้เราปรับแก้ไปแล้ว อยากเอาส่วนนี้ออกไปเลย") · ✅ commit `a8c7e01`**
+            (ไฟล์: `figma-export/overhaul2-plugin/{code.js,ui.html,manifest.json}` · `figma-export/test-overhaul2-plugin.js` · `figma-export/component-rules.{md,json}` ·
+            `figma-export/check-component-rules.js` · `CLAUDE.md` · `.claude/skills/userflow/SKILL.md`) · โค้ด patchAppt/patchReview/patchWbs + ตัวช่วยลบแล้ว 200 บรรทัด · ปุ่มที่เหลือ: สร้างครบ 14 · เช็ค · toast+notification · จัดวางใหม่ · เปลี่ยนป้าย Device Type · ปิด Clip content
             ปุ่มแก้เฉพาะจุดในปลั๊กอิน (ปิดแล้วเปิดปลั๊กอินใหม่ก่อน · อยู่หน้า overhaul-1):
             1. **"ส่งออกเฉพาะการนัดหมาย (S7 · S13) + stepper"** — ⚠️ อัปเดตไลบรารีในไฟล์ Maintain-D ก่อน (Progress steps เพิ่มเป็น 7 ช่องแล้ว)
                · นัดหมาย 10 จอ → `RepairAppointmentStep` (component ในไฟล์ Maintain-D หน้า Design · RepairMethod ปิด · Type In/Wating · State Default/Filled/ReturnReason) · ปุ่ม "ส่งนัดหมาย"
@@ -664,6 +664,19 @@ python3 -m http.server 8124 --bind 127.0.0.1   # ห้าม file://
             3. **"แก้ตามรีวิว 19 ต.ค."** (แทนปุ่มปิด divider เดิม) — Header navigation Desktop→Tablet (ตัวที่แก้มือแล้วไม่แตะ) · ปิด Info icon (ตัวที่โผล่คือ `Input label` ซ้อนใน) ·
                กล่องแสดงข้อมูลตามตัวอย่าง VehicleInfo · หน้า Detail ใช้ Section label · ตารางประกอบเอง → component `Table` · stepper → Progress steps
             สร้างใหม่ทั้งหมดก็ได้ผลเดียวกัน · harness: สร้างใหม่ / จอเก่า+ปุ่ม / กดซ้ำ / ไลบรารีอัปเดตทีหลัง / ไฟล์ไม่มี component — ตรงกติกาทุกกรณี
+      - [x] 📝 **AC Overhaul 14 scenario + สเปก toast/notification + ปลั๊กอินบล็อก P/Q (20 ต.ค. 2569 เย็น · ✅ commit `a8c7e01`)** —
+            เจ้าของงานสั่ง _"เขียนขอบเขตของแต่ละหน้า ว่าต้องทำอะไรได้บ้าง คือการเขียน ac … ไล่ไปแต่ละ scen"_ → ระดับ scenario (ไม่แตก state) · _"ไม่ต้องมีสัญลักษณ์ ใช้ตัวอักษรอย่างเดียว ไม่ต้องลงรายละเอียด figma ว่าอยู่หน้าไหน"_ · _"เขียนเป็นเงื่อนไขในการสร้าง ac ครั้งต่อๆ ไปด้วย"_
+            · `Diagram/01-บำรุงรักษาตามวาระ/15-overhaul-AC.md` — AC-S1…S14 (กำหนดให้/เมื่อ/แล้ว + ฟอร์ม · กันพลาด · หลังบันทึก หรือขั้น stepper + ข้อห้าม · ยังไม่เคาะ · ข้อมูลจำลอง) + ข้อกำหนดร่วมหน้ารายการแผน + คำถามรวม 7 ข้อ · **กติกาเขียน AC** อยู่หัวไฟล์ + CLAUDE.md หัวข้อใหม่ (ของเดิม `clickup/ac-*.md` แบบเก่า ไม่ย้อนแก้)
+            · `16-overhaul-toast-notification.md` — สั่ง _"ออกแบบ toast และ notification ของ overhaul แยกเป็นอีกเรื่องนึง ไม่รวมของเดิม … อ่าน component และลองออกแบบมาเลย แยกเป็น pattern"_ → หัวข้อ 0 แยก toast / notification / Alert ·
+              toast = component `Notification` Success/Error ขวาล่าง (T1–T15 ครบทุกการกระทำ · error ค้างจนกดปิด = เสนอ) · notification = กระดิ่ง `Nav button` Indicator + `Notification card` (N1–N13 ผู้รับ/สีจุด/ข้อความ/ปลายทาง · mobile = bottom sheet เสนอ) · ตารางความสัมพันธ์ต่อเหตุการณ์ · คำถามต้องเคาะ 8 ข้อ
+              (ไลบรารีมี `Toast` แต่ยังไม่เสร็จ ไม่มีจอไหนใช้ · `_Notification item base` นำเข้าตรงไม่ได้ ชื่อขึ้นต้น "_" ⇒ แก้จากในการ์ด)
+            · ปลั๊กอิน overhaul2: ปุ่ม **"สร้างชุด toast + notification"** → หน้า `overhaul-noti-N` บล็อก P (toast 4 state) · Q (notification 4 state) × desktop/mobile = 16 จอ · `buildSet()` ใช้ร่วมกับชุด 14 scenario · harness `MODE=build-noti FIRST='สำเร็จ บนหน้ารายการแผน'` (16 จอ คำเตือน 0)
+            · **ป้ายข้างจอ = component set `Device Type`** (Type=Header/Desktop/Mobile · หน้า Design ของ Maintain-D · เจ้าของงาน publish แล้ว) แทน `Component 1` (เหลือเป็นตัวสำรอง · จับชื่อ variant ไม่สนตัวพิมพ์ · ปุ่มเช็ครายงาน variant) · R19 ใน component-rules.md/.json อัปเดต · harness LOCAL รวม Device Type (ดัมป์ Maintain-D ต้องดึงใหม่ถึงจะเทสต์ของจริง — ทดสอบไปด้วยดัมป์จำลองแล้ว 45 ป้าย)
+            · ปุ่มแก้เฉพาะจุดใหม่ 2 ปุ่ม (ไม่สร้างจอใหม่ ไม่ย้าย): **"เปลี่ยนป้ายข้างจอเป็น Device Type"** (แทนที่เดิม 45 ป้าย/หน้า) · **"ปิด Clip content ทุกจอ"** (สั่ง _"clip content เอาออก"_ · ชุดใหม่ไม่ clip ตั้งแต่สร้าง · เฟรม Progress steps ประกอบเองด้วย)
+            · เทสต์: `node figma-export/test-overhaul2-plugin.js` 112 จอ คำเตือน 0 · build-noti 16 จอ คำเตือน 0 · MODE=patch PATCH=patch-device / patch-clip ผ่าน
+            - [ ] ⬜ Notion: เจ้าของงานถามว่าเขียน AC ลง Notion ได้ไหม — ได้ แต่บัญชีที่ต่ออยู่เป็น **Tyrosine's Notion** ไม่ใช่ของเจ้าของงาน (มีหน้า "งานหลังจาก meeting. Overhal") · รอเคาะว่าจะลงบัญชีนั้นหรือเปลี่ยนการเชื่อมต่อ
+            - [ ] ⬜ รอเจ้าของงานกดปุ่ม toast+notification / ปิด clip / เปลี่ยนป้าย ใน Figma แล้วรีวิว · mobile notification แบบ bottom sheet ยังไม่ผ่านทีมออกแบบ (ยังไม่ตั้งเป็น R20) · toast error ค้างจนกดปิด = เสนอ
+            - [ ] ⬜ เคาะคำถาม AC 7 ข้อ (ท้ายไฟล์ 15) + toast/notification 8 ข้อ (ท้ายไฟล์ 16) · ดัมป์ Maintain-D ใหม่ให้มี Device Type · ยังไม่มี Notion/ClickUp card ของ AC
       - [x] 📐 **กติกาสร้างจอ R1–R18 (19 ต.ค.)** — `figma-export/component-rules.md` (คนอ่าน) + `component-rules.json` (เทสต์บังคับใน test-overhaul2-plugin.js · ผิด = ไม่ผ่าน) · CLAUDE.md สั่งอ่านก่อนสร้างจอทุกครั้ง
             เจ้าของงานสั่ง _"การสร้างครั้งต่อไปของโปรเจ็คนี้จะใช้เงื่อนไข component ที่ถูกต้องเท่านั้น"_ · ที่มา: รีวิวทีมออกแบบ (Header Tablet · ไม่มี divider · Section header เฉพาะ Create/Edit ·
             Section label หน้า Detail · ปิด Info icon · Table/Progress steps ทั้งก้อน · Content/เลือกรถ ทีมออกแบบทำเอง) + ตัวอย่างกล่องแสดงข้อมูล + นัดหมายแบบงานซ่อม + 3 ช่อง WBS ไม่บังคับ
