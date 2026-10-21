@@ -6,15 +6,15 @@
   #log{margin-top:10px;height:220px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
 </style>
 <p><b>จอ Overhaul v2 ครบ 14 scenario (62 จอ) ฉบับหลัง PO confirm ทุกหน้า (21 ต.ค.)</b> — ทุกชิ้นเป็น instance ของ component จริง · จัดวางแบบตาราง flow (R19: 1 scenario = 1 บล็อก A–O · ป้าย A.1 A.2 … = state) · สร้างบนหน้าใหม่ทุกครั้ง ไม่แตะชุดเดิม · ราว 2–3 นาทีต่อปุ่ม</p>
+<p style="margin:4px 0"><b>อุปกรณ์ที่สร้าง</b> (ใช้กับทุกปุ่มสร้างด้านล่าง ยกเว้น 2 ปุ่ม Desktop/Mobile ที่ระบุเอง): <label><input type="radio" name="dev" value="desktop" checked> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label> <label><input type="radio" name="dev" value="both"> ทั้งคู่</label> <small>— เจ้าของงาน 21 ต.ค.: ตอนนี้ยังไม่ทำ mobile ถ้าทำให้ยึดจาก desktop</small></p>
 <p style="margin:4px 0"><label><input type="checkbox" id="here"> <b>วางต่อท้ายหน้าที่เปิดอยู่</b> แทนสร้างหน้าใหม่ (ใช้กับทุกปุ่มสร้างด้านล่าง · ของเดิมบนหน้านั้นไม่ถูกแตะ)</label></p>
 <button id="desk">สร้าง Desktop (1440) → หน้า overhaul-desktop-N</button>
 <button id="mob" style="background:#7a0463">สร้าง Mobile (402×874) → หน้า overhaul-mobile-N</button>
 <p><b>สร้างเฉพาะ scenario ที่เลือก</b> — ติ๊กแล้วกด ได้เฉพาะบล็อกนั้น (รหัส A–O เดิม) บนหน้า overhaul-sel-N หรือต่อท้ายหน้าที่เปิดอยู่ · ใช้เทียบ/แทนบางจอโดยไม่ต้องสร้างทั้ง 14<br>
-<span id="pick"></span><br>
-<label><input type="radio" name="dev" value="desktop" checked> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label> <label><input type="radio" name="dev" value="both"> ทั้งคู่</label></p>
+<span id="pick"></span></p>
 <button id="pickgo" style="background:#1d4ed8">สร้างเฉพาะ scenario ที่เลือก</button>
 <p><b>toast</b> — หน้าแยก เฉพาะ toast ไม่มี UI อื่น: 1 toast = 1 เฟรมโปร่ง (instance <code>Notification</code> แก้ข้อความได้) · ถ้อยคำ 23 ข้อความตามที่ PO confirm · บล็อก A–E ตามหน้า 1–5 · แถว desktop แล้ว mobile · ทุกเฟรมตั้ง Export settings แล้ว (SVG + PNG 2x)</p>
-<button id="toastp" style="background:#7c3aed">สร้างหน้า toast → หน้า overhaul-toast-N</button>
+<button id="toastp" style="background:#7c3aed">สร้างหน้า toast → หน้า overhaul-toast-N</button> <small>(toast ยังคงมีทั้ง desktop/mobile ถ้าเลือก "ทั้งคู่")</small>
 <p><b>Dashboard งาน Overhaul (21 ต.ค.)</b> — แท็บในหน้าจัดการงาน Overhaul ตามโครง MA Overview: แผน · รถหลัง Overhaul · ซ่อมหลัง Overhaul · อะไหล่ + หน้ารายคัน "หลัง Overhaul" · แต่ละบล็อกมี "เฟส 1" (ข้อมูลที่มีจริง) และ "เป้าหมาย" (+ คอลัมน์ที่ต้องเพิ่มช่องในโฟลว์ก่อน มี Alert บอก) · 12 จอ × 2 ขนาด · เอกสารคอลัมน์ Diagram/01-บำรุงรักษาตามวาระ/20</p>
 <button id="dash" style="background:#0e7490">สร้าง Dashboard → หน้า overhaul-dash-N</button>
 <p><b>notification</b> — กระดิ่งจุดแดง + แผง Notification card (mobile = bottom sheet) · 4 state × desktop/mobile</p>
@@ -27,14 +27,14 @@
 <button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button>
 <div id="log"></div>
 <script>
-const send = (type, extra) => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: Object.assign({ type, here: document.getElementById('here').checked }, extra || {}) }, '*'); };
+const send = (type, extra) => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: Object.assign({ type, here: document.getElementById('here').checked, devices: document.querySelector('input[name=dev]:checked').value }, extra || {}) }, '*'); };
 document.getElementById('upd').onclick = () => send('update-selected', { addNew: document.getElementById('addnew').checked });
 document.getElementById('ptx').onclick = () => send('patch-texts');
 document.getElementById('desk').onclick = () => send('build-desktop');
 document.getElementById('mob').onclick = () => send('build-mobile');
 document.getElementById('toastp').onclick = () => send('build-toast');
 document.getElementById('noti').onclick = () => send('build-noti');
-document.getElementById('pickgo').onclick = () => send('build-pick', { pick: [...document.querySelectorAll('#pick input:checked')].map(i => +i.value), devices: document.querySelector('input[name=dev]:checked').value });
+document.getElementById('pickgo').onclick = () => send('build-pick', { pick: [...document.querySelectorAll('#pick input:checked')].map(i => +i.value) });
 document.getElementById('dash').onclick = () => send('build-dash');
 document.getElementById('chk').onclick = () => send('check');
 onmessage = (e) => { const m = e.data.pluginMessage; if (m && m.type === 'scenarios') { document.getElementById('pick').innerHTML = m.items.map((t, i) => '<label style="display:inline-block;margin:2px 10px 2px 0"><input type="checkbox" value="' + i + '"> ' + String.fromCharCode(65 + i) + ' ' + t.split(' · ')[0].replace(' — ', ' ') + '</label>').join(''); return; } if (m && m.type === 'log') { const el = document.getElementById('log'); el.textContent += m.text + '\n'; el.scrollTop = el.scrollHeight; } };

@@ -327,7 +327,7 @@ const MODE_CHECK = process.env.MODE === 'check';
     const kind = mobs.length ? 'Mobile' : 'Desktop', other = mobs.length ? 'Desktop' : 'Mobile';
     if (labels.some(n => n.name.endsWith(' · ' + other))) logs.push('⚠ R19 ชุด ' + kind + ' อย่างเดียว แต่มีป้าย ' + other);
     if (!labels.some(n => n.name.endsWith(' · ' + kind))) logs.push('⚠ R19 ชุด ' + kind + ' ไม่มีป้าย ' + kind);
-    if (screens.some(n => Math.round(n.width) !== (mobs.length ? 402 : 1440))) logs.push('⚠ R19 ชุด ' + kind + ' มีจอกว้างผิดอุปกรณ์');
+    if (!/^TOAST \/ /.test(screens[0].name) && screens.some(n => Math.round(n.width) !== (mobs.length ? 402 : 1440))) logs.push('⚠ R19 ชุด ' + kind + ' มีจอกว้างผิดอุปกรณ์');   // เฟรม toast (R20) ไม่ใช่ขนาดจอ
   }
   console.log('R19 จัดวางแบบตาราง flow: ป้าย ' + labels.length + (split ? ' · ชุดอุปกรณ์เดียว (' + (mobs.length ? 'mobile ' + mobs.length : 'desktop ' + desks.length) + ' จอ)' : ' · คู่ desktop/mobile ' + pairs) + (logs.some(l => /R19/.test(l)) ? '' : ' ✓'));
   if (process.env.DUMP_TEXT) {   // DUMP_TEXT=regex ชื่อจอ → พิมพ์ข้อความทุกชั้น (รวมที่ซ่อน) ตามลำดับ layer — ใช้เทียบกับข้อความที่ก๊อปจาก Figma (21 ต.ค. 2569)

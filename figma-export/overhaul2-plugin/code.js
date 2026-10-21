@@ -1124,7 +1124,8 @@ async function job(name, stage, build) {
   for (const node of await build()) if (node) add(content, node, 'h');
   return scr;
 }
-const apptKv = (ret, d1, d2) => kv([[ret ? 'ช่วงวันนัดรับรถ' : 'ช่วงวันนำรถเข้า', d1 + ' – ' + d2], ['ผู้ประสานงาน (กบค.)', 'นายวิชัย ทองดี'], ['เบอร์โทรผู้ประสานงาน (กบค.)', '02-590-9123']], 3);   // 21 ต.ค. 2569: ไม่แสดงอู่/หมายเหตุ ให้ตรงฟอร์ม
+const apptKv = (ret, d1, d2) => kv([[ret ? 'ช่วงวันนัดรับรถ' : 'ช่วงวันนำรถเข้า', d1 + ' – ' + d2], ['ผู้ประสานงาน (กบค.)', 'นายวิชัย ทองดี'], ['เบอร์โทรผู้ประสานงาน (กบค.)', '02-590-9123'],
+  ['ชื่ออู่', VENDOR[0]], ['เบอร์อู่', VENDOR[1]], ['ที่อยู่', VENDOR[2]], ['หมายเหตุ', '—']], 3);   // มือถือคงเดิม (ยังไม่ทำ mobile — 21 ต.ค. 2569)
 /* นัดหมาย (desktop) = instance ของ RepairAppointmentStep — component ในไฟล์ Maintain-D หน้า Design (ฟอร์มนัดของงานซ่อม)
    เจ้าของงานสั่ง 19 ต.ค. 2569: "การนัดหมายเข้าซ่อมอยากให้ใช้แบบนี้ เพราะเรื่องการซ่อมบำรุงใช้แบบนี้ โดย section รูปแบบการซ่อมไม่ต้องมี" (RepairMethod = false)
    variant: ฟอร์ม Type=In · State=Default/Filled · รอตอบกลับ Type=Wating · ปฏิเสธ Type=In State=ReturnReason (ผลตอบกลับ + ฟอร์มส่งนัดใหม่)
@@ -1173,7 +1174,10 @@ async function apptForm(ret, o) {
   const nodes = [col('Section', [await section(ret ? 'นัดหมายรับรถ' : 'นัดหมายนำรถเข้าอู่'),
     row('Row', [field(ret ? 'นัดรับรถตั้งแต่วันที่' : 'นำรถเข้าตั้งแต่วันที่', o.d1, { placeholder: 'วว/ดด/ปปปป', error: o.errors ? 'กรุณาเลือกวันที่เริ่ม' : '' }),
       field('ถึงวันที่', o.d2, { placeholder: 'วว/ดด/ปปปป', error: o.errors ? 'กรุณาเลือกวันที่สิ้นสุด' : '' }), frame('Spacer', 'VERTICAL')]),
-    row('Row', [coord, field('เบอร์โทรผู้ประสานงาน (กบค.)', o.coord ? '02-590-9123' : '', { state: 'Readonly', placeholder: 'แสดงเมื่อเลือกผู้ประสานงาน' }), frame('Spacer', 'VERTICAL')])], 16),   // 21 ต.ค. 2569: ไม่มีแถวอู่และหมายเหตุ ให้ตรงกับฟอร์ม desktop ที่เจ้าของงานเคาะ
+    row('Row', [coord, field('เบอร์โทรผู้ประสานงาน (กบค.)', o.coord ? '02-590-9123' : '', { state: 'Readonly', placeholder: 'แสดงเมื่อเลือกผู้ประสานงาน' }), frame('Spacer', 'VERTICAL')]),
+    // มือถือ/แบบประกอบเอง คงเดิมไว้ก่อน — เจ้าของงาน 21 ต.ค. 2569: "บนมือถือยังไม่ต้องแก้ ถ้ามีการทำมือถือ ให้อ่านจาก desktop แต่ตอนนี้ยังไม่ทำ mobile" (desktop ซ่อนช่องอู่แล้ว ตอนทำมือถือให้ตัดแถวอู่/หมายเหตุตาม)
+    row('Row', [field('ชื่ออู่' + (ret ? ' (ค่าตั้งต้นจาก PO)' : ''), VENDOR[0], { state: 'Readonly' }), field('เบอร์อู่', VENDOR[1], { state: 'Readonly' }), field('ที่อยู่', VENDOR[2], { state: 'Readonly' })]),
+    area('หมายเหตุ', '', { optional: true, placeholder: 'ระบุหมายเหตุ' })], 16),
     btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันนัดหมาย', { size: 'lg' }]])];
   nodes._coord = coord;
   return nodes;
@@ -1618,7 +1622,8 @@ const TOAST_GROUPS = TOAST_SCENARIOS.map(([title, screens], i) => {
   const code = LETTERS[i], tag = title.split(' · ')[0], rest = title.split(' · ').slice(1).join(' · ');
   return { code, title: 'หน้า ' + tag + ' ' + rest, subs: [{ code, title: rest, tag, screens }] };
 });
-async function buildToast(o) { await buildSet('overhaul-toast', TOAST_SCENARIOS, TOAST_GROUPS, 'toast (เฉพาะ toast)', Object.assign({ prefix: 'TOAST', rowMin: 0 }, o)); }
+const devOf = (o) => (o && o.devices === 'mobile') ? [true] : (o && o.devices === 'desktop') ? [false] : [false, true];   // ตัวเลือกอุปกรณ์จากหน้าต่างปลั๊กอิน (21 ต.ค. 2569 เจ้าของงาน: ตอนนี้ยังไม่ทำ mobile — ค่าเริ่มต้น Desktop)
+async function buildToast(o) { await buildSet('overhaul-toast', TOAST_SCENARIOS, TOAST_GROUPS, 'toast (เฉพาะ toast)', Object.assign({ prefix: 'TOAST', rowMin: 0 }, o, { devices: devOf(o) })); }
 
 /* ---------- แก้บนหน้า Figma เดิม (เจ้าของงานถาม 21 ต.ค. 2569: "tab ที่เคย export ไว้ อยากให้เข้าปรับแก้ในนี้ได้หรือเปล่า เพราะมีบางส่วนที่มีการแก้ไขไปบ้างแล้ว" → เคาะ: แก้แค่บางจอ จอที่แก้ให้ตรง CF ทั้งจอ · จอใหม่ต่อท้ายแถวของ scenario นั้น)
    ปุ่ม "อัปเดตจอที่เลือกเป็นฉบับ CF": สร้างจอฉบับปัจจุบัน (SCENARIOS) แทนที่เฟรมที่เลือก ตำแหน่ง/ลำดับ layer เดิม · จอที่ไม่ได้เลือกไม่แตะ · state ที่ CF ตัด (เมนู "…") ไม่ลบ แค่ติดป้าย · state ใหม่ของ scenario ที่แตะ ต่อท้ายแถว desktop/mobile ของบล็อกนั้น
@@ -1950,23 +1955,22 @@ const DASH_GROUPS = DASH_SCENARIOS.map(([title, screens], i) => {
   const code = LETTERS[i], tag = title.split(' · ')[0], rest = title.split(' · ').slice(1).join(' · ');
   return { code, title: tag + ' · ' + rest, subs: [{ code, title: rest, tag, screens }] };
 });
-async function buildDash(o) { await buildSet('overhaul-dash', DASH_SCENARIOS, DASH_GROUPS, 'dashboard', o); }
+async function buildDash(o) { await buildSet('overhaul-dash', DASH_SCENARIOS, DASH_GROUPS, 'dashboard', Object.assign({}, o, { devices: devOf(o) })); }
 
 /* ---------- สร้างทั้งหมด ---------- */
 /* เจ้าของงานสั่ง 21 ต.ค. 2569: "แยกการ export mobile ออกจาก desktop ทำให้เป็น 2 ปุ่ม" ⇒ desktop → หน้า overhaul-desktop-N · mobile → หน้า overhaul-mobile-N (แต่ละหน้ามีแถวอุปกรณ์เดียว · ผัง R19 เหมือนเดิม)
    build() = ทั้งคู่บนหน้าเดียว (ไม่มีปุ่มแล้ว · harness MODE=build ยังใช้ได้) */
 async function build(o) { await buildSet('overhaul', SCENARIOS, GROUPS, 'scenario', o); }
-async function buildDesktop(o) { await buildSet('overhaul-desktop', SCENARIOS, GROUPS, 'scenario · desktop', Object.assign({ devices: [false] }, o)); }
-async function buildMobile(o) { await buildSet('overhaul-mobile', SCENARIOS, GROUPS, 'scenario · mobile', Object.assign({ devices: [true] }, o)); }
-async function buildNoti(o) { await buildSet('overhaul-noti', NOTI_SCENARIOS, NOTI_GROUPS, 'notification', o); }
+async function buildDesktop(o) { await buildSet('overhaul-desktop', SCENARIOS, GROUPS, 'scenario · desktop', Object.assign({}, o, { devices: [false] })); }   // ปุ่มนี้ระบุอุปกรณ์เอง ไม่ใช้ตัวเลือกบนหน้าต่าง
+async function buildMobile(o) { await buildSet('overhaul-mobile', SCENARIOS, GROUPS, 'scenario · mobile', Object.assign({}, o, { devices: [true] })); }
+async function buildNoti(o) { await buildSet('overhaul-noti', NOTI_SCENARIOS, NOTI_GROUPS, 'notification', Object.assign({}, o, { devices: devOf(o) })); }
 /* สร้างเฉพาะ scenario ที่ติ๊ก (เจ้าของงานสั่ง 21 ต.ค. 2569 "ลอง generate หน้านัดหมายแบบใหม่ออกมา" — ไม่ต้องสร้างทั้ง 14) · รหัสตัวอักษรคงเดิม (A–O) · หน้า overhaul-sel-N หรือต่อท้ายหน้าที่เปิดอยู่ */
 async function buildPick(o) {
   o = o || {};
   const idx = (o.pick || []).map(Number).filter(i => i >= 0 && i < SCENARIOS.length);
   if (!idx.length) { log('ยังไม่ได้ติ๊ก scenario — ติ๊กอย่างน้อย 1 รายการแล้วกดอีกครั้ง'); return; }
   const SCEN = SCENARIOS.filter((_, i) => idx.indexOf(i) >= 0), GRP = GROUPS.filter((_, i) => idx.indexOf(i) >= 0);
-  const devices = o.devices === 'mobile' ? [true] : o.devices === 'desktop' ? [false] : [false, true];
-  await buildSet('overhaul-sel', SCEN, GRP, 'scenario ที่เลือก (' + GRP.map(g => g.code).join(' ') + ')', Object.assign({}, o, { devices }));
+  await buildSet('overhaul-sel', SCEN, GRP, 'scenario ที่เลือก (' + GRP.map(g => g.code).join(' ') + ')', Object.assign({}, o, { devices: devOf(o) }));
 }
 async function buildSet(base, SCEN, GRP, what, o) {
   o = o || {};
@@ -1990,7 +1994,7 @@ async function buildSet(base, SCEN, GRP, what, o) {
      (เดิม: scenario ละแถว desktop–mobile คู่กัน) · ป้ายใช้ Header/State + Component 1 ของทีมออกแบบ · ไม่ใช้ section */
   const TOTAL = SCEN.reduce((a, x) => a + x[1].length, 0);
   log(INDEX.has('Header') ? 'แถบรหัส flow: component Header ของทีมออกแบบ' : 'แถบรหัส flow: ไม่พบ component Header ในไฟล์ — วาดแถบธรรมดาสีเดียวกันแทน');
-  const devices = o.devices || [false, true];
+  const devices = Array.isArray(o.devices) ? o.devices : devOf(o);   // กันค่าเป็นข้อความ ('desktop'/'mobile'/'both') จากหน้าต่างปลั๊กอิน
   const { made } = await buildGrid(page, prefix, GRP, y, TOTAL * devices.length, { rowMin: o.rowMin, devices });
   // ตรวจ: ทุกชิ้นที่ไม่ใช่กรอบจัดวาง ต้องเป็น instance
   // นับจากโครงอย่างเดียว (เดิมถาม main component ทีละ instance 1,600+ ครั้ง) · ชื่อ component ที่ใช้มาจากที่ปลั๊กอินสร้างเอง (USED)
@@ -2014,14 +2018,14 @@ function findInstanceAncestor(n) { let p = n.parent; while (p) { if (p.type === 
 
 figma.ui.onmessage = async (msg) => {
   try {
-    const o = { here: !!msg.here };
+    const o = { here: !!msg.here, devices: msg.devices };
     if (msg.type === 'build') await build(o);
     if (msg.type === 'build-desktop') await buildDesktop(o);
     if (msg.type === 'build-mobile') await buildMobile(o);
     if (msg.type === 'build-noti') await buildNoti(o);
     if (msg.type === 'build-toast') await buildToast(o);
     if (msg.type === 'build-dash') await buildDash(o);
-    if (msg.type === 'build-pick') await buildPick(Object.assign(o, { pick: msg.pick, devices: msg.devices }));
+    if (msg.type === 'build-pick') await buildPick(Object.assign(o, { pick: msg.pick }));
     if (msg.type === 'update-selected') await updateSelected({ addNew: msg.addNew !== false });
     if (msg.type === 'patch-texts') await patchTexts();
     if (msg.type === 'check') { log('— เช็ค component (ไม่สร้างอะไร) —'); await resolveAll(NEEDED, true); log(deviceSetInfo()); }
