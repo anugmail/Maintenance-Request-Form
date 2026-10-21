@@ -1,6 +1,6 @@
 {
   "_about": "กติกาการสร้างจอด้วย component จริงของไลบรารี (Component) VMS Plus — ตัวทดสอบ test-overhaul2-plugin.js อ่านไฟล์นี้แล้วตรวจทุกจอ · ผิดกติกา = ทดสอบไม่ผ่าน · คำอธิบายรายข้ออยู่ที่ component-rules.md · แก้กติกาต้องแก้ทั้ง 2 ไฟล์",
-  "_updated": "2026-10-21 (R25 ตารางทุก scenario = component Table เสมอ ห้ามประกอบเอง · R24 เลือกรถในฟอร์ม PO = Input dropdown + ชิป · R23 แบบที่เจ้าของงานส่งเป็นหลัก · R22 dashboard แบบ MA Overview · R20 หน้า toast แยก · R21 จัดการเป็นไอคอน) · 2026-10-19 (R10 R16–R17)",
+  "_updated": "2026-10-21 (R21 ฉบับเจ้าของงาน: ปุ่ม … + Dropdown menu บนตารางรายการแผน/PO · R25 ตารางทุก scenario = component Table เสมอ ห้ามประกอบเอง · R24 เลือกรถในฟอร์ม PO = Input dropdown + ชิป · R23 แบบที่เจ้าของงานส่งเป็นหลัก · R22 dashboard แบบ MA Overview · R20 หน้า toast แยก · R21 จัดการเป็นไอคอน) · 2026-10-19 (R10 R16–R17)",
   "library": {
     "Table": {
       "cols": 8,
@@ -178,6 +178,12 @@
       "desktopOnly": true,
       "component": "Badge outline with remove icon",
       "source": "รถที่เลือกแล้วในฟอร์ม PO แสดงเป็นชิป Badge outline with remove icon (Color=Brand) ข้อความ \"ทะเบียน จังหวัด\" ใต้ช่อง Input dropdown \"เลือกรถ\" · รายการที่เปิด = Dropdown list แถวละทะเบียน+จังหวัด (ไม่มีบรรทัดรอง) คันที่เลือกแล้ว State=Selected"
+    },
+    {
+      "id": "R21",
+      "screens": "^OH2 / .*เมนู \"…\"",
+      "component": "Dropdown menu",
+      "source": "เจ้าของงานเคาะ 21 ต.ค. 2569 ค่ำ จากภาพจอจริง \"ตรงนี้จริงๆ มันเป็นจุด 3 จุด แล้ว action ถึงจะมีให้เลือกว่า view edit delete\" · \"สร้างแผน สร้าง PO 2 ตาราง\" · \"เลือกแล้ว ใช้เป็น component ของ 2 หน้านี้เลย เซฟให้หน่อย\" — ตารางรายการแผน/PO ช่องจัดการ = ปุ่ม … (Table cell Style=Action icons เปิดช่องเดียว ไอคอน more_horiz) + Dropdown menu ดูรายละเอียด · แก้ไข · ลบ ตอนกด · แทนชีต CF \"ICON Action\" (ฉบับเช้า เคย forbid Dropdown menu) · component-rules.md §5"
     }
   ],
   "displayBox": {
@@ -277,12 +283,6 @@
     }
   },
   "forbid": [
-    {
-      "id": "R21",
-      "screens": "^OH2 / ",
-      "component": "Dropdown menu",
-      "source": "PO CF 21 ต.ค. 2569 ทุกหน้า \"ขอเป็น ICON Action\" — จัดการท้ายแถวเป็นไอคอน ดูรายละเอียด · แก้ไข · ลบ (Table cell / Mobile table item Style=Action icons) ไม่ใช่เมนู …"
-    },
     {
       "id": "R24",
       "screens": "^OH2 / .*S[45] — (?!.*· mobile$)",

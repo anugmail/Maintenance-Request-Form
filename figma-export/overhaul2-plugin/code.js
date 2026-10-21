@@ -491,7 +491,7 @@ async function upload(label, files, o) {   // File upload Type=Default
   });
   return u;
 }
-/* ไอคอนจัดการท้ายแถว (PO CF 21 ต.ค. 2569 ทุกหน้า: "ขอเป็น ICON Action" แทนเมนู "…") — Table cell / Mobile table item Style=Action icons มี 4 ช่อง View · Edit · Print · Delete
+/* ไอคอนท้ายแถว — Table cell / Mobile table item Style=Action icons มี 4 ช่อง View · Edit · Print · Delete · ROW_ICONS = ชุด ดู/แก้ไข/ลบ (ชีต CF "ICON Action" 21 ต.ค. เช้า) ตอนนี้ใช้แค่ใน patchTexts — ตารางรายการแผน/PO กลับเป็นปุ่ม "…" + เมนู (เจ้าของงาน 21 ต.ค. ค่ำ ดู menuAt)
    เปิดช่องตามจำนวนไอคอนเรียงซ้ายไปขวา แล้วสลับไอคอนในช่องเป็นของเรา (ดูรายละเอียด · แก้ไข · ลบ) */
 const ICON_SLOTS = ['View', 'Edit', 'Print', 'Delete'];
 const ROW_ICONS = ['quick_reference_all-24-300-round', 'stylus-24-300-round', 'delete-24-300-round'];
@@ -947,6 +947,33 @@ async function lightbox(scr, o) {
   if (hd) { await text(hd, 'Text', o.title); await text(hd, 'Supporting text', o.sub || ''); const fi = find(hd, 'Featured icon'); if (fi) fi.visible = false; }
   const ft = find(m, 'Modal footer'); if (ft) ft.visible = false;
 }
+/* ปุ่ม "…" ท้ายแถว + Dropdown menu — เจ้าของงานเคาะ 21 ต.ค. 2569 ค่ำ จากภาพจอจริง: "ตรงนี้จริงๆ มันเป็นจุด 3 จุด แล้ว action ถึงจะมีให้เลือกว่า view edit delete"
+   ใช้กับ 2 ตาราง: รายการแผน · PO ("สร้างแผน สร้าง PO 2 ตาราง") แทนชีต CF "ขอเป็น ICON Action" (R21 ฉบับใหม่ · R23 แบบเจ้าของงานเหนือชีต) · ตารางอื่นคงไอคอนตรง (S9 ดินสอ/ถังขยะตามจอ J · อะไหล่ · ลูกศร) */
+const MENU = [['ดูรายละเอียด', 'quick_reference_all-24-300-round'], ['แก้ไข', 'stylus-24-300-round'], ['ลบ', 'delete-24-300-round']];
+const firstMenuCell = (scr) => scr.findAll(n => n.type === 'INSTANCE' && n.name === 'Table cell' && n.variantProperties && n.variantProperties.Style === 'Action icons')[0];
+function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "…" · mobile = bottom sheet ที่มีรายการเมนู
+  const fill = (m) => { hide(m, '_Dropdown menu header'); const list = (find(m, 'Menu items') || m).children; const want = { 0: items[0], 1: items[1], 3: 'divider', 4: items[2] };
+    list.forEach((it, i) => { const w = want[i]; if (!w) { it.visible = false; return; } if (w !== 'divider') setProps(it, { Text: w[0], Shortcut: false, Icon: true, 'Icon swap': icon(w[1]) }); }); };
+  if (MOB) {
+    overlay(scr, inst('Background overlay'), 0, 0).resize(VW(), VH());
+    const sh = frame('Sheet', 'VERTICAL', { fill: WHITE, pad: [0, 0] }); sh.topLeftRadius = sh.topRightRadius = 24;
+    overlay(scr, sh, 0, 0); sh.counterAxisSizingMode = 'FIXED'; sh.resize(VW(), sh.height);
+    const hd = inst('Bottom sheet header'); add(sh, hd, 'h'); const ta = find(hd, 'Text and action'); if (ta) ta.visible = false; const dv = find(hd, 'Divider'); if (dv) dv.visible = false;
+    const m = inst('Dropdown menu'); add(sh, m, 'h'); fill(m);
+    m.strokes = []; sh.y = VH() - sh.height;
+    return m;
+  }
+  const m = inst('Dropdown menu'); fill(m);
+  overlay(scr, m, 0, 0);
+  if (anchor) {
+    const sb = scr.absoluteBoundingBox, ab = anchor.absoluteBoundingBox;
+    let right = ab.x - sb.x + ab.width;
+    let clip = anchor.parent; while (clip && clip !== scr && !(clip.type === 'INSTANCE' && clip.name === 'Table' && clip.clipsContent)) clip = clip.parent;   // ตารางเลื่อนแนวนอน (13 คอลัมน์): ช่อง … อาจอยู่นอกส่วนที่เห็น
+    if (clip && clip !== scr) { const cb = clip.absoluteBoundingBox; if (ab.x + ab.width > cb.x + cb.width) { right = cb.x - sb.x + cb.width; log('· เมนู "…": ช่องจัดการอยู่ในส่วนที่ต้องเลื่อนแนวนอน ⇒ วางเมนูชิดขอบขวาของตารางที่เห็น'); } }
+    m.x = right - m.width - 16; m.y = ab.y - sb.y + ab.height - 8;
+  }
+  return m;
+}
 function comboAt(scr, anchor, items) {   // Dropdown list ใต้ช่องพิมพ์ค้น
   const l = inst('Dropdown list');
   const rows = l.children.filter(n => n.name === 'Dropdown list item');
@@ -1038,10 +1065,10 @@ const EDIT = { name: 'Overhaul ประจำปีงบ 2569 — รถเค
 /* ---------- หน้า 3 รายละเอียดแผน ---------- */
 /* ตาราง PO (หน้า 2 CF 21 ต.ค. 2569): + ความคืบหน้า (ปิดงานแล้ว x/n) + ระยะสัญญา (ใกล้ครบ = บรรทัดรองสีแดง) · จัดการเป็นไอคอน ดู/แก้ไข/ลบ แทนเมนู "…" · 7 คอลัมน์ใช้ component Table ได้
    PO ฝากถาม 2 เรื่องที่ยังไม่ทำ: PO ใบเดียวมีอู่ได้มากกว่า 1 ไหม · กดแถวแล้วขยายเห็นรถใน PO (ไลบรารีไม่มีแถวขยาย) — รอเคาะ */
-const PO_COLS = [['หมายเลข PO', 150, 'Lead text'], ['ชื่อ PO', 0], ['ศูนย์บริการ/อู่', 250], ['จำนวนรถ', 96], ['ความคืบหน้า', 150], ['ระยะสัญญา', 210], ['', 140]];
+const PO_COLS = [['หมายเลข PO', 150, 'Lead text'], ['ชื่อ PO', 0], ['ศูนย์บริการ/อู่', 250], ['จำนวนรถ', 96], ['ความคืบหน้า', 150], ['ระยะสัญญา', 210], ['', 72]];
 const poRow = (r) => { const n = +r[3] || 0, d = +(r[4] || 0);
   return [r[0], r[1], r[2], r[3], n ? { progress: Math.round(d / n * 100), text: d + '/' + n } : '—',
-    r[5] ? { text: r[5] + ' – ' + r[6], sub: r[7] ? 'ใกล้ครบสัญญา (เหลือ 7 วัน)' : 'ตามใบสั่งจ้าง', subColor: r[7] ? 'error' : null } : '—', { icons: ROW_ICONS }]; };
+    r[5] ? { text: r[5] + ' – ' + r[6], sub: r[7] ? 'ใกล้ครบสัญญา (เหลือ 7 วัน)' : 'ตามใบสั่งจ้าง', subColor: r[7] ? 'error' : null } : '—', { menu: 1 }]; };
 async function planDetail(name, o) {
   o = o || {};
   const p = o.plan || PLANS[4];
@@ -1295,7 +1322,7 @@ const NEW_PO = ['PO-700202', 'ซ่อมระบบเครื่องย�
 const D = (a, b) => [a, b];
 const SCENARIOS = [
   ['หน้ารายการแผน — ค้นหา · ตัวกรอง · ค้นไม่เจอ · ยังไม่มีแผน', [
-    ['รายการแผน (component Table · ไอคอนจัดการ · pagination)', () => listScreen('รายการแผน', CF_LIST)],
+    ['รายการแผน (component Table · ปุ่ม … · pagination)', () => listScreen('รายการแผน', CF_LIST)],
     ['ตัวกรอง (ปีงบ · สถานะ · ประเภทยานพาหนะ · ช่วงวงเงิน)', async () => { const s = await listScreen('ตัวกรอง', CF_LIST); await filterPanelCF(s); return s; }],
     ['ผลกรองด้วยประเภทยานพาหนะ', () => listScreen('ผลกรองด้วยประเภทยานพาหนะ', Object.assign({}, CF_LIST, { rows: [PLANS_CF[0], PLANS_CF[3], PLANS_CF[5]], chips: ['ประเภทยานพาหนะ: รถกระเช้า'], pageOpt: { per: 5, total: 3 } }))],
     ['ค้นหา พิมพ์ 3 ตัวอักษร ขึ้น autocomplete', () => listScreen('ค้นหา autocomplete', Object.assign({}, CF_LIST, { query: 'I-69', combo: CF_COMBO }))],
@@ -1310,13 +1337,15 @@ const SCENARIOS = [
     ['บันทึกสำเร็จ (toast 1)', async () => { const s = await listScreen('S1 บันทึกสำเร็จ', Object.assign({}, CF_LIST, { rows: [NEW_PLAN_CF].concat(PLANS_CF.slice(0, 4)), pageOpt: { per: 5, total: PLANS_CF.length + 1 } })); await T(s, 1); return s; }],
     ['ดูรายละเอียดแผน', () => planDetail('S1 รายละเอียดแผน', { plan: NEW_PLAN, pos: [] })]]],
   ['S2 · กบค. แก้ไขแผน', [
-    ['กดไอคอนแก้ไข → ฟอร์มแก้ไข (เติมค่าเดิม)', () => planForm('S2 ฟอร์มแก้ไข', { edit: true, values: EDIT })],
+    ['เมนู "…" → แก้ไข', async () => { const s = await listScreen('S2 เมนู', CF_LIST); menuAt(s, firstMenuCell(s), MENU); return s; }],
+    ['กดแก้ไขในเมนู … → ฟอร์มแก้ไข (เติมค่าเดิม)', () => planForm('S2 ฟอร์มแก้ไข', { edit: true, values: EDIT })],
     ['ยืนยันการแก้ไขแผน', async () => { const s = await planForm('S2 ยืนยันการแก้ไข', { edit: true, values: Object.assign({}, EDIT, { budget: '11,000,000' }) });
       await confirm(s, { title: 'ยืนยันการแก้ไขแผน', sub: 'บันทึกการเปลี่ยนแปลงของแผน 123456 "Overhaul ประจำปีงบ 2569 — รถเครน"' }); return s; }],
     ['บันทึกสำเร็จ (toast 3)', async () => { const s = await planDetail('S2 บันทึกสำเร็จ'); await T(s, 3); return s; }],
     ['เปิดแก้ไขแผนที่ถูกลบไปแล้ว (toast 6)', async () => { const s = await listScreen('S2 ไม่พบแผน', Object.assign({}, CF_LIST, { rows: PLANS_CF.slice(1, 6), pageOpt: { per: 5, total: PLANS_CF.length - 1 } })); await T(s, 6); return s; }]]],
   ['S3 · กบค. ลบแผน', [
-    ['กดไอคอนลบ → ยืนยันการลบแผน', async () => { const s = await listScreen('S3 ยืนยันการลบ', CF_LIST); await confirm(s, { danger: true, title: 'ยืนยันการลบแผน',
+    ['เมนู "…" → ลบ', async () => { const s = await listScreen('S3 เมนู', CF_LIST); menuAt(s, firstMenuCell(s), MENU); return s; }],
+    ['กดลบในเมนู … → ยืนยันการลบแผน', async () => { const s = await listScreen('S3 ยืนยันการลบ', CF_LIST); await confirm(s, { danger: true, title: 'ยืนยันการลบแผน',
       sub: 'แผน 123460 "Overhaul ประจำปีงบ 2570 — รถกระเช้า ภาคใต้" และ Purchase Order 1 ใบในแผนนี้จะถูกลบ' }); return s; }],
     ['ลบสำเร็จ (toast 4)', async () => { const s = await listScreen('S3 ลบสำเร็จ', Object.assign({}, CF_LIST, { rows: PLANS_CF.slice(1, 6), pageOpt: { per: 5, total: PLANS_CF.length - 1 } })); await T(s, 4); return s; }]]],
   ['S4 · กบค. สร้าง Purchase order', [
@@ -1331,12 +1360,13 @@ const SCENARIOS = [
     ['บันทึกสำเร็จ (toast 7)', async () => { const s = await planDetail('S4 บันทึกสำเร็จ', { plan: PLANS[2], status: 'P2', pos: [NEW_PO] }); await T(s, 7); return s; }],
     ['รายละเอียด PO', () => poDetail('S4 รายละเอียด PO')]]],
   ['S5 · กบค. แก้ไข Purchase order', [
-    ['กดไอคอนแก้ไขของ PO → ฟอร์มแก้ไข PO', () => poForm('S5 ฟอร์มแก้ไข PO', { edit: true, name: 'ซ่อมระบบเครื่องยนต์', vendor: 'บริษัท ฮีโน่ มอเตอร์ส เซลส์ จำกัด', sel: [0, 2], order: [{ name: 'ใบสั่งจ้าง-PO-690101.pdf', size: '500 KB' }] })],
+    ['เมนู "…" ของ PO → แก้ไข', async () => { const s = await planDetail('S5 เมนู PO'); menuAt(s, firstMenuCell(s), MENU); return s; }],
+    ['กดแก้ไขในเมนู … ของ PO → ฟอร์มแก้ไข PO', () => poForm('S5 ฟอร์มแก้ไข PO', { edit: true, name: 'ซ่อมระบบเครื่องยนต์', vendor: 'บริษัท ฮีโน่ มอเตอร์ส เซลส์ จำกัด', sel: [0, 2], order: [{ name: 'ใบสั่งจ้าง-PO-690101.pdf', size: '500 KB' }] })],
     ['ยืนยันการแก้ไข PO', async () => { const s = await poForm('S5 ยืนยันการแก้ไข PO', { edit: true, name: 'ซ่อมระบบเครื่องยนต์และเกียร์', vendor: 'บริษัท ฮีโน่ มอเตอร์ส เซลส์ จำกัด', sel: [0, 2], order: [{ name: 'ใบสั่งจ้าง-PO-690101.pdf', size: '500 KB' }] });
       await confirm(s, { title: 'ยืนยันการแก้ไข PO', sub: 'บันทึกการเปลี่ยนแปลงของ PO-690101 "ซ่อมระบบเครื่องยนต์และเกียร์"' }); return s; }],
     ['บันทึกสำเร็จ (toast 8)', async () => { const s = await poDetail('S5 บันทึกสำเร็จ'); await T(s, 8); return s; }]]],
   ['S6 · กบค. ลบ purchase order', [
-    ['กดไอคอนลบของ PO → ยืนยันการลบ PO', async () => { const s = await planDetail('S6 ยืนยันการลบ PO'); await confirm(s, { danger: true, title: 'ยืนยันการลบ PO', sub: 'PO-690101 "ซ่อมระบบเครื่องยนต์" และงานของรถ 2 คันใน PO นี้จะถูกลบ' }); return s; }],
+    ['กดลบในเมนู … ของ PO → ยืนยันการลบ PO', async () => { const s = await planDetail('S6 ยืนยันการลบ PO'); await confirm(s, { danger: true, title: 'ยืนยันการลบ PO', sub: 'PO-690101 "ซ่อมระบบเครื่องยนต์" และงานของรถ 2 คันใน PO นี้จะถูกลบ' }); return s; }],
     ['ลบสำเร็จ (toast 9)', async () => { const s = await planDetail('S6 ลบสำเร็จ', { pos: POS.slice(1) }); await T(s, 9); return s; }]]],
   ['S7 · กบค. นัดหมายหน่วยงาน นำรถเข้า overhaul', [
     ['ฟอร์มนัด (ว่าง)', () => job('S7 ฟอร์มนัด', 'V1', () => apptForm(false))],
@@ -1596,14 +1626,14 @@ const NEW_PLAN_CF = ['123461', 'Overhaul ประจำปีงบ 2570 — �
    R25 (เจ้าของงานสั่ง 21 ต.ค. 2569 ค่ำ "ถ้าเป็นหน้า list ต้องดึงตารางให้ถูก"): desktop ใช้ component Table 8 คอลัมน์ ⇒ ยุบ 13 ช่องเป็น 8 คอลัมน์แบบ 2 บรรทัด (ไม่ตัดช่องใด):
      แผน = เลขแผน / ชื่อแผน · หน่วยงาน / ปีงบประมาณ · งบประมาณ (บาท) / ประเภทงบ + WBS · จำนวนรถ / รอติดตาม · ความคืบหน้า (progress) · สถานะ · แก้ไขล่าสุด / ผู้แก้ + วันที่สร้าง · จัดการ
    mobile ยังใช้ชุด 13 ช่องเดิมเป็นการ์ด (ยังไม่ทำ mobile — เมื่อสั่งทำ ให้อ้างอิง desktop) */
-const PLAN_COLS_D = [['แผน', 0, 'Lead text', 'Down'], ['หน่วยงาน', 110], ['งบประมาณ (บาท)', 210], ['จำนวนรถ', 110], ['ความคืบหน้า (ปิดงานแล้ว)', 160], ['สถานะ', 124, 'Badge', 'Swap'], ['แก้ไขล่าสุด', 190, 'Text', 'Swap'], ['', 128]];
+const PLAN_COLS_D = [['แผน', 0, 'Lead text', 'Down'], ['หน่วยงาน', 110], ['งบประมาณ (บาท)', 210], ['จำนวนรถ', 110], ['ความคืบหน้า (ปิดงานแล้ว)', 160], ['สถานะ', 124, 'Badge', 'Swap'], ['แก้ไขล่าสุด', 190, 'Text', 'Swap'], ['', 72]];
 const planRowD = (p) => { const n = +p[7], d = +p[8];
   return [{ text: p[0], sub: p[1] }, { text: p[2], sub: 'ปีงบประมาณ ' + p[5] }, { text: p[6], sub: p[3] + ' · ' + p[4] }, { text: p[7], sub: 'รอติดตาม ' + p[9] },
-    n ? { progress: Math.round(d / n * 100), text: d + '/' + n } : { text: '—', sub: 'ยังไม่มีรถใน PO' }, { pill: STATUS[p[10]] }, { text: p[13], sub: p[12] + ' · สร้าง ' + p[11] }, { icons: ROW_ICONS }]; };
+    n ? { progress: Math.round(d / n * 100), text: d + '/' + n } : { text: '—', sub: 'ยังไม่มีรถใน PO' }, { pill: STATUS[p[10]] }, { text: p[13], sub: p[12] + ' · สร้าง ' + p[11] }, { menu: 1 }]; };
 const PLAN_COLS_M = [['เลขแผน', 92, 'Lead text', 'Down'], ['ชื่อแผน', 190, 'Text', 'Swap'], ['หน่วยงาน', 90], ['ประเภทงบ', 170, 'Text', 'Swap'], ['ปีงบประมาณ', 96], ['งบประมาณ (บาท)', 116], ['จำนวนรถ', 84],
-  ['ความคืบหน้า (ปิดงานแล้ว)', 160], ['รถรอติดตาม', 96], ['สถานะ', 118, 'Badge', 'Swap'], ['วันที่สร้าง', 104], ['แก้ไขล่าสุด', 160], ['', 128]];
+  ['ความคืบหน้า (ปิดงานแล้ว)', 160], ['รถรอติดตาม', 96], ['สถานะ', 118, 'Badge', 'Swap'], ['วันที่สร้าง', 104], ['แก้ไขล่าสุด', 160], ['', 72]];
 const planRowM = (p) => { const n = +p[7], d = +p[8];
-  return [p[0], p[1], p[2], { text: p[3], sub: p[4] }, p[5], p[6], p[7], n ? { progress: Math.round(d / n * 100), text: d + '/' + n } : { text: '—', sub: 'ยังไม่มีรถใน PO' }, p[9], { pill: STATUS[p[10]] }, p[11], { text: p[12], sub: p[13] }, { icons: ROW_ICONS }]; };
+  return [p[0], p[1], p[2], { text: p[3], sub: p[4] }, p[5], p[6], p[7], n ? { progress: Math.round(d / n * 100), text: d + '/' + n } : { text: '—', sub: 'ยังไม่มีรถใน PO' }, p[9], { pill: STATUS[p[10]] }, p[11], { text: p[12], sub: p[13] }, { menu: 1 }]; };
 const planWide = () => MOB || LIB_TABLE.cols >= PLAN_COLS_M.length;   // mobile = การ์ด 13 ช่อง · desktop = ทีละช่องเมื่อ Table ของไลบรารีมีคอลัมน์พอ (probeTable) ไม่พอ = ยุบ 8 คอลัมน์ 2 บรรทัด
 const PLAN_COLS_CF = () => planWide() ? PLAN_COLS_M : PLAN_COLS_D;   // tbl() รับฟังก์ชัน — เลือกชุดตอนสร้างจอ
 const planRowCF = (p) => (planWide() ? planRowM : planRowD)(p);
@@ -1667,8 +1697,8 @@ async function buildToast(o) { await buildSet('overhaul-toast', TOAST_SCENARIOS,
    ชื่อเฟรมที่รู้จัก: 19 ต.ค. "OH2 / S1 — label[ · mobile]" · หลังจัดวางใหม่ "OH2 / B.1 · S1 — label[ · mobile]" ---------- */
 const SCEN_TAGS = SCENARIOS.map(([title]) => title.split(' · ')[0]);
 const normLabel = (s) => String(s).replace(/\s*\([^()]*\)\s*$/, '').replace(/\s+/g, ' ').trim();   // ตัดวงเล็บท้าย เช่น "(toast 2)" "(เติมค่าเดิม)"
-const STATE_ALIAS = { 'ผลกรองด้วยรถ': 'ผลกรองด้วยประเภทยานพาหนะ', 'ระบุอะไหล่แล้ว': 'นำเข้าไฟล์สำเร็จ (toast 23)', 'ยืนยันรับรถแล้ว ยังไม่มีความคืบหน้า': 'ยังไม่มีความคืบหน้า', 'ติ๊กรถแล้วกดเพิ่ม': 'เลือกรถ (พิมพ์ค้นแล้วเลือกจาก dropdown)', 'รายการแผน (13 คอลัมน์ · ไอคอนจัดการ · pagination)': 'รายการแผน (component Table · ไอคอนจัดการ · pagination)' };   // ชื่อ state เดิมที่เทียบด้วยกติกาทั่วไปไม่ได้ (รายการท้าย = ชื่อฉบับ CF เช้า 21 ต.ค. → ชื่อตามจอ J ของเจ้าของงาน)
-const REMOVED_STATES = ['เมนู "…" → แก้ไข', 'เมนู "…" → ลบ', 'เมนู "…" ของ PO → แก้ไข', 'ดูรูปแนบ (lightbox)'];   // CF ตัดออก (จัดการเป็นไอคอน R21) · lightbox ไม่อยู่ในจอ J ที่เจ้าของงานส่ง (R23)
+const STATE_ALIAS = { 'ผลกรองด้วยรถ': 'ผลกรองด้วยประเภทยานพาหนะ', 'ระบุอะไหล่แล้ว': 'นำเข้าไฟล์สำเร็จ (toast 23)', 'ยืนยันรับรถแล้ว ยังไม่มีความคืบหน้า': 'ยังไม่มีความคืบหน้า', 'ติ๊กรถแล้วกดเพิ่ม': 'เลือกรถ (พิมพ์ค้นแล้วเลือกจาก dropdown)', 'รายการแผน (13 คอลัมน์ · ไอคอนจัดการ · pagination)': 'รายการแผน (component Table · ปุ่ม … · pagination)', 'กดไอคอนแก้ไข → ฟอร์มแก้ไข (เติมค่าเดิม)': 'กดแก้ไขในเมนู … → ฟอร์มแก้ไข (เติมค่าเดิม)', 'กดไอคอนลบ → ยืนยันการลบแผน': 'กดลบในเมนู … → ยืนยันการลบแผน', 'กดไอคอนแก้ไขของ PO → ฟอร์มแก้ไข PO': 'กดแก้ไขในเมนู … ของ PO → ฟอร์มแก้ไข PO', 'กดไอคอนลบของ PO → ยืนยันการลบ PO': 'กดลบในเมนู … ของ PO → ยืนยันการลบ PO', 'รายการแผน (component Table · ไอคอนจัดการ · pagination)': 'รายการแผน (component Table · ปุ่ม … · pagination)' };   // ชื่อฉบับ CF เช้า (ไอคอน) → ฉบับเจ้าของงานค่ำ (ปุ่ม … + เมนู)   // ชื่อ state เดิมที่เทียบด้วยกติกาทั่วไปไม่ได้ (รายการท้าย = ชื่อฉบับ CF เช้า 21 ต.ค. → ชื่อตามจอ J ของเจ้าของงาน)
+const REMOVED_STATES = ['ดูรูปแนบ (lightbox)'];   // lightbox ไม่อยู่ในจอ J ที่เจ้าของงานส่ง (R23) · state เมนู "…" ที่ CF เคยตัด กลับมาแล้ว 21 ต.ค. ค่ำ (เจ้าของงาน)
 const REMOVED_TAG = ' · ตัดแล้ว (ไม่มี state นี้ในฉบับปัจจุบัน)';
 function parseFrameName(name) {   // → { code, tag, label, mob } หรือ null
   const m = /^OH2 \/ (?:([A-Z]\d*\.\d+) · )?(.*)$/.exec(name); if (!m) return null;
@@ -1771,7 +1801,7 @@ async function patchTexts() {
   const frames = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf('OH2 / ') === 0);
   if (!frames.length) { log('ไม่พบเฟรม "OH2 /" บนหน้านี้ — เปิดหน้าที่มีจอ Overhaul ก่อน'); return; }
   await resolveAll(['Pill outline', 'Notification', 'Table cell', 'Mobile table item', 'more_horiz-20-400-round', 'quick_reference_all-24-300-round', 'stylus-24-300-round', 'delete-24-300-round', 'Text input']);
-  const moreId = INDEX.has('more_horiz-20-400-round') ? icon('more_horiz-20-400-round') : null;
+  const viewId = INDEX.has('quick_reference_all-24-300-round') ? icon('quick_reference_all-24-300-round') : null;
   let pills = 0, toasts = 0, icons = 0, search = 0;
   for (const f of frames) {
     for (const p of f.findAll(n => n.type === 'INSTANCE' && n.name === 'Pill outline')) { const t = propVal(p, 'Text'); if (STATUS_RENAME[t]) { setProps(p, { Text: STATUS_RENAME[t] }); pills++; } }
@@ -1781,11 +1811,11 @@ async function patchTexts() {
     }
     for (const c of f.findAll(x => x.type === 'INSTANCE' && (x.name === 'Table cell' || x.name === 'Mobile table item') && x.variantProperties && x.variantProperties.Style === 'Action icons')) {
       const on = ICON_SLOTS.filter(k => propVal(c, k) === true), bs = c.findAll(n => n.type === 'INSTANCE' && n.name === 'Tertiary button');
-      if (on.length === 1 && on[0] === 'View' && bs[0] && moreId && propVal(bs[0], 'Leading icon swap') === moreId) { fillIcons(c, ROW_ICONS); icons++; }   // ช่อง "…" เดิม (เปิดแค่ View + ไอคอน more_horiz) → ดู · แก้ไข · ลบ · ปุ่มลูกศร/แก้ไข-ลบ ไม่แตะ
+      if (on.length === 3 && bs[0] && viewId && propVal(bs[0], 'Leading icon swap') === viewId) { fillIcons(c, ['more_horiz-20-400-round']); icons++; }   // ช่อง 3 ไอคอน ดู · แก้ไข · ลบ (ฉบับ CF เช้า) → ปุ่ม "…" (เจ้าของงาน 21 ต.ค. ค่ำ) · ไอคอน 1–2 ปุ่ม (S9 แก้ไข/ลบ · อะไหล่ · ลูกศร · ดู) ไม่แตะ
     }
     for (const ti of f.findAll(x => x.type === 'INSTANCE' && x.name === 'Text input')) { if (propVal(ti, 'Text') === SEARCH_OLD_PLACEHOLDER) { setProps(ti, { Text: SEARCH_CF }); search++; } }
   }
-  log('แก้บนหน้า "' + page.name + '" ' + frames.length + ' จอ: ป้ายสถานะ ' + pills + ' · ถ้อยคำ toast ' + toasts + ' · ช่องจัดการ "…" → ไอคอน ' + icons + ' · placeholder ค้นหา ' + search + ' · ไม่ได้สร้างหรือย้ายจอ (คอลัมน์ใหม่/จอใหม่ตาม CF ใช้ปุ่ม "อัปเดตจอที่เลือก")');
+  log('แก้บนหน้า "' + page.name + '" ' + frames.length + ' จอ: ป้ายสถานะ ' + pills + ' · ถ้อยคำ toast ' + toasts + ' · ช่องจัดการ ไอคอน 3 ปุ่ม → "…" ' + icons + ' · placeholder ค้นหา ' + search + ' · ไม่ได้สร้างหรือย้ายจอ (คอลัมน์ใหม่/จอใหม่ตาม CF ใช้ปุ่ม "อัปเดตจอที่เลือก")');
   log(errors.length ? '⚠ เตือน ' + errors.length + ' จุด' : 'ไม่มีคำเตือน ✓');
 }
 
