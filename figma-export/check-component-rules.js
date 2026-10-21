@@ -77,6 +77,7 @@ function check(screens) {
     for (const r of RULES.ownerDesign || []) {
       if (!new RegExp(r.screens).test(sc.name) || (r.desktopOnly && mobile)) continue;
       const heads = all.filter(x => isInst(x, 'Table header cell') && shown(x)).map(x => (prop(x, 'Text') || '').trim()).filter(Boolean);
+      if (r.minCols && heads.length < r.minCols) continue;   // แบบสำรองเมื่อไลบรารีมีคอลัมน์ไม่พอ (เช่น Table 8 คอลัมน์) ไม่ตรวจ
       const want = r.tableHeaders || [];
       if (want.some((h, i) => heads[i] !== h)) fail(r, sc, 'หัวตาราง [' + heads.join(' · ') + '] ไม่ตรงแบบที่เจ้าของงานส่ง [' + want.join(' · ') + ']');
     }

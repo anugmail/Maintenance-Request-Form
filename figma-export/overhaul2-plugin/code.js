@@ -163,7 +163,7 @@ async function resolveAll(list, checkOnly) {
     }
   };
   const missing = [];
-  if (list.indexOf('Table') >= 0) { const b = await probeTable(); if (b) log('· Table ในไลบรารี: "' + b.name + '" ' + b.cols + ' คอลัมน์ × ' + b.rows + ' แถว' + (b.all.length > 1 ? ' (variant: ' + b.all.join(' · ') + ')' : '') + (LIB_TABLE.cols >= 13 ? ' ⇒ หน้ารายการแผนแสดง 13 ช่องทีละคอลัมน์ เลื่อนแนวนอน' : ' ⇒ หน้ารายการแผนยุบ 13 ช่องเป็น 8 คอลัมน์ 2 บรรทัด')); }
+  if (list.indexOf('Table') >= 0) { const b = await probeTable(); if (b) log('· Table ในไลบรารี: "' + b.name + '" ' + b.cols + ' คอลัมน์ × ' + b.rows + ' แถว' + (b.all.length > 1 ? ' (variant: ' + b.all.join(' · ') + ')' : '') + (LIB_TABLE.cols >= PLAN_COLS_D.length ? ' ⇒ หน้ารายการแผนตามจอเจ้าของงาน ' + PLAN_COLS_D.length + ' คอลัมน์' : ' ⇒ ไลบรารีมีแค่ ' + LIB_TABLE.cols + ' คอลัมน์ หน้ารายการแผนยุบ หมายเลขแผน/ชื่อแผน เป็นช่องเดียว (สำรอง)')); }
   for (const name of list) {
     const names = [name].concat(ALIAS[name] || []);
     let got = null, how = '';
@@ -1324,7 +1324,7 @@ const SCENARIOS = [
   ['หน้ารายการแผน — ค้นหา · ตัวกรอง · ค้นไม่เจอ · ยังไม่มีแผน', [
     ['รายการแผน (component Table · ปุ่ม … · pagination)', () => listScreen('รายการแผน', CF_LIST)],
     ['ตัวกรอง (ปีงบ · สถานะ · ประเภทยานพาหนะ · ช่วงวงเงิน)', async () => { const s = await listScreen('ตัวกรอง', CF_LIST); await filterPanelCF(s); return s; }],
-    ['ผลกรองด้วยประเภทยานพาหนะ', () => listScreen('ผลกรองด้วยประเภทยานพาหนะ', Object.assign({}, CF_LIST, { rows: [PLANS_CF[0], PLANS_CF[3], PLANS_CF[5]], chips: ['ประเภทยานพาหนะ: รถกระเช้า'], pageOpt: { per: 5, total: 3 } }))],
+    ['ผลกรองด้วยประเภทยานพาหนะ', () => listScreen('ผลกรองด้วยประเภทยานพาหนะ', Object.assign({}, CF_LIST, { rows: [PLANS_CF[0], PLANS_CF[3], PLANS_CF[5]], chips: ['ประเภทยานพาหนะ: รถกระเช้า'], pageOpt: { per: 10, total: 3 } }))],
     ['ค้นหา พิมพ์ 3 ตัวอักษร ขึ้น autocomplete', () => listScreen('ค้นหา autocomplete', Object.assign({}, CF_LIST, { query: 'I-69', combo: CF_COMBO }))],
     ['ค้นไม่เจอ', () => listScreen('ค้นไม่เจอ', { notFound: true, query: 'ไม่มีแผนนี้' })],
     ['ยังไม่มีแผน', () => listScreen('ยังไม่มีแผน', { empty: true })]]],
@@ -1334,7 +1334,7 @@ const SCENARIOS = [
     ['กรอกครบ', () => planForm('S1 กรอกครบ', { values: FILLED })],
     ['ย้อนกลับ — ยืนยันการออก', async () => { const s = await planForm('S1 ยืนยันการออก', { values: FILLED }); await confirm(s, { title: 'ยืนยันการออก', sub: 'ข้อมูลที่แก้ไขไว้จะไม่ถูกบันทึก', cancel: 'ปิด' }); return s; }],
     ['บันทึกไม่สำเร็จ (toast 2)', async () => { const s = await planForm('S1 บันทึกไม่สำเร็จ', { values: FILLED }); await T(s, 2); return s; }],
-    ['บันทึกสำเร็จ (toast 1)', async () => { const s = await listScreen('S1 บันทึกสำเร็จ', Object.assign({}, CF_LIST, { rows: [NEW_PLAN_CF].concat(PLANS_CF.slice(0, 4)), pageOpt: { per: 5, total: PLANS_CF.length + 1 } })); await T(s, 1); return s; }],
+    ['บันทึกสำเร็จ (toast 1)', async () => { const s = await listScreen('S1 บันทึกสำเร็จ', Object.assign({}, CF_LIST, { rows: [NEW_PLAN_CF].concat(PLANS_CF.slice(0, 9)), pageOpt: { per: 10, total: PLAN_TOTAL + 1 } })); await T(s, 1); return s; }],
     ['ดูรายละเอียดแผน', () => planDetail('S1 รายละเอียดแผน', { plan: NEW_PLAN, pos: [] })]]],
   ['S2 · กบค. แก้ไขแผน', [
     ['เมนู "…" → แก้ไข', async () => { const s = await listScreen('S2 เมนู', CF_LIST); menuAt(s, firstMenuCell(s), MENU); return s; }],
@@ -1342,12 +1342,12 @@ const SCENARIOS = [
     ['ยืนยันการแก้ไขแผน', async () => { const s = await planForm('S2 ยืนยันการแก้ไข', { edit: true, values: Object.assign({}, EDIT, { budget: '11,000,000' }) });
       await confirm(s, { title: 'ยืนยันการแก้ไขแผน', sub: 'บันทึกการเปลี่ยนแปลงของแผน 123456 "Overhaul ประจำปีงบ 2569 — รถเครน"' }); return s; }],
     ['บันทึกสำเร็จ (toast 3)', async () => { const s = await planDetail('S2 บันทึกสำเร็จ'); await T(s, 3); return s; }],
-    ['เปิดแก้ไขแผนที่ถูกลบไปแล้ว (toast 6)', async () => { const s = await listScreen('S2 ไม่พบแผน', Object.assign({}, CF_LIST, { rows: PLANS_CF.slice(1, 6), pageOpt: { per: 5, total: PLANS_CF.length - 1 } })); await T(s, 6); return s; }]]],
+    ['เปิดแก้ไขแผนที่ถูกลบไปแล้ว (toast 6)', async () => { const s = await listScreen('S2 ไม่พบแผน', Object.assign({}, CF_LIST, { rows: PLANS_CF.slice(1, 10), pageOpt: { per: 10, total: PLAN_TOTAL - 1 } })); await T(s, 6); return s; }]]],
   ['S3 · กบค. ลบแผน', [
     ['เมนู "…" → ลบ', async () => { const s = await listScreen('S3 เมนู', CF_LIST); menuAt(s, firstMenuCell(s), MENU); return s; }],
     ['กดลบในเมนู … → ยืนยันการลบแผน', async () => { const s = await listScreen('S3 ยืนยันการลบ', CF_LIST); await confirm(s, { danger: true, title: 'ยืนยันการลบแผน',
       sub: 'แผน 123460 "Overhaul ประจำปีงบ 2570 — รถกระเช้า ภาคใต้" และ Purchase Order 1 ใบในแผนนี้จะถูกลบ' }); return s; }],
-    ['ลบสำเร็จ (toast 4)', async () => { const s = await listScreen('S3 ลบสำเร็จ', Object.assign({}, CF_LIST, { rows: PLANS_CF.slice(1, 6), pageOpt: { per: 5, total: PLANS_CF.length - 1 } })); await T(s, 4); return s; }]]],
+    ['ลบสำเร็จ (toast 4)', async () => { const s = await listScreen('S3 ลบสำเร็จ', Object.assign({}, CF_LIST, { rows: PLANS_CF.slice(1, 10), pageOpt: { per: 10, total: PLAN_TOTAL - 1 } })); await T(s, 4); return s; }]]],
   ['S4 · กบค. สร้าง Purchase order', [
     ['รายละเอียดแผน (ยังไม่มี PO)', () => planDetail('S4 แผนยังไม่มี PO', { plan: PLANS[2], pos: [] })],
     ['ฟอร์ม PO (ว่าง)', () => poForm('S4 ฟอร์ม PO (ว่าง)', {})],
@@ -1505,7 +1505,7 @@ async function tableInfo() {   // ปุ่ม "เช็ค component": โค�
   const b = await probeTable();
   if (!b) { log('· อ่าน component Table (key ' + KEYS.Table[0].slice(0, 8) + '…) จากไลบรารีไม่ได้'); return; }
   log('· component Table (key ' + KEYS.Table[0].slice(0, 8) + '…): ใช้ variant "' + b.name + '" กว้าง ' + b.w + ' · คอลัมน์ ' + b.cols + ' · แถว ' + b.rows + ' · variant ทั้งหมด: ' + b.all.join(' · ')
-    + (b.cols >= PLAN_COLS_M.length ? ' ⇒ หน้ารายการแผนแสดง ' + PLAN_COLS_M.length + ' ช่องทีละคอลัมน์ (Scrollbar เปิด เลื่อนแนวนอน)' : ' ⇒ หน้ารายการแผนยุบเป็น ' + PLAN_COLS_D.length + ' คอลัมน์ 2 บรรทัด (Table มีแค่ ' + b.cols + ' คอลัมน์ — ถ้าไลบรารีที่ publish ใหม่เป็น component คนละ key ให้เลือก instance แล้วกด "อ่านจอที่เลือก" ส่ง key มา)'));
+    + (b.cols >= PLAN_COLS_D.length ? ' ⇒ หน้ารายการแผนตามจอเจ้าของงาน ' + PLAN_COLS_D.length + ' คอลัมน์' : ' ⇒ Table มีแค่ ' + b.cols + ' คอลัมน์ หน้ารายการแผนใช้แบบสำรอง 8 คอลัมน์ — ถ้าไลบรารีที่ publish ใหม่เป็น component คนละ key ให้เลือก instance แล้วกด "อ่านจอที่เลือก" ส่ง key มา'));
 }
 function deviceSetInfo() {   // ข้อความรายงานในหน้าต่างปลั๊กอิน (ปุ่มเช็ค + ตอนสร้าง)
   const set = INDEX.get('Device Type');
@@ -1609,35 +1609,39 @@ const NOTI_GROUPS = NOTI_SCENARIOS.map(([title, screens], i) => {
 /* ---------- หน้า 1 รายการแผน ฉบับหลัง CF จาก PO (Google Sheet แท็บ "1 รายการแผน" · อ่าน 20 ต.ค. 2569) — สร้างคู่กับฉบับที่ออกแบบไว้บนหน้า overhaul-cf-N ให้เห็นความต่าง
    mapping รายฟิลด์: Diagram/01-บำรุงรักษาตามวาระ/17-overhaul-cf-หน้า1-mapping.md ---------- */
 const STATUS_CF = STATUS;   // ชื่อสถานะหลัง CF = ชุดหลักแล้ว (21 ต.ค. 2569)
-const SEARCH_CF = 'ค้นหาเลขแผน, ชื่อแผน, เลขที่งบประมาณ, ทะเบียนรถ';   // PO: เลขศูนย์ต้นทุน → เลขที่งบประมาณ (ค้นได้ทั้งศูนย์ต้นทุนและ WBS) + ค้นด้วยทะเบียนรถ
+const SEARCH_CF = 'ค้นหาเลขแผน, ชื่อแผน, เลขศูนย์ต้นทุน';   // ตามจอเจ้าของงาน 21 ต.ค. ค่ำ (R23) — ชีต CF เคยให้ "เลขที่งบประมาณ, ทะเบียนรถ" (patchTexts แปลงกลับ)
 /* [เลขแผน, ชื่อแผน, หน่วยงาน, ประเภทงบ, เลขที่งบประมาณ (SubText), ปีงบ, งบ, จำนวนรถ, ปิดงานแล้ว, รถรอติดตาม, สถานะ, วันที่สร้าง, ผู้แก้ไขล่าสุด, แก้ไขเมื่อ] — ข้อมูลจำลอง
    หน่วยงาน = คอลัมน์ที่ PO ขอเพิ่ม 21 ต.ค. 2569 ("สังกัดที่รับผิดชอบแผน ไม่แน่ใจว่ามีไหม") — ตามตารางสิทธิ์ คนสร้างแผนมีแต่ กบค. ⇒ ค่าเป็น กบค. ทุกแถว (แจ้ง PO แล้วว่าอาจซ้ำซ้อน) */
-const PLANS_CF = [
-  ['123460', 'Overhaul ประจำปีงบ 2570 — รถกระเช้า ภาคใต้', 'กบค.', 'งบลงทุน', 'WBS: I-70-Z-DPMXX.JM.0002', '2570', '21,500,000', '1', 0, '1', 'P2', '10 ต.ค. 2569', 'นายวิชัย ทองดี', '19 ต.ค. 2569 14:20'],
-  ['123459', 'Overhaul ประจำปีงบ 2570 — รถเครน กฟน.1', 'กบค.', 'งบลงทุน', 'WBS: I-70-Z-DPMXX.JM.0001', '2570', '12,400,000', '0', 0, '0', 'P1', '1 ต.ค. 2569', 'นางสาวกนกวรรณ ใจมั่น', '1 ต.ค. 2569 09:05'],
-  ['123458', 'Overhaul ประจำปีงบ 2569 — รถเจาะหลุม', 'กบค.', 'งบทำการ', 'ศูนย์ต้นทุน: C-69-OH-0103', '2569', '6,200,000', '0', 0, '0', 'P1', '2 ก.ย. 2569', 'นายวิชัย ทองดี', '2 ก.ย. 2569 16:40'],
-  ['123457', 'Overhaul ประจำปีงบ 2569 — รถกระเช้า', 'กบค.', 'งบลงทุน', 'WBS: I-69-Z-DPMXX.JM.0102', '2569', '8,500,000', '3', 1, '1', 'P2', '20 ส.ค. 2569', 'นายวิชัย ทองดี', '18 ต.ค. 2569 11:12'],
-  ['123456', 'Overhaul ประจำปีงบ 2569 — รถเครน', 'กบค.', 'งบลงทุน', 'WBS: I-69-Z-DPMXX.JM.0003', '2569', '10,000,000', '3', 2, '0', 'P2', '12 ส.ค. 2569', 'นางสาวกนกวรรณ ใจมั่น', '20 ต.ค. 2569 08:30'],
-  ['123402', 'Overhaul ประจำปีงบ 2568 — รถกระเช้า', 'กบค.', 'งบลงทุน', 'WBS: I-68-Z-DPMXX.JM.0102', '2568', '4,300,000', '1', 1, '0', 'P3', '1 ส.ค. 2568', 'นายวิชัย ทองดี', '30 พ.ย. 2568 10:00'],
-  ['123401', 'Overhaul ประจำปีงบ 2568 — รถเครน', 'กบค.', 'งบลงทุน', 'WBS: I-68-Z-DPMXX.JM.0101', '2568', '9,800,000', '2', 2, '0', 'P3', '15 ก.ค. 2568', 'นายวิชัย ทองดี', '20 ธ.ค. 2568 15:45'],
+const PLANS_CF = [   // 10 แถวตามเฟรมหน้ารายการแผนที่เจ้าของงานส่ง 21 ต.ค. 2569 ค่ำ (R23) — เลขแผนในจอเป็น placeholder Z69000X ใช้เลขรันแทน · [เลข, ชื่อ, หน่วยงาน, ประเภทงบ, รหัสงบ (บรรทัดรอง), ปีงบ, งบ, n รถ, ปิดงานแล้ว, รอติดตาม, สถานะ, วันที่สร้าง, ผู้แก้, แก้ไขล่าสุด]
+  ['123460', 'Overhaul ประจำปีงบ 2570 — รถกระเช้า ภาคใต้', 'กบค.', 'งบลงทุน', 'I-70-Z-DPMXX.JM.0002', '2571', '20,000,000', '5', 0, '1', 'P2', '21 ต.ค. 2569', 'นายวิชัย ทองดี', '21 ต.ค. 2569 14:20'],
+  ['123459', 'Overhaul รถกระเช้า ภาคเหนือ', 'กบค.', 'งบลงทุน', 'I-70-Z-DPMXX.JM.0003', '2571', '15,000,000', '0', 0, '0', 'P1', '20 ต.ค. 2569', 'นางสาวกนกวรรณ ใจมั่น', '20 ต.ค. 2569 09:05'],
+  ['123458', 'Overhaul รถกระเช้า ภาคกลาง', 'กบค.', 'งบลงทุน', 'I-70-Z-DPMXX.JM.0004', '2571', '12,500,000', '0', 0, '0', 'P1', '19 ต.ค. 2569', 'นายวิชัย ทองดี', '19 ต.ค. 2569 16:40'],
+  ['123457', 'Overhaul รถกระเช้า ภาคอีสาน', 'กบค.', 'งบลงทุน', 'I-70-Z-DPMXX.JM.0005', '2571', '18,000,000', '10', 5, '2', 'P2', '18 ต.ค. 2569', 'นายวิชัย ทองดี', '18 ต.ค. 2569 11:12'],
+  ['123456', 'จัดซื้อรถกระเช้า ภาคใต้', 'กบค.', 'งบลงทุน', 'I-70-Z-DPMXX.JM.0006', '2571', '25,000,000', '15', 7, '3', 'P2', '17 ต.ค. 2569', 'นางสาวกนกวรรณ ใจมั่น', '20 ต.ค. 2569 08:30'],
+  ['123455', 'ปรับปรุงรถบริการ ภาคเหนือ', 'กบค.', 'งบลงทุน', 'I-70-Z-DPMXX.JM.0007', '2570', '8,500,000', '5', 3, '1', 'P2', '16 ต.ค. 2569', 'นายวิชัย ทองดี', '16 ต.ค. 2569 10:00'],
+  ['123454', 'Overhaul รถเครน ภาคกลาง', 'กบค.', 'งบลงทุน', 'I-70-Z-DPMXX.JM.0008', '2570', '16,000,000', '0', 0, '0', 'P1', '15 ต.ค. 2569', 'นายวิชัย ทองดี', '15 ต.ค. 2569 15:45'],
+  ['123453', 'จัดซื้อเครื่องมือซ่อมบำรุง', 'กบค.', 'งบลงทุน', 'I-70-Z-DPMXX.JM.0009', '2570', '3,000,000', '0', 0, '0', 'P1', '14 ต.ค. 2569', 'นางสาวกนกวรรณ ใจมั่น', '14 ต.ค. 2569 13:10'],
+  ['123452', 'ปรับปรุงรถกระเช้า ภาคใต้', 'กบค.', 'งบลงทุน', 'I-70-Z-DPMXX.JM.0010', '2570', '9,500,000', '0', 0, '0', 'P1', '13 ต.ค. 2569', 'นายวิชัย ทองดี', '13 ต.ค. 2569 09:50'],
+  ['123451', 'Overhaul รถบริการ ภาคอีสาน', 'กบค.', 'งบลงทุน', 'I-70-Z-DPMXX.JM.0011', '2570', '11,000,000', '13', 8, '2', 'P2', '12 ต.ค. 2569', 'นายวิชัย ทองดี', '12 ต.ค. 2569 17:30'],
 ];
-const NEW_PLAN_CF = ['123461', 'Overhaul ประจำปีงบ 2570 — รถเจาะหลุม', 'กบค.', 'งบลงทุน', 'WBS: I-70-Z-DPMXX.JM.0003', '2570', '5,500,000', '0', 0, '0', 'P1', '21 ต.ค. 2569', 'นายวิชัย ทองดี', '21 ต.ค. 2569 10:12'];
-/* หน้ารายการแผน — 13 ช่องตาม CF (12 ของ 20 ต.ค. + หน่วยงาน) · จัดการ = ไอคอน ดูรายละเอียด · แก้ไข · ลบ (PO CF: "ขอเป็น ICON Action")
-   R25 (เจ้าของงานสั่ง 21 ต.ค. 2569 ค่ำ "ถ้าเป็นหน้า list ต้องดึงตารางให้ถูก"): desktop ใช้ component Table 8 คอลัมน์ ⇒ ยุบ 13 ช่องเป็น 8 คอลัมน์แบบ 2 บรรทัด (ไม่ตัดช่องใด):
-     แผน = เลขแผน / ชื่อแผน · หน่วยงาน / ปีงบประมาณ · งบประมาณ (บาท) / ประเภทงบ + WBS · จำนวนรถ / รอติดตาม · ความคืบหน้า (progress) · สถานะ · แก้ไขล่าสุด / ผู้แก้ + วันที่สร้าง · จัดการ
-   mobile ยังใช้ชุด 13 ช่องเดิมเป็นการ์ด (ยังไม่ทำ mobile — เมื่อสั่งทำ ให้อ้างอิง desktop) */
-const PLAN_COLS_D = [['แผน', 0, 'Lead text', 'Down'], ['หน่วยงาน', 110], ['งบประมาณ (บาท)', 210], ['จำนวนรถ', 110], ['ความคืบหน้า (ปิดงานแล้ว)', 160], ['สถานะ', 124, 'Badge', 'Swap'], ['แก้ไขล่าสุด', 190, 'Text', 'Swap'], ['', 72]];
-const planRowD = (p) => { const n = +p[7], d = +p[8];
-  return [{ text: p[0], sub: p[1] }, { text: p[2], sub: 'ปีงบประมาณ ' + p[5] }, { text: p[6], sub: p[3] + ' · ' + p[4] }, { text: p[7], sub: 'รอติดตาม ' + p[9] },
-    n ? { progress: Math.round(d / n * 100), text: d + '/' + n } : { text: '—', sub: 'ยังไม่มีรถใน PO' }, { pill: STATUS[p[10]] }, { text: p[13], sub: p[12] + ' · สร้าง ' + p[11] }, { menu: 1 }]; };
+const PLAN_TOTAL = 95;   // "แสดง 1 ถึง 10 จาก 95 รายการ" ตามจอเจ้าของงาน
+const NEW_PLAN_CF = ['123461', 'Overhaul ประจำปีงบ 2570 — รถเจาะหลุม', 'กบค.', 'งบลงทุน', 'I-70-Z-DPMXX.JM.0012', '2570', '5,500,000', '0', 0, '0', 'P1', '21 ต.ค. 2569', 'นายวิชัย ทองดี', '21 ต.ค. 2569 10:12'];
+/* หน้ารายการแผน — desktop ยึดเฟรมที่เจ้าของงานส่ง 21 ต.ค. 2569 ค่ำ (R23 · ข้อความดิบ ~/PEA/Maintain-D/userflow/figma-ref/overhaul-A-list-2569-10-21.txt):
+     "หน้า list คอลัมน์ และ component ให้ยึดตามที่วางให้" ⇒ 8 คอลัมน์ + ปุ่ม … : หมายเลขแผน · ชื่อแผน · ประเภทงบ (บรรทัดรอง = รหัสงบ) · ปีงบประมาณ · งบประมาณ (บาท) · ความคืบหน้า (x/n หรือ -) · สถานะ · วันที่สร้าง
+     คอลัมน์ที่ชีต CF มีแต่จอไม่มี (หน่วยงาน · จำนวนรถ · รถรอติดตาม · แก้ไขล่าสุด) ไม่ใส่ จดรอเคาะ (ไฟล์ 18/19) · ต้องใช้ component Table ที่มี ≥ 9 คอลัมน์ (ไลบรารี publish แล้ว) ไม่พอ = ยุบ หมายเลขแผน/ชื่อแผน เป็นช่องเดียว
+   mobile ยังใช้ชุด 13 ช่องตาม CF เป็นการ์ด (ยังไม่ทำ mobile — เมื่อสั่งทำ ให้อ้างอิง desktop) */
+const PLAN_COLS_D = [['หมายเลขแผน', 130, 'Lead text', 'Down'], ['ชื่อแผน', 0, 'Text', 'Swap'], ['ประเภทงบ', 190, 'Text', 'Swap'], ['ปีงบประมาณ', 110], ['งบประมาณ (บาท)', 150], ['ความคืบหน้า', 150], ['สถานะ', 124, 'Badge', 'Swap'], ['วันที่สร้าง', 120], ['', 72]];
+const planProgress = (p) => { const n = +p[7], d = +p[8]; return n ? { progress: Math.round(d / n * 100), text: d + '/' + n } : '-'; };   // จอเจ้าของงาน: ไม่มี PO แสดง "-" ไม่มีบรรทัดรอง
+const planRowD = (p) => [p[0], p[1], { text: p[3], sub: p[4] }, p[5], p[6], planProgress(p), { pill: STATUS[p[10]] }, p[11], { menu: 1 }];
+const PLAN_COLS_D8 = [['หมายเลขแผน', 0, 'Lead text', 'Down'], ['ประเภทงบ', 190, 'Text', 'Swap'], ['ปีงบประมาณ', 110], ['งบประมาณ (บาท)', 150], ['ความคืบหน้า', 150], ['สถานะ', 124, 'Badge', 'Swap'], ['วันที่สร้าง', 120], ['', 72]];   // สำรอง: ไลบรารี Table 8 คอลัมน์ — ชื่อแผนเป็นบรรทัดรองของหมายเลขแผน
+const planRowD8 = (p) => [{ text: p[0], sub: p[1] }, { text: p[3], sub: p[4] }, p[5], p[6], planProgress(p), { pill: STATUS[p[10]] }, p[11], { menu: 1 }];
 const PLAN_COLS_M = [['เลขแผน', 92, 'Lead text', 'Down'], ['ชื่อแผน', 190, 'Text', 'Swap'], ['หน่วยงาน', 90], ['ประเภทงบ', 170, 'Text', 'Swap'], ['ปีงบประมาณ', 96], ['งบประมาณ (บาท)', 116], ['จำนวนรถ', 84],
   ['ความคืบหน้า (ปิดงานแล้ว)', 160], ['รถรอติดตาม', 96], ['สถานะ', 118, 'Badge', 'Swap'], ['วันที่สร้าง', 104], ['แก้ไขล่าสุด', 160], ['', 72]];
-const planRowM = (p) => { const n = +p[7], d = +p[8];
-  return [p[0], p[1], p[2], { text: p[3], sub: p[4] }, p[5], p[6], p[7], n ? { progress: Math.round(d / n * 100), text: d + '/' + n } : { text: '—', sub: 'ยังไม่มีรถใน PO' }, p[9], { pill: STATUS[p[10]] }, p[11], { text: p[12], sub: p[13] }, { menu: 1 }]; };
-const planWide = () => MOB || LIB_TABLE.cols >= PLAN_COLS_M.length;   // mobile = การ์ด 13 ช่อง · desktop = ทีละช่องเมื่อ Table ของไลบรารีมีคอลัมน์พอ (probeTable) ไม่พอ = ยุบ 8 คอลัมน์ 2 บรรทัด
-const PLAN_COLS_CF = () => planWide() ? PLAN_COLS_M : PLAN_COLS_D;   // tbl() รับฟังก์ชัน — เลือกชุดตอนสร้างจอ
-const planRowCF = (p) => (planWide() ? planRowM : planRowD)(p);
-const CF_LIST = { rows: PLANS_CF.slice(0, 5), cols: PLAN_COLS_CF, rowFn: planRowCF, placeholder: SEARCH_CF, pageOpt: { per: 5, total: PLANS_CF.length } };
+const planRowM = (p) => [p[0], p[1], p[2], { text: p[3], sub: p[4] }, p[5], p[6], p[7], planProgress(p), p[9], { pill: STATUS[p[10]] }, p[11], { text: p[12], sub: p[13] }, { menu: 1 }];
+const planSet = () => MOB ? 'M' : LIB_TABLE.cols >= PLAN_COLS_D.length ? 'D' : 'D8';   // mobile = การ์ด 13 ช่อง · desktop = จอเจ้าของงาน 9 คอลัมน์ · ไลบรารีเก่า 8 = สำรอง
+const PLAN_COLS_CF = () => ({ M: PLAN_COLS_M, D: PLAN_COLS_D, D8: PLAN_COLS_D8 })[planSet()];   // tbl() รับฟังก์ชัน — เลือกชุดตอนสร้างจอ
+const planRowCF = (p) => ({ M: planRowM, D: planRowD, D8: planRowD8 })[planSet()](p);
+const CF_LIST = { rows: PLANS_CF.slice(0, 10), cols: PLAN_COLS_CF, rowFn: planRowCF, placeholder: SEARCH_CF, pageOpt: { per: 10, total: PLAN_TOTAL } };   // 10 แถว · "แสดง 1 ถึง 10 จาก 95 รายการ" ตามจอเจ้าของงาน
 const CF_COMBO = [['WBS: I-69-Z-DPMXX.JM.0003', 'แผน 123456 Overhaul ประจำปีงบ 2569 — รถเครน'], ['WBS: I-69-Z-DPMXX.JM.0102', 'แผน 123457 Overhaul ประจำปีงบ 2569 — รถกระเช้า'], ['ศูนย์ต้นทุน: C-69-OH-0103', 'แผน 123458 Overhaul ประจำปีงบ 2569 — รถเจาะหลุม']];
 const PLAN_COLS = PLAN_COLS_CF, planRow = planRowCF;   // ชุดหลักใช้ฉบับ CF (listScreen ใช้เป็นค่าเริ่มต้น)
 const VEHICLE_TYPES = [['รถเครน'], ['รถกระเช้า'], ['รถเจาะหลุม'], ['รถขุดตัก'], ['รถพ่วงฉีดน้ำ']];
@@ -1794,7 +1798,7 @@ async function addNewStates(page, touched) {
 }
 const STATUS_RENAME = { 'ยังไม่มี PO': 'รอเลข PO', 'ดำเนินการ': 'รอดำเนินการ' };   // PO CF หน้า 1
 const TOAST_RENAME = { 'การสร้างแผน overhaul สำเร็จ': 1, 'general error': 2, 'ลบแผน overhaul สำเร็จ': 4, 'ลบ purchase order สำเร็จ': 9, 'การสร้าง นัดหมาย สำเร็จ': 13, 'ไม่สามารถสร้าง นัดหมาย': 14, 'ปิดงานสำเร็จ': 25 };   // ถ้อยคำเดิม → เลขแถวในชีต OH-Toast
-const SEARCH_OLD_PLACEHOLDER = 'ค้นหาเลขแผน, ชื่อแผน, เลขศูนย์ต้นทุน';
+const SEARCH_OLD_PLACEHOLDER = 'ค้นหาเลขแผน, ชื่อแผน, เลขที่งบประมาณ, ทะเบียนรถ';   // ฉบับ CF เช้า 21 ต.ค. → ฉบับจอเจ้าของงาน
 async function patchTexts() {
   errors.length = 0;
   const page = figma.currentPage;

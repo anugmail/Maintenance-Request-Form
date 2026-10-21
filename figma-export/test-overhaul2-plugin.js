@@ -219,7 +219,9 @@ function extendTable(n) {
     while (content.children.filter(k => k.name === 'Column').length < n) content.children.push(deep(cols[cols.length - 1], content));
   }
 }
-if (process.env.TABLE_COLS) extendTable(+process.env.TABLE_COLS);
+const TABLE_COLS = process.env.TABLE_COLS === undefined ? 12 : +process.env.TABLE_COLS;   // ไม่ตั้ง = จำลองไลบรารีที่เจ้าของงาน publish แล้ว (> 8 คอลัมน์ · 21 ต.ค. ค่ำ) · TABLE_COLS=8 = ไลบรารีเก่าตาม dump
+if (TABLE_COLS > 8) extendTable(TABLE_COLS);
+console.log('จำลอง component Table ' + TABLE_COLS + ' คอลัมน์' + (process.env.TABLE_COLS === undefined ? ' (ค่าเริ่มต้น — ไลบรารี publish ใหม่ 21 ต.ค. · TABLE_COLS=8 = ตาม dump เก่า)' : ''));
 // REF_STEPPER=1: จำลองหน้างานซ่อมที่มีเฟรม "Progress steps" 7 ขั้น (มีกรอบ มุม 12 เส้นสีแดง) ⇒ ปลั๊กอินต้องลอกกรอบนี้
 if (process.env.REF_STEPPER) {
   const pg = new Node({ type: 'PAGE', name: 'Flow การซ่อม' }, root); root.children.push(pg);
