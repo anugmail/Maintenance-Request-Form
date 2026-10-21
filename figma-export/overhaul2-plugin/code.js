@@ -2049,6 +2049,40 @@ async function buildSet(base, SCEN, GRP, what, o) {
 }
 function findInstanceAncestor(n) { let p = n.parent; while (p) { if (p.type === 'INSTANCE') return p; p = p.parent; } return null; }
 
+/* อ่านจอที่เลือก (21 ต.ค. 2569 ค่ำ · R23): เจ้าของงานแก้จอบนหน้า Figma เอง (ระยะหัวข้อ · ซ่อน/เปิดช่อง) แต่ข้อความที่ก๊อปจาก Figma ไม่มีระยะและการซ่อนชั้น
+   ⇒ ปุ่มนี้พิมพ์โครงของสิ่งที่เลือกเป็นบรรทัดย่อ (ชื่อ · ชนิด · ขนาด · gap/padding ของ auto layout · ตำแหน่งเมื่อไม่มี auto layout · ข้อความ · property ของ instance · ~ = ซ่อน)
+   ให้ก๊อป log กลับมา แล้วปรับ script ให้ตรง — ไม่แก้อะไรในไฟล์ */
+function readSelection() {
+  const sel = figma.currentPage.selection || [];
+  if (!sel.length) { log('ยังไม่ได้เลือกอะไร — คลิกเลือกจอ / ป้าย / ส่วนของจอบนหน้านี้ (เลือกหลายชิ้นได้) แล้วกดอีกครั้ง'); return; }
+  const SKIP = { 'Sidebar navigation': 1, 'Header navigation': 1, 'Progress steps': 1 };   // ส่วนเปลือกที่เหมือนกันทุกจอ ไม่ต้องลงลึก
+  const MAX = 2500;
+  const r = (v) => Math.round(v * 10) / 10;
+  const out = [];
+  const propsOf = (n) => { const o = []; try { const cp = n.componentProperties || {}; for (const k in cp) { if (cp[k].type === 'INSTANCE_SWAP') continue; const v = cp[k].value; o.push(k.split('#')[0] + '=' + (typeof v === 'string' ? JSON.stringify(v) : v)); } } catch (e) {} return o.join(' '); };
+  const walk = (n, d, inInst) => {
+    if (out.length > MAX) return;
+    const t = n.type, hidden = n.visible === false;
+    if (t === 'VECTOR' || t === 'RECTANGLE' || t === 'ELLIPSE' || t === 'LINE' || t === 'BOOLEAN_OPERATION' || t === 'POLYGON' || t === 'STAR') return;
+    if (inInst && !hidden && t !== 'TEXT' && t !== 'INSTANCE' && t !== 'FRAME') return;
+    if (inInst && !hidden && t === 'INSTANCE' && /-(?:20|24)-\d{3}-round|^_/.test(n.name)) return;   // ไอคอน/ชิ้นภายในของ component ไม่ต้องพิมพ์
+    if (inInst > 0 && d - inInst > 3 && !hidden) return;   // ข้างใน instance ลงลึกไม่เกิน 3 ชั้น (พอเห็นข้อความ/ชั้นที่ซ่อน)
+    let s = '  '.repeat(d) + (hidden ? '~' : '') + n.name + ' [' + t[0] + ']';
+    try { s += ' ' + r(n.width) + '×' + r(n.height); } catch (e) {}
+    try { const pl = n.parent && n.parent.layoutMode; if (!pl || pl === 'NONE') s += ' @' + r(n.x) + ',' + r(n.y); } catch (e) {}
+    try { if (n.layoutMode && n.layoutMode !== 'NONE') { s += ' ' + n.layoutMode[0] + ' gap' + n.itemSpacing; const p = [n.paddingTop, n.paddingRight, n.paddingBottom, n.paddingLeft]; if (p.some(Boolean)) s += ' pad' + p.join('/'); if (n.layoutWrap === 'WRAP') s += ' wrap'; } } catch (e) {}
+    try { if (t === 'TEXT') s += ' "' + String(n.characters).slice(0, 80).replace(/\n/g, '⏎') + '"' + (typeof n.fontSize === 'number' ? ' ' + n.fontSize : ''); } catch (e) {}
+    if (t === 'INSTANCE') { const p = propsOf(n); if (p) s += ' {' + p + '}'; }
+    out.push(s);
+    if (SKIP[n.name]) { out.push('  '.repeat(d + 1) + '…'); return; }
+    if (hidden && inInst) return;
+    (n.children || []).forEach(c => walk(c, d + 1, inInst || (t === 'INSTANCE' ? d + 1 : 0)));   // inInst = ความลึกที่เริ่มเข้า instance (0 = ยังไม่เข้า)
+  };
+  sel.forEach(n => { out.push('## ' + n.name + ' [' + n.type + '] @' + r(n.x) + ',' + r(n.y) + ' ' + r(n.width) + '×' + r(n.height)); walk(n, 0, n.type === 'INSTANCE' ? 1 : 0); });
+  log('— โครงของที่เลือก ' + sel.length + ' ชิ้น · ' + out.length + ' บรรทัด (~ = ซ่อน · [F]/[I]/[T] = frame/instance/text · V/H gapN padT/R/B/L = auto layout · @x,y = ตำแหน่งเมื่อไม่มี auto layout) — กด "คัดลอก log" แล้ววางกลับมา —');
+  for (let i = 0; i < out.length; i += 50) log(out.slice(i, i + 50).join('\n'));
+  if (out.length > MAX) log('… ตัดที่ ' + MAX + ' บรรทัด — เลือกทีละจอถ้าต้องการครบ');
+}
 figma.ui.onmessage = async (msg) => {
   try {
     const o = { here: !!msg.here, devices: msg.devices };
@@ -2061,6 +2095,7 @@ figma.ui.onmessage = async (msg) => {
     if (msg.type === 'build-pick') await buildPick(Object.assign(o, { pick: msg.pick }));
     if (msg.type === 'update-selected') await updateSelected({ addNew: msg.addNew !== false });
     if (msg.type === 'patch-texts') await patchTexts();
+    if (msg.type === 'read-selection') readSelection();
     if (msg.type === 'check') { log('— เช็ค component (ไม่สร้างอะไร) —'); await resolveAll(NEEDED, true); log(deviceSetInfo()); }
   } catch (e) { log('✗ หยุด — ' + (e && e.message ? e.message : e)); }
 };

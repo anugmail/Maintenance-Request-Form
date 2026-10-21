@@ -243,7 +243,7 @@ const MODE_CHECK = process.env.MODE === 'check';
   const PREFIX = (process.env.PREFIX || 'OH2') + ' / ';   // ปลั๊กอินอื่นตั้ง PREFIX= (เช่น MT) · FIRST= ชื่อจอแรกของ userflow (20 ต.ค. 2569)
   let screens = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(PREFIX) === 0 && n.name.indexOf(' · ตัดแล้ว') < 0);   // จอที่ CF ตัดแล้ว (ติดป้ายไว้ ไม่ลบ) ไม่ตรวจ
   if (process.env.CHECK_ONLY) screens = screens.filter(n => new RegExp(process.env.CHECK_ONLY).test(n.name));   // ตรวจเฉพาะจอที่อัปเดต (จอเก่าที่ไม่ได้เลือกอาจยังเป็นแบบก่อน CF)
-  if (global.__before && process.env.SELECT) {   // อัปเดตจอที่เลือก: จอที่ไม่ได้เลือกต้องเป็น node เดิม ตำแหน่งเดิม · จอที่เลือกต้องถูกแทนที่ที่ตำแหน่งเดิม
+  if (global.__before && process.env.SELECT && process.env.PATCH !== 'read-selection') {   // อัปเดตจอที่เลือก (read-selection แค่อ่าน ไม่แทนที่): จอที่ไม่ได้เลือกต้องเป็น node เดิม ตำแหน่งเดิม · จอที่เลือกต้องถูกแทนที่ที่ตำแหน่งเดิม
     const byId = new Map(page.children.map(n => [n.id, n]));
     const re = process.env.SELECT === 'all' ? null : new RegExp(process.env.SELECT);
     let kept = 0, replaced = 0;
