@@ -1124,13 +1124,12 @@ async function job(name, stage, build) {
   for (const node of await build()) if (node) add(content, node, 'h');
   return scr;
 }
-const apptKv = (ret, d1, d2) => kv([[ret ? 'ช่วงวันนัดรับรถ' : 'ช่วงวันนำรถเข้า', d1 + ' – ' + d2], ['ผู้ประสานงาน (กบค.)', 'นายวิชัย ทองดี'], ['เบอร์โทรผู้ประสานงาน (กบค.)', '02-590-9123'],
-  ['ชื่ออู่', VENDOR[0]], ['เบอร์อู่', VENDOR[1]], ['ที่อยู่', VENDOR[2]], ['หมายเหตุ', '—']], 3);
+const apptKv = (ret, d1, d2) => kv([[ret ? 'ช่วงวันนัดรับรถ' : 'ช่วงวันนำรถเข้า', d1 + ' – ' + d2], ['ผู้ประสานงาน (กบค.)', 'นายวิชัย ทองดี'], ['เบอร์โทรผู้ประสานงาน (กบค.)', '02-590-9123']], 3);   // 21 ต.ค. 2569: ไม่แสดงอู่/หมายเหตุ ให้ตรงฟอร์ม
 /* นัดหมาย (desktop) = instance ของ RepairAppointmentStep — component ในไฟล์ Maintain-D หน้า Design (ฟอร์มนัดของงานซ่อม)
    เจ้าของงานสั่ง 19 ต.ค. 2569: "การนัดหมายเข้าซ่อมอยากให้ใช้แบบนี้ เพราะเรื่องการซ่อมบำรุงใช้แบบนี้ โดย section รูปแบบการซ่อมไม่ต้องมี" (RepairMethod = false)
    variant: ฟอร์ม Type=In · State=Default/Filled · รอตอบกลับ Type=Wating · ปฏิเสธ Type=In State=ReturnReason (ผลตอบกลับ + ฟอร์มส่งนัดใหม่)
    ช่องของงานซ่อม → ช่องของ Overhaul (userflow S7/S13): ช่วงเวลาที่รับมอบรถ → ช่วงวันนำรถเข้า/นัดรับรถ · ช่างซ่อม → ผู้ประสานงาน (กบค.) ·
-   เบอร์ผู้รับมอบรถ → เบอร์โทรผู้ประสานงาน (กบค.) · สถานที่รับรถ → ศูนย์บริการ/อู่ (ค่าจาก PO) · ไม่มีช่องหมายเหตุ (component ไม่มี) · mobile: component ไม่มี variant มือถือ ⇒ ใช้แบบเดิม */
+   เบอร์ผู้รับมอบรถ → เบอร์โทรผู้ประสานงาน (กบค.) · สถานที่รับรถ (Text area) ซ่อน — เจ้าของงานเคาะ 21 ต.ค. 2569 จากจอที่แก้ไว้: ฟอร์มมีแค่ ช่วงวัน · ผู้ประสานงาน · เบอร์ (อู่อยู่ในกล่องข้อมูลยานพาหนะ) · ไม่มีช่องหมายเหตุ · mobile: component ไม่มี variant มือถือ ⇒ ประกอบเองด้วยช่องชุดเดียวกัน */
 const COORD = ['นายวิชัย ทองดี', 'วิศวกร กบค.', '02-590-9123'];
 const REJECT_NOTE = 'รถติดภารกิจซ่อมบำรุงสายส่ง ขอเลื่อนเป็นสัปดาห์ถัดไป';
 function repairAppt(ret, kind, o) {
@@ -1155,7 +1154,7 @@ function repairAppt(ret, kind, o) {
     err(dd, 'กรุณาเลือกผู้ประสานงาน');
   }
   if (phone) { lbl(phone, 'เบอร์โทรผู้ประสานงาน (กบค.)'); setProps(phone, { Text: filled ? COORD[2] : 'แสดงเมื่อเลือกผู้ประสานงาน' }); }
-  if (area) { lbl(area, 'ศูนย์บริการ/อู่' + (ret ? ' (ค่าตั้งต้นจาก PO)' : '')); setProps(area, { Text: VENDOR[0] + ' · ' + VENDOR[1] + ' · ' + VENDOR[2], 'Show Placeholder': false }); }
+  if (area) area.visible = false;   // 21 ต.ค. 2569 เจ้าของงานส่งจอนัดหมายที่เคาะ: ไม่มีช่องอู่ในฟอร์ม (Text area "สถานที่รับรถ" ซ่อน) — อู่แสดงในกล่องข้อมูลยานพาหนะด้านบนแล้ว
   if (kind === 'rejected') {
     const it = find(a, '_Content item base');
     if (it) setProps(it, { Label: 'เหตุผลการปฏิเสธ', Text: REJECT_NOTE, Supporting: false, 'Leading icon': false });
@@ -1174,9 +1173,7 @@ async function apptForm(ret, o) {
   const nodes = [col('Section', [await section(ret ? 'นัดหมายรับรถ' : 'นัดหมายนำรถเข้าอู่'),
     row('Row', [field(ret ? 'นัดรับรถตั้งแต่วันที่' : 'นำรถเข้าตั้งแต่วันที่', o.d1, { placeholder: 'วว/ดด/ปปปป', error: o.errors ? 'กรุณาเลือกวันที่เริ่ม' : '' }),
       field('ถึงวันที่', o.d2, { placeholder: 'วว/ดด/ปปปป', error: o.errors ? 'กรุณาเลือกวันที่สิ้นสุด' : '' }), frame('Spacer', 'VERTICAL')]),
-    row('Row', [coord, field('เบอร์โทรผู้ประสานงาน (กบค.)', o.coord ? '02-590-9123' : '', { state: 'Readonly', placeholder: 'แสดงเมื่อเลือกผู้ประสานงาน' }), frame('Spacer', 'VERTICAL')]),
-    row('Row', [field('ชื่ออู่' + (ret ? ' (ค่าตั้งต้นจาก PO)' : ''), VENDOR[0], { state: 'Readonly' }), field('เบอร์อู่', VENDOR[1], { state: 'Readonly' }), field('ที่อยู่', VENDOR[2], { state: 'Readonly' })]),
-    area('หมายเหตุ', '', { optional: true, placeholder: 'ระบุหมายเหตุ' })], 16),
+    row('Row', [coord, field('เบอร์โทรผู้ประสานงาน (กบค.)', o.coord ? '02-590-9123' : '', { state: 'Readonly', placeholder: 'แสดงเมื่อเลือกผู้ประสานงาน' }), frame('Spacer', 'VERTICAL')])], 16),   // 21 ต.ค. 2569: ไม่มีแถวอู่และหมายเหตุ ให้ตรงกับฟอร์ม desktop ที่เจ้าของงานเคาะ
     btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันนัดหมาย', { size: 'lg' }]])];
   nodes._coord = coord;
   return nodes;

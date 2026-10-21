@@ -330,6 +330,16 @@ const MODE_CHECK = process.env.MODE === 'check';
     if (screens.some(n => Math.round(n.width) !== (mobs.length ? 402 : 1440))) logs.push('⚠ R19 ชุด ' + kind + ' มีจอกว้างผิดอุปกรณ์');
   }
   console.log('R19 จัดวางแบบตาราง flow: ป้าย ' + labels.length + (split ? ' · ชุดอุปกรณ์เดียว (' + (mobs.length ? 'mobile ' + mobs.length : 'desktop ' + desks.length) + ' จอ)' : ' · คู่ desktop/mobile ' + pairs) + (logs.some(l => /R19/.test(l)) ? '' : ' ✓'));
+  if (process.env.DUMP_TEXT) {   // DUMP_TEXT=regex ชื่อจอ → พิมพ์ข้อความทุกชั้น (รวมที่ซ่อน) ตามลำดับ layer — ใช้เทียบกับข้อความที่ก๊อปจาก Figma (21 ต.ค. 2569)
+    const re = new RegExp(process.env.DUMP_TEXT);
+    for (const sc of page.children.filter(n => n.type === 'FRAME' && re.test(n.name))) {
+      const lines = [];
+      const walk = (n, hid) => { const h = hid || n.visible === false; if (n.type === 'TEXT') lines.push((h ? '~' : '') + n.characters); (n.children || []).forEach(c => walk(c, h)); };
+      walk(sc, false);
+      fs.writeFileSync(process.env.DUMP_TEXT_OUT || '/tmp/dump-text.txt', '## ' + sc.name + '\n' + lines.join('\n') + '\n');
+      console.log('DUMP_TEXT: ' + sc.name + ' → ' + lines.length + ' ข้อความ (ขึ้นต้น ~ = ซ่อน)');
+    }
+  }
   if (process.env.DUMP_LAYOUT) fs.writeFileSync(process.env.DUMP_LAYOUT, JSON.stringify(page.children.map(n => ({ name: n.name, type: n.type, x: n.x, y: n.y, w: n.width, h: n.height }))));
   logs.slice(printed).filter(l => /^⚠/.test(l)).forEach(l => console.log(l));
   const bad = logs.filter(l => /^⚠|^✗/.test(l));
