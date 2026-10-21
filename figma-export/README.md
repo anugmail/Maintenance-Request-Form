@@ -18,6 +18,7 @@
 |---|---|---|---|---|
 | Overhaul v2 (14 scenario · 56 จอ × 2) | `overhaul2-plugin/` (code.js ไฟล์เดียว ฉบับ 19 ต.ค.) | `overhaul-1` · `OH2 / …` | `overhaul-v2-component-map.md` | `node figma-export/test-overhaul2-plugin.js` |
 | Overhaul v2 · toast + notification (บล็อก P · Q · 8 จอ × 2) — ปุ่ม "สร้างชุด toast + notification" ในปลั๊กอินเดียวกัน (20 ต.ค. 2569) | `overhaul2-plugin/` (`NOTI_SCENARIOS` · `toast()` · `bell()` · `notiPanel()`) | `overhaul-noti-1` · `OH2 / P.1 · toast — …` | สเปก `Diagram/01-บำรุงรักษาตามวาระ/16-overhaul-toast-notification.md` | `MODE=build-noti FIRST='สำเร็จ บนหน้ารายการแผน' node figma-export/test-overhaul2-plugin.js` |
+| Overhaul v2 · หน้า 1 รายการแผน เทียบก่อน/หลัง CF ของ PO (บล็อก A เดิม 2 state · B หลัง CF 3 state · 5 จอ × 2) — ปุ่ม "สร้างหน้า 1 รายการแผน เทียบก่อน/หลัง CF" (20 ต.ค. 2569) | `overhaul2-plugin/` (`CF1_SCENARIOS` · `PLANS_CF` · `filterPanelCF()` · Table cell Text+SubText / Lead Progress Bar · pagination per/total) | `overhaul-cf-1` · `OH2 / B.1 · CF — …` | mapping `Diagram/01-บำรุงรักษาตามวาระ/17-overhaul-cf-หน้า1-mapping.md` | `MODE=build-cf1 FIRST='รายการแผน' node figma-export/test-overhaul2-plugin.js` |
 | บำรุงรักษาตามวาระ (รอบแรก 9 scenario · 41 จอ × 2) | `maintainance-plugin/` = `plugin-lib/core.js` + `screens.js` → `build-plugin.js` ประกอบเป็น `code.js` | `maintainance-1` · `MT / …` | `maintainance-component-map.md` | `node figma-export/build-plugin.js maintainance-plugin && node figma-export/test-maintainance-plugin.js` |
 
 - `plugin-lib/core.js` = โค้ดส่วนกลาง (หา component 3 ทาง · instance helpers · ฟอร์ม/ตาราง/กล่องข้อมูล/modal/เปลือกหน้า · กติกา R1–R14) — ปลั๊กอินใหม่เขียนแค่ `screens.js` (PLUGIN · DIRECT/NESTED/LOCAL_OPTIONAL · ข้อมูล · จอ · SCENARIOS · build) แล้วรัน build-plugin.js · **ห้ามแก้ code.js ที่ประกอบแล้วตรงๆ**
@@ -81,6 +82,10 @@ flow-report-capture.js       โฟลว์แจ้งซ่อม ฝั่�
 8-flow-userflow.js           userflow .md (Diagram/<เรื่อง>/NN-<เรื่อง>-userflow.md · สัญลักษณ์ 4 แบบของบอร์ดเจ้าของงาน)
                              → out/diagram-userflow-<เรื่อง>.json · section ละ scenario · รูปทรง Template (วงกลม/สี่เหลี่ยม/ข้าวหลามตัด)
                              จัดวางเอง ไม่พึ่ง mermaid · %% Q: ในผัง = sticky คำถาม · ค่าเริ่มต้น = บำรุงรักษาตามวาระ 18 scenario (19 ต.ค. 2569)
+9-ac-board.js                AC ระดับหน้า .md (Diagram/<เรื่อง>/NN-…-AC-หน้าN-….md) → out/board-ac-<เรื่อง>.json ตรง (ไม่ผ่าน 3-figjam-board.js)
+                             section ชนิด doc ละ 1 หัวข้อ `##` · ตาราง md → TableNode ของ FigJam (แก้ทีละเซลล์ได้) · ย่อหน้า/รายการขีด → กล่องข้อความ
+                             ค่าเริ่มต้น = 18-overhaul-AC-หน้า1-รายการแผน.md → board-ac-overhaul-page1.json (20 ต.ค. 2569 · anchor below ลงไฟล์บอร์ด userflow Overhaul)
+                             หน้าอื่น: --src=… --out=board-ac-<เรื่อง>.json --prefix="AC หน้า 2 รายละเอียดแผน"
    ▼ out/figjam/**/*.png + manifest.json + out/diagram-*.json
 3-figjam-board.js            → out/board.json · ค่าเริ่มต้น = ผังโฟลว์สร้างแผน + capture สร้างแผน 8 จอ
                              + วางแผนการเดินทาง 8 จอ + แจ้งซ่อมฝั่งผู้แจ้ง 8 จอ (เจ้าของงานสั่งทีละโฟลว์)
@@ -92,6 +97,8 @@ serve.js                     เสิร์ฟ board.json + รูป (รอ�
 figjam-plugin/               ปลั๊กอิน FigJam: section ผัง (ShapeWithText ตามชนิด node + connector ผูกปลายจริง
                              ลาก node แล้วเส้นตาม) + section รูป (IMAGE fill) + ป้าย + ลูกศร flow
                              รันซ้ำล้างของเดิม + เก็บกวาดรูปอัปโหลดค้าง
+                             + section เอกสาร (kind doc: หัวข้อ/กล่องข้อความ = TextNode กว้างคงที่สูงตามเนื้อหา · ตาราง = figma.createTable
+                             แถวแรกพื้นเทา) สำหรับ AC รายหน้าจาก 9-ac-board.js
 ```
 
 ใช้งาน (หลัง capture + gen board แล้ว):
@@ -107,6 +114,11 @@ node figma-export/serve.js                          # เสิร์ฟให�
 · รูปห้ามเกิน 4096px ต่อด้าน — เป็นเหตุที่ capture ที่ scale 1 และสไลซ์หน้ายาว
 
 เทสก่อนเปิด Figma: `node figma-export/test-figjam-plugin.js` (mock Plugin API — ตรวจจำนวน/ลูกศร/รันซ้ำไม่ซ้อน)
+
+**AC รายหน้าลงบอร์ดเดียวกับ userflow Overhaul** (20 ต.ค. 2569): `node figma-export/9-ac-board.js` (out/ ไม่อยู่ใน git ต้องสร้างทุกครั้ง) → `node figma-export/serve.js`
+→ เปิดไฟล์ FigJam ของบอร์ด Overhaul → ปลั๊กอินเดิม ช่องที่อยู่ใส่ `http://localhost:8124/board-ac-overhaul-page1.json` → โหลด + สร้างบอร์ด
+วางต่อใต้ของเดิม (anchor below) 11 section "AC หน้า 1 รายการแผน · …" · กดซ้ำ = ล้างเฉพาะ 11 section นี้แล้วสร้างใหม่ ไม่แตะบอร์ด userflow
+· เทส `SPEC=board-ac-overhaul-page1.json node figma-export/test-figjam-plugin.js`
 
 ## ทำไมต้องเป็นปลั๊กอิน ไม่ใช่ REST API
 

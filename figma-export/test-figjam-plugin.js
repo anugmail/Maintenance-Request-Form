@@ -50,6 +50,9 @@ class MNode {
       this.text = textSublayer();          // default Inter Medium — จำลองกติกา unloaded font
     }
     if (type === 'STICKY') { this.text = textSublayer(); this.width = 240; this.height = 240; }
+    if (type === 'TABLE') {   // TableNode ของ FigJam (20 ต.ค. 2569 — section ชนิด doc)
+      this.numRows = 0; this.numColumns = 0; this.colW = []; this.cells = [];
+    }
     if (type === 'CONNECTOR') {
       this.connectorStart = null; this.connectorEnd = null;
       this.connectorStartStrokeCap = 'NONE'; this.connectorEndStrokeCap = 'ARROW_LINES';
@@ -68,6 +71,9 @@ class MNode {
   }
   resize(w, h) { this.width = w; this.height = h; }
   resizeWithoutConstraints(w, h) { this.width = w; this.height = h; }
+  cellAt(r, c) { return (this.cells[r] || [])[c] || null; }
+  resizeColumn(c, w) { this.colW[c] = w; this.width = this.colW.reduce((a, b) => a + b, 0); }
+  resizeRow() {}
   findAll(fn) { const out = []; const w = (n) => (n.children || []).forEach(c => { if (!fn || fn(c)) out.push(c); w(c); }); w(this); return out; }   // SectionNode.findAll ของจริง
 }
 
@@ -103,6 +109,11 @@ const figma = {
   createConnector() { const n = new MNode('CONNECTOR'); page.appendChild(n); return n; },
   createSticky() { const n = new MNode('STICKY'); page.appendChild(n); return n; },
   createShapeWithText() { const n = new MNode('SHAPE_WITH_TEXT'); page.appendChild(n); return n; },
+  createTable(nr, nc) {   // เซลล์เกิดมาเป็น Inter Medium เหมือน text sublayer อื่น — ต้องโหลดฟอนต์ก่อนเขียน
+    const n = new MNode('TABLE'); n.numRows = nr; n.numColumns = nc; n.colW = Array(nc).fill(160);
+    for (let r = 0; r < nr; r++) { n.cells.push([]); for (let c = 0; c < nc; c++) n.cells[r].push({ rowIndex: r, columnIndex: c, text: textSublayer(), fills: [] }); }
+    n.width = nc * 160; n.height = nr * 48; page.appendChild(n); return n;
+  },
   createImage(bytes) {
     if (!(bytes instanceof Uint8Array) || !bytes.length) throw new Error('bytes เพี้ยน');
     return { hash: 'h' + (idSeq++) };
@@ -166,8 +177,10 @@ const ok = (m) => console.log('✓ ' + m);
   page.children.filter(n => n.type === 'SECTION').forEach(s =>
     labels.push(...deep(s).filter(c => c.type === 'TEXT')));
   // ป้าย = ป้ายคอลัมน์ของ section รูป + ชื่อเลน + หัวคอลัมน์ช่วงงาน (phases — เพิ่ม 15 ก.ย. 2569)
+  const docSecs = spec.sections.filter(s => s.kind === 'doc');
   const wantLabels = spec.sections.reduce((a, s) => a + (s.cols || []).length, 0)
-    + diagSecs.reduce((a, s) => a + s.diagram.clusters.length + (s.diagram.phases || []).length, 0);
+    + diagSecs.reduce((a, s) => a + s.diagram.clusters.length + (s.diagram.phases || []).length, 0)
+    + docSecs.reduce((a, s) => a + s.blocks.filter(b => b.kind !== 'table').length, 0);
   labels.length === wantLabels ? ok('ป้ายชื่อ ' + labels.length) : fail('ป้ายได้ ' + labels.length + ' คาด ' + wantLabels);
 
   // node ผังทุกตัวต้องมีข้อความ + ชนิดถูกตั้ง (ไม่ค้าง SQUARE หมด)
@@ -190,6 +203,45 @@ const ok = (m) => console.log('✓ ' + m);
     (!missing.length && !extra.length)
       ? ok('ชนิดรูปผังตรงสเปก (' + [...gotKinds].join(',') + ')')
       : fail('ชนิดรูปผังไม่ตรงสเปก — ขาด: ' + (missing.join(',') || '-') + ' · เกิน: ' + (extra.join(',') || '-'));
+  }
+
+  // section ชนิด doc: ตารางครบ · ทุกเซลล์ที่สเปกมีข้อความต้องถูกเขียน (ฟอนต์โหลดก่อน) · หัวตารางมีสี · text block กว้างเท่าที่สั่ง
+  if (docSecs.length) {
+    const wantTables = docSecs.reduce((a, s) => a + s.blocks.filter(b => b.kind === 'table').length, 0);
+    const tables = [];
+    page.children.filter(n => n.type === 'SECTION' && docSecs.some(s => s.name === n.name))
+      .forEach(s => tables.push(...s.children.filter(c => c.type === 'TABLE')));
+    (r.tables === wantTables && tables.length === wantTables) ? ok('ตาราง ' + tables.length) : fail('ตารางได้ ' + tables.length + '/' + r.tables + ' คาด ' + wantTables);
+    let emptyCell = 0, cells = 0, noHead = 0;
+    docSecs.forEach(s => {
+      const sec = page.children.find(n => n.type === 'SECTION' && n.name === s.name);
+      const tbs = sec.children.filter(c => c.type === 'TABLE');
+      s.blocks.filter(b => b.kind === 'table').forEach((b, i) => {
+        const tb = tbs[i];
+        if (!tb) return;
+        if (tb.numRows !== b.rows.length || tb.numColumns !== b.colW.length) fail('ขนาดตารางไม่ตรง ' + tb.name);
+        b.rows.forEach((row, ri) => row.forEach((v, ci) => {
+          cells++;
+          const cell = tb.cellAt(ri, ci);
+          if (v && (!cell || cell.text.characters !== v)) emptyCell++;
+          if (ri === 0 && (!cell || !cell.fills.length)) noHead++;
+        }));
+      });
+    });
+    emptyCell === 0 ? ok('เซลล์มีข้อความครบ ' + cells) : fail('เซลล์ไม่ถูกเขียน ' + emptyCell);
+    noHead === 0 ? ok('หัวตารางมีสีพื้น') : fail('หัวตารางไม่มีสี ' + noHead);
+    const texts = [];
+    page.children.filter(n => n.type === 'SECTION' && docSecs.some(s => s.name === n.name))
+      .forEach(s => texts.push(...s.children.filter(c => c.type === 'TEXT' && c.name.startsWith('text /'))));
+    const wantText = docSecs.reduce((a, s) => a + s.blocks.filter(b => b.kind === 'text').length, 0);
+    const W = docSecs[0].w || 2000;
+    (texts.length === wantText && texts.every(t => t.width === W && t.characters && t.textAutoResize === 'HEIGHT'))
+      ? ok('กล่องข้อความ ' + texts.length + ' กว้าง ' + W + ' สูงตามเนื้อหา') : fail('กล่องข้อความผิด (ได้ ' + texts.length + ' คาด ' + wantText + ')');
+    const bad = [];
+    docSecs.forEach(s => { const sec = page.children.find(n => n.type === 'SECTION' && n.name === s.name); if (!sec) return;
+      const kids = sec.children.slice().sort((a, b) => a.y - b.y);
+      for (let i = 1; i < kids.length; i++) if (kids[i].y < kids[i - 1].y + kids[i - 1].height) bad.push(s.name + ' #' + i); });
+    bad.length === 0 ? ok('บล็อกใน doc ไม่ซ้อนทับกัน') : fail('บล็อกซ้อนทับ ' + bad.length + ' จุด: ' + bad.slice(0, 3).join(', '));
   }
 
   // section ต้องครอบลูกทุกตัว (spot check ทุก section)

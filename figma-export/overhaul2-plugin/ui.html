@@ -9,6 +9,8 @@
 <button id="go">สร้างครบ 14 scenario</button> <button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button>
 <p style="margin:14px 0 6px"><b>toast + notification</b> (สเปก <code>Diagram/01-บำรุงรักษาตามวาระ/16-overhaul-toast-notification.md</code> · 20 ต.ค.) — ชุดแยก 8 จอ × 2 ขนาด บนหน้าใหม่ <b>overhaul-noti-N</b> ไม่แตะชุด 14 scenario: บล็อก <b>P</b> toast (Notification Success/Error ขวาล่าง · 4 state) · บล็อก <b>Q</b> notification (กระดิ่งจุดแดง · Notification card ใต้กระดิ่ง · mobile = bottom sheet · 4 state)</p>
 <button id="noti" style="background:#0f766e">สร้างชุด toast + notification (บล็อก P · Q)</button>
+<p style="margin:14px 0 6px"><b>หน้า 1 รายการแผน เทียบก่อน/หลัง CF</b> (ชีต confirm ของ PO แท็บ "1 รายการแผน" · 20 ต.ค.) — หน้าใหม่ <b>overhaul-cf-N</b>: บล็อก <b>A</b> ฉบับที่ออกแบบไว้ (2 state) · บล็อก <b>B</b> ฉบับหลัง CF (รายการ 12 คอลัมน์ · ตัวกรองใหม่ · ค้นหา autocomplete) · mapping รายฟิลด์ใน <code>Diagram/01-บำรุงรักษาตามวาระ/17-overhaul-cf-หน้า1-mapping.md</code></p>
+<button id="cf1" style="background:#b45309">สร้างหน้า 1 รายการแผน เทียบก่อน/หลัง CF</button>
 <p style="margin:14px 0 6px"><b>แก้เฉพาะส่วน</b> — ไม่สร้างจอใหม่ ที่แก้มือไว้ไม่หาย (ใช้กับทุกเฟรม "OH2 /" ในหน้านี้)</p>
 <button id="playout" style="background:#1d4ed8">จัดวางใหม่เป็นตาราง flow (ย้ายจอเดิม ไม่สร้างใหม่)</button>
 <button id="pdev" style="background:#475467">เปลี่ยนป้ายข้างจอเป็น Device Type (แทนป้ายเดิมที่เดิม ไม่แตะจอ)</button> <button id="pclip" style="background:#475467">ปิด Clip content ทุกจอบนหน้านี้ (ไม่สร้างใหม่)</button>
@@ -18,6 +20,7 @@ const log = (s) => { const d = document.getElementById('log'); d.textContent += 
 document.getElementById('go').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'build' } }, '*'); };
 document.getElementById('chk').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'check' } }, '*'); };
 document.getElementById('noti').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'build-noti' } }, '*'); };
+document.getElementById('cf1').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'build-cf1' } }, '*'); };
 document.getElementById('playout').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'patch-layout' } }, '*'); };
 document.getElementById('pdev').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'patch-device' } }, '*'); };
 document.getElementById('pclip').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'patch-clip' } }, '*'); };

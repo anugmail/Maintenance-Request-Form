@@ -9,6 +9,10 @@
    ไม่มี rectangle/frame ให้ใช้ ส่วน text ของ shape ปล่อยว่างไว้
    (ไม่แตะ = ไม่ต้องโหลดฟอนต์ให้มัน)
 
+   section ชนิด doc (20 ต.ค. 2569 — AC รายหน้า จาก 9-ac-board.js): บล็อกเรียงลง
+   heading/text = TextNode · table = TableNode ของ FigJam (figma.createTable
+   เซลล์แก้ทีละช่องบนบอร์ดได้) — ใช้ลงไฟล์เดียวกับบอร์ด userflow ด้วย anchor below
+
    รันซ้ำ = ล้างของเดิมก่อน: section ชื่อตรงกับ spec · MEDIA เร่ร่อน
    ระดับบนสุด (รูปที่เคยอัปโหลดค้างไว้) · ลูกศร/รูปที่ปลั๊กอินนี้สร้าง
    ============================================================ */
@@ -89,7 +93,7 @@ async function build(spec, images) {
     try { await figma.loadFontAsync(f); } catch (e) { /* ไม่มีก็ปล่อย — เจอจริงค่อยฟ้องตอนตั้งค่า */ }
   }
 
-  const made = { sections: 0, shapes: 0, connectors: 0, stickies: 0, warnings };
+  const made = { sections: 0, shapes: 0, connectors: 0, stickies: 0, tables: 0, texts: 0, warnings };
   let y = 0;
   /* anchor: 'below' — วางต่อใต้ของที่มีอยู่บนบอร์ดแล้ว ชิดซ้ายเท่าของเดิม
      ใช้ตอนเขียนลงบอร์ดที่มีงานคนอื่นอยู่ (ค่าเดิม = เริ่มที่ 0,0 ซึ่งจะทับของเขา) */
@@ -107,6 +111,11 @@ async function build(spec, images) {
     if (sec.kind === 'diagram') {
       y = await buildDiagram(sec, y, font, made, x0, built);
       post('✓ ' + sec.name + ' (ผัง ' + sec.diagram.nodes.length + ' node)');
+      continue;
+    }
+    if (sec.kind === 'doc') {
+      y = await buildDoc(sec, y, font, made, x0, built);
+      post('✓ ' + sec.name + ' (' + sec.blocks.length + ' บล็อก)');
       continue;
     }
     step('สร้าง section "' + sec.name + '"');
@@ -316,13 +325,86 @@ async function buildDiagram(sec, y, font, made, x0, built) {
   return y + s.height + 320;
 }
 
+/* ---------- section ชนิดเอกสาร (AC รายหน้า — สเปกจาก 9-ac-board.js) ----------
+   บล็อกเรียงลงใน section: heading = TextNode ใหญ่ · text = TextNode กว้างคงที่ สูงตามเนื้อหา ·
+   table = TableNode ของ FigJam (เซลล์แก้ทีละช่องได้บนบอร์ด · แถวแรกพื้นเทาเป็นหัวตาราง)
+   ความสูงจริงอ่านจาก node หลังใส่ข้อความ (ค่าในสเปกเป็นแค่ค่าประมาณกันตก) */
+const HEAD_TINT = { r: 0xE9 / 255, g: 0xEA / 255, b: 0xEE / 255 };
+
+async function buildDoc(sec, y, font, made, x0, built) {
+  const PAD = sec.pad || 80, GAP = sec.gap || 40, W = sec.w || 2000;
+  if (sec.blocks.some(b => b.kind === 'table') && typeof figma.createTable !== 'function') {
+    throw new Error('FigJam ที่เปิดอยู่ไม่มี figma.createTable — สร้างตารางไม่ได้ · section "' + sec.name + '" · ' +
+      'วิธีแก้: อัปเดต FigJam (Table ใน Plugin API) หรือสร้างสเปกแบบไม่มีตาราง');
+  }
+  step('สร้าง section "' + sec.name + '"');
+  const s = figma.createSection();
+  s.name = sec.name;
+  s.fills = [{ type: 'SOLID', color: { r: sec.color[0] / 255, g: sec.color[1] / 255, b: sec.color[2] / 255 } }];
+  let yy = PAD;
+  let maxW = W;
+
+  for (const b of sec.blocks) {
+    if (b.kind === 'heading' || b.kind === 'text') {
+      step((b.kind === 'heading' ? 'หัวข้อ "' : 'กล่องข้อความ "') + b.text.slice(0, 30) + '"');
+      const t = figma.createText();
+      t.fontName = font;
+      t.fontSize = b.kind === 'heading' ? (b.size || 32) : (sec.fontText || 24);
+      t.characters = b.text;
+      t.name = (b.kind === 'heading' ? 'heading / ' : 'text / ') + b.text.split('\n')[0].slice(0, 40);
+      s.appendChild(t);
+      if (b.kind === 'text') {
+        /* กว้างคงที่ สูงตามเนื้อหา — text ของ FigJam เกิดมาเป็นกว้างตามข้อความ (ย่อหน้ายาวจะเป็นบรรทัดเดียวยาวมาก) */
+        try { t.textAutoResize = 'HEIGHT'; } catch (e) { /* รุ่นที่ไม่รองรับ — ใช้ขนาดประมาณจากสเปก */ }
+        t.resize(W, Math.max(b.h || 40, 40));
+      }
+      t.x = PAD; t.y = yy;
+      yy += Math.max(t.height || 0, b.kind === 'heading' ? Math.round(t.fontSize * 1.5) : (b.h || 40)) + GAP;
+      made.texts++;
+      continue;
+    }
+    if (b.kind === 'table') {
+      const nR = b.rows.length, nC = b.colW.length;
+      step('ตาราง ' + nR + ' แถว x ' + nC + ' คอลัมน์ "' + (b.rows[0] || []).join(' | ').slice(0, 40) + '"');
+      const tb = figma.createTable(nR, nC);
+      tb.name = 'table / ' + (b.rows[0] || []).join(' | ').slice(0, 60);
+      s.appendChild(tb);
+      b.colW.forEach((w, c) => { try { tb.resizeColumn(c, w); } catch (e) { /* รุ่นที่ไม่มี resizeColumn — ปล่อยกว้างเดิม */ } });
+      for (let r = 0; r < nR; r++) {
+        for (let c = 0; c < nC; c++) {
+          const cell = tb.cellAt(r, c);
+          if (!cell) continue;
+          /* กติกาฟอนต์ของ Figma: จะเปลี่ยน fontName ต้องโหลดฟอนต์เดิมของเซลล์ก่อน (เซลล์เกิดมาเป็น Inter) */
+          try { await figma.loadFontAsync(cell.text.fontName); } catch (e) { /* โหลดไว้แล้วตอนต้น */ }
+          cell.text.fontName = font;
+          cell.text.fontSize = sec.fontCell || 20;
+          cell.text.characters = b.rows[r][c] || '';
+          if (r === 0) { try { cell.fills = [{ type: 'SOLID', color: HEAD_TINT }]; } catch (e) { /* เซลล์รุ่นที่ใส่สีไม่ได้ */ } }
+        }
+      }
+      tb.x = PAD; tb.y = yy;
+      yy += Math.max(tb.height || 0, b.h || 0) + GAP;
+      maxW = Math.max(maxW, tb.width || b.colW.reduce((a, w) => a + w, 0));
+      made.tables++;
+      continue;
+    }
+    made.warnings.push('บล็อกชนิดไม่รู้จัก "' + b.kind + '" ใน ' + sec.name);
+  }
+
+  s.resizeWithoutConstraints(maxW + PAD * 2, yy - GAP + PAD);
+  s.x = x0 || 0; s.y = y;
+  if (built) built.push(s);
+  made.sections++;
+  return y + s.height + 320;
+}
+
 figma.ui.onmessage = async (msg) => {
   if (msg.type !== 'build') return;
   try {
     const result = await build(msg.spec, msg.images);
     figma.ui.postMessage({ type: 'done', result });
     figma.notify('บอร์ดเสร็จ: ' + result.sections + ' section · รูป ' + result.shapes +
-      ' · ลูกศร ' + result.connectors);
+      ' · ลูกศร ' + result.connectors + (result.tables ? ' · ตาราง ' + result.tables + ' · กล่องข้อความ ' + result.texts : ''));
   } catch (e) {
     // ส่ง stack กลับไปด้วย — ข้อความอย่างเดียว ("not a function") บอกไม่ได้ว่าพังบรรทัดไหน
     // และ mock ใน test-figjam-plugin.js จับไม่เจอเพราะมันนิยามเมธอดครบกว่า Figma จริง

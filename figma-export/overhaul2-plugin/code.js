@@ -508,6 +508,12 @@ function mobileCards(cols, rows) {   // mobile: 1 แถวตาราง = 1 �
       if (i >= data.length) { it.visible = false; return; }
       const [head, v] = data[i];
       if (v && v.pill) { setProps(it, { Style: 'Badge' }); setProps(it, { Header: head }); const p = find(it, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
+      else if (v && v.progress != null) { setProps(it, { Style: 'Text' }); setProps(it, { Header: head, Text: (v.text ? v.text + ' · ' : '') + v.progress + '%', Supporting: false }); }   // mobile: ความคืบหน้าเป็นข้อความ (Mobile table item ไม่มี progress bar)
+      else if (v && typeof v === 'object' && v.text != null) {
+        setProps(it, { Style: i === 0 ? 'Lead text' : 'Text' });
+        const hasSub = !!v.sub && propVal(it, 'Supporting text') !== undefined;
+        setProps(it, hasSub ? { Header: head, Text: v.text, Supporting: true, 'Supporting text': v.sub } : { Header: head, Text: v.text + (v.sub ? ' · ' + v.sub : ''), Supporting: false });
+      }
       else { setProps(it, { Style: i === 0 ? 'Lead text' : 'Text' }); setProps(it, { Header: head, Text: v == null ? '' : String(v), Supporting: false }); }
     });
     add(box, card, 'h');
@@ -526,7 +532,7 @@ function tblComposed(cols, rows) {   // cols: [หัว, กว้าง, Style
     if (sort) { const s = find(hc, 'Sort icon'); if (s) setProps(s, { Icon: sort }); }
     rows.forEach((r, ri) => {
       const v = r[ci], alt = ri % 2 ? 'True' : 'False';
-      const st = v && v.check != null ? 'Lead checkbox' : v && v.pill ? 'Badge' : v && (v.menu || v.icons) ? 'Action icons' : style || 'Text';
+      const st = cellStyle(v, style);
       const cell = inst('Table cell', { Style: st, 'Alternating fills': alt });
       add(c, cell, 'h');
       if (st === 'Badge') { const p = find(cell, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
@@ -538,14 +544,28 @@ function tblComposed(cols, rows) {   // cols: [หัว, กว้าง, Style
       } else if (st === 'Lead checkbox') {
         setProps(cell, { Text: v.text, Supporting: false });
         const cb = find(cell, 'Checkbox'); if (cb) setProps(cb, { Type: v.check ? 'Selected' : 'Unselected' });
-      } else setProps(cell, { Text: v == null ? '' : String(v), Supporting: false });
+      } else fillTextCell(cell, v);
     });
   });
   return t;
 }
+/* ช่องตารางชนิดเพิ่ม (CF หน้า 1 · 20 ต.ค. 2569): {text, sub} = Text + SubText (property Supporting text ของ Table cell) · {progress: 0–100, text} = Style "Lead Progress Bar"
+   ข้อความใน Progress bar ต้องใส่ผ่าน text() (async) ⇒ เก็บคิวไว้แล้วให้ tbl() เรียก flushCellText() ตอนจบ */
+const cellStyle = (v, style) => v && v.check != null ? 'Lead checkbox' : v && v.pill ? 'Badge' : v && (v.menu || v.icons) ? 'Action icons' : v && v.progress != null ? 'Lead Progress Bar' : style || 'Text';
+const CELL_TEXT = [];
+async function flushCellText() { for (const [n, layer, val] of CELL_TEXT.splice(0)) await text(n, layer, val); }
+function fillTextCell(cell, v) {
+  if (v && v.progress != null) {
+    const pb = cell.findAll(n => n.type === 'INSTANCE' && n.name === 'Progress bar')[0];
+    if (pb) { setProps(pb, { Progress: Math.max(0, Math.min(100, Math.round(v.progress / 20) * 20)) + '%', Percentage: true, Label: 'Right' }); if (v.text) CELL_TEXT.push([pb, 'Percentage', v.text]); }
+    return;
+  }
+  if (v && typeof v === 'object' && v.text != null) { setProps(cell, { Text: v.text, Supporting: !!v.sub, 'Supporting text': v.sub || '' }); return; }
+  setProps(cell, { Text: v == null ? '' : String(v), Supporting: false });
+}
 /* ช่องตาราง 1 ช่อง — ใช้ทั้งกับ Table cell ที่ซ้อนใน Table (รีวิว 19 ต.ค. 2569) และ mobile */
 function fillCell(cell, v, style, alt) {
-  const st = v && v.check != null ? 'Lead checkbox' : v && v.pill ? 'Badge' : v && (v.menu || v.icons) ? 'Action icons' : style || 'Text';
+  const st = cellStyle(v, style);
   setProps(cell, { Style: st, 'Alternating fills': alt });
   if (st === 'Badge') { const p = find(cell, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
   else if (st === 'Action icons') {
@@ -556,7 +576,7 @@ function fillCell(cell, v, style, alt) {
   } else if (st === 'Lead checkbox') {
     setProps(cell, { Text: v.text, Supporting: false });
     const cb = find(cell, 'Checkbox'); if (cb) setProps(cb, { Type: v.check ? 'Selected' : 'Unselected' });
-  } else setProps(cell, { Text: v == null ? '' : String(v), Supporting: false });
+  } else fillTextCell(cell, v);
 }
 /* กว้างคอลัมน์ใน instance: w = คงที่ · 0 = ยืดเต็ม — Figma ยอมให้ override ขนาดลูกใน instance ที่เป็น auto layout */
 function sizeCol(c, w) {
@@ -572,13 +592,13 @@ const OVERSIZE = [];
 async function tbl(cols, rows, o) {   // cols: [หัว, กว้าง, Style, เรียงได้] · ช่อง: ข้อความ | {pill:[t,สี]} | {menu:1} | {icons:[..]} | {check:bool,text}
   o = o || {};
   if (MOB) {
-    const m = mobileCards(cols, rows);
+    const m = mobileCards(cols, rows); await flushCellText();
     if (!o.pagination) return m;
-    const box = col('Table', [m], 20); add(box, await pagination(o.pagination), 'h'); return box;
+    const box = col('Table', [m], 20); add(box, await pagination(o.pagination, o.pageOpt), 'h'); return box;
   }
   if (cols.length > TABLE_MAX.cols || rows.length > TABLE_MAX.rows) {   // ไลบรารีขยายไม่ได้ (instance เพิ่มคอลัมน์/แถวไม่ได้) ⇒ คงแบบเดิม แล้วรายงาน
     OVERSIZE.push(cols.length + ' คอลัมน์ × ' + rows.length + ' แถว');
-    const box = col('Table', [tblComposed(cols, rows)], 20); if (o.pagination) add(box, await pagination(o.pagination), 'h'); return box;
+    const box = col('Table', [tblComposed(cols, rows)], 20); await flushCellText(); if (o.pagination) add(box, await pagination(o.pagination, o.pageOpt), 'h'); return box;
   }
   const t = inst('Table', { 'Alternating fills': 'True' }, { Scrollbar: false, Pagination: !!o.pagination });
   t.name = 'Table';
@@ -596,7 +616,8 @@ async function tbl(cols, rows, o) {   // cols: [หัว, กว้าง, Styl
     cells.forEach((cell, ri) => { if (ri >= rows.length) { cell.visible = false; return; } fillCell(cell, rows[ri][ci], style, ri % 2 ? 'True' : 'False'); });
     sizeCol(c, w);
   });
-  if (o.pagination) { const pg = find(t, 'Table pagination'); if (pg) await fillPagination(pg, o.pagination); }
+  await flushCellText();
+  if (o.pagination) { const pg = find(t, 'Table pagination'); if (pg) await fillPagination(pg, o.pagination, o.pageOpt); }
   return t;
 }
 async function listCheck(title, items, ticked) {   // List with checkbox (หัว + รายการ)
@@ -949,7 +970,7 @@ const planRow = (p) => [p[0], p[1], p[2], p[3], p[4], p[5], { pill: STATUS[p[6]]
 async function tableHeader(o) {
   const th = inst('Table header', { Breakpoint: BP() }, { 'Table title': false, Badge: false, 'Supporting text': false, 'More actions': false, Filters: !!(o.chips && o.chips.length) });
   const ti = find(th, 'Text input');
-  if (ti) setProps(ti, { Label: false, Helper: false, 'Trailing icon': false, Text: o.query || 'ค้นหาเลขแผน, ชื่อแผน, เลขศูนย์ต้นทุน', State: o.query ? 'Filled' : 'Default' });
+  if (ti) setProps(ti, { Label: false, Helper: false, 'Trailing icon': false, Text: o.query || o.placeholder || 'ค้นหาเลขแผน, ชื่อแผน, เลขศูนย์ต้นทุน', State: o.query ? 'Filled' : 'Default' });
   const acts = find(th, 'Actions');
   if (acts) { let first = true; for (const b of acts.children) {
     if (b.name === 'Secondary button' && first) { first = false; setProps(b, { Text: 'ตัวกรอง', 'Leading icon': true, 'Leading icon swap': icon('filter_list-24-400-round') }); const p = find(b, 'Pill outline'); if (p) p.visible = false; }
@@ -957,17 +978,25 @@ async function tableHeader(o) {
   th.findAll(n => n.name === 'Badge outline with remove icon').forEach((c, i) => { if (o.chips && i < o.chips.length) setProps(c, { Text: o.chips[i] }); else c.visible = false; });
   return th;
 }
-async function pagination(n) { return fillPagination(inst('Table pagination', { Breakpoint: BP() }), n); }
-async function fillPagination(pg, n) {
-  const tx = find(pg, 'Text'); if (tx && tx.type === 'TEXT') await text(pg, tx, 'แสดง 1 ถึง ' + n + ' จาก ' + n + ' รายการ');
+async function pagination(n, o) { return fillPagination(inst('Table pagination', { Breakpoint: BP() }), n, o); }
+/* o.per / o.total (CF หน้า 1: PO ฝากเรื่อง record per page + pagination) — ไม่ส่ง = หน้าเดียว n รายการ · Items per page dropdown เป็นของ component อยู่แล้ว */
+async function fillPagination(pg, n, o) {
+  o = o || {}; const per = o.per || n, total = o.total || n, pages = Math.max(1, Math.ceil(total / per));
+  const tx = find(pg, 'Text'); if (tx && tx.type === 'TEXT') await text(pg, tx, 'แสดง 1 ถึง ' + Math.min(per, total) + ' จาก ' + total + ' รายการ');
   const items = pg.findAll(x => x.name === 'Button groups pagination item');
-  items.forEach((it, i) => { if (i === 0 || i === items.length - 1) setProps(it, { State: 'Disabled' }); else if (i === 1) setProps(it, { Number: '1' }); else it.visible = false; });
+  items.forEach((it, i) => {
+    if (i === 0) setProps(it, { State: 'Disabled' });
+    else if (i === items.length - 1) setProps(it, { State: pages > 1 ? 'Default' : 'Disabled' });
+    else if (i <= pages) setProps(it, { Number: String(i), State: i === 1 ? 'Hover/Active' : 'Default' });
+    else it.visible = false;
+  });
+  if (o.per) { const ipp = find(pg, 'Items per page dropdown'); const dd = ipp && find(ipp, 'Input dropdown'); if (dd) setProps(dd, { Text: String(per) }); }
   return pg;
 }
 async function listScreen(name, o) {
   const { scr, page } = await shell(name, { title: 'จัดการงาน Overhaul', primary: 'สร้างแผน Overhaul' });
   const sec = col('Section', [], 24); add(page, sec, 'h');
-  if (!o.empty) add(sec, await tableHeader(o), 'h');
+  const th = o.empty ? null : add(sec, await tableHeader(o), 'h');
   if (o.empty) {
     const es = inst('Empty state/Data empty'); add(sec, es, 'h');
     await text(es, 'Text', 'ยังไม่มีแผน Overhaul'); await text(es, 'Supporting text', 'สร้างแผนเพื่อเริ่มเพิ่ม Purchase Order และติดตามงานรายคัน');
@@ -979,8 +1008,9 @@ async function listScreen(name, o) {
     const s2 = find(es, 'Secondary button'); if (s2) setProps(s2, { Text: 'ล้างคำค้นและตัวกรอง', 'Leading icon': false });
     const pb = find(es, 'Primary button'); if (pb) pb.visible = false;
   } else {
-    add(sec, await tbl(PLAN_COLS, o.rows.map(planRow), { pagination: o.rows.length }), 'h');
+    add(sec, await tbl(o.cols || PLAN_COLS, o.rows.map(o.rowFn || planRow), { pagination: o.rows.length, pageOpt: o.pageOpt }), 'h');   // o.cols/o.rowFn/o.pageOpt = ฉบับ CF หน้า 1
   }
+  if (o.combo && th) { const ti = find(th, 'Text input'); if (ti) comboAt(scr, find(ti, 'Container') || ti, o.combo); }   // autocomplete ใต้ช่องค้นหา (CF: พิมพ์ 3 ตัวอักษร)
   return scr;
 }
 const firstMenuCell = (scr) => scr.findAll(n => n.type === 'INSTANCE' && n.name === 'Table cell' && n.variantProperties && n.variantProperties.Style === 'Action icons')[0];
@@ -1570,6 +1600,64 @@ const NOTI_GROUPS = NOTI_SCENARIOS.map(([title, screens], i) => {
   return { code, title: tag + ' ' + rest, subs: [{ code, title: rest, tag, screens }] };
 });
 
+/* ---------- หน้า 1 รายการแผน ฉบับหลัง CF จาก PO (Google Sheet แท็บ "1 รายการแผน" · อ่าน 20 ต.ค. 2569) — สร้างคู่กับฉบับที่ออกแบบไว้บนหน้า overhaul-cf-N ให้เห็นความต่าง
+   mapping รายฟิลด์: Diagram/01-บำรุงรักษาตามวาระ/17-overhaul-cf-หน้า1-mapping.md ---------- */
+const STATUS_CF = { P1: ['รอเลข PO', 'Gray'], P2: ['รอดำเนินการ', 'Info'], P3: ['เสร็จสิ้น', 'Success'] };   // PO: ยังไม่มี PO → รอเลข PO · ดำเนินการ → รอดำเนินการ
+const SEARCH_CF = 'ค้นหาเลขแผน, ชื่อแผน, เลขที่งบประมาณ, ทะเบียนรถ';   // PO: เลขศูนย์ต้นทุน → เลขที่งบประมาณ (ค้นได้ทั้งศูนย์ต้นทุนและ WBS) + ค้นด้วยทะเบียนรถ
+/* [เลขแผน, ชื่อแผน, ประเภทงบ, เลขที่งบประมาณ (SubText), ปีงบ, งบ, จำนวนรถ, ปิดงานแล้ว, รถรอติดตาม, สถานะ, วันที่สร้าง, ผู้แก้ไขล่าสุด, แก้ไขเมื่อ] — ข้อมูลจำลอง */
+const PLANS_CF = [
+  ['123460', 'Overhaul ประจำปีงบ 2570 — รถกระเช้า ภาคใต้', 'งบลงทุน', 'WBS: I-70-Z-DPMXX.JM.0002', '2570', '21,500,000', '1', 0, '1', 'P2', '10 ต.ค. 2569', 'นายวิชัย ทองดี', '19 ต.ค. 2569 14:20'],
+  ['123459', 'Overhaul ประจำปีงบ 2570 — รถเครน กฟน.1', 'งบลงทุน', 'WBS: I-70-Z-DPMXX.JM.0001', '2570', '12,400,000', '0', 0, '0', 'P1', '1 ต.ค. 2569', 'นางสาวกนกวรรณ ใจมั่น', '1 ต.ค. 2569 09:05'],
+  ['123458', 'Overhaul ประจำปีงบ 2569 — รถเจาะหลุม', 'งบทำการ', 'ศูนย์ต้นทุน: C-69-OH-0103', '2569', '6,200,000', '0', 0, '0', 'P1', '2 ก.ย. 2569', 'นายวิชัย ทองดี', '2 ก.ย. 2569 16:40'],
+  ['123457', 'Overhaul ประจำปีงบ 2569 — รถกระเช้า', 'งบลงทุน', 'WBS: I-69-Z-DPMXX.JM.0102', '2569', '8,500,000', '3', 1, '1', 'P2', '20 ส.ค. 2569', 'นายวิชัย ทองดี', '18 ต.ค. 2569 11:12'],
+  ['123456', 'Overhaul ประจำปีงบ 2569 — รถเครน', 'งบลงทุน', 'WBS: I-69-Z-DPMXX.JM.0003', '2569', '10,000,000', '3', 2, '0', 'P2', '12 ส.ค. 2569', 'นางสาวกนกวรรณ ใจมั่น', '20 ต.ค. 2569 08:30'],
+  ['123402', 'Overhaul ประจำปีงบ 2568 — รถกระเช้า', 'งบลงทุน', 'WBS: I-68-Z-DPMXX.JM.0102', '2568', '4,300,000', '1', 1, '0', 'P3', '1 ส.ค. 2568', 'นายวิชัย ทองดี', '30 พ.ย. 2568 10:00'],
+  ['123401', 'Overhaul ประจำปีงบ 2568 — รถเครน', 'งบลงทุน', 'WBS: I-68-Z-DPMXX.JM.0101', '2568', '9,800,000', '2', 2, '0', 'P3', '15 ก.ค. 2568', 'นายวิชัย ทองดี', '20 ธ.ค. 2568 15:45'],
+];
+/* 12 คอลัมน์ตาม CF (เกิน component Table 8 คอลัมน์ ⇒ ประกอบเอง R8 รอเคาะ) · กว้างรวม ~1,500 เกินพื้นที่จอ 1440 — ตั้งใจให้เห็นว่าต้องเคาะว่าจะซ่อน/รวมคอลัมน์ไหน */
+const PLAN_COLS_CF = [['เลขแผน', 92, 'Lead text', 'Down'], ['ชื่อแผน', 200, 'Text', 'Swap'], ['ประเภทงบ', 176, 'Text', 'Swap'], ['ปีงบประมาณ', 96], ['งบประมาณ (บาท)', 120], ['จำนวนรถที่ Overhaul', 112],
+  ['ความคืบหน้า (ปิดงานแล้ว)', 170], ['รถรอติดตาม', 100], ['สถานะ', 120, 'Badge', 'Swap'], ['วันที่สร้าง', 110], ['แก้ไขล่าสุด', 168], ['', 56]];
+const planRowCF = (p) => { const n = +p[6], d = +p[7];
+  return [p[0], p[1], { text: p[2], sub: p[3] }, p[4], p[5], p[6], n ? { progress: Math.round(d / n * 100), text: d + '/' + n } : { text: '—', sub: 'ยังไม่มีรถใน PO' }, p[8], { pill: STATUS_CF[p[9]] }, p[10], { text: p[11], sub: p[12] }, { menu: 1 }]; };
+const CF_LIST = { rows: PLANS_CF.slice(0, 5), cols: PLAN_COLS_CF, rowFn: planRowCF, placeholder: SEARCH_CF, pageOpt: { per: 5, total: PLANS_CF.length } };
+const VEHICLE_TYPES = [['รถเครน'], ['รถกระเช้า'], ['รถเจาะหลุม'], ['รถขุดตัก'], ['รถพ่วงฉีดน้ำ']];
+async function checkGroup(label, items) {   // Input label + Checkbox with badge ต่อรายการ (ใช้กับสถานะ และประเภทยานพาหนะที่ PO ขอเลือกหลายค่า)
+  const st = col('Section', [], 12);
+  const lb = inst('Input label'); add(st, lb, 'h'); await text(lb, 'Label', label); hide(lb, '(ถ้ามี)'); hide(lb, 'info-24-300-round'); hide(lb, 'Tertiary brand button');
+  for (const [t, color] of items) { const cb = inst('Checkbox with badge'); st.appendChild(cb); const p = find(cb, 'Pill outline'); if (p) setProps(p, { Color: color || 'Gray', Text: t }); }
+  return st;
+}
+/* ตัวกรองฉบับ CF: ปีงบประมาณ · สถานะ (ชื่อใหม่) · ประเภทยานพาหนะ (PO ขอ multiple select — ไลบรารีไม่มี dropdown หลายค่า ⇒ รายการ checkbox รอทีมออกแบบ)
+   · งบประมาณ (PO ให้พิจารณา range slider — ไลบรารีไม่มี Slider ⇒ คง dropdown ช่วงวงเงิน รอเคาะ) · ตัดตัวกรอง "รถ" (ทะเบียน) และ "ศูนย์ต้นทุน" */
+async function filterPanelCF(scr) {
+  const content = [dropdown('ปีงบประมาณ', '2570'), await checkGroup('สถานะ', ['P1', 'P2', 'P3'].map(k => [STATUS_CF[k][0], STATUS_CF[k][1]])),
+    await checkGroup('ประเภทยานพาหนะ (เลือกได้หลายค่า)', VEHICLE_TYPES), dropdown('งบประมาณ (ช่วงวงเงิน)', 'ไม่เกิน 5 ล้านบาท')];
+  if (MOB) { await sheet(scr, { title: 'ตัวกรอง', action: 'ล้างตัวกรอง', content, ok: 'ตกลง' }); return; }
+  overlay(scr, inst('Background overlay'), 0, 0).resize(1440, 1024);
+  const panel = frame('Panel', 'VERTICAL', { gap: 24, fill: WHITE });
+  overlay(scr, panel, 960, 0); panel.primaryAxisSizingMode = 'FIXED'; panel.counterAxisSizingMode = 'FIXED'; panel.resize(480, 1024);
+  const hd = inst('Side panel header'); add(panel, hd, 'h'); hide(hd, 'Tabs');
+  await text(hd, 'Text', 'ตัวกรอง'); await text(hd, 'Supporting text', 'กรองข้อมูลให้แสดงเฉพาะข้อมูลที่ต้องการ');
+  const body = frame('Content', 'VERTICAL', { gap: 24, pad: [0, 24] }); add(panel, body, 'both');
+  for (const n of content) add(body, n, 'h');
+  const ft = inst('Side panel footer'); add(panel, ft, 'h');
+  [['Tertiary brand button', 'ล้างตัวกรอง'], ['Secondary button', 'ยกเลิก'], ['Primary button', 'ตกลง']].forEach(([k, t]) => { const b = find(ft, k); if (b) setProps(b, { Text: t, 'Leading icon': false, 'Trailing icon': false }); });
+}
+const CF1_SCENARIOS = [
+  ['เดิม · หน้า 1 รายการแผน ฉบับที่ออกแบบไว้ (ก่อน CF)', [
+    ['รายการแผน', () => listScreen('เดิม รายการแผน', { rows: PLANS })],
+    ['ตัวกรอง', async () => { const s = await listScreen('เดิม ตัวกรอง', { rows: PLANS }); await filterPanel(s); return s; }]]],
+  ['CF · หน้า 1 รายการแผน หลัง PO confirm (ชีต "1 รายการแผน" อ่าน 20 ต.ค. 2569)', [
+    ['รายการแผน (คอลัมน์ใหม่ · ชื่อสถานะใหม่ · pagination)', () => listScreen('CF รายการแผน', CF_LIST)],
+    ['ตัวกรอง (ปีงบ · สถานะ · ประเภทยานพาหนะ · ช่วงวงเงิน)', async () => { const s = await listScreen('CF ตัวกรอง', CF_LIST); await filterPanelCF(s); return s; }],
+    ['ค้นหา พิมพ์ 3 ตัวอักษร ขึ้น autocomplete', () => listScreen('CF ค้นหา', Object.assign({}, CF_LIST, { query: 'I-69', combo: [['WBS: I-69-Z-DPMXX.JM.0003', 'แผน 123456 Overhaul ประจำปีงบ 2569 — รถเครน'], ['WBS: I-69-Z-DPMXX.JM.0102', 'แผน 123457 Overhaul ประจำปีงบ 2569 — รถกระเช้า'], ['ศูนย์ต้นทุน: C-69-OH-0103', 'แผน 123458 Overhaul ประจำปีงบ 2569 — รถเจาะหลุม']] }))]]],
+];
+const CF1_GROUPS = CF1_SCENARIOS.map(([title, screens], i) => {
+  const code = LETTERS[i], tag = title.split(' · ')[0], rest = title.split(' · ').slice(1).join(' · ');
+  return { code, title: tag + ' ' + rest, subs: [{ code, title: rest, tag, screens }] };
+});
+async function buildCF1() { await buildSet('overhaul-cf', CF1_SCENARIOS, CF1_GROUPS, 'หน้า 1 ก่อน/หลัง CF'); }
+
 /* ---------- สร้างทั้งหมด ---------- */
 async function build() { await buildSet('overhaul', SCENARIOS, GROUPS, 'scenario'); }
 async function buildNoti() { await buildSet('overhaul-noti', NOTI_SCENARIOS, NOTI_GROUPS, 'toast/notification'); }
@@ -1618,6 +1706,7 @@ figma.ui.onmessage = async (msg) => {
   try {
     if (msg.type === 'build') await build();
     if (msg.type === 'build-noti') await buildNoti();
+    if (msg.type === 'build-cf1') await buildCF1();
     if (msg.type === 'check') { log('— เช็ค component (ไม่สร้างอะไร) —'); await resolveAll(NEEDED, true); log(deviceSetInfo()); }
     if (msg.type === 'patch-device') await patchDevice();
     if (msg.type === 'patch-clip') await patchClip();

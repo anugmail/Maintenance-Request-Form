@@ -66,7 +66,7 @@ $btn.addEventListener('click', async () => {
     const base = specUrl.replace(/[^/]*$/, '');
     log('— กำลังโหลด ' + specUrl.replace(base, ''));
     const r0 = await fetch(specUrl);
-    if (!r0.ok) throw new Error('ไม่พบไฟล์สเปก ' + specUrl.replace(base, '') + ' (' + r0.status + ') — เช็คชื่อไฟล์ใน figma-export/out/ (เช่น board.json · board-overhaul2.json · board-maintainance.json)');
+    if (!r0.ok) throw new Error('ไม่พบไฟล์สเปก ' + specUrl.replace(base, '') + ' (' + r0.status + ') — เช็คชื่อไฟล์ใน figma-export/out/ (เช่น board.json · board-overhaul2.json · board-maintainance.json · board-ac-overhaul-page1.json)');
     const spec = await r0.json();
     if (!spec || !Array.isArray(spec.sections)) throw new Error('ไฟล์นี้ไม่ใช่สเปกบอร์ด (ไม่มี sections) — ' + specUrl.replace(base, ''));
 
@@ -94,7 +94,7 @@ onmessage = (e) => {
   if (!m) return;
   if (m.type === 'log') log(m.text, m.cls);
   if (m.type === 'done') {
-    log('เสร็จ: section ' + m.result.sections + ' · รูป ' + m.result.shapes + ' · ลูกศร ' + m.result.connectors);
+    log('เสร็จ: section ' + m.result.sections + ' · รูป ' + m.result.shapes + ' · ลูกศร ' + m.result.connectors + (m.result.tables ? ' · ตาราง ' + m.result.tables + ' · กล่องข้อความ ' + m.result.texts : ''));
     (m.result.warnings || []).forEach(w => log('เตือน: ' + w, 'warn'));
     $btn.disabled = false;
   }
