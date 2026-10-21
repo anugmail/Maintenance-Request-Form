@@ -1631,13 +1631,14 @@ const NEW_PLAN_CF = ['123461', 'Overhaul ประจำปีงบ 2570 — �
      คอลัมน์ที่ชีต CF มีแต่จอไม่มี (หน่วยงาน · จำนวนรถ · รถรอติดตาม · แก้ไขล่าสุด) ไม่ใส่ จดรอเคาะ (ไฟล์ 18/19) · ต้องใช้ component Table ที่มี ≥ 9 คอลัมน์ (ไลบรารี publish แล้ว) ไม่พอ = ยุบ หมายเลขแผน/ชื่อแผน เป็นช่องเดียว
    mobile ยังใช้ชุด 13 ช่องตาม CF เป็นการ์ด (ยังไม่ทำ mobile — เมื่อสั่งทำ ให้อ้างอิง desktop) */
 const PLAN_COLS_D = [['หมายเลขแผน', 130, 'Lead text', 'Down'], ['ชื่อแผน', 0, 'Text', 'Swap'], ['ประเภทงบ', 190, 'Text', 'Swap'], ['ปีงบประมาณ', 110], ['งบประมาณ (บาท)', 150], ['ความคืบหน้า', 150], ['สถานะ', 124, 'Badge', 'Swap'], ['วันที่สร้าง', 120], ['', 72]];
-const planProgress = (p) => { const n = +p[7], d = +p[8]; return n ? { progress: Math.round(d / n * 100), text: d + '/' + n } : '-'; };   // จอเจ้าของงาน: ไม่มี PO แสดง "-" ไม่มีบรรทัดรอง
+const planProgress = (p) => { const n = +p[7], d = +p[8]; return n ? d + '/' + n : '-'; };   // เจ้าของงาน 21 ต.ค. ค่ำ: "ความคืบหน้าตัด Progress bar ออก" ⇒ ข้อความ x/n · ไม่มี PO แสดง "-" ไม่มีบรรทัดรอง
+const planProgressBar = (p) => { const n = +p[7], d = +p[8]; return n ? { progress: Math.round(d / n * 100), text: d + '/' + n } : '-'; };   // mobile ยังใช้แถบแบบเดิม (ยังไม่ทำ mobile)
 const planRowD = (p) => [p[0], p[1], { text: p[3], sub: p[4] }, p[5], p[6], planProgress(p), { pill: STATUS[p[10]] }, p[11], { menu: 1 }];
-const PLAN_COLS_D8 = [['หมายเลขแผน', 0, 'Lead text', 'Down'], ['ประเภทงบ', 190, 'Text', 'Swap'], ['ปีงบประมาณ', 110], ['งบประมาณ (บาท)', 150], ['ความคืบหน้า', 150], ['สถานะ', 124, 'Badge', 'Swap'], ['วันที่สร้าง', 120], ['', 72]];   // สำรอง: ไลบรารี Table 8 คอลัมน์ — ชื่อแผนเป็นบรรทัดรองของหมายเลขแผน
-const planRowD8 = (p) => [{ text: p[0], sub: p[1] }, { text: p[3], sub: p[4] }, p[5], p[6], planProgress(p), { pill: STATUS[p[10]] }, p[11], { menu: 1 }];
+const PLAN_COLS_D8 = [['หมายเลขแผน', 130, 'Lead text', 'Down'], ['ชื่อแผน', 0, 'Text', 'Swap'], ['ประเภทงบ', 190, 'Text', 'Swap'], ['งบประมาณ (บาท)', 160], ['ความคืบหน้า', 130], ['สถานะ', 124, 'Badge', 'Swap'], ['วันที่สร้าง', 120], ['', 72]];   // สำรอง: ไลบรารี Table 8 คอลัมน์ — ชื่อแผนคงเป็นคอลัมน์ (เจ้าของงาน 21 ต.ค. ค่ำ "เพิ่ม column ชื่อแผน") ยุบ ปีงบประมาณ เป็นบรรทัดรองของงบประมาณ
+const planRowD8 = (p) => [p[0], p[1], { text: p[3], sub: p[4] }, { text: p[6], sub: 'ปีงบประมาณ ' + p[5] }, planProgress(p), { pill: STATUS[p[10]] }, p[11], { menu: 1 }];
 const PLAN_COLS_M = [['เลขแผน', 92, 'Lead text', 'Down'], ['ชื่อแผน', 190, 'Text', 'Swap'], ['หน่วยงาน', 90], ['ประเภทงบ', 170, 'Text', 'Swap'], ['ปีงบประมาณ', 96], ['งบประมาณ (บาท)', 116], ['จำนวนรถ', 84],
   ['ความคืบหน้า (ปิดงานแล้ว)', 160], ['รถรอติดตาม', 96], ['สถานะ', 118, 'Badge', 'Swap'], ['วันที่สร้าง', 104], ['แก้ไขล่าสุด', 160], ['', 72]];
-const planRowM = (p) => [p[0], p[1], p[2], { text: p[3], sub: p[4] }, p[5], p[6], p[7], planProgress(p), p[9], { pill: STATUS[p[10]] }, p[11], { text: p[12], sub: p[13] }, { menu: 1 }];
+const planRowM = (p) => [p[0], p[1], p[2], { text: p[3], sub: p[4] }, p[5], p[6], p[7], planProgressBar(p), p[9], { pill: STATUS[p[10]] }, p[11], { text: p[12], sub: p[13] }, { menu: 1 }];
 const planSet = () => MOB ? 'M' : LIB_TABLE.cols >= PLAN_COLS_D.length ? 'D' : 'D8';   // mobile = การ์ด 13 ช่อง · desktop = จอเจ้าของงาน 9 คอลัมน์ · ไลบรารีเก่า 8 = สำรอง
 const PLAN_COLS_CF = () => ({ M: PLAN_COLS_M, D: PLAN_COLS_D, D8: PLAN_COLS_D8 })[planSet()];   // tbl() รับฟังก์ชัน — เลือกชุดตอนสร้างจอ
 const planRowCF = (p) => ({ M: planRowM, D: planRowD, D8: planRowD8 })[planSet()](p);
