@@ -959,7 +959,7 @@ function comboAt(scr, anchor, items) {   // Dropdown list ใต้ช่อง�
   rows.forEach((it, i) => {
     if (i >= items.length) { it.visible = false; return; }
     setProps(it, { State: items[i][2] ? 'Selected' : 'Default' });
-    setProps(it, { Text: items[i][0], 'Supporting text': items[i][1], Avatar: false, 'Supporting 2': false, Supporting: true });
+    setProps(it, { Text: items[i][0], 'Supporting text': items[i][1] || '', Avatar: false, 'Supporting 2': false, Supporting: !!items[i][1] });   // ไม่ส่งบรรทัดรอง = แถวเดียว (เลือกรถ S4: ทะเบียน+จังหวัดอย่างเดียว)
   });
   const sc = find(l, 'Vertical scrollbar'); if (sc) sc.visible = false;
   overlay(scr, l, 0, 0);
@@ -1081,19 +1081,38 @@ async function poForm(name, o) {
   const sel = o.sel || [];
   const left = ALL_CARS.filter((_, i) => sel.indexOf(i) < 0), right = ALL_CARS.filter((_, i) => sel.indexOf(i) >= 0);
   const vendorF = dropdown('ศูนย์บริการ/อู่', o.vendor || '', { placeholder: 'ค้นหาชื่อศูนย์บริการ/อู่', lead: 'search-24-300-round', state: o.vendorOpen ? 'Focused' : undefined, error: o.errors ? 'กรุณาเลือกศูนย์บริการ/อู่' : '' });
-  const mid = MOB ? row('Actions', [btn('Secondary button', 'เพิ่ม', { disabled: !(o.tick && o.tick.length) }), btn('Secondary button', 'นำออก', { disabled: true })], { gap: 12, keep: true })
-    : col('Actions', [btn('Secondary button', 'เพิ่ม', { disabled: !(o.tick && o.tick.length) }), btn('Secondary button', 'นำออก', { disabled: true })], 12);
-  mid.layoutGrow = 0;
-  const shown = o.query ? left.filter(c => c[1].indexOf(o.query) >= 0 || c[0].indexOf(o.query) >= 0) : left;   // จอ "ค้นแล้วติ๊ก" กรองตามคำค้น
-  const L = await listCheck('รายการรถทั้งหมด', shown, o.tick || []), R = await listCheck('เลือกแล้ว', right, []);
-  const dual = row('Dual list', [L, mid, R], { gap: 16 }); mid.layoutGrow = 0; if (!MOB) mid.primaryAxisAlignItems = 'CENTER';
+  /* เลือกรถ — desktop (เจ้าของงานสั่ง 21 ต.ค. 2569 ค่ำ · R24): Input dropdown ช่องเดียว พิมพ์ค้นทะเบียน/จังหวัด → Dropdown list แถวละ "ทะเบียน จังหวัด" (คันที่เลือกแล้ว State=Selected)
+     → รถที่เลือกแล้วเป็นชิป Badge outline with remove icon ใต้ช่อง (กด × เอาออก) · ไม่มี dual list เพิ่ม/นำออก · ตัวกรอง หน่วยงาน/เขต · ประเภทรถ ยังไม่ใส่ (รอเคาะ)
+     mobile: ยังไม่ทำ — คง dual list แบบเดิม (ถ้าทำมือถือให้อ่านจาก desktop) */
+  let carSec;
+  const carF = MOB ? null : dropdown('เลือกรถ', o.query || '', { placeholder: 'ค้นหาทะเบียน, จังหวัด', lead: 'search-24-300-round', state: o.carOpen ? 'Focused' : undefined });
+  if (MOB) {
+    const mid = row('Actions', [btn('Secondary button', 'เพิ่ม', { disabled: !(o.tick && o.tick.length) }), btn('Secondary button', 'นำออก', { disabled: true })], { gap: 12, keep: true });
+    mid.layoutGrow = 0;
+    const shown = o.query ? left.filter(c => c[1].indexOf(o.query) >= 0 || c[0].indexOf(o.query) >= 0) : left;
+    const L = await listCheck('รายการรถทั้งหมด', shown, o.tick || []), R = await listCheck('เลือกแล้ว', right, []);
+    const dual = row('Dual list', [L, mid, R], { gap: 16 }); mid.layoutGrow = 0;
+    carSec = col('Section', [await section('เลือกรถ'), row('Row', [field('ค้นหารถ', o.query, { placeholder: 'ค้นหาทะเบียน, รุ่น/ยี่ห้อ', lead: 1 }), frame('Spacer', 'VERTICAL')]), dual], 16);
+  } else {
+    let chips = null;
+    if (right.length) {
+      chips = frame('Selected cars', 'HORIZONTAL', { gap: 8 });
+      try { chips.layoutWrap = 'WRAP'; chips.counterAxisSpacing = 8; } catch (e) {}
+      right.forEach(c => chips.appendChild(inst('Badge outline with remove icon', { Color: 'Brand' }, { Text: c[0] })));
+    }
+    carSec = col('Section', [await section('เลือกรถ'), row('Row', [carF, frame('Spacer', 'VERTICAL')]), chips], 16);
+  }
   add(page, col('Content', [
     col('Section', [await section('รายละเอียด Purchase Order'), row('Row', [field('ชื่อ Purchase Order', o.name, { placeholder: 'เช่น ซ่อมระบบแอร์', error: o.errors ? 'กรุณาระบุชื่อ Purchase Order' : '' }), vendorF])], 16),
-    col('Section', [await section('เลือกรถ'), row('Row', [field('ค้นหารถ', o.query, { placeholder: 'ค้นหาทะเบียน, รุ่น/ยี่ห้อ', lead: 1 }), frame('Spacer', 'VERTICAL')]), dual], 16),
+    carSec,
     col('Section', [await section('เอกสาร'), await upload('ใบสั่งจ้าง', o.order || [], { error: o.errors ? 'กรุณาแนบใบสั่งจ้าง' : '' }), await upload('อื่นๆ', [], { optional: true })], 16),
     btnRow(edit ? [['Secondary button', 'ยกเลิก', { size: 'lg' }], ['Primary button', 'บันทึก', { size: 'lg' }]] : [['Primary button', 'บันทึก', { size: 'lg' }]]),
   ], 32), 'h');
   if (o.vendorOpen) comboAt(scr, vendorF.findOne(n => n.name === 'Container') || vendorF, [['บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', '02-111-2202 · เขตพระนคร กรุงเทพฯ']]);
+  if (o.carOpen && carF) {   // รายการรถที่ตรงคำค้น (ทะเบียน/จังหวัด) · คันที่เลือกแล้วติ๊ก Selected · แสดงได้เท่าช่องของ component Dropdown list
+    const cands = ALL_CARS.map((c, i) => [c, i]).filter(([c]) => !o.query || c[0].indexOf(o.query) >= 0);
+    comboAt(scr, carF.findOne(n => n.name === 'Container') || carF, cands.map(([c, i]) => [c[0], '', sel.indexOf(i) >= 0]));
+  }
   return scr;
 }
 
@@ -1311,7 +1330,7 @@ const SCENARIOS = [
     ['ฟอร์ม PO (ว่าง)', () => poForm('S4 ฟอร์ม PO (ว่าง)', {})],
     ['กดบันทึกโดยยังไม่ครบ', () => poForm('S4 ยังไม่ครบ', { errors: true })],
     ['เลือกอู่ (พิมพ์ค้น)', () => poForm('S4 เลือกอู่', { name: 'ซ่อมระบบเครื่องยนต์และเจาะหลุม', vendor: 'ตรีเพชร', vendorOpen: true })],
-    ['ติ๊กรถแล้วกดเพิ่ม', () => poForm('S4 เลือกรถ', { name: 'ซ่อมระบบเครื่องยนต์และเจาะหลุม', vendor: 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', query: 'เจาะหลุม', tick: [0, 1] })],
+    ['เลือกรถ (พิมพ์ค้นแล้วเลือกจาก dropdown)', () => poForm('S4 เลือกรถ', { name: 'ซ่อมระบบเครื่องยนต์และเจาะหลุม', vendor: 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', query: '7', carOpen: true, sel: [2], tick: [0, 1] })],   // desktop: พิมพ์ "7" → 70-1123 ชลบุรี (เลือกแล้ว) · 71-9902 ขอนแก่น · 72-6648 สงขลา · mobile ยังเป็น dual list เดิม
     ['กรอกครบ', () => poForm('S4 กรอกครบ', { name: 'ซ่อมระบบเครื่องยนต์และเจาะหลุม', vendor: 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', sel: [3, 6], order: [{ name: 'ใบสั่งจ้าง.pdf', size: '195 KB' }] })],
     ['บันทึกไม่สำเร็จ (toast 11)', async () => { const s = await poForm('S4 บันทึกไม่สำเร็จ', { name: 'ซ่อมระบบเครื่องยนต์และเจาะหลุม', vendor: 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', sel: [3, 6], order: [{ name: 'ใบสั่งจ้าง.pdf', size: '195 KB' }] }); await T(s, 11); return s; }],
     ['เปิดฟอร์มจากแผนที่ถูกลบไปแล้ว (toast 12)', async () => { const s = await poForm('S4 ไม่พบแผน', {}); await T(s, 12); return s; }],
@@ -1643,7 +1662,7 @@ async function buildToast(o) { await buildSet('overhaul-toast', TOAST_SCENARIOS,
    ชื่อเฟรมที่รู้จัก: 19 ต.ค. "OH2 / S1 — label[ · mobile]" · หลังจัดวางใหม่ "OH2 / B.1 · S1 — label[ · mobile]" ---------- */
 const SCEN_TAGS = SCENARIOS.map(([title]) => title.split(' · ')[0]);
 const normLabel = (s) => String(s).replace(/\s*\([^()]*\)\s*$/, '').replace(/\s+/g, ' ').trim();   // ตัดวงเล็บท้าย เช่น "(toast 2)" "(เติมค่าเดิม)"
-const STATE_ALIAS = { 'ผลกรองด้วยรถ': 'ผลกรองด้วยประเภทยานพาหนะ', 'ระบุอะไหล่แล้ว': 'นำเข้าไฟล์สำเร็จ (toast 23)', 'ยืนยันรับรถแล้ว ยังไม่มีความคืบหน้า': 'ยังไม่มีความคืบหน้า' };   // ชื่อ state เดิมที่เทียบด้วยกติกาทั่วไปไม่ได้ (รายการท้าย = ชื่อฉบับ CF เช้า 21 ต.ค. → ชื่อตามจอ J ของเจ้าของงาน)
+const STATE_ALIAS = { 'ผลกรองด้วยรถ': 'ผลกรองด้วยประเภทยานพาหนะ', 'ระบุอะไหล่แล้ว': 'นำเข้าไฟล์สำเร็จ (toast 23)', 'ยืนยันรับรถแล้ว ยังไม่มีความคืบหน้า': 'ยังไม่มีความคืบหน้า', 'ติ๊กรถแล้วกดเพิ่ม': 'เลือกรถ (พิมพ์ค้นแล้วเลือกจาก dropdown)' };   // ชื่อ state เดิมที่เทียบด้วยกติกาทั่วไปไม่ได้ (รายการท้าย = ชื่อฉบับ CF เช้า 21 ต.ค. → ชื่อตามจอ J ของเจ้าของงาน)
 const REMOVED_STATES = ['เมนู "…" → แก้ไข', 'เมนู "…" → ลบ', 'เมนู "…" ของ PO → แก้ไข', 'ดูรูปแนบ (lightbox)'];   // CF ตัดออก (จัดการเป็นไอคอน R21) · lightbox ไม่อยู่ในจอ J ที่เจ้าของงานส่ง (R23)
 const REMOVED_TAG = ' · ตัดแล้ว (ไม่มี state นี้ในฉบับปัจจุบัน)';
 function parseFrameName(name) {   // → { code, tag, label, mob } หรือ null

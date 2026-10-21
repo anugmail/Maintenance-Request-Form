@@ -1,6 +1,6 @@
 {
   "_about": "กติกาการสร้างจอด้วย component จริงของไลบรารี (Component) VMS Plus — ตัวทดสอบ test-overhaul2-plugin.js อ่านไฟล์นี้แล้วตรวจทุกจอ · ผิดกติกา = ทดสอบไม่ผ่าน · คำอธิบายรายข้ออยู่ที่ component-rules.md · แก้กติกาต้องแก้ทั้ง 2 ไฟล์",
-  "_updated": "2026-10-21 (R23 แบบที่เจ้าของงานส่งเป็นหลัก — S9 ตาราง วันที่·รายละเอียด·หมายเหตุ · R22 dashboard แบบ MA Overview · R20 หน้า toast แยก · R21 จัดการเป็นไอคอน) · 2026-10-19 (R10 R16–R17)",
+  "_updated": "2026-10-21 (R24 เลือกรถในฟอร์ม PO = Input dropdown + ชิป · R23 แบบที่เจ้าของงานส่งเป็นหลัก · R22 dashboard แบบ MA Overview · R20 หน้า toast แยก · R21 จัดการเป็นไอคอน) · 2026-10-19 (R10 R16–R17)",
   "library": {
     "Table": {
       "cols": 8,
@@ -160,6 +160,13 @@
         "นัดหมายรับรถ"
       ],
       "source": "เจ้าของงานสั่ง 19 ต.ค. 2569 — การนัดหมายเข้าซ่อม/รับรถใช้ component นัดหมายของงานซ่อม (ไฟล์ Maintain-D หน้า Design)"
+    },
+    {
+      "id": "R24",
+      "screens": "^OH2 / .*S4 — (เลือกรถ|กรอกครบ|บันทึกไม่สำเร็จ)",
+      "desktopOnly": true,
+      "component": "Badge outline with remove icon",
+      "source": "รถที่เลือกแล้วในฟอร์ม PO แสดงเป็นชิป Badge outline with remove icon (Color=Brand) ข้อความ \"ทะเบียน จังหวัด\" ใต้ช่อง Input dropdown \"เลือกรถ\" · รายการที่เปิด = Dropdown list แถวละทะเบียน+จังหวัด (ไม่มีบรรทัดรอง) คันที่เลือกแล้ว State=Selected"
     }
   ],
   "displayBox": {
@@ -264,6 +271,12 @@
       "screens": "^OH2 / ",
       "component": "Dropdown menu",
       "source": "PO CF 21 ต.ค. 2569 ทุกหน้า \"ขอเป็น ICON Action\" — จัดการท้ายแถวเป็นไอคอน ดูรายละเอียด · แก้ไข · ลบ (Table cell / Mobile table item Style=Action icons) ไม่ใช่เมนู …"
+    },
+    {
+      "id": "R24",
+      "screens": "^OH2 / .*S[45] — (?!.*· mobile$)",
+      "component": "List with checkbox",
+      "source": "เจ้าของงานสั่ง 21 ต.ค. 2569 (ค่ำ): เลือกรถในฟอร์ม PO เป็น dropdown select (ทะเบียน จังหวัด) รถที่เลือกแล้วเป็นชิป — desktop ไม่ใช้ dual list / List with checkbox แล้ว (mobile ยังไม่ทำ คงเดิม)"
     }
   ],
   "dashboard": {
@@ -282,7 +295,11 @@
       "id": "R23",
       "screens": "^OH2 / .*S9 — มีความคืบหน้า",
       "desktopOnly": true,
-      "tableHeaders": ["วันที่", "รายละเอียด", "หมายเหตุ"],
+      "tableHeaders": [
+        "วันที่",
+        "รายละเอียด",
+        "หมายเหตุ"
+      ],
       "note": "ลำดับแหล่งความจริงของโครงจอ: ข้อความ/ภาพจากเฟรม Figma ที่เจ้าของงานส่ง → ชีต CF ของ PO → userflow/AC · คอลัมน์ในชีตที่จอของเจ้าของงานไม่มี ไม่ใส่ (จดรอเคาะในไฟล์ 19) · ตรวจด้วย harness DUMP_TEXT",
       "source": "เจ้าของงานสั่ง 21 ต.ค. 2569 (ค่ำ) พร้อมข้อความจากเฟรม J.1–J.3: \"scen J ให้ปรับแก้ใน script เป็นแบบที่ส่งไป ครั้งหน้าถ้าต้อง gen ui ให้ยึดตามแบบที่ส่งไป\" · component-rules.md §4.2"
     }
