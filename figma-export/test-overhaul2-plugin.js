@@ -340,6 +340,17 @@ const MODE_CHECK = process.env.MODE === 'check';
       console.log('DUMP_TEXT: ' + sc.name + ' → ' + lines.length + ' ข้อความ (ขึ้นต้น ~ = ซ่อน)');
     }
   }
+  if (process.env.DUMP_TABLE) {   // DUMP_TABLE=regex ชื่อจอ → พิมพ์ตารางทุกตัวในจอ: component/ประกอบเอง · หัวคอลัมน์ · ช่องแถวแรก (Style · Text · Supporting text) · กว้าง — ตรวจ R25 (21 ต.ค. 2569 ค่ำ)
+    const re = new RegExp(process.env.DUMP_TABLE), pv = (n, k) => { const cp = n.componentProperties || {}; const x = Object.keys(cp).find(y => y.split('#')[0].trim() === k); return x ? cp[x].value : undefined; };
+    for (const sc of page.children.filter(n => n.type === 'FRAME' && re.test(n.name))) {
+      for (const t of sc.findAll(n => n.name === 'Table' && (n.type === 'INSTANCE' || (n.children || []).some(c => c.name === 'Column')))) {
+        const cols = t.findAll(n => n.name === 'Column' && n.visible !== false);
+        console.log('DUMP_TABLE: ' + sc.name + ' → ' + (t.type === 'INSTANCE' ? 'component Table' : 'ประกอบเอง') + ' · ' + cols.length + ' คอลัมน์');
+        cols.forEach(c => { const [h, c1] = c.children; const st = (c1 && c1.variantProperties || {}).Style;
+          console.log('   ' + Math.round(c.width) + 'px  หัว "' + (pv(h, 'Text') || '') + '"' + (pv(h, 'Sort icon') ? ' ↕' : '') + '  แถว1 ' + st + ' "' + (pv(c1, 'Text') || '') + '"' + (pv(c1, 'Supporting') ? ' / "' + (pv(c1, 'Supporting text') || '') + '"' : '')); });
+      }
+    }
+  }
   if (process.env.DUMP_LAYOUT) fs.writeFileSync(process.env.DUMP_LAYOUT, JSON.stringify(page.children.map(n => ({ name: n.name, type: n.type, x: n.x, y: n.y, w: n.width, h: n.height }))));
   logs.slice(printed).filter(l => /^⚠/.test(l)).forEach(l => console.log(l));
   const bad = logs.filter(l => /^⚠|^✗/.test(l));

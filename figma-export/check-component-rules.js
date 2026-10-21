@@ -53,7 +53,8 @@ function check(screens) {
       if (allowed || r.pending) { const k = r.id + ' ' + (r.pending || 'ตาราง ' + r.component + ' เกินขนาด Table ของไลบรารี'); pending.set(k, (pending.get(k) || new Set()).add(sc.name)); continue; }
       fail(r, sc, r.component + ' วางเดี่ยว ต้องอยู่ใน ' + r.parent);
     }
-    for (const t of composedTables(sc)) if (!oversize(t)) fail(RULES.insideOnly[0], sc, 'ตารางประกอบเองขนาดไม่เกินไลบรารี — ต้องใช้ component Table');
+    // R25 (21 ต.ค. 2569 ค่ำ): ตารางประกอบเอง = ไม่ผ่านทุกขนาด — เจ้าของงานสั่งให้ทุก scenario ดึง component Table (เกิน 8 คอลัมน์ต้องยุบ/ตัดก่อน)
+    for (const t of composedTables(sc)) { const nc = t.children.filter(x => x.name === 'Column').length; fail(RULES.tables && RULES.tables.neverCompose ? RULES.tables : RULES.insideOnly[0], sc, 'ตารางประกอบเอง ' + nc + ' คอลัมน์ — ต้องใช้ component Table' + (nc > RULES.library.Table.cols ? ' (ยุบเป็น 2 บรรทัด/ตัดให้เหลือ ' + RULES.library.Table.cols + ')' : '')); }
     // กติการายหน้า (หน้า Detail)
     for (const r of RULES.pages) {
       const ph = all.find(x => isInst(x, 'Page header'));

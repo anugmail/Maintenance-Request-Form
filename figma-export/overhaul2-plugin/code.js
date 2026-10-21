@@ -545,31 +545,6 @@ function mobileCards(cols, rows) {   // mobile: 1 แถวตาราง = 1 �
   });
   return box;
 }
-/* ตารางประกอบเองแบบเดิม — ใช้เฉพาะตารางที่เกินขนาด component Table ของไลบรารี (8 คอลัมน์ × 10 แถว) */
-function tblComposed(cols, rows) {   // cols: [หัว, กว้าง, Style, เรียงได้] · ช่อง: ข้อความ | {pill:[t,สี]} | {menu:1} | {icons:[..]} | {check:bool,text}
-  const t = frame('Table', 'HORIZONTAL');
-  cols.forEach(([head, w, style, sort], ci) => {
-    const c = frame('Column', 'VERTICAL');
-    t.appendChild(c);
-    if (w) { c.layoutSizingHorizontal = 'FIXED'; c.resize(w, c.height); } else c.layoutGrow = 1;
-    const hc = inst('Table header cell', { Checkbox: 'False' }, { Text: head || ' ', 'Sort icon': !!sort, 'Header text': !!head });
-    add(c, hc, 'h');
-    if (sort) { const s = find(hc, 'Sort icon'); if (s) setProps(s, { Icon: sort }); }
-    rows.forEach((r, ri) => {
-      const v = r[ci], alt = ri % 2 ? 'True' : 'False';
-      const st = cellStyle(v, style);
-      const cell = inst('Table cell', { Style: st, 'Alternating fills': alt });
-      add(c, cell, 'h');
-      if (st === 'Badge') { const p = find(cell, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
-      else if (st === 'Action icons') fillIcons(cell, v.menu ? ['more_horiz-20-400-round'] : v.icons);
-      else if (st === 'Lead checkbox') {
-        setProps(cell, { Text: v.text, Supporting: false });
-        const cb = find(cell, 'Checkbox'); if (cb) setProps(cb, { Type: v.check ? 'Selected' : 'Unselected' });
-      } else fillTextCell(cell, v);
-    });
-  });
-  return t;
-}
 /* ช่องตารางชนิดเพิ่ม (CF หน้า 1 · 20 ต.ค. 2569): {text, sub} = Text + SubText (property Supporting text ของ Table cell) · {progress: 0–100, text} = Style "Lead Progress Bar"
    ข้อความใน Progress bar ต้องใส่ผ่าน text() (async) ⇒ เก็บคิวไว้แล้วให้ tbl() เรียก flushCellText() ตอนจบ */
 const cellStyle = (v, style) => v && v.check != null ? 'Lead checkbox' : v && v.pill ? 'Badge' : v && (v.menu || v.icons) ? 'Action icons' : v && v.progress != null ? 'Lead Progress Bar' : style || 'Text';
@@ -602,21 +577,20 @@ function sizeCol(c, w) {
     c.children.forEach(x => { x.layoutSizingHorizontal = 'FILL'; });
   } catch (e) { warn('ปรับกว้างคอลัมน์ ' + c.name, e); }
 }
-/* ตาราง = instance ของ component "Table" (รีวิว 19 ต.ค. 2569: เดิมประกอบเองจาก Table cell/Table header cell ⇒ ไม่มีกรอบตาราง)
-   Table ของไลบรารีมี 8 คอลัมน์ × 10 แถว ⇒ ซ่อนส่วนที่เกิน · ปิด Scrollbar · Pagination ตาม o.pagination (จำนวนรายการ) */
+/* ตาราง = instance ของ component "Table" (key f1bf4ff7… · รีวิว 19 ต.ค. 2569: เดิมประกอบเองจาก Table cell/Table header cell ⇒ ไม่มีกรอบตาราง)
+   R25 (เจ้าของงานสั่ง 21 ต.ค. 2569 ค่ำ): ทุก scenario ที่มีตารางต้องดึง component นี้ **ทุกขนาด** ไม่ประกอบเองอีก — ไลบรารีมี 8 คอลัมน์ × 10 แถว
+   ⇒ เกิน 8 คอลัมน์ต้องยุบเป็นช่อง 2 บรรทัด (Text + Supporting text) หรือตัดก่อนเรียก (ดู PLAN_COLS_D) · ซ่อนส่วนที่เกิน · ปิด Scrollbar · Pagination ตาม o.pagination
+   cols ส่งเป็นฟังก์ชันได้ (คืนชุดคอลัมน์ตามอุปกรณ์ — desktop ยุบแล้ว / mobile ยังชุดเดิม จนกว่าจะสั่งทำ mobile) */
 const TABLE_MAX = { cols: 8, rows: 10 };   // ขนาด component Table ของไลบรารี
-const OVERSIZE = [];
-async function tbl(cols, rows, o) {   // cols: [หัว, กว้าง, Style, เรียงได้] · ช่อง: ข้อความ | {pill:[t,สี]} | {menu:1} | {icons:[..]} | {check:bool,text}
+async function tbl(cols, rows, o) {   // cols: [หัว, กว้าง, Style, เรียงได้] · ช่อง: ข้อความ | {text, sub} | {pill:[t,สี]} | {menu:1} | {icons:[..]} | {check:bool,text} | {progress, text}
   o = o || {};
+  if (typeof cols === 'function') cols = cols();
   if (MOB) {
     const m = mobileCards(cols, rows); await flushCellText();
     if (!o.pagination) return m;
     const box = col('Table', [m], 20); add(box, await pagination(o.pagination, o.pageOpt), 'h'); return box;
   }
-  if (cols.length > TABLE_MAX.cols || rows.length > TABLE_MAX.rows) {   // ไลบรารีขยายไม่ได้ (instance เพิ่มคอลัมน์/แถวไม่ได้) ⇒ คงแบบเดิม แล้วรายงาน
-    OVERSIZE.push(cols.length + ' คอลัมน์ × ' + rows.length + ' แถว');
-    const box = col('Table', [tblComposed(cols, rows)], 20); await flushCellText(); if (o.pagination) add(box, await pagination(o.pagination, o.pageOpt), 'h'); return box;
-  }
+  if (cols.length > TABLE_MAX.cols || rows.length > TABLE_MAX.rows) warn('Table', 'R25: ' + cols.length + ' คอลัมน์ × ' + rows.length + ' แถว เกิน component Table (8 × 10) — ต้องยุบ/ตัดคอลัมน์หรือแบ่งหน้าก่อนเรียก (ไม่ประกอบเองแล้ว)');
   const t = inst('Table', { 'Alternating fills': 'True' }, { Scrollbar: false, Pagination: !!o.pagination });
   t.name = 'Table';
   const wrap = find(t, 'Content with scrollbar'), content = wrap && wrap.children.find(c => c.name === 'Content');
@@ -1301,7 +1275,7 @@ const NEW_PO = ['PO-700202', 'ซ่อมระบบเครื่องย�
 const D = (a, b) => [a, b];
 const SCENARIOS = [
   ['หน้ารายการแผน — ค้นหา · ตัวกรอง · ค้นไม่เจอ · ยังไม่มีแผน', [
-    ['รายการแผน (13 คอลัมน์ · ไอคอนจัดการ · pagination)', () => listScreen('รายการแผน', CF_LIST)],
+    ['รายการแผน (component Table · ไอคอนจัดการ · pagination)', () => listScreen('รายการแผน', CF_LIST)],
     ['ตัวกรอง (ปีงบ · สถานะ · ประเภทยานพาหนะ · ช่วงวงเงิน)', async () => { const s = await listScreen('ตัวกรอง', CF_LIST); await filterPanelCF(s); return s; }],
     ['ผลกรองด้วยประเภทยานพาหนะ', () => listScreen('ผลกรองด้วยประเภทยานพาหนะ', Object.assign({}, CF_LIST, { rows: [PLANS_CF[0], PLANS_CF[3], PLANS_CF[5]], chips: ['ประเภทยานพาหนะ: รถกระเช้า'], pageOpt: { per: 5, total: 3 } }))],
     ['ค้นหา พิมพ์ 3 ตัวอักษร ขึ้น autocomplete', () => listScreen('ค้นหา autocomplete', Object.assign({}, CF_LIST, { query: 'I-69', combo: CF_COMBO }))],
@@ -1417,10 +1391,6 @@ async function polish(root) {
 
 function reportOversize() {
   if (STEP_SHORT.length) { log('· Progress steps ของไลบรารีมี ' + STEP_SHORT[0] + ' ช่อง แต่หน้างานมี ' + STEPS.length + ' ขั้น ⇒ ' + STEP_SHORT.length + ' จอยังวาง Horizontal step item ทีละขั้น — เพิ่มช่องใน component แล้วสร้างชุดใหม่ จะสลับให้เอง'); STEP_SHORT.length = 0; }
-  if (!OVERSIZE.length) return;
-  const by = {}; OVERSIZE.forEach(x => { by[x] = (by[x] || 0) + 1; });
-  log('· ตารางที่ใหญ่กว่า component Table ของไลบรารี (8 คอลัมน์ × 10 แถว) คงแบบประกอบเองไว้ ' + OVERSIZE.length + ' ตาราง: ' + Object.keys(by).map(k => k + ' ×' + by[k]).join(' · ') + ' — รอเจ้าของงานเคาะ');
-  OVERSIZE.length = 0;
 }
 
 
@@ -1480,6 +1450,17 @@ function deviceVariant(kind) {   // → { key, value } ของ variant ใน 
     for (const k of Object.keys(vp)) if (want.indexOf(String(vp[k]).trim().toLowerCase()) >= 0) return { key: k, value: vp[k] };
   }
   return null;
+}
+async function tableInfo() {   // โครง component Table ของไลบรารี ณ ตอนนี้ (R25 · 21 ต.ค. 2569 ค่ำ เจ้าของงาน publish ใหม่) — นำเข้าด้วย key แล้วนับคอลัมน์/แถวของ variant แรก
+  try {
+    const set = await figma.importComponentSetByKeyAsync(KEYS.Table[0]);
+    const v = set.defaultVariant || set.children[0];
+    const cols = v.findAll(x => x.type === 'FRAME' && x.name === 'Column');
+    const rows = cols[0] ? cols[0].children.filter(x => x.name === 'Table cell').length : 0;
+    const defs = set.componentPropertyDefinitions || {};
+    log('· component Table (key ' + KEYS.Table[0].slice(0, 8) + '…): variant "' + v.name + '" ' + Math.round(v.width) + '×' + Math.round(v.height) + ' · คอลัมน์ ' + cols.length + ' · แถว ' + rows + ' · property: ' + Object.keys(defs).map(k => k.split('#')[0] + (defs[k].variantOptions ? '=' + defs[k].variantOptions.join('|') : '')).join(' · ')
+      + (cols.length !== TABLE_MAX.cols || rows !== TABLE_MAX.rows ? ' ⚠ ต่างจากที่สคริปต์รู้จัก (' + TABLE_MAX.cols + ' × ' + TABLE_MAX.rows + ') — ส่ง log นี้กลับมาให้ปรับ TABLE_MAX/การยุบคอลัมน์' : ' ✓ ตรงกับที่สคริปต์รู้จัก'));
+  } catch (e) { log('· อ่าน component Table จากไลบรารีไม่ได้: ' + (e && e.message || e)); }
 }
 function deviceSetInfo() {   // ข้อความรายงานในหน้าต่างปลั๊กอิน (ปุ่มเช็ค + ตอนสร้าง)
   const set = INDEX.get('Device Type');
@@ -1596,12 +1577,20 @@ const PLANS_CF = [
   ['123401', 'Overhaul ประจำปีงบ 2568 — รถเครน', 'กบค.', 'งบลงทุน', 'WBS: I-68-Z-DPMXX.JM.0101', '2568', '9,800,000', '2', 2, '0', 'P3', '15 ก.ค. 2568', 'นายวิชัย ทองดี', '20 ธ.ค. 2568 15:45'],
 ];
 const NEW_PLAN_CF = ['123461', 'Overhaul ประจำปีงบ 2570 — รถเจาะหลุม', 'กบค.', 'งบลงทุน', 'WBS: I-70-Z-DPMXX.JM.0003', '2570', '5,500,000', '0', 0, '0', 'P1', '21 ต.ค. 2569', 'นายวิชัย ทองดี', '21 ต.ค. 2569 10:12'];
-/* 13 คอลัมน์ตาม CF (12 ของ 20 ต.ค. + หน่วยงาน) เกิน component Table 8 คอลัมน์ ⇒ ประกอบเอง (R8 รอเคาะ) · กว้างรวม ~1,560 เกินพื้นที่จอ 1440 — ตั้งใจให้เห็นว่าต้องเคาะว่าจะซ่อน/รวมคอลัมน์ไหน (ยังไม่เคาะ ไฟล์ 18)
-   จัดการ = ไอคอน ดูรายละเอียด · แก้ไข · ลบ (PO CF: "ขอเป็น ICON Action") */
-const PLAN_COLS_CF = [['เลขแผน', 92, 'Lead text', 'Down'], ['ชื่อแผน', 190, 'Text', 'Swap'], ['หน่วยงาน', 90], ['ประเภทงบ', 170, 'Text', 'Swap'], ['ปีงบประมาณ', 96], ['งบประมาณ (บาท)', 116], ['จำนวนรถ', 84],
+/* หน้ารายการแผน — 13 ช่องตาม CF (12 ของ 20 ต.ค. + หน่วยงาน) · จัดการ = ไอคอน ดูรายละเอียด · แก้ไข · ลบ (PO CF: "ขอเป็น ICON Action")
+   R25 (เจ้าของงานสั่ง 21 ต.ค. 2569 ค่ำ "ถ้าเป็นหน้า list ต้องดึงตารางให้ถูก"): desktop ใช้ component Table 8 คอลัมน์ ⇒ ยุบ 13 ช่องเป็น 8 คอลัมน์แบบ 2 บรรทัด (ไม่ตัดช่องใด):
+     แผน = เลขแผน / ชื่อแผน · หน่วยงาน / ปีงบประมาณ · งบประมาณ (บาท) / ประเภทงบ + WBS · จำนวนรถ / รอติดตาม · ความคืบหน้า (progress) · สถานะ · แก้ไขล่าสุด / ผู้แก้ + วันที่สร้าง · จัดการ
+   mobile ยังใช้ชุด 13 ช่องเดิมเป็นการ์ด (ยังไม่ทำ mobile — เมื่อสั่งทำ ให้อ้างอิง desktop) */
+const PLAN_COLS_D = [['แผน', 0, 'Lead text', 'Down'], ['หน่วยงาน', 110], ['งบประมาณ (บาท)', 210], ['จำนวนรถ', 110], ['ความคืบหน้า (ปิดงานแล้ว)', 160], ['สถานะ', 124, 'Badge', 'Swap'], ['แก้ไขล่าสุด', 190, 'Text', 'Swap'], ['', 128]];
+const planRowD = (p) => { const n = +p[7], d = +p[8];
+  return [{ text: p[0], sub: p[1] }, { text: p[2], sub: 'ปีงบประมาณ ' + p[5] }, { text: p[6], sub: p[3] + ' · ' + p[4] }, { text: p[7], sub: 'รอติดตาม ' + p[9] },
+    n ? { progress: Math.round(d / n * 100), text: d + '/' + n } : { text: '—', sub: 'ยังไม่มีรถใน PO' }, { pill: STATUS[p[10]] }, { text: p[13], sub: p[12] + ' · สร้าง ' + p[11] }, { icons: ROW_ICONS }]; };
+const PLAN_COLS_M = [['เลขแผน', 92, 'Lead text', 'Down'], ['ชื่อแผน', 190, 'Text', 'Swap'], ['หน่วยงาน', 90], ['ประเภทงบ', 170, 'Text', 'Swap'], ['ปีงบประมาณ', 96], ['งบประมาณ (บาท)', 116], ['จำนวนรถ', 84],
   ['ความคืบหน้า (ปิดงานแล้ว)', 160], ['รถรอติดตาม', 96], ['สถานะ', 118, 'Badge', 'Swap'], ['วันที่สร้าง', 104], ['แก้ไขล่าสุด', 160], ['', 128]];
-const planRowCF = (p) => { const n = +p[7], d = +p[8];
+const planRowM = (p) => { const n = +p[7], d = +p[8];
   return [p[0], p[1], p[2], { text: p[3], sub: p[4] }, p[5], p[6], p[7], n ? { progress: Math.round(d / n * 100), text: d + '/' + n } : { text: '—', sub: 'ยังไม่มีรถใน PO' }, p[9], { pill: STATUS[p[10]] }, p[11], { text: p[12], sub: p[13] }, { icons: ROW_ICONS }]; };
+const PLAN_COLS_CF = () => MOB ? PLAN_COLS_M : PLAN_COLS_D;   // tbl() รับฟังก์ชัน — เลือกชุดตามอุปกรณ์ตอนสร้างจอ
+const planRowCF = (p) => (MOB ? planRowM : planRowD)(p);
 const CF_LIST = { rows: PLANS_CF.slice(0, 5), cols: PLAN_COLS_CF, rowFn: planRowCF, placeholder: SEARCH_CF, pageOpt: { per: 5, total: PLANS_CF.length } };
 const CF_COMBO = [['WBS: I-69-Z-DPMXX.JM.0003', 'แผน 123456 Overhaul ประจำปีงบ 2569 — รถเครน'], ['WBS: I-69-Z-DPMXX.JM.0102', 'แผน 123457 Overhaul ประจำปีงบ 2569 — รถกระเช้า'], ['ศูนย์ต้นทุน: C-69-OH-0103', 'แผน 123458 Overhaul ประจำปีงบ 2569 — รถเจาะหลุม']];
 const PLAN_COLS = PLAN_COLS_CF, planRow = planRowCF;   // ชุดหลักใช้ฉบับ CF (listScreen ใช้เป็นค่าเริ่มต้น)
@@ -1662,7 +1651,7 @@ async function buildToast(o) { await buildSet('overhaul-toast', TOAST_SCENARIOS,
    ชื่อเฟรมที่รู้จัก: 19 ต.ค. "OH2 / S1 — label[ · mobile]" · หลังจัดวางใหม่ "OH2 / B.1 · S1 — label[ · mobile]" ---------- */
 const SCEN_TAGS = SCENARIOS.map(([title]) => title.split(' · ')[0]);
 const normLabel = (s) => String(s).replace(/\s*\([^()]*\)\s*$/, '').replace(/\s+/g, ' ').trim();   // ตัดวงเล็บท้าย เช่น "(toast 2)" "(เติมค่าเดิม)"
-const STATE_ALIAS = { 'ผลกรองด้วยรถ': 'ผลกรองด้วยประเภทยานพาหนะ', 'ระบุอะไหล่แล้ว': 'นำเข้าไฟล์สำเร็จ (toast 23)', 'ยืนยันรับรถแล้ว ยังไม่มีความคืบหน้า': 'ยังไม่มีความคืบหน้า', 'ติ๊กรถแล้วกดเพิ่ม': 'เลือกรถ (พิมพ์ค้นแล้วเลือกจาก dropdown)' };   // ชื่อ state เดิมที่เทียบด้วยกติกาทั่วไปไม่ได้ (รายการท้าย = ชื่อฉบับ CF เช้า 21 ต.ค. → ชื่อตามจอ J ของเจ้าของงาน)
+const STATE_ALIAS = { 'ผลกรองด้วยรถ': 'ผลกรองด้วยประเภทยานพาหนะ', 'ระบุอะไหล่แล้ว': 'นำเข้าไฟล์สำเร็จ (toast 23)', 'ยืนยันรับรถแล้ว ยังไม่มีความคืบหน้า': 'ยังไม่มีความคืบหน้า', 'ติ๊กรถแล้วกดเพิ่ม': 'เลือกรถ (พิมพ์ค้นแล้วเลือกจาก dropdown)', 'รายการแผน (13 คอลัมน์ · ไอคอนจัดการ · pagination)': 'รายการแผน (component Table · ไอคอนจัดการ · pagination)' };   // ชื่อ state เดิมที่เทียบด้วยกติกาทั่วไปไม่ได้ (รายการท้าย = ชื่อฉบับ CF เช้า 21 ต.ค. → ชื่อตามจอ J ของเจ้าของงาน)
 const REMOVED_STATES = ['เมนู "…" → แก้ไข', 'เมนู "…" → ลบ', 'เมนู "…" ของ PO → แก้ไข', 'ดูรูปแนบ (lightbox)'];   // CF ตัดออก (จัดการเป็นไอคอน R21) · lightbox ไม่อยู่ในจอ J ที่เจ้าของงานส่ง (R23)
 const REMOVED_TAG = ' · ตัดแล้ว (ไม่มี state นี้ในฉบับปัจจุบัน)';
 function parseFrameName(name) {   // → { code, tag, label, mob } หรือ null
@@ -2052,7 +2041,14 @@ function findInstanceAncestor(n) { let p = n.parent; while (p) { if (p.type === 
 /* อ่านจอที่เลือก (21 ต.ค. 2569 ค่ำ · R23): เจ้าของงานแก้จอบนหน้า Figma เอง (ระยะหัวข้อ · ซ่อน/เปิดช่อง) แต่ข้อความที่ก๊อปจาก Figma ไม่มีระยะและการซ่อนชั้น
    ⇒ ปุ่มนี้พิมพ์โครงของสิ่งที่เลือกเป็นบรรทัดย่อ (ชื่อ · ชนิด · ขนาด · gap/padding ของ auto layout · ตำแหน่งเมื่อไม่มี auto layout · ข้อความ · property ของ instance · ~ = ซ่อน)
    ให้ก๊อป log กลับมา แล้วปรับ script ให้ตรง — ไม่แก้อะไรในไฟล์ */
-function readSelection() {
+async function mainInfo(n) {   // "ชุด/variant key=… (ไลบรารี)" ของ instance — ใช้ตอนอ่านจอที่เลือก (เจ้าของงาน publish component ใหม่ 21 ต.ค. 2569 ค่ำ: ต้องรู้ key + โครงใหม่)
+  try { const mc = await n.getMainComponentAsync(); if (!mc) return '';
+    const set = mc.parent && mc.parent.type === 'COMPONENT_SET' ? mc.parent : null;
+    const cols = n.findAll(x => x.type === 'FRAME' && x.name === 'Column' && x.visible !== false).length;
+    return 'component=' + (set ? set.name + ' / ' : '') + mc.name + ' key=' + (set ? set.key : mc.key) + (mc.remote ? ' (ไลบรารี)' : ' (ในไฟล์นี้)') + (cols ? ' · คอลัมน์ ' + cols : '');
+  } catch (e) { return 'component=? (' + (e && e.message || e) + ')'; }
+}
+async function readSelection() {
   const sel = figma.currentPage.selection || [];
   if (!sel.length) { log('ยังไม่ได้เลือกอะไร — คลิกเลือกจอ / ป้าย / ส่วนของจอบนหน้านี้ (เลือกหลายชิ้นได้) แล้วกดอีกครั้ง'); return; }
   const SKIP = { 'Sidebar navigation': 1, 'Header navigation': 1, 'Progress steps': 1 };   // ส่วนเปลือกที่เหมือนกันทุกจอ ไม่ต้องลงลึก
@@ -2078,7 +2074,7 @@ function readSelection() {
     if (hidden && inInst) return;
     (n.children || []).forEach(c => walk(c, d + 1, inInst || (t === 'INSTANCE' ? d + 1 : 0)));   // inInst = ความลึกที่เริ่มเข้า instance (0 = ยังไม่เข้า)
   };
-  sel.forEach(n => { out.push('## ' + n.name + ' [' + n.type + '] @' + r(n.x) + ',' + r(n.y) + ' ' + r(n.width) + '×' + r(n.height)); walk(n, 0, n.type === 'INSTANCE' ? 1 : 0); });
+  for (const n of sel) { out.push('## ' + n.name + ' [' + n.type + '] @' + r(n.x) + ',' + r(n.y) + ' ' + r(n.width) + '×' + r(n.height) + (n.type === 'INSTANCE' ? ' ' + await mainInfo(n) : '')); walk(n, 0, n.type === 'INSTANCE' ? 1 : 0); }
   log('— โครงของที่เลือก ' + sel.length + ' ชิ้น · ' + out.length + ' บรรทัด (~ = ซ่อน · [F]/[I]/[T] = frame/instance/text · V/H gapN padT/R/B/L = auto layout · @x,y = ตำแหน่งเมื่อไม่มี auto layout) — กด "คัดลอก log" แล้ววางกลับมา —');
   for (let i = 0; i < out.length; i += 50) log(out.slice(i, i + 50).join('\n'));
   if (out.length > MAX) log('… ตัดที่ ' + MAX + ' บรรทัด — เลือกทีละจอถ้าต้องการครบ');
@@ -2095,8 +2091,8 @@ figma.ui.onmessage = async (msg) => {
     if (msg.type === 'build-pick') await buildPick(Object.assign(o, { pick: msg.pick }));
     if (msg.type === 'update-selected') await updateSelected({ addNew: msg.addNew !== false });
     if (msg.type === 'patch-texts') await patchTexts();
-    if (msg.type === 'read-selection') readSelection();
-    if (msg.type === 'check') { log('— เช็ค component (ไม่สร้างอะไร) —'); await resolveAll(NEEDED, true); log(deviceSetInfo()); }
+    if (msg.type === 'read-selection') await readSelection();
+    if (msg.type === 'check') { log('— เช็ค component (ไม่สร้างอะไร) —'); await resolveAll(NEEDED, true); log(deviceSetInfo()); await tableInfo(); }
   } catch (e) { log('✗ หยุด — ' + (e && e.message ? e.message : e)); }
 };
 figma.ui.postMessage({ type: 'scenarios', items: SCENARIOS.map(x => x[0]) });   // รายการติ๊กของปุ่ม "สร้างเฉพาะ scenario ที่เลือก"

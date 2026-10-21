@@ -1,10 +1,15 @@
 {
   "_about": "กติกาการสร้างจอด้วย component จริงของไลบรารี (Component) VMS Plus — ตัวทดสอบ test-overhaul2-plugin.js อ่านไฟล์นี้แล้วตรวจทุกจอ · ผิดกติกา = ทดสอบไม่ผ่าน · คำอธิบายรายข้ออยู่ที่ component-rules.md · แก้กติกาต้องแก้ทั้ง 2 ไฟล์",
-  "_updated": "2026-10-21 (R24 เลือกรถในฟอร์ม PO = Input dropdown + ชิป · R23 แบบที่เจ้าของงานส่งเป็นหลัก · R22 dashboard แบบ MA Overview · R20 หน้า toast แยก · R21 จัดการเป็นไอคอน) · 2026-10-19 (R10 R16–R17)",
+  "_updated": "2026-10-21 (R25 ตารางทุก scenario = component Table เสมอ ห้ามประกอบเอง · R24 เลือกรถในฟอร์ม PO = Input dropdown + ชิป · R23 แบบที่เจ้าของงานส่งเป็นหลัก · R22 dashboard แบบ MA Overview · R20 หน้า toast แยก · R21 จัดการเป็นไอคอน) · 2026-10-19 (R10 R16–R17)",
   "library": {
     "Table": {
       "cols": 8,
-      "rows": 10
+      "rows": 10,
+      "key": "f1bf4ff71490cea64e92f210d8941eecb1d236e3",
+      "variant": {
+        "Alternating fills": "True"
+      },
+      "_note": "R25 เจ้าของงานสั่ง 21 ต.ค. 2569 ค่ำ: ทุก scenario ที่มีตาราง (desktop) ต้องเป็น instance ของ component นี้ เกิน 8 คอลัมน์ให้ยุบเป็นช่อง 2 บรรทัด/ตัด ไม่ประกอบเอง"
     },
     "Progress steps": {
       "steps": 7,
@@ -30,6 +35,14 @@
         "Type": "Horizontal"
       },
       "source": "เจ้าของงานส่งภาพ component Progress steps 19 ต.ค. 2569 — stepper ใช้ component นี้ทั้งก้อน"
+    },
+    {
+      "id": "R25",
+      "component": "Table",
+      "desktop": {
+        "Alternating fills": "True"
+      },
+      "source": "เจ้าของงานส่ง instance Table Alternating fills เปิด 21 ต.ค. 2569 ค่ำ (§4.4)"
     }
   ],
   "props": [
@@ -119,15 +132,13 @@
       "id": "R8",
       "component": "Table cell",
       "parent": "Table",
-      "allowWhenOversize": "Table",
-      "source": "รีวิว 19 ต.ค. 2569 (ต้องเรียก component Table ทั้งก้อน)"
+      "source": "รีวิว 19 ต.ค. 2569 (ต้องเรียก component Table ทั้งก้อน) · 21 ต.ค. ค่ำ R25: ถอดข้อยกเว้นขนาด — ประกอบเอง = ไม่ผ่านทุกขนาด"
     },
     {
       "id": "R9",
       "component": "Table header cell",
       "parent": "Table",
-      "allowWhenOversize": "Table",
-      "source": "รีวิว 19 ต.ค. 2569"
+      "source": "รีวิว 19 ต.ค. 2569 · 21 ต.ค. ค่ำ R25: ถอดข้อยกเว้นขนาด — ประกอบเอง = ไม่ผ่านทุกขนาด"
     },
     {
       "id": "R10",
@@ -303,5 +314,11 @@
       "note": "ลำดับแหล่งความจริงของโครงจอ: ข้อความ/ภาพจากเฟรม Figma ที่เจ้าของงานส่ง → ชีต CF ของ PO → userflow/AC · คอลัมน์ในชีตที่จอของเจ้าของงานไม่มี ไม่ใส่ (จดรอเคาะในไฟล์ 19) · ตรวจด้วย harness DUMP_TEXT",
       "source": "เจ้าของงานสั่ง 21 ต.ค. 2569 (ค่ำ) พร้อมข้อความจากเฟรม J.1–J.3: \"scen J ให้ปรับแก้ใน script เป็นแบบที่ส่งไป ครั้งหน้าถ้าต้อง gen ui ให้ยึดตามแบบที่ส่งไป\" · component-rules.md §4.2"
     }
-  ]
+  ],
+  "tables": {
+    "id": "R25",
+    "component": "Table",
+    "neverCompose": true,
+    "source": "เจ้าของงานวางข้อความ component Table + ภาพหน้ารายการแผนที่ประกอบเอง 21 ต.ค. 2569 ค่ำ: \"ถ้าต้องเลือกตารางให้ดึง component นี้ ที่ผ่านมาดึงผิด\" · \"ถ้าเป็นหน้า list ต้องดึงตารางให้ถูก\" · \"ทุก scen ที่ใช้ตาราง ให้ดึง component ที่ส่งให้ทั้งหมด … ของ desktop ก่อน\" — component-rules.md §4.4"
+  }
 }
