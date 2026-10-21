@@ -9,7 +9,7 @@
       "variant": {
         "Alternating fills": "True"
       },
-      "_note": "R25 เจ้าของงานสั่ง 21 ต.ค. 2569 ค่ำ: ทุก scenario ที่มีตาราง (desktop) ต้องเป็น instance ของ component นี้ เกิน 8 คอลัมน์ให้ยุบเป็นช่อง 2 บรรทัด/ตัด ไม่ประกอบเอง"
+      "_note": "R25 เจ้าของงานสั่ง 21 ต.ค. 2569 ค่ำ: ทุก scenario ที่มีตาราง (desktop) ต้องเป็น instance ของ component นี้ ห้ามประกอบเอง · cols/rows = ค่าตั้งต้น (ฉบับ 19 ต.ค.) — ไลบรารี publish Table > 8 คอลัมน์แล้ว (21 ต.ค. ค่ำ) ปลั๊กอิน probeTable() อ่านของจริงตอนสร้าง เกินแล้วยุบเป็นช่อง 2 บรรทัด/ตัด"
     },
     "Progress steps": {
       "steps": 7,

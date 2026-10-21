@@ -209,6 +209,17 @@ function extendPS(n) {
   }
 }
 if (process.env.PS_SLOTS) extendPS(+process.env.PS_SLOTS);
+// TABLE_COLS=13: จำลองไลบรารีหลังเจ้าของงาน publish Table ที่มีคอลัมน์มากกว่า 8 (21 ต.ค. 2569 ค่ำ) — ต่อ Column ท้ายทุก variant ของชุด Table (ปลั๊กอิน probeTable() ต้องเห็นแล้วเลือกชุดคอลัมน์เอง)
+function extendTable(n) {
+  const deep = (src, parent) => { const c = new Node({ type: src.type, name: src.name, w: src.width, h: src.height, text: src.characters, dir: src._lm }, parent);
+    c._mainName = src._mainName; c._variant = src._variant; c._pv = src._pv; c.children = (src.children || []).map(k => deep(k, c)); if (c.type === 'INSTANCE') hydrate(c); return c; };
+  for (const v of SETS.get('Table').children) {
+    const content = v.findAll(x => x.name === 'Content' && (x.children || []).some(k => k.name === 'Column'))[0];
+    const cols = content.children.filter(k => k.name === 'Column');
+    while (content.children.filter(k => k.name === 'Column').length < n) content.children.push(deep(cols[cols.length - 1], content));
+  }
+}
+if (process.env.TABLE_COLS) extendTable(+process.env.TABLE_COLS);
 // REF_STEPPER=1: จำลองหน้างานซ่อมที่มีเฟรม "Progress steps" 7 ขั้น (มีกรอบ มุม 12 เส้นสีแดง) ⇒ ปลั๊กอินต้องลอกกรอบนี้
 if (process.env.REF_STEPPER) {
   const pg = new Node({ type: 'PAGE', name: 'Flow การซ่อม' }, root); root.children.push(pg);
@@ -345,7 +356,7 @@ const MODE_CHECK = process.env.MODE === 'check';
     for (const sc of page.children.filter(n => n.type === 'FRAME' && re.test(n.name))) {
       for (const t of sc.findAll(n => n.name === 'Table' && (n.type === 'INSTANCE' || (n.children || []).some(c => c.name === 'Column')))) {
         const cols = t.findAll(n => n.name === 'Column' && n.visible !== false);
-        console.log('DUMP_TABLE: ' + sc.name + ' → ' + (t.type === 'INSTANCE' ? 'component Table' : 'ประกอบเอง') + ' · ' + cols.length + ' คอลัมน์');
+        console.log('DUMP_TABLE: ' + sc.name + ' → ' + (t.type === 'INSTANCE' ? 'component Table' : 'ประกอบเอง') + ' · ' + cols.length + ' คอลัมน์' + (t.type === 'INSTANCE' ? ' · Scrollbar=' + pv(t, 'Scrollbar') + (t.clipsContent ? ' · clip' : '') : ''));
         cols.forEach(c => { const [h, c1] = c.children; const st = (c1 && c1.variantProperties || {}).Style;
           console.log('   ' + Math.round(c.width) + 'px  หัว "' + (pv(h, 'Text') || '') + '"' + (pv(h, 'Sort icon') ? ' ↕' : '') + '  แถว1 ' + st + ' "' + (pv(c1, 'Text') || '') + '"' + (pv(c1, 'Supporting') ? ' / "' + (pv(c1, 'Supporting text') || '') + '"' : '')); });
       }

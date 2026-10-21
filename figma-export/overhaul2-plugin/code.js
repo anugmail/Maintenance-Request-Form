@@ -163,6 +163,7 @@ async function resolveAll(list, checkOnly) {
     }
   };
   const missing = [];
+  if (list.indexOf('Table') >= 0) { const b = await probeTable(); if (b) log('· Table ในไลบรารี: "' + b.name + '" ' + b.cols + ' คอลัมน์ × ' + b.rows + ' แถว' + (b.all.length > 1 ? ' (variant: ' + b.all.join(' · ') + ')' : '') + (LIB_TABLE.cols >= 13 ? ' ⇒ หน้ารายการแผนแสดง 13 ช่องทีละคอลัมน์ เลื่อนแนวนอน' : ' ⇒ หน้ารายการแผนยุบ 13 ช่องเป็น 8 คอลัมน์ 2 บรรทัด')); }
   for (const name of list) {
     const names = [name].concat(ALIAS[name] || []);
     let got = null, how = '';
@@ -353,6 +354,7 @@ const VENDOR = ['บริษัท มิตซูบิชิ ฟูโซ่ 
 let MOB = false;
 const BP = () => (MOB ? 'Mobile' : 'Desktop');
 const VW = () => (MOB ? 402 : 1440), VH = () => (MOB ? 874 : 1024);
+const CONTENT_W = () => (MOB ? VW() - 32 : 1296);   // กว้างพื้นที่เนื้อหา (desktop = 1440 − sidebar − ขอบ · Metric 4 ใบพอดี 1296)
 
 /* ---------- ตัวช่วยประกอบ ---------- */
 function btn(kind, label, o) {
@@ -581,7 +583,23 @@ function sizeCol(c, w) {
    R25 (เจ้าของงานสั่ง 21 ต.ค. 2569 ค่ำ): ทุก scenario ที่มีตารางต้องดึง component นี้ **ทุกขนาด** ไม่ประกอบเองอีก — ไลบรารีมี 8 คอลัมน์ × 10 แถว
    ⇒ เกิน 8 คอลัมน์ต้องยุบเป็นช่อง 2 บรรทัด (Text + Supporting text) หรือตัดก่อนเรียก (ดู PLAN_COLS_D) · ซ่อนส่วนที่เกิน · ปิด Scrollbar · Pagination ตาม o.pagination
    cols ส่งเป็นฟังก์ชันได้ (คืนชุดคอลัมน์ตามอุปกรณ์ — desktop ยุบแล้ว / mobile ยังชุดเดิม จนกว่าจะสั่งทำ mobile) */
-const TABLE_MAX = { cols: 8, rows: 10 };   // ขนาด component Table ของไลบรารี
+const LIB_TABLE = { cols: 8, rows: 10, variant: { 'Alternating fills': 'True' }, name: '', w: 0, probed: false };   // โครง Table ของไลบรารี ณ ตอนสร้าง (ค่าตั้งต้น = ฉบับ 19 ต.ค.) — probeTable() อ่านของจริง
+/* อ่านโครง component Table จากไลบรารีจริงทุกครั้งที่สร้าง (เจ้าของงาน publish Table ที่มีมากกว่า 8 คอลัมน์ 21 ต.ค. 2569 ค่ำ "component มีแบบมากกว่า 8 column แล้ว")
+   เลือก variant ที่มีคอลัมน์มากที่สุด (เท่ากันเอา Alternating fills=True) · จำนวนคอลัมน์นี้ตัดสินว่าหน้ารายการแผนแสดงทีละช่อง (≥ 13) หรือยุบ 2 บรรทัด (PLAN_COLS_CF) */
+async function probeTable() {
+  try {
+    const set = await figma.importComponentSetByKeyAsync(KEYS.Table[0]);
+    let best = null; const all = [];
+    for (const v of set.children) {
+      const cols = v.findAll(x => x.type === 'FRAME' && x.name === 'Column'), rows = cols[0] ? cols[0].children.filter(x => x.name === 'Table cell').length : 0;
+      const alt = (v.variantProperties || {})['Alternating fills'] === 'True';
+      all.push(v.name + ' = ' + cols.length + ' คอลัมน์');
+      if (!best || cols.length > best.cols || (cols.length === best.cols && alt && !best.alt)) best = { cols: cols.length, rows, alt, variant: Object.assign({}, v.variantProperties || {}), name: v.name, w: Math.round(v.width), all };
+    }
+    if (best && best.cols) Object.assign(LIB_TABLE, { cols: best.cols, rows: best.rows, variant: best.variant, name: best.name, w: best.w, probed: true });
+    return best;
+  } catch (e) { warn('อ่านโครง Table จากไลบรารี', e); return null; }
+}
 async function tbl(cols, rows, o) {   // cols: [หัว, กว้าง, Style, เรียงได้] · ช่อง: ข้อความ | {text, sub} | {pill:[t,สี]} | {menu:1} | {icons:[..]} | {check:bool,text} | {progress, text}
   o = o || {};
   if (typeof cols === 'function') cols = cols();
@@ -590,9 +608,11 @@ async function tbl(cols, rows, o) {   // cols: [หัว, กว้าง, Styl
     if (!o.pagination) return m;
     const box = col('Table', [m], 20); add(box, await pagination(o.pagination, o.pageOpt), 'h'); return box;
   }
-  if (cols.length > TABLE_MAX.cols || rows.length > TABLE_MAX.rows) warn('Table', 'R25: ' + cols.length + ' คอลัมน์ × ' + rows.length + ' แถว เกิน component Table (8 × 10) — ต้องยุบ/ตัดคอลัมน์หรือแบ่งหน้าก่อนเรียก (ไม่ประกอบเองแล้ว)');
-  const t = inst('Table', { 'Alternating fills': 'True' }, { Scrollbar: false, Pagination: !!o.pagination });
+  if (cols.length > LIB_TABLE.cols || rows.length > LIB_TABLE.rows) warn('Table', 'R25: ' + cols.length + ' คอลัมน์ × ' + rows.length + ' แถว เกิน component Table ของไลบรารี (' + LIB_TABLE.cols + ' × ' + LIB_TABLE.rows + ') — ต้องยุบ/ตัดคอลัมน์หรือแบ่งหน้าก่อนเรียก (ไม่ประกอบเองแล้ว)');
+  const fixedW = cols.reduce((a, c) => a + (c[1] || 0), 0), scroll = fixedW > CONTENT_W();   // กว้างรวมเกินพื้นที่ ⇒ เปิด Scrollbar ของ component + clip (ตารางเลื่อนแนวนอน เช่น รายการแผน 13 คอลัมน์)
+  const t = inst('Table', LIB_TABLE.variant, { Scrollbar: scroll, Pagination: !!o.pagination });
   t.name = 'Table';
+  if (scroll) { try { t.clipsContent = true; } catch (e) { warn('clip ตารางเลื่อนแนวนอน', e); } }
   const wrap = find(t, 'Content with scrollbar'), content = wrap && wrap.children.find(c => c.name === 'Content');
   try { if (wrap) wrap.layoutSizingHorizontal = 'FILL'; if (content) content.layoutSizingHorizontal = 'FILL'; } catch (e) { warn('ยืดตารางเต็มกว้าง', e); }
   const columns = content ? content.children.filter(c => c.name === 'Column') : [];
@@ -1451,16 +1471,11 @@ function deviceVariant(kind) {   // → { key, value } ของ variant ใน 
   }
   return null;
 }
-async function tableInfo() {   // โครง component Table ของไลบรารี ณ ตอนนี้ (R25 · 21 ต.ค. 2569 ค่ำ เจ้าของงาน publish ใหม่) — นำเข้าด้วย key แล้วนับคอลัมน์/แถวของ variant แรก
-  try {
-    const set = await figma.importComponentSetByKeyAsync(KEYS.Table[0]);
-    const v = set.defaultVariant || set.children[0];
-    const cols = v.findAll(x => x.type === 'FRAME' && x.name === 'Column');
-    const rows = cols[0] ? cols[0].children.filter(x => x.name === 'Table cell').length : 0;
-    const defs = set.componentPropertyDefinitions || {};
-    log('· component Table (key ' + KEYS.Table[0].slice(0, 8) + '…): variant "' + v.name + '" ' + Math.round(v.width) + '×' + Math.round(v.height) + ' · คอลัมน์ ' + cols.length + ' · แถว ' + rows + ' · property: ' + Object.keys(defs).map(k => k.split('#')[0] + (defs[k].variantOptions ? '=' + defs[k].variantOptions.join('|') : '')).join(' · ')
-      + (cols.length !== TABLE_MAX.cols || rows !== TABLE_MAX.rows ? ' ⚠ ต่างจากที่สคริปต์รู้จัก (' + TABLE_MAX.cols + ' × ' + TABLE_MAX.rows + ') — ส่ง log นี้กลับมาให้ปรับ TABLE_MAX/การยุบคอลัมน์' : ' ✓ ตรงกับที่สคริปต์รู้จัก'));
-  } catch (e) { log('· อ่าน component Table จากไลบรารีไม่ได้: ' + (e && e.message || e)); }
+async function tableInfo() {   // ปุ่ม "เช็ค component": โครง Table ของไลบรารี ณ ตอนนี้ (R25)
+  const b = await probeTable();
+  if (!b) { log('· อ่าน component Table (key ' + KEYS.Table[0].slice(0, 8) + '…) จากไลบรารีไม่ได้'); return; }
+  log('· component Table (key ' + KEYS.Table[0].slice(0, 8) + '…): ใช้ variant "' + b.name + '" กว้าง ' + b.w + ' · คอลัมน์ ' + b.cols + ' · แถว ' + b.rows + ' · variant ทั้งหมด: ' + b.all.join(' · ')
+    + (b.cols >= PLAN_COLS_M.length ? ' ⇒ หน้ารายการแผนแสดง ' + PLAN_COLS_M.length + ' ช่องทีละคอลัมน์ (Scrollbar เปิด เลื่อนแนวนอน)' : ' ⇒ หน้ารายการแผนยุบเป็น ' + PLAN_COLS_D.length + ' คอลัมน์ 2 บรรทัด (Table มีแค่ ' + b.cols + ' คอลัมน์ — ถ้าไลบรารีที่ publish ใหม่เป็น component คนละ key ให้เลือก instance แล้วกด "อ่านจอที่เลือก" ส่ง key มา)'));
 }
 function deviceSetInfo() {   // ข้อความรายงานในหน้าต่างปลั๊กอิน (ปุ่มเช็ค + ตอนสร้าง)
   const set = INDEX.get('Device Type');
@@ -1589,8 +1604,9 @@ const PLAN_COLS_M = [['เลขแผน', 92, 'Lead text', 'Down'], ['ชื�
   ['ความคืบหน้า (ปิดงานแล้ว)', 160], ['รถรอติดตาม', 96], ['สถานะ', 118, 'Badge', 'Swap'], ['วันที่สร้าง', 104], ['แก้ไขล่าสุด', 160], ['', 128]];
 const planRowM = (p) => { const n = +p[7], d = +p[8];
   return [p[0], p[1], p[2], { text: p[3], sub: p[4] }, p[5], p[6], p[7], n ? { progress: Math.round(d / n * 100), text: d + '/' + n } : { text: '—', sub: 'ยังไม่มีรถใน PO' }, p[9], { pill: STATUS[p[10]] }, p[11], { text: p[12], sub: p[13] }, { icons: ROW_ICONS }]; };
-const PLAN_COLS_CF = () => MOB ? PLAN_COLS_M : PLAN_COLS_D;   // tbl() รับฟังก์ชัน — เลือกชุดตามอุปกรณ์ตอนสร้างจอ
-const planRowCF = (p) => (MOB ? planRowM : planRowD)(p);
+const planWide = () => MOB || LIB_TABLE.cols >= PLAN_COLS_M.length;   // mobile = การ์ด 13 ช่อง · desktop = ทีละช่องเมื่อ Table ของไลบรารีมีคอลัมน์พอ (probeTable) ไม่พอ = ยุบ 8 คอลัมน์ 2 บรรทัด
+const PLAN_COLS_CF = () => planWide() ? PLAN_COLS_M : PLAN_COLS_D;   // tbl() รับฟังก์ชัน — เลือกชุดตอนสร้างจอ
+const planRowCF = (p) => (planWide() ? planRowM : planRowD)(p);
 const CF_LIST = { rows: PLANS_CF.slice(0, 5), cols: PLAN_COLS_CF, rowFn: planRowCF, placeholder: SEARCH_CF, pageOpt: { per: 5, total: PLANS_CF.length } };
 const CF_COMBO = [['WBS: I-69-Z-DPMXX.JM.0003', 'แผน 123456 Overhaul ประจำปีงบ 2569 — รถเครน'], ['WBS: I-69-Z-DPMXX.JM.0102', 'แผน 123457 Overhaul ประจำปีงบ 2569 — รถกระเช้า'], ['ศูนย์ต้นทุน: C-69-OH-0103', 'แผน 123458 Overhaul ประจำปีงบ 2569 — รถเจาะหลุม']];
 const PLAN_COLS = PLAN_COLS_CF, planRow = planRowCF;   // ชุดหลักใช้ฉบับ CF (listScreen ใช้เป็นค่าเริ่มต้น)
