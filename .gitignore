@@ -11,3 +11,6 @@ figma-export/out/
 
 # scratch output ของ Playwright MCP browser tool (accessibility snapshot ราย request)
 .playwright-mcp/
+
+# plan.md = บันทึกงานส่วนตัว เก็บเฉพาะเครื่อง local (เจ้าของงานสั่ง 21 ต.ค. 2569 ไม่ให้ push) — ถอดออกจาก index แล้ว ไฟล์ยังอยู่ในโฟลเดอร์
+/plan.md
