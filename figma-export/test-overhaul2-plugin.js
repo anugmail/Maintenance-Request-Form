@@ -6,7 +6,8 @@
    ชื่อ layer ตรงกับไฟล์จริง ⇒ จับได้ว่าปลั๊กอินอ้าง component/variant/property/layer ที่ไม่มีอยู่จริงหรือเปล่า
    (ไม่ได้จำลอง auto-layout จริง — ตำแหน่ง/ขนาดยังต้องดูในไฟล์จริง)
 
-   รัน:  node figma-export/test-overhaul2-plugin.js [slug=component]
+   รัน:  node figma-export/test-overhaul2-plugin.js [slug=component]          (MODE=build ทั้งสองอุปกรณ์บนหน้าเดียว)
+         MODE=build-desktop / MODE=build-mobile   ปุ่มแยกอุปกรณ์ (21 ต.ค. 2569) · MODE=build-toast PREFIX=TOAST FIRST='T1 ' · MODE=build-noti FIRST='ไม่มีแจ้งเตือนใหม่'
          EMPTY=1 node figma-export/test-overhaul2-plugin.js   จำลองไฟล์ที่ไม่มี component ในตัว → ต้องไปทาง "นำเข้าจากไลบรารี" ด้วย key
    ============================================================ */
 const fs = require('fs');
@@ -218,7 +219,7 @@ if (process.env.REF_STEPPER) {
 }
 const MODE_CHECK = process.env.MODE === 'check';
 (async () => {
-  await uiHandler({ type: process.env.MODE === 'patch' ? 'build' : (process.env.MODE || 'build') });
+  await uiHandler({ type: process.env.MODE === 'patch' ? 'build' : (process.env.MODE || 'build'), here: process.env.HERE === '1', pick: (process.env.PICK || '').split(',').filter(Boolean), devices: process.env.DEVICES || 'both' });   // PICK=7,13 DEVICES=desktop สำหรับ MODE=build-pick   // HERE=1 = ติ๊ก "วางต่อท้ายหน้าที่เปิดอยู่"
   if (process.env.MODE === 'patch') {   // สร้างแบบเก่า (CODE=ไฟล์เก่า) แล้วแก้เฉพาะส่วนด้วยโค้ดปัจจุบัน · PATCH=ชื่อข้อความ (ค่าเริ่ม patch-dividers)
     figma.currentPage.selection = [];
     if (process.env.PS_SLOTS_AFTER) extendPS(+process.env.PS_SLOTS_AFTER);   // ไลบรารีอัปเดตหลังสร้างจอแล้ว
@@ -228,12 +229,33 @@ const MODE_CHECK = process.env.MODE === 'check';
       for (const t of (process.env.PATCH || 'patch-dividers').split(',')) await uiHandler({ type: t }).catch(e => console.log('(รอบพัง) ' + e.message));
     }
     if (process.env.CODE) vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'overhaul2-plugin', 'code.js'), 'utf8'), ctx());
-    for (const t of (process.env.PATCH || 'patch-dividers').split(',')) await uiHandler({ type: t });
+    if (process.env.SELECT) {   // SELECT=all | regex — จำลองผู้ใช้คลิกเลือกเฟรมบนหน้าก่อนกด "อัปเดตจอที่เลือก" (21 ต.ค. 2569)
+      const re = process.env.SELECT === 'all' ? null : new RegExp(process.env.SELECT);
+      figma.currentPage.selection = figma.currentPage.children.filter(n => n.type === 'FRAME' && n.name.indexOf('OH2 / ') === 0 && (!re || re.test(n.name)));
+      console.log('(เลือกเฟรม ' + figma.currentPage.selection.length + ' เฟรม)');
+      global.__before = figma.currentPage.children.map(n => [n.id, n.name, n.x, n.y]);
+    }
+    for (const t of (process.env.PATCH || 'patch-dividers').split(',')) await uiHandler({ type: t, addNew: process.env.ADDNEW !== '0' });
   }
   logs.forEach(l => console.log(l));
+  const printed = logs.length;   // คำเตือนที่ตัวตรวจเพิ่มหลังจากนี้ พิมพ์ท้ายผล
   const page = pages[0] || figma.currentPage;
   const PREFIX = (process.env.PREFIX || 'OH2') + ' / ';   // ปลั๊กอินอื่นตั้ง PREFIX= (เช่น MT) · FIRST= ชื่อจอแรกของ userflow (20 ต.ค. 2569)
-  const screens = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(PREFIX) === 0);
+  let screens = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(PREFIX) === 0 && n.name.indexOf(' · ตัดแล้ว') < 0);   // จอที่ CF ตัดแล้ว (ติดป้ายไว้ ไม่ลบ) ไม่ตรวจ
+  if (process.env.CHECK_ONLY) screens = screens.filter(n => new RegExp(process.env.CHECK_ONLY).test(n.name));   // ตรวจเฉพาะจอที่อัปเดต (จอเก่าที่ไม่ได้เลือกอาจยังเป็นแบบก่อน CF)
+  if (global.__before && process.env.SELECT) {   // อัปเดตจอที่เลือก: จอที่ไม่ได้เลือกต้องเป็น node เดิม ตำแหน่งเดิม · จอที่เลือกต้องถูกแทนที่ที่ตำแหน่งเดิม
+    const byId = new Map(page.children.map(n => [n.id, n]));
+    const re = process.env.SELECT === 'all' ? null : new RegExp(process.env.SELECT);
+    let kept = 0, replaced = 0;
+    for (const [id, name, x, y] of global.__before) {
+      const sel = name.indexOf('OH2 / ') === 0 && (!re || re.test(name));
+      const n = byId.get(id);
+      if (!sel) { if (!n || n.x !== x || n.y !== y) logs.push('⚠ จอที่ไม่ได้เลือกถูกแตะ: ' + name); else kept++; continue; }
+      if (n && n.name.indexOf(' · ตัดแล้ว') < 0) logs.push('⚠ จอที่เลือกไม่ถูกแทนที่: ' + name);
+      else if (!n) { const m = page.children.find(c => c.x === x && c.y === y && c.type === 'FRAME'); if (!m) logs.push('⚠ ตำแหน่งเดิมว่างหลังแทนที่: ' + name); else replaced++; }
+    }
+    console.log('อัปเดตจอที่เลือก: แทนที่ตำแหน่งเดิม ' + replaced + ' · ไม่แตะ ' + kept + (logs.some(l => /ถูกแตะ|ไม่ถูกแทนที่|ว่างหลัง/.test(l)) ? '' : ' ✓'));
+  }
   const sections = [...new Set(screens.map(n => n.y))];   // แถว = scenario
   // ไม่เหลือเส้นคั่นที่มองเห็น (เจ้าของงานสั่งปิด divider ทั้งหมด 19 ต.ค. 2569)
   const shown = (n) => { for (let p = n; p; p = p.parent) if (p.visible === false) return false; return true; };
@@ -288,19 +310,28 @@ const MODE_CHECK = process.env.MODE === 'check';
   if (wbs) console.log('ตรวจแถววงเงิน + WBS ' + wbs + ' จอ' + (logs.some(l => /^⚠.*WBS/.test(l)) ? '' : ' ✓'));
   // แผง Layers ของ Figma แสดงลูกตัวสุดท้ายไว้บนสุด ⇒ จอแรกของ userflow ต้องเป็นตัวสุดท้าย
   const top = screens[screens.length - 1];
-  if (top && top.name.indexOf(process.env.FIRST || 'หน้ารายการแผน') < 0) logs.push('⚠ แผง Layers ไม่ได้เรียงจอแรกไว้บนสุด: ' + top.name);
+  if (top && !process.env.CHECK_ONLY && top.name.indexOf(process.env.FIRST || 'หน้ารายการแผน') < 0) logs.push('⚠ แผง Layers ไม่ได้เรียงจอแรกไว้บนสุด: ' + top.name);
   // R19 แพทเทิร์นจัดวาง (เจ้าของงานสั่ง 20 ต.ค. 2569): ป้ายรหัส flow "<prefix> · …" ต้องมี · จอ mobile อยู่ใต้จอ desktop คอลัมน์เดียวกัน (x เท่ากัน · y มากกว่า)
   const labels = page.children.filter(n => n.name.indexOf((process.env.PREFIX || 'OH2') + ' · ') === 0);
-  if (!labels.length) logs.push('⚠ R19 ไม่มีป้ายรหัส flow (แถบตัวอักษร/ย่อย/state · Device/Desktop/Mobile)');
+  if (!labels.length && process.env.R19 !== '0') logs.push('⚠ R19 ไม่มีป้ายรหัส flow (แถบตัวอักษร/ย่อย/state · Device/Desktop/Mobile)');   // R19=0 = หน้าเก่าก่อนมีป้าย (19 ต.ค.)
   let pairs = 0;
-  for (const m of screens.filter(n => / · mobile$/.test(n.name))) {
+  const mobs = screens.filter(n => / · mobile$/.test(n.name)), desks = screens.filter(n => !/ · mobile$/.test(n.name));
+  const split = !mobs.length || !desks.length;   // ปุ่มแยก desktop/mobile (21 ต.ค. 2569): หน้าหนึ่งมีอุปกรณ์เดียว ⇒ ไม่มีคู่ให้ตรวจ แต่ป้าย Device ต้องตรงอุปกรณ์
+  if (!split && process.env.R19 !== '0') for (const m of mobs) {   // R19=0 = หน้าเก่า 19 ต.ค. (mobile วางคู่ desktop) ไม่ตรวจคู่
     const d = screens.find(n => n.name === m.name.replace(/ · mobile$/, ''));
     if (!d) { logs.push('⚠ R19 จอ mobile ไม่มีคู่ desktop: ' + m.name); continue; }
     if (d.x !== m.x || !(d.y < m.y)) logs.push('⚠ R19 จอ mobile ไม่ได้อยู่ใต้ desktop คอลัมน์เดียวกัน: ' + m.name);
     pairs++;
   }
-  console.log('R19 จัดวางแบบตาราง flow: ป้าย ' + labels.length + ' · คู่ desktop/mobile ' + pairs + (logs.some(l => /R19/.test(l)) ? '' : ' ✓'));
+  if (split && screens.length) {
+    const kind = mobs.length ? 'Mobile' : 'Desktop', other = mobs.length ? 'Desktop' : 'Mobile';
+    if (labels.some(n => n.name.endsWith(' · ' + other))) logs.push('⚠ R19 ชุด ' + kind + ' อย่างเดียว แต่มีป้าย ' + other);
+    if (!labels.some(n => n.name.endsWith(' · ' + kind))) logs.push('⚠ R19 ชุด ' + kind + ' ไม่มีป้าย ' + kind);
+    if (screens.some(n => Math.round(n.width) !== (mobs.length ? 402 : 1440))) logs.push('⚠ R19 ชุด ' + kind + ' มีจอกว้างผิดอุปกรณ์');
+  }
+  console.log('R19 จัดวางแบบตาราง flow: ป้าย ' + labels.length + (split ? ' · ชุดอุปกรณ์เดียว (' + (mobs.length ? 'mobile ' + mobs.length : 'desktop ' + desks.length) + ' จอ)' : ' · คู่ desktop/mobile ' + pairs) + (logs.some(l => /R19/.test(l)) ? '' : ' ✓'));
   if (process.env.DUMP_LAYOUT) fs.writeFileSync(process.env.DUMP_LAYOUT, JSON.stringify(page.children.map(n => ({ name: n.name, type: n.type, x: n.x, y: n.y, w: n.width, h: n.height }))));
+  logs.slice(printed).filter(l => /^⚠/.test(l)).forEach(l => console.log(l));
   const bad = logs.filter(l => /^⚠|^✗/.test(l));
   const want = (code0.match(/^  \[\'(?:หน้ารายการแผน|S\d+)/gm) || []).length;   // จำนวน section ที่ประกาศ
   console.log('\n— ผลทดสอบ — แถว ' + sections.length + ' · หน้าจอ ' + screens.length + ' · คำเตือน ' + bad.length);

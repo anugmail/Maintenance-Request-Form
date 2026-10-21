@@ -1,28 +1,41 @@
 <style>
   body{font:12px/1.5 -apple-system,"IBM Plex Sans Thai",sans-serif;margin:0;padding:14px;color:#1b1b1b}
-  button{padding:8px 14px;border:0;border-radius:6px;background:#a80689;color:#fff;font:inherit;cursor:pointer}
-  #log{margin-top:10px;height:300px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
+  button{padding:8px 14px;border:0;border-radius:6px;background:#a80689;color:#fff;font:inherit;cursor:pointer;margin:2px 4px 2px 0}
+  p{margin:10px 0 4px}
+  small{color:#475467}
+  #log{margin-top:10px;height:220px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
 </style>
-<p>สร้างหน้าจอ Overhaul v2 <b>ครบ 14 scenario · 56 จอ × 2 ขนาด (desktop 1440 · mobile 402×874)</b> บนหน้า overhaul-1 — ทุกชิ้นเป็น instance ของ component จริง (นำเข้าจากไลบรารีไฟล์ component)<br>
-<b>จัดวางแบบตาราง flow ของทีมออกแบบ (R19 · 20 ต.ค.)</b>: 1 scenario = 1 บล็อก (แถบตัวอักษร A–O) → ป้าย A.1 A.2 … = state → แถว Desktop → แถว Mobile ใต้คอลัมน์เดียวกัน + ป้าย Device/Desktop/Mobile<br>
-<b>กดแล้วสร้างบนหน้าใหม่ overhaul-2, -3, … ไม่แตะชุดเดิม</b> (ของเดิมบน overhaul-1 ที่ย้าย/แก้มือไว้คงอยู่) · ชุดใหม่มีทุกอย่างที่เคยแก้ไว้แล้ว (ปิด divider · Header Tablet · Section label · Info icon · Table/Progress steps ทั้งก้อน · นัดหมายแบบงานซ่อม · แถว WBS) · ใช้เวลาราว 2–5 นาที</p>
-<button id="go">สร้างครบ 14 scenario</button> <button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button>
-<p style="margin:14px 0 6px"><b>toast + notification</b> (สเปก <code>Diagram/01-บำรุงรักษาตามวาระ/16-overhaul-toast-notification.md</code> · 20 ต.ค.) — ชุดแยก 8 จอ × 2 ขนาด บนหน้าใหม่ <b>overhaul-noti-N</b> ไม่แตะชุด 14 scenario: บล็อก <b>P</b> toast (Notification Success/Error ขวาล่าง · 4 state) · บล็อก <b>Q</b> notification (กระดิ่งจุดแดง · Notification card ใต้กระดิ่ง · mobile = bottom sheet · 4 state)</p>
-<button id="noti" style="background:#0f766e">สร้างชุด toast + notification (บล็อก P · Q)</button>
-<p style="margin:14px 0 6px"><b>หน้า 1 รายการแผน เทียบก่อน/หลัง CF</b> (ชีต confirm ของ PO แท็บ "1 รายการแผน" · 20 ต.ค.) — หน้าใหม่ <b>overhaul-cf-N</b>: บล็อก <b>A</b> ฉบับที่ออกแบบไว้ (2 state) · บล็อก <b>B</b> ฉบับหลัง CF (รายการ 12 คอลัมน์ · ตัวกรองใหม่ · ค้นหา autocomplete) · mapping รายฟิลด์ใน <code>Diagram/01-บำรุงรักษาตามวาระ/17-overhaul-cf-หน้า1-mapping.md</code></p>
-<button id="cf1" style="background:#b45309">สร้างหน้า 1 รายการแผน เทียบก่อน/หลัง CF</button>
-<p style="margin:14px 0 6px"><b>แก้เฉพาะส่วน</b> — ไม่สร้างจอใหม่ ที่แก้มือไว้ไม่หาย (ใช้กับทุกเฟรม "OH2 /" ในหน้านี้)</p>
-<button id="playout" style="background:#1d4ed8">จัดวางใหม่เป็นตาราง flow (ย้ายจอเดิม ไม่สร้างใหม่)</button>
-<button id="pdev" style="background:#475467">เปลี่ยนป้ายข้างจอเป็น Device Type (แทนป้ายเดิมที่เดิม ไม่แตะจอ)</button> <button id="pclip" style="background:#475467">ปิด Clip content ทุกจอบนหน้านี้ (ไม่สร้างใหม่)</button>
+<p><b>จอ Overhaul v2 ครบ 14 scenario (62 จอ) ฉบับหลัง PO confirm ทุกหน้า (21 ต.ค.)</b> — ทุกชิ้นเป็น instance ของ component จริง · จัดวางแบบตาราง flow (R19: 1 scenario = 1 บล็อก A–O · ป้าย A.1 A.2 … = state) · สร้างบนหน้าใหม่ทุกครั้ง ไม่แตะชุดเดิม · ราว 2–3 นาทีต่อปุ่ม</p>
+<p style="margin:4px 0"><label><input type="checkbox" id="here"> <b>วางต่อท้ายหน้าที่เปิดอยู่</b> แทนสร้างหน้าใหม่ (ใช้กับทุกปุ่มสร้างด้านล่าง · ของเดิมบนหน้านั้นไม่ถูกแตะ)</label></p>
+<button id="desk">สร้าง Desktop (1440) → หน้า overhaul-desktop-N</button>
+<button id="mob" style="background:#7a0463">สร้าง Mobile (402×874) → หน้า overhaul-mobile-N</button>
+<p><b>สร้างเฉพาะ scenario ที่เลือก</b> — ติ๊กแล้วกด ได้เฉพาะบล็อกนั้น (รหัส A–O เดิม) บนหน้า overhaul-sel-N หรือต่อท้ายหน้าที่เปิดอยู่ · ใช้เทียบ/แทนบางจอโดยไม่ต้องสร้างทั้ง 14<br>
+<span id="pick"></span><br>
+<label><input type="radio" name="dev" value="desktop" checked> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label> <label><input type="radio" name="dev" value="both"> ทั้งคู่</label></p>
+<button id="pickgo" style="background:#1d4ed8">สร้างเฉพาะ scenario ที่เลือก</button>
+<p><b>toast</b> — หน้าแยก เฉพาะ toast ไม่มี UI อื่น: 1 toast = 1 เฟรมโปร่ง (instance <code>Notification</code> แก้ข้อความได้) · ถ้อยคำ 23 ข้อความตามที่ PO confirm · บล็อก A–E ตามหน้า 1–5 · แถว desktop แล้ว mobile · ทุกเฟรมตั้ง Export settings แล้ว (SVG + PNG 2x)</p>
+<button id="toastp" style="background:#7c3aed">สร้างหน้า toast → หน้า overhaul-toast-N</button>
+<p><b>Dashboard งาน Overhaul (21 ต.ค.)</b> — แท็บในหน้าจัดการงาน Overhaul ตามโครง MA Overview: แผน · รถหลัง Overhaul · ซ่อมหลัง Overhaul · อะไหล่ + หน้ารายคัน "หลัง Overhaul" · แต่ละบล็อกมี "เฟส 1" (ข้อมูลที่มีจริง) และ "เป้าหมาย" (+ คอลัมน์ที่ต้องเพิ่มช่องในโฟลว์ก่อน มี Alert บอก) · 12 จอ × 2 ขนาด · เอกสารคอลัมน์ Diagram/01-บำรุงรักษาตามวาระ/20</p>
+<button id="dash" style="background:#0e7490">สร้าง Dashboard → หน้า overhaul-dash-N</button>
+<p><b>notification</b> — กระดิ่งจุดแดง + แผง Notification card (mobile = bottom sheet) · 4 state × desktop/mobile</p>
+<button id="noti" style="background:#0f766e">สร้างชุด notification → หน้า overhaul-noti-N</button>
+<p><b>แก้บนหน้าเดิมที่มีของแก้มือ (21 ต.ค.)</b> — เปิดหน้านั้น แล้ว<b>คลิกเลือกเฟรมจอ</b>ที่อยากให้เป็นฉบับ CF (เลือกหลายเฟรมได้ · จอที่แก้มือไว้และอยากเก็บ ไม่ต้องเลือก) → กดปุ่มซ้าย: สร้างจอฉบับ CF แทนที่ตำแหน่ง/ชื่อเดิม (จอเก่ากู้ได้จาก Version history) · จอที่ไม่ได้เลือกไม่แตะ · state เมนู "…" ที่ CF ตัด ไม่ลบ แค่ติดป้าย<br>
+<label><input type="checkbox" id="addnew" checked> เพิ่ม state ใหม่จาก CF ของ scenario เดียวกัน ต่อท้ายแถว desktop/mobile ด้วย (lightbox · ไฟล์ผิดรูปแบบ · ไม่พบแผน · บันทึกไม่สำเร็จ …)</label></p>
+<button id="upd" style="background:#b45309">อัปเดตจอที่เลือกเป็นฉบับ CF (แทนที่ตำแหน่งเดิม)</button>
+<button id="ptx" style="background:#475467">แก้คำ/ไอคอนทุกจอบนหน้านี้ (ไม่สร้างใหม่: ชื่อสถานะ · toast · ปุ่ม … → ไอคอน)</button>
+<p><small>เปลี่ยนไฟล์หรือไลบรารี → เช็คก่อนว่า component ครบ</small></p>
+<button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button>
 <div id="log"></div>
 <script>
-const log = (s) => { const d = document.getElementById('log'); d.textContent += s + '\n'; d.scrollTop = d.scrollHeight; };
-document.getElementById('go').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'build' } }, '*'); };
-document.getElementById('chk').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'check' } }, '*'); };
-document.getElementById('noti').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'build-noti' } }, '*'); };
-document.getElementById('cf1').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'build-cf1' } }, '*'); };
-document.getElementById('playout').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'patch-layout' } }, '*'); };
-document.getElementById('pdev').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'patch-device' } }, '*'); };
-document.getElementById('pclip').onclick = () => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: { type: 'patch-clip' } }, '*'); };
-onmessage = (e) => { const m = e.data.pluginMessage; if (m && m.type === 'log') log(m.text); };
+const send = (type, extra) => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: Object.assign({ type, here: document.getElementById('here').checked }, extra || {}) }, '*'); };
+document.getElementById('upd').onclick = () => send('update-selected', { addNew: document.getElementById('addnew').checked });
+document.getElementById('ptx').onclick = () => send('patch-texts');
+document.getElementById('desk').onclick = () => send('build-desktop');
+document.getElementById('mob').onclick = () => send('build-mobile');
+document.getElementById('toastp').onclick = () => send('build-toast');
+document.getElementById('noti').onclick = () => send('build-noti');
+document.getElementById('pickgo').onclick = () => send('build-pick', { pick: [...document.querySelectorAll('#pick input:checked')].map(i => +i.value), devices: document.querySelector('input[name=dev]:checked').value });
+document.getElementById('dash').onclick = () => send('build-dash');
+document.getElementById('chk').onclick = () => send('check');
+onmessage = (e) => { const m = e.data.pluginMessage; if (m && m.type === 'scenarios') { document.getElementById('pick').innerHTML = m.items.map((t, i) => '<label style="display:inline-block;margin:2px 10px 2px 0"><input type="checkbox" value="' + i + '"> ' + String.fromCharCode(65 + i) + ' ' + t.split(' · ')[0].replace(' — ', ' ') + '</label>').join(''); return; } if (m && m.type === 'log') { const el = document.getElementById('log'); el.textContent += m.text + '\n'; el.scrollTop = el.scrollHeight; } };
 </script>

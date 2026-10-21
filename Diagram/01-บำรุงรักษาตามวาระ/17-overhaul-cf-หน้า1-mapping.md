@@ -100,3 +100,8 @@
 - 16-overhaul-toast-notification.md: ตัด T3 ไม่สำเร็จ เพิ่ม T16 ไม่พบแผน และถ้อยคำ T2 T3 ถือว่ายืนยันแล้ว
 - figma-export/overhaul-v2-component-map.md และ design-mock/overhaul-v2-01-plans.html: คอลัมน์และตัวกรองตามข้อ 1 และ 3
 - ปลั๊กอิน overhaul2 ชุด 14 scenario: ยังใช้ฉบับเดิม จะย้ายไปฉบับ CF เมื่อ PO confirm หน้าอื่นครบ เพื่อไม่ให้ชุดหลักเปลี่ยนทีละครึ่ง
+
+## 10. ทำแล้ว 21 ต.ค. 2569
+
+PO confirm ครบทุกแท็บ (หน้า 2 ถึง 5 และ toast) ปลั๊กอิน overhaul2 ชุด 14 scenario สลับมาใช้ฉบับ CF ทั้ง 5 หน้าแล้ว (ปุ่ม "สร้างครบ 14 scenario" สร้างบนหน้า overhaul-N ใหม่) ไฟล์ 12 15 16 18 ตามแก้แล้ว mapping ของหน้า 2 ถึง 5 และ toast อยู่ไฟล์ [19-overhaul-cf-หน้า2-5-toast-mapping.md](19-overhaul-cf-หน้า2-5-toast-mapping.md) ส่วน figma-export/overhaul-v2-component-map.md, design-mock/overhaul-v2-0*.html และ overhaul-next ยังไม่ตามแก้
+หน้า 1 มีเพิ่มจากที่ mapping ไว้ 20 ต.ค. คือ PO ขอเพิ่มคอลัมน์ "หน่วยงาน" (รวมเป็น 13 คอลัมน์) และขอให้จัดการท้ายแถวเป็นไอคอน (ดูรายละเอียด แก้ไข ลบ) แทนเมนู

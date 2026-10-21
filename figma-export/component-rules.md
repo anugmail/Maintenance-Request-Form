@@ -2,7 +2,7 @@
 
 > 🔴 เจ้าของงานสั่ง 19 ต.ค. 2569: _"อยากให้เซฟข้อมูลเงื่อนไขการสร้างแต่ละจุดไว้ด้วย การสร้างครั้งต่อไปของโปรเจ็คนี้จะใช้เงื่อนไข component ที่ถูกต้องเท่านั้น"_
 >
-> - ไฟล์นี้ = คำอธิบายรายจุด · [`component-rules.json`](component-rules.json) = กติกาฉบับที่เครื่องตรวจ (รหัส R1–R18 ตรงกัน) — **แก้กติกาต้องแก้ทั้งคู่**
+> - ไฟล์นี้ = คำอธิบายรายจุด · [`component-rules.json`](component-rules.json) = กติกาฉบับที่เครื่องตรวจ (รหัส R1–R22 ตรงกัน) — **แก้กติกาต้องแก้ทั้งคู่**
 > - ตัวตรวจ: [`check-component-rules.js`](check-component-rules.js) ถูกเรียกใน `node figma-export/test-overhaul2-plugin.js` — **ผิดกติกา = ทดสอบไม่ผ่าน** ต้องผ่านก่อนให้เจ้าของงานรันปลั๊กอินทุกครั้ง
 > - ข้อที่ติดข้อจำกัดไลบรารีแสดงเป็น "รอเคาะ" (ไม่ทำให้ล้ม แต่ต้องรายงานเจ้าของงาน) — ห้ามประกอบเองเงียบๆ
 > - ต้นแบบ HTML (`design-mock/`) และ Next.js (`overhaul-next/`) ใช้กติกาเดียวกันในส่วนที่เป็นหน้าตา
@@ -43,7 +43,8 @@
 | จุด | component | เงื่อนไข |
 |---|---|---|
 | กล่องแสดงข้อมูล (R12) | เฟรม `Content` > `Content item row` Column width=Full | ตามตัวอย่าง Maintain-D หน้า "Flow การซ่อม" (VehicleInfo > Content): **พื้น Color/surface/secondary-subtle (#F9FAFB) · มุม 8 · ขอบใน 24 · ระยะแถว 24** · แถวละ 4 ช่อง (mobile 2) · `_Content item base` Type=Text with label · **ไม่มีไอคอนนำ** · ผูกสีกับตัวแปรไลบรารีถ้าหาได้ |
-| ตาราง (R8 R9) | **`Table`** Alternating fills=True | **เรียกทั้งก้อน** ห้ามวาง Table cell / Table header cell เดี่ยว · Scrollbar ปิด · Pagination ตามหน้ารายการ · คอลัมน์/แถวที่ไม่ใช้ซ่อน · ช่อง: Text / Lead text / Badge (Pill outline) / Action icons / Lead checkbox · mobile = การ์ด `Mobile table` |
+| ตาราง (R8 R9) | **`Table`** Alternating fills=True | **เรียกทั้งก้อน** ห้ามวาง Table cell / Table header cell เดี่ยว · Scrollbar ปิด · Pagination ตามหน้ารายการ · คอลัมน์/แถวที่ไม่ใช้ซ่อน · ช่อง: Text / Lead text / Badge (Pill outline) / Action icons / Lead checkbox / Lead Progress Bar · mobile = การ์ด `Mobile table` |
+| ช่องตาราง 2 บรรทัด · สีบรรทัดรอง | `Table cell` Style=Text + Supporting text | ข้อมูล 2 บรรทัด (ประเภทงบ+เลขที่งบ · ผู้แก้ไข+เวลา · ระยะสัญญา · รายละเอียดตามสถานะ) · **ใกล้ครบสัญญา = บรรทัดรองสีแดง error-600 #D92D20** (PO CF หน้า 2 · 21 ต.ค. 2569 · `tintSub()`) · **Style=Badge มีแต่ Pill ไม่มีบรรทัดรอง** ⇒ ข้อมูลประกอบสถานะ (วันนัด/วันอยู่อู่/ประกัน) ไปอยู่คอลัมน์ถัดไป "รายละเอียดตามสถานะ" (PO CF หน้า 3 ยอมรับทางเลือกนี้) |
 | ป้ายสถานะ | `Pill outline` | สีตามตารางสถานะ `Diagram/…/12-overhaul-สถานะ.md` |
 | ขั้นตอน (R10 R15) | **`Progress steps`** Type=Horizontal (instance) | **ใช้ instance ทั้งก้อนเสมอ** — เจ้าของงานเพิ่มช่องเป็น **7** แล้ว publish (19 ต.ค. 2569) ⇒ พอทั้งหน้างาน Overhaul 6 ขั้นและงานซ่อม 7 ขั้น · Step 2/3/4 = true แล้ว**ซ่อนช่องที่เกินจำนวนขั้น** · ช่อง: Status Completed/Current/Incomplete · Number "01" "02" … · Text ชื่อขั้น · Supporting ปิด · Connector ปิดช่องสุดท้าย · ไฟล์ที่ยังไม่อัปเดตไลบรารี (ช่องไม่พอ) ปลั๊กอินวางเฟรมมีกรอบแทนชั่วคราวแล้วรายงาน — อัปเดตไลบรารีแล้วกดปุ่มอีกรอบจะสลับเป็น instance · mobile = `Mobile progress steps` |
 | ว่าง / ค้นไม่เจอ | `Empty state/Data empty` · `Empty state/Search not found` | ข้อความตามสถานการณ์ · ปุ่มที่ไม่ใช้ซ่อน |
@@ -73,8 +74,9 @@ mobile: component ไม่มี variant มือถือ ⇒ จอมือ
 | ปุ่มลบ | `Secondary danger button` (หน้า) · `Primary danger button` (ยืนยัน) | — |
 | ยืนยันลบ | `Modal` Type=Destructive centered image with input | desktop กลางจอ · **mobile = bottom sheet** (Background overlay + Bottom sheet header/footer · มุมบน 24) |
 | ฟอร์มใน popup | `Modal` Type=Form · แถว `Card form row` | mobile = bottom sheet |
-| เมนู "…" | `Dropdown menu` | ดูรายละเอียด · แก้ไข · (คั่น) · ลบ · mobile = bottom sheet |
-| แจ้งผล | `Notification` Success/Error | ข้อความตรงตัวอักษรตาม userflow (เช่น "การสร้างแผน overhaul สำเร็จ" · "general error") |
+| จัดการท้ายแถว (R21) | `Table cell` / `Mobile table item` Style=**Action icons** | ไอคอน ดูรายละเอียด · แก้ไข · ลบ (ช่อง View/Edit/Print/Delete เปิดตามจำนวนไอคอน แล้วสลับไอคอน · `fillIcons()`) · **ห้ามใช้ `Dropdown menu` "…" ในจอ Overhaul** (PO CF 21 ต.ค. 2569 ทุกหน้า "ขอเป็น ICON Action") · mobile = แถวไอคอนท้ายการ์ด · ปุ่มไปหน้างาน = ไอคอนลูกศรขวา |
+| lightbox รูปแนบ | `Modal` Type=Centered image carousel · mobile = bottom sheet + `Images` Size=sm | PO CF หน้า 5 (21 ต.ค. 2569) "ทำเป็น Lightbox ขึ้นมาก็ได้" · ซ่อน Modal footer · หัว = วันเวลาของความคืบหน้า · ไฟล์ที่ไม่มี `Images` ข้ามจอ mobile + รายงาน |
+| แจ้งผล (toast) | `Notification` Success/Error | ถ้อยคำตามที่ PO confirm 21 ต.ค. 2569 (`TOASTS` ใน code.js · ไฟล์ 16 หัวข้อ 6) · ขวาล่าง ห่างขอบ 24 มี Supporting text · general error = รหัส status เช่น "500 Internal Server Error" · ไฟล์ผิดรูปแบบไม่ใช่ toast (validation ที่รายการไฟล์ `_File upload item base` State=Error) |
 | ตัวกรอง | `Side panel header` + `Side panel footer` + ช่องกรอก · สถานะใช้ `Checkbox with badge` | mobile = bottom sheet |
 
 ## 5.1 การจัดวางจอบนหน้า (R19) — แพทเทิร์นของทีมออกแบบ ใช้ทุกครั้งจนกว่าจะเปลี่ยน
@@ -87,18 +89,43 @@ mobile: component ไม่มี variant มือถือ ⇒ จอมือ
 | แถบย่อย (B1 · B2) | `Header` › `State` State=**Sub Flow** (เทา #667085) | ใช้เฉพาะเมื่อกลุ่มหนึ่งมีหลาย scenario (ตอนนี้ไม่ใช้ — `buildGrid` ข้ามเมื่อ sub.code = g.code) |
 | ป้าย state (A.1 · A.2) | `Header` › `State` State=**Sub Flow 2** (ฟ้า #9CACCC) กว้าง 1440 ต่อคอลัมน์ | **ตัวอักษร.ตัวเลข = state ของจอ** (ว่าง · กรอกไม่ครบ · กรอกครบ · ยืนยัน · สำเร็จ …) · ป้าย Device (`Device Type` Type=Device — เจ้าของงานสั่ง 20 ต.ค. 2569 เย็น ให้อ่านจาก component set นี้ · `Component 1` ชุดเก่าเป็นตัวสำรอง) ซ้ายสุด |
 | แถว Desktop | จอ 1440 เรียงตามคอลัมน์ state · ป้าย `Device Type` Type=Desktop ซ้าย กว้าง 300 สูงเท่าแถว | — |
-| แถว Mobile | จอ 402×874 **ใต้คอลัมน์เดียวกัน** (x เท่ากับ desktop) · ป้าย `Device Type` Type=Mobile | **แยกแถว desktop/mobile เสมอ** (เลิกวางคู่กันในแถวเดียว) |
+| แถว Mobile | จอ 402×874 **ใต้คอลัมน์เดียวกัน** (x เท่ากับ desktop) · ป้าย `Device Type` Type=Mobile | **แยกแถว desktop/mobile เสมอ** (เลิกวางคู่กันในแถวเดียว) · **21 ต.ค. 2569 เจ้าของงานสั่งแยกปุ่ม export**: "สร้าง Desktop" → หน้า `overhaul-desktop-N` (แถว Desktop อย่างเดียว) · "สร้าง Mobile" → หน้า `overhaul-mobile-N` (แถว Mobile อย่างเดียว) · ผังคอลัมน์/ป้ายเหมือนเดิม · harness ตรวจว่าหน้าอุปกรณ์เดียวมีป้ายและความกว้างตรงอุปกรณ์ |
 | ระยะ | ป้ายข้าง 300 + ช่อง 80 · คอลัมน์ 1440 เว้น 200 · แถบ 120 เว้น 80 · desktop→mobile เว้น 160 · กลุ่มเว้น 400 | `GRID` ใน `plugin-lib/core.js` |
 
 - โค้ด: `buildGrid()` ใน `plugin-lib/core.js` (สำเนาใน `overhaul2-plugin/code.js`) · กลุ่มประกาศใน `GROUPS` ของแต่ละปลั๊กอิน · ป้ายชื่อ `<prefix> · …` · ไม่ใช้ section · **สร้างบนหน้าใหม่ `<base>-N` ทุกครั้ง ไม่ลบ/ไม่แตะชุดเดิม** (เจ้าของงานสั่ง 20 ต.ค. 2569 "สร้างใหม่เลย ไม่รบกวนของเดิม") · แถบ Header ใส่ข้อความไม่ได้เพราะฟอนต์ LINE Seed Sans ไม่มีในเครื่อง → สลับฟอนต์สำรอง / แถบธรรมดา
+- **แก้บนหน้าเดิมที่มีของแก้มือ (21 ต.ค. 2569):** ปุ่ม "อัปเดตจอที่เลือกเป็นฉบับ CF" สร้างจอฉบับปัจจุบันแทนที่เฉพาะเฟรมที่ผู้ใช้เลือก (ตำแหน่ง/ชื่อเดิม · จอที่ไม่ได้เลือกไม่แตะ · state ที่ CF ตัดติดป้าย " · ตัดแล้ว" ไม่ลบ) + state ใหม่ต่อท้ายแถวของ scenario นั้น (หน้าแบบ R19 ใช้คอลัมน์ถัดไป · หน้าแบบ 19 ต.ค. ที่ mobile วางคู่ desktop ต่อท้ายขอบขวา) · ปุ่ม "แก้คำ/ไอคอนทุกจอ" แตะแค่ property (ชื่อสถานะ · toast · ช่อง "…" → ไอคอน · placeholder) · checkbox "วางต่อท้ายหน้าที่เปิดอยู่" ใช้กับทุกปุ่มสร้าง · harness: `MODE=patch CODE=<code.js เก่า> PATCH=update-selected SELECT=all|regex [ADDNEW=0] [CHECK_ONLY=regex] [R19=0]`
 - `Header`/`State` เป็น component จากอีกไลบรารี (หาได้จาก instance ในไฟล์ Maintain-D) — เปิดไม่ได้ปลั๊กอินวาดแถบธรรมดาสีเดียวกัน (ป้ายอยู่นอกจอ ไม่กระทบกติกา "ทุกชิ้นในจอเป็น instance")
 - เทส: harness ตรวจว่ามีป้ายรหัส flow และจอ mobile ทุกจออยู่ใต้ desktop คอลัมน์เดียวกัน
+
+## 5.2 หน้า toast แยก (R20) — เจ้าของงานสั่ง 21 ต.ค. 2569
+
+> _"ส่วนที่เป็น toast ก็แยกออกเป็นอีกหน้าโดยไม่ต้องมีหน้า ui อย่างอื่นเข้ามา ทำเป็น toast แยกเลย พร้อมให้ export แบบแก้ไขได้"_
+
+| จุด | component · variant | เงื่อนไข |
+|---|---|---|
+| เฟรม | เฟรมโปร่ง (ไม่มีพื้น) หุ้ม toast พอดี ชื่อ `TOAST / A.1 · 1 — T1 …` | **ไม่ใช่ขนาดจอ** (ยกเว้น R14) · ข้างในต้องมีแค่ instance `Notification` 1 ตัว ไม่มีเปลือกหน้า/ชิ้นอื่น · **ต้องมี Export settings** (SVG + PNG 2x) ⇒ เลือกเฟรมแล้ว Export ได้ทันที และยังแก้ข้อความ/สลับ Type ในไฟล์ได้ |
+| toast | `Notification` Type=Success/Error · Breakpoint=Desktop (แถวบน) / Mobile กว้าง 370 (แถวล่าง) | ถ้อยคำตาม `TOASTS` (PO confirm) · Supporting text ตามสเปก 16 ข้อ 1.1 |
+| จัดวาง | R19 เหมือนชุดอื่น (บล็อก A–E = หน้า 1–5 · ป้าย state = A.1 A.2 … · แถว Desktop แล้ว Mobile) | แถวสูงเท่าเนื้อหา (`rowMin: 0`) · หน้าใหม่ `overhaul-toast-N` ทุกครั้ง · toast ที่ชีตแท็บรายหน้าใช้ซ้ำข้ามหน้า สร้างซ้ำในบล็อกของหน้านั้น |
+| เทส | `MODE=build-toast PREFIX=TOAST FIRST='T1 ' node figma-export/test-overhaul2-plugin.js` | checker: เฟรมชื่อขึ้นต้น `TOAST / ` ข้าม R14 แต่ต้องมี Notification · ไม่มี instance อื่น · มี exportSettings |
+
+## 5.3 Dashboard งาน Overhaul (R22) — เจ้าของงานสั่ง 21 ต.ค. 2569
+
+> _"outcome ที่อยากเห็น เป็นเรื่องของการ tracking อะไหล่ อายุการใช้หลังจาก overhaul ทั้งภาพรวม และรายคัน"_ · เอกสารคอลัมน์ `Diagram/01-บำรุงรักษาตามวาระ/20-overhaul-dashboard-หลัง-overhaul.md`
+
+| จุด | component · variant | เงื่อนไข |
+|---|---|---|
+| โครงหน้า | ลอก **MA Overview** ของ UI Release#2 (351:181468) | Page header → `Tabs` (Tab item Active + `Pill outline` Brand นับ) → แถว `Metric item` ×4 (desktop ยืดเต็ม 1296 · mobile 2 ใบต่อแถว) → `Alert` Gray "ข้อมูล ณ วันที่" (+ Alert Info "คอลัมน์ที่ยังไม่มีข้อมูล" ในฉบับเป้าหมาย) → `Table header` → `Table` **≤ 8 คอลัมน์** → pagination / Empty state |
+| Metric | `Metric item` Breakpoint=Desktop/Mobile · `Featured icon` ซ้อน Color = Brand/Gray/Info/Success/Warning/Error/Purple ตามความหมาย | ตัวเลข = Number · ป้าย = Text · ไม่มีเป้า ไม่มีคะแนนผู้รับจ้าง |
+| กราฟ | **ไม่มี chart component ในไลบรารี** | ห้ามวาดกราฟ/SVG เอง — ใช้ Metric · Pill · Progress bar · ตาราง · กล่อง ก่อน→หลัง แทน |
+| หน้ารายคัน | หน้า Detail (R5 R11 R12): `Section label` + `Content item row` | กล่อง "ก่อน → หลัง Overhaul" 2 ช่องต่อแถว · ตารางอะไหล่/งานซ่อมหลัง ≤ 8 คอลัมน์ |
+| เฟส | ทุกบล็อกมี 2 state: "เฟส 1" (คอลัมน์ที่มีข้อมูลจริง) · "เป้าหมาย" (+ คอลัมน์ NONE ติด Alert) | ตามกติกา no-data-no-ui |
+| เทส | `MODE=build-dash FIRST='DASH แผน' node figma-export/test-overhaul2-plugin.js` | checker: จอชื่อ `DASH แผน/รถหลัง/ซ่อมหลัง/อะไหล่` ต้องมี Tabs + Metric item |
 
 ## 6. ข้อจำกัดไลบรารี (instance เพิ่มลูกไม่ได้) — เกินแล้วต้องถาม
 
 | component | ขนาดสูงสุด | ที่ติดอยู่ตอนนี้ (19 ต.ค. 2569) |
 |---|---|---|
-| `Table` | 8 คอลัมน์ × 10 แถว | ⏳ ตารางหน้ารายการแผนมี 9 คอลัมน์ (ข้อมูล 8 + เมนู "…") ⇒ ยังประกอบเองไว้ · รอเคาะ ตัด 1 คอลัมน์ / ขยาย Table ในไลบรารี |
+| `Table` | 8 คอลัมน์ × 10 แถว | ⏳ หน้ารายการแผนหลัง CF มี **13 คอลัมน์** (21 ต.ค. 2569 PO เพิ่มหน่วยงาน) ⇒ ยังประกอบเองไว้ กว้าง ~1,560 เกินจอ 1440 · หน้า 2 (7 คอลัมน์) หน้า 3 (8) ใช้ Table ได้แล้ว · รอเคาะ ซ่อน/รวมคอลัมน์ หรือทีมออกแบบขยาย Table |
 | `Progress steps` | **7 ช่อง** (อัปเดต 19 ต.ค. 2569 · เดิม 5) | ✅ หน้างาน 6 ขั้นใช้ instance ได้แล้ว |
 
 ## 7. ส่วนที่ยังประกอบจากชิ้นไลบรารี (ไม่มี component ทั้งก้อนให้ใช้ — ยังไม่ผ่านรีวิว)
@@ -109,6 +136,10 @@ bottom sheet (ไลบรารีล็อกเนื้อหาตายต
 
 | วันที่ | เปลี่ยน |
 |---|---|
+| 21 ต.ค. 2569 (ค่ำ) | ปุ่ม **"สร้างเฉพาะ scenario ที่เลือก"** (ติ๊ก A–O · Desktop/Mobile/ทั้งคู่ · รหัสคงเดิม · หน้า overhaul-sel-N) — ใช้ generate จอนัดหมาย S7/S13 ฉบับ CF มาเทียบกับหน้าเดิมโดยไม่สร้างทั้ง 14 |
+| 21 ต.ค. 2569 (เย็น) | **R22 Dashboard งาน Overhaul** (แท็บ แผน · รถหลัง Overhaul · ซ่อมหลัง Overhaul · อะไหล่ + หน้ารายคัน · โครง MA Overview · Metric item/Tabs เข้า DIRECT · ปุ่ม "สร้าง Dashboard" 12 จอ × 2) · **แก้บนหน้าเดิม**: ปุ่ม "อัปเดตจอที่เลือกเป็นฉบับ CF" + "แก้คำ/ไอคอนทุกจอ" + checkbox "วางต่อท้ายหน้าที่เปิดอยู่" (เจ้าของงานถามเรื่องหน้า Figma ที่แก้มือไว้บางส่วน) |
+| 21 ต.ค. 2569 (บ่าย) | แยกปุ่ม export **Desktop / Mobile** เป็น 2 ปุ่ม (หน้า overhaul-desktop-N / overhaul-mobile-N · `buildGrid` รับ `devices`) · รวบปุ่มปลั๊กอินเหลือ 5: Desktop · Mobile · toast · notification · เช็ค component — ถอดปุ่มแก้เฉพาะจุดชุดเก่า (จัดวางใหม่ · Device Type · ปิด Clip) ปุ่มเทียบก่อน/หลัง CF และบล็อก P toast ในชุด notification (toast มีหน้าแยกแล้ว) · โค้ดเก่าดูใน git ก่อน 21 ต.ค. |
+| 21 ต.ค. 2569 | PO confirm ครบทุกหน้า (ชีต CF แท็บ 1–5 + OH-Toast) ⇒ ชุด 14 scenario เปลี่ยนเป็นฉบับ CF ทั้ง 5 หน้า (คอลัมน์ใหม่ · ชื่อสถานะ รอเลข PO/รอดำเนินการ · ถ้อยคำ toast `TOASTS` · state ไม่พบแผน/บันทึกไม่สำเร็จ/lightbox/validation ไฟล์) · **R21** จัดการท้ายแถว = Action icons ห้าม Dropdown menu · **R20** หน้า toast แยก (เฟรมโปร่งมีแค่ Notification + Export settings · ปุ่ม "สร้างหน้า toast") · Table cell 2 บรรทัด + บรรทัดรองสีแดง · lightbox = Modal carousel / Images |
 | 20 ต.ค. 2569 | R19: จัดวางแบบตาราง flow ของทีมออกแบบ (1 scenario = 1 บล็อกตัวอักษร · A.1 A.2 = state · แถว Desktop แล้ว Mobile · ป้าย Header/State + Component 1 · หน้าใหม่ทุกครั้ง ไม่แตะชุดเดิม) — ใช้ทุกครั้งจนกว่าจะเปลี่ยน · (เคยเสนอกลุ่มตามหน้า/ขั้น เจ้าของงานเลือกแยกราย scenario) |
 | 20 ต.ค. 2569 (เย็น) | R19 ป้ายข้างจอ: อ่านจาก component set `Device Type` (property Type = Device · Desktop · Mobile · กว้าง 300 · พื้น #667085) ของทีมออกแบบแทน `Component 1` (คงไว้เป็นตัวสำรอง · ปลั๊กอินจับชื่อ variant แบบไม่สนตัวพิมพ์ · ปุ่ม "เช็ค component" รายงาน variant ที่พบ) · เพิ่มบล็อก P toast + Q notification (ปุ่มแยก หน้า overhaul-noti-N · สเปก `Diagram/01-บำรุงรักษาตามวาระ/16-overhaul-toast-notification.md`) · ถอดปุ่มแก้เฉพาะจุด 3 ปุ่ม (นัดหมาย · รีวิว 19 ต.ค. · แถว WBS) ที่ใช้เสร็จแล้ว |
 | 19 ต.ค. 2569 | R18: 3 ช่อง WBS ไม่บังคับ "(ถ้ามี)" |

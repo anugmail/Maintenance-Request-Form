@@ -1,6 +1,6 @@
 {
   "_about": "กติกาการสร้างจอด้วย component จริงของไลบรารี (Component) VMS Plus — ตัวทดสอบ test-overhaul2-plugin.js อ่านไฟล์นี้แล้วตรวจทุกจอ · ผิดกติกา = ทดสอบไม่ผ่าน · คำอธิบายรายข้ออยู่ที่ component-rules.md · แก้กติกาต้องแก้ทั้ง 2 ไฟล์",
-  "_updated": "2026-10-19 (R10 stepper แบบหน้างานซ่อม · R16–R17 นัดหมาย)",
+  "_updated": "2026-10-21 (R22 dashboard แบบ MA Overview · R20 หน้า toast แยก · R21 จัดการเป็นไอคอน) · 2026-10-19 (R10 R16–R17)",
   "library": {
     "Table": {
       "cols": 8,
@@ -187,7 +187,15 @@
       874
     ],
     "sections": false,
-    "source": "1 จอ 1 พื้นหลัง · mobile 402×874 วางคู่ (19 ต.ค. 2569)"
+    "source": "1 จอ 1 พื้นหลัง · mobile 402×874 วางคู่ (19 ต.ค. 2569)",
+    "exempt": {
+      "id": "R20",
+      "namePrefix": "TOAST / ",
+      "mustContain": "Notification",
+      "exportSettings": true,
+      "note": "หน้า toast แยก (เจ้าของงานสั่ง 21 ต.ค. 2569 \"toast แยกออกเป็นอีกหน้า ไม่ต้องมีหน้า ui อย่างอื่นเข้ามา พร้อมให้ export แบบแก้ไขได้\"): 1 toast = 1 เฟรมโปร่งขนาดเท่า toast ไม่ใช่ขนาดจอ · ข้างในมีแค่ instance ของ Notification · ทุกเฟรมต้องมี Export settings (SVG + PNG 2x) · สร้างบนหน้า overhaul-toast-N",
+      "source": "เจ้าของงานสั่ง 21 ต.ค. 2569"
+    }
   },
   "layout": {
     "id": "R19",
@@ -241,6 +249,32 @@
       "barH": 120
     },
     "checkedBy": "test-overhaul2-plugin.js (ป้ายต้องมี · mobile ใต้ desktop คอลัมน์เดียวกัน)",
-    "freshPage": "สร้างบนหน้า <base>-N ใหม่ทุกครั้ง ไม่ลบ/ไม่แตะชุดเดิม"
+    "freshPage": "สร้างบนหน้า <base>-N ใหม่ทุกครั้ง ไม่ลบ/ไม่แตะชุดเดิม",
+    "devices": {
+      "buttons": [
+        "build-desktop → overhaul-desktop-N",
+        "build-mobile → overhaul-mobile-N"
+      ],
+      "note": "21 ต.ค. 2569 เจ้าของงานสั่งแยกปุ่ม export mobile ออกจาก desktop — หน้าอุปกรณ์เดียวมีแถวเดียว ป้าย Device Type ต้องตรงอุปกรณ์ · MODE=build (ทั้งคู่บนหน้าเดียว) ยังใช้ใน harness"
+    }
+  },
+  "forbid": [
+    {
+      "id": "R21",
+      "screens": "^OH2 / ",
+      "component": "Dropdown menu",
+      "source": "PO CF 21 ต.ค. 2569 ทุกหน้า \"ขอเป็น ICON Action\" — จัดการท้ายแถวเป็นไอคอน ดูรายละเอียด · แก้ไข · ลบ (Table cell / Mobile table item Style=Action icons) ไม่ใช่เมนู …"
+    }
+  ],
+  "dashboard": {
+    "id": "R22",
+    "screens": "^OH2 / .*DASH (แผน|รถหลัง|ซ่อมหลัง|อะไหล่)",
+    "mustHave": [
+      "Tabs",
+      "Metric item"
+    ],
+    "maxTableCols": 8,
+    "note": "Dashboard งาน Overhaul (เจ้าของงานสั่ง 21 ต.ค. 2569) ลอกโครงหน้า MA Overview ของ UI Release#2: Page header → Tabs + Pill นับ → Metric item ×4 (Featured icon สีตามความหมาย) → Alert ข้อมูล ณ วันที่ → Table header → Table ≤ 8 คอลัมน์ → pagination/empty · ไม่มี chart component ในไลบรารี ห้ามวาดกราฟเอง · หน้ารายคันเป็นหน้า Detail (Section label + กล่องแสดงข้อมูล)",
+    "source": "เจ้าของงานสั่ง 21 ต.ค. 2569 · แม่แบบ UI Release#2 node 351:181468 · Metric item 2011:13829"
   }
 }

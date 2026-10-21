@@ -22,7 +22,13 @@ function check(screens) {
     const all = sc.findAll(() => true);
     // R14 ขนาดจอ
     const want = RULES.screen[mobile ? 'mobile' : 'desktop'];
-    if (Math.round(sc.width) !== want[0]) fail(RULES.screen, sc, 'กว้าง ' + sc.width + ' ต้องเป็น ' + want[0]);
+    const ex = RULES.screen.exempt, exempt = !!(ex && sc.name.indexOf(ex.namePrefix) === 0);   // R20 หน้า toast แยก: เฟรม = toast อย่างเดียว ไม่ใช่ขนาดจอ (21 ต.ค. 2569)
+    const inInst = (x) => { for (let p = x.parent; p && p !== sc; p = p.parent) if (p.type === 'INSTANCE') return true; return false; };
+    if (exempt) {
+      if (!all.some(x => isInst(x, ex.mustContain) && shown(x))) fail(ex, sc, 'ไม่มี ' + ex.mustContain);
+      if (all.some(x => x.type === 'INSTANCE' && shown(x) && !isInst(x, ex.mustContain) && !inInst(x))) fail(ex, sc, 'มีชิ้นอื่นนอกจาก ' + ex.mustContain + ' — หน้า toast ต้องไม่มี UI อื่น');
+      if (ex.exportSettings && !(sc.exportSettings && sc.exportSettings.length)) fail(ex, sc, 'ไม่มี Export settings');
+    } else if (Math.round(sc.width) !== want[0]) fail(RULES.screen, sc, 'กว้าง ' + sc.width + ' ต้องเป็น ' + want[0]);
     // variant ที่กำหนด
     for (const r of RULES.variants) for (const n of all.filter(x => isInst(x, r.component) && shown(x))) {
       const w = r[mobile ? 'mobile' : 'desktop']; if (!w) continue;   // บางกติกากำหนดเฉพาะ desktop (mobile ใช้ component คนละตัว)
@@ -61,6 +67,11 @@ function check(screens) {
       if (!all.some(x => isInst(x, r.component) && shown(x))) fail(r, sc, 'ไม่มี ' + r.component);
       for (const t of r.forbidSectionTitles || []) if (all.some(x => isInst(x, 'Section header') && shown(x) && prop(x, 'Title') === t)) fail(r, sc, 'ยังมีหัวข้อเดิม "' + t + '"');
     }
+    // component ที่ห้ามใช้ในจอชุดนี้ (R21: Overhaul เลิกใช้เมนู "…" — PO CF 21 ต.ค. 2569 ขอเป็นไอคอน)
+    for (const r of RULES.forbid || []) { if (!new RegExp(r.screens).test(sc.name)) continue; if (all.some(x => isInst(x, r.component) && shown(x))) fail(r, sc, 'ใช้ ' + r.component + ' — ' + r.source); }
+    // R22 dashboard: จอแท็บต้องมี Tabs + Metric item (21 ต.ค. 2569)
+    const dr = RULES.dashboard;
+    if (dr && new RegExp(dr.screens).test(sc.name)) for (const c of dr.mustHave) if (!all.some(x => isInst(x, c) && shown(x))) fail(dr, sc, 'ไม่มี ' + c);
     // กล่องแสดงข้อมูล
     const d = RULES.displayBox;
     const inInstance = (x) => { for (let p = x.parent; p && p !== sc; p = p.parent) if (p.type === 'INSTANCE') return true; return false; };   // กล่องที่อยู่ใน component เป็นแบบของ component เอง
