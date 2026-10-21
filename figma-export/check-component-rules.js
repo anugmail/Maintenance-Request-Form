@@ -72,6 +72,13 @@ function check(screens) {
     // R22 dashboard: จอแท็บต้องมี Tabs + Metric item (21 ต.ค. 2569)
     const dr = RULES.dashboard;
     if (dr && new RegExp(dr.screens).test(sc.name)) for (const c of dr.mustHave) if (!all.some(x => isInst(x, c) && shown(x))) fail(dr, sc, 'ไม่มี ' + c);
+    // R23 แบบที่เจ้าของงานส่งเป็นหลัก: หัวตารางของจอที่กำหนดต้องตรงลำดับ (21 ต.ค. 2569 ค่ำ · S9 วันที่ · รายละเอียด · หมายเหตุ)
+    for (const r of RULES.ownerDesign || []) {
+      if (!new RegExp(r.screens).test(sc.name) || (r.desktopOnly && mobile)) continue;
+      const heads = all.filter(x => isInst(x, 'Table header cell') && shown(x)).map(x => (prop(x, 'Text') || '').trim()).filter(Boolean);
+      const want = r.tableHeaders || [];
+      if (want.some((h, i) => heads[i] !== h)) fail(r, sc, 'หัวตาราง [' + heads.join(' · ') + '] ไม่ตรงแบบที่เจ้าของงานส่ง [' + want.join(' · ') + ']');
+    }
     // กล่องแสดงข้อมูล
     const d = RULES.displayBox;
     const inInstance = (x) => { for (let p = x.parent; p && p !== sc; p = p.parent) if (p.type === 'INSTANCE') return true; return false; };   // กล่องที่อยู่ใน component เป็นแบบของ component เอง

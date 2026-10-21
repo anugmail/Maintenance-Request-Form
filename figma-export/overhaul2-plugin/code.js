@@ -927,7 +927,8 @@ async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 
     if (f.area) setProps(r, { 'Input 1 swap': main('Text area', { State: 'Filled', Size: 'md' }).id });
     const inp = r.children.find(c => c.type === 'INSTANCE' && c.visible !== false);
     if (inp) setProps(inp, { State: f.value ? 'Filled' : 'Default' });
-    if (inp) setProps(inp, { 'Label text': f.label, Text: f.value || '', Optional: false, Helper: false, 'Info icon': false, 'Show Placeholder': !f.value });
+    if (inp) setProps(inp, { 'Label text': f.label, Text: f.value || f.placeholder || '', Optional: !!f.optional, Helper: false, 'Info icon': false, 'Show Placeholder': !f.value });
+    if (inp) syncLabel(inp, f.label, f.optional);   // ป้ายที่เห็นคือ Input label ที่ซ้อน (R4) · optional ⇒ "(ถ้ามี)"
   });
   const ft = m.findAll(n => n.type === 'INSTANCE' && /button/.test(n.name) && n.parent && n.parent.name === 'Actions');
   ft.forEach(b => {
@@ -1116,8 +1117,9 @@ async function job(name, stage, build) {
   const n = +stage.slice(1), cur = { V1: 1, V2: 1, V3: 1, V4: 2, V5: 3, V6: 4, V7: 5, V8: 5, V9: 5, V10: 6, V11: 6 }[stage];
   const { scr, page } = await shell(name, { title: '72-6648 สงขลา', back: true, crumbs: ['แผน 123460', 'PO-700201', '72-6648 สงขลา'], badge: JOB[stage] });
   const content = col('Content', [
+    // กล่องข้อมูลยานพาหนะ 6 ช่อง (ภาพที่เจ้าของงานส่ง 21 ต.ค. 2569 ค่ำ: ไม่มี Purchase Order / ศูนย์บริการ/อู่ — อู่ไปอยู่ในกล่องของส่วนนัดหมาย)
     col('Section', [await section('ข้อมูลยานพาหนะ'), kv([['ทะเบียน', '72-6648 สงขลา'], ['ยี่ห้อ/รุ่น', 'HINO FG1J'], ['ประเภท', 'รถกระเช้า'], ['อายุการใช้งาน', '16 ปี'],
-      ['เลขไมล์สะสม', '221,300 กม.'], ['ชั่วโมงสะสม', '13,300 ชม.'], ['Purchase Order', 'PO-700201 · ซ่อมช่วงล่างและระบบเบรก'], ['ศูนย์บริการ/อู่', VENDOR[0]]])], 16),
+      ['เลขไมล์สะสม', '221,300 กม.'], ['ชั่วโมงสะสม', '13,300 ชม.']])], 16),
     stepper(cur, n === 11),
   ], 32);
   add(page, content, 'h');
@@ -1133,6 +1135,14 @@ const apptKv = (ret, d1, d2) => kv([[ret ? 'ช่วงวันนัดรั
    เบอร์ผู้รับมอบรถ → เบอร์โทรผู้ประสานงาน (กบค.) · สถานที่รับรถ (Text area) ซ่อน — เจ้าของงานเคาะ 21 ต.ค. 2569 จากจอที่แก้ไว้: ฟอร์มมีแค่ ช่วงวัน · ผู้ประสานงาน · เบอร์ (อู่อยู่ในกล่องข้อมูลยานพาหนะ) · ไม่มีช่องหมายเหตุ · mobile: component ไม่มี variant มือถือ ⇒ ประกอบเองด้วยช่องชุดเดียวกัน */
 const COORD = ['นายวิชัย ทองดี', 'วิศวกร กบค.', '02-590-9123'];
 const REJECT_NOTE = 'รถติดภารกิจซ่อมบำรุงสายส่ง ขอเลื่อนเป็นสัปดาห์ถัดไป';
+/* ภาพที่เจ้าของงานส่ง 21 ต.ค. 2569 (ค่ำ): ส่วน "รายละเอียดการนัดหมาย" = หัวข้อ → กล่องเทา ศูนย์บริการ/อู่ · เบอร์โทร ศูนย์บริการ/อู่ · ที่อยู่ (Content item row 3 ช่อง · ค่าจาก PO) → ช่องกรอก 3 ช่อง
+   component ไม่มีกล่องอู่ในส่วนนี้ ⇒ ซ่อนหัวข้อในตัว component แล้วห่อด้วย Section header ของเรา + กล่อง kv + component (ใช้กับทุก state ของ S7/S13 desktop) */
+const VENDOR_KV = () => kv([['ศูนย์บริการ/อู่', VENDOR[0]], ['เบอร์โทร ศูนย์บริการ/อู่', VENDOR[1]], ['ที่อยู่', VENDOR[2]]], 3);
+async function apptSection(node) {
+  const inRM = (n) => { for (let p = n.parent; p && p !== node; p = p.parent) if (p.name === 'RepairMethod') return true; return false; };
+  node.findAll(n => n.type === 'INSTANCE' && n.name === 'Section header' && !inRM(n)).forEach(h => { h.visible = false; });   // หัวข้อในตัว component ซ่อน ใช้ของเราแทน
+  return col('Section', [await section('รายละเอียดการนัดหมาย'), VENDOR_KV(), node], 16);
+}
 function repairAppt(ret, kind, o) {
   o = o || {};
   const filled = !!o.coord || kind === 'rejected';
@@ -1166,7 +1176,7 @@ async function apptForm(ret, o) {
   o = o || {};
   if (!MOB && INDEX.has('RepairAppointmentStep')) {
     const r = repairAppt(ret, 'form', o);
-    const nodes = [r.node, btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ส่งนัดหมาย', { size: 'lg' }]])];
+    const nodes = [await apptSection(r.node), btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ส่งนัดหมาย', { size: 'lg' }]])];
     nodes._coord = r.coord && (r.coord.findOne(n => n.name === 'Container') || r.coord);
     return nodes;
   }
@@ -1183,13 +1193,13 @@ async function apptForm(ret, o) {
   return nodes;
 }
 async function apptWait(ret, d1, d2) {
-  if (!MOB && INDEX.has('RepairAppointmentStep')) return [repairAppt(ret, 'wait').node];   // Type=Wating: "รอตอบกลับจากหน่วยงาน" + ปุ่มแก้ไขนัดหมายในตัว
+  if (!MOB && INDEX.has('RepairAppointmentStep')) return [await apptSection(repairAppt(ret, 'wait').node)];   // Type=Wating: "รอตอบกลับจากหน่วยงาน" + ปุ่มแก้ไขนัดหมายในตัว
   return [col('Section', [await section(ret ? 'นัดหมายรับรถ' : 'นัดหมายนำรถเข้าอู่'),
     alertBox('Info', 'รอหน่วยงานเจ้าของรถตอบกลับ', 'ส่งนัดหมายแล้ว 19/10/2569 · แก้ไขนัดหมายได้จนกว่าหน่วยงานจะตอบรับ'), apptKv(ret, d1, d2)], 16),
     btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Secondary button', 'แก้ไขนัดหมาย', { size: 'lg' }]])];
 }
 async function apptRejected(ret, d1, d2) {
-  if (!MOB && INDEX.has('RepairAppointmentStep')) return [repairAppt(ret, 'rejected', { r1: d1, r2: d2 }).node, btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ส่งนัดหมาย', { size: 'lg' }]])];
+  if (!MOB && INDEX.has('RepairAppointmentStep')) return [await apptSection(repairAppt(ret, 'rejected', { r1: d1, r2: d2 }).node), btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ส่งนัดหมาย', { size: 'lg' }]])];
   return [col('Section', [await section(ret ? 'นัดหมายรับรถ' : 'นัดหมายนำรถเข้าอู่'),
     alertBox('Warning', 'หน่วยงานปฏิเสธนัดหมาย', 'หมายเหตุ: รถติดภารกิจซ่อมบำรุงสายส่ง ขอเลื่อนเป็นสัปดาห์ถัดไป'), apptKv(ret, d1, d2)], 16),
     btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Secondary button', 'แก้ไขนัดหมาย', { size: 'lg' }]])];
@@ -1205,12 +1215,15 @@ async function checkin(done) {
     col('Section', [await section('ลงนามรับรถ'), row('Row', [await sign('กบค.', 'นายวิชัย ทองดี'), await sign('หน่วยงานเจ้าของรถ', 'นายประวิทย์ แสงทอง')])], 16),
     btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันรับรถ', { size: 'lg' }]])];
 }
-/* ความคืบหน้า [วันที่/เวลา, รายละเอียด, ผู้บันทึก, รูป/ไฟล์แนบ] — หน้า 5 CF 21 ต.ค. 2569: + ผู้บันทึก (ใครก็ได้ที่มีสิทธิ์ในงาน) + รูป/ไฟล์แนบ (กดดูเป็น lightbox) · จัดการเป็นไอคอน แก้ไข/ลบ */
-const LOGS = [['20/10/2569 09:30 น.', 'รื้อเครื่องยนต์ ตรวจสภาพชิ้นส่วนภายใน', 'นายวิชัย ทองดี (กบค.)', '2 รูป'], ['05/11/2569 14:00 น.', 'เปลี่ยนชุดลูกสูบและแหวน ประกอบกลับ', 'นางสาวกนกวรรณ ใจมั่น (กบค.)', '3 รูป · 1 PDF']];
-const LOG_FIELDS = (l) => [{ label: 'วันที่/เวลา', value: l ? l[0].replace(' น.', '') : '20/10/2569 09:30' }, { label: 'รายละเอียด', value: l ? l[1] : 'รื้อเครื่องยนต์ ตรวจสภาพชิ้นส่วนภายใน', area: 1 }, { label: 'ผู้บันทึก (จากผู้ใช้ที่ล็อกอิน)', value: l ? l[2] : 'นายวิชัย ทองดี (กบค.)' }];   // แถว 3 ของ Modal Form = ผู้บันทึก (ระบบเติม) · รูป/ไฟล์แนบในฟอร์มยังไม่มี (Card form row สลับเป็น File upload ไม่ได้) รอเคาะ
+/* ความคืบหน้า [วันที่, รายละเอียด, หมายเหตุ] — ยึดจอ scen J (J.1–J.3) ที่เจ้าของงานส่งจาก Figma 21 ต.ค. 2569 (R23): ตาราง วันที่ · รายละเอียด · หมายเหตุ · ไอคอนแก้ไข/ลบ + pagination
+   · modal เพิ่ม/แก้ไข = วันที่/เวลา · รายละเอียด (Text area) · หมายเหตุ (ถ้ามี) placeholder "ระบุหมายเหตุ" · ปุ่ม ยกเลิก/บันทึก
+   · คอลัมน์ ผู้บันทึก / รูป-ไฟล์แนบ ที่ PO CF หน้า 5 ไว้ ไม่อยู่ในจอที่เจ้าของงานเคาะ ⇒ ไม่ใส่ · state ดูรูปแนบ (lightbox) ถอดออก (ฟังก์ชัน lightbox เก็บไว้เผื่อกลับมา) */
+const LOGS = [['20/10/2569 09:30 น.', 'รื้อเครื่องยนต์ ตรวจสภาพชิ้นส่วนภายใน', '-'], ['05/11/2569 14:00 น.', 'เปลี่ยนชุดลูกสูบและแหวน ประกอบกลับ', 'รออะไหล่จากคลัง 2 รายการ']];
+const LOG_FIELDS = (l) => [{ label: 'วันที่/เวลา', value: l ? l[0].replace(' น.', '') : '20/10/2569 09:30' }, { label: 'รายละเอียด', value: l ? l[1] : 'รื้อเครื่องยนต์ ตรวจสภาพชิ้นส่วนภายใน', area: 1 },
+  { label: 'หมายเหตุ', value: l && l[2] !== '-' ? l[2] : '', optional: true, placeholder: 'ระบุหมายเหตุ' }];   // Optional ของ Input label แสดงเป็น "(ถ้ามี)" เอง · "-" ในตาราง = ไม่มีหมายเหตุ
 async function logs(list) {
   const sec = col('Section', [await section('รายละเอียดการติดตาม', { buttons: [{ kind: 'Secondary button', text: 'ความคืบหน้า', icon: 'add-24-300-round' }] })], 16);
-  if (list.length) add(sec, await tbl([['วันที่/เวลา', 190], ['รายละเอียด', 0], ['ผู้บันทึก', 200], ['รูป/ไฟล์แนบ', 130], ['', 104]], list.map(l => [l[0], l[1], l[2], l[3], { icons: list.length > 1 ? ['stylus-24-300-round', 'delete-24-300-round'] : ['stylus-24-300-round'] }])), 'h');
+  if (list.length) add(sec, await tbl([['วันที่', 190], ['รายละเอียด', 0], ['หมายเหตุ', 260], ['', 104]], list.map(l => [l[0], l[1], l[2], { icons: list.length > 1 ? ['stylus-24-300-round', 'delete-24-300-round'] : ['stylus-24-300-round'] }]), { pagination: list.length }), 'h');   // ตามจอ scen J ของเจ้าของงาน (R23): วันที่ · รายละเอียด · หมายเหตุ · ไอคอน + pagination
   else { const es = inst('Empty state/Data empty'); add(sec, es, 'h'); await text(es, 'Text', 'ยังไม่มีความคืบหน้า'); await text(es, 'Supporting text', 'เพิ่มความคืบหน้าอย่างน้อย 1 รายการก่อนกด "ซ่อมสำเร็จ"'); const a = find(es, 'Actions'); if (a) a.visible = false; }
   return [sec, btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ซ่อมสำเร็จ', { size: 'lg', disabled: !list.length }]])];
 }
@@ -1324,11 +1337,10 @@ const SCENARIOS = [
   ['S8 · กบค. ตรวจรับรถก่อน Overhaul', [
     ['หน่วยงานยืนยันนัดแล้ว → รายการตรวจสอบ (toast 15)', async () => { const s = await job('S8 รายการตรวจสอบ', 'V4', () => checkin(false)); await T(s, 15); return s; }],
     ['ตรวจครบ + ลงนาม 2 ฝ่าย', () => job('S8 ลงนามแล้ว', 'V4', () => checkin(true))]]],
-  ['S9 · กบค. เพิ่มการติดตามผลการดำเนินการ overhaul', [
-    ['ยืนยันรับรถแล้ว ยังไม่มีความคืบหน้า (toast 17)', async () => { const s = await job('S9 ว่าง', 'V5', () => logs([])); await T(s, 17); return s; }],
+  ['S9 · กบค. เพิ่มการติดตามผลการดำเนินการ overhaul', [   // 3 state ตามจอ J.1–J.3 ที่เจ้าของงานส่ง 21 ต.ค. 2569 (R23) · toast 17/18 อยู่บนหน้า toast แยกแล้ว · lightbox ถอด
+    ['ยังไม่มีความคืบหน้า', () => job('S9 ว่าง', 'V5', () => logs([]))],
     ['เพิ่มความคืบหน้า', async () => { const s = await job('S9 เพิ่ม', 'V5', () => logs([])); await formModal(s, { title: 'เพิ่มความคืบหน้า', fields: LOG_FIELDS(null) }); return s; }],
-    ['มีความคืบหน้า 2 รายการ (toast 18)', async () => { const s = await job('S9 มีรายการ', 'V5', () => logs(LOGS)); await T(s, 18); return s; }],
-    ['ดูรูปแนบ (lightbox)', async () => { const s = await job('S9 lightbox', 'V5', () => logs(LOGS)); await lightbox(s, { title: 'รูปความคืบหน้า 20/10/2569 09:30 น.', sub: 'รื้อเครื่องยนต์ ตรวจสภาพชิ้นส่วนภายใน · รูป 1 จาก 2' }); return s; }]]],
+    ['มีความคืบหน้า 2 รายการ', () => job('S9 มีรายการ', 'V5', () => logs(LOGS))]]],
   ['S10 · กบค. แก้ไข การติดตามผลการดำเนินการ overhaul', [
     ['กดไอคอนแก้ไข → แก้ไขความคืบหน้า', async () => { const s = await job('S10 แก้ไข', 'V5', () => logs(LOGS)); await formModal(s, { title: 'แก้ไขความคืบหน้า', fields: LOG_FIELDS(LOGS[0]) }); return s; }],
     ['บันทึกแล้ว (toast 19)', async () => { const s = await job('S10 บันทึกแล้ว', 'V5', () => logs(LOGS)); await T(s, 19); return s; }]]],
@@ -1631,9 +1643,9 @@ async function buildToast(o) { await buildSet('overhaul-toast', TOAST_SCENARIOS,
    ชื่อเฟรมที่รู้จัก: 19 ต.ค. "OH2 / S1 — label[ · mobile]" · หลังจัดวางใหม่ "OH2 / B.1 · S1 — label[ · mobile]" ---------- */
 const SCEN_TAGS = SCENARIOS.map(([title]) => title.split(' · ')[0]);
 const normLabel = (s) => String(s).replace(/\s*\([^()]*\)\s*$/, '').replace(/\s+/g, ' ').trim();   // ตัดวงเล็บท้าย เช่น "(toast 2)" "(เติมค่าเดิม)"
-const STATE_ALIAS = { 'ผลกรองด้วยรถ': 'ผลกรองด้วยประเภทยานพาหนะ', 'ระบุอะไหล่แล้ว': 'นำเข้าไฟล์สำเร็จ (toast 23)' };   // ชื่อ state เดิมที่เทียบด้วยกติกาทั่วไปไม่ได้
-const REMOVED_STATES = ['เมนู "…" → แก้ไข', 'เมนู "…" → ลบ', 'เมนู "…" ของ PO → แก้ไข'];   // CF ตัดออก (จัดการเป็นไอคอน R21)
-const REMOVED_TAG = ' · ตัดแล้ว (CF 21 ต.ค.: จัดการเป็นไอคอน)';
+const STATE_ALIAS = { 'ผลกรองด้วยรถ': 'ผลกรองด้วยประเภทยานพาหนะ', 'ระบุอะไหล่แล้ว': 'นำเข้าไฟล์สำเร็จ (toast 23)', 'ยืนยันรับรถแล้ว ยังไม่มีความคืบหน้า': 'ยังไม่มีความคืบหน้า' };   // ชื่อ state เดิมที่เทียบด้วยกติกาทั่วไปไม่ได้ (รายการท้าย = ชื่อฉบับ CF เช้า 21 ต.ค. → ชื่อตามจอ J ของเจ้าของงาน)
+const REMOVED_STATES = ['เมนู "…" → แก้ไข', 'เมนู "…" → ลบ', 'เมนู "…" ของ PO → แก้ไข', 'ดูรูปแนบ (lightbox)'];   // CF ตัดออก (จัดการเป็นไอคอน R21) · lightbox ไม่อยู่ในจอ J ที่เจ้าของงานส่ง (R23)
+const REMOVED_TAG = ' · ตัดแล้ว (ไม่มี state นี้ในฉบับปัจจุบัน)';
 function parseFrameName(name) {   // → { code, tag, label, mob } หรือ null
   const m = /^OH2 \/ (?:([A-Z]\d*\.\d+) · )?(.*)$/.exec(name); if (!m) return null;
   let rest = m[2], mob = false;
@@ -1897,8 +1909,9 @@ async function planTab(name) {
   return scr;
 }
 /* หน้ารายคัน "หลัง Overhaul" (Detail: Section label + กล่องแสดงข้อมูล R12) — รถ 72-6648 สงขลา */
-const V_INFO = [['ทะเบียน', '72-6648 สงขลา'], ['ยี่ห้อ/รุ่น · ประเภท', 'HINO FG1J · รถกระเช้า'], ['หน่วยงานเจ้าของรถ', 'กฟฟ.สงขลา (กฟต.3)'], ['ปีแผน', '2569'],
-  ['แผน', '123457 Overhaul ประจำปีงบ 2569 — รถกระเช้า'], ['PO', 'PO-690201 ซ่อมระบบไฮดรอลิกกระเช้า'], ['ศูนย์บริการ/อู่', 'บริษัท มิตซูบิชิ ฟูโซ่ ทรัค จำกัด'], ['สถานะงาน', 'ปิดงานแล้ว 5 ต.ค. 2569']];
+/* กล่องข้อมูลยานพาหนะ = ชุดเดียวกับหน้างานรายคัน (เจ้าของงาน 21 ต.ค. 2569: "ส่วนที่เป็นรายละเอียดรถจะไม่มีข้อมูล purchase order แสดงแค่ที่ส่งไปให้") · เรื่องแผน/PO/อู่ แยกเป็นกล่อง "งาน Overhaul" */
+const V_INFO = [['ทะเบียน', '72-6648 สงขลา'], ['ยี่ห้อ/รุ่น', 'HINO FG1J'], ['ประเภท', 'รถกระเช้า'], ['อายุการใช้งาน', '16 ปี'], ['เลขไมล์สะสม', '223,350 กม.'], ['ชั่วโมงสะสม', '13,420 ชม.']];
+const V_JOB = [['แผน', '123457 Overhaul ประจำปีงบ 2569 — รถกระเช้า'], ['PO', 'PO-690201 ซ่อมระบบไฮดรอลิกกระเช้า'], ['ศูนย์บริการ/อู่', 'บริษัท มิตซูบิชิ ฟูโซ่ ทรัค จำกัด'], ['หน่วยงานเจ้าของรถ', 'กฟฟ.สงขลา (กฟต.3)'], ['ปีแผน', '2569'], ['สถานะงาน', 'ปิดงานแล้ว 5 ต.ค. 2569']];
 const BA_P1 = [['วันรับรถเข้าอู่', '1 ก.ย. 2569'], ['วันปิดงาน', '5 ต.ค. 2569'], ['อยู่อู่', '34 วัน'], ['หลังปิดงาน', '16 วัน'],
   ['เลขไมล์ล่าสุด (ตามทะเบียนรถ)', '223,350 กม.'], ['ชั่วโมงเครื่องล่าสุด (ตามทะเบียนรถ)', '13,420 ชม.'], ['ค่าซ่อม 12 เดือนก่อนเข้าอู่', '86,200 บาท · 5 ครั้ง'], ['ค่าซ่อมตั้งแต่ปิดงาน', '12,500 บาท · 1 ครั้ง'],
   ['อายุรถ', '16 ปี (จดทะเบียน 12 มี.ค. 2553)'], ['ราคาที่ได้มา', '2,900,000 บาท'], ['ความคุ้มค่า', 'ยังไม่มีค่า Overhaul (ช่อง E)'], ['ประกัน', 'ยังไม่มีช่องกรอก (ช่อง A B C)']];
@@ -1919,7 +1932,8 @@ async function vehicleAfter(name, o) {
     actions: [['Secondary button', 'ส่งออก PDF'], ['Secondary button', 'เปิดหน้างาน Overhaul', 'keyboard_arrow_right-20-400-round']] });
   const r = DASH_REPAIRS[0];
   const sections = [
-    col('Section', [await sectionLabel('รถและงาน Overhaul'), kv(V_INFO)], 16),
+    col('Section', [await sectionLabel('ข้อมูลยานพาหนะ'), kv(V_INFO)], 16),
+    col('Section', [await sectionLabel('งาน Overhaul'), kv(V_JOB)], 16),
     col('Section', [await sectionLabel(o.target ? 'ก่อน → หลัง Overhaul' : 'ก่อน → หลัง Overhaul (เฟส 1: ข้อมูลที่มี)'), kv(o.target ? BA_T : BA_P1, 2)], 16),
     col('Section', [await sectionLabel('อะไหล่ที่เปลี่ยนตอน Overhaul', { badge: V_PARTS.length }), await tbl(o.target ? VP_COLS_T : VP_COLS_P1,
       V_PARTS.map(p => o.target ? [{ text: p[0], sub: p[1] }, { pill: [p[6], 'Gray'] }, p[2], p[3], p[4], p[5], { pill: p[7] }, { icons: ['quick_reference_all-24-300-round'] }]

@@ -1,6 +1,6 @@
 {
   "_about": "กติกาการสร้างจอด้วย component จริงของไลบรารี (Component) VMS Plus — ตัวทดสอบ test-overhaul2-plugin.js อ่านไฟล์นี้แล้วตรวจทุกจอ · ผิดกติกา = ทดสอบไม่ผ่าน · คำอธิบายรายข้ออยู่ที่ component-rules.md · แก้กติกาต้องแก้ทั้ง 2 ไฟล์",
-  "_updated": "2026-10-21 (R22 dashboard แบบ MA Overview · R20 หน้า toast แยก · R21 จัดการเป็นไอคอน) · 2026-10-19 (R10 R16–R17)",
+  "_updated": "2026-10-21 (R23 แบบที่เจ้าของงานส่งเป็นหลัก — S9 ตาราง วันที่·รายละเอียด·หมายเหตุ · R22 dashboard แบบ MA Overview · R20 หน้า toast แยก · R21 จัดการเป็นไอคอน) · 2026-10-19 (R10 R16–R17)",
   "library": {
     "Table": {
       "cols": 8,
@@ -276,5 +276,15 @@
     "maxTableCols": 8,
     "note": "Dashboard งาน Overhaul (เจ้าของงานสั่ง 21 ต.ค. 2569) ลอกโครงหน้า MA Overview ของ UI Release#2: Page header → Tabs + Pill นับ → Metric item ×4 (Featured icon สีตามความหมาย) → Alert ข้อมูล ณ วันที่ → Table header → Table ≤ 8 คอลัมน์ → pagination/empty · ไม่มี chart component ในไลบรารี ห้ามวาดกราฟเอง · หน้ารายคันเป็นหน้า Detail (Section label + กล่องแสดงข้อมูล)",
     "source": "เจ้าของงานสั่ง 21 ต.ค. 2569 · แม่แบบ UI Release#2 node 351:181468 · Metric item 2011:13829"
-  }
+  },
+  "ownerDesign": [
+    {
+      "id": "R23",
+      "screens": "^OH2 / .*S9 — มีความคืบหน้า",
+      "desktopOnly": true,
+      "tableHeaders": ["วันที่", "รายละเอียด", "หมายเหตุ"],
+      "note": "ลำดับแหล่งความจริงของโครงจอ: ข้อความ/ภาพจากเฟรม Figma ที่เจ้าของงานส่ง → ชีต CF ของ PO → userflow/AC · คอลัมน์ในชีตที่จอของเจ้าของงานไม่มี ไม่ใส่ (จดรอเคาะในไฟล์ 19) · ตรวจด้วย harness DUMP_TEXT",
+      "source": "เจ้าของงานสั่ง 21 ต.ค. 2569 (ค่ำ) พร้อมข้อความจากเฟรม J.1–J.3: \"scen J ให้ปรับแก้ใน script เป็นแบบที่ส่งไป ครั้งหน้าถ้าต้อง gen ui ให้ยึดตามแบบที่ส่งไป\" · component-rules.md §4.2"
+    }
+  ]
 }
