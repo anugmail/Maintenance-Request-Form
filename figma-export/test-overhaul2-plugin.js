@@ -58,6 +58,7 @@ class Node {
   insertChild(i, c) { if (c.parent) c.parent.children = c.parent.children.filter(x => x !== c); c.parent = this; this.children.splice(i, 0, c); }
   appendChild(c) { if (c.parent) c.parent.children = c.parent.children.filter(x => x !== c); c.parent = this; this.children.push(c); }
   remove() { if (this.parent) this.parent.children = this.parent.children.filter(x => x !== this); }
+  async exportAsync(o) { if (!o || o.format !== 'PNG') throw new Error('exportAsync: รองรับแค่ PNG ในเทส'); return new Uint8Array(16); }
   resize(w, h) { this.width = w; this.height = h; }
   resizeWithoutConstraints(w, h) { this.resize(w, h); }
   get absoluteBoundingBox() { let x = this.x, y = this.y, p = this.parent; while (p && p.type !== 'PAGE') { x += p.x || 0; y += p.y || 0; p = p.parent; } return { x, y, width: this.width, height: this.height }; }
@@ -180,6 +181,7 @@ const figma = {
   // ผัง userflow ข้างจอ (22 ต.ค. 2569 · ปลั๊กอินบำรุงรักษา): รูปทรง + เส้นหักมุม
   createEllipse() { return new Node({ type: 'ELLIPSE', name: 'Ellipse' }); },
   createRectangle() { return new Node({ type: 'RECTANGLE', name: 'Rectangle' }); },
+  createImage(bytes) { if (!(bytes instanceof Uint8Array)) throw new Error('createImage ต้องได้ Uint8Array'); return { hash: 'img' + (++uid) }; },   // ภาพย่อจอในผัง userflow
   createPolygon() { return new Node({ type: 'POLYGON', name: 'Polygon' }); },
   createVector() { const v = new Node({ type: 'VECTOR', name: 'Vector' });
     v.setVectorNetworkAsync = async (net) => { if (!net || !Array.isArray(net.vertices) || !Array.isArray(net.segments)) throw new Error('vectorNetwork ผิดรูป');
@@ -382,6 +384,10 @@ const MODE_CHECK = process.env.MODE === 'check';
       if (!ss.length || !vs.length) logs.push('⚠ ผัง userflow ' + code + ' ไม่มีกล่องหรือเส้น');
       if (vs.some(v => !v.vectorNetwork || !v.vectorNetwork.vertices.length || v.vectorNetwork.vertices[v.vectorNetwork.vertices.length - 1].strokeCap !== 'ARROW_LINES')) logs.push('⚠ เส้นในผัง ' + code + ' ไม่มีหัวลูกศร');
       if (ss.some(n => n.x < 0 || n.y < 0 || n.x + n.width > f.width || n.y + n.height > f.height)) logs.push('⚠ กล่องในผัง ' + code + ' ล้นกรอบ');
+      const thumbs = f.children.filter(n => n.name.indexOf('ภาพย่อ ') === 0), filled = thumbs.filter(n => (n.fills || []).some(x => x.type === 'IMAGE' && x.imageHash));
+      const coded = f.children.filter(n => n.name.indexOf('ป้ายจอ ') === 0).length;
+      global.__thumbs = (global.__thumbs || 0) + filled.length;
+      if (filled.length < Math.min(coded, thumbs.length) - 3) logs.push('⚠ ภาพย่อจอในผัง ' + code + ' ใส่ได้แค่ ' + filled.length + '/' + thumbs.length);
       for (const b of f.children.filter(n => n.name.indexOf('ป้ายจอ ') === 0)) for (const c of b.name.slice(7).split(' ')) {
         badges++;
         if (c.split('.')[0] !== code) logs.push('⚠ ป้ายจอ ' + c + ' อยู่ผิดบล็อก ' + code);
@@ -393,7 +399,7 @@ const MODE_CHECK = process.env.MODE === 'check';
       if (f && bars[i].y < f.y + f.height) logs.push('⚠ บล็อก ' + bars[i].name.split(' · ')[1].split(' ')[0] + ' ทับผังของบล็อก ' + prevCode);
     }
     if (flowsOn.length !== bars.length) logs.push('⚠ ผัง userflow ' + flowsOn.length + ' ผัง แต่มี ' + bars.length + ' บล็อก');
-    console.log('ผัง userflow ข้างจอ: ' + flowsOn.length + '/' + bars.length + ' บล็อก · กล่อง ' + shapes + ' · เส้น ' + vecs + ' · ป้ายรหัสจอ ' + badges + (logs.slice(printed).some(l => /ผัง|ป้ายจอ|บล็อก/.test(l)) ? '' : ' ✓'));
+    console.log('ผัง userflow ข้างจอ: ' + flowsOn.length + '/' + bars.length + ' บล็อก · กล่อง ' + shapes + ' · เส้น ' + vecs + ' · ภาพย่อ ' + (global.__thumbs || 0) + ' · ป้ายรหัสจอ ' + badges + (logs.slice(printed).some(l => /ผัง|ป้ายจอ|บล็อก/.test(l)) ? '' : ' ✓'));
   }
   if (process.env.DUMP_TEXT) {   // DUMP_TEXT=regex ชื่อจอ → พิมพ์ข้อความทุกชั้น (รวมที่ซ่อน) ตามลำดับ layer — ใช้เทียบกับข้อความที่ก๊อปจาก Figma (21 ต.ค. 2569)
     const re = new RegExp(process.env.DUMP_TEXT);

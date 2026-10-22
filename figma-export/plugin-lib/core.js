@@ -968,7 +968,7 @@ async function userflowFrame(prefix, code, n, codes, loose) {
   const put = (node, x, y) => { f.appendChild(node); node.x = x; node.y = y; return node; };
   put(await labelText('userflow · S' + n + ' ' + sc.title, 32, '#101828'), 40, 36);
   put(await labelText('อ่านบน → ล่าง · ทางแยก N ไปขวา · เส้นที่วนข้างผัง = ย้อนกลับ · ป้ายเทา = รหัสจอทางขวา', 16, '#475467'), 40, 84);
-  const pos = {};
+  const pos = {}, slots = [];
   for (const e of sc.edges) {   // เส้นก่อน กล่องทับเส้น
     const from = sc.nodes.find(x => x.id === e.from);
     const hex = '#' + [from.stroke.r, from.stroke.g, from.stroke.b].map(c => Math.round(c * 255).toString(16).padStart(2, '0')).join('');
@@ -985,9 +985,21 @@ async function userflowFrame(prefix, code, n, codes, loose) {
     s.resize(nd.w, nd.h); s.x = nd.x; s.y = nd.y;
     s.fills = [{ type: 'SOLID', color: nd.fill }]; s.strokes = [{ type: 'SOLID', color: nd.stroke }]; s.strokeWeight = 4;
     s.name = nd.id + ' / ' + (nd.label.split('\n')[0] || nd.kind);
-    const iw = nd.kind === 'decision' ? nd.w * 0.62 : nd.w * 0.86, ih = nd.kind === 'decision' ? nd.h * 0.62 : nd.h * 0.8;
-    const t = put(await flowText(nd.label, nd.kind === 'end' ? 16 : 15, '#101828', iw, ih), nd.x + (nd.w - iw) / 2, nd.y + (nd.h - ih) / 2);
-    t.name = nd.id + ' ข้อความ';
+    if (nd.thumb) {   // กล่องหน้าจอ = ช่องภาพย่อจอจริงด้านบน + ชื่อหน้าใต้ภาพ (เจ้าของงานเลือก 22 ต.ค. 2569 "ภาพย่อจอในผัง")
+      const th = figma.createRectangle(); CREATED.push(th); f.appendChild(th);
+      th.resize(nd.thumb.w, nd.thumb.h); th.x = nd.x + nd.thumb.x; th.y = nd.y + nd.thumb.y; th.cornerRadius = 4;
+      th.fills = [{ type: 'SOLID', color: WHITE }]; th.strokes = [{ type: 'SOLID', color: rgbOf('#D0D5DD') }]; th.strokeWeight = 1;
+      th.name = 'ภาพย่อ ' + nd.id;
+      slots.push({ id: nd.id, rect: th });
+      if (!codes[nd.id]) { const ph = put(await flowText('ยังไม่มีจอในบล็อกนี้', 14, '#667085', nd.thumb.w, nd.thumb.h), th.x, th.y); ph.name = nd.id + ' ยังไม่มีจอ'; }
+      const top = nd.thumb.y + nd.thumb.h + 4, ih = nd.h - top - 6, iw = nd.w - 16;
+      const t = put(await flowText(nd.label.replace(/\n/g, ' '), 15, '#101828', iw, ih), nd.x + 8, nd.y + top);
+      t.name = nd.id + ' ข้อความ';
+    } else {
+      const iw = nd.kind === 'decision' ? nd.w * 0.62 : nd.w * 0.86, ih = nd.kind === 'decision' ? nd.h * 0.62 : nd.h * 0.8;
+      const t = put(await flowText(nd.label, nd.kind === 'end' ? 16 : 15, '#101828', iw, ih), nd.x + (nd.w - iw) / 2, nd.y + (nd.h - ih) / 2);
+      t.name = nd.id + ' ข้อความ';
+    }
     pos[nd.id] = nd;
   }
   for (const id of Object.keys(codes)) {   // ป้ายรหัสจอ มุมขวาบนของกล่อง
@@ -1011,7 +1023,18 @@ async function userflowFrame(prefix, code, n, codes, loose) {
     t.textAutoResize = 'HEIGHT'; t.resize(sc.w - 80, t.height || 24); h += (t.height || 24) + 40;
   }
   f.resize(sc.w, h);
-  return f;
+  return { frame: f, slots };
+}
+/* ภาพย่อจอจริง: export จอเป็น PNG แล้วใส่เป็นภาพในช่อง · จอสูงกว่าช่อง = ตัดเอาส่วนบนเต็มความกว้าง (เห็นหัวหน้า + ส่วนต้นของเนื้อหา) · ภาพเป็นภาพนิ่ง แก้จอแล้วต้องสร้างใหม่ */
+async function fillThumb(rect, scr) {
+  try {
+    const scale = Math.max(0.05, Math.min(1, (rect.width / scr.width) * 2));
+    const bytes = await scr.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: scale } });
+    const img = figma.createImage(bytes);
+    const vis = (rect.height / rect.width) / (scr.height / scr.width);   // สัดส่วนความสูงของจอที่ช่องแสดงได้เมื่อเต็มความกว้าง
+    rect.fills = [vis < 1 ? { type: 'IMAGE', imageHash: img.hash, scaleMode: 'CROP', imageTransform: [[1, 0, 0], [0, vis, 0]] } : { type: 'IMAGE', imageHash: img.hash, scaleMode: 'FIT' }];
+    return true;
+  } catch (e) { warn('ภาพย่อ ' + scr.name, e); return false; }
 }
 
 /* GROUPS = [{ code: 'A', title: '…', subs: [{ code: 'A', title: '…', tag: 'S1', screens: [[label, fn, 'D1 D2'?], …] }] }]
@@ -1035,6 +1058,7 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
         y += GRID.barH + GRID.gap;
       }
       const sn = scenNo(sub.tag);
+      let flowSlots = null; const byCode = {};   // รหัสจอ → เฟรมจอ (desktop ก่อน) สำหรับภาพย่อในผัง
       if (opts.flow !== false && USERFLOW && sn != null && USERFLOW.scenarios[sn]) {   // ผัง userflow ซ้ายของบล็อก (ขอบขวาห่างป้าย Device FLOW_GAP)
         const codes = {}, loose = [];
         sub.screens.forEach(([label, , ids], i) => {
@@ -1045,7 +1069,9 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
         });
         CREATED = [];
         try {
-          const fr = await userflowFrame(prefix, g.code, sn, codes, loose);
+          const uf = await userflowFrame(prefix, g.code, sn, codes, loose);
+          const fr = uf && uf.frame;
+          if (uf) flowSlots = { slots: uf.slots, codes };
           if (fr) { put(fr, -(fr.width + FLOW_GAP), top); flowBottom = Math.max(flowBottom, top + fr.height); flows++;
             log('  · ผัง userflow S' + sn + ' (' + USERFLOW.scenarios[sn].nodes.length + ' กล่อง' + (loose.length ? ' · จอที่ยังไม่มีกล่องในผัง ' + loose.length : '') + ')'); }
         } catch (e) { warn('ผัง userflow S' + sn, e); const k = dropCreated(page); if (k) log('    ลบชิ้นที่ค้างจากผังที่พัง ' + k + ' ชิ้น'); }
@@ -1063,6 +1089,7 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
             const s = await fn(); stripDividers(s); await polish(s);
             s.name = prefix + ' / ' + sub.code + '.' + (i + 1) + ' · ' + sub.tag + ' — ' + label + (mob ? ' · mobile' : '');
             put(s, x, rowY); h = Math.max(h, s.height); made.push(s);
+            const cd = sub.code + '.' + (i + 1); if (!byCode[cd]) byCode[cd] = s;
             log('  · ' + made.length + '/' + total + ' ' + s.name);
           } catch (e) {
             warn(sub.code + '.' + (i + 1) + ' ' + label + (mob ? ' (mobile)' : ''), e);
@@ -1074,6 +1101,11 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
         const rowH = Math.max(h, opts.rowMin != null ? opts.rowMin : (mob ? GRID.mobH : GRID.deskH));
         CREATED = []; put(await deviceLabel(prefix, mob ? 'Mobile' : 'Desktop', rowH), 0, rowY);
         y = rowY + rowH + GRID.rowGap;
+      }
+      if (flowSlots) {   // ภาพย่อจอจริงในกล่องหน้าจอของผัง (จอแรกที่ผูกกับกล่องนั้น)
+        let k = 0;
+        for (const sl of flowSlots.slots) { const cd = (flowSlots.codes[sl.id] || [])[0]; if (cd && byCode[cd] && await fillThumb(sl.rect, byCode[cd])) k++; }
+        if (flowSlots.slots.length) log('  · ภาพย่อจอในผัง ' + k + '/' + flowSlots.slots.length + ' กล่อง');
       }
       log('✓ ' + sub.code + ' ' + sub.title + ' (' + n + ' state)');
     }

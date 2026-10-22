@@ -12,9 +12,10 @@
 const uf = require('../8-flow-userflow.js');
 
 const SIZE = { end: 112, action: 176, display: 176, decision: 176 };
+/* กล่องหน้าจอ (Display) = ภาพย่อจอจริง + ชื่อหน้าใต้ภาพ (เจ้าของงานเลือก 22 ต.ค. 2569 "ภาพย่อจอในผัง") — ปลั๊กอินวางภาพลงช่อง thumb หลังสร้างจอเสร็จ */
+const DISPLAY = { w: 336, h: 316, pad: 8, thumbH: 228 };
+const GAPX = 144, GAPY = 64;   // ช่องว่างระหว่างคอลัมน์ / แถว (คอลัมน์และแถวกว้างไม่เท่ากันตามกล่องที่ใหญ่สุดในนั้น)
 const CELL = 176;        // ช่องกว้างสุด — จัดกึ่งกลาง
-const PX = 320;          // ระยะคอลัมน์ (ทางแยก N)
-const PY = 236;          // ระยะแถว (ลำดับขั้น)
 const X0 = 40, Y0 = 140; // เว้นหัวผังด้านบน
 const LANE = 36;         // ช่องวิ่งของเส้นย้อนกลับ (ขวาของผัง) ต่อ 1 เส้น
 const STICKY_W = 320, STICKY_GAP = 16;
@@ -24,11 +25,17 @@ function vertical(flow) {
   const { rank, row, back } = uf.rankRows(flow);
   const maxRank = Math.max(...flow.nodes.map(n => rank[n.id]));
   const maxRow = Math.max(...flow.nodes.map(n => row[n.id]));
+  const dim = (n) => n.kind === 'display' ? [DISPLAY.w, DISPLAY.h] : [SIZE[n.kind] || CELL, SIZE[n.kind] || CELL];
+  const colW = Array(maxRow + 1).fill(CELL), rankH = Array(maxRank + 1).fill(CELL);
+  flow.nodes.forEach(n => { const [w, h] = dim(n); colW[row[n.id]] = Math.max(colW[row[n.id]], w); rankH[rank[n.id]] = Math.max(rankH[rank[n.id]], h); });
+  const colX = [], rankY = []; colW.reduce((x, w, i) => { colX[i] = x; return x + w + GAPX; }, X0); rankH.reduce((y, h, i) => { rankY[i] = y; return y + h + GAPY; }, Y0);
   const nodes = flow.nodes.map(n => {
-    const s = SIZE[n.kind] || CELL;
-    const cx = X0 + row[n.id] * PX + CELL / 2, cy = Y0 + rank[n.id] * PY + CELL / 2;
+    const [w, h] = dim(n), c = row[n.id], r = rank[n.id];
+    const cx = colX[c] + colW[c] / 2, cy = rankY[r] + rankH[r] / 2;
     const st = uf.ST[n.kind] || uf.ST.action;   // สีชุดเดียวกับบอร์ด FigJam (Template บอร์ด Planning 1-2)
-    return { id: n.id, kind: n.kind, label: n.label, x: cx - s / 2, y: cy - s / 2, w: s, h: s, fill: st.fill, stroke: st.stroke, cx, cy, col: row[n.id], rank: rank[n.id] };
+    const o = { id: n.id, kind: n.kind, label: n.label, x: cx - w / 2, y: cy - h / 2, w, h, fill: st.fill, stroke: st.stroke, cx, cy, col: c, rank: r };
+    if (n.kind === 'display') o.thumb = { x: DISPLAY.pad, y: DISPLAY.pad, w: w - DISPLAY.pad * 2, h: DISPLAY.thumbH };   // ช่องภาพย่อ (พิกัดในกล่อง)
+    return o;
   });
   const pos = Object.fromEntries(nodes.map(n => [n.id, n]));
   const boxes = nodes.map(n => ({ id: n.id, x1: n.x - PAD, y1: n.y - PAD, x2: n.x + n.w + PAD, y2: n.y + n.h + PAD }));
@@ -41,13 +48,13 @@ function vertical(flow) {
     }
     return k;
   };
-  const right0 = X0 + (maxRow + 1) * PX - (PX - CELL) / 2;   // ขอบขวาของคอลัมน์สุดท้าย
+  const right0 = colX[maxRow] + colW[maxRow];   // ขอบขวาของคอลัมน์สุดท้าย
   let lanes = 0, lanesL = 0;
   const left0 = X0 - 24;   // ช่องวิ่งซ้ายของผัง (ติดลบได้ — เลื่อนทั้งผังทีหลัง)
   const edges = flow.edges.map(e => {
     const a = pos[e.from], b = pos[e.to];
     const bot = (n) => [n.cx, n.y + n.h], top = (n) => [n.cx, n.y], rgt = (n) => [n.x + n.w, n.cy], lft = (n) => [n.x, n.cy];
-    const half = (PY - CELL) / 2;
+    const half = GAPY / 2;
     const lane = () => { const x = right0 + 24 + lanes * LANE; return [rgt(a), [x, a.cy], [x, b.cy], rgt(b)]; };
     if (back.has(e)) {   // เส้นย้อนกลับ: ออกข้างขวา → ออกข้างซ้าย → ออกใต้แล้ววิ่งขวา/ซ้าย · เลือกเส้นแรกที่ไม่ทับกล่อง
       const xr = right0 + 24 + lanes * LANE, xl = left0 - lanesL * LANE;
@@ -64,11 +71,12 @@ function vertical(flow) {
     if (a.cx === b.cx) cand.push([bot(a), top(b)]);                                                   // ตรงลง
     if (b.cy > a.cy && b.cx !== a.cx) {
       cand.push([b.cx > a.cx ? rgt(a) : lft(a), [b.cx, a.cy], top(b)]);                               // ออกข้าง แล้วลงเข้าหัว (ทางแยก N)
-      cand.push([bot(a), [a.cx, b.y - (PY - CELL) / 2], [b.cx, b.y - (PY - CELL) / 2], top(b)]);       // ลงก่อน แล้วเลี้ยวเหนือปลายทาง
-      cand.push([bot(a), [a.cx, a.y + a.h + (PY - CELL) / 2], [b.cx, a.y + a.h + (PY - CELL) / 2], top(b)]);   // เลี้ยวใต้ต้นทาง แล้วลง
+      const ybt = rankY[b.rank] - GAPY / 2, yat = rankY[a.rank] + rankH[a.rank] + GAPY / 2;
+      cand.push([bot(a), [a.cx, ybt], [b.cx, ybt], top(b)]);       // ลงก่อน แล้วเลี้ยวเหนือปลายทาง (กลางช่องว่างเหนือแถวปลายทาง)
+      cand.push([bot(a), [a.cx, yat], [b.cx, yat], top(b)]);       // เลี้ยวใต้ต้นทาง แล้วลง
     }
     if (a.cx === b.cx && b.cy > a.cy) {   // คอลัมน์เดียวกันแต่ข้ามหลายขั้น — อ้อมซ้าย/ขวาในช่องว่างระหว่างคอลัมน์
-      const gx = a.cx - PX / 2, gx2 = a.cx + PX / 2;
+      const gx = colX[a.col] - GAPX / 2, gx2 = colX[a.col] + colW[a.col] + GAPX / 2;
       cand.push([lft(a), [gx, a.cy], [gx, b.cy], lft(b)]);
       cand.push([rgt(a), [gx2, a.cy], [gx2, b.cy], rgt(b)]);
     }
@@ -82,7 +90,7 @@ function vertical(flow) {
   const sx = Math.max(laneR, right0) + 40;
   const stickies = flow.stickies.map(st => ({ node: st.node, text: st.text, x: sx, y: pos[st.node].y, w: STICKY_W }));
   let w = (stickies.length ? sx + STICKY_W : Math.max(laneR, right0)) + 40;
-  const h = Y0 + (maxRank + 1) * PY + 40;
+  const h = rankY[maxRank] + rankH[maxRank] + 40;
   const shift = lanesL ? lanesL * LANE + 24 : 0;   // มีช่องวิ่งซ้าย ⇒ เลื่อนทั้งผังไปขวา ให้ทุกอย่างอยู่ในกรอบ
   if (shift) {
     nodes.forEach(n => { n.x += shift; }); edges.forEach(e => { e.pts = e.pts.map(([x, y]) => [x + shift, y]); }); stickies.forEach(s => { s.x += shift; }); w += shift;
