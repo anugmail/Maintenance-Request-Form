@@ -1,6 +1,6 @@
 {
   "_about": "กติกาการสร้างจอด้วย component จริงของไลบรารี (Component) VMS Plus — ตัวทดสอบ test-overhaul2-plugin.js อ่านไฟล์นี้แล้วตรวจทุกจอ · ผิดกติกา = ทดสอบไม่ผ่าน · คำอธิบายรายข้ออยู่ที่ component-rules.md · แก้กติกาต้องแก้ทั้ง 2 ไฟล์",
-  "_updated": "2026-10-21 (R23 บล็อก A ฉบับเจ้าของงาน 8 คอลัมน์ ไม่มีหน่วยงาน + ตัวกรอง dropdown · R23 หน้ารายการแผนตามจอเจ้าของงาน 8 คอลัมน์ + ปุ่ม … · R21 ฉบับเจ้าของงาน: ปุ่ม … + Dropdown menu บนตารางรายการแผน/PO · R25 ตารางทุก scenario = component Table เสมอ ห้ามประกอบเอง · R24 เลือกรถในฟอร์ม PO = Input dropdown + ชิป · R23 แบบที่เจ้าของงานส่งเป็นหลัก · R22 dashboard แบบ MA Overview · R20 หน้า toast แยก · R21 จัดการเป็นไอคอน) · 2026-10-19 (R10 R16–R17)",
+  "_updated": "2026-10-22 (R26 ผัง userflow ข้างจอ · ปลั๊กอินบำรุงรักษาปรับ export ให้ตรง Overhaul) · 2026-10-21 (R23 บล็อก A ฉบับเจ้าของงาน 8 คอลัมน์ ไม่มีหน่วยงาน + ตัวกรอง dropdown · R23 หน้ารายการแผนตามจอเจ้าของงาน 8 คอลัมน์ + ปุ่ม … · R21 ฉบับเจ้าของงาน: ปุ่ม … + Dropdown menu บนตารางรายการแผน/PO · R25 ตารางทุก scenario = component Table เสมอ ห้ามประกอบเอง · R24 เลือกรถในฟอร์ม PO = Input dropdown + ชิป · R23 แบบที่เจ้าของงานส่งเป็นหลัก · R22 dashboard แบบ MA Overview · R20 หน้า toast แยก · R21 จัดการเป็นไอคอน) · 2026-10-19 (R10 R16–R17)",
   "library": {
     "Table": {
       "cols": 8,
@@ -281,6 +281,22 @@
       ],
       "note": "21 ต.ค. 2569 เจ้าของงานสั่งแยกปุ่ม export mobile ออกจาก desktop — หน้าอุปกรณ์เดียวมีแถวเดียว ป้าย Device Type ต้องตรงอุปกรณ์ · MODE=build (ทั้งคู่บนหน้าเดียว) ยังใช้ใน harness"
     }
+  },
+  "userflowBeside": {
+    "id": "R26",
+    "title": "ผัง userflow ข้างจอ — 1 บล็อก scenario = ผังซ้ายสุด + ป้าย Device + คอลัมน์จอ (22 ต.ค. 2569 · ปลั๊กอินบำรุงรักษา)",
+    "flowName": "<prefix> · <ตัวอักษร> userflow S<เลข scenario>",
+    "gapToDevice": 200,
+    "topAlignsWithBar": true,
+    "badge": {
+      "fill": "#9CACCC",
+      "text": "รหัสจอ เช่น B.2 · B.3 — ต้องเป็นจอที่มีจริงในบล็อกเดียวกัน"
+    },
+    "unmappedScreens": "เขียนตัวแดงใต้ผัง ห้ามเติมกล่องในผังเอง",
+    "source": "Diagram/<เรื่อง>/NN-<เรื่อง>-userflow.md ผ่าน plugin-lib/userflow-layout.js (ฝังตอน build-plugin.js · <ปลั๊กอิน>/build.json)",
+    "targetPage": "บำรุงรักษา = หน้า \"Maintainance\" ต่อใต้ของเดิม ไม่ลบ/ไม่ย้ายของที่มีอยู่",
+    "checkedBy": "test-overhaul2-plugin.js เมื่อ FLOW=1 (test-maintainance-plugin.js ตั้งให้)",
+    "note": "เจ้าของงานสั่ง 22 ต.ค. 2569 \"อยากให้ userflow กับ wireframe เรียงต่อกัน … อยู่ข้างๆกัน ตอนที่ export ออกมา\" + \"จะเอาลงในเพจ Maintainance ด้วยกันเลย\""
   },
   "forbid": [
     {

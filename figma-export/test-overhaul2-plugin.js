@@ -169,7 +169,7 @@ const figma = {
   root: Object.assign(root, { children: root.children }),
   currentPage: Object.assign(root.children[0], { selection: [] }),
   showUI() {},
-  ui: { postMessage: (m) => logs.push(m.text), set onmessage(f) { uiHandler = f; } },
+  ui: { postMessage: (m) => { if (m.type === 'log') logs.push(m.text); }, set onmessage(f) { uiHandler = f; } },   // ข้อความชนิดอื่น (รายการ scenario ให้หน้าต่างติ๊ก) ไม่ใช่ log
   async loadAllPagesAsync() {},
   async loadFontAsync() {},
   async setCurrentPageAsync(p) { figma.currentPage = p; },
@@ -177,6 +177,13 @@ const figma = {
   createText() { const t = new Node({ type: 'TEXT', name: 'Text' }); t.fontName = { family: 'Inter', style: 'Regular' }; return t; },   // ป้ายรหัส flow แบบสำรอง (20 ต.ค. 2569)
   insertChildStub: null,
   createSection() { return new Node({ type: 'SECTION', name: 'Section' }); },
+  // ผัง userflow ข้างจอ (22 ต.ค. 2569 · ปลั๊กอินบำรุงรักษา): รูปทรง + เส้นหักมุม
+  createEllipse() { return new Node({ type: 'ELLIPSE', name: 'Ellipse' }); },
+  createRectangle() { return new Node({ type: 'RECTANGLE', name: 'Rectangle' }); },
+  createPolygon() { return new Node({ type: 'POLYGON', name: 'Polygon' }); },
+  createVector() { const v = new Node({ type: 'VECTOR', name: 'Vector' });
+    v.setVectorNetworkAsync = async (net) => { if (!net || !Array.isArray(net.vertices) || !Array.isArray(net.segments)) throw new Error('vectorNetwork ผิดรูป');
+      net.segments.forEach(g => { if (!net.vertices[g.start] || !net.vertices[g.end]) throw new Error('segment ชี้ vertex ที่ไม่มี'); }); v.vectorNetwork = net; }; return v; },
   createPage() { const p = new Node({ type: 'PAGE', name: 'Page' }, root); root.children.push(p); pages.push(p); return p; },
   viewport: { scrollAndZoomIntoView() {} },
 };
@@ -230,6 +237,12 @@ if (process.env.REF_STEPPER) {
   const hs = SETS.get('Horizontal step item');
   for (let i = 0; i < 7; i++) { const it = makeInstance(hs.children[0]); it.parent = fr; fr.children.push(it); }
 }
+/* EXISTING=1 (22 ต.ค. 2569): ไฟล์มีหน้า "🔧 Maintainance" ที่เจ้าของงานวางของไว้แล้ว ⇒ ปลั๊กอินต้องวางบนหน้านั้น ต่อใต้ของเดิม ไม่แตะของเดิม */
+if (process.env.EXISTING) {
+  const pg = new Node({ type: 'PAGE', name: '🔧 Maintainance ' }, root); root.children.push(pg);
+  const old = new Node({ type: 'FRAME', name: 'ของเดิมที่แก้มือ', w: 1440, h: 900 }, pg); old.y = 120; pg.children.push(old);
+  global.__existing = { page: pg, node: old, x: old.x, y: old.y };
+}
 const MODE_CHECK = process.env.MODE === 'check';
 (async () => {
   await uiHandler({ type: process.env.MODE === 'patch' ? 'build' : (process.env.MODE || 'build'), here: process.env.HERE === '1', pick: (process.env.PICK || '').split(',').filter(Boolean), devices: process.env.DEVICES || 'both' });   // PICK=7,13 DEVICES=desktop สำหรับ MODE=build-pick   // HERE=1 = ติ๊ก "วางต่อท้ายหน้าที่เปิดอยู่"
@@ -252,7 +265,7 @@ const MODE_CHECK = process.env.MODE === 'check';
   }
   logs.forEach(l => console.log(l));
   const printed = logs.length;   // คำเตือนที่ตัวตรวจเพิ่มหลังจากนี้ พิมพ์ท้ายผล
-  const page = pages[0] || figma.currentPage;
+  const page = process.env.EXISTING ? figma.currentPage : (pages[0] || figma.currentPage);   // EXISTING=1: ปลั๊กอินต้องหาหน้าที่มีอยู่แล้วเอง (ไม่สร้างหน้าใหม่)
   const PREFIX = (process.env.PREFIX || 'OH2') + ' / ';   // ปลั๊กอินอื่นตั้ง PREFIX= (เช่น MT) · FIRST= ชื่อจอแรกของ userflow (20 ต.ค. 2569)
   let screens = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(PREFIX) === 0 && n.name.indexOf(' · ตัดแล้ว') < 0);   // จอที่ CF ตัดแล้ว (ติดป้ายไว้ ไม่ลบ) ไม่ตรวจ
   if (process.env.CHECK_ONLY) screens = screens.filter(n => new RegExp(process.env.CHECK_ONLY).test(n.name));   // ตรวจเฉพาะจอที่อัปเดต (จอเก่าที่ไม่ได้เลือกอาจยังเป็นแบบก่อน CF)
@@ -343,6 +356,45 @@ const MODE_CHECK = process.env.MODE === 'check';
     if (!/^TOAST \/ /.test(screens[0].name) && screens.some(n => Math.round(n.width) !== (mobs.length ? 402 : 1440))) logs.push('⚠ R19 ชุด ' + kind + ' มีจอกว้างผิดอุปกรณ์');   // เฟรม toast (R20) ไม่ใช่ขนาดจอ
   }
   console.log('R19 จัดวางแบบตาราง flow: ป้าย ' + labels.length + (split ? ' · ชุดอุปกรณ์เดียว (' + (mobs.length ? 'mobile ' + mobs.length : 'desktop ' + desks.length) + ' จอ)' : ' · คู่ desktop/mobile ' + pairs) + (logs.some(l => /R19/.test(l)) ? '' : ' ✓'));
+  if (global.__existing) {   // หน้าเดิมต้องเป็นหน้าปลายทาง · ของเดิมอยู่ที่เดิม · ของใหม่อยู่ใต้ของเดิมทั้งหมด
+    const ex = global.__existing;
+    if (page !== ex.page) logs.push('⚠ ไม่ได้วางบนหน้าที่มีอยู่แล้ว (' + ex.page.name.trim() + ') — วางบน ' + page.name);
+    if (ex.node.parent !== ex.page || ex.node.x !== ex.x || ex.node.y !== ex.y) logs.push('⚠ ของเดิมบนหน้าถูกแตะ');
+    const bottom = ex.y + ex.node.height, above = page.children.filter(n => n !== ex.node && n.y < bottom);
+    if (above.length) logs.push('⚠ ของใหม่ทับของเดิม ' + above.length + ' ชิ้น: ' + above[0].name);
+    if (pages.length) logs.push('⚠ สร้างหน้าใหม่ทั้งที่มีหน้า Maintainance อยู่แล้ว');
+    console.log('วางต่อใต้ของเดิมบนหน้า "' + ex.page.name.trim() + '"' + (logs.slice(printed).some(l => /ของเดิม|หน้าที่มีอยู่|หน้าใหม่ทั้งที่/.test(l)) ? '' : ' ✓'));
+  }
+  if (process.env.FLOW) {   // ผัง userflow ข้างจอ (22 ต.ค. 2569): ทุกบล็อก scenario มีผังซ้ายสุด · ป้ายรหัสจอชี้จอที่มีจริง · บล็อกไม่ทับกัน
+    const P = process.env.PREFIX || 'OH2';
+    const bars = page.children.filter(n => new RegExp('^' + P + ' · [A-Z] S\\d+ ').test(n.name)).sort((a, b) => a.y - b.y);
+    const flowsOn = page.children.filter(n => new RegExp('^' + P + ' · [A-Z] userflow S\\d+$').test(n.name));
+    const names = new Set(screens.map(n => n.name.split(' · ')[0].replace(P + ' / ', '')));
+    let badges = 0, shapes = 0, vecs = 0;
+    for (const bar of bars) {
+      const code = bar.name.split(' · ')[1].split(' ')[0];
+      const f = flowsOn.find(n => n.name.indexOf(P + ' · ' + code + ' userflow') === 0);
+      if (!f) { logs.push('⚠ ผัง userflow ไม่มีในบล็อก ' + bar.name); continue; }
+      if (f.y !== bar.y) logs.push('⚠ ผัง userflow ไม่ได้เริ่มที่หัวบล็อก ' + code);
+      if (f.x + f.width > 0) logs.push('⚠ ผัง userflow ทับป้าย Device/จอ ' + code);
+      const ss = f.children.filter(n => ['ELLIPSE', 'RECTANGLE', 'POLYGON'].includes(n.type)), vs = f.children.filter(n => n.type === 'VECTOR');
+      shapes += ss.length; vecs += vs.length;
+      if (!ss.length || !vs.length) logs.push('⚠ ผัง userflow ' + code + ' ไม่มีกล่องหรือเส้น');
+      if (vs.some(v => !v.vectorNetwork || !v.vectorNetwork.vertices.length || v.vectorNetwork.vertices[v.vectorNetwork.vertices.length - 1].strokeCap !== 'ARROW_LINES')) logs.push('⚠ เส้นในผัง ' + code + ' ไม่มีหัวลูกศร');
+      if (ss.some(n => n.x < 0 || n.y < 0 || n.x + n.width > f.width || n.y + n.height > f.height)) logs.push('⚠ กล่องในผัง ' + code + ' ล้นกรอบ');
+      for (const b of f.children.filter(n => n.name.indexOf('ป้ายจอ ') === 0)) for (const c of b.name.slice(7).split(' ')) {
+        badges++;
+        if (c.split('.')[0] !== code) logs.push('⚠ ป้ายจอ ' + c + ' อยู่ผิดบล็อก ' + code);
+        else if (!names.has(c)) logs.push('⚠ ป้ายจอ ' + c + ' ไม่มีจอจริง');
+      }
+    }
+    for (let i = 1; i < bars.length; i++) {   // บล็อกถัดไปต้องเริ่มใต้ผังและแถวจอของบล็อกก่อน
+      const prevCode = bars[i - 1].name.split(' · ')[1].split(' ')[0], f = flowsOn.find(n => n.name.indexOf(P + ' · ' + prevCode + ' userflow') === 0);
+      if (f && bars[i].y < f.y + f.height) logs.push('⚠ บล็อก ' + bars[i].name.split(' · ')[1].split(' ')[0] + ' ทับผังของบล็อก ' + prevCode);
+    }
+    if (flowsOn.length !== bars.length) logs.push('⚠ ผัง userflow ' + flowsOn.length + ' ผัง แต่มี ' + bars.length + ' บล็อก');
+    console.log('ผัง userflow ข้างจอ: ' + flowsOn.length + '/' + bars.length + ' บล็อก · กล่อง ' + shapes + ' · เส้น ' + vecs + ' · ป้ายรหัสจอ ' + badges + (logs.slice(printed).some(l => /ผัง|ป้ายจอ|บล็อก/.test(l)) ? '' : ' ✓'));
+  }
   if (process.env.DUMP_TEXT) {   // DUMP_TEXT=regex ชื่อจอ → พิมพ์ข้อความทุกชั้น (รวมที่ซ่อน) ตามลำดับ layer — ใช้เทียบกับข้อความที่ก๊อปจาก Figma (21 ต.ค. 2569)
     const re = new RegExp(process.env.DUMP_TEXT);
     for (const sc of page.children.filter(n => n.type === 'FRAME' && re.test(n.name))) {

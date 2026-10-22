@@ -50,19 +50,22 @@ const MAX_LINE = 15;       // ตัวอักษรต่อบรรทั�
 const MAX_LINES = 5;
 
 /* ---- อ่าน .md: scenario + บล็อก mermaid ---- */
-const md = fs.readFileSync(SRC, 'utf8');
-const RE_H = /^### Scenario (\d+) · (.+)$/gm;
-const scenarios = [];
-let hm;
-while ((hm = RE_H.exec(md))) {
-  const start = hm.index + hm[0].length;
-  const nextH = md.slice(start).search(/^### Scenario \d+ · /m);
-  const body = md.slice(start, nextH === -1 ? undefined : start + nextH);
-  const code = body.match(/```mermaid\n([\s\S]*?)```/);
-  if (!code) { console.error('Scenario ' + hm[1] + ' ไม่มีบล็อก mermaid'); process.exit(1); }
-  scenarios.push({ n: Number(hm[1]), title: hm[2].trim(), code: code[1] });
+function readScenarios(src) {
+  const md = fs.readFileSync(src, 'utf8');
+  const RE_H = /^### Scenario (\d+) · (.+)$/gm;
+  const out = [];
+  let hm;
+  while ((hm = RE_H.exec(md))) {
+    const start = hm.index + hm[0].length;
+    const nextH = md.slice(start).search(/^### Scenario \d+ · /m);
+    const body = md.slice(start, nextH === -1 ? undefined : start + nextH);
+    const code = body.match(/```mermaid\n([\s\S]*?)```/);
+    if (!code) { console.error('Scenario ' + hm[1] + ' ไม่มีบล็อก mermaid'); process.exit(1); }
+    out.push({ n: Number(hm[1]), title: hm[2].trim(), code: code[1] });
+  }
+  if (!out.length) { console.error('ไม่พบหัวข้อ "### Scenario N · …" ใน ' + src); process.exit(1); }
+  return out;
 }
-if (!scenarios.length) { console.error('ไม่พบหัวข้อ "### Scenario N · …" ใน ' + SRC); process.exit(1); }
 
 /* ---- parse ซอร์ส mermaid แบบจำกัดรูป (เราเป็นคนเขียนซอร์สเอง จึงคุมรูปได้) ---- */
 const NODE_RE = /^(\w+)(\(\[(?:"[^"]*"|[^\]]*)\]\)|\(\((?:"[^"]*"|[^)]*)\)\)|\{(?:"[^"]*"|[^}]*)\}|\[(?:"[^"]*"|[^\]]*)\]|\((?:"[^"]*"|[^)]*)\))?/;
@@ -120,7 +123,8 @@ function parseFlow(code) {
 
 /* ---- จัดวาง: คอลัมน์ = longest path · แถว = เส้นหลักก่อน ทางแยกลงล่าง ---- */
 const isNo = (label) => /^(N|No|ไม่)/i.test(label || '');
-function layout(flow) {
+/* rank = ระยะไกลสุดจาก start (ไม่นับเส้นย้อนกลับ) · row = เส้นหลักแถว 0 ทางแยก N ลงแถวถัดไป · back = เส้นย้อนกลับ — ใช้ทั้งบอร์ด FigJam (แนวนอน) และผังข้างจอในปลั๊กอิน Figma (แนวตั้ง · plugin-lib/userflow-layout.js) */
+function rankRows(flow) {
   const { nodes, edges } = flow;
   const ids = nodes.map(n => n.id);
   const out = {}; ids.forEach(id => { out[id] = []; });
@@ -150,6 +154,12 @@ function layout(flow) {
   };
   place(ids[0], 0); walk(ids[0]);
   ids.forEach(id => { if (row[id] === undefined) { place(id, 0); walk(id); } });
+  return { rank, row, back };
+}
+function layout(flow) {
+  const { nodes, edges } = flow;
+  const ids = nodes.map(n => n.id);
+  const { rank, row, back } = rankRows(flow);
 
   const maxRank = Math.max(...ids.map(id => rank[id]));
   const maxRow = Math.max(...ids.map(id => row[id]));
@@ -205,7 +215,7 @@ function labelWarnings(sc, nodes) {
 }
 
 /* ---- section คำอธิบายสัญลักษณ์ (หัวบอร์ด) ---- */
-function legend() {
+function legend(count) {
   const items = [
     ['L1', 'end', 'start /\nEnd'],
     ['L2', 'action', 'Action\nสิ่งที่ผู้ใช้ทำ'],
@@ -218,13 +228,15 @@ function legend() {
   });
   const stickies = [{
     x: X0 + 4 * COLW, y: Y0 - 20, color: YELLOW,
-    text: TITLE + ' — userflow ' + scenarios.length + ' scenario (ร่าง 19 ต.ค. 2569)\nsection ละ scenario เรียงตามลำดับงาน · อ่านซ้าย → ขวา\nป้าย Y/N บนเส้น · เส้นที่วนใต้แถว = ย้อนกลับไปแก้\n❓ ในกล่อง / sticky เหลือง = ยังไม่รู้ ต้องถาม\nเนื้อหาคู่กัน: ' + path.relative(path.join(__dirname, '..'), SRC)
+    text: TITLE + ' — userflow ' + count + ' scenario (ร่าง 19 ต.ค. 2569)\nsection ละ scenario เรียงตามลำดับงาน · อ่านซ้าย → ขวา\nป้าย Y/N บนเส้น · เส้นที่วนใต้แถว = ย้อนกลับไปแก้\n❓ ในกล่อง / sticky เหลือง = ยังไม่รู้ ต้องถาม\nเนื้อหาคู่กัน: ' + path.relative(path.join(__dirname, '..'), SRC)
   }];
   return { name: TITLE + ' · userflow — สัญลักษณ์และวิธีอ่าน', diagram: { w: X0 + 4 * COLW + 420, h: Y0 + CELL + 120, font: FONT, phases: [], clusters: [], nodes, edges: [], stickies } };
 }
 
 /* ---- ประกอบ ---- */
-const sections = [legend()];
+function main() {
+const scenarios = readScenarios(SRC);
+const sections = [legend(scenarios.length)];
 const warnings = [];
 let totals = { nodes: 0, edges: 0, stickies: 0 };
 for (const sc of scenarios) {
@@ -251,3 +263,7 @@ fs.writeFileSync(OUT, JSON.stringify({ title: TITLE, src: path.relative(path.joi
 console.log('รวม ' + scenarios.length + ' scenario + สัญลักษณ์ 1 section · node ' + totals.nodes + ' · เส้น ' + totals.edges + ' · sticky ' + totals.stickies);
 if (warnings.length) { console.log('⚠ เตือน ' + warnings.length + ' ข้อ:'); warnings.forEach(w => console.log('   ' + w)); }
 console.log('เขียน ' + path.relative(process.cwd(), OUT));
+}
+
+module.exports = { readScenarios, parseFlow, rankRows, layout, isNo, ST, MAX_LINE, MAX_LINES };
+if (require.main === module) main();

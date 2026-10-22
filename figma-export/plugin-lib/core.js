@@ -6,6 +6,7 @@
    (Figma โหลด code.js ไฟล์เดียว ไม่มี require) · ปลั๊กอิน Overhaul ยังใช้สำเนาของตัวเองอยู่ จะย้ายมาใช้ไฟล์นี้หลัง commit รอบรีวิว 19 ต.ค.
 
    screens.js ของแต่ละปลั๊กอินต้องประกาศ: PLUGIN { prefix, page, menu, searchHint } · DIRECT · NESTED · LOCAL_OPTIONAL · NEEDED · NESTED_ONLY · SCENARIOS · build()
+   ผัง userflow ข้างจอ (22 ต.ค. 2569): build-plugin.js ฝัง const USERFLOW จาก <ปลั๊กอิน>/build.json → buildGrid() วางผังซ้ายของแต่ละบล็อก scenario (userflowFrame)
    กติกาที่โค้ดนี้ทำให้ (component-rules.md): R1 Header Tablet · R2/R13 ไม่มี divider · R4 ปิด Info icon · R6–R7 ช่องกรอก · R8–R9 Table ทั้งก้อน (เกินขนาดค่อยประกอบ) ·
    R12 กล่องแสดงข้อมูล · R14 เฟรม 1440×1024 / 402×874 · ปุ่มท้ายซ้าย–ขวา · อัปโหลด 1 คอลัมน์ · mobile = การ์ด Mobile table / bottom sheet
    ============================================================================ */
@@ -865,13 +866,37 @@ async function flowBar(prefix, code, title, state, width) {
   bar.name = prefix + ' · ' + code + ' ' + title;
   return bar;
 }
+/* ป้ายข้างจอ (Device · Desktop · Mobile) — เจ้าของงานสั่ง 20 ต.ค. 2569: อ่านจาก component set "Device Type" ของทีมออกแบบ (property Type · กว้าง 300 · พื้น #667085)
+   ชื่อ variant จับแบบไม่สนตัวพิมพ์ตาม DEVICE_ALIAS · ไม่พบ set หรือไม่มี variant นั้น → ถอยไป "Component 1" (ชุดเก่า) → กรอบธรรมดา
+   (ยกจาก overhaul2-plugin 22 ต.ค. 2569 — ปลั๊กอินบำรุงรักษาใช้ป้ายชุดเดียวกับ Overhaul) */
+const DEVICE_ALIAS = { Header: ['device', 'header', 'label'], Desktop: ['desktop'], Mobile: ['mobile'], Tablet: ['tablet'] };
+function deviceVariant(kind) {   // → { key, value } ของ variant ใน Device Type ที่ตรง kind · null = ไม่มี
+  const set = INDEX.get('Device Type'); if (!set || set.type !== 'COMPONENT_SET') return null;
+  const want = DEVICE_ALIAS[kind] || [String(kind).toLowerCase()];
+  for (const c of set.children) {
+    if (c.type !== 'COMPONENT') continue;
+    const vp = c.variantProperties || {};
+    for (const k of Object.keys(vp)) if (want.indexOf(String(vp[k]).trim().toLowerCase()) >= 0) return { key: k, value: vp[k] };
+  }
+  return null;
+}
+function deviceSetInfo() {   // ข้อความรายงานในหน้าต่างปลั๊กอิน (ปุ่มเช็ค + ตอนสร้าง)
+  const set = INDEX.get('Device Type');
+  if (!set) return 'ป้ายข้างจอ: ไม่พบ component "Device Type" ในไฟล์ — ' + (INDEX.has('Component 1') ? 'ใช้ "Component 1" (ชุดเก่า) แทน' : 'วาดป้ายธรรมดาแทน');
+  const vals = set.type === 'COMPONENT_SET' ? set.children.filter(c => c.type === 'COMPONENT').map(c => Object.keys(c.variantProperties || {}).map(k => k + '=' + c.variantProperties[k]).join(',')).join(' · ') : '(component เดี่ยว ไม่มี variant)';
+  const miss = ['Header', 'Desktop', 'Mobile'].filter(k => !deviceVariant(k));
+  return 'ป้ายข้างจอ: component "Device Type" [' + vals + ']' + (miss.length ? ' ⚠ ไม่มี variant สำหรับ ' + miss.join(', ') + ' — ป้ายนั้นถอยไป Component 1/กรอบธรรมดา' : ' ✓ ใช้ Device/Desktop/Mobile ครบ');
+}
 async function deviceLabel(prefix, type, height) {
-  let n;
-  if (INDEX.has('Component 1')) { n = inst('Component 1', { Type: type }); try { n.resize(GRID.side, height); } catch (e) { warn('ปรับสูงป้าย ' + type, e); } }
+  let n; const dv = deviceVariant(type);
+  if (dv) { n = inst('Device Type', { [dv.key]: dv.value }); try { n.resize(GRID.side, height); } catch (e) { warn('ปรับสูงป้าย ' + type, e); } }
+  else if (INDEX.has('Component 1')) { n = inst('Component 1', { Type: type }); try { n.resize(GRID.side, height); } catch (e) { warn('ปรับสูงป้าย ' + type, e); } }
   else { n = fixed(frame('Device', 'VERTICAL', { fill: rgbOf('#667085') }), GRID.side, height); n.primaryAxisAlignItems = 'CENTER'; n.counterAxisAlignItems = 'CENTER'; n.appendChild(await labelText(type === 'Header' ? 'Device' : type, 48, '#FFFFFF')); }
   n.name = prefix + ' · ' + (type === 'Header' ? 'Device' : type);
   return n;
 }
+/* ตัวเลือกอุปกรณ์จากหน้าต่างปลั๊กอิน: 'desktop' → [false] · 'mobile' → [true] · อื่น ('both') → [false, true] (แถว mobile ใต้ desktop) */
+const devOf = (o) => (o && o.devices === 'mobile') ? [true] : (o && o.devices === 'desktop') ? [false] : [false, true];
 
 /* หน้าปลายทาง = หน้าใหม่ทุกครั้ง ไม่แตะชุดเดิม (เจ้าของงานสั่ง 20 ต.ค. 2569 "สร้างใหม่เลย ไม่รบกวนของเดิม"):
    ใช้หน้า <base>-N ที่ยังว่าง (ไม่มีเฟรม/ป้ายของปลั๊กอิน) · ไม่มีก็สร้าง <base>-(N+1) · สร้างหน้าไม่ได้ (แพลนจำกัด) → หน้าปัจจุบัน วางต่อใต้ของเดิม ไม่ลบอะไร */
@@ -886,37 +911,157 @@ async function targetPage(base, prefix) {
   try { const p = figma.createPage(); p.name = base + '-' + next; return { page: p, fresh: true }; }
   catch (e) { return { page: figma.currentPage, fresh: false }; }
 }
+/* หน้าปลายทางตามชื่อ (เจ้าของงานสั่ง 22 ต.ค. 2569 "จะเอาลงในเพจ Maintainance ด้วยกันเลย"): หาหน้าที่ชื่อตรง (ไม่สนตัวพิมพ์ · มีอีโมจิ/ช่องว่างนำหน้าได้ · ไม่นับ <ชื่อ>-N)
+   ไม่มี → สร้างหน้าชื่อนั้น · สร้างไม่ได้ → หน้าปัจจุบัน · ทุกกรณีวางต่อใต้ของเดิม ไม่ลบ/ไม่ย้ายของที่มีอยู่ */
+async function namedPage(names) {
+  const want = names.map(n => n.toLowerCase());
+  const norm = (p) => p.name.trim().toLowerCase().replace(/^[^a-z0-9ก-๙]+/, '').replace(/[^a-z0-9ก-๙]+$/, '');
+  const hit = figma.root.children.find(p => want.indexOf(norm(p)) >= 0);
+  if (hit) return { page: hit, fresh: false, found: true };
+  try { const p = figma.createPage(); p.name = names[0]; return { page: p, fresh: true, found: false }; }
+  catch (e) { return { page: figma.currentPage, fresh: false, found: false, fallback: true }; }
+}
 
-/* GROUPS = [{ code: 'B', title: 'แผน Overhaul', subs: [{ code: 'B1', title: 'กบค. สร้างแผน', tag: 'S1', screens: [[label, fn], …] }] }]
-   fn() สร้างจอตามตัวแปร MOB · จอชื่อ "<prefix> / B1.2 · S1 — <label>[ · mobile]" · คืน { made, y } */
+/* ---------- ผัง userflow ข้างจอ (เจ้าของงานสั่ง 22 ต.ค. 2569: "userflow กับ wireframe เรียงต่อกัน … อยู่ข้างๆกัน ตอนที่ export") ----------
+   ข้อมูลผังฝังตอน build (const USERFLOW · plugin-lib/userflow-layout.js อ่านไฟล์ userflow .md) — ปลั๊กอินแค่วาดตามตำแหน่ง
+   1 บล็อก scenario = ผังซ้ายสุด (อ่านบน → ล่าง) + ป้าย Device + คอลัมน์จอ A.1 A.2 … · กล่องในผังที่มีจอติดป้ายรหัสจอ (A.2 · A.3)
+   รูปทรง/สีชุดเดียวกับบอร์ด FigJam: วงกลมขาว start/End · วงกลมฟ้า Action · สี่เหลี่ยมเขียว Display · ข้าวหลามตัดม่วง Decision · sticky เหลือง = คำถามที่ยังค้าง
+   ผังเป็นของวาดประกอบ (shape + vector) อยู่นอกเฟรมจอ เหมือนป้าย Header — ไม่กระทบกติกา "ทุกชิ้นในจอเป็น instance" · Figma design ไม่มี connector ⇒ ลากกล่องแล้วเส้นไม่ตาม */
+const FLOW_GAP = 200;          // ช่องระหว่างผังกับป้าย Device
+const STICKY_FILL = '#FFE299', BADGE_FILL = '#9CACCC', FLOW_LINE = '#EAECF0';
+const scenNo = (tag) => { const m = String(tag || '').match(/^S(\d+)$/); return m ? +m[1] : null; };
+function flowNode(kind) {
+  let n;
+  if (kind === 'decision') { n = figma.createPolygon(); n.pointCount = 4; }
+  else if (kind === 'display') { n = figma.createRectangle(); n.cornerRadius = 8; }
+  else n = figma.createEllipse();
+  CREATED.push(n);
+  return n;
+}
+async function flowText(chars, size, hex, w, h) {
+  const t = await labelText(chars, size, hex);
+  t.textAlignHorizontal = 'CENTER'; t.textAlignVertical = 'CENTER';
+  if (w) { t.textAutoResize = 'NONE'; t.resize(w, h); }
+  return t;
+}
+async function arrow(pts, hex, weight) {   // เส้นหักมุมตามจุด + หัวลูกศรที่ปลาย · พิกัดเทียบมุมซ้ายบนของเส้นเอง แล้วค่อยวาง x/y
+  const minX = Math.min(...pts.map(p => p[0])), minY = Math.min(...pts.map(p => p[1]));
+  const v = figma.createVector(); CREATED.push(v);
+  const net = {
+    vertices: pts.map(([x, y], i) => Object.assign({ x: x - minX, y: y - minY }, i === pts.length - 1 ? { strokeCap: 'ARROW_LINES' } : {})),
+    segments: pts.slice(1).map((_, i) => ({ start: i, end: i + 1 }))
+  };
+  if (typeof v.setVectorNetworkAsync === 'function') await v.setVectorNetworkAsync(net); else v.vectorNetwork = net;
+  v.strokes = [{ type: 'SOLID', color: rgbOf(hex) }]; v.strokeWeight = weight || 3; v.strokeJoin = 'ROUND';
+  v.fills = [];
+  return v;
+}
+/* codes: { nodeId: ['A.2', …] } · loose: ['A.5 ยืนยันการออก', …] = จอที่ยังไม่มีกล่องในผัง */
+async function userflowFrame(prefix, code, n, codes, loose) {
+  const sc = USERFLOW && USERFLOW.scenarios && USERFLOW.scenarios[n];
+  if (!sc) return null;
+  const f = figma.createFrame(); CREATED.push(f);
+  f.name = prefix + ' · ' + code + ' userflow S' + n;
+  f.fills = [{ type: 'SOLID', color: WHITE }]; f.strokes = [{ type: 'SOLID', color: rgbOf(FLOW_LINE) }]; f.strokeWeight = 2; f.cornerRadius = 16;
+  f.clipsContent = false;
+  f.resize(sc.w, sc.h);
+  const put = (node, x, y) => { f.appendChild(node); node.x = x; node.y = y; return node; };
+  put(await labelText('userflow · S' + n + ' ' + sc.title, 32, '#101828'), 40, 36);
+  put(await labelText('อ่านบน → ล่าง · ทางแยก N ไปขวา · เส้นที่วนข้างผัง = ย้อนกลับ · ป้ายเทา = รหัสจอทางขวา', 16, '#475467'), 40, 84);
+  const pos = {};
+  for (const e of sc.edges) {   // เส้นก่อน กล่องทับเส้น
+    const from = sc.nodes.find(x => x.id === e.from);
+    const hex = '#' + [from.stroke.r, from.stroke.g, from.stroke.b].map(c => Math.round(c * 255).toString(16).padStart(2, '0')).join('');
+    const v = await arrow(e.pts, hex, 3);
+    put(v, Math.min(...e.pts.map(p => p[0])), Math.min(...e.pts.map(p => p[1])));   // ตั้ง x/y หลังย้ายเข้ากรอบ (พิกัดในกรอบผัง)
+    v.name = 'เส้น ' + e.from + ' → ' + e.to + (e.back ? ' (ย้อนกลับ)' : '');
+    if (e.label) {
+      const [a, b] = [e.pts[0], e.pts[1]], down = a[0] === b[0];
+      const t = put(await labelText(e.label, 18, '#101828'), a[0] + (down ? 10 : 12), a[1] + (down ? 4 : -28)); t.name = 'ป้าย ' + e.label;
+    }
+  }
+  for (const nd of sc.nodes) {
+    const s = flowNode(nd.kind); f.appendChild(s);
+    s.resize(nd.w, nd.h); s.x = nd.x; s.y = nd.y;
+    s.fills = [{ type: 'SOLID', color: nd.fill }]; s.strokes = [{ type: 'SOLID', color: nd.stroke }]; s.strokeWeight = 4;
+    s.name = nd.id + ' / ' + (nd.label.split('\n')[0] || nd.kind);
+    const iw = nd.kind === 'decision' ? nd.w * 0.62 : nd.w * 0.86, ih = nd.kind === 'decision' ? nd.h * 0.62 : nd.h * 0.8;
+    const t = put(await flowText(nd.label, nd.kind === 'end' ? 16 : 15, '#101828', iw, ih), nd.x + (nd.w - iw) / 2, nd.y + (nd.h - ih) / 2);
+    t.name = nd.id + ' ข้อความ';
+    pos[nd.id] = nd;
+  }
+  for (const id of Object.keys(codes)) {   // ป้ายรหัสจอ มุมขวาบนของกล่อง
+    const nd = pos[id]; if (!nd) { warn('ผัง S' + n, new Error('จอผูกกับกล่อง ' + id + ' ที่ไม่มีในผัง userflow')); continue; }
+    const b = frame('ป้ายจอ ' + codes[id].join(' '), 'HORIZONTAL', { fill: rgbOf(BADGE_FILL), pad: [4, 10] }); b.cornerRadius = 6;
+    b.primaryAxisSizingMode = 'AUTO'; b.counterAxisSizingMode = 'AUTO';
+    b.appendChild(await labelText(codes[id].join(' · '), 16, '#101828'));
+    put(b, nd.x + nd.w - 24, nd.y - 16);
+  }
+  let low = 0;   // sticky: ซ้อนลงถ้าชนกัน
+  for (const st of sc.stickies) {
+    const box = frame('คำถาม ' + st.node, 'VERTICAL', { fill: rgbOf(STICKY_FILL), pad: [16, 16] }); box.cornerRadius = 4;
+    box.counterAxisSizingMode = 'FIXED'; box.primaryAxisSizingMode = 'AUTO'; box.resize(st.w, 100);
+    const t = await labelText(st.text, 15, '#101828'); box.appendChild(t); t.layoutSizingHorizontal = 'FILL'; t.textAutoResize = 'HEIGHT';
+    const y = Math.max(st.y, low);
+    put(box, st.x, y); low = y + box.height + sc.gap;
+  }
+  let h = Math.max(sc.h, low + 40);
+  if (loose && loose.length) {   // จอที่ผังยังไม่มีกล่องรองรับ — แจ้งให้เติม userflow (ไม่เดาเติมเอง)
+    const t = put(await labelText('จอที่ยังไม่มีกล่องในผัง userflow: ' + loose.join(' · '), 16, '#B42318'), 40, h); t.name = 'จอที่ยังไม่มีกล่องในผัง';
+    t.textAutoResize = 'HEIGHT'; t.resize(sc.w - 80, t.height || 24); h += (t.height || 24) + 40;
+  }
+  f.resize(sc.w, h);
+  return f;
+}
+
+/* GROUPS = [{ code: 'A', title: '…', subs: [{ code: 'A', title: '…', tag: 'S1', screens: [[label, fn, 'D1 D2'?], …] }] }]
+   screens[i][2] = id กล่องในผัง userflow ที่จอนี้แสดง (คั่นด้วยช่องว่าง · ไม่ใส่ = ผังยังไม่มีกล่องของจอนี้)
+   fn() สร้างจอตามตัวแปร MOB · จอชื่อ "<prefix> / A.2 · S1 — <label>[ · mobile]" · คืน { made, y, flows }
+   opts.devices = [false] desktop · [true] mobile · ไม่ส่ง = ทั้งคู่ · opts.rowMin = ความสูงแถวขั้นต่ำ · opts.flow = false ไม่วางผัง userflow */
 async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
-  opts = opts || {};   // opts.reuse(sub, i, label, mob) → เฟรมเดิมที่จะย้ายเข้าผังแทนการสร้างใหม่ (ปุ่ม "จัดวางใหม่" · ที่แก้มือไว้ไม่หาย)
-  const made = []; let y = y0; const x0 = GRID.side + GRID.gap; const pitch = GRID.colW + GRID.colGap; const skipped = [];
+  opts = opts || {};
+  const made = []; let y = y0; const x0 = GRID.side + GRID.gap; const pitch = GRID.colW + GRID.colGap; let flows = 0;
   const put = (n, x, yy) => { page.insertChild(0, n); n.x = x; n.y = yy; return n; };
   for (const g of GROUPS) {
     const nCols = Math.max(...g.subs.map(s => s.screens.length));
+    const top = y;
     CREATED = []; put(await flowBar(prefix, g.code, g.title, 'Default', nCols * GRID.colW + (nCols - 1) * GRID.colGap), x0, y);
     y += GRID.barH + GRID.gap;
+    let flowBottom = top;
     for (const sub of g.subs) {
       const n = sub.screens.length, w = n * GRID.colW + (n - 1) * GRID.colGap;
       if (sub.code !== g.code) {   // แถบย่อย (B1 B2) เฉพาะเมื่อกลุ่มมีหลาย scenario · เจ้าของงานเคาะ 20 ต.ค. 2569: 1 scenario = 1 บล็อก ⇒ ไม่มีแถบย่อย ป้าย state = A.1 A.2 …
         put(await flowBar(prefix, sub.code, sub.title, 'Sub Flow', w), x0, y);
         y += GRID.barH + GRID.gap;
       }
+      const sn = scenNo(sub.tag);
+      if (opts.flow !== false && USERFLOW && sn != null && USERFLOW.scenarios[sn]) {   // ผัง userflow ซ้ายของบล็อก (ขอบขวาห่างป้าย Device FLOW_GAP)
+        const codes = {}, loose = [];
+        sub.screens.forEach(([label, , ids], i) => {
+          const c = sub.code + '.' + (i + 1);
+          const list = String(ids || '').split(/\s+/).filter(Boolean);
+          if (!list.length) loose.push(c + ' ' + label);
+          list.forEach(id => { (codes[id] = codes[id] || []).push(c); });
+        });
+        CREATED = [];
+        try {
+          const fr = await userflowFrame(prefix, g.code, sn, codes, loose);
+          if (fr) { put(fr, -(fr.width + FLOW_GAP), top); flowBottom = Math.max(flowBottom, top + fr.height); flows++;
+            log('  · ผัง userflow S' + sn + ' (' + USERFLOW.scenarios[sn].nodes.length + ' กล่อง' + (loose.length ? ' · จอที่ยังไม่มีกล่องในผัง ' + loose.length : '') + ')'); }
+        } catch (e) { warn('ผัง userflow S' + sn, e); const k = dropCreated(page); if (k) log('    ลบชิ้นที่ค้างจากผังที่พัง ' + k + ' ชิ้น'); }
+        CREATED = [];
+      }
       put(await deviceLabel(prefix, 'Header', GRID.barH), 0, y);
       for (const [i, [label]] of sub.screens.entries()) put(await flowBar(prefix, sub.code + '.' + (i + 1), label, 'Sub Flow 2', GRID.colW), x0 + i * pitch, y);
       y += GRID.barH + GRID.gap;
-      for (const mob of [false, true]) {
+      for (const mob of (opts.devices || [false, true])) {   // devices: [false]=desktop อย่างเดียว · [true]=mobile อย่างเดียว · ไม่ส่ง=ทั้งคู่ (แถว mobile ใต้ desktop)
         MOB = mob; let h = 0; const rowY = y;
         for (const [i, [label, fn]] of sub.screens.entries()) {
           const x = x0 + i * pitch;
           CREATED = []; PLACE = { x, y: rowY };   // เฟรมจอไปอยู่ตำแหน่งจริงทันทีที่สร้าง · ชิ้นที่สร้างระหว่างทางถูกติดตามไว้
           try {
-            const name = prefix + ' / ' + sub.code + '.' + (i + 1) + ' · ' + sub.tag + ' — ' + label + (mob ? ' · mobile' : '');
-            let s = opts.reuse ? opts.reuse(sub, i, label, mob) : null;
-            if (opts.reuse && !s) { skipped.push(name); CREATED = []; PLACE = null; continue; }   // โหมดจัดวางใหม่: ไม่มีจอนี้บนหน้า → เว้นช่องไว้ ไม่สร้างใหม่
-            if (!s) { s = await fn(); stripDividers(s); await polish(s); }
-            s.name = name;
+            const s = await fn(); stripDividers(s); await polish(s);
+            s.name = prefix + ' / ' + sub.code + '.' + (i + 1) + ' · ' + sub.tag + ' — ' + label + (mob ? ' · mobile' : '');
             put(s, x, rowY); h = Math.max(h, s.height); made.push(s);
             log('  · ' + made.length + '/' + total + ' ' + s.name);
           } catch (e) {
@@ -926,46 +1071,15 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
           CREATED = []; PLACE = null;
         }
         MOB = false;
-        const rowH = Math.max(h, mob ? GRID.mobH : GRID.deskH);
+        const rowH = Math.max(h, opts.rowMin != null ? opts.rowMin : (mob ? GRID.mobH : GRID.deskH));
         CREATED = []; put(await deviceLabel(prefix, mob ? 'Mobile' : 'Desktop', rowH), 0, rowY);
         y = rowY + rowH + GRID.rowGap;
       }
-      y += GRID.groupGap - GRID.rowGap;
       log('✓ ' + sub.code + ' ' + sub.title + ' (' + n + ' state)');
     }
+    y = Math.max(y, flowBottom + GRID.rowGap);   // ผังสูงกว่าแถวจอ ⇒ บล็อกถัดไปเริ่มใต้ผัง
+    y += GRID.groupGap - GRID.rowGap;
   }
   CREATED = [];
-  if (skipped.length) log('· ไม่พบจอบนหน้านี้ ' + skipped.length + ' จอ (เว้นช่องไว้ — กดสร้างใหม่ทั้งชุดถ้าต้องการ): ' + skipped.slice(0, 5).map(n => n.split(' / ')[1]).join(' · ') + (skipped.length > 5 ? ' …' : ''));
-  return { made, y, skipped };
-}
-/* ปุ่ม "จัดวางใหม่เป็นตาราง flow" — ย้ายเฟรมจอที่มีอยู่บนหน้าปัจจุบันเข้าผัง R19 โดยไม่สร้างจอใหม่ (ที่แก้มือไว้ไม่หาย)
-   จับคู่จอจากชื่อ "<prefix> / <tag> — <state>" (ชื่อเดิม) หรือ "<prefix> / B1.2 · <tag> — <state>" (ชื่อใหม่) · ป้ายสร้างใหม่ทุกครั้ง · จอที่ไม่อยู่ในผังย้ายไปแถวท้าย */
-async function patchLayout(page, prefix, GROUPS) {
-  const frames = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(prefix + ' / ') === 0);
-  if (!frames.length) { log('ไม่พบเฟรม "' + prefix + ' /" บนหน้านี้ — ใช้ปุ่มสร้างทั้งชุดแทน'); return; }
-  const strip = (n) => n.replace(new RegExp('^' + prefix + ' / (?:[A-Z]\\d*\\.\\d+ · )?'), '');
-  const byKey = new Map(); frames.forEach(f => { const k = strip(f.name); if (!byKey.has(k)) byKey.set(k, f); });
-  const used = new Set();
-  const reuse = (sub, i, label, mob) => {   // ชื่อตรง → ไม่ตรงก็เอาจอของ scenario เดียวกันที่ลงท้ายด้วย state เดียวกัน (ป้าย state เคยเปลี่ยนถ้อยคำ)
-    const suf = (mob ? ' · mobile' : '');
-    let f = byKey.get(sub.tag + ' — ' + label + suf) || null;
-    if (!f) for (const [k, v] of byKey) { if (!used.has(v) && k.indexOf(sub.tag + ' — ') === 0 && k.endsWith(' — ' + label + suf) === true) { f = v; break; } }
-    if (!f) for (const [k, v] of byKey) { if (!used.has(v) && k.indexOf(sub.tag + ' — ') === 0 && (mob ? / · mobile$/.test(k) : !/ · mobile$/.test(k)) && k.indexOf(label) >= 0) { f = v; break; } }
-    if (f) used.add(f);
-    return f;
-  };
-  page.children.filter(n => n.name.indexOf(prefix + ' · ') === 0).forEach(n => n.remove());
-  const swept = sweepOrphans(page, new Set(NEEDED)); if (swept) log('เก็บชิ้นส่วนที่ค้าง ' + swept + ' ชิ้น');
-  const y0 = Math.min(...frames.map(f => f.y));
-  log(INDEX.has('Header') ? 'แถบรหัส flow: component Header ของทีมออกแบบ' : 'แถบรหัส flow: ไม่พบ component Header ในไฟล์ — วาดแถบธรรมดาสีเดียวกันแทน');
-  const r = await buildGrid(page, prefix, GROUPS, y0, frames.length, { reuse });
-  const rest = frames.filter(f => !used.has(f));
-  if (rest.length) {   // จอที่ไม่อยู่ในผัง (ชื่อไม่ตรง scenario/state ใด) — ย้ายไปแถวท้าย ไม่ลบ
-    let x = GRID.side + GRID.gap, yy = r.y;
-    page.insertChild(0, await flowBar(prefix, '?', 'จอที่ไม่อยู่ในผัง (ชื่อไม่ตรง) ' + rest.length + ' จอ', 'Sub Flow', Math.max(GRID.colW, rest.length * (GRID.colW + GRID.colGap) - GRID.colGap)));
-    page.children[0].x = x; page.children[0].y = yy; yy += GRID.barH + GRID.gap;
-    rest.forEach(f => { f.x = x; f.y = yy; x += f.width + GRID.colGap; });
-    log('· จอที่ไม่อยู่ในผัง ' + rest.length + ' จอ ย้ายไปแถวท้าย: ' + rest.slice(0, 4).map(f => f.name.split(' / ')[1]).join(' · ') + (rest.length > 4 ? ' …' : ''));
-  }
-  log('จัดวางใหม่แล้ว ' + r.made.length + ' จอ · ' + GROUPS.length + ' กลุ่ม · ไม่ได้สร้างจอใหม่' + (r.skipped.length ? ' · เว้นช่อง ' + r.skipped.length : ''));
+  return { made, y, flows };
 }
