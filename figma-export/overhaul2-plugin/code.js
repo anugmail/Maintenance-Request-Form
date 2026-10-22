@@ -480,7 +480,7 @@ async function upload(label, files, o) {   // File upload Type=Default
   const lb = find(u, 'Input label');
   if (lb) { await text(lb, 'Label', label); const op = find(lb, '(ถ้ามี)'); if (op) op.visible = !!o.optional; const ic = find(lb, 'info-24-300-round'); if (ic) ic.visible = false; const tb = find(lb, 'Tertiary brand button'); if (tb) tb.visible = false; }
   const base = find(u, '_File upload base'); if (base && o.error) setProps(base, { State: 'Error' });
-  if (base) { await text(base, 'Supporting text', (o.accept || 'PDF, JPG') + ' · สูงสุด 10 ไฟล์ · ' + files.length + '/10 ไฟล์'); }
+  if (base) { await text(base, 'Supporting text', o.hint || ((o.accept || 'PDF, JPG') + ' · สูงสุด 10 ไฟล์ · ' + files.length + '/10 ไฟล์')); }   // hint = คำใต้กล่องตามจอเจ้าของงาน (บล็อก B)
   const items = u.findAll(n => n.name === '_File upload item base');
   items.forEach((it, i) => {
     if (i >= files.length) { it.visible = false; return; }
@@ -1045,21 +1045,25 @@ async function planForm(name, o) {
   const E = (k, m) => o.errors ? m : '';
   add(page, col('Content', [
     // วงเงินอนุมัติ + WBS 3 ช่อง แถวเดียว (เจ้าของงานส่งตัวอย่าง 19 ต.ค. 2569): วงเงินครึ่งซ้าย · WBS/โครงข่าย/กิจกรรม แบ่งครึ่งขวา
-    col('Section', [await section('ข้อมูลแผน'), row('Row', [field('ชื่อแผน', v.name, { placeholder: 'เช่น Overhaul ประจำปีงบ 2570 — รถเครน', error: E('n', 'กรุณาระบุชื่อแผน') }),
-      dropdown('ประจำปีงบประมาณ', v.year || '2569')]), wbsRow(field('วงเงินอนุมัติ (บาท)', v.budget, { placeholder: '0', error: E('b', 'กรุณาระบุวงเงินอนุมัติ (บาท)') }), [
+    // บล็อก B ฉบับเจ้าของงาน 22 ต.ค. 2569 (component-rules §4.2.1): placeholder "ระบุ…/เลือก…" · ปีงบไม่มีค่าเริ่ม + error "กรุณาเลือกปีงบประมาณ" · error วงเงิน "กรุณาระบุวงเงินอนุมัติ"
+    col('Section', [await section('ข้อมูลแผน'), row('Row', [field('ชื่อแผน', v.name, { placeholder: 'ระบุชื่อแผน', error: E('n', 'กรุณาระบุชื่อแผน') }),
+      dropdown('ประจำปีงบประมาณ', v.year || '', { placeholder: 'เลือกปีงบประมาณ', error: E('y', 'กรุณาเลือกปีงบประมาณ') })]), wbsRow(field('วงเงินอนุมัติ (บาท)', v.budget, { placeholder: 'ระบุวงเงินอนุมัติ', error: E('b', 'กรุณาระบุวงเงินอนุมัติ') }), [
       // 3 ช่อง WBS ไม่บังคับ "(ถ้ามี)" — เจ้าของงานเคาะ 19 ต.ค. 2569 ⇒ ไม่มี error ตอนกดบันทึก
-      field('เลข WBS', v.wbs, { placeholder: 'เช่น C-70-OH-0003', optional: true }),
-      field('เลขโครงข่าย', v.net, { placeholder: 'เช่น 60002103', optional: true }), field('เลขกิจกรรม', v.act, { placeholder: 'เช่น 0010', optional: true })])], 16),
+      field('เลข WBS', v.wbs, { placeholder: 'ระบุเลข WBS', optional: true }),
+      field('เลขโครงข่าย', v.net, { placeholder: 'ระบุเลขโครงข่าย', optional: true }), field('เลขกิจกรรม', v.act, { placeholder: 'ระบุเลขกิจกรรม', optional: true })])], 16),
     // กล่องอัปโหลด 1 คอลัมน์ (เจ้าของงานเคาะ 19 ต.ค. 2569)
-    col('Section', [await section('เอกสาร'), await upload('หนังสืออนุมัติหลักการ', v.approve || [], { error: E('', 'กรุณาแนบหนังสืออนุมัติหลักการ') }),
-      await upload('เอกสารอนุมัติงบ', v.budgetDoc || [], { error: E('', 'กรุณาแนบเอกสารอนุมัติงบ') }),
-      await upload('อื่นๆ', v.other || [], { optional: true })], 16),
+    // เอกสาร: จอเจ้าของงานไม่มี error ที่ช่องเอกสาร (B.2 มีแค่ ชื่อแผน · ปีงบ · วงเงิน) · ป้าย "เอกสารอื่น ๆ" · คำใต้กล่อง "PDF, PNG, or JPG (สูงสุด 10 ไฟล์)"
+    col('Section', [await section('เอกสาร'), await upload('หนังสืออนุมัติหลักการ', v.approve || [], { hint: DOC_HINT }),
+      await upload('เอกสารอนุมัติงบ', v.budgetDoc || [], { hint: DOC_HINT }),
+      await upload('เอกสารอื่น ๆ', v.other || [], { optional: true, hint: DOC_HINT })], 16),
     btnRow(edit ? [['Secondary button', 'ยกเลิก', { size: 'lg' }], ['Primary button', 'บันทึก', { size: 'lg' }]] : [['Primary button', 'บันทึก', { size: 'lg' }]]),
   ], 32), 'h');
   return scr;
 }
-const FILLED = { name: 'Overhaul ประจำปีงบ 2570 — รถเจาะหลุม', year: '2569', budget: '5,500,000', wbs: 'C-70-OH-0003', net: '60002103', act: '0010',
-  approve: [{ name: 'อนุมัติหลักการ.pdf', size: '293 KB' }], budgetDoc: [{ name: 'อนุมัติงบ.jpg', size: '117 KB' }, { name: 'สรุป.docx', err: 1 }], other: [] };
+const DOC_HINT = 'PDF, PNG, or JPG (สูงสุด 10 ไฟล์)';
+const FILLED = { name: 'Overhaul ประจำปีงบ 2570 — รถเจาะหลุม', year: '2571', budget: '5,000,000', wbs: 'C-70-OH-0003', net: '60002103', act: '0010',   // ค่าตามจอ B.3 ของเจ้าของงาน
+  approve: [{ name: 'Document.pdf', size: '200 KB' }], budgetDoc: [{ name: 'Image_เอกสารอนุมัติงบ01.jpg', size: '10 KB' }, { name: 'Image_เอกสารอนุมัติงบ02.png', size: '10 KB' }],
+  other: [{ name: 'Image001.jpg', size: '200 KB' }, { name: 'Image002.png', size: '200 KB' }] };
 const EDIT = { name: 'Overhaul ประจำปีงบ 2569 — รถเครน', year: '2569', budget: '10,000,000', wbs: 'C-69-OH-0101', net: '60001234', act: '0010',
   approve: [{ name: 'หนังสืออนุมัติหลักการ-123456.pdf', size: '822 KB' }], budgetDoc: [{ name: 'เอกสารอนุมัติงบ-123456.pdf', size: '601 KB' }], other: [] };
 
@@ -1073,23 +1077,25 @@ const poRow = (r) => { const n = +r[3] || 0, d = +(r[4] || 0);
 async function planDetail(name, o) {
   o = o || {};
   const p = o.plan || PLANS[4];
-  const { scr, page } = await shell(name, { title: 'หมายเลขแผน ' + p[0], back: true, crumbs: ['แผน ' + p[0]], badge: STATUS[o.status || p[6]],
+  const { scr, page } = await shell(name, { title: 'หมายเลขแผน ' + p[0], back: true, crumbs: ['แผน ' + p[0]], badge: o.badge || STATUS[o.status || p[6]],   // o.badge = ป้ายตามจอเจ้าของงาน (B.7 "ยังไม่มี PO")
     actions: [['Secondary danger button', 'ลบแผน', 'delete-24-300-round'], ['Secondary button', 'แก้ไข', 'stylus-24-300-round']] });
   const pos = o.pos || POS;
   const sections = [
     col('Section', [await sectionLabel('รายละเอียดแผน'), kv([['ชื่อแผน', p[1]], ['ประจำปีงบประมาณ', '25' + p[2].slice(2, 4)], ['วงเงินอนุมัติ (บาท)', p[3]], ['จำนวนรถที่ Overhaul', p[5] + ' คัน'],
-      ['วันที่สร้าง', p[7]], ['ประเภทงบ · เลขที่งบประมาณ', 'งบลงทุน · ' + p[2]], ['เลขโครงข่าย', '60001234'], ['เลขกิจกรรม', '0010']])], 16),   // คำเดียวกับหน้า 1 หลัง CF (ประเภทงบ · เลขที่งบประมาณ)
+      ['วันที่สร้าง', p[7]], ['เลข WBS (ศูนย์ต้นทุน)', p[2]], ['เลขโครงข่าย', '60001234'], ['เลขกิจกรรม', '0010']])], 16),   // แถว 2 ตามจอ B.7 ของเจ้าของงาน 22 ต.ค. (วันที่สร้าง · เลข WBS (ศูนย์ต้นทุน) · เลขโครงข่าย · เลขกิจกรรม)
     col('Section', [await sectionLabel('เอกสาร'), row('Row', [await upload('หนังสืออนุมัติหลักการ', [{ name: 'หนังสืออนุมัติหลักการ-' + p[0] + '.pdf', size: '822 KB' }], { readonly: true }),
       await upload('เอกสารอนุมัติงบ', [{ name: 'เอกสารอนุมัติงบ-' + p[0] + '.pdf', size: '601 KB' }], { readonly: true })])], 16),
   ];
-  const poSec = col('Section', [await sectionLabel('Purchase Order', { badge: pos.length, buttons: [{ kind: 'Primary button', text: 'PO', icon: 'add-24-300-round' }] })], 16);
+  // ยังไม่มี PO (จอ B.7 ของเจ้าของงาน): หัว "Purchase Order (0)" ไม่มีปุ่มที่หัว · ปุ่ม "สร้าง Purchase Order" อยู่ใน Empty state
+  const poSec = col('Section', [await sectionLabel('Purchase Order', { badge: pos.length, buttons: pos.length ? [{ kind: 'Primary button', text: 'PO', icon: 'add-24-300-round' }] : [] })], 16);
   if (pos.length) add(poSec, await tbl(PO_COLS, pos.map(poRow)), 'h');
   else { const es = inst('Empty state/Data empty'); add(poSec, es, 'h'); await text(es, 'Text', 'ยังไม่มี Purchase Order'); await text(es, 'Supporting text', 'เพิ่ม PO เพื่อเลือกรถที่จะเข้า Overhaul และเริ่มงานรายคัน');
-    const a = find(es, 'Actions'); if (a) a.visible = false; }
+    const s2 = find(es, 'Secondary button'); if (s2) s2.visible = false; const pb = find(es, 'Primary button'); if (pb) setProps(pb, { Text: 'สร้าง Purchase Order' }); }
   sections.push(poSec);
-  const partSec = col('Section', [await sectionLabel('อะไหล่จากคลัง', { buttons: [{ kind: 'Secondary button', text: 'เบิก', icon: 'add-24-300-round' }] })], 16);
+  // อะไหล่ที่ใช้ (จอ B.7 ของเจ้าของงาน): หัว "อะไหล่ที่ใช้" ไม่มีปุ่มที่หัว · ปุ่ม "เบิกอะไหล่" ใน Empty state (ปุ่มรอง — ปุ่มหลักของหน้าเป็นของ PO)
+  const partSec = col('Section', [await sectionLabel('อะไหล่ที่ใช้')], 16);
   const es2 = inst('Empty state/Data empty'); add(partSec, es2, 'h'); await text(es2, 'Text', 'ยังไม่มีรายการเบิกอะไหล่'); await text(es2, 'Supporting text', 'ส่วนนี้จองไว้ตาม userflow — ขั้นตอนเบิกอะไหล่ยังไม่ได้ออกแบบ');
-  const a2 = find(es2, 'Actions'); if (a2) a2.visible = false;
+  const s3 = find(es2, 'Secondary button'); if (s3) setProps(s3, { Text: 'เบิกอะไหล่' }); const pb2 = find(es2, 'Primary button'); if (pb2) pb2.visible = false;
   sections.push(partSec);
   add(page, col('Content', sections, 32), 'h');
   return scr;
@@ -1315,7 +1321,10 @@ const TOASTS = {
   25: { page: 5, when: 'ขั้น 6 → ปิดงาน', title: 'ปิดงาน {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} เรียบร้อยแล้ว', noti: 1 },
   26: Object.assign({ page: 5, when: 'บันทึกไม่สำเร็จในขั้น 2–6' }, GENERAL_ERROR),
 };
-const T = (scr, n) => toast(scr, TOASTS[n]);   // toast บนจอ scenario = Notification ขวาล่าง ห่างขอบ 24 พร้อมบรรทัดรอง (สเปก 16 ข้อ 1.1)
+const T = (scr, n) => toast(scr, TOASTS[n]);
+/* toast ของบล็อก B ตามจอเจ้าของงาน 22 ต.ค. 2569: หัว "general error" (ตัวเล็ก) · "สร้างแผน Overhaul สำเร็จ" (ไม่มีเลขแผน) — บรรทัดรองในจอเป็นข้อความตัวอย่างของ component ⇒ ใช้ของ GENERAL_ERROR / ไม่มีบรรทัดรอง */
+const B_TOAST_ERR = { err: 1, title: 'general error', sub: GENERAL_ERROR.sub };
+const B_TOAST_OK = { title: 'สร้างแผน Overhaul สำเร็จ' };   // toast บนจอ scenario = Notification ขวาล่าง ห่างขอบ 24 พร้อมบรรทัดรอง (สเปก 16 ข้อ 1.1)
 const NEW_PO = ['PO-700202', 'ซ่อมระบบเครื่องยนต์และเจาะหลุม', 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', '2', 0, '20 ต.ค. 2569', '20 ม.ค. 2570', false];
 
 /* ---------- รายการจอแยกตาม scenario (ชื่อ section = ชื่อ scenario ใน userflow) — ฉบับหลัง PO confirm ทุกหน้า (21 ต.ค. 2569)
@@ -1327,14 +1336,15 @@ const SCENARIOS = [
     ['ตัวกรอง', async () => { const s = await listScreen('ตัวกรอง', CF_LIST); await filterPanelCF(s); return s; }],
     ['ค้นไม่เจอ', () => listScreen('ค้นไม่เจอ', { notFound: true, query: 'แผน Overhaul ปี 2573' })],
     ['ยังไม่มีแผน', () => listScreen('ยังไม่มีแผน', { empty: true })]]],
-  ['S1 · กบค. สร้างแผน Overhaul', [
-    ['ฟอร์มสร้างแผน (ว่าง)', () => planForm('S1 ฟอร์มสร้างแผน (ว่าง)', {})],
-    ['กดบันทึกโดยยังไม่ครบ', () => planForm('S1 กดบันทึกโดยยังไม่ครบ', { errors: true })],
-    ['กรอกครบ', () => planForm('S1 กรอกครบ', { values: FILLED })],
+  // บล็อก B ฉบับเจ้าของงาน 22 ต.ค. 2569 — "export scenB ต้องได้แบบที่ส่งให้ เป๊ะเลย" (component-rules §4.2.1 · ข้อความดิบ figma-ref/overhaul-B-2569-10-22.txt)
+  ['S1 · กบค. สร้างแผน Overhaul และ ดูรายละเอียด', [
+    ['ฟอร์มสร้างแผน Default', () => planForm('S1 ฟอร์มสร้างแผน Default', {})],
+    ['Validation กรณีไม่ได้เลือก, Out of focus', () => planForm('S1 Validation', { errors: true })],
+    ['Filled', () => planForm('S1 Filled', { values: FILLED })],
     ['ย้อนกลับ — ยืนยันการออก', async () => { const s = await planForm('S1 ยืนยันการออก', { values: FILLED }); await confirm(s, { title: 'ยืนยันการออก', sub: 'ข้อมูลที่แก้ไขไว้จะไม่ถูกบันทึก', cancel: 'ปิด' }); return s; }],
-    ['บันทึกไม่สำเร็จ (toast 2)', async () => { const s = await planForm('S1 บันทึกไม่สำเร็จ', { values: FILLED }); await T(s, 2); return s; }],
-    ['บันทึกสำเร็จ (toast 1)', async () => { const s = await listScreen('S1 บันทึกสำเร็จ', Object.assign({}, CF_LIST, { rows: [NEW_PLAN_CF].concat(PLANS_CF.slice(0, 9)), pageOpt: { per: 10, total: PLAN_TOTAL + 1 } })); await T(s, 1); return s; }],
-    ['ดูรายละเอียดแผน', () => planDetail('S1 รายละเอียดแผน', { plan: NEW_PLAN, pos: [] })]]],
+    ['บันทึกไม่สำเร็จ', async () => { const s = await planForm('S1 บันทึกไม่สำเร็จ', { values: FILLED }); await toast(s, B_TOAST_ERR); return s; }],
+    ['บันทึกสำเร็จ', async () => { const s = await listScreen('S1 บันทึกสำเร็จ', CF_LIST); await toast(s, B_TOAST_OK); return s; }],   // จอเจ้าของงาน: รายการ 10 แถวเดิม (จาก 95) + toast · ไม่แทรกแถวใหม่
+    ['ดูรายละเอียดแผน', () => planDetail('S1 รายละเอียดแผน', { plan: NEW_PLAN, pos: [], badge: ['ยังไม่มี PO', 'Gray'] })]]],
   ['S2 · กบค. แก้ไขแผน', [
     ['เมนู "…" → แก้ไข', async () => { const s = await listScreen('S2 เมนู', CF_LIST); menuAt(s, firstMenuCell(s), MENU); return s; }],
     ['กดแก้ไขในเมนู … → ฟอร์มแก้ไข (เติมค่าเดิม)', () => planForm('S2 ฟอร์มแก้ไข', { edit: true, values: EDIT })],
@@ -1705,7 +1715,8 @@ async function buildToast(o) { await buildSet('overhaul-toast', TOAST_SCENARIOS,
    ชื่อเฟรมที่รู้จัก: 19 ต.ค. "OH2 / S1 — label[ · mobile]" · หลังจัดวางใหม่ "OH2 / B.1 · S1 — label[ · mobile]" ---------- */
 const SCEN_TAGS = SCENARIOS.map(([title]) => title.split(' · ')[0]);
 const normLabel = (s) => String(s).replace(/\s*\([^()]*\)\s*$/, '').replace(/\s+/g, ' ').trim();   // ตัดวงเล็บท้าย เช่น "(toast 2)" "(เติมค่าเดิม)"
-const STATE_ALIAS = { 'ผลกรองด้วยรถ': 'ผลกรองด้วยประเภทยานพาหนะ', 'ระบุอะไหล่แล้ว': 'นำเข้าไฟล์สำเร็จ (toast 23)', 'ยืนยันรับรถแล้ว ยังไม่มีความคืบหน้า': 'ยังไม่มีความคืบหน้า', 'ติ๊กรถแล้วกดเพิ่ม': 'เลือกรถ (พิมพ์ค้นแล้วเลือกจาก dropdown)', 'รายการแผน (13 คอลัมน์ · ไอคอนจัดการ · pagination)': 'รายการแผน', 'รายการแผน (component Table · ปุ่ม … · pagination)': 'รายการแผน', 'ตัวกรอง (ปีงบ · สถานะ · ประเภทยานพาหนะ · ช่วงวงเงิน)': 'ตัวกรอง', 'กดไอคอนแก้ไข → ฟอร์มแก้ไข (เติมค่าเดิม)': 'กดแก้ไขในเมนู … → ฟอร์มแก้ไข (เติมค่าเดิม)', 'กดไอคอนลบ → ยืนยันการลบแผน': 'กดลบในเมนู … → ยืนยันการลบแผน', 'กดไอคอนแก้ไขของ PO → ฟอร์มแก้ไข PO': 'กดแก้ไขในเมนู … ของ PO → ฟอร์มแก้ไข PO', 'กดไอคอนลบของ PO → ยืนยันการลบ PO': 'กดลบในเมนู … ของ PO → ยืนยันการลบ PO', 'รายการแผน (component Table · ไอคอนจัดการ · pagination)': 'รายการแผน' };   // ชื่อฉบับ CF เช้า (ไอคอน) → ฉบับเจ้าของงานค่ำ (ปุ่ม … + เมนู)   // ชื่อ state เดิมที่เทียบด้วยกติกาทั่วไปไม่ได้ (รายการท้าย = ชื่อฉบับ CF เช้า 21 ต.ค. → ชื่อตามจอ J ของเจ้าของงาน)
+const STATE_ALIAS = { 'S1|ฟอร์มสร้างแผน (ว่าง)': 'ฟอร์มสร้างแผน Default', 'S1|กดบันทึกโดยยังไม่ครบ': 'Validation กรณีไม่ได้เลือก, Out of focus', 'S1|กรอกครบ': 'Filled', 'S1|บันทึกไม่สำเร็จ (toast 2)': 'บันทึกไม่สำเร็จ', 'S1|บันทึกสำเร็จ (toast 1)': 'บันทึกสำเร็จ',   // บล็อก B ฉบับเจ้าของงาน 22 ต.ค.
+  'ผลกรองด้วยรถ': 'ผลกรองด้วยประเภทยานพาหนะ', 'ระบุอะไหล่แล้ว': 'นำเข้าไฟล์สำเร็จ (toast 23)', 'ยืนยันรับรถแล้ว ยังไม่มีความคืบหน้า': 'ยังไม่มีความคืบหน้า', 'ติ๊กรถแล้วกดเพิ่ม': 'เลือกรถ (พิมพ์ค้นแล้วเลือกจาก dropdown)', 'รายการแผน (13 คอลัมน์ · ไอคอนจัดการ · pagination)': 'รายการแผน', 'รายการแผน (component Table · ปุ่ม … · pagination)': 'รายการแผน', 'ตัวกรอง (ปีงบ · สถานะ · ประเภทยานพาหนะ · ช่วงวงเงิน)': 'ตัวกรอง', 'กดไอคอนแก้ไข → ฟอร์มแก้ไข (เติมค่าเดิม)': 'กดแก้ไขในเมนู … → ฟอร์มแก้ไข (เติมค่าเดิม)', 'กดไอคอนลบ → ยืนยันการลบแผน': 'กดลบในเมนู … → ยืนยันการลบแผน', 'กดไอคอนแก้ไขของ PO → ฟอร์มแก้ไข PO': 'กดแก้ไขในเมนู … ของ PO → ฟอร์มแก้ไข PO', 'กดไอคอนลบของ PO → ยืนยันการลบ PO': 'กดลบในเมนู … ของ PO → ยืนยันการลบ PO', 'รายการแผน (component Table · ไอคอนจัดการ · pagination)': 'รายการแผน' };   // ชื่อฉบับ CF เช้า (ไอคอน) → ฉบับเจ้าของงานค่ำ (ปุ่ม … + เมนู)   // ชื่อ state เดิมที่เทียบด้วยกติกาทั่วไปไม่ได้ (รายการท้าย = ชื่อฉบับ CF เช้า 21 ต.ค. → ชื่อตามจอ J ของเจ้าของงาน)
 const REMOVED_STATES = ['ดูรูปแนบ (lightbox)', 'ผลกรองด้วยประเภทยานพาหนะ', 'ค้นหา พิมพ์ 3 ตัวอักษร ขึ้น autocomplete'];   // บล็อก A ของเจ้าของงาน (21 ต.ค. ค่ำ) เหลือ 4 state: รายการแผน · ตัวกรอง · ค้นไม่เจอ · ยังไม่มีแผน   // lightbox ไม่อยู่ในจอ J ที่เจ้าของงานส่ง (R23) · state เมนู "…" ที่ CF เคยตัด กลับมาแล้ว 21 ต.ค. ค่ำ (เจ้าของงาน)
 const REMOVED_TAG = ' · ตัดแล้ว (ไม่มี state นี้ในฉบับปัจจุบัน)';
 function parseFrameName(name) {   // → { code, tag, label, mob } หรือ null
@@ -1718,7 +1729,7 @@ function parseFrameName(name) {   // → { code, tag, label, mob } หรือ 
 function matchState(tag, label) {   // → { si, ti, newLabel, fn } · { removed: true } · null
   const si = SCEN_TAGS.indexOf(tag); if (si < 0) return null;
   const states = SCENARIOS[si][1];
-  const want = STATE_ALIAS[label] || STATE_ALIAS[normLabel(label)] || label;
+  const want = STATE_ALIAS[tag + '|' + label] || STATE_ALIAS[label] || STATE_ALIAS[normLabel(label)] || label;   // 'S1|ชื่อเดิม' = เปลี่ยนชื่อเฉพาะ scenario นั้น (S4 ใช้ชื่อเดียวกันอยู่)
   let ti = states.findIndex(([l]) => l === want);
   if (ti < 0) ti = states.findIndex(([l]) => normLabel(l) === normLabel(want));
   if (ti < 0) ti = states.findIndex(([l]) => { const a = normLabel(l), b = normLabel(want); return b && (a.endsWith(b) || a.startsWith(b)); });
