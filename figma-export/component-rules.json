@@ -132,12 +132,14 @@
       "id": "R8",
       "component": "Table cell",
       "parent": "Table",
+      "allowInside": ["ReceiptChecklist"],
       "source": "รีวิว 19 ต.ค. 2569 (ต้องเรียก component Table ทั้งก้อน) · 21 ต.ค. ค่ำ R25: ถอดข้อยกเว้นขนาด — ประกอบเอง = ไม่ผ่านทุกขนาด"
     },
     {
       "id": "R9",
       "component": "Table header cell",
       "parent": "Table",
+      "allowInside": ["ReceiptChecklist"],
       "source": "รีวิว 19 ต.ค. 2569 · 21 ต.ค. ค่ำ R25: ถอดข้อยกเว้นขนาด — ประกอบเอง = ไม่ผ่านทุกขนาด"
     },
     {

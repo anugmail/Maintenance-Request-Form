@@ -18,7 +18,7 @@ const SLUG = process.argv[2] || 'component';
 const DUMP = path.join(__dirname, 'out', 'figma-dump', SLUG);
 const MIXED = Symbol('mixed');
 /* ไฟล์ดัมป์ที่โหลด: ทั้งโฟลเดอร์ <slug> + component ในตัวไฟล์ Maintain-D ที่ปลั๊กอินใช้ (RepairAppointmentStep — หน้า Design) */
-const LOCAL_FROM_MAINTAIN_D = (process.env.LOCAL || 'RepairAppointmentStep,Device Type,Component 1').split(',').map(s => s.trim()).filter(Boolean);   // LOCAL=ชื่อ,ชื่อ สำหรับปลั๊กอินอื่น (20 ต.ค. 2569) · Device Type = ป้ายข้างจอชุดใหม่ (ดัมป์ Maintain-D ต้องดึงใหม่ถึงจะมี — ไม่มีก็ถอยไป Component 1)
+const LOCAL_FROM_MAINTAIN_D = (process.env.LOCAL || 'RepairAppointmentStep,ReceiptChecklist,HandoverSignature,Modal Signature,Device Type,Component 1').split(',').map(s => s.trim()).filter(Boolean);   // LOCAL=ชื่อ,ชื่อ สำหรับปลั๊กอินอื่น (20 ต.ค. 2569) · Device Type = ป้ายข้างจอชุดใหม่ (ดัมป์ Maintain-D ต้องดึงใหม่ถึงจะมี — ไม่มีก็ถอยไป Component 1)
 const DUMPS = fs.readdirSync(DUMP).filter(f => f.endsWith('.json')).map(f => Object.assign({ file: f }, JSON.parse(fs.readFileSync(path.join(DUMP, f), 'utf8'))));
 (() => {   // สแกนทุกหน้าของไฟล์ Maintain-D — component ที่ยืมจาก flow อื่นกระจายอยู่หลายหน้า (Design · Local Component · รายละเอียดงานซ่อม)
   const dir = path.join(__dirname, 'out', 'figma-dump', 'maintain-d');
@@ -323,7 +323,8 @@ const MODE_CHECK = process.env.MODE === 'check';
       nL += sc.findAll(n => n.type === 'INSTANCE' && n.name === 'Section label').length;
     }
     sc.findAll(n => n.type === 'INSTANCE' && n.name === 'Input label').forEach(l => { const k = Object.keys(l.componentProperties).find(x => x.split('#')[0] === 'Info icon'); if (k && l.componentProperties[k].value !== false && shown(l)) logs.push('⚠ Info icon ยังเปิด: ' + sc.name); });
-    if (sc.findAll(n => n.type === 'FRAME' && n.name === 'Content item').length) logs.push('⚠ กล่องแสดงข้อมูลยังไม่ได้แต่ง: ' + sc.name);
+    const inInst = (n) => { for (let p = n.parent; p && p !== sc; p = p.parent) if (p.type === 'INSTANCE') return true; return false; };   // กรอบใน component ของทีมออกแบบ (Modal Signature) ไม่นับ
+    if (sc.findAll(n => n.type === 'FRAME' && n.name === 'Content item' && !inInst(n)).length) logs.push('⚠ กล่องแสดงข้อมูลยังไม่ได้แต่ง: ' + sc.name);
   });
   if (process.env.SHOW) screens.filter(sc => sc.name.indexOf(process.env.SHOW) >= 0).forEach(sc => sc.findAll(n => n.type === 'INSTANCE' && n.name === 'Table').forEach(t => {
     const v = (n, k) => { const x = Object.keys(n.componentProperties || {}).find(y => y.split('#')[0] === k); return x ? n.componentProperties[x].value : ''; };

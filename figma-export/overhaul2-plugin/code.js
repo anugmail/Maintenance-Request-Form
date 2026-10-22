@@ -129,7 +129,7 @@ const NESTED = ['Nav button', 'Sort icon', 'Badge outline with remove icon', 'Bu
   'List with checkbox item', 'List header item', 'Checkbox', 'Card form row', 'Badge outline', 'Mobile table item', 'Step circles / 5 steps',
   '_Notification item base', 'Status', 'Images'];   // ชิ้นใน Notification card (20 ต.ค. 2569) · Images = lightbox มือถือ (ไม่มี ⇒ ข้ามจอนั้น + รายงาน)
 /* component ในตัวไฟล์ Maintain-D (ไม่อยู่ในไลบรารี) — ไฟล์อื่นไม่มี ⇒ ไม่หยุด ใช้แบบเดิมแทนแล้วรายงาน */
-const LOCAL_OPTIONAL = ['RepairAppointmentStep', 'Device Type', 'Component 1', 'Header'];   // Device Type = ป้าย Device/Desktop/Mobile ของทีมออกแบบ (20 ต.ค. 2569 · แทน Component 1 ที่เก็บไว้เป็นตัวสำรอง) · Header = แถบรหัส flow (ไลบรารีอื่น หาจาก instance ในไฟล์)
+const LOCAL_OPTIONAL = ['RepairAppointmentStep', 'ReceiptChecklist', 'HandoverSignature', 'Modal Signature', 'Device Type', 'Component 1', 'Header'];   // Device Type = ป้าย Device/Desktop/Mobile ของทีมออกแบบ (20 ต.ค. 2569 · แทน Component 1 ที่เก็บไว้เป็นตัวสำรอง) · Header = แถบรหัส flow (ไลบรารีอื่น หาจาก instance ในไฟล์)
 const NEEDED = DIRECT.concat(NESTED, LOCAL_OPTIONAL);
 const NESTED_ONLY = new Set(NESTED);
 const FUTURE = [];
@@ -1253,7 +1253,33 @@ async function apptRejected(ret, d1, d2) {
     alertBox('Warning', 'หน่วยงานปฏิเสธนัดหมาย', 'หมายเหตุ: รถติดภารกิจซ่อมบำรุงสายส่ง ขอเลื่อนเป็นสัปดาห์ถัดไป'), apptKv(ret, d1, d2)], 16),
     btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Secondary button', 'แก้ไขนัดหมาย', { size: 'lg' }]])];
 }
-async function checkin(done) {
+/* ตรวจรับรถ (S8) ฉบับเจ้าของงาน 22 ต.ค. 2569 ดึก (บล็อก I · R23 · component-rules §4.2.4) = component ของ Flow การซ่อมทั้งก้อน:
+   ReceiptChecklist "รายการเอกสารรับรถ" (State Default/Filled · Breakpoint Desktop/Mobile) + HandoverSignature "ลงนามการรับมอบรถ" (Default/Filled/Signed)
+   + Modal Signature (Default/Filled) ตอนกดเซ็นลงนาม · ข้อความในเฟรมเจ้าของงาน = ค่าในตัว component (ไม่ override) · ไม่มีในไฟล์ → แบบเดิม checkinOld()
+   o = { list: 'Default'|'Filled', sign: 'Default'|'Filled'|'Signed', modal: 'Default'|'Filled' } · ปุ่ม "ยืนยันรับรถ" กดได้เมื่อเซ็น 2 ฝ่าย (Signed) */
+async function checkinPanel(scr, o) {
+  o = o || {};
+  if (!INDEX.has('ReceiptChecklist') || !INDEX.has('HandoverSignature') || (MOB && !o.mobOk)) return null;
+  const rc = inst('ReceiptChecklist', { Breakpoint: MOB ? 'Mobile' : 'Desktop', State: o.list || 'Default' }); rc.name = 'ReceiptChecklist';
+  const nodes = [rc];
+  if (!MOB) { const hs = inst('HandoverSignature', { State: o.sign || 'Default' }); hs.name = 'HandoverSignature'; nodes.push(hs); }
+  nodes.push(btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันรับรถ', { size: 'lg', disabled: o.sign !== 'Signed' }]]));
+  return nodes;
+}
+async function signModal(scr, state) {   // Modal Signature (เต็มจอ มีพื้นหลังในตัว) หัว "ลงนามการรับมอบรถ" ปุ่ม ปิด · บันทึก ตามเฟรมเจ้าของงาน
+  if (MOB || !INDEX.has('Modal Signature')) { await confirm(scr, { title: 'ลงนามการรับมอบรถ', sub: state === 'Filled' ? 'เซ็นลงนามแล้ว' : 'เซ็นลงนามในช่องด้านล่าง', cancel: 'ปิด', ok: 'บันทึก' }); return; }
+  const m = inst('Modal Signature', { State: state || 'Default' }); m.name = 'Modal Signature';
+  overlay(scr, m, 0, 0);
+  const hd = find(m, 'Modal header'); if (hd) { await text(hd, 'Text', 'ลงนามการรับมอบรถ'); const sp = find(hd, 'Supporting text'); if (sp) sp.visible = false; }
+  const ft = find(m, 'Modal footer');
+  if (ft) { const sb = find(ft, 'Secondary button'); if (sb) setProps(sb, { Text: 'ปิด', 'Leading icon': false, 'Trailing icon': false }); const pb = find(ft, 'Primary button'); if (pb) setProps(pb, { Text: 'บันทึก', 'Leading icon': false, 'Trailing icon': false }); }
+}
+async function checkin(o) {   // ใช้ component ของงานซ่อมถ้ามี ไม่มี/มือถือ → แบบเดิม
+  if (typeof o !== 'object') o = o ? { list: 'Filled', sign: 'Signed' } : {};
+  const p = await checkinPanel(null, o);
+  return p || checkinOld(o.sign === 'Signed');
+}
+async function checkinOld(done) {
   const sign = async (who, name) => {
     const box = col('Sign', [dropdown(who, done ? name : '', { placeholder: 'เลือกผู้ลงนาม' })], 12);
     add(box, done ? row('Signed', [pill('ลงนามแล้ว 19/10/2569', 'Success')], { hug: true }) : row('Sign', [btn('Secondary button', 'เซ็น')], { hug: true }), 'h');
@@ -1395,9 +1421,12 @@ const SCENARIOS = [
     ['รอหน่วยงานตอบรับ (toast 13)', async () => { const s = await job('S7 รอตอบรับ', 'V2', () => apptWait(false, '22/10/2569', '24/10/2569')); await T(s, 13); return s; }],
     ['หน่วยงานปฏิเสธ (toast 16)', async () => { const s = await job('S7 ปฏิเสธ', 'V3', () => apptRejected(false, '22/10/2569', '24/10/2569')); await T(s, 16); return s; }],
     ['แก้ไขนัดหมาย', () => job('S7 แก้ไขนัด', 'V3', () => apptForm(false, { d1: '29/10/2569', d2: '31/10/2569', coord: 1 }))]]],
-  ['S8 · กบค. ตรวจรับรถก่อน Overhaul', [
-    ['หน่วยงานยืนยันนัดแล้ว → รายการตรวจสอบ (toast 15)', async () => { const s = await job('S8 รายการตรวจสอบ', 'V4', () => checkin(false)); await T(s, 15); return s; }],
-    ['ตรวจครบ + ลงนาม 2 ฝ่าย', () => job('S8 ลงนามแล้ว', 'V4', () => checkin(true))]]],
+  ['S8 · กบค. ตรวจรับรถก่อน Overhaul', [   // บล็อก I ฉบับเจ้าของงาน 22 ต.ค. 2569 ดึก (R23 · §4.2.4) — ReceiptChecklist + HandoverSignature + Modal Signature ของงานซ่อม · ไม่มี toast ในเฟรม (toast 15 อยู่หน้า toast แยก)
+    ['Default', () => job('S8 Default', 'V4', () => checkin({ list: 'Default', sign: 'Default' }))],
+    ['Filled ตรวจ + เลือกผู้ลงนาม + ยังไม่ได้เซ็น', () => job('S8 Filled', 'V4', () => checkin({ list: 'Filled', sign: 'Filled' }))],
+    ['เซ็นลงนาม Default', async () => { const s = await job('S8 เซ็นลงนาม', 'V4', () => checkin({ list: 'Filled', sign: 'Filled' })); await signModal(s, 'Default'); return s; }],
+    ['เซ็นลงนาม Filled', async () => { const s = await job('S8 เซ็นลงนามแล้ว', 'V4', () => checkin({ list: 'Filled', sign: 'Filled' })); await signModal(s, 'Filled'); return s; }],
+    ['Filled ตรวจ + เซ็น 2 ฝ่าย ปุ่ม “ยืนยันรับรถ” จะ Enable', () => job('S8 เซ็น 2 ฝ่าย', 'V4', () => checkin({ list: 'Filled', sign: 'Signed' }))]]],
   ['S9 · กบค. เพิ่มการติดตามผลการดำเนินการ overhaul', [   // 3 state ตามจอ J.1–J.3 ที่เจ้าของงานส่ง 21 ต.ค. 2569 (R23) · toast 17/18 อยู่บนหน้า toast แยกแล้ว · lightbox ถอด
     ['ยังไม่มีความคืบหน้า', () => job('S9 ว่าง', 'V5', () => logs([]))],
     ['เพิ่มความคืบหน้า', async () => { const s = await job('S9 เพิ่ม', 'V5', () => logs([])); await formModal(s, { title: 'เพิ่มความคืบหน้า', fields: LOG_FIELDS(null) }); return s; }],
@@ -1443,6 +1472,7 @@ function stripDividers(root) {
 }
 
 /* แต่งจอตามรีวิว 19 ต.ค. 2569 (ใช้ทั้งตอนสร้างและปุ่มแก้เฉพาะจุด): ปิด Info icon ของ Input label · กล่องแสดงข้อมูล (display) */
+function insideInstance(n, stop) { for (let p = n.parent; p && p !== stop; p = p.parent) if (p.type === 'INSTANCE') return true; return false; }
 async function polish(root) {
   let info = 0, disp = 0;
   for (const l of root.findAll(n => n.type === 'INSTANCE' && n.name === 'Input label')) {
@@ -1453,7 +1483,14 @@ async function polish(root) {
     const cp = n.componentProperties || {}, k = Object.keys(cp).find(x => x.split('#')[0] === 'Info icon');
     if (k && cp[k].value !== false) { setProps(n, { 'Info icon': false }); info++; }
   }
-  for (const b of root.findAll(n => n.type === 'FRAME' && n.name === 'Content item' && n.children.some(c => c.name === 'Content item row'))) { await displayBox(b); disp++; }
+  // R5: Section label / Section header ที่ซ้อนใน component ของทีมออกแบบ (Modal Signature ฯลฯ · 22 ต.ค. 2569) อาจเปิด Info icon / More actions — ปิดให้ทุกตัว (แบบเดียวกับ plugin-lib/core.js)
+  for (const n of root.findAll(n => n.type === 'INSTANCE' && (n.name === 'Section label' || n.name === 'Section header'))) {
+    const cp = n.componentProperties || {}, fix = {};
+    for (const k of ['Info icon', 'More actions']) { const key = Object.keys(cp).find(x => x.split('#')[0] === k); if (key && cp[key].value !== false) fix[k] = false; }
+    if (Object.keys(fix).length) { setProps(n, fix); info++; }
+  }
+  // กล่องแสดงข้อมูล: แต่งเฉพาะกรอบที่ปลั๊กอินสร้าง — กรอบ Content item ข้างใน component ของทีมออกแบบ (Modal Signature) แต่งไว้แล้ว ไม่แตะ
+  for (const b of root.findAll(n => n.type === 'FRAME' && n.name === 'Content item' && n.children.some(c => c.name === 'Content item row') && !insideInstance(n, root))) { await displayBox(b); disp++; }
   return { info, disp };
 }
 
@@ -1726,7 +1763,8 @@ async function buildToast(o) { await buildSet('overhaul-toast', TOAST_SCENARIOS,
    ชื่อเฟรมที่รู้จัก: 19 ต.ค. "OH2 / S1 — label[ · mobile]" · หลังจัดวางใหม่ "OH2 / B.1 · S1 — label[ · mobile]" ---------- */
 const SCEN_TAGS = SCENARIOS.map(([title]) => title.split(' · ')[0]);
 const normLabel = (s) => String(s).replace(/\s*\([^()]*\)\s*$/, '').replace(/\s+/g, ' ').trim();   // ตัดวงเล็บท้าย เช่น "(toast 2)" "(เติมค่าเดิม)"
-const STATE_ALIAS = { 'S2|กดแก้ไขในเมนู … → ฟอร์มแก้ไข (เติมค่าเดิม)': 'ฟอร์มแก้ไข (Prefield ข้อมูลที่สร้างไว้)', 'S2|บันทึกสำเร็จ (toast 3)': 'บันทึกสำเร็จ', 'S3|เมนู "…" → ลบ': 'เมนู "…" → ลบ ในหน้า List', 'S3|กดลบในเมนู … → ยืนยันการลบแผน': 'ยืนยันการลบแผน ในหน้า List', 'S3|ลบสำเร็จ (toast 4)': 'ลบสำเร็จ (ลบที่ List or Detail ก็กลับมานี่)',   // บล็อก C · D ฉบับเจ้าของงาน 22 ต.ค.
+const STATE_ALIAS = { 'S8|หน่วยงานยืนยันนัดแล้ว → รายการตรวจสอบ (toast 15)': 'Default', 'S8|ตรวจครบ + ลงนาม 2 ฝ่าย': 'Filled ตรวจ + เซ็น 2 ฝ่าย ปุ่ม “ยืนยันรับรถ” จะ Enable',   // บล็อก I ฉบับเจ้าของงาน 22 ต.ค. ดึก
+  'S2|กดแก้ไขในเมนู … → ฟอร์มแก้ไข (เติมค่าเดิม)': 'ฟอร์มแก้ไข (Prefield ข้อมูลที่สร้างไว้)', 'S2|บันทึกสำเร็จ (toast 3)': 'บันทึกสำเร็จ', 'S3|เมนู "…" → ลบ': 'เมนู "…" → ลบ ในหน้า List', 'S3|กดลบในเมนู … → ยืนยันการลบแผน': 'ยืนยันการลบแผน ในหน้า List', 'S3|ลบสำเร็จ (toast 4)': 'ลบสำเร็จ (ลบที่ List or Detail ก็กลับมานี่)',   // บล็อก C · D ฉบับเจ้าของงาน 22 ต.ค.
   'S1|ฟอร์มสร้างแผน (ว่าง)': 'ฟอร์มสร้างแผน Default', 'S1|กดบันทึกโดยยังไม่ครบ': 'Validation กรณีไม่ได้เลือก, Out of focus', 'S1|กรอกครบ': 'Filled', 'S1|บันทึกไม่สำเร็จ (toast 2)': 'บันทึกไม่สำเร็จ', 'S1|บันทึกสำเร็จ (toast 1)': 'บันทึกสำเร็จ',   // บล็อก B ฉบับเจ้าของงาน 22 ต.ค.
   'ผลกรองด้วยรถ': 'ผลกรองด้วยประเภทยานพาหนะ', 'ระบุอะไหล่แล้ว': 'นำเข้าไฟล์สำเร็จ (toast 23)', 'ยืนยันรับรถแล้ว ยังไม่มีความคืบหน้า': 'ยังไม่มีความคืบหน้า', 'ติ๊กรถแล้วกดเพิ่ม': 'เลือกรถ (พิมพ์ค้นแล้วเลือกจาก dropdown)', 'รายการแผน (13 คอลัมน์ · ไอคอนจัดการ · pagination)': 'รายการแผน', 'รายการแผน (component Table · ปุ่ม … · pagination)': 'รายการแผน', 'ตัวกรอง (ปีงบ · สถานะ · ประเภทยานพาหนะ · ช่วงวงเงิน)': 'ตัวกรอง', 'กดไอคอนแก้ไข → ฟอร์มแก้ไข (เติมค่าเดิม)': 'กดแก้ไขในเมนู … → ฟอร์มแก้ไข (เติมค่าเดิม)', 'กดไอคอนลบ → ยืนยันการลบแผน': 'กดลบในเมนู … → ยืนยันการลบแผน', 'กดไอคอนแก้ไขของ PO → ฟอร์มแก้ไข PO': 'กดแก้ไขในเมนู … ของ PO → ฟอร์มแก้ไข PO', 'กดไอคอนลบของ PO → ยืนยันการลบ PO': 'กดลบในเมนู … ของ PO → ยืนยันการลบ PO', 'รายการแผน (component Table · ไอคอนจัดการ · pagination)': 'รายการแผน' };   // ชื่อฉบับ CF เช้า (ไอคอน) → ฉบับเจ้าของงานค่ำ (ปุ่ม … + เมนู)   // ชื่อ state เดิมที่เทียบด้วยกติกาทั่วไปไม่ได้ (รายการท้าย = ชื่อฉบับ CF เช้า 21 ต.ค. → ชื่อตามจอ J ของเจ้าของงาน)
 const REMOVED_STATES = ['เปิดแก้ไขแผนที่ถูกลบไปแล้ว (toast 6)', 'ดูรูปแนบ (lightbox)', 'ผลกรองด้วยประเภทยานพาหนะ', 'ค้นหา พิมพ์ 3 ตัวอักษร ขึ้น autocomplete'];   // บล็อก A ของเจ้าของงาน (21 ต.ค. ค่ำ) เหลือ 4 state: รายการแผน · ตัวกรอง · ค้นไม่เจอ · ยังไม่มีแผน   // lightbox ไม่อยู่ในจอ J ที่เจ้าของงานส่ง (R23) · state เมนู "…" ที่ CF เคยตัด กลับมาแล้ว 21 ต.ค. ค่ำ (เจ้าของงาน)
