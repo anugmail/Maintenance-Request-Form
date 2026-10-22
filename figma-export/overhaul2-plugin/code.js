@@ -1380,18 +1380,19 @@ const SCENARIOS = [
   // บล็อก C · D ฉบับเจ้าของงาน 22 ต.ค. 2569 — "อ่าน scen C and D และ Design ให้เป็นต้นแบบในการ export ครั้งต่อไป" (component-rules §4.2.2 · ข้อความดิบ figma-ref/overhaul-CD-2569-10-22.txt)
   ['S2 · กบค. แก้ไขแผน', [
     ['เมนู "…" → แก้ไข', async () => { const s = await listScreen('S2 เมนู', CF_LIST); menuAt(s, firstMenuCell(s), MENU); return s; }],
-    ['ฟอร์มแก้ไข (Prefield ข้อมูลที่สร้างไว้)', () => planForm('S2 ฟอร์มแก้ไข', { edit: true, planNo: NEW_PLAN[0], values: FILLED })],
-    ['ปุ่ม “ยกเลิก” → ยืนยันการออก (กรณีที่มีการแก้ไขเกิดขึ้น)', async () => { const s = await planForm('S2 ยืนยันการออก', { edit: true, planNo: NEW_PLAN[0], values: FILLED });
+    ['ฟอร์มแก้ไข Prefield ข้อมูลที่สร้างไว้', () => planForm('S2 ฟอร์มแก้ไข', { edit: true, planNo: NEW_PLAN[0], values: FILLED })],
+    ['“ยกเลิก” → ยืนยันการออก กรณีที่มีการแก้ไขเกิดขึ้น', async () => { const s = await planForm('S2 ยืนยันการออก', { edit: true, planNo: NEW_PLAN[0], values: FILLED });
       await confirm(s, { title: 'ยืนยันการออก', sub: 'ข้อมูลที่แก้ไขไว้จะไม่ถูกบันทึก', cancel: 'ปิด', ok: 'ยืนยัน' }); return s; }],
     ['ยืนยันการแก้ไขแผน', async () => { const s = await planForm('S2 ยืนยันการแก้ไข', { edit: true, planNo: NEW_PLAN[0], values: FILLED });
       await confirm(s, { title: 'ยืนยันการแก้ไข', sub: 'เมื่อยืนยันการแก้ไขแล้วจะไม่สามารถย้อนกลับได้ โปรดตรวจสอบก่อนยืนยัน', cancel: 'ยกเลิก', ok: 'ยืนยัน' }); return s; }],
     ['บันทึกสำเร็จ', async () => { const s = await planDetail('S2 บันทึกสำเร็จ', { plan: NEW_PLAN, pos: [], badge: ['ยังไม่มี PO', 'Gray'] }); await toast(s, C_TOAST_OK); return s; }]]],
   ['S3 · กบค. ลบแผน', [
+    // ลำดับคอลัมน์ตามเฟรมเจ้าของงาน 22 ต.ค. ดึก: เส้นหน้า List (D.1.1 → D.2.1 → D.3) แล้วเส้นหน้า Detail (D.1.2 → D.2.2)
     ['เมนู "…" → ลบ ในหน้า List', async () => { const s = await listScreen('S3 เมนู', CF_LIST); menuAt(s, firstMenuCell(s), MENU); return s; }, '1.1'],
-    ['ปุ่ม “ลบแผน” ในหน้า Detail', () => planDetail('S3 ปุ่มลบแผน', { plan: NEW_PLAN, pos: [], badge: ['ยังไม่มี PO', 'Gray'] }), '1.2'],
     ['ยืนยันการลบแผน ในหน้า List', async () => { const s = await listScreen('S3 ยืนยันการลบ List', CF_LIST); await confirm(s, D_CONFIRM); return s; }, '2.1'],
-    ['ยืนยันการลบแผน ในหน้า Detail', async () => { const s = await planDetail('S3 ยืนยันการลบ Detail', { plan: NEW_PLAN, pos: [], badge: ['ยังไม่มี PO', 'Gray'] }); await confirm(s, D_CONFIRM); return s; }, '2.2'],
-    ['ลบสำเร็จ (ลบที่ List or Detail ก็กลับมานี่)', async () => { const s = await listScreen('S3 ลบสำเร็จ', CF_LIST); await toast(s, D_TOAST_OK); return s; }, '3']]],
+    ['ลบสำเร็จ (ลบที่ List or Detail ก็กลับมานี่)', async () => { const s = await listScreen('S3 ลบสำเร็จ', CF_LIST); await toast(s, D_TOAST_OK); return s; }, '3'],
+    ['ปุ่ม “ลบแผน” ในหน้า Detail', () => planDetail('S3 ปุ่มลบแผน', { plan: NEW_PLAN, pos: [], badge: ['ยังไม่มี PO', 'Gray'] }), '1.2'],
+    ['ยืนยันการลบแผน ในหน้า Detail', async () => { const s = await planDetail('S3 ยืนยันการลบ Detail', { plan: NEW_PLAN, pos: [], badge: ['ยังไม่มี PO', 'Gray'] }); await confirm(s, D_CONFIRM); return s; }, '2.2']]],
   ['S4 · กบค. สร้าง Purchase order', [
     ['รายละเอียดแผน (ยังไม่มี PO)', () => planDetail('S4 แผนยังไม่มี PO', { plan: PLANS[2], pos: [] })],
     ['ฟอร์ม PO (ว่าง)', () => poForm('S4 ฟอร์ม PO (ว่าง)', {})],
@@ -1764,7 +1765,8 @@ async function buildToast(o) { await buildSet('overhaul-toast', TOAST_SCENARIOS,
 const SCEN_TAGS = SCENARIOS.map(([title]) => title.split(' · ')[0]);
 const normLabel = (s) => String(s).replace(/\s*\([^()]*\)\s*$/, '').replace(/\s+/g, ' ').trim();   // ตัดวงเล็บท้าย เช่น "(toast 2)" "(เติมค่าเดิม)"
 const STATE_ALIAS = { 'S8|หน่วยงานยืนยันนัดแล้ว → รายการตรวจสอบ (toast 15)': 'Default', 'S8|ตรวจครบ + ลงนาม 2 ฝ่าย': 'Filled ตรวจ + เซ็น 2 ฝ่าย ปุ่ม “ยืนยันรับรถ” จะ Enable',   // บล็อก I ฉบับเจ้าของงาน 22 ต.ค. ดึก
-  'S2|กดแก้ไขในเมนู … → ฟอร์มแก้ไข (เติมค่าเดิม)': 'ฟอร์มแก้ไข (Prefield ข้อมูลที่สร้างไว้)', 'S2|บันทึกสำเร็จ (toast 3)': 'บันทึกสำเร็จ', 'S3|เมนู "…" → ลบ': 'เมนู "…" → ลบ ในหน้า List', 'S3|กดลบในเมนู … → ยืนยันการลบแผน': 'ยืนยันการลบแผน ในหน้า List', 'S3|ลบสำเร็จ (toast 4)': 'ลบสำเร็จ (ลบที่ List or Detail ก็กลับมานี่)',   // บล็อก C · D ฉบับเจ้าของงาน 22 ต.ค.
+  'S2|กดแก้ไขในเมนู … → ฟอร์มแก้ไข (เติมค่าเดิม)': 'ฟอร์มแก้ไข Prefield ข้อมูลที่สร้างไว้', 'S2|ฟอร์มแก้ไข (Prefield ข้อมูลที่สร้างไว้)': 'ฟอร์มแก้ไข Prefield ข้อมูลที่สร้างไว้', 'S2|ปุ่ม “ยกเลิก” → ยืนยันการออก (กรณีที่มีการแก้ไขเกิดขึ้น)': '“ยกเลิก” → ยืนยันการออก กรณีที่มีการแก้ไขเกิดขึ้น',   // ชื่อ C.2 C.3 ฉบับเจ้าของงาน 22 ต.ค. ดึก
+   'S2|บันทึกสำเร็จ (toast 3)': 'บันทึกสำเร็จ', 'S3|เมนู "…" → ลบ': 'เมนู "…" → ลบ ในหน้า List', 'S3|กดลบในเมนู … → ยืนยันการลบแผน': 'ยืนยันการลบแผน ในหน้า List', 'S3|ลบสำเร็จ (toast 4)': 'ลบสำเร็จ (ลบที่ List or Detail ก็กลับมานี่)',   // บล็อก C · D ฉบับเจ้าของงาน 22 ต.ค.
   'S1|ฟอร์มสร้างแผน (ว่าง)': 'ฟอร์มสร้างแผน Default', 'S1|กดบันทึกโดยยังไม่ครบ': 'Validation กรณีไม่ได้เลือก, Out of focus', 'S1|กรอกครบ': 'Filled', 'S1|บันทึกไม่สำเร็จ (toast 2)': 'บันทึกไม่สำเร็จ', 'S1|บันทึกสำเร็จ (toast 1)': 'บันทึกสำเร็จ',   // บล็อก B ฉบับเจ้าของงาน 22 ต.ค.
   'ผลกรองด้วยรถ': 'ผลกรองด้วยประเภทยานพาหนะ', 'ระบุอะไหล่แล้ว': 'นำเข้าไฟล์สำเร็จ (toast 23)', 'ยืนยันรับรถแล้ว ยังไม่มีความคืบหน้า': 'ยังไม่มีความคืบหน้า', 'ติ๊กรถแล้วกดเพิ่ม': 'เลือกรถ (พิมพ์ค้นแล้วเลือกจาก dropdown)', 'รายการแผน (13 คอลัมน์ · ไอคอนจัดการ · pagination)': 'รายการแผน', 'รายการแผน (component Table · ปุ่ม … · pagination)': 'รายการแผน', 'ตัวกรอง (ปีงบ · สถานะ · ประเภทยานพาหนะ · ช่วงวงเงิน)': 'ตัวกรอง', 'กดไอคอนแก้ไข → ฟอร์มแก้ไข (เติมค่าเดิม)': 'กดแก้ไขในเมนู … → ฟอร์มแก้ไข (เติมค่าเดิม)', 'กดไอคอนลบ → ยืนยันการลบแผน': 'กดลบในเมนู … → ยืนยันการลบแผน', 'กดไอคอนแก้ไขของ PO → ฟอร์มแก้ไข PO': 'กดแก้ไขในเมนู … ของ PO → ฟอร์มแก้ไข PO', 'กดไอคอนลบของ PO → ยืนยันการลบ PO': 'กดลบในเมนู … ของ PO → ยืนยันการลบ PO', 'รายการแผน (component Table · ไอคอนจัดการ · pagination)': 'รายการแผน' };   // ชื่อฉบับ CF เช้า (ไอคอน) → ฉบับเจ้าของงานค่ำ (ปุ่ม … + เมนู)   // ชื่อ state เดิมที่เทียบด้วยกติกาทั่วไปไม่ได้ (รายการท้าย = ชื่อฉบับ CF เช้า 21 ต.ค. → ชื่อตามจอ J ของเจ้าของงาน)
 const REMOVED_STATES = ['เปิดแก้ไขแผนที่ถูกลบไปแล้ว (toast 6)', 'ดูรูปแนบ (lightbox)', 'ผลกรองด้วยประเภทยานพาหนะ', 'ค้นหา พิมพ์ 3 ตัวอักษร ขึ้น autocomplete'];   // บล็อก A ของเจ้าของงาน (21 ต.ค. ค่ำ) เหลือ 4 state: รายการแผน · ตัวกรอง · ค้นไม่เจอ · ยังไม่มีแผน   // lightbox ไม่อยู่ในจอ J ที่เจ้าของงานส่ง (R23) · state เมนู "…" ที่ CF เคยตัด กลับมาแล้ว 21 ต.ค. ค่ำ (เจ้าของงาน)
