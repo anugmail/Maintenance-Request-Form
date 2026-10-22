@@ -72,6 +72,14 @@ const PARTS = [   // รายการ · รหัส · หมวด · จ�
   ['ไส้กรองน้ำมันเครื่อง', 'FL-0031', 'ไส้กรอง', '12', 'ชิ้น', '40', 'ok'],
   ['น้ำมันเครื่อง 15W-40', 'OL-0046', 'น้ำมัน', '216', 'ลิตร', '600', 'ok'],
   ['จาระบีอเนกประสงค์', 'GR-0007', 'หล่อลื่น', '24', 'กก.', '10', 'short']];
+/* อะไหล่แบบงานซ่อม (22 ต.ค. 2569 "ปรับอะไหล่ให้สอดคล้องกับงานซ่อม"): คลัง 2 แบบ Smart Inventory / คลังสำรอง · ราคาต่อหน่วย (ค่าสมมติ) ·
+   จำนวนตามแผนเกินคงเหลือ = ซื้อเพิ่มส่วนต่าง + เลือกผู้จัดซื้อ · ผู้จัดซื้อในบำรุงรักษา = Smart Inventory หรือ ผพจ. (S3) แทน "กบค." ของงานซ่อม — รอเคาะ */
+const WH = ['Smart Inventory', 'Smart Inventory', 'Smart Inventory', 'คลังสำรอง', 'คลังสำรอง'];
+const PRICE = [120, 680, 250, 95, 180];
+const BUYER = ['Smart Inventory', 'ผพจ.'];
+const BUYER_OF = { 1: 0, 4: 1 };   // อะไหล่ที่ขาด → ผู้จัดซื้อที่เลือกไว้ (ไส้กรองไฮโดรลิก = Smart Inventory · จาระบี = ผพจ.)
+const baht = (n) => n.toLocaleString('en-US') + ' บาท';
+const shortOf = (i) => Math.max(0, +PARTS[i][3] - +PARTS[i][5]);
 const TST = { sent: ['ส่งแจ้งแล้ว', 'Info'], done: ['ดำเนินการแล้ว', 'Success'] };
 const TRIP = { place: 'จุดรวมงาน กฟฉ.1 ขอนแก่น', d1: '03/11/2569', d2: '07/11/2569', staff: ['นายวิชัย ทองดี', 'นางสาวกนกวรรณ ใจมั่น', 'นายสมชาย พูลสุข'], perDiem: '7,200', lodging: '9,600', travel: '4,850' };
 const TRIPS = [[TRIP.place, TRIP.d1 + ' – ' + TRIP.d2, '6', 'กบค. (ตรวจเอง)', 'sent']];
@@ -102,6 +110,27 @@ async function radioPick(title, options, sel, o) {
     if (MOB) add(r, c, 'h'); else { r.appendChild(c); c.layoutGrow = 1; }
   });
   return col('Section', [await (o.label ? sectionLabel(title) : section(title)), r], 16);
+}
+/* เลือกรถหลายคัน (เจ้าของงานสั่ง 22 ต.ค. 2569 "ใช้แบบ Overhaul ช่องค้นหากับชิป") = แบบ R24 ของ Overhaul:
+   Input dropdown ช่องเดียว "เลือกรถ" พิมพ์ค้นทะเบียน/จังหวัด → Dropdown list แถวละทะเบียน (คันที่เลือกแล้ว State=Selected) → รถที่เลือกเป็นชิป Badge outline with remove icon ใต้ช่อง
+   ไม่ใช้ dual list แล้ว · ใช้ทั้ง desktop และ mobile (mobile ช่องเต็มแถว) · งานซ่อมเลือกรถคันเดียวด้วยช่องค้นทะเบียนแบบเดียวกัน (Dropdown/Search PEA with request) */
+async function carPick(title, cands, sel, o) {
+  o = o || {};
+  const right = cands.filter((_, i) => sel.indexOf(i) >= 0);
+  const f = dropdown('เลือกรถ', o.query || '', { placeholder: 'ค้นหาทะเบียน, จังหวัด', lead: 'search-24-300-round', state: o.open ? 'Focused' : undefined, error: o.error || '' });
+  let chips = null;
+  if (right.length) {
+    chips = frame('Selected cars', 'HORIZONTAL', { gap: 8 });
+    try { chips.layoutWrap = 'WRAP'; chips.counterAxisSpacing = 8; } catch (e) { /* ไฟล์เก่าไม่มี wrap */ }
+    right.forEach(c => chips.appendChild(inst('Badge outline with remove icon', { Color: 'Brand' }, { Text: c[0] })));
+  }
+  const sec = col('Section', [await section(title, { badge: right.length || null }), MOB ? f : row('Row', [f, frame('Spacer', 'VERTICAL')]), chips], 16);
+  const open = (scr) => {   // รายการที่ตรงคำค้น · คันที่เลือกแล้วติ๊ก Selected · แถวเดียวไม่มีบรรทัดรอง
+    if (!o.open) return;
+    const list = cands.map((c, i) => [c, i]).filter(([c]) => !o.query || c[0].indexOf(o.query) >= 0);
+    comboAt(scr, f.findOne(n => n.name === 'Container') || f, list.map(([c, i]) => [c[0], '', sel.indexOf(i) >= 0]));
+  };
+  return { sec, open };
 }
 /* กล่องข้อมูลรถ — ยืม VehicleAndReporterInfo (หน้า รายละเอียดงานซ่อม): Section label + Content item row แถวละ 4 · ไม่มี/mobile → Section label + กล่องแสดงข้อมูล (R12) */
 async function vehicleInfo(pairs, title) {
@@ -145,8 +174,32 @@ async function photoUploads(list, filled, errors) {
 }
 const partRow = (p, i, o) => [p[0], p[1], p[2], p[3], p[4], p[5], { pill: o && o.result ? PSTAT[o.result === 'short' ? p[6] : 'ok'] : o && o.picked && o.picked.indexOf(i) >= 0 ? PSTAT.reserved : [' ', 'Gray'] }];
 const PART_COLS = [['รายการอะไหล่', 0, 'Lead text', 'Swap'], ['รหัส', 100], ['หมวด', 110], ['ตามแผน', 100], ['หน่วย', 90], ['คงเหลือในคลัง', 130], ['สถานะ', 140, 'Badge']];
-/* เบิก/จองอะไหล่ — ยืม PartRequestStepPanel (ขั้นเบิกอะไหล่ของงานซ่อม = PartsInventoryPanel "คลังอะไหล่" Smart Inventory + RequestedPartsPanel "อะไหล่ที่ต้องการใช้งาน")
-   · mobile / ไฟล์ที่ไม่มี component → ตาราง Table ของไลบรารี */
+/* ใส่ข้อความการ์ดอะไหล่ (Spare Part Card Item) — จับชั้นข้อความจากข้อความตัวอย่างของ component ไม่ใช้ลำดับ (การ์ดในแผง Filled วางชั้นต่างจากตัวแม่):
+   รหัส · "1 หน่วย" · "| 680 บาท" (ราคาต่อหน่วย) · "<คลัง> : คงเหลือ n" · "| ต้องจัดซื้อ n" · ราคารวมของการ์ด (Text "3,400 บาท") */
+async function fillPartCard(c, i, o) {
+  o = o || {};
+  const part = PARTS[i], unit = part[4];
+  const own = (n) => !findInstanceAncestorIn(n, c);
+  const sup = c.findAll(n => n.type === 'TEXT' && n.name === 'Supporting text' && own(n));
+  const orig = sup.map(t => t.characters || '');
+  await text(c, 'Name', part[0]);
+  if (sup[0]) await text(c, sup[0], part[1]);
+  for (const [k, t] of sup.entries()) {
+    const was = orig[k];
+    if (k === 0 || was === '·' || was === '|') continue;
+    if (/คงเหลือ/.test(was)) await text(c, t, WH[i] + ' : คงเหลือ ' + o.stock + ' ' + unit);
+    else if (/^(ต้องจัดซื้อ|ซื้อเพิ่ม)/.test(was)) { if (o.buy > 0) await text(c, t, 'ต้องจัดซื้อ ' + o.buy + ' ' + unit); }   // แถวนี้ซ่อนด้วย property จัดซื้อเพิ่ม เมื่อไม่ขาด
+    else if (/หน่วย$/.test(was)) await text(c, t, '1 ' + unit);
+    else if (/บาท$/.test(was)) await text(c, t, baht(PRICE[i]));
+  }
+  if (o.qty != null) {
+    const line = c.findAll(n => n.type === 'TEXT' && n.name === 'Text' && own(n))[0];
+    if (line) await text(c, line, baht(o.qty * PRICE[i]));
+  }
+}
+/* เบิก/จองอะไหล่ — ยืม PartRequestStepPanel (ขั้นเบิกอะไหล่ของงานซ่อม = PartsInventoryPanel "คลังอะไหล่" + RequestedPartsPanel "อะไหล่ที่ต้องการใช้งาน")
+   ตามแบบงานซ่อม (22 ต.ค. 2569): การ์ดคลังบอกคลังและคงเหลือ · การ์ดที่เลือกมีจำนวน + ราคารวม · ถ้าเกินคงเหลือ = "| ซื้อเพิ่ม n" + Helper "จำนวนที่เกินยอดในคลัง…" + เลือกผู้จัดซื้อ (Radio text card)
+   o.inv = 'Default' | 'Not Found' | 'API error' (สถานะของ PartsInventoryPanel) · mobile / ไฟล์ที่ไม่มี component → ตาราง Table ของไลบรารี */
 async function partsPanel(o) {
   o = o || {};
   const picked = o.picked || [];
@@ -154,19 +207,16 @@ async function partsPanel(o) {
     const p = inst('PartRequestStepPanel'); p.name = 'PartRequestStepPanel';
     const inv = find(p, 'PartsInventoryPanel'), req = find(p, 'RequestedPartsPanel');
     if (inv) {
-      setProps(inv, { State: 'Default' });
+      setProps(inv, { State: o.inv || 'Default' });
       const sh = find(inv, 'Section header');
-      if (sh) { setProps(sh, { Title: 'คลังอะไหล่', 'Supporting text': true, 'More actions': false, Badge: false, Actions: false }); await text(sh, 'Supporting text', 'อะไหล่ตามแผนจาก Smart Inventory และคลังสำรอง'); }
-      const ti = find(inv, 'Text input'); if (ti) setProps(ti, { Text: 'ค้นหาชื่อหรือรหัสอะไหล่', Label: false, Helper: false, 'Info icon': false });
+      if (sh) { setProps(sh, { Title: 'คลังอะไหล่', 'Supporting text': true, 'More actions': false, Badge: false, Actions: false }); await text(sh, 'Supporting text', 'อะไหล่ทั้งหมดจาก Smart Inventory และ คลังสำรอง'); }
+      const ti = find(inv, 'Text input'); if (ti) setProps(ti, { Text: o.query || 'ค้นหาชื่อหรือรหัสอะไหล่', Label: false, Helper: false, 'Info icon': false });
       const cards = inv.findAll(n => n.type === 'INSTANCE' && n.name === 'Spare Part Card Item');
       for (const [i, c] of cards.entries()) {
         const part = PARTS[i];
         if (!part) { c.visible = false; continue; }
         setProps(c, { Suggestion: false, Select: picked.indexOf(i) >= 0, Add: picked.indexOf(i) < 0, 'จัดซื้อเพิ่ม': false, 'เลือกผู้จัดซื้อ': false });
-        await text(c, 'Name', part[0]);
-        await text(c, 'Supporting text', part[1] + ' · ' + part[2], 0);
-        await text(c, 'Supporting text', 'Smart Inventory : คงเหลือ ' + part[5] + ' ' + part[4] + ' · ตามแผน ' + part[3] + ' ' + part[4], 1);
-        const inf = find(c, 'Info'); if (inf) inf.visible = false;
+        await fillPartCard(c, i, { stock: part[5] });
       }
     }
     if (req) {
@@ -174,24 +224,45 @@ async function partsPanel(o) {
       const sh = find(req, 'Section header');
       if (sh) { setProps(sh, { Title: 'อะไหล่ที่ต้องใช้ตามแผน', 'Supporting text': true, 'More actions': false, Badge: picked.length > 0, Actions: false }); await text(sh, 'Supporting text', 'ระบบคำนวณจากรถในแผน · เบิก/จองผ่านระบบจองอะไหล่'); const b = find(sh, 'Badge outline'); if (b && picked.length) setProps(b, { Text: String(picked.length) }); }
       const cards = req.findAll(n => n.type === 'INSTANCE' && n.name === 'Spare Part Card Item');
+      // แผงมีการ์ดรายการที่เลือกแค่ 3 ช่อง (instance เพิ่มลูกไม่ได้) ⇒ เรียงรายการที่ต้องจัดซื้อขึ้นก่อนให้เห็น · ตัวเลข Badge และยอดรวมนับทุกรายการ
+      const order = picked.slice().sort((a, b) => (shortOf(b) > 0) - (shortOf(a) > 0));
       let k = 0;
       for (const c of cards) {
         const vp = (c.variantProperties || {})['อะไหล่'];
         if (vp === 'เพิ่มอะไหล่') { c.visible = false; continue; }
-        const part = PARTS[picked[k++]];
+        const i = order[k++], part = PARTS[i];
         if (!part) { c.visible = false; continue; }
-        setProps(c, { Suggestion: false, 'จัดซื้อเพิ่ม': false, 'เลือกผู้จัดซื้อ': false });
-        const nm = find(c, 'Name'); if (nm) await text(c, nm, part[0]);
-        await text(c, 'Supporting text', 'Smart Inventory : คงเหลือ ' + part[5] + ' ' + part[4], 0);
-        const num = find(c, 'Number input'); if (num) setProps(num, { Number: part[3], Label: false, Helper: false });
-        const price = find(c, 'Text'); if (price && price.type === 'TEXT') await text(c, price, part[3] + ' ' + part[4]);
+        const buy = o.result === 'ok' ? 0 : shortOf(i);   // อะไหล่พร้อมครบ = ของเข้าคลังแล้ว ไม่มีซื้อเพิ่ม
+        const stock = o.result === 'ok' ? Math.max(+part[5], +part[3]) : part[5];
+        setProps(c, { Suggestion: false, 'จัดซื้อเพิ่ม': buy > 0, 'เลือกผู้จัดซื้อ': buy > 0 });
+        await fillPartCard(c, i, { stock, buy, qty: +part[3] });
+        const num = find(c, 'Number input');
+        if (num) setProps(num, { Number: part[3], Label: false, Optional: false, 'Info icon': false, Helper: buy > 0, 'Helper text': buy > 0 ? 'จำนวนที่เกินยอดในคลัง จะถูกตั้งเป็นรายการจัดซื้อให้อัตโนมัติ' : '' });
+        if (buy > 0) {
+          const il = find(c, 'Input label'); if (il) setProps(il, { Optional: false, 'Info icon': false, button: false });   // ป้าย "เลือกผู้จัดซื้ออะไหล่เพิ่ม" ไม่บังคับเลือก (มีค่าเริ่มต้น) · ไม่มีปุ่มข้างป้าย
+          c.findAll(n => n.type === 'INSTANCE' && n.name === 'Radio text card').forEach((r, j) => setProps(r, { Text: BUYER[j] || '', Supporting: false, Selected: (BUYER_OF[i] || 0) === j ? 'True' : 'False' }));
+        }
       }
       const addBtn = find(req, 'Secondary button'); if (addBtn) setProps(addBtn, { Text: 'ระบุอะไหล่เพิ่มเติม' });
+      // กล่องรวมค่าอะไหล่ท้ายแผง (แบบงานซ่อม): เบิกจากคลัง · ต้องจัดซื้อ · รวมทั้งหมด — คิดจากทุกรายการที่เลือก
+      const cost = find(req, 'Cost Container');
+      if (cost && picked.length) {
+        let take = 0, buyAmt = 0;
+        picked.forEach(i => { const q = +PARTS[i][3], st = o.result === 'ok' ? q : Math.min(q, +PARTS[i][5]); take += st * PRICE[i]; buyAmt += (q - st) * PRICE[i]; });
+        const csh = find(cost, 'Section header'); if (csh) setProps(csh, { Title: 'รวมค่าอะไหล่', 'Supporting text': false, 'More actions': false, Badge: false, Actions: false });
+        const infos = cost.findAll(n => n.type === 'FRAME' && n.name === 'Purchase Info');
+        const vals = [['เบิกจากคลัง', take], ['ต้องจัดซื้อ', buyAmt]];
+        for (const [j, f] of infos.entries()) { const ts = f.children.filter(x => x.type === 'TEXT'); if (vals[j] && ts[1]) { await text(f, ts[0], vals[j][0]); await text(f, ts[1], baht(vals[j][1])); } }
+        const tot = find(cost, 'Total Cost'); const tt = tot ? tot.children.filter(x => x.type === 'TEXT') : [];
+        if (tt[1]) await text(tot, tt[1], baht(take + buyAmt));
+      }
     }
     return p;
   }
   return col('Section', [await section('รายการอะไหล่ที่ต้องใช้ตามแผน', { badge: PARTS.length }), await tbl(PART_COLS, PARTS.map((p, i) => partRow(p, i, o)))], 16);
 }
+/* ข้อความที่อยู่ใน instance ซ้อน (เช่น Pill หรือปุ่ม) ไม่ใช่ข้อความของการ์ดเอง */
+function findInstanceAncestorIn(n, stop) { let q = n.parent; while (q && q !== stop) { if (q.type === 'INSTANCE') return q; q = q.parent; } return null; }
 /* สรุปรายการเบิก/จอง — ยืม SummaryRequestedParts (modal สรุปรายการอะไหล่ของงานซ่อม) · ไม่มี/mobile → Modal ยืนยัน */
 async function partsSummary(scr, o) {
   if (!MOB && has('SummaryRequestedParts')) {
@@ -209,6 +280,16 @@ async function partsSummary(scr, o) {
         setProps(r, { 'Item 2': true, 'Item 3': true, 'Item 4': true });
         r.children.filter(c => c.name === '_Content item base').forEach((it, j) => { if (pairs[j]) setProps(it, { Label: pairs[j][0], Text: pairs[j][1], Supporting: false, 'Leading icon': false }); });
       });
+    }
+    // ยอดรวมแบบงานซ่อม: เบิกจาก Smart Inventory · เบิกจากคลังสำรอง · จัดซื้อเพิ่มโดย Smart Inventory · จัดซื้อเพิ่มโดย ผพจ. · รวม
+    const sum = { take: [0, 0], buy: [0, 0] };
+    PARTS.forEach((pt, i) => { const q = +pt[3], st = Math.min(q, +pt[5]); sum.take[WH[i] === 'Smart Inventory' ? 0 : 1] += st * PRICE[i]; if (q > st) sum.buy[BUYER_OF[i] || 0] += (q - st) * PRICE[i]; });
+    const lines = [['เบิกจาก Smart Inventory', sum.take[0]], ['เบิกจากคลังสำรอง', sum.take[1]], ['จัดซื้ออะไหล่เพิ่มโดย Smart Inventory', sum.buy[0]], ['จัดซื้ออะไหล่เพิ่มโดย ผพจ.', sum.buy[1]]];
+    const rowsT = m.findAll(n => n.type === 'FRAME' && n.children && n.children.length === 2 && n.children.every(c => c.type === 'TEXT') && /^(Supporting text|Text)$/.test(n.children[0].name) && n.children[1].name === 'Text');
+    let li = 0;
+    for (const r of rowsT) {
+      if (r.children[0].name === 'Supporting text' && lines[li]) { await text(m, r.children[0], lines[li][0]); await text(m, r.children[1], baht(lines[li][1])); li++; }
+      else if (r.children[0].name === 'Text') await text(m, r.children[1], baht(lines.reduce((a, x) => a + x[1], 0)));
     }
     const ft = m.findAll(n => n.type === 'INSTANCE' && /button/.test(n.name) && n.parent && n.parent.name === 'Actions');
     ft.forEach(b => { if (b.name === 'Primary button') setProps(b, { Text: 'ยืนยันเบิก/จอง', 'Leading icon': false, 'Trailing icon': false }); else if (b.name === 'Secondary button') setProps(b, { Text: 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false }); else b.visible = false; });
@@ -234,11 +315,7 @@ async function planForm(name, o) {
   const v = o.values || {}, E = (m) => o.errors ? m : '';
   const { scr, page } = await shell(name, { title: 'สร้างแผนบำรุงรักษา', back: true, crumbs: ['สร้างแผน'] });
   const sel = o.sel || [];
-  const left = CARS.filter((_, i) => sel.indexOf(i) < 0), right = CARS.filter((_, i) => sel.indexOf(i) >= 0);
-  const mid = MOB ? row('Actions', [btn('Secondary button', 'เพิ่ม'), btn('Secondary button', 'นำออก', { disabled: !sel.length })], { gap: 12, keep: true })
-    : col('Actions', [btn('Secondary button', 'เพิ่ม'), btn('Secondary button', 'นำออก', { disabled: !sel.length })], 12);
-  const L = await listCheck('รถที่เข้าเกณฑ์ (' + left.length + ')', left, []), R = await listCheck('เลือกเข้าแผนแล้ว (' + right.length + ')', right, []);
-  const dual = row('Dual list', [L, mid, R], { gap: 16 }); mid.layoutGrow = 0; if (!MOB) mid.primaryAxisAlignItems = 'CENTER';
+  const car = await carPick('เลือกรถเข้าแผน', CARS, sel, { query: o.query, open: o.carOpen, error: sel.length ? '' : E('กรุณาเลือกรถเข้าแผนอย่างน้อย 1 คัน') });
   const partsSec = col('Section', [await section('รายการอะไหล่ที่ต้องใช้ (ระบบคำนวณจากรถที่เลือก)', { badge: sel.length ? PARTS.length : null })], 16);
   if (sel.length) add(partsSec, await tbl(PART_COLS.slice(0, 5), PARTS.map(p => [p[0], p[1], p[2], p[3], p[4]])), 'h');
   else { const es = inst('Empty state/Data empty'); add(partsSec, es, 'h'); await text(es, 'Text', 'ยังไม่มีรายการอะไหล่'); await text(es, 'Supporting text', 'เลือกรถเข้าแผนก่อน ระบบจะคำนวณน้ำมัน ไส้กรอง และอะไหล่ตามรอบให้เอง'); const a = find(es, 'Actions'); if (a) a.visible = false; }
@@ -246,10 +323,11 @@ async function planForm(name, o) {
     col('Section', [await section('ข้อมูลแผน'),
       row('Row', [field('ชื่อแผน', v.name, { placeholder: 'เช่น บำรุงรักษาตามวาระ ปีงบ 2570 รถกระเช้า ภาค 2', error: E('กรุณาระบุชื่อแผน') }), dropdown('ปีงบประมาณ', v.year || '2570')]),
       row('Row', [dropdown('ไตรมาส', v.q || '', { placeholder: 'เลือกไตรมาส', error: E('กรุณาเลือกไตรมาส') }), dropdown('เกณฑ์เลือกรถ', v.rule || '', { placeholder: 'ทรัค / เนต', error: E('กรุณาเลือกเกณฑ์เลือกรถ') })])], 16),
-    col('Section', [await section('เลือกรถเข้าแผน', { badge: right.length }), row('Row', [field('ค้นหารถ', o.query, { placeholder: 'ค้นหาทะเบียน, รุ่น, หน่วยงาน', lead: 1 }), frame('Spacer', 'VERTICAL')]), dual], 16),
+    car.sec,
     partsSec,
     btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'บันทึกและส่งตรวจสอบ', { size: 'lg' }]])
   ], 32), 'h');
+  car.open(scr);
   return scr;
 }
 const FILLED = { name: NEW_PLAN[1], year: '2570', q: 'Q2', rule: 'ทรัค' };
@@ -277,10 +355,9 @@ async function partsScreen(name, o) {
   o = o || {};
   const { scr, page } = await shell(name, { title: 'เบิก/จองอะไหล่ · ' + P[0], back: true, crumbs: ['แผน ' + P[0], 'เบิก/จองอะไหล่'] });
   const nodes = [];
-  if (o.result === 'short') nodes.push(alertBox('Warning', 'ระบบจองอะไหล่ตอบกลับ: จองได้ 3 รายการ · คงเหลือไม่พอ 2 รายการ', 'ไส้กรองไฮโดรลิก · จาระบีอเนกประสงค์ — ส่งรายการให้ ผพจ. จัดซื้อ (S3) แล้ว รอของเข้าคลัง'));
+  if (o.result === 'short') nodes.push(alertBox('Warning', 'ระบบจองอะไหล่ตอบกลับ: จองได้ 3 รายการ · คงเหลือไม่พอ 2 รายการ', 'ไส้กรองไฮโดรลิก ซื้อเพิ่ม 9 ชิ้น โดย Smart Inventory · จาระบีอเนกประสงค์ ซื้อเพิ่ม 14 กก. โดย ผพจ. (S3) — รอของเข้าคลัง'));
   if (o.result === 'ok') nodes.push(alertBox('Success', 'มีอะไหล่พร้อมครบตามแผน', 'จองผ่านระบบจองอะไหล่แล้ว 5 รายการ · เลือกรูปแบบดำเนินการเพื่อไปทำแผนเดินทาง'));
-  if (o.result) nodes.push(col('Section', [await section('รายการอะไหล่ที่ต้องใช้ตามแผน', { badge: PARTS.length }), await tbl(PART_COLS, PARTS.map((p, i) => partRow(p, i, o)))], 16));
-  else nodes.push(await partsPanel(o));
+  nodes.push(await partsPanel(o));   // ผลจองแสดงในแผงการ์ดเดิมแบบงานซ่อม (เลิกใช้ตาราง + ป้ายพร้อม/ขาด · 22 ต.ค. 2569)
   if (o.result === 'ok') nodes.push(await radioPick('รูปแบบดำเนินการ', ['กบค. ดำเนินการเอง — ทำแผนเดินทาง (S6)', 'ว่าจ้างผู้รับจ้าง — ผู้รับจ้างทำแผนเดินทาง (S7)'], o.hire ? 1 : 0));
   nodes.push(btnRow(o.result === 'ok' ? [['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ไปทำแผนเดินทาง', { size: 'lg' }]]
     : o.result === 'short' ? [['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ไปทำแผนเดินทาง', { size: 'lg', disabled: true }]]
@@ -305,22 +382,19 @@ async function tripForm(name, o) {
   const v = o.values || {}, E = (m) => o.errors ? m : '';
   const { scr, page } = await shell(name, { title: 'สร้างแผนเดินทาง', back: true, crumbs: ['แผน ' + P[0], 'สร้างแผนเดินทาง'] });
   const sel = o.sel || [];
-  const left = CARS.filter((_, i) => sel.indexOf(i) < 0), right = CARS.filter((_, i) => sel.indexOf(i) >= 0);
-  const mid = MOB ? row('Actions', [btn('Secondary button', 'เพิ่ม'), btn('Secondary button', 'นำออก', { disabled: !sel.length })], { gap: 12, keep: true })
-    : col('Actions', [btn('Secondary button', 'เพิ่ม'), btn('Secondary button', 'นำออก', { disabled: !sel.length })], 12);
-  const L = await listCheck('รถในแผน (' + left.length + ')', left, []), R = await listCheck('รถที่จะบำรุงรักษาในใบนี้ (' + right.length + ')', right, []);
-  const dual = row('Dual list', [L, mid, R], { gap: 16 }); mid.layoutGrow = 0; if (!MOB) mid.primaryAxisAlignItems = 'CENTER';
+  const car = await carPick('เลือกรถที่จะบำรุงรักษา', CARS, sel, { query: o.query, open: o.carOpen, error: sel.length ? '' : E('กรุณาเลือกรถที่จะบำรุงรักษาอย่างน้อย 1 คัน') });   // ค้นได้เฉพาะรถในแผนนี้
   const d1 = field('วันที่เดินทาง ตั้งแต่', v.d1, { placeholder: 'วว/ดด/ปปปป', error: E('กรุณาเลือกวันที่เริ่ม'), state: o.dateOpen ? 'Focused' : undefined });
   const d2 = field('ถึงวันที่', v.d2, { placeholder: 'วว/ดด/ปปปป', error: E('กรุณาเลือกวันที่สิ้นสุด') });
   const place = dropdown('สถานที่บำรุงรักษา (จุดรวมงาน)', v.place, { placeholder: 'ค้นหาจุดรวมงาน', lead: 'search-24-300-round', error: E('กรุณาเลือกสถานที่บำรุงรักษา') });
   const staff = [0, 1, 2].map(i => dropdown('พนักงาน กบค. ซ่อม คนที่ ' + (i + 1) + (i === 2 ? ' (ถ้ามี)' : ''), v.staff ? v.staff[i] : '', { placeholder: 'ค้นหาชื่อ-นามสกุล, รหัสพนักงาน', lead: 'search-24-300-round', error: i < 2 ? E('กรุณาเลือกพนักงาน') : '' }));
   add(page, col('Content', [
     col('Section', [await section('รายละเอียดแผนเดินทาง'), row('Row', [place, d1, d2])], 16),
-    col('Section', [await section('เลือกรถที่จะบำรุงรักษา', { badge: right.length }), dual], 16),
+    car.sec,
     col('Section', [await section('พนักงาน กบค. ซ่อม (2-3 คน)'), row('Row', staff)], 16),
     col('Section', [await section('ค่าใช้จ่าย (บาท)'), row('Row', [field('ค่าเบี้ยเลี้ยง', v.perDiem, { placeholder: '0', error: E('กรุณาระบุค่าเบี้ยเลี้ยง') }), field('ค่าที่พัก', v.lodging, { placeholder: '0', error: E('กรุณาระบุค่าที่พัก') }), field('ค่าเดินทาง', v.travel, { placeholder: '0', error: E('กรุณาระบุค่าเดินทาง') })])], 16),
     btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันการสร้างแผนเดินทาง', { size: 'lg' }]])
   ], 32), 'h');
+  car.open(scr);
   if (o.dateOpen && !MOB) {   // ปฏิทินช่วงวัน = Date picker Type=Dual ของไลบรารี วางใต้ช่องวันที่
     const dp = inst('Date picker', { Type: 'Dual' }, { 'Time picker': false });
     overlay(scr, dp, 0, 0);
@@ -456,6 +530,7 @@ const SCENARIOS = [
   ['S1 · กบค. สร้างแผนบำรุงรักษา', [
     ['รายการแผน', () => listScreen('S1 รายการแผน', { rows: PLANS })],
     ['ฟอร์มสร้างแผน (ว่าง)', () => planForm('S1 ฟอร์มสร้างแผน', {})],
+    ['พิมพ์ค้นรถ — รายการทะเบียนเปิด', () => planForm('S1 ค้นรถ', { values: FILLED, sel: [0], carOpen: true, query: '82-' })],
     ['กดบันทึกโดยยังไม่ครบ', () => planForm('S1 ยังไม่ครบ', { errors: true })],
     ['เลือกรถแล้ว — ระบบคำนวณอะไหล่', () => planForm('S1 เลือกรถแล้ว', { values: FILLED, sel: [0, 1, 4, 5] })],
     ['ย้อนกลับ — ยืนยันการออก', async () => { const s = await planForm('S1 ยืนยันการออก', { values: FILLED, sel: [0, 1] }); await confirm(s, { title: 'ยืนยันการออก', sub: 'ข้อมูลที่กรอกไว้จะไม่ถูกบันทึก', cancel: 'ปิด', ok: 'ออก' }); return s; }],
@@ -468,6 +543,8 @@ const SCENARIOS = [
     ['ยืนยันจำนวนรถ', async () => { const s = await vehiclesScreen('S4 ยืนยันจำนวนรถ', { removed: true }); await confirm(s, { title: 'ยืนยันจำนวนรถตามแผน', sub: 'รถในแผน 5 คัน · พร้อม 3 · ไม่พร้อม 1 · ยังไม่ตอบ 1 — ไปขั้นเบิกอะไหล่ (S5)', ok: 'ยืนยัน' }); return s; }]]],
   ['S5 · กบค. ตรวจสอบและเบิกอะไหล่ผ่านระบบจองอะไหล่', [
     ['คลังอะไหล่ + อะไหล่ตามแผน (ยังไม่เลือก)', () => partsScreen('S5 คลังอะไหล่', {})],
+    ['ค้นหาอะไหล่ไม่พบ', () => partsScreen('S5 ค้นไม่พบ', { inv: 'Not Found', query: 'ไส้กรองแอร์ FT-0999' })],
+    ['ระบบคลังอะไหล่ขัดข้อง', () => partsScreen('S5 คลังขัดข้อง', { inv: 'API error' })],
     ['เลือกอะไหล่ครบตามแผน', () => partsScreen('S5 เลือกครบ', { picked: [0, 1, 2, 3, 4] })],
     ['สรุปรายการเบิก/จอง', async () => { const s = await partsScreen('S5 สรุปรายการ', { picked: [0, 1, 2, 3, 4] }); await partsSummary(s, { stock: 3, buy: 2 }); return s; }],
     ['ผลจอง — คงเหลือไม่พอ 2 รายการ', () => partsScreen('S5 อะไหล่ขาด', { picked: [0, 1, 2, 3, 4], result: 'short' })],
@@ -511,9 +588,9 @@ const SCENARIOS = [
    ชื่อ state → id กล่องในผัง mermaid ของ Diagram/01-บำรุงรักษาตามวาระ/14-บำรุงรักษา-userflow.md (คั่นด้วยช่องว่างได้หลายกล่อง)
    ไม่ใส่ = ผังยังไม่มีกล่องของจอนี้ ⇒ ปลั๊กอินเขียนบอกใต้ผัง "จอที่ยังไม่มีกล่องในผัง" (รอเติม userflow — ไม่เติมผังเอง) */
 const FLOW_NODES = {
-  S1: { 'รายการแผน': 'D1', 'ฟอร์มสร้างแผน (ว่าง)': 'D2', 'กดบันทึกโดยยังไม่ครบ': 'Q1', 'เลือกรถแล้ว — ระบบคำนวณอะไหล่': 'D3', 'บันทึกสำเร็จ — รอ ผพจ. ตรวจสอบ': 'A3' },
+  S1: { 'รายการแผน': 'D1', 'ฟอร์มสร้างแผน (ว่าง)': 'D2', 'พิมพ์ค้นรถ — รายการทะเบียนเปิด': 'A2', 'กดบันทึกโดยยังไม่ครบ': 'Q1', 'เลือกรถแล้ว — ระบบคำนวณอะไหล่': 'D3', 'บันทึกสำเร็จ — รอ ผพจ. ตรวจสอบ': 'A3' },
   S4: { 'รายการรถในแผน — มีรถสถานะโอน': 'D1', 'ยืนยันนำรถออกจากแผน': 'A2', 'นำรถออกแล้ว': 'A2', 'ยืนยันจำนวนรถ': 'A4' },
-  S5: { 'คลังอะไหล่ + อะไหล่ตามแผน (ยังไม่เลือก)': 'D1', 'เลือกอะไหล่ครบตามแผน': 'A2', 'สรุปรายการเบิก/จอง': 'D2', 'ผลจอง — คงเหลือไม่พอ 2 รายการ': 'D3', 'อะไหล่พร้อมครบ — เลือกรูปแบบดำเนินการ': 'D4' },
+  S5: { 'คลังอะไหล่ + อะไหล่ตามแผน (ยังไม่เลือก)': 'D1', 'ค้นหาอะไหล่ไม่พบ': 'D1', 'ระบบคลังอะไหล่ขัดข้อง': 'D1', 'เลือกอะไหล่ครบตามแผน': 'A2', 'สรุปรายการเบิก/จอง': 'D2', 'ผลจอง — คงเหลือไม่พอ 2 รายการ': 'D3', 'อะไหล่พร้อมครบ — เลือกรูปแบบดำเนินการ': 'D4' },
   S6: { 'แผนเดินทางของแผนนี้ (ยังไม่มี)': 'D1', 'ฟอร์มสร้างแผนเดินทาง (ว่าง)': 'D2', 'เลือกช่วงวันเดินทาง': 'A2', 'กดยืนยันโดยยังไม่ครบ': 'Q1', 'กรอกครบ': 'A4', 'ยืนยันแล้ว — ส่ง Notification': 'D3' },
   S10: { 'รายการรถตามแผนเดินทาง': 'D1', 'บันทึกงาน (ว่าง)': 'D2', 'บำรุงรักษาไม่ได้ — ระบุสาเหตุ': 'A3', 'กดบันทึกโดยยังไม่ครบ': 'Q2', 'กรอกครบ': 'A8', 'บันทึกสำเร็จ': 'A9' },
   S12: { 'งานรายคัน — รอผลตรวจน้ำมัน': 'D1', 'ฟอร์มบันทึกผลตรวจ (ว่าง)': 'D2', 'กรอกครบ': 'A2', 'บันทึกสำเร็จ — แจ้งเจ้าของรถ': 'D3' },

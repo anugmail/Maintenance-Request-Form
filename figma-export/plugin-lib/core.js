@@ -747,7 +747,7 @@ function comboAt(scr, anchor, items) {   // Dropdown list ใต้ช่อง�
   rows.forEach((it, i) => {
     if (i >= items.length) { it.visible = false; return; }
     setProps(it, { State: items[i][2] ? 'Selected' : 'Default' });
-    setProps(it, { Text: items[i][0], 'Supporting text': items[i][1], Avatar: false, 'Supporting 2': false, Supporting: true });
+    setProps(it, { Text: items[i][0], 'Supporting text': items[i][1] || '', Avatar: false, 'Supporting 2': false, Supporting: !!items[i][1] });   // ไม่ส่งบรรทัดรอง = แถวเดียว (เลือกรถ: ทะเบียนอย่างเดียว · ยกจาก Overhaul R24)
   });
   const sc = find(l, 'Vertical scrollbar'); if (sc) sc.visible = false;
   overlay(scr, l, 0, 0);
