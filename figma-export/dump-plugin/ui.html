@@ -1,28 +1,74 @@
 <style>
   body{font:12px/1.5 -apple-system,"IBM Plex Sans Thai",sans-serif;margin:0;padding:14px;color:#1b1b1b}
-  input{width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid #d5d5d5;border-radius:6px;font:inherit}
-  button{margin-top:10px;padding:8px 14px;border:0;border-radius:6px;background:#a80689;color:#fff;font:inherit;cursor:pointer}
-  #log{margin-top:10px;height:210px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
+  input[type=text]{width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid #d5d5d5;border-radius:6px;font:inherit}
+  button{padding:8px 10px;border:0;border-radius:6px;background:#a80689;color:#fff;font:inherit;cursor:pointer}
+  button.secondary{background:#eee;color:#1b1b1b}
+  .row{display:flex;gap:8px;margin-top:8px}
+  .row button{flex:1}
+  #pagesbox{margin-top:8px;max-height:150px;overflow:auto;border:1px solid #eee;border-radius:6px;padding:6px 8px;background:#fafafa}
+  #pageslist label{display:block;padding:2px 0;cursor:pointer}
+  #log{margin-top:10px;height:170px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
+  p{margin:10px 0 2px}
 </style>
-<p>ชื่อโฟลเดอร์ปลายทาง (ใต้ <code>out/figma-dump/</code>)</p>
-<input id="slug" value="component">
-<p style="margin:8px 0 0">กรองเฉพาะหน้าที่ชื่อมีคำนี้ (ว่าง = ทั้งไฟล์) — ใช้ตอนอยากทดสอบทีละหน้าก่อนดัมป์เต็ม</p>
-<input id="pagefilter" placeholder="เช่น Badge">
-<p style="margin:8px 0 0">ปลายทาง <code>http://localhost:8124</code> — ต้องรัน <code>node figma-export/serve.js</code> ค้างไว้</p>
-<button id="go">เริ่มดัมป์</button>
+<p>1. โหลดรายชื่อหน้าในไฟล์ที่เปิดอยู่ แล้วติ๊กเฉพาะหน้าที่ต้องการ (เลือกน้อย = ดัมป์เร็ว)</p>
+<div class="row">
+  <button id="loadpages">โหลดรายชื่อหน้า</button>
+  <button class="secondary" id="selall">เลือกทั้งหมด</button>
+  <button class="secondary" id="selnone">ไม่เลือกเลย</button>
+</div>
+<div id="pagesbox">
+  <div id="pageslist">ยังไม่โหลด — กด "โหลดรายชื่อหน้า" ก่อน</div>
+</div>
+
+<p>2. ชื่อโฟลเดอร์ปลายทาง (ใต้ <code>out/figma-dump/</code>)</p>
+<input type="text" id="slug" value="component">
+
+<p>3. ปลายทาง <code>http://localhost:8124</code> — ต้องรัน <code>node figma-export/serve.js</code> ค้างไว้</p>
+<button id="go" style="margin-top:6px;width:100%">เริ่มดัมป์หน้าที่เลือก</button>
 <div id="log"></div>
 <script>
 const log = (s) => { const d = document.getElementById('log'); d.textContent += s + '\n'; d.scrollTop = d.scrollHeight; };
+let pages = [];
 let total = 0, ok = 0, fail = 0;
-document.getElementById('go').onclick = () => {
-  document.getElementById('log').textContent=''; ok=fail=0;
-  const pageFilter = document.getElementById('pagefilter').value || '';
-  parent.postMessage({pluginMessage:{type:'start', pageFilter}}, '*');
+
+function renderPages() {
+  const box = document.getElementById('pageslist');
+  if (!pages.length) { box.textContent = 'ไฟล์นี้ไม่มีหน้าเลย'; return; }
+  box.innerHTML = pages.map((p) =>
+    '<label><input type="checkbox" value="' + p.id + '"> ' + p.name + '</label>'
+  ).join('');
+}
+
+document.getElementById('loadpages').onclick = () => {
+  document.getElementById('pageslist').textContent = 'กำลังโหลด…';
+  parent.postMessage({ pluginMessage: { type: 'list-pages' } }, '*');
 };
+document.getElementById('selall').onclick = () => {
+  document.querySelectorAll('#pageslist input[type=checkbox]').forEach((c) => (c.checked = true));
+};
+document.getElementById('selnone').onclick = () => {
+  document.querySelectorAll('#pageslist input[type=checkbox]').forEach((c) => (c.checked = false));
+};
+
+document.getElementById('go').onclick = () => {
+  const ids = [...document.querySelectorAll('#pageslist input[type=checkbox]:checked')].map((c) => c.value);
+  if (!ids.length) { log('ยังไม่ได้ติ๊กหน้าไหนเลย — เลือกก่อนแล้วกดใหม่'); return; }
+  document.getElementById('log').textContent = '';
+  ok = fail = 0;
+  parent.postMessage({ pluginMessage: { type: 'start', pageIds: ids } }, '*');
+};
+
 onmessage = async (e) => {
-  const m = e.data.pluginMessage; if (!m) return;
+  const m = e.data.pluginMessage;
+  if (!m) return;
   const slug = (document.getElementById('slug').value || 'dump').trim();
-  if (m.type === 'total') { total = m.total; log('ไฟล์: ' + m.file + ' · ' + total + ' หน้า'); }
+
+  if (m.type === 'pages') {
+    pages = m.pages;
+    renderPages();
+    log('ไฟล์: ' + m.file + ' · ' + pages.length + ' หน้า — ติ๊กหน้าที่ต้องการแล้วกด "เริ่มดัมป์หน้าที่เลือก"');
+  }
+  if (m.type === 'total') { total = m.total; log('เริ่มดัมป์ ' + total + ' หน้าที่เลือกไว้'); }
   if (m.type === 'error') { fail++; log('✗ ' + m.name + ' — ' + m.message); }
   if (m.type === 'page') {
     try {
@@ -32,6 +78,6 @@ onmessage = async (e) => {
       ok++; log('[' + (m.i + 1) + '/' + total + '] ' + m.name + ' — ' + (j.bytes || 0).toLocaleString() + ' ไบต์');
     } catch (err) { fail++; log('✗ ส่งไม่ได้ ' + m.name + ' — ' + err.message + '  (รัน serve.js หรือยัง?)'); }
   }
-  if (m.type === 'done') log('— จบ — สำเร็จ ' + ok + ' หน้า · ล้มเหลว ' + fail);
+  if (m.type === 'done' && total) log('— จบ — สำเร็จ ' + ok + ' หน้า · ล้มเหลว ' + fail);
 };
 </script>

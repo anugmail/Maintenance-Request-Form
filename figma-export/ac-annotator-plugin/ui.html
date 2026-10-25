@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<style>
+  body { font-family: Inter, "IBM Plex Sans Thai", sans-serif; margin: 0; padding: 16px; font-size: 13px; color: #1a1a1a; }
+  h1 { font-size: 14px; margin: 0 0 4px; }
+  p.sub { color: #666; margin: 0 0 14px; line-height: 1.5; }
+  select { width: 100%; padding: 8px 9px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px; margin-bottom: 4px; }
+  #scopenote { font-size: 11px; color: #a84b06; margin: 0 0 10px; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .row { display: flex; gap: 8px; margin-bottom: 10px; }
+  button { flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-size: 13px; }
+  button.primary { background: #18794e; color: #fff; border-color: #18794e; }
+  button.secondary { background: #fff; color: #333; }
+  button.danger { background: #b31212; color: #fff; border-color: #b31212; }
+  button.warn { background: #d98c0d; color: #fff; border-color: #d98c0d; }
+  #selbox { margin-bottom: 10px; padding: 8px 10px; border-radius: 6px; background: #eef2ff; font-size: 12px; line-height: 1.6; white-space: pre-wrap; }
+  #selbox.empty { background: #f4f4f4; color: #888; }
+  hr { border: none; border-top: 1px solid #e5e5e5; margin: 14px 0; }
+  details summary { cursor: pointer; font-size: 12px; color: #555; margin-bottom: 8px; }
+  #result { margin-top: 12px; padding: 10px; border-radius: 6px; background: #f4f4f4; white-space: pre-wrap; line-height: 1.5; min-height: 40px; }
+  #result.ok { background: #e8f5e9; }
+  #result.err { background: #fdecea; }
+  #result.warn { background: #fff4e0; }
+</style>
+</head>
+<body>
+  <h1>AC annotator — Overhaul</h1>
+  <p class="sub">เลือกเฟรมในหน้า Figma (เลือกได้หลายเฟรมพร้อมกัน) แล้วกด "แปะ AC ตามเฟรมที่เลือก" — ปลั๊กอินอ่านชื่อเฟรมเอง จับคู่กับ AC ที่ตรง ไม่ต้องเลือกจาก dropdown</p>
+
+  <div id="selbox" class="empty">ยังไม่ได้เลือกอะไรในหน้า Figma</div>
+
+  <div class="row">
+    <button class="primary" id="btn-auto">แปะ AC ตามเฟรมที่เลือก</button>
+  </div>
+  <div class="row">
+    <button class="danger" id="btn-clear">ล้างป้ายที่แปะไว้</button>
+  </div>
+
+  <div id="result">ยังไม่ได้ทำอะไร</div>
+
+  <hr>
+  <details id="manual">
+    <summary>auto หาไม่เจอ หรืออยากเลือกเอง — เปิดดู dropdown</summary>
+    <select id="entry"><option value="">กำลังโหลดรายการ…</option></select>
+    <p id="scopenote">ครอบทุก scenario ของ Overhaul (S1-S14: A ถึง O) — ถ้าเลือกเฟรมแล้วไม่มีตัวเลือกขึ้นมาเลย แปลว่าเฟรมนั้นยังไม่มี AC</p>
+    <div class="row">
+      <button class="secondary" id="btn-annotate" disabled>แปะ AC ที่เลือกจาก dropdown</button>
+    </div>
+    <div class="row" id="row-confirm" style="display:none">
+      <button class="warn" id="btn-confirm">ยืนยัน แปะทั้งที่ชื่อไม่ตรง</button>
+    </div>
+  </details>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const result = $('result');
+    const selbox = $('selbox');
+
+    parent.postMessage({ pluginMessage: { type: 'list' } }, '*');
+
+    $('btn-auto').onclick = () => parent.postMessage({ pluginMessage: { type: 'annotate-auto' } }, '*');
+    $('btn-clear').onclick = () => parent.postMessage({ pluginMessage: { type: 'clear' } }, '*');
+
+    const doAnnotate = (force) => {
+      const key = $('entry').value;
+      parent.postMessage({ pluginMessage: { type: 'annotate', key, force: !!force } }, '*');
+    };
+    $('btn-annotate').onclick = () => { $('row-confirm').style.display = 'none'; doAnnotate(false); };
+    $('btn-confirm').onclick = () => { $('row-confirm').style.display = 'none'; doAnnotate(true); };
+    $('entry').onchange = () => { $('btn-annotate').disabled = !$('entry').value; };
+
+    onmessage = (e) => {
+      const msg = e.data.pluginMessage;
+      if (!msg) return;
+      if (msg.type === 'entries') {
+        const GROUPS = [
+          { label: 'หน้ารายการแผน (A.*)', test: (k) => k.startsWith('A.') || k === 'กำลังโหลด' || k === 'โหลดไม่สำเร็จ' },
+          { label: 'ฟอร์มสร้างแผน (B.*)', test: (k) => k.startsWith('B.') },
+          { label: 'ฟอร์มแก้ไขแผน (C.*)', test: (k) => k.startsWith('C.') },
+          { label: 'ลบแผน (D.*)', test: (k) => k.startsWith('D.') },
+          { label: 'ฟอร์ม Purchase Order (E.*)', test: (k) => k.startsWith('E.') },
+          { label: 'แก้ไข/ลบ PO (F.*/G.*)', test: (k) => k.startsWith('F.') || k.startsWith('G.') },
+          { label: 'นัดหมายนำรถเข้า (H.*)', test: (k) => k.startsWith('H.') },
+          { label: 'ตรวจรับรถ (I.*)', test: (k) => k.startsWith('I.') },
+          { label: 'ความคืบหน้างานซ่อม (J.*/K.*/L.*)', test: (k) => k.startsWith('J.') || k.startsWith('K.') || k.startsWith('L.') },
+          { label: 'เอกสาร Safety (M.*)', test: (k) => k.startsWith('M.') },
+          { label: 'นัดหมายส่งคืนรถ (N.*)', test: (k) => k.startsWith('N.') },
+          { label: 'ปิดงาน (O.*)', test: (k) => k.startsWith('O.') },
+        ];
+        const groupsHtml = GROUPS.map((g) => {
+          const opts = msg.keys.filter(g.test).map((k) => '<option value="' + k + '">' + k + '</option>').join('');
+          return opts ? '<optgroup label="' + g.label + '">' + opts + '</optgroup>' : '';
+        }).join('');
+        $('entry').innerHTML = '<option value="" disabled selected>— เลือก AC entry ก่อนกดแปะ —</option>' + groupsHtml;
+        $('btn-annotate').disabled = true;
+      }
+      if (msg.type === 'selection') {
+        if (!msg.names.length) {
+          selbox.textContent = 'ยังไม่ได้เลือกอะไรในหน้า Figma';
+          selbox.className = 'empty';
+        } else {
+          selbox.textContent = 'เลือกอยู่ (' + msg.names.length + '): ' + msg.names.join(' · ');
+          selbox.className = '';
+        }
+      }
+      if (msg.type === 'result') {
+        result.textContent = msg.text;
+        result.className = msg.ok ? 'ok' : 'err';
+      }
+      if (msg.type === 'mismatch') {
+        result.textContent = msg.text;
+        result.className = 'warn';
+        $('row-confirm').style.display = 'flex';
+        $('manual').open = true;
+      }
+    };
+  </script>
+</body>
+</html>

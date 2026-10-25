@@ -75,13 +75,29 @@ async function trim(n, depth) {
   return o;
 }
 
-figma.showUI(__html__, { width: 460, height: 380 });
+figma.showUI(__html__, { width: 460, height: 460 });
 
 figma.ui.onmessage = async (msg) => {
+  // 22 ต.ค. 2569: เลือกหน้าเป็นรายตัวจาก checkbox แทนพิมพ์กรองชื่อแบบเดา — ไฟล์ใหญ่หลายสิบหน้า
+  // เดิมดัมป์ทั้งไฟล์ถ้าไม่กรองจะช้ามาก ⇒ บังคับให้เลือกอย่างน้อย 1 หน้าเสมอ ไม่มี "ดัมป์ทั้งหมด" เป็นค่าเริ่มต้นอีกแล้ว
+  if (msg.type === 'list-pages') {
+    await figma.loadAllPagesAsync();
+    figma.ui.postMessage({
+      type: 'pages',
+      file: figma.root.name,
+      pages: figma.root.children.map((p) => ({ id: p.id, name: p.name })),
+    });
+    return;
+  }
   if (msg.type !== 'start') return;
   await figma.loadAllPagesAsync();
-  const filter = (msg.pageFilter || '').trim().toLowerCase();
-  const pages = filter ? figma.root.children.filter((p) => p.name.toLowerCase().includes(filter)) : figma.root.children;
+  const ids = Array.isArray(msg.pageIds) ? msg.pageIds : [];
+  const pages = ids.length ? figma.root.children.filter((p) => ids.includes(p.id)) : [];
+  if (!pages.length) {
+    figma.ui.postMessage({ type: 'error', i: -1, name: '-', message: 'ยังไม่ได้เลือกหน้าเลย — ติ๊กอย่างน้อย 1 หน้าก่อนกดเริ่มดัมป์' });
+    figma.ui.postMessage({ type: 'done' });
+    return;
+  }
   figma.ui.postMessage({ type: 'total', total: pages.length, file: figma.root.name });
   for (let i = 0; i < pages.length; i++) {
     const p = pages[i];

@@ -1,0 +1,284 @@
+{
+  "_readme": {
+    "purpose": "Machine-readable field→schema map for the Overhaul feature, meant to be consumed by a Figma-generation plugin so it can attach backend provenance (table.column) as plugin data on generated nodes.",
+    "how_to_match": "Join on 'field_key'. field_key is taken verbatim from the prototype's TS source (prop/state/variable names) — if your Figma-gen plugin derives frames/inputs from this same source, the generated layer names should already carry these keys (or very close to them). Recommended convention: when generating a node for a form field, set node name or pluginData key 'schema-field' = field_key, then look it up here and write pluginData 'schema-table', 'schema-column', 'schema-status' onto that node.",
+    "status_values": {
+      "match": "backend column exists and means the same thing",
+      "partial": "backend column exists but semantics/shape differ (see notes)",
+      "gap": "no backend column/table at all for this UI field — confirm with BA before writing AC",
+      "external": "sourced from vms_mas_vehicle / vms_mas_department / HR platform — not owned by maintain-d-be"
+    },
+    "critical_finding": "Two competing prototype directions exist for Overhaul (plan-form 'v1' under /overhaul/* and vehicle-execution 'v2' under /overhaul-v2/*). The REAL backend migrations (dated 2026-10-19, newer than both prototypes) diverge from BOTH: it added WBS/Network/Activity/mandatory-document fields that neither prototype has, and dropped vehicle-selection-criteria, per-vehicle step lifecycle, parts requisition, inspection logs, and safety/warranty tracking that both prototypes assume. Confirm which prototype direction is still in scope before generating more Figma screens from it.",
+    "backend_refs": {
+      "plan": "domain/overhaul/domain/overhaul_plan.go, migrations/20261019150949_create_table_vms_trn_overhaul_job.sql",
+      "documents": "migrations/20261019170000_create_table_vms_mas_overhaul_document.sql",
+      "purchase_order": "domain/overhaul/domain/purchase_order.go, migrations/20261019180000_create_purchase_order_tables.sql",
+      "appointment": "domain/overhaul/domain/appointment.go, migrations/20261019140000_create_overhaul_intake_appointment.sql"
+    }
+  },
+
+  "fields": [
+    {
+      "screen": "Plan form (/overhaul/new, /overhaul/[id]/edit)",
+      "component": "PlanForm.tsx",
+      "field_key": "name",
+      "label_th": "ชื่อแผนงาน",
+      "backend_table": "vms_trn_overhaul_job",
+      "backend_column": "plan_name",
+      "status": "match"
+    },
+    {
+      "screen": "Plan form",
+      "component": "PlanForm.tsx",
+      "field_key": "year",
+      "label_th": "ปีแผนงาน (พ.ศ.)",
+      "backend_table": "vms_trn_overhaul_job",
+      "backend_column": "fiscal_year",
+      "status": "partial",
+      "notes": "UI stores พ.ศ. 4-digit int; backend column fiscal_year is varchar(10) validated by a 4-digit regex (domain/overhaul/domain/appointment.go fiscalYearPattern) — same shape, but confirm พ.ศ. vs ค.ศ. convention end-to-end."
+    },
+    {
+      "screen": "Plan form",
+      "component": "PlanForm.tsx",
+      "field_key": "budget",
+      "label_th": "งบประมาณ (บาท)",
+      "backend_table": "vms_trn_overhaul_job",
+      "backend_column": "approved_budget",
+      "status": "match",
+      "notes": "backend stores as integer (baht, no decimals) — UI formats with .toLocaleString; confirm decimal places get dropped intentionally."
+    },
+    {
+      "screen": "Plan form",
+      "component": "PlanForm.tsx (readonly when editing)",
+      "field_key": "plan.planNo",
+      "label_th": "เลขที่แผน",
+      "backend_table": "vms_trn_overhaul_job",
+      "backend_column": "plan_no",
+      "status": "partial",
+      "notes": "Generated server-side. Prototype format 'OVH-2569-0004' (see overhaulV2.ts) DOES NOT match real backend format 'ORZ690000X' (FormatPlanNo in overhaul_plan.go:292). Figma mockups showing 'OVH-...' numbers are wrong — use ORZ format or make it clearly a placeholder."
+    },
+    {
+      "screen": "Plan form",
+      "component": "PlanForm.tsx",
+      "field_key": "picked (vehicles[] + criteria[])",
+      "label_th": "เลือกรถเข้าแผน + เกณฑ์คัดเลือก",
+      "backend_table": null,
+      "backend_column": null,
+      "status": "gap",
+      "notes": "OverhaulPlan Go struct has NO vehicles field and no selection_criteria at all. Real backend attaches vehicles to a plan only indirectly, through vms_trn_po_vehicle (vehicle ↔ purchase order), which happens later at PO-entry time — not at plan-creation time. If AC says 'เลือกรถตอนสร้างแผน' it currently has no column to persist that selection to."
+    },
+    {
+      "screen": "Plan form",
+      "component": "PlanForm.tsx",
+      "field_key": "(missing) wbsNumber / networkNo / activityNo",
+      "label_th": "เลข WBS / Network / Activity",
+      "backend_table": "vms_trn_overhaul_job",
+      "backend_column": "wbs_number / network_no / activity_no",
+      "status": "gap",
+      "notes": "Backend REQUIRES these 3 fields (validatePlanFields in overhaul_plan.go) but neither prototype's PlanForm has input fields for them. Must add to Figma/AC or the create-plan API call will always fail validation."
+    },
+    {
+      "screen": "Plan form",
+      "component": "PlanForm.tsx",
+      "field_key": "(missing) principle_approval / budget_approval files",
+      "label_th": "เอกสารอนุมัติหลักการ / เอกสารอนุมัติงบประมาณ",
+      "backend_table": "vms_mas_overhaul_document",
+      "backend_column": "doc_type IN (principle_approval, budget_approval, other)",
+      "status": "gap",
+      "notes": "Backend requires at least 1 file of each of the first two doc_types to create/update a plan (CreateOverhaulPlanCommand.Validate). Neither PlanForm.tsx nor the v2 flow has a file-upload step at plan level — this is a hard blocker for the create-plan API, not optional."
+    },
+    {
+      "screen": "Plan form",
+      "component": "PlanForm.tsx",
+      "field_key": "status transitions (DRAFT→PENDING→ACTIVE / CANCELLED)",
+      "label_th": "สถานะแผน + อนุมัติโดยหัวหน้า",
+      "backend_table": "vms_trn_overhaul_job.plan_status",
+      "backend_column": "plan_status",
+      "status": "partial",
+      "notes": "Column is free varchar(50), only 1 seeded constant found in code (PlanStatusPendingApproval = 'pending_approval'). The full DRAFT/PENDING/ACTIVE/CLOSING/CLOSED/CANCELLED state machine + approver/reject-reason fields that PlanForm.tsx assumes are NOT modeled as columns anywhere (no approved_by, approved_at, reject_reason, close_* columns on vms_trn_overhaul_job). Approval workflow shown in UI is currently unbacked."
+    },
+
+    {
+      "screen": "Vehicle info card (/overhaul-v2/[vehicleId])",
+      "component": "overhaul-v2/[vehicleId]/page.tsx",
+      "field_key": "v.plate / v.model / v.org / v.reg",
+      "label_th": "ทะเบียน / ยี่ห้อ-รุ่น / หน่วยงาน / วันจดทะเบียน",
+      "backend_table": "vms_mas_vehicle (external, main-be)",
+      "backend_column": "license_plate / brand_model / org_unit / registration_date (names approximate — confirm with main-be schema)",
+      "status": "external"
+    },
+    {
+      "screen": "Vehicle info card",
+      "component": "overhaul-v2/[vehicleId]/page.tsx",
+      "field_key": "v.code",
+      "label_th": "รหัสข้างรถ",
+      "backend_table": "vms_mas_vehicle (external?)",
+      "backend_column": null,
+      "status": "gap",
+      "notes": "Not confirmed to exist on vms_mas_vehicle from anything visible in maintain-d-be — must verify with main-be team."
+    },
+    {
+      "screen": "Vehicle info card",
+      "component": "overhaul-v2/[vehicleId]/page.tsx",
+      "field_key": "v.owner / v.ownerTel",
+      "label_th": "ผู้ดูแลรถ (เจ้าของรถ) / เบอร์โทร",
+      "backend_table": null,
+      "backend_column": null,
+      "status": "gap",
+      "notes": "No 'owner' concept found on vms_mas_vehicle or anywhere in maintain-d-be migrations. Used heavily in StepAppt for 'ผู้รับรถ' — needs a real source before AC can specify where it comes from."
+    },
+
+    {
+      "screen": "① เบิกอะไหล่ (/overhaul-v2/[vehicleId])",
+      "component": "StepParts.tsx",
+      "field_key": "parts[].code / name / unit / qty / stock / price",
+      "label_th": "รายการอะไหล่ / คงคลัง / จำนวนเบิก / ราคาต่อหน่วย",
+      "backend_table": null,
+      "backend_column": null,
+      "status": "gap",
+      "notes": "There is NO parts/requisition table scoped to overhaul anywhere in migrations. vms_mas_part + vms_trn_part_requisition exist but are FK'd to vms_trn_repair_job only, not to vms_trn_overhaul_job or vms_trn_purchase_order. This entire step has zero backend support today."
+    },
+    {
+      "screen": "① เบิกอะไหล่",
+      "component": "StepParts.tsx",
+      "field_key": "partsSkipped",
+      "label_th": "ข้ามขั้นเบิกอะไหล่",
+      "backend_table": null,
+      "backend_column": null,
+      "status": "gap",
+      "notes": "Depends on the parts table above existing first."
+    },
+
+    {
+      "screen": "② บันทึก PO (/overhaul-v2/[vehicleId])",
+      "component": "PoSection.tsx / PoModal",
+      "field_key": "vendor / vendorName",
+      "label_th": "บริษัทผู้รับจ้าง",
+      "backend_table": "vms_trn_purchase_order",
+      "backend_column": "vendor_id, vendor_name",
+      "status": "match",
+      "notes": "vendor_address/telephone/mobile_phone were added later (migrations 20261021100000, 20261021110000) — present if those migrations are applied."
+    },
+    {
+      "screen": "② บันทึก PO",
+      "component": "PoSection.tsx / PoModal",
+      "field_key": "poNo",
+      "label_th": "เลขที่ PO",
+      "backend_table": "vms_trn_purchase_order",
+      "backend_column": "po_number",
+      "status": "partial",
+      "notes": "Real backend auto-generates po_number via FormatPONumber = '{overhaul_code}-{seq}' (purchase_order.go:216), e.g. ORZ6900001-01. Prototype placeholder 'PO-2569-xxxxx' is user-typed free text — decide whether PO number stays user-entered or becomes system-generated before writing AC."
+    },
+    {
+      "screen": "② บันทึก PO",
+      "component": "PoSection.tsx / PoModal",
+      "field_key": "poDate / start / days / end",
+      "label_th": "วันที่ PO / วันเริ่มสัญญา / ระยะเวลาว่าจ้าง / วันสิ้นสุดสัญญา",
+      "backend_table": null,
+      "backend_column": null,
+      "status": "gap",
+      "notes": "vms_trn_purchase_order has NO date columns at all (only created_at/updated_at audit timestamps). Contract date range is a core part of the UI (drives 'เกินสัญญา' badge) but has nowhere to persist today."
+    },
+    {
+      "screen": "② บันทึก PO",
+      "component": "PoSection.tsx / PoModal",
+      "field_key": "items[] (รายการงานที่บริษัทรับทำ)",
+      "label_th": "รายการงานที่บริษัทรับทำ",
+      "backend_table": null,
+      "backend_column": null,
+      "status": "gap",
+      "notes": "No column for a list of scope-of-work line items on vms_trn_purchase_order. po_name (varchar) could hold one line but not a structured list."
+    },
+    {
+      "screen": "② บันทึก PO",
+      "component": "PoSection.tsx / PoModal",
+      "field_key": "amount",
+      "label_th": "งบประมาณ (ของ PO นี้)",
+      "backend_table": null,
+      "backend_column": null,
+      "status": "gap",
+      "notes": "vms_trn_purchase_order has no amount/budget column — only the PLAN-level approved_budget exists (vms_trn_overhaul_job.approved_budget), which is a single total, not per-PO."
+    },
+    {
+      "screen": "② บันทึก PO",
+      "component": "PoSection.tsx / PoModal",
+      "field_key": "file (ไฟล์ใบสั่งจ้าง PO)",
+      "label_th": "ไฟล์ใบสั่งจ้าง (PO)",
+      "backend_table": "vms_mas_po_document",
+      "backend_column": "doc_type = 'WORK_ORDER'",
+      "status": "match"
+    },
+    {
+      "screen": "② บันทึก PO",
+      "component": "PoSection.tsx",
+      "field_key": "status (open/done) / doneAt",
+      "label_th": "สถานะ PO (กำลังดำเนินการ/เสร็จแล้ว) / วันที่ส่งมอบ",
+      "backend_table": null,
+      "backend_column": null,
+      "status": "gap",
+      "notes": "No status or completion-date column on vms_trn_purchase_order. The 'ส่งมอบงานแล้ว' action in the UI has nothing to write to."
+    },
+
+    {
+      "screen": "③ ติดตามงาน (/overhaul-v2/[vehicleId])",
+      "component": "Steps.tsx — StepTrack / LogModal",
+      "field_key": "logs[] (date, progress%, poId, note, inspector, files[])",
+      "label_th": "บันทึกการตรวจงาน",
+      "backend_table": null,
+      "backend_column": null,
+      "status": "gap",
+      "notes": "No inspection-log table exists for overhaul anywhere in migrations. Entire step unbacked."
+    },
+
+    {
+      "screen": "④ นัดหมายรับรถ (/overhaul-v2/[vehicleId])",
+      "component": "Steps.tsx — StepAppt",
+      "field_key": "poId / date / time / contact / tel / note",
+      "label_th": "สถานที่รับรถ (บริษัท) / วันที่นัด / เวลา / ผู้ประสานงานของบริษัท / เบอร์โทร / รายละเอียดเพิ่มเติม",
+      "backend_table": "vms_trn_overhaul_po_vehicle_appointment",
+      "backend_column": "po_vehicle_uid, appointment_start_date/end_date, coordinator_* or garage_* (needs mapping decision), person_full_name/dept_sap/emp_id",
+      "status": "partial",
+      "notes": "Real table models appointment_type IN ('intake','return') with DATE-only start/end (no time-of-day column) and a generic coordinator/person/employee identity triple whose semantics don't cleanly match 'ผู้ประสานงานของบริษัท'. Needs a BA session to decide which real column plays which UI role before AC can be precise."
+    },
+    {
+      "screen": "④ นัดหมายรับรถ",
+      "component": "Steps.tsx — StepAppt",
+      "field_key": "sentAt / pickedUpAt",
+      "label_th": "ส่งนัดหมายเมื่อ / วันที่เจ้าของรถรับรถจริง",
+      "backend_table": "vms_trn_overhaul_po_vehicle_appointment",
+      "backend_column": "has_responded (bool), is_approved (bool) — no explicit picked_up_at timestamp",
+      "status": "partial",
+      "notes": "pickedUpAt is the date that starts the warranty clock per overhaulV2.ts comments — real table has no column that unambiguously represents 'the day the vehicle was physically picked up'. This is load-bearing for warranty math, needs a dedicated column."
+    },
+
+    {
+      "screen": "⑤ ปิดงาน (/overhaul-v2/[vehicleId])",
+      "component": "StepClose.tsx",
+      "field_key": "safety.rows[] (label, res pass/fail, note)",
+      "label_th": "Safety Inspection Checklist",
+      "backend_table": null,
+      "backend_column": null,
+      "status": "gap",
+      "notes": "No safety-inspection table exists for overhaul. SAFETY_ITEMS (12 fixed rows) in overhaulV2.ts are hardcoded in frontend — comment in that file explicitly flags 'ค่าจำลอง รอ กบค. ส่งแบบฟอร์มจริง'."
+    },
+    {
+      "screen": "⑤ ปิดงาน",
+      "component": "StepClose.tsx",
+      "field_key": "safety.file / safety.inspector",
+      "label_th": "ใบ checklist ที่ลงนามแล้ว / ผู้ตรวจ",
+      "backend_table": null,
+      "backend_column": null,
+      "status": "gap"
+    },
+    {
+      "screen": "⑤ ปิดงาน",
+      "component": "StepClose.tsx",
+      "field_key": "safety.warrantyDays / warrantyStart / warrantyEnd / closedAt",
+      "label_th": "จำนวนวันรับประกัน / วันเริ่ม / วันสิ้นสุด / วันปิดงาน",
+      "backend_table": null,
+      "backend_column": null,
+      "status": "gap",
+      "notes": "No warranty_* or closed_at columns anywhere for overhaul. This directly contradicts the TOR's own warranty requirement (180 days post-Overhaul per JO1-Tech-Data-Spec.md section 6.3/7.4.2-04) — the TOR expects this to be tracked, but today's schema has nowhere to put it."
+    }
+  ]
+}

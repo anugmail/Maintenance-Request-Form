@@ -1,0 +1,108 @@
+<style>
+  body{font:12px/1.5 -apple-system,"IBM Plex Sans Thai",sans-serif;margin:0;padding:14px;color:#1b1b1b}
+  input[type=text]{width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid #d5d5d5;border-radius:6px;font:inherit}
+  select{width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid #d5d5d5;border-radius:6px;font:inherit}
+  button{padding:8px 10px;border:0;border-radius:6px;background:#a80689;color:#fff;font:inherit;cursor:pointer}
+  button.secondary{background:#eee;color:#1b1b1b}
+  button:disabled{opacity:.5;cursor:default}
+  .row{display:flex;gap:8px;margin-top:8px}
+  .row button{flex:1}
+  #sectionsbox{margin-top:8px;max-height:140px;overflow:auto;border:1px solid #eee;border-radius:6px;padding:6px 8px;background:#fafafa}
+  #sectionslist label{display:block;padding:2px 0;cursor:pointer}
+  #log{margin-top:10px;height:150px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
+  p{margin:10px 0 2px}
+  .warn{color:#8a5500;background:#fff6e6;border:1px solid #f0d9a6;border-radius:6px;padding:8px;margin-top:8px}
+</style>
+<p>1. โหลดรายชื่อหน้า แล้วเลือกหน้าที่ frame/section อยู่</p>
+<div class="row">
+  <button id="loadpages" style="flex:2">โหลดรายชื่อหน้า</button>
+  <select id="pagesel" style="flex:3" disabled><option>ยังไม่โหลด</option></select>
+</div>
+
+<p>2. โหลด frame/section ในหน้านั้น แล้วติ๊กเฉพาะที่ต้องการ</p>
+<div class="row">
+  <button id="loadsections" disabled>โหลด frame/section</button>
+  <button class="secondary" id="selall" disabled>เลือกทั้งหมด</button>
+  <button class="secondary" id="selnone" disabled>ไม่เลือกเลย</button>
+</div>
+<div id="sectionsbox">
+  <div id="sectionslist">ยังไม่โหลด</div>
+</div>
+<div class="warn">ถ้า frame นั้นมีแต่รูปสกรีนช็อต (ท่อ A ปกติแปะเป็น PNG) จะได้แค่ "มีรูปแปะอยู่" ไม่ได้ข้อความในรูป — ใช้ได้จริงกับ sticky note / shape-with-text / ผัง mermaid เท่านั้น</div>
+
+<p>3. ชื่อโฟลเดอร์ปลายทาง (ใต้ <code>out/figjam-dump/</code>)</p>
+<input type="text" id="slug" value="overhaul-flow">
+
+<p>4. ปลายทาง <code>http://localhost:8124</code> — ต้องรัน <code>node figma-export/serve.js</code> ค้างไว้</p>
+<button id="go" style="margin-top:6px;width:100%">เริ่มดัมป์ frame ที่เลือก</button>
+<div id="log"></div>
+<script>
+const log = (s) => { const d = document.getElementById('log'); d.textContent += s + '\n'; d.scrollTop = d.scrollHeight; };
+let sections = [];
+let total = 0, ok = 0, fail = 0;
+
+document.getElementById('loadpages').onclick = () => {
+  parent.postMessage({ pluginMessage: { type: 'list-pages' } }, '*');
+};
+document.getElementById('loadsections').onclick = () => {
+  const pageId = document.getElementById('pagesel').value;
+  document.getElementById('sectionslist').textContent = 'กำลังโหลด…';
+  parent.postMessage({ pluginMessage: { type: 'list-sections', pageId } }, '*');
+};
+document.getElementById('selall').onclick = () => {
+  document.querySelectorAll('#sectionslist input[type=checkbox]').forEach((c) => (c.checked = true));
+};
+document.getElementById('selnone').onclick = () => {
+  document.querySelectorAll('#sectionslist input[type=checkbox]').forEach((c) => (c.checked = false));
+};
+
+function renderSections() {
+  const box = document.getElementById('sectionslist');
+  if (!sections.length) { box.textContent = 'ไม่พบ frame/section ในหน้านี้'; return; }
+  box.innerHTML = sections.map((s) =>
+    '<label><input type="checkbox" value="' + s.id + '"> ' + s.name + ' <span style="color:#999">(' + s.type + ')</span></label>'
+  ).join('');
+}
+
+document.getElementById('go').onclick = () => {
+  const pageId = document.getElementById('pagesel').value;
+  const ids = [...document.querySelectorAll('#sectionslist input[type=checkbox]:checked')].map((c) => c.value);
+  if (!pageId) { log('ยังไม่ได้เลือกหน้า'); return; }
+  if (!ids.length) { log('ยังไม่ได้ติ๊ก frame/section ไหนเลย'); return; }
+  document.getElementById('log').textContent = '';
+  ok = fail = 0;
+  parent.postMessage({ pluginMessage: { type: 'start', pageId, sectionIds: ids } }, '*');
+};
+
+onmessage = async (e) => {
+  const m = e.data.pluginMessage;
+  if (!m) return;
+  const slug = (document.getElementById('slug').value || 'dump').trim();
+
+  if (m.type === 'pages') {
+    const sel = document.getElementById('pagesel');
+    sel.innerHTML = m.pages.map((p) => '<option value="' + p.id + '">' + p.name + '</option>').join('');
+    sel.disabled = false;
+    document.getElementById('loadsections').disabled = false;
+    log('ไฟล์: ' + m.file + ' · ' + m.pages.length + ' หน้า — เลือกหน้าแล้วกด "โหลด frame/section"');
+  }
+  if (m.type === 'sections') {
+    sections = m.sections;
+    renderSections();
+    document.getElementById('selall').disabled = false;
+    document.getElementById('selnone').disabled = false;
+    log('พบ ' + sections.length + ' frame/section — ติ๊กที่ต้องการแล้วกด "เริ่มดัมป์ frame ที่เลือก"');
+  }
+  if (m.type === 'total') { total = m.total; log('เริ่มดัมป์ ' + total + ' frame ที่เลือกไว้'); }
+  if (m.type === 'error') { fail++; log('✗ ' + m.name + ' — ' + m.message); }
+  if (m.type === 'section') {
+    try {
+      const r = await fetch('http://localhost:8124/figjam-dump/' + slug + '/' + m.id + '.json',
+        { method: 'POST', body: JSON.stringify(m.data) });
+      const j = await r.json();
+      ok++; log('[' + (m.i + 1) + '/' + total + '] ' + m.name + ' — ' + (j.bytes || 0).toLocaleString() + ' ไบต์');
+    } catch (err) { fail++; log('✗ ส่งไม่ได้ ' + m.name + ' — ' + err.message + '  (รัน serve.js หรือยัง?)'); }
+  }
+  if (m.type === 'done' && total) log('— จบ — สำเร็จ ' + ok + ' · ล้มเหลว ' + fail);
+};
+</script>
