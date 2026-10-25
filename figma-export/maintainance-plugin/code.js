@@ -1,4 +1,4 @@
-/* ⚠ ไฟล์นี้ประกอบอัตโนมัติจาก plugin-lib/core.js + maintainance-plugin/screens.js ด้วย build-plugin.js — แก้ที่ต้นทางแล้วรัน  node figma-export/build-plugin.js maintainance-plugin  (2026-10-20) */
+/* ⚠ ไฟล์นี้ประกอบอัตโนมัติจาก plugin-lib/core.js + maintainance-plugin/screens.js + Diagram/01-บำรุงรักษาตามวาระ/14-บำรุงรักษา-userflow.md ด้วย build-plugin.js — แก้ที่ต้นทางแล้วรัน  node figma-export/build-plugin.js maintainance-plugin  (2026-10-22) */
 
 /* ============================================================================
    plugin-lib/core.js — โค้ดส่วนกลางของปลั๊กอินสร้างจอจาก component จริง (แยกจาก overhaul2-plugin 20 ต.ค. 2569)
@@ -8,6 +8,7 @@
    (Figma โหลด code.js ไฟล์เดียว ไม่มี require) · ปลั๊กอิน Overhaul ยังใช้สำเนาของตัวเองอยู่ จะย้ายมาใช้ไฟล์นี้หลัง commit รอบรีวิว 19 ต.ค.
 
    screens.js ของแต่ละปลั๊กอินต้องประกาศ: PLUGIN { prefix, page, menu, searchHint } · DIRECT · NESTED · LOCAL_OPTIONAL · NEEDED · NESTED_ONLY · SCENARIOS · build()
+   ผัง userflow ข้างจอ (22 ต.ค. 2569): build-plugin.js ฝัง const USERFLOW จาก <ปลั๊กอิน>/build.json → buildGrid() วางผังซ้ายของแต่ละบล็อก scenario (userflowFrame)
    กติกาที่โค้ดนี้ทำให้ (component-rules.md): R1 Header Tablet · R2/R13 ไม่มี divider · R4 ปิด Info icon · R6–R7 ช่องกรอก · R8–R9 Table ทั้งก้อน (เกินขนาดค่อยประกอบ) ·
    R12 กล่องแสดงข้อมูล · R14 เฟรม 1440×1024 / 402×874 · ปุ่มท้ายซ้าย–ขวา · อัปโหลด 1 คอลัมน์ · mobile = การ์ด Mobile table / bottom sheet
    ============================================================================ */
@@ -748,7 +749,7 @@ function comboAt(scr, anchor, items) {   // Dropdown list ใต้ช่อง�
   rows.forEach((it, i) => {
     if (i >= items.length) { it.visible = false; return; }
     setProps(it, { State: items[i][2] ? 'Selected' : 'Default' });
-    setProps(it, { Text: items[i][0], 'Supporting text': items[i][1], Avatar: false, 'Supporting 2': false, Supporting: true });
+    setProps(it, { Text: items[i][0], 'Supporting text': items[i][1] || '', Avatar: false, 'Supporting 2': false, Supporting: !!items[i][1] });   // ไม่ส่งบรรทัดรอง = แถวเดียว (เลือกรถ: ทะเบียนอย่างเดียว · ยกจาก Overhaul R24)
   });
   const sc = find(l, 'Vertical scrollbar'); if (sc) sc.visible = false;
   overlay(scr, l, 0, 0);
@@ -867,13 +868,37 @@ async function flowBar(prefix, code, title, state, width) {
   bar.name = prefix + ' · ' + code + ' ' + title;
   return bar;
 }
+/* ป้ายข้างจอ (Device · Desktop · Mobile) — เจ้าของงานสั่ง 20 ต.ค. 2569: อ่านจาก component set "Device Type" ของทีมออกแบบ (property Type · กว้าง 300 · พื้น #667085)
+   ชื่อ variant จับแบบไม่สนตัวพิมพ์ตาม DEVICE_ALIAS · ไม่พบ set หรือไม่มี variant นั้น → ถอยไป "Component 1" (ชุดเก่า) → กรอบธรรมดา
+   (ยกจาก overhaul2-plugin 22 ต.ค. 2569 — ปลั๊กอินบำรุงรักษาใช้ป้ายชุดเดียวกับ Overhaul) */
+const DEVICE_ALIAS = { Header: ['device', 'header', 'label'], Desktop: ['desktop'], Mobile: ['mobile'], Tablet: ['tablet'] };
+function deviceVariant(kind) {   // → { key, value } ของ variant ใน Device Type ที่ตรง kind · null = ไม่มี
+  const set = INDEX.get('Device Type'); if (!set || set.type !== 'COMPONENT_SET') return null;
+  const want = DEVICE_ALIAS[kind] || [String(kind).toLowerCase()];
+  for (const c of set.children) {
+    if (c.type !== 'COMPONENT') continue;
+    const vp = c.variantProperties || {};
+    for (const k of Object.keys(vp)) if (want.indexOf(String(vp[k]).trim().toLowerCase()) >= 0) return { key: k, value: vp[k] };
+  }
+  return null;
+}
+function deviceSetInfo() {   // ข้อความรายงานในหน้าต่างปลั๊กอิน (ปุ่มเช็ค + ตอนสร้าง)
+  const set = INDEX.get('Device Type');
+  if (!set) return 'ป้ายข้างจอ: ไม่พบ component "Device Type" ในไฟล์ — ' + (INDEX.has('Component 1') ? 'ใช้ "Component 1" (ชุดเก่า) แทน' : 'วาดป้ายธรรมดาแทน');
+  const vals = set.type === 'COMPONENT_SET' ? set.children.filter(c => c.type === 'COMPONENT').map(c => Object.keys(c.variantProperties || {}).map(k => k + '=' + c.variantProperties[k]).join(',')).join(' · ') : '(component เดี่ยว ไม่มี variant)';
+  const miss = ['Header', 'Desktop', 'Mobile'].filter(k => !deviceVariant(k));
+  return 'ป้ายข้างจอ: component "Device Type" [' + vals + ']' + (miss.length ? ' ⚠ ไม่มี variant สำหรับ ' + miss.join(', ') + ' — ป้ายนั้นถอยไป Component 1/กรอบธรรมดา' : ' ✓ ใช้ Device/Desktop/Mobile ครบ');
+}
 async function deviceLabel(prefix, type, height) {
-  let n;
-  if (INDEX.has('Component 1')) { n = inst('Component 1', { Type: type }); try { n.resize(GRID.side, height); } catch (e) { warn('ปรับสูงป้าย ' + type, e); } }
+  let n; const dv = deviceVariant(type);
+  if (dv) { n = inst('Device Type', { [dv.key]: dv.value }); try { n.resize(GRID.side, height); } catch (e) { warn('ปรับสูงป้าย ' + type, e); } }
+  else if (INDEX.has('Component 1')) { n = inst('Component 1', { Type: type }); try { n.resize(GRID.side, height); } catch (e) { warn('ปรับสูงป้าย ' + type, e); } }
   else { n = fixed(frame('Device', 'VERTICAL', { fill: rgbOf('#667085') }), GRID.side, height); n.primaryAxisAlignItems = 'CENTER'; n.counterAxisAlignItems = 'CENTER'; n.appendChild(await labelText(type === 'Header' ? 'Device' : type, 48, '#FFFFFF')); }
   n.name = prefix + ' · ' + (type === 'Header' ? 'Device' : type);
   return n;
 }
+/* ตัวเลือกอุปกรณ์จากหน้าต่างปลั๊กอิน: 'desktop' → [false] · 'mobile' → [true] · อื่น ('both') → [false, true] (แถว mobile ใต้ desktop) */
+const devOf = (o) => (o && o.devices === 'mobile') ? [true] : (o && o.devices === 'desktop') ? [false] : [false, true];
 
 /* หน้าปลายทาง = หน้าใหม่ทุกครั้ง ไม่แตะชุดเดิม (เจ้าของงานสั่ง 20 ต.ค. 2569 "สร้างใหม่เลย ไม่รบกวนของเดิม"):
    ใช้หน้า <base>-N ที่ยังว่าง (ไม่มีเฟรม/ป้ายของปลั๊กอิน) · ไม่มีก็สร้าง <base>-(N+1) · สร้างหน้าไม่ได้ (แพลนจำกัด) → หน้าปัจจุบัน วางต่อใต้ของเดิม ไม่ลบอะไร */
@@ -888,38 +913,185 @@ async function targetPage(base, prefix) {
   try { const p = figma.createPage(); p.name = base + '-' + next; return { page: p, fresh: true }; }
   catch (e) { return { page: figma.currentPage, fresh: false }; }
 }
+/* หน้าปลายทางตามชื่อ (เจ้าของงานสั่ง 22 ต.ค. 2569 "จะเอาลงในเพจ Maintainance ด้วยกันเลย"): หาหน้าที่ชื่อตรง (ไม่สนตัวพิมพ์ · มีอีโมจิ/ช่องว่างนำหน้าได้ · ไม่นับ <ชื่อ>-N)
+   ไม่มี → สร้างหน้าชื่อนั้น · สร้างไม่ได้ → หน้าปัจจุบัน · ทุกกรณีวางต่อใต้ของเดิม ไม่ลบ/ไม่ย้ายของที่มีอยู่ */
+async function namedPage(names) {
+  const want = names.map(n => n.toLowerCase());
+  const norm = (p) => p.name.trim().toLowerCase().replace(/^[^a-z0-9ก-๙]+/, '').replace(/[^a-z0-9ก-๙]+$/, '');
+  const hit = figma.root.children.find(p => want.indexOf(norm(p)) >= 0);
+  if (hit) return { page: hit, fresh: false, found: true };
+  try { const p = figma.createPage(); p.name = names[0]; return { page: p, fresh: true, found: false }; }
+  catch (e) { return { page: figma.currentPage, fresh: false, found: false, fallback: true }; }
+}
 
-/* GROUPS = [{ code: 'B', title: 'แผน Overhaul', subs: [{ code: 'B1', title: 'กบค. สร้างแผน', tag: 'S1', screens: [[label, fn], …] }] }]
-   fn() สร้างจอตามตัวแปร MOB · จอชื่อ "<prefix> / B1.2 · S1 — <label>[ · mobile]" · คืน { made, y } */
+/* ---------- ผัง userflow ข้างจอ (เจ้าของงานสั่ง 22 ต.ค. 2569: "userflow กับ wireframe เรียงต่อกัน … อยู่ข้างๆกัน ตอนที่ export") ----------
+   ข้อมูลผังฝังตอน build (const USERFLOW · plugin-lib/userflow-layout.js อ่านไฟล์ userflow .md) — ปลั๊กอินแค่วาดตามตำแหน่ง
+   1 บล็อก scenario = ผังซ้ายสุด (อ่านบน → ล่าง) + ป้าย Device + คอลัมน์จอ A.1 A.2 … · กล่องในผังที่มีจอติดป้ายรหัสจอ (A.2 · A.3)
+   รูปทรง/สีชุดเดียวกับบอร์ด FigJam: วงกลมขาว start/End · วงกลมฟ้า Action · สี่เหลี่ยมเขียว Display · ข้าวหลามตัดม่วง Decision · sticky เหลือง = คำถามที่ยังค้าง
+   ผังเป็นของวาดประกอบ (shape + vector) อยู่นอกเฟรมจอ เหมือนป้าย Header — ไม่กระทบกติกา "ทุกชิ้นในจอเป็น instance" · Figma design ไม่มี connector ⇒ ลากกล่องแล้วเส้นไม่ตาม */
+const FLOW_GAP = 200;          // ช่องระหว่างผังกับป้าย Device
+const STICKY_FILL = '#FFE299', BADGE_FILL = '#9CACCC', FLOW_LINE = '#EAECF0';
+const scenNo = (tag) => { const m = String(tag || '').match(/^S(\d+)$/); return m ? +m[1] : null; };
+function flowNode(kind) {
+  let n;
+  if (kind === 'decision') { n = figma.createPolygon(); n.pointCount = 4; }
+  else if (kind === 'display') { n = figma.createRectangle(); n.cornerRadius = 8; }
+  else n = figma.createEllipse();
+  CREATED.push(n);
+  return n;
+}
+async function flowText(chars, size, hex, w, h) {
+  const t = await labelText(chars, size, hex);
+  t.textAlignHorizontal = 'CENTER'; t.textAlignVertical = 'CENTER';
+  if (w) { t.textAutoResize = 'NONE'; t.resize(w, h); }
+  return t;
+}
+async function arrow(pts, hex, weight) {   // เส้นหักมุมตามจุด + หัวลูกศรที่ปลาย · พิกัดเทียบมุมซ้ายบนของเส้นเอง แล้วค่อยวาง x/y
+  const minX = Math.min(...pts.map(p => p[0])), minY = Math.min(...pts.map(p => p[1]));
+  const v = figma.createVector(); CREATED.push(v);
+  const net = {
+    vertices: pts.map(([x, y], i) => Object.assign({ x: x - minX, y: y - minY }, i === pts.length - 1 ? { strokeCap: 'ARROW_LINES' } : {})),
+    segments: pts.slice(1).map((_, i) => ({ start: i, end: i + 1 }))
+  };
+  if (typeof v.setVectorNetworkAsync === 'function') await v.setVectorNetworkAsync(net); else v.vectorNetwork = net;
+  v.strokes = [{ type: 'SOLID', color: rgbOf(hex) }]; v.strokeWeight = weight || 3; v.strokeJoin = 'ROUND';
+  v.fills = [];
+  return v;
+}
+/* codes: { nodeId: ['A.2', …] } · loose: ['A.5 ยืนยันการออก', …] = จอที่ยังไม่มีกล่องในผัง */
+async function userflowFrame(prefix, code, n, codes, loose) {
+  const sc = USERFLOW && USERFLOW.scenarios && USERFLOW.scenarios[n];
+  if (!sc) return null;
+  const f = figma.createFrame(); CREATED.push(f);
+  f.name = prefix + ' · ' + code + ' userflow S' + n;
+  f.fills = [{ type: 'SOLID', color: WHITE }]; f.strokes = [{ type: 'SOLID', color: rgbOf(FLOW_LINE) }]; f.strokeWeight = 2; f.cornerRadius = 16;
+  f.clipsContent = false;
+  f.resize(sc.w, sc.h);
+  const put = (node, x, y) => { f.appendChild(node); node.x = x; node.y = y; return node; };
+  put(await labelText('userflow · S' + n + ' ' + sc.title, 32, '#101828'), 40, 36);
+  put(await labelText('อ่านบน → ล่าง · ทางแยก N ไปขวา · เส้นที่วนข้างผัง = ย้อนกลับ · ป้ายเทา = รหัสจอทางขวา', 16, '#475467'), 40, 84);
+  const pos = {}, slots = [];
+  for (const e of sc.edges) {   // เส้นก่อน กล่องทับเส้น
+    const from = sc.nodes.find(x => x.id === e.from);
+    const hex = '#' + [from.stroke.r, from.stroke.g, from.stroke.b].map(c => Math.round(c * 255).toString(16).padStart(2, '0')).join('');
+    const v = await arrow(e.pts, hex, 3);
+    put(v, Math.min(...e.pts.map(p => p[0])), Math.min(...e.pts.map(p => p[1])));   // ตั้ง x/y หลังย้ายเข้ากรอบ (พิกัดในกรอบผัง)
+    v.name = 'เส้น ' + e.from + ' → ' + e.to + (e.back ? ' (ย้อนกลับ)' : '');
+    if (e.label) {
+      const [a, b] = [e.pts[0], e.pts[1]], down = a[0] === b[0];
+      const t = put(await labelText(e.label, 18, '#101828'), a[0] + (down ? 10 : 12), a[1] + (down ? 4 : -28)); t.name = 'ป้าย ' + e.label;
+    }
+  }
+  for (const nd of sc.nodes) {
+    const s = flowNode(nd.kind); f.appendChild(s);
+    s.resize(nd.w, nd.h); s.x = nd.x; s.y = nd.y;
+    s.fills = [{ type: 'SOLID', color: nd.fill }]; s.strokes = [{ type: 'SOLID', color: nd.stroke }]; s.strokeWeight = 4;
+    s.name = nd.id + ' / ' + (nd.label.split('\n')[0] || nd.kind);
+    if (nd.thumb) {   // กล่องหน้าจอ = ช่องภาพย่อจอจริงด้านบน + ชื่อหน้าใต้ภาพ (เจ้าของงานเลือก 22 ต.ค. 2569 "ภาพย่อจอในผัง")
+      const th = figma.createRectangle(); CREATED.push(th); f.appendChild(th);
+      th.resize(nd.thumb.w, nd.thumb.h); th.x = nd.x + nd.thumb.x; th.y = nd.y + nd.thumb.y; th.cornerRadius = 4;
+      th.fills = [{ type: 'SOLID', color: WHITE }]; th.strokes = [{ type: 'SOLID', color: rgbOf('#D0D5DD') }]; th.strokeWeight = 1;
+      th.name = 'ภาพย่อ ' + nd.id;
+      slots.push({ id: nd.id, rect: th });
+      if (!codes[nd.id]) { const ph = put(await flowText('ยังไม่มีจอในบล็อกนี้', 14, '#667085', nd.thumb.w, nd.thumb.h), th.x, th.y); ph.name = nd.id + ' ยังไม่มีจอ'; }
+      const top = nd.thumb.y + nd.thumb.h + 4, ih = nd.h - top - 6, iw = nd.w - 16;
+      const t = put(await flowText(nd.label.replace(/\n/g, ' '), 15, '#101828', iw, ih), nd.x + 8, nd.y + top);
+      t.name = nd.id + ' ข้อความ';
+    } else {
+      const iw = nd.kind === 'decision' ? nd.w * 0.62 : nd.w * 0.86, ih = nd.kind === 'decision' ? nd.h * 0.62 : nd.h * 0.8;
+      const t = put(await flowText(nd.label, nd.kind === 'end' ? 16 : 15, '#101828', iw, ih), nd.x + (nd.w - iw) / 2, nd.y + (nd.h - ih) / 2);
+      t.name = nd.id + ' ข้อความ';
+    }
+    pos[nd.id] = nd;
+  }
+  for (const id of Object.keys(codes)) {   // ป้ายรหัสจอ มุมขวาบนของกล่อง
+    const nd = pos[id]; if (!nd) { warn('ผัง S' + n, new Error('จอผูกกับกล่อง ' + id + ' ที่ไม่มีในผัง userflow')); continue; }
+    const b = frame('ป้ายจอ ' + codes[id].join(' '), 'HORIZONTAL', { fill: rgbOf(BADGE_FILL), pad: [4, 10] }); b.cornerRadius = 6;
+    b.primaryAxisSizingMode = 'AUTO'; b.counterAxisSizingMode = 'AUTO';
+    b.appendChild(await labelText(codes[id].join(' · '), 16, '#101828'));
+    put(b, nd.x + nd.w - 24, nd.y - 16);
+  }
+  let low = 0;   // sticky: ซ้อนลงถ้าชนกัน
+  for (const st of sc.stickies) {
+    const box = frame('คำถาม ' + st.node, 'VERTICAL', { fill: rgbOf(STICKY_FILL), pad: [16, 16] }); box.cornerRadius = 4;
+    box.counterAxisSizingMode = 'FIXED'; box.primaryAxisSizingMode = 'AUTO'; box.resize(st.w, 100);
+    const t = await labelText(st.text, 15, '#101828'); box.appendChild(t); t.layoutSizingHorizontal = 'FILL'; t.textAutoResize = 'HEIGHT';
+    const y = Math.max(st.y, low);
+    put(box, st.x, y); low = y + box.height + sc.gap;
+  }
+  let h = Math.max(sc.h, low + 40);
+  if (loose && loose.length) {   // จอที่ผังยังไม่มีกล่องรองรับ — แจ้งให้เติม userflow (ไม่เดาเติมเอง)
+    const t = put(await labelText('จอที่ยังไม่มีกล่องในผัง userflow: ' + loose.join(' · '), 16, '#B42318'), 40, h); t.name = 'จอที่ยังไม่มีกล่องในผัง';
+    t.textAutoResize = 'HEIGHT'; t.resize(sc.w - 80, t.height || 24); h += (t.height || 24) + 40;
+  }
+  f.resize(sc.w, h);
+  return { frame: f, slots };
+}
+/* ภาพย่อจอจริง: export จอเป็น PNG แล้วใส่เป็นภาพในช่อง · จอสูงกว่าช่อง = ตัดเอาส่วนบนเต็มความกว้าง (เห็นหัวหน้า + ส่วนต้นของเนื้อหา) · ภาพเป็นภาพนิ่ง แก้จอแล้วต้องสร้างใหม่ */
+async function fillThumb(rect, scr) {
+  try {
+    const scale = Math.max(0.05, Math.min(1, (rect.width / scr.width) * 2));
+    const bytes = await scr.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: scale } });
+    const img = figma.createImage(bytes);
+    const vis = (rect.height / rect.width) / (scr.height / scr.width);   // สัดส่วนความสูงของจอที่ช่องแสดงได้เมื่อเต็มความกว้าง
+    rect.fills = [vis < 1 ? { type: 'IMAGE', imageHash: img.hash, scaleMode: 'CROP', imageTransform: [[1, 0, 0], [0, vis, 0]] } : { type: 'IMAGE', imageHash: img.hash, scaleMode: 'FIT' }];
+    return true;
+  } catch (e) { warn('ภาพย่อ ' + scr.name, e); return false; }
+}
+
+/* GROUPS = [{ code: 'A', title: '…', subs: [{ code: 'A', title: '…', tag: 'S1', screens: [[label, fn, 'D1 D2'?], …] }] }]
+   screens[i][2] = id กล่องในผัง userflow ที่จอนี้แสดง (คั่นด้วยช่องว่าง · ไม่ใส่ = ผังยังไม่มีกล่องของจอนี้)
+   fn() สร้างจอตามตัวแปร MOB · จอชื่อ "<prefix> / A.2 · S1 — <label>[ · mobile]" · คืน { made, y, flows }
+   opts.devices = [false] desktop · [true] mobile · ไม่ส่ง = ทั้งคู่ · opts.rowMin = ความสูงแถวขั้นต่ำ · opts.flow = false ไม่วางผัง userflow */
 async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
-  opts = opts || {};   // opts.reuse(sub, i, label, mob) → เฟรมเดิมที่จะย้ายเข้าผังแทนการสร้างใหม่ (ปุ่ม "จัดวางใหม่" · ที่แก้มือไว้ไม่หาย)
-  const made = []; let y = y0; const x0 = GRID.side + GRID.gap; const pitch = GRID.colW + GRID.colGap; const skipped = [];
+  opts = opts || {};
+  const made = []; let y = y0; const x0 = GRID.side + GRID.gap; const pitch = GRID.colW + GRID.colGap; let flows = 0;
   const put = (n, x, yy) => { page.insertChild(0, n); n.x = x; n.y = yy; return n; };
   for (const g of GROUPS) {
     const nCols = Math.max(...g.subs.map(s => s.screens.length));
+    const top = y;
     CREATED = []; put(await flowBar(prefix, g.code, g.title, 'Default', nCols * GRID.colW + (nCols - 1) * GRID.colGap), x0, y);
     y += GRID.barH + GRID.gap;
+    let flowBottom = top;
     for (const sub of g.subs) {
       const n = sub.screens.length, w = n * GRID.colW + (n - 1) * GRID.colGap;
       if (sub.code !== g.code) {   // แถบย่อย (B1 B2) เฉพาะเมื่อกลุ่มมีหลาย scenario · เจ้าของงานเคาะ 20 ต.ค. 2569: 1 scenario = 1 บล็อก ⇒ ไม่มีแถบย่อย ป้าย state = A.1 A.2 …
         put(await flowBar(prefix, sub.code, sub.title, 'Sub Flow', w), x0, y);
         y += GRID.barH + GRID.gap;
       }
+      const sn = scenNo(sub.tag);
+      let flowSlots = null; const byCode = {};   // รหัสจอ → เฟรมจอ (desktop ก่อน) สำหรับภาพย่อในผัง
+      if (opts.flow !== false && USERFLOW && sn != null && USERFLOW.scenarios[sn]) {   // ผัง userflow ซ้ายของบล็อก (ขอบขวาห่างป้าย Device FLOW_GAP)
+        const codes = {}, loose = [];
+        sub.screens.forEach(([label, , ids], i) => {
+          const c = sub.code + '.' + (i + 1);
+          const list = String(ids || '').split(/\s+/).filter(Boolean);
+          if (!list.length) loose.push(c + ' ' + label);
+          list.forEach(id => { (codes[id] = codes[id] || []).push(c); });
+        });
+        CREATED = [];
+        try {
+          const uf = await userflowFrame(prefix, g.code, sn, codes, loose);
+          const fr = uf && uf.frame;
+          if (uf) flowSlots = { slots: uf.slots, codes };
+          if (fr) { put(fr, -(fr.width + FLOW_GAP), top); flowBottom = Math.max(flowBottom, top + fr.height); flows++;
+            log('  · ผัง userflow S' + sn + ' (' + USERFLOW.scenarios[sn].nodes.length + ' กล่อง' + (loose.length ? ' · จอที่ยังไม่มีกล่องในผัง ' + loose.length : '') + ')'); }
+        } catch (e) { warn('ผัง userflow S' + sn, e); const k = dropCreated(page); if (k) log('    ลบชิ้นที่ค้างจากผังที่พัง ' + k + ' ชิ้น'); }
+        CREATED = [];
+      }
       put(await deviceLabel(prefix, 'Header', GRID.barH), 0, y);
       for (const [i, [label]] of sub.screens.entries()) put(await flowBar(prefix, sub.code + '.' + (i + 1), label, 'Sub Flow 2', GRID.colW), x0 + i * pitch, y);
       y += GRID.barH + GRID.gap;
-      for (const mob of [false, true]) {
+      for (const mob of (opts.devices || [false, true])) {   // devices: [false]=desktop อย่างเดียว · [true]=mobile อย่างเดียว · ไม่ส่ง=ทั้งคู่ (แถว mobile ใต้ desktop)
         MOB = mob; let h = 0; const rowY = y;
         for (const [i, [label, fn]] of sub.screens.entries()) {
           const x = x0 + i * pitch;
           CREATED = []; PLACE = { x, y: rowY };   // เฟรมจอไปอยู่ตำแหน่งจริงทันทีที่สร้าง · ชิ้นที่สร้างระหว่างทางถูกติดตามไว้
           try {
-            const name = prefix + ' / ' + sub.code + '.' + (i + 1) + ' · ' + sub.tag + ' — ' + label + (mob ? ' · mobile' : '');
-            let s = opts.reuse ? opts.reuse(sub, i, label, mob) : null;
-            if (opts.reuse && !s) { skipped.push(name); CREATED = []; PLACE = null; continue; }   // โหมดจัดวางใหม่: ไม่มีจอนี้บนหน้า → เว้นช่องไว้ ไม่สร้างใหม่
-            if (!s) { s = await fn(); stripDividers(s); await polish(s); }
-            s.name = name;
+            const s = await fn(); stripDividers(s); await polish(s);
+            s.name = prefix + ' / ' + sub.code + '.' + (i + 1) + ' · ' + sub.tag + ' — ' + label + (mob ? ' · mobile' : '');
             put(s, x, rowY); h = Math.max(h, s.height); made.push(s);
+            const cd = sub.code + '.' + (i + 1); if (!byCode[cd]) byCode[cd] = s;
             log('  · ' + made.length + '/' + total + ' ' + s.name);
           } catch (e) {
             warn(sub.code + '.' + (i + 1) + ' ' + label + (mob ? ' (mobile)' : ''), e);
@@ -928,49 +1100,26 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
           CREATED = []; PLACE = null;
         }
         MOB = false;
-        const rowH = Math.max(h, mob ? GRID.mobH : GRID.deskH);
+        const rowH = Math.max(h, opts.rowMin != null ? opts.rowMin : (mob ? GRID.mobH : GRID.deskH));
         CREATED = []; put(await deviceLabel(prefix, mob ? 'Mobile' : 'Desktop', rowH), 0, rowY);
         y = rowY + rowH + GRID.rowGap;
       }
-      y += GRID.groupGap - GRID.rowGap;
+      if (flowSlots) {   // ภาพย่อจอจริงในกล่องหน้าจอของผัง (จอแรกที่ผูกกับกล่องนั้น)
+        let k = 0;
+        for (const sl of flowSlots.slots) { const cd = (flowSlots.codes[sl.id] || [])[0]; if (cd && byCode[cd] && await fillThumb(sl.rect, byCode[cd])) k++; }
+        if (flowSlots.slots.length) log('  · ภาพย่อจอในผัง ' + k + '/' + flowSlots.slots.length + ' กล่อง');
+      }
       log('✓ ' + sub.code + ' ' + sub.title + ' (' + n + ' state)');
     }
+    y = Math.max(y, flowBottom + GRID.rowGap);   // ผังสูงกว่าแถวจอ ⇒ บล็อกถัดไปเริ่มใต้ผัง
+    y += GRID.groupGap - GRID.rowGap;
   }
   CREATED = [];
-  if (skipped.length) log('· ไม่พบจอบนหน้านี้ ' + skipped.length + ' จอ (เว้นช่องไว้ — กดสร้างใหม่ทั้งชุดถ้าต้องการ): ' + skipped.slice(0, 5).map(n => n.split(' / ')[1]).join(' · ') + (skipped.length > 5 ? ' …' : ''));
-  return { made, y, skipped };
+  return { made, y, flows };
 }
-/* ปุ่ม "จัดวางใหม่เป็นตาราง flow" — ย้ายเฟรมจอที่มีอยู่บนหน้าปัจจุบันเข้าผัง R19 โดยไม่สร้างจอใหม่ (ที่แก้มือไว้ไม่หาย)
-   จับคู่จอจากชื่อ "<prefix> / <tag> — <state>" (ชื่อเดิม) หรือ "<prefix> / B1.2 · <tag> — <state>" (ชื่อใหม่) · ป้ายสร้างใหม่ทุกครั้ง · จอที่ไม่อยู่ในผังย้ายไปแถวท้าย */
-async function patchLayout(page, prefix, GROUPS) {
-  const frames = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(prefix + ' / ') === 0);
-  if (!frames.length) { log('ไม่พบเฟรม "' + prefix + ' /" บนหน้านี้ — ใช้ปุ่มสร้างทั้งชุดแทน'); return; }
-  const strip = (n) => n.replace(new RegExp('^' + prefix + ' / (?:[A-Z]\\d*\\.\\d+ · )?'), '');
-  const byKey = new Map(); frames.forEach(f => { const k = strip(f.name); if (!byKey.has(k)) byKey.set(k, f); });
-  const used = new Set();
-  const reuse = (sub, i, label, mob) => {   // ชื่อตรง → ไม่ตรงก็เอาจอของ scenario เดียวกันที่ลงท้ายด้วย state เดียวกัน (ป้าย state เคยเปลี่ยนถ้อยคำ)
-    const suf = (mob ? ' · mobile' : '');
-    let f = byKey.get(sub.tag + ' — ' + label + suf) || null;
-    if (!f) for (const [k, v] of byKey) { if (!used.has(v) && k.indexOf(sub.tag + ' — ') === 0 && k.endsWith(' — ' + label + suf) === true) { f = v; break; } }
-    if (!f) for (const [k, v] of byKey) { if (!used.has(v) && k.indexOf(sub.tag + ' — ') === 0 && (mob ? / · mobile$/.test(k) : !/ · mobile$/.test(k)) && k.indexOf(label) >= 0) { f = v; break; } }
-    if (f) used.add(f);
-    return f;
-  };
-  page.children.filter(n => n.name.indexOf(prefix + ' · ') === 0).forEach(n => n.remove());
-  const swept = sweepOrphans(page, new Set(NEEDED)); if (swept) log('เก็บชิ้นส่วนที่ค้าง ' + swept + ' ชิ้น');
-  const y0 = Math.min(...frames.map(f => f.y));
-  log(INDEX.has('Header') ? 'แถบรหัส flow: component Header ของทีมออกแบบ' : 'แถบรหัส flow: ไม่พบ component Header ในไฟล์ — วาดแถบธรรมดาสีเดียวกันแทน');
-  const r = await buildGrid(page, prefix, GROUPS, y0, frames.length, { reuse });
-  const rest = frames.filter(f => !used.has(f));
-  if (rest.length) {   // จอที่ไม่อยู่ในผัง (ชื่อไม่ตรง scenario/state ใด) — ย้ายไปแถวท้าย ไม่ลบ
-    let x = GRID.side + GRID.gap, yy = r.y;
-    page.insertChild(0, await flowBar(prefix, '?', 'จอที่ไม่อยู่ในผัง (ชื่อไม่ตรง) ' + rest.length + ' จอ', 'Sub Flow', Math.max(GRID.colW, rest.length * (GRID.colW + GRID.colGap) - GRID.colGap)));
-    page.children[0].x = x; page.children[0].y = yy; yy += GRID.barH + GRID.gap;
-    rest.forEach(f => { f.x = x; f.y = yy; x += f.width + GRID.colGap; });
-    log('· จอที่ไม่อยู่ในผัง ' + rest.length + ' จอ ย้ายไปแถวท้าย: ' + rest.slice(0, 4).map(f => f.name.split(' / ')[1]).join(' · ') + (rest.length > 4 ? ' …' : ''));
-  }
-  log('จัดวางใหม่แล้ว ' + r.made.length + ' จอ · ' + GROUPS.length + ' กลุ่ม · ไม่ได้สร้างจอใหม่' + (r.skipped.length ? ' · เว้นช่อง ' + r.skipped.length : ''));
-}
+
+/* ======================== userflow (ฝังตอน build) ======================== */
+const USERFLOW = {"src":"Diagram/01-บำรุงรักษาตามวาระ/14-บำรุงรักษา-userflow.md","scenarios":{"1":{"n":1,"title":"กบค. สร้างแผนบำรุงรักษา","w":836,"h":2936,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"A0","kind":"action","label":"กดเมนู\nบำรุงรักษา\nตามวาระ","x":120,"y":380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D1","kind":"display","label":"หน้า รายการ\nแผนบำรุงรักษา","x":40,"y":620,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"กด\nสร้างแผน","x":120,"y":1000,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"หน้า สร้างแผน\nบำรุงรักษา","x":40,"y":1240,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A2","kind":"action","label":"ระบุข้อมูล\n+ เลือกรถ","x":120,"y":1620,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q1","kind":"decision","label":"ระบุครบ ?","x":120,"y":1860,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"D3","kind":"display","label":"ระบบแสดง\nรายการอะไหล่\nที่ต้องใช้","x":40,"y":2100,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A3","kind":"action","label":"บันทึก\n+ ส่งให้ ผพจ.\nตรวจสอบ","x":120,"y":2480,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"E","kind":"end","label":"End","x":152,"y":2752,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"A0","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"A0","to":"D1","label":"","back":false,"pts":[[208,556],[208,620]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,936],[208,1000]]},{"from":"A1","to":"D2","label":"","back":false,"pts":[[208,1176],[208,1240]]},{"from":"D2","to":"A2","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"A2","to":"Q1","label":"","back":false,"pts":[[208,1796],[208,1860]]},{"from":"Q1","to":"D2","label":"N","back":true,"pts":[[296,1948],[400,1948],[400,1398],[376,1398]]},{"from":"Q1","to":"D3","label":"Y","back":false,"pts":[[208,2036],[208,2100]]},{"from":"D3","to":"A3","label":"","back":false,"pts":[[208,2416],[208,2480]]},{"from":"A3","to":"E","label":"","back":false,"pts":[[208,2656],[208,2752]]}],"stickies":[{"node":"D3","text":"Q2 ❓ รายการอะไหล่ที่ระบบคำนวณ ให้ กบค. แก้ได้ไหม หรือเป็น Display อย่างเดียว","x":476,"y":2100,"w":320}],"gap":16},"2":{"n":2,"title":"ผพจ. ตรวจสอบและอนุมัติแผนบำรุงรักษา","w":1280,"h":3316,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"A0","kind":"action","label":"กดเมนู\nแผนรอ\nตรวจสอบ","x":120,"y":380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D1","kind":"display","label":"หน้า รายการแผน\nรอตรวจสอบ","x":40,"y":620,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"เปิดแผน","x":120,"y":1000,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"หน้า รายละเอียด\nแผน + รายการ\nอะไหล่","x":40,"y":1240,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A2","kind":"action","label":"ตรวจสอบ\nแผน","x":120,"y":1620,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q1","kind":"decision","label":"อนุมัติ ?","x":120,"y":1860,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A3","kind":"action","label":"ระบุเหตุผล\nแผนไม่ถูกต้อง","x":600,"y":2100,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D3","kind":"display","label":"ระบบส่งกลับ\nให้ กบค.\nแก้ไข","x":520,"y":2340,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"E1","kind":"end","label":"End","x":632,"y":2822,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"A4","kind":"action","label":"ตรวจ/เตรียม\nอะไหล่สำหรับ\nไตรมาส","x":120,"y":2100,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A5","kind":"action","label":"กดอนุมัติ\nแผน","x":120,"y":2410,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D4","kind":"display","label":"ระบบเปลี่ยน\nสถานะแผน\nอนุมัติแล้ว","x":40,"y":2720,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"E","kind":"end","label":"End","x":152,"y":3132,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"A0","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"A0","to":"D1","label":"","back":false,"pts":[[208,556],[208,620]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,936],[208,1000]]},{"from":"A1","to":"D2","label":"","back":false,"pts":[[208,1176],[208,1240]]},{"from":"D2","to":"A2","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"A2","to":"Q1","label":"","back":false,"pts":[[208,1796],[208,1860]]},{"from":"Q1","to":"A3","label":"N","back":false,"pts":[[296,1948],[688,1948],[688,2100]]},{"from":"A3","to":"D3","label":"","back":false,"pts":[[688,2276],[688,2340]]},{"from":"D3","to":"E1","label":"","back":false,"pts":[[688,2656],[688,2822]]},{"from":"Q1","to":"A4","label":"Y","back":false,"pts":[[208,2036],[208,2100]]},{"from":"A4","to":"A5","label":"","back":false,"pts":[[208,2276],[208,2410]]},{"from":"A5","to":"D4","label":"","back":false,"pts":[[208,2586],[208,2720]]},{"from":"D4","to":"E","label":"","back":false,"pts":[[208,3036],[208,3132]]}],"stickies":[{"node":"A0","text":"Q1 ❓ ผพจ. ย่อจากอะไร เป็นหน่วยเดียวกับ \"ฝ่ายพัสดุ\" ที่ผังเดิมเรียกไหม","x":920,"y":380,"w":320},{"node":"A4","text":"Q3 ❓ \"ตรวจ/เตรียมอะไหล่เพื่อใช้ในไตรมาส\" ทำในระบบ (มีหน้าจอ) หรือนอกระบบ","x":920,"y":2100,"w":320}],"gap":16},"3":{"n":3,"title":"ผพจ. ออกเลขงานและจัดซื้ออะไหล่","w":1120,"h":3316,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"D1","kind":"display","label":"หน้า รายละเอียด\nแผน\n(อนุมัติแล้ว)","x":40,"y":380,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"กด\nออกเลขงาน","x":120,"y":760,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"ระบบออก\nเลขงาน\nของแผน","x":40,"y":1000,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A2","kind":"action","label":"ส่งรายการ\nอะไหล่ให้\nหัวหน้า ผพจ.","x":120,"y":1380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D3","kind":"display","label":"หน้า รายการ\nอะไหล่รอ\nหัวหน้าตรวจ","x":40,"y":1620,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A3","kind":"action","label":"หัวหน้า ผพจ.\nตรวจสอบ\nรายการ","x":120,"y":2000,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q1","kind":"decision","label":"อนุมัติ ?","x":120,"y":2240,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A4","kind":"action","label":"ระบุเหตุผล\nอะไหล่\nไม่ถูกต้อง","x":520,"y":2480,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A5","kind":"action","label":"ทำเรื่อง\nคืนอะไหล่ ❓","x":520,"y":2790,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"E1","kind":"end","label":"End","x":552,"y":3132,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"A6","kind":"action","label":"ทำเรื่อง\nซื้ออะไหล่ ❓","x":120,"y":2480,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D4","kind":"display","label":"ระบบบันทึก\nใบ PO","x":40,"y":2720,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"E","kind":"end","label":"End","x":152,"y":3132,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"D1","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,696],[208,760]]},{"from":"A1","to":"D2","label":"","back":false,"pts":[[208,936],[208,1000]]},{"from":"D2","to":"A2","label":"","back":false,"pts":[[208,1316],[208,1380]]},{"from":"A2","to":"D3","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"D3","to":"A3","label":"","back":false,"pts":[[208,1936],[208,2000]]},{"from":"A3","to":"Q1","label":"","back":false,"pts":[[208,2176],[208,2240]]},{"from":"Q1","to":"A4","label":"N","back":false,"pts":[[296,2328],[608,2328],[608,2480]]},{"from":"A4","to":"A5","label":"","back":false,"pts":[[608,2656],[608,2790]]},{"from":"A5","to":"E1","label":"","back":false,"pts":[[608,2966],[608,3132]]},{"from":"Q1","to":"A6","label":"Y","back":false,"pts":[[208,2416],[208,2480]]},{"from":"A6","to":"D4","label":"","back":false,"pts":[[208,2656],[208,2720]]},{"from":"D4","to":"E","label":"","back":false,"pts":[[208,3036],[208,3132]]}],"stickies":[{"node":"D2","text":"Q4 ❓ รูปแบบเลขงาน — เจ้าของงานบอกว่ามีเกณฑ์ของจริง ยังไม่ได้ส่ง","x":760,"y":1000,"w":320},{"node":"A5","text":"Q5 ❓ อะไหล่ไม่ถูกต้องแล้ว \"ทำเรื่องคืนอะไหล่\" คือคืนอะไร ยังไม่ได้ซื้อ — หรือหมายถึงแก้รายการแล้วส่งใหม่","x":760,"y":2790,"w":320},{"node":"A6","text":"Q6 ❓ ซื้ออะไหล่ \"ที่ไหน อย่างไร\" (คำถามบนบอร์ด) · ซื้อผ่าน Smart Inventory/SAP หรือบันทึกผลอย่างเดียว","x":760,"y":2480,"w":320}],"gap":16},"4":{"n":4,"title":"กบค. ตรวจสอบจำนวนรถปัจจุบันตามแผน","w":1536,"h":2176,"nodes":[{"id":"S","kind":"end","label":"start","x":212,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"A0","kind":"action","label":"เปิดแผน\nที่มีเลขงาน","x":180,"y":380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D1","kind":"display","label":"หน้า รายการรถ\nในแผน\nพร้อม / ไม่พร้อม","x":100,"y":620,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"ตรวจสอบ\nสถานะรถ\nรายคัน","x":180,"y":1000,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q1","kind":"decision","label":"มีรถสถานะ\nรอยุบ/โอน ?","x":180,"y":1240,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A2","kind":"action","label":"นำรถออก\nจากแผน","x":180,"y":1480,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q2","kind":"decision","label":"จำนวนรถ\nตรงแผน ?","x":580,"y":1480,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A3","kind":"action","label":"ปรับจำนวน\nรถในแผน","x":900,"y":1720,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A4","kind":"action","label":"ยืนยัน\nจำนวนรถ","x":580,"y":1720,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"E","kind":"end","label":"End","x":612,"y":1992,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"A0","label":"","back":false,"pts":[[268,284],[268,380]]},{"from":"A0","to":"D1","label":"","back":false,"pts":[[268,556],[268,620]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[268,936],[268,1000]]},{"from":"A1","to":"Q1","label":"","back":false,"pts":[[268,1176],[268,1240]]},{"from":"Q1","to":"A2","label":"Y","back":false,"pts":[[268,1416],[268,1480]]},{"from":"A2","to":"D1","label":"","back":true,"pts":[[180,1568],[76,1568],[76,778],[100,778]]},{"from":"Q1","to":"Q2","label":"N","back":false,"pts":[[356,1328],[668,1328],[668,1480]]},{"from":"Q2","to":"A3","label":"N","back":false,"pts":[[756,1568],[988,1568],[988,1720]]},{"from":"A3","to":"D1","label":"","back":true,"pts":[[1076,1808],[1100,1808],[1100,778],[436,778]]},{"from":"Q2","to":"A4","label":"Y","back":false,"pts":[[668,1656],[668,1720]]},{"from":"A4","to":"E","label":"","back":false,"pts":[[668,1896],[668,1992]]}],"stickies":[{"node":"D1","text":"Q7 ❓ \"พร้อม / ไม่พร้อม\" ใครเป็นคนตอบ และตอบจากหน้าไหน — ต้นแบบมีขั้นยืนยันรถให้หน่วยงานเจ้าของรถตอบ แต่บอร์ดนี้ไม่มีเลนตอบ","x":1176,"y":620,"w":320},{"node":"A2","text":"Q8 ❓ นำรถออกจากแผนหลังมีเลขงานแล้ว ต้องแจ้ง ผพจ. ให้ปรับรายการอะไหล่ไหม","x":1176,"y":1480,"w":320}],"gap":16},"5":{"n":5,"title":"กบค. ตรวจสอบและเบิกอะไหล่ผ่านระบบจองอะไหล่","w":1280,"h":2696,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"D1","kind":"display","label":"หน้า รายการ\nอะไหล่ที่ต้องใช้\nตามแผน","x":40,"y":380,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"ตรวจสอบ\nยอดคงเหลือ","x":120,"y":760,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A2","kind":"action","label":"กด เบิก/จอง\nอะไหล่","x":120,"y":1000,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"ระบบจอง\nอะไหล่\n(ระบบภายนอก)","x":40,"y":1240,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"Q1","kind":"decision","label":"มีอะไหล่\nพร้อม ?","x":120,"y":1620,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"D3","kind":"display","label":"แสดงรายการ\nที่ขาด\nรอจัดซื้อ S3","x":520,"y":1860,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"E1","kind":"end","label":"End","x":632,"y":2272,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"D4","kind":"display","label":"ระบบแสดง\nสถานะ\nอะไหล่พร้อม","x":40,"y":1860,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"Q2","kind":"decision","label":"ว่าจ้าง ?","x":120,"y":2240,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"E2","kind":"end","label":"ไป S6\nกบค. ทำแผน\nเดินทาง","x":632,"y":2512,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"E3","kind":"end","label":"ไป S7\nผู้รับจ้าง\nทำแผนเดินทาง","x":152,"y":2512,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"D1","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,696],[208,760]]},{"from":"A1","to":"A2","label":"","back":false,"pts":[[208,936],[208,1000]]},{"from":"A2","to":"D2","label":"","back":false,"pts":[[208,1176],[208,1240]]},{"from":"D2","to":"Q1","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"Q1","to":"D3","label":"N","back":false,"pts":[[296,1708],[688,1708],[688,1860]]},{"from":"D3","to":"E1","label":"","back":false,"pts":[[688,2176],[688,2272]]},{"from":"Q1","to":"D4","label":"Y","back":false,"pts":[[208,1796],[208,1860]]},{"from":"D4","to":"Q2","label":"","back":false,"pts":[[208,2176],[208,2240]]},{"from":"Q2","to":"E2","label":"N","back":false,"pts":[[208,2416],[208,2448],[688,2448],[688,2512]]},{"from":"Q2","to":"E3","label":"Y","back":false,"pts":[[208,2416],[208,2512]]}],"stickies":[{"node":"D2","text":"Q9 ❓ \"ระบบจองอะไหล่\" คือระบบไหน (Smart Inventory / App ขออะไหล่) เชื่อมกับ VMS+ ยังไง","x":920,"y":1240,"w":320},{"node":"Q2","text":"Q10 ❓ ตัดสินใจว่าจ้างต่อแผนทั้งใบ หรือต่อคัน/ต่อพื้นที่","x":920,"y":2240,"w":320}],"gap":16},"6":{"n":6,"title":"กบค. ทำแผนเดินทาง (ตรวจเอง)","w":836,"h":2936,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"D1","kind":"display","label":"หน้า แผน\nเดินทาง\nของแผนนี้","x":40,"y":380,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"กด สร้างแผน\nเดินทาง","x":120,"y":760,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"หน้า สร้างแผน\nเดินทาง","x":40,"y":1000,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A2","kind":"action","label":"เลือกรถ\nสถานที่\nช่วงวันเดินทาง","x":120,"y":1380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A3","kind":"action","label":"ระบุพนักงาน\n2-3 คน\n+ ค่าใช้จ่าย","x":120,"y":1620,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q1","kind":"decision","label":"ระบุครบ ?","x":120,"y":1860,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A4","kind":"action","label":"ยืนยันการ\nสร้างแผน\nเดินทาง","x":120,"y":2100,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D3","kind":"display","label":"ระบบส่ง\nNotification\nเจ้าของรถ + กรย.","x":40,"y":2340,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"E","kind":"end","label":"End","x":152,"y":2752,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"D1","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,696],[208,760]]},{"from":"A1","to":"D2","label":"","back":false,"pts":[[208,936],[208,1000]]},{"from":"D2","to":"A2","label":"","back":false,"pts":[[208,1316],[208,1380]]},{"from":"A2","to":"A3","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"A3","to":"Q1","label":"","back":false,"pts":[[208,1796],[208,1860]]},{"from":"Q1","to":"D2","label":"N","back":true,"pts":[[296,1948],[400,1948],[400,1158],[376,1158]]},{"from":"Q1","to":"A4","label":"Y","back":false,"pts":[[208,2036],[208,2100]]},{"from":"A4","to":"D3","label":"","back":false,"pts":[[208,2276],[208,2340]]},{"from":"D3","to":"E","label":"","back":false,"pts":[[208,2656],[208,2752]]}],"stickies":[{"node":"A2","text":"Q11 ❓ \"สถานที่บำรุงรักษา\" คือจุดรวมงานเดียวกับที่ กรย. วางอะไหล่ไหม ใครกำหนดรายชื่อจุด","x":476,"y":1380,"w":320},{"node":"D3","text":"Q12 ❓ Notification ส่งช่องทางไหน (เลนหน่วยงานบอก e-mail + VMS+) และเจ้าของรถต้องตอบรับวันไหม","x":476,"y":2340,"w":320}],"gap":16},"7":{"n":7,"title":"ผู้รับจ้างทำแผนเดินทาง (ว่าจ้าง)","w":836,"h":3316,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"A0","kind":"action","label":"เข้าระบบ\nผู้รับจ้าง ❓","x":120,"y":380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D1","kind":"display","label":"หน้า งานที่\nได้รับว่าจ้าง","x":40,"y":620,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"กด สร้างแผน\nเดินทาง","x":120,"y":1000,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"หน้า สร้างแผน\nเดินทาง","x":40,"y":1240,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A2","kind":"action","label":"เลือกรถ\nสถานที่\nช่วงวันเดินทาง","x":120,"y":1620,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q1","kind":"decision","label":"ระบุครบ ?","x":120,"y":1860,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A3","kind":"action","label":"ยืนยันการ\nสร้างแผน\nเดินทาง","x":120,"y":2100,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D3","kind":"display","label":"ระบบส่ง\nNotification\nเจ้าของรถ + กรย.","x":40,"y":2340,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"D4","kind":"display","label":"ระบบส่งแผน\nให้ กบค.\nตรวจสอบ","x":40,"y":2720,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"E","kind":"end","label":"End","x":152,"y":3132,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"A0","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"A0","to":"D1","label":"","back":false,"pts":[[208,556],[208,620]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,936],[208,1000]]},{"from":"A1","to":"D2","label":"","back":false,"pts":[[208,1176],[208,1240]]},{"from":"D2","to":"A2","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"A2","to":"Q1","label":"","back":false,"pts":[[208,1796],[208,1860]]},{"from":"Q1","to":"D2","label":"N","back":true,"pts":[[296,1948],[400,1948],[400,1398],[376,1398]]},{"from":"Q1","to":"A3","label":"Y","back":false,"pts":[[208,2036],[208,2100]]},{"from":"A3","to":"D3","label":"","back":false,"pts":[[208,2276],[208,2340]]},{"from":"D3","to":"D4","label":"","back":false,"pts":[[208,2656],[208,2720]]},{"from":"D4","to":"E","label":"","back":false,"pts":[[208,3036],[208,3132]]}],"stickies":[{"node":"A0","text":"Q13 ❓ ผู้รับจ้างเข้า VMS+ ทางไหน มีบัญชีภายนอกไหม หรือ กบค. กรอกแทน","x":476,"y":380,"w":320},{"node":"D1","text":"Q14 ❓ \"ทำเรื่องซื้ออะไหล่\" ของผู้รับจ้าง (บอร์ด) ทำนอกระบบ หรือต้องบันทึกในระบบ","x":476,"y":620,"w":320}],"gap":16},"8":{"n":8,"title":"กบค. ตรวจสอบแผนเดินทางของผู้รับจ้าง","w":1280,"h":2936,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"A0","kind":"action","label":"กดเมนู\nแผนเดินทาง\nผู้รับจ้าง","x":120,"y":380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D1","kind":"display","label":"หน้า รายการแผน\nเดินทางจาก\nผู้รับจ้าง","x":40,"y":620,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"เลือกแท็บ\nรอตรวจสอบ","x":120,"y":1000,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A2","kind":"action","label":"ดูรายละเอียด\nแผน","x":120,"y":1240,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"หน้า รายละเอียด\nแผนเดินทาง","x":40,"y":1480,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"Q1","kind":"decision","label":"อนุมัติ ?","x":120,"y":1860,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A3","kind":"action","label":"ปฏิเสธ\n+ ระบุเหตุผล","x":600,"y":2100,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D3","kind":"display","label":"ระบบแจ้ง\nผู้รับจ้าง\nย้ายไปแท็บปฏิเสธ","x":520,"y":2340,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"E1","kind":"end","label":"End","x":632,"y":2752,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"A4","kind":"action","label":"กดอนุมัติ","x":120,"y":2100,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D4","kind":"display","label":"ระบบย้ายไป\nแท็บอนุมัติแล้ว\n+ แจ้ง กรย.","x":40,"y":2340,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"E","kind":"end","label":"End","x":152,"y":2752,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"A0","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"A0","to":"D1","label":"","back":false,"pts":[[208,556],[208,620]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,936],[208,1000]]},{"from":"A1","to":"A2","label":"","back":false,"pts":[[208,1176],[208,1240]]},{"from":"A2","to":"D2","label":"","back":false,"pts":[[208,1416],[208,1480]]},{"from":"D2","to":"Q1","label":"","back":false,"pts":[[208,1796],[208,1860]]},{"from":"Q1","to":"A3","label":"N","back":false,"pts":[[296,1948],[688,1948],[688,2100]]},{"from":"A3","to":"D3","label":"","back":false,"pts":[[688,2276],[688,2340]]},{"from":"D3","to":"E1","label":"","back":false,"pts":[[688,2656],[688,2752]]},{"from":"Q1","to":"A4","label":"Y","back":false,"pts":[[208,2036],[208,2100]]},{"from":"A4","to":"D4","label":"","back":false,"pts":[[208,2276],[208,2340]]},{"from":"D4","to":"E","label":"","back":false,"pts":[[208,2656],[208,2752]]}],"stickies":[{"node":"A3","text":"Q15 ❓ (บอร์ด) ผู้รับจ้างต้องเสนอแผนใหม่? มี limit การเสนอใหม่ไหม? ต้องบอกใครบ้าง? ใครต้องทำอะไรต่อบ้าง?","x":920,"y":2100,"w":320}],"gap":16},"9":{"n":9,"title":"กรย. เตรียมอะไหล่ไว้ที่จุดรวมงาน","w":1120,"h":2556,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"D0","kind":"display","label":"ได้รับ\nNotification\nแผนเดินทาง","x":40,"y":380,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"D1","kind":"display","label":"หน้า แผนเดินทาง\nที่ต้องเตรียม\nอะไหล่","x":40,"y":760,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"กด รับทราบ\nแผน","x":120,"y":1140,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A2","kind":"action","label":"ไปเอาอะไหล่\nก่อนวันเดินทาง\n(นอกระบบ)","x":120,"y":1380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q1","kind":"decision","label":"มีอะไหล่\nพร้อม ?","x":120,"y":1620,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A3","kind":"action","label":"แจ้ง กบค.\nอะไหล่\nไม่พร้อม ❓","x":520,"y":1860,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"E1","kind":"end","label":"End","x":552,"y":2132,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"A4","kind":"action","label":"เตรียมอะไหล่\nไว้ที่จุดกลาง/\nรวมงาน","x":120,"y":1860,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A5","kind":"action","label":"กด บันทึกว่า\nเตรียมแล้ว","x":120,"y":2100,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"E","kind":"end","label":"End","x":152,"y":2372,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"D0","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"D0","to":"D1","label":"","back":false,"pts":[[208,696],[208,760]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,1076],[208,1140]]},{"from":"A1","to":"A2","label":"","back":false,"pts":[[208,1316],[208,1380]]},{"from":"A2","to":"Q1","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"Q1","to":"A3","label":"N","back":false,"pts":[[296,1708],[608,1708],[608,1860]]},{"from":"A3","to":"E1","label":"","back":false,"pts":[[608,2036],[608,2132]]},{"from":"Q1","to":"A4","label":"Y","back":false,"pts":[[208,1796],[208,1860]]},{"from":"A4","to":"A5","label":"","back":false,"pts":[[208,2036],[208,2100]]},{"from":"A5","to":"E","label":"","back":false,"pts":[[208,2276],[208,2372]]}],"stickies":[{"node":"A3","text":"Q16 ❓ กรย. พบอะไหล่ไม่พร้อม ต้องแจ้งใคร ผ่านระบบไหม (บอร์ดมีทาง \"ไม่\" แต่ไม่มีปลายทาง)","x":760,"y":1860,"w":320}],"gap":16},"10":{"n":10,"title":"กบค./ผู้รับจ้าง บันทึกงานบำรุงรักษารายคัน","w":1192,"h":3996,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"A0","kind":"action","label":"ไปจุดรวมงาน\nรับอะไหล่\n(นอกระบบ)","x":120,"y":380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A1","kind":"action","label":"เดินทางไป\nหน้างาน\n(นอกระบบ)","x":120,"y":620,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D1","kind":"display","label":"หน้า รายการรถ\nตามแผนเดินทาง","x":40,"y":860,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A2","kind":"action","label":"เลือกคัน","x":120,"y":1240,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"หน้า บันทึกงาน\nบำรุงรักษา\nรายคัน","x":40,"y":1480,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"Q1","kind":"decision","label":"บำรุงรักษา\nได้ ?","x":120,"y":1860,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A3","kind":"action","label":"ระบุสาเหตุ\nที่บำรุงรักษา\nไม่ได้","x":520,"y":2100,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A4","kind":"action","label":"บันทึก","x":520,"y":2340,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q3","kind":"decision","label":"มีคันอื่น\nในแผน ?","x":120,"y":3540,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A5","kind":"action","label":"อัปโหลดภาพ\nก่อนเริ่มงาน","x":120,"y":2100,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A6","kind":"action","label":"ตรวจ + บำรุง\n+ เก็บตัวอย่าง\nน้ำมันไฮโดรลิก","x":120,"y":2340,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A7","kind":"action","label":"บันทึกงาน\n+ อะไหล่\nที่ใช้จริง","x":120,"y":2580,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A8","kind":"action","label":"อัปโหลดภาพ\nตอนจบงาน","x":120,"y":2820,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q2","kind":"decision","label":"ระบุครบ ?","x":120,"y":3060,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A9","kind":"action","label":"บันทึก","x":120,"y":3300,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"E","kind":"end","label":"End","x":152,"y":3812,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"A0","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"A0","to":"A1","label":"","back":false,"pts":[[208,556],[208,620]]},{"from":"A1","to":"D1","label":"","back":false,"pts":[[208,796],[208,860]]},{"from":"D1","to":"A2","label":"","back":false,"pts":[[208,1176],[208,1240]]},{"from":"A2","to":"D2","label":"","back":false,"pts":[[208,1416],[208,1480]]},{"from":"D2","to":"Q1","label":"","back":false,"pts":[[208,1796],[208,1860]]},{"from":"Q1","to":"A3","label":"N","back":false,"pts":[[296,1948],[608,1948],[608,2100]]},{"from":"A3","to":"A4","label":"","back":false,"pts":[[608,2276],[608,2340]]},{"from":"A4","to":"Q3","label":"","back":false,"pts":[[608,2516],[608,3508],[208,3508],[208,3540]]},{"from":"Q1","to":"A5","label":"Y","back":false,"pts":[[208,2036],[208,2100]]},{"from":"A5","to":"A6","label":"","back":false,"pts":[[208,2276],[208,2340]]},{"from":"A6","to":"A7","label":"","back":false,"pts":[[208,2516],[208,2580]]},{"from":"A7","to":"A8","label":"","back":false,"pts":[[208,2756],[208,2820]]},{"from":"A8","to":"Q2","label":"","back":false,"pts":[[208,2996],[208,3060]]},{"from":"Q2","to":"D2","label":"N","back":true,"pts":[[296,3148],[720,3148],[720,1638],[376,1638]]},{"from":"Q2","to":"A9","label":"Y","back":false,"pts":[[208,3236],[208,3300]]},{"from":"A9","to":"Q3","label":"","back":false,"pts":[[208,3476],[208,3540]]},{"from":"Q3","to":"D1","label":"Y","back":true,"pts":[[296,3628],[756,3628],[756,1018],[376,1018]]},{"from":"Q3","to":"E","label":"N","back":false,"pts":[[208,3716],[208,3812]]}],"stickies":[{"node":"A5","text":"Q17 ❓ (บอร์ด) ระบบต้อง stamp ระยะเวลาระหว่างที่ Upload ภาพก่อนเริ่มไปจนถึงตอนจบการบำรุงรักษาไหม?","x":832,"y":2100,"w":320},{"node":"A8","text":"Q18 ❓ (บอร์ด) ชั่วโมงเครื่องจักร — ภาพถ่ายหรือกรอกข้อมูล? · อะไหล่เก่า? · อะไหล่ใหม่ (ถ้าเหลือ?)","x":832,"y":2820,"w":320},{"node":"A3","text":"Q19 ❓ (บอร์ด) กรณีบำรุงรักษาไม่ได้ จำเป็นต้องใช้ form รูปแบบเดียวกันไหม? หากแยกกันจะต้องมี field อะไรบ้าง?","x":832,"y":2100,"w":320}],"gap":16},"11":{"n":11,"title":"กบค. ตรวจสอบงานจากผู้รับจ้างและรับคืนอะไหล่","w":1120,"h":3036,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"D1","kind":"display","label":"หน้า งานบำรุง\nรักษาที่ผู้รับจ้าง\nส่งมา","x":40,"y":380,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"เปิดรายคัน","x":120,"y":760,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"หน้า รายละเอียด\nงาน ภาพก่อน/หลัง\nอะไหล่ที่ใช้","x":40,"y":1000,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A2","kind":"action","label":"ตรวจสอบ","x":120,"y":1380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q1","kind":"decision","label":"ตรวจสอบ\nผ่าน ?","x":120,"y":1620,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A3","kind":"action","label":"ส่งกลับให้\nผู้รับจ้าง\nแก้ไข ❓","x":520,"y":1860,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"E1","kind":"end","label":"End","x":552,"y":2132,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"A4","kind":"action","label":"รับคืนอะไหล่/\nน้ำมันที่\nไม่ได้ใช้","x":120,"y":1860,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q2","kind":"decision","label":"ใช้อะไหล่\nครบ ?","x":120,"y":2100,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A5","kind":"action","label":"ทำเรื่อง\nคืนอะไหล่\nเข้าคลัง","x":520,"y":2340,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A6","kind":"action","label":"บันทึกผล\nตรวจสอบ","x":120,"y":2580,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"E","kind":"end","label":"End","x":152,"y":2852,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"D1","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,696],[208,760]]},{"from":"A1","to":"D2","label":"","back":false,"pts":[[208,936],[208,1000]]},{"from":"D2","to":"A2","label":"","back":false,"pts":[[208,1316],[208,1380]]},{"from":"A2","to":"Q1","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"Q1","to":"A3","label":"N","back":false,"pts":[[296,1708],[608,1708],[608,1860]]},{"from":"A3","to":"E1","label":"","back":false,"pts":[[608,2036],[608,2132]]},{"from":"Q1","to":"A4","label":"Y","back":false,"pts":[[208,1796],[208,1860]]},{"from":"A4","to":"Q2","label":"","back":false,"pts":[[208,2036],[208,2100]]},{"from":"Q2","to":"A5","label":"N","back":false,"pts":[[208,2276],[208,2308],[608,2308],[608,2340]]},{"from":"A5","to":"A6","label":"","back":false,"pts":[[520,2428],[208,2428],[208,2580]]},{"from":"Q2","to":"A6","label":"Y","back":false,"pts":[[208,2276],[208,2580]]},{"from":"A6","to":"E","label":"","back":false,"pts":[[208,2756],[208,2852]]}],"stickies":[{"node":"A3","text":"Q20 ❓ ตรวจสอบไม่ผ่าน ส่งกลับผู้รับจ้างยังไง (บอร์ดมีทาง \"ไม่\" แต่ไม่มีปลายทาง)","x":760,"y":1860,"w":320}],"gap":16},"12":{"n":12,"title":"กบค. บันทึกผลตรวจน้ำมันไฮโดรลิก","w":836,"h":2936,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"A0","kind":"action","label":"ตรวจการนำ\nไฟฟ้าน้ำมัน\n(นอกระบบ)","x":120,"y":380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D1","kind":"display","label":"หน้า งาน\nบำรุงรักษา\nรายคัน","x":40,"y":620,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"กด บันทึก\nผลตรวจน้ำมัน","x":120,"y":1000,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"หน้า บันทึกผล\nตรวจน้ำมัน\nไฮโดรลิก","x":40,"y":1240,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A2","kind":"action","label":"ระบุผล","x":120,"y":1620,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q1","kind":"decision","label":"ระบุครบ ?","x":120,"y":1860,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A3","kind":"action","label":"บันทึก","x":120,"y":2100,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D3","kind":"display","label":"ระบบแจ้งเตือน\nเจ้าของรถ\nผลตรวจน้ำมัน","x":40,"y":2340,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"E","kind":"end","label":"End","x":152,"y":2752,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"A0","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"A0","to":"D1","label":"","back":false,"pts":[[208,556],[208,620]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,936],[208,1000]]},{"from":"A1","to":"D2","label":"","back":false,"pts":[[208,1176],[208,1240]]},{"from":"D2","to":"A2","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"A2","to":"Q1","label":"","back":false,"pts":[[208,1796],[208,1860]]},{"from":"Q1","to":"D2","label":"N","back":true,"pts":[[296,1948],[400,1948],[400,1398],[376,1398]]},{"from":"Q1","to":"A3","label":"Y","back":false,"pts":[[208,2036],[208,2100]]},{"from":"A3","to":"D3","label":"","back":false,"pts":[[208,2276],[208,2340]]},{"from":"D3","to":"E","label":"","back":false,"pts":[[208,2656],[208,2752]]}],"stickies":[{"node":"D2","text":"Q21 ❓ ผลตรวจเป็นค่าตัวเลข (เกณฑ์ผ่าน/ไม่ผ่านเท่าไหร่) หรือเลือก ผ่าน/ไม่ผ่าน · แนบใบผลแล็บไหม","x":476,"y":1240,"w":320}],"gap":16},"13":{"n":13,"title":"หน่วยงาน/เจ้าของรถ ยอมรับผลการตรวจบำรุงรถรายคัน","w":1120,"h":3316,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"D0","kind":"display","label":"ได้รับแจ้งเตือน\ne-mail + VMS+\n(รายคัน)","x":40,"y":380,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A0","kind":"action","label":"กดลิงก์/เมนู\nจากแจ้งเตือน","x":120,"y":760,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D1","kind":"display","label":"หน้า รายการ\nการตรวจบำรุงรถ\nที่รอตรวจสอบ","x":40,"y":1000,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"เปิดรายการ\nของคันนั้น","x":120,"y":1380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"หน้า รายการ\nตรวจบำรุงรถ\nใบตรวจ 2 ใบ","x":40,"y":1620,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A2","kind":"action","label":"ดูใบตรวจ\n+ ภาพก่อน/หลัง","x":120,"y":2000,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A3","kind":"action","label":"กดยอมรับ\nผลการตรวจ\nบำรุงรถ","x":120,"y":2240,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D3","kind":"display","label":"ระบบบันทึก\nการยอมรับ\nรายคัน","x":40,"y":2480,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"Q1","kind":"decision","label":"บำรุงรักษาครบ\nทุกคันตามแผน ?","x":120,"y":2860,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"E1","kind":"end","label":"รอแจ้งเตือน\nคันถัดไป","x":552,"y":3132,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"E2","kind":"end","label":"ไป S14\nตรวจหลักฐาน\nทั้งแผน","x":152,"y":3132,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"D0","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"D0","to":"A0","label":"","back":false,"pts":[[208,696],[208,760]]},{"from":"A0","to":"D1","label":"","back":false,"pts":[[208,936],[208,1000]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,1316],[208,1380]]},{"from":"A1","to":"D2","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"D2","to":"A2","label":"","back":false,"pts":[[208,1936],[208,2000]]},{"from":"A2","to":"A3","label":"","back":false,"pts":[[208,2176],[208,2240]]},{"from":"A3","to":"D3","label":"","back":false,"pts":[[208,2416],[208,2480]]},{"from":"D3","to":"Q1","label":"","back":false,"pts":[[208,2796],[208,2860]]},{"from":"Q1","to":"E1","label":"N","back":false,"pts":[[296,2948],[608,2948],[608,3132]]},{"from":"Q1","to":"E2","label":"Y","back":false,"pts":[[208,3036],[208,3132]]}],"stickies":[{"node":"D2","text":"Q19 ❓ (บอร์ด) กรณีที่ไม่สามารถบำรุงรักษาได้ จำเป็นต้องใช้ form รูปแบบเดียวกันไหม? หากแยกกันจะต้องมี field อะไรบ้าง?","x":760,"y":1620,"w":320},{"node":"A3","text":"Q23 ❓ ถ้าไม่ยอมรับผล ทำยังไง (บอร์ดมีแค่ปุ่มยอมรับ) · \"หน่วยงาน\" กับ \"เจ้าของรถ\" เป็นคนเดียวกันไหม","x":760,"y":2240,"w":320}],"gap":16},"14":{"n":14,"title":"หน่วยงาน/เจ้าของรถ ตรวจสอบหลักฐานและประเมินความพึงพอใจ (ครบทุกคัน)","w":800,"h":3316,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"D0","kind":"display","label":"ได้รับแจ้งเตือน\ne-mail + VMS+\n(ครบทุกคัน)","x":40,"y":380,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A0","kind":"action","label":"กดลิงก์/เมนู\nจากแจ้งเตือน","x":120,"y":760,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D1","kind":"display","label":"หน้า รายการ\nการตรวจบำรุงรถ\nที่รอตรวจสอบ","x":40,"y":1000,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"เปิดรายการ\nของแผน","x":120,"y":1380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"หน้า เอกสาร\nหลักฐานการตรวจ\nบำรุงรถทั้งแผน","x":40,"y":1620,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A2","kind":"action","label":"ตรวจสอบ\nเอกสาร\nหลักฐาน","x":120,"y":2000,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A3","kind":"action","label":"ประเมิน\nความพึงพอใจ","x":120,"y":2240,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A4","kind":"action","label":"กดยอมรับ\nผลการตรวจ\nบำรุงรถ","x":120,"y":2480,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D3","kind":"display","label":"ระบบบันทึก\nการยอมรับ\n+ แจ้ง กบค.","x":40,"y":2720,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"E","kind":"end","label":"End","x":152,"y":3132,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"D0","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"D0","to":"A0","label":"","back":false,"pts":[[208,696],[208,760]]},{"from":"A0","to":"D1","label":"","back":false,"pts":[[208,936],[208,1000]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,1316],[208,1380]]},{"from":"A1","to":"D2","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"D2","to":"A2","label":"","back":false,"pts":[[208,1936],[208,2000]]},{"from":"A2","to":"A3","label":"","back":false,"pts":[[208,2176],[208,2240]]},{"from":"A3","to":"A4","label":"","back":false,"pts":[[208,2416],[208,2480]]},{"from":"A4","to":"D3","label":"","back":false,"pts":[[208,2656],[208,2720]]},{"from":"D3","to":"E","label":"","back":false,"pts":[[208,3036],[208,3132]]}],"stickies":[{"node":"A3","text":"Q22 ❓ (บอร์ด) ประเมินความพึงพอใจ (ต้องทำทุกครั้ง?) · แบบประเมินมีข้อ/สเกลอะไร","x":440,"y":2240,"w":320},{"node":"A4","text":"Q28 ❓ การยอมรับ 2 รอบ (รายคัน S13 + ทั้งแผน S14) จำเป็นทั้งคู่ไหม หรือรอบเดียวพอ","x":440,"y":2480,"w":320}],"gap":16},"15":{"n":15,"title":"กบค. บันทึกและส่งประวัติงานบำรุงรักษา","w":1120,"h":2456,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"D1","kind":"display","label":"หน้า แผน\nบำรุงรักษา\nความคืบหน้ารายคัน","x":40,"y":380,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"Q1","kind":"decision","label":"บำรุงรักษาเสร็จ\nทั้งหมด ?","x":120,"y":760,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"E1","kind":"end","label":"กลับ S10\nทำคันที่เหลือ","x":552,"y":1102,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"D2","kind":"display","label":"หน้า ประวัติงาน\nบำรุงรักษา\nทั้งหมด","x":40,"y":1000,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"ตรวจทาน\nประวัติ","x":120,"y":1380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A2","kind":"action","label":"กด ส่งประวัติ\nให้หัวหน้า\nตรวจสอบ","x":120,"y":1620,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D3","kind":"display","label":"ระบบเปลี่ยน\nสถานะ\nรอหัวหน้าตรวจ","x":40,"y":1860,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"E","kind":"end","label":"End","x":152,"y":2272,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"D1","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"D1","to":"Q1","label":"","back":false,"pts":[[208,696],[208,760]]},{"from":"Q1","to":"E1","label":"N","back":false,"pts":[[296,848],[608,848],[608,1102]]},{"from":"Q1","to":"D2","label":"Y","back":false,"pts":[[208,936],[208,1000]]},{"from":"D2","to":"A1","label":"","back":false,"pts":[[208,1316],[208,1380]]},{"from":"A1","to":"A2","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"A2","to":"D3","label":"","back":false,"pts":[[208,1796],[208,1860]]},{"from":"D3","to":"E","label":"","back":false,"pts":[[208,2176],[208,2272]]}],"stickies":[{"node":"Q1","text":"Q24 ❓ คันที่ \"บำรุงรักษาไม่ได้\" (S10) นับว่าเสร็จไหม — ส่งประวัติได้ทั้งที่มีคันทำไม่ได้หรือเปล่า","x":760,"y":760,"w":320}],"gap":16},"16":{"n":16,"title":"หัวหน้า กบค. ตรวจสอบประวัติงานบำรุงรักษา","w":920,"h":2936,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"A0","kind":"action","label":"กดเมนู\nประวัติรอ\nตรวจสอบ","x":120,"y":380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D1","kind":"display","label":"หน้า รายการ\nประวัติรอ\nตรวจสอบ","x":40,"y":620,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"เปิดแผน","x":120,"y":1000,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"หน้า ประวัติงาน\nบำรุงรักษา\nของแผน","x":40,"y":1240,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A2","kind":"action","label":"ตรวจสอบ","x":120,"y":1620,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q1","kind":"decision","label":"ผ่าน ?","x":120,"y":1860,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"A3","kind":"action","label":"ตีกลับ\n+ ระบุเหตุผล","x":600,"y":2100,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D3","kind":"display","label":"ระบบส่งกลับ\nให้ กบค.\nแก้ไข","x":520,"y":2340,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"E1","kind":"end","label":"End","x":632,"y":2752,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"A4","kind":"action","label":"กดอนุมัติ","x":120,"y":2100,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D4","kind":"display","label":"ระบบบันทึก\nประวัติ\nเป็นทางการ","x":40,"y":2340,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"E","kind":"end","label":"End","x":152,"y":2752,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"A0","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"A0","to":"D1","label":"","back":false,"pts":[[208,556],[208,620]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,936],[208,1000]]},{"from":"A1","to":"D2","label":"","back":false,"pts":[[208,1176],[208,1240]]},{"from":"D2","to":"A2","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"A2","to":"Q1","label":"","back":false,"pts":[[208,1796],[208,1860]]},{"from":"Q1","to":"A3","label":"N","back":false,"pts":[[296,1948],[688,1948],[688,2100]]},{"from":"A3","to":"D3","label":"","back":false,"pts":[[688,2276],[688,2340]]},{"from":"D3","to":"E1","label":"","back":false,"pts":[[688,2656],[688,2752]]},{"from":"Q1","to":"A4","label":"Y","back":false,"pts":[[208,2036],[208,2100]]},{"from":"A4","to":"D4","label":"","back":false,"pts":[[208,2276],[208,2340]]},{"from":"D4","to":"E","label":"","back":false,"pts":[[208,2656],[208,2752]]}],"stickies":[],"gap":16},"17":{"n":17,"title":"กบค. ออกรายงานผลและปิดงาน","w":836,"h":2696,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"D1","kind":"display","label":"หน้า แผน\nบำรุงรักษา\n(ประวัติผ่านแล้ว)","x":40,"y":380,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"กด รายงานผล\nการบำรุงรักษา","x":120,"y":760,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"หน้า รายงานผล\nการบำรุงรักษา","x":40,"y":1000,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A2","kind":"action","label":"ดาวน์โหลด\nรายงาน","x":120,"y":1380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"A3","kind":"action","label":"กด ปิดงาน","x":120,"y":1620,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"Q1","kind":"decision","label":"ยืนยัน\nปิดงาน ?","x":120,"y":1860,"w":176,"h":176,"fill":{"r":0.8627451062202454,"g":0.800000011920929,"b":1},"stroke":{"r":0.529411792755127,"g":0.30980393290519714,"b":1}},{"id":"D3","kind":"display","label":"ระบบเปลี่ยน\nสถานะแผน\nปิดงานแล้ว","x":40,"y":2100,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"E","kind":"end","label":"End","x":152,"y":2512,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"D1","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,696],[208,760]]},{"from":"A1","to":"D2","label":"","back":false,"pts":[[208,936],[208,1000]]},{"from":"D2","to":"A2","label":"","back":false,"pts":[[208,1316],[208,1380]]},{"from":"A2","to":"A3","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"A3","to":"Q1","label":"","back":false,"pts":[[208,1796],[208,1860]]},{"from":"Q1","to":"D2","label":"N","back":true,"pts":[[296,1948],[400,1948],[400,1158],[376,1158]]},{"from":"Q1","to":"D3","label":"Y","back":false,"pts":[[208,2036],[208,2100]]},{"from":"D3","to":"E","label":"","back":false,"pts":[[208,2416],[208,2512]]}],"stickies":[{"node":"D2","text":"Q25 ❓ รายงานผลมีหัวข้ออะไรบ้าง รูปแบบไฟล์ (PDF/Excel) — บอร์ดบอกแค่ \"Download ได้\"","x":476,"y":1000,"w":320}],"gap":16},"18":{"n":18,"title":"กบค. คำนวณต้นทุนการบำรุงรักษา","w":800,"h":2456,"nodes":[{"id":"S","kind":"end","label":"start","x":152,"y":172,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}},{"id":"D1","kind":"display","label":"หน้า แผน\nบำรุงรักษา\n(ปิดงานแล้ว)","x":40,"y":380,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A1","kind":"action","label":"กด คำนวณ\nต้นทุน","x":120,"y":760,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D2","kind":"display","label":"หน้า ต้นทุน\nค่าแรง ที่พัก\nเดินทาง","x":40,"y":1000,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A2","kind":"action","label":"ตรวจทาน\nค่าใช้จ่าย","x":120,"y":1380,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"D3","kind":"display","label":"ระบบแสดง\nSummary\nต้นทุน","x":40,"y":1620,"w":336,"h":316,"fill":{"r":0.7764706015586853,"g":0.9803921580314636,"b":0.9647058844566345},"stroke":{"r":0.3529411852359772,"g":0.8470588326454163,"b":0.800000011920929},"thumb":{"x":8,"y":8,"w":320,"h":228}},{"id":"A3","kind":"action","label":"ดาวน์โหลด\nExcel","x":120,"y":2000,"w":176,"h":176,"fill":{"r":0.7607843279838562,"g":0.8980392217636108,"b":1},"stroke":{"r":0.239215686917305,"g":0.6784313917160034,"b":1}},{"id":"E","kind":"end","label":"End","x":152,"y":2272,"w":112,"h":112,"fill":{"r":1,"g":1,"b":1},"stroke":{"r":0.4588235318660736,"g":0.4588235318660736,"b":0.4588235318660736}}],"edges":[{"from":"S","to":"D1","label":"","back":false,"pts":[[208,284],[208,380]]},{"from":"D1","to":"A1","label":"","back":false,"pts":[[208,696],[208,760]]},{"from":"A1","to":"D2","label":"","back":false,"pts":[[208,936],[208,1000]]},{"from":"D2","to":"A2","label":"","back":false,"pts":[[208,1316],[208,1380]]},{"from":"A2","to":"D3","label":"","back":false,"pts":[[208,1556],[208,1620]]},{"from":"D3","to":"A3","label":"","back":false,"pts":[[208,1936],[208,2000]]},{"from":"A3","to":"E","label":"","back":false,"pts":[[208,2176],[208,2272]]}],"stickies":[{"node":"D2","text":"Q26 ❓ \"ค่าแรง\" ในต้นทุน กับ \"ค่าเบี้ยเลี้ยง\" ที่กรอกตอนทำแผนเดินทาง (S6) เป็นรายการเดียวกันไหม · ต้นทุนรวมค่าอะไหล่/ค่าจ้างผู้รับจ้างไหม","x":440,"y":1000,"w":320}],"gap":16}}};
 
 /* ======================== maintainance-plugin/screens.js ======================== */
 /* ============================================================================
@@ -983,9 +1132,12 @@ async function patchLayout(page, prefix, GROUPS) {
       SummaryRequestedParts (สรุปรายการเบิก) — ไฟล์ที่ไม่มี component เหล่านี้ ปลั๊กอินใช้แบบสำรองจากไลบรารีแล้วรายงาน
    ต้นทาง: Diagram/01-บำรุงรักษาตามวาระ/14-บำรุงรักษา-userflow.md · ตารางจับคู่: figma-export/maintainance-component-map.md
    กติกา: figma-export/component-rules.md (R1–R18) · ตารางไม่เกิน 8 คอลัมน์ทุกตาราง (ใช้ component Table ทั้งก้อนได้)
+   export (22 ต.ค. 2569 · ปรับให้ตรงเงื่อนไข Overhaul ใน plan.md หัวข้อ 🎯 + component-rules ข้อ 5.1 R19 · ข้อ 5.4 R26):
+     ปุ่ม ทั้งชุด · Desktop · Mobile · เฉพาะ scenario ที่เลือก · เช็ค component · ป้าย Device Type · 1 scenario = 1 บล็อกตัวอักษร · A.1 A.2 = state
+     + ผัง userflow ของ scenario นั้นซ้ายสุดของบล็อก (FLOW_NODES ผูกจอกับกล่องในผัง) · ทุกปุ่มวางบนหน้า "Maintainance" ต่อใต้ของเดิม
    ============================================================================ */
 
-const PLUGIN = { prefix: 'MT', page: 'maintainance-1', menu: 'บำรุงรักษาตามวาระ', searchHint: 'ค้นหาเลขงาน, ชื่อแผน' };
+const PLUGIN = { prefix: 'MT', page: 'Maintainance', menu: 'บำรุงรักษาตามวาระ', searchHint: 'ค้นหาเลขงาน, ชื่อแผน' };
 
 /* ---------- component ที่ใช้ — ขาดตัวไหนหยุด (ไลบรารี) · NESTED = ชิ้นซ้อนใน component อื่น · LOCAL_OPTIONAL = ของไฟล์ Maintain-D ไม่มีก็ใช้แบบสำรอง ---------- */
 const DIRECT = ['Sidebar navigation', 'Header navigation', 'Page header', 'Section header', 'Section label', 'Table', 'Content item row', 'Table header',
@@ -998,7 +1150,7 @@ const DIRECT = ['Sidebar navigation', 'Header navigation', 'Page header', 'Secti
 const NESTED = ['Nav button', 'Sort icon', 'Badge outline with remove icon', 'Button groups pagination item', 'Tertiary brand button', 'Primary danger button',
   '_Content item base', '_File upload item base', 'List with checkbox item', 'List header item', 'Checkbox', 'Badge outline', 'Mobile table item', 'Table cell', 'Table header cell', 'Radio button'];
 const LOCAL_OPTIONAL = ['PartRequestStepPanel', 'PartsInventoryPanel', 'RequestedPartsPanel', 'Spare Part Card Item', 'IncidentPhotoGallery', 'VehicleAndReporterInfo', 'SummaryRequestedParts',
-  'Component 1', 'Header'];   // Component 1 = ป้าย Device/Desktop/Mobile · Header = แถบรหัส flow ของทีมออกแบบ (ไลบรารีอื่น หาจาก instance ในไฟล์)
+  'Device Type', 'Component 1', 'Header'];   // Device Type = ป้าย Device/Desktop/Mobile ชุดเดียวกับ Overhaul (22 ต.ค. 2569 · Component 1 = ตัวสำรองชุดเก่า) · Header = แถบรหัส flow ของทีมออกแบบ (ไลบรารีอื่น หาจาก instance ในไฟล์)
 const NEEDED = DIRECT.concat(NESTED, LOCAL_OPTIONAL);
 const NESTED_ONLY = new Set(NESTED);
 const has = (n) => INDEX.has(n);
@@ -1044,6 +1196,14 @@ const PARTS = [   // รายการ · รหัส · หมวด · จ�
   ['ไส้กรองน้ำมันเครื่อง', 'FL-0031', 'ไส้กรอง', '12', 'ชิ้น', '40', 'ok'],
   ['น้ำมันเครื่อง 15W-40', 'OL-0046', 'น้ำมัน', '216', 'ลิตร', '600', 'ok'],
   ['จาระบีอเนกประสงค์', 'GR-0007', 'หล่อลื่น', '24', 'กก.', '10', 'short']];
+/* อะไหล่แบบงานซ่อม (22 ต.ค. 2569 "ปรับอะไหล่ให้สอดคล้องกับงานซ่อม"): คลัง 2 แบบ Smart Inventory / คลังสำรอง · ราคาต่อหน่วย (ค่าสมมติ) ·
+   จำนวนตามแผนเกินคงเหลือ = ซื้อเพิ่มส่วนต่าง + เลือกผู้จัดซื้อ · ผู้จัดซื้อในบำรุงรักษา = Smart Inventory หรือ ผพจ. (S3) แทน "กบค." ของงานซ่อม — รอเคาะ */
+const WH = ['Smart Inventory', 'Smart Inventory', 'Smart Inventory', 'คลังสำรอง', 'คลังสำรอง'];
+const PRICE = [120, 680, 250, 95, 180];
+const BUYER = ['Smart Inventory', 'ผพจ.'];
+const BUYER_OF = { 1: 0, 4: 1 };   // อะไหล่ที่ขาด → ผู้จัดซื้อที่เลือกไว้ (ไส้กรองไฮโดรลิก = Smart Inventory · จาระบี = ผพจ.)
+const baht = (n) => n.toLocaleString('en-US') + ' บาท';
+const shortOf = (i) => Math.max(0, +PARTS[i][3] - +PARTS[i][5]);
 const TST = { sent: ['ส่งแจ้งแล้ว', 'Info'], done: ['ดำเนินการแล้ว', 'Success'] };
 const TRIP = { place: 'จุดรวมงาน กฟฉ.1 ขอนแก่น', d1: '03/11/2569', d2: '07/11/2569', staff: ['นายวิชัย ทองดี', 'นางสาวกนกวรรณ ใจมั่น', 'นายสมชาย พูลสุข'], perDiem: '7,200', lodging: '9,600', travel: '4,850' };
 const TRIPS = [[TRIP.place, TRIP.d1 + ' – ' + TRIP.d2, '6', 'กบค. (ตรวจเอง)', 'sent']];
@@ -1074,6 +1234,27 @@ async function radioPick(title, options, sel, o) {
     if (MOB) add(r, c, 'h'); else { r.appendChild(c); c.layoutGrow = 1; }
   });
   return col('Section', [await (o.label ? sectionLabel(title) : section(title)), r], 16);
+}
+/* เลือกรถหลายคัน (เจ้าของงานสั่ง 22 ต.ค. 2569 "ใช้แบบ Overhaul ช่องค้นหากับชิป") = แบบ R24 ของ Overhaul:
+   Input dropdown ช่องเดียว "เลือกรถ" พิมพ์ค้นทะเบียน/จังหวัด → Dropdown list แถวละทะเบียน (คันที่เลือกแล้ว State=Selected) → รถที่เลือกเป็นชิป Badge outline with remove icon ใต้ช่อง
+   ไม่ใช้ dual list แล้ว · ใช้ทั้ง desktop และ mobile (mobile ช่องเต็มแถว) · งานซ่อมเลือกรถคันเดียวด้วยช่องค้นทะเบียนแบบเดียวกัน (Dropdown/Search PEA with request) */
+async function carPick(title, cands, sel, o) {
+  o = o || {};
+  const right = cands.filter((_, i) => sel.indexOf(i) >= 0);
+  const f = dropdown('เลือกรถ', o.query || '', { placeholder: 'ค้นหาทะเบียน, จังหวัด', lead: 'search-24-300-round', state: o.open ? 'Focused' : undefined, error: o.error || '' });
+  let chips = null;
+  if (right.length) {
+    chips = frame('Selected cars', 'HORIZONTAL', { gap: 8 });
+    try { chips.layoutWrap = 'WRAP'; chips.counterAxisSpacing = 8; } catch (e) { /* ไฟล์เก่าไม่มี wrap */ }
+    right.forEach(c => chips.appendChild(inst('Badge outline with remove icon', { Color: 'Brand' }, { Text: c[0] })));
+  }
+  const sec = col('Section', [await section(title, { badge: right.length || null }), MOB ? f : row('Row', [f, frame('Spacer', 'VERTICAL')]), chips], 16);
+  const open = (scr) => {   // รายการที่ตรงคำค้น · คันที่เลือกแล้วติ๊ก Selected · แถวเดียวไม่มีบรรทัดรอง
+    if (!o.open) return;
+    const list = cands.map((c, i) => [c, i]).filter(([c]) => !o.query || c[0].indexOf(o.query) >= 0);
+    comboAt(scr, f.findOne(n => n.name === 'Container') || f, list.map(([c, i]) => [c[0], '', sel.indexOf(i) >= 0]));
+  };
+  return { sec, open };
 }
 /* กล่องข้อมูลรถ — ยืม VehicleAndReporterInfo (หน้า รายละเอียดงานซ่อม): Section label + Content item row แถวละ 4 · ไม่มี/mobile → Section label + กล่องแสดงข้อมูล (R12) */
 async function vehicleInfo(pairs, title) {
@@ -1117,8 +1298,32 @@ async function photoUploads(list, filled, errors) {
 }
 const partRow = (p, i, o) => [p[0], p[1], p[2], p[3], p[4], p[5], { pill: o && o.result ? PSTAT[o.result === 'short' ? p[6] : 'ok'] : o && o.picked && o.picked.indexOf(i) >= 0 ? PSTAT.reserved : [' ', 'Gray'] }];
 const PART_COLS = [['รายการอะไหล่', 0, 'Lead text', 'Swap'], ['รหัส', 100], ['หมวด', 110], ['ตามแผน', 100], ['หน่วย', 90], ['คงเหลือในคลัง', 130], ['สถานะ', 140, 'Badge']];
-/* เบิก/จองอะไหล่ — ยืม PartRequestStepPanel (ขั้นเบิกอะไหล่ของงานซ่อม = PartsInventoryPanel "คลังอะไหล่" Smart Inventory + RequestedPartsPanel "อะไหล่ที่ต้องการใช้งาน")
-   · mobile / ไฟล์ที่ไม่มี component → ตาราง Table ของไลบรารี */
+/* ใส่ข้อความการ์ดอะไหล่ (Spare Part Card Item) — จับชั้นข้อความจากข้อความตัวอย่างของ component ไม่ใช้ลำดับ (การ์ดในแผง Filled วางชั้นต่างจากตัวแม่):
+   รหัส · "1 หน่วย" · "| 680 บาท" (ราคาต่อหน่วย) · "<คลัง> : คงเหลือ n" · "| ต้องจัดซื้อ n" · ราคารวมของการ์ด (Text "3,400 บาท") */
+async function fillPartCard(c, i, o) {
+  o = o || {};
+  const part = PARTS[i], unit = part[4];
+  const own = (n) => !findInstanceAncestorIn(n, c);
+  const sup = c.findAll(n => n.type === 'TEXT' && n.name === 'Supporting text' && own(n));
+  const orig = sup.map(t => t.characters || '');
+  await text(c, 'Name', part[0]);
+  if (sup[0]) await text(c, sup[0], part[1]);
+  for (const [k, t] of sup.entries()) {
+    const was = orig[k];
+    if (k === 0 || was === '·' || was === '|') continue;
+    if (/คงเหลือ/.test(was)) await text(c, t, WH[i] + ' : คงเหลือ ' + o.stock + ' ' + unit);
+    else if (/^(ต้องจัดซื้อ|ซื้อเพิ่ม)/.test(was)) { if (o.buy > 0) await text(c, t, 'ต้องจัดซื้อ ' + o.buy + ' ' + unit); }   // แถวนี้ซ่อนด้วย property จัดซื้อเพิ่ม เมื่อไม่ขาด
+    else if (/หน่วย$/.test(was)) await text(c, t, '1 ' + unit);
+    else if (/บาท$/.test(was)) await text(c, t, baht(PRICE[i]));
+  }
+  if (o.qty != null) {
+    const line = c.findAll(n => n.type === 'TEXT' && n.name === 'Text' && own(n))[0];
+    if (line) await text(c, line, baht(o.qty * PRICE[i]));
+  }
+}
+/* เบิก/จองอะไหล่ — ยืม PartRequestStepPanel (ขั้นเบิกอะไหล่ของงานซ่อม = PartsInventoryPanel "คลังอะไหล่" + RequestedPartsPanel "อะไหล่ที่ต้องการใช้งาน")
+   ตามแบบงานซ่อม (22 ต.ค. 2569): การ์ดคลังบอกคลังและคงเหลือ · การ์ดที่เลือกมีจำนวน + ราคารวม · ถ้าเกินคงเหลือ = "| ซื้อเพิ่ม n" + Helper "จำนวนที่เกินยอดในคลัง…" + เลือกผู้จัดซื้อ (Radio text card)
+   o.inv = 'Default' | 'Not Found' | 'API error' (สถานะของ PartsInventoryPanel) · mobile / ไฟล์ที่ไม่มี component → ตาราง Table ของไลบรารี */
 async function partsPanel(o) {
   o = o || {};
   const picked = o.picked || [];
@@ -1126,19 +1331,16 @@ async function partsPanel(o) {
     const p = inst('PartRequestStepPanel'); p.name = 'PartRequestStepPanel';
     const inv = find(p, 'PartsInventoryPanel'), req = find(p, 'RequestedPartsPanel');
     if (inv) {
-      setProps(inv, { State: 'Default' });
+      setProps(inv, { State: o.inv || 'Default' });
       const sh = find(inv, 'Section header');
-      if (sh) { setProps(sh, { Title: 'คลังอะไหล่', 'Supporting text': true, 'More actions': false, Badge: false, Actions: false }); await text(sh, 'Supporting text', 'อะไหล่ตามแผนจาก Smart Inventory และคลังสำรอง'); }
-      const ti = find(inv, 'Text input'); if (ti) setProps(ti, { Text: 'ค้นหาชื่อหรือรหัสอะไหล่', Label: false, Helper: false, 'Info icon': false });
+      if (sh) { setProps(sh, { Title: 'คลังอะไหล่', 'Supporting text': true, 'More actions': false, Badge: false, Actions: false }); await text(sh, 'Supporting text', 'อะไหล่ทั้งหมดจาก Smart Inventory และ คลังสำรอง'); }
+      const ti = find(inv, 'Text input'); if (ti) setProps(ti, { Text: o.query || 'ค้นหาชื่อหรือรหัสอะไหล่', Label: false, Helper: false, 'Info icon': false });
       const cards = inv.findAll(n => n.type === 'INSTANCE' && n.name === 'Spare Part Card Item');
       for (const [i, c] of cards.entries()) {
         const part = PARTS[i];
         if (!part) { c.visible = false; continue; }
         setProps(c, { Suggestion: false, Select: picked.indexOf(i) >= 0, Add: picked.indexOf(i) < 0, 'จัดซื้อเพิ่ม': false, 'เลือกผู้จัดซื้อ': false });
-        await text(c, 'Name', part[0]);
-        await text(c, 'Supporting text', part[1] + ' · ' + part[2], 0);
-        await text(c, 'Supporting text', 'Smart Inventory : คงเหลือ ' + part[5] + ' ' + part[4] + ' · ตามแผน ' + part[3] + ' ' + part[4], 1);
-        const inf = find(c, 'Info'); if (inf) inf.visible = false;
+        await fillPartCard(c, i, { stock: part[5] });
       }
     }
     if (req) {
@@ -1146,24 +1348,45 @@ async function partsPanel(o) {
       const sh = find(req, 'Section header');
       if (sh) { setProps(sh, { Title: 'อะไหล่ที่ต้องใช้ตามแผน', 'Supporting text': true, 'More actions': false, Badge: picked.length > 0, Actions: false }); await text(sh, 'Supporting text', 'ระบบคำนวณจากรถในแผน · เบิก/จองผ่านระบบจองอะไหล่'); const b = find(sh, 'Badge outline'); if (b && picked.length) setProps(b, { Text: String(picked.length) }); }
       const cards = req.findAll(n => n.type === 'INSTANCE' && n.name === 'Spare Part Card Item');
+      // แผงมีการ์ดรายการที่เลือกแค่ 3 ช่อง (instance เพิ่มลูกไม่ได้) ⇒ เรียงรายการที่ต้องจัดซื้อขึ้นก่อนให้เห็น · ตัวเลข Badge และยอดรวมนับทุกรายการ
+      const order = picked.slice().sort((a, b) => (shortOf(b) > 0) - (shortOf(a) > 0));
       let k = 0;
       for (const c of cards) {
         const vp = (c.variantProperties || {})['อะไหล่'];
         if (vp === 'เพิ่มอะไหล่') { c.visible = false; continue; }
-        const part = PARTS[picked[k++]];
+        const i = order[k++], part = PARTS[i];
         if (!part) { c.visible = false; continue; }
-        setProps(c, { Suggestion: false, 'จัดซื้อเพิ่ม': false, 'เลือกผู้จัดซื้อ': false });
-        const nm = find(c, 'Name'); if (nm) await text(c, nm, part[0]);
-        await text(c, 'Supporting text', 'Smart Inventory : คงเหลือ ' + part[5] + ' ' + part[4], 0);
-        const num = find(c, 'Number input'); if (num) setProps(num, { Number: part[3], Label: false, Helper: false });
-        const price = find(c, 'Text'); if (price && price.type === 'TEXT') await text(c, price, part[3] + ' ' + part[4]);
+        const buy = o.result === 'ok' ? 0 : shortOf(i);   // อะไหล่พร้อมครบ = ของเข้าคลังแล้ว ไม่มีซื้อเพิ่ม
+        const stock = o.result === 'ok' ? Math.max(+part[5], +part[3]) : part[5];
+        setProps(c, { Suggestion: false, 'จัดซื้อเพิ่ม': buy > 0, 'เลือกผู้จัดซื้อ': buy > 0 });
+        await fillPartCard(c, i, { stock, buy, qty: +part[3] });
+        const num = find(c, 'Number input');
+        if (num) setProps(num, { Number: part[3], Label: false, Optional: false, 'Info icon': false, Helper: buy > 0, 'Helper text': buy > 0 ? 'จำนวนที่เกินยอดในคลัง จะถูกตั้งเป็นรายการจัดซื้อให้อัตโนมัติ' : '' });
+        if (buy > 0) {
+          const il = find(c, 'Input label'); if (il) setProps(il, { Optional: false, 'Info icon': false, button: false });   // ป้าย "เลือกผู้จัดซื้ออะไหล่เพิ่ม" ไม่บังคับเลือก (มีค่าเริ่มต้น) · ไม่มีปุ่มข้างป้าย
+          c.findAll(n => n.type === 'INSTANCE' && n.name === 'Radio text card').forEach((r, j) => setProps(r, { Text: BUYER[j] || '', Supporting: false, Selected: (BUYER_OF[i] || 0) === j ? 'True' : 'False' }));
+        }
       }
       const addBtn = find(req, 'Secondary button'); if (addBtn) setProps(addBtn, { Text: 'ระบุอะไหล่เพิ่มเติม' });
+      // กล่องรวมค่าอะไหล่ท้ายแผง (แบบงานซ่อม): เบิกจากคลัง · ต้องจัดซื้อ · รวมทั้งหมด — คิดจากทุกรายการที่เลือก
+      const cost = find(req, 'Cost Container');
+      if (cost && picked.length) {
+        let take = 0, buyAmt = 0;
+        picked.forEach(i => { const q = +PARTS[i][3], st = o.result === 'ok' ? q : Math.min(q, +PARTS[i][5]); take += st * PRICE[i]; buyAmt += (q - st) * PRICE[i]; });
+        const csh = find(cost, 'Section header'); if (csh) setProps(csh, { Title: 'รวมค่าอะไหล่', 'Supporting text': false, 'More actions': false, Badge: false, Actions: false });
+        const infos = cost.findAll(n => n.type === 'FRAME' && n.name === 'Purchase Info');
+        const vals = [['เบิกจากคลัง', take], ['ต้องจัดซื้อ', buyAmt]];
+        for (const [j, f] of infos.entries()) { const ts = f.children.filter(x => x.type === 'TEXT'); if (vals[j] && ts[1]) { await text(f, ts[0], vals[j][0]); await text(f, ts[1], baht(vals[j][1])); } }
+        const tot = find(cost, 'Total Cost'); const tt = tot ? tot.children.filter(x => x.type === 'TEXT') : [];
+        if (tt[1]) await text(tot, tt[1], baht(take + buyAmt));
+      }
     }
     return p;
   }
   return col('Section', [await section('รายการอะไหล่ที่ต้องใช้ตามแผน', { badge: PARTS.length }), await tbl(PART_COLS, PARTS.map((p, i) => partRow(p, i, o)))], 16);
 }
+/* ข้อความที่อยู่ใน instance ซ้อน (เช่น Pill หรือปุ่ม) ไม่ใช่ข้อความของการ์ดเอง */
+function findInstanceAncestorIn(n, stop) { let q = n.parent; while (q && q !== stop) { if (q.type === 'INSTANCE') return q; q = q.parent; } return null; }
 /* สรุปรายการเบิก/จอง — ยืม SummaryRequestedParts (modal สรุปรายการอะไหล่ของงานซ่อม) · ไม่มี/mobile → Modal ยืนยัน */
 async function partsSummary(scr, o) {
   if (!MOB && has('SummaryRequestedParts')) {
@@ -1181,6 +1404,16 @@ async function partsSummary(scr, o) {
         setProps(r, { 'Item 2': true, 'Item 3': true, 'Item 4': true });
         r.children.filter(c => c.name === '_Content item base').forEach((it, j) => { if (pairs[j]) setProps(it, { Label: pairs[j][0], Text: pairs[j][1], Supporting: false, 'Leading icon': false }); });
       });
+    }
+    // ยอดรวมแบบงานซ่อม: เบิกจาก Smart Inventory · เบิกจากคลังสำรอง · จัดซื้อเพิ่มโดย Smart Inventory · จัดซื้อเพิ่มโดย ผพจ. · รวม
+    const sum = { take: [0, 0], buy: [0, 0] };
+    PARTS.forEach((pt, i) => { const q = +pt[3], st = Math.min(q, +pt[5]); sum.take[WH[i] === 'Smart Inventory' ? 0 : 1] += st * PRICE[i]; if (q > st) sum.buy[BUYER_OF[i] || 0] += (q - st) * PRICE[i]; });
+    const lines = [['เบิกจาก Smart Inventory', sum.take[0]], ['เบิกจากคลังสำรอง', sum.take[1]], ['จัดซื้ออะไหล่เพิ่มโดย Smart Inventory', sum.buy[0]], ['จัดซื้ออะไหล่เพิ่มโดย ผพจ.', sum.buy[1]]];
+    const rowsT = m.findAll(n => n.type === 'FRAME' && n.children && n.children.length === 2 && n.children.every(c => c.type === 'TEXT') && /^(Supporting text|Text)$/.test(n.children[0].name) && n.children[1].name === 'Text');
+    let li = 0;
+    for (const r of rowsT) {
+      if (r.children[0].name === 'Supporting text' && lines[li]) { await text(m, r.children[0], lines[li][0]); await text(m, r.children[1], baht(lines[li][1])); li++; }
+      else if (r.children[0].name === 'Text') await text(m, r.children[1], baht(lines.reduce((a, x) => a + x[1], 0)));
     }
     const ft = m.findAll(n => n.type === 'INSTANCE' && /button/.test(n.name) && n.parent && n.parent.name === 'Actions');
     ft.forEach(b => { if (b.name === 'Primary button') setProps(b, { Text: 'ยืนยันเบิก/จอง', 'Leading icon': false, 'Trailing icon': false }); else if (b.name === 'Secondary button') setProps(b, { Text: 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false }); else b.visible = false; });
@@ -1206,11 +1439,7 @@ async function planForm(name, o) {
   const v = o.values || {}, E = (m) => o.errors ? m : '';
   const { scr, page } = await shell(name, { title: 'สร้างแผนบำรุงรักษา', back: true, crumbs: ['สร้างแผน'] });
   const sel = o.sel || [];
-  const left = CARS.filter((_, i) => sel.indexOf(i) < 0), right = CARS.filter((_, i) => sel.indexOf(i) >= 0);
-  const mid = MOB ? row('Actions', [btn('Secondary button', 'เพิ่ม'), btn('Secondary button', 'นำออก', { disabled: !sel.length })], { gap: 12, keep: true })
-    : col('Actions', [btn('Secondary button', 'เพิ่ม'), btn('Secondary button', 'นำออก', { disabled: !sel.length })], 12);
-  const L = await listCheck('รถที่เข้าเกณฑ์ (' + left.length + ')', left, []), R = await listCheck('เลือกเข้าแผนแล้ว (' + right.length + ')', right, []);
-  const dual = row('Dual list', [L, mid, R], { gap: 16 }); mid.layoutGrow = 0; if (!MOB) mid.primaryAxisAlignItems = 'CENTER';
+  const car = await carPick('เลือกรถเข้าแผน', CARS, sel, { query: o.query, open: o.carOpen, error: sel.length ? '' : E('กรุณาเลือกรถเข้าแผนอย่างน้อย 1 คัน') });
   const partsSec = col('Section', [await section('รายการอะไหล่ที่ต้องใช้ (ระบบคำนวณจากรถที่เลือก)', { badge: sel.length ? PARTS.length : null })], 16);
   if (sel.length) add(partsSec, await tbl(PART_COLS.slice(0, 5), PARTS.map(p => [p[0], p[1], p[2], p[3], p[4]])), 'h');
   else { const es = inst('Empty state/Data empty'); add(partsSec, es, 'h'); await text(es, 'Text', 'ยังไม่มีรายการอะไหล่'); await text(es, 'Supporting text', 'เลือกรถเข้าแผนก่อน ระบบจะคำนวณน้ำมัน ไส้กรอง และอะไหล่ตามรอบให้เอง'); const a = find(es, 'Actions'); if (a) a.visible = false; }
@@ -1218,10 +1447,11 @@ async function planForm(name, o) {
     col('Section', [await section('ข้อมูลแผน'),
       row('Row', [field('ชื่อแผน', v.name, { placeholder: 'เช่น บำรุงรักษาตามวาระ ปีงบ 2570 รถกระเช้า ภาค 2', error: E('กรุณาระบุชื่อแผน') }), dropdown('ปีงบประมาณ', v.year || '2570')]),
       row('Row', [dropdown('ไตรมาส', v.q || '', { placeholder: 'เลือกไตรมาส', error: E('กรุณาเลือกไตรมาส') }), dropdown('เกณฑ์เลือกรถ', v.rule || '', { placeholder: 'ทรัค / เนต', error: E('กรุณาเลือกเกณฑ์เลือกรถ') })])], 16),
-    col('Section', [await section('เลือกรถเข้าแผน', { badge: right.length }), row('Row', [field('ค้นหารถ', o.query, { placeholder: 'ค้นหาทะเบียน, รุ่น, หน่วยงาน', lead: 1 }), frame('Spacer', 'VERTICAL')]), dual], 16),
+    car.sec,
     partsSec,
     btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'บันทึกและส่งตรวจสอบ', { size: 'lg' }]])
   ], 32), 'h');
+  car.open(scr);
   return scr;
 }
 const FILLED = { name: NEW_PLAN[1], year: '2570', q: 'Q2', rule: 'ทรัค' };
@@ -1249,10 +1479,9 @@ async function partsScreen(name, o) {
   o = o || {};
   const { scr, page } = await shell(name, { title: 'เบิก/จองอะไหล่ · ' + P[0], back: true, crumbs: ['แผน ' + P[0], 'เบิก/จองอะไหล่'] });
   const nodes = [];
-  if (o.result === 'short') nodes.push(alertBox('Warning', 'ระบบจองอะไหล่ตอบกลับ: จองได้ 3 รายการ · คงเหลือไม่พอ 2 รายการ', 'ไส้กรองไฮโดรลิก · จาระบีอเนกประสงค์ — ส่งรายการให้ ผพจ. จัดซื้อ (S3) แล้ว รอของเข้าคลัง'));
+  if (o.result === 'short') nodes.push(alertBox('Warning', 'ระบบจองอะไหล่ตอบกลับ: จองได้ 3 รายการ · คงเหลือไม่พอ 2 รายการ', 'ไส้กรองไฮโดรลิก ซื้อเพิ่ม 9 ชิ้น โดย Smart Inventory · จาระบีอเนกประสงค์ ซื้อเพิ่ม 14 กก. โดย ผพจ. (S3) — รอของเข้าคลัง'));
   if (o.result === 'ok') nodes.push(alertBox('Success', 'มีอะไหล่พร้อมครบตามแผน', 'จองผ่านระบบจองอะไหล่แล้ว 5 รายการ · เลือกรูปแบบดำเนินการเพื่อไปทำแผนเดินทาง'));
-  if (o.result) nodes.push(col('Section', [await section('รายการอะไหล่ที่ต้องใช้ตามแผน', { badge: PARTS.length }), await tbl(PART_COLS, PARTS.map((p, i) => partRow(p, i, o)))], 16));
-  else nodes.push(await partsPanel(o));
+  nodes.push(await partsPanel(o));   // ผลจองแสดงในแผงการ์ดเดิมแบบงานซ่อม (เลิกใช้ตาราง + ป้ายพร้อม/ขาด · 22 ต.ค. 2569)
   if (o.result === 'ok') nodes.push(await radioPick('รูปแบบดำเนินการ', ['กบค. ดำเนินการเอง — ทำแผนเดินทาง (S6)', 'ว่าจ้างผู้รับจ้าง — ผู้รับจ้างทำแผนเดินทาง (S7)'], o.hire ? 1 : 0));
   nodes.push(btnRow(o.result === 'ok' ? [['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ไปทำแผนเดินทาง', { size: 'lg' }]]
     : o.result === 'short' ? [['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ไปทำแผนเดินทาง', { size: 'lg', disabled: true }]]
@@ -1277,22 +1506,19 @@ async function tripForm(name, o) {
   const v = o.values || {}, E = (m) => o.errors ? m : '';
   const { scr, page } = await shell(name, { title: 'สร้างแผนเดินทาง', back: true, crumbs: ['แผน ' + P[0], 'สร้างแผนเดินทาง'] });
   const sel = o.sel || [];
-  const left = CARS.filter((_, i) => sel.indexOf(i) < 0), right = CARS.filter((_, i) => sel.indexOf(i) >= 0);
-  const mid = MOB ? row('Actions', [btn('Secondary button', 'เพิ่ม'), btn('Secondary button', 'นำออก', { disabled: !sel.length })], { gap: 12, keep: true })
-    : col('Actions', [btn('Secondary button', 'เพิ่ม'), btn('Secondary button', 'นำออก', { disabled: !sel.length })], 12);
-  const L = await listCheck('รถในแผน (' + left.length + ')', left, []), R = await listCheck('รถที่จะบำรุงรักษาในใบนี้ (' + right.length + ')', right, []);
-  const dual = row('Dual list', [L, mid, R], { gap: 16 }); mid.layoutGrow = 0; if (!MOB) mid.primaryAxisAlignItems = 'CENTER';
+  const car = await carPick('เลือกรถที่จะบำรุงรักษา', CARS, sel, { query: o.query, open: o.carOpen, error: sel.length ? '' : E('กรุณาเลือกรถที่จะบำรุงรักษาอย่างน้อย 1 คัน') });   // ค้นได้เฉพาะรถในแผนนี้
   const d1 = field('วันที่เดินทาง ตั้งแต่', v.d1, { placeholder: 'วว/ดด/ปปปป', error: E('กรุณาเลือกวันที่เริ่ม'), state: o.dateOpen ? 'Focused' : undefined });
   const d2 = field('ถึงวันที่', v.d2, { placeholder: 'วว/ดด/ปปปป', error: E('กรุณาเลือกวันที่สิ้นสุด') });
   const place = dropdown('สถานที่บำรุงรักษา (จุดรวมงาน)', v.place, { placeholder: 'ค้นหาจุดรวมงาน', lead: 'search-24-300-round', error: E('กรุณาเลือกสถานที่บำรุงรักษา') });
   const staff = [0, 1, 2].map(i => dropdown('พนักงาน กบค. ซ่อม คนที่ ' + (i + 1) + (i === 2 ? ' (ถ้ามี)' : ''), v.staff ? v.staff[i] : '', { placeholder: 'ค้นหาชื่อ-นามสกุล, รหัสพนักงาน', lead: 'search-24-300-round', error: i < 2 ? E('กรุณาเลือกพนักงาน') : '' }));
   add(page, col('Content', [
     col('Section', [await section('รายละเอียดแผนเดินทาง'), row('Row', [place, d1, d2])], 16),
-    col('Section', [await section('เลือกรถที่จะบำรุงรักษา', { badge: right.length }), dual], 16),
+    car.sec,
     col('Section', [await section('พนักงาน กบค. ซ่อม (2-3 คน)'), row('Row', staff)], 16),
     col('Section', [await section('ค่าใช้จ่าย (บาท)'), row('Row', [field('ค่าเบี้ยเลี้ยง', v.perDiem, { placeholder: '0', error: E('กรุณาระบุค่าเบี้ยเลี้ยง') }), field('ค่าที่พัก', v.lodging, { placeholder: '0', error: E('กรุณาระบุค่าที่พัก') }), field('ค่าเดินทาง', v.travel, { placeholder: '0', error: E('กรุณาระบุค่าเดินทาง') })])], 16),
     btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันการสร้างแผนเดินทาง', { size: 'lg' }]])
   ], 32), 'h');
+  car.open(scr);
   if (o.dateOpen && !MOB) {   // ปฏิทินช่วงวัน = Date picker Type=Dual ของไลบรารี วางใต้ช่องวันที่
     const dp = inst('Date picker', { Type: 'Dual' }, { 'Time picker': false });
     overlay(scr, dp, 0, 0);
@@ -1428,6 +1654,7 @@ const SCENARIOS = [
   ['S1 · กบค. สร้างแผนบำรุงรักษา', [
     ['รายการแผน', () => listScreen('S1 รายการแผน', { rows: PLANS })],
     ['ฟอร์มสร้างแผน (ว่าง)', () => planForm('S1 ฟอร์มสร้างแผน', {})],
+    ['พิมพ์ค้นรถ — รายการทะเบียนเปิด', () => planForm('S1 ค้นรถ', { values: FILLED, sel: [0], carOpen: true, query: '82-' })],
     ['กดบันทึกโดยยังไม่ครบ', () => planForm('S1 ยังไม่ครบ', { errors: true })],
     ['เลือกรถแล้ว — ระบบคำนวณอะไหล่', () => planForm('S1 เลือกรถแล้ว', { values: FILLED, sel: [0, 1, 4, 5] })],
     ['ย้อนกลับ — ยืนยันการออก', async () => { const s = await planForm('S1 ยืนยันการออก', { values: FILLED, sel: [0, 1] }); await confirm(s, { title: 'ยืนยันการออก', sub: 'ข้อมูลที่กรอกไว้จะไม่ถูกบันทึก', cancel: 'ปิด', ok: 'ออก' }); return s; }],
@@ -1440,6 +1667,8 @@ const SCENARIOS = [
     ['ยืนยันจำนวนรถ', async () => { const s = await vehiclesScreen('S4 ยืนยันจำนวนรถ', { removed: true }); await confirm(s, { title: 'ยืนยันจำนวนรถตามแผน', sub: 'รถในแผน 5 คัน · พร้อม 3 · ไม่พร้อม 1 · ยังไม่ตอบ 1 — ไปขั้นเบิกอะไหล่ (S5)', ok: 'ยืนยัน' }); return s; }]]],
   ['S5 · กบค. ตรวจสอบและเบิกอะไหล่ผ่านระบบจองอะไหล่', [
     ['คลังอะไหล่ + อะไหล่ตามแผน (ยังไม่เลือก)', () => partsScreen('S5 คลังอะไหล่', {})],
+    ['ค้นหาอะไหล่ไม่พบ', () => partsScreen('S5 ค้นไม่พบ', { inv: 'Not Found', query: 'ไส้กรองแอร์ FT-0999' })],
+    ['ระบบคลังอะไหล่ขัดข้อง', () => partsScreen('S5 คลังขัดข้อง', { inv: 'API error' })],
     ['เลือกอะไหล่ครบตามแผน', () => partsScreen('S5 เลือกครบ', { picked: [0, 1, 2, 3, 4] })],
     ['สรุปรายการเบิก/จอง', async () => { const s = await partsScreen('S5 สรุปรายการ', { picked: [0, 1, 2, 3, 4] }); await partsSummary(s, { stock: 3, buy: 2 }); return s; }],
     ['ผลจอง — คงเหลือไม่พอ 2 รายการ', () => partsScreen('S5 อะไหล่ขาด', { picked: [0, 1, 2, 3, 4], result: 'short' })],
@@ -1479,34 +1708,55 @@ const SCENARIOS = [
 ];
 
 
+/* ---------- จอ ↔ กล่องในผัง userflow (เจ้าของงานสั่ง 22 ต.ค. 2569: userflow กับ wireframe อยู่ข้างกันตอน export) ----------
+   ชื่อ state → id กล่องในผัง mermaid ของ Diagram/01-บำรุงรักษาตามวาระ/14-บำรุงรักษา-userflow.md (คั่นด้วยช่องว่างได้หลายกล่อง)
+   ไม่ใส่ = ผังยังไม่มีกล่องของจอนี้ ⇒ ปลั๊กอินเขียนบอกใต้ผัง "จอที่ยังไม่มีกล่องในผัง" (รอเติม userflow — ไม่เติมผังเอง) */
+const FLOW_NODES = {
+  S1: { 'รายการแผน': 'D1', 'ฟอร์มสร้างแผน (ว่าง)': 'D2', 'พิมพ์ค้นรถ — รายการทะเบียนเปิด': 'A2', 'กดบันทึกโดยยังไม่ครบ': 'Q1', 'เลือกรถแล้ว — ระบบคำนวณอะไหล่': 'D3', 'บันทึกสำเร็จ — รอ ผพจ. ตรวจสอบ': 'A3' },
+  S4: { 'รายการรถในแผน — มีรถสถานะโอน': 'D1', 'ยืนยันนำรถออกจากแผน': 'A2', 'นำรถออกแล้ว': 'A2', 'ยืนยันจำนวนรถ': 'A4' },
+  S5: { 'คลังอะไหล่ + อะไหล่ตามแผน (ยังไม่เลือก)': 'D1', 'ค้นหาอะไหล่ไม่พบ': 'D1', 'ระบบคลังอะไหล่ขัดข้อง': 'D1', 'เลือกอะไหล่ครบตามแผน': 'A2', 'สรุปรายการเบิก/จอง': 'D2', 'ผลจอง — คงเหลือไม่พอ 2 รายการ': 'D3', 'อะไหล่พร้อมครบ — เลือกรูปแบบดำเนินการ': 'D4' },
+  S6: { 'แผนเดินทางของแผนนี้ (ยังไม่มี)': 'D1', 'ฟอร์มสร้างแผนเดินทาง (ว่าง)': 'D2', 'เลือกช่วงวันเดินทาง': 'A2', 'กดยืนยันโดยยังไม่ครบ': 'Q1', 'กรอกครบ': 'A4', 'ยืนยันแล้ว — ส่ง Notification': 'D3' },
+  S10: { 'รายการรถตามแผนเดินทาง': 'D1', 'บันทึกงาน (ว่าง)': 'D2', 'บำรุงรักษาไม่ได้ — ระบุสาเหตุ': 'A3', 'กดบันทึกโดยยังไม่ครบ': 'Q2', 'กรอกครบ': 'A8', 'บันทึกสำเร็จ': 'A9' },
+  S12: { 'งานรายคัน — รอผลตรวจน้ำมัน': 'D1', 'ฟอร์มบันทึกผลตรวจ (ว่าง)': 'D2', 'กรอกครบ': 'A2', 'บันทึกสำเร็จ — แจ้งเจ้าของรถ': 'D3' },
+  S15: { 'ความคืบหน้ารายคัน (ยังไม่ครบ)': 'D1', 'ครบทุกคัน — ประวัติงานบำรุงรักษา': 'D2', 'ยืนยันส่งประวัติ': 'A2', 'ส่งแล้ว — รอหัวหน้าตรวจสอบ': 'D3' },
+  S17: { 'รายงานผล (ประวัติผ่านแล้ว)': 'D2', 'ยืนยันปิดงาน': 'Q1', 'ปิดงานแล้ว': 'D3' },
+  S18: { 'ต้นทุนการบำรุงรักษา + Summary': 'D2 D3', 'ดาวน์โหลด Excel แล้ว': 'A3' },
+};
+
 /* ---------- กลุ่ม = scenario (แพทเทิร์นเดียวกับ Overhaul — เจ้าของงานเคาะ 20 ต.ค. 2569: 1 scenario = 1 บล็อก · แถว Desktop แล้ว Mobile) ---------- */
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const GROUPS = SCENARIOS.map(([title, screens], i) => {
   const code = LETTERS[i], tag = title.split(' · ')[0], rest = title.split(' · ').slice(1).join(' · ');
-  return { code, title: tag + ' ' + rest, subs: [{ code, title: rest, tag, screens }] };
+  const map = FLOW_NODES[tag] || {};
+  return { code, title: tag + ' ' + rest, subs: [{ code, title: rest, tag, screens: screens.map(([label, fn]) => [label, fn, map[label] || '']) }] };
 });
 
-/* ---------- สร้างทั้งหมด (โครงเดียวกับ Overhaul: 1 จอ = 1 เฟรมพื้นขาว · scenario ละแถว · desktop + mobile คู่กัน) ---------- */
-async function build() {
+/* ---------- สร้าง (ปุ่มชุดเดียวกับ Overhaul 21 ต.ค. 2569: ทั้งชุด · Desktop · Mobile · เฉพาะ scenario ที่เลือก · เช็ค component) ----------
+   เจ้าของงานสั่ง 22 ต.ค. 2569 "จะเอาลงในเพจ Maintainance ด้วยกันเลย" ⇒ ทุกปุ่มวางบนหน้า "Maintainance" (ไม่มีก็สร้าง) ต่อใต้ของเดิม ไม่ลบ/ไม่ย้ายของที่มีอยู่
+   แต่ละบล็อก scenario = ผัง userflow ซ้ายสุด + ป้าย Device + คอลัมน์จอ A.1 A.2 … (แถว Desktop แล้ว Mobile ตามที่เลือก) */
+const PAGE_NAMES = ['Maintainance', 'Maintenance'];
+async function buildSet(SCEN, GRP, what, devices) {
   errors.length = 0;
   const t0 = Date.now();
   log('นำเข้า component จากไลบรารี + ยืมจาก flow งานซ่อมในไฟล์นี้…');
   await resolveAll();
-  const borrowed = LOCAL_OPTIONAL.filter(has);
+  const borrowed = LOCAL_OPTIONAL.filter(n => has(n) && ['Device Type', 'Component 1', 'Header'].indexOf(n) < 0);
   log('component จาก flow งานซ่อมที่ใช้ได้: ' + (borrowed.length ? borrowed.join(' · ') : 'ไม่มี — ใช้แบบสำรองจากไลบรารีทุกจุด'));
-  log('นำเข้าเสร็จใน ' + Math.round((Date.now() - t0) / 1000) + ' วินาที · เริ่มสร้างจอ');
-  // หน้าปลายทาง = หน้าใหม่ maintainance-N ไม่แตะชุดเดิม (แพทเทิร์นเดียวกับ Overhaul — เจ้าของงานสั่ง 20 ต.ค. 2569)
-  const tp = await targetPage('maintainance', PLUGIN.prefix);
+  log(deviceSetInfo());
+  log(USERFLOW ? 'ผัง userflow: ' + USERFLOW.src + ' (' + Object.keys(USERFLOW.scenarios).length + ' scenario ในไฟล์ · วางข้างจอเฉพาะ scenario ที่มีจอ)' : '⚠ ไม่มีผัง userflow ฝังมา — รัน node figma-export/build-plugin.js maintainance-plugin ใหม่');
+  log('นำเข้าเสร็จใน ' + Math.round((Date.now() - t0) / 1000) + ' วินาที · เริ่มสร้าง');
+  const tp = await namedPage(PAGE_NAMES);
   const page = tp.page;
-  log(tp.fresh ? 'วางในหน้าใหม่ "' + page.name + '" — ชุดเดิมบนหน้าอื่นไม่ถูกแตะ' : '⚠ สร้างหน้าใหม่ไม่ได้ (แพลนจำกัดจำนวนหน้า) — วางต่อใต้ของเดิมในหน้า "' + page.name + '" ไม่ลบอะไร');
+  log(tp.found ? 'วางบนหน้า "' + page.name + '" ต่อใต้ของเดิม — ของที่มีอยู่บนหน้านี้ไม่ถูกแตะ'
+    : tp.fallback ? '⚠ หาหน้า "Maintainance" ไม่เจอและสร้างหน้าใหม่ไม่ได้ (แพลนจำกัดจำนวนหน้า) — วางต่อใต้ของเดิมในหน้า "' + page.name + '" ไม่ลบอะไร'
+    : 'ไม่พบหน้า "Maintainance" — สร้างหน้าใหม่ชื่อนี้แล้ววางลงไป');
   await figma.setCurrentPageAsync(page);
-  const swept = tp.fresh ? 0 : sweepOrphans(page, new Set(NEEDED));
-  if (swept) log('เก็บชิ้นส่วนที่ค้างจากรอบก่อน (ซ้อนอยู่ที่มุมหน้า) ' + swept + ' ชิ้น');
   let y = 0;
   page.children.forEach(n => { if (n.absoluteBoundingBox) y = Math.max(y, n.absoluteBoundingBox.y + n.absoluteBoundingBox.height + 400); });
-  const TOTAL = SCENARIOS.reduce((a, x) => a + x[1].length, 0);
+  if (y) log('ของเดิมบนหน้านี้สูงถึง y=' + Math.round(y - 400) + ' — ชุดนี้เริ่มที่ y=' + Math.round(y));
+  const TOTAL = SCEN.reduce((a, x) => a + x[1].length, 0);
   log(INDEX.has('Header') ? 'แถบรหัส flow: component Header ของทีมออกแบบ' : 'แถบรหัส flow: ไม่พบ component Header ในไฟล์ — วาดแถบธรรมดาสีเดียวกันแทน');
-  const { made } = await buildGrid(page, PLUGIN.prefix, GROUPS, y, TOTAL * 2);
+  const { made, flows } = await buildGrid(page, PLUGIN.prefix, GRP, y, TOTAL * devices.length, { devices });
   let instances = 0, loose = 0;
   for (const s of made) for (const n of s.findAll(x => !findInstanceAncestor(x))) {
     if (n.type === 'INSTANCE') instances++;
@@ -1514,19 +1764,31 @@ async function build() {
   }
   figma.viewport.scrollAndZoomIntoView(made.slice(0, 6));
   log('');
-  log('สร้าง ' + made.length + ' จอ · ' + GROUPS.length + ' บล็อก scenario (A–' + GROUPS[GROUPS.length - 1].code + ') · instance ชั้นบนสุด ' + instances + ' ชิ้น');
-  log('ชิ้นที่ไม่ใช่ instance/กรอบ: ' + loose + (loose ? ' ⚠ ต้องเป็น 0' : ' ✓'));
+  log('สร้าง ' + made.length + ' จอ (' + (devices.length === 2 ? 'Desktop + Mobile' : devices[0] ? 'Mobile' : 'Desktop') + ') · ผัง userflow ' + flows + ' ผัง · ' + GRP.length + ' บล็อก ' + what + ' (' + GRP.map(g => g.code).join(' ') + ') · instance ชั้นบนสุด ' + instances + ' ชิ้น');
+  log('ชิ้นในจอที่ไม่ใช่ instance/กรอบ: ' + loose + (loose ? ' ⚠ ต้องเป็น 0' : ' ✓') + ' (ผัง userflow เป็นของวาดประกอบนอกจอ ไม่นับ)');
   log('component ที่ใช้ (' + USED.size + '): ' + [...USED].sort().join(' · '));
   log(errors.length ? '⚠ เตือน ' + errors.length + ' จุด (รายการด้านบน) — ส่งข้อความนี้กลับมาให้ตรวจ' : 'ไม่มีคำเตือน ✓');
   if (FONT_SWAPPED) log('· ข้อความที่ต้องสลับเป็นฟอนต์สำรอง (component ใช้ฟอนต์ที่เครื่องไม่มี) ' + FONT_SWAPPED + ' จุด — ฟอนต์ ' + (FALLBACK_FONT ? FALLBACK_FONT.family + ' ' + FALLBACK_FONT.style : '-'));
   reportOversize();
   log('ใช้เวลารวม ' + Math.round((Date.now() - t0) / 1000) + ' วินาที');
 }
+async function build(o) { await buildSet(SCENARIOS, GROUPS, 'scenario', devOf(o)); }
+async function buildDesktop() { await buildSet(SCENARIOS, GROUPS, 'scenario · desktop', [false]); }   // ปุ่มนี้ระบุอุปกรณ์เอง ไม่ใช้ตัวเลือกบนหน้าต่าง
+async function buildMobile() { await buildSet(SCENARIOS, GROUPS, 'scenario · mobile', [true]); }
+async function buildPick(o) {   // ติ๊กเฉพาะบาง scenario · รหัสตัวอักษรคงเดิม (A–I)
+  const idx = (o.pick || []).map(Number).filter(i => i >= 0 && i < SCENARIOS.length);
+  if (!idx.length) { log('ยังไม่ได้ติ๊ก scenario — ติ๊กอย่างน้อย 1 รายการแล้วกดอีกครั้ง'); return; }
+  await buildSet(SCENARIOS.filter((_, i) => idx.indexOf(i) >= 0), GROUPS.filter((_, i) => idx.indexOf(i) >= 0), 'scenario ที่เลือก', devOf(o));
+}
 
 figma.ui.onmessage = async (msg) => {
   try {
-    if (msg.type === 'build') await build();
-    if (msg.type === 'check') { log('— เช็ค component (ไม่สร้างอะไร) —'); await resolveAll(NEEDED, true); }
-    if (msg.type === 'patch-layout') { await resolveAll(['Component 1', 'Header']); await patchLayout(figma.currentPage, PLUGIN.prefix, GROUPS); }
+    const o = { devices: msg.devices, pick: msg.pick };
+    if (msg.type === 'build') await build(o);
+    if (msg.type === 'build-desktop') await buildDesktop();
+    if (msg.type === 'build-mobile') await buildMobile();
+    if (msg.type === 'build-pick') await buildPick(o);
+    if (msg.type === 'check') { log('— เช็ค component (ไม่สร้างอะไร) —'); await resolveAll(NEEDED, true); log(deviceSetInfo()); }
   } catch (e) { log('✗ หยุด — ' + (e && e.message ? e.message : e)); }
 };
+figma.ui.postMessage({ type: 'scenarios', items: SCENARIOS.map(x => x[0]) });   // รายการติ๊กของปุ่ม "สร้างเฉพาะ scenario ที่เลือก"

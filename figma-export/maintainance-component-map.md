@@ -18,6 +18,31 @@
 | ภาพก่อนเริ่มงาน / ภาพตอนจบงาน (แสดง) | **`IncidentPhotoGallery`** (รายละเอียดงานซ่อม) = Section label + `Images` sm × 4 + ปุ่มเลื่อน | S10 (ดูงานที่บันทึกแล้ว) · S12 | เปลี่ยนหัว · ซ่อนภาพที่เกินจำนวน · ปุ่มเลื่อนเมื่อเกิน 4 |
 | ทางเลือก 2 ทาง (บำรุงรักษาได้/ไม่ได้ · ตรวจเอง/ว่าจ้าง) | แบบ `RadioSelection` / `AdditionalPartRequest` ของงานซ่อม = Section header + `Radio text card` × 2 (ประกอบจากไลบรารี) | S5 · S10 | — |
 
+## 1.1 เรียนจากหน้า "Flow การซ่อม" บล็อก Repair - กรย. (22 ต.ค. 2569 · เจ้าของงานส่งข้อความจอ + userflow ผู้แจ้ง/กรย./กบค.)
+
+> เจ้าของงานสั่ง: _"นี่คือสิ่งที่ทำไปแล้ว การออกแบบที่ใช้ไปแล้ว อยากให้เรียนรู้และจำว่า จังหวะเลือกรถ ต้องใช้ component อะไร … เรียนรู้และจดจำการหยิบใช้ component ในจอทั้งหมด แต่เรื่องการแบ่ง scen ยังใช้แบบเดิม"_
+> อ่านจากดัมป์ `out/figma-dump/maintain-d/872-344807.json` (19 ต.ค.) — ป้าย state A1.1–G1.2 ตรงกับข้อความที่ส่งมาทุกป้าย · 80 จอ (desktop + mobile) · ข้อความดิบสรุปที่ `~/PEA/Maintain-D/userflow/figma-ref/repair-flow-กรย-2569-10-22.txt`
+
+| จังหวะในจอ | component ที่ทีมออกแบบใช้ | หมายเหตุ |
+|---|---|---|
+| เลือกรถ (แจ้งซ่อม ขั้น 1 · **คันเดียว**) | `Dropdown/Search PEA with request` placeholder "ค้นหายานพาหนะด้วยหมายเลขทะเบียน" → เลือกแล้ว State=Selected | ขั้นหลังจากนี้รถเป็น **กล่องแสดงผลอย่างเดียว** `VehicleAndReporterInfo` / Section label "ข้อมูลยานพาหนะ" + `Content item row` (ยี่ห้อรถยนต์ · รุ่น · หมายเลข S/N · ทะเบียน · รหัสรถ · ยี่ห้อกระเช้า · รุ่น · หมายเลข HC · ชั่วโมงเครื่องจักรสะสม · เลขไมล์สะสม · ใช้งาน ณ สถานที่) · **ไม่มีจอเลือกรถหลายคัน** ในงานซ่อม |
+| เลือกคน (ผู้รับรถ · ช่างซ่อม · ผู้ติดต่อ) | `Dropdown/Search PEA` (ค้นหาชื่อ-นามสกุล, รหัสพนักงาน · แถวรายการ ชื่อ + หน่วยงาน) · เบอร์โทรเติมอัตโนมัติเป็น `Text input` Readonly | |
+| เลือกวิธีซ่อม / รูปแบบนัด | `Radio text card` (Selected/Disabled) ใน Section header · ตัวเลือกสั้นแบบเบิก/ไม่เบิกอะไหล่ = `Horizontal radio groups` | |
+| A เบิกอะไหล่ | **`PartRequestStepPanel`** = `PartsInventoryPanel` (State Default/Not Found/API error · ช่องค้น "ค้นหาชื่อหรือรหัสอะไหล่" · `Spare Part Card Item` อะไหล่=รายการในคลัง พร้อม `Selecte Spare Part` + `Badge outline with leading icon`) + `RequestedPartsPanel` (Default/Filled · `Spare Part Card Item` อะไหล่=รายการที่เลือก / เพิ่มอะไหล่ · ปุ่ม "ระบุอะไหล่เพิ่มเติม") → `SummaryRequestedParts` (สรุปก่อนยืนยัน) → `Primary button` "ยืนยันเบิกอะไหล่" | คลัง 2 แบบ Smart Inventory / คลังสำรอง (บรรทัด "คงเหลือ n") · "จำนวนที่เกินยอดในคลัง จะถูกตั้งเป็นรายการจัดซื้อให้อัตโนมัติ" · เลือกผู้จัดซื้ออะไหล่เพิ่ม (Smart Inventory / กบค.) · ตัวเลือกเบิก/ไม่เบิกอะไหล่ |
+| B นัดหมายวันซ่อม · E นัดหมายวันคืนรถ | **`RepairAppointmentStep`** Type=In (เข้า) / Out (คืน) / Wating · State=Default/Filled/ReturnReason · mobile ประกอบเอง: `Radio text card` + `Dropdown/Search PEA with request` + `Dropdown/MA duration` + `Text input` + `Text area` | ป้าย state Default · Filled · รอตอบกลับจากหน่วยงาน · ได้รับผลตอบกลับ |
+| C ตรวจสภาพก่อนซ่อม · F หลังซ่อม | **`PreRepairInspectionStepPanel`** Default/Filled (desktop) · mobile `ReceiptChecklist` + `InspectionChecklist` (Breakpoint=Mobile) · ลงนาม = **`Modal Signature`** Default/Filled · ปุ่ม "ยืนยันการตรวจสภาพ" | ป้าย state Default · Filled · Handover Signature · Filled and Signed · จัดซ่อมที่หน้างานมีแค่ Default/Filled |
+| D ดำเนินการซ่อม | **`RepairInProgressStepPanel`** State=Default / Filled L (ไม่พบอาการเพิ่ม) / Filled R (พบอาการเพิ่ม) · ปุ่ม "ซ่อมเสร็จสิ้น" | |
+| G รายงานปิดงาน | ข้อมูลเอกสาร + ตาราง "บันทึกตรวจสอบเอกสารปิดงาน" (มี/ไม่มี/ไม่ต้องใช้ + อัพโหลดเอกสาร) + รายการจัดซื้อ (รายการ · ค่าใช้จ่าย · ใบสำคัญจ่าย) | |
+| โครงทุกจอ | `Page header` Page=Incident detail · `Tabs` (กระบวนการซ่อม · รายละเอียด · ประวัติการดำเนินการ) · ขั้น = `Horizontal step item` 7 ขั้น (desktop) / **`Mobile progress steps` Collapsed=True** "2 / 7 · ถัดไป: …" (mobile) · `Pill outline` สถานะ · `Tertiary danger button` "ปิดงานทันที" | mobile ใช้ `Page header` Breakpoint=Mobile |
+
+
+**ปรับปลั๊กอินบำรุงรักษาตามหัวข้อนี้แล้ว (22 ต.ค. 2569 · เจ้าของงานสั่ง "ใช้แบบ Overhaul ช่องค้นหากับชิป แล้วปรับอะไหล่ด้วย" + "ทำแค่ส่วนของบำรุงรักษาให้สอดคล้องกับงานซ่อม")**
+- เลือกรถหลายคัน S1 (เลือกรถเข้าแผน) และ S6 (เลือกรถที่จะบำรุงรักษา) = แบบ R24 ของ Overhaul: `Input dropdown` "เลือกรถ" ไอคอนค้นหา placeholder "ค้นหาทะเบียน, จังหวัด" → `Dropdown list` แถวละทะเบียน (คันที่เลือก State=Selected) → ชิป `Badge outline with remove icon` Color=Brand ใต้ช่อง · เลิกใช้ dual list · desktop และ mobile · error "กรุณาเลือกรถ…อย่างน้อย 1 คัน" · state ใหม่ S1 "พิมพ์ค้นรถ — รายการทะเบียนเปิด"
+- อะไหล่ S5: การ์ดคลังบอก รหัส · 1 หน่วย | ราคาต่อหน่วย · "<Smart Inventory/คลังสำรอง> : คงเหลือ n" · การ์ดที่เลือกมีจำนวน + ราคารวม · รายการที่เกินคงเหลือ = "| ต้องจัดซื้อ n" + Helper "จำนวนที่เกินยอดในคลัง จะถูกตั้งเป็นรายการจัดซื้อให้อัตโนมัติ" + เลือกผู้จัดซื้อ (`Radio text card` Smart Inventory / ผพจ. — งานซ่อมใช้ กบค. · **รอเคาะ**) · กล่องรวมค่าอะไหล่ท้ายแผง (เบิกจากคลัง · ต้องจัดซื้อ · รวมทั้งหมด) · สรุปเบิก/จองมียอด 4 บรรทัด + รวม · state ใหม่ "ค้นหาอะไหล่ไม่พบ" (PartsInventoryPanel Not Found) · "ระบบคลังอะไหล่ขัดข้อง" (API error) · ผลจองแสดงในแผงการ์ดแทนตาราง
+- ข้อจำกัด: `RequestedPartsPanel` มีการ์ดรายการที่เลือก 3 ช่อง (instance เพิ่มไม่ได้) แผนมี 5 รายการ ⇒ แสดงรายการที่ต้องจัดซื้อก่อน · Badge และยอดรวมนับครบ 5 · ถ้าต้องเห็นครบให้ทีมออกแบบเพิ่มช่องแล้ว publish · mobile S5 ยังเป็นตาราง (แผงอะไหล่ออกแบบไว้แค่ desktop)
+
+**การแบ่ง scenario ของทีมออกแบบในหน้านี้:** ตัวอักษร = ขั้นของ stepper (A–G) · A1 B1 B2 = ทางแยกในขั้น (เข้าซ่อมที่หน่วยงาน / จัดซ่อมที่หน้างาน) · A1.1 = state — **เจ้าของงานสั่งให้ปลั๊กอินบำรุงรักษายังใช้แบบเดิม (R19: ตัวอักษร = scenario · A.1 = state)** ไม่เปลี่ยนตามหน้านี้
+
 ## 2. โครงหน้า (ทุกจอ) — ตามกติกา R1 R2 R13 R14
 
 | ส่วน | component · variant | เงื่อนไข |

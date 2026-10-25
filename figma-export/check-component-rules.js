@@ -43,6 +43,7 @@ function check(screens) {
       let ok = false, allowed = false;
       for (let p = n.parent; p && p !== sc; p = p.parent) {
         if (isInst(p, r.parent)) { ok = true; break; }
+        if ((r.allowInside || []).some(c => isInst(p, c))) { ok = true; break; }   // component ของทีมออกแบบที่ประกอบตารางไว้เอง (ReceiptChecklist ของงานซ่อม · 22 ต.ค. 2569) — ไม่ใช่ปลั๊กอินประกอบ
         if (r.allowInStyledFrame && p.type === 'FRAME' && p.name === r.parent) {   // เฟรมแทน component ต้องมีกรอบ + มุมแบบ component (หน้างานซ่อม)
           if ((p.strokes || []).length && p.cornerRadius > 0) { ok = true; break; }
           fail(r, sc, r.parent + ' เป็นเฟรมไม่มีกรอบ/มุม — ต้องแต่งแบบหน้างานซ่อม'); ok = true; break;
@@ -77,6 +78,7 @@ function check(screens) {
     for (const r of RULES.ownerDesign || []) {
       if (!new RegExp(r.screens).test(sc.name) || (r.desktopOnly && mobile)) continue;
       const heads = all.filter(x => isInst(x, 'Table header cell') && shown(x)).map(x => (prop(x, 'Text') || '').trim()).filter(Boolean);
+      if (r.minCols && heads.length < r.minCols) continue;   // แบบสำรองเมื่อไลบรารีมีคอลัมน์ไม่พอ (เช่น Table 8 คอลัมน์) ไม่ตรวจ
       const want = r.tableHeaders || [];
       if (want.some((h, i) => heads[i] !== h)) fail(r, sc, 'หัวตาราง [' + heads.join(' · ') + '] ไม่ตรงแบบที่เจ้าของงานส่ง [' + want.join(' · ') + ']');
     }

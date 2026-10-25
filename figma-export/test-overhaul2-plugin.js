@@ -18,7 +18,7 @@ const SLUG = process.argv[2] || 'component';
 const DUMP = path.join(__dirname, 'out', 'figma-dump', SLUG);
 const MIXED = Symbol('mixed');
 /* ไฟล์ดัมป์ที่โหลด: ทั้งโฟลเดอร์ <slug> + component ในตัวไฟล์ Maintain-D ที่ปลั๊กอินใช้ (RepairAppointmentStep — หน้า Design) */
-const LOCAL_FROM_MAINTAIN_D = (process.env.LOCAL || 'RepairAppointmentStep,Device Type,Component 1').split(',').map(s => s.trim()).filter(Boolean);   // LOCAL=ชื่อ,ชื่อ สำหรับปลั๊กอินอื่น (20 ต.ค. 2569) · Device Type = ป้ายข้างจอชุดใหม่ (ดัมป์ Maintain-D ต้องดึงใหม่ถึงจะมี — ไม่มีก็ถอยไป Component 1)
+const LOCAL_FROM_MAINTAIN_D = (process.env.LOCAL || 'RepairAppointmentStep,ReceiptChecklist,HandoverSignature,Modal Signature,Device Type,Component 1').split(',').map(s => s.trim()).filter(Boolean);   // LOCAL=ชื่อ,ชื่อ สำหรับปลั๊กอินอื่น (20 ต.ค. 2569) · Device Type = ป้ายข้างจอชุดใหม่ (ดัมป์ Maintain-D ต้องดึงใหม่ถึงจะมี — ไม่มีก็ถอยไป Component 1)
 const DUMPS = fs.readdirSync(DUMP).filter(f => f.endsWith('.json')).map(f => Object.assign({ file: f }, JSON.parse(fs.readFileSync(path.join(DUMP, f), 'utf8'))));
 (() => {   // สแกนทุกหน้าของไฟล์ Maintain-D — component ที่ยืมจาก flow อื่นกระจายอยู่หลายหน้า (Design · Local Component · รายละเอียดงานซ่อม)
   const dir = path.join(__dirname, 'out', 'figma-dump', 'maintain-d');
@@ -58,6 +58,7 @@ class Node {
   insertChild(i, c) { if (c.parent) c.parent.children = c.parent.children.filter(x => x !== c); c.parent = this; this.children.splice(i, 0, c); }
   appendChild(c) { if (c.parent) c.parent.children = c.parent.children.filter(x => x !== c); c.parent = this; this.children.push(c); }
   remove() { if (this.parent) this.parent.children = this.parent.children.filter(x => x !== this); }
+  async exportAsync(o) { if (!o || o.format !== 'PNG') throw new Error('exportAsync: รองรับแค่ PNG ในเทส'); return new Uint8Array(16); }
   resize(w, h) { this.width = w; this.height = h; }
   resizeWithoutConstraints(w, h) { this.resize(w, h); }
   get absoluteBoundingBox() { let x = this.x, y = this.y, p = this.parent; while (p && p.type !== 'PAGE') { x += p.x || 0; y += p.y || 0; p = p.parent; } return { x, y, width: this.width, height: this.height }; }
@@ -169,7 +170,7 @@ const figma = {
   root: Object.assign(root, { children: root.children }),
   currentPage: Object.assign(root.children[0], { selection: [] }),
   showUI() {},
-  ui: { postMessage: (m) => logs.push(m.text), set onmessage(f) { uiHandler = f; } },
+  ui: { postMessage: (m) => { if (m.type === 'log') logs.push(m.text); }, set onmessage(f) { uiHandler = f; } },   // ข้อความชนิดอื่น (รายการ scenario ให้หน้าต่างติ๊ก) ไม่ใช่ log
   async loadAllPagesAsync() {},
   async loadFontAsync() {},
   async setCurrentPageAsync(p) { figma.currentPage = p; },
@@ -177,6 +178,14 @@ const figma = {
   createText() { const t = new Node({ type: 'TEXT', name: 'Text' }); t.fontName = { family: 'Inter', style: 'Regular' }; return t; },   // ป้ายรหัส flow แบบสำรอง (20 ต.ค. 2569)
   insertChildStub: null,
   createSection() { return new Node({ type: 'SECTION', name: 'Section' }); },
+  // ผัง userflow ข้างจอ (22 ต.ค. 2569 · ปลั๊กอินบำรุงรักษา): รูปทรง + เส้นหักมุม
+  createEllipse() { return new Node({ type: 'ELLIPSE', name: 'Ellipse' }); },
+  createRectangle() { return new Node({ type: 'RECTANGLE', name: 'Rectangle' }); },
+  createImage(bytes) { if (!(bytes instanceof Uint8Array)) throw new Error('createImage ต้องได้ Uint8Array'); return { hash: 'img' + (++uid) }; },   // ภาพย่อจอในผัง userflow
+  createPolygon() { return new Node({ type: 'POLYGON', name: 'Polygon' }); },
+  createVector() { const v = new Node({ type: 'VECTOR', name: 'Vector' });
+    v.setVectorNetworkAsync = async (net) => { if (!net || !Array.isArray(net.vertices) || !Array.isArray(net.segments)) throw new Error('vectorNetwork ผิดรูป');
+      net.segments.forEach(g => { if (!net.vertices[g.start] || !net.vertices[g.end]) throw new Error('segment ชี้ vertex ที่ไม่มี'); }); v.vectorNetwork = net; }; return v; },
   createPage() { const p = new Node({ type: 'PAGE', name: 'Page' }, root); root.children.push(p); pages.push(p); return p; },
   viewport: { scrollAndZoomIntoView() {} },
 };
@@ -209,6 +218,19 @@ function extendPS(n) {
   }
 }
 if (process.env.PS_SLOTS) extendPS(+process.env.PS_SLOTS);
+// TABLE_COLS=13: จำลองไลบรารีหลังเจ้าของงาน publish Table ที่มีคอลัมน์มากกว่า 8 (21 ต.ค. 2569 ค่ำ) — ต่อ Column ท้ายทุก variant ของชุด Table (ปลั๊กอิน probeTable() ต้องเห็นแล้วเลือกชุดคอลัมน์เอง)
+function extendTable(n) {
+  const deep = (src, parent) => { const c = new Node({ type: src.type, name: src.name, w: src.width, h: src.height, text: src.characters, dir: src._lm }, parent);
+    c._mainName = src._mainName; c._variant = src._variant; c._pv = src._pv; c.children = (src.children || []).map(k => deep(k, c)); if (c.type === 'INSTANCE') hydrate(c); return c; };
+  for (const v of SETS.get('Table').children) {
+    const content = v.findAll(x => x.name === 'Content' && (x.children || []).some(k => k.name === 'Column'))[0];
+    const cols = content.children.filter(k => k.name === 'Column');
+    while (content.children.filter(k => k.name === 'Column').length < n) content.children.push(deep(cols[cols.length - 1], content));
+  }
+}
+const TABLE_COLS = process.env.TABLE_COLS === undefined ? 12 : +process.env.TABLE_COLS;   // ไม่ตั้ง = จำลองไลบรารีที่เจ้าของงาน publish แล้ว (> 8 คอลัมน์ · 21 ต.ค. ค่ำ) · TABLE_COLS=8 = ไลบรารีเก่าตาม dump
+if (TABLE_COLS > 8) extendTable(TABLE_COLS);
+console.log('จำลอง component Table ' + TABLE_COLS + ' คอลัมน์' + (process.env.TABLE_COLS === undefined ? ' (ค่าเริ่มต้น — ไลบรารี publish ใหม่ 21 ต.ค. · TABLE_COLS=8 = ตาม dump เก่า)' : ''));
 // REF_STEPPER=1: จำลองหน้างานซ่อมที่มีเฟรม "Progress steps" 7 ขั้น (มีกรอบ มุม 12 เส้นสีแดง) ⇒ ปลั๊กอินต้องลอกกรอบนี้
 if (process.env.REF_STEPPER) {
   const pg = new Node({ type: 'PAGE', name: 'Flow การซ่อม' }, root); root.children.push(pg);
@@ -216,6 +238,12 @@ if (process.env.REF_STEPPER) {
   fr.cornerRadius = 12; fr.strokes = [{ type: 'SOLID', color: { r: 1, g: 0, b: 0 } }]; fr.strokeWeight = 2;
   const hs = SETS.get('Horizontal step item');
   for (let i = 0; i < 7; i++) { const it = makeInstance(hs.children[0]); it.parent = fr; fr.children.push(it); }
+}
+/* EXISTING=1 (22 ต.ค. 2569): ไฟล์มีหน้า "🔧 Maintainance" ที่เจ้าของงานวางของไว้แล้ว ⇒ ปลั๊กอินต้องวางบนหน้านั้น ต่อใต้ของเดิม ไม่แตะของเดิม */
+if (process.env.EXISTING) {
+  const pg = new Node({ type: 'PAGE', name: '🔧 Maintainance ' }, root); root.children.push(pg);
+  const old = new Node({ type: 'FRAME', name: 'ของเดิมที่แก้มือ', w: 1440, h: 900 }, pg); old.y = 120; pg.children.push(old);
+  global.__existing = { page: pg, node: old, x: old.x, y: old.y };
 }
 const MODE_CHECK = process.env.MODE === 'check';
 (async () => {
@@ -239,7 +267,7 @@ const MODE_CHECK = process.env.MODE === 'check';
   }
   logs.forEach(l => console.log(l));
   const printed = logs.length;   // คำเตือนที่ตัวตรวจเพิ่มหลังจากนี้ พิมพ์ท้ายผล
-  const page = pages[0] || figma.currentPage;
+  const page = process.env.EXISTING ? figma.currentPage : (pages[0] || figma.currentPage);   // EXISTING=1: ปลั๊กอินต้องหาหน้าที่มีอยู่แล้วเอง (ไม่สร้างหน้าใหม่)
   const PREFIX = (process.env.PREFIX || 'OH2') + ' / ';   // ปลั๊กอินอื่นตั้ง PREFIX= (เช่น MT) · FIRST= ชื่อจอแรกของ userflow (20 ต.ค. 2569)
   let screens = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(PREFIX) === 0 && n.name.indexOf(' · ตัดแล้ว') < 0);   // จอที่ CF ตัดแล้ว (ติดป้ายไว้ ไม่ลบ) ไม่ตรวจ
   if (process.env.CHECK_ONLY) screens = screens.filter(n => new RegExp(process.env.CHECK_ONLY).test(n.name));   // ตรวจเฉพาะจอที่อัปเดต (จอเก่าที่ไม่ได้เลือกอาจยังเป็นแบบก่อน CF)
@@ -295,7 +323,8 @@ const MODE_CHECK = process.env.MODE === 'check';
       nL += sc.findAll(n => n.type === 'INSTANCE' && n.name === 'Section label').length;
     }
     sc.findAll(n => n.type === 'INSTANCE' && n.name === 'Input label').forEach(l => { const k = Object.keys(l.componentProperties).find(x => x.split('#')[0] === 'Info icon'); if (k && l.componentProperties[k].value !== false && shown(l)) logs.push('⚠ Info icon ยังเปิด: ' + sc.name); });
-    if (sc.findAll(n => n.type === 'FRAME' && n.name === 'Content item').length) logs.push('⚠ กล่องแสดงข้อมูลยังไม่ได้แต่ง: ' + sc.name);
+    const inInst = (n) => { for (let p = n.parent; p && p !== sc; p = p.parent) if (p.type === 'INSTANCE') return true; return false; };   // กรอบใน component ของทีมออกแบบ (Modal Signature) ไม่นับ
+    if (sc.findAll(n => n.type === 'FRAME' && n.name === 'Content item' && !inInst(n)).length) logs.push('⚠ กล่องแสดงข้อมูลยังไม่ได้แต่ง: ' + sc.name);
   });
   if (process.env.SHOW) screens.filter(sc => sc.name.indexOf(process.env.SHOW) >= 0).forEach(sc => sc.findAll(n => n.type === 'INSTANCE' && n.name === 'Table').forEach(t => {
     const v = (n, k) => { const x = Object.keys(n.componentProperties || {}).find(y => y.split('#')[0] === k); return x ? n.componentProperties[x].value : ''; };
@@ -330,6 +359,49 @@ const MODE_CHECK = process.env.MODE === 'check';
     if (!/^TOAST \/ /.test(screens[0].name) && screens.some(n => Math.round(n.width) !== (mobs.length ? 402 : 1440))) logs.push('⚠ R19 ชุด ' + kind + ' มีจอกว้างผิดอุปกรณ์');   // เฟรม toast (R20) ไม่ใช่ขนาดจอ
   }
   console.log('R19 จัดวางแบบตาราง flow: ป้าย ' + labels.length + (split ? ' · ชุดอุปกรณ์เดียว (' + (mobs.length ? 'mobile ' + mobs.length : 'desktop ' + desks.length) + ' จอ)' : ' · คู่ desktop/mobile ' + pairs) + (logs.some(l => /R19/.test(l)) ? '' : ' ✓'));
+  if (global.__existing) {   // หน้าเดิมต้องเป็นหน้าปลายทาง · ของเดิมอยู่ที่เดิม · ของใหม่อยู่ใต้ของเดิมทั้งหมด
+    const ex = global.__existing;
+    if (page !== ex.page) logs.push('⚠ ไม่ได้วางบนหน้าที่มีอยู่แล้ว (' + ex.page.name.trim() + ') — วางบน ' + page.name);
+    if (ex.node.parent !== ex.page || ex.node.x !== ex.x || ex.node.y !== ex.y) logs.push('⚠ ของเดิมบนหน้าถูกแตะ');
+    const bottom = ex.y + ex.node.height, above = page.children.filter(n => n !== ex.node && n.y < bottom);
+    if (above.length) logs.push('⚠ ของใหม่ทับของเดิม ' + above.length + ' ชิ้น: ' + above[0].name);
+    if (pages.length) logs.push('⚠ สร้างหน้าใหม่ทั้งที่มีหน้า Maintainance อยู่แล้ว');
+    console.log('วางต่อใต้ของเดิมบนหน้า "' + ex.page.name.trim() + '"' + (logs.slice(printed).some(l => /ของเดิม|หน้าที่มีอยู่|หน้าใหม่ทั้งที่/.test(l)) ? '' : ' ✓'));
+  }
+  if (process.env.FLOW) {   // ผัง userflow ข้างจอ (22 ต.ค. 2569): ทุกบล็อก scenario มีผังซ้ายสุด · ป้ายรหัสจอชี้จอที่มีจริง · บล็อกไม่ทับกัน
+    const P = process.env.PREFIX || 'OH2';
+    const bars = page.children.filter(n => new RegExp('^' + P + ' · [A-Z] S\\d+ ').test(n.name)).sort((a, b) => a.y - b.y);
+    const flowsOn = page.children.filter(n => new RegExp('^' + P + ' · [A-Z] userflow S\\d+$').test(n.name));
+    const names = new Set(screens.map(n => n.name.split(' · ')[0].replace(P + ' / ', '')));
+    let badges = 0, shapes = 0, vecs = 0;
+    for (const bar of bars) {
+      const code = bar.name.split(' · ')[1].split(' ')[0];
+      const f = flowsOn.find(n => n.name.indexOf(P + ' · ' + code + ' userflow') === 0);
+      if (!f) { logs.push('⚠ ผัง userflow ไม่มีในบล็อก ' + bar.name); continue; }
+      if (f.y !== bar.y) logs.push('⚠ ผัง userflow ไม่ได้เริ่มที่หัวบล็อก ' + code);
+      if (f.x + f.width > 0) logs.push('⚠ ผัง userflow ทับป้าย Device/จอ ' + code);
+      const ss = f.children.filter(n => ['ELLIPSE', 'RECTANGLE', 'POLYGON'].includes(n.type)), vs = f.children.filter(n => n.type === 'VECTOR');
+      shapes += ss.length; vecs += vs.length;
+      if (!ss.length || !vs.length) logs.push('⚠ ผัง userflow ' + code + ' ไม่มีกล่องหรือเส้น');
+      if (vs.some(v => !v.vectorNetwork || !v.vectorNetwork.vertices.length || v.vectorNetwork.vertices[v.vectorNetwork.vertices.length - 1].strokeCap !== 'ARROW_LINES')) logs.push('⚠ เส้นในผัง ' + code + ' ไม่มีหัวลูกศร');
+      if (ss.some(n => n.x < 0 || n.y < 0 || n.x + n.width > f.width || n.y + n.height > f.height)) logs.push('⚠ กล่องในผัง ' + code + ' ล้นกรอบ');
+      const thumbs = f.children.filter(n => n.name.indexOf('ภาพย่อ ') === 0), filled = thumbs.filter(n => (n.fills || []).some(x => x.type === 'IMAGE' && x.imageHash));
+      const coded = f.children.filter(n => n.name.indexOf('ป้ายจอ ') === 0).length;
+      global.__thumbs = (global.__thumbs || 0) + filled.length;
+      if (filled.length < Math.min(coded, thumbs.length) - 3) logs.push('⚠ ภาพย่อจอในผัง ' + code + ' ใส่ได้แค่ ' + filled.length + '/' + thumbs.length);
+      for (const b of f.children.filter(n => n.name.indexOf('ป้ายจอ ') === 0)) for (const c of b.name.slice(7).split(' ')) {
+        badges++;
+        if (c.split('.')[0] !== code) logs.push('⚠ ป้ายจอ ' + c + ' อยู่ผิดบล็อก ' + code);
+        else if (!names.has(c)) logs.push('⚠ ป้ายจอ ' + c + ' ไม่มีจอจริง');
+      }
+    }
+    for (let i = 1; i < bars.length; i++) {   // บล็อกถัดไปต้องเริ่มใต้ผังและแถวจอของบล็อกก่อน
+      const prevCode = bars[i - 1].name.split(' · ')[1].split(' ')[0], f = flowsOn.find(n => n.name.indexOf(P + ' · ' + prevCode + ' userflow') === 0);
+      if (f && bars[i].y < f.y + f.height) logs.push('⚠ บล็อก ' + bars[i].name.split(' · ')[1].split(' ')[0] + ' ทับผังของบล็อก ' + prevCode);
+    }
+    if (flowsOn.length !== bars.length) logs.push('⚠ ผัง userflow ' + flowsOn.length + ' ผัง แต่มี ' + bars.length + ' บล็อก');
+    console.log('ผัง userflow ข้างจอ: ' + flowsOn.length + '/' + bars.length + ' บล็อก · กล่อง ' + shapes + ' · เส้น ' + vecs + ' · ภาพย่อ ' + (global.__thumbs || 0) + ' · ป้ายรหัสจอ ' + badges + (logs.slice(printed).some(l => /ผัง|ป้ายจอ|บล็อก/.test(l)) ? '' : ' ✓'));
+  }
   if (process.env.DUMP_TEXT) {   // DUMP_TEXT=regex ชื่อจอ → พิมพ์ข้อความทุกชั้น (รวมที่ซ่อน) ตามลำดับ layer — ใช้เทียบกับข้อความที่ก๊อปจาก Figma (21 ต.ค. 2569)
     const re = new RegExp(process.env.DUMP_TEXT);
     for (const sc of page.children.filter(n => n.type === 'FRAME' && re.test(n.name))) {
@@ -345,7 +417,7 @@ const MODE_CHECK = process.env.MODE === 'check';
     for (const sc of page.children.filter(n => n.type === 'FRAME' && re.test(n.name))) {
       for (const t of sc.findAll(n => n.name === 'Table' && (n.type === 'INSTANCE' || (n.children || []).some(c => c.name === 'Column')))) {
         const cols = t.findAll(n => n.name === 'Column' && n.visible !== false);
-        console.log('DUMP_TABLE: ' + sc.name + ' → ' + (t.type === 'INSTANCE' ? 'component Table' : 'ประกอบเอง') + ' · ' + cols.length + ' คอลัมน์');
+        console.log('DUMP_TABLE: ' + sc.name + ' → ' + (t.type === 'INSTANCE' ? 'component Table' : 'ประกอบเอง') + ' · ' + cols.length + ' คอลัมน์' + (t.type === 'INSTANCE' ? ' · Scrollbar=' + pv(t, 'Scrollbar') + (t.clipsContent ? ' · clip' : '') : ''));
         cols.forEach(c => { const [h, c1] = c.children; const st = (c1 && c1.variantProperties || {}).Style;
           console.log('   ' + Math.round(c.width) + 'px  หัว "' + (pv(h, 'Text') || '') + '"' + (pv(h, 'Sort icon') ? ' ↕' : '') + '  แถว1 ' + st + ' "' + (pv(c1, 'Text') || '') + '"' + (pv(c1, 'Supporting') ? ' / "' + (pv(c1, 'Supporting text') || '') + '"' : '')); });
       }
