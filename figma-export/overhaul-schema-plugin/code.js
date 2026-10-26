@@ -39,10 +39,10 @@ const SCHEMA = {
   // หน้า 1 — รายการแผน (PLAN_COLS_D / PLAN_COLS_M, แถวจาก PLANS_CF) — อัปเดตจาก 21-overhaul-full-audit.md § 1
   'แผน': { label: 'DB', table: 'vms_trn_overhaul_job', column: 'plan_no + plan_name', note: 'รวม 2 ฟิลด์ไว้บรรทัดเดียว — plan_no format จริงคือ ORZ690000X (FormatPlanNo) บอร์ด FigJam ใช้ placeholder "Z69000X"/"123456" เท่านั้น ไม่ใช่ format จริง' },
   'เลขแผน': { label: 'DB', table: 'vms_trn_overhaul_job', column: 'plan_no', rule: 'แสดงตาม format จริงของระบบ (`ORZ690000X` จาก `FormatPlanNo`) ไม่ใช่ placeholder ที่เห็นในดีไซน์', note: 'format จริง ORZ690000X (FormatPlanNo) — ยืนยันซ้ำใน 21-overhaul-full-audit.md 22 ต.ค. 2569' },
-  'เลขที่แผน': { label: 'DB', table: 'vms_trn_overhaul_job', column: 'plan_no', rule: 'แสดงตาม format จริง `ORZ690000X` (`FormatPlanNo`) ไม่ใช่ placeholder ที่เห็นในดีไซน์' },
+  'เลขที่แผน': { label: 'DB', table: 'vms_trn_overhaul_job', column: 'plan_no', rule: 'แสดงตาม format จริงของระบบ (`ORZ690000X` จาก `FormatPlanNo`) ไม่ใช่ placeholder ที่เห็นในดีไซน์' },
   'ชื่อแผน': { label: 'DB', table: 'vms_trn_overhaul_job', column: 'plan_name' },
   'หน่วยงาน': { label: 'RESOLVED', table: null, column: null, note: 'ไม่ใช่ gap จริง — Overhaul ทำโดย กบค. หน่วยงานเดียวเสมอ (ค่าคงที่ ไม่ใช่ตัวแปร) ไม่จำเป็นต้องมี column รองรับ (เคาะใน 21-overhaul-full-audit.md 22 ต.ค. 2569 — รอบก่อนเข้าใจผิดว่ายังเป็น gap)' },
-  'ประเภทงบ': { label: 'GAP', table: null, column: null, rule: 'ต้องเคาะก่อน — ค่า "งบลงทุน/งบทำการ" ที่โชว์ยังไม่รู้ว่ามาจาก enum ใหม่หรือเป็นค่าคงที่ตายตัว ไม่มี column รองรับเลย', note: 'เดิมกังวล 2 เรื่องรวมกัน — เรื่อง "ศูนย์ต้นทุน" ปิดแล้วจริง (ทีมเคาะว่าใช้ WBS อย่างเดียว ไม่มีศูนย์ต้นทุนแยก, 21-overhaul-full-audit.md 22 ต.ค. 2569) แต่เรื่อง "งบลงทุน/งบทำการ" (ค่าที่โชว์ในคอลัมน์นี้จริงๆของจอ A.1 เช่น "งบลงทุน") ยังเป็น GAP อยู่ — ไม่มี enum/column รองรับ และ 21-overhaul-full-audit.md ไม่ได้ตรวจส่วนนี้เลย ค่าที่เห็นในทุกแถวของ mock เป็น "งบลงทุน" เหมือนกันหมด (เสี่ยงเป็นค่า placeholder ตายตัว ไม่ใช่ query จริง) ต้องเคาะว่ามาจากไหน' },
+  'ประเภทงบ': { label: 'GAP', table: null, column: null, rule: 'ต้องเคาะก่อน — ค่า "งบลงทุน/งบทำการ" ที่โชว์ยังไม่รู้ว่ามาจาก enum ใหม่หรือเป็นค่าคงที่ตายตัว ไม่มี column รองรับเลย', note: 'เดิมกังวล 2 เรื่องรวมกัน — เรื่อง "ศูนย์ต้นทุน" ปิดแล้วจริง (ทีมเคาะว่าใช้ WBS อย่างเดียว ไม่มีศูนย์ต้นทุนแยก, 21-overhaul-full-audit.md 22 ต.ค. 2569) แต่เรื่อง "งบลงทุน/งบทำการ" (ค่าที่โชว์ในคอลัมน์นี้จริงๆของจอ A.1 เช่น "งบลงทุน") ยังเป็น GAP อยู่ — ไม่มี enum/column รองรับ และ 21-overhaul-full-audit.md ไม่ได้ตรวจส่วนนี้เลย ค่าที่เห็นในทุกแถวของ mock เป็น "งบลงทุน" เหมือนกันหมด (เสี่ยงเป็นค่า placeholder ตายตัว ไม่ใช่ query จริง) ต้องเคาะว่ามาจากไหน — 🤔 ลูกค้าเสนอไว้ในชีต MaintainD-Overhaul แท็บ "1 รายการแผน" (ยังไม่ confirm): ให้หัวคอลัมน์นี้โชว์ 2 บรรทัดคือ [Text] = ประเภทงบ เช่น "งบลงทุน" และ [SubText] = เลข WBS เช่น "WBS: I-69-Z-DPMXX.JM.0003" — ถ้าแบบนี้คือ enum งบลงทุน/งบทำการ ยังต้องมี column ใหม่รองรับอยู่ดี ไม่ใช่แค่จัด layout' },
   'เลขที่งบประมาณ': { label: 'DB', table: 'vms_trn_overhaul_job', column: 'wbs_number', note: 'ยืนยันแล้วว่าเป็นเลข WBS เท่านั้น ไม่มีแบบศูนย์ต้นทุนแยก (21-overhaul-full-audit.md) — ⚠️ บอร์ด FigJam เขียนชื่อตารางกำกับไว้ผิดเป็น "(vms_trn_repair_job)" ของจริงอยู่ vms_trn_overhaul_job (เป็นบั๊กเอกสาร ไม่ใช่ gap จริง) — key นี้เป็นชื่อที่เดาไว้ ของจริงในจอ dump คือ "เลข WBS" และ "เลข WBS (ศูนย์ต้นทุน)" ด้านล่าง เก็บ key นี้ไว้เป็น alias เผื่อจอหน้าอื่นใช้คำนี้' },
   'หมายเลขแผน': { label: 'DB', table: 'vms_trn_overhaul_job', column: 'plan_no', rule: 'แสดงตาม format จริงของระบบ (`ORZ690000X` จาก `FormatPlanNo`) ไม่ใช่ placeholder ที่เห็นในดีไซน์', note: 'ข้อความจริงจากจอ dump (หน้ารายการแผน A.1 และหน้ารายละเอียดแผน B.7) — ไม่ใช่ "เลขแผน"/"เลขที่แผน" ที่เดาไว้แต่เดิม format จริง ORZ690000X (FormatPlanNo)' },
   'เลข WBS': { label: 'DB', table: 'vms_trn_overhaul_job', column: 'wbs_number', note: 'ข้อความจริงจากฟอร์มสร้างแผน (B.1) — ไม่มีคำว่า "(ศูนย์ต้นทุน)" ต่อท้ายแบบหน้ารายละเอียด' },
@@ -50,7 +50,7 @@ const SCHEMA = {
   'หนังสืออนุมัติหลักการ': { label: 'DB', table: 'vms_mas_overhaul_document', column: 'doc_type = principle_approval', note: 'ตรง 1:1 กับ DocTypePrincipleApproval ใน overhaul_plan.go — ข้อความจริงจากฟอร์มสร้างแผน (B.1) และหน้ารายละเอียด (B.7)' },
   'เอกสารอนุมัติงบ': { label: 'DB', table: 'vms_mas_overhaul_document', column: 'doc_type = budget_approval', note: 'ตรง 1:1 กับ DocTypeBudgetApproval' },
   'เอกสารอื่น ๆ': { label: 'DB', table: 'vms_mas_overhaul_document', column: 'doc_type = other', note: 'ข้อความจริงจากฟอร์มสร้างแผน (B.1) มีเว้นวรรคก่อน "ๆ" — ต่างจาก "อื่นๆ" ไม่เว้นวรรคที่ใช้ในฟอร์ม PO' },
-  'อะไหล่ที่ใช้': { label: 'GAP', table: null, column: null, note: 'ส่วนในหน้ารายละเอียดแผน (B.7) — ตาม AC-S1 เป็นแค่การ "จองไว้เฉยๆ" ตาม userflow ไม่ได้ลงรายละเอียด backend เชื่อมกับ Smart Inventory ที่ยังไม่มี API คนละเรื่องกับรายการอะไหล่ปิดงานต่อคัน (รหัส L ของ Scenario 14)' },
+  'อะไหล่ที่ใช้': { label: 'GAP', table: null, column: null, rule: 'ต้องเคาะก่อน — ตอนนี้เป็นแค่การ "จองไว้เฉยๆ" ตาม userflow ไม่มีตารางรองรับจริง (คนละเรื่องกับรายการอะไหล่ปิดงานต่อคันของ Scenario 14)', note: 'ส่วนในหน้ารายละเอียดแผน (B.7) — ตาม AC-S1 เป็นแค่การ "จองไว้เฉยๆ" ตาม userflow ไม่ได้ลงรายละเอียด backend เชื่อมกับ Smart Inventory ที่ยังไม่มี API คนละเรื่องกับรายการอะไหล่ปิดงานต่อคัน (รหัส L ของ Scenario 14)' },
   'งบประมาณ (บาท)': { label: 'DB', table: 'vms_trn_overhaul_job', column: 'approved_budget' },
   'วงเงินอนุมัติ (บาท)': { label: 'DB', table: 'vms_trn_overhaul_job', column: 'approved_budget' },
   'งบ': { label: 'DB', table: 'vms_trn_overhaul_job', column: 'approved_budget' },
@@ -69,7 +69,7 @@ const SCHEMA = {
 
   // หน้า 2 — PO (PO_COLS) — อัปเดตจาก 21-overhaul-full-audit.md § 2
   'หมายเลข PO': { label: 'DB', table: 'vms_trn_purchase_order', column: 'po_number', rule: 'แสดงตาม format จริง `{overhaul_code}-{seq}` (`FormatPONumber`) เช่น `ORZ6900001-01` ไม่ใช่ placeholder ที่เห็นในดีไซน์', note: 'format จริง {overhaul_code}-{seq} (FormatPONumber) เช่น ORZ6900001-01 — ตรงกับ sticky #127 บนบอร์ด FigJam เป๊ะ เรื่องนี้เคาะแล้ว ไม่ใช่ gap (21-overhaul-full-audit.md)' },
-  'เลขที่ PO': { label: 'DB', table: 'vms_trn_purchase_order', column: 'po_number', rule: 'แสดงตาม format จริง `{overhaul_code}-{seq}` (`FormatPONumber`) ไม่ใช่ placeholder ที่เห็นในดีไซน์' },
+  'เลขที่ PO': { label: 'DB', table: 'vms_trn_purchase_order', column: 'po_number', rule: 'แสดงตาม format จริง `{overhaul_code}-{seq}` (`FormatPONumber`) เช่น `ORZ6900001-01` ไม่ใช่ placeholder ที่เห็นในดีไซน์' },
   'ชื่อ PO': { label: 'DB', table: 'vms_trn_purchase_order', column: 'po_name' },
   'ชื่อ Purchase Order': { label: 'DB', table: 'vms_trn_purchase_order', column: 'po_name' },
   'ศูนย์บริการ/อู่': { label: 'DB', table: 'vms_trn_purchase_order', column: 'vendor_name (+ vendor_id)' },
@@ -237,6 +237,14 @@ const AC_FLOWS = {
         q: 'เลข WBS ที่เขียนกำกับว่าอยู่ตาราง (vms_trn_repair_job) ต้องไปดูตารางนั้นจริงไหม?',
         a: 'ไม่ — เป็นความผิดพลาดในการเขียนบอร์ด (ใช้ template จากหน้าแจ้งซ่อมแล้วลืมแก้ชื่อตาราง) field นี้อยู่ `vms_trn_overhaul_job.wbs_number` จริง',
       },
+      {
+        q: 'แก้ไข/ลบแผนแล้ว ต้องเก็บประวัติ (audit log) ไว้ไหม?',
+        a: 'ไม่ต้อง — ตอบแล้วจากการอ่านบอร์ดดิบซ้ำ (26 ต.ค. 2569, ดู 23-figjam-raw-reread-AC-ready.md): "ไม่เก็บทั้งคู่ ใครอยากทำไรก็ทำ" ไม่มี audit trail ของการแก้ไข/ลบแผน',
+      },
+      {
+        q: 'คอลัมน์ "จัดการ" ท้ายแถวในหน้ารายการแผน เป็นเมนู "..." หรือไอคอนแยก 3 ปุ่ม?',
+        a: 'เมนู "..." — ⚠️ แก้คำตอบ 26 ต.ค. 2569 (เคยตอบผิดว่าเป็นไอคอนแยก อ้างแค่ชีต MaintainD-Overhaul ซึ่งเป็นข้อเสนอรอบแรก): เจ้าของงานกำหนดจากจอจริงเมื่อ 21 ต.ค. 2569 ค่ำ (ดู 15-overhaul-AC.md บรรทัด 9 และ 33) ให้เป็น "ปุ่ม … ท้ายแถว กดแล้วเปิดเมนู ดูรายละเอียด/แก้ไข/ลบ" แทนไอคอน 3 ปุ่มตามชีต — การตัดสินใจนี้มาทีหลังและมาจากจอจริง จึงทับของชีตเดิม ไฟล์ 18 (AC หน้า 1) ยังไม่ได้อัปเดตตามจึงยังเขียนว่าเป็นไอคอน 3 ปุ่มอยู่ (เอกสารขัดกันเอง ต้องแจ้งทีมแก้ไฟล์ 18 ให้ตรงไฟล์ 15)',
+      },
     ],
     fields: [
       'หมายเลขแผน', 'เลขแผน', 'เลขที่แผน', 'ชื่อแผน', 'หน่วยงาน', 'ประเภทงบ', 'เลขที่งบประมาณ',
@@ -289,6 +297,14 @@ const AC_FLOWS = {
         q: 'เลขไมล์ที่โชว์ตอนเลือกรถเข้า PO เป็นค่า snapshot ตอนสร้าง PO หรือค่าสดจากทะเบียนรถ?',
         a: 'ยังไม่เคาะ — ไม่มี column ไมล์บน PO/po_vehicle เลยจริงๆ (ชื่อตารางที่บอร์ดเขียนกำกับไว้ก็พิมพ์ผิดด้วย) ของตอนนี้ต้องเป็นค่าสดจาก `vms_mas_vehicle` เท่านั้น',
       },
+      {
+        q: 'PO หนึ่งใบ มีได้แค่ศูนย์บริการ/อู่เดียว หรือมากกว่า 1 แห่งได้?',
+        a: 'ยังไม่เคาะ — ลูกค้าเองฝากคำถามนี้ไว้ในชีต MaintainD-Overhaul แท็บ "2 รายละเอียดแผน" ("ฝากดูด้วยครับว่าเป็นไปได้ไหมที่จะมีมากกว่า 1 ศูนย์ซ่อม/อู่") ปัจจุบัน schema เป็น 1:1 (vendor_id เดียวต่อ PO) ถ้าต้องรองรับหลายอู่ต้องออกแบบ schema ใหม่ก่อน implement',
+      },
+      {
+        q: 'แถว PO ในตารางรายละเอียดแผน ปุ่มจัดการท้ายแถว เป็นเมนู "..." หรือไอคอนแยก?',
+        a: 'เมนู "..." เหมือนหน้ารายการแผน — เจ้าของงานกำหนดจากจอจริง 21 ต.ค. 2569 ค่ำ ว่าตาราง PO ใช้ "ปุ่ม … ท้ายแถวที่เปิดเมนู ดูรายละเอียด, แก้ไข, ลบ" เช่นกัน (15-overhaul-AC.md บรรทัด 130) ไม่ใช่ไอคอนแยกตามที่ชีต MaintainD-Overhaul เสนอไว้รอบแรก',
+      },
     ],
     fields: [
       'หมายเลข PO', 'เลขที่ PO', 'ชื่อ PO', 'ชื่อ Purchase Order', 'ศูนย์บริการ/อู่', 'ความคืบหน้า',
@@ -306,13 +322,13 @@ const AC_FLOWS = {
         then: ['status แผน → "กำลังดำเนินการ" (final: กำลังดำเนินการ PO) — เปลี่ยนจาก "รอ PO"', 'toast "การสร้าง purchase order สำเร็จ"'],
       },
       { when: 'กบค. แก้ไข PO แล้วบันทึก', then: ['status แผนไม่เปลี่ยน', 'toast "บันทึกการแก้ไข PO สำเร็จ"'] },
-      { when: 'กบค. ลบ PO (ยังมี PO อื่นเหลือในแผน)', then: ['status แผนยังเป็น "กำลังดำเนินการ"', 'toast "ลบ purchase order สำเร็จ"'] },
+      { when: 'กบค. ลบ PO (ยังมี PO อื่นเหลือในแผน)', then: ['status แผนยังเป็น "กำลังดำเนินการ"', 'toast "ลบ PO สำเร็จ"'] },
       {
         when: 'กบค. ลบ PO ตัวสุดท้าย (เหลือ PO = 0)',
         then: [
           'status แผนย้อนกลับไป "รอ PO" (final: รอเลข PO)',
           'หน่วยงาน/กรย. จะไม่เห็นแผนนี้อีกจนกว่าจะมี PO ใหม่ (กลับไปสิทธิ์แบบ plan13)',
-          'toast เดียวกัน "ลบ purchase order สำเร็จ"',
+          'toast เดียวกัน "ลบ PO สำเร็จ"',
         ],
       },
     ],
@@ -343,6 +359,10 @@ const AC_FLOWS = {
       {
         q: '"ผู้ประสานงาน" คือฝั่งอู่หรือฝั่ง กบค.?',
         a: 'กบค. (พนักงาน กฟภ.) — field ชื่อ "ผู้ประสานงาน (กบค.)" ตรงกับ `CoordinatorName/CoordinatorEmpID` ที่ดึงจาก userhub ไม่ใช่ข้อมูลอู่',
+      },
+      {
+        q: 'จอฝั่งนัดรับรถคืน (Scenario 13) ยังขาดสภาพกันพลาด/toast เทียบกับขั้นนี้อยู่ไหม?',
+        a: 'ไม่ขาดแล้ว — sprint 29 ต.ค. 2569 (overhaul-flow-2) ขยายจอ Scenario 13 จาก 3 จอเป็น 8 จอ ครบทุกสภาพเหมือนขั้นนี้แล้ว (ดู 24-sprint-flow-vs-flow-2-เปรียบเทียบ.md) — แต่เฟรมสุดท้าย (N.5 แก้ไขนัดหมาย) ชื่อพิมพ์ผิดเป็น "OOH2" แทน "OH2" บนบอร์ด ถ้า auto-match ด้วย regex `OH2 / <รหัส> ·` เฟรมนี้จะหลุด ต้องแจ้งทีมออกแบบแก้ชื่อก่อน',
       },
     ],
     fields: ['ผู้ประสานงาน (กบค.)', 'เบอร์โทรผู้ประสานงาน', 'เบอร์โทรผู้ประสานงาน (กบค.)', 'ช่วงวันนำรถเข้า', 'ประเภท', 'เลขไมล์สะสม', 'ชั่วโมงสะสม', 'รูปแบบการซ่อม', 'ทะเบียน'],
@@ -394,6 +414,10 @@ const AC_FLOWS = {
         q: 'Scenario 8 ไม่มี sticky FE/BE ติดอยู่เลย ต่างจาก scenario อื่น แปลว่าไม่ต้องทำหรือเปล่า?',
         a: 'ไม่ใช่ — แปลว่ายังไม่ถูกคุยในระดับ task breakdown เท่านั้น ยังต้องทำ ควรเน้นคุยจุดนี้ในที่ประชุมก่อน เพราะไม่มีใครวาง FE/BE ไว้ให้',
       },
+      {
+        q: 'มีชื่อตาราง draft เสนอไว้บนบอร์ดบ้างไหม (เอกสาร 21 บอกว่า 0% backend ไม่มีแม้แต่ draft)?',
+        a: 'มีจริง — อ่านบอร์ดดิบซ้ำ (26 ต.ค. 2569) เจอชื่อ `vms_trn_overhaul_po_vehicle` และ `vms_trn_overhaul_inspection_form_items` ที่ไม่ปรากฏในเอกสาร 21/22 มาก่อน (ดู 23-figjam-raw-reread-AC-ready.md) — ยังไม่ migrate จริง แต่มีชื่อเสนอแล้ว ไม่ต้องตั้งเอง',
+      },
     ],
     fields: ['รายการตรวจสอบ', 'ลงนามรับรถ'],
     permissions: [
@@ -427,7 +451,11 @@ const AC_FLOWS = {
     devFaq: [
       {
         q: 'ลบความคืบหน้าจนเหลือ 0 รายการได้ไหม หรือต้องเหลืออย่างน้อย 1 เสมอ?',
-        a: 'ยังไม่เคาะ — บอร์ดเขียนแค่ "มีตั้งแต่ 1 รายการจะสามารถลบได้" ไม่ได้บอกขอบเขตล่าง ต้องถามทีมก่อน implement validation',
+        a: 'ยังไม่เคาะ (แถมพบคำตอบขัดกันเอง 2 แหล่งบนบอร์ด 26 ต.ค. 2569 — แหล่งหนึ่งบอก "ปุ่มลบไม่แสดงเมื่อเหลือ 1 รายการ" อีกแหล่งบอกว่าลบรายการสุดท้ายได้จริงและรีเซ็ตคอลัมน์กลับ default — ต้องถามทีมให้ฟันธงก่อน ห้ามเลือกเองว่าอันไหนถูก ดู 23-figjam-raw-reread-AC-ready.md)',
+      },
+      {
+        q: 'มีชื่อตาราง draft เสนอไว้บนบอร์ดบ้างไหม (เอกสาร 21 บอกว่า 0% backend gap สมบูรณ์ที่สุด)?',
+        a: 'มีจริง — เจอชื่อ `vms_trn_overhaul_progress_log` บนบอร์ดดิบ (26 ต.ค. 2569) ไม่ปรากฏในเอกสาร 21/22 มาก่อน ยังไม่ migrate แต่มีชื่อเสนอแล้ว',
       },
     ],
     fields: ['รายละเอียดการติดตาม'],
@@ -532,6 +560,10 @@ const AC_FLOWS = {
         q: '"ปิดงาน" รวมเรื่องประกัน/Safety ด้วยไหม เหมือน prototype เก่า?',
         a: 'ไม่ — บอร์ด FigJam ล่าสุด (ใหม่กว่า prototype เก่า) แยก Safety ไปเป็น Scenario 12 แล้ว เหลือ Scenario 14 ไว้แค่เรื่องค่าใช้จ่ายอย่างเดียว ไม่มีประกัน/checklist ซ้ำ',
       },
+      {
+        q: 'ที่เอกสาร 21/23 ตั้งคำถามว่า "ปิดงาน" ควรเป็นอะไหล่หรือค่าใช้จ่าย — sprint ล่าสุด (29 ต.ค. 2569) เคาะหรือยัง?',
+        a: '⚠️ ยังไม่เคาะ — เช็คจอจริงของ sprint 29 ต.ค. 2569 (overhaul-flow-2) แล้วยังใช้คำว่า "อะไหล่" เหมือนเดิมทุกจอ (O.1-O.3) ไม่ได้เปลี่ยนเป็นค่าใช้จ่าย/ใบสำคัญจ่ายตามที่ sticky ของบอร์ดรอบก่อนขอไว้ — แต่บอร์ด sprint ล่าสุดเริ่มตั้งชื่อ "Scenario 21 เบิกอะไหล่" แยกไว้ต่างหากแล้ว (ยังไม่มีจอ) น่าจะเป็นทางที่ทีมจะแยกอะไหล่ออกจากปิดงานจริงๆ แต่ต้องยืนยันกับทีมก่อนเขียนโค้ด ห้ามเดาเอง (ดู 24-sprint-flow-vs-flow-2-เปรียบเทียบ.md)',
+      },
     ],
     fields: ['ชื่ออะไหล่', 'ค่าใช้จ่าย', 'ใบสำคัญจ่ายเลขที่'],
     permissions: [
@@ -566,7 +598,7 @@ const AC_FLOWS = {
  *  - field ที่เป็น DB/EXTERNAL/NEW/RESOLVED และไม่มี info.rule = "แสดงค่าตรงไปตรงมา ไม่มี rule พิเศษ" → ข้ามแถว ไม่ใส่ตาราง
  *  - field ที่เป็น GAP/PARTIAL แต่ลืมเขียน info.rule ไว้ (ยังไม่ curate) → ขึ้นเตือนสั้นๆให้ไปเพิ่ม ไม่ dump note ทั้งก้อนมาแทน */
 function buildRuleTable(matches) {
-  const rows = [];
+  const groups = new Map(); // signature (label+table+column+rule) → { keys[], info }
   const skipped = [];
   for (const m of matches) {
     const { key, info } = m;
@@ -581,8 +613,21 @@ function buildRuleTable(matches) {
     } else if (info.label === 'GAP' || info.label === 'PARTIAL') {
       rule = '⚠️ ' + rule;
     }
+    // รวมแถวที่ชี้ไป table.column เดียวกันเป๊ะ (เช่น "หมายเลขแผน"/"เลขแผน"/"เลขที่แผน" ล้วนคือ
+    // plan_no — ของเดิมแยกเป็น 3 แถวซ้ำเนื้อหาเป๊ะ อ่านแล้วดูไม่ใช่ AC มือโปร) ให้เหลือ 1 แถวต่อ
+    // column จริง 1 คอลัมน์ ชื่อ key ที่ใช้แทนกันได้คั่นด้วย "/" แทน — ไม่รวมถ้า rule ต่างกัน
+    // (เช่น "เบอร์โทรผู้ประสานงาน" vs "...(กบค.)" มี rule ข้อความต่างกันเล็กน้อย ยังแยกแถวไว้ตามเดิม)
+    const sig = `${info.label}|${info.table || ''}|${info.column || ''}|${rule}`;
+    if (groups.has(sig)) {
+      groups.get(sig).keys.push(key);
+    } else {
+      groups.set(sig, { keys: [key], info, rule });
+    }
+  }
+  const rows = [];
+  for (const { keys, info, rule } of groups.values()) {
     const ref = info.table ? info.table + (info.column ? '.' + info.column : '') : 'ไม่มี column รองรับ';
-    rows.push(`${rows.length + 1}. ${key}  [${info.label}]\n   Rule: ${rule}\n   อ้างอิง: ${ref}`);
+    rows.push(`${rows.length + 1}. ${keys.join(' / ')}  [${info.label}]\n   Rule: ${rule}\n   อ้างอิง: ${ref}`);
   }
   const lines = [];
   if (rows.length) lines.push(rows.join('\n\n'));

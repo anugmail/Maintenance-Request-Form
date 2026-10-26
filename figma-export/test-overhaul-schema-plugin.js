@@ -173,6 +173,32 @@ async function run() {
   assert.ok(ruleTable.includes('ข้าม 1 field') && ruleTable.includes('ชื่อแผน'), 'field ที่ถูกข้ามต้องแจ้งไว้ท้ายลิสต์ ไม่ใช่หายไปเงียบๆ');
   console.log('✓ buildRuleTable เอาเฉพาะ field ที่มี rule สั้นจริง และแจ้ง field ที่ข้ามไว้ท้ายลิสต์ ไม่หายไปเงียบๆ');
 
+  // 9b) buildRuleTable ต้องรวมแถวที่ชี้ table.column เดียวกันเป๊ะเป็นแถวเดียว (เจอจริง 26 ต.ค. 2569 —
+  //     "หมายเลขแผน"/"เลขแผน"/"เลขที่แผน" ทั้ง 3 key ชี้ plan_no เดียวกัน เคยขึ้นซ้ำ 3 แถวเนื้อหาเป๊ะ
+  //     อ่านแล้วไม่ใช่ AC มือโปร) แต่ห้ามรวมถ้า rule ต่างกันแม้ table.column จะเหมือนกัน
+  const aliasMatches = [
+    { key: 'หมายเลขแผน', info: SCHEMA['หมายเลขแผน'] },
+    { key: 'เลขแผน', info: SCHEMA['เลขแผน'] },
+    { key: 'เลขที่แผน', info: SCHEMA['เลขที่แผน'] },
+  ];
+  const aliasTable = buildRuleTable(aliasMatches);
+  assert.ok(
+    aliasTable.includes('1. หมายเลขแผน / เลขแผน / เลขที่แผน'),
+    'สามคีย์ที่ชี้ plan_no เดียวกันเป๊ะต้องรวมเป็นแถวเดียว คั่นด้วย " / "',
+  );
+  assert.strictEqual((aliasTable.match(/vms_trn_overhaul_job\.plan_no/g) || []).length, 1, 'ต้องมีแถวอ้างอิง plan_no แค่แถวเดียว ไม่ซ้ำ 3 รอบ');
+
+  // ยืนยันด้วยคู่สังเคราะห์ (ไม่พึ่ง SCHEMA จริงที่อาจแก้ rule ให้ตรงกันในอนาคตจนเทสนี้ไม่มีความหมาย)
+  // ว่าแถวที่ table.column เหมือนกันแต่ rule ต่างกันจริงๆ ต้อง "ไม่" ถูกรวม กันพลาดเนื้อหาคนละเรื่องมาปนกัน
+  const syntheticMatches = [
+    { key: 'ฟิลด์ A', info: { label: 'DB', table: 'x', column: 'y', rule: 'กฎข้อที่ 1' } },
+    { key: 'ฟิลด์ B', info: { label: 'DB', table: 'x', column: 'y', rule: 'กฎข้อที่ 2 (คนละเรื่องกัน)' } },
+  ];
+  const syntheticTable = buildRuleTable(syntheticMatches);
+  assert.ok(!syntheticTable.includes('ฟิลด์ A / ฟิลด์ B'), 'table.column เหมือนกันแต่ rule ต่างกันจริง ต้องไม่ถูกรวมแถว');
+  assert.ok(syntheticTable.includes('1. ฟิลด์ A') && syntheticTable.includes('2. ฟิลด์ B'), 'ต้องขึ้นเป็น 2 แถวแยกกัน คนละ rule');
+  console.log('✓ buildRuleTable รวมแถวที่ table.column + rule เหมือนกันเป๊ะเป็นแถวเดียว ไม่รวมถ้า rule ต่างกัน');
+
   // 10) buildFlowSection: ต้องมีเฉพาะ flow ที่เก็บไว้จริง (scenario7) ไม่เดา flow ที่ไม่มี
   const flowText = buildFlowSection('scenario7');
   assert.ok(flowText.includes('FLOW — Scenario 7'), 'ต้องมีหัวข้อ Flow');

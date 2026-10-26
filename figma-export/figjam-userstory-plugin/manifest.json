@@ -1,0 +1,9 @@
+{
+  "name": "Maintain-D — Overhaul user story annotator",
+  "id": "1471820935506372101",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figjam"],
+  "networkAccess": { "allowedDomains": ["none"], "reasoning": "เนื้อหา user story ฝังอยู่ใน code.js ทั้งหมด ไม่ต่อเครือข่าย" }
+}
