@@ -32,7 +32,7 @@ function makeNode(name, overrides) {
 function makeTextMock() {
   return makeNode('text', {
     type: 'TEXT',
-    fontName: null, fontSize: 0, characters: '', textAutoResize: '', height: 20,
+    fontName: null, fontSize: 0, characters: '', textAutoResize: '', textAlignHorizontal: 'LEFT', height: 20,
     resize(w, h) { this.width = w; this.height = h; },
   });
 }
@@ -79,6 +79,18 @@ function resetFigmaMock() {
     viewport: { scrollAndZoomIntoView(nodes) { scrolledInto = nodes; } },
     loadFontAsync: async () => {},
     createText: makeTextMock,
+    createShapeWithText() {
+      return makeNode('AC shape', {
+        type: 'SHAPE_WITH_TEXT', shapeType: '', fills: [], strokes: [],
+        text: Object.preventExtensions({
+          fontName: {family: 'Inter', style: 'Regular'}, fontSize: 13,
+          characters: '', textAlignHorizontal: 'CENTER', _bold: [], _sizes: [],
+          setRangeFontName(start, end, font) {this._bold.push([start, end, font]);},
+          setRangeFontSize(start, end, size) {this._sizes.push([start, end, size]);},
+        }),
+        resize(w, h) { this.width = w; this.height = h; },
+      });
+    },
     createTable: makeTableMock,
     createCodeBlock: makeCodeBlockMock,
     group(nodes) { return { type: 'GROUP', children: nodes }; },
@@ -169,8 +181,8 @@ test('ไม่มี section ใดเหลือเป็น markdown pipe-ta
   }
 });
 
-test('สิ่งที่ยังไม่ครบ ของทั้ง 8 flow ตรงกับจำนวนที่ fork รายงานไว้ (11,12,6,13,13,8,9,10)', () => {
-  const expected = { plan13: 11, po46: 12, scenario7: 6, scenario8: 13, scenario911: 13, scenario12: 8, scenario13: 9, scenario14: 10 };
+test('สิ่งที่ยังไม่ครบ ของทั้ง 8 flow ตรงกับจำนวนปัจจุบันใน 25-overhaul-user-stories-AC.md (sync 27 ต.ค. 2569 — scenario7/scenario911/scenario14 เพิ่มขึ้นจากของเดิม)', () => {
+  const expected = { plan13: 11, po46: 12, scenario7: 9, scenario8: 13, scenario911: 14, scenario12: 8, scenario13: 9, scenario14: 12 };
   for (const [key, n] of Object.entries(expected)) {
     const sec = mod.USER_STORIES[key].sections.find((x) => x.level === 'bold' && x.label.startsWith('สิ่งที่ยังไม่ครบ'));
     assert.ok(sec, key + ' ไม่มี section สิ่งที่ยังไม่ครบ');
@@ -203,7 +215,7 @@ test('createBulletText ใส่ • นำหน้าทุกข้อ ไม
   resetFigmaMock();
   mod = freshModule();
   const t = await mod.createBulletText(['ข้อหนึ่ง', 'ข้อสอง'], 400);
-  assert.strictEqual(t.characters, '•  ข้อหนึ่ง\n•  ข้อสอง');
+  assert.strictEqual(t.characters, '•  ข้อหนึ่ง\n\n•  ข้อสอง');
 });
 
 test('renderSection: section ที่มี table คืน node .type TABLE, section ที่มี code คืน .type TEXT (ไม่ใช่ CODE_BLOCK แล้ว)', async () => {
@@ -228,20 +240,17 @@ test('renderSection: ข้าม "A. Story Header" ไม่สร้าง nod
 });
 
 // ---------- annotateUserStory: ต้องสร้างหลาย node จริง (ตาราง/ข้อความ) ไม่ใช่ text เดียว ----------
-test('annotateUserStory สร้างหลาย node แยกตามประเภทเนื้อหาจริง (ไม่ใช่ text ก้อนเดียวแบบเดิม) และไม่มี Story Header', async () => {
-  resetFigmaMock();
-  mod = freshModule();
-  const node = makeNode('OH2 / B.2 · S1 — x', { width: 300, absoluteTransform: [[1, 0, 50], [0, 1, 60]] });
-  const nodes = await mod.annotateUserStory(node, 'plan13');
-  assert.ok(nodes.length > 15, 'ควรมีหลาย node ต่อ story (title+sections หลายอันมี label+content)');
-  const kinds = nodes.map((n) => n.type);
-  assert.ok(kinds.includes('TABLE'), 'ต้องมีตารางจริงอย่างน้อย 1');
-  assert.ok(kinds.filter((k) => k === 'TABLE').length >= 3, 'story นี้มี 3 ตารางที่เหลือ (ตัด Story Header ไป 1 จาก 4)');
-  assert.ok(!kinds.includes('CODE_BLOCK'), 'ต้องไม่มี CODE_BLOCK อีกต่อไป');
-  for (const n of nodes) {
-    assert.ok(!n.characters || !n.characters.includes('Story ID'), 'ต้องไม่มีเนื้อหา Story Header หลงเหลืออยู่');
-    assert.strictEqual(n.getPluginData(mod.TAG_KEY), '1');
-  }
+test('annotateUserStory writes the full narrative directly in one native shape', async () => {
+  resetFigmaMock(); mod = freshModule();
+  const nodes = await mod.annotateUserStory(makeNode('OH2 / B.2 · S1'), 'plan13');
+  assert.strictEqual(nodes.filter(n => n.type === 'TEXT').length, 0);
+  assert.strictEqual(nodes.filter(n => n.type === 'SHAPE_WITH_TEXT').length, 1);
+  const text = nodes.find(n => n.type === 'SHAPE_WITH_TEXT').text.characters;
+  assert.ok(text.startsWith(mod.FRAME_STORIES['B.2'].title));
+  assert.ok(text.indexOf('ภาพรวมหน้านี้') < text.indexOf('As-is — Sprint 06'));
+  assert.ok(text.indexOf('UI Component & Behavior') < text.indexOf('ประเด็นที่ต้องเคาะ'));
+  assert.ok(text.includes('UI Component & Behavior รวมแนวทางพัฒนาจากโปรเจกต์และข้อเสนอ'));
+  for (const n of nodes) assert.strictEqual(n.getPluginData(mod.TAG_KEY), '1');
 });
 
 test('annotateUserStory วาง node ทุกตัวไว้ทางขวาของ node ต้นทาง (x เดียวกันหมด, y ไล่ลงไม่ชนกัน)', async () => {
@@ -250,7 +259,7 @@ test('annotateUserStory วาง node ทุกตัวไว้ทางข�
   const node = makeNode('OH2 / B.2 · S1 — x', { width: 300, absoluteTransform: [[1, 0, 50], [0, 1, 60]] });
   const nodes = await mod.annotateUserStory(node, 'plan13');
   const expectedX = 50 + 300 + 40; // SECTION_GAP_X = 40
-  for (const n of nodes) assert.strictEqual(n.x, expectedX);
+  for (const n of nodes) assert.strictEqual(n.x, expectedX - (n.type === 'SHAPE_WITH_TEXT' ? 20 : 0));
   for (let i = 1; i < nodes.length; i++) assert.ok(nodes[i].y > nodes[i - 1].y, 'y ต้องไล่ลงเรื่อยๆ ไม่ซ้อนกัน');
 });
 
@@ -300,7 +309,7 @@ test('onmessage annotate-auto: จับคู่ได้แปะสำเร�
   const last = uiMessages[uiMessages.length - 1];
   assert.strictEqual(last.ok, true);
   assert.ok(/แปะ user story แล้ว 1 เฟรม/.test(last.text));
-  assert.ok(created.length > 15, 'ควรสร้างหลาย node จริงไม่ใช่ 1 text');
+  assert.ok(created.filter(n => n.name.endsWith(' / เรื่องราว')).length === 1, 'หนึ่ง text เนื้อเรื่องต่อเฟรม พร้อมตารางแยก');
   assert.ok(scrolledInto, 'ต้องเลื่อนจอไปหา node ที่สร้างใหม่ (scrollAndZoomIntoView)');
   assert.strictEqual(scrolledInto.length, created.length);
 });
@@ -331,7 +340,7 @@ test('onmessage annotate-auto: เลือกหลายเฟรมผสม�
   assert.ok(/หาไม่เจอ 1 เฟรม/.test(last.text));
 });
 
-test('onmessage annotate (manual): เลือก flow ถูกต้อง แปะได้ทุกเฟรมที่เลือกไม่ว่าชื่อเฟรมจะเป็นอะไร', async () => {
+test('onmessage annotate (manual): ไม่เดา AC เมื่อชื่อเฟรมไม่มีรหัส', async () => {
   resetFigmaMock();
   const n1 = makeNode('เฟรมชื่ออะไรก็ได้ 1');
   const n2 = makeNode('เฟรมชื่ออะไรก็ได้ 2');
@@ -339,26 +348,22 @@ test('onmessage annotate (manual): เลือก flow ถูกต้อง �
   mod = freshModule();
   await sendMessage({ type: 'annotate', flow: 'scenario14' });
   const last = uiMessages[uiMessages.length - 1];
-  assert.strictEqual(last.ok, true);
-  assert.ok(created.length > 30, 'สองเฟรม x หลาย node ต่อ story');
-  assert.ok(scrolledInto, 'ต้องเลื่อนจอไปหา node ที่สร้างใหม่');
+  assert.strictEqual(last.ok, false);
+  assert.strictEqual(created.length, 0);
+  assert.ok(last.text.includes('ไม่พบ AC ตรงรหัสเฟรม'));
 });
 
-test('createTable throw กลางๆ (เช่น API เปลี่ยน/limit เกิน) → ไม่เงียบหาย ยังเห็น error ใน UI และ node อื่นที่ไม่พังยังถูกวางอยู่', async () => {
-  resetFigmaMock();
-  let callCount = 0;
-  global.figma.createTable = (...args) => {
-    callCount++;
-    if (callCount === 2) throw new Error('จำลอง API พัง (เช่น table เกิน limit)');
-    return makeTableMock(...args);
-  };
-  const node = makeNode('OH2 / B.2 · S1 — x');
-  global.figma.currentPage.selection = [node];
-  mod = freshModule();
-  await sendMessage({ type: 'annotate-auto' });
-  const last = uiMessages[uiMessages.length - 1];
-  assert.ok(/⚠️ พบปัญหา/.test(last.text), 'ต้องมีข้อความ error โผล่ใน UI ไม่ใช่เงียบหาย: ' + last.text);
-  assert.ok(created.length > 10, 'node อื่นที่ไม่พังต้องยังถูกสร้าง/วางอยู่ (ไม่ใช่ทั้ง batch หายไปหมด)');
+test('separate tables retain narrative when table API fails', async () => {
+  resetFigmaMock(); mod = freshModule();
+  const story = mod.FRAME_STORIES['B.2'];
+  const saved = story.sections;
+  try {
+    story.sections = [...saved, {label: 'ตารางข้อมูล', table: {headers: ['ฟิลด์'], rows: [['ชื่อแผน']]}}];
+    global.figma.createTable = () => {throw new Error('table failure');};
+    const nodes = await mod.annotateUserStory(makeNode('OH2 / B.2 · S1'), 'plan13');
+    assert.ok(nodes.errors.some(e => e.includes('table failure')));
+    assert.ok(nodes.some(n => n.text && n.text.characters.includes('ดูตารางที่ 1 ด้านล่าง')));
+  } finally {story.sections = saved;}
 });
 
 test('annotateUserStory พังทั้งตัว (เช่น flow ทั้งก้อน throw) ตอน annotate-auto หลายเฟรม → เฟรมอื่นที่ไม่พังยังสำเร็จ และ error ไม่หายไปเงียบๆ', async () => {
@@ -394,12 +399,12 @@ test('splitScenarios แยก 4 scenario ที่อยู่ใน code fence
   assert.ok(!scenarios[0].text.includes('AC-04'), 'ต้องตัดก่อน scenario ถัดไป ไม่ปนกัน');
 });
 
-test('collectScenarios รวม scenario จาก B1+B2+B3 ทั้งหมดของ plan13 ได้ 8 รายการ (1 CRUD-happy + 2 CRUD-alt + 2 list-page-alt + 2 CRUD-exception + 2 list-page-exception) หลังเพิ่ม AC-05..08 (ค้นหา/ตัวกรอง/ไม่พบแผน/ยังไม่มีแผน) 26 ต.ค. 2569', () => {
+test('collectScenarios รวม scenario จาก B1+B2+B3 ทั้งหมดของ plan13 ได้ 10 รายการ (เพิ่ม AC-09/AC-10 จากบอร์ด Refinement 29 oct 2026 เข้ามาอีก 2 — sync 27 ต.ค. 2569)', () => {
   const pool = mod.collectScenarios(mod.USER_STORIES.plan13);
-  assert.strictEqual(pool.length, 8);
+  assert.strictEqual(pool.length, 10);
   assert.deepStrictEqual(
     pool.map((s) => s.title.slice(0, 5)).sort(),
-    ['AC-01', 'AC-02', 'AC-03', 'AC-04', 'AC-05', 'AC-06', 'AC-07', 'AC-08'].sort(),
+    ['AC-01', 'AC-02', 'AC-03', 'AC-04', 'AC-05', 'AC-06', 'AC-07', 'AC-08', 'AC-09', 'AC-10'].sort(),
   );
 });
 
@@ -483,7 +488,7 @@ test('buildGherkinSectionForFrame: จับคู่ไม่ได้เลย
   const node = makeNode('เฟรมไม่มีรูปแบบชื่อ', { children: [makeTextNode('ข้อความไม่เกี่ยวอะไรเลย')] });
   const section = mod.buildGherkinSectionForFrame(mod.USER_STORIES.plan13, node);
   assert.ok(section.label.includes('ไม่มั่นใจว่าตรงกับจอนี้'));
-  assert.strictEqual(section.code.length, 8, 'ต้องมีครบทั้ง 8 scenario เพราะไม่เดา');
+  assert.strictEqual(section.code.length, 10, 'ต้องมีครบทั้ง 10 scenario เพราะไม่เดา');
 });
 
 test('buildSectionsForFrame: แทนที่ B1/B2/B3 ด้วย section เดียว โดยคงตำแหน่งเดิมและ section อื่นไว้ครบ', () => {
@@ -495,7 +500,7 @@ test('buildSectionsForFrame: แทนที่ B1/B2/B3 ด้วย section �
   assert.ok(sections.some((s) => s.label === 'A. Story Header'), 'ไม่ได้ลบจากข้อมูล แค่ไม่ render (isStoryHeaderSection กรองทีหลัง)');
 });
 
-test('annotateUserStory ปลายทาง: เฟรมมีข้อความจริงตรงกับ AC-03 → ได้ TEXT เดียวสำหรับ Gherkin ไม่ใช่ 4', async () => {
+test('annotateUserStory ปลายทาง: ใช้ AC B.2 จากเอกสารใหม่โดยตรง', async () => {
   resetFigmaMock();
   mod = freshModule();
   const node = makeNode('OH2 / B.2 · S1 — x', {
@@ -504,9 +509,8 @@ test('annotateUserStory ปลายทาง: เฟรมมีข้อคว
     children: [makeTextNode('กรุณาระบุชื่อแผน')],
   });
   const nodes = await mod.annotateUserStory(node, 'plan13');
-  const gherkinNodes = nodes.filter((n) => n.characters && n.characters.startsWith('Scenario:'));
-  assert.strictEqual(gherkinNodes.length, 1, 'ต้องเหลือ scenario เดียวที่ตรงกับเฟรม ไม่ใช่ทั้ง 4');
-  assert.ok(gherkinNodes[0].characters.includes('AC-03'));
+  assert.ok(nodes.some(n => n.text && n.text.characters.startsWith(mod.FRAME_STORIES['B.2'].title)));
+  assert.ok(!nodes.some(n => n.characters && n.characters.startsWith('Scenario:')));
 });
 
 // ---------- หน้ารายการ (กลุ่ม A) — AC-05..08 เพิ่มเมื่อ 26 ต.ค. 2569 จาก 18-overhaul-AC-หน้า1-รายการแผน.md ----------
@@ -667,6 +671,526 @@ test('onmessage list: ส่ง flows ครบ 8 key และ selection ปั
   const selMsg = uiMessages.find((m) => m.type === 'selection');
   assert.strictEqual(flowsMsg.keys.length, 8);
   assert.deepStrictEqual(selMsg.names, ['OH2 / A.1 · S1 — x']);
+});
+
+test('new document: exact IDs, shared delete modal, corrected A.3/A.4 and Sheet notes', () => {
+  assert.strictEqual(Object.keys(mod.FRAME_STORIES).length, 72);
+  assert.ok(mod.FRAME_STORIES['A.3'].title.includes('ค้นไม่เจอ'));
+  assert.ok(mod.FRAME_STORIES['A.4'].title.includes('ยังไม่มีแผน'));
+  for (const id of ['D.2.1', 'D.2.2']) assert.ok(mod.FRAME_STORIES[id].sections.some(x => x.label === 'UI Component & Behavior'));
+  assert.ok(JSON.stringify(mod.FRAME_STORIES['I.5']).includes('ยืนยันรับรถสำเร็จ'));
+  assert.ok(mod.FRAME_STORIES['O.3'].source.includes('Overhaul-AC-ฉบับอ่านง่าย-ทุกเฟรม.md'));
+});
+
+test('legacy D.2 shared modal accepts slash and dot names and preserves both origins', async () => {
+  for (const name of ['OH2 / D.2 · S3 — ยืนยันการลบแผน', 'OH2 · D.2 ยืนยันการลบแผน']) {
+    resetFigmaMock(); mod = freshModule();
+    assert.strictEqual(mod.findFlowForNode(name), mod.LETTER_TO_FLOW.D);
+    const nodes = await mod.annotateUserStory(makeNode(name), mod.LETTER_TO_FLOW.D);
+    const text = nodes.map(node => node.text ? node.text.characters : node.characters || '').join('\n');
+    assert.ok(text.includes('AC D.2 — ยืนยันการลบแผน'));
+    assert.ok(text.includes('กลับรายการแผน A.1'));
+    assert.ok(text.includes('กลับรายละเอียดแผน B.7'));
+  }
+});
+
+test('legacy H.4 failure toast resolves to H.4.1 without guessing other states', async () => {
+  resetFigmaMock(); mod = freshModule();
+  const nodes = await mod.annotateUserStory(makeNode('OH2 / H.4 · S7 — สร้างนัดไม่สำเร็จ (toast 14)'), mod.LETTER_TO_FLOW.H);
+  const text = nodes.map(node => node.text ? node.text.characters : node.characters || '').join('\n');
+  assert.ok(text.includes('AC H.4.1 — สร้างนัดไม่สำเร็จ'));
+  assert.ok(!text.includes('AC H.4.2'));
+  await assert.rejects(() => mod.annotateUserStory(makeNode('OH2 / H.4 · S7 — รอหน่วยงานตอบรับ'), mod.LETTER_TO_FLOW.H), /ไม่พบ AC/);
+});
+
+test('legacy H.7 edit and H.6 rejection resolve to their specific appointment AC', async () => {
+  for (const [name, expected] of [
+    ['OH2 / H.7 · S7 — แก้ไขนัดหมาย', 'H.4.3'],
+    ['OH2 / H.6 · S7 — หน่วยงานปฏิเสธนัดเข้าอู่', 'H.4.4'],
+  ]) {
+    resetFigmaMock(); mod = freshModule();
+    const nodes = await mod.annotateUserStory(makeNode(name), mod.LETTER_TO_FLOW.H);
+    const text = nodes.map(node => node.text ? node.text.characters : node.characters || '').join('\n');
+    assert.ok(text.includes('AC ' + expected + ' —'), name);
+  }
+  await assert.rejects(() => mod.annotateUserStory(makeNode('OH2 / H.7 · S7 — สร้างนัดไม่สำเร็จ'), mod.LETTER_TO_FLOW.H), /ไม่พบ AC/);
+});
+
+test('unknown frame and mismatched manual flow never attach another AC', async () => {
+  await assert.rejects(() => mod.annotateUserStory(makeNode('OH2 / B.99 · S1'), 'plan13'), /ไม่พบ AC/);
+  await assert.rejects(() => mod.annotateUserStory(makeNode('OH2 / B.2 · S1'), 'scenario14'), /flow ที่เลือกไม่ตรง/);
+});
+
+test('readable edition retains every frame section and item in the composed text', () => {
+  for (const story of Object.values(mod.FRAME_STORIES)) {
+    const result = mod.composeFrameStory(story);
+    for (const section of story.sections) {
+      if (section.paragraph) assert.ok(result.text.includes(section.paragraph));
+      for (const item of section.bullets || []) assert.ok(result.text.includes(item));
+    }
+    assert.ok(!result.text.includes('**'));
+    assert.ok(!result.text.includes('Senior Dev'));
+  }
+});
+
+test('annotation omits trailing source reference without repeating all shared rules', async () => {
+  resetFigmaMock();
+  mod = freshModule();
+  const nodes = await mod.annotateUserStory(makeNode('OH2 / A.1 · S1'), 'plan13');
+  const texts = nodes.map(n => n.text ? n.text.characters : n.characters || '').join('\n');
+  assert.ok(!texts.includes('Overhaul-AC-ฉบับอ่านง่าย-ทุกเฟรม.md'));
+  assert.ok(!texts.includes('อ้างอิง:'));
+  assert.ok(!texts.includes('กติกากลาง / Sheet'));
+  assert.ok(!texts.includes('สถานะงานรายคัน (chip'));
+  assert.ok(texts.includes('UI Component & Behavior'));
+});
+
+test('each frame has its own component Dev notes and readable AC source', () => {
+  const payloads = new Set();
+  for (const [id, story] of Object.entries(mod.FRAME_STORIES)) {
+    const expectedSource = ['D.2.1', 'D.2.2'].includes(id) ? 'Overhaul-AC-รายเฟรม.md' : 'Overhaul-AC-ฉบับอ่านง่าย-ทุกเฟรม.md';
+    assert.ok(story.source.startsWith(expectedSource));
+    const notes = story.sections.filter(x => x.label === 'UI Component & Behavior');
+    assert.strictEqual(notes.length, 1, id);
+    assert.ok(notes[0].bullets.length >= 1 , id);
+    const payload = JSON.stringify(notes);
+    assert.ok(!payloads.has(payload), 'Dev notes reused verbatim: ' + id);
+    payloads.add(payload);
+  }
+});
+
+test('native shape owns editable text, bold headings and cleanup', async () => {
+  resetFigmaMock(); mod = freshModule();
+  const nodes = await mod.annotateUserStory(makeNode('OH2 / A.1 · S1'), 'plan13');
+  assert.strictEqual(nodes.length, 1);
+  const shape = nodes[0];
+  assert.strictEqual(shape.shapeType, 'SQUARE');
+  assert.ok(shape.text.characters.startsWith('AC A.1'));
+  assert.strictEqual(shape.text.textAlignHorizontal, 'LEFT');
+  for (const heading of ['UI Component & Behavior', 'UI Component & Behavior', 'ประเด็นที่ต้องเคาะ', 'As-is — Sprint 06', 'To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่', 'UI Component & Behavior']) {
+    assert.ok(shape.text._bold.some(([start, end]) => shape.text.characters.slice(start, end) === heading), 'heading not bold: ' + heading);
+  }
+  mod.clearTags(global.figma.currentPage);
+  assert.ok(shape._removed);
+});
+
+test('component Dev notes distinguish search, filters, signature and read-only states', async () => {
+  resetFigmaMock(); mod = freshModule();
+  const notes = id => JSON.stringify(mod.FRAME_STORIES[id].sections.filter(s => s.label === 'UI Component & Behavior'));
+  for (const word of ['ช่องค้นหา (SearchInput)', 'ตารางรายการแผน', 'ปุ่มเปลี่ยนหน้าใต้ตาราง', 'ปุ่ม']) assert.ok(notes('A.1').includes(word));
+  for (const word of ['แผง', 'ช่องเลือกปีงบ', 'ช่องติ๊ก', 'ตกลง']) assert.ok(notes('A.2').includes(word));
+  assert.ok(!notes('A.2').includes('ปุ่มเปลี่ยนหน้าใต้ตาราง'));
+  assert.ok(notes('E.4').includes('vendor_id'));
+  assert.ok(notes('F.2').includes('ช่องติ๊กเลือก'));
+  assert.ok(notes('I.3').includes('พื้นที่วาดลายเซ็น'));
+  assert.ok(!notes('I.3').includes('ช่องค้นหาเหนือรายการ'));
+  assert.ok(notes('H.5').includes('อ่านอย่างเดียว'));
+  assert.ok(notes('O.3').includes('ไม่มีแถว ช่องกรอก'));
+  const nodes = await mod.annotateUserStory(makeNode('OH2 / A.1 · S1'), 'plan13');
+  assert.strictEqual(nodes.filter(n => n.type === 'TEXT').length, 0);
+  assert.strictEqual(nodes.find(n => n.type === 'SHAPE_WITH_TEXT').shapeType, 'SQUARE');
+});
+
+test('all readable behavior and unresolved questions survive design-only simplification', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const raw = fs.readFileSync(path.join(__dirname, 'figjam-userstory-plugin', 'Overhaul-AC-ฉบับอ่านง่าย-ทุกเฟรม.md'), 'utf8');
+  const headers = [...raw.matchAll(/^### ([A-O]\.\d+(?:\.\d+)?) — (.+)$/gm)];
+  assert.strictEqual(headers.length, 70);
+  for (let i = 0; i < headers.length; i++) {
+    const header = headers[i];
+    const block = raw.slice(header.index + header[0].length, i + 1 < headers.length ? headers[i + 1].index : raw.length).replace(/\n---[\s\S]*$/, '');
+    const text = mod.composeFrameStory(mod.FRAME_STORIES[header[1]]).text;
+    let topic = '';
+    for (const line of block.split('\n')) {
+      const heading = /^\*\*(.+)\*\*$/.exec(line.trim());
+      if (heading) {topic = heading[1]; continue;}
+      if (!['พฤติกรรมที่ควรทำ', 'ต้องตกลงก่อนทำ'].includes(topic) || !line.startsWith('- ')) continue;
+      const bullet = line.slice(2).replace(/\*\*([^*]+)\*\*/g, '$1').replace(/`([^`]+)`/g, '$1');
+      // Visual sample-value mismatches are now intentionally omitted.
+      if (/^ชื่อแผน "Overhaul.*mock ไม่ตรงกัน/.test(bullet)) continue;
+      if (header[1] === 'A.2' && topic === 'พฤติกรรมที่ควรทำ') continue; // Reworded as comprehensive contracts, tested below.
+      if (header[1] === 'E.10' && bullet.includes('รายละเอียดตามสถานะ') && bullet.includes('ตารางกติกากลาง')) {
+        const questions = mod.FRAME_STORIES['E.10'].sections
+          .filter(section => section.label === 'ประเด็นที่ต้องเคาะ')
+          .flatMap(section => section.bullets || []);
+        const question = questions.find(value => value.includes('รายละเอียดตามสถานะ'));
+        assert.ok(question, 'E.10 must retain the unresolved status-detail question');
+        for (const detail of ['ต้องตกลง', 'ตัวอย่างข้อความเพียง 2 สถานะ',
+          'รอนัดหมายเข้าอู่', 'รอหน่วยงานตอบรับนัดเข้าอู่', 'หน่วยงานปฏิเสธนัดเข้าอู่',
+          'รอตรวจรับรถ', 'กำลังซ่อม', 'รอตรวจสภาพ Safety', 'รอนัดหมายรับรถ',
+          'รอหน่วยงานตอบรับนัดหมายรับรถ', 'หน่วยงานปฏิเสธนัดหมายรับรถ',
+          'รอปิดงาน', 'ปิดงานแล้ว', 'ชื่อที่ต่างจาก status final ใน Sheet ยังต้องตกลง']) {
+          assert.ok(question.includes(detail), 'E.10 missing status-question detail: ' + detail);
+        }
+        assert.ok(text.includes(question), 'E.10 must render the expanded question');
+        continue;
+      }
+      const {plainLanguage} = require('./figjam-userstory-plugin/merge-behavior');
+      assert.ok(text.includes(plainLanguage(bullet.replace(/…$/, ''))), header[1] + ': dropped behavior/question: ' + bullet);
+    }
+  }
+});
+
+test('requested headings include frame-specific source questions and Sheet without mixing AC', () => {
+  const text = mod.composeFrameStory(mod.FRAME_STORIES['A.1']).text;
+  for (const heading of ['UI Component & Behavior', 'UI Component & Behavior', 'ประเด็นที่ต้องเคาะ', 'As-is — Sprint 06', 'To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่', 'UI Component & Behavior']) assert.ok(text.includes(heading));
+  assert.ok(text.includes('ICON Action'));
+  assert.ok(text.includes('คอลัมน์ในตาราง'));
+  assert.ok(text.includes('AutoComplete'));
+  const validation = mod.composeFrameStory(mod.FRAME_STORIES['B.2']).text;
+  assert.ok(validation.includes('ช่องเอกสารใน B.2 ไม่ขึ้น error'));
+  assert.ok(!validation.includes('คอลัมน์ CF'));
+  assert.ok(!validation.includes('[Sheet พี่นุ — 1 รายการแผน]'));
+  assert.ok(!validation.includes('[Sheet พี่นุ'));
+});
+
+test('A.2 documents overlay, Esc, cancel destination and draft persistence from project components', () => {
+  const text = mod.composeFrameStory(mod.FRAME_STORIES['A.2']).text;
+  for (const term of ['คลิกพื้นหลังทึบ', 'Esc', 'กลับไปดูรายการ A.1', 'ไม่ใช้ตัวกรองที่เพิ่งเปลี่ยน', 'คลิกภายในแผง', 'แผงยังเปิด', 'ล้างแล้วกดยกเลิก', 'กรองทันที']) assert.ok(text.includes(term), term);
+});
+
+test('cancel destinations distinguish page forms, confirmation dialogs and popup drafts', () => {
+  const text = id => mod.composeFrameStory(mod.FRAME_STORIES[id]).text;
+  assert.ok(text('C.2').includes('เข้าจากหน้ารายละเอียด'));
+  assert.ok(text('C.3').includes('กลับ C.2 พร้อม ข้อมูลที่ยังไม่บันทึก'));
+  assert.ok(text('C.4').includes('ไม่บันทึกและไม่กลับรายการ'));
+  assert.ok(text('D.2.2').includes('กลับรายละเอียดแผนเดิม B.7 ไม่กลับรายการ'));
+  assert.ok(text('F.2').includes('มาจากรายละเอียด PO กลับ PO เดิม'));
+  assert.ok(text('J.2').includes('กลับ J.1/J.3'));
+  assert.ok(text('L.2').includes('กลับตาราง L.1 พร้อมรายการครบเดิม'));
+});
+
+test('observed project gaps are explicit rather than treated as implemented AC', () => {
+  const text = id => mod.composeFrameStory(mod.FRAME_STORIES[id]).text;
+  assert.ok(text('H.3').includes('ไม่มีปุ่ม Apply/Cancel'));
+  assert.ok(text('I.3').includes('ยังไม่มี กล่อง “เซ็นลงนาม” (Modal — แนวทางนำไปใช้) วาดลายเซ็น'));
+  assert.ok(text('J.2').includes('ไม่นำช่องนี้มาเพิ่มใน AC'));
+  assert.ok(text('B.1').includes('เส้นทางนำทางด้านบน เป็นลิงก์ตรง'));
+  assert.ok(text('C.4').includes('ยังปิดด้วยพื้นหลัง/Esc ได้ระหว่างรอ'));
+});
+
+test('Dev names pair the visible label and internal component in parentheses', () => {
+  const notes = id => JSON.stringify(mod.FRAME_STORIES[id].sections.filter(x => x.label === 'UI Component & Behavior'));
+  for (const [id, label] of [
+    ['C.1', 'เมนู “…” ท้ายแถวรายการ (RowMenu)'],
+    ['A.1', 'ช่องค้นหา (SearchInput)'],
+    ['A.2', 'แผงด้านขวา (FilterPanel / PlanFilter)'],
+    ['D.2.1', 'กล่อง “ยืนยันการลบแผน” (ConfirmDialog)'],
+    ['E.4', 'ช่องพิมพ์ค้นและเลือกจากรายการ (Combobox)'],
+    ['I.3', 'กล่อง “เซ็นลงนาม” (Modal — แนวทางนำไปใช้)'],
+  ]) assert.ok(notes(id).includes(label), id + ': ' + label);
+});
+
+test('Sprint 06 baseline matches state semantics when H/I/N frame IDs changed', () => {
+  assert.ok(mod.FRAME_STORIES['H.4.2'].baseline.frameNames.every(n => n.includes('H.5') && n.includes('รอหน่วยงานตอบรับ')));
+  assert.ok(mod.FRAME_STORIES['I.5'].baseline.frameNames.some(n => n.includes('I.2') && n.includes('ลงนาม')));
+  assert.ok(mod.FRAME_STORIES['N.4.2'].baseline.frameNames.some(n => n.includes('N.2') && n.includes('รอหน่วยงานตอบรับ')));
+  assert.strictEqual(mod.FRAME_STORIES['I.3'].baseline.frameNames.length, 0);
+  assert.ok(mod.FRAME_STORIES['I.3'].sections.find(s => s.label.startsWith('To-be')).bullets.some(t => t.startsWith('NEW')));
+});
+
+test('A.2 separates an existing filter from new behavior specifications and integrates Sheet provenance', () => {
+  const story = mod.FRAME_STORIES['A.2'];
+  assert.ok(story.sections.find(s => s.label === 'As-is — Sprint 06').bullets.some(text => text.includes('จากเดิม มีปีงบ')));
+  const delta = story.sections.find(s => s.label.startsWith('To-be'));
+  assert.ok(delta.bullets.some(t => t.startsWith('CHANGE') && t.includes('[Sheet พี่นุ — 1 รายการแผน]')));
+  assert.ok(delta.bullets.some(t => t.startsWith('NEW') && t.includes('ไม่ใช่สร้างตัวกรองใหม่ทั้งชุด')));
+  assert.ok(!story.sections.some(s => s.label.startsWith('จาก Sheet')));
+  const text = mod.composeFrameStory(story).text;
+  assert.ok(text.includes('ประเภทยานพาหนะ (เพิ่ม):'));
+  assert.ok(text.includes('[Sheet พี่นุ — 1 รายการแผน]'));
+});
+
+test('every frame has baseline evidence and a bounded To-be claim', () => {
+  for (const story of Object.values(mod.FRAME_STORIES)) {
+    assert.strictEqual(story.sections[0].label, 'ภาพรวมหน้านี้');
+    assert.ok(story.sections.some(s => s.label === 'As-is — Sprint 06'));
+    assert.ok(story.sections.some(s => s.label.startsWith('To-be')));
+    assert.ok(story.sections.find(s => s.label.startsWith('To-be')).bullets.every(t => /^(NEW|CHANGE) — /.test(t)));
+    assert.ok(story.baseline.board.includes('Refinement 15/10/69'));
+  }
+});
+
+test('all 72 frames have authored As-is and at least two specific NEW/CHANGE requirements', () => {
+  const payloads = new Set();
+  assert.strictEqual(Object.keys(mod.FRAME_STORIES).length, 72);
+  for (const [id, story] of Object.entries(mod.FRAME_STORIES)) {
+    const asIs = story.sections.find(x => x.label === 'As-is — Sprint 06');
+    const toBe = story.sections.find(x => x.label.startsWith('To-be'));
+    assert.ok(asIs.bullets.length >= 1, id);
+    assert.ok(asIs.bullets.every(text => !/baseline/i.test(text)), id);
+    assert.strictEqual(asIs.paragraph, undefined, id);
+    assert.ok(toBe.bullets.length >= 2, id);
+    assert.ok(toBe.bullets.every(t => /^(NEW|CHANGE) — /.test(t)), id);
+    const payload = JSON.stringify(toBe.bullets);
+    assert.ok(!payload.includes('ยังไม่มีข้อแตกต่างเฉพาะเฟรม'), id);
+    assert.ok(!payload.includes('คงเดิมในระดับ flow'), id);
+    assert.ok(!payloads.has(payload), 'generic delta copied to ' + id);
+    payloads.add(payload);
+  }
+});
+
+test('all frames order overview, As-is, To-be and UI components', () => {
+  for (const [id, story] of Object.entries(mod.FRAME_STORIES)) {
+    const labels = story.sections.map(s => s.label);
+    assert.strictEqual(labels[0], 'ภาพรวมหน้านี้', id);
+    assert.deepStrictEqual(story.sections[0].bullets.map(text => text.split(':')[0]), ['What', 'Who', 'Do'], id);
+    assert.ok(!JSON.stringify(story.sections).includes('Page Behavior'), id);
+    assert.ok(!labels.includes('จากจอเดิม'), id);
+    assert.ok(!labels.includes('พฤติกรรมที่ควรทำ'), id);
+    const asIs = labels.indexOf('As-is — Sprint 06');
+    const toBe = labels.indexOf('To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่');
+    const details = labels.indexOf('UI Component & Behavior');
+    const dev = labels.indexOf('UI Component & Behavior');
+    assert.ok(asIs === 1 && toBe === 2 && details === 3 && details === dev, id);
+    assert.strictEqual(story.sections[details].level, 'h2');
+    assert.ok(story.sections[toBe].bullets.length >= 2, id);
+  }
+});
+
+test('A.2 screen section retains all fields, defaults and footer actions', () => {
+  const story = mod.FRAME_STORIES['A.2'];
+  const start = story.sections.findIndex(s => s.label === 'UI Component & Behavior');
+  const end = story.sections.findIndex(s => s.label === 'Error Handling / Edge Cases');
+  const text = JSON.stringify(story.sections.slice(start, start + 1));
+  for (const word of ['โดยแสดงตัวกรองที่ใช้อยู่จริง', '× / Esc', 'คลิกพื้นหลังทึบ',
+    'ปีงบประมาณ: dropdown ค่าเริ่มต้น', 'ทั้งหมด', 'checkbox 6 ช่วง', 'เลือกได้หลายช่วง',
+    'ช่องเลือกสถานะ', 'ล้างตัวกรอง', 'ยกเลิก', 'ตกลง', '[Sheet พี่นุ — 1 รายการแผน]']) {
+    assert.ok(text.includes(word), 'missing A.2 screen detail: ' + word);
+  }
+});
+
+test('screen facts use bullets without restarted numbering and coalesce adjacent lists', () => {
+  const story = mod.FRAME_STORIES['A.2'];
+  const start = story.sections.findIndex(s => s.label === 'UI Component & Behavior');
+  const end = story.sections.findIndex(s => s.label === 'Error Handling / Edge Cases');
+  const screen = story.sections.slice(start, start + 1);
+  assert.strictEqual(screen.filter(s => s.bullets).length, 1);
+  const text = mod.composeFrameStory(story).text;
+  assert.ok(text.includes('- ปีงบประมาณ: dropdown'));
+  assert.ok(!/^\d+\. /m.test(text));
+  assert.ok(!text.includes('ปีงบประมาณ: ✅ CF'));
+  assert.ok(screen[0].bullets.some(t => t.includes('ปีงบประมาณ: dropdown') && t.includes('[Sheet พี่นุ — 1 รายการแผน]')));
+});
+
+test('empty question placeholders are omitted without dropping real questions', () => {
+  for (const story of Object.values(mod.FRAME_STORIES)) {
+    const text = mod.composeFrameStory(story).text;
+    assert.ok(!text.includes('ฉบับอ่านง่ายยังไม่ได้ระบุคำถามสำหรับเฟรมนี้'));
+    assert.ok(!text.includes('ยังไม่มีประเด็นเพิ่มเติมระบุใน AC ต้นฉบับของเฟรมนี้'));
+  }
+  assert.ok(mod.composeFrameStory(mod.FRAME_STORIES['B.2']).text.includes('ช่องเอกสารใน B.2 ไม่ขึ้น error'));
+});
+
+test('status changes are explicit old-to-new pairs with per-line Sheet provenance', () => {
+  const text = mod.composeFrameStory(mod.FRAME_STORIES['A.1']).text;
+  assert.ok(text.includes('ลูกค้าแก้ชื่อสถานะ:'));
+  assert.ok(text.includes('ยังไม่มี PO -> รอเลข PO [Sheet พี่นุ — 1 รายการแผน]'));
+  assert.ok(text.includes('ดำเนินการ -> รอดำเนินการ [Sheet พี่นุ — 1 รายการแผน]'));
+  assert.ok(text.includes('เสร็จสิ้น: ใช้ชื่อเดิม'));
+  assert.ok(!text.includes('ลูกค้าแก้จาก'));
+  const delta = mod.FRAME_STORIES['A.2'].sections.find(s => s.label.startsWith('To-be'));
+  assert.ok(delta.bullets.some(t => t.startsWith('CHANGE — ลูกค้าแก้ชื่อสถานะ:')));
+});
+
+test('formatting clarifies pagination options and other explicit change notes without changing values', () => {
+  const {formatContent} = require('./figjam-userstory-plugin/format-content');
+  assert.strictEqual(formatContent('Pagination (10,25,50,100)'), 'จำนวนรายการต่อหน้า: 10, 25, 50 หรือ 100 รายการ');
+  assert.strictEqual(formatContent('Pagination (10, 25, 50)'), 'จำนวนรายการต่อหน้า: 10, 25 หรือ 50 รายการ');
+  const text = mod.composeFrameStory(mod.FRAME_STORIES['G.2']).text;
+  assert.ok(text.includes('ลบ purchase order สำเร็จ -> ลบ PO สำเร็จ [Sheet พี่นุ'));
+  assert.strictEqual(formatContent('1. Status: คงเดิม'), 'Status: คงเดิม');
+});
+
+test('permission facts are separated before screen details with their Sheet provenance', () => {
+  const story = mod.FRAME_STORIES['A.1'];
+  const access = story.sections.findIndex(s => s.label === 'สิทธิ์การใช้งาน (Permission)');
+  const screen = story.sections.findIndex(s => s.label === 'UI Component & Behavior');
+  assert.ok(access > screen);
+  const permission = story.sections[access].bullets.join('\n');
+  assert.ok(permission.includes('กบค. (admin-super): เห็นทุกแผน'));
+  assert.ok(permission.includes('กรย. เขต (admin-region): เปิดได้เฉพาะแผนที่มีรถในเขตตัวเอง'));
+  assert.ok(permission.includes('[Sheet พี่นุ — OH-Permission]'));
+  const screenEnd = story.sections.findIndex(s => s.label === 'Error Handling / Edge Cases');
+  assert.ok(!JSON.stringify(story.sections.slice(screen, screen + 1)).includes('Permission:'));
+  for (const value of Object.values(mod.FRAME_STORIES)) {
+    assert.ok(!value.sections.some(s => s.label === 'ต้องตกลงก่อนทำ'));
+    assert.ok(!value.sections.some(s => s.label === 'สิ่งที่อยู่บนหน้าจอ'));
+  }
+});
+
+test('mixed Sheet facts keep status, permission and notifications in their appropriate sections', () => {
+  const {splitPermissionFacts, mergeQuestions} = require('./figjam-userstory-plugin/format-content');
+  const split = splitPermissionFacts('Status: รอตรวจ · Permission อัปโหลด/ยืนยัน เฉพาะ กบค. · ไม่มี notification · ไม่สำเร็จใช้ General Error [Sheet พี่นุ — OH-Toast #22]');
+  assert.strictEqual(split.permission.length, 1);
+  assert.ok(split.permission[0].startsWith('อัปโหลด/ยืนยัน เฉพาะ กบค.'));
+  assert.ok(split.permission[0].includes('[Sheet พี่นุ — OH-Toast #22]'));
+  assert.ok(split.other.some(t => t.startsWith('Status:')));
+  assert.ok(split.other.some(t => t.startsWith('ไม่มี notification')));
+  assert.ok(split.other.some(t => t.startsWith('ไม่สำเร็จ')));
+  const merged = mergeQuestions([{bullets: ['ต้องเคาะ: ขนาดไฟล์สูงสุด…']}, {bullets: ['ขนาดไฟล์สูงสุดต่อไฟล์และจำนวนไฟล์']}, {bullets: ['คำถามคนละเรื่อง']}]);
+  assert.deepStrictEqual(merged, ['ขนาดไฟล์สูงสุดต่อไฟล์และจำนวนไฟล์', 'คำถามคนละเรื่อง']);
+});
+
+test('A.1 uses one confirmed column set and removes passive design annotations', () => {
+  const story = mod.FRAME_STORIES['A.1'];
+  const start = story.sections.findIndex(s => s.label === 'UI Component & Behavior');
+  const end = story.sections.findIndex(s => s.label === 'Error Handling / Edge Cases');
+  const text = JSON.stringify(story.sections.slice(start, start + 1));
+  assert.strictEqual((text.match(/คอลัมน์ในตาราง/g) || []).length, 1);
+  for (const unwanted of ['ตารางมี 8 คอลัมน์', 'คอลัมน์ CF', 'แสดง 2 บรรทัด', 'ตัดออก:', 'Status: chip', 'เป็น chip:']) assert.ok(!text.includes(unwanted), unwanted);
+  for (const needed of ['นับรถไม่ซ้ำจากทุก PO', 'รถที่ปิดงานแล้ว / รถทั้งหมด', 'ยังไม่มี PO -> รอเลข PO', 'ดำเนินการ -> รอดำเนินการ', '[Sheet พี่นุ — 1 รายการแผน]', 'Sorting:']) assert.ok(text.includes(needed), needed);
+});
+
+test('A.2 keeps multi-select behavior while explaining status renames only once', () => {
+  const text = mod.composeFrameStory(mod.FRAME_STORIES['A.2']).text;
+  assert.strictEqual((text.match(/ลูกค้าแก้ชื่อสถานะ:/g) || []).length, 1);
+  assert.ok(text.includes('ช่องเลือกสถานะ: เลือกได้หลายค่าพร้อมกัน'));
+  assert.ok(!text.includes('สถานะ: checkbox 3 ค่า'));
+});
+
+test('all 72 frames have specific Error Handling / Edge Cases immediately after Dev', () => {
+  const seen = new Set();
+  for (const [id, story] of Object.entries(mod.FRAME_STORIES)) {
+    const dev = story.sections.findIndex(s => s.label === 'UI Component & Behavior');
+    const sections = story.sections.filter(s => s.label === 'Error Handling / Edge Cases');
+    assert.strictEqual(sections.length, 1, id);
+    assert.strictEqual(story.sections.find(s => s.label === 'Error Handling / Edge Cases'), sections[0], id);
+    assert.ok(sections[0].bullets.length >= 2, id);
+    const payload = JSON.stringify(sections[0].bullets);
+    assert.ok(!seen.has(payload), 'reused generic cases: ' + id);
+    seen.add(payload);
+    const questions = story.sections.findIndex(s => s.label === 'ประเด็นที่ต้องเคาะ');
+    if (questions >= 0) assert.ok(dev + 1 < questions, id);
+  }
+});
+
+test('edge cases cover actual state-specific failures, not a global checklist', async () => {
+  const cases = id => mod.FRAME_STORIES[id].sections.find(s => s.label === 'Error Handling / Edge Cases').bullets.join('\n');
+  assert.ok(cases('A.1').includes('ผลคำเก่าที่กลับมาช้า'));
+  assert.ok(cases('B.5').includes('ไม่ทราบว่าคำขอเดิมสำเร็จหรือยัง'));
+  assert.ok(cases('H.4.3').includes('หน่วยงานตอบรับขณะ'));
+  assert.ok(cases('I.3').includes('ยังไม่มีเส้นวาด'));
+  assert.ok(cases('M.2').includes('คงไฟล์สำเร็จอื่น'));
+  assert.ok(cases('O.3').includes('อ่านอย่างเดียว'));
+  assert.ok(!cases('O.3').includes('พิมพ์ค้นหา'));
+  resetFigmaMock(); mod = freshModule();
+  const nodes = await mod.annotateUserStory(makeNode('OH2 / A.1 · S1'), 'plan13');
+  const shape = nodes.find(n => n.type === 'SHAPE_WITH_TEXT');
+  assert.ok(shape.text.characters.includes('Error Handling / Edge Cases'));
+  assert.ok(shape.text._bold.some(([start, end]) => shape.text.characters.slice(start, end) === 'Error Handling / Edge Cases'));
+  assert.strictEqual(nodes.filter(n => n.type === 'TEXT').length, 0);
+});
+
+test('long plan-name overflow remains an explicit screen behavior after simplification', async () => {
+  const story = mod.FRAME_STORIES['A.1'];
+  const start = story.sections.findIndex(s => s.label === 'UI Component & Behavior');
+  const end = story.sections.findIndex(s => s.label === 'Error Handling / Edge Cases');
+  const facts = story.sections.slice(start, start + 1).flatMap(s => s.bullets || []);
+  assert.strictEqual(facts.filter(t => t.includes('ชื่อแผนยาวเกินคอลัมน์')).length, 1);
+  assert.ok(facts.some(t => t.includes('ชื่อแผนยาวเกินคอลัมน์') && t.includes('…')));
+  resetFigmaMock(); mod = freshModule();
+  const nodes = await mod.annotateUserStory(makeNode('OH2 / A.1 · S1'), 'plan13');
+  const shape = nodes.find(n => n.type === 'SHAPE_WITH_TEXT');
+  assert.ok(shape.text.characters.includes('ชื่อแผนยาวเกินคอลัมน์ตัดด้วย'));
+});
+
+test('screen cleanup preserves QA display and state contracts alongside actions', () => {
+  const {simplifyScreenSections} = require('./figjam-userstory-plugin/simplify-screen');
+  const behaviors = [
+    'หัวข้อ เมื่อชื่อแผนยาวเกินคอลัมน์ ตัดด้วย “…”',
+    'breadcrumb อ่านอย่างเดียวสำหรับผู้ไม่มีสิทธิ์แก้ไข',
+    'หัวข้อ ซ่อนเมื่อไม่มีข้อมูล',
+    'หัวข้อ แสดง error เมื่อโหลดไม่สำเร็จ',
+    'ตารางมี 8 คอลัมน์: เมื่อไม่มี PO แสดง “-”',
+    'ปุ่มยืนยัน disabled จนกว่าจะกรอกข้อมูลครบ',
+    'กดยกเลิกแล้วกลับหน้ารายการโดยไม่บันทึก',
+  ];
+  const sections = simplifyScreenSections([
+    {label: 'รายละเอียดหน้าจอ', bullets: [
+      'คอลัมน์ CF: เลขแผน, ชื่อแผน, ประเภทงบ',
+      'หัวข้อ จัดการงาน Overhaul',
+      'คอลัมน์ "ประเภทงบ" แสดง 2 บรรทัด: ประเภทงบ และเลขงบ',
+      ...behaviors,
+    ]},
+    {label: 'มุม Dev', bullets: ['แนวทางพัฒนา']},
+  ]);
+  const facts = sections[0].bullets;
+  for (const behavior of behaviors) assert.ok(facts.includes(behavior), behavior);
+  assert.ok(!facts.includes('หัวข้อ จัดการงาน Overhaul'));
+  assert.ok(!facts.some(t => t.includes('แสดง 2 บรรทัด')));
+});
+
+test('component grouping retains source contracts, provenance and separate tables', () => {
+  const {groupComponents} = require('./figjam-userstory-plugin/group-components');
+  const input = [
+    {label: 'Behavior', bullets: ['เปิดหน้า']},
+    {label: 'รายละเอียดหน้าจอ', bullets: ['ชื่อแผนยาวเกินคอลัมน์ตัดด้วย “…” [Sheet พี่นุ — 1 รายการแผน]']},
+    {label: '', table: {headers: ['Field'], rows: [['ชื่อแผน']]}},
+    {label: 'มุม Dev', bullets: [
+      'เมนู “…” ท้ายแถว (RowMenu): กด Esc แล้วปิดและคืน focus',
+      'ปุ่ม “ยกเลิก”: กลับรายการและทิ้งข้อมูลที่ยังไม่บันทึกเมื่อยืนยันออก',
+    ]},
+    {label: 'Error Handling / Edge Cases', bullets: ['โหลดไม่สำเร็จ']},
+  ];
+  const snapshot = JSON.stringify(input);
+  const output = groupComponents(input);
+  assert.strictEqual(JSON.stringify(input), snapshot, 'must not mutate source sections');
+  const ui = output.find(s => s.label === 'UI Component & Behavior');
+  for (const source of input.slice(1, 4)) {
+    for (const fact of source.bullets || []) assert.ok(ui.bullets.some(t => t.includes(fact)), fact);
+  }
+  assert.deepStrictEqual(output.find(s => s.table).table, input[2].table);
+  assert.ok(!output.some(s => s.label === 'รายละเอียดหน้าจอ' || s.label.startsWith('มุม Dev')));
+});
+
+test('A.1 names each button destination and keeps overflow on the plan-name column', () => {
+  const ui = mod.FRAME_STORIES['A.1'].sections.find(section => section.label === 'UI Component & Behavior');
+  const buttons = ui.bullets.find(text => text.startsWith('Buttons\n'));
+  assert.ok(buttons.includes('ปุ่ม “ตัวกรอง”: เปิดแผงตัวกรอง A.2'));
+  assert.ok(buttons.includes('\n  - ปุ่ม “+ สร้างแผน Overhaul”: เปิดฟอร์มสร้างแผน B.1'));
+  assert.ok(!buttons.includes('ตามลำดับ'));
+  const table = ui.bullets.find(text => text.startsWith('Table (DataTable)\n'));
+  assert.ok(table.includes('ชื่อแผน: ชื่อแผนยาวเกินคอลัมน์ตัดด้วย'));
+});
+
+test('72 frames use component groups and distinguish absent controls', async () => {
+  for (const [id, story] of Object.entries(mod.FRAME_STORIES)) {
+    const groups = story.sections.filter(s => s.label === 'UI Component & Behavior');
+    assert.strictEqual(groups.length, 1, id);
+    assert.ok(!story.sections.some(s => s.label === 'รายละเอียดหน้าจอ' || s.label.startsWith('มุม Dev')), id);
+    assert.ok(groups[0].bullets.every(t => t.includes('\n  - ')), id);
+  }
+  const table = mod.FRAME_STORIES['A.1'].sections.find(s => s.label === 'UI Component & Behavior').bullets.find(t => t.startsWith('Table (DataTable)\n'));
+  for (const child of ['Columns', 'Row Actions (RowMenu)', 'Sorting', 'Pagination']) assert.ok(table.includes('  - ' + child));
+  const empty = mod.FRAME_STORIES['A.4'].sections.find(s => s.label === 'UI Component & Behavior');
+  assert.ok(!empty.bullets.some(t => t.startsWith('Search Input')));
+  assert.ok(empty.bullets.some(t => t.startsWith('Visibility\n') && t.includes('ไม่มีช่องค้นหา')));
+  resetFigmaMock(); mod = freshModule();
+  const [shape] = await mod.annotateUserStory(makeNode('OH2 / A.1 · S1'), 'plan13');
+  assert.ok(shape.text._bold.some(([a, b]) => shape.text.characters.slice(a, b) === 'Table (DataTable)'));
+});
+
+test('all frames have a single Behavior with development details inline', () => {
+  for (const [id, story] of Object.entries(mod.FRAME_STORIES)) {
+    assert.strictEqual(story.sections.filter(s => s.label === 'UI Component & Behavior').length, 1, id);
+    assert.strictEqual(story.sections[0].label, 'ภาพรวมหน้านี้', id);
+    const text = mod.composeFrameStory(story).text;
+    assert.ok(!text.includes('Dev Note'), id);
+    assert.ok(!/\n\s*- Actions\n/.test(text), id);
+    assert.ok(!text.includes('ค่าร่าง'), id);
+  }
+  const behavior = mod.FRAME_STORIES['A.2'].sections.find(section => section.label === 'UI Component & Behavior').bullets.join('\n');
+  for (const term of ['ไม่เปลี่ยนตารางด้านหลัง', 'คลิกพื้นหลังทึบ', 'เปิดใหม่แสดงตัวกรองที่ใช้อยู่จริง', 'ต้องกด “ตกลง” จึงเปลี่ยนผลในตาราง', 'หน้าเบื้องหลังเลื่อนไม่ได้', 'คลิก label']) assert.ok(behavior.includes(term), term);
+  assert.strictEqual((behavior.match(/กด “ล้างตัวกรอง” →/g) || []).length, 1);
+});
+
+test('rule merging keeps distinct source tags and qualifications', () => {
+  const {mergeRules} = require('./figjam-userstory-plugin/merge-behavior');
+  assert.deepStrictEqual(mergeRules(['กด Esc ปิดเมนู', 'กด Esc ปิดเมนูและคืน focus', 'กด Esc ปิดเมนู']), ['กด Esc ปิดเมนูและคืน focus']);
+  const tagged = ['ปิดได้ [Sheet พี่นุ — 1]', 'ปิดได้ [Sheet พี่นุ — 2]', 'ปิดได้เฉพาะเมื่อไม่กำลังบันทึก'];
+  assert.deepStrictEqual(mergeRules(tagged), tagged);
 });
 
 (async () => {
