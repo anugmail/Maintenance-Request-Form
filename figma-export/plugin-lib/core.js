@@ -692,8 +692,8 @@ async function confirm(scr, o) {   // Modal กลาง — danger = Destructiv
   const sb = find(m, 'Secondary button'); if (sb) setProps(sb, { Text: o.cancel || 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false });
   const pb = find(m, o.danger ? 'Primary danger button' : 'Primary button'); if (pb) setProps(pb, { Text: o.ok || 'ยืนยัน', 'Leading icon': false, 'Trailing icon': false });
 }
-async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 สลับเป็น Text area ด้วย property "Input 1 swap" ของ Card form row
-  if (MOB) { await sheet(scr, { title: o.title, content: o.fields.map(f => f.area ? area(f.label, f.value) : field(f.label, f.value)), ok: 'บันทึก' }); return; }
+async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 สลับเป็น Text area ด้วย property "Input 1 swap" ของ Card form row · o.ok / o.cancel = ชื่อปุ่ม (ค่าเริ่ม บันทึก / ยกเลิก · 22 ต.ค. 2569 ใช้กับ "ส่งกลับ" "ปฏิเสธ")
+  if (MOB) { await sheet(scr, { title: o.title, content: o.fields.map(f => f.area ? area(f.label, f.value) : field(f.label, f.value)), ok: o.ok || 'บันทึก', cancel: o.cancel }); return; }
   const m = inst('Modal', { Type: 'Form', Size: 'md' });
   overlay(scr, m, 0, 0);
   const hd = find(m, 'Modal header');
@@ -710,8 +710,8 @@ async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 
   });
   const ft = m.findAll(n => n.type === 'INSTANCE' && /button/.test(n.name) && n.parent && n.parent.name === 'Actions');
   ft.forEach(b => {
-    if (b.name === 'Primary button') setProps(b, { Text: 'บันทึก', 'Leading icon': false, 'Trailing icon': false });
-    else if (b.name === 'Secondary button') setProps(b, { Text: 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false });
+    if (b.name === 'Primary button') setProps(b, { Text: o.ok || 'บันทึก', 'Leading icon': false, 'Trailing icon': false });
+    else if (b.name === 'Secondary button') setProps(b, { Text: o.cancel || 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false });
     else b.visible = false;
   });
 }
@@ -957,8 +957,9 @@ async function arrow(pts, hex, weight) {   // เส้นหักมุมต�
   return v;
 }
 /* codes: { nodeId: ['A.2', …] } · loose: ['A.5 ยืนยันการออก', …] = จอที่ยังไม่มีกล่องในผัง */
-async function userflowFrame(prefix, code, n, codes, loose) {
-  const sc = USERFLOW && USERFLOW.scenarios && USERFLOW.scenarios[n];
+async function userflowFrame(prefix, code, n, codes, loose, o) {   // o.sc = ผังที่ใช้แทน (แนวนอนของ journey) · o.title = หัวผัง
+  o = o || {};
+  const sc = o.sc || (USERFLOW && USERFLOW.scenarios && USERFLOW.scenarios[n]);
   if (!sc) return null;
   const f = figma.createFrame(); CREATED.push(f);
   f.name = prefix + ' · ' + code + ' userflow S' + n;
@@ -966,8 +967,9 @@ async function userflowFrame(prefix, code, n, codes, loose) {
   f.clipsContent = false;
   f.resize(sc.w, sc.h);
   const put = (node, x, y) => { f.appendChild(node); node.x = x; node.y = y; return node; };
-  put(await labelText('userflow · S' + n + ' ' + sc.title, 32, '#101828'), 40, 36);
-  put(await labelText('อ่านบน → ล่าง · ทางแยก N ไปขวา · เส้นที่วนข้างผัง = ย้อนกลับ · ป้ายเทา = รหัสจอทางขวา', 16, '#475467'), 40, 84);
+  put(await labelText(o.title || ('userflow · S' + n + ' ' + sc.title), 32, '#101828'), 40, 36);
+  put(await labelText(sc.horizontal ? 'อ่านซ้าย → ขวา · ทางแยก N ลงล่าง · เส้นที่วนใต้ผัง = ย้อนกลับ · ป้ายเทา = รหัสจอบนหน้านี้'
+    : 'อ่านบน → ล่าง · ทางแยก N ไปขวา · เส้นที่วนข้างผัง = ย้อนกลับ · ป้ายเทา = รหัสจอทางขวา', 16, '#475467'), 40, 84);
   const pos = {}, slots = [];
   for (const e of sc.edges) {   // เส้นก่อน กล่องทับเส้น
     const from = sc.nodes.find(x => x.id === e.from);
@@ -1035,6 +1037,78 @@ async function fillThumb(rect, scr) {
     rect.fills = [vis < 1 ? { type: 'IMAGE', imageHash: img.hash, scaleMode: 'CROP', imageTransform: [[1, 0, 0], [0, vis, 0]] } : { type: 'IMAGE', imageHash: img.hash, scaleMode: 'FIT' }];
     return true;
   } catch (e) { warn('ภาพย่อ ' + scr.name, e); return false; }
+}
+
+/* ---------- journey แนวขวาง (เจ้าของงานสั่ง 22 ต.ค. 2569: "ทำ scen มาต่อกันเป็นแนวขวาง สำหรับ export" + "ลงในเพจ maintainance แต่มีปุ่มแยก") ----------
+   USERFLOW.journey (ฝังตอน build จาก build.json) = { title, phases: [[ชื่อช่วง, [n…]]], cols: [[n…]], row: { n: 1 }, links: [[จาก, ไป, ป้าย, 'back'?]], scenarios: ผังแนวนอน }
+   วาง: แถบ Journey → แถบช่วงงาน → กรอบผัง scenario เรียงซ้าย → ขวาตาม cols (ทางแยกลงแถว 2 ตาม row) → ลูกศรระหว่าง scenario (เข้าที่ start ของปลายทาง)
+   เส้นย้อนกลับ (back) วิ่งเหนือแถว 1 / ใต้แถว 2 แบบเส้นประ · info.codes(n) = { codes, loose } ป้ายรหัสจอ · info.frameFor(code) = เฟรมจอบนหน้า (ภาพย่อ) หรือ null */
+const JGAP = { col: 240, row: 240, bar: 80, lane: 48 };
+async function buildJourney(page, prefix, y0, info) {
+  const J = USERFLOW && USERFLOW.journey;
+  if (!J) throw new Error('ไม่มีข้อมูล journey ฝังมา — ใส่ "journey" ใน build.json แล้วรัน node figma-export/build-plugin.js ใหม่');
+  const put = (nd, x, y) => { page.insertChild(0, nd); nd.x = x; nd.y = y; return nd; };
+  const F = {}, thumbs = []; let made = 0;
+  for (const col of J.cols) for (const n of col) {
+    CREATED = [];
+    const sc = J.scenarios[n]; if (!sc) { warn('journey', new Error('ไม่มีผัง S' + n + ' ในไฟล์ userflow')); continue; }
+    const c = info.codes(n) || { codes: {}, loose: [] };
+    try {
+      const uf = await userflowFrame(prefix, 'journey', n, c.codes, [], { sc, title: 'Scenario ' + n + ' · ' + sc.title });
+      F[n] = uf.frame; page.insertChild(0, uf.frame); made++;
+      for (const sl of uf.slots) { const cd = (c.codes[sl.id] || [])[0]; if (cd) thumbs.push([sl.rect, cd]); }
+    } catch (e) { warn('journey S' + n, e); dropCreated(page); }
+    CREATED = [];
+  }
+  /* ตำแหน่ง: คอลัมน์กว้างเท่ากรอบที่กว้างสุดในคอลัมน์ · แถว 2 อยู่ใต้กรอบแถว 1 ที่สูงสุด */
+  const rowOf = (n) => (J.row && J.row[n]) || 0;
+  const backTop = J.links.filter(l => l[3] === 'back' && !rowOf(l[0]) && !rowOf(l[1])).length;
+  const top = y0 + GRID.barH + JGAP.bar + GRID.barH + JGAP.bar + backTop * JGAP.lane;
+  const colX = []; let x = 0;
+  J.cols.forEach((col, i) => { colX[i] = x; x += Math.max(...col.map(n => F[n] ? F[n].width : 0)) + JGAP.col; });
+  const totalW = x - JGAP.col;
+  const h0 = Math.max(...Object.keys(F).filter(n => !rowOf(n)).map(n => F[n].height));
+  const rowY = [top, top + h0 + JGAP.row];
+  const colOf = {}; J.cols.forEach((col, i) => col.forEach(n => { colOf[n] = i; }));
+  for (const n of Object.keys(F)) { F[n].x = colX[colOf[n]]; F[n].y = rowY[rowOf(n)]; }
+  /* แถบ Journey + ช่วงงาน (component Header ของทีมออกแบบ · ไม่มี = แถบธรรมดา) */
+  CREATED = [];
+  put(await flowBar(prefix, 'Journey', J.title, 'Default', totalW), 0, y0);
+  for (const [i, [title, ns]] of (J.phases || []).entries()) {
+    const xs = ns.filter(n => F[n]).map(n => F[n].x), xe = ns.filter(n => F[n]).map(n => F[n].x + F[n].width);
+    if (!xs.length) continue;
+    put(await flowBar(prefix, 'ช่วง ' + (i + 1), title, 'Sub Flow', Math.max(...xe) - Math.min(...xs)), Math.min(...xs), y0 + GRID.barH + JGAP.bar);
+  }
+  /* ภาพย่อจอจริง (จอที่สร้างไว้บนหน้านี้แล้ว) */
+  let tk = 0;
+  for (const [rect, cd] of thumbs) { const scr = info.frameFor(cd); if (scr && await fillThumb(rect, scr)) tk++; }
+  /* ลูกศรระหว่าง scenario: ออกขอบขวาของต้นทาง (ระดับ start ของต้นทาง) → เข้าซ้ายของ start ปลายทาง · back = เส้นประวิ่งเหนือแถว 1 / ใต้แถว 2 */
+  const startOf = (n) => { const s = J.scenarios[n].nodes[0]; return { x: F[n].x + s.x, y: F[n].y + s.y + s.h / 2 }; };
+  let lanesTop = 0, lanesBot = 0, links = 0;
+  const bottom2 = Math.max(...Object.keys(F).map(n => F[n].y + F[n].height));
+  for (const [a, b, label, kind] of J.links) {
+    if (!F[a] || !F[b]) continue;
+    CREATED = [];
+    let pts, hex = '#475467';
+    if (kind === 'back') {
+      hex = '#98A2B3';
+      if (rowOf(a) || rowOf(b)) { const yl = bottom2 + JGAP.lane * (++lanesBot); pts = [[F[a].x + F[a].width / 2, F[a].y + F[a].height], [F[a].x + F[a].width / 2, yl], [F[b].x + F[b].width / 2, yl], [F[b].x + F[b].width / 2, F[b].y + F[b].height]]; }
+      else { const yl = top - JGAP.lane * (++lanesTop); pts = [[F[a].x + F[a].width / 2, F[a].y], [F[a].x + F[a].width / 2, yl], [F[b].x + F[b].width / 2, yl], [F[b].x + F[b].width / 2, F[b].y]]; }
+    } else {
+      const sa = startOf(a), sb = startOf(b), ax = F[a].x + F[a].width, ay = rowOf(a) === rowOf(b) ? sb.y : sa.y;
+      const mx = ax + JGAP.col / 2;
+      pts = ay === sb.y ? [[ax, ay], [sb.x, sb.y]] : [[ax, ay], [mx, ay], [mx, sb.y], [sb.x, sb.y]];
+    }
+    try {
+      const v = await arrow(pts, hex, 6); put(v, Math.min(...pts.map(p => p[0])), Math.min(...pts.map(p => p[1])));
+      if (kind === 'back') { try { v.dashPattern = [24, 16]; } catch (e) { /* ไม่มี dash ก็เส้นทึบ */ } }
+      v.name = prefix + ' · journey S' + a + ' → S' + b + (kind === 'back' ? ' (ย้อนกลับ)' : '');
+      if (label) { const p0 = pts[kind === 'back' ? 1 : 0], p1 = pts[kind === 'back' ? 2 : 1]; const t = await labelText(label, 24, '#101828'); put(t, Math.min(p0[0], p1[0]) + 16, Math.min(p0[1], p1[1]) - 36); t.name = prefix + ' · ป้าย ' + label; }
+      links++;
+    } catch (e) { warn('ลูกศร S' + a + ' → S' + b, e); }
+    CREATED = [];
+  }
+  return { made, links, thumbs: tk, slots: thumbs.length, w: totalW };
 }
 
 /* GROUPS = [{ code: 'A', title: '…', subs: [{ code: 'A', title: '…', tag: 'S1', screens: [[label, fn, 'D1 D2'?], …] }] }]

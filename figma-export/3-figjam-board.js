@@ -17,6 +17,8 @@
                                                     Overhaul v2 ครบ 14 scenario (section ละ scenario · capture จาก flow-overhaul2-capture.js)
                                                     --out= เขียนไฟล์ชื่ออื่น ไม่ทับ board.json (ปลั๊กอินใส่ชื่อไฟล์ในช่องที่อยู่ได้)
      node figma-export/3-figjam-board.js --maintainance --only --out=board-maintainance.json
+     node figma-export/3-figjam-board.js --maintainance-journey --only --out=board-maintainance-journey.json
+                                                    userflow บำรุงรักษา 18 scenario เป็นผังเดียวต่อกัน (start จุดเดียว · 8-flow-userflow.js --journey)
                                                     userflow บำรุงรักษาตามวาระ 17 scenario (section ละ scenario · ผังรูปทรง Template
                                                     จาก Diagram/01-…/14-บำรุงรักษา-userflow.md ผ่าน 8-flow-userflow.js — ไม่มีรูป capture)
      node figma-export/3-figjam-board.js --pages    + หน้ารวมทุกหน้าจัดหมวด
@@ -214,6 +216,17 @@ function main() {
     }));
   }
 
+  // journey ต่อกันทั้งเรื่อง (22 ต.ค. 2569 · เจ้าของงาน "ที่ส่งไปไม่ได้ต่อกัน แต่สิ่งที่อยากได้คือต่อกัน")
+  // ต้นทาง: ไฟล์ userflow เดียวกัน + ลำดับ/จุดต่อ maintainance-plugin/build.json → 8-flow-userflow.js --journey → out/diagram-userflow-maintainance-journey.json
+  if (args.has('--maintainance-journey')) {
+    const uf = path.join(OUT, 'diagram-userflow-maintainance-journey.json');
+    if (!fs.existsSync(uf)) {
+      console.error('ไม่พบ ' + uf + ' — รัน  node figma-export/8-flow-userflow.js --journey  ก่อน');
+      process.exit(1);
+    }
+    read(uf).sections.forEach((sec, i) => sections.push({ name: sec.name, color: i === 0 ? [255, 255, 255] : [250, 250, 250], kind: 'diagram', diagram: sec.diagram }));
+  }
+
   if (all || args.has('--pages')) {
     const pages = read(path.join(FJ, 'manifest.json'));
     const groupColor = {
@@ -235,7 +248,7 @@ function main() {
 
   const board = {
     version: 1,
-    anchor: (args.has('--disposal') || args.has('--inventory') || args.has('--overhaul2') || args.has('--maintainance')) ? 'below' : undefined,   // วางต่อใต้ของเดิมบนบอร์ด ไม่ทับ
+    anchor: (args.has('--disposal') || args.has('--inventory') || args.has('--overhaul2') || args.has('--maintainance') || args.has('--maintainance-journey')) ? 'below' : undefined,   // วางต่อใต้ของเดิมบนบอร์ด ไม่ทับ
     generatedAt: new Date().toISOString(),
     font: { family: 'IBM Plex Sans Thai', style: 'Medium' },
     fallbackFont: { family: 'Inter', style: 'Medium' },

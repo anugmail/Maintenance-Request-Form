@@ -22,6 +22,11 @@ if (cfg.userflow) {
   const uf = require('./plugin-lib/userflow-layout.js').build(src);
   flow = JSON.stringify(Object.assign({ src: cfg.userflow }, { scenarios: uf }));
   flowNote = 'ผัง userflow ' + Object.keys(uf).length + ' scenario จาก ' + cfg.userflow;
+  if (cfg.journey) {   // journey แนวขวาง (22 ต.ค. 2569): ผังแนวนอนทุก scenario + ลำดับ/จุดต่อจาก build.json
+    const j = Object.assign({}, cfg.journey, { scenarios: require('./plugin-lib/userflow-layout.js').build(src, true) });
+    flow = JSON.stringify(Object.assign({ src: cfg.userflow }, { scenarios: uf, journey: j }));
+    flowNote += ' + journey แนวขวาง ' + j.cols.length + ' คอลัมน์ · จุดต่อ ' + j.links.length;
+  }
 }
 const out = '/* ⚠ ไฟล์นี้ประกอบอัตโนมัติจาก plugin-lib/core.js + ' + dir + '/screens.js' + (cfg.userflow ? ' + ' + cfg.userflow : '') + ' ด้วย build-plugin.js — แก้ที่ต้นทางแล้วรัน  node figma-export/build-plugin.js ' + dir + '  (' + new Date().toISOString().slice(0, 10) + ') */\n\n' +
   core + '\n/* ======================== userflow (ฝังตอน build) ======================== */\nconst USERFLOW = ' + flow + ';\n' +

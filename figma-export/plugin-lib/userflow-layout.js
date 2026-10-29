@@ -21,11 +21,11 @@ const LANE = 36;         // ช่องวิ่งของเส้นย้�
 const STICKY_W = 320, STICKY_GAP = 16;
 const PAD = 8;           // ระยะกันชนตอนเช็คว่าเส้นทับกล่องไหม
 
-function vertical(flow) {
+function vertical(flow, swap) {   // swap = คำนวณด้วยกล่องกว้าง↔สูงสลับกัน เพื่อให้ horizontal() กลับแกนแล้วขนาดกล่องตรงของจริง
   const { rank, row, back } = uf.rankRows(flow);
   const maxRank = Math.max(...flow.nodes.map(n => rank[n.id]));
   const maxRow = Math.max(...flow.nodes.map(n => row[n.id]));
-  const dim = (n) => n.kind === 'display' ? [DISPLAY.w, DISPLAY.h] : [SIZE[n.kind] || CELL, SIZE[n.kind] || CELL];
+  const dim = (n) => n.kind === 'display' ? (swap ? [DISPLAY.h, DISPLAY.w] : [DISPLAY.w, DISPLAY.h]) : [SIZE[n.kind] || CELL, SIZE[n.kind] || CELL];
   const colW = Array(maxRow + 1).fill(CELL), rankH = Array(maxRank + 1).fill(CELL);
   flow.nodes.forEach(n => { const [w, h] = dim(n); colW[row[n.id]] = Math.max(colW[row[n.id]], w); rankH[rank[n.id]] = Math.max(rankH[rank[n.id]], h); });
   const colX = [], rankY = []; colW.reduce((x, w, i) => { colX[i] = x; return x + w + GAPX; }, X0); rankH.reduce((y, h, i) => { rankY[i] = y; return y + h + GAPY; }, Y0);
@@ -98,14 +98,34 @@ function vertical(flow) {
   return { w, h, nodes: nodes.map(({ cx, cy, col, rank: r, ...n }) => n), edges, stickies, gap: STICKY_GAP };
 }
 
-/* อ่านไฟล์ userflow ทั้งไฟล์ → { "1": { n, title, w, h, nodes, edges, stickies }, … } */
-function build(src) {
+/* ผังแนวนอน (journey แนวขวาง · เจ้าของงานสั่ง 22 ต.ค. 2569 "ทำ scen มาต่อกันเป็นแนวขวาง สำหรับ export"):
+   คำนวณด้วย vertical() แบบสลับขนาดกล่อง แล้วกลับแกน x↔y ⇒ อ่านซ้าย → ขวา · ทางแยก N ลงแถวล่าง · เส้นย้อนกลับวิ่งใต้ผัง · sticky คำถามใต้ผัง
+   หัวผังเดิมอยู่บน (Y0) ⇒ หลังกลับแกนเลื่อนทั้งผังลง/ซ้ายเท่าระยะหัว ให้หัวผังยังอยู่ด้านบน */
+function horizontal(flow) {
+  const v = vertical(flow, true), head = Y0 - X0;
+  const T = ([x, y]) => [y - head, x + head];
+  const nodes = v.nodes.map(n => {
+    const o = Object.assign({}, n, { x: n.y - head, y: n.x + head, w: n.h, h: n.w });
+    if (n.kind === 'display') o.thumb = { x: DISPLAY.pad, y: DISPLAY.pad, w: o.w - DISPLAY.pad * 2, h: DISPLAY.thumbH };
+    return o;
+  });
+  const edges = v.edges.map(e => Object.assign({}, e, { pts: e.pts.map(T) }));
+  const bottom = Math.max(...nodes.map(n => n.y + n.h), ...edges.map(e => Math.max(...e.pts.map(p => p[1])))) + 40;
+  const pos = Object.fromEntries(nodes.map(n => [n.id, n]));
+  const stickies = v.stickies.map(st => ({ node: st.node, text: st.text, x: pos[st.node].x, y: bottom, w: STICKY_W }));
+  const w = Math.max(...nodes.map(n => n.x + n.w), ...edges.map(e => Math.max(...e.pts.map(p => p[0]))), ...stickies.map(st => st.x + st.w)) + 40;
+  const h = bottom + (stickies.length ? 160 : 0);
+  return { w, h, nodes, edges, stickies, gap: STICKY_GAP, horizontal: true };
+}
+
+/* อ่านไฟล์ userflow ทั้งไฟล์ → { "1": { n, title, w, h, nodes, edges, stickies }, … } · horizontal = ผังแนวนอนสำหรับ journey */
+function build(src, horizontalMode) {
   const out = {};
-  for (const sc of uf.readScenarios(src)) out[sc.n] = Object.assign({ n: sc.n, title: sc.title }, vertical(uf.parseFlow(sc.code)));
+  for (const sc of uf.readScenarios(src)) out[sc.n] = Object.assign({ n: sc.n, title: sc.title }, (horizontalMode ? horizontal : vertical)(uf.parseFlow(sc.code)));
   return out;
 }
 
-module.exports = { build, vertical, SIZE };
+module.exports = { build, vertical, horizontal, SIZE };
 if (require.main === module) {   // ดูผลเร็ว: node figma-export/plugin-lib/userflow-layout.js <ไฟล์ userflow.md>
   const path = require('path');
   const src = path.resolve(process.argv[2] || path.join(__dirname, '..', '..', 'Diagram', '01-บำรุงรักษาตามวาระ', '14-บำรุงรักษา-userflow.md'));

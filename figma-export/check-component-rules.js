@@ -43,7 +43,7 @@ function check(screens) {
       let ok = false, allowed = false;
       for (let p = n.parent; p && p !== sc; p = p.parent) {
         if (isInst(p, r.parent)) { ok = true; break; }
-        if ((r.allowInside || []).some(c => isInst(p, c))) { ok = true; break; }   // component ของทีมออกแบบที่ประกอบตารางไว้เอง (ReceiptChecklist ของงานซ่อม · 22 ต.ค. 2569) — ไม่ใช่ปลั๊กอินประกอบ
+        if ((r.allowInside || []).some(c => isInst(p, c))) { ok = true; break; }   // component ของทีมออกแบบที่ประกอบตารางไว้เอง (ReturnPart · 22 ต.ค. 2569) — ไม่ใช่ปลั๊กอินประกอบ
         if (r.allowInStyledFrame && p.type === 'FRAME' && p.name === r.parent) {   // เฟรมแทน component ต้องมีกรอบ + มุมแบบ component (หน้างานซ่อม)
           if ((p.strokes || []).length && p.cornerRadius > 0) { ok = true; break; }
           fail(r, sc, r.parent + ' เป็นเฟรมไม่มีกรอบ/มุม — ต้องแต่งแบบหน้างานซ่อม'); ok = true; break;
