@@ -1,0 +1,27 @@
+<style>
+  body{font:12px/1.5 -apple-system,"IBM Plex Sans Thai",sans-serif;margin:0;padding:14px;color:#1b1b1b}
+  button{padding:8px 14px;border:0;border-radius:6px;background:#a80689;color:#fff;font:inherit;cursor:pointer;margin:2px 4px 2px 0}
+  p{margin:10px 0 4px}
+  small{color:#475467}
+  #log{margin-top:10px;height:240px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
+</style>
+<p><b>ประเมินผู้รับจ้าง — 3 scenario (12 จอ)</b> · ทุกชิ้นในจอเป็น instance ของ component จริงในไลบรารี · คะแนนใช้ component Rating (ดาว 1–5)<br>
+1 scenario = 1 บล็อกตัวอักษร (A รายการ · B ประเมิน · C ดูผล) → ป้าย Device → คอลัมน์จอ A.1 A.2 …<br>
+<b>ทุกปุ่มวางบนหน้า "ประเมินผู้รับจ้าง"</b> ต่อใต้ของเดิม (ไม่มีหน้าก็สร้าง) — ของที่มีอยู่ไม่ถูกแตะ</p>
+<button id="desk">สร้าง Desktop (1440)</button>
+<button id="mob" style="background:#7a0463">สร้าง Mobile (402×874)</button>
+<p><b>สร้างเฉพาะ scenario ที่เลือก</b> · อุปกรณ์: <label><input type="radio" name="dev" value="desktop" checked> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label> <label><input type="radio" name="dev" value="both"> ทั้งคู่</label><br>
+<span id="pick"></span></p>
+<button id="pickgo" style="background:#1d4ed8">สร้างเฉพาะ scenario ที่เลือก</button>
+<p><small>เปลี่ยนไฟล์หรือไลบรารี → เช็คก่อนว่า component ครบ · ปิด-เปิดปลั๊กอินใหม่ทุกครั้งหลังสคริปต์เปลี่ยน</small></p>
+<button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button> <button id="copylog" style="background:#334155">คัดลอก log</button>
+<div id="log"></div>
+<script>
+const send = (type, extra) => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: Object.assign({ type, devices: document.querySelector('input[name=dev]:checked').value }, extra || {}) }, '*'); };
+document.getElementById('desk').onclick = () => send('build-desktop');
+document.getElementById('mob').onclick = () => send('build-mobile');
+document.getElementById('pickgo').onclick = () => send('build-pick', { pick: [...document.querySelectorAll('#pick input:checked')].map(i => +i.value) });
+document.getElementById('chk').onclick = () => send('check');
+document.getElementById('copylog').onclick = () => { const ta = document.createElement('textarea'); ta.value = document.getElementById('log').textContent; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); };
+onmessage = (e) => { const m = e.data.pluginMessage; if (m && m.type === 'scenarios') { document.getElementById('pick').innerHTML = m.items.map((t, i) => '<label style="display:inline-block;margin:2px 10px 2px 0"><input type="checkbox" value="' + i + '"> ' + String.fromCharCode(65 + i) + ' ' + t.split(' · ')[0] + '</label>').join(''); return; } if (m && m.type === 'log') { const el = document.getElementById('log'); el.textContent += m.text + '\n'; el.scrollTop = el.scrollHeight; } };
+</script>

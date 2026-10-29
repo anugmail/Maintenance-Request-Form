@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ประเมินผู้รับจ้าง | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  22 ต.ค. 2569 — ประเมินผู้รับจ้าง (อู่/ศูนย์บริการ) ต่อ 1 ใบสั่งจ้าง (PO) — คนละเรื่องกับ "ประเมินพนักงานขับรถ" ของ VMS+ เดิม
+  สเปก: Diagram/07-ประเมินผู้รับจ้าง/01-ออกแบบ-ประเมินผู้รับจ้าง-อู่-เทียบกับ-ประเมินพนักงานขับรถ-VMS+เดิม.md
+  ข้อประเมิน: Diagram/07-ประเมินผู้รับจ้าง/02-ข้อประเมินผู้รับจ้าง-6หมวด-20ข้อ.csv (ลอกจากแบบประเมินกระดาษ)
+  3 มุมมองในไฟล์เดียว: (ไม่มีพารามิเตอร์) รายการ 2 แท็บ · ?po=<เลข PO> ฟอร์มประเมิน · ?po=<เลข PO>&view=1 ดูผลประเมิน
+
+  ที่มา · ไฟล์ Component: Rating (107:2628 — ดาวเต็ม warning-600 · ว่าง gray-300) · Tabs (.tabs/.tab-btn) · Table (.tbl) ·
+           Badge (.badge) · Section header (.sect) · Content item (.incident-summary) · Alert (.note) · Modal Destructive centered ·
+           Notification (.notif) · Empty state (.filter-empty) · ไม่มีส่วนแนบแบบที่ลงนาม (เจ้าของงานสั่งตัด 22 ต.ค. 2569)
+        · ไฟล์ UI Release#2: ไม่มีหน้าประเมิน (ค้น "ประเมิน"/"Rating" = 0 หน้า) ⇒ โครงหน้าอิงชุด Overhaul v2 · พฤติกรรมอิงเว็บ VMS+ เดิม
+          (code-maintainD/web/vms-plus-main-fe/components/tabs/driverEvaluationTabs.tsx + components/rating.tsx)
+  22 ต.ค. 2569 ดึก — ปรับให้ตรงจอ Figma (ปลั๊กอิน figma-export/contractor-eval-plugin/ · เจ้าของงานสั่ง "ต้องการให้ตรง figma"):
+    style ตามหน้าจริง vmsplus-dev /driver-evaluation (รายการไม่มีช่องค้นหา · คอลัมน์ # · ข้อ = ข้อความตัวหนา + ดาวใต้ข้อความ) · เนื้อหาตาม Excel ·
+    คอลัมน์บริบทงานซ่อม/บำรุงรักษา/Overhaul (ประเภทงาน · เลขที่อ้างอิง · ทะเบียนรถ · วันที่ส่งมอบงาน) · ฟอร์มหน้าเต็ม · ดาวเริ่มว่าง (เจ้าของงานเลือก)
+  ตีความเอง (รอเคาะ — ดูหัวข้อ 9 ของสเปก): ผู้ตรวจประเมิน = กบค. · ชื่อระดับ 1–5 · พิมพ์ PDF ไปเซ็นแล้วแนบกลับ
+  ดาวประกอบจาก .ms star + Tailwind (ยังไม่มีคลาสกลาง .rating ใน components.css) · ไม่มีบล็อกสไตล์ในหน้า · ข้อมูลจำลองทั้งหมด
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv" href="overhaul-v2-01-plans.html" title="จัดการงาน Overhaul"><span class="ms">build_circle</span><span class="nvlbl">จัดการงาน Overhaul</span></a>
+    <a class="nv on" href="contractor-eval.html" title="ประเมินผู้รับจ้าง"><span class="ms">reviews</span><span class="nvlbl">ประเมินผู้รับจ้าง</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นางสาวกนกวรรณ ใจมั่น — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft">Prototype (Mock) · ประเมินผู้รับจ้าง (อู่/ศูนย์บริการ) ต่อใบสั่งจ้าง · ข้อมูลจำลองทั้งหมด</div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep"></span><a href="contractor-eval.html" id="crumb-list">ประเมินผู้รับจ้าง</a>
+        <span class="sep hidden" id="crumb-sep"></span><span class="cur hidden" id="crumb"></span>
+      </div>
+
+      <!-- ===== มุมมอง 1: รายการ (style หน้าจริง: แท็บ + ตาราง ไม่มีช่องค้นหา · คอลัมน์ # นำ) ===== -->
+      <section id="v-list" class="hidden">
+        <div class="page-title-row"><h1 class="page-title mb-0 mr-auto">ประเมินผู้รับจ้าง</h1></div>
+        <div class="tabs" role="tablist">
+          <button class="tab-btn on" type="button" data-tab="pending">ยังไม่ได้ประเมิน <span class="badge b-brand" id="n-pending"></span></button>
+          <button class="tab-btn" type="button" data-tab="done">ประเมินแล้ว</button>
+        </div>
+        <div class="stack mt-6">
+          <div class="tblwrap mt-0" id="wrap">
+            <table class="tbl striped"><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+          </div>
+          <div class="filter-empty hidden" id="empty"><span class="ms">task_alt</span><b id="empty-t"></b><span id="empty-s"></span>
+            <button class="btn btn-s btn-sm mt-2" type="button" id="empty-go">ดูรายการที่ประเมินแล้ว</button></div>
+        </div>
+      </section>
+
+      <!-- ===== มุมมอง 2/3: ฟอร์มประเมิน (Section header) · ดูผลประเมิน (Section label + ตารางต่อหมวด) ===== -->
+      <section id="v-form" class="hidden">
+        <div class="page-title-row flex-wrap">
+          <a class="btn btn-t btn-icon !no-underline" id="back" href="contractor-eval.html" aria-label="ย้อนกลับ"><span class="ms">arrow_back</span></a>
+          <h1 class="page-title mb-0" id="title"></h1>
+          <span class="badge b-ok hidden" id="ro-badge">ประเมินแล้ว</span>
+          <span class="ml-auto flex gap-3 hidden" id="ro-actions">
+            <button class="btn btn-s" type="button" id="print">พิมพ์แบบประเมิน (PDF)</button>
+          </span>
+        </div>
+
+        <div class="flex flex-col gap-8">
+          <section>
+            <div class="sect">ข้อมูลผู้รับจ้าง</div>
+            <dl class="incident-summary lg:grid-cols-4 mt-4" id="head"></dl>
+          </section>
+
+          <section class="hidden" id="summary">
+            <div class="sect">สรุปผลการประเมิน</div>
+            <dl class="incident-summary lg:grid-cols-4 mt-4" id="sum-kv"></dl>
+          </section>
+
+          <div class="note note-info mb-0" id="scale-sec"><span class="ms">info</span><div>
+            <b>ให้คะแนนทุกข้อ 1 ถึง 5 ดาว</b> — 1 ต้องปรับปรุงมาก · 2 ต้องปรับปรุง · 3 พอใช้ · 4 ดี · 5 ดีมาก · คะแนนรวมเต็ม 100 (20 ข้อ × 5) · หมายเหตุไม่บังคับ
+          </div></div>
+
+          <div class="flex flex-col gap-8" id="groups"></div>
+
+          <section id="remark-sec">
+            <div class="sect">หมายเหตุ/ข้อเสนอแนะเพิ่มเติม</div>
+            <div class="f mt-4"><label for="remark">หมายเหตุ/ข้อเสนอแนะเพิ่มเติม <span class="text-gray-500 font-normal">(ถ้ามี)</span></label><textarea id="remark" rows="3" placeholder="ระบุหมายเหตุหรือข้อเสนอแนะ"></textarea></div>
+          </section>
+
+          <section id="score-sec">
+            <div class="sect">สรุปคะแนน</div>
+            <dl class="incident-summary lg:grid-cols-4 mt-4" id="score-kv"></dl>
+          </section>
+
+          <!-- แถวปุ่มท้ายหน้า: ยกเลิกชิดซ้าย · บันทึกชิดขวา (กติกาปุ่มท้าย) -->
+          <div class="flex items-center justify-between gap-3" id="bar">
+            <button class="btn btn-s btn-lg" type="button" id="cancel">ยกเลิก</button>
+            <button class="btn btn-p btn-lg" type="button" id="save" disabled>บันทึกการประเมิน</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="filter-empty hidden" id="notfound">
+        <span class="ms">search_off</span><b>ไม่พบใบสั่งจ้างนี้</b><span>ใบสั่งจ้างอาจถูกลบ หรือยังไม่ถึงขั้นประเมิน</span>
+        <a class="btn btn-s btn-sm mt-2 !no-underline" href="contractor-eval.html">กลับหน้ารายการ</a>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="m-ok">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-ok-t">
+    <div class="modal-hd center">
+      <div class="modal-hd-c"><span class="ficon"><span class="ms">info</span></span><h2 id="m-ok-t">ยืนยันการประเมิน</h2><div class="modal-sub" id="m-ok-s"></div></div>
+      <button class="modal-x" type="button" data-close="m-ok" aria-label="ปิด"><span class="ms">close</span></button>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-ok">ยกเลิก</button>
+      <button class="btn btn-p" type="button" id="m-ok-go">ยืนยัน</button>
+    </div></div></div>
+  </div>
+</div>
+<div class="modal-overlay hidden" id="m-leave">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-leave-t">
+    <div class="modal-hd center">
+      <div class="modal-hd-c"><span class="ficon"><span class="ms">info</span></span><h2 id="m-leave-t">ยืนยันการออก</h2><div class="modal-sub">ข้อมูลที่กรอกไว้จะไม่ถูกบันทึก</div></div>
+      <button class="modal-x" type="button" data-close="m-leave" aria-label="ปิด"><span class="ms">close</span></button>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-leave">ปิด</button>
+      <button class="btn btn-p" type="button" id="m-leave-go">ออก</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="overhaul-v2-mock.js?v=20261019-4"></script>
+<script>
+/* ข้อประเมิน — ตรงกับ Diagram/07-ประเมินผู้รับจ้าง/02-ข้อประเมินผู้รับจ้าง-6หมวด-20ข้อ.csv */
+const CE_GROUPS=[
+  {code:'G1',title:'สถานประกอบการ',icon:'store',q:['ได้รับการรับรองระบบคุณภาพมาตรฐาน (ISO หรือ Authorized Service หรือ มาตรฐานฝีมือแรงงานแห่งชาติ โดยกรมพัฒนาฝีมือแรงงาน)','มีขนาดพื้นที่ปฏิบัติงานเพียงพอรองรับงานซ่อม เป็นระเบียบ สะอาด','พื้นที่ปฏิบัติงานมีความปลอดภัยในการจัดเก็บทรัพย์สินระหว่างซ่อม']},
+  {code:'G2',title:'เครื่องมืออุปกรณ์',icon:'construction',q:['ความพร้อมของเครื่องมืออุปกรณ์','เครื่องมืออุปกรณ์มีการบำรุงรักษา/การสอบเทียบ','มีอุปกรณ์ความปลอดภัยครบถ้วนเหมาะสมกับลักษณะงาน ขณะให้บริการ']},
+  {code:'G3',title:'ผู้ปฏิบัติงาน',icon:'engineering',q:['ผู้ปฏิบัติงานปฏิบัติถูกต้องตามข้อกำหนด/ระเบียบของ กฟภ.','ผู้ปฏิบัติงานปฏิบัติตามมาตรฐาน ข้อกำหนด คู่มือ กฎหมาย พรบ. และประกาศของทางราชการ','พนักงานได้รับการฝึกอบรมทักษะการปฏิบัติงานมีความเข้าใจและรอบรู้ในงาน','มีมนุษย์สัมพันธ์ดี แต่งกายสุภาพ สะอาด']},
+  {code:'G4',title:'การให้บริการ',icon:'support_agent',q:['ความสะดวกรวดเร็วในการติดต่อ สามารถอธิบาย ให้คำแนะนำการให้บริการ','สามารถแก้ไขปัญหาเกี่ยวกับการให้บริการได้ทันที','มีความพร้อมกรณีมีความต้องการใช้บริการเร่งด่วน','มีบริการหลังการส่งมอบงาน']},
+  {code:'G5',title:'คุณภาพของผลงาน',icon:'verified',q:['อะไหล่อุปกรณ์ที่ใช้มีคุณภาพตรงตามข้อกำหนดการจ้าง มีเอกสารให้ตรวจสอบ','คุณภาพงานตรงตามรายละเอียดที่กำหนดโดยไม่ต้องแก้ไข','เอกสาร/รายงาน/ข้อเสนอแนะประกอบผลงาน ถูกต้องครบถ้วน','มีการรับประกันผลงาน']},
+  {code:'G6',title:'การส่งมอบงาน',icon:'local_shipping',q:['ส่งมอบงาน ตรงตามกำหนดเวลา','ความถูกต้องของเอกสารประกอบในการส่งมอบ']},
+];
+const CE_QIDS=CE_GROUPS.flatMap(g=>g.q.map((_,i)=>`${g.code}-${i+1}`));
+const CE_LEVEL=['','ต้องปรับปรุงมาก','ต้องปรับปรุง','พอใช้','ดี','ดีมาก'];
+const CE_KEY='ce-mock-v4';   // v4 = ตัดหมายเหตุรายข้อ + ตัดแนบแบบที่ลงนาม (22 ต.ค. 2569)
+const EVALUATOR='นางสาวกนกวรรณ ใจมั่น (กบค.)';
+
+/* ข้อมูลจำลอง — ชุดเดียวกับปลั๊กอิน Figma (contractor-eval-plugin/screens.js) · บริบทงานซ่อม/บำรุงรักษา/Overhaul ไม่ใช่การจองรถ
+   ประเมินผู้รับจ้างต่อ 1 ใบสั่งจ้าง: งานซ่อม (ส่งอู่ · อ้างใบแจ้งซ่อม) · บำรุงรักษาตามวาระ (ว่าจ้าง · อ้างเลขงาน) · Overhaul (อ้างแผน) */
+const CE_JOB={repair:['งานซ่อม','b-info'],pm:['บำรุงรักษา','b-ok'],oh:['Overhaul','b-brand']};
+const CE_GROUP_ICON=['garage_home','car_repair','groups','call','search_check','schedule'];   // ไอคอนหมวด = Featured icon ในจอ Figma
+const CE_ITEMS=[
+  {po:'PO-2570-0211',type:'repair',vendor:'อู่ ช.เจริญยนต์ ขอนแก่น',addr:'อ.เมือง ขอนแก่น',ref:'ใบแจ้งซ่อม RP-2570-0045',plate:'82-1145 ขอนแก่น',delivered:'2026-10-15',contract:'สญ.0211/2570'},
+  {po:'PO-2570-0190',type:'pm',vendor:'บริษัท สยามไฮดรอลิก เซอร์วิส จำกัด',addr:'อ.บางพลี สมุทรปราการ',ref:'เลขงาน MT-2570-002',plate:'80-5738 น่าน +2 คัน',delivered:'2026-10-18',contract:'สญ.0190/2570'},
+  {po:'PO-680101',type:'oh',vendor:'บริษัท ฮีโน่ มอเตอร์ส เซลส์ จำกัด',addr:'เขตบางนา กรุงเทพฯ',ref:'แผน 123401',plate:'72-6648 สงขลา +1 คัน',delivered:'2026-10-20',contract:'สญ.123401/2568'},
+  {po:'PO-2569-0877',type:'repair',vendor:'อู่ ช.เจริญยนต์ ขอนแก่น',addr:'อ.เมือง ขอนแก่น',ref:'ใบแจ้งซ่อม RP-2569-0312',plate:'82-6789 ขอนแก่น',delivered:'2026-09-20',contract:'สญ.0877/2569'},
+  {po:'PO-2569-0640',type:'pm',vendor:'บริษัท สยามไฮดรอลิก เซอร์วิส จำกัด',addr:'อ.บางพลี สมุทรปราการ',ref:'เลขงาน MT-2569-014',plate:'81-2210 เชียงใหม่ +4 คัน',delivered:'2026-09-28',contract:'สญ.0640/2569'},
+];
+const ceItems=()=>CE_ITEMS;
+/* หมายเหตุมีช่องเดียวท้ายฟอร์ม ไม่มีหมายเหตุรายข้อ (เจ้าของงานสั่ง 22 ต.ค. 2569) */
+function ceSeed(){const mk=(arr)=>Object.fromEntries(CE_QIDS.map((id,i)=>[id,{s:arr[i%arr.length]}]));
+  return {'PO-2569-0877':{at:'2026-09-27',by:EVALUATOR,ans:mk([5,4,4,5,4]),remark:'ส่งมอบตรงเวลา เอกสารครบ ส่งมอบก่อนกำหนด 3 วัน'},
+          'PO-2569-0640':{at:'2026-10-02',by:EVALUATOR,ans:mk([3,4,3,3,4,2]),remark:''}}}
+function ceLoad(){try{const s=JSON.parse(localStorage.getItem(CE_KEY));if(s)return s}catch(e){}const s=ceSeed();ceSave(s);return s}
+function ceSave(s){try{localStorage.setItem(CE_KEY,JSON.stringify(s))}catch(e){}}
+const E=ceLoad();
+const $=id=>document.getElementById(id);
+
+/* ดาว — ตาม Rating ของไลบรารี: เต็ม warning-600 · ว่าง gray-300 · ไอคอน star เติมสี (FILL 1) · ขนาดใหญ่แบบหน้าจริง */
+function stars(v,{name='',ro=false,size='text-[36px]'}={}){
+  return `<span class="inline-flex gap-2" ${ro?'':`role="radiogroup" aria-label="${oh2Esc(name)}"`}>${[1,2,3,4,5].map(n=>{
+    const cls=`ms !${size} leading-none [font-variation-settings:'FILL'_1] ${n<=Math.round(v)?'text-warning-600':'text-gray-300'}`;
+    return ro?`<span class="${cls}" aria-hidden="true">star</span>`:
+      `<button type="button" class="${cls} bg-transparent border-0 p-0 cursor-pointer" role="radio" aria-checked="${v===n}" aria-label="${n} ดาว — ${CE_LEVEL[n]}" title="${n} — ${CE_LEVEL[n]}" data-q="${name}" data-v="${n}">star</button>`}).join('')}</span>`;
+}
+const sumOf=a=>CE_QIDS.reduce((t,id)=>t+((a[id]||{}).s||0),0);
+const answered=a=>CE_QIDS.filter(id=>(a[id]||{}).s).length;
+const jobBadge=t=>`<span class="badge ${CE_JOB[t][1]}">${CE_JOB[t][0]}</span>`;
+const fld=(k,v)=>`<div class="incident-field"><dt>${k}</dt><dd>${v}</dd></div>`;
+
+/* ---------- มุมมองรายการ ---------- */
+function renderList(){
+  $('v-list').classList.remove('hidden');
+  const items=ceItems();let tab='pending';
+  const draw=()=>{
+    const pend=items.filter(i=>!E[i.po]),done=items.filter(i=>E[i.po]);
+    $('n-pending').textContent=pend.length;$('n-pending').classList.toggle('hidden',!pend.length);
+    const rows=tab==='pending'?pend:done;
+    if(tab==='pending'){
+      $('thead').innerHTML='<tr><th class="w-[64px]">#</th><th>ใบสั่งจ้าง</th><th>ประเภทงาน</th><th>ผู้รับจ้าง</th><th>เลขที่อ้างอิง</th><th>ทะเบียนรถ</th><th>วันที่ส่งมอบงาน</th><th class="w-[104px]">ดำเนินการ</th></tr>';
+      $('tbody').innerHTML=rows.map((i,k)=>`<tr><td>${k+1}</td><td><div class="cell-key">${i.po}</div></td><td>${jobBadge(i.type)}</td><td>${oh2Esc(i.vendor)}</td><td>${oh2Esc(i.ref)}</td><td>${oh2Esc(i.plate)}</td><td>${oh2Date(i.delivered)}</td>
+        <td><a class="btn btn-t btn-icon !no-underline" href="?po=${i.po}" aria-label="ประเมิน ${i.po}" title="ประเมิน"><span class="ms">star</span></a></td></tr>`).join('');
+    }else{
+      $('thead').innerHTML='<tr><th class="w-[64px]">#</th><th>ใบสั่งจ้าง</th><th>ประเภทงาน</th><th>ผู้รับจ้าง</th><th>ทะเบียนรถ</th><th>วันที่ประเมิน</th><th>คะแนน (เต็ม 100)</th><th class="w-[60px]" aria-label="ดู"></th></tr>';
+      $('tbody').innerHTML=rows.map((i,k)=>{const e=E[i.po],t=sumOf(e.ans);return `<tr><td>${k+1}</td><td><div class="cell-key">${i.po}</div></td><td>${jobBadge(i.type)}</td><td>${oh2Esc(i.vendor)}</td><td>${oh2Esc(i.plate)}</td><td>${oh2Date(e.at)}</td>
+        <td>${t} / 100 · เฉลี่ย ${(t/20).toFixed(2)}</td>
+        <td><a class="btn btn-t btn-icon !no-underline" href="?po=${i.po}&view=1" aria-label="ดูผลประเมิน ${i.po}" title="ดูรายละเอียด"><span class="ms">quick_reference_all</span></a></td></tr>`}).join('');
+    }
+    $('wrap').classList.toggle('hidden',!rows.length);$('empty').classList.toggle('hidden',!!rows.length);
+    $('empty-t').textContent=tab==='pending'?'ไม่มีรายการที่ต้องประเมิน':'ยังไม่มีประวัติการประเมิน';
+    $('empty-s').textContent=tab==='pending'?'ใบสั่งจ้างงานซ่อม บำรุงรักษา และ Overhaul จะเข้ามาที่นี่เมื่อผู้รับจ้างส่งมอบงานครบแล้ว':'เมื่อประเมินผู้รับจ้างแล้ว ประวัติจะแสดงที่นี่';
+    $('empty-go').classList.toggle('hidden',tab!=='pending');
+  };
+  const setTab=t=>{tab=t;document.querySelectorAll('.tab-btn').forEach(x=>x.classList.toggle('on',x.dataset.tab===t));draw()};
+  document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
+  $('empty-go').addEventListener('click',()=>setTab('done'));
+  const saved=new URLSearchParams(location.search).get('saved');
+  if(saved){setTab('done');oh2Notify(`ประเมินผู้รับจ้างสำเร็จ (${saved})`);history.replaceState(null,'',location.pathname)}else draw();
+}
+
+/* ---------- มุมมองฟอร์ม/ดูผล ---------- */
+function renderForm(po,ro){
+  const it=ceItems().find(i=>i.po===po);
+  if(!it||(ro&&!E[po])){$('notfound').classList.remove('hidden');return}
+  if(!ro&&E[po]){location.replace(`?po=${po}&view=1`);return}
+  $('v-form').classList.remove('hidden');
+  $('crumb-sep').classList.remove('hidden');$('crumb').classList.remove('hidden');$('crumb').textContent=po;
+  $('title').textContent=ro?`หมายเลขใบสั่งจ้าง ${po}`:`ประเมินผู้รับจ้าง ${po}`;document.title=`${$('title').textContent} | Maintain-D (Mock)`;
+  const ev=ro?E[po]:{ans:{},remark:''};let dirty=false;
+  const base=fld('ผู้รับจ้าง',oh2Esc(it.vendor))+fld('ที่อยู่',oh2Esc(it.addr))+fld('ใบสั่งจ้างเลขที่',it.po)+fld('สัญญาเลขที่',oh2Esc(it.contract))+
+    fld('ประเภทงาน',CE_JOB[it.type][0])+fld('เลขที่อ้างอิง',oh2Esc(it.ref))+fld('ทะเบียนรถ',oh2Esc(it.plate))+fld('วันที่ส่งมอบงาน',oh2Date(it.delivered));
+  $('head').innerHTML=ro?base:base+fld('วันที่ประเมิน',oh2Date(new Date().toISOString().slice(0,10)))+fld('ผู้ตรวจประเมิน',oh2Esc(EVALUATOR));
+
+  const gsum=g=>g.q.reduce((x,_,i)=>x+((ev.ans[`${g.code}-${i+1}`]||{}).s||0),0);
+  const draw=()=>{
+    $('groups').innerHTML=CE_GROUPS.map((g,gi)=>{
+      if(ro) return `<section>
+        <div class="sect">${g.title} ${gsum(g)} / ${g.q.length*5}</div>
+        <div class="tblwrap mt-4"><table class="tbl striped"><thead><tr><th class="w-[80px]">ข้อ</th><th>รายการประเมิน</th><th class="w-[160px]">คะแนน</th></tr></thead><tbody>
+        ${g.q.map((t,i)=>{const a=ev.ans[`${g.code}-${i+1}`]||{};return `<tr><td>${i+1}</td><td>${oh2Esc(t)}</td><td>${a.s} · ${CE_LEVEL[a.s]}</td></tr>`}).join('')}
+        </tbody></table></div></section>`;
+      return `<section>
+        <div class="flex items-center gap-4"><span class="ficon"><span class="ms">${CE_GROUP_ICON[gi]}</span></span>
+          <div class="sect flex-1"><span>${g.title}</span><span class="badge b-brand">${gsum(g)}/${g.q.length*5}</span></div></div>
+        <div class="flex flex-col gap-6 mt-4 lg:pl-16">
+        ${g.q.map((t,i)=>{const id=`${g.code}-${i+1}`,a=ev.ans[id]||{};return `<div class="flex flex-col gap-3">
+          <div class="font-medium text-gray-700">${i+1}. ${oh2Esc(t)}</div>
+          <div class="flex flex-wrap items-center gap-6">${stars(a.s||0,{name:id})}</div>
+        </div>`}).join('')}</div></section>`}).join('');
+    if(!ro){
+      const n=answered(ev.ans),t=sumOf(ev.ans),av=n?(t/n).toFixed(2)+' จาก 5':'-';
+      $('score-kv').innerHTML=fld('ให้คะแนนแล้ว',`${n} / ${CE_QIDS.length} ข้อ`)+fld('คะแนนรวม',`${t} / 100`)+fld('ค่าเฉลี่ย',av)+fld('ผลระดับ','รอเคาะเกณฑ์');
+      $('save').disabled=n<CE_QIDS.length;
+      $('save').title=n<CE_QIDS.length?`กรุณาให้คะแนนให้ครบทุกข้อ (เหลือ ${CE_QIDS.length-n} ข้อ)`:'';
+    }
+  };
+  $('groups').addEventListener('click',e=>{
+    const s=e.target.closest('[data-q]');if(s){const a=ev.ans[s.dataset.q]=ev.ans[s.dataset.q]||{};a.s=+s.dataset.v;dirty=true;draw()}
+  });
+
+  if(ro){
+    ['bar','scale-sec','remark-sec','score-sec'].forEach(id=>$(id).classList.add('hidden'));
+    ['summary','ro-actions','ro-badge'].forEach(id=>$(id).classList.remove('hidden'));
+    const t=sumOf(ev.ans);
+    $('sum-kv').innerHTML=fld('คะแนนรวม',`${t} / 100`)+fld('ค่าเฉลี่ย',`${(t/20).toFixed(2)} จาก 5`)+fld('ผู้ตรวจประเมิน',oh2Esc(ev.by))+fld('วันที่ประเมิน',oh2Date(ev.at))+
+      CE_GROUPS.map(g=>fld(g.title,`${gsum(g)} / ${g.q.length*5}`)).join('')+fld('หมายเหตุ/ข้อเสนอแนะเพิ่มเติม',oh2Esc(ev.remark||'-'));
+    $('print').addEventListener('click',()=>oh2Notify('พิมพ์แบบประเมิน '+po,{sub:'ต้นแบบ — ยังไม่มีไฟล์ PDF จริง'}));
+  }else{
+    $('remark').addEventListener('input',()=>{ev.remark=$('remark').value;dirty=true});
+    const leave=e=>{if(!dirty)return;e.preventDefault();oh2Modal('m-leave',true)};
+    $('back').addEventListener('click',leave);$('crumb-list').addEventListener('click',leave);
+    $('cancel').addEventListener('click',e=>{if(dirty)leave(e);else location.href='contractor-eval.html'});
+    $('m-leave-go').addEventListener('click',()=>location.href='contractor-eval.html');
+    $('save').addEventListener('click',()=>{$('m-ok-s').textContent=`คุณต้องการบันทึกคะแนนการประเมินสำหรับ ${it.vendor} (${po}) ใช่หรือไม่? คะแนนรวม ${sumOf(ev.ans)} / 100 · บันทึกแล้วแก้ไขไม่ได้`;oh2Modal('m-ok',true)});
+    $('m-ok-go').addEventListener('click',()=>{
+      E[po]={at:new Date().toISOString().slice(0,10),by:EVALUATOR,ans:ev.ans,remark:ev.remark||''};ceSave(E);
+      location.href=`contractor-eval.html?saved=${po}`});
+  }
+  draw();
+}
+
+const q=new URLSearchParams(location.search);
+q.get('po')?renderForm(q.get('po'),q.get('view')==='1'):renderList();
+</script>
+</body>
+</html>
