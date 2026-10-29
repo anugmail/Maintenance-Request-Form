@@ -241,12 +241,13 @@ if (process.env.REF_STEPPER) {
 }
 /* EXISTING=1 (22 ต.ค. 2569): ไฟล์มีหน้า "🔧 Maintainance" ที่เจ้าของงานวางของไว้แล้ว ⇒ ปลั๊กอินต้องวางบนหน้านั้น ต่อใต้ของเดิม ไม่แตะของเดิม */
 if (process.env.EXISTING) {
-  const pg = new Node({ type: 'PAGE', name: '🔧 Maintainance ' }, root); root.children.push(pg);
+  const pg = new Node({ type: 'PAGE', name: process.env.EXISTING_PAGE || '🔧 Maintainance ' }, root); root.children.push(pg);   // EXISTING_PAGE= ชื่อหน้าของปลั๊กอินอื่น (ประเมินผู้รับจ้าง 22 ต.ค. 2569)
   const old = new Node({ type: 'FRAME', name: 'ของเดิมที่แก้มือ', w: 1440, h: 900 }, pg); old.y = 120; pg.children.push(old);
   global.__existing = { page: pg, node: old, x: old.x, y: old.y };
 }
 const MODE_CHECK = process.env.MODE === 'check';
 (async () => {
+  if (process.env.PRE_MODE) await uiHandler({ type: process.env.PRE_MODE, devices: 'desktop' });   // PRE_MODE=build-desktop MODE=build-journey = สร้างจอก่อนแล้วกด journey (ทดสอบภาพย่อ · 22 ต.ค. 2569)
   await uiHandler({ type: process.env.MODE === 'patch' ? 'build' : (process.env.MODE || 'build'), here: process.env.HERE === '1', pick: (process.env.PICK || '').split(',').filter(Boolean), devices: process.env.DEVICES || 'both' });   // PICK=7,13 DEVICES=desktop สำหรับ MODE=build-pick   // HERE=1 = ติ๊ก "วางต่อท้ายหน้าที่เปิดอยู่"
   if (process.env.MODE === 'patch') {   // สร้างแบบเก่า (CODE=ไฟล์เก่า) แล้วแก้เฉพาะส่วนด้วยโค้ดปัจจุบัน · PATCH=ชื่อข้อความ (ค่าเริ่ม patch-dividers)
     figma.currentPage.selection = [];
@@ -365,10 +366,25 @@ const MODE_CHECK = process.env.MODE === 'check';
     if (ex.node.parent !== ex.page || ex.node.x !== ex.x || ex.node.y !== ex.y) logs.push('⚠ ของเดิมบนหน้าถูกแตะ');
     const bottom = ex.y + ex.node.height, above = page.children.filter(n => n !== ex.node && n.y < bottom);
     if (above.length) logs.push('⚠ ของใหม่ทับของเดิม ' + above.length + ' ชิ้น: ' + above[0].name);
-    if (pages.length) logs.push('⚠ สร้างหน้าใหม่ทั้งที่มีหน้า Maintainance อยู่แล้ว');
+    if (pages.length) logs.push('⚠ สร้างหน้าใหม่ทั้งที่มีหน้า ' + global.__existing.page.name.trim() + ' อยู่แล้ว');
     console.log('วางต่อใต้ของเดิมบนหน้า "' + ex.page.name.trim() + '"' + (logs.slice(printed).some(l => /ของเดิม|หน้าที่มีอยู่|หน้าใหม่ทั้งที่/.test(l)) ? '' : ' ✓'));
   }
-  if (process.env.FLOW) {   // ผัง userflow ข้างจอ (22 ต.ค. 2569): ทุกบล็อก scenario มีผังซ้ายสุด · ป้ายรหัสจอชี้จอที่มีจริง · บล็อกไม่ทับกัน
+  if (process.env.MODE === 'build-journey') {   // journey แนวขวาง (22 ต.ค. 2569): ผังครบทุก scenario · เรียงซ้าย → ขวาไม่ทับกัน · ลูกศรมีหัว · ภาพย่อเมื่อมีจอ
+    const P = process.env.PREFIX || 'OH2';
+    const js = page.children.filter(n => new RegExp('^' + P + ' · journey userflow S\\d+$').test(n.name));
+    const arrows = page.children.filter(n => n.type === 'VECTOR' && n.name.indexOf(P + ' · journey S') === 0);
+    const want = +(process.env.JOURNEY_N || 18), wantL = +(process.env.JOURNEY_LINKS || 23);
+    if (js.length !== want) logs.push('⚠ journey มีผัง ' + js.length + ' แต่ต้องมี ' + want);
+    if (arrows.length !== wantL) logs.push('⚠ journey มีลูกศรเชื่อม ' + arrows.length + ' แต่ต้องมี ' + wantL);
+    for (let i = 0; i < js.length; i++) for (let k = i + 1; k < js.length; k++) { const a = js[i], b = js[k]; if (a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height) logs.push('⚠ ผัง ' + a.name + ' ทับ ' + b.name); }
+    if (arrows.some(v => !v.vectorNetwork || v.vectorNetwork.vertices[v.vectorNetwork.vertices.length - 1].strokeCap !== 'ARROW_LINES')) logs.push('⚠ ลูกศร journey ไม่มีหัวลูกศร');
+    const bar = page.children.find(n => n.name.indexOf(P + ' · Journey') === 0); if (!bar) logs.push('⚠ ไม่มีแถบ Journey');
+    const filled = js.reduce((t, f) => t + f.children.filter(n => n.name.indexOf('ภาพย่อ ') === 0 && (n.fills || []).some(x => x.type === 'IMAGE')).length, 0);
+    if (process.env.PRE_MODE && !filled) logs.push('⚠ สร้างจอก่อนแล้วแต่ไม่มีภาพย่อใน journey');
+    const order = js.slice().sort((a, b) => a.x - b.x).map(f => +f.name.split(' S').pop());
+    console.log('journey: ผัง ' + js.length + ' · ลูกศร ' + arrows.length + ' · ภาพย่อ ' + filled + ' · ลำดับซ้าย→ขวา ' + order.join(' '));
+  }
+  else if (process.env.FLOW) {   // ผัง userflow ข้างจอ (22 ต.ค. 2569): ทุกบล็อก scenario มีผังซ้ายสุด · ป้ายรหัสจอชี้จอที่มีจริง · บล็อกไม่ทับกัน
     const P = process.env.PREFIX || 'OH2';
     const bars = page.children.filter(n => new RegExp('^' + P + ' · [A-Z] S\\d+ ').test(n.name)).sort((a, b) => a.y - b.y);
     const flowsOn = page.children.filter(n => new RegExp('^' + P + ' · [A-Z] userflow S\\d+$').test(n.name));
