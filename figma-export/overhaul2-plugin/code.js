@@ -75,6 +75,13 @@ const KEYS = {
   "Text input": ["ee163422d91020d39770ea1da8b3b7029591f5c9", true],
   "Table header": ["4c2192715fe57cede2ebb34c09c440e480d326a8", true],
   "search-24-300-round": ["2686cdef98896d918405092d40c6c08ea6b6406a", false],
+  "paid-24-300-round": ["3f83a333cb688dd77b4f3702646969ca0591bd02", false],   // ไอคอนนำช่องประเภทงบประมาณ (29 ต.ค. 2569 · ไลบรารี component หน้า 21:163)
+  "account_balance-24-300-round": ["48c0cb9ff8ec9c4c6c9a2be469bcd54a12742890", false],   // ไอคอนนำช่องศูนย์ต้นทุน
+  "Toggle with description": ["3d62d45097c0e86cf73f73500c668e528a3fa734", false],   // สวิตช์ "มีการรับประกันงานซ่อม" หน้าปิดงาน (30 ต.ค. 2569)
+  "Date picker": ["aec5697b4e4cea8ef26f19f2803c0518c8d44498", true],   // S16 ปฏิทินเลือกวันตอบรับ (Single) · ช่วงวันที่สะดวกตอนปฏิเสธ (Dual) — key เดียวกับ plugin-lib/core.js
+  "Radio text card": ["e4510738f989bb24dbfb70fe6acfbf5705dcd60b", true],
+  "Checkbox with description": ["dfc323f6bb605f586c4928ecb08c77acfb241f53", false],   // S18 ฟอร์มส่งออก: เลือกหัวข้อที่รวมในไฟล์ (key เดียวกับปลั๊กอินบำรุงรักษา)
+  "download-24-300-round": ["336f0dff014c26316e0fa56959bc75f09f71531d", false],   // S18 ปุ่ม ส่งออก PDF / Excel (ไลบรารี component หน้า 21:163)   // S16 เลือก ตอบรับ / ปฏิเสธนัดหมาย (30 ต.ค. 2569 · ชุดเดียวกับปลั๊กอินบำรุงรักษา · งานซ่อมใช้ใน Select Repair Method)
   "Input dropdown": ["8cacaddc8403f16136cdd9eef163fd7dc5efe835", true],
   "filter_list-24-400-round": ["5e274a00f056dc8b4802e262a414017f4725f40c", false],
   "Badge outline with remove icon": ["a285551749934eae24da851c1acf1247dd5e7c99", true],
@@ -118,6 +125,7 @@ const DIRECT = ['Sidebar navigation', 'Header navigation', 'Page header', 'Secti
   'Modal', 'Notification', 'Notification card', 'Empty state/Search not found', 'Empty state/Data empty',
   'add-24-300-round', 'filter_list-24-400-round', 'more_horiz-20-400-round', 'quick_reference_all-24-300-round', 'stylus-24-300-round',
   'delete-24-300-round', 'search-24-300-round', 'keyboard_arrow_right-20-400-round', 'keyboard_arrow_left-20-400-round', 'cloud_upload-24-300-round',
+  'paid-24-300-round', 'account_balance-24-300-round', 'Toggle with description', 'Radio text card', 'Date picker', 'Checkbox with description', 'download-24-300-round',
   // mobile (19 ต.ค. 2569)
   'Mobile table', 'Mobile progress steps', 'Bottom sheet header', 'Bottom sheet footer', 'Modal header',
   // dashboard (21 ต.ค. 2569)
@@ -354,7 +362,11 @@ const VENDOR = ['บริษัท มิตซูบิชิ ฟูโซ่ 
 let MOB = false;
 const BP = () => (MOB ? 'Mobile' : 'Desktop');
 const VW = () => (MOB ? 402 : 1440), VH = () => (MOB ? 874 : 1024);
-const CONTENT_W = () => (MOB ? VW() - 32 : 1296);   // กว้างพื้นที่เนื้อหา (desktop = 1440 − sidebar − ขอบ · Metric 4 ใบพอดี 1296)
+const CONTENT_W = () => (MOB ? VW() - 32 : 1296);
+/* VIEW = จอดูอย่างเดียวของหน่วยงานเจ้าของรถ / กรย. (S17 · 30 ต.ค. 2569 · R30) — ปุ่มที่บทบาทนี้ไม่มีวันกดได้ ซ่อน ไม่ใช้ Disabled:
+   หลัก "ผู้ใช้จะกดได้สักวันไหม" ไม่ได้ = ซ่อน · ได้แต่ยังไม่ครบเงื่อนไข = Disabled + บอกเหตุผล (Smashing Hidden vs Disabled 2024 · NN/g · USWDS 2023)
+   ตามแบบ UI Release#2: หน้า User/Driver ของ Vehicle Breakdown ไม่มีปุ่มของ Admin · ตัวช่วยที่ดู VIEW: pageHead · section · sectionLabel · btnRow · tbl · job */
+let VIEW = false;   // กว้างพื้นที่เนื้อหา (desktop = 1440 − sidebar − ขอบ · Metric 4 ใบพอดี 1296)
 
 /* ---------- ตัวช่วยประกอบ ---------- */
 function btn(kind, label, o) {
@@ -387,7 +399,7 @@ function field(label, value, o) {   // Text input
   o = o || {};
   const st = o.state || (o.error ? 'Error' : value ? 'Filled' : 'Default');
   const n = inst('Text input', { State: st, Size: 'md' }, { 'Label text': label, Text: value || o.placeholder || '', Optional: !!o.optional,
-    Helper: !!o.error, 'Helper text': o.error || '', 'Info icon': false, 'Leading icon': !!o.lead, 'Trailing icon': false,
+    Helper: !!(o.error || o.helper), 'Helper text': o.error || o.helper || '', 'Info icon': false, 'Leading icon': !!o.lead, 'Trailing icon': false,
     'Show Placeholder': !value });
   if (o.lead) setProps(n, { 'Leading icon swap': icon(typeof o.lead === 'string' ? o.lead : 'search-24-300-round') });
   return syncLabel(n, label, o.optional);
@@ -402,11 +414,12 @@ function dropdown(label, value, o) {   // Input dropdown
 }
 function area(label, value, o) {
   o = o || {};
-  return syncLabel(inst('Text area', { State: value ? 'Filled' : 'Default', Size: 'md' }, { 'Label text': label, Text: value || o.placeholder || '',
-    Optional: !!o.optional, Helper: false, 'Info icon': false, 'Trailing icon': false, 'Show Placeholder': !value }), label, o.optional);
+  return syncLabel(inst('Text area', { State: o.error ? 'Error' : value ? 'Filled' : 'Default', Size: 'md' }, { 'Label text': label, Text: value || o.placeholder || '',
+    Optional: !!o.optional, Helper: !!o.error, 'Helper text': o.error || '', 'Info icon': false, 'Trailing icon': false, 'Show Placeholder': !value }), label, o.optional);
 }
 async function section(title, o) {   // Section header + ปุ่มขวา
   o = o || {};
+  if (VIEW) o = Object.assign({}, o, { buttons: [] });
   const sh = inst('Section header', { Breakpoint: BP() }, { Title: title, Badge: o.badge != null, 'Supporting text': false,
     Actions: !!(o.buttons && o.buttons.length), 'More actions': false });
   if (o.badge != null) { const b = find(sh, 'Badge outline'); if (b) setProps(b, { Text: String(o.badge) }); }
@@ -422,6 +435,7 @@ async function section(title, o) {   // Section header + ปุ่มขวา
    ไม่มี Badge ⇒ จำนวนต่อท้ายชื่อ "(n)" ตาม wireframe "รายการรถ (จำนวน xx)" · ปุ่ม: Primary action = Tertiary brand button · Secondary action = Tertiary button */
 async function sectionLabel(title, o) {
   o = o || {};
+  if (VIEW) o = Object.assign({}, o, { buttons: [] });
   const bs = o.buttons || [];
   const pri = bs.find(b => b.kind === 'Primary button'), sec = bs.find(b => b.kind !== 'Primary button');
   const sl = inst('Section label', { Breakpoint: BP() }, { Title: o.badge != null ? title + ' (' + o.badge + ')' : title, Supporting: false, 'Info icon': false,
@@ -603,6 +617,7 @@ async function probeTable() {
 async function tbl(cols, rows, o) {   // cols: [หัว, กว้าง, Style, เรียงได้] · ช่อง: ข้อความ | {text, sub} | {pill:[t,สี]} | {menu:1} | {icons:[..]} | {check:bool,text} | {progress, text}
   o = o || {};
   if (typeof cols === 'function') cols = cols();
+  if (VIEW) ({ cols, rows } = viewTable(cols, rows));
   if (MOB) {
     const m = mobileCards(cols, rows); await flushCellText();
     if (!o.pagination) return m;
@@ -630,6 +645,14 @@ async function tbl(cols, rows, o) {   // cols: [หัว, กว้าง, Styl
   await flushCellText();
   if (o.pagination) { const pg = find(t, 'Table pagination'); if (pg) await fillPagination(pg, o.pagination, o.pageOpt); }
   return t;
+}
+/* จอดูอย่างเดียว: ปุ่ม "…" (เมนู ดู/แก้ไข/ลบ) เหลือ "ดูรายละเอียด" อย่างเดียว ⇒ ไอคอนลูกศรขวาแบบตารางรายการรถ · ไอคอนแก้ไข/ลบ ตัด · คอลัมน์จัดการที่ว่างทั้งคอลัมน์ ตัดทิ้ง */
+const EDIT_ICONS = ['stylus-24-300-round', 'delete-24-300-round'];
+function viewTable(cols, rows) {
+  rows = rows.map(r => r.map(v => v && v.menu ? { icons: ['keyboard_arrow_right-20-400-round'] }
+    : v && v.icons ? (v.icons.filter(i => EDIT_ICONS.indexOf(i) < 0).length ? Object.assign({}, v, { icons: v.icons.filter(i => EDIT_ICONS.indexOf(i) < 0) }) : '') : v));
+  const keep = cols.map((c, ci) => !!c[0] || rows.some(r => r[ci] !== '' && r[ci] != null));
+  return { cols: cols.filter((_, ci) => keep[ci]), rows: rows.map(r => r.filter((_, ci) => keep[ci])) };
 }
 async function listCheck(title, items, ticked) {   // List with checkbox (หัว + รายการ)
   const l = inst('List with checkbox');
@@ -769,6 +792,7 @@ async function shell(name, o) {
 }
 /* Page header: crumbs = ลิงก์ระดับกลาง · ปุ่มขวาตาม o.primary (Actions ของ Page header) หรือ o.actions (กรอบแยก — ปุ่มลบสีแดงไม่มีใน Page header) */
 async function pageHead(o) {
+  if (VIEW) o = Object.assign({}, o, { primary: '', actions: o.viewActions || null });   // viewActions = ปุ่มที่ไม่แก้ข้อมูล (ส่งออก) คงไว้ให้บทบาทดูอย่างเดียว   // จอดูอย่างเดียว: ซ่อนปุ่มสร้าง/แก้ไข/ลบที่หัวหน้า
   const ph = inst('Page header', { Breakpoint: BP() }, { Title: o.title, 'Supporting text': false, Badge: !!o.badge,
     'Back action': !!o.back, 'Copy action': false, 'More actions': false, Actions: !!o.primary });
   const crumbs = [o.root || 'จัดการงาน Overhaul'].concat(o.crumbs || []);   // o.root = เมนูต้นทางอื่น (เช่น ข้อมูลยานพาหนะ ของหน้าประวัติการซ่อม)
@@ -781,9 +805,13 @@ async function pageHead(o) {
   if (crumbs.length === 1) { /* หน้าแรกของเมนู: ลิงก์ปัจจุบันคือชื่อเมนูเอง */ }
   if (o.badge) { const b = find(ph, 'Badge outline'); if (b) setProps(b, { Color: BADGE_OF[o.badge[1]] || 'Gray', Text: o.badge[0] }); }
   const acts = find(ph, 'Actions');
+  if (acts && VIEW) acts.visible = false;   // จอดูอย่างเดียว: ซ่อนชั้นปุ่มของ Page header ตรงๆ ด้วย (นอกจาก property Actions=false)
   if (acts && o.primary) for (const b of acts.children) {
     if (b.name !== 'Primary button') { b.visible = false; continue; }
-    setProps(b, { Text: o.primary, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') });
+    // o.primaryIcon === false = ปุ่มไม่มีไอคอน (S16 "ยืนยันตอบกลับ" ตามหน้าตอบรับนัดหมายของงานซ่อม) · o.primaryDisabled = ยังกดไม่ได้
+    if (o.primaryIcon === false) setProps(b, { Text: o.primary, 'Leading icon': false, 'Trailing icon': false });
+    else setProps(b, { Text: o.primary, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') });
+    if (o.primaryDisabled) setProps(b, { State: 'Disabled' });
   }
   if (!o.actions) return ph;
   if (MOB) {   // mobile: ปุ่มของหน้าเรียงใต้หัวหน้า แบ่งครึ่ง
@@ -802,6 +830,7 @@ async function pageHead(o) {
 }
 /* แถวปุ่มท้ายหน้า: 2 ปุ่มขึ้นไป = ปุ่มแรก (ย้อนกลับ/ยกเลิก) ชิดซ้าย ปุ่มสุดท้ายชิดขวา — เจ้าของงานแก้ในแบบจริง 19 ต.ค. 2569 */
 const btnRow = (list) => {
+  if (VIEW) return null;   // จอดูอย่างเดียว: ไม่มีแถวปุ่มท้ายหน้า (ย้อนกลับใช้ Back action ของ Page header)
   if (MOB) {   // mobile: ปุ่มเต็มแถว แบ่งเท่ากัน (แบบ Bottom sheet footer ของไลบรารี)
     const r = frame('Actions', 'HORIZONTAL', { gap: 16 });
     list.forEach(b => { const n = btn(b[0], b[1], Object.assign({}, b[2] || {}, { size: 'lg' })); r.appendChild(n); n.layoutGrow = 1; });
@@ -844,6 +873,18 @@ const NOTI_ITEMS = [
   ['Success', 'หน่วยงาน กฟฟ.กทม. ยืนยันรับรถ 8234 กค กทม วันที่ 9 พ.ย. 2569 เตรียมปิดงาน', 'เมื่อวาน 15:30', ''],
   ['Brand', 'แผน 123456 Overhaul ประจำปีงบ 2569 — รถเครน เสร็จสิ้น รถทั้ง 3 คันปิดงานแล้ว', '2 วันที่แล้ว', ''],
 ];
+/* S15 แจ้งเตือนประกันงานซ่อมใกล้หมด (30 ต.ค. 2569) — รถคันเดียวกับหน้ารายคันหลัง Overhaul (72-6648 สงขลา ปิดงาน 5 ต.ค. 2569 + 360 วัน = 30 ก.ย. 2570)
+   เตือน 31 ส.ค. 2570 (เหลือ 30 วัน) และ 15 ก.ย. 2570 (เหลือ 15 วัน) · กบค. (N14) บอกให้แจ้งหน่วยงาน · เจ้าของรถ (N15) บอกให้สำรวจรถเอง แล้วแจ้ง กบค. ถ้าพบปัญหา */
+const warnNoti = (to, left, when) => [left <= 15 ? 'Error' : 'Warning', to === 'kbk'
+  ? 'ประกันของผู้รับจ้าง รถ 72-6648 สงขลา (PO-690201 มิตซูบิชิ ฟูโซ่) จะหมดวันที่ 30 ก.ย. 2570 เหลือ ' + left + ' วัน กรุณาแจ้ง กฟฟ.สงขลา ให้สำรวจความสมบูรณ์ของรถ หากพบปัญหาให้นำรถเข้าเก็บงานก่อนหมดประกัน'
+  : 'ประกันงานซ่อม Overhaul รถ 72-6648 สงขลา จะหมดวันที่ 30 ก.ย. 2570 เหลือ ' + left + ' วัน กรุณาสำรวจความสมบูรณ์ของรถ หากพบปัญหาให้แจ้ง กบค. เพื่อนำรถเข้าเก็บงานกับผู้รับจ้างก่อนหมดประกัน', when, ''];
+const OWN_CLOSED = ['Success', 'งาน Overhaul รถ 72-6648 สงขลา ปิดงานแล้ว ดูรายการอะไหล่ที่ใช้ได้', '5 ต.ค. 2569', ''];   // N10 ฝั่งเจ้าของรถ
+const WARN_NOTI = {
+  kbk30: [warnNoti('kbk', 30, 'วันนี้ 09:00'), NOTI_ITEMS[3], NOTI_ITEMS[4]],
+  kbk15: [warnNoti('kbk', 15, 'วันนี้ 09:00'), NOTI_ITEMS[3], NOTI_ITEMS[4], warnNoti('kbk', 30, '15 วันที่แล้ว')],
+  own30: [warnNoti('own', 30, 'วันนี้ 09:00'), OWN_CLOSED],
+  own15: [warnNoti('own', 15, 'วันนี้ 09:00'), warnNoti('own', 30, '15 วันที่แล้ว'), OWN_CLOSED],
+};
 function fillNotiItem(r, it) {   // _Notification item base: จุดสถานะ + ข้อความ + เวลา + ปุ่มรองเมื่อผู้รับต้องทำต่อ
   setProps(r, { Text: it[1], 'Supporting text': it[2], 'Show status': true, 'Show button': !!it[3] });
   const st = r.findAll(x => x.type === 'INSTANCE' && x.name === 'Status')[0]; if (st) setProps(st, { State: it[0] });
@@ -1039,6 +1080,29 @@ async function listScreen(name, o) {
 /* แถววงเงิน + WBS: desktop วงเงินครึ่งซ้าย + กลุ่ม "WBS" ครึ่งขวา (3 ช่องเท่ากัน) — Figma รับ layoutGrow แค่ 0/1 จึงใช้ซ้อนกลุ่มแทนสัดส่วน 3:1:1:1
    · mobile เรียงลงต่อกันในแถวเดียว */
 function wbsRow(budget, w) { return MOB ? row('Row', [budget].concat(w)) : row('Row', [budget, row('WBS', w)]); }
+/* ประเภทงบประมาณ (เจ้าของงานสั่ง 29 ต.ค. 2569 "scen b อยากให้เลือกประเภทงบประมาณได้" + ภาพ 5 ประเภท · "เลือกงบประมาณอยู่ที่เดิม แต่ประเภทงบอยากให้ช่วยออกแบบ")
+   เคาะแล้ว: ประเภทงบแทนที่กลุ่ม WBS (ครึ่งขวาของแถววงเงิน) · ช่องตามประเภทเป็นแถวใหม่ใต้ครึ่งขวา (ครึ่งซ้ายเว้น) · ค่าตั้งต้นว่าง ยังไม่มีแถวช่องตามประเภท
+   · ประเภทงบบังคับ "กรุณาเลือกประเภทงบประมาณ" · ช่องตามประเภทไม่บังคับทุกช่อง "(ถ้ามี)" ไม่มี error · อื่น ๆ = Text input "หมายเหตุ"
+   · ศูนย์ต้นทุนของหน่วยงานต้นสังกัดระบบเติมให้ (Readonly) · mobile เรียงลงตาม row() */
+const BUDGET_TYPES = ['งบทำการ หน่วยงานต้นสังกัด', 'งบทำการ หน่วยงานอื่น', 'งบลงทุน งานก่อสร้าง', 'งบลงทุน งานบำรุงรักษา', 'อื่น ๆ (โปรดระบุในหมายเหตุ)'];
+const OWN_COST_CENTER = 'Z903021100  ผจค.กพค.-บริหาร';   // ตามภาพเจ้าของงาน (ศูนย์ต้นทุนของหน่วยงานผู้สร้างแผน)
+const COST_CENTERS = [['Z903021100', 'ผจค.กพค.-บริหาร'], ['Z903022100', 'ผจค.กพค.-ปฏิบัติการ'], ['Z903031100', 'ผบร.กบค.-บริหาร']];   // ข้อมูลจำลอง (รหัสจริงรอ vms)
+function budgetTypeFields(v) {   // ช่องตามประเภทงบ — ไม่บังคับทุกช่อง
+  const t = BUDGET_TYPES.indexOf(v.btype);
+  if (t === 0) return [field('ศูนย์ต้นทุน', OWN_COST_CENTER, { state: 'Readonly', lead: 'account_balance-24-300-round' })];
+  if (t === 1) return [dropdown('ศูนย์ต้นทุน', v.cc || '', { placeholder: 'เลือกศูนย์ต้นทุน', optional: true, lead: 'account_balance-24-300-round', state: v.ccOpen ? 'Focused' : undefined })];
+  if (t === 2) return [field('เลข WBS', v.wbs, { placeholder: 'ระบุเลข WBS', optional: true }),
+    field('เลขโครงข่าย', v.net, { placeholder: 'ระบุเลขโครงข่าย', optional: true }), field('เลขกิจกรรม', v.act, { placeholder: 'ระบุเลขกิจกรรม', optional: true })];
+  if (t === 3) return [field('เลขที่ใบสั่ง', v.order, { placeholder: 'ระบุเลขที่ใบสั่ง', optional: true })];
+  if (t === 4) return [field('หมายเหตุ', v.note, { placeholder: 'ระบุหมายเหตุ', optional: true })];
+  return [];
+}
+function budgetRows(budget, type, v) {   // แถววงเงิน + ประเภทงบ · แถวช่องตามประเภท (ครึ่งขวา)
+  const dep = budgetTypeFields(v);
+  const rows = [row('Row', [budget, type])];
+  if (dep.length) rows.push(MOB ? row('Row', dep) : row('Row', [frame('Spacer', 'VERTICAL'), row('WBS', dep)]));
+  return rows;
+}
 async function planForm(name, o) {
   const edit = !!o.edit, v = o.values || {};
   const no = o.planNo || '123456';   // บล็อก C (22 ต.ค.): แก้ไขแผนที่เพิ่งสร้างในบล็อก B = 123461
@@ -1048,10 +1112,10 @@ async function planForm(name, o) {
     // วงเงินอนุมัติ + WBS 3 ช่อง แถวเดียว (เจ้าของงานส่งตัวอย่าง 19 ต.ค. 2569): วงเงินครึ่งซ้าย · WBS/โครงข่าย/กิจกรรม แบ่งครึ่งขวา
     // บล็อก B ฉบับเจ้าของงาน 22 ต.ค. 2569 (component-rules §4.2.1): placeholder "ระบุ…/เลือก…" · ปีงบไม่มีค่าเริ่ม + error "กรุณาเลือกปีงบประมาณ" · error วงเงิน "กรุณาระบุวงเงินอนุมัติ"
     col('Section', [await section('ข้อมูลแผน'), row('Row', [field('ชื่อแผน', v.name, { placeholder: 'ระบุชื่อแผน', error: E('n', 'กรุณาระบุชื่อแผน') }),
-      dropdown('ประจำปีงบประมาณ', v.year || '', { placeholder: 'เลือกปีงบประมาณ', error: E('y', 'กรุณาเลือกปีงบประมาณ') })]), wbsRow(field('วงเงินอนุมัติ (บาท)', v.budget, { placeholder: 'ระบุวงเงินอนุมัติ', error: E('b', 'กรุณาระบุวงเงินอนุมัติ') }), [
-      // 3 ช่อง WBS ไม่บังคับ "(ถ้ามี)" — เจ้าของงานเคาะ 19 ต.ค. 2569 ⇒ ไม่มี error ตอนกดบันทึก
-      field('เลข WBS', v.wbs, { placeholder: 'ระบุเลข WBS', optional: true }),
-      field('เลขโครงข่าย', v.net, { placeholder: 'ระบุเลขโครงข่าย', optional: true }), field('เลขกิจกรรม', v.act, { placeholder: 'ระบุเลขกิจกรรม', optional: true })])], 16),
+      dropdown('ประจำปีงบประมาณ', v.year || '', { placeholder: 'เลือกปีงบประมาณ', error: E('y', 'กรุณาเลือกปีงบประมาณ') })])].concat(
+      // 29 ต.ค. 2569: กลุ่ม WBS → ประเภทงบประมาณ + ช่องตามประเภท (budgetRows) · 3 ช่อง WBS ยังไม่บังคับ "(ถ้ามี)" (เคาะ 19 ต.ค. + 29 ต.ค. "ไม่บังคับเลย")
+      budgetRows(field('วงเงินอนุมัติ (บาท)', v.budget, { placeholder: 'ระบุวงเงินอนุมัติ', error: E('b', 'กรุณาระบุวงเงินอนุมัติ') }),
+        dropdown('ประเภทงบประมาณ', v.btype || '', { placeholder: 'เลือกประเภทงบประมาณ', lead: 'paid-24-300-round', error: E('t', 'กรุณาเลือกประเภทงบประมาณ'), state: o.typeOpen ? 'Focused' : undefined }), v)), 16),
     // กล่องอัปโหลด 1 คอลัมน์ (เจ้าของงานเคาะ 19 ต.ค. 2569)
     // เอกสาร: จอเจ้าของงานไม่มี error ที่ช่องเอกสาร (B.2 มีแค่ ชื่อแผน · ปีงบ · วงเงิน) · ป้าย "เอกสารอื่น ๆ" · คำใต้กล่อง "PDF, PNG, or JPG (สูงสุด 10 ไฟล์)"
     col('Section', [await section('เอกสาร'), await upload('หนังสืออนุมัติหลักการ', v.approve || [], { hint: DOC_HINT }),
@@ -1062,10 +1126,13 @@ async function planForm(name, o) {
   return scr;
 }
 const DOC_HINT = 'PDF, PNG, or JPG (สูงสุด 10 ไฟล์)';
-const FILLED = { name: 'Overhaul ประจำปีงบ 2570 — รถเจาะหลุม', year: '2571', budget: '5,000,000', wbs: 'C-70-OH-0003', net: '60002103', act: '0010',   // ค่าตามจอ B.3 ของเจ้าของงาน
+const BUDGET_SAMPLE = [{}, {}, {}, { order: '4100012345' }, { note: 'งบกลางเหลือจ่ายปี 2569 ตามบันทึกอนุมัติ' }];   // ข้อมูลจำลองช่องตามประเภท
+const budgetFilled = (t, x) => Object.assign({}, FILLED, { btype: BUDGET_TYPES[t], wbs: '', net: '', act: '' }, BUDGET_SAMPLE[t], x || {});
+const budgetTypeAnchor = (s) => { const dd = s.findAll(n => n.type === 'INSTANCE' && n.name === 'Input dropdown')[1]; return dd && (find(dd, 'Container') || dd); };   // [0] ปีงบ · [1] ประเภทงบ · [2] ศูนย์ต้นทุน
+const FILLED = { name: 'Overhaul ประจำปีงบ 2570 — รถเจาะหลุม', year: '2571', budget: '5,000,000', btype: BUDGET_TYPES[2], wbs: 'C-70-OH-0003', net: '60002103', act: '0010',   // ค่าตามจอ B.3 ของเจ้าของงาน
   approve: [{ name: 'Document.pdf', size: '200 KB' }], budgetDoc: [{ name: 'Image_เอกสารอนุมัติงบ01.jpg', size: '10 KB' }, { name: 'Image_เอกสารอนุมัติงบ02.png', size: '10 KB' }],
   other: [{ name: 'Image001.jpg', size: '200 KB' }, { name: 'Image002.png', size: '200 KB' }] };
-const EDIT = { name: 'Overhaul ประจำปีงบ 2569 — รถเครน', year: '2569', budget: '10,000,000', wbs: 'C-69-OH-0101', net: '60001234', act: '0010',
+const EDIT = { name: 'Overhaul ประจำปีงบ 2569 — รถเครน', year: '2569', budget: '10,000,000', btype: BUDGET_TYPES[2], wbs: 'C-69-OH-0101', net: '60001234', act: '0010',
   approve: [{ name: 'หนังสืออนุมัติหลักการ-123456.pdf', size: '822 KB' }], budgetDoc: [{ name: 'เอกสารอนุมัติงบ-123456.pdf', size: '601 KB' }], other: [] };
 
 /* ---------- หน้า 3 รายละเอียดแผน ---------- */
@@ -1092,22 +1159,23 @@ async function planDetail(name, o) {
   const poSec = col('Section', [await sectionLabel('Purchase Order', { badge: pos.length, buttons: pos.length ? [{ kind: 'Primary button', text: 'PO', icon: 'add-24-300-round' }] : [] })], 16);
   if (pos.length) add(poSec, await tbl(PO_COLS, pos.map(poRow)), 'h');
   else { const es = inst('Empty state/Data empty'); add(poSec, es, 'h'); await text(es, 'Text', 'ยังไม่มี Purchase Order'); await text(es, 'Supporting text', 'เพิ่ม PO เพื่อเลือกรถที่จะเข้า Overhaul และเริ่มงานรายคัน');
-    const s2 = find(es, 'Secondary button'); if (s2) s2.visible = false; const pb = find(es, 'Primary button'); if (pb) setProps(pb, { Text: 'สร้าง Purchase Order' }); }
+    const s2 = find(es, 'Secondary button'); if (s2) s2.visible = false; const pb = find(es, 'Primary button'); if (pb) setProps(pb, { Text: o.poBtn || 'สร้าง Purchase Order' }); }   // o.poBtn = ตามจอเจ้าของงาน (E.1 29 ต.ค. 2569 "เพิ่ม Purchase Order")
   sections.push(poSec);
   // อะไหล่ที่ใช้ (จอ B.7 ของเจ้าของงาน): หัว "อะไหล่ที่ใช้" ไม่มีปุ่มที่หัว · ปุ่ม "เบิกอะไหล่" ใน Empty state (ปุ่มรอง — ปุ่มหลักของหน้าเป็นของ PO)
   const partSec = col('Section', [await sectionLabel('อะไหล่ที่ใช้')], 16);
   const es2 = inst('Empty state/Data empty'); add(partSec, es2, 'h'); await text(es2, 'Text', 'ยังไม่มีรายการเบิกอะไหล่'); await text(es2, 'Supporting text', 'ส่วนนี้จองไว้ตาม userflow — ขั้นตอนเบิกอะไหล่ยังไม่ได้ออกแบบ');
-  const s3 = find(es2, 'Secondary button'); if (s3) setProps(s3, { Text: 'เบิกอะไหล่' }); const pb2 = find(es2, 'Primary button'); if (pb2) pb2.visible = false;
+  const s3 = find(es2, 'Secondary button'); if (s3) { setProps(s3, { Text: 'เบิกอะไหล่' }); if (VIEW) s3.visible = false; } const pb2 = find(es2, 'Primary button'); if (pb2) pb2.visible = false;
   sections.push(partSec);
   add(page, col('Content', sections, 32), 'h');
   return scr;
 }
 
 /* ---------- หน้า 4 ฟอร์ม PO ---------- */
+const PO_FILE_HINT = 'PDF, PNG, or JPG ขนาดไม่เกิน 10 MB ต่อหนึ่งไฟล์';   // คำใต้กล่องอัปโหลดตาม E · F ฉบับเจ้าของงาน 29 ต.ค. 2569
 async function poForm(name, o) {
   o = o || {};
   const edit = !!o.edit;
-  const { scr, page } = await shell(name, { title: edit ? 'แก้ไข PO-690101' : 'เพิ่ม Purchase Order', back: true, crumbs: ['แผน ' + (edit ? '123456' : '123458'), edit ? 'แก้ไข PO-690101' : 'เพิ่ม Purchase Order'] });
+  const { scr, page } = await shell(name, { title: edit ? 'แก้ไข PO-690101' : 'เพิ่ม Purchase Order', back: true, crumbs: ['แผน 123458', edit ? 'แก้ไข PO-690101' : 'เพิ่ม Purchase Order'] });
   const sel = o.sel || [];
   const left = ALL_CARS.filter((_, i) => sel.indexOf(i) < 0), right = ALL_CARS.filter((_, i) => sel.indexOf(i) >= 0);
   const vendorF = dropdown('ศูนย์บริการ/อู่', o.vendor || '', { placeholder: 'ค้นหาชื่อศูนย์บริการ/อู่', lead: 'search-24-300-round', state: o.vendorOpen ? 'Focused' : undefined, error: o.errors ? 'กรุณาเลือกศูนย์บริการ/อู่' : '' });
@@ -1115,7 +1183,7 @@ async function poForm(name, o) {
      → รถที่เลือกแล้วเป็นชิป Badge outline with remove icon ใต้ช่อง (กด × เอาออก) · ไม่มี dual list เพิ่ม/นำออก · ตัวกรอง หน่วยงาน/เขต · ประเภทรถ ยังไม่ใส่ (รอเคาะ)
      mobile: ยังไม่ทำ — คง dual list แบบเดิม (ถ้าทำมือถือให้อ่านจาก desktop) */
   let carSec;
-  const carF = MOB ? null : dropdown('เลือกรถ', o.query || '', { placeholder: 'ค้นหาทะเบียน, จังหวัด', lead: 'search-24-300-round', state: o.carOpen ? 'Focused' : undefined });
+  const carF = MOB ? null : dropdown('เลือกรถ', o.query || '', { placeholder: 'ค้นหาทะเบียน, จังหวัด', lead: 'search-24-300-round', state: o.carOpen ? 'Focused' : undefined, error: o.errors ? 'กรุณาเลือกรถ' : '' });   // error ตาม E.3 ฉบับเจ้าของงาน 29 ต.ค. 2569
   if (MOB) {
     const mid = row('Actions', [btn('Secondary button', 'เพิ่ม', { disabled: !(o.tick && o.tick.length) }), btn('Secondary button', 'นำออก', { disabled: true })], { gap: 12, keep: true });
     mid.layoutGrow = 0;
@@ -1135,12 +1203,12 @@ async function poForm(name, o) {
   add(page, col('Content', [
     col('Section', [await section('รายละเอียด Purchase Order'), row('Row', [field('ชื่อ Purchase Order', o.name, { placeholder: 'เช่น ซ่อมระบบแอร์', error: o.errors ? 'กรุณาระบุชื่อ Purchase Order' : '' }), vendorF])], 16),
     carSec,
-    col('Section', [await section('เอกสาร'), await upload('ใบสั่งจ้าง', o.order || [], { error: o.errors ? 'กรุณาแนบใบสั่งจ้าง' : '' }), await upload('อื่นๆ', [], { optional: true })], 16),
+    col('Section', [await section('เอกสาร'), await upload('ใบสั่งจ้าง', o.order || [], { error: o.errors ? 'กรุณาแนบใบสั่งจ้าง' : '', hint: PO_FILE_HINT }), await upload('เอกสารอื่น ๆ', [], { optional: true, hint: PO_FILE_HINT })], 16),   // ป้าย/คำใต้กล่องตาม E · F ฉบับเจ้าของงาน 29 ต.ค. 2569
     btnRow(edit ? [['Secondary button', 'ยกเลิก', { size: 'lg' }], ['Primary button', 'บันทึก', { size: 'lg' }]] : [['Primary button', 'บันทึก', { size: 'lg' }]]),
   ], 32), 'h');
   if (o.vendorOpen) comboAt(scr, vendorF.findOne(n => n.name === 'Container') || vendorF, [['บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', '02-111-2202 · เขตพระนคร กรุงเทพฯ']]);
   if (o.carOpen && carF) {   // รายการรถที่ตรงคำค้น (ทะเบียน/จังหวัด) · คันที่เลือกแล้วติ๊ก Selected · แสดงได้เท่าช่องของ component Dropdown list
-    const cands = ALL_CARS.map((c, i) => [c, i]).filter(([c]) => !o.query || c[0].indexOf(o.query) >= 0);
+    const q = (o.query || '').replace(/[^0-9ก-๙a-z]/gi, ''), cands = ALL_CARS.map((c, i) => [c, i]).filter(([c]) => !q || c[0].replace(/[^0-9ก-๙a-z]/gi, '').indexOf(q) >= 0);   // ไม่สนขีด: พิมพ์ "701" เจอ 70-1123 (E.5 ฉบับเจ้าของงาน)
     comboAt(scr, carF.findOne(n => n.name === 'Container') || carF, cands.map(([c, i]) => [c[0], '', sel.indexOf(i) >= 0]));
   }
   return scr;
@@ -1148,24 +1216,26 @@ async function poForm(name, o) {
 
 /* ---------- หน้า 5 รายละเอียด PO ---------- */
 const CAR_COLS = [['ทะเบียน', 140, 'Lead text'], ['ยี่ห้อ/รุ่น · ประเภท', 0], ['หน่วยงานเจ้าของรถ', 130], ['เลขไมล์ (กม.)', 110], ['อายุการใช้งาน', 100], ['สถานะงาน', 210, 'Badge'], ['รายละเอียดตามสถานะ', 210], ['', 72]];
-const carRow = (c) => [c[0], c[1], c[2], c[3], c[4] + ' ปี', { pill: JOB[c[5]] }, c[6] ? { text: c[6], sub: c[7] || '' } : '—', { icons: ['keyboard_arrow_right-20-400-round'] }];
-async function poDetail(name) {
+const carRow = (c) => [c[0], c[1], c[2], c[3], c[4] + ' ปี', { pill: JOB[c[5]] }, c[6] ? { text: c[6], sub: c[7] || '' } : '—', { icons: c[5] === 'V11' ? ['quick_reference_all-24-300-round', 'keyboard_arrow_right-20-400-round'] : ['keyboard_arrow_right-20-400-round'] }];   // ปิดงานแล้ว: ดูสรุปรายคัน (S18) · เปิดหน้างาน
+async function poDetail(name, o) {
+  o = o || {};
   const { scr, page } = await shell(name, { title: 'หมายเลข PO-690101', back: true, crumbs: ['แผน 123456', 'PO-690101'],
     actions: [['Secondary danger button', 'ลบ PO', 'delete-24-300-round'], ['Secondary button', 'แก้ไข', 'stylus-24-300-round']] });
   add(page, col('Content', [
     col('Section', [await sectionLabel('รายละเอียด Purchase Order'), kv([['ชื่อแผน', PLANS[4][1]], ['ชื่อ Purchase Order', 'ซ่อมระบบเครื่องยนต์'], ['ศูนย์บริการ/อู่', 'บริษัท ฮีโน่ มอเตอร์ส เซลส์ จำกัด'], ['เบอร์โทรอู่', '02-111-2201'], ['ที่อยู่', 'เขตบางนา กรุงเทพฯ']])], 16),
     col('Section', [await sectionLabel('เอกสาร'), row('Row', [await upload('ใบสั่งจ้าง', [{ name: 'ใบสั่งจ้าง-PO-690101.pdf', size: '500 KB' }], { readonly: true }), frame('Spacer', 'VERTICAL')])], 16),
     // หน้า 3 CF (21 ต.ค. 2569): + หน่วยงานเจ้าของรถ · วันนัด/วันที่อยู่อู่/ประกัน ยุบเป็นคอลัมน์เดียวถัดจากสถานะ (Badge cell ไม่มีบรรทัดรอง) · ปุ่ม "หน้างาน" เป็นไอคอน · 8 คอลัมน์พอดี Table
-    col('Section', [await sectionLabel('รายการรถ', { badge: CARS.length }), await tbl(CAR_COLS, CARS.map(carRow))], 16),
+    col('Section', [await sectionLabel('รายการรถ', { badge: (o.cars || CARS).length }), await tbl(CAR_COLS, (o.cars || CARS).map(carRow))], 16),   // o.cars = เฉพาะรถของหน่วยงาน (S17)
   ], 32), 'h');
   return scr;
 }
 
 /* ---------- หน้า 6 หน้างานรายคัน ---------- */
-async function job(name, stage, build) {
-  const n = +stage.slice(1), cur = { V1: 1, V2: 1, V3: 1, V4: 2, V5: 3, V6: 4, V7: 5, V8: 5, V9: 5, V10: 6, V11: 6 }[stage];
-  const { scr, page } = await shell(name, { title: '72-6648 สงขลา', back: true, crumbs: ['แผน 123460', 'PO-700201', '72-6648 สงขลา'], badge: JOB[stage] });
+async function job(name, stage, build, step, head) {   // head = ตัวเลือกเพิ่มของหัวหน้า เช่น actions (S18 ปุ่ม "ดูสรุปรายคัน")   // step = ขั้นที่เปิดดู (จอดูย้อนหลังของ S17 · ไม่ส่ง = ขั้นตามสถานะ)
+  const n = +stage.slice(1), cur = step || { V1: 1, V2: 1, V3: 1, V4: 2, V5: 3, V6: 4, V7: 5, V8: 5, V9: 5, V10: 6, V11: 6 }[stage];
+  const { scr, page } = await shell(name, Object.assign({ title: '72-6648 สงขลา', back: true, crumbs: ['แผน 123460', 'PO-700201', '72-6648 สงขลา'], badge: JOB[stage] }, head || {}));
   const content = col('Content', [
+    VIEW ? alertBox('Info', VIEW_NOTE[0], VIEW_NOTE[1]) : null,   // S17 จอดูอย่างเดียว: บอกทางออกเมื่อข้อมูลไม่ถูกต้อง (ปุ่มแก้ไขถูกซ่อน)
     // กล่องข้อมูลยานพาหนะ 6 ช่อง (ภาพที่เจ้าของงานส่ง 21 ต.ค. 2569 ค่ำ: ไม่มี Purchase Order / ศูนย์บริการ/อู่ — อู่ไปอยู่ในกล่องของส่วนนัดหมาย)
     col('Section', [await section('ข้อมูลยานพาหนะ'), kv([['ทะเบียน', '72-6648 สงขลา'], ['ยี่ห้อ/รุ่น', 'HINO FG1J'], ['ประเภท', 'รถกระเช้า'], ['อายุการใช้งาน', '16 ปี'],
       ['เลขไมล์สะสม', '221,300 กม.'], ['ชั่วโมงสะสม', '13,300 ชม.']])], 16),
@@ -1253,6 +1323,230 @@ async function apptRejected(ret, d1, d2) {
     alertBox('Warning', 'หน่วยงานปฏิเสธนัดหมาย', 'หมายเหตุ: รถติดภารกิจซ่อมบำรุงสายส่ง ขอเลื่อนเป็นสัปดาห์ถัดไป'), apptKv(ret, d1, d2)], 16),
     btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Secondary button', 'แก้ไขนัดหมาย', { size: 'lg' }]])];
 }
+/* ---------- S16 หน่วยงานเจ้าของรถ ตอบกลับนัดหมาย (บล็อก Q · 30 ต.ค. 2569) ----------
+   เจ้าของงาน: "ออกแบบ ตอบรับนัดหมายของงาน Overhaul ให้สอดคล้องกับงานแจ้งซ่อม เพิ่มเป็นอีก scen โดยแยกเป็น ตอบรับ และ ปฏิสเธ" → เคาะ "ตามที่แนะนำ"
+   ต้นแบบ = หน้าตอบรับนัดหมายของงานซ่อม (ไฟล์ Maintain-D section "Accepting appointments" · ข้อความดิบ figma-ref/repair-ตอบรับนัดหมาย-2569-10-30.txt):
+   Page header ปุ่ม "ยืนยันตอบกลับ" · 2 คอลัมน์ ซ้าย 746 (ตอบกลับ + ข้อมูลการนัดหมาย + รายละเอียด) ขวา 526 (ยานพาหนะ) · Section label ทุกหัวข้อ
+   · Modal Centered image "ยืนยันการตอบกลับ" ปุ่ม ไม่ใช่ตอนนี้ / ยืนยัน · toast "ตอบกลับสำเร็จ" + บรรทัดรอง
+   ต่างจากงานซ่อม: ไม่มีรูปแบบการนัดหมายให้เลือก (เข้าอู่ตาม PO) ⇒ การ์ด Radio text card 2 ใบ ตอบรับ / ปฏิเสธนัดหมาย แทน
+   · ตอบรับ = วันนำรถเข้า/วันรับรถ **บังคับ เลือกวันเดียวในช่วงที่ กบค. เสนอ** (Date picker Single) + คนนำส่ง/คนรับรถ (ถ้ามี · ค้นชื่อ) + เบอร์เติมอัตโนมัติ
+   · ปฏิเสธ = ช่วงวันที่สะดวก (ถ้ามี · Date picker Dual) + เหตุผลที่ปฏิเสธ บังคับ — เจ้าของงานเคาะ 30 ต.ค. 2569 "ต้องเลือกวันใดวันนึงถ้าตอบรับ" · ปฏิเสธ "ช่วงวัน ไม่บังคับ"
+   · ครอบทั้งนัดเข้าอู่ (S7) และนัดรับรถคืน (S13) */
+const S16_APPT = {
+  in: { d1: '22/10/2569', d2: '24/10/2569', when: 'ช่วงวันนำรถเข้า', date: 'วันนำรถเข้า', person: 'ผู้นำส่งรถ', phone: 'เบอร์โทรศัพท์ผู้นำส่งรถ', step: 'นัดเอารถเข้าอู่',
+    yes: 'เลือกวันนำรถเข้าอู่จากช่วงวันที่ กบค. เสนอ', wait: 'V2', ok: 'V4', no: 'V3', pick: '23/10/2569', who: ['นายสมชาย ใจดี', 'พนักงานขับรถ กฟฟ.สงขลา', '081-234-5678'],
+    reason: REJECT_NOTE, want: ['27/10/2569', '31/10/2569'] },
+  out: { d1: '08/11/2569', d2: '09/11/2569', when: 'ช่วงวันนัดรับรถ', date: 'วันรับรถ', person: 'ผู้รับรถ', phone: 'เบอร์โทรศัพท์ผู้รับรถ', step: 'นัดรับรถ',
+    yes: 'เลือกวันไปรับรถที่อู่จากช่วงวันที่ กบค. เสนอ', wait: 'V8', ok: 'V10', no: 'V9', pick: '09/11/2569', who: ['นายประสิทธิ์ ตรวจสอบดี', 'ช่างคุมรถ กฟฟ.สงขลา', '089-765-4321'],
+    reason: 'ไม่มีพนักงานขับรถไปรับรถในวันดังกล่าว', want: ['15/11/2569', '16/11/2569'] },
+};
+const S16_PEOPLE = [['นายสมชาย ใจดี', '510234 · พนักงานขับรถ กฟฟ.สงขลา', true], ['นายสมศักดิ์ รักษ์ดี', '510871 · พนักงานขับรถ กฟฟ.สงขลา'], ['นางสาวสมใจ ศรีสุข', '512077 · ผปบ. กฟฟ.สงขลา']];
+const REPLY_CONFIRM = { title: 'ยืนยันการตอบกลับ', sub: 'คุณต้องการยืนยันการตอบกลับหรือไม่ ?', cancel: 'ไม่ใช่ตอนนี้', ok: 'ยืนยัน' };   // คำตาม Modal ของงานซ่อม
+const REPLY_TOAST = (yes) => ({ title: 'ตอบกลับสำเร็จ', sub: yes ? 'ส่งตอบรับนัดหมายรถ 72-6648 สงขลา ให้ กบค. เรียบร้อยแล้ว' : 'ส่งเหตุผลการปฏิเสธนัดหมายให้ กบค. เรียบร้อยแล้ว' });
+let REPLY_ANCHOR = null, REPLY_DATE = null;   // ช่องค้นชื่อ / ช่องวันของจอล่าสุด — ใช้วาง Dropdown list (comboAt) และ Date picker
+/* o = { stage: 'wait'|'ok'|'no', pick: 0 ตอบรับ | 1 ปฏิเสธ, date: เลือกวันแล้ว, who: เลือกคนแล้ว, query, open, want: กรอกช่วงวันที่สะดวก, reason, errors } */
+async function reply(name, k, o) {
+  o = o || {};
+  const A = S16_APPT[k], stage = o.stage || 'wait', done = stage !== 'wait';
+  const { scr, page } = await shell(name, { title: '72-6648 สงขลา', back: true, crumbs: ['แผน 123460', 'PO-700201', '72-6648 สงขลา'], badge: JOB[A[stage]],
+    primary: done ? '' : 'ยืนยันตอบกลับ', primaryIcon: false, primaryDisabled: o.pick == null });
+  const left = [];
+  if (!done) {
+    const cards = MOB ? col('Radio', [], 12) : row('Radio', [], { gap: 16 });
+    [['ตอบรับนัดหมาย', A.yes], ['ปฏิเสธนัดหมาย', 'แจ้งเหตุผลและช่วงวันที่สะดวกให้ กบค. นัดหมายใหม่']].forEach(([t, sub], i) => {
+      const c = inst('Radio text card', { State: 'Default', Selected: o.pick === i ? 'True' : 'False' }, { Text: t, 'Supporting text': sub, Supporting: true });
+      if (MOB) add(cards, c, 'h'); else { cards.appendChild(c); c.layoutGrow = 1; }
+    });
+    const kids = [await sectionLabel('ตอบกลับนัดหมาย'), cards];
+    if (o.pick === 0) {
+      REPLY_DATE = field(A.date, o.date ? A.pick : '', { placeholder: 'เลือก' + A.date, state: o.dateOpen ? 'Focused' : undefined,
+        error: o.errors && !o.date ? 'กรุณาเลือก' + A.date : '', helper: 'เลือกได้ 1 วัน ระหว่าง ' + A.d1 + ' - ' + A.d2 });
+      kids.push(REPLY_DATE);
+      REPLY_ANCHOR = dropdown(A.person, o.query || (o.who ? A.who[0] : ''), { optional: true, placeholder: 'ค้นหาชื่อ-นามสกุล, รหัสพนักงาน', lead: 'search-24-300-round', state: o.open ? 'Focused' : undefined });
+      kids.push(row('Row', [REPLY_ANCHOR, field(A.phone, o.who ? A.who[2] : '', { state: 'Readonly', optional: true, placeholder: 'แสดงเมื่อเลือก' + A.person })]));
+    }
+    if (o.pick === 1) {
+      REPLY_DATE = field('ช่วงวันที่สะดวก', o.want ? A.want.join(' - ') : '', { optional: true, placeholder: 'เลือกวันที่เริ่มต้น - วันที่สิ้นสุด', state: o.dateOpen ? 'Focused' : undefined });
+      kids.push(REPLY_DATE);
+      kids.push(area('เหตุผลที่ปฏิเสธ', o.reason || '', { placeholder: 'ระบุเหตุผลที่ปฏิเสธ', error: o.errors ? 'กรุณาระบุเหตุผลที่ปฏิเสธ' : '' }));
+    }
+    left.push(col('Section', kids, 16));
+  } else {
+    const pairs = stage === 'ok' ? [['ผลการตอบกลับ', 'ตอบรับนัดหมาย'], [A.date, A.pick], [A.person, A.who[0]], [A.phone, A.who[2]]]
+      : [['ผลการตอบกลับ', 'ปฏิเสธนัดหมาย'], ['ช่วงวันที่สะดวก', A.want.join(' - ')], ['เหตุผลที่ปฏิเสธ', A.reason]];
+    left.push(col('Section', [await sectionLabel('ผลการตอบกลับ'), kv(pairs)], 16));
+  }
+  left.push(col('Section', [await sectionLabel('ข้อมูลการนัดหมาย'), kv([[A.when, A.d1 + ' - ' + A.d2], ['ผู้ประสานงาน (กบค.)', COORD[0]], ['เบอร์โทรผู้ประสานงาน (กบค.)', COORD[2]],
+    ['ศูนย์บริการ/อู่', VENDOR[0]], ['เบอร์โทร ศูนย์บริการ/อู่', VENDOR[1]], ['ที่อยู่', VENDOR[2]]], 3)], 16));
+  left.push(col('Section', [await sectionLabel('รายละเอียดงาน Overhaul'), kv([['หมายเลขแผน', '123460'], ['ชื่อแผน', PLANS[0][1]], ['หมายเลข PO', 'PO-700201'], ['ขั้นตอน', A.step]], 2)], 16));
+  const right = col('Section', [await sectionLabel('ยานพาหนะ'), kv([['ทะเบียน', '72-6648 สงขลา'], ['ยี่ห้อ/รุ่น', 'HINO FG1J'], ['ประเภท', 'รถกระเช้า'], ['อายุการใช้งาน', '16 ปี'],
+    ['เลขไมล์สะสม', '221,300 กม.'], ['ชั่วโมงสะสม', '13,300 ชม.']], 2)], 16);
+  const L = col('Left', left, 32), R = col('Right', [right], 32);
+  if (MOB) { add(page, col('Content', [L, R], 32), 'h'); return scr; }
+  const r = row('Content', [], { gap: 24, hug: true });
+  r.appendChild(L); L.layoutGrow = 1;
+  r.appendChild(R); R.counterAxisSizingMode = 'FIXED'; R.resize(526, R.height);
+  add(page, r, 'h');
+  return scr;
+}
+/* ปฏิทินใต้ช่องวัน: ตอบรับ = Type=Single (วันในช่วงที่ กบค. เสนอเท่านั้น — การปิดวันนอกช่วงเป็นพฤติกรรมของระบบ instance ปรับรายวันไม่ได้) · ปฏิเสธ = Type=Dual */
+function replyCalendar(scr, type) {
+  if (MOB || !REPLY_DATE) return;   // mobile ยังไม่ทำ (21 ต.ค. 2569) — ช่องวันคงเป็นช่องกรอก
+  const dp = inst('Date picker', { Type: type }, { 'Time picker': false });
+  overlay(scr, dp, 0, 0);
+  const sb = scr.absoluteBoundingBox, ab = REPLY_DATE.absoluteBoundingBox; dp.x = ab.x - sb.x; dp.y = ab.y - sb.y + ab.height + 4;
+}
+const replyDate = async (name, k, o, type) => { const s = await reply(name, k, Object.assign({ dateOpen: true }, o)); replyCalendar(s, type); return s; };
+const replyCombo = async (name) => { const s = await reply(name, 'in', { pick: 0, date: true, query: 'สม', open: true }); comboAt(s, REPLY_ANCHOR, S16_PEOPLE); return s; };
+const replyModal = async (name, k, o) => { const s = await reply(name, k, o); await confirm(s, REPLY_CONFIRM); return s; };
+const replyDone = async (name, k, yes) => { const s = await reply(name, k, { stage: yes ? 'ok' : 'no' }); await toast(s, REPLY_TOAST(yes)); return s; };
+
+/* ---------- S17 หน่วยงานเจ้าของรถ / กรย. ดูข้อมูลอย่างเดียว (บล็อก R · 30 ต.ค. 2569 · R30) ----------
+   เจ้าของงาน: "คนที่ไม่ใช่ กบค ที่เป็นเจ้าของรถ เป็น กรย ของหน่วยงานนั้นจะเข้ามาเห็นข้อมูลได้ แต่ว่าแก้ไขข้อมูลไม่ได้ … ลองเสนอความเห็น … ใช้หลักการออกแบบของ ux"
+   → เคาะ "เอาตามนั้นเลย": ซ่อนปุ่มที่บทบาทนี้ไม่มีสิทธิ์ (ไม่ Disabled) · รายการแผนเฉพาะแผนที่มีรถของหน่วยงาน · เปิดแผน/PO เห็นข้อมูลทั้งใบ ตารางรถเฉพาะรถของหน่วยงาน
+   · Alert Info บนหน้างานรายคันบอกทางออก (ติดต่อผู้ประสานงาน กบค.) · เข้าจากเมนู "จัดการงาน Overhaul" ได้เหมือน กบค.
+   ขั้น 1 และ 5 ที่มีนัดแล้ว = ส่วนตอบกลับของ S16 (หน่วยงานมีสิทธิ์ตอบ) ⇒ ไม่ซ้ำในบล็อกนี้ */
+const VIEW_NOTE = ['ข้อมูลนี้จัดการโดย กบค. ดูได้อย่างเดียว', 'หากข้อมูลไม่ถูกต้อง ติดต่อผู้ประสานงาน (กบค.) ' + COORD[0] + ' ' + COORD[2]];
+const CLOSED_CAR = ['72-6648 สงขลา', 'HINO FG1J · รถกระเช้า', 'กฟฟ.สงขลา', '221,300', '16', 'V11', 'ปิดงาน 09/11/2569', 'ประกันถึง 04/11/2570'];   // S18 แถวรถที่ปิดงานแล้วในตาราง PO
+const OWN_CAR = ['72-6648 สงขลา', 'HINO FG1J · รถกระเช้า', 'กฟฟ.สงขลา', '221,300', '16', 'V5', 'อยู่อู่ 12 วัน', 'รับรถ 23 ต.ค. 2569'];
+const SAFETY_DONE = [{ name: 'Safety-Inspection-72-6648.pdf', size: '1.2 MB' }, { name: 'Image.jpg', size: '200 KB' }];
+const asView = (fn) => async () => { VIEW = true; try { return await fn(); } finally { VIEW = false; } };
+async function viewNoAppt() {   // ขั้น 1 ก่อน กบค. ส่งนัด: ยังไม่มีอะไรให้ตอบ
+  const es = inst('Empty state/Data empty');
+  await text(es, 'Text', 'ยังไม่มีนัดหมาย'); await text(es, 'Supporting text', 'กบค. จะแจ้งช่วงวันนำรถเข้าอู่ทางแจ้งเตือน แล้วตอบรับหรือปฏิเสธได้ที่หน้านี้');
+  const a = find(es, 'Actions'); if (a) a.visible = false;
+  return [col('Section', [await section('รายละเอียดการนัดหมาย'), es], 16)];
+}
+
+/* ---------- S18 หน้าสรุปรายคัน (บล็อก S · 30 ต.ค. 2569 · R31) ----------
+   เจ้าของงาน: "หน้าสรุปรายคัน ส่วนในหน้าสรุปรายคันจะแสดงประกันอยู่แล้ว เลยอยากได้แค่หน้าสรุปรายคันก่อน" (ตอบข้อ ค ของข้อเสนอ: รวมว่าคันนั้นทำอะไรไป อะไหล่ ประกัน เอกสาร ไว้หน้าเดียว)
+   หน้า Detail อ่านอย่างเดียว เปิดเมื่อปิดงานแล้ว · ทุกหัวข้อ Section label · ตารางทุกตัว = component Table (R25) · กล่องแสดงข้อมูล R12
+   ลำดับ: ยานพาหนะ → งาน Overhaul → ระยะเวลาและขั้นตอน (ตาราง 6 ขั้น) → การรับประกันงานซ่อม → อะไหล่ที่ใช้ → การติดตามงานซ่อม → เอกสาร
+   ต่างจากแท็บ "หลัง Overhaul" ของหน้าประวัติรถ (dashboard · ไฟล์ 20): แท็บนั้นติดตามหลังรับรถคืน (ซ่อมซ้ำ ก่อน/หลัง) · หน้านี้สรุปงาน Overhaul รอบนั้นจบในตัว */
+const SUM_STEPS = () => [['นัดเอารถเข้าอู่', '23/10/2569', 'หน่วยงานตอบรับ · ผู้นำส่งรถ นายสมชาย ใจดี', { text: 'นัด 22/10/2569 - 24/10/2569', sub: 'ส่งนัด 19/10/2569 · ผู้ประสานงาน ' + COORD[0] }],
+  ['ตรวจรับรถ', '23/10/2569', 'ลงนาม 2 ฝ่าย กบค. และหน่วยงาน', { text: 'รายการเอกสารรับรถครบ 7 รายการ', sub: '' }],
+  ['ติดตามงานซ่อม', '05/11/2569', 'ความคืบหน้า 2 รายการ', { text: 'ซ่อมสำเร็จ 06/11/2569', sub: 'อยู่อู่ 14 วัน' }],
+  ['ตรวจสภาพ', '07/11/2569', 'เอกสาร Safety Inspection 2 ไฟล์', { text: 'ยืนยันการตรวจสภาพ', sub: '' }],
+  ['นัดรับรถ', '09/11/2569', 'หน่วยงานตอบรับ · ผู้รับรถ นายประสิทธิ์ ตรวจสอบดี', { text: 'นัด 08/11/2569 - 09/11/2569', sub: '' }],
+  ['ปิดงาน', CLOSE_DATE, 'อะไหล่ 3 รายการ · รับประกัน 360 วัน', { text: 'ปิดงานโดย ' + COORD[0], sub: '' }]];
+const SUM_STEP_COLS = [['ขั้นตอน', 180, 'Lead text'], ['วันที่เสร็จ', 140], ['ผลของขั้น', 0], ['รายละเอียด', 340]];
+/* w = ค่าประกัน: { on, start, days, end, left (เหลือกี่วัน ณ วันที่ดู), note } */
+async function summaryWarranty(w) {
+  const head = await sectionLabel('การรับประกันงานซ่อม');
+  if (!w.on) return col('Section', [head, kv([['การรับประกันงานซ่อม', 'ไม่มี'], ['แจ้งเตือนก่อนหมด', 'ไม่แจ้งเตือน']])], 16);
+  const state = w.left <= 0 ? ['หมดประกันแล้ว', 'Gray'] : w.left <= 30 ? ['ใกล้หมดประกัน', w.left <= 15 ? 'Error' : 'Warning'] : ['อยู่ในประกัน', 'Success'];
+  const kids = [head, kv([['วันเริ่มรับประกัน', w.start], ['ระยะรับประกัน', w.days + ' วัน'], ['วันหมดอายุประกัน', w.end + (w.left > 0 ? ' (เหลือ ' + w.left + ' วัน)' : '')], ['สถานะ', state[0]],
+    ['ผู้รับจ้าง', VENDOR[0]], ['หมายเลข PO', 'PO-700201'], ['แจ้งเตือนก่อนหมด', 'เจ้าของรถ และ กบค. 30 วัน และ 15 วัน'], ['แจ้งเตือนที่ส่งแล้ว', w.sent || 'ยังไม่ถึงรอบ']])];
+  if (w.left > 0 && w.left <= 30) kids.splice(1, 0, alertBox(w.left <= 15 ? 'Error' : 'Warning', 'ประกันงานซ่อมเหลือ ' + w.left + ' วัน หมด ' + w.end, 'สำรวจความสมบูรณ์ของรถ หากพบปัญหาให้นำรถเข้าเก็บงานกับผู้รับจ้างตาม PO-700201 ก่อนหมดประกัน'));
+  return col('Section', kids, 16);
+}
+async function jobSummary(name, o) {
+  o = o || {};
+  const w = o.warranty || Object.assign({ left: 360 }, WARRANTY);
+  const { scr, page } = await shell(name, { title: '72-6648 สงขลา', back: true, crumbs: ['แผน 123460', 'PO-700201', '72-6648 สงขลา', 'สรุปรายคัน'], badge: JOB.V11, actions: EXPORT_BTNS, viewActions: EXPORT_BTNS });   // ส่งออกเป็นการดูข้อมูล ⇒ หน่วยงาน (VIEW) กดได้
+  const sec = async (t, kids) => col('Section', [await sectionLabel(t)].concat(kids), 16);
+  add(page, col('Content', [
+    VIEW ? alertBox('Info', VIEW_NOTE[0], VIEW_NOTE[1]) : null,
+    await sec('ข้อมูลยานพาหนะ', [kv([['ทะเบียน', '72-6648 สงขลา'], ['ยี่ห้อ/รุ่น', 'HINO FG1J'], ['ประเภท', 'รถกระเช้า'], ['อายุการใช้งาน', '16 ปี'], ['เลขไมล์สะสม', '221,300 กม.'], ['ชั่วโมงสะสม', '13,300 ชม.'], ['หน่วยงานเจ้าของรถ', 'กฟฟ.สงขลา']])]),
+    await sec('ข้อมูลงาน Overhaul', [kv([['หมายเลขแผน', '123460'], ['ชื่อแผน', PLANS[0][1]], ['หมายเลข PO', 'PO-700201'], ['ศูนย์บริการ/อู่', VENDOR[0]],
+      ['รับรถเข้าอู่', '23/10/2569'], ['ปิดงาน', CLOSE_DATE], ['ระยะเวลาทั้งหมด', '17 วัน (อยู่อู่ 14 วัน)'], ['ผู้ประสานงาน (กบค.)', COORD[0] + ' ' + COORD[2]]])]),
+    await sec('ระยะเวลาและขั้นตอน', [await tbl(SUM_STEP_COLS, SUM_STEPS())]),
+    await summaryWarranty(w),
+    await sec('อะไหล่ที่ใช้ (' + PARTS.length + ')', [await tbl([['ชื่ออะไหล่', 0], ['จำนวน', 160], ['หน่วย', 160]], PARTS)]),
+    await sec('การติดตามงานซ่อม (' + LOGS.length + ')', [await tbl([['วันที่', 190], ['รายละเอียด', 0], ['หมายเหตุ', 260]], LOGS)]),
+    await sec('เอกสาร', [row('Row', [await upload('ใบสั่งจ้าง', [{ name: 'ใบสั่งจ้าง-PO-700201.pdf', size: '500 KB' }], { readonly: true }),
+      await upload('เอกสาร Safety Inspection', SAFETY_DONE, { readonly: true })])]),
+  ], 32), 'h');
+  return scr;
+}
+
+/* ---------- S18 ส่งออกสรุปรายคัน PDF / Excel (30 ต.ค. 2569 · R32) ----------
+   เจ้าของงาน: "ต้องมีปุ่ม export pdf,excel ด้วย ขอ ฟอร์ม export ด้วย ว่าจะรูปร่างยังไง" → เลือก "ทั้งสองอย่าง" (หน้าต่างกดส่งออก + หน้าตาไฟล์ที่ได้)
+   · ปุ่ม Secondary "ส่งออก Excel" · "ส่งออก PDF" ที่หัวหน้า (ตามแบบปุ่ม Export ของ UI Release#2 ซึ่งเป็น Secondary button)
+   · หน้าต่าง = Modal Type=Form (Card form row 3 แถว): แถว 1 Radio text card PDF / Excel (ตั้งตามปุ่มที่กด เปลี่ยนได้) · แถว 2–3 Checkbox with description หัวข้อที่รวม 4 ข้อ
+     ข้อมูลยานพาหนะและข้อมูลงานรวมทุกครั้ง (บอกในบรรทัดรองของหัว) · ปุ่ม ยกเลิก / ส่งออก · สำเร็จ = toast + ชื่อไฟล์
+   · ไฟล์ PDF = หน้ากระดาษ A4 794×1123 (เฟรม "ไฟล์ PDF" ไม่ใช่จอ — R32 ยกเว้นขนาดจอ R14) เรียงหัวข้อแบบหน้าสรุป ทุกชิ้นเป็น instance
+   · ไฟล์ Excel = 1 หัวข้อ 1 ชีต (Tabs = แถบชีต) · ทุกชีตมีคอลัมน์ทะเบียน + PO นำหน้า ให้รวมหลายไฟล์ต่อกันได้ */
+const EXPORT_BTNS = [['Secondary button', 'ส่งออก Excel', 'download-24-300-round'], ['Secondary button', 'ส่งออก PDF', 'download-24-300-round']];
+const EXPORT_PARTS = [['ขั้นตอนและระยะเวลา', 'ตาราง 6 ขั้นพร้อมวันที่เสร็จ'], ['การรับประกันงานซ่อม', 'วันเริ่ม วันหมด และการแจ้งเตือน'], ['อะไหล่ที่ใช้', 'ชื่อ จำนวน หน่วย'], ['การติดตามงานซ่อม', 'ความคืบหน้าทุกรายการ']];
+const EXPORT_FILE = (pdf) => 'สรุป-Overhaul-72-6648-สงขลา-PO-700201.' + (pdf ? 'pdf' : 'xlsx');
+const EXPORT_CARDS = [['PDF', 'เอกสาร A4 สำหรับพิมพ์หรือแนบหนังสือ'], ['Excel', 'ไฟล์ .xlsx แยกชีตตามหัวข้อ']];
+async function exportModal(scr, pdf, off) {   // off = ดัชนีหัวข้อที่ไม่ติ๊ก
+  off = off || [];
+  const sel = (i) => ((i === 0) === !!pdf ? 'True' : 'False');
+  const fillCard = (n, i) => setProps(n, { Text: EXPORT_CARDS[i][0], 'Supporting text': EXPORT_CARDS[i][1], Supporting: true });
+  const fillCheck = async (n, i) => { await text(n, 'Text', EXPORT_PARTS[i][0]); await text(n, 'Supporting text', EXPORT_PARTS[i][1]); const cb = find(n, 'Checkbox'); if (cb) setProps(cb, { Type: off.indexOf(i) < 0 ? 'Selected' : 'Unselected' }); };
+  if (MOB) {   // mobile: bottom sheet การ์ด 2 ใบ + รายการติ๊ก
+    const kids = [];
+    for (const i of [0, 1]) { const c = inst('Radio text card', { State: 'Default', Selected: sel(i) }); fillCard(c, i); kids.push(c); }
+    for (const i of [0, 1, 2, 3]) { const c = inst('Checkbox with description'); await fillCheck(c, i); kids.push(c); }
+    return sheet(scr, { title: 'ส่งออกสรุปรายคัน', content: kids, ok: 'ส่งออก' });
+  }
+  const m = inst('Modal', { Type: 'Form', Size: 'md' });
+  overlay(scr, m, 0, 0);
+  const hd = find(m, 'Modal header');
+  if (hd) { await text(hd, 'Text', 'ส่งออกสรุปรายคัน'); await text(hd, 'Supporting text', '72-6648 สงขลา · PO-700201 · ข้อมูลยานพาหนะและข้อมูลงานรวมทุกครั้ง'); }
+  const rows = (find(m, 'Form') || m).children.filter(c => c.name === 'Card form row');
+  const plan = [[['card', 0], ['card', 1]], [['check', 0], ['check', 1]], [['check', 2], ['check', 3]]];   // แถว 1 รูปแบบไฟล์ · แถว 2–3 หัวข้อที่รวม (2 ช่องต่อแถว)
+  for (const [ri, r] of rows.entries()) {
+    if (!plan[ri]) { r.visible = false; continue; }
+    const [a, b] = plan[ri];
+    const comp = (x) => x[0] === 'card' ? main('Radio text card', { State: 'Default', Selected: sel(x[1]) }) : main('Checkbox with description');
+    setProps(r, { 'Input 2': true });
+    const slots = r.children.filter(c => c.type === 'INSTANCE' && c.visible !== false);
+    for (const [j, x] of [a, b].entries()) {
+      const n = slots[j]; if (!n) { warn('ฟอร์มส่งออก', 'แถว ' + (ri + 1) + ' ไม่มีช่องที่ ' + (j + 1)); continue; }
+      try { n.swapComponent(comp(x)); } catch (e) { warn('ฟอร์มส่งออก สลับช่อง', e); continue; }   // สลับช่องของ Card form row เป็นการ์ด/ติ๊ก (property Input swap ทำแบบเดียวกัน)
+      USED.add(x[0] === 'card' ? 'Radio text card' : 'Checkbox with description');
+      if (x[0] === 'card') fillCard(n, x[1]); else await fillCheck(n, x[1]);
+    }
+  }
+  const ft = m.findAll(n => n.type === 'INSTANCE' && /button/.test(n.name) && n.parent && n.parent.name === 'Actions');
+  ft.forEach(btnN => { if (btnN.name === 'Primary button') setProps(btnN, { Text: 'ส่งออก', 'Leading icon': false, 'Trailing icon': false });
+    else if (btnN.name === 'Secondary button') setProps(btnN, { Text: 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false }); else btnN.visible = false; });
+  return m;
+}
+/* หน้าตาไฟล์ — สร้างเป็นเฟรมเอกสาร (ไม่มี Sidebar/Header) ด้วย instance ชุดเดียวกับหน้าสรุป · บังคับ desktop (ไฟล์ไม่เปลี่ยนตามอุปกรณ์) */
+async function docFrame(name, w, h, kids) {
+  const was = MOB; MOB = false;
+  try {
+    const f = frame('OH2 / ' + name, 'VERTICAL', { fill: WHITE, pad: 48, gap: 24 });
+    if (PLACE) { f.x = PLACE.x; f.y = PLACE.y; }
+    f.primaryAxisSizingMode = 'FIXED'; f.counterAxisSizingMode = 'FIXED'; f.resize(w, h); f.clipsContent = false;
+    for (const k of await kids()) if (k) add(f, k, 'h');
+    return f;
+  } finally { MOB = was; }
+}
+const PDF_HEAD = async (page) => [await sectionLabel('สรุปงาน Overhaul รายคัน · 72-6648 สงขลา'),
+  kv([['หน่วยงานที่ออกเอกสาร', 'กบค. การไฟฟ้าส่วนภูมิภาค'], ['พิมพ์เมื่อ', '10/11/2569 10:30 น.'], ['ผู้พิมพ์', COORD[0]], ['หน้า', page + ' / 2']], 4)];
+const PDF_STEP_COLS = [['ขั้นตอน', 130, 'Lead text'], ['วันที่เสร็จ', 110], ['ผลของขั้น', 0], ['รายละเอียด', 210]];
+async function pdfPage(name, n) {
+  return docFrame(name, 794, 1123, async () => {
+    const head = await PDF_HEAD(n);
+    if (n === 1) return head.concat([
+      col('Section', [await sectionLabel('ข้อมูลยานพาหนะ'), kv([['ทะเบียน', '72-6648 สงขลา'], ['ยี่ห้อ/รุ่น', 'HINO FG1J'], ['ประเภท', 'รถกระเช้า'], ['อายุการใช้งาน', '16 ปี'], ['เลขไมล์สะสม', '221,300 กม.'], ['ชั่วโมงสะสม', '13,300 ชม.'], ['หน่วยงานเจ้าของรถ', 'กฟฟ.สงขลา']], 4)], 12),
+      col('Section', [await sectionLabel('ข้อมูลงาน Overhaul'), kv([['หมายเลขแผน', '123460'], ['หมายเลข PO', 'PO-700201'], ['ศูนย์บริการ/อู่', VENDOR[0]], ['ผู้ประสานงาน (กบค.)', COORD[0]],
+        ['รับรถเข้าอู่', '23/10/2569'], ['ปิดงาน', CLOSE_DATE], ['ระยะเวลาทั้งหมด', '17 วัน'], ['อยู่อู่', '14 วัน']], 4)], 12),
+      col('Section', [await sectionLabel('ขั้นตอนและระยะเวลา'), await tbl(PDF_STEP_COLS, SUM_STEPS())], 12)]);
+    return head.concat([
+      col('Section', [await sectionLabel('การรับประกันงานซ่อม'), kv([['วันเริ่มรับประกัน', WARRANTY.start], ['ระยะรับประกัน', WARRANTY.days + ' วัน'], ['วันหมดอายุประกัน', WARRANTY.end], ['ผู้รับจ้าง', VENDOR[0]]], 4)], 12),
+      col('Section', [await sectionLabel('อะไหล่ที่ใช้ (' + PARTS.length + ')'), await tbl([['ชื่ออะไหล่', 0], ['จำนวน', 120], ['หน่วย', 120]], PARTS)], 12),
+      col('Section', [await sectionLabel('การติดตามงานซ่อม (' + LOGS.length + ')'), await tbl([['วันที่', 170], ['รายละเอียด', 0], ['หมายเหตุ', 170]], LOGS)], 12),
+      col('Section', [await sectionLabel('เอกสารแนบในระบบ'), kv([['ใบสั่งจ้าง', 'ใบสั่งจ้าง-PO-700201.pdf'], ['เอกสาร Safety Inspection', SAFETY_DONE.map(f => f.name).join(', ')]], 2)], 12)]);
+  });
+}
+const XLS_SHEETS = [['สรุป', ''], ['ขั้นตอน', ''], ['การรับประกัน', ''], ['อะไหล่', ''], ['การติดตามงานซ่อม', '']];
+async function xlsSheet(name, sheet) {
+  return docFrame(name, 1440, 1024, async () => {
+    const t = await tabs(XLS_SHEETS, sheet);
+    const lead = ['72-6648 สงขลา', 'PO-700201'];
+    if (sheet === 0) return [t, await tbl([['ทะเบียน', 160, 'Lead text'], ['หมายเลข PO', 140], ['หัวข้อ', 260], ['ค่า', 0]],
+      [['หน่วยงานเจ้าของรถ', 'กฟฟ.สงขลา'], ['ยี่ห้อ/รุ่น · ประเภท', 'HINO FG1J · รถกระเช้า'], ['หมายเลขแผน', '123460'], ['ศูนย์บริการ/อู่', VENDOR[0]], ['รับรถเข้าอู่', '23/10/2569'],
+        ['ปิดงาน', CLOSE_DATE], ['ระยะเวลาทั้งหมด (วัน)', '17'], ['วันหมดอายุประกัน', WARRANTY.end], ['จำนวนอะไหล่ (รายการ)', String(PARTS.length)], ['ผู้ประสานงาน (กบค.)', COORD[0]]].map(r => lead.concat(r)))];
+    return [t, await tbl([['ทะเบียน', 160, 'Lead text'], ['หมายเลข PO', 140], ['ชื่ออะไหล่', 0], ['จำนวน', 140], ['หน่วย', 140]], PARTS.map(p => lead.concat(p)))];
+  });
+}
+
 /* ตรวจรับรถ (S8) ฉบับเจ้าของงาน 22 ต.ค. 2569 ดึก (บล็อก I · R23 · component-rules §4.2.4) = component ของ Flow การซ่อมทั้งก้อน:
    ReceiptChecklist "รายการเอกสารรับรถ" (State Default/Filled · Breakpoint Desktop/Mobile) + HandoverSignature "ลงนามการรับมอบรถ" (Default/Filled/Signed)
    + Modal Signature (Default/Filled) ตอนกดเซ็นลงนาม · ข้อความในเฟรมเจ้าของงาน = ค่าในตัว component (ไม่ override) · ไม่มีในไฟล์ → แบบเดิม checkinOld()
@@ -1263,6 +1557,7 @@ async function checkinPanel(scr, o) {
   const rc = inst('ReceiptChecklist', { Breakpoint: MOB ? 'Mobile' : 'Desktop', State: o.list || 'Default' }); rc.name = 'ReceiptChecklist';
   const nodes = [rc];
   if (!MOB) { const hs = inst('HandoverSignature', { State: o.sign || 'Default' }); hs.name = 'HandoverSignature'; nodes.push(hs); }
+  if (VIEW) nodes.forEach(n => n.findAll(x => x.type === 'INSTANCE' && /^(Primary|Secondary) button$/.test(x.name)).forEach(b => { b.visible = false; }));   // S17 ดูย้อนหลัง: ปุ่มแนบไฟล์/เซ็นลงนามในตัว component ของงานซ่อม ซ่อน
   nodes.push(btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันรับรถ', { size: 'lg', disabled: o.sign !== 'Signed' }]]));
   return nodes;
 }
@@ -1310,29 +1605,44 @@ async function logs(list) {
 const SAFETY_FILES = [{ name: 'Document.pdf', size: '200 KB', bar: true }, { name: 'Image.jpg', size: '200 KB', progress: true }, { name: 'Image.png', size: '200 KB', progress: true },
   { name: 'Document.pdf', err: true, errText: 'อัปโหลดไม่สำเร็จ' }];   // M.2 ตามเฟรมเจ้าของงาน
 async function safety(files) {
-  return [col('Section', [await section('เอกสารแนบ'), await upload('เอกสาร Safety Inspection', files, { optional: true, hint: 'PDF, PNG, or JPG (สูงสุด 10 ไฟล์)' })], 16),
+  return [col('Section', [await section('เอกสารแนบ'), await upload('เอกสาร Safety Inspection', files, { optional: true, hint: 'PDF, PNG, or JPG (สูงสุด 10 ไฟล์)', readonly: VIEW })], 16),   // VIEW = รายการไฟล์อย่างเดียว ไม่มีกล่องอัปโหลด
     btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันการตรวจสภาพ', { size: 'lg' }]])];
 }
 const PARTS = [['ชุดลูกสูบพร้อมแหวน', '6', 'ชุด'], ['กรองน้ำมันเครื่อง', '2', 'ชิ้น'], ['น้ำมันเครื่อง 15W-40', '18', 'ลิตร']];
-/* การรับประกันของผู้รับจ้าง (เจ้าของงาน 22 ต.ค. 2569): หน้าสุดท้ายของการปิดงาน กบค. กรอก "จำนวนวัน" ระบบคำนวณวันหมดอายุให้ ·
-   วันเริ่มรับประกัน ค่าตั้งต้น = วันปิดงาน แก้ได้ · เป็นประกันของบริษัทผู้รับจ้าง (ประกันของ กบค. เป็นอีกเรื่อง ยังไม่ทำ) ·
-   ระบบเตือนทุกคนในหน่วยงาน กบค. ทางกระดิ่งในระบบ ก่อนประกันของผู้รับจ้างหมด 30 วันและ 15 วัน · ใช้เฉพาะ Overhaul ก่อน (เจ้าของงานเคาะ 22 ต.ค.) ·
-   ทำไมต้องเตือน: ให้ กบค. ไปแจ้งหน่วยงานเจ้าของรถสำรวจความสมบูรณ์ของรถ ถ้าพบปัญหานำรถเข้าเก็บงานก่อนหมดประกัน หรือแจ้งว่ารถใช้งานเป็นอย่างไร — แจ้งเตือนอย่างเดียว ไม่มีขั้นตอนในระบบต่อ · ตีความเอง: ระยะรับประกันบังคับ (การเตือนต้องมีวันหมด) · ไฟล์ 21 หัวข้อ 4 */
+/* การรับประกันของผู้รับจ้าง (เจ้าของงาน 22 ต.ค. 2569): หน้าสุดท้ายของการปิดงาน กบค. ระบุ "จำนวนวัน" ระบบคำนวณวันหมดอายุให้ ·
+   วันเริ่มรับประกัน ค่าตั้งต้น = วันปิดงาน แก้ได้ · เป็นประกันของบริษัทผู้รับจ้าง (ประกันของ กบค. เป็นอีกเรื่อง ยังไม่ทำ) · ใช้เฉพาะ Overhaul ก่อน (เจ้าของงานเคาะ 22 ต.ค.) ·
+   ทำไมต้องเตือน: ให้หน่วยงานเจ้าของรถสำรวจความสมบูรณ์ของรถ ถ้าพบปัญหานำรถเข้าเก็บงานก่อนหมดประกัน — แจ้งเตือนอย่างเดียว ไม่มีขั้นตอนในระบบต่อ · ไฟล์ 21 หัวข้อ 4
+   30 ต.ค. 2569 (เจ้าของงาน "เลือกรับประกัน งานซ่อม โดยให้เลือกจำนวนวันแล้วระบบคำนวนวันรับประกันให้"): หัว "การรับประกันงานซ่อม" · Toggle "มีการรับประกันงานซ่อม" (ตั้งต้นเปิด)
+   เปิด = วันเริ่ม · dropdown ระยะรับประกัน ค่าตายตัว 90/180/360/720 วัน (ไม่มีระบุเอง) · วันหมดอายุ Readonly · ปิด = ซ่อนช่อง ไม่แจ้งเตือน ·
+   เตือนทั้งหน่วยงานเจ้าของรถ และ กบค. ทางกระดิ่ง ก่อนหมด 30 และ 15 วัน (S15 บล็อก P · เดิม 22 ต.ค. เตือน กบค. อย่างเดียว) */
 const CLOSE_DATE = '09/11/2569';   // วันปิดงานในข้อมูลจำลอง (หลังนัดรับรถ 08–09/11/2569)
-const WARRANTY = { start: CLOSE_DATE, days: '360', end: '04/11/2570' };   // 9 พ.ย. 2569 + 360 วัน
+const WARRANTY_DAYS = [['90 วัน', 'หมดอายุ 07/02/2570'], ['180 วัน', 'หมดอายุ 08/05/2570'], ['360 วัน', 'หมดอายุ 04/11/2570'], ['720 วัน', 'หมดอายุ 29/10/2571']];   // นับจากวันปิดงานจำลอง
+const WARRANTY = { on: true, start: CLOSE_DATE, days: '360', end: '04/11/2570' };   // 9 พ.ย. 2569 + 360 วัน
+const WARRANTY_NOTE = 'ระบบจะแจ้งเตือนหน่วยงานเจ้าของรถ และ กบค. ก่อนประกันหมด 30 วัน และ 15 วัน';
+async function toggleRow(label, sub, on) {   // Toggle with description: สวิตช์อยู่ใน instance ชื่อ Toggle (Pressed True/False)
+  const t = inst('Toggle with description');
+  await text(t, 'Text', label);
+  if (sub) await text(t, 'Supporting text', sub); else hide(t, 'Supporting text');
+  const tg = find(t, 'Toggle'); if (tg) setProps(tg, { Pressed: on ? 'True' : 'False' });
+  return t;
+}
+const warrantyAnchor = (s) => { const dd = s.findAll(n => n.type === 'INSTANCE' && n.name === 'Input dropdown').find(n => Object.entries(n.componentProperties || {}).some(([k, v]) => k.split('#')[0] === 'Label text' && v.value === 'ระยะรับประกัน')); return dd && (find(dd, 'Container') || dd); };
 async function warrantySec(closed, w, o) {
   o = o || {};
-  const head = await section('การรับประกันของผู้รับจ้าง');
-  if (closed) return col('Section', [head, kv([['วันเริ่มรับประกัน', w.start], ['ระยะรับประกัน', w.days + ' วัน'], ['วันหมดอายุประกัน', w.end], ['แจ้งเตือนก่อนหมด', '30 วัน และ 15 วัน']])], 16);
-  return col('Section', [head,
+  const head = await section('การรับประกันงานซ่อม');
+  if (closed) return col('Section', [head, kv(w.on ? [['วันเริ่มรับประกัน', w.start], ['ระยะรับประกัน', w.days + ' วัน'], ['วันหมดอายุประกัน', w.end], ['แจ้งเตือนก่อนหมด', 'เจ้าของรถ และ กบค. 30 วัน และ 15 วัน']]
+    : [['การรับประกันงานซ่อม', 'ไม่มี'], ['แจ้งเตือนก่อนหมด', 'ไม่แจ้งเตือน']])], 16);
+  const tg = await toggleRow('มีการรับประกันงานซ่อม', 'ประกันผลงานของผู้รับจ้างตามสัญญา', w.on);
+  if (!w.on) return col('Section', [head, tg, alertBox('Info', 'งานนี้ไม่มีการรับประกัน', 'ระบบจะไม่แจ้งเตือนก่อนหมดประกัน · เปิดสวิตช์เมื่อสัญญามีการรับประกันผลงาน')], 16);
+  return col('Section', [head, tg,
     row('Row', [field('วันเริ่มรับประกัน', w.start, { placeholder: 'วว/ดด/ปปปป' }),
-      field('ระยะรับประกัน (วัน)', w.days || '', { placeholder: 'ระบุจำนวนวัน', error: o.error ? 'กรุณาระบุระยะรับประกัน (วัน)' : '' }),
-      field('วันหมดอายุประกัน', w.end || '', { state: 'Readonly', placeholder: 'คำนวณเมื่อระบุจำนวนวัน' })]),
-    alertBox('Info', 'ระบบจะแจ้งเตือน กบค. ทางกระดิ่งในระบบ ก่อนประกันของผู้รับจ้างหมด 30 วัน และ 15 วัน', 'เพื่อให้ กบค. แจ้งหน่วยงานเจ้าของรถสำรวจความสมบูรณ์ของรถ และนำรถเข้าเก็บงานก่อนหมดประกัน · วันเริ่มรับประกันตั้งต้นเป็นวันปิดงาน แก้ได้ · วันหมดอายุคำนวณจากวันเริ่ม + จำนวนวัน')], 16);
+      dropdown('ระยะรับประกัน', w.days ? w.days + ' วัน' : '', { placeholder: 'เลือกระยะรับประกัน', error: o.error ? 'กรุณาเลือกระยะรับประกัน' : '', state: o.daysOpen ? 'Focused' : undefined }),
+      field('วันหมดอายุประกัน', w.end || '', { state: 'Readonly', placeholder: 'คำนวณเมื่อเลือกระยะรับประกัน' })]),
+    alertBox('Info', WARRANTY_NOTE, 'แจ้งทางกระดิ่งในระบบ เพื่อให้หน่วยงานสำรวจความสมบูรณ์ของรถ และนำรถเข้าเก็บงานก่อนหมดประกัน · วันเริ่มตั้งต้นเป็นวันปิดงาน แก้ได้ · วันหมดอายุ = วันเริ่ม + ระยะรับประกัน')], 16);
 }
 async function closeJob(parts, closed, o) {
   o = o || {};
-  const w = o.warranty || (parts.length ? WARRANTY : { start: CLOSE_DATE });
+  const w = o.warranty || (parts.length ? WARRANTY : { on: true, start: CLOSE_DATE });
   const sec = col('Section', [await section('รายการอะไหล่ที่ใช้', { buttons: closed ? [] : [{ kind: 'Secondary button', text: 'นำเข้าไฟล์', icon: 'cloud_upload-24-300-round' }] })], 16);
   if (!closed) add(sec, row('Row', [field('ชื่ออะไหล่', '', { placeholder: 'เช่น ชุดลูกสูบพร้อมแหวน' }), field('จำนวน', '1'), dropdown('หน่วย', 'ชิ้น')]), 'h');   // PO ถาม 21 ต.ค.: "มีเพิ่มด้วยไหม" — มี (แถวนี้) · จำนวน = ตัวเลข หน่วย = ชิ้น/ชุด/ลิตร
   // PO CF หน้า 5 (21 ต.ค. 2569): ไฟล์อะไหล่ผิดรูปแบบขึ้นเป็น validation ที่ตัวไฟล์ ไม่ใช่ toast
@@ -1380,9 +1690,18 @@ const B_TOAST_OK = { title: 'สร้างแผน Overhaul สำเร็�
 /* บล็อก C · D ตามจอเจ้าของงาน 22 ต.ค. 2569 */
 const C_TOAST_OK = { title: 'บันทึกการแก้ไขแผนสำเร็จ' };
 const D_TOAST_OK = { title: 'ลบแผน overhaul สำเร็จ' };   // ตัวพิมพ์ตามจอ
+/* บล็อก E F G ฉบับเจ้าของงาน 29 ต.ค. 2569 (component-rules §4.2.7–4.2.9) — คำบนจอ scenario ตามเฟรม · หน้า toast แยก (R20) คงคำตามชีต (toast 7 8 9)
+   F: เฟรมเขียน "บันทึกการแก้ไขแผนสำเร็จ" (ก๊อปจากบล็อก C) ⇒ เจ้าของงานเคาะ 29 ต.ค. ใช้ "บันทึกการแก้ไข PO สำเร็จ" */
+const E_TOAST_OK = { title: 'การเพิ่ม Purchase Order สำเร็จ' };
+const F_TOAST_OK = { title: 'บันทึกการแก้ไข PO สำเร็จ' };
+const G_TOAST_OK = { title: 'ลบ purchase order สำเร็จ' };
+const O_TOAST_OK = { title: 'ปิดงานสำเร็จ' };   // บล็อก O ฉบับเจ้าของงาน 29 ต.ค. 2569
+const EDIT_CONFIRM = { title: 'ยืนยันการแก้ไข', sub: 'เมื่อยืนยันการแก้ไขแล้วจะไม่สามารถย้อนกลับได้ โปรดตรวจสอบก่อนยืนยัน', cancel: 'ยกเลิก', ok: 'ยืนยัน' };   // ชุดเดียวกับ C.4 (F.3 ฉบับเจ้าของงาน)
+const E_PLAN = ['123458'].concat(NEW_PLAN.slice(1));   // หน้ารายละเอียดแผนของ E/F ตามเฟรม: ค่าของแผนที่เพิ่งสร้าง (2570 รถเจาะหลุม 5,500,000) · เลขแผน 123458 ตาม breadcrumb ของฟอร์ม (Z69000X ในเฟรม = placeholder)
+const EDIT_PO = { edit: true, name: 'ซ่อมระบบแอร์', vendor: 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', sel: [0, 2], order: [{ name: 'ใบสั่งจ้าง.pdf', size: '195 KB' }] };   // F.2 F.3 ตามเฟรม (ขนาดในเฟรม 195 MB เกินเพดาน 10 MB ⇒ ใช้ KB ตามที่เจ้าของงานเคาะ)
 const L_TOAST_OK = { title: 'ลบรายละเอียดการติดตาม สำเร็จ' };   // บล็อก L ฉบับเจ้าของงาน 22 ต.ค. (เว้นวรรคตามจอ) — หน้า toast แยก (R20) ยังเป็นถ้อยคำชีต (toast 20)
 const D_CONFIRM = { danger: true, title: 'ยืนยันการลบแผน', sub: 'เมื่อลบแล้วจะไม่สามารถกู้คืนข้อมูลได้ ต้องการลบใช่หรือไม่', cancel: 'ยกเลิก', ok: 'ยืนยัน' };   // toast บนจอ scenario = Notification ขวาล่าง ห่างขอบ 24 พร้อมบรรทัดรอง (สเปก 16 ข้อ 1.1)
-const NEW_PO = ['PO-700202', 'ซ่อมระบบเครื่องยนต์และเจาะหลุม', 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', '2', 0, '20 ต.ค. 2569', '20 ม.ค. 2570', false];
+const NEW_PO = ['PO-700202', 'ซ่อมระบบแอร์', 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', '2', 0, '20 ต.ค. 2569', '20 ม.ค. 2570', false];
 
 /* ---------- รายการจอแยกตาม scenario (ชื่อ section = ชื่อ scenario ใน userflow) — ฉบับหลัง PO confirm ทุกหน้า (21 ต.ค. 2569)
    เปลี่ยนจาก 19 ต.ค.: จัดการเป็นไอคอน (ไม่มี state เมนู "…") · ตาราง/ตัวกรอง/ค้นหาหน้า 1 ฉบับ CF · ถ้อยคำ toast ตาม TOASTS · + state ไม่พบแผน · บันทึกไม่สำเร็จ · lightbox · validation ไฟล์ ---------- */
@@ -1395,13 +1714,21 @@ const SCENARIOS = [
     ['ยังไม่มีแผน', () => listScreen('ยังไม่มีแผน', { empty: true })]]],
   // บล็อก B ฉบับเจ้าของงาน 22 ต.ค. 2569 — "export scenB ต้องได้แบบที่ส่งให้ เป๊ะเลย" (component-rules §4.2.1 · ข้อความดิบ figma-ref/overhaul-B-2569-10-22.txt)
   ['S1 · กบค. สร้างแผน Overhaul และ ดูรายละเอียด', [
-    ['ฟอร์มสร้างแผน Default', () => planForm('S1 ฟอร์มสร้างแผน Default', {})],
-    ['Validation กรณีไม่ได้เลือก, Out of focus', () => planForm('S1 Validation', { errors: true })],
-    ['Filled', () => planForm('S1 Filled', { values: FILLED })],
-    ['ย้อนกลับ — ยืนยันการออก', async () => { const s = await planForm('S1 ยืนยันการออก', { values: FILLED }); await confirm(s, { title: 'ยืนยันการออก', sub: 'ข้อมูลที่แก้ไขไว้จะไม่ถูกบันทึก', cancel: 'ปิด' }); return s; }],
-    ['บันทึกไม่สำเร็จ', async () => { const s = await planForm('S1 บันทึกไม่สำเร็จ', { values: FILLED }); await toast(s, B_TOAST_ERR); return s; }],
-    ['บันทึกสำเร็จ', async () => { const s = await listScreen('S1 บันทึกสำเร็จ', CF_LIST); await toast(s, B_TOAST_OK); return s; }],   // จอเจ้าของงาน: รายการ 10 แถวเดิม (จาก 95) + toast · ไม่แทรกแถวใหม่
-    ['ดูรายละเอียดแผน', () => planDetail('S1 รายละเอียดแผน', { plan: NEW_PLAN, pos: [], badge: ['ยังไม่มี PO', 'Gray'] })]]],
+    ['ฟอร์มสร้างแผน Default', () => planForm('S1 ฟอร์มสร้างแผน Default', {}), '1'],
+    ['Validation กรณีไม่ได้เลือก, Out of focus', () => planForm('S1 Validation', { errors: true }), '2'],
+    // 29 ต.ค. 2569 ประเภทงบประมาณ: B.3 แตกเป็น B.3.1 เปิดรายการประเภทงบ + B.3.2–B.3.6 กรอกครบรายประเภท (B.3.4 = Filled เดิม)
+    ['เลือกประเภทงบประมาณ', async () => { const s = await planForm('S1 เลือกประเภทงบประมาณ', { values: Object.assign({}, FILLED, { btype: '' }), typeOpen: true });
+      comboAt(s, budgetTypeAnchor(s), BUDGET_TYPES.map(t => [t, ''])); return s; }, '3.1'],
+    ['Filled — งบทำการ หน่วยงานต้นสังกัด', () => planForm('S1 Filled ต้นสังกัด', { values: budgetFilled(0) }), '3.2'],
+    ['Filled — งบทำการ หน่วยงานอื่น', async () => { const s = await planForm('S1 Filled หน่วยงานอื่น', { values: budgetFilled(1, { ccOpen: true }) });
+      const dd = s.findAll(n => n.type === 'INSTANCE' && n.name === 'Input dropdown')[2]; comboAt(s, dd && (find(dd, 'Container') || dd), COST_CENTERS.map(c => [c[0] + '  ' + c[1], ''])); return s; }, '3.3'],
+    ['Filled — งบลงทุน งานก่อสร้าง', () => planForm('S1 Filled', { values: FILLED }), '3.4'],
+    ['Filled — งบลงทุน งานบำรุงรักษา', () => planForm('S1 Filled งานบำรุงรักษา', { values: budgetFilled(3) }), '3.5'],
+    ['Filled — อื่น ๆ', () => planForm('S1 Filled อื่น ๆ', { values: budgetFilled(4) }), '3.6'],
+    ['ย้อนกลับ — ยืนยันการออก', async () => { const s = await planForm('S1 ยืนยันการออก', { values: FILLED }); await confirm(s, { title: 'ยืนยันการออก', sub: 'ข้อมูลที่แก้ไขไว้จะไม่ถูกบันทึก', cancel: 'ปิด' }); return s; }, '4'],
+    ['บันทึกไม่สำเร็จ', async () => { const s = await planForm('S1 บันทึกไม่สำเร็จ', { values: FILLED }); await toast(s, B_TOAST_ERR); return s; }, '5'],
+    ['บันทึกสำเร็จ', async () => { const s = await listScreen('S1 บันทึกสำเร็จ', CF_LIST); await toast(s, B_TOAST_OK); return s; }, '6'],   // จอเจ้าของงาน: รายการ 10 แถวเดิม (จาก 95) + toast · ไม่แทรกแถวใหม่
+    ['ดูรายละเอียดแผน', () => planDetail('S1 รายละเอียดแผน', { plan: NEW_PLAN, pos: [], badge: ['ยังไม่มี PO', 'Gray'] }), '7']]],
   // บล็อก C · D ฉบับเจ้าของงาน 22 ต.ค. 2569 — "อ่าน scen C and D และ Design ให้เป็นต้นแบบในการ export ครั้งต่อไป" (component-rules §4.2.2 · ข้อความดิบ figma-ref/overhaul-CD-2569-10-22.txt)
   ['S2 · กบค. แก้ไขแผน', [
     ['เมนู "…" → แก้ไข', async () => { const s = await listScreen('S2 เมนู', CF_LIST); menuAt(s, firstMenuCell(s), MENU); return s; }],
@@ -1418,26 +1745,27 @@ const SCENARIOS = [
     ['ลบสำเร็จ (ลบที่ List or Detail ก็กลับมานี่)', async () => { const s = await listScreen('S3 ลบสำเร็จ', CF_LIST); await toast(s, D_TOAST_OK); return s; }, '3'],
     ['ปุ่ม “ลบแผน” ในหน้า Detail', () => planDetail('S3 ปุ่มลบแผน', { plan: NEW_PLAN, pos: [], badge: ['ยังไม่มี PO', 'Gray'] }), '1.2'],
     ['ยืนยันการลบแผน ในหน้า Detail', async () => { const s = await planDetail('S3 ยืนยันการลบ Detail', { plan: NEW_PLAN, pos: [], badge: ['ยังไม่มี PO', 'Gray'] }); await confirm(s, D_CONFIRM); return s; }, '2.2']]],
+  // บล็อก E F G ฉบับเจ้าของงาน 29 ต.ค. 2569 (R23 · component-rules §4.2.7–4.2.9 · ข้อความดิบ figma-ref/overhaul-E|F|G-2569-10-29.txt) — หน้ารายละเอียดแผนใช้แบบ E/F ทุกจอ (เจ้าของงานเคาะ: G เป็นฉบับก่อน CF ใช้แค่ state · modal · toast)
   ['S4 · กบค. สร้าง Purchase order', [
-    ['รายละเอียดแผน (ยังไม่มี PO)', () => planDetail('S4 แผนยังไม่มี PO', { plan: PLANS[2], pos: [] })],
-    ['ฟอร์ม PO (ว่าง)', () => poForm('S4 ฟอร์ม PO (ว่าง)', {})],
-    ['กดบันทึกโดยยังไม่ครบ', () => poForm('S4 ยังไม่ครบ', { errors: true })],
-    ['เลือกอู่ (พิมพ์ค้น)', () => poForm('S4 เลือกอู่', { name: 'ซ่อมระบบเครื่องยนต์และเจาะหลุม', vendor: 'ตรีเพชร', vendorOpen: true })],
-    ['เลือกรถ (พิมพ์ค้นแล้วเลือกจาก dropdown)', () => poForm('S4 เลือกรถ', { name: 'ซ่อมระบบเครื่องยนต์และเจาะหลุม', vendor: 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', query: '7', carOpen: true, sel: [2], tick: [0, 1] })],   // desktop: พิมพ์ "7" → 70-1123 ชลบุรี (เลือกแล้ว) · 71-9902 ขอนแก่น · 72-6648 สงขลา · mobile ยังเป็น dual list เดิม
-    ['กรอกครบ', () => poForm('S4 กรอกครบ', { name: 'ซ่อมระบบเครื่องยนต์และเจาะหลุม', vendor: 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', sel: [3, 6], order: [{ name: 'ใบสั่งจ้าง.pdf', size: '195 KB' }] })],
-    ['บันทึกไม่สำเร็จ (toast 11)', async () => { const s = await poForm('S4 บันทึกไม่สำเร็จ', { name: 'ซ่อมระบบเครื่องยนต์และเจาะหลุม', vendor: 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', sel: [3, 6], order: [{ name: 'ใบสั่งจ้าง.pdf', size: '195 KB' }] }); await T(s, 11); return s; }],
-    ['เปิดฟอร์มจากแผนที่ถูกลบไปแล้ว (toast 12)', async () => { const s = await poForm('S4 ไม่พบแผน', {}); await T(s, 12); return s; }],
-    ['บันทึกสำเร็จ (toast 7)', async () => { const s = await planDetail('S4 บันทึกสำเร็จ', { plan: PLANS[2], status: 'P2', pos: [NEW_PO] }); await T(s, 7); return s; }],
+    ['รายละเอียดแผน (ยังไม่มี PO)', () => planDetail('S4 แผนยังไม่มี PO', { plan: E_PLAN, pos: [], badge: ['ยังไม่มี PO', 'Gray'], poBtn: 'เพิ่ม Purchase Order' })],
+    ['ฟอร์ม PO Default', () => poForm('S4 ฟอร์ม PO Default', {})],
+    ['Validation กรณีไม่ได้เลือก, Out of focus', () => poForm('S4 Validation', { errors: true })],
+    ['เลือกอู่ (พิมพ์ค้น)', () => poForm('S4 เลือกอู่', { name: 'ซ่อมระบบแอร์', vendor: 'ตรี', vendorOpen: true })],
+    ['เลือกรถ (พิมพ์ค้นแล้วเลือกจาก dropdown)', () => poForm('S4 เลือกรถ', { name: 'ซ่อมระบบแอร์', vendor: 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', query: '701', carOpen: true, sel: [2], tick: [0, 1] })],   // desktop: พิมพ์ "701" → 70-1123 ชลบุรี (เลือกแล้ว) · mobile ยังเป็น dual list เดิม
+    ['กรอกครบ', () => poForm('S4 กรอกครบ', { name: 'ซ่อมระบบแอร์', vendor: 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', sel: [3, 6], order: [{ name: 'ใบสั่งจ้าง.pdf', size: '195 KB' }] })],
+    ['บันทึกไม่สำเร็จ (toast 11)', async () => { const s = await poForm('S4 บันทึกไม่สำเร็จ', { name: 'ซ่อมระบบแอร์', vendor: 'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', sel: [3, 6], order: [{ name: 'ใบสั่งจ้าง.pdf', size: '195 KB' }] }); await T(s, 11); return s; }],
+    ['บันทึกสำเร็จ (toast 7)', async () => { const s = await planDetail('S4 บันทึกสำเร็จ', { plan: E_PLAN, pos: [NEW_PO] }); await toast(s, E_TOAST_OK); return s; }],
     ['รายละเอียด PO', () => poDetail('S4 รายละเอียด PO')]]],
-  ['S5 · กบค. แก้ไข Purchase order', [
-    ['เมนู "…" ของ PO → แก้ไข', async () => { const s = await planDetail('S5 เมนู PO'); menuAt(s, firstMenuCell(s), MENU); return s; }],
-    ['กดแก้ไขในเมนู … ของ PO → ฟอร์มแก้ไข PO', () => poForm('S5 ฟอร์มแก้ไข PO', { edit: true, name: 'ซ่อมระบบเครื่องยนต์', vendor: 'บริษัท ฮีโน่ มอเตอร์ส เซลส์ จำกัด', sel: [0, 2], order: [{ name: 'ใบสั่งจ้าง-PO-690101.pdf', size: '500 KB' }] })],
-    ['ยืนยันการแก้ไข PO', async () => { const s = await poForm('S5 ยืนยันการแก้ไข PO', { edit: true, name: 'ซ่อมระบบเครื่องยนต์และเกียร์', vendor: 'บริษัท ฮีโน่ มอเตอร์ส เซลส์ จำกัด', sel: [0, 2], order: [{ name: 'ใบสั่งจ้าง-PO-690101.pdf', size: '500 KB' }] });
-      await confirm(s, { title: 'ยืนยันการแก้ไข PO', sub: 'บันทึกการเปลี่ยนแปลงของ PO-690101 "ซ่อมระบบเครื่องยนต์และเกียร์"' }); return s; }],
-    ['บันทึกสำเร็จ (toast 8)', async () => { const s = await poDetail('S5 บันทึกสำเร็จ'); await T(s, 8); return s; }]]],
+  ['S5 · กบค. แก้ไข Purchase order', [   // เส้นจากหน้ารายละเอียดแผน (F.1.1 → F.2 → F.3 → F.4.1) แล้วเส้นจากหน้ารายละเอียด PO (F.1.2 → F.4.2) — บันทึกแล้วกลับจอที่มา
+    ['เมนู "…" ของ PO → แก้ไข', async () => { const s = await planDetail('S5 เมนู PO', { plan: E_PLAN, pos: [NEW_PO] }); menuAt(s, firstMenuCell(s), MENU); return s; }, '1.1'],
+    ['ฟอร์มแก้ไข PO', () => poForm('S5 ฟอร์มแก้ไข PO', EDIT_PO), '2'],
+    ['ยืนยันการแก้ไข PO', async () => { const s = await poForm('S5 ยืนยันการแก้ไข PO', EDIT_PO); await confirm(s, EDIT_CONFIRM); return s; }, '3'],
+    ['บันทึกสำเร็จ', async () => { const s = await planDetail('S5 บันทึกสำเร็จ จากแผน', { plan: E_PLAN, pos: [NEW_PO] }); await toast(s, F_TOAST_OK); return s; }, '4.1'],
+    ['รายละเอียด PO → แก้ไข', () => poDetail('S5 รายละเอียด PO → แก้ไข'), '1.2'],
+    ['บันทึกสำเร็จ', async () => { const s = await poDetail('S5 บันทึกสำเร็จ จาก PO'); await toast(s, F_TOAST_OK); return s; }, '4.2']]],
   ['S6 · กบค. ลบ purchase order', [
-    ['กดลบในเมนู … ของ PO → ยืนยันการลบ PO', async () => { const s = await planDetail('S6 ยืนยันการลบ PO'); await confirm(s, { danger: true, title: 'ยืนยันการลบ PO', sub: 'PO-690101 "ซ่อมระบบเครื่องยนต์" และงานของรถ 2 คันใน PO นี้จะถูกลบ' }); return s; }],
-    ['ลบสำเร็จ (toast 9)', async () => { const s = await planDetail('S6 ลบสำเร็จ', { pos: POS.slice(1) }); await T(s, 9); return s; }]]],
+    ['ยืนยันการลบ PO', async () => { const s = await planDetail('S6 ยืนยันการลบ PO'); await confirm(s, Object.assign({}, D_CONFIRM, { title: 'ยืนยันการลบ' })); return s; }],
+    ['ลบสำเร็จ', async () => { const s = await planDetail('S6 ลบสำเร็จ', { pos: POS.slice(1) }); await toast(s, G_TOAST_OK); return s; }]]],
   ['S7 · กบค. นัดหมายหน่วยงาน นำรถเข้า overhaul', [
     ['ฟอร์มนัด (ว่าง)', () => job('S7 ฟอร์มนัด', 'V1', () => apptForm(false))],
     ['กดยืนยันโดยยังไม่ครบ', () => job('S7 ยังไม่ครบ', 'V1', () => apptForm(false, { errors: true }))],
@@ -1468,17 +1796,81 @@ const SCENARIOS = [
   ['S12 · กบค. upload เอกสารด้านความปลอดภัย', [
     ['Default ยังไม่มีเอกสาร', () => job('S12 ว่าง', 'V6', () => safety([]))],   // บล็อก M ฉบับเจ้าของงาน 22 ต.ค. 2569 — ไม่มี toast ในเฟรม (toast 21/22 อยู่หน้า toast แยก)
     ['Filled อัปโหลดเอกสารแล้ว', () => job('S12 อัปโหลดแล้ว', 'V6', () => safety(SAFETY_FILES))]]],
+  // บล็อก N O ฉบับเจ้าของงาน 29 ต.ค. 2569 (R23 · component-rules §4.2.10–4.2.11 · ข้อความดิบ figma-ref/overhaul-MNO-2569-10-29.txt)
+  // N: ป้ายช่องในเฟรมเป็น "ช่วงวันนำรถเข้า" (ก๊อปจาก H) ⇒ เจ้าของงานเคาะใช้ "ช่วงวันนัดรับรถ" · N.4 "ส่งนัดหมาย" = หัวแถวย่อย N.4.1–N.4.4 ไม่ใช่จอ · N.5 = กลับมาหน้านี้ระหว่างรอตอบกลับ (Type=Wating + ปุ่มแก้ไขนัดหมาย)
   ['S13 · กบค. นัดหมายหน่วยงานส่งคืนรถ', [
-    ['ฟอร์มนัดรับรถ (ค่าอู่ตั้งต้น)', () => job('S13 ฟอร์มนัดรับ', 'V7', () => apptForm(true))],
-    ['รอหน่วยงานตอบรับ (toast 13)', async () => { const s = await job('S13 รอตอบรับ', 'V8', () => apptWait(true, '08/11/2569', '09/11/2569')); await T(s, 13); return s; }],
-    ['หน่วยงานปฏิเสธ (toast 16)', async () => { const s = await job('S13 ปฏิเสธ', 'V9', () => apptRejected(true, '08/11/2569', '09/11/2569')); await T(s, 16); return s; }]]],
+    ['ฟอร์มนัด Default', () => job('S13 ฟอร์มนัด Default', 'V7', () => apptForm(true)), '1'],
+    ['Validation กรณีไม่ได้เลือก, Out of focus', () => job('S13 Validation', 'V7', () => apptForm(true, { errors: true })), '2'],
+    ['Filled', () => job('S13 Filled', 'V7', () => apptForm(true, { d1: '08/11/2569', d2: '09/11/2569', coord: 1 })), '3'],
+    ['สร้างนัดไม่สำเร็จ (toast 14)', async () => { const s = await job('S13 ไม่สำเร็จ', 'V7', () => apptForm(true, { d1: '08/11/2569', d2: '09/11/2569', coord: 1 })); await T(s, 14); return s; }, '4.1'],
+    ['รอหน่วยงานตอบรับ (toast 13)', async () => { const s = await job('S13 รอตอบรับ', 'V8', () => apptWait(true, '08/11/2569', '09/11/2569')); await T(s, 13); return s; }, '4.2'],
+    ['แก้ไขนัดหมาย', () => job('S13 แก้ไขนัด', 'V9', () => apptForm(true, { d1: '15/11/2569', d2: '16/11/2569', coord: 1 })), '4.3'],
+    ['หน่วยงานปฏิเสธ', () => job('S13 ปฏิเสธ', 'V9', () => apptRejected(true, '08/11/2569', '09/11/2569')), '4.4'],
+    ['ย้อนกลับมาจากหน้าอื่นหลังนัดหมายแล้ว', () => job('S13 กลับมาหลังนัด', 'V8', () => apptWait(true, '08/11/2569', '09/11/2569')), '5']]],
+  // O: เฟรมเหลือ 3 state ⇒ เจ้าของงานเคาะ คงส่วน "การรับประกันของผู้รับจ้าง" (R28) ไว้ใน O.2 O.3 · ตัด state ไฟล์ผิดรูปแบบ · ยังไม่ระบุประกัน · บันทึกไม่สำเร็จ
+  // 30 ต.ค. 2569: ส่วนรับประกันเป็น Toggle + dropdown ระยะรับประกัน ⇒ เพิ่ม O.2.1 เปิดรายการระยะ · O.2.2 ปิดสวิตช์ (ไม่มีการรับประกัน) · รหัส O.1 O.2 O.3 คงเดิม
   ['S14 · กบค. ปิดงาน', [
-    ['ยังไม่ได้ระบุอะไหล่', () => job('S14 ว่าง', 'V10', () => closeJob([]))],
-    ['นำเข้าไฟล์ผิดรูปแบบ (validation ไม่ใช่ toast)', () => job('S14 ไฟล์ผิดรูปแบบ', 'V10', () => closeJob([], false, { importErr: true }))],
-    ['นำเข้าไฟล์สำเร็จ (toast 23)', async () => { const s = await job('S14 นำเข้าไฟล์แล้ว', 'V10', () => closeJob(PARTS)); await T(s, 23); return s; }],
-    ['ยังไม่ระบุระยะรับประกัน กดปิดงาน (validation)', () => job('S14 ยังไม่ระบุประกัน', 'V10', () => closeJob(PARTS, false, { warranty: { start: CLOSE_DATE }, error: true }))],
-    ['บันทึกไม่สำเร็จ (toast 26)', async () => { const s = await job('S14 บันทึกไม่สำเร็จ', 'V10', () => closeJob(PARTS)); await T(s, 26); return s; }],
-    ['ปิดงานแล้ว (toast 25)', async () => { const s = await job('S14 ปิดงานแล้ว', 'V11', () => closeJob(PARTS, true)); await T(s, 25); return s; }]]],
+    ['ยังไม่ได้ระบุอะไหล่', () => job('S14 ว่าง', 'V10', () => closeJob([])), '1'],
+    ['ระบุอะไหล่แล้ว', () => job('S14 ระบุอะไหล่แล้ว', 'V10', () => closeJob(PARTS)), '2'],
+    ['เลือกระยะรับประกัน', async () => { const s = await job('S14 เลือกระยะรับประกัน', 'V10', () => closeJob(PARTS, false, { warranty: { on: true, start: CLOSE_DATE }, daysOpen: 1 }));
+      comboAt(s, warrantyAnchor(s), WARRANTY_DAYS); return s; }, '2.1'],
+    ['ไม่มีการรับประกัน (ปิดสวิตช์)', () => job('S14 ไม่มีการรับประกัน', 'V10', () => closeJob(PARTS, false, { warranty: { on: false } })), '2.2'],
+    ['ปิดงานแล้ว', async () => { const s = await job('S14 ปิดงานแล้ว', 'V11', () => closeJob(PARTS, true)); await toast(s, O_TOAST_OK); return s; }, '3']]],
+  // S15 บล็อก P (เจ้าของงาน 30 ต.ค. 2569 "แจ้งเตือนไปยังเจ้าของรถ และกบค เมื่อใกล้ครบกำหนด จะเตือนประกันเหลือ 30 วัน และ 15 วัน"): กระดิ่งในระบบ แจ้งเตือนอย่างเดียว ไม่มีปุ่ม
+  //   กดรายการ → หน้ารถ แท็บหลัง Overhaul (ทั้งสองฝั่ง) · 30 วัน = Warning · 15 วัน = Error · ไม่มี toast
+  ['S15 · ระบบแจ้งเตือนประกันงานซ่อมใกล้หมด ถึงเจ้าของรถ และ กบค.', [
+    ['กบค. — เหลือ 30 วัน', async () => { const s = await listScreen('S15 กบค. 30 วัน', CF_LIST); bell(s, true); await notiPanel(s, WARN_NOTI.kbk30, '1 แจ้งเตือนใหม่'); return s; }],
+    ['กบค. — เหลือ 15 วัน', async () => { const s = await listScreen('S15 กบค. 15 วัน', CF_LIST); bell(s, true); await notiPanel(s, WARN_NOTI.kbk15, '1 แจ้งเตือนใหม่'); return s; }],
+    ['เจ้าของรถ — เหลือ 30 วัน', async () => { const s = await vehicleHistory('S15 เจ้าของรถ 30 วัน'); bell(s, true); await notiPanel(s, WARN_NOTI.own30, '1 แจ้งเตือนใหม่'); return s; }],
+    ['เจ้าของรถ — เหลือ 15 วัน', async () => { const s = await vehicleHistory('S15 เจ้าของรถ 15 วัน'); bell(s, true); await notiPanel(s, WARN_NOTI.own15, '1 แจ้งเตือนใหม่'); return s; }],
+    // 30 ต.ค. 2569 เจ้าของงาน "แจ้งเตือนประกันใกล้หมด พาไปได้" ⇒ ปลายทาง = หน้าสรุปรายคัน (S18) แทนแท็บหลัง Overhaul · ชื่อเดิมอยู่ใน STATE_ALIAS
+    ['กดแจ้งเตือน ไปหน้าสรุปรายคัน', async () => { const s = await jobSummary('S15 ปลายทาง', { warranty: Object.assign({}, WARRANTY, { left: 15, sent: 'รอบ 30 วัน 05/10/2570 · รอบ 15 วัน 20/10/2570' }) }); bell(s, false); return s; }]]],
+  // S16 บล็อก Q (30 ต.ค. 2569 · เจ้าของงานเคาะ "ตามที่แนะนำ"): ฝั่งหน่วยงานเจ้าของรถ ตามหน้าตอบรับนัดหมายของงานซ่อม · Q.1.x ตอบรับ · Q.2.x ปฏิเสธ (นัดเข้าอู่ ครบเส้น)
+  //   Q.3.x Q.4.x นัดรับรถคืน (ช่องเดียวกัน ต่างแค่ชื่อช่อง ⇒ เฉพาะ Filled + สำเร็จ) · notification = R
+  ['S16 · หน่วยงานเจ้าของรถ ตอบกลับนัดหมาย ตอบรับ และ ปฏิเสธ', [
+    ['นัดนำรถเข้าอู่ — รอตอบกลับ', () => reply('S16 นัดเข้าอู่ รอตอบกลับ', 'in'), '1'],
+    ['ตอบรับ — เลือกวันจากช่วงที่เสนอ', () => replyDate('S16 ตอบรับ เลือกวัน', 'in', { pick: 0 }, 'Single'), '1.1'],
+    ['ตอบรับ — Validation ไม่เลือกวัน', () => reply('S16 ตอบรับ Validation', 'in', { pick: 0, errors: true }), '1.2'],
+    ['ตอบรับ — ค้นหาผู้นำส่งรถ', () => replyCombo('S16 ตอบรับ ค้นหาผู้นำส่งรถ'), '1.3'],
+    ['ตอบรับ — Filled', () => reply('S16 ตอบรับ Filled', 'in', { pick: 0, date: true, who: true }), '1.4'],
+    ['ตอบรับ — ยืนยันการตอบกลับ', () => replyModal('S16 ตอบรับ ยืนยัน', 'in', { pick: 0, date: true, who: true }), '1.5'],
+    ['ตอบรับสำเร็จ', () => replyDone('S16 ตอบรับสำเร็จ', 'in', true), '1.6'],
+    ['ปฏิเสธ — Validation ไม่ระบุเหตุผล', () => reply('S16 ปฏิเสธ Validation', 'in', { pick: 1, errors: true }), '2.1'],
+    ['ปฏิเสธ — เลือกช่วงวันที่สะดวก', () => replyDate('S16 ปฏิเสธ เลือกช่วงวัน', 'in', { pick: 1, reason: S16_APPT.in.reason }, 'Dual'), '2.2'],
+    ['ปฏิเสธ — Filled', () => reply('S16 ปฏิเสธ Filled', 'in', { pick: 1, want: true, reason: S16_APPT.in.reason }), '2.3'],
+    ['ปฏิเสธ — ยืนยันการตอบกลับ', () => replyModal('S16 ปฏิเสธ ยืนยัน', 'in', { pick: 1, want: true, reason: S16_APPT.in.reason }), '2.4'],
+    ['ปฏิเสธสำเร็จ', () => replyDone('S16 ปฏิเสธสำเร็จ', 'in', false), '2.5'],
+    ['นัดรับรถคืน — รอตอบกลับ', () => reply('S16 นัดรับรถ รอตอบกลับ', 'out'), '3'],
+    ['นัดรับรถ ตอบรับ — Filled', () => reply('S16 นัดรับรถ ตอบรับ Filled', 'out', { pick: 0, date: true, who: true }), '3.1'],
+    ['นัดรับรถ ตอบรับสำเร็จ', () => replyDone('S16 นัดรับรถ ตอบรับสำเร็จ', 'out', true), '3.2'],
+    ['นัดรับรถ ปฏิเสธ — Filled', () => reply('S16 นัดรับรถ ปฏิเสธ Filled', 'out', { pick: 1, want: true, reason: S16_APPT.out.reason }), '4.1'],
+    ['นัดรับรถ ปฏิเสธสำเร็จ', () => replyDone('S16 นัดรับรถ ปฏิเสธสำเร็จ', 'out', false), '4.2']]],
+  // S17 บล็อก R (30 ต.ค. 2569 · R30): จอดูอย่างเดียวของหน่วยงานเจ้าของรถ / กรย. — ตัวช่วยเดิมทุกตัวในโหมด VIEW (ปุ่มแก้ไข/ลบ/สร้าง ซ่อน) · notification = S
+  ['S17 · หน่วยงานเจ้าของรถ และ กรย. ดูข้อมูลอย่างเดียว', [
+    ['รายการแผน — เฉพาะแผนที่มีรถของหน่วยงาน', asView(() => listScreen('S17 รายการแผน', Object.assign({}, CF_LIST, { rows: PLANS_CF.filter(p => p[10] !== 'P1').slice(0, 3), pageOpt: { per: 10, total: 3 } }))), '1'],
+    ['รายละเอียดแผน', asView(() => planDetail('S17 รายละเอียดแผน', { pos: [POS[0]] })), '2'],
+    ['รายละเอียด PO — เฉพาะรถของหน่วยงาน', asView(() => poDetail('S17 รายละเอียด PO', { cars: [OWN_CAR] })), '3'],
+    ['หน้างาน ขั้น 1 — ยังไม่มีนัดหมาย', asView(() => job('S17 ขั้น 1 ยังไม่มีนัด', 'V1', viewNoAppt)), '4'],
+    ['หน้างาน ขั้น 2 ตรวจรับรถ (ดูย้อนหลัง)', asView(() => job('S17 ขั้น 2 ตรวจรับรถ', 'V5', () => checkin({ list: 'Filled', sign: 'Signed' }), 2)), '5'],
+    ['หน้างาน ขั้น 3 ติดตามงานซ่อม', asView(() => job('S17 ขั้น 3 ติดตามงานซ่อม', 'V5', () => logs(LOGS))), '6'],
+    ['หน้างาน ขั้น 4 ตรวจสภาพ (ดูย้อนหลัง)', asView(() => job('S17 ขั้น 4 ตรวจสภาพ', 'V7', () => safety(SAFETY_DONE), 4)), '7'],
+    ['หน้างาน ขั้น 6 ปิดงานแล้ว', asView(() => job('S17 ปิดงานแล้ว', 'V11', () => closeJob(PARTS, true))), '8']]],
+  // S18 บล็อก S (30 ต.ค. 2569 · R31): หน้าสรุปรายคัน — กบค. และหน่วยงาน (ดูอย่างเดียว) · notification = T
+  ['S18 · หน้าสรุปรายคัน งาน Overhaul ที่ปิดงานแล้ว', [
+    ['หน้างานปิดงานแล้ว — ปุ่ม ดูสรุปรายคัน', () => job('S18 ทางเข้า', 'V11', () => closeJob(PARTS, true), null, { actions: [['Secondary button', 'ดูสรุปรายคัน', 'quick_reference_all-24-300-round']] }), '1'],
+    ['เข้าจากรายละเอียด PO — ไอคอน ดูสรุปรายคัน', () => poDetail('S18 เข้าจาก PO', { cars: [CARS[0], CLOSED_CAR] }), '1.1'],
+    ['เข้าจาก Dashboard แท็บรถหลัง Overhaul — ไอคอน ดูสรุปรายคัน', () => carsTab('S18 เข้าจาก Dashboard'), '1.2'],
+    ['สรุปรายคัน — อยู่ในประกัน', () => jobSummary('S18 สรุป อยู่ในประกัน'), '2'],
+    ['สรุปรายคัน — ประกันใกล้หมด เหลือ 15 วัน', () => jobSummary('S18 สรุป ใกล้หมด', { warranty: Object.assign({}, WARRANTY, { left: 15, sent: 'รอบ 30 วัน 05/10/2570 · รอบ 15 วัน 20/10/2570' }) }), '3'],
+    ['สรุปรายคัน — ไม่มีการรับประกัน', () => jobSummary('S18 สรุป ไม่มีประกัน', { warranty: { on: false } }), '4'],
+    ['สรุปรายคัน — หน่วยงานเจ้าของรถ (ดูอย่างเดียว)', asView(() => jobSummary('S18 สรุป หน่วยงาน')), '5'],
+    ['กดส่งออก PDF — ฟอร์มส่งออก', async () => { const sc = await jobSummary('S18 ฟอร์มส่งออก PDF'); await exportModal(sc, true); return sc; }, '6'],
+    ['ฟอร์มส่งออก — เปลี่ยนเป็น Excel เลือกบางหัวข้อ', async () => { const sc = await jobSummary('S18 ฟอร์มส่งออก Excel'); await exportModal(sc, false, [3]); return sc; }, '7'],
+    ['ส่งออกสำเร็จ', async () => { const sc = await jobSummary('S18 ส่งออกสำเร็จ'); await toast(sc, { title: 'ส่งออกไฟล์สำเร็จ', sub: EXPORT_FILE(true) }); return sc; }, '8'],
+    ['ไฟล์ PDF หน้า 1', () => pdfPage('S18 ไฟล์ PDF หน้า 1', 1), '9'],
+    ['ไฟล์ PDF หน้า 2', () => pdfPage('S18 ไฟล์ PDF หน้า 2', 2), '10'],
+    ['ไฟล์ Excel ชีต สรุป', () => xlsSheet('S18 ไฟล์ Excel สรุป', 0), '11'],
+    ['ไฟล์ Excel ชีต อะไหล่', () => xlsSheet('S18 ไฟล์ Excel อะไหล่', 3), '12']]],
 ];
 
 /* ปิดเส้นคั่นทุกจุดในจอ (เจ้าของงานสั่ง 19 ต.ค. 2569 "disable divider ออกให้หมด")
@@ -1687,7 +2079,7 @@ const NOTI_SCENARIOS = [
     ['กดรายการ ไปหน้างานที่เกี่ยว', async () => { const s = await job('noti ปลายทาง', 'V3', () => apptRejected(false, '22/10/2569', '24/10/2569')); bell(s, false); return s; }]]],
 ];
 const NOTI_GROUPS = NOTI_SCENARIOS.map(([title, screens], i) => {
-  const code = LETTERS[15 + i], tag = title.split(' · ')[0], rest = title.split(' · ').slice(1).join(' · ');   // P = notification
+  const code = LETTERS[SCENARIOS.length + i], tag = title.split(' · ')[0], rest = title.split(' · ').slice(1).join(' · ');   // ถัดบล็อกสุดท้ายของหน้าหลัก (30 ต.ค. 2569 เพิ่ม P S15 ⇒ notification = Q)
   return { code, title: tag + ' ' + rest, subs: [{ code, title: rest, tag, screens }] };
 });
 
@@ -1791,7 +2183,13 @@ async function buildToast(o) { await buildSet('overhaul-toast', TOAST_SCENARIOS,
    ชื่อเฟรมที่รู้จัก: 19 ต.ค. "OH2 / S1 — label[ · mobile]" · หลังจัดวางใหม่ "OH2 / B.1 · S1 — label[ · mobile]" ---------- */
 const SCEN_TAGS = SCENARIOS.map(([title]) => title.split(' · ')[0]);
 const normLabel = (s) => String(s).replace(/\s*\([^()]*\)\s*$/, '').replace(/\s+/g, ' ').trim();   // ตัดวงเล็บท้าย เช่น "(toast 2)" "(เติมค่าเดิม)"
-const STATE_ALIAS = { 'S12|ซ่อมสำเร็จแล้ว ยังไม่มีเอกสาร (toast 21)': 'Default ยังไม่มีเอกสาร', 'S12|อัปโหลดแล้ว': 'Filled อัปโหลดเอกสารแล้ว',   // บล็อก M ฉบับเจ้าของงาน 22 ต.ค. 2569
+const STATE_ALIAS = { 'S15|กดแจ้งเตือน ไปหน้ารถ แท็บหลัง Overhaul': 'กดแจ้งเตือน ไปหน้าสรุปรายคัน',   // 30 ต.ค. 2569 ปลายทางแจ้งเตือนประกัน = หน้าสรุปรายคัน
+  'S4|ฟอร์ม PO (ว่าง)': 'ฟอร์ม PO Default', 'S4|กดบันทึกโดยยังไม่ครบ': 'Validation กรณีไม่ได้เลือก, Out of focus',   // บล็อก E F G N O ฉบับเจ้าของงาน 29 ต.ค. 2569
+  'S5|กดแก้ไขในเมนู … ของ PO → ฟอร์มแก้ไข PO': 'ฟอร์มแก้ไข PO', 'S5|กดไอคอนแก้ไขของ PO → ฟอร์มแก้ไข PO': 'ฟอร์มแก้ไข PO', 'S5|บันทึกสำเร็จ (toast 8)': 'บันทึกสำเร็จ',
+  'S6|กดลบในเมนู … ของ PO → ยืนยันการลบ PO': 'ยืนยันการลบ PO', 'S6|กดไอคอนลบของ PO → ยืนยันการลบ PO': 'ยืนยันการลบ PO', 'S6|ลบสำเร็จ (toast 9)': 'ลบสำเร็จ',
+  'S13|ฟอร์มนัดรับรถ (ค่าอู่ตั้งต้น)': 'ฟอร์มนัด Default', 'S13|หน่วยงานปฏิเสธ (toast 16)': 'หน่วยงานปฏิเสธ',
+  'S14|นำเข้าไฟล์สำเร็จ (toast 23)': 'ระบุอะไหล่แล้ว', 'S14|ปิดงานแล้ว (toast 25)': 'ปิดงานแล้ว',
+  'S12|ซ่อมสำเร็จแล้ว ยังไม่มีเอกสาร (toast 21)': 'Default ยังไม่มีเอกสาร', 'S12|อัปโหลดแล้ว': 'Filled อัปโหลดเอกสารแล้ว',   // บล็อก M ฉบับเจ้าของงาน 22 ต.ค. 2569
   'เฟส 1 — คอลัมน์ที่มีข้อมูลวันนี้': 'เฟส 1 — ประกันผู้รับจ้าง · ซ่อมชิ้นที่ Overhaul รายคัน', 'เป้าหมาย — + ประกัน · ใช้งานหลังรับรถ · ในประกัน (Alert บอกช่องที่ต้องเพิ่ม)': 'เป้าหมาย — + ใช้งานหลังรับรถ · ยืนยันชิ้นที่ Overhaul ด้วยรหัส (Alert บอกช่องที่ต้องเพิ่ม)',
   'เฟส 1 — พบคำตรงกันจากข้อความ': 'เฟส 1 — ชิ้นที่ Overhaul (จับชื่อ) · ประกันผู้รับจ้าง', 'เป้าหมาย — เกี่ยวกับ Overhaul? · ในประกัน': 'เป้าหมาย — เกี่ยวกับ Overhaul? (ยืนยัน) · ประกันผู้รับจ้าง',
   'เฟส 1 — ข้อมูลที่มี': 'แท็บหลัง Overhaul เฟส 1 — แทรกรายคัน ซ่อมชิ้นที่ Overhaul ในประกัน · ยังไม่ครบช่วงติดตาม', 'เป้าหมาย — ประกัน · ใช้งานหลังรับรถ · ความคุ้มค่า': 'แท็บหลัง Overhaul เป้าหมาย — + ใช้งานหลังรับรถ · ความคุ้มค่า',
@@ -1800,9 +2198,10 @@ const STATE_ALIAS = { 'S12|ซ่อมสำเร็จแล้ว ยัง�
   'S9|มีความคืบหน้า 2 รายการ': 'เพิ่มความคืบหน้าสำเร็จ', 'S10|กดไอคอนแก้ไข → แก้ไขความคืบหน้า': 'แก้ไขรายละเอียดการติดตาม or หมายเหตุ', 'S10|บันทึกแล้ว (toast 19)': 'Update การแก้ไข', 'S11|กดไอคอนลบ → ยืนยันการลบความคืบหน้า': 'ยืนยันการลบรายละเอียดการติดตาม', 'S11|เหลือ 1 รายการ ลบไม่ได้แล้ว (toast 20)': 'ลบสำเร็จ เหลือ 1 รายการจะลบไม่ได้',   // บล็อก J K L ฉบับเจ้าของงาน 22 ต.ค.
   'S2|กดแก้ไขในเมนู … → ฟอร์มแก้ไข (เติมค่าเดิม)': 'ฟอร์มแก้ไข Prefield ข้อมูลที่สร้างไว้', 'S2|ฟอร์มแก้ไข (Prefield ข้อมูลที่สร้างไว้)': 'ฟอร์มแก้ไข Prefield ข้อมูลที่สร้างไว้', 'S2|ปุ่ม “ยกเลิก” → ยืนยันการออก (กรณีที่มีการแก้ไขเกิดขึ้น)': '“ยกเลิก” → ยืนยันการออก กรณีที่มีการแก้ไขเกิดขึ้น',   // ชื่อ C.2 C.3 ฉบับเจ้าของงาน 22 ต.ค. ดึก
    'S2|บันทึกสำเร็จ (toast 3)': 'บันทึกสำเร็จ', 'S3|เมนู "…" → ลบ': 'เมนู "…" → ลบ ในหน้า List', 'S3|กดลบในเมนู … → ยืนยันการลบแผน': 'ยืนยันการลบแผน ในหน้า List', 'S3|ลบสำเร็จ (toast 4)': 'ลบสำเร็จ (ลบที่ List or Detail ก็กลับมานี่)',   // บล็อก C · D ฉบับเจ้าของงาน 22 ต.ค.
-  'S1|ฟอร์มสร้างแผน (ว่าง)': 'ฟอร์มสร้างแผน Default', 'S1|กดบันทึกโดยยังไม่ครบ': 'Validation กรณีไม่ได้เลือก, Out of focus', 'S1|กรอกครบ': 'Filled', 'S1|บันทึกไม่สำเร็จ (toast 2)': 'บันทึกไม่สำเร็จ', 'S1|บันทึกสำเร็จ (toast 1)': 'บันทึกสำเร็จ',   // บล็อก B ฉบับเจ้าของงาน 22 ต.ค.
-  'ผลกรองด้วยรถ': 'ผลกรองด้วยประเภทยานพาหนะ', 'ระบุอะไหล่แล้ว': 'นำเข้าไฟล์สำเร็จ (toast 23)', 'ยืนยันรับรถแล้ว ยังไม่มีความคืบหน้า': 'ยังไม่มีความคืบหน้า', 'ติ๊กรถแล้วกดเพิ่ม': 'เลือกรถ (พิมพ์ค้นแล้วเลือกจาก dropdown)', 'รายการแผน (13 คอลัมน์ · ไอคอนจัดการ · pagination)': 'รายการแผน', 'รายการแผน (component Table · ปุ่ม … · pagination)': 'รายการแผน', 'ตัวกรอง (ปีงบ · สถานะ · ประเภทยานพาหนะ · ช่วงวงเงิน)': 'ตัวกรอง', 'กดไอคอนแก้ไข → ฟอร์มแก้ไข (เติมค่าเดิม)': 'กดแก้ไขในเมนู … → ฟอร์มแก้ไข (เติมค่าเดิม)', 'กดไอคอนลบ → ยืนยันการลบแผน': 'กดลบในเมนู … → ยืนยันการลบแผน', 'กดไอคอนแก้ไขของ PO → ฟอร์มแก้ไข PO': 'กดแก้ไขในเมนู … ของ PO → ฟอร์มแก้ไข PO', 'กดไอคอนลบของ PO → ยืนยันการลบ PO': 'กดลบในเมนู … ของ PO → ยืนยันการลบ PO', 'รายการแผน (component Table · ไอคอนจัดการ · pagination)': 'รายการแผน' };   // ชื่อฉบับ CF เช้า (ไอคอน) → ฉบับเจ้าของงานค่ำ (ปุ่ม … + เมนู)   // ชื่อ state เดิมที่เทียบด้วยกติกาทั่วไปไม่ได้ (รายการท้าย = ชื่อฉบับ CF เช้า 21 ต.ค. → ชื่อตามจอ J ของเจ้าของงาน)
-const REMOVED_STATES = ['ยืนยันการตรวจสอบแล้ว (toast 22)', 'เปิดแก้ไขแผนที่ถูกลบไปแล้ว (toast 6)', 'ดูรูปแนบ (lightbox)', 'ผลกรองด้วยประเภทยานพาหนะ', 'ค้นหา พิมพ์ 3 ตัวอักษร ขึ้น autocomplete'];   // บล็อก A ของเจ้าของงาน (21 ต.ค. ค่ำ) เหลือ 4 state: รายการแผน · ตัวกรอง · ค้นไม่เจอ · ยังไม่มีแผน   // lightbox ไม่อยู่ในจอ J ที่เจ้าของงานส่ง (R23) · state เมนู "…" ที่ CF เคยตัด กลับมาแล้ว 21 ต.ค. ค่ำ (เจ้าของงาน)
+  'S1|ฟอร์มสร้างแผน (ว่าง)': 'ฟอร์มสร้างแผน Default', 'S1|กดบันทึกโดยยังไม่ครบ': 'Validation กรณีไม่ได้เลือก, Out of focus', 'S1|กรอกครบ': 'Filled — งบลงทุน งานก่อสร้าง', 'S1|Filled': 'Filled — งบลงทุน งานก่อสร้าง',   // 29 ต.ค. ประเภทงบ: B.3 → B.3.4 'S1|บันทึกไม่สำเร็จ (toast 2)': 'บันทึกไม่สำเร็จ', 'S1|บันทึกสำเร็จ (toast 1)': 'บันทึกสำเร็จ',   // บล็อก B ฉบับเจ้าของงาน 22 ต.ค.
+  'ผลกรองด้วยรถ': 'ผลกรองด้วยประเภทยานพาหนะ', 'ยืนยันรับรถแล้ว ยังไม่มีความคืบหน้า': 'ยังไม่มีความคืบหน้า', 'ติ๊กรถแล้วกดเพิ่ม': 'เลือกรถ (พิมพ์ค้นแล้วเลือกจาก dropdown)', 'รายการแผน (13 คอลัมน์ · ไอคอนจัดการ · pagination)': 'รายการแผน', 'รายการแผน (component Table · ปุ่ม … · pagination)': 'รายการแผน', 'ตัวกรอง (ปีงบ · สถานะ · ประเภทยานพาหนะ · ช่วงวงเงิน)': 'ตัวกรอง', 'กดไอคอนแก้ไข → ฟอร์มแก้ไข (เติมค่าเดิม)': 'กดแก้ไขในเมนู … → ฟอร์มแก้ไข (เติมค่าเดิม)', 'กดไอคอนลบ → ยืนยันการลบแผน': 'กดลบในเมนู … → ยืนยันการลบแผน', 'กดไอคอนแก้ไขของ PO → ฟอร์มแก้ไข PO': 'กดแก้ไขในเมนู … ของ PO → ฟอร์มแก้ไข PO', 'กดไอคอนลบของ PO → ยืนยันการลบ PO': 'กดลบในเมนู … ของ PO → ยืนยันการลบ PO', 'รายการแผน (component Table · ไอคอนจัดการ · pagination)': 'รายการแผน' };   // ชื่อฉบับ CF เช้า (ไอคอน) → ฉบับเจ้าของงานค่ำ (ปุ่ม … + เมนู)   // ชื่อ state เดิมที่เทียบด้วยกติกาทั่วไปไม่ได้ (รายการท้าย = ชื่อฉบับ CF เช้า 21 ต.ค. → ชื่อตามจอ J ของเจ้าของงาน)
+const REMOVED_STATES = ['เปิดฟอร์มจากแผนที่ถูกลบไปแล้ว (toast 12)', 'นำเข้าไฟล์ผิดรูปแบบ (validation ไม่ใช่ toast)', 'ยังไม่ระบุระยะรับประกัน กดปิดงาน (validation)', 'บันทึกไม่สำเร็จ (toast 26)',   // บล็อก E · O ฉบับเจ้าของงาน 29 ต.ค. 2569
+  'ยืนยันการตรวจสอบแล้ว (toast 22)', 'เปิดแก้ไขแผนที่ถูกลบไปแล้ว (toast 6)', 'ดูรูปแนบ (lightbox)', 'ผลกรองด้วยประเภทยานพาหนะ', 'ค้นหา พิมพ์ 3 ตัวอักษร ขึ้น autocomplete'];   // บล็อก A ของเจ้าของงาน (21 ต.ค. ค่ำ) เหลือ 4 state: รายการแผน · ตัวกรอง · ค้นไม่เจอ · ยังไม่มีแผน   // lightbox ไม่อยู่ในจอ J ที่เจ้าของงานส่ง (R23) · state เมนู "…" ที่ CF เคยตัด กลับมาแล้ว 21 ต.ค. ค่ำ (เจ้าของงาน)
 const REMOVED_TAG = ' · ตัดแล้ว (ไม่มี state นี้ในฉบับปัจจุบัน)';
 function parseFrameName(name) {   // → { code, tag, label, mob } หรือ null
   const m = /^OH2 \/ (?:([A-Z]\d*(?:\.\d+)+) · )?(.*)$/.exec(name); if (!m) return null;   // รหัส D.1.1 ได้ (22 ต.ค. 2569)
@@ -1811,11 +2210,13 @@ function parseFrameName(name) {   // → { code, tag, label, mob } หรือ 
   for (const tag of SCEN_TAGS) if (rest.indexOf(tag + ' — ') === 0) return { code: m[1] || '', tag, label: rest.slice(tag.length + 3), mob };
   return null;
 }
-function matchState(tag, label) {   // → { si, ti, newLabel, fn } · { removed: true } · null
+function matchState(tag, label, code) {   // → { si, ti, newLabel, fn } · { removed: true } · null · code = รหัสบนชื่อเฟรม (F.4.2) ใช้แยก state ชื่อซ้ำ
   const si = SCEN_TAGS.indexOf(tag); if (si < 0) return null;
   const states = SCENARIOS[si][1];
   const want = STATE_ALIAS[tag + '|' + label] || STATE_ALIAS[label] || STATE_ALIAS[normLabel(label)] || label;   // 'S1|ชื่อเดิม' = เปลี่ยนชื่อเฉพาะ scenario นั้น (S4 ใช้ชื่อเดียวกันอยู่)
   let ti = states.findIndex(([l]) => l === want);
+  const same = states.map((st, i) => i).filter(i => states[i][0] === want);   // ชื่อซ้ำในบล็อก (บล็อก F ฉบับเจ้าของงาน 29 ต.ค. 2569: F.4.1 · F.4.2 บันทึกสำเร็จ)
+  if (same.length > 1 && code) { const suf = code.replace(/^[A-Z]\d*\./, ''); const hit = same.find(i => (states[i][2] || String(i + 1)) === suf); if (hit != null) ti = hit; }
   if (ti < 0) ti = states.findIndex(([l]) => normLabel(l) === normLabel(want));
   if (ti < 0) ti = states.findIndex(([l]) => { const a = normLabel(l), b = normLabel(want); return b && (a.endsWith(b) || a.startsWith(b)); });
   if (ti < 0) return REMOVED_STATES.some(r => normLabel(r) === normLabel(label) || normLabel(r) === normLabel(want)) ? { removed: true } : null;   // เทียบทั้งชื่อเดิมและชื่อหลัง alias (เช่น ผลกรองด้วยรถ → ผลกรองด้วยประเภทยานพาหนะ ที่ถูกตัด 21 ต.ค. ค่ำ)
@@ -1835,7 +2236,7 @@ async function updateSelected(o) {
   log('นำเข้า component จากไลบรารี…'); await resolveAll(); await findStepRef(); log(deviceSetInfo());
   const touched = new Set(); let done = 0, skipped = 0, removed = 0;
   for (const old of sel) {
-    const p = parseFrameName(old.name), m = p && matchState(p.tag, p.label);
+    const p = parseFrameName(old.name), m = p && matchState(p.tag, p.label, p.code);
     if (!p || !m) { skipped++; log('  · ข้าม "' + old.name + '" — ชื่อไม่ตรง scenario/state ใดใน CF'); continue; }
     if (m.removed) { removed++; if (old.name.indexOf(REMOVED_TAG) < 0) old.name += REMOVED_TAG; log('  · "' + old.name + '" — state นี้ไม่มีใน CF แล้ว ไม่แตะ แค่ติดป้าย'); continue; }
     const mob = p.mob || old.width <= 500;
@@ -1859,7 +2260,7 @@ async function updateSelected(o) {
    หน้าแบบ 19 ต.ค. (desktop กับ mobile แถวเดียวกัน): ต่อท้ายขอบขวาของแถว desktop แล้ว mobile เคียงกัน */
 async function addNewStates(page, touched) {
   const info = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf('OH2 / ') === 0 && n.name.indexOf(REMOVED_TAG) < 0)
-    .map(f => { const p = parseFrameName(f.name), m = p && matchState(p.tag, p.label); return m && !m.removed ? { f, p, m, mob: p.mob || f.width <= 500 } : null; }).filter(Boolean);
+    .map(f => { const p = parseFrameName(f.name), m = p && matchState(p.tag, p.label, p.code); return m && !m.removed ? { f, p, m, mob: p.mob || f.width <= 500 } : null; }).filter(Boolean);
   const rowOf = (list) => { if (!list.length) return null; const ys = {}; list.forEach(r => { ys[r.f.y] = (ys[r.f.y] || 0) + 1; }); const y = +Object.keys(ys).sort((a, b) => ys[b] - ys[a])[0]; return { y, frames: list.filter(r => r.f.y === y) }; };
   let added = 0;
   for (const si of touched) {
@@ -1977,7 +2378,7 @@ async function dashList(page, o) {
   return sec;
 }
 const TRACK = { none: ['ยังไม่มีงานซ่อม', 'Success'], other: ['ซ่อมชิ้นอื่น', 'Warning'], same: ['ซ่อมชิ้นที่ Overhaul', 'Error'] };
-const VIEW_ICONS = ['quick_reference_all-24-300-round', 'keyboard_arrow_right-20-400-round'];   // ดูรายละเอียด · เปิดหน้างาน
+const VIEW_ICONS = ['quick_reference_all-24-300-round', 'keyboard_arrow_right-20-400-round'];   // ดูสรุปรายคัน (S18 · 30 ต.ค. 2569 เดิม = หน้ารายคันหลัง Overhaul) · เปิดหน้างาน
 /* รถที่ปิดงานแล้ว (V11) — [ทะเบียน, รุ่น·ประเภท, หน่วยงาน · เขต, แผน, PO, วันปิดงาน, อยู่อู่ วัน, อะไหล่ n, อะไหล่ 2 ชื่อแรก, ซ่อมหลัง n, ซ่อมล่าสุด, สถานะติดตาม,
    ประกันผู้รับจ้างถึง (= วันเริ่มรับประกัน + จำนวนวันที่กรอกตอนปิดงาน · R28), ข้อความรองของประกัน, แดง? (เหลือ ≤ 30 วัน หรือหมดแล้ว), ใช้งาน +กม., +ชม. ณ วันที่, ซ่อมชิ้นที่ Overhaul n ครั้ง] · วันนี้ในข้อมูลจำลอง = 21 ต.ค. 2569 */
 const DASH_CARS = [
@@ -2125,10 +2526,13 @@ async function vehicleAfter(name, o) {
   o = o || {};
   const { scr, page } = await vehicleShell(name, 4);
   const r = DASH_REPAIRS[0];
+  if (o.left) add(page, alertBox(o.left <= 15 ? 'Error' : 'Warning', 'ประกันของผู้รับจ้างเหลือ ' + o.left + ' วัน หมด 30 ก.ย. 2570',
+    'สำรวจความสมบูรณ์ของรถ หากพบปัญหาให้นำรถเข้าเก็บงานกับ บริษัท มิตซูบิชิ ฟูโซ่ ทรัค จำกัด ตาม PO-690201 ก่อนหมดประกัน'), 'h');   // ปลายทางแจ้งเตือน S15
   add(page, alertBox('Error', V_INSERT[0], V_INSERT[1]), 'h');   // แทรกรายคัน: ซ่อมชิ้นที่ Overhaul ในประกัน
+  const warranty = o.left ? V_WARRANTY.map(([k, v]) => [k, k === 'วันหมดอายุประกัน' ? '30 ก.ย. 2570 (เหลือ ' + o.left + ' วัน)' : k === 'แจ้งเตือนก่อนหมด' ? 'เจ้าของรถ และ กบค. 30 วัน และ 15 วัน' : v]) : V_WARRANTY;
   const sections = [
     col('Section', [await sectionLabel('งาน Overhaul'), kv(V_JOB)], 16),
-    col('Section', [await sectionLabel('ประกันของผู้รับจ้าง'), kv(V_WARRANTY)], 16),
+    col('Section', [await sectionLabel('ประกันของผู้รับจ้าง'), kv(warranty)], 16),
     col('Section', [await sectionLabel(o.target ? 'ก่อน → หลัง Overhaul' : 'ก่อน → หลัง Overhaul (เฟส 1: ข้อมูลที่มี)'), kv(o.target ? BA_T : BA_P1, 2)], 16),
     col('Section', [await sectionLabel('อะไหล่ที่เปลี่ยนตอน Overhaul', { badge: V_PARTS.length }), await tbl(o.target ? VP_COLS_T : VP_COLS_P1,
       V_PARTS.map(p => o.target ? [{ text: p[0], sub: p[1] }, { pill: [p[6], 'Gray'] }, p[2], p[3], p[4], p[5], { pill: p[7] }, { icons: ['quick_reference_all-24-300-round'] }]

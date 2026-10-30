@@ -28,6 +28,9 @@ function check(screens) {
       if (!all.some(x => isInst(x, ex.mustContain) && shown(x))) fail(ex, sc, 'ไม่มี ' + ex.mustContain);
       if (all.some(x => x.type === 'INSTANCE' && shown(x) && !isInst(x, ex.mustContain) && !inInst(x))) fail(ex, sc, 'มีชิ้นอื่นนอกจาก ' + ex.mustContain + ' — หน้า toast ต้องไม่มี UI อื่น');
       if (ex.exportSettings && !(sc.exportSettings && sc.exportSettings.length)) fail(ex, sc, 'ไม่มี Export settings');
+    } else if (RULES.screen.docs && new RegExp(RULES.screen.docs.nameRegex).test(sc.name)) {   // R32 เฟรมหน้าตาไฟล์ที่ส่งออก (PDF A4 · ชีต Excel) ไม่ใช่จอ — ไม่ผูกขนาดอุปกรณ์ (30 ต.ค. 2569)
+      const d = RULES.screen.docs, okW = /ไฟล์ PDF/.test(sc.name) ? d.pdf[0] : d.excel[0];
+      if (Math.round(sc.width) !== okW) fail(d, sc, 'กว้าง ' + sc.width + ' ต้องเป็น ' + okW);
     } else if (Math.round(sc.width) !== want[0]) fail(RULES.screen, sc, 'กว้าง ' + sc.width + ' ต้องเป็น ' + want[0]);
     // variant ที่กำหนด
     for (const r of RULES.variants) for (const n of all.filter(x => isInst(x, r.component) && shown(x))) {
@@ -70,7 +73,8 @@ function check(screens) {
       for (const t of r.forbidSectionTitles || []) if (all.some(x => isInst(x, 'Section header') && shown(x) && prop(x, 'Title') === t)) fail(r, sc, 'ยังมีหัวข้อเดิม "' + t + '"');
     }
     // component ที่ห้ามใช้ในจอชุดนี้ (R21: Overhaul เลิกใช้เมนู "…" — PO CF 21 ต.ค. 2569 ขอเป็นไอคอน)
-    for (const r of RULES.forbid || []) { if (!new RegExp(r.screens).test(sc.name)) continue; if (all.some(x => isInst(x, r.component) && shown(x))) fail(r, sc, 'ใช้ ' + r.component + ' — ' + r.source); }
+    const inside = (x, names) => { for (let p = x.parent; p && p !== sc; p = p.parent) if (p.type === 'INSTANCE' && names.some(nm => isInst(p, nm))) return true; return false; };   // allowInside = ยกเว้นตัวที่อยู่ใน component ที่กำหนด (R30 ปุ่มตัวกรองใน Table header) · allowText = ยกเว้นปุ่มที่ข้อความตรง (R30 ปุ่มส่งออก)
+    for (const r of RULES.forbid || []) { if (!new RegExp(r.screens).test(sc.name)) continue; if (all.some(x => isInst(x, r.component) && shown(x) && !(r.allowInside && inside(x, r.allowInside)) && !(r.allowText && r.allowText.indexOf((prop(x, 'Text') || '').trim()) >= 0))) fail(r, sc, 'ใช้ ' + r.component + ' — ' + r.source); }
     // R22 dashboard: จอแท็บต้องมี Tabs + Metric item (21 ต.ค. 2569)
     const dr = RULES.dashboard;
     if (dr && new RegExp(dr.screens).test(sc.name)) for (const c of dr.mustHave) if (!all.some(x => isInst(x, c) && shown(x))) fail(dr, sc, 'ไม่มี ' + c);

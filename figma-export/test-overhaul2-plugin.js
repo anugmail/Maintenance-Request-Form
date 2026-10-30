@@ -156,7 +156,7 @@ function hydrate(n) {
     }
   };
   n.getMainComponentAsync = async () => n._main;
-  n.swapComponent = (comp) => { if (!comp || comp.type !== 'COMPONENT') throw new Error('swapComponent ต้องได้ COMPONENT'); n._main = null; n._mainName = (comp.parent && comp.parent.type === 'COMPONENT_SET') ? comp.parent.name : comp.name; n._variant = comp.variantProperties; n.name = n._mainName; hydrate(n); };
+  n.swapComponent = (comp) => { if (!comp || comp.type !== 'COMPONENT') throw new Error('swapComponent ต้องได้ COMPONENT'); n._main = null; n._mainName = (comp.parent && comp.parent.type === 'COMPONENT_SET') ? comp.parent.name : comp.name; n._variant = comp.variantProperties; n.name = n._mainName; hydrate(n); ; { const fresh = makeInstance(comp); n.children = fresh.children; n.children.forEach(c => { c.parent = n; }); n.width = fresh.width; n.height = fresh.height; }   /* 30 ต.ค. 2569: Figma จริงแทนลูกด้วยของ component ใหม่ — เดิม mock เก็บลูกเก่าไว้ */ };
 }
 const ALL = new Set(root.findAll(n => n.type === 'COMPONENT').map(n => n.id));
 for (const n of root.findAll(n => n.type === 'COMPONENT')) n.createInstance = () => makeInstance(n);
@@ -293,20 +293,31 @@ const MODE_CHECK = process.env.MODE === 'check';
     (n.type === 'INSTANCE' && n.componentProperties && Object.keys(n.componentProperties).some(k => k.split('#')[0] === 'Divider' && (n.componentProperties[k].value === true || n.componentProperties[k].value === 'True'))))).forEach(() => divs++));
   if (divs) logs.push('⚠ ยังเห็นเส้นคั่น ' + divs + ' จุด'); else console.log('ไม่เหลือเส้นคั่นที่มองเห็น ✓');
   if (page.children.some(n => n.type === 'SECTION')) logs.push('⚠ ยังมี section บนหน้า');
-  // วงเงินอนุมัติ + WBS 3 ช่อง ต้องอยู่แถวเดียวกัน · ไม่เหลือหัวข้อ "งบโครงการตาม WBS" ที่ว่าง (19 ต.ค. 2569)
+  // วงเงินอนุมัติ + ประเภทงบประมาณ แถวเดียวกันครึ่งต่อครึ่ง · ช่องตามประเภท (WBS 3 ช่อง ฯลฯ) แถวถัดไปครึ่งขวา (29 ต.ค. 2569 · เดิม 19 ต.ค. WBS อยู่แถววงเงิน)
+  //   ไม่เหลือหัวข้อ "งบโครงการตาม WBS" · ช่องตามประเภทไม่บังคับทุกช่อง (Optional) ไม่มี error
   const lbl = (n) => { const cp = n.componentProperties || {}; const k = Object.keys(cp).find(x => x.split('#')[0] === 'Label text'); return k ? cp[k].value : ''; };
+  const prop = (n, name) => { const cp = n.componentProperties || {}; const k = Object.keys(cp).find(x => x.split('#')[0] === name); return k ? cp[k].value : undefined; };
+  const DEP = ['เลข WBS', 'เลขโครงข่าย', 'เลขกิจกรรม', 'เลขที่ใบสั่ง', 'หมายเหตุ', 'ศูนย์ต้นทุน'];
   let wbs = 0;
   screens.forEach(sc => {
-    const f = sc.findAll(n => n.type === 'INSTANCE' && n.name === 'Text input');
+    const f = sc.findAll(n => n.type === 'INSTANCE' && (n.name === 'Text input' || n.name === 'Input dropdown'));
     const g = (t) => f.find(n => lbl(n) === t);
-    const b = g('วงเงินอนุมัติ (บาท)'), w = ['เลข WBS', 'เลขโครงข่าย', 'เลขกิจกรรม'].map(g);
-    if (!b) return; wbs++;
-    const desk = sc.width > 500;   // desktop: Row > [วงเงิน, WBS > 3 ช่อง] ครึ่งต่อครึ่ง · mobile: ช่องต่อกันใน Row เดียว
-    const box = desk ? w[0] && w[0].parent : b.parent;
-    if (w.some(x => !x || x.parent !== box) || (desk ? (box.name !== 'WBS' || box.parent !== b.parent) : false)) { logs.push('⚠ ช่อง WBS ไม่อยู่แถวเดียวกับวงเงินอนุมัติ: ' + sc.name); return; }
-    const r = desk ? b.parent.children : box.children, o = desk ? r.indexOf(box) - r.indexOf(b) - 1 : 0;
-    if (desk ? (o !== 0 || box.children.map(x => x).join() !== w.join()) : (r.indexOf(w[0]) !== r.indexOf(b) + 1 || r.indexOf(w[2]) !== r.indexOf(b) + 3)) logs.push('⚠ ลำดับช่อง WBS ผิด: ' + sc.name);
-    if (desk && (b.layoutGrow !== 1 || box.layoutGrow !== 1 || w.some(x => x.layoutGrow !== 1))) logs.push('⚠ วงเงิน/WBS ไม่ได้แบ่งครึ่ง: ' + sc.name);
+    const b = g('วงเงินอนุมัติ (บาท)'); if (!b) return; wbs++;
+    const t = g('ประเภทงบประมาณ'), desk = sc.width > 500;
+    if (!t || t.parent !== b.parent || b.parent.children.indexOf(t) !== b.parent.children.indexOf(b) + 1) { logs.push('⚠ ประเภทงบประมาณไม่อยู่ถัดวงเงินอนุมัติในแถวเดียวกัน: ' + sc.name); return; }
+    if (desk && (b.layoutGrow !== 1 || t.layoutGrow !== 1)) logs.push('⚠ วงเงิน/ประเภทงบ ไม่ได้แบ่งครึ่ง: ' + sc.name);
+    const dep = DEP.map(g).filter(Boolean);
+    if (!dep.length) return;
+    if (dep.some(x => x.parent !== dep[0].parent)) { logs.push('⚠ ช่องตามประเภทงบไม่อยู่แถวเดียวกัน: ' + sc.name); return; }
+    if (dep.some(x => lbl(x) !== 'ศูนย์ต้นทุน' && prop(x, 'Optional') !== true) || dep.some(x => prop(x, 'Helper') === true)) logs.push('⚠ ช่องตามประเภทงบต้องไม่บังคับและไม่มี error: ' + sc.name);
+    if (desk) {
+      const box = dep[0].parent, r = box.parent, rows = r && r.parent ? r.parent.children : [];
+      if (box.name !== 'WBS' || rows.indexOf(r) !== rows.indexOf(b.parent) + 1 || r.children[0].name !== 'Spacer' || r.children[1] !== box || box.layoutGrow !== 1 || dep.some(x => x.layoutGrow !== 1))
+        logs.push('⚠ ช่องตามประเภทงบไม่อยู่ครึ่งขวาของแถวใต้วงเงิน: ' + sc.name);
+    }
+    const w = ['เลข WBS', 'เลขโครงข่าย', 'เลขกิจกรรม'].map(g);
+    if (w.some(Boolean) && w.some(x => !x)) logs.push('⚠ ช่อง WBS ไม่ครบ 3 ช่อง: ' + sc.name);
+    else if (w[0] && w.map(x => x.parent.children.indexOf(x)).join() !== [0, 1, 2].map(i => w[0].parent.children.indexOf(w[0]) + i).join()) logs.push('⚠ ลำดับช่อง WBS ผิด: ' + sc.name);
     if (sc.findAll(n => n.type === 'TEXT' && n.characters === 'งบโครงการตาม WBS').length) logs.push('⚠ ยังเหลือหัวข้อ งบโครงการตาม WBS: ' + sc.name);
   });
   // รีวิว 19 ต.ค. 2569: ตารางต้องเป็น component Table · หน้า Detail ใช้ Section label · Info icon ปิด · กล่องแสดงข้อมูล
@@ -357,7 +368,7 @@ const MODE_CHECK = process.env.MODE === 'check';
     const kind = mobs.length ? 'Mobile' : 'Desktop', other = mobs.length ? 'Desktop' : 'Mobile';
     if (labels.some(n => n.name.endsWith(' · ' + other))) logs.push('⚠ R19 ชุด ' + kind + ' อย่างเดียว แต่มีป้าย ' + other);
     if (!labels.some(n => n.name.endsWith(' · ' + kind))) logs.push('⚠ R19 ชุด ' + kind + ' ไม่มีป้าย ' + kind);
-    if (!/^TOAST \/ /.test(screens[0].name) && screens.some(n => Math.round(n.width) !== (mobs.length ? 402 : 1440))) logs.push('⚠ R19 ชุด ' + kind + ' มีจอกว้างผิดอุปกรณ์');   // เฟรม toast (R20) ไม่ใช่ขนาดจอ
+    if (!/^TOAST \/ /.test(screens[0].name) && screens.some(n => !/ — ไฟล์ (PDF|Excel)/.test(n.name) && Math.round(n.width) !== (mobs.length ? 402 : 1440))) logs.push('⚠ R19 ชุด ' + kind + ' มีจอกว้างผิดอุปกรณ์');   // R32 เฟรมไฟล์ส่งออกไม่ใช่จอ   // เฟรม toast (R20) ไม่ใช่ขนาดจอ
   }
   console.log('R19 จัดวางแบบตาราง flow: ป้าย ' + labels.length + (split ? ' · ชุดอุปกรณ์เดียว (' + (mobs.length ? 'mobile ' + mobs.length : 'desktop ' + desks.length) + ' จอ)' : ' · คู่ desktop/mobile ' + pairs) + (logs.some(l => /R19/.test(l)) ? '' : ' ✓'));
   if (global.__existing) {   // หน้าเดิมต้องเป็นหน้าปลายทาง · ของเดิมอยู่ที่เดิม · ของใหม่อยู่ใต้ของเดิมทั้งหมด

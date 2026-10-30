@@ -5,12 +5,12 @@
   small{color:#475467}
   #log{margin-top:10px;height:220px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
 </style>
-<p><b>จอ Overhaul v2 ครบ 14 scenario (62 จอ) ฉบับหลัง PO confirm ทุกหน้า (21 ต.ค.)</b> — ทุกชิ้นเป็น instance ของ component จริง · จัดวางแบบตาราง flow (R19: 1 scenario = 1 บล็อก A–O · ป้าย A.1 A.2 … = state) · สร้างบนหน้าใหม่ทุกครั้ง ไม่แตะชุดเดิม · ราว 2–3 นาทีต่อปุ่ม</p>
+<p><b>จอ Overhaul v2 ครบ 18 scenario + หน้ารายการ (123 จอต่ออุปกรณ์ · 30 ต.ค.)</b> — ทุกชิ้นเป็น instance ของ component จริง · จัดวางแบบตาราง flow (R19: 1 scenario = 1 บล็อก A–S · ป้าย A.1 A.2 … = state) · สร้างบนหน้าใหม่ทุกครั้ง ไม่แตะชุดเดิม · ราว 2–3 นาทีต่อปุ่ม</p>
 <p style="margin:4px 0"><b>อุปกรณ์ที่สร้าง</b> (ใช้กับทุกปุ่มสร้างด้านล่าง ยกเว้น 2 ปุ่ม Desktop/Mobile ที่ระบุเอง): <label><input type="radio" name="dev" value="desktop" checked> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label> <label><input type="radio" name="dev" value="both"> ทั้งคู่</label> <small>— เจ้าของงาน 21 ต.ค.: ตอนนี้ยังไม่ทำ mobile ถ้าทำให้ยึดจาก desktop</small></p>
 <p style="margin:4px 0"><label><input type="checkbox" id="here"> <b>วางต่อท้ายหน้าที่เปิดอยู่</b> แทนสร้างหน้าใหม่ (ใช้กับทุกปุ่มสร้างด้านล่าง · ของเดิมบนหน้านั้นไม่ถูกแตะ)</label></p>
 <button id="desk">สร้าง Desktop (1440) → หน้า overhaul-desktop-N</button>
 <button id="mob" style="background:#7a0463">สร้าง Mobile (402×874) → หน้า overhaul-mobile-N</button>
-<p><b>สร้างเฉพาะ scenario ที่เลือก</b> — ติ๊กแล้วกด ได้เฉพาะบล็อกนั้น (รหัส A–O เดิม) บนหน้า overhaul-sel-N หรือต่อท้ายหน้าที่เปิดอยู่ · ใช้เทียบ/แทนบางจอโดยไม่ต้องสร้างทั้ง 14<br>
+<p><b>สร้างเฉพาะ scenario ที่เลือก</b> — ติ๊กแล้วกด ได้เฉพาะบล็อกนั้น (รหัส A–S · P = S15 แจ้งเตือนประกันใกล้หมด · Q = S16 หน่วยงานตอบกลับนัดหมาย · R = S17 หน่วยงานดูอย่างเดียว · S = S18 หน้าสรุปรายคัน) บนหน้า overhaul-sel-N หรือต่อท้ายหน้าที่เปิดอยู่ · ใช้เทียบ/แทนบางจอโดยไม่ต้องสร้างทั้ง 14<br>
 <span id="pick"></span></p>
 <button id="pickgo" style="background:#1d4ed8">สร้างเฉพาะ scenario ที่เลือก</button>
 <p><b>toast</b> — หน้าแยก เฉพาะ toast ไม่มี UI อื่น: 1 toast = 1 เฟรมโปร่ง (instance <code>Notification</code> แก้ข้อความได้) · ถ้อยคำ 23 ข้อความตามที่ PO confirm · บล็อก A–E ตามหน้า 1–5 · แถว desktop แล้ว mobile · ทุกเฟรมตั้ง Export settings แล้ว (SVG + PNG 2x)</p>
