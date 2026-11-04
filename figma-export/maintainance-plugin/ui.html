@@ -5,15 +5,23 @@
   small{color:#475467}
   #log{margin-top:10px;height:240px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
 </style>
-<p><b>บำรุงรักษาตามวาระ — ครบ 18 scenario (93 จอต่ออุปกรณ์ · A–R เรียงตาม S1–S18)</b> · ทุกชิ้นในจอเป็น instance ของ component จริง (ไลบรารี + ที่ยืมจาก flow งานซ่อม)<br>
+<p><b>บำรุงรักษาตามวาระ — 21 scenario (A–V = S1, S2, S4, S6–S23 · V = S23 ผู้รับจ้าง แยกจาก S10 เลขชั่วคราว · S3 ตัดออก · S5 รวมเข้า S4 บล็อก D ว่าง)</b> · ทุกชิ้นในจอเป็น instance ของ component จริง (ไลบรารี + ที่ยืมจาก flow งานซ่อม)<br>
 แต่ละบล็อก scenario = <b>ผัง userflow ซ้ายสุด</b> (อ่านบน → ล่าง · ป้ายเทาบนกล่อง = รหัสจอ) → ป้าย Device → คอลัมน์จอ A.1 A.2 … แถว Desktop แล้ว Mobile<br>
 <b>ทุกปุ่มวางบนหน้า "Maintainance"</b> ต่อใต้ของเดิม (ไม่มีหน้าก็สร้าง) — ของที่มีอยู่บนหน้านั้นไม่ถูกแตะ · ราว 2–4 นาทีต่อปุ่ม</p>
+<p style="background:#fdf2fa;border:1px solid #f3c6e8;border-radius:6px;padding:8px"><b>ติ๊กเลือกส่วนที่จะสร้าง</b> (ทุกอย่างอยู่ในไฟล์นี้ ไม่ต้องใช้ FigJam) — เรียงต่อใต้ของเดิมตามลำดับนี้<br>
+<span id="parts"><label><input type="checkbox" value="desktop"> userflow + จอ Desktop</label> · <label><input type="checkbox" value="mobile"> จอ Mobile</label> · <label><input type="checkbox" value="journey"> userflow แนวขวาง</label> · <label><input type="checkbox" value="storymap" checked> user story mapping</label> · <label><input type="checkbox" value="usecase" checked> use case (76 ข้อ)</label> · <label><input type="checkbox" value="scenarios" checked> ตาราง scenario</label> · <label><input type="checkbox" value="ucscen" checked> use case ตาม scenario</label></span><br>
+<button id="partsAll" style="background:#475467">ติ๊กทั้งหมด</button> <button id="partsGo">สร้างที่ติ๊ก</button><br>
+<small>story map กับ use case อ่านจากไฟล์ 23 / 24 ใน Diagram ตอน build ปลั๊กอิน · กดซ้ำจะแทนที่กรอบเดิมของสองส่วนนี้ ไม่ซ้อน</small></p>
 <button id="all">สร้างทั้งชุด (userflow + Desktop + Mobile)</button>
 <button id="desk" style="background:#7a0463">สร้าง Desktop (1440)</button>
 <button id="mob" style="background:#7a0463">สร้าง Mobile (402×874)</button>
-<p><b>userflow แนวขวาง (journey)</b> — 18 scenario ต่อกันซ้าย → ขวา ตามลำดับงาน (ทางแยกตรวจเอง/ว่าจ้างลงแถว 2) · ภาพย่อหยิบจากจอที่สร้างไว้บนหน้านี้แล้ว (กดสร้าง Desktop ก่อนจะได้ภาพครบ)<br>
+<p><b>userflow แนวขวาง (journey)</b> — 21 scenario ต่อกันซ้าย → ขวา ตามลำดับงาน (ทางแยกตรวจเอง/ว่าจ้างลงแถว 2) · ภาพย่อหยิบจากจอที่สร้างไว้บนหน้านี้แล้ว (กดสร้าง Desktop ก่อนจะได้ภาพครบ)<br>
 <button id="journey" style="background:#0e7490">สร้าง userflow แนวขวาง (journey)</button></p>
-<p><b>สร้างเฉพาะ scenario ที่เลือก</b> — รหัสตัวอักษร A–R = S1–S18 · อุปกรณ์: <label><input type="radio" name="dev" value="both" checked> ทั้งคู่</label> <label><input type="radio" name="dev" value="desktop"> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label><br>
+<p><b>ลบลิงก์กดต่อจอ</b> — ลบลิงก์ที่กดแล้วไปจอถัดไปบนหน้า Maintainance จอ ปุ่ม และข้อความอยู่ครบ · interaction อื่นของ component ไม่ถูกแตะ<br>
+<button id="clearProto" style="background:#b42318">ลบลิงก์กดต่อจอบนหน้านี้</button> <button id="moveLatest" style="background:#0e7490">ย้ายบล็อกล่าสุดกลับเข้าหน้า Maintainance</button></p>
+<p><b>ส่งภาพจอไป FigJam</b> — export จอ desktop บนหน้าที่เปิดอยู่ (รวมจอที่แก้มือแล้ว) ไปที่ <code>figma-export/out/figjam/flow-maintainance/</code> · ต้องรัน <code>node figma-export/serve.js</code> ก่อน · แล้วสร้างบอร์ดด้วย <code>3-figjam-board.js --maintainance</code><br>
+<button id="shots" style="background:#334155">ส่งภาพจอบนหน้านี้ไป FigJam</button></p>
+<p><b>สร้างเฉพาะ scenario ที่เลือก</b> — รหัสตัวอักษร A–V = S1, S2, S4, S6–S23 (S23 ผู้รับจ้าง = V · S3 ตัดออก · S5 รวมเข้า S4 2 พ.ย.) · อุปกรณ์: <label><input type="radio" name="dev" value="both" checked> ทั้งคู่</label> <label><input type="radio" name="dev" value="desktop"> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label><br>
 <span id="pick"></span></p>
 <button id="pickgo" style="background:#1d4ed8">สร้างเฉพาะ scenario ที่เลือก</button>
 <p><small>เปลี่ยนไฟล์หรือไลบรารี → เช็คก่อนว่า component ครบ · แก้ไฟล์ userflow แล้วต้อง build ปลั๊กอินใหม่ ผังถึงจะตาม · ปิด-เปิดปลั๊กอินใหม่ทุกครั้งหลังสคริปต์เปลี่ยน</small></p>
@@ -26,7 +34,28 @@ document.getElementById('desk').onclick = () => send('build-desktop');
 document.getElementById('mob').onclick = () => send('build-mobile');
 document.getElementById('pickgo').onclick = () => send('build-pick', { pick: [...document.querySelectorAll('#pick input:checked')].map(i => +i.value) });
 document.getElementById('journey').onclick = () => send('build-journey');
+/* ติ๊กเลือกส่วน / ทั้งหมด (30 ต.ค. 2569 เจ้าของงานเลือก "ทุกอย่างอยู่ใน Figma") */
+const partBoxes = () => [...document.querySelectorAll('#parts input')];
+document.getElementById('partsAll').onclick = () => { const on = partBoxes().some(i => !i.checked); partBoxes().forEach(i => { i.checked = on; }); };
+document.getElementById('partsGo').onclick = () => { const parts = partBoxes().filter(i => i.checked).map(i => i.value); if (!parts.length) { logLine('ยังไม่ได้ติ๊กส่วนไหน'); return; } send('build-docs', { parts }); };
+/* ส่งภาพจอไป FigJam (30 ต.ค. 2569): ปลั๊กอิน export จอบนหน้านี้ส่งมาทีละภาพ → POST เข้า serve.js (out/figjam/<dir>/) */
+const SERVE = 'http://localhost:8124/';
+document.getElementById('shots').onclick = () => send('export-shots');
+document.getElementById('clearProto').onclick = () => send('clear-proto');
+document.getElementById('moveLatest').onclick = () => send('move-latest');
+async function postFile(path, body) { const r = await fetch(SERVE + path.split('/').map(encodeURIComponent).join('/'), { method: 'POST', body }); if (!r.ok) throw new Error(path + ' ' + r.status); }
+let shotOk = 0, shotErr = 0;
+async function onShot(m) {
+  try { await postFile('figjam/' + m.dir + '/' + m.file, m.bytes); shotOk++; }
+  catch (e) { shotErr++; logLine('✗ ส่ง ' + m.file + ' ไม่ได้ — รัน node figma-export/serve.js อยู่หรือยัง (' + e.message + ')'); }
+}
+async function onShotsDone(m) {
+  try { await postFile('figjam/' + m.dir + '/manifest.json', JSON.stringify(m.manifest, null, 1)); logLine('✓ เขียนภาพ ' + shotOk + ' ไฟล์ + manifest.json ที่ out/figjam/' + m.dir + '/' + (shotErr ? ' · ✗ ไม่สำเร็จ ' + shotErr : '')); }
+  catch (e) { logLine('✗ เขียน manifest.json ไม่ได้ — ' + e.message); }
+  shotOk = 0; shotErr = 0;
+}
 document.getElementById('chk').onclick = () => send('check');
 document.getElementById('copylog').onclick = () => { const ta = document.createElement('textarea'); ta.value = document.getElementById('log').textContent; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); };
-onmessage = (e) => { const m = e.data.pluginMessage; if (m && m.type === 'scenarios') { document.getElementById('pick').innerHTML = m.items.map((t, i) => '<label style="display:inline-block;margin:2px 10px 2px 0"><input type="checkbox" value="' + i + '"> ' + String.fromCharCode(65 + i) + ' ' + t.split(' · ')[0] + '</label>').join(''); return; } if (m && m.type === 'log') { const el = document.getElementById('log'); el.textContent += m.text + '\n'; el.scrollTop = el.scrollHeight; } };
+onmessage = (e) => { const m = e.data.pluginMessage; if (m && m.type === 'scenarios') { document.getElementById('pick').innerHTML = m.items.map((t, i) => '<label style="display:inline-block;margin:2px 10px 2px 0"><input type="checkbox" value="' + i + '"> ' + (m.codes ? m.codes[i] : String.fromCharCode(65 + i)) + ' ' + t.split(' · ')[0] + '</label>').join(''); return; } if (m && m.type === 'shot') { onShot(m); return; } if (m && m.type === 'shots-done') { onShotsDone(m); return; } if (m && m.type === 'log') logLine(m.text); };
+function logLine(t) { const el = document.getElementById('log'); el.textContent += t + '\n'; el.scrollTop = el.scrollHeight; }
 </script>

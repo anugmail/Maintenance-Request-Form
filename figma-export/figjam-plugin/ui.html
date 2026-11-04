@@ -32,16 +32,31 @@
   }
   #log div{margin:0 0 2px}
   .err{color:var(--figma-color-text-danger)}
+  #parts{margin:0 0 12px;border:1px solid var(--figma-color-border);border-radius:6px;padding:8px 10px;max-height:240px;overflow:auto}
+  #parts h2{font-size:11px;font-weight:600;margin:6px 0 2px;color:var(--figma-color-text-secondary);display:flex;justify-content:space-between;align-items:center}
+  #parts h2 a{font-weight:400;cursor:pointer;color:var(--figma-color-text-brand)}
+  #parts label.off{opacity:.55;cursor:default}
+  #parts label{display:flex;gap:6px;align-items:flex-start;font-weight:400;margin:0 0 4px;cursor:pointer}
+  #parts input{width:auto;margin:3px 0 0;padding:0}
+  #parts small{color:var(--figma-color-text-secondary)}
+  .row{display:flex;gap:8px}
+  .row button{flex:1}
+  button.ghost{background:var(--figma-color-bg-secondary);color:var(--figma-color-text);border-color:var(--figma-color-border)}
   .warn{color:var(--figma-color-text-secondary)}
 </style>
 
 <h1>Maintain-D → FigJam board</h1>
-<p class="sub">วางรูป capture ทุกโฟลว์/ทุกหน้าเป็นบอร์ดพร้อมลูกศร</p>
+<p class="sub">ติ๊กส่วนที่จะลงบอร์ดนี้ แต่ละส่วนวางต่อใต้ของเดิม · สร้างส่วนเดิมซ้ำ = แทนที่เฉพาะส่วนนั้น ส่วนอื่นไม่ถูกแตะ</p>
 
-<label for="url">ที่อยู่สเปกบอร์ด</label>
-<input id="url" value="http://localhost:8124/board.json" spellcheck="false">
+<label>ส่วนที่มีในเครื่อง (จาก serve.js)</label>
+<div id="parts"><small>กำลังโหลดรายการ… (ต้องรัน node figma-export/serve.js)</small></div>
+<div class="row"><button id="all" class="ghost">ติ๊กทั้งหมด</button><button id="none" class="ghost">ล้างที่ติ๊ก</button><button id="reload" class="ghost">โหลดรายการใหม่</button></div>
+<button id="buildParts">สร้างส่วนที่ติ๊ก</button>
 
-<button id="build">โหลด + สร้างบอร์ด</button>
+<label for="url">หรือใส่ที่อยู่สเปกบอร์ดเอง</label>
+<input id="url" value="http://localhost:8124/board-maintainance.json" spellcheck="false">
+
+<button id="build">โหลด + สร้างบอร์ดจากที่อยู่นี้</button>
 
 <div id="log"></div>
 
@@ -57,37 +72,91 @@ function log(msg, cls) {
   $log.scrollTop = $log.scrollHeight;
 }
 
-$btn.addEventListener('click', async () => {
-  $btn.disabled = true;
-  try {
-    /* ช่องที่อยู่รับได้ทั้งโฟลเดอร์ (เดิม) และไฟล์ .json ชื่ออื่น เช่น …/board-overhaul2.json (19 ต.ค. 2569 — ชุด Overhaul v2 แยกไฟล์ไม่ทับ board.json) */
-    const url = document.getElementById('url').value.trim();
-    const specUrl = /\.json$/.test(url) ? url : url.replace(/\/?$/, '/') + 'board.json';
-    const base = specUrl.replace(/[^/]*$/, '');
-    log('— กำลังโหลด ' + specUrl.replace(base, ''));
-    const r0 = await fetch(specUrl);
-    if (!r0.ok) throw new Error('ไม่พบไฟล์สเปก ' + specUrl.replace(base, '') + ' (' + r0.status + ') — เช็คชื่อไฟล์ใน figma-export/out/ (เช่น board.json · board-overhaul2.json · board-maintainance.json · board-ac-overhaul-page1.json)');
-    const spec = await r0.json();
-    if (!spec || !Array.isArray(spec.sections)) throw new Error('ไฟล์นี้ไม่ใช่สเปกบอร์ด (ไม่มี sections) — ' + specUrl.replace(base, ''));
+const SERVE = 'http://localhost:8124/';
+let waiting = null;   // ส่งสร้างทีละส่วน — รอ done/error ของส่วนก่อนหน้า
+const setBusy = (v) => { $btn.disabled = v; document.getElementById('buildParts').disabled = v; };
 
-    const srcs = [...new Set(spec.sections.flatMap(s => (s.cols || []).flatMap(c => c.images.map(i => i.src))))];
-    log('— รูปทั้งหมด ' + srcs.length + ' ไฟล์');
-    const images = [];
-    let done = 0;
-    for (const src of srcs) {
-      const r = await fetch(base + src);
-      if (!r.ok) throw new Error('โหลดรูปไม่ได้: ' + src + ' (' + r.status + ')');
-      images.push({ src, bytes: new Uint8Array(await r.arrayBuffer()) });
-      if (++done % 10 === 0) log('   โหลดแล้ว ' + done + '/' + srcs.length);
-    }
-    log('— ส่งเข้า Figma สร้างบอร์ด…');
-    parent.postMessage({ pluginMessage: { type: 'build', spec, images } }, '*');
-  } catch (e) {
-    log('พัง: ' + e.message, 'err');
-    log('เช็คว่ารัน `node figma-export/serve.js` อยู่หรือยัง', 'warn');
-    $btn.disabled = false;
+/* โหลดสเปก + รูป แล้วส่งเข้า sandbox · resolve เมื่อ sandbox ตอบ done (true) หรือ error (false) */
+async function buildSpec(url) {
+  /* ช่องที่อยู่รับได้ทั้งโฟลเดอร์ (เดิม) และไฟล์ .json ชื่ออื่น เช่น …/board-overhaul2.json (19 ต.ค. 2569 — ชุด Overhaul v2 แยกไฟล์ไม่ทับ board.json) */
+  const specUrl = /\.json$/.test(url) ? url : url.replace(/\/?$/, '/') + 'board.json';
+  const base = specUrl.replace(/[^/]*$/, '');
+  log('— กำลังโหลด ' + specUrl.replace(base, ''));
+  const r0 = await fetch(specUrl);
+  if (!r0.ok) throw new Error('ไม่พบไฟล์สเปก ' + specUrl.replace(base, '') + ' (' + r0.status + ') — เช็คชื่อไฟล์ใน figma-export/out/ (เช่น board-maintainance.json · board-maintainance-story-map.json · board-login-flow.json)');
+  const spec = await r0.json();
+  if (!spec || !Array.isArray(spec.sections)) throw new Error('ไฟล์นี้ไม่ใช่สเปกบอร์ด (ไม่มี sections) — ' + specUrl.replace(base, ''));
+  const srcs = [...new Set(spec.sections.flatMap(s => (s.cols || []).flatMap(c => c.images.map(i => i.src))))];
+  log('— รูปทั้งหมด ' + srcs.length + ' ไฟล์');
+  const images = [];
+  let done = 0;
+  for (const src of srcs) {
+    const r = await fetch(base + src.split('/').map(encodeURIComponent).join('/'));
+    if (!r.ok) throw new Error('โหลดรูปไม่ได้: ' + src + ' (' + r.status + ')');
+    images.push({ src, bytes: new Uint8Array(await r.arrayBuffer()) });
+    if (++done % 10 === 0) log('   โหลดแล้ว ' + done + '/' + srcs.length);
   }
+  log('— ส่งเข้า FigJam สร้างบอร์ด…');
+  const p = new Promise(res => { waiting = res; });
+  parent.postMessage({ pluginMessage: { type: 'build', spec, images } }, '*');
+  return p;
+}
+
+$btn.addEventListener('click', async () => {
+  setBusy(true);
+  try { await buildSpec(document.getElementById('url').value.trim()); }
+  catch (e) { log('พัง: ' + e.message, 'err'); log('เช็คว่ารัน `node figma-export/serve.js` อยู่หรือยัง', 'warn'); }
+  setBusy(false);
 });
+
+/* รายการส่วน (GET /boards.json ของ serve.js) — ติ๊กแล้วสร้างทีละส่วนตามลำดับในรายการ */
+async function loadParts() {
+  const box = document.getElementById('parts');
+  try {
+    const r = await fetch(SERVE + 'boards.json');
+    if (!r.ok) throw new Error(String(r.status));
+    const { boards } = await r.json();
+    box.textContent = '';
+    let g = null;
+    for (const b of boards) {
+      if (b.group !== g) {
+        g = b.group; const h = document.createElement('h2'); h.textContent = g;
+        const a = document.createElement('a'); a.textContent = 'ติ๊กทั้งกลุ่ม'; const grp = g;
+        a.onclick = () => document.querySelectorAll('#parts input[data-group="' + grp + '"]:not(:disabled)').forEach(i => { i.checked = true; });
+        h.appendChild(a); box.appendChild(h);
+      }
+      const l = document.createElement('label');
+      const c = document.createElement('input'); c.type = 'checkbox'; c.value = b.file; c.dataset.group = b.group; c.dataset.all = b.inAll ? '1' : '0';
+      if (!b.sections) { c.disabled = true; l.className = 'off'; }   // ยังว่าง เช่น UI scenario ที่ยังไม่ได้ส่งภาพจาก Figma
+      const t = document.createElement('span');
+      const d = new Date(b.updated);
+      t.append(b.label + ' ');
+      const sm = document.createElement('small');
+      sm.textContent = !b.sections ? '· ยังว่าง (UI scenario: กดส่งภาพจอจากปลั๊กอิน Figma ก่อน แล้วสร้างไฟล์บอร์ดใหม่)' : '· ' + b.sections + ' section' + (b.images ? ' · ภาพ ' + b.images : '') + ' · อัปเดต ' + d.toLocaleDateString('th-TH') + ' ' + d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+      t.appendChild(sm);
+      l.append(c, t); box.appendChild(l);
+    }
+    if (!boards.length) box.textContent = 'ยังไม่มีสเปกบอร์ดใน figma-export/out/';
+  } catch (e) {
+    box.textContent = 'โหลดรายการไม่ได้ — รัน node figma-export/serve.js (ตัวล่าสุด) แล้วกด "โหลดรายการใหม่"';
+  }
+}
+document.getElementById('reload').addEventListener('click', loadParts);
+document.getElementById('all').addEventListener('click', () => document.querySelectorAll('#parts input[data-all="1"]:not(:disabled)').forEach(i => { i.checked = true; }));   // ไม่รวม userflow คู่ภาพจอ (ซ้ำกับ userflow) และชุดเก่า
+document.getElementById('none').addEventListener('click', () => document.querySelectorAll('#parts input').forEach(i => { i.checked = false; }));
+document.getElementById('buildParts').addEventListener('click', async () => {
+  const files = [...document.querySelectorAll('#parts input:checked')].map(i => i.value);
+  if (!files.length) { log('ยังไม่ได้ติ๊กส่วนที่จะสร้าง', 'warn'); return; }
+  setBusy(true);
+  for (const f of files) {
+    log('=== ' + f + ' ===');
+    try { const ok = await buildSpec(SERVE + f); if (!ok) log('ข้าม ' + f + ' ไปส่วนถัดไป', 'warn'); }
+    catch (e) { log('พัง: ' + e.message, 'err'); }
+  }
+  log('ครบ ' + files.length + ' ส่วน');
+  setBusy(false);
+});
+loadParts();
 
 onmessage = (e) => {
   const m = e.data.pluginMessage;
@@ -96,8 +165,8 @@ onmessage = (e) => {
   if (m.type === 'done') {
     log('เสร็จ: section ' + m.result.sections + ' · รูป ' + m.result.shapes + ' · ลูกศร ' + m.result.connectors + (m.result.tables ? ' · ตาราง ' + m.result.tables + ' · กล่องข้อความ ' + m.result.texts : ''));
     (m.result.warnings || []).forEach(w => log('เตือน: ' + w, 'warn'));
-    $btn.disabled = false;
+    if (waiting) { waiting(true); waiting = null; }
   }
-  if (m.type === 'error') { log('พัง: ' + m.message, 'err'); $btn.disabled = false; }
+  if (m.type === 'error') { log('พัง: ' + m.message, 'err'); if (waiting) { waiting(false); waiting = null; } }
 };
 </script>

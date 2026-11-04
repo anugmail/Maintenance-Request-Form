@@ -28,8 +28,23 @@ if (cfg.userflow) {
     flowNote += ' + journey แนวขวาง ' + j.cols.length + ' คอลัมน์ · จุดต่อ ' + j.links.length;
   }
 }
+let ac = 'null', acNote = '';
+if (cfg.ac) {   // AC รายจอ (30 ต.ค. 2569 แม่แบบของทีม): .md ใน Diagram/ → const AC = { 'A.1': {...} } ให้ปลั๊กอินวางการ์ดใต้จอ
+  const parsed = require('./plugin-lib/ac-md.js').parse(path.resolve(__dirname, '..', cfg.ac));
+  ac = JSON.stringify(Object.assign({ src: cfg.ac }, { screens: parsed }));
+  acNote = ' · AC ' + Object.keys(parsed).length + ' จอ จาก ' + cfg.ac;
+}
+let docs = 'null', docsNote = '';
+if (cfg.docs) {   // เอกสารที่ปลั๊กอินวางเป็นกรอบบนหน้า (30 ต.ค. 2569 story map + use case ใน Figma) → const DOCS = { key: { src, … } }
+  const dt = require('./plugin-lib/doc-tables.js'), d = {};
+  for (const [k, v] of Object.entries(cfg.docs)) { const src = path.resolve(__dirname, '..', v); d[k] = Object.assign({ src: v }, /\.csv$/.test(v) ? dt.csv(src) : dt.md(src)); }
+  docs = JSON.stringify(d);
+  docsNote = ' · เอกสาร ' + Object.keys(d).join(', ');
+}
 const out = '/* ⚠ ไฟล์นี้ประกอบอัตโนมัติจาก plugin-lib/core.js + ' + dir + '/screens.js' + (cfg.userflow ? ' + ' + cfg.userflow : '') + ' ด้วย build-plugin.js — แก้ที่ต้นทางแล้วรัน  node figma-export/build-plugin.js ' + dir + '  (' + new Date().toISOString().slice(0, 10) + ') */\n\n' +
   core + '\n/* ======================== userflow (ฝังตอน build) ======================== */\nconst USERFLOW = ' + flow + ';\n' +
+  '\n/* ======================== AC รายจอ (ฝังตอน build) ======================== */\nconst AC = ' + ac + ';\n' +
+  '\n/* ======================== เอกสาร story map / use case (ฝังตอน build) ======================== */\nconst DOCS = ' + docs + ';\n' +
   '\n/* ======================== ' + dir + '/screens.js ======================== */\n' + screens;
 fs.writeFileSync(path.join(__dirname, dir, 'code.js'), out);
-console.log(dir + '/code.js: ' + out.split('\n').length + ' บรรทัด (core ' + core.split('\n').length + ' + screens ' + screens.split('\n').length + ') · ' + flowNote);
+console.log(dir + '/code.js: ' + out.split('\n').length + ' บรรทัด (core ' + core.split('\n').length + ' + screens ' + screens.split('\n').length + ') · ' + flowNote + acNote + docsNote);

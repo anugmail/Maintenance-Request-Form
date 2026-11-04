@@ -14,7 +14,8 @@ const hex = (c) => '#' + [c.r, c.g, c.b].map(v => Math.round(v * 255).toString(1
 const composedTables = (sc) => sc.findAll(n => n.type === 'FRAME' && n.name === 'Table' && n.children.some(x => x.name === 'Column'));
 const oversize = (t) => { const cs = t.children.filter(x => x.name === 'Column'); return cs.length > RULES.library.Table.cols || (cs[0] && cs[0].children.length - 1 > RULES.library.Table.rows); };
 
-function check(screens) {
+function check(screens, opt) {   // opt.inFile(ชื่อ) = ไฟล์มี component นั้นไหม (กติกา ifInFile: component ของไฟล์งานซ่อม ไม่มีในไฟล์ → ปลั๊กอินใช้แบบสำรอง ไม่นับผิด · 3 พ.ย. 2569)
+  opt = opt || {};
   const fails = [], pending = new Map();
   const fail = (r, sc, msg) => fails.push(r.id + ' ' + sc.name + ' — ' + msg);
   for (const sc of screens) {
@@ -46,7 +47,8 @@ function check(screens) {
       let ok = false, allowed = false;
       for (let p = n.parent; p && p !== sc; p = p.parent) {
         if (isInst(p, r.parent)) { ok = true; break; }
-        if ((r.allowInside || []).some(c => isInst(p, c))) { ok = true; break; }   // component ของทีมออกแบบที่ประกอบตารางไว้เอง (ReturnPart · 22 ต.ค. 2569) — ไม่ใช่ปลั๊กอินประกอบ
+        if ((r.allowInside || []).some(c => isInst(p, c))) { ok = true; break; }
+        if (p.type === 'FRAME' && (r.allowInFrame || []).includes(p.name)) { ok = true; break; }   // แบบสำรองที่ลอกตารางของ component งานซ่อมชื่อเดียวกัน เมื่อไฟล์ไม่มี component นั้น (R47 · 3 พ.ย. 2569)   // component ของทีมออกแบบที่ประกอบตารางไว้เอง (ReturnPart · 22 ต.ค. 2569) — ไม่ใช่ปลั๊กอินประกอบ
         if (r.allowInStyledFrame && p.type === 'FRAME' && p.name === r.parent) {   // เฟรมแทน component ต้องมีกรอบ + มุมแบบ component (หน้างานซ่อม)
           if ((p.strokes || []).length && p.cornerRadius > 0) { ok = true; break; }
           fail(r, sc, r.parent + ' เป็นเฟรมไม่มีกรอบ/มุม — ต้องแต่งแบบหน้างานซ่อม'); ok = true; break;
@@ -69,6 +71,7 @@ function check(screens) {
     // จอที่ต้องใช้ component เฉพาะ (เช่น นัดหมาย = RepairAppointmentStep)
     for (const r of RULES.screensUse || []) {
       if (!new RegExp(r.screens).test(sc.name) || (r.desktopOnly && mobile)) continue;
+      if (r.ifInFile && opt.inFile && !opt.inFile(r.component)) continue;
       if (!all.some(x => isInst(x, r.component) && shown(x))) fail(r, sc, 'ไม่มี ' + r.component);
       for (const t of r.forbidSectionTitles || []) if (all.some(x => isInst(x, 'Section header') && shown(x) && prop(x, 'Title') === t)) fail(r, sc, 'ยังมีหัวข้อเดิม "' + t + '"');
     }

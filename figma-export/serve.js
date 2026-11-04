@@ -12,6 +12,17 @@ const path = require('path');
 
 const PORT = Number(process.env.PORT) || 8124;
 const OUT = path.join(__dirname, 'out');
+/* ป้ายของสเปกบอร์ดที่รู้จัก (ลำดับ = ลำดับที่แสดงในปลั๊กอินบอร์ด) */
+const BOARD_LABELS = [
+  { file: 'board-maintainance.json', group: 'บำรุงรักษาตามวาระ', label: 'userflow รายscenario' },
+  { file: 'board-maintainance-ui.json', group: 'บำรุงรักษาตามวาระ', label: 'UI scenario (ภาพจอจาก Figma)' },
+  { file: 'board-maintainance-flow-ui.json', group: 'บำรุงรักษาตามวาระ', label: 'userflow คู่ภาพจอ', inAll: false },
+  { file: 'board-maintainance-journey.json', group: 'บำรุงรักษาตามวาระ', label: 'journey ต่อกันทั้งเรื่อง' },
+  { file: 'board-maintainance-story-map.json', group: 'บำรุงรักษาตามวาระ', label: 'user story mapping (JO ข้อ 7.3)' },
+  { file: 'board-maintainance-usecase.json', group: 'บำรุงรักษาตามวาระ', label: 'use case 66 ข้อ' },
+  { file: 'board-ac-overhaul-page1.json', group: 'Overhaul', label: 'AC หน้า 1 รายการแผน' },
+  { file: 'board-overhaul2.json', group: 'Overhaul', label: 'ภาพจอจาก HTML (ชุดเก่า 19 ต.ค.)', inAll: false },
+];
 
 const handler = (req, res) => {
   const cors = {
@@ -37,6 +48,20 @@ const handler = (req, res) => {
 
   /* POST — ให้ปลั๊กอินส่งผลกลับมาเขียนลง out/ (ใช้กับ catalog-plugin ที่ดัมป์ component
      จากไฟล์ Figma จริง) · เขียนได้เฉพาะ .json ใต้ out/ เท่านั้น กัน path traversal ด้วย guard ตัวเดียวกับ GET */
+  if (req.method === 'POST' && path.extname(file) === '.png') {   // ภาพจอจากปลั๊กอิน Figma (30 ต.ค. 2569) — เขียนได้เฉพาะใต้ out/figjam/
+    if (!file.startsWith(path.join(OUT, 'figjam') + path.sep)) { res.writeHead(403, cors); return res.end(); }
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => {
+      const buf = Buffer.concat(chunks);
+      fs.mkdir(path.dirname(file), { recursive: true }, () => fs.writeFile(file, buf, (err) => {
+        console.log((err ? '✗ เขียนไม่ได้ ' : '✓ เขียน ') + path.relative(process.cwd(), file) + (err ? ' — ' + err.message : ' (' + buf.length.toLocaleString() + ' ไบต์)'));
+        res.writeHead(err ? 500 : 200, Object.assign({ 'Content-Type': 'application/json; charset=utf-8' }, cors));
+        res.end(JSON.stringify(err ? { error: err.message } : { ok: true, bytes: buf.length }));
+      }));
+    });
+    return;
+  }
   if (req.method === 'POST') {
     if (path.extname(file) !== '.json') {
       res.writeHead(400, Object.assign({ 'Content-Type': 'application/json; charset=utf-8' }, cors));
@@ -56,6 +81,21 @@ const handler = (req, res) => {
       });
     });
     return;
+  }
+
+  /* GET /boards.json — รายการสเปกบอร์ด FigJam ที่มีใน out/ ตอนนี้ (สร้างสดทุกครั้ง) ให้ปลั๊กอินบอร์ดติ๊กเลือกสร้างทีละส่วนบนบอร์ดเดียว (30 ต.ค. 2569)
+     กลุ่ม/ป้ายของไฟล์ที่รู้จักอยู่ใน BOARD_LABELS · ไฟล์อื่นขึ้นในกลุ่ม "อื่น ๆ" ด้วยชื่อเรื่องในสเปก · board.json (ชุดแรก ไม่มี anchor = ล้างของบนบอร์ด) ไม่แสดง */
+  if (req.method === 'GET' && rel === 'boards.json') {
+    const list = fs.readdirSync(OUT).filter(f => /^board-.+\.json$/.test(f)).map(f => {
+      let spec = {}; try { spec = JSON.parse(fs.readFileSync(path.join(OUT, f), 'utf8')); } catch (e) { return null; }
+      if (!Array.isArray(spec.sections)) return null;
+      const known = BOARD_LABELS.find(x => x.file === f);
+      return { file: f, group: known ? known.group : 'อื่น ๆ', label: known ? known.label : (spec.title || f), order: known ? BOARD_LABELS.indexOf(known) : 999, inAll: !known || known.inAll !== false,   // inAll:false = ไม่ติ๊กตอนกด "ติ๊กทั้งหมด" (ซ้ำกับส่วนอื่น หรือชุดเก่า)
+        sections: spec.sections.length, images: spec.sections.reduce((n, s) => n + (s.cols || []).reduce((m, c) => m + c.images.length, 0), 0),
+        updated: fs.statSync(path.join(OUT, f)).mtime.toISOString() };
+    }).filter(Boolean).sort((x, y) => x.order - y.order || x.file.localeCompare(y.file));
+    res.writeHead(200, Object.assign({ 'Content-Type': 'application/json; charset=utf-8' }, cors));
+    return res.end(JSON.stringify({ boards: list }));
   }
 
   const TYPES = { '.png': 'image/png', '.json': 'application/json; charset=utf-8' };

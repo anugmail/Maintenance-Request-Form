@@ -16,7 +16,7 @@
      node figma-export/3-figjam-board.js --overhaul2 --only --out=board-overhaul2.json
                                                     Overhaul v2 ครบ 14 scenario (section ละ scenario · capture จาก flow-overhaul2-capture.js)
                                                     --out= เขียนไฟล์ชื่ออื่น ไม่ทับ board.json (ปลั๊กอินใส่ชื่อไฟล์ในช่องที่อยู่ได้)
-     node figma-export/3-figjam-board.js --maintainance --only --out=board-maintainance.json
+     node figma-export/3-figjam-board.js --maintainance --only --out=board-maintainance.json   (มี out/figjam/flow-maintainance/manifest.json = ใส่ภาพจอจาก Figma ต่อจากผังแต่ละ scenario · --shots-dir= เปลี่ยนโฟลเดอร์)
      node figma-export/3-figjam-board.js --maintainance-journey --only --out=board-maintainance-journey.json
                                                     userflow บำรุงรักษา 18 scenario เป็นผังเดียวต่อกัน (start จุดเดียว · 8-flow-userflow.js --journey)
                                                     userflow บำรุงรักษาตามวาระ 17 scenario (section ละ scenario · ผังรูปทรง Template
@@ -203,7 +203,12 @@ function main() {
   // userflow บำรุงรักษาตามวาระ (19 ต.ค. 2569) — 17 scenario ที่เขียนตามบอร์ดเจ้าของงาน · ผังล้วน ไม่มีรูป capture
   // ต้นทาง: Diagram/01-บำรุงรักษาตามวาระ/14-บำรุงรักษา-userflow.md → 8-flow-userflow.js → out/diagram-userflow-maintainance.json
   // แยกไฟล์จากชุดซ่อม (board.json) และ Overhaul (board-overhaul2.json) ตามคำสั่ง "ซ่อมอันนึง บำรุงอันนึง"
-  if (all || args.has('--maintainance')) {
+  /* บำรุงรักษา 3 ส่วนแยกกัน (30 ต.ค. 2569 เจ้าของงาน "อยากให้กด export ได้ทั้งหมด และเลือกทีละอย่างได้"):
+     --maintainance          userflow ผังล้วนรายscenario
+     --maintainance-ui       UI scenario: ภาพจอจาก Figma รายscenario (จากปุ่ม "ส่งภาพจอบนหน้านี้ไป FigJam" → out/figjam/<shots-dir>/manifest.json)
+     --maintainance-flow-ui  ผังกับภาพจอคู่กัน (section ภาพจอต่อจากผังของ scenario เดียวกัน) */
+  const MAINT_FLAGS = ['--maintainance', '--maintainance-ui', '--maintainance-flow-ui'];
+  if (all || MAINT_FLAGS.some(f => args.has(f))) {
     const uf = path.join(OUT, 'diagram-userflow-maintainance.json');
     if (!fs.existsSync(uf)) {
       console.error('ไม่พบ ' + uf + ' — รัน  node figma-export/8-flow-userflow.js  ก่อน');
@@ -211,9 +216,21 @@ function main() {
     }
     const u = read(uf);
     const tint = [COLORS.violet, COLORS.blue, COLORS.teal, COLORS.yellow, COLORS.pink, COLORS.green, COLORS.gray];
-    u.sections.forEach((sec, i) => sections.push({
-      name: sec.name, color: i === 0 ? [255, 255, 255] : tint[(i - 1) % tint.length], kind: 'diagram', diagram: sec.diagram
-    }));
+    const shotDir = (process.argv.find(a => a.startsWith('--shots-dir=')) || '--shots-dir=flow-maintainance').slice(12);
+    const smf = path.join(FJ, shotDir, 'manifest.json');
+    const sm = fs.existsSync(smf) ? read(smf) : null;
+    const wantFlow = all || args.has('--maintainance') || args.has('--maintainance-flow-ui');
+    const wantShots = args.has('--maintainance-ui') || args.has('--maintainance-flow-ui');
+    if (wantShots) console.log(sm ? 'ภาพจอจาก Figma: ' + sm.shots.length + ' จอ (หน้า "' + sm.page + '" · export ' + sm.exportedAt + ')' : '⚠ ยังไม่มีภาพจอ (' + path.relative(path.join(__dirname, '..'), smf) + ') — กด "ส่งภาพจอบนหน้านี้ไป FigJam" ในปลั๊กอิน Figma ก่อน');
+    u.sections.forEach((sec, i) => {
+      const color = i === 0 ? [255, 255, 255] : tint[(i - 1) % tint.length];
+      if (wantFlow) sections.push({ name: sec.name, color, kind: 'diagram', diagram: sec.diagram });
+      const m = sec.name.match(/Scenario (\d+) · (.+)$/), shots = wantShots && sm && m ? sm.shots.filter(x => x.scenario === 'S' + m[1]) : [];
+      if (shots.length) sections.push({
+        name: (args.has('--maintainance-ui') ? 'UI scenario บำรุงรักษา · S' + m[1] + ' · ' + m[2] : sec.name + ' · จอจาก Figma'), color, connect: 'sequence',
+        cols: shots.map(x => ({ label: x.code + ' · ' + x.name, note: '', images: [{ src: 'figjam/' + shotDir + '/' + x.file, w: x.w, h: x.h }] }))
+      });
+    });
   }
 
   // journey ต่อกันทั้งเรื่อง (22 ต.ค. 2569 · เจ้าของงาน "ที่ส่งไปไม่ได้ต่อกัน แต่สิ่งที่อยากได้คือต่อกัน")
@@ -248,7 +265,7 @@ function main() {
 
   const board = {
     version: 1,
-    anchor: (args.has('--disposal') || args.has('--inventory') || args.has('--overhaul2') || args.has('--maintainance') || args.has('--maintainance-journey')) ? 'below' : undefined,   // วางต่อใต้ของเดิมบนบอร์ด ไม่ทับ
+    anchor: (args.has('--disposal') || args.has('--inventory') || args.has('--overhaul2') || args.has('--maintainance') || args.has('--maintainance-ui') || args.has('--maintainance-flow-ui') || args.has('--maintainance-journey')) ? 'below' : undefined,   // วางต่อใต้ของเดิมบนบอร์ด ไม่ทับ
     generatedAt: new Date().toISOString(),
     font: { family: 'IBM Plex Sans Thai', style: 'Medium' },
     fallbackFont: { family: 'Inter', style: 'Medium' },

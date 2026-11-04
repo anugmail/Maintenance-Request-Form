@@ -4,8 +4,20 @@
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
-  "editorType": ["figma"],
+  "editorType": [
+    "figma"
+  ],
   "documentAccess": "dynamic-page",
-  "permissions": ["teamlibrary"],
-  "networkAccess": { "allowedDomains": ["none"], "reasoning": "ข้อมูลหน้าจออยู่ใน code.js ทั้งหมด ไม่ต่อเครือข่าย" }
+  "permissions": [
+    "teamlibrary"
+  ],
+  "networkAccess": {
+    "allowedDomains": [
+      "none"
+    ],
+    "devAllowedDomains": [
+      "http://localhost:8124"
+    ],
+    "reasoning": "ส่งภาพจอไป serve.js ในเครื่อง (out/figjam/) สำหรับบอร์ด FigJam — ไม่ต่อออกอินเทอร์เน็ต"
+  }
 }
