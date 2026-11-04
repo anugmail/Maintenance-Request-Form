@@ -475,7 +475,7 @@ function mobileCards(cols, rows) {   // mobile: 1 แถวตาราง = 1 �
     const card = inst('Mobile table', { 'Alternating fills': 'False' });
     const items = card.children.filter(c => c.name === 'Mobile table item');
     const data = [], acts = [];
-    cols.forEach(([head], ci) => { const v = r[ci]; if (v && (v.menu || v.icons)) acts.push(v); else if (head) data.push([head, v]); });
+    cols.forEach(([head], ci) => { const v = r[ci]; if (v && (v.menu || v.icons)) acts.push(v); else if (head && v && v.pills) v.pills.forEach((pl, k) => data.push([k ? v.pillsHead || head : head, { pill: pl }])); else if (head) data.push([head, v]); });   // Mobile table item ไม่มี Multiple badges ⇒ ป้ายที่ 2 เป็นแถวของการ์ด (4 พ.ย. 2569)
     items.forEach((it, i) => {
       const last = i === items.length - 1;
       if (last) {
@@ -507,10 +507,11 @@ function tblComposed(cols, rows) {   // cols: [หัว, กว้าง, Style
     if (sort) { const s = find(hc, 'Sort icon'); if (s) setProps(s, { Icon: sort }); }
     rows.forEach((r, ri) => {
       const v = r[ci], alt = ri % 2 ? 'True' : 'False';
-      const st = v && v.check != null ? 'Lead checkbox' : v && v.pill ? 'Badge' : v && (v.menu || v.icons) ? 'Action icons' : style || 'Text';
+      const st = v && v.check != null ? 'Lead checkbox' : v && v.pills ? 'Multiple badges' : v && v.pill ? 'Badge' : v && (v.menu || v.icons) ? 'Action icons' : style || 'Text';
       const cell = inst('Table cell', { Style: st, 'Alternating fills': alt });
       add(c, cell, 'h');
-      if (st === 'Badge') { const p = find(cell, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
+      if (st === 'Multiple badges') fillPills(cell, v.pills);
+      else if (st === 'Badge') { const p = find(cell, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
       else if (st === 'Action icons') {
         const ic = v.menu ? ['more_horiz-20-400-round'] : v.icons;
         setProps(cell, { View: ic.length > 0, Edit: ic.length > 1, Print: false, Delete: false });
@@ -525,10 +526,15 @@ function tblComposed(cols, rows) {   // cols: [หัว, กว้าง, Style
   return t;
 }
 /* ช่องตาราง 1 ช่อง — ใช้ทั้งกับ Table cell ที่ซ้อนใน Table (รีวิว 19 ต.ค. 2569) และ mobile */
+/* ป้ายหลายอันในช่องเดียว (4 พ.ย. 2569 S12 สถานะงาน + "รอผลตรวจน้ำมัน") — Table cell Style=Multiple badges ของไลบรารีมี Pill outline 3 อัน (ป้าย · ป้าย · +n) ใช้ตามจำนวน ที่เหลือซ่อน */
+function fillPills(cell, pills) {
+  cell.findAll(n => n.type === 'INSTANCE' && n.name === 'Pill outline').forEach((p, k) => { if (k < pills.length) setProps(p, { Color: pills[k][1], Text: pills[k][0] }); else p.visible = false; });
+}
 function fillCell(cell, v, style, alt) {
-  const st = v && v.check != null ? 'Lead checkbox' : v && v.pill ? 'Badge' : v && (v.menu || v.icons) ? 'Action icons' : style || 'Text';
+  const st = v && v.check != null ? 'Lead checkbox' : v && v.pills ? 'Multiple badges' : v && v.pill ? 'Badge' : v && (v.menu || v.icons) ? 'Action icons' : style || 'Text';
   setProps(cell, { Style: st, 'Alternating fills': alt });
-  if (st === 'Badge') { const p = find(cell, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
+  if (st === 'Multiple badges') fillPills(cell, v.pills);
+  else if (st === 'Badge') { const p = find(cell, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
   else if (st === 'Action icons') {
     const ic = v.menu ? ['more_horiz-20-400-round'] : v.icons;
     setProps(cell, { View: ic.length > 0, Edit: ic.length > 1, Print: false, Delete: false });
