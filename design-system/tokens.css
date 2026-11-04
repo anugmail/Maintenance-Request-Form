@@ -83,6 +83,13 @@
   --info-50:#EEF4FF;       /* ✔ ยืนยันจากไลบรารี ใช้ 72 ครั้ง · พื้นอ่อนของ info */
   --info-25:#F5F8FF;       /* ⚠ ไม่พบในไลบรารี */
 
+  /* ---------- Purple (v0.73 · 4 พ.ย. 2569) — Pill outline / Featured icon Color=Purple
+     ✔ Variable ของไลบรารี Color/component/utility/purple/50 · 200 · 700 (ดัมป์ปลั๊กอินรุ่นที่เก็บชื่อ Variable 4 พ.ย. 2569) */
+  --purple-700:#6927DA;    /* ✔ Color/component/utility/purple/700 — ตัวอักษร Pill outline Purple */
+  --purple-600:#7839EE;    /* ✔ v0.74 Featured icon Color=Purple Size=sm (ไอคอน) */
+  --purple-200:#DDD6FE;    /* ✔ Color/component/utility/purple/200 — ขอบ */
+  --purple-50:#F5F3FF;     /* ✔ Color/component/utility/purple/50 — พื้น */
+
   /* ---------- Badge (วัดจาก runtime — pill outline) ✅ ทั้งบล็อก ----------
      ระบบจริงใช้ ramp แบรนด์อ่อนคนละชุดกับ Figma สำหรับ badge โดยเฉพาะ
      (Figma: พื้น #FDEEFC ขอบ #F8BFF4 · runtime: พื้น #FFF5FD ขอบ #FED8F6)  */
@@ -198,8 +205,9 @@
   --btn-link-text-hover:var(--brand-950);           /* ⚠ ยังไม่ยืนยัน */
 
   /* วงแหวน focus */
-  --focus-ring:rgba(168,6,137,.24);                 /* ⚠ ประมาณจาก brand-900 · แอปจริงใช้ #a806891f (อัลฟา .12) */
-  --focus-ring-error:rgba(217,45,32,.24);           /* ⚠ */
+  --focus-ring:rgba(168,6,137,.12);                 /* ✔ v0.74 ไลบรารี State=Focused #A806891F (อัลฟา .12) ตรงแอปจริง · เดิม .24 */
+  --focus-ring-error:rgba(217,45,32,.12);           /* ✔ v0.74 ไลบรารี State=Focused (error) #D92D201F · เดิม .24 */
+  --focus-ring-gray:rgba(102,112,133,.12);          /* ✔ v0.74 ไลบรารี State=Focused (Secondary/Checkbox) #6670851F */
 
 
   /* ══════════ alias เดิม — ห้ามลบ (ใช้อยู่ทั่วต้นแบบ ~350 จุด) ══════════
@@ -217,6 +225,8 @@
   --shadow-xs:0 1px 2px rgba(10,13,18,.05);  /* ✔ เงาช่องกรอก/ตารางตามไลบรารี (#0A0D12 5%) */
   --shadow-app:0 0 40px rgba(16,24,40,.12);
   --shadow-pop:0 4px 14px rgba(16,24,40,.25);
+  --shadow-lg:0 12px 16px -4px rgba(16,24,40,.08);   /* ✔ v0.73 ไลบรารี Dropdown menu · Dropdown list · Notification (DROP_SHADOW #10182814 y12 blur16 spread-4) */
+  --overlay:rgba(0,0,0,.4);   /* ✔ v0.73 ไลบรารี Background overlay (#000000 40% · Variable Color/background/overlay) */
   --shadow-card:0 1px 2px rgba(16,24,40,.06),0 10px 30px rgba(16,24,40,.07);  /* การ์ดหน้าวิเคราะห์ */
   --grad-header:linear-gradient(135deg,var(--brand-900),var(--brand-800));
 }

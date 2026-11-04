@@ -9,8 +9,67 @@
 const hex = (c) => '#' + [c.r, c.g, c.b].map((v) => Math.round(v * 255).toString(16).padStart(2, '0')).join('').toUpperCase();
 const solids = (arr) => (Array.isArray(arr) ? arr : []).filter((p) => p.visible !== false && p.type === 'SOLID').map((p) => hex(p.color));
 
+/* 4 พ.ย. 2569 เจ้าของงาน "ต้องมี component เท่านั้นในการทำเว็บ" ⇒ ดัมป์ให้ครบพอทำเว็บจาก component โดยไม่เดา:
+   เงา/เบลอ (effects) · ความทึบของโหนดและของสี (opacity) · ชั้นที่ซ่อน (visible) · gradient/ภาพ · ระยะตัวอักษร/จัดแนว
+   · ชื่อตัวแปร (Variables) ที่ผูกกับสี/ระยะ/รัศมี — ใช้จับคู่ token ตรงตัว · SVG ของ component กราฟิก (ไอคอน โลโก้ ภาพประกอบ) */
+const rgba = (c, a) => hex(c) + (a != null && a < 1 ? Math.round(a * 255).toString(16).padStart(2, '0').toUpperCase() : '');
+const paints = (arr) => (Array.isArray(arr) ? arr : []).filter((p) => p.visible !== false).map((p) =>
+  p.type === 'SOLID' ? rgba(p.color, p.opacity) : p.type === 'IMAGE' ? 'image' : /GRADIENT/.test(p.type) ? { gradient: p.type, stops: (p.gradientStops || []).map((g) => [rgba(g.color, g.color.a), Math.round(g.position * 100) / 100]) } : p.type);
+const VAR_NAME = new Map();
+async function varName(id) {
+  if (!id) return null;
+  if (VAR_NAME.has(id)) return VAR_NAME.get(id);
+  let nm = null;
+  try { const v = await figma.variables.getVariableByIdAsync(id); nm = v ? v.name : null; } catch (e) {}
+  VAR_NAME.set(id, nm); return nm;
+}
+async function bound(n) {   // { fills: ['color/brand/900'], strokes: [...], itemSpacing: 'spacing/md', ... }
+  const out = {};
+  try {
+    const bv = n.boundVariables || {};
+    for (const k of Object.keys(bv)) {
+      const v = bv[k], list = Array.isArray(v) ? v : [v];
+      const names = (await Promise.all(list.map((x) => varName(x && x.id)))).filter(Boolean);
+      if (names.length) out[k] = names.length === 1 ? names[0] : names;
+    }
+  } catch (e) {}
+  return Object.keys(out).length ? out : null;
+}
+const isLogo = (n) => /logo/i.test(n.name) && /COMPONENT|INSTANCE|GROUP|FRAME/.test(n.type) && n.width <= 600 && n.height <= 600;   // โลโก้วางใน auto layout ได้ (Brand logo (Light mode) · 4 พ.ย. 2569)
+const isGraphic = (n) => isLogo(n) || (n.type === 'COMPONENT' || n.type === 'INSTANCE') && (!n.layoutMode || n.layoutMode === 'NONE') && n.width <= 600 && n.height <= 600
+  && (/-(\d{2})-(\d{3})-(round|sharp|outlined)$|logo|illustration|icon|symbol/i.test(n.name) || (n.children || []).every((k) => /VECTOR|BOOLEAN_OPERATION|GROUP|ELLIPSE|RECTANGLE|STAR|POLYGON|LINE/.test(k.type)));
+const SVG_DONE = new Set(), IMG_DONE = new Set();
+
 async function trim(n, depth) {
   const o = { name: n.name, type: n.type };
+  if (n.visible === false) o.visible = false;
+  if (typeof n.opacity === 'number' && n.opacity < 1) o.opacity = Math.round(n.opacity * 100) / 100;
+  try {
+    const fx = (n.effects || []).filter((e) => e.visible !== false);
+    if (fx.length) o.effects = fx.map((e) => /SHADOW/.test(e.type)
+      ? { type: e.type, color: rgba(e.color, e.color.a), x: e.offset.x, y: e.offset.y, blur: e.radius, spread: e.spread || 0 }
+      : { type: e.type, blur: e.radius });
+  } catch (e) {}
+  try { const fs = paints(n.fills); if (fs.some((x) => typeof x !== 'string' || x.length > 7 || x === 'image')) o.paint = fs; } catch (e) {}
+  try { const b = await bound(n); if (b) o.vars = b; } catch (e) {}
+  if (typeof n.strokeAlign === 'string' && n.strokeWeight) o.strokeAlign = n.strokeAlign;
+  try { if (n.strokeTopWeight != null && (n.strokeTopWeight !== n.strokeBottomWeight || n.strokeLeftWeight !== n.strokeRightWeight)) o.sws = [n.strokeTopWeight, n.strokeRightWeight, n.strokeBottomWeight, n.strokeLeftWeight]; } catch (e) {}
+  if (n.primaryAxisAlignItems) o.justify = n.primaryAxisAlignItems;
+  if (n.layoutSizingHorizontal) o.sizing = [n.layoutSizingHorizontal, n.layoutSizingVertical];
+  if (isGraphic(n)) {
+    // ไอคอนส่งออกครั้งเดียวต่อ component · โลโก้/ภาพประกอบส่งออกได้แม้เป็น instance (โลโก้ PEA อยู่ในหน้าจอ UI Release#2 ไม่อยู่ในไลบรารี) ซ้ำชื่อส่งครั้งเดียว
+    const key = n.type === 'COMPONENT' || n.type === 'COMPONENT_SET' ? n.id : (/logo|illustration|graphic/i.test(n.name) ? 'i:' + n.name + ':' + Math.round(n.width) : null);
+    if (key && !SVG_DONE.has(key)) { SVG_DONE.add(key); try { o.svg = await n.exportAsync({ format: 'SVG_STRING' }); } catch (e) {} }
+  }
+  // 4 พ.ย. 2569: รูปภาพในกรอบ (IMAGE fill เช่นภาพประกอบ Empty state) ส่งออกเป็น PNG base64 · ครั้งเดียวต่อ imageHash · ขนาดไม่เกิน 800
+  try {
+    const img = (Array.isArray(n.fills) ? n.fills : []).find((p) => p.type === 'IMAGE' && p.visible !== false && p.imageHash);
+    if (img && n.width <= 800 && n.height <= 800 && !IMG_DONE.has(img.imageHash)) {
+      IMG_DONE.add(img.imageHash);
+      const bytes = await n.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: 2 } });
+      o.png = figma.base64Encode(bytes); o.imageHash = img.imageHash;
+    } else if (img) o.imageHash = img.imageHash;
+  } catch (e) {}
   if (typeof n.width === 'number') { o.w = Math.round(n.width); o.h = Math.round(n.height); }
   if (n.paddingLeft) o.pl = n.paddingLeft;
   if (n.paddingRight) o.pr = n.paddingRight;
@@ -35,6 +94,10 @@ async function trim(n, depth) {
         lh: lh && lh.unit === 'PIXELS' ? Math.round(lh.value) : null,
       };
       o.text = (n.characters || '').slice(0, 80);
+      const ls = n.letterSpacing; if (ls && ls.value) o.font.ls = ls.unit === 'PERCENT' ? ls.value + '%' : ls.value;
+      if (n.textAlignHorizontal && n.textAlignHorizontal !== 'LEFT') o.font.align = n.textAlignHorizontal;
+      if (n.textCase && n.textCase !== 'ORIGINAL') o.font.case = n.textCase;
+      if (n.textDecoration && n.textDecoration !== 'NONE') o.font.deco = n.textDecoration;
     } catch (e) {}
   }
   if (n.type === 'COMPONENT_SET' && n.componentPropertyDefinitions) {
