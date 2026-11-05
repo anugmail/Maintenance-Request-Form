@@ -226,10 +226,22 @@ function main() {
       const color = i === 0 ? [255, 255, 255] : tint[(i - 1) % tint.length];
       if (wantFlow) sections.push({ name: sec.name, color, kind: 'diagram', diagram: sec.diagram });
       const m = sec.name.match(/Scenario (\d+) · (.+)$/), shots = wantShots && sm && m ? sm.shots.filter(x => x.scenario === 'S' + m[1]) : [];
-      if (shots.length) sections.push({
-        name: (args.has('--maintainance-ui') ? 'UI scenario บำรุงรักษา · S' + m[1] + ' · ' + m[2] : sec.name + ' · จอจาก Figma'), color, connect: 'sequence',
-        cols: shots.map(x => ({ label: x.code + ' · ' + x.name, note: '', images: [{ src: 'figjam/' + shotDir + '/' + x.file, w: x.w, h: x.h }] }))
-      });
+      if (shots.length) {
+        /* 5 พ.ย. 2569 แถว Desktop / Mobile ตามผัง R19 ของไฟล์ Figma — จอเดียวกันอยู่คอลัมน์เดียว desktop บน mobile ล่าง · ป้ายแถวซ้ายสุด */
+        const dev = (x) => x.device || 'desktop';
+        const codes = [...new Set(shots.map(x => x.code))];
+        const hasMob = shots.some(x => dev(x) === 'mobile');
+        const rowH = (d) => Math.max(0, ...shots.filter(x => dev(x) === d).map(x => x.h));
+        sections.push({
+          name: (args.has('--maintainance-ui') ? 'UI scenario บำรุงรักษา · S' + m[1] + ' · ' + m[2] : sec.name + ' · จอจาก Figma'), color, connect: 'sequence',
+          rows: hasMob ? [{ label: 'Desktop', h: rowH('desktop') }, { label: 'Mobile', h: rowH('mobile') }] : undefined,
+          cols: codes.map(code => {
+            const d = shots.find(x => x.code === code && dev(x) === 'desktop'), mo = shots.find(x => x.code === code && dev(x) === 'mobile');
+            const im = (x, row) => ({ src: 'figjam/' + shotDir + '/' + x.file, w: x.w, h: x.h, row });
+            return { label: code + ' · ' + (d || mo).name, note: '', images: [d && im(d, 0), mo && im(mo, hasMob ? 1 : 0)].filter(Boolean) };
+          })
+        });
+      }
     });
   }
 

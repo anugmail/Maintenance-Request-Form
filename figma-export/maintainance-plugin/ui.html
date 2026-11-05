@@ -5,23 +5,23 @@
   small{color:#475467}
   #log{margin-top:10px;height:240px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
 </style>
-<p><b>บำรุงรักษาตามวาระ — 21 scenario (A–V = S1, S2, S4, S6–S23 · V = S23 ผู้รับจ้าง แยกจาก S10 เลขชั่วคราว · S3 ตัดออก · S5 รวมเข้า S4 บล็อก D ว่าง)</b> · ทุกชิ้นในจอเป็น instance ของ component จริง (ไลบรารี + ที่ยืมจาก flow งานซ่อม)<br>
+<p><b>บำรุงรักษาตามวาระ — 20 scenario (A–W = S1, S2, S4, S6–S10, S12–S22, S24 · S11 S23 ตัดออก 4 พ.ย. บล็อก J V ว่าง · W = S24 ข้อมูลการบำรุงรักษา (เลขชั่วคราว) · S3 ตัดออก · S5 รวมเข้า S4 บล็อก D ว่าง)</b> · ทุกชิ้นในจอเป็น instance ของ component จริง (ไลบรารี + ที่ยืมจาก flow งานซ่อม)<br>
 แต่ละบล็อก scenario = <b>ผัง userflow ซ้ายสุด</b> (อ่านบน → ล่าง · ป้ายเทาบนกล่อง = รหัสจอ) → ป้าย Device → คอลัมน์จอ A.1 A.2 … แถว Desktop แล้ว Mobile<br>
 <b>ทุกปุ่มวางบนหน้า "Maintainance"</b> ต่อใต้ของเดิม (ไม่มีหน้าก็สร้าง) — ของที่มีอยู่บนหน้านั้นไม่ถูกแตะ · ราว 2–4 นาทีต่อปุ่ม</p>
 <p style="background:#fdf2fa;border:1px solid #f3c6e8;border-radius:6px;padding:8px"><b>ติ๊กเลือกส่วนที่จะสร้าง</b> (ทุกอย่างอยู่ในไฟล์นี้ ไม่ต้องใช้ FigJam) — เรียงต่อใต้ของเดิมตามลำดับนี้<br>
-<span id="parts"><label><input type="checkbox" value="desktop"> userflow + จอ Desktop</label> · <label><input type="checkbox" value="mobile"> จอ Mobile</label> · <label><input type="checkbox" value="journey"> userflow แนวขวาง</label> · <label><input type="checkbox" value="storymap" checked> user story mapping</label> · <label><input type="checkbox" value="usecase" checked> use case (78 ข้อ)</label> · <label><input type="checkbox" value="scenarios" checked> ตาราง scenario</label> · <label><input type="checkbox" value="ucscen" checked> use case ตาม scenario</label></span><br>
+<span id="parts"><label><input type="checkbox" value="desktop"> userflow + จอ Desktop</label> · <label><input type="checkbox" value="mobile"> จอ Mobile</label> · <label><input type="checkbox" value="journey"> userflow แนวขวาง</label> · <label><input type="checkbox" value="swimlane"> user journey swimlane (ผู้เกี่ยวข้อง)</label> · <label><input type="checkbox" value="storymap" checked> user story mapping</label> · <label><input type="checkbox" value="usecase" checked> use case (81 ข้อ · ตัดออก 5 ข้อพร้อม S11 S23 · มีคอลัมน์ scenario + JO)</label> · <label><input type="checkbox" value="scenarios" checked> ตาราง scenario</label></span><br>
 <button id="partsAll" style="background:#475467">ติ๊กทั้งหมด</button> <button id="partsGo">สร้างที่ติ๊ก</button><br>
 <small>story map กับ use case อ่านจากไฟล์ 23 / 24 ใน Diagram ตอน build ปลั๊กอิน · กดซ้ำจะแทนที่กรอบเดิมของสองส่วนนี้ ไม่ซ้อน</small></p>
 <button id="all">สร้างทั้งชุด (userflow + Desktop + Mobile)</button>
 <button id="desk" style="background:#7a0463">สร้าง Desktop (1440)</button>
 <button id="mob" style="background:#7a0463">สร้าง Mobile (402×874)</button>
-<p><b>userflow แนวขวาง (journey)</b> — 21 scenario ต่อกันซ้าย → ขวา ตามลำดับงาน (ทางแยกตรวจเอง/ว่าจ้างลงแถว 2) · ภาพย่อหยิบจากจอที่สร้างไว้บนหน้านี้แล้ว (กดสร้าง Desktop ก่อนจะได้ภาพครบ)<br>
+<p><b>userflow แนวขวาง (journey)</b> — 20 scenario ต่อกันซ้าย → ขวา ตามลำดับงาน (ทางแยกดำเนินการเอง S6 / จ้างดำเนินการ S9 ลงแถว 2 · แผนจ้างกลับมาที่ S10 ทางเดียวกัน) · ภาพย่อหยิบจากจอที่สร้างไว้บนหน้านี้แล้ว (กดสร้าง Desktop ก่อนจะได้ภาพครบ)<br>
 <button id="journey" style="background:#0e7490">สร้าง userflow แนวขวาง (journey)</button></p>
 <p><b>ลบลิงก์กดต่อจอ</b> — ลบลิงก์ที่กดแล้วไปจอถัดไปบนหน้า Maintainance จอ ปุ่ม และข้อความอยู่ครบ · interaction อื่นของ component ไม่ถูกแตะ<br>
 <button id="clearProto" style="background:#b42318">ลบลิงก์กดต่อจอบนหน้านี้</button> <button id="moveLatest" style="background:#0e7490">ย้ายบล็อกล่าสุดกลับเข้าหน้า Maintainance</button></p>
 <p><b>ส่งภาพจอไป FigJam</b> — export จอ desktop บนหน้าที่เปิดอยู่ (รวมจอที่แก้มือแล้ว) ไปที่ <code>figma-export/out/figjam/flow-maintainance/</code> · ต้องรัน <code>node figma-export/serve.js</code> ก่อน · แล้วสร้างบอร์ดด้วย <code>3-figjam-board.js --maintainance</code><br>
 <button id="shots" style="background:#334155">ส่งภาพจอบนหน้านี้ไป FigJam</button></p>
-<p><b>สร้างเฉพาะ scenario ที่เลือก</b> — รหัสตัวอักษร A–V = S1, S2, S4, S6–S23 (S23 ผู้รับจ้าง = V · S3 ตัดออก · S5 รวมเข้า S4 2 พ.ย.) · อุปกรณ์: <label><input type="radio" name="dev" value="both" checked> ทั้งคู่</label> <label><input type="radio" name="dev" value="desktop"> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label><br>
+<p><b>สร้างเฉพาะ scenario ที่เลือก</b> — รหัสตัวอักษร A–W = S1, S2, S4, S6–S10, S12–S22, S24 (S11 S23 ตัดออก 4 พ.ย. บล็อก J V ว่าง · S24 ข้อมูลการบำรุงรักษา = W · S3 ตัดออก · S5 รวมเข้า S4 2 พ.ย.) · อุปกรณ์: <label><input type="radio" name="dev" value="both" checked> ทั้งคู่</label> <label><input type="radio" name="dev" value="desktop"> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label><br>
 <span id="pick"></span></p>
 <button id="pickgo" style="background:#1d4ed8">สร้างเฉพาะ scenario ที่เลือก</button>
 <p><small>เปลี่ยนไฟล์หรือไลบรารี → เช็คก่อนว่า component ครบ · แก้ไฟล์ userflow แล้วต้อง build ปลั๊กอินใหม่ ผังถึงจะตาม · ปิด-เปิดปลั๊กอินใหม่ทุกครั้งหลังสคริปต์เปลี่ยน</small></p>

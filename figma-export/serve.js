@@ -19,7 +19,10 @@ const BOARD_LABELS = [
   { file: 'board-maintainance-flow-ui.json', group: 'บำรุงรักษาตามวาระ', label: 'userflow คู่ภาพจอ', inAll: false },
   { file: 'board-maintainance-journey.json', group: 'บำรุงรักษาตามวาระ', label: 'journey ต่อกันทั้งเรื่อง' },
   { file: 'board-maintainance-story-map.json', group: 'บำรุงรักษาตามวาระ', label: 'user story mapping (JO ข้อ 7.3)' },
-  { file: 'board-maintainance-usecase.json', group: 'บำรุงรักษาตามวาระ', label: 'use case 66 ข้อ' },
+  { file: 'board-maintainance-usecase.json', group: 'บำรุงรักษาตามวาระ', label: 'use case 92 ข้อ' },
+  { file: 'board-login-flow.json', group: 'Login และสิทธิ์', label: 'ลำดับ login + ภาพหน้าจริง' },
+  { file: 'board-login-permission.json', group: 'Login และสิทธิ์', label: 'สิทธิ์ Overhaul ตาม role' },
+  { file: 'board-login-ac.json', group: 'Login และสิทธิ์', label: 'AC รายจอ 7 จอ' },
   { file: 'board-ac-overhaul-page1.json', group: 'Overhaul', label: 'AC หน้า 1 รายการแผน' },
   { file: 'board-overhaul2.json', group: 'Overhaul', label: 'ภาพจอจาก HTML (ชุดเก่า 19 ต.ค.)', inAll: false },
 ];
@@ -70,6 +73,20 @@ const handler = (req, res) => {
     let body = '';
     req.on('data', (c) => { body += c; });
     req.on('end', () => {
+      /* manifest ภาพจอ (5 พ.ย. 2569): ส่งหลายหน้า Figma ⇒ รวมกับ manifest เดิมในโฟลเดอร์เดียวกัน (รหัสจอซ้ำ = ภาพที่ส่งล่าสุด) ไม่ทับทั้งไฟล์ */
+      if (path.basename(file) === 'manifest.json' && file.startsWith(path.join(OUT, 'figjam') + path.sep) && fs.existsSync(file)) {
+        try {
+          const old = JSON.parse(fs.readFileSync(file, 'utf8')), neu = JSON.parse(body);
+          if (Array.isArray(old.shots) && Array.isArray(neu.shots)) {
+            const k = (x) => x.code + '|' + (x.device || 'desktop');   // จอเดียวกันมีทั้ง desktop และ mobile (5 พ.ย. 2569)
+            const by = new Map(old.shots.map(x => [k(x), x]));
+            neu.shots.forEach(x => by.set(k(x), x));
+            const pages = [...new Set([].concat(old.pages || [old.page], neu.page).filter(Boolean))];
+            body = JSON.stringify(Object.assign({}, neu, { page: pages.join(' + '), pages, shots: [...by.values()] }), null, 1);
+            console.log('รวม manifest กับของเดิม: ' + by.size + ' จอ จาก ' + pages.length + ' หน้า');
+          }
+        } catch (e) { console.log('รวม manifest ไม่ได้ เขียนทับ — ' + e.message); }
+      }
       fs.mkdir(path.dirname(file), { recursive: true }, () => {
         fs.writeFile(file, body, (err) => {
           const ok = !err;

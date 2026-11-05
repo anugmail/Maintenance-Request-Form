@@ -53,6 +53,7 @@ class Node {
     for (const k of src.kids || []) this.children.push(new Node(k, this));
   }
   findOne(fn) { return this.findAll(fn)[0] || null; }
+  async getMainComponentAsync() { return this._main || null; }   // 4 พ.ย. 2569: instance ที่มาจากดัมป์ (ไม่ผ่าน makeInstance) ก็ต้องมีเมธอดนี้ เหมือน Figma จริง — ดัมป์ maintain-d รุ่นใหม่มี Progress steps เป็น instance
   findAll(fn) { const out = []; const w = (n) => { for (const c of n.children) { if (!fn || fn(c)) out.push(c); w(c); } }; w(this); return out; }
   findAllWithCriteria(c) { return this.findAll(n => c.types.includes(n.type)); }
   insertChild(i, c) { if (c.parent) c.parent.children = c.parent.children.filter(x => x !== c); c.parent = this; this.children.splice(i, 0, c); }
@@ -184,7 +185,7 @@ const figma = {
   root: Object.assign(root, { children: root.children }),
   currentPage: Object.assign(root.children[0], { selection: [] }),
   showUI() {},
-  ui: { postMessage: (m) => { if (m.type === 'log') logs.push(m.text); }, set onmessage(f) { uiHandler = f; } },   // ข้อความชนิดอื่น (รายการ scenario ให้หน้าต่างติ๊ก) ไม่ใช่ log
+  ui: { postMessage: (m) => { if (m.type === 'log') logs.push(m.text); if (m.type === 'shots-done') { const sh = m.manifest.shots, n = (d) => sh.filter(x => x.device === d).length; console.log('ส่งภาพจอ: desktop ' + n('desktop') + ' · mobile ' + n('mobile') + ' · ไฟล์ mobile ลงท้าย -mobile ' + sh.filter(x => x.device === 'mobile').every(x => /-mobile\.png$/.test(x.file))); } }, set onmessage(f) { uiHandler = f; } },   // shots-done (5 พ.ย. 2569) = ตรวจว่าส่ง mobile ด้วย   // ข้อความชนิดอื่น (รายการ scenario ให้หน้าต่างติ๊ก) ไม่ใช่ log
   async loadAllPagesAsync() {},
   async loadFontAsync() {},
   async setCurrentPageAsync(p) { figma.currentPage = p; },
@@ -196,6 +197,7 @@ const figma = {
   createEllipse() { return new Node({ type: 'ELLIPSE', name: 'Ellipse' }); },
   createRectangle() { return new Node({ type: 'RECTANGLE', name: 'Rectangle' }); },
   createImage(bytes) { if (!(bytes instanceof Uint8Array)) throw new Error('createImage ต้องได้ Uint8Array'); return { hash: 'img' + (++uid) }; },   // ภาพย่อจอในผัง userflow
+  base64Decode(s) { if (typeof s !== 'string' || !s) throw new Error('base64Decode ต้องได้ string'); return Uint8Array.from(Buffer.from(s, 'base64')); },   // ภาพ Empty state ฝังตอน build (5 พ.ย. 2569)
   createPolygon() { return new Node({ type: 'POLYGON', name: 'Polygon' }); },
   createVector() { const v = new Node({ type: 'VECTOR', name: 'Vector' });
     v.setVectorNetworkAsync = async (net) => { if (!net || !Array.isArray(net.vertices) || !Array.isArray(net.segments)) throw new Error('vectorNetwork ผิดรูป');
@@ -269,7 +271,7 @@ const MODE_CHECK = process.env.MODE === 'check';
     for (const f of fs.readdirSync(process.env.SHOTS_DIR).filter(x => x.endsWith('.png'))) files[f.replace(/\.png$/, '')] = new Uint8Array(fs.readFileSync(path.join(process.env.SHOTS_DIR, f)));
     await uiHandler({ type: 'shots', files });
   }
-  if (process.env.PRE_MODE) for (const t of process.env.PRE_MODE.split(',')) await uiHandler({ type: t, devices: 'desktop', pick: (process.env.PRE_PICK || '').split(',').filter(Boolean) });   // คั่นจุลภาค = กดหลายปุ่มตามลำดับ (30 ต.ค. 2569 ทดสอบส่งภาพเมื่อหน้ามีจอ 2 ชุด)   // PRE_MODE=build-desktop MODE=build-journey = สร้างจอก่อนแล้วกด journey (ทดสอบภาพย่อ · 22 ต.ค. 2569)
+  if (process.env.PRE_MODE) for (const t of process.env.PRE_MODE.split(',')) await uiHandler({ type: t, devices: process.env.PRE_DEVICES || 'desktop', pick: (process.env.PRE_PICK || '').split(',').filter(Boolean) });   // คั่นจุลภาค = กดหลายปุ่มตามลำดับ (30 ต.ค. 2569 ทดสอบส่งภาพเมื่อหน้ามีจอ 2 ชุด)   // PRE_MODE=build-desktop MODE=build-journey = สร้างจอก่อนแล้วกด journey (ทดสอบภาพย่อ · 22 ต.ค. 2569)
   let protoSeed = null, moveSeed = null;
   if (process.env.MODE === 'move-latest') {   // ปุ่มย้ายบล็อกที่ล้นขอบ (2 พ.ย. 2569): สร้าง S1 แล้วเลื่อนทั้งชุดไปไกลเท่าเหตุการณ์จริง
     await uiHandler({ type: 'build-pick', pick: ['0'], devices: 'desktop' });
@@ -447,7 +449,7 @@ const MODE_CHECK = process.env.MODE === 'check';
   if (process.env.MODE === 'build-docs') {   // ติ๊กเลือกส่วน (30 ต.ค. 2569): กรอบ story map / use case อยู่บนหน้าเดียวกับจอ · ไม่ทับกัน · การ์ด/แถวครบตามไฟล์ · กดซ้ำไม่ซ้อน
     const P = process.env.PREFIX || 'OH2';
     const parts = (process.env.PARTS || 'storymap,usecase').split(',');
-    const docs = page.children.filter(n => n.name === P + ' · user story mapping' || n.name === P + ' · use case' || n.name === P + ' · scenario' || n.name === P + ' · use case ตาม scenario');   // ตาราง scenario (4 พ.ย. 2569 เจ้าของงาน "ทำตัว export ให้หน่อย")
+    const docs = page.children.filter(n => n.name === P + ' · user story mapping' || n.name === P + ' · use case' || n.name === P + ' · scenario' || n.name === P + ' · use case ตาม scenario' || n.name === P + ' · user journey swimlane');   // ตาราง scenario (4 พ.ย. 2569 เจ้าของงาน "ทำตัว export ให้หน่อย")
     const sm = docs.find(n => /story mapping$/.test(n.name)), uc = docs.find(n => /use case$/.test(n.name));
     if (parts.includes('storymap') && !sm) logs.push('⚠ ไม่มีกรอบ user story mapping');
     if (parts.includes('usecase') && !uc) logs.push('⚠ ไม่มีกรอบ use case');
@@ -458,14 +460,31 @@ const MODE_CHECK = process.env.MODE === 'check';
     const box = (n) => n.absoluteBoundingBox || { x: n.x, y: n.y, width: n.width, height: n.height };
     const all = page.children.filter(n => n.type !== 'PAGE');
     for (const d of docs) for (const o of all) { if (o === d) continue; const a = box(d), b = box(o); if (a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height) logs.push('⚠ กรอบ ' + d.name + ' ทับ ' + o.name); }
-    if (['use case', 'user story mapping', 'scenario', 'use case ตาม scenario'].some(k => page.children.filter(n => n.name === P + ' · ' + k).length > 1)) logs.push('⚠ กรอบเอกสารซ้อนกันหลังกดซ้ำ');
+    if (['use case', 'user story mapping', 'scenario', 'use case ตาม scenario', 'user journey swimlane'].some(k => page.children.filter(n => n.name === P + ' · ' + k).length > 1)) logs.push('⚠ กรอบเอกสารซ้อนกันหลังกดซ้ำ');
+    const sw = docs.find(n => n.name === P + ' · user journey swimlane');   // 4 พ.ย. 2569 user journey swimlane: กล่อง/เส้น/lane ครบตามไฟล์ · กล่องอยู่ในเลนของตัวเอง ไม่ล้นกรอบ
+    if (parts.includes('swimlane') && !sw) logs.push('⚠ ไม่มีกรอบ user journey swimlane');
+    let swBox = 0, swLine = 0, swLane = 0;
+    if (sw) {
+      const kids = sw.children, boxes = kids.filter(n => /^(ขั้น|ทางแยก) /.test(n.name)), lanes = kids.filter(n => n.name.indexOf('lane · ') === 0), lines = kids.filter(n => n.name.indexOf('เส้น ') === 0);
+      swBox = boxes.length; swLine = lines.length; swLane = lanes.length;
+      if (process.env.SWIM_N && swBox !== +process.env.SWIM_N) logs.push('⚠ swimlane มีกล่อง ' + swBox + ' แต่ต้องมี ' + process.env.SWIM_N);
+      if (process.env.SWIM_EDGES && swLine !== +process.env.SWIM_EDGES) logs.push('⚠ swimlane มีเส้น ' + swLine + ' แต่ต้องมี ' + process.env.SWIM_EDGES);
+      if (process.env.SWIM_LANES && swLane !== +process.env.SWIM_LANES) logs.push('⚠ swimlane มี lane ' + swLane + ' แต่ต้องมี ' + process.env.SWIM_LANES);
+      if (!boxes.some(n => n.type === 'POLYGON')) logs.push('⚠ swimlane ไม่มีทางแยกข้าวหลามตัด');
+      if (boxes.some(n => /^ขั้น /.test(n.name) && n.type !== 'RECTANGLE')) logs.push('⚠ swimlane ขั้นงานต้องเป็นสี่เหลี่ยม');
+      for (const b of boxes) {
+        if (b.x < 0 || b.y < 0 || b.x + b.width > sw.width || b.y + b.height > sw.height) logs.push('⚠ swimlane กล่อง ' + b.name + ' ล้นกรอบ');
+        if (!lanes.some(l => b.y >= l.y && b.y + b.height <= l.y + l.height)) logs.push('⚠ swimlane กล่อง ' + b.name + ' คร่อมเลน');
+      }
+      if (lines.some(v => !v.vectorNetwork || v.vectorNetwork.vertices[v.vectorNetwork.vertices.length - 1].strokeCap !== 'ARROW_LINES')) logs.push('⚠ swimlane มีเส้นไม่มีหัวลูกศร');
+    }
     const sc = docs.find(n => n.name === P + ' · scenario'), scRows = sc ? sc.findAll(n => n.name === 'แถว').length : 0;
     if (parts.includes('scenarios') && !sc) logs.push('⚠ ไม่มีกรอบตาราง scenario');
     const us = docs.find(n => n.name === P + ' · use case ตาม scenario'), usGroups = us ? us.findAll(n => n.name.indexOf('ตาราง · ') === 0).length : 0;   // 4 พ.ย. 2569: กลุ่มละ scenario + กลุ่มที่ยังไม่อยู่ใน scenario
     if (parts.includes('ucscen') && !us) logs.push('⚠ ไม่มีกรอบ use case ตาม scenario');
     if (us && process.env.SCEN_N && usGroups !== +process.env.SCEN_N - 1) logs.push('⚠ use case ตาม scenario มี ' + usGroups + ' กลุ่ม แต่ต้องมี ' + (+process.env.SCEN_N - 1));
     if (sc && scRows !== +(process.env.SCEN_N || 22)) logs.push('⚠ ตาราง scenario มี ' + scRows + ' แถว แต่ต้องมี ' + (process.env.SCEN_N || 22));   // 20 scenario + ตัดออก 2
-    console.log('เอกสารบนหน้า: story map การ์ด ' + cards + ' (' + cols + ' ช่วงงาน) · use case ' + rows + ' แถว (' + tbls + ' ตาราง) · scenario ' + scRows + ' แถว · use case ตาม scenario ' + usGroups + ' กลุ่ม · จอ ' + screens.length);
+    console.log('เอกสารบนหน้า: story map การ์ด ' + cards + ' (' + cols + ' ช่วงงาน) · use case ' + rows + ' แถว (' + tbls + ' ตาราง) · scenario ' + scRows + ' แถว · use case ตาม scenario ' + usGroups + ' กลุ่ม · swimlane กล่อง ' + swBox + ' เส้น ' + swLine + ' lane ' + swLane + ' · จอ ' + screens.length);
   }
   if (process.env.MODE === 'build-journey') {   // journey แนวขวาง (22 ต.ค. 2569): ผังครบทุก scenario · เรียงซ้าย → ขวาไม่ทับกัน · ลูกศรมีหัว · ภาพย่อเมื่อมีจอ
     const P = process.env.PREFIX || 'OH2';
@@ -520,9 +539,11 @@ const MODE_CHECK = process.env.MODE === 'check';
     const re = new RegExp(process.env.DUMP_TEXT);
     for (const sc of page.children.filter(n => n.type === 'FRAME' && re.test(n.name))) {
       const lines = [];
-      const walk = (n, hid) => { const h = hid || n.visible === false; if (n.type === 'TEXT') lines.push((h ? '~' : '') + n.characters); (n.children || []).forEach(c => walk(c, h)); };
+      const walk = (n, hid) => { const h = hid || n.visible === false; if (n.type === 'TEXT') lines.push((h ? '~' : '') + n.characters);
+        if (process.env.DUMP_PROPS && n.type === 'INSTANCE') for (const [k, p] of Object.entries(n.componentProperties || {})) if (p.type === 'TEXT') lines.push((h ? '~' : '') + '@' + k.split('#')[0] + '=' + p.value);   // DUMP_PROPS=1 = ข้อความที่ตั้งผ่าน property ของ instance (เช่น Label/Text ของ _Content item base) (5 พ.ย. 2569)
+        (n.children || []).forEach(c => walk(c, h)); };
       walk(sc, false);
-      fs.writeFileSync(process.env.DUMP_TEXT_OUT || '/tmp/dump-text.txt', '## ' + sc.name + '\n' + lines.join('\n') + '\n');
+      fs[process.env.DUMP_TEXT_APPEND ? 'appendFileSync' : 'writeFileSync'](process.env.DUMP_TEXT_OUT || '/tmp/dump-text.txt', '## ' + sc.name + '\n' + lines.join('\n') + '\n');   // DUMP_TEXT_APPEND=1 = ต่อท้ายทุกจอที่ตรง (5 พ.ย. 2569)
       console.log('DUMP_TEXT: ' + sc.name + ' → ' + lines.length + ' ข้อความ (ขึ้นต้น ~ = ซ่อน)');
     }
   }

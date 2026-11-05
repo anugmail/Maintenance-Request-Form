@@ -1,0 +1,43 @@
+<style>
+  body{font:12px/1.5 -apple-system,"IBM Plex Sans Thai",sans-serif;margin:0;padding:14px;color:#1b1b1b}
+  button{padding:8px 14px;border:0;border-radius:6px;background:#a80689;color:#fff;font:inherit;cursor:pointer;margin:2px 4px 2px 0}
+  p{margin:10px 0 4px}
+  small{color:#475467}
+  code{background:#f2f4f7;padding:1px 4px;border-radius:4px}
+  #log{margin-top:10px;height:240px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
+</style>
+<p><b>Login และสิทธิ์ตาม role — 2 scenario (7 จอ)</b> · A เข้าสู่ระบบ (ภาพหน้าจริงของ VMS Plus / SSO กฟภ.) · B รายการแผน Overhaul ในมุม กบค. · กรย. · หน่วยงานเจ้าของรถ<br>
+การ์ด AC รายจอ (แม่แบบของทีม) อยู่ใต้จอคอลัมน์เดียวกัน · <b>วางต่อใต้ของเดิมบนหน้าที่เปิดอยู่</b> ไม่สร้างหน้าใหม่ ไม่แตะของเดิม</p>
+<p><small>ภาพหน้าจริงโหลดจากเครื่อง: รัน <code>node figma-export/serve.js</code> ก่อนกด (ภาพอยู่ <code>figma-export/out/figjam/login/</code>)</small></p>
+<button id="desk">สร้าง Desktop (1440)</button>
+<button id="mob" style="background:#7a0463">สร้าง Mobile (402×874)</button>
+<p><b>สร้างเฉพาะ scenario ที่เลือก</b> · อุปกรณ์: <label><input type="radio" name="dev" value="desktop" checked> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label> <label><input type="radio" name="dev" value="both"> ทั้งคู่</label><br>
+<span id="pick"></span></p>
+<button id="pickgo" style="background:#1d4ed8">สร้างเฉพาะ scenario ที่เลือก</button>
+<p><small>เปลี่ยนไฟล์หรือไลบรารี → เช็คก่อนว่า component ครบ · ปิด-เปิดปลั๊กอินใหม่ทุกครั้งหลังสคริปต์เปลี่ยน</small></p>
+<button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button> <button id="copylog" style="background:#334155">คัดลอก log</button>
+<div id="log"></div>
+<script>
+const SHOT_BASE = 'http://localhost:8124/figjam/login/';
+const SHOT_FILES = ['01-หน้าเข้าสู่ระบบ', '02-SSO', '03-SSO-กรอกผิด'].flatMap(f => [f, f + '-mobile']);
+const logLine = (t) => { const el = document.getElementById('log'); el.textContent += t + '\n'; el.scrollTop = el.scrollHeight; };
+async function loadShots() {   // ภาพหน้าจริงจาก serve.js — โหลดไม่ได้ก็สร้างต่อ (ปลั๊กอินเตือนในจอ)
+  const files = {};
+  for (const f of SHOT_FILES) {
+    try { const r = await fetch(SHOT_BASE + encodeURIComponent(f) + '.png'); if (r.ok) files[f] = new Uint8Array(await r.arrayBuffer()); } catch (e) { /* serve.js ไม่ได้รัน */ }
+  }
+  logLine('ภาพหน้าจริง ' + Object.keys(files).length + '/' + SHOT_FILES.length + (Object.keys(files).length ? '' : ' — รัน node figma-export/serve.js แล้วกดใหม่'));
+  return files;
+}
+const send = async (type, extra) => {
+  document.getElementById('log').textContent = '';
+  if (type !== 'check') parent.postMessage({ pluginMessage: { type: 'shots', files: await loadShots() } }, '*');
+  parent.postMessage({ pluginMessage: Object.assign({ type, devices: document.querySelector('input[name=dev]:checked').value }, extra || {}) }, '*');
+};
+document.getElementById('desk').onclick = () => send('build-desktop');
+document.getElementById('mob').onclick = () => send('build-mobile');
+document.getElementById('pickgo').onclick = () => send('build-pick', { pick: [...document.querySelectorAll('#pick input:checked')].map(i => +i.value) });
+document.getElementById('chk').onclick = () => send('check');
+document.getElementById('copylog').onclick = () => { const ta = document.createElement('textarea'); ta.value = document.getElementById('log').textContent; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); };
+onmessage = (e) => { const m = e.data.pluginMessage; if (m && m.type === 'scenarios') { document.getElementById('pick').innerHTML = m.items.map((t, i) => '<label style="display:inline-block;margin:2px 10px 2px 0"><input type="checkbox" value="' + i + '"> ' + String.fromCharCode(65 + i) + ' ' + t.split(' · ')[0] + '</label>').join(''); return; } if (m && m.type === 'log') logLine(m.text); };
+</script>

@@ -345,13 +345,13 @@ function dropdown(label, value, o) {   // Input dropdown
 function multiDropdown(label, values, o) {
   o = o || {}; values = values || [];
   const st = o.state || (o.error ? 'Error' : values.length ? 'Selected' : 'Default');
-  const n = inst('Input dropdown with badges', { State: st, Size: 'md' }, { 'Label text': label, Text: values.length ? '' : o.placeholder || 'เลือก', Optional: false, Helper: !!o.error, 'Helper text': o.error || '', 'Info icon': false, 'Leading icon': false });
+  const n = inst('Input dropdown with badges', { State: st, Size: 'md' }, { 'Label text': label, Text: values.length ? '' : o.placeholder || 'เลือก', Optional: !!o.optional, Helper: !!o.error, 'Helper text': o.error || '', 'Info icon': false, 'Leading icon': false });   // o.optional = "(ถ้ามี)" ในแผงตัวกรอง (5 พ.ย. 2569)
   const chips = n.findAll(c => c.type === 'INSTANCE' && c.name === 'Badge outline with remove icon');
   chips.forEach((c, j) => {
     if (j >= values.length) { c.visible = false; return; }
     setProps(c, { Text: values.length > chips.length && j === chips.length - 1 ? '+' + (values.length - j) : values[j] });
   });
-  return syncLabel(n, label, false);
+  return syncLabel(n, label, !!o.optional);
 }
 function area(label, value, o) {
   o = o || {};
@@ -384,7 +384,7 @@ async function sectionLabel(title, o) {
   const pri = bs.find(b => b.kind === 'Primary button'), sec = bs.find(b => b.kind !== 'Primary button');
   const sl = inst('Section label', { Breakpoint: BP() }, { Title: o.badge != null ? title + ' (' + o.badge + ')' : title, Supporting: false, 'Info icon': false,
     'More actions': false, Actions: !!(pri || sec), 'Primary action': !!pri, 'Secondary action': !!sec });
-  const put = (b, node) => { if (b && node) setProps(node, { Text: b.text, 'Leading icon': !!b.icon, 'Trailing icon': false, ...(b.icon ? { 'Leading icon swap': icon(b.icon) } : {}) }); };
+  const put = (b, node) => { if (b && node) setProps(node, { Text: b.text, 'Leading icon': !!b.icon, 'Trailing icon': false, ...(b.icon ? { 'Leading icon swap': icon(b.icon) } : {}), ...(b.disabled ? { State: 'Disabled' } : {}) }); };   // b.disabled = State Disabled ของ Tertiary (brand) button (5 พ.ย. 2569 ปุ่มสร้างแผนเดินทางเมื่อรถครบทุกคัน)
   put(pri, find(sl, 'Tertiary brand button')); put(sec, find(sl, 'Tertiary button'));
   return sl;
 }
@@ -461,8 +461,8 @@ function mobileCards(cols, rows) {   // mobile: 1 แถวตาราง = 1 �
     const hd = find(l, 'List header item'); if (hd) { const b = find(hd, 'Badge outline'); if (b) b.visible = false; const cb = find(hd, 'Checkbox'); if (cb) setProps(cb, { Type: rows.every(r => r[0].check) ? 'Selected' : 'Unselected' }); }
     l.children.filter(c => c.name === 'List with checkbox item').forEach((it, i) => {
       if (i >= rows.length) { it.visible = false; return; }
-      setProps(it, { State: rows[i][0].check ? 'Selected' : 'Default' });
-      setProps(it, { Text: rows[i][0].text, Avatar: false, Supporting: false, 'Supporting 2': false });
+      setProps(it, { State: rows[i][0].disabled ? 'Disabled' : rows[i][0].check ? 'Selected' : 'Default' });   // disabled = ติ๊กไม่ได้ (อยู่ไตรมาส/แผนเดินทางอื่น · 5 พ.ย. 2569)
+      setProps(it, { Text: rows[i][0].text, Avatar: false, Supporting: !!rows[i][0].sub, 'Supporting text': rows[i][0].sub || '', 'Supporting 2': false });
     });
     const sc = find(l, 'Vertical scrollbar'); if (sc) sc.visible = false;
     l._title = cols[0][0];
@@ -478,6 +478,14 @@ function mobileCards(cols, rows) {   // mobile: 1 แถวตาราง = 1 �
       const last = i === items.length - 1;
       if (last) {
         if (!acts.length) { it.visible = false; return; }
+        /* 4 พ.ย. 2569 เจ้าของงาน "ส่วนที่เป็น mobile อยากให้ expand view edit delete icon ออกมาแบบตัวอย่างทั้งหมด"
+           ⇒ ช่องเมนู "…" ที่รู้รายการ (menu + items) บนมือถือเปิดปุ่มไอคอนของ Mobile table item Style=Action icons ตามรายการเลย
+           (View = ดูรายละเอียด · Edit = แก้ไข · Delete = ลบ · Print ปิด · ไอคอนตั้งต้นของไลบรารีตรงอยู่แล้ว ไม่สลับ) · ไม่มี items = ปุ่ม … ปุ่มเดียวแบบเดิม */
+        if (acts[0].menu && acts[0].items) {
+          const has = (t) => acts[0].items.some(x => x[0] === t);
+          setProps(it, { View: has('ดูรายละเอียด'), Edit: has('แก้ไข'), Print: false, Delete: has('ลบ') });
+          return;
+        }
         const ic = acts[0].menu ? ['more_horiz-20-400-round'] : acts[0].icons;
         setProps(it, { View: ic.length > 0, Edit: ic.length > 1, Print: false, Delete: false });
         it.findAll(n => n.name === 'Tertiary button').forEach((b, k) => { if (ic[k]) setProps(b, { 'Leading icon swap': icon(ic[k]) }); });
@@ -516,8 +524,8 @@ function tblComposed(cols, rows) {   // cols: [หัว, กว้าง, Style
         const bs = cell.findAll(n => n.name === 'Tertiary button');
         ic.forEach((name, i) => { if (bs[i]) setProps(bs[i], { 'Leading icon swap': icon(name) }); });
       } else if (st === 'Lead checkbox') {
-        setProps(cell, { Text: v.text, Supporting: false });
-        const cb = find(cell, 'Checkbox'); if (cb) setProps(cb, { Type: v.check ? 'Selected' : 'Unselected' });
+        setProps(cell, { Text: v.text, Supporting: !!v.sub, 'Supporting text': v.sub || '' });
+        const cb = find(cell, 'Checkbox'); if (cb) setProps(cb, { Type: v.check ? 'Selected' : 'Unselected', State: v.disabled ? 'Disabled' : 'Default' });
       } else setProps(cell, { Text: v == null ? '' : String(v), Supporting: false });
     });
   });
@@ -539,10 +547,40 @@ function fillCell(cell, v, style, alt) {
     const bs = cell.findAll(n => n.name === 'Tertiary button');
     ic.forEach((name, i) => { if (bs[i]) setProps(bs[i], { 'Leading icon swap': icon(name) }); });
   } else if (st === 'Lead checkbox') {
-    setProps(cell, { Text: v.text, Supporting: false });
-    const cb = find(cell, 'Checkbox'); if (cb) setProps(cb, { Type: v.check ? 'Selected' : 'Unselected' });
-  } else if (v && typeof v === 'object' && v.text != null) setProps(cell, { Text: v.text, Supporting: !!v.sub, 'Supporting text': v.sub || '' });   // { text, sub } = 2 บรรทัด ตามแบบ Overhaul
+    setProps(cell, { Text: v.text, Supporting: !!v.sub, 'Supporting text': v.sub || '' });   // { check, text, sub, disabled } — แถวที่ติ๊กไม่ได้ = Checkbox State=Disabled + บรรทัดรองบอกเหตุผล (5 พ.ย. 2569)
+    const cb = find(cell, 'Checkbox'); if (cb) setProps(cb, { Type: v.check ? 'Selected' : 'Unselected', State: v.disabled ? 'Disabled' : 'Default' });
+  } else if (v && typeof v === 'object' && v.text != null) {   // { text, sub } = 2 บรรทัด ตามแบบ Overhaul
+    setProps(cell, { Text: v.text, Supporting: !!v.sub, 'Supporting text': v.sub || '' });
+    if (v.tone && v.sub) toneText(find(cell, 'Supporting text'), v.tone);   // บรรทัดรองสีเตือน/แดง แบบ Vehicle list ของ UI Release#2 (S24)
+  }
   else setProps(cell, { Text: v == null ? '' : String(v), Supporting: false });
+}
+/* บรรทัดรองสีตามสถานะ — Vehicle list ของ UI Release#2 ใช้ Supporting text ผูกตัวแปร Color/text/warning (#DC6803) · Color/text/error (#D92D20) ("ใกล้ครบกำหนดบำรุงรักษา" · "ครบกำหนดบำรุงรักษา")
+   ใส่ค่าสีทันที แล้ว bindTones() ผูกตัวแปรของไลบรารีหลังประกอบจอ (หาไม่ได้ก็คงค่าสี) */
+const TONE_HEX = { warning: '#DC6803', error: '#D92D20' };
+let TONED = [];
+const TONE_VARS = {};
+function toneText(t, tone) {
+  if (!t || t.type !== 'TEXT' || !TONE_HEX[tone]) return;
+  try { t.fills = [{ type: 'SOLID', color: rgbOf(TONE_HEX[tone]) }]; TONED.push([t, tone]); } catch (e) { warn('สีบรรทัดรอง', e); }
+}
+async function libVar(re) {   // ตัวแปรสีของไลบรารีตามชื่อ (แบบ surfaceVar)
+  try { const l = (await figma.variables.getLocalVariablesAsync('COLOR')).find(v => re.test(v.name)); if (l) return l; } catch (e) { /* ไม่มี API */ }
+  try {
+    for (const c of await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()) {
+      const v = (await figma.teamLibrary.getVariablesInLibraryCollectionAsync(c.key)).find(x => re.test(x.name));
+      if (v) return await figma.variables.importVariableByKeyAsync(v.key);
+    }
+  } catch (e) { /* ไม่มีสิทธิ์ teamlibrary */ }
+  return null;
+}
+async function bindTones() {
+  const list = TONED; TONED = [];
+  for (const [t, tone] of list) {
+    if (!(tone in TONE_VARS)) TONE_VARS[tone] = await libVar(new RegExp('^Color/text/' + tone + '$', 'i'));
+    const v = TONE_VARS[tone]; if (!v) continue;
+    try { t.fills = [figma.variables.setBoundVariableForPaint({ type: 'SOLID', color: rgbOf(TONE_HEX[tone]) }, 'color', v)]; } catch (e) { /* คงค่าสี */ }
+  }
 }
 /* กว้างคอลัมน์ใน instance: w = คงที่ · 0 = ยืดเต็ม — Figma ยอมให้ override ขนาดลูกใน instance ที่เป็น auto layout */
 function sizeCol(c, w) {
@@ -635,7 +673,7 @@ async function shell(name, o) {
 async function pageHead(o) {
   const ph = inst('Page header', { Breakpoint: BP() }, { Title: o.title, 'Supporting text': false, Badge: !!o.badge,
     'Back action': !!o.back, 'Copy action': false, 'More actions': false, Actions: !!o.primary });
-  const crumbs = [PLUGIN.menu].concat(o.crumbs || []);
+  const crumbs = [o.root || PLUGIN.menu].concat(o.crumbs || []);   // o.root = เมนูอื่นของระบบ (เช่น ยานพาหนะ ของ Vehicle Management · S24 4 พ.ย. 2569)
   for (const [i, n] of ['Link 1', 'Link 2', 'Link 3'].entries()) {
     const l = find(ph, n); if (!l) continue;
     if (i < crumbs.length - 1) { const lk = find(l, 'Link'); if (lk) await text(l, lk, crumbs[i]); } else l.visible = false;
@@ -645,6 +683,7 @@ async function pageHead(o) {
   if (crumbs.length === 1) { /* หน้าแรกของเมนู: ลิงก์ปัจจุบันคือชื่อเมนูเอง */ }
   if (o.badge) { const b = find(ph, 'Badge outline'); if (b) setProps(b, { Color: BADGE_OF[o.badge[1]] || 'Gray', Text: o.badge[0] }); }
   const acts = find(ph, 'Actions');
+  if (acts && !o.primary) acts.visible = false;   // ตรงกับ property Actions=false (5 พ.ย. 2569 ตัวตรวจ R56 ดูการมองเห็นของชั้น)
   if (acts && o.primary) for (const b of acts.children) {
     if (b.name !== 'Primary button') { b.visible = false; continue; }
     setProps(b, { Text: o.primary, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') });
@@ -681,9 +720,29 @@ function overlay(scr, node, x, y) { scr.appendChild(node); node.layoutPositionin
 function notify(scr, title, err) {
   const n = inst('Notification', { Type: err ? 'Error' : 'Success', Breakpoint: BP() }, { Text: title, Actions: false });
   const sup = find(n, 'Supporting text'); if (sup) sup.visible = false;
-  overlay(scr, n, VW() - n.width, VH() - n.height);
+  /* toast ขวาบนเสมอ ไม่อยู่ตรงกลาง (เจ้าของงาน 5 พ.ย. 2569 "toast จะขึ้นที่มุมขวาบน เสมอ ไม่อยู่ตรงกลาง" · รีวิวทีมออกแบบ S2 "แสดง Toast ด้านบนขวา")
+     Desktop: variant ของ Notification จัดการ์ดบนขวาในตัว (justify MIN · pt 24 · pr 24) แบบที่ Flow การซ่อมวาง "อนุมัติรายการสำเร็จ" ⇒ วาง instance ชิดขอบบนขวา
+     Mobile: variant จัดการ์ดล่างกลาง (justify MAX · align CENTER · pb 16) ⇒ override การจัดวาง auto layout ของ instance เป็นบนขวา ขอบ 16 แล้ววางชิดขอบบนขวา (การ์ดเป็นของไลบรารีเหมือนเดิม) */
+  if (MOB) { try { n.primaryAxisAlignItems = 'MIN'; n.counterAxisAlignItems = 'MAX'; n.paddingTop = 16; n.paddingBottom = 0; } catch (e) { warn('toast มือถือขวาบน', e); } }
+  overlay(scr, n, VW() - n.width, 0);
 }
 /* bottom sheet ประกอบจากชิ้นไลบรารี (Bottom sheet ของไลบรารีล็อกเนื้อหาตายตัว) — แบบเดียวกับที่ UI Release#2 ประกอบแผงตัวกรอง */
+/* แผงตัวกรองด้านข้าง — ตาม Filter ของ Vehicle list (UI Release#2): Background overlay + Side panel header "ตัวกรอง" + dropdown + Side panel footer
+   (ประกอบจากชิ้นไลบรารีแบบ filterPanelCF ของ Overhaul · component-rules §7) · มือถือ = bottom sheet */
+async function filterPanel(scr, content, o) {
+  o = o || {};
+  if (MOB) { await sheet(scr, { title: 'ตัวกรอง', action: 'ล้างตัวกรอง', content, ok: 'ตกลง' }); return; }
+  overlay(scr, inst('Background overlay'), 0, 0).resize(1440, Math.max(1024, scr.height));
+  const panel = frame('Panel', 'VERTICAL', { gap: 24, fill: WHITE });
+  overlay(scr, panel, 960, 0); panel.primaryAxisSizingMode = 'FIXED'; panel.counterAxisSizingMode = 'FIXED'; panel.resize(480, 1024);
+  const hd = inst('Side panel header'); add(panel, hd, 'h'); hide(hd, 'Tabs');
+  await text(hd, 'Text', 'ตัวกรอง'); await text(hd, 'Supporting text', 'กรองข้อมูลให้แสดงเฉพาะข้อมูลที่ต้องการ');
+  const body = frame('Content', 'VERTICAL', { gap: 24, pad: [0, 24] }); add(panel, body, 'both');
+  for (const n of content) add(body, n, 'h');
+  const ft = inst('Side panel footer'); add(panel, ft, 'h');
+  [['Tertiary brand button', 'ล้างตัวกรอง'], ['Secondary button', 'ยกเลิก'], ['Primary button', 'ตกลง']].forEach(([k, t]) => { const b = find(ft, k); if (b) setProps(b, { Text: t, 'Leading icon': false, 'Trailing icon': false }); });
+  return panel;
+}
 async function sheet(scr, o) {
   overlay(scr, inst('Background overlay'), 0, 0).resize(VW(), VH());
   const sh = frame('Sheet', 'VERTICAL', { fill: WHITE });
@@ -729,7 +788,7 @@ async function confirm(scr, o) {   // Modal กลาง — danger = Destructiv
   const pb = find(m, o.danger ? 'Primary danger button' : 'Primary button'); if (pb) setProps(pb, { Text: o.ok || 'ยืนยัน', 'Leading icon': false, 'Trailing icon': false });
 }
 async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 สลับเป็น Text area ด้วย property "Input 1 swap" ของ Card form row · o.ok / o.cancel = ชื่อปุ่ม (ค่าเริ่ม บันทึก / ยกเลิก · 22 ต.ค. 2569 ใช้กับ "ส่งกลับ" "ปฏิเสธ")
-  if (MOB) { await sheet(scr, { title: o.title, content: o.fields.map(f => f.area ? area(f.label, f.value) : field(f.label, f.value)), ok: o.ok || 'บันทึก', cancel: o.cancel }); return; }
+  if (MOB) { await sheet(scr, { title: o.title, content: [].concat(...o.fields.map(f => f.pair || [f])).map(f => f.area ? area(f.label, f.value) : field(f.label, f.value, { optional: f.optional })), ok: o.ok || 'บันทึก', cancel: o.cancel }); return; }
   const m = inst('Modal', { Type: 'Form', Size: 'md' });
   overlay(scr, m, 0, 0);
   modalHead(find(m, 'Modal header'), o.title, o.sub, { 'Back icon': false, 'Featured icon': false });
@@ -737,6 +796,19 @@ async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
     if (i >= o.fields.length) { r.visible = false; continue; }
+    /* f.pair = [ช่องซ้าย, ช่องขวา] ใช้ Input 2 ของ Card form row (5 พ.ย. 2569 popup ระบุอะไหล่เพิ่มเติม 6 ช่อง: ชื่อ · ยี่ห้อ / รุ่น · รหัส / จำนวน · หน่วย) */
+    if (o.fields[i].pair) {
+      setProps(r, { 'Input 2': true });
+      const ins = r.children.filter(c => c.type === 'INSTANCE');
+      if (ins[1]) ins[1].visible = true;
+      for (const [k, pf] of o.fields[i].pair.entries()) { const inp = ins[k]; if (!inp) continue;
+        setProps(inp, { State: pf.value ? 'Filled' : 'Default' });
+        setProps(inp, { 'Label text': pf.label, Text: pf.value || pf.placeholder || '', Optional: !!pf.optional, Helper: false, 'Info icon': false, 'Show Placeholder': !pf.value });
+        syncLabel(inp, pf.label, pf.optional);
+        const ct = find(inp, 'Container'), tv = ct && ct.findOne(n => n.type === 'TEXT' && n.visible !== false);
+        if (tv && (pf.value || pf.placeholder) && tv.characters !== (pf.value || pf.placeholder)) await text(ct, tv, pf.value || pf.placeholder); }
+      continue;
+    }
     const f = o.fields[i];
     setProps(r, { 'Input 2': false });
     if (f.area) setProps(r, { 'Input 1 swap': main('Text area', { State: 'Filled', Size: 'md' }).id });
@@ -747,7 +819,9 @@ async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 
     const ct = inp && !f.area && find(inp, 'Container'), tv = ct && ct.findOne(n => n.type === 'TEXT' && n.visible !== false);
     if (tv && f.value && tv.characters !== f.value) await text(ct, tv, f.value);   // 3 พ.ย. 2569 ไฟล์จริงช่องขึ้นว่าง — ค่าที่เห็นไม่ตรง property ก็ใส่ที่ข้อความโดยตรง
   }
-  const ft = m.findAll(n => n.type === 'INSTANCE' && /button/.test(n.name) && n.parent && n.parent.name === 'Actions');
+  /* ปุ่มของ Modal Type=Form อยู่ใน Modal footer > Actions > "Primary and secondary actions" (ไม่ใช่ลูกของ Actions ตรงๆ) — เดิมกรองแค่ parent = Actions ปุ่มหลักเลยค้างคำของไลบรารี
+     (ชีตลูกค้า 5 พ.ย. 2569: popup ตีกลับขึ้น "บันทึก" แทน "ตีกลับ" · popup ระบุอะไหล่เพิ่มเติมขึ้น "บันทึก" แทน "เพิ่ม") */
+  const ft = m.findAll(n => n.type === 'INSTANCE' && /button/.test(n.name) && n.parent && (n.parent.name === 'Actions' || n.parent.name === 'Primary and secondary actions'));
   ft.forEach(b => {
     if (b.name === 'Primary button') setProps(b, { Text: o.ok || 'บันทึก', 'Leading icon': false, 'Trailing icon': false });
     else if (b.name === 'Secondary button') setProps(b, { Text: o.cancel || 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false });
@@ -759,7 +833,9 @@ async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 
 let PINS = [];
 function pin(place) { place(); PINS.push(place); }
 function repin() { const p = PINS; PINS = []; for (const f of p) { try { f(); } catch (e) { /* ช่องถูกลบไปแล้ว */ } } }
-function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "…" · mobile = bottom sheet ที่มีรายการเมนู
+let MENU_SHEET = false;
+function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "…" · mobile = ไม่เปิดเมนู เพราะการ์ดมือถือแสดงไอคอนดู แก้ไข ลบ ครบแล้ว (4 พ.ย. 2569) · ตั้ง MENU_SHEET = true ถ้าจะกลับไปใช้ bottom sheet
+  if (MOB && !MENU_SHEET) return null;
   if (MOB) {
     overlay(scr, inst('Background overlay'), 0, 0).resize(VW(), VH());
     const sh = frame('Sheet', 'VERTICAL', { fill: WHITE, pad: [0, 0] }); sh.topLeftRadius = sh.topRightRadius = 24;
@@ -793,28 +869,39 @@ function comboAt(scr, anchor, items) {   // Dropdown list ใต้ช่อง�
     setProps(it, { State: items[i][2] ? 'Selected' : 'Default' });
     setProps(it, { Text: items[i][0], 'Supporting text': items[i][1] || '', Avatar: false, 'Supporting 2': false, Supporting: !!items[i][1] });   // ไม่ส่งบรรทัดรอง = แถวเดียว (เลือกรถ: ทะเบียนอย่างเดียว · ยกจาก Overhaul R24)
   });
-  const sc = find(l, 'Vertical scrollbar'); if (sc) sc.visible = false;
+  const sc = find(l, 'Vertical scrollbar'); if (sc) sc.visible = items.length > rows.length;   // รายการเกินแถวของไลบรารี (5) = คง scrollbar ไว้ (5 พ.ย. 2569 เขตของหลายภาค)
   overlay(scr, l, 0, 0);
   if (anchor) pin(() => { const sb = scr.absoluteBoundingBox, ab = anchor.absoluteBoundingBox; l.resize(ab.width, l.height); l.x = ab.x - sb.x; l.y = ab.y - sb.y + ab.height + 4; });
 }
 
 /* ---------- แถบค้นหา + แบ่งหน้า (ตาม Table header / Table pagination ของไลบรารี) ---------- */
+/* o.title + o.badge = หัวตาราง "ชื่อ" + Badge outline (เช่น "ยานพาหนะ" "5 คัน" ของ Vehicle list ใน UI Release#2) · o.filterCount = Pill บนปุ่มตัวกรอง (ช่องแรกของ Actions มี Pill outline ในตัว)
+   o.more = [{ text, disabled }] ปุ่ม Secondary ช่องถัดไป (เช่น "จัดลงไตรมาส" แบบปุ่ม "รายงาน" ของ Export reports - Select vehicles · ช่องนี้ใน Table header ของไฟล์ Component ไม่มี Pill ⇒ จำนวนต่อท้ายข้อความ) — 5 พ.ย. 2569 */
 async function tableHeader(o) {
-  const th = inst('Table header', { Breakpoint: BP() }, { 'Table title': false, Badge: false, 'Supporting text': false, 'More actions': false, Filters: !!(o.chips && o.chips.length) });
+  const th = inst('Table header', { Breakpoint: BP() }, { 'Table title': !!o.title, Badge: o.badge != null, 'Supporting text': false, 'More actions': false, Filters: !!(o.chips && o.chips.length) });
+  if (o.title) { setProps(th, { Title: o.title }); const tt = find(th, 'Front Section'); const tx = tt && tt.findOne(n => n.type === 'TEXT'); if (tx) await text(tt, tx, o.title); }
+  if (o.badge != null) { const b = find(th, 'Badge outline'); if (b) setProps(b, { Text: String(o.badge) }); }
   const ti = find(th, 'Text input');
   if (ti) setProps(ti, { Label: false, Helper: false, 'Trailing icon': false, Text: o.query || o.placeholder || PLUGIN.searchHint, State: o.query ? 'Filled' : 'Default' });
-  const acts = find(th, 'Actions');
+  const acts = find(th, 'Actions'), more = (o.more || []).slice();
   if (acts) { let first = true; for (const b of acts.children) {
-    if (b.name === 'Secondary button' && first) { first = false; setProps(b, { Text: 'ตัวกรอง', 'Leading icon': true, 'Leading icon swap': icon('filter_list-24-400-round') }); const p = find(b, 'Pill outline'); if (p) p.visible = false; }
-    else b.visible = false; } }
+    if (b.name === 'Secondary button' && first) { first = false; setProps(b, { Text: 'ตัวกรอง', 'Leading icon': true, 'Leading icon swap': icon('filter_list-24-400-round') }); const p = find(b, 'Pill outline'); if (p) { if (o.filterCount) setProps(p, { Text: String(o.filterCount) }); else p.visible = false; } }
+    else if (b.name === 'Secondary button' && more.length) { const m = more.shift(); b.visible = true; setProps(b, { Text: m.text, 'Leading icon': !!m.icon, 'Trailing icon': false, State: m.disabled ? 'Disabled' : 'Default' }); if (m.icon) setProps(b, { 'Leading icon swap': icon(m.icon) }); }
+    else if (o.primary && b.name === 'Primary button') setProps(b, { Text: o.primary, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') });
+    else if (o.primary && MOB && b.name === 'Secondary button' && !acts.children.some(x => x.name === 'Primary button')) {   // Table header Mobile มีแค่ Secondary 2 ช่อง ⇒ สลับช่องที่ 2 เป็น Primary แบบ Request list ของ 5.10 Vehicle In Use (EV) · UI Release#2
+      try { b.swapComponent(main('Primary button', { State: 'Default', Size: 'lg' })); b.name = 'Primary button'; setProps(b, { Text: o.primary, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') }); } catch (e) { warn('ปุ่มหลักใน Table header มือถือ', e); }
+    }
+    else b.visible = false; } }   // o.primary = ปุ่มหลักขวาของ "ตัวกรอง" (5 พ.ย. 2569 รีวิวทีมออกแบบ · ตาม Incident list ของ 5.5 Repair & Maintenance Job (Admin) ใน UI Release#2)
   th.findAll(n => n.name === 'Badge outline with remove icon').forEach((c, i) => { if (o.chips && i < o.chips.length) setProps(c, { Text: o.chips[i] }); else c.visible = false; });
   return th;
 }
 async function pagination(n) { return fillPagination(inst('Table pagination', { Breakpoint: BP() }), n); }
-async function fillPagination(pg, n) {
-  const tx = find(pg, 'Text'); if (tx && tx.type === 'TEXT') await text(pg, tx, 'แสดง 1 ถึง ' + n + ' จาก ' + n + ' รายการ');
+async function fillPagination(pg, n) {   // n = จำนวนแถว · { shown, total } = แถวมากกว่าที่ Table แสดงได้ (10 แถว) แสดงหน้าแรก (4 พ.ย. 2569)
+  const shown = typeof n === 'object' ? n.shown : n, total = typeof n === 'object' ? n.total : n;
+  const tx = find(pg, 'Text'); if (tx && tx.type === 'TEXT') await text(pg, tx, 'แสดง 1 ถึง ' + shown + ' จาก ' + total + ' รายการ');
   const items = pg.findAll(x => x.name === 'Button groups pagination item');
-  items.forEach((it, i) => { if (i === 0 || i === items.length - 1) setProps(it, { State: 'Disabled' }); else if (i === 1) setProps(it, { Number: '1' }); else it.visible = false; });
+  const pages = Math.max(1, Math.ceil(total / Math.max(1, shown)));
+  items.forEach((it, i) => { if (i === 0 || (i === items.length - 1 && pages === 1)) setProps(it, { State: 'Disabled' }); else if (i === items.length - 1) { /* ไปหน้าถัดไปได้ */ } else if (i >= 1 && i <= pages) setProps(it, { Number: String(i) }); else it.visible = false; });
   return pg;
 }
 const firstMenuCell = (scr) => scr.findAll(n => n.type === 'INSTANCE' && n.name === 'Table cell' && n.variantProperties && n.variantProperties.Style === 'Action icons')[0];
@@ -1128,6 +1215,15 @@ async function userflowFrame(prefix, code, n, codes, loose, o) {   // o.sc = ผ
   f.resize(sc.w, h);
   return { frame: f, slots };
 }
+/* ภาพประกอบ Empty state ที่ UI Release#2 เปลี่ยนจากภาพตั้งต้น (5 พ.ย. 2569 เจ้าของงาน "empty s1 ของรถ ใช้ ui นี้") —
+   ใส่ IMAGE fill ทับสี่เหลี่ยมใน Graphic ของ instance แบบเดียวกับ Contract vehicle list - Empty (1-54) · ภาพฝังตอน build (build.json "images") */
+async function emptyGraphic(es, key) {
+  const png = typeof IMAGES !== 'undefined' && IMAGES && IMAGES[key];
+  const g = find(es, 'Graphic'), r = g && g.findOne && g.findOne(n => n.type === 'RECTANGLE');
+  if (!png || !r) { warn('ภาพ Empty state ' + key, new Error(png ? 'ไม่เจอสี่เหลี่ยมใน Graphic' : 'ไม่มีภาพใน build.json images')); return es; }
+  r.fills = [{ type: 'IMAGE', imageHash: figma.createImage(figma.base64Decode(png)).hash, scaleMode: 'FILL' }];
+  return es;
+}
 /* ภาพย่อจอจริง: export จอเป็น PNG แล้วใส่เป็นภาพในช่อง · จอสูงกว่าช่อง = ตัดเอาส่วนบนเต็มความกว้าง (เห็นหัวหน้า + ส่วนต้นของเนื้อหา) · ภาพเป็นภาพนิ่ง แก้จอแล้วต้องสร้างใหม่ */
 async function fillThumb(rect, scr) {
   try {
@@ -1225,6 +1321,69 @@ async function tableBoard(prefix, name, title, src, data, group, cols) {
   return outer;
 }
 
+/* ---------- user journey swimlane ตามผู้เกี่ยวข้อง (เจ้าของงานสั่ง 4 พ.ย. 2569 "อยากให้ทำ user journey ยาวๆ เป็น swimlane ที่มี stakeholder ด้วย") ----------
+   ข้อมูลฝังตอน build (const SWIMLANE · plugin-lib/swimlane-layout.js อ่าน Diagram/…-swimlane.md) — ปลั๊กอินแค่วาดตามตำแหน่ง
+   1 แถว = 1 ผู้เกี่ยวข้อง (ชื่อซ้ายสุด) · แถบช่วงงานด้านบน · "อยากได้เป็นสี่เหลี่ยม และทางแยกเป็นข้าวหลามตัด" ⇒ ขั้นงาน = สี่เหลี่ยมเขียว · ทางแยก = ข้าวหลามตัดม่วง (สีชุดผัง userflow)
+   เส้นทึบ = ไปขั้นถัดไป · เส้นประเทา = ย้อนกลับไปทำซ้ำ · เป็นของวาดประกอบนอกเฟรมจอ (shape + vector) เหมือนผัง userflow */
+async function swimlaneBoard(prefix, sw) {
+  CREATED = [];
+  const f = figma.createFrame(); CREATED.push(f);
+  f.name = prefix + ' · user journey swimlane';
+  f.resize(sw.w, sw.h); f.fills = [{ type: 'SOLID', color: WHITE }];
+  f.strokes = [{ type: 'SOLID', color: rgbOf('#D0D5DD') }]; f.strokeWeight = 2; f.cornerRadius = 24; f.clipsContent = false;
+  const put = (node, x, y) => { f.appendChild(node); node.x = x; node.y = y; return node; };
+  const rect = (name, x, y, w, h, hex, stroke) => {
+    const r = figma.createRectangle(); CREATED.push(r); r.name = name; r.resize(w, h);
+    r.fills = hex ? [{ type: 'SOLID', color: rgbOf(hex) }] : [];
+    if (stroke) { r.strokes = [{ type: 'SOLID', color: rgbOf(stroke) }]; r.strokeWeight = 1; }
+    return put(r, x, y);
+  };
+  put(await docText(sw.title, 56, '#101828'), 64, 48);
+  put(await docText('สี่เหลี่ยม = ขั้นงาน (วงเล็บ = scenario · ภาพ = จอจริงบนหน้านี้ · ป้ายเทา = รหัสจอ) · ข้าวหลามตัด = ทางแยก · เส้นประเทา = ย้อนกลับไปทำซ้ำ · ต้นฉบับ ' + sw.src, 24, '#475467', null, true), 64, 128);
+  for (const l of sw.lanes) {   // แถวผู้เกี่ยวข้อง: พื้นสลับสี + ช่องชื่อซ้าย
+    rect('lane · ' + l.label, 0, l.y, sw.w, l.h, l.i % 2 ? '#F9FAFB' : '#FFFFFF', '#EAECF0');
+    rect('ชื่อ lane · ' + l.label, 0, l.y, sw.headW, l.h, '#F2F4F7', '#EAECF0');
+    const t = put(await docText(l.label, 28, '#101828', sw.headW - 48), 24, 0); t.name = 'ชื่อ ' + l.label;
+    t.y = l.y + (l.h - t.height) / 2;
+  }
+  for (const b of sw.bands) {   // แถบช่วงงาน (สีหัวการ์ด story map)
+    const r = rect('ช่วงงาน · ' + b.name, b.x, b.y, b.w, b.h, '#A80689'); r.cornerRadius = 8;
+    const t = put(await docText(b.name, 26, '#FFFFFF'), b.x + 20, 0); t.y = b.y + (b.h - t.height) / 2;
+  }
+  let links = 0;
+  for (const e of sw.edges) {   // เส้นก่อน กล่องทับเส้น
+    const v = await arrow(e.pts, e.back ? '#98A2B3' : '#475467', 3);
+    if (e.back) { try { v.dashPattern = [16, 10]; } catch (err) { /* ไม่มี dash ก็เส้นทึบ */ } }
+    put(v, Math.min(...e.pts.map(p => p[0])), Math.min(...e.pts.map(p => p[1])));
+    v.name = 'เส้น ' + e.from + ' → ' + e.to + (e.back ? ' (ย้อนกลับ)' : '');
+    if (e.lab) { const t = put(await labelText(e.label, 18, '#101828'), e.lab[0], e.lab[1]); t.name = 'ป้าย ' + e.label; }
+    links++;
+  }
+  let steps = 0, forks = 0; const slots = [];
+  for (const nd of sw.nodes) {
+    const s = flowNode(nd.kind === 'decision' ? 'decision' : 'display'); f.appendChild(s);
+    s.resize(nd.w, nd.h); s.x = nd.x; s.y = nd.y;
+    s.fills = [{ type: 'SOLID', color: nd.fill }]; s.strokes = [{ type: 'SOLID', color: nd.stroke }]; s.strokeWeight = 4;
+    s.name = (nd.kind === 'decision' ? 'ทางแยก ' : 'ขั้น ') + nd.id + ' / ' + nd.label;
+    if (nd.thumb) {   // ภาพย่อจอจริง (เจ้าของงาน 4 พ.ย. 2569 "ภาพย่อจอจริง + รหัสจอ") — ช่องบน + ข้อความใต้ภาพ + ป้ายรหัสจอมุมขวาบน แบบกล่องหน้าจอของผัง userflow
+      const th = rect('ภาพย่อ ' + nd.id, nd.x + nd.thumb.x, nd.y + nd.thumb.y, nd.thumb.w, nd.thumb.h, '#FFFFFF', '#D0D5DD'); th.cornerRadius = 4;
+      slots.push({ id: nd.id, rect: th, codes: nd.screens });
+      const top = nd.thumb.y + nd.thumb.h + 4, ih = nd.h - top - 6, iw = nd.w - 16;
+      const t = put(await flowText(nd.label, 15, '#101828', iw, ih), nd.x + 8, nd.y + top); t.name = nd.id + ' ข้อความ';
+      const b = frame('ป้ายจอ ' + nd.screens.join(' '), 'HORIZONTAL', { fill: rgbOf(BADGE_FILL), pad: [4, 10] }); b.cornerRadius = 6;
+      b.primaryAxisSizingMode = 'AUTO'; b.counterAxisSizingMode = 'AUTO';
+      b.appendChild(await labelText(nd.screens.join(' · '), 16, '#101828'));
+      put(b, nd.x + nd.w - 24, nd.y - 16);
+    } else {
+      const iw = nd.kind === 'decision' ? nd.w * 0.62 : nd.w - 24, ih = nd.kind === 'decision' ? nd.h * 0.62 : nd.h - 16;
+      const t = put(await flowText(nd.label, 17, '#101828', iw, ih), nd.x + (nd.w - iw) / 2, nd.y + (nd.h - ih) / 2); t.name = nd.id + ' ข้อความ';
+    }
+    if (nd.kind === 'decision') forks++; else steps++;
+  }
+  CREATED = [];
+  return { frame: f, steps, forks, links, slots };
+}
+
 /* ---------- ส่งภาพจอบนหน้านี้ไป FigJam (เจ้าของงาน 30 ต.ค. 2569 "export … ไปที่ figjam ด้วย userflow และ design มาจาก figma ปรับใหม่ล่าสุด") ----------
    export เฟรมจอ "<prefix> / A.1 · S1 — ชื่อ" บนหน้าที่เปิดอยู่ (จอที่ทีมแก้มือแล้วก็ได้) เป็น PNG ส่งให้หน้าต่างปลั๊กอิน → POST เข้า serve.js ที่ out/figjam/<dir>/
    แล้ว 3-figjam-board.js วางภาพต่อจากผัง userflow ของ scenario เดียวกัน · desktop อย่างเดียว · ด้านยาวไม่เกิน 4000 px (FigJam รับไม่เกิน 4096) */
@@ -1232,11 +1391,15 @@ const SHOT_RE = /^(\S+) \/ ([A-Z])\.([0-9.]+) · (S\d+) — (.+)$/;
 async function exportShots(dir) {
   errors.length = 0;
   const page = figma.currentPage;
-  const all = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(PLUGIN.prefix + ' / ') === 0 && !/ · mobile$/.test(n.name) && n.name.indexOf(' · ตัดแล้ว') < 0);
+  /* 5 พ.ย. 2569 เจ้าของงาน "export figjam อยากให้ออกมาเป็นแบบนี้ มี mobile มาด้วย … บอกว่าส่วนใหน desktop , mobile" ⇒ ส่งจอ mobile ด้วย (ชื่อเฟรมลงท้าย " · mobile") · device ใน manifest */
+  const all = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(PLUGIN.prefix + ' / ') === 0 && n.name.indexOf(' · ตัดแล้ว') < 0);
   const shots = [], skipped = [];
-  for (const f of all) { const m = f.name.match(SHOT_RE); if (m) shots.push({ f, code: m[2] + '.' + m[3], letter: m[2], no: m[3], scenario: m[4], name: m[5] }); else skipped.push(f.name); }
+  for (const f of all) {
+    const mob = / · mobile$/.test(f.name), m = f.name.replace(/ · mobile$/, '').match(SHOT_RE);
+    if (m) shots.push({ f, code: m[2] + '.' + m[3], letter: m[2], no: m[3], scenario: m[4], name: m[5], device: mob ? 'mobile' : 'desktop' }); else skipped.push(f.name);
+  }
   /* หน้าเดียวกันมีหลายชุด (ปุ่มสร้างวางต่อใต้ของเดิมทุกครั้ง) ⇒ ใช้ชุดล่าสุด = จอ A.1 ที่อยู่ล่างสุด กับทุกจอที่อยู่ใต้มัน · ชุดเก่าด้านบนไม่ส่ง */
-  const a1 = shots.filter(x => x.code === 'A.1');
+  const a1 = shots.filter(x => x.code === 'A.1' && x.device === 'desktop');
   if (a1.length > 1) {
     const top = Math.max(...a1.map(x => x.f.y));
     const old = shots.filter(x => x.f.y < top - 1);
@@ -1244,7 +1407,7 @@ async function exportShots(dir) {
   }
   const seen = new Set();   // รหัสซ้ำในชุดเดียวกัน ⇒ เก็บตัวที่อยู่ล่างสุด (สร้างทีหลัง)
   shots.sort((p, q) => q.f.y - p.f.y);
-  shots.splice(0, shots.length, ...shots.filter(x => !seen.has(x.code) && seen.add(x.code)));
+  shots.splice(0, shots.length, ...shots.filter(x => !seen.has(x.code + x.device) && seen.add(x.code + x.device)));
   const key = (s) => s.letter + s.no.split('.').map(x => x.padStart(3, '0')).join('.');
   shots.sort((a, b) => key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0);
   if (!shots.length) { log('ไม่พบเฟรมจอ "' + PLUGIN.prefix + ' / …" บนหน้า "' + page.name + '" — เปิดหน้าที่มีจอแล้วกดใหม่'); return; }
@@ -1254,9 +1417,9 @@ async function exportShots(dir) {
     try {
       const scale = Math.min(1, 4000 / Math.max(s.f.width, s.f.height));
       const bytes = await s.f.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: scale } });
-      const file = s.code + '-' + s.scenario + '.png';
+      const file = s.code + '-' + s.scenario + (s.device === 'mobile' ? '-mobile' : '') + '.png';
       figma.ui.postMessage({ type: 'shot', dir, file, bytes });
-      manifest.shots.push({ code: s.code, scenario: s.scenario, name: s.name, file, w: Math.round(s.f.width * scale), h: Math.round(s.f.height * scale) });
+      manifest.shots.push({ code: s.code, scenario: s.scenario, name: s.name, device: s.device, file, w: Math.round(s.f.width * scale), h: Math.round(s.f.height * scale) });
     } catch (e) { warn('export ' + s.f.name, e); }
   }
   figma.ui.postMessage({ type: 'shots-done', dir, manifest });
@@ -1385,7 +1548,7 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
           const x = x0 + i * pitch;
           CREATED = []; PLACE = { x, y: rowY };   // เฟรมจอไปอยู่ตำแหน่งจริงทันทีที่สร้าง · ชิ้นที่สร้างระหว่างทางถูกติดตามไว้
           try {
-            PINS = []; const s = await fn(); stripDividers(s); await polish(s); repin();
+            PINS = []; const s = await fn(); stripDividers(s); await polish(s); repin(); await bindTones();
             s.name = prefix + ' / ' + sub.code + '.' + (i + 1) + ' · ' + sub.tag + ' — ' + label + (mob ? ' · mobile' : '');
             put(s, x, rowY); h = Math.max(h, s.height); made.push(s);
             const cd = sub.code + '.' + (i + 1); if (!byCode[cd]) byCode[cd] = s;

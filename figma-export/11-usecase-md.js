@@ -35,7 +35,8 @@ const cell = (s) => s.replace(/\|/g, '/');
 const md = ['# Use case บำรุงรักษาตามวาระ', '',
   '> สร้างจาก [' + path.basename(SRC) + '](' + path.basename(SRC) + ') ด้วย `node figma-export/11-usecase-md.js` ห้ามแก้ไฟล์นี้มือ แก้ที่ CSV แล้วรันใหม่',
   '> 1 use case = บทบาท + ทำอะไรให้จบ 1 อย่าง + ผ่านเมื่อไหร่ · สถานะบอกว่า flow ปัจจุบัน (userflow ไฟล์ 14) ครอบแค่ไหน',
-  '> รวม ' + rows.length + ' ข้อ · มีใน flow แล้ว ' + count('มีใน flow แล้ว') + ' · มีบางส่วน ' + count('มีบางส่วน') + ' · ยังไม่มี ' + count('ยังไม่มี') + ' · ขัดกับที่เคาะ ' + count('ขัดกับที่เคาะ'), ''];
+  '> รวม ' + rows.length + ' ข้อ · มีใน flow แล้ว ' + count('มีใน flow แล้ว') + ' · มีบางส่วน ' + count('มีบางส่วน') + ' · ยังไม่มี ' + count('ยังไม่มี') + ' · ขัดกับที่เคาะ ' + count('ขัดกับที่เคาะ')
+    + (count('ตัดออก') ? ' · ตัดออก ' + count('ตัดออก') + ' (คงแถวไว้ให้ตามรอยได้)' : ''), ''];   // ตัดออก = scenario ของข้อนั้นถูกตัด (4 พ.ย. 2569 S11 S23)
 const groups = [...new Set(rows.map(r => col(r, 'ช่วงงาน')))];
 for (const g of groups) {
   const mine = rows.filter(r => col(r, 'ช่วงงาน') === g);
@@ -43,26 +44,6 @@ for (const g of groups) {
   for (const r of mine) md.push('| ' + ['รหัส', 'scenario', 'บทบาท', 'use case', 'ผ่านเมื่อ', 'JO', 'สถานะใน flow', 'หมายเหตุ'].map(k => cell(col(r, k))).join(' | ') + ' |');
   md.push('');
 }
-/* use case ตาม scenario (4 พ.ย. 2569 เจ้าของงาน "ทำเป็นตาราง usecase ให้ด้วยก็ดีว่า scen นี้มี usecase อะไรบ้าง")
-   ลำดับ scenario = ลำดับงานตามช่วงงาน (phases) ของ journey ใน maintainance-plugin/build.json แบบเดียวกับตาราง scenario · ชื่อจากตารางภาพรวมในไฟล์ userflow · use case ที่อยู่หลาย scenario ขึ้นทุก scenario */
-const BUILD = JSON.parse(fs.readFileSync(path.join(__dirname, 'maintainance-plugin', 'build.json'), 'utf8'));
-const FLOW = fs.readFileSync(path.join(ROOT, BUILD.userflow), 'utf8');
-const NAME = {}; FLOW.split('\n').forEach(l => { const m = l.match(/^\| (S\d+) \| ([^|]+) \|/); if (m && !NAME[m[1]]) NAME[m[1]] = m[2].trim(); });
-const SEQ = BUILD.journey.phases.flatMap(ph => ph[1]).map(n => 'S' + n);   // ลำดับตามช่วงงาน · scenario ที่อยู่ในคอลัมน์แต่ไม่อยู่ในช่วงงาน (เช่น S21) แทรกต่อจากตัวก่อนหน้าในคอลัมน์
-{ const cols = BUILD.journey.cols.flat().map(n => 'S' + n); cols.forEach((t, i) => { if (SEQ.indexOf(t) < 0) SEQ.splice(i ? SEQ.indexOf(cols[i - 1]) + 1 : 0, 0, t); }); }
-const tagsOf = (r) => col(r, 'scenario').split(/\s*·\s*/).filter(t => /^S\d+$/.test(t));
-md.push('## use case ตาม scenario', '', '> เรียงตามลำดับงาน · use case ที่ใช้ร่วมกันหลาย scenario ขึ้นในทุก scenario นั้น', '');
-for (const t of SEQ) {
-  const mine = rows.filter(r => tagsOf(r).indexOf(t) >= 0);
-  md.push('### ' + t + ' ' + (NAME[t] || '') + ' (' + mine.length + ' ข้อ)', '');
-  if (!mine.length) { md.push('ยังไม่มี use case', ''); continue; }
-  md.push('| รหัส | บทบาท | use case | ผ่านเมื่อ | สถานะ |', '|---|---|---|---|---|');
-  for (const r of mine) md.push('| ' + ['รหัส', 'บทบาท', 'use case', 'ผ่านเมื่อ', 'สถานะใน flow'].map(k => cell(col(r, k))).join(' | ') + ' |');
-  md.push('');
-}
-const loose = rows.filter(r => !tagsOf(r).length);
-md.push('### ยังไม่อยู่ใน scenario ไหน (' + loose.length + ' ข้อ)', '', '| รหัส | บทบาท | use case | สถานะ | หมายเหตุ |', '|---|---|---|---|---|');
-for (const r of loose) md.push('| ' + ['รหัส', 'บทบาท', 'use case', 'สถานะใน flow', 'หมายเหตุ'].map(k => cell(col(r, k))).join(' | ') + ' |');
-md.push('');
+/* 4 พ.ย. 2569 เจ้าของงาน "ปรับแก้ให้เหลืออันเดียวได้มั้ย" — เลิกส่วน "use case ตาม scenario" ใช้ตารางตามช่วงงาน (มีคอลัมน์ scenario + JO) ตารางเดียว */
 fs.writeFileSync(OUT, md.join('\n'));
 console.log('เขียน ' + path.relative(ROOT, OUT) + ' · ' + rows.length + ' use case · ' + groups.length + ' ช่วงงาน');

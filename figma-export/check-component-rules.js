@@ -70,10 +70,20 @@ function check(screens, opt) {   // opt.inFile(ชื่อ) = ไฟล์ม�
     }
     // จอที่ต้องใช้ component เฉพาะ (เช่น นัดหมาย = RepairAppointmentStep)
     for (const r of RULES.screensUse || []) {
-      if (!new RegExp(r.screens).test(sc.name) || (r.desktopOnly && mobile)) continue;
+      if (!new RegExp(r.screens).test(sc.name) || (r.desktopOnly && mobile) || (r.mobileOnly && !mobile)) continue;   // mobileOnly (5 พ.ย. 2569 R70 Mobile progress steps)
       if (r.ifInFile && opt.inFile && !opt.inFile(r.component)) continue;
       if (!all.some(x => isInst(x, r.component) && shown(x))) fail(r, sc, 'ไม่มี ' + r.component);
+      else if (r.badgeMatch && !all.some(x => isInst(x, r.component) && shown(x) && x.findAll(b => isInst(b, 'Badge outline') && shown(b) && new RegExp(r.badgeMatch).test((prop(b, 'Text') || '').trim())).length))
+        fail(r, sc, r.component + ' ไม่มี Badge ข้อความตรง ' + r.badgeMatch);   // R71 ตัวนับ "ตรวจแล้ว x/y" (5 พ.ย. 2569)
       for (const t of r.forbidSectionTitles || []) if (all.some(x => isInst(x, 'Section header') && shown(x) && prop(x, 'Title') === t)) fail(r, sc, 'ยังมีหัวข้อเดิม "' + t + '"');
+    }
+    // R76 กล่องข้อมูลแยกตามประเภทงาน (5 พ.ย. 2569): ป้ายของ _Content item base ชุดแรกในจอต้องเรียงตาม labels · ป้ายใน forbidLabels (ไม่มีที่มาในข้อมูลของงานนั้น) ห้ามมีในจอ
+    for (const r of RULES.displayLabels || []) {
+      if (!new RegExp(r.screens).test(sc.name)) continue;
+      const got = all.filter(x => isInst(x, '_Content item base') && shown(x)).map(x => (prop(x, 'Label') || '').trim()).filter(l => l && l !== 'Label');   // ช่องว่างท้ายแถว (ป้ายตั้งต้น "Label" · ปิดด้วย property Item n) ไม่นับ
+      const want = r.labels || [];
+      if (want.some((l, i) => got[i] !== l)) fail(r, sc, 'ป้ายกล่องข้อมูล [' + got.slice(0, want.length).join(' · ') + '] ไม่ตรง [' + want.join(' · ') + ']');
+      for (const l of r.forbidLabels || []) if (got.indexOf(l) >= 0) fail(r, sc, 'มีช่อง "' + l + '" ที่ข้อมูลของงานนี้ไม่มี');
     }
     // component ที่ห้ามใช้ในจอชุดนี้ (R21: Overhaul เลิกใช้เมนู "…" — PO CF 21 ต.ค. 2569 ขอเป็นไอคอน)
     const inside = (x, names) => { for (let p = x.parent; p && p !== sc; p = p.parent) if (p.type === 'INSTANCE' && names.some(nm => isInst(p, nm))) return true; return false; };   // allowInside = ยกเว้นตัวที่อยู่ใน component ที่กำหนด (R30 ปุ่มตัวกรองใน Table header) · allowText = ยกเว้นปุ่มที่ข้อความตรง (R30 ปุ่มส่งออก)

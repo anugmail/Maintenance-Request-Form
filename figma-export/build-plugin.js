@@ -41,10 +41,26 @@ if (cfg.docs) {   // เอกสารที่ปลั๊กอินวา�
   docs = JSON.stringify(d);
   docsNote = ' · เอกสาร ' + Object.keys(d).join(', ');
 }
+let swim = 'null', swimNote = '';
+if (cfg.swimlane) {   // user journey swimlane ตามผู้เกี่ยวข้อง (4 พ.ย. 2569): .md ใน Diagram/ → const SWIMLANE (ตำแหน่งกล่อง/เส้นคำนวณที่นี่)
+  const sw = require('./plugin-lib/swimlane-layout.js').build(path.resolve(__dirname, '..', cfg.swimlane));
+  if (sw.problems.length) { console.error('✗ swimlane จัดวางไม่ผ่าน:\n' + sw.problems.join('\n')); process.exit(1); }
+  swim = JSON.stringify(Object.assign({ src: cfg.swimlane }, sw));
+  swimNote = ' · swimlane ' + sw.lanes.length + ' lane ' + sw.nodes.length + ' กล่อง ' + sw.edges.length + ' เส้น';
+}
+let images = 'null', imagesNote = '';
+if (cfg.images) {   // ภาพประกอบที่ UI Release#2 ใส่ทับภาพตั้งต้นของ component (5 พ.ย. 2569 Empty state รถ) → const IMAGES = { key: base64 PNG }
+  const im = {};
+  for (const [k, v] of Object.entries(cfg.images)) if (k[0] !== '_') im[k] = fs.readFileSync(path.resolve(__dirname, '..', v)).toString('base64');
+  images = JSON.stringify(im);
+  imagesNote = ' · ภาพ ' + Object.keys(im).join(', ');
+}
 const out = '/* ⚠ ไฟล์นี้ประกอบอัตโนมัติจาก plugin-lib/core.js + ' + dir + '/screens.js' + (cfg.userflow ? ' + ' + cfg.userflow : '') + ' ด้วย build-plugin.js — แก้ที่ต้นทางแล้วรัน  node figma-export/build-plugin.js ' + dir + '  (' + new Date().toISOString().slice(0, 10) + ') */\n\n' +
   core + '\n/* ======================== userflow (ฝังตอน build) ======================== */\nconst USERFLOW = ' + flow + ';\n' +
   '\n/* ======================== AC รายจอ (ฝังตอน build) ======================== */\nconst AC = ' + ac + ';\n' +
   '\n/* ======================== เอกสาร story map / use case (ฝังตอน build) ======================== */\nconst DOCS = ' + docs + ';\n' +
+  '\n/* ======================== user journey swimlane (ฝังตอน build) ======================== */\nconst SWIMLANE = ' + swim + ';\n' +
+  '\n/* ======================== ภาพประกอบ (ฝังตอน build) ======================== */\nconst IMAGES = ' + images + ';\n' +
   '\n/* ======================== ' + dir + '/screens.js ======================== */\n' + screens;
 fs.writeFileSync(path.join(__dirname, dir, 'code.js'), out);
-console.log(dir + '/code.js: ' + out.split('\n').length + ' บรรทัด (core ' + core.split('\n').length + ' + screens ' + screens.split('\n').length + ') · ' + flowNote + acNote + docsNote);
+console.log(dir + '/code.js: ' + out.split('\n').length + ' บรรทัด (core ' + core.split('\n').length + ' + screens ' + screens.split('\n').length + ') · ' + flowNote + acNote + docsNote + swimNote + imagesNote);

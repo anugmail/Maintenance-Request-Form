@@ -1,0 +1,308 @@
+{
+  "_note": "ข้อมูลจำลอง login VMS Plus — รูปเดียวกับ payload จริง (30 ต.ค. 2569) ตัวตน/หน่วยงาน/รหัสทั้งหมดเป็นค่าจำลอง · JWT ลายเซ็น \"mock\" · สร้างด้วย build-personas.js ห้ามแก้มือ",
+  "flow": [
+    "POST /api/login/request-keycloak {redirect_uri}",
+    "SSO sso2.pea.co.th → /callback_code_token?code=…",
+    "POST /api/login/authen-keycloak {code, redirect_uri} → login_response",
+    "localStorage: accessToken · refreshToken · idTokenHint",
+    "GET /api/login/profile (Authorization: Bearer accessToken · x-apikey) → profile"
+  ],
+  "personas": [
+    {
+      "id": "kbk",
+      "label": "กบค. — แก้ไขได้ทุกคัน",
+      "overhaul": {
+        "scope": "ทั้งประเทศ",
+        "edit": true,
+        "reply_appointment": false,
+        "note": "สร้าง/แก้ไข/ลบ แผน PO นัดหมาย ทุกขั้นของงานรายคัน"
+      },
+      "login_response": {
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBfaWQiOiI1MTAyMzEiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZmlyc3RfbmFtZSI6IuC4meC4suC4ouC4p-C4tOC4iuC4seC4oiIsImxhc3RfbmFtZSI6IuC4l-C4reC4h-C4lOC4tSIsImZ1bGxfbmFtZSI6IuC4meC4suC4ouC4p-C4tOC4iuC4seC4oiDguJfguK3guIfguJTguLUiLCJwb3NpdGlvbiI6IuC4p-C4qC44IiwiZGVwdF9zYXAiOiI0MTIwIiwiZGVwdF9zYXBfc2hvcnQiOiLguJzguJrguKIuIOC4geC4muC4hC4g4Lid4Lii4LieLiDguKrguLLguKLguIfguLLguJkg4Lin4LioIiwiZGVwdF9zYXBfZnVsbCI6IuC5geC4nOC4meC4geC4muC4s-C4o-C4uOC4h-C4o-C4seC4geC4qeC4suC4ouC4suC4meC4nuC4suC4q-C4meC4sC_guIHguJrguIQuL-C4neC5iOC4suC4ouC4ouC4suC4meC4nuC4suC4q-C4meC4sCAo4LiI4Liz4Lil4Lit4LiHKSIsImJ1cmVhdV9kZXB0X3NhcCI6IjQxMiIsIm1vYmlsZV9udW1iZXIiOiItIiwiaW50ZXJuYWxfbnVtYmVyIjoiIiwiYnVzaW5lc3NfYXJlYSI6IlowMDAiLCJpbWFnZV91cmwiOiIiLCJyb2xlcyI6WyJhZG1pbi1zdXBlciIsInZlaGljbGUtdXNlciJdLCJpc19lbXBsb3llZSI6dHJ1ZSwibGV2ZWxfY29kZSI6IjA4IiwibG9naW5fYnkiOiJrZXljbG9hayIsImlzcyI6InZtcy1wbHVzIiwiYXVkIjpbInZtcy1wbHVzLWNsaWVudCJdLCJleHAiOjE3OTMzNTgwMDAsImlhdCI6MTc5MzMyMjAwMCwianRpIjoibW9jay1hY2Nlc3Mta2JrIn0.mock",
+        "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBfaWQiOiI1MTAyMzEiLCJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImZpcnN0X25hbWUiOiIiLCJsYXN0X25hbWUiOiIiLCJmdWxsX25hbWUiOiLguJnguLLguKLguKfguLTguIrguLHguKIg4LiX4Lit4LiH4LiU4Li1IiwicG9zaXRpb24iOiIiLCJkZXB0X3NhcCI6IiIsImRlcHRfc2FwX3Nob3J0IjoiIiwiZGVwdF9zYXBfZnVsbCI6IiIsImJ1cmVhdV9kZXB0X3NhcCI6IiIsIm1vYmlsZV9udW1iZXIiOiIiLCJpbnRlcm5hbF9udW1iZXIiOiIiLCJidXNpbmVzc19hcmVhIjoiIiwiaW1hZ2VfdXJsIjoiIiwicm9sZXMiOm51bGwsImlzX2VtcGxveWVlIjpmYWxzZSwibGV2ZWxfY29kZSI6IiIsImxvZ2luX2J5Ijoia2V5Y2xvYWsiLCJpc3MiOiJ2bXMtcGx1cyIsImF1ZCI6WyJ2bXMtcGx1cy1jbGllbnQiXSwiZXhwIjoxNzk4NTA2MDAwLCJpYXQiOjE3OTMzMjIwMDAsImp0aSI6Im1vY2stcmVmcmVzaC1rYmsifQ.mock",
+        "idTokenHint": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1vY2sifQ.eyJleHAiOjE3OTMzMjIzMDAsImlhdCI6MTc5MzMyMjAwMCwiYXV0aF90aW1lIjoxNzkzMzIyMDAwLCJqdGkiOiJtb2NrLWlkLWtiayIsImlzcyI6Imh0dHBzOi8vc3NvMi5wZWEuY28udGgvcmVhbG1zL3BlYS11c2VycyIsImF1ZCI6InBlYS1WTVMtUGx1cyIsInN1YiI6ImY6bW9jazo1MTAyMzEiLCJ0eXAiOiJJRCIsImF6cCI6InBlYS1WTVMtUGx1cyIsInNpZCI6Im1vY2stc2lkLWtiayIsImF0X2hhc2giOiJtb2NrIiwiYWNyIjoiMSIsImhyX2RlcHRfc2FwX2Z1bGwiOiLguYHguJzguJnguIHguJrguLPguKPguLjguIfguKPguLHguIHguKnguLLguKLguLLguJnguJ7guLLguKvguJnguLAv4LiB4Lia4LiELi_guJ3guYjguLLguKLguKLguLLguJnguJ7guLLguKvguJnguLAgKOC4iOC4s-C4peC4reC4hykiLCJocl9jb3N0X2NlbnRlciI6Ilo0MTIwMTAwMDAiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaHJfZGVwYXJ0bWVudCI6IuC4nOC4muC4oi4g4LiB4Lia4LiELiDguJ3guKLguJ4uIOC4quC4suC4ouC4h-C4suC4mSDguKfguKgiLCJocl9kZXB0X2NoYW5nZV9jb2RlIjoibW9jayIsImhyX2RlcHRfc2FwIjoiNDEyMCIsImhyX2xhc3RuYW1lIjoi4LiX4Lit4LiH4LiU4Li1IiwiaHJfc3RlbGxfdGV4dF9mdWxsIjoi4Lin4LioLjgiLCJocl9wb3NpdGlvbiI6IuC4p-C4qC44IiwicHJlZmVycmVkX3VzZXJuYW1lIjoiNTEwMjMxIiwiaHJfZnVsbG5hbWVfdGgiOiLguJnguLLguKLguKfguLTguIrguLHguKIg4LiX4Lit4LiH4LiU4Li1IiwiaHJfZW1wbG95ZWVfaWQiOiI1MTAyMzEiLCJnaXZlbl9uYW1lIjoi4LiZ4Liy4Lii4Lin4Li04LiK4Lix4LiiIiwiaHJfbW9iaWxlcGhvbmUiOiLguYTguKHguYjguKLguLTguJnguKLguK3guKHguYDguJvguLTguJTguYDguJzguKLguILguYnguK3guKHguLnguKUiLCJocl9mdWxsbmFtZV9lbiI6Ik1vY2sga2JrIiwibmFtZSI6Ik1vY2sga2JrIiwiaHJfcG9zaV9zdGF0dXNfZGVzYyI6IuC4nuC4meC4seC4geC4h-C4suC4meC4m-C4geC4leC4tCIsImlkZW50aXR5X25vIjoiMDAwMDAwMDAwMDAwMCIsImhyX2ZpcnN0bmFtZSI6IuC4meC4suC4ouC4p-C4tOC4iuC4seC4oiIsImhyX3Bvc2lfY29kZSI6Im1vY2siLCJocl9idXNpbmVzc19hcmVhIjoiWjAwMCIsImZhbWlseV9uYW1lIjoia2JrIiwiZW1haWwiOiJrYmtAbW9jay5pbnZhbGlkIn0.mock"
+      },
+      "access_token_claims": {
+        "emp_id": "510231",
+        "token_type": "access",
+        "first_name": "นายวิชัย",
+        "last_name": "ทองดี",
+        "full_name": "นายวิชัย ทองดี",
+        "position": "วศ.8",
+        "dept_sap": "4120",
+        "dept_sap_short": "ผบย. กบค. ฝยพ. สายงาน วศ",
+        "dept_sap_full": "แผนกบำรุงรักษายานพาหนะ/กบค./ฝ่ายยานพาหนะ (จำลอง)",
+        "bureau_dept_sap": "412",
+        "mobile_number": "-",
+        "internal_number": "",
+        "business_area": "Z000",
+        "image_url": "",
+        "roles": [
+          "admin-super",
+          "vehicle-user"
+        ],
+        "is_employee": true,
+        "level_code": "08",
+        "login_by": "keycloak",
+        "iss": "vms-plus",
+        "aud": [
+          "vms-plus-client"
+        ],
+        "exp": 1793358000,
+        "iat": 1793322000,
+        "jti": "mock-access-kbk"
+      },
+      "profile": {
+        "emp_id": "510231",
+        "first_name": "นายวิชัย",
+        "last_name": "ทองดี",
+        "full_name": "นายวิชัย ทองดี",
+        "dept_sap": "4120",
+        "dept_sap_short": "ผบย. กบค. ฝยพ. สายงาน วศ",
+        "dept_sap_full": "แผนกบำรุงรักษายานพาหนะ/กบค./ฝ่ายยานพาหนะ (จำลอง)",
+        "bureau_dept_sap": "412",
+        "mobile_number": "-",
+        "internal_number": "",
+        "business_area": "Z000",
+        "image_url": "",
+        "posi_text": "วศ.8",
+        "license_status_code": "",
+        "license_status": "",
+        "trn_request_annual_driver_uid": "",
+        "annual_yyyy": 2569,
+        "annual_licenses": [],
+        "roles": [
+          "admin-super",
+          "vehicle-user"
+        ],
+        "login_by": "keycloak",
+        "is_employee": true,
+        "level_code": "08",
+        "is_level_m5": "0",
+        "id_token_hint": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1vY2sifQ.eyJleHAiOjE3OTMzMjIzMDAsImlhdCI6MTc5MzMyMjAwMCwiYXV0aF90aW1lIjoxNzkzMzIyMDAwLCJqdGkiOiJtb2NrLWlkLWtiayIsImlzcyI6Imh0dHBzOi8vc3NvMi5wZWEuY28udGgvcmVhbG1zL3BlYS11c2VycyIsImF1ZCI6InBlYS1WTVMtUGx1cyIsInN1YiI6ImY6bW9jazo1MTAyMzEiLCJ0eXAiOiJJRCIsImF6cCI6InBlYS1WTVMtUGx1cyIsInNpZCI6Im1vY2stc2lkLWtiayIsImF0X2hhc2giOiJtb2NrIiwiYWNyIjoiMSIsImhyX2RlcHRfc2FwX2Z1bGwiOiLguYHguJzguJnguIHguJrguLPguKPguLjguIfguKPguLHguIHguKnguLLguKLguLLguJnguJ7guLLguKvguJnguLAv4LiB4Lia4LiELi_guJ3guYjguLLguKLguKLguLLguJnguJ7guLLguKvguJnguLAgKOC4iOC4s-C4peC4reC4hykiLCJocl9jb3N0X2NlbnRlciI6Ilo0MTIwMTAwMDAiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaHJfZGVwYXJ0bWVudCI6IuC4nOC4muC4oi4g4LiB4Lia4LiELiDguJ3guKLguJ4uIOC4quC4suC4ouC4h-C4suC4mSDguKfguKgiLCJocl9kZXB0X2NoYW5nZV9jb2RlIjoibW9jayIsImhyX2RlcHRfc2FwIjoiNDEyMCIsImhyX2xhc3RuYW1lIjoi4LiX4Lit4LiH4LiU4Li1IiwiaHJfc3RlbGxfdGV4dF9mdWxsIjoi4Lin4LioLjgiLCJocl9wb3NpdGlvbiI6IuC4p-C4qC44IiwicHJlZmVycmVkX3VzZXJuYW1lIjoiNTEwMjMxIiwiaHJfZnVsbG5hbWVfdGgiOiLguJnguLLguKLguKfguLTguIrguLHguKIg4LiX4Lit4LiH4LiU4Li1IiwiaHJfZW1wbG95ZWVfaWQiOiI1MTAyMzEiLCJnaXZlbl9uYW1lIjoi4LiZ4Liy4Lii4Lin4Li04LiK4Lix4LiiIiwiaHJfbW9iaWxlcGhvbmUiOiLguYTguKHguYjguKLguLTguJnguKLguK3guKHguYDguJvguLTguJTguYDguJzguKLguILguYnguK3guKHguLnguKUiLCJocl9mdWxsbmFtZV9lbiI6Ik1vY2sga2JrIiwibmFtZSI6Ik1vY2sga2JrIiwiaHJfcG9zaV9zdGF0dXNfZGVzYyI6IuC4nuC4meC4seC4geC4h-C4suC4meC4m-C4geC4leC4tCIsImlkZW50aXR5X25vIjoiMDAwMDAwMDAwMDAwMCIsImhyX2ZpcnN0bmFtZSI6IuC4meC4suC4ouC4p-C4tOC4iuC4seC4oiIsImhyX3Bvc2lfY29kZSI6Im1vY2siLCJocl9idXNpbmVzc19hcmVhIjoiWjAwMCIsImZhbWlseV9uYW1lIjoia2JrIiwiZW1haWwiOiJrYmtAbW9jay5pbnZhbGlkIn0.mock"
+      }
+    },
+    {
+      "id": "kry",
+      "label": "กรย. กฟต.3 — ดูอย่างเดียว ในเขต",
+      "overhaul": {
+        "scope": "รถในเขต (business_area ขึ้นต้นด้วย L)",
+        "edit": false,
+        "reply_appointment": false,
+        "note": "เปิดแผนได้ PO และรถกรองเหลือเฉพาะเขตตัวเอง"
+      },
+      "login_response": {
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBfaWQiOiI1MjA0MTciLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZmlyc3RfbmFtZSI6IuC4meC4suC4h-C4quC4suC4p-C4nuC4tOC4oeC4nuC5jOC4iuC4meC4gSIsImxhc3RfbmFtZSI6IuC4qOC4o-C4teC4quC4uOC4giIsImZ1bGxfbmFtZSI6IuC4meC4suC4h-C4quC4suC4p-C4nuC4tOC4oeC4nuC5jOC4iuC4meC4gSDguKjguKPguLXguKrguLjguIIiLCJwb3NpdGlvbiI6IuC4nuC4iuC4hy43IiwiZGVwdF9zYXAiOiI4MzEwIiwiZGVwdF9zYXBfc2hvcnQiOiLguJzguKPguKIuIOC4geC4o-C4oi4g4LiB4Lif4LiVLjMiLCJkZXB0X3NhcF9mdWxsIjoi4LmB4Lic4LiZ4LiB4Lij4LiW4Lii4LiZ4LiV4LmML-C4geC4o-C4oi4v4LiB4Liy4Lij4LmE4Lif4Lif4LmJ4Liy4Liq4LmI4Lin4LiZ4Lig4Li54Lih4Li04Lig4Liy4LiEIOC5gOC4guC4lSAzIOC4oOC4suC4hOC5g-C4leC5iSAo4LiI4Liz4Lil4Lit4LiHKSIsImJ1cmVhdV9kZXB0X3NhcCI6IjgzMSIsIm1vYmlsZV9udW1iZXIiOiItIiwiaW50ZXJuYWxfbnVtYmVyIjoiIiwiYnVzaW5lc3NfYXJlYSI6IkwwMDAiLCJpbWFnZV91cmwiOiIiLCJyb2xlcyI6WyJhZG1pbi1yZWdpb24iLCJ2ZWhpY2xlLXVzZXIiXSwiaXNfZW1wbG95ZWUiOnRydWUsImxldmVsX2NvZGUiOiIwNyIsImxvZ2luX2J5Ijoia2V5Y2xvYWsiLCJpc3MiOiJ2bXMtcGx1cyIsImF1ZCI6WyJ2bXMtcGx1cy1jbGllbnQiXSwiZXhwIjoxNzkzMzU4MDAwLCJpYXQiOjE3OTMzMjIwMDAsImp0aSI6Im1vY2stYWNjZXNzLWtyeSJ9.mock",
+        "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBfaWQiOiI1MjA0MTciLCJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImZpcnN0X25hbWUiOiIiLCJsYXN0X25hbWUiOiIiLCJmdWxsX25hbWUiOiLguJnguLLguIfguKrguLLguKfguJ7guLTguKHguJ7guYzguIrguJnguIEg4Lio4Lij4Li14Liq4Li44LiCIiwicG9zaXRpb24iOiIiLCJkZXB0X3NhcCI6IiIsImRlcHRfc2FwX3Nob3J0IjoiIiwiZGVwdF9zYXBfZnVsbCI6IiIsImJ1cmVhdV9kZXB0X3NhcCI6IiIsIm1vYmlsZV9udW1iZXIiOiIiLCJpbnRlcm5hbF9udW1iZXIiOiIiLCJidXNpbmVzc19hcmVhIjoiIiwiaW1hZ2VfdXJsIjoiIiwicm9sZXMiOm51bGwsImlzX2VtcGxveWVlIjpmYWxzZSwibGV2ZWxfY29kZSI6IiIsImxvZ2luX2J5Ijoia2V5Y2xvYWsiLCJpc3MiOiJ2bXMtcGx1cyIsImF1ZCI6WyJ2bXMtcGx1cy1jbGllbnQiXSwiZXhwIjoxNzk4NTA2MDAwLCJpYXQiOjE3OTMzMjIwMDAsImp0aSI6Im1vY2stcmVmcmVzaC1rcnkifQ.mock",
+        "idTokenHint": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1vY2sifQ.eyJleHAiOjE3OTMzMjIzMDAsImlhdCI6MTc5MzMyMjAwMCwiYXV0aF90aW1lIjoxNzkzMzIyMDAwLCJqdGkiOiJtb2NrLWlkLWtyeSIsImlzcyI6Imh0dHBzOi8vc3NvMi5wZWEuY28udGgvcmVhbG1zL3BlYS11c2VycyIsImF1ZCI6InBlYS1WTVMtUGx1cyIsInN1YiI6ImY6bW9jazo1MjA0MTciLCJ0eXAiOiJJRCIsImF6cCI6InBlYS1WTVMtUGx1cyIsInNpZCI6Im1vY2stc2lkLWtyeSIsImF0X2hhc2giOiJtb2NrIiwiYWNyIjoiMSIsImhyX2RlcHRfc2FwX2Z1bGwiOiLguYHguJzguJnguIHguKPguJbguKLguJnguJXguYwv4LiB4Lij4LiiLi_guIHguLLguKPguYTguJ_guJ_guYnguLLguKrguYjguKfguJnguKDguLnguKHguLTguKDguLLguIQg4LmA4LiC4LiVIDMg4Lig4Liy4LiE4LmD4LiV4LmJICjguIjguLPguKXguK3guIcpIiwiaHJfY29zdF9jZW50ZXIiOiJMODMxMDEwMDAwIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImhyX2RlcGFydG1lbnQiOiLguJzguKPguKIuIOC4geC4o-C4oi4g4LiB4Lif4LiVLjMiLCJocl9kZXB0X2NoYW5nZV9jb2RlIjoibW9jayIsImhyX2RlcHRfc2FwIjoiODMxMCIsImhyX2xhc3RuYW1lIjoi4Lio4Lij4Li14Liq4Li44LiCIiwiaHJfc3RlbGxfdGV4dF9mdWxsIjoi4Lie4LiK4LiHLjciLCJocl9wb3NpdGlvbiI6IuC4nuC4iuC4hy43IiwicHJlZmVycmVkX3VzZXJuYW1lIjoiNTIwNDE3IiwiaHJfZnVsbG5hbWVfdGgiOiLguJnguLLguIfguKrguLLguKfguJ7guLTguKHguJ7guYzguIrguJnguIEg4Lio4Lij4Li14Liq4Li44LiCIiwiaHJfZW1wbG95ZWVfaWQiOiI1MjA0MTciLCJnaXZlbl9uYW1lIjoi4LiZ4Liy4LiH4Liq4Liy4Lin4Lie4Li04Lih4Lie4LmM4LiK4LiZ4LiBIiwiaHJfbW9iaWxlcGhvbmUiOiLguYTguKHguYjguKLguLTguJnguKLguK3guKHguYDguJvguLTguJTguYDguJzguKLguILguYnguK3guKHguLnguKUiLCJocl9mdWxsbmFtZV9lbiI6Ik1vY2sga3J5IiwibmFtZSI6Ik1vY2sga3J5IiwiaHJfcG9zaV9zdGF0dXNfZGVzYyI6IuC4nuC4meC4seC4geC4h-C4suC4meC4m-C4geC4leC4tCIsImlkZW50aXR5X25vIjoiMDAwMDAwMDAwMDAwMCIsImhyX2ZpcnN0bmFtZSI6IuC4meC4suC4h-C4quC4suC4p-C4nuC4tOC4oeC4nuC5jOC4iuC4meC4gSIsImhyX3Bvc2lfY29kZSI6Im1vY2siLCJocl9idXNpbmVzc19hcmVhIjoiTDAwMCIsImZhbWlseV9uYW1lIjoia3J5IiwiZW1haWwiOiJrcnlAbW9jay5pbnZhbGlkIn0.mock"
+      },
+      "access_token_claims": {
+        "emp_id": "520417",
+        "token_type": "access",
+        "first_name": "นางสาวพิมพ์ชนก",
+        "last_name": "ศรีสุข",
+        "full_name": "นางสาวพิมพ์ชนก ศรีสุข",
+        "position": "พชง.7",
+        "dept_sap": "8310",
+        "dept_sap_short": "ผรย. กรย. กฟต.3",
+        "dept_sap_full": "แผนกรถยนต์/กรย./การไฟฟ้าส่วนภูมิภาค เขต 3 ภาคใต้ (จำลอง)",
+        "bureau_dept_sap": "831",
+        "mobile_number": "-",
+        "internal_number": "",
+        "business_area": "L000",
+        "image_url": "",
+        "roles": [
+          "admin-region",
+          "vehicle-user"
+        ],
+        "is_employee": true,
+        "level_code": "07",
+        "login_by": "keycloak",
+        "iss": "vms-plus",
+        "aud": [
+          "vms-plus-client"
+        ],
+        "exp": 1793358000,
+        "iat": 1793322000,
+        "jti": "mock-access-kry"
+      },
+      "profile": {
+        "emp_id": "520417",
+        "first_name": "นางสาวพิมพ์ชนก",
+        "last_name": "ศรีสุข",
+        "full_name": "นางสาวพิมพ์ชนก ศรีสุข",
+        "dept_sap": "8310",
+        "dept_sap_short": "ผรย. กรย. กฟต.3",
+        "dept_sap_full": "แผนกรถยนต์/กรย./การไฟฟ้าส่วนภูมิภาค เขต 3 ภาคใต้ (จำลอง)",
+        "bureau_dept_sap": "831",
+        "mobile_number": "-",
+        "internal_number": "",
+        "business_area": "L000",
+        "image_url": "",
+        "posi_text": "พชง.7",
+        "license_status_code": "",
+        "license_status": "",
+        "trn_request_annual_driver_uid": "",
+        "annual_yyyy": 2569,
+        "annual_licenses": [],
+        "roles": [
+          "admin-region",
+          "vehicle-user"
+        ],
+        "login_by": "keycloak",
+        "is_employee": true,
+        "level_code": "07",
+        "is_level_m5": "0",
+        "id_token_hint": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1vY2sifQ.eyJleHAiOjE3OTMzMjIzMDAsImlhdCI6MTc5MzMyMjAwMCwiYXV0aF90aW1lIjoxNzkzMzIyMDAwLCJqdGkiOiJtb2NrLWlkLWtyeSIsImlzcyI6Imh0dHBzOi8vc3NvMi5wZWEuY28udGgvcmVhbG1zL3BlYS11c2VycyIsImF1ZCI6InBlYS1WTVMtUGx1cyIsInN1YiI6ImY6bW9jazo1MjA0MTciLCJ0eXAiOiJJRCIsImF6cCI6InBlYS1WTVMtUGx1cyIsInNpZCI6Im1vY2stc2lkLWtyeSIsImF0X2hhc2giOiJtb2NrIiwiYWNyIjoiMSIsImhyX2RlcHRfc2FwX2Z1bGwiOiLguYHguJzguJnguIHguKPguJbguKLguJnguJXguYwv4LiB4Lij4LiiLi_guIHguLLguKPguYTguJ_guJ_guYnguLLguKrguYjguKfguJnguKDguLnguKHguLTguKDguLLguIQg4LmA4LiC4LiVIDMg4Lig4Liy4LiE4LmD4LiV4LmJICjguIjguLPguKXguK3guIcpIiwiaHJfY29zdF9jZW50ZXIiOiJMODMxMDEwMDAwIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImhyX2RlcGFydG1lbnQiOiLguJzguKPguKIuIOC4geC4o-C4oi4g4LiB4Lif4LiVLjMiLCJocl9kZXB0X2NoYW5nZV9jb2RlIjoibW9jayIsImhyX2RlcHRfc2FwIjoiODMxMCIsImhyX2xhc3RuYW1lIjoi4Lio4Lij4Li14Liq4Li44LiCIiwiaHJfc3RlbGxfdGV4dF9mdWxsIjoi4Lie4LiK4LiHLjciLCJocl9wb3NpdGlvbiI6IuC4nuC4iuC4hy43IiwicHJlZmVycmVkX3VzZXJuYW1lIjoiNTIwNDE3IiwiaHJfZnVsbG5hbWVfdGgiOiLguJnguLLguIfguKrguLLguKfguJ7guLTguKHguJ7guYzguIrguJnguIEg4Lio4Lij4Li14Liq4Li44LiCIiwiaHJfZW1wbG95ZWVfaWQiOiI1MjA0MTciLCJnaXZlbl9uYW1lIjoi4LiZ4Liy4LiH4Liq4Liy4Lin4Lie4Li04Lih4Lie4LmM4LiK4LiZ4LiBIiwiaHJfbW9iaWxlcGhvbmUiOiLguYTguKHguYjguKLguLTguJnguKLguK3guKHguYDguJvguLTguJTguYDguJzguKLguILguYnguK3guKHguLnguKUiLCJocl9mdWxsbmFtZV9lbiI6Ik1vY2sga3J5IiwibmFtZSI6Ik1vY2sga3J5IiwiaHJfcG9zaV9zdGF0dXNfZGVzYyI6IuC4nuC4meC4seC4geC4h-C4suC4meC4m-C4geC4leC4tCIsImlkZW50aXR5X25vIjoiMDAwMDAwMDAwMDAwMCIsImhyX2ZpcnN0bmFtZSI6IuC4meC4suC4h-C4quC4suC4p-C4nuC4tOC4oeC4nuC5jOC4iuC4meC4gSIsImhyX3Bvc2lfY29kZSI6Im1vY2siLCJocl9idXNpbmVzc19hcmVhIjoiTDAwMCIsImZhbWlseV9uYW1lIjoia3J5IiwiZW1haWwiOiJrcnlAbW9jay5pbnZhbGlkIn0.mock"
+      }
+    },
+    {
+      "id": "owner",
+      "label": "หน่วยงานเจ้าของรถ กฟฟ.สงขลา — ดู + ตอบนัด",
+      "overhaul": {
+        "scope": "รถของหน่วยงานตัวเอง (dept_sap เจ้าของรถ)",
+        "edit": false,
+        "reply_appointment": true,
+        "note": "กดได้แค่ ตอบรับ / ปฏิเสธนัด (นัดเข้าอู่ · นัดรับรถ) · รถคันอื่นใน PO เดียวกันไม่เห็น"
+      },
+      "login_response": {
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBfaWQiOiI1MzA4NjIiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZmlyc3RfbmFtZSI6IuC4meC4suC4h-C4p-C4o-C4o-C4k-C4siIsImxhc3RfbmFtZSI6IuC5geC4geC5ieC4p-C4oeC4k-C4tSIsImZ1bGxfbmFtZSI6IuC4meC4suC4h-C4p-C4o-C4o-C4k-C4siDguYHguIHguYnguKfguKHguJPguLUiLCJwb3NpdGlvbiI6IuC4q-C4nC44IiwiZGVwdF9zYXAiOiI4MzUyIiwiZGVwdF9zYXBfc2hvcnQiOiLguJzguJrguKMuIOC4geC4n-C4ny7guKrguIfguILguKXguLIg4LiB4Lif4LiVLjMiLCJkZXB0X3NhcF9mdWxsIjoi4LmB4Lic4LiZ4LiB4Lia4Lij4Li04LiB4Liy4LijL-C4geC4suC4o-C5hOC4n-C4n-C5ieC4suC4quC5iOC4p-C4meC4oOC4ueC4oeC4tOC4oOC4suC4hOC4iOC4seC4h-C4q-C4p-C4seC4lOC4quC4h-C4guC4peC4si_guIHguJ_guJUuMyAo4LiI4Liz4Lil4Lit4LiHKSIsImJ1cmVhdV9kZXB0X3NhcCI6IjgzNSIsIm1vYmlsZV9udW1iZXIiOiItIiwiaW50ZXJuYWxfbnVtYmVyIjoiIiwiYnVzaW5lc3NfYXJlYSI6IkwwNTIiLCJpbWFnZV91cmwiOiIiLCJyb2xlcyI6WyJhZG1pbi1kZXBhcnRtZW50IiwiYXBwcm92YWwtZGVwYXJ0bWVudCIsInZlaGljbGUtdXNlciJdLCJpc19lbXBsb3llZSI6dHJ1ZSwibGV2ZWxfY29kZSI6IjA4IiwibG9naW5fYnkiOiJrZXljbG9hayIsImlzcyI6InZtcy1wbHVzIiwiYXVkIjpbInZtcy1wbHVzLWNsaWVudCJdLCJleHAiOjE3OTMzNTgwMDAsImlhdCI6MTc5MzMyMjAwMCwianRpIjoibW9jay1hY2Nlc3Mtb3duZXIifQ.mock",
+        "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBfaWQiOiI1MzA4NjIiLCJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImZpcnN0X25hbWUiOiIiLCJsYXN0X25hbWUiOiIiLCJmdWxsX25hbWUiOiLguJnguLLguIfguKfguKPguKPguJPguLIg4LmB4LiB4LmJ4Lin4Lih4LiT4Li1IiwicG9zaXRpb24iOiIiLCJkZXB0X3NhcCI6IiIsImRlcHRfc2FwX3Nob3J0IjoiIiwiZGVwdF9zYXBfZnVsbCI6IiIsImJ1cmVhdV9kZXB0X3NhcCI6IiIsIm1vYmlsZV9udW1iZXIiOiIiLCJpbnRlcm5hbF9udW1iZXIiOiIiLCJidXNpbmVzc19hcmVhIjoiIiwiaW1hZ2VfdXJsIjoiIiwicm9sZXMiOm51bGwsImlzX2VtcGxveWVlIjpmYWxzZSwibGV2ZWxfY29kZSI6IiIsImxvZ2luX2J5Ijoia2V5Y2xvYWsiLCJpc3MiOiJ2bXMtcGx1cyIsImF1ZCI6WyJ2bXMtcGx1cy1jbGllbnQiXSwiZXhwIjoxNzk4NTA2MDAwLCJpYXQiOjE3OTMzMjIwMDAsImp0aSI6Im1vY2stcmVmcmVzaC1vd25lciJ9.mock",
+        "idTokenHint": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1vY2sifQ.eyJleHAiOjE3OTMzMjIzMDAsImlhdCI6MTc5MzMyMjAwMCwiYXV0aF90aW1lIjoxNzkzMzIyMDAwLCJqdGkiOiJtb2NrLWlkLW93bmVyIiwiaXNzIjoiaHR0cHM6Ly9zc28yLnBlYS5jby50aC9yZWFsbXMvcGVhLXVzZXJzIiwiYXVkIjoicGVhLVZNUy1QbHVzIiwic3ViIjoiZjptb2NrOjUzMDg2MiIsInR5cCI6IklEIiwiYXpwIjoicGVhLVZNUy1QbHVzIiwic2lkIjoibW9jay1zaWQtb3duZXIiLCJhdF9oYXNoIjoibW9jayIsImFjciI6IjEiLCJocl9kZXB0X3NhcF9mdWxsIjoi4LmB4Lic4LiZ4LiB4Lia4Lij4Li04LiB4Liy4LijL-C4geC4suC4o-C5hOC4n-C4n-C5ieC4suC4quC5iOC4p-C4meC4oOC4ueC4oeC4tOC4oOC4suC4hOC4iOC4seC4h-C4q-C4p-C4seC4lOC4quC4h-C4guC4peC4si_guIHguJ_guJUuMyAo4LiI4Liz4Lil4Lit4LiHKSIsImhyX2Nvc3RfY2VudGVyIjoiTDgzNTIwMDAwMCIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJocl9kZXBhcnRtZW50Ijoi4Lic4Lia4LijLiDguIHguJ_guJ8u4Liq4LiH4LiC4Lil4LiyIOC4geC4n-C4lS4zIiwiaHJfZGVwdF9jaGFuZ2VfY29kZSI6Im1vY2siLCJocl9kZXB0X3NhcCI6IjgzNTIiLCJocl9sYXN0bmFtZSI6IuC5geC4geC5ieC4p-C4oeC4k-C4tSIsImhyX3N0ZWxsX3RleHRfZnVsbCI6IuC4q-C4nC44IiwiaHJfcG9zaXRpb24iOiLguKvguJwuOCIsInByZWZlcnJlZF91c2VybmFtZSI6IjUzMDg2MiIsImhyX2Z1bGxuYW1lX3RoIjoi4LiZ4Liy4LiH4Lin4Lij4Lij4LiT4LiyIOC5geC4geC5ieC4p-C4oeC4k-C4tSIsImhyX2VtcGxveWVlX2lkIjoiNTMwODYyIiwiZ2l2ZW5fbmFtZSI6IuC4meC4suC4h-C4p-C4o-C4o-C4k-C4siIsImhyX21vYmlsZXBob25lIjoi4LmE4Lih4LmI4Lii4Li04LiZ4Lii4Lit4Lih4LmA4Lib4Li04LiU4LmA4Lic4Lii4LiC4LmJ4Lit4Lih4Li54LilIiwiaHJfZnVsbG5hbWVfZW4iOiJNb2NrIG93bmVyIiwibmFtZSI6Ik1vY2sgb3duZXIiLCJocl9wb3NpX3N0YXR1c19kZXNjIjoi4Lie4LiZ4Lix4LiB4LiH4Liy4LiZ4Lib4LiB4LiV4Li0IiwiaWRlbnRpdHlfbm8iOiIwMDAwMDAwMDAwMDAwIiwiaHJfZmlyc3RuYW1lIjoi4LiZ4Liy4LiH4Lin4Lij4Lij4LiT4LiyIiwiaHJfcG9zaV9jb2RlIjoibW9jayIsImhyX2J1c2luZXNzX2FyZWEiOiJMMDUyIiwiZmFtaWx5X25hbWUiOiJvd25lciIsImVtYWlsIjoib3duZXJAbW9jay5pbnZhbGlkIn0.mock"
+      },
+      "access_token_claims": {
+        "emp_id": "530862",
+        "token_type": "access",
+        "first_name": "นางวรรณา",
+        "last_name": "แก้วมณี",
+        "full_name": "นางวรรณา แก้วมณี",
+        "position": "หผ.8",
+        "dept_sap": "8352",
+        "dept_sap_short": "ผบร. กฟฟ.สงขลา กฟต.3",
+        "dept_sap_full": "แผนกบริการ/การไฟฟ้าส่วนภูมิภาคจังหวัดสงขลา/กฟต.3 (จำลอง)",
+        "bureau_dept_sap": "835",
+        "mobile_number": "-",
+        "internal_number": "",
+        "business_area": "L052",
+        "image_url": "",
+        "roles": [
+          "admin-department",
+          "approval-department",
+          "vehicle-user"
+        ],
+        "is_employee": true,
+        "level_code": "08",
+        "login_by": "keycloak",
+        "iss": "vms-plus",
+        "aud": [
+          "vms-plus-client"
+        ],
+        "exp": 1793358000,
+        "iat": 1793322000,
+        "jti": "mock-access-owner"
+      },
+      "profile": {
+        "emp_id": "530862",
+        "first_name": "นางวรรณา",
+        "last_name": "แก้วมณี",
+        "full_name": "นางวรรณา แก้วมณี",
+        "dept_sap": "8352",
+        "dept_sap_short": "ผบร. กฟฟ.สงขลา กฟต.3",
+        "dept_sap_full": "แผนกบริการ/การไฟฟ้าส่วนภูมิภาคจังหวัดสงขลา/กฟต.3 (จำลอง)",
+        "bureau_dept_sap": "835",
+        "mobile_number": "-",
+        "internal_number": "",
+        "business_area": "L052",
+        "image_url": "",
+        "posi_text": "หผ.8",
+        "license_status_code": "",
+        "license_status": "",
+        "trn_request_annual_driver_uid": "",
+        "annual_yyyy": 2569,
+        "annual_licenses": [],
+        "roles": [
+          "admin-department",
+          "approval-department",
+          "vehicle-user"
+        ],
+        "login_by": "keycloak",
+        "is_employee": true,
+        "level_code": "08",
+        "is_level_m5": "0",
+        "id_token_hint": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1vY2sifQ.eyJleHAiOjE3OTMzMjIzMDAsImlhdCI6MTc5MzMyMjAwMCwiYXV0aF90aW1lIjoxNzkzMzIyMDAwLCJqdGkiOiJtb2NrLWlkLW93bmVyIiwiaXNzIjoiaHR0cHM6Ly9zc28yLnBlYS5jby50aC9yZWFsbXMvcGVhLXVzZXJzIiwiYXVkIjoicGVhLVZNUy1QbHVzIiwic3ViIjoiZjptb2NrOjUzMDg2MiIsInR5cCI6IklEIiwiYXpwIjoicGVhLVZNUy1QbHVzIiwic2lkIjoibW9jay1zaWQtb3duZXIiLCJhdF9oYXNoIjoibW9jayIsImFjciI6IjEiLCJocl9kZXB0X3NhcF9mdWxsIjoi4LmB4Lic4LiZ4LiB4Lia4Lij4Li04LiB4Liy4LijL-C4geC4suC4o-C5hOC4n-C4n-C5ieC4suC4quC5iOC4p-C4meC4oOC4ueC4oeC4tOC4oOC4suC4hOC4iOC4seC4h-C4q-C4p-C4seC4lOC4quC4h-C4guC4peC4si_guIHguJ_guJUuMyAo4LiI4Liz4Lil4Lit4LiHKSIsImhyX2Nvc3RfY2VudGVyIjoiTDgzNTIwMDAwMCIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJocl9kZXBhcnRtZW50Ijoi4Lic4Lia4LijLiDguIHguJ_guJ8u4Liq4LiH4LiC4Lil4LiyIOC4geC4n-C4lS4zIiwiaHJfZGVwdF9jaGFuZ2VfY29kZSI6Im1vY2siLCJocl9kZXB0X3NhcCI6IjgzNTIiLCJocl9sYXN0bmFtZSI6IuC5geC4geC5ieC4p-C4oeC4k-C4tSIsImhyX3N0ZWxsX3RleHRfZnVsbCI6IuC4q-C4nC44IiwiaHJfcG9zaXRpb24iOiLguKvguJwuOCIsInByZWZlcnJlZF91c2VybmFtZSI6IjUzMDg2MiIsImhyX2Z1bGxuYW1lX3RoIjoi4LiZ4Liy4LiH4Lin4Lij4Lij4LiT4LiyIOC5geC4geC5ieC4p-C4oeC4k-C4tSIsImhyX2VtcGxveWVlX2lkIjoiNTMwODYyIiwiZ2l2ZW5fbmFtZSI6IuC4meC4suC4h-C4p-C4o-C4o-C4k-C4siIsImhyX21vYmlsZXBob25lIjoi4LmE4Lih4LmI4Lii4Li04LiZ4Lii4Lit4Lih4LmA4Lib4Li04LiU4LmA4Lic4Lii4LiC4LmJ4Lit4Lih4Li54LilIiwiaHJfZnVsbG5hbWVfZW4iOiJNb2NrIG93bmVyIiwibmFtZSI6Ik1vY2sgb3duZXIiLCJocl9wb3NpX3N0YXR1c19kZXNjIjoi4Lie4LiZ4Lix4LiB4LiH4Liy4LiZ4Lib4LiB4LiV4Li0IiwiaWRlbnRpdHlfbm8iOiIwMDAwMDAwMDAwMDAwIiwiaHJfZmlyc3RuYW1lIjoi4LiZ4Liy4LiH4Lin4Lij4Lij4LiT4LiyIiwiaHJfcG9zaV9jb2RlIjoibW9jayIsImhyX2J1c2luZXNzX2FyZWEiOiJMMDUyIiwiZmFtaWx5X25hbWUiOiJvd25lciIsImVtYWlsIjoib3duZXJAbW9jay5pbnZhbGlkIn0.mock"
+      }
+    },
+    {
+      "id": "none",
+      "label": "ผู้ใช้รถทั่วไป — ไม่มีสิทธิ์ Overhaul",
+      "overhaul": {
+        "scope": "ไม่มี",
+        "edit": false,
+        "reply_appointment": false,
+        "note": "ไม่เห็นเมนู \"จัดการงาน Overhaul\" · เปิดลิงก์ตรงได้หน้า ไม่มีสิทธิ์"
+      },
+      "login_response": {
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBfaWQiOiI1NDAwMTUiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZmlyc3RfbmFtZSI6IuC4meC4suC4ouC4mOC4meC4siIsImxhc3RfbmFtZSI6IuC4oeC4teC4quC4uOC4giIsImZ1bGxfbmFtZSI6IuC4meC4suC4ouC4mOC4meC4siDguKHguLXguKrguLjguIIiLCJwb3NpdGlvbiI6IuC4nuC4iuC4hy41IiwiZGVwdF9zYXAiOiI4MzYxIiwiZGVwdF9zYXBfc2hvcnQiOiLguJzguJvguJouIOC4geC4n-C4qi7guKvguLLguJTguYPguKvguI3guYgg4LiB4Lif4LiVLjMiLCJkZXB0X3NhcF9mdWxsIjoi4LmB4Lic4LiZ4LiB4Lib4LiP4Li04Lia4Lix4LiV4Li04LiB4Liy4Lij4LmB4Lil4Liw4Lia4Liz4Lij4Li44LiH4Lij4Lix4LiB4Lip4LiyL-C4geC4n-C4qi7guKvguLLguJTguYPguKvguI3guYgv4LiB4Lif4LiVLjMgKOC4iOC4s-C4peC4reC4hykiLCJidXJlYXVfZGVwdF9zYXAiOiI4MzYiLCJtb2JpbGVfbnVtYmVyIjoiLSIsImludGVybmFsX251bWJlciI6IiIsImJ1c2luZXNzX2FyZWEiOiJMMDUzIiwiaW1hZ2VfdXJsIjoiIiwicm9sZXMiOlsidmVoaWNsZS11c2VyIl0sImlzX2VtcGxveWVlIjp0cnVlLCJsZXZlbF9jb2RlIjoiMDUiLCJsb2dpbl9ieSI6ImtleWNsb2FrIiwiaXNzIjoidm1zLXBsdXMiLCJhdWQiOlsidm1zLXBsdXMtY2xpZW50Il0sImV4cCI6MTc5MzM1ODAwMCwiaWF0IjoxNzkzMzIyMDAwLCJqdGkiOiJtb2NrLWFjY2Vzcy1ub25lIn0.mock",
+        "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBfaWQiOiI1NDAwMTUiLCJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImZpcnN0X25hbWUiOiIiLCJsYXN0X25hbWUiOiIiLCJmdWxsX25hbWUiOiLguJnguLLguKLguJjguJnguLIg4Lih4Li14Liq4Li44LiCIiwicG9zaXRpb24iOiIiLCJkZXB0X3NhcCI6IiIsImRlcHRfc2FwX3Nob3J0IjoiIiwiZGVwdF9zYXBfZnVsbCI6IiIsImJ1cmVhdV9kZXB0X3NhcCI6IiIsIm1vYmlsZV9udW1iZXIiOiIiLCJpbnRlcm5hbF9udW1iZXIiOiIiLCJidXNpbmVzc19hcmVhIjoiIiwiaW1hZ2VfdXJsIjoiIiwicm9sZXMiOm51bGwsImlzX2VtcGxveWVlIjpmYWxzZSwibGV2ZWxfY29kZSI6IiIsImxvZ2luX2J5Ijoia2V5Y2xvYWsiLCJpc3MiOiJ2bXMtcGx1cyIsImF1ZCI6WyJ2bXMtcGx1cy1jbGllbnQiXSwiZXhwIjoxNzk4NTA2MDAwLCJpYXQiOjE3OTMzMjIwMDAsImp0aSI6Im1vY2stcmVmcmVzaC1ub25lIn0.mock",
+        "idTokenHint": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1vY2sifQ.eyJleHAiOjE3OTMzMjIzMDAsImlhdCI6MTc5MzMyMjAwMCwiYXV0aF90aW1lIjoxNzkzMzIyMDAwLCJqdGkiOiJtb2NrLWlkLW5vbmUiLCJpc3MiOiJodHRwczovL3NzbzIucGVhLmNvLnRoL3JlYWxtcy9wZWEtdXNlcnMiLCJhdWQiOiJwZWEtVk1TLVBsdXMiLCJzdWIiOiJmOm1vY2s6NTQwMDE1IiwidHlwIjoiSUQiLCJhenAiOiJwZWEtVk1TLVBsdXMiLCJzaWQiOiJtb2NrLXNpZC1ub25lIiwiYXRfaGFzaCI6Im1vY2siLCJhY3IiOiIxIiwiaHJfZGVwdF9zYXBfZnVsbCI6IuC5geC4nOC4meC4geC4m-C4j-C4tOC4muC4seC4leC4tOC4geC4suC4o-C5geC4peC4sOC4muC4s-C4o-C4uOC4h-C4o-C4seC4geC4qeC4si_guIHguJ_guKou4Lir4Liy4LiU4LmD4Lir4LiN4LmIL-C4geC4n-C4lS4zICjguIjguLPguKXguK3guIcpIiwiaHJfY29zdF9jZW50ZXIiOiJMODM2MTAwMDAwIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImhyX2RlcGFydG1lbnQiOiLguJzguJvguJouIOC4geC4n-C4qi7guKvguLLguJTguYPguKvguI3guYgg4LiB4Lif4LiVLjMiLCJocl9kZXB0X2NoYW5nZV9jb2RlIjoibW9jayIsImhyX2RlcHRfc2FwIjoiODM2MSIsImhyX2xhc3RuYW1lIjoi4Lih4Li14Liq4Li44LiCIiwiaHJfc3RlbGxfdGV4dF9mdWxsIjoi4Lie4LiK4LiHLjUiLCJocl9wb3NpdGlvbiI6IuC4nuC4iuC4hy41IiwicHJlZmVycmVkX3VzZXJuYW1lIjoiNTQwMDE1IiwiaHJfZnVsbG5hbWVfdGgiOiLguJnguLLguKLguJjguJnguLIg4Lih4Li14Liq4Li44LiCIiwiaHJfZW1wbG95ZWVfaWQiOiI1NDAwMTUiLCJnaXZlbl9uYW1lIjoi4LiZ4Liy4Lii4LiY4LiZ4LiyIiwiaHJfbW9iaWxlcGhvbmUiOiLguYTguKHguYjguKLguLTguJnguKLguK3guKHguYDguJvguLTguJTguYDguJzguKLguILguYnguK3guKHguLnguKUiLCJocl9mdWxsbmFtZV9lbiI6Ik1vY2sgbm9uZSIsIm5hbWUiOiJNb2NrIG5vbmUiLCJocl9wb3NpX3N0YXR1c19kZXNjIjoi4Lie4LiZ4Lix4LiB4LiH4Liy4LiZ4Lib4LiB4LiV4Li0IiwiaWRlbnRpdHlfbm8iOiIwMDAwMDAwMDAwMDAwIiwiaHJfZmlyc3RuYW1lIjoi4LiZ4Liy4Lii4LiY4LiZ4LiyIiwiaHJfcG9zaV9jb2RlIjoibW9jayIsImhyX2J1c2luZXNzX2FyZWEiOiJMMDUzIiwiZmFtaWx5X25hbWUiOiJub25lIiwiZW1haWwiOiJub25lQG1vY2suaW52YWxpZCJ9.mock"
+      },
+      "access_token_claims": {
+        "emp_id": "540015",
+        "token_type": "access",
+        "first_name": "นายธนา",
+        "last_name": "มีสุข",
+        "full_name": "นายธนา มีสุข",
+        "position": "พชง.5",
+        "dept_sap": "8361",
+        "dept_sap_short": "ผปบ. กฟส.หาดใหญ่ กฟต.3",
+        "dept_sap_full": "แผนกปฏิบัติการและบำรุงรักษา/กฟส.หาดใหญ่/กฟต.3 (จำลอง)",
+        "bureau_dept_sap": "836",
+        "mobile_number": "-",
+        "internal_number": "",
+        "business_area": "L053",
+        "image_url": "",
+        "roles": [
+          "vehicle-user"
+        ],
+        "is_employee": true,
+        "level_code": "05",
+        "login_by": "keycloak",
+        "iss": "vms-plus",
+        "aud": [
+          "vms-plus-client"
+        ],
+        "exp": 1793358000,
+        "iat": 1793322000,
+        "jti": "mock-access-none"
+      },
+      "profile": {
+        "emp_id": "540015",
+        "first_name": "นายธนา",
+        "last_name": "มีสุข",
+        "full_name": "นายธนา มีสุข",
+        "dept_sap": "8361",
+        "dept_sap_short": "ผปบ. กฟส.หาดใหญ่ กฟต.3",
+        "dept_sap_full": "แผนกปฏิบัติการและบำรุงรักษา/กฟส.หาดใหญ่/กฟต.3 (จำลอง)",
+        "bureau_dept_sap": "836",
+        "mobile_number": "-",
+        "internal_number": "",
+        "business_area": "L053",
+        "image_url": "",
+        "posi_text": "พชง.5",
+        "license_status_code": "",
+        "license_status": "",
+        "trn_request_annual_driver_uid": "",
+        "annual_yyyy": 2569,
+        "annual_licenses": [],
+        "roles": [
+          "vehicle-user"
+        ],
+        "login_by": "keycloak",
+        "is_employee": true,
+        "level_code": "05",
+        "is_level_m5": "0",
+        "id_token_hint": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1vY2sifQ.eyJleHAiOjE3OTMzMjIzMDAsImlhdCI6MTc5MzMyMjAwMCwiYXV0aF90aW1lIjoxNzkzMzIyMDAwLCJqdGkiOiJtb2NrLWlkLW5vbmUiLCJpc3MiOiJodHRwczovL3NzbzIucGVhLmNvLnRoL3JlYWxtcy9wZWEtdXNlcnMiLCJhdWQiOiJwZWEtVk1TLVBsdXMiLCJzdWIiOiJmOm1vY2s6NTQwMDE1IiwidHlwIjoiSUQiLCJhenAiOiJwZWEtVk1TLVBsdXMiLCJzaWQiOiJtb2NrLXNpZC1ub25lIiwiYXRfaGFzaCI6Im1vY2siLCJhY3IiOiIxIiwiaHJfZGVwdF9zYXBfZnVsbCI6IuC5geC4nOC4meC4geC4m-C4j-C4tOC4muC4seC4leC4tOC4geC4suC4o-C5geC4peC4sOC4muC4s-C4o-C4uOC4h-C4o-C4seC4geC4qeC4si_guIHguJ_guKou4Lir4Liy4LiU4LmD4Lir4LiN4LmIL-C4geC4n-C4lS4zICjguIjguLPguKXguK3guIcpIiwiaHJfY29zdF9jZW50ZXIiOiJMODM2MTAwMDAwIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImhyX2RlcGFydG1lbnQiOiLguJzguJvguJouIOC4geC4n-C4qi7guKvguLLguJTguYPguKvguI3guYgg4LiB4Lif4LiVLjMiLCJocl9kZXB0X2NoYW5nZV9jb2RlIjoibW9jayIsImhyX2RlcHRfc2FwIjoiODM2MSIsImhyX2xhc3RuYW1lIjoi4Lih4Li14Liq4Li44LiCIiwiaHJfc3RlbGxfdGV4dF9mdWxsIjoi4Lie4LiK4LiHLjUiLCJocl9wb3NpdGlvbiI6IuC4nuC4iuC4hy41IiwicHJlZmVycmVkX3VzZXJuYW1lIjoiNTQwMDE1IiwiaHJfZnVsbG5hbWVfdGgiOiLguJnguLLguKLguJjguJnguLIg4Lih4Li14Liq4Li44LiCIiwiaHJfZW1wbG95ZWVfaWQiOiI1NDAwMTUiLCJnaXZlbl9uYW1lIjoi4LiZ4Liy4Lii4LiY4LiZ4LiyIiwiaHJfbW9iaWxlcGhvbmUiOiLguYTguKHguYjguKLguLTguJnguKLguK3guKHguYDguJvguLTguJTguYDguJzguKLguILguYnguK3guKHguLnguKUiLCJocl9mdWxsbmFtZV9lbiI6Ik1vY2sgbm9uZSIsIm5hbWUiOiJNb2NrIG5vbmUiLCJocl9wb3NpX3N0YXR1c19kZXNjIjoi4Lie4LiZ4Lix4LiB4LiH4Liy4LiZ4Lib4LiB4LiV4Li0IiwiaWRlbnRpdHlfbm8iOiIwMDAwMDAwMDAwMDAwIiwiaHJfZmlyc3RuYW1lIjoi4LiZ4Liy4Lii4LiY4LiZ4LiyIiwiaHJfcG9zaV9jb2RlIjoibW9jayIsImhyX2J1c2luZXNzX2FyZWEiOiJMMDUzIiwiZmFtaWx5X25hbWUiOiJub25lIiwiZW1haWwiOiJub25lQG1vY2suaW52YWxpZCJ9.mock"
+      }
+    }
+  ]
+}

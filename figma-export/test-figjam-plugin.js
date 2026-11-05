@@ -165,7 +165,7 @@ const ok = (m) => console.log('✓ ' + m);
   const wantSticky = diagSecs.reduce((a, s) => a + (s.diagram.stickies || []).length, 0);
   if (wantSticky) {
     const st = [];
-    page.children.filter(n => n.type === 'SECTION').forEach(s => st.push(...s.children.filter(c => c.type === 'STICKY')));
+    page.children.filter(n => n.type === 'SECTION').forEach(s => st.push(...(function d(n, o = []) { (n.children || []).forEach(c => { o.push(c); d(c, o); }); return o; })(s).filter(c => c.type === 'STICKY')));
     st.length === wantSticky && st.every(k => k.text.characters)
       ? ok('sticky ' + st.length + ' ใบ มีข้อความครบ') : fail('sticky ได้ ' + st.length + ' คาด ' + wantSticky);
   }
@@ -180,7 +180,39 @@ const ok = (m) => console.log('✓ ' + m);
   const docSecs = spec.sections.filter(s => s.kind === 'doc');
   const wantLabels = spec.sections.reduce((a, s) => a + (s.cols || []).length, 0)
     + diagSecs.reduce((a, s) => a + s.diagram.clusters.length + (s.diagram.phases || []).length, 0)
-    + docSecs.reduce((a, s) => a + s.blocks.filter(b => b.kind !== 'table').length, 0);
+    + docSecs.reduce((a, s) => a + s.blocks.filter(b => b.kind !== 'table').length, 0)
+    + spec.sections.length;   // + หัวข้อภาษาไทยในแต่ละ section (5 พ.ย. 2569)
+  const secs = page.children.filter(n => n.type === 'SECTION' && spec.sections.some(x => x.name === n.name));
+  const top = (s) => (s.children.length === 1 && s.children[0].type === 'GROUP') ? s.children[0] : s;   // section ที่รวบเป็น group เดียวแล้ว
+  const titled = secs.filter(s => { const box = top(s); const t = box.children.find(c => c.type === 'TEXT' && c.name === 'หัวข้อ / ' + s.name);
+    return t && t.characters === s.name && box.children.every(c => c === t || c.type === 'CONNECTOR' || c.y >= t.y + 56); });
+  /* group (5 พ.ย. 2569): section รูป/ผัง = group เดียว "scenario / ชื่อ" ที่มีหัวข้อ จอ ลูกศรครบ · section รูป: จอละ group "จอ / ป้าย" = ป้าย + ภาพ */
+  const wrapSecs = secs.filter(s => { const sp = spec.sections.find(x => x.name === s.name); return sp && sp.kind !== 'doc'; });
+  const wrapped = wrapSecs.filter(s => s.children.length === 1 && s.children[0].type === 'GROUP' && s.children[0].name === 'scenario / ' + s.name);
+  wrapped.length === wrapSecs.length ? ok('รวบ scenario เป็น group เดียว ' + wrapped.length + ' section') : fail('รวบ scenario ได้ ' + wrapped.length + ' จาก ' + wrapSecs.length);
+  const looseConn = page.children.filter(n => n.type === 'CONNECTOR' && n.name === 'flow →' && n !== foreignConn);   // foreignConn = ลูกศรของ flow อื่นที่เทสวางไว้เอง
+  looseConn.length === 0 ? ok('ลูกศรอยู่ใน section ทั้งหมด') : fail('ลูกศรลอยอยู่บนหน้า ' + looseConn.length);
+  const imgSecs = spec.sections.filter(x => Array.isArray(x.cols));
+  /* แถว Desktop / Mobile (5 พ.ย. 2569): มีป้ายแถวครบ · ภาพ mobile อยู่ใต้ภาพ desktop ทุกภาพในเซกชันเดียวกัน */
+  const rowSecs = imgSecs.filter(x => x.rows);
+  if (rowSecs.length) {
+    const bad = rowSecs.filter(sp => {
+      const sec = secs.find(n => n.name === sp.name); if (!sec) return true;
+      const all = deep(sec), labs = all.filter(n => n.name && n.name.startsWith('อุปกรณ์ / '));
+      const shots = all.filter(n => n.type === 'SHAPE_WITH_TEXT' && n.name.startsWith('shot / '));
+      const mob = shots.filter(n => /-mobile\.png$/.test(n.name)), desk = shots.filter(n => !/-mobile\.png$/.test(n.name));
+      const deskBottom = Math.max(...desk.map(n => n.y + n.height));
+      return labs.length !== sp.rows.length || !mob.length || mob.some(n => n.y < deskBottom);
+    });
+    bad.length === 0 ? ok('แถว Desktop / Mobile ' + rowSecs.length + ' section · ป้ายแถวครบ · mobile อยู่ใต้ desktop') : fail('แถว Desktop / Mobile ผิด ' + bad.map(x => x.name).join(', '));
+  }
+  if (imgSecs.length) {
+    const wantG = imgSecs.reduce((a, x) => a + x.cols.length, 0);
+    const gs = secs.flatMap(s => deep(s)).filter(n => n.type === 'GROUP' && n.name.startsWith('จอ / '));
+    const goodG = gs.filter(g => g.children[0] && g.children[0].type === 'TEXT' && g.children.slice(1).length >= 1 && g.children.slice(1).every(c => c.type === 'SHAPE_WITH_TEXT'));
+    (gs.length === wantG && goodG.length === wantG) ? ok('จอละ group (ป้าย + ภาพ) ' + gs.length) : fail('group จอได้ ' + goodG.length + '/' + gs.length + ' คาด ' + wantG);
+  }
+  titled.length === secs.length ? ok('หัวข้อไทยในทุก section ' + titled.length + ' อยู่บนสุด') : fail('หัวข้อ section ได้ ' + titled.length + ' จาก ' + secs.length);
   labels.length === wantLabels ? ok('ป้ายชื่อ ' + labels.length) : fail('ป้ายได้ ' + labels.length + ' คาด ' + wantLabels);
 
   // node ผังทุกตัวต้องมีข้อความ + ชนิดถูกตั้ง (ไม่ค้าง SQUARE หมด)
