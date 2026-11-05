@@ -16,6 +16,9 @@
 
    รัน:  node figma-export/9-ac-board.js
          node figma-export/9-ac-board.js --src=Diagram/<เรื่อง>/NN-….md --out=board-ac-<เรื่อง>.json --prefix="AC หน้า 2 รายละเอียดแผน"
+         # บำรุงรักษา (5 พ.ย. 2569): AC หน้าสร้างแผน + story map — แก้ไฟล์ .md แล้วรันใหม่ทั้งสองบรรทัด
+         node figma-export/9-ac-board.js --src="Diagram/01-บำรุงรักษาตามวาระ/25-บำรุงรักษา-AC-หน้า-สร้างแผน.md" --out=board-maintainance-ac-create.json --prefix="AC หน้าสร้างแผน"
+         node figma-export/9-ac-board.js --src="Diagram/01-บำรุงรักษาตามวาระ/23-บำรุงรักษา-story-map-JO-7.3.md" --out=board-maintainance-story-map.json --prefix="Story Map บำรุงรักษา"
          # login + สิทธิ์ (30 ต.ค. 2569 · ภาพหน้าจริงอยู่นอกรีโป ก๊อปเข้า out/figjam/login/ ก่อน):
          node figma-export/9-ac-board.js --src="Diagram/08-login-และสิทธิ์/01-login-flow.md" --out=board-login-flow.json --prefix="Login" --shots=figjam/login
          node figma-export/9-ac-board.js --src="Diagram/08-login-และสิทธิ์/02-overhaul-สิทธิ์ตาม-role.md" --out=board-login-permission.json --prefix="สิทธิ์ Overhaul"
