@@ -88,6 +88,16 @@ function check(screens, opt) {   // opt.inFile(ชื่อ) = ไฟล์ม�
     // component ที่ห้ามใช้ในจอชุดนี้ (R21: Overhaul เลิกใช้เมนู "…" — PO CF 21 ต.ค. 2569 ขอเป็นไอคอน)
     const inside = (x, names) => { for (let p = x.parent; p && p !== sc; p = p.parent) if (p.type === 'INSTANCE' && names.some(nm => isInst(p, nm))) return true; return false; };   // allowInside = ยกเว้นตัวที่อยู่ใน component ที่กำหนด (R30 ปุ่มตัวกรองใน Table header) · allowText = ยกเว้นปุ่มที่ข้อความตรง (R30 ปุ่มส่งออก)
     for (const r of RULES.forbid || []) { if (!new RegExp(r.screens).test(sc.name)) continue; if (all.some(x => isInst(x, r.component) && shown(x) && !(r.allowInside && inside(x, r.allowInside)) && !(r.allowText && r.allowText.indexOf((prop(x, 'Text') || '').trim()) >= 0))) fail(r, sc, 'ใช้ ' + r.component + ' — ' + r.source); }
+    // R80 คำบนจอ (6 พ.ย. 2569): ข้อความที่มองเห็น (TEXT + property ข้อความของ instance) ห้ามมีคำต้องห้าม ยกเว้นคำใน allow (ข้อมูลจาก API)
+    for (const r of RULES.wording || []) {
+      if (!new RegExp(r.screens).test(sc.name)) continue;
+      const strip = (s) => (r.allow || []).reduce((t, w) => t.split(w).join(''), s || '');
+      const owner = (x) => { for (let p = x.parent; p && p !== sc; p = p.parent) if (p.type === 'INSTANCE') return ' (ใน ' + compName(p) + ')'; return ''; };   // บอก component ที่ข้อความอยู่ ⇒ รู้ว่าเป็นค่าตั้งต้นของ component หรือปลั๊กอินใส่เอง
+      const texts = all.filter(x => shown(x) && x.type === 'TEXT').map(x => [x.characters, owner(x)])
+        .concat(...all.filter(x => shown(x) && x.type === 'INSTANCE').map(x => Object.values(x.componentProperties || {}).filter(v => v.type === 'TEXT').map(v => [v.value, ' (ใน ' + compName(x) + ')'])));
+      const bad = [...new Set(texts.filter(([t]) => strip(t).indexOf(r.word) >= 0).map(([t, w]) => t + '"' + w))];
+      if (bad.length) fail(r, sc, 'ยังมีคำว่า "' + r.word + '" ต้องใช้ "' + r.use + '": ' + bad.slice(0, 3).map(t => '"' + t).join(' · '));
+    }
     // R22 dashboard: จอแท็บต้องมี Tabs + Metric item (21 ต.ค. 2569)
     const dr = RULES.dashboard;
     if (dr && new RegExp(dr.screens).test(sc.name)) for (const c of dr.mustHave) if (!all.some(x => isInst(x, c) && shown(x))) fail(dr, sc, 'ไม่มี ' + c);
@@ -118,4 +128,39 @@ function check(screens, opt) {   // opt.inFile(ชื่อ) = ไฟล์ม�
   return { fails, pending: [...pending].map(([k, s]) => k + ' (' + s.size + ' จอ)') };
 }
 
-module.exports = { check, RULES };
+/* R80 ตรวจซอร์สปลั๊กอิน (6 พ.ย. 2569): ข้อความใน string literal ห้ามมีคำต้องห้าม ยกเว้น allow — ข้ามคอมเมนต์และ regex literal (คำพูดเจ้าของงานในคอมเมนต์คงตามจริง)
+   คืน [[บรรทัด, ข้อความ]] ที่ผิด */
+function stringLiterals(src) {
+  const out = []; let i = 0, prev = '';
+  const n = src.length;
+  while (i < n) {
+    const c = src[i];
+    if (c === '/' && src[i + 1] === '/') { const j = src.indexOf('\n', i); i = j < 0 ? n : j; continue; }
+    if (c === '/' && src[i + 1] === '*') { const j = src.indexOf('*/', i + 2); i = j < 0 ? n : j + 2; continue; }
+    if (c === '"' || c === "'" || c === '`') {
+      let j = i + 1, start = i + 1;
+      while (j < n) {
+        const d = src[j];
+        if (d === '\\') { j += 2; continue; }
+        if (c === '`' && d === '$' && src[j + 1] === '{') { out.push([start, j]); let k = j + 2, lvl = 1; while (k < n && lvl) { if (src[k] === '{') lvl++; else if (src[k] === '}') lvl--; k++; } start = k; j = k; continue; }
+        if (d === c || (d === '\n' && c !== '`')) break;
+        j++;
+      }
+      out.push([start, j]); i = j + 1; prev = c; continue;
+    }
+    if (c === '/' && (prev === '' || '(,=:[!&|?{};+-*%<>~^'.indexOf(prev) >= 0 || /return\s*$/.test(src.slice(Math.max(0, i - 8), i)))) {
+      let j = i + 1, cls = false;
+      while (j < n && src[j] !== '\n') { const d = src[j]; if (d === '\\') { j += 2; continue; } if (d === '[') cls = true; else if (d === ']') cls = false; else if (d === '/' && !cls) break; j++; }
+      i = j + 1; prev = '/'; continue;
+    }
+    if (!/\s/.test(c)) prev = c;
+    i++;
+  }
+  return out.map(([a, b]) => [src.slice(0, a).split('\n').length, src.slice(a, b)]);
+}
+function checkSourceWording(src, rule) {
+  const strip = (s) => (rule.allow || []).reduce((t, w) => t.split(w).join(''), s);
+  return stringLiterals(src).filter(([, s]) => strip(s).indexOf(rule.word) >= 0);
+}
+
+module.exports = { check, RULES, checkSourceWording };

@@ -15,5 +15,23 @@ process.env.SCEN_N = process.env.SCEN_N || '25';   // 5 พ.ย. 2569 S25: + S25
 process.env.SWIM_N = process.env.SWIM_N || '43';   // 5 พ.ย. 2569 S25: + กล่อง k29   // 4 พ.ย. 2569 ค่ำ: ตัดกล่อง S11 S23 + เลนผู้รับจ้าง   // user journey swimlane (4 พ.ย. 2569) 26-บำรุงรักษา-swimlane.md: กล่อง · เส้น · lane
 process.env.SWIM_EDGES = process.env.SWIM_EDGES || '51';   // 5 พ.ย. 2569 S25: + k19→k29 · k29→k7
 process.env.SWIM_LANES = process.env.SWIM_LANES || '7';
-process.env.FLOW = process.env.FLOW || '1';   // ผัง userflow ข้างจอ (22 ต.ค. 2569) — ตรวจทุกบล็อกมีผังซ้ายสุด · ป้ายรหัสจอชี้จอจริง
+process.env.ACT_N = process.env.ACT_N || '21';   // 6 พ.ย. 2569 flowchart กิจกรรมราย scenario 27-บำรุงรักษา-flowchart-กิจกรรม.md: กรอบ scenario · กล่อง · เส้น
+process.env.ACT_BOX = process.env.ACT_BOX || '219';
+process.env.ACT_LINES = process.env.ACT_LINES || '236';
+process.env.FLOW = process.env.FLOW || '1';
+process.env.FLOW_KIND = process.env.FLOW_KIND || 'flowchart';   // 6 พ.ย. 2569 เจ้าของงาน "อยากให้ flowchart คู่กับ ui ไม่ใช่ user flow" ⇒ ผังซ้ายของบล็อกเป็น flowchart กิจกรรม   // ผัง userflow ข้างจอ (22 ต.ค. 2569) — ตรวจทุกบล็อกมีผังซ้ายสุด · ป้ายรหัสจอชี้จอจริง
+/* R80 (6 พ.ย. 2569) คำว่า "ยานพาหนะ" แทน "รถ" — ตรวจซอร์ส screens.js ก่อน (ข้อความที่ปลั๊กอินใส่เอง) แล้วจอที่สร้างตรวจซ้ำใน check-component-rules
+   + WORD_ALLOW ในปลั๊กอินต้องตรง allow ของกติกา (ตัวแก้ข้อความตั้งต้นของ component ใช้ชุดเดียวกัน) */
+{
+  const fs = require('fs'), { RULES, checkSourceWording } = require('./check-component-rules');
+  const src = fs.readFileSync(path.join(__dirname, 'maintainance-plugin', 'screens.js'), 'utf8');
+  const errs = [];
+  for (const r of (RULES.wording || []).filter(r => /\^MT/.test(r.screens))) {
+    checkSourceWording(src, r).slice(0, 20).forEach(([ln, s]) => errs.push(r.id + ' screens.js:' + ln + ' ยังมีคำว่า "' + r.word + '" ต้องใช้ "' + r.use + '": ' + s.slice(0, 80)));
+    const m = src.match(/const WORD_ALLOW = (\[[^\]]*\])/);
+    if (!m || JSON.stringify(JSON.parse(m[1].replace(/'/g, '"'))) !== JSON.stringify(r.allow)) errs.push(r.id + ' WORD_ALLOW ใน screens.js ไม่ตรง allow ของ component-rules.json');
+  }
+  if (errs.length) { errs.forEach(e => console.log('⚠ ' + e)); process.exit(1); }
+  console.log('R80 ซอร์ส screens.js ไม่มีคำว่า "รถ" นอกข้อมูลจาก API ✓');
+}
 require('./test-overhaul2-plugin.js');

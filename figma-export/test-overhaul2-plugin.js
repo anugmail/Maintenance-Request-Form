@@ -449,7 +449,7 @@ const MODE_CHECK = process.env.MODE === 'check';
   if (process.env.MODE === 'build-docs') {   // ติ๊กเลือกส่วน (30 ต.ค. 2569): กรอบ story map / use case อยู่บนหน้าเดียวกับจอ · ไม่ทับกัน · การ์ด/แถวครบตามไฟล์ · กดซ้ำไม่ซ้อน
     const P = process.env.PREFIX || 'OH2';
     const parts = (process.env.PARTS || 'storymap,usecase').split(',');
-    const docs = page.children.filter(n => n.name === P + ' · user story mapping' || n.name === P + ' · use case' || n.name === P + ' · scenario' || n.name === P + ' · use case ตาม scenario' || n.name === P + ' · user journey swimlane');   // ตาราง scenario (4 พ.ย. 2569 เจ้าของงาน "ทำตัว export ให้หน่อย")
+    const docs = page.children.filter(n => n.name === P + ' · user story mapping' || n.name === P + ' · use case' || n.name === P + ' · scenario' || n.name === P + ' · use case ตาม scenario' || n.name === P + ' · user journey swimlane' || n.name.indexOf(P + ' · flowchart กิจกรรม') === 0);   // ตาราง scenario (4 พ.ย. 2569 เจ้าของงาน "ทำตัว export ให้หน่อย")
     const sm = docs.find(n => /story mapping$/.test(n.name)), uc = docs.find(n => /use case$/.test(n.name));
     if (parts.includes('storymap') && !sm) logs.push('⚠ ไม่มีกรอบ user story mapping');
     if (parts.includes('usecase') && !uc) logs.push('⚠ ไม่มีกรอบ use case');
@@ -471,6 +471,7 @@ const MODE_CHECK = process.env.MODE === 'check';
       if (process.env.SWIM_EDGES && swLine !== +process.env.SWIM_EDGES) logs.push('⚠ swimlane มีเส้น ' + swLine + ' แต่ต้องมี ' + process.env.SWIM_EDGES);
       if (process.env.SWIM_LANES && swLane !== +process.env.SWIM_LANES) logs.push('⚠ swimlane มี lane ' + swLane + ' แต่ต้องมี ' + process.env.SWIM_LANES);
       if (!boxes.some(n => n.type === 'POLYGON')) logs.push('⚠ swimlane ไม่มีทางแยกข้าวหลามตัด');
+      if (process.env.FLOW_KIND === 'flowchart' && kids.some(n => /^ภาพย่อ|^ป้ายจอ/.test(n.name))) logs.push('⚠ swimlane มีหน้าจอปน (6 พ.ย. 2569 เจ้าของงานเลือกแบบไม่มีจอ)');
       if (boxes.some(n => /^ขั้น /.test(n.name) && n.type !== 'RECTANGLE')) logs.push('⚠ swimlane ขั้นงานต้องเป็นสี่เหลี่ยม');
       for (const b of boxes) {
         if (b.x < 0 || b.y < 0 || b.x + b.width > sw.width || b.y + b.height > sw.height) logs.push('⚠ swimlane กล่อง ' + b.name + ' ล้นกรอบ');
@@ -478,17 +479,40 @@ const MODE_CHECK = process.env.MODE === 'check';
       }
       if (lines.some(v => !v.vectorNetwork || v.vectorNetwork.vertices[v.vectorNetwork.vertices.length - 1].strokeCap !== 'ARROW_LINES')) logs.push('⚠ swimlane มีเส้นไม่มีหัวลูกศร');
     }
+    const scen = docs.filter(n => n.type === 'FRAME' && n.name.indexOf(P + ' · flowchart กิจกรรม · S') === 0);   // 6 พ.ย. 2569 flowchart กิจกรรม "อยากให้แยก scen เลยนะ": กรอบบนหน้า 1 scenario = 1 กรอบ · ไม่ซ้อนหลังกดซ้ำ · กิจกรรม = สี่เหลี่ยม · ทางเลือก = ข้าวหลามตัด · เส้นมีหัวลูกศร · ไม่ล้นกรอบ · ไม่มีหน้าจอปน
+    if (parts.includes('activity') && !scen.length) logs.push('⚠ ไม่มีกรอบ flowchart กิจกรรม');
+    if (parts.includes('activity') && !docs.some(n => n.name === P + ' · flowchart กิจกรรม · คำอธิบาย')) logs.push('⚠ ไม่มีกรอบคำอธิบาย flowchart กิจกรรม');
+    if (docs.some(n => n.name === P + ' · flowchart กิจกรรม')) logs.push('⚠ flowchart กิจกรรม ยังรวมอยู่ในกรอบใหญ่ (ต้องแยกกรอบละ scenario)');
+    if (new Set(scen.map(n => n.name)).size !== scen.length) logs.push('⚠ flowchart กิจกรรม มีกรอบซ้อนกันหลังกดซ้ำ');
+    let afScen = scen.length, afBox = 0, afLine = 0;
+    if (scen.length) {
+      if (process.env.ACT_N && afScen !== +process.env.ACT_N) logs.push('⚠ flowchart กิจกรรม มี ' + afScen + ' scenario แต่ต้องมี ' + process.env.ACT_N);
+      for (const a of scen) for (const b of scen) if (a !== b && a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height) logs.push('⚠ flowchart กรอบ ' + a.name + ' ทับ ' + b.name);
+      for (const g of scen) {
+        const boxes = g.children.filter(n => /^(กิจกรรม|ทางเลือก|เริ่ม\/จบ) /.test(n.name)), lines = g.children.filter(n => n.name.indexOf('เส้น ') === 0 && n.type === 'VECTOR');
+        afBox += boxes.length; afLine += lines.length;
+        if (boxes.some(n => /^กิจกรรม /.test(n.name) && n.type !== 'RECTANGLE')) logs.push('⚠ flowchart ' + g.name + ' กิจกรรมต้องเป็นสี่เหลี่ยม');
+        if (boxes.some(n => /^ทางเลือก /.test(n.name) && n.type !== 'POLYGON')) logs.push('⚠ flowchart ' + g.name + ' ทางเลือกต้องเป็นข้าวหลามตัด');
+        if (lines.some(v => !v.vectorNetwork || v.vectorNetwork.vertices[v.vectorNetwork.vertices.length - 1].strokeCap !== 'ARROW_LINES')) logs.push('⚠ flowchart ' + g.name + ' มีเส้นไม่มีหัวลูกศร');
+        for (const k of g.children) if (k.x < 0 || k.y < 0 || k.x + k.width > g.width + 1 || k.y + k.height > g.height + 1) logs.push('⚠ flowchart ' + g.name + ' ชิ้น ' + k.name + ' ล้นกรอบ');
+        if (g.children.some(n => /^ภาพย่อ|^ป้ายจอ/.test(n.name))) logs.push('⚠ flowchart ' + g.name + ' มีหน้าจอปน (เจ้าของงานสั่งแยก)');
+      }
+      if (process.env.ACT_BOX && afBox !== +process.env.ACT_BOX) logs.push('⚠ flowchart กิจกรรม มีกล่อง ' + afBox + ' แต่ต้องมี ' + process.env.ACT_BOX);
+      if (process.env.ACT_LINES && afLine !== +process.env.ACT_LINES) logs.push('⚠ flowchart กิจกรรม มีเส้น ' + afLine + ' แต่ต้องมี ' + process.env.ACT_LINES);
+    }
     const sc = docs.find(n => n.name === P + ' · scenario'), scRows = sc ? sc.findAll(n => n.name === 'แถว').length : 0;
     if (parts.includes('scenarios') && !sc) logs.push('⚠ ไม่มีกรอบตาราง scenario');
     const us = docs.find(n => n.name === P + ' · use case ตาม scenario'), usGroups = us ? us.findAll(n => n.name.indexOf('ตาราง · ') === 0).length : 0;   // 4 พ.ย. 2569: กลุ่มละ scenario + กลุ่มที่ยังไม่อยู่ใน scenario
     if (parts.includes('ucscen') && !us) logs.push('⚠ ไม่มีกรอบ use case ตาม scenario');
     if (us && process.env.SCEN_N && usGroups !== +process.env.SCEN_N - 1) logs.push('⚠ use case ตาม scenario มี ' + usGroups + ' กลุ่ม แต่ต้องมี ' + (+process.env.SCEN_N - 1));
     if (sc && scRows !== +(process.env.SCEN_N || 22)) logs.push('⚠ ตาราง scenario มี ' + scRows + ' แถว แต่ต้องมี ' + (process.env.SCEN_N || 22));   // 20 scenario + ตัดออก 2
-    console.log('เอกสารบนหน้า: story map การ์ด ' + cards + ' (' + cols + ' ช่วงงาน) · use case ' + rows + ' แถว (' + tbls + ' ตาราง) · scenario ' + scRows + ' แถว · use case ตาม scenario ' + usGroups + ' กลุ่ม · swimlane กล่อง ' + swBox + ' เส้น ' + swLine + ' lane ' + swLane + ' · จอ ' + screens.length);
+    console.log('เอกสารบนหน้า: story map การ์ด ' + cards + ' (' + cols + ' ช่วงงาน) · use case ' + rows + ' แถว (' + tbls + ' ตาราง) · scenario ' + scRows + ' แถว · use case ตาม scenario ' + usGroups + ' กลุ่ม · swimlane กล่อง ' + swBox + ' เส้น ' + swLine + ' lane ' + swLane + ' · flowchart กิจกรรม ' + afScen + ' scenario ' + afBox + ' กล่อง ' + afLine + ' เส้น · จอ ' + screens.length);
   }
   if (process.env.MODE === 'build-journey') {   // journey แนวขวาง (22 ต.ค. 2569): ผังครบทุก scenario · เรียงซ้าย → ขวาไม่ทับกัน · ลูกศรมีหัว · ภาพย่อเมื่อมีจอ
     const P = process.env.PREFIX || 'OH2';
-    const js = page.children.filter(n => new RegExp('^' + P + ' · journey userflow S\\d+$').test(n.name));
+    const JK = process.env.FLOW_KIND || 'userflow';   // 6 พ.ย. 2569 บำรุงรักษา: journey ต่อผัง flowchart กิจกรรมแทน userflow
+    const js = page.children.filter(n => new RegExp('^' + P + ' · journey ' + JK + ' S\\d+$').test(n.name));
+    if (JK === 'flowchart') for (const f of js) { if (f.children.some(n => /^ภาพย่อ|^ป้ายจอ/.test(n.name))) logs.push('⚠ journey ' + f.name + ' มีหน้าจอปน'); if (!f.children.some(n => /^กิจกรรม /.test(n.name) && n.type === 'RECTANGLE')) logs.push('⚠ journey ' + f.name + ' ไม่มีกล่องกิจกรรม'); }
     const arrows = page.children.filter(n => n.type === 'VECTOR' && n.name.indexOf(P + ' · journey S') === 0);
     const want = +(process.env.JOURNEY_N || 18), wantL = +(process.env.JOURNEY_LINKS || 23);
     if (js.length !== want) logs.push('⚠ journey มีผัง ' + js.length + ' แต่ต้องมี ' + want);
@@ -497,19 +521,19 @@ const MODE_CHECK = process.env.MODE === 'check';
     if (arrows.some(v => !v.vectorNetwork || v.vectorNetwork.vertices[v.vectorNetwork.vertices.length - 1].strokeCap !== 'ARROW_LINES')) logs.push('⚠ ลูกศร journey ไม่มีหัวลูกศร');
     const bar = page.children.find(n => n.name.indexOf(P + ' · Journey') === 0); if (!bar) logs.push('⚠ ไม่มีแถบ Journey');
     const filled = js.reduce((t, f) => t + f.children.filter(n => n.name.indexOf('ภาพย่อ ') === 0 && (n.fills || []).some(x => x.type === 'IMAGE')).length, 0);
-    if (process.env.PRE_MODE && !filled) logs.push('⚠ สร้างจอก่อนแล้วแต่ไม่มีภาพย่อใน journey');
+    if (process.env.PRE_MODE && !filled && JK !== 'flowchart') logs.push('⚠ สร้างจอก่อนแล้วแต่ไม่มีภาพย่อใน journey');   // flowchart ไม่มีภาพย่อจอโดยตั้งใจ
     const order = js.slice().sort((a, b) => a.x - b.x).map(f => +f.name.split(' S').pop());
     console.log('journey: ผัง ' + js.length + ' · ลูกศร ' + arrows.length + ' · ภาพย่อ ' + filled + ' · ลำดับซ้าย→ขวา ' + order.join(' '));
   }
   else if (process.env.FLOW) {   // ผัง userflow ข้างจอ (22 ต.ค. 2569): ทุกบล็อก scenario มีผังซ้ายสุด · ป้ายรหัสจอชี้จอที่มีจริง · บล็อกไม่ทับกัน
-    const P = process.env.PREFIX || 'OH2';
+    const P = process.env.PREFIX || 'OH2', K = process.env.FLOW_KIND || 'userflow';   // FLOW_KIND=flowchart: บำรุงรักษาวาง flowchart กิจกรรมข้างจอแทน userflow (6 พ.ย. 2569) — ไม่มีภาพย่อ/ป้ายจอ
     const bars = page.children.filter(n => new RegExp('^' + P + ' · [A-Z] S\\d+ ').test(n.name)).sort((a, b) => a.y - b.y);
-    const flowsOn = page.children.filter(n => new RegExp('^' + P + ' · [A-Z] userflow S\\d+$').test(n.name));
+    const flowsOn = page.children.filter(n => new RegExp('^' + P + ' · [A-Z] ' + K + ' S\\d+$').test(n.name));
     const names = new Set(screens.map(n => n.name.split(' · ')[0].replace(P + ' / ', '')));
     let badges = 0, shapes = 0, vecs = 0;
     for (const bar of bars) {
       const code = bar.name.split(' · ')[1].split(' ')[0];
-      const f = flowsOn.find(n => n.name.indexOf(P + ' · ' + code + ' userflow') === 0);
+      const f = flowsOn.find(n => n.name.indexOf(P + ' · ' + code + ' ' + K + ' S') === 0);
       if (!f) { logs.push('⚠ ผัง userflow ไม่มีในบล็อก ' + bar.name); continue; }
       if (f.y !== bar.y) logs.push('⚠ ผัง userflow ไม่ได้เริ่มที่หัวบล็อก ' + code);
       if (f.x + f.width > bar.x) logs.push('⚠ ผัง userflow ทับป้าย Device/จอ ' + code);   // เทียบกับหัวบล็อก ไม่ใช่ x 0 — ชุดที่วางเป็นคอลัมน์ทางขวา (fitOn 4 พ.ย. 2569) เริ่มที่ x อื่น
@@ -518,6 +542,7 @@ const MODE_CHECK = process.env.MODE === 'check';
       if (!ss.length || !vs.length) logs.push('⚠ ผัง userflow ' + code + ' ไม่มีกล่องหรือเส้น');
       if (vs.some(v => !v.vectorNetwork || !v.vectorNetwork.vertices.length || v.vectorNetwork.vertices[v.vectorNetwork.vertices.length - 1].strokeCap !== 'ARROW_LINES')) logs.push('⚠ เส้นในผัง ' + code + ' ไม่มีหัวลูกศร');
       if (ss.some(n => n.x < 0 || n.y < 0 || n.x + n.width > f.width || n.y + n.height > f.height)) logs.push('⚠ กล่องในผัง ' + code + ' ล้นกรอบ');
+      if (K === 'flowchart' && f.children.some(n => /^ภาพย่อ|^ป้ายจอ/.test(n.name))) logs.push('⚠ flowchart ข้างจอ ' + code + ' มีหน้าจอปน (เจ้าของงานสั่งแยก)');
       const thumbs = f.children.filter(n => n.name.indexOf('ภาพย่อ ') === 0), filled = thumbs.filter(n => (n.fills || []).some(x => x.type === 'IMAGE' && x.imageHash));
       const coded = f.children.filter(n => n.name.indexOf('ป้ายจอ ') === 0).length;
       global.__thumbs = (global.__thumbs || 0) + filled.length;
@@ -529,11 +554,11 @@ const MODE_CHECK = process.env.MODE === 'check';
       }
     }
     for (let i = 1; i < bars.length; i++) {   // บล็อกถัดไปต้องเริ่มใต้ผังและแถวจอของบล็อกก่อน
-      const prevCode = bars[i - 1].name.split(' · ')[1].split(' ')[0], f = flowsOn.find(n => n.name.indexOf(P + ' · ' + prevCode + ' userflow') === 0);
+      const prevCode = bars[i - 1].name.split(' · ')[1].split(' ')[0], f = flowsOn.find(n => n.name.indexOf(P + ' · ' + prevCode + ' ' + K + ' S') === 0);
       if (f && bars[i].y < f.y + f.height) logs.push('⚠ บล็อก ' + bars[i].name.split(' · ')[1].split(' ')[0] + ' ทับผังของบล็อก ' + prevCode);
     }
     if (flowsOn.length !== bars.length) logs.push('⚠ ผัง userflow ' + flowsOn.length + ' ผัง แต่มี ' + bars.length + ' บล็อก');
-    console.log('ผัง userflow ข้างจอ: ' + flowsOn.length + '/' + bars.length + ' บล็อก · กล่อง ' + shapes + ' · เส้น ' + vecs + ' · ภาพย่อ ' + (global.__thumbs || 0) + ' · ป้ายรหัสจอ ' + badges + (logs.slice(printed).some(l => /ผัง|ป้ายจอ|บล็อก/.test(l)) ? '' : ' ✓'));
+    console.log('ผัง ' + K + ' ข้างจอ: ' + flowsOn.length + '/' + bars.length + ' บล็อก · กล่อง ' + shapes + ' · เส้น ' + vecs + ' · ภาพย่อ ' + (global.__thumbs || 0) + ' · ป้ายรหัสจอ ' + badges + (logs.slice(printed).some(l => /ผัง|ป้ายจอ|บล็อก/.test(l)) ? '' : ' ✓'));
   }
   if (process.env.DUMP_TEXT) {   // DUMP_TEXT=regex ชื่อจอ → พิมพ์ข้อความทุกชั้น (รวมที่ซ่อน) ตามลำดับ layer — ใช้เทียบกับข้อความที่ก๊อปจาก Figma (21 ต.ค. 2569)
     const re = new RegExp(process.env.DUMP_TEXT);
