@@ -24,6 +24,7 @@ const BOARD_LABELS = [
   { file: 'board-maintainance-ac.json', group: 'บำรุงรักษาตามวาระ · AC', label: 'AC ราย scenario (ไฟล์ 28)' },   // --src=…/28-บำรุงรักษา-AC.md --prefix="AC ราย scenario"
   { file: 'board-maintainance-ac-s1.json', group: 'บำรุงรักษาตามวาระ · AC', label: 'AC หน้า S1 รายการแผน รายละเอียดแผน อะไหล่ของยานพาหนะ (ไฟล์ 29)' },   // --src=…/29-บำรุงรักษา-AC-หน้า-S1.md --prefix="AC หน้า S1"
   { file: 'board-maintainance-ac-create.json', group: 'บำรุงรักษาตามวาระ · AC', label: 'AC หน้าสร้างแผน (ไฟล์ 25)' },   // --src=…/25-บำรุงรักษา-AC-หน้า-สร้างแผน.md --prefix="AC หน้าสร้างแผน"
+  { file: 'board-maintainance-ac-s2.json', group: 'บำรุงรักษาตามวาระ · AC', label: 'AC หน้า S2 แผนรออนุมัติ ตรวจสอบแผน (ไฟล์ 30)' },   // --src=…/30-บำรุงรักษา-AC-หน้า-S2.md --prefix="AC หน้า S2"
   { file: 'board-login-flow.json', group: 'Login และสิทธิ์', label: 'ลำดับ login + ภาพหน้าจริง' },
   { file: 'board-login-permission.json', group: 'Login และสิทธิ์', label: 'สิทธิ์ Overhaul ตาม role' },
   { file: 'board-login-ac.json', group: 'Login และสิทธิ์', label: 'AC รายจอ 7 จอ' },

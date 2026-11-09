@@ -21,6 +21,7 @@
          # 9 พ.ย. 2569: AC ระดับหน้าทุกหน้าของ S1 (รายการแผน · รายละเอียดแผน · อะไหล่ของยานพาหนะ)
          node figma-export/9-ac-board.js --src="Diagram/01-บำรุงรักษาตามวาระ/29-บำรุงรักษา-AC-หน้า-S1.md" --out=board-maintainance-ac-s1.json --prefix="AC หน้า S1"
          node figma-export/9-ac-board.js --src="Diagram/01-บำรุงรักษาตามวาระ/28-บำรุงรักษา-AC.md" --out=board-maintainance-ac.json --prefix="AC ราย scenario"
+         node figma-export/9-ac-board.js --src="Diagram/01-บำรุงรักษาตามวาระ/30-บำรุงรักษา-AC-หน้า-S2.md" --out=board-maintainance-ac-s2.json --prefix="AC หน้า S2"
          node figma-export/9-ac-board.js --src="Diagram/01-บำรุงรักษาตามวาระ/23-บำรุงรักษา-story-map-JO-7.3.md" --out=board-maintainance-story-map.json --prefix="Story Map บำรุงรักษา"
          # login + สิทธิ์ (30 ต.ค. 2569 · ภาพหน้าจริงอยู่นอกรีโป ก๊อปเข้า out/figjam/login/ ก่อน):
          node figma-export/9-ac-board.js --src="Diagram/08-login-และสิทธิ์/01-login-flow.md" --out=board-login-flow.json --prefix="Login" --shots=figjam/login
