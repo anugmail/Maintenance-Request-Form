@@ -55,9 +55,10 @@ Object.assign(KEYS, {
   "account_balance-24-300-round": ["48c0cb9ff8ec9c4c6c9a2be469bcd54a12742890", false],   // ไอคอนนำช่องศูนย์ต้นทุน แบบสำรองของ Request Repair/Budget (ตัวเดียวกับ Overhaul R18 · 5 พ.ย. 2569 · R72)
   "Metric item": ["5e82119aab7dc5401c7f5940b7a500339ace506a", true],   // S4 แดชบอร์ดอะไหล่ (6 พ.ย. 2569) — key เดียวกับแดชบอร์ด Overhaul (R22)
   "download-24-300-round": ["336f0dff014c26316e0fa56959bc75f09f71531d", false],   // S4 ปุ่มส่งออก — key เดียวกับ S18 ของ Overhaul (R32)
-  "swap_driving_apps_wheel-24-300-round": ["d431c64461da6f292b3989371704fd336e1f719b", false]   // S25 เมนู/ปุ่ม "ย้ายไปไตรมาสอื่น" (ไฟล์ Component หน้าไอคอน · UI Release#2 ปุ่ม "โอนย้ายสังกัด" ใช้ swap_driving_apps)
+  "swap_driving_apps_wheel-24-300-round": ["d431c64461da6f292b3989371704fd336e1f719b", false],   // S25 เมนู/ปุ่ม "ย้ายไปไตรมาสอื่น" (ไฟล์ Component หน้าไอคอน · UI Release#2 ปุ่ม "โอนย้ายสังกัด" ใช้ swap_driving_apps)
+  "calendar_month-24-300-round": ["afb81bef65f96089512284d42edd7bb46646a465", false]   // ไอคอนนำช่องวันดำเนินการ (6 พ.ย. 2569 · R83) — ไฟล์ Component หน้า Icons · ช่องช่วงวันที่ Date range picker / Trip date ของ UI Release#2 หน้า 5.2 Vehicle Management มีไอคอนนำ
 });
-NEEDED.push('Metric item', 'download-24-300-round', 'swap_driving_apps_wheel-24-300-round', 'Step circles / 4 steps', 'account_balance-24-300-round');   // S25 (5 พ.ย. 2569) ไอคอนย้ายไปไตรมาสอื่น
+NEEDED.push('Metric item', 'download-24-300-round', 'swap_driving_apps_wheel-24-300-round', 'Step circles / 4 steps', 'account_balance-24-300-round', 'calendar_month-24-300-round');   // S25 (5 พ.ย. 2569) ไอคอนย้ายไปไตรมาสอื่น · 6 พ.ย. 2569 ไอคอนช่องวันดำเนินการ
 
 /* ---------- ข้อมูลตัวอย่าง (ยกชื่อรถ/หน่วยงาน/จังหวัดจาก maintainance-yearly/mock-yearly.js — ค่าสมมติทั้งหมด) ---------- */
 const PST = { review: ['รออนุมัติ', 'Warning'],   // 30 ต.ค. 2569: ส่งอนุมัติทั่วไป ไม่ผ่าน ผพจ.
@@ -146,10 +147,13 @@ const tripLoc = (i, locs) => (locs || {})[i] || 'สำนักงาน ' + TR
 /* วันดำเนินการรายคัน (6 พ.ย. 2569 รีวิว S6 "เพิ่ม คอลัมม์ "วันดำเนินการ" โดยเลือกได้ไม่เกิน range ของแผนที่กำหนดมาเท่านั้น" + "เลือกซ้ำวันกันได้ เลือกเป็นช่วงวัน" + "เพิ่มการเลือกวันดำเนิน จาก icon แก้ไข ได้ด้วย")
    ค่าเริ่มต้น = ช่วงวันเดินทางทั้งช่วง (แบบสถานที่บำรุงรักษา "ค่าเริ่มต้น สำนักงานที่ยานพาหนะอยู่") · แก้ใน popup ไอคอนแก้ไข · works = { ลำดับรถ: [ตั้งแต่, ถึง] } · หลายคันซ้ำวันกันได้ */
 const tripWork = (i, t) => { const w = ((t && t.works) || {})[i]; return w ? w[0] + ' – ' + w[1] : t ? t.d1 + ' – ' + t.d2 : '—'; };
-const tripWorkCell = (i, t) => ({ text: tripWork(i, t), sub: ((t && t.works) || {})[i] ? 'แก้จากช่วงวันเดินทาง' : 'ค่าเริ่มต้น ช่วงวันเดินทาง' });
+const tripRange = (t) => t && (t.vendor || t.hire) ? 'ช่วงวันทำงาน' : 'ช่วงวันเดินทาง';   // แผนจ้าง (S9) ใช้ช่วงวันทำงานแทนช่วงวันเดินทาง
+const tripWorkCell = (i, t) => ({ text: tripWork(i, t), sub: ((t && t.works) || {})[i] ? 'แก้จาก' + tripRange(t) : 'ค่าเริ่มต้น ' + tripRange(t) });
 const TRIP_WORKS = { 0: ['03/11/2569', '04/11/2569'], 1: ['03/11/2569', '04/11/2569'], 4: ['05/11/2569', '06/11/2569'] };   // 82-6789 กับ 82-1145 วันเดียวกัน (เลือกซ้ำวันได้) · ค่าสมมติ
-/* อะไหล่ของแผนเดินทาง (6 พ.ย. 2569 รีวิว S6 "เพิ่ม section ของอะใหล่ ทริปนี้") — รวมจากยานพาหนะในใบ · ตาราง QPART_COLS ชุดเดียวกับทุกหน้า (R81) · ค่าสมมติ: ไส้กรอง 3 รายการต่อคัน + น้ำมันไฮโดรลิกครึ่งหนึ่งของคัน */
-const tripParts = (sel) => sel.length ? [[PARTS[0][0], PARTS[0][1], PARTS[0][2], String(+OIL_SPEC.litre * Math.ceil(sel.length / 2)), PARTS[0][4]]].concat(CAR_PICK.map(x => [PARTS[x][0], PARTS[x][1], PARTS[x][2], String(CAR_QTY[x] * sel.length), PARTS[x][4]])) : [];
+/* อะไหล่ของแผนเดินทาง (6 พ.ย. 2569 รีวิว S6 "เพิ่ม section ของอะใหล่ ทริปนี้") — รวมจากยานพาหนะในใบ · ตาราง QPART_COLS ชุดเดียวกับทุกหน้า (R81) · รายการที่จำนวน 0 ไม่แสดง
+   ค่าสมมติรายคันของไตรมาส 1 (9 พ.ย. 2569 ให้ผลรวมทุกใบเท่ากับอะไหล่ในไตรมาส 1 ของหน้าไตรมาส = PARTS): เปลี่ยนน้ำมัน 30 ลิตร คัน 0 และ 3 (ตรง TRIP_OIL) · ไส้กรอง 3 รายการ คันละ 2 ชิ้น คัน 0–5 · ไส้กรองเชื้อเพลิง 2 ชิ้น คัน 0 และ 4 */
+const TRIP_OIL_CARS = [0, 3], TRIP_FILTER_CARS = [0, 1, 2, 3, 4, 5], TRIP_FUEL_CARS = [0, 4];
+const tripParts = (sel) => PARTS.map((p, x) => { const n = (cars, q) => sel.filter(i => cars.indexOf(i) >= 0).length * q; return [p[0], p[1], p[2], String(x === 0 ? n(TRIP_OIL_CARS, +OIL_SPEC.litre) : x === 4 ? n(TRIP_FUEL_CARS, CAR_QTY[4]) : n(TRIP_FILTER_CARS, CAR_QTY[x])), p[4]]; }).filter(r => +r[3] > 0);
 /* เบอร์ติดต่อรายคัน (3 พ.ย. 2569 · 6 พ.ย. 2569 เปลี่ยนเป็นผู้ดูแลยานพาหนะ ดูด้านล่าง) เจ้าของงาน "เพิ่มคอลัมน์เบอร์ติดต่อในหน้ารถที่เลือกแล้ว โดยเบอร์เป็นเบอร์ของเจ้าของรถ และตอนกดแก้ไข อยากเพิ่มการแก้ไขเบอร์โทร และสถานที่นัดได้")
    ค่าเริ่มต้น = เบอร์เจ้าของรถจากข้อมูลรถ · แก้ได้ทีละคันใน popup เดียวกับสถานที่ · คอลัมน์ตามหน้า MA Appointment ของ UI Release#2 ("เบอร์ติดต่อ") */
 /* 6 พ.ย. 2569 เจ้าของงาน "เพิ่มชื่อผู้ดูแลยานพาหนะ ตรงเบอร์โทร ดึงจากผู้ควบคุมรถ" + "ตรงป๊อบอัพ เลยต้องมีให้แก้ชื่อโดย prefill ข้อมูลมาให้"
@@ -161,10 +165,26 @@ const TRIP_PHONES = { 4: ['นายอนุชา ศรีสุข', '086-55
 const tripPhone = (i, ph) => ((ph || {})[i] || [])[1] || OWNER_PH[i];
 const tripCtrl = (i, ph) => ((ph || {})[i] || [])[0] || CTRL_NAME[i];
 const tripPhoneCell = (i, ph) => ({ text: tripCtrl(i, ph), sub: tripPhone(i, ph) });
+/* ตารางยานพาหนะของแผนเดินทาง ชุดเดียวทุกหน้า (R82 · 6 พ.ย. 2569 เจ้าของงาน "ถ้าเพิ่ม คอลัมน์ ก็ส่งผลกระทบกับ หน้าอื่นๆที่เป็นหน้าที่เหมือนกันด้วย ตอน export ก็เกี่ยวข้องด้วย" · แบบ QPART_COLS R81)
+   ใช้ที่ ฟอร์มแผนเดินทาง S6 S9 (+ ไอคอนแก้ไข ลบ) · ตรวจสอบแผนเดินทาง S7 · แผนเดินทางดูอย่างเดียว S8 · รายละเอียดแผนเดินทาง S10 S12 (หน่วยงานเป็นบรรทัดรองของทะเบียน + สถานะงาน + ปุ่ม … เพราะ Table ของไลบรารี 8 คอลัมน์)
+   · หน้าไตรมาส (ไม่มีสถานที่บำรุงรักษา + คอลัมน์แผนเดินทาง) · ไฟล์ PDF และ Excel ที่ส่งออก · เพิ่ม ลด หรือเปลี่ยนชื่อคอลัมน์ที่นี่ที่เดียว ช่องของแต่ละคอลัมน์อยู่ใน tripVCells (จับคู่ด้วยชื่อหัวคอลัมน์)
+   ประเภทยานพาหนะต่อจากทะเบียน แบบ Vehicle list ของ UI Release#2 หน้า 5.2 Vehicle Management ("เลขทะเบียน / ยี่ห้อ / รุ่น" แล้ว "ประเภทยานพาหนะ") · component Table ของไฟล์ Component */
+const UNIT_COL = 'หน่วยงานเจ้าของยานพาหนะ';
+const TRIP_V_COLS = [['ทะเบียน', 150, 'Lead text'], ['ประเภทยานพาหนะ', 120], ['ยี่ห้อ/รุ่น', 0], [UNIT_COL, 140], ['ผู้ดูแลยานพาหนะ', 160], ['สถานที่บำรุงรักษา', 190], ['วันดำเนินการ', 180]];
+/* o.unitSub = หน่วยงานไปเป็นบรรทัดรองของทะเบียน · o.drop = [ชื่อคอลัมน์ที่ไม่แสดง] · o.fill = ทุกคอลัมน์ยืดเท่ากัน (ไฟล์ PDF A4) */
+const tripVCols = (o) => { o = o || {}; return TRIP_V_COLS.filter(c => (o.drop || []).indexOf(c[0]) < 0 && !(o.unitSub && c[0] === UNIT_COL)).map(c => o.fill ? [c[0], 0, c[2]] : c); };
+/* t = { d1, d2, works, locs, phones, vendor | hire } ใบแผนเดินทาง หรือค่าในฟอร์ม · ยังไม่มีช่วงวัน (ฟอร์มยังไม่เลือกวันที่) = วันดำเนินการ "—" */
+const tripVCells = (i, t, o) => {
+  o = o || {};
+  const c = TRIP_CARS[i], locs = t.locs || {};
+  const cell = { 'ทะเบียน': o.unitSub ? { text: c[0], sub: c[2] } : c[0], 'ประเภทยานพาหนะ': typeOf(c), 'ยี่ห้อ/รุ่น': c[1], [UNIT_COL]: c[2], 'ผู้ดูแลยานพาหนะ': tripPhoneCell(i, t.phones),
+    'สถานที่บำรุงรักษา': { text: tripLoc(i, locs), sub: locs[i] ? 'แก้จากสำนักงานเจ้าของยานพาหนะ' : 'ค่าเริ่มต้น สำนักงานที่ยานพาหนะอยู่' }, 'วันดำเนินการ': t.d1 ? tripWorkCell(i, t) : '—' };
+  return tripVCols(o).map(col => cell[col[0]]);
+};
 const TRIP_ALL = TRIP_CARS.map((_, i) => i), TRIP_REST = TRIP_ALL.filter(i => TRIP_SEL.indexOf(i) < 0);
 const TRIP_OUT = 5, TRIP_KEEP = TRIP_SEL.filter(i => i !== TRIP_OUT);   // 5 พ.ย. 2569 เอารถออกจากแผนเดินทาง (soft delete): 82-3302 อุดรธานี ออกแล้วกลับไปเลือกได้   // ใบแรกใช้ TRIP_SEL · ใบถัดไปเลือกได้เฉพาะที่เหลือ
 /* ชื่อแผนเดินทาง (3 พ.ย. 2569 เจ้าของงาน "ตอนสร้างแผนการเดินทางอยากให้ตั้งชื่อแผนได้ด้วย") — ผู้ใช้ตั้งเอง แสดงแทน "แผนเดินทาง k" ในหน้าแผนเดินทาง */
-const TRIP_1 = { name: 'ตรวจยานพาหนะ ขอนแก่น อุดรธานี ลำปาง', sel: TRIP_SEL, locs: TRIP_LOCS, phones: TRIP_PHONES, d1: TRIP.d1, d2: TRIP.d2, st: 'review' }, TRIP_2 = { name: 'ตรวจยานพาหนะ น่าน เชียงใหม่ เชียงราย', sel: TRIP_REST, locs: {}, phones: {}, d1: '17/11/2569', d2: '21/11/2569', st: 'review' };
+const TRIP_1 = { name: 'ตรวจยานพาหนะ ขอนแก่น อุดรธานี ลำปาง', sel: TRIP_SEL, locs: TRIP_LOCS, phones: TRIP_PHONES, works: TRIP_WORKS, d1: TRIP.d1, d2: TRIP.d2, st: 'review' }, TRIP_2 = { name: 'ตรวจยานพาหนะ น่าน เชียงใหม่ เชียงราย', sel: TRIP_REST, locs: {}, phones: {}, d1: '17/11/2569', d2: '21/11/2569', st: 'review' };
 const tripAs = (t, st) => Object.assign({}, t, { st });
 const TAKEN_1 = Object.fromEntries(TRIP_SEL.map(i => [i, TRIP_1.name]));   // รถที่อยู่ในแผนเดินทางใบแรกแล้ว → popup ใบถัดไปแสดงแต่เลือกไม่ได้ (5 พ.ย. 2569)
 /* S9 แผนเดินทางจ้างดำเนินการ (3 พ.ย. 2569 เจ้าของงาน "ตอนที่ทำ e2 อยากให้มีการเลือกว่า กบค ดำเนินการเอง หรือ จ้างดำเนินการ และพอเลือกจ้างดำเนินการ ก็มีให้เลือก vendor list")
@@ -592,6 +612,7 @@ async function assignModal(scr, n, sel) {
   ASSIGN_OPTS.forEach((t, i) => { const c = inst('Radio text card', { State: 'Default', Selected: i === sel ? 'True' : 'False' }, { Text: t, Supporting: false }); add(r, c, 'h'); });
   await popupModal(scr, { title: 'จัดลงไตรมาส', sub: 'ยานพาหนะที่เลือก ' + n + ' คัน · ยานพาหนะที่จัดไว้แล้วจะย้ายไปไตรมาสที่เลือก', body: [r], ok: 'ยืนยัน', okOff: sel < 0 });
 }
+const ALL_Q_PARTS_EMPTY = 'จัดการอะไหล่ทีละคันจากปุ่ม … ที่แถวยานพาหนะในแท็บไตรมาส รายการจะรวมมาที่นี่';   // แท็บทั้งหมด ยังไม่มีอะไหล่สักคัน (9 พ.ย. 2569 · ข้อความเสนอ)
 async function planForm(name, o) {
   o = o || {};
   const v = o.values || {}, E = (m) => o.errors ? m : '';
@@ -630,12 +651,14 @@ async function planForm(name, o) {
   } else if (q && !f.query) add(carSec, await noCarsInQ(q), 'h');
   else add(carSec, await searchNotFound(), 'h');   // ไม่มีรถตรงคำค้น/ตัวกรอง = Vehicle list - Search not found ของ UI Release#2
   /* อะไหล่ในไตรมาส n — 5 พ.ย. 2569 เจ้าของงาน "ให้เอารายการอะใหล่ออก เป็น empty ก่อน แล้วค่อยให้เลือกจัดการอะใหล่ ทีละคัน แล้วค่อยเอามาลงในรายการอะใหล่ตอนจะส่งอนุมัติ"
-     ⇒ ตั้งต้น Empty state (noParts) · รวมจากรถที่จัดการแล้ว · ไม่มีปุ่มเพิ่มอะไหล่และไอคอนแก้ไข ลบ ของแถว · แท็บทั้งหมด = Empty state ให้เปิดแท็บไตรมาส (แบบ A เดิม) */
-  const inQs = q ? Object.keys(alloc).map(Number).filter(i => alloc[i] === q) : [];
-  const qRows = q ? qAgg(inQs.filter(i => draw[i] !== 'none'), o.picks || {}, o.oils || {}, o.manualCars || []) : [];   // คันที่ไม่เบิกอะไหล่ไม่รวมในรายการ
-  const partsSec = col('Section', [await section('อะไหล่ในไตรมาส' + (q ? ' ' + q : ''), { badge: qRows.length || null })], 16);
+     ⇒ ตั้งต้น Empty state (noParts) · รวมจากรถที่จัดการแล้ว · ไม่มีปุ่มเพิ่มอะไหล่และไอคอนแก้ไข ลบ ของแถว
+     9 พ.ย. 2569 เจ้าของงาน (ภาพแท็บทั้งหมดที่ขึ้น "เปิดแท็บไตรมาสเพื่อดูอะไหล่…") _"หน้าอะใหล่ทั้งไตรมาส ต้องรวมมาให้ด้วย ทั้งไตรมาส"_
+     ⇒ แท็บทั้งหมด = หัวข้อ "อะไหล่ทุกไตรมาส" (ชื่อเสนอ ⏳) รวมอะไหล่ของยานพาหนะทุกคันที่จัดลงไตรมาสแล้ว ไม่ขึ้นกับตัวกรองภาค เขต ประเภท · ยอด = ผลรวมของแท็บไตรมาส 1–4 (qAgg บวกรายคัน) · คันไม่เบิกไม่นับ */
+  const inQs = Object.keys(alloc).map(Number).filter(i => !q || alloc[i] === q);   // แท็บทั้งหมด = ทุกคันที่จัดลงไตรมาสแล้ว
+  const qRows = qAgg(inQs.filter(i => draw[i] !== 'none'), o.picks || {}, o.oils || {}, o.manualCars || []);   // คันที่ไม่เบิกอะไหล่ไม่รวมในรายการ
+  const partsSec = col('Section', [await section(q ? 'อะไหล่ในไตรมาส ' + q : 'อะไหล่ทุกไตรมาส', { badge: qRows.length || null })], 16);
   add(partsSec, qRows.length ? await tblShort(QPART_COLS, qRows) :
-    await noParts(!q ? 'เปิดแท็บไตรมาสเพื่อดูอะไหล่ของยานพาหนะในไตรมาสนั้น' : inQs.length ? 'จัดการอะไหล่ทีละคันจากปุ่ม … ที่แถวยานพาหนะ รายการจะรวมมาที่นี่' : 'จัดยานพาหนะลงไตรมาสนี้ก่อน แล้วจึงจัดการอะไหล่ทีละคันได้'), 'h');
+    await noParts(!q ? ALL_Q_PARTS_EMPTY : inQs.length ? 'จัดการอะไหล่ทีละคันจากปุ่ม … ที่แถวยานพาหนะ รายการจะรวมมาที่นี่' : 'จัดยานพาหนะลงไตรมาสนี้ก่อน แล้วจึงจัดการอะไหล่ทีละคันได้'), 'h');
   /* รีวิว 5 พ.ย. 2569 "ต้องกรอกข้อมูลที่ require ครบถึงจะ enable ปุ่ม" + 6 พ.ย. 2569 เจ้าของงาน "ต้องเอารถเข้า ไตรมาสทุกคัน" "บังคับให้กรอกอะใหล่ทุกคัน ไปหน้าต่อไปไม่ได้" (เลือกแบบ ก หน้าเดียว)
      ⇒ ปุ่มบันทึกและส่งอนุมัติกดได้เมื่อ ชื่อแผน · ปีงบประมาณ · รถทุกคันของหน่วยงานอยู่ในไตรมาส · ทุกคันกำหนดอะไหล่แล้ว (เบิกพร้อมรายการ หรือ ไม่เบิก) */
   const complete = !!(v.name && v.year && nIn === FLEET && Object.keys(alloc).every(i => decided(+i)));
@@ -819,12 +842,13 @@ async function dashXls(name, sheet) {
 /* หน้าแผนเดินทางของไตรมาส (3 พ.ย. 2569 เจ้าของงาน "อยากให้แสดงรถทั้งหมดในแผน และมีให้เพิ่มแผนการเดินทาง" → เลือกรถของไตรมาสที่กำลังทำ · หน้าเดียว 2 ส่วน)
    ส่วนรถ: รถทุกคันของไตรมาส + ช่วงวันเดินทาง + ป้ายแผนเดินทางที่รถอยู่ (ยังไม่มี = Gray) · ส่วนแผนเดินทาง: รายการใบ + ปุ่มสร้างแผนเดินทาง
    หน้า Detail ⇒ Section label (R3) · o.trips = แผนเดินทางที่ยืนยันแล้ว [{ sel, locs, d1, d2, st }] เรียงตามลำดับที่สร้าง */
-const TRIP_Q_COLS = [['ทะเบียน', 160, 'Lead text'], ['ประเภทยานพาหนะ', 130], ['ยี่ห้อ/รุ่น', 0], ['หน่วยงานเจ้าของยานพาหนะ', 140], ['ผู้ดูแลยานพาหนะ', 170], ['วันดำเนินการ', 190], ['แผนเดินทาง', 200]];   // 6 พ.ย. 2569 + ประเภทยานพาหนะ · ช่วงวันเดินทาง เป็น วันดำเนินการรายคัน   // มีใบ = ชื่อแผนเดินทาง (Text) · ยังไม่มี = Badge Gray · เบอร์ติดต่อ 3 พ.ย. 2569 เจ้าของงาน "หน้า e1 ก็อยากให้มีเบอร์ติดต่อด้วย" (อยู่ในใบแล้ว = เบอร์ของใบนั้น)
+const TRIP_Q_COLS = tripVCols({ drop: ['สถานที่บำรุงรักษา'] }).concat([['แผนเดินทาง', 200]]);   // R82 ชุดเดียวกับตารางยานพาหนะของแผนเดินทาง (หน้าไตรมาสไม่มีสถานที่ เพราะสถานที่อยู่กับแผนเดินทาง)   // 6 พ.ย. 2569 + ประเภทยานพาหนะ · ช่วงวันเดินทาง เป็น วันดำเนินการรายคัน   // มีใบ = ชื่อแผนเดินทาง (Text) · ยังไม่มี = Badge Gray · เบอร์ติดต่อ 3 พ.ย. 2569 เจ้าของงาน "หน้า e1 ก็อยากให้มีเบอร์ติดต่อด้วย" (อยู่ในใบแล้ว = เบอร์ของใบนั้น)
 /* รถในแผนปีที่ยังไม่ได้อยู่ในไตรมาสนี้ (ค่าสมมติ) — ทะเบียน · ยี่ห้อ/รุ่น · หน่วยงานเจ้าของรถ · เบอร์ · ชื่อผู้ดูแลยานพาหนะ · popup "เพิ่มรถเข้า" ไตรมาส (E.16) */
 const Q_EXTRA = [['81-9035 ลำปาง', 'Isuzu FTR + กระเช้า Aichi SK12A', 'กฟน.2 ลำปาง', '054-218-330', 'นายเกรียงไกร มูลเมือง'], ['82-4417 น่าน', 'Hino FC + กระเช้า Tadano AT-121', 'กฟน.2 น่าน', '054-710-244', 'นายสุเมธ จันทร์ดี'],
   ['80-6652 ลำพูน', 'Isuzu FRR + กระเช้า Aichi SK10A', 'กฟน.1 ลำพูน', '053-511-090', 'นายวิทยา สายสุข']];
 const Q_REMOVE_CONFIRM = (c) => ({ danger: true, title: 'ยืนยันการเอายานพาหนะออกจาก' + NOW_Q, sub: c[0] + ' จะถูกเอาออกจาก' + NOW_Q + ' ของแผนนี้ และอะไหล่ของยานพาหนะคันนี้ออกจากรายการเบิกของไตรมาส', cancel: 'ยกเลิก', ok: 'เอาออก' });   // แบบ CAR_REMOVE_CONFIRM
 const qAddModal = (scr, ticked) => tripCarModal(scr, { cars: Q_EXTRA, pool: [0, 1, 2], ticked, title: 'เพิ่มยานพาหนะเข้า' + NOW_Q, sub: 'ยานพาหนะในขอบเขตของแผน (ภาค เขต และประเภทยานพาหนะเดียวกัน) ที่ยังไม่อยู่ในไตรมาสใด', okText: 'เพิ่มเข้า' + NOW_Q });
+const Q_PARTS_EMPTY = 'ไตรมาสนี้ไม่มีอะไหล่ที่ต้องเบิก';   // บรรทัดรองของ Empty state หัวข้ออะไหล่ในไตรมาส n (ชุดเดียวกับ S2 อะไหล่ในแผน)
 const TRIP_COLS = [['ชื่อแผนเดินทาง', 0, 'Lead text'], ['ช่วงวัน', 220], ['ยานพาหนะ (คัน)', 100], ['ผู้ดำเนินการ', 260], ['สถานะ', 150, 'Badge'], ['', 72]];
 const tripPlaces = (t) => { const n = new Set(t.sel.map(i => tripLoc(i, t.locs))).size, own = t.sel.filter(i => !t.locs[i]).length; return n + ' แห่ง' + (own ? ' (สำนักงานเจ้าของยานพาหนะ ' + own + ' คัน)' : ''); };
 async function tripList(name, o) {
@@ -840,12 +864,22 @@ async function tripList(name, o) {
   const qAll = o.cars || (o.added || []).map(k => [Q_EXTRA[k], -1]).concat(TRIP_CARS.map((c, i) => [c, i]).filter(([, i]) => (o.removed || []).indexOf(i) < 0));   // คันที่เพิ่มใหม่ขึ้นก่อน
   const qCars = qAll.slice(0, TABLE_MAX.rows);   // Table ของไลบรารีได้ 10 แถว (R8) ⇒ เกินแสดงหน้าแรก + pagination
   const cars = col('Section', [await sectionLabel('ยานพาหนะใน' + Q, { badge: qAll.length, buttons: [{ kind: 'Secondary button', text: 'เพิ่มยานพาหนะ', icon: 'add-24-300-round' }] }),
-    await tblShort(TRIP_Q_COLS.concat([['', 104]]), qCars.map(([c, i]) => { const k = i >= 0 ? tripOf(i) : -1, sub = (o.subs || {})[c[0]]; return [sub ? { text: c[0], sub } : c[0], typeOf(c), c[1], c[2], i >= 0 ? tripPhoneCell(i, k >= 0 ? trips[k].phones : null) : { text: c[4], sub: c[3] }, k >= 0 ? tripWork(i, trips[k]) : '—', J[c[0]] ? { pill: WSTAT[J[c[0]]] } : k >= 0 ? { text: trips[k].name, sub: 'เพิ่มเข้าแผนเดินทางแล้ว' } : { pill: ['ยังไม่มีแผนเดินทาง', 'Gray'] },   /* 6 พ.ย. 2569 เจ้าของงาน "หลังจากสร้างแผนการเดินทางแล้ว รถที่เพิ่ม จะแสดงว่าถูกเพิ่มแล้ว" */ J[c[0]] ? { menu: 1, items: [MOVE_ITEM] } : { icons: k >= 0 ? ['stylus-24-300-round'] : ['stylus-24-300-round', 'delete-24-300-round'] }]; }), qAll.length > qCars.length ? { pagination: { shown: qCars.length, total: qAll.length } } : {})], 16);
+    await tblShort(TRIP_Q_COLS.concat([['', 104]]), qCars.map(([c, i]) => { const k = i >= 0 ? tripOf(i) : -1, sub = (o.subs || {})[c[0]];
+      /* R82 ช่องตามชุด TRIP_V_COLS (ไม่มีสถานที่) · ยานพาหนะที่เพิ่มเข้าไตรมาส (Q_EXTRA) ยังไม่อยู่ในแผนเดินทาง ⇒ ผู้ดูแลจากข้อมูลยานพาหนะ วันดำเนินการ "—" เรียงตามชุดเดียวกัน */
+      const base = i >= 0 ? tripVCells(i, k >= 0 ? trips[k] : {}, { drop: ['สถานที่บำรุงรักษา'] }) : [c[0], typeOf(c), c[1], c[2], { text: c[4], sub: c[3] }, '—'];
+      if (sub) base[0] = { text: c[0], sub };
+      return base.concat([J[c[0]] ? { pill: WSTAT[J[c[0]]] } : k >= 0 ? { text: trips[k].name, sub: 'เพิ่มเข้าแผนเดินทางแล้ว' } : { pill: ['ยังไม่มีแผนเดินทาง', 'Gray'] },   /* 6 พ.ย. 2569 เจ้าของงาน "หลังจากสร้างแผนการเดินทางแล้ว รถที่เพิ่ม จะแสดงว่าถูกเพิ่มแล้ว" */ J[c[0]] ? { menu: 1, items: [MOVE_ITEM] } : { icons: k >= 0 ? ['stylus-24-300-round'] : ['stylus-24-300-round', 'delete-24-300-round'] }]); }), qAll.length > qCars.length ? { pagination: { shown: qCars.length, total: qAll.length } } : {})], 16);
   const free = qAll.filter(([, i]) => i < 0 || tripOf(i) < 0).length;   // 5 พ.ย. 2569 รีวิว "สามารถสร้างแผนได้จนกว่าจะไม่เหลือรถอยู่แล้ว" ⇒ รถทุกคันอยู่ในแผนเดินทางแล้ว ปุ่มกดไม่ได้
   const sec = col('Section', [await sectionLabel('แผนเดินทาง', { badge: trips.length, buttons: [{ kind: 'Primary button', text: 'สร้างแผนเดินทาง', icon: 'add-24-300-round', disabled: !free }] })], 16);
   if (trips.length) add(sec, await tblShort(TRIP_COLS, trips.map(t => [{ text: t.name, sub: tripPlaces(t) }, t.d1 + ' – ' + t.d2, String(t.sel.length), tripBy(t), { pill: TST[t.st] }, { icons: ['keyboard_arrow_right-20-400-round'] }])), 'h');
   else { const es = inst('Empty state/Data empty'); add(sec, es, 'h'); await text(es, 'Text', 'ยังไม่มีแผนเดินทาง'); await text(es, 'Supporting text', 'สร้างแผนเดินทางเพื่อนัดวันเข้าตรวจ แจ้งเจ้าของยานพาหนะและ กรย.'); const s2 = find(es, 'Secondary button'); if (s2) s2.visible = false; const pb = find(es, 'Primary button'); if (pb) setProps(pb, { Text: 'สร้างแผนเดินทาง', 'Leading icon swap': icon('add-24-300-round') }); }
-  add(page, col('Content', [await vehicleInfo(o.q ? PLAN_KV.map(([k, v]) => k === 'ไตรมาส' ? [k, Q + ' (' + qAll.length + ' คัน)'] : [k, v]) : TRIP_KV, 'รายละเอียดแผน'), cars, sec], 32), 'h');
+  /* อะไหล่ในไตรมาส n (6 พ.ย. 2569 เจ้าของงาน "หน้าที่ รวมรถในไตรมาส จะเป็นรวมแยกตามรายการ ไม่ต้องมีจาก smart inventory" · แทนหน้าความคืบหน้าอะไหล่ S4 เดิม)
+     Section label + Table QPART_COLS (R81) · ดูอย่างเดียว · ยอด = PARTS ของไตรมาสที่กำลังทำ · o.parts = { qty, subs } ไตรมาสอื่น (S25 รวมอะไหล่ของยานพาหนะที่ย้ายมา บรรทัดรองใต้ชนิด) */
+  /* 9 พ.ย. 2569 (ตามเว็บ): รายการที่จำนวนเป็น 0 ไม่แสดง · ไม่เหลือสักรายการ (ยานพาหนะในไตรมาสไม่เบิกอะไหล่ทุกคัน หรือไม่มียานพาหนะ) = Empty state/Data empty
+     ข้อความเดียวกับหัวข้ออะไหล่ในแผนของ S2 (planPartsSec): "ยังไม่มีรายการอะไหล่" / "ไตรมาสนี้ไม่มีอะไหล่ที่ต้องเบิก" · o.parts.qty = [] ⇒ จอว่าง */
+  const pq = o.parts || {}, qParts = PARTS.map((p, x) => [(pq.subs || {})[x] ? { text: p[0], sub: pq.subs[x] } : p[0], p[1], p[2], String(pq.qty ? pq.qty[x] || 0 : p[3]), p[4]]).filter(r => +r[3] > 0);
+  const parts = col('Section', [await sectionLabel('อะไหล่ใน' + Q, { badge: qParts.length }), qParts.length ? await tblShort(QPART_COLS, qParts) : await noParts(Q_PARTS_EMPTY)], 16);
+  add(page, col('Content', [await vehicleInfo(o.q ? PLAN_KV.map(([k, v]) => k === 'ไตรมาส' ? [k, Q + ' (' + qAll.length + ' คัน)'] : [k, v]) : TRIP_KV, 'รายละเอียดแผน'), cars, parts, sec], 32), 'h');
   if (MOB) qCars.forEach(([c], r) => { if (J[c[0]]) moveCard(scr, r, o.moveOff); });   // S25 มือถือ: ปุ่ม "ย้ายไปไตรมาสอื่น" บนการ์ด (Mobile table item Style=Action buttons)
   return scr;
 }
@@ -853,7 +887,15 @@ async function tripList(name, o) {
    3 พ.ย. 2569 เจ้าของงาน: เลือกรถจากรายการรถทั้งหมดของไตรมาส ผ่านปุ่ม "เพิ่มรถ" (popup tripCarModal) · 1 ไตรมาสมีหลายแผนเดินทางได้
    รถที่อยู่ในแผนเดินทางใดแล้วไม่มีให้เลือกในแผนเดินทางถัดไป
    o.sel = รถในแผนเดินทางนี้ (ลำดับใน VEH) · o.locs = สถานที่ที่แก้ { ลำดับรถ: ข้อความ } · o.phones = ผู้ดูแลยานพาหนะที่แก้ { ลำดับรถ: [ชื่อ, เบอร์] } */
-const TRIP_CAR_COLS = [['ทะเบียน', 160, 'Lead text'], ['ประเภทยานพาหนะ', 130], ['ยี่ห้อ/รุ่น', 0], ['หน่วยงานเจ้าของยานพาหนะ', 140], ['ผู้ดูแลยานพาหนะ', 170], ['สถานที่บำรุงรักษา', 200], ['วันดำเนินการ', 190], ['', 104]];   // 6 พ.ย. 2569 + ประเภทยานพาหนะ + วันดำเนินการ (Table 8 คอลัมน์เต็ม)
+const TRIP_CAR_COLS = tripVCols().concat([['', 104]]);   // 6 พ.ย. 2569 + ประเภทยานพาหนะ + วันดำเนินการ (Table 8 คอลัมน์เต็ม) · R82 ชุด TRIP_V_COLS + ไอคอนแก้ไข ลบ
+/* อะไหล่ของแผนเดินทาง (6 พ.ย. 2569 รีวิว S6 "เพิ่ม section ของอะใหล่ ทริปนี้") — ตาราง QPART_COLS ชุดเดียวกับอะไหล่ในไตรมาส (R81) ดูอย่างเดียว รวมจากยานพาหนะในใบ (tripParts)
+   หน้า Create/Edit (ฟอร์ม S6 S9) = Section header + Badge (R3) · หน้า Detail (S7 S8 S10) = Section label "(n)" (R5 R11) · ไม่มียานพาหนะ = Empty state/Data empty "ยังไม่มีรายการอะไหล่" แบบ noParts ของ S1
+   วางต่อจากตารางยานพาหนะในแผนเดินทาง (แบบหัวข้ออะไหล่ในไตรมาส n ของหน้าไตรมาส) */
+const TRIP_PARTS_EMPTY = 'เพิ่มยานพาหนะเข้าแผนเดินทางแล้ว อะไหล่ของยานพาหนะแต่ละคันจะรวมมาที่นี่';
+async function tripPartsSec(sel, detail) {
+  const rows = tripParts(sel), head = detail ? await sectionLabel('อะไหล่ของแผนเดินทาง', { badge: rows.length }) : await section('อะไหล่ของแผนเดินทาง', { badge: rows.length || null });
+  return col('Section', [head, rows.length ? await tblShort(QPART_COLS, rows) : await noParts(TRIP_PARTS_EMPTY)], 16);
+}
 async function tripForm(name, o) {
   o = o || {};
   const v = o.values || {}, E = (m) => o.errors ? m : '';
@@ -861,9 +903,10 @@ async function tripForm(name, o) {
   const { scr, page } = await shell(name, { title: head + ' · ' + NOW_Q, back: true, crumbs: [P[1], NOW_Q, head] });   // 5 พ.ย. 2569 breadcrumb ต่อจากหน้า "ไตรมาส 1"
   const sel = o.sel || [];
   const car = { sec: col('Section', [await section('ยานพาหนะในแผนเดินทาง', { badge: sel.length || null, buttons: [{ kind: 'Secondary button', text: 'เพิ่มยานพาหนะ', icon: 'add-24-300-round' }] })], 16) };
-  if (sel.length) add(car.sec, await tblShort(TRIP_CAR_COLS, sel.map(i => [TRIP_CARS[i][0], typeOf(TRIP_CARS[i]), TRIP_CARS[i][1], TRIP_CARS[i][2], tripPhoneCell(i, o.phones), { text: tripLoc(i, o.locs), sub: (o.locs || {})[i] ? 'แก้จากสำนักงานเจ้าของยานพาหนะ' : 'ค่าเริ่มต้น สำนักงานที่ยานพาหนะอยู่' }, v.d1 ? tripWorkCell(i, { d1: v.d1, d2: v.d2, works: o.works }) : '—', { icons: ['stylus-24-300-round', 'delete-24-300-round'] }])), 'h');
-  else add(car.sec, await noTripCars(), 'h');   // 5 พ.ย. 2569 เลิก Alert "กรุณาเพิ่มรถเข้าแผนเดินทางอย่างน้อย 1 คัน" — ปุ่มยืนยัน Disabled จนกว่าจะมีรถแทน
   const hire = o.mode === 'hire';   // o.mode = 'hire' จ้างดำเนินการ (S9) · ค่าเริ่มต้น ดำเนินการเอง (S6)
+  const ft = { d1: v.d1, d2: v.d2, works: o.works, locs: o.locs, phones: o.phones, hire };   // ค่าในฟอร์ม = ใบแผนเดินทาง (R82 tripVCells) · o.works = วันดำเนินการที่แก้ { ลำดับยานพาหนะ: [ตั้งแต่, ถึง] }
+  if (sel.length) add(car.sec, await tblShort(TRIP_CAR_COLS, sel.map(i => tripVCells(i, ft).concat([{ icons: ['stylus-24-300-round', 'delete-24-300-round'] }]))), 'h');
+  else add(car.sec, await noTripCars(), 'h');   // 5 พ.ย. 2569 เลิก Alert "กรุณาเพิ่มรถเข้าแผนเดินทางอย่างน้อย 1 คัน" — ปุ่มยืนยัน Disabled จนกว่าจะมีรถแทน
   // 3 พ.ย. 2569 เจ้าของงาน: ชื่อแผนเดินทางกับรูปแบบดำเนินการแถวเดียวกันคนละครึ่ง radio เล็ก (เดิม Radio text card เต็มแถว) · mobile เรียงลงตาม row()
   // 6 พ.ย. 2569 เจ้าของงาน "เปลี่ยนคำ กบค ดำเนินการเอง เป็น ดำเนินการเอง"
   const mode = radioGroup('รูปแบบดำเนินการ', ['ดำเนินการเอง', 'จ้างดำเนินการ'], hire ? 1 : 0);
@@ -891,6 +934,7 @@ async function tripForm(name, o) {
     col('Section', [await section(hire ? 'ช่วงวันทำงาน' : 'ช่วงวันเดินทาง'), row('Row', [d1, d2, frame('Spacer', 'VERTICAL')])], 16),
     hire ? null : col('Section', [await section('พนักงานที่เดินทาง', { badge: v.staff && v.staff.length ? v.staff.length + ' คน' : null })].concat(staff, [btn('Secondary button', 'เพิ่มพนักงาน', { icon: 'add-24-300-round' })]), 16),
     car.sec,
+    await tripPartsSec(sel),   // 6 พ.ย. 2569 อะไหล่ของแผนเดินทาง ใต้ตารางยานพาหนะ (R82)
     // 3 พ.ย. 2569 เจ้าของงาน: ค่าเบี้ยเลี้ยง ค่าที่พัก ค่าเดินทาง ไม่กรอกในแผนเดินทางแล้ว ย้ายไปกรอกรายคันตอนปิดงาน (S10) พร้อมเลือกงบ ตั้งต้นศูนย์ต้นทุนของหน่วยงานเจ้าของรถ
     btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', o.edit ? 'ส่งอนุมัติใหม่' : 'ยืนยันการสร้างแผนเดินทาง', { size: 'lg', disabled: !complete }]])
   ], 32), 'h');
@@ -922,11 +966,51 @@ async function thaiDatePicker(dp, months) {   // ตั้ง property แล้
   }
   return dp;
 }
+const TRIP_DATES = { d1: TRIP.d1, d2: TRIP.d2 };   // ช่วงวันเดินทางของฟอร์ม (03–07/11/2569) = ช่วงที่เลือกวันดำเนินการได้ (R83)
 const TRIP_FILLED = { name: 'ตรวจยานพาหนะ ขอนแก่น อุดรธานี ลำปาง', place: TRIP.place, d1: TRIP.d1, d2: TRIP.d2, staff: TRIP.staff, perDiem: TRIP.perDiem, lodging: TRIP.lodging, travel: TRIP.travel };
 /* popup แก้ไขรถในแผนเดินทาง (ไอคอนแก้ไขในแถว) = formModal (Modal Type=Form) 2 ช่อง เบอร์ติดต่อ + สถานที่บำรุงรักษา · ค่าตั้งต้นในช่อง = ค่าปัจจุบันของแถว
    3 พ.ย. 2569 เพิ่มเบอร์ติดต่อ (เดิมแก้แค่สถานที่) · ตัวอย่างแสดงค่าที่กำลังแก้ */
 /* 6 พ.ย. 2569 เจ้าของงาน "ตรงป๊อบอัพ เลยต้องมีให้แก้ชื่อโดย prefill ข้อมูลมาให้" ⇒ 3 ช่อง ผู้ดูแลยานพาหนะ (ค่าเริ่มต้นชื่อผู้ควบคุมรถ) · เบอร์ติดต่อ · สถานที่บำรุงรักษา */
-async function tripCarEdit(scr, i, phones, locs) { await formModal(scr, { title: 'แก้ไขผู้ดูแลยานพาหนะและสถานที่ · ' + TRIP_CARS[i][0], fields: [{ label: 'ผู้ดูแลยานพาหนะ', value: tripCtrl(i, phones) }, { label: 'เบอร์ติดต่อ', value: tripPhone(i, phones) }, { label: 'สถานที่บำรุงรักษา', value: tripLoc(i, locs) }], ok: 'บันทึก' }); }
+/* 6 พ.ย. 2569 รีวิว S6 "เพิ่มการเลือกวันดำเนิน จาก icon แก้ไข ได้ด้วย" + "โดยเลือกได้ไม่เกิน range ของแผนที่กำหนดมาเท่านั้น" + "เลือกซ้ำวันกันได้ เลือกเป็นช่วงวัน" (R83)
+   ⇒ o.trip = ใบแผนเดินทาง/ค่าในฟอร์ม { d1, d2, works, hire|vendor } (ยานพาหนะอยู่ในแผนเดินทาง) — popup หัว "แก้ไขยานพาหนะในแผนเดินทาง · {ทะเบียน}" 4 ช่องใน Modal Type=Form md (Card form row 3 แถว):
+   แถว 1 ผู้ดูแลยานพาหนะ | เบอร์ติดต่อ (Input 1 + Input 2 ของ Card form row) · แถว 2 สถานที่บำรุงรักษา · แถว 3 วันดำเนินการ (ช่วงวันในช่องเดียว "วว/ดด/ปปปป - วว/ดด/ปปปป" ไอคอนปฏิทินนำหน้า
+   แบบ Date range picker / Trip date ของ UI Release#2 หน้า 5.2 Vehicle Management = Text input + Date picker Type=Single แสดงช่วงด้วย Selected day / Day in range) · ค่าเริ่มต้นทั้งช่วงวันเดินทาง (แผนจ้าง = ช่วงวันทำงาน)
+   o.pick = [วันเริ่ม, วันสิ้นสุด] เปิดปฏิทินใต้ช่อง: วันนอกช่วงวันเดินทาง = _Date picker calendar item base State=Disabled (กดไม่ได้) · มือถือไม่วางปฏิทิน (แบบช่องวันที่ของ S6)
+   ไม่มี o.trip (หน้าไตรมาส ยานพาหนะยังไม่อยู่ในแผนเดินทาง) = 3 ช่องแบบเดิม หัว "แก้ไขผู้ดูแลยานพาหนะและสถานที่ · {ทะเบียน}" */
+const TH_MONTH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+const dayOf = (s) => +s.split('/')[0], monthOf = (s) => { const [, m, y] = s.split('/'); return TH_MONTH[+m - 1] + ' ' + y; };
+const workRange = (i, t) => (t.works || {})[i] || [t.d1, t.d2];
+async function tripCarEdit(scr, i, phones, locs, o) {
+  o = o || {};
+  const t = o.trip, plate = TRIP_CARS[i][0];
+  if (!t) { await formModal(scr, { title: 'แก้ไขผู้ดูแลยานพาหนะและสถานที่ · ' + plate, fields: [{ label: 'ผู้ดูแลยานพาหนะ', value: tripCtrl(i, phones) }, { label: 'เบอร์ติดต่อ', value: tripPhone(i, phones) }, { label: 'สถานที่บำรุงรักษา', value: tripLoc(i, locs) }], ok: 'บันทึก' }); return; }
+  const w = o.pick || workRange(i, t);
+  await formModal(scr, { title: 'แก้ไขยานพาหนะในแผนเดินทาง · ' + plate, fields: [{ pair: [{ label: 'ผู้ดูแลยานพาหนะ', value: tripCtrl(i, phones) }, { label: 'เบอร์ติดต่อ', value: tripPhone(i, phones) }] },
+    { label: 'สถานที่บำรุงรักษา', value: tripLoc(i, locs) }, { label: 'วันดำเนินการ', value: w[0] + ' - ' + w[1] }], ok: 'บันทึก' });
+  const inp = scr.findAll(n => n.type === 'INSTANCE' && n.name === 'Text input' && propVal(n, 'Label text') === 'วันดำเนินการ').pop();
+  if (!inp) { warn('popup แก้ไขยานพาหนะในแผนเดินทาง', 'ไม่พบช่องวันดำเนินการ'); return; }
+  setProps(inp, { 'Leading icon': true, 'Leading icon swap': icon('calendar_month-24-300-round') });
+  if (!o.pick) return;
+  const val = w[0] + ' - ' + w[1];
+  setProps(inp, { State: 'Focused' }); setProps(inp, { Text: val, 'Show Placeholder': false, 'Leading icon': true, 'Leading icon swap': icon('calendar_month-24-300-round') });   // เปลี่ยน variant แล้วใส่ค่าซ้ำ (ชั้นข้อความกลับเป็นค่าตั้งต้นของ variant)
+  { const ct = find(inp, 'Container'), tv = ct && ct.findOne(n => n.type === 'TEXT' && n.visible !== false); if (tv && tv.characters !== val) await text(ct, tv, val); }
+  if (MOB) return;
+  const dp = await rangeDays(await thaiDatePicker(inst('Date picker', { Type: 'Single' }, { 'Time picker': false }), [monthOf(t.d1)]), dayOf(t.d1), dayOf(t.d2), dayOf(w[0]), dayOf(w[1]));
+  overlay(scr, dp, 0, 0);
+  pin(() => { const sb = scr.absoluteBoundingBox, ab = inp.absoluteBoundingBox; dp.x = ab.x - sb.x; const below = ab.y - sb.y + ab.height + 4; dp.y = below + dp.height > VH() ? ab.y - sb.y - dp.height - 4 : below; });   // ใต้ช่อง · ล้นขอบล่างของจอให้ขึ้นเหนือช่อง
+}
+/* ช่วงวันในปฏิทิน Date picker (ตาม Date picker Type=Dual ของไฟล์ Component + Date range picker / Trip date ของ UI Release#2): วันเริ่มและวันสิ้นสุด = Type "Selected day" · ระหว่างนั้น = "Day in range"
+   วันนอกช่วงที่เลือกได้ (lo..hi = ช่วงวันเดินทาง) = Type "Day" State "Disabled" · วันของเดือนถัดไปที่ไลบรารีตั้ง Disabled ไว้แล้วไม่แตะ · ตำแหน่งวันในตารางคงตามไลบรารี (แบบ thaiDatePicker) */
+async function rangeDays(dp, lo, hi, a, b) {
+  for (const n of dp.findAll(x => x.type === 'INSTANCE' && x.name === '_Date picker calendar item base')) {
+    const tl = n.findAll(x => x.type === 'TEXT' && x.name === 'Text' && x.visible !== false)[0], d = +((tl ? tl.characters : ptext(n)) || '').trim();
+    if (!d || propVal(n, 'State') === 'Disabled') continue;   // ชื่อวัน (จ. อ. …) และวันของเดือนถัดไป
+    const out = d < lo || d > hi, ends = d === a || d === b, mid = d > a && d < b;
+    setProps(n, { Type: out ? 'Day' : ends ? 'Selected day' : mid ? 'Day in range' : 'Day', State: out ? 'Disabled' : 'Default' });
+    setProps(n, { 'Left connector': mid || (ends && d === b && a !== b), 'Right connector': mid || (ends && d === a && a !== b), Indicator: false });
+  }
+  return dp;
+}
 async function noTripCars() { const es = inst('Empty state/Data empty'); await text(es, 'Text', 'ยังไม่มียานพาหนะในแผนเดินทาง'); await text(es, 'Supporting text', 'กดเพิ่มยานพาหนะเพื่อเลือกยานพาหนะของ' + NOW_Q + ' ที่ยังไม่อยู่ในแผนเดินทางใด'); const a = find(es, 'Actions'); if (a) a.visible = false; return es; }
 /* popup เพิ่มรถเข้าแผนเดินทาง (3 พ.ย. 2569 เจ้าของงาน "รายการรถทั้งหมดที่อยู่ในแผนไตรมาสนั้น โดยมีปุ่มให้เพิ่มรถเข้าแผนการเดินทาง")
    ตามโครง Modal Type=Card list Size=xl "เลือกยานพาหนะ" ของไฟล์ Component (Modal header + Table header ค้นหา + เนื้อหา ขอบใน 24 ระยะ 24 มุม 12)
@@ -996,7 +1080,7 @@ const JOB_T = tripAs(TRIP_1, 'approved'), JOB_I = TRIP_1.sel[0];
 const JOB_START = '04/11/2569 08:42 น.', JOB_END = '04/11/2569 11:15 น.', JOB_BY = TRIP.staff[0] + ' (กบค.)';
 const JOB_MIX = { [TRIP_1.sel[0]]: 'done', [TRIP_1.sel[1]]: 'doing', [TRIP_1.sel[2]]: 'cannot' };   // หลังปิดงานคันแรก: คันที่ 2 กำลังทำ · คันที่ 3 บำรุงรักษาไม่ได้ · คันที่ 4 ยังไม่เริ่ม
 const JOB_CANNOT = 'ยานพาหนะติดภารกิจซ่อมสายส่งฉุกเฉิน ไม่อยู่ที่จุดนัดในวันเดินทาง';
-const TRIP_JOB_COLS = [['ทะเบียน', 190, 'Lead text'], ['ยี่ห้อ/รุ่น', 0], ['ผู้ดูแลยานพาหนะ', 190], ['สถานที่บำรุงรักษา', 260], ['สถานะงาน', 320, 'Badge'], ['', 72]];   // 320 = สองป้าย (สถานะ + ผลน้ำมัน · 4 พ.ย. 2569)
+const TRIP_JOB_COLS = tripVCols({ unitSub: true }).concat([['สถานะงาน', 260, 'Badge'], ['', 72]]);   // R82 ชุด TRIP_V_COLS (หน่วยงานเป็นบรรทัดรองของทะเบียน ให้พอ 8 คอลัมน์) + สถานะงาน + ปุ่ม … · 260 = สองป้าย (สถานะ + ผลน้ำมัน · 4 พ.ย. 2569 เดิม 320)
 /* ปุ่ม "…" ท้ายแถวรถ (3 พ.ย. 2569 เจ้าของงาน "คอลัมน์สุดท้ายอยากได้เป็นจุดสามจุดที่กดไปมีดูรายละเอียด แก้ไข และลบ") แบบเมนูรายการแผน S19 S20 (planMenu)
    รายการตามสถานะงาน (เสนอ): ยังไม่เริ่ม = ดูรายละเอียด แก้ไข ลบ · อยู่ระหว่างบำรุงรักษา = ดูรายละเอียด แก้ไข · เสร็จสิ้น / บำรุงรักษาไม่ได้ = ดูรายละเอียด
    แก้ไข = popup แก้เบอร์ติดต่อและสถานที่ (tripCarEdit เดียวกับ S6) · ลบ = ยืนยันแล้วเอารถออกจากแผนเดินทาง */
@@ -1013,16 +1097,42 @@ async function tripDetail(name, o) {   // หน้ารายละเอี�
   const total = t.sel.length - cnt('cannot'), counter = 'ตรวจแล้ว ' + cnt('done') + '/' + total;
   const prog = 'เสร็จสิ้น ' + cnt('done') + ' จาก ' + total + ' คัน' + [['doing', 'อยู่ระหว่างบำรุงรักษา', ''], ['cannot', 'บำรุงรักษาไม่ได้', ' (ไม่นับรวม)']]
     .map(([k, l, x]) => cnt(k) ? ' · ' + l + ' ' + cnt(k) + x : '').join('');
-  const { scr, page } = await shell(name, { title: t.name, back: true, crumbs: [P[1], NOW_Q, t.name], badge: TST.approved });   // 5 พ.ย. 2569 ต่อจากหน้า "ไตรมาส 1"
-  const rows = t.sel.map(i => [{ text: TRIP_CARS[i][0], sub: TRIP_CARS[i][2] }, TRIP_CARS[i][1], tripPhoneCell(i, t.phones), tripLoc(i, t.locs), st(i) === 'done' && (o.oil || {})[i] ? { pills: [WSTAT.done, OIL_TAG[o.oil[i]]], pillsHead: 'ผลตรวจน้ำมัน' } : { pill: WSTAT[st(i)] }, { menu: 1, items: JOB_MENU[st(i)] }]);   // o.oil = { ลำดับรถ: wait|fail } ป้ายผลน้ำมันต่อจากสถานะ (S12 · 4 พ.ย. 2569)
+  const { scr, page } = await shell(name, { title: t.name, back: true, crumbs: [P[1], NOW_Q, t.name], badge: TST.approved, actions: [TRIP_EXPORT_BTN] });   // 5 พ.ย. 2569 ต่อจากหน้า "ไตรมาส 1" · 6 พ.ย. 2569 ปุ่มส่งออกที่หัวหน้า (R84)
+  const rows = t.sel.map(i => tripVCells(i, t, { unitSub: true }).concat([st(i) === 'done' && (o.oil || {})[i] ? { pills: [WSTAT.done, OIL_TAG[o.oil[i]]], pillsHead: 'ผลตรวจน้ำมัน' } : { pill: WSTAT[st(i)] }, { menu: 1, items: JOB_MENU[st(i)] }]));   // o.oil = { ลำดับรถ: wait|fail } ป้ายผลน้ำมันต่อจากสถานะ (S12 · 4 พ.ย. 2569)
   add(page, col('Content', [await vehicleInfo(tripKv(t).concat([['ความคืบหน้า', prog]]), 'รายละเอียดแผนเดินทาง'),
     // ตัวนับ = Badge outline ใน Section header แบบ "รายการยานพาหนะในสัญญา" + Badge "2 รายการ" หน้า 5.1 Rental Contract Management ของ UI Release#2 (Section label ไม่มีช่อง Badge)
-    col('Section', [await section('ยานพาหนะในแผนเดินทาง', { badge: counter }), await tblShort(TRIP_JOB_COLS, rows)], 16)], 32), 'h');
+    col('Section', [await section('ยานพาหนะในแผนเดินทาง', { badge: counter }), await tblShort(TRIP_JOB_COLS, rows)], 16),
+    await tripPartsSec(t.sel, true)], 32), 'h');   // 6 พ.ย. 2569 อะไหล่ของแผนเดินทาง (R82)
   const i0 = t.sel[0];
   if (o.menu) planMenu(scr, JOB_MENU[st(i0)]);   // ใบจ้างก็เป็นเมนูของ กบค. ชุดเดียวกัน (มุมผู้รับจ้างตัดออกพร้อม S23 4 พ.ย. 2569)
-  if (o.edit) await tripCarEdit(scr, i0, t.phones, t.locs);
+  if (o.edit) await tripCarEdit(scr, i0, t.phones, t.locs, { trip: t });   // 6 พ.ย. 2569 popup มีวันดำเนินการด้วย (R83)
   if (o.del) await confirm(scr, CAR_REMOVE_CONFIRM(TRIP_CARS[i0]));
+  if (o.exportPdf != null) await tripExport(scr, o.exportPdf, t);   // R84 popup ส่งออกแผนเดินทาง
   return scr;
+}
+/* ---------- ส่งออกแผนเดินทาง (R84 · 6 พ.ย. 2569 เจ้าของงาน "ตอน export ก็เกี่ยวข้องด้วย" · plan.md "ปุ่มส่งออก PDF/Excel ข้อมูลทั้งหน้า (แนบเอกสารยืมยานพาหนะ)") ----------
+   ปุ่ม Secondary button "ส่งออก" ไอคอน download ที่หัวหน้ารายละเอียดแผนเดินทาง (กรอบ Actions ข้าง Page header แบบปุ่มส่งออกของ S18 Overhaul R32 · ส่งออกไม่แก้ข้อมูล ฝั่งดูอย่างเดียว S8 ก็มี)
+   popup = exportModal ชุดเดียวกับ S4 (Radio text card รูปแบบไฟล์ PDF / Excel) · ไม่มีการ์ดขอบเขต เพราะส่งออกใบเดียวทั้งหน้า · สำเร็จ = toast ขวาบน "ส่งออกไฟล์สำเร็จ" (คำเดียวกับ S4 และ Overhaul)
+   ไฟล์ = docFrame ชุดเดียวกับ S4: PDF A4 2 หน้า (รายละเอียด + ยานพาหนะ · อะไหล่) · Excel 2 ชีต (ยานพาหนะ · อะไหล่) · คอลัมน์ = TRIP_V_COLS (R82) และ QPART_COLS (R81) ชุดเดียวกับจอ */
+const TRIP_EXPORT_BTN = ['Secondary button', 'ส่งออก', 'download-24-300-round'];
+const TRIP_SHEETS = ['ยานพาหนะในแผนเดินทาง', 'อะไหล่ของแผนเดินทาง'];
+async function tripExport(scr, pdf, t) {
+  return exportModal(scr, pdf, { title: 'ส่งออกแผนเดินทาง', sub: t.name + ' · รายละเอียดแผนเดินทาง ยานพาหนะ ' + t.sel.length + ' คัน และอะไหล่ของแผนเดินทาง' });
+}
+const tripDocHead = (t, page) => [sectionLabel('แผนเดินทาง · ' + t.name + ' · หน้า ' + page + '/2'), kv([['หน่วยงานที่ออกเอกสาร', CREATOR.replace(/^.*\((.*)\)$/, '$1')], ['แผน', P[0] + ' ' + P[1]], ['พิมพ์เมื่อ', '06/11/2569 10:30 น.'], ['ผู้พิมพ์', CREATOR]], 4)];
+async function tripPdf(name, page, t) {
+  t = t || JOB_T;
+  return docFrame(name, 794, 1123, async () => {
+    const [h, k] = tripDocHead(t, page), parts = tripParts(t.sel);
+    if (page === 2) return [await h, k, col('Section', [await sectionLabel('อะไหล่ของแผนเดินทาง', { badge: parts.length }), await tblShort(QPART_COLS, parts)], 12)];
+    return [await h, k, col('Section', [await sectionLabel('รายละเอียดแผนเดินทาง'), kv(tripKv(t), 4)], 12),
+      col('Section', [await sectionLabel('ยานพาหนะในแผนเดินทาง', { badge: t.sel.length }), await tblShort(tripVCols({ unitSub: true, fill: true }), t.sel.map(i => tripVCells(i, t, { unitSub: true })))], 12)];   // A4 กว้างไม่พอ 7 คอลัมน์ ⇒ หน่วยงานเป็นบรรทัดรองของทะเบียน
+  });
+}
+async function tripXls(name, sheet, t) {
+  t = t || JOB_T;
+  return docFrame(name, 1440, 1024, async () => [await tabs(TRIP_SHEETS.map(s => [s, null]), sheet),
+    sheet === 0 ? await tblShort(tripVCols(), t.sel.map(i => tripVCells(i, t))) : await tblShort(QPART_COLS, tripParts(t.sel))]);
 }
 /* S12 ผลการทดสอบน้ำมันไฮโดรลิก — 4 พ.ย. 2569 เจ้าของงาน "ไม่ได้อยากเป็น popup อยากได้เป็นส่วนหนึ่งของ flow เลย เช่น ถ้าเลือก เก็บตัวอย่างน้ำมันไฮดรอลิก ก็จะ มีให้เลือกเก็บผล แต่เป็น optional"
    + "ตอนนี้อยากให้ทางเข้าคือทางเดียวคือดูรายละเอียดแล้วเพิ่มในส่วนของรายละเอียด" ⇒ ใส่ผลได้ในหน้าปิดงาน (ไม่บังคับ) หรือภายหลังที่ section ในหน้างานรายคันที่เสร็จสิ้น · เลิก popup และเมนู "ผลการทดสอบน้ำมันไฮโดรลิก"
@@ -1616,8 +1726,9 @@ const GO = { icons: ['keyboard_arrow_right-20-400-round'] };
 /* ---------- S7 ผู้อนุมัติ ตรวจสอบและอนุมัติแผนเดินทาง (3 พ.ย. 2569) ----------
    เจ้าของงาน "s7 เป็นเรื่องอนุมัติแผนการเดินทาง" + หน้าอนุมัติแบบเดียวกับ S2 (radio อนุมัติ ค่าเริ่มต้น / ส่งกลับแก้ไข + เหตุผล) · ผู้อนุมัติตามสายงานจาก API getUpperLower (Q45)
    ตาม `Radio text card` + `Section label` + `Table` ของไฟล์ Component · หน้า Detail ⇒ Section label (R3) */
-const TRIP_VIEW_COLS = [['ทะเบียน', 200, 'Lead text'], ['ยี่ห้อ/รุ่น', 0], ['หน่วยงานเจ้าของยานพาหนะ', 200], ['สถานที่บำรุงรักษา', 330]];
-const tripCarRows = (t, only) => t.sel.filter(i => !only || TRIP_CARS[i][2] === only).map(i => [TRIP_CARS[i][0], TRIP_CARS[i][1], TRIP_CARS[i][2], { text: tripLoc(i, t.locs), sub: t.locs[i] ? 'แก้จากสำนักงานเจ้าของยานพาหนะ' : 'ค่าเริ่มต้น สำนักงานที่ยานพาหนะอยู่' }]);
+const TRIP_VIEW_COLS = tripVCols();   // R82 ชุดเดียวกับฟอร์มแผนเดินทาง ดูอย่างเดียว (6 พ.ย. 2569 + ประเภทยานพาหนะ · ผู้ดูแลยานพาหนะ · วันดำเนินการ · เดิม ทะเบียน ยี่ห้อ/รุ่น หน่วยงาน สถานที่)
+const tripCarIdx = (t, only) => t.sel.filter(i => !only || TRIP_CARS[i][2] === only);   // only = หน่วยงานเจ้าของยานพาหนะ (S8 ฝั่งหน่วยงานเห็นเฉพาะยานพาหนะของตน)
+const tripCarRows = (t, only) => tripCarIdx(t, only).map(i => tripVCells(i, t));
 const tripKv = (t, more) => [['ชื่อแผนเดินทาง', t.name], ['แผน', P[0] + ' ' + P[1]], ['ไตรมาส', NOW_Q], ['รูปแบบดำเนินการ', t.vendor ? 'จ้างดำเนินการ' : 'ดำเนินการเอง']].concat(t.vendor
   ? [['ผู้รับจ้าง', t.vendor], ['เลขที่สัญญา/ใบสั่งจ้าง', t.contract || '-'], ['ช่วงวันทำงาน', t.d1 + ' – ' + t.d2]]   // S9 แผนจ้าง: ไม่มีพนักงาน กบค. และค่าใช้จ่าย
   : [['ช่วงวันเดินทาง', t.d1 + ' – ' + t.d2], ['พนักงานที่เดินทาง', TRIP.staff.join(', ')]], [['ผู้สร้าง', CREATOR], ['วันที่ส่ง', '03/11/2569']], more || []);   // ค่าใช้จ่ายย้ายไปปิดงานรายคัน (3 พ.ย. 2569)
@@ -1631,7 +1742,8 @@ async function tripReview(name, o) {   // o.decision = 'return' · o.reason · o
   const { scr, page } = await shell(name, { title: 'ตรวจสอบแผนเดินทาง', back: true, crumbs: ['แผนเดินทางรออนุมัติ', t.name], badge: TST[o.status || 'review'] });
   // 5 พ.ย. 2569 ทำตาม S2 (รีวิวทีมออกแบบ) ให้สอดคล้อง: ผลการพิจารณาบนสุด ไม่มีค่าเริ่มต้น · อนุมัติแล้วแสดงแค่ toast ไม่มี Alert ซ้ำ
   const d = o.status === 'approved' ? null : await decisionSection(o, 'แผนเดินทางผ่านการตรวจสอบ แจ้งเจ้าของยานพาหนะและ กรย.', 'แจ้งเหตุผลให้ กบค. แก้ไขแผนเดินทางแล้วส่งใหม่');
-  const nodes = (d ? [d.dec] : []).concat([await vehicleInfo(tripKv(t), 'รายละเอียดแผนเดินทาง'), col('Section', [await sectionLabel('ยานพาหนะในแผนเดินทาง', { badge: t.sel.length }), await tblShort(TRIP_VIEW_COLS, tripCarRows(t))], 16)]);
+  const nodes = (d ? [d.dec] : []).concat([await vehicleInfo(tripKv(t), 'รายละเอียดแผนเดินทาง'), col('Section', [await sectionLabel('ยานพาหนะในแผนเดินทาง', { badge: t.sel.length }), await tblShort(TRIP_VIEW_COLS, tripCarRows(t))], 16),
+    await tripPartsSec(t.sel, true)]);   // 6 พ.ย. 2569 อะไหล่ของแผนเดินทาง ให้ผู้อนุมัติเห็นชุดเดียวกับฟอร์ม (R82)
   if (d) nodes.push(btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันผลการพิจารณา', { size: 'lg', disabled: !d.ok }]]));
   add(page, col('Content', nodes, 32), 'h');
   return scr;
@@ -1679,10 +1791,11 @@ const TRIP_SEEN_COLS = [['ชื่อแผนเดินทาง', 0, 'Lead 
 const tripSeenList = (name, own) => roleList(name, { title: 'แผนเดินทางบำรุงรักษา', search: 'ค้นหาชื่อแผนเดินทาง, ทะเบียน', cols: TRIP_SEEN_COLS, rows: [[{ text: TRIP_1.name, sub: P[0] + ' · ' + NOW_Q }, TRIP_1.d1 + ' – ' + TRIP_1.d2, String(own ? ownCars(TRIP_1).length : TRIP_1.sel.length), { pill: TST.approved }, GO]] });
 async function tripView(name, own) {   // ดูอย่างเดียว · own = หน่วยงานเจ้าของรถ (เฉพาะรถของตน)
   const t = tripAs(TRIP_1, 'approved');
-  const { scr, page } = await shell(name, { title: t.name, back: true, crumbs: ['แผนเดินทางบำรุงรักษา', t.name], badge: TST.approved });
+  const { scr, page } = await shell(name, { title: t.name, back: true, crumbs: ['แผนเดินทางบำรุงรักษา', t.name], badge: TST.approved, actions: [TRIP_EXPORT_BTN] });   // 6 พ.ย. 2569 ส่งออกได้ เพราะไม่แก้ข้อมูล (แบบ viewActions ของ S18 Overhaul · R84)
   const kv = [['ชื่อแผนเดินทาง', t.name], ['แผน', P[0] + ' ' + P[1]], ['ไตรมาส', NOW_Q], ['ช่วงวันเดินทาง', t.d1 + ' – ' + t.d2], ['พนักงานที่เดินทาง', TRIP.staff.join(', ')], ['ผู้สร้าง', CREATOR], ['อนุมัติเมื่อ', '04/11/2569']];
-  const rows = tripCarRows(t, own ? OWN_UNIT : null);
-  add(page, col('Content', [await vehicleInfo(kv, 'รายละเอียดแผนเดินทาง'), col('Section', [await sectionLabel(own ? 'ยานพาหนะของหน่วยงานในแผนเดินทาง' : 'ยานพาหนะในแผนเดินทาง', { badge: rows.length }), await tblShort(TRIP_VIEW_COLS, rows)], 16)], 32), 'h');
+  const idx = tripCarIdx(t, own ? OWN_UNIT : null), rows = tripCarRows(t, own ? OWN_UNIT : null);
+  add(page, col('Content', [await vehicleInfo(kv, 'รายละเอียดแผนเดินทาง'), col('Section', [await sectionLabel(own ? 'ยานพาหนะของหน่วยงานในแผนเดินทาง' : 'ยานพาหนะในแผนเดินทาง', { badge: rows.length }), await tblShort(TRIP_VIEW_COLS, rows)], 16),
+    await tripPartsSec(idx, true)], 32), 'h');   // 6 พ.ย. 2569 อะไหล่ของแผนเดินทาง (R82) · ฝั่งหน่วยงานรวมเฉพาะยานพาหนะของตน
   return scr;
 }
 
@@ -1727,7 +1840,7 @@ async function planPartsSec(q) {
   const rows = planQParts(q);
   const sec = col('Section', [await sectionLabel('อะไหล่ในแผน'), await tabs(QUARTERS.map((t, k) => [t, planQParts(k + 1).length]), q - 1)], 16);
   if (rows.length) add(sec, await tblShort(QPART_COLS, rows), 'h');
-  else add(sec, await noParts('ไตรมาสนี้ไม่มีอะไหล่ที่ต้องเบิก'), 'h');
+  else add(sec, await noParts(Q_PARTS_EMPTY), 'h');   // ข้อความชุดเดียวกับหัวข้ออะไหล่ในไตรมาส n ของหน้าไตรมาส
   return sec;
 }
 /* อนุมัติสำเร็จ (5 พ.ย. 2569 รีวิว): "แสดง Toast ด้านบนขวา · ไม่ต้องแสดง Alert อนุมัติแผนแล้ว ซ้ำ ให้แสดงแค่ Toast · สถานะ รออนุมัติ > อนุมัติแล้ว · Section ผลการพิจารณา หายไป" ⇒ o.status = 'approved' ไม่มี Alert ไม่มีส่วนผลการพิจารณาและแถวปุ่ม */
@@ -2076,6 +2189,11 @@ const MOVE_Q2_BASE = [30, 6, 6, 6, 2];
 const MOVE_PART_OF = WORK.map(w => PARTS.findIndex(p => p[0] === w[1]));
 const MOVE_Q2_QTY = MOVE_Q2_BASE.map((n, i) => { const k = MOVE_PART_OF.indexOf(i); return n + (k >= 0 ? +WORK[k][2] : 0); });
 const MOVE_Q2_SUBS = Object.fromEntries(MOVE_PART_OF.map((i, k) => [i, 'รวม ' + WORK[k][2] + ' ' + WORK[k][4] + ' ของ ' + MOVE_CAR[0] + ' ที่ย้ายมา']));
+/* 9 พ.ย. 2569 (เว็บเจอตอนตาม Figma): X.8 กับ X.9 เป็นหน้าไตรมาส 2 หน้าเดียวกัน ⇒ ยานพาหนะและอะไหล่ในไตรมาสชุดเดียวกัน (MOVE_Q2_QTY · เดิม X.8 ใช้ยอดไตรมาส 1 ของ PARTS · X.9 เรียก moveQuarter(…, 2) ได้หน้าไตรมาส 3)
+   ไตรมาส 3 และ 4 (กรณี X.5 X.10) = อะไหล่ตามแผนของยานพาหนะคันที่ย้าย (WORK) + ไส้กรอง 3 รายการของ 81-3348 พะเยา ในไตรมาส 3 (ค่าสมมติ) */
+const MOVE_Q2_PAGE = { q: qName(MOVE_TO), cars: [[MOVE_CAR.concat([OWNER_PH[MOVE_I], CTRL_NAME[MOVE_I]]), -1]].concat(MOVE_Q2.map(c => [c, -1])), subs: { [MOVE_CAR[0]]: 'ย้ายมาจาก' + NOW_Q }, parts: { qty: MOVE_Q2_QTY, subs: MOVE_Q2_SUBS } };
+const MOVE_CAR_QTY = PARTS.map((_, i) => { const k = MOVE_PART_OF.indexOf(i); return k >= 0 ? +WORK[k][2] : 0; });
+const MOVE_Q3_QTY = MOVE_CAR_QTY.map((n, i) => n + (CAR_PICK.indexOf(i) >= 0 ? CAR_QTY[i] : 0));
 function moveMenu(scr, row, off) {   // เมนู "…" ใต้ปุ่มของแถวที่ row (ลำดับแถวในตารางรถของไตรมาส) · off = ไตรมาสสุดท้าย รายการกดไม่ได้
   const cells = scr.findAll(n => n.type === 'INSTANCE' && n.name === 'Table cell' && n.variantProperties && n.variantProperties.Style === 'Action icons');
   const m = menuAt(scr, cells[row], [MOVE_ITEM]);
@@ -2108,8 +2226,9 @@ async function moveModal(scr, o) {
 /* หน้าไตรมาสของ S25: q = ลำดับไตรมาส (0 = ไตรมาส 1 ข้อมูลของ S6) */
 async function moveQuarter(name, q, o) {
   o = o || {};
-  if (q === 2) return tripList(name, Object.assign({ q: qName(2), cars: [[MOVE_CAR, MOVE_I], [MOVE_Q3_OTHER, -1]], trips: [MOVE_T3], jobs: MOVE_JOB }, o));
-  if (q === 3) return tripList(name, Object.assign({ q: qName(3), cars: [[MOVE_CAR, MOVE_I]], trips: [MOVE_T4], jobs: MOVE_JOB, moveOff: true }, o));
+  if (q === 1) return tripList(name, Object.assign({}, MOVE_Q2_PAGE, o));   // หน้าไตรมาส 2 หลังย้าย (X.8 X.9)
+  if (q === 2) return tripList(name, Object.assign({ q: qName(2), cars: [[MOVE_CAR, MOVE_I], [MOVE_Q3_OTHER, -1]], trips: [MOVE_T3], jobs: MOVE_JOB, parts: { qty: MOVE_Q3_QTY } }, o));
+  if (q === 3) return tripList(name, Object.assign({ q: qName(3), cars: [[MOVE_CAR, MOVE_I]], trips: [MOVE_T4], jobs: MOVE_JOB, moveOff: true, parts: { qty: MOVE_CAR_QTY } }, o));
   return tripList(name, Object.assign({ trips: [JOB_T], jobs: MOVE_JOB }, o));
 }
 
@@ -2153,14 +2272,16 @@ const SCENARIOS = [
     ['จัดครบทุกคันแต่ยังกำหนดอะไหล่ไม่ครบ — ปุ่มบันทึกและส่งอนุมัติกดไม่ได้', () => planForm('S1 อะไหล่ยังไม่ครบ', Object.assign({ values: FILLED, alloc: A_ALL, picks: { 0: CAR_PICK }, oils: { 0: 1 }, q: 1 }, R2))],
     ['จัดครบและกำหนดอะไหล่ครบทุกคัน — ปุ่มบันทึกและส่งอนุมัติกดได้', () => planForm('S1 ครบทุกคัน', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 2 }, R2))],
     /* 6 พ.ย. 2569 เจ้าของงาน "กบค แค่เห็นแผนทั้งหมด" ⇒ รายการแผนทุกหน่วยงาน ไม่มีปุ่มสร้างแผน · เมนู … เหลือดูรายละเอียด · รายละเอียดแผนไม่มีปุ่ม (แบบ R30 ของ Overhaul ซ่อนปุ่มที่ทำไม่ได้) */
-    // 6 พ.ย. 2569 เมนู … ของยานพาหนะแต่ละคัน (ดูรายละเอียด แก้ไข ลบ) — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน
+    ['กบค. — รายการแผนทุกหน่วยงาน สร้างแผนได้ แผนหน่วยงานอื่นดูอย่างเดียว', () => listScreen('S1 กบค. รายการแผน', { rows: [NEW_PLAN].concat(PLANS), view: 'กบค.' })],
+    ['กบค. — รายละเอียดแผนของหน่วยงานอื่น ดูอย่างเดียว', () => planDetail('S1 กบค. รายละเอียดแผน', { status: 'approved', readonly: true })],
+    // 6 พ.ย. 2569 (ต่อท้าย A.33–A.37) เมนู … ของยานพาหนะแต่ละคัน (ดูรายละเอียด แก้ไข ลบ) — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน
     ['แท็บไตรมาส 1 — กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด แก้ไข ลบ', async () => { const s = await planForm('S1 เมนูของยานพาหนะ', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }, R2)); planMenu(s, Q_MENU); return s; }],
     ['เมนู … → ดูรายละเอียด — อะไหล่ของยานพาหนะคันนี้ ดูอย่างเดียว', () => carPartsView('S1 ดูอะไหล่ของยานพาหนะ', 0)],
     ['เมนู … → ลบ — ยืนยันเอายานพาหนะออกจากไตรมาส', async () => { const s = await planForm('S1 ยืนยันเอาออกจากไตรมาส', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }, R2)); await confirm(s, Q_OUT_CONFIRM(CAND[0], 1)); return s; }],
     ['เอาออกแล้ว — ยานพาหนะกลับเป็นยังไม่จัด ปุ่มบันทึกและส่งอนุมัติกดไม่ได้', async () => { const al = Object.assign({}, A_ALL); delete al[0]; const s = await planForm('S1 เอาออกจากไตรมาสแล้ว', Object.assign({ values: FILLED, alloc: al, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }, R2)); notify(s, 'เอายานพาหนะออกจากไตรมาส 1 สำเร็จ'); return s; }],
-    ['กบค. — รายการแผนทุกหน่วยงาน สร้างแผนได้ แผนหน่วยงานอื่นดูอย่างเดียว', () => listScreen('S1 กบค. รายการแผน', { rows: [NEW_PLAN].concat(PLANS), view: 'กบค.' })],
     ['รายการแผน — กดตัวกรอง แผงตัวกรอง เขต หน่วยงานหน้างาน (กบค.)', () => listScreen('S1 กบค. ตัวกรองรายการแผน', { rows: [NEW_PLAN].concat(PLANS), view: 'กบค.', filter: { units: ['กกฟ.1'], open: 'unit' } })],
-    ['กบค. — รายละเอียดแผนของหน่วยงานอื่น ดูอย่างเดียว', () => planDetail('S1 กบค. รายละเอียดแผน', { status: 'approved', readonly: true })]]],
+    // 9 พ.ย. 2569 เจ้าของงาน "หน้าอะใหล่ทั้งไตรมาส ต้องรวมมาให้ด้วย ทั้งไตรมาส" — ต่อท้ายบล็อก (A.38) รหัสจอเดิมไม่เลื่อน
+    ['แท็บทั้งหมด — อะไหล่ทุกไตรมาส รวมอะไหล่ของยานพาหนะทุกคันที่จัดลงไตรมาสแล้ว', () => planForm('S1 อะไหล่ทุกไตรมาส', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW }, R2))]]],
   /* S2 ปรับ 5 พ.ย. 2569 (รีวิวทีมออกแบบ): ผลการพิจารณาบนสุด ไม่มีค่าเริ่มต้น · อนุมัติสำเร็จแสดงแค่ toast ขวาบน สถานะอนุมัติแล้ว ส่วนผลการพิจารณาหาย */
   ['S2 · ผู้อนุมัติ ตรวจสอบและอนุมัติแผนบำรุงรักษา', [
     ['รายการแผนรออนุมัติ', () => roleList('S2 แผนรออนุมัติ', { title: 'แผนรออนุมัติ', search: 'ค้นหาชื่อแผน, ผู้สร้าง', cols: REVIEW_COLS, rows: REVIEW_ROWS.map(reviewRow) })],
@@ -2199,24 +2320,27 @@ const SCENARIOS = [
     ['ฟอร์มสร้างแผนเดินทาง (ว่าง)', () => tripForm('S6 ฟอร์มแผนเดินทาง', {})],
     ['กดเพิ่มยานพาหนะ — popup ยานพาหนะทุกคันของไตรมาส', () => tripForm('S6 popup เพิ่มยานพาหนะ', { modal: { pool: TRIP_ALL, ticked: TRIP_SEL } })],
     ['เพิ่มยานพาหนะแล้ว — สถานที่ตั้งต้นสำนักงานที่ยานพาหนะอยู่', () => tripForm('S6 เพิ่มยานพาหนะแล้ว', { sel: TRIP_SEL })],
-    ['แก้ไขผู้ดูแลยานพาหนะและสถานที่บำรุงรักษาของยานพาหนะ', async () => { const s = await tripForm('S6 แก้ผู้ดูแลและสถานที่', { sel: TRIP_SEL }); await tripCarEdit(s, 4, TRIP_PHONES, TRIP_LOCS); return s; }],
+    ['แก้ไขยานพาหนะในแผนเดินทาง — ผู้ดูแลยานพาหนะ สถานที่ และวันดำเนินการ ค่าเริ่มต้นทั้งช่วงวันเดินทาง', async () => { const s = await tripForm('S6 แก้ไขยานพาหนะในแผนเดินทาง', { sel: TRIP_SEL, values: TRIP_DATES }); await tripCarEdit(s, 4, TRIP_PHONES, TRIP_LOCS, { trip: TRIP_DATES }); return s; }],   // 6 พ.ย. 2569 popup 4 ช่อง (R83) · เดิม "แก้ไขผู้ดูแลยานพาหนะและสถานที่บำรุงรักษาของยานพาหนะ" รหัสจอเดิม
     ['กดไอคอนลบ — เอายานพาหนะออกจากแผนเดินทางนี้ (soft delete)', () => tripForm('S6 เอายานพาหนะออกจากแผนเดินทาง', { sel: TRIP_KEEP, locs: TRIP_LOCS, phones: TRIP_PHONES })],
     ['กดเพิ่มยานพาหนะอีกครั้ง — ยานพาหนะที่เอาออกกลับมาเลือกได้', () => tripForm('S6 เพิ่มยานพาหนะอีกครั้ง', { sel: TRIP_KEEP, locs: TRIP_LOCS, phones: TRIP_PHONES, modal: { pool: TRIP_ALL.filter(i => TRIP_KEEP.indexOf(i) < 0), ticked: [TRIP_OUT] } })],
     ['เลือกช่วงวันเดินทาง', () => tripForm('S6 เลือกช่วงวัน', { sel: TRIP_SEL, locs: TRIP_LOCS, phones: TRIP_PHONES, dateOpen: true })],
     ['Validation กรณีไม่ได้ระบุข้อมูล, Out of focus', () => tripForm('S6 Validation', { errors: true })],
-    ['กรอกครบ', () => tripForm('S6 กรอกครบ', { values: TRIP_FILLED, sel: TRIP_SEL, locs: TRIP_LOCS, phones: TRIP_PHONES })],
+    ['กรอกครบ', () => tripForm('S6 กรอกครบ', { values: TRIP_FILLED, sel: TRIP_SEL, locs: TRIP_LOCS, phones: TRIP_PHONES, works: TRIP_WORKS })],   // 6 พ.ย. 2569 วันดำเนินการรายคันตาม TRIP_1 (E.13)
     ['สร้างแผนเดินทางสำเร็จ — กลับหน้าไตรมาส 1 แสดงแผนเดินทางใหม่ (รออนุมัติ)', async () => { const s = await tripList('S6 ยืนยันแล้ว', { trips: [TRIP_1] }); notify(s, 'สร้างแผนเดินทางสำเร็จ · ส่งให้ผู้อนุมัติแล้ว'); return s; }],
     ['สร้างแผนเดินทางใบถัดไป — popup ยานพาหนะในแผนเดินทางอื่นแสดงแต่เลือกไม่ได้', () => tripForm('S6 ใบถัดไป popup', { modal: { pool: TRIP_ALL, ticked: TRIP_REST, taken: TAKEN_1 } })],
     ['แผนเดินทาง 2 ใบ — ยานพาหนะครบทุกคัน ปุ่มสร้างแผนเดินทางกดไม่ได้', async () => { const s = await tripList('S6 แผนเดินทาง 2 ใบ', { trips: [tripAs(TRIP_1, 'approved'), TRIP_2] }); notify(s, 'สร้างแผนเดินทางสำเร็จ · ส่งให้ผู้อนุมัติแล้ว'); return s; }],
     ['แผนเดินทางถูกส่งกลับแก้ไข', () => tripList('S6 ถูกส่งกลับ', { trips: [tripAs(TRIP_1, 'returned')] })],
     ['แก้ไขแผนเดินทางที่ถูกส่งกลับ', () => tripForm('S6 แก้ไขที่ถูกส่งกลับ', { edit: true, alert: ['Error', 'ผู้อนุมัติส่งกลับให้แก้ไข', TRIP_RETURN], values: Object.assign({}, TRIP_FILLED, { d1: '10/11/2569', d2: '14/11/2569' }), sel: TRIP_SEL, locs: TRIP_LOCS, phones: TRIP_PHONES })],
-    ['ส่งอนุมัติใหม่แล้ว', async () => { const s = await tripList('S6 ส่งอนุมัติใหม่', { trips: [Object.assign(tripAs(TRIP_1, 'review'), { d1: '10/11/2569', d2: '14/11/2569' })] }); notify(s, 'ส่งแผนเดินทางให้ผู้อนุมัติใหม่แล้ว'); return s; }],
+    ['ส่งอนุมัติใหม่แล้ว', async () => { const s = await tripList('S6 ส่งอนุมัติใหม่', { trips: [Object.assign(tripAs(TRIP_1, 'review'), { d1: '10/11/2569', d2: '14/11/2569', works: {} })] });   /* เปลี่ยนช่วงวันเดินทางแล้ว วันดำเนินการกลับเป็นทั้งช่วงใหม่ (เสนอ) */ notify(s, 'ส่งแผนเดินทางให้ผู้อนุมัติใหม่แล้ว'); return s; }],
     // เพิ่ม ลด แก้ไข รถในไตรมาส (เจ้าของงาน 4 พ.ย. 2569 · ไม่ต้องส่งอนุมัติแผนใหม่) — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน
     ['กดเพิ่มยานพาหนะ — popup ยานพาหนะในแผนที่ยังไม่อยู่ในไตรมาส', async () => { const s = await tripList('S6 popup เพิ่มยานพาหนะเข้าไตรมาส', { trips: [] }); await qAddModal(s, [0]); return s; }],
     ['เพิ่มยานพาหนะเข้าไตรมาสแล้ว', async () => { const s = await tripList('S6 เพิ่มยานพาหนะเข้าไตรมาสแล้ว', { trips: [], added: [0] }); notify(s, 'เพิ่มยานพาหนะเข้า' + NOW_Q + ' สำเร็จ'); return s; }],
     ['กดไอคอนแก้ไข — แก้ไขผู้ดูแลยานพาหนะและสถานที่บำรุงรักษา', async () => { const s = await tripList('S6 แก้ไขยานพาหนะในไตรมาส', { trips: [] }); await tripCarEdit(s, 1, {}, {}); return s; }],
     ['กดไอคอนลบ — ยืนยันเอายานพาหนะออกจากไตรมาส', async () => { const s = await tripList('S6 ยืนยันเอายานพาหนะออกจากไตรมาส', { trips: [] }); await confirm(s, Q_REMOVE_CONFIRM(TRIP_CARS[1])); return s; }],
-    ['เอายานพาหนะออกจากไตรมาสแล้ว', async () => { const s = await tripList('S6 เอายานพาหนะออกจากไตรมาสแล้ว', { trips: [], removed: [1] }); notify(s, 'เอายานพาหนะออกจาก' + NOW_Q + ' สำเร็จ'); return s; }]]],
+    ['เอายานพาหนะออกจากไตรมาสแล้ว', async () => { const s = await tripList('S6 เอายานพาหนะออกจากไตรมาสแล้ว', { trips: [], removed: [1] }); notify(s, 'เอายานพาหนะออกจาก' + NOW_Q + ' สำเร็จ'); return s; }],
+    // 6 พ.ย. 2569 รีวิว S6 วันดำเนินการรายคัน (R83) — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน (E.24 E.25) · ส่งออกแผนเดินทางอยู่ท้าย S10 (I.27–I.32)
+    ['เลือกวันดำเนินการ — ปฏิทินเลือกได้เฉพาะช่วงวันเดินทาง วันนอกช่วงกดไม่ได้', async () => { const s = await tripForm('S6 เลือกวันดำเนินการ', { values: TRIP_FILLED, sel: TRIP_SEL, locs: TRIP_LOCS, phones: TRIP_PHONES }); await tripCarEdit(s, 0, TRIP_PHONES, TRIP_LOCS, { trip: TRIP_DATES, pick: TRIP_WORKS[0] }); return s; }],
+    ['บันทึกวันดำเนินการแล้ว — หลายคันวันเดียวกันได้ คันที่ไม่แก้คงทั้งช่วงวันเดินทาง', () => tripForm('S6 บันทึกวันดำเนินการแล้ว', { values: TRIP_FILLED, sel: TRIP_SEL, locs: TRIP_LOCS, phones: TRIP_PHONES, works: TRIP_WORKS })]]],
   ['S7 · ผู้อนุมัติ ตรวจสอบและอนุมัติแผนเดินทาง', [
     ['รายการแผนเดินทางรออนุมัติ', () => tripReviewList('S7 รออนุมัติ', [TRIP_1, TRIP_V, TRIP_OTHER])],
     ['รายละเอียดแผนเดินทาง — ผลการพิจารณา ยังไม่เลือก', () => tripReview('S7 รายละเอียด', {})],   // 5 พ.ย. 2569 ตาม S2
@@ -2236,7 +2360,7 @@ const SCENARIOS = [
     ['เลือกจ้างดำเนินการ — ช่องผู้รับจ้างขึ้น', () => tripForm('S9 เลือกจ้าง', { mode: 'hire' })],
     ['เลือกผู้รับจ้าง — รายชื่อผู้รับจ้างเปิด', () => tripForm('S9 รายชื่อผู้รับจ้าง', { mode: 'hire', vendorOpen: true, values: { name: TRIP_V.name } })],
     ['กดเพิ่มยานพาหนะ — popup ยานพาหนะในแผนเดินทางอื่นแสดงแต่เลือกไม่ได้', () => tripForm('S9 popup เพิ่มยานพาหนะ', { mode: 'hire', values: { name: TRIP_V.name, vendor: TRIP_V.vendor }, modal: { pool: TRIP_ALL, ticked: TRIP_REST, taken: TAKEN_1 } })],   // 5 พ.ย. 2569 popup เดียวกับ S6
-    ['แก้ไขผู้ดูแลยานพาหนะและสถานที่บำรุงรักษาของยานพาหนะ', async () => { const s = await tripForm('S9 แก้ผู้ดูแลและสถานที่', { mode: 'hire', values: { name: TRIP_V.name, vendor: TRIP_V.vendor }, sel: TRIP_REST }); await tripCarEdit(s, 6, TRIP_V_PHONES, TRIP_V_LOCS); return s; }],
+    ['แก้ไขยานพาหนะในแผนเดินทาง — ผู้ดูแลยานพาหนะ สถานที่ และวันดำเนินการ ค่าเริ่มต้นทั้งช่วงวันทำงาน', async () => { const s = await tripForm('S9 แก้ไขยานพาหนะในแผนเดินทาง', { mode: 'hire', values: { name: TRIP_V.name, vendor: TRIP_V.vendor, d1: TRIP_V.d1, d2: TRIP_V.d2 }, sel: TRIP_REST, locs: TRIP_V_LOCS, phones: TRIP_V_PHONES }); await tripCarEdit(s, 6, TRIP_V_PHONES, TRIP_V_LOCS, { trip: { d1: TRIP_V.d1, d2: TRIP_V.d2, hire: true } }); return s; }],   // 6 พ.ย. 2569 (R83) เดิม "แก้ไขผู้ดูแลยานพาหนะและสถานที่บำรุงรักษาของยานพาหนะ" 
     ['Validation กรณีไม่ได้ระบุข้อมูล, Out of focus', () => tripForm('S9 Validation', { mode: 'hire', errors: true })],   // 5 พ.ย. 2569 ฟอร์มเดียวกับ S6 ปุ่มยืนยัน Disabled จนกว่าครบ
     ['กรอกครบ', () => tripForm('S9 กรอกครบ', { mode: 'hire', values: TRIP_V, sel: TRIP_REST, locs: TRIP_V_LOCS, phones: TRIP_V_PHONES })],
     ['ยืนยันแล้ว — ส่งให้ผู้อนุมัติ (รออนุมัติ)', async () => { const s = await tripList('S9 ยืนยันแล้ว', { trips: [tripAs(TRIP_1, 'approved'), TRIP_V] }); notify(s, 'สร้างแผนเดินทางสำเร็จ · ส่งให้ผู้อนุมัติแล้ว'); return s; }]]],
@@ -2248,7 +2372,7 @@ const SCENARIOS = [
   ['S10 · กบค. บันทึกงานบำรุงรักษารายคัน', [
     ['หน้ารายละเอียดแผนเดินทาง — ยังไม่เริ่มงาน ตรวจแล้ว 0/4', () => tripDetail('S10 รายละเอียดแผนเดินทาง', {})],
     ['กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด แก้ไข ลบ', () => tripDetail('S10 เมนูของยานพาหนะ', { menu: true })],
-    ['เมนูแก้ไข — แก้ไขผู้ดูแลยานพาหนะและสถานที่', () => tripDetail('S10 แก้ไขยานพาหนะในแผนเดินทาง', { edit: true })],
+    ['เมนูแก้ไข — แก้ไขยานพาหนะในแผนเดินทาง ผู้ดูแลยานพาหนะ สถานที่ และวันดำเนินการ', () => tripDetail('S10 แก้ไขยานพาหนะในแผนเดินทาง', { edit: true })],   // 6 พ.ย. 2569 (R83) เดิม "เมนูแก้ไข — แก้ไขผู้ดูแลยานพาหนะและสถานที่" 
     ['เมนูลบ — ยืนยันเอายานพาหนะออกจากแผนเดินทาง', () => tripDetail('S10 ลบยานพาหนะออกจากแผนเดินทาง', { del: true })],
     ['หน้างานรายคัน — ยังไม่เริ่ม', () => jobPage('S10 งานรายคัน', {})],
     ['กดเริ่มงาน — Step 1 ตรวจสภาพก่อนบำรุงรักษา สถานะอยู่ระหว่างบำรุงรักษา', async () => { const s = await stepPage('S10 Step 1 ตรวจสภาพก่อนบำรุงรักษา', { step: 1 }); notify(s, 'เริ่มงานบำรุงรักษาแล้ว'); return s; }],
@@ -2273,7 +2397,14 @@ const SCENARIOS = [
     ['บันทึกเอกสาร Safety Inspection สำเร็จ', async () => { const s = await workDetail('S10 บันทึกเอกสาร Safety Inspection', { safety: { files: SAFETY_DONE, saved: true } }); notify(s, 'บันทึกเอกสาร Safety Inspection สำเร็จ'); return s; }],
     // แผนจ้างดำเนินการ (4 พ.ย. 2569 ตัด S23 S11) — กบค. ปิดงานรายคันแทนผู้รับจ้างด้วยหน้าและขั้นตอนเดียวกัน
     ['แผนจ้างดำเนินการ — หน้ารายละเอียดแผนเดินทาง กดปุ่ม … ของยานพาหนะ', () => tripDetail('S10 แผนจ้าง รายละเอียดแผนเดินทาง', { trip: HIRE_T, st: HIRE_ST, menu: true })],
-    ['แผนจ้างดำเนินการ — Step 2 สรุปงานก่อนปิดงาน กบค. ปิดงานแทนผู้รับจ้าง', () => stepPage('S10 แผนจ้าง Step 2', { hire: true, step: 2, filled: true })]]],
+    ['แผนจ้างดำเนินการ — Step 2 สรุปงานก่อนปิดงาน กบค. ปิดงานแทนผู้รับจ้าง', () => stepPage('S10 แผนจ้าง Step 2', { hire: true, step: 2, filled: true })],
+    // 6 พ.ย. 2569 รีวิว S6 "ตอน export ก็เกี่ยวข้องด้วย" — ส่งออกแผนเดินทางจากหน้ารายละเอียดแผนเดินทาง (R84) · ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน (I.27–I.32)
+    ['หน้ารายละเอียดแผนเดินทาง — กดส่งออก — popup รูปแบบไฟล์', () => tripDetail('S10 ส่งออกแผนเดินทาง', { exportPdf: true })],
+    ['ส่งออกแผนเดินทางสำเร็จ', async () => { const s = await tripDetail('S10 ส่งออกแผนเดินทางสำเร็จ', {}); notify(s, 'ส่งออกไฟล์สำเร็จ'); return s; }],
+    ['ไฟล์ PDF หน้า 1 — รายละเอียดแผนเดินทาง และยานพาหนะ', () => tripPdf('S10 ไฟล์ PDF แผนเดินทาง หน้า 1', 1)],
+    ['ไฟล์ PDF หน้า 2 — อะไหล่ของแผนเดินทาง', () => tripPdf('S10 ไฟล์ PDF แผนเดินทาง หน้า 2', 2)],
+    ['ไฟล์ Excel — ชีตยานพาหนะในแผนเดินทาง', () => tripXls('S10 ไฟล์ Excel ชีตยานพาหนะ', 0)],
+    ['ไฟล์ Excel — ชีตอะไหล่ของแผนเดินทาง', () => tripXls('S10 ไฟล์ Excel ชีตอะไหล่', 1)]]],
   // S23 ผู้รับจ้าง บันทึกงานรายคันและส่งตรวจงาน · S11 กบค. ตรวจรับงานรายคันของผู้รับจ้าง — ตัดออกทั้ง scenario 4 พ.ย. 2569 (เจ้าของงาน "อยากตัด scen ผู้รับจ้าง หรือ vendor ตรวจรับทีละคัน ออก") · บล็อก J V ว่าง (BLOCK_OF)
   ['S12 · กบค. บันทึกผลตรวจน้ำมันไฮโดรลิก', [   // 4 พ.ย. 2569 เลิก popup: ใส่ผลตอนปิดงาน (ถ้ามี) หรือภายหลังที่หน้ารายละเอียดงานรายคัน · ป้ายรอผลที่สถานะงาน
     ['Step 2 สรุปงานก่อนปิดงาน — เลือกเก็บตัวอย่าง ใส่ผลการทดสอบได้ (ถ้ามี)', () => stepPage('S12 Step 2 ผลการทดสอบ', { step: 2, filled: true })],   // 5 พ.ย. 2569 หน้าปิดงานเป็น Step 2 ของ S10
@@ -2371,8 +2502,8 @@ const SCENARIOS = [
     ['กรณีไตรมาส 3 — ไตรมาสก่อนหน้าและไตรมาสปัจจุบันเลือกไม่ได้', async () => { const s = await moveQuarter('S25 popup ไตรมาส 3', 2); await moveModal(s, { cur: 2, trip: MOVE_T3 }); return s; }],
     ['ยืนยันการย้ายยานพาหนะ', async () => { const s = await moveQuarter('S25 ยืนยันการย้ายยานพาหนะ', 0); await confirm(s, MOVE_CONFIRM(MOVE_TO)); return s; }],
     ['ย้ายสำเร็จ — ไตรมาส 1 ไม่มียานพาหนะคันนี้แล้ว', async () => { const s = await tripList('S25 ย้ายสำเร็จ', { trips: [JOB_T], removed: [MOVE_I] }); notify(s, MOVE_TOAST); return s; }],
-    ['หน้าไตรมาส 2 — ยานพาหนะที่ย้ายมา ยังไม่มีแผนเดินทาง', () => tripList('S25 ไตรมาส 2', { q: qName(MOVE_TO), cars: [[MOVE_CAR.concat([OWNER_PH[MOVE_I], CTRL_NAME[MOVE_I]]), -1]].concat(MOVE_Q2.map(c => [c, -1])), subs: { [MOVE_CAR[0]]: 'ย้ายมาจาก' + NOW_Q } })],
-    ['ความคืบหน้าอะไหล่ ไตรมาส 2 — รวมอะไหล่ของยานพาหนะที่ย้ายมา', () => partsProgress('S25 อะไหล่ไตรมาส 2', { q: qName(MOVE_TO), picked: Q_ALL, qty: MOVE_Q2_QTY, subs: MOVE_Q2_SUBS, cars: MOVE_Q2.length + 1 })],
+    ['หน้าไตรมาส 2 — ยานพาหนะที่ย้ายมา ยังไม่มีแผนเดินทาง', () => moveQuarter('S25 ไตรมาส 2', MOVE_TO)],   // 9 พ.ย. 2569 ชุดเดียวกับ X.9 (MOVE_Q2_PAGE)
+    ['หน้าไตรมาส 2 — อะไหล่ในไตรมาสรวมอะไหล่ของยานพาหนะที่ย้ายมา', () => moveQuarter('S25 อะไหล่ไตรมาส 2', MOVE_TO)],   // 9 พ.ย. 2569 แก้ moveQuarter(…, 2) ที่ได้หน้าไตรมาส 3 · 6 พ.ย. 2569 เดิมหน้าความคืบหน้าอะไหล่ S4 (เปลี่ยนเป็นแดชบอร์ด) ⇒ หัวข้ออะไหล่ในไตรมาสของหน้าไตรมาส   // 6 พ.ย. 2569 เดิมหน้าความคืบหน้าอะไหล่ S4 (เปลี่ยนเป็นแดชบอร์ด) ⇒ หัวข้ออะไหล่ในไตรมาสของหน้าไตรมาส
     ['ไตรมาส 4 — เมนูย้ายไปไตรมาสอื่นกดไม่ได้', async () => { const s = await moveQuarter('S25 ไตรมาส 4 ย้ายไม่ได้', 3); moveMenu(s, 0, true); return s; }]]],
 ];
 
@@ -2381,9 +2512,14 @@ const SCENARIOS = [
    ชื่อ state → id กล่องในผัง mermaid ของ Diagram/01-บำรุงรักษาตามวาระ/14-บำรุงรักษา-userflow.md (คั่นด้วยช่องว่างได้หลายกล่อง)
    ไม่ใส่ = ผังยังไม่มีกล่องของจอนี้ ⇒ ปลั๊กอินเขียนบอกใต้ผัง "จอที่ยังไม่มีกล่องในผัง" (รอเติม userflow — ไม่เติมผังเอง) */
 const FLOW_NODES = {
-  S1: { 'รายการแผน': 'D1', 'รายการแผน — ยังไม่มีแผน': 'D0', 'ฟอร์มสร้างแผน (ว่าง)': 'D2', 'เลือกปีงบประมาณ — รายการปีเปิด': 'A2', 'กดตัวกรอง — แผงตัวกรอง ยังไม่เลือกภาค เขต ประเภทยานพาหนะ': 'A3', 'เลือกภาค เขต ในแผงตัวกรอง — รายการเขตของภาคที่เลือก': 'A7', 'ยานพาหนะทั้งหมดของพื้นที่ที่เลือก — กดตกลงแล้ว ชิปตัวกรอง ยังไม่ติ๊ก': 'D4', 'ค้นหาและกรองแล้ว': 'A8', 'ไม่พบยานพาหนะที่ตรงกับคำค้นหรือตัวกรอง': 'A8', 'ติ๊กยานพาหนะ 3 คัน — ปุ่มจัดลงไตรมาสกดได้': 'A5', 'กดจัดลงไตรมาส — popup เลือกไตรมาส': 'D6', 'จัดลงไตรมาสแล้ว — ป้ายไตรมาสในตาราง ตัวเลขบนแท็บเปลี่ยน': 'D3', 'แท็บไตรมาส 1 — ทุกคันกำหนดแล้ว อะไหล่ในไตรมาสรวมครบ': 'D12', 'ย้ายยานพาหนะไปไตรมาสอื่น — ติ๊กยานพาหนะที่จัดแล้ว': 'D6', 'เอาภาคหรือตัวกรองออก — ยานพาหนะที่จัดแล้วยังอยู่ในไตรมาส': 'D7', 'Validation กรณีไม่ได้ระบุข้อมูล, Out of focus': 'D8', 'บันทึกและส่งอนุมัติสำเร็จ — รออนุมัติ': 'A6 D5', 'รายละเอียดแผน — รออนุมัติ ดูอย่างเดียว': 'D9', 'รายละเอียดแผน — อนุมัติแล้ว': 'D10', 'รายละเอียดแผน — ส่งกลับแก้ไข เห็นเหตุผล กดแก้ไขไป S19': 'D11', 'ไตรมาสที่ยังไม่มียานพาหนะ — ปุ่มเพิ่มยานพาหนะเข้าไตรมาส 3': 'D13', 'กดเพิ่มยานพาหนะเข้าไตรมาส 3 — popup ยานพาหนะที่ยังไม่อยู่ในไตรมาสใด': 'A13 D14', 'ติ๊กยานพาหนะ 2 คัน — ปุ่มเพิ่มเข้าไตรมาส 3 กดได้': 'A14', 'เพิ่มยานพาหนะเข้าไตรมาส 3 แล้ว — แท็บไตรมาส 3 มียานพาหนะ ตัวเลขบนแท็บเปลี่ยน': 'D15', 'ทุกคันในพื้นที่จัดลงไตรมาสแล้ว — popup ไม่มียานพาหนะให้เพิ่ม': 'D16' },
-  S6: { 'รายการแผน — เมนู "…" ดูรายละเอียดแผนที่อนุมัติแล้ว': 'D7 A7', 'รายละเอียดแผน — กดไปหน้าไตรมาส 1': 'D8 A8', 'หน้าไตรมาส 1 — ยังไม่มีแผนเดินทาง': 'D1', 'ฟอร์มสร้างแผนเดินทาง (ว่าง)': 'D2', 'กดเพิ่มยานพาหนะ — popup ยานพาหนะทุกคันของไตรมาส': 'D5', 'เพิ่มยานพาหนะแล้ว — สถานที่ตั้งต้นสำนักงานที่ยานพาหนะอยู่': 'D4', 'แก้ไขผู้ดูแลยานพาหนะและสถานที่บำรุงรักษาของยานพาหนะ': 'A5', 'กดไอคอนลบ — เอายานพาหนะออกจากแผนเดินทางนี้ (soft delete)': 'A9', 'กดเพิ่มยานพาหนะอีกครั้ง — ยานพาหนะที่เอาออกกลับมาเลือกได้': 'D5', 'เลือกช่วงวันเดินทาง': 'A3', 'Validation กรณีไม่ได้ระบุข้อมูล, Out of focus': 'D9', 'กรอกครบ': 'A4', 'สร้างแผนเดินทางสำเร็จ — กลับหน้าไตรมาส 1 แสดงแผนเดินทางใหม่ (รออนุมัติ)': 'D3', 'สร้างแผนเดินทางใบถัดไป — popup ยานพาหนะในแผนเดินทางอื่นแสดงแต่เลือกไม่ได้': 'D5', 'แผนเดินทาง 2 ใบ — ยานพาหนะครบทุกคัน ปุ่มสร้างแผนเดินทางกดไม่ได้': 'D6', 'แผนเดินทางถูกส่งกลับแก้ไข': 'D1', 'แก้ไขแผนเดินทางที่ถูกส่งกลับ': 'D2', 'ส่งอนุมัติใหม่แล้ว': 'D3', 'กดเพิ่มยานพาหนะ — popup ยานพาหนะในแผนที่ยังไม่อยู่ในไตรมาส': 'AQ', 'เพิ่มยานพาหนะเข้าไตรมาสแล้ว': 'D1', 'กดไอคอนแก้ไข — แก้ไขผู้ดูแลยานพาหนะและสถานที่บำรุงรักษา': 'AQ', 'กดไอคอนลบ — ยืนยันเอายานพาหนะออกจากไตรมาส': 'AQ', 'เอายานพาหนะออกจากไตรมาสแล้ว': 'D1' },
-  S10: { 'หน้ารายละเอียดแผนเดินทาง — ยังไม่เริ่มงาน ตรวจแล้ว 0/4': 'D1', 'กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด แก้ไข ลบ': 'D1', 'เมนูแก้ไข — แก้ไขผู้ดูแลยานพาหนะและสถานที่': 'A6', 'เมนูลบ — ยืนยันเอายานพาหนะออกจากแผนเดินทาง': 'A7', 'หน้างานรายคัน — ยังไม่เริ่ม': 'D2', 'กดเริ่มงาน — Step 1 ตรวจสภาพก่อนบำรุงรักษา สถานะอยู่ระหว่างบำรุงรักษา': 'A2 D3', 'กดเซ็นลงนาม — ลงนามการตรวจสภาพ': 'D3', 'ตรวจรายการและลงนามครบ — ปุ่มยืนยันการตรวจสภาพกดได้': 'Q4', 'ยืนยันการตรวจสภาพ — Step 2 สรุปงานก่อนปิดงาน': 'A4 D6', 'Validation กรณีไม่ได้ระบุข้อมูล, Out of focus': 'Q2', 'เลือกวันที่เปลี่ยนน้ำมันครั้งล่าสุด — ปฏิทิน': 'D6', 'เลือกงบที่ตัด หน่วยงานอื่น — ระบุศูนย์ต้นทุน': 'D6', 'กรอกผลงานครบ': 'A5', 'ปิดงานสำเร็จ — กลับหน้ารายละเอียดแผนเดินทาง เสร็จสิ้น + รอผลตรวจน้ำมัน': 'D4', 'ปิดงานสำเร็จ — เปลี่ยนน้ำมันอย่างเดียว ไม่มีป้ายรอผลตรวจน้ำมัน': 'D4', 'บำรุงรักษาไม่ได้ — ระบุสาเหตุ ยืนยันอะไหล่ส่งคืน': 'A3', 'บำรุงรักษาไม่ได้ — ยังไม่ระบุสาเหตุ': 'A3', 'บำรุงรักษาไม่ได้ระหว่าง Step 1 — คืนอะไหล่ตามแผนทั้งหมด': 'A3', 'บำรุงรักษาไม่ได้ระหว่าง Step 2 — อะไหล่ที่ใช้ไปแล้ว': 'A3', 'บันทึกบำรุงรักษาไม่ได้แล้ว — กลับหน้ารายละเอียดแผนเดินทาง ตรวจแล้ว 0/3': 'D4', 'ดูงานที่ปิดแล้ว — เสร็จสิ้น': 'D5', 'Step 2 — แนบเอกสาร Safety Inspection (ถ้ามี)': 'D6', 'หน้างานรายคัน — เพิ่มเอกสาร Safety Inspection ภายหลัง': 'D5', 'บันทึกเอกสาร Safety Inspection สำเร็จ': 'D5', 'แผนจ้างดำเนินการ — หน้ารายละเอียดแผนเดินทาง กดปุ่ม … ของยานพาหนะ': 'D1', 'แผนจ้างดำเนินการ — Step 2 สรุปงานก่อนปิดงาน กบค. ปิดงานแทนผู้รับจ้าง': 'D6' },
+  S1: { 'รายการแผน': 'D1', 'รายการแผน — ยังไม่มีแผน': 'D0', 'ฟอร์มสร้างแผน (ว่าง)': 'D2', 'เลือกปีงบประมาณ — รายการปีเปิด': 'A2', 'กดตัวกรอง — แผงตัวกรอง ยังไม่เลือกภาค เขต ประเภทยานพาหนะ': 'A3', 'เลือกภาค เขต ในแผงตัวกรอง — รายการเขตของภาคที่เลือก': 'A7', 'ยานพาหนะทั้งหมดของพื้นที่ที่เลือก — กดตกลงแล้ว ชิปตัวกรอง ยังไม่ติ๊ก': 'D4', 'ค้นหาและกรองแล้ว': 'A8', 'ไม่พบยานพาหนะที่ตรงกับคำค้นหรือตัวกรอง': 'A8', 'ติ๊กยานพาหนะ 3 คัน — ปุ่มจัดลงไตรมาสกดได้': 'A5', 'กดจัดลงไตรมาส — popup เลือกไตรมาส': 'D6', 'จัดลงไตรมาสแล้ว — ป้ายไตรมาสในตาราง ตัวเลขบนแท็บเปลี่ยน': 'D3', 'แท็บไตรมาส 1 — ทุกคันกำหนดแล้ว อะไหล่ในไตรมาสรวมครบ': 'D12', 'ย้ายยานพาหนะไปไตรมาสอื่น — ติ๊กยานพาหนะที่จัดแล้ว': 'D6', 'เอาภาคหรือตัวกรองออก — ยานพาหนะที่จัดแล้วยังอยู่ในไตรมาส': 'D7', 'Validation กรณีไม่ได้ระบุข้อมูล, Out of focus': 'D8', 'บันทึกและส่งอนุมัติสำเร็จ — รออนุมัติ': 'A6 D5', 'รายละเอียดแผน — รออนุมัติ ดูอย่างเดียว': 'D9', 'รายละเอียดแผน — อนุมัติแล้ว': 'D10', 'รายละเอียดแผน — ส่งกลับแก้ไข เห็นเหตุผล กดแก้ไขไป S19': 'D11', 'ไตรมาสที่ยังไม่มียานพาหนะ — ปุ่มเพิ่มยานพาหนะเข้าไตรมาส 3': 'D13', 'กดเพิ่มยานพาหนะเข้าไตรมาส 3 — popup ยานพาหนะที่ยังไม่อยู่ในไตรมาสใด': 'A13 D14', 'ติ๊กยานพาหนะ 2 คัน — ปุ่มเพิ่มเข้าไตรมาส 3 กดได้': 'A14', 'เพิ่มยานพาหนะเข้าไตรมาส 3 แล้ว — แท็บไตรมาส 3 มียานพาหนะ ตัวเลขบนแท็บเปลี่ยน': 'D15', 'ทุกคันในพื้นที่จัดลงไตรมาสแล้ว — popup ไม่มียานพาหนะให้เพิ่ม': 'D16', 'แท็บทั้งหมด — อะไหล่ทุกไตรมาส รวมอะไหล่ของยานพาหนะทุกคันที่จัดลงไตรมาสแล้ว': 'D12' },
+  S6: { 'รายการแผน — เมนู "…" ดูรายละเอียดแผนที่อนุมัติแล้ว': 'D7 A7', 'รายละเอียดแผน — กดไปหน้าไตรมาส 1': 'D8 A8', 'หน้าไตรมาส 1 — ยังไม่มีแผนเดินทาง': 'D1', 'ฟอร์มสร้างแผนเดินทาง (ว่าง)': 'D2', 'กดเพิ่มยานพาหนะ — popup ยานพาหนะทุกคันของไตรมาส': 'D5', 'เพิ่มยานพาหนะแล้ว — สถานที่ตั้งต้นสำนักงานที่ยานพาหนะอยู่': 'D4', 'แก้ไขยานพาหนะในแผนเดินทาง — ผู้ดูแลยานพาหนะ สถานที่ และวันดำเนินการ ค่าเริ่มต้นทั้งช่วงวันเดินทาง': 'A5', 'กดไอคอนลบ — เอายานพาหนะออกจากแผนเดินทางนี้ (soft delete)': 'A9', 'กดเพิ่มยานพาหนะอีกครั้ง — ยานพาหนะที่เอาออกกลับมาเลือกได้': 'D5', 'เลือกช่วงวันเดินทาง': 'A3', 'Validation กรณีไม่ได้ระบุข้อมูล, Out of focus': 'D9', 'กรอกครบ': 'A4', 'สร้างแผนเดินทางสำเร็จ — กลับหน้าไตรมาส 1 แสดงแผนเดินทางใหม่ (รออนุมัติ)': 'D3', 'สร้างแผนเดินทางใบถัดไป — popup ยานพาหนะในแผนเดินทางอื่นแสดงแต่เลือกไม่ได้': 'D5', 'แผนเดินทาง 2 ใบ — ยานพาหนะครบทุกคัน ปุ่มสร้างแผนเดินทางกดไม่ได้': 'D6', 'แผนเดินทางถูกส่งกลับแก้ไข': 'D1', 'แก้ไขแผนเดินทางที่ถูกส่งกลับ': 'D2', 'ส่งอนุมัติใหม่แล้ว': 'D3', 'กดเพิ่มยานพาหนะ — popup ยานพาหนะในแผนที่ยังไม่อยู่ในไตรมาส': 'AQ', 'เพิ่มยานพาหนะเข้าไตรมาสแล้ว': 'D1', 'กดไอคอนแก้ไข — แก้ไขผู้ดูแลยานพาหนะและสถานที่บำรุงรักษา': 'AQ', 'กดไอคอนลบ — ยืนยันเอายานพาหนะออกจากไตรมาส': 'AQ', 'เอายานพาหนะออกจากไตรมาสแล้ว': 'D1',
+    // 6 พ.ย. 2569 E.24 E.25 วันดำเนินการรายคัน (R83) — กล่อง D10 ในผัง S6 ของไฟล์ 14
+    'เลือกวันดำเนินการ — ปฏิทินเลือกได้เฉพาะช่วงวันเดินทาง วันนอกช่วงกดไม่ได้': 'D10', 'บันทึกวันดำเนินการแล้ว — หลายคันวันเดียวกันได้ คันที่ไม่แก้คงทั้งช่วงวันเดินทาง': 'D4' },
+  S10: { 'หน้ารายละเอียดแผนเดินทาง — ยังไม่เริ่มงาน ตรวจแล้ว 0/4': 'D1', 'กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด แก้ไข ลบ': 'D1', 'เมนูแก้ไข — แก้ไขยานพาหนะในแผนเดินทาง ผู้ดูแลยานพาหนะ สถานที่ และวันดำเนินการ': 'A6', 'เมนูลบ — ยืนยันเอายานพาหนะออกจากแผนเดินทาง': 'A7', 'หน้างานรายคัน — ยังไม่เริ่ม': 'D2', 'กดเริ่มงาน — Step 1 ตรวจสภาพก่อนบำรุงรักษา สถานะอยู่ระหว่างบำรุงรักษา': 'A2 D3', 'กดเซ็นลงนาม — ลงนามการตรวจสภาพ': 'D3', 'ตรวจรายการและลงนามครบ — ปุ่มยืนยันการตรวจสภาพกดได้': 'Q4', 'ยืนยันการตรวจสภาพ — Step 2 สรุปงานก่อนปิดงาน': 'A4 D6', 'Validation กรณีไม่ได้ระบุข้อมูล, Out of focus': 'Q2', 'เลือกวันที่เปลี่ยนน้ำมันครั้งล่าสุด — ปฏิทิน': 'D6', 'เลือกงบที่ตัด หน่วยงานอื่น — ระบุศูนย์ต้นทุน': 'D6', 'กรอกผลงานครบ': 'A5', 'ปิดงานสำเร็จ — กลับหน้ารายละเอียดแผนเดินทาง เสร็จสิ้น + รอผลตรวจน้ำมัน': 'D4', 'ปิดงานสำเร็จ — เปลี่ยนน้ำมันอย่างเดียว ไม่มีป้ายรอผลตรวจน้ำมัน': 'D4', 'บำรุงรักษาไม่ได้ — ระบุสาเหตุ ยืนยันอะไหล่ส่งคืน': 'A3', 'บำรุงรักษาไม่ได้ — ยังไม่ระบุสาเหตุ': 'A3', 'บำรุงรักษาไม่ได้ระหว่าง Step 1 — คืนอะไหล่ตามแผนทั้งหมด': 'A3', 'บำรุงรักษาไม่ได้ระหว่าง Step 2 — อะไหล่ที่ใช้ไปแล้ว': 'A3', 'บันทึกบำรุงรักษาไม่ได้แล้ว — กลับหน้ารายละเอียดแผนเดินทาง ตรวจแล้ว 0/3': 'D4', 'ดูงานที่ปิดแล้ว — เสร็จสิ้น': 'D5', 'Step 2 — แนบเอกสาร Safety Inspection (ถ้ามี)': 'D6', 'หน้างานรายคัน — เพิ่มเอกสาร Safety Inspection ภายหลัง': 'D5', 'บันทึกเอกสาร Safety Inspection สำเร็จ': 'D5', 'แผนจ้างดำเนินการ — หน้ารายละเอียดแผนเดินทาง กดปุ่ม … ของยานพาหนะ': 'D1', 'แผนจ้างดำเนินการ — Step 2 สรุปงานก่อนปิดงาน กบค. ปิดงานแทนผู้รับจ้าง': 'D6',
+    // 6 พ.ย. 2569 I.27–I.32 ส่งออกแผนเดินทาง (R84) — กล่อง A9 D7 ในผัง S10 ของไฟล์ 14
+    'หน้ารายละเอียดแผนเดินทาง — กดส่งออก — popup รูปแบบไฟล์': 'A9', 'ส่งออกแผนเดินทางสำเร็จ': 'D7', 'ไฟล์ PDF หน้า 1 — รายละเอียดแผนเดินทาง และยานพาหนะ': 'D7', 'ไฟล์ PDF หน้า 2 — อะไหล่ของแผนเดินทาง': 'D7',
+    'ไฟล์ Excel — ชีตยานพาหนะในแผนเดินทาง': 'D7', 'ไฟล์ Excel — ชีตอะไหล่ของแผนเดินทาง': 'D7' },
   S24: { 'แท็บการบำรุงรักษา — ยานพาหนะทุกคัน เรียงกำหนดครั้งถัดไป': 'D1', 'ค้นหาทะเบียน': 'A1', 'ค้นหาไม่พบ': 'D2', 'กดตัวกรอง — แผงตัวกรอง': 'D3', 'กรองแล้ว — ใกล้ครบกำหนดบำรุงรักษา': 'D4', 'กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด': 'A4', 'รายละเอียดยานพาหนะ — แท็บตารางบำรุงรักษา': 'D5', 'ประวัติ กดปุ่ม … — ดูรายละเอียดงานที่ปิดแล้ว': 'A5' },
   S12: { 'Step 2 สรุปงานก่อนปิดงาน — เลือกเก็บตัวอย่าง ใส่ผลการทดสอบได้ (ถ้ามี)': 'A1', 'ปิดงานโดยยังไม่มีผล — ป้ายรอผลตรวจน้ำมัน': 'D1', 'กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด': 'A3', 'หน้างานรายคัน — ส่วนผลการทดสอบยังว่าง': 'D2', 'กดบันทึกโดยยังไม่เลือกผล': 'Q2', 'เลือกผล + แนบไฟล์ (ถ้ามี)': 'A4', 'บันทึกสำเร็จ — แสดงผลที่บันทึก แก้ได้ภายหลัง': 'D3', 'กลับหน้าแผนเดินทาง — ป้ายน้ำมันไม่ผ่าน': 'D4' },
   S15: { 'ความคืบหน้ารายคัน (ยังไม่ครบ)': 'D1', 'ครบทุกคัน — ประวัติงานบำรุงรักษา': 'D2', 'ยืนยันส่งประวัติ': 'A2', 'ส่งแล้ว — รอหัวหน้าตรวจสอบ': 'D3' },
@@ -2395,11 +2531,11 @@ const FLOW_NODES = {
   S2: { 'รายการแผนรออนุมัติ': 'D1', 'รายละเอียดแผน — ผลการพิจารณา ยังไม่เลือก': 'D2 A2', 'อนุมัติ — ยืนยันอนุมัติแผน': 'A5', 'อนุมัติแผนสำเร็จ': 'D4', 'เลือกส่งกลับแก้ไข — ช่องเหตุผลขึ้น': 'A3', 'ส่งกลับแก้ไข — Validation กรณีไม่ได้ระบุเหตุผล, Out of focus': 'D5', 'ส่งกลับแก้ไข — ยืนยันส่งกลับ': 'A4', 'ส่งกลับแล้ว': 'D3' },
   // S3 พักไว้ 30 ต.ค. 2569
   S7: { 'รายการแผนเดินทางรออนุมัติ': 'D1', 'รายละเอียดแผนเดินทาง — ผลการพิจารณา ยังไม่เลือก': 'D2 A2', 'อนุมัติ — ยืนยันอนุมัติแผนเดินทาง': 'A5', 'อนุมัติแผนเดินทางสำเร็จ': 'D4', 'เลือกส่งกลับแก้ไข — ช่องเหตุผลขึ้น': 'A3', 'ส่งกลับแก้ไข — Validation กรณีไม่ได้ระบุเหตุผล, Out of focus': 'D5', 'ส่งกลับแก้ไข — ยืนยันส่งกลับ': 'A4', 'ส่งกลับแล้ว': 'D3' },
-  S9: { 'เลือกจ้างดำเนินการ — ช่องผู้รับจ้างขึ้น': 'D2', 'เลือกผู้รับจ้าง — รายชื่อผู้รับจ้างเปิด': 'A3', 'กดเพิ่มยานพาหนะ — popup ยานพาหนะในแผนเดินทางอื่นแสดงแต่เลือกไม่ได้': 'D5', 'แก้ไขผู้ดูแลยานพาหนะและสถานที่บำรุงรักษาของยานพาหนะ': 'A5', 'Validation กรณีไม่ได้ระบุข้อมูล, Out of focus': 'Q1', 'กรอกครบ': 'A6', 'ยืนยันแล้ว — ส่งให้ผู้อนุมัติ (รออนุมัติ)': 'D3' },
+  S9: { 'เลือกจ้างดำเนินการ — ช่องผู้รับจ้างขึ้น': 'D2', 'เลือกผู้รับจ้าง — รายชื่อผู้รับจ้างเปิด': 'A3', 'กดเพิ่มยานพาหนะ — popup ยานพาหนะในแผนเดินทางอื่นแสดงแต่เลือกไม่ได้': 'D5', 'แก้ไขยานพาหนะในแผนเดินทาง — ผู้ดูแลยานพาหนะ สถานที่ และวันดำเนินการ ค่าเริ่มต้นทั้งช่วงวันทำงาน': 'A5', 'Validation กรณีไม่ได้ระบุข้อมูล, Out of focus': 'Q1', 'กรอกครบ': 'A6', 'ยืนยันแล้ว — ส่งให้ผู้อนุมัติ (รออนุมัติ)': 'D3' },
   S8: { 'กรย. — มีแจ้งเตือนใหม่ (จุดแดงที่กระดิ่ง)': 'D1', 'กรย. — เปิดแผงแจ้งเตือน': 'A1', 'กรย. — แผนเดินทาง ดูอย่างเดียว (ยานพาหนะทุกคันในใบ)': 'D2', 'หน่วยงานเจ้าของยานพาหนะ — เปิดแผงแจ้งเตือน': 'A2', 'หน่วยงานเจ้าของยานพาหนะ — แผนเดินทาง ดูอย่างเดียว (เฉพาะยานพาหนะของหน่วยงาน)': 'D3' },
   S13: { 'รายการรอตรวจสอบ': 'D1', 'ผลการตรวจบำรุงยานพาหนะรายคัน': 'D2', 'คันที่บำรุงรักษาไม่ได้ — สาเหตุ': 'D2', 'ยืนยันยอมรับผล': 'A3', 'ยอมรับผลแล้ว': 'D3' },
   S14: { 'รายการ — ครบทุกคันแล้ว': 'D1', 'หลักฐานทั้งแผน — ยังไม่ประเมิน': 'D2', 'ประเมินความพึงพอใจแล้ว': 'A3', 'ยืนยันยอมรับผลทั้งแผน': 'A4', 'ยอมรับผลทั้งแผนแล้ว': 'D3' },
-  S25: { 'หน้าไตรมาส 1 — ยานพาหนะที่บำรุงรักษาไม่ได้ ป้ายบำรุงรักษาไม่ได้': 'D0', 'กดปุ่ม … ของยานพาหนะ — ย้ายไปไตรมาสอื่น': 'A1', 'popup ย้ายไปไตรมาสอื่น — ยังไม่เลือกไตรมาส': 'A2 D2', 'เลือกไตรมาส 2 — ปุ่มย้ายยานพาหนะกดได้': 'A3', 'กรณีไตรมาส 3 — ไตรมาสก่อนหน้าและไตรมาสปัจจุบันเลือกไม่ได้': 'D2', 'ยืนยันการย้ายยานพาหนะ': 'D3', 'ย้ายสำเร็จ — ไตรมาส 1 ไม่มียานพาหนะคันนี้แล้ว': 'D4', 'หน้าไตรมาส 2 — ยานพาหนะที่ย้ายมา ยังไม่มีแผนเดินทาง': 'A4 D5', 'ความคืบหน้าอะไหล่ ไตรมาส 2 — รวมอะไหล่ของยานพาหนะที่ย้ายมา': 'D6', 'ไตรมาส 4 — เมนูย้ายไปไตรมาสอื่นกดไม่ได้': 'D1' },   // 5 พ.ย. 2569 บล็อก X
+  S25: { 'หน้าไตรมาส 1 — ยานพาหนะที่บำรุงรักษาไม่ได้ ป้ายบำรุงรักษาไม่ได้': 'D0', 'กดปุ่ม … ของยานพาหนะ — ย้ายไปไตรมาสอื่น': 'A1', 'popup ย้ายไปไตรมาสอื่น — ยังไม่เลือกไตรมาส': 'A2 D2', 'เลือกไตรมาส 2 — ปุ่มย้ายยานพาหนะกดได้': 'A3', 'กรณีไตรมาส 3 — ไตรมาสก่อนหน้าและไตรมาสปัจจุบันเลือกไม่ได้': 'D2', 'ยืนยันการย้ายยานพาหนะ': 'D3', 'ย้ายสำเร็จ — ไตรมาส 1 ไม่มียานพาหนะคันนี้แล้ว': 'D4', 'หน้าไตรมาส 2 — ยานพาหนะที่ย้ายมา ยังไม่มีแผนเดินทาง': 'A4 D5', 'หน้าไตรมาส 2 — อะไหล่ในไตรมาสรวมอะไหล่ของยานพาหนะที่ย้ายมา': 'D6', 'ไตรมาส 4 — เมนูย้ายไปไตรมาสอื่นกดไม่ได้': 'D1' },   // 5 พ.ย. 2569 บล็อก X
   S16: { 'รายการประวัติรอตรวจสอบ': 'D1', 'ประวัติงานบำรุงรักษาของแผน': 'D2', 'ตีกลับ — ระบุเหตุผล': 'A3', 'ยืนยันอนุมัติประวัติ': 'A4', 'อนุมัติประวัติแล้ว': 'D4' },
 };
 
@@ -2620,7 +2756,9 @@ async function buildActivity() {
 }
 async function buildDocs(o) {
   const parts = (o.parts && o.parts.length) ? o.parts : ['storymap', 'usecase'];
-  const devs = [parts.indexOf('desktop') >= 0 ? false : null, parts.indexOf('mobile') >= 0 ? true : null].filter(x => x !== null);
+  /* R19 (เจ้าของงาน 20 ต.ค. 2569 แยกแถว Desktop / Mobile ทุกครั้ง) + 6 พ.ย. 2569 เจ้าของงาน "เมื่อวานเซฟว่า ต้องมี flowchart และมี mobile แต่วันนี้มี flowchart แล้ว แต่ว่ายังไม่มี mobile"
+     ⇒ ติ๊กจอส่วนไหนก็สร้าง flowchart + Desktop + Mobile ครบทุกครั้ง (เดิมติ๊ก Desktop อย่างเดียวได้แถว Desktop อย่างเดียว) */
+  const devs = ['screens', 'desktop', 'mobile'].some(k => parts.indexOf(k) >= 0) ? [false, true] : [];
   log('สร้าง ' + parts.length + ' ส่วน: ' + parts.join(' · '));
   if (devs.length) await buildSet(SCENARIOS, GROUPS, 'scenario', devs);
   if (parts.indexOf('journey') >= 0) await buildJourneyAll();
