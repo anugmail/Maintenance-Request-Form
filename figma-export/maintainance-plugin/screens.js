@@ -1840,8 +1840,8 @@ async function decisionSection(o, approveSub, returnSub) {
    ⇒ Tabs = "รวมทุกไตรมาส" (ค่าเริ่มต้น · ยอดเท่าผลรวมไตรมาส 1–4 แบบ R85) + ไตรมาส 1–4 (Tabs ของไลบรารีมี 5 ช่องพอดี) · q = 0 รวมทุกไตรมาส · 1–4 ไตรมาสนั้น
    แสดงทุกหน้ารายละเอียดแผน (planBody): หน้าตรวจสอบของผู้อนุมัติ (S2) · หน้ารายละเอียดของผู้สร้างแผนทุกสถานะ (S1 A.20–A.22 · S19 · S20) · A.32 กบค. ดูแผนของหน่วยงานอื่น (เจ้าของงาน 9 พ.ย. 2569 ส่งภาพ 4 จอ "ทำให้เป็นแบบนี้") */
 const planQParts = (k) => { const cars = Object.keys(A_ALL).map(Number).filter(i => (k === 0 || A_ALL[i] === k) && A_DRAW[i] !== 'none'); return qAgg(cars, A_PICKS, A_OILS, []).sort((a, b) => a[2].localeCompare(b[2], 'th')); };
-async function planPartsSec(q) {
-  const rows = planQParts(q);
+async function planPartsSec(q, rowsOf) {   // rowsOf = ยอดรายแท็บของแผนอื่น (ค่าเริ่ม planQParts = แผน NP) · E.2 ใช้ pQParts ของแผน P
+  const rows = (rowsOf || planQParts)(q);
   const sec = col('Section', [await sectionLabel('อะไหล่ในแผน'), await tabs([['รวมทุกไตรมาส', null]].concat(QUARTERS.map(t => [t, null])), q)], 16); // 9 พ.ย. 2569 เจ้าของงาน "เอาเลขออกไปเลยได้ป่ะ ถ้าหมายถึงจำนวนชนิด" ⇒ หัวข้ออะไหล่รวมตามรายการไม่มีตัวเลขจำนวนชนิด
   if (rows.length) add(sec, await tblShort(QPART_COLS, rows), 'h');
   else add(sec, await noParts(q ? Q_PARTS_EMPTY : ALL_Q_PARTS_EMPTY), 'h');   // ข้อความชุดเดียวกับหัวข้ออะไหล่ในไตรมาส n ของหน้าไตรมาส
@@ -1993,13 +1993,22 @@ async function planDetail(name, o) {   // หน้ารายละเอี�
    รถไตรมาส 1 = 10 คันของ S6 (TRIP_CARS) · ไตรมาสอื่นตามแผน P */
 const Q_BTN = { kind: 'Primary button', text: 'ไปหน้า' + NOW_Q, icon: 'keyboard_arrow_right-20-400-round' };   // ปุ่มเข้าหน้าไตรมาส (Tertiary brand button ของ Section label)
 const P_Q = (P[9].match(/: (\d+)/g) || []).map(x => +x.slice(2));
+const P_COUNTS = [TRIP_CARS.length].concat(P_Q.slice(1));
+/* อะไหล่ในแผนของแผน P (E.2 · 9 พ.ย. 2569 เจ้าของงาน "หน้าอื่นที่ต้องมีอะใหล่รวม หรืออะใหล่แต่ละไตรมาส ก็ต้องมี section อะใหล่ด้วยนะ")
+   ไตรมาส 1 = PARTS ชุดเดียวกับอะไหล่ในไตรมาส 1 ของหน้าไตรมาส · ไตรมาส 2–4 ค่าสมมติตามสัดส่วนจำนวนยานพาหนะ (แผน P มีข้อมูลรายคันแค่ไตรมาส 1) · รวมทุกไตรมาส = ผลรวม 4 แท็บ */
+const pQty = (k) => PARTS.map(p => Math.round(+p[3] * P_COUNTS[k - 1] / P_COUNTS[0]));
+const pQParts = (k) => {
+  const qty = k ? pQty(k) : PARTS.map((_, x) => [1, 2, 3, 4].reduce((a, j) => a + pQty(j)[x], 0));
+  return PARTS.map((p, x) => [p[0], p[1], p[2], String(qty[x]), p[4]]).filter(r => +r[3] > 0).sort((a, b) => a[2].localeCompare(b[2], 'th'));
+};
 async function planDetailQ(name) {
-  const counts = [TRIP_CARS.length].concat(P_Q.slice(1));
+  const counts = P_COUNTS;
   const { scr, page } = await shell(name, { title: 'เลขที่ ' + P[0], back: true, crumbs: [P[1]], badge: PST.active });
   add(page, col('Content', [await vehicleInfo(PLAN_KV, 'รายละเอียดแผน'),
     col('Section', [await sectionLabel('ยานพาหนะในแผน', { badge: counts.reduce((a, b) => a + b, 0), buttons: [Q_BTN] }),
       await tabs(QUARTERS.map((t, k) => [t, counts[k]]), 0),
-      await tblShort(CARP_COLS.slice(0, 6), TRIP_CARS.map((c, i) => [c[0], c[1], c[2], JOB_OIL_OPTS[TRIP_OIL[i]], lastOil(c[0]), (i % 4) + 1 + ' รายการ']))], 16)], 32), 'h');
+      await tblShort(CARP_COLS.slice(0, 6), TRIP_CARS.map((c, i) => [c[0], c[1], c[2], JOB_OIL_OPTS[TRIP_OIL[i]], lastOil(c[0]), (i % 4) + 1 + ' รายการ']))], 16),
+    await planPartsSec(0, pQParts)], 32), 'h');
   return scr;
 }
 
