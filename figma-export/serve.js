@@ -21,6 +21,7 @@ const BOARD_LABELS = [
   { file: 'board-maintainance-story-map.json', group: 'บำรุงรักษาตามวาระ', label: 'user story mapping (JO ข้อ 7.3)' },
   { file: 'board-maintainance-usecase.json', group: 'บำรุงรักษาตามวาระ', label: 'use case 92 ข้อ' },
   { file: 'board-maintainance-ac-create.json', group: 'บำรุงรักษาตามวาระ', label: 'AC หน้าสร้างแผน (ไฟล์ 25)' },   // 5 พ.ย. 2569 · 9-ac-board.js --src=…/25-บำรุงรักษา-AC-หน้า-สร้างแผน.md
+  { file: 'board-maintainance-ac-s1.json', group: 'บำรุงรักษาตามวาระ', label: 'AC หน้า S1 (ไฟล์ 29)' },   // 9 พ.ย. 2569 · 9-ac-board.js --src=…/29-บำรุงรักษา-AC-หน้า-S1.md
   { file: 'board-login-flow.json', group: 'Login และสิทธิ์', label: 'ลำดับ login + ภาพหน้าจริง' },
   { file: 'board-login-permission.json', group: 'Login และสิทธิ์', label: 'สิทธิ์ Overhaul ตาม role' },
   { file: 'board-login-ac.json', group: 'Login และสิทธิ์', label: 'AC รายจอ 7 จอ' },
