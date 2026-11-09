@@ -174,20 +174,20 @@ const CTRL_NAME = ['นายสมชาย แก้วมณี', 'นาย�
 const TRIP_PHONES = { 4: ['นายอนุชา ศรีสุข', '086-552-1904'] }, TRIP_V_LOCS = { 6: 'ศูนย์บริการผู้รับจ้าง สาขาขอนแก่น' }, TRIP_V_PHONES = { 6: ['นายธนพล วงศ์ใหญ่', '095-118-4420'] };
 const tripPhone = (i, ph) => ((ph || {})[i] || [])[1] || OWNER_PH[i];
 const tripCtrl = (i, ph) => ((ph || {})[i] || [])[0] || CTRL_NAME[i];
-const tripPhoneCell = (i, ph) => ({ text: tripCtrl(i, ph), sub: tripPhone(i, ph) });
+const tripPhoneCell = (i, ph) => ({ text: tripPhone(i, ph), sub: tripCtrl(i, ph) });   // 9 พ.ย. 2569 เจ้าของงาน "E4 ตรงติดต่อ อยากให้ เพิ่มชื่อผู้ดูแลรถ ตรงด้านล่างเบอร์โทร ด้วย และอยากให้แก้จุดที่เกี่ยวข้องด้วย" ⇒ คอลัมน์ "เบอร์ติดต่อ" เบอร์บรรทัดบน ชื่อผู้ดูแลยานพาหนะบรรทัดรอง (เดิม 6 พ.ย. ชื่อบน เบอร์ล่าง หัว "ผู้ดูแลยานพาหนะ")
 /* ตารางยานพาหนะของแผนเดินทาง ชุดเดียวทุกหน้า (R82 · 6 พ.ย. 2569 เจ้าของงาน "ถ้าเพิ่ม คอลัมน์ ก็ส่งผลกระทบกับ หน้าอื่นๆที่เป็นหน้าที่เหมือนกันด้วย ตอน export ก็เกี่ยวข้องด้วย" · แบบ QPART_COLS R81)
    ใช้ที่ ฟอร์มแผนเดินทาง S6 S9 (+ ไอคอนแก้ไข ลบ) · ตรวจสอบแผนเดินทาง S7 · แผนเดินทางดูอย่างเดียว S8 · รายละเอียดแผนเดินทาง S10 S12 (หน่วยงานเป็นบรรทัดรองของทะเบียน + สถานะงาน + ปุ่ม … เพราะ Table ของไลบรารี 8 คอลัมน์)
    · หน้าไตรมาส (ไม่มีสถานที่บำรุงรักษา + คอลัมน์แผนเดินทาง) · ไฟล์ PDF และ Excel ที่ส่งออก · เพิ่ม ลด หรือเปลี่ยนชื่อคอลัมน์ที่นี่ที่เดียว ช่องของแต่ละคอลัมน์อยู่ใน tripVCells (จับคู่ด้วยชื่อหัวคอลัมน์)
    ประเภทยานพาหนะต่อจากทะเบียน แบบ Vehicle list ของ UI Release#2 หน้า 5.2 Vehicle Management ("เลขทะเบียน / ยี่ห้อ / รุ่น" แล้ว "ประเภทยานพาหนะ") · component Table ของไฟล์ Component */
 const UNIT_COL = 'หน่วยงานเจ้าของยานพาหนะ';
-const TRIP_V_COLS = [['ทะเบียน', 150, 'Lead text'], ['ประเภทยานพาหนะ', 120], ['ยี่ห้อ/รุ่น', 0], [UNIT_COL, 140], ['ผู้ดูแลยานพาหนะ', 160], ['สถานที่บำรุงรักษา', 190], ['วันดำเนินการ', 180]];
+const TRIP_V_COLS = [['ทะเบียน', 150, 'Lead text'], ['ประเภทยานพาหนะ', 120], ['ยี่ห้อ/รุ่น', 0], [UNIT_COL, 140], ['เบอร์ติดต่อ', 160], ['สถานที่บำรุงรักษา', 190], ['วันดำเนินการ', 180]];
 /* o.unitSub = หน่วยงานไปเป็นบรรทัดรองของทะเบียน · o.drop = [ชื่อคอลัมน์ที่ไม่แสดง] · o.fill = ทุกคอลัมน์ยืดเท่ากัน (ไฟล์ PDF A4) */
 const tripVCols = (o) => { o = o || {}; return TRIP_V_COLS.filter(c => (o.drop || []).indexOf(c[0]) < 0 && !(o.unitSub && c[0] === UNIT_COL)).map(c => o.fill ? [c[0], 0, c[2]] : c); };
 /* t = { d1, d2, works, locs, phones, vendor | hire } ใบแผนเดินทาง หรือค่าในฟอร์ม · ยังไม่มีช่วงวัน (ฟอร์มยังไม่เลือกวันที่) = วันดำเนินการ "—" */
 const tripVCells = (i, t, o) => {
   o = o || {};
   const c = TRIP_CARS[i], locs = t.locs || {};
-  const cell = { 'ทะเบียน': o.unitSub ? { text: c[0], sub: c[2] } : c[0], 'ประเภทยานพาหนะ': typeOf(c), 'ยี่ห้อ/รุ่น': c[1], [UNIT_COL]: c[2], 'ผู้ดูแลยานพาหนะ': tripPhoneCell(i, t.phones),
+  const cell = { 'ทะเบียน': o.unitSub ? { text: c[0], sub: c[2] } : c[0], 'ประเภทยานพาหนะ': typeOf(c), 'ยี่ห้อ/รุ่น': c[1], [UNIT_COL]: c[2], 'เบอร์ติดต่อ': tripPhoneCell(i, t.phones),
     'สถานที่บำรุงรักษา': { text: tripLoc(i, locs), sub: locs[i] ? 'แก้จากสำนักงานเจ้าของยานพาหนะ' : 'ค่าเริ่มต้น สำนักงานที่ยานพาหนะอยู่' }, 'วันดำเนินการ': t.d1 ? tripWorkCell(i, t) : '—' };
   return tripVCols(o).map(col => cell[col[0]]);
 };
@@ -998,9 +998,9 @@ const workRange = (i, t) => (t.works || {})[i] || [t.d1, t.d2];
 async function tripCarEdit(scr, i, phones, locs, o) {
   o = o || {};
   const t = o.trip, plate = TRIP_CARS[i][0];
-  if (!t) { await formModal(scr, { title: 'แก้ไขผู้ดูแลยานพาหนะและสถานที่ · ' + plate, fields: [{ label: 'ผู้ดูแลยานพาหนะ', value: tripCtrl(i, phones) }, { label: 'เบอร์ติดต่อ', value: tripPhone(i, phones) }, { label: 'สถานที่บำรุงรักษา', value: tripLoc(i, locs) }], ok: 'บันทึก' }); return; }
+  if (!t) { await formModal(scr, { title: 'แก้ไขผู้ดูแลยานพาหนะและสถานที่ · ' + plate, fields: [{ label: 'เบอร์ติดต่อ', value: tripPhone(i, phones) }, { label: 'ผู้ดูแลยานพาหนะ', value: tripCtrl(i, phones) }, { label: 'สถานที่บำรุงรักษา', value: tripLoc(i, locs) }], ok: 'บันทึก' }); return; }
   const w = o.pick || workRange(i, t);
-  await formModal(scr, { title: 'แก้ไขยานพาหนะในแผนเดินทาง · ' + plate, fields: [{ pair: [{ label: 'ผู้ดูแลยานพาหนะ', value: tripCtrl(i, phones) }, { label: 'เบอร์ติดต่อ', value: tripPhone(i, phones) }] },
+  await formModal(scr, { title: 'แก้ไขยานพาหนะในแผนเดินทาง · ' + plate, fields: [{ pair: [{ label: 'เบอร์ติดต่อ', value: tripPhone(i, phones) }, { label: 'ผู้ดูแลยานพาหนะ', value: tripCtrl(i, phones) }] },   // เบอร์ก่อนชื่อ ตามคอลัมน์ (9 พ.ย. 2569)
     { label: 'สถานที่บำรุงรักษา', value: tripLoc(i, locs) }, { label: 'วันดำเนินการ', value: w[0] + ' - ' + w[1] }], ok: 'บันทึก' });
   const inp = scr.findAll(n => n.type === 'INSTANCE' && n.name === 'Text input' && propVal(n, 'Label text') === 'วันดำเนินการ').pop();
   if (!inp) { warn('popup แก้ไขยานพาหนะในแผนเดินทาง', 'ไม่พบช่องวันดำเนินการ'); return; }
@@ -1210,7 +1210,7 @@ const jobWork = (sel) => WORK.filter((w, k) => k > 0 || sel !== 0);   // แถ�
 async function jobBoxes(h, t, i, started, car) {   // กล่องข้อมูลยานพาหนะ 6 ช่อง + กล่องการนัดหมาย (หน้างานรายคันและหน้าขั้นตอน) · car = ยานพาหนะของจอตัวอย่าง (ค่าเริ่ม TRIP_CARS[i])
   const c = car || TRIP_CARS[i];
   const appt = (h ? [['แผนเดินทาง', t.name], ['ผู้รับจ้าง', t.vendor], ['ช่วงวันทำงาน', t.d1 + ' – ' + t.d2]] : [['แผนเดินทาง', t.name], ['ช่วงวันเดินทาง', t.d1 + ' – ' + t.d2]])
-    .concat([['สถานที่บำรุงรักษา', tripLoc(i, t.locs)], ['ผู้ดูแลยานพาหนะ', tripCtrl(i, t.phones)], ['เบอร์ติดต่อ', tripPhone(i, t.phones)]])
+    .concat([['สถานที่บำรุงรักษา', tripLoc(i, t.locs)], ['เบอร์ติดต่อ', tripPhone(i, t.phones)], ['ผู้ดูแลยานพาหนะ', tripCtrl(i, t.phones)]])   // เบอร์ก่อนชื่อผู้ดูแล ตามคอลัมน์เบอร์ติดต่อ (9 พ.ย. 2569)
     .concat(started ? [['เริ่มงาน', h ? HIRE_START : JOB_START], ['ผู้เริ่มงาน', JOB_BY]] : []);   // ใบจ้าง: กบค. เป็นผู้บันทึก (ชื่อช่างผู้รับจ้างยังไม่เคาะ)
   return [await vehicleInfo([['ทะเบียน', c[0]], ['ยี่ห้อ/รุ่น', c[1]], ['ประเภท', typeOf(c)], ['หน่วยงานเจ้าของยานพาหนะ', c[2]], ['เลขไมล์สะสม', '182,400 กม.'], ['ชั่วโมงเครื่องจักรสะสม', '6,120 ชม.']]),
     await vehicleInfo(appt, 'การนัดหมาย')];
