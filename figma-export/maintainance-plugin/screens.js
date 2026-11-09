@@ -1810,7 +1810,7 @@ const reviewRow = (p) => [p[1], p[8], { text: 'นายวิชัย ทอ�
 const REVIEW_ROWS = [NP, PLANS[2], PLANS[3]];
 const PART_CHECK_COLS = [['รายการอะไหล่', 0, 'Lead text'], ['รหัส', 110], ['ตามแผน', 110], ['หน่วย', 90], ['คงเหลือในคลัง', 140], ['ต้องซื้อเพิ่ม', 140]];
 const partCheckRows = () => PARTS.map((p, i) => [p[0], p[1], p[3], p[4], p[5], shortOf(i) ? String(shortOf(i)) : '-']);
-async function planBody(o) {   // เนื้อหน้ารายละเอียดแผน ใช้ทั้งฝั่งผู้อนุมัติ (S2) และผู้สร้างแผน (S1 S19 S20) · o.pq = แท็บอะไหล่ในแผน (0 รวมทุกไตรมาส) · สถานะคลังรับทราบ (o.wh) ตัดพร้อม S22 6 พ.ย. 2569
+async function planBody(o) {   // เนื้อหน้ารายละเอียดแผน ใช้ทั้งฝั่งผู้อนุมัติ (S2) และผู้สร้างแผน (S1 S19 S20) · o.parts = มีอะไหล่ในแผน (ผู้อนุมัติเท่านั้น) · o.pq = แท็บ (0 รวมทุกไตรมาส) · สถานะคลังรับทราบ (o.wh) ตัดพร้อม S22 6 พ.ย. 2569
   o = o || {};
   const inPlan = Object.keys(A_ALL).map(Number);   // รถในแผนใหม่ = ที่จัดลงไตรมาสตอนสร้างแผน (S1)
   // เจ้าของงาน 2 พ.ย. 2569 "อยากให้ข้อมูลที่แสดงเป็นข้อมูลรถ" ⇒ รถแยกแท็บไตรมาส คอลัมน์เดียวกับ section รถในไตรมาสของ S1 ไม่มีไอคอน (ดูอย่างเดียว) · ไม่มีตารางอะไหล่ทั้งปี
@@ -1818,8 +1818,8 @@ async function planBody(o) {   // เนื้อหน้ารายละเ�
   return [await vehicleInfo(npKv(), 'รายละเอียดแผน'),
     // 5 พ.ย. 2569 ชีตลูกค้า: ปุ่มไปหน้าไตรมาสต้องมีทั้งแผน อนุมัติแล้ว และ ดำเนินการ (เดิมมีเฉพาะ planDetailQ ดำเนินการ) · o.qBtn
     col('Section', [await sectionLabel('ยานพาหนะในแผน', { badge: inPlan.length, buttons: o.qBtn ? [Q_BTN] : [] }), await tabs(QUARTERS.map((t, k) => [t, inPlan.filter(i => A_ALL[i] === k + 1).length]), 0),
-      await tblShort(CARP_COLS.slice(0, 6), q1.map(i => [CAND[i][0], CAND[i][1], CAND[i][2], OIL_OPTS[(A_PICKS[i] || []).indexOf(0) >= 0 ? 1 : 0], lastOil(CAND[i][0]), n(i) ? n(i) + ' รายการ' : A_DRAW[i] ? 'ไม่เบิกอะไหล่' : 'ยังไม่เลือก']))], 16),
-    await planPartsSec(o.pq || 0)];   // 9 พ.ย. 2569 อะไหล่ในแผน แท็บรวมทุกไตรมาส + ไตรมาส 1–4 ทั้งหน้าผู้สร้างและผู้อนุมัติ
+      await tblShort(CARP_COLS.slice(0, 6), q1.map(i => [CAND[i][0], CAND[i][1], CAND[i][2], OIL_OPTS[(A_PICKS[i] || []).indexOf(0) >= 0 ? 1 : 0], lastOil(CAND[i][0]), n(i) ? n(i) + ' รายการ' : A_DRAW[i] ? 'ไม่เบิกอะไหล่' : 'ยังไม่เลือก']))], 16)]
+    .concat(o.parts ? [await planPartsSec(o.pq || 0)] : []);   // อะไหล่ในแผน เฉพาะหน้าผู้อนุมัติ (S2) · 9 พ.ย. 2569 เจ้าของงาน "หน้าผู้สร้าง ถ้ามีรวมอะใหล่ทุกไตรมาสแล้วก็ไม่ต้องมี มีแค่ผู้อนุมัติ"
 }
 /* หน้ารายละเอียดแผนฝั่งผู้อนุมัติ (Detail ⇒ Section label)
    เจ้าของงาน 2 พ.ย. 2569: ผลการพิจารณาเป็น radio อนุมัติ (ค่าเริ่มต้น) / ส่งกลับแก้ไข แทนปุ่ม 2 ปุ่ม — ตามการ์ดตอบรับ/ปฏิเสธนัดหมายของ Overhaul R29 (§4.2.13)
@@ -1838,7 +1838,7 @@ async function decisionSection(o, approveSub, returnSub) {
    ตาม Section label + Tabs + Table ของหน้ารายละเอียดแผน (รถในแผน) ในบล็อกเดียวกัน · ไม่มีอะไหล่ = Empty state */
 /* 9 พ.ย. 2569 เจ้าของงาน (ภาพหัวข้ออะไหล่ในแผนของ S2) "อยากให้มี tab รวมทุกไตรมาส และแยกไตรมาส ทั้งก่อนอนุมัติ และ ผู้อนุมัติ"
    ⇒ Tabs = "รวมทุกไตรมาส" (ค่าเริ่มต้น · ยอดเท่าผลรวมไตรมาส 1–4 แบบ R85) + ไตรมาส 1–4 (Tabs ของไลบรารีมี 5 ช่องพอดี) · q = 0 รวมทุกไตรมาส · 1–4 ไตรมาสนั้น
-   ย้ายเข้า planBody ⇒ หน้ารายละเอียดแผนของผู้สร้าง (S1 S19 S20 ทุกสถานะ · มุม กบค.) และหน้าตรวจสอบของผู้อนุมัติ (S2) เหมือนกัน */
+   แสดงเฉพาะหน้าตรวจสอบของผู้อนุมัติ (S2 · planBody o.parts) — หน้ารายละเอียดของผู้สร้างไม่มี เพราะฟอร์มมีอะไหล่รวมทุกไตรมาสแล้ว (เจ้าของงาน 9 พ.ย. 2569) */
 const planQParts = (k) => { const cars = Object.keys(A_ALL).map(Number).filter(i => (k === 0 || A_ALL[i] === k) && A_DRAW[i] !== 'none'); return qAgg(cars, A_PICKS, A_OILS, []).sort((a, b) => a[2].localeCompare(b[2], 'th')); };
 async function planPartsSec(q) {
   const rows = planQParts(q);
@@ -1853,7 +1853,7 @@ async function planReview(name, o) {
   const done = o.status === 'approved';
   const { scr, page } = await shell(name, { title: 'ตรวจสอบแผนบำรุงรักษา', back: true, crumbs: ['แผนรออนุมัติ', NP[1]], badge: PST[o.status || 'review'] });
   const d = done ? null : await decisionSection(o, 'แผนผ่านการตรวจสอบ หน่วยงานเริ่มงานรายไตรมาสได้', 'แจ้งเหตุผลให้ผู้สร้างแผนแก้ไขแล้วส่งใหม่');
-  const nodes = (d ? [d.dec] : []).concat(await planBody({ pq: o.pq }));
+  const nodes = (d ? [d.dec] : []).concat(await planBody({ pq: o.pq, parts: true }));
   if (d) nodes.push(btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันผลการพิจารณา', { size: 'lg', disabled: !d.ok }]]));
   add(page, col('Content', nodes, 32), 'h');
   return scr;
