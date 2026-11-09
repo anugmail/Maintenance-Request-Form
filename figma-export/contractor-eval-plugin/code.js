@@ -1463,12 +1463,15 @@ async function exportShots(dir, scen) {   // scen = ['S1', 'S2'] ส่งเฉ
     const mob = / · mobile$/.test(f.name), m = f.name.replace(/ · mobile$/, '').match(SHOT_RE);
     if (m) shots.push({ f, code: m[2] + '.' + m[3], letter: m[2], no: m[3], scenario: m[4], name: m[5], device: mob ? 'mobile' : 'desktop' }); else skipped.push(f.name);
   }
-  /* หน้าเดียวกันมีหลายชุด ⇒ จอรหัสเดียวกันเก็บตัวที่สร้างล่าสุด = อยู่บนสุดของแผง Layers (ลำดับลูกท้ายสุดของหน้า)
-     9 พ.ย. 2569 เดิมเลือกตามตำแหน่งล่างสุด แต่หน้าเต็มแล้วปลั๊กอินวางชุดใหม่ที่ช่องว่างด้านบนหรือคอลัมน์ขวา ⇒ ส่งชุดเก่าไป FigJam (เจ้าของงาน "ของฝั่ง figma มาแล้ว แต่ figjam ยังไม่มา") */
+  /* หน้าเดียวกันมีหลายชุด ⇒ จอรหัสเดียวกันเก็บตัวที่สร้างล่าสุด
+     9 พ.ย. 2569 เดิมเลือกตามตำแหน่งล่างสุด แต่หน้าเต็มแล้วปลั๊กอินวางชุดใหม่ที่ช่องว่างด้านบนหรือคอลัมน์ขวา ⇒ ส่งชุดเก่าไป FigJam (เจ้าของงาน "ของฝั่ง figma มาแล้ว แต่ figjam ยังไม่มา")
+     9 พ.ย. 2569 (รอบ 2 · เจ้าของงาน "ทำไมหน้า figjam ไม่เท่า figma ทำให้เท่าหน่อย"): buildGrid วางทุกชิ้นด้วย page.insertChild(0) ⇒ ชุดใหม่อยู่ลำดับต้นของ page.children (ล่างสุดของแผง Layers)
+     ไม่ใช่ลำดับท้าย — รอบแรกเลือกลำดับท้ายจึงได้ชุดเก่าสุด (A.20 ฉบับก่อน 6 พ.ย.) ⇒ จอที่มีเวลาสร้าง (pluginData builtAt) เลือกตามเวลา · จอที่สร้างก่อนมีเวลา ลำดับต้นของหน้า = ล่าสุด */
   const order = new Map(page.children.map((n, i) => [n.id, i]));
+  const builtAt = (f) => +((f.getPluginData && f.getPluginData('builtAt')) || 0);
   const seen = new Set();
   const total = shots.length;
-  shots.sort((p, q) => order.get(q.f.id) - order.get(p.f.id));
+  shots.sort((p, q) => (builtAt(q.f) - builtAt(p.f)) || (order.get(p.f.id) - order.get(q.f.id)));
   shots.splice(0, shots.length, ...shots.filter(x => !seen.has(x.code + x.device) && seen.add(x.code + x.device)));
   if (total > shots.length) log('หน้านี้มีจอหลายชุด — ส่งเฉพาะชุดที่สร้างล่าสุดของแต่ละจอ · ข้ามชุดเก่า ' + (total - shots.length) + ' จอ');
   if (scen && scen.length) { shots.splice(0, shots.length, ...shots.filter(x => scen.indexOf(x.scenario) >= 0)); log('ส่งเฉพาะ ' + scen.join(' ')); }
@@ -1627,6 +1630,7 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
           try {
             PINS = []; const s = await fn(); stripDividers(s); await polish(s); repin(); await bindTones(); if (typeof AFTER_SCREEN === 'function') await AFTER_SCREEN(s);   // AFTER_SCREEN = ตัวเรียกเฉพาะปลั๊กอิน (บำรุงรักษา: ลิงก์เลขทะเบียน 6 พ.ย. 2569)
             s.name = prefix + ' / ' + sub.code + '.' + (i + 1) + ' · ' + sub.tag + ' — ' + label + (mob ? ' · mobile' : '');
+            if (s.setPluginData) s.setPluginData('builtAt', String(Date.now()));   // ส่งภาพไป FigJam เลือกจอที่สร้างล่าสุดตามเวลานี้ (exportShots · 9 พ.ย. 2569)
             put(s, x, rowY); h = Math.max(h, s.height); made.push(s);
             const cd = sub.code + '.' + (i + 1); if (!byCode[cd]) byCode[cd] = s;
             log('  · ' + made.length + '/' + total + ' ' + s.name);
@@ -1778,9 +1782,9 @@ const REC = {
   repair: {   // งานซ่อมส่งอู่ — ข้อมูลใบแจ้งซ่อม (ใบแจ้งซ่อม Maintain-D) + ข้อมูลงานซ่อมที่ศูนย์บริการ (งานซ่อมที่ศูนย์บริการ) · ไม่มีใบสั่งจ้าง/สัญญา/ที่อยู่อู่
     po: '-', key: 'MTD-691003-014', vendor: 'อู่ ช.เจริญยนต์ ขอนแก่น', ref: 'ใบแจ้งซ่อม MTD-691003-014', plate: '82-1145 ขอนแก่น', delivered: '15/10/2569',
     job: 'MTD-691003-014', repairNo: 'RAM000245', invoice: 'R202510147', due: '14/10/2569  17:00', done: '15/10/2569  16:30', warranty: '90 วัน' },
-  pm: {       // แผนเดินทางจ้างดำเนินการ (S9) ของปลั๊กอินบำรุงรักษา TRIP_V — แผน MR Z7000001 ไตรมาส 1 รถ 6 คัน
-    po: 'สจ.69-0142', key: 'สจ.69-0142', vendor: 'บริษัท สยามไฮดรอลิก เซอร์วิส จำกัด', ref: 'MR Z7000001', plate: '80-5738 น่าน +5 คัน', delivered: '21/11/2569',
-    addr: 'อ.บางพลี สมุทรปราการ', mr: 'MR Z7000001', trip: 'จ้างบำรุงรักษา น่าน เชียงใหม่ เชียงราย', period: '17/11/2569 – 21/11/2569', cars: '6 คัน' },
+  pm: {       // แผนเดินทางจ้างดำเนินการ (S9) ของปลั๊กอินบำรุงรักษา TRIP_V — แผน MRZ7000001 ไตรมาส 1 รถ 6 คัน
+    po: 'สจ.69-0142', key: 'สจ.69-0142', vendor: 'บริษัท สยามไฮดรอลิก เซอร์วิส จำกัด', ref: 'MRZ7000001', plate: '80-5738 น่าน +5 คัน', delivered: '21/11/2569',
+    addr: 'อ.บางพลี สมุทรปราการ', mr: 'MRZ7000001', trip: 'จ้างบำรุงรักษา น่าน เชียงใหม่ เชียงราย', period: '17/11/2569 – 21/11/2569', cars: '6 คัน' },
   oh: {       // Purchase Order ของปลั๊กอิน Overhaul — PO-690201 แผน ORZ6900002 รถ 72-6648 สงขลา ปิดงาน 5 ต.ค. 2569 ประกัน 360 วัน ถึง 30 ก.ย. 2570
     po: 'PO-690201', key: 'PO-690201', vendor: 'บริษัท มิตซูบิชิ ฟูโซ่ ทรัค จำกัด', ref: 'แผน ORZ6900002', plate: '72-6648 สงขลา', delivered: '05/10/2569',
     addr: 'อ.บางพลี สมุทรปราการ', poName: 'ซ่อมระบบไฮดรอลิกกระเช้า', plan: 'ORZ6900002', cars: '1 คัน', contract: '01/09/2569 – 31/10/2569', closed: '05/10/2569', warranty: '360 วัน · ถึง 30/09/2570' },
