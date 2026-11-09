@@ -298,7 +298,8 @@ function main() {
     fs.readdirSync(OUT).filter(f => /^board-maintainance-ui-S\d+\.json$/.test(f)).forEach(f => fs.unlinkSync(path.join(OUT, f)));
     const by = new Map();
     sections.forEach(s => { const m = s.name.match(/Scenario (\d+) · (.+?)(?: · จอจาก Figma)?$/) || s.name.match(/· S(\d+) · (.+)$/); if (!m) return; const k = m[1]; if (!by.has(k)) by.set(k, { title: 'S' + k + ' · ' + m[2], sections: [] }); by.get(k).sections.push(s); });
-    by.forEach((v, k) => fs.writeFileSync(path.join(OUT, 'board-maintainance-ui-S' + k + '.json'), JSON.stringify(Object.assign({}, board, { title: v.title, sections: v.sections }))));
+    /* ชื่อ section ต้องไม่ซ้ำกับบอร์ดชุดเต็ม — ปลั๊กอินบอร์ดลบ section ชื่อเดียวกันก่อนวาง ติ๊กชุดเต็มคู่กับราย S แล้วภาพของชุดเต็มหายหลังเห็นแวบเดียว (เจ้าของงาน 9 พ.ย. 2569 "พอ export เห็นรูป จะกด ก็หายไป") */
+    by.forEach((v, k) => fs.writeFileSync(path.join(OUT, 'board-maintainance-ui-S' + k + '.json'), JSON.stringify(Object.assign({}, board, { title: v.title, sections: v.sections.map(x => Object.assign({}, x, { name: 'ราย scenario · ' + x.name })) }))));
     console.log('แยกราย scenario: ' + by.size + ' ไฟล์ (' + [...by.keys()].map(k => 'S' + k).join(' ') + ') → out/board-maintainance-ui-S<n>.json');
   }
   const outArg = [...args].find(a => a.indexOf('--out=') === 0);
