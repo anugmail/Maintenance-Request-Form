@@ -1451,7 +1451,7 @@ function splitBoard(page, f) {
    export เฟรมจอ "<prefix> / A.1 · S1 — ชื่อ" บนหน้าที่เปิดอยู่ (จอที่ทีมแก้มือแล้วก็ได้) เป็น PNG ส่งให้หน้าต่างปลั๊กอิน → POST เข้า serve.js ที่ out/figjam/<dir>/
    แล้ว 3-figjam-board.js วางภาพต่อจากผัง userflow ของ scenario เดียวกัน · desktop อย่างเดียว · ด้านยาวไม่เกิน 4000 px (FigJam รับไม่เกิน 4096) */
 const SHOT_RE = /^(\S+) \/ ([A-Z])\.([0-9.]+) · (S\d+) — (.+)$/;
-async function exportShots(dir) {
+async function exportShots(dir, scen) {   // scen = ['S1', 'S2'] ส่งเฉพาะ scenario ที่ติ๊ก (ว่าง = ทุกจอ · 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่")
   errors.length = 0;
   const page = figma.currentPage;
   /* 5 พ.ย. 2569 เจ้าของงาน "export figjam อยากให้ออกมาเป็นแบบนี้ มี mobile มาด้วย … บอกว่าส่วนใหน desktop , mobile" ⇒ ส่งจอ mobile ด้วย (ชื่อเฟรมลงท้าย " · mobile") · device ใน manifest */
@@ -1471,11 +1471,12 @@ async function exportShots(dir) {
   const seen = new Set();   // รหัสซ้ำในชุดเดียวกัน ⇒ เก็บตัวที่อยู่ล่างสุด (สร้างทีหลัง)
   shots.sort((p, q) => q.f.y - p.f.y);
   shots.splice(0, shots.length, ...shots.filter(x => !seen.has(x.code + x.device) && seen.add(x.code + x.device)));
+  if (scen && scen.length) { shots.splice(0, shots.length, ...shots.filter(x => scen.indexOf(x.scenario) >= 0)); log('ส่งเฉพาะ ' + scen.join(' ')); }
   const key = (s) => s.letter + s.no.split('.').map(x => x.padStart(3, '0')).join('.');
   shots.sort((a, b) => key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0);
   if (!shots.length) { log('ไม่พบเฟรมจอ "' + PLUGIN.prefix + ' / …" บนหน้า "' + page.name + '" — เปิดหน้าที่มีจอแล้วกดใหม่'); return; }
   log('ส่งภาพจอ ' + shots.length + ' จอ จากหน้า "' + page.name + '" ไปที่ out/figjam/' + dir + '/ …');
-  const manifest = { source: 'figma', page: page.name, exportedAt: new Date().toISOString(), shots: [] };
+  const manifest = { source: 'figma', page: page.name, exportedAt: new Date().toISOString(), scen: scen && scen.length ? scen : undefined, shots: [] };
   for (const s of shots) {
     try {
       const scale = Math.min(1, 4000 / Math.max(s.f.width, s.f.height));
@@ -1487,7 +1488,8 @@ async function exportShots(dir) {
   }
   figma.ui.postMessage({ type: 'shots-done', dir, manifest });
   log('export แล้ว ' + manifest.shots.length + '/' + shots.length + ' จอ' + (skipped.length ? ' · ข้าม ' + skipped.length + ' เฟรมที่ชื่อไม่ตรงรูปแบบ (เช่น ' + skipped[0] + ')' : '') + (errors.length ? ' · ⚠ เตือน ' + errors.length + ' จุด' : ''));
-  log('ขั้นต่อไป: node figma-export/3-figjam-board.js --maintainance --only --out=board-maintainance.json แล้วโหลดบอร์ดใน FigJam');
+  const sc = scen && scen.length ? ' --scen=' + scen.join(',') : '';
+  log('ขั้นต่อไป: node figma-export/3-figjam-board.js --maintainance-flow-ui --only' + sc + ' --out=board-maintainance-flow-ui.json (flowchart คู่ภาพจอ) หรือ --maintainance-ui' + sc + ' --out=board-maintainance-ui.json (ภาพจออย่างเดียว) แล้วโหลดบอร์ดใน FigJam');
 }
 
 /* ---------- journey แนวขวาง (เจ้าของงานสั่ง 22 ต.ค. 2569: "ทำ scen มาต่อกันเป็นแนวขวาง สำหรับ export" + "ลงในเพจ maintainance แต่มีปุ่มแยก") ----------

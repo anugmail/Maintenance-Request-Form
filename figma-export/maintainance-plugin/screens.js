@@ -2799,7 +2799,7 @@ figma.ui.onmessage = async (msg) => {
     if (msg.type === 'build-pick') await buildPick(o);
     if (msg.type === 'build-journey') await buildJourneyAll();
     if (msg.type === 'build-activity') await buildActivity();
-    if (msg.type === 'export-shots') await exportShots('flow-maintainance');
+    if (msg.type === 'export-shots') await exportShots('flow-maintainance', msg.scen);   // msg.scen = scenario ที่ติ๊ก (9 พ.ย. 2569 แยก export FigJam ราย S)
     if (msg.type === 'move-latest') await moveLatest();
     if (msg.type === 'clear-proto') { const tp = await namedPage(PAGE_NAMES); await figma.setCurrentPageAsync(tp.page); await clearPrototype(tp.page); }
     if (msg.type === 'build-docs') await buildDocs({ parts: msg.parts });   // 30 ต.ค. 2569 ติ๊กเลือกส่วน / สร้างทั้งหมด   // 30 ต.ค. 2569 ส่งภาพจอบนหน้านี้ไป FigJam

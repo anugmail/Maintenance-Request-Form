@@ -16,6 +16,7 @@
      node figma-export/3-figjam-board.js --overhaul2 --only --out=board-overhaul2.json
                                                     Overhaul v2 ครบ 14 scenario (section ละ scenario · capture จาก flow-overhaul2-capture.js)
                                                     --out= เขียนไฟล์ชื่ออื่น ไม่ทับ board.json (ปลั๊กอินใส่ชื่อไฟล์ในช่องที่อยู่ได้)
+     node figma-export/3-figjam-board.js --maintainance-flow-ui --only --scen=S1,S2 --out=board-maintainance-flow-ui.json   (เฉพาะ S ที่ระบุ · 9 พ.ย. 2569)
      node figma-export/3-figjam-board.js --maintainance --only --out=board-maintainance.json   (มี out/figjam/flow-maintainance/manifest.json = ใส่ภาพจอจาก Figma ต่อจากผังแต่ละ scenario · --shots-dir= เปลี่ยนโฟลเดอร์)
      node figma-export/3-figjam-board.js --maintainance-journey --only --out=board-maintainance-journey.json
                                                     userflow บำรุงรักษา 18 scenario เป็นผังเดียวต่อกัน (start จุดเดียว · 8-flow-userflow.js --journey)
@@ -222,8 +223,14 @@ function main() {
     const wantFlow = all || args.has('--maintainance') || args.has('--maintainance-flow-ui');
     const wantShots = args.has('--maintainance-ui') || args.has('--maintainance-flow-ui');
     if (wantShots) console.log(sm ? 'ภาพจอจาก Figma: ' + sm.shots.length + ' จอ (หน้า "' + sm.page + '" · export ' + sm.exportedAt + ')' : '⚠ ยังไม่มีภาพจอ (' + path.relative(path.join(__dirname, '..'), smf) + ') — กด "ส่งภาพจอบนหน้านี้ไป FigJam" ในปลั๊กอิน Figma ก่อน');
+    /* 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่" ⇒ --scen=S1,S2 เอาเฉพาะ scenario นั้น · ไม่ใส่แต่ manifest มาจากปุ่มส่งราย S (sm.scen) = ใช้ชุดนั้น */
+    const scenArg = process.argv.find(a => a.startsWith('--scen='));
+    const scenOnly = scenArg ? scenArg.slice(7).split(',').map(x => x.trim().toUpperCase()).filter(Boolean) : (wantShots && sm && sm.scen) || null;
+    if (scenOnly) console.log('เฉพาะ scenario: ' + scenOnly.join(' '));
     u.sections.forEach((sec, i) => {
       const color = i === 0 ? [255, 255, 255] : tint[(i - 1) % tint.length];
+      const sm1 = sec.name.match(/Scenario (\d+) · /);
+      if (scenOnly && (!sm1 || scenOnly.indexOf('S' + sm1[1]) < 0)) return;
       if (wantFlow) sections.push({ name: sec.name, color, kind: 'diagram', diagram: sec.diagram });
       const m = sec.name.match(/Scenario (\d+) · (.+)$/), shots = wantShots && sm && m ? sm.shots.filter(x => x.scenario === 'S' + m[1]) : [];
       if (shots.length) {
