@@ -1092,7 +1092,12 @@ async function popupModal(scr, o) {
 /* ตารางสั้นไม่มีแบ่งหน้า (5 พ.ย. 2569 ชีตลูกค้า: ข้อความตัวอย่าง "แสดง 1 ถึง 10  จาก 95 รายการ" ของ Table ค้างในจอที่รายการน้อย)
    tbl() ปิด property Pagination แล้ว แต่ชั้น Table pagination ในไฟล์จริงยังเห็น ⇒ ซ่อนชั้นนั้นตรงๆ · ใช้กับทุกตารางของปลั๊กอินนี้ที่ไม่แบ่งหน้า (ตารางที่แบ่งหน้าส่ง o.pagination ตัวเลขจริงตาม fillPagination)
    5 พ.ย. 2569 รอบ 2: จาก S10 S12 ขยายเป็นทุก tbl() ของปลั๊กอินบำรุงรักษา (Overhaul / ประเมินผู้รับจ้าง ไม่แตะ) */
-async function tblShort(cols, rows, o) { const t = await tbl(cols, rows, o); if (!(o && o.pagination)) (t.findAll ? t.findAll(n => n.name === 'Table pagination') : []).forEach(n => { n.visible = false; }); return t; }
+/* 9 พ.ย. 2569 เจ้าของงาน (ภาพหน้ารายละเอียดแผน) "รายละเอียด ควรเป็นการ จอง section แบบได้แค่ 10 รายการ และถ้าเกินจะมี pagiation มา"
+   ⇒ ตารางที่ไม่ได้กำหนดการแบ่งหน้าเอง แสดงไม่เกิน 10 แถว (TABLE_MAX.rows) เกินแล้วแสดงหน้าแรก 10 แถว + Table pagination "แสดง 1 ถึง 10 จาก n รายการ" · ไม่เกินไม่มีตัวแบ่งหน้า */
+async function tblShort(cols, rows, o) {
+  if (!(o && o.pagination) && rows.length > TABLE_MAX.rows) { o = Object.assign({}, o, { pagination: { shown: TABLE_MAX.rows, total: rows.length } }); rows = rows.slice(0, TABLE_MAX.rows); }
+  const t = await tbl(cols, rows, o); if (!(o && o.pagination)) (t.findAll ? t.findAll(n => n.name === 'Table pagination') : []).forEach(n => { n.visible = false; }); return t;
+}
 const JOB_T = tripAs(TRIP_1, 'approved'), JOB_I = TRIP_1.sel[0];
 const JOB_START = '04/11/2569 08:42 น.', JOB_END = '04/11/2569 11:15 น.', JOB_BY = TRIP.staff[0] + ' (' + UNITS[0] + ')';
 const JOB_MIX = { [TRIP_1.sel[0]]: 'done', [TRIP_1.sel[1]]: 'doing', [TRIP_1.sel[2]]: 'cannot' };   // หลังปิดงานคันแรก: คันที่ 2 กำลังทำ · คันที่ 3 บำรุงรักษาไม่ได้ · คันที่ 4 ยังไม่เริ่ม
