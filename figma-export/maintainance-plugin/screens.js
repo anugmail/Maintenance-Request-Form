@@ -1219,6 +1219,7 @@ const jobWork = (sel) => WORK.filter((w, k) => k > 0 || sel !== 0);   // แถ�
 async function jobBoxes(h, t, i, started, car) {   // กล่องข้อมูลยานพาหนะ 6 ช่อง + กล่องการนัดหมาย (หน้างานรายคันและหน้าขั้นตอน) · car = ยานพาหนะของจอตัวอย่าง (ค่าเริ่ม TRIP_CARS[i])
   const c = car || TRIP_CARS[i];
   const appt = (h ? [['แผนเดินทาง', t.name], ['ผู้รับจ้าง', t.vendor], ['ช่วงวันทำงาน', t.d1 + ' – ' + t.d2]] : [['แผนเดินทาง', t.name], ['ช่วงวันเดินทาง', t.d1 + ' – ' + t.d2]])
+    .concat([['วันดำเนินการ', tripWork(i, t)]])   // R83 วันดำเนินการของคันนี้ (9 พ.ย. 2569 ค่ำ เจ้าของงาน _"ในแผนการเดินทางอ่ะ จะมีช่วงของการดำเนินการอยู่แล้ว แต่ในรายคันอยากให้เห็นว่าแต่ละคันจะดำเนินการเมื่อไร"_ + _"ใส่ตรงหน้ารายการรถ ก็ได้ หรือจะใส่ในตอนเริ่มงานก็ได้ … อยากให้สามารถแก้ไขได้"_)
     .concat([['สถานที่บำรุงรักษา', tripLoc(i, t.locs)], ['เบอร์ติดต่อ', tripPhone(i, t.phones)], ['ผู้ดูแลยานพาหนะ', tripCtrl(i, t.phones)]])   // เบอร์ก่อนชื่อผู้ดูแล ตามคอลัมน์เบอร์ติดต่อ (9 พ.ย. 2569)
     .concat(started ? [['เริ่มงาน', h ? HIRE_START : JOB_START], ['ผู้เริ่มงาน', JOB_BY]] : []);   // ใบจ้าง: กบค. เป็นผู้บันทึก (ชื่อช่างผู้รับจ้างยังไม่เคาะ)
   return [await vehicleInfo([['ทะเบียน', c[0]], ['ยี่ห้อ/รุ่น', c[1]], ['ประเภท', typeOf(c)], ['หน่วยงานเจ้าของยานพาหนะ', c[2]], ['เลขไมล์สะสม', '182,400 กม.'], ['ชั่วโมงเครื่องจักรสะสม', '6,120 ชม.']]),
@@ -1572,8 +1573,12 @@ async function stepPage(name, o) {
   const { scr, page } = await shell(name, { title: c[0], back: true, crumbs: [NOW_Q, t.name, c[0]], badge: WSTAT.doing, actions: [['Secondary button', 'บำรุงรักษาไม่ได้']] });
   headPill(scr, WSTAT.doing);
   const nodes = [await mtStepper(step)].concat(await jobBoxes(h, t, i, true, o.car));
-  let dateAnchor = null;
+  let dateAnchor = null, workAnchor = null;
   if (step === 1) {
+    /* R83 แก้วันดำเนินการของคันนี้ตอนเริ่มงาน (9 พ.ย. 2569 ค่ำ เจ้าของงาน _"ในแผนการเดินทางอ่ะ จะมีช่วงของการดำเนินการอยู่แล้ว แต่ในรายคันอยากให้เห็นว่าแต่ละคันจะดำเนินการเมื่อไร"_ + _"ใส่ตรงหน้ารายการรถ ก็ได้ หรือจะใส่ในตอนเริ่มงานก็ได้ … อยากให้สามารถแก้ไขได้"_) ⇒ Section "วันดำเนินการ" บนสุดของ Step 1 · ช่องเดียวกับ popup แก้ไขยานพาหนะในแผนเดินทาง (Text input + ไอคอนปฏิทิน ช่วงวัน) ค่าเริ่มต้น = วันดำเนินการในตาราง · o.workPick = เปิดปฏิทิน */
+    const wv = (o.workPick || workRange(i, t)).join(' - ');
+    workAnchor = field('วันดำเนินการ', wv, { lead: 'calendar_month-24-300-round', state: o.workPick ? 'Focused' : undefined });
+    nodes.push(col('Section', [await section('วันดำเนินการ'), MOB ? workAnchor : row('Row', [workAnchor, frame('Spacer', 'VERTICAL')])], 16));
     nodes.push(...await inspectStep(c, o.filled, o.signed),   // 9 พ.ย. 2569 แบบตรวจตามประเภทยานพาหนะ แทนรายการเอกสารรับยานพาหนะ (R86)
       col('Section', [await section('ภาพก่อนเริ่มงาน')].concat(await photoUploads(BEFORE, o.filled, false)), 16),
       btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันการตรวจสภาพ', { size: 'lg', disabled: !o.signed }]]));   // ลงนามบังคับ (เจ้าของงาน 5 พ.ย. 2569)
@@ -1597,6 +1602,11 @@ async function stepPage(name, o) {
   }
   add(page, col('Content', nodes, 32), 'h');
   if (step === 1 && o.signModal) await signModal(scr, SIGN_INSPECT, o.filled, SIGN_IN[0]);
+  if (o.workPick && workAnchor && !MOB) {   // ปฏิทินช่วงวัน แบบ popup แก้ไขยานพาหนะในแผนเดินทาง (rangeDays · วันนอกช่วงวันเดินทางกดไม่ได้)
+    const dp = await rangeDays(await thaiDatePicker(inst('Date picker', { Type: 'Single' }, { 'Time picker': false }), [monthOf(t.d1)]), dayOf(t.d1), dayOf(t.d2), dayOf(o.workPick[0]), dayOf(o.workPick[1]));
+    overlay(scr, dp, 0, 0);
+    const sb = scr.absoluteBoundingBox, ab = workAnchor.absoluteBoundingBox; dp.x = ab.x - sb.x; dp.y = ab.y - sb.y + ab.height + 4;
+  }
   if (o.dateOpen && dateAnchor && !MOB) {   // ปฏิทินวันเดียว = Date picker Type=Single วางใต้ช่อง (มือถือไม่วาง แบบช่องวันที่ของ S6)
     const dp = await thaiDatePicker(inst('Date picker', { Type: 'Single' }, { 'Time picker': false }), ['มีนาคม 2568']);   // เดือนของวันที่ในช่อง (12/03/2568)
     overlay(scr, dp, 0, 0);
@@ -2487,7 +2497,9 @@ const SCENARIOS = [
     ['ไฟล์ Excel — ชีตอะไหล่ของแผนเดินทาง', () => tripXls('S10 ไฟล์ Excel ชีตอะไหล่', 1)],
     // 9 พ.ย. 2569 (R86) แบบตรวจตามประเภทยานพาหนะ — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน
     ['ยานพาหนะประเภทรถพ่วงฉีดน้ำ — Step 1 ใช้แบบตรวจสภาพรถพ่วงฉีดน้ำ', () => stepPage('S10 Step 1 รถพ่วงฉีดน้ำ', { step: 1, car: WATER_CAR })],
-    ['ยานพาหนะประเภทรถพ่วงฉีดน้ำ — ตรวจรายการและลงนามครบ', () => stepPage('S10 Step 1 รถพ่วงฉีดน้ำ ลงนามครบ', { step: 1, car: WATER_CAR, filled: true, signed: true })]]],
+    ['ยานพาหนะประเภทรถพ่วงฉีดน้ำ — ตรวจรายการและลงนามครบ', () => stepPage('S10 Step 1 รถพ่วงฉีดน้ำ ลงนามครบ', { step: 1, car: WATER_CAR, filled: true, signed: true })],
+    // R83 แก้วันดำเนินการของคันนี้ตอนเริ่มงาน (9 พ.ย. 2569 ค่ำ เจ้าของงาน _"ในแผนการเดินทางอ่ะ จะมีช่วงของการดำเนินการอยู่แล้ว แต่ในรายคันอยากให้เห็นว่าแต่ละคันจะดำเนินการเมื่อไร"_ + _"ใส่ตรงหน้ารายการรถ ก็ได้ หรือจะใส่ในตอนเริ่มงานก็ได้ … อยากให้สามารถแก้ไขได้"_) — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน
+    ['Step 1 — แก้วันดำเนินการของคันนี้ (ปฏิทิน เลือกได้ในช่วงวันเดินทาง)', () => stepPage('S10 Step 1 แก้วันดำเนินการ', { step: 1, workPick: ['04/11/2569', '05/11/2569'] })]]],
   // S23 ผู้รับจ้าง บันทึกงานรายคันและส่งตรวจงาน · S11 กบค. ตรวจรับงานรายคันของผู้รับจ้าง — ตัดออกทั้ง scenario 4 พ.ย. 2569 (เจ้าของงาน "อยากตัด scen ผู้รับจ้าง หรือ vendor ตรวจรับทีละคัน ออก") · บล็อก J V ว่าง (BLOCK_OF)
   ['S12 · หน่วยงาน บันทึกผลตรวจน้ำมันไฮโดรลิก', [   // 4 พ.ย. 2569 เลิก popup: ใส่ผลตอนปิดงาน (ถ้ามี) หรือภายหลังที่หน้ารายละเอียดงานรายคัน · ป้ายรอผลที่สถานะงาน
     ['Step 2 สรุปงานก่อนปิดงาน — เลือกเก็บตัวอย่าง ใส่ผลการทดสอบได้ (ถ้ามี)', () => stepPage('S12 Step 2 ผลการทดสอบ', { step: 2, filled: true })],   // 5 พ.ย. 2569 หน้าปิดงานเป็น Step 2 ของ S10
