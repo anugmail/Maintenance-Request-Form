@@ -226,7 +226,7 @@ function main() {
     if (wantShots) console.log(sm ? 'ภาพจอจาก Figma: ' + sm.shots.length + ' จอ (หน้า "' + sm.page + '" · export ' + sm.exportedAt + ')' : '⚠ ยังไม่มีภาพจอ (' + path.relative(path.join(__dirname, '..'), smf) + ') — กด "ส่งภาพจอบนหน้านี้ไป FigJam" ในปลั๊กอิน Figma ก่อน');
     /* 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่" ⇒ --scen=S1,S2 เอาเฉพาะ scenario นั้น · ไม่ใส่แต่ manifest มาจากปุ่มส่งราย S (sm.scen) = ใช้ชุดนั้น */
     const scenArg = process.argv.find(a => a.startsWith('--scen='));
-    const scenOnly = scenArg ? scenArg.slice(7).split(',').map(x => x.trim().toUpperCase()).filter(Boolean) : (wantShots && sm && sm.scen) || null;
+    const scenOnly = scenArg ? scenArg.slice(7).split(',').map(x => x.trim().toUpperCase()).filter(Boolean) : null;   // ใส่ --scen เท่านั้น (manifest รวมภาพทุก S ไว้แล้ว · ไม่กรองตาม sm.scen กันชุดเต็มหดเหลือ S ที่ส่งล่าสุด)
     if (scenOnly) console.log('เฉพาะ scenario: ' + scenOnly.join(' '));
     u.sections.forEach((sec, i) => {
       const color = i === 0 ? [255, 255, 255] : tint[(i - 1) % tint.length];

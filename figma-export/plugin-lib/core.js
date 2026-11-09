@@ -1461,16 +1461,14 @@ async function exportShots(dir, scen) {   // scen = ['S1', 'S2'] ส่งเฉ
     const mob = / · mobile$/.test(f.name), m = f.name.replace(/ · mobile$/, '').match(SHOT_RE);
     if (m) shots.push({ f, code: m[2] + '.' + m[3], letter: m[2], no: m[3], scenario: m[4], name: m[5], device: mob ? 'mobile' : 'desktop' }); else skipped.push(f.name);
   }
-  /* หน้าเดียวกันมีหลายชุด (ปุ่มสร้างวางต่อใต้ของเดิมทุกครั้ง) ⇒ ใช้ชุดล่าสุด = จอ A.1 ที่อยู่ล่างสุด กับทุกจอที่อยู่ใต้มัน · ชุดเก่าด้านบนไม่ส่ง */
-  const a1 = shots.filter(x => x.code === 'A.1' && x.device === 'desktop');
-  if (a1.length > 1) {
-    const top = Math.max(...a1.map(x => x.f.y));
-    const old = shots.filter(x => x.f.y < top - 1);
-    if (old.length) { log('หน้านี้มีจอหลายชุด — ส่งเฉพาะชุดล่าสุด (เริ่มที่ A.1 ล่างสุด) · ข้ามชุดเก่า ' + old.length + ' จอ'); shots.splice(0, shots.length, ...shots.filter(x => old.indexOf(x) < 0)); }
-  }
-  const seen = new Set();   // รหัสซ้ำในชุดเดียวกัน ⇒ เก็บตัวที่อยู่ล่างสุด (สร้างทีหลัง)
-  shots.sort((p, q) => q.f.y - p.f.y);
+  /* หน้าเดียวกันมีหลายชุด ⇒ จอรหัสเดียวกันเก็บตัวที่สร้างล่าสุด = อยู่บนสุดของแผง Layers (ลำดับลูกท้ายสุดของหน้า)
+     9 พ.ย. 2569 เดิมเลือกตามตำแหน่งล่างสุด แต่หน้าเต็มแล้วปลั๊กอินวางชุดใหม่ที่ช่องว่างด้านบนหรือคอลัมน์ขวา ⇒ ส่งชุดเก่าไป FigJam (เจ้าของงาน "ของฝั่ง figma มาแล้ว แต่ figjam ยังไม่มา") */
+  const order = new Map(page.children.map((n, i) => [n.id, i]));
+  const seen = new Set();
+  const total = shots.length;
+  shots.sort((p, q) => order.get(q.f.id) - order.get(p.f.id));
   shots.splice(0, shots.length, ...shots.filter(x => !seen.has(x.code + x.device) && seen.add(x.code + x.device)));
+  if (total > shots.length) log('หน้านี้มีจอหลายชุด — ส่งเฉพาะชุดที่สร้างล่าสุดของแต่ละจอ · ข้ามชุดเก่า ' + (total - shots.length) + ' จอ');
   if (scen && scen.length) { shots.splice(0, shots.length, ...shots.filter(x => scen.indexOf(x.scenario) >= 0)); log('ส่งเฉพาะ ' + scen.join(' ')); }
   const key = (s) => s.letter + s.no.split('.').map(x => x.padStart(3, '0')).join('.');
   shots.sort((a, b) => key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0);
@@ -1488,8 +1486,7 @@ async function exportShots(dir, scen) {   // scen = ['S1', 'S2'] ส่งเฉ
   }
   figma.ui.postMessage({ type: 'shots-done', dir, manifest });
   log('export แล้ว ' + manifest.shots.length + '/' + shots.length + ' จอ' + (skipped.length ? ' · ข้าม ' + skipped.length + ' เฟรมที่ชื่อไม่ตรงรูปแบบ (เช่น ' + skipped[0] + ')' : '') + (errors.length ? ' · ⚠ เตือน ' + errors.length + ' จุด' : ''));
-  const sc = scen && scen.length ? ' --scen=' + scen.join(',') : '';
-  log('ขั้นต่อไป: node figma-export/3-figjam-board.js --maintainance-flow-ui --only' + sc + ' --out=board-maintainance-flow-ui.json (flowchart คู่ภาพจอ) หรือ --maintainance-ui' + sc + ' --out=board-maintainance-ui.json (ภาพจออย่างเดียว) แล้วโหลดบอร์ดใน FigJam');
+  log('ขั้นต่อไป: node figma-export/3-figjam-board.js --maintainance-ui --only --split-scen --out=board-maintainance-ui.json (ชุดเต็ม + แยกไฟล์ราย S) แล้วเปิดปลั๊กอินบอร์ดใน FigJam ใหม่ เลือกกลุ่ม "บำรุงรักษาตามวาระ · ราย scenario"');
 }
 
 /* ---------- journey แนวขวาง (เจ้าของงานสั่ง 22 ต.ค. 2569: "ทำ scen มาต่อกันเป็นแนวขวาง สำหรับ export" + "ลงในเพจ maintainance แต่มีปุ่มแยก") ----------
