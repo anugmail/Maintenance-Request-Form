@@ -510,7 +510,9 @@ const scopeCell = (p) => { const x = PLAN_SCOPE[p[0]]; return x ? { text: x[0], 
 const PLAN_UNIT = { 'MRZ7000004': 'กกฟ.1', 'MRZ7000001': 'กกฟ.1', 'MRZ7000002': 'กกฟ.2', 'MRZ7000003': 'กรย.', 'MRZ7100001': 'กบค.', 'MRZ6900012': 'กกฟ.1', 'MRZ7100002': 'กกฟ.2', 'MRZ6900011': 'กรย.' };   // หน่วยงานเจ้าของแผน (ค่าสมมติ · 6 พ.ย. 2569 · MRZ7100001 = แผนของ กบค. ที่มีรถ กฝซ.)
 /* view = หน่วยงานที่เปิดดูแผนทุกหน่วยงาน (กบค.) · หน่วยงานเป็นบรรทัดรองของเลขที่ MR (Table 8 คอลัมน์เต็ม)
    แผนของหน่วยงานตัวเอง เมนู … ตามสถานะแบบปกติ · แผนของหน่วยงานอื่น ดูรายละเอียดอย่างเดียว (6 พ.ย. 2569 รอบ 2) */
-const planRow = (p, view) => [view ? { text: p[0], sub: PLAN_UNIT[p[0]] || UNITS[0] } : p[0], { text: p[1], sub: 'ปีงบประมาณ ' + p[8] }, scopeCell(p), p[4], qCell(p[9]), { pill: PST[p[5]] }, { menu: 1, items: view && PLAN_UNIT[p[0]] !== view ? MENU.slice(0, 1) : PLAN_MENU_OF(p[5]) }];
+/* 9 พ.ย. 2569 เจ้าของงาน (ภาพหน้ารายการแผนมุม กบค.) "หน้านี้น่าจะต้องเพิ่มคอลัมม์ หน่วยงานเจ้าของเรื่อง ด้วย" ⇒ มุม กบค. (view) มีคอลัมน์ "หน่วยงานเจ้าของเรื่อง" ต่อจากเลขที่ MR แทนบรรทัดรองใต้เลขที่ MR · มุมหน่วยงานเห็นแต่แผนของตัวเอง ไม่มีคอลัมน์นี้ */
+const PLAN_COLS_ALL = PLAN_COLS.slice(0, 1).concat([['หน่วยงานเจ้าของเรื่อง', 140]], PLAN_COLS.slice(1));
+const planRow = (p, view) => (view ? [p[0], PLAN_UNIT[p[0]] || UNITS[0]] : [p[0]]).concat([{ text: p[1], sub: 'ปีงบประมาณ ' + p[8] }, scopeCell(p), p[4], qCell(p[9]), { pill: PST[p[5]] }, { menu: 1, items: view && PLAN_UNIT[p[0]] !== view ? MENU.slice(0, 1) : PLAN_MENU_OF(p[5]) }]);
 /* 5 พ.ย. 2569 รีวิวทีมออกแบบ: ปุ่ม Primary "สร้างแผน" อยู่ขวาของปุ่ม "ตัวกรอง" ⇒ ย้ายจาก Page header ไป Actions ของ Table header
    ตาม Incident list ของ 5.5 Repair & Maintenance Job (Admin) ใน UI Release#2 (Page header ไม่มีปุ่ม · Table header = ค้นหา + ตัวกรอง + ปุ่มหลัก)
    o.empty = ยังไม่มีแผน ⇒ Empty state/Data empty (Graphic) + ปุ่ม "สร้างแผน" ไม่มี Table header ตาม Admin State=Empty ของ RP & MA Job และ Wall charger list - Empty ของ UI Release#2 */
@@ -526,7 +528,7 @@ async function listScreen(name, o) {
     return scr;
   }
   add(sec, await tableHeader(Object.assign({ primary: 'สร้างแผน' }, o)), 'h');   // กบค. สร้างแผนได้แล้ว (6 พ.ย. 2569 รอบ 2) ⇒ ปุ่มอยู่ทุกมุม
-  add(sec, await tblShort(PLAN_COLS, (o.rows || PLANS).map(p => planRow(p, o.view)), { pagination: (o.rows || PLANS).length }), 'h');
+  add(sec, await tblShort(o.view ? PLAN_COLS_ALL : PLAN_COLS, (o.rows || PLANS).map(p => planRow(p, o.view)), { pagination: (o.rows || PLANS).length }), 'h');
   /* แผงตัวกรองหน้ารายการแผน (6 พ.ย. 2569 รีวิว "filter หน้ารายการแผน เขต · หน่วยงานหน้างาน กรย. 12 เขต, กกฟ. 1and2" + "กบค. อยากเห็นทุกแผน")
      filterPanel แบบแผงตัวกรองของฟอร์ม S1 (R77) · Input dropdown with badges Optional เลือกหลายค่า · เขต = 12 เขต (DISTRICTS) · หน่วยงานหน้างาน = UNITS · o.filter.open = 'unit' | 'district' */
   if (o.filter) {
