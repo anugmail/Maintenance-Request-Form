@@ -1810,7 +1810,7 @@ const reviewRow = (p) => [p[1], p[8], { text: 'นายวิชัย ทอ�
 const REVIEW_ROWS = [NP, PLANS[2], PLANS[3]];
 const PART_CHECK_COLS = [['รายการอะไหล่', 0, 'Lead text'], ['รหัส', 110], ['ตามแผน', 110], ['หน่วย', 90], ['คงเหลือในคลัง', 140], ['ต้องซื้อเพิ่ม', 140]];
 const partCheckRows = () => PARTS.map((p, i) => [p[0], p[1], p[3], p[4], p[5], shortOf(i) ? String(shortOf(i)) : '-']);
-async function planBody(o) {   // เนื้อหน้ารายละเอียดแผน ใช้ทั้งฝั่งผู้อนุมัติ (S2) และผู้สร้างแผน (S1 S19 S20) · o.parts = มีอะไหล่ในแผน (ผู้อนุมัติเท่านั้น) · o.pq = แท็บ (0 รวมทุกไตรมาส) · สถานะคลังรับทราบ (o.wh) ตัดพร้อม S22 6 พ.ย. 2569
+async function planBody(o) {   // เนื้อหน้ารายละเอียดแผน ใช้ทั้งฝั่งผู้อนุมัติ (S2) และผู้สร้างแผน (S1 S19 S20) · o.parts = มีอะไหล่ในแผน (ผู้อนุมัติ + A.32 กบค. ดูแผนหน่วยงานอื่น) · o.pq = แท็บ (0 รวมทุกไตรมาส) · สถานะคลังรับทราบ (o.wh) ตัดพร้อม S22 6 พ.ย. 2569
   o = o || {};
   const inPlan = Object.keys(A_ALL).map(Number);   // รถในแผนใหม่ = ที่จัดลงไตรมาสตอนสร้างแผน (S1)
   // เจ้าของงาน 2 พ.ย. 2569 "อยากให้ข้อมูลที่แสดงเป็นข้อมูลรถ" ⇒ รถแยกแท็บไตรมาส คอลัมน์เดียวกับ section รถในไตรมาสของ S1 ไม่มีไอคอน (ดูอย่างเดียว) · ไม่มีตารางอะไหล่ทั้งปี
@@ -1838,7 +1838,7 @@ async function decisionSection(o, approveSub, returnSub) {
    ตาม Section label + Tabs + Table ของหน้ารายละเอียดแผน (รถในแผน) ในบล็อกเดียวกัน · ไม่มีอะไหล่ = Empty state */
 /* 9 พ.ย. 2569 เจ้าของงาน (ภาพหัวข้ออะไหล่ในแผนของ S2) "อยากให้มี tab รวมทุกไตรมาส และแยกไตรมาส ทั้งก่อนอนุมัติ และ ผู้อนุมัติ"
    ⇒ Tabs = "รวมทุกไตรมาส" (ค่าเริ่มต้น · ยอดเท่าผลรวมไตรมาส 1–4 แบบ R85) + ไตรมาส 1–4 (Tabs ของไลบรารีมี 5 ช่องพอดี) · q = 0 รวมทุกไตรมาส · 1–4 ไตรมาสนั้น
-   แสดงเฉพาะหน้าตรวจสอบของผู้อนุมัติ (S2 · planBody o.parts) — หน้ารายละเอียดของผู้สร้างไม่มี เพราะฟอร์มมีอะไหล่รวมทุกไตรมาสแล้ว (เจ้าของงาน 9 พ.ย. 2569) */
+   แสดงที่หน้าตรวจสอบของผู้อนุมัติ (S2 · planBody o.parts) และ A.32 กบค. ดูแผนของหน่วยงานอื่น (planDetail o.parts · ไม่มีฟอร์มของแผนนั้นให้ดูยอดรวม) — หน้ารายละเอียดของผู้สร้างไม่มี เพราะฟอร์มมีอะไหล่รวมทุกไตรมาสแล้ว (เจ้าของงาน 9 พ.ย. 2569) */
 const planQParts = (k) => { const cars = Object.keys(A_ALL).map(Number).filter(i => (k === 0 || A_ALL[i] === k) && A_DRAW[i] !== 'none'); return qAgg(cars, A_PICKS, A_OILS, []).sort((a, b) => a[2].localeCompare(b[2], 'th')); };
 async function planPartsSec(q) {
   const rows = planQParts(q);
@@ -1975,14 +1975,14 @@ function planMenu(scr, items) {   // เมนู "…" ตามสถานะ
   if (items.length < 3) { const d = (find(m, 'Menu items') || m).children[3]; if (d) d.visible = false; }
   return m;
 }
-async function planDetail(name, o) {   // หน้ารายละเอียดแผนฝั่ง กบค. · ก่อนอนุมัติมี ลบแผน + แก้ไข · อนุมัติแล้วเหลือแก้ไข · o.readonly = ไม่มีปุ่ม (S1 รออนุมัติ ดูอย่างเดียว · เจ้าของงาน 5 พ.ย. 2569)
+async function planDetail(name, o) {   // หน้ารายละเอียดแผนฝั่ง กบค. · ก่อนอนุมัติมี ลบแผน + แก้ไข · อนุมัติแล้วเหลือแก้ไข · o.readonly = ไม่มีปุ่ม (S1 รออนุมัติ ดูอย่างเดียว · เจ้าของงาน 5 พ.ย. 2569) · o.parts = มีอะไหล่ในแผน (A.32 กบค. ดูแผนหน่วยงานอื่น · 9 พ.ย. 2569)
   o = o || {};
   const st = o.status || 'review';
   let actions = [['Secondary button', 'แก้ไข', 'stylus-24-300-round']];
   if (st !== 'approved') actions.unshift(['Secondary danger button', 'ลบแผน', 'delete-24-300-round']);
   if (o.readonly) actions = null;
   const { scr, page } = await shell(name, { title: 'เลขที่ ' + NP[0], back: true, crumbs: [NP[1]], badge: PST[st], actions });
-  const nodes = await planBody({ qBtn: st === 'approved' || st === 'active' });
+  const nodes = await planBody({ qBtn: st === 'approved' || st === 'active', parts: o.parts });
   if (st === 'returned') nodes.unshift(alertBox(...ALERT_RETURNED));
   add(page, col('Content', nodes, 32), 'h');
   return scr;
@@ -2277,7 +2277,8 @@ const SCENARIOS = [
     ['จัดครบและกำหนดอะไหล่ครบทุกคัน — ปุ่มบันทึกและส่งอนุมัติกดได้', () => planForm('S1 ครบทุกคัน', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 2 }, R2))],
     /* 6 พ.ย. 2569 เจ้าของงาน "กบค แค่เห็นแผนทั้งหมด" ⇒ รายการแผนทุกหน่วยงาน ไม่มีปุ่มสร้างแผน · เมนู … เหลือดูรายละเอียด · รายละเอียดแผนไม่มีปุ่ม (แบบ R30 ของ Overhaul ซ่อนปุ่มที่ทำไม่ได้) */
     ['กบค. — รายการแผนทุกหน่วยงาน สร้างแผนได้ แผนหน่วยงานอื่นดูอย่างเดียว', () => listScreen('S1 กบค. รายการแผน', { rows: [NEW_PLAN].concat(PLANS), view: 'กบค.' })],
-    ['กบค. — รายละเอียดแผนของหน่วยงานอื่น ดูอย่างเดียว', () => planDetail('S1 กบค. รายละเอียดแผน', { status: 'approved', readonly: true })],
+    // 9 พ.ย. 2569 เจ้าของงาน "A32 ต้องมี section อะใหล่เพิ่มเข้ามาด้วย เพราะตอนที่ หน้าอนุมัติก็ต้องมี section นี้ขึ้นมาด้วย" ⇒ อะไหล่ในแผนชุดเดียวกับ S2 (กบค. ไม่มีฟอร์มของแผนหน่วยงานอื่นให้ดูยอดรวม)
+    ['กบค. — รายละเอียดแผนของหน่วยงานอื่น ดูอย่างเดียว', () => planDetail('S1 กบค. รายละเอียดแผน', { status: 'approved', readonly: true, parts: true })],
     // 6 พ.ย. 2569 (ต่อท้าย A.33–A.37) เมนู … ของยานพาหนะแต่ละคัน (ดูรายละเอียด แก้ไข ลบ) — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน
     ['แท็บไตรมาส 1 — กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด แก้ไข ลบ', async () => { const s = await planForm('S1 เมนูของยานพาหนะ', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }, R2)); planMenu(s, Q_MENU); return s; }],
     ['เมนู … → ดูรายละเอียด — อะไหล่ของยานพาหนะคันนี้ ดูอย่างเดียว', () => carPartsView('S1 ดูอะไหล่ของยานพาหนะ', 0)],
