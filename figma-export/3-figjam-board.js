@@ -17,6 +17,7 @@
                                                     Overhaul v2 ครบ 14 scenario (section ละ scenario · capture จาก flow-overhaul2-capture.js)
                                                     --out= เขียนไฟล์ชื่ออื่น ไม่ทับ board.json (ปลั๊กอินใส่ชื่อไฟล์ในช่องที่อยู่ได้)
      node figma-export/3-figjam-board.js --maintainance-flow-ui --only --scen=S1,S2 --out=board-maintainance-flow-ui.json   (เฉพาะ S ที่ระบุ · 9 พ.ย. 2569)
+     node figma-export/3-figjam-board.js --maintainance-ui --only --split-scen --out=board-maintainance-ui.json   (+ แยกไฟล์ละ S board-maintainance-ui-S<n>.json ให้ติ๊กทีละ S ในปลั๊กอินบอร์ด · 9 พ.ย. 2569)
      node figma-export/3-figjam-board.js --maintainance --only --out=board-maintainance.json   (มี out/figjam/flow-maintainance/manifest.json = ใส่ภาพจอจาก Figma ต่อจากผังแต่ละ scenario · --shots-dir= เปลี่ยนโฟลเดอร์)
      node figma-export/3-figjam-board.js --maintainance-journey --only --out=board-maintainance-journey.json
                                                     userflow บำรุงรักษา 18 scenario เป็นผังเดียวต่อกัน (start จุดเดียว · 8-flow-userflow.js --journey)
@@ -291,6 +292,15 @@ function main() {
     sections
   };
 
+  /* --split-scen (9 พ.ย. 2569 เจ้าของงาน "figjam ยังไม่แยก S ต้องทำไง"): เขียนบอร์ดแยกไฟล์ละ scenario board-maintainance-ui-S<n>.json
+     ปลั๊กอินบอร์ด FigJam (serve.js /boards.json) ขึ้นเป็นรายการ S ให้ติ๊กทีละ S · ไฟล์ราย S ชุดเก่าลบก่อนเขียนใหม่ */
+  if (args.has('--split-scen')) {
+    fs.readdirSync(OUT).filter(f => /^board-maintainance-ui-S\d+\.json$/.test(f)).forEach(f => fs.unlinkSync(path.join(OUT, f)));
+    const by = new Map();
+    sections.forEach(s => { const m = s.name.match(/Scenario (\d+) · (.+?)(?: · จอจาก Figma)?$/) || s.name.match(/· S(\d+) · (.+)$/); if (!m) return; const k = m[1]; if (!by.has(k)) by.set(k, { title: 'S' + k + ' · ' + m[2], sections: [] }); by.get(k).sections.push(s); });
+    by.forEach((v, k) => fs.writeFileSync(path.join(OUT, 'board-maintainance-ui-S' + k + '.json'), JSON.stringify(Object.assign({}, board, { title: v.title, sections: v.sections }))));
+    console.log('แยกราย scenario: ' + by.size + ' ไฟล์ (' + [...by.keys()].map(k => 'S' + k).join(' ') + ') → out/board-maintainance-ui-S<n>.json');
+  }
   const outArg = [...args].find(a => a.indexOf('--out=') === 0);
   const outFile = outArg ? outArg.slice(6) : 'board.json';
   fs.writeFileSync(path.join(OUT, outFile), JSON.stringify(board));

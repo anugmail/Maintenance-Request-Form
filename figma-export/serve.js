@@ -108,6 +108,9 @@ const handler = (req, res) => {
       let spec = {}; try { spec = JSON.parse(fs.readFileSync(path.join(OUT, f), 'utf8')); } catch (e) { return null; }
       if (!Array.isArray(spec.sections)) return null;
       const known = BOARD_LABELS.find(x => x.file === f);
+      const perS = f.match(/^board-maintainance-ui-S(\d+)\.json$/);   // 9 พ.ย. 2569 บอร์ดราย scenario (3-figjam-board.js --split-scen) · ไม่รวมใน "ติ๊กทั้งหมด" กันซ้ำกับชุดเต็ม
+      if (perS) return { file: f, group: 'บำรุงรักษาตามวาระ · ราย scenario', label: spec.title || ('S' + perS[1]), order: 500 + Number(perS[1]), inAll: false,
+        sections: spec.sections.length, images: spec.sections.reduce((n, s) => n + (s.cols || []).reduce((m, c) => m + c.images.length, 0), 0), updated: fs.statSync(path.join(OUT, f)).mtime.toISOString() };
       return { file: f, group: known ? known.group : 'อื่น ๆ', label: known ? known.label : (spec.title || f), order: known ? BOARD_LABELS.indexOf(known) : 999, inAll: !known || known.inAll !== false,   // inAll:false = ไม่ติ๊กตอนกด "ติ๊กทั้งหมด" (ซ้ำกับส่วนอื่น หรือชุดเก่า)
         sections: spec.sections.length, images: spec.sections.reduce((n, s) => n + (s.cols || []).reduce((m, c) => m + c.images.length, 0), 0),
         updated: fs.statSync(path.join(OUT, f)).mtime.toISOString() };
