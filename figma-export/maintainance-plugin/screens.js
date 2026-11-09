@@ -141,6 +141,8 @@ const BUYER_OF = { 1: 0, 4: 1 };   // อะไหล่ที่ขาด → �
 const baht = (n) => n.toLocaleString('en-US') + ' บาท';
 const shortOf = (i) => Math.max(0, +PARTS[i][3] - +PARTS[i][5]);
 const TST = { sent: ['ส่งแจ้งแล้ว', 'Info'], done: ['ดำเนินการแล้ว', 'Success'], review: ['รออนุมัติ', 'Warning'], approved: ['อนุมัติแล้ว', 'Success'], returned: ['ส่งกลับแก้ไข', 'Error'] };   // 3 พ.ย. 2569 แผนเดินทางต้องอนุมัติ (S7) · ชื่อตามสถานะแผน S2
+/* 9 พ.ย. 2569 เจ้าของงาน "พนักงานสามารถเพิ่มได้ไม่จำกัด และ เป็น 1 คน 1 แถว เป็นชื่อ สกุล ตำแหน่ง เบอร์โทร" ⇒ แถวพนักงานที่เดินทาง: ชื่อ-สกุล (ค้นหา) · ตำแหน่ง (Readonly จากข้อมูลพนักงาน) · เบอร์โทร · ค่าสมมติ */
+const STAFF_INFO = { 'นายวิชัย ทองดี': ['วศ.8', '081-472-1180'], 'นางสาวกนกวรรณ ใจมั่น': ['ชก.6', '089-221-4407'], 'นายสมชาย พูลสุข': ['ชก.5', '086-530-2291'] };
 const TRIP = { place: 'จุดรวมงาน กฟฉ.1 ขอนแก่น', d1: '03/11/2569', d2: '07/11/2569', staff: ['นายวิชัย ทองดี', 'นางสาวกนกวรรณ ใจมั่น', 'นายสมชาย พูลสุข'], perDiem: '7,200', lodging: '9,600', travel: '4,850' };
 /* S6 สถานที่รายคัน (เจ้าของงาน 2 พ.ย. 2569): ค่าเริ่มต้น = สำนักงานที่รถคันนั้นอยู่ (หน่วยงานเจ้าของรถ) แก้ได้ทีละคัน · TRIP.place ยังใช้กับ S9 S10 ที่ยังไม่ได้รีวิวรอบนี้
    3 พ.ย. 2569 เจ้าของงาน: ตัวอย่างรถในไตรมาส 10 คัน เฉพาะ S6 (S1 S2 S4 ยังเป็นไตรมาส 1 = 6 คันตามที่รีวิวแล้ว) · 1 ไตรมาสมีแผนเดินทางหลายใบ รถไม่ซ้ำกัน */
@@ -925,13 +927,18 @@ async function tripForm(name, o) {
   const complete = !!(v.name && sel.length && v.d1 && v.d2 && (hire ? v.vendor : v.staff && v.staff[0] && v.staff[1]));
   /* 6 พ.ย. 2569 เจ้าของงาน "เปลี่ยนคำของพนักงาน กบค" + "จำนวนคนเดินทาง เพิ่ม ได้ไม่จำกัด" ⇒ หัวข้อ "พนักงานที่เดินทาง" (เดิม พนักงาน กบค. ซ่อม 2-3 คน) · 1 คน 1 แถว
      แบบเดียวกับแถวพนักงานในค่าใช้จ่ายตอนปิดงาน (closeCosts · เจ้าของงาน 3 พ.ย. "เพิ่ม ลด พนักงานได้"): Input dropdown ค้นชื่อ + ปุ่มลบ Tertiary button ไอคอนอย่างเดียว + ปุ่ม "เพิ่มพนักงาน" ใต้แถว
-     ยังต้องมีอย่างน้อย 2 คนเหมือนเดิม (ช่องคนที่ 1 2 ขึ้น error) · ฟอร์มว่างแสดง 2 แถว */
+     ยังต้องมีอย่างน้อย 2 คนเหมือนเดิม (ช่องคนที่ 1 2 ขึ้น error) · ฟอร์มว่างแสดง 2 แถว
+     9 พ.ย. 2569 เจ้าของงาน "พนักงานสามารถเพิ่มได้ไม่จำกัด และ เป็น 1 คน 1 แถว เป็นชื่อ สกุล ตำแหน่ง เบอร์โทร" ⇒ แถวละ ชื่อ-สกุล (Input dropdown ค้นหา) · ตำแหน่ง (Text input Readonly เติมจากข้อมูลพนักงานเมื่อเลือกชื่อ) · เบอร์โทร (Text input เติมจากข้อมูลพนักงาน แก้ได้) · ปุ่มลบ
+     แบบคู่ ผู้ดูแลยานพาหนะ / เบอร์ติดต่อ ของ popup ยานพาหนะในแผนเดินทาง (R83) */
   const delBtn = () => inst('Tertiary button', { State: 'Default', Size: 'md' }, { 'Button text': false, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('delete-24-300-round') });
   const staffNames = v.staff && v.staff.length ? v.staff : ['', ''];
   const staff = staffNames.map((nm, i) => {
-    const dd = dropdown('พนักงานคนที่ ' + (i + 1), nm, { placeholder: 'ค้นหาชื่อ-นามสกุล, รหัสพนักงาน', lead: 'search-24-300-round', error: i < 2 ? E('กรุณาเลือกพนักงาน') : '' });
-    if (MOB) return col('Row', [dd, delBtn()], 16);
-    const rw = row('Row', [dd, frame('Spacer', 'VERTICAL')], { align: 'MAX' }); rw.insertChild(1, delBtn());   // ปุ่มลบชิดช่อง ไม่ยืด
+    const info = STAFF_INFO[nm] || ['', ''];
+    const dd = dropdown('ชื่อ-สกุล', nm, { placeholder: 'ค้นหาชื่อ-นามสกุล, รหัสพนักงาน', lead: 'search-24-300-round', error: i < 2 ? E('กรุณาเลือกพนักงาน') : '' });
+    const pos = field('ตำแหน่ง', info[0], { state: 'Readonly', placeholder: '-' });
+    const tel = field('เบอร์โทร', info[1], { placeholder: '0XX-XXX-XXXX' });
+    if (MOB) return col('Row', [dd, pos, tel, delBtn()], 16);
+    const rw = row('Row', [dd, pos, tel], { align: 'MAX' }); rw.appendChild(delBtn());   // ปุ่มลบท้ายแถว ไม่ยืด
     return rw;
   });
   add(page, col('Content', [
