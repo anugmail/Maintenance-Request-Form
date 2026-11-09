@@ -79,6 +79,14 @@ const NEW_PLAN = ['MR Z7000004', 'บำรุงรักษายานพา�
    6 พ.ย. 2569 (รอบ 2) เจ้าของงาน "กฝช ส่งให้ กบค เป็นผู้ดำเนินการ" + "กบค จะทำแผนจะมีรถของ กฝช. ด้วย"
    ⇒ กบค. สร้างแผนได้อีกหน่วยงาน (รถในแผนมีรถของ กฝซ. ด้วย) · แผนของหน่วยงานอื่น กบค. ยังดูอย่างเดียว */
 const UNITS = ['กกฟ.1', 'กกฟ.2', 'กรย.', 'กบค.'], CREATOR = 'นายวิชัย ทองดี (กกฟ.1)';
+/* 9 พ.ย. 2569 เจ้าของงาน "ปรับให้มีการสร้าง ของ กรย และ กกฟ ทำ persona ของทั้ง 3 กองนนี้ โดยหน้ารวม เห็นไม่เหมือนกันคือ กกฟ1,2 และ กรย สร้างได้ และเห็นแค่ของตัวเองแต่ กบคจะเห็นของคนอื่นด้วย"
+   ⇒ หน้ารายการแผนของ กกฟ.1 กกฟ.2 กรย. เห็นเฉพาะแผนของหน่วยงานตัวเอง (ownPlans) มีปุ่มสร้างแผน · กบค. เห็นแผนทุกหน่วยงาน (allPlans · บรรทัดรองเป็นหน่วยงาน)
+   UNIT_PLANS = แผนจำลองเพิ่มให้ทุกหน่วยงานมีแผนของตัวเองอย่างน้อย 2 แผน · เลขที่ MR นับต่อกันทั้งระบบภายในปีงบประมาณ (Z71 ต่อจาก MR Z7100001 · Z69 ต่อจาก MR Z6900011) */
+const UNIT_PLANS = [
+  ['MR Z6900012', 'บำรุงรักษายานพาหนะ กกฟ.1 ปีงบประมาณ 2569', 'ภาค 1, ภาค 2', 'ไตรมาส 4', '9', 'closed', '05/06/2568', 'กระเช้าแก้ไฟ', '2569', 'ไตรมาส 1: 3 · ไตรมาส 2: 2 · ไตรมาส 3: 2 · ไตรมาส 4: 2'],
+  ['MR Z7100002', 'บำรุงรักษายานพาหนะ กกฟ.2 ปีงบประมาณ 2571', 'ภาค 3, ภาค 4', 'ไตรมาส 1', '7', 'review', '15/10/2569', 'กระเช้าฮอทไลน์, รถพ่วงฉีดน้ำ', '2571', 'ไตรมาส 1: 2 · ไตรมาส 2: 2 · ไตรมาส 3: 2 · ไตรมาส 4: 1']];
+const allPlans = () => PLANS.concat(UNIT_PLANS);
+const ownPlans = (u) => allPlans().filter(p => PLAN_UNIT[p[0]] === u);   // หน้ารายการแผนของหน่วยงาน u เห็นเฉพาะแผนของตัวเอง
 const REGIONS = ['ภาค 1 (เหนือ)', 'ภาค 2 (ตะวันออกเฉียงเหนือ)', 'ภาค 3 (กลาง)', 'ภาค 4 (ใต้)'];
 /* เขตภายใต้ภาค (R35 · เจ้าของงาน 2 พ.ย. 2569 "ภาคเหนือ มี 3 เขต เขาก็จะเลือก ภาค แล้วจึงเลือก เขต ภายใต้ภาค แล้วถึงเห็นรถ")
    ค่าย่อและ placeholder "เลือกเขต" ตาม Input dropdown ของหน้า 5.9 EV Charging Station ใน UI Release#2 */
@@ -497,7 +505,7 @@ const PLAN_MENU_OF = (st) => st === 'review' || st === 'returned' ? MENU : st ==
    PLAN_SCOPE = แผนที่มีรถหลายภาค/ประเภท (ค่าสมมติ) · ที่เหลือใช้ภาคและประเภทเดียวของแผน */
 const PLAN_SCOPE = { 'MR Z7000001': ['ภาค 1, ภาค 2', 'กระเช้าแก้ไฟ'], 'MR Z7000002': ['ภาค 2, ภาค 3', 'กระเช้าแก้ไฟ, รถพ่วงฉีดน้ำ'] };   // 5 พ.ย. 2569 ชีตลูกค้า: MR Z7000001 เคยเป็น "ภาค 1" แต่รถในแผน (TRIP_CARS) อยู่ทั้ง กฟน. และ กฟฉ. ⇒ ภาค 1 และภาค 2 ให้ตรงรถ
 const scopeCell = (p) => { const x = PLAN_SCOPE[p[0]]; return x ? { text: x[0], sub: x[1] } : { text: shortRegion(p[2]), sub: p[7] }; };
-const PLAN_UNIT = { 'MR Z7000004': 'กกฟ.1', 'MR Z7000001': 'กกฟ.1', 'MR Z7000002': 'กกฟ.2', 'MR Z7000003': 'กรย.', 'MR Z7100001': 'กบค.', 'MR Z6900011': 'กรย.' };   // หน่วยงานเจ้าของแผน (ค่าสมมติ · 6 พ.ย. 2569 · MR Z7100001 = แผนของ กบค. ที่มีรถ กฝซ.)
+const PLAN_UNIT = { 'MR Z7000004': 'กกฟ.1', 'MR Z7000001': 'กกฟ.1', 'MR Z7000002': 'กกฟ.2', 'MR Z7000003': 'กรย.', 'MR Z7100001': 'กบค.', 'MR Z6900012': 'กกฟ.1', 'MR Z7100002': 'กกฟ.2', 'MR Z6900011': 'กรย.' };   // หน่วยงานเจ้าของแผน (ค่าสมมติ · 6 พ.ย. 2569 · MR Z7100001 = แผนของ กบค. ที่มีรถ กฝซ.)
 /* view = หน่วยงานที่เปิดดูแผนทุกหน่วยงาน (กบค.) · หน่วยงานเป็นบรรทัดรองของเลขที่ MR (Table 8 คอลัมน์เต็ม)
    แผนของหน่วยงานตัวเอง เมนู … ตามสถานะแบบปกติ · แผนของหน่วยงานอื่น ดูรายละเอียดอย่างเดียว (6 พ.ย. 2569 รอบ 2) */
 const planRow = (p, view) => [view ? { text: p[0], sub: PLAN_UNIT[p[0]] || UNITS[0] } : p[0], { text: p[1], sub: 'ปีงบประมาณ ' + p[8] }, scopeCell(p), p[4], qCell(p[9]), { pill: PST[p[5]] }, { menu: 1, items: view && PLAN_UNIT[p[0]] !== view ? MENU.slice(0, 1) : PLAN_MENU_OF(p[5]) }];
@@ -2252,7 +2260,7 @@ const SCENARIOS = [
      · ค่ำ 5 พ.ย. 2569 (R77): ภาค เขต ประเภทรถ อยู่ในแผงตัวกรองของ Table header — A.5 แผงตัวกรองยังไม่เลือก · A.6 เลือกภาค 1 + กฟน.2 กฟน.1 ในแผง (รายการเขตเปิด) · A.7 กดตกลงแล้ว ตารางรถ + ชิป
        (รหัส A.1–A.27 ไม่เลื่อน · A.5 A.6 A.7 เปลี่ยนชื่อ) */
   ['S1 · หน่วยงาน สร้างแผนบำรุงรักษาประจำปี และจัดยานพาหนะลงไตรมาส', [
-    ['รายการแผน', () => listScreen('S1 รายการแผน', { rows: PLANS })],
+    ['รายการแผน', () => listScreen('S1 รายการแผน', { rows: ownPlans(UNITS[0]) })],
     ['รายการแผน — ยังไม่มีแผน', () => listScreen('S1 รายการว่าง', { empty: true })],
     ['ฟอร์มสร้างแผน (ว่าง)', () => planForm('S1 ฟอร์มสร้างแผน', {})],
     ['เลือกปีงบประมาณ — รายการปีเปิด', () => planForm('S1 เลือกปีงบประมาณ', { values: { name: FILLED.name }, yearOpen: true })],
@@ -2270,7 +2278,7 @@ const SCENARIOS = [
     ['Validation กรณีไม่ได้ระบุข้อมูล, Out of focus', () => planForm('S1 Validation', { errors: true })],
     ['ย้อนกลับ — ยืนยันการออก', async () => { const s = await planForm('S1 ยืนยันการออก', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS }, R2)); await confirm(s, EXIT_CONFIRM('ข้อมูลที่กรอกไว้จะไม่ถูกบันทึก')); return s; }],
     ['บันทึกไม่สำเร็จ', async () => { const s = await planForm('S1 บันทึกไม่สำเร็จ', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS }, R2)); notify(s, 'general error', true); return s; }],
-    ['บันทึกและส่งอนุมัติสำเร็จ — รออนุมัติ', async () => { const s = await listScreen('S1 บันทึกสำเร็จ', { rows: [NEW_PLAN].concat(PLANS) }); notify(s, 'ส่งแผนบำรุงรักษาเพื่ออนุมัติสำเร็จ'); return s; }],
+    ['บันทึกและส่งอนุมัติสำเร็จ — รออนุมัติ', async () => { const s = await listScreen('S1 บันทึกสำเร็จ', { rows: [NEW_PLAN].concat(ownPlans(UNITS[0])) }); notify(s, 'ส่งแผนบำรุงรักษาเพื่ออนุมัติสำเร็จ'); return s; }],
     ['รายละเอียดแผน — รออนุมัติ ดูอย่างเดียว', () => planDetail('S1 รายละเอียด รออนุมัติ', { status: 'review', readonly: true })],
     ['รายละเอียดแผน — อนุมัติแล้ว', () => planDetail('S1 รายละเอียด อนุมัติแล้ว', { status: 'approved' })],
     ['รายละเอียดแผน — ส่งกลับแก้ไข เห็นเหตุผล กดแก้ไขไป S19', () => planDetail('S1 รายละเอียด ส่งกลับแก้ไข', { status: 'returned' })],
@@ -2285,7 +2293,7 @@ const SCENARIOS = [
     ['จัดครบทุกคันแต่ยังกำหนดอะไหล่ไม่ครบ — ปุ่มบันทึกและส่งอนุมัติกดไม่ได้', () => planForm('S1 อะไหล่ยังไม่ครบ', Object.assign({ values: FILLED, alloc: A_ALL, picks: { 0: CAR_PICK }, oils: { 0: 1 }, q: 1 }, R2))],
     ['จัดครบและกำหนดอะไหล่ครบทุกคัน — ปุ่มบันทึกและส่งอนุมัติกดได้', () => planForm('S1 ครบทุกคัน', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 2 }, R2))],
     /* 6 พ.ย. 2569 เจ้าของงาน "กบค แค่เห็นแผนทั้งหมด" ⇒ รายการแผนทุกหน่วยงาน ไม่มีปุ่มสร้างแผน · เมนู … เหลือดูรายละเอียด · รายละเอียดแผนไม่มีปุ่ม (แบบ R30 ของ Overhaul ซ่อนปุ่มที่ทำไม่ได้) */
-    ['กบค. — รายการแผนทุกหน่วยงาน สร้างแผนได้ แผนหน่วยงานอื่นดูอย่างเดียว', () => listScreen('S1 กบค. รายการแผน', { rows: [NEW_PLAN].concat(PLANS), view: 'กบค.' })],
+    ['กบค. — รายการแผนทุกหน่วยงาน สร้างแผนได้ แผนหน่วยงานอื่นดูอย่างเดียว', () => listScreen('S1 กบค. รายการแผน', { rows: [NEW_PLAN].concat(allPlans()), view: 'กบค.' })],
     // 9 พ.ย. 2569 เจ้าของงาน "A32 ต้องมี section อะใหล่เพิ่มเข้ามาด้วย เพราะตอนที่ หน้าอนุมัติก็ต้องมี section นี้ขึ้นมาด้วย" ⇒ อะไหล่ในแผนชุดเดียวกับ S2 (มาจาก planBody เหมือนทุกหน้ารายละเอียดแผน)
     ['กบค. — รายละเอียดแผนของหน่วยงานอื่น ดูอย่างเดียว', () => planDetail('S1 กบค. รายละเอียดแผน', { status: 'approved', readonly: true })],
     // 6 พ.ย. 2569 (ต่อท้าย A.33–A.37) เมนู … ของยานพาหนะแต่ละคัน (ดูรายละเอียด แก้ไข ลบ) — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน
@@ -2293,9 +2301,12 @@ const SCENARIOS = [
     ['เมนู … → ดูรายละเอียด — อะไหล่ของยานพาหนะคันนี้ ดูอย่างเดียว', () => carPartsView('S1 ดูอะไหล่ของยานพาหนะ', 0)],
     ['เมนู … → ลบ — ยืนยันเอายานพาหนะออกจากไตรมาส', async () => { const s = await planForm('S1 ยืนยันเอาออกจากไตรมาส', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }, R2)); await confirm(s, Q_OUT_CONFIRM(CAND[0], 1)); return s; }],
     ['เอาออกแล้ว — ยานพาหนะกลับเป็นยังไม่จัด ปุ่มบันทึกและส่งอนุมัติกดไม่ได้', async () => { const al = Object.assign({}, A_ALL); delete al[0]; const s = await planForm('S1 เอาออกจากไตรมาสแล้ว', Object.assign({ values: FILLED, alloc: al, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }, R2)); notify(s, 'เอายานพาหนะออกจากไตรมาส 1 สำเร็จ'); return s; }],
-    ['รายการแผน — กดตัวกรอง แผงตัวกรอง เขต หน่วยงานหน้างาน (กบค.)', () => listScreen('S1 กบค. ตัวกรองรายการแผน', { rows: [NEW_PLAN].concat(PLANS), view: 'กบค.', filter: { units: ['กกฟ.1'], open: 'unit' } })],
+    ['รายการแผน — กดตัวกรอง แผงตัวกรอง เขต หน่วยงานหน้างาน (กบค.)', () => listScreen('S1 กบค. ตัวกรองรายการแผน', { rows: [NEW_PLAN].concat(allPlans()), view: 'กบค.', filter: { units: ['กกฟ.1'], open: 'unit' } })],
     // 9 พ.ย. 2569 เจ้าของงาน "หน้าอะใหล่ทั้งไตรมาส ต้องรวมมาให้ด้วย ทั้งไตรมาส" — ต่อท้ายบล็อก (A.38) รหัสจอเดิมไม่เลื่อน
-    ['แท็บทั้งหมด — อะไหล่รวมทุกไตรมาส รวมอะไหล่ของยานพาหนะทุกคันที่จัดลงไตรมาสแล้ว', () => planForm('S1 อะไหล่รวมทุกไตรมาส', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW }, R2))]]],
+    ['แท็บทั้งหมด — อะไหล่รวมทุกไตรมาส รวมอะไหล่ของยานพาหนะทุกคันที่จัดลงไตรมาสแล้ว', () => planForm('S1 อะไหล่รวมทุกไตรมาส', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW }, R2))],
+    // 9 พ.ย. 2569 เจ้าของงาน "ปรับให้มีการสร้าง ของ กรย และ กกฟ ทำ persona ของทั้ง 3 กองนนี้ โดยหน้ารวม เห็นไม่เหมือนกันคือ กกฟ1,2 และ กรย สร้างได้ และเห็นแค่ของตัวเองแต่ กบคจะเห็นของคนอื่นด้วย" — ต่อท้ายบล็อก (A.39 A.40) รหัสจอเดิมไม่เลื่อน · A.1 = กกฟ.1 · A.31 = กบค.
+    ['กกฟ.2 — รายการแผน เห็นเฉพาะแผนของ กกฟ.2 สร้างแผนได้', () => listScreen('S1 กกฟ.2 รายการแผน', { rows: ownPlans('กกฟ.2') })],
+    ['กรย. — รายการแผน เห็นเฉพาะแผนของ กรย. สร้างแผนได้', () => listScreen('S1 กรย. รายการแผน', { rows: ownPlans('กรย.') })]]],
   /* S2 ปรับ 5 พ.ย. 2569 (รีวิวทีมออกแบบ): ผลการพิจารณาบนสุด ไม่มีค่าเริ่มต้น · อนุมัติสำเร็จแสดงแค่ toast ขวาบน สถานะอนุมัติแล้ว ส่วนผลการพิจารณาหาย */
   ['S2 · ผู้อนุมัติ ตรวจสอบและอนุมัติแผนบำรุงรักษา', [
     ['รายการแผนรออนุมัติ', () => roleList('S2 แผนรออนุมัติ', { title: 'แผนรออนุมัติ', search: 'ค้นหาชื่อแผน, ผู้สร้าง', cols: REVIEW_COLS, rows: REVIEW_ROWS.map(reviewRow) })],
@@ -2328,7 +2339,7 @@ const SCENARIOS = [
   /* S6 ปรับ 5 พ.ย. 2569 (รีวิวทีมออกแบบ): ทางเข้าจากเมนูถึงหน้าไตรมาส (E.1–E.3) · หน้า E.3 = "ไตรมาส 1" · popup รถในแผนเดินทางอื่นแสดงแต่เลือกไม่ได้ · เอารถออกจากแผนเดินทาง (soft delete) แล้วกลับมาเลือกได้
      · Validation Out of focus · สร้างสำเร็จกลับหน้าไตรมาส + toast · สร้างได้จนรถหมด แล้วปุ่มสร้างแผนเดินทางกดไม่ได้ (ตัด popup "รถทุกคันอยู่ในแผนเดินทางแล้ว") */
   ['S6 · หน่วยงาน ทำแผนเดินทาง (ดำเนินการเอง)', [
-    ['รายการแผน — เมนู "…" ดูรายละเอียดแผนที่อนุมัติแล้ว', async () => { const s = await listScreen('S6 รายการแผน', { rows: PLANS }); planMenu(s, MENU.slice(0, 1)); return s; }],
+    ['รายการแผน — เมนู "…" ดูรายละเอียดแผนที่อนุมัติแล้ว', async () => { const s = await listScreen('S6 รายการแผน', { rows: ownPlans(UNITS[0]) }); planMenu(s, MENU.slice(0, 1)); return s; }],
     ['รายละเอียดแผน — กดไปหน้าไตรมาส 1', () => planDetailQ('S6 รายละเอียดแผน')],
     ['หน้าไตรมาส 1 — ยังไม่มีแผนเดินทาง', () => tripList('S6 ไตรมาส 1 (ว่าง)', { trips: [] })],
     ['ฟอร์มสร้างแผนเดินทาง (ว่าง)', () => tripForm('S6 ฟอร์มแผนเดินทาง', {})],
@@ -2461,21 +2472,21 @@ const SCENARIOS = [
     ['ดาวน์โหลด Excel แล้ว', async () => { const s = await costScreen('S18 ดาวน์โหลดแล้ว'); notify(s, 'ดาวน์โหลดไฟล์ Excel แล้ว'); return s; }]]],
   // S19 S20 ต่อท้าย ⇒ ตัวอักษรบล็อกของ scenario เดิมไม่ขยับ · ลำดับในเรื่องอยู่ที่ journey (build.json)
   ['S19 · หน่วยงาน แก้ไขแผนบำรุงรักษา แล้วส่งอนุมัติใหม่', [
-    ['เมนู "…" → แก้ไข', async () => { const s = await listScreen('S19 เมนู', { rows: [planAs('returned')].concat(PLANS) }); planMenu(s, MENU); return s; }],
+    ['เมนู "…" → แก้ไข', async () => { const s = await listScreen('S19 เมนู', { rows: [planAs('returned')].concat(ownPlans(UNITS[0])) }); planMenu(s, MENU); return s; }],
     ['รายละเอียดแผน — ส่งกลับแก้ไข', () => planDetail('S19 รายละเอียดแผน', { status: 'returned' })],
     ['ฟอร์มแก้ไข Prefield ข้อมูลที่สร้างไว้', () => planForm('S19 ฟอร์มแก้ไข', Object.assign({ alert: ALERT_RETURNED }, EDIT_FORM))],
     ['เอาภาคหรือตัวกรองออก — ยานพาหนะที่จัดไว้แล้วยังอยู่', () => planForm('S19 เอาตัวกรองออก', Object.assign({}, EDIT_FORM, { q: 0, regions: [REGIONS[0]] }))],   // 5 พ.ย. 2569 ตาม S1 เลิก confirm เอารถออก
     ['“ยกเลิก” → ยืนยันการออก กรณีที่มีการแก้ไขเกิดขึ้น', async () => { const s = await planForm('S19 ยืนยันการออก', EDIT_FORM); await confirm(s, EXIT_CONFIRM('ข้อมูลที่แก้ไขไว้จะไม่ถูกบันทึก')); return s; }],
     ['ยืนยันการแก้ไขแผน', async () => { const s = await planForm('S19 ยืนยันการแก้ไข', EDIT_FORM); await confirm(s, EDIT_CONFIRM); return s; }],
     ['บันทึกไม่สำเร็จ', async () => { const s = await planForm('S19 บันทึกไม่สำเร็จ', EDIT_FORM); notify(s, 'general error', true); return s; }],
-    ['บันทึกสำเร็จ — รออนุมัติ', async () => { const s = await listScreen('S19 บันทึกสำเร็จ', { rows: [NEW_PLAN].concat(PLANS) }); notify(s, 'บันทึกการแก้ไขแผนและส่งอนุมัติสำเร็จ'); return s; }],
-    ['แผนอนุมัติแล้ว — เมนู "…" → แก้ไข', async () => { const s = await listScreen('S19 เมนูอนุมัติแล้ว', { rows: [planAs('approved')].concat(PLANS) }); planMenu(s, MENU.slice(0, 2)); return s; }],
+    ['บันทึกสำเร็จ — รออนุมัติ', async () => { const s = await listScreen('S19 บันทึกสำเร็จ', { rows: [NEW_PLAN].concat(ownPlans(UNITS[0])) }); notify(s, 'บันทึกการแก้ไขแผนและส่งอนุมัติสำเร็จ'); return s; }],
+    ['แผนอนุมัติแล้ว — เมนู "…" → แก้ไข', async () => { const s = await listScreen('S19 เมนูอนุมัติแล้ว', { rows: [planAs('approved')].concat(ownPlans(UNITS[0])) }); planMenu(s, MENU.slice(0, 2)); return s; }],
     ['แผนอนุมัติแล้ว — ฟอร์มแก้ไข ต้องส่งอนุมัติใหม่', () => planForm('S19 ฟอร์มอนุมัติแล้ว', Object.assign({ alert: ALERT_APPROVED }, EDIT_FORM))],
-    ['แผนดำเนินการแล้ว — เมนู "…" ดูรายละเอียดอย่างเดียว', async () => { const s = await listScreen('S19 เมนูดำเนินการ', { rows: PLANS }); planMenu(s, MENU.slice(0, 1)); return s; }]]],
+    ['แผนดำเนินการแล้ว — เมนู "…" ดูรายละเอียดอย่างเดียว', async () => { const s = await listScreen('S19 เมนูดำเนินการ', { rows: ownPlans(UNITS[0]) }); planMenu(s, MENU.slice(0, 1)); return s; }]]],
   ['S20 · หน่วยงาน ลบแผนบำรุงรักษาที่ยังไม่อนุมัติ', [
-    ['เมนู "…" → ลบ ในหน้า List', async () => { const s = await listScreen('S20 เมนู', { rows: [NEW_PLAN].concat(PLANS) }); planMenu(s, MENU); return s; }],
-    ['ยืนยันการลบแผน ในหน้า List', async () => { const s = await listScreen('S20 ยืนยันการลบ List', { rows: [NEW_PLAN].concat(PLANS) }); await confirm(s, DELETE_CONFIRM); return s; }],
-    ['ลบสำเร็จ (ลบที่ List หรือ Detail ก็กลับมานี่)', async () => { const s = await listScreen('S20 ลบสำเร็จ', { rows: PLANS }); notify(s, 'ลบแผนบำรุงรักษาสำเร็จ'); return s; }],
+    ['เมนู "…" → ลบ ในหน้า List', async () => { const s = await listScreen('S20 เมนู', { rows: [NEW_PLAN].concat(ownPlans(UNITS[0])) }); planMenu(s, MENU); return s; }],
+    ['ยืนยันการลบแผน ในหน้า List', async () => { const s = await listScreen('S20 ยืนยันการลบ List', { rows: [NEW_PLAN].concat(ownPlans(UNITS[0])) }); await confirm(s, DELETE_CONFIRM); return s; }],
+    ['ลบสำเร็จ (ลบที่ List หรือ Detail ก็กลับมานี่)', async () => { const s = await listScreen('S20 ลบสำเร็จ', { rows: ownPlans(UNITS[0]) }); notify(s, 'ลบแผนบำรุงรักษาสำเร็จ'); return s; }],
     ['ปุ่ม “ลบแผน” ในหน้า Detail', () => planDetail('S20 ปุ่มลบแผน', {})],
     ['ยืนยันการลบแผน ในหน้า Detail', async () => { const s = await planDetail('S20 ยืนยันการลบ Detail', {}); await confirm(s, DELETE_CONFIRM); return s; }],
     ['แผนอนุมัติแล้ว — หน้ารายละเอียดไม่มีปุ่มลบ', () => planDetail('S20 อนุมัติแล้ว', { status: 'approved' })]]],
