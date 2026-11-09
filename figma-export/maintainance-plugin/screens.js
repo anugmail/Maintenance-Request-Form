@@ -2581,7 +2581,7 @@ async function moveLatest() {
   if (!nodes.length) { log('บล็อกล่าสุดบนหน้า "' + main.name.trim() + '" อยู่ในขอบพื้นที่วางงานอยู่แล้ว ไม่ต้องย้าย'); return; }
   const spot = fitOn(main, nodes);   // แบบเดียวกับตอนสร้าง: ใต้ของเดิม → ช่องว่างจากขอบบน → คอลัมน์ใหม่ทางขวา (4 พ.ย. 2569)
   if (!spot) { log('⚠ หน้านี้ไม่มีที่ว่างในขอบพื้นที่วางงานแล้ว — ย้ายไม่สำเร็จ ไม่มีอะไรเปลี่ยน'); return; }
-  for (const n of nodes) { if (src !== main) main.appendChild(n); }
+  if (src !== main) for (const n of nodes.slice().reverse()) main.insertChild(0, n);   // ลำดับต้นของหน้าแบบตอนสร้าง (buildGrid insertChild 0) ⇒ exportShots นับเป็นชุดล่าสุด · เดิม appendChild ไปอยู่ลำดับท้าย (9 พ.ย. 2569)
   shiftAll(nodes, spot);
   if (src !== main && !src.children.length) { log('ลบหน้าว่าง "' + src.name + '" แล้ว'); src.remove(); }
   const screens = nodes.filter(n => n.name.indexOf(scr) === 0);
@@ -2680,7 +2680,7 @@ async function buildJourneyAll() {
   await figma.setCurrentPageAsync(page);
   const screens = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(PLUGIN.prefix + ' / ') === 0 && !/ · mobile$/.test(n.name));
   log('วางบนหน้า "' + page.name + '" ' + (tp.limit != null ? 'ในช่องว่างด้านบน ต่อลงมาจากชุดก่อน' : 'ต่อใต้ของเดิม') + ' (y=' + Math.round(y) + ') · จอ desktop บนหน้านี้ ' + screens.length + ' จอ (ใช้ทำภาพย่อ)');
-  const frameFor = (code) => screens.find(f => f.name.indexOf(PLUGIN.prefix + ' / ' + code + ' · ') === 0) || null;   // ชุดล่าสุดอยู่บนสุดของแผง Layers
+  const frameFor = (code) => screens.find(f => f.name.indexOf(PLUGIN.prefix + ' / ' + code + ' · ') === 0) || null;   // ชุดล่าสุด = ลำดับต้นของหน้า (buildGrid วางด้วย insertChild 0 · ล่างสุดของแผง Layers)
   const r = await buildJourney(page, PLUGIN.prefix, y, { codes: journeyCodes, frameFor });
   if (tp.limit != null) liftAbove(page, before, tp.limit);
   log('');
@@ -2740,7 +2740,7 @@ async function buildSwimlane() {
   try {
     const r = await swimlaneBoard(PLUGIN.prefix, SWIMLANE);
     putBelow(page, r.frame);
-    // ภาพย่อจากจอ desktop บนหน้านี้ (ชุดล่าสุดอยู่บนสุดของแผง Layers แบบ journey) · ไม่มีจอ = ช่องว่าง ⇒ กดสร้าง Desktop ก่อนแล้วกดใหม่
+    // ภาพย่อจากจอ desktop บนหน้านี้ (ชุดล่าสุด = ลำดับต้นของหน้า แบบ journey) · ไม่มีจอ = ช่องว่าง ⇒ กดสร้าง Desktop ก่อนแล้วกดใหม่
     const screens = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(PLUGIN.prefix + ' / ') === 0 && !/ · mobile$/.test(n.name));
     const frameFor = (code) => screens.find(f => f.name.indexOf(PLUGIN.prefix + ' / ' + code + ' · ') === 0) || null;
     let shots = 0;
