@@ -34,6 +34,15 @@ const DUMPS = fs.readdirSync(DUMP).filter(f => f.endsWith('.json')).map(f => Obj
   const miss = LOCAL_FROM_MAINTAIN_D.filter(n => !got.has(n));
   if (miss.length) console.log('(ดัมป์ Maintain-D ไม่มี local component: ' + miss.join(', ') + ' — ปลั๊กอินต้องใช้แบบสำรองแทน)');
 })();
+/* component กลางของหน้า Design Annotations ไฟล์ (UI) VMS Plus – Release#2 (เจ้าของงาน 10 พ.ย. 2569 "ใช้ design จาก component กลาง")
+   Header (Type=Header / Subheader) + State ที่ซ้อนอยู่ข้างใน — ตัวแรกที่ชื่อ Header ในดัมป์คือชุดใหญ่ (ตัวที่สองคือหัว Section/Case) · ANNOT=0 = ไม่มี (ทดสอบทางถอย) */
+if (process.env.ANNOT !== '0') (() => {
+  const f = path.join(__dirname, '..', 'design-system', '.figma-extract', 'ui-release2', '1-56.json');
+  if (!fs.existsSync(f)) return;
+  const j = JSON.parse(fs.readFileSync(f, 'utf8')), got = new Set();
+  const sets = (j.sets || []).filter(s => ['Header', 'State'].includes(s.name) && s.type === 'COMPONENT_SET' && !got.has(s.name) && got.add(s.name));
+  if (sets.length) DUMPS.push({ file: 'ui-release2/1-56.json', page: 'Design Annotations (UI Release#2)', sets });
+})();
 let uid = 0;
 
 class Node {
@@ -411,6 +420,17 @@ const MODE_CHECK = process.env.MODE === 'check';
   // R19 แพทเทิร์นจัดวาง (เจ้าของงานสั่ง 20 ต.ค. 2569): ป้ายรหัส flow "<prefix> · …" ต้องมี · จอ mobile อยู่ใต้จอ desktop คอลัมน์เดียวกัน (x เท่ากัน · y มากกว่า)
   const labels = page.children.filter(n => n.name.indexOf((process.env.PREFIX || 'OH2') + ' · ') === 0);
   if (!labels.length && process.env.R19 !== '0') logs.push('⚠ R19 ไม่มีป้ายรหัส flow (แถบตัวอักษร/ย่อย/state · Device/Desktop/Mobile)');   // R19=0 = หน้าเก่าก่อนมีป้าย (19 ต.ค.)
+  /* R19 ฉบับ 10 พ.ย. 2569 (component กลางของหน้า Design Annotations · UI Release#2): ปลั๊กอินที่มี blockHeader + ไฟล์มี Header ⇒ แถบหัวบล็อก = Header Type=Header · ป้าย state = Header Type=Subheader (State=Default)
+     ห้ามถอยไปแถบวาดเองเงียบๆ เมื่อ component มีอยู่ */
+  if (code.includes('async function blockHeader') && SETS.has('Header') && process.env.R19 !== '0') {
+    const P0 = process.env.PREFIX || 'OH2', pv = (n) => n.variantProperties || {};
+    for (const b of labels.filter(n => !/ · (Device|Desktop|Mobile)$/.test(n.name) && !/ (flowchart|userflow) S\d/.test(n.name) && n.name.indexOf(P0 + ' · journey') !== 0 && n.name.indexOf(P0 + ' · ป้าย ') !== 0 && !/ · (use case|user story mapping|scenario|use case ตาม scenario|user journey swimlane)$/.test(n.name))) {
+      const code1 = b.name.slice(P0.length + 3).split(' ')[0], isState = /\.\d+$/.test(code1), isPhase = code1 === 'ช่วง';
+      if (b.type !== 'INSTANCE') { logs.push('⚠ R19 แถบ ' + b.name.slice(0, 50) + ' วาดเอง ทั้งที่ไฟล์มี component Header (Design Annotations)'); continue; }
+      const want = (isState || isPhase) ? 'Subheader' : 'Header';
+      if (pv(b).Type !== want) logs.push('⚠ R19 แถบ ' + code1 + ' ต้องเป็น Header Type=' + want + ' (ได้ ' + pv(b).Type + ')');
+    }
+  }
   let pairs = 0;
   const mobs = screens.filter(n => / · mobile$/.test(n.name)), desks = screens.filter(n => !/ · mobile$/.test(n.name));
   const split = !mobs.length || !desks.length;   // ปุ่มแยก desktop/mobile (21 ต.ค. 2569): หน้าหนึ่งมีอุปกรณ์เดียว ⇒ ไม่มีคู่ให้ตรวจ แต่ป้าย Device ต้องตรงอุปกรณ์
@@ -562,7 +582,7 @@ const MODE_CHECK = process.env.MODE === 'check';
   }
   if (process.env.DUMP_TEXT) {   // DUMP_TEXT=regex ชื่อจอ → พิมพ์ข้อความทุกชั้น (รวมที่ซ่อน) ตามลำดับ layer — ใช้เทียบกับข้อความที่ก๊อปจาก Figma (21 ต.ค. 2569)
     const re = new RegExp(process.env.DUMP_TEXT);
-    for (const sc of page.children.filter(n => n.type === 'FRAME' && re.test(n.name))) {
+    for (const sc of page.children.filter(n => (n.type === 'FRAME' || n.type === 'INSTANCE') && re.test(n.name))) {   // INSTANCE = แถบ Header ของ Design Annotations (10 พ.ย. 2569)
       const lines = [];
       const walk = (n, hid) => { const h = hid || n.visible === false; if (n.type === 'TEXT') lines.push((h ? '~' : '') + n.characters);
         if (process.env.DUMP_PROPS && n.type === 'INSTANCE') for (const [k, p] of Object.entries(n.componentProperties || {})) if (p.type === 'TEXT') lines.push((h ? '~' : '') + '@' + k.split('#')[0] + '=' + p.value);   // DUMP_PROPS=1 = ข้อความที่ตั้งผ่าน property ของ instance (เช่น Label/Text ของ _Content item base) (5 พ.ย. 2569)
@@ -579,7 +599,7 @@ const MODE_CHECK = process.env.MODE === 'check';
   }
   if (process.env.DUMP_TABLE) {   // DUMP_TABLE=regex ชื่อจอ → พิมพ์ตารางทุกตัวในจอ: component/ประกอบเอง · หัวคอลัมน์ · ช่องแถวแรก (Style · Text · Supporting text) · กว้าง — ตรวจ R25 (21 ต.ค. 2569 ค่ำ)
     const re = new RegExp(process.env.DUMP_TABLE), pv = (n, k) => { const cp = n.componentProperties || {}; const x = Object.keys(cp).find(y => y.split('#')[0].trim() === k); return x ? cp[x].value : undefined; };
-    for (const sc of page.children.filter(n => n.type === 'FRAME' && re.test(n.name))) {
+    for (const sc of page.children.filter(n => (n.type === 'FRAME' || n.type === 'INSTANCE') && re.test(n.name))) {   // INSTANCE = แถบ Header ของ Design Annotations (10 พ.ย. 2569)
       for (const t of sc.findAll(n => n.name === 'Table' && (n.type === 'INSTANCE' || (n.children || []).some(c => c.name === 'Column')))) {
         const cols = t.findAll(n => n.name === 'Column' && n.visible !== false);
         console.log('DUMP_TABLE: ' + sc.name + ' → ' + (t.type === 'INSTANCE' ? 'component Table' : 'ประกอบเอง') + ' · ' + cols.length + ' คอลัมน์' + (t.type === 'INSTANCE' ? ' · Scrollbar=' + pv(t, 'Scrollbar') + (t.clipsContent ? ' · clip' : '') : ''));

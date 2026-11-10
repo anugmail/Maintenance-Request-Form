@@ -25,6 +25,9 @@ const warn = (where, e) => {   // แนบบรรทัดใน code.js ท�
    ทั้ง 3 ทางได้ instance ที่ผูกกับ component จริง ไม่มีการวาดเอง */
 /* key ของ component ต้นฉบับในไฟล์ "component" ที่เราอ่านค่ามา (ดัมป์ 19 ต.ค. 2569 10:52 · เก็บ key ของ main component ตรงๆ) · [key, เป็น component set ไหม] */
 const KEYS = {
+  /* 10 พ.ย. 2569 เจ้าของงาน "ตอนออกแบบครั้งต่ออยากให้ใช้ design จาก component กลาง" = หน้า Design Annotations ของไฟล์ (UI) VMS Plus – Release#2
+     แถบหัวบล็อก/ป้าย state (Header · Type=Header / Subheader) — key จากดัมป์ design-system/.figma-extract/ui-release2/1-56.json · นำเข้าไม่ได้ (ไฟล์นั้นไม่ได้เปิดเป็นไลบรารี) → หาในไฟล์/instance ตามเดิม */
+  "Header": ["cbdb14c4c43c175124ce4c7bb138bb980fc2f4ae", true],
   "Mobile table": ["4ca09b73532ee1f8f21e3e0a6f2c7f151839ee62", true],
   "Mobile table item": ["754d62b4c29ea0f402f67950cfe7a4eae279e591", true],
   "Mobile progress steps": ["9154edd850c0be2201a44213fe6e94163a7a1516", true],
@@ -105,6 +108,7 @@ const KEYS = {
   "keyboard_arrow_left-20-400-round": ["32933c0651c04a63cb2aa78648cf8b15ebc7c266", false],
   "cloud_upload-24-300-round": ["bb12332b86d47144684d92bf7d358b9c2b7a4e50", false],
 };
+const SOFT_KEY = new Set(['Header']);   // นำเข้าด้วย key ไม่ได้ไม่ต้องเตือนเรื่องไลบรารี VMS Plus (อยู่คนละไฟล์) — ถอยไปหาในไฟล์ตามเดิม
 const ALIAS = {};   // 19 ต.ค.: Sidebar navigation มี key ของไฟล์ component แล้ว ไม่ต้องอ้างชื่อ Sidebar ของ UI Release#2
 const INDEX = new Map();     // ชื่อ → COMPONENT_SET / COMPONENT ที่ใช้ได้
 const ROUTE = {};            // ชื่อ → ได้มาทางไหน
@@ -153,7 +157,7 @@ async function resolveAll(list, checkOnly) {
     if (!got) await scanInstances();
     if (!got) for (const x of names) { if (viaInst.has(x)) { got = viaInst.get(x); how = 'จาก instance ในไฟล์ ⚠ อาจลิงก์ไปไลบรารีที่เปิดไม่ได้'; break; } }
     if (!got && importErr) how = 'นำเข้าไม่ได้: ' + importErr;
-    if (importErr && !IMPORT_ERR && !NESTED_ONLY.has(name)) IMPORT_ERR = importErr;   // ชิ้นส่วนซ้อน (เช่น _Dropdown menu item ที่ Figma ไม่ publish) ไม่ต้องเตือน
+    if (importErr && !IMPORT_ERR && !NESTED_ONLY.has(name) && !SOFT_KEY.has(name)) IMPORT_ERR = importErr;   // ชิ้นส่วนซ้อน (เช่น _Dropdown menu item ที่ Figma ไม่ publish) ไม่ต้องเตือน
     if (got) { INDEX.set(name, got); ROUTE[name] = how + (got.name !== name ? ' (ชื่อ ' + got.name + ')' : ''); }
     else missing.push(name + (how ? ' — ' + how : ''));
   }
@@ -970,7 +974,7 @@ async function labelText(chars, size, hex) {
   return t;
 }
 function fixed(f, w, h) { f.primaryAxisSizingMode = 'FIXED'; f.counterAxisSizingMode = 'FIXED'; f.resize(w, h); return f; }
-async function flowBar(prefix, code, title, state, width) {
+async function flowBar(prefix, code, title, state, width, desc) {
   let bar = null;
   if (INDEX.has('Header') && !HEADER_BROKEN) {
     bar = inst('Header', { Type: 'Subheader' });
@@ -980,7 +984,8 @@ async function flowBar(prefix, code, title, state, width) {
     const okCode = st ? await text(st, 'Text', code) : false;
     const det = find(bar, 'Detail'); const ts = det ? det.children.filter(c => c.type === 'TEXT') : [];
     const okTitle = ts[0] ? await text(det, ts[0], title) : false;
-    if (ts[1]) ts[1].visible = false;   // บรรทัด "เงื่อนไข" ของทีมออกแบบ — ไม่ใช้
+    /* บรรทัดที่ 2 = เงื่อนไขของ state (แบบตัวอย่าง "เงื่อนไขการแสดงผล …" ใน Design Annotations · 10 พ.ย. 2569) — ไม่มีก็ซ่อน */
+    if (ts[1]) { if (desc && await text(det, ts[1], desc)) { try { ts[1].layoutSizingHorizontal = 'FILL'; ts[1].textAutoResize = 'HEIGHT'; } catch (e) { /* ปล่อยกว้างตาม component */ } } else ts[1].visible = false; }
     if (!(okCode && okTitle)) {   // ใส่ข้อความไม่ได้ (ฟอนต์/โครง) → ป้ายจะไม่ตรง scenario ⇒ ถอยไปแถบธรรมดาทั้งชุด
       try { bar.remove(); } catch (e) { /* ลบไม่ได้ ปล่อย */ }
       bar = null; HEADER_BROKEN = true;
@@ -992,8 +997,27 @@ async function flowBar(prefix, code, title, state, width) {
     const st = fixed(frame('State', 'HORIZONTAL', { fill: rgbOf(BAR_FILL[state] || BAR_FILL.Default), pad: [0, 40] }), GRID.stateW, GRID.barH);
     st.primaryAxisAlignItems = 'CENTER'; st.counterAxisAlignItems = 'CENTER'; st.appendChild(await labelText(code, 64, '#FFFFFF')); bar.appendChild(st);
     const det = frame('Detail', 'HORIZONTAL', { fill: WHITE, pad: [0, 40] }); det.counterAxisAlignItems = 'CENTER'; bar.appendChild(det); det.layoutGrow = 1; det.layoutSizingVertical = 'FILL';
-    det.appendChild(await labelText(title, 48, '#101828'));
+    det.appendChild(await labelText(title + (desc ? ' — ' + desc : ''), 48, '#101828'));
   }
+  bar.name = prefix + ' · ' + code + ' ' + title + (desc ? ' — ' + desc : '');
+  return bar;
+}
+/* แถบหัวบล็อก (10 พ.ย. 2569 เจ้าของงาน "ใช้ design จาก component กลาง" — หน้า Design Annotations ของ UI Release#2):
+   Header Type=Header = ชื่อใหญ่ + บรรทัดอธิบาย + Header / Status (ค่าตั้งต้น Work In Progress) · รหัสบล็อกนำหน้าชื่อ
+   component ไม่มี variant Type=Header (ชุดเก่าในไฟล์) หรือใส่ข้อความไม่ได้ → แถบ Subheader แบบเดิม */
+async function blockHeader(prefix, code, title, width, desc) {
+  const set = INDEX.get('Header');
+  const top = !HEADER_BROKEN && set && set.type === 'COMPONENT_SET' && set.children.some(c => c.variantProperties && c.variantProperties.Type === 'Header');
+  if (!top) return flowBar(prefix, code, title, 'Default', width);
+  const bar = inst('Header', { Type: 'Header' });
+  const ts = bar.children.filter(c => c.type === 'TEXT');
+  if (!(ts[0] && await text(bar, ts[0], code + ' · ' + title))) {
+    try { bar.remove(); } catch (e) { /* ลบไม่ได้ ปล่อย */ }
+    log('⚠ แถบหัวบล็อก (Header Type=Header) ใส่ข้อความไม่ได้ — ใช้แถบ Subheader แทน');
+    return flowBar(prefix, code, title, 'Default', width);
+  }
+  if (ts[1]) { if (desc && await text(bar, ts[1], desc)) { try { ts[1].textAutoResize = 'HEIGHT'; } catch (e) { /* ปล่อย */ } } else ts[1].visible = false; }
+  try { bar.resize(width, bar.height); } catch (e) { warn('ปรับกว้างแถบหัวบล็อก ' + code, e); }
   bar.name = prefix + ' · ' + code + ' ' + title;
   return bar;
 }
@@ -1518,7 +1542,9 @@ async function buildJourney(page, prefix, y0, info) {
   /* ตำแหน่ง: คอลัมน์กว้างเท่ากรอบที่กว้างสุดในคอลัมน์ · แถว 2 อยู่ใต้กรอบแถว 1 ที่สูงสุด */
   const rowOf = (n) => (J.row && J.row[n]) || 0;
   const backTop = J.links.filter(l => l[3] === 'back' && !rowOf(l[0]) && !rowOf(l[1])).length;
-  const top = y0 + GRID.barH + JGAP.bar + GRID.barH + JGAP.bar + backTop * JGAP.lane;
+  /* แถบ Journey = Header Type=Header (สูงกว่าแถบเดิม) ⇒ สร้างก่อนเพื่อวัดความสูง แล้วค่อยยืดกว้างเท่าผังด้านล่าง (10 พ.ย. 2569) */
+  CREATED = []; const jb = put(await blockHeader(prefix, 'Journey', J.title, 1000), 0, y0); const jh = Math.max(GRID.barH, jb.height);
+  const top = y0 + jh + JGAP.bar + GRID.barH + JGAP.bar + backTop * JGAP.lane;
   const colX = []; let x = 0;
   J.cols.forEach((col, i) => { colX[i] = x; x += Math.max(...col.map(n => F[n] ? F[n].width : 0)) + JGAP.col; });
   const totalW = x - JGAP.col;
@@ -1528,11 +1554,11 @@ async function buildJourney(page, prefix, y0, info) {
   for (const n of Object.keys(F)) { F[n].x = colX[colOf[n]]; F[n].y = rowY[rowOf(n)]; }
   /* แถบ Journey + ช่วงงาน (component Header ของทีมออกแบบ · ไม่มี = แถบธรรมดา) */
   CREATED = [];
-  put(await flowBar(prefix, 'Journey', J.title, 'Default', totalW), 0, y0);
+  try { jb.resize(totalW, jb.height); } catch (e) { warn('ปรับกว้างแถบ Journey', e); }
   for (const [i, [title, ns]] of (J.phases || []).entries()) {
     const xs = ns.filter(n => F[n]).map(n => F[n].x), xe = ns.filter(n => F[n]).map(n => F[n].x + F[n].width);
     if (!xs.length) continue;
-    put(await flowBar(prefix, 'ช่วง ' + (i + 1), title, 'Sub Flow', Math.max(...xe) - Math.min(...xs)), Math.min(...xs), y0 + GRID.barH + JGAP.bar);
+    put(await flowBar(prefix, 'ช่วง ' + (i + 1), title, 'Sub Flow', Math.max(...xe) - Math.min(...xs)), Math.min(...xs), y0 + jh + JGAP.bar);
   }
   /* ภาพย่อจอจริง (จอที่สร้างไว้บนหน้านี้แล้ว) */
   let tk = 0;
@@ -1577,8 +1603,8 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
   for (const g of GROUPS) {
     const nCols = Math.max(...g.subs.map(s => s.screens.length));
     const top = y;
-    CREATED = []; put(await flowBar(prefix, g.code, g.title, 'Default', nCols * GRID.colW + (nCols - 1) * GRID.colGap), x0, y);
-    y += GRID.barH + GRID.gap;
+    CREATED = []; const hb = put(await blockHeader(prefix, g.code, g.title, nCols * GRID.colW + (nCols - 1) * GRID.colGap, opts.describe ? opts.describe(g) : ''), x0, y);
+    y += Math.max(GRID.barH, hb.height) + GRID.gap;
     let flowBottom = top;
     for (const sub of g.subs) {
       const n = sub.screens.length, w = n * GRID.colW + (n - 1) * GRID.colGap;
@@ -1617,9 +1643,16 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
         } catch (e) { warn('ผัง userflow S' + sn, e); const k = dropCreated(page); if (k) log('    ลบชิ้นที่ค้างจากผังที่พัง ' + k + ' ชิ้น'); }
         CREATED = [];
       }
-      put(await deviceLabel(prefix, 'Header', GRID.barH), 0, y);
-      for (const [i, [label]] of sub.screens.entries()) put(await flowBar(prefix, sub.code + '.' + (i + 1), label, 'Sub Flow 2', GRID.colW), x0 + i * pitch, y);
-      y += GRID.barH + GRID.gap;
+      /* ป้าย state รายคอลัมน์ = Header Subheader แบบตัวอย่างใน Design Annotations (State=Default ดำ · ชื่อจอ + บรรทัดเงื่อนไข) 10 พ.ย. 2569
+         ชื่อจอ "ชื่อ — เงื่อนไข" แยกเป็น 2 บรรทัด · ป้าย Device สูงเท่าป้าย state ที่สูงสุด */
+      let sh = GRID.barH;
+      for (const [i, [label]] of sub.screens.entries()) {
+        const k = label.indexOf(' — ');
+        const b = put(await flowBar(prefix, sub.code + '.' + (i + 1), k < 0 ? label : label.slice(0, k), 'Default', GRID.colW, k < 0 ? '' : label.slice(k + 3)), x0 + i * pitch, y);
+        sh = Math.max(sh, b.height);
+      }
+      put(await deviceLabel(prefix, 'Header', sh), 0, y);
+      y += sh + GRID.gap;
       for (const mob of (opts.devices || [false, true])) {   // devices: [false]=desktop อย่างเดียว · [true]=mobile อย่างเดียว · ไม่ส่ง=ทั้งคู่ (แถว mobile ใต้ desktop)
         MOB = mob; let h = 0; const rowY = y;
         for (const [i, [label, fn]] of sub.screens.entries()) {
