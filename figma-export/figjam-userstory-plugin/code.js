@@ -1,3 +1,206 @@
+// BEGIN FRAME_BRIDGE
+/* One plugin identity, two editor modes, local transfer of observed frame data. */
+const FrameBridge = (() => {
+  const KEY = 'maintain-d/ac-bridge/v1';
+  const SOURCE_KEY = 'maintain-d/ac-bridge/source';
+  const copy = value => JSON.parse(JSON.stringify(value));
+  async function load(api) {
+    const value = await api.clientStorage.getAsync(KEY);
+    if (value == null) return {version: 1, records: []};
+    if (value.version !== 1 || !Array.isArray(value.records)) throw Error('ข้อมูลที่บันทึกเป็นคนละ version กรุณาบันทึกจาก Figma ใหม่');
+    return value;
+  }
+  function source(api) {
+    let id = api.fileKey ? 'file:' + api.fileKey : api.root.getPluginData(SOURCE_KEY);
+    if (!id) {
+      id = 'local:' + Date.now().toString(36) + ':' + Math.random().toString(36).slice(2);
+      api.root.setPluginData(SOURCE_KEY, id);
+    }
+    return {id, fileKey: api.fileKey || '', fileName: api.root.name || '', pageId: api.currentPage.id || '', pageName: api.currentPage.name || ''};
+  }
+  async function save(api, inspector) {
+    if (api.editorType !== 'figma') throw Error('บันทึกข้อมูลจาก frame ต้นฉบับใน Figma Design เท่านั้น');
+    const nodes = Array.from(api.currentPage.selection || []);
+    if (!nodes.length) throw Error('เลือก frame ใน Figma ก่อนบันทึก');
+    if (nodes.some(node => !node.id || !['FRAME', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE', 'SECTION', 'GROUP'].includes(node.type))) {
+      throw Error('เลือก frame หรือ component ที่ต้องการบันทึก ไม่เลือกเฉพาะ text หรือ image');
+    }
+    // Capture source/page before awaiting reads; the user may switch pages meanwhile.
+    const origin = source(api);
+    const report = await inspector.readSelection(nodes);
+    const capturedAt = new Date().toISOString();
+    const store = await load(api);
+    for (const frame of report.frames) {
+      if (frame.warnings.some(warning => warning.startsWith('อ่านไม่ครบ:'))) throw Error('frame ใหญ่เกินขอบเขตที่อ่านได้ กรุณาเลือก frame ที่เล็กลงก่อนบันทึก');
+      const key = origin.id + '/' + frame.id;
+      const record = {key, source: origin, capturedAt, frame};
+      const index = store.records.findIndex(item => item.key === key);
+      if (index >= 0) store.records[index] = record;
+      else store.records.push(record);
+    }
+    // Conservative upper bound on UTF-8 size, below the plugin storage quota.
+    if (JSON.stringify(store).length * 3 > 4 * 1024 * 1024) throw Error('ข้อมูลที่เก็บมีขนาดใหญ่เกินไป กรุณาลบรายการเก่าที่ไม่ใช้ก่อนบันทึก');
+    await api.clientStorage.setAsync(KEY, copy(store));
+    return report.frames.map(frame => store.records.find(item => item.key === origin.id + '/' + frame.id));
+  }
+  async function list(api) {
+    return (await load(api)).records.slice().sort((a, b) => b.capturedAt.localeCompare(a.capturedAt));
+  }
+  async function get(api, key) {
+    const record = (await load(api)).records.find(item => item.key === key);
+    if (!record) throw Error('ไม่พบข้อมูล frame ที่เลือก กรุณาโหลดรายการใหม่หรือบันทึกจาก Figma ก่อน');
+    return copy(record);
+  }
+  async function remove(api, key) {
+    const store = await load(api);
+    store.records = store.records.filter(item => item.key !== key);
+    await api.clientStorage.setAsync(KEY, store);
+  }
+  function metadata(record) {
+    return 'Figma: ' + record.source.fileName + '\nPage: ' + record.source.pageName +
+      '\nFrame: ' + record.frame.name + '\nบันทึกเมื่อ: ' + record.capturedAt;
+  }
+  // Human-facing observations; technical layers remain in the JSON snapshot.
+  function readable(report) {
+    return report.frames.map(frame => {
+      const lines = [frame.name];
+      const meaningful = item => !/\/(?: Sidebar navigation| Header navigation)(?: \/|$)/.test(item.path || '');
+      const texts = [...new Set((frame.texts || []).filter(meaningful).map(item => item.text).filter(Boolean))];
+      if (texts.length) lines.push('ข้อความและข้อมูลบนหน้าจอ', ...texts.map(text => '• ' + text));
+      for (const item of (frame.components || []).filter(meaningful)) {
+        if (!/button/i.test(item.name)) continue;
+        const label = (item.properties || []).find(prop => prop.type === 'TEXT' && prop.name === 'Text');
+        if (!label || !label.value || label.value === 'Text') continue;
+        const disabled = (item.variants || {}).State === 'Disabled';
+        lines.push('• ปุ่ม “' + label.value + '” — ' + (disabled ? 'ยังใช้งานไม่ได้ในจอนี้' : 'แสดงในสถานะ ' + ((item.variants || {}).State || 'ไม่ระบุ')));
+      }
+      if (!texts.length) lines.push('ยังไม่มีข้อความหน้าจอที่อ่านได้ ต้องเลือก frame ต้นฉบับที่มีช่องกรอกหรือเนื้อหา');
+      lines.push(...(frame.warnings || []).map(warning => 'หมายเหตุ: ' + warning));
+      lines.push('ส่วนนี้สรุปสิ่งที่เห็นในแบบ ยังไม่ยืนยันผลหลังกดปุ่ม เงื่อนไขตรวจข้อมูล หรือสิทธิ์ที่แบบไม่ได้ระบุ');
+      return lines.join('\n');
+    }).join('\n\n');
+  }
+  function code(name) {
+    const match = /(?:^|[\/·]\s*)((?:[A-O]|S19)\.\d+(?:\.\d+)?)(?=\s|$|[·—–-])/.exec(name || '');
+    return match ? match[1] : null;
+  }
+  return {save, list, get, remove, metadata, code, readable};
+})();
+if (typeof module !== 'undefined') module.exports = FrameBridge;
+// END FRAME_BRIDGE
+// BEGIN FRAME_INSPECTOR
+/* Read visible UI from the selected frame. Observations are not behavior requirements. */
+const FrameInspector = (() => {
+  const LIMIT = 10000;
+  const clean = value => value == null ? value : JSON.parse(JSON.stringify(value));
+  async function read(root) {
+    const frame = {id: root.id || '', name: root.name || '', type: root.type || '', components: [], texts: [], warnings: []};
+    const pending = [{node: root, path: root.name || '', owners: []}];
+    let visited = 0;
+    let images = 0;
+    while (pending.length) {
+      const {node, path, owners} = pending.pop();
+      let childOwners = owners;
+      if (node.visible === false) continue;
+      if (++visited > LIMIT) {frame.warnings.push('อ่านไม่ครบ: frame มีมากกว่า ' + LIMIT + ' layers'); break;}
+      if (node.type === 'TEXT' && node.characters) {
+        frame.texts.push({id: node.id || '', path, text: node.characters});
+        for (const item of owners) item.texts.push(node.characters);
+      }
+      if (node.type === 'IMAGE' || (Array.isArray(node.fills) && node.fills.some(fill => fill.type === 'IMAGE'))) images++;
+      if (node.type === 'INSTANCE') {
+        const item = {id: node.id || '', name: node.name || '', path, component: null, variants: clean(node.variantProperties || {}), properties: [], texts: []};
+        try {
+          const props = node.componentProperties || {};
+          item.properties = Object.keys(props).map(key => ({name: key.split('#')[0], key, type: props[key].type, value: clean(props[key].value)}));
+        } catch (error) {frame.warnings.push(path + ': อ่าน property ไม่ได้ — ' + (error.message || error));}
+        try {
+          const main = typeof node.getMainComponentAsync === 'function' ? await node.getMainComponentAsync() : null;
+          if (main) item.component = {id: main.id || '', name: main.name || '', key: main.key || '', set: main.parent && main.parent.type === 'COMPONENT_SET' ? main.parent.name : ''};
+          else frame.warnings.push(path + ': ไม่พบ main component; แสดงค่าจาก instance ที่อ่านได้');
+        } catch (error) {frame.warnings.push(path + ': อ่าน main component ไม่ได้ — ' + (error.message || error));}
+        frame.components.push(item);
+        childOwners = owners.concat(item);
+      }
+      const children = node.children || [];
+      for (let i = children.length - 1; i >= 0; i--) pending.push({node: children[i], path: path + ' / ' + (children[i].name || children[i].type || ''), owners: childOwners});
+    }
+    // Give component instances their visible text, including nested library layers.
+    for (const item of frame.components) {
+      item.texts = [...new Set(item.texts)];
+    }
+    if (!frame.components.length) frame.warnings.push(images
+      ? 'พบภาพใน frame แต่ไม่มี component instance จึงอ่าน component ภายในภาพไม่ได้ ให้เลือก frame ต้นฉบับใน Figma Design'
+      : 'ไม่พบ component instance อาจเป็น layers ที่ detach แล้ว อ่านได้เฉพาะข้อความและโครงที่เหลือ');
+    return frame;
+  }
+  async function readSelection(nodes) {
+    const frames = [];
+    for (const node of nodes) frames.push(await read(node));
+    return {version: 1, frames};
+  }
+  function format(report) {
+    if (!report.frames.length) return 'เลือก frame เพื่ออ่าน component ล่าสุด';
+    const lines = [];
+    for (const frame of report.frames) {
+      lines.push(frame.name + ' — ' + frame.components.length + ' component instances');
+      for (const item of frame.components) {
+        lines.push('• ' + item.name + (item.component ? ' [' + (item.component.set ? item.component.set + ' / ' : '') + item.component.name + ']' : ''));
+        lines.push('  Layer: ' + item.path);
+        const variants = Object.keys(item.variants).map(key => key + '=' + item.variants[key]);
+        if (variants.length) lines.push('  Variant: ' + variants.join(', '));
+        for (const prop of item.properties) lines.push('  ' + prop.name + ' (' + prop.type + '): ' + String(prop.value));
+        if (item.texts.length) lines.push('  Text: ' + item.texts.join(' | '));
+      }
+      if (frame.texts.length) lines.push('ข้อความที่แสดงใน frame:\n' + [...new Set(frame.texts.map(item => item.text))].join('\n'));
+      for (const warning of frame.warnings) lines.push('หมายเหตุ: ' + warning);
+      lines.push('ข้อมูลนี้อ่านจาก design ปัจจุบัน ไม่ยืนยัน behavior, validation, สิทธิ์ หรือ API ที่ไม่ได้แสดงใน frame');
+    }
+    return lines.join('\n');
+  }
+  // A new selection invalidates any older asynchronous response.
+  function watch(api, formatter = format) {
+    let revision = 0;
+    let timer;
+    let stopped = false;
+    async function refresh() {
+      const current = ++revision;
+      const nodes = Array.from(api.currentPage.selection || []);
+      try {
+        const report = await readSelection(nodes);
+        if (!stopped && current === revision) api.ui.postMessage({type: 'frame-inspection', report, text: formatter(report)});
+      } catch (error) {
+        if (!stopped && current === revision) api.ui.postMessage({type: 'frame-inspection', report: {version: 1, frames: []}, text: 'อ่าน frame ไม่สำเร็จ: ' + (error.message || error)});
+      }
+    }
+    function schedule() {
+      ++revision;
+      clearTimeout(timer);
+      timer = setTimeout(refresh, 180);
+    }
+    let watchedPage;
+    function watchPage() {
+      if (watchedPage && typeof watchedPage.off === 'function') watchedPage.off('nodechange', schedule);
+      watchedPage = api.currentPage;
+      // Page-scoped nodechange supports dynamic-page without loading every page.
+      if (typeof watchedPage.on === 'function') watchedPage.on('nodechange', schedule);
+      schedule();
+    }
+    api.on('selectionchange', schedule);
+    api.on('currentpagechange', watchPage);
+    api.on('close', () => {
+      stopped = true; ++revision; clearTimeout(timer);
+      if (watchedPage && typeof watchedPage.off === 'function') watchedPage.off('nodechange', schedule);
+    });
+    watchPage();
+    clearTimeout(timer);
+    refresh();
+    return refresh;
+  }
+  return {read, readSelection, format, watch};
+})();
+if (typeof module !== 'undefined') module.exports = FrameInspector;
+// END FRAME_INSPECTOR
 /* Maintain-D — Overhaul exact-frame AC annotator (FigJam).
  * Source: readable per-frame AC + explicitly authored component Dev notes. Run node build-content.js after editing it.
  * Match complete frame IDs (including H.4.1 and D.2.1); never infer from visible
@@ -42,8 +245,8 @@ const FRAME_STORIES = {
           "พฤติกรรมการใช้งาน\n  - คลิกค้นหาแล้วพิมพ์ได้; คำค้นใหม่ต้องเปลี่ยนผล ไม่เอาผลคำค้นเก่ามาแสดงทับ\n  - กดล้างคำค้นแล้วกลับไปแสดงรายการตามตัวกรองที่ยังเลือกอยู่",
           "Table (DataTable)\n  - Sorting\n    - เมื่อเปิดหน้า แสดงรายการตามสิทธิ์และตัวเลือกค้นหา/ตัวกรอง/เรียงลำดับ/แบ่งหน้า\n    - Sorting: เลขแผน ค่าเริ่มต้นใหม่→เก่า · ชื่อแผน, สถานะ ตามตัวอักษร · ประเภทงบ เรียงตามประเภทงบ [Sheet พี่นุ — 1 รายการแผน]\n  - Pagination\n    - เลือกการเรียงลำดับหรือจำนวนรายการต่อหน้าแล้วตารางเปลี่ยนให้ตรงกัน\n    - แบ่งหน้า: \"แสดง 1 ถึง 10 จาก 95 รายการ\" + dropdown จำนวนต่อหน้า (ค่าเริ่มต้น 10) + ปุ่มเลขหน้า ‹ 1 2 … 9 10 ›\n    - จำนวนรายการต่อหน้าและปุ่มเปลี่ยนหน้า: ลูกค้าฝากให้ตรวจรายละเอียด (CF) [Sheet พี่นุ — 1 รายการแผน]\n    - ปุ่มเปลี่ยนหน้าใต้ตาราง (Pagination) และช่องเลือกจำนวนต่อหน้า: เปลี่ยนแล้วโหลดหน้าที่ถูกต้องโดยคงคำค้น/ตัวกรอง; ไม่คำนวณจำนวนทั้งหมดจากเพียงแถวในหน้าปัจจุบัน\n  - Columns\n    - คอลัมน์ในตาราง [Sheet พี่นุ — 1 รายการแผน]:\n        - เลขแผน\n        - ชื่อแผน: ชื่อแผนยาวเกินคอลัมน์ตัดด้วย \"…\"\n        - ประเภทงบ\n        - ปีงบประมาณ\n        - งบประมาณ (บาท)\n        - จำนวนรถที่ Overhaul: นับรถไม่ซ้ำจากทุก PO\n        - ความคืบหน้า: รถที่ปิดงานแล้ว / รถทั้งหมด; แผนที่ยังไม่มี PO แสดง “-”\n        - สถานะ\n        - วันที่สร้าง\n        - จัดการ\n  - Behavior\n    - ตารางรายการแผน (DataTable): หัวคอลัมน์ที่เรียงได้ต้องเปลี่ยนทิศ sort และข้อมูลพร้อมกัน; ชื่อยาวตัดด้วย …; ป้ายสถานะ/ความคืบหน้าอ่านค่าจากรายการเดียวกัน\n  - Row Actions (RowMenu)\n    - เมนู “…” ท้ายแถวรายการ (RowMenu): คลิกนอกเมนูปิดโดยไม่ทำ action; Esc ปิดและคืน focus ให้ปุ่มเมนูเดิม ลูกศรขึ้น/ลงเลื่อนรายการ และเมื่อเลือกรายการจะปิดเมนูก่อนนำทาง/เปิดกล่อง",
           "Status (StatusBadge)\n  - ลูกค้าแก้ชื่อสถานะ:\n      - ยังไม่มี PO -> รอเลข PO [Sheet พี่นุ — 1 รายการแผน]\n      - ดำเนินการ -> รอดำเนินการ [Sheet พี่นุ — 1 รายการแผน]\n      - เสร็จสิ้น: ใช้ชื่อเดิม [Sheet พี่นุ — 1 รายการแผน]",
-          "Search Input (SearchInput)\n  - ลูกค้าแก้ข้อความในช่องค้นหา: เลขศูนย์ต้นทุน -> เลขที่งบประมาณ [Sheet พี่นุ — 1 รายการแผน]\n  - รายละเอียดการค้นหา: ค้นได้จากเลขแผน, ชื่อแผน, เลขที่งบประมาณ หรือเลข WBS, ทะเบียนรถ (CF) · พิมพ์ 3 อักขระแรกขึ้น AutoComplete [Sheet พี่นุ — 1 รายการแผน]\n  - ช่องค้นหา (SearchInput): focus แล้วเห็นตำแหน่งพิมพ์และพิมพ์/ลบคำได้; blur ไม่ล้างคำค้น คงคำที่พิมพ์ระหว่างโหลด และไม่ให้ผลคำค้นเก่ามาทับคำใหม่ ถ้าโหลดผิดพลาดต้องลองใหม่ได้ ส่วนเริ่มค้นเมื่อใดและ autocomplete ยังต้องตกลง",
-          "Buttons\n  - ปุ่ม “ตัวกรอง”: เปิดแผงตัวกรอง A.2; แต่ละคลิกเปิดครั้งเดียว ไม่เปิดแผงซ้อนจากการกดซ้ำ\n  - ปุ่ม “+ สร้างแผน Overhaul”: เปิดฟอร์มสร้างแผน B.1; แสดงเฉพาะผู้มีสิทธิ์ และไม่เปิดหน้าใหม่ซ้อนจากการกดซ้ำ"
+          "Search Input (SearchInput)\n  - ลูกค้าแก้ข้อความในช่องค้นหา: เลขศูนย์ต้นทุน -> เลขที่งบประมาณ [Sheet พี่นุ — 1 รายการแผน]\n  - รายละเอียดการค้นหา: ค้นได้จากเลขแผน, ชื่อแผน, เลขที่งบประมาณ หรือเลข WBS, ทะเบียนรถ (CF) · พิมพ์ 3 อักขระแรกขึ้น AutoComplete [Sheet พี่นุ — 1 รายการแผน]\n  - ช่องค้นหา (SearchInput): คลิกในช่อง → เข้า focus แสดง cursor และพิมพ์ แก้ไข หรือลบคำค้นได้\n  - ช่องค้นหา (SearchInput): คลิกออกจากช่อง → blur แต่ข้อความในช่องยังอยู่ ไม่ล้างออกเอง\n  - ช่องค้นหา (SearchInput): ระหว่าง loading ให้แสดงคำค้นที่พิมพ์ไว้; หากเปลี่ยนคำค้น ให้ใช้ผลของคำล่าสุด ไม่แสดงผลจากคำค้นก่อนหน้าทับ\n  - ช่องค้นหา (SearchInput): หากเกิด error ให้เก็บคำค้นไว้และลองใหม่ได้; วิธีเริ่มค้นหาและ AutoComplete ยังต้องตกลง",
+          "Buttons\n  - ปุ่ม “ตัวกรอง”: เปิดแผงตัวกรอง A.2; แต่ละคลิกเปิดครั้งเดียว ไม่เปิดแผงซ้อนจากการกดซ้ำ\n  - ปุ่ม “+ สร้างแผน Overhaul”: เปิด form สร้างแผน B.1; แสดงเฉพาะผู้มีสิทธิ์ และไม่เปิดหน้าใหม่ซ้อนจากการกดซ้ำ"
         ]
       },
       {
@@ -64,8 +267,8 @@ const FRAME_STORIES = {
         "label": "Error Handling / Edge Cases",
         "bullets": [
           "โหลดรายการไม่สำเร็จ: แจ้งปัญหาและให้ลองใหม่ ไม่ใช้ “ยังไม่มีแผน” แทนข้อผิดพลาด",
-          "พิมพ์ค้นหาต่อเนื่อง: ผลคำเก่าที่กลับมาช้าต้องไม่ทับคำล่าสุด; เปลี่ยนคำค้น/ตัวกรองขณะอยู่หน้าหลังให้กลับหน้าแรกของผลใหม่",
-          "กดเปิดแผนที่อีกคนลบไปแล้ว: แจ้งว่าไม่พบแผนและโหลดรายการใหม่ ไม่เปิดฟอร์มสร้างแผนแทน"
+          "พิมพ์ค้นหาต่อเนื่อง: ผลคำเก่าที่กลับมาช้าต้องไม่ทับคำล่าสุด; เมื่อเปลี่ยนคำค้นหาหรือตัวกรอง ให้แสดงหน้า 1 ของผลค้นหาใหม่",
+          "กดเปิดแผนที่อีกคนลบไปแล้ว: แจ้งว่าไม่พบแผนและโหลดรายการใหม่ ไม่เปิด form สร้างแผนแทน"
         ]
       },
       {
@@ -104,7 +307,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีปีงบ งบประมาณ สถานะ และล้าง/ยกเลิก/ตกลง แต่ยังไม่ระบุ contract การปิดพื้นหลัง/Esc และค่าที่เลือกไว้ครบทุกทาง"
+          "จากเดิม มีปีงบ งบประมาณ สถานะ และล้าง/ยกเลิก/ตกลง แต่ยังไม่ระบุ behavior การคลิกพื้นที่นอกแผงหรือกด Esc เพื่อปิด และข้อมูลที่ยังไม่บันทึกครบทุกทาง"
         ]
       },
       {
@@ -112,22 +315,22 @@ const FRAME_STORIES = {
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
           "CHANGE — ลูกค้าแก้ชื่อสถานะ:\n  - ยังไม่มี PO -> รอเลข PO [Sheet พี่นุ — 1 รายการแผน]\n  - ดำเนินการ -> รอดำเนินการ [Sheet พี่นุ — 1 รายการแผน]\n  - เสร็จสิ้น: ใช้ชื่อเดิม [Sheet พี่นุ — 1 รายการแผน]",
-          "NEW — เพิ่มข้อกำหนดการปิดแผง: พื้นหลังทึบ/×/Esc/ยกเลิกปิดแผง ไม่ใช้ค่าที่เลือกไว้ และกลับ A.1 ไม่ใช่สร้างตัวกรองใหม่ทั้งชุด; แผงตัวกรอง (FilterPanel/PlanFilter) ในโค้ดรองรับอยู่แล้ว",
-          "NEW — เพิ่มข้อกำหนดค่าที่เลือกไว้: ล้างเฉพาะในแผงและยังไม่กรองจนกดตกลง; ปิดโดยไม่ตกลงทิ้งค่าที่เลือกไว้ เปิดใหม่ใช้ค่าที่กรองอยู่จริง"
+          "NEW — เพิ่มข้อกำหนดการปิดแผง: พื้นหลังทึบ/×/Esc/ยกเลิกปิดแผง ไม่ใช้ข้อมูลที่ยังไม่บันทึก และกลับ A.1 ไม่ใช่สร้างตัวกรองใหม่ทั้งชุด; แผงตัวกรอง (FilterPanel/PlanFilter) ในโค้ดรองรับอยู่แล้ว",
+          "NEW — กด “ล้างตัวกรอง” เพื่อล้างตัวเลือกในแผง แล้วกด “ตกลง” เพื่ออัปเดตรายการ หากปิดแผงก่อนกด “ตกลง” รายการจะยังใช้ตัวกรองเดิม และเมื่อเปิดแผงอีกครั้ง ตัวเลือกจะกลับมาเป็นค่าเดิม"
         ]
       },
       {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "Side panel (FilterPanel)\n  - Behavior\n    - กด “ตัวกรอง” เปิดแผงด้านขวา (FilterPanel / PlanFilter) โดยแสดงตัวกรองที่ใช้อยู่จริง การเปลี่ยนค่าในแผงยังไม่เปลี่ยนตารางด้านหลัง\n    - กด “ตกลง” → กรองรายการตามค่าที่เลือกทั้งหมด แล้วปิดแผงกลับไปดูรายการ A.1\n    - กด “ยกเลิก” / × / Esc หรือคลิกพื้นหลังทึบ → ปิดแผงกลับไปดูรายการ A.1 โดยไม่ใช้ตัวกรองที่เพิ่งเปลี่ยน เปิดใหม่แสดงตัวกรองที่ใช้อยู่จริง\n    - กด “ล้างตัวกรอง” → ล้างค่าในแผงและแผงยังเปิด ต้องกด “ตกลง” จึงเปลี่ยนผลในตาราง; ล้างแล้วกดยกเลิกจะยังคงตัวกรองเดิม\n    - คลิกภายในแผงหรือช่องกรองแล้วแผงไม่ปิด ขณะเปิดแผงหน้าเบื้องหลังเลื่อนไม่ได้ (useOverlay)\n    - แนวทางพัฒนานี้ใช้ PlanFilter ของ overhaul-next เป็นฐาน; FilterDrawer ในต้นแบบเก่าล้างแล้วกรองทันที จึงต้องระวังไม่ใช้พฤติกรรมเก่าปะปน\n  - Fields\n    - ปีงบประมาณ: dropdown ค่าเริ่มต้น \"ทั้งหมด\" [Sheet พี่นุ — 1 รายการแผน]\n    - งบประมาณ (บาท): checkbox 6 ช่วง เลือกได้หลายช่วง\n    - ช่องเลือกสถานะ: เลือกได้หลายค่าพร้อมกัน\n    - ประเภทยานพาหนะ (เพิ่ม): ลูกค้าเปลี่ยนตัวกรอง\n        - ค้นทะเบียนรถ -> เลือกประเภทยานพาหนะแบบเลือกได้หลายค่า [Sheet พี่นุ — 1 รายการแผน]\n        - ตัวกรองแบบใหม่ยังไม่มีใน mock\n    - งบประมาณ: ลูกค้าให้พิจารณา Range Slider Input แทนช่วงตายตัว [Sheet พี่นุ — 1 รายการแผน]\n    - ช่องเลือกปีงบ และช่องติ๊กช่วงงบ/สถานะ: เปิดแล้วแสดงค่าที่เลือกล่าสุด เปลี่ยนแต่ละช่องได้อิสระ; ติ๊ก/เอาติ๊กออกได้หลายค่าในกลุ่มเดียว และคลิก label ต้องเปลี่ยน ช่องติ๊กเลือก ตัวเดียวกับที่แสดง"
+          "Side panel (FilterPanel)\n  - Behavior\n    - กด “ตัวกรอง” เปิดแผงด้านขวา (FilterPanel / PlanFilter) โดยแสดงตัวกรองที่ใช้อยู่จริง การเปลี่ยนค่าในแผงยังไม่เปลี่ยนตารางด้านหลัง\n    - กด “ตกลง” → กรองรายการตามค่าที่เลือกทั้งหมด แล้วปิดแผงกลับไปดูรายการ A.1\n    - กด “ยกเลิก” / × / Esc หรือคลิกพื้นหลังทึบ → ปิดแผงกลับไปดูรายการ A.1 โดยไม่ใช้ตัวกรองที่เพิ่งเปลี่ยน เปิดใหม่แสดงตัวกรองที่ใช้อยู่จริง\n    - กด “ล้างตัวกรอง” → ล้างตัวเลือกในแผง โดยแผงยังเปิด แล้วกด “ตกลง” เพื่ออัปเดตรายการ หากปิดแผงก่อนกด “ตกลง” รายการจะยังใช้ตัวกรองเดิม และเมื่อเปิดแผงอีกครั้ง ตัวเลือกจะกลับมาเป็นค่าเดิม\n    - คลิกภายในแผงหรือช่องกรองแล้วแผงไม่ปิด ขณะเปิดแผงหน้าเบื้องหลังเลื่อนไม่ได้ (useOverlay)\n    - แนวทางพัฒนานี้ใช้ PlanFilter ของ overhaul-next เป็นฐาน; FilterDrawer ในต้นแบบเก่าล้างแล้วกรองทันที จึงต้องระวังไม่ใช้พฤติกรรมเก่าปะปน\n  - Fields\n    - ปีงบประมาณ: dropdown ค่าเริ่มต้น \"ทั้งหมด\" [Sheet พี่นุ — 1 รายการแผน]\n    - งบประมาณ (บาท): checkbox 6 ช่วง เลือกได้หลายช่วง\n    - ช่องเลือกสถานะ: เลือกได้หลายค่าพร้อมกัน\n    - ประเภทยานพาหนะ (เพิ่ม): ลูกค้าเปลี่ยนตัวกรอง\n        - ค้นทะเบียนรถ -> เลือกประเภทยานพาหนะแบบเลือกได้หลายค่า [Sheet พี่นุ — 1 รายการแผน]\n        - ตัวกรองแบบใหม่ยังไม่มีใน mock\n    - งบประมาณ: ลูกค้าให้พิจารณา Range Slider Input แทนช่วงตายตัว [Sheet พี่นุ — 1 รายการแผน]\n    - ช่องเลือกปีงบ: เปิดแผงแล้วแสดงปีงบที่ใช้กรองรายการปัจจุบัน; เปลี่ยนปีงบได้โดยไม่เปลี่ยนช่วงงบหรือสถานะที่เลือกไว้\n    - checkbox ช่วงงบและสถานะ: เลือกได้หลายข้อในกลุ่มเดียว; คลิกซ้ำที่ข้อเดิมเพื่อยกเลิกข้อนั้น\n    - label ของ checkbox: คลิกข้อความข้าง checkbox เพื่อเลือกหรือยกเลิก checkbox ข้อนั้น เช่น คลิก “รอเลข PO” เพื่อเลือกหรือยกเลิกสถานะ “รอเลข PO”"
         ]
       },
       {
         "level": "h2",
         "label": "Error Handling / Edge Cases",
         "bullets": [
-          "เปลี่ยนค่าแล้วกดยกเลิก/×/Esc/พื้นหลัง: ทิ้งเฉพาะค่าที่เลือกไว้ ตารางยังใช้ตัวกรองเดิม; เปิดใหม่ห้ามเห็นค่าที่ทิ้งไป",
+          "เปลี่ยนค่าแล้วกดยกเลิก/×/Esc/พื้นหลัง: ทิ้งเฉพาะข้อมูลที่ยังไม่บันทึก ตารางยังใช้ตัวกรองเดิม; เปิดใหม่ห้ามเห็นค่าที่ทิ้งไป",
           "ถ้าใช้ตัวกรองแล้วต้องโหลดรายการใหม่แต่โหลดไม่สำเร็จ: คงค่าที่เลือกให้ลองใหม่ ไม่แสดง “ไม่พบแผน” แทน error และไม่แสดงข้อมูลเก่าว่าเป็นผลของตัวกรองใหม่"
         ]
       },
@@ -167,14 +370,14 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีจอค้นไม่พบและการล้างคำค้น แต่ไม่ได้แยก no-result จากการโหลด/error และผลต่อ focus เป็น contract ชัดเจน"
+          "จากเดิม มีจอค้นไม่พบและการล้างคำค้น แต่ไม่ได้แยก no-result จากการโหลด/error และผลต่อ focus เป็น behavior ชัดเจน"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่มข้อกำหนด state ค้นไม่พบ: ไม่แสดงตารางเก่าหรือ pagination ค้าง แต่ยังคงคำค้น/ตัวกรองไว้ให้แก้; error ต้องไม่ใช้ภาพค้นไม่พบแทน",
+          "NEW — เพิ่มข้อกำหนด state ค้นไม่พบ: ไม่แสดงตารางเก่าหรือ Pagination ค้าง แต่ยังคงคำค้น/ตัวกรองไว้ให้แก้; error ต้องไม่ใช้ภาพค้นไม่พบแทน",
           "NEW — เพิ่มผลปุ่มล้าง: ล้างคำค้นและตัวกรองพร้อมกันแล้วกลับรายการ A.1 ในหน้าเดิมและคืน focus ที่ช่องค้นหา"
         ]
       },
@@ -184,8 +387,9 @@ const FRAME_STORIES = {
         "bullets": [
           "พฤติกรรมการใช้งาน\n  - คำค้นและตัวกรองเดิมต้องยังอยู่ เพื่อให้ผู้ใช้แก้ไขได้\n  - กด “ล้างคำค้นและตัวกรอง” ให้ล้างทั้งคู่ แล้วโหลดรายการใหม่\n  - กด \"ล้างคำค้นและตัวกรอง\" ล้างคำค้นและตัวกรอง กลับแสดงรายการทั้งหมด\n  - ใช้กติกาค้นหาเดียวกับ A.1 (รวมทะเบียนรถและ AutoComplete 3 อักขระ) ไม่มี toast [Sheet พี่นุ]",
           "Empty State (EmptyState)\n  - หลังค้นหาแล้วไม่มีผล ต้องแสดง “ไม่พบแผน Overhaul” ไม่แสดงข้อมูลเก่าหรือการแบ่งหน้า\n  - กบค. พิมพ์คำค้น (ตัวอย่าง \"แผน Overhaul ปี 2573\") หรือเลือกตัวกรองที่ไม่มีแผนตรง แทนตารางด้วยภาพ empty หัวข้อ \"ไม่พบแผน Overhaul\" ข้อความรอง \"ไม่มีแผนที่ตรงกับคำค้นหรือตัวกรอง\" และปุ่ม \"ล้างคำค้นและตัวกรอง\"\n  - ส่วนแสดงเมื่อไม่มีข้อมูล “ไม่พบแผน Overhaul”: ใช้เมื่อค้นสำเร็จแต่ไม่มีผล ไม่ใช้แทน loading หรือ error",
-          "Search Input (SearchInput)\n  - ช่องค้นหาคงคำที่พิมพ์ (ขอบ focus สีม่วง) ปุ่ม \"ตัวกรอง\" และ \"+ สร้างแผน Overhaul\" ยังอยู่ ไม่มีการแบ่งหน้า\n  - ช่องค้นหาเหนือรายการ (SearchInput)และค่าตัวกรอง: ยังคงค่าที่ทำให้ไม่พบ เพื่อแก้คำค้นต่อได้",
-          "Buttons\n  - ปุ่ม “ล้างคำค้นและตัวกรอง”: ล้างทั้งคู่แล้วโหลดรายการใหม่; ไม่คงหน้าที่ไม่มีรายการหลังล้าง",
+          "Search Input (SearchInput)\n  - ช่องค้นหา (SearchInput): คลิกในช่อง → เข้า focus แสดงขอบสีม่วงและ cursor สามารถพิมพ์ แก้ไข หรือลบคำค้นได้\n  - ช่องค้นหา (SearchInput): คลิกออกจากช่อง → blur ขอบสีม่วงหาย แต่คำค้นยังอยู่\n  - ช่องค้นหา (SearchInput): ค้นหาแล้วไม่พบรายการ → แสดง Empty State “ไม่พบแผน Overhaul” โดยเก็บคำค้นและค่าตัวกรองเดิมไว้ เพื่อให้แก้ไขแล้วค้นหาใหม่ได้",
+          "Buttons\n  - ปุ่ม “ตัวกรอง”: ยังแสดงเมื่อค้นหาไม่พบรายการ กดแล้วเปิดแผงตัวกรอง A.2\n  - ปุ่ม “+ สร้างแผน Overhaul”: ยังแสดงเฉพาะผู้มีสิทธิ์เมื่อค้นหาไม่พบรายการ กดแล้วเปิด form สร้างแผน B.1\n  - ปุ่ม “ล้างคำค้นและตัวกรอง”: ล้างทั้งคู่แล้วโหลดรายการใหม่; ไม่คงหน้าที่ไม่มีรายการหลังล้าง",
+          "Table (DataTable)\n  - Pagination\n    - Pagination: ไม่แสดงปุ่มเปลี่ยนหน้าและตัวเลือกจำนวนรายการต่อหน้า เมื่อไม่มีผลค้นหา",
           "Navigation\n  - จากหน้ารายการ plans: ปุ่มล้างคำค้น/ตัวกรองทำงานในหน้าเดิม A.1 ไม่เปิด แผงตัวกรอง และไม่ไปหน้าสร้างแผน; คง focus ที่ช่องค้นหาเพื่อพิมพ์ใหม่"
         ]
       },
@@ -229,14 +433,14 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีจอยังไม่มีแผนและปุ่มสร้าง ไม่ได้แยกข้อกำหนดการเข้าถึงปุ่มกับการกลับจากฟอร์มเป็นราย state"
+          "จากเดิม มีจอยังไม่มีแผนและปุ่มสร้าง ไม่ได้แยกข้อกำหนดการเข้าถึงปุ่มกับการกลับจาก form เป็นราย state"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่มข้อกำหนดปุ่มสร้างกลางจอ: ผู้มีสิทธิ์กดแล้วไป B.1; กลับโดยยังไม่สร้างต้องยังเห็น A.4 ไม่สร้างแผนจากการเปิดฟอร์ม",
+          "NEW — เพิ่มข้อกำหนดปุ่มสร้างกลางจอ: ผู้มีสิทธิ์กดแล้วไป B.1; กลับโดยยังไม่สร้างต้องยังเห็น A.4 ไม่สร้างแผนจากการเปิด form",
           "NEW — เพิ่มขอบเขต empty state: ไม่แสดงแถบค้นหา/ตัวกรอง/แบ่งหน้าในจอว่าง และไม่ใช้ state นี้แทน A.3 ที่ค้นไม่พบ"
         ]
       },
@@ -245,7 +449,7 @@ const FRAME_STORIES = {
         "label": "UI Component & Behavior",
         "bullets": [
           "Empty State (EmptyState)\n  - ถ้าระบบไม่มีรายการที่ผู้ใช้มีสิทธิ์เห็น ให้แสดงข้อความยังไม่มีแผน\n  - ยังไม่มีแผนในระบบเลย เปิดหน้า แสดงภาพ empty หัวข้อ \"ยังไม่มีแผน Overhaul\" ข้อความรอง \"สร้างแผน Overhaul เพื่อเพิ่ม Purchase Order และติดตามสถานะซ่อมของรถแต่ละคัน\" และปุ่ม \"+ สร้างแผน Overhaul\" ตรงกลาง\n  - ส่วนแสดงเมื่อไม่มีข้อมูล “ยังไม่มีแผน Overhaul”: ใช้เมื่อยังไม่มีข้อมูล ไม่ปะปนกับค้นไม่พบของ A.3",
-          "Buttons\n  - แสดงปุ่มสร้างแผนเฉพาะผู้ที่มีสิทธิ์; กดแล้วไปหน้าสร้างแผน\n  - กดปุ่ม ไปหน้าสร้างแผน (B.1)\n  - ปุ่ม \"+ สร้างแผน Overhaul\" แสดงเฉพาะ กบค. role อื่นเห็นแค่ข้อความ empty · หน่วยงาน/กรย. ที่ยังไม่มีรถอยู่ใน PO ใดเลยจะเห็นหน้านี้ [Sheet พี่นุ — permission]\n  - ปุ่ม “+ สร้างแผน Overhaul” กลางจอ: พาไป B.1 และตรวจสิทธิ์; ไม่สร้างช่องค้นหา/ตัวกรองหรือ pagination เพิ่มใน state นี้\n  - ปุ่มสร้างแผนเป็นลิงก์ไปฟอร์มสร้าง B.1; ถ้าผู้ใช้กลับจากฟอร์มโดยยังไม่สร้างสำเร็จ ให้เห็น state ว่าง A.4 เดิม ไม่สร้างแผนจากการเปิดฟอร์ม",
+          "Buttons\n  - แสดงปุ่มสร้างแผนเฉพาะผู้ที่มีสิทธิ์; กดแล้วไปหน้าสร้างแผน\n  - กดปุ่ม ไปหน้าสร้างแผน (B.1)\n  - ปุ่ม \"+ สร้างแผน Overhaul\" แสดงเฉพาะ กบค. role อื่นเห็นแค่ข้อความ empty · หน่วยงาน/กรย. ที่ยังไม่มีรถอยู่ใน PO ใดเลยจะเห็นหน้านี้ [Sheet พี่นุ — permission]\n  - ปุ่ม “+ สร้างแผน Overhaul” กลางจอ: พาไป B.1 และตรวจสิทธิ์; ไม่สร้างช่องค้นหา/ตัวกรองหรือ Pagination เพิ่มใน state นี้\n  - ปุ่มสร้างแผนเป็นลิงก์ไป form สร้าง B.1; ถ้าผู้ใช้กลับจาก form โดยยังไม่สร้างสำเร็จ ให้เห็น state ว่าง A.4 เดิม ไม่สร้างแผนจากการเปิด form",
           "Status (StatusBadge)\n  - ไม่แสดงตารางหรือการแบ่งหน้าในสถานะนี้",
           "Visibility\n  - ไม่มีช่องค้นหา ปุ่มตัวกรอง ปุ่มสร้างด้านบน และการแบ่งหน้า"
         ]
@@ -268,13 +472,13 @@ const FRAME_STORIES = {
     }
   },
   "B.1": {
-    "title": "AC B.1 — ฟอร์มสร้างแผน (Default)",
+    "title": "AC B.1 — form สร้างแผน (Default)",
     "sections": [
       {
         "level": "h2",
         "label": "ภาพรวมหน้านี้",
         "bullets": [
-          "What: สร้างแผน Overhaul และตรวจรายละเอียดแผนที่สร้าง — ฟอร์มสร้างแผน (Default)",
+          "What: สร้างแผน Overhaul และตรวจรายละเอียดแผนที่สร้าง — form สร้างแผน (Default)",
           "Who: กบค. ใช้สร้างแผน; หน้ารายละเอียดเปิดดูได้ตามขอบเขตสิทธิ์",
           "Do: กรอกข้อมูลแผน เลือกค่าที่จำเป็น บันทึก หรือย้อนกลับ"
         ]
@@ -283,47 +487,59 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีฟอร์มสร้างว่างและช่องบังคับ แต่ยังไม่แยก contract ออกจากฟอร์มทุกทางกับค่าที่ไม่เคยแก้"
+          "จากเดิม มี form สร้างว่างและช่องบังคับ แต่ยังไม่แยก behavior การออกจาก form ทุกทาง และกรณีที่ยังไม่เคยแก้ค่า"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่มข้อกำหนดทางออก: ไม่เคยแก้ค่าให้กลับรายการ A ได้ทันที; มี ข้อมูลที่ยังไม่บันทึก เปิด B.4 ก่อนออก โดยต้องครอบคลุม breadcrumb ที่โค้ดปัจจุบันยังเป็นลิงก์ตรง",
-          "NEW — เพิ่มเงื่อนไขเริ่มต้น: ปีงบยังไม่เลือกและปุ่มบันทึกยังไม่พร้อม ห้ามตั้งปี/สร้างแผนแทนผู้ใช้"
+          "NEW — เพิ่มข้อกำหนดทางออก: ไม่เคยแก้ค่าให้กลับรายการ A ได้ทันที; มีข้อมูลที่ยังไม่บันทึก เปิด modal “ยืนยันการออก” (ConfirmDialog — Modal แบบ centered) B.4 ก่อนออก โดยต้องครอบคลุม breadcrumb ที่โค้ดปัจจุบันยังเป็นลิงก์ตรง",
+          "NEW — เพิ่มเงื่อนไขเริ่มต้น: ปีงบยังไม่เลือกและปุ่มบันทึกยังไม่พร้อม ห้ามตั้งปีหรือสร้างแผนแทนผู้ใช้"
         ]
       },
       {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - กดแก้ไขหรือสร้างแล้วแสดงข้อมูลในฟอร์มตามจอ\n  - ช่องบังคับที่ปล่อยว่างต้องมีข้อความเตือน\n  - กดยืนยันแล้วรอผล; ไม่สำเร็จต้องคงค่าที่กรอกไว้\n  - ฟอร์มแบ่ง 2 ส่วน: \"ข้อมูลแผน\" และ \"เอกสาร\" ตามตารางฟิลด์ด้านบน ทุกช่องว่าง",
-          "Navigation\n  - กด \"+ สร้างแผน Overhaul\" เปิดหน้า breadcrumb \"จัดการงาน Overhaul > สร้างแผน Overhaul\" หัวข้อ \"สร้างแผน Overhaul\"\n  - จาก หน้าฟอร์มสร้าง/แก้ไขแผน (PlanForm): ปุ่มย้อนกลับไปหน้ารายการ ถ้ายังไม่แก้ค่าให้ออกได้ทันที; ถ้ามี ข้อมูลที่ยังไม่บันทึก เปิด “ยืนยันการออก” B.4 ก่อน ส่วน เส้นทางนำทางด้านบน เป็นลิงก์ตรงและยังไม่ผ่าน guard จึงต้องปรับ/เคาะให้ครอบคลุมก่อนอ้างว่ากันข้อมูลหายทุกทาง; หน้าใหม่ไม่มีปุ่มยกเลิกท้ายฟอร์มตาม AC จึงไม่เพิ่มปุ่มเอง",
-          "Buttons\n  - ปุ่ม \"บันทึก\" ขวาล่าง สถานะ disable\n  - ปุ่ม “บันทึก”: เริ่ม disable และคำนวณสถานะจากฟิลด์ที่ยืนยันแล้วว่าบังคับ",
-          "Form Fields\n  - ช่องกรอก ชื่อแผนและวงเงิน: เริ่มว่าง; focus แล้วแก้ค่าได้ เมื่อออกจากช่องบังคับที่ยังว่างให้เข้าสู่ validation ของ B.2 ข้อความที่กรอกต้องคงอยู่เมื่อเปลี่ยนไปช่องอื่น",
-          "Select Field\n  - ช่องเลือกจากรายการ ปีงบประมาณ: เริ่มยังไม่เลือก ไม่กำหนดปีเองแทนผู้ใช้",
-          "File Upload (FileUpload)\n  - ช่องแนบไฟล์ เอกสาร: แยกไฟล์ตามหนังสืออนุมัติหลักการ/อนุมัติงบ/อื่น ๆ; ชนิดและจำนวนตาม AC ส่วนขนาดและเอกสารบังคับยังต้องตกลง"
+          "พฤติกรรมการใช้งาน\n  - กดแก้ไขหรือสร้างแล้วแสดงข้อมูลใน form ตามจอ; สำหรับ B.1 เป็นการสร้างแผนใหม่ ทุกช่องเริ่มต้นว่าง\n  - ช่องบังคับที่ปล่อยว่างต้องมีข้อความเตือน โดยตรวจเมื่อออกจากช่องตาม B.2\n  - กดบันทึกแล้วรอผล; ไม่สำเร็จต้องคงค่าที่กรอกและไฟล์ที่แนบไว้\n  - form แบ่ง 2 ส่วน: “ข้อมูลแผน” และ “เอกสาร”",
+          "Navigation\n  - กด “+ สร้างแผน Overhaul” เปิดหน้า breadcrumb “จัดการงาน Overhaul > สร้างแผน Overhaul” หัวข้อ “สร้างแผน Overhaul”\n  - จากหน้า form สร้าง/แก้ไขแผน (PlanForm): ปุ่มย้อนกลับไปหน้ารายการ A ถ้ายังไม่แก้ค่าให้ออกได้ทันที; ถ้ามีข้อมูลที่ยังไม่บันทึก เปิด modal “ยืนยันการออก” (ConfirmDialog — Modal แบบ centered) B.4 ก่อน\n  - breadcrumb ในโค้ดปัจจุบันเป็นลิงก์ตรงและยังไม่ผ่าน guard จึงต้องปรับให้ครอบคลุมก่อนอ้างว่าป้องกันข้อมูลหายทุกทาง\n  - Figma ล่าสุดมีปุ่ม “ยกเลิก” ท้าย form แต่โค้ดที่ตรวจไว้ใช้ปุ่มย้อนกลับ ต้องยืนยันให้ตรงกัน; ข้อเสนอให้ปุ่ม “ยกเลิก” ใช้กติกาเดียวกับปุ่มย้อนกลับ",
+          "Buttons\n  - ปุ่ม “บันทึก”: เริ่ม disable และคำนวณสถานะจาก field ที่ยืนยันแล้วว่าบังคับ\n  - ปุ่ม “ยกเลิก”: Figma ล่าสุดแสดงในสถานะใช้งานได้ตั้งแต่เปิดหน้า; ปลายทางและการยืนยันก่อนออกต้องตกลงตาม Navigation",
+          "Form Fields\n  - ช่องกรอกชื่อแผนและวงเงิน: เริ่มต้นว่าง; คลิกในช่อง → เข้า focus แสดง cursor และพิมพ์หรือแก้ไขค่าได้; คลิกออกจากช่อง → blur โดยเก็บค่าที่กรอกไว้ หากช่องบังคับยังว่าง ให้แสดง validation ตาม B.2 (validate on blur)\n  - ชื่อแผน: แสดง placeholder “ระบุชื่อแผน”; วงเงินอนุมัติ (บาท): แสดง placeholder “ระบุวงเงินอนุมัติ”\n  - เลข WBS / เลขโครงข่าย / เลขกิจกรรม: เริ่มต้นว่าง แสดง placeholder “ระบุเลข WBS” / “ระบุเลขโครงข่าย” / “ระบุเลขกิจกรรม” แต่ละช่องระบุ “(ถ้ามี)” จึงไม่บังคับกรอก",
+          "Select Field\n  - ช่องเลือกจากรายการ ปีงบประมาณ: เริ่มยังไม่เลือก แสดง “เลือกปีงบประมาณ” ไม่กำหนดปีเองแทนผู้ใช้",
+          "File Upload (FileUpload)\n  - ทั้งสามช่องเลือกไฟล์ด้วยการคลิกหรือลากไฟล์มาวางได้\n  - ช่องแนบไฟล์ “หนังสืออนุมัติหลักการ”: รับ PDF, PNG และ JPG ขนาดไม่เกิน 10 MB ต่อไฟล์; ข้อกำหนดเดิมระบุสูงสุด 10 ไฟล์ในช่องนี้ ต้องยืนยันจำนวนและการบังคับแนบ\n  - ช่องแนบไฟล์ “เอกสารอนุมัติงบ”: รับ PDF, PNG และ JPG ขนาดไม่เกิน 10 MB ต่อไฟล์; ข้อกำหนดเดิมระบุสูงสุด 10 ไฟล์ในช่องนี้ ต้องยืนยันจำนวนและการบังคับแนบ\n  - ช่องแนบไฟล์ “เอกสารอื่น ๆ”: ไม่บังคับแนบ รับ PDF, PNG และ JPG ขนาดไม่เกิน 10 MB ต่อไฟล์; ข้อกำหนดเดิมระบุสูงสุด 10 ไฟล์ในช่องนี้ ต้องยืนยันจำนวน"
         ]
       },
       {
         "level": "h2",
         "label": "สิทธิ์การใช้งาน (Permission)",
         "bullets": [
-          "สร้างแผนเป็น Layer 1 ทำได้เฉพาะ กบค. (role อื่นเข้า URL นี้ตรงๆ ต้องถูกปฏิเสธที่ backend) [Sheet พี่นุ]",
-          "แผนใหม่ได้สถานะ \"รอเลข PO\" [Sheet พี่นุ]"
+          "สร้างแผนเป็น Layer 1 ทำได้เฉพาะ กบค. (role อื่นเข้า URL นี้ตรง ๆ ต้องถูกปฏิเสธที่ backend) [Sheet พี่นุ]",
+          "แผนใหม่ได้สถานะ “รอเลข PO” [Sheet พี่นุ]"
         ]
       },
       {
         "level": "h2",
         "label": "Error Handling / Edge Cases",
         "bullets": [
-          "กดออกจากฟอร์มหลังเริ่มกรอก: ต้องผ่านยืนยันการออกทุกทางที่รองรับ ไม่ปล่อย breadcrumb ข้ามการเตือนจนข้อมูลหาย",
-          "เลือกไฟล์ผิดประเภท/เกินจำนวน: แจ้งที่รายการไฟล์นั้น ไม่ล้างชื่อแผน ปีงบ หรือไฟล์ที่เลือกถูกแล้ว"
+          "กดออกจาก form หลังเริ่มกรอก: ต้องผ่านยืนยันการออกทุกทางที่รองรับ ไม่ปล่อย breadcrumb ข้ามการเตือนจนข้อมูลหาย",
+          "เลือกไฟล์ผิดประเภท/เกินขนาด 10 MB/เกินจำนวนที่ตกลง: แจ้งที่รายการไฟล์นั้น ไม่ล้างชื่อแผน ปีงบ หรือไฟล์ที่เลือกถูกแล้ว"
+        ]
+      },
+      {
+        "level": "h2",
+        "label": "ประเด็นที่ต้องเคาะ",
+        "bullets": [
+          "ช่องใดบังคับกรอก และเงื่อนไขใดทำให้ปุ่ม “บันทึก” ใช้งานได้",
+          "ตัวเลือกปีงบประมาณ ความยาวและการซ้ำของชื่อแผน รวมถึงรูปแบบวงเงินที่รับ",
+          "รูปแบบและความสัมพันธ์ของเลข WBS เลขโครงข่าย และเลขกิจกรรม",
+          "ยืนยันจำนวนสูงสุด 10 ไฟล์ต่อหมวด และการบังคับแนบสองหมวดแรก",
+          "ยืนยันพฤติกรรมของปุ่ม “ยกเลิก” และ breadcrumb รวมถึงการใช้ B.4",
+          "ข้อความและหน้าปลายทางหลังบันทึกสำเร็จหรือผิดพลาด"
         ]
       }
     ],
-    "source": "Overhaul-AC-ฉบับอ่านง่าย-ทุกเฟรม.md + Overhaul-AC-รายเฟรม.md + Overhaul-Dev-แนวทางประกอบ.md + Overhaul-Sprint06-Delta-รายเฟรม.md + Overhaul-Error-Handling-Edge-Cases-รายเฟรม.md",
+    "source": "Overhaul-AC-ฉบับอ่านง่าย-ทุกเฟรม.md",
     "baseline": {
       "board": "Refinement 15/10/69 - Final Userflow Overhaul #14/10/2026",
       "frameNames": [
@@ -354,7 +570,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "CHANGE — เปลี่ยนจังหวะ validation จาก state กดบันทึกใน baseline เป็น blur/out of focus ตาม AC ล่าสุด พร้อมปุ่มบันทึก disable; ต้องยืนยัน pattern ก่อนพัฒนา",
+          "CHANGE — เปลี่ยนจังหวะ validation จาก state กดบันทึกใน baseline เป็น blur เมื่อออกจากช่องบังคับที่ยังว่าง พร้อมปุ่มบันทึก disable; ต้องยืนยัน pattern ก่อนพัฒนา",
           "NEW — เพิ่มการแก้ error รายช่อง: กรอกถูกให้ล้างเฉพาะ error ช่องนั้น คงค่าช่องอื่น; วงเงิน 0 ยังไม่ผ่าน และไม่สร้าง error เอกสารเองขณะที่ยังไม่ตกลง required"
         ]
       },
@@ -371,7 +587,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "Error Handling / Edge Cases",
         "bullets": [
-          "แก้ช่องที่ผิดให้ถูก: ล้างเฉพาะ error ช่องนั้น ไม่ล้าง error ช่องอื่นทั้งฟอร์ม",
+          "แก้ช่องที่ผิดให้ถูก: ล้างเฉพาะ error ช่องนั้น ไม่ล้าง error ช่องอื่นทั้ง form",
           "วงเงินว่างหรือ 0: ไม่ผ่านเงื่อนไขบันทึก; ช่องเอกสารที่ยังไม่ตกลง required ต้องไม่สร้าง error บังคับเอง"
         ]
       },
@@ -408,7 +624,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีฟอร์มกรอกครบ/ไฟล์แนบ แต่ยังไม่แยกข้อกำหนดหลายไฟล์และการส่งซ้ำเป็น contract ราย action"
+          "จากเดิม มี form กรอกครบ/ไฟล์แนบ แต่ยังไม่แยกข้อกำหนดหลายไฟล์และการส่งซ้ำเป็น behavior ราย action"
         ]
       },
       {
@@ -423,10 +639,10 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - กดแก้ไขหรือสร้างแล้วแสดงข้อมูลในฟอร์มตามจอ\n  - ช่องบังคับที่ปล่อยว่างต้องมีข้อความเตือน\n  - กดยืนยันแล้วรอผล; ไม่สำเร็จต้องคงค่าที่กรอกไว้",
+          "พฤติกรรมการใช้งาน\n  - กดแก้ไขหรือสร้างแล้วแสดงข้อมูลใน form ตามจอ\n  - ช่องบังคับที่ปล่อยว่างต้องมีข้อความเตือน\n  - กดยืนยันแล้วรอผล; ไม่สำเร็จต้องคงค่าที่กรอกไว้",
           "File Upload (FileUpload)\n  - กรอกครบ (ตัวอย่าง ชื่อ \"Overhaul ประจำปีงบ 2570 — รถเจาะหลุม\", ปี 2571, วงเงิน 5,000,000, WBS C-70-OH-0003, โครงข่าย 60002103, กิจกรรม 0010) และแนบไฟล์ ปุ่ม \"บันทึก\" enable\n  - ไฟล์ที่แนบแสดงชื่อ ขนาด (เช่น \"Document.pdf 200 KB\") แถบ \"100%\" และปุ่มลบ แนบได้หลายไฟล์ต่อช่อง (Document.pdf, Image001.jpg, Image002.png)\n  - รายการไฟล์แนบ: แสดงชื่อ ขนาด progress และปุ่มลบแยกต่อไฟล์; ลบรายการที่เลือกเท่านั้น",
           "Form Fields\n  - ช่องกรอก ชื่อแผน/วงเงิน/เลขอ้างอิง และ รายการตัวเลือก ปีงบ: คงค่าที่กรอกครบ ไม่ reset เมื่อมีไฟล์เพิ่ม",
-          "Buttons\n  - ปุ่ม “บันทึก”: enable เมื่อข้อมูลครบ และกันกดซ้ำระหว่างรอผลโดยยังคงค่าฟอร์ม"
+          "Buttons\n  - ปุ่ม “บันทึก”: enable เมื่อข้อมูลครบ และกันกดซ้ำระหว่างรอผลโดยยังคงค่า form"
         ]
       },
       {
@@ -455,21 +671,21 @@ const FRAME_STORIES = {
         "bullets": [
           "What: สร้างแผน Overhaul และตรวจรายละเอียดแผนที่สร้าง — ย้อนกลับ ยืนยันการออก",
           "Who: กบค. ใช้สร้างแผน; หน้ารายละเอียดเปิดดูได้ตามขอบเขตสิทธิ์",
-          "Do: ยืนยันออกจากฟอร์มโดยทิ้งข้อมูล หรือยกเลิกการออกเพื่อกรอกต่อ"
+          "Do: ยืนยันออกจาก form โดยทิ้งข้อมูล หรือยกเลิกการออกเพื่อกรอกต่อ"
         ]
       },
       {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีการยืนยันออกจากฟอร์ม แต่รายละเอียดการปิดพื้นหลัง/Esc และการคง ข้อมูลที่ยังไม่บันทึก ยังไม่แยกครบทุกทาง"
+          "จากเดิม มีการยืนยันออกจาก form แต่รายละเอียดการคลิกพื้นที่นอกแผงหรือกด Esc เพื่อปิด และการคง ข้อมูลที่ยังไม่บันทึก ยังไม่แยกครบทุกทาง"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่มข้อกำหนดปิดกล่อง (ConfirmDialog): ปิด/×/Esc/พื้นหลังกลับ B.1/B.3 พร้อม ข้อมูลที่ยังไม่บันทึก ไม่ใช่ออกจากฟอร์ม",
+          "NEW — เพิ่มข้อกำหนดปิดกล่อง (ConfirmDialog): ปิด/×/Esc/พื้นหลังกลับ B.1/B.3 พร้อม ข้อมูลที่ยังไม่บันทึก ไม่ใช่ออกจาก form",
           "NEW — เพิ่มผลยืนยันออก: ทิ้งเฉพาะค่าที่ยังไม่บันทึกแล้วไปหน้ารายการ A; ปิดกล่องธรรมดาต้องไม่ทำผลเดียวกับยืนยัน"
         ]
       },
@@ -477,16 +693,16 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - ถ้ามีข้อมูลเปลี่ยนและยังไม่บันทึก ให้เปิดหน้าต่างยืนยันการออก\n  - กดปิด/ยกเลิก กลับมาพร้อมข้อมูลที่กรอกไว้\n  - กดยืนยัน จึงออกจากหน้าและไม่บันทึกการเปลี่ยนแปลง\n  - \"ปิด\" กลับฟอร์มค่าเดิมครบ · \"ยืนยัน\" ออกโดยไม่บันทึก\n  - Breadcrumb/ทางออกจากหน้า: ต้องตกลง trigger ที่แท้จริง เพราะจอสร้างแผนไม่มีปุ่มย้อนกลับ/ยกเลิก\n  - กด “ยืนยัน” → ทิ้ง ข้อมูลที่ยังไม่บันทึก และไปหน้ารายการแผน A ผ่าน หน้าต้นทางที่กำหนดไว้; เส้นทางนำทางด้านบน ของ prototype ยังเป็นลิงก์ตรง ไม่ผ่านกล่องนี้ จึงต้องเพิ่ม guard ให้ตรง AC ก่อน",
-          "Modal\n  - กรอกข้อมูลไว้แล้ว ออกจากฟอร์มโดยไม่บันทึก (breadcrumb/ย้อนกลับ) เปิด modal \"ยืนยันการออก\" ข้อความ \"ข้อมูลที่แก้ไขไว้จะไม่ถูกบันทึก\" ปุ่ม \"ปิด\" / \"ยืนยัน\"\n  - กล่องโต้ตอบกลางจอ (Modal) “ยืนยันการออก”: เปิดจากการออกจากฟอร์มที่แก้แล้ว; คงฟอร์มไว้ด้านหลัง\n  - จาก หน้าฟอร์มสร้าง/แก้ไขแผน (PlanForm) + กล่อง “ยืนยันการออก” (ConfirmDialog): ปุ่ม “ปิด”, ×, Esc หรือคลิกพื้นหลัง → ปิดเฉพาะ กล่องโต้ตอบกลางจอ (Modal) แล้วกลับ B.1/B.3 พร้อมชื่อแผน ปีงบ วงเงิน และไฟล์ ข้อมูลที่ยังไม่บันทึก เดิม ไม่ออกจากฟอร์ม",
-          "Buttons\n  - ปุ่ม “ปิด”: ปิดกล่องแล้วกลับฟอร์มสร้างแผน B.1/B.3 โดยไม่ล้างค่า\n  - ปุ่ม “ยืนยัน”: ทิ้งข้อมูลที่ยังไม่บันทึกแล้วกลับรายการแผน A.1 หรือหน้าว่าง A.4 ตามข้อมูลที่มี"
+          "พฤติกรรมการใช้งาน\n  - ถ้ามีข้อมูลเปลี่ยนและยังไม่บันทึก ให้เปิดหน้าต่างยืนยันการออก\n  - กดปิด/ยกเลิก กลับมาพร้อมข้อมูลที่กรอกไว้\n  - กดยืนยัน จึงออกจากหน้าและไม่บันทึกการเปลี่ยนแปลง\n  - \"ปิด\" กลับ form ค่าเดิมครบ · \"ยืนยัน\" ออกโดยไม่บันทึก\n  - Breadcrumb/ทางออกจากหน้า: ต้องตกลง trigger ที่แท้จริง เพราะจอสร้างแผนไม่มีปุ่มย้อนกลับ/ยกเลิก\n  - กด “ยืนยัน” → ทิ้ง ข้อมูลที่ยังไม่บันทึก และไปหน้ารายการแผน A ผ่าน หน้าต้นทางที่กำหนดไว้; เส้นทางนำทางด้านบน ของ prototype ยังเป็นลิงก์ตรง ไม่ผ่านกล่องนี้ จึงต้องเพิ่ม guard ให้ตรง AC ก่อน",
+          "Modal\n  - กรอกข้อมูลไว้แล้ว ออกจาก form โดยไม่บันทึก (breadcrumb/ย้อนกลับ) เปิด modal \"ยืนยันการออก\" ข้อความ \"ข้อมูลที่แก้ไขไว้จะไม่ถูกบันทึก\" ปุ่ม \"ปิด\" / \"ยืนยัน\"\n  - กล่องโต้ตอบกลางจอ (Modal) “ยืนยันการออก”: เปิดจากการออกจาก form ที่แก้แล้ว; คง form ไว้ด้านหลัง\n  - จาก หน้า form สร้าง/แก้ไขแผน (PlanForm) + กล่อง “ยืนยันการออก” (ConfirmDialog): ปุ่ม “ปิด”, ×, Esc หรือคลิกพื้นหลัง → ปิดเฉพาะ กล่องโต้ตอบกลางจอ (Modal) แล้วกลับ B.1/B.3 พร้อมชื่อแผน ปีงบ วงเงิน และไฟล์ ข้อมูลที่ยังไม่บันทึก เดิม ไม่ออกจาก form",
+          "Buttons\n  - ปุ่ม “ปิด”: ปิดกล่องแล้วกลับ form สร้างแผน B.1/B.3 โดยไม่ล้างค่า\n  - ปุ่ม “ยืนยัน”: ทิ้งข้อมูลที่ยังไม่บันทึกแล้วกลับรายการแผน A.1 หรือหน้าว่าง A.4 ตามข้อมูลที่มี"
         ]
       },
       {
         "level": "h2",
         "label": "Error Handling / Edge Cases",
         "bullets": [
-          "เปิดยืนยันออกแล้วกดปิด/×/Esc/พื้นหลัง: กลับฟอร์มพร้อม ข้อมูลที่ยังไม่บันทึก ไม่ทำผลเดียวกับกดยืนยันออก",
+          "เปิดยืนยันออกแล้วกดปิด/×/Esc/พื้นหลัง: กลับ form พร้อม ข้อมูลที่ยังไม่บันทึก ไม่ทำผลเดียวกับกดยืนยันออก",
           "กดยืนยันออกซ้ำระหว่างเปลี่ยนหน้า: ออกเพียงครั้งเดียว และไม่ยิงบันทึกแผนจากการปิดกล่อง"
         ]
       },
@@ -494,7 +710,7 @@ const FRAME_STORIES = {
         "level": "h3",
         "label": "ประเด็นที่ต้องเคาะ",
         "bullets": [
-          "ฟอร์มสร้างไม่มีปุ่ม \"ย้อนกลับ/ยกเลิก\" (มีแค่ \"บันทึก\") ต้องเคาะว่าจุดที่เปิด modal นี้คืออะไร และถ้ายังไม่กรอกอะไรเลยไม่ต้องเปิด modal"
+          "form สร้างไม่มีปุ่ม \"ย้อนกลับ/ยกเลิก\" (มีแค่ \"บันทึก\") ต้องเคาะว่าจุดที่เปิด modal นี้คืออะไร และถ้ายังไม่กรอกอะไรเลยไม่ต้องเปิด modal"
         ]
       }
     ],
@@ -522,14 +738,14 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีผลบันทึกแผนไม่สำเร็จ แต่ไม่ได้แยก retry กับการคงข้อมูล/ไฟล์เป็น contract รายส่วน"
+          "จากเดิม มีผลบันทึกแผนไม่สำเร็จ แต่ไม่ได้แยก retry กับการคงข้อมูล/ไฟล์เป็น behavior รายส่วน"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่มข้อกำหนด error: toast ปิดได้โดยฟอร์มยังอยู่และคงค่า/ไฟล์ทุกช่อง ไม่ทำแผนใหม่จากการ retry อัตโนมัติ",
+          "NEW — เพิ่มข้อกำหนด error: toast ปิดได้โดย form ยังอยู่และคงค่า/ไฟล์ทุกช่อง ไม่ทำแผนใหม่จากการ retry อัตโนมัติ",
           "NEW — เพิ่มผลปุ่ม retry: เมื่อพ้น pending กดบันทึกใหม่ได้ และผลล้มเหลวเดิมต้องไม่แสดง success ทับ"
         ]
       },
@@ -539,7 +755,7 @@ const FRAME_STORIES = {
         "bullets": [
           "พฤติกรรมการใช้งาน\n  - เมื่อกดบันทึกหรือส่งแล้วผิดพลาด ให้แสดงข้อความแจ้งตามจอ\n  - ข้อความแจ้งผลมุมขวาบน error: แสดงเมื่อบันทึกไม่สำเร็จ; ใช้ข้อความ error ตามที่ตกลง ไม่แจ้งสำเร็จซ้ำ",
           "File Upload (FileUpload)\n  - อยู่หน้าเดิม และค่าที่กรอก/ไฟล์ที่เลือกต้องไม่หาย\n  - กด \"บันทึก\" แล้ว server ตอบผิดพลาด แสดง toast error \"general error\" อยู่หน้าเดิม ค่าที่กรอกและไฟล์คงอยู่",
-          "Status (StatusBadge)\n  - ปลดสถานะกำลังทำ เพื่อให้แก้ไขและกดใหม่ได้ โดยไม่สร้างข้อมูลซ้ำ\n  - ใช้กติกา error กลาง (แสดง Status Code ถ้าไม่รู้สาเหตุ)\n  - toast \"General Error\" ถ้าไม่รู้สาเหตุให้แสดง Status Code แทน เช่น \"500 Internal Server Error\" ใช้ทั้งฟอร์มสร้างและแก้ไขแผน [Sheet พี่นุ — OH-Toast #2, ✅ CF]",
+          "Status (StatusBadge)\n  - ปลดสถานะกำลังทำ เพื่อให้แก้ไขและกดใหม่ได้ โดยไม่สร้างข้อมูลซ้ำ\n  - ใช้กติกา error กลาง (แสดง Status Code ถ้าไม่รู้สาเหตุ)\n  - toast \"General Error\" ถ้าไม่รู้สาเหตุให้แสดง Status Code แทน เช่น \"500 Internal Server Error\" ใช้ทั้ง form สร้างและแก้ไขแผน [Sheet พี่นุ — OH-Toast #2, ✅ CF]",
           "Form Fields\n  - ช่องกรอก, รายการตัวเลือก และไฟล์แนบ: เก็บค่าทั้งหมดไว้ให้แก้หรือส่งใหม่",
           "Buttons\n  - ปุ่ม “บันทึก”: ออกจากสถานะกำลังส่งหลังล้มเหลว และกด retry ได้โดยไม่สร้างแผนซ้ำ"
         ]
@@ -585,7 +801,7 @@ const FRAME_STORIES = {
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
           "NEW — เพิ่มข้อกำหนดหลังสำเร็จ: โหลดรายการแผนจากผลที่บันทึกจริงพร้อมสถานะรอเลข PO และความคืบหน้า “-” ไม่คงข้อมูลก่อนสร้าง",
-          "NEW — เพิ่ม contract toast: แสดงครั้งเดียวจากการสร้างสำเร็จ ไม่ยิงอีกเพียงเพราะ refresh/กลับมาที่รายการ"
+          "NEW — เพิ่ม behavior toast: แสดงครั้งเดียวจากการสร้างสำเร็จ ไม่ยิงอีกเพียงเพราะ refresh/กลับมาที่รายการ"
         ]
       },
       {
@@ -638,7 +854,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีรายละเอียดแผนและส่วน PO/เอกสาร แต่ไม่ได้แยกผลของปุ่มและการเปิดข้อมูลข้ามแผนเป็น contract ครบถ้วน"
+          "จากเดิม มีรายละเอียดแผนและส่วน PO/เอกสาร แต่ไม่ได้แยกผลของปุ่มและการเปิดข้อมูลข้ามแผนเป็น behavior ครบถ้วน"
         ]
       },
       {
@@ -653,12 +869,12 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - กดแก้ไขหรือสร้างแล้วแสดงข้อมูลในฟอร์มตามจอ\n  - ช่องบังคับที่ปล่อยว่างต้องมีข้อความเตือน\n  - กดยืนยันแล้วรอผล; ไม่สำเร็จต้องคงค่าที่กรอกไว้\n  - ส่วน \"รายละเอียดแผน\": ชื่อแผน, ประจำปีงบประมาณ, วงเงินอนุมัติ (บาท), จำนวนรถที่ Overhaul (\"0 คัน\"), วันที่สร้าง (dd/mm/yyyy พ.ศ.), เลข WBS (ศูนย์ต้นทุน), เลขโครงข่าย, เลขกิจกรรม\n  - ส่วน \"Purchase Order (0)\": empty \"ยังไม่มี Purchase Order\" ข้อความรอง \"เพิ่ม PO เพื่อเลือกรถที่จะเข้า Overhaul และเริ่มงานรายคัน\" ปุ่ม \"+ สร้าง Purchase Order\" (ไป E.2)\n  - ส่วน \"อะไหล่ที่ใช้\": empty \"ยังไม่มีรายการเบิกอะไหล่\" ข้อความรอง \"ส่วนนี้จองไว้ตาม userflow — ขั้นตอนเบิกอะไหล่ยังไม่ได้ออกแบบ\" ปุ่ม \"+ เบิกอะไหล่\" (ยังไม่มีปลายทาง ดู Scenario 21)\n  - หัวหน้า ✅ CF: breadcrumb \"หน้าแรก > จัดการงาน Overhaul > แผน {เลขแผน}\" ปุ่ม แก้ไข / ลบแผน / + PO [Sheet พี่นุ — 2 รายละเอียดแผน]\n  - ระยะสัญญา: เมื่อใกล้ครบสัญญาแสดง SubText สีแดง (ผูกกับ Scenario 16: 30 วัน / 15 วัน) [Sheet พี่นุ — 2 รายละเอียดแผน]\n  - จำนวนรถ: ลูกค้าให้ดูความเป็นไปได้ทำ Expand Row กดแล้วแสดงรายการรถในแถว [Sheet พี่นุ — 2 รายละเอียดแผน]\n  - ส่วน Purchase Order: แยกตารางกับ empty state ตามจำนวน PO จริง",
+          "พฤติกรรมการใช้งาน\n  - กดแก้ไขหรือสร้างแล้วแสดงข้อมูลใน form ตามจอ\n  - ช่องบังคับที่ปล่อยว่างต้องมีข้อความเตือน\n  - กดยืนยันแล้วรอผล; ไม่สำเร็จต้องคงค่าที่กรอกไว้\n  - ส่วน \"รายละเอียดแผน\": ชื่อแผน, ประจำปีงบประมาณ, วงเงินอนุมัติ (บาท), จำนวนรถที่ Overhaul (\"0 คัน\"), วันที่สร้าง (dd/mm/yyyy พ.ศ.), เลข WBS (ศูนย์ต้นทุน), เลขโครงข่าย, เลขกิจกรรม\n  - ส่วน \"Purchase Order (0)\": empty \"ยังไม่มี Purchase Order\" ข้อความรอง \"เพิ่ม PO เพื่อเลือกรถที่จะเข้า Overhaul และเริ่มงานรายคัน\" ปุ่ม \"+ สร้าง Purchase Order\" (ไป E.2)\n  - ส่วน \"อะไหล่ที่ใช้\": empty \"ยังไม่มีรายการเบิกอะไหล่\" ข้อความรอง \"ส่วนนี้จองไว้ตาม userflow — ขั้นตอนเบิกอะไหล่ยังไม่ได้ออกแบบ\" ปุ่ม \"+ เบิกอะไหล่\" (ยังไม่มีปลายทาง ดู Scenario 21)\n  - หัวหน้า ✅ CF: breadcrumb \"หน้าแรก > จัดการงาน Overhaul > แผน {เลขแผน}\" ปุ่ม แก้ไข / ลบแผน / + PO [Sheet พี่นุ — 2 รายละเอียดแผน]\n  - ระยะสัญญา: เมื่อใกล้ครบสัญญาแสดง SubText สีแดง (ผูกกับ Scenario 16: 30 วัน / 15 วัน) [Sheet พี่นุ — 2 รายละเอียดแผน]\n  - จำนวนรถ: ลูกค้าให้ดูความเป็นไปได้ทำ Expand Row กดแล้วแสดงรายการรถในแถว [Sheet พี่นุ — 2 รายละเอียดแผน]\n  - ส่วน Purchase Order: แยกตารางกับ empty state ตามจำนวน PO จริง",
           "Status (StatusBadge)\n  - เปิดแผนจากรายการ (เมนู \"ดูรายละเอียด\") breadcrumb \"จัดการงาน Overhaul > แผน {เลข}\" หัวข้อ \"หมายเลขแผน {เลข}\" chip สถานะ และปุ่ม \"ลบแผน\" (กรอบแดง) / \"แก้ไข\" ขวาบน",
-          "File Upload (FileUpload)\n  - ส่วน \"เอกสาร\": แยกกลุ่ม หนังสืออนุมัติหลักการ / เอกสารอนุมัติงบ แต่ละไฟล์มีไอคอนชนิด ชื่อ ขนาด และปุ่มดาวน์โหลด\n  - ส่วนข้อมูลแผนและเอกสาร: แสดงข้อมูลของแผนที่เปิดจริง; ดาวน์โหลดไฟล์ตามรายการ ไม่ใช้ข้อมูลจากแถวก่อนหน้า",
+          "File Upload (FileUpload)\n  - ส่วน \"เอกสาร\": แยกกลุ่ม หนังสืออนุมัติหลักการ / เอกสารอนุมัติงบ แต่ละไฟล์มีicon ชนิด ชื่อ ขนาด และปุ่มดาวน์โหลด\n  - ส่วนข้อมูลแผนและเอกสาร: แสดงข้อมูลของแผนที่เปิดจริง; ดาวน์โหลดไฟล์ตามรายการ ไม่ใช้ข้อมูลจากแถวก่อนหน้า",
           "Table (DataTable)\n  - Behavior\n    - ตาราง PO ✅ CF: หมายเลข PO, ชื่อ PO (เช่น ซ่อมระบบแอร์), ศูนย์บริการ/อู่, จำนวนรถ (ชิดขวา), ความคืบหน้า (ปิดงานแล้ว x/n คันใน PO), ระยะสัญญา (เริ่ม–สิ้นสุด ตามใบสั่งจ้าง), จัดการ (ICON Action: ดูรายละเอียด · แก้ไข · ลบ) [Sheet พี่นุ — 2 รายละเอียดแผน]",
           "Search Input (SearchInput)\n  - ค้นหา/ตัวกรอง: ไม่มี (รอ confirm) · Sorting: ตามลำดับที่สร้าง PO (รอ confirm) [Sheet พี่นุ — 2 รายละเอียดแผน]",
-          "Buttons\n  - ปุ่ม “แก้ไขแผน”: เปิดฟอร์มแก้ไขแผน C.2 เฉพาะผู้มีสิทธิ์\n  - ปุ่ม “ลบแผน”: เปิดกล่องยืนยันลบแผน D.2.2 เฉพาะผู้มีสิทธิ์\n  - ปุ่มสร้าง Purchase Order: เปิดฟอร์มสร้าง PO E.2 เฉพาะผู้มีสิทธิ์; ความต่างระหว่าง B.7/E.1 ต้องตกลงก่อนใช้ component ชุดเดียวกัน"
+          "Buttons\n  - ปุ่ม “แก้ไขแผน”: เปิด form แก้ไขแผน C.2 เฉพาะผู้มีสิทธิ์\n  - ปุ่ม “ลบแผน”: เปิดกล่องยืนยันลบแผน D.2.2 เฉพาะผู้มีสิทธิ์\n  - ปุ่มสร้าง Purchase Order: เปิด form สร้าง PO E.2 เฉพาะผู้มีสิทธิ์; ความต่างระหว่าง B.7/E.1 ต้องตกลงก่อนใช้ component ชุดเดียวกัน"
         ]
       },
       {
@@ -683,7 +899,7 @@ const FRAME_STORIES = {
         "label": "ประเด็นที่ต้องเคาะ",
         "bullets": [
           "หน้ารายละเอียดมี 2 แบบในไฟล์: B.7/C.5/D/F/G ใช้ \"เลข WBS (ศูนย์ต้นทุน)\" + ส่วน \"อะไหล่ที่ใช้\" + ปุ่ม \"เบิกอะไหล่\" ส่วน E.1/E.9 ใช้ \"ประเภทงบ · เลขที่งบประมาณ\" (เช่น \"งบลงทุน · C-69-OH-0103\") + ส่วน \"อะไหล่จากคลัง\" + ปุ่ม \"เบิก\" ต้องเลือกแบบเดียว",
-          "chip สถานะในหน้านี้คือ \"ยังไม่มี PO\" แต่ในตารางรายการคือ \"รอเลข PO\" และในฟอร์มไม่มีช่อง \"ประเภทงบ\" ทั้งที่ตารางแสดง ต้องเคาะที่มาของค่า",
+          "chip สถานะในหน้านี้คือ \"ยังไม่มี PO\" แต่ในตารางรายการคือ \"รอเลข PO\" และใน form ไม่มีช่อง \"ประเภทงบ\" ทั้งที่ตารางแสดง ต้องเคาะที่มาของค่า",
           "breadcrumb \"แผน 123461\" ไม่ตรงกับหัวข้อ \"หมายเลขแผน Z69000X\" และค่าใน detail (ปี 2570, 5,500,000, 60001234) ไม่ตรงกับที่กรอกใน B.3 (2571, 5,000,000, 60002103) — mock ไม่ตรงกัน",
           "ลูกค้าฝากถาม: PO 1 ใบมีศูนย์บริการ/อู่มากกว่า 1 แห่งได้ไหม (schema ตอนนี้ 1:1) ต้องตอบก่อนออกแบบ E.2/F.2",
           "ตาราง PO ที่ CF มีทั้งชื่อ PO, ความคืบหน้า และระยะสัญญา ตรงกับรวม E.9 + F.1 ต้องแก้ mock ให้ทุกเฟรมใช้ชุดนี้"
@@ -729,8 +945,8 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - กดแก้ไขหรือสร้างแล้วแสดงข้อมูลในฟอร์มตามจอ\n  - ช่องบังคับที่ปล่อยว่างต้องมีข้อความเตือน\n  - กดยืนยันแล้วรอผล; ไม่สำเร็จต้องคงค่าที่กรอกไว้\n  - เลือก \"แก้ไข\" ไปฟอร์มแก้ไขแผนนั้น (C.2)\n  - รายการเมนู “แก้ไข”: พาไป C.2 พร้อมเลขแผนของแถวนั้น; ซ่อน action ที่ role ไม่มีสิทธิ์\n  - การปิดเมนู: ตาม เมนู “…” ท้ายแถวรายการ (RowMenu) คลิกนอกปิดเมนู และ Esc ปิดพร้อมคืน focus ให้ปุ่มเมนูเดิม ไม่ออกจากหน้ารายการ",
-          "Table (DataTable)\n  - Row Actions (RowMenu)\n    - กบค. กด \"…\" ท้ายแถวในหน้ารายการ เปิดเมนู 3 ข้อ: \"ดูรายละเอียด\" (ไอคอนแว่นขยาย), \"แก้ไข\" (ไอคอนดินสอ), \"ลบ\" (icon ถังขยะ)\n    - ลูกค้าขอจัดการท้ายแถวเป็น ICON Action (ดู ⚠️ ใน A.1) [Sheet พี่นุ]\n    - เมนู “…” ท้ายแถว: เปิดให้ตรงแผนที่กด ไม่สลับไปใช้ ID แถวอื่นหลัง sort/แบ่งหน้า\n    - เมนู “…” ท้ายแถวรายการ (RowMenu): คลิกนอกเมนู/Esc → ปิดเมนูแล้วค้างหน้ารายการแผน ไม่เข้าสู่ฟอร์ม; กดแก้ไข → ปิดเมนูแล้วเปิด C.2 ของแถวนั้น",
+          "พฤติกรรมการใช้งาน\n  - กดแก้ไขหรือสร้างแล้วแสดงข้อมูลใน form ตามจอ\n  - ช่องบังคับที่ปล่อยว่างต้องมีข้อความเตือน\n  - กดยืนยันแล้วรอผล; ไม่สำเร็จต้องคงค่าที่กรอกไว้\n  - เลือก \"แก้ไข\" ไป form แก้ไขแผนนั้น (C.2)\n  - รายการเมนู “แก้ไข”: พาไป C.2 พร้อมเลขแผนของแถวนั้น; ซ่อน action ที่ role ไม่มีสิทธิ์\n  - การปิดเมนู: ตาม เมนู “…” ท้ายแถวรายการ (RowMenu) คลิกนอกปิดเมนู และ Esc ปิดพร้อมคืน focus ให้ปุ่มเมนูเดิม ไม่ออกจากหน้ารายการ",
+          "Table (DataTable)\n  - Row Actions (RowMenu)\n    - กบค. กด \"…\" ท้ายแถวในหน้ารายการ เปิดเมนู 3 ข้อ: \"ดูรายละเอียด\" (icon แว่นขยาย), \"แก้ไข\" (icon ดินสอ), \"ลบ\" (icon ถังขยะ)\n    - ลูกค้าขอจัดการท้ายแถวเป็น ICON Action (ดู ⚠️ ใน A.1) [Sheet พี่นุ]\n    - เมนู “…” ท้ายแถว: เปิดให้ตรงแผนที่กด ไม่สลับไปใช้ ID แถวอื่นหลัง sort/แบ่งหน้า\n    - เมนู “…” ท้ายแถวรายการ (RowMenu): คลิกนอกเมนู/Esc → ปิดเมนูแล้วค้างหน้ารายการแผน ไม่เข้าสู่ form; กดแก้ไข → ปิดเมนูแล้วเปิด C.2 ของแถวนั้น",
           "Status (StatusBadge)\n  - เมนูแสดงทั้งแถวสถานะ \"รอเลข PO\" และ \"รอดำเนินการ\""
         ]
       },
@@ -746,7 +962,7 @@ const FRAME_STORIES = {
         "label": "Error Handling / Edge Cases",
         "bullets": [
           "ตารางถูกเรียงหรือโหลดใหม่หลังเปิดเมนู: action แก้ไขต้องยังอ้าง ID แผนที่กด ไม่เปลี่ยนตามตำแหน่งแถว",
-          "แผนถูกลบหรือสิทธิ์เปลี่ยนก่อนเข้าฟอร์ม: แจ้งว่าเปิดแก้ไม่ได้และกลับรายการ ไม่เปิดฟอร์มว่างแทน"
+          "แผนถูกลบหรือสิทธิ์เปลี่ยนก่อนเข้า form: แจ้งว่าเปิดแก้ไม่ได้และกลับรายการ ไม่เปิด form ว่างแทน"
         ]
       },
       {
@@ -767,13 +983,13 @@ const FRAME_STORIES = {
     }
   },
   "C.2": {
-    "title": "AC C.2 — ฟอร์มแก้ไข",
+    "title": "AC C.2 — form แก้ไข",
     "sections": [
       {
         "level": "h2",
         "label": "ภาพรวมหน้านี้",
         "bullets": [
-          "What: แก้ไขข้อมูลแผน Overhaul — ฟอร์มแก้ไข",
+          "What: แก้ไขข้อมูลแผน Overhaul — form แก้ไข",
           "Who: กบค. ใช้แก้ไขและยืนยันข้อมูลแผน",
           "Do: ปรับข้อมูลแผน ตรวจข้อมูล และบันทึกหรือยกเลิก"
         ]
@@ -782,33 +998,33 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม ระบุแก้ไขเข้าจากรายการหรือรายละเอียดและยกเลิกกลับทางเดิม แต่ยังไม่แยก callback/ค่าที่เลือกไว้/ไฟล์ทุกกรณี"
+          "จากเดิม ระบุแก้ไขเข้าจากรายการหรือรายละเอียดและยกเลิกกลับทางเดิม แต่ยังไม่แยก callback/ข้อมูลที่ยังไม่บันทึก/ไฟล์ทุกกรณี"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract ยกเลิก: ไม่แก้ให้กลับต้นทางทันที; มี ข้อมูลที่ยังไม่บันทึก เปิด C.3 ก่อน และจำต้นทางเป็นรายการ A.1 หรือรายละเอียด B.7 ให้ชัด",
-          "NEW — เพิ่ม contract prefill: แยกค่าเดิม/ค่าที่แก้/ไฟล์ใหม่ ไม่อัปโหลดไฟล์เดิมซ้ำและไม่ reset ข้อมูลที่ยังไม่บันทึก เมื่อเปิดกล่องยืนยัน"
+          "NEW — เพิ่ม behavior ยกเลิก: ไม่แก้ให้กลับต้นทางทันที; มี ข้อมูลที่ยังไม่บันทึก เปิด C.3 ก่อน และจำต้นทางเป็นรายการ A.1 หรือรายละเอียด B.7 ให้ชัด",
+          "NEW — เพิ่ม behavior prefill: แยกค่าเดิม/ค่าที่แก้/ไฟล์ใหม่ ไม่อัปโหลดไฟล์เดิมซ้ำและไม่ reset ข้อมูลที่ยังไม่บันทึก เมื่อเปิดกล่องยืนยัน"
         ]
       },
       {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - กดแก้ไขหรือสร้างแล้วแสดงข้อมูลในฟอร์มตามจอ\n  - ช่องบังคับที่ปล่อยว่างต้องมีข้อความเตือน\n  - กดยืนยันแล้วรอผล; ไม่สำเร็จต้องคงค่าที่กรอกไว้\n  - บันทึกไม่สำเร็จใช้ toast \"General Error\" (#2) เหมือน B.5 · เปิดลิงก์แก้ไขแผนที่ถูกลบแล้ว → toast \"ไม่พบแผน {เลขแผน}\" (#6, ✅ CF) และอยู่หน้ารายการ [Sheet พี่นุ]\n  - กด “บันทึก” → validate; ถ้ามีการแก้ที่ผ่านเงื่อนไขเปิด C.4 และยังไม่บันทึกจริงจนกดยืนยัน",
+          "พฤติกรรมการใช้งาน\n  - กดแก้ไขหรือสร้างแล้วแสดงข้อมูลใน form ตามจอ\n  - ช่องบังคับที่ปล่อยว่างต้องมีข้อความเตือน\n  - กดยืนยันแล้วรอผล; ไม่สำเร็จต้องคงค่าที่กรอกไว้\n  - บันทึกไม่สำเร็จใช้ toast \"General Error\" (#2) เหมือน B.5 · เปิดลิงก์แก้ไขแผนที่ถูกลบแล้ว → toast \"ไม่พบแผน {เลขแผน}\" (#6, ✅ CF) และอยู่หน้ารายการ [Sheet พี่นุ]\n  - กด “บันทึก” → validate; ถ้ามีการแก้ที่ผ่านเงื่อนไขเปิด C.4 และยังไม่บันทึกจริงจนกดยืนยัน",
           "File Upload (FileUpload)\n  - ทุกช่องเติมค่าที่สร้างไว้ (prefill — โน้ตในจอ) รวมไฟล์เดิมทุกไฟล์\n  - รายการเอกสารเดิมและ upload: แยกไฟล์ที่เก็บแล้วออกจากไฟล์ใหม่ ไม่อัปโหลดไฟล์เดิมซ้ำ",
-          "Form Fields\n  - ใช้ฟิลด์และ validation เดียวกับ B.1/B.2\n  - ช่องกรอก/รายการตัวเลือก ในฟอร์มแก้ไข: เติมค่าของแผนล่าสุด; แยกค่าที่โหลดมากับค่าที่ผู้ใช้เปลี่ยน",
+          "Form Fields\n  - ใช้ฟิลด์และ validation เดียวกับ B.1/B.2\n  - ช่องกรอก/รายการตัวเลือก ใน form แก้ไข: เติมค่าของแผนล่าสุด; แยกค่าที่โหลดมากับค่าที่ผู้ใช้เปลี่ยน",
           "Buttons\n  - ปุ่มล่าง: \"ยกเลิก\" (ซ้าย) / \"บันทึก\" (ขวา)\n  - ปุ่ม “ยกเลิก”: เปิดกล่องยืนยันการออก C.3 เมื่อมีการแก้ไข; ถ้ายังไม่แก้ กลับหน้าต้นทาง\n  - ปุ่ม “บันทึก”: เปิดกล่องยืนยันการแก้ไขแผน C.4 เมื่อข้อมูลผ่านเงื่อนไข",
-          "Navigation\n  - จาก หน้าฟอร์มสร้าง/แก้ไขแผน (PlanForm) และหน้า plans/edit: “ยกเลิก” ถ้าไม่แก้ข้อมูล → กลับหน้าที่เข้ามา (จากรายการกลับรายการ; เข้าจากหน้ารายละเอียด กลับรายละเอียด B.7); ถ้าแก้แล้ว → เปิด C.3 ก่อน ไม่ทิ้ง ข้อมูลที่ยังไม่บันทึก ทันที"
+          "Navigation\n  - จาก หน้า form สร้าง/แก้ไขแผน (PlanForm) และหน้า plans/edit: “ยกเลิก” ถ้าไม่แก้ข้อมูล → กลับหน้าที่เข้ามา (จากรายการกลับรายการ; เข้าจากหน้ารายละเอียด กลับรายละเอียด B.7); ถ้าแก้แล้ว → เปิด C.3 ก่อน ไม่ทิ้ง ข้อมูลที่ยังไม่บันทึก ทันที"
         ]
       },
       {
         "level": "h2",
         "label": "Error Handling / Edge Cases",
         "bullets": [
-          "โหลดค่าเดิมของแผนไม่สำเร็จ: ไม่เปิดให้บันทึกค่าฟอร์มว่างทับข้อมูลเดิม และให้ลองโหลดใหม่ได้",
+          "โหลดค่าเดิมของแผนไม่สำเร็จ: ไม่เปิดให้บันทึกค่า form ว่างทับข้อมูลเดิม และให้ลองโหลดใหม่ได้",
           "อีกคนแก้แผนระหว่างกรอก: แจ้งว่าข้อมูลเปลี่ยนแล้วและให้ตรวจค่าล่าสุด ไม่ทับการแก้อื่นเงียบ ๆ; วิธีเก็บ ข้อมูลที่ยังไม่บันทึก เพื่อเทียบต้องตกลง"
         ]
       },
@@ -859,16 +1075,16 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - ถ้ามีข้อมูลเปลี่ยนและยังไม่บันทึก ให้เปิดหน้าต่างยืนยันการออก\n  - กดปิด/ยกเลิก กลับมาพร้อมข้อมูลที่กรอกไว้\n  - กดยืนยัน จึงออกจากหน้าและไม่บันทึกการเปลี่ยนแปลง\n  - \"ปิด\" กลับฟอร์มพร้อมค่าที่แก้ไว้ · \"ยืนยัน\" ทิ้งการแก้ไข กลับหน้าก่อนหน้า",
-          "Modal\n  - มีการแก้ไขเกิดขึ้น (โน้ตในจอ) กด \"ยกเลิก\" เปิด modal \"ยืนยันการออก\" ข้อความ \"ข้อมูลที่แก้ไขไว้จะไม่ถูกบันทึก\" ปุ่ม \"ปิด\" / \"ยืนยัน\"\n  - ยังไม่ได้แก้อะไร กด \"ยกเลิก\" ออกได้เลยไม่มี modal\n  - กล่องโต้ตอบกลางจอ (Modal) ยืนยันการออก: แสดงบนฟอร์มแก้ไขโดยยังเก็บ ข้อมูลที่ยังไม่บันทึก\n  - จาก หน้าฟอร์มสร้าง/แก้ไขแผน (PlanForm)/กล่อง “ยืนยันการออก” (ConfirmDialog): “ปิด”, ×, Esc, คลิกพื้นหลัง → ปิดเฉพาะกล่องและกลับ C.2 พร้อม ข้อมูลที่ยังไม่บันทึก; “ยืนยัน” → ทิ้ง ข้อมูลที่ยังไม่บันทึก แล้วกลับรายการหรือรายละเอียดแผนตามจุดที่เข้ามา",
-          "Buttons\n  - ปุ่ม “ปิด”: ปิดกล่องแล้วกลับฟอร์มแก้ไข C.2 พร้อมค่าที่แก้ทั้งหมด\n  - ปุ่ม “ยืนยัน”: ทิ้งการแก้ไข แล้วกลับรายการแผน A.1 หรือรายละเอียดแผน B.7 ตามจุดที่เข้ามา"
+          "พฤติกรรมการใช้งาน\n  - ถ้ามีข้อมูลเปลี่ยนและยังไม่บันทึก ให้เปิดหน้าต่างยืนยันการออก\n  - กดปิด/ยกเลิก กลับมาพร้อมข้อมูลที่กรอกไว้\n  - กดยืนยัน จึงออกจากหน้าและไม่บันทึกการเปลี่ยนแปลง\n  - \"ปิด\" กลับ form พร้อมค่าที่แก้ไว้ · \"ยืนยัน\" ทิ้งการแก้ไข กลับหน้าก่อนหน้า",
+          "Modal\n  - มีการแก้ไขเกิดขึ้น (โน้ตในจอ) กด \"ยกเลิก\" เปิด modal \"ยืนยันการออก\" ข้อความ \"ข้อมูลที่แก้ไขไว้จะไม่ถูกบันทึก\" ปุ่ม \"ปิด\" / \"ยืนยัน\"\n  - ยังไม่ได้แก้อะไร กด \"ยกเลิก\" ออกได้เลยไม่มี modal\n  - กล่องโต้ตอบกลางจอ (Modal) ยืนยันการออก: แสดงบน form แก้ไขโดยยังเก็บ ข้อมูลที่ยังไม่บันทึก\n  - จาก หน้า form สร้าง/แก้ไขแผน (PlanForm)/กล่อง “ยืนยันการออก” (ConfirmDialog): “ปิด”, ×, Esc, คลิกพื้นหลัง → ปิดเฉพาะกล่องและกลับ C.2 พร้อม ข้อมูลที่ยังไม่บันทึก; “ยืนยัน” → ทิ้ง ข้อมูลที่ยังไม่บันทึก แล้วกลับรายการหรือรายละเอียดแผนตามจุดที่เข้ามา",
+          "Buttons\n  - ปุ่ม “ปิด”: ปิดกล่องแล้วกลับ form แก้ไข C.2 พร้อมค่าที่แก้ทั้งหมด\n  - ปุ่ม “ยืนยัน”: ทิ้งการแก้ไข แล้วกลับรายการแผน A.1 หรือรายละเอียดแผน B.7 ตามจุดที่เข้ามา"
         ]
       },
       {
         "level": "h2",
         "label": "Error Handling / Edge Cases",
         "bullets": [
-          "ปิดกล่องยืนยันออกด้วยทุกทางที่อนุญาต: ต้องคงชื่อแผน วงเงิน และไฟล์ที่แก้ไว้ ไม่ reset ฟอร์ม",
+          "ปิดกล่องยืนยันออกด้วยทุกทางที่อนุญาต: ต้องคงชื่อแผน วงเงิน และไฟล์ที่แก้ไว้ ไม่ reset form",
           "มาจากรายการกับมาจากรายละเอียด: ยืนยันออกต้องไปต้นทางที่จำไว้ ไม่ใช้ history ย้อนสุ่มจนกลับผิดแผน"
         ]
       }
@@ -897,7 +1113,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มียืนยันแก้ไข แต่ไม่ได้แยกการยกเลิกยืนยันกับการออกจากฟอร์ม และการปิดระหว่าง pending"
+          "จากเดิม มียืนยันแก้ไข แต่ไม่ได้แยกการยกเลิกยืนยันกับการออกจาก form และการปิดระหว่าง pending"
         ]
       },
       {
@@ -913,8 +1129,8 @@ const FRAME_STORIES = {
         "label": "UI Component & Behavior",
         "bullets": [
           "พฤติกรรมการใช้งาน\n  - กดยกเลิก ปิดหน้าต่างโดยไม่เปลี่ยนข้อมูล\n  - กดยืนยันเพียงครั้งเดียวแล้วรอผล; ถ้าไม่สำเร็จต้องไม่แสดงว่าลบ/แก้ไขแล้ว\n  - “ยืนยัน” → เริ่มบันทึก แล้วไปหน้าต้นทางเมื่อสำเร็จ; ปุ่มบนจอ (Button) ที่ loading ปิดการกดซ้ำ แต่ กล่องโต้ตอบกลางจอ (Modal) ปัจจุบันยังปิดด้วยพื้นหลัง/Esc ได้ระหว่างรอ จึงต้องตกลงว่าจะล็อกการปิดระหว่าง pending หรือไม่",
-          "Buttons\n  - กดปุ่มลบหรือแก้ไขแล้วให้เปิดหน้าต่างยืนยันตามจอ\n  - ปุ่ม “ยกเลิก”: ปิดกล่องแล้วกลับฟอร์มแก้ไขแผน C.2 พร้อมข้อมูลเดิม\n  - ปุ่ม “ยืนยัน”: ส่งการแก้ไขเพียงครั้งเดียว แสดง pending ระหว่างรอ; สำเร็จแสดงผล C.5",
-          "Modal\n  - กด \"บันทึก\" เปิด modal \"ยืนยันการแก้ไข\" ข้อความ \"เมื่อยืนยันการแก้ไขแล้วจะไม่สามารถย้อนกลับได้ โปรดตรวจสอบก่อนยืนยัน\" ปุ่ม \"ยกเลิก\" / \"ยืนยัน\"\n  - \"ยกเลิก\" ปิด modal กลับฟอร์ม ค่าคงอยู่ · \"ยืนยัน\" ส่งบันทึก\n  - กล่องโต้ตอบกลางจอ (Modal) “ยืนยันการแก้ไข”: แสดงข้อความเตือนก่อนส่งบันทึกจริง\n  - จาก กล่อง “ยืนยันการแก้ไขแผน” (ConfirmDialog) ของ หน้าฟอร์มสร้าง/แก้ไขแผน (PlanForm): “ยกเลิก”, ×, Esc หรือคลิกพื้นหลัง → ปิดกล่องยืนยันและกลับ C.2 พร้อมค่าที่แก้ ไม่บันทึกและไม่กลับรายการ"
+          "Buttons\n  - กดปุ่มลบหรือแก้ไขแล้วให้เปิดหน้าต่างยืนยันตามจอ\n  - ปุ่ม “ยกเลิก”: ปิดกล่องแล้วกลับ form แก้ไขแผน C.2 พร้อมข้อมูลเดิม\n  - ปุ่ม “ยืนยัน”: ส่งการแก้ไขเพียงครั้งเดียว แสดง pending ระหว่างรอ; สำเร็จแสดงผล C.5",
+          "Modal\n  - กด \"บันทึก\" เปิด modal \"ยืนยันการแก้ไข\" ข้อความ \"เมื่อยืนยันการแก้ไขแล้วจะไม่สามารถย้อนกลับได้ โปรดตรวจสอบก่อนยืนยัน\" ปุ่ม \"ยกเลิก\" / \"ยืนยัน\"\n  - \"ยกเลิก\" ปิด modal กลับ form ค่าคงอยู่ · \"ยืนยัน\" ส่งบันทึก\n  - กล่องโต้ตอบกลางจอ (Modal) “ยืนยันการแก้ไข”: แสดงข้อความเตือนก่อนส่งบันทึกจริง\n  - จาก กล่อง “ยืนยันการแก้ไขแผน” (ConfirmDialog) ของ หน้า form สร้าง/แก้ไขแผน (PlanForm): “ยกเลิก”, ×, Esc หรือคลิกพื้นหลัง → ปิดกล่องยืนยันและกลับ C.2 พร้อมค่าที่แก้ ไม่บันทึกและไม่กลับรายการ"
         ]
       },
       {
@@ -958,7 +1174,7 @@ const FRAME_STORIES = {
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
           "NEW — เพิ่มข้อกำหนดแสดงผล: ชื่อแผน/ปีงบ/วงเงิน/ไฟล์ต้องเป็นค่าที่บันทึกใหม่ ไม่แสดง cache ก่อนแก้",
-          "NEW — เพิ่ม contract กลับต้นทาง: ใช้ปลายทางตามทางเข้าและยืนยันกับ AC ล่าสุด; toast เกิดจากการแก้สำเร็จ ไม่เกิดซ้ำเมื่อเปิดหน้าอ่าน"
+          "NEW — เพิ่ม behavior กลับต้นทาง: ใช้ปลายทางตามทางเข้าและยืนยันกับ AC ล่าสุด; toast เกิดจากการแก้สำเร็จ ไม่เกิดซ้ำเมื่อเปิดหน้าอ่าน"
         ]
       },
       {
@@ -1010,7 +1226,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีทางเข้าลบจากเมนูแถวรายการ แต่ยังไม่ได้แยกการเปิดเมนูออกจากการยืนยันลบเป็น contract ละเอียด"
+          "จากเดิม มีทางเข้าลบจากเมนูแถวรายการ แต่ยังไม่ได้แยกการเปิดเมนูออกจากการยืนยันลบเป็น behavior ละเอียด"
         ]
       },
       {
@@ -1138,7 +1354,7 @@ const FRAME_STORIES = {
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
           "NEW — เพิ่มข้อกำหนดตารางหลังลบ: โหลดจำนวนใหม่และไม่คงแถวแผนที่ลบ; หากไม่เหลือแผนให้แสดง A.4",
-          "NEW — เพิ่มกรณี pagination หลุดหน้า: หากหน้าปัจจุบันว่างแต่ยังมีข้อมูลหน้าอื่น ต้องตกลงหน้าที่จะกลับและไม่แสดงว่ายังไม่มีแผนทั้งระบบ"
+          "NEW — เพิ่มกรณี Pagination หลุดหน้า: หากหน้าปัจจุบันว่างแต่ยังมีข้อมูลหน้าอื่น ต้องตกลงหน้าที่จะกลับและไม่แสดงว่ายังไม่มีแผนทั้งระบบ"
         ]
       },
       {
@@ -1198,7 +1414,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่มข้อกำหนดปุ่ม “+ PO”: เปิด E.2 ของแผนปัจจุบัน ไม่สร้าง PO จากการเปิดฟอร์มและไม่ทำงานร่วมกับปุ่มเบิกอะไหล่",
+          "NEW — เพิ่มข้อกำหนดปุ่ม “+ PO”: เปิด E.2 ของแผนปัจจุบัน ไม่สร้าง PO จากการเปิด form และไม่ทำงานร่วมกับปุ่มเบิกอะไหล่",
           "NEW — เพิ่มข้อกำหนดเอกสารสองคอลัมน์: ดาวน์โหลดไฟล์ตามประเภท/แผนที่กด ไม่ใช้ไฟล์จากแผนก่อนหน้า"
         ]
       },
@@ -1206,11 +1422,11 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - เมื่อเปิดฟอร์ม แสดงค่าปัจจุบันให้ครบ; ช่องที่ยังไม่เลือกต้องว่าง\n  - ระหว่างบันทึกให้รอผลและไม่ให้กดซ้ำ\n  - บันทึกไม่สำเร็จต้องคงข้อมูลที่กรอก; สำเร็จจึงแสดงรายละเอียดใหม่\n  - กด \"+ PO\" ไปหน้าเพิ่ม Purchase Order (E.2)",
+          "พฤติกรรมการใช้งาน\n  - เมื่อเปิด form แสดงค่าปัจจุบันให้ครบ; ช่องที่ยังไม่เลือกต้องว่าง\n  - ระหว่างบันทึกให้รอผลและไม่ให้กดซ้ำ\n  - บันทึกไม่สำเร็จต้องคงข้อมูลที่กรอก; สำเร็จจึงแสดงรายละเอียดใหม่\n  - กด \"+ PO\" ไปหน้าเพิ่ม Purchase Order (E.2)",
           "File Upload (FileUpload)\n  - เปลี่ยนชื่อ PO อู่ รถ หรือไฟล์แล้วตรวจความครบถ้วนก่อนบันทึก",
           "Status (StatusBadge)\n  - แผนสถานะ \"รอเลข PO\" ส่วน \"Purchase Order (0)\" แสดง empty \"ยังไม่มี Purchase Order\" ข้อความรอง \"เพิ่ม PO เพื่อเลือกรถที่จะเข้า Overhaul และเริ่มงานรายคัน\" และปุ่ม \"+ PO\" ที่หัวส่วน",
           "Table (DataTable)\n  - Columns\n    - ส่วนเอกสารแสดง 2 คอลัมน์ (หนังสืออนุมัติหลักการ | เอกสารอนุมัติงบ) เช่น \"หนังสืออนุมัติหลักการ-123458.pdf 822 KB\"\n    - รายการเอกสารสองคอลัมน์: ดาวน์โหลดไฟล์ของประเภทที่กดและของแผนปัจจุบัน",
-          "Buttons\n  - ส่วน \"อะไหล่จากคลัง\" มีปุ่ม \"+ เบิก\" และ empty \"ยังไม่มีรายการเบิกอะไหล่\"\n  - ปุ่ม “+ PO”: เปิดฟอร์มสร้าง PO E.2\n  - ปุ่ม “+ เบิก”: ทำรายการในส่วนอะไหล่ ไม่เปิดฟอร์ม PO; ปลายทางของการเบิกยังต้องตกลง",
+          "Buttons\n  - ส่วน \"อะไหล่จากคลัง\" มีปุ่ม \"+ เบิก\" และ empty \"ยังไม่มีรายการเบิกอะไหล่\"\n  - ปุ่ม “+ PO”: เปิด form สร้าง PO E.2\n  - ปุ่ม “+ เบิก”: ทำรายการในส่วนอะไหล่ ไม่เปิด form PO; ปลายทางของการเบิกยังต้องตกลง",
           "Empty State (EmptyState)\n  - ส่วนแสดงเมื่อไม่มีข้อมูล Purchase Order (0): แสดงเมื่อแผนนี้ยังไม่มี PO"
         ]
       },
@@ -1247,13 +1463,13 @@ const FRAME_STORIES = {
     }
   },
   "E.2": {
-    "title": "AC E.2 — ฟอร์ม PO (ว่าง)",
+    "title": "AC E.2 — form PO (ว่าง)",
     "sections": [
       {
         "level": "h2",
         "label": "ภาพรวมหน้านี้",
         "bullets": [
-          "What: สร้าง PO ภายใต้แผนและตรวจรายละเอียด PO — ฟอร์ม PO (ว่าง)",
+          "What: สร้าง PO ภายใต้แผนและตรวจรายละเอียด PO — form PO (ว่าง)",
           "Who: กบค. ใช้จัดการ PO; ผู้มีสิทธิ์ดูใช้ตรวจข้อมูลแผน PO และรถในขอบเขตของตน",
           "Do: กรอกข้อมูล PO เลือกอู่และรถ บันทึก หรือยกเลิก"
         ]
@@ -1262,7 +1478,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีฟอร์มเพิ่ม PO พร้อมอู่ รถและเอกสาร แต่ไม่ได้แยก contract การออกทุกทาง/การเลือกเป็น ID ครบถ้วน"
+          "จากเดิม มี form เพิ่ม PO พร้อมอู่ รถและเอกสาร แต่ไม่ได้แยก behavior การออกทุกทาง/การเลือกเป็น ID ครบถ้วน"
         ]
       },
       {
@@ -1270,19 +1486,19 @@ const FRAME_STORIES = {
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
           "NEW — เพิ่มข้อกำหนดเลือกอู่/รถ: พิมพ์ชื่ออย่างเดียวไม่ถือว่าเลือก ต้องมีรายการจริงและค่าที่ส่งตรงกับสิ่งที่แสดง",
-          "NEW — เพิ่มการออกจากฟอร์ม: ปุ่มย้อนกลับใช้ leave guard กลับ E.1 ส่วน breadcrumb ปัจจุบันยังข้าม guard ต้องแก้ให้ตรงข้อกำหนดก่อนอ้างว่าป้องกันข้อมูลหายครบ"
+          "NEW — เพิ่มการออกจาก form: ปุ่มย้อนกลับใช้ leave guard กลับ E.1 ส่วน breadcrumb ปัจจุบันยังข้าม guard ต้องแก้ให้ตรงข้อกำหนดก่อนอ้างว่าป้องกันข้อมูลหายครบ"
         ]
       },
       {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - เมื่อเปิดฟอร์ม แสดงค่าปัจจุบันให้ครบ; ช่องที่ยังไม่เลือกต้องว่าง\n  - ระหว่างบันทึกให้รอผลและไม่ให้กดซ้ำ\n  - บันทึกไม่สำเร็จต้องคงข้อมูลที่กรอก; สำเร็จจึงแสดงรายละเอียดใหม่\n  - 3 ส่วน: \"รายละเอียด Purchase Order\" (ชื่อ PO, ศูนย์บริการ/อู่), \"เลือกรถ\" (ช่องค้นหารถ), \"เอกสาร\" (ใบสั่งจ้าง, อื่นๆ)",
-          "File Upload (FileUpload)\n  - เปลี่ยนชื่อ PO อู่ รถ หรือไฟล์แล้วตรวจความครบถ้วนก่อนบันทึก\n  - ช่องอัปโหลดแสดง \"PDF, JPG · สูงสุด 10 ไฟล์ · 0/10 ไฟล์\" (มีตัวนับ)\n  - ช่องแนบไฟล์ ใบสั่งจ้าง/เอกสารอื่น: แยกแต่ละประเภทและแสดงตัวนับ 0/10; PO รับ PDF, JPG ตามต้นฉบับ",
+          "พฤติกรรมการใช้งาน\n  - เมื่อเปิด form แสดงค่าปัจจุบันให้ครบ; ช่องที่ยังไม่เลือกต้องว่าง\n  - ระหว่างบันทึกให้รอผลและไม่ให้กดซ้ำ\n  - บันทึกไม่สำเร็จต้องคงข้อมูลที่กรอก; สำเร็จจึงแสดงรายละเอียดใหม่\n  - 3 ส่วน: \"รายละเอียด Purchase Order\" (ชื่อ PO, ศูนย์บริการ/อู่), \"เลือกรถ\" (ช่องค้นหารถ), \"เอกสาร\" (ใบสั่งจ้าง, อื่นๆ)",
+          "File Upload (FileUpload)\n  - เปลี่ยนชื่อ PO อู่ รถ หรือไฟล์แล้วตรวจความครบถ้วนก่อนบันทึก\n  - ช่องอัปโหลดแสดง \"PDF, JPG · สูงสุด 10 ไฟล์ · 0/10 ไฟล์\" (มีตัวนับ)\n  - ช่องแนบไฟล์ ใบสั่งจ้าง/เอกสารอื่น: แยกแต่ละประเภทและแสดงตัวนับ 0/10; รับ PDF และ JPG สูงสุด 10 ไฟล์ต่อช่อง โดยใบสั่งจ้างบังคับแนบ ส่วนเอกสารอื่นไม่บังคับแนบ",
           "Buttons\n  - ปุ่ม \"บันทึก\" ขวาล่าง ไม่มีปุ่มยกเลิก/ย้อนกลับ\n  - ปุ่ม “บันทึก”: ใช้รูปแบบ validation ของ PO ตาม E.3 ไม่ยก disable ของหน้าสร้างแผนมาใช้เอง",
           "Select Field\n  - breadcrumb \"… > แผน {เลขแผน} > เพิ่ม Purchase Order\" [Sheet พี่นุ — 4 เพิ่ม-แก้ไข PO, ✅ CF]\n    \n    ช่องเลือกอู่แบบพิมพ์ค้นหา (vendor list) [Sheet พี่นุ — 4 เพิ่ม-แก้ไข PO, ✅ CF]",
           "Form Fields\n  - ช่องกรอก ชื่อ PO: เริ่มว่าง; ช่องเลือกอู่และรถต้องเลือกจากรายการจริง ไม่ถือข้อความที่พิมพ์ว่าเลือกแล้ว",
-          "Navigation\n  - จาก หน้าฟอร์มสร้าง/แก้ไข PO (PoForm): ปุ่มย้อนกลับใช้ หน้าต้นทางที่กำหนดไว้ กลับรายละเอียดแผน E.1; มี ข้อมูลที่ยังไม่บันทึก เปิด “ยืนยันการออก” ก่อน ปิดกล่องแล้วกลับฟอร์มเดิม ยืนยันแล้วทิ้ง ข้อมูลที่ยังไม่บันทึก ไปต้นทาง ส่วน เส้นทางนำทางด้านบน ยังเป็นลิงก์ตรงไม่ผ่าน guard ต้องแก้/เคาะให้ครอบคลุม; ไม่เพิ่มปุ่มยกเลิกท้ายหน้าสร้าง PO ที่ AC ไม่มี"
+          "Navigation\n  - จาก หน้า form สร้าง/แก้ไข PO (PoForm): ปุ่มย้อนกลับใช้ หน้าต้นทางที่กำหนดไว้ กลับรายละเอียดแผน E.1; มี ข้อมูลที่ยังไม่บันทึก เปิด “ยืนยันการออก” ก่อน ปิดกล่องแล้วกลับ form เดิม ยืนยันแล้วทิ้ง ข้อมูลที่ยังไม่บันทึก ไปต้นทาง ส่วน เส้นทางนำทางด้านบน ยังเป็นลิงก์ตรงไม่ผ่าน guard ต้องแก้/เคาะให้ครอบคลุม; ไม่เพิ่มปุ่มยกเลิกท้ายหน้าสร้าง PO ที่ AC ไม่มี"
         ]
       },
       {
@@ -1297,7 +1513,7 @@ const FRAME_STORIES = {
         "label": "Error Handling / Edge Cases",
         "bullets": [
           "พิมพ์ชื่ออู่/รถแต่ไม่ได้เลือกรายการ: ไม่ถือว่ามีรายการที่ถูกต้องสำหรับบันทึก",
-          "ออกจากฟอร์มที่เลือกไฟล์หรือรถแล้ว: ผ่าน leave guard และคง ข้อมูลที่ยังไม่บันทึก เมื่อปิดกล่องเตือน ไม่ทิ้งข้อมูลจาก breadcrumb โดยไม่เตือน"
+          "ออกจาก form ที่เลือกไฟล์หรือรถแล้ว: ผ่าน leave guard และคง ข้อมูลที่ยังไม่บันทึก เมื่อปิดกล่องเตือน ไม่ทิ้งข้อมูลจาก breadcrumb โดยไม่เตือน"
         ]
       }
     ],
@@ -1332,7 +1548,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract validation รายส่วน: ชื่อ PO/อู่/ใบสั่งจ้างแสดงใต้ส่วนที่ผิด แก้ถูกให้หายเฉพาะส่วนนั้น ไม่ล้างค่าหรือไฟล์ส่วนอื่น",
+          "NEW — เพิ่ม behavior validation รายส่วน: ชื่อ PO/อู่/ใบสั่งจ้างแสดงใต้ส่วนที่ผิด แก้ถูกให้หายเฉพาะส่วนนั้น ไม่ล้างค่าหรือไฟล์ส่วนอื่น",
           "NEW — ระบุเงื่อนไขรถเป็นเรื่องต้องตกลง ไม่เพิ่ม required อย่างน้อยหนึ่งคันเป็นข้อยืนยันเพียงเพราะ prototype ตรวจไว้"
         ]
       },
@@ -1394,7 +1610,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract ช่องเลือกอู่ (Combobox): blur คืนชื่อเดิม Esc ปิดไม่เลือก Enter เลือกแถวไฮไลต์; พิมพ์ไม่เลือกไม่เปลี่ยนอู่",
+          "NEW — เพิ่ม behavior ช่องเลือกอู่ (Combobox): blur คืนชื่อเดิม Esc ปิดไม่เลือก Enter เลือกแถวไฮไลต์; พิมพ์ไม่เลือกไม่เปลี่ยนอู่",
           "NEW — เพิ่มผลเปลี่ยนอู่: ID/ชื่อ/เบอร์/ที่อยู่ต้องเปลี่ยนเป็นอู่เดียวกัน ไม่คง snapshot ของอู่เดิมหลังเปลี่ยนข้อความ"
         ]
       },
@@ -1456,7 +1672,7 @@ const FRAME_STORIES = {
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
           "CHANGE — ต้องเลือก component เลือกรถให้ตรงแบบล่าสุดที่ตกลง ไม่ผสม chip ของ E.5 กับสองฝั่งของ F.2 เป็นข้อกำหนดเดียวกันโดยอัตโนมัติ",
-          "NEW — เพิ่ม contract เลือก/เอาออก: ไม่เพิ่มรถซ้ำ กด × ลบเฉพาะคันนั้นและปรับสถานะเลือกในผลค้นโดยฟอร์มยังอยู่"
+          "NEW — เพิ่ม behavior เลือก/เอาออก: ไม่เพิ่มรถซ้ำ กด × ลบเฉพาะคันนั้นและปรับสถานะเลือกในผลค้นโดย form ยังอยู่"
         ]
       },
       {
@@ -1464,7 +1680,7 @@ const FRAME_STORIES = {
         "label": "UI Component & Behavior",
         "bullets": [
           "พฤติกรรมการใช้งาน\n  - พิมพ์ทะเบียนหรือคำค้นแล้วแสดงรถที่ตรงเงื่อนไข\n  - เลือกรถซ้ำต้องไม่เพิ่มรายการซ้ำ\n  - กดกากบาทบนป้ายรถให้เอาคันนั้นออก และสามารถเลือกกลับมาได้\n  - ถ้าค้นแล้วไม่พบ/โหลดผิดพลาด ต้องแสดงข้อความแยกกัน\n  - เลือกรถ รายการนั้นมีเครื่องหมาย ✓ และเพิ่มเป็นชิป \"70-1123 ชลบุรี ×\" ใต้ช่อง เลือกได้หลายคัน\n  - กด × บนชิป เอารถคันนั้นออก\n  - ตัวกรองเพิ่ม: หน่วยงาน/เขต และ ประเภทรถ (รายการรถทั้งประเทศยาวมาก) [Sheet พี่นุ — 4 เพิ่ม-แก้ไข PO, ✅ CF]\n  - ช่องพิมพ์ค้นหา รถ: แยกคำค้นจากรายการรถที่เลือกไว้ และไม่ให้ผลคำเก่ามาทับคำใหม่",
-          "Vehicle Selection\n  - คลิกรถหนึ่งคันแล้วเพิ่มเป็นป้ายรายการที่เลือก พร้อมเครื่องหมายถูกในรายการ\n  - รายการเลือกรถแสดง: ทะเบียน, เลขไมล์, อายุการใช้งาน, หน่วยงานเจ้าของรถ (ช่วยเลือกให้ตรงกับที่อนุมัติหลักการไว้) [Sheet พี่นุ — 4 เพิ่ม-แก้ไข PO, ✅ CF]\n  - รูปแบบเลือกแบบ ป้ายรายการที่เลือก กับรายการสองฝั่งใน Sheet/F.2 ยังขัดกัน จึงไม่สร้างตัวกรองที่ยังไม่มีใน mock เป็นข้อยืนยัน\n  - มุม Dev สำหรับ ป้ายรายการที่เลือก ยังยึด AC E.5: กด × เอารถออกแต่ฟอร์ม PO ยังค้าง ไม่ใช่ปิดทั้งหน้า; component รายการเลือกรถสองฝั่ง “รายการรถทั้งหมด”/“เลือกแล้ว” (DualList) ที่มีในโปรเจกต์เป็นสองฝั่ง จึงใช้แทน ป้ายรายการที่เลือก โดยไม่เคาะรูปแบบไม่ได้",
+          "Vehicle Selection\n  - คลิกรถหนึ่งคันแล้วเพิ่มเป็นป้ายรายการที่เลือก พร้อมเครื่องหมายถูกในรายการ\n  - รายการเลือกรถแสดง: ทะเบียน, เลขไมล์, อายุการใช้งาน, หน่วยงานเจ้าของรถ (ช่วยเลือกให้ตรงกับที่อนุมัติหลักการไว้) [Sheet พี่นุ — 4 เพิ่ม-แก้ไข PO, ✅ CF]\n  - รูปแบบเลือกแบบ ป้ายรายการที่เลือก กับรายการสองฝั่งใน Sheet/F.2 ยังขัดกัน จึงไม่สร้างตัวกรองที่ยังไม่มีใน mock เป็นข้อยืนยัน\n  - มุม Dev สำหรับ ป้ายรายการที่เลือก ยังยึด AC E.5: กด × เอารถออกแต่ form PO ยังค้าง ไม่ใช่ปิดทั้งหน้า; component รายการเลือกรถสองฝั่ง “รายการรถทั้งหมด”/“เลือกแล้ว” (DualList) ที่มีในโปรเจกต์เป็นสองฝั่ง จึงใช้แทน ป้ายรายการที่เลือก โดยไม่เคาะรูปแบบไม่ได้",
           "Select Field\n  - พิมพ์ในช่องเลือกรถ (เช่น \"7\") dropdown แสดงรถที่ตรง เช่น \"70-1123 ชลบุรี\", \"82-0457 สระบุรี\", \"71-9902 ขอนแก่น\", \"72-6648 สงขลา\"\n  - ช่องเลือกจากรายการ รถ: แสดงเครื่องหมายเลือกของคันที่อยู่ในรายการแล้ว; เลือกหลายคันได้โดยไม่เพิ่มคันเดิมซ้ำ",
           "Search Input (SearchInput)\n  - ค้นหา: ทะเบียน, รุ่น/ยี่ห้อ placeholder \"ค้นหาทะเบียน, รุ่น/ยี่ห้อ\" [Sheet พี่นุ — 4 เพิ่ม-แก้ไข PO, ✅ CF]",
           "Table (DataTable)\n  - Sorting\n    - Sorting (เสนอ ยังไม่ CF): อายุการใช้งาน เก่าสุดก่อน [Sheet พี่นุ — 4 เพิ่ม-แก้ไข PO, ✅ CF]",
@@ -1513,7 +1729,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีฟอร์ม PO กรอกครบ แต่ไม่แยกข้อมูลที่พร้อมส่งจากการอัปโหลดที่ยังไม่เสร็จและการกดซ้ำ"
+          "จากเดิม มี form PO กรอกครบ แต่ไม่แยกข้อมูลที่พร้อมส่งจากการอัปโหลดที่ยังไม่เสร็จและการกดซ้ำ"
         ]
       },
       {
@@ -1528,10 +1744,10 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - เมื่อเปิดฟอร์ม แสดงค่าปัจจุบันให้ครบ; ช่องที่ยังไม่เลือกต้องว่าง\n  - ระหว่างบันทึกให้รอผลและไม่ให้กดซ้ำ\n  - บันทึกไม่สำเร็จต้องคงข้อมูลที่กรอก; สำเร็จจึงแสดงรายละเอียดใหม่",
+          "พฤติกรรมการใช้งาน\n  - เมื่อเปิด form แสดงค่าปัจจุบันให้ครบ; ช่องที่ยังไม่เลือกต้องว่าง\n  - ระหว่างบันทึกให้รอผลและไม่ให้กดซ้ำ\n  - บันทึกไม่สำเร็จต้องคงข้อมูลที่กรอก; สำเร็จจึงแสดงรายละเอียดใหม่",
           "File Upload (FileUpload)\n  - เปลี่ยนชื่อ PO อู่ รถ หรือไฟล์แล้วตรวจความครบถ้วนก่อนบันทึก\n  - กรอกชื่อ PO เลือกอู่ เลือกรถ (ชิป \"82-0457 สระบุรี\", \"83-2210 นครราชสีมา\") และแนบใบสั่งจ้าง ไฟล์แสดง \"ใบสั่งจ้าง.pdf 195 KB\" ตัวนับเป็น \"1/10 ไฟล์\" ปุ่ม \"บันทึก\" พร้อมกด\n  - ช่องแนบไฟล์ ใบสั่งจ้าง: แสดงชื่อ ขนาด และตัวนับ 1/10 ตามจำนวนไฟล์จริง",
           "Form Fields\n  - ช่องกรอก ชื่อ PO/อู่ และ ป้ายรายการที่เลือก รถ: แสดงค่าที่เลือกครบให้สอดคล้องกับข้อมูลที่จะส่ง",
-          "Buttons\n  - ปุ่ม “บันทึก”: ส่งชุดข้อมูลปัจจุบันครั้งเดียว และกันกดซ้ำระหว่างรอผล\n  - จาก ปุ่มบนจอ (Button): เมื่อส่งให้ใช้ loading เพื่อปิดการกดซ้ำทั้งเมาส์/คีย์บอร์ด; ไม่ใช้เพียงเปลี่ยนสี เพราะตัวปุ่มจะ disable จริงเมื่อ loading; หากออกจากฟอร์มขณะมี ข้อมูลที่ยังไม่บันทึก ต้องผ่าน leave guard ของ หน้าฟอร์มสร้าง/แก้ไข PO (PoForm)"
+          "Buttons\n  - ปุ่ม “บันทึก”: ส่งชุดข้อมูลปัจจุบันครั้งเดียว และกันกดซ้ำระหว่างรอผล\n  - จาก ปุ่มบนจอ (Button): เมื่อส่งให้ใช้ loading เพื่อปิดการกดซ้ำทั้งเมาส์/คีย์บอร์ด; ไม่ใช้เพียงเปลี่ยนสี เพราะตัวปุ่มจะ disable จริงเมื่อ loading; หากออกจาก form ขณะมี ข้อมูลที่ยังไม่บันทึก ต้องผ่าน leave guard ของ หน้า form สร้าง/แก้ไข PO (PoForm)"
         ]
       },
       {
@@ -1567,14 +1783,14 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีบันทึก PO ล้มเหลว แต่ยังไม่แยกปิด toast ออกจากการออกจากฟอร์มหรือรีเซ็ตค่า"
+          "จากเดิม มีบันทึก PO ล้มเหลว แต่ยังไม่แยกปิด toast ออกจากการออกจาก form หรือรีเซ็ตค่า"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่มข้อกำหนด error: กด × ปิดเฉพาะ toast ฟอร์ม/อู่/chip รถ/ไฟล์ยังครบและไม่เปลี่ยนหน้า",
+          "NEW — เพิ่มข้อกำหนด error: กด × ปิดเฉพาะ toast form/อู่/chip รถ/ไฟล์ยังครบและไม่เปลี่ยนหน้า",
           "NEW — เพิ่ม retry: พ้น pending แล้วกดส่งใหม่ได้ โดยไม่สร้าง PO ซ้ำจาก request ก่อนหน้า"
         ]
       },
@@ -1582,12 +1798,12 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - เมื่อกดบันทึกหรือส่งแล้วผิดพลาด ให้แสดงข้อความแจ้งตามจอ\n  - ข้อความแจ้งผลมุมขวาบน “General Error”: อยู่บนฟอร์มเดิมเมื่อส่งไม่สำเร็จ",
+          "พฤติกรรมการใช้งาน\n  - เมื่อกดบันทึกหรือส่งแล้วผิดพลาด ให้แสดงข้อความแจ้งตามจอ\n  - ข้อความแจ้งผลมุมขวาบน “General Error”: อยู่บน form เดิมเมื่อส่งไม่สำเร็จ",
           "File Upload (FileUpload)\n  - อยู่หน้าเดิม และค่าที่กรอก/ไฟล์ที่เลือกต้องไม่หาย\n  - server ตอบผิดพลาด toast \"General Error\" (ไม่รู้สาเหตุให้แสดง Status Code เช่น \"500 Internal Server Error\") อยู่หน้าเดิม ค่าทุกช่อง ชิปรถ และไฟล์คงอยู่",
           "Status (StatusBadge)\n  - ปลดสถานะกำลังทำ เพื่อให้แก้ไขและกดใหม่ได้ โดยไม่สร้างข้อมูลซ้ำ\n  - \"General Error\" แสดง Status Code เมื่อไม่รู้สาเหตุ [Sheet พี่นุ — OH-Toast #11, ✅ CF]",
           "Form Fields\n  - ช่องกรอก ชื่อ PO, อู่, ป้ายรายการที่เลือก รถ และไฟล์แนบ: คงค่าทั้งหมด ไม่ reset จากการ refetch ที่ล้มเหลว",
           "Buttons\n  - ปุ่ม “บันทึก”: กลับมากด retry ได้หลังพ้น pending",
-          "Modal\n  - ข้อความแจ้งผลมุมขวาบน error ไม่ใช่ กล่องโต้ตอบกลางจอ (Modal) จึงไม่สร้างพื้นหลังทึบหรือบังคับให้ปิดก่อนกรอกต่อ; กด × บน toast ปิดเฉพาะข้อความ ฟอร์ม PO กับไฟล์เดิมยังอยู่"
+          "Modal\n  - ข้อความแจ้งผลมุมขวาบน error ไม่ใช่ กล่องโต้ตอบกลางจอ (Modal) จึงไม่สร้างพื้นหลังทึบหรือบังคับให้ปิดก่อนกรอกต่อ; กด × บน toast ปิดเฉพาะข้อความ form PO กับไฟล์เดิมยังอยู่"
         ]
       },
       {
@@ -1609,13 +1825,13 @@ const FRAME_STORIES = {
     }
   },
   "E.8": {
-    "title": "AC E.8 — เปิดฟอร์มจากแผนที่ถูกลบไปแล้ว",
+    "title": "AC E.8 — เปิด form จากแผนที่ถูกลบไปแล้ว",
     "sections": [
       {
         "level": "h2",
         "label": "ภาพรวมหน้านี้",
         "bullets": [
-          "What: สร้าง PO ภายใต้แผนและตรวจรายละเอียด PO — เปิดฟอร์มจากแผนที่ถูกลบไปแล้ว",
+          "What: สร้าง PO ภายใต้แผนและตรวจรายละเอียด PO — เปิด form จากแผนที่ถูกลบไปแล้ว",
           "Who: กบค. ใช้จัดการ PO; ผู้มีสิทธิ์ดูใช้ตรวจข้อมูลแผน PO และรถในขอบเขตของตน",
           "Do: รับทราบว่าแผนถูกลบและกลับไปยังรายการ; ไม่บันทึก PO ลงแผนที่ไม่มีอยู่"
         ]
@@ -1631,24 +1847,24 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่มข้อกำหนดความปลอดภัยการบันทึก: ไม่ให้สร้าง PO ลงแผนที่ถูกลบแม้ฟอร์มยังแสดงด้านหลัง",
-          "NEW — เพิ่มจุดตัดสินหลัง toast: ต้องตกลงจะค้างฟอร์มพร้อมปิดปุ่มหรือกลับรายการ และใช้กรณีแผนถูกลบระหว่างกรอกอย่างไร ไม่เดาปลายทางจากข้อความ error"
+          "NEW — เพิ่มข้อกำหนดความปลอดภัยการบันทึก: ไม่ให้สร้าง PO ลงแผนที่ถูกลบแม้ form ยังแสดงด้านหลัง",
+          "NEW — เพิ่มจุดตัดสินหลัง toast: ต้องตกลงจะค้าง form พร้อมปิดปุ่มหรือกลับรายการ และใช้กรณีแผนถูกลบระหว่างกรอกอย่างไร ไม่เดาปลายทางจากข้อความ error"
         ]
       },
       {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - กดยกเลิก ปิดหน้าต่างโดยไม่เปลี่ยนข้อมูล\n  - กดยืนยันเพียงครั้งเดียวแล้วรอผล; ถ้าไม่สำเร็จต้องไม่แสดงว่าลบ/แก้ไขแล้ว\n  - ฟอร์ม PO ด้านหลัง: ต้องตกลงว่าจะค้างพร้อมปิดปุ่ม หรือพากลับรายการ ไม่ตัดสินใจนำทางเองจาก toast",
+          "พฤติกรรมการใช้งาน\n  - กดยกเลิก ปิดหน้าต่างโดยไม่เปลี่ยนข้อมูล\n  - กดยืนยันเพียงครั้งเดียวแล้วรอผล; ถ้าไม่สำเร็จต้องไม่แสดงว่าลบ/แก้ไขแล้ว\n  - form PO ด้านหลัง: ต้องตกลงว่าจะค้างพร้อมปิดปุ่ม หรือพากลับรายการ ไม่ตัดสินใจนำทางเองจาก toast",
           "Buttons\n  - กดปุ่มลบหรือแก้ไขแล้วให้เปิดหน้าต่างยืนยันตามจอ",
-          "Empty State (EmptyState)\n  - แผนต้นทางถูกลบไปแล้ว เปิดฟอร์มเพิ่ม PO ของแผนนั้น toast \"ไม่พบแผน\"\n  - toast \"ไม่พบแผน\" [Sheet พี่นุ — OH-Toast #12, ✅ CF]\n  - ข้อความแจ้งผลมุมขวาบน “ไม่พบแผน”: ผูกกับแผนที่ฟอร์มอ้างอิงและไม่เปิดให้บันทึกลงแผนที่ลบแล้ว"
+          "Empty State (EmptyState)\n  - แผนต้นทางถูกลบไปแล้ว เปิด form เพิ่ม PO ของแผนนั้น toast \"ไม่พบแผน\"\n  - toast \"ไม่พบแผน\" [Sheet พี่นุ — OH-Toast #12, ✅ CF]\n  - ข้อความแจ้งผลมุมขวาบน “ไม่พบแผน”: ผูกกับแผนที่ form อ้างอิงและไม่เปิดให้บันทึกลงแผนที่ลบแล้ว"
         ]
       },
       {
         "level": "h2",
         "label": "Error Handling / Edge Cases",
         "bullets": [
-          "แผนถูกลบระหว่างเปิดฟอร์มกับกดบันทึก: ตรวจซ้ำตอนส่งและไม่ยอมสร้าง PO แม้ฟอร์มด้านหลังยังอยู่",
+          "แผนถูกลบระหว่างเปิด form กับกดบันทึก: ตรวจซ้ำตอนส่งและไม่ยอมสร้าง PO แม้ form ด้านหลังยังอยู่",
           "กด retry หลัง toast ไม่พบแผน: ไม่ส่งสร้างวนซ้ำ ต้องให้กลับไปเลือกแผนที่ใช้งานได้ตามปลายทางที่ตกลง"
         ]
       },
@@ -1656,7 +1872,7 @@ const FRAME_STORIES = {
         "level": "h3",
         "label": "ประเด็นที่ต้องเคาะ",
         "bullets": [
-          "เฟรมยังแสดงฟอร์มอยู่ด้านหลัง toast ต้องเคาะว่าหลัง toast พาไปหน้ารายการแผนหรือไม่ (แนะนำพาไปหน้ารายการ) และกรณีแผนถูกลบระหว่างกรอกแล้วกดบันทึกใช้ toast เดียวกันไหม"
+          "เฟรมยังแสดง form อยู่ด้านหลัง toast ต้องเคาะว่าหลัง toast พาไปหน้ารายการแผนหรือไม่ (แนะนำพาไปหน้ารายการ) และกรณีแผนถูกลบระหว่างกรอกแล้วกดบันทึกใช้ toast เดียวกันไหม"
         ]
       }
     ],
@@ -1691,7 +1907,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract หลังสร้าง: ตาราง PO หัวจำนวน รถทั้งหมดและสถานะแผนต้องอัปเดตจากผลเดียวกัน ไม่คง 0 คันจากก่อนสร้าง",
+          "NEW — เพิ่ม behavior หลังสร้าง: ตาราง PO หัวจำนวน รถทั้งหมดและสถานะแผนต้องอัปเดตจากผลเดียวกัน ไม่คง 0 คันจากก่อนสร้าง",
           "NEW — เพิ่มข้อกำหนดแหล่งระยะสัญญา: ไม่แสดงค่าจำลองเป็นข้อมูลจริงจนตกลงจุดกรอก/ที่มาของวันเริ่มสิ้นสุด"
         ]
       },
@@ -1701,7 +1917,7 @@ const FRAME_STORIES = {
         "bullets": [
           "พฤติกรรมการใช้งาน\n  - ปรับรายการหรือรายละเอียดล่าสุดให้เห็นตรงกับข้อมูลที่บันทึก\n  - ไม่ให้กดยืนยันซ้ำขณะกำลังส่งข้อมูล\n  - บันทึกสำเร็จ กลับหน้ารายละเอียดแผน toast \"การสร้าง purchase order สำเร็จ\"\n  - Permission: ตั้งแต่ PO นี้ หน่วยงานเจ้าของรถและ กรย. เขตของรถเริ่มเห็นแผน (เฉพาะ PO/รถในขอบเขตตัวเอง)\n  - Sheet PEA: ลบ PO จนเหลือ 0 แผนย้อนกลับเป็น \"รอเลข PO\" (ตอบ ⚠️ ใน G.1)\n  - toast \"การสร้าง purchase order สำเร็จ\" แสดงที่หน้ารายละเอียดแผน [Sheet พี่นุ — OH-Toast #7, ✅ CF]\n  - ข้อความแจ้งผลมุมขวาบน สร้าง PO สำเร็จ: แสดงที่รายละเอียดแผนหลังบันทึก",
           "Status (StatusBadge)\n  - เมื่อระบบยืนยันว่าทำสำเร็จ จึงเปลี่ยนหน้า/สถานะและแสดงข้อความสำเร็จ\n  - chip สถานะแผนเปลี่ยนเป็น \"รอดำเนินการ\" และส่วนเปลี่ยนเป็น \"Purchase Order (1)\"\n  - รถทุกคันใน PO สถานะ \"รอนัดหมายเข้าอู่\"\n  - Status: แผน \"รอเลข PO\" → \"รอดำเนินการ\" (status final: \"กำลังดำเนินการ PO\") · รถทุกคันใน PO → \"รอนัดหมายเข้าอู่\"\n  - ป้ายสถานะ/รายการที่เลือก สถานะแผนและจำนวนรถ: อัปเดตตามผลสร้าง PO ไม่คง 0 คันจากหน้าก่อน; ที่มาระยะสัญญายังต้องตกลง",
-          "Table (DataTable)\n  - Columns\n    - ตาราง PO คอลัมน์: หมายเลข PO, ศูนย์บริการ/อู่, จำนวนรถ, ความคืบหน้า (แถบ + \"0/2\"), ระยะสัญญา (\"20 ต.ค. 2569 – 20 ม.ค. 2570\" + บรรทัดรอง \"ตามใบสั่งจ้าง\") และไอคอนดูรายละเอียด\n  - Behavior\n    - ตาราง PO และหัวส่วน Purchase Order: โหลดแถวใหม่พร้อมจำนวนรถ/ความคืบหน้า/ระยะสัญญาตามข้อมูลจริง"
+          "Table (DataTable)\n  - Columns\n    - ตาราง PO คอลัมน์: หมายเลข PO, ศูนย์บริการ/อู่, จำนวนรถ, ความคืบหน้า (แถบ + \"0/2\"), ระยะสัญญา (\"20 ต.ค. 2569 – 20 ม.ค. 2570\" + บรรทัดรอง \"ตามใบสั่งจ้าง\") และicon ดูรายละเอียด\n  - Behavior\n    - ตาราง PO และหัวส่วน Purchase Order: โหลดแถวใหม่พร้อมจำนวนรถ/ความคืบหน้า/ระยะสัญญาตามข้อมูลจริง"
         ]
       },
       {
@@ -1716,7 +1932,7 @@ const FRAME_STORIES = {
         "level": "h3",
         "label": "ประเด็นที่ต้องเคาะ",
         "bullets": [
-          "\"ระยะสัญญา\" ไม่มีช่องกรอกในฟอร์ม PO ต้องเคาะว่ามาจากไหน (กรอกเอง/อ่านจากใบสั่งจ้าง) — เกี่ยวกับ Scenario 16 แจ้งเตือนก่อนหมดสัญญา 30 และ 15 วัน",
+          "\"ระยะสัญญา\" ไม่มีช่องกรอกใน form PO ต้องเคาะว่ามาจากไหน (กรอกเอง/อ่านจากใบสั่งจ้าง) — เกี่ยวกับ Scenario 16 แจ้งเตือนก่อนหมดสัญญา 30 และ 15 วัน",
           "ตาราง PO ใน E.9 ไม่มีคอลัมน์ \"ชื่อ PO\" แต่ F.1/G.1 มี และ F.1 ไม่มี \"ความคืบหน้า\"/\"ระยะสัญญา\" ต้องเลือกชุดคอลัมน์เดียว",
           "\"จำนวนรถที่ Overhaul\" ยัง \"0 คัน\" ทั้งที่ PO มีรถ 2 คัน ต้องนับจากรถใน PO ทั้งหมด (overhauled_car_count)",
           "Sheet ไม่มี notification ตอนรถถูกจัดเข้า PO หน่วยงานเจ้าของรถจะไม่รู้ตัวจนได้นัดหมาย (#13) ต้องเคาะว่าจำเป็นไหม"
@@ -1747,7 +1963,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีรายละเอียด PO และตารางรถ แต่ยังไม่ครบ contract ข้อมูลรองตามสถานะ/ปลายทางยกเลิกลบ"
+          "จากเดิม มีรายละเอียด PO และตารางรถ แต่ยังไม่ครบ behavior ข้อมูลรองตามสถานะ/ปลายทางยกเลิกลบ"
         ]
       },
       {
@@ -1755,16 +1971,16 @@ const FRAME_STORIES = {
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
           "NEW — เพิ่มข้อกำหนดตารางรายคัน: สถานะและข้อมูลรองต้องเป็นของรถแต่ละคัน กดหน้างานไปแผน/PO/รถชุดเดียวกัน",
-          "NEW — เพิ่มทางเข้าลบ/แก้ไข: ยกเลิกกล่องลบกลับรายละเอียด PO เดิม และจำต้นทางนี้เพื่อยกเลิกฟอร์มแก้ไขได้ถูกหน้า"
+          "NEW — เพิ่มทางเข้าลบ/แก้ไข: ยกเลิกกล่องลบกลับรายละเอียด PO เดิม และจำต้นทางนี้เพื่อยกเลิก form แก้ไขได้ถูกหน้า"
         ]
       },
       {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - เมื่อเปิดฟอร์ม แสดงค่าปัจจุบันให้ครบ; ช่องที่ยังไม่เลือกต้องว่าง\n  - ระหว่างบันทึกให้รอผลและไม่ให้กดซ้ำ\n  - บันทึกไม่สำเร็จต้องคงข้อมูลที่กรอก; สำเร็จจึงแสดงรายละเอียดใหม่\n  - ส่วน \"รายละเอียด Purchase Order\": ชื่อแผน, ชื่อ Purchase Order, ศูนย์บริการ/อู่, เบอร์โทรอู่, ที่อยู่\n  - ส่วน \"รายการรถ (2)\": คอลัมน์ ทะเบียน, หน่วยงานเจ้าของรถ, เลขไมล์ (กม.), อายุการใช้งาน, สถานะงาน (chip), รายละเอียดตามสถานะ และปุ่ม › ไปหน้างานรายคัน\n  - หัวหน้า: breadcrumb \"… > แผน {เลขแผน} > {เลข PO}\" ปุ่ม แก้ไข / ลบ PO (เฉพาะ กบค.) [Sheet พี่นุ — 3 รายละเอียด PO, ✅ CF]\n  - Toast: แก้ไข PO → \"บันทึกการแก้ไข PO สำเร็จ\" (#8) · ลบ PO → กลับหน้ารายละเอียดแผน (#9) [Sheet พี่นุ — 3 รายละเอียด PO, ✅ CF]\n  - จาก หน้ารายละเอียด PO (PoDetail): กด “ลบ PO” เปิด G.1 บนหน้าเดิม; ยกเลิกกล่อง → กลับรายละเอียด PO นี้; กด “แก้ไข” → เปิด F.2 โดยจำว่ามาจากรายละเอียด PO เพื่อให้ยกเลิกกลับถูกหน้า",
+          "พฤติกรรมการใช้งาน\n  - เมื่อเปิด form แสดงค่าปัจจุบันให้ครบ; ช่องที่ยังไม่เลือกต้องว่าง\n  - ระหว่างบันทึกให้รอผลและไม่ให้กดซ้ำ\n  - บันทึกไม่สำเร็จต้องคงข้อมูลที่กรอก; สำเร็จจึงแสดงรายละเอียดใหม่\n  - ส่วน \"รายละเอียด Purchase Order\": ชื่อแผน, ชื่อ Purchase Order, ศูนย์บริการ/อู่, เบอร์โทรอู่, ที่อยู่\n  - ส่วน \"รายการรถ (2)\": คอลัมน์ ทะเบียน, หน่วยงานเจ้าของรถ, เลขไมล์ (กม.), อายุการใช้งาน, สถานะงาน (chip), รายละเอียดตามสถานะ และปุ่ม › ไปหน้างานรายคัน\n  - หัวหน้า: breadcrumb \"… > แผน {เลขแผน} > {เลข PO}\" ปุ่ม แก้ไข / ลบ PO (เฉพาะ กบค.) [Sheet พี่นุ — 3 รายละเอียด PO, ✅ CF]\n  - Toast: แก้ไข PO → \"บันทึกการแก้ไข PO สำเร็จ\" (#8) · ลบ PO → กลับหน้ารายละเอียดแผน (#9) [Sheet พี่นุ — 3 รายละเอียด PO, ✅ CF]\n  - จาก หน้ารายละเอียด PO (PoDetail): กด “ลบ PO” เปิด G.1 บนหน้าเดิม; ยกเลิกกล่อง → กลับรายละเอียด PO นี้; กด “แก้ไข” → เปิด F.2 โดยจำว่ามาจากรายละเอียด PO เพื่อให้ยกเลิกกลับถูกหน้า",
           "File Upload (FileUpload)\n  - เปลี่ยนชื่อ PO อู่ รถ หรือไฟล์แล้วตรวจความครบถ้วนก่อนบันทึก\n  - ส่วน \"เอกสาร\": ใบสั่งจ้าง (เช่น \"ใบสั่งจ้าง-PO-690101.pdf 10 MB\")\n  - รายการเอกสาร: ตรวจสิทธิ์เข้าถึงไฟล์ ไม่อาศัยเพียงซ่อนปุ่มบนหน้า",
-          "Buttons\n  - กดดูรายละเอียด PO breadcrumb \"จัดการงาน Overhaul > แผน {เลข} > {เลข PO}\" หัวข้อ \"หมายเลข {เลข PO}\" ปุ่ม \"ลบ PO\" (กรอบแดง) / \"แก้ไข\"\n  - ปุ่ม ›/หน้างาน: เปิดรถที่กดพร้อมแผนและ PO ถูกชุด\n  - ปุ่ม “แก้ไข”: เปิดฟอร์มแก้ไข PO F.2 โดยตรวจสิทธิ์ก่อน\n  - ปุ่ม “ลบ PO”: เปิดกล่องยืนยันลบ PO G.1 โดยตรวจสิทธิ์ก่อน",
+          "Buttons\n  - กดดูรายละเอียด PO breadcrumb \"จัดการงาน Overhaul > แผน {เลข} > {เลข PO}\" หัวข้อ \"หมายเลข {เลข PO}\" ปุ่ม \"ลบ PO\" (กรอบแดง) / \"แก้ไข\"\n  - ปุ่ม ›/หน้างาน: เปิดรถที่กดพร้อมแผนและ PO ถูกชุด\n  - ปุ่ม “แก้ไข”: เปิด form แก้ไข PO F.2 โดยตรวจสิทธิ์ก่อน\n  - ปุ่ม “ลบ PO”: เปิดกล่องยืนยันลบ PO G.1 โดยตรวจสิทธิ์ก่อน",
           "Status (StatusBadge)\n  - ตัวอย่าง \"รายละเอียดตามสถานะ\": กำลังซ่อม → \"อยู่อู่ 12 วัน / รับรถ 9 ต.ค. 2569\" · รอหน่วยงานตอบรับนัดเข้าอู่ → \"นัดเข้าอู่ 22 – 24 ต.ค. 2569 / รอหน่วยงานตอบรับ\"\n  - SubText ใต้สถานะงาน (🤔 ลูกค้าเสนอ): วันนัดถัดไป (ช่วงนัดเข้าอู่/นัดรับรถที่ยืนยัน หรือ \"รอตอบรับ\"), จำนวนวันที่อยู่อู่ (นับจากวันยืนยันรับรถ), ประกันหลัง Overhaul ถึงวันที่ (หลังปิดงาน) ถ้าทำ SubText ไม่ได้ให้แยกเป็น 3 คอลัมน์ [Sheet พี่นุ — 3 รายละเอียด PO, ✅ CF]",
           "Table (DataTable)\n  - Behavior\n    - ตารางรถ: ทะเบียน, ยี่ห้อ/รุ่น · ประเภท, หน่วยงานเจ้าของรถ, เลขไมล์ (กม. ชิดขวา), อายุการใช้งาน (ปี), สถานะงาน (ป้าย 11 สถานะ), ปุ่ม \"หน้างาน\" เป็น ICON Action [Sheet พี่นุ — 3 รายละเอียด PO, ✅ CF]\n    - ตารางรถ: แต่ละแถวแสดง ป้ายรายการที่เลือก และข้อมูลรองตามสถานะของรถคันนั้น; ไม่ใช้ข้อความสถานะร่วมกันทั้งตาราง\n  - Sorting\n    - ค้นหาทะเบียน, ตัวกรองสถานะงาน, sort สถานะงาน/วันนัดถัดไป: เสนอ รอ confirm [Sheet พี่นุ — 3 รายละเอียด PO, ✅ CF]"
         ]
@@ -1823,7 +2039,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีเมนูแก้ไข PO แต่ไม่ได้แยกการปิดเมนูกับการจำทางเข้าฟอร์มเป็น contract ทุก action"
+          "จากเดิม มีเมนูแก้ไข PO แต่ไม่ได้แยกการปิดเมนูกับการจำทางเข้า form เป็น behavior ทุก action"
         ]
       },
       {
@@ -1831,14 +2047,14 @@ const FRAME_STORIES = {
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
           "NEW — เพิ่มเมนู “…” (RowMenu): คลิกนอก/Esc ปิดแล้วคงรายละเอียดแผน; เลือกแก้ไขจึงเปิด F.2 ของ PO แถวนั้น",
-          "NEW — เพิ่มต้นทางฟอร์มเป็นรายละเอียดแผน เพื่อให้กดยกเลิกจาก F.2 ไม่ไปหน้า PO ผิดทางเข้า"
+          "NEW — เพิ่มต้นทาง form เป็นรายละเอียดแผน เพื่อให้กดยกเลิกจาก F.2 ไม่ไปหน้า PO ผิดทางเข้า"
         ]
       },
       {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - เมื่อเปิดฟอร์ม แสดงค่าปัจจุบันให้ครบ; ช่องที่ยังไม่เลือกต้องว่าง\n  - ระหว่างบันทึกให้รอผลและไม่ให้กดซ้ำ\n  - บันทึกไม่สำเร็จต้องคงข้อมูลที่กรอก; สำเร็จจึงแสดงรายละเอียดใหม่\n  - เลือก \"แก้ไข\" ไปฟอร์มแก้ไข PO (F.2)\n  - เมนู “…” ในตาราง PO: จับ PO ของแถวที่กด\n  - รายการ “แก้ไข”: เปิด F.2 พร้อมข้อมูล PO เป้าหมาย; role ที่ดูอย่างเดียวไม่มี action แก้ไข/ลบ",
+          "พฤติกรรมการใช้งาน\n  - เมื่อเปิด form แสดงค่าปัจจุบันให้ครบ; ช่องที่ยังไม่เลือกต้องว่าง\n  - ระหว่างบันทึกให้รอผลและไม่ให้กดซ้ำ\n  - บันทึกไม่สำเร็จต้องคงข้อมูลที่กรอก; สำเร็จจึงแสดงรายละเอียดใหม่\n  - เลือก \"แก้ไข\" ไป form แก้ไข PO (F.2)\n  - เมนู “…” ในตาราง PO: จับ PO ของแถวที่กด\n  - รายการ “แก้ไข”: เปิด F.2 พร้อมข้อมูล PO เป้าหมาย; role ที่ดูอย่างเดียวไม่มี action แก้ไข/ลบ",
           "File Upload (FileUpload)\n  - เปลี่ยนชื่อ PO อู่ รถ หรือไฟล์แล้วตรวจความครบถ้วนก่อนบันทึก",
           "Table (DataTable)\n  - Row Actions (RowMenu)\n    - แผนมี PO (ตัวอย่าง \"Purchase Order (3)\") กด \"…\" ท้ายแถว PO เมนู \"ดูรายละเอียด\" / \"แก้ไข\" / \"ลบ\"\n    - ลูกค้าขอจัดการเป็น ICON Action [Sheet พี่นุ]\n      \n      ตาราง PO ให้ใช้คอลัมน์ชุดที่ CF ใน B.7 [Sheet พี่นุ]\n    - เมนู “…” ท้ายแถวรายการ (RowMenu): คลิกนอก/Esc ปิดเมนูแล้วอยู่หน้ารายละเอียดแผน (PlanDetail); กดแก้ไข → เปิด F.2 โดยเก็บต้นทางเป็นหน้ารายละเอียดแผน (PlanDetail)\n  - Columns\n    - ตาราง PO ในเฟรมนี้มีคอลัมน์ หมายเลข PO, ชื่อ PO, ศูนย์บริการ/อู่, จำนวนรถ"
         ]
@@ -1855,7 +2071,7 @@ const FRAME_STORIES = {
         "label": "Error Handling / Edge Cases",
         "bullets": [
           "PO ถูกลบหรือรายการเรียงใหม่หลังเปิดเมนูแก้ไข: อ้าง ID เดิมและตรวจว่ายังเปิดได้ก่อนนำทาง",
-          "คลิกนอก/Esc ปิดเมนู: ไม่ควรมีการเปิดฟอร์มแก้ไขตามหลังจาก event ที่ยังค้าง"
+          "คลิกนอก/Esc ปิดเมนู: ไม่ควรมีการเปิด form แก้ไขตามหลังจาก event ที่ยังค้าง"
         ]
       },
       {
@@ -1875,13 +2091,13 @@ const FRAME_STORIES = {
     }
   },
   "F.2": {
-    "title": "AC F.2 — ฟอร์มแก้ไข PO",
+    "title": "AC F.2 — form แก้ไข PO",
     "sections": [
       {
         "level": "h2",
         "label": "ภาพรวมหน้านี้",
         "bullets": [
-          "What: แก้ไขข้อมูล PO — ฟอร์มแก้ไข PO",
+          "What: แก้ไขข้อมูล PO — form แก้ไข PO",
           "Who: กบค. ใช้แก้ไขและยืนยันข้อมูล PO",
           "Do: ปรับข้อมูล PO แล้วบันทึกหรือยกเลิก"
         ]
@@ -1897,24 +2113,24 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract สองฝั่ง (DualList): ค้นเปลี่ยนฝั่งซ้ายแต่ไม่ล้างรถเลือกแล้ว เลือกทั้งหมดจำกัดตามรายการที่แสดง และย้ายแล้วล้างการติ๊กฝั่งที่ย้าย",
-          "NEW — เพิ่ม contract ยกเลิก: ไม่เปลี่ยนค่าให้กลับต้นทางทันที มี ข้อมูลที่ยังไม่บันทึก เปิดยืนยันออก; ปิดกล่องคง ข้อมูลที่ยังไม่บันทึก ยืนยันแล้วกลับ PO/แผนตามทางเข้า"
+          "NEW — เพิ่ม behavior สองฝั่ง (DualList): ค้นเปลี่ยนฝั่งซ้ายแต่ไม่ล้างรถเลือกแล้ว เลือกทั้งหมดจำกัดตามรายการที่แสดง และย้ายแล้วล้างการติ๊กฝั่งที่ย้าย",
+          "NEW — เพิ่ม behavior ยกเลิก: ไม่เปลี่ยนค่าให้กลับต้นทางทันที มี ข้อมูลที่ยังไม่บันทึก เปิดยืนยันออก; ปิดกล่องคง ข้อมูลที่ยังไม่บันทึก ยืนยันแล้วกลับ PO/แผนตามทางเข้า"
         ]
       },
       {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - เมื่อเปิดฟอร์ม แสดงค่าปัจจุบันให้ครบ; ช่องที่ยังไม่เลือกต้องว่าง\n  - ระหว่างบันทึกให้รอผลและไม่ให้กดซ้ำ\n  - บันทึกไม่สำเร็จต้องคงข้อมูลที่กรอก; สำเร็จจึงแสดงรายละเอียดใหม่\n  - ส่วน \"เลือกรถ\" เป็นแบบ 2 รายการ: ช่อง \"ค้นหารถ\" placeholder \"ค้นหาทะเบียน, รุ่น/ยี่ห้อ\" · ซ้าย \"รายการรถทั้งหมด\" + จำนวน · ขวา \"เลือกแล้ว\" + จำนวน · ตรงกลางปุ่ม \"เพิ่ม\" / \"นำออก\"",
+          "พฤติกรรมการใช้งาน\n  - เมื่อเปิด form แสดงค่าปัจจุบันให้ครบ; ช่องที่ยังไม่เลือกต้องว่าง\n  - ระหว่างบันทึกให้รอผลและไม่ให้กดซ้ำ\n  - บันทึกไม่สำเร็จต้องคงข้อมูลที่กรอก; สำเร็จจึงแสดงรายละเอียดใหม่\n  - ส่วน \"เลือกรถ\" เป็นแบบ 2 รายการ: ช่อง \"ค้นหารถ\" placeholder \"ค้นหาทะเบียน, รุ่น/ยี่ห้อ\" · ซ้าย \"รายการรถทั้งหมด\" + จำนวน · ขวา \"เลือกแล้ว\" + จำนวน · ตรงกลางปุ่ม \"เพิ่ม\" / \"นำออก\"",
           "File Upload (FileUpload)\n  - เปลี่ยนชื่อ PO อู่ รถ หรือไฟล์แล้วตรวจความครบถ้วนก่อนบันทึก\n  - ชื่อ PO, อู่ และใบสั่งจ้างเติมค่าเดิม (ตัวนับ \"1/10 ไฟล์\")",
           "Buttons\n  - ติ๊กรถฝั่งซ้ายแล้วกด \"เพิ่ม\" ย้ายไปฝั่ง \"เลือกแล้ว\" · ติ๊กฝั่งขวาแล้วกด \"นำออก\" ย้ายกลับ ปุ่มจะ enable เมื่อมีรถถูกติ๊ก\n  - ปุ่มล่าง \"ยกเลิก\" / \"บันทึก\"\n  - ปุ่ม “เพิ่ม”/“นำออก”: enable เมื่อฝั่งนั้นมีรายการติ๊ก ย้ายตาม ID และอัปเดตจำนวนทั้งสองฝั่ง ไม่ให้รถซ้ำ",
-          "Checkbox\n  - แต่ละแถวรถมี checkbox ทะเบียน และบรรทัดรอง \"ยี่ห้อรุ่น · ประเภท เลขไมล์ {x} กม. · อายุ {y} ปี\" เช่น \"ISUZU FVM · รถกระเช้า เลขไมล์ 210,050 กม. · อายุ 14 ปี\" หัวรายการมี checkbox เลือกทั้งหมด\n  - ช่องติ๊กเลือก รายแถว/เลือกทั้งหมด: เก็บสถานะติ๊กแยกสองฝั่ง; ต้องตกลงเลือกทั้งหมดเฉพาะผลค้นหรือทุกรายการ",
+          "Checkbox\n  - แต่ละแถวรถมี checkbox ทะเบียน และบรรทัดรอง \"ยี่ห้อรุ่น · ประเภท เลขไมล์ {x} กม. · อายุ {y} ปี\" เช่น \"ISUZU FVM · รถกระเช้า เลขไมล์ 210,050 กม. · อายุ 14 ปี\" หัวรายการมี checkbox เลือกทั้งหมด\n  - checkbox รายแถว/เลือกทั้งหมด: เก็บสถานะติ๊กแยกสองฝั่ง; ต้องตกลงเลือกทั้งหมดเฉพาะผลค้นหรือทุกรายการ",
           "Table (DataTable)\n  - Columns\n    - breadcrumb \"แก้ไข {เลข PO}\" · รายการเลือกรถ คอลัมน์ ค้นหา และตัวกรองชุดเดียวกับ E.5 (ทะเบียน, เลขไมล์, อายุ, หน่วยงานเจ้าของรถ · ค้น ทะเบียน, รุ่น/ยี่ห้อ · กรอง หน่วยงาน/เขต, ประเภทรถ) [Sheet พี่นุ — 4 เพิ่ม-แก้ไข PO, ✅ CF]",
           "Search Input (SearchInput)\n  - ช่องค้นหาเหนือรายการ (SearchInput)รถ: เปลี่ยนผลรายการฝั่งซ้าย โดยไม่ล้างรถฝั่ง “เลือกแล้ว”",
           "Form Fields\n  - ช่องกรอก ชื่อ PO/อู่และ upload: เติมค่าที่บันทึกเดิม; “ยกเลิก”/“บันทึก” จัดการ ข้อมูลที่ยังไม่บันทึก และเปิดยืนยันตาม flow",
-          "Navigation\n  - จาก หน้าฟอร์มสร้าง/แก้ไข PO (PoForm): “ยกเลิก” ถ้าไม่มีการเปลี่ยนค่า → กลับต้นทาง (มาจากตาราง PO กลับรายละเอียดแผน; มาจากรายละเอียด PO กลับ PO เดิม); ถ้ามี ข้อมูลที่ยังไม่บันทึก → เปิดยืนยันการออก ไม่ทิ้งค่าทันที",
+          "Navigation\n  - จาก หน้า form สร้าง/แก้ไข PO (PoForm): “ยกเลิก” ถ้าไม่มีการเปลี่ยนค่า → กลับต้นทาง (มาจากตาราง PO กลับรายละเอียดแผน; มาจากรายละเอียด PO กลับ PO เดิม); ถ้ามี ข้อมูลที่ยังไม่บันทึก → เปิดยืนยันการออก ไม่ทิ้งค่าทันที",
           "Modal\n  - กล่องยืนยันการออก: “ปิด”/×/Esc/พื้นหลัง → กลับ F.2 พร้อม ข้อมูลที่ยังไม่บันทึก; “ยืนยัน” → ทิ้ง ข้อมูลที่ยังไม่บันทึก แล้วไปต้นทางที่จำไว้",
-          "Vehicle Selection\n  - จาก รายการเลือกรถสองฝั่ง “รายการรถทั้งหมด”/“เลือกแล้ว” (DualList): ช่องติ๊กเลือก เลือกทั้งหมดเลือกเฉพาะรายการในกล่อง/ผลค้นที่แสดง; กดเพิ่ม/นำออกแล้วล้างการติ๊กของฝั่งที่ย้าย แต่คงรถที่เลือกและคำค้นของอีกฝั่ง"
+          "Vehicle Selection\n  - จาก รายการเลือกรถสองฝั่ง “รายการรถทั้งหมด”/“เลือกแล้ว” (DualList): checkbox เลือกทั้งหมดเลือกเฉพาะรายการในกล่อง/ผลค้นที่แสดง; กดเพิ่ม/นำออกแล้วล้างการติ๊กของฝั่งที่ย้าย แต่คงรถที่เลือกและคำค้นของอีกฝั่ง"
         ]
       },
       {
@@ -1922,14 +2138,14 @@ const FRAME_STORIES = {
         "label": "Error Handling / Edge Cases",
         "bullets": [
           "ค้นรถฝั่งซ้ายแล้วกดเลือกทั้งหมด: เลือกตามขอบเขตที่ตกลง ไม่เพิ่มรถที่ถูกเลือกฝั่งขวาซ้ำ",
-          "อีกคนแก้ PO/รถเริ่มขั้นถัดไปก่อนบันทึก: ตรวจล่าสุดและแจ้งรายการที่แก้ต่อไม่ได้ ไม่ล้าง ข้อมูลที่ยังไม่บันทึก ทั้งฟอร์มหรือทับการแก้อื่นเงียบ ๆ"
+          "อีกคนแก้ PO/รถเริ่มขั้นถัดไปก่อนบันทึก: ตรวจล่าสุดและแจ้งรายการที่แก้ต่อไม่ได้ ไม่ล้าง ข้อมูลที่ยังไม่บันทึก ทั้ง form หรือทับการแก้อื่นเงียบ ๆ"
         ]
       },
       {
         "level": "h3",
         "label": "ประเด็นที่ต้องเคาะ",
         "bullets": [
-          "ฟอร์มสร้าง (E.5) เลือกรถแบบชิป ค้น \"ทะเบียน, จังหวัด\" แต่ฟอร์มแก้ไขเป็นแบบ 2 รายการ ค้น \"ทะเบียน, รุ่น/ยี่ห้อ\" ต้องใช้แบบเดียวกันทั้งสร้างและแก้ไข",
+          "form สร้าง (E.5) เลือกรถแบบชิป ค้น \"ทะเบียน, จังหวัด\" แต่ form แก้ไขเป็นแบบ 2 รายการ ค้น \"ทะเบียน, รุ่น/ยี่ห้อ\" ต้องใช้แบบเดียวกันทั้งสร้างและแก้ไข",
           "ช่องชื่อ PO ใน mock ว่าง ทั้งที่ต้อง prefill \"ซ่อมระบบเครื่องยนต์\" และตัวเลข \"รายการรถทั้งหมด 6\" แต่แสดง 5 คัน",
           "ต้องเคาะ: นำรถที่งานเริ่มแล้ว (เกินขั้น 01) ออกจาก PO ได้ไหม, เปลี่ยนอู่ได้ไหมเมื่อมีนัดหมายแล้ว (ข้อมูลอู่ถูกใช้ใน H/N), กด \"ยกเลิก\" หลังแก้ไขใช้ modal ยืนยันการออกเหมือน C.3 ไหม",
           "mock F.2 ยังไม่มี \"หน่วยงานเจ้าของรถ\" ในแต่ละแถว และไม่มีตัวกรอง หน่วยงาน/เขต, ประเภทรถ"
@@ -1967,7 +2183,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract ยกเลิก/×/Esc/พื้นหลัง: กลับ F.2 พร้อมชื่อ อู่ รถ ไฟล์ที่แก้ ไม่ทิ้ง ข้อมูลที่ยังไม่บันทึก และยังไม่บันทึก",
+          "NEW — เพิ่ม behavior ยกเลิก/×/Esc/พื้นหลัง: กลับ F.2 พร้อมชื่อ อู่ รถ ไฟล์ที่แก้ ไม่ทิ้ง ข้อมูลที่ยังไม่บันทึก และยังไม่บันทึก",
           "CHANGE — ปลายทางสำเร็จต้องตรง AC F.4 ที่ไป PO; prototype บางทางกลับตามต้นทาง ต้องเคาะและปรับไม่ยก callback เก่ามาเป็นข้อยืนยัน"
         ]
       },
@@ -1976,8 +2192,8 @@ const FRAME_STORIES = {
         "label": "UI Component & Behavior",
         "bullets": [
           "พฤติกรรมการใช้งาน\n  - กดยกเลิก ปิดหน้าต่างโดยไม่เปลี่ยนข้อมูล\n  - กดยืนยันเพียงครั้งเดียวแล้วรอผล; ถ้าไม่สำเร็จต้องไม่แสดงว่าลบ/แก้ไขแล้ว\n  - ปลายทางหลังบันทึกใน prototype กลับตามต้นทาง แต่ AC ล่าสุดระบุไปหน้ารายละเอียด PO (PoDetail) F.4 จึงต้องยึด AC/เคาะจุดต่างก่อน ไม่สรุปว่าตาม component แล้วเส้นทางถูกเสมอ",
-          "Buttons\n  - กดปุ่มลบหรือแก้ไขแล้วให้เปิดหน้าต่างยืนยันตามจอ\n  - ปุ่ม “ยกเลิก”: ปิดกล่องแล้วกลับฟอร์มแก้ไข PO F.2 พร้อมค่าที่แก้\n  - ปุ่ม “ยืนยัน”: ส่งการแก้ไขเพียงครั้งเดียว; สำเร็จไปหน้ารายละเอียด PO F.4 ตาม AC และคงข้อมูลที่แก้หากผิดพลาด",
-          "Modal\n  - กด \"บันทึก\" modal \"ยืนยันการแก้ไข\" ข้อความ \"เมื่อยืนยันการแก้ไขแล้วจะไม่สามารถย้อนกลับได้ โปรดตรวจสอบก่อนยืนยัน\" ปุ่ม \"ยกเลิก\" / \"ยืนยัน\"\n  - กล่องโต้ตอบกลางจอ (Modal) “ยืนยันการแก้ไข”: แสดงก่อนส่งการแก้ PO\n  - จาก กล่อง “ยืนยันการแก้ไข” (ConfirmDialog) ของ หน้าฟอร์มสร้าง/แก้ไข PO (PoForm): “ยกเลิก”, ×, Esc หรือคลิกพื้นหลัง → ปิดเฉพาะกล่องแล้วกลับ F.2 พร้อมชื่อ PO อู่ รถ และไฟล์ที่แก้; “ยืนยัน” จึงส่งบันทึก"
+          "Buttons\n  - กดปุ่มลบหรือแก้ไขแล้วให้เปิดหน้าต่างยืนยันตามจอ\n  - ปุ่ม “ยกเลิก”: ปิดกล่องแล้วกลับ form แก้ไข PO F.2 พร้อมค่าที่แก้\n  - ปุ่ม “ยืนยัน”: ส่งการแก้ไขเพียงครั้งเดียว; สำเร็จไปหน้ารายละเอียด PO F.4 และคงข้อมูลที่แก้หากผิดพลาด",
+          "Modal\n  - กด \"บันทึก\" modal \"ยืนยันการแก้ไข\" ข้อความ \"เมื่อยืนยันการแก้ไขแล้วจะไม่สามารถย้อนกลับได้ โปรดตรวจสอบก่อนยืนยัน\" ปุ่ม \"ยกเลิก\" / \"ยืนยัน\"\n  - กล่องโต้ตอบกลางจอ (Modal) “ยืนยันการแก้ไข”: แสดงก่อนส่งการแก้ PO\n  - จาก กล่อง “ยืนยันการแก้ไข” (ConfirmDialog) ของ หน้า form สร้าง/แก้ไข PO (PoForm): “ยกเลิก”, ×, Esc หรือคลิกพื้นหลัง → ปิดเฉพาะกล่องแล้วกลับ F.2 พร้อมชื่อ PO อู่ รถ และไฟล์ที่แก้; “ยืนยัน” จึงส่งบันทึก"
         ]
       },
       {
@@ -1985,7 +2201,7 @@ const FRAME_STORIES = {
         "label": "Error Handling / Edge Cases",
         "bullets": [
           "กดยืนยันแก้ PO ซ้ำ: ส่งครั้งเดียวและคงรายการรถ/ไฟล์ที่จะบันทึกชุดเดิมระหว่างรอ",
-          "บันทึกไม่สำเร็จ: กลับหรือคงฟอร์มพร้อม ข้อมูลที่ยังไม่บันทึก ไม่พาไป F.4 ให้ดูเหมือนแก้สำเร็จ"
+          "บันทึกไม่สำเร็จ: กลับหรือคง form พร้อม ข้อมูลที่ยังไม่บันทึก ไม่พาไป F.4 ให้ดูเหมือนแก้สำเร็จ"
         ]
       }
     ],
@@ -2020,7 +2236,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract โหลดใหม่: จำนวนรถ/แถว/ข้อมูล PO ต้องตรงผลบันทึก รถที่เพิ่มเริ่มรอนัดเข้าอู่ รถเดิมคงสถานะ ไม่ reset ทุกคัน",
+          "NEW — เพิ่ม behavior โหลดใหม่: จำนวนรถ/แถว/ข้อมูล PO ต้องตรงผลบันทึก รถที่เพิ่มเริ่มรอนัดเข้าอู่ รถเดิมคงสถานะ ไม่ reset ทุกคัน",
           "NEW — เพิ่ม toast แก้สำเร็จครั้งเดียวหลังบันทึก ไม่ยิงใหม่เมื่อกลับมาอ่านรายละเอียด"
         ]
       },
@@ -2082,8 +2298,8 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract ยกเลิก/×/Esc/พื้นหลัง: กลับรายละเอียดแผนหรือ PO ที่เปิดกล่อง คง PO/รถเดิม ไม่ลบจากการปิด modal",
-          "NEW — เพิ่ม contract ยืนยัน: ลบครั้งเดียวแล้วไป G.2 เมื่อสำเร็จ; เงื่อนไข PO ที่รถเริ่มงานแล้วต้องตกลงก่อนเปิดให้ยืนยัน"
+          "NEW — เพิ่ม behavior ยกเลิก/×/Esc/พื้นหลัง: กลับรายละเอียดแผนหรือ PO ที่เปิดกล่อง คง PO/รถเดิม ไม่ลบจากการปิด modal",
+          "NEW — เพิ่ม behavior ยืนยัน: ลบครั้งเดียวแล้วไป G.2 เมื่อสำเร็จ; เงื่อนไข PO ที่รถเริ่มงานแล้วต้องตกลงก่อนเปิดให้ยืนยัน"
         ]
       },
       {
@@ -2189,13 +2405,13 @@ const FRAME_STORIES = {
     }
   },
   "H.1": {
-    "title": "AC H.1 — ฟอร์มนัด Default",
+    "title": "AC H.1 — form นัด Default",
     "sections": [
       {
         "level": "h2",
         "label": "ภาพรวมหน้านี้",
         "bullets": [
-          "What: นัดหมายรถเข้าอู่และติดตามผลตอบรับ — ฟอร์มนัด Default",
+          "What: นัดหมายรถเข้าอู่และติดตามผลตอบรับ — form นัด Default",
           "Who: กบค. ใช้จัดการนัด; หน่วยงานเจ้าของรถตอบรับหรือปฏิเสธนัดของตน; กรย. เขตดูข้อมูลตามสิทธิ์",
           "Do: เลือกวันเวลาและกรอกข้อมูลนัดเข้าอู่ แล้วส่งนัดหรือยกเลิก"
         ]
@@ -2204,14 +2420,14 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีฟอร์มนัดเข้าอู่ แต่ยังไม่แยกทางออกจากหน้างานกับการถอยสถานะงาน"
+          "จากเดิม มี form นัดเข้าอู่ แต่ยังไม่แยกทางออกจากหน้างานกับการถอยสถานะงาน"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract ย้อนกลับ: ไป E.10 ของ PO นี้ ไม่ย้อนสถานะรถ; มี ข้อมูลที่ยังไม่บันทึก เปิดยืนยันออกก่อน",
+          "NEW — เพิ่ม behavior ย้อนกลับ: ไป E.10 ของ PO นี้ ไม่ย้อนสถานะรถ; มี ข้อมูลที่ยังไม่บันทึก เปิดยืนยันออกก่อน",
           "NEW — เพิ่มค่าเริ่มต้น: ช่วงวัน/ผู้ประสานงานยังไม่เลือก ข้อมูลอู่ดูอย่างเดียว และส่งนัดยังไม่พร้อมจนข้อมูลครบ"
         ]
       },
@@ -2275,7 +2491,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "CHANGE — เปลี่ยนรายละเอียด validation เป็น blur/ปิดช่องว่างตาม AC ล่าสุด ไม่ใช้ชื่อ state เดิมเป็นเหตุให้ส่ง request ก่อนเตือน",
+          "CHANGE — เปลี่ยนรายละเอียด validation เป็น blur เมื่อออกจากช่องบังคับที่ยังว่าง ไม่ใช้ชื่อ state เดิมเป็นเหตุให้ส่ง request ก่อนเตือน",
           "NEW — เพิ่มข้อกำหนด Clear/คลิกนอก/Esc ของปฏิทิน: ปิดเฉพาะแผง ไม่ออกจากหน้างาน และคำนวณ error/ปุ่มส่งตามค่าที่ยังเหลือ"
         ]
       },
@@ -2284,7 +2500,7 @@ const FRAME_STORIES = {
         "label": "UI Component & Behavior",
         "bullets": [
           "พฤติกรรมการใช้งาน\n  - เมื่อออกจากช่องที่จำเป็นโดยไม่กรอก ให้ขึ้นข้อความเตือนตามหน้าจอ\n  - เมื่อกรอกถูกต้องให้ลบข้อความเตือนของช่องนั้น\n  - หากข้อมูลยังไม่ครบ ต้องไม่ส่งข้อมูลผิดไปบันทึก",
-          "Date Input\n  - เปิดแล้วปิดช่องโดยไม่เลือก ขอบแดง + \"กรุณาเลือกช่วงวันนำรถเข้า\" และ/หรือ \"กรุณาเลือกผู้ประสานงาน\"\n  - ปฏิทินเปิดเป็น dropdown มีปุ่ม \"Clear\"\n  - ช่องเลือกช่วงวันที่ (DateRangeInput) และช่องเลือกผู้ประสานงาน: เปิดแล้วปิดโดยยังไม่เลือกให้ขึ้นขอบแดงและ error ของช่องนั้น\n  - จาก ช่องเลือกช่วงวันที่ (DateRangeInput): คลิกนอกช่องหรือกด Esc → ปิดเฉพาะแผงปฏิทิน ไม่ออกจากหน้างาน; การแสดง validation ตอน blur ยังเป็นหน้าที่ของฟอร์ม ไม่ใช่แผงปฏิทินทำให้เอง",
+          "Date Input\n  - เปิดแล้วปิดช่องโดยไม่เลือก ขอบแดง + \"กรุณาเลือกช่วงวันนำรถเข้า\" และ/หรือ \"กรุณาเลือกผู้ประสานงาน\"\n  - ปฏิทินเปิดเป็น dropdown มีปุ่ม \"Clear\"\n  - ช่องเลือกช่วงวันที่ (DateRangeInput) และช่องเลือกผู้ประสานงาน: เปิดแล้วปิดโดยยังไม่เลือกให้ขึ้นขอบแดงและ error ของช่องนั้น\n  - จาก ช่องเลือกช่วงวันที่ (DateRangeInput): คลิกนอกช่องหรือกด Esc → ปิดเฉพาะแผงปฏิทิน ไม่ออกจากหน้างาน; การแสดง validation ตอน blur ยังเป็นหน้าที่ของ form ไม่ใช่แผงปฏิทินทำให้เอง",
           "Buttons\n  - ปุ่ม “Clear” ในปฏิทิน: ล้างช่วงวันแล้วคำนวณ validation/ปุ่มส่งใหม่ ไม่คงวันเดิมในข้อมูลที่จะส่ง"
         ]
       },
@@ -2328,8 +2544,8 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่มข้อกำหนดวันร่าง/Apply/Cancel ตาม AC; ปฏิทินในโค้ดยังแก้ค่าทันทีและไม่มี Apply/Cancel ต้องพัฒนาเพิ่มก่อนอ้างว่ารองรับ",
-          "NEW — เพิ่ม contract ผู้ประสานงาน (Combobox): blur คืนชื่อที่เลือก Esc ปิด Enter เลือกแถวจริง และเบอร์เปลี่ยนตามคนนั้น ไม่ส่งนัดจากการเลือกชื่ออย่างเดียว"
+          "NEW — เลือกวันในปฏิทินแล้วกด “Apply” เพื่อใช้ช่วงวันที่เลือก; กด “Cancel” เพื่อปิดปฏิทินและใช้ช่วงวันเดิม; ปฏิทินในโค้ดยังแก้ค่าทันทีและไม่มี Apply/Cancel ต้องพัฒนาเพิ่มก่อนอ้างว่ารองรับ",
+          "NEW — เพิ่ม behavior ผู้ประสานงาน (Combobox): blur คืนชื่อที่เลือก Esc ปิด Enter เลือกแถวจริง และเบอร์เปลี่ยนตามคนนั้น ไม่ส่งนัดจากการเลือกชื่ออย่างเดียว"
         ]
       },
       {
@@ -2338,10 +2554,10 @@ const FRAME_STORIES = {
         "bullets": [
           "พฤติกรรมการใช้งาน\n  - เลือกวันและเวลาแล้วตรวจว่าข้อมูลจำเป็นครบก่อนส่ง\n  - ออกจากช่องที่บังคับแต่ยังว่างให้ขึ้นคำเตือน และแก้ถูกแล้วเตือนหาย\n  - ระหว่างส่งนัดห้ามกดส่งซ้ำ\n  - ช่องพิมพ์ค้นและรายการตัวเลือก ผู้ประสานงาน: เลือกชื่อจริงจากรายการสองบรรทัดแล้วเติมเบอร์ของคนนั้น; แก้คำค้นต้องไม่คงผู้ประสานงานผิดคน",
           "Status (StatusBadge)\n  - ส่งสำเร็จให้แสดงสถานะรอหน่วยงานตอบรับ; ไม่สำเร็จต้องคงค่าที่กรอก",
-          "Date Input\n  - เลือกช่วงวัน ปฏิทิน 2 เดือนเลือกวันเริ่ม-สิ้นสุด ปุ่ม \"Cancel\" / \"Apply\" แสดงผล \"22/10/2569 - 24/10/2569\"\n  - ช่องเลือกช่วงวันที่ (DateRangeInput) สองเดือน: เก็บช่วงวันที่กำลังเลือกแยกจากค่าที่ Apply; Cancel ไม่เปลี่ยนค่าที่แสดงในฟอร์ม\n  - จาก ช่องเลือกช่วงวันที่ (DateRangeInput) ปัจจุบัน: คลิกนอก/Esc ปิดแผง และการเลือกวันแก้ค่าฟอร์มทันที ไม่มีปุ่ม Apply/Cancel; ต่างจาก AC ที่มี ข้อมูลที่ยังไม่บันทึก และ Apply/Cancel จึงต้องเคาะ/ปรับ component ไม่อ้างว่ารองรับแล้ว",
+          "Date Input\n  - เลือกช่วงวัน ปฏิทิน 2 เดือนเลือกวันเริ่ม-สิ้นสุด ปุ่ม \"Cancel\" / \"Apply\" แสดงผล \"22/10/2569 - 24/10/2569\"\n  - ช่องเลือกช่วงวันที่ (DateRangeInput) สองเดือน: เก็บช่วงวันที่กำลังเลือกแยกจากค่าที่ Apply; Cancel ไม่เปลี่ยนค่าที่แสดงใน form\n  - จาก ช่องเลือกช่วงวันที่ (DateRangeInput) ปัจจุบัน: คลิกนอก/Esc ปิดแผง และการเลือกวันแก้ค่า form ทันที ไม่มีปุ่ม Apply/Cancel; ต่างจาก AC ที่มี ข้อมูลที่ยังไม่บันทึก และ Apply/Cancel จึงต้องเคาะ/ปรับ component ไม่อ้างว่ารองรับแล้ว",
           "Select Field\n  - พิมพ์ค้นผู้ประสานงาน dropdown แต่ละรายการ 2 บรรทัด: ชื่อ (\"นายวิชัย ทองดี\") และ \"ตำแหน่ง · เบอร์\" (\"วิศวกร กบค. · 02-590-9123\")\n  - ผู้ประสานงาน (กบค.) เป็นช่องเลือกแบบพิมพ์ค้นหาชื่อ [Sheet พี่นุ — OH-5, ✅ CF]",
           "Buttons\n  - เลือก ช่องแสดง \"นายวิชัย ทองดี วิศวกร กบค.\" เบอร์ \"02-590-9123\" เติมอัตโนมัติ ปุ่ม \"ส่งนัดหมาย\" enable\n  - ปุ่ม “ส่งนัดหมาย”: enable เมื่อเลือกข้อมูลครบ; รูปแบบปฏิทินไทย/พ.ศ. ต้องตรงค่าที่แสดงและข้อสรุปทีม",
-          "Combobox\n  - จาก ช่องพิมพ์ค้นและเลือกจากรายการ (Combobox) ผู้ประสานงาน: blur ปิดรายการคืนชื่อที่เลือกไว้, Esc ปิดไม่เลือกใหม่, Enter เลือกแถวที่ไฮไลต์; ไม่ออกจากหน้าฟอร์มเพียงเพราะปิด รายการตัวเลือก"
+          "Combobox\n  - จาก ช่องพิมพ์ค้นและเลือกจากรายการ (Combobox) ผู้ประสานงาน: blur ปิดรายการคืนชื่อที่เลือกไว้, Esc ปิดไม่เลือกใหม่, Enter เลือกแถวที่ไฮไลต์; ไม่ออกจากหน้า form เพียงเพราะปิด รายการตัวเลือก"
         ]
       },
       {
@@ -2385,7 +2601,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม เดิมมีผลส่งนัดเข้าอู่ล้มเหลวภายใต้ H.4 แต่ไม่แยกผลต่อ ข้อมูลที่ยังไม่บันทึก/ปุ่มส่งใหม่เป็น contract ครบ"
+          "จากเดิม เดิมมีผลส่งนัดเข้าอู่ล้มเหลวภายใต้ H.4 แต่ไม่แยกผลต่อ ข้อมูลที่ยังไม่บันทึก/ปุ่มส่งใหม่เป็น behavior ครบ"
         ]
       },
       {
@@ -2447,7 +2663,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract ระหว่างรอ: ส่งสำเร็จยังไม่ถือว่าหน่วยงานตอบรับและไม่เลื่อนขั้นเอง; toast เกิดครั้งเดียว",
+          "NEW — เพิ่ม behavior ระหว่างรอ: ส่งสำเร็จยังไม่ถือว่าหน่วยงานตอบรับและไม่เลื่อนขั้นเอง; toast เกิดครั้งเดียว",
           "NEW — เพิ่มปุ่มแก้ไขนัด: เปิด H.4.3 ด้วยนัดปัจจุบันและตรวจสถานะตอบรับล่าสุดก่อนให้แก้"
         ]
       },
@@ -2457,7 +2673,7 @@ const FRAME_STORIES = {
         "bullets": [
           "พฤติกรรมการใช้งาน\n  - ปรับรายการหรือรายละเอียดล่าสุดให้เห็นตรงกับข้อมูลที่บันทึก\n  - ไม่ให้กดยืนยันซ้ำขณะกำลังส่งข้อมูล\n  - Toast #13: \"นัดหมาย {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} สำเร็จ\" (🤔 แก้จาก \"การสร้าง นัดหมาย สำเร็จ\") ตรงกับ mock [Sheet พี่นุ]\n  - Notification #13: ข้อความเดียวกับ toast ส่งถึงหน่วยงานเจ้าของรถของคันนั้น [Sheet พี่นุ]\n  - ข้อความแจ้งผลมุมขวาบน สำเร็จ: แสดงหลังส่งสำเร็จครั้งเดียว; วิธีแสดงผลเมื่อหน่วยงานตอบภายหลังยังต้องตกลง",
           "Status (StatusBadge)\n  - เมื่อระบบยืนยันว่าทำสำเร็จ จึงเปลี่ยนหน้า/สถานะและแสดงข้อความสำเร็จ\n  - ส่งสำเร็จ toast \"นัดหมาย {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} สำเร็จ\" สถานะเป็น \"รอหน่วยงานตอบรับนัดเข้าอู่\"\n  - สถานะ \"รอหน่วยงานตอบรับนัดเข้าอู่\" หน่วยงานเจ้าของรถกดตอบรับ สถานะเป็น \"รอตรวจรับรถ\" (status final: \"หน่วยงานตอบรับเข้าอู่แล้ว\") stepper ไปขั้น 02\n  - Status: \"รอหน่วยงานตอบรับนัดเข้าอู่\" (status final: \"รอหน่วยงานตอบรับเข้าอู่\") [Sheet พี่นุ]\n  - ป้ายสถานะ/รายการที่เลือก สถานะและข้อความ “รอตอบกลับจากหน่วยงาน”: แสดงผลนัดที่ส่งสำเร็จ ไม่เปลี่ยนเป็นตอบรับเอง",
-          "Buttons\n  - ส่วนฟอร์มถูกแทนด้วย empty \"รอตอบกลับจากหน่วยงาน\" และปุ่ม \"แก้ไขนัดหมาย\"\n  - ปุ่ม “แก้ไขนัดหมาย”: เปิด H.4.3 พร้อมนัดปัจจุบัน และตรวจว่ายังแก้ได้เมื่อกด"
+          "Buttons\n  - ส่วน form ถูกแทนด้วย empty \"รอตอบกลับจากหน่วยงาน\" และปุ่ม \"แก้ไขนัดหมาย\"\n  - ปุ่ม “แก้ไขนัดหมาย”: เปิด H.4.3 พร้อมนัดปัจจุบัน และตรวจว่ายังแก้ได้เมื่อกด"
         ]
       },
       {
@@ -2516,15 +2732,15 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract ข้อมูลที่ยังไม่บันทึก แก้นัด: ปิด dropdown/ปฏิทินไม่ยกเลิกนัดเดิม; ย้อนกลับไป PO ผ่าน guard ปิดกล่องแล้วกลับ ข้อมูลที่ยังไม่บันทึก เดิม",
-          "NEW — เพิ่มการส่งใหม่: ตรวจว่ายังไม่มีคำตอบจากหน่วยงานระหว่างเปิดฟอร์มก่อนแก้นัด และกันกดซ้ำ"
+          "NEW — เพิ่ม behavior ข้อมูลที่ยังไม่บันทึก แก้นัด: ปิด dropdown/ปฏิทินไม่ยกเลิกนัดเดิม; ย้อนกลับไป PO ผ่าน guard ปิดกล่องแล้วกลับ ข้อมูลที่ยังไม่บันทึก เดิม",
+          "NEW — เพิ่มการส่งใหม่: ตรวจว่ายังไม่มีคำตอบจากหน่วยงานระหว่างเปิด form ก่อนแก้นัด และกันกดซ้ำ"
         ]
       },
       {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - เปิดฟอร์มโดยใส่วัน เวลา และข้อมูลนัดเดิมให้เห็น\n  - แก้ค่าใหม่แล้วตรวจว่าข้อมูลจำเป็นครบก่อนส่งอีกครั้ง\n  - หากยกเลิกการแก้ไข ให้ข้อมูลเดิมไม่เปลี่ยน\n  - กด \"แก้ไขนัดหมาย\" ฟอร์มเปิดพร้อมค่าเดิม (22/10/2569 - 24/10/2569, นายวิชัย ทองดี, 02-590-9123) แก้ได้ทุกช่อง",
+          "พฤติกรรมการใช้งาน\n  - เปิด form โดยใส่วัน เวลา และข้อมูลนัดเดิมให้เห็น\n  - แก้ค่าใหม่แล้วตรวจว่าข้อมูลจำเป็นครบก่อนส่งอีกครั้ง\n  - หากยกเลิกการแก้ไข ให้ข้อมูลเดิมไม่เปลี่ยน\n  - กด \"แก้ไขนัดหมาย\" form เปิดพร้อมค่าเดิม (22/10/2569 - 24/10/2569, นายวิชัย ทองดี, 02-590-9123) แก้ได้ทุกช่อง",
           "Status (StatusBadge)\n  - กด \"ส่งนัดหมาย\" ถือเป็นการส่งนัดใหม่ ใช้ toast และสถานะเดียวกับ H.4.2\n  - แก้ไขนัดได้จนกว่าหน่วยงานจะตอบ แก้แล้วส่งใหม่ใช้ toast #13 \"นัดหมาย {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} สำเร็จ\" และสถานะกลับเป็น \"รอหน่วยงานตอบรับนัดเข้าอู่\" (ตอบ ⚠️ ด้านบนแล้ว) [Sheet พี่นุ — PEA]\n  - ป้ายสถานะ/รายการที่เลือก สถานะ: ใช้ผลนัดล่าสุดหลังส่งใหม่ ไม่คงป้ายปฏิเสธหรือค่าจาก ข้อมูลที่ยังไม่บันทึก",
           "Date Input\n  - ช่องเลือกช่วงวันที่ (DateRangeInput)/ช่องผู้ประสานงาน: เติมข้อมูลนัดเดิมและเปิดแก้เป็น ข้อมูลที่ยังไม่บันทึก\n  - ปิดเฉพาะ รายการตัวเลือก ผู้ประสานงาน/ปฏิทินด้วยคลิกนอก ไม่ถือเป็นการยกเลิกนัดที่เคยส่ง",
           "Buttons\n  - ปุ่มส่งนัดใหม่: ตรวจสิทธิ์และสถานะตอบรับล่าสุดก่อนส่ง พร้อมกันกดซ้ำ\n  - ออกจากการแก้นัดด้วยปุ่มย้อนกลับ → ขอไปรายละเอียด PO ผ่าน leave guard ของ หน้าหน้างานรถรายคัน (JobView); ถ้ามี ข้อมูลที่ยังไม่บันทึก ปิดกล่องยืนยันการออกจะกลับนัดที่กำลังแก้ ไม่ใช่ส่งนัดใหม่"
@@ -2579,7 +2795,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract กล่องเหตุผล: คงหมายเหตุของครั้งที่ปฏิเสธแบบอ่านอย่างเดียวขณะปรับวัน/ผู้ประสานงานนัดใหม่",
+          "NEW — เพิ่ม behavior กล่องเหตุผล: คงหมายเหตุของครั้งที่ปฏิเสธแบบอ่านอย่างเดียวขณะปรับวัน/ผู้ประสานงานนัดใหม่",
           "NEW — เพิ่มทางออก: ย้อนกลับผ่าน guard ไป PO ไม่ลบประวัติปฏิเสธ; ส่งใหม่เปลี่ยนสถานะเมื่อสำเร็จเท่านั้น"
         ]
       },
@@ -2587,12 +2803,12 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - ผู้มีสิทธิ์แก้ไขนัดต้องกลับไปเลือกวัน/ข้อมูลนัดใหม่ได้\n  - ห้ามข้ามไปขั้นถัดไปเพียงเพราะส่งนัดไปแล้ว\n  - ฟอร์มเติมค่านัดเดิม แก้แล้วกด \"ส่งนัดหมาย\" ได้ → กลับไป H.4.2\n  - Action (PEA): หน่วยงานปฏิเสธนัด + หมายเหตุ (เหตุผล) [Sheet พี่นุ]\n  - Toast #16 (ถึง กบค.): \"หน่วยงาน {สังกัด} ของ {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} ปฏิเสธนัดหมาย\" (ประเภทแจ้งเตือน) [Sheet พี่นุ]\n  - กบค. แก้ไขนัดแล้วส่งใหม่: toast #13 สถานะกลับเป็น \"รอหน่วยงานตอบรับนัดเข้าอู่\" [Sheet พี่นุ]",
-          "Status (StatusBadge)\n  - เมื่อหน่วยงานปฏิเสธ ให้แสดงสถานะปฏิเสธตามจอ\n  - หน่วยงานปฏิเสธนัด สถานะ \"หน่วยงานปฏิเสธนัดเข้าอู่\" แสดงกล่อง \"เหตุผลการปฏิเสธ\" (เช่น \"รถติดภารกิจซ่อมบำรุงสายส่ง ขอเลื่อนเป็นสัปดาห์ถัดไป\") เหนือฟอร์ม\n  - Status: \"หน่วยงานปฏิเสธนัดเข้าอู่\" (status final: \"หน่วยงานปฏิเสธเข้าอู่\") [Sheet พี่นุ]",
+          "พฤติกรรมการใช้งาน\n  - ผู้มีสิทธิ์แก้ไขนัดต้องกลับไปเลือกวัน/ข้อมูลนัดใหม่ได้\n  - ห้ามข้ามไปขั้นถัดไปเพียงเพราะส่งนัดไปแล้ว\n  - form เติมค่านัดเดิม แก้แล้วกด \"ส่งนัดหมาย\" ได้ → กลับไป H.4.2\n  - Action (PEA): หน่วยงานปฏิเสธนัด + หมายเหตุ (เหตุผล) [Sheet พี่นุ]\n  - Toast #16 (ถึง กบค.): \"หน่วยงาน {สังกัด} ของ {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} ปฏิเสธนัดหมาย\" (ประเภทแจ้งเตือน) [Sheet พี่นุ]\n  - กบค. แก้ไขนัดแล้วส่งใหม่: toast #13 สถานะกลับเป็น \"รอหน่วยงานตอบรับนัดเข้าอู่\" [Sheet พี่นุ]",
+          "Status (StatusBadge)\n  - เมื่อหน่วยงานปฏิเสธ ให้แสดงสถานะปฏิเสธตามจอ\n  - หน่วยงานปฏิเสธนัด สถานะ \"หน่วยงานปฏิเสธนัดเข้าอู่\" แสดงกล่อง \"เหตุผลการปฏิเสธ\" (เช่น \"รถติดภารกิจซ่อมบำรุงสายส่ง ขอเลื่อนเป็นสัปดาห์ถัดไป\") เหนือ form\n  - Status: \"หน่วยงานปฏิเสธนัดเข้าอู่\" (status final: \"หน่วยงานปฏิเสธเข้าอู่\") [Sheet พี่นุ]",
           "Modal\n  - กล่องเหตุผลการปฏิเสธ: แสดงหมายเหตุของนัดที่ถูกปฏิเสธแบบอ่านอย่างเดียว",
           "Date Input\n  - ช่องเลือกช่วงวันที่ (DateRangeInput)/ผู้ประสานงาน: เติมค่าครั้งก่อนให้แก้ใหม่โดยไม่ทำเหตุผลปฏิเสธเดิมหายระหว่างกรอก",
           "Buttons\n  - ปุ่มส่งนัดใหม่: ส่งค่าที่แก้ และอัปเดตกล่องสถานะตามผล server",
-          "Navigation\n  - กด “ย้อนกลับ” ออกจากฟอร์มที่แก้นัดหลังถูกปฏิเสธ ใช้ leave guard แล้วกลับรายละเอียด PO; การปิดกล่องยืนยันการออกคงเหตุผลปฏิเสธและ ข้อมูลที่ยังไม่บันทึก ไว้ ไม่ลบประวัตินัด"
+          "Navigation\n  - กด “ย้อนกลับ” ออกจาก form ที่แก้นัดหลังถูกปฏิเสธ ใช้ leave guard แล้วกลับรายละเอียด PO; การปิดกล่องยืนยันการออกคงเหตุผลปฏิเสธและ ข้อมูลที่ยังไม่บันทึก ไว้ ไม่ลบประวัตินัด"
         ]
       },
       {
@@ -2676,7 +2892,7 @@ const FRAME_STORIES = {
         "label": "Error Handling / Edge Cases",
         "bullets": [
           "กลับมาอ่านขั้นนัดที่ผ่านแล้ว: ไม่เปิดให้แก้/ส่งนัดจากปุ่มค้างหรือ URL ที่เคยใช้",
-          "โหลดนัดเดิมไม่สำเร็จ: แจ้งให้ลองโหลดใหม่ ไม่แสดงฟอร์มว่างที่ทำให้เข้าใจว่าต้องนัดอีกครั้ง"
+          "โหลดนัดเดิมไม่สำเร็จ: แจ้งให้ลองโหลดใหม่ ไม่แสดง form ว่างที่ทำให้เข้าใจว่าต้องนัดอีกครั้ง"
         ]
       },
       {
@@ -2710,15 +2926,15 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีรายการตรวจรับและลงนาม แต่ไม่ครบ contract รายแถว/การยกเลิก ข้อมูลที่ยังไม่บันทึก จากหน้างาน"
+          "จากเดิม มีรายการตรวจรับและลงนาม แต่ไม่ครบ behavior รายแถว/การยกเลิก ข้อมูลที่ยังไม่บันทึก จากหน้างาน"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract checklist: radio มี/ไม่มีหนึ่งค่า และ checkbox/หมายเหตุเก็บตามแถว ไม่ reset เมื่อเลือกผู้เซ็น",
-          "NEW — เพิ่ม dirty guard ก่อนกลับ PO เมื่อแก้ checklist/ผู้ลงนาม; ปิดกล่องคง ข้อมูลที่ยังไม่บันทึก ยืนยันออกจึงทิ้งส่วนยังไม่บันทึก"
+          "NEW — เพิ่ม behavior checklist: radio มี/ไม่มีหนึ่งค่า และ checkbox/หมายเหตุเก็บตามแถว ไม่ reset เมื่อเลือกผู้เซ็น",
+          "NEW — เพิ่ม การตรวจข้อมูลที่ยังไม่บันทึกก่อนออกจากหน้า ก่อนกลับ PO เมื่อแก้ checklist/ผู้ลงนาม; ปิดกล่องคง ข้อมูลที่ยังไม่บันทึก ยืนยันออกจึงทิ้งส่วนยังไม่บันทึก"
         ]
       },
       {
@@ -2729,7 +2945,7 @@ const FRAME_STORIES = {
           "Signature\n  - วาดลายเซ็นได้ ลบแล้วเซ็นใหม่ได้; ช่องลายเซ็นว่างต้องไม่นับว่าเซ็นแล้ว\n  - ยืนยันรับรถได้เมื่อข้อมูลตรวจและลายเซ็นครบตามกติกาในจอ",
           "Stepper\n  - สถานะ \"รอตรวจรับรถ\" stepper ขั้น 01 เป็นเครื่องหมายถูก ขั้น 02 \"ตรวจรับรถ\" เป็นปัจจุบัน",
           "Buttons\n  - แสดง checklist 13 ข้อยังไม่เลือก และปุ่ม \"+ เพิ่มรายการ\" ใต้ตาราง\n  - ปุ่ม \"ย้อนกลับ\" / \"ยืนยันรับรถ\" (disable)\n  - ปุ่ม “+ เพิ่มรายการ”: ยังต้องตกลงรูปแบบแถวใหม่และการลบ จึงไม่สร้างวิธีเพิ่มเอง\n  - ปุ่ม “ยืนยันรับรถ”: เริ่ม disable ตาม state เริ่มต้น",
-          "Table (DataTable)\n  - Behavior\n    - ตารางตรวจรับรถ (OH-5, ✅ CF): รายการตรวจสอบ, ผลตรวจ, หมายเหตุ (mock แยกผลตรวจเป็น มี/ไม่มี/ชำรุด/ผิดรุ่น) [Sheet พี่นุ]\n    - ตารางรายการตรวจสอบ 13 ข้อ: radio มี/ไม่มีเลือกได้หนึ่งค่า ส่วน ช่องติ๊กเลือก ชำรุด/ผิดรุ่นเก็บแยก; note เป็น ช่องกรอก ของแต่ละแถว",
+          "Table (DataTable)\n  - Behavior\n    - ตารางตรวจรับรถ (OH-5, ✅ CF): รายการตรวจสอบ, ผลตรวจ, หมายเหตุ (mock แยกผลตรวจเป็น มี/ไม่มี/ชำรุด/ผิดรุ่น) [Sheet พี่นุ]\n    - ตารางรายการตรวจสอบ 13 ข้อ: radio มี/ไม่มีเลือกได้หนึ่งค่า ส่วน checkbox ชำรุด/ผิดรุ่นเก็บแยก; note เป็น ช่องกรอก ของแต่ละแถว",
           "Status (StatusBadge)\n  - Status: \"รอตรวจรับรถ\" (status final: \"หน่วยงานตอบรับเข้าอู่แล้ว\") [Sheet พี่นุ]",
           "Select Field\n  - ช่องเลือกจากรายการ ผู้ส่งมอบ/ผู้รับมอบ และปุ่ม “เซ็นลงนาม”: เก็บแยกสองฝ่าย; เงื่อนไขเปิดเซ็นก่อนเลือกชื่อยังต้องตกลง"
         ]
@@ -2804,7 +3020,7 @@ const FRAME_STORIES = {
           "Signature\n  - วาดลายเซ็นได้ ลบแล้วเซ็นใหม่ได้; ช่องลายเซ็นว่างต้องไม่นับว่าเซ็นแล้ว\n  - ยืนยันรับรถได้เมื่อข้อมูลตรวจและลายเซ็นครบตามกติกาในจอ",
           "Status (StatusBadge)\n  - กบค. เลือกสถานะแต่ละข้อและใส่หมายเหตุ (เช่น \"ต้องติดต่อขนส่ง\", \"รอทำเรื่องเบิกเพื่อนำมาติดตั้งอย่างเร่งด่วน\", \"รอจัดซื้อมาติดตั้ง\") และแบตเตอรี่ \"GS Yuasa\" \"1\" ลูก ค่าแสดงในตาราง",
           "Buttons\n  - เลือกผู้ส่งมอบ \"นายอนุชิต ลิ้มกิมฮวย\" และผู้รับมอบ \"นายสมาน ใจมั่น\" ชื่อแสดงในช่อง ปุ่ม \"เซ็นลงนาม\" ทั้งสองยังไม่ได้เซ็น \"ยืนยันรับรถ\" ยัง disable\n  - ปุ่ม “เซ็นลงนาม” สองฝ่าย: เปิด กล่องโต้ตอบกลางจอ (Modal) ของฝ่ายที่กด; “ยืนยันรับรถ” ยัง disable เพราะยังไม่มีลายเซ็น",
-          "Checkbox\n  - ตัวเลือกที่เลือกได้หนึ่งค่า/ช่องติ๊กเลือก และ ช่องกรอก หมายเหตุใน checklist: รักษาค่าต่อแถว ไม่ reset เมื่อลงชื่อ",
+          "Checkbox\n  - ตัวเลือกที่เลือกได้หนึ่งค่า/checkbox และ ช่องกรอก หมายเหตุใน checklist: รักษาค่าต่อแถว ไม่ reset เมื่อลงชื่อ",
           "Select Field\n  - ช่องเลือกจากรายการ ผู้ส่งมอบ/ผู้รับมอบ: เลือกแล้วแสดงชื่อ แต่ยังไม่ถือว่าเซ็นแล้ว"
         ]
       },
@@ -2847,7 +3063,7 @@ const FRAME_STORIES = {
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
           "NEW — เพิ่มกล่องวาดลายเซ็นว่างพร้อมชื่อ/บทบาทของฝ่ายที่กด และปุ่มบันทึก disable เมื่อยังไม่มีเส้นวาด; ต้องพัฒนา canvas เพิ่ม",
-          "NEW — เพิ่ม contract ปิด/×/Esc/พื้นหลัง: ทิ้งภาพ ข้อมูลที่ยังไม่บันทึก แล้วกลับ I.2 ฝ่ายเดิม โดยคลิก/วาดในกล่องไม่ทำให้ modal ปิด"
+          "NEW — เพิ่ม behavior ปิด/×/Esc/พื้นหลัง: ทิ้งภาพ ข้อมูลที่ยังไม่บันทึก แล้วกลับ I.2 ฝ่ายเดิม โดยคลิก/วาดในกล่องไม่ทำให้ modal ปิด"
         ]
       },
       {
@@ -2950,15 +3166,15 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีจอเซ็นสองฝ่ายภายใต้ I.2 แต่ไม่ครบ contract แก้ลายเซ็น/เปลี่ยนชื่อ/ยืนยันซ้ำ"
+          "จากเดิม มีจอเซ็นสองฝ่ายภายใต้ I.2 แต่ไม่ครบ behavior แก้ลายเซ็น/เปลี่ยนชื่อ/ยืนยันซ้ำ"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract แก้ลงนามรายฝ่าย: ปิดโดยไม่บันทึกคงภาพเดิม ส่วนเปลี่ยนชื่อผู้เซ็นหลังเซ็นแล้วต้องตกลงการล้างภาพ",
-          "NEW — เพิ่ม contract ยืนยันรับรถ: กันกดซ้ำและไปกำลังซ่อมหลังผลบันทึกจริง ไม่เลื่อนขั้นจากการปิด modal"
+          "NEW — เพิ่ม behavior แก้ลงนามรายฝ่าย: ปิดโดยไม่บันทึกคงภาพเดิม ส่วนเปลี่ยนชื่อผู้เซ็นหลังเซ็นแล้วต้องตกลงการล้างภาพ",
+          "NEW — เพิ่ม behavior ยืนยันรับรถ: กันกดซ้ำและไปกำลังซ่อมหลังผลบันทึกจริง ไม่เลื่อนขั้นจากการปิด modal"
         ]
       },
       {
@@ -3021,7 +3237,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract state ว่าง: แสดงเมื่อโหลดสำเร็จแล้วไม่มีรายการ ไม่ใช้แทน loading/error หรือคงแถวเก่า",
+          "NEW — เพิ่ม behavior state ว่าง: แสดงเมื่อโหลดสำเร็จแล้วไม่มีรายการ ไม่ใช้แทน loading/error หรือคงแถวเก่า",
           "NEW — เพิ่ม action: ปุ่มเพิ่มเปิด J.2 ปุ่มซ่อมสำเร็จยังไม่พร้อมเมื่อยังไม่มีรายการที่บันทึกจริง"
         ]
       },
@@ -3086,15 +3302,15 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มี popup เพิ่มความคืบหน้าและยกเลิก แต่ยังไม่ครบ contract ปิดพื้นหลัง/Esc กับ ข้อมูลที่ยังไม่บันทึก"
+          "จากเดิม มี popup เพิ่มความคืบหน้าและยกเลิก แต่ยังไม่ครบ behavior คลิกพื้นที่นอกแผงหรือกด Esc เพื่อปิด กับ ข้อมูลที่ยังไม่บันทึก"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract ยกเลิก/×/Esc/พื้นหลัง: ปิด popup กลับ J.1/J.3 โดยไม่บันทึก textarea; คลิกใน popup ไม่ปิด",
-          "CHANGE — ยึดฟิลด์ตาม AC ปัจจุบันที่ไม่มีวันที่/เวลา ไม่ยกฟิลด์วันที่/เวลาจาก prototype มาเพิ่มโดยไม่มีข้อสรุป"
+          "NEW — เพิ่ม behavior ยกเลิก/×/Esc/พื้นหลัง: ปิด popup กลับ J.1/J.3 โดยไม่บันทึก textarea; คลิกใน popup ไม่ปิด",
+          "CHANGE — แสดงช่องรายละเอียดความคืบหน้าและหมายเหตุ โดยไม่มีช่องวันที่/เวลา ไม่ยกฟิลด์วันที่/เวลาจาก prototype มาเพิ่มโดยไม่มีข้อสรุป"
         ]
       },
       {
@@ -3147,7 +3363,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract ตาราง: เพิ่มเฉพาะแถวที่บันทึกสำเร็จ มีวันที่/รายละเอียด/หมายเหตุตรงผลจริง และไม่ซ้ำจาก retry",
+          "NEW — เพิ่ม behavior ตาราง: เพิ่มเฉพาะแถวที่บันทึกสำเร็จ มีวันที่/รายละเอียด/หมายเหตุตรงผลจริง และไม่ซ้ำจาก retry",
           "NEW — เพิ่มเงื่อนไขซ่อมสำเร็จ: ใช้จำนวนรายการจาก server ไม่ใช้ข้อความที่ยังอยู่ใน popup เป็นรายการครบแล้ว"
         ]
       },
@@ -3155,7 +3371,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - ปรับรายการหรือรายละเอียดล่าสุดให้เห็นตรงกับข้อมูลที่บันทึก\n  - ไม่ให้กดยืนยันซ้ำขณะกำลังส่งข้อมูล\n  - toast \"เพิ่มความคืบหน้าสำเร็จ\" (ปิด ⚠️ toast ด้านบน) · ไม่สำเร็จใช้ \"General Error\" (#26) [Sheet พี่นุ — OH-Toast #18, ✅ CF]\n  - ไอคอนแก้ไข/ลบในแถว: จับรายการของแถวนั้นให้ถูกต้อง",
+          "พฤติกรรมการใช้งาน\n  - ปรับรายการหรือรายละเอียดล่าสุดให้เห็นตรงกับข้อมูลที่บันทึก\n  - ไม่ให้กดยืนยันซ้ำขณะกำลังส่งข้อมูล\n  - toast \"เพิ่มความคืบหน้าสำเร็จ\" (ปิด ⚠️ toast ด้านบน) · ไม่สำเร็จใช้ \"General Error\" (#26) [Sheet พี่นุ — OH-Toast #18, ✅ CF]\n  - icon แก้ไข/ลบในแถว: จับรายการของแถวนั้นให้ถูกต้อง",
           "Status (StatusBadge)\n  - เมื่อระบบยืนยันว่าทำสำเร็จ จึงเปลี่ยนหน้า/สถานะและแสดงข้อความสำเร็จ",
           "Table (DataTable)\n  - Behavior\n    - ตารางแสดงแถวใหม่ \"22/10/2569 10:00 น. | รื้อเครื่องยนต์ ตรวจสภาพชิ้นส่วนภายใน | -\" ปุ่ม \"ซ่อมสำเร็จ\" enable\n    - ตารางความคืบหน้า: เพิ่มแถวที่ server บันทึกแล้ว พร้อมวันที่ รายละเอียด หมายเหตุ",
           "Buttons\n  - ปุ่ม “ซ่อมสำเร็จ”: เปิดตามจำนวนรายการที่ใช้ได้จริง ไม่ใช้แค่แถว ข้อมูลที่ยังไม่บันทึก ใน กล่องกรอกข้อมูลกลางจอ"
@@ -3201,14 +3417,14 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีแก้ไขความคืบหน้า แต่ไม่แยกการเลือกไอคอนเป้าหมายหลังตารางเปลี่ยนเป็น contract ราย action"
+          "จากเดิม มีแก้ไขความคืบหน้า แต่ไม่แยกการเลือกicon เป้าหมายหลังตารางเปลี่ยนเป็น behavior ราย action"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract ดินสอท้ายแถว: เปิดข้อมูล ID แถวนั้น ไม่เปลี่ยนแถวอื่นหลัง sort/refetch",
+          "NEW — เพิ่ม behavior ดินสอท้ายแถว: เปิดข้อมูล ID แถวนั้น ไม่เปลี่ยนแถวอื่นหลัง sort/refetch",
           "NEW — เพิ่มผลปิดเมนู/ยกเลิกก่อนแก้: ไม่เปลี่ยนรายการหรือเปิด popup ซ้ำจาก event ค้าง"
         ]
       },
@@ -3216,15 +3432,15 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - แสดงรายการความคืบหน้าที่บันทึกไว้ตามลำดับในจอ\n  - เมื่อเพิ่มหรือแก้ไข ให้เปิดช่องพร้อมค่าที่เกี่ยวข้องและตรวจข้อมูลจำเป็น\n  - บันทึกสำเร็จแล้วรายการต้องอัปเดต; บันทึกไม่สำเร็จให้คงข้อความไว้\n  - หากลบ ให้ถามยืนยันก่อน และไม่ให้รายการหายจนระบบยืนยันสำเร็จ\n  - กดไอคอนดินสอที่แถว เปิด popup แก้ไข (K.2)\n  - ไอคอนดินสอในตารางความคืบหน้า: เปิด กล่องกรอกข้อมูลกลางจอ ของรายการที่กด พร้อมค่าปัจจุบัน\n  - รายการแถวอื่น: ไม่ถูกแก้หรือเปิด กล่องกรอกข้อมูลกลางจอ ซ้ำเมื่อโหลดตารางใหม่",
-          "Table (DataTable)\n  - Row Actions (RowMenu)\n    - จาก ไอคอนดินสอท้ายแถวความคืบหน้า: เปิดแก้ไขต้องจำ ID รายการ; กดนอกเมนู/Esc ก่อนเลือกแก้ไข → แค่ปิดเมนู ไม่เปลี่ยนข้อมูลหรือเปิด กล่องกรอกข้อมูลกลางจอ"
+          "พฤติกรรมการใช้งาน\n  - แสดงรายการความคืบหน้าที่บันทึกไว้ตามลำดับในจอ\n  - เมื่อเพิ่มหรือแก้ไข ให้เปิดช่องพร้อมค่าที่เกี่ยวข้องและตรวจข้อมูลจำเป็น\n  - บันทึกสำเร็จแล้วรายการต้องอัปเดต; บันทึกไม่สำเร็จให้คงข้อความไว้\n  - หากลบ ให้ถามยืนยันก่อน และไม่ให้รายการหายจนระบบยืนยันสำเร็จ\n  - กดicon ดินสอที่แถว เปิด popup แก้ไข (K.2)\n  - icon ดินสอในตารางความคืบหน้า: เปิด กล่องกรอกข้อมูลกลางจอ ของรายการที่กด พร้อมค่าปัจจุบัน\n  - รายการแถวอื่น: ไม่ถูกแก้หรือเปิด กล่องกรอกข้อมูลกลางจอ ซ้ำเมื่อโหลดตารางใหม่",
+          "Table (DataTable)\n  - Row Actions (RowMenu)\n    - จาก icon ดินสอท้ายแถวความคืบหน้า: เปิดแก้ไขต้องจำ ID รายการ; กดนอกเมนู/Esc ก่อนเลือกแก้ไข → แค่ปิดเมนู ไม่เปลี่ยนข้อมูลหรือเปิด กล่องกรอกข้อมูลกลางจอ"
         ]
       },
       {
         "level": "h2",
         "label": "Error Handling / Edge Cases",
         "bullets": [
-          "รายการเปลี่ยนลำดับหลังเปิดหน้า: ไอคอนแก้ไขต้องอ้างรายการ ID เดิม ไม่ใช้ index ไปเปิดแถวอื่น",
+          "รายการเปลี่ยนลำดับหลังเปิดหน้า: icon แก้ไขต้องอ้างรายการ ID เดิม ไม่ใช้ index ไปเปิดแถวอื่น",
           "รายการถูกลบจากอีกหน้าจอก่อนเปิดแก้: แจ้งไม่พบและโหลดตารางใหม่ ไม่เปิด popup ว่างให้บันทึกเพิ่มแทน"
         ]
       }
@@ -3261,7 +3477,7 @@ const FRAME_STORIES = {
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
           "NEW — เพิ่มเฟรม ข้อมูลที่ยังไม่บันทึก แก้ไข: เติมค่าเดิมใน textarea/หมายเหตุและแยก ข้อมูลที่ยังไม่บันทึก จากแถวที่บันทึกแล้ว",
-          "NEW — เพิ่ม contract ปิด popup: ยกเลิก/×/Esc/พื้นหลังกลับตาราง K.1 โดยคงค่าเดิม; บันทึกอ้าง ID เดิม ไม่เพิ่มเป็นรายการใหม่"
+          "NEW — เพิ่ม behavior ปิด popup: ยกเลิก/×/Esc/พื้นหลังกลับตาราง K.1 โดยคงค่าเดิม; บันทึกอ้าง ID เดิม ไม่เพิ่มเป็นรายการใหม่"
         ]
       },
       {
@@ -3362,14 +3578,14 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีไอคอนลบความคืบหน้า แต่ไม่แยกจำนวนรายการล่าสุดกับการจำเป้าหมายหลังตารางเปลี่ยน"
+          "จากเดิม มีicon ลบความคืบหน้า แต่ไม่แยกจำนวนรายการล่าสุดกับการจำเป้าหมายหลังตารางเปลี่ยน"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract ถังขยะท้ายแถว: จำ ID ก่อนเปิด L.2 และไม่ลบจากการเพียงเปิดกล่อง",
+          "NEW — เพิ่ม behavior ถังขยะท้ายแถว: จำ ID ก่อนเปิด L.2 และไม่ลบจากการเพียงเปิดกล่อง",
           "NEW — เพิ่มการตรวจห้ามลบจนเหลือศูนย์จากจำนวนล่าสุด ไม่ใช้จำนวนที่ค้างตอนเปิดหน้า"
         ]
       },
@@ -3422,7 +3638,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract กล่องยืนยัน: ยกเลิก/×/Esc/พื้นหลังกลับ L.1 พร้อมรายการครบเดิม; ยืนยันส่งลบ ID เดิมเพียงครั้งเดียว",
+          "NEW — เพิ่ม behavior กล่องยืนยัน: ยกเลิก/×/Esc/พื้นหลังกลับ L.1 พร้อมรายการครบเดิม; ยืนยันส่งลบ ID เดิมเพียงครั้งเดียว",
           "NEW — เพิ่มตรวจจำนวนล่าสุดก่อนลบเพื่อกันสองหน้าจอลบจนไม่เหลือรายการ"
         ]
       },
@@ -3476,7 +3692,7 @@ const FRAME_STORIES = {
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
           "NEW — เพิ่มเฟรมผลลบสำเร็จ: เอาเฉพาะแถวเป้าหมายออกแล้วแสดงรายการคงเหลือจริง",
-          "NEW — เพิ่ม contract ปุ่มซ่อมสำเร็จ/ลบ: คำนวณจากจำนวนหลังลบ ไม่คงสิทธิ์กดจากตารางก่อนลบ"
+          "NEW — เพิ่ม behavior ปุ่มซ่อมสำเร็จ/ลบ: คำนวณจากจำนวนหลังลบ ไม่คงสิทธิ์กดจากตารางก่อนลบ"
         ]
       },
       {
@@ -3501,7 +3717,7 @@ const FRAME_STORIES = {
         "level": "h3",
         "label": "ประเด็นที่ต้องเคาะ",
         "bullets": [
-          "mock L.3 ยังแสดงicon ถังขยะที่แถวสุดท้าย ต้อง disable หรือซ่อนไอคอน (และ backend ต้องปฏิเสธการลบรายการสุดท้ายด้วย)",
+          "mock L.3 ยังแสดงicon ถังขยะที่แถวสุดท้าย ต้อง disable หรือซ่อนicon (และ backend ต้องปฏิเสธการลบรายการสุดท้ายด้วย)",
           "ข้อความไม่ตรงกับ mock L.3 \"ลบรายละเอียดการติดตาม สำเร็จ\" ให้ใช้ตาม Sheet"
         ]
       }
@@ -3535,15 +3751,15 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract เลือกไฟล์: Cancel หน้าต่างเครื่องคงรายการเดิม ไฟล์ผิดชนิดหรือเกินจำนวนไม่ถูกนับพร้อมยืนยัน",
-          "NEW — เพิ่มรองรับไฟล์ตาม AC Safety: PDF/PNG/JPG และสถานะอัปโหลดจริง; component ปัจจุบันยังจำลอง PDF/JPG จึงต้องปรับก่อนใช้จริง"
+          "NEW — เพิ่ม behavior เลือกไฟล์: Cancel หน้าต่างเครื่องคงรายการเดิม ไฟล์ผิดชนิดหรือเกินจำนวนไม่ถูกนับพร้อมยืนยัน",
+          "NEW — รับเอกสาร Safety Inspection เป็น PDF, PNG และ JPG สูงสุด 10 ไฟล์ พร้อมแสดงสถานะอัปโหลดแต่ละไฟล์; component ปัจจุบันยังจำลอง PDF/JPG จึงต้องปรับก่อนใช้จริง"
         ]
       },
       {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "File Upload (FileUpload)\n  - คลิกเลือกไฟล์หรือลากวางได้ตามพื้นที่อัปโหลด\n  - รับเฉพาะไฟล์ตามชนิดที่หน้าจอกำหนด; ไฟล์ไม่ถูกต้องให้แจ้งเหตุผล\n  - เลือกแล้วแสดงชื่อไฟล์และสถานะ; ลบไฟล์ออกได้ก่อนบันทึก\n  - ไฟล์ที่บันทึกแล้วต้องเปิดดูหรือดาวน์โหลดได้ตามสิทธิ์\n  - สถานะ \"รอตรวจสภาพ Safety\" stepper ขั้น 04 \"ตรวจสภาพ\" ปัจจุบัน แสดงส่วน \"เอกสารแนบ\" ช่อง \"เอกสาร Safety Inspection\" รับ \"PDF, PNG, or JPG (สูงสุด 10 ไฟล์)\"\n  - ช่องแนบไฟล์ “เอกสาร Safety Inspection”: รับ PDF, PNG, JPG สูงสุด 10 ไฟล์; แยกเลือกไฟล์กับอัปโหลดสำเร็จ ไม่รับไฟล์ผิดชนิดหรือเกินจำนวน หากไฟล์ใดอัปโหลดไม่สำเร็จให้แสดงสถานะของไฟล์นั้นโดยไม่ลบไฟล์อื่น ขนาดสูงสุดและข้อความ error ยังต้องตกลง\n  - จาก ช่องแนบไฟล์และรายการไฟล์ (FileUpload): เลือกไฟล์แล้วกด Cancel ในหน้าต่างเลือกไฟล์ของเครื่อง → รายการเดิมไม่เปลี่ยน; ตอนนี้โค้ดตรวจ PDF/JPG และไม่อัปโหลดจริง จึงต้องปรับ PNG/สถานะอัปโหลดตาม AC Safety ก่อนใช้จริง",
+          "File Upload (FileUpload)\n  - คลิกเลือกไฟล์หรือลากวางได้ตามพื้นที่อัปโหลด\n  - รับเฉพาะไฟล์ตามชนิดที่หน้าจอกำหนด; ไฟล์ไม่ถูกต้องให้แจ้งเหตุผล\n  - เลือกแล้วแสดงชื่อไฟล์และสถานะ; ลบไฟล์ออกได้ก่อนบันทึก\n  - ไฟล์ที่บันทึกแล้วต้องเปิดดูหรือดาวน์โหลดได้ตามสิทธิ์\n  - สถานะ \"รอตรวจสภาพ Safety\" stepper ขั้น 04 \"ตรวจสภาพ\" ปัจจุบัน แสดงส่วน \"เอกสารแนบ\" ช่อง \"เอกสาร Safety Inspection\" รับ \"PDF, PNG, or JPG (สูงสุด 10 ไฟล์)\"\n  - ช่องแนบไฟล์ “เอกสาร Safety Inspection”: รับ PDF, PNG, JPG สูงสุด 10 ไฟล์; แยกเลือกไฟล์กับอัปโหลดสำเร็จ ไม่รับไฟล์ผิดชนิดหรือเกินจำนวน หากไฟล์ใดอัปโหลดไม่สำเร็จให้แสดงสถานะของไฟล์นั้นโดยไม่ลบไฟล์อื่น ขนาดสูงสุดและข้อความ error ยังต้องตกลง\n  - จาก ช่องแนบไฟล์และรายการไฟล์ (FileUpload): เลือกไฟล์แล้วกด Cancel ในหน้าต่างเลือกไฟล์ของเครื่อง → รายการเดิมไม่เปลี่ยน; ตอนนี้โค้ดตรวจ PDF/JPG และไม่อัปโหลดจริง จึงต้องเพิ่มการรับ PNG และสถานะอัปโหลดจริงให้ครบก่อนใช้จริง",
           "Buttons\n  - ปุ่ม \"ย้อนกลับ\" / \"ยืนยันการตรวจสภาพ\" (disable)\n  - ปุ่ม “ยืนยันการตรวจสภาพ”: เริ่ม disable เพราะยังไม่มีไฟล์ที่ใช้ได้\n  - ปุ่ม “ย้อนกลับ”: กลับหน้ารายละเอียด PO (E.10); หากเลือกไฟล์ไว้แต่ยังไม่บันทึก ต้องแสดงกล่องยืนยันการออกก่อน โดยให้หน้าตรวจ Safety เป็นผู้ตรวจว่ามีข้อมูลที่ยังไม่บันทึกและเปิดกล่องยืนยัน ส่วน FileUpload ทำหน้าที่เลือกและแสดงไฟล์เท่านั้น",
           "Stepper\n  - แถบขั้นตอน 6 ขั้น (Stepper) ขั้น 04: ไม่เลื่อนไปขั้นนัดรับรถเพียงเพราะเลือกไฟล์"
         ]
@@ -3581,22 +3797,22 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีอัปโหลดแล้ว แต่ไม่ครบ contract ลบรายไฟล์/error/ยืนยันซ้ำและ viewer ที่ยังเป็น mock"
+          "จากเดิม มีอัปโหลดแล้ว แต่ไม่ครบ behavior ลบรายไฟล์/error/ยืนยันซ้ำและ viewer ที่ยังเป็น mock"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract รายไฟล์: ลบเฉพาะไฟล์ที่กด อัปเดตปุ่มยืนยันเมื่อไม่เหลือไฟล์ที่ใช้ได้ และคงไฟล์อื่นเมื่อไฟล์หนึ่งผิดพลาด",
-          "NEW — เพิ่ม contract ยืนยัน: กันส่งซ้ำ เลื่อนไปนัดรับรถหลังบันทึกจริง และไม่ถือข้อความจำลองดูตัวอย่าง/ดาวน์โหลดว่าเป็น viewer ที่ทำเสร็จแล้ว"
+          "NEW — เพิ่ม behavior รายไฟล์: ลบเฉพาะไฟล์ที่กด อัปเดตปุ่มยืนยันเมื่อไม่เหลือไฟล์ที่ใช้ได้ และคงไฟล์อื่นเมื่อไฟล์หนึ่งผิดพลาด",
+          "NEW — เพิ่ม behavior ยืนยัน: กันส่งซ้ำ เลื่อนไปนัดรับรถหลังบันทึกจริง และไม่ถือข้อความจำลองดูตัวอย่าง/ดาวน์โหลดว่าเป็น viewer ที่ทำเสร็จแล้ว"
         ]
       },
       {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "File Upload (FileUpload)\n  - คลิกเลือกไฟล์หรือลากวางได้ตามพื้นที่อัปโหลด\n  - รับเฉพาะไฟล์ตามชนิดที่หน้าจอกำหนด; ไฟล์ไม่ถูกต้องให้แจ้งเหตุผล\n  - เลือกแล้วแสดงชื่อไฟล์และสถานะ; ลบไฟล์ออกได้ก่อนบันทึก\n  - ไฟล์ที่บันทึกแล้วต้องเปิดดูหรือดาวน์โหลดได้ตามสิทธิ์\n  - แนบไฟล์ แสดง \"Document.pdf 200 KB\" แถบ \"100%\" และปุ่มลบ ปุ่ม \"ยืนยันการตรวจสภาพ\" enable\n  - รายการไฟล์แนบ: แสดงชื่อ ขนาด progress และปุ่มลบรายไฟล์; ลบแล้วคำนวณจำนวนไฟล์ที่พร้อมใหม่\n  - จาก ช่องแนบไฟล์และรายการไฟล์ (FileUpload): กดไอคอนลบลบเฉพาะไฟล์นั้น หน้าตรวจ Safety ยังอยู่; กดชื่อไฟล์/ดาวน์โหลดใน prototype เป็นข้อความจำลอง ไม่ได้มี viewer จริงที่ยืนยันการปิด/ย้อนกลับได้\n  - กด “ย้อนกลับ” ไป PO ผ่าน guard หากมีการเปลี่ยนไฟล์; กด × ปิด toast สำเร็จ/ผิดพลาดไม่เปลี่ยนรายการไฟล์และไม่เปลี่ยนขั้นเอง",
+          "File Upload (FileUpload)\n  - คลิกเลือกไฟล์หรือลากวางได้ตามพื้นที่อัปโหลด\n  - รับเฉพาะไฟล์ตามชนิดที่หน้าจอกำหนด; ไฟล์ไม่ถูกต้องให้แจ้งเหตุผล\n  - เลือกแล้วแสดงชื่อไฟล์และสถานะ; ลบไฟล์ออกได้ก่อนบันทึก\n  - ไฟล์ที่บันทึกแล้วต้องเปิดดูหรือดาวน์โหลดได้ตามสิทธิ์\n  - แนบไฟล์ แสดง \"Document.pdf 200 KB\" แถบ \"100%\" และปุ่มลบ ปุ่ม \"ยืนยันการตรวจสภาพ\" enable\n  - รายการไฟล์แนบ: แสดงชื่อ ขนาด progress และปุ่มลบรายไฟล์; ลบแล้วคำนวณจำนวนไฟล์ที่พร้อมใหม่\n  - จาก ช่องแนบไฟล์และรายการไฟล์ (FileUpload): กดicon ลบลบเฉพาะไฟล์นั้น หน้าตรวจ Safety ยังอยู่; กดชื่อไฟล์/ดาวน์โหลดใน prototype เป็นข้อความจำลอง ไม่ได้มี viewer จริงที่ยืนยันการปิด/ย้อนกลับได้\n  - กด “ย้อนกลับ” ไป PO ผ่าน guard หากมีการเปลี่ยนไฟล์; กด × ปิด toast สำเร็จ/ผิดพลาดไม่เปลี่ยนรายการไฟล์และไม่เปลี่ยนขั้นเอง",
           "Stepper\n  - กด \"ยืนยันการตรวจสภาพ\" สถานะเป็น \"รอนัดหมายรับรถ\" stepper ไปขั้น 05\n  - แถบขั้นตอน 6 ขั้น (Stepper)/ป้ายรายการที่เลือก: ไปขั้นนัดรับรถหลังยืนยันสำเร็จเท่านั้น; error ต้องคงไฟล์ไว้",
           "Status (StatusBadge)\n  - toast \"ยืนยันการตรวจสอบสำเร็จ\" (ปิด ⚠️ toast ด้านบน) [Sheet พี่นุ — OH-Toast #22, ✅ CF]\n    \n    Status \"รอตรวจสภาพ Safety\" → \"รอนัดหมายรับรถ\" (status final: \"อยู่ระหว่างตรวจ\" → \"รอนัดหมาย\") [Sheet พี่นุ — OH-Toast #22, ✅ CF]\n    \n    ไม่มี notification [Sheet พี่นุ — OH-Toast #22, ✅ CF]\n    \n    ไม่สำเร็จใช้ \"General Error\" (#26) [Sheet พี่นุ — OH-Toast #22, ✅ CF]",
           "Buttons\n  - ปุ่ม “ยืนยันการตรวจสภาพ”: enable จากไฟล์ที่อัปโหลดสำเร็จ และกันกดซ้ำระหว่างยืนยัน"
@@ -3637,13 +3853,13 @@ const FRAME_STORIES = {
     }
   },
   "N.1": {
-    "title": "AC N.1 — ฟอร์มนัด Default",
+    "title": "AC N.1 — form นัด Default",
     "sections": [
       {
         "level": "h2",
         "label": "ภาพรวมหน้านี้",
         "bullets": [
-          "What: นัดหมายรับรถและติดตามผลตอบรับ — ฟอร์มนัด Default",
+          "What: นัดหมายรับรถและติดตามผลตอบรับ — form นัด Default",
           "Who: กบค. ใช้จัดการนัดรับรถ; หน่วยงานเจ้าของรถตอบรับหรือปฏิเสธนัดของตน; กรย. เขตดูข้อมูลตามสิทธิ์",
           "Do: เลือกวันเวลาและกรอกข้อมูลนัดรับรถ แล้วส่งนัดหรือยกเลิก"
         ]
@@ -3652,14 +3868,14 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีฟอร์มนัดรับรถ แต่ยังไม่แยกการกลับ PO กับการถอยสถานะงานและ ข้อมูลที่ยังไม่บันทึก ทางกลับ"
+          "จากเดิม มี form นัดรับรถ แต่ยังไม่แยกการกลับ PO กับการถอยสถานะงานและ ข้อมูลที่ยังไม่บันทึก ทางกลับ"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract ย้อนกลับ: กลับ PO นี้ไม่ถอยไปสถานะนัดเข้าอู่; มี ข้อมูลที่ยังไม่บันทึก ต้องยืนยันออกก่อน",
+          "NEW — เพิ่ม behavior ย้อนกลับ: กลับ PO นี้ไม่ถอยไปสถานะนัดเข้าอู่; มี ข้อมูลที่ยังไม่บันทึก ต้องยืนยันออกก่อน",
           "NEW — เพิ่มค่าเริ่มต้นขากลับ: วัน/ผู้ประสานงานยังไม่เลือก stepper ขั้น 05 และข้อมูลอู่เป็นอ่านอย่างเดียว"
         ]
       },
@@ -3714,7 +3930,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม ยังไม่พบเฟรม validation นัดรับรถแยกจากฟอร์มเริ่มต้น"
+          "จากเดิม ยังไม่พบเฟรม validation นัดรับรถแยกจาก form เริ่มต้น"
         ]
       },
       {
@@ -3764,7 +3980,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม ยังไม่พบเฟรมกรอกนัดรับรถครบแยกจากฟอร์มเริ่มต้น"
+          "จากเดิม ยังไม่พบเฟรมกรอกนัดรับรถครบแยกจาก form เริ่มต้น"
         ]
       },
       {
@@ -3772,7 +3988,7 @@ const FRAME_STORIES = {
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
           "NEW — เพิ่ม state วัน/ผู้ประสานงานครบและปุ่มส่งพร้อม; ข้อความชื่อที่พิมพ์แต่ไม่เลือกยังไม่ถือว่าครบ",
-          "NEW — เพิ่ม ข้อมูลที่ยังไม่บันทึก ปฏิทิน Apply/Cancel ตาม AC และกติกาไม่ก่อนวันผ่าน Safetyที่ยังต้องเคาะ; โค้ดปฏิทินเดิมไม่มี Apply/Cancel จึงต้องปรับ"
+          "NEW — เลือกวันในปฏิทินแล้วกด “Apply” เพื่อใช้ช่วงวันที่เลือก; กด “Cancel” เพื่อปิดปฏิทินและใช้ช่วงวันเดิม; เงื่อนไขห้ามเลือกวันก่อนวันผ่าน Safety ยังต้องตกลง; โค้ดปฏิทินเดิมไม่มี Apply/Cancel จึงต้องปรับ"
         ]
       },
       {
@@ -3781,7 +3997,7 @@ const FRAME_STORIES = {
         "bullets": [
           "พฤติกรรมการใช้งาน\n  - เลือกวันและเวลาแล้วตรวจว่าข้อมูลจำเป็นครบก่อนส่ง\n  - ออกจากช่องที่บังคับแต่ยังว่างให้ขึ้นคำเตือน และแก้ถูกแล้วเตือนหาย\n  - ระหว่างส่งนัดห้ามกดส่งซ้ำ\n  - เหมือน H.3: \"22/10/2569 - 24/10/2569\", \"นายวิชัย ทองดี วิศวกร กบค.\", \"02-590-9123\" ปุ่ม \"ส่งนัดหมาย\" enable",
           "Status (StatusBadge)\n  - ส่งสำเร็จให้แสดงสถานะรอหน่วยงานตอบรับ; ไม่สำเร็จต้องคงค่าที่กรอก",
-          "Date Input\n  - ช่องเลือกช่วงวันที่ (DateRangeInput): Apply ช่วงวันรับรถลงฟอร์ม ส่วน Cancel คงวันเดิม; เงื่อนไขเทียบวันผ่าน Safety ต้องตกลง\n  - ช่องเลือกช่วงวันที่ (DateRangeInput) ในโค้ดยังไม่มี Apply/Cancel และแก้ค่าทันทีเมื่อเลือก ต่างจาก AC นัดรับรถ จึงต้องเพิ่ม ข้อมูลที่ยังไม่บันทึก หากจะใช้รูปแบบ Apply/Cancel; คลิกนอก/Esc ปิดแผงไม่ใช่ออกจากหน้างาน",
+          "Date Input\n  - ช่องเลือกช่วงวันที่ (DateRangeInput): Apply ช่วงวันรับรถลง form ส่วน Cancel คงวันเดิม; เงื่อนไขเทียบวันผ่าน Safety ต้องตกลง\n  - ช่องเลือกช่วงวันที่ (DateRangeInput) ในโค้ดยังไม่มี Apply/Cancel และแก้ค่าทันทีเมื่อเลือก ต่างจาก AC นัดรับรถ จึงต้องเพิ่ม ข้อมูลที่ยังไม่บันทึก หากจะใช้รูปแบบ Apply/Cancel; คลิกนอก/Esc ปิดแผงไม่ใช่ออกจากหน้างาน",
           "Select Field\n  - ช่องเลือกจากรายการ ผู้ประสานงาน: เลือกชื่อจริงแล้วเติมเบอร์ให้ตรงคน",
           "Buttons\n  - ปุ่ม “ส่งนัดหมาย”: enable จากข้อมูลที่เลือกครบ ไม่ใช้เพียงข้อความที่พิมพ์ในช่องชื่อ",
           "Combobox\n  - ช่องพิมพ์ค้นและเลือกจากรายการ (Combobox) ผู้ประสานงาน: blur คืนชื่อที่เลือกไว้, Enter เลือกและปิด, Esc ปิดรายการ; การเลือกนี้ยังไม่ส่งนัดจนกดปุ่มส่ง"
@@ -3840,7 +4056,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - เมื่อกดบันทึกหรือส่งแล้วผิดพลาด ให้แสดงข้อความแจ้งตามจอ\n  - \"นัดหมาย {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} ไม่สำเร็จ\" ใช้ร่วมกับขั้น 1 [Sheet พี่นุ — OH-Toast #14]\n  - ข้อความแจ้งผลมุมขวาบน นัดรับรถไม่สำเร็จ: แสดงบนฟอร์มเดิมและไม่เลื่อน stepper",
+          "พฤติกรรมการใช้งาน\n  - เมื่อกดบันทึกหรือส่งแล้วผิดพลาด ให้แสดงข้อความแจ้งตามจอ\n  - \"นัดหมาย {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} ไม่สำเร็จ\" ใช้ร่วมกับขั้น 1 [Sheet พี่นุ — OH-Toast #14]\n  - ข้อความแจ้งผลมุมขวาบน นัดรับรถไม่สำเร็จ: แสดงบน form เดิมและไม่เลื่อน stepper",
           "File Upload (FileUpload)\n  - อยู่หน้าเดิม และค่าที่กรอก/ไฟล์ที่เลือกต้องไม่หาย",
           "Status (StatusBadge)\n  - ปลดสถานะกำลังทำ เพื่อให้แก้ไขและกดใหม่ได้ โดยไม่สร้างข้อมูลซ้ำ\n  - toast \"นัดหมาย {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} ไม่สำเร็จ\" อยู่หน้าเดิม สถานะยัง \"รอนัดหมายรับรถ\"",
           "Date Input\n  - ช่องเลือกช่วงวันที่ (DateRangeInput)/ผู้ประสานงาน: คงค่าที่เลือก; ปุ่มส่งพ้น pending แล้วให้ลองใหม่ได้"
@@ -3884,7 +4100,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract ระหว่างรอ: ส่งสำเร็จยังไม่เท่าตอบรับ ไม่เปลี่ยนเป็นรอปิดงานเอง และ toast ไม่ซ้ำจาก refresh",
+          "NEW — เพิ่ม behavior ระหว่างรอ: ส่งสำเร็จยังไม่เท่าตอบรับ ไม่เปลี่ยนเป็นรอปิดงานเอง และ toast ไม่ซ้ำจาก refresh",
           "NEW — เพิ่ม action แก้ไขนัดที่เปิดค่าปัจจุบันใน N.4.3 และตรวจสถานะล่าสุดก่อนให้แก้"
         ]
       },
@@ -3945,14 +4161,14 @@ const FRAME_STORIES = {
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
           "NEW — เพิ่ม ข้อมูลที่ยังไม่บันทึก แก้นัดรับรถโดยแยกจากนัดเข้าอู่และนัดที่ส่งแล้ว",
-          "NEW — เพิ่ม contract ออก/ส่งใหม่: ปิดกล่องยืนยันออกคง ข้อมูลที่ยังไม่บันทึก ยืนยันจึงไป PO; ส่งใหม่ตรวจว่ายังแก้ได้และกันกดซ้ำ"
+          "NEW — เพิ่ม behavior ออก/ส่งใหม่: ปิดกล่องยืนยันออกคง ข้อมูลที่ยังไม่บันทึก ยืนยันจึงไป PO; ส่งใหม่ตรวจว่ายังแก้ได้และกันกดซ้ำ"
         ]
       },
       {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - เปิดฟอร์มโดยใส่วัน เวลา และข้อมูลนัดเดิมให้เห็น\n  - แก้ค่าใหม่แล้วตรวจว่าข้อมูลจำเป็นครบก่อนส่งอีกครั้ง\n  - หากยกเลิกการแก้ไข ให้ข้อมูลเดิมไม่เปลี่ยน\n  - เหมือน H.4.3: ฟอร์มเติมค่าเดิม ส่งใหม่ได้",
+          "พฤติกรรมการใช้งาน\n  - เปิด form โดยใส่วัน เวลา และข้อมูลนัดเดิมให้เห็น\n  - แก้ค่าใหม่แล้วตรวจว่าข้อมูลจำเป็นครบก่อนส่งอีกครั้ง\n  - หากยกเลิกการแก้ไข ให้ข้อมูลเดิมไม่เปลี่ยน\n  - เหมือน H.4.3: form เติมค่าเดิม ส่งใหม่ได้",
           "Status (StatusBadge)\n  - แก้ไขได้จนกว่าหน่วยงานจะตอบ ส่งใหม่ใช้ toast #13 สถานะกลับเป็น \"รอหน่วยงานตอบรับนัดหมายรับรถ\" [Sheet พี่นุ — PEA]\n  - ป้ายสถานะ/รายการที่เลือก ปฏิเสธใน mock: เป็นจุดขัดกันที่ต้องตกลง ไม่ hardcode ตามภาพจนสถานะผิด",
           "Date Input\n  - ช่องเลือกช่วงวันที่ (DateRangeInput)/ผู้ประสานงาน: เติมนัดรับรถครั้งก่อนให้แก้ได้ โดยแยก ข้อมูลที่ยังไม่บันทึก",
           "Buttons\n  - ปุ่มส่งนัดใหม่: ตรวจสถานะล่าสุดก่อนส่ง กันซ้ำ และแสดงสถานะรอตอบรับจากผลใหม่",
@@ -4004,8 +4220,8 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract กล่องเหตุผล: คงหมายเหตุการปฏิเสธขากลับไว้ขณะเลือกวันใหม่ ไม่ใช้ข้อมูลนัดเข้าอู่",
-          "NEW — เพิ่ม contract ปิด dropdown/ย้อนกลับ: ปิดส่วนเลือกไม่ล้างเหตุผล ย้อนกลับผ่าน guard ไม่ลบนัดที่เคยปฏิเสธ"
+          "NEW — เพิ่ม behavior กล่องเหตุผล: คงหมายเหตุการปฏิเสธขากลับไว้ขณะเลือกวันใหม่ ไม่ใช้ข้อมูลนัดเข้าอู่",
+          "NEW — เพิ่ม behavior ปิด dropdown/ย้อนกลับ: ปิดส่วนเลือกไม่ล้างเหตุผล ย้อนกลับผ่าน guard ไม่ลบนัดที่เคยปฏิเสธ"
         ]
       },
       {
@@ -4013,7 +4229,7 @@ const FRAME_STORIES = {
         "label": "UI Component & Behavior",
         "bullets": [
           "พฤติกรรมการใช้งาน\n  - ผู้มีสิทธิ์แก้ไขนัดต้องกลับไปเลือกวัน/ข้อมูลนัดใหม่ได้\n  - ห้ามข้ามไปขั้นถัดไปเพียงเพราะส่งนัดไปแล้ว",
-          "Status (StatusBadge)\n  - เมื่อหน่วยงานปฏิเสธ ให้แสดงสถานะปฏิเสธตามจอ\n  - สถานะ \"หน่วยงานปฏิเสธนัดหมายรับรถ\" แสดงกล่อง \"เหตุผลการปฏิเสธ\" (\"รถติดภารกิจซ่อมบำรุงสายส่ง ขอเลื่อนเป็นสัปดาห์ถัดไป\") ฟอร์มเติมค่าเดิม ส่งใหม่ได้\n  - หน่วยงานปฏิเสธนัด + หมายเหตุ (เฉพาะหน่วยงานเจ้าของรถ) · Status \"หน่วยงานปฏิเสธนัดหมายรับรถ\" (status final: \"หน่วยงานปฏิเสธรับรถ\") · toast #16 ถึง กบค. \"หน่วยงาน {สังกัด} ของ {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} ปฏิเสธนัดหมาย\" [Sheet พี่นุ]",
+          "Status (StatusBadge)\n  - เมื่อหน่วยงานปฏิเสธ ให้แสดงสถานะปฏิเสธตามจอ\n  - สถานะ \"หน่วยงานปฏิเสธนัดหมายรับรถ\" แสดงกล่อง \"เหตุผลการปฏิเสธ\" (\"รถติดภารกิจซ่อมบำรุงสายส่ง ขอเลื่อนเป็นสัปดาห์ถัดไป\") form เติมค่าเดิม ส่งใหม่ได้\n  - หน่วยงานปฏิเสธนัด + หมายเหตุ (เฉพาะหน่วยงานเจ้าของรถ) · Status \"หน่วยงานปฏิเสธนัดหมายรับรถ\" (status final: \"หน่วยงานปฏิเสธรับรถ\") · toast #16 ถึง กบค. \"หน่วยงาน {สังกัด} ของ {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} ปฏิเสธนัดหมาย\" [Sheet พี่นุ]",
           "Modal\n  - กล่อง “เหตุผลการปฏิเสธ”: แสดงหมายเหตุของนัดรับรถครั้งที่ถูกปฏิเสธ",
           "Date Input\n  - ช่องเลือกช่วงวันที่ (DateRangeInput)/ผู้ประสานงานและปุ่มส่งใหม่: คงค่าเดิมให้ปรับแล้วส่ง โดยไม่เปลี่ยนไปใช้ข้อมูลนัดเข้าอู่\n  - ปิด รายการตัวเลือก/ปฏิทินไม่ล้างเหตุผลปฏิเสธ; กดย้อนกลับใช้ guard แล้วไป PO ไม่ใช่ลบนัดรับรถที่ถูกปฏิเสธ"
         ]
@@ -4090,7 +4306,7 @@ const FRAME_STORIES = {
         "label": "Error Handling / Edge Cases",
         "bullets": [
           "กลับมาอ่านนัดรับที่ตอบรับแล้ว: ไม่เปิดปุ่มส่ง/แก้จาก state เก่าหรือการเปลี่ยน URL",
-          "โหลดรายละเอียดนัดรับไม่สำเร็จ: แสดงปัญหาและลองใหม่ ไม่แสดงฟอร์มว่างจนผู้ใช้ส่งนัดซ้ำ"
+          "โหลดรายละเอียดนัดรับไม่สำเร็จ: แสดงปัญหาและลองใหม่ ไม่แสดง form ว่างจนผู้ใช้ส่งนัดซ้ำ"
         ]
       },
       {
@@ -4123,15 +4339,15 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีกรอกอะไหล่/นำเข้า/ปิดงาน แต่ไม่ครบ contract file picker cancel และ validation รายช่องที่ยังไม่เคาะ"
+          "จากเดิม มีกรอกอะไหล่/นำเข้า/ปิดงาน แต่ไม่ครบ behavior file picker cancel และ validation รายช่องที่ยังไม่เคาะ"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract นำเข้า: Cancel หน้าต่างเลือกไฟล์คงรายการเดิม; ต้องตกลง template/ชนิดไฟล์/ต่อท้ายหรือแทนที่ก่อนพัฒนา",
-          "NEW — เพิ่ม contract แถวกรอก: ชื่อว่าง/จำนวนผิด/หน่วยไม่เลือกไม่กลายเป็นรายการพร้อมปิด และต้องตกลงวิธีเพิ่มแถวกับทศนิยมก่อน"
+          "NEW — เพิ่ม behavior นำเข้า: Cancel หน้าต่างเลือกไฟล์คงรายการเดิม; ต้องตกลง template/ชนิดไฟล์/ต่อท้ายหรือแทนที่ก่อนพัฒนา",
+          "NEW — เพิ่ม behavior แถวกรอก: ชื่อว่าง/จำนวนผิด/หน่วยไม่เลือกไม่กลายเป็นรายการพร้อมปิด และต้องตกลงวิธีเพิ่มแถวกับทศนิยมก่อน"
         ]
       },
       {
@@ -4146,7 +4362,7 @@ const FRAME_STORIES = {
           "Table (DataTable)\n  - Behavior\n    - ตารางอะไหล่ (OH-5): ชื่ออะไหล่ ✅ CF · ลบ ✅ [Sheet พี่นุ]",
           "Form Fields\n  - ช่องกรอก ชื่ออะไหล่/จำนวน และ รายการตัวเลือก หน่วย: แยกค่าต่อแถว ชื่อว่างและจำนวนไม่ถูกต้องต้องไม่กลายเป็นรายการพร้อมปิดงาน; หน่วยต้องอ้างค่าที่เลือก ไม่ตีความหน่วยเป็นจำนวน ส่วนทศนิยมและข้อความ error ยังต้องตกลง",
           "Empty State (EmptyState)\n  - ส่วนแสดงเมื่อไม่มีข้อมูล และปุ่ม “ปิดงาน”: ต้องมีอย่างน้อยหนึ่งรายการตามกติกา; วิธีเพิ่มแถว/Enter ยังไม่มีข้อสรุป",
-          "Navigation\n  - “ย้อนกลับ” → PO ผ่าน leave guard เมื่อมีรายการที่ยังไม่บันทึก; เส้นทางนี้เป็นของ หน้าหน้างานรถรายคัน (JobView) ส่วน file import ของอะไหล่ยังไม่มี component ที่ยืนยัน contract template/rollback ได้"
+          "Navigation\n  - “ย้อนกลับ” → PO ผ่าน leave guard เมื่อมีรายการที่ยังไม่บันทึก; เส้นทางนี้เป็นของ หน้าหน้างานรถรายคัน (JobView) ส่วน file import ของอะไหล่ยังไม่มี component ที่ยืนยัน behavior template/rollback ได้"
         ]
       },
       {
@@ -4206,19 +4422,19 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract แถวอะไหล่: ลบเฉพาะแถวที่เลือก ปรับความพร้อมปิดงานตามรายการที่เหลือ และไม่รวมรายการชื่อซ้ำเอง",
-          "NEW — เพิ่ม contract ย้อนกลับ: ต้องพิจารณา guard ก่อนทิ้งรายการที่เพิ่ม; การคง ข้อมูลที่ยังไม่บันทึก หลังออก/refresh ยังต้องตกลง"
+          "NEW — เพิ่ม behavior แถวอะไหล่: ลบเฉพาะแถวที่เลือก ปรับความพร้อมปิดงานตามรายการที่เหลือ และไม่รวมรายการชื่อซ้ำเอง",
+          "NEW — เพิ่ม behavior ย้อนกลับ: ต้องพิจารณา guard ก่อนทิ้งรายการที่เพิ่ม; การคง ข้อมูลที่ยังไม่บันทึก หลังออก/refresh ยังต้องตกลง"
         ]
       },
       {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - ถ้าข้อมูลที่จำเป็นยังไม่ครบ อย่าให้ปิดงานสำเร็จ\n  - เมื่อกดยืนยันปิดงานแล้วระหว่างรอผลต้องไม่กดซ้ำ",
+          "พฤติกรรมการใช้งาน\n  - ถ้าข้อมูลที่จำเป็นยังไม่ครบ อย่าให้ปิดงานสำเร็จ\n  - เมื่อกดยืนยันปิดงานแล้วระหว่างรอผลต้องไม่กดซ้ำ\n  - อ้างอิง Planning 1,2_.pdf: ส่วนการรับประกันมีสวิตช์ วันเริ่มรับประกัน ระยะรับประกัน และวันหมดอายุ; การเปิดรายการตัวเลือกเป็น O.2.1 และปิดสวิตช์เป็น O.2.2",
           "Status (StatusBadge)\n  - แสดงข้อมูลการปิดงานและอะไหล่ตามสถานะจริงของรถ",
           "Stepper\n  - ปิดสำเร็จให้สถานะรถและขั้นตอนแสดง “ปิดงานแล้ว”",
-          "Table (DataTable)\n  - Row Actions (RowMenu)\n    - เพิ่มรายการ ตารางคอลัมน์ ชื่ออะไหล่, จำนวน, หน่วย พร้อมไอคอนลบท้ายแถว เช่น \"ชุดลูกสูบพร้อมแหวน 6 ชุด\", \"กรองน้ำมันเครื่อง 2 ชิ้น\", \"น้ำมันเครื่อง 15W-40 18 ลิตร\"\n  - Behavior\n    - ตารางอะไหล่และไอคอนลบ: ลบเฉพาะรายการนั้น แล้วปรับจำนวนรายการที่ใช้ปิดงาน",
-          "Buttons\n  - แถวกรอกยังอยู่ด้านบนเพื่อเพิ่มต่อ ปุ่ม \"ปิดงาน\" enable\n  - ปุ่ม “ปิดงาน”: enable เมื่อมีรายการถูกต้อง กันส่งซ้ำ และตรวจรายการล่าสุดก่อนบันทึก\n  - กดไอคอนลบแถวเป็นการแก้ ข้อมูลที่ยังไม่บันทึก ในหน้าปิดงาน ไม่ใช่นำทางออก; ปุ่มย้อนกลับไป PO ต้องพิจารณา dirty guard เพื่อไม่ทิ้งรายการที่เพิ่มโดยไม่ตั้งใจ; การคง ข้อมูลที่ยังไม่บันทึก หลังออกยังต้องตกลง",
+          "Table (DataTable)\n  - Row Actions (RowMenu)\n    - เพิ่มรายการ ตารางคอลัมน์ ชื่ออะไหล่, จำนวน, หน่วย พร้อมicon ลบท้ายแถว เช่น \"ชุดลูกสูบพร้อมแหวน 6 ชุด\", \"กรองน้ำมันเครื่อง 2 ชิ้น\", \"น้ำมันเครื่อง 15W-40 18 ลิตร\"\n  - Behavior\n    - ตารางอะไหล่และicon ลบ: ลบเฉพาะรายการนั้น แล้วปรับจำนวนรายการที่ใช้ปิดงาน",
+          "Buttons\n  - แถวกรอกยังอยู่ด้านบนเพื่อเพิ่มต่อ ปุ่ม \"ปิดงาน\" enable\n  - ปุ่ม “ปิดงาน”: enable เมื่อมีรายการถูกต้อง กันส่งซ้ำ และตรวจรายการล่าสุดก่อนบันทึก\n  - กดicon ลบแถวเป็นการแก้ ข้อมูลที่ยังไม่บันทึก ในหน้าปิดงาน ไม่ใช่นำทางออก; ปุ่มย้อนกลับไป PO ต้องพิจารณา การตรวจข้อมูลที่ยังไม่บันทึกก่อนออกจากหน้า เพื่อไม่ทิ้งรายการที่เพิ่มโดยไม่ตั้งใจ; การคง ข้อมูลที่ยังไม่บันทึก หลังออกยังต้องตกลง",
           "Form Fields\n  - แถว ช่องกรอก ชื่อ/จำนวน/รายการตัวเลือก หน่วย: คงไว้สำหรับกรอกเพิ่ม แต่ไม่สมมติว่ารายการซ้ำต้องรวมเอง"
         ]
       },
@@ -4234,7 +4450,7 @@ const FRAME_STORIES = {
         "level": "h3",
         "label": "ประเด็นที่ต้องเคาะ",
         "bullets": [
-          "ต้องเคาะ: แก้ไขรายการที่เพิ่มแล้วได้ไหม (มีแค่ไอคอนลบ), รายการชื่อซ้ำรวมกันหรือแยกแถว, บันทึกเป็น ข้อมูลที่ยังไม่บันทึก ก่อนกดปิดงานไหม (ออกจากหน้าแล้วรายการยังอยู่ไหม)"
+          "ต้องเคาะ: แก้ไขรายการที่เพิ่มแล้วได้ไหม (มีแค่icon ลบ), รายการชื่อซ้ำรวมกันหรือแยกแถว, บันทึกเป็น ข้อมูลที่ยังไม่บันทึก ก่อนกดปิดงานไหม (ออกจากหน้าแล้วรายการยังอยู่ไหม)"
         ]
       }
     ],
@@ -4244,6 +4460,121 @@ const FRAME_STORIES = {
       "frameNames": [
         "OH2 / O.2 · S14 — ระบุอะไหล่แล้ว"
       ]
+    }
+  },
+  "O.2.1": {
+    "title": "AC O.2.1 — เลือกระยะรับประกัน",
+    "sections": [
+      {
+        "level": "h2",
+        "label": "ภาพรวมหน้านี้",
+        "bullets": [
+          "What: บันทึกอะไหล่และปิดงาน Overhaul รายคัน — เลือกระยะรับประกัน",
+          "Who: กบค. ใช้จัดการอะไหล่และปิดงาน; ผู้มีสิทธิ์ดูใช้ตรวจข้อมูลรถในขอบเขตของตน",
+          "Do: เลือกวันเริ่มและระยะรับประกัน ตรวจวันหมดอายุและเงื่อนไขแจ้งเตือน"
+        ]
+      },
+      {
+        "level": "h2",
+        "label": "As-is — Sprint 06",
+        "bullets": [
+          "จากเดิม มีขั้นปิดงาน แต่ยังไม่มีรายละเอียดตัวเลือกระยะรับประกันตาม Planning 1,2_.pdf ชุดนี้"
+        ]
+      },
+      {
+        "level": "h2",
+        "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
+        "bullets": [
+          "NEW — เพิ่มตัวเลือกรับประกัน 90/180/360/720 วัน และคำนวณวันหมดอายุจากวันเริ่มที่แก้ไขได้",
+          "NEW — ระบุการแจ้งเตือนผ่านกระดิ่งถึงหน่วยงานเจ้าของรถและ กบค. ก่อนหมดประกัน 30 และ 15 วัน โดยกติกาแจ้งย้อนหลังยังต้องตกลง"
+        ]
+      },
+      {
+        "level": "h2",
+        "label": "UI Component & Behavior",
+        "bullets": [
+          "พฤติกรรมการใช้งาน\n  - เมื่อเปิดรายการเลือกระยะรับประกัน ระบบแสดง 90, 180, 360 และ 720 วัน พร้อมวันหมดอายุของแต่ละตัวเลือกจากวันเริ่มรับประกัน\n  - เมื่อเลือกระยะรับประกัน ระบบแสดงระยะที่เลือกและคำนวณวันหมดอายุ = วันเริ่มรับประกัน + จำนวนวันรับประกัน\n  - เมื่อเปลี่ยนวันเริ่มหรือระยะรับประกัน ระบบคำนวณวันหมดอายุใหม่ เช่น 09/11/2569 + 360 วัน = 04/11/2570\n  - วันเริ่มรับประกันตั้งต้นเป็นวันปิดงานและแก้ไขได้; ก่อนเลือกข้อมูลครบให้แสดง “คำนวณเมื่อเลือกระยะรับประกัน” แทนวันหมดอายุ\n  - ระบบแสดงว่าจะส่งแจ้งเตือนทางกระดิ่งให้หน่วยงานเจ้าของรถและ กบค. ก่อนประกันหมด 30 วัน และ 15 วัน\n  - ข้อเสนอเพิ่มเติม: เมื่อเปิดรับประกันแต่วันที่ไม่ถูกต้องหรือยังไม่เลือกระยะ ระบบไม่ให้ปิดงานและแจ้งช่องที่ต้องแก้ โดยคงข้อมูลอะไหล่ไว้\n  - อ้างอิง Planning 1,2_.pdf: สถานะรอปิดงาน มีรายการอะไหล่ และเปิดสวิตช์ “มีการรับประกันงานซ่อม”\n  - สวิตช์รับประกัน/ช่องวันเริ่ม/รายการเลือกระยะ: ใช้ข้อมูลรับประกันชุดเดียวกับ O.2; เปิดตัวเลือกไม่เปลี่ยนรายการอะไหล่หรือสถานะรถ\n  - วันหมดอายุ: คำนวณด้วยวันปฏิทินจากวันเริ่ม + 90/180/360/720 วัน แสดงปี พ.ศ. และไม่บันทึกเพียงข้อความวันที่บนหน้าจอ\n  - ข้อเสนอเพิ่มเติม: ตรวจวันเริ่มและระยะก่อนปิดงานเมื่อเปิดรับประกัน; การคำนวณไม่ได้แปลว่าบันทึกหรือส่งแจ้งเตือนแล้ว"
+        ]
+      },
+      {
+        "level": "h2",
+        "label": "Error Handling / Edge Cases",
+        "bullets": [
+          "ข้อเสนอเพิ่มเติม: วันเริ่มว่างหรือไม่ใช่วันที่จริงขณะเปิดรับประกัน ไม่คำนวณเป็นวันที่ผิดและไม่ให้ปิดงาน; คงรายการอะไหล่ให้แก้ไขต่อ",
+          "ข้อเสนอเพิ่มเติม: เปลี่ยนวันเริ่มหลังเลือกระยะแล้ว ต้องไม่แสดงวันหมดอายุจากค่าเดิม; ทดสอบข้ามเดือน ข้ามปี และปีอธิกสุรทิน"
+        ]
+      },
+      {
+        "level": "h3",
+        "label": "ประเด็นที่ต้องเคาะ",
+        "bullets": [
+          "วันเริ่มรับประกันย้อนหลังหรืออนาคตได้หรือไม่ และปรับค่าเริ่มต้นอย่างไรหากเปิด form ค้างข้ามวัน",
+          "หากปิดงานหลังผ่านวันแจ้งเตือนแล้ว ต้องแจ้งย้อนหลังหรือข้ามรอบนั้น และส่งแจ้งเตือนเวลาใด"
+        ]
+      }
+    ],
+    "source": "Overhaul-AC-ฉบับอ่านง่าย-ทุกเฟรม.md + Overhaul-AC-รายเฟรม.md + Overhaul-Dev-แนวทางประกอบ.md + Overhaul-Sprint06-Delta-รายเฟรม.md + Overhaul-Error-Handling-Edge-Cases-รายเฟรม.md",
+    "baseline": {
+      "board": "Refinement 15/10/69 - Final Userflow Overhaul #14/10/2026",
+      "frameNames": []
+    }
+  },
+  "O.2.2": {
+    "title": "AC O.2.2 — ไม่มีการรับประกัน (ปิดสวิตช์)",
+    "sections": [
+      {
+        "level": "h2",
+        "label": "ภาพรวมหน้านี้",
+        "bullets": [
+          "What: บันทึกอะไหล่และปิดงาน Overhaul รายคัน — ไม่มีการรับประกัน (ปิดสวิตช์)",
+          "Who: กบค. ใช้จัดการอะไหล่และปิดงาน; ผู้มีสิทธิ์ดูใช้ตรวจข้อมูลรถในขอบเขตของตน",
+          "Do: ระบุว่างานไม่มีการรับประกันและตรวจอะไหล่ก่อนปิดงาน"
+        ]
+      },
+      {
+        "level": "h2",
+        "label": "As-is — Sprint 06",
+        "bullets": [
+          "จากเดิม มีขั้นปิดงาน แต่ยังไม่มีรายละเอียดสถานะปิดสวิตช์รับประกันตาม Planning 1,2_.pdf ชุดนี้"
+        ]
+      },
+      {
+        "level": "h2",
+        "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
+        "bullets": [
+          "NEW — เพิ่มสถานะไม่มีการรับประกัน ซ่อนช่องรับประกันและไม่บังคับกรอกวันที่หรือระยะ",
+          "NEW — ปิดงานโดยไม่สร้างแจ้งเตือนก่อนหมดประกัน และยังบังคับอะไหล่อย่างน้อย 1 รายการ"
+        ]
+      },
+      {
+        "level": "h2",
+        "label": "UI Component & Behavior",
+        "bullets": [
+          "พฤติกรรมการใช้งาน\n  - เมื่อปิดสวิตช์ ระบบซ่อนช่องวันเริ่มรับประกัน ระยะรับประกัน และวันหมดอายุ แล้วแสดงข้อความว่างานนี้ไม่มีการรับประกันและระบบจะไม่แจ้งเตือนก่อนหมดประกัน\n  - เมื่อไม่มีการรับประกัน ระบบไม่บังคับกรอกข้อมูลรับประกัน แต่ยังต้องมีอะไหล่อย่างน้อย 1 รายการจึงปิดงานได้\n  - อ้างอิง Planning 1,2_.pdf: ปิดสวิตช์ “มีการรับประกันงานซ่อม” แล้วแสดง “งานนี้ไม่มีการรับประกัน”\n  - สวิตช์รับประกัน: ปิดแล้วแสดงไม่มีการรับประกันและไม่บังคับกรอกช่องวันที่/ระยะ โดยยังตรวจรายการอะไหล่\n  - ข้อมูลปิดงาน: บันทึกสถานะไม่มีการรับประกันให้ชัด ไม่ใช้วันที่ที่ซ่อนอยู่สร้างแจ้งเตือน\n  - การคืนค่าหลังเปิดสวิตช์อีกครั้งและข้อความสรุปหลังปิดงานยังต้องตกลง ไม่กำหนดเองจากค่าที่ซ่อนไว้",
+          "Status (StatusBadge)\n  - เมื่อปิดงานสำเร็จในสถานะนี้ ระบบบันทึกว่าไม่มีการรับประกัน และไม่สร้างการแจ้งเตือนก่อนหมดประกันจากค่าที่เคยเลือกไว้"
+        ]
+      },
+      {
+        "level": "h2",
+        "label": "Error Handling / Edge Cases",
+        "bullets": [
+          "ปิดรับประกันหลังเลือกวันและระยะไว้: ค่าที่ซ่อนต้องไม่ทำให้บังคับกรอกหรือสร้างการแจ้งเตือนก่อนหมดประกัน",
+          "ไม่มีการรับประกันและลบอะไหล่รายการสุดท้าย: ยังไม่อนุญาตให้ปิดงาน เพราะข้อกำหนดอะไหล่อย่างน้อย 1 รายการยังใช้"
+        ]
+      },
+      {
+        "level": "h3",
+        "label": "ประเด็นที่ต้องเคาะ",
+        "bullets": [
+          "เมื่อปิดแล้วเปิดสวิตช์อีกครั้งก่อนบันทึก ให้คืนค่ารับประกันที่เลือกไว้หรือตั้งค่าใหม่",
+          "หน้าปิดงานแล้วกรณีไม่มีการรับประกันจะแสดงข้อความใดแทนตารางรับประกัน"
+        ]
+      }
+    ],
+    "source": "Overhaul-AC-ฉบับอ่านง่าย-ทุกเฟรม.md + Overhaul-AC-รายเฟรม.md + Overhaul-Dev-แนวทางประกอบ.md + Overhaul-Sprint06-Delta-รายเฟรม.md + Overhaul-Error-Handling-Edge-Cases-รายเฟรม.md",
+    "baseline": {
+      "board": "Refinement 15/10/69 - Final Userflow Overhaul #14/10/2026",
+      "frameNames": []
     }
   },
   "O.3": {
@@ -4262,14 +4593,14 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "As-is — Sprint 06",
         "bullets": [
-          "จากเดิม มีปิดงานแล้ว แต่ไม่ครบ contract กลับมาอ่าน URL เดิมและผลต่อ action/แผนสุดท้าย"
+          "จากเดิม มีปิดงานแล้ว แต่ไม่ครบ behavior กลับมาอ่าน URL เดิมและผลต่อ action/แผนสุดท้าย"
         ]
       },
       {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract อ่านอย่างเดียว: กลับมาเปิดแล้วไม่มีแถวกรอก/นำเข้า/ลบ/ปิดงาน แม้ใช้ URL เดิม และไม่ยิง success ซ้ำ",
+          "NEW — เพิ่ม behavior อ่านอย่างเดียว: กลับมาเปิดแล้วไม่มีแถวกรอก/นำเข้า/ลบ/ปิดงาน แม้ใช้ URL เดิม และไม่ยิง success ซ้ำ",
           "NEW — เพิ่มความสอดคล้องผลปิด: chip/stepper/ความคืบหน้าและสถานะแผนกรณีรถคันสุดท้ายต้องอ่านจากผลบันทึกจริง ไม่ใช้เพียงภาพ toast"
         ]
       },
@@ -4277,11 +4608,11 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "UI Component & Behavior",
         "bullets": [
-          "พฤติกรรมการใช้งาน\n  - ถ้าข้อมูลที่จำเป็นยังไม่ครบ อย่าให้ปิดงานสำเร็จ\n  - เมื่อกดยืนยันปิดงานแล้วระหว่างรอผลต้องไม่กดซ้ำ\n  - Toast #25 (🤔 เสนอ): \"ปิดงาน {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} เรียบร้อยแล้ว\" แทน \"ปิดงานสำเร็จ\" ใน mock [Sheet พี่นุ]\n  - Notification #25: ข้อความเดียวกับ toast ถึงหน่วยงานเจ้าของรถ [Sheet พี่นุ]\n  - แผน (Sheet PEA): เมื่อรถทุกคันในทุก PO ปิดงาน ระบบเปลี่ยนแผนเป็น \"เสร็จสิ้น\" อัตโนมัติ (status final: \"อนุมัติ PO\") ตอบ ⚠️ ด้านบนแล้ว [Sheet พี่นุ]\n  - ความคืบหน้า: หน้ารายการ/PO แสดง \"ปิดงานแล้ว x/n คัน\" = รถที่ปิดงานหารรถทั้งหมด [Sheet พี่นุ]\n  - ไม่สำเร็จ: \"General Error\" (#26) [Sheet พี่นุ]",
+          "พฤติกรรมการใช้งาน\n  - ถ้าข้อมูลที่จำเป็นยังไม่ครบ อย่าให้ปิดงานสำเร็จ\n  - เมื่อกดยืนยันปิดงานแล้วระหว่างรอผลต้องไม่กดซ้ำ\n  - อ้างอิง Planning 1,2_.pdf: แสดงวันที่ปิดงาน ข้อความ “รถคันนี้จบรอบ Overhaul” และข้อมูลรับประกันที่บันทึก ได้แก่ วันเริ่ม ระยะ วันหมดอายุ และผู้รับแจ้งเตือนก่อนหมด 30 วันและ 15 วัน\n  - Toast #25 (🤔 เสนอ): \"ปิดงาน {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} เรียบร้อยแล้ว\" แทน \"ปิดงานสำเร็จ\" ใน mock [Sheet พี่นุ]\n  - Notification #25: ข้อความเดียวกับ toast ถึงหน่วยงานเจ้าของรถ [Sheet พี่นุ]\n  - แผน (Sheet PEA): เมื่อรถทุกคันในทุก PO ปิดงาน ระบบเปลี่ยนแผนเป็น \"เสร็จสิ้น\" อัตโนมัติ (status final: \"อนุมัติ PO\") ตอบ ⚠️ ด้านบนแล้ว [Sheet พี่นุ]\n  - ความคืบหน้า: หน้ารายการ/PO แสดง \"ปิดงานแล้ว x/n คัน\" = รถที่ปิดงานหารรถทั้งหมด [Sheet พี่นุ]\n  - ไม่สำเร็จ: \"General Error\" (#26) [Sheet พี่นุ]",
           "Status (StatusBadge)\n  - แสดงข้อมูลการปิดงานและอะไหล่ตามสถานะจริงของรถ\n  - Status: รถ \"ปิดงานแล้ว\" (status final: \"เสร็จสิ้น\") [Sheet พี่นุ]",
           "Stepper\n  - ปิดสำเร็จให้สถานะรถและขั้นตอนแสดง “ปิดงานแล้ว”\n  - กด \"ปิดงาน\" สำเร็จ toast \"ปิดงานสำเร็จ\" chip สถานะ \"ปิดงานแล้ว\" stepper ทั้ง 6 ขั้นเป็นเครื่องหมายถูก\n  - ป้ายสถานะ/รายการที่เลือก/stepper: แสดงปิดงานแล้วและครบทั้ง 6 ขั้น; toast สำเร็จไม่ยิงซ้ำเพียงเพราะกลับมาอ่านหน้า",
-          "File Upload (FileUpload)\n  - \"รายการอะไหล่ที่ใช้\" เป็นตารางอ่านอย่างเดียว ไม่มีแถวกรอก ปุ่มนำเข้าไฟล์ ไอคอนลบ และปุ่ม \"ปิดงาน\"",
-          "Table (DataTable)\n  - Behavior\n    - ตารางอะไหล่: แสดงรายการที่บันทึกจริงเป็นอ่านอย่างเดียว ไม่มีแถว ช่องกรอก หรือไอคอนลบ",
+          "File Upload (FileUpload)\n  - \"รายการอะไหล่ที่ใช้\" เป็นตารางอ่านอย่างเดียว ไม่มีแถวกรอก ปุ่มนำเข้าไฟล์ icon ลบ และปุ่ม \"ปิดงาน\"",
+          "Table (DataTable)\n  - Behavior\n    - ตารางอะไหล่: แสดงรายการที่บันทึกจริงเป็นอ่านอย่างเดียว ไม่มีแถว ช่องกรอก หรือicon ลบ",
           "Buttons\n  - ปุ่มนำเข้า/ปิดงาน: ไม่แสดงในสถานะปิดแล้ว แม้กลับมาเปิดจาก URL เดิม\n  - ปุ่มย้อนกลับ/ไปดู PO เป็นการออกจากมุมมองอ่านอย่างเดียว ไม่เปิดยืนยันการออกเพราะไม่มี ข้อมูลที่ยังไม่บันทึก และไม่เปลี่ยนสถานะปิดงานแล้ว"
         ]
       },
@@ -4304,6 +4635,7 @@ const FRAME_STORIES = {
         "level": "h3",
         "label": "ประเด็นที่ต้องเคาะ",
         "bullets": [
+          "ต้องเคาะ: หลังปิดงานแสดง toast แล้วอยู่หน้าเดิมหรือเปลี่ยนหน้า ตามคำถามใน Planning 1,2_.pdf",
           "ต้องเคาะ: modal ยืนยันก่อนปิดงาน (แนะนำมี เพราะแก้ไม่ได้อีก), toast/กติกา error เมื่อปิดไม่สำเร็จ, รถคันสุดท้ายของแผนปิดงานแล้วสถานะแผนเป็น \"เสร็จสิ้น\" อัตโนมัติไหม, ความคืบหน้าในหน้ารายการ (เช่น \"5/10\") นับจากรถที่ \"ปิดงานแล้ว\" ใช่ไหม",
           "ตารางใน O.2/O.3 ยังมีคอลัมน์ placeholder \"Header / Text\" ต้องลบออกหรือระบุว่าเป็นคอลัมน์อะไร (พบแบบเดียวกันในตาราง PO และตารางรถ E.9, E.10, F.1, F.4)",
           "Sheet ไม่มี notification ถึง กบค. เมื่อแผนเสร็จสิ้นทั้งแผน ต้องเคาะว่าจำเป็นไหม"
@@ -4341,8 +4673,8 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — เพิ่ม contract ยกเลิก/×/Esc/พื้นหลัง: ปิดกล่องกลับ A.1 คงแถวแผนเดิม; คลิกในกล่องไม่ปิด",
-          "NEW — เพิ่ม contract ยืนยัน: ส่งลบครั้งเดียวตาม Soft Delete และไม่แสดงสำเร็จก่อนผลจริง; เงื่อนไขปิดระหว่างกำลังลบต้องตกลง"
+          "NEW — เพิ่ม behavior ยกเลิก/×/Esc/พื้นหลัง: ปิดกล่องกลับ A.1 คงแถวแผนเดิม; คลิกในกล่องไม่ปิด",
+          "NEW — เพิ่ม behavior ยืนยัน: ส่งลบครั้งเดียวตาม Soft Delete และไม่แสดงสำเร็จก่อนผลจริง; เงื่อนไขปิดระหว่างกำลังลบต้องตกลง"
         ]
       },
       {
@@ -4403,7 +4735,7 @@ const FRAME_STORIES = {
         "level": "h2",
         "label": "To-be — สิ่งที่เปลี่ยนหรือเพิ่มใหม่",
         "bullets": [
-          "NEW — แยก contract ของกล่องลบจากรายละเอียด: ยกเลิก/×/Esc/พื้นหลังกลับ B.7 ไม่กลับ A.1",
+          "NEW — แยก behavior ของกล่องลบจากรายละเอียด: ยกเลิก/×/Esc/พื้นหลังกลับ B.7 ไม่กลับ A.1",
           "NEW — ยืนยันลบสำเร็จจึงไปหน้ารายการ A; การแค่ปิดกล่องต้องไม่ทำให้รายละเอียดถูกนำออกหรือลบข้อมูล"
         ]
       },
@@ -4452,7 +4784,7 @@ const FRAME_COMMON = [
       "ค้นหา: ระหว่างพิมพ์ให้เห็นข้อความที่กรอกทันที; กำลังหาข้อมูลแสดงว่ารออยู่; ไม่พบแสดงข้อความไม่พบ; ถ้าค้นผิดพลาดต้องลองใหม่ได้; เมื่อค้นคำใหม่ห้ามผลคำเก่ามาแทน",
       "ช่องเลือกจากรายการ: ต้องเลือกรายการจริง ไม่ใช่พิมพ์ชื่อคล้าย ๆ แล้วถือว่าเลือก; เมื่อเปลี่ยนรายการต้องเปลี่ยนข้อมูลที่เกี่ยวข้องด้วย",
       "ปุ่มบันทึก/ยืนยัน: กดแล้วแสดงสถานะกำลังทำ ป้องกันการกดซ้ำ; สำเร็จแสดงผลตามจอ; ไม่สำเร็จเก็บข้อมูลที่กรอกไว้",
-      "การออกจากฟอร์ม: ถ้าแก้ข้อมูลแล้วแต่ยังไม่บันทึก ให้ถามก่อนออกตามจอเดิม; ถ้ายังไม่แก้ ออกได้เลย (ข้อเสนอ)",
+      "การออกจาก form: ถ้าแก้ข้อมูลแล้วแต่ยังไม่บันทึก ให้ถามก่อนออกตามจอเดิม; ถ้ายังไม่แก้ ออกได้เลย (ข้อเสนอ)",
       "สิทธิ์: เห็นเฉพาะข้อมูลที่มีสิทธิ์ และกดทำรายการได้เฉพาะบทบาทที่กำหนด",
       "วัน เวลา และไฟล์: ต้องไม่ยอมรับวันที่ผิดลำดับหรือไฟล์ผิดประเภท; เก็บไฟล์ที่แนบแล้วไว้เมื่อบันทึกไม่สำเร็จ"
     ]
@@ -7081,7 +7413,7 @@ function composeFrameStory(story) {
       parts.push('ดูตารางที่ ' + tables.length + ' ด้านล่าง');
     }
   }
-  parts.push('UI Component & Behavior รวมแนวทางพัฒนาจากโปรเจกต์และข้อเสนอ; Error Handling / Edge Cases เป็นข้อเสนอ ส่วนที่อ้าง Sheet ให้ยึดตามแหล่งที่ระบุ ส่วนที่ต้องตกลงยังไม่ใช่ข้อสรุป');
+  if (!story.sprint09) parts.push('UI Component & Behavior รวมแนวทางพัฒนาจากโปรเจกต์และข้อเสนอ; Error Handling / Edge Cases เป็นข้อเสนอ ส่วนที่อ้าง Sheet ให้ยึดตามแหล่งที่ระบุ ส่วนที่ต้องตกลงยังไม่ใช่ข้อสรุป');
   return {text: parts.join('\n\n'), tables};
 }
 
@@ -7101,9 +7433,8 @@ function sharedDeletePlanStory() {
   return {...list, title: 'AC D.2 — ยืนยันการลบแผน', sections};
 }
 
-async function annotateUserStory(node, flowKey) {
-  if (!USER_STORIES[flowKey]) return null;
-  const match = /(?:^|[\/·]\s*)([A-O]\.\d+(?:\.\d+)?)(?=\s|$|[·—–-])/.exec(node.name || '');
+function resolveFrameStory(name) {
+  const match = /(?:^|[\/·]\s*)([A-O]\.\d+(?:\.\d+)?)(?=\s|$|[·—–-])/.exec(name || '');
   // Legacy Sprint 06 IDs are accepted only for the documented state.
   const legacyStates = {
     'H.4': {id: 'H.4.1', state: /สร้างนัดไม่สำเร็จ/},
@@ -7112,10 +7443,22 @@ async function annotateUserStory(node, flowKey) {
     'D.1': {id: 'D.1.1', state: /เมนู/},
   };
   const legacy = match && legacyStates[match[1]];
-  const frameId = match && (legacy && legacy.state.test(node.name) ? legacy.id : match[1]);
+  const frameId = match && (legacy && legacy.state.test(name) ? legacy.id : match[1]);
   const story = frameId && (frameId === 'D.2' ? sharedDeletePlanStory() : FRAME_STORIES[frameId]);
+  return {story, frameId};
+}
+
+async function annotateUserStory(node, flowKey, liveUI, transferred, destinationPage, storyOverride) {
+  const annotationPage = destinationPage || figma.currentPage;
+  if (!storyOverride && !USER_STORIES[flowKey] && !transferred) return null;
+  const sourceName = transferred ? transferred.frame.name : node.name;
+  const resolved = resolveFrameStory(sourceName);
+  const story = storyOverride || resolved.story || (transferred ? {
+    title: 'UI — ' + sourceName,
+    sections: [{level: 'h2', label: 'ข้อมูลจาก design', paragraph: 'ยังไม่มี AC behavior สำหรับ frame นี้ รายการด้านล่างเป็นข้อมูล UI ที่บันทึกจาก Figma'}],
+  } : null);
   if (!story) throw new Error('ไม่พบ AC ตรงรหัสเฟรม: ' + node.name);
-  if (LETTER_TO_FLOW[match[1][0]] !== flowKey) throw new Error('flow ที่เลือกไม่ตรงกับรหัสเฟรม ' + match[1]);
+  if (!storyOverride && !transferred && LETTER_TO_FLOW[resolved.frameId[0]] !== flowKey) throw new Error('flow ที่เลือกไม่ตรงกับรหัสเฟรม ' + resolved.frameId);
   const abs = node.absoluteTransform
     ? {x: node.absoluteTransform[0][2], y: node.absoluteTransform[1][2]}
     : {x: node.x, y: node.y};
@@ -7124,10 +7467,12 @@ async function annotateUserStory(node, flowKey) {
   const created = [];
   const errors = [];
   const composed = composeFrameStory(story);
+  // Reviewed AC already integrates observed UI. Only unknown frames need a summary.
+  if (!resolved.story && transferred) composed.text += '\n\nรายละเอียดหน้าจอ\n' + FrameBridge.readable({frames: [transferred.frame]});
   const pad = 20;
   function add(n, nx, ny) {
     n.x = nx; n.y = ny;
-    figma.currentPage.appendChild(n);
+    annotationPage.appendChild(n);
     n.setPluginData(TAG_KEY, '1');
     created.push(n);
   }
@@ -7189,7 +7534,7 @@ async function annotateUserStory(node, flowKey) {
     for (const n of nodes) { add(n, x, y); y += n.height + BLOCK_GAP_Y; }
   }
   if (created.length) {
-    try { figma.group(created, figma.currentPage); } catch (e) { /* editor may not support grouping */ }
+    try { created.container = figma.group(created, annotationPage); } catch (e) { /* editor may not support grouping */ }
   }
   created.errors = errors;
   return created;
@@ -7213,22 +7558,851 @@ function clearTags(root) {
   return n;
 }
 
+const BRIDGE_PLACEMENT = 'maintain-d-ac-bridge-placement';
+function bridgeAnnotations(root, placement) {
+  const found = [];
+  function walk(node) {
+    for (const child of node.children || []) {
+      if (child.getPluginData && child.getPluginData(BRIDGE_PLACEMENT) === placement) found.push(child);
+      else walk(child);
+    }
+  }
+  walk(root);
+  return found;
+}
+async function pasteSavedFrame(key) {
+  if (figma.editorType !== 'figjam') throw Error('เปิด plugin นี้ใน FigJam เพื่อแปะข้อมูลที่บันทึกจาก Figma');
+  const destination = figma.currentPage;
+  const selection = Array.from(destination.selection || []);
+  const record = await FrameBridge.get(figma, key);
+  if (selection.length > 1) throw Error('เลือก frame หรือภาพปลายทางครั้งละ 1 ชิ้น หรือไม่เลือกเพื่อวางบนพื้นที่ว่าง');
+  const center = figma.viewport.center || {x: 0, y: 0};
+  let target = selection[0] || {id: 'floating', name: record.frame.name, width: 0, x: center.x, y: center.y};
+  // Selecting an existing AC (or one of its children) updates its original binding.
+  for (let owner = selection[0]; owner && owner !== destination; owner = owner.parent) {
+    const binding = owner.getPluginData && owner.getPluginData(BRIDGE_PLACEMENT);
+    if (!binding) continue;
+    const parts = JSON.parse(binding);
+    if (parts[0] !== record.key) throw Error('ป้าย AC ที่เลือกเป็นของ frame อื่น กรุณาเลือกรายการข้อมูลให้ตรงกับป้าย หรือเลือกภาพปลายทางใหม่');
+    target = {id: parts[1], name: record.frame.name, width: 0, x: center.x, y: center.y};
+    break;
+  }
+  const targetCode = FrameBridge.code(target.name);
+  const sourceCode = FrameBridge.code(record.frame.name);
+  const canonical = name => resolveFrameStory(name).frameId || FrameBridge.code(name);
+  if (targetCode && sourceCode && canonical(target.name) !== canonical(record.frame.name)) {
+    throw Error('รหัสปลายทาง ' + targetCode + ' ไม่ตรงกับข้อมูล Figma ' + sourceCode + ' กรุณาเลือกภาพ/frame ที่ตรงกัน หรือยกเลิก selection เพื่อวางแยก');
+  }
+  const placement = JSON.stringify([record.key, target.id]);
+  const previous = bridgeAnnotations(destination, placement);
+  const oldPosition = previous[0] && (previous[0].absoluteTransform
+    ? {x: previous[0].absoluteTransform[0][2], y: previous[0].absoluteTransform[1][2]}
+    : {x: previous[0].x, y: previous[0].y});
+  const nodes = await annotateUserStory(target, findFlowForNode(record.frame.name), false, record, destination);
+  if (!nodes || !nodes.length || (nodes.errors && nodes.errors.length)) {
+    if (nodes) {
+      if (nodes.container && typeof nodes.container.remove === 'function') nodes.container.remove();
+      else for (const node of nodes) node.remove();
+    }
+    throw Error('สร้าง AC ใหม่ไม่ครบ จึงยังเก็บป้ายเดิมไว้: ' + (nodes && nodes.errors ? nodes.errors.join(' · ') : 'ไม่พบข้อมูล'));
+  }
+  const container = nodes.container;
+  const owners = container && typeof container.setPluginData === 'function' ? [container] : nodes;
+  for (const owner of owners) {
+    owner.setPluginData(BRIDGE_PLACEMENT, placement);
+    owner.setPluginData(TAG_KEY, '1');
+  }
+  if (oldPosition) {
+    const first = owners[0];
+    const dx = oldPosition.x - first.x, dy = oldPosition.y - first.y;
+    for (const owner of owners) {owner.x += dx; owner.y += dy;}
+  }
+  // Replace only this source/target binding, after successful creation.
+  for (const old of previous) old.remove();
+  if (figma.currentPage === destination) figma.viewport.scrollAndZoomIntoView(owners);
+  return {updated: previous.length > 0, frame: record.frame.name, capturedAt: record.capturedAt};
+}
+
+function matchSprint09Frame(name) {
+  // Ordered state-specific rules: a bare A.1 never determines the dataset.
+  const rule = SPRINT09_FRAME_MAP.find(rule => new RegExp(rule.pattern, 'i').test(name || ''));
+  if (rule) return {storyId: 'US-S09-' + rule.story, acIds: rule.ac.map(id => 'AC-S09-' + rule.story + '-' + id)};
+  // Use the authored per-frame catalog, including names without an OH2 prefix.
+  // SP09 has its own reused A–J IDs; never treat its unreviewed screens as Overhaul.
+  if (!/^SP09\b/i.test(name || '')) {
+    const resolved = resolveFrameStory(name);
+    if (resolved.story) return {legacyFrameId: resolved.frameId, storyId: 'Overhaul — AC รายเฟรม', acIds: ['AC ' + resolved.frameId]};
+  }
+  return null;
+}
+
+function sprint09Story(storyId, acIds) {
+  const source = SPRINT09_AC[storyId];
+  if (!source || !Array.isArray(acIds) || !acIds.length) throw Error('เลือก Story และ AC อย่างน้อย 1 ข้อ');
+  if (new Set(acIds).size !== acIds.length || acIds.some(id => !source.ac.some(ac => ac.id === id))) throw Error('AC ไม่ตรงกับ Story ที่เลือก');
+  const labels = {R: 'ข้อสรุป refinement', D: 'ตามหน้าจอ — รอยืนยัน Sprint scope', P: 'ข้อเสนอ — รอรับรอง'};
+  return {sprint09: true, title: source.id + ' — ' + source.title, sections: [
+    {level: 'h2', label: 'Acceptance Criteria — Sprint 09', bullets: source.ac.filter(ac => acIds.includes(ac.id)).map(ac => ac.id + ' [' + labels[ac.level] + ']\n' + ac.text)},
+    {level: 'h2', label: 'บริบทและประเด็นที่ต้องยืนยัน', paragraph: source.context},
+    {level: 'h2', label: 'แหล่งอ้างอิง', paragraph: 'refinement-sprint09.pdf / docs/sprint09-acceptance-criteria.md; mapping เลือกโดยผู้ใช้ ไม่อนุมานสิทธิ์หรือ behavior จากชื่อเฟรม'}
+  ]};
+}
+
+function findSprint09Annotations(root, binding) {
+  const found = [];
+  const pending = Array.from(root.children || []);
+  while (pending.length) {
+    const node = pending.pop();
+    if (typeof node.getPluginData === 'function' && node.getPluginData('sprint09-binding') === binding) {
+      found.push(node);
+      // A matching group owns its descendants: remove the owner just once.
+      continue;
+    }
+    if (node.children) pending.push(...node.children);
+  }
+  return found;
+}
+
+function isACLabel(node) {
+  return node.type === 'SHAPE_WITH_TEXT' || node.type === 'TEXT' ||
+    (typeof node.getPluginData === 'function' && node.getPluginData(TAG_KEY) === '1');
+}
+
+async function annotateSprint09(storyId, acIds, target, destinationPage, frameStory) {
+  if (figma.editorType !== 'figjam') throw Error('แปะ AC ใน FigJam: เลือกภาพหรือ frame ปลายทางก่อน');
+  const selection = target ? [target] : Array.from(figma.currentPage.selection || []);
+  if (selection.length !== 1) throw Error('เลือก frame หรือภาพปลายทาง 1 ชิ้นสำหรับ mapping ที่เลือกเอง');
+  const node = selection[0];
+  const story = frameStory || sprint09Story(storyId, acIds);
+  const page = destinationPage || figma.currentPage;
+  if (node.removed) throw Error('เฟรมปลายทางถูกลบแล้ว');
+  const binding = 'sprint09:' + node.id;
+  const previous = findSprint09Annotations(page, binding);
+  const created = await annotateUserStory(node, null, false, null, page, story);
+  if (!created.length || created.errors.length) {
+    for (const item of created) item.remove();
+    if (created.container) created.container.remove();
+    throw Error('แปะ AC ไม่สำเร็จ: ' + created.errors.join(' / '));
+  }
+  for (const item of created) item.setPluginData('sprint09-binding', binding);
+  if (created.container) created.container.setPluginData('sprint09-binding', binding);
+  for (const item of previous) { if (!item.removed) item.remove(); }
+  node.setPluginData('sprint09-map', JSON.stringify({storyId, acIds}));
+  return {updated: previous.length > 0, nodes: created, owner: created.container || created[0]};
+}
+
+// BEGIN SPRINT09_AC
+const SPRINT09_AC = {
+  "US-S09-01": {
+    "id": "US-S09-01",
+    "title": "Login จริงผ่าน VMS+ / Keycloak",
+    "ac": [
+      {
+        "id": "AC-S09-01-01",
+        "level": "R",
+        "text": "**Given** ยังไม่ได้เข้าสู่ระบบ **When** เปิดการเข้าสู่ Maintain-D **Then** แสดงทางเข้าสู่ระบบ VMS+ และเข้าสู่กระบวนการ Login จริงได้ โดยไม่มีหน้าเลือก mock user"
+      },
+      {
+        "id": "AC-S09-01-02",
+        "level": "D",
+        "text": "**Given** อยู่หน้าเข้าสู่ VMS+ **When** เลือก “พนักงาน กฟภ.” **Then** ไปหน้า SSO กฟภ. เพื่อกรอกบัญชี"
+      },
+      {
+        "id": "AC-S09-01-03",
+        "level": "R",
+        "text": "**Given** บัญชีถูกต้องและมีสิทธิ์ **When** Login สำเร็จ **Then** ได้ token ของผู้ใช้ที่ Login จริง และเข้าสู่หน้า Overhaul ได้ โดยไม่ใช้ identity ของ mock user"
+      },
+      {
+        "id": "AC-S09-01-04",
+        "level": "R",
+        "text": "**Given** มีบัญชีทดสอบแยก `admin-super`, `general`, `admin-region` **When** Login ทีละบัญชี **Then** ทั้งสามบัญชีเข้าสู่ระบบได้และได้รับ identity/role ตรงกับบัญชีที่ใช้"
+      },
+      {
+        "id": "AC-S09-01-05",
+        "level": "D",
+        "text": "**Given** อยู่หน้า SSO **When** กรอกบัญชีหรือรหัสผ่านไม่ถูกต้อง **Then** ไม่เข้าสู่ VMS+ และ SSO แสดง “Invalid username or password.” ตามพฤติกรรมเดิม"
+      },
+      {
+        "id": "AC-S09-01-06",
+        "level": "D",
+        "text": "**Given** ยืนยันตัวตน SSO สำเร็จแต่บัญชียังไม่มีสิทธิ์เข้า VMS+ **When** กลับจาก SSO **Then** แสดง “คุณไม่มีสิทธิ์เข้าใช้งานระบบ” และ “กรุณาติดต่อผู้ดูแลหากต้องการเข้าใช้งาน” โดยไม่เก็บ token สำหรับใช้งานต่อ ปิดข้อความแล้วยังอยู่หน้าเข้าสู่ระบบ"
+      },
+      {
+        "id": "AC-S09-01-07",
+        "level": "P",
+        "text": "**Given** ยังไม่ได้ Login **When** เปิด URL รายละเอียด Overhaul/PO โดยตรง **Then** ต้องเข้าสู่กระบวนการ Login ก่อน และไม่แสดงข้อมูลรายละเอียดระหว่างรอ"
+      }
+    ],
+    "context": "**User story:** ในฐานะผู้ใช้งาน ฉันต้องการเข้าสู่ Maintain-D ผ่านการยืนยันตัวตนของ VMS+ เพื่อใช้งานด้วยบัญชีและสิทธิ์จริง\n**ขอบเขต:** Keycloak ยืนยันตัวตน และ UserHub เป็นแหล่งสิทธิ์ตามโน้ตในบอร์ด หน้า SSO เป็นระบบที่มีอยู่แล้ว ใช้ทดสอบการเชื่อมต่อโดยไม่ถือว่าเป็นงานออกแบบ SSO ใหม่\n|---|---|---|\n**รอยืนยัน:** ระยะเวลา token/session และ refresh token, การกลับหน้าปลายทางหลัง Login, URL ของแต่ละ environment และ CORS ที่จำเป็น หน้าเลือกบัญชี VMS+ เดิมกับหน้าเลือก mock user เป็นคนละส่วน—ข้อสรุปให้เอาออกหมายถึงหน้า mock user"
+  },
+  "US-S09-02": {
+    "id": "US-S09-02",
+    "title": "เมนูและข้อมูลตามสิทธิ์",
+    "ac": [
+      {
+        "id": "AC-S09-02-01",
+        "level": "R",
+        "text": "**Given** Login จริงสำเร็จ **When** เปิดหน้าใช้งาน **Then** เมนูและรายละเอียดที่เข้าถึงได้สอดคล้องกับสิทธิ์ที่ได้รับจากระบบสิทธิ์"
+      },
+      {
+        "id": "AC-S09-02-02",
+        "level": "R",
+        "text": "**Given** ผู้ใช้มี role `general` และผูกหน่วยงานแล้ว **When** เปิดรายการรถ **Then** เห็นเฉพาะรถภายในหน่วยงานของตน"
+      },
+      {
+        "id": "AC-S09-02-03",
+        "level": "R",
+        "text": "**Given** ผู้ใช้มี role `admin-region` และผูกเขตแล้ว **When** เปิดรายการรถ **Then** เห็นเฉพาะรถภายในเขตของตน"
+      },
+      {
+        "id": "AC-S09-02-04",
+        "level": "R",
+        "text": "**Given** ผู้ใช้มี role `admin-super` **When** เปิดรายการรถ **Then** เห็นรถทั้งหมดในขอบเขตระบบ"
+      },
+      {
+        "id": "AC-S09-02-05",
+        "level": "D",
+        "text": "**Given** ผู้ใช้เข้า VMS+ ได้แต่ไม่มีสิทธิ์ Overhaul เช่นมีเพียง `vehicle-user` ตามตัวอย่างในบล็อก A.4 **When** เปิดเมนู **Then** ไม่แสดงเมนู “จัดการงาน Overhaul” โดยไม่ตีความว่าผู้ใช้ไม่มีสิทธิ์เข้า VMS+ ทั้งระบบ"
+      },
+      {
+        "id": "AC-S09-02-06",
+        "level": "D",
+        "text": "**Given** ผู้ใช้ไม่มีสิทธิ์ Overhaul **When** เปิด URL Overhaul โดยตรง **Then** ไม่แสดงข้อมูลแผนหรือรถแม้บางส่วน และแจ้งว่าไม่มีสิทธิ์เข้าถึง"
+      },
+      {
+        "id": "AC-S09-02-07",
+        "level": "P",
+        "text": "**Given** ผู้ใช้มีสิทธิ์เฉพาะหน่วยงาน/เขต **When** เปลี่ยน ID ใน URL หรือเรียกข้อมูลรถนอกขอบเขต **Then** ระบบปฏิเสธการเข้าถึงและไม่ส่งข้อมูลรถนั้นกลับ"
+      }
+    ],
+    "context": "**User story:** ในฐานะเจ้าของรถ/ผู้ดูแลเขต/ผู้ดูแลส่วนกลาง ฉันต้องการเห็นเมนูและรถตามสิทธิ์ เพื่อทำงานกับข้อมูลในความรับผิดชอบ\n|---|---|---|\n**Dependency:** ต้องมีชุดข้อมูลผูกผู้ใช้→หน่วยงาน/เขต→รถ และ mapping role กับเมนูซ่อม/บำรุงรักษา/Overhaul ก่อน QA ตรวจรับ; บอร์ดยังไม่ได้ระบุสิทธิ์สร้าง/แก้ไข/ลบราย role จึงไม่อนุมานว่า role ที่อ่านได้จะแก้ไขได้"
+  },
+  "US-S09-03": {
+    "id": "US-S09-03",
+    "title": "Notification ตามเหตุการณ์ธุรกิจ",
+    "ac": [
+      {
+        "id": "AC-S09-03-01",
+        "level": "R",
+        "text": "**Given** มีการนัดหมายรถเข้าอู่ **When** ส่งนัดหมายสำเร็จ **Then** สร้างการแจ้งเตือนถึงหน่วยงานต้นทางสำหรับรายการนัดหมายนั้น"
+      },
+      {
+        "id": "AC-S09-03-02",
+        "level": "R",
+        "text": "**Given** หน่วยงานต้นทางได้รับนัดหมาย **When** ต้นทางยืนยันนัดหมายสำเร็จ **Then** สร้างการแจ้งเตือนถึง กบค. ว่าหน่วยงานต้นทางยืนยันแล้ว"
+      },
+      {
+        "id": "AC-S09-03-03",
+        "level": "R",
+        "text": "**Given** มีงานตรวจรับรถ **When** ตรวจรับรถสำเร็จ **Then** สร้างการแจ้งเตือนถึงหน่วยงานต้นทางของรถนั้น"
+      },
+      {
+        "id": "AC-S09-03-04",
+        "level": "R",
+        "text": "**Given** งานพร้อมยืนยันขั้นตอนที่ 7 **When** ยืนยันการส่งอนุมัติสำเร็จ **Then** สร้างการแจ้งเตือนปิดงานถึงหน่วยงานต้นทาง โดยไม่รอผู้อนุมัติ"
+      },
+      {
+        "id": "AC-S09-03-05",
+        "level": "R",
+        "text": "**Given** เกิดเหตุการณ์ใดเหตุการณ์หนึ่งข้างต้นและทราบผู้รับ **When** ส่งแจ้งเตือน **Then** รองรับการส่งผ่าน VMS+, PEA Life และ Work-D ตามผู้รับที่เกี่ยวข้อง และใช้ SMS เฉพาะผู้รับ Vendor ที่มี `is_employee = false`"
+      },
+      {
+        "id": "AC-S09-03-06",
+        "level": "R",
+        "text": "**Given** ผู้รับเป็นพนักงาน กฟภ. (`is_employee = true`) **When** เกิดเหตุการณ์แจ้งเตือน **Then** ไม่ส่ง SMS ให้ผู้รับรายนั้น"
+      },
+      {
+        "id": "AC-S09-03-07",
+        "level": "R",
+        "text": "**Given** สร้าง notification ของ Overhaul **When** บันทึกแจ้งเตือน **Then** มี `notify_type` ให้แยกประเภทงาน Overhaul ออกจากประเภทงานอื่นได้; ค่าจริงและชื่อประเภทงานซ่อมใหญ่รอยืนยัน"
+      },
+      {
+        "id": "AC-S09-03-08",
+        "level": "P",
+        "text": "**Given** การบันทึกขั้นตอนธุรกิจไม่สำเร็จ **When** ระบบตอบกลับว่าล้มเหลว **Then** ไม่สร้างแจ้งเตือนที่ระบุว่าขั้นตอนนั้นสำเร็จ"
+      },
+      {
+        "id": "AC-S09-03-09",
+        "level": "P",
+        "text": "**Given** เหตุการณ์หนึ่งส่งไปบางช่องทางสำเร็จแต่บางช่องทางล้มเหลว **When** ตรวจสอบผลส่ง **Then** แยกผลรายช่องทางได้ และไม่เปลี่ยนผลธุรกิจที่บันทึกสำเร็จแล้วเป็นล้มเหลวเพียงเพราะการส่งแจ้งเตือนล้มเหลว; วิธี retry รอยืนยัน"
+      }
+    ],
+    "context": "**User story:** ในฐานะหน่วยงานต้นทางและ กบค. ฉันต้องการรับแจ้งเตือนเมื่อขั้นตอนสำคัญสำเร็จ เพื่อทราบสถานะและดำเนินการต่อ\n**ช่องทางตามข้อสรุป [R]:** VMS+ (in-app), PEA Life, Work-D และ SMS โดยไม่รวม Firebase; SMS ส่งเฉพาะ Vendor ที่ `is_employee = false` ไม่ส่งให้พนักงาน กฟภ. ทั้งนี้ต้องยืนยัน mapping ผู้รับแต่ละช่องทางก่อนทดสอบครบวงจร\n|---|---|---|\n**ข้อความตามบอร์ด [R] — ตัวแปรต้องใช้ข้อมูลของรายการจริง:**\n| เหตุการณ์ | ข้อความ |\n|---|---|\n| นัดหมายรถเข้าอู่ | “นัดหมาย {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} สำเร็จ” |\n| ต้นทางยืนยันนัดหมาย | “หน่วยงาน {สังกัด} ของ {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} ยืนยันนัดหมายแล้ว” |\n| ตรวจรับรถสำเร็จ | “ยืนยันรับรถสำเร็จ” |\n| ยืนยันขั้นตอนที่ 7 | “ปิดงาน {ข้อมูลสำคัญ เช่นเลขแผนหรือ PO} เรียบร้อยแล้ว” |\n**รอยืนยัน:** จะใช้เลขแผน, PO, ทะเบียนรถ หรือหลายค่าร่วมกันในข้อความ; ผู้รับเป็นรายบุคคลหรือกลุ่มหน่วยงาน; แหล่ง EmployeeId ของ PEA Life; ผู้รับ Work-D; endpoint และสัญญาข้อมูลที่ใช้งานจริง; กรณี Vendor ไม่มีเบอร์หรือ `is_employee` ไม่ทราบค่า ไม่มีการถือว่าค่าว่างเท่ากับ false"
+  },
+  "US-S09-04": {
+    "id": "US-S09-04",
+    "title": "รายการแจ้งเตือนใน VMS+ และลิงก์รายละเอียด",
+    "ac": [
+      {
+        "id": "AC-S09-04-01",
+        "level": "R",
+        "text": "**Given** มีข้อความที่ยังไม่อ่าน **When** แสดงไอคอนแจ้งเตือน **Then** แสดง badge dot สีเขียว"
+      },
+      {
+        "id": "AC-S09-04-02",
+        "level": "R",
+        "text": "**Given** มีรายการแจ้งเตือน **When** เปิดรายการ **Then** รายการที่ยังไม่ได้กดมีพื้นหลังสีเทา และรายการที่กดอ่านแล้วมีพื้นหลังสีขาว"
+      },
+      {
+        "id": "AC-S09-04-03",
+        "level": "R",
+        "text": "**Given** กำลังแสดงรายการแจ้งเตือน **When** กดรายการหนึ่ง **Then** เปิดหน้ารายละเอียดที่สัมพันธ์กับแจ้งเตือนนั้น เช่นรายละเอียด Overhaul หรือ PO โดยใช้ ID ใน URL เป็นพารามิเตอร์เพื่อดึงข้อมูล"
+      },
+      {
+        "id": "AC-S09-04-04",
+        "level": "R",
+        "text": "**Given** กดอ่านรายการที่ยังไม่อ่าน **When** กลับมาดูรายการ **Then** รายการนั้นมีสถานะอ่านแล้ว และเมื่อไม่มีข้อความที่ยังไม่อ่าน badge dot หายไป"
+      },
+      {
+        "id": "AC-S09-04-05",
+        "level": "R",
+        "text": "**Given** มีรายการแจ้งเตือน **When** กด “ล้างข้อความแจ้งเตือน” **Then** เคลียร์รายการแจ้งเตือนทั้งหมดของผู้ใช้และซ่อน badge dot"
+      },
+      {
+        "id": "AC-S09-04-06",
+        "level": "R",
+        "text": "**Given** ไม่มีรายการแจ้งเตือนหรือถูกล้างแล้ว **When** เปิดรายการ **Then** แสดงสภาพรายการว่างและไม่มี badge dot"
+      },
+      {
+        "id": "AC-S09-04-07",
+        "level": "P",
+        "text": "**Given** URL รายละเอียดมี ID ที่ถูกต้องและผู้ใช้มีสิทธิ์ **When** เปิด URL โดยตรงหรือ refresh หน้า **Then** โหลดรายละเอียดรายการเดิมได้โดยไม่อาศัยการคลิกมาจากหน้ารายการ"
+      },
+      {
+        "id": "AC-S09-04-08",
+        "level": "P",
+        "text": "**Given** ปลายทางถูกลบ ไม่มีอยู่ หรือผู้รับไม่มีสิทธิ์ **When** กดแจ้งเตือน **Then** แจ้งว่าไม่สามารถเปิดรายละเอียดได้และไม่เปิดเผยข้อมูลที่ไม่มีสิทธิ์"
+      }
+    ],
+    "context": "**User story:** ในฐานะผู้รับแจ้งเตือน ฉันต้องการแยกข้อความที่ยังไม่อ่าน เปิดรายการที่เกี่ยวข้อง และล้างรายการได้\n|---|---|---|\n**รอยืนยัน:** ล้างรายการหมายถึงซ่อนสำหรับผู้ใช้หรือลบข้อมูลจริง, การคงสถานะอ่าน/ล้างเมื่อ refresh หรือ Login ใหม่, สีวงขอบไอคอนและข้อความ empty state, ลิงก์ปลายทางของแจ้งเตือนแต่ละเหตุการณ์"
+  },
+  "US-S09-05": {
+    "id": "US-S09-05",
+    "title": "เตือนก่อนสิ้นสุดประกัน",
+    "ac": [
+      {
+        "id": "AC-S09-05-01",
+        "level": "R",
+        "text": "**Given** รถมีวันสิ้นสุดประกัน **When** ถึงวันก่อนสิ้นสุดประกัน 30 วัน **Then** สร้างแจ้งเตือนล่วงหน้า 30 วันหนึ่งครั้งสำหรับรอบประกันนั้น"
+      },
+      {
+        "id": "AC-S09-05-02",
+        "level": "R",
+        "text": "**Given** รถมีวันสิ้นสุดประกัน **When** ถึงวันก่อนสิ้นสุดประกัน 15 วัน **Then** สร้างแจ้งเตือนล่วงหน้า 15 วันหนึ่งครั้งสำหรับรอบประกันนั้น แม้เคยแจ้งที่ 30 วันแล้ว"
+      },
+      {
+        "id": "AC-S09-05-03",
+        "level": "R",
+        "text": "**Given** เข้าเงื่อนไขเตือน **When** กำหนดผู้รับ **Then** แจ้งเจ้าของรถ กรย. และ กบค. ที่เกี่ยวข้องกับรถนั้น"
+      },
+      {
+        "id": "AC-S09-05-04",
+        "level": "R",
+        "text": "**Given** สร้างแจ้งเตือนสิ้นสุดประกัน **When** แสดงข้อความ **Then** หัวข้อเป็น “แจ้งวันสิ้นสุดประกัน” และรายละเอียดเป็น “แจ้งวันสิ้นสุดประกัน วันที่ {วันสิ้นสุดประกัน} ของรถ {เลขทะเบียน} โปรดตรวจสอบความเรียบร้อย” โดยแทนค่าจริง"
+      },
+      {
+        "id": "AC-S09-05-05",
+        "level": "R",
+        "text": "**Given** เคยสร้างแจ้งเตือนระยะ 30 หรือ 15 วันของรอบประกันนั้นแล้ว **When** กระบวนการตรวจสอบทำงานซ้ำ **Then** ไม่สร้างแจ้งเตือนระยะเดิมซ้ำ"
+      },
+      {
+        "id": "AC-S09-05-06",
+        "level": "P",
+        "text": "**Given** รถไม่มีวันสิ้นสุดประกัน **When** ตรวจเงื่อนไขแจ้งเตือน **Then** ไม่คำนวณวันเตือนจากวันที่สมมติและไม่ใช้วันสิ้นสุด PO แทนโดยอัตโนมัติ"
+      }
+    ],
+    "context": "**User story:** ในฐานะเจ้าของรถ กรย. และ กบค. ฉันต้องการรับแจ้งเตือนก่อนประกันงานซ่อมสิ้นสุด เพื่อมีเวลาตรวจสอบรถ\n**กติกาจากบอร์ด:** หัวข้อเดิมเขียน “ก่อนหมดสัญญา” แต่คำอธิบายระบุชัดให้นับจาก **วันสิ้นสุดประกัน** จึงใช้วันสิ้นสุดประกันเป็นฐานของ AC ชุดนี้ ไม่ใช้วันสิ้นสุดสัญญา PO\n|---|---|---|\n**ตัวอย่างตรวจรับ [P]:** หากวันสิ้นสุดประกันเป็น 31/12/2569 จะเข้าเงื่อนไข 30 วันในวันที่ 1/12/2569 และ 15 วันในวันที่ 16/12/2569 โดยเสนอให้นับวันปฏิทินตามเวลาไทย\n**รอยืนยัน:** ช่องทางแจ้งเตือนของประกัน (ไม่อนุมานว่าใช้ทุกช่องทางเช่นเดียวกับ 4 เหตุการณ์), เวลารันงาน, timezone, วิธีชดเชยเมื่อระบบหยุดทำงาน, การแจ้งย้อนหลังเมื่อเพิ่งบันทึกประกัน, การแก้วันสิ้นสุดประกันหลังเคยส่ง และเจ้าของรถหมายถึงผู้ใช้หรือผู้รับแทนหน่วยงานใด"
+  },
+  "US-S09-06": {
+    "id": "US-S09-06",
+    "title": "ปิดงานเมื่อยืนยันขั้นตอนที่ 7",
+    "ac": [
+      {
+        "id": "AC-S09-06-01",
+        "level": "D",
+        "text": "**Given** งานพร้อมสำหรับขั้นตอนที่ 7 **When** เปิดหน้าสรุปก่อนส่ง **Then** แสดงข้อมูลผู้ซ่อม ยานพาหนะ ประกันงานซ่อม บันทึกติดตามงาน อะไหล่ และเอกสารที่บันทึกไว้ของงานนั้น"
+      },
+      {
+        "id": "AC-S09-06-02",
+        "level": "R",
+        "text": "**Given** กบค. ทำขั้นตอนก่อนหน้าครบและข้อมูลพร้อม **When** ยืนยันการส่งอนุมัติขั้นตอนที่ 7 สำเร็จ **Then** งานเปลี่ยนเป็น “ปิดงานแล้ว” ทันที โดยไม่เข้าสู่กระบวนการรอผู้อนุมัติ"
+      },
+      {
+        "id": "AC-S09-06-03",
+        "level": "D",
+        "text": "**Given** ยืนยันขั้นตอนที่ 7 สำเร็จ **When** แสดงผลหลังปิดงาน **Then** แสดงความคืบหน้า 100% และข้อความ “ปิดงาน {ข้อมูลสำคัญ เช่นเลขแผนหรือ Purchase Order} เรียบร้อยแล้ว”"
+      },
+      {
+        "id": "AC-S09-06-04",
+        "level": "R",
+        "text": "**Given** ปิดงานจากขั้นตอนที่ 7 สำเร็จ **When** ดำเนินผลต่อเนื่อง **Then** แจ้งหน่วยงานต้นทางตาม AC-S09-03-04 โดยไม่ต้องมี action อนุมัติเพิ่ม"
+      },
+      {
+        "id": "AC-S09-06-05",
+        "level": "P",
+        "text": "**Given** การยืนยันขั้นตอนที่ 7 บันทึกไม่สำเร็จ **When** ระบบแจ้งข้อผิดพลาด **Then** คงสถานะก่อนปิดงานและไม่แสดงข้อความปิดงานสำเร็จ"
+      }
+    ],
+    "context": "**User story:** ในฐานะ กบค. ฉันต้องการยืนยันขั้นตอนสุดท้ายแล้วปิดงานได้ทันที เพื่อจบงานและแจ้งหน่วยงานต้นทาง\n|---|---|---|\n**ข้อขัดแย้งที่ต้องแก้:** หน้าจอ P.1 ยังแสดง “รอ ผบช. อนุมัติปิดงาน” และชื่อปุ่ม “ส่งอนุมัติ” แต่ข้อสรุปใหม่ให้ปิดงานทันที ต้องยืนยันชื่อปุ่ม/ชื่อขั้นตอนใหม่ ส่วน workflow ผู้อนุมัติไม่รวมในร่าง Sprint นี้ตามโน้ต “ตัดเรื่องของผู้อนุมัติไปก่อน”"
+  },
+  "US-S09-07": {
+    "id": "US-S09-07",
+    "title": "Dashboard รถที่ Overhaul [รอยืนยัน Sprint scope]",
+    "ac": [
+      {
+        "id": "AC-S09-07-01",
+        "level": "D",
+        "text": "**Given** เข้าถึงหน้าได้ตามสิทธิ์ **When** เลือกแท็บ “รถที่ Overhaul” **Then** แสดงสรุปความคุ้มค่า ความคืบหน้า ประเภทรถ ยี่ห้อ และตารางรถ"
+      },
+      {
+        "id": "AC-S09-07-02",
+        "level": "D",
+        "text": "**Given** มีข้อมูลรถ **When** ค้นหาทะเบียน/ยี่ห้อ/รุ่น หรือใช้ตัวกรอง **Then** ตารางแสดงรถที่ตรงเงื่อนไข; หน้าตัวกรองมี ยี่ห้อ รุ่นรถ ประเภทรถ อายุการใช้งาน เลขไมล์สะสม ค่า Overhaul เทียบราคารถ และสถานะงาน"
+      },
+      {
+        "id": "AC-S09-07-03",
+        "level": "D",
+        "text": "**Given** ใช้ตัวกรองแล้ว **When** แสดงสรุป **Then** ความคุ้มค่า ความคืบหน้า และจำนวนตามประเภทรถอิงชุดรถตามตัวกรอง ส่วน “ยี่ห้อที่ Overhaul บ่อยที่สุด” อิงข้อมูลรวมตามข้อความกำกับและไม่เปลี่ยนตามตัวกรอง โดยยังต้องอยู่ภายในสิทธิ์ผู้ใช้"
+      },
+      {
+        "id": "AC-S09-07-04",
+        "level": "D",
+        "text": "**Given** รถมีราคาซื้อใหม่ทดแทน 2,700,000 บาท และประเมิน Overhaul 250,000 บาท **When** แสดงส่วนต่างประมาณการ **Then** แสดง 2,450,000 บาท และแยกราคาซื้อเดิม 2,030,000 บาทเป็นอีกค่า ไม่ใช้ราคาซื้อเดิมแทนราคาซื้อใหม่"
+      },
+      {
+        "id": "AC-S09-07-05",
+        "level": "D",
+        "text": "**Given** แสดงการ์ดความคุ้มค่า **When** ผู้ใช้อ่านผล **Then** มีคำอธิบายว่าเป็นประมาณการ ไม่ใช่ผลประหยัดจากค่าใช้จ่ายจริง และแสดงจำนวนรถที่มีราคาครบเทียบจำนวนรถทั้งหมดในชุดนั้น"
+      },
+      {
+        "id": "AC-S09-07-06",
+        "level": "D",
+        "text": "**Given** รถบางคันไม่มีข้อมูลความคืบหน้า **When** คำนวณค่าเฉลี่ย **Then** ไม่นับค่าที่ขาดเป็น 0% และแสดงจำนวนรถที่มีข้อมูล จำนวนที่ถึง 100% และจำนวนที่ยังไม่มีข้อมูล"
+      },
+      {
+        "id": "AC-S09-07-07",
+        "level": "D",
+        "text": "**Given** กรองแล้วเหลือรถที่มีความคืบหน้า 100% เพียงคันเดียว **When** แสดงสรุป **Then** ค่าเฉลี่ยเป็น 100% รถที่ถึง 100% เท่ากับ 1 และรถที่ยังไม่มีข้อมูลเท่ากับ 0"
+      },
+      {
+        "id": "AC-S09-07-08",
+        "level": "D",
+        "text": "**Given** ไม่มีรถตรงเงื่อนไข **When** แสดงผล **Then** ตารางแสดง “ไม่พบรถตามตัวกรอง” มีคำแนะนำเปลี่ยนตัวกรอง สรุปราคา/ค่าเฉลี่ยแสดง “—” และจำนวนรถเป็น 0 โดยไม่ค้างค่าจากผลก่อนหน้า"
+      }
+    ],
+    "context": "**User story:** ในฐานะผู้ดูแลงาน ฉันต้องการดูภาพรวมรถ ต้นทุนประมาณการ และความคืบหน้า เพื่อประกอบการติดตามและตัดสินใจ\nAC ทั้งชุดเป็น **[D] ตามหน้าจอ Scenario 15 / A.5–A.8** ยังไม่ถือว่า commit ส่งมอบใน Sprint 09\n|---|---|\n**รอยืนยัน:** สูตรเปอร์เซ็นต์และการปัดเศษ, กรณีราคาขาดบางคันจะรวมราคาจากชุดใด, ช่วงตัวกรอง/เงื่อนไขขอบเขตตัวเลข, “ข้อมูลรวม” รวมระดับใด, ชื่อสถานะงานที่ยังมี “รอ ผบช. อนุมัติปิดงาน” ต้องสอดคล้องกับ US-S09-06"
+  },
+  "US-S09-08": {
+    "id": "US-S09-08",
+    "title": "ราคาประมาณการรายคัน [รอยืนยัน Sprint scope]",
+    "ac": [
+      {
+        "id": "AC-S09-08-01",
+        "level": "D",
+        "text": "**Given** เปิดรายละเอียดรถจากแผน **When** แสดงข้อมูลรถ **Then** แสดงราคาประมาณการซื้อใหม่ทดแทนและราคา Overhaul จากแบบประเมินรายคัน"
+      },
+      {
+        "id": "AC-S09-08-02",
+        "level": "D",
+        "text": "**Given** ผู้ใช้มีสิทธิ์แก้ไขราคารายคัน **When** เปิดแก้ไขและบันทึกค่าที่ถูกต้อง **Then** บันทึกค่าให้รถที่เลือกและแสดง “แก้ไขราคารายคันสำเร็จ”"
+      }
+    ],
+    "context": "**User story:** ในฐานะผู้จัดการแผน ฉันต้องการบันทึกราคาซื้อใหม่ทดแทนและราคา Overhaul รายคัน เพื่อใช้เปรียบเทียบประมาณการ\nAC ทั้งชุดเป็น **[D] ตามหน้าจอ B.9–B.12**; สิทธิ์แก้ไขจริงรอยืนยันตาม US-S09-02\n|---|---|\n**รอยืนยันก่อนเพิ่ม AC validation:** ราคาบังคับหรือไม่, 0 ได้หรือไม่, จำนวนทศนิยม/ค่าสูงสุด, ความสัมพันธ์ราคาประเมินกับค่าใช้จ่ายจริง, จังหวะอัปเดต Dashboard หลังแก้ไข ไม่ใช้ตัวเลขตัวอย่างในภาพเป็นขีดจำกัดธุรกิจ"
+  },
+  "US-S09-09": {
+    "id": "US-S09-09",
+    "title": "ข้อมูลอู่/ศูนย์บริการ [รอยืนยัน Sprint scope]",
+    "ac": [
+      {
+        "id": "AC-S09-09-01",
+        "level": "D",
+        "text": "**Given** มีข้อมูลอู่ **When** เปิดรายการ **Then** แสดงรหัส ชื่อ ประเภท/ยี่ห้อที่รองรับ ที่ตั้ง เบอร์โทร และคะแนนเฉลี่ย"
+      },
+      {
+        "id": "AC-S09-09-02",
+        "level": "D",
+        "text": "**Given** มีอู่ที่ตรงเงื่อนไข **When** ค้นหาชื่ออู่ จังหวัด หรือเบอร์โทร **Then** แสดงรายการที่ตรงคำค้น"
+      },
+      {
+        "id": "AC-S09-09-03",
+        "level": "D",
+        "text": "**Given** ผู้ใช้มีสิทธิ์เพิ่มอู่ **When** กรอกชื่ออู่และบันทึก **Then** สร้างข้อมูลอู่ได้ โดยประเภท/ยี่ห้อที่รองรับ ที่อยู่ เบอร์โทร อีเมล พิกัด และเอกสารเป็นข้อมูล “ถ้ามี” ตามแบบฟอร์ม"
+      },
+      {
+        "id": "AC-S09-09-04",
+        "level": "D",
+        "text": "**Given** แบบฟอร์มยังไม่มีชื่ออู่ **When** กดบันทึก **Then** ไม่สร้างรายการและแสดง “กรุณาระบุชื่ออู่/ศูนย์บริการ”"
+      },
+      {
+        "id": "AC-S09-09-05",
+        "level": "D",
+        "text": "**Given** มีอู่เดิมและผู้ใช้มีสิทธิ์แก้ไข **When** แก้ข้อมูลแล้วบันทึกสำเร็จ **Then** ข้อมูลอู่เดิมเปลี่ยนตามที่บันทึกและแสดง “บันทึกข้อมูลอู่สำเร็จ”"
+      },
+      {
+        "id": "AC-S09-09-06",
+        "level": "D",
+        "text": "**Given** อู่มีคะแนน **When** เปิดรายละเอียด **Then** แสดงคะแนนเฉลี่ยและจำนวนครั้ง; ถ้ายังไม่มีคะแนนแสดง “ยังไม่มีคะแนน” โดยไม่แสดงเป็น 0 คะแนน"
+      },
+      {
+        "id": "AC-S09-09-07",
+        "level": "D",
+        "text": "**Given** อู่มีข้อมูลพิกัด **When** กด “นำทางด้วย Google Maps” **Then** เปิดการนำทางไปยังพิกัดของอู่นั้น"
+      },
+      {
+        "id": "AC-S09-09-08",
+        "level": "D",
+        "text": "**Given** มี PO หรือเอกสารอ้างอิงของอู่ **When** เปิดรายละเอียด **Then** แสดงรายการที่สัมพันธ์กับอู่นั้น; ถ้าไม่มีแสดงสภาพไม่มีเอกสารอ้างอิง"
+      },
+      {
+        "id": "AC-S09-09-09",
+        "level": "D",
+        "text": "**Given** ไม่มีข้อมูลอู่เลย **When** เปิดรายการ **Then** แสดง “ยังไม่มีอู่/ศูนย์บริการ”; ถ้ามีข้อมูลแต่ค้นไม่ตรงแสดง “ไม่พบอู่/ศูนย์บริการ” และแนะนำให้เปลี่ยนคำค้นหรือตัวกรอง"
+      },
+      {
+        "id": "AC-S09-09-10",
+        "level": "D",
+        "text": "**Given** แนบเอกสารข้อมูลอู่ **When** เลือกไฟล์ **Then** รองรับ PDF/JPG และจำนวนสูงสุด 10 ไฟล์ตามข้อความในแบบฟอร์ม"
+      }
+    ],
+    "context": "**User story:** ในฐานะผู้จัดการข้อมูลอู่ ฉันต้องการค้นหา เพิ่ม แก้ไข และดูข้อมูลอู่ เพื่อใช้อ้างอิงในการจัดการงาน Overhaul\nAC ทั้งชุดเป็น **[D] ตามหน้าจอ UC-6/18 A.1–A.11**; role ที่ดู/เพิ่ม/แก้ไขได้รอยืนยัน\n|---|---|\n**รอยืนยัน:** รายละเอียดตัวกรอง, ชื่ออู่ซ้ำ, validation เบอร์/อีเมล/พิกัด, ขนาดไฟล์สูงสุด, แหล่งคะแนนและสูตรเฉลี่ย, สิทธิ์เปิด PO, ข้อความ/การลองใหม่เมื่อโหลดไม่สำเร็จ (มีชื่อเฟรม A.11 แต่ยังไม่มีรายละเอียดพฤติกรรมเพียงพอ)"
+  }
+};
+const SPRINT09_FRAME_MAP = [
+  {
+    "pattern": "(?:SSO|Login to your account).*(?:กรอกรหัสผิด|รหัสผิด)|SSO กรอกรหัสผิด",
+    "story": "01",
+    "ac": [
+      "05"
+    ]
+  },
+  {
+    "pattern": "ไม่มีสิทธิ์เข้าใช้งานระบบ",
+    "story": "01",
+    "ac": [
+      "06"
+    ]
+  },
+  {
+    "pattern": "SSO.*Login to your account",
+    "story": "01",
+    "ac": [
+      "03"
+    ]
+  },
+  {
+    "pattern": "หน้าเข้าสู่ระบบ VMS|เข้าสู่ระบบ.*VMS|SP09 / เข้าสู่ระบบ|ทางเข้า.*Keycloak",
+    "story": "01",
+    "ac": [
+      "01",
+      "02",
+      "03"
+    ]
+  },
+  {
+    "pattern": "เจ้าของรถ.*กรย|permission|สิทธิ์.*(?:general|admin)|(?:general|admin-region|admin-super).*สิทธิ์",
+    "story": "02",
+    "ac": [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07"
+    ]
+  },
+  {
+    "pattern": "(?:ก่อนหมด|สิ้นสุด|หมดอายุ|หมด).*ประกัน|แจ้งเตือนก่อนหมดสัญญา",
+    "story": "05",
+    "ac": [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06"
+    ]
+  },
+  {
+    "pattern": "(?:notification|แจ้งเตือน).*(?:ว่าง|ไม่มี)|(?:ว่าง|ไม่มี).*แจ้งเตือน",
+    "story": "04",
+    "ac": [
+      "01",
+      "06"
+    ]
+  },
+  {
+    "pattern": "ล้าง.*แจ้งเตือน",
+    "story": "04",
+    "ac": [
+      "05",
+      "06"
+    ]
+  },
+  {
+    "pattern": "(?:notification|แจ้งเตือน).*(?:อ่าน|รายการ|แผง)|แผงแจ้งเตือน|กระดิ่ง",
+    "story": "04",
+    "ac": [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08"
+    ]
+  },
+  {
+    "pattern": "ต้นทางยืนยันนัดหมาย|หน่วยงานยืนยันนัดหมาย",
+    "story": "03",
+    "ac": [
+      "02",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09"
+    ]
+  },
+  {
+    "pattern": "นัดหมายรถเข้าอู่สำเร็จ|นัดเอารถเข้าอู่.*สำเร็จ",
+    "story": "03",
+    "ac": [
+      "01",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09"
+    ]
+  },
+  {
+    "pattern": "ตรวจรับรถสำเร็จ",
+    "story": "03",
+    "ac": [
+      "03",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09"
+    ]
+  },
+  {
+    "pattern": "(?:P\\.2|ยืนยันการส่งอนุมัติ|ปิดงานแล้ว|ส่งอนุมัติปิดงาน)",
+    "story": "06",
+    "ac": [
+      "02",
+      "03",
+      "04",
+      "05"
+    ]
+  },
+  {
+    "pattern": "P\\.1|สรุปก่อนส่งอนุมัติ|รอปิดงาน.*สรุป",
+    "story": "06",
+    "ac": [
+      "01",
+      "02",
+      "04",
+      "05"
+    ]
+  },
+  {
+    "pattern": "รถที่ Overhaul.*(?:ไม่พบ|ไม่มีข้อมูล)|ไม่พบรถตามตัวกรอง",
+    "story": "07",
+    "ac": [
+      "03",
+      "08"
+    ]
+  },
+  {
+    "pattern": "รถที่ Overhaul.*(?:ตัวกรอง|กรองรุ่น)",
+    "story": "07",
+    "ac": [
+      "02",
+      "03"
+    ]
+  },
+  {
+    "pattern": "รถที่ Overhaul|Dashboard.*ประมาณการ",
+    "story": "07",
+    "ac": [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08"
+    ]
+  },
+  {
+    "pattern": "B\\.9|รายละเอียดรถจากแผน",
+    "story": "08",
+    "ac": [
+      "01"
+    ]
+  },
+  {
+    "pattern": "B\\.(?:10|11|12)|แก้ไขราคาประมาณการ|ราคารายคัน",
+    "story": "08",
+    "ac": [
+      "01",
+      "02"
+    ]
+  },
+  {
+    "pattern": "(?:อู่|ศูนย์บริการ).*(?:Validation|validation)|Validation.*(?:อู่|ศูนย์บริการ)",
+    "story": "09",
+    "ac": [
+      "03",
+      "04"
+    ]
+  },
+  {
+    "pattern": "(?:อู่|ศูนย์บริการ).*(?:ไม่มีข้อมูล|ค้นหาไม่พบ)|(?:ไม่มีข้อมูล|ค้นหาไม่พบ).*อู่",
+    "story": "09",
+    "ac": [
+      "02",
+      "09"
+    ]
+  },
+  {
+    "pattern": "(?:รายละเอียด.*(?:อู่|ศูนย์บริการ)|(?:อู่|ศูนย์บริการ).*รายละเอียด)",
+    "story": "09",
+    "ac": [
+      "06",
+      "07",
+      "08"
+    ]
+  },
+  {
+    "pattern": "แก้ไข.*(?:อู่|ศูนย์บริการ)",
+    "story": "09",
+    "ac": [
+      "05",
+      "10"
+    ]
+  },
+  {
+    "pattern": "เพิ่ม.*(?:อู่|ศูนย์บริการ)",
+    "story": "09",
+    "ac": [
+      "03",
+      "04",
+      "10"
+    ]
+  },
+  {
+    "pattern": "รายการ.*(?:อู่|ศูนย์บริการ)",
+    "story": "09",
+    "ac": [
+      "01",
+      "02",
+      "06",
+      "09"
+    ]
+  }
+];
+// END SPRINT09_AC
+
 /* ---------- ทางเข้าจริงของปลั๊กอิน ---------- */
 if (typeof figma !== 'undefined' && figma.showUI) {
   figma.showUI(__html__, { width: 420, height: 480 });
 
+  const refreshInspection = FrameInspector.watch(figma, FrameBridge.readable);
+  let bridgeWrite = Promise.resolve();
+  const sendSaved = async () => {
+    const records = await FrameBridge.list(figma);
+    figma.ui.postMessage({type: 'saved-frames', records});
+  };
   const sendSelection = () => {
-    figma.ui.postMessage({ type: 'selection', names: figma.currentPage.selection.map((n) => n.name) });
+    figma.ui.postMessage({ type: 'selection', names: figma.currentPage.selection.map((n) => n.name), sprint09: figma.currentPage.selection.filter(node => !isACLabel(node)).map(node => ({name: node.name, mapping: matchSprint09Frame(node.name)})) });
   };
   figma.on('selectionchange', sendSelection);
 
   figma.ui.onmessage = async (msg) => {
+    if (msg.type === 'inspect-frame') { await refreshInspection(); return; }
     try {
+      if (msg.type === 'bridge-save') {
+        bridgeWrite = bridgeWrite.catch(() => {}).then(() => FrameBridge.save(figma, FrameInspector));
+        const records = await bridgeWrite;
+        figma.ui.postMessage({type: 'export-ac-source', records: await FrameBridge.list(figma)});
+        await sendSaved();
+        figma.ui.postMessage({type: 'result', ok: true, text: 'บันทึกข้อมูลแล้ว ' + records.length + ' frame — เปิด plugin เดียวกันใน FigJam แล้วกด “โหลดข้อมูลจาก Figma”'});
+        return;
+      }
+      if (msg.type === 'bridge-load') { await sendSaved(); return; }
+      if (msg.type === 'bridge-remove') {
+        bridgeWrite = bridgeWrite.catch(() => {}).then(() => FrameBridge.remove(figma, msg.key));
+        await bridgeWrite;
+        await sendSaved();
+        figma.ui.postMessage({type: 'result', ok: true, text: 'ลบข้อมูลที่บันทึกไว้แล้ว โดยไม่ลบ frame หรือ AC บน canvas'});
+        return;
+      }
+      if (msg.type === 'bridge-paste') {
+        bridgeWrite = bridgeWrite.catch(() => {}).then(() => pasteSavedFrame(msg.key));
+        const result = await bridgeWrite;
+        figma.ui.postMessage({type: 'result', ok: true, text: (result.updated ? 'อัปเดต AC เดิมแล้ว: ' : 'แปะ AC แล้ว: ') + result.frame + '\nข้อมูลจาก Figma บันทึกเมื่อ ' + result.capturedAt});
+        return;
+      }
+      if (msg.type === 'sprint09-auto') {
+        const page = figma.currentPage;
+        const selected = Array.from(page.selection || []);
+        const nodes = selected.filter(node => !isACLabel(node));
+        const ignored = selected.length - nodes.length;
+        if (!nodes.length) throw Error('เลือก frame หรือภาพหน้าจออย่างน้อย 1 ชิ้น (ไม่เลือกเฉพาะป้าย AC หรือข้อความ)');
+        const jobs = nodes.map(node => ({node, mapping: matchSprint09Frame(node.name)}));
+        bridgeWrite = bridgeWrite.catch(() => {}).then(async () => {
+          let success = 0;
+          let firstCreated = null;
+          let legacyCount = 0;
+          const skipped = [];
+          const failed = [];
+          for (const [index, {node, mapping}] of jobs.entries()) {
+            figma.ui.postMessage({type: 'ac-progress', text: 'กำลังแปะ ' + (index + 1) + '/' + jobs.length + ': ' + node.name});
+            if (!mapping) { skipped.push(node.name); continue; }
+            try {
+              const legacyStory = mapping.legacyFrameId && resolveFrameStory(node.name).story;
+              const output = await annotateSprint09(mapping.storyId, mapping.acIds, node, page, legacyStory);
+              if (!firstCreated) firstCreated = output;
+              success++;
+              if (mapping.legacyFrameId) legacyCount++;
+            } catch (error) { failed.push(node.name + ': ' + (error.message || error)); }
+          }
+          if (firstCreated && figma.currentPage === page) {
+            try { figma.viewport.scrollAndZoomIntoView([firstCreated.owner]); } catch (error) { /* Report still shows the creation result. */ }
+          }
+          const lines = ['แปะ / อัปเดต AC ตามเฟรมสำเร็จ ' + success + '/' + nodes.length + ' เฟรม'];
+          if (success) lines.push('สร้างป้ายข้างเฟรมแล้ว — พาไปป้ายแรกให้แล้ว');
+          if (typeof figma.notify === 'function') figma.notify('แปะ AC สำเร็จ ' + success + '/' + nodes.length + ' เฟรม', {error: success === 0});
+          if (ignored) lines.push('ข้ามป้าย/ข้อความ ' + ignored + ' ชิ้น');
+          if (legacyCount) lines.push('ใช้ AC Overhaul รายเฟรม ' + legacyCount + ' เฟรม');
+          if (skipped.length) lines.push('ยังไม่มี mapping (' + skipped.length + '): ' + skipped.join(' · '));
+          if (failed.length) lines.push('แปะไม่สำเร็จ (' + failed.length + '): ' + failed.join(' · '));
+          figma.ui.postMessage({type: 'result', ok: success > 0 && failed.length === 0, text: lines.join('\n')});
+        });
+        await bridgeWrite;
+        return;
+      }
+      if (msg.type === 'sprint09-annotate') {
+        bridgeWrite = bridgeWrite.catch(() => {}).then(() => annotateSprint09(msg.storyId, msg.acIds));
+        const result = await bridgeWrite;
+        if (result.owner) figma.viewport.scrollAndZoomIntoView([result.owner]);
+        figma.ui.postMessage({type: 'result', ok: true, text: (result.updated ? 'อัปเดต' : 'แปะ') + ' AC Sprint 09 ให้เฟรมที่เลือกแล้ว'});
+        return;
+      }
       if (msg.type === 'list') {
+        figma.ui.postMessage({type: 'sprint09-stories', stories: SPRINT09_AC});
+        figma.ui.postMessage({type: 'editor-mode', editor: figma.editorType || 'figjam'});
         figma.ui.postMessage({ type: 'flows', keys: Object.keys(USER_STORIES) });
         sendSelection();
       }
       if (msg.type === 'annotate-auto') {
+        if (figma.editorType === 'figma') throw Error('ใน Figma ให้กด “บันทึกข้อมูลสำหรับ AC” แล้วเปิด plugin เดียวกันใน FigJam');
         const sel = figma.currentPage.selection;
         if (!sel.length) {
           figma.ui.postMessage({ type: 'result', ok: false, text: 'ยังไม่ได้เลือกเฟรมในหน้า — เลือกก่อนแล้วกดใหม่' });
@@ -7244,7 +8418,7 @@ if (typeof figma !== 'undefined' && figma.showUI) {
           if (!key) { unmatched.push(node.name); continue; }
           if (!USER_STORIES[key]) { noContent.push(node.name + ' (' + key + ')'); continue; }
           try {
-            const nodes = await annotateUserStory(node, key);
+            const nodes = await annotateUserStory(node, key, msg.liveUI);
             if (nodes) {
               allNodes.push(...nodes);
               if (nodes.errors && nodes.errors.length) allErrors.push(...nodes.errors.map((e) => node.name + ' » ' + e));
@@ -7265,6 +8439,7 @@ if (typeof figma !== 'undefined' && figma.showUI) {
         figma.ui.postMessage({ type: 'result', ok: created > 0 && allNodes.length > 0, text: lines.join('\n') || 'ไม่พบอะไรให้แปะ' });
       }
       if (msg.type === 'annotate') {
+        if (figma.editorType === 'figma') throw Error('ใน Figma ให้บันทึกข้อมูลสำหรับ AC แล้วแปะใน FigJam');
         const sel = figma.currentPage.selection;
         if (!sel.length) {
           figma.ui.postMessage({ type: 'result', ok: false, text: 'ยังไม่ได้เลือกเฟรมในหน้า — เลือกก่อนแล้วกดใหม่' });
@@ -7283,7 +8458,7 @@ if (typeof figma !== 'undefined' && figma.showUI) {
         const allErrors = [];
         for (const node of sel) {
           try {
-            const nodes = await annotateUserStory(node, msg.flow);
+            const nodes = await annotateUserStory(node, msg.flow, msg.liveUI);
             if (nodes) {
               allNodes.push(...nodes);
               if (nodes.errors && nodes.errors.length) allErrors.push(...nodes.errors.map((e) => node.name + ' » ' + e));
@@ -7315,7 +8490,7 @@ if (typeof figma !== 'undefined' && figma.showUI) {
 /* ---------- export สำหรับเทสบน Node ---------- */
 if (typeof module !== 'undefined') {
   module.exports = {
-    composeFrameStory, FRAME_STORIES, LETTER_TO_FLOW, USER_STORIES, frameLetter, findFlowForNode, annotateUserStory, clearTags, TAG_KEY,
+    matchSprint09Frame, SPRINT09_AC, sprint09Story, annotateSprint09, pasteSavedFrame, bridgeAnnotations, BRIDGE_PLACEMENT, resolveFrameStory, composeFrameStory, FRAME_STORIES, LETTER_TO_FLOW, USER_STORIES, frameLetter, findFlowForNode, annotateUserStory, clearTags, TAG_KEY,
     createLabelText, createBodyText, createBulletText, createGherkinBlock, createDataTable, renderSection,
     isStoryHeaderSection,
     splitScenarios, collectScenarios, extractQuotedStrings, extractActionQuotes, extractStateQuotes,

@@ -20,11 +20,12 @@ function makeNode(name, overrides) {
     y: 20,
     absoluteTransform: [[1, 0, 10], [0, 1, 20]],
     children: [],
+    parent: null,
     _pluginData: {},
     _removed: false,
     setPluginData(k, v) { this._pluginData[k] = v; },
     getPluginData(k) { return this._pluginData[k] || ''; },
-    remove() { this._removed = true; },
+    remove() { this._removed = true; if (this.parent) this.parent.children = this.parent.children.filter(node => node !== this); },
   }, overrides);
   return Object.preventExtensions(node);
 }
@@ -74,7 +75,7 @@ function resetFigmaMock() {
     currentPage: {
       selection: [],
       children: pageChildren,
-      appendChild(node) { pageChildren.push(node); created.push(node); },
+      appendChild(node) { this.children.push(node); node.parent = this; created.push(node); },
     },
     viewport: { scrollAndZoomIntoView(nodes) { scrolledInto = nodes; } },
     loadFontAsync: async () => {},
@@ -290,12 +291,115 @@ async function sendMessage(msg) {
   await onmessageHandler(msg);
 }
 
+test('live frame reading includes newly added component without changing authored AC', async () => {
+  resetFigmaMock(); mod = freshModule();
+  const original = JSON.stringify(mod.FRAME_STORIES['A.1']);
+  const root = makeNode('OH2 / A.1 · S1', {type: 'FRAME', id: 'screen', children: []});
+  root.children.push(makeNode('New export button', {
+    type: 'INSTANCE', id: 'new-button', componentProperties: {'Text#1:0': {type: 'TEXT', value: 'ส่งออกข้อมูลใหม่'}},
+    getMainComponentAsync: async () => ({id: 'main', name: 'State=Default', parent: {type: 'COMPONENT_SET', name: 'Primary button'}}),
+  }));
+  const nodes = await mod.annotateUserStory(root, 'plan13', true);
+  const text = nodes.find(node => node.type === 'SHAPE_WITH_TEXT').text.characters;
+  assert.ok(!text.includes('UI ล่าสุดจาก frame ที่เลือก'));
+  assert.ok(!text.includes('Layer:'));
+  assert.ok(!text.includes('INSTANCE_SWAP'));
+  assert.ok(!text.includes('ส่งออกข้อมูลใหม่'), 'unreviewed UI stays in the inspection panel');
+  assert.strictEqual(JSON.stringify(mod.FRAME_STORIES['A.1']), original);
+  global.figma.currentPage.selection = [root];
+  await sendMessage({type: 'inspect-frame'});
+  assert.ok(uiMessages.some(message => message.type === 'frame-inspection' && message.text.includes('ส่งออกข้อมูลใหม่')));
+});
+
+test('AC Bridge saves in Figma then creates and safely updates the same FigJam annotation', async () => {
+  const values = new Map();
+  const clone = value => value == null ? value : JSON.parse(JSON.stringify(value));
+  const storage = {getAsync: async key => clone(values.get(key)), setAsync: async (key, value) => {values.set(key, clone(value));}};
+  resetFigmaMock();
+  global.figma.editorType = 'figma';
+  global.figma.fileKey = 'source-file';
+  global.figma.root = makeNode('Maintain-D', {id: 'root'});
+  global.figma.clientStorage = storage;
+  Object.assign(global.figma.currentPage, {id: 'design-page', name: 'Design'});
+  const source = makeNode('OH2 / A.1 · S1', {id: 'source-frame', type: 'FRAME'});
+  const button = makeNode('New filter button', {
+    id: 'button', type: 'INSTANCE', componentProperties: {'Text#1:0': {type: 'TEXT', value: 'ข้อความก่อนแก้'}},
+    getMainComponentAsync: async () => ({id: 'main', name: 'State=Default', parent: {type: 'COMPONENT_SET', name: 'Primary button'}}),
+  });
+  source.children.push(button);
+  global.figma.currentPage.selection = [source];
+  mod = freshModule();
+  await sendMessage({type: 'bridge-save'});
+  const records = uiMessages.filter(message => message.type === 'saved-frames').slice(-1)[0].records;
+  assert.strictEqual(records.length, 1);
+  const key = records[0].key;
+  // Reopen this same plugin in a different editor; persisted storage survives.
+  resetFigmaMock();
+  global.figma.editorType = 'figjam';
+  global.figma.clientStorage = storage;
+  Object.assign(global.figma.currentPage, {id: 'board-page', name: 'Board'});
+  global.figma.group = (nodes, page) => {
+    const group = makeNode('AC group', {id: 'group-' + created.length, type: 'GROUP', x: nodes[0].x, y: nodes[0].y, absoluteTransform: null, children: []});
+    for (const node of nodes) {page.children = page.children.filter(child => child !== node); group.children.push(node); node.parent = group;}
+    page.appendChild(group);
+    return group;
+  };
+  const target = makeNode('OH2 / A.1 · S1', {id: 'screenshot', type: 'RECTANGLE', fills: [{type: 'IMAGE'}]});
+  global.figma.currentPage.selection = [target];
+  const unrelated = makeNode('Manually written note', {id: 'manual-note'});
+  global.figma.currentPage.appendChild(unrelated);
+  mod = freshModule();
+  await sendMessage({type: 'bridge-load'});
+  assert.ok(uiMessages.some(message => message.type === 'saved-frames' && message.records[0].key === key));
+  await sendMessage({type: 'bridge-paste', key});
+  let group = global.figma.currentPage.children.find(node => node.getPluginData(mod.BRIDGE_PLACEMENT));
+  assert.ok(group);
+  assert.ok(!group.children[0].text.characters.includes('ข้อความก่อนแก้'));
+  assert.ok(!group.children[0].text.characters.includes('UI ล่าสุดจาก Figma'));
+  assert.ok(!group.children[0].text.characters.includes('ภายในภาพไม่ได้'));
+  group.x = 900; group.y = 500;
+  // Update stored source without touching the board or other saved frames.
+  const storeKey = [...values.keys()][0];
+  const store = values.get(storeKey);
+  store.records[0].frame.components[0].properties[0].value = 'ข้อความหลังแก้';
+  values.set(storeKey, store);
+  await sendMessage({type: 'bridge-paste', key});
+  assert.strictEqual(group._removed, true);
+  const updated = global.figma.currentPage.children.find(node => node.getPluginData(mod.BRIDGE_PLACEMENT));
+  assert.ok(!updated.children[0].text.characters.includes('ข้อความหลังแก้'));
+  assert.ok(!updated.children[0].text.characters.includes('ข้อความก่อนแก้'));
+  assert.strictEqual(updated.x, 900);
+  assert.strictEqual(updated.y, 500);
+  assert.strictEqual(global.figma.currentPage.children.filter(node => node.getPluginData(mod.BRIDGE_PLACEMENT)).length, 1);
+  assert.ok(!unrelated._removed);
+  global.figma.currentPage.selection = [updated.children[0]];
+  await sendMessage({type: 'bridge-paste', key});
+  assert.strictEqual(global.figma.currentPage.children.filter(node => node.getPluginData(mod.BRIDGE_PLACEMENT)).length, 1, 'selecting an AC child updates its original target binding');
+  const current = global.figma.currentPage.children.find(node => node.getPluginData(mod.BRIDGE_PLACEMENT));
+  global.figma.currentPage.selection = [target];
+  const originalCreate = global.figma.createShapeWithText;
+  global.figma.createShapeWithText = () => {throw Error('render failed');};
+  await sendMessage({type: 'bridge-paste', key});
+  assert.ok(!current._removed, 'failed rendering must keep the existing annotation');
+  assert.ok(uiMessages.filter(message => message.type === 'result').slice(-1)[0].text.includes('เก็บป้ายเดิม'));
+  global.figma.createShapeWithText = originalCreate;
+  global.figma.currentPage.selection = [makeNode('OH2 / B.1 · S1', {id: 'wrong-target'})];
+  await assert.rejects(() => mod.pasteSavedFrame(key), /ไม่ตรง/);
+  // A new frame with no authored AC is still transferred as observations only.
+  store.records[0].frame.name = 'OH2 / S19.1 · S19 — สรุปรายคัน';
+  values.set(storeKey, store);
+  global.figma.currentPage.selection = [];
+  const observation = await mod.pasteSavedFrame(key);
+  assert.ok(observation.frame.includes('S19.1'));
+  assert.ok(global.figma.currentPage.children.some(node => node.children && node.children.some(child => child.text && child.text.characters.includes('ยังไม่มี AC behavior สำหรับ frame นี้'))));
+});
+
 test('onmessage annotate-auto: ไม่มี selection → แจ้งเตือนให้เลือกก่อน', async () => {
   resetFigmaMock();
   global.figma.currentPage.selection = [];
   mod = freshModule();
   await sendMessage({ type: 'annotate-auto' });
-  const last = uiMessages[uiMessages.length - 1];
+  const last = uiMessages.filter(message => message.type === 'result').slice(-1)[0];
   assert.strictEqual(last.ok, false);
   assert.ok(/เลือก/.test(last.text));
 });
@@ -306,7 +410,7 @@ test('onmessage annotate-auto: จับคู่ได้แปะสำเร�
   global.figma.currentPage.selection = [node];
   mod = freshModule();
   await sendMessage({ type: 'annotate-auto' });
-  const last = uiMessages[uiMessages.length - 1];
+  const last = uiMessages.filter(message => message.type === 'result').slice(-1)[0];
   assert.strictEqual(last.ok, true);
   assert.ok(/แปะ user story แล้ว 1 เฟรม/.test(last.text));
   assert.ok(created.filter(n => n.name.endsWith(' / เรื่องราว')).length === 1, 'หนึ่ง text เนื้อเรื่องต่อเฟรม พร้อมตารางแยก');
@@ -320,7 +424,7 @@ test('onmessage annotate-auto: เฟรมหาไม่เจอ → แจ�
   global.figma.currentPage.selection = [node];
   mod = freshModule();
   await sendMessage({ type: 'annotate-auto' });
-  const last = uiMessages[uiMessages.length - 1];
+  const last = uiMessages.filter(message => message.type === 'result').slice(-1)[0];
   assert.strictEqual(last.ok, false);
   assert.ok(/หาไม่เจอ/.test(last.text));
   assert.strictEqual(created.length, 0);
@@ -334,7 +438,7 @@ test('onmessage annotate-auto: เลือกหลายเฟรมผสม�
   global.figma.currentPage.selection = [ok1, ok2, bad];
   mod = freshModule();
   await sendMessage({ type: 'annotate-auto' });
-  const last = uiMessages[uiMessages.length - 1];
+  const last = uiMessages.filter(message => message.type === 'result').slice(-1)[0];
   assert.strictEqual(last.ok, true);
   assert.ok(/แปะ user story แล้ว 2 เฟรม/.test(last.text));
   assert.ok(/หาไม่เจอ 1 เฟรม/.test(last.text));
@@ -347,7 +451,7 @@ test('onmessage annotate (manual): ไม่เดา AC เมื่อชื�
   global.figma.currentPage.selection = [n1, n2];
   mod = freshModule();
   await sendMessage({ type: 'annotate', flow: 'scenario14' });
-  const last = uiMessages[uiMessages.length - 1];
+  const last = uiMessages.filter(message => message.type === 'result').slice(-1)[0];
   assert.strictEqual(last.ok, false);
   assert.strictEqual(created.length, 0);
   assert.ok(last.text.includes('ไม่พบ AC ตรงรหัสเฟรม'));
@@ -377,7 +481,7 @@ test('annotateUserStory พังทั้งตัว (เช่น flow ทั
   broken.absoluteTransform = null;
   broken.x = undefined; // ทำให้คำนวณ abs พังถ้า logic พึ่ง node.x ตรงๆ โดยไม่กัน undefined
   await sendMessage({ type: 'annotate-auto' });
-  const last = uiMessages[uiMessages.length - 1];
+  const last = uiMessages.filter(message => message.type === 'result').slice(-1)[0];
   assert.ok(last.ok, 'อย่างน้อย 1 เฟรมต้องสำเร็จ');
   assert.ok(/แปะ user story แล้ว/.test(last.text));
 });
@@ -422,7 +526,7 @@ test('readFrameTexts เดินทุก node ลูกเก็บ .character
   assert.deepStrictEqual(texts, ['หัวข้อ', 'ข้อความซ้อนใน group']);
 });
 
-test('matchScenarioByContent จับคู่ scenario ที่ error message ตรงกับข้อความจริงในเฟรม (หลายข้อความ error พร้อมกัน ตามจอฟอร์มที่กรอกไม่ครบจริง)', () => {
+test('matchScenarioByContent จับคู่ scenario ที่ error message ตรงกับข้อความจริงในเฟรม (หลายข้อความ error พร้อมกัน ตามจอ form ที่กรอกไม่ครบจริง)', () => {
   const pool = mod.collectScenarios(mod.USER_STORIES.plan13);
   const frameTexts = ['ชื่อแผน', 'วงเงินอนุมัติ (บาท)', 'กรุณาระบุชื่อแผน', 'กรุณาระบุวงเงินอนุมัติ (บาท)', 'กรุณาแนบหนังสืออนุมัติหลักการ', 'กรุณาแนบเอกสารอนุมัติงบ', 'บันทึก'];
   const match = mod.matchScenarioByContent(pool, frameTexts);
@@ -433,7 +537,7 @@ test('matchScenarioByContent จับคู่ scenario ที่ error message
 
 test('matchScenarioByContent ไม่ติดกับดัก placeholder — ข้อความ error ที่มี {เลขแผน} ต้องไม่ถูกนับว่า "เจอจริง" แค่เพราะมีคำย่อยตรงกับข้อความสั้นในเฟรม', () => {
   const pool = mod.collectScenarios(mod.USER_STORIES.plan13);
-  // เฟรมมีแค่ข้อความสั้นๆ "สร้างแผน Overhaul" (เช่น หัวข้อฟอร์ม) — ไม่ควรไปจับคู่กับ toast
+  // เฟรมมีแค่ข้อความสั้นๆ "สร้างแผน Overhaul" (เช่น หัวข้อ form) — ไม่ควรไปจับคู่กับ toast
   // ที่มี placeholder "สร้างแผน Overhaul {เลขแผน} สำเร็จ" ของ AC-01 เพราะไม่มีทางเจอข้อความ
   // เต็มแบบนั้นบนจอจริง (ตัวเลขแผนจะถูกแทนที่ด้วยค่าจริงเสมอ)
   const match = mod.matchScenarioByContent(pool, ['สร้างแผน Overhaul']);
@@ -595,7 +699,7 @@ test('filterSectionByFrame (bullets): กรองเหลือเฉพาะ
   assert.ok(filtered.bullets[filtered.bullets.length - 1].startsWith('ℹ️ กรองตาม'), 'ต้องมี note ท้ายสุดบอกว่ากรองแล้ว');
 });
 
-test('filterSectionByFrame (bullets): ไม่มีข้อไหนยืนยันได้เลย → คงเดิมทั้งหมด ไม่เดา (เช่น B6 Notification ของ plan13 ไม่มี quote ที่ตรงกับเฟรมฟอร์มสร้างแผน)', () => {
+test('filterSectionByFrame (bullets): ไม่มีข้อไหนยืนยันได้เลย → คงเดิมทั้งหมด ไม่เดา (เช่น B6 Notification ของ plan13 ไม่มี quote ที่ตรงกับเฟรม form สร้างแผน)', () => {
   const section = mod.USER_STORIES.plan13.sections.find((s) => s.label === 'B6. Notification');
   const filtered = mod.filterSectionByFrame(section, ['ข้อความที่ไม่เกี่ยวอะไรเลย'], new Set());
   assert.deepStrictEqual(filtered, section, 'ไม่มีอะไรตรง ต้องคืนค่าเดิมทั้งหมด ไม่ใช่ลดเหลือ 0 ข้อ');
@@ -626,11 +730,11 @@ test('buildSectionsForFrame: เฟรม B.2 (validation error) กรอง C1
   const sections = mod.buildSectionsForFrame(mod.USER_STORIES.plan13, node);
   const c1 = sections.find((s) => s.label === 'C1. Field Validation');
   const b4 = sections.find((s) => s.label === 'B4. Business Rules');
-  assert.strictEqual(c1.table.rows.length, 4, 'C1 ต้องเหลือ 4 แถว ไม่ใช่ทั้ง 10 แถวของทุกฟิลด์ในฟอร์ม');
+  assert.strictEqual(c1.table.rows.length, 4, 'C1 ต้องเหลือ 4 แถว ไม่ใช่ทั้ง 10 แถวของทุกฟิลด์ใน form');
   assert.ok(b4.bullets.length < 7, 'B4 ต้องถูกกรอง ไม่ใช่โชว์ครบทั้ง 6 ข้อ + note');
 });
 
-test('buildSectionsForFrame: เฟรมหน้ารายการ A.4 (ไม่พบแผน) ไม่กรอง C1 ทิ้ง (C1 เป็นฟิลด์ของฟอร์มสร้างแผน ไม่เกี่ยวกับหน้ารายการ จึงไม่มีอะไรตรง — ต้องคงครบ ไม่ใช่กรองจนเหลือ 0)', () => {
+test('buildSectionsForFrame: เฟรมหน้ารายการ A.4 (ไม่พบแผน) ไม่กรอง C1 ทิ้ง (C1 เป็นฟิลด์ของ form สร้างแผน ไม่เกี่ยวกับหน้ารายการ จึงไม่มีอะไรตรง — ต้องคงครบ ไม่ใช่กรองจนเหลือ 0)', () => {
   const node = makeNode('OH2 / A.4 · S1 — ไม่พบแผน', {
     children: ['ไม่พบแผน Overhaul', 'ไม่มีแผนที่ตรงกับคำค้นหรือตัวกรอง', 'ล้างคำค้นและตัวกรอง'].map(makeTextNode),
   });
@@ -656,7 +760,7 @@ test('onmessage clear: เรียก clearTags และรายงานจ�
   global.figma.currentPage.selection = [];
   mod = freshModule();
   await sendMessage({ type: 'clear' });
-  const last = uiMessages[uiMessages.length - 1];
+  const last = uiMessages.filter(message => message.type === 'result').slice(-1)[0];
   assert.strictEqual(last.ok, true);
   assert.ok(/ลบป้ายที่แปะไว้แล้ว 1 ป้าย/.test(last.text));
 });
@@ -674,7 +778,7 @@ test('onmessage list: ส่ง flows ครบ 8 key และ selection ปั
 });
 
 test('new document: exact IDs, shared delete modal, corrected A.3/A.4 and Sheet notes', () => {
-  assert.strictEqual(Object.keys(mod.FRAME_STORIES).length, 72);
+  assert.strictEqual(Object.keys(mod.FRAME_STORIES).length, 74);
   assert.ok(mod.FRAME_STORIES['A.3'].title.includes('ค้นไม่เจอ'));
   assert.ok(mod.FRAME_STORIES['A.4'].title.includes('ยังไม่มีแผน'));
   for (const id of ['D.2.1', 'D.2.2']) assert.ok(mod.FRAME_STORIES[id].sections.some(x => x.label === 'UI Component & Behavior'));
@@ -778,10 +882,10 @@ test('component Dev notes distinguish search, filters, signature and read-only s
   resetFigmaMock(); mod = freshModule();
   const notes = id => JSON.stringify(mod.FRAME_STORIES[id].sections.filter(s => s.label === 'UI Component & Behavior'));
   for (const word of ['ช่องค้นหา (SearchInput)', 'ตารางรายการแผน', 'ปุ่มเปลี่ยนหน้าใต้ตาราง', 'ปุ่ม']) assert.ok(notes('A.1').includes(word));
-  for (const word of ['แผง', 'ช่องเลือกปีงบ', 'ช่องติ๊ก', 'ตกลง']) assert.ok(notes('A.2').includes(word));
+  for (const word of ['แผง', 'ช่องเลือกปีงบ', 'checkbox', 'ตกลง']) assert.ok(notes('A.2').includes(word));
   assert.ok(!notes('A.2').includes('ปุ่มเปลี่ยนหน้าใต้ตาราง'));
   assert.ok(notes('E.4').includes('vendor_id'));
-  assert.ok(notes('F.2').includes('ช่องติ๊กเลือก'));
+  assert.ok(notes('F.2').includes('checkbox'));
   assert.ok(notes('I.3').includes('พื้นที่วาดลายเซ็น'));
   assert.ok(!notes('I.3').includes('ช่องค้นหาเหนือรายการ'));
   assert.ok(notes('H.5').includes('อ่านอย่างเดียว'));
@@ -796,7 +900,7 @@ test('all readable behavior and unresolved questions survive design-only simplif
   const path = require('path');
   const raw = fs.readFileSync(path.join(__dirname, 'figjam-userstory-plugin', 'Overhaul-AC-ฉบับอ่านง่าย-ทุกเฟรม.md'), 'utf8');
   const headers = [...raw.matchAll(/^### ([A-O]\.\d+(?:\.\d+)?) — (.+)$/gm)];
-  assert.strictEqual(headers.length, 70);
+  assert.strictEqual(headers.length, 72);
   for (let i = 0; i < headers.length; i++) {
     const header = headers[i];
     const block = raw.slice(header.index + header[0].length, i + 1 < headers.length ? headers[i + 1].index : raw.length).replace(/\n---[\s\S]*$/, '');
@@ -847,7 +951,7 @@ test('requested headings include frame-specific source questions and Sheet witho
 
 test('A.2 documents overlay, Esc, cancel destination and draft persistence from project components', () => {
   const text = mod.composeFrameStory(mod.FRAME_STORIES['A.2']).text;
-  for (const term of ['คลิกพื้นหลังทึบ', 'Esc', 'กลับไปดูรายการ A.1', 'ไม่ใช้ตัวกรองที่เพิ่งเปลี่ยน', 'คลิกภายในแผง', 'แผงยังเปิด', 'ล้างแล้วกดยกเลิก', 'กรองทันที']) assert.ok(text.includes(term), term);
+  for (const term of ['คลิกพื้นหลังทึบ', 'Esc', 'กลับไปดูรายการ A.1', 'ไม่ใช้ตัวกรองที่เพิ่งเปลี่ยน', 'คลิกภายในแผง', 'แผงยังเปิด', 'หากปิดแผงก่อนกด “ตกลง”', 'กรองทันที']) assert.ok(text.includes(term), term);
 });
 
 test('cancel destinations distinguish page forms, confirmation dialogs and popup drafts', () => {
@@ -866,7 +970,7 @@ test('observed project gaps are explicit rather than treated as implemented AC',
   assert.ok(text('H.3').includes('ไม่มีปุ่ม Apply/Cancel'));
   assert.ok(text('I.3').includes('ยังไม่มี กล่อง “เซ็นลงนาม” (Modal — แนวทางนำไปใช้) วาดลายเซ็น'));
   assert.ok(text('J.2').includes('ไม่นำช่องนี้มาเพิ่มใน AC'));
-  assert.ok(text('B.1').includes('เส้นทางนำทางด้านบน เป็นลิงก์ตรง'));
+  assert.ok(text('B.1').includes('breadcrumb ในโค้ดปัจจุบันเป็นลิงก์ตรงและยังไม่ผ่าน guard'));
   assert.ok(text('C.4').includes('ยังปิดด้วยพื้นหลัง/Esc ได้ระหว่างรอ'));
 });
 
@@ -907,14 +1011,14 @@ test('every frame has baseline evidence and a bounded To-be claim', () => {
     assert.strictEqual(story.sections[0].label, 'ภาพรวมหน้านี้');
     assert.ok(story.sections.some(s => s.label === 'As-is — Sprint 06'));
     assert.ok(story.sections.some(s => s.label.startsWith('To-be')));
-    assert.ok(story.sections.find(s => s.label.startsWith('To-be')).bullets.every(t => /^(NEW|CHANGE) — /.test(t)));
+    assert.ok(story.sections.find(s => s.label.startsWith('To-be')).bullets.every(t => /^(NEW|CHANGE) — /.test(t) || story === mod.FRAME_STORIES['B.1']));
     assert.ok(story.baseline.board.includes('Refinement 15/10/69'));
   }
 });
 
-test('all 72 frames have authored As-is and at least two specific NEW/CHANGE requirements', () => {
+test('all 74 frames have authored As-is and at least two specific NEW/CHANGE requirements', () => {
   const payloads = new Set();
-  assert.strictEqual(Object.keys(mod.FRAME_STORIES).length, 72);
+  assert.strictEqual(Object.keys(mod.FRAME_STORIES).length, 74);
   for (const [id, story] of Object.entries(mod.FRAME_STORIES)) {
     const asIs = story.sections.find(x => x.label === 'As-is — Sprint 06');
     const toBe = story.sections.find(x => x.label.startsWith('To-be'));
@@ -922,7 +1026,7 @@ test('all 72 frames have authored As-is and at least two specific NEW/CHANGE req
     assert.ok(asIs.bullets.every(text => !/baseline/i.test(text)), id);
     assert.strictEqual(asIs.paragraph, undefined, id);
     assert.ok(toBe.bullets.length >= 2, id);
-    assert.ok(toBe.bullets.every(t => /^(NEW|CHANGE) — /.test(t)), id);
+    assert.ok(toBe.bullets.every(t => /^(NEW|CHANGE) — /.test(t) || id === 'B.1'), id);
     const payload = JSON.stringify(toBe.bullets);
     assert.ok(!payload.includes('ยังไม่มีข้อแตกต่างเฉพาะเฟรม'), id);
     assert.ok(!payload.includes('คงเดิมในระดับ flow'), id);
@@ -1050,7 +1154,7 @@ test('A.2 keeps multi-select behavior while explaining status renames only once'
   assert.ok(!text.includes('สถานะ: checkbox 3 ค่า'));
 });
 
-test('all 72 frames have specific Error Handling / Edge Cases immediately after Dev', () => {
+test('all 74 frames have specific Error Handling / Edge Cases immediately after Dev', () => {
   const seen = new Set();
   for (const [id, story] of Object.entries(mod.FRAME_STORIES)) {
     const dev = story.sections.findIndex(s => s.label === 'UI Component & Behavior');
@@ -1149,13 +1253,13 @@ test('A.1 names each button destination and keeps overflow on the plan-name colu
   const ui = mod.FRAME_STORIES['A.1'].sections.find(section => section.label === 'UI Component & Behavior');
   const buttons = ui.bullets.find(text => text.startsWith('Buttons\n'));
   assert.ok(buttons.includes('ปุ่ม “ตัวกรอง”: เปิดแผงตัวกรอง A.2'));
-  assert.ok(buttons.includes('\n  - ปุ่ม “+ สร้างแผน Overhaul”: เปิดฟอร์มสร้างแผน B.1'));
+  assert.ok(buttons.includes('\n  - ปุ่ม “+ สร้างแผน Overhaul”: เปิด form สร้างแผน B.1'));
   assert.ok(!buttons.includes('ตามลำดับ'));
   const table = ui.bullets.find(text => text.startsWith('Table (DataTable)\n'));
   assert.ok(table.includes('ชื่อแผน: ชื่อแผนยาวเกินคอลัมน์ตัดด้วย'));
 });
 
-test('72 frames use component groups and distinguish absent controls', async () => {
+test('74 frames use component groups and distinguish absent controls', async () => {
   for (const [id, story] of Object.entries(mod.FRAME_STORIES)) {
     const groups = story.sections.filter(s => s.label === 'UI Component & Behavior');
     assert.strictEqual(groups.length, 1, id);
@@ -1182,8 +1286,34 @@ test('all frames have a single Behavior with development details inline', () => 
     assert.ok(!text.includes('ค่าร่าง'), id);
   }
   const behavior = mod.FRAME_STORIES['A.2'].sections.find(section => section.label === 'UI Component & Behavior').bullets.join('\n');
-  for (const term of ['ไม่เปลี่ยนตารางด้านหลัง', 'คลิกพื้นหลังทึบ', 'เปิดใหม่แสดงตัวกรองที่ใช้อยู่จริง', 'ต้องกด “ตกลง” จึงเปลี่ยนผลในตาราง', 'หน้าเบื้องหลังเลื่อนไม่ได้', 'คลิก label']) assert.ok(behavior.includes(term), term);
+  for (const term of ['ไม่เปลี่ยนตารางด้านหลัง', 'คลิกพื้นหลังทึบ', 'เปิดใหม่แสดงตัวกรองที่ใช้อยู่จริง', 'กด “ตกลง” เพื่ออัปเดตรายการ', 'หน้าเบื้องหลังเลื่อนไม่ได้', 'คลิกข้อความข้าง checkbox']) assert.ok(behavior.includes(term), term);
   assert.strictEqual((behavior.match(/กด “ล้างตัวกรอง” →/g) || []).length, 1);
+});
+
+test('plan attachment rules spell out each category, file types and count', () => {
+  const story = mod.FRAME_STORIES['B.1'];
+  const text = mod.composeFrameStory(story).text;
+  for (const category of ['หนังสืออนุมัติหลักการ', 'เอกสารอนุมัติงบ', 'เอกสารอื่น ๆ']) {
+    assert.ok(text.includes('“' + category + '”'));
+  }
+  assert.ok(text.includes('PDF, PNG และ JPG ขนาดไม่เกิน 10 MB ต่อไฟล์'));
+  assert.ok(text.includes('ข้อกำหนดเดิมระบุสูงสุด 10 ไฟล์ในช่องนี้ ต้องยืนยันจำนวน'));
+  assert.ok(!text.includes('ขนาดไฟล์สูงสุดและการบังคับแนบยังต้องตกลง'));
+  assert.ok(text.includes('“เอกสารอื่น ๆ”: ไม่บังคับแนบ'));
+  assert.ok(!text.includes('ชนิดและจำนวนตาม AC'));
+});
+
+test('all frame prose uses consistent UI vocabulary and readable search behavior', () => {
+  for (const [id, story] of Object.entries(mod.FRAME_STORIES)) {
+    const text = mod.composeFrameStory(story).text;
+    for (const old of ['เคอร์เซอร์', 'โฟกัส', 'ช่องติ๊ก', 'ไอคอน', 'dirty guard', 'คงคำที่พิมพ์', 'ฟอร์ม']) {
+      assert.ok(!text.includes(old), id + ': obsolete wording ' + old);
+    }
+  }
+  const search = mod.FRAME_STORIES['A.1'].sections.find(section => section.label === 'UI Component & Behavior').bullets.join('\n');
+  for (const term of ['focus', 'cursor', 'blur', 'ข้อความในช่องยังอยู่', 'ผลของคำล่าสุด']) assert.ok(search.includes(term), term);
+  const filters = mod.FRAME_STORIES['A.2'].sections.find(section => section.label === 'UI Component & Behavior').bullets.join('\n');
+  for (const term of ['checkbox', 'คลิกซ้ำ', 'คลิกข้อความข้าง checkbox', 'หากปิดแผงก่อนกด “ตกลง”']) assert.ok(filters.includes(term), term);
 });
 
 test('rule merging keeps distinct source tags and qualifications', () => {
@@ -1191,6 +1321,95 @@ test('rule merging keeps distinct source tags and qualifications', () => {
   assert.deepStrictEqual(mergeRules(['กด Esc ปิดเมนู', 'กด Esc ปิดเมนูและคืน focus', 'กด Esc ปิดเมนู']), ['กด Esc ปิดเมนูและคืน focus']);
   const tagged = ['ปิดได้ [Sheet พี่นุ — 1]', 'ปิดได้ [Sheet พี่นุ — 2]', 'ปิดได้เฉพาะเมื่อไม่กำลังบันทึก'];
   assert.deepStrictEqual(mergeRules(tagged), tagged);
+});
+
+test('Planning warranty states render their own AC without falling back to O.2', async () => {
+  resetFigmaMock(); mod = freshModule();
+  for (const [id, words] of [
+    ['O.2.1', ['90, 180, 360 และ 720', '04/11/2570', '30 วัน และ 15 วัน', 'ข้อเสนอเพิ่มเติม', 'ย้อนหลัง']],
+    ['O.2.2', ['ไม่มีการรับประกัน', 'ไม่สร้างการแจ้งเตือน', 'อย่างน้อย 1 รายการ', 'คืนค่า']],
+  ]) {
+    const text = mod.composeFrameStory(mod.FRAME_STORIES[id]).text;
+    for (const word of words) assert.ok(text.includes(word), id + ': missing ' + word);
+    const nodes = await mod.annotateUserStory(makeNode('OH2 / ' + id + ' · S14'), mod.findFlowForNode('OH2 / ' + id + ' · S14'));
+    const shape = nodes.find(n => n.type === 'SHAPE_WITH_TEXT');
+    assert.ok(shape.text.characters.includes('AC ' + id + ' —'));
+  }
+});
+
+test('Sprint 09 auto annotates multiple selected frames independently and reports unmatched frames', async () => {
+  resetFigmaMock();
+  global.figma.editorType = 'figjam';
+  global.figma.group = () => { throw Error('group unavailable'); };
+  global.figma.currentPage.children.push({type: 'CONNECTOR', name: 'connector without plugin data'});
+  global.figma.currentPage.findAll = fn => global.figma.currentPage.children.filter(fn);
+  freshModule();
+  const targets = [
+    makeNode('SSO กรอกรหัสผิด', {id: 'login-error'}),
+    makeNode('P.2 ปิดงานแล้ว', {id: 'closed'}),
+    makeNode('Unknown frame', {id: 'unknown'}),
+    makeNode('Shape with text', {id: 'existing-label', type: 'SHAPE_WITH_TEXT'}),
+    makeNode('OH2 / A.1 · หน้ารายการแผน — ค้นหา — รายการแผน', {id: 'plan-list'}),
+  ];
+  global.figma.currentPage.selection = targets;
+  await onmessageHandler({type: 'sprint09-auto'});
+  const result = uiMessages.filter(m => m.type === 'result').at(-1);
+  assert.ok(result.ok, result.text);
+  assert.ok(result.text.includes('3/4'), result.text);
+  assert.ok(result.text.includes('ข้ามป้าย/ข้อความ 1'), result.text);
+  assert.ok(result.text.includes('Unknown frame'), result.text);
+  assert.ok(scrolledInto && scrolledInto.length, 'Must reveal newly created AC on canvas');
+  assert.ok(scrolledInto[0].text.characters.includes('AC-S09-01-05'));
+  const shapes = global.figma.currentPage.children.filter(n => n.type === 'SHAPE_WITH_TEXT');
+  assert.strictEqual(shapes.length, 3);
+  assert.ok(shapes[2].text.characters.includes('AC A.1'));
+  assert.ok(shapes[0].text.characters.includes('AC-S09-01-05'));
+  assert.ok(!shapes[0].text.characters.includes('AC-S09-06-02'));
+  assert.ok(shapes[1].text.characters.includes('AC-S09-06-02'));
+  await onmessageHandler({type: 'sprint09-auto'});
+  assert.strictEqual(global.figma.currentPage.children.filter(n => n.type === 'SHAPE_WITH_TEXT').length, 3);
+  global.figma.currentPage.selection = [];
+  await onmessageHandler({type: 'sprint09-auto'});
+  assert.strictEqual(uiMessages.filter(m => m.type === 'result').at(-1).ok, false);
+  resetFigmaMock();
+  mod = freshModule();
+});
+
+test('Every authored Overhaul frame resolves without requiring an OH2 prefix', () => {
+  for (const [id, story] of Object.entries(mod.FRAME_STORIES)) {
+    const mapping = mod.matchSprint09Frame(id + ' · ' + story.title);
+    assert.ok(mapping, id + ' has no mapping');
+    if (mapping.legacyFrameId) assert.ok(mod.resolveFrameStory(id).story, id);
+  }
+});
+
+test('Per-frame mapping supports existing IDs and keeps SP09 namespaces separate', () => {
+  assert.strictEqual(mod.matchSprint09Frame('A.1').legacyFrameId, 'A.1');
+  assert.strictEqual(mod.matchSprint09Frame('SP09 / B.1 แผนบำรุงรักษา'), null);
+  assert.strictEqual(mod.matchSprint09Frame('ข้อมูลที่ไม่รู้จัก'), null);
+  const empty = mod.matchSprint09Frame('A.8 รถที่ Overhaul — ไม่พบข้อมูล');
+  assert.deepStrictEqual(empty.acIds, ['AC-S09-07-03', 'AC-S09-07-08']);
+  const error = mod.matchSprint09Frame('SSO กรอกรหัสผิด');
+  assert.deepStrictEqual(error.acIds, ['AC-S09-01-05']);
+  assert.deepStrictEqual(mod.matchSprint09Frame('P.2 ปิดงานแล้ว').acIds, ['AC-S09-06-02', 'AC-S09-06-03', 'AC-S09-06-04', 'AC-S09-06-05']);
+  assert.deepStrictEqual(mod.matchSprint09Frame('เพิ่มอู่/ศูนย์บริการ').acIds, ['AC-S09-09-03', 'AC-S09-09-04', 'AC-S09-09-10']);
+});
+
+test('Sprint 09 maps only selected AC and preserves proposal/scope status without legacy behavior', async () => {
+  const all = Object.values(mod.SPRINT09_AC).flatMap(story => story.ac);
+  assert.strictEqual(all.length, 62);
+  assert.strictEqual(new Set(all.map(ac => ac.id)).size, 62);
+  const story = mod.sprint09Story('US-S09-06', ['AC-S09-06-02', 'AC-S09-06-05']);
+  const text = mod.composeFrameStory(story).text;
+  assert.ok(text.includes('ข้อสรุป refinement'));
+  assert.ok(text.includes('ข้อเสนอ — รอรับรอง'));
+  assert.ok(!text.includes('AC-S09-06-01'));
+  assert.ok(!text.includes('UI Component & Behavior รวมแนวทาง'));
+  assert.throws(() => mod.sprint09Story('US-S09-06', ['AC-S09-01-01']));
+  assert.throws(() => mod.sprint09Story('US-S09-06', []));
+  const nodes = await mod.annotateUserStory(makeNode('A.1 duplicated code'), null, false, null, null, story);
+  assert.ok(nodes.some(node => node.type === 'SHAPE_WITH_TEXT' && node.text.characters.includes('US-S09-06')));
+  assert.ok(!nodes.errors.length);
 });
 
 (async () => {

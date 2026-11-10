@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="th"><meta charset="utf-8"><title>Maintain-D SP09</title>
+<body>
+<h3>SP09 — จอเพิ่มเติม · VMS Plus</h3>
+<p>Desktop 1440 · สร้างหน้าใหม่ เก็บจอเดิมไว้ทั้งหมด · เลือกกลุ่มด้านล่าง</p>
+<div id="groups"></div>
+<p><button id="build">สร้างกลุ่มที่เลือก</button> <button id="check">ตรวจ component</button> <button id="read">อ่านจอที่เลือก</button></p>
+<p>ยังไม่รวม prototype interaction หรือ API</p>
+<details open><summary>ขอบเขตที่พักไว้ / ไม่รวมในชุดนี้</summary><ul id="pending"></ul></details>
+<pre id="report" role="status"></pre>
+<button id="copy">คัดลอก log</button><pre id="log"></pre>
+<script>
+const el = id => document.getElementById(id);
+let busy=false;
+function send(type,extra={}) {
+  if(busy)return;
+  if(type==='build'){busy=true;el('build').disabled=true;}
+  el('report').textContent='';el('log').textContent='';
+  parent.postMessage({pluginMessage:{type,...extra}},'*');
+}
+el('build').onclick=()=>send('build',{pick:[...document.querySelectorAll('#groups input:checked')].map(n=>+n.value)});
+el('check').onclick=()=>send('check');el('read').onclick=()=>send('read-selection');
+el('copy').onclick=()=>{const t=document.createElement('textarea');t.value=el('report').textContent+'\n'+el('log').textContent;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();};
+onmessage=e=>{
+  const m=e.data.pluginMessage;if(!m)return;
+  if(m.type==='sp-inventory'){
+    el('groups').replaceChildren();
+    m.items.forEach((item,i)=>{const p=document.createElement('p'),l=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=i;input.checked=true;l.append(input,document.createTextNode(item.code+' '+item.title+' ('+item.count+' จอ)'));p.append(l);el('groups').append(p);});
+    el('pending').replaceChildren();m.pending.forEach(p=>{const li=document.createElement('li');li.textContent=p.feature+' — '+p.reason;el('pending').append(li);});
+  }
+  if(m.type==='build-report'){
+    const r=m.report,lines=['หน้า '+r.page,'สร้าง '+r.created+'/'+r.expected+' จอ · ล้มเหลว '+r.failed.length+' · มีคำเตือน '+r.incomplete.length];
+    r.failed.forEach(f=>lines.push('✗ '+f.code+' '+f.label+' — '+f.error));
+    r.incomplete.forEach(f=>lines.push('⚠ '+f.code+' '+f.label+'\n'+f.warnings.join('\n')));
+    el('report').textContent=lines.join('\n');busy=false;el('build').disabled=false;
+  }
+  if(m.type==='stopped'){el('report').textContent='หยุด — '+m.error;busy=false;el('build').disabled=false;}
+  if(m.type==='log')el('log').textContent+=m.text+'\n';
+};
+</script></body></html>

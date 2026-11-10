@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
-<link rel="stylesheet" href="../design-system/tokens.css?v=20261019-ds72">
-<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261106-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261106-ds74">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
 <!--
@@ -68,6 +68,35 @@
       </div>
 
       <form class="flex flex-col gap-8" id="form" novalidate>
+        <!-- 5 พ.ย. 2569 — เจ้าของงานสั่งย้ายขั้นตอนเลือกรถขึ้นมาเป็นขั้นแรกของฟอร์ม: "เลือกรถในแผนก่อน แล้วแต่ละ PO ค่อยเลือกรถจากในแผนอีกที"
+             รถที่เลือกตรงนี้ = plan.cars (เพดานรถที่ PO ของแผนนี้เลือกได้ภายหลัง — ดู overhaul-v2-04-po-form.html) ไม่บังคับ (data-req) เพราะแผนบางอันอาจวางแผนไว้ก่อนยังไม่ระบุรถก็ได้ -->
+        <section id="cars-field">
+          <div class="sect">เลือกรถที่จะเข้า Overhaul <span class="badge sq" id="n-sel"></span></div>
+          <div class="list-toolbar split mb-0 mt-4">
+            <div class="lt-search"><div class="search"><span class="ms">search</span><input type="search" id="car-q" placeholder="ค้นหาทะเบียน, ยี่ห้อ/รุ่น, สังกัด" aria-label="ค้นหารถ"></div></div>
+          </div>
+          <div class="tblwrap mt-3">
+            <table class="tbl striped">
+              <thead><tr>
+                <th class="w-[44px]"><input type="checkbox" id="all-cars" aria-label="เลือกรถทั้งหมดที่ค้นเจอ"></th>
+                <th>ทะเบียน</th>
+                <th>ยี่ห้อ/รุ่น · ประเภท</th>
+                <th class="num">เลขไมล์ / ชม.ทำงาน</th>
+                <th class="num">อายุ</th>
+                <th class="num">มูลค่าได้มา / ราคากลาง</th>
+                <th>สถานะการใช้งาน</th>
+                <th class="num">ราคาประมาณการ <small>(ซื้อใหม่ทดแทน)</small></th>
+                <th class="num">ราคา Overhaul <small>(แบบประเมิน)</small></th>
+                <th class="w-[56px]" aria-label="ดูรายละเอียดรถ"></th>
+              </tr></thead>
+              <tbody id="car-body"></tbody>
+            </table>
+          </div>
+          <div class="filter-empty hidden mt-3" id="car-notfound">
+            <span class="ms">search_off</span><b>ไม่พบรถที่ตรงกับคำค้น</b>
+          </div>
+        </section>
+
         <section>
           <div class="sect">ข้อมูลแผน</div>
           <!-- วงเงินอนุมัติ + WBS 3 ช่อง แถวเดียว (เจ้าของงานส่งตัวอย่าง 19 ต.ค. 2569): จอกว้าง 6 ส่วน = วงเงิน 3 · WBS/โครงข่าย/กิจกรรม ละ 1 ·
@@ -75,11 +104,14 @@
           <div class="fgrid gap-y-8 mb-0 grid-cols-1 md:grid-cols-3 xl:grid-cols-6">
             <div class="f md:col-span-2 xl:col-span-4" data-req><label for="name">ชื่อแผน</label><div class="in noic"><input type="text" id="name" placeholder="เช่น Overhaul ประจำปีงบ 2570 — รถเครน"></div><div class="help hidden"></div></div>
             <div class="f xl:col-span-2" data-req><label for="year">ประจำปีงบประมาณ</label><div class="in noic"><select id="year"></select></div><div class="help hidden"></div></div>
-            <div class="f md:col-span-3" data-req><label for="budget">วงเงินอนุมัติ (บาท)</label><div class="in noic"><input type="text" id="budget" inputmode="decimal" placeholder="0"></div><div class="help hidden"></div></div>
-            <div class="f"><label for="wbs">เลข WBS <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="wbs" placeholder="เช่น C-70-OH-0003"></div><div class="help hidden"></div></div>
+            <div class="f md:col-span-2 xl:col-span-2" data-req><label for="budget">วงเงินอนุมัติ (บาท)</label><div class="in noic"><input type="text" id="budget" inputmode="decimal" placeholder="0"></div><div class="help hidden"></div></div>
+            <!-- WBS กว้างขึ้น (เจ้าของงานสั่ง 5 พ.ย. 2569 "เลข WBS ยาว") — เลขจริงยาวกว่าตัวอย่างเดิมมาก เช่น I-70-Z-DPMXX.JM.0002 · เลขกิจกรรมแคบลง (สั้นได้ เช่น 0010) -->
+            <div class="f md:col-span-2 xl:col-span-2"><label for="wbs">เลข WBS <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="wbs" placeholder="เช่น I-70-Z-DPMXX.JM.0002"></div><div class="help hidden"></div></div>
             <div class="f"><label for="net">เลขโครงข่าย <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="net" inputmode="numeric" placeholder="เช่น 60002103"></div><div class="help hidden"></div></div>
             <div class="f"><label for="act">เลขกิจกรรม <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="act" inputmode="numeric" placeholder="เช่น 0010"></div><div class="help hidden"></div></div>
           </div>
+          <!-- หมายเหตุ — เจ้าของงานสั่ง 5 พ.ย. 2569: งานบางแผนดำเนินการข้ามปีงบ อยาก track เหตุผล/ความคืบหน้าได้ -->
+          <div class="fgrid gap-y-8 mb-0 grid-cols-1 mt-6"><div class="f"><label for="remark">หมายเหตุ <small>(ถ้ามี)</small></label><div class="in noic"><textarea id="remark" rows="2" placeholder="เช่น เหตุผลที่งานข้ามปีงบ ความคืบหน้า หรือข้อสังเกตอื่นๆ"></textarea></div><div class="help hidden"></div></div></div>
         </section>
 
         <section>
@@ -137,7 +169,7 @@
   </div>
 </div>
 
-<script src="overhaul-v2-mock.js?v=20261019-4"></script>
+<script src="overhaul-v2-mock.js?v=20261106-1"></script>
 <script>
 const $=id=>document.getElementById(id);
 const q=new URLSearchParams(location.search);
@@ -145,7 +177,7 @@ let S=oh2Load();
 const editId=q.get('id');
 const plan=editId?S.plans.find(p=>p.id===editId):null;
 const backTo=q.get('from')==='detail'&&plan?`overhaul-v2-03-plan-detail.html?id=${plan.id}`:'overhaul-v2-01-plans.html';
-const FIELDS=['name','year','budget','wbs','net','act'];
+const FIELDS=['name','year','budget','wbs','net','act','remark'];
 
 /* ปีงบ — ปีปัจจุบันเป็นค่าตั้งต้น · แผนเดิมที่เป็นปีก่อนหน้า (แก้ไข) ให้เห็นปีเดิมด้วย ไม่เลือกปีอื่นย้อนหลังได้ */
 const years=oh2Years(5);
@@ -153,14 +185,49 @@ if(plan&&!years.includes(plan.year))years.unshift(plan.year);
 $('year').innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join('');
 
 const docs=plan?JSON.parse(JSON.stringify(plan.docs)):{approve:[],budget:[],other:[]};
+/* เลือกรถที่จะเข้า Overhaul — ขั้นแรกของฟอร์ม (5 พ.ย. 2569) · เลือกจากรถทั้งหมดในระบบ (ต่างจากฟอร์ม PO ที่เลือกได้แค่รถในแผนนี้เท่านั้น)
+   sel: id -> {estPrice, estOverhaul} — มี key = ติ๊กเลือกแล้ว (5 พ.ย. 2569 รอบ 2: เดิมเป็น Set เก็บแค่ id เฉยๆ ตอนนี้พ่วงราคาประมาณการ/ราคา Overhaul แบบประเมินไปด้วย)
+   ช่องราคาจะ disabled ถ้ายังไม่ติ๊กเลือกรถคันนั้น (oh2VehRow เช็ค checked ให้) */
+const sel=new Map((plan?plan.cars:[]).map(c=>[c.id,{estPrice:c.estPrice,estOverhaul:c.estOverhaul}]));
+function drawCars(){
+  const qq=$('car-q').value.trim().toLowerCase();
+  const list=OH2_VEHICLES.filter(v=>!qq||[v.plate,v.brand,v.type,v.dept].some(x=>x.toLowerCase().includes(qq)));
+  $('car-body').innerHTML=list.map(v=>oh2VehRow(v,sel.has(v.id),sel.get(v.id)||{estPrice:'',estOverhaul:''})).join('');
+  $('car-body').closest('.tblwrap').classList.toggle('hidden',!list.length);
+  $('car-notfound').classList.toggle('hidden',!!list.length);
+  const n=list.filter(v=>sel.has(v.id)).length;
+  $('all-cars').checked=!!list.length&&n===list.length;$('all-cars').indeterminate=n>0&&n<list.length;$('all-cars').disabled=!list.length;
+  $('n-sel').textContent=sel.size;
+}
+document.getElementById('car-body').addEventListener('change',e=>{
+  const c=e.target;if(!c.classList.contains('veh-ck'))return;
+  if(c.checked)sel.set(c.value,sel.get(c.value)||{estPrice:'',estOverhaul:''});
+  else sel.delete(c.value);
+  drawCars();
+});
+/* พิมพ์ราคา — อัปเดตค่าใน sel ตรงๆ ไม่เรียก drawCars() กันโฟกัสหลุดระหว่างพิมพ์ */
+document.getElementById('car-body').addEventListener('input',e=>{
+  const t=e.target;const cur=sel.get(t.dataset.id);if(!cur)return;
+  if(t.classList.contains('veh-est-price'))cur.estPrice=t.value?+t.value:'';
+  else if(t.classList.contains('veh-est-overhaul'))cur.estOverhaul=t.value?+t.value:'';
+});
+$('all-cars').addEventListener('change',()=>{
+  const qq=$('car-q').value.trim().toLowerCase();
+  const list=OH2_VEHICLES.filter(v=>!qq||[v.plate,v.brand,v.type,v.dept].some(x=>x.toLowerCase().includes(qq)));
+  list.forEach(v=>$('all-cars').checked?sel.set(v.id,sel.get(v.id)||{estPrice:'',estOverhaul:''}):sel.delete(v.id));drawCars();
+});
+$('car-q').addEventListener('input',drawCars);
+document.addEventListener('click',e=>{const t=e.target.closest('[data-todo]');if(t)oh2Notify(`${t.dataset.todo} — ยังไม่ได้ทำในรอบตัวอย่างนี้`,{sub:'ยังไม่ยืนยันดีไซน์'})});
+drawCars();
 if(plan){
   $('title').textContent=`แก้ไขแผน ${plan.id}`;$('crumb').textContent=`แก้ไขแผน ${plan.id}`;document.title=`แก้ไขแผน ${plan.id} | Maintain-D (Mock)`;
   $('name').value=plan.name;$('year').value=plan.year;$('budget').value=oh2Money(plan.budget);
-  $('wbs').value=plan.wbs;$('net').value=plan.net;$('act').value=plan.act;
+  $('wbs').value=plan.wbs;$('net').value=plan.net;$('act').value=plan.act;$('remark').value=plan.remark||'';
   $('cancel').classList.remove('hidden');
 } else if(editId){oh2Notify(`ไม่พบแผน ${editId}`,{err:true});}
 
-const snap=()=>JSON.stringify([FIELDS.map(f=>$(f).value.trim()),docs]);
+const carsSnap=()=>[...sel.entries()].map(([id,v])=>({id,estPrice:v.estPrice||0,estOverhaul:v.estOverhaul||0})).sort((a,b)=>a.id<b.id?-1:1);
+const snap=()=>JSON.stringify([FIELDS.map(f=>$(f).value.trim()),docs,carsSnap()]);
 const start=snap();
 const dirty=()=>snap()!==start;
 
@@ -187,7 +254,7 @@ $('budget').addEventListener('blur',()=>{const n=money($('budget').value);if(n>0
 
 function commit(){
   if($('simfail').checked){oh2Notify('general error',{err:true});return false}
-  const data={name:$('name').value.trim(),year:+$('year').value,budget:money($('budget').value),wbs:$('wbs').value.trim(),net:$('net').value.trim(),act:$('act').value.trim(),docs};
+  const data={name:$('name').value.trim(),year:+$('year').value,budget:money($('budget').value),wbs:$('wbs').value.trim(),net:$('net').value.trim(),act:$('act').value.trim(),remark:$('remark').value.trim(),cars:carsSnap(),docs};
   if(plan)Object.assign(plan,data);
   else S.plans.push(Object.assign({id:oh2NextPlanId(S),created:new Date().toISOString().slice(0,10),pos:[]},data));
   oh2Save(S);return true;

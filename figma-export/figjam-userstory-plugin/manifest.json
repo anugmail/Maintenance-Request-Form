@@ -1,9 +1,21 @@
 {
-  "name": "Maintain-D — Overhaul user story annotator",
+  "name": "Maintain-D — AC Bridge (Figma + FigJam)",
   "id": "1471820935506372101",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
-  "editorType": ["figjam"],
-  "networkAccess": { "allowedDomains": ["none"], "reasoning": "เนื้อหา user story ฝังอยู่ใน code.js ทั้งหมด ไม่ต่อเครือข่าย" }
+  "editorType": [
+    "figma",
+    "figjam"
+  ],
+  "networkAccess": {
+    "allowedDomains": [
+      "none"
+    ],
+    "reasoning": "บันทึกข้อมูล Figma ล่าสุดทับไฟล์เดิมผ่าน local server บนเครื่อง และใช้ clientStorage ส่งข้อมูลไป FigJam",
+    "devAllowedDomains": [
+      "http://localhost:8124"
+    ]
+  },
+  "documentAccess": "dynamic-page"
 }

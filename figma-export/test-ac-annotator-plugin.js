@@ -168,6 +168,26 @@ async function run() {
   clearTags(currentPage);
   console.log('✓ onmessage "annotate-auto" แปะ AC จากชื่อเฟรมได้เองโดยไม่ต้องใช้ dropdown');
 
+  // Live component observations are read from the selected frame at annotation time.
+  const liveFrame = frame('OH2 / A.1 · S1', {w: 1440});
+  const newButton = new Node('INSTANCE');
+  newButton.name = 'Export button added in Figma';
+  newButton.componentProperties = {'Text#1:0': {type: 'TEXT', value: 'ส่งออกล่าสุด'}};
+  newButton.getMainComponentAsync = async () => ({id: 'main', name: 'State=Default', parent: {type: 'COMPONENT_SET', name: 'Primary button'}});
+  liveFrame.appendChild(newButton);
+  currentPage.selection = [liveFrame];
+  await global.figma.ui.onmessage({type: 'annotate-auto', liveUI: true});
+  const liveTag = currentPage.children.find(node => node.getPluginData(TAG_KEY) === '1');
+  assert.ok(liveTag.characters.includes('Export button added in Figma'));
+  assert.ok(liveTag.characters.includes('ส่งออกล่าสุด'));
+  assert.ok(liveTag.characters.includes('UI ล่าสุดจาก frame ที่เลือก'));
+  clearTags(currentPage);
+  newButton.componentProperties['Text#1:0'].value = 'ชื่อปุ่มที่เพิ่งแก้';
+  await global.figma.ui.onmessage({type: 'inspect-frame'});
+  const inspection = sentMessages.filter(message => message.type === 'frame-inspection').slice(-1)[0];
+  assert.ok(inspection.text.includes('ชื่อปุ่มที่เพิ่งแก้'));
+  console.log('✓ live selection reads new components and current properties into the AC observation');
+
   console.log('\nPASS — ac-annotator-plugin/code.js ทำงานถูกต้องตามที่ทดสอบ');
 }
 

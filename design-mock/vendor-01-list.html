@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>อู่/ศูนย์บริการ | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261106-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261106-ds74">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  5 พ.ย. 2569 — ร่าง design-mock "อู่/ศูนย์บริการ" (CRUD) จากสเปก J1-UC-16 / J1-UC-18 (อ้างอิง ~/Downloads/อู่.pdf — บอร์ด sprint พ.ย. 2569):
+    J1-UC-16  "จัดเก็บข้อมูลอู่/ศูนย์บริการที่เคยซ่อม พร้อมข้อมูลติดต่อและอ้างอิงเอกสารที่เกี่ยวข้อง เช่น PO ได้"
+    J1-UC-18  "ดูข้อมูลอู่ครบถ้วน นำทางด้วย Google Maps และเห็นคะแนนเฉลี่ยคุณภาพงานซ่อมได้"
+    J1-UC-18-01 ข้อมูลอู่เพิ่ม: ประเภท/ยี่ห้อที่รองรับ, ที่อยู่, เบอร์โทร, อีเมล
+    J1-UC-18-02 พิกัด Lat/Long + นำทางด้วย Google Maps
+    J1-UC-18-03 คะแนนเฉลี่ยคุณภาพงานซ่อมของอู่ (คำนวณจากการประเมิน — อ่านอย่างเดียว ไม่มีในฟอร์มเพิ่ม/แก้ไข)
+  โครงหน้ายึดจาก "Admin list" (ไฟล์ UI Release#2 node 2381:558524 · เพจ "5.17 Department Admin") ที่เจ้าของงานให้ไปดูเป็นตัวอย่าง "vendor list" —
+    ของจริงเป็น CRUD คนแบบเดียวกัน (Page header + Table header ค้นหา/ปุ่มเพิ่ม + Table + Table pagination + Modal เพิ่ม/แก้ไข + Empty/Search not found)
+    ต่างแค่ช่องข้อมูล (Admin = คน มี Avatar/Role · อู่ = ธุรกิจ ไม่มี Avatar)
+  component (ไฟล์ Component VMS Plus): Page header + Breadcrumbs · Primary/Secondary/Tertiary button · Text input (.search/.f) ·
+    Table / Table header cell / Table cell Style=Text|Badge (.tbl) · Table pagination (.tblfoot/.pager) · Dropdown menu (.dd-menu) ·
+    Modal Type=Form (.modal-hd/.modal-bd/.modal-ft — ยกจาก overhaul-v2-06-job.html #m-log) · Modal Type=Destructive centered (.modal-hd.center) ·
+    Pill outline (.badge — ใช้แทนดาว/rating เพราะไลบรารีไม่มี component rating/star) · Empty state/Data empty + Search not found (.filter-empty)
+  ตีความเอง/ยังไม่เคาะ: "ประเภท/ยี่ห้อที่รองรับ" เป็นช่องข้อความอิสระ (คั่นด้วยจุลภาค) ไม่ใช่ checkbox/tag เพราะยังไม่มีรายการยี่ห้อมาตรฐานให้ยึด ·
+    คะแนนเฉลี่ยแสดงเป็นตัวเลข "x.x/5" ใน badge สี (ไม่มี component ดาว) · ประวัติ PO ที่เคยใช้ (J1-UC-16) ยังไม่ทำหน้ารายละเอียด — แค่ลิงก์ "เปิดแผนที่" ใน dd-menu
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility · ข้อมูลจำลองทั้งหมด
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="vendor-01-list.html" title="อู่/ศูนย์บริการ"><span class="ms">store</span><span class="nvlbl">อู่/ศูนย์บริการ</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นางสาวกนกวรรณ ใจมั่น — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft flex items-center gap-3 flex-wrap">
+        <span class="mr-auto">Prototype (Mock) · อู่/ศูนย์บริการ — ร่างจาก J1-UC-16/18 · ข้อมูลจำลองทั้งหมด ยังไม่เคาะดีไซน์</span>
+        <button class="btn btn-t btn-sm" type="button" id="reset"><span class="ms">restart_alt</span>คืนค่าข้อมูลตัวอย่าง</button>
+      </div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep"></span><span class="cur">อู่/ศูนย์บริการ</span>
+      </div>
+
+      <div class="page-title-row">
+        <h1 class="page-title mb-0 mr-auto">อู่/ศูนย์บริการ</h1>
+        <button class="btn btn-p" type="button" id="add-btn"><span class="ms">add</span>เพิ่มอู่/ศูนย์บริการ</button>
+      </div>
+
+      <div class="w-full stack">
+        <div class="list-toolbar split mb-0" id="toolbar">
+          <div class="lt-search"><div class="search"><span class="ms">search</span><input type="search" id="q" placeholder="ค้นหาชื่ออู่, ประเภท/ยี่ห้อ, ที่อยู่" aria-label="ค้นหาอู่/ศูนย์บริการ"></div></div>
+        </div>
+
+        <div class="tblwrap mt-0" id="wrap">
+          <table class="tbl striped">
+            <thead>
+              <tr>
+                <th>ชื่ออู่/ศูนย์บริการ</th>
+                <th>ประเภท/ยี่ห้อที่รองรับ</th>
+                <th>ที่อยู่</th>
+                <th>เบอร์โทร</th>
+                <th class="num">คะแนนเฉลี่ย</th>
+                <th class="w-[72px]" aria-label="จัดการ"></th>
+              </tr>
+            </thead>
+            <tbody id="body"></tbody>
+          </table>
+          <div class="tblfoot">
+            <div class="tf-left"><span id="foot"></span>
+              <select class="select-inline" aria-label="จำนวนแถวต่อหน้า"><option selected>10</option><option>25</option><option>50</option></select></div>
+            <div class="pager">
+              <button class="pg" type="button" disabled aria-label="หน้าก่อน"><span class="ms">chevron_left</span></button>
+              <button class="pg on" type="button">1</button>
+              <button class="pg" type="button" disabled aria-label="หน้าถัดไป"><span class="ms">chevron_right</span></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty state/Search not found -->
+        <div class="filter-empty hidden" id="notfound">
+          <span class="ms">search_off</span>
+          <b>ไม่พบอู่/ศูนย์บริการ</b>
+          <span>ไม่มีรายการที่ตรงกับคำค้น</span>
+          <button class="btn btn-s btn-sm mt-2" type="button" id="clear">ล้างคำค้น</button>
+        </div>
+        <!-- Empty state/Data empty -->
+        <div class="filter-empty hidden" id="empty">
+          <span class="ms">store</span>
+          <b>ยังไม่มีอู่/ศูนย์บริการ</b>
+          <span>เพิ่มอู่/ศูนย์บริการเพื่อใช้อ้างอิงตอนสร้างใบสั่งจ้าง (PO)</span>
+          <button class="btn btn-p btn-sm mt-2" type="button" id="add-btn-2"><span class="ms">add</span>เพิ่มอู่/ศูนย์บริการ</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- เพิ่ม/แก้ไขอู่ — Modal Type=Form (ยกโครงจาก overhaul-v2-06-job.html #m-log) -->
+<div class="modal-overlay hidden" id="m-form">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-form-t">
+    <div class="modal-hd"><div class="modal-hd-c"><h2 id="m-form-t">เพิ่มอู่/ศูนย์บริการ</h2></div>
+      <button class="modal-x" type="button" data-close="m-form" aria-label="ปิด"><span class="ms">close</span></button></div>
+    <div class="modal-bd stack">
+      <div class="f" data-req><label for="f-name">ชื่ออู่/ศูนย์บริการ</label><div class="in noic"><input type="text" id="f-name" placeholder="เช่น บริษัท ฮีโน่ มอเตอร์ส เซลส์ จำกัด"></div><div class="help hidden"></div></div>
+      <div class="f"><label for="f-types">ประเภท/ยี่ห้อที่รองรับ <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="f-types" placeholder="เช่น ฮีโน่, อีซูซุ, รถเครน (คั่นด้วยจุลภาค)"></div><div class="help hidden"></div></div>
+      <div class="f" data-req><label for="f-addr">ที่อยู่</label><textarea id="f-addr" rows="2" placeholder="ระบุที่อยู่อู่/ศูนย์บริการ"></textarea><div class="help hidden"></div></div>
+      <div class="fgrid grid-cols-2 gap-y-4 mb-0">
+        <div class="f" data-req><label for="f-tel">เบอร์โทร</label><div class="in noic"><input type="text" id="f-tel" inputmode="tel" placeholder="เช่น 02-111-2201"></div><div class="help hidden"></div></div>
+        <div class="f"><label for="f-email">อีเมล <small>(ถ้ามี)</small></label><div class="in noic"><input type="email" id="f-email" placeholder="เช่น contact@example.co.th"></div><div class="help hidden"></div></div>
+      </div>
+      <div class="fgrid grid-cols-2 gap-y-4 mb-0">
+        <div class="f"><label for="f-lat">พิกัด Lat <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="f-lat" inputmode="decimal" placeholder="เช่น 13.6680"></div><div class="help hidden"></div></div>
+        <div class="f"><label for="f-lng">พิกัด Long <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="f-lng" inputmode="decimal" placeholder="เช่น 100.6050"></div><div class="help hidden"></div></div>
+      </div>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a"><button class="btn btn-t" type="button" data-close="m-form">ยกเลิก</button>
+      <div class="modal-ft-r"><button class="btn btn-p" type="button" id="m-form-ok">บันทึก</button></div></div></div>
+  </div>
+</div>
+
+<!-- ยืนยันการลบ — Modal Type=Destructive centered -->
+<div class="modal-overlay hidden" id="m-del">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-del-t">
+    <div class="modal-hd center">
+      <div class="modal-hd-c"><span class="ficon"><span class="ms">info</span></span><h2 id="m-del-t">ยืนยันการลบอู่/ศูนย์บริการ</h2><div class="modal-sub" id="m-del-s"></div></div>
+      <button class="modal-x" type="button" data-close="m-del" aria-label="ปิด"><span class="ms">close</span></button>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-del">ยกเลิก</button>
+      <button class="btn btn-d" type="button" id="m-del-ok">ยืนยัน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="overhaul-v2-mock.js?v=20261106-1"></script>
+<script>
+const $=id=>document.getElementById(id);
+const VKEY='vendor-mock-v1';
+/* ข้อมูลจำลอง — ชื่อ/ที่อยู่/เบอร์ยืมจาก OH2_VENDORS ของ overhaul-v2-mock.js (ใช้ชุดเดียวกันให้สอดคล้อง) + เพิ่มช่องตามสเปก J1-UC-18-01/02/03 */
+function seed(){return [
+  {id:'V001', name:'บริษัท ฮีโน่ มอเตอร์ส เซลส์ จำกัด', types:'ฮีโน่, ทั่วไป', addr:'เขตบางนา กรุงเทพฯ', tel:'02-111-2201', email:'contact@hino-sales.co.th', lat:'13.6680', lng:'100.6050', rating:4.5},
+  {id:'V002', name:'บริษัท ตรีเพชรอีซูซุเซลส์ จำกัด', types:'อีซูซุ, ทั่วไป', addr:'เขตพระนคร กรุงเทพฯ', tel:'02-111-2202', email:'contact@trichart.co.th', lat:'13.7590', lng:'100.4980', rating:4.2},
+  {id:'V003', name:'บริษัท มิตซูบิชิ ฟูโซ่ ทรัค จำกัด', types:'มิตซูบิชิ, รถเครน', addr:'อ.บางพลี สมุทรปราการ', tel:'02-111-2203', email:'contact@fuso.co.th', lat:'13.6020', lng:'100.7230', rating:4.8},
+  {id:'V004', name:'อู่ช่างสมชาย ซ่อมรถเครน', types:'รถเครน, รถกระเช้า', addr:'อ.เมือง ขอนแก่น', tel:'043-123-456', email:'', lat:'16.4322', lng:'102.8236', rating:3.9},
+];}
+function load(){try{const s=JSON.parse(localStorage.getItem(VKEY));if(s&&s.length)return s}catch(e){}const s=seed();save(s);return s}
+function save(s){try{localStorage.setItem(VKEY,JSON.stringify(s))}catch(e){}}
+let V=load();
+let editId=null, delId=null;
+
+const esc=oh2Esc, num=oh2Num;   // ใช้ helper เดิมจาก overhaul-v2-mock.js (escape/format เลข)
+/* J1-UC-18-03: คะแนนคำนวณจากการประเมินงานซ่อมที่ผ่านมา — อู่ใหม่ที่ยังไม่เคยมีงาน (rating=0) ต้องแยกจาก "ได้คะแนนแย่" ไม่งั้นดูเหมือนถูกประเมินแล้วว่าแย่ทั้งที่ยังไม่มีข้อมูล */
+const ratingBadge=r=>{if(!r)return '<span class="text-[var(--gray-400)]">ยังไม่มีคะแนน</span>';const c=r>=4.5?'b-ok':r>=3.5?'b-low':'b-out';return `<span class="badge ${c}">${r.toFixed(1)}/5</span>`};
+
+function rows(){
+  const q=$('q').value.trim().toLowerCase();
+  if(!q)return V;
+  return V.filter(v=>[v.name,v.types,v.addr].some(x=>String(x).toLowerCase().includes(q)));
+}
+function render(){
+  const list=rows();
+  $('body').innerHTML=list.map(v=>`<tr>
+      <td><div class="cell-key">${esc(v.name)}</div></td>
+      <td>${v.types?esc(v.types):'<span class="text-[var(--gray-400)]">—</span>'}</td>
+      <td><span class="cell-clip" style="max-width:220px" title="${esc(v.addr)}">${esc(v.addr)}</span></td>
+      <td>${esc(v.tel)}</td>
+      <td class="num">${ratingBadge(v.rating)}</td>
+      <td class="dt-action">
+        <details class="dd"><summary class="btn btn-t btn-icon" aria-label="จัดการ ${esc(v.name)}"><span class="ms">more_horiz</span></summary>
+          <div class="dd-menu">
+            ${v.lat&&v.lng?`<a class="dd-item !no-underline" href="https://www.google.com/maps?q=${encodeURIComponent(v.lat)},${encodeURIComponent(v.lng)}" target="_blank" rel="noopener"><span><span class="ms">map</span>เปิดแผนที่ (Google Maps)</span></a>`:''}
+            <button class="dd-item" type="button" data-edit="${esc(v.id)}"><span><span class="ms">edit</span>แก้ไข</span></button>
+            <div class="dd-sep"></div>
+            <button class="dd-item" type="button" data-del="${esc(v.id)}"><span><span class="ms">delete</span>ลบ</span></button>
+          </div></details>
+      </td></tr>`).join('');
+  $('foot').textContent=list.length?`แสดง 1 ถึง ${list.length} จาก ${list.length} รายการ`:'';
+  const none=!V.length, nf=!none&&!list.length;
+  $('wrap').classList.toggle('hidden',!list.length);
+  $('empty').classList.toggle('hidden',!none);
+  $('notfound').classList.toggle('hidden',!nf);
+  $('toolbar').classList.toggle('hidden',none);
+}
+$('q').addEventListener('input',render);
+$('clear').addEventListener('click',()=>{$('q').value='';render();$('q').focus()});
+
+/* เพิ่ม/แก้ไข */
+function openForm(id){
+  editId=id;
+  const v=id?V.find(x=>x.id===id):null;
+  $('m-form-t').textContent=v?'แก้ไขอู่/ศูนย์บริการ':'เพิ่มอู่/ศูนย์บริการ';
+  ['name','types','addr','tel','email','lat','lng'].forEach(k=>{$('f-'+k).value=v?(v[k]||''):'';clearErr($('f-'+k).closest('.f'))});
+  oh2Modal('m-form',true);
+}
+function setErr(el,msg){el.classList.add('err');const h=el.querySelector('.help');h.textContent=msg;h.classList.remove('hidden')}
+function clearErr(el){el.classList.remove('err');const h=el.querySelector('.help');if(h)h.classList.add('hidden')}
+function validate(){
+  let first=null;
+  document.querySelectorAll('#m-form [data-req]').forEach(el=>{
+    clearErr(el);
+    const inp=el.querySelector('input,textarea');const v=inp.value.trim();
+    if(!v){setErr(el,'กรุณาระบุ'+el.querySelector('label').textContent);first=first||el}
+  });
+  if(first){first.scrollIntoView({block:'center',behavior:'smooth'});first.querySelector('input,textarea').focus()}
+  return !first;
+}
+['name','addr','tel'].forEach(k=>$('f-'+k).addEventListener('input',()=>clearErr($('f-'+k).closest('.f'))));
+$('add-btn').addEventListener('click',()=>openForm(null));
+$('add-btn-2').addEventListener('click',()=>openForm(null));
+$('m-form-ok').addEventListener('click',()=>{
+  if(!validate())return;
+  const data={name:$('f-name').value.trim(),types:$('f-types').value.trim(),addr:$('f-addr').value.trim(),
+    tel:$('f-tel').value.trim(),email:$('f-email').value.trim(),lat:$('f-lat').value.trim(),lng:$('f-lng').value.trim()};
+  if(editId){Object.assign(V.find(x=>x.id===editId),data);oh2Notify('บันทึกการแก้ไขอู่/ศูนย์บริการสำเร็จ')}
+  else{const n=Math.max(0,...V.map(x=>+x.id.slice(1)))+1;V.push(Object.assign({id:'V'+String(n).padStart(3,'0'),rating:0},data));oh2Notify('เพิ่มอู่/ศูนย์บริการสำเร็จ')}
+  save(V);oh2Modal('m-form',false);render();
+});
+
+/* ลบ */
+document.addEventListener('click',e=>{
+  const ed=e.target.closest('[data-edit]');if(ed){ed.closest('details').open=false;openForm(ed.dataset.edit);return}
+  const d=e.target.closest('[data-del]');if(d){delId=d.dataset.del;d.closest('details').open=false;
+    const v=V.find(x=>x.id===delId);$('m-del-s').textContent=`อู่/ศูนย์บริการ "${v.name}" จะถูกลบ`;oh2Modal('m-del',true)}
+});
+$('m-del-ok').addEventListener('click',()=>{V=V.filter(v=>v.id!==delId);save(V);oh2Modal('m-del',false);render();oh2Notify('ลบอู่/ศูนย์บริการสำเร็จ')});
+
+$('reset').addEventListener('click',()=>{V=seed();save(V);render();oh2Notify('คืนค่าข้อมูลตัวอย่างแล้ว')});
+render();
+</script>
+</body>
+</html>

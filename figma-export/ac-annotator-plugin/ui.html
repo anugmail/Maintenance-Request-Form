@@ -38,6 +38,17 @@
     <button class="danger" id="btn-clear">ล้างป้ายที่แปะไว้</button>
   </div>
 
+  <details open>
+    <summary>Component ล่าสุดจาก frame ที่เลือก</summary>
+    <p>อ่านใหม่เมื่อเลือก frame หรือแก้ design; หากเป็นภาพใน FigJam จะอ่าน component ภายในภาพไม่ได้</p>
+    <textarea id="frame-inspection" rows="10" cols="46" readonly aria-label="Component จาก frame ที่เลือก"></textarea>
+    <div class="row">
+      <button id="btn-inspect">อ่าน frame อีกครั้ง</button>
+      <button id="btn-copy-inspection">คัดลอกข้อมูล</button>
+    </div>
+    <label><input id="live-ui" type="checkbox" checked> แนบ UI ที่อ่านได้ล่าสุดกับ AC</label>
+  </details>
+
   <div id="result">ยังไม่ได้ทำอะไร</div>
 
   <hr>
@@ -60,12 +71,12 @@
 
     parent.postMessage({ pluginMessage: { type: 'list' } }, '*');
 
-    $('btn-auto').onclick = () => parent.postMessage({ pluginMessage: { type: 'annotate-auto' } }, '*');
+    $('btn-auto').onclick = () => parent.postMessage({ pluginMessage: { type: 'annotate-auto', liveUI: document.getElementById('live-ui').checked } }, '*');
     $('btn-clear').onclick = () => parent.postMessage({ pluginMessage: { type: 'clear' } }, '*');
 
     const doAnnotate = (force) => {
       const key = $('entry').value;
-      parent.postMessage({ pluginMessage: { type: 'annotate', key, force: !!force } }, '*');
+      parent.postMessage({ pluginMessage: { type: 'annotate', key, force: !!force, liveUI: document.getElementById('live-ui').checked } }, '*');
     };
     $('btn-annotate').onclick = () => { $('row-confirm').style.display = 'none'; doAnnotate(false); };
     $('btn-confirm').onclick = () => { $('row-confirm').style.display = 'none'; doAnnotate(true); };
@@ -74,6 +85,9 @@
     onmessage = (e) => {
       const msg = e.data.pluginMessage;
       if (!msg) return;
+      if (msg.type === 'frame-inspection') {
+        document.getElementById('frame-inspection').value = msg.text;
+      }
       if (msg.type === 'entries') {
         const GROUPS = [
           { label: 'หน้ารายการแผน (A.*)', test: (k) => k.startsWith('A.') || k === 'กำลังโหลด' || k === 'โหลดไม่สำเร็จ' },
@@ -115,6 +129,14 @@
         $('row-confirm').style.display = 'flex';
         $('manual').open = true;
       }
+    };
+    document.getElementById('btn-inspect').onclick = () => {
+      parent.postMessage({pluginMessage: {type: 'inspect-frame'}}, '*');
+    };
+    document.getElementById('btn-copy-inspection').onclick = async () => {
+      const field = document.getElementById('frame-inspection');
+      try { await navigator.clipboard.writeText(field.value); }
+      catch (error) { field.focus(); field.select(); document.execCommand('copy'); }
     };
   </script>
 </body>

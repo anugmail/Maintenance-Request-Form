@@ -1,6 +1,6 @@
 {
   "_about": "กติกาการสร้างจอด้วย component จริงของไลบรารี (Component) VMS Plus — ตัวทดสอบ test-overhaul2-plugin.js อ่านไฟล์นี้แล้วตรวจทุกจอ · ผิดกติกา = ทดสอบไม่ผ่าน · คำอธิบายรายข้ออยู่ที่ component-rules.md · แก้กติกาต้องแก้ทั้ง 2 ไฟล์",
-  "_updated": "2026-10-22 (R26 ผัง userflow ข้างจอ · ปลั๊กอินบำรุงรักษาปรับ export ให้ตรง Overhaul) · 2026-10-21 (R23 บล็อก A ฉบับเจ้าของงาน 8 คอลัมน์ ไม่มีหน่วยงาน + ตัวกรอง dropdown · R23 หน้ารายการแผนตามจอเจ้าของงาน 8 คอลัมน์ + ปุ่ม … · R21 ฉบับเจ้าของงาน: ปุ่ม … + Dropdown menu บนตารางรายการแผน/PO · R25 ตารางทุก scenario = component Table เสมอ ห้ามประกอบเอง · R24 เลือกรถในฟอร์ม PO = Input dropdown + ชิป · R23 แบบที่เจ้าของงานส่งเป็นหลัก · R22 dashboard แบบ MA Overview · R20 หน้า toast แยก · R21 จัดการเป็นไอคอน) · 2026-10-19 (R10 R16–R17)",
+  "_updated": "2026-11-05 (รอบ 2 — §4.3.1 ขั้นเลือกรถของฟอร์มแผน เพิ่ม 2 คอลัมน์ราคาประมาณการ/ราคา Overhaul แบบประเมินรายคัน · Table cell Style=Text เพราะไลบรารีไม่มี Style แบบ input · `VEH_PICK_COLS_PLAN`/`vehPickRowPlan`/`FILLED.cars` object) · 2026-11-05 (R24 แก้ไข: เลือกรถในฟอร์ม PO เปลี่ยนจาก Input dropdown + ชิป เป็นตาราง checkbox เพราะย้ายขั้นเลือกรถไปเป็นขั้นแรกของฟอร์มแผนแล้ว ดู component-rules.md §4.3/§4.3.1) · 2026-10-22 (R26 ผัง userflow ข้างจอ · ปลั๊กอินบำรุงรักษาปรับ export ให้ตรง Overhaul) · 2026-10-21 (R23 บล็อก A ฉบับเจ้าของงาน 8 คอลัมน์ ไม่มีหน่วยงาน + ตัวกรอง dropdown · R23 หน้ารายการแผนตามจอเจ้าของงาน 8 คอลัมน์ + ปุ่ม … · R21 ฉบับเจ้าของงาน: ปุ่ม … + Dropdown menu บนตารางรายการแผน/PO · R25 ตารางทุก scenario = component Table เสมอ ห้ามประกอบเอง · R24 เลือกรถในฟอร์ม PO = Input dropdown + ชิป (เดิม — ดู 2026-11-05) · R23 แบบที่เจ้าของงานส่งเป็นหลัก · R22 dashboard แบบ MA Overview · R20 หน้า toast แยก · R21 จัดการเป็นไอคอน) · 2026-10-19 (R10 R16–R17)",
   "library": {
     "Table": {
       "cols": 8,
@@ -132,14 +132,18 @@
       "id": "R8",
       "component": "Table cell",
       "parent": "Table",
-      "allowInside": ["ReceiptChecklist"],
+      "allowInside": [
+        "ReceiptChecklist"
+      ],
       "source": "รีวิว 19 ต.ค. 2569 (ต้องเรียก component Table ทั้งก้อน) · 21 ต.ค. ค่ำ R25: ถอดข้อยกเว้นขนาด — ประกอบเอง = ไม่ผ่านทุกขนาด"
     },
     {
       "id": "R9",
       "component": "Table header cell",
       "parent": "Table",
-      "allowInside": ["ReceiptChecklist"],
+      "allowInside": [
+        "ReceiptChecklist"
+      ],
       "source": "รีวิว 19 ต.ค. 2569 · 21 ต.ค. ค่ำ R25: ถอดข้อยกเว้นขนาด — ประกอบเอง = ไม่ผ่านทุกขนาด"
     },
     {
@@ -178,8 +182,8 @@
       "id": "R24",
       "screens": "^OH2 / .*S4 — (เลือกรถ|กรอกครบ|บันทึกไม่สำเร็จ)",
       "desktopOnly": true,
-      "component": "Badge outline with remove icon",
-      "source": "รถที่เลือกแล้วในฟอร์ม PO แสดงเป็นชิป Badge outline with remove icon (Color=Brand) ข้อความ \"ทะเบียน จังหวัด\" ใต้ช่อง Input dropdown \"เลือกรถ\" · รายการที่เปิด = Dropdown list แถวละทะเบียน+จังหวัด (ไม่มีบรรทัดรอง) คันที่เลือกแล้ว State=Selected"
+      "component": "Table",
+      "source": "แก้ 5 พ.ย. 2569 — เจ้าของงานสั่งเปลี่ยนจาก Input dropdown + ชิป Badge outline with remove icon (R24 เดิม 21 ต.ค. 2569) เป็นตาราง checkbox (Table cell Style=Lead checkbox) เพราะตอนนี้เลือกรถในแผนไปแล้วตั้งแต่ขั้นสร้างแผน PO แค่ติ๊กจากรถในแผน ไม่ค้นรถทั้งระบบอีกต่อไป — ดู component-rules.md §4.3"
     },
     {
       "id": "R21",
@@ -305,7 +309,7 @@
       "id": "R24",
       "screens": "^OH2 / .*S[45] — (?!.*· mobile$)",
       "component": "List with checkbox",
-      "source": "เจ้าของงานสั่ง 21 ต.ค. 2569 (ค่ำ): เลือกรถในฟอร์ม PO เป็น dropdown select (ทะเบียน จังหวัด) รถที่เลือกแล้วเป็นชิป — desktop ไม่ใช้ dual list / List with checkbox แล้ว (mobile ยังไม่ทำ คงเดิม)"
+      "source": "แก้ 5 พ.ย. 2569 — เลือกรถในฟอร์ม PO เปลี่ยนเป็นตาราง checkbox (Table) แทน dropdown+ชิป แต่ desktop ก็ยังไม่ใช้ dual list / List with checkbox เหมือนเดิม (mobile ยังไม่ทำ คงเดิม)"
     }
   ],
   "dashboard": {
@@ -316,7 +320,7 @@
       "Metric item"
     ],
     "maxTableCols": 8,
-    "note": "Dashboard งาน Overhaul (เจ้าของงานสั่ง 21 ต.ค. 2569) ลอกโครงหน้า MA Overview ของ UI Release#2: Page header → Tabs + Pill นับ → Metric item ×4 (Featured icon สีตามความหมาย) → Alert ข้อมูล ณ วันที่ → Table header → Table ≤ 8 คอลัมน์ → pagination/empty · ไม่มี chart component ในไลบรารี ห้ามวาดกราฟเอง · หน้ารายคันเป็นหน้า Detail (Section label + กล่องแสดงข้อมูล)",
+    "note": "Dashboard งาน Overhaul (เจ้าของงานสั่ง 21 ต.ค. 2569) ลอกโครงหน้า MA Overview ของ UI Release#2: Page header → Tabs + Pill นับ → Metric item ×4 (Featured icon สีตามความหมาย) → Alert ข้อมูล ณ วันที่ → Table header → Table ≤ 8 คอลัมน์ → pagination/empty · ไม่มี chart component ในไลบรารี ห้ามวาดกราฟเอง · หน้ารายคันเป็นหน้า Detail (Section label + กล่องแสดงข้อมูล) · 6 พ.ย. 2569: เจ้าของงานอนุญาต A.5 เพิ่ม grouped horizontal bar chart แนว Chart.js เป็น editable layers ใช้ palette/font VMS Plus และ filter scope เดียวกับ dashboard; เป็นข้อยกเว้นของกฎห้ามวาดกราฟเดิมเฉพาะกราฟนี้ · 9 พ.ย. 2569 เจ้าของงานอนุญาตกราฟแบบอื่นด้วย: native editable arcs/text/frames ภายใน Executive visual dashboard; นับแยกจาก unsupported loose layers.",
     "source": "เจ้าของงานสั่ง 21 ต.ค. 2569 · แม่แบบ UI Release#2 node 351:181468 · Metric item 2011:13829"
   },
   "ownerDesign": [
@@ -327,6 +331,7 @@
       "tableHeaders": [
         "วันที่",
         "รายละเอียด",
+        "ความคืบหน้า",
         "หมายเหตุ"
       ],
       "note": "ลำดับแหล่งความจริงของโครงจอ: ข้อความ/ภาพจากเฟรม Figma ที่เจ้าของงานส่ง → ชีต CF ของ PO → userflow/AC · คอลัมน์ในชีตที่จอของเจ้าของงานไม่มี ไม่ใส่ (จดรอเคาะในไฟล์ 19) · ตรวจด้วย harness DUMP_TEXT",
@@ -347,7 +352,7 @@
         "สถานะ",
         "วันที่สร้าง"
       ],
-      "note": "บล็อก A ฉบับที่เจ้าของงานแก้แล้ว 21 ต.ค. 2569 ค่ำ (\"ให้ยึดเป็นหลักในการออกแบบครั้งต่อไป\"): 4 state รายการแผน · ตัวกรอง · ค้นไม่เจอ · ยังไม่มีแผน · ตาราง 8 คอลัมน์ + ปุ่ม … (ไม่มีหน่วยงาน — เจ้าของงานยืนยันซ้ำ \"ตัดหน่วยงานออก สิ่งที่ต้องมีคือชื่อแผน\") · 10 แถว \"แสดง 1 ถึง 10 จาก 95 รายการ\" · ค้นหา \"ค้นหาเลขแผน, ชื่อแผน, เลขศูนย์ต้นทุน\" · ตัวกรอง = dropdown 3 ช่อง (ถ้ามี) ปีงบประมาณ · งบประมาณ (บาท) 6 ช่วง · สถานะ + ปุ่ม ล้างตัวกรอง ยกเลิก ตกลง · ความคืบหน้าเป็นข้อความ x/n · จอว่าง \"สร้างแผน Overhaul เพื่อเพิ่ม Purchase Order และติดตามสถานะซ่อมของรถแต่ละคัน\" · คอลัมน์ที่ชีต CF มีแต่จอไม่มี (หน่วยงาน จำนวนรถ รถรอติดตาม แก้ไขล่าสุด) และตัวกรองประเภทยานพาหนะ ไม่ใส่ รอเคาะ · minCols: ไม่ตรวจเมื่อไลบรารีมีไม่ถึง 9 คอลัมน์ (แบบสำรอง) · pagination เลขหน้า 1 2 … 9 10 · ข้อความ \"แสดง 1 ถึง 10  จาก 95 รายการ\"",
+      "note": "บล็อก A ฉบับที่เจ้าของงานแก้แล้ว 21 ต.ค. 2569 ค่ำ (\"ให้ยึดเป็นหลักในการออกแบบครั้งต่อไป\"): 4 state รายการแผน · ตัวกรอง · ค้นไม่เจอ · ยังไม่มีแผน · ตาราง 8 คอลัมน์ + ปุ่ม … (ไม่มีหน่วยงาน — เจ้าของงานยืนยันซ้ำ \"ตัดหน่วยงานออก สิ่งที่ต้องมีคือชื่อแผน\") · 10 แถว \"แสดง 1 ถึง 10 จาก 95 รายการ\" · ค้นหา \"ค้นหาเลขแผน, ชื่อแผน, เลขศูนย์ต้นทุน\" · ตัวกรอง = dropdown 3 ช่อง (ถ้ามี) ปีงบประมาณ · งบประมาณ (บาท) 6 ช่วง · สถานะ + ปุ่ม ล้างตัวกรอง ยกเลิก ตกลง · ความคืบหน้าเป็น Progress bar พร้อมเปอร์เซ็นต์จริง (6 พ.ย. 2569) · จอว่าง \"สร้างแผน Overhaul เพื่อเพิ่ม Purchase Order และติดตามสถานะซ่อมของรถแต่ละคัน\" · คอลัมน์ที่ชีต CF มีแต่จอไม่มี (หน่วยงาน จำนวนรถ รถรอติดตาม แก้ไขล่าสุด) และตัวกรองประเภทยานพาหนะ ไม่ใส่ รอเคาะ · minCols: ไม่ตรวจเมื่อไลบรารีมีไม่ถึง 9 คอลัมน์ (แบบสำรอง) · pagination เลขหน้า 1 2 … 9 10 · ข้อความ \"แสดง 1 ถึง 10  จาก 95 รายการ\"",
       "source": "เจ้าของงานวางข้อความทั้งบล็อก A (A.1–A.4) 21 ต.ค. 2569 ค่ำ: \"scen A ที่ถูกปรับแก้แล้ว ให้ยึดเป็นหลักในการออกแบบครั้งต่อไป จดไว้ด้วย\" · ข้อความดิบ ~/PEA/Maintain-D/userflow/figma-ref/overhaul-A-list-2569-10-21.txt"
     }
   ],
@@ -356,5 +361,272 @@
     "component": "Table",
     "neverCompose": true,
     "source": "เจ้าของงานวางข้อความ component Table + ภาพหน้ารายการแผนที่ประกอบเอง 21 ต.ค. 2569 ค่ำ: \"ถ้าต้องเลือกตารางให้ดึง component นี้ ที่ผ่านมาดึงผิด\" · \"ถ้าเป็นหน้า list ต้องดึงตารางให้ถูก\" · \"ทุก scen ที่ใช้ตาราง ให้ดึง component ที่ส่งให้ทั้งหมด … ของ desktop ก่อน\" — component-rules.md §4.4"
+  },
+  "review20261106": {
+    "source": "คอมเมนต์ A.1–T.1 และคำตอบเจ้าของงานใน session วันที่ 6 พ.ย. 2569; ใช้แทนรายละเอียดเก่าที่ขัดกัน",
+    "planTabs": [
+      "แผน Overhaul",
+      "รถที่ Overhaul"
+    ],
+    "createAction": "right of filter in Table header",
+    "progress": {
+      "aggregate": "mean of individual car percentages across all POs",
+      "missing": "dash",
+      "exactPercentageLabel": true,
+      "source": "p.pos[].cars[].progress / r.cars[].progress; fixtures only, no API"
+    },
+    "vehicleSelectionSection": 2,
+    "wbsRatios": [
+      0.4,
+      0.3,
+      0.3
+    ],
+    "priceStates": [
+      "B.8",
+      "B.9",
+      "B.10",
+      "B.11",
+      "B.12"
+    ],
+    "contractDates": {
+      "inputLevel": "PO only",
+      "tableHeaders": [
+        "วันเริ่มสัญญา",
+        "วันสิ้นสุดสัญญา"
+      ],
+      "showAtCloseOut": true
+    },
+    "appointment": {
+      "inboundSingleDate": true,
+      "inboundSkippable": true,
+      "returnSkippable": true
+    },
+    "repairCompleteRequiresLatestPercent": 100,
+    "toast": {
+      "position": "top-right",
+      "desktopInset": 0,
+      "mobileInset": 0,
+      "standaloneToastUnchanged": true
+    },
+    "overlay": "full actual frame height, refit after layout",
+    "pending": [
+      "J.2 fixed percent suffix unavailable in current Text input dump",
+      "live Figma access and component Table definition dump",
+      "I.1 repair-method categories not shown in I.2 SVG; ReceiptChecklist library definition still unavailable",
+      "T.1 original vehicle photo and actual line amounts missing; visual verification in Figma still pending"
+    ],
+    "verification": "node figma-export/test-overhaul-review.js",
+    "checkinReference": {
+      "path": "overhaul2-plugin/reference-I2-checklist.md",
+      "sourceSvg": "I.2 · S8 — รายการตรวจสอบ.svg",
+      "checklistItems": 13,
+      "state": {
+        "ReceiptChecklist": "Filled",
+        "HandoverSignature": "Filled",
+        "confirmDisabledUntilBothSigned": true
+      },
+      "note": "13 vehicle receipt checklist items; does not establish repair-method categories"
+    },
+    "approvalReference": {
+      "path": "overhaul2-plugin/reference-T1-approval.md",
+      "columns": [
+        0.59,
+        0.41
+      ],
+      "omitRepeatedVehicleBoxAboveSteps": true,
+      "partsLineAmountIndex": 5,
+      "partsCodeIndex": 4,
+      "total": "sum known line amounts, otherwise dash; never multiply quantity twice",
+      "photo": "placeholder until original asset supplied"
+    },
+    "planFilter": {
+      "reference": "overhaul2-plugin/reference-A2-filter.md",
+      "year": {
+        "component": "Input dropdown",
+        "value": "ทั้งหมด",
+        "optional": false
+      },
+      "budget": {
+        "component": "List with checkbox",
+        "supporting": false,
+        "count": 6,
+        "selected": false,
+        "itemComponent": "List with checkbox item",
+        "avatar": false,
+        "supporting2": false,
+        "librarySlotsInDump": 5,
+        "instancesForSixRanges": 2
+      },
+      "status": {
+        "component": "Checkbox with badge",
+        "values": [
+          "รอเลข PO",
+          "รอดำเนินการ",
+          "เสร็จสิ้น"
+        ],
+        "selected": false
+      },
+      "floatingBudgetDropdown": false,
+      "footer": [
+        "ล้างตัวกรอง",
+        "ยกเลิก",
+        "ตกลง"
+      ]
+    },
+    "componentLoading": {
+      "noUnverifiedMandatoryCheckboxKey": true,
+      "budgetUsesExistingListDependency": true,
+      "missingErrorIncludesComponentNames": true,
+      "regressionTest": "node figma-export/test-overhaul-component-loading.js",
+      "liveLogPending": true
+    }
+  },
+  "reviewRound2": {
+    "source": "คอมเมนต์รอบ 2 และคำยืนยัน B.3/E.2/H.1 วันที่ 6 พ.ย. 2569",
+    "reference": "overhaul2-plugin/review-round2.md",
+    "tabs": {
+      "activeIndex": 1,
+      "activeVariant": "True",
+      "inactiveVariant": "False",
+      "type": "VARIANT"
+    },
+    "dashboard": {
+      "filterKeys": [
+        "model",
+        "brand",
+        "type",
+        "query"
+      ],
+      "globalBrandRankingUnaffected": false,
+      "vehicleAge": "PLAN_VEHICLES age in vehicle information cell; unknown displays —",
+      "metrics": 8,
+      "tableColumns": 8,
+      "samePricedCohort": true,
+      "priceCoverage": true,
+      "progressCoverage": true,
+      "renderedStates": [
+        "A.5",
+        "A.7",
+        "A.8"
+      ],
+      "liveApi": false,
+      "interactiveFigmaFiltering": false
+    },
+    "priceModalEmptyState": "B.13",
+    "poVehicles": "same table as plan, only plan.cars",
+    "purchaseOrderCopy": "expand PO words, preserve PO- identifiers",
+    "appointmentActions": {
+      "left": [
+        "ย้อนกลับ"
+      ],
+      "right": [
+        "ข้ามขั้นตอน",
+        "ยืนยันนัดหมาย"
+      ],
+      "skipKind": "Tertiary button"
+    },
+    "trackingHeaders": [
+      "วันที่",
+      "รายละเอียด",
+      "ความคืบหน้า",
+      "หมายเหตุ"
+    ],
+    "toast": {
+      "top": 0,
+      "right": 0
+    },
+    "overhaulCostLabel": "ค่าใช้จ่ายในการดำเนินการ Overhaul",
+    "approvalPartCategories": [
+      "vehicle",
+      "machine"
+    ],
+    "approvalSuccessAlert": false,
+    "pendingSourceNodes": {
+      "fileKey": "bhYXsswc3XwG9Pk9hxgeDw",
+      "checkin": "1824:617793",
+      "vehicleCard": "2623:88498",
+      "reason": "MCP edit access denied; waiting for source read access or selection log"
+    },
+    "verification": "node figma-export/test-overhaul-round2.js"
+  },
+  "missingScreenDiagnostics": {
+    "source": "overhaul2-plugin/missing-screen-diagnosis.md",
+    "expectedDesktopScreens": 86,
+    "photoDeleteButton": "Secondary button with Leading icon=delete, Button text=false",
+    "undeclaredIconButtonRemoved": true,
+    "missingCoordinator": "retain frame and warn, never dereference undefined",
+    "headerVariantFailure": "existing outside-screen fallback, do not abort later blocks",
+    "reportFields": [
+      "expected",
+      "created",
+      "failed",
+      "incomplete"
+    ],
+    "reportFailureKeys": [
+      "code",
+      "label",
+      "device",
+      "error"
+    ],
+    "blockSuccessRequiresNoFailuresOrWarnings": true,
+    "countsFromScenarios": true,
+    "tests": [
+      "test-overhaul-all-screen-runtime.js",
+      "test-overhaul-build-report.js"
+    ],
+    "liveLibraryAndLayoutVerified": false
+  },
+  "latestReview": {
+    "date": "2026-11-06",
+    "planActions": "A.1 แสดง action column และปุ่ม … / Table header Actions=true",
+    "budgetCheckbox": {
+      "component": "Checkbox with description",
+      "key": "dfc323f6bb605f586c4928ecb08c77acfb241f53",
+      "Supporting": false,
+      "count": 6
+    },
+    "currency": "comma thousands, exactly 2 fractional digits",
+    "vehiclePriceLabels": [
+      "ราคากลาง (บาท)",
+      "ราคาประเมิน Overhaul"
+    ],
+    "vehicleMenuEdit": "แก้ไข",
+    "poVehicles": "เฉพาะรถในแผนต้นทาง",
+    "receipt": "desktop ต้องใช้ ReceiptChecklist + HandoverSignature; ไม่ใช้ checkinOld เงียบๆ",
+    "searchChips": "แสดง Badge outline with remove icon ของคำค้น/ตัวกรอง",
+    "receiptOrderDesktop": [
+      "รูปสภาพรถ (ก่อน Overhaul)",
+      "ReceiptChecklist",
+      "HandoverSignature",
+      "Actions"
+    ],
+    "executiveVisualization": {
+      "date": "2026-11-09",
+      "scope": "existing vehicle dashboard A.5 desktop",
+      "charts": [
+        "comparison bars",
+        "progress doughnut",
+        "vehicle type polar area",
+        "filtered brand ranking"
+      ],
+      "nativeLayerExceptionRoot": "Executive visual dashboard",
+      "filtered": [
+        "comparison bars",
+        "progress doughnut",
+        "vehicle type polar area",
+        "brand ranking"
+      ],
+      "global": [],
+      "missingProgress": "exclude unknowns; display coverage",
+      "currency": "comma + 2 decimals",
+      "mobile": "unchanged"
+    },
+    "planVehicleRemark": {
+      "header": "หมายเหตุ",
+      "before": "action menu",
+      "empty": "—",
+      "compact": "merge age into mileage/hours and combine two estimates; keep remarks and action columns",
+      "scope": "plan forms only"
+    }
   }
 }

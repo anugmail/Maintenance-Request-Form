@@ -105,6 +105,8 @@ for (let i = 0; i < headers.length; i++) {
   if (frames[h[1]]) throw new Error('Duplicate frame ' + h[1]);
   frames[h[1]] = {title: 'AC ' + h[1] + ' — ' + h[2], sections: parseBlocks(body, ''), source: path.basename(FRAME_DOC_PATH)};
 }
+// B.1 is reviewed as a complete narrative; do not re-merge obsolete source notes.
+const reviewedB1 = JSON.parse(JSON.stringify(frames['B.1']));
 // Readable AC is the presentation baseline. Full source is used only for the
 // two missing modal frames; Dev notes are explicitly authored per complete ID.
 const originalName = 'Overhaul-AC-รายเฟรม.md';
@@ -187,7 +189,7 @@ const stateMap = {
   'H.4.1':['H.4','ไม่สำเร็จ'], 'H.4.2':['H.5','รอหน่วยงาน'],
   'H.4.3':['H.7','แก้ไขนัดหมาย'], 'H.4.4':['H.6','ปฏิเสธ'], 'H.5':null,
   'I.1':['I.1','รายการตรวจสอบ'], 'I.2':null, 'I.3':null, 'I.4':null, 'I.5':['I.2','ลงนาม'],
-  'K.2':null, 'K.3':null,
+  'K.2':null, 'K.3':null, 'O.2.1':null, 'O.2.2':null,
   'L.2':['L.2','ยืนยันการลบ'], 'L.3':null,
   'N.1':['N.1','ฟอร์มนัด'], 'N.2':null, 'N.3':null, 'N.4.1':null,
   'N.4.2':['N.2','รอหน่วยงาน'], 'N.4.3':null, 'N.4.4':['N.3','ปฏิเสธ'], 'N.5':null,
@@ -408,8 +410,19 @@ for (const [id, story] of Object.entries(frames)) {
     ...remaining.filter(section => !asIs.includes(section) && !toBe.includes(section)),
   ];
 }
+for (const section of reviewedB1.sections) section.level = 'h2';
+const reviewedUI = reviewedB1.sections.find(section => section.label === 'UI Component & Behavior');
+const groupTitles = new Set(['พฤติกรรมการใช้งาน', 'Navigation', 'Buttons', 'Form Fields', 'Select Field', 'File Upload (FileUpload)']);
+const reviewedGroups = [];
+for (const text of reviewedUI.bullets) {
+  if (groupTitles.has(text)) reviewedGroups.push(text);
+  else reviewedGroups[reviewedGroups.length - 1] += '\n  - ' + text;
+}
+reviewedUI.bullets = reviewedGroups;
+reviewedB1.baseline = frames['B.1'].baseline;
+frames['B.1'] = reviewedB1;
 const common = parseBlocks(raw.slice(raw.indexOf('## กติกาที่ใช้ร่วมกัน'), headers[0].index), '');
-if (Object.keys(frames).length !== 72) throw new Error('Expected 72 frame IDs, got ' + Object.keys(frames).length);
+if (Object.keys(frames).length !== 74) throw new Error('Expected 74 frame IDs, got ' + Object.keys(frames).length);
 let code = fs.readFileSync(CODE_PATH, 'utf8');
 const generated = '// BEGIN FRAME_STORIES\nconst FRAME_STORIES = ' + JSON.stringify(frames, null, 2) + ';\nconst FRAME_COMMON = ' + JSON.stringify(common, null, 2) + ';\n// END FRAME_STORIES';
 if (code.includes('// BEGIN FRAME_STORIES')) code = code.replace(/\/\/ BEGIN FRAME_STORIES[\s\S]*?\/\/ END FRAME_STORIES/, () => generated);

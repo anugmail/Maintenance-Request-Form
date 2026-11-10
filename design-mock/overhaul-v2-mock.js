@@ -2,18 +2,19 @@
    โครง: แผน → PO (1 ใบหลายคัน) → งานรายคัน 6 ขั้น · ชื่อสถานะเป็นร่างตาม Diagram/01-บำรุงรักษาตามวาระ/12-overhaul-สถานะ.md (P1–P3 · V1–V11)
    เก็บใน localStorage คีย์ oh2-mock-v1 · เลขแผน ทะเบียน ชื่อบริษัท และตัวเลขทั้งหมดเป็นค่าสมมติ */
 
-const OH2_KEY='oh2-mock-v3';   // v3 (19 ต.ค. 2569): แผนและ PO มีเอกสารตัวอย่าง
+const OH2_KEY='oh2-mock-v4';   // v3 (19 ต.ค. 2569): แผนและ PO มีเอกสารตัวอย่าง · v4 (5 พ.ย. 2569): plan.cars เปลี่ยนจาก string[] เป็น [{id,estPrice,estOverhaul}] — บังคับ re-seed
 
-/* รถที่เลือกเข้า PO ได้ — ช่องตาม wireframe ข้าง userflow (ทะเบียน · เลขไมล์ · อายุการใช้งาน) */
+/* รถที่เลือกเข้า PO ได้ — ตาราง (เจ้าของงานสั่ง 5 พ.ย. 2569 เปลี่ยนจาก dropdown เป็น table ให้เห็น info มากขึ้น)
+   เพิ่ม: dept (สังกัด) · acqValue (มูลค่าได้มา) · refPrice (ราคากลาง กบค. — เจ้าของงานขอเพิ่ม) · status (สถานะการใช้งาน ทั่วไป ไม่ใช่สถานะงาน Overhaul V1-V11) */
 const OH2_VEHICLES=[
-  {id:'c1',plate:'8234 กค กทม',brand:'HINO FM2P',type:'รถเครน 10 ตัน',mileage:182400,age:12,hours:9800},
-  {id:'c2',plate:'81-5521 นครปฐม',brand:'ISUZU FVM',type:'รถกระเช้า',mileage:210050,age:14,hours:11200},
-  {id:'c3',plate:'70-1123 ชลบุรี',brand:'HINO FG8J',type:'รถเครน 5 ตัน',mileage:150200,age:11,hours:8100},
-  {id:'c4',plate:'82-0457 สระบุรี',brand:'ISUZU FXZ',type:'รถเจาะหลุมปักเสา',mileage:198700,age:13,hours:10400},
-  {id:'c5',plate:'71-9902 ขอนแก่น',brand:'MITSUBISHI FN',type:'รถกระเช้า',mileage:233100,age:15,hours:12900},
-  {id:'c6',plate:'80-3316 เชียงใหม่',brand:'HINO FM1A',type:'รถเครน 10 ตัน',mileage:176900,age:10,hours:7600},
-  {id:'c7',plate:'83-2210 นครราชสีมา',brand:'ISUZU FVZ',type:'รถเจาะหลุมปักเสา',mileage:205400,age:12,hours:10900},
-  {id:'c8',plate:'72-6648 สงขลา',brand:'HINO FG1J',type:'รถกระเช้า',mileage:221300,age:16,hours:13300},
+  {id:'c1',plate:'8234 กค กทม',brand:'HINO FM2P',type:'รถเครน 10 ตัน',mileage:182400,age:12,hours:9800,dept:'กฟฟ.กทม.',acqValue:2030000,refPrice:1950000,status:'พร้อมใช้งาน'},
+  {id:'c2',plate:'81-5521 นครปฐม',brand:'ISUZU FVM',type:'รถกระเช้า',mileage:210050,age:14,hours:11200,dept:'กฟฟ.นครปฐม',acqValue:1880000,refPrice:1800000,status:'พร้อมใช้งาน'},
+  {id:'c3',plate:'70-1123 ชลบุรี',brand:'HINO FG8J',type:'รถเครน 5 ตัน',mileage:150200,age:11,hours:8100,dept:'กฟฟ.ชลบุรี',acqValue:1650000,refPrice:1600000,status:'พร้อมใช้งาน'},
+  {id:'c4',plate:'82-0457 สระบุรี',brand:'ISUZU FXZ',type:'รถเจาะหลุมปักเสา',mileage:198700,age:13,hours:10400,dept:'กฟฟ.สระบุรี',acqValue:1920000,refPrice:1850000,status:'อยู่ระหว่างซ่อม'},
+  {id:'c5',plate:'71-9902 ขอนแก่น',brand:'MITSUBISHI FN',type:'รถกระเช้า',mileage:233100,age:15,hours:12900,dept:'กฟฟ.ขอนแก่น',acqValue:2130000,refPrice:2050000,status:'พร้อมใช้งาน'},
+  {id:'c6',plate:'80-3316 เชียงใหม่',brand:'HINO FM1A',type:'รถเครน 10 ตัน',mileage:176900,age:10,hours:7600,dept:'กฟฟ.เชียงใหม่',acqValue:1980000,refPrice:1900000,status:'พร้อมใช้งาน'},
+  {id:'c7',plate:'83-2210 นครราชสีมา',brand:'ISUZU FVZ',type:'รถเจาะหลุมปักเสา',mileage:205400,age:12,hours:10900,dept:'กฟฟ.นครราชสีมา',acqValue:2260000,refPrice:2150000,status:'พร้อมใช้งาน'},
+  {id:'c8',plate:'72-6648 สงขลา',brand:'HINO FG1J',type:'รถกระเช้า',mileage:221300,age:16,hours:13300,dept:'กฟฟ.สงขลา',acqValue:2480000,refPrice:2380000,status:'พร้อมใช้งาน'},
 ];
 
 /* ศูนย์บริการ/อู่ — userflow เขียนว่า vendor list "(mockup)" ⇒ ยังไม่มีแหล่งข้อมูลจริง */
@@ -23,31 +24,57 @@ const OH2_VENDORS=[
   {name:'บริษัท มิตซูบิชิ ฟูโซ่ ทรัค จำกัด',tel:'02-111-2203',addr:'อ.บางพลี สมุทรปราการ'},
 ];
 
-/* สถานะงานรายคัน (V1–V11) และของแผน (P1–P3) — ป้ายใช้ .badge (Pill outline) */
+/* สถานะงานรายคัน (V1–V12) และของแผน (P1–P3) — ป้ายใช้ .badge (Pill outline)
+   6 พ.ย. 2569 (T.1) — เจ้าของงานสั่งขั้นปิดงานต้องส่งผู้บังคับบัญชาอนุมัติก่อน ⇒ เพิ่มขั้นที่ 7 "ยืนยันการส่งอนุมัติ"
+   V11 เดิม = "ปิดงานแล้ว" ย้ายไป V12 · V11 ใหม่ = "รอ ผบช. อนุมัติปิดงาน" (หน้าสรุปก่อนส่งอนุมัติ) */
 const OH2_JOB={
   V1:['รอนัดหมายเข้าอู่','b-neutral'],V2:['รอหน่วยงานตอบรับนัดเข้าอู่','b-low'],V3:['หน่วยงานปฏิเสธนัดเข้าอู่','b-out'],
   V4:['รอตรวจรับรถ','b-low'],V5:['กำลังซ่อม','b-info'],V6:['รอตรวจสภาพ Safety','b-low'],
   V7:['รอนัดหมายรับรถ','b-neutral'],V8:['รอหน่วยงานตอบรับนัดรับรถ','b-low'],V9:['หน่วยงานปฏิเสธนัดรับรถ','b-out'],
-  V10:['รอปิดงาน','b-brand'],V11:['ปิดงานแล้ว','b-ok'],
+  V10:['รอปิดงาน','b-brand'],V11:['รอ ผบช. อนุมัติปิดงาน','b-brand'],V12:['ปิดงานแล้ว','b-ok'],
 };
 const OH2_PLAN={P1:['ยังไม่มี PO','b-neutral'],P2:['ดำเนินการ','b-info'],P3:['เสร็จสิ้น','b-ok']};
+/* สถานะการใช้งานรถ (ทั่วไป) — คนละชุดกับสถานะงาน Overhaul V1-V11 (OH2_JOB) ใช้ในตารางเลือกรถ (เจ้าของงานสั่ง 5 พ.ย. 2569) */
+const OH2_VEH_STATUS={'พร้อมใช้งาน':'b-ok','อยู่ระหว่างซ่อม':'b-low','ไม่พร้อมใช้งาน':'b-out'};
+function oh2VehBadge(status){const c=OH2_VEH_STATUS[status]||'b-neutral';return `<span class="badge ${c}">${oh2Esc(status)}</span>`}
+/* แถวตารางเลือกรถ — ใช้ร่วมกันทั้งหน้าสร้างแผน (เลือกจาก OH2_VEHICLES ทั้งหมด) และฟอร์ม PO (เลือกจากรถในแผนเท่านั้น) กันโค้ดซ้ำ/ค่าเพี้ยนกัน (5 พ.ย. 2569)
+   est = {estPrice, estOverhaul} ส่งมาเฉพาะหน้าสร้างแผน (5 พ.ย. 2569 รอบ 2) — เพิ่ม 2 คอลัมน์กรอกราคาประมาณการ/ราคา Overhaul แบบประเมินรายคัน (ผูกกับแผนนี้เท่านั้น)
+   ไม่ส่ง est (undefined) = ไม่แสดง 2 คอลัมน์นี้ (ฟอร์ม PO คงหน้าตาเดิม) */
+function oh2VehRow(v,checked,est){return `<tr>
+    <td><input type="checkbox" class="veh-ck" value="${v.id}"${checked?' checked':''} aria-label="เลือก ${oh2Esc(v.plate)}"></td>
+    <td><div class="cell-key">${oh2Esc(v.plate)}</div></td>
+    <td>${oh2Esc(v.brand)}<div class="cell-sub">${oh2Esc(v.type)}</div></td>
+    <td class="num">${oh2Num(v.mileage)} กม.<div class="cell-sub">${oh2Num(v.hours)} ชม.</div></td>
+    <td class="num">${v.age} ปี</td>
+    <td class="num">${oh2Money(v.acqValue)} บาท<div class="cell-sub">ราคากลาง ${oh2Money(v.refPrice)} บาท</div></td>
+    <td>${oh2VehBadge(v.status)}<div class="cell-sub">${oh2Esc(v.dept)}</div></td>
+    ${est?`<td><input type="number" min="0" step="1000" class="in veh-est-price" data-id="${v.id}" value="${est.estPrice||''}"${checked?'':' disabled'} aria-label="ราคาประมาณการ (ซื้อใหม่ทดแทน) ${oh2Esc(v.plate)}" placeholder="บาท"></td>
+    <td><input type="number" min="0" step="1000" class="in veh-est-overhaul" data-id="${v.id}" value="${est.estOverhaul||''}"${checked?'':' disabled'} aria-label="ราคา Overhaul แบบประเมิน ${oh2Esc(v.plate)}" placeholder="บาท"></td>`:''}
+    <td class="text-center"><button class="btn btn-t btn-icon" type="button" data-todo="ดูรายละเอียดรถ ${oh2Esc(v.plate)}" aria-label="ดูรายละเอียด ${oh2Esc(v.plate)}"><span class="ms">open_in_new</span></button></td>
+  </tr>`}
 
 function oh2Seed(){
   const po=(id,name,vendor,cars)=>({id,name,vendor,cars,docs:{order:[{name:`ใบสั่งจ้าง-${id}.pdf`,size:512000}],other:[]}});
   /* เอกสารตัวอย่างของแผน — ชื่อไฟล์/ขนาดสมมติ (ให้หน้าแก้ไขมีไฟล์เดิมให้เห็น) */
   const docs=(id)=>({approve:[{name:`หนังสืออนุมัติหลักการ-${id}.pdf`,size:842000}],budget:[{name:`เอกสารอนุมัติงบ-${id}.pdf`,size:615000}],other:[]});
-  const plan=(id,name,year,wbs,net,act,budget,created,pos)=>({id,name,year,wbs,net,act,budget,created,pos,docs:docs(id)});
+  /* cars = รถที่ "จอง" ไว้กับแผนตั้งแต่ขั้นสร้างแผน (เจ้าของงานสั่ง 5 พ.ย. 2569 "เลือกรถในแผนก่อน แล้วแต่ละ PO ค่อยเลือกรถจากในแผนอีกที")
+     ⇒ plan.cars = เพดานรถที่ PO ของแผนนั้นเลือกได้ · ไม่ใช่รถที่มี PO แล้วเท่านั้น (ดู 123458/123459 ที่ยังไม่มี PO แต่จองรถไว้แล้ว ตามที่ "พี่วิทย์" ขอให้ผู้บริหารเห็นแผนล่วงหน้าได้)
+     ของเดิมที่มี PO อยู่แล้ว ต้องมีรถครบในชุดนี้ด้วย (ไม่งั้นแก้ไข PO เดิมจะไม่เห็นรถที่เลือกไว้แล้ว)
+     5 พ.ย. 2569 (รอบ 2) — แต่ละรถในแผนแก้ไข/เพิ่ม "ราคาประมาณการ (ซื้อใหม่ทดแทน)" + "ราคา Overhaul แบบประเมิน" ได้ — ผูกกับแผนนี้เท่านั้น (ไม่ใช่ข้อมูลถาวรของรถ)
+     ใช้เทียบ "คุ้มไหมที่จะ Overhaul" ตอนวางแผน และเป็นข้อมูลตั้งต้นให้ dashboard ผู้บริหาร "เทียบราคาซื้อใหม่" ⇒ cars เก็บเป็น [{id, estPrice, estOverhaul}] แทนสตริง id เฉยๆ */
+  const cw=(id,estPrice,estOverhaul)=>({id,estPrice,estOverhaul});
+  const plan=(id,name,year,wbs,net,act,budget,created,pos,remark,cars)=>({id,name,year,wbs,net,act,budget,created,pos,remark:remark||'',cars:cars||[],docs:docs(id)});
   const s={plans:[
-    plan('123456','Overhaul ประจำปีงบ 2569 — รถเครน',2569,'C-69-OH-0101','60001234','0010',10000000,'2026-08-12',[po('PO-690101','ซ่อมระบบเครื่องยนต์',0,['c1','c3']),po('PO-690102','ซ่อมระบบไฮดรอลิกเครน',0,['c6']),po('PO-690103','ซ่อมระบบแอร์',1,['c1'])]),
-    plan('123457','Overhaul ประจำปีงบ 2569 — รถกระเช้า',2569,'C-69-OH-0102','60001235','0010',8500000,'2026-08-20',[po('PO-690201','ซ่อมระบบกระเช้าและช่วงล่าง',1,['c2','c5','c8'])]),
-    plan('123458','Overhaul ประจำปีงบ 2569 — รถเจาะหลุม',2569,'C-69-OH-0103','60001236','0020',6200000,'2026-09-02',[]),
-    plan('123459','Overhaul ประจำปีงบ 2570 — รถเครน กฟน.1',2570,'C-70-OH-0001','60002101','0010',12400000,'2026-10-01',[]),
-    plan('123401','Overhaul ประจำปีงบ 2568 — รถเครน',2568,'C-68-OH-0101','60000981','0010',9800000,'2025-07-15',[po('PO-680101','ซ่อมระบบเครื่องยนต์และเกียร์',0,['c4','c7'])]),
-    plan('123402','Overhaul ประจำปีงบ 2568 — รถกระเช้า',2568,'C-68-OH-0102','60000982','0020',4300000,'2025-08-01',[po('PO-680201','ซ่อมระบบกระเช้า',2,['c5'])]),
-    plan('123460','Overhaul ประจำปีงบ 2570 — รถกระเช้า ภาคใต้',2570,'C-70-OH-0002','60002102','0030',21500000,'2026-10-10',[po('PO-700201','ซ่อมช่วงล่างและระบบเบรก',2,['c8'])]),
+    plan('123456','Overhaul ประจำปีงบ 2569 — รถเครน',2569,'C-69-OH-0101','60001234','0010',10000000,'2026-08-12',[po('PO-690101','ซ่อมระบบเครื่องยนต์',0,['c1','c3']),po('PO-690102','ซ่อมระบบไฮดรอลิกเครน',0,['c6']),po('PO-690103','ซ่อมระบบแอร์',1,['c1'])],'งานข้ามปีงบ 2569→2570 รออะไหล่นำเข้าจากต่างประเทศ (เครื่องยนต์)',[cw('c1',2700000,250000),cw('c3',2200000,190000),cw('c6',2650000,215000)]),
+    plan('123457','Overhaul ประจำปีงบ 2569 — รถกระเช้า',2569,'C-69-OH-0102','60001235','0010',8500000,'2026-08-20',[po('PO-690201','ซ่อมระบบกระเช้าและช่วงล่าง',1,['c2','c5','c8'])],'',[cw('c2',2500000,230000),cw('c5',2850000,265000),cw('c8',3300000,340000)]),
+    plan('123458','Overhaul ประจำปีงบ 2569 — รถเจาะหลุม',2569,'C-69-OH-0103','60001236','0020',6200000,'2026-09-02',[],'',[cw('c4',2550000,310000)]),
+    plan('123459','Overhaul ประจำปีงบ 2570 — รถเครน กฟน.1',2570,'C-70-OH-0001','60002101','0010',12400000,'2026-10-01',[],'',[cw('c6',2650000,215000),cw('c7',3000000,280000)]),
+    plan('123401','Overhaul ประจำปีงบ 2568 — รถเครน',2568,'C-68-OH-0101','60000981','0010',9800000,'2025-07-15',[po('PO-680101','ซ่อมระบบเครื่องยนต์และเกียร์',0,['c4','c7'])],'',[cw('c4',2550000,310000),cw('c7',3000000,280000)]),
+    plan('123402','Overhaul ประจำปีงบ 2568 — รถกระเช้า',2568,'C-68-OH-0102','60000982','0020',4300000,'2025-08-01',[po('PO-680201','ซ่อมระบบกระเช้า',2,['c5'])],'',[cw('c5',2850000,265000)]),
+    plan('123460','Overhaul ประจำปีงบ 2570 — รถกระเช้า ภาคใต้',2570,'C-70-OH-0002','60002102','0030',21500000,'2026-10-10',[po('PO-700201','ซ่อมช่วงล่างและระบบเบรก',2,['c8'])],'ดำเนินการต่อเนื่องจากปีงบ 2569 — รอผลประเมินโครงสร้างตัวถังเพิ่มเติม',[cw('c8',3300000,340000),cw('c1',2700000,250000)]),
   ],jobs:{}};
   /* ให้แต่ละคันอยู่คนละขั้น — เปิดมาเห็นสถานะหลายแบบ */
-  const st={'123456':{c1:'V5',c3:'V2',c6:'V1'},'123457':{c2:'V8',c5:'V3',c8:'V10'},'123401':{c4:'V11',c7:'V11'},'123402':{c5:'V11'},'123460':{c8:'V1'}};
+  const st={'123456':{c1:'V5',c3:'V2',c6:'V1'},'123457':{c2:'V8',c5:'V3',c8:'V10'},'123401':{c4:'V12',c7:'V12'},'123402':{c5:'V12'},'123460':{c8:'V1'}};
   for(const [pid,m] of Object.entries(st))for(const [cid,v] of Object.entries(m))s.jobs[pid+':'+cid]={stage:v};
   return s;
 }
@@ -60,7 +87,7 @@ function oh2PlanCars(p){return [...new Set(p.pos.flatMap(x=>x.cars))]}
 function oh2PlanStatus(s,p){
   if(!p.pos.length)return 'P1';
   const cars=oh2PlanCars(p);
-  return cars.length&&cars.every(c=>(s.jobs[p.id+':'+c]||{}).stage==='V11')?'P3':'P2';
+  return cars.length&&cars.every(c=>(s.jobs[p.id+':'+c]||{}).stage==='V12')?'P3':'P2';
 }
 function oh2Badge(map,code){const [t,c]=map[code];return `<span class="badge ${c}">${oh2Esc(t)}</span>`}
 
@@ -192,16 +219,38 @@ document.addEventListener('click',e=>{
   oh2Notify((t.dataset.prevname?'ดูตัวอย่าง ':'ดาวน์โหลด ')+(t.dataset.prevname||t.dataset.dlname),{sub:'ต้นแบบ — ยังไม่มีไฟล์จริง'});
 });
 
+/* แกลเลอรีรูปสภาพรถ (ถ่าย/แนบรูป) — v2 ตามสกรีนช็อตแอปจริง "แจ้งซ่อม" ขั้นรายละเอียดเหตุการณ์ ที่เจ้าของงานส่งมา 6 พ.ย. 2569
+   (แก้จาก 5 พ.ย. 2569 ที่ยกจาก mock/Maintenance-Request-Form.html ผิดหน้าตา — กล่องเล็ก 72×72 ของเก่าใช้ไม่ได้)
+   กล่องอัปโหลด = component `.fu` เดิม (ตรงไลบรารีอยู่แล้ว) · grid thumbnail ใหญ่ + ปุ่มลบลอย — ไม่มี component ตรงในไฟล์ Component
+   (เช็ค "Images" แล้ว เป็น carousel รูปเดียว+ลูกศร/pagination ไม่ใช่ grid หลายรูป) ⇒ ยกจากสกรีนช็อตแอปจริงแทน (ดู design-system/README.md §4.2)
+   gallery = ชื่อกลุ่ม (ใช้แยก data-gallery ว่าแก้ไขอาร์เรย์ไหน) · photos = [{url}] url=null แสดงกล่องตัวอย่าง (gradient) · ไม่จำกัดจำนวน
+   ปุ่ม "เพิ่มรูปตัวอย่าง" ไม่มีในสกรีนช็อตจริง — เสริมไว้เฉพาะต้นแบบ ให้ทดสอบหลายรูปได้โดยไม่ต้องมีไฟล์จริง */
+function oh2PhotoPicker(gallery,photos){
+  return `<label class="fu"><input type="file" class="photo-file" data-gallery="${gallery}" accept="image/*" multiple><span class="ficon sm gray"><span class="ms">cloud_upload</span></span>
+    <span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PNG, JPG, GIF หรือ WebP (สูงสุด 20 ไฟล์)</small></span></label>
+    <div class="photo-grid mt-4" data-gallery="${gallery}">${photos.map((p,i)=>`<div class="photo-card">${p.url?`<img src="${oh2Esc(p.url)}">`:''}<button class="photo-card-rm" type="button" data-act="photo-rm" data-gallery="${gallery}" data-i="${i}" aria-label="ลบรูปที่ ${i+1}"><span class="ms">delete</span></button></div>`).join('')}</div>
+    <button class="btn btn-t btn-sm mt-3" type="button" data-act="photo-demo" data-gallery="${gallery}"><span class="ms">add_photo_alternate</span>เพิ่มรูปตัวอย่าง (ต้นแบบ)</button>`;
+}
+function oh2PhotoGalleryRO(photos){
+  if(!photos||!photos.length)return '<div class="text-sm text-[var(--gray-400)] mt-3">ไม่มีรูปแนบ</div>';
+  return `<div class="photo-grid mt-3">${photos.map(p=>`<div class="photo-card">${p.url?`<img src="${oh2Esc(p.url)}">`:''}</div>`).join('')}</div>`;
+}
+
 /* เลข PO ใหม่ — ต่อจากเลขมากสุดในทุกแผน (รูปแบบ PO-<เลข 6 หลัก>) */
 function oh2NextPoId(s){const n=Math.max(0,...s.plans.flatMap(p=>p.pos.map(o=>+String(o.id).replace(/\D/g,''))));return 'PO-'+String(n+1).padStart(6,'0')}
 /* งานรายคันเริ่มที่ขั้น 1 (V1) เมื่อรถถูกเลือกเข้า PO */
 function oh2EnsureJobs(s,planId,cars){cars.forEach(c=>{const k=planId+':'+c;if(!s.jobs[k])s.jobs[k]={stage:'V1'}})}
 
-/* ---------- งานรายคัน 6 ขั้น (S7–S14) ----------
-   ขั้น ↔ สถานะ: 1 นัดเข้าอู่ V1–V3 · 2 ตรวจรับรถ V4 · 3 ติดตามงานซ่อม V5 · 4 ตรวจสภาพ V6 · 5 นัดรับรถ V7–V9 · 6 ปิดงาน V10–V11 */
-const OH2_STEPS=['นัดเอารถเข้าอู่','ตรวจรับรถ','ติดตามงานซ่อม','ตรวจสภาพ','นัดรับรถ','ปิดงาน'];
-const OH2_STEP_OF={V1:1,V2:1,V3:1,V4:2,V5:3,V6:4,V7:5,V8:5,V9:5,V10:6,V11:6};
-const OH2_CHECKLIST=['สำเนาคู่มือจดทะเบียนรถ','กุญแจรถ (ตัวจริง + สำรอง)','สภาพตัวรถภายนอกและสี','ระบบไฟส่องสว่างและสัญญาณ','ยางและล้อ (รวมยางอะไหล่)','ระดับน้ำมันเครื่องและของเหลว','เครื่องมือประจำรถ'];
+/* ---------- งานรายคัน 7 ขั้น (S7–S15) ---------- 6 พ.ย. 2569 (T.1) เพิ่มขั้นที่ 7 "ยืนยันการส่งอนุมัติ"
+   ขั้น ↔ สถานะ: 1 นัดเข้าอู่ V1–V3 · 2 ตรวจรับรถ V4 · 3 ติดตามงานซ่อม V5 · 4 ตรวจสภาพ V6 · 5 นัดรับรถ V7–V9 · 6 ปิดงาน V10 · 7 ส่งอนุมัติ V11–V12 */
+const OH2_STEPS=['นัดเอารถเข้าอู่','ตรวจรับรถ','ติดตามงานซ่อม','ตรวจสภาพ','นัดรับรถ','ปิดงาน','ยืนยันการส่งอนุมัติ'];
+const OH2_STEP_OF={V1:1,V2:1,V3:1,V4:2,V5:3,V6:4,V7:5,V8:5,V9:5,V10:6,V11:7,V12:7};
+/* 6 พ.ย. 2569 (I.1) — เปลี่ยนเป็น "รายการเอกสารรับรถ" (ReceiptChecklist) 13 ข้อ ตามสกรีนช็อตแอปจริงที่เจ้าของงานส่ง — คอลัมน์ มี/ไม่มี (เลือกอย่างใดอย่างหนึ่ง) + ชำรุด/ผิดรุ่น (ติ๊กได้อิสระ) + หมายเหตุ
+   แทนที่ checklist 7 ข้อแบบ ok/remark เดิม (ไม่ตรงกับภาพจริง) */
+const OH2_RECEIPT_CHECKLIST=['แผ่นป้ายทะเบียนหน้า-หลัง','ป้ายทะเบียนติดกระจก และ พรบ.','กระจกมองข้างซ้าย-ขวา, กระจกมองหลัง','ยางอะไหล่',
+  'แบตเตอรี่ (ระบุยี่ห้อ/จำนวนลูก)','เครื่องมือประจำรถ, แม่แรง, ประแจถอดล้อ','ผ้าถังน้ำมัน','อุปกรณ์บนหน้าปัด, แตร','ใบปัดน้ำฝน',
+  'วิทยุ, ลำโพง, เสาอากาศ, วิทยุรับ-ส่ง','ระบบไฟส่องสว่าง','สภาพยาง','สภาพตัวถังและสี'];
+const OH2_CHECKLIST=OH2_RECEIPT_CHECKLIST;   // ชื่อเดิมคงไว้กันโค้ดเก่าอ้างพัง — เนื้อหาเปลี่ยนเป็นชุด 13 ข้อแล้ว
 const oh2Iso=(d)=>d.toISOString().slice(0,10);
 const oh2Add=(days)=>{const d=new Date();d.setDate(d.getDate()+days);return oh2Iso(d)};
 /* เติมรายละเอียดตัวอย่างให้งานที่ seed ไว้แค่สถานะ — เปิดหน้างานขั้นไหนก็เห็นข้อมูลที่ควรมีถึงขั้นนั้น */
@@ -210,12 +259,21 @@ function oh2Job(s,planId,carId){
   const n=+j.stage.slice(1);
   const appt=(days,ok)=>({from:oh2Add(days),to:oh2Add(days+2),coord:'s1',remark:'',sentAt:oh2Add(days-7),reply:ok===undefined?null:{ok,remark:ok?'':'วันดังกล่าวรถติดภารกิจซ่อมบำรุงสายส่ง ขอเลื่อนเป็นสัปดาห์ถัดไป',at:oh2Add(days-5)}});
   if(n>=2&&!j.appt)j.appt=appt(n===2?7:-60,n===2?undefined:n===3?false:true);
-  if(n>=5&&!j.checkin)j.checkin={items:OH2_CHECKLIST.map(l=>({label:l,ok:true,remark:''})),sign:{kbk:{who:'s1',at:oh2Add(-58)},unit:{who:'หน่วยงาน',at:oh2Add(-58)}},at:oh2Add(-58)};
-  if(n>=5&&!j.logs)j.logs=[{at:oh2Add(-50)+'T09:30',note:'รื้อเครื่องยนต์ ตรวจสภาพชิ้นส่วนภายใน'},{at:oh2Add(-35)+'T14:00',note:'เปลี่ยนชุดลูกสูบและแหวน ประกอบกลับ'}].slice(0,n===5?1:2);
+  // 6 พ.ย. 2569 (I.1) — รายการเอกสารรับรถ 13 ข้อ: state 'has'|'none' (มี/ไม่มี เลือกอย่างใดอย่างหนึ่ง) + damaged/wrongModel (ชำรุด/ผิดรุ่น ติ๊กอิสระ) + remark
+  if(n>=5&&!j.checkin)j.checkin={items:OH2_RECEIPT_CHECKLIST.map(l=>({label:l,state:'has',damaged:false,wrongModel:false,remark:''})),sign:{kbk:{who:'s1',at:oh2Add(-58)},unit:{who:'หน่วยงาน',at:oh2Add(-58)}},at:oh2Add(-58),photos:[{url:null},{url:null}]};   // 5 พ.ย. 2569 — รูปสภาพรถก่อน Overhaul (ตัวอย่าง)
+  // 6 พ.ย. 2569 (J.2/J.3) — เพิ่ม pct (ความคืบหน้า %) ต่อรายการ — รายการล่าสุด 100% = ปุ่ม "ซ่อมสำเร็จ" enable
+  if(n>=5&&!j.logs)j.logs=[{at:oh2Add(-50)+'T09:30',note:'รื้อเครื่องยนต์ ตรวจสภาพชิ้นส่วนภายใน',pct:40},{at:oh2Add(-35)+'T14:00',note:'เปลี่ยนชุดลูกสูบและแหวน ประกอบกลับ',pct:n>=6?100:70}].slice(0,n===5?1:2);
   if(n>=7&&!j.safety)j.safety=[{name:'Safety-Inspection.pdf',size:420000}];
+  if(n>=7&&!j.safetyPhotos)j.safetyPhotos=[{url:null},{url:null},{url:null}];   // 5 พ.ย. 2569 — รูปสภาพรถหลัง Overhaul (ตัวอย่าง ไม่จำกัดจำนวน)
+  if(n>=7&&!j.otherDocs)j.otherDocs=[];   // 6 พ.ย. 2569 (M.1) — เอกสารอื่นๆ ต่อจาก Safety Inspection (กล่องอัปโหลดทั่วไป ยังไม่เคาะประเภทไฟล์)
   if(n>=8&&!j.ret)j.ret=appt(n===8?5:-3,n===8?undefined:n===9?false:true);
-  if(n>=11&&!j.parts)j.parts=[{name:'ชุดลูกสูบพร้อมแหวน',qty:6,unit:'ชุด'},{name:'ปะเก็นฝาสูบ',qty:1,unit:'ชิ้น'}];
-  if(n>=11&&!j.closedAt)j.closedAt=oh2Add(-1);
-  j.logs=j.logs||[];j.safety=j.safety||[];j.parts=j.parts||[];j.partFiles=j.partFiles||[];
+  // 6 พ.ย. 2569 (T.1) — V11 เดิม (ปิดงานแล้ว) ย้ายเป็น V12 ⇒ เงื่อนไขเดิม n>=11 เลื่อนเป็น n>=10 (parts กรอกไว้ตั้งแต่ขั้น 6) และ n>=12 (closedAt เฉพาะปิดงานจริง)
+  if(n>=10&&!j.parts)j.parts=[{cat:'vehicle',name:'ชุดลูกสูบพร้อมแหวน',qty:6,unit:'ชุด'},{cat:'vehicle',name:'ปะเก็นฝาสูบ',qty:1,unit:'ชิ้น'},{cat:'machine',name:'สายเคเบิลกว้าน',qty:1,unit:'เส้น'}];   // 5 พ.ย. 2569 — แยก 2 หมวด ตัวรถ/เครื่องมือกล
+  if(n>=10&&j.joCost==null)j.joCost='18500';   // 6 พ.ย. 2569 (O.1) — ค่าแรง/ค่าใช้จ่ายตาม JO (amount field อิสระ)
+  if(n>=11&&!j.warranty)j.warranty={from:oh2Add(-30),to:oh2Add(335),days:365};   // 6 พ.ย. 2569 (T.1) — การรับประกันงานซ่อม (แสดงในหน้าสรุปก่อนส่งอนุมัติ)
+  if(n>=12&&!j.closedAt)j.closedAt=oh2Add(-1);
+  j.logs=j.logs||[];j.safety=j.safety||[];j.safetyPhotos=j.safetyPhotos||[];j.otherDocs=j.otherDocs||[];j.parts=j.parts||[];j.partFiles=j.partFiles||[];
+  if(j.joCost==null)j.joCost='';
+  if(j.checkin)j.checkin.photos=j.checkin.photos||[];
   return j;
 }

@@ -19,58 +19,221 @@
 </style>
 </head>
 <body>
-  <h2>แปะ User Story — Overhaul (overhaul-flow-2)</h2>
+  <h2>AC Bridge — Figma + FigJam · frame-batch v3</h2>
+  <div id="result" role="status" aria-live="polite"></div>
+  <p id="mode-note">กำลังอ่านโหมดของไฟล์…</p>
   <div class="box">
-    <div><b>เฟรมที่เลือก:</b></div>
+    <div><b>Frame ที่เลือก:</b></div>
     <div id="selection" class="sel">(ยังไม่ได้เลือก)</div>
   </div>
 
-  <button class="primary" id="btn-auto">แปะ user story ตามเฟรมที่เลือก (อัตโนมัติ)</button>
-  <button class="danger" id="btn-clear">ล้างป้ายที่แปะไว้</button>
+  <section id="design-tools" hidden>
+    <p>เลือก frame ต้นฉบับ แล้วบันทึกข้อมูล component และข้อความล่าสุด บันทึกทับไฟล์ข้อมูลล่าสุดใน workspace ด้วย ต้องเปิด <code>node figma-export/serve.js</code> ก่อน จากนั้นเปิด plugin เดียวกันใน FigJam</p>
+    <button class="primary" id="btn-save">บันทึกข้อมูลสำหรับ AC</button>
+  </section>
 
-  <details>
-    <summary>เลือก flow เอง (กรณีหาตัวอักษรนำหน้าเฟรมไม่เจอ)</summary>
-    <select id="flow-select"></select>
-    <button id="btn-manual">แปะ user story ที่เลือกจาก dropdown</button>
+  <div class="box">
+    <button id="btn-load">โหลดข้อมูลจาก Figma</button>
+    <label for="saved-frames">Frame ที่บันทึกไว้</label>
+    <select id="saved-frames"><option value="">ยังไม่ได้โหลดข้อมูล</option></select>
+    <div id="saved-info" class="sel"></div>
+    <details>
+      <summary>ดูข้อมูลที่บันทึก</summary>
+      <textarea id="saved-preview" rows="8" cols="46" readonly aria-label="ข้อมูล frame ที่บันทึก"></textarea>
+    </details>
+    <section id="figjam-tools" hidden>
+      <p>เลือกภาพหรือ frame ปลายทาง 1 ชิ้น หรือไม่เลือกเพื่อวางบนพื้นที่ว่าง กดซ้ำจะอัปเดตป้ายเดิมของข้อมูลนี้ที่ปลายทางเดิม</p>
+      <button class="primary" id="btn-paste" disabled>แปะ / อัปเดต AC จากข้อมูลที่เลือก</button>
+    </section>
+    <button id="btn-remove-saved" disabled>ลบรายการที่บันทึกนี้</button>
+  </div>
+
+  <section id="sprint09-tools" class="box" hidden>
+    <b>AC ตามเฟรมที่เลือก</b>
+    <p>เลือกภาพหรือ frame ใน FigJam ได้หลายชิ้น ระบบจับคู่ AC แยกตามชื่อและสถานะของแต่ละเฟรม กดซ้ำจะแทนที่ mapping Sprint 09 เดิมของปลายทางนี้</p>
+    <div id="sprint09-auto-preview" class="sel">เลือก frame เพื่อจับคู่ AC</div>
+    <button class="primary" id="btn-sprint09-auto">แปะ AC ตามเฟรมที่เลือก (เลือกหลายเฟรมได้)</button>
+    <details><summary>เลือก AC Sprint 09 เอง / แก้ mapping</summary>
+    <label for="sprint09-story">Story</label>
+    <select id="sprint09-story"></select>
+    <div id="sprint09-criteria" style="max-height:220px;overflow:auto"></div>
+    <p>R = ข้อสรุป · D = รอยืนยัน scope · P = ข้อเสนอรอรับรอง</p>
+    <button class="primary" id="btn-sprint09">แปะ / อัปเดต AC Sprint 09 ให้เฟรมที่เลือก</button>
+    </details>
+  </section>
+
+  <details id="inspection-panel" open>
+    <summary>สรุปข้อมูลหน้าจอล่าสุด</summary>
+    <p>อ่านใหม่เมื่อเลือก frame หรือแก้ design; ภาพใน FigJam ไม่มีข้อมูล component ภายใน ให้โหลดข้อมูลที่บันทึกจาก Figma แทน</p>
+    <textarea id="frame-inspection" rows="10" cols="46" readonly aria-label="สรุปข้อมูลหน้าจอ"></textarea>
+    <button id="btn-inspect">อ่าน frame อีกครั้ง</button>
+    <button id="btn-copy-inspection">คัดลอกข้อมูล</button>
   </details>
 
-  <div id="result"></div>
-
+  <details id="legacy-tools" hidden>
+    <summary>ใช้ AC เดิมตามชื่อ frame โดยไม่โหลดข้อมูลจาก Figma</summary>
+    <label><input id="live-ui" type="checkbox" checked> แนบ UI ที่อ่านได้จาก selection ปัจจุบันกับ AC เดิม</label>
+    <button id="btn-auto">แปะ AC ตามชื่อ frame ที่เลือก</button>
+    <select id="flow-select"></select>
+    <button id="btn-manual">แปะ AC ที่เลือกจาก dropdown</button>
+    <button class="danger" id="btn-clear">ล้างป้ายที่ plugin แปะไว้ในหน้านี้</button>
+  </details>
+  <p>ข้อมูลที่บันทึกอยู่ในเครื่อง/แอปที่ใช้ plugin นี้ ไม่แชร์ข้ามคนหรือข้ามเครื่อง ข้อมูล UI ที่อ่านได้ยังไม่ยืนยัน behavior ที่ไม่ได้ระบุใน design</p>
   <script>
     const selEl = document.getElementById('selection');
     const resultEl = document.getElementById('result');
     const flowSelect = document.getElementById('flow-select');
+    const savedSelect = document.getElementById('saved-frames');
+    let savedRecords = [];
+    let busy = false;
+    function updateSavedPreview() {
+      const record = savedRecords.find(item => item.key === savedSelect.value);
+      document.getElementById('btn-paste').disabled = busy || !record;
+      document.getElementById('btn-remove-saved').disabled = busy || !record;
+      document.getElementById('saved-info').textContent = record
+        ? record.source.fileName + ' / ' + record.source.pageName + '\nบันทึกเมื่อ ' + new Date(record.capturedAt).toLocaleString('th-TH', {timeZone: 'Asia/Bangkok'}) + '\n' + record.frame.components.length + ' component instances'
+        : 'ยังไม่มีข้อมูล กรุณาบันทึก frame จาก Figma Design ก่อน';
+      document.getElementById('saved-preview').value = record ? JSON.stringify(record.frame, null, 2) : '';
+    }
+    function setBusy(value) {
+      busy = value;
+      for (const id of ['btn-save', 'btn-load', 'saved-frames']) document.getElementById(id).disabled = value;
+      updateSavedPreview();
+    }
+    function bridge(type) {
+      if (busy) return;
+      setBusy(true);
+      parent.postMessage({pluginMessage: {type, key: savedSelect.value}}, '*');
+    }
+    savedSelect.onchange = updateSavedPreview;
+    document.getElementById('btn-save').onclick = () => bridge('bridge-save');
+    document.getElementById('btn-load').onclick = () => bridge('bridge-load');
+    document.getElementById('btn-paste').onclick = () => bridge('bridge-paste');
+    document.getElementById('btn-remove-saved').onclick = () => bridge('bridge-remove');
 
     function showResult(ok, text) {
       resultEl.textContent = text;
       resultEl.className = ok ? 'ok' : 'err';
     }
 
-    window.onmessage = (e) => {
+    let sprint09Stories = {};
+    const sprint09Select = document.getElementById('sprint09-story');
+    function showSprint09Criteria() {
+      const host = document.getElementById('sprint09-criteria');
+      host.replaceChildren();
+      for (const ac of sprint09Stories[sprint09Select.value]?.ac || []) {
+        const label = document.createElement('label');
+        label.style.display = 'block';
+        const input = document.createElement('input');
+        input.type = 'checkbox'; input.value = ac.id;
+        label.append(input, document.createTextNode(ac.id + ' [' + ac.level + '] ' + ac.text.replace(/\*\*/g, '')));
+        host.appendChild(label);
+      }
+    }
+    sprint09Select.onchange = showSprint09Criteria;
+    document.getElementById('btn-sprint09-auto').onclick = () => {
+      if (busy) return;
+      setBusy(true);
+      showResult(true, 'รับคำสั่งแล้ว — กำลังจับคู่และแปะ AC ตามเฟรมที่เลือก…');
+      parent.postMessage({pluginMessage: {type: 'sprint09-auto'}}, '*');
+    };
+    document.getElementById('btn-sprint09').onclick = () => {
+      if (busy) return;
+      const acIds = Array.from(document.querySelectorAll('#sprint09-criteria input:checked')).map(input => input.value);
+      if (!acIds.length) { showResult(false, 'เลือก AC อย่างน้อย 1 ข้อ'); return; }
+      setBusy(true);
+      parent.postMessage({pluginMessage: {type: 'sprint09-annotate', storyId: sprint09Select.value, acIds}}, '*');
+    };
+    window.onmessage = async (e) => {
       const msg = e.data.pluginMessage;
       if (!msg) return;
+      if (msg.type === 'export-ac-source') {
+        try {
+          const response = await fetch('http://localhost:8124/ac-bridge/latest.json', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({version: 1, records: msg.records}, null, 2)
+          });
+          if (!response.ok) throw Error('HTTP ' + response.status);
+          showResult(true, 'บันทึกไฟล์ข้อมูลล่าสุดแล้ว: figma-export/out/ac-bridge/latest.json (เขียนทับไฟล์เดิม)');
+        } catch (error) {
+          showResult(false, 'ข้อมูลอยู่ใน plugin แล้ว แต่ยังบันทึกลง workspace ไม่สำเร็จ เปิด node figma-export/serve.js แล้วกดบันทึกอีกครั้ง: ' + error.message);
+        }
+        return;
+      }
+      if (msg.type === 'sprint09-stories') {
+        sprint09Stories = msg.stories;
+        sprint09Select.replaceChildren();
+        for (const story of Object.values(msg.stories)) {
+          const option = document.createElement('option');
+          option.value = story.id; option.textContent = story.id + ' — ' + story.title;
+          sprint09Select.appendChild(option);
+        }
+        showSprint09Criteria();
+      }
+      if (msg.type === 'editor-mode') {
+        const design = msg.editor === 'figma';
+        document.getElementById('design-tools').hidden = !design;
+        document.getElementById('sprint09-tools').hidden = design;
+        document.getElementById('figjam-tools').hidden = design;
+        document.getElementById('legacy-tools').hidden = design;
+        document.getElementById('inspection-panel').open = design;
+        document.getElementById('mode-note').textContent = design
+          ? 'Figma Design — อ่านและบันทึกข้อมูล frame'
+          : 'FigJam — โหลดข้อมูลจาก Figma แล้วแปะหรืออัปเดต AC';
+      }
+      if (msg.type === 'saved-frames') {
+        const previous = savedSelect.value;
+        savedRecords = msg.records;
+        savedSelect.replaceChildren();
+        for (const record of savedRecords) {
+          const option = document.createElement('option');
+          option.value = record.key;
+          option.textContent = record.frame.name + ' — ' + record.source.fileName + ' / ' + record.source.pageName;
+          savedSelect.appendChild(option);
+        }
+        if (savedRecords.some(record => record.key === previous)) savedSelect.value = previous;
+        setBusy(false);
+        if (!savedRecords.length) showResult(true, 'ยังไม่มีข้อมูลที่บันทึก — เปิด plugin นี้ใน Figma แล้วเลือก frame เพื่อบันทึกก่อน');
+      }
+
+      if (msg.type === 'frame-inspection') {
+        document.getElementById('frame-inspection').value = msg.readableText || msg.text;
+      }
       if (msg.type === 'selection') {
+        document.getElementById('sprint09-auto-preview').textContent = Array.isArray(msg.sprint09) && msg.sprint09.length ? msg.sprint09.map(item => item.name + '\n' + (item.mapping ? item.mapping.storyId + ': ' + item.mapping.acIds.join(', ') : 'ยังไม่มี mapping — จะข้ามเฟรมนี้')).join('\n\n') : 'เลือก frame เพื่อจับคู่ AC (เลือกหลายชิ้นได้)';
         selEl.textContent = msg.names && msg.names.length ? msg.names.join('\n') : '(ยังไม่ได้เลือก)';
       }
       if (msg.type === 'flows') {
         flowSelect.innerHTML = msg.keys.map((k) => '<option value="' + k + '">' + k + '</option>').join('');
       }
+      if (msg.type === 'ac-progress') {
+        showResult(true, msg.text);
+      }
       if (msg.type === 'result') {
+        setBusy(false);
         showResult(msg.ok, msg.text);
       }
     };
 
     document.getElementById('btn-auto').onclick = () => {
-      parent.postMessage({ pluginMessage: { type: 'annotate-auto' } }, '*');
+      parent.postMessage({ pluginMessage: { type: 'annotate-auto', liveUI: document.getElementById('live-ui').checked } }, '*');
     };
     document.getElementById('btn-clear').onclick = () => {
       parent.postMessage({ pluginMessage: { type: 'clear' } }, '*');
     };
     document.getElementById('btn-manual').onclick = () => {
-      parent.postMessage({ pluginMessage: { type: 'annotate', flow: flowSelect.value } }, '*');
+      parent.postMessage({ pluginMessage: { type: 'annotate', flow: flowSelect.value, liveUI: document.getElementById('live-ui').checked } }, '*');
     };
 
     parent.postMessage({ pluginMessage: { type: 'list' } }, '*');
+    document.getElementById('btn-inspect').onclick = () => {
+      parent.postMessage({pluginMessage: {type: 'inspect-frame'}}, '*');
+    };
+    document.getElementById('btn-copy-inspection').onclick = async () => {
+      const field = document.getElementById('frame-inspection');
+      try { await navigator.clipboard.writeText(field.value); }
+      catch (error) { field.focus(); field.select(); document.execCommand('copy'); }
+    };
   </script>
 </body>
 </html>
