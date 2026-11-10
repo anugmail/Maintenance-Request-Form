@@ -647,6 +647,18 @@ const MODE_CHECK = process.env.MODE === 'check';
   const bad = logs.filter(l => /^⚠|^✗/.test(l));
   const want = (code0.match(/^  \[\'(?:หน้ารายการแผน|S\d+)/gm) || []).length;   // จำนวน section ที่ประกาศ
   console.log('โหลดทุกหน้า (loadAllPagesAsync) ' + LOAD_ALL.n + ' ครั้ง');
+  if (process.env.NODE_STATS) {   // NODE_STATS=1 นับชั้นต่อจอ (10 พ.ย. 2569 เจ้าของงานกังวลแรมของ Figma — แรมโตตามจำนวนชั้นในไฟล์)
+    let tot = 0, hid = 0; const byComp = new Map(), perScr = [];
+    const shownN = (n) => { for (let p = n; p; p = p.parent) if (p.visible === false) return false; return true; };
+    for (const sc of screens) { const all = sc.findAll(() => true); tot += all.length; const h = all.filter(n => !shownN(n)).length; hid += h; perScr.push([all.length, h, sc.name]);
+      for (const n of sc.findAll(n => n.type === 'INSTANCE' && !(n.parent && n.parent.type === 'INSTANCE'))) { const k = n.name; const c = n.findAll(() => true).length + 1; const v = byComp.get(k) || [0, 0]; byComp.set(k, [v[0] + c, v[1] + 1]); } }
+    const other = page.children.filter(n => screens.indexOf(n) < 0).reduce((a, n) => a + 1 + (n.findAll ? n.findAll(() => true).length : 0), 0);
+    console.log('NODE_STATS จอ ' + screens.length + ' · ชั้นในจอรวม ' + tot + ' (ซ่อน ' + hid + ' = ' + Math.round(hid * 100 / tot) + '%) · เฉลี่ย ' + Math.round(tot / screens.length) + ' ชั้น/จอ · ชิ้นนอกจอ (ป้าย ผัง) ' + other);
+    const grp = (re) => perScr.filter(x => re.test(x[2])).reduce((a, x) => a + x[0], 0);
+    console.log('  desktop ' + grp(/^(?!.*· mobile$)/) + ' · mobile ' + grp(/· mobile$/) + ' · หน้าตาไฟล์ (PDF/Excel) ที่ซ้ำในแถว mobile ' + grp(/ไฟล์ (PDF|Excel).*· mobile$/));
+    perScr.sort((x, y) => y[0] - x[0]).slice(0, 5).forEach(x => console.log('  จอหนัก ' + x[0] + ' ชั้น (ซ่อน ' + x[1] + ') ' + x[2].slice(0, 90)));
+    [...byComp].sort((x, y) => y[1][0] - x[1][0]).slice(0, 12).forEach(([k, v]) => console.log('  component ' + k + ' · ' + v[1] + ' ชิ้น · ' + v[0] + ' ชั้น (' + Math.round(v[0] * 100 / tot) + '%)'));
+  }
   console.log('\n— ผลทดสอบ — แถว ' + sections.length + ' · หน้าจอ ' + screens.length + ' · คำเตือน ' + bad.length);
   process.exitCode = MODE_CHECK || (screens.length > 0 && !bad.length) ? 0 : 1;
 })().catch(e => { console.error(e); process.exit(1); });
