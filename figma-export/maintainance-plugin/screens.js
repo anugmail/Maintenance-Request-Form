@@ -1402,10 +1402,13 @@ async function closeDocs(filled) {   // บันทึกตรวจสอบ�
    → ค่าเดินทาง (รวมทุกคน) ช่องเดียวใต้แถว → สรุปรวม → งบประมาณ (ศูนย์ต้นทุน) */
 const CLOSE_COST_BY = [[TRIP.staff[0], 240, 800, 2], [TRIP.staff[1], 240, 800, 2], [TRIP.staff[2], 240, 800, 1]];   // พนักงาน · เบี้ยเลี้ยง/วัน · ที่พัก/วัน · จำนวนวัน
 const CLOSE_TRAVEL = 1210;   // ค่าเดินทางรวมทุกคน
+/* ชั่วโมงทำงาน × อัตราค่าแรงต่อชั่วโมง (เจ้าของงานเคาะ 10 พ.ย. 2569 S18 "ค่าเบี้ยเลี้ยง และค่าชั่วโมงทำงาน จะแสดงเฉพาะส่วนที่ทำเอง" · "กรอกอัตราเองตอนปิดงาน" · ชั่วโมงทำงานเป็น optional)
+   รายคัน 1 แถวใต้ค่าเดินทาง ไม่บังคับทั้งสองช่อง · ไม่กรอก = ค่าชั่วโมงทำงาน 0 (เสนอ) · แผนจ้างไม่มีส่วนนี้ (R87) */
+const CLOSE_HOURS = 6, CLOSE_RATE = 150;
 const nf = (n) => n.toLocaleString('en-US');
 const personSum = (r) => (r[1] + r[2]) * r[3];
 const costSum = (k) => CLOSE_COST_BY.reduce((a, r) => a + r[k] * r[3], 0);
-const CLOSE_COST = { perDiem: nf(costSum(1)), lodging: nf(costSum(2)), travel: nf(CLOSE_TRAVEL), total: nf(costSum(1) + costSum(2) + CLOSE_TRAVEL) };
+const CLOSE_COST = { perDiem: nf(costSum(1)), lodging: nf(costSum(2)), travel: nf(CLOSE_TRAVEL), labour: nf(CLOSE_HOURS * CLOSE_RATE), total: nf(costSum(1) + costSum(2) + CLOSE_TRAVEL + CLOSE_HOURS * CLOSE_RATE) };
 const OWNER_CC = (c) => 'E301010000 ' + c[2] + ' - บริหาร';   // ศูนย์ต้นทุนของหน่วยงานเจ้าของรถ (ข้อมูลจำลอง)
 /* งบที่ตัด + ศูนย์ต้นทุน (5 พ.ย. 2569 รีวิว S10 "เลือกศูนย์ต้นทุน ต้องเป็นรูปแบบเดียวกันกับงานซ่อมและ overhaul" · R72)
    งานซ่อม (ไฟล์ Maintain-D หน้า Local Component) = component "Request Repair/Budget" variant "งบที่ตัด": Input dropdown "งบที่ตัด" ครึ่งซ้าย + ช่องตามประเภทครึ่งขวาแถวเดียวกัน
@@ -1443,10 +1446,11 @@ async function closeCosts(filled, budget) {   // budget = ค่าส่งต�
     const rw = row('Row', kids, { align: 'MAX' }); const d = delBtn(); rw.appendChild(d);   // ปุ่มลบไม่ยืด
     return rw;
   });
-  const sum = filled ? CLOSE_COST : { perDiem: '0', lodging: '0', travel: '0', total: '0' };
+  const sum = filled ? CLOSE_COST : { perDiem: '0', lodging: '0', travel: '0', labour: '0', total: '0' };
+  const hours = row('Row', [field('ชั่วโมงทำงาน', filled ? String(CLOSE_HOURS) : '', { placeholder: '0', optional: true }), field('อัตราค่าแรง (บาท/ชั่วโมง)', filled ? nf(CLOSE_RATE) : '', { placeholder: '0', optional: true })]);
   return col('Section', [await section('ค่าใช้จ่ายของยานพาหนะคันนี้ (บาท)', { badge: CLOSE_COST_BY.length + ' คน' })]   // 3 พ.ย. 2569 เจ้าของงานลบกล่องแจ้งในไฟล์เองแล้ว "ลบใน script อย่างเดียว … export ต้องไม่มี"
-    .concat(rows, [btn('Secondary button', 'เพิ่มพนักงาน', { icon: 'add-24-300-round' }), row('Row', [money('ค่าเดินทาง (รวมทุกคน)', CLOSE_TRAVEL), frame('Spacer', 'VERTICAL')]),
-      kv([['รวมค่าเบี้ยเลี้ยง', sum.perDiem + ' บาท'], ['รวมค่าที่พัก', sum.lodging + ' บาท'], ['ค่าเดินทาง', sum.travel + ' บาท'], ['รวมค่าใช้จ่ายของยานพาหนะคันนี้', sum.total + ' บาท']]),
+    .concat(rows, [btn('Secondary button', 'เพิ่มพนักงาน', { icon: 'add-24-300-round' }), row('Row', [money('ค่าเดินทาง (รวมทุกคน)', CLOSE_TRAVEL), frame('Spacer', 'VERTICAL')]), hours,
+      kv([['รวมค่าเบี้ยเลี้ยง', sum.perDiem + ' บาท'], ['รวมค่าที่พัก', sum.lodging + ' บาท'], ['ค่าเดินทาง', sum.travel + ' บาท'], ['ค่าชั่วโมงทำงาน', sum.labour + ' บาท'], ['รวมค่าใช้จ่ายของยานพาหนะคันนี้', sum.total + ' บาท']]),
       budgetPick(c, budget)]), 16);   // เดิม "งบประมาณ (ศูนย์ต้นทุน)" ช่องเดียว (3 พ.ย. 2569) → งบที่ตัด + ศูนย์ต้นทุน แบบงานซ่อม (5 พ.ย. 2569 R72)
 }
 /* ---------- รับรถก่อนเริ่มงาน + ตรวจสภาพตอนปิดงาน (3 พ.ย. 2569 เจ้าของงาน "ตอนกดเริ่มงาน อยากได้หน้าที่เป็นรายการรับรถ และมีให้ลงนาม และตอนปิดงานก็เหมือนกัน มีให้ตรวจสภาพรถปิดงาน") ----------
@@ -1715,7 +1719,7 @@ async function workDetail(name, o) {
     // ค่าใช้จ่ายรายคันที่กรอกตอนปิดงาน (3 พ.ย. 2569) · แสดงเฉพาะรายการที่กรอก
     col('Section', [await sectionLabel('ค่าใช้จ่ายของยานพาหนะคันนี้ (บาท)'), await tblShort([['พนักงาน', 0, 'Lead text'], ['ค่าเบี้ยเลี้ยง/วัน', 150], ['ค่าที่พัก/วัน', 150], ['จำนวนวัน', 120], ['รวม', 150]],
       CLOSE_COST_BY.map(r => [r[0], nf(r[1]), nf(r[2]), String(r[3]), nf(personSum(r))])),
-      kv([['รวมค่าเบี้ยเลี้ยง', CLOSE_COST.perDiem + ' บาท'], ['รวมค่าที่พัก', CLOSE_COST.lodging + ' บาท'], ['ค่าเดินทาง (รวมทุกคน)', CLOSE_COST.travel + ' บาท'], ['รวมค่าใช้จ่ายของยานพาหนะคันนี้', CLOSE_COST.total + ' บาท'], ['งบที่ตัด', BUDGET_CUT[0]], ['ศูนย์ต้นทุน', OWNER_CC(TRIP_CARS[JOB_I])]])], 16)];   // คู่ งบที่ตัด + ศูนย์ต้นทุน แบบ BudgetSource ของงานซ่อม (5 พ.ย. 2569 R72)
+      kv([['รวมค่าเบี้ยเลี้ยง', CLOSE_COST.perDiem + ' บาท'], ['รวมค่าที่พัก', CLOSE_COST.lodging + ' บาท'], ['ค่าเดินทาง (รวมทุกคน)', CLOSE_COST.travel + ' บาท'], ['ค่าชั่วโมงทำงาน', CLOSE_HOURS + ' ชม. × ' + nf(CLOSE_RATE) + ' บาท = ' + CLOSE_COST.labour + ' บาท'], ['รวมค่าใช้จ่ายของยานพาหนะคันนี้', CLOSE_COST.total + ' บาท'], ['งบที่ตัด', BUDGET_CUT[0]], ['ศูนย์ต้นทุน', OWNER_CC(TRIP_CARS[JOB_I])]])], 16)];   // คู่ งบที่ตัด + ศูนย์ต้นทุน แบบ BudgetSource ของงานซ่อม (5 พ.ย. 2569 R72)
   // 3 พ.ย. 2569 เจ้าของงาน "ตรงนี้ลบแบชออก แล้วมี radio ว่าผ่าน ไม่ผ่าน และมีให้ upload ไฟล์เป็น optional" ⇒ กรอกผลในหน้านี้ได้เลย (อีกทางคือเมนู … ในหน้ารายละเอียดแผนเดินทาง S12)
   // S12 (4 พ.ย. 2569) ทางเดียวที่บันทึกผลหลังปิดงาน = section นี้ในหน้ารายละเอียดงานรายคัน · แสดงเฉพาะคันที่เก็บตัวอย่าง · o.res = { sel, files, errors, saved }
   const res = o.res || {};
@@ -1880,17 +1884,55 @@ async function maDetail(name, o) {
 
 /* ---------- ประวัติงานบำรุงรักษา (S16 ตีกลับแล้วผู้ดำเนินการส่งใหม่ · เดิม S15 ตัดออก 10 พ.ย. 2569) · S17 รายงานผล/ปิดงาน · S18 ต้นทุน ---------- */
 /* historyScreen (S15/S16 ประวัติ) และ reportScreen (S17) เอาออก 10 พ.ย. 2569 — S15 S16 S17 ตัดออก */
-const COST_COLS = [['แผนเดินทาง / จุดรวมงาน', 0, 'Lead text'], ['ยานพาหนะ (คัน)', 100], ['ค่าแรง (เบี้ยเลี้ยง)', 160], ['ค่าที่พัก', 140], ['ค่าเดินทาง', 140], ['รวม (บาท)', 150]];
-const COSTS = [[TRIP.place, '6', '7,200', '9,600', '4,850', '21,650'], ['จุดรวมงาน กฟน.2 น่าน', '6', '7,200', '12,800', '6,320', '26,320']];
-async function costScreen(name) {
-  const { scr, page } = await detail(name, { crumbs: ['ต้นทุนการบำรุงรักษา'], status: 'closed', actions: [['Secondary button', 'ดาวน์โหลด Excel', 'cloud_upload-24-300-round']] });
-  add(page, col('Content', [
-    await vehicleInfo(PLAN_KV, 'รายละเอียดแผน'),
-    col('Section', [await sectionLabel('ต้นทุนการบำรุงรักษา รายแผนเดินทาง', { badge: COSTS.length }), await tblShort(COST_COLS, COSTS)], 16),
-    col('Section', [await sectionLabel('Summary ของต้นทุน'), kv([['ค่าแรง (เบี้ยเลี้ยง)', '14,400 บาท'], ['ค่าที่พัก', '22,400 บาท'], ['ค่าเดินทาง', '11,170 บาท'], ['รวมทั้งแผน', '47,970 บาท'], ['เฉลี่ยต่อคัน', '3,997.50 บาท'], ['จำนวนคัน', P[4] + ' คัน']])], 16),
-    alertBox('Info', 'ค่าแรงใช้ยอดเบี้ยเลี้ยงที่กรอกรายคันตอนปิดงาน (S10) · ยังไม่รวมค่าอะไหล่', 'รอเคาะ Q26 — "ค่าแรง" กับ "ค่าเบี้ยเลี้ยง" รายการเดียวกันไหม · ต้นทุนรวมอะไหล่/ค่าจ้างไหม')
-  ], 32), 'h');
-  return scr;
+/* ---------- S18 ต้นทุนการบำรุงรักษา (เจ้าของงานเคาะ 10 พ.ย. 2569 · ไฟล์ 14 Scenario 18 · R92) ----------
+   ทางเข้า = แท็บ "ต้นทุนการบำรุงรักษา" ในหน้ารายละเอียดแผนที่อนุมัติแล้ว (Tabs ใต้หัวหน้า แบบ Vehicle detail ของ UI Release#2 ที่ S24 maShell ใช้) · ดูได้ตั้งแต่มีคันแรกปิดงาน
+   โครงตามหน้า 5.13 EV charging costs for each agency ของ UI Release#2: Metric item ×4 → Table คอลัมน์ศูนย์ต้นทุน · ไม่มีกราฟ (ไลบรารีไม่มี · เจ้าของงานเลือกไม่มี)
+   นับเฉพาะงานที่หน่วยงานทำเอง (แผนเดินทางจ้างดำเนินการไม่แสดง) · ค่าอะไหล่ = ราคารวมที่ใช้จริงตอนปิดงาน (ราคาต่อหน่วยระบบเติมให้ · ไม่รวมที่คืน · รวมอะไหล่นอกแผน)
+   ค่าแรง = เบี้ยเลี้ยง + ชั่วโมงทำงาน × อัตรา (S10 Step 2 · ชั่วโมงไม่บังคับ) · ที่พัก เดินทาง ตาม S10 · ยานพาหนะที่บำรุงรักษาไม่ได้แยก section · สรุปตามแผนรายไตรมาส · เฉลี่ยต่อคัน
+   ส่งออก = Excel อย่างเดียว ข้อมูลเหมือนจอ (ปุ่ม "ส่งออก" ไอคอน download แบบ R84 · ไม่มี popup เลือกรูปแบบเพราะมีรูปแบบเดียว · toast "ส่งออกไฟล์สำเร็จ" คำเดียวกับ S4) */
+const PLAN_TABS = ['รายละเอียดแผน', 'ต้นทุนการบำรุงรักษา'];
+const COST_CANNOT = TRIP_1.sel[2];   // คันที่บำรุงรักษาไม่ได้ของ T1 (JOB_MIX)
+// [ลำดับใน TRIP_CARS, วันที่ปิดงาน, ค่าอะไหล่, ค่าเบี้ยเลี้ยง, ชั่วโมงทำงาน (0 = ไม่ได้กรอก), ค่าที่พัก, ค่าเดินทาง, ศูนย์ต้นทุนหน่วยงานอื่น] · แถวแรก = งานของ S10 (CLOSE_PARTS CLOSE_COST_BY)
+const COST_V = [[JOB_I, '04/11/2569', 5880, costSum(1), CLOSE_HOURS, costSum(2), CLOSE_TRAVEL], [TRIP_1.sel[1], '05/11/2569', 5420, 960, 5, 3200, 980], [TRIP_1.sel[3], '06/11/2569', 7130, 1200, 0, 4000, 1210, true],
+  [TRIP_2.sel[0], '18/11/2569', 4980, 720, 4, 2400, 860], [TRIP_2.sel[1], '19/11/2569', 6240, 960, 6, 3200, 980]];
+const COST_X = [[COST_CANNOT, '04/11/2569', 1150, 480, 0, 1600, 450]];   // บำรุงรักษาไม่ได้ — ค่าใช้จ่ายที่เกิดแล้ว (อะไหล่ที่ใช้ไปแล้ว I.19 · ค่าเดินทาง ที่พัก)
+const costLabour = (r) => r[4] * CLOSE_RATE;
+const costTotal = (r) => r[2] + r[3] + costLabour(r) + r[5] + r[6];
+const COST_COLS = [['ทะเบียน', 210, 'Lead text'], ['ศูนย์ต้นทุน', 0], ['ค่าอะไหล่', 110], ['ค่าเบี้ยเลี้ยง', 120], ['ค่าชั่วโมงทำงาน', 150], ['ค่าที่พัก', 110], ['ค่าเดินทาง', 110], ['รวม (บาท)', 120]];
+const costRow = (r, cannot) => { const c = TRIP_CARS[r[0]], cc = r[7] ? OTHER_CC : OWNER_CC(c);
+  return [{ text: c[0], sub: 'ไตรมาส 1 · ' + (cannot ? 'บำรุงรักษาไม่ได้' : 'ปิดงาน ' + r[1]) }, { text: cc.split(' ')[0], sub: cc.split(' ').slice(1).join(' ') }, nf(r[2]), nf(r[3]),
+    r[4] ? { text: nf(costLabour(r)), sub: r[4] + ' ชม. × ' + nf(CLOSE_RATE) + ' บาท' } : '-', nf(r[5]), nf(r[6]), nf(costTotal(r))]; };
+const QCOST_COLS = [['ไตรมาส', 0, 'Lead text'], ['ยานพาหนะ (คัน)', 160], ['ค่าอะไหล่', 110], ['ค่าเบี้ยเลี้ยง', 120], ['ค่าชั่วโมงทำงาน', 150], ['ค่าที่พัก', 110], ['ค่าเดินทาง', 110], ['รวม (บาท)', 120]];
+const COST_ALL = () => COST_V.concat(COST_X);
+const costSumOf = (rs) => [2, 3, null, 5, 6].map(k => rs.reduce((a, r) => a + (k == null ? costLabour(r) : r[k]), 0)).concat([rs.reduce((a, r) => a + costTotal(r), 0)]);
+const QCOST_ROWS = () => { const s1 = costSumOf(COST_ALL()), z = ['0', '0', '0', '0', '0', '0'];
+  return QUARTERS.map((q, k) => [q, k ? '0' : String(COST_ALL().length)].concat(k ? z : s1.map(nf))).concat([['รวมทั้งแผน', String(COST_ALL().length)].concat(s1.map(nf))]); };   // ยานพาหนะ (คัน) = คันที่มีต้นทุน (ปิดงานแล้ว + บำรุงรักษาไม่ได้)
+const costMetrics = () => { const all = COST_ALL(), tot = all.reduce((a, r) => a + costTotal(r), 0);
+  return [['ต้นทุนรวมของแผน', nf(tot) + ' บาท', 'Brand'], ['เฉลี่ยต่อคัน', nf(Math.round(tot / all.length)) + ' บาท', 'Brand'],   // เฉลี่ย = ต้นทุนรวม ÷ ยานพาหนะที่มีต้นทุน (รวมคันที่บำรุงรักษาไม่ได้ · เสนอ)
+    ['ยานพาหนะที่ปิดงานแล้ว', COST_V.length + '/' + P_COUNTS.reduce((a, b) => a + b, 0) + ' คัน', 'Success'], ['บำรุงรักษาไม่ได้', COST_X.length + ' คัน', 'Warning']]; };
+const COST_EXPORT_BTN = ['Secondary button', 'ส่งออก', 'download-24-300-round'];
+async function costBody(o) {   // เนื้อแท็บต้นทุนการบำรุงรักษา · o.empty = ยังไม่มียานพาหนะปิดงาน
+  if (o.empty) {
+    const es = inst('Empty state/Data empty');
+    await text(es, 'Text', 'ยังไม่มีต้นทุนการบำรุงรักษา'); await text(es, 'Supporting text', 'ต้นทุนจะแสดงเมื่อยานพาหนะในแผนเดินทางที่ดำเนินการเอง ปิดงานคันแรก');
+    const a = find(es, 'Actions'); if (a) a.visible = false;
+    return [es];
+  }
+  return [metricRow(await Promise.all(costMetrics().map(m => metric(m[0], m[1], m[2])))),
+    col('Section', [await sectionLabel('สรุปรายไตรมาส'), await tblShort(QCOST_COLS, QCOST_ROWS())], 16),
+    col('Section', [await sectionLabel('ต้นทุนรายคัน', { badge: COST_V.length }), await tblShort(COST_COLS, COST_V.map(r => costRow(r)))], 16),
+    col('Section', [await sectionLabel('ยานพาหนะที่บำรุงรักษาไม่ได้', { badge: COST_X.length }), await tblShort(COST_COLS, COST_X.map(r => costRow(r, true)))], 16)];
+}
+async function costScreen(name, o) {   // หน้ารายละเอียดแผน แท็บต้นทุนการบำรุงรักษา (planDetailQ tab 1)
+  return planDetailQ(name, Object.assign({ tab: 1 }, o));
+}
+const COST_SHEETS = ['สรุปรายไตรมาส', 'ต้นทุนรายคัน'];
+async function costXls(name, sheet) {   // ไฟล์ Excel ที่ส่งออก — ข้อมูลเหมือนจอ (เจ้าของงาน 10 พ.ย. 2569 "excel แสดงเหมือนหน้าจอ") · ชีต = แถบ Tabs แบบ tripXls
+  return docFrame(name, 1440, 1024, async () => {
+    const head = [await tabs(COST_SHEETS.map(s => [s, null]), sheet), await sectionLabel('ต้นทุนการบำรุงรักษา · ' + P[0] + ' ' + P[1])];
+    if (sheet === 0) return head.concat([kv(costMetrics().map(m => [m[0], m[1]]), 4), await tblShort(QCOST_COLS, QCOST_ROWS())]);
+    return head.concat([await tblShort(COST_COLS, COST_V.map(r => costRow(r))), await sectionLabel('ยานพาหนะที่บำรุงรักษาไม่ได้', { badge: COST_X.length }), await tblShort(COST_COLS, COST_X.map(r => costRow(r, true)))]);
+  });
 }
 
 /* ======================== รอบสอง 9 scenario (เจ้าของงานสั่ง 22 ต.ค. 2569 ดึก "บำรุงรักษา สามารถ export 18 scen ได้เลย") ========================
@@ -2208,9 +2250,12 @@ const pQParts = (k) => {
   const qty = k ? pQty(k) : PARTS.map((_, x) => [1, 2, 3, 4].reduce((a, j) => a + pQty(j)[x], 0));
   return PARTS.map((p, x) => [p[0], p[1], p[2], String(qty[x]), p[4]]).filter(r => +r[3] > 0).sort((a, b) => a[2].localeCompare(b[2], 'th'));
 };
-async function planDetailQ(name) {
-  const counts = P_COUNTS;
-  const { scr, page } = await shell(name, { title: 'เลขที่ ' + P[0], back: true, crumbs: [P[1]], badge: PST.active });
+async function planDetailQ(name, o) {   // แผนที่อนุมัติแล้ว · แท็บ รายละเอียดแผน / ต้นทุนการบำรุงรักษา (S18 · 10 พ.ย. 2569) · o.tab · o.empty
+  o = o || {};
+  const counts = P_COUNTS, tab = o.tab || 0;
+  const { scr, page } = await shell(name, { title: 'เลขที่ ' + P[0], back: true, crumbs: [P[1]], badge: PST.active, actions: tab === 1 && !o.empty ? [COST_EXPORT_BTN] : undefined });
+  add(page, await tabs(PLAN_TABS.map(t => [t, null]), tab), 'h');
+  if (tab === 1) { add(page, col('Content', await costBody(o), 32), 'h'); return scr; }
   add(page, col('Content', [await vehicleInfo(PLAN_KV, 'รายละเอียดแผน'),
     col('Section', [await sectionLabel('ยานพาหนะในแผน', { badge: counts.reduce((a, b) => a + b, 0), buttons: [Q_BTN] }),
       await tabs(QUARTERS.map((t, k) => [t, counts[k]]), 0),
@@ -2696,9 +2741,13 @@ const SCENARIOS = [
     ['เปิดแผงแจ้งเตือน — ปิดงานแล้ว รอรับทราบ', async () => { const s = await ackList('S13 แผงแจ้งเตือน', {}); bell(s, true); await notiPanel(s, [NOTI_ACK, NOTI_OLD], '1 แจ้งเตือนใหม่'); return s; }]]],
   /* S16 หัวหน้าหน่วยงาน ตรวจสอบประวัติ และ S17 ออกรายงานผลและปิดงาน ตัดออก 10 พ.ย. 2569 (เจ้าของงาน "s16 ตัดทิ้งไม่ต้องรับทราบทั้งแผน ตอนเสร็จงานแล้ว รับทราบรายคันก็พอ" + "s17 ตัดทิ้ง")
      บล็อก O P ว่าง · ผู้ดูแลยานพาหนะรับทราบรายคัน (S13) เป็นขั้นสุดท้าย · รับทราบครบทุกคันแล้วแผนปิดงานเอง (เสนอ) · ดูผลที่แดชบอร์ด S4 S24 */
-  ['S18 · ผู้ดำเนินการ คำนวณต้นทุนการบำรุงรักษา', [
-    ['ต้นทุนการบำรุงรักษา + Summary', () => costScreen('S18 ต้นทุน')],
-    ['ดาวน์โหลด Excel แล้ว', async () => { const s = await costScreen('S18 ดาวน์โหลดแล้ว'); notify(s, 'ดาวน์โหลดไฟล์ Excel แล้ว'); return s; }]]],
+  ['S18 · ผู้ดำเนินการ คำนวณต้นทุนการบำรุงรักษา', [   // เคาะ 10 พ.ย. 2569 (R92) · เดิม Q.1 Q.2 ร่างหน้าต้นทุนแยก
+    ['รายละเอียดแผนที่อนุมัติแล้ว — แท็บต้นทุนการบำรุงรักษา', () => planDetailQ('S18 รายละเอียดแผน')],
+    ['แท็บต้นทุนการบำรุงรักษา — สรุปรายไตรมาส ต้นทุนรายคัน และยานพาหนะที่บำรุงรักษาไม่ได้', () => costScreen('S18 ต้นทุน')],
+    ['กดส่งออก — ส่งออกไฟล์ Excel สำเร็จ', async () => { const s = await costScreen('S18 ส่งออกแล้ว'); notify(s, 'ส่งออกไฟล์สำเร็จ'); return s; }],
+    ['ไฟล์ Excel — ชีตสรุปรายไตรมาส', () => costXls('S18 ไฟล์ Excel สรุปรายไตรมาส', 0)],
+    ['ไฟล์ Excel — ชีตต้นทุนรายคัน', () => costXls('S18 ไฟล์ Excel ต้นทุนรายคัน', 1)],
+    ['ยังไม่มียานพาหนะปิดงาน — ยังไม่มีต้นทุน', () => costScreen('S18 ยังไม่มีต้นทุน', { empty: true })]]],
   // S19 S20 ต่อท้าย ⇒ ตัวอักษรบล็อกของ scenario เดิมไม่ขยับ · ลำดับในเรื่องอยู่ที่ journey (build.json)
   ['S19 · ผู้สร้างแผน แก้ไขแผนบำรุงรักษา แล้วส่งอนุมัติใหม่', [
     ['เมนู "…" → แก้ไข', async () => { const s = await listScreen('S19 เมนู', { rows: [planAs('returned')].concat(ownPlans(UNITS[0])) }); planMenu(s, MENU); return s; }],
