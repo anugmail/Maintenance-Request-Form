@@ -29,9 +29,9 @@ process.env.FLOW_KIND = process.env.FLOW_KIND || 'flowchart';   // 6 พ.ย. 25
   for (const r of (RULES.wording || []).filter(r => /\^MT/.test(r.screens))) {
     checkSourceWording(src, r).slice(0, 20).forEach(([ln, s]) => errs.push(r.id + ' screens.js:' + ln + ' ยังมีคำว่า "' + r.word + '" ต้องใช้ "' + r.use + '": ' + s.slice(0, 80)));
     const m = src.match(/const WORD_ALLOW = (\[[^\]]*\])/);
-    if (!m || JSON.stringify(JSON.parse(m[1].replace(/'/g, '"'))) !== JSON.stringify(r.allow)) errs.push(r.id + ' WORD_ALLOW ใน screens.js ไม่ตรง allow ของ component-rules.json');
+    if (r.id === 'R80' && (!m || JSON.stringify(JSON.parse(m[1].replace(/'/g, '"'))) !== JSON.stringify(r.allow))) errs.push(r.id + ' WORD_ALLOW ใน screens.js ไม่ตรง allow ของ component-rules.json');
   }
   if (errs.length) { errs.forEach(e => console.log('⚠ ' + e)); process.exit(1); }
-  console.log('R80 ซอร์ส screens.js ไม่มีคำว่า "รถ" นอกข้อมูลจาก API ✓');
+  console.log('R80 ซอร์ส screens.js ไม่มีคำว่า "รถ" นอกข้อมูลจาก API ✓ · R91 สะกดไฮดรอลิก ✓');   // R91 (10 พ.ย. 2569) ไม่มีคำยกเว้น ⇒ เทียบ WORD_ALLOW เฉพาะ R80
 }
 require('./test-overhaul2-plugin.js');
