@@ -167,5 +167,5 @@ NODE_PATH=<ที่ที่ npm i playwright-core ไว้>/node_modules node
 ## บริบทที่ควรรู้
 
 - static HTML ล้วน ไม่มี build step · state อยู่ใน `localStorage` (คนละ key ต่อโหมด)
-- deploy ด้วย GitHub Actions → Pages (`.github/workflows/pages.yml`) ทุก push บน `main`
+- ~~deploy ด้วย GitHub Actions → Pages ทุก push บน `main`~~ **เลิกใช้ 10 พ.ย. 2569** — เจ้าของงานสั่งปิด GitHub Pages ของรีโปนี้ (ลบ workflow แล้ว) · ลิงก์เดียวที่ใช้คือต้นแบบเว็บบำรุงรักษา https://anugmail.github.io/maintenance-utility-vehicle/ · อย่าเปิด Pages หรือเพิ่ม workflow deploy กลับโดยไม่ถาม
 - โฟลว์บำรุงรักษา = **ออกเลขงาน (หน้าแยก) + stepper 5 เฟส** ไม่ใช่ "6 ช่วง" แบบเอกสารเก่า
