@@ -716,12 +716,10 @@
     "bars": {
       "letter": {
         "component": "Header",
-        "Type": "Header",
-        "fill": "#0C111D",
-        "since": "2026-11-10",
-        "text": "รหัสบล็อก · ชื่อ scenario",
-        "desc": "สถานะรีวิว (ไม่มีก็ซ่อน)",
-        "status": "Header / Status ค่าตั้งต้น"
+        "Type": "Subheader",
+        "State": "Default",
+        "fill": "#101828",
+        "descHidden": true
       },
       "sub": {
         "component": "Header",
@@ -731,11 +729,19 @@
       "state": {
         "component": "Header",
         "Type": "Subheader",
-        "State": "Default",
-        "fill": "#101828",
+        "State": "Sub Flow",
+        "success": "Success (ชื่อจอมี สำเร็จ)",
+        "failed": "Failed (Validation / ไม่สำเร็จ)",
         "width": 1440,
-        "since": "2026-11-10",
-        "desc": "ชื่อจอส่วนหลัง ' — ' = บรรทัดเงื่อนไข"
+        "descHidden": true,
+        "since": "2026-11-10"
+      },
+      "page": {
+        "component": "Header",
+        "Type": "Header",
+        "count": "1 ต่อชุดจอ",
+        "status": "Work In Progress | Ready for Review",
+        "since": "2026-11-10"
       }
     },
     "side": {
@@ -775,7 +781,7 @@
       "note": "21 ต.ค. 2569 เจ้าของงานสั่งแยกปุ่ม export mobile ออกจาก desktop — หน้าอุปกรณ์เดียวมีแถวเดียว ป้าย Device Type ต้องตรงอุปกรณ์ · MODE=build (ทั้งคู่บนหน้าเดียว) ยังใช้ใน harness"
     },
     "annotations": {
-      "source": "เจ้าของงานสั่ง 10 พ.ย. 2569 \"ตอนออกแบบครั้งต่ออยากให้ใช้ design จาก component กลาง\" + \"แก้ไขทั้งหมดของการออกแบบเรื่องบำรุงรักษาเลย\" — หน้า Design Annotations ของไฟล์ (UI) VMS Plus – Release#2 (ดัมป์ design-system/.figma-extract/ui-release2/1-56.json)",
+      "source": "เจ้าของงานสั่ง 10 พ.ย. 2569 \"ตอนออกแบบครั้งต่ออยากให้ใช้ design จาก component กลาง\" + \"แก้ไขทั้งหมดของการออกแบบเรื่องบำรุงรักษาเลย\" — หน้า Design Annotations ของไฟล์ (UI) VMS Plus – Release#2 (ดัมป์ design-system/.figma-extract/ui-release2/1-56.json) · ลอกจากหน้าจริง 5.1–5.17 ของไฟล์เดียวกัน (Backup AO5hfAa5kNVCWEoHku80Jp)",
       "keys": {
         "Header": "cbdb14c4c43c175124ce4c7bb138bb980fc2f4ae",
         "State": "4fd866c3dccbc0e936e7160ad58916b3ee2b256f"

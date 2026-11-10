@@ -427,8 +427,14 @@ const MODE_CHECK = process.env.MODE === 'check';
     for (const b of labels.filter(n => !/ · (Device|Desktop|Mobile)$/.test(n.name) && !/ (flowchart|userflow) S\d/.test(n.name) && n.name.indexOf(P0 + ' · journey') !== 0 && n.name.indexOf(P0 + ' · ป้าย ') !== 0 && !/ · (use case|user story mapping|scenario|use case ตาม scenario|user journey swimlane)$/.test(n.name))) {
       const code1 = b.name.slice(P0.length + 3).split(' ')[0], isState = /\.\d+$/.test(code1), isPhase = code1 === 'ช่วง';
       if (b.type !== 'INSTANCE') { logs.push('⚠ R19 แถบ ' + b.name.slice(0, 50) + ' วาดเอง ทั้งที่ไฟล์มี component Header (Design Annotations)'); continue; }
-      const want = (isState || isPhase) ? 'Subheader' : 'Header';
-      if (pv(b).Type !== want) logs.push('⚠ R19 แถบ ' + code1 + ' ต้องเป็น Header Type=' + want + ' (ได้ ' + pv(b).Type + ')');
+      const want = (code1 === 'Journey' || code1 === 'Page') ? 'Header' : 'Subheader';   // หน้าจริงของ UI Release#2: Type=Header 1 ตัวต่อหน้า · บล็อกตัวอักษร/state/ช่วงงาน = Subheader
+      if (pv(b).Type !== want) { logs.push('⚠ R19 แถบ ' + code1 + ' ต้องเป็น Header Type=' + want + ' (ได้ ' + pv(b).Type + ')'); continue; }
+      if (want === 'Subheader' && !isPhase) {   // สี State: บล็อก = Default · state = Sub Flow / Success / Failed ตามชื่อจอ
+        const st = b.children.find(c => c.name === 'State'), tone = st && (st.variantProperties || {}).State;
+        const label = b.name.slice(P0.length + 3 + code1.length + 1);
+        const exp = !isState ? 'Default' : /ไม่สำเร็จ|Validation/.test(label) ? 'Failed' : /สำเร็จ/.test(label) ? 'Success' : 'Sub Flow';
+        if (tone !== exp) logs.push('⚠ R19 แถบ ' + code1 + ' State ต้องเป็น ' + exp + ' (ได้ ' + tone + ')');
+      }
     }
   }
   let pairs = 0;

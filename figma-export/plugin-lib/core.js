@@ -1002,21 +1002,28 @@ async function flowBar(prefix, code, title, state, width, desc) {
   bar.name = prefix + ' · ' + code + ' ' + title + (desc ? ' — ' + desc : '');
   return bar;
 }
-/* แถบหัวบล็อก (10 พ.ย. 2569 เจ้าของงาน "ใช้ design จาก component กลาง" — หน้า Design Annotations ของ UI Release#2):
-   Header Type=Header = ชื่อใหญ่ + บรรทัดอธิบาย + Header / Status (ค่าตั้งต้น Work In Progress) · รหัสบล็อกนำหน้าชื่อ
+/* สีป้าย state ตามหน้าจริงของ UI Release#2 (10 พ.ย. 2569): ปกติ Sub Flow (เทา) · ผลสำเร็จ (A - S1 …) Success (เขียว) · ผิดพลาด (A3.1 - F …) Failed (แดง)
+   ของเรา: ชื่อจอมี "สำเร็จ" = Success · "Validation" หรือ "ไม่สำเร็จ" = Failed · ที่เหลือ Sub Flow */
+const stateTone = (label) => /ไม่สำเร็จ|Validation/.test(label) ? 'Failed' : /สำเร็จ/.test(label) ? 'Success' : 'Sub Flow';
+/* หัวหน้า (10 พ.ย. 2569 เจ้าของงาน "ใช้ design จาก component กลาง" — หน้า Design Annotations ของ UI Release#2 · ไฟล์ Backup):
+   Header Type=Header = ชื่อใหญ่ + บรรทัดอธิบาย + Header / Status · หน้าจริงของไฟล์ (5.1–5.17) ใช้ "1 ตัวต่อหน้า" เป็นชื่อขอบเขตงาน สถานะ Ready for Review / Work In Progress
+   บรรทัดอธิบายซ่อน · บล็อกตัวอักษรไม่ใช้ตัวนี้ (ใช้ Subheader State=Default) · ใช้กับหัวหน้าของชุดจอ และแถบ Journey
    component ไม่มี variant Type=Header (ชุดเก่าในไฟล์) หรือใส่ข้อความไม่ได้ → แถบ Subheader แบบเดิม */
-async function blockHeader(prefix, code, title, width, desc) {
+async function blockHeader(prefix, code, title, width, desc, status) {
   const set = INDEX.get('Header');
   const top = !HEADER_BROKEN && set && set.type === 'COMPONENT_SET' && set.children.some(c => c.variantProperties && c.variantProperties.Type === 'Header');
   if (!top) return flowBar(prefix, code, title, 'Default', width);
   const bar = inst('Header', { Type: 'Header' });
   const ts = bar.children.filter(c => c.type === 'TEXT');
-  if (!(ts[0] && await text(bar, ts[0], code + ' · ' + title))) {
+  if (!(ts[0] && await text(bar, ts[0], code === 'Page' ? title : code + ' · ' + title))) {
     try { bar.remove(); } catch (e) { /* ลบไม่ได้ ปล่อย */ }
     log('⚠ แถบหัวบล็อก (Header Type=Header) ใส่ข้อความไม่ได้ — ใช้แถบ Subheader แทน');
     return flowBar(prefix, code, title, 'Default', width);
   }
   if (ts[1]) { if (desc && await text(bar, ts[1], desc)) { try { ts[1].textAutoResize = 'HEIGHT'; } catch (e) { /* ปล่อย */ } } else ts[1].visible = false; }
+  const hs = status && find(bar, 'Header / Status');   // ค่าที่หน้าจริงใช้: Work In Progress (ค่าตั้งต้นของ component) · Ready for Review
+  if (hs && Object.keys(hs.componentProperties || {}).some(k => k.split('#')[0] === 'Property 1')) setProps(hs, { 'Property 1': status });
+  else if (hs && status !== 'Work In Progress') warn('Header / Status', 'เปลี่ยนเป็น ' + status + ' ไม่ได้ (component ไม่เปิด property)');
   try { bar.resize(width, bar.height); } catch (e) { warn('ปรับกว้างแถบหัวบล็อก ' + code, e); }
   bar.name = prefix + ' · ' + code + ' ' + title;
   return bar;
@@ -1600,11 +1607,16 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
   opts = opts || {};
   const made = []; let y = y0; const x0 = GRID.side + GRID.gap; const pitch = GRID.colW + GRID.colGap; let flows = 0;
   const put = (n, x, yy) => { page.insertChild(0, n); n.x = x; n.y = yy; return n; };
+  if (opts.page) {   // หัวหน้าของชุดจอ 1 ตัว (Header Type=Header) กว้างเท่าบล็อกที่กว้างสุด — แบบหน้า 5.x ของ UI Release#2
+    const nMax = Math.max(...GROUPS.map(g => Math.max(...g.subs.map(s => s.screens.length))));
+    CREATED = []; const ph = put(await blockHeader(prefix, 'Page', opts.page.title, nMax * GRID.colW + (nMax - 1) * GRID.colGap, '', opts.page.status), x0, y);
+    y += ph.height + GRID.groupGap;
+  }
   for (const g of GROUPS) {
     const nCols = Math.max(...g.subs.map(s => s.screens.length));
     const top = y;
-    CREATED = []; const hb = put(await blockHeader(prefix, g.code, g.title, nCols * GRID.colW + (nCols - 1) * GRID.colGap, opts.describe ? opts.describe(g) : ''), x0, y);
-    y += Math.max(GRID.barH, hb.height) + GRID.gap;
+    CREATED = []; put(await flowBar(prefix, g.code, g.title, 'Default', nCols * GRID.colW + (nCols - 1) * GRID.colGap), x0, y);   // บล็อกตัวอักษร = Subheader State=Default (หน้าจริง: "A แก้ไขตารางบำรุงรักษา…")
+    y += GRID.barH + GRID.gap;
     let flowBottom = top;
     for (const sub of g.subs) {
       const n = sub.screens.length, w = n * GRID.colW + (n - 1) * GRID.colGap;
@@ -1643,12 +1655,11 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
         } catch (e) { warn('ผัง userflow S' + sn, e); const k = dropCreated(page); if (k) log('    ลบชิ้นที่ค้างจากผังที่พัง ' + k + ' ชิ้น'); }
         CREATED = [];
       }
-      /* ป้าย state รายคอลัมน์ = Header Subheader แบบตัวอย่างใน Design Annotations (State=Default ดำ · ชื่อจอ + บรรทัดเงื่อนไข) 10 พ.ย. 2569
-         ชื่อจอ "ชื่อ — เงื่อนไข" แยกเป็น 2 บรรทัด · ป้าย Device สูงเท่าป้าย state ที่สูงสุด */
+      /* ป้าย state รายคอลัมน์ = Header Subheader สีตาม stateTone (หน้าจริงของ UI Release#2 · 10 พ.ย. 2569) · บรรทัดอธิบายซ่อนแบบหน้าจริง
+         ป้าย Device สูงเท่าป้าย state ที่สูงสุด */
       let sh = GRID.barH;
       for (const [i, [label]] of sub.screens.entries()) {
-        const k = label.indexOf(' — ');
-        const b = put(await flowBar(prefix, sub.code + '.' + (i + 1), k < 0 ? label : label.slice(0, k), 'Default', GRID.colW, k < 0 ? '' : label.slice(k + 3)), x0 + i * pitch, y);
+        const b = put(await flowBar(prefix, sub.code + '.' + (i + 1), label, stateTone(label), GRID.colW), x0 + i * pitch, y);
         sh = Math.max(sh, b.height);
       }
       put(await deviceLabel(prefix, 'Header', sh), 0, y);
