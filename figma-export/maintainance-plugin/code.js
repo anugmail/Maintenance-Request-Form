@@ -2502,8 +2502,14 @@ const DASH_PROG_COLS = [['เลขที่ MR', 150, 'Lead text'], ['ชื่
 const DASH_PROG = [['MRZ7000001', 1, 2, 4, 6, 'doing'], ['MRZ7000001', 2, 0, 0, 3, 'todo'], ['MRZ7000001', 3, 0, 0, 2, 'todo'], ['MRZ7000001', 4, 0, 0, 1, 'todo'],
   ['MRZ7000004', 1, 1, 0, 3, 'doing'], ['MRZ7000004', 2, 0, 0, 3, 'todo'], ['MRZ7000004', 3, 0, 0, 2, 'todo'], ['MRZ7000004', 4, 0, 0, 2, 'todo'],
   ['MRZ7000002', 2, 1, 0, 4, 'doing'], ['MRZ7000002', 3, 0, 0, 2, 'todo']];
+/* ใครเห็นอะไร (เจ้าของงาน 10 พ.ย. 2569 "ผู้สร้างแผนเห็นเฉพาะแผนของหน่วยงานตัวเอง ยกเว้น กบค จะเห็นแผนของหน่วยงานอื่นด้วย แต่แก้ไขไม่ได้")
+   ค่าเริ่มต้นของจอ = ผู้ใช้ กกฟ.1 เห็นเฉพาะแผนของ กกฟ.1 ไม่มีตัวกรองหน่วยงาน · o.kbk = ผู้ใช้ กบค. เห็นทุกหน่วยงาน มีตัวกรองหน่วยงานผู้ขอเบิก (แดชบอร์ดดูอย่างเดียวทุกบทบาท) */
+const DASH_OWN = 'กกฟ.1';
+const dashMine = (kbk) => (r) => kbk || PLAN_UNIT[r[0]] === DASH_OWN;
+const dashMetrics = (kbk) => { const pl = DASH_PLANS().filter(dashMine(kbk)), pr = DASH_PROG.filter(dashMine(kbk));
+  const cars = pl.reduce((a, p) => a + +p[4], 0), done = pr.reduce((a, r) => a + r[3], 0);
+  return [['แผนที่อนุมัติแล้ว', String(pl.length), 'Brand'], ['ยานพาหนะในแผน', String(cars), 'Brand'], ['รายการอะไหล่', String(DASH_AGG.length), 'Brand'], ['ยานพาหนะบำรุงรักษาแล้ว', done + '/' + cars, 'Success']]; };
 const dashProgRow = (r) => { const p = DASH_PLANS().find(x => x[0] === r[0]); return [{ text: r[0], sub: PLAN_UNIT[r[0]] }, p[1], 'ไตรมาส ' + r[1], r[2] + ' ใบ', r[3] + '/' + r[4] + ' คัน', { pill: QST[r[5]] }, GO]; };
-const DASH_METRICS = [['แผนที่อนุมัติแล้ว', '3', 'Brand'], ['ยานพาหนะในแผน', '30', 'Brand'], ['รายการอะไหล่', String(DASH_AGG.length), 'Brand'], ['ยานพาหนะบำรุงรักษาแล้ว', '4/30', 'Success']];
 const DASH_HINT = ['ค้นหาชื่ออะไหล่, รหัสอะไหล่', 'ค้นหาทะเบียน, ชื่ออะไหล่, รหัสอะไหล่', 'ค้นหาเลขที่ MR, ชื่อแผน'];
 async function metric(text, number, color) {   // Metric item (Breakpoint ตามจอ) + สี Featured icon ที่ซ้อนอยู่ — ยกจาก overhaul2-plugin (R22)
   const m = inst('Metric item', { Breakpoint: BP() }, { Number: String(number), Text: text });
@@ -2518,8 +2524,8 @@ function metricRow(items) {   // desktop: 4 ใบเต็มแถว gap 24 (
   }
   const r = frame('Metrics', 'HORIZONTAL', { gap: 24 }); items.forEach(m => { r.appendChild(m); m.layoutGrow = 1; }); return r;
 }
-const DASH_TABLE = (tab) => tab === 0 ? [sortAll(QPART_COLS), DASH_AGG] : tab === 1 ? [sortAll(DASH_CAR_COLS), DASH_CAR_ROWS()] : [sortAll(DASH_PROG_COLS), DASH_PROG.map(dashProgRow)];
-/* o.tab · o.query · o.chips (ตัวกรองที่ใช้แล้ว) · o.notFound · o.empty · o.filter = แผงตัวกรอง { open } · o.exportPdf = popup ส่งออก (true PDF / false Excel) */
+const DASH_TABLE = (tab, kbk) => tab === 0 ? [sortAll(QPART_COLS), DASH_AGG] : tab === 1 ? [sortAll(DASH_CAR_COLS), DASH_CAR_ROWS()] : [sortAll(DASH_PROG_COLS), DASH_PROG.filter(dashMine(kbk)).map(dashProgRow)];
+/* o.tab · o.query · o.chips (ตัวกรองที่ใช้แล้ว) · o.notFound · o.empty · o.filter = แผงตัวกรอง { open } · o.exportPdf = popup ส่งออก (true PDF / false Excel) · o.kbk = มุมมอง กบค. ทุกหน่วยงาน */
 async function partsDash(name, o) {
   o = o || {};
   const tab = o.tab || 0;
@@ -2530,9 +2536,9 @@ async function partsDash(name, o) {
     const a = find(es, 'Actions'); if (a) a.visible = false;
     return scr;
   }
-  const [cols, rows] = DASH_TABLE(tab);
-  add(page, await tabs(DASH_TABS.map((t, i) => [t, i === 0 ? DASH_AGG.length : i === 1 ? 214 : DASH_PROG.length]), tab), 'h');
-  add(page, metricRow(await Promise.all(DASH_METRICS.map(m => metric(m[0], m[1], m[2])))), 'h');
+  const [cols, rows] = DASH_TABLE(tab, o.kbk);
+  add(page, await tabs(DASH_TABS.map((t, i) => [t, i === 0 ? DASH_AGG.length : i === 1 ? 214 : DASH_PROG.filter(dashMine(o.kbk)).length]), tab), 'h');
+  add(page, metricRow(await Promise.all(dashMetrics(o.kbk).map(m => metric(m[0], m[1], m[2])))), 'h');
   const sec = col('Section', [], 24); add(page, sec, 'h');
   add(sec, await tableHeader({ placeholder: DASH_HINT[tab], query: o.query, chips: o.chips, filterCount: (o.chips || []).length || null, more: [{ text: 'ส่งออก', icon: 'download-24-300-round' }] }), 'h');
   if (o.notFound) add(sec, await searchNotFound(), 'h');
@@ -2541,12 +2547,12 @@ async function partsDash(name, o) {
   if (o.filter) {
     const fd = o.filter, at = (n) => n.findOne(x => x.name === 'Container') || n;
     const yr = dropdown('ปีงบประมาณ', '2570', { optional: true });
-    const unit = multiDropdown('หน่วยงานผู้ขอเบิก', fd.units || [], { placeholder: 'เลือกหน่วยงานผู้ขอเบิก', optional: true, state: fd.open === 'unit' ? 'Focused' : undefined });
+    const unit = o.kbk ? multiDropdown('หน่วยงานผู้ขอเบิก', fd.units || [], { placeholder: 'เลือกหน่วยงานผู้ขอเบิก', optional: true, state: fd.open === 'unit' ? 'Focused' : undefined }) : null;   // ผู้ใช้หน่วยงานเห็นเฉพาะแผนของตัวเอง ⇒ ตัวกรองหน่วยงานมีเฉพาะ กบค. (10 พ.ย. 2569)
     const dist = multiDropdown('เขต', fd.districts || [], { placeholder: 'เลือกเขต', optional: true });
     const plan = multiDropdown('แผน', fd.plans || [], { placeholder: 'เลือกแผน', optional: true, state: fd.open === 'plan' ? 'Focused' : undefined });
-    await filterPanel(scr, [yr, unit, dist, plan]);
-    if (fd.open === 'unit') comboAt(scr, at(unit), UNITS.map(u => [u, '', (fd.units || []).indexOf(u) >= 0]));
-    if (fd.open === 'plan') comboAt(scr, at(plan), DASH_PLANS().map(p => [p[0], p[1], (fd.plans || []).indexOf(p[0]) >= 0]));
+    await filterPanel(scr, [yr, unit, dist, plan].filter(Boolean));
+    if (unit && fd.open === 'unit') comboAt(scr, at(unit), UNITS.map(u => [u, '', (fd.units || []).indexOf(u) >= 0]));
+    if (fd.open === 'plan') comboAt(scr, at(plan), DASH_PLANS().filter(dashMine(o.kbk)).map(p => [p[0], p[1], (fd.plans || []).indexOf(p[0]) >= 0]));
   }
   if (o.exportPdf != null) await exportModal(scr, o.exportPdf, { scope: [rows.length + ' รายการตามแท็บ ' + DASH_TABS[tab] + ((o.chips || []).length ? ' และตัวกรองที่ใช้อยู่' : ''), (tab === 1 ? 214 : rows.length) + ' รายการ ทุกแผนที่อนุมัติแล้วในปีงบประมาณ 2570'] });
   return scr;
@@ -2575,7 +2581,7 @@ async function docFrame(name, w, h, kids) {
 const DOC_HEAD = (title, filter) => [title, kv([['หน่วยงานที่ออกเอกสาร', UNITS[0] + ' การไฟฟ้าส่วนภูมิภาค'], ['ตัวกรอง', filter], ['พิมพ์เมื่อ', '06/11/2569 10:30 น.'], ['ผู้พิมพ์', CREATOR]], 4)];
 async function dashPdf(name) {
   return docFrame(name, 794, 1123, async () => {
-    const [t, k] = DOC_HEAD('รายงานอะไหล่ของแผนที่อนุมัติแล้ว · ปีงบประมาณ 2570', 'หน่วยงานผู้ขอเบิก กกฟ.1');
+    const [t, k] = DOC_HEAD('รายงานอะไหล่ของแผนที่อนุมัติแล้ว · ปีงบประมาณ 2570', 'ปีงบประมาณ 2570 · แผน MRZ7000001');
     return [await sectionLabel(t), k, col('Section', [await sectionLabel('รวมตามรายการ (' + DASH_AGG.length + ')'), await tbl(QPART_COLS, DASH_AGG)], 12)];
   });
 }
@@ -4217,17 +4223,20 @@ const SCENARIOS = [
   ['S4 · ผู้ดำเนินการ ดูอะไหล่และความคืบหน้าของแผนที่อนุมัติแล้ว (แดชบอร์ด)', [
     ['แท็บรวมตามรายการ — อะไหล่ทุกแผนที่อนุมัติแล้วในปีงบประมาณ 2570', () => partsDash('S4 รวมตามรายการ', {})],
     ['ค้นหาชื่ออะไหล่ หรือรหัสอะไหล่', () => partsDash('S4 ค้นหา', { query: 'FL-00' })],
-    ['กดตัวกรอง — แผงตัวกรอง ปีงบประมาณ หน่วยงานผู้ขอเบิก เขต แผน', () => partsDash('S4 แผงตัวกรอง', { filter: { units: ['กกฟ.1'], open: 'plan' } })],
-    ['กรองแล้ว — ชิปตัวกรองเหนือตาราง', () => partsDash('S4 กรองแล้ว', { chips: ['2570', 'กกฟ.1'] })],
+    ['กดตัวกรอง — แผงตัวกรอง ปีงบประมาณ เขต แผน (เห็นเฉพาะแผนของหน่วยงานตัวเอง)', () => partsDash('S4 แผงตัวกรอง', { filter: { open: 'plan' } })],
+    ['กรองแล้ว — ชิปตัวกรองเหนือตาราง', () => partsDash('S4 กรองแล้ว', { chips: ['2570', 'MRZ7000001'] })],
     ['ไม่พบอะไหล่ที่ตรงกับคำค้นหรือตัวกรอง', () => partsDash('S4 ไม่พบ', { query: 'ไส้กรองแอร์', notFound: true })],
     ['แท็บแยกรายคัน — อะไหล่ของยานพาหนะแต่ละคัน', () => partsDash('S4 แยกรายคัน', { tab: 1 })],
     ['แท็บความคืบหน้าของแผน — แผนเดินทางและยานพาหนะที่บำรุงรักษาแล้วรายไตรมาส', () => partsDash('S4 ความคืบหน้า', { tab: 2 })],
-    ['กดส่งออก — popup รูปแบบไฟล์ และข้อมูลที่ส่งออก', () => partsDash('S4 ส่งออก', { chips: ['2570', 'กกฟ.1'], exportPdf: true })],
-    ['ส่งออกสำเร็จ', async () => { const s = await partsDash('S4 ส่งออกสำเร็จ', { chips: ['2570', 'กกฟ.1'] }); notify(s, 'ส่งออกไฟล์สำเร็จ'); return s; }],
+    ['กดส่งออก — popup รูปแบบไฟล์ และข้อมูลที่ส่งออก', () => partsDash('S4 ส่งออก', { chips: ['2570', 'MRZ7000001'], exportPdf: true })],
+    ['ส่งออกสำเร็จ', async () => { const s = await partsDash('S4 ส่งออกสำเร็จ', { chips: ['2570', 'MRZ7000001'] }); notify(s, 'ส่งออกไฟล์สำเร็จ'); return s; }],
     ['ไฟล์ PDF — รวมตามรายการ', () => dashPdf('S4 ไฟล์ PDF')],
     ['ไฟล์ Excel — ชีตรวมตามรายการ', () => dashXls('S4 ไฟล์ Excel รวม', 0)],
     ['ไฟล์ Excel — ชีตแยกรายคัน', () => dashXls('S4 ไฟล์ Excel รายคัน', 1)],
-    ['ยังไม่มีแผนที่อนุมัติแล้ว', () => partsDash('S4 ว่าง', { empty: true })]]],
+    ['ยังไม่มีแผนที่อนุมัติแล้ว', () => partsDash('S4 ว่าง', { empty: true })],
+    // 10 พ.ย. 2569 เจ้าของงาน "ผู้สร้างแผนเห็นเฉพาะแผนของหน่วยงานตัวเอง ยกเว้น กบค จะเห็นแผนของหน่วยงานอื่นด้วย แต่แก้ไขไม่ได้" — ต่อท้าย (C.14 C.15) รหัสจอเดิมไม่เลื่อน
+    ['กบค. — ความคืบหน้าของแผนทุกหน่วยงาน ดูอย่างเดียว', () => partsDash('S4 กบค. ทุกหน่วยงาน', { kbk: true, tab: 2 })],
+    ['กบค. — แผงตัวกรอง มีหน่วยงานผู้ขอเบิก', () => partsDash('S4 กบค. แผงตัวกรอง', { kbk: true, filter: { units: ['กกฟ.2'], open: 'unit' } })]]],
   // S5 เบิกอะไหล่ผ่านระบบจองอะไหล่ — รวมเข้า S4 2 พ.ย. 2569 (เจ้าของงาน "รวบ s4 s5 เป็นหน้าเดียวกัน ยุบ S5 ออกไปก่อน") · บล็อก D เว้นว่าง
   /* S6 ปรับ 5 พ.ย. 2569 (รีวิวทีมออกแบบ): ทางเข้าจากเมนูถึงหน้าไตรมาส (E.1–E.3) · หน้า E.3 = "ไตรมาส 1" · popup รถในแผนเดินทางอื่นแสดงแต่เลือกไม่ได้ · เอารถออกจากแผนเดินทาง (soft delete) แล้วกลับมาเลือกได้
      · Validation Out of focus · สร้างสำเร็จกลับหน้าไตรมาส + toast · สร้างได้จนรถหมด แล้วปุ่มสร้างแผนเดินทางกดไม่ได้ (ตัด popup "รถทุกคันอยู่ในแผนเดินทางแล้ว") */
