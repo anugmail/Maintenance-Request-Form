@@ -1,0 +1,11 @@
+{
+  "name": "Maintain-D — ประเมินผู้รับจ้าง (component จริง)",
+  "id": "1472903116188005391",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "permissions": ["teamlibrary"],
+  "networkAccess": { "allowedDomains": ["none"], "reasoning": "ข้อมูลหน้าจออยู่ใน code.js ทั้งหมด ไม่ต่อเครือข่าย" }
+}

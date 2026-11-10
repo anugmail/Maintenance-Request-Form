@@ -16,7 +16,11 @@
      node figma-export/3-figjam-board.js --overhaul2 --only --out=board-overhaul2.json
                                                     Overhaul v2 ครบ 14 scenario (section ละ scenario · capture จาก flow-overhaul2-capture.js)
                                                     --out= เขียนไฟล์ชื่ออื่น ไม่ทับ board.json (ปลั๊กอินใส่ชื่อไฟล์ในช่องที่อยู่ได้)
-     node figma-export/3-figjam-board.js --maintainance --only --out=board-maintainance.json
+     node figma-export/3-figjam-board.js --maintainance-flow-ui --only --scen=S1,S2 --out=board-maintainance-flow-ui.json   (เฉพาะ S ที่ระบุ · 9 พ.ย. 2569)
+     node figma-export/3-figjam-board.js --maintainance-ui --only --split-scen --out=board-maintainance-ui.json   (+ แยกไฟล์ละ S board-maintainance-ui-S<n>.json ให้ติ๊กทีละ S ในปลั๊กอินบอร์ด · 9 พ.ย. 2569)
+     node figma-export/3-figjam-board.js --maintainance --only --out=board-maintainance.json   (มี out/figjam/flow-maintainance/manifest.json = ใส่ภาพจอจาก Figma ต่อจากผังแต่ละ scenario · --shots-dir= เปลี่ยนโฟลเดอร์)
+     node figma-export/3-figjam-board.js --maintainance-journey --only --out=board-maintainance-journey.json
+                                                    userflow บำรุงรักษา 18 scenario เป็นผังเดียวต่อกัน (start จุดเดียว · 8-flow-userflow.js --journey)
                                                     userflow บำรุงรักษาตามวาระ 17 scenario (section ละ scenario · ผังรูปทรง Template
                                                     จาก Diagram/01-…/14-บำรุงรักษา-userflow.md ผ่าน 8-flow-userflow.js — ไม่มีรูป capture)
      node figma-export/3-figjam-board.js --pages    + หน้ารวมทุกหน้าจัดหมวด
@@ -201,7 +205,12 @@ function main() {
   // userflow บำรุงรักษาตามวาระ (19 ต.ค. 2569) — 17 scenario ที่เขียนตามบอร์ดเจ้าของงาน · ผังล้วน ไม่มีรูป capture
   // ต้นทาง: Diagram/01-บำรุงรักษาตามวาระ/14-บำรุงรักษา-userflow.md → 8-flow-userflow.js → out/diagram-userflow-maintainance.json
   // แยกไฟล์จากชุดซ่อม (board.json) และ Overhaul (board-overhaul2.json) ตามคำสั่ง "ซ่อมอันนึง บำรุงอันนึง"
-  if (all || args.has('--maintainance')) {
+  /* บำรุงรักษา 3 ส่วนแยกกัน (30 ต.ค. 2569 เจ้าของงาน "อยากให้กด export ได้ทั้งหมด และเลือกทีละอย่างได้"):
+     --maintainance          userflow ผังล้วนรายscenario
+     --maintainance-ui       UI scenario: ภาพจอจาก Figma รายscenario (จากปุ่ม "ส่งภาพจอบนหน้านี้ไป FigJam" → out/figjam/<shots-dir>/manifest.json)
+     --maintainance-flow-ui  ผังกับภาพจอคู่กัน (section ภาพจอต่อจากผังของ scenario เดียวกัน) */
+  const MAINT_FLAGS = ['--maintainance', '--maintainance-ui', '--maintainance-flow-ui'];
+  if (all || MAINT_FLAGS.some(f => args.has(f))) {
     const uf = path.join(OUT, 'diagram-userflow-maintainance.json');
     if (!fs.existsSync(uf)) {
       console.error('ไม่พบ ' + uf + ' — รัน  node figma-export/8-flow-userflow.js  ก่อน');
@@ -209,9 +218,50 @@ function main() {
     }
     const u = read(uf);
     const tint = [COLORS.violet, COLORS.blue, COLORS.teal, COLORS.yellow, COLORS.pink, COLORS.green, COLORS.gray];
-    u.sections.forEach((sec, i) => sections.push({
-      name: sec.name, color: i === 0 ? [255, 255, 255] : tint[(i - 1) % tint.length], kind: 'diagram', diagram: sec.diagram
-    }));
+    const shotDir = (process.argv.find(a => a.startsWith('--shots-dir=')) || '--shots-dir=flow-maintainance').slice(12);
+    const smf = path.join(FJ, shotDir, 'manifest.json');
+    const sm = fs.existsSync(smf) ? read(smf) : null;
+    const wantFlow = all || args.has('--maintainance') || args.has('--maintainance-flow-ui');
+    const wantShots = args.has('--maintainance-ui') || args.has('--maintainance-flow-ui');
+    if (wantShots) console.log(sm ? 'ภาพจอจาก Figma: ' + sm.shots.length + ' จอ (หน้า "' + sm.page + '" · export ' + sm.exportedAt + ')' : '⚠ ยังไม่มีภาพจอ (' + path.relative(path.join(__dirname, '..'), smf) + ') — กด "ส่งภาพจอบนหน้านี้ไป FigJam" ในปลั๊กอิน Figma ก่อน');
+    /* 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่" ⇒ --scen=S1,S2 เอาเฉพาะ scenario นั้น · ไม่ใส่แต่ manifest มาจากปุ่มส่งราย S (sm.scen) = ใช้ชุดนั้น */
+    const scenArg = process.argv.find(a => a.startsWith('--scen='));
+    const scenOnly = scenArg ? scenArg.slice(7).split(',').map(x => x.trim().toUpperCase()).filter(Boolean) : null;   // ใส่ --scen เท่านั้น (manifest รวมภาพทุก S ไว้แล้ว · ไม่กรองตาม sm.scen กันชุดเต็มหดเหลือ S ที่ส่งล่าสุด)
+    if (scenOnly) console.log('เฉพาะ scenario: ' + scenOnly.join(' '));
+    u.sections.forEach((sec, i) => {
+      const color = i === 0 ? [255, 255, 255] : tint[(i - 1) % tint.length];
+      const sm1 = sec.name.match(/Scenario (\d+) · /);
+      if (scenOnly && (!sm1 || scenOnly.indexOf('S' + sm1[1]) < 0)) return;
+      if (wantFlow) sections.push({ name: sec.name, color, kind: 'diagram', diagram: sec.diagram });
+      const m = sec.name.match(/Scenario (\d+) · (.+)$/), shots = wantShots && sm && m ? sm.shots.filter(x => x.scenario === 'S' + m[1]) : [];
+      if (shots.length) {
+        /* 5 พ.ย. 2569 แถว Desktop / Mobile ตามผัง R19 ของไฟล์ Figma — จอเดียวกันอยู่คอลัมน์เดียว desktop บน mobile ล่าง · ป้ายแถวซ้ายสุด */
+        const dev = (x) => x.device || 'desktop';
+        const codes = [...new Set(shots.map(x => x.code))];
+        const hasMob = shots.some(x => dev(x) === 'mobile');
+        const rowH = (d) => Math.max(0, ...shots.filter(x => dev(x) === d).map(x => x.h));
+        sections.push({
+          name: (args.has('--maintainance-ui') ? 'UI scenario บำรุงรักษา · S' + m[1] + ' · ' + m[2] : sec.name + ' · จอจาก Figma'), color, connect: 'sequence',
+          rows: hasMob ? [{ label: 'Desktop', h: rowH('desktop') }, { label: 'Mobile', h: rowH('mobile') }] : undefined,
+          cols: codes.map(code => {
+            const d = shots.find(x => x.code === code && dev(x) === 'desktop'), mo = shots.find(x => x.code === code && dev(x) === 'mobile');
+            const im = (x, row) => ({ src: 'figjam/' + shotDir + '/' + x.file, w: x.w, h: x.h, row });
+            return { label: code + ' · ' + (d || mo).name, note: '', images: [d && im(d, 0), mo && im(mo, hasMob ? 1 : 0)].filter(Boolean) };
+          })
+        });
+      }
+    });
+  }
+
+  // journey ต่อกันทั้งเรื่อง (22 ต.ค. 2569 · เจ้าของงาน "ที่ส่งไปไม่ได้ต่อกัน แต่สิ่งที่อยากได้คือต่อกัน")
+  // ต้นทาง: ไฟล์ userflow เดียวกัน + ลำดับ/จุดต่อ maintainance-plugin/build.json → 8-flow-userflow.js --journey → out/diagram-userflow-maintainance-journey.json
+  if (args.has('--maintainance-journey')) {
+    const uf = path.join(OUT, 'diagram-userflow-maintainance-journey.json');
+    if (!fs.existsSync(uf)) {
+      console.error('ไม่พบ ' + uf + ' — รัน  node figma-export/8-flow-userflow.js --journey  ก่อน');
+      process.exit(1);
+    }
+    read(uf).sections.forEach((sec, i) => sections.push({ name: sec.name, color: i === 0 ? [255, 255, 255] : [250, 250, 250], kind: 'diagram', diagram: sec.diagram }));
   }
 
   if (all || args.has('--pages')) {
@@ -235,13 +285,23 @@ function main() {
 
   const board = {
     version: 1,
-    anchor: (args.has('--disposal') || args.has('--inventory') || args.has('--overhaul2') || args.has('--maintainance')) ? 'below' : undefined,   // วางต่อใต้ของเดิมบนบอร์ด ไม่ทับ
+    anchor: (args.has('--disposal') || args.has('--inventory') || args.has('--overhaul2') || args.has('--maintainance') || args.has('--maintainance-ui') || args.has('--maintainance-flow-ui') || args.has('--maintainance-journey')) ? 'below' : undefined,   // วางต่อใต้ของเดิมบนบอร์ด ไม่ทับ
     generatedAt: new Date().toISOString(),
     font: { family: 'IBM Plex Sans Thai', style: 'Medium' },
     fallbackFont: { family: 'Inter', style: 'Medium' },
     sections
   };
 
+  /* --split-scen (9 พ.ย. 2569 เจ้าของงาน "figjam ยังไม่แยก S ต้องทำไง"): เขียนบอร์ดแยกไฟล์ละ scenario board-maintainance-ui-S<n>.json
+     ปลั๊กอินบอร์ด FigJam (serve.js /boards.json) ขึ้นเป็นรายการ S ให้ติ๊กทีละ S · ไฟล์ราย S ชุดเก่าลบก่อนเขียนใหม่ */
+  if (args.has('--split-scen')) {
+    fs.readdirSync(OUT).filter(f => /^board-maintainance-ui-S\d+\.json$/.test(f)).forEach(f => fs.unlinkSync(path.join(OUT, f)));
+    const by = new Map();
+    sections.forEach(s => { const m = s.name.match(/Scenario (\d+) · (.+?)(?: · จอจาก Figma)?$/) || s.name.match(/· S(\d+) · (.+)$/); if (!m) return; const k = m[1]; if (!by.has(k)) by.set(k, { title: 'S' + k + ' · ' + m[2], sections: [] }); by.get(k).sections.push(s); });
+    /* ชื่อ section ต้องไม่ซ้ำกับบอร์ดชุดเต็ม — ปลั๊กอินบอร์ดลบ section ชื่อเดียวกันก่อนวาง ติ๊กชุดเต็มคู่กับราย S แล้วภาพของชุดเต็มหายหลังเห็นแวบเดียว (เจ้าของงาน 9 พ.ย. 2569 "พอ export เห็นรูป จะกด ก็หายไป") */
+    by.forEach((v, k) => fs.writeFileSync(path.join(OUT, 'board-maintainance-ui-S' + k + '.json'), JSON.stringify(Object.assign({}, board, { title: v.title, sections: v.sections.map(x => Object.assign({}, x, { name: 'ราย scenario · ' + x.name })) }))));
+    console.log('แยกราย scenario: ' + by.size + ' ไฟล์ (' + [...by.keys()].map(k => 'S' + k).join(' ') + ') → out/board-maintainance-ui-S<n>.json');
+  }
   const outArg = [...args].find(a => a.indexOf('--out=') === 0);
   const outFile = outArg ? outArg.slice(6) : 'board.json';
   fs.writeFileSync(path.join(OUT, outFile), JSON.stringify(board));

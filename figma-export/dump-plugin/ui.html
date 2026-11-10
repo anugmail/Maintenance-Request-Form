@@ -28,20 +28,11 @@
 <div id="log"></div>
 <script>
 const log = (s) => { const d = document.getElementById('log'); d.textContent += s + '\n'; d.scrollTop = d.scrollHeight; };
-let pages = [];
-let total = 0, ok = 0, fail = 0;
-
-function renderPages() {
-  const box = document.getElementById('pageslist');
-  if (!pages.length) { box.textContent = 'ไฟล์นี้ไม่มีหน้าเลย'; return; }
-  box.innerHTML = pages.map((p) =>
-    '<label><input type="checkbox" value="' + p.id + '"> ' + p.name + '</label>'
-  ).join('');
-}
-
-document.getElementById('loadpages').onclick = () => {
-  document.getElementById('pageslist').textContent = 'กำลังโหลด…';
-  parent.postMessage({ pluginMessage: { type: 'list-pages' } }, '*');
+let total = 0, ok = 0, fail = 0, pending = [];   // pending = การส่งไฟล์ที่ยังไม่เสร็จ — รอครบก่อนสรุป (4 พ.ย. 2569 เคยขึ้น "สำเร็จ 0 หน้า" ก่อนส่งเสร็จ)
+document.getElementById('go').onclick = () => {
+  document.getElementById('log').textContent=''; ok=fail=0; pending=[];
+  const pageFilter = document.getElementById('pagefilter').value || '';
+  parent.postMessage({pluginMessage:{type:'start', pageFilter}}, '*');
 };
 document.getElementById('selall').onclick = () => {
   document.querySelectorAll('#pageslist input[type=checkbox]').forEach((c) => (c.checked = true));
@@ -71,13 +62,15 @@ onmessage = async (e) => {
   if (m.type === 'total') { total = m.total; log('เริ่มดัมป์ ' + total + ' หน้าที่เลือกไว้'); }
   if (m.type === 'error') { fail++; log('✗ ' + m.name + ' — ' + m.message); }
   if (m.type === 'page') {
-    try {
-      const r = await fetch('http://localhost:8124/figma-dump/' + slug + '/' + m.id + '.json',
-        { method: 'POST', body: JSON.stringify(m.data) });
-      const j = await r.json();
-      ok++; log('[' + (m.i + 1) + '/' + total + '] ' + m.name + ' — ' + (j.bytes || 0).toLocaleString() + ' ไบต์');
-    } catch (err) { fail++; log('✗ ส่งไม่ได้ ' + m.name + ' — ' + err.message + '  (รัน serve.js หรือยัง?)'); }
+    pending.push((async () => {
+      try {
+        const r = await fetch('http://localhost:8124/figma-dump/' + slug + '/' + m.id + '.json',
+          { method: 'POST', body: JSON.stringify(m.data) });
+        const j = await r.json();
+        ok++; log('[' + (m.i + 1) + '/' + total + '] ' + m.name + ' — ' + (j.bytes || 0).toLocaleString() + ' ไบต์');
+      } catch (err) { fail++; log('✗ ส่งไม่ได้ ' + m.name + ' — ' + err.message + '  (รัน serve.js หรือยัง? · หน้าที่ใหญ่มากลองกรองรันทีละหน้า)'); }
+    })());
   }
-  if (m.type === 'done' && total) log('— จบ — สำเร็จ ' + ok + ' หน้า · ล้มเหลว ' + fail);
+  if (m.type === 'done') { log('… รอส่งไฟล์ให้ครบ'); await Promise.all(pending); log('— จบ — สำเร็จ ' + ok + ' หน้า · ล้มเหลว ' + fail); }
 };
 </script>

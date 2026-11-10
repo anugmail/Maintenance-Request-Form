@@ -1,0 +1,15 @@
+{
+  "name": "Maintain-D — Login และสิทธิ์ตาม role (component จริง + ภาพหน้าจริง)",
+  "id": "1473146283502117019",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "permissions": ["teamlibrary"],
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "devAllowedDomains": ["http://localhost:8124"],
+    "reasoning": "โหลดภาพหน้า login จริงจากเครื่อง (serve.js · out/figjam/login/) — ไม่ต่อออกอินเทอร์เน็ตเลย"
+  }
+}

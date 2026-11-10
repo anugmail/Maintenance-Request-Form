@@ -25,6 +25,9 @@ const warn = (where, e) => {   // แนบบรรทัดใน code.js ท�
    ทั้ง 3 ทางได้ instance ที่ผูกกับ component จริง ไม่มีการวาดเอง */
 /* key ของ component ต้นฉบับในไฟล์ "component" ที่เราอ่านค่ามา (ดัมป์ 19 ต.ค. 2569 10:52 · เก็บ key ของ main component ตรงๆ) · [key, เป็น component set ไหม] */
 const KEYS = {
+  /* 10 พ.ย. 2569 เจ้าของงาน "ตอนออกแบบครั้งต่ออยากให้ใช้ design จาก component กลาง" = หน้า Design Annotations ของไฟล์ (UI) VMS Plus – Release#2
+     แถบหัวบล็อก/ป้าย state (Header · Type=Header / Subheader) — key จากดัมป์ design-system/.figma-extract/ui-release2/1-56.json · นำเข้าไม่ได้ (ไฟล์นั้นไม่ได้เปิดเป็นไลบรารี) → หาในไฟล์/instance ตามเดิม */
+  "Header": ["cbdb14c4c43c175124ce4c7bb138bb980fc2f4ae", true],
   "Mobile table": ["4ca09b73532ee1f8f21e3e0a6f2c7f151839ee62", true],
   "Mobile table item": ["754d62b4c29ea0f402f67950cfe7a4eae279e591", true],
   "Mobile progress steps": ["9154edd850c0be2201a44213fe6e94163a7a1516", true],
@@ -85,6 +88,7 @@ const KEYS = {
   "Nav button": ["fb0cf06df292e5bff53d7503855a3b943fb8225b", true],
   "quick_reference_all-24-300-round": ["9ed6481ba385035617f2491e6e7b5d6a58e9997c", false],
   "stylus-24-300-round": ["803aec7e2947f42a48164aa843ea6078b14cae1f", false],
+  "check-24-300-round": ["8c1bd305deb686415a28e6999512f486d5b3d5b1", false],   // ไอคอนนำปุ่ม "รับทราบ" สีเขียว S13 (10 พ.ย. 2569 · แบบปุ่ม "ตรวจแล้ว" หน้า 5.14 - 5.15 UI Release#2)
   "delete-24-300-round": ["d0a4abe7a062d89630de6bd7cb8ce325d1fd8336", false],
   "Table cell": ["2c5b641cf63a8a66f18d2a702c0fddf3fe3b2b20", true],
   "Table header cell": ["d689fd327ddac63e712a5bb5a3b4f3e39fab435e", true],
@@ -105,6 +109,7 @@ const KEYS = {
   "keyboard_arrow_left-20-400-round": ["32933c0651c04a63cb2aa78648cf8b15ebc7c266", false],
   "cloud_upload-24-300-round": ["bb12332b86d47144684d92bf7d358b9c2b7a4e50", false],
 };
+const SOFT_KEY = new Set(['Header']);   // นำเข้าด้วย key ไม่ได้ไม่ต้องเตือนเรื่องไลบรารี VMS Plus (อยู่คนละไฟล์) — ถอยไปหาในไฟล์ตามเดิม
 const ALIAS = {};   // 19 ต.ค.: Sidebar navigation มี key ของไฟล์ component แล้ว ไม่ต้องอ้างชื่อ Sidebar ของ UI Release#2
 const INDEX = new Map();     // ชื่อ → COMPONENT_SET / COMPONENT ที่ใช้ได้
 const ROUTE = {};            // ชื่อ → ได้มาทางไหน
@@ -153,7 +158,7 @@ async function resolveAll(list, checkOnly) {
     if (!got) await scanInstances();
     if (!got) for (const x of names) { if (viaInst.has(x)) { got = viaInst.get(x); how = 'จาก instance ในไฟล์ ⚠ อาจลิงก์ไปไลบรารีที่เปิดไม่ได้'; break; } }
     if (!got && importErr) how = 'นำเข้าไม่ได้: ' + importErr;
-    if (importErr && !IMPORT_ERR && !NESTED_ONLY.has(name)) IMPORT_ERR = importErr;   // ชิ้นส่วนซ้อน (เช่น _Dropdown menu item ที่ Figma ไม่ publish) ไม่ต้องเตือน
+    if (importErr && !IMPORT_ERR && !NESTED_ONLY.has(name) && !SOFT_KEY.has(name)) IMPORT_ERR = importErr;   // ชิ้นส่วนซ้อน (เช่น _Dropdown menu item ที่ Figma ไม่ publish) ไม่ต้องเตือน
     if (got) { INDEX.set(name, got); ROUTE[name] = how + (got.name !== name ? ' (ชื่อ ' + got.name + ')' : ''); }
     else missing.push(name + (how ? ' — ' + how : ''));
   }
@@ -340,10 +345,23 @@ function dropdown(label, value, o) {   // Input dropdown
   if (o.lead) p['Leading icon swap'] = icon(o.lead);
   return syncLabel(inst('Input dropdown', { State: st, Size: 'md' }, p), label, false);
 }
+/* เลือกหลายค่า — Input dropdown with badges ค่าที่เลือกเป็นชิปในช่อง (Selected 4 ชิป · Focused 2 ชิป + ช่องพิมพ์) เกินช่องให้ชิปสุดท้ายเป็น "+n"
+   ตาม Dropdown/Fleet card gas station หน้า 5.2 Vehicle Management ของ UI Release#2 (เจ้าของงาน 2 พ.ย. 2569 "ภาค เขต ประเภทรถ อยากให้มัลติซีเล็คได้") */
+function multiDropdown(label, values, o) {
+  o = o || {}; values = values || [];
+  const st = o.state || (o.error ? 'Error' : values.length ? 'Selected' : 'Default');
+  const n = inst('Input dropdown with badges', { State: st, Size: 'md' }, { 'Label text': label, Text: values.length ? '' : o.placeholder || 'เลือก', Optional: !!o.optional, Helper: !!o.error, 'Helper text': o.error || '', 'Info icon': false, 'Leading icon': false });   // o.optional = "(ถ้ามี)" ในแผงตัวกรอง (5 พ.ย. 2569)
+  const chips = n.findAll(c => c.type === 'INSTANCE' && c.name === 'Badge outline with remove icon');
+  chips.forEach((c, j) => {
+    if (j >= values.length) { c.visible = false; return; }
+    setProps(c, { Text: values.length > chips.length && j === chips.length - 1 ? '+' + (values.length - j) : values[j] });
+  });
+  return syncLabel(n, label, !!o.optional);
+}
 function area(label, value, o) {
   o = o || {};
-  return syncLabel(inst('Text area', { State: value ? 'Filled' : 'Default', Size: 'md' }, { 'Label text': label, Text: value || o.placeholder || '',
-    Optional: !!o.optional, Helper: false, 'Info icon': false, 'Trailing icon': false, 'Show Placeholder': !value }), label, o.optional);
+  return syncLabel(inst('Text area', { State: o.error ? 'Error' : value ? 'Filled' : 'Default', Size: 'md' }, { 'Label text': label, Text: value || o.placeholder || '',
+    Optional: !!o.optional, Helper: !!o.error, 'Helper text': o.error || '', 'Info icon': false, 'Trailing icon': false, 'Show Placeholder': !value }), label, o.optional);   // error แบบ area() ของ Overhaul (R29)
 }
 async function section(title, o) {   // Section header + ปุ่มขวา
   o = o || {};
@@ -354,7 +372,12 @@ async function section(title, o) {   // Section header + ปุ่มขวา
   if (acts) acts.children.forEach(c => { c.visible = false; });
   (o.buttons || []).forEach((b, i) => {
     const slot = acts && acts.children.filter(c => c.name === b.kind)[i] || (acts && acts.children.find(c => c.name === b.kind && !c.visible));
-    if (slot) { slot.visible = true; setProps(slot, { Text: b.text, 'Leading icon': !!b.icon, 'Trailing icon': false }); if (b.icon) setProps(slot, { 'Leading icon swap': icon(b.icon) }); }
+    if (slot) {
+      slot.visible = true; setProps(slot, { Text: b.text, 'Leading icon': !!b.icon, 'Trailing icon': false, State: b.disabled ? 'Disabled' : 'Default' }); if (b.icon) setProps(slot, { 'Leading icon swap': icon(b.icon) });
+      // 2 พ.ย. 2569 ปุ่ม "เพิ่มอะไหล่" ในไฟล์จริงตัดคำเป็น 2 บรรทัด ⇒ ปุ่มและข้อความในปุ่มกว้างตามคำ
+      try { slot.layoutSizingHorizontal = 'HUG'; } catch (e) { /* ไฟล์เก่าไม่รองรับ */ }
+      const tx = slot.findOne(n => n.type === 'TEXT' && n.name === 'Text'); if (tx) try { tx.textAutoResize = 'WIDTH_AND_HEIGHT'; } catch (e) { /* ข้ามได้ */ }
+    }
   });
   return sh;
 }
@@ -366,7 +389,7 @@ async function sectionLabel(title, o) {
   const pri = bs.find(b => b.kind === 'Primary button'), sec = bs.find(b => b.kind !== 'Primary button');
   const sl = inst('Section label', { Breakpoint: BP() }, { Title: o.badge != null ? title + ' (' + o.badge + ')' : title, Supporting: false, 'Info icon': false,
     'More actions': false, Actions: !!(pri || sec), 'Primary action': !!pri, 'Secondary action': !!sec });
-  const put = (b, node) => { if (b && node) setProps(node, { Text: b.text, 'Leading icon': !!b.icon, 'Trailing icon': false, ...(b.icon ? { 'Leading icon swap': icon(b.icon) } : {}) }); };
+  const put = (b, node) => { if (b && node) setProps(node, { Text: b.text, 'Leading icon': !!b.icon, 'Trailing icon': false, ...(b.icon ? { 'Leading icon swap': icon(b.icon) } : {}), ...(b.disabled ? { State: 'Disabled' } : {}) }); };   // b.disabled = State Disabled ของ Tertiary (brand) button (5 พ.ย. 2569 ปุ่มสร้างแผนเดินทางเมื่อรถครบทุกคัน)
   put(pri, find(sl, 'Tertiary brand button')); put(sec, find(sl, 'Tertiary button'));
   return sl;
 }
@@ -425,9 +448,15 @@ async function upload(label, files, o) {   // File upload Type=Default
   items.forEach((it, i) => {
     if (i >= files.length) { it.visible = false; return; }
     const f = files[i];
-    setProps(it, { State: f.err ? 'Error' : 'Completed' });
-    setProps(it, { 'File name': f.name, 'File size': f.err ? 'อัปโหลดไม่สำเร็จ — รับเฉพาะไฟล์ PDF หรือ JPG' : f.size, 'Progress bar': false,
-      Actions: true, 'Download action': !f.err && !o.readonly, 'Delete action': !o.readonly });
+    /* 4 พ.ย. 2569 เจ้าของงาน "upload เอกสาร pdf และ ภาพ จะใช้สัญลักษณ์ไม่เหมือนกัน และ upload แล้ว จะมี progress bar ด้วย อ้างอิงจากของเดิม"
+       ไอคอน = _File icon Type=Image (jpg png) / Document (อื่น) ของไลบรารี · แถบ = Progress bar ในรายการไฟล์ แบบปลั๊กอิน Overhaul (บล็อก M):
+       f.progress = กำลังอัปโหลด (State In progress · ตัวเลข = %) · f.bar หรือ o.bar = อัปโหลดเสร็จแล้วแสดงแถบ 100% */
+    const pct = f.progress ? (typeof f.progress === 'number' ? Math.max(0, Math.min(100, Math.round(f.progress / 20) * 20)) : 40) : 100;
+    setProps(it, { State: f.err ? 'Error' : f.progress ? 'In progress' : 'Completed' });
+    setProps(it, { 'File name': f.name, 'File size': f.err ? 'อัปโหลดไม่สำเร็จ — รับเฉพาะไฟล์ PDF หรือ JPG' : f.size, 'Progress bar': !f.err && !!(f.progress || f.bar || o.bar),
+      Actions: true, 'Download action': !f.err && !o.readonly && !f.progress, 'Delete action': !o.readonly });
+    const fi = it.findOne(n => n.type === 'INSTANCE' && n.name === '_File icon'); if (fi) setProps(fi, { Type: /\.(jpe?g|png|gif|webp|heic)$/i.test(f.name) ? 'Image' : 'Document' });
+    const pb = it.findOne(n => n.type === 'INSTANCE' && n.name === 'Progress bar'); if (pb && !f.err && (f.progress || f.bar || o.bar)) setProps(pb, { Progress: pct + '%' });
   });
   return u;
 }
@@ -437,8 +466,8 @@ function mobileCards(cols, rows) {   // mobile: 1 แถวตาราง = 1 �
     const hd = find(l, 'List header item'); if (hd) { const b = find(hd, 'Badge outline'); if (b) b.visible = false; const cb = find(hd, 'Checkbox'); if (cb) setProps(cb, { Type: rows.every(r => r[0].check) ? 'Selected' : 'Unselected' }); }
     l.children.filter(c => c.name === 'List with checkbox item').forEach((it, i) => {
       if (i >= rows.length) { it.visible = false; return; }
-      setProps(it, { State: rows[i][0].check ? 'Selected' : 'Default' });
-      setProps(it, { Text: rows[i][0].text, Avatar: false, Supporting: false, 'Supporting 2': false });
+      setProps(it, { State: rows[i][0].disabled ? 'Disabled' : rows[i][0].check ? 'Selected' : 'Default' });   // disabled = ติ๊กไม่ได้ (อยู่ไตรมาส/แผนเดินทางอื่น · 5 พ.ย. 2569)
+      setProps(it, { Text: rows[i][0].text, Avatar: false, Supporting: !!rows[i][0].sub, 'Supporting text': rows[i][0].sub || '', 'Supporting 2': false });
     });
     const sc = find(l, 'Vertical scrollbar'); if (sc) sc.visible = false;
     l._title = cols[0][0];
@@ -449,11 +478,19 @@ function mobileCards(cols, rows) {   // mobile: 1 แถวตาราง = 1 �
     const card = inst('Mobile table', { 'Alternating fills': 'False' });
     const items = card.children.filter(c => c.name === 'Mobile table item');
     const data = [], acts = [];
-    cols.forEach(([head], ci) => { const v = r[ci]; if (v && (v.menu || v.icons)) acts.push(v); else if (head) data.push([head, v]); });
+    cols.forEach(([head], ci) => { const v = r[ci]; if (v && (v.menu || v.icons)) acts.push(v); else if (head && v && v.pills) v.pills.forEach((pl, k) => data.push([k ? v.pillsHead || head : head, { pill: pl }])); else if (head) data.push([head, v]); });   // Mobile table item ไม่มี Multiple badges ⇒ ป้ายที่ 2 เป็นแถวของการ์ด (4 พ.ย. 2569)
     items.forEach((it, i) => {
       const last = i === items.length - 1;
       if (last) {
         if (!acts.length) { it.visible = false; return; }
+        /* 4 พ.ย. 2569 เจ้าของงาน "ส่วนที่เป็น mobile อยากให้ expand view edit delete icon ออกมาแบบตัวอย่างทั้งหมด"
+           ⇒ ช่องเมนู "…" ที่รู้รายการ (menu + items) บนมือถือเปิดปุ่มไอคอนของ Mobile table item Style=Action icons ตามรายการเลย
+           (View = ดูรายละเอียด · Edit = แก้ไข · Delete = ลบ · Print ปิด · ไอคอนตั้งต้นของไลบรารีตรงอยู่แล้ว ไม่สลับ) · ไม่มี items = ปุ่ม … ปุ่มเดียวแบบเดิม */
+        if (acts[0].menu && acts[0].items) {
+          const has = (t) => acts[0].items.some(x => x[0] === t);
+          setProps(it, { View: has('ดูรายละเอียด'), Edit: has('แก้ไข'), Print: false, Delete: has('ลบ') });
+          return;
+        }
         const ic = acts[0].menu ? ['more_horiz-20-400-round'] : acts[0].icons;
         setProps(it, { View: ic.length > 0, Edit: ic.length > 1, Print: false, Delete: false });
         it.findAll(n => n.name === 'Tertiary button').forEach((b, k) => { if (ic[k]) setProps(b, { 'Leading icon swap': icon(ic[k]) }); });
@@ -462,6 +499,7 @@ function mobileCards(cols, rows) {   // mobile: 1 แถวตาราง = 1 �
       if (i >= data.length) { it.visible = false; return; }
       const [head, v] = data[i];
       if (v && v.pill) { setProps(it, { Style: 'Badge' }); setProps(it, { Header: head }); const p = find(it, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
+      else if (v && typeof v === 'object' && v.text != null) { setProps(it, { Style: i === 0 ? 'Lead text' : 'Text' }); setProps(it, { Header: head, Text: v.text, Supporting: !!v.sub, 'Supporting text': v.sub || '' }); }   // บรรทัดรองใช้ช่อง Supporting text ของ Mobile table item (เจ้าของงาน 4 พ.ย. 2569 "รายละเอียดก็มีนี่นา") เดิมต่อท้ายด้วย ·
       else { setProps(it, { Style: i === 0 ? 'Lead text' : 'Text' }); setProps(it, { Header: head, Text: v == null ? '' : String(v), Supporting: false }); }
     });
     add(box, card, 'h');
@@ -480,37 +518,74 @@ function tblComposed(cols, rows) {   // cols: [หัว, กว้าง, Style
     if (sort) { const s = find(hc, 'Sort icon'); if (s) setProps(s, { Icon: sort }); }
     rows.forEach((r, ri) => {
       const v = r[ci], alt = ri % 2 ? 'True' : 'False';
-      const st = v && v.check != null ? 'Lead checkbox' : v && v.pill ? 'Badge' : v && (v.menu || v.icons) ? 'Action icons' : style || 'Text';
+      const st = v && v.check != null ? 'Lead checkbox' : v && v.pills ? 'Multiple badges' : v && v.pill ? 'Badge' : v && (v.menu || v.icons) ? 'Action icons' : style || 'Text';
       const cell = inst('Table cell', { Style: st, 'Alternating fills': alt });
       add(c, cell, 'h');
-      if (st === 'Badge') { const p = find(cell, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
+      if (st === 'Multiple badges') fillPills(cell, v.pills);
+      else if (st === 'Badge') { const p = find(cell, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
       else if (st === 'Action icons') {
         const ic = v.menu ? ['more_horiz-20-400-round'] : v.icons;
         setProps(cell, { View: ic.length > 0, Edit: ic.length > 1, Print: false, Delete: false });
         const bs = cell.findAll(n => n.name === 'Tertiary button');
         ic.forEach((name, i) => { if (bs[i]) setProps(bs[i], { 'Leading icon swap': icon(name) }); });
       } else if (st === 'Lead checkbox') {
-        setProps(cell, { Text: v.text, Supporting: false });
-        const cb = find(cell, 'Checkbox'); if (cb) setProps(cb, { Type: v.check ? 'Selected' : 'Unselected' });
+        setProps(cell, { Text: v.text, Supporting: !!v.sub, 'Supporting text': v.sub || '' });
+        const cb = find(cell, 'Checkbox'); if (cb) setProps(cb, { Type: v.check ? 'Selected' : 'Unselected', State: v.disabled ? 'Disabled' : 'Default' });
       } else setProps(cell, { Text: v == null ? '' : String(v), Supporting: false });
     });
   });
   return t;
 }
 /* ช่องตาราง 1 ช่อง — ใช้ทั้งกับ Table cell ที่ซ้อนใน Table (รีวิว 19 ต.ค. 2569) และ mobile */
+/* ป้ายหลายอันในช่องเดียว (4 พ.ย. 2569 S12 สถานะงาน + "รอผลตรวจน้ำมัน") — Table cell Style=Multiple badges ของไลบรารีมี Pill outline 3 อัน (ป้าย · ป้าย · +n) ใช้ตามจำนวน ที่เหลือซ่อน */
+function fillPills(cell, pills) {
+  cell.findAll(n => n.type === 'INSTANCE' && n.name === 'Pill outline').forEach((p, k) => { if (k < pills.length) setProps(p, { Color: pills[k][1], Text: pills[k][0] }); else p.visible = false; });
+}
 function fillCell(cell, v, style, alt) {
-  const st = v && v.check != null ? 'Lead checkbox' : v && v.pill ? 'Badge' : v && (v.menu || v.icons) ? 'Action icons' : style || 'Text';
+  const st = v && v.check != null ? 'Lead checkbox' : v && v.pills ? 'Multiple badges' : v && v.pill ? 'Badge' : v && (v.menu || v.icons) ? 'Action icons' : style || 'Text';
   setProps(cell, { Style: st, 'Alternating fills': alt });
-  if (st === 'Badge') { const p = find(cell, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
+  if (st === 'Multiple badges') fillPills(cell, v.pills);
+  else if (st === 'Badge') { const p = find(cell, 'Pill outline'); if (p) setProps(p, { Color: v.pill[1], Text: v.pill[0] }); }
   else if (st === 'Action icons') {
     const ic = v.menu ? ['more_horiz-20-400-round'] : v.icons;
     setProps(cell, { View: ic.length > 0, Edit: ic.length > 1, Print: false, Delete: false });
     const bs = cell.findAll(n => n.name === 'Tertiary button');
     ic.forEach((name, i) => { if (bs[i]) setProps(bs[i], { 'Leading icon swap': icon(name) }); });
   } else if (st === 'Lead checkbox') {
-    setProps(cell, { Text: v.text, Supporting: false });
-    const cb = find(cell, 'Checkbox'); if (cb) setProps(cb, { Type: v.check ? 'Selected' : 'Unselected' });
-  } else setProps(cell, { Text: v == null ? '' : String(v), Supporting: false });
+    setProps(cell, { Text: v.text, Supporting: !!v.sub, 'Supporting text': v.sub || '' });   // { check, text, sub, disabled } — แถวที่ติ๊กไม่ได้ = Checkbox State=Disabled + บรรทัดรองบอกเหตุผล (5 พ.ย. 2569)
+    const cb = find(cell, 'Checkbox'); if (cb) setProps(cb, { Type: v.check ? 'Selected' : 'Unselected', State: v.disabled ? 'Disabled' : 'Default' });
+  } else if (v && typeof v === 'object' && v.text != null) {   // { text, sub } = 2 บรรทัด ตามแบบ Overhaul
+    setProps(cell, { Text: v.text, Supporting: !!v.sub, 'Supporting text': v.sub || '' });
+    if (v.tone && v.sub) toneText(find(cell, 'Supporting text'), v.tone);   // บรรทัดรองสีเตือน/แดง แบบ Vehicle list ของ UI Release#2 (S24)
+  }
+  else setProps(cell, { Text: v == null ? '' : String(v), Supporting: false });
+}
+/* บรรทัดรองสีตามสถานะ — Vehicle list ของ UI Release#2 ใช้ Supporting text ผูกตัวแปร Color/text/warning (#DC6803) · Color/text/error (#D92D20) ("ใกล้ครบกำหนดบำรุงรักษา" · "ครบกำหนดบำรุงรักษา")
+   ใส่ค่าสีทันที แล้ว bindTones() ผูกตัวแปรของไลบรารีหลังประกอบจอ (หาไม่ได้ก็คงค่าสี) */
+const TONE_HEX = { warning: '#DC6803', error: '#D92D20' };
+let TONED = [];
+const TONE_VARS = {};
+function toneText(t, tone) {
+  if (!t || t.type !== 'TEXT' || !TONE_HEX[tone]) return;
+  try { t.fills = [{ type: 'SOLID', color: rgbOf(TONE_HEX[tone]) }]; TONED.push([t, tone]); } catch (e) { warn('สีบรรทัดรอง', e); }
+}
+async function libVar(re) {   // ตัวแปรสีของไลบรารีตามชื่อ (แบบ surfaceVar)
+  try { const l = (await figma.variables.getLocalVariablesAsync('COLOR')).find(v => re.test(v.name)); if (l) return l; } catch (e) { /* ไม่มี API */ }
+  try {
+    for (const c of await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync()) {
+      const v = (await figma.teamLibrary.getVariablesInLibraryCollectionAsync(c.key)).find(x => re.test(x.name));
+      if (v) return await figma.variables.importVariableByKeyAsync(v.key);
+    }
+  } catch (e) { /* ไม่มีสิทธิ์ teamlibrary */ }
+  return null;
+}
+async function bindTones() {
+  const list = TONED; TONED = [];
+  for (const [t, tone] of list) {
+    if (!(tone in TONE_VARS)) TONE_VARS[tone] = await libVar(new RegExp('^Color/text/' + tone + '$', 'i'));
+    const v = TONE_VARS[tone]; if (!v) continue;
+    try { t.fills = [figma.variables.setBoundVariableForPaint({ type: 'SOLID', color: rgbOf(TONE_HEX[tone]) }, 'color', v)]; } catch (e) { /* คงค่าสี */ }
+  }
 }
 /* กว้างคอลัมน์ใน instance: w = คงที่ · 0 = ยืดเต็ม — Figma ยอมให้ override ขนาดลูกใน instance ที่เป็น auto layout */
 function sizeCol(c, w) {
@@ -603,7 +678,7 @@ async function shell(name, o) {
 async function pageHead(o) {
   const ph = inst('Page header', { Breakpoint: BP() }, { Title: o.title, 'Supporting text': false, Badge: !!o.badge,
     'Back action': !!o.back, 'Copy action': false, 'More actions': false, Actions: !!o.primary });
-  const crumbs = [PLUGIN.menu].concat(o.crumbs || []);
+  const crumbs = [o.root || PLUGIN.menu].concat(o.crumbs || []);   // o.root = เมนูอื่นของระบบ (เช่น ยานพาหนะ ของ Vehicle Management · S24 4 พ.ย. 2569)
   for (const [i, n] of ['Link 1', 'Link 2', 'Link 3'].entries()) {
     const l = find(ph, n); if (!l) continue;
     if (i < crumbs.length - 1) { const lk = find(l, 'Link'); if (lk) await text(l, lk, crumbs[i]); } else l.visible = false;
@@ -613,6 +688,7 @@ async function pageHead(o) {
   if (crumbs.length === 1) { /* หน้าแรกของเมนู: ลิงก์ปัจจุบันคือชื่อเมนูเอง */ }
   if (o.badge) { const b = find(ph, 'Badge outline'); if (b) setProps(b, { Color: BADGE_OF[o.badge[1]] || 'Gray', Text: o.badge[0] }); }
   const acts = find(ph, 'Actions');
+  if (acts && !o.primary) acts.visible = false;   // ตรงกับ property Actions=false (5 พ.ย. 2569 ตัวตรวจ R56 ดูการมองเห็นของชั้น)
   if (acts && o.primary) for (const b of acts.children) {
     if (b.name !== 'Primary button') { b.visible = false; continue; }
     setProps(b, { Text: o.primary, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') });
@@ -649,9 +725,29 @@ function overlay(scr, node, x, y) { scr.appendChild(node); node.layoutPositionin
 function notify(scr, title, err) {
   const n = inst('Notification', { Type: err ? 'Error' : 'Success', Breakpoint: BP() }, { Text: title, Actions: false });
   const sup = find(n, 'Supporting text'); if (sup) sup.visible = false;
-  overlay(scr, n, VW() - n.width, VH() - n.height);
+  /* toast ขวาบนเสมอ ไม่อยู่ตรงกลาง (เจ้าของงาน 5 พ.ย. 2569 "toast จะขึ้นที่มุมขวาบน เสมอ ไม่อยู่ตรงกลาง" · รีวิวทีมออกแบบ S2 "แสดง Toast ด้านบนขวา")
+     Desktop: variant ของ Notification จัดการ์ดบนขวาในตัว (justify MIN · pt 24 · pr 24) แบบที่ Flow การซ่อมวาง "อนุมัติรายการสำเร็จ" ⇒ วาง instance ชิดขอบบนขวา
+     Mobile: variant จัดการ์ดล่างกลาง (justify MAX · align CENTER · pb 16) ⇒ override การจัดวาง auto layout ของ instance เป็นบนขวา ขอบ 16 แล้ววางชิดขอบบนขวา (การ์ดเป็นของไลบรารีเหมือนเดิม) */
+  if (MOB) { try { n.primaryAxisAlignItems = 'MIN'; n.counterAxisAlignItems = 'MAX'; n.paddingTop = 16; n.paddingBottom = 0; } catch (e) { warn('toast มือถือขวาบน', e); } }
+  overlay(scr, n, VW() - n.width, 0);
 }
 /* bottom sheet ประกอบจากชิ้นไลบรารี (Bottom sheet ของไลบรารีล็อกเนื้อหาตายตัว) — แบบเดียวกับที่ UI Release#2 ประกอบแผงตัวกรอง */
+/* แผงตัวกรองด้านข้าง — ตาม Filter ของ Vehicle list (UI Release#2): Background overlay + Side panel header "ตัวกรอง" + dropdown + Side panel footer
+   (ประกอบจากชิ้นไลบรารีแบบ filterPanelCF ของ Overhaul · component-rules §7) · มือถือ = bottom sheet */
+async function filterPanel(scr, content, o) {
+  o = o || {};
+  if (MOB) { await sheet(scr, { title: 'ตัวกรอง', action: 'ล้างตัวกรอง', content, ok: 'ตกลง' }); return; }
+  overlay(scr, inst('Background overlay'), 0, 0).resize(1440, Math.max(1024, scr.height));
+  const panel = frame('Panel', 'VERTICAL', { gap: 24, fill: WHITE });
+  overlay(scr, panel, 960, 0); panel.primaryAxisSizingMode = 'FIXED'; panel.counterAxisSizingMode = 'FIXED'; panel.resize(480, 1024);
+  const hd = inst('Side panel header'); add(panel, hd, 'h'); hide(hd, 'Tabs');
+  await text(hd, 'Text', 'ตัวกรอง'); await text(hd, 'Supporting text', 'กรองข้อมูลให้แสดงเฉพาะข้อมูลที่ต้องการ');
+  const body = frame('Content', 'VERTICAL', { gap: 24, pad: [0, 24] }); add(panel, body, 'both');
+  for (const n of content) add(body, n, 'h');
+  const ft = inst('Side panel footer'); add(panel, ft, 'h');
+  [['Tertiary brand button', 'ล้างตัวกรอง'], ['Secondary button', 'ยกเลิก'], ['Primary button', 'ตกลง']].forEach(([k, t]) => { const b = find(ft, k); if (b) setProps(b, { Text: t, 'Leading icon': false, 'Trailing icon': false }); });
+  return panel;
+}
 async function sheet(scr, o) {
   overlay(scr, inst('Background overlay'), 0, 0).resize(VW(), VH());
   const sh = frame('Sheet', 'VERTICAL', { fill: WHITE });
@@ -675,11 +771,16 @@ async function sheet(scr, o) {
   sh.y = VH() - sh.height;
   return { sh, body };
 }
+/* หัว popup ตั้งผ่าน property ของ Modal header (Title · Supporting · Supporting text) — 3 พ.ย. 2569 เจ้าของงานเจอ popup แก้ไขเบอร์/สถานที่ขึ้นหัวตั้งต้น "แก้ไขข้อมูลผู้ใช้ยานพาหนะ"
+   เดิมใช้ text(hd, 'Text') ซึ่งเจอข้อความในปุ่มย้อนกลับ (Tertiary button ที่ซ่อนอยู่) ก่อนหัวเรื่องจริง */
+function modalHead(hd, title, sub, extra) {
+  if (!hd) return;
+  setProps(hd, Object.assign({ Title: title || '', Supporting: !!sub }, sub ? { 'Supporting text': sub } : {}, extra || {}));
+}
 async function confirm(scr, o) {   // Modal กลาง — danger = Destructive · อื่น = Centered image (ซ่อนรูป) · mobile = bottom sheet
   if (MOB) {
     const mh = inst('Modal header', { Alignment: 'Center' });
-    await text(mh, 'Text', o.title); await text(mh, 'Supporting text', o.sub);
-    const x = find(mh, 'Tertiary button'); if (x) x.visible = false; const dv = find(mh, 'Divider'); if (dv) dv.visible = false;
+    modalHead(mh, o.title, o.sub, { 'Back icon': false, 'Close icon': false, Divider: false });
     const r = await sheet(scr, { content: [mh], danger: o.danger, ok: o.ok, cancel: o.cancel });
     r.body.paddingLeft = r.body.paddingRight = 0;
     return;
@@ -687,35 +788,59 @@ async function confirm(scr, o) {   // Modal กลาง — danger = Destructiv
   const m = inst('Modal', { Type: o.danger ? 'Destructive centered image with input' : 'Centered image', Size: 'md' });
   overlay(scr, m, 0, 0);
   hide(m, 'Content'); if (o.danger) hide(m, 'Form');
-  const hd = find(m, 'Modal header');
-  if (hd) { await text(hd, 'Text', o.title); await text(hd, 'Supporting text', o.sub); }
+  modalHead(find(m, 'Modal header'), o.title, o.sub);
   const sb = find(m, 'Secondary button'); if (sb) setProps(sb, { Text: o.cancel || 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false });
   const pb = find(m, o.danger ? 'Primary danger button' : 'Primary button'); if (pb) setProps(pb, { Text: o.ok || 'ยืนยัน', 'Leading icon': false, 'Trailing icon': false });
 }
-async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 สลับเป็น Text area ด้วย property "Input 1 swap" ของ Card form row
-  if (MOB) { await sheet(scr, { title: o.title, content: o.fields.map(f => f.area ? area(f.label, f.value) : field(f.label, f.value)), ok: 'บันทึก' }); return; }
+async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 สลับเป็น Text area ด้วย property "Input 1 swap" ของ Card form row · o.ok / o.cancel = ชื่อปุ่ม (ค่าเริ่ม บันทึก / ยกเลิก · 22 ต.ค. 2569 ใช้กับ "ส่งกลับ" "ปฏิเสธ")
+  if (MOB) { await sheet(scr, { title: o.title, content: [].concat(...o.fields.map(f => f.pair || [f])).map(f => f.area ? area(f.label, f.value) : field(f.label, f.value, { optional: f.optional })), ok: o.ok || 'บันทึก', cancel: o.cancel }); return; }
   const m = inst('Modal', { Type: 'Form', Size: 'md' });
   overlay(scr, m, 0, 0);
-  const hd = find(m, 'Modal header');
-  if (hd) { await text(hd, 'Text', o.title); const sup = find(hd, 'Supporting text'); if (sup) sup.visible = false; }
+  modalHead(find(m, 'Modal header'), o.title, o.sub, { 'Back icon': false, 'Featured icon': false });
   const rows = (find(m, 'Form') || m).children.filter(c => c.name === 'Card form row');
-  rows.forEach((r, i) => {
-    if (i >= o.fields.length) { r.visible = false; return; }
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    if (i >= o.fields.length) { r.visible = false; continue; }
+    /* f.pair = [ช่องซ้าย, ช่องขวา] ใช้ Input 2 ของ Card form row (5 พ.ย. 2569 popup ระบุอะไหล่เพิ่มเติม 6 ช่อง: ชื่อ · ยี่ห้อ / รุ่น · รหัส / จำนวน · หน่วย) */
+    if (o.fields[i].pair) {
+      setProps(r, { 'Input 2': true });
+      const ins = r.children.filter(c => c.type === 'INSTANCE');
+      if (ins[1]) ins[1].visible = true;
+      for (const [k, pf] of o.fields[i].pair.entries()) { const inp = ins[k]; if (!inp) continue;
+        setProps(inp, { State: pf.value ? 'Filled' : 'Default' });
+        setProps(inp, { 'Label text': pf.label, Text: pf.value || pf.placeholder || '', Optional: !!pf.optional, Helper: false, 'Info icon': false, 'Show Placeholder': !pf.value });
+        syncLabel(inp, pf.label, pf.optional);
+        const ct = find(inp, 'Container'), tv = ct && ct.findOne(n => n.type === 'TEXT' && n.visible !== false);
+        if (tv && (pf.value || pf.placeholder) && tv.characters !== (pf.value || pf.placeholder)) await text(ct, tv, pf.value || pf.placeholder); }
+      continue;
+    }
     const f = o.fields[i];
     setProps(r, { 'Input 2': false });
     if (f.area) setProps(r, { 'Input 1 swap': main('Text area', { State: 'Filled', Size: 'md' }).id });
     const inp = r.children.find(c => c.type === 'INSTANCE' && c.visible !== false);
     if (inp) setProps(inp, { State: f.value ? 'Filled' : 'Default' });
-    if (inp) setProps(inp, { 'Label text': f.label, Text: f.value || '', Optional: false, Helper: false, 'Info icon': false, 'Show Placeholder': !f.value });
-  });
-  const ft = m.findAll(n => n.type === 'INSTANCE' && /button/.test(n.name) && n.parent && n.parent.name === 'Actions');
+    if (inp) setProps(inp, { 'Label text': f.label, Text: f.value || f.placeholder || '', Optional: !!f.optional, Helper: false, 'Info icon': false, 'Show Placeholder': !f.value });
+    if (inp) syncLabel(inp, f.label, f.optional);   // ป้ายที่เห็นคือ Input label ที่ซ้อน (ตาม Overhaul) — เดิมไม่ตั้ง ป้ายเลยค้าง "ผู้ใช้ยานพาหนะ" ของไลบรารี
+    const ct = inp && !f.area && find(inp, 'Container'), tv = ct && ct.findOne(n => n.type === 'TEXT' && n.visible !== false);
+    if (tv && f.value && tv.characters !== f.value) await text(ct, tv, f.value);   // 3 พ.ย. 2569 ไฟล์จริงช่องขึ้นว่าง — ค่าที่เห็นไม่ตรง property ก็ใส่ที่ข้อความโดยตรง
+  }
+  /* ปุ่มของ Modal Type=Form อยู่ใน Modal footer > Actions > "Primary and secondary actions" (ไม่ใช่ลูกของ Actions ตรงๆ) — เดิมกรองแค่ parent = Actions ปุ่มหลักเลยค้างคำของไลบรารี
+     (ชีตลูกค้า 5 พ.ย. 2569: popup ตีกลับขึ้น "บันทึก" แทน "ตีกลับ" · popup ระบุอะไหล่เพิ่มเติมขึ้น "บันทึก" แทน "เพิ่ม") */
+  const ft = m.findAll(n => n.type === 'INSTANCE' && /button/.test(n.name) && n.parent && (n.parent.name === 'Actions' || n.parent.name === 'Primary and secondary actions'));
   ft.forEach(b => {
-    if (b.name === 'Primary button') setProps(b, { Text: 'บันทึก', 'Leading icon': false, 'Trailing icon': false });
-    else if (b.name === 'Secondary button') setProps(b, { Text: 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false });
+    if (b.name === 'Primary button') setProps(b, { Text: o.ok || 'บันทึก', 'Leading icon': false, 'Trailing icon': false });
+    else if (b.name === 'Secondary button') setProps(b, { Text: o.cancel || 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false });
     else b.visible = false;
   });
 }
-function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "…" · mobile = bottom sheet ที่มีรายการเมนู
+/* 4 พ.ย. 2569 เจ้าของงาน "จังหวะที่เป็น dropdown ต้องชิดกับจุดที่เลือก" — วางรายการตอนสร้างจอ แล้ว stripDividers/polish ทำให้ของเหนือช่องเตี้ยลง ช่องเลื่อนขึ้นแต่รายการค้างที่เดิม
+   ⇒ จำวิธีวางไว้ (PINS) แล้ววางซ้ำอีกรอบหลังจอเสร็จ (repin ใน buildGrid) รายการจึงอยู่ใต้ช่อง 4 px / เมนูชิดปุ่ม "…" ตามตำแหน่งสุดท้ายของช่อง */
+let PINS = [];
+function pin(place) { place(); PINS.push(place); }
+function repin() { const p = PINS; PINS = []; for (const f of p) { try { f(); } catch (e) { /* ช่องถูกลบไปแล้ว */ } } }
+let MENU_SHEET = false;
+function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "…" · mobile = ไม่เปิดเมนู เพราะการ์ดมือถือแสดงไอคอนดู แก้ไข ลบ ครบแล้ว (4 พ.ย. 2569) · ตั้ง MENU_SHEET = true ถ้าจะกลับไปใช้ bottom sheet
+  if (MOB && !MENU_SHEET) return null;
   if (MOB) {
     overlay(scr, inst('Background overlay'), 0, 0).resize(VW(), VH());
     const sh = frame('Sheet', 'VERTICAL', { fill: WHITE, pad: [0, 0] }); sh.topLeftRadius = sh.topRightRadius = 24;
@@ -737,7 +862,7 @@ function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "
     if (w !== 'divider') setProps(it, { Text: w[0], Shortcut: false, Icon: true, 'Icon swap': icon(w[1]) });
   });
   overlay(scr, m, 0, 0);
-  if (anchor) { const sb = scr.absoluteBoundingBox, ab = anchor.absoluteBoundingBox; m.x = ab.x - sb.x + ab.width - m.width - 16; m.y = ab.y - sb.y + ab.height - 8; }
+  if (anchor) pin(() => { const sb = scr.absoluteBoundingBox, ab = anchor.absoluteBoundingBox; m.x = ab.x - sb.x + ab.width - m.width - 16; m.y = ab.y - sb.y + ab.height - 8; });
   return m;
 }
 const MENU = [['ดูรายละเอียด', 'quick_reference_all-24-300-round'], ['แก้ไข', 'stylus-24-300-round'], ['ลบ', 'delete-24-300-round']];
@@ -749,28 +874,39 @@ function comboAt(scr, anchor, items) {   // Dropdown list ใต้ช่อง�
     setProps(it, { State: items[i][2] ? 'Selected' : 'Default' });
     setProps(it, { Text: items[i][0], 'Supporting text': items[i][1] || '', Avatar: false, 'Supporting 2': false, Supporting: !!items[i][1] });   // ไม่ส่งบรรทัดรอง = แถวเดียว (เลือกรถ: ทะเบียนอย่างเดียว · ยกจาก Overhaul R24)
   });
-  const sc = find(l, 'Vertical scrollbar'); if (sc) sc.visible = false;
+  const sc = find(l, 'Vertical scrollbar'); if (sc) sc.visible = items.length > rows.length;   // รายการเกินแถวของไลบรารี (5) = คง scrollbar ไว้ (5 พ.ย. 2569 เขตของหลายภาค)
   overlay(scr, l, 0, 0);
-  if (anchor) { const sb = scr.absoluteBoundingBox, ab = anchor.absoluteBoundingBox; l.resize(ab.width, l.height); l.x = ab.x - sb.x; l.y = ab.y - sb.y + ab.height + 4; }
+  if (anchor) pin(() => { const sb = scr.absoluteBoundingBox, ab = anchor.absoluteBoundingBox; l.resize(ab.width, l.height); l.x = ab.x - sb.x; l.y = ab.y - sb.y + ab.height + 4; });
 }
 
 /* ---------- แถบค้นหา + แบ่งหน้า (ตาม Table header / Table pagination ของไลบรารี) ---------- */
+/* o.title + o.badge = หัวตาราง "ชื่อ" + Badge outline (เช่น "ยานพาหนะ" "5 คัน" ของ Vehicle list ใน UI Release#2) · o.filterCount = Pill บนปุ่มตัวกรอง (ช่องแรกของ Actions มี Pill outline ในตัว)
+   o.more = [{ text, disabled }] ปุ่ม Secondary ช่องถัดไป (เช่น "จัดลงไตรมาส" แบบปุ่ม "รายงาน" ของ Export reports - Select vehicles · ช่องนี้ใน Table header ของไฟล์ Component ไม่มี Pill ⇒ จำนวนต่อท้ายข้อความ) — 5 พ.ย. 2569 */
 async function tableHeader(o) {
-  const th = inst('Table header', { Breakpoint: BP() }, { 'Table title': false, Badge: false, 'Supporting text': false, 'More actions': false, Filters: !!(o.chips && o.chips.length) });
+  const th = inst('Table header', { Breakpoint: BP() }, { 'Table title': !!o.title, Badge: o.badge != null, 'Supporting text': false, 'More actions': false, Filters: !!(o.chips && o.chips.length) });
+  if (o.title) { setProps(th, { Title: o.title }); const tt = find(th, 'Front Section'); const tx = tt && tt.findOne(n => n.type === 'TEXT'); if (tx) await text(tt, tx, o.title); }
+  if (o.badge != null) { const b = find(th, 'Badge outline'); if (b) setProps(b, { Text: String(o.badge) }); }
   const ti = find(th, 'Text input');
   if (ti) setProps(ti, { Label: false, Helper: false, 'Trailing icon': false, Text: o.query || o.placeholder || PLUGIN.searchHint, State: o.query ? 'Filled' : 'Default' });
-  const acts = find(th, 'Actions');
+  const acts = find(th, 'Actions'), more = (o.more || []).slice();
   if (acts) { let first = true; for (const b of acts.children) {
-    if (b.name === 'Secondary button' && first) { first = false; setProps(b, { Text: 'ตัวกรอง', 'Leading icon': true, 'Leading icon swap': icon('filter_list-24-400-round') }); const p = find(b, 'Pill outline'); if (p) p.visible = false; }
-    else b.visible = false; } }
+    if (b.name === 'Secondary button' && first) { first = false; setProps(b, { Text: 'ตัวกรอง', 'Leading icon': true, 'Leading icon swap': icon('filter_list-24-400-round') }); const p = find(b, 'Pill outline'); if (p) { if (o.filterCount) setProps(p, { Text: String(o.filterCount) }); else p.visible = false; } }
+    else if (b.name === 'Secondary button' && more.length) { const m = more.shift(); b.visible = true; setProps(b, { Text: m.text, 'Leading icon': !!m.icon, 'Trailing icon': false, State: m.disabled ? 'Disabled' : 'Default' }); if (m.icon) setProps(b, { 'Leading icon swap': icon(m.icon) }); }
+    else if (o.primary && b.name === 'Primary button') setProps(b, { Text: o.primary, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') });
+    else if (o.primary && MOB && b.name === 'Secondary button' && !acts.children.some(x => x.name === 'Primary button')) {   // Table header Mobile มีแค่ Secondary 2 ช่อง ⇒ สลับช่องที่ 2 เป็น Primary แบบ Request list ของ 5.10 Vehicle In Use (EV) · UI Release#2
+      try { b.swapComponent(main('Primary button', { State: 'Default', Size: 'lg' })); b.name = 'Primary button'; setProps(b, { Text: o.primary, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') }); } catch (e) { warn('ปุ่มหลักใน Table header มือถือ', e); }
+    }
+    else b.visible = false; } }   // o.primary = ปุ่มหลักขวาของ "ตัวกรอง" (5 พ.ย. 2569 รีวิวทีมออกแบบ · ตาม Incident list ของ 5.5 Repair & Maintenance Job (Admin) ใน UI Release#2)
   th.findAll(n => n.name === 'Badge outline with remove icon').forEach((c, i) => { if (o.chips && i < o.chips.length) setProps(c, { Text: o.chips[i] }); else c.visible = false; });
   return th;
 }
 async function pagination(n) { return fillPagination(inst('Table pagination', { Breakpoint: BP() }), n); }
-async function fillPagination(pg, n) {
-  const tx = find(pg, 'Text'); if (tx && tx.type === 'TEXT') await text(pg, tx, 'แสดง 1 ถึง ' + n + ' จาก ' + n + ' รายการ');
+async function fillPagination(pg, n) {   // n = จำนวนแถว · { shown, total } = แถวมากกว่าที่ Table แสดงได้ (10 แถว) แสดงหน้าแรก (4 พ.ย. 2569)
+  const shown = typeof n === 'object' ? n.shown : n, total = typeof n === 'object' ? n.total : n;
+  const tx = find(pg, 'Text'); if (tx && tx.type === 'TEXT') await text(pg, tx, 'แสดง 1 ถึง ' + shown + ' จาก ' + total + ' รายการ');
   const items = pg.findAll(x => x.name === 'Button groups pagination item');
-  items.forEach((it, i) => { if (i === 0 || i === items.length - 1) setProps(it, { State: 'Disabled' }); else if (i === 1) setProps(it, { Number: '1' }); else it.visible = false; });
+  const pages = Math.max(1, Math.ceil(total / Math.max(1, shown)));
+  items.forEach((it, i) => { if (i === 0 || (i === items.length - 1 && pages === 1)) setProps(it, { State: 'Disabled' }); else if (i === items.length - 1) { /* ไปหน้าถัดไปได้ */ } else if (i >= 1 && i <= pages) setProps(it, { Number: String(i) }); else it.visible = false; });
   return pg;
 }
 const firstMenuCell = (scr) => scr.findAll(n => n.type === 'INSTANCE' && n.name === 'Table cell' && n.variantProperties && n.variantProperties.Style === 'Action icons')[0];
@@ -839,7 +975,7 @@ async function labelText(chars, size, hex) {
   return t;
 }
 function fixed(f, w, h) { f.primaryAxisSizingMode = 'FIXED'; f.counterAxisSizingMode = 'FIXED'; f.resize(w, h); return f; }
-async function flowBar(prefix, code, title, state, width) {
+async function flowBar(prefix, code, title, state, width, desc) {
   let bar = null;
   if (INDEX.has('Header') && !HEADER_BROKEN) {
     bar = inst('Header', { Type: 'Subheader' });
@@ -849,20 +985,54 @@ async function flowBar(prefix, code, title, state, width) {
     const okCode = st ? await text(st, 'Text', code) : false;
     const det = find(bar, 'Detail'); const ts = det ? det.children.filter(c => c.type === 'TEXT') : [];
     const okTitle = ts[0] ? await text(det, ts[0], title) : false;
-    if (ts[1]) ts[1].visible = false;   // บรรทัด "เงื่อนไข" ของทีมออกแบบ — ไม่ใช้
+    /* บรรทัดที่ 2 = เงื่อนไขของ state (แบบตัวอย่าง "เงื่อนไขการแสดงผล …" ใน Design Annotations · 10 พ.ย. 2569) — ไม่มีก็ซ่อน */
+    if (ts[1]) { if (desc && await text(det, ts[1], desc)) { try { ts[1].layoutSizingHorizontal = 'FILL'; ts[1].textAutoResize = 'HEIGHT'; } catch (e) { /* ปล่อยกว้างตาม component */ } } else ts[1].visible = false; }
     if (!(okCode && okTitle)) {   // ใส่ข้อความไม่ได้ (ฟอนต์/โครง) → ป้ายจะไม่ตรง scenario ⇒ ถอยไปแถบธรรมดาทั้งชุด
       try { bar.remove(); } catch (e) { /* ลบไม่ได้ ปล่อย */ }
       bar = null; HEADER_BROKEN = true;
       log('⚠ แถบ Header ของทีมออกแบบใส่ข้อความไม่ได้ (ฟอนต์ของ component ไม่มีในเครื่อง) — ใช้แถบธรรมดาสีเดียวกันแทนทั้งชุด');
-    } else { try { bar.resize(width, bar.height); } catch (e) { warn('ปรับกว้างแถบ ' + code, e); } }
+    } else {
+      try { bar.resize(width, bar.height); } catch (e) { warn('ปรับกว้างแถบ ' + code, e); }
+      /* ชื่อยาวไม่ล้นไปทับคอลัมน์ข้าง (เจ้าของงาน 10 พ.ย. 2569 ส่งภาพ V.4.1 ทับ V.4.2 "ปรับกล่องให้เหมาะสมกับคำ"):
+         ข้อความกว้างเต็ม Detail แล้วขึ้นบรรทัดใหม่ · แถบสูงตามข้อความ (กว้างคงเท่าจอ) · กล่องรหัสยืดสูงตาม */
+      try { ts[0].layoutSizingHorizontal = 'FILL'; ts[0].textAutoResize = 'HEIGHT'; bar.counterAxisSizingMode = 'AUTO'; if (st) st.layoutSizingVertical = 'FILL'; } catch (e) { warn('ตัดบรรทัดแถบ ' + code, e); }
+    }
   }
-  if (!bar) {
+  if (!bar) {   // แถบธรรมดา: กว้างคงที่ สูงตามข้อความ (อย่างน้อย GRID.barH) · ชื่อยาวขึ้นบรรทัดใหม่ไม่ล้นคอลัมน์ (10 พ.ย. 2569)
     bar = fixed(frame('Header', 'HORIZONTAL'), width, GRID.barH);
+    bar.counterAxisSizingMode = 'AUTO'; bar.minHeight = GRID.barH;
     const st = fixed(frame('State', 'HORIZONTAL', { fill: rgbOf(BAR_FILL[state] || BAR_FILL.Default), pad: [0, 40] }), GRID.stateW, GRID.barH);
-    st.primaryAxisAlignItems = 'CENTER'; st.counterAxisAlignItems = 'CENTER'; st.appendChild(await labelText(code, 64, '#FFFFFF')); bar.appendChild(st);
-    const det = frame('Detail', 'HORIZONTAL', { fill: WHITE, pad: [0, 40] }); det.counterAxisAlignItems = 'CENTER'; bar.appendChild(det); det.layoutGrow = 1; det.layoutSizingVertical = 'FILL';
-    det.appendChild(await labelText(title, 48, '#101828'));
+    st.primaryAxisAlignItems = 'CENTER'; st.counterAxisAlignItems = 'CENTER'; st.appendChild(await labelText(code, 64, '#FFFFFF')); bar.appendChild(st); st.layoutSizingVertical = 'FILL';
+    const det = frame('Detail', 'HORIZONTAL', { fill: WHITE, pad: [24, 40] }); det.counterAxisAlignItems = 'CENTER'; bar.appendChild(det); det.layoutGrow = 1;
+    const tt = await labelText(title + (desc ? ' — ' + desc : ''), 48, '#101828'); det.appendChild(tt); tt.layoutSizingHorizontal = 'FILL'; tt.textAutoResize = 'HEIGHT';
   }
+  bar.name = prefix + ' · ' + code + ' ' + title + (desc ? ' — ' + desc : '');
+  return bar;
+}
+/* สีป้าย state ตามหน้าจริงของ UI Release#2 (10 พ.ย. 2569): ปกติ Sub Flow (เทา) · ผลสำเร็จ (A - S1 …) Success (เขียว) · ผิดพลาด (A3.1 - F …) Failed (แดง)
+   ของเรา: ชื่อจอมี "สำเร็จ" = Success · "Validation" หรือ "ไม่สำเร็จ" = Failed · ที่เหลือ Sub Flow */
+const stateTone = (label) => /ไม่สำเร็จ|Validation/.test(label) ? 'Failed' : /สำเร็จ/.test(label) ? 'Success' : 'Sub Flow';
+/* หัวหน้า (10 พ.ย. 2569 เจ้าของงาน "ใช้ design จาก component กลาง" — หน้า Design Annotations ของ UI Release#2 · ไฟล์ Backup):
+   Header Type=Header = ชื่อใหญ่ + บรรทัดอธิบาย + Header / Status · หน้าจริงของไฟล์ (5.1–5.17) ใช้ "1 ตัวต่อหน้า" เป็นชื่อขอบเขตงาน สถานะ Ready for Review / Work In Progress
+   บรรทัดอธิบายซ่อน · บล็อกตัวอักษรไม่ใช้ตัวนี้ (ใช้ Subheader State=Default) · ใช้กับหัวหน้าของชุดจอ และแถบ Journey
+   component ไม่มี variant Type=Header (ชุดเก่าในไฟล์) หรือใส่ข้อความไม่ได้ → แถบ Subheader แบบเดิม */
+async function blockHeader(prefix, code, title, width, desc, status) {
+  const set = INDEX.get('Header');
+  const top = !HEADER_BROKEN && set && set.type === 'COMPONENT_SET' && set.children.some(c => c.variantProperties && c.variantProperties.Type === 'Header');
+  if (!top) return flowBar(prefix, code, title, 'Default', width);
+  const bar = inst('Header', { Type: 'Header' });
+  const ts = bar.children.filter(c => c.type === 'TEXT');
+  if (!(ts[0] && await text(bar, ts[0], code === 'Page' ? title : code + ' · ' + title))) {
+    try { bar.remove(); } catch (e) { /* ลบไม่ได้ ปล่อย */ }
+    log('⚠ แถบหัวบล็อก (Header Type=Header) ใส่ข้อความไม่ได้ — ใช้แถบ Subheader แทน');
+    return flowBar(prefix, code, title, 'Default', width);
+  }
+  if (ts[1]) { if (desc && await text(bar, ts[1], desc)) { try { ts[1].textAutoResize = 'HEIGHT'; } catch (e) { /* ปล่อย */ } } else ts[1].visible = false; }
+  const hs = find(bar, 'Header / Status');   // ค่าที่หน้าจริงใช้: Work In Progress (ค่าตั้งต้นของ component) · Ready for Review
+  if (hs && !status) hs.visible = false;   // ไม่ส่งสถานะ = ซ่อนป้าย (เจ้าของงาน 10 พ.ย. 2569 "แถบ Journey เอาป้าย Work In Progress ออกด้วย")
+  else if (hs && Object.keys(hs.componentProperties || {}).some(k => k.split('#')[0] === 'Property 1')) setProps(hs, { 'Property 1': status });
+  else if (hs && status !== 'Work In Progress') warn('Header / Status', 'เปลี่ยนเป็น ' + status + ' ไม่ได้ (component ไม่เปิด property)');
+  try { bar.resize(width, bar.height); } catch (e) { warn('ปรับกว้างแถบหัวบล็อก ' + code, e); }
   bar.name = prefix + ' · ' + code + ' ' + title;
   return bar;
 }
@@ -921,7 +1091,64 @@ async function namedPage(names) {
   try { const p = figma.createPage(); p.name = names[0]; return { page: p, fresh: true, found: false }; }
   catch (e) { return { page: figma.currentPage, fresh: false, found: false, fallback: true }; }
 }
-
+/* พื้นที่วางงานของ Figma มีขอบราว ±65,500 เกินแล้วเลื่อนและซูมไปไม่ถึง (2 พ.ย. 2569 จอ S1 ไปอยู่ y=231434 แล้วเจ้าของงานมองไม่เห็น)
+   เจ้าของงาน "อยากเพิ่มใน page Maintainance เดิม แทน 2" ⇒ ใต้ของเดิมไม่พอ ให้วางเหนือของเดิมบนหน้าเดียวกัน · เหนือของเดิมก็เต็มแล้วจึงต่อหน้า <ชื่อ>-2 <ชื่อ>-3 …
+   ของเดิมไม่ถูกแตะ · ปลั๊กอิน dynamic-page ต้อง loadAsync ก่อนอ่านหน้าที่ยังไม่เปิด */
+const CANVAS_MAX = 60000;
+const pageBottom = (page) => page.children.reduce((y, n) => n.absoluteBoundingBox ? Math.max(y, n.absoluteBoundingBox.y + n.absoluteBoundingBox.height) : y, 0);
+const pageTop = (page) => page.children.reduce((y, n) => n.absoluteBoundingBox ? Math.min(y, n.absoluteBoundingBox.y) : y, CANVAS_MAX);
+function spotOn(page, need, gap, skip) {   // { y } = วางจาก y ลงล่าง · limit = ขอบบนของของที่อยู่ถัดลงไป (ห้ามล้น) · null = หน้านี้ไม่มีที่
+  /* เจ้าของงาน 2 พ.ย. 2569 "อยากให้การเขียน เป็นเขียนต่อด้านล่าง" ⇒ ใต้ของเดิมไม่พอ ให้หาช่องว่างแรกจากขอบบน (-CANVAS_MAX) ลงมา
+     ชุดแรกอยู่ขอบบน ชุดถัดไปต่อใต้ชุดก่อน เรียงลงมาตามลำดับ export · skip = ชิ้นที่ไม่นับ (ชิ้นที่กำลังวาง/ย้าย) */
+  const kids = page.children.filter(n => n.absoluteBoundingBox && !(skip && skip.has(n)));
+  if (!kids.length) return { y: 0 };
+  const top = (n) => n.absoluteBoundingBox.y, bot = (n) => top(n) + n.absoluteBoundingBox.height;
+  const b = kids.reduce((m, n) => Math.max(m, bot(n)), -Infinity);
+  if (b + gap + need <= CANVAS_MAX) return { y: b + gap };
+  let y = -CANVAS_MAX;
+  for (let k = 0; k <= kids.length; k++) {
+    const hit = kids.filter(n => top(n) < y + need + gap && bot(n) + gap > y);
+    if (!hit.length) { const next = kids.filter(n => top(n) >= y).reduce((m, n) => Math.min(m, top(n)), CANVAS_MAX + gap); return { y, limit: next - gap }; }
+    y = hit.reduce((m, n) => Math.max(m, bot(n)), -Infinity) + gap;
+    if (y + need > CANVAS_MAX) return null;
+  }
+  return null;
+}
+async function roomyPage(names, need, gap) {
+  gap = gap || 400;
+  const tp = await namedPage(names);
+  const on = async (p) => { if (p.loadAsync) await p.loadAsync(); return spotOn(p, need, gap); };
+  const here = await on(tp.page);
+  if (here) return Object.assign(tp, here);
+  const lower = (p) => p.name.trim().toLowerCase(), re = new RegExp('^' + names[0].toLowerCase() + '-(\\d+)$');
+  const pages = figma.root.children.filter(p => re.test(lower(p)));
+  for (const p of pages) { const s = await on(p); if (s) return Object.assign({ page: p, fresh: false, found: true, next: true }, s); }
+  const next = pages.reduce((m, p) => Math.max(m, +lower(p).match(re)[1]), 1) + 1;
+  try { const p = figma.createPage(); p.name = names[0] + '-' + next; return { page: p, fresh: true, found: true, next: true, y: 0 }; }
+  catch (e) { return Object.assign(tp, { full: true, y: pageBottom(tp.page) + gap }); }
+}
+function liftAbove(page, before, limit) {   // วางในช่องว่างด้านบน: สูงจริงเกินที่เผื่อไว้จนทับของที่อยู่ถัดลงไป ⇒ ขยับทั้งชุดขึ้นเท่าที่ล้น
+  const fresh = page.children.filter(n => !before.has(n));
+  const dy = Math.min(0, limit - fresh.reduce((y, n) => Math.max(y, n.y + n.height), -Infinity));
+  if (dy) fresh.forEach(n => { n.y += dy; });
+}
+/* 4 พ.ย. 2569 เจ้าของงาน "เมื่อวาน export ไปที่ Maintainance2 … อยากให้ export ไปที่ Maintainance แทน"
+   ประเมินก่อนสร้าง (BLOCK_H × จำนวนบล็อก) เกินขอบเสมอเมื่อสร้างทั้งชุด ทั้งที่ชุดจริงสูงราว 77,000 ⇒ สร้างบนหน้าเดิมก่อน วัดขนาดจริงแล้วค่อยย้ายลงช่อง
+   ลำดับ: ใต้ของเดิม → ช่องว่างจากขอบบนลงมา (spotOn) → คอลัมน์ใหม่ทางขวาของของเดิม (บนเสมอของเดิม) · null = หน้านี้ไม่มีที่ทั้งแนวตั้งและแนวนอน */
+function fitOn(page, nodes, gap) {
+  gap = gap || 400;
+  const moving = new Set(nodes);
+  const top = Math.min(...nodes.map(n => n.y)), h = Math.max(...nodes.map(n => n.y + n.height)) - top;
+  const left = Math.min(...nodes.map(n => n.x)), w = Math.max(...nodes.map(n => n.x + n.width)) - left;
+  const s = spotOn(page, h, gap, moving);
+  if (s) { const y = s.y + h > CANVAS_MAX ? Math.max(-CANVAS_MAX, CANVAS_MAX - h) : s.y; return { dx: 0, dy: y - top, y, side: false }; }   // หน้าว่าง spotOn ให้ y 0 ⇒ ชุดสูงต้องยกขึ้นให้อยู่ในขอบ
+  const old = page.children.filter(n => !moving.has(n) && n.absoluteBoundingBox);
+  const right = old.reduce((m, n) => Math.max(m, n.absoluteBoundingBox.x + n.absoluteBoundingBox.width), -Infinity) + gap * 5;
+  const y = Math.max(-CANVAS_MAX, Math.min(pageTop({ children: old }), CANVAS_MAX - h));
+  if (right + w > CANVAS_MAX || h > 2 * CANVAS_MAX) return null;
+  return { dx: right - left, dy: y - top, x: right, y, side: true };
+}
+function shiftAll(nodes, f) { for (const n of nodes) { n.x += f.dx; n.y += f.dy; } }
 /* ---------- ผัง userflow ข้างจอ (เจ้าของงานสั่ง 22 ต.ค. 2569: "userflow กับ wireframe เรียงต่อกัน … อยู่ข้างๆกัน ตอนที่ export") ----------
    ข้อมูลผังฝังตอน build (const USERFLOW · plugin-lib/userflow-layout.js อ่านไฟล์ userflow .md) — ปลั๊กอินแค่วาดตามตำแหน่ง
    1 บล็อก scenario = ผังซ้ายสุด (อ่านบน → ล่าง) + ป้าย Device + คอลัมน์จอ A.1 A.2 … · กล่องในผังที่มีจอติดป้ายรหัสจอ (A.2 · A.3)
@@ -957,8 +1184,9 @@ async function arrow(pts, hex, weight) {   // เส้นหักมุมต�
   return v;
 }
 /* codes: { nodeId: ['A.2', …] } · loose: ['A.5 ยืนยันการออก', …] = จอที่ยังไม่มีกล่องในผัง */
-async function userflowFrame(prefix, code, n, codes, loose) {
-  const sc = USERFLOW && USERFLOW.scenarios && USERFLOW.scenarios[n];
+async function userflowFrame(prefix, code, n, codes, loose, o) {   // o.sc = ผังที่ใช้แทน (แนวนอนของ journey) · o.title = หัวผัง
+  o = o || {};
+  const sc = o.sc || (USERFLOW && USERFLOW.scenarios && USERFLOW.scenarios[n]);
   if (!sc) return null;
   const f = figma.createFrame(); CREATED.push(f);
   f.name = prefix + ' · ' + code + ' userflow S' + n;
@@ -966,8 +1194,9 @@ async function userflowFrame(prefix, code, n, codes, loose) {
   f.clipsContent = false;
   f.resize(sc.w, sc.h);
   const put = (node, x, y) => { f.appendChild(node); node.x = x; node.y = y; return node; };
-  put(await labelText('userflow · S' + n + ' ' + sc.title, 32, '#101828'), 40, 36);
-  put(await labelText('อ่านบน → ล่าง · ทางแยก N ไปขวา · เส้นที่วนข้างผัง = ย้อนกลับ · ป้ายเทา = รหัสจอทางขวา', 16, '#475467'), 40, 84);
+  put(await labelText(o.title || ('userflow · S' + n + ' ' + sc.title), 32, '#101828'), 40, 36);
+  put(await labelText(sc.horizontal ? 'อ่านซ้าย → ขวา · ทางแยก N ลงล่าง · เส้นที่วนใต้ผัง = ย้อนกลับ · ป้ายเทา = รหัสจอบนหน้านี้'
+    : 'อ่านบน → ล่าง · ทางแยก N ไปขวา · เส้นที่วนข้างผัง = ย้อนกลับ · ป้ายเทา = รหัสจอทางขวา', 16, '#475467'), 40, 84);
   const pos = {}, slots = [];
   for (const e of sc.edges) {   // เส้นก่อน กล่องทับเส้น
     const from = sc.nodes.find(x => x.id === e.from);
@@ -1025,6 +1254,15 @@ async function userflowFrame(prefix, code, n, codes, loose) {
   f.resize(sc.w, h);
   return { frame: f, slots };
 }
+/* ภาพประกอบ Empty state ที่ UI Release#2 เปลี่ยนจากภาพตั้งต้น (5 พ.ย. 2569 เจ้าของงาน "empty s1 ของรถ ใช้ ui นี้") —
+   ใส่ IMAGE fill ทับสี่เหลี่ยมใน Graphic ของ instance แบบเดียวกับ Contract vehicle list - Empty (1-54) · ภาพฝังตอน build (build.json "images") */
+async function emptyGraphic(es, key) {
+  const png = typeof IMAGES !== 'undefined' && IMAGES && IMAGES[key];
+  const g = find(es, 'Graphic'), r = g && g.findOne && g.findOne(n => n.type === 'RECTANGLE');
+  if (!png || !r) { warn('ภาพ Empty state ' + key, new Error(png ? 'ไม่เจอสี่เหลี่ยมใน Graphic' : 'ไม่มีภาพใน build.json images')); return es; }
+  r.fills = [{ type: 'IMAGE', imageHash: figma.createImage(figma.base64Decode(png)).hash, scaleMode: 'FILL' }];
+  return es;
+}
 /* ภาพย่อจอจริง: export จอเป็น PNG แล้วใส่เป็นภาพในช่อง · จอสูงกว่าช่อง = ตัดเอาส่วนบนเต็มความกว้าง (เห็นหัวหน้า + ส่วนต้นของเนื้อหา) · ภาพเป็นภาพนิ่ง แก้จอแล้วต้องสร้างใหม่ */
 async function fillThumb(rect, scr) {
   try {
@@ -1037,6 +1275,338 @@ async function fillThumb(rect, scr) {
   } catch (e) { warn('ภาพย่อ ' + scr.name, e); return false; }
 }
 
+/* ---------- เอกสารเป็นกรอบบนหน้า Figma: user story mapping + use case (30 ต.ค. 2569 เจ้าของงาน "ทุกอย่างอยู่ใน Figma") ----------
+   ข้อมูลฝังตอน build (const DOCS จาก build.json "docs") · กรอบอยู่นอกจอ ชื่อ "<prefix> · …" ปลั๊กอินล้างตอนรันซ้ำแบบป้ายอื่น · ไม่ใช่จอ UI จึงวาดด้วยกรอบ + ข้อความ */
+const DOC_STATUS = { 'มีใน flow แล้ว': '#E3F4EA', 'มีบางส่วน': '#FDF0DC', 'ยังไม่มี': '#EFEDF0', 'ขัดกับที่เคาะ': '#FDE8E6' };
+let DOC_FONT = null;
+async function docText(chars, size, hex, w, regular) {
+  const t = await labelText(chars || ' ', size, hex);   // หัว = ฟอนต์ป้าย (ตัวหนา)
+  if (regular) {
+    if (DOC_FONT === null) { DOC_FONT = false; for (const f of [{ family: 'IBM Plex Sans Thai', style: 'Regular' }, { family: 'Inter', style: 'Regular' }]) { try { await figma.loadFontAsync(f); DOC_FONT = f; break; } catch (e) { /* ลองตัวถัดไป */ } } }
+    if (DOC_FONT) t.fontName = DOC_FONT;
+  }
+  if (w) { t.resize(w, t.height); t.textAutoResize = 'HEIGHT'; }
+  return t;
+}
+function docBox(name, dir, o) {
+  const f = frame(name, dir, Object.assign({ fill: WHITE }, o || {}));
+  if (o && o.stroke) { f.strokes = [{ type: 'SOLID', color: rgbOf(o.stroke) }]; f.strokeWeight = 1; }
+  if (o && o.radius) f.cornerRadius = o.radius;
+  return f;
+}
+function putBelow(page, node, gap) {   // วางต่อใต้ของเดิมบนหน้า ชิดซ้ายที่ x = 0 · กรอบชื่อเดียวกันของรอบก่อนถูกแทนที่ (ไม่ซ้อนหลายชุด)
+  page.children.filter(n => n !== node && n.name === node.name).forEach(n => { log('↻ แทนที่ "' + n.name + '" ของรอบก่อน'); n.remove(); });
+  let y = 0; page.children.forEach(n => { if (n !== node && n.absoluteBoundingBox) y = Math.max(y, n.absoluteBoundingBox.y + n.absoluteBoundingBox.height + (gap || 400)); });
+  const s = spotOn(page, node.height, gap || 400, new Set([node]));   // ใต้ของเดิมเกินขอบพื้นที่วางงาน ⇒ ช่องว่างแรกจากขอบบนลงมา
+  page.insertChild(0, node); node.x = 0; node.y = s ? s.y : y; return node;
+}
+/* story map: แถวช่วงงานเรียงซ้าย → ขวา · การ์ดข้อกำหนดใต้แต่ละช่วง (☑ ทำแล้ว · สีตามสถานะ) */
+async function storyMapBoard(prefix, sm) {
+  CREATED = [];
+  const W = 440;
+  const outer = docBox(prefix + ' · user story mapping', 'VERTICAL', { pad: 64, gap: 32, stroke: '#D0D5DD', radius: 24 });
+  outer.appendChild(await docText(sm.title, 56, '#101828'));
+  outer.appendChild(await docText('ต้นฉบับ ' + sm.src + ' · สีการ์ด = flow ครอบแค่ไหน (เขียว มีแล้ว · ส้ม บางส่วน · เทา ยังไม่มี · แดง ขัดกับที่เคาะ) · ☑ = ทำแล้ว', 24, '#475467', null, true));
+  const cols = docBox('Columns', 'HORIZONTAL', { gap: 24, fill: null }); cols.fills = []; outer.appendChild(cols);
+  for (const sec of sm.sections) {
+    const col = docBox('ช่วงงาน · ' + sec.h, 'VERTICAL', { gap: 12 }); col.fills = [];
+    col.counterAxisSizingMode = 'FIXED'; col.resize(W, 100); col.primaryAxisSizingMode = 'AUTO';
+    const head = docBox('หัว', 'VERTICAL', { pad: 20, gap: 6, fill: rgbOf('#A80689'), radius: 12 });
+    head.appendChild(await docText(sec.h, 26, '#FFFFFF', W - 40));
+    if (sec.note) head.appendChild(await docText(sec.note, 20, '#FFFFFF', W - 40, true));
+    col.appendChild(head); head.layoutAlign = 'STRETCH';
+    const hi = (k) => (sec.head || []).indexOf(k);
+    for (const r of sec.rows) {
+      const st = r[hi('สถานะ')] || '';
+      const card = docBox('การ์ด', 'VERTICAL', { pad: 16, gap: 8, fill: rgbOf(DOC_STATUS[st] || '#FFFFFF'), radius: 10, stroke: '#D0D5DD' });
+      card.appendChild(await docText((r[hi('ทำแล้ว')] || '☐') + ' ' + (r[hi('use case')] || ''), 22, '#101828', W - 32, true));
+      card.appendChild(await docText(['JO ' + (r[hi('JO')] || '-'), st, r[hi('ใน flow ตอนนี้')] || ''].filter(Boolean).join(' · '), 18, '#475467', W - 32, true));
+      col.appendChild(card); card.layoutAlign = 'STRETCH';
+    }
+    cols.appendChild(col);
+  }
+  CREATED = [];
+  return outer;
+}
+/* ตาราง use case: แยกหัวข้อตามคอลัมน์ group · คอลัมน์กว้างตาม widths · แถวสลับสี · สถานะระบายสี */
+async function tableBoard(prefix, name, title, src, data, group, cols) {
+  CREATED = [];
+  const W = cols.reduce((a, c) => a + c[1], 0);
+  const outer = docBox(prefix + ' · ' + name, 'VERTICAL', { pad: 64, gap: 32, stroke: '#D0D5DD', radius: 24 });
+  outer.appendChild(await docText(title, 56, '#101828'));
+  outer.appendChild(await docText('ต้นฉบับ ' + src + ' · ' + data.rows.length + ' ข้อ', 24, '#475467', null, true));
+  const gi = data.head.indexOf(group);
+  for (const g of [...new Set(data.rows.map(r => r[gi]))]) {
+    const rows = data.rows.filter(r => r[gi] === g);
+    outer.appendChild(await docText(g + ' (' + rows.length + ' ข้อ)', 32, '#A80689'));
+    const tbl = docBox('ตาราง · ' + g, 'VERTICAL', { stroke: '#D0D5DD', radius: 8 }); tbl.clipsContent = true;
+    const line = async (vals, i, header) => {
+      const rw = docBox(header ? 'หัวตาราง' : 'แถว', 'HORIZONTAL', { fill: rgbOf(header ? '#F2F4F7' : (i % 2 ? '#FCFCFD' : '#FFFFFF')) });
+      for (const [k, [h, w]] of cols.entries()) {
+        const v = vals[k] || '';
+        const cell = docBox(h, 'VERTICAL', { pad: 12, fill: header ? null : (h === 'สถานะใน flow' && DOC_STATUS[v] ? rgbOf(DOC_STATUS[v]) : null) });
+        if (header || !(h === 'สถานะใน flow' && DOC_STATUS[v])) cell.fills = [];
+        cell.counterAxisSizingMode = 'FIXED'; cell.resize(w, 40); cell.primaryAxisSizingMode = 'AUTO';
+        cell.appendChild(await docText(v, header ? 18 : 18, header ? '#344054' : '#101828', w - 24, !header));
+        rw.appendChild(cell); cell.layoutAlign = 'STRETCH';
+      }
+      tbl.appendChild(rw);
+    };
+    await line(cols.map(c => c[0]), 0, true);
+    for (const [i, r] of rows.entries()) await line(cols.map(c => r[data.head.indexOf(c[0])]), i, false);
+    outer.appendChild(tbl);
+  }
+  CREATED = [];
+  return outer;
+}
+
+/* ---------- user journey swimlane ตามผู้เกี่ยวข้อง (เจ้าของงานสั่ง 4 พ.ย. 2569 "อยากให้ทำ user journey ยาวๆ เป็น swimlane ที่มี stakeholder ด้วย") ----------
+   ข้อมูลฝังตอน build (const SWIMLANE · plugin-lib/swimlane-layout.js อ่าน Diagram/…-swimlane.md) — ปลั๊กอินแค่วาดตามตำแหน่ง
+   1 แถว = 1 ผู้เกี่ยวข้อง (ชื่อซ้ายสุด) · แถบช่วงงานด้านบน · "อยากได้เป็นสี่เหลี่ยม และทางแยกเป็นข้าวหลามตัด" ⇒ ขั้นงาน = สี่เหลี่ยมเขียว · ทางแยก = ข้าวหลามตัดม่วง (สีชุดผัง userflow)
+   เส้นทึบ = ไปขั้นถัดไป · เส้นประเทา = ย้อนกลับไปทำซ้ำ · เป็นของวาดประกอบนอกเฟรมจอ (shape + vector) เหมือนผัง userflow */
+async function swimlaneBoard(prefix, sw) {
+  CREATED = [];
+  const f = figma.createFrame(); CREATED.push(f);
+  f.name = prefix + ' · user journey swimlane';
+  f.resize(sw.w, sw.h); f.fills = [{ type: 'SOLID', color: WHITE }];
+  f.strokes = [{ type: 'SOLID', color: rgbOf('#D0D5DD') }]; f.strokeWeight = 2; f.cornerRadius = 24; f.clipsContent = false;
+  const put = (node, x, y) => { f.appendChild(node); node.x = x; node.y = y; return node; };
+  const rect = (name, x, y, w, h, hex, stroke) => {
+    const r = figma.createRectangle(); CREATED.push(r); r.name = name; r.resize(w, h);
+    r.fills = hex ? [{ type: 'SOLID', color: rgbOf(hex) }] : [];
+    if (stroke) { r.strokes = [{ type: 'SOLID', color: rgbOf(stroke) }]; r.strokeWeight = 1; }
+    return put(r, x, y);
+  };
+  put(await docText(sw.title, 56, '#101828'), 64, 48);
+  put(await docText('สี่เหลี่ยม = ขั้นงาน (วงเล็บ = scenario · ภาพ = จอจริงบนหน้านี้ · ป้ายเทา = รหัสจอ) · ข้าวหลามตัด = ทางแยก · เส้นประเทา = ย้อนกลับไปทำซ้ำ · ต้นฉบับ ' + sw.src, 24, '#475467', null, true), 64, 128);
+  for (const l of sw.lanes) {   // แถวผู้เกี่ยวข้อง: พื้นสลับสี + ช่องชื่อซ้าย
+    rect('lane · ' + l.label, 0, l.y, sw.w, l.h, l.i % 2 ? '#F9FAFB' : '#FFFFFF', '#EAECF0');
+    rect('ชื่อ lane · ' + l.label, 0, l.y, sw.headW, l.h, '#F2F4F7', '#EAECF0');
+    const t = put(await docText(l.label, 28, '#101828', sw.headW - 48), 24, 0); t.name = 'ชื่อ ' + l.label;
+    t.y = l.y + (l.h - t.height) / 2;
+  }
+  for (const b of sw.bands) {   // แถบช่วงงาน (สีหัวการ์ด story map)
+    const r = rect('ช่วงงาน · ' + b.name, b.x, b.y, b.w, b.h, '#A80689'); r.cornerRadius = 8;
+    const t = put(await docText(b.name, 26, '#FFFFFF'), b.x + 20, 0); t.y = b.y + (b.h - t.height) / 2;
+  }
+  let links = 0;
+  for (const e of sw.edges) {   // เส้นก่อน กล่องทับเส้น
+    const v = await arrow(e.pts, e.back ? '#98A2B3' : '#475467', 3);
+    if (e.back) { try { v.dashPattern = [16, 10]; } catch (err) { /* ไม่มี dash ก็เส้นทึบ */ } }
+    put(v, Math.min(...e.pts.map(p => p[0])), Math.min(...e.pts.map(p => p[1])));
+    v.name = 'เส้น ' + e.from + ' → ' + e.to + (e.back ? ' (ย้อนกลับ)' : '');
+    if (e.lab) { const t = put(await labelText(e.label, 18, '#101828'), e.lab[0], e.lab[1]); t.name = 'ป้าย ' + e.label; }
+    links++;
+  }
+  let steps = 0, forks = 0; const slots = [];
+  for (const nd of sw.nodes) {
+    const s = flowNode(nd.kind === 'decision' ? 'decision' : 'display'); f.appendChild(s);
+    s.resize(nd.w, nd.h); s.x = nd.x; s.y = nd.y;
+    s.fills = [{ type: 'SOLID', color: nd.fill }]; s.strokes = [{ type: 'SOLID', color: nd.stroke }]; s.strokeWeight = 4;
+    s.name = (nd.kind === 'decision' ? 'ทางแยก ' : 'ขั้น ') + nd.id + ' / ' + nd.label;
+    if (nd.thumb) {   // ภาพย่อจอจริง (เจ้าของงาน 4 พ.ย. 2569 "ภาพย่อจอจริง + รหัสจอ") — ช่องบน + ข้อความใต้ภาพ + ป้ายรหัสจอมุมขวาบน แบบกล่องหน้าจอของผัง userflow
+      const th = rect('ภาพย่อ ' + nd.id, nd.x + nd.thumb.x, nd.y + nd.thumb.y, nd.thumb.w, nd.thumb.h, '#FFFFFF', '#D0D5DD'); th.cornerRadius = 4;
+      slots.push({ id: nd.id, rect: th, codes: nd.screens });
+      const top = nd.thumb.y + nd.thumb.h + 4, ih = nd.h - top - 6, iw = nd.w - 16;
+      const t = put(await flowText(nd.label, 15, '#101828', iw, ih), nd.x + 8, nd.y + top); t.name = nd.id + ' ข้อความ';
+      const b = frame('ป้ายจอ ' + nd.screens.join(' '), 'HORIZONTAL', { fill: rgbOf(BADGE_FILL), pad: [4, 10] }); b.cornerRadius = 6;
+      b.primaryAxisSizingMode = 'AUTO'; b.counterAxisSizingMode = 'AUTO';
+      b.appendChild(await labelText(nd.screens.join(' · '), 16, '#101828'));
+      put(b, nd.x + nd.w - 24, nd.y - 16);
+    } else {
+      const iw = nd.kind === 'decision' ? nd.w * 0.62 : nd.w - 24, ih = nd.kind === 'decision' ? nd.h * 0.62 : nd.h - 16;
+      const t = put(await flowText(nd.label, 17, '#101828', iw, ih), nd.x + (nd.w - iw) / 2, nd.y + (nd.h - ih) / 2); t.name = nd.id + ' ข้อความ';
+    }
+    if (nd.kind === 'decision') forks++; else steps++;
+  }
+  CREATED = [];
+  return { frame: f, steps, forks, links, slots };
+}
+
+/* ---------- flowchart กิจกรรมราย scenario (เจ้าของงาน 6 พ.ย. 2569 "สร้าง แต่ละ scen ออกมา … ทำ script ให้ export ใน figma" + "อยากได้ flowchart") ----------
+   ข้อมูลฝังตอน build (const ACTIVITY · plugin-lib/activity-layout.js อ่าน Diagram/…-flowchart-กิจกรรม.md) — ปลั๊กอินแค่วาดตามตำแหน่ง
+   "เอาเป็นแค่กิจกรรม … ไม่ต้องเอาหน้าจอไปรวม" ⇒ ไม่มีภาพย่อจอ ไม่มีป้ายรหัสจอ
+   "อยากให้แยก scen เลยนะ" ⇒ ประกอบในกรอบชั่วคราวเพื่อหาที่ว่างบนหน้า (putBelow) แล้วแยกออกเป็นกรอบบนหน้า 1 scenario = 1 กรอบ + กรอบคำอธิบาย 1 กรอบ
+   รูปทรงแบบ swimlane ("สี่เหลี่ยม และทางแยกเป็นข้าวหลามตัด"): กิจกรรม = สี่เหลี่ยม · ทางเลือก = ข้าวหลามตัด · เริ่ม/จบ/ไปต่อ = วงกลม · เส้นประเทา = ย้อนกลับไปทำซ้ำ
+   คำอธิบายบนกรอบใช้คำธรรมดา (เจ้าของงาน "ไม่ต้องใช้คำแปลกๆนะ ให้ใช้คำปกติเหมือนมนุษย์อ่าน") */
+/* กรอบผัง 1 scenario — ใช้ทั้งปุ่ม "สร้าง flowchart กิจกรรม" (กรอบละ scenario) และวางซ้ายของแถวจอในบล็อก scenario แทนผัง userflow
+   (เจ้าของงาน 6 พ.ย. 2569 "export รอบต่อไป … อยากให้ flowchart คู่กับ ui ไม่ใช่ user flow") · sc = 1 scenario จาก ACTIVITY.scenarios */
+async function activityFrame(name, sc) {
+  const g = figma.createFrame(); CREATED.push(g);
+  g.name = name; g.resize(sc.w, sc.h); g.clipsContent = false;
+  g.fills = [{ type: 'SOLID', color: WHITE }]; g.strokes = [{ type: 'SOLID', color: rgbOf('#D0D5DD') }]; g.strokeWeight = 2; g.cornerRadius = 16;
+  const put = (node, x, y) => { g.appendChild(node); node.x = x; node.y = y; return node; };
+  put(await docText('S' + sc.n + ' · ' + sc.title, 26, '#101828', sc.w - 80), 40, 32).name = 'ชื่อ scenario';
+  let steps = 0, forks = 0, links = 0;
+  for (const e of sc.edges) {   // เส้นก่อน กล่องทับเส้น
+    const v = await arrow(e.pts, e.back ? '#98A2B3' : '#475467', 3);
+    if (e.back) { try { v.dashPattern = [16, 10]; } catch (err) { /* ไม่มี dash ก็เส้นทึบ */ } }
+    put(v, Math.min(...e.pts.map(p => p[0])), Math.min(...e.pts.map(p => p[1])));
+    v.name = 'เส้น ' + e.from + ' → ' + e.to + (e.back ? ' (ย้อนกลับ)' : '');
+    if (e.lab) put(await labelText(e.label, 18, '#101828'), e.lab[0], e.lab[1]).name = 'ป้าย ' + e.label;   // ตำแหน่งจาก activity-layout.js (กรอบขยายให้แล้ว)
+    links++;
+  }
+  for (const nd of sc.nodes) {
+    const s = flowNode(nd.kind === 'decision' ? 'decision' : nd.kind === 'end' ? 'end' : 'display'); g.appendChild(s);
+    s.resize(nd.w, nd.h); s.x = nd.x; s.y = nd.y;
+    s.fills = [{ type: 'SOLID', color: nd.fill }]; s.strokes = [{ type: 'SOLID', color: nd.stroke }]; s.strokeWeight = 4;
+    s.name = (nd.kind === 'decision' ? 'ทางเลือก ' : nd.kind === 'end' ? 'เริ่ม/จบ ' : 'กิจกรรม ') + nd.id + ' / ' + nd.label.split('\n')[0];
+    const iw = nd.kind === 'decision' ? nd.w * 0.62 : nd.w * 0.86, ih = nd.kind === 'decision' ? nd.h * 0.62 : nd.h * 0.8;
+    put(await flowText(nd.label, nd.kind === 'end' ? 16 : 17, '#101828', iw, ih), nd.x + (nd.w - iw) / 2, nd.y + (nd.h - ih) / 2).name = nd.id + ' ข้อความ';
+    if (nd.kind === 'decision') forks++; else if (nd.kind !== 'end') steps++;
+  }
+  return { frame: g, steps, forks, links };
+}
+async function activityBoard(prefix, ac) {
+  CREATED = [];
+  const f = figma.createFrame(); CREATED.push(f);
+  f.name = prefix + ' · flowchart กิจกรรม';
+  f.resize(ac.w, ac.h); f.fills = [{ type: 'SOLID', color: WHITE }];
+  f.strokes = [{ type: 'SOLID', color: rgbOf('#D0D5DD') }]; f.strokeWeight = 2; f.cornerRadius = 24; f.clipsContent = false;
+  const hd = figma.createFrame(); CREATED.push(hd);
+  hd.name = prefix + ' · flowchart กิจกรรม · คำอธิบาย'; hd.resize(Math.min(ac.w, 4000), 200); hd.fills = []; hd.clipsContent = false;
+  f.appendChild(hd); hd.x = 0; hd.y = 0;
+  const head = await docText(ac.title + ' · ' + ac.scenarios.length + ' scenario', 56, '#101828'); hd.appendChild(head); head.x = 64; head.y = 48;
+  const lg = await docText('อ่านจากบนลงล่าง กล่องสี่เหลี่ยมคือสิ่งที่ทำ รูปข้าวหลามตัดคือจุดที่ต้องเลือก คำบนเส้นบอกว่าเลือกแล้วไปทางไหน วงกลมคือจุดเริ่มและจุดจบ เส้นประสีเทาคือย้อนกลับไปทำอีกครั้ง ผังนี้ไม่มีหน้าจอ ดูหน้าจอได้ที่ userflow (ต้นฉบับ ' + ac.src + ')', 24, '#475467', null, true);
+  hd.appendChild(lg); lg.x = 64; lg.y = 128;
+  let steps = 0, forks = 0, links = 0;
+  for (const sc of ac.scenarios) {
+    const r = await activityFrame(prefix + ' · flowchart กิจกรรม · S' + sc.n + ' · ' + sc.title, sc);
+    f.appendChild(r.frame); r.frame.x = sc.x; r.frame.y = sc.y;
+    steps += r.steps; forks += r.forks; links += r.links;
+  }
+  CREATED = [];
+  return { frame: f, scenarios: ac.scenarios.length, steps, forks, links };
+}
+/* แยกกรอบชั่วคราวของ activityBoard ออกเป็นกรอบบนหน้า (ตำแหน่งเดิมบนหน้า) แล้วลบกรอบชั่วคราว · คืนรายการกรอบที่แยกแล้ว */
+function splitBoard(page, f) {
+  const kids = f.children.slice();
+  for (const k of kids) { const x = f.x + k.x, y = f.y + k.y; page.insertChild(0, k); k.x = x; k.y = y; }
+  f.remove();
+  return kids;
+}
+
+/* ---------- ส่งภาพจอบนหน้านี้ไป FigJam (เจ้าของงาน 30 ต.ค. 2569 "export … ไปที่ figjam ด้วย userflow และ design มาจาก figma ปรับใหม่ล่าสุด") ----------
+   export เฟรมจอ "<prefix> / A.1 · S1 — ชื่อ" บนหน้าที่เปิดอยู่ (จอที่ทีมแก้มือแล้วก็ได้) เป็น PNG ส่งให้หน้าต่างปลั๊กอิน → POST เข้า serve.js ที่ out/figjam/<dir>/
+   แล้ว 3-figjam-board.js วางภาพต่อจากผัง userflow ของ scenario เดียวกัน · desktop อย่างเดียว · ด้านยาวไม่เกิน 4000 px (FigJam รับไม่เกิน 4096) */
+const SHOT_RE = /^(\S+) \/ ([A-Z])\.([0-9.]+) · (S\d+) — (.+)$/;
+async function exportShots(dir, scen) {   // scen = ['S1', 'S2'] ส่งเฉพาะ scenario ที่ติ๊ก (ว่าง = ทุกจอ · 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่")
+  errors.length = 0;
+  const page = figma.currentPage;
+  /* 5 พ.ย. 2569 เจ้าของงาน "export figjam อยากให้ออกมาเป็นแบบนี้ มี mobile มาด้วย … บอกว่าส่วนใหน desktop , mobile" ⇒ ส่งจอ mobile ด้วย (ชื่อเฟรมลงท้าย " · mobile") · device ใน manifest */
+  const all = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(PLUGIN.prefix + ' / ') === 0 && n.name.indexOf(' · ตัดแล้ว') < 0);
+  const shots = [], skipped = [];
+  for (const f of all) {
+    const mob = / · mobile$/.test(f.name), m = f.name.replace(/ · mobile$/, '').match(SHOT_RE);
+    if (m) shots.push({ f, code: m[2] + '.' + m[3], letter: m[2], no: m[3], scenario: m[4], name: m[5], device: mob ? 'mobile' : 'desktop' }); else skipped.push(f.name);
+  }
+  /* หน้าเดียวกันมีหลายชุด ⇒ จอรหัสเดียวกันเก็บตัวที่สร้างล่าสุด
+     9 พ.ย. 2569 เดิมเลือกตามตำแหน่งล่างสุด แต่หน้าเต็มแล้วปลั๊กอินวางชุดใหม่ที่ช่องว่างด้านบนหรือคอลัมน์ขวา ⇒ ส่งชุดเก่าไป FigJam (เจ้าของงาน "ของฝั่ง figma มาแล้ว แต่ figjam ยังไม่มา")
+     9 พ.ย. 2569 (รอบ 2 · เจ้าของงาน "ทำไมหน้า figjam ไม่เท่า figma ทำให้เท่าหน่อย"): buildGrid วางทุกชิ้นด้วย page.insertChild(0) ⇒ ชุดใหม่อยู่ลำดับต้นของ page.children (ล่างสุดของแผง Layers)
+     ไม่ใช่ลำดับท้าย — รอบแรกเลือกลำดับท้ายจึงได้ชุดเก่าสุด (A.20 ฉบับก่อน 6 พ.ย.) ⇒ จอที่มีเวลาสร้าง (pluginData builtAt) เลือกตามเวลา · จอที่สร้างก่อนมีเวลา ลำดับต้นของหน้า = ล่าสุด */
+  const order = new Map(page.children.map((n, i) => [n.id, i]));
+  const builtAt = (f) => +((f.getPluginData && f.getPluginData('builtAt')) || 0);
+  const seen = new Set();
+  const total = shots.length;
+  shots.sort((p, q) => (builtAt(q.f) - builtAt(p.f)) || (order.get(p.f.id) - order.get(q.f.id)));
+  shots.splice(0, shots.length, ...shots.filter(x => !seen.has(x.code + x.device) && seen.add(x.code + x.device)));
+  if (total > shots.length) log('หน้านี้มีจอหลายชุด — ส่งเฉพาะชุดที่สร้างล่าสุดของแต่ละจอ · ข้ามชุดเก่า ' + (total - shots.length) + ' จอ');
+  if (scen && scen.length) { shots.splice(0, shots.length, ...shots.filter(x => scen.indexOf(x.scenario) >= 0)); log('ส่งเฉพาะ ' + scen.join(' ')); }
+  const key = (s) => s.letter + s.no.split('.').map(x => x.padStart(3, '0')).join('.');
+  shots.sort((a, b) => key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0);
+  if (!shots.length) { log('ไม่พบเฟรมจอ "' + PLUGIN.prefix + ' / …" บนหน้า "' + page.name + '" — เปิดหน้าที่มีจอแล้วกดใหม่'); return; }
+  log('ส่งภาพจอ ' + shots.length + ' จอ จากหน้า "' + page.name + '" ไปที่ out/figjam/' + dir + '/ …');
+  const manifest = { source: 'figma', page: page.name, exportedAt: new Date().toISOString(), scen: scen && scen.length ? scen : undefined, shots: [] };
+  for (const s of shots) {
+    try {
+      const scale = Math.min(1, 4000 / Math.max(s.f.width, s.f.height));
+      const bytes = await s.f.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: scale } });
+      const file = s.code + '-' + s.scenario + (s.device === 'mobile' ? '-mobile' : '') + '.png';
+      figma.ui.postMessage({ type: 'shot', dir, file, bytes });
+      manifest.shots.push({ code: s.code, scenario: s.scenario, name: s.name, device: s.device, file, w: Math.round(s.f.width * scale), h: Math.round(s.f.height * scale) });
+    } catch (e) { warn('export ' + s.f.name, e); }
+  }
+  figma.ui.postMessage({ type: 'shots-done', dir, manifest });
+  log('export แล้ว ' + manifest.shots.length + '/' + shots.length + ' จอ' + (skipped.length ? ' · ข้าม ' + skipped.length + ' เฟรมที่ชื่อไม่ตรงรูปแบบ (เช่น ' + skipped[0] + ')' : '') + (errors.length ? ' · ⚠ เตือน ' + errors.length + ' จุด' : ''));
+  log('ขั้นต่อไป: node figma-export/3-figjam-board.js --maintainance-ui --only --split-scen --out=board-maintainance-ui.json (ชุดเต็ม + แยกไฟล์ราย S) แล้วเปิดปลั๊กอินบอร์ดใน FigJam ใหม่ เลือกกลุ่ม "บำรุงรักษาตามวาระ · ราย scenario"');
+}
+
+/* ---------- journey แนวขวาง (เจ้าของงานสั่ง 22 ต.ค. 2569: "ทำ scen มาต่อกันเป็นแนวขวาง สำหรับ export" + "ลงในเพจ maintainance แต่มีปุ่มแยก") ----------
+   USERFLOW.journey (ฝังตอน build จาก build.json) = { title, phases: [[ชื่อช่วง, [n…]]], cols: [[n…]], row: { n: 1 }, links: [[จาก, ไป, ป้าย, 'back'?]], scenarios: ผังแนวนอน }
+   วาง: แถบ Journey → แถบช่วงงาน → กรอบผัง scenario เรียงซ้าย → ขวาตาม cols (ทางแยกลงแถว 2 ตาม row) → ลูกศรระหว่าง scenario (เข้าที่ start ของปลายทาง)
+   เส้นย้อนกลับ (back) วิ่งเหนือแถว 1 / ใต้แถว 2 แบบเส้นประ · info.codes(n) = { codes, loose } ป้ายรหัสจอ · info.frameFor(code) = เฟรมจอบนหน้า (ภาพย่อ) หรือ null */
+const JGAP = { col: 240, row: 240, bar: 80, lane: 48 };
+async function buildJourney(page, prefix, y0, info) {
+  const J = USERFLOW && USERFLOW.journey;
+  if (!J) throw new Error('ไม่มีข้อมูล journey ฝังมา — ใส่ "journey" ใน build.json แล้วรัน node figma-export/build-plugin.js ใหม่');
+  const put = (nd, x, y) => { page.insertChild(0, nd); nd.x = x; nd.y = y; return nd; };
+  const F = {}, thumbs = []; let made = 0;
+  for (const col of J.cols) for (const n of col) {
+    CREATED = [];
+    const sc = J.scenarios[n]; if (!sc) { warn('journey', new Error('ไม่มีผัง S' + n + ' ในไฟล์ userflow')); continue; }
+    const c = info.codes(n) || { codes: {}, loose: [] };
+    try {
+      /* J.kind 'activity' (บำรุงรักษา 6 พ.ย. 2569): ต่อผัง flowchart กิจกรรมแนวนอนแทนผัง userflow · ไม่มีภาพย่อจอ */
+      const uf = J.kind === 'activity' ? Object.assign(await activityFrame(prefix + ' · journey flowchart S' + n, sc), { slots: [] })
+        : await userflowFrame(prefix, 'journey', n, c.codes, [], { sc, title: 'Scenario ' + n + ' · ' + sc.title });
+      F[n] = uf.frame; page.insertChild(0, uf.frame); made++;
+      for (const sl of uf.slots) { const cd = (c.codes[sl.id] || [])[0]; if (cd) thumbs.push([sl.rect, cd]); }
+    } catch (e) { warn('journey S' + n, e); dropCreated(page); }
+    CREATED = [];
+  }
+  /* ตำแหน่ง: คอลัมน์กว้างเท่ากรอบที่กว้างสุดในคอลัมน์ · แถว 2 อยู่ใต้กรอบแถว 1 ที่สูงสุด */
+  const rowOf = (n) => (J.row && J.row[n]) || 0;
+  const backTop = J.links.filter(l => l[3] === 'back' && !rowOf(l[0]) && !rowOf(l[1])).length;
+  /* แถบ Journey = Header Type=Header (สูงกว่าแถบเดิม) ⇒ สร้างก่อนเพื่อวัดความสูง แล้วค่อยยืดกว้างเท่าผังด้านล่าง (10 พ.ย. 2569) */
+  CREATED = []; const jb = put(await blockHeader(prefix, 'Journey', J.title, 1000), 0, y0); const jh = Math.max(GRID.barH, jb.height);
+  const top = y0 + jh + JGAP.bar + GRID.barH + JGAP.bar + backTop * JGAP.lane;
+  const colX = []; let x = 0;
+  J.cols.forEach((col, i) => { colX[i] = x; x += Math.max(...col.map(n => F[n] ? F[n].width : 0)) + JGAP.col; });
+  const totalW = x - JGAP.col;
+  const h0 = Math.max(...Object.keys(F).filter(n => !rowOf(n)).map(n => F[n].height));
+  const rowY = [top, top + h0 + JGAP.row];
+  const colOf = {}; J.cols.forEach((col, i) => col.forEach(n => { colOf[n] = i; }));
+  for (const n of Object.keys(F)) { F[n].x = colX[colOf[n]]; F[n].y = rowY[rowOf(n)]; }
+  /* แถบ Journey + ช่วงงาน (component Header ของทีมออกแบบ · ไม่มี = แถบธรรมดา) */
+  CREATED = [];
+  try { jb.resize(totalW, jb.height); } catch (e) { warn('ปรับกว้างแถบ Journey', e); }
+  for (const [i, [title, ns]] of (J.phases || []).entries()) {
+    const xs = ns.filter(n => F[n]).map(n => F[n].x), xe = ns.filter(n => F[n]).map(n => F[n].x + F[n].width);
+    if (!xs.length) continue;
+    put(await flowBar(prefix, 'ช่วง ' + (i + 1), title, 'Sub Flow', Math.max(...xe) - Math.min(...xs)), Math.min(...xs), y0 + jh + JGAP.bar);
+  }
+  /* ภาพย่อจอจริง (จอที่สร้างไว้บนหน้านี้แล้ว) */
+  let tk = 0;
+  for (const [rect, cd] of thumbs) { const scr = info.frameFor(cd); if (scr && await fillThumb(rect, scr)) tk++; }
+  /* ลูกศรระหว่าง scenario: ออกขอบขวาของต้นทาง (ระดับ start ของต้นทาง) → เข้าซ้ายของ start ปลายทาง · back = เส้นประวิ่งเหนือแถว 1 / ใต้แถว 2 */
+  const startOf = (n) => { const s = J.scenarios[n].nodes[0]; return { x: F[n].x + s.x, y: F[n].y + s.y + s.h / 2 }; };
+  let lanesTop = 0, lanesBot = 0, links = 0;
+  const bottom2 = Math.max(...Object.keys(F).map(n => F[n].y + F[n].height));
+  for (const [a, b, label, kind] of J.links) {
+    if (!F[a] || !F[b]) continue;
+    CREATED = [];
+    let pts, hex = '#475467';
+    if (kind === 'back') {
+      hex = '#98A2B3';
+      if (rowOf(a) || rowOf(b)) { const yl = bottom2 + JGAP.lane * (++lanesBot); pts = [[F[a].x + F[a].width / 2, F[a].y + F[a].height], [F[a].x + F[a].width / 2, yl], [F[b].x + F[b].width / 2, yl], [F[b].x + F[b].width / 2, F[b].y + F[b].height]]; }
+      else { const yl = top - JGAP.lane * (++lanesTop); pts = [[F[a].x + F[a].width / 2, F[a].y], [F[a].x + F[a].width / 2, yl], [F[b].x + F[b].width / 2, yl], [F[b].x + F[b].width / 2, F[b].y]]; }
+    } else {
+      const sa = startOf(a), sb = startOf(b), ax = F[a].x + F[a].width, ay = rowOf(a) === rowOf(b) ? sb.y : sa.y;
+      const mx = ax + JGAP.col / 2;
+      pts = ay === sb.y ? [[ax, ay], [sb.x, sb.y]] : [[ax, ay], [mx, ay], [mx, sb.y], [sb.x, sb.y]];
+    }
+    try {
+      const v = await arrow(pts, hex, 6); put(v, Math.min(...pts.map(p => p[0])), Math.min(...pts.map(p => p[1])));
+      if (kind === 'back') { try { v.dashPattern = [24, 16]; } catch (e) { /* ไม่มี dash ก็เส้นทึบ */ } }
+      v.name = prefix + ' · journey S' + a + ' → S' + b + (kind === 'back' ? ' (ย้อนกลับ)' : '');
+      if (label) { const p0 = pts[kind === 'back' ? 1 : 0], p1 = pts[kind === 'back' ? 2 : 1]; const t = await labelText(label, 24, '#101828'); put(t, Math.min(p0[0], p1[0]) + 16, Math.min(p0[1], p1[1]) - 36); t.name = prefix + ' · ป้าย ' + label; }
+      links++;
+    } catch (e) { warn('ลูกศร S' + a + ' → S' + b, e); }
+    CREATED = [];
+  }
+  return { made, links, thumbs: tk, slots: thumbs.length, w: totalW };
+}
+
 /* GROUPS = [{ code: 'A', title: '…', subs: [{ code: 'A', title: '…', tag: 'S1', screens: [[label, fn, 'D1 D2'?], …] }] }]
    screens[i][2] = id กล่องในผัง userflow ที่จอนี้แสดง (คั่นด้วยช่องว่าง · ไม่ใส่ = ผังยังไม่มีกล่องของจอนี้)
    fn() สร้างจอตามตัวแปร MOB · จอชื่อ "<prefix> / A.2 · S1 — <label>[ · mobile]" · คืน { made, y, flows }
@@ -1045,10 +1615,15 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
   opts = opts || {};
   const made = []; let y = y0; const x0 = GRID.side + GRID.gap; const pitch = GRID.colW + GRID.colGap; let flows = 0;
   const put = (n, x, yy) => { page.insertChild(0, n); n.x = x; n.y = yy; return n; };
+  if (opts.page) {   // หัวหน้าของชุดจอ 1 ตัว (Header Type=Header) กว้างเท่าบล็อกที่กว้างสุด — แบบหน้า 5.x ของ UI Release#2
+    const nMax = Math.max(...GROUPS.map(g => Math.max(...g.subs.map(s => s.screens.length))));
+    CREATED = []; const ph = put(await blockHeader(prefix, 'Page', opts.page.title, nMax * GRID.colW + (nMax - 1) * GRID.colGap, '', opts.page.status), x0, y);
+    y += ph.height + GRID.groupGap;
+  }
   for (const g of GROUPS) {
     const nCols = Math.max(...g.subs.map(s => s.screens.length));
     const top = y;
-    CREATED = []; put(await flowBar(prefix, g.code, g.title, 'Default', nCols * GRID.colW + (nCols - 1) * GRID.colGap), x0, y);
+    CREATED = []; put(await flowBar(prefix, g.code, g.title, 'Default', nCols * GRID.colW + (nCols - 1) * GRID.colGap), x0, y);   // บล็อกตัวอักษร = Subheader State=Default (หน้าจริง: "A แก้ไขตารางบำรุงรักษา…")
     y += GRID.barH + GRID.gap;
     let flowBottom = top;
     for (const sub of g.subs) {
@@ -1059,7 +1634,18 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
       }
       const sn = scenNo(sub.tag);
       let flowSlots = null; const byCode = {};   // รหัสจอ → เฟรมจอ (desktop ก่อน) สำหรับภาพย่อในผัง
-      if (opts.flow !== false && USERFLOW && sn != null && USERFLOW.scenarios[sn]) {   // ผัง userflow ซ้ายของบล็อก (ขอบขวาห่างป้าย Device FLOW_GAP)
+      /* ปลั๊กอินที่ฝัง ACTIVITY (บำรุงรักษา) วาง flowchart กิจกรรมซ้ายของบล็อกแทนผัง userflow (เจ้าของงาน 6 พ.ย. 2569 "อยากให้ flowchart คู่กับ ui ไม่ใช่ user flow")
+         ไม่มีภาพย่อจอ ไม่มีป้ายรหัสจอ (flowchart ไม่มีหน้าจอ) · ปลั๊กอินอื่นที่ไม่มี ACTIVITY ใช้ผัง userflow ตามเดิม */
+      const act = (typeof ACTIVITY !== 'undefined' && ACTIVITY && sn != null) ? ACTIVITY.scenarios.find(x => x.n === sn) : null;
+      if (opts.flow !== false && act) {
+        CREATED = [];
+        try {
+          const fr = (await activityFrame(prefix + ' · ' + g.code + ' flowchart S' + sn, act)).frame;
+          put(fr, -(fr.width + FLOW_GAP), top); flowBottom = Math.max(flowBottom, top + fr.height); flows++;
+          log('  · flowchart กิจกรรม S' + sn + ' (' + act.nodes.length + ' กล่อง)');
+        } catch (e) { warn('flowchart กิจกรรม S' + sn, e); const k = dropCreated(page); if (k) log('    ลบชิ้นที่ค้างจากผังที่พัง ' + k + ' ชิ้น'); }
+        CREATED = [];
+      } else if (opts.flow !== false && USERFLOW && sn != null && USERFLOW.scenarios[sn]) {   // ผัง userflow ซ้ายของบล็อก (ขอบขวาห่างป้าย Device FLOW_GAP)
         const codes = {}, loose = [];
         sub.screens.forEach(([label, , ids], i) => {
           const c = sub.code + '.' + (i + 1);
@@ -1077,17 +1663,24 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
         } catch (e) { warn('ผัง userflow S' + sn, e); const k = dropCreated(page); if (k) log('    ลบชิ้นที่ค้างจากผังที่พัง ' + k + ' ชิ้น'); }
         CREATED = [];
       }
-      put(await deviceLabel(prefix, 'Header', GRID.barH), 0, y);
-      for (const [i, [label]] of sub.screens.entries()) put(await flowBar(prefix, sub.code + '.' + (i + 1), label, 'Sub Flow 2', GRID.colW), x0 + i * pitch, y);
-      y += GRID.barH + GRID.gap;
+      /* ป้าย state รายคอลัมน์ = Header Subheader สีตาม stateTone (หน้าจริงของ UI Release#2 · 10 พ.ย. 2569) · บรรทัดอธิบายซ่อนแบบหน้าจริง
+         ป้าย Device สูงเท่าป้าย state ที่สูงสุด */
+      let sh = GRID.barH;
+      for (const [i, [label]] of sub.screens.entries()) {
+        const b = put(await flowBar(prefix, sub.code + '.' + (i + 1), label, stateTone(label), GRID.colW), x0 + i * pitch, y);
+        sh = Math.max(sh, b.height);
+      }
+      put(await deviceLabel(prefix, 'Header', sh), 0, y);
+      y += sh + GRID.gap;
       for (const mob of (opts.devices || [false, true])) {   // devices: [false]=desktop อย่างเดียว · [true]=mobile อย่างเดียว · ไม่ส่ง=ทั้งคู่ (แถว mobile ใต้ desktop)
         MOB = mob; let h = 0; const rowY = y;
         for (const [i, [label, fn]] of sub.screens.entries()) {
           const x = x0 + i * pitch;
           CREATED = []; PLACE = { x, y: rowY };   // เฟรมจอไปอยู่ตำแหน่งจริงทันทีที่สร้าง · ชิ้นที่สร้างระหว่างทางถูกติดตามไว้
           try {
-            const s = await fn(); stripDividers(s); await polish(s);
+            PINS = []; const s = await fn(); stripDividers(s); await polish(s); repin(); await bindTones(); if (typeof AFTER_SCREEN === 'function') await AFTER_SCREEN(s);   // AFTER_SCREEN = ตัวเรียกเฉพาะปลั๊กอิน (บำรุงรักษา: ลิงก์เลขทะเบียน 6 พ.ย. 2569)
             s.name = prefix + ' / ' + sub.code + '.' + (i + 1) + ' · ' + sub.tag + ' — ' + label + (mob ? ' · mobile' : '');
+            if (s.setPluginData) s.setPluginData('builtAt', String(Date.now()));   // ส่งภาพไป FigJam เลือกจอที่สร้างล่าสุดตามเวลานี้ (exportShots · 9 พ.ย. 2569)
             put(s, x, rowY); h = Math.max(h, s.height); made.push(s);
             const cd = sub.code + '.' + (i + 1); if (!byCode[cd]) byCode[cd] = s;
             log('  · ' + made.length + '/' + total + ' ' + s.name);

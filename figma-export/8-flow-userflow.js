@@ -17,6 +17,13 @@
          node figma-export/8-flow-userflow.js --src=Diagram/<เรื่อง>/NN-<เรื่อง>-userflow.md --out=diagram-userflow-<เรื่อง>.json
          node figma-export/3-figjam-board.js --maintainance --only --out=board-maintainance.json
    ผลลัพธ์: out/diagram-userflow-maintainance.json = { sections: [{ name, diagram }] } (3-figjam-board.js ห่อเป็น section ชนิดผัง)
+
+   --journey (22 ต.ค. 2569 · เจ้าของงาน "ที่ส่งไปไม่ได้ต่อกัน แต่สิ่งที่อยากได้คือต่อกัน"):
+     ทุก scenario เป็นผังเดียวที่ต่อกัน — start จุดเดียว · ขั้นสุดท้ายของ scenario ต่อเข้าขั้นแรกของ scenario ถัดไป (ไม่มี start/End คั่น)
+     กติการวม = plugin-lib/journey-merge.js · ลำดับ/ทางแยก/จุดต่อ = maintainance-plugin/build.json "journey" (ชุดเดียวกับปุ่ม journey ในปลั๊กอิน Figma)
+     scenario ละแถบพื้น (lane) ชื่อ S<n> · หัวช่วงงานด้านบน · เส้นข้าม scenario = connector จริง (ลากกล่องแล้วเส้นตาม)
+         node figma-export/8-flow-userflow.js --journey
+         node figma-export/3-figjam-board.js --maintainance-journey --only --out=board-maintainance-journey.json
    ============================================================ */
 
 const fs = require('fs');
@@ -27,7 +34,9 @@ const arg = (k, d) => {
   return hit ? hit.slice(k.length + 3) : d;
 };
 const SRC = path.resolve(__dirname, '..', arg('src', path.join('Diagram', '01-บำรุงรักษาตามวาระ', '14-บำรุงรักษา-userflow.md')));
-const OUT = path.join(__dirname, 'out', arg('out', 'diagram-userflow-maintainance.json'));
+const JOURNEY = process.argv.includes('--journey');
+const OUT = path.join(__dirname, 'out', arg('out', JOURNEY ? 'diagram-userflow-maintainance-journey.json' : 'diagram-userflow-maintainance.json'));
+const JOURNEY_CFG = path.resolve(__dirname, arg('journey-cfg', path.join('maintainance-plugin', 'build.json')));
 const TITLE = arg('title', 'บำรุงรักษาตามวาระ');
 
 /* ---- หน้าตา Template (อ่านค่าจริงจากบอร์ด Planning 1-2 เมื่อ 5 ต.ค. 2569 — ดู 6-flow-disposal.js) ---- */
@@ -215,7 +224,7 @@ function labelWarnings(sc, nodes) {
 }
 
 /* ---- section คำอธิบายสัญลักษณ์ (หัวบอร์ด) ---- */
-function legend(count) {
+function legend(count, note) {
   const items = [
     ['L1', 'end', 'start /\nEnd'],
     ['L2', 'action', 'Action\nสิ่งที่ผู้ใช้ทำ'],
@@ -228,13 +237,73 @@ function legend(count) {
   });
   const stickies = [{
     x: X0 + 4 * COLW, y: Y0 - 20, color: YELLOW,
-    text: TITLE + ' — userflow ' + count + ' scenario (ร่าง 19 ต.ค. 2569)\nsection ละ scenario เรียงตามลำดับงาน · อ่านซ้าย → ขวา\nป้าย Y/N บนเส้น · เส้นที่วนใต้แถว = ย้อนกลับไปแก้\n❓ ในกล่อง / sticky เหลือง = ยังไม่รู้ ต้องถาม\nเนื้อหาคู่กัน: ' + path.relative(path.join(__dirname, '..'), SRC)
+    text: TITLE + ' — userflow ' + count + ' scenario (ร่าง 19 ต.ค. 2569)\n' + (note || 'section ละ scenario เรียงตามลำดับงาน · อ่านซ้าย → ขวา') + '\nป้าย Y/N บนเส้น · เส้นที่วนใต้แถว = ย้อนกลับไปแก้\n❓ ในกล่อง / sticky เหลือง = ยังไม่รู้ ต้องถาม\nเนื้อหาคู่กัน: ' + path.relative(path.join(__dirname, '..'), SRC)
   }];
   return { name: TITLE + ' · userflow — สัญลักษณ์และวิธีอ่าน', diagram: { w: X0 + 4 * COLW + 420, h: Y0 + CELL + 120, font: FONT, phases: [], clusters: [], nodes, edges: [], stickies } };
 }
 
+/* ---- journey: ผังเดียวต่อกันทุก scenario ---- */
+const BAND_HEAD = 110;     // หัวแถบ scenario (ชื่อ S<n> ตัว 30)
+const BLOCK_GAP = 260;     // ช่องระหว่างบล็อก scenario (ให้เส้นข้ามหักมุม + ป้าย)
+const PHASE_H = 80;        // แถวหัวช่วงงานเหนือแถบ
+const BACK_GRAY = rgb(0.596, 0.635, 0.702);
+function journeyDiagram() {
+  const cfg = JSON.parse(fs.readFileSync(JOURNEY_CFG, 'utf8')).journey;
+  if (!cfg) { console.error('ไม่มี "journey" ใน ' + JOURNEY_CFG); process.exit(1); }
+  const m = require('./plugin-lib/journey-merge.js').merge(SRC, cfg);
+  const L = {};
+  for (const n of m.order) if (m.blocks[n]) L[n] = layout(m.blocks[n].flow);
+  const rowOf = (n) => (cfg.row && cfg.row[n]) || 0;
+  const colX = []; let x = X0;
+  cfg.cols.forEach((col, i) => { colX[i] = x; x += Math.max(...col.map(n => L[n] ? L[n].w : 0)) + BLOCK_GAP; });
+  const top = Y0 + PHASE_H;
+  const h0 = Math.max(...m.order.filter(n => L[n] && !rowOf(n)).map(n => L[n].h)) + BAND_HEAD;
+  const rowY = [top, top + h0 + BLOCK_GAP];
+  const colOf = {}; cfg.cols.forEach((col, i) => col.forEach(n => { colOf[n] = i; }));
+  const nodes = [], edges = [], stickies = [], clusters = [], phases = [], at = {};
+  const id = (n, k) => 'S' + n + '_' + k;
+  for (const n of m.order) {
+    const d = L[n]; if (!d) continue;
+    const bx = colX[colOf[n]], by = rowY[rowOf(n)];
+    at[n] = { x: bx, y: by, w: d.w, h: d.h + BAND_HEAD };
+    clusters.push({ label: 'S' + n + ' · ' + m.blocks[n].title, x: bx, y: by, w: d.w, h: d.h + BAND_HEAD });
+    for (const nd of d.nodes) nodes.push(Object.assign({}, nd, { id: id(n, nd.id), x: bx + nd.x, y: by + BAND_HEAD + nd.y }));
+    for (const e of d.edges) edges.push(Object.assign({}, e, { from: id(n, e.from), to: id(n, e.to) }));
+    for (const st of d.stickies) stickies.push(Object.assign({}, st, { x: bx + st.x, y: by + BAND_HEAD + st.y }));
+  }
+  const pos = Object.fromEntries(nodes.map(nd => [nd.id, nd]));
+  for (const c of m.cross) {
+    const a = pos[id(c.a, c.from)];
+    if (!a || !pos[id(c.b, c.to)]) { console.error('เส้นข้าม scenario ชี้กล่องที่ไม่มี: S' + c.a + '.' + c.from + ' → S' + c.b + '.' + c.to); process.exit(1); }
+    edges.push(c.back
+      ? { from: id(c.a, c.from), to: id(c.b, c.to), label: c.label, style: 'dotted', dash: [16, 12], color: BACK_GRAY, weight: 4, lineType: 'ELBOWED', ms: 'BOTTOM', me: 'BOTTOM' }
+      : { from: id(c.a, c.from), to: id(c.b, c.to), label: c.label, style: 'solid', color: a.stroke, weight: 4, lineType: 'ELBOWED', ms: 'RIGHT', me: 'LEFT' });
+  }
+  for (const [title, ns] of (cfg.phases || [])) {
+    const xs = ns.filter(n => at[n]).map(n => at[n].x);
+    if (xs.length) phases.push({ label: '▸ ' + title, x: Math.min(...xs), y: Y0 });
+  }
+  const w = Math.max(...Object.values(at).map(b => b.x + b.w)) + 40;
+  const h = Math.max(...Object.values(at).map(b => b.y + b.h)) + 200;   // เผื่อเส้นย้อนกลับวิ่งใต้แถบ
+  return { diagram: { w, h, font: FONT, phases, clusters, nodes, edges, stickies }, m };
+}
+
 /* ---- ประกอบ ---- */
 function main() {
+if (JOURNEY) {
+  const { diagram, m } = journeyDiagram();
+  const back = m.cross.filter(c => c.back).length;
+  const sections = [legend(m.order.length, 'ผังเดียวต่อกันทุก scenario · start จุดเดียว อ่านซ้าย → ขวา · แถบสี = scenario · เส้นประเทา = ย้อนกลับ'),
+    { name: TITLE + ' · journey — userflow ต่อกันทั้งเรื่อง (S' + m.order[0] + ' → S' + m.order[m.order.length - 1] + ')', diagram }];
+  const jw = labelWarnings('J', diagram.nodes).concat(m.warnings);
+  fs.mkdirSync(path.dirname(OUT), { recursive: true });
+  fs.writeFileSync(OUT, JSON.stringify({ title: TITLE, src: path.relative(path.join(__dirname, '..'), SRC), generatedAt: new Date().toISOString(), sections }));
+  console.log('journey ' + m.order.length + ' scenario · node ' + diagram.nodes.length + ' · เส้น ' + diagram.edges.length + ' (ข้าม scenario ' + m.cross.length + ' · ย้อนกลับ ' + back + ') · sticky ' + diagram.stickies.length +
+    ' · start ' + diagram.nodes.filter(n => n.kind === 'end' && n.label === 'start').length + ' · ' + Math.round(diagram.w) + '×' + Math.round(diagram.h));
+  if (jw.length) { console.log('⚠ เตือน ' + jw.length + ' ข้อ:'); jw.forEach(w => console.log('   ' + w)); }
+  console.log('เขียน ' + path.relative(process.cwd(), OUT));
+  return;
+}
 const scenarios = readScenarios(SRC);
 const sections = [legend(scenarios.length)];
 const warnings = [];

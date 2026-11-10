@@ -14,7 +14,8 @@ const hex = (c) => '#' + [c.r, c.g, c.b].map(v => Math.round(v * 255).toString(1
 const composedTables = (sc) => sc.findAll(n => n.type === 'FRAME' && n.name === 'Table' && n.children.some(x => x.name === 'Column'));
 const oversize = (t) => { const cs = t.children.filter(x => x.name === 'Column'); return cs.length > RULES.library.Table.cols || (cs[0] && cs[0].children.length - 1 > RULES.library.Table.rows); };
 
-function check(screens) {
+function check(screens, opt) {   // opt.inFile(ชื่อ) = ไฟล์มี component นั้นไหม (กติกา ifInFile: component ของไฟล์งานซ่อม ไม่มีในไฟล์ → ปลั๊กอินใช้แบบสำรอง ไม่นับผิด · 3 พ.ย. 2569)
+  opt = opt || {};
   const fails = [], pending = new Map();
   const fail = (r, sc, msg) => fails.push(r.id + ' ' + sc.name + ' — ' + msg);
   for (const sc of screens) {
@@ -28,6 +29,9 @@ function check(screens) {
       if (!all.some(x => isInst(x, ex.mustContain) && shown(x))) fail(ex, sc, 'ไม่มี ' + ex.mustContain);
       if (all.some(x => x.type === 'INSTANCE' && shown(x) && !isInst(x, ex.mustContain) && !inInst(x))) fail(ex, sc, 'มีชิ้นอื่นนอกจาก ' + ex.mustContain + ' — หน้า toast ต้องไม่มี UI อื่น');
       if (ex.exportSettings && !(sc.exportSettings && sc.exportSettings.length)) fail(ex, sc, 'ไม่มี Export settings');
+    } else if (RULES.screen.docs && new RegExp(RULES.screen.docs.nameRegex).test(sc.name)) {   // R32 เฟรมหน้าตาไฟล์ที่ส่งออก (PDF A4 · ชีต Excel) ไม่ใช่จอ — ไม่ผูกขนาดอุปกรณ์ (30 ต.ค. 2569)
+      const d = RULES.screen.docs, okW = /ไฟล์ PDF/.test(sc.name) ? d.pdf[0] : d.excel[0];
+      if (Math.round(sc.width) !== okW) fail(d, sc, 'กว้าง ' + sc.width + ' ต้องเป็น ' + okW);
     } else if (Math.round(sc.width) !== want[0]) fail(RULES.screen, sc, 'กว้าง ' + sc.width + ' ต้องเป็น ' + want[0]);
     // variant ที่กำหนด
     for (const r of RULES.variants) for (const n of all.filter(x => isInst(x, r.component) && shown(x))) {
@@ -43,7 +47,8 @@ function check(screens) {
       let ok = false, allowed = false;
       for (let p = n.parent; p && p !== sc; p = p.parent) {
         if (isInst(p, r.parent)) { ok = true; break; }
-        if ((r.allowInside || []).some(c => isInst(p, c))) { ok = true; break; }   // component ของทีมออกแบบที่ประกอบตารางไว้เอง (ReceiptChecklist ของงานซ่อม · 22 ต.ค. 2569) — ไม่ใช่ปลั๊กอินประกอบ
+        if ((r.allowInside || []).some(c => isInst(p, c))) { ok = true; break; }
+        if (p.type === 'FRAME' && (r.allowInFrame || []).includes(p.name)) { ok = true; break; }   // แบบสำรองที่ลอกตารางของ component งานซ่อมชื่อเดียวกัน เมื่อไฟล์ไม่มี component นั้น (R47 · 3 พ.ย. 2569)   // component ของทีมออกแบบที่ประกอบตารางไว้เอง (ReturnPart · 22 ต.ค. 2569) — ไม่ใช่ปลั๊กอินประกอบ
         if (r.allowInStyledFrame && p.type === 'FRAME' && p.name === r.parent) {   // เฟรมแทน component ต้องมีกรอบ + มุมแบบ component (หน้างานซ่อม)
           if ((p.strokes || []).length && p.cornerRadius > 0) { ok = true; break; }
           fail(r, sc, r.parent + ' เป็นเฟรมไม่มีกรอบ/มุม — ต้องแต่งแบบหน้างานซ่อม'); ok = true; break;
@@ -65,12 +70,46 @@ function check(screens) {
     }
     // จอที่ต้องใช้ component เฉพาะ (เช่น นัดหมาย = RepairAppointmentStep)
     for (const r of RULES.screensUse || []) {
-      if (!new RegExp(r.screens).test(sc.name) || (r.desktopOnly && mobile)) continue;
+      if (!new RegExp(r.screens).test(sc.name) || (r.desktopOnly && mobile) || (r.mobileOnly && !mobile)) continue;   // mobileOnly (5 พ.ย. 2569 R70 Mobile progress steps)
+      if (r.ifInFile && opt.inFile && !opt.inFile(r.component)) continue;
       if (!all.some(x => isInst(x, r.component) && shown(x))) fail(r, sc, 'ไม่มี ' + r.component);
+      else if (r.badgeMatch && !all.some(x => isInst(x, r.component) && shown(x) && x.findAll(b => isInst(b, 'Badge outline') && shown(b) && new RegExp(r.badgeMatch).test((prop(b, 'Text') || '').trim())).length))
+        fail(r, sc, r.component + ' ไม่มี Badge ข้อความตรง ' + r.badgeMatch);   // R71 ตัวนับ "ตรวจแล้ว x/y" (5 พ.ย. 2569)
+      else if (r.tabTexts && !all.some(x => isInst(x, r.component) && shown(x) && x.findAll(b => isInst(b, 'Tab item') && shown(b)).map(b => (prop(b, 'Text') || '').trim()).join('|') === r.tabTexts.join('|')))
+        fail(r, sc, r.component + ' แท็บไม่ตรง ' + r.tabTexts.join(' · '));   // R88 แท็บของหน้าอนุมัติ (10 พ.ย. 2569)
       for (const t of r.forbidSectionTitles || []) if (all.some(x => isInst(x, 'Section header') && shown(x) && prop(x, 'Title') === t)) fail(r, sc, 'ยังมีหัวข้อเดิม "' + t + '"');
     }
+    // R89 ปุ่มสีตามหน้าจริง (10 พ.ย. 2569 S13 ปุ่มรับทราบสีเขียวแบบปุ่ม "ตรวจแล้ว" หน้า 5.14 - 5.15 UI Release#2): ปุ่มข้อความ text ที่กดได้ ต้องพื้นสี fill · forbidText = ข้อความปุ่มที่ห้ามมีในจอชุดนี้
+    for (const r of RULES.buttonFill || []) {
+      if (!new RegExp(r.screens).test(sc.name)) continue;
+      const bs = all.filter(x => isInst(x, r.component) && shown(x));
+      const hex = (f) => { const c = f && f.color; return c ? '#' + [c.r, c.g, c.b].map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('').toUpperCase() : ''; };
+      for (const b of bs.filter(x => (prop(x, 'Text') || '').trim() === r.text && !/Disabled/.test((x.variantProperties || {}).State || '')))
+        if (hex((b.fills || [])[0]) !== r.fill.toUpperCase()) fail(r, sc, 'ปุ่ม "' + r.text + '" ต้องพื้น ' + r.fill + ' (ได้ ' + (hex((b.fills || [])[0]) || 'ค่าตั้งต้นของ component') + ')');
+      for (const t of r.forbidText || []) if (all.some(x => /button/i.test(compName(x) || x.name) && shown(x) && (prop(x, 'Text') || '').trim() === t)) fail(r, sc, 'มีปุ่ม "' + t + '" — ' + r.source);
+      if (r.requireText && !bs.some(x => (prop(x, 'Text') || '').trim() === r.text) && (!r.requireUnless || !new RegExp(r.requireUnless).test(sc.name))) fail(r, sc, 'ไม่มีปุ่ม "' + r.text + '"');
+    }
+    // R76 กล่องข้อมูลแยกตามประเภทงาน (5 พ.ย. 2569): ป้ายของ _Content item base ชุดแรกในจอต้องเรียงตาม labels · ป้ายใน forbidLabels (ไม่มีที่มาในข้อมูลของงานนั้น) ห้ามมีในจอ
+    for (const r of RULES.displayLabels || []) {
+      if (!new RegExp(r.screens).test(sc.name)) continue;
+      const got = all.filter(x => isInst(x, '_Content item base') && shown(x)).map(x => (prop(x, 'Label') || '').trim()).filter(l => l && l !== 'Label');   // ช่องว่างท้ายแถว (ป้ายตั้งต้น "Label" · ปิดด้วย property Item n) ไม่นับ
+      const want = r.labels || [];
+      if (want.some((l, i) => got[i] !== l)) fail(r, sc, 'ป้ายกล่องข้อมูล [' + got.slice(0, want.length).join(' · ') + '] ไม่ตรง [' + want.join(' · ') + ']');
+      for (const l of r.forbidLabels || []) if (got.indexOf(l) >= 0) fail(r, sc, 'มีช่อง "' + l + '" ที่ข้อมูลของงานนี้ไม่มี');
+    }
     // component ที่ห้ามใช้ในจอชุดนี้ (R21: Overhaul เลิกใช้เมนู "…" — PO CF 21 ต.ค. 2569 ขอเป็นไอคอน)
-    for (const r of RULES.forbid || []) { if (!new RegExp(r.screens).test(sc.name)) continue; if (all.some(x => isInst(x, r.component) && shown(x))) fail(r, sc, 'ใช้ ' + r.component + ' — ' + r.source); }
+    const inside = (x, names) => { for (let p = x.parent; p && p !== sc; p = p.parent) if (p.type === 'INSTANCE' && names.some(nm => isInst(p, nm))) return true; return false; };   // allowInside = ยกเว้นตัวที่อยู่ใน component ที่กำหนด (R30 ปุ่มตัวกรองใน Table header) · allowText = ยกเว้นปุ่มที่ข้อความตรง (R30 ปุ่มส่งออก)
+    for (const r of RULES.forbid || []) { if (!new RegExp(r.screens).test(sc.name)) continue; if (all.some(x => isInst(x, r.component) && shown(x) && !(r.allowInside && inside(x, r.allowInside)) && !(r.allowText && r.allowText.indexOf((prop(x, 'Text') || '').trim()) >= 0))) fail(r, sc, 'ใช้ ' + r.component + ' — ' + r.source); }
+    // R80 คำบนจอ (6 พ.ย. 2569): ข้อความที่มองเห็น (TEXT + property ข้อความของ instance) ห้ามมีคำต้องห้าม ยกเว้นคำใน allow (ข้อมูลจาก API)
+    for (const r of RULES.wording || []) {
+      if (!new RegExp(r.screens).test(sc.name)) continue;
+      const strip = (s) => (r.allow || []).reduce((t, w) => t.split(w).join(''), s || '');
+      const owner = (x) => { for (let p = x.parent; p && p !== sc; p = p.parent) if (p.type === 'INSTANCE') return ' (ใน ' + compName(p) + ')'; return ''; };   // บอก component ที่ข้อความอยู่ ⇒ รู้ว่าเป็นค่าตั้งต้นของ component หรือปลั๊กอินใส่เอง
+      const texts = all.filter(x => shown(x) && x.type === 'TEXT').map(x => [x.characters, owner(x)])
+        .concat(...all.filter(x => shown(x) && x.type === 'INSTANCE').map(x => Object.values(x.componentProperties || {}).filter(v => v.type === 'TEXT').map(v => [v.value, ' (ใน ' + compName(x) + ')'])));
+      const bad = [...new Set(texts.filter(([t]) => strip(t).indexOf(r.word) >= 0).map(([t, w]) => t + '"' + w))];
+      if (bad.length) fail(r, sc, 'ยังมีคำว่า "' + r.word + '" ต้องใช้ "' + r.use + '": ' + bad.slice(0, 3).map(t => '"' + t).join(' · '));
+    }
     // R22 dashboard: จอแท็บต้องมี Tabs + Metric item (21 ต.ค. 2569)
     const dr = RULES.dashboard;
     if (dr && new RegExp(dr.screens).test(sc.name)) for (const c of dr.mustHave) if (!all.some(x => isInst(x, c) && shown(x))) fail(dr, sc, 'ไม่มี ' + c);
@@ -101,4 +140,39 @@ function check(screens) {
   return { fails, pending: [...pending].map(([k, s]) => k + ' (' + s.size + ' จอ)') };
 }
 
-module.exports = { check, RULES };
+/* R80 ตรวจซอร์สปลั๊กอิน (6 พ.ย. 2569): ข้อความใน string literal ห้ามมีคำต้องห้าม ยกเว้น allow — ข้ามคอมเมนต์และ regex literal (คำพูดเจ้าของงานในคอมเมนต์คงตามจริง)
+   คืน [[บรรทัด, ข้อความ]] ที่ผิด */
+function stringLiterals(src) {
+  const out = []; let i = 0, prev = '';
+  const n = src.length;
+  while (i < n) {
+    const c = src[i];
+    if (c === '/' && src[i + 1] === '/') { const j = src.indexOf('\n', i); i = j < 0 ? n : j; continue; }
+    if (c === '/' && src[i + 1] === '*') { const j = src.indexOf('*/', i + 2); i = j < 0 ? n : j + 2; continue; }
+    if (c === '"' || c === "'" || c === '`') {
+      let j = i + 1, start = i + 1;
+      while (j < n) {
+        const d = src[j];
+        if (d === '\\') { j += 2; continue; }
+        if (c === '`' && d === '$' && src[j + 1] === '{') { out.push([start, j]); let k = j + 2, lvl = 1; while (k < n && lvl) { if (src[k] === '{') lvl++; else if (src[k] === '}') lvl--; k++; } start = k; j = k; continue; }
+        if (d === c || (d === '\n' && c !== '`')) break;
+        j++;
+      }
+      out.push([start, j]); i = j + 1; prev = c; continue;
+    }
+    if (c === '/' && (prev === '' || '(,=:[!&|?{};+-*%<>~^'.indexOf(prev) >= 0 || /return\s*$/.test(src.slice(Math.max(0, i - 8), i)))) {
+      let j = i + 1, cls = false;
+      while (j < n && src[j] !== '\n') { const d = src[j]; if (d === '\\') { j += 2; continue; } if (d === '[') cls = true; else if (d === ']') cls = false; else if (d === '/' && !cls) break; j++; }
+      i = j + 1; prev = '/'; continue;
+    }
+    if (!/\s/.test(c)) prev = c;
+    i++;
+  }
+  return out.map(([a, b]) => [src.slice(0, a).split('\n').length, src.slice(a, b)]);
+}
+function checkSourceWording(src, rule) {
+  const strip = (s) => (rule.allow || []).reduce((t, w) => t.split(w).join(''), s);
+  return stringLiterals(src).filter(([, s]) => strip(s).indexOf(rule.word) >= 0);
+}
+
+module.exports = { check, RULES, checkSourceWording };

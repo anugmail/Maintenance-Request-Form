@@ -123,8 +123,11 @@ async function build(spec, images) {
     s.name = sec.name;
     s.fills = [{ type: 'SOLID', color: { r: sec.color[0] / 255, g: sec.color[1] / 255, b: sec.color[2] / 255 } }];
 
-    let x = 80;
-    let maxColH = 0;
+    /* แถว Desktop / Mobile (5 พ.ย. 2569 ตามผัง R19 ของไฟล์ Figma): sec.rows = [{ label, h }] · ภาพมี im.row · ป้ายแถวซ้ายสุด */
+    const rows = sec.rows || null, ROW_GAP = 120, DEV_W = 160;
+    const rowY = (r) => 176 + (rows ? rows.slice(0, r).reduce((a, q) => a + q.h + ROW_GAP, 0) : 0);
+    let x = rows ? 80 + DEV_W + 80 : 80;
+    let maxColH = rows ? rowY(rows.length - 1) + rows[rows.length - 1].h - 176 : 0;
     const anchors = [];
 
     for (const col of sec.cols) {
@@ -139,6 +142,7 @@ async function build(spec, images) {
       let yy = 176;
       let first = null;
       let colW = 0;
+      const colShapes = [];
       for (const im of col.images) {
         const bytes = byteMap.get(im.src);
         if (!bytes) throw new Error('ไม่มี bytes ของ ' + im.src);
@@ -155,24 +159,41 @@ async function build(spec, images) {
         // (เจ้าของงานเจอ 15 ก.ย. 2569) ⇒ มีขอบไว้อย่างน้อยเห็นว่ากล่องยังอยู่ แค่รูปไม่มา
         shape.strokes = [{ type: 'SOLID', color: { r: 0.816, g: 0.835, b: 0.867 } }];
         shape.strokeWeight = 1;
-        shape.x = x; shape.y = yy;
+        shape.x = x; shape.y = rows ? rowY(im.row || 0) : yy;
         yy += im.h;
         colW = Math.max(colW, im.w);
         if (!first) first = shape;
+        colShapes.push(shape);
         made.shapes++;
       }
       anchors.push(first);
-      maxColH = Math.max(maxColH, yy - 176);
+      groupIn(s, [label].concat(colShapes), 'จอ / ' + col.label, made);
+      if (!rows) maxColH = Math.max(maxColH, yy - 176);
       x += (colW || 1440) + 160;
     }
 
+    if (rows) rows.forEach((q, r) => {
+      step('ป้ายแถว ' + q.label);
+      const d = figma.createShapeWithText();
+      d.shapeType = 'ROUNDED_RECTANGLE';
+      d.name = 'อุปกรณ์ / ' + q.label;
+      s.appendChild(d);
+      d.resize(DEV_W, q.h);
+      d.fills = [{ type: 'SOLID', color: { r: 0x64 / 255, g: 0x74 / 255, b: 0x8B / 255 } }];
+      d.text.fontName = font; d.text.fontSize = 32; d.text.characters = q.label;
+      d.text.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
+      d.x = 80; d.y = rowY(r);
+    });
+
     step('ปรับขนาด section "' + sec.name + '"');
     s.resizeWithoutConstraints(x - 160 + 80, 176 + maxColH + 80);
+    await addSectionTitle(s, sec.name, font);
     s.x = x0; s.y = y;
     built.push(s);
     y += s.height + 320;
     made.sections++;
 
+    const secConns = [];
     if (sec.connect === 'sequence') {
       for (let i = 0; i < anchors.length - 1; i++) {
         if (!anchors[i] || !anchors[i + 1]) continue;
@@ -184,14 +205,44 @@ async function build(spec, images) {
         c.connectorEndStrokeCap = 'ARROW_LINES';
         c.strokes = [{ type: 'SOLID', color: ARROW }];
         c.strokeWeight = 3;
+        secConns.push(c);
         made.connectors++;
       }
     }
+    wrapScenario(s, secConns, sec.name, made);
     post('✓ ' + sec.name + ' (' + sec.cols.length + ' หน้าจอ)');
   }
 
   figma.viewport.scrollAndZoomIntoView(built.length ? built : figma.currentPage.children);
   return made;
+}
+
+/* หัวข้อภาษาไทยในแต่ละ section (5 พ.ย. 2569 เจ้าของงาน ภาพหัว section สระลอยเพี้ยน)
+   ป้ายชื่อ section FigJam วาดด้วยฟอนต์ของโปรแกรม ปลั๊กอินเลือกไม่ได้ ⇒ ใส่ TextNode ฟอนต์ไทยตัวใหญ่ไว้บนสุดของ section
+   ดันของเดิมลงตามความสูงหัวข้อ (connector ผูกปลายกับ node อยู่แล้ว เลื่อนตามเอง) · ชื่อ section คงเดิม (รันซ้ำแทนที่ได้) */
+async function addSectionTitle(s, title, font) {
+  const H = 120;
+  for (const c of s.children) if (c.type !== 'CONNECTOR') c.y += H;
+  s.resizeWithoutConstraints(s.width, s.height + H);
+  const t = figma.createText();
+  t.fontName = font;
+  t.fontSize = 56;
+  t.characters = title;
+  t.name = 'หัวข้อ / ' + title;
+  s.appendChild(t);
+  t.x = 80; t.y = 40;
+}
+
+/* group ในแต่ละ section (5 พ.ย. 2569 เจ้าของงาน "อยากให้ group หน้าจอ ก่อน แล้วค่อย group scenario แล้วจากนั้น ก็ groupรวบ พื้นหลัง แยกไปทีละ scen ไป ตอนนี้ทุกชิ้นมันแยกออกจากกันไปหมด")
+   ชั้นใน = จอ (ป้าย + ภาพ) · ชั้นนอก = ทุกอย่างของ scenario (หัวข้อ จอ ลูกศร) อยู่ใน section ของ scenario นั้นซึ่งเป็นพื้นหลัง ⇒ ลาก/เลือกทีละ scenario ได้ทั้งก้อน
+   ลูกศรเดิมสร้างไว้บนหน้า (ไม่อยู่ใน section) ⇒ ย้ายเข้า section ก่อนรวบ · group ไม่ได้ (API รุ่นเก่า) = เตือน ไม่พัง */
+function groupIn(s, nodes, name, made) {
+  try { const g = figma.group(nodes, s); g.name = name; return g; }
+  catch (e) { made.warnings.push('group "' + name + '" ไม่ได้ — ' + e.message); return null; }
+}
+function wrapScenario(s, conns, name, made) {
+  for (const c of conns) { try { s.appendChild(c); } catch (e) { /* ลูกศรย้ายไม่ได้ ปล่อยไว้บนหน้า */ } }
+  if (s.children.length > 1) groupIn(s, [...s.children], 'scenario / ' + name, made);
 }
 
 /* ---------- section ชนิดผัง (flowchart จาก Diagram/ ผ่าน 4-figjam-diagram.js) ----------
@@ -299,13 +350,16 @@ async function buildDiagram(sec, y, font, made, x0, built) {
   }
 
   s.resizeWithoutConstraints(d.w + PAD * 2, d.h + PAD * 2);
+  await addSectionTitle(s, sec.name, font);
   s.x = x0 || 0; s.y = y;
   if (built) built.push(s);
   made.sections++;
 
+  const secConns = [];
   for (const e of d.edges) {
     if (!byId[e.from] || !byId[e.to]) continue;
     const c = figma.createConnector();
+    secConns.push(c);
     c.name = 'flow →';
     c.connectorStart = { endpointNodeId: byId[e.from].id, magnet: e.ms || 'AUTO' };
     c.connectorEnd = { endpointNodeId: byId[e.to].id, magnet: e.me || 'AUTO' };
@@ -321,6 +375,7 @@ async function buildDiagram(sec, y, font, made, x0, built) {
     }
     made.connectors++;
   }
+  wrapScenario(s, secConns, sec.name, made);
 
   return y + s.height + 320;
 }
@@ -392,6 +447,7 @@ async function buildDoc(sec, y, font, made, x0, built) {
   }
 
   s.resizeWithoutConstraints(maxW + PAD * 2, yy - GAP + PAD);
+  await addSectionTitle(s, sec.name, font);
   s.x = x0 || 0; s.y = y;
   if (built) built.push(s);
   made.sections++;
