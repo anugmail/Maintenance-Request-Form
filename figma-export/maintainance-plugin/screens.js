@@ -879,8 +879,9 @@ async function tripList(name, o) {
   const qCars = qAll.slice(0, TABLE_MAX.rows);   // Table ของไลบรารีได้ 10 แถว (R8) ⇒ เกินแสดงหน้าแรก + pagination
   const cars = col('Section', [await sectionLabel('ยานพาหนะใน' + Q, { badge: qAll.length, buttons: [{ kind: 'Secondary button', text: 'เพิ่มยานพาหนะ', icon: 'add-24-300-round' }] }),
     await tblShort(TRIP_Q_COLS.concat([['', 104]]), qCars.map(([c, i]) => { const k = i >= 0 ? tripOf(i) : -1, sub = (o.subs || {})[c[0]];
-      /* R82 ช่องตามชุด TRIP_V_COLS (ไม่มีสถานที่) · ยานพาหนะที่เพิ่มเข้าไตรมาส (Q_EXTRA) ยังไม่อยู่ในแผนเดินทาง ⇒ ผู้ดูแลจากข้อมูลยานพาหนะ วันดำเนินการ "—" เรียงตามชุดเดียวกัน */
-      const base = i >= 0 ? tripVCells(i, k >= 0 ? trips[k] : {}, { drop: ['สถานที่บำรุงรักษา'] }) : [c[0], typeOf(c), c[1], c[2], { text: c[4], sub: c[3] }, '—'];
+      /* R82 ช่องตามชุด TRIP_V_COLS (ไม่มีสถานที่) · ยานพาหนะที่เพิ่มเข้าไตรมาส (Q_EXTRA) และที่ย้ายมา (S25 MOVE_Q2_PAGE) ยังไม่อยู่ในแผนเดินทาง ⇒ ผู้ดูแลจากข้อมูลยานพาหนะ วันดำเนินการ "—" เรียงตามชุดเดียวกัน
+         เบอร์ติดต่อ = เบอร์บรรทัดบน ชื่อผู้ดูแลบรรทัดรอง แบบ tripPhoneCell (9 พ.ย. 2569 · 10 พ.ย. 2569 แก้จุดนี้ที่ยังเป็นชื่อบน เบอร์ล่าง) */
+      const base = i >= 0 ? tripVCells(i, k >= 0 ? trips[k] : {}, { drop: ['สถานที่บำรุงรักษา'] }) : [c[0], typeOf(c), c[1], c[2], { text: c[3], sub: c[4] }, '—'];
       if (sub) base[0] = { text: c[0], sub };
       return base.concat([J[c[0]] ? { pill: WSTAT[J[c[0]]] } : k >= 0 ? { text: trips[k].name, sub: 'เพิ่มเข้าแผนเดินทางแล้ว' } : { pill: ['ยังไม่มีแผนเดินทาง', 'Gray'] },   /* 6 พ.ย. 2569 เจ้าของงาน "หลังจากสร้างแผนการเดินทางแล้ว รถที่เพิ่ม จะแสดงว่าถูกเพิ่มแล้ว" */ J[c[0]] ? { menu: 1, items: [MOVE_ITEM] } : { icons: k >= 0 ? ['stylus-24-300-round'] : ['stylus-24-300-round', 'delete-24-300-round'] }]); }), qAll.length > qCars.length ? { pagination: { shown: qCars.length, total: qAll.length } } : {})], 16);
   const free = qAll.filter(([, i]) => i < 0 || tripOf(i) < 0).length;   // 5 พ.ย. 2569 รีวิว "สามารถสร้างแผนได้จนกว่าจะไม่เหลือรถอยู่แล้ว" ⇒ รถทุกคันอยู่ในแผนเดินทางแล้ว ปุ่มกดไม่ได้
@@ -2262,7 +2263,8 @@ const qName = (k) => QUARTERS[k].split(' (')[0];   // ลำดับ 0–3 → 
 const MOVE_TO = 1;   // ตัวอย่างเลือกไตรมาส 2
 const MOVE_TOAST = 'ย้ายยานพาหนะ ' + MOVE_CAR[0] + ' ไป' + qName(MOVE_TO) + ' สำเร็จ';
 const MOVE_CONFIRM = (k) => ({ title: 'ยืนยันการย้ายยานพาหนะไป' + qName(k), sub: MOVE_CAR[0] + ' จะออกจาก' + NOW_Q + ' ไปอยู่' + qName(k) + ' ของแผนนี้ พร้อมอะไหล่ตามแผนของยานพาหนะคันนี้', cancel: 'ยกเลิก', ok: 'ยืนยัน' });
-const MOVE_PART_COLS = [['อะไหล่ตามแผน', 0, 'Lead text'], ['จำนวนตามแผน', 170], ['หน่วย', 120]];
+/* อะไหล่ที่ย้ายไปด้วย (10 พ.ย. 2569) = ตาราง QPART_COLS ชุดเดียวกับอะไหล่ในไตรมาส n ที่รับยอดนี้ไป (R81 · เดิม 3 คอลัมน์ อะไหล่ตามแผน จำนวนตามแผน หน่วย) · แถวตาม WORK ของยานพาหนะคันที่ย้าย */
+const movePartRows = () => WORK.map((w, k) => { const p = PARTS[MOVE_PART_OF[k]] || [w[1], '-', '-']; return [p[0], p[1], p[2], w[2], w[4]]; });
 /* รถเดิมของไตรมาส 2 (P_Q[1] = 3 คัน · ค่าสมมติ) ทะเบียน · ยี่ห้อ/รุ่น · หน่วยงานเจ้าของรถ · เบอร์ · ชื่อผู้ดูแลยานพาหนะ */
 const MOVE_Q2 = [['81-7702 ลำปาง', 'Isuzu FTR + กระเช้า Aichi SK12A', 'กฟน.1 ลำปาง', '054-217-411', 'นายไพโรจน์ ดวงใจ'], ['82-5530 เชียงราย', 'Hino FC + กระเช้า Tadano AT-100', 'กฟน.1 เชียงราย', '053-711-930', 'นายศักดิ์ชัย ทองแท้'],
   ['80-1189 น่าน', 'Isuzu FRR + กระเช้า Aichi SK10A', 'กฟน.2 น่าน', '054-710-551', 'นายมานพ ศรีเมือง']];
@@ -2300,11 +2302,12 @@ function moveCard(scr, row, off) {   // มือถือ: ช่องท้�
 /* popup ย้ายไปไตรมาสอื่น · o.cur = ไตรมาสปัจจุบัน (0–3) · o.sel = ไตรมาสที่เลือก (-1 ยังไม่เลือก · ปุ่ม Disabled) · o.trip = แผนเดินทางที่บำรุงรักษาไม่ได้ */
 async function moveModal(scr, o) {
   const cur = o.cur || 0, sel = o.sel == null ? -1 : o.sel;
-  const info = kv([['ทะเบียน', MOVE_CAR[0]], ['หน่วยงานเจ้าของยานพาหนะ', MOVE_CAR[2]], ['แผนเดินทาง', (o.trip || JOB_T).name], ['สาเหตุที่บำรุงรักษาไม่ได้', JOB_CANNOT]], 2);
+  // 10 พ.ย. 2569 + ประเภทยานพาหนะต่อจากทะเบียน (R82 ทุกที่ที่แสดงยานพาหนะมีประเภท · แบบตอนตรวจตามประเภท R86)
+  const info = kv([['ทะเบียน', MOVE_CAR[0]], ['ประเภทยานพาหนะ', typeOf(MOVE_CAR)], ['หน่วยงานเจ้าของยานพาหนะ', MOVE_CAR[2]], ['แผนเดินทาง', (o.trip || JOB_T).name], ['สาเหตุที่บำรุงรักษาไม่ได้', JOB_CANNOT]], 2);
   const r = col('Radio', [], 12);
   QUARTERS.forEach((t, k) => add(r, inst('Radio text card', { State: k <= cur ? 'Disabled' : 'Default', Selected: k === sel ? 'True' : 'False' },
     { Text: t, Supporting: true, 'Supporting text': k < cur ? 'ไตรมาสก่อนหน้า' : k === cur ? 'ไตรมาสปัจจุบัน' : 'ยานพาหนะในไตรมาส ' + P_Q[k] + ' คัน' }), 'h'));
-  const parts = col('Section', [await section('อะไหล่ตามแผนที่ย้ายไปด้วย', { badge: WORK.length }), await tblShort(MOVE_PART_COLS, WORK.map(w => [w[1], w[2], w[4]]))], 16);
+  const parts = col('Section', [await section('อะไหล่ตามแผนที่ย้ายไปด้วย', { badge: WORK.length }), await tblShort(QPART_COLS, movePartRows())], 16);
   await popupModal(scr, { title: 'ย้ายไปไตรมาสอื่น · ' + MOVE_CAR[0], sub: 'ยานพาหนะและอะไหล่ตามแผนของยานพาหนะคันนี้จะย้ายไปไตรมาสที่เลือก', w: 800, ok: 'ย้ายยานพาหนะ', okOff: sel < 0,
     body: [info, col('Section', [await section('เลือกไตรมาสที่จะย้ายไป'), r], 16), parts] });
 }
