@@ -97,11 +97,15 @@
 
         <section>
           <div class="sect"><span>อะไหล่จากคลัง</span>
-            <span class="ml-auto"><button class="btn btn-s btn-sm" type="button" id="add-part"><span class="ms">add</span>เบิก</button></span></div>
+            <!-- [ลอง] JO 7.4.2 24 ต.ค. 2569 — เพิ่มปุ่ม "คืนอะไหล่" ข้างปุ่มเบิกเดิม ตามที่เจ้าของงานตอบ "ใช้ปุ่มเดิม + เพิ่มข้างๆ กัน" (ยังไม่ยืนยันดีไซน์จริง) -->
+            <span class="ml-auto flex gap-3">
+              <button class="btn btn-s btn-sm" type="button" id="add-part"><span class="ms">add</span>เบิกอะไหล่</button>
+              <button class="btn btn-s btn-sm" type="button" id="return-part"><span class="ms">undo</span>คืนอะไหล่</button>
+            </span></div>
           <div class="filter-empty mt-4">
             <span class="ms">inventory_2</span>
             <b>ยังไม่มีรายการเบิกอะไหล่</b>
-            <span>ส่วนนี้จองไว้ตาม userflow — ขั้นตอนเบิกอะไหล่จากคลังยังไม่ได้ออกแบบ</span>
+            <span>ส่วนนี้จองไว้ตาม userflow — ขั้นตอนเบิก/คืนอะไหล่ยังไม่ได้ออกแบบ</span>
           </div>
         </section>
       </div>
@@ -128,7 +132,7 @@
   </div>
 </div>
 
-<script src="overhaul-v2-mock.js?v=20261019-4"></script>
+<script src="overhaul-v2-mock.js?v=20261106-1"></script>
 <script>
 const $=id=>document.getElementById(id);
 const q=new URLSearchParams(location.search);
@@ -148,7 +152,8 @@ function render(){
   const f=(k,v,wide)=>`<div class="incident-field${wide?' wide':''}"><dt>${k}</dt><dd>${v}</dd></div>`;
   $('info').innerHTML=f('ชื่อแผน',oh2Esc(p.name),true)+f('ประจำปีงบประมาณ',p.year)+f('วงเงินอนุมัติ (บาท)',oh2Money(p.budget))+
     f('จำนวนรถที่ Overhaul',oh2PlanCars(p).length+' คัน')+f('วันที่สร้าง',oh2Date(p.created))+
-    f('เลข WBS (ศูนย์ต้นทุน)',oh2Esc(p.wbs))+f('เลขโครงข่าย',oh2Esc(p.net))+f('เลขกิจกรรม',oh2Esc(p.act));
+    f('เลข WBS (ศูนย์ต้นทุน)',oh2Esc(p.wbs))+f('เลขโครงข่าย',oh2Esc(p.net))+f('เลขกิจกรรม',oh2Esc(p.act))+
+    f('หมายเหตุ',p.remark?oh2Esc(p.remark):'<span class="text-[var(--gray-400)]">—</span>',true);   // 5 พ.ย. 2569 — track งานที่ดำเนินการข้ามปี
   $('doc-approve').innerHTML=oh2FilesRO(p.docs.approve);$('doc-budget').innerHTML=oh2FilesRO(p.docs.budget);$('doc-other').innerHTML=oh2FilesRO(p.docs.other);
   $('po-count').textContent=p.pos.length;
   $('po-body').innerHTML=p.pos.map(o=>`<tr>
@@ -180,6 +185,8 @@ $('m-del-ok').addEventListener('click',()=>{
   const p=oh2Plan(S,id);p.pos=p.pos.filter(o=>o.id!==del.id);oh2Save(S);render();oh2Notify('ลบ purchase order สำเร็จ');
 });
 $('add-part').addEventListener('click',()=>oh2Notify('เบิกอะไหล่จากคลัง — ยังไม่ได้ออกแบบ',{sub:'userflow จอง section ไว้เท่านั้น'}));
+// [ลอง] JO 7.4.2 — ตัวอย่าง toast "คืนอะไหล่สำเร็จ" (ยังไม่มีฟอร์ม/ขั้นตอนจริง แค่ลองดูปฏิกิริยาของปุ่ม)
+$('return-part').addEventListener('click',()=>oh2Notify('บันทึกคืนอะไหล่สำเร็จ',{sub:'[ลอง] ยังไม่มีฟอร์มจริง — แค่สาธิต toast'}));
 
 const saved=q.get('saved');
 if(saved){oh2Notify({edit:'บันทึกการแก้ไขแผนสำเร็จ',po:'การสร้าง purchase order สำเร็จ',poedit:'บันทึกการแก้ไข PO สำเร็จ',podel:'ลบ purchase order สำเร็จ'}[saved]||'บันทึกสำเร็จ');

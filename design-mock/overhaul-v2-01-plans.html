@@ -23,7 +23,7 @@
            Table pagination (.tblfoot/.pager) · Dropdown menu + _Dropdown menu item (.dd-menu — เมนู "…") ·
            Side panel (.filter-drawer) · Input dropdown + Dropdown list item (.combo — ตัวกรองรถ) ·
            Modal Type=Destructive centered (.modal-hd.center + .modal-ft-a.fill + .btn-d) · Featured icon (.ficon) · Notification (.notif) ·
-           Empty state/Data empty + Search not found (.filter-empty)
+           Empty state/Data empty + Search not found (.filter-empty) · Tabs + Tab item (.tabs/.tab-btn)
         · ไฟล์ UI Release#2: หน้า "5.1 Rental Contract Management" เฟรม `Contract list` (Page header + Table header ค้นหา/ปุ่ม +
           ตาราง + Table pagination) · `Contract list - Empty` / `Search not found` · `Filter Side panel` · `Create contract - Success`
           ⚠️ ไฟล์ UI Release#2 ไม่มีหน้าจอ Overhaul — ยึดโครงหน้ารายการสัญญาที่มีครบทุก state
@@ -34,6 +34,12 @@
   จับคู่ทุกส่วนกับ component จริง: figma-export/overhaul-v2-component-map.md
   ตีความเอง: ตัวกรอง "งบประมาณ" เป็นช่วงวงเงิน · ข้อความแจ้งหลังลบ "ลบแผน overhaul สำเร็จ" (userflow ไม่ได้ระบุ)
   ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility · ข้อมูลจำลองทั้งหมด
+
+  4 พ.ย. 2569 — เจ้าของงานสั่งรวมแท็บ "รถที่ Overhaul" เข้าหน้านี้เป็น in-page tab (.tabs/.tab-btn — เหมือน overhaul-02-detail.html)
+    → สั่งแยกเป็น 2 หน้าคนละเส้นทาง (อ้าง overhaul-02-plans.html) → สั่งย้อนกลับมาเป็น in-page tab หน้าเดียวอีกครั้ง (เวอร์ชันสุดท้าย 4 พ.ย. 2569 ค่ำ)
+    ⇒ หน้านี้มี 2 แท็บ: "แผน Overhaul" (tab-plan เนื้อหาเดิม) + "รถที่ Overhaul" (tab-cost ยกจากที่เคยทำแยกไฟล์ไว้ — metric 4 ก้อน/กราฟ/ตารางรถ ประกัน 2 ชั้น/ตัวกรองเกณฑ์เข้า Overhaul)
+    ไอดีของแท็บ "รถที่ Overhaul" ลงท้ายด้วย 2 ทั้งหมด (q2, fbtn2, fpanel2, f-brand2 …) กันชนกับไอดีของแท็บ "แผน Overhaul" ที่อยู่ใน DOM เดียวกัน
+    sidebar กลับไปมีลิงก์เดียว (ไม่มีหน้า overhaul-v2-07-dashboard-value.html แยกแล้ว — ลบไฟล์นั้นออก)
 -->
 </head>
 <body>
@@ -68,6 +74,13 @@
         <a class="btn btn-p !no-underline" href="overhaul-v2-02-plan-form.html"><span class="ms">add</span>สร้างแผน Overhaul</a>
       </div>
 
+      <div class="tabs" role="tablist" aria-label="จัดการงาน Overhaul">
+        <button type="button" class="tab-btn on" role="tab" aria-selected="true" data-tab="plan">แผน Overhaul</button>
+        <button type="button" class="tab-btn" role="tab" aria-selected="false" data-tab="cost">รถที่ Overhaul</button>
+      </div>
+
+      <!-- ===== แท็บ: แผน Overhaul (เดิม) ===== -->
+      <div class="pt-6" id="tab-plan" role="tabpanel">
       <div class="w-full stack">
         <div class="list-toolbar split mb-0" id="toolbar">
           <div class="lt-search"><div class="search"><span class="ms">search</span><input type="search" id="q" placeholder="ค้นหาเลขแผน, ชื่อแผน, เลขศูนย์ต้นทุน" aria-label="ค้นหาแผน"></div></div>
@@ -88,6 +101,7 @@
                 <th class="num">จำนวนรถที่ Overhaul</th>
                 <th class="sortable" data-k="status"><button type="button">สถานะ<span class="ms">swap_vert</span></button></th>
                 <th>วันที่สร้าง</th>
+                <th>หมายเหตุ</th>
                 <th class="w-[72px]" aria-label="จัดการ"></th>
               </tr>
             </thead>
@@ -119,11 +133,66 @@
           <a class="btn btn-p btn-sm mt-2 !no-underline" href="overhaul-v2-02-plan-form.html"><span class="ms">add</span>สร้างแผน Overhaul</a>
         </div>
       </div>
+      </div>
+
+      <!-- ===== แท็บ: รถที่ Overhaul (ยกจาก overhaul-v2-07-dashboard-value.html เดิม) ===== -->
+      <div class="pt-6 hidden" id="tab-cost" role="tabpanel">
+        <div class="card mb-0">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2 text-sm text-gray-600"><span class="ms">insights</span>ค่า Overhaul เทียบราคารถ — รายปีงบประมาณ</div>
+            <div class="flex items-center gap-4 text-xs text-gray-600">
+              <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-full" style="background:var(--chart-2)"></span>ราคารถ (ข้อมูลในระบบ)</span>
+              <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-full" style="background:var(--chart-5)"></span>ค่า Overhaul</span>
+            </div>
+          </div>
+          <div class="mt-3" id="chart"></div>
+          <div class="flex items-center gap-6 mt-3 pt-3 border-t border-gray-200 flex-wrap">
+            <div><div class="text-xs text-gray-600">ประหยัดรวม (บาท)</div><div class="text-h1 font-bold text-gray-900" id="m-save"></div></div>
+            <div><div class="text-xs text-gray-600">ค่า Overhaul เฉลี่ยเทียบราคารถ</div><div class="text-h1 font-bold text-gray-900" id="m-cost"></div></div>
+          </div>
+          <!-- รายละเอียดที่มาของ "ประหยัดรวม" แยกตามปีงบประมาณ — ตอบ "ประหยัดจากอะไร" (ราคารถ − ค่า Overhaul ของปีนั้น) ตัวเลข format เดียวกับทั้งหน้า (คอมม่าคั่นหลักพัน + หน่วย "บาท") -->
+          <div class="mt-3 pt-3 border-t border-gray-200 stack tight" id="save-breakdown"></div>
+          <!-- 5 พ.ย. 2569 — เจ้าของงานขอดูรูปแบบ format currency ให้เลือก (มี/ไม่มีหน่วย ฯลฯ) ก่อนเคาะ · แถวนี้ชั่วคราวสำหรับเทียบเท่านั้น ไม่ใช่ของจริง เอาออกทันทีที่เลือกแบบได้ -->
+          <div class="mt-3 pt-3 border-t border-gray-200" id="save-format-compare">
+            <div class="text-xs text-gray-500 mb-2">⏳ ยังไม่เคาะ — ตัวอย่างรูปแบบแสดงตัวเลข "ประหยัดรวม" ให้เลือก (ค่าเดียวกันทุกแบบ)</div>
+            <div class="grid gap-2 sm:grid-cols-2" id="save-format-list"></div>
+          </div>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2 mt-4">
+          <div class="card mb-0">
+            <div class="flex items-center gap-2 text-sm text-gray-600"><span class="ms">history</span>เวลาเฉลี่ยก่อนกลับมาซ่อมอีก (วัน)</div>
+            <div class="text-h1 font-bold text-gray-900 mt-2" id="m-days"></div>
+          </div>
+          <div class="card mb-0">
+            <div class="flex items-center gap-2 text-sm text-gray-600"><span class="ms">directions_car</span>รุ่นที่ Overhaul บ่อยสุด</div>
+            <div class="text-h1 font-bold text-gray-900 mt-2" id="m-brand"></div>
+          </div>
+        </div>
+        <div class="list-toolbar split mb-0 mt-4">
+          <div class="lt-search"><div class="search"><span class="ms">search</span><input type="search" id="q2" placeholder="ค้นหาทะเบียน, ยี่ห้อ/รุ่น"></div></div>
+          <div class="lt-actions"><button class="btn btn-s" type="button" id="fbtn2" aria-controls="fpanel2"><span class="ms">filter_list</span>ตัวกรอง</button></div>
+        </div>
+        <div class="fchips" id="fchips2" aria-label="ตัวกรองที่ใช้อยู่"></div>
+        <div class="tblwrap mt-4" id="carwrap">
+          <table class="tbl striped">
+            <thead><tr><th>ทะเบียน</th><th>ยี่ห้อ/รุ่น · ประเภท</th><th class="num">เลขไมล์ (กม.)</th><th class="num">อายุการใช้งาน</th>
+              <th>ระยะเวลาประกัน กบค</th><th>ระยะเวลาประกัน (บริษัท)</th><th class="num">เปรียบเทียบราคา Overhaul</th><th>วันที่ซ่อมล่าสุด</th><th>สถานะงาน</th><th class="w-[56px]" aria-label="เพิ่มเข้าแผน"></th></tr></thead>
+            <tbody id="cars"></tbody>
+          </table>
+        </div>
+        <!-- Empty state/Search not found -->
+        <div class="filter-empty hidden" id="notfound2">
+          <span class="ms">search_off</span>
+          <b>ไม่พบรถที่ Overhaul</b>
+          <span>ไม่มีรถที่ตรงกับคำค้นหรือตัวกรอง</span>
+          <button class="btn btn-s btn-sm mt-2" type="button" id="clear2">ล้างคำค้นและตัวกรอง</button>
+        </div>
+      </div>
     </main>
   </div>
 </div>
 
-<!-- ตัวกรอง — Side panel (ตาม `Filter Side panel` ของ UI Release#2 5.1) · ช่องตาม userflow: งบประมาณ · สถานะ · รถ · ศูนย์ต้นทุน -->
+<!-- ตัวกรองแผน — Side panel (ตาม `Filter Side panel` ของ UI Release#2 5.1) · ช่องตาม userflow: งบประมาณ · สถานะ · รถ · ศูนย์ต้นทุน -->
 <div class="filter-panel filter-drawer" id="fpanel">
   <div class="filter-drawer-sheet" role="dialog" aria-modal="true" aria-labelledby="ftitle">
     <div class="filter-drawer-head">
@@ -146,6 +215,29 @@
   </div>
 </div>
 
+<!-- ตัวกรองรถ — Side panel · เน้นรถและเกณฑ์ที่จะเข้า Overhaul (sync กับ carFilterPanel ใน figma-export/overhaul2-plugin/code.js) -->
+<div class="filter-panel filter-drawer" id="fpanel2">
+  <div class="filter-drawer-sheet" role="dialog" aria-modal="true" aria-labelledby="ftitle2">
+    <div class="filter-drawer-head">
+      <span class="filter-drawer-icon"><span class="ms">filter_list</span></span>
+      <div class="filter-drawer-title"><h2 id="ftitle2">ตัวกรอง</h2><p>กรองข้อมูลให้แสดงเฉพาะข้อมูลที่ต้องการ</p></div>
+      <button type="button" class="filter-drawer-close" id="fclose2" aria-label="ปิดตัวกรอง"><span class="ms">close</span></button>
+    </div>
+    <div class="filter-drawer-body">
+      <div class="filter-field"><label for="f-brand2">ยี่ห้อ</label><select id="f-brand2"><option value="">ทั้งหมด</option></select></div>
+      <div class="filter-field"><label for="f-type2">ประเภทรถ</label><select id="f-type2"><option value="">ทั้งหมด</option></select></div>
+      <div class="filter-field"><label for="f-age2">อายุการใช้งาน</label>
+        <select id="f-age2"><option value="">ทั้งหมด</option><option value="0-10">ต่ำกว่า 10 ปี</option><option value="10-15">10–15 ปี</option><option value="15-">มากกว่า 15 ปี</option></select></div>
+      <div class="filter-field"><label for="f-mileage2">เลขไมล์สะสม (กม.)</label>
+        <select id="f-mileage2"><option value="">ทั้งหมด</option><option value="0-150000">ต่ำกว่า 150,000 กม.</option><option value="150000-200000">150,000–200,000 กม.</option><option value="200000-">มากกว่า 200,000 กม.</option></select></div>
+      <div class="filter-field"><label for="f-cost2">ค่า Overhaul เทียบราคารถ</label>
+        <select id="f-cost2"><option value="">ทั้งหมด</option><option value="under">ต่ำกว่า 10%</option><option value="over">10% ขึ้นไป (เกินเกณฑ์)</option></select></div>
+      <div class="filter-field"><label>สถานะงาน</label><div class="filter-checks" id="f-stage2"></div></div>
+    </div>
+    <div class="filter-drawer-foot"><button class="btn btn-link" type="button" id="fclear2">ล้างตัวกรอง</button><button class="btn btn-s" type="button" id="fcancel2">ยกเลิก</button><button class="btn btn-p" type="button" id="fapply2">ตกลง</button></div>
+  </div>
+</div>
+
 <!-- ยืนยันการลบแผน — Modal Type=Destructive centered (ไลบรารี) -->
 <div class="modal-overlay hidden" id="m-del">
   <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-del-t">
@@ -160,9 +252,17 @@
   </div>
 </div>
 
-<script src="overhaul-v2-mock.js?v=20261019-4"></script>
+<script src="overhaul-v2-mock.js?v=20261106-1"></script>
 <script>
 const $=id=>document.getElementById(id);
+
+/* ── สลับแท็บ "แผน Overhaul" / "รถที่ Overhaul" ── */
+document.querySelectorAll('.tabs>.tab-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tabs>.tab-btn').forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-selected',on)});
+  ['plan','cost'].forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));
+}));
+
+/* ===== แท็บ: แผน Overhaul (เดิม) ===== */
 let S=oh2Load();
 let sort={k:'id',dir:-1};
 let F={budget:'',status:[],car:'',wbs:''};   // ตัวกรองที่ใช้อยู่
@@ -193,6 +293,7 @@ function render(){
       <td class="num">${oh2PlanCars(p).length}</td>
       <td>${oh2Badge(OH2_PLAN,statusOf(p))}</td>
       <td>${oh2Date(p.created)}</td>
+      <td>${p.remark?`<span class="cell-clip" style="max-width:220px" title="${oh2Esc(p.remark)}">${oh2Esc(p.remark)}</span>`:`<span class="text-[var(--gray-400)]">—</span>`}</td>
       <td class="dt-action">
         <details class="dd"><summary class="btn btn-t btn-icon" aria-label="จัดการแผน ${oh2Esc(p.id)}"><span class="ms">more_horiz</span></summary>
           <div class="dd-menu">
@@ -257,7 +358,7 @@ document.addEventListener('click',e=>{
     $('m-del-s').textContent=`แผน ${p.id} "${p.name}"${p.pos.length?` และ Purchase Order ${p.pos.length} ใบในแผนนี้`:''} จะถูกลบ`;
     oh2Modal('m-del',true);return}
   const t=e.target.closest('[data-todo]');
-  if(t){const dd=t.closest('details');if(dd)dd.open=false;oh2Notify(`${t.dataset.todo} — ยังไม่ได้ทำในรอบตัวอย่างนี้`,{sub:'ต้นแบบรอบนี้ทำเฉพาะหน้ารายการแผน'})}
+  if(t){const dd=t.closest('details');if(dd)dd.open=false;oh2Notify(`${t.dataset.todo} — ยังไม่ได้ทำในรอบตัวอย่างนี้`,{sub:'ยังไม่ยืนยันดีไซน์'})}
 });
 $('m-del-ok').addEventListener('click',()=>{
   S.plans=S.plans.filter(p=>p.id!==delId);oh2Save(S);oh2Modal('m-del',false);render();
@@ -271,6 +372,195 @@ if(saved){oh2Notify({create:'การสร้างแผน overhaul สำ�
 $('reset').addEventListener('click',()=>{S=oh2Reset();render();oh2Notify('คืนค่าข้อมูลตัวอย่างแล้ว')});
 $('wipe').addEventListener('click',()=>{S.plans=[];oh2Save(S);render()});
 render();
+
+/* ===== แท็บ: รถที่ Overhaul (ยกจาก overhaul-v2-07-dashboard-value.html เดิม — ไอดี/ตัวแปรลงท้าย 2 กันชน) ===== */
+const COST_ALERT_PCT=10;
+/* price = ราคาที่ได้มา (ยืนยันแล้วว่ามีจริง vms_mas_vehicle.vehicle_price) · cost = ค่า Overhaul จริง */
+const COST_VS_PRICE={
+  '8234 กค กทม':{price:2030000,cost:182700},'72-6648 สงขลา':{price:2480000,cost:223200},
+  '71-9902 ขอนแก่น':{price:2130000,cost:191700},'80-3316 เชียงใหม่':{price:1980000,cost:178200},
+  '83-2210 นครราชสีมา':{price:2260000,cost:203400},
+};
+/* year = ปีงบประมาณที่ปิดงาน Overhaul — ใช้รวมยอดเข้ากราฟรายปี */
+const VALUE_CARS=[
+  {plate:'8234 กค กทม',brand:'HINO FM2P',type:'รถเครน 10 ตัน',mileage:182400,age:12,stage:'V5',year:2569},
+  {plate:'72-6648 สงขลา',brand:'HINO FG1J',type:'รถกระเช้า',mileage:221300,age:16,stage:'V11',year:2569},
+  {plate:'71-9902 ขอนแก่น',brand:'MITSUBISHI FN',type:'รถกระเช้า',mileage:233100,age:15,stage:'V11',year:2570},
+  {plate:'80-3316 เชียงใหม่',brand:'HINO FM1A',type:'รถเครน 10 ตัน',mileage:176900,age:10,stage:'V11',year:2569},
+  {plate:'83-2210 นครราชสีมา',brand:'ISUZU FVZ',type:'รถเจาะหลุมปักเสา',mileage:205400,age:12,stage:'V11',year:2569},
+];
+/* ประกัน 2 ชั้น — กบค = ประกันมาตรฐาน 180 วันหลังปิดงาน · บริษัท = ประกันผู้รับจ้างตาม PO (มาตรฐาน 360 วัน) คนละแหล่ง คนละชุดรถ
+   from/to เป็น ISO (yyyy-mm-dd) — ให้ oh2Date() แปลงเป็น dd/mm/bbbb ตอนแสดงผล */
+const WARRANTY_KBK_BY_PLATE={
+  '72-6648 สงขลา':{from:'2026-05-09',to:'2026-11-05',days:180,status:'active'},
+  '83-2210 นครราชสีมา':{from:'2026-01-01',to:'2026-06-30',days:180,status:'expired'},
+};
+const WARRANTY_CO_BY_PLATE={
+  '72-6648 สงขลา':{from:'2026-05-09',to:'2027-05-02',days:360,status:'active'},   // ผู้รับจ้าง มิตซูบิชิ ฟูโซ่ ตาม PO-690201
+  '80-3316 เชียงใหม่':{from:'2025-01-01',to:'2025-12-26',days:360,status:'expired'},   // ผู้รับจ้าง ฮีโน่ มอเตอร์ส ตาม PO-680101
+};
+const DASH_REPAIRS=[
+  {at:'18 ต.ค. 2569',after:13,plate:'72-6648 สงขลา',symptom:'ไฮดรอลิกกระเช้ารั่ว',detail:'น้ำมันไฮดรอลิกซึมที่ข้อต่อบูม',part:'ซีลไฮดรอลิก',related:'พบคำตรงกัน',by:'มิตซูบิชิ ฟูโซ่',cost:12500},
+  {at:'20 ต.ค. 2569',after:2,plate:'70-1123 ชลบุรี',symptom:'สัญญาณไฟเลี้ยวไม่ติด',detail:'หลอดไฟเลี้ยวหน้าซ้ายขาด',part:'หลอดไฟ',related:'—',by:'ซ่อมเอง กบค.',cost:450},
+  {at:'2 ก.ย. 2569',after:276,plate:'83-2210 นครราชสีมา',symptom:'สตาร์ทติดยาก',detail:'แบตเตอรี่เสื่อม',part:'แบตเตอรี่',related:'—',by:'ซ่อมเอง กบค.',cost:8900},
+  {at:'5 มิ.ย. 2569',after:187,plate:'83-2210 นครราชสีมา',symptom:'เครื่องยนต์มีเสียงดัง',detail:'กรองน้ำมันเครื่องตัน',part:'กรองน้ำมันเครื่อง',related:'พบคำตรงกัน',by:'ซ่อมเอง กบค.',cost:2100},
+  {at:'12 มี.ค. 2569',after:82,plate:'71-9902 ขอนแก่น',symptom:'เบรกไม่อยู่',detail:'ผ้าเบรกหน้าหมด',part:'ผ้าเบรกหน้า',related:'รอระบุ',by:'ตรีเพชรอีซูซุ',cost:6400},
+];
+
+/* ค่า Overhaul เฉลี่ยเทียบราคารถ */
+const pcts=Object.values(COST_VS_PRICE).map(m=>Math.round(m.cost/m.price*1000)/10);
+const avgPct=Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length*10)/10;
+$('m-cost').textContent=avgPct+'%';
+
+/* กราฟเส้นเทียบ "ราคารถ" กับ "ค่า Overhaul" รวมรายปีงบประมาณ — วาดเองด้วย SVG (ไลบรารีไม่มีหน้า Charts แล้ว)
+   แกน X เป็นปีงบ ไม่ใช่รายคัน กันกราฟรกเมื่อปีนั้นมีรถเยอะ (รวมยอดเป็น 1 จุดต่อปี) · เส้นประแนวตั้ง = ช่องว่างที่ประหยัดได้ในปีนั้น */
+function renderChart(){
+  const perCar=VALUE_CARS.map(c=>COST_VS_PRICE[c.plate]&&Object.assign({year:c.year},COST_VS_PRICE[c.plate])).filter(Boolean);
+  const byYear={};
+  perCar.forEach(d=>{const y=byYear[d.year]||(byYear[d.year]={year:d.year,price:0,cost:0,n:0});y.price+=d.price;y.cost+=d.cost;y.n++;});
+  const data=Object.values(byYear).sort((a,b)=>a.year-b.year);
+  const W=800,H=240,L=64,R=20,T=20,B=34,innerW=W-L-R,innerH=H-T-B;
+  const maxV=Math.max(...data.map(d=>d.price))*1.08;
+  const x=i=>L+(data.length===1?innerW/2:i*innerW/(data.length-1));
+  const y=v=>T+innerH-(v/maxV)*innerH;
+  const fmt=v=>(v/1e6).toFixed(1)+'M';
+  let svg=`<svg viewBox="0 0 ${W} ${H}" class="w-full" style="max-height:260px" role="img" aria-label="กราฟเทียบราคารถกับค่า Overhaul รายปีงบประมาณ">`;
+  for(let g=0;g<=4;g++){const v=maxV*g/4,yy=y(v);
+    svg+=`<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="var(--gray-200)" stroke-width="1"/>`;
+    svg+=`<text x="${L-8}" y="${yy+4}" text-anchor="end" font-size="11" fill="var(--gray-500)">${fmt(v)}</text>`;}
+  data.forEach((d,i)=>{const xx=x(i);
+    svg+=`<line x1="${xx}" y1="${y(d.price)}" x2="${xx}" y2="${y(d.cost)}" stroke="var(--gray-300)" stroke-width="1" stroke-dasharray="3,3"/>`;});
+  svg+=`<polyline points="${data.map((d,i)=>`${x(i)},${y(d.price)}`).join(' ')}" fill="none" stroke="var(--chart-2)" stroke-width="2.5"/>`;
+  svg+=`<polyline points="${data.map((d,i)=>`${x(i)},${y(d.cost)}`).join(' ')}" fill="none" stroke="var(--chart-5)" stroke-width="2.5"/>`;
+  data.forEach((d,i)=>{const xx=x(i);
+    svg+=`<circle cx="${xx}" cy="${y(d.price)}" r="4" fill="var(--chart-2)"><title>ปีงบ ${d.year} (${d.n} คัน) · รวมราคารถ ${oh2Num(d.price)} บาท</title></circle>`;
+    svg+=`<circle cx="${xx}" cy="${y(d.cost)}" r="4" fill="var(--chart-5)"><title>ปีงบ ${d.year} (${d.n} คัน) · รวมค่า Overhaul ${oh2Num(d.cost)} บาท</title></circle>`;
+    svg+=`<text x="${xx}" y="${y(d.cost)-10}" text-anchor="middle" font-size="10" fill="var(--chart-5)" font-weight="600">${(d.cost/1e6).toFixed(1)}M</text>`;
+    svg+=`<text x="${xx}" y="${H-B+18}" text-anchor="middle" font-size="10" fill="var(--gray-600)">ปีงบ ${d.year} (${d.n} คัน)</text>`;});
+  svg+=`</svg>`;
+  $('chart').innerHTML=svg;
+  const totalSave=perCar.reduce((a,d)=>a+(d.price-d.cost),0);
+  $('m-save').textContent=totalSave.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})+' บาท';   // format currency ทศนิยม 2 ตำแหน่ง (เจ้าของงานสั่ง 4 พ.ย. 2569 — เฉพาะ "ประหยัดรวม" ไม่แตะ oh2Num() ที่ใช้ทั่วทั้งหน้า (เลขไมล์ ฯลฯ ไม่อยากมีทศนิยม)
+  /* รายละเอียดที่มาของ "ประหยัดรวม" แยกตามปีงบประมาณ — ตอบ "ประหยัดจากอะไร" (4 พ.ย. 2569) · "ประหยัด" ทศนิยม 2 ตำแหน่งตรงกับ "ประหยัดรวม" ด้านบน (ราคารถ/ค่า Overhaul คงคอมม่าธรรมดาเหมือนเดิม — ไม่ได้ขอ) */
+  const cur2=n=>n.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  $('save-breakdown').innerHTML=data.map(d=>{
+    const save=d.price-d.cost;
+    return `<div class="flex items-center justify-between gap-3 flex-wrap text-sm">
+      <div class="text-gray-700 font-medium">ปีงบ ${d.year} <span class="text-gray-400 font-normal">(${d.n} คัน)</span></div>
+      <div class="text-gray-500">ราคารถ ${oh2Num(d.price)} บาท − ค่า Overhaul ${oh2Num(d.cost)} บาท</div>
+      <div class="font-semibold" style="color:var(--success-700)">= ประหยัด ${cur2(save)} บาท</div>
+    </div>`;
+  }).join('');
+  /* 5 พ.ย. 2569 — เจ้าของงานขอดูรูปแบบ currency ให้เทียบก่อนเคาะ (มี/ไม่มีหน่วย ฯลฯ) ค่าเดียวกันหมด (totalSave) ต่างกันแค่วิธีโชว์ · ชั่วคราว ไม่ใช่ของจริง */
+  const FORMATS=[
+    ['A — เลข + "บาท" ต่อท้าย (ที่ใช้อยู่ตอนนี้)', cur2(totalSave)+' บาท'],
+    ['B — สัญลักษณ์ ฿ นำหน้า', '฿'+cur2(totalSave)],
+    ['C — สัญลักษณ์ ฿ ต่อท้าย', cur2(totalSave)+' ฿'],
+    ['D — รหัสสกุลเงิน THB นำหน้า (แบบระบบ/SAP)', 'THB '+cur2(totalSave)],
+    ['E — Intl currency (Browser default th-TH)', totalSave.toLocaleString('th-TH',{style:'currency',currency:'THB'})],
+    ['F — ไม่มีหน่วยต่อท้าย (ใช้หัวข้อ "(บาท)" บอกหน่วยแทน)', cur2(totalSave)],
+    ['G — ไม่มีทศนิยม (ของเดิมก่อน 4 พ.ย.)', oh2Num(totalSave)+' บาท'],
+  ];
+  $('save-format-list').innerHTML=FORMATS.map(([label,val])=>`
+    <div class="rounded border border-gray-200 px-3 py-2">
+      <div class="text-xs text-gray-500 mb-1">${label}</div>
+      <div class="text-lg font-bold text-gray-900">${val}</div>
+    </div>`).join('');
+}
+renderChart();
+
+function costCell(plate){
+  const m=COST_VS_PRICE[plate];
+  if(!m)return `<span class="text-[var(--gray-400)]">—</span><div class="cell-sub">ยังไม่มีราคารถในระบบ</div>`;
+  const pct=Math.round(m.cost/m.price*1000)/10;const over=pct>=COST_ALERT_PCT;
+  return `<div class="cell-key">${oh2Num(m.cost)} บาท</div><div class="cell-sub${over?' !text-[var(--error-600)]':''}">${pct}% ของราคารถ (ทุน ${oh2Num(m.price)} บาท)</div>`;
+}
+function costPct(plate){const m=COST_VS_PRICE[plate];return m?Math.round(m.cost/m.price*1000)/10:null;}
+function warrCellOf(map,plate){
+  const w=map[plate];
+  if(!w)return `<span class="text-[var(--gray-400)]">—</span><div class="cell-sub">ยังไม่มีข้อมูลประกัน</div>`;
+  return `<div class="cell-key">${oh2Date(w.from)} – ${oh2Date(w.to)}</div><div class="cell-sub${w.status==='expired'?' !text-[var(--error-600)]':''}">${w.days} วัน · ${w.status==='expired'?'หมดประกันแล้ว':'ยังอยู่ในประกัน'}</div>`;
+}
+const warrKbkCell=plate=>warrCellOf(WARRANTY_KBK_BY_PLATE,plate);
+const warrCoCell=plate=>warrCellOf(WARRANTY_CO_BY_PLATE,plate);
+/* วันที่ซ่อมล่าสุด — ครั้งล่าสุดของทะเบียนนั้นใน DASH_REPAIRS (เรียงใหม่→เก่าอยู่แล้ว) 2 บรรทัด (วันที่ + หลัง Overhaul N วัน) */
+function lastRepairCell(plate){
+  const r=DASH_REPAIRS.find(x=>x.plate===plate);
+  if(!r)return `<span class="text-[var(--gray-400)]">—</span><div class="cell-sub">ยังไม่มีการซ่อมหลัง Overhaul</div>`;
+  return `<div class="cell-key">${oh2Esc(r.at)}</div><div class="cell-sub">หลัง Overhaul ${r.after} วัน</div>`;
+}
+/* ตัวกรอง — เน้นรถและเกณฑ์ที่จะเข้า Overhaul (sync กับ carFilterPanel ของ Figma plugin) */
+const F20={brand:'',type:'',age:'',mileage:'',cost:'',stage:[]};
+let F2={...F20,stage:[]};
+const brandOf=c=>c.brand.split(' ')[0];
+const inRange=(v,range)=>{if(!range)return true;const [a,b]=range.split('-').map(x=>x===''?null:+x);return (a==null||v>=a)&&(b==null||v<b);};
+const SEL_LABEL=id=>v=>$(id).querySelector(`option[value="${v}"]`).textContent;
+function renderCars(){
+  const q=$('q2').value.trim().toLowerCase();
+  const list=VALUE_CARS.filter(c=>{
+    if(q&&![c.plate,c.brand,c.type].some(x=>x.toLowerCase().includes(q)))return false;
+    if(F2.brand&&brandOf(c)!==F2.brand)return false;
+    if(F2.type&&c.type!==F2.type)return false;
+    if(F2.age&&!inRange(c.age,F2.age))return false;
+    if(F2.mileage&&!inRange(c.mileage,F2.mileage))return false;
+    if(F2.cost){const pct=costPct(c.plate);if(pct==null)return false;if(F2.cost==='over'&&pct<COST_ALERT_PCT)return false;if(F2.cost==='under'&&pct>=COST_ALERT_PCT)return false;}
+    if(F2.stage.length&&!F2.stage.includes(c.stage))return false;
+    return true;
+  });
+  $('carwrap').classList.toggle('hidden',!list.length);
+  $('notfound2').classList.toggle('hidden',!!list.length);
+  const chips=[];
+  if(F2.brand)chips.push(['brand','',F2.brand]);
+  if(F2.type)chips.push(['type','',F2.type]);
+  if(F2.age)chips.push(['age','',SEL_LABEL('f-age2')(F2.age)]);
+  if(F2.mileage)chips.push(['mileage','',SEL_LABEL('f-mileage2')(F2.mileage)]);
+  if(F2.cost)chips.push(['cost','',SEL_LABEL('f-cost2')(F2.cost)]);
+  F2.stage.forEach(k=>chips.push(['stage',k,OH2_JOB[k][0]]));
+  $('fchips2').innerHTML=chips.map(([k,v,t])=>`<span class="fchip">${oh2Esc(t)}<button class="fchip-x" type="button" data-rm="${k}" data-v="${oh2Esc(v)}" aria-label="เอาตัวกรอง ${oh2Esc(t)} ออก"><span class="ms">close_small</span></button></span>`).join('');
+  $('cars').innerHTML=list.map(c=>`<tr>
+    <td><div class="cell-key">${oh2Esc(c.plate)}</div></td>
+    <td>${oh2Esc(c.brand)} · ${oh2Esc(c.type)}</td>
+    <td class="num">${oh2Num(c.mileage)}</td>
+    <td class="num">${c.age} ปี</td>
+    <td>${warrKbkCell(c.plate)}</td>
+    <td>${warrCoCell(c.plate)}</td>
+    <td class="num">${costCell(c.plate)}</td>
+    <td>${lastRepairCell(c.plate)}</td>
+    <td>${oh2Badge(OH2_JOB,c.stage)}</td>
+    <td class="text-center"><button class="btn btn-t btn-icon" type="button" data-todo="เพิ่มเข้าแผน" aria-label="เพิ่ม ${oh2Esc(c.plate)} เข้าแผน"><span class="ms">add</span></button></td></tr>`).join('');
+}
+$('q2').addEventListener('input',renderCars);
+$('f-brand2').innerHTML+=[...new Set(VALUE_CARS.map(brandOf))].sort().map(b=>`<option>${oh2Esc(b)}</option>`).join('');
+$('f-type2').innerHTML+=[...new Set(VALUE_CARS.map(c=>c.type))].sort().map(t=>`<option>${oh2Esc(t)}</option>`).join('');
+$('f-stage2').innerHTML=[...new Set(VALUE_CARS.map(c=>c.stage))].map(k=>`<label><input type="checkbox" value="${k}" aria-label="${oh2Esc(OH2_JOB[k][0])}">${oh2Badge(OH2_JOB,k)}</label>`).join('');
+const FSEL2=['brand','type','age','mileage','cost'];
+function openFilter2(o){
+  $('fpanel2').classList.toggle('open',o);document.body.classList.toggle('modal-open',o);
+  if(!o)return;
+  FSEL2.forEach(k=>$('f-'+k+'2').value=F2[k]);
+  $('f-stage2').querySelectorAll('input').forEach(i=>i.checked=F2.stage.includes(i.value));
+}
+$('fbtn2').addEventListener('click',()=>openFilter2(true));
+['fclose2','fcancel2'].forEach(id=>$(id).addEventListener('click',()=>openFilter2(false)));
+$('fpanel2').addEventListener('click',e=>{if(e.target===$('fpanel2'))openFilter2(false)});
+$('fclear2').addEventListener('click',()=>{FSEL2.forEach(k=>$('f-'+k+'2').value='');$('f-stage2').querySelectorAll('input').forEach(i=>i.checked=false)});
+$('fapply2').addEventListener('click',()=>{
+  F2={stage:[...$('f-stage2').querySelectorAll('input:checked')].map(i=>i.value)};FSEL2.forEach(k=>F2[k]=$('f-'+k+'2').value);
+  openFilter2(false);renderCars()});
+$('fchips2').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;const k=b.dataset.rm;
+  if(k==='stage')F2.stage=F2.stage.filter(x=>x!==b.dataset.v);else F2[k]='';renderCars()});
+$('clear2').addEventListener('click',()=>{$('q2').value='';F2={...F20,stage:[]};renderCars();$('q2').focus()});
+renderCars();
+
+/* เวลาเฉลี่ยก่อนกลับมาซ่อมอีก */
+const avgDays=Math.round(DASH_REPAIRS.reduce((a,r)=>a+r.after,0)/DASH_REPAIRS.length);
+$('m-days').textContent=avgDays;
+
+/* รุ่นที่ Overhaul บ่อยสุด (นับยี่ห้อจาก VALUE_CARS ชุดเดียวกับ metric ด้านบน กันเลขไม่ตรงกัน) */
+const brandCount={};
+VALUE_CARS.forEach(c=>{brandCount[c.brand.split(' ')[0]]=(brandCount[c.brand.split(' ')[0]]||0)+1});
+const brandList=Object.entries(brandCount).sort((a,b)=>b[1]-a[1]);
+$('m-brand').textContent=`${brandList[0][0]} (${brandList[0][1]} คัน)`;
 </script>
 </body>
 </html>

@@ -15,8 +15,8 @@
 <button id="pickgo" style="background:#1d4ed8">สร้างเฉพาะ scenario ที่เลือก</button>
 <p><b>toast</b> — หน้าแยก เฉพาะ toast ไม่มี UI อื่น: 1 toast = 1 เฟรมโปร่ง (instance <code>Notification</code> แก้ข้อความได้) · ถ้อยคำ 23 ข้อความตามที่ PO confirm · บล็อก A–E ตามหน้า 1–5 · แถว desktop แล้ว mobile · ทุกเฟรมตั้ง Export settings แล้ว (SVG + PNG 2x)</p>
 <button id="toastp" style="background:#7c3aed">สร้างหน้า toast → หน้า overhaul-toast-N</button> <small>(toast ยังคงมีทั้ง desktop/mobile ถ้าเลือก "ทั้งคู่")</small>
-<p><b>Dashboard งาน Overhaul (21 ต.ค.)</b> — แท็บในหน้าจัดการงาน Overhaul ตามโครง MA Overview: แผน · รถหลัง Overhaul · ซ่อมหลัง Overhaul · อะไหล่ + หน้ารายคัน "หลัง Overhaul" · แต่ละบล็อกมี "เฟส 1" (ข้อมูลที่มีจริง) และ "เป้าหมาย" (+ คอลัมน์ที่ต้องเพิ่มช่องในโฟลว์ก่อน มี Alert บอก) · 12 จอ × 2 ขนาด · เอกสารคอลัมน์ Diagram/01-บำรุงรักษาตามวาระ/20</p>
-<button id="dash" style="background:#0e7490">สร้าง Dashboard → หน้า overhaul-dash-N</button>
+<p><b>Summary รายคัน · ประวัติการซ่อม (Scenario 19)</b> — 4 จอ: สรุปรายคัน · ประวัติการซ่อม · ไม่มีประวัติ · โหลดไม่สำเร็จ · สร้างต่อท้ายในหน้าที่เปิดอยู่เสมอ แล้วเลือกจอที่สร้างให้</p>
+<button id="vehicle-summary">สร้าง Summary รายคัน + ประวัติการซ่อม</button>
 <p><b>notification</b> — กระดิ่งจุดแดง + แผง Notification card (mobile = bottom sheet) · 4 state × desktop/mobile</p>
 <button id="noti" style="background:#0f766e">สร้างชุด notification → หน้า overhaul-noti-N</button>
 <p><b>แก้บนหน้าเดิมที่มีของแก้มือ (21 ต.ค.)</b> — เปิดหน้านั้น แล้ว<b>คลิกเลือกเฟรมจอ</b>ที่อยากให้เป็นฉบับ CF (เลือกหลายเฟรมได้ · จอที่แก้มือไว้และอยากเก็บ ไม่ต้องเลือก) → กดปุ่มซ้าย: สร้างจอฉบับ CF แทนที่ตำแหน่ง/ชื่อเดิม (จอเก่ากู้ได้จาก Version history) · จอที่ไม่ได้เลือกไม่แตะ · state เมนู "…" ที่ CF ตัด ไม่ลบ แค่ติดป้าย<br>
@@ -26,19 +26,38 @@
 <p><small>เปลี่ยนไฟล์หรือไลบรารี → เช็คก่อนว่า component ครบ</small></p>
 <button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button>
 <button id="read" style="background:#334155">อ่านจอที่เลือก (พิมพ์โครง + ระยะ + ชั้นที่ซ่อน ไม่แก้อะไร)</button> <button id="copylog" style="background:#334155">คัดลอก log</button>
+<div id="build-report" role="status" style="white-space:pre-wrap"></div>
 <div id="log"></div>
 <script>
-const send = (type, extra) => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: Object.assign({ type, here: document.getElementById('here').checked, devices: document.querySelector('input[name=dev]:checked').value }, extra || {}) }, '*'); };
+const send = (type, extra) => { document.getElementById('log').textContent = ''; document.getElementById('build-report').textContent = ''; parent.postMessage({ pluginMessage: Object.assign({ type, here: document.getElementById('here').checked, devices: document.querySelector('input[name=dev]:checked').value }, extra || {}) }, '*'); };
 document.getElementById('upd').onclick = () => send('update-selected', { addNew: document.getElementById('addnew').checked });
 document.getElementById('ptx').onclick = () => send('patch-texts');
 document.getElementById('desk').onclick = () => send('build-desktop');
 document.getElementById('mob').onclick = () => send('build-mobile');
 document.getElementById('toastp').onclick = () => send('build-toast');
 document.getElementById('noti').onclick = () => send('build-noti');
-document.getElementById('pickgo').onclick = () => send('build-pick', { pick: [...document.querySelectorAll('#pick input:checked')].map(i => +i.value) });
-document.getElementById('dash').onclick = () => send('build-dash');
+document.getElementById('pickgo').onclick = () => send('build-pick', { pick: [...document.querySelectorAll('#pick input:checked')].map(i => +i.value), here: true });   // 4 พ.ย. 2569 — เจ้าของงานสั่งให้ปุ่มนี้วางต่อท้ายหน้าที่เปิดอยู่เสมอ ไม่ต้องติ๊ก checkbox ก่อน (ปุ่มอื่นยังอิง checkbox ตามเดิม — ชุด scenario เต็มยังต้องได้หน้าใหม่ทุกครั้งตาม R19)
+document.getElementById('vehicle-summary').onclick = () => send('build-vehicle-summary');
 document.getElementById('chk').onclick = () => send('check');
 document.getElementById('read').onclick = () => send('read-selection');
 document.getElementById('copylog').onclick = () => { const ta = document.createElement('textarea'); ta.value = document.getElementById('log').textContent; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); };
-onmessage = (e) => { const m = e.data.pluginMessage; if (m && m.type === 'scenarios') { document.getElementById('pick').innerHTML = m.items.map((t, i) => '<label style="display:inline-block;margin:2px 10px 2px 0"><input type="checkbox" value="' + i + '"> ' + String.fromCharCode(65 + i) + ' ' + t.split(' · ')[0].replace(' — ', ' ') + '</label>').join(''); return; } if (m && m.type === 'log') { const el = document.getElementById('log'); el.textContent += m.text + '\n'; el.scrollTop = el.scrollHeight; } };
+onmessage = (e) => {
+  const m = e.data.pluginMessage;
+  if (!m) return;
+  if (m.type === 'scenarios') {
+    const total = m.totalScreens == null ? '?' : m.totalScreens;
+    document.getElementById('inventory').textContent = 'Overhaul v2 · ' + m.items.length + ' บล็อก · ' + total + ' จอต่ออุปกรณ์ (ทั้งคู่ = ' + (typeof total === 'number' ? total * 2 : '?') + ' จอ)';
+    document.getElementById('pick').innerHTML = m.items.map((t, i) => '<label style="display:inline-block;margin:2px 10px 2px 0"><input type="checkbox" value="' + i + '"> ' + String.fromCharCode(65 + i) + ' ' + t.split(' · ')[0].replace(' — ', ' ') + (m.counts ? ' (' + m.counts[i] + ' จอ)' : '') + '</label>').join('');
+    return;
+  }
+  if (m.type === 'build-report') {
+    const r = m.report;
+    const lines = ['หน้า: ' + r.page, 'สร้าง ' + r.created + '/' + r.expected + ' จอ · ล้มเหลว ' + r.failed.length + ' · มีคำเตือน ' + r.incomplete.length];
+    r.failed.forEach(f => lines.push('✗ ' + f.code + ' [' + f.device + '] ' + f.label + ' — ' + f.error));
+    r.incomplete.forEach(f => lines.push('⚠ ' + f.code + ' [' + f.device + '] ' + f.label + '\n  ' + f.warnings.join('\n  ')));
+    document.getElementById('build-report').textContent = lines.join('\n');
+    return;
+  }
+  if (m.type === 'log') { const el = document.getElementById('log'); el.textContent += m.text + '\n'; el.scrollTop = el.scrollHeight; }
+};
 </script>

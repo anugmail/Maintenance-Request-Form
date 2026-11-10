@@ -1440,6 +1440,20 @@ input.tbl-cell-ro{width:100px;display:inline-block;background:var(--gray-100);bo
 .fu-item.err{border-color:var(--error-500)}
 .fu-item.err .fu-item-tx small{color:var(--error-600)}
 
+/* ---- Photo attach v2 (แกลเลอรีรูปสภาพรถ) — ตามสกรีนช็อตแอปจริง "แจ้งซ่อม" ขั้นรายละเอียดเหตุการณ์ ที่เจ้าของงานส่งมา 6 พ.ย. 2569
+   (แก้จากรอบ 5 พ.ย. 2569 ที่ยกจาก mock/Maintenance-Request-Form.html คนละหน้าตา — ของเดิมกล่องเล็ก 72×72 ผิด ของจริงกล่องอัปโหลดใหญ่ + grid thumbnail)
+   กล่องอัปโหลด = ใช้ component `.fu` เดิม (File upload — ตรงกับไลบรารีอยู่แล้ว) ไม่ต้องสร้างใหม่
+   grid thumbnail ด้านล่าง: ไม่มี component ตรงในไฟล์ Component (เช็ค "Images" แล้ว — เป็น carousel รูปเดียว+ลูกศร/pagination ไม่ใช่ grid หลายรูป+ปุ่มลบ)
+   ⇒ ยกจากสกรีนช็อตแอปจริงแทน · ใช้ที่ขั้นตรวจรับรถ/ตรวจสภาพของ Overhaul v2 (overhaul-v2-06-job.html) — แนบรูปสภาพรถได้ไม่จำกัดจำนวน */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.photo-grid:empty{display:none}
+.photo-card{position:relative;aspect-ratio:4/3;border-radius:var(--rounded-md);overflow:hidden;background:linear-gradient(135deg,var(--gray-200),var(--gray-400))}
+.photo-card img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-card-rm{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid var(--gray-300);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 2px rgba(16,24,40,.08);padding:0}
+.photo-card-rm .ms{font-size:18px;color:var(--gray-600)}
+.photo-card-rm:hover .ms{color:var(--error-600)}
+
 /* ---- Dual list เลือกรถ — 2 กล่อง `List with checkbox` วางคู่ ตาม `List with checkbox` / `List with checkbox item` / `List header item`
    ของไฟล์ Component (List 3285-58382) + `Contract vehicle list` ของ UI Release#2 (5.1) · ปุ่มย้ายตรงกลางเป็น Secondary button
    หัว: h40 · r4 · พื้น gray-200 · pad 16 ซ้ายขวา · หัวข้อ 16/600 ดำ + Badge outline Gray (จำนวน) · checkbox ขวา (เลือกทั้งหมด / Indeterminate)

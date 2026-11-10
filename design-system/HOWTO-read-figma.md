@@ -3,6 +3,14 @@
 > คู่กับ [`figma-export/HOWTO.md`](../figma-export/HOWTO.md) ซึ่งเป็นขา **เขียนเข้า** Figma
 > ไฟล์นี้คือขา **อ่านออกจาก** Figma · ทะเบียนว่าอ่านอะไรมาแล้วบ้างอยู่ที่ [`SOURCES.md`](SOURCES.md)
 
+> 🆕 **22 ต.ค. 2569 — อ่านจากไฟล์ FigJam (ไม่ใช่ไฟล์ design) ใช้คนละปลั๊กอิน**
+> `figma-export/dump-plugin/` (`editorType: figma`) import เข้าไฟล์ FigJam ไม่ได้
+> ให้ใช้ `figma-export/figjam-dump-plugin/` (`editorType: figjam`) แทน — เลือกหน้า → เลือก frame/section
+> ที่ต้องการ → ดัมป์เฉพาะส่วนนั้น ไม่ใช่ทั้งบอร์ด ผลลัพธ์ที่ `figma-export/out/figjam-dump/<slug>/`
+> ⚠️ ใช้ได้จริงกับ sticky note / shape-with-text / ผัง mermaid เท่านั้น — ถ้า frame นั้นเป็นรูปสกรีนช็อต
+> (ของท่อ A ปกติ) จะได้แค่ `hasImage: true` อ่านข้อความในรูปไม่ได้ ให้กลับไปอ่าน `mock/*.html` หรือ
+> ดัมป์ฝั่งไฟล์ design ด้วย `dump-plugin/` แทนสำหรับกรณีนั้น
+
 ---
 
 ## 0.1 🔴 แหล่งความจริงใหม่ 2 ไฟล์ (1 ก.ย. 2569) + สคริปต์ที่ใช้ดึง
@@ -22,7 +30,8 @@
 ```bash
 node figma-export/serve.js                      # 1) รับไฟล์ที่ปลั๊กอินส่งกลับ (พอร์ต 8124) — รันค้างไว้
 # 2) ในแอป Figma: Plugins → Development → Import plugin from manifest → figma-export/dump-plugin/manifest.json
-# 3) รันปลั๊กอิน ใส่ชื่อโฟลเดอร์ (component / ui-release2) แล้วกด "เริ่มดัมป์ทั้งไฟล์"
+# 3) รันปลั๊กอิน → กด "โหลดรายชื่อหน้า" → ติ๊กเฉพาะหน้าที่ต้องการ (22 ต.ค. 2569: เลือกเป็นรายหน้าแทนพิมพ์กรองชื่อ
+#    กันดัมป์ทั้งไฟล์ช้าเกินไปโดยไม่ตั้งใจ) → ใส่ชื่อโฟลเดอร์ (component / ui-release2) → กด "เริ่มดัมป์หน้าที่เลือก"
 node design-system/figma-dump-import.js         # 4) แปลงผลเข้ารูป .figma-extract/<slug>/ + ทำไฟล์สรุป
 FIGMA_SRC=component node design-system/verify-tokens.js   # 5) ตรวจ token เทียบไลบรารีใหม่
 ```

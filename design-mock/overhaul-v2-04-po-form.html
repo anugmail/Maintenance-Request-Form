@@ -75,25 +75,39 @@
           </div>
         </section>
 
+        <!-- 5 พ.ย. 2569 — เจ้าของงานสั่งเปลี่ยนจาก dual list (checkbox 2 ฝั่ง) เป็น table ให้เห็น info รถมากขึ้น:
+             เลขไมล์ · ชั่วโมงการทำงาน · อายุ · มูลค่าได้มา (+ ราคากลาง กบค. ที่ขอเพิ่ม) · สังกัด · ยี่ห้อ/รุ่น · สถานะการใช้งาน · link ไปรายละเอียดรถ
+             ยังไม่มีหน้ารายละเอียดรถใน design-mock ชุดนี้ — ไอคอนลิงก์ขึ้น toast "ยังไม่ได้ทำ" ไว้ก่อน (data-todo) -->
         <section data-req id="cars-field">
-          <div class="sect">เลือกรถ</div>
-          <div class="dual mt-4">
-            <div class="flex flex-col gap-3 min-w-0">
-              <div class="search w-full"><span class="ms">search</span><input type="search" id="car-q" placeholder="ค้นหาทะเบียน, รุ่น/ยี่ห้อ" aria-label="ค้นหารถ"></div>
-              <div class="lchk"><div class="lchk-hd"><b>รายการรถทั้งหมด <span class="badge sq" id="n-all"></span></b><input type="checkbox" id="all-l" aria-label="เลือกทั้งหมด"></div>
-                <div class="lchk-body" id="list-l"></div></div>
-            </div>
-            <div class="dual-mid">
-              <button class="btn btn-s btn-sm" type="button" id="to-r">เพิ่ม<span class="ms">chevron_right</span></button>
-              <button class="btn btn-s btn-sm" type="button" id="to-l"><span class="ms">chevron_left</span>นำออก</button>
-            </div>
-            <div class="flex flex-col gap-3 min-w-0">
-              <div class="h-10 hidden md:block"></div>
-              <div class="lchk"><div class="lchk-hd"><b>เลือกแล้ว <span class="badge sq" id="n-sel"></span></b><input type="checkbox" id="all-r" aria-label="เลือกทั้งหมด"></div>
-                <div class="lchk-body" id="list-r"></div></div>
-            </div>
+          <div class="sect">เลือกรถ <span class="badge sq" id="n-sel"></span></div>
+          <div class="list-toolbar split mb-0 mt-4">
+            <div class="lt-search"><div class="search"><span class="ms">search</span><input type="search" id="car-q" placeholder="ค้นหาทะเบียน, ยี่ห้อ/รุ่น, สังกัด" aria-label="ค้นหารถ"></div></div>
           </div>
-          <div class="f"><div class="help hidden"></div></div>   <!-- .f ห่อเฉพาะข้อความ error — ถ้าใส่ที่ section, .f label{display:block} จะทับแถว .lchk-item -->
+          <div class="tblwrap mt-3">
+            <table class="tbl striped">
+              <thead><tr>
+                <th class="w-[44px]"><input type="checkbox" id="all-cars" aria-label="เลือกรถทั้งหมดที่ค้นเจอ"></th>
+                <th>ทะเบียน</th>
+                <th>ยี่ห้อ/รุ่น · ประเภท</th>
+                <th class="num">เลขไมล์ / ชม.ทำงาน</th>
+                <th class="num">อายุ</th>
+                <th class="num">มูลค่าได้มา / ราคากลาง</th>
+                <th>สถานะการใช้งาน</th>
+                <th class="w-[56px]" aria-label="ดูรายละเอียดรถ"></th>
+              </tr></thead>
+              <tbody id="car-body"></tbody>
+            </table>
+          </div>
+          <div class="filter-empty hidden mt-3" id="car-notfound">
+            <span class="ms">search_off</span><b>ไม่พบรถที่ตรงกับคำค้น</b>
+          </div>
+          <!-- 5 พ.ย. 2569 — PO เลือกได้เฉพาะรถที่จองไว้กับแผนแล้ว ถ้าแผนยังไม่ได้จองรถ ต้องกลับไปเพิ่มที่หน้าแผนก่อน -->
+          <div class="filter-empty hidden mt-3" id="car-noplan">
+            <span class="ms">directions_car</span><b>แผนนี้ยังไม่ได้จองรถไว้</b>
+            <span>ไปที่หน้าแก้ไขแผนเพื่อเลือกรถที่จะเข้า Overhaul ก่อน แล้วค่อยกลับมาสร้าง PO</span>
+            <a class="btn btn-s btn-sm mt-2 !no-underline" id="go-plan-cars" href="#"><span class="ms">edit</span>ไปที่หน้าแก้ไขแผน</a>
+          </div>
+          <div class="f"><div class="help hidden"></div></div>
         </section>
 
         <section>
@@ -145,7 +159,7 @@
   </div>
 </div>
 
-<script src="overhaul-v2-mock.js?v=20261019-4"></script>
+<script src="overhaul-v2-mock.js?v=20261106-1"></script>
 <script>
 const $=id=>document.getElementById(id);
 const q=new URLSearchParams(location.search);
@@ -168,32 +182,32 @@ if(po){
 const vc=oh2Combo($('vendor'),OH2_VENDORS.map((v,i)=>({value:String(i),label:v.name,sub:v.tel+' · '+v.addr})),v=>{vendor=v;clearErr($('vendor'))});
 if(po)vc.value;   // ค่าเริ่มต้นอยู่ใน vendor แล้ว
 
-/* dual list — ซ้าย: รถทุกคันที่ยังไม่เลือก (ค้นได้) · ขวา: รถที่เลือกแล้ว · ติ๊กแล้วกดปุ่มกลางเพื่อย้าย */
-const tick={l:new Set(),r:new Set()};
-const row=(v,side)=>`<label class="lchk-item${tick[side].has(v.id)?' sel':''}"><span class="lchk-tx"><b>${oh2Esc(v.plate)}</b>
-  <small>${oh2Esc(v.brand)} · ${oh2Esc(v.type)} <i></i> เลขไมล์ ${oh2Num(v.mileage)} กม. <i></i> อายุ ${v.age} ปี</small></span>
-  <input type="checkbox" data-side="${side}" value="${v.id}"${tick[side].has(v.id)?' checked':''} aria-label="เลือก ${oh2Esc(v.plate)}"></label>`;
+/* ตารางเลือกรถ (5 พ.ย. 2569) — เลือกได้เฉพาะรถที่ "จอง" ไว้กับแผนแล้ว (plan.cars) ไม่ใช่รถทั้งหมดในระบบอีกต่อไป
+   (เจ้าของงานสั่ง: "เลือกรถในแผนก่อน แล้วแต่ละ PO ค่อยเลือกรถจากในแผนอีกที") · แถวใช้ oh2VehRow() ร่วมกับหน้าสร้างแผน */
+const planCars=OH2_VEHICLES.filter(v=>plan&&plan.cars.some(c=>c.id===v.id));
+if(plan)$('go-plan-cars').href=`overhaul-v2-02-plan-form.html?id=${plan.id}&from=detail`;
 function drawCars(){
   const qq=$('car-q').value.trim().toLowerCase();
-  const left=OH2_VEHICLES.filter(v=>!sel.has(v.id)&&(!qq||[v.plate,v.brand,v.type].some(x=>x.toLowerCase().includes(qq))));
-  const right=OH2_VEHICLES.filter(v=>sel.has(v.id));
-  $('list-l').innerHTML=left.length?left.map(v=>row(v,'l')).join(''):`<div class="lchk-empty">${qq?'ไม่พบรถที่ตรงกับคำค้น':'เลือกครบทุกคันแล้ว'}</div>`;
-  $('list-r').innerHTML=right.length?right.map(v=>row(v,'r')).join(''):'<div class="lchk-empty">ยังไม่ได้เลือกรถ</div>';
-  $('n-all').textContent=left.length;$('n-sel').textContent=right.length;
-  for(const [side,list] of [['l',left],['r',right]]){
-    const all=$('all-'+side),n=list.filter(v=>tick[side].has(v.id)).length;
-    all.checked=!!list.length&&n===list.length;all.indeterminate=n>0&&n<list.length;all.disabled=!list.length;
-  }
-  $('to-r').disabled=!tick.l.size;$('to-l').disabled=!tick.r.size;
+  const list=planCars.filter(v=>!qq||[v.plate,v.brand,v.type,v.dept].some(x=>x.toLowerCase().includes(qq)));
+  $('car-body').innerHTML=list.map(v=>oh2VehRow(v,sel.has(v.id))).join('');
+  $('car-body').closest('.tblwrap').classList.toggle('hidden',!list.length);
+  $('car-notfound').classList.toggle('hidden',!!list.length||!planCars.length);
+  $('car-noplan').classList.toggle('hidden',!!planCars.length);   // แผนนี้ยังไม่ได้จองรถไว้เลย — ต้องกลับไปเพิ่มที่หน้าแผนก่อน
+  const n=list.filter(v=>sel.has(v.id)).length;
+  $('all-cars').checked=!!list.length&&n===list.length;$('all-cars').indeterminate=n>0&&n<list.length;$('all-cars').disabled=!list.length;
+  $('n-sel').textContent=sel.size;
 }
-document.querySelector('.dual').addEventListener('change',e=>{
-  const c=e.target;if(c.dataset.side){c.checked?tick[c.dataset.side].add(c.value):tick[c.dataset.side].delete(c.value);drawCars();return}
-  if(c.id==='all-l'||c.id==='all-r'){const side=c.id.slice(-1);
-    document.querySelectorAll(`[data-side="${side}"]`).forEach(x=>c.checked?tick[side].add(x.value):tick[side].delete(x.value));drawCars()}
+document.getElementById('car-body').addEventListener('change',e=>{
+  const c=e.target;if(!c.classList.contains('veh-ck'))return;
+  c.checked?sel.add(c.value):sel.delete(c.value);clearErr($('cars-field'));drawCars();
 });
-$('to-r').addEventListener('click',()=>{tick.l.forEach(id=>sel.add(id));tick.l.clear();clearErr($('cars-field'));drawCars()});
-$('to-l').addEventListener('click',()=>{tick.r.forEach(id=>sel.delete(id));tick.r.clear();drawCars()});
+$('all-cars').addEventListener('change',()=>{
+  const qq=$('car-q').value.trim().toLowerCase();
+  const list=planCars.filter(v=>!qq||[v.plate,v.brand,v.type,v.dept].some(x=>x.toLowerCase().includes(qq)));
+  list.forEach(v=>$('all-cars').checked?sel.add(v.id):sel.delete(v.id));clearErr($('cars-field'));drawCars();
+});
 $('car-q').addEventListener('input',drawCars);
+document.addEventListener('click',e=>{const t=e.target.closest('[data-todo]');if(t)oh2Notify(`${t.dataset.todo} — ยังไม่ได้ทำในรอบตัวอย่างนี้`,{sub:'ยังไม่ยืนยันดีไซน์'})});
 drawCars();
 
 document.querySelectorAll('[data-files]').forEach(el=>oh2Upload(el,docs[el.dataset.files],()=>clearErr(el)));
