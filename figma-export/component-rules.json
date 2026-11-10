@@ -745,7 +745,8 @@
         "failed": "Failed (Validation / ไม่สำเร็จ)",
         "width": 1440,
         "descHidden": true,
-        "since": "2026-11-10"
+        "since": "2026-11-10",
+        "wrap": "ข้อความ FILL + HEIGHT ขึ้นบรรทัดใหม่ในกว้าง 1440 ไม่ขยายกล่อง (10 พ.ย. 2569)"
       },
       "page": {
         "use": false,

@@ -429,6 +429,10 @@ const MODE_CHECK = process.env.MODE === 'check';
       if (b.type !== 'INSTANCE') { logs.push('⚠ R19 แถบ ' + b.name.slice(0, 50) + ' วาดเอง ทั้งที่ไฟล์มี component Header (Design Annotations)'); continue; }
       const want = (code1 === 'Journey' || code1 === 'Page') ? 'Header' : 'Subheader';   // หน้าจริงของ UI Release#2: Type=Header 1 ตัวต่อหน้า · บล็อกตัวอักษร/state/ช่วงงาน = Subheader
       if (pv(b).Type !== want) { logs.push('⚠ R19 แถบ ' + code1 + ' ต้องเป็น Header Type=' + want + ' (ได้ ' + pv(b).Type + ')'); continue; }
+      if (want === 'Subheader') {   // ชื่อยาวต้องขึ้นบรรทัดใหม่ในกว้างของแถบ ไม่ล้นทับคอลัมน์ข้าง (10 พ.ย. 2569 V.4.1 ทับ V.4.2)
+        const det = b.children.find(c => c.name === 'Detail'), t0 = det && det.children.find(c => c.type === 'TEXT');
+        if (!t0 || t0._lsh !== 'FILL' || t0.textAutoResize !== 'HEIGHT') logs.push('⚠ R19 แถบ ' + code1 + ' ชื่อไม่ตัดบรรทัดในกว้างของแถบ (ต้อง FILL + HEIGHT) — ชื่อยาวจะล้นทับคอลัมน์ข้าง');
+      }
       if (want === 'Subheader' && !isPhase) {   // สี State: บล็อก = Default · state = Sub Flow / Success / Failed ตามชื่อจอ
         const st = b.children.find(c => c.name === 'State'), tone = st && (st.variantProperties || {}).State;
         const label = b.name.slice(P0.length + 3 + code1.length + 1);
