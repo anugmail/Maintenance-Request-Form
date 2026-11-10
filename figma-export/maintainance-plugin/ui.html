@@ -21,6 +21,8 @@
 <button id="activity" style="background:#0e7490">สร้าง flowchart กิจกรรม</button></p>
 <p><b>ลบลิงก์กดต่อจอ</b> — ลบลิงก์ที่กดแล้วไปจอถัดไปบนหน้า Maintainance จอ ปุ่ม และข้อความอยู่ครบ · interaction อื่นของ component ไม่ถูกแตะ<br>
 <button id="clearProto" style="background:#b42318">ลบลิงก์กดต่อจอบนหน้านี้</button> <button id="moveLatest" style="background:#0e7490">ย้ายบล็อกล่าสุดกลับเข้าหน้า Maintainance</button></p>
+<p><b>แยกจอของ scenario ที่ตัดออก</b> — ย้ายจอ ป้าย และ flowchart ของบล็อกที่ตัดออก (M N O P = S14–S17 · J = S11 · U = S22) ไปรวมในกรอบ "ตัดออกแล้ว" ขวาสุดของหน้า มีแถบแดงบอกว่าตัดเมื่อไหร่และเพราะอะไร · ชื่อจอขึ้นต้น "ตัดออก · " export ไม่หยิบไป · ไม่ลบ<br>
+<button id="archiveCut" style="background:#475467">ย้ายจอที่ตัดออกไปกรอบ "ตัดออกแล้ว"</button></p>
 <p><b>ลบจอของ scenario ที่ตัดออก</b> — ลบจอ ป้าย และ flowchart ของบล็อกว่าง (M = S14 · N = S15 · O = S16 · P = S17 ตัด 10 พ.ย. · J = S11 · U = S22) ทุกหน้า Maintainance · ชิ้นอื่นไม่แตะ · ย้อนได้ด้วย Ctrl/Cmd+Z<br>
 <button id="purgeCut" style="background:#b42318">ลบจอของบล็อกที่ตัดออก</button></p>
 <p><b>ส่งภาพจอไป FigJam</b> — export จอ desktop บนหน้าที่เปิดอยู่ (รวมจอที่แก้มือแล้ว) ไปที่ <code>figma-export/out/figjam/flow-maintainance/</code> · ต้องรัน <code>node figma-export/serve.js</code> ก่อน · แล้วสร้างบอร์ดด้วย <code>3-figjam-board.js --maintainance-flow-ui</code> · <b>ส่งราย S</b>: ติ๊ก scenario ในหัวข้อ "สร้างเฉพาะ scenario ที่เลือก" แล้วกด "ส่งภาพจอ scenario ที่เลือกไป FigJam"<br>
@@ -50,6 +52,7 @@ document.getElementById('shots').onclick = () => send('export-shots');
 document.getElementById('pickshots').onclick = () => { const scen = [...document.querySelectorAll('#pick input:checked')].map(i => i.dataset.s); if (!scen.length) { document.getElementById('log').textContent = 'ติ๊ก scenario ก่อน (ไม่ติ๊ก = ใช้ปุ่ม ส่งภาพจอบนหน้านี้ไป FigJam ด้านบน)'; return; } send('export-shots', { scen }); };
 document.getElementById('clearProto').onclick = () => send('clear-proto');
 document.getElementById('purgeCut').onclick = () => send('purge-cut');
+document.getElementById('archiveCut').onclick = () => send('archive-cut');
 document.getElementById('moveLatest').onclick = () => send('move-latest');
 async function postFile(path, body) { const r = await fetch(SERVE + path.split('/').map(encodeURIComponent).join('/'), { method: 'POST', body }); if (!r.ok) throw new Error(path + ' ' + r.status); }
 let shotOk = 0, shotErr = 0;

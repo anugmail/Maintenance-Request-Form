@@ -271,7 +271,10 @@ if (process.env.EXISTING) {
   const pg = new Node({ type: 'PAGE', name: process.env.EXISTING_PAGE || '🔧 Maintainance ' }, root); root.children.push(pg);   // EXISTING_PAGE= ชื่อหน้าของปลั๊กอินอื่น (ประเมินผู้รับจ้าง 22 ต.ค. 2569)
   const old = new Node({ type: 'FRAME', name: 'ของเดิมที่แก้มือ', w: +process.env.EXISTING_W || 1440, h: +process.env.EXISTING_H || 900 }, pg); old.y = +process.env.EXISTING_Y || 120; pg.children.push(old);   // EXISTING_Y= ของเดิมเกินขอบพื้นที่วางงาน (2 พ.ย. 2569) · EXISTING_W= ของเดิมกว้างเต็มขอบ ⇒ ไม่มีคอลัมน์ทางขวา ต้องไปหน้า -2 (4 พ.ย. 2569)
   global.__existing = { page: pg, node: old, x: old.x, y: old.y };
-  if (process.env.EXISTING_CURRENT) figma.currentPage = Object.assign(pg, { selection: [] });   // ปลั๊กอิน login (30 ต.ค. 2569): วางบนหน้าที่เปิดอยู่ ⇒ หน้าเดิมต้องเป็นหน้าปัจจุบัน
+  if (process.env.EXISTING_CURRENT) figma.currentPage = Object.assign(pg, { selection: [] });
+  /* FAKE_CUT=1 (10 พ.ย. 2569): ใส่จอเก่าของบล็อกที่ตัดออก (M = S14 · O = S16) + จอที่ยังใช้ (L = S13) บนหน้าเดิม ⇒ ทดสอบปุ่มแยกจอที่ตัดออก (MODE=archive-cut) ว่าย้ายเฉพาะบล็อกที่ตัด */
+  if (process.env.FAKE_CUT) [['MT / M.1 · S14 — รายการ', 0], ['MT · M S14 หน่วยงาน ตรวจหลักฐาน', -200], ['MT / O.2 · S16 — ประวัติของแผน', 2000], ['MT / L.1 · S13 — ยังใช้อยู่', 4000]].forEach(([nm, y]) => {
+    const f = new Node({ type: 'FRAME', name: nm, w: 1440, h: 900 }, pg); f.x = 400; f.y = 2000 + y; pg.children.push(f); });   // ปลั๊กอิน login (30 ต.ค. 2569): วางบนหน้าที่เปิดอยู่ ⇒ หน้าเดิมต้องเป็นหน้าปัจจุบัน
 }
 const MODE_CHECK = process.env.MODE === 'check';
 (async () => {
@@ -313,6 +316,20 @@ const MODE_CHECK = process.env.MODE === 'check';
     if (n(btn[3]) !== 1) logs.push('⚠ ลิงก์ที่ปลั๊กอินไม่ได้ผูกถูกลบไปด้วย');
     if (pg.flowStartingPoints.length !== 1 || pg.flowStartingPoints[0].nodeId !== 'อื่น') logs.push('⚠ flow starting point ลบไม่ตรง');
     console.log('ลบลิงก์กดต่อจอ: ตรวจ 4 ชิ้น + flow starting point ครบ');
+  }
+  if (process.env.MODE === 'archive-cut' && process.env.FAKE_CUT) {   // ปุ่มแยกจอที่ตัดออก (10 พ.ย. 2569): ย้ายเฉพาะบล็อกที่ตัดเข้ากรอบ "ตัดออกแล้ว" · จอที่ยังใช้อยู่คงที่เดิม · ไม่ลบ · ชื่อขึ้นต้น "ตัดออก · "
+    const pg = global.__existing.page, box = pg.children.find(n => n.name === 'ตัดออกแล้ว'), errs = [];
+    if (!box) errs.push('ไม่มีกรอบ ตัดออกแล้ว');
+    if (box && box.type === 'SECTION') errs.push('กรอบเป็น section (R19 ห้าม)');
+    if (pg.children.some(n => /^MT \/ [MO]\.|^MT · M /.test(n.name))) errs.push('ยังมีจอของบล็อกที่ตัดอยู่นอกกรอบ');
+    if (!pg.children.some(n => n.name === 'MT / L.1 · S13 — ยังใช้อยู่')) errs.push('จอที่ยังใช้ (S13) ถูกย้ายหรือหาย');
+    const moved = box ? box.children.filter(n => n.name.indexOf('ตัดออก · MT') === 0).length : 0;
+    if (moved !== 3) errs.push('ย้ายเข้ากรอบ ' + moved + ' ชิ้น ต้องเป็น 3');
+    if (box && box.children.filter(n => /^ตัดออก · S1[46] \(บล็อก/.test(n.name)).length !== 2) errs.push('ไม่มีแถบบอกบล็อกที่ตัดครบ 2 แถบ');
+    errs.forEach(e => console.log('⚠ ' + e));
+    console.log('แยกจอที่ตัดออก: ย้าย ' + moved + ' ชิ้น · แถบ 2 · S13 อยู่ที่เดิม' + (errs.length ? '' : ' ✓'));
+    console.log('\n— ผลทดสอบ — แยกจอที่ตัดออก · คำเตือน ' + errs.length);
+    process.exit(errs.length ? 1 : 0);
   }
   if (process.env.MODE === 'patch') {   // สร้างแบบเก่า (CODE=ไฟล์เก่า) แล้วแก้เฉพาะส่วนด้วยโค้ดปัจจุบัน · PATCH=ชื่อข้อความ (ค่าเริ่ม patch-dividers)
     figma.currentPage.selection = [];
@@ -412,6 +429,7 @@ const MODE_CHECK = process.env.MODE === 'check';
   rc.fails.slice(0, 40).forEach(f => { logs.push('⚠ กติกา ' + f); console.log('⚠ กติกา ' + f); }); if (rc.fails.length > 40) logs.push('⚠ กติกา … อีก ' + (rc.fails.length - 40) + ' จุด');
   console.log(rc.fails.length ? 'ผิดกติกา component ' + rc.fails.length + ' จุด' : 'ตรงกติกา component-rules.json ✓');
   rc.pending.forEach(p => console.log('  รอเคาะ: ' + p));
+  if (!process.env.MODE && !process.env.CHECK_ONLY && process.env.PREFIX === 'MT') rc.unmatched.forEach(u => { logs.push('⚠ กติกาไม่ตรงจอไหนเลย (ชื่อจอเปลี่ยน? scenario ตัดแล้วให้ใส่ retired): ' + u); console.log('⚠ กติกาไม่ตรงจอไหนเลย: ' + u); });   // เฉพาะโหมดสร้างครบทุกจอของปลั๊กอินบำรุงรักษา (10 พ.ย. 2569 · Overhaul มี R17 ไม่ตรงจอ รอเจ้าของชุดนั้นดู)
   console.log('ตาราง Table ' + nT + ' · Section label ในหน้า Detail ' + nL);
   if (wbs) console.log('ตรวจแถววงเงิน + WBS ' + wbs + ' จอ' + (logs.some(l => /^⚠.*WBS/.test(l)) ? '' : ' ✓'));
   // แผง Layers ของ Figma แสดงลูกตัวสุดท้ายไว้บนสุด ⇒ จอแรกของ userflow ต้องเป็นตัวสุดท้าย

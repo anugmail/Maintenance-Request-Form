@@ -1880,13 +1880,13 @@ async function maDetail(name, o) {
 
 /* ---------- ประวัติงานบำรุงรักษา (S16 ตีกลับแล้วผู้ดำเนินการส่งใหม่ · เดิม S15 ตัดออก 10 พ.ย. 2569) · S17 รายงานผล/ปิดงาน · S18 ต้นทุน ---------- */
 /* historyScreen (S15/S16 ประวัติ) และ reportScreen (S17) เอาออก 10 พ.ย. 2569 — S15 S16 S17 ตัดออก */
-const COST_COLS = [['ใบเดินทาง / จุดรวมงาน', 0, 'Lead text'], ['ยานพาหนะ (คัน)', 100], ['ค่าแรง (เบี้ยเลี้ยง)', 160], ['ค่าที่พัก', 140], ['ค่าเดินทาง', 140], ['รวม (บาท)', 150]];
+const COST_COLS = [['แผนเดินทาง / จุดรวมงาน', 0, 'Lead text'], ['ยานพาหนะ (คัน)', 100], ['ค่าแรง (เบี้ยเลี้ยง)', 160], ['ค่าที่พัก', 140], ['ค่าเดินทาง', 140], ['รวม (บาท)', 150]];
 const COSTS = [[TRIP.place, '6', '7,200', '9,600', '4,850', '21,650'], ['จุดรวมงาน กฟน.2 น่าน', '6', '7,200', '12,800', '6,320', '26,320']];
 async function costScreen(name) {
   const { scr, page } = await detail(name, { crumbs: ['ต้นทุนการบำรุงรักษา'], status: 'closed', actions: [['Secondary button', 'ดาวน์โหลด Excel', 'cloud_upload-24-300-round']] });
   add(page, col('Content', [
     await vehicleInfo(PLAN_KV, 'รายละเอียดแผน'),
-    col('Section', [await sectionLabel('ต้นทุนการบำรุงรักษา รายใบเดินทาง', { badge: COSTS.length }), await tblShort(COST_COLS, COSTS)], 16),
+    col('Section', [await sectionLabel('ต้นทุนการบำรุงรักษา รายแผนเดินทาง', { badge: COSTS.length }), await tblShort(COST_COLS, COSTS)], 16),
     col('Section', [await sectionLabel('Summary ของต้นทุน'), kv([['ค่าแรง (เบี้ยเลี้ยง)', '14,400 บาท'], ['ค่าที่พัก', '22,400 บาท'], ['ค่าเดินทาง', '11,170 บาท'], ['รวมทั้งแผน', '47,970 บาท'], ['เฉลี่ยต่อคัน', '3,997.50 บาท'], ['จำนวนคัน', P[4] + ' คัน']])], 16),
     alertBox('Info', 'ค่าแรงใช้ยอดเบี้ยเลี้ยงที่กรอกรายคันตอนปิดงาน (S10) · ยังไม่รวมค่าอะไหล่', 'รอเคาะ Q26 — "ค่าแรง" กับ "ค่าเบี้ยเลี้ยง" รายการเดียวกันไหม · ต้นทุนรวมอะไหล่/ค่าจ้างไหม')
   ], 32), 'h');
@@ -2162,7 +2162,7 @@ async function carPartsView(name, i, o) {
   o = o || {};
   const car = CAND[i], picks = (o.picks || A_PICKS)[i] || [], oil = (o.oils || A_OILS)[i], none = (o.draw || A_DRAW)[i] === 'none';
   const { scr, page } = await shell(name, { title: 'อะไหล่ของยานพาหนะ ' + car[0], back: true, crumbs: ['สร้างแผน', 'อะไหล่ของยานพาหนะ'], actions: [['Secondary button', 'แก้ไข', 'stylus-24-300-round']] });
-  const kv = [['ทะเบียน', car[0]], ['ยี่ห้อ/รุ่น', car[1]], ['หน่วยงานเจ้าของยานพาหนะ', car[2]], ['ไตรมาส', 'ไตรมาส ' + ((o.alloc || A_ALL)[i] || '-')],
+  const kv = [['ทะเบียน', car[0]], ['ประเภทยานพาหนะ', typeOf(car)], ['ยี่ห้อ/รุ่น', car[1]], ['หน่วยงานเจ้าของยานพาหนะ', car[2]], ['ไตรมาส', 'ไตรมาส ' + ((o.alloc || A_ALL)[i] || '-')],
     ['น้ำมันไฮโดรลิก', oil == null ? TODO_NONE : JOB_OIL_OPTS[oil] + (oil ? ' · ' + OIL_SPEC.grade + ' · ' + OIL_SPEC.litre + ' ลิตร' : '')], ['เปลี่ยนน้ำมันครั้งล่าสุด', lastOil(car[0])], ['การเบิกอะไหล่', none ? 'ไม่เบิกอะไหล่' : 'เบิกอะไหล่']];
   const rows = none ? [] : picks.filter(x => x !== 0).map(x => [PARTS[x][0], PART_BM[x][0], PART_BM[x][1], PARTS[x][1], String(CAR_QTY[x]), PARTS[x][4]]);
   const list = col('Section', [await sectionLabel('อะไหล่อื่นๆ (' + rows.length + ')')], 16);
@@ -2849,6 +2849,43 @@ async function purgeCut() {
   }
   log(total ? '✓ ลบแล้ว ' + total + ' ชิ้น · ย้อนได้ด้วย Ctrl/Cmd+Z' : '✓ ไม่มีจอของบล็อกที่ตัดออกเหลืออยู่');
 }
+/* ย้ายจอของบล็อกที่ตัดออกไปรวมในกรอบ "ตัดออกแล้ว" (เจ้าของงาน 10 พ.ย. 2569 "ตัดออกจากตรงที่ export หรือแยกไว้อีก section ให้ด้วย ว่า scen นี้ ตัดออกแล้ว")
+   ไม่ลบ · กรอบ (frame ไม่ใช่ section ตาม R19) ขวาสุดของหน้า · หัว Header Type=Header "Scenario ที่ตัดออกแล้ว" · บล็อกละแถบ Subheader State=Failed (แดง) บอก scenario วันที่ และเหตุผลจาก SCEN_CUT
+   ชิ้นที่ย้ายเปลี่ยนชื่อขึ้นต้น "ตัดออก · " ⇒ ส่งภาพ/journey/ปุ่มอื่นที่หาชื่อ "MT / " ไม่หยิบไป · กดซ้ำได้ ต่อท้ายกรอบเดิม */
+async function archiveCut() {
+  const P0 = PLUGIN.prefix;
+  await figma.loadAllPagesAsync();
+  try { await resolveAll(['Header']); } catch (e) { /* ไม่มี Header ใช้แถบธรรมดา */ }
+  const norm = (p) => p.name.trim().toLowerCase().replace(/^[^a-z0-9ก-๙]+/, '').replace(/[^a-z0-9ก-๙]+$/, '');
+  const pages = figma.root.children.filter(p => /^(maintainance|maintenance)(-\d+)?$/.test(norm(p)));
+  const why = {}; SCEN_CUT.forEach(c => { why[c[0]] = c; });
+  let total = 0;
+  for (const pg of pages) {
+    const groups = CUT_BLOCKS().map(([L, tag]) => [L, tag, pg.children.filter(n => n.name.indexOf('ตัดออก · ') !== 0 && n.name !== 'ตัดออกแล้ว' && cutHit(n.name, P0) &&
+      (n.name.indexOf(P0 + ' / ' + L + '.') === 0 || n.name.indexOf(P0 + ' · ' + L + ' ') === 0 || n.name.indexOf(P0 + ' · ' + L + '.') === 0 || n.name.indexOf(' · ' + tag + ' — ') > 0 || n.name === P0 + ' · journey flowchart ' + tag))]).filter(g => g[2].length);
+    if (!groups.length) continue;
+    let box = pg.children.find(n => n.type === 'FRAME' && n.name === 'ตัดออกแล้ว');
+    if (!box) {
+      const right = pg.children.reduce((x, n) => Math.max(x, n.x + n.width), 0), top = pg.children.reduce((y, n) => Math.min(y, n.y), 0);
+      box = figma.createFrame(); box.name = 'ตัดออกแล้ว'; box.fills = []; box.clipsContent = false; pg.appendChild(box); box.x = right + 4000; box.y = top;
+      CREATED = []; const hd = await blockHeader(P0, 'Page', 'Scenario ที่ตัดออกแล้ว — ไม่ใช้ export · เก็บไว้ดูประวัติ', 3000); hd.name = 'ตัดออกแล้ว · หัว'; box.appendChild(hd); hd.x = 0; hd.y = 0;
+    }
+    let y = box.children.reduce((m, n) => Math.max(m, n.y + n.height), 0) + 400;
+    for (const [L, tag, nodes] of groups) {
+      const minX = Math.min(...nodes.map(n => n.x)), minY = Math.min(...nodes.map(n => n.y)), maxX = Math.max(...nodes.map(n => n.x + n.width)), maxY = Math.max(...nodes.map(n => n.y + n.height));
+      const c = why[tag] || [tag, '', 'ตัดออก'];
+      CREATED = []; const bar = await flowBar(P0, 'ตัดออก ' + tag, c[1] + ' — ' + c[2], 'Failed', Math.max(1440, maxX - minX)); bar.name = 'ตัดออก · ' + tag + ' (บล็อก ' + L + ')';
+      box.appendChild(bar); bar.x = 0; bar.y = y; y += bar.height + 80;
+      for (const n of nodes) { const dx = n.x - minX, dy = n.y - minY; box.appendChild(n); n.x = dx; n.y = y + dy; n.name = 'ตัดออก · ' + n.name; }
+      y += (maxY - minY) + 400;
+      log('  · ' + tag + ' (บล็อก ' + L + ') ย้าย ' + nodes.length + ' ชิ้นเข้ากรอบ "ตัดออกแล้ว" บนหน้า ' + pg.name.trim());
+      total += nodes.length;
+    }
+    try { const w = box.children.reduce((m, n) => Math.max(m, n.x + n.width), 0); box.resizeWithoutConstraints(Math.max(3000, w), y); } catch (e) { warn('ขนาดกรอบตัดออกแล้ว', e); }
+  }
+  CREATED = [];
+  log(total ? '✓ ย้ายจอของ scenario ที่ตัดออกแล้ว ' + total + ' ชิ้น ไปกรอบ "ตัดออกแล้ว" ขวาสุดของหน้า · ย้อนได้ด้วย Ctrl/Cmd+Z' : '✓ ไม่มีจอของบล็อกที่ตัดออกเหลืออยู่นอกกรอบ "ตัดออกแล้ว"');
+}
 async function moveLatest() {
   const main = (await namedPage(PAGE_NAMES)).page, tag = PLUGIN.prefix + ' · ', scr = PLUGIN.prefix + ' / ';
   await figma.setCurrentPageAsync(main);
@@ -3096,7 +3133,8 @@ figma.ui.onmessage = async (msg) => {
     if (msg.type === 'build-activity') await buildActivity();
     if (msg.type === 'export-shots') await exportShots('flow-maintainance', msg.scen);   // msg.scen = scenario ที่ติ๊ก (9 พ.ย. 2569 แยก export FigJam ราย S)
     if (msg.type === 'move-latest') await moveLatest();
-    if (msg.type === 'purge-cut') await purgeCut();   // 10 พ.ย. 2569 ลบจอบล็อก M N (S14 S15) และบล็อกว่างอื่น
+    if (msg.type === 'purge-cut') await purgeCut();
+    if (msg.type === 'archive-cut') await archiveCut();   // 10 พ.ย. 2569 ย้ายไปกรอบ ตัดออกแล้ว แทนการลบ   // 10 พ.ย. 2569 ลบจอบล็อก M N (S14 S15) และบล็อกว่างอื่น
     if (msg.type === 'clear-proto') { const tp = await namedPage(PAGE_NAMES); await figma.setCurrentPageAsync(tp.page); await clearPrototype(tp.page); }
     if (msg.type === 'build-docs') await buildDocs({ parts: msg.parts });   // 30 ต.ค. 2569 ติ๊กเลือกส่วน / สร้างทั้งหมด   // 30 ต.ค. 2569 ส่งภาพจอบนหน้านี้ไป FigJam
     if (msg.type === 'check') { log('— เช็ค component (ไม่สร้างอะไร) —'); await resolveAll(NEEDED, true); log(deviceSetInfo()); }
