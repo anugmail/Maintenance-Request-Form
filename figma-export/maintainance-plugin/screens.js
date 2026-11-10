@@ -211,9 +211,11 @@ const WORK = [   // รายการงาน · อะไหล่ · ตา�
 const BEFORE = ['รูปยานพาหนะ + ทะเบียน', 'อะไหล่ใหม่'];
 const AFTER = ['รูปยานพาหนะ + ทะเบียน', 'อะไหล่เก่า', 'อะไหล่ใหม่ที่เหลือ', 'จุดที่บำรุงรักษา (อะไหล่ใหม่)'];
 /* S10 สถานะงานรายคัน (3 พ.ย. 2569 เจ้าของงานเลือก "ทำทีละขั้น") ตามชื่อสถานะงานของหน้า RP & MA Job ของ UI Release#2 (นัดหมายแล้ว → อยู่ระหว่างซ่อม → เสร็จสิ้น / ยกเลิก) */
-const WSTAT = { todo: ['ยังไม่เริ่ม', 'Gray'], doing: ['อยู่ระหว่างบำรุงรักษา', 'Warning'], done: ['เสร็จสิ้น', 'Success'], cannot: ['บำรุงรักษาไม่ได้', 'Error'] };
-/* 4 พ.ย. 2569 เจ้าของงานตัด S23 (มุมผู้รับจ้าง) และ S11 (กบค. ตรวจรับทีละคัน) _"อยากตัด scen ผู้รับจ้าง หรือ vendor ตรวจรับทีละคัน ออก"_ ⇒ สถานะระหว่างทางของแผนจ้าง
-   (ดำเนินการบำรุงรักษาแล้ว · แจ้งบำรุงรักษาไม่ได้ · รอตรวจรับ · ส่งกลับแก้ไข) เอาออก · แผนจ้างใช้ 4 สถานะเดียวกับแผนที่ กบค. ดำเนินการเอง เพราะ กบค. ปิดงานรายคันแทนผู้รับจ้าง (S10) */
+const WSTAT = { todo: ['ยังไม่เริ่ม', 'Gray'], doing: ['อยู่ระหว่างบำรุงรักษา', 'Warning'], done: ['เสร็จสิ้น', 'Success'], cannot: ['บำรุงรักษาไม่ได้', 'Error'],
+  /* S23 มุมผู้รับจ้าง (เอากลับ 10 พ.ย. 2569 เจ้าของงาน _"scen s23 อยากปรับ ui ให้เหมือนกับ s10 แต่ว่า เงื่อนไขการมองเห็น เมนูต่างๆ ยังเป็นเหมือนเดิม"_ · R87)
+     สถานะระหว่างทางของแผนจ้างชุดเดิมของ S23 (3 พ.ย. 2569 รอบ 2 เจ้าของงาน "เห็นสถานะ ว่ารถคันนั้น ดำเนินการบำรุงรักษาแล้ว ปุ่มจะแสดงให้ส่งตรวจงาน") · สีชุดเดิม: ยังไม่ส่ง Info · รอตรวจรับ Warning · ส่งกลับแก้ไข Error
+     (4 พ.ย. 2569 เคยตัดพร้อม S11 · S11 ยังตัดอยู่ ผู้ตรวจรับงานที่ผู้รับจ้างส่งยังไม่เคาะ) · หน่วยงานปิดงานแทนผู้รับจ้างที่ S10 ยังใช้ 4 สถานะแรกตามเดิม */
+  worked: ['ดำเนินการบำรุงรักษาแล้ว', 'Info'], reported: ['แจ้งบำรุงรักษาไม่ได้', 'Info'], wait: ['รอตรวจรับ', 'Warning'], returned: ['ส่งกลับแก้ไข', 'Error'] };
 const ACC = { wait: ['รอหน่วยงานยอมรับ', 'Warning'], ok: ['หน่วยงานยอมรับแล้ว', 'Success'] };
 const pdf = (name, size) => ({ name, size: size || '1.2 MB' });
 const jpg = (name) => ({ name: name + '.jpg', size: '2.4 MB' });
@@ -1109,26 +1111,31 @@ const TRIP_JOB_COLS = tripVCols({ unitSub: true }).concat([['สถานะง�
    รายการตามสถานะงาน (เสนอ): ยังไม่เริ่ม = ดูรายละเอียด แก้ไข ลบ · อยู่ระหว่างบำรุงรักษา = ดูรายละเอียด แก้ไข · เสร็จสิ้น / บำรุงรักษาไม่ได้ = ดูรายละเอียด
    แก้ไข = popup แก้เบอร์ติดต่อและสถานที่ (tripCarEdit เดียวกับ S6) · ลบ = ยืนยันแล้วเอารถออกจากแผนเดินทาง */
 const JOB_MENU = { todo: MENU, doing: MENU.slice(0, 2), done: MENU.slice(0, 1), cannot: MENU.slice(0, 1) };   // done = คันที่เลือกน้ำมันแบบมีเก็บตัวอย่าง (ตัวอย่าง JOB_OIL) · ไม่ได้เก็บตัวอย่างเหลือ ดูรายละเอียด
+/* S23 มุมผู้รับจ้าง: ทุกสถานะมีแค่ "ดูรายละเอียด" (เจ้าของงาน 4 พ.ย. 2569 "vendor ดูรายละเอียดรายคัน จะเห็นแค่ ปุ่มเริ่มงาน และบำรุงรักษาได้ โดยไม่เห็นปุ่ม ลบ และแก้ไข แต่ว่า กบค จะเห็น อยากให้แยก view" · คงเดิม 10 พ.ย. 2569 R87) */
+const VENDOR_MENU = MENU.slice(0, 1);
 /* ยืนยันการออก ชุดเดียวทุกฟอร์ม (5 พ.ย. 2569 ชีตลูกค้า: ฟอร์มสร้าง "ปิด"/"ออก" แต่ฟอร์มแก้ไข "ปิด"/"ยืนยัน") ⇒ ปุ่มตามหน้าต่างออกจากหน้าของงานซ่อม
    (ไฟล์ Maintain-D หน้า แจ้งซ่อม / Flow การซ่อม: "ยกเลิก" / "ยืนยัน") · ปุ่มเดียวกับยืนยันอื่นของปลั๊กอินนี้ (ยกเลิก + ปุ่มยืนยัน) · หัวและบรรทัดรองคงเดิม */
 const EXIT_CONFIRM = (sub) => ({ title: 'ยืนยันการออก', sub, cancel: 'ยกเลิก', ok: 'ยืนยัน' });
 const CAR_REMOVE_CONFIRM = (c) => ({ danger: true, title: 'ยืนยันการเอายานพาหนะออกจากแผนเดินทาง', sub: c[0] + ' จะถูกเอาออกจากแผนเดินทางนี้ และเลือกเข้าแผนเดินทางใบอื่นของไตรมาสได้อีก', cancel: 'ยกเลิก', ok: 'เอาออก' });
 async function tripDetail(name, o) {   // หน้ารายละเอียดแผนเดินทาง (หลังอนุมัติ) · o.trip = ใบที่แสดง (ค่าเริ่ม JOB_T · ใบจ้าง HIRE_T ที่ หน่วยงานปิดงานแทนผู้รับจ้าง 4 พ.ย. 2569) · o.st = { ลำดับรถ: สถานะใน WSTAT } · o.menu / o.edit / o.del = เมนู … ของรถคันแรก
   o = o || {};
-  const t = o.trip || JOB_T, st = (i) => (o.st || {})[i] || 'todo', cnt = (k) => t.sel.filter(i => st(i) === k).length;
+  const t = o.trip || JOB_T, st = (i) => (o.st || {})[i] || 'todo', cnt = (k) => t.sel.filter(i => st(i) === k).length, v = !!o.vendor;   // o.vendor = S23 มุมผู้รับจ้าง (R87)
   /* ตัวนับความคืบหน้า (รีวิว 5 พ.ย. 2569 "อยากให้มีนับ progress แบบ 0/10 ของรายการรถที่ตรวจแล้ว" · R71) = เสร็จสิ้น / (รถทั้งหมดในแผนเดินทาง − บำรุงรักษาไม่ได้)
-     เจ้าของงาน 5 พ.ย. 2569 "ถ้าบำรุงรักษาไม่ได้ ไม่เอามานับ เช่น ถ้าทั้งหมด 10 แล้วมีคันที่ไม่ได้บำรุงรักษา จะเหลือ 9" · ใบจ้างนับแบบเดียวกัน */
-  const total = t.sel.length - cnt('cannot'), counter = 'ตรวจแล้ว ' + cnt('done') + '/' + total;
-  const prog = 'เสร็จสิ้น ' + cnt('done') + ' จาก ' + total + ' คัน' + [['doing', 'อยู่ระหว่างบำรุงรักษา', ''], ['cannot', 'บำรุงรักษาไม่ได้', ' (ไม่นับรวม)']]
-    .map(([k, l, x]) => cnt(k) ? ' · ' + l + ' ' + cnt(k) + x : '').join('');
+     เจ้าของงาน 5 พ.ย. 2569 "ถ้าบำรุงรักษาไม่ได้ ไม่เอามานับ เช่น ถ้าทั้งหมด 10 แล้วมีคันที่ไม่ได้บำรุงรักษา จะเหลือ 9" · ใบจ้างนับแบบเดียวกัน
+     S23 มุมผู้รับจ้าง (10 พ.ย. 2569 · เสนอ ยังไม่เคาะ): ตรวจแล้ว = ผู้รับจ้างทำเสร็จแล้ว (ดำเนินการบำรุงรักษาแล้ว · รอตรวจรับ · เสร็จสิ้น) · ไม่นับรวม = บำรุงรักษาไม่ได้ · แจ้งบำรุงรักษาไม่ได้ */
+  const sum = (ks) => ks.reduce((a, k) => a + cnt(k), 0), doneK = v ? ['worked', 'wait', 'done'] : ['done'], outK = v ? ['reported', 'cannot'] : ['cannot'];
+  const total = t.sel.length - sum(outK), counter = 'ตรวจแล้ว ' + sum(doneK) + '/' + total;
+  const prog = (v ? 'ตรวจแล้ว ' + sum(doneK) : 'เสร็จสิ้น ' + cnt('done')) + ' จาก ' + total + ' คัน'
+    + [['doing', ''], ['worked', ''], ['wait', ''], ['returned', ''], ['reported', ' (ไม่นับรวม)'], ['cannot', ' (ไม่นับรวม)']]
+      .map(([k, x]) => cnt(k) ? ' · ' + WSTAT[k][0] + ' ' + cnt(k) + x : '').join('');
   const { scr, page } = await shell(name, { title: t.name, back: true, crumbs: [P[1], NOW_Q, t.name], badge: TST.approved, actions: [TRIP_EXPORT_BTN] });   // 5 พ.ย. 2569 ต่อจากหน้า "ไตรมาส 1" · 6 พ.ย. 2569 ปุ่มส่งออกที่หัวหน้า (R84)
-  const rows = t.sel.map(i => tripVCells(i, t, { unitSub: true }).concat([st(i) === 'done' && (o.oil || {})[i] ? { pills: [WSTAT.done, OIL_TAG[o.oil[i]]], pillsHead: 'ผลตรวจน้ำมัน' } : { pill: WSTAT[st(i)] }, { menu: 1, items: JOB_MENU[st(i)] }]));   // o.oil = { ลำดับรถ: wait|fail } ป้ายผลน้ำมันต่อจากสถานะ (S12 · 4 พ.ย. 2569)
+  const rows = t.sel.map(i => tripVCells(i, t, { unitSub: true }).concat([st(i) === 'done' && (o.oil || {})[i] ? { pills: [WSTAT.done, OIL_TAG[o.oil[i]]], pillsHead: 'ผลตรวจน้ำมัน' } : { pill: WSTAT[st(i)] }, { menu: 1, items: v ? VENDOR_MENU : JOB_MENU[st(i)] }]));   // o.oil = { ลำดับรถ: wait|fail } ป้ายผลน้ำมันต่อจากสถานะ (S12 · 4 พ.ย. 2569)
   add(page, col('Content', [await vehicleInfo(tripKv(t).concat([['ความคืบหน้า', prog]]), 'รายละเอียดแผนเดินทาง'),
     // ตัวนับ = Badge outline ใน Section header แบบ "รายการยานพาหนะในสัญญา" + Badge "2 รายการ" หน้า 5.1 Rental Contract Management ของ UI Release#2 (Section label ไม่มีช่อง Badge)
     col('Section', [await section('ยานพาหนะในแผนเดินทาง', { badge: counter }), await tblShort(TRIP_JOB_COLS, rows)], 16),
     await tripPartsSec(t.sel, true)], 32), 'h');   // 6 พ.ย. 2569 อะไหล่ของแผนเดินทาง (R82)
   const i0 = t.sel[0];
-  if (o.menu) planMenu(scr, JOB_MENU[st(i0)]);   // ใบจ้างก็เป็นเมนูของ กบค. ชุดเดียวกัน (มุมผู้รับจ้างตัดออกพร้อม S23 4 พ.ย. 2569)
+  if (o.menu) planMenu(scr, v ? VENDOR_MENU : JOB_MENU[st(i0)]);   // ใบจ้างที่หน่วยงานปิดงานแทน (S10) = เมนูชุดเดียวกับแผนดำเนินการเอง · มุมผู้รับจ้าง (S23) = ดูรายละเอียดอย่างเดียว (R87)
   if (o.edit) await tripCarEdit(scr, i0, t.phones, t.locs, { trip: t });   // 6 พ.ย. 2569 popup มีวันดำเนินการด้วย (R83)
   if (o.del) await confirm(scr, CAR_REMOVE_CONFIRM(TRIP_CARS[i0]));
   if (o.exportPdf != null) await tripExport(scr, o.exportPdf, t);   // R84 popup ส่งออกแผนเดินทาง
@@ -1216,24 +1223,27 @@ const jobWork = (sel) => WORK.filter((w, k) => k > 0 || sel !== 0);   // แถ�
    o.hire = ใบจ้าง HIRE_T: กล่องการนัดหมายเป็นข้อมูลใบจ้าง (ผู้รับจ้าง · ช่วงวันทำงาน) · ปุ่ม ตาราง ไอคอนแก้ไข ลบ เหมือนแผนที่ กบค. ดำเนินการเอง ไม่มี view ผู้รับจ้างแล้ว */
 /* 5 พ.ย. 2569 รีวิวทีมออกแบบ S10 "เมื่อกดเริ่มงาน จะพาเข้า Step การ Maintain" ⇒ หน้างานรายคันเหลือสถานะ ยังไม่เริ่ม อย่างเดียว (ปุ่ม เริ่มงาน)
    คันที่อยู่ระหว่างบำรุงรักษา เปิดแล้วไปขั้นที่ค้าง (stepPage) · หน้างานรายคันแบบ อยู่ระหว่างบำรุงรักษา + ปุ่มปิดงาน เลิกใช้ (Step 2 เดิมของรีวิว) */
-async function jobBoxes(h, t, i, started, car) {   // กล่องข้อมูลยานพาหนะ 6 ช่อง + กล่องการนัดหมาย (หน้างานรายคันและหน้าขั้นตอน) · car = ยานพาหนะของจอตัวอย่าง (ค่าเริ่ม TRIP_CARS[i])
+async function jobBoxes(h, t, i, started, car, by) {   // กล่องข้อมูลยานพาหนะ 6 ช่อง + กล่องการนัดหมาย (หน้างานรายคันและหน้าขั้นตอน) · car = ยานพาหนะของจอตัวอย่าง (ค่าเริ่ม TRIP_CARS[i]) · by = ผู้เริ่มงาน (ค่าเริ่ม JOB_BY · S23 = ผู้รับจ้าง)
   const c = car || TRIP_CARS[i];
   const appt = (h ? [['แผนเดินทาง', t.name], ['ผู้รับจ้าง', t.vendor], ['ช่วงวันทำงาน', t.d1 + ' – ' + t.d2]] : [['แผนเดินทาง', t.name], ['ช่วงวันเดินทาง', t.d1 + ' – ' + t.d2]])
     .concat([['วันดำเนินการ', tripWork(i, t)]])   // R83 วันดำเนินการของคันนี้ (9 พ.ย. 2569 ค่ำ เจ้าของงาน _"ในแผนการเดินทางอ่ะ จะมีช่วงของการดำเนินการอยู่แล้ว แต่ในรายคันอยากให้เห็นว่าแต่ละคันจะดำเนินการเมื่อไร"_ + _"ใส่ตรงหน้ารายการรถ ก็ได้ หรือจะใส่ในตอนเริ่มงานก็ได้ … อยากให้สามารถแก้ไขได้"_)
     .concat([['สถานที่บำรุงรักษา', tripLoc(i, t.locs)], ['เบอร์ติดต่อ', tripPhone(i, t.phones)], ['ผู้ดูแลยานพาหนะ', tripCtrl(i, t.phones)]])   // เบอร์ก่อนชื่อผู้ดูแล ตามคอลัมน์เบอร์ติดต่อ (9 พ.ย. 2569)
-    .concat(started ? [['เริ่มงาน', h ? HIRE_START : JOB_START], ['ผู้เริ่มงาน', JOB_BY]] : []);   // ใบจ้าง: กบค. เป็นผู้บันทึก (ชื่อช่างผู้รับจ้างยังไม่เคาะ)
+    .concat(started ? [['เริ่มงาน', h ? HIRE_START : JOB_START], ['ผู้เริ่มงาน', by || JOB_BY]] : []);   // ใบจ้างที่หน่วยงานปิดงานแทน (S10): หน่วยงานเป็นผู้บันทึก · S23 ผู้รับจ้างเป็นผู้เริ่มงานเอง (HIRE_BY)
   return [await vehicleInfo([['ทะเบียน', c[0]], ['ยี่ห้อ/รุ่น', c[1]], ['ประเภท', typeOf(c)], ['หน่วยงานเจ้าของยานพาหนะ', c[2]], ['เลขไมล์สะสม', '182,400 กม.'], ['ชั่วโมงเครื่องจักรสะสม', '6,120 ชม.']]),
     await vehicleInfo(appt, 'การนัดหมาย')];
 }
-async function jobPage(name, o) {   // หน้างานรายคัน ยังไม่เริ่ม · o.i = ลำดับรถ · o.modal = 'cannot' · o.reason · o.errors · o.hire
+/* S23 มุมผู้รับจ้าง (o.vendor · เอากลับ 10 พ.ย. 2569 R87): ปุ่มหัวหน้าเหมือนกัน (บำรุงรักษาไม่ได้ · เริ่มงาน) · อะไหล่ตามแผนดูอย่างเดียว ไม่มีปุ่มเพิ่มอะไหล่และคอลัมน์ไอคอนแก้ไข ลบ
+   ตามเงื่อนไขการมองเห็นเดิม (เจ้าของงาน 4 พ.ย. 2569 "vendor ดูรายละเอียดรายคัน จะเห็นแค่ ปุ่มเริ่มงาน และบำรุงรักษาได้ โดยไม่เห็นปุ่ม ลบ และแก้ไข") · กล่องการนัดหมายเป็นข้อมูลใบจ้าง (jobBoxes h) */
+async function jobPage(name, o) {   // หน้างานรายคัน ยังไม่เริ่ม · o.i = ลำดับรถ · o.modal = 'cannot' · o.reason · o.errors · o.hire · o.vendor
   o = o || {};
-  const h = !!o.hire, t = h ? HIRE_T : JOB_T, i = o.i == null ? JOB_I : o.i, c = TRIP_CARS[i];
+  const v = !!o.vendor, h = !!o.hire || v, t = h ? HIRE_T : JOB_T, i = o.i == null ? (v ? HIRE_DONE : JOB_I) : o.i, c = TRIP_CARS[i];
   const acts = [['Secondary button', 'บำรุงรักษาไม่ได้'], ['Primary button', 'เริ่มงาน']];   // Page header Job detail ของ RP & MA Job
   const { scr, page } = await shell(name, { title: c[0], back: true, crumbs: [NOW_Q, t.name, c[0]], badge: WSTAT.todo, actions: acts });
   const nodes = await jobBoxes(h, t, i, false);
   const wk = jobWork(TRIP_OIL[i]);   // ตามแผนของคันนี้ (S21)
-  nodes.push(col('Section', [await sectionLabel('รายการงานและอะไหล่ตามแผน', { badge: wk.length, buttons: [{ kind: 'Secondary button', text: 'เพิ่มอะไหล่', icon: 'add-24-300-round' }] }),
-    await tblShort(JOB_COLS, wk.map(w => [w[0], w[1], w[2], w[4], { icons: ['stylus-24-300-round', 'delete-24-300-round'] }]))], 16));   // แก้ไข / เพิ่ม = หน้าอะไหล่ของรถ (S21) · ลบ = ยืนยันแล้วเอาออกจากรถคันนี้
+  nodes.push(col('Section', [await sectionLabel('รายการงานและอะไหล่ตามแผน', { badge: wk.length, buttons: v ? null : [{ kind: 'Secondary button', text: 'เพิ่มอะไหล่', icon: 'add-24-300-round' }] }),
+    v ? await tblShort(JOB_COLS.slice(0, 4), wk.map(w => [w[0], w[1], w[2], w[4]]))   // ผู้รับจ้าง: ดูอย่างเดียว
+      : await tblShort(JOB_COLS, wk.map(w => [w[0], w[1], w[2], w[4], { icons: ['stylus-24-300-round', 'delete-24-300-round'] }]))], 16));   // แก้ไข / เพิ่ม = หน้าอะไหล่ของรถ (S21) · ลบ = ยืนยันแล้วเอาออกจากรถคันนี้
   add(page, col('Content', nodes, 32), 'h');
   if (o.modal === 'cannot') await cannotModal(scr, i, { reason: o.reason, errors: o.errors });
   return scr;
@@ -1243,7 +1253,11 @@ async function jobPage(name, o) {   // หน้างานรายคัน �
 const RET_COLS = [['ชื่ออะไหล่', 0, 'Lead text'], ['จำนวนตามแผน', 170], ['จำนวนที่ใช้', 170], ['จำนวนที่คืน', 170]];
 const retRows = (used) => WORK.map((w, k) => { const u = used ? +used[k] : 0; return [w[1], w[2] + ' ' + w[4], u + ' ' + w[4], (+w[2] - u) + ' ' + w[4]]; });
 const CANNOT_USED = ['30', '2', '0', '0'];   // เปลี่ยนน้ำมันและไส้กรองไฮโดรลิกแล้วพบปัญหา ทำต่อไม่ได้
-async function retTable(used) { const rows = retRows(used); return col('Section', [await section('อะไหล่ส่งคืน', { badge: rows.length }), await tblShort(RET_COLS, rows)], 16); }   // แบบแก้ไข ลบ ของผู้รับจ้างตัดออกพร้อม S23 (4 พ.ย. 2569)
+async function retTable(used, label, edit) {   // label = หน้างานรายคันแบบดู (Section label R3) · edit = ผู้รับจ้างแก้ไข ลบ เพิ่มได้ (S23 · 4 พ.ย. 2569 เอากลับ 10 พ.ย. 2569 R87)
+  const rows = retRows(used);
+  return col('Section', [await (label ? sectionLabel : section)('อะไหล่ส่งคืน', { badge: rows.length, buttons: edit ? [ADD_PART] : null }),
+    await tblShort(edit ? RET_COLS.concat([['', 104]]) : RET_COLS, edit ? rows.map(r => r.concat([EDIT_ICONS])) : rows)], 16);
+}
 async function cannotModal(scr, i, o) {   // o.reason · o.used (null = ยังไม่เริ่ม) · o.errors
   // 5 พ.ย. 2569 รีวิว S10 "เมื่อกดแล้วจะต้องระบุสาเหตุ แสดงรายการอะไหล่ที่ต้องใช้สำหรับงานนี้เพื่อยืนยันการส่งคืน เมื่อยืนยันแล้ว จะกลับไปที่หน้ารายละเอียดแผนเดินทาง" — โครงเดิมตรงแล้ว เพิ่มบรรทัดรองบอกให้ตรวจอะไหล่ก่อนยืนยัน
   await popupModal(scr, { title: 'บำรุงรักษาไม่ได้ · ' + TRIP_CARS[i][0], sub: 'ระบุสาเหตุ และตรวจรายการอะไหล่ของงานนี้เพื่อยืนยันการส่งคืน', w: 800, ok: 'ยืนยัน',
@@ -1252,12 +1266,70 @@ async function cannotModal(scr, i, o) {   // o.reason · o.used (null = ยั�
 
 /* ---------- แผนจ้างดำเนินการ (ใบจ้าง HIRE_T) ----------
    4 พ.ย. 2569 เจ้าของงาน _"อยากตัด scen ผู้รับจ้าง หรือ vendor ตรวจรับทีละคัน ออก คือ S23 และ S11 ที่อยากเอาออก"_ แล้วเลือกให้ กบค. ปิดงานรายคันของแผนจ้างเอง
-   ด้วยหน้างานรายคันและหน้าปิดงานเดียวกับ S10 (กรอกแทนผู้รับจ้าง) ⇒ ลบ hireJob · ส่งตรวจงาน · ผลการพิจารณาตรวจรับ · popup แก้ไข เพิ่ม ลบ อะไหล่ของผู้รับจ้าง · photoFiles
-   เหลือข้อมูลใบจ้างที่ S10 ใช้ (HIRE_T · เวลาเริ่มงาน) + สาเหตุตัวอย่างของ popup บำรุงรักษาไม่ได้ (HIRE_WHY) */
+   ด้วยหน้างานรายคันและหน้าปิดงานเดียวกับ S10 (กรอกแทนผู้รับจ้าง) — ยังคงอยู่ที่ S10 (I.25 I.26)
+   10 พ.ย. 2569 เจ้าของงานเอา S23 กลับ _"scen s23 อยากปรับ ui ให้เหมือนกับ s10 แต่ว่า เงื่อนไขการมองเห็น เมนูต่างๆ ยังเป็นเหมือนเดิม"_ (R87) · S11 ยังตัดอยู่
+   ⇒ มุมผู้รับจ้างใช้ tripDetail · jobPage · stepPage ของ S10 (o.vendor) + หน้างานที่ปิดแล้วของผู้รับจ้าง (vendorJob แบบ workDetail) + ส่งตรวจงาน · แก้ไข เพิ่ม ลบ อะไหล่และภาพ ตามชุดเดิมของ S23 */
 const HIRE_T = tripAs(TRIP_V, 'approved'), HIRE_START = '17/11/2569 09:10 น.';
 const HIRE_WHY = 'กระบอกสูบไฮโดรลิกหลักรั่ว ต้องส่งซ่อมก่อนจึงบำรุงรักษาได้';
 const HIRE_ST = { [TRIP_V.sel[0]]: 'doing', [TRIP_V.sel[1]]: 'done' };   // ใบจ้างระหว่างทาง: คันแรก กบค. เริ่มงานแทนผู้รับจ้างแล้ว · คันที่ 2 ปิดงานแล้ว · ที่เหลือยังไม่เริ่ม
 const WORK_COLS2 = [['รายการงาน', 0], ['อะไหล่ที่ใช้', 320], ['จำนวนตามแผน', 140], ['จำนวนที่ใช้จริง', 140], ['หน่วย', 110]];
+/* ข้อมูลจำลองของ S23 (ชุดเดิมก่อนตัด 4 พ.ย. 2569) · ผู้รับจ้าง = ชื่อช่างของผู้รับจ้างที่บันทึกงาน */
+const HIRE_DONE = TRIP_V.sel[0], HIRE_CANNOT = TRIP_V.sel[1];
+const HIRE_BY = 'นายประเสริฐ ศรีสุข (ผู้รับจ้าง)', HIRE_TECH = 'นายประเสริฐ ศรีสุข', HIRE_END = '17/11/2569 13:25 น.', HIRE_SENT = '17/11/2569 16:40 น.', HIRE_REPORTED = '18/11/2569 08:35 น.';
+const HIRE_BACK = 'จำนวนไส้กรองอากาศที่คืนไม่ตรงกับภาพอะไหล่ใหม่ที่เหลือ กรุณาตรวจนับและแก้จำนวนที่คืน';
+const HIRE_BACK_CANNOT = 'กรุณาระบุตำแหน่งที่รั่วและผลตรวจเบื้องต้นในสาเหตุให้ชัดเจน';
+const HIRE_VENDOR = { [TRIP_V.sel[0]]: 'returned', [TRIP_V.sel[1]]: 'wait', [TRIP_V.sel[2]]: 'worked', [TRIP_V.sel[3]]: 'doing' };   // มุมผู้รับจ้างระหว่างทาง: ส่งกลับแก้ไข · รอตรวจรับ · ดำเนินการแล้ว · กำลังทำ
+const vendorSign = (list) => [[list[0][0], HIRE_TECH], list[1]];   // ลงนามฝั่งผู้ดำเนินการของ S23 = ช่างผู้รับจ้าง (ใครลงนามจริงยังไม่เคาะ)
+/* หน้างานรายคันของผู้รับจ้างหลังปิดงานหรือแจ้งบำรุงรักษาไม่ได้ (S23 · R87) — โครงเดียวกับหน้างานที่ปิดแล้วของ S10 (workDetail: กล่อง "ข้อมูลยานพาหนะและงาน" กล่องเดียว · ภาพ · อะไหล่ที่ใช้จริง)
+   ไม่มีส่วนค่าใช้จ่ายของยานพาหนะ (เจ้าของงาน 10 พ.ย. 2569 _"จะไม่มีเรื่องทั้ง section ค่าใช้จ่ายรายคัน"_) + ของเดิม S23: ปุ่มตามสถานะ · กล่องแจ้งส่งกลับแก้ไข · อะไหล่ส่งคืน
+   · ไอคอนแก้ไข ลบ + ปุ่มเพิ่มอะไหล่ · ภาพเป็นรายการไฟล์ (File upload) ลบและอัปโหลดใหม่ได้ (เจ้าของงาน 4 พ.ย. 2569 "อะใหล่ที่ใช้จริง และ อะใหล่ส่งคืน ต้องมีสัญลักณ์ให้แก้ไขได้ ลบรายการได้ รูปภาพ แก้ไขได้ ลบได้")
+   ป้ายหัวหน้า = Pill outline สีตามตาราง (headPill แบบหน้าขั้นตอน · Badge outline ไม่มีสี Warning / Info)
+   o.st = worked | reported | wait | returned · o.cannot = คันที่แจ้งบำรุงรักษาไม่ได้ · o.partEdit · o.partAdd ('filled') · o.partDel */
+async function vendorJob(name, o) {
+  o = o || {};
+  const t = HIRE_T, cannot = !!o.cannot, i = cannot ? HIRE_CANNOT : HIRE_DONE, c = TRIP_CARS[i], s = o.st;
+  const acts = s === 'worked' || s === 'reported' ? [['Secondary button', 'แก้ไขงาน'], ['Primary button', 'ส่งตรวจงาน']]
+    : s === 'returned' ? (cannot ? [['Secondary button', 'บำรุงรักษาไม่ได้'], ['Primary button', 'เริ่มงาน']] : [['Primary button', 'แก้ไขงาน']]) : null;   // รอตรวจรับ = ไม่มีปุ่ม · ส่งกลับคันที่แจ้งไม่ได้ = ปุ่มกลับเป็นแบบก่อนแจ้ง
+  const { scr, page } = await shell(name, { title: c[0], back: true, crumbs: [NOW_Q, t.name, c[0]], badge: WSTAT[s], actions: acts });
+  headPill(scr, WSTAT[s]);
+  const nodes = [];
+  if (s === 'returned') nodes.push(alertBox('Error', 'หน่วยงานส่งกลับให้แก้ไข', cannot ? HIRE_BACK_CANNOT : HIRE_BACK));
+  const veh = [['ทะเบียน', c[0]], ['ยี่ห้อ/รุ่น', c[1]], ['ประเภท', typeOf(c)], ['หน่วยงานเจ้าของยานพาหนะ', c[2]], ['เลขไมล์สะสม', '176,050 กม.'], ['ชั่วโมงเครื่องจักรสะสม', '5,840 ชม.']];
+  const job = cannot ? [['สาเหตุที่บำรุงรักษาไม่ได้', HIRE_WHY], ['ผู้แจ้ง', HIRE_BY], ['แจ้งเมื่อ', HIRE_REPORTED]]
+    : [['เริ่มงาน', HIRE_START], ['ปิดงาน', HIRE_END], ['ผู้บันทึก', HIRE_BY], ['น้ำมันไฮโดรลิก', JOB_OIL_OPTS[TRIP_OIL[i]]], ['เลขไมล์หลังทำ', '176,090 กม.'], ['ชั่วโมงเครื่องจักรหลังทำ', '5,846 ชม.']];
+  const sent = s === 'wait' ? [['ส่งตรวจงานเมื่อ', cannot ? '18/11/2569 08:50 น.' : HIRE_SENT], ['ผู้ส่ง', HIRE_BY]] : [];
+  nodes.push(await vehicleInfo(veh.concat(job, sent), 'ข้อมูลยานพาหนะและงาน'));
+  if (!cannot) nodes.push(await photoFiles(),
+    col('Section', [await sectionLabel('รายการงานและอะไหล่ที่ใช้จริง', { badge: WORK.length, buttons: [ADD_PART] }),
+      await tblShort(WORK_COLS2.concat([['', 104]]), WORK.map(w => [w[0], w[1], w[2], w[3], w[4], EDIT_ICONS]))], 16));
+  nodes.push(await retTable(cannot ? null : WORK.map(w => w[3]), true, true));   // ปิดงาน = จำนวนที่คืนจาก Step 2 · แจ้งไม่ได้ = จาก popup (คืนทั้งหมด)
+  add(page, col('Content', nodes, 32), 'h');
+  if (o.partEdit) await partEditModal(scr, WORK[PART_K]);
+  if (o.partAdd) await partAddModal(scr, o.partAdd === 'filled');
+  if (o.partDel) await confirm(scr, PART_DEL_CONFIRM(WORK[PART_K]));
+  return scr;
+}
+/* ส่งตรวจงาน (เจ้าของงาน 3 พ.ย. 2569 "คนตรวจงานเป็นผู้รับจ้าง ส่งตรวจงาน") · ผู้ตรวจรับยังไม่เคาะ (S11 ยังตัดอยู่ 10 พ.ย. 2569) ⇒ ข้อความเป็น "หน่วยงาน" */
+const HIRE_SEND_CONFIRM = (c) => ({ title: 'ยืนยันส่งตรวจงาน · ' + c[0], sub: 'งานของยานพาหนะคันนี้จะส่งให้หน่วยงานตรวจรับ', cancel: 'ยกเลิก', ok: 'ส่งตรวจงาน' });
+/* แก้ไข ลบ อะไหล่และภาพของผู้รับจ้าง (4 พ.ย. 2569 เจ้าของงาน "ส่วนที่เป็นอะไหล่ที่ใช้จริง และ อะไหล่ส่งคืน ต้องมีสัญลักษณ์ให้แก้ไขได้ ลบรายการได้ รูปภาพ แก้ไขได้ ลบได้")
+   ตาราง = คอลัมน์ไอคอนแก้ไข + ลบ กว้าง 104 แบบตารางอะไหล่ในไตรมาสของ S1 · ไอคอนแก้ไขทั้งสองตาราง = popup เดียวกัน (จำนวนที่คืนคำนวณจากจำนวนที่ใช้จริง)
+   ภาพ = File upload ของไลบรารี (รายการไฟล์มีปุ่มลบ · อัปโหลดใหม่แทนภาพเดิม · ไอคอนตามชนิดไฟล์ + แถบความคืบหน้า R48) · Images ของไลบรารีไม่มีปุ่มแก้ไข ลบ */
+const EDIT_ICONS = { icons: ['stylus-24-300-round', 'delete-24-300-round'] }, PART_K = 3;   // ตัวอย่างแก้ = ไส้กรองอากาศ (ใช้ 1 คืน 1)
+const photoFiles = (o) => upload('ภาพก่อนเริ่มงาน', BEFORE.map((b, k) => jpg('before-' + (k + 1))).concat(o && o.uploading ? [Object.assign(jpg('before-3'), { progress: 60 })] : []), { hint: 'JPG, PNG · สูงสุด 10 ภาพ', bar: true });
+async function partEditModal(scr, w) {
+  await popupModal(scr, { title: 'แก้ไขอะไหล่ · ' + w[1], ok: 'บันทึก',
+    body: [field('รายการงาน', w[0], { state: 'Readonly' }),
+      row('Row', [field('จำนวนตามแผน', w[2] + ' ' + w[4], { state: 'Readonly' }), field('จำนวนที่ใช้จริง (' + w[4] + ')', w[3]), field('จำนวนที่คืน', (+w[2] - +w[3]) + ' ' + w[4], { state: 'Readonly' })])] });
+}
+/* เพิ่มรายการ (4 พ.ย. 2569 เจ้าของงาน "scen V ต้องมีเพิ่มรายการได้ด้วย") — ผู้รับจ้างไม่ได้เลือกจากคลังของหน่วยงาน ⇒ popup กรอกเองแบบ "รายการเพิ่มเติม" ของหน้าอะไหล่ของยานพาหนะ (S21)
+   + จำนวนที่ใช้จริงและหน่วย · เพิ่มแล้วขึ้นในอะไหล่ที่ใช้จริง และจำนวนที่คืนเป็น 0 */
+const ADD_PART = { kind: 'Secondary button', text: 'เพิ่มอะไหล่', icon: 'add-24-300-round' };
+async function partAddModal(scr, filled) {
+  await popupModal(scr, { title: 'เพิ่มอะไหล่ที่ใช้จริง', ok: 'เพิ่ม',
+    body: [field('ชื่ออะไหล่', filled ? 'ไส้กรองเชื้อเพลิง' : '', { placeholder: 'ระบุชื่ออะไหล่' }), field('รหัสอะไหล่', filled ? 'FF-5052' : '', { placeholder: 'ระบุรหัสอะไหล่', optional: true }),
+      row('Row', [field('จำนวนที่ใช้จริง', filled ? '1' : '', { placeholder: '0' }), dropdown('หน่วย', filled ? 'ชิ้น' : '', { placeholder: 'เลือกหน่วย' })])] });
+}
+const PART_DEL_CONFIRM = (w) => ({ danger: true, title: 'ยืนยันการเอาอะไหล่ออก', sub: w[1] + ' จะถูกเอาออกจากยานพาหนะคันนี้', cancel: 'ยกเลิก', ok: 'เอาออก' });
 /* (5 พ.ย. 2569 รีวิว S10: เนื้อหาหน้าปิดงานย้ายเป็น Step 2 สรุปงานก่อนปิดงาน ของ stepPage — มีแถบขั้นตอนด้านบน เนื้อหายังไล่ยาวหน้าเดียว)
    ปิดงาน = หน้าเดียวไล่ยาว ไม่มี stepper ไม่มีส่วนภาพ (3 พ.ย. 2569 เจ้าของงานวางข้อความเฟรม "รายงานปิดงาน" ของงานซ่อม: "หน้าปิดงานอยากได้สไตล์แบบนี้ ยังไม่ต้องมีเพิ่มรูป และไม่ต้องมี stepper")
    ส่วนตามเฟรม: ข้อมูลเอกสาร · บันทึกข้อตกลงลูกค้า (Section header + Content item row) · รายการสภาพวัสดุอะไหล่ (Table ของไลบรารี 8 คอลัมน์)
@@ -1276,21 +1348,25 @@ const CLOSE_DOC_SEL = [0];   // กรอกครบ: 0 มี · 1 ไม่�
 /* 5 พ.ย. 2569 รีวิว S10 Step 2 "ระบุจำนวนอะไหล่ที่ใช้จริงในงานนี้" (R74) ⇒ คอลัมน์ "จำนวนที่ใช้" เป็นช่องกรอก Number input ตาม ReturnPart ของงานซ่อม
    (ไฟล์ Maintain-D หน้า Design: ตาราง Table header cell + Table cell ที่ใส่ Number input ในคอลัมน์ "จำนวนที่ใช้" · Table ของไลบรารีไม่มีช่องกรอก)
    ⇒ desktop ประกอบแบบ checkTable (เฟรมชื่อ ReturnPart = แบบสำรองลอกโครง component งานซ่อม R47) · มือถือคง Table การ์ด (Mobile table ไม่มีช่องกรอก) · หัวคอลัมน์และลำดับตามเฟรมรายงานปิดงาน (3 พ.ย. 2569) */
-async function closeParts(rows, filled) {
+/* แผนจ้างดำเนินการ (noPrice · เจ้าของงาน 10 พ.ย. 2569 _"ส่วนที่สภาพวัสดุอะไหล่ ส่วนที่เป็นราคาต้องไม่แสดง"_ · R87): ไม่มีคอลัมน์ราคาต่อหน่วย · ราคารวมที่ใช้ · ราคารวมที่คืน ทั้ง desktop และมือถือ
+   ใช้ทั้ง Step 2 ของผู้รับจ้าง (S23) และ Step 2 ที่หน่วยงานปิดงานแทนผู้รับจ้าง (S10 I.26) · คอลัมน์ที่เหลือคงเดิม */
+const CLOSE_PRICE_COLS = [1, 3, 5];
+async function closeParts(rows, filled, noPrice) {
   const val = (r) => (filled ? r : r.slice(0, 6).concat(['0', ''])).map((x, i) => i === 7 && !x ? '-' : x);   // ฟอร์มว่าง: จำนวนที่ใช้ตั้งต้นตามแผน · อะไหล่เก่า 0 · หมายเหตุ "-"
+  const keep = CLOSE_PART_HEADS.map((_, i) => i).filter(i => !noPrice || CLOSE_PRICE_COLS.indexOf(i) < 0);
   const head = await section('รายการสภาพวัสดุอะไหล่', { badge: rows.length });
   const more = btn('Secondary button', 'เพิ่มรายการ', { icon: 'add-24-300-round' });
   if (MOB) {
-    const cols = CLOSE_PART_HEADS.map((h, i) => [h, i === 0 ? 220 : i === 7 ? 0 : 118, i ? 'Text' : 'Lead text']);
-    return col('Section', [head, await tblShort(cols, rows.map(val)), more], 16);
+    const cols = keep.map(i => [CLOSE_PART_HEADS[i], i === 0 ? 220 : i === 7 ? 0 : 118, i ? 'Text' : 'Lead text']);
+    return col('Section', [head, await tblShort(cols, rows.map(r => { const x = val(r); return keep.map(i => x[i]); })), more], 16);
   }
   const data = rows.map(val);
   const num = (ri) => {   // Number input ไม่มีป้าย ในช่องตาราง (ReturnPart)
     return inst('Number input', { State: 'Filled', Size: 'md' }, { Number: data[ri][2], Label: false, Optional: false, 'Info icon': false, Helper: false });
   };
-  const cols = CLOSE_PART_HEADS.map((h, ci) => ci === 0 ? [h, 220] : ci === 2 ? [h, 140, num, true] : [h, ci === 7 ? 0 : 118, (ri) => null]);
+  const cols = keep.map(ci => { const h = CLOSE_PART_HEADS[ci]; return ci === 0 ? [h, 220, null, false, ci] : ci === 2 ? [h, 140, num, true, ci] : [h, ci === 7 ? 0 : 118, (ri) => null, false, ci]; });
   const t = frame('Content with scrollbar', 'HORIZONTAL');
-  cols.forEach(([h, w, make, grow], ci) => {
+  cols.forEach(([h, w, make, grow, ci]) => {
     const c = frame('Column', 'VERTICAL'); t.appendChild(c);
     if (w) { c.layoutSizingHorizontal = 'FIXED'; c.resize(w, c.height); } else c.layoutGrow = 1;
     add(c, inst('Table header cell', { Checkbox: 'False' }, { Text: h, 'Sort icon': false, 'Header text': true }), 'h');
@@ -1479,7 +1555,7 @@ function inspectForm(c) {   // แบบตรวจของยานพาห�
     ['รหัส', 'B-2563-0412'], ['ใช้งานประจำที่', c[2]], ['SERIAL No.', cm + '-11873'], ['หมายเลข HC', 'HC-0412'], ['ยี่ห้อยานพาหนะ', vb], ['รุ่นยานพาหนะ', vm], ['ระยะทางการใช้งานยานพาหนะ (Km)', '182,400'], ['ระยะเวลาการใช้งานเครน (Hr)', '6,120']] };
 }
 const INSPECT_NOTE = { 17: 'สายน้ำมันไฮดรอลิคซึมที่ข้อต่อ เปลี่ยนแล้ว' }, INSPECT_FIX = 17;   // ข้อมูลจำลองตอนตรวจครบ: ทุกรายการ "ปกติ" ยกเว้นข้อ 18 "แก้ไข"
-async function inspectStep(c, filled, signed) {   // Step 1: ข้อมูลส่วนบนของใบตรวจ + รายการตรวจตามประเภท + ลงนาม ผู้ตรวจ / ผู้รับการตรวจ
+async function inspectStep(c, filled, signed, sign) {   // Step 1: ข้อมูลส่วนบนของใบตรวจ + รายการตรวจตามประเภท + ลงนาม ผู้ตรวจ / ผู้รับการตรวจ · sign = ผู้ลงนาม (ค่าเริ่ม SIGN_IN · S23 vendorSign)
   const fm = inspectForm(c), sel = (i) => filled ? (i === INSPECT_FIX % fm.items.length ? 1 : 0) : -1;
   const list = MOB
     ? fm.items.map((t, i) => checkCard((i + 1) + '. ' + t, ['ปกติ', 'แก้ไข'], sel(i))).concat([btn('Secondary button', 'เพิ่มรายการ', { icon: 'add-24-300-round', size: 'lg' })])
@@ -1487,7 +1563,7 @@ async function inspectStep(c, filled, signed) {   // Step 1: ข้อมูล�
         ['หมายเหตุ', 448, i => noteCell(filled && sel(i) === 1 ? INSPECT_NOTE[INSPECT_FIX] : ''), true]], true)];
   return [await vehicleInfo(fm.kv, fm.title),
     col('InspectionChecklist', [await section('รายการตรวจสภาพ', { badge: fm.items.length })].concat(list), 16),
-    await signSection(SIGN_INSPECT, SIGN_IN, filled, signed)];
+    await signSection(SIGN_INSPECT, sign || SIGN_IN, filled, signed)];
 }
 const SIGN_INSPECT = 'ลงนามการตรวจสภาพ';   // 5 พ.ย. 2569 รีวิว S10 Step 1 "ลงนามการตรวจสภาพ" (เดิม "ลงนามการรับมอบรถ") · บังคับ — เจ้าของงาน "เรื่องลงนาม require"
 async function receiptPanel(filled, signed) {
@@ -1516,16 +1592,17 @@ async function receiptPanel(filled, signed) {
 /* ลงนามการส่งคืนรถ ตอนปิดงาน — 5 พ.ย. 2569 เจ้าของงาน "s10 เอาตรวจสภาพปิดงาน ออกไปเลย" (R65) ⇒ เอาตารางตรวจสภาพรถปิดงาน (24 รายการ ปกติ/ต้องแก้ไข/หมายเหตุ + เพิ่มรายการ) ออก คงไว้แค่ลงนามการส่งคืนรถ
    ไฟล์ที่มี InspectionChecklist ของงานซ่อม: ใช้ instance เดิม AfterRepair=true แล้วซ่อนส่วนตรวจสภาพ (Section header · Content with scrollbar · Table pagination) เหลือ AfterRepair > HandoverSignature (ซ่อน RepairFeedback ReturnPart เหมือนเดิม)
    ไม่มี component / แบบสำรอง = signSection "ลงนามการส่งคืนรถ" · รายการรับรถตอนเริ่มงาน (receiptPanel) ไม่เกี่ยว คงเดิม */
-async function inspectPanel(filled, signed) {
+async function inspectPanel(filled, signed, sign) {   // sign = ผู้ลงนาม (ค่าเริ่ม SIGN_OUT · S23 vendorSign)
+  sign = sign || SIGN_OUT;
   if (has('InspectionChecklist')) {
     const ic = inst('InspectionChecklist', { Breakpoint: BP(), State: filled ? 'Filled' : 'Default' }, { AfterRepair: true }); ic.name = 'InspectionChecklist';
     ic.children.forEach(c => { if (c.name !== 'AfterRepair') c.visible = false; });
     const ar = find(ic, 'AfterRepair');
     if (ar) { ar.visible = true; ['RepairFeedback', 'ReturnPart'].forEach(nm => { const x = find(ar, nm); if (x) x.visible = false; });
-      const hs = find(ar, 'HandoverSignature'); if (hs) { setProps(hs, { State: signed ? 'Signed' : filled ? 'Filled' : 'Default' }); await signFix(hs, 'ลงนามการส่งคืนยานพาหนะ', SIGN_OUT, filled); } }
+      const hs = find(ar, 'HandoverSignature'); if (hs) { setProps(hs, { State: signed ? 'Signed' : filled ? 'Filled' : 'Default' }); await signFix(hs, 'ลงนามการส่งคืนยานพาหนะ', sign, filled); } }
     return [ic];
   }
-  return [await signSection('ลงนามการส่งคืนยานพาหนะ', SIGN_OUT, filled, signed)];
+  return [await signSection('ลงนามการส่งคืนยานพาหนะ', sign, filled, signed)];
 }
 /* ---------- S10 ขั้นตอนบำรุงรักษา 2 ขั้น (5 พ.ย. 2569 รีวิวทีมออกแบบ · เจ้าของงาน "s10 ลองปรับให้เป็นแบบที่เขียนให้") ----------
    รีวิว: "หน้างานรายคัน - เริ่มงาน เมื่อกดเริ่มงาน จะพาเข้า Step การ Maintain · Step1 : ตรวจสภาพก่อนบำรุงรักษา ลงนามการตรวจสภาพ · Step2 : ไม่ต้องมีแล้ว · Step3 : เอาไปแทน Step2 สรุปงานก่อนปิดงาน"
@@ -1563,23 +1640,26 @@ async function mtStepper(cur) {   // cur = 1 | 2
   });
   return ps;
 }
-/* หน้าขั้นตอนของงานรายคัน · o.step = 1 | 2 · o.hire = ใบจ้าง (กบค. กรอกแทนผู้รับจ้าง) · o.i = ลำดับรถ
+/* หน้าขั้นตอนของงานรายคัน · o.step = 1 | 2 · o.hire = ใบจ้าง (กบค. กรอกแทนผู้รับจ้าง) · o.vendor = S23 มุมผู้รับจ้าง (R87) · o.i = ลำดับรถ
+   ใบจ้างทั้งสองแบบ (o.hire · o.vendor) Step 2 ไม่มีส่วนค่าใช้จ่ายของยานพาหนะ และตารางรายการสภาพวัสดุอะไหล่ไม่มีคอลัมน์ราคา (เจ้าของงาน 10 พ.ย. 2569
+   _"จะไม่มีเรื่องทั้ง section ค่าใช้จ่ายรายคัน ที่ต้องกรอก ส่วนที่สภาพวัสดุอะไหล่ ส่วนที่เป็นราคาต้องไม่แสดง · s23 ยังแสดงเหมือนเดิมแต่ส่วนที่เป็นราคา ของค่าใช้จ่ายของรถรายคัน จะไม่มี ส่วนที่เหลือยังคงเดิม"_)
+   ผู้รับจ้าง: วันดำเนินการใน Step 1 อ่านอย่างเดียว (ผู้รับจ้างแก้ข้อมูลยานพาหนะในแผนเดินทางไม่ได้ ตามเงื่อนไขการมองเห็นเดิม · ยังไม่เคาะ) · ผู้ลงนามฝั่งผู้ดำเนินการ = ช่างผู้รับจ้าง (vendorSign)
    Step 1: o.filled (ตรวจรายการแล้ว) · o.signed (ลงนามครบ) · o.signModal
    Step 2: o.filled · o.errors · o.safety · o.oilRes · o.oil (ตัวเลือกน้ำมัน) · o.date / o.dateOpen (วันที่เปลี่ยนน้ำมันครั้งล่าสุด) · o.budget (budgetPick)
    ทั้งสองขั้น: o.modal = 'cannot' (popup บำรุงรักษาไม่ได้) · o.reason · o.cannotErrors */
 async function stepPage(name, o) {
   o = o || {};
-  const h = !!o.hire, t = h ? HIRE_T : JOB_T, i = o.i == null ? (h ? TRIP_V.sel[0] : JOB_I) : o.i, c = o.car || TRIP_CARS[i], step = o.step || 1;   // o.car = จอตัวอย่างรถพ่วงฉีดน้ำ (R86)
+  const v = !!o.vendor, h = !!o.hire || v, t = h ? HIRE_T : JOB_T, i = o.i == null ? (h ? TRIP_V.sel[0] : JOB_I) : o.i, c = o.car || TRIP_CARS[i], step = o.step || 1;   // o.car = จอตัวอย่างรถพ่วงฉีดน้ำ (R86)
   const { scr, page } = await shell(name, { title: c[0], back: true, crumbs: [NOW_Q, t.name, c[0]], badge: WSTAT.doing, actions: [['Secondary button', 'บำรุงรักษาไม่ได้']] });
   headPill(scr, WSTAT.doing);
-  const nodes = [await mtStepper(step)].concat(await jobBoxes(h, t, i, true, o.car));
+  const nodes = [await mtStepper(step)].concat(await jobBoxes(h, t, i, true, o.car, v ? HIRE_BY : null));
   let dateAnchor = null, workAnchor = null;
   if (step === 1) {
     /* R83 แก้วันดำเนินการของคันนี้ตอนเริ่มงาน (9 พ.ย. 2569 ค่ำ เจ้าของงาน _"ในแผนการเดินทางอ่ะ จะมีช่วงของการดำเนินการอยู่แล้ว แต่ในรายคันอยากให้เห็นว่าแต่ละคันจะดำเนินการเมื่อไร"_ + _"ใส่ตรงหน้ารายการรถ ก็ได้ หรือจะใส่ในตอนเริ่มงานก็ได้ … อยากให้สามารถแก้ไขได้"_) ⇒ Section "วันดำเนินการ" บนสุดของ Step 1 · ช่องเดียวกับ popup แก้ไขยานพาหนะในแผนเดินทาง (Text input + ไอคอนปฏิทิน ช่วงวัน) ค่าเริ่มต้น = วันดำเนินการในตาราง · o.workPick = เปิดปฏิทิน */
     const wv = (o.workPick || workRange(i, t)).join(' - ');
-    workAnchor = field('วันดำเนินการ', wv, { lead: 'calendar_month-24-300-round', state: o.workPick ? 'Focused' : undefined });
+    workAnchor = field('วันดำเนินการ', wv, { lead: 'calendar_month-24-300-round', state: v ? 'Readonly' : o.workPick ? 'Focused' : undefined });   // S23 อ่านอย่างเดียว
     nodes.push(col('Section', [await section('วันดำเนินการ'), MOB ? workAnchor : row('Row', [workAnchor, frame('Spacer', 'VERTICAL')])], 16));
-    nodes.push(...await inspectStep(c, o.filled, o.signed),   // 9 พ.ย. 2569 แบบตรวจตามประเภทยานพาหนะ แทนรายการเอกสารรับยานพาหนะ (R86)
+    nodes.push(...await inspectStep(c, o.filled, o.signed, v ? vendorSign(SIGN_IN) : null),   // 9 พ.ย. 2569 แบบตรวจตามประเภทยานพาหนะ แทนรายการเอกสารรับยานพาหนะ (R86)
       col('Section', [await section('ภาพก่อนเริ่มงาน')].concat(await photoUploads(BEFORE, o.filled, false)), 16),
       btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันการตรวจสภาพ', { size: 'lg', disabled: !o.signed }]]));   // ลงนามบังคับ (เจ้าของงาน 5 พ.ย. 2569)
   } else {
@@ -1587,8 +1667,9 @@ async function stepPage(name, o) {
     nodes.push(
       col('Section', [await section('ข้อมูลเอกสาร'), kv([['เลขที่งาน', P[0]], ['หน่วยงานผู้ใช้บริการ', c[2]], ['ชื่องาน', 'บำรุงรักษา' + typeOf(c) + ' ' + c[1] + ' ทะเบียน ' + c[0] + ' ณ ' + tripLoc(i, t.locs)], ['วันที่รับงาน', JOB_START.slice(0, 10)], ['วันที่เสร็จงาน', JOB_END.slice(0, 10)]])], 16),
       col('Section', [await section('บันทึกข้อตกลงลูกค้า'), kv([['ติดต่อลูกค้าชื่อ', SIGN_OWNER], ['ตำแหน่ง', 'หัวหน้าแผนก ' + c[2]], ['เมื่อวันที่', t.d1], ['เบอร์โทรศัพท์', tripPhone(i, t.phones)], ['ความต้องการลูกค้า', 'บำรุงรักษาตามแผน ณ ' + tripLoc(i, t.locs)]])], 16),
-      await closeParts(CLOSE_PARTS.filter((r, k) => k > 0 || oil !== 0), o.filled),
-      await closeCosts(o.filled, o.budget),
+      await closeParts(CLOSE_PARTS.filter((r, k) => k > 0 || oil !== 0), o.filled, h));   // ใบจ้าง: ไม่มีคอลัมน์ราคา (R87)
+    if (!h) nodes.push(await closeCosts(o.filled, o.budget));   // ใบจ้าง: ไม่มีส่วนค่าใช้จ่ายของยานพาหนะคันนี้ (รวมงบที่ตัด ศูนย์ต้นทุน · R87)
+    nodes.push(
       col('Section', [await section('ผลการบำรุงรักษา'),
         row('Row', [field('เลขไมล์ยานพาหนะ (กม.)', o.filled ? '182,640' : '', { placeholder: '0', error: E('กรุณาระบุเลขไมล์ยานพาหนะ') }),
           field('ชั่วโมงเครื่องจักร (ชม.)', o.filled ? '6,131' : '', { placeholder: '0', error: E('กรุณาระบุชั่วโมงเครื่องจักร') })])], 16));
@@ -1596,12 +1677,12 @@ async function stepPage(name, o) {
     dateAnchor = oilBox.findOne(n => n.type === 'INSTANCE' && n.name === 'Text input' && n.componentProperties && Object.keys(n.componentProperties).some(k => /^Label text/.test(k) && n.componentProperties[k].value === 'วันที่เปลี่ยนน้ำมันครั้งล่าสุด'));
     nodes.push(oilBox);
     if (safetyOn()) nodes.push(col('Section', await safetyDocs(o.safety), 16));   // Safety Inspection (ถ้ามี) ต่อจากน้ำมันไฮโดรลิก (4 พ.ย. 2569)
-    nodes.push(...await inspectPanel(o.filled, o.filled));   // ลงนามการส่งคืนรถ (5 พ.ย. 2569 ตัดตรวจสภาพรถปิดงานออก · R65)
+    nodes.push(...await inspectPanel(o.filled, o.filled, v ? vendorSign(SIGN_OUT) : null));   // ลงนามการส่งคืนรถ (5 พ.ย. 2569 ตัดตรวจสภาพรถปิดงานออก · R65)
     nodes.push(await closeDocs(o.filled));
     nodes.push(btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ปิดงาน', { size: 'lg', disabled: !o.filled }]]));   // 5 พ.ย. 2569 กติกาใหม่ (R59): Disabled จนกว่าครบ (เลขไมล์ ชั่วโมงเครื่องจักร ลงนามการส่งคืนรถ) · error ขึ้นเมื่อออกจากช่อง (Out of focus)
   }
   add(page, col('Content', nodes, 32), 'h');
-  if (step === 1 && o.signModal) await signModal(scr, SIGN_INSPECT, o.filled, SIGN_IN[0]);
+  if (step === 1 && o.signModal) await signModal(scr, SIGN_INSPECT, o.filled, (v ? vendorSign(SIGN_IN) : SIGN_IN)[0]);
   if (o.workPick && workAnchor && !MOB) {   // ปฏิทินช่วงวัน แบบ popup แก้ไขยานพาหนะในแผนเดินทาง (rangeDays · วันนอกช่วงวันเดินทางกดไม่ได้)
     const dp = await rangeDays(await thaiDatePicker(inst('Date picker', { Type: 'Single' }, { 'Time picker': false }), [monthOf(t.d1)]), dayOf(t.d1), dayOf(t.d2), dayOf(o.workPick[0]), dayOf(o.workPick[1]));
     overlay(scr, dp, 0, 0);
@@ -2500,7 +2581,34 @@ const SCENARIOS = [
     ['ยานพาหนะประเภทรถพ่วงฉีดน้ำ — ตรวจรายการและลงนามครบ', () => stepPage('S10 Step 1 รถพ่วงฉีดน้ำ ลงนามครบ', { step: 1, car: WATER_CAR, filled: true, signed: true })],
     // R83 แก้วันดำเนินการของคันนี้ตอนเริ่มงาน (9 พ.ย. 2569 ค่ำ เจ้าของงาน _"ในแผนการเดินทางอ่ะ จะมีช่วงของการดำเนินการอยู่แล้ว แต่ในรายคันอยากให้เห็นว่าแต่ละคันจะดำเนินการเมื่อไร"_ + _"ใส่ตรงหน้ารายการรถ ก็ได้ หรือจะใส่ในตอนเริ่มงานก็ได้ … อยากให้สามารถแก้ไขได้"_) — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน
     ['Step 1 — แก้วันดำเนินการของคันนี้ (ปฏิทิน เลือกได้ในช่วงวันเดินทาง)', () => stepPage('S10 Step 1 แก้วันดำเนินการ', { step: 1, workPick: ['04/11/2569', '05/11/2569'] })]]],
-  // S23 ผู้รับจ้าง บันทึกงานรายคันและส่งตรวจงาน · S11 กบค. ตรวจรับงานรายคันของผู้รับจ้าง — ตัดออกทั้ง scenario 4 พ.ย. 2569 (เจ้าของงาน "อยากตัด scen ผู้รับจ้าง หรือ vendor ตรวจรับทีละคัน ออก") · บล็อก J V ว่าง (BLOCK_OF)
+  // S11 กบค. ตรวจรับงานรายคันของผู้รับจ้าง — ตัดออกทั้ง scenario 4 พ.ย. 2569 (เจ้าของงาน "อยากตัด scen ผู้รับจ้าง หรือ vendor ตรวจรับทีละคัน ออก") · บล็อก J ว่าง (BLOCK_OF) · ยังตัดอยู่ 10 พ.ย. 2569
+  /* S23 ผู้รับจ้าง บันทึกงานรายคันและส่งตรวจงาน — ตัด 4 พ.ย. 2569 · เอากลับ 10 พ.ย. 2569 (R87) เจ้าของงาน _"scen s23 อยากปรับ ui ให้เหมือนกับ s10 แต่ว่า เงื่อนไขการมองเห็น เมนูต่างๆ ยังเป็นเหมือนเดิม"_
+     UI ของ S10 ปัจจุบัน (ตัวนับ ตรวจแล้ว x/y · ปุ่มส่งออก · หน้างานรายคัน · Step 1 แบบตรวจตามประเภท R86 + วันดำเนินการ R83 + ลงนาม · Step 2 สรุปงานก่อนปิดงาน · toast ขวาบน R60)
+     + การมองเห็นของ S23 เดิม (เมนู "…" ดูรายละเอียดอย่างเดียว · อะไหล่ตามแผนดูอย่างเดียว · หลังปิดงานแก้ไข ลบ เพิ่ม อะไหล่และภาพ · ส่งตรวจงาน · ส่งกลับแก้ไข) · Step 2 ไม่มีค่าใช้จ่ายและราคา
+     ฝั่งผู้ตรวจรับไม่วาด (S11 ยังตัด · ผู้ตรวจรับยังไม่เคาะ) · บล็อก V */
+  ['S23 · ผู้รับจ้าง บันทึกงานรายคันและส่งตรวจงาน', [
+    ['หน้ารายละเอียดแผนเดินทาง มุมผู้รับจ้าง — ยังไม่เริ่มงาน ตรวจแล้ว 0/6', () => tripDetail('S23 รายละเอียดแผนเดินทาง', { trip: HIRE_T, vendor: true })],
+    ['กดปุ่ม … ของยานพาหนะ — ดูรายละเอียดอย่างเดียว ไม่มีแก้ไข ลบ', () => tripDetail('S23 เมนูของยานพาหนะ', { trip: HIRE_T, vendor: true, menu: true })],
+    ['หน้างานรายคัน ยังไม่เริ่ม — อะไหล่ตามแผนดูอย่างเดียว', () => jobPage('S23 งานรายคัน', { vendor: true })],
+    ['กดเริ่มงาน — Step 1 ตรวจสภาพก่อนบำรุงรักษา วันดำเนินการอ่านอย่างเดียว', async () => { const s = await stepPage('S23 Step 1 ตรวจสภาพก่อนบำรุงรักษา', { vendor: true, step: 1 }); notify(s, 'เริ่มงานบำรุงรักษาแล้ว'); return s; }],
+    ['กดเซ็นลงนาม — ลงนามการตรวจสภาพ', () => stepPage('S23 ลงนามการตรวจสภาพ', { vendor: true, step: 1, filled: true, signModal: true })],
+    ['ตรวจรายการและลงนามครบ — ปุ่มยืนยันการตรวจสภาพกดได้', () => stepPage('S23 Step 1 ลงนามครบ', { vendor: true, step: 1, filled: true, signed: true })],
+    ['ยืนยันการตรวจสภาพ — Step 2 สรุปงานก่อนปิดงาน ไม่มีค่าใช้จ่ายและราคา', () => stepPage('S23 Step 2 สรุปงานก่อนปิดงาน', { vendor: true, step: 2 })],
+    ['Validation กรณีไม่ได้ระบุข้อมูล, Out of focus', () => stepPage('S23 Validation', { vendor: true, step: 2, errors: true })],
+    ['กรอกผลงานครบ', () => stepPage('S23 ปิดงานกรอกครบ', { vendor: true, step: 2, filled: true })],
+    ['ปิดงานสำเร็จ — กลับหน้ารายละเอียดแผนเดินทาง ดำเนินการบำรุงรักษาแล้ว ตรวจแล้ว 1/6', async () => { const s = await tripDetail('S23 ปิดงานสำเร็จ', { trip: HIRE_T, vendor: true, st: { [HIRE_DONE]: 'worked' } }); notify(s, 'บันทึกงานบำรุงรักษาสำเร็จ'); return s; }],
+    ['หน้างานรายคัน ดำเนินการบำรุงรักษาแล้ว — ปุ่มแก้ไขงาน ส่งตรวจงาน', () => vendorJob('S23 ดำเนินการบำรุงรักษาแล้ว', { st: 'worked' })],
+    ['กดไอคอนแก้ไขอะไหล่ — แก้จำนวนที่ใช้จริง', () => vendorJob('S23 แก้ไขอะไหล่', { st: 'worked', partEdit: true })],
+    ['กดเพิ่มอะไหล่ — popup เพิ่มอะไหล่ที่ใช้จริง', () => vendorJob('S23 เพิ่มอะไหล่', { st: 'worked', partAdd: 'filled' })],
+    ['กดไอคอนลบอะไหล่ — ยืนยันเอาออก', () => vendorJob('S23 ลบอะไหล่', { st: 'worked', partDel: true })],
+    ['กดส่งตรวจงาน — ยืนยันส่งตรวจงาน', async () => { const s = await vendorJob('S23 ยืนยันส่งตรวจงาน', { st: 'worked' }); await confirm(s, HIRE_SEND_CONFIRM(TRIP_CARS[HIRE_DONE])); return s; }],
+    ['ส่งตรวจงานแล้ว — รอตรวจรับ', async () => { const s = await vendorJob('S23 รอตรวจรับ', { st: 'wait' }); notify(s, 'ส่งตรวจงานแล้ว'); return s; }],
+    ['บำรุงรักษาไม่ได้ — ระบุสาเหตุ ยืนยันอะไหล่ส่งคืน', () => jobPage('S23 บำรุงรักษาไม่ได้', { vendor: true, i: HIRE_CANNOT, modal: 'cannot', reason: HIRE_WHY })],
+    ['บำรุงรักษาไม่ได้ระหว่าง Step 2 — อะไหล่ที่ใช้ไปแล้ว', () => stepPage('S23 บำรุงรักษาไม่ได้ Step 2', { vendor: true, step: 2, modal: 'cannot', reason: HIRE_WHY })],
+    ['หน้างานรายคัน แจ้งบำรุงรักษาไม่ได้ — ปุ่มแก้ไขงาน ส่งตรวจงาน', () => vendorJob('S23 แจ้งบำรุงรักษาไม่ได้', { st: 'reported', cannot: true })],
+    ['ถูกส่งกลับแก้ไข — คันที่ปิดงานไว้', () => vendorJob('S23 ส่งกลับแก้ไข', { st: 'returned' })],
+    ['ถูกส่งกลับแก้ไข — คันที่แจ้งบำรุงรักษาไม่ได้', () => vendorJob('S23 ส่งกลับแก้ไข แจ้งไม่ได้', { st: 'returned', cannot: true })],
+    ['หน้ารายละเอียดแผนเดินทาง — สถานะงานรายคันระหว่างทาง ตรวจแล้ว 2/6', () => tripDetail('S23 รายละเอียดแผนเดินทาง ระหว่างทาง', { trip: HIRE_T, vendor: true, st: HIRE_VENDOR })]]],
   ['S12 · หน่วยงาน บันทึกผลตรวจน้ำมันไฮโดรลิก', [   // 4 พ.ย. 2569 เลิก popup: ใส่ผลตอนปิดงาน (ถ้ามี) หรือภายหลังที่หน้ารายละเอียดงานรายคัน · ป้ายรอผลที่สถานะงาน
     ['Step 2 สรุปงานก่อนปิดงาน — เลือกเก็บตัวอย่าง ใส่ผลการทดสอบได้ (ถ้ามี)', () => stepPage('S12 Step 2 ผลการทดสอบ', { step: 2, filled: true })],   // 5 พ.ย. 2569 หน้าปิดงานเป็น Step 2 ของ S10
     ['ปิดงานโดยยังไม่มีผล — ป้ายรอผลตรวจน้ำมัน', async () => { const s = await tripDetail('S12 รอผลตรวจน้ำมัน', { st: JOB_MIX, oil: { [JOB_I]: 'wait' } }); notify(s, 'บันทึกงานบำรุงรักษาสำเร็จ'); return s; }],
@@ -2615,6 +2723,14 @@ const FLOW_NODES = {
     // 6 พ.ย. 2569 I.27–I.32 ส่งออกแผนเดินทาง (R84) — กล่อง A9 D7 ในผัง S10 ของไฟล์ 14
     'หน้ารายละเอียดแผนเดินทาง — กดส่งออก — popup รูปแบบไฟล์': 'A9', 'ส่งออกแผนเดินทางสำเร็จ': 'D7', 'ไฟล์ PDF หน้า 1 — รายละเอียดแผนเดินทาง และยานพาหนะ': 'D7', 'ไฟล์ PDF หน้า 2 — อะไหล่ของแผนเดินทาง': 'D7',
     'ไฟล์ Excel — ชีตยานพาหนะในแผนเดินทาง': 'D7', 'ไฟล์ Excel — ชีตอะไหล่ของแผนเดินทาง': 'D7' },
+  // 10 พ.ย. 2569 S23 เอากลับ (R87) — กล่องในผัง S23 ของไฟล์ 14
+  S23: { 'หน้ารายละเอียดแผนเดินทาง มุมผู้รับจ้าง — ยังไม่เริ่มงาน ตรวจแล้ว 0/6': 'D1', 'กดปุ่ม … ของยานพาหนะ — ดูรายละเอียดอย่างเดียว ไม่มีแก้ไข ลบ': 'A0', 'หน้างานรายคัน ยังไม่เริ่ม — อะไหล่ตามแผนดูอย่างเดียว': 'D2',
+    'กดเริ่มงาน — Step 1 ตรวจสภาพก่อนบำรุงรักษา วันดำเนินการอ่านอย่างเดียว': 'A2 D3', 'กดเซ็นลงนาม — ลงนามการตรวจสภาพ': 'D3', 'ตรวจรายการและลงนามครบ — ปุ่มยืนยันการตรวจสภาพกดได้': 'Q4',
+    'ยืนยันการตรวจสภาพ — Step 2 สรุปงานก่อนปิดงาน ไม่มีค่าใช้จ่ายและราคา': 'A4 D6', 'Validation กรณีไม่ได้ระบุข้อมูล, Out of focus': 'Q2', 'กรอกผลงานครบ': 'A5',
+    'ปิดงานสำเร็จ — กลับหน้ารายละเอียดแผนเดินทาง ดำเนินการบำรุงรักษาแล้ว ตรวจแล้ว 1/6': 'D9', 'หน้างานรายคัน ดำเนินการบำรุงรักษาแล้ว — ปุ่มแก้ไขงาน ส่งตรวจงาน': 'D4',
+    'กดไอคอนแก้ไขอะไหล่ — แก้จำนวนที่ใช้จริง': 'A6', 'กดเพิ่มอะไหล่ — popup เพิ่มอะไหล่ที่ใช้จริง': 'A6', 'กดไอคอนลบอะไหล่ — ยืนยันเอาออก': 'A6', 'กดส่งตรวจงาน — ยืนยันส่งตรวจงาน': 'A8', 'ส่งตรวจงานแล้ว — รอตรวจรับ': 'D7',
+    'บำรุงรักษาไม่ได้ — ระบุสาเหตุ ยืนยันอะไหล่ส่งคืน': 'A3', 'บำรุงรักษาไม่ได้ระหว่าง Step 2 — อะไหล่ที่ใช้ไปแล้ว': 'A3', 'หน้างานรายคัน แจ้งบำรุงรักษาไม่ได้ — ปุ่มแก้ไขงาน ส่งตรวจงาน': 'D5',
+    'ถูกส่งกลับแก้ไข — คันที่ปิดงานไว้': 'D8', 'ถูกส่งกลับแก้ไข — คันที่แจ้งบำรุงรักษาไม่ได้': 'D8', 'หน้ารายละเอียดแผนเดินทาง — สถานะงานรายคันระหว่างทาง ตรวจแล้ว 2/6': 'D1' },
   S24: { 'แท็บการบำรุงรักษา — ยานพาหนะทุกคัน เรียงกำหนดครั้งถัดไป': 'D1', 'ค้นหาทะเบียน': 'A1', 'ค้นหาไม่พบ': 'D2', 'กดตัวกรอง — แผงตัวกรอง': 'D3', 'กรองแล้ว — ใกล้ครบกำหนดบำรุงรักษา': 'D4', 'กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด': 'A4', 'รายละเอียดยานพาหนะ — แท็บตารางบำรุงรักษา': 'D5', 'ประวัติ กดปุ่ม … — ดูรายละเอียดงานที่ปิดแล้ว': 'A5' },
   S12: { 'Step 2 สรุปงานก่อนปิดงาน — เลือกเก็บตัวอย่าง ใส่ผลการทดสอบได้ (ถ้ามี)': 'A1', 'ปิดงานโดยยังไม่มีผล — ป้ายรอผลตรวจน้ำมัน': 'D1', 'กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด': 'A3', 'หน้างานรายคัน — ส่วนผลการทดสอบยังว่าง': 'D2', 'กดบันทึกโดยยังไม่เลือกผล': 'Q2', 'เลือกผล + แนบไฟล์ (ถ้ามี)': 'A4', 'บันทึกสำเร็จ — แสดงผลที่บันทึก แก้ได้ภายหลัง': 'D3', 'กลับหน้าแผนเดินทาง — ป้ายน้ำมันไม่ผ่าน': 'D4' },
   S15: { 'ความคืบหน้ารายคัน (ยังไม่ครบ)': 'D1', 'ครบทุกคัน — ประวัติงานบำรุงรักษา': 'D2', 'ยืนยันส่งประวัติ': 'A2', 'ส่งแล้ว — รอหัวหน้าตรวจสอบ': 'D3' },
@@ -2637,8 +2753,9 @@ const FLOW_NODES = {
 /* ---------- กลุ่ม = scenario (แพทเทิร์นเดียวกับ Overhaul — เจ้าของงานเคาะ 20 ต.ค. 2569: 1 scenario = 1 บล็อก · แถว Desktop แล้ว Mobile) ---------- */
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 /* ตัวอักษรบล็อกผูกกับตำแหน่งใน BLOCK_OF ตายตัว (2 พ.ย. 2569) — ตัด/รวม scenario แล้วบล็อกอื่นไม่เลื่อน ชื่อเฟรมที่ export ไปแล้วยังตรง · S5 รวมเข้า S4 ⇒ D เว้นว่าง
-   4 พ.ย. 2569 ตัด S11 (J) และ S23 (V) ⇒ คงช่องไว้เป็นป้ายกันที่ ('S11 ตัดออก' · 'S23 ตัดออก' ไม่ตรงกับ scenario ไหน) ถ้าเอาออกจาก array ตัวอักษร K–U และ W จะเลื่อน ชื่อเฟรม Figma ที่ export แล้วจะไม่ตรง */
-const BLOCK_OF = ['S1', 'S2', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11 ตัดออก', 'S12', 'S13', 'S14', 'S15', 'S16', 'S17', 'S18', 'S19', 'S20', 'S21', 'S22 ตัดออก', 'S23 ตัดออก', 'S24', 'S25'];   // S24 ข้อมูลการบำรุงรักษา (4 พ.ย. 2569) = W · J V ว่าง
+   4 พ.ย. 2569 ตัด S11 (J) และ S23 (V) ⇒ คงช่องไว้เป็นป้ายกันที่ ('S11 ตัดออก' · 'S23 ตัดออก' ไม่ตรงกับ scenario ไหน) ถ้าเอาออกจาก array ตัวอักษร K–U และ W จะเลื่อน ชื่อเฟรม Figma ที่ export แล้วจะไม่ตรง
+   10 พ.ย. 2569 เอา S23 กลับ (R87) ⇒ ช่อง V กลับเป็น 'S23' ตัวอักษรอื่นไม่เลื่อน · J ยังว่าง (S11 ยังตัด) */
+const BLOCK_OF = ['S1', 'S2', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11 ตัดออก', 'S12', 'S13', 'S14', 'S15', 'S16', 'S17', 'S18', 'S19', 'S20', 'S21', 'S22 ตัดออก', 'S23', 'S24', 'S25'];   // S24 ข้อมูลการบำรุงรักษา (4 พ.ย. 2569) = W · J ว่าง · V = S23 (เอากลับ 10 พ.ย. 2569)
 const GROUPS = SCENARIOS.map(([title, screens], i) => {
   const tag0 = title.split(' · ')[0], code = BLOCK_OF.indexOf(tag0) >= 0 ? LETTERS[BLOCK_OF.indexOf(tag0)] : LETTERS[i], tag = title.split(' · ')[0], rest = title.split(' · ').slice(1).join(' · ');
   const map = FLOW_NODES[tag] || {};
@@ -2795,12 +2912,12 @@ async function clearPrototype(page) {
    parts: desktop (userflow + จอ desktop) · mobile · journey · storymap · usecase — เรียงตามลำดับนี้ ต่อใต้ของเดิมทุกส่วน */
 /* ตาราง scenario (เจ้าของงาน 2 พ.ย. 2569 "อยากให้ทำตาราง เขียนใน figma") — ช่วงงาน/ผู้ทำจากตารางภาพรวม (หัวข้อ 0) ของ userflow · บล็อก/จำนวนจอจาก GROUPS
    เรียงตามลำดับงานจริง · ท้ายตารางมีกลุ่ม scenario ที่ตัดออก · สถานะรีวิว = ที่ไล่กับเจ้าของงานแล้วในรอบ 2 พ.ย. */
-const SCEN_SEQ = ['S1', 'S2', 'S19', 'S20', 'S21', 'S4', 'S6', 'S9', 'S7', 'S8', 'S10', 'S25', 'S12', 'S13', 'S14', 'S15', 'S16', 'S17', 'S18', 'S24'];
+const SCEN_SEQ = ['S1', 'S2', 'S19', 'S20', 'S21', 'S4', 'S6', 'S9', 'S7', 'S8', 'S10', 'S23', 'S25', 'S12', 'S13', 'S14', 'S15', 'S16', 'S17', 'S18', 'S24'];
 const SCEN_REVIEW = { S1: 'ปรับตามรีวิว 5 พ.ย. · เลือกยานพาหนะแบบ A · เพิ่มยานพาหนะจากแท็บไตรมาสว่าง (เจ้าของงาน 5 พ.ย.)', S2: 'ปรับตามรีวิว 5 พ.ย.', S4: 'เปลี่ยนเป็นแดชบอร์ด 6 พ.ย. (รีวิว บล็อก C)', S21: 'ปรับตามเจ้าของงาน 5 พ.ย. · จัดการอะไหล่ทีละคัน', S19: 'ปรับตาม S1 2 พ.ย.',
-  S6: 'ปรับตามรีวิว 5 พ.ย.', S7: 'ทำตาม S2 5 พ.ย. · รอรีวิวจอ', S8: 'ใหม่ 3 พ.ย. · รอรีวิวจอ', S9: 'ใหม่ 3 พ.ย. · รอรีวิวจอ', S10: 'ปรับตามรีวิว 5 พ.ย.', S12: 'ปรับตามรีวิว 4 พ.ย.', S18: 'ยังไม่ออกแบบ (เจ้าของงาน 4 พ.ย.)', S24: 'ใหม่ 4 พ.ย. · รอรีวิวจอ', S25: 'ใหม่ 5 พ.ย. · รอรีวิวจอ' };   // 4 พ.ย. 2569: ทำตามที่เจ้าของงานสั่งแล้ว แต่ยังไม่ได้ไล่จอด้วยกัน
-const SCEN_UPDATED = '6 พ.ย. 2569';   // วันที่ข้อมูลในตาราง scenario ล่าสุด — แก้ SCEN_REVIEW แล้วเปลี่ยนวันนี้ด้วย (ขึ้นที่หัวตาราง)
+  S6: 'ปรับตามรีวิว 5 พ.ย.', S7: 'ทำตาม S2 5 พ.ย. · รอรีวิวจอ', S8: 'ใหม่ 3 พ.ย. · รอรีวิวจอ', S9: 'ใหม่ 3 พ.ย. · รอรีวิวจอ', S10: 'ปรับตามรีวิว 5 พ.ย. · แผนจ้าง Step 2 ไม่มีค่าใช้จ่ายและราคา 10 พ.ย.', S23: 'เอากลับ 10 พ.ย. · UI แบบ S10 การมองเห็นแบบเดิม · รอรีวิวจอ', S12: 'ปรับตามรีวิว 4 พ.ย.', S18: 'ยังไม่ออกแบบ (เจ้าของงาน 4 พ.ย.)', S24: 'ใหม่ 4 พ.ย. · รอรีวิวจอ', S25: 'ใหม่ 5 พ.ย. · รอรีวิวจอ' };   // 4 พ.ย. 2569: ทำตามที่เจ้าของงานสั่งแล้ว แต่ยังไม่ได้ไล่จอด้วยกัน
+const SCEN_UPDATED = '10 พ.ย. 2569';   // วันที่ข้อมูลในตาราง scenario ล่าสุด — แก้ SCEN_REVIEW แล้วเปลี่ยนวันนี้ด้วย (ขึ้นที่หัวตาราง)
 const SCEN_CUT = [['S3', 'ผพจ. ออกเลขงานและจัดซื้ออะไหล่', 'ตัดออก 2 พ.ย.'], ['S5', 'หน่วยงาน เบิกอะไหล่ผ่านระบบจองอะไหล่', 'รวมเข้า S4 2 พ.ย.'],
-  ['S11', 'หน่วยงาน ตรวจรับงานรายคันของผู้รับจ้างและรับคืนอะไหล่', 'ตัดออก 4 พ.ย. · หน่วยงานปิดงานแผนจ้างเองที่ S10'], ['S23', 'ผู้รับจ้าง บันทึกงานรายคันและส่งตรวจงาน', 'ตัดออก 4 พ.ย. · หน่วยงานปิดงานแผนจ้างเองที่ S10'],
+  ['S11', 'หน่วยงาน ตรวจรับงานรายคันของผู้รับจ้างและรับคืนอะไหล่', 'ตัดออก 4 พ.ย. · หน่วยงานปิดงานแผนจ้างเองที่ S10 · S23 ส่งตรวจงานแล้ว ผู้ตรวจรับยังไม่เคาะ'],
   ['S22', 'คลัง รับทราบรายการอะไหล่รายไตรมาส', 'ตัดออก 6 พ.ย. · ระบบแจ้ง Smart Inventory ตอนอนุมัติแผน (S2)']];
 const SCEN_COLS = [['scenario', 110], ['บล็อก', 90], ['ชื่อ', 600], ['ผู้ทำ', 300], ['จอ', 90], ['สถานะรีวิว', 260]];
 function scenData() {
