@@ -379,7 +379,7 @@ mobile: **ยังไม่ทำ** (เจ้าของงาน 21 ต.ค.
 
 | ชั้น | component · variant | เงื่อนไข |
 |---|---|---|
-| ~~หัวหน้าของชุดจอ~~ | **ไม่ใช้** — เจ้าของงาน 10 พ.ย. 2569 _"ป้ายบนสุดไม่ต้องมี ที่เป็นป้าย บำรุงรักษา ที่ status inprogress เอาออก"_ | หน้าจริงของไฟล์มี `Header` Type=Header + `Header / Status` 1 ตัวต่อหน้า แต่ชุดจอบำรุงรักษาไม่ใส่ · แถบ Journey ยังเป็น Type=Header |
+| ~~หัวหน้าของชุดจอ~~ | **ไม่ใช้** — เจ้าของงาน 10 พ.ย. 2569 _"ป้ายบนสุดไม่ต้องมี ที่เป็นป้าย บำรุงรักษา ที่ status inprogress เอาออก"_ | หน้าจริงของไฟล์มี `Header` Type=Header + `Header / Status` 1 ตัวต่อหน้า แต่ชุดจอบำรุงรักษาไม่ใส่ · แถบ Journey ยังเป็น Type=Header แต่**ซ่อนป้าย `Header / Status`** (เจ้าของงาน 10 พ.ย. 2569 _"แถบ Journey เอาป้าย Work In Progress ออกด้วย"_) |
 | แถบบล็อกตัวอักษร (A · B · …) | `Header` Type=Subheader › `State` State=**Default** | หน้าจริง "A แก้ไขตารางบำรุงรักษา…" (Default 182 ตัว) · บรรทัดอธิบายซ่อน |
 | ป้าย state (A.1 · A.2) | `Header` Type=Subheader › `State` State=**Sub Flow** · ชื่อจอมี "สำเร็จ" = **Success** · "Validation" หรือ "ไม่สำเร็จ" = **Failed** | หน้าจริง state ปกติ Sub Flow (634) · ผลสำเร็จ "A - S1" Success · ผิดพลาด "A3.1 - F" Failed/Sub Failed · บรรทัดอธิบายซ่อน (ตัวที่เปิดไว้เป็นข้อความตั้งต้นของ component) · `stateTone()` ใน core |
 | ป้าย Device · Desktop · Mobile | `Device Type` (ไม่เปลี่ยน) | หน้าจริงของ UI Release#2 ไม่มีป้ายนี้ เป็นของทีม Maintain-D |

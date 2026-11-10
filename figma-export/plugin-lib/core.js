@@ -1021,8 +1021,9 @@ async function blockHeader(prefix, code, title, width, desc, status) {
     return flowBar(prefix, code, title, 'Default', width);
   }
   if (ts[1]) { if (desc && await text(bar, ts[1], desc)) { try { ts[1].textAutoResize = 'HEIGHT'; } catch (e) { /* ปล่อย */ } } else ts[1].visible = false; }
-  const hs = status && find(bar, 'Header / Status');   // ค่าที่หน้าจริงใช้: Work In Progress (ค่าตั้งต้นของ component) · Ready for Review
-  if (hs && Object.keys(hs.componentProperties || {}).some(k => k.split('#')[0] === 'Property 1')) setProps(hs, { 'Property 1': status });
+  const hs = find(bar, 'Header / Status');   // ค่าที่หน้าจริงใช้: Work In Progress (ค่าตั้งต้นของ component) · Ready for Review
+  if (hs && !status) hs.visible = false;   // ไม่ส่งสถานะ = ซ่อนป้าย (เจ้าของงาน 10 พ.ย. 2569 "แถบ Journey เอาป้าย Work In Progress ออกด้วย")
+  else if (hs && Object.keys(hs.componentProperties || {}).some(k => k.split('#')[0] === 'Property 1')) setProps(hs, { 'Property 1': status });
   else if (hs && status !== 'Work In Progress') warn('Header / Status', 'เปลี่ยนเป็น ' + status + ' ไม่ได้ (component ไม่เปิด property)');
   try { bar.resize(width, bar.height); } catch (e) { warn('ปรับกว้างแถบหัวบล็อก ' + code, e); }
   bar.name = prefix + ' · ' + code + ' ' + title;
