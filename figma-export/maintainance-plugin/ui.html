@@ -5,7 +5,7 @@
   small{color:#475467}
   #log{margin-top:10px;height:240px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
 </style>
-<p><b>บำรุงรักษาตามวาระ — 21 scenario (A–X = S1, S2, S4, S6–S10, S12–S21, S23–S25 · S11 ตัดออก 4 พ.ย. บล็อก J ว่าง · V = S23 ผู้รับจ้าง (เอากลับ 10 พ.ย.) · S22 ตัดออก 6 พ.ย. บล็อก U ว่าง · W = S24 ข้อมูลการบำรุงรักษา (เลขชั่วคราว) · S3 ตัดออก · S5 รวมเข้า S4 บล็อก D ว่าง)</b> · ทุกชิ้นในจอเป็น instance ของ component จริง (ไลบรารี + ที่ยืมจาก flow งานซ่อม)<br>
+<p><b>บำรุงรักษาตามวาระ — 17 scenario (A–X = S1, S2, S4, S6–S10, S12, S13, S18–S21, S23–S25 · S14 S15 S16 S17 ตัดออก 10 พ.ย. บล็อก M N O P ว่าง · S11 ตัดออก 4 พ.ย. บล็อก J ว่าง · V = S23 ผู้รับจ้าง (เอากลับ 10 พ.ย.) · S22 ตัดออก 6 พ.ย. บล็อก U ว่าง · W = S24 ข้อมูลการบำรุงรักษา (เลขชั่วคราว) · S3 ตัดออก · S5 รวมเข้า S4 บล็อก D ว่าง)</b> · ทุกชิ้นในจอเป็น instance ของ component จริง (ไลบรารี + ที่ยืมจาก flow งานซ่อม)<br>
 แต่ละบล็อก scenario = <b>flowchart กิจกรรมซ้ายสุด</b> (อ่านบนลงล่าง ไม่มีหน้าจอในผัง · ใช้แทนผัง userflow ตั้งแต่ 6 พ.ย.) → ป้าย Device → คอลัมน์จอ A.1 A.2 … แถว Desktop แล้ว Mobile<br>
 <b>ทุกปุ่มวางบนหน้า "Maintainance"</b> ต่อใต้ของเดิม (ไม่มีหน้าก็สร้าง) — ของที่มีอยู่บนหน้านั้นไม่ถูกแตะ · ราว 2–4 นาทีต่อปุ่ม</p>
 <p style="background:#fdf2fa;border:1px solid #f3c6e8;border-radius:6px;padding:8px"><b>ติ๊กเลือกส่วนที่จะสร้าง</b> (ทุกอย่างอยู่ในไฟล์นี้ ไม่ต้องใช้ FigJam) — เรียงต่อใต้ของเดิมตามลำดับนี้<br>
@@ -15,17 +15,17 @@
 <button id="all">สร้างทั้งชุด (flowchart + Desktop + Mobile)</button>
 <button id="desk" style="background:#7a0463">สร้างเฉพาะ Desktop (1440 · ไม่มี Mobile)</button>
 <button id="mob" style="background:#7a0463">สร้างเฉพาะ Mobile (402×874)</button>
-<p><b>flowchart ยาวทั้งเส้น</b> — เอา flowchart กิจกรรม 21 scenario มาต่อกันซ้ายไปขวาตามลำดับงาน เล่าเรื่องตั้งแต่สร้างแผนจนถึงต้นทุน (ทำเองกับจ้างแยกเป็น 2 แถว · จ้างดำเนินการผู้รับจ้างทำเองที่ S23 แถวล่างใต้ S10) · ไม่มีหน้าจอ · ใช้แทน userflow แนวขวางตั้งแต่ 6 พ.ย.<br>
+<p><b>flowchart ยาวทั้งเส้น</b> — เอา flowchart กิจกรรม 17 scenario มาต่อกันซ้ายไปขวาตามลำดับงาน เล่าเรื่องตั้งแต่สร้างแผนจนถึงต้นทุน (ทำเองกับจ้างแยกเป็น 2 แถว · จ้างดำเนินการผู้รับจ้างทำเองที่ S23 แถวล่างใต้ S10) · ไม่มีหน้าจอ · ใช้แทน userflow แนวขวางตั้งแต่ 6 พ.ย.<br>
 <button id="journey" style="background:#0e7490">สร้าง flowchart ยาวทั้งเส้น</button></p>
 <p><b>flowchart กิจกรรมราย scenario</b> — 21 ผัง แยกกรอบละ scenario บอกว่าใครทำอะไร ตรงไหนต้องเลือก และไปต่อที่ไหน ไม่มีหน้าจอ · จาก <code>Diagram/01-บำรุงรักษาตามวาระ/27-บำรุงรักษา-flowchart-กิจกรรม.md</code> · กดซ้ำจะแทนชุดเดิม<br>
 <button id="activity" style="background:#0e7490">สร้าง flowchart กิจกรรม</button></p>
 <p><b>ลบลิงก์กดต่อจอ</b> — ลบลิงก์ที่กดแล้วไปจอถัดไปบนหน้า Maintainance จอ ปุ่ม และข้อความอยู่ครบ · interaction อื่นของ component ไม่ถูกแตะ<br>
 <button id="clearProto" style="background:#b42318">ลบลิงก์กดต่อจอบนหน้านี้</button> <button id="moveLatest" style="background:#0e7490">ย้ายบล็อกล่าสุดกลับเข้าหน้า Maintainance</button></p>
-<p><b>ลบจอของ scenario ที่ตัดออก</b> — ลบจอ ป้าย และ flowchart ของบล็อกว่าง (M = S14 · N = S15 ตัด 10 พ.ย. · J = S11 · U = S22) ทุกหน้า Maintainance · ชิ้นอื่นไม่แตะ · ย้อนได้ด้วย Ctrl/Cmd+Z<br>
+<p><b>ลบจอของ scenario ที่ตัดออก</b> — ลบจอ ป้าย และ flowchart ของบล็อกว่าง (M = S14 · N = S15 · O = S16 · P = S17 ตัด 10 พ.ย. · J = S11 · U = S22) ทุกหน้า Maintainance · ชิ้นอื่นไม่แตะ · ย้อนได้ด้วย Ctrl/Cmd+Z<br>
 <button id="purgeCut" style="background:#b42318">ลบจอของบล็อกที่ตัดออก</button></p>
 <p><b>ส่งภาพจอไป FigJam</b> — export จอ desktop บนหน้าที่เปิดอยู่ (รวมจอที่แก้มือแล้ว) ไปที่ <code>figma-export/out/figjam/flow-maintainance/</code> · ต้องรัน <code>node figma-export/serve.js</code> ก่อน · แล้วสร้างบอร์ดด้วย <code>3-figjam-board.js --maintainance-flow-ui</code> · <b>ส่งราย S</b>: ติ๊ก scenario ในหัวข้อ "สร้างเฉพาะ scenario ที่เลือก" แล้วกด "ส่งภาพจอ scenario ที่เลือกไป FigJam"<br>
 <button id="shots" style="background:#334155">ส่งภาพจอบนหน้านี้ไป FigJam</button></p>
-<p><b>สร้างเฉพาะ scenario ที่เลือก</b> — รหัสตัวอักษร A–X = S1, S2, S4, S6–S10, S12–S21, S23–S25 (S11 ตัดออก 4 พ.ย. บล็อก J ว่าง · V = S23 ผู้รับจ้าง เอากลับ 10 พ.ย. · S22 ตัดออก 6 พ.ย. · S24 ข้อมูลการบำรุงรักษา = W · S25 = X · S3 ตัดออก · S5 รวมเข้า S4 2 พ.ย.) · อุปกรณ์: <label><input type="radio" name="dev" value="both" checked> ทั้งคู่</label> <label><input type="radio" name="dev" value="desktop"> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label><br>
+<p><b>สร้างเฉพาะ scenario ที่เลือก</b> — รหัสตัวอักษร A–X = S1, S2, S4, S6–S10, S12, S13, S18–S21, S23–S25 (S14–S17 ตัดออก 10 พ.ย. บล็อก M–P ว่าง · S11 ตัดออก 4 พ.ย. บล็อก J ว่าง · V = S23 ผู้รับจ้าง เอากลับ 10 พ.ย. · S22 ตัดออก 6 พ.ย. · S24 ข้อมูลการบำรุงรักษา = W · S25 = X · S3 ตัดออก · S5 รวมเข้า S4 2 พ.ย.) · อุปกรณ์: <label><input type="radio" name="dev" value="both" checked> ทั้งคู่</label> <label><input type="radio" name="dev" value="desktop"> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label><br>
 <span id="pick"></span></p>
 <button id="pickgo" style="background:#1d4ed8">สร้างเฉพาะ scenario ที่เลือก</button> <button id="pickshots" style="background:#334155">ส่งภาพจอ scenario ที่เลือกไป FigJam</button>
 <p><small>เปลี่ยนไฟล์หรือไลบรารี → เช็คก่อนว่า component ครบ · แก้ไฟล์ flowchart (27) หรือ userflow (14) แล้วต้อง build ปลั๊กอินใหม่ ผังถึงจะตาม · ปิด-เปิดปลั๊กอินใหม่ทุกครั้งหลังสคริปต์เปลี่ยน</small></p>
