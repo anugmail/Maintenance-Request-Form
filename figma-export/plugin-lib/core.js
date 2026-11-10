@@ -88,6 +88,7 @@ const KEYS = {
   "Nav button": ["fb0cf06df292e5bff53d7503855a3b943fb8225b", true],
   "quick_reference_all-24-300-round": ["9ed6481ba385035617f2491e6e7b5d6a58e9997c", false],
   "stylus-24-300-round": ["803aec7e2947f42a48164aa843ea6078b14cae1f", false],
+  "check-24-300-round": ["8c1bd305deb686415a28e6999512f486d5b3d5b1", false],   // ไอคอนนำปุ่ม "รับทราบ" สีเขียว S13 (10 พ.ย. 2569 · แบบปุ่ม "ตรวจแล้ว" หน้า 5.14 - 5.15 UI Release#2)
   "delete-24-300-round": ["d0a4abe7a062d89630de6bd7cb8ce325d1fd8336", false],
   "Table cell": ["2c5b641cf63a8a66f18d2a702c0fddf3fe3b2b20", true],
   "Table header cell": ["d689fd327ddac63e712a5bb5a3b4f3e39fab435e", true],

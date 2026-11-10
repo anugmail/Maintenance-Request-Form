@@ -21,7 +21,7 @@ const DIRECT = ['Sidebar navigation', 'Header navigation', 'Page header', 'Secti
   'Primary button', 'Secondary button', 'Secondary danger button', 'Tertiary button', 'Dropdown list', 'Background overlay', 'Modal', 'Notification',
   'Empty state/Data empty', 'Radio text card', 'Images', 'Date picker', 'Checkbox with description',
   'add-24-300-round', 'filter_list-24-400-round', 'more_horiz-20-400-round', 'delete-24-300-round', 'search-24-300-round', 'keyboard_arrow_right-20-400-round',
-  'cloud_upload-24-300-round', 'stylus-24-300-round', 'quick_reference_all-24-300-round', 'description-24-300-round', 'Dropdown menu',
+  'cloud_upload-24-300-round', 'stylus-24-300-round', 'check-24-300-round', 'quick_reference_all-24-300-round', 'description-24-300-round', 'Dropdown menu',
   'Mobile table', 'Bottom sheet header', 'Bottom sheet footer', 'Modal header', 'Modal footer', 'Tabs', 'Notification card', 'Horizontal radio groups', 'Checkbox text card',
   'Side panel header', 'Side panel footer', 'Empty state/Search not found',
   'Progress steps', 'Mobile progress steps'];   // S10 ขั้นตอนบำรุงรักษา 2 ขั้น (รีวิว 5 พ.ย. 2569 · R70) ตาม 5.2 Vehicle Management ของ UI Release#2 · S24 แผงตัวกรอง + ไม่พบข้อมูล ตาม Vehicle list ของ UI Release#2 (4 พ.ย. 2569)
@@ -216,7 +216,7 @@ const WSTAT = { todo: ['ยังไม่เริ่ม', 'Gray'], doing: ['�
      สถานะระหว่างทางของแผนจ้างชุดเดิมของ S23 (3 พ.ย. 2569 รอบ 2 เจ้าของงาน "เห็นสถานะ ว่ารถคันนั้น ดำเนินการบำรุงรักษาแล้ว ปุ่มจะแสดงให้ส่งตรวจงาน") · สีชุดเดิม: ยังไม่ส่ง Info · รอตรวจรับ Warning · ส่งกลับแก้ไข Error
      (4 พ.ย. 2569 เคยตัดพร้อม S11 · S11 ยังตัดอยู่ ผู้ตรวจรับงานที่ผู้รับจ้างส่งยังไม่เคาะ) · หน่วยงานปิดงานแทนผู้รับจ้างที่ S10 ยังใช้ 4 สถานะแรกตามเดิม */
   worked: ['ดำเนินการบำรุงรักษาแล้ว', 'Info'], reported: ['แจ้งบำรุงรักษาไม่ได้', 'Info'], wait: ['รอตรวจรับ', 'Warning'], returned: ['ส่งกลับแก้ไข', 'Error'] };
-const ACC = { wait: ['รอหน่วยงานยอมรับ', 'Warning'], ok: ['หน่วยงานยอมรับแล้ว', 'Success'] };
+const ACC = { wait: ['รอรับทราบ', 'Warning'], ok: ['รับทราบแล้ว', 'Success'] };   // S13 ผู้ดูแลยานพาหนะรับทราบผลรายคัน (10 พ.ย. 2569 เดิม รอหน่วยงานยอมรับ / หน่วยงานยอมรับแล้ว)
 const pdf = (name, size) => ({ name, size: size || '1.2 MB' });
 const jpg = (name) => ({ name: name + '.jpg', size: '2.4 MB' });
 
@@ -1795,32 +1795,21 @@ async function maDetail(name, o) {
 
 /* ---------- S12 บันทึกผลตรวจน้ำมันไฮโดรลิก ---------- */
 
-/* ---------- S15 ประวัติงานบำรุงรักษา · S17 รายงานผล/ปิดงาน · S18 ต้นทุน ---------- */
-const HIST_COLS = [['ทะเบียน', 160, 'Lead text', 'Swap'], ['วันที่ทำ', 120], ['งานที่ทำ', 0], ['อะไหล่ที่ใช้', 220], ['ผลน้ำมัน', 110, 'Badge'], ['ผู้ทำ', 150], ['การยอมรับ', 190, 'Badge']];
+/* ---------- ประวัติงานบำรุงรักษา (S16 ตีกลับแล้วผู้ดำเนินการส่งใหม่ · เดิม S15 ตัดออก 10 พ.ย. 2569) · S17 รายงานผล/ปิดงาน · S18 ต้นทุน ---------- */
+const HIST_COLS = [['ทะเบียน', 160, 'Lead text', 'Swap'], ['วันที่ทำ', 120], ['งานที่ทำ', 0], ['อะไหล่ที่ใช้', 220], ['ผลน้ำมัน', 110, 'Badge'], ['ผู้ทำ', 150], ['การรับทราบ', 190, 'Badge']];   // รับทราบ = ผู้ดูแลยานพาหนะ S13 (10 พ.ย. 2569)
 const HIST = VEH.slice(0, 4).map((v, i) => [v[0], '0' + (4 + i) + '/11/2569', 'เปลี่ยนน้ำมันไฮโดรลิก · ไส้กรอง', '30 ลิตร · 5 ชิ้น',
-  { pill: i === 2 ? ['ไม่ผ่าน', 'Error'] : ['ผ่าน', 'Success'] }, TRIP.staff[i % 3], { pill: i < 3 ? ACC.ok : ACC.wait }]);
-async function progressScreen(name, o) {
-  o = o || {};
-  const done = o.done || 10, total = +P[4];
-  const { scr, page } = await detail(name, { crumbs: ['ประวัติงานบำรุงรักษา'], status: 'active' });
-  add(page, col('Content', [
-    await vehicleInfo(PLAN_KV, 'รายละเอียดแผน'),
-    col('Section', [await sectionLabel('ความคืบหน้ารายคัน'), kv([['บำรุงรักษาแล้ว', done + ' / ' + total + ' คัน'], ['ทำไม่ได้', '0 คัน'], ['รอทำ', (total - done) + ' คัน'], ['หน่วยงานยอมรับแล้ว', (done - 1) + ' คัน']]),
-      alertBox('Warning', 'ยังบำรุงรักษาไม่ครบทุกคันตามแผน (เหลือ ' + (total - done) + ' คัน)', 'บอร์ด: "บำรุงรักษาเสร็จทั้งหมดหรือไม่?" — ครบแล้วจึงบันทึกและส่งประวัติให้หัวหน้าหน่วยงาน ตรวจสอบได้')], 16),
-    col('Section', [await sectionLabel('ประวัติงานบำรุงรักษา', { badge: HIST.length }), await tblShort(HIST_COLS, HIST)], 16),
-    btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ส่งประวัติให้หัวหน้าตรวจสอบ', { size: 'lg', disabled: true }]])
-  ], 32), 'h');
-  return scr;
-}
+  { pill: i === 2 ? ['ไม่ผ่าน', 'Error'] : ['ผ่าน', 'Success'] }, TRIP.staff[i % 3], { pill: ACC.ok }]);   // ประวัติไปหัวหน้าเมื่อรับทราบครบทุกคันแล้ว (10 พ.ย. 2569)
+const HIST_BACK = 'ผลน้ำมันไฮโดรลิกของ 80-5738 น่าน ไม่ผ่าน ต้องระบุการแก้ไขก่อนบันทึกประวัติ';   // เหตุผลตีกลับตัวอย่าง (S16 O.3 O.6)
 async function historyScreen(name, o) {
   o = o || {};
   const total = +P[4];
   const { scr, page } = await detail(name, { crumbs: ['ประวัติงานบำรุงรักษา'], status: o.sent ? 'hist' : 'active' });
   const nodes = [await vehicleInfo(PLAN_KV, 'รายละเอียดแผน'),
-    col('Section', [await sectionLabel('ความคืบหน้ารายคัน'), kv([['บำรุงรักษาแล้ว', total + ' / ' + total + ' คัน'], ['ทำไม่ได้', '0 คัน'], ['รอทำ', '0 คัน'], ['หน่วยงานยอมรับแล้ว', total + ' คัน']])], 16),
+    col('Section', [await sectionLabel('ความคืบหน้ารายคัน'), kv([['บำรุงรักษาแล้ว', total + ' / ' + total + ' คัน'], ['ทำไม่ได้', '0 คัน'], ['รอทำ', '0 คัน'], ['ผู้ดูแลยานพาหนะรับทราบแล้ว', total + ' คัน']])], 16),
     col('Section', [await sectionLabel('ประวัติงานบำรุงรักษาทั้งหมด', { badge: total }), await tblShort(HIST_COLS, HIST, { pagination: total })], 16)];
+  if (o.returned) nodes.unshift(alertBox('Error', 'หัวหน้าหน่วยงานตีกลับประวัติงานบำรุงรักษา', HIST_BACK));   // S16 O.6 (10 พ.ย. 2569) ผู้ดำเนินการเห็นเหตุผล แก้แล้วส่งใหม่
   if (o.sent) nodes.push(alertBox('Info', 'ส่งประวัติให้หัวหน้าหน่วยงาน ตรวจสอบแล้ว 12/11/2569', 'แก้ไขไม่ได้จนกว่าหัวหน้าจะตีกลับ (S16)'));
-  nodes.push(btnRow(o.sent ? [['Secondary button', 'ย้อนกลับ', { size: 'lg' }]] : [['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ส่งประวัติให้หัวหน้าตรวจสอบ', { size: 'lg' }]]));
+  nodes.push(btnRow(o.sent ? [['Secondary button', 'ย้อนกลับ', { size: 'lg' }]] : [['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', o.returned ? 'ส่งประวัติให้หัวหน้าตรวจสอบอีกครั้ง' : 'ส่งประวัติให้หัวหน้าตรวจสอบ', { size: 'lg' }]]));
   add(page, col('Content', nodes, 32), 'h');
   return scr;
 }
@@ -1830,7 +1819,7 @@ async function reportScreen(name, o) {
     actions: [['Secondary button', 'ดาวน์โหลดรายงาน', 'cloud_upload-24-300-round']] });
   const nodes = [await vehicleInfo(PLAN_KV.concat([['หัวหน้าหน่วยงาน ตรวจประวัติ', 'ผ่าน · 13/11/2569'], ['ผู้ตรวจ', 'นายประเสริฐ มั่นคง']]), 'รายละเอียดแผน'),
     col('Section', [await sectionLabel('สรุปรายงานผลการบำรุงรักษา'), kv([['ยานพาหนะตามแผน', P[4] + ' คัน'], ['บำรุงรักษาแล้ว', P[4] + ' คัน'], ['ทำไม่ได้', '0 คัน'], ['ใบเดินทาง', '2 ใบ'],
-      ['อะไหล่ที่ใช้', '5 รายการ · คืนคลัง 1 รายการ'], ['ผลน้ำมันไฮโดรลิก', 'ผ่าน 11 · ไม่ผ่าน 1'], ['หน่วยงานยอมรับผล', P[4] + ' / ' + P[4] + ' คัน'], ['ช่วงดำเนินการ', '03/11/2569 – 12/11/2569']])], 16)];
+      ['อะไหล่ที่ใช้', '5 รายการ · คืนคลัง 1 รายการ'], ['ผลน้ำมันไฮโดรลิก', 'ผ่าน 11 · ไม่ผ่าน 1'], ['ผู้ดูแลยานพาหนะรับทราบ', P[4] + ' / ' + P[4] + ' คัน'], ['ช่วงดำเนินการ', '03/11/2569 – 12/11/2569']])], 16)];
   if (o.closed) nodes.push(alertBox('Success', 'ปิดงานแล้ว 14/11/2569', 'ไปขั้นคำนวณต้นทุน (S18) ได้'));
   nodes.push(btnRow(o.closed ? [['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'คำนวณต้นทุน', { size: 'lg' }]] : [['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ปิดงาน', { size: 'lg' }]]));
   add(page, col('Content', nodes, 32), 'h');
@@ -1851,7 +1840,7 @@ async function costScreen(name) {
 
 /* ======================== รอบสอง 9 scenario (เจ้าของงานสั่ง 22 ต.ค. 2569 ดึก "บำรุงรักษา สามารถ export 18 scen ได้เลย") ========================
    S2–S3 ผพจ./หัวหน้า ผพจ. · S7 ผู้รับจ้าง · S8 กบค. ตรวจแผนผู้รับจ้าง · S9 กรย. · S11 กบค. ตรวจงานผู้รับจ้าง + รับคืนอะไหล่ (ตัดออก 4 พ.ย. 2569) · S13–S14 หน่วยงาน/เจ้าของรถ · S16 หัวหน้าหน่วยงาน
-   ตีความเอง (คำถามในไฟล์ 14 ยังค้าง — แจ้งเจ้าของงานแล้ว): ผพจ. กับหัวหน้า ผพจ. คนละบทบาท (Q1) · ผู้รับจ้างมีบัญชีเข้า VMS+ เอง (Q13) · ยอมรับ 2 รอบ รายคัน S13 + ทั้งแผน S14 (Q28) ·
+   ตีความเอง (คำถามในไฟล์ 14 ยังค้าง — แจ้งเจ้าของงานแล้ว): ผพจ. กับหัวหน้า ผพจ. คนละบทบาท (Q1) · ผู้รับจ้างมีบัญชีเข้า VMS+ เอง (Q13) · รับทราบรอบเดียวรายคันที่ S13 (Q28 เคาะ 10 พ.ย. 2569 · S14 S15 ตัดออก) ·
    ไม่มีปุ่มไม่ยอมรับ (Q23) · ไม่สร้างทางที่บอร์ดยังไม่มีปลายทาง (กรย. อะไหล่ไม่พร้อม Q16 · ผพจ. คืนอะไหล่ Q5)
    ยืมจาก flow งานซ่อม: `RepairFeedback` (คะแนน 1–5 Radio text card — เจ้าของงานเลือกให้ S14 · การประเมินเกิดตอนบำรุงรักษาครบทุกคัน) · `ReturnPart` (ตารางรับคืนอะไหล่ S11 — เลิกใช้ 3 พ.ย. 2569 · S11 ตัดออกทั้ง scenario 4 พ.ย. 2569) */
 async function tabs(items, active) {   // component Tabs (5 ช่อง Tab item) · items [[ข้อความ, จำนวน]] · ซ่อนช่องที่เกิน (ยกจาก overhaul2-plugin)
@@ -1945,7 +1934,7 @@ async function notiPanel(scr, items, badge) {
 const OWN_UNIT = TRIP_CARS[0][2];   // หน่วยงานเจ้าของรถตัวอย่าง (กฟฉ.1 ขอนแก่น · รถ 2 คันในแผนเดินทาง 1)
 const ownCars = (t) => t.sel.filter(i => TRIP_CARS[i][2] === OWN_UNIT);
 const NOTI_KRY = ['Brand', 'แผนเดินทาง ' + TRIP_1.name + ' อนุมัติแล้ว หน่วยงานผู้ดำเนินการจะเข้าบำรุงรักษายานพาหนะ ' + TRIP_1.sel.length + ' คัน ระหว่างวันที่ ' + TRIP_1.d1 + ' ถึง ' + TRIP_1.d2, '10 นาทีที่แล้ว'];
-const NOTI_OWN = ['Brand', 'หน่วยงานผู้ดำเนินการจะเข้าบำรุงรักษายานพาหนะของหน่วยงาน ' + ownCars(TRIP_1).length + ' คัน (' + ownCars(TRIP_1).map(i => TRIP_CARS[i][0]).join(', ') + ') ระหว่างวันที่ ' + TRIP_1.d1 + ' ถึง ' + TRIP_1.d2 + ' ที่ ' + tripLoc(ownCars(TRIP_1)[0], TRIP_1.locs), '10 นาทีที่แล้ว'];
+const NOTI_OWN = ['Brand', 'หน่วยงานผู้ดำเนินการจะเข้าบำรุงรักษายานพาหนะที่คุณดูแล ' + ownCars(TRIP_1).length + ' คัน (' + ownCars(TRIP_1).map(i => TRIP_CARS[i][0]).join(', ') + ') ระหว่างวันที่ ' + TRIP_1.d1 + ' ถึง ' + TRIP_1.d2 + ' ที่ ' + tripLoc(ownCars(TRIP_1)[0], TRIP_1.locs), '10 นาทีที่แล้ว'];
 const NOTI_OLD = ['Success', 'บำรุงรักษายานพาหนะ 82-3302 อุดรธานี ตามแผนเดินทางเดือนตุลาคมเสร็จแล้ว', '2 วันที่แล้ว'];
 const TRIP_SEEN_COLS = [['ชื่อแผนเดินทาง', 0, 'Lead text'], ['ช่วงวันเดินทาง', 220], ['ยานพาหนะ (คัน)', 100], ['สถานะ', 150, 'Badge'], ['', 60]];
 const tripSeenList = (name, own) => roleList(name, { title: 'แผนเดินทางบำรุงรักษา', search: 'ค้นหาชื่อแผนเดินทาง, ทะเบียน', cols: TRIP_SEEN_COLS, rows: [[{ text: TRIP_1.name, sub: P[0] + ' · ' + NOW_Q }, TRIP_1.d1 + ' – ' + TRIP_1.d2, String(own ? ownCars(TRIP_1).length : TRIP_1.sel.length), { pill: TST.approved }, GO]] });
@@ -2263,32 +2252,55 @@ async function prepDetail(name, o) {
   return scr;
 }
 
-/* ---------- S13 หน่วยงาน/เจ้าของรถ ยอมรับผลรายคัน · S14 ทั้งแผน + ประเมินความพึงพอใจ ---------- */
-const ACC_COLS = [['ทะเบียน / แผน', 0, 'Lead text'], ['วันที่บำรุง', 140], ['ผู้ทำ', 220], ['เลขที่ MR', 140], ['สถานะ', 200, 'Badge'], ['', 60]];
-const ACC_PLAN = ['ทั้งแผน (' + P[4] + ' คัน)', '04–12/11/2569', 'ดำเนินการเอง', P[0]];
+/* ---------- S13 ผู้ดูแลยานพาหนะ รับทราบผลและประเมินความพึงพอใจรายคัน (เจ้าของงาน 10 พ.ย. 2569) ----------
+   Q23 "มีแค่ปุ่มยอมรับ เหมือนปุ่มรับทราบ" · Q19 "บำรุงรักษาไม่ได้ ใช้ฟอร์มเดียวกัน" · Q28 "รอบเดียวพอ คือรอบที่ส่งรายคัน หลังจากบำรุงเสร็จ" (S14 S15 ตัดออก)
+   ผู้กด = ผู้มีชื่อเป็นผู้ดูแลยานพาหนะในแผนเดินทาง แม้เจ้าของแผนกับเจ้าของยานพาหนะเป็นหน่วยงานเดียวกัน ("คนทำแผนกับคนปฏิบัติอาจจะเป็นคนละคน") · แจ้งเตือนเรื่องยานพาหนะส่งถึงผู้ดูแลยานพาหนะ
+   ประเมินความพึงพอใจรายคันย้ายจาก S14 มาไว้ตอนรับทราบ · ปุ่ม "รับทราบ" สีเขียว ("อยากใช้คำกลางๆ แล้วเปลี่ยนสี เป็นสีเขียว") กดแล้วปุ่มหาย เหลือป้าย "รับทราบแล้ว" ไม่มี popup ยืนยัน
+   ผลที่แสดง = ที่ผู้ดำเนินการบันทึกใน S10 (ข้อมูลงาน · ผลตรวจสภาพ Step 1 + ลงนาม · ภาพ · งานและอะไหล่ที่ใช้จริง) แทนไฟล์ PDF แบบเดิม · คันที่บำรุงรักษาไม่ได้ = ฟอร์มเดียวกัน ส่วนสาเหตุแทนผลงาน ไม่มีประเมิน (เสนอ ยังไม่เคาะ) */
+const ACC_COLS = [['ทะเบียน', 0, 'Lead text'], ['วันดำเนินการ', 140], ['ผู้ดำเนินการ', 220], ['แผนเดินทาง', 260], ['สถานะ', 160, 'Badge'], ['', 60]];
+const ACK_CARS = [JOB_I, TRIP_1.sel[1], TRIP_1.sel[2]];   // ยานพาหนะที่ผู้ดูแลคนนี้ดูแล (ตัวอย่าง) · sel[2] = MOVE_I คันที่บำรุงรักษาไม่ได้ (ประกาศทีหลัง)
+const ACK_LIST = 'ผลการบำรุงรักษารอรับทราบ';
 const accRows = (o) => {
   o = o || {};
-  const cars = [0, 1, 4].map((i, k) => [VEH[i][0], '0' + (4 + k) + '/11/2569', TRIP.staff[k] + ' (' + UNITS[0] + ')', P[0], { pill: (o.accepted || []).indexOf(k) >= 0 ? ACC.ok : ACC.wait }, GO]);
-  if (o.plan) cars.unshift([ACC_PLAN[0], ACC_PLAN[1], ACC_PLAN[2], ACC_PLAN[3], { pill: o.plan === 'done' ? ['ยอมรับผลทั้งแผนแล้ว', 'Success'] : ['ครบทุกคันแล้ว รอตรวจหลักฐาน', 'Warning'] }, GO]);
-  return cars;
+  return ACK_CARS.map((i, k) => { const c = TRIP_CARS[i]; return [{ text: c[0], sub: typeOf(c) }, '0' + (4 + k) + '/11/2569', { text: TRIP.staff[k % TRIP.staff.length], sub: UNITS[0] },
+    { text: JOB_T.name, sub: P[0] }, { pill: (o.accepted || []).indexOf(k) >= 0 ? ACC.ok : ACC.wait }, GO]; });   // คันที่บำรุงรักษาไม่ได้ก็รอรับทราบเหมือนกัน (Q19 ฟอร์มเดียวกัน)
 };
-async function carResult(name, o) {   // รายการตรวจบำรุงรถรายคัน (ฝั่งหน่วยงาน) — ใบตรวจ 2 ใบ + ภาพ + อะไหล่ที่ใช้จริง · กรณีบำรุงรักษาไม่ได้แสดงสาเหตุ
+const ackList = (name, o) => roleList(name, { title: ACK_LIST, search: 'ค้นหาทะเบียน, แผนเดินทาง', cols: ACC_COLS, rows: accRows(o) });
+const NOTI_ACK = ['Brand', 'ปิดงานบำรุงรักษา ' + TRIP_CARS[JOB_I][0] + ' แล้ว รอผู้ดูแลยานพาหนะรับทราบผลและประเมินความพึงพอใจ', '5 นาทีที่แล้ว'];
+let ACK_VAR;
+async function ackRow(off) {   // ย้อนกลับ + รับทราบ (เขียว) — Primary button ของไฟล์ Component พื้นผูกตัวแปร Color/surface/success (#17B26A) + ไอคอนนำ check-24-300-round
+  // ตามปุ่ม "ตรวจแล้ว" / "ขึ้น SAP แล้ว" ของหน้า 5.14 - 5.15 Cost & Expense Check · UI Release#2 · Disabled (ยังไม่ประเมิน) = State=Disabled ของไลบรารี ไม่ทาเขียว
+  const r = btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'รับทราบ', { size: 'lg', icon: 'check-24-300-round', disabled: !!off }]]);
+  const b = r.children.find(c => c.name === 'Primary button');
+  if (b && !off) {
+    if (ACK_VAR === undefined) ACK_VAR = await libVar(/^Color\/surface\/success$/i);
+    let paint = { type: 'SOLID', color: rgbOf('#17B26A') };
+    if (ACK_VAR) try { paint = figma.variables.setBoundVariableForPaint(paint, 'color', ACK_VAR); } catch (e) { /* ใช้ค่าสี */ }
+    try { b.fills = [paint]; } catch (e) { warn('สีปุ่มรับทราบ', e); }
+  }
+  return r;
+}
+async function ackResult(name, o) {   // o.cannot · o.score (1–5) · o.done = รับทราบแล้ว
   o = o || {};
-  const car = o.cannot ? VEH[2] : V;
-  const { scr, page } = await shell(name, { title: 'ผลการตรวจบำรุงยานพาหนะ · ' + car[0], back: true, crumbs: ['รอตรวจสอบ', car[0]], badge: o.cannot ? WSTAT.cannot : ACC[o.ok ? 'ok' : 'wait'] });
-  const nodes = [await vehicleInfo([['ทะเบียน', car[0]], ['ยี่ห้อ/รุ่น', car[1]], ['หน่วยงานเจ้าของยานพาหนะ', car[2]], ['เลขที่ MR', P[0]], ['วันที่บำรุง', '04/11/2569'], ['ผู้ทำ', TRIP.staff[0] + ' (' + UNITS[0] + ')']], 'ข้อมูลยานพาหนะ')];
-  if (o.cannot) nodes.push(col('Section', [await sectionLabel('สาเหตุที่บำรุงรักษาไม่ได้'), kv([['สาเหตุ', 'ยานพาหนะติดภารกิจซ่อมสายส่งฉุกเฉิน ไม่อยู่ที่หน่วยงานในวันนัด'], ['ผู้บันทึก', TRIP.staff[0] + ' (' + UNITS[0] + ')'], ['วันที่บันทึก', '05/11/2569']])], 16),
-    alertBox('Warning', 'ใช้ฟอร์มเดียวกับคันที่บำรุงรักษาได้หรือแยก ยังไม่เคาะ (Q19)', 'จอนี้แสดงสาเหตุจาก S10 แล้วให้ยอมรับรับทราบ'));
-  else nodes.push(col('Section', [await sectionLabel('เอกสารการตรวจบำรุงยานพาหนะ (2)'), await upload('ใบตรวจสภาพอะไหล่ · ใบตรวจสภาพงานบำรุงรักษา', [pdf('ใบตรวจสภาพอะไหล่-' + car[0].split(' ')[0] + '.pdf', '380 KB'), pdf('ใบตรวจสภาพงานบำรุงรักษา-' + car[0].split(' ')[0] + '.pdf', '410 KB')], { readonly: true })], 16),
-    await photoGallery('ภาพก่อนเริ่มงาน (' + BEFORE.length + ')', BEFORE.length),
-    col('Section', [await sectionLabel('รายการงานและอะไหล่ที่ใช้จริง', { badge: WORK.length }), await tblShort(WORK_COLS2, WORK.map(w => [w[0], w[1], w[2], w[3], w[4]]))], 16));   // ภาพตอนจบงานเอาออก 4 พ.ย. 2569 ให้ตรงกับหน้าปิดงาน
-  if (o.ok) nodes.push(alertBox('Success', 'ยอมรับผลการตรวจบำรุงยานพาหนะแล้ว 06/11/2569', 'รอคันอื่นในแผนครบแล้วจึงตรวจหลักฐานทั้งแผน (S14)'));
-  else nodes.push(btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยอมรับผลการตรวจบำรุงยานพาหนะ', { size: 'lg' }]]));
+  const i = o.cannot ? MOVE_I : JOB_I, c = TRIP_CARS[i];
+  const { scr, page } = await shell(name, { title: 'ผลการบำรุงรักษา · ' + c[0], back: true, crumbs: [ACK_LIST, c[0]], badge: o.done ? ACC.ok : ACC.wait });   // คันที่บำรุงรักษาไม่ได้ก็รอรับทราบ (สาเหตุอยู่ในเนื้อหา)
+  const job = o.cannot ? [['วันดำเนินการ', TRIP_1.d1], ['ผู้แจ้ง', JOB_BY], ['แจ้งเมื่อ', '05/11/2569 09:20 น.']]
+    : [['วันดำเนินการ', '04/11/2569'], ['เริ่มงาน', JOB_START], ['ปิดงาน', JOB_END], ['ผู้ดำเนินการ', JOB_BY], ['น้ำมันไฮโดรลิก', JOB_OIL_OPTS[JOB_OIL]], ['เลขไมล์หลังทำ', '182,640 กม.']];
+  const nodes = [await vehicleInfo([['ทะเบียน', c[0]], ['ยี่ห้อ/รุ่น', c[1]], ['ประเภทยานพาหนะ', typeOf(c)], ['หน่วยงานเจ้าของยานพาหนะ', c[2]], ['แผนเดินทาง', JOB_T.name], ['เลขที่ MR', P[0]],
+    ['ผู้ดูแลยานพาหนะ', tripCtrl(i, TRIP_1.phones)]].concat(job).concat(o.done ? [['รับทราบเมื่อ', '06/11/2569 10:05 น.']] : []), 'ข้อมูลยานพาหนะและงาน')];
+  if (o.cannot) nodes.push(col('Section', [await sectionLabel('สาเหตุที่บำรุงรักษาไม่ได้'), kv([['สาเหตุ', JOB_CANNOT], ['ผู้บันทึก', JOB_BY], ['วันที่บันทึก', '05/11/2569']])], 16));
+  else {
+    nodes.push(col('Section', [await sectionLabel('ผลการตรวจสภาพก่อนบำรุงรักษา')].concat(await inspectStep(c, true, true)), 16),
+      await photoGallery('ภาพก่อนเริ่มงาน (' + BEFORE.length + ')', BEFORE.length),
+      col('Section', [await sectionLabel('รายการงานและอะไหล่ที่ใช้จริง', { badge: WORK.length }), await tblShort(WORK_COLS2, WORK.map(w => [w[0], w[1], w[2], w[3], w[4]]))], 16),
+      await feedback(o.score || (o.done ? 5 : 0)));
+  }
+  if (!o.done) nodes.push(await ackRow(!o.cannot && !o.score));   // ยังไม่ประเมิน = ปุ่ม Disabled · คันที่บำรุงรักษาไม่ได้ไม่มีประเมิน กดได้เลย
   add(page, col('Content', nodes, 32), 'h');
   return scr;
 }
 /* ประเมินความพึงพอใจ — ยืม RepairFeedback (คะแนนประเมินคุณภาพงานซ่อมบำรุงของงานซ่อม: Section header + Radio text card 1–5) · เจ้าของงานเลือก 22 ต.ค. 2569
-   การประเมินเกิดตอนบำรุงรักษาครบทุกคันตามแผน ก่อนกดยอมรับผลทั้งแผน (S14) · ไม่มี/mobile → Section header + Radio text card ของไลบรารี */
+   การประเมินเกิดตอนผู้ดูแลยานพาหนะรับทราบผลรายคัน (S13 · 10 พ.ย. 2569 ย้ายจาก S14 ที่ตัดออก) · ไม่มี/mobile → Section header + Radio text card ของไลบรารี */
 async function feedback(score) {
   const title = 'คะแนนประเมินความพึงพอใจงานบำรุงรักษา', sub = 'ให้คะแนน 1–5 · 1 ต้องปรับปรุงมาก · 5 ดีมาก';
   if (!MOB && has('RepairFeedback')) {
@@ -2306,19 +2318,7 @@ async function feedback(score) {
   const sh = await section(title);
   return col('Section', [sh, r], 16);
 }
-async function planEvidence(name, o) {   // เอกสารหลักฐานการตรวจบำรุงรถทั้งแผน + ประเมินความพึงพอใจ + ยอมรับผลทั้งแผน
-  o = o || {};
-  const { scr, page } = await shell(name, { title: 'หลักฐานการตรวจบำรุงยานพาหนะ · ' + P[0], back: true, crumbs: ['รอตรวจสอบ', P[0]], badge: o.done ? ['ยอมรับผลทั้งแผนแล้ว', 'Success'] : ['ครบทุกคันแล้ว', 'Warning'] });
-  const nodes = [await vehicleInfo(PLAN_KV, 'รายละเอียดแผน'),
-    col('Section', [await sectionLabel('สรุปรายคัน', { badge: 3 }), await tblShort([['ทะเบียน', 170, 'Lead text'], ['ใบตรวจสภาพอะไหล่', 0], ['ใบตรวจสภาพงานบำรุงรักษา', 0], ['การยอมรับรายคัน', 200, 'Badge']],
-      [0, 1, 4].map(i => [VEH[i][0], 'ใบตรวจสภาพอะไหล่-' + VEH[i][0].split(' ')[0] + '.pdf', 'ใบตรวจสภาพงานบำรุงรักษา-' + VEH[i][0].split(' ')[0] + '.pdf', { pill: ACC.ok }]), { pagination: 3 })], 16),
-    await feedback(o.score || 0),
-    area('ข้อเสนอแนะเพิ่มเติม', o.score ? 'ทีมงานตรงเวลา ทำความสะอาดพื้นที่หลังเสร็จงาน' : '', { optional: true, placeholder: 'ระบุข้อเสนอแนะ' })];
-  if (o.done) nodes.push(alertBox('Success', 'ยอมรับผลการตรวจบำรุงยานพาหนะทั้งแผนแล้ว 14/11/2569', 'แจ้งหน่วยงานแล้ว — ส่งประวัติให้หัวหน้าหน่วยงาน ได้ (S15)'));
-  else nodes.push(btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยอมรับผลการตรวจบำรุงยานพาหนะ', { size: 'lg', disabled: !o.score }]]));
-  add(page, col('Content', nodes, 32), 'h');
-  return scr;
-}
+/* planEvidence (S14 หลักฐานทั้งแผน + ยอมรับผลทั้งแผน) เอาออก 10 พ.ย. 2569 — S14 ตัดออก ประเมินย้ายไป S13 รายคัน */
 
 /* ---------- S16 หัวหน้าหน่วยงาน ตรวจสอบประวัติงานบำรุงรักษา ---------- */
 const HST = { wait: ['รอหัวหน้าตรวจสอบ', 'Warning'], ok: ['ผ่านแล้ว', 'Success'], back: ['ตีกลับ', 'Error'] };
@@ -2329,7 +2329,7 @@ async function headHistory(name, o) {   // หน้าเดียวกับ 
   const { scr, page } = await shell(name, { title: 'หมายเลขแผน ' + P[0], back: true, crumbs: ['ประวัติรอตรวจสอบ', P[0]], badge: HST[o.st || 'wait'] });
   const total = +P[4];
   const nodes = [await vehicleInfo(PLAN_KV, 'รายละเอียดแผน'),
-    col('Section', [await sectionLabel('ความคืบหน้ารายคัน'), kv([['บำรุงรักษาแล้ว', total + ' / ' + total + ' คัน'], ['ทำไม่ได้', '0 คัน'], ['หน่วยงานยอมรับแล้ว', total + ' คัน'], ['ผู้ส่ง', CREATOR + ' · 12/11/2569']])], 16),
+    col('Section', [await sectionLabel('ความคืบหน้ารายคัน'), kv([['บำรุงรักษาแล้ว', total + ' / ' + total + ' คัน'], ['ทำไม่ได้', '0 คัน'], ['ผู้ดูแลยานพาหนะรับทราบแล้ว', total + ' คัน'], ['ผู้ส่ง', CREATOR + ' · 12/11/2569']])], 16),
     col('Section', [await sectionLabel('ประวัติงานบำรุงรักษาทั้งหมด', { badge: total }), await tblShort(HIST_COLS, HIST, { pagination: total })], 16)];
   if (o.st === 'ok') nodes.push(alertBox('Success', 'อนุมัติประวัติแล้ว 13/11/2569 — บันทึกเป็นประวัติทางการ', 'หน่วยงานออกรายงานผลและปิดงานได้ (S17)'));
   else nodes.push(btnRow([['Secondary button', 'ตีกลับ', { size: 'lg' }], ['Primary button', 'อนุมัติประวัติ', { size: 'lg' }]]));
@@ -2416,7 +2416,7 @@ const SCENARIOS = [
      · เอาพื้นที่/ตัวกรองออกรถที่จัดแล้วไม่หาย · Validation Out of focus · รายละเอียดแผนหลังส่งอนุมัติ 3 สถานะ
      · ค่ำ 5 พ.ย. 2569 (R77): ภาค เขต ประเภทรถ อยู่ในแผงตัวกรองของ Table header — A.5 แผงตัวกรองยังไม่เลือก · A.6 เลือกภาค 1 + กฟน.2 กฟน.1 ในแผง (รายการเขตเปิด) · A.7 กดตกลงแล้ว ตารางรถ + ชิป
        (รหัส A.1–A.27 ไม่เลื่อน · A.5 A.6 A.7 เปลี่ยนชื่อ) */
-  ['S1 · หน่วยงาน สร้างแผนบำรุงรักษาประจำปี และจัดยานพาหนะลงไตรมาส', [
+  ['S1 · ผู้สร้างแผน สร้างแผนบำรุงรักษาประจำปี และจัดยานพาหนะลงไตรมาส', [
     ['รายการแผน', () => listScreen('S1 รายการแผน', { rows: ownPlans(UNITS[0]) })],
     ['รายการแผน — ยังไม่มีแผน', () => listScreen('S1 รายการว่าง', { empty: true })],
     ['ฟอร์มสร้างแผน (ว่าง)', () => planForm('S1 ฟอร์มสร้างแผน', {})],
@@ -2482,7 +2482,7 @@ const SCENARIOS = [
   // S3 ผพจ. ออกเลขงานและจัดซื้ออะไหล่ — พักไว้ 30 ต.ค. 2569 (เจ้าของงาน "อนุมัติเลขงาน ไม่ต้องมีในระบบแล้ว แยกออกไปก่อน") · ฟังก์ชัน planIssue/headPartCheck/poForm คงไว้ · userflow ย้ายไป 14-…-พักไว้-S3.md
   /* S4 เดิม "ติดตามความคืบหน้าและเบิกอะไหล่ของไตรมาส" (partsProgress · เทียบคงเหลือ Smart Inventory + เบิก/จอง) เปลี่ยนเป็นแดชบอร์ด 6 พ.ย. 2569 (เจ้าของงาน "หน้าที่จาก smart inventory จะเปลี่ยนเป็นหน้าแดชบอร์ด")
      รหัสจอ C.1–C.6 เดิมถูกแทนด้วยจอแดชบอร์ด (ชื่อ state ใหม่) · อะไหล่รายไตรมาสย้ายไปหัวข้อ "อะไหล่ในไตรมาส n" ของหน้าไตรมาส (S6) */
-  ['S4 · หน่วยงาน ดูอะไหล่และความคืบหน้าของแผนที่อนุมัติแล้ว (แดชบอร์ด)', [
+  ['S4 · ผู้ดำเนินการ ดูอะไหล่และความคืบหน้าของแผนที่อนุมัติแล้ว (แดชบอร์ด)', [
     ['แท็บรวมตามรายการ — อะไหล่ทุกแผนที่อนุมัติแล้วในปีงบประมาณ 2570', () => partsDash('S4 รวมตามรายการ', {})],
     ['ค้นหาชื่ออะไหล่ หรือรหัสอะไหล่', () => partsDash('S4 ค้นหา', { query: 'FL-00' })],
     ['กดตัวกรอง — แผงตัวกรอง ปีงบประมาณ หน่วยงานผู้ขอเบิก เขต แผน', () => partsDash('S4 แผงตัวกรอง', { filter: { units: ['กกฟ.1'], open: 'plan' } })],
@@ -2499,7 +2499,7 @@ const SCENARIOS = [
   // S5 เบิกอะไหล่ผ่านระบบจองอะไหล่ — รวมเข้า S4 2 พ.ย. 2569 (เจ้าของงาน "รวบ s4 s5 เป็นหน้าเดียวกัน ยุบ S5 ออกไปก่อน") · บล็อก D เว้นว่าง
   /* S6 ปรับ 5 พ.ย. 2569 (รีวิวทีมออกแบบ): ทางเข้าจากเมนูถึงหน้าไตรมาส (E.1–E.3) · หน้า E.3 = "ไตรมาส 1" · popup รถในแผนเดินทางอื่นแสดงแต่เลือกไม่ได้ · เอารถออกจากแผนเดินทาง (soft delete) แล้วกลับมาเลือกได้
      · Validation Out of focus · สร้างสำเร็จกลับหน้าไตรมาส + toast · สร้างได้จนรถหมด แล้วปุ่มสร้างแผนเดินทางกดไม่ได้ (ตัด popup "รถทุกคันอยู่ในแผนเดินทางแล้ว") */
-  ['S6 · หน่วยงาน ทำแผนเดินทาง (ดำเนินการเอง)', [
+  ['S6 · ผู้ดำเนินการ ทำแผนเดินทาง (ดำเนินการเอง)', [
     ['รายการแผน — เมนู "…" ดูรายละเอียดแผนที่อนุมัติแล้ว', async () => { const s = await listScreen('S6 รายการแผน', { rows: ownPlans(UNITS[0]) }); planMenu(s, MENU.slice(0, 1)); return s; }],
     ['รายละเอียดแผน — กดไปหน้าไตรมาส 1', () => planDetailQ('S6 รายละเอียดแผน')],
     ['หน้าไตรมาส 1 — ยังไม่มีแผนเดินทาง', () => tripList('S6 ไตรมาส 1 (ว่าง)', { trips: [] })],
@@ -2539,13 +2539,13 @@ const SCENARIOS = [
     // 10 พ.ย. 2569 แท็บของหน้าอนุมัติ (ตาม S2) — ต่อท้าย รหัสจอเดิมไม่เลื่อน
     ['แท็บอนุมัติแล้ว — แผนเดินทางที่อนุมัติไปแล้ว', () => tripReviewList('S7 แท็บอนุมัติแล้ว', [TRIP_OK], 1)],
     ['แท็บส่งกลับแก้ไข — แผนเดินทางที่ส่งกลับรอผู้สร้างแก้', () => tripReviewList('S7 แท็บส่งกลับแก้ไข', [Object.assign({}, TRIP_1, { st: 'returned' }), TRIP_RET], 2, 2)]]],
-  ['S8 · กรย. และหน่วยงานเจ้าของยานพาหนะ ได้รับแจ้งเตือนแผนเดินทาง', [
+  ['S8 · กรย. และผู้ดูแลยานพาหนะ ได้รับแจ้งเตือนแผนเดินทาง', [
     ['กรย. — มีแจ้งเตือนใหม่ (จุดแดงที่กระดิ่ง)', async () => { const s = await tripSeenList('S8 กรย. มีใหม่', false); bell(s, true); return s; }],
     ['กรย. — เปิดแผงแจ้งเตือน', async () => { const s = await tripSeenList('S8 กรย. แผงแจ้งเตือน', false); bell(s, true); await notiPanel(s, [NOTI_KRY, NOTI_OLD], '1 แจ้งเตือนใหม่'); return s; }],
     ['กรย. — แผนเดินทาง ดูอย่างเดียว (ยานพาหนะทุกคันในใบ)', () => tripView('S8 กรย. แผนเดินทาง', false)],
-    ['หน่วยงานเจ้าของยานพาหนะ — เปิดแผงแจ้งเตือน', async () => { const s = await tripSeenList('S8 หน่วยงาน แผงแจ้งเตือน', true); bell(s, true); await notiPanel(s, [NOTI_OWN, NOTI_OLD], '1 แจ้งเตือนใหม่'); return s; }],
-    ['หน่วยงานเจ้าของยานพาหนะ — แผนเดินทาง ดูอย่างเดียว (เฉพาะยานพาหนะของหน่วยงาน)', () => tripView('S8 หน่วยงาน แผนเดินทาง', true)]]],
-  ['S9 · หน่วยงาน สร้างแผนเดินทางจ้างดำเนินการ (vendor)', [
+    ['ผู้ดูแลยานพาหนะ — เปิดแผงแจ้งเตือน', async () => { const s = await tripSeenList('S8 หน่วยงาน แผงแจ้งเตือน', true); bell(s, true); await notiPanel(s, [NOTI_OWN, NOTI_OLD], '1 แจ้งเตือนใหม่'); return s; }],
+    ['ผู้ดูแลยานพาหนะ — แผนเดินทาง ดูอย่างเดียว (เฉพาะยานพาหนะที่ดูแล)', () => tripView('S8 หน่วยงาน แผนเดินทาง', true)]]],
+  ['S9 · ผู้ดำเนินการ สร้างแผนเดินทางจ้างดำเนินการ (vendor)', [
     ['เลือกจ้างดำเนินการ — ช่องผู้รับจ้างขึ้น', () => tripForm('S9 เลือกจ้าง', { mode: 'hire' })],
     ['เลือกผู้รับจ้าง — รายชื่อผู้รับจ้างเปิด', () => tripForm('S9 รายชื่อผู้รับจ้าง', { mode: 'hire', vendorOpen: true, values: { name: TRIP_V.name } })],
     ['กดเพิ่มยานพาหนะ — popup ยานพาหนะในแผนเดินทางอื่นแสดงแต่เลือกไม่ได้', () => tripForm('S9 popup เพิ่มยานพาหนะ', { mode: 'hire', values: { name: TRIP_V.name, vendor: TRIP_V.vendor }, modal: { pool: TRIP_ALL, ticked: TRIP_REST, taken: TAKEN_1 } })],   // 5 พ.ย. 2569 popup เดียวกับ S6
@@ -2558,7 +2558,7 @@ const SCENARIOS = [
   /* S10 ปรับตามรีวิว 5 พ.ย. 2569 (ทีมออกแบบ + เจ้าของงาน "s10 ลองปรับให้เป็นแบบที่เขียนให้"): ตัวนับ "ตรวจแล้ว x/y" (ไม่นับคันที่บำรุงรักษาไม่ได้) · กดเริ่มงานเข้าขั้นตอน 2 ขั้น
      Step 1 ตรวจสภาพก่อนบำรุงรักษา (ลงนามบังคับ) → Step 2 สรุปงานก่อนปิดงาน · หน้าอยู่ระหว่างบำรุงรักษาเดิมเอาออก · toast ขวาบน (R60) · ป้ายรอผลตรวจน้ำมันเฉพาะคันที่เก็บตัวอย่าง
      รหัสจอเลื่อนทั้งบล็อก (ไม่มีปุ่มอัปเดตจอที่เลือกของปลั๊กอินนี้ — export ใหม่) */
-  ['S10 · หน่วยงาน บันทึกงานบำรุงรักษารายคัน', [
+  ['S10 · ผู้ดำเนินการ บันทึกงานบำรุงรักษารายคัน', [
     ['หน้ารายละเอียดแผนเดินทาง — ยังไม่เริ่มงาน ตรวจแล้ว 0/4', () => tripDetail('S10 รายละเอียดแผนเดินทาง', {})],
     ['กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด แก้ไข ลบ', () => tripDetail('S10 เมนูของยานพาหนะ', { menu: true })],
     ['เมนูแก้ไข — แก้ไขยานพาหนะในแผนเดินทาง ผู้ดูแลยานพาหนะ สถานที่ และวันดำเนินการ', () => tripDetail('S10 แก้ไขยานพาหนะในแผนเดินทาง', { edit: true })],   // 6 พ.ย. 2569 (R83) เดิม "เมนูแก้ไข — แก้ไขผู้ดูแลยานพาหนะและสถานที่" 
@@ -2627,7 +2627,7 @@ const SCENARIOS = [
     ['ถูกส่งกลับแก้ไข — คันที่ปิดงานไว้', () => vendorJob('S23 ส่งกลับแก้ไข', { st: 'returned' })],
     ['ถูกส่งกลับแก้ไข — คันที่แจ้งบำรุงรักษาไม่ได้', () => vendorJob('S23 ส่งกลับแก้ไข แจ้งไม่ได้', { st: 'returned', cannot: true })],
     ['หน้ารายละเอียดแผนเดินทาง — สถานะงานรายคันระหว่างทาง ตรวจแล้ว 2/6', () => tripDetail('S23 รายละเอียดแผนเดินทาง ระหว่างทาง', { trip: HIRE_T, vendor: true, st: HIRE_VENDOR })]]],
-  ['S12 · หน่วยงาน บันทึกผลตรวจน้ำมันไฮโดรลิก', [   // 4 พ.ย. 2569 เลิก popup: ใส่ผลตอนปิดงาน (ถ้ามี) หรือภายหลังที่หน้ารายละเอียดงานรายคัน · ป้ายรอผลที่สถานะงาน
+  ['S12 · ผู้ดำเนินการ บันทึกผลตรวจน้ำมันไฮโดรลิก', [   // 4 พ.ย. 2569 เลิก popup: ใส่ผลตอนปิดงาน (ถ้ามี) หรือภายหลังที่หน้ารายละเอียดงานรายคัน · ป้ายรอผลที่สถานะงาน
     ['Step 2 สรุปงานก่อนปิดงาน — เลือกเก็บตัวอย่าง ใส่ผลการทดสอบได้ (ถ้ามี)', () => stepPage('S12 Step 2 ผลการทดสอบ', { step: 2, filled: true })],   // 5 พ.ย. 2569 หน้าปิดงานเป็น Step 2 ของ S10
     ['ปิดงานโดยยังไม่มีผล — ป้ายรอผลตรวจน้ำมัน', async () => { const s = await tripDetail('S12 รอผลตรวจน้ำมัน', { st: JOB_MIX, oil: { [JOB_I]: 'wait' } }); notify(s, 'บันทึกงานบำรุงรักษาสำเร็จ'); return s; }],
     ['กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด', () => tripDetail('S12 เมนูของยานพาหนะ', { st: JOB_MIX, oil: { [JOB_I]: 'wait' }, menu: true })],
@@ -2636,38 +2636,32 @@ const SCENARIOS = [
     ['เลือกผล + แนบไฟล์ (ถ้ามี)', () => workDetail('S12 ผลการทดสอบกรอกครบ', { res: { sel: 1, files: [OIL_FILE] } })],
     ['บันทึกสำเร็จ — แสดงผลที่บันทึก แก้ได้ภายหลัง', async () => { const s = await workDetail('S12 บันทึกผลสำเร็จ', { res: { sel: 1, files: [OIL_FILE], saved: true } }); notify(s, 'บันทึกผลการทดสอบน้ำมันไฮโดรลิกสำเร็จ'); return s; }],
     ['กลับหน้าแผนเดินทาง — ป้ายน้ำมันไม่ผ่าน', () => tripDetail('S12 น้ำมันไม่ผ่าน', { st: JOB_MIX, oil: { [JOB_I]: 'fail' } })]]],
-  ['S13 · หน่วยงาน/เจ้าของยานพาหนะ ยอมรับผลการตรวจบำรุงยานพาหนะรายคัน', [
-    ['รายการรอตรวจสอบ', () => roleList('S13 รายการ', { title: 'การตรวจบำรุงยานพาหนะรอตรวจสอบ', search: 'ค้นหาทะเบียน, เลขที่ MR', cols: ACC_COLS, rows: accRows({}) })],
-    ['ผลการตรวจบำรุงยานพาหนะรายคัน', () => carResult('S13 รายคัน', {})],
-    ['คันที่บำรุงรักษาไม่ได้ — สาเหตุ', () => carResult('S13 ทำไม่ได้', { cannot: true })],
-    ['ยืนยันยอมรับผล', async () => { const s = await carResult('S13 ยืนยัน', {}); await confirm(s, { title: 'ยืนยันยอมรับผลการตรวจบำรุงยานพาหนะ', sub: V[0] + ' · บำรุงรักษาวันที่ 04/11/2569', ok: 'ยอมรับผล' }); return s; }],
-    ['ยอมรับผลแล้ว', async () => { const s = await roleList('S13 ยอมรับแล้ว', { title: 'การตรวจบำรุงยานพาหนะรอตรวจสอบ', search: 'ค้นหาทะเบียน, เลขที่ MR', cols: ACC_COLS, rows: accRows({ accepted: [0] }) }); notify(s, 'ยอมรับผลการตรวจบำรุงยานพาหนะ ' + V[0] + ' สำเร็จ'); return s; }]]],
-  ['S14 · หน่วยงาน/เจ้าของยานพาหนะ ตรวจสอบหลักฐานและประเมินความพึงพอใจ (ครบทุกคัน)', [
-    ['รายการ — ครบทุกคันแล้ว', () => roleList('S14 รายการ', { title: 'การตรวจบำรุงยานพาหนะรอตรวจสอบ', search: 'ค้นหาทะเบียน, เลขที่ MR', cols: ACC_COLS, rows: accRows({ plan: 'wait', accepted: [0, 1, 2] }) })],
-    ['หลักฐานทั้งแผน — ยังไม่ประเมิน', () => planEvidence('S14 ยังไม่ประเมิน', {})],
-    ['ประเมินความพึงพอใจแล้ว', () => planEvidence('S14 ประเมินแล้ว', { score: 5 })],
-    ['ยืนยันยอมรับผลทั้งแผน', async () => { const s = await planEvidence('S14 ยืนยัน', { score: 5 }); await confirm(s, { title: 'ยืนยันยอมรับผลการตรวจบำรุงยานพาหนะทั้งแผน', sub: P[0] + ' · ' + P[4] + ' คัน · คะแนนความพึงพอใจ 5 · ระบบจะแจ้งหน่วยงานผู้ดำเนินการ', ok: 'ยอมรับผล' }); return s; }],
-    ['ยอมรับผลทั้งแผนแล้ว', async () => { const s = await planEvidence('S14 ยอมรับแล้ว', { score: 5, done: true }); notify(s, 'ยอมรับผลการตรวจบำรุงยานพาหนะทั้งแผนสำเร็จ'); return s; }]]],
-  ['S15 · หน่วยงาน บันทึกและส่งประวัติงานบำรุงรักษา', [
-    ['ความคืบหน้ารายคัน (ยังไม่ครบ)', () => progressScreen('S15 ยังไม่ครบ', { done: 10 })],
-    ['ครบทุกคัน — ประวัติงานบำรุงรักษา', () => historyScreen('S15 ครบทุกคัน', {})],
-    ['ยืนยันส่งประวัติ', async () => { const s = await historyScreen('S15 ยืนยันส่ง', {}); await confirm(s, { title: 'ส่งประวัติให้หัวหน้าหน่วยงาน ตรวจสอบ', sub: 'ประวัติงานบำรุงรักษา ' + P[4] + ' คันของแผน ' + P[0] + ' จะแก้ไขไม่ได้จนกว่าหัวหน้าจะตรวจเสร็จ', ok: 'ส่งประวัติ' }); return s; }],
-    ['ส่งแล้ว — รอหัวหน้าตรวจสอบ', async () => { const s = await historyScreen('S15 ส่งแล้ว', { sent: true }); notify(s, 'ส่งประวัติงานบำรุงรักษาให้หัวหน้าตรวจสอบแล้ว'); return s; }]]],
+  /* S13 ปรับ 10 พ.ย. 2569 (เจ้าของงาน Q19 Q23 Q28 · ผู้ดูแลยานพาหนะรับทราบ + ประเมินรายคัน) — รหัส L.1–L.5 เดิม (ยังไม่เคยรีวิว) เปลี่ยนเนื้อ · L.6 ต่อท้าย
+     S14 ตรวจหลักฐานทั้งแผน และ S15 ส่งประวัติ ตัดออก 10 พ.ย. 2569 (บล็อก M N ว่าง) — รับทราบครบทุกคันแล้วประวัติไปหัวหน้าหน่วยงาน (S16) เอง */
+  ['S13 · ผู้ดูแลยานพาหนะ รับทราบผลและประเมินความพึงพอใจรายคัน', [
+    ['รายการผลการบำรุงรักษารอรับทราบ — มีแจ้งเตือนใหม่', async () => { const s = await ackList('S13 รายการ', {}); bell(s, true); return s; }],
+    ['ผลการบำรุงรักษารายคัน — ยังไม่ประเมิน ปุ่มรับทราบกดไม่ได้', () => ackResult('S13 ยังไม่ประเมิน', {})],
+    ['คันที่บำรุงรักษาไม่ได้ — ฟอร์มเดียวกัน แสดงสาเหตุ รับทราบได้เลย', () => ackResult('S13 บำรุงรักษาไม่ได้', { cannot: true })],
+    ['ประเมินความพึงพอใจแล้ว — ปุ่มรับทราบกดได้', () => ackResult('S13 ประเมินแล้ว', { score: 4 })],
+    ['รับทราบแล้ว — ปุ่มหาย ป้ายรับทราบแล้ว', async () => { const s = await ackResult('S13 รับทราบแล้ว', { score: 4, done: true }); notify(s, 'รับทราบผลการบำรุงรักษา ' + TRIP_CARS[JOB_I][0] + ' แล้ว'); return s; }],
+    ['เปิดแผงแจ้งเตือน — ปิดงานแล้ว รอรับทราบ', async () => { const s = await ackList('S13 แผงแจ้งเตือน', {}); bell(s, true); await notiPanel(s, [NOTI_ACK, NOTI_OLD], '1 แจ้งเตือนใหม่'); return s; }]]],
   ['S16 · หัวหน้าหน่วยงาน ตรวจสอบประวัติงานบำรุงรักษา', [
     ['รายการประวัติรอตรวจสอบ', () => roleList('S16 รายการ', { title: 'ประวัติรอตรวจสอบ', search: 'ค้นหาเลขที่ MR, ชื่อแผน', cols: HQ_COLS, rows: hqRows('wait') })],
     ['ประวัติงานบำรุงรักษาของแผน', () => headHistory('S16 ประวัติของแผน', {})],
-    ['ตีกลับ — ระบุเหตุผล', async () => { const s = await headHistory('S16 ตีกลับ', {}); await reason(s, 'ตีกลับประวัติงานบำรุงรักษา', 'เหตุผลที่ตีกลับ', 'ผลน้ำมันไฮโดรลิกของ 80-5738 น่าน ไม่ผ่าน ต้องระบุการแก้ไขก่อนบันทึกประวัติ', 'ตีกลับ'); return s; }],
+    ['ตีกลับ — ระบุเหตุผล', async () => { const s = await headHistory('S16 ตีกลับ', {}); await reason(s, 'ตีกลับประวัติงานบำรุงรักษา', 'เหตุผลที่ตีกลับ', HIST_BACK, 'ตีกลับ'); return s; }],
     ['ยืนยันอนุมัติประวัติ', async () => { const s = await headHistory('S16 ยืนยันอนุมัติ', {}); await confirm(s, { title: 'ยืนยันอนุมัติประวัติงานบำรุงรักษา', sub: P[0] + ' · ' + P[4] + ' คัน · บันทึกเป็นประวัติทางการ', ok: 'อนุมัติ' }); return s; }],
-    ['อนุมัติประวัติแล้ว', async () => { const s = await headHistory('S16 อนุมัติแล้ว', { st: 'ok' }); notify(s, 'อนุมัติประวัติงานบำรุงรักษาสำเร็จ'); return s; }]]],
-  ['S17 · หน่วยงาน ออกรายงานผลและปิดงาน', [
+    ['อนุมัติประวัติแล้ว', async () => { const s = await headHistory('S16 อนุมัติแล้ว', { st: 'ok' }); notify(s, 'อนุมัติประวัติงานบำรุงรักษาสำเร็จ'); return s; }],
+    // 10 พ.ย. 2569 S15 ตัดออก ⇒ ตีกลับแล้วผู้ดำเนินการแก้และส่งใหม่ที่หน้าประวัติของแผน (ต่อท้าย O.6 รหัสเดิมไม่เลื่อน)
+    ['ผู้ดำเนินการ — ประวัติถูกตีกลับ เห็นเหตุผล แก้แล้วส่งใหม่', () => historyScreen('S16 ผู้ดำเนินการ ถูกตีกลับ', { returned: true })]]],
+  ['S17 · ผู้ดำเนินการ ออกรายงานผลและปิดงาน', [
     ['รายงานผล (ประวัติผ่านแล้ว)', () => reportScreen('S17 รายงานผล', {})],
     ['ยืนยันปิดงาน', async () => { const s = await reportScreen('S17 ยืนยันปิดงาน', {}); await confirm(s, { title: 'ยืนยันปิดงาน', sub: 'แผน ' + P[0] + ' จะเปลี่ยนสถานะเป็น "ปิดงานแล้ว" และแก้ไขข้อมูลไม่ได้อีก', ok: 'ปิดงาน' }); return s; }],
     ['ปิดงานแล้ว', async () => { const s = await reportScreen('S17 ปิดงานแล้ว', { closed: true }); notify(s, 'ปิดงานสำเร็จ'); return s; }]]],
-  ['S18 · หน่วยงาน คำนวณต้นทุนการบำรุงรักษา', [
+  ['S18 · ผู้ดำเนินการ คำนวณต้นทุนการบำรุงรักษา', [
     ['ต้นทุนการบำรุงรักษา + Summary', () => costScreen('S18 ต้นทุน')],
     ['ดาวน์โหลด Excel แล้ว', async () => { const s = await costScreen('S18 ดาวน์โหลดแล้ว'); notify(s, 'ดาวน์โหลดไฟล์ Excel แล้ว'); return s; }]]],
   // S19 S20 ต่อท้าย ⇒ ตัวอักษรบล็อกของ scenario เดิมไม่ขยับ · ลำดับในเรื่องอยู่ที่ journey (build.json)
-  ['S19 · หน่วยงาน แก้ไขแผนบำรุงรักษา แล้วส่งอนุมัติใหม่', [
+  ['S19 · ผู้สร้างแผน แก้ไขแผนบำรุงรักษา แล้วส่งอนุมัติใหม่', [
     ['เมนู "…" → แก้ไข', async () => { const s = await listScreen('S19 เมนู', { rows: [planAs('returned')].concat(ownPlans(UNITS[0])) }); planMenu(s, MENU); return s; }],
     ['รายละเอียดแผน — ส่งกลับแก้ไข', () => planDetail('S19 รายละเอียดแผน', { status: 'returned' })],
     ['ฟอร์มแก้ไข Prefield ข้อมูลที่สร้างไว้', () => planForm('S19 ฟอร์มแก้ไข', Object.assign({ alert: ALERT_RETURNED }, EDIT_FORM))],
@@ -2679,7 +2673,7 @@ const SCENARIOS = [
     ['แผนอนุมัติแล้ว — เมนู "…" → แก้ไข', async () => { const s = await listScreen('S19 เมนูอนุมัติแล้ว', { rows: [planAs('approved')].concat(ownPlans(UNITS[0])) }); planMenu(s, MENU.slice(0, 2)); return s; }],
     ['แผนอนุมัติแล้ว — ฟอร์มแก้ไข ต้องส่งอนุมัติใหม่', () => planForm('S19 ฟอร์มอนุมัติแล้ว', Object.assign({ alert: ALERT_APPROVED }, EDIT_FORM))],
     ['แผนดำเนินการแล้ว — เมนู "…" ดูรายละเอียดอย่างเดียว', async () => { const s = await listScreen('S19 เมนูดำเนินการ', { rows: ownPlans(UNITS[0]) }); planMenu(s, MENU.slice(0, 1)); return s; }]]],
-  ['S20 · หน่วยงาน ลบแผนบำรุงรักษาที่ยังไม่อนุมัติ', [
+  ['S20 · ผู้สร้างแผน ลบแผนบำรุงรักษาที่ยังไม่อนุมัติ', [
     ['เมนู "…" → ลบ ในหน้า List', async () => { const s = await listScreen('S20 เมนู', { rows: [NEW_PLAN].concat(ownPlans(UNITS[0])) }); planMenu(s, MENU); return s; }],
     ['ยืนยันการลบแผน ในหน้า List', async () => { const s = await listScreen('S20 ยืนยันการลบ List', { rows: [NEW_PLAN].concat(ownPlans(UNITS[0])) }); await confirm(s, DELETE_CONFIRM); return s; }],
     ['ลบสำเร็จ (ลบที่ List หรือ Detail ก็กลับมานี่)', async () => { const s = await listScreen('S20 ลบสำเร็จ', { rows: ownPlans(UNITS[0]) }); notify(s, 'ลบแผนบำรุงรักษาสำเร็จ'); return s; }],
@@ -2687,7 +2681,7 @@ const SCENARIOS = [
     ['ยืนยันการลบแผน ในหน้า Detail', async () => { const s = await planDetail('S20 ยืนยันการลบ Detail', {}); await confirm(s, DELETE_CONFIRM); return s; }],
     ['แผนอนุมัติแล้ว — หน้ารายละเอียดไม่มีปุ่มลบ', () => planDetail('S20 อนุมัติแล้ว', { status: 'approved' })]]],
   /* S21 ปรับ 5 พ.ย. 2569 (เจ้าของงาน): จัดการอะไหล่ทีละคัน (หน้าแยก) · เข้าจากไอคอนแก้ไขที่แถวรถในแท็บไตรมาส n · บันทึกแล้วรวมลงหัวข้ออะไหล่ในไตรมาส (ตั้งต้นว่าง) */
-  ['S21 · หน่วยงาน จัดการอะไหล่ของยานพาหนะแต่ละคันในแผน', [
+  ['S21 · ผู้สร้างแผน จัดการอะไหล่ของยานพาหนะแต่ละคันในแผน', [
     ['แท็บไตรมาส 1 — ทุกคันยังไม่กำหนด อะไหล่ในไตรมาสว่าง', () => planForm('S21 แท็บไตรมาส 1', Object.assign({ values: FILLED, alloc: A_ALL, q: 1 }, R2))],
     ['เมนู … → แก้ไข — หน้าจัดการอะไหล่ของยานพาหนะ (ยังไม่กำหนด)', () => carPartsScreen('S21 สิ่งที่ต้องทำของยานพาหนะ', {})],
     ['เลือกยานพาหนะคันอื่น — รายการยานพาหนะในไตรมาสเปิด', () => carPartsScreen('S21 เลือกยานพาหนะ', { carOpen: true })],
@@ -2705,7 +2699,7 @@ const SCENARIOS = [
   /* S22 กบค. คลัง รับทราบรายการอะไหล่รายไตรมาส — ตัดออก 6 พ.ย. 2569 (เจ้าของงาน "ตอนที่เลือกรถเข้าแผน เลือกอะใหล่ อยากให้ส่งจำนวนทั้งปีไปที่ smartinventory โดยยังไม่ส่งให้ตัด แค่ inform" + เลือกส่งตอนแผนอนุมัติแล้ว แทนการให้คลังกดรับทราบ)
      ⇒ ระบบแจ้ง Smart Inventory ตอน S2 อนุมัติ · บล็อก U เว้นว่าง · warehouseScreen/whParts คงไว้ */
   /* S24 ข้อมูลการบำรุงรักษารายคัน (เจ้าของงาน 4 พ.ย. 2569 · เลขชั่วคราว = W ต่อท้าย) — แท็บ การบำรุงรักษา ของ Vehicle Management */
-  ['S24 · หน่วยงาน ติดตามข้อมูลการบำรุงรักษารายคันและกำหนดครั้งถัดไป', [
+  ['S24 · ผู้ดำเนินการ ติดตามข้อมูลการบำรุงรักษารายคันและกำหนดครั้งถัดไป', [
     ['แท็บการบำรุงรักษา — ยานพาหนะทุกคัน เรียงกำหนดครั้งถัดไป', () => maList('S24 การบำรุงรักษา', {})],
     ['ค้นหาทะเบียน', () => maList('S24 ค้นหาทะเบียน', { query: '82-1145', rows: [5] })],
     ['ค้นหาไม่พบ', () => maList('S24 ค้นหาไม่พบ', { query: '99-9999', rows: [] })],
@@ -2715,7 +2709,7 @@ const SCENARIOS = [
     ['รายละเอียดยานพาหนะ — แท็บตารางบำรุงรักษา', () => maDetail('S24 ตารางบำรุงรักษา', {})],
     ['ประวัติ กดปุ่ม … — ดูรายละเอียดงานที่ปิดแล้ว', () => maDetail('S24 เมนูประวัติ', { menu: true })]]],
   /* S25 ย้ายรถที่บำรุงรักษาไม่ได้ไปไตรมาสอื่น (เจ้าของงาน 5 พ.ย. 2569 · บล็อก X) — ทางเข้าหน้าไตรมาส (S6) · ไปได้เฉพาะไตรมาสถัดไปของแผนเดียวกัน · รถและอะไหล่ตามแผนย้ายตาม · ไม่ต้องอนุมัติใหม่ */
-  ['S25 · หน่วยงาน ย้ายยานพาหนะที่บำรุงรักษาไม่ได้ไปไตรมาสอื่น', [
+  ['S25 · ผู้ดำเนินการ ย้ายยานพาหนะที่บำรุงรักษาไม่ได้ไปไตรมาสอื่น', [
     ['หน้าไตรมาส 1 — ยานพาหนะที่บำรุงรักษาไม่ได้ ป้ายบำรุงรักษาไม่ได้', () => moveQuarter('S25 ไตรมาส 1 ยานพาหนะบำรุงรักษาไม่ได้', 0)],
     ['กดปุ่ม … ของยานพาหนะ — ย้ายไปไตรมาสอื่น', async () => { const s = await moveQuarter('S25 เมนูย้ายไปไตรมาสอื่น', 0); moveMenu(s, MOVE_I); return s; }],
     ['popup ย้ายไปไตรมาสอื่น — ยังไม่เลือกไตรมาส', async () => { const s = await moveQuarter('S25 popup ย้ายไปไตรมาสอื่น', 0); await moveModal(s, { cur: 0 }); return s; }],
@@ -2751,7 +2745,6 @@ const FLOW_NODES = {
     'ถูกส่งกลับแก้ไข — คันที่ปิดงานไว้': 'D8', 'ถูกส่งกลับแก้ไข — คันที่แจ้งบำรุงรักษาไม่ได้': 'D8', 'หน้ารายละเอียดแผนเดินทาง — สถานะงานรายคันระหว่างทาง ตรวจแล้ว 2/6': 'D1' },
   S24: { 'แท็บการบำรุงรักษา — ยานพาหนะทุกคัน เรียงกำหนดครั้งถัดไป': 'D1', 'ค้นหาทะเบียน': 'A1', 'ค้นหาไม่พบ': 'D2', 'กดตัวกรอง — แผงตัวกรอง': 'D3', 'กรองแล้ว — ใกล้ครบกำหนดบำรุงรักษา': 'D4', 'กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด': 'A4', 'รายละเอียดยานพาหนะ — แท็บตารางบำรุงรักษา': 'D5', 'ประวัติ กดปุ่ม … — ดูรายละเอียดงานที่ปิดแล้ว': 'A5' },
   S12: { 'Step 2 สรุปงานก่อนปิดงาน — เลือกเก็บตัวอย่าง ใส่ผลการทดสอบได้ (ถ้ามี)': 'A1', 'ปิดงานโดยยังไม่มีผล — ป้ายรอผลตรวจน้ำมัน': 'D1', 'กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด': 'A3', 'หน้างานรายคัน — ส่วนผลการทดสอบยังว่าง': 'D2', 'กดบันทึกโดยยังไม่เลือกผล': 'Q2', 'เลือกผล + แนบไฟล์ (ถ้ามี)': 'A4', 'บันทึกสำเร็จ — แสดงผลที่บันทึก แก้ได้ภายหลัง': 'D3', 'กลับหน้าแผนเดินทาง — ป้ายน้ำมันไม่ผ่าน': 'D4' },
-  S15: { 'ความคืบหน้ารายคัน (ยังไม่ครบ)': 'D1', 'ครบทุกคัน — ประวัติงานบำรุงรักษา': 'D2', 'ยืนยันส่งประวัติ': 'A2', 'ส่งแล้ว — รอหัวหน้าตรวจสอบ': 'D3' },
   S17: { 'รายงานผล (ประวัติผ่านแล้ว)': 'D2', 'ยืนยันปิดงาน': 'Q1', 'ปิดงานแล้ว': 'D3' },
   S18: { 'ต้นทุนการบำรุงรักษา + Summary': 'D2 D3', 'ดาวน์โหลด Excel แล้ว': 'A3' },
   S19: { 'เมนู "…" → แก้ไข': 'A1', 'รายละเอียดแผน — ส่งกลับแก้ไข': 'A1', 'ฟอร์มแก้ไข Prefield ข้อมูลที่สร้างไว้': 'D3', 'เอาภาคหรือตัวกรองออก — ยานพาหนะที่จัดไว้แล้วยังอยู่': 'D4', '“ยกเลิก” → ยืนยันการออก กรณีที่มีการแก้ไขเกิดขึ้น': 'D5', 'ยืนยันการแก้ไขแผน': 'D6', 'บันทึกไม่สำเร็จ': 'D7', 'บันทึกสำเร็จ — รออนุมัติ': 'D8', 'แผนอนุมัติแล้ว — เมนู "…" → แก้ไข': 'A1', 'แผนอนุมัติแล้ว — ฟอร์มแก้ไข ต้องส่งอนุมัติใหม่': 'D3', 'แผนดำเนินการแล้ว — เมนู "…" ดูรายละเอียดอย่างเดียว': 'D2' },
@@ -2762,10 +2755,9 @@ const FLOW_NODES = {
   S7: { 'รายการแผนเดินทางรออนุมัติ': 'D1', 'รายละเอียดแผนเดินทาง — ผลการพิจารณา ยังไม่เลือก': 'D2 A2', 'อนุมัติ — ยืนยันอนุมัติแผนเดินทาง': 'A5', 'อนุมัติแผนเดินทางสำเร็จ': 'D4', 'เลือกส่งกลับแก้ไข — ช่องเหตุผลขึ้น': 'A3', 'ส่งกลับแก้ไข — Validation กรณีไม่ได้ระบุเหตุผล, Out of focus': 'D5', 'ส่งกลับแก้ไข — ยืนยันส่งกลับ': 'A4', 'ส่งกลับแล้ว': 'D3' },
   S9: { 'เลือกจ้างดำเนินการ — ช่องผู้รับจ้างขึ้น': 'D2', 'เลือกผู้รับจ้าง — รายชื่อผู้รับจ้างเปิด': 'A3', 'กดเพิ่มยานพาหนะ — popup ยานพาหนะในแผนเดินทางอื่นแสดงแต่เลือกไม่ได้': 'D5', 'แก้ไขยานพาหนะในแผนเดินทาง — ผู้ดูแลยานพาหนะ สถานที่ และวันดำเนินการ ค่าเริ่มต้นทั้งช่วงวันทำงาน': 'A5', 'Validation กรณีไม่ได้ระบุข้อมูล, Out of focus': 'Q1', 'กรอกครบ': 'A6', 'ยืนยันแล้ว — ส่งให้ผู้อนุมัติ (รออนุมัติ)': 'D3' },
   S8: { 'กรย. — มีแจ้งเตือนใหม่ (จุดแดงที่กระดิ่ง)': 'D1', 'กรย. — เปิดแผงแจ้งเตือน': 'A1', 'กรย. — แผนเดินทาง ดูอย่างเดียว (ยานพาหนะทุกคันในใบ)': 'D2', 'หน่วยงานเจ้าของยานพาหนะ — เปิดแผงแจ้งเตือน': 'A2', 'หน่วยงานเจ้าของยานพาหนะ — แผนเดินทาง ดูอย่างเดียว (เฉพาะยานพาหนะของหน่วยงาน)': 'D3' },
-  S13: { 'รายการรอตรวจสอบ': 'D1', 'ผลการตรวจบำรุงยานพาหนะรายคัน': 'D2', 'คันที่บำรุงรักษาไม่ได้ — สาเหตุ': 'D2', 'ยืนยันยอมรับผล': 'A3', 'ยอมรับผลแล้ว': 'D3' },
-  S14: { 'รายการ — ครบทุกคันแล้ว': 'D1', 'หลักฐานทั้งแผน — ยังไม่ประเมิน': 'D2', 'ประเมินความพึงพอใจแล้ว': 'A3', 'ยืนยันยอมรับผลทั้งแผน': 'A4', 'ยอมรับผลทั้งแผนแล้ว': 'D3' },
+  S13: { 'รายการผลการบำรุงรักษารอรับทราบ — มีแจ้งเตือนใหม่': 'D1', 'ผลการบำรุงรักษารายคัน — ยังไม่ประเมิน ปุ่มรับทราบกดไม่ได้': 'D2', 'คันที่บำรุงรักษาไม่ได้ — ฟอร์มเดียวกัน แสดงสาเหตุ รับทราบได้เลย': 'D3', 'ประเมินความพึงพอใจแล้ว — ปุ่มรับทราบกดได้': 'A2 D4', 'รับทราบแล้ว — ปุ่มหาย ป้ายรับทราบแล้ว': 'A3 D5', 'เปิดแผงแจ้งเตือน — ปิดงานแล้ว รอรับทราบ': 'A0 D0' },
   S25: { 'หน้าไตรมาส 1 — ยานพาหนะที่บำรุงรักษาไม่ได้ ป้ายบำรุงรักษาไม่ได้': 'D0', 'กดปุ่ม … ของยานพาหนะ — ย้ายไปไตรมาสอื่น': 'A1', 'popup ย้ายไปไตรมาสอื่น — ยังไม่เลือกไตรมาส': 'A2 D2', 'เลือกไตรมาส 2 — ปุ่มย้ายยานพาหนะกดได้': 'A3', 'กรณีไตรมาส 3 — ไตรมาสก่อนหน้าและไตรมาสปัจจุบันเลือกไม่ได้': 'D2', 'ยืนยันการย้ายยานพาหนะ': 'D3', 'ย้ายสำเร็จ — ไตรมาส 1 ไม่มียานพาหนะคันนี้แล้ว': 'D4', 'หน้าไตรมาส 2 — ยานพาหนะที่ย้ายมา ยังไม่มีแผนเดินทาง': 'A4 D5', 'หน้าไตรมาส 2 — อะไหล่ในไตรมาสรวมอะไหล่ของยานพาหนะที่ย้ายมา': 'D6', 'ไตรมาส 4 — เมนูย้ายไปไตรมาสอื่นกดไม่ได้': 'D1' },   // 5 พ.ย. 2569 บล็อก X
-  S16: { 'รายการประวัติรอตรวจสอบ': 'D1', 'ประวัติงานบำรุงรักษาของแผน': 'D2', 'ตีกลับ — ระบุเหตุผล': 'A3', 'ยืนยันอนุมัติประวัติ': 'A4', 'อนุมัติประวัติแล้ว': 'D4' },
+  S16: { 'รายการประวัติรอตรวจสอบ': 'D1', 'ประวัติงานบำรุงรักษาของแผน': 'D2', 'ตีกลับ — ระบุเหตุผล': 'A3', 'ยืนยันอนุมัติประวัติ': 'A4', 'อนุมัติประวัติแล้ว': 'D4', 'ผู้ดำเนินการ — ประวัติถูกตีกลับ เห็นเหตุผล แก้แล้วส่งใหม่': 'D3 D5 A5' },
 };
 
 /* ---------- กลุ่ม = scenario (แพทเทิร์นเดียวกับ Overhaul — เจ้าของงานเคาะ 20 ต.ค. 2569: 1 scenario = 1 บล็อก · แถว Desktop แล้ว Mobile) ---------- */
@@ -2773,7 +2765,7 @@ const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 /* ตัวอักษรบล็อกผูกกับตำแหน่งใน BLOCK_OF ตายตัว (2 พ.ย. 2569) — ตัด/รวม scenario แล้วบล็อกอื่นไม่เลื่อน ชื่อเฟรมที่ export ไปแล้วยังตรง · S5 รวมเข้า S4 ⇒ D เว้นว่าง
    4 พ.ย. 2569 ตัด S11 (J) และ S23 (V) ⇒ คงช่องไว้เป็นป้ายกันที่ ('S11 ตัดออก' · 'S23 ตัดออก' ไม่ตรงกับ scenario ไหน) ถ้าเอาออกจาก array ตัวอักษร K–U และ W จะเลื่อน ชื่อเฟรม Figma ที่ export แล้วจะไม่ตรง
    10 พ.ย. 2569 เอา S23 กลับ (R87) ⇒ ช่อง V กลับเป็น 'S23' ตัวอักษรอื่นไม่เลื่อน · J ยังว่าง (S11 ยังตัด) */
-const BLOCK_OF = ['S1', 'S2', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11 ตัดออก', 'S12', 'S13', 'S14', 'S15', 'S16', 'S17', 'S18', 'S19', 'S20', 'S21', 'S22 ตัดออก', 'S23', 'S24', 'S25'];   // S24 ข้อมูลการบำรุงรักษา (4 พ.ย. 2569) = W · J ว่าง · V = S23 (เอากลับ 10 พ.ย. 2569)
+const BLOCK_OF = ['S1', 'S2', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11 ตัดออก', 'S12', 'S13', 'S14 ตัดออก', 'S15 ตัดออก', 'S16', 'S17', 'S18', 'S19', 'S20', 'S21', 'S22 ตัดออก', 'S23', 'S24', 'S25'];   // S24 ข้อมูลการบำรุงรักษา (4 พ.ย. 2569) = W · J ว่าง · V = S23 (เอากลับ 10 พ.ย. 2569)
 const GROUPS = SCENARIOS.map(([title, screens], i) => {
   const tag0 = title.split(' · ')[0], code = BLOCK_OF.indexOf(tag0) >= 0 ? LETTERS[BLOCK_OF.indexOf(tag0)] : LETTERS[i], tag = title.split(' · ')[0], rest = title.split(' · ').slice(1).join(' · ');
   const map = FLOW_NODES[tag] || {};
@@ -2786,6 +2778,27 @@ const GROUPS = SCENARIOS.map(([title, screens], i) => {
 const PAGE_NAMES = ['Maintainance', 'Maintenance'];
 const BLOCK_H = 7000;   // ความสูงที่เผื่อต่อ 1 บล็อก scenario ตอนเช็คว่าหน้าเหลือที่พอไหม
 /* ย้ายบล็อกล่าสุดที่ล้นขอบ (หรือที่ค้างบนหน้า -2 จากปุ่มรุ่นก่อน) มาไว้เหนือของเดิมบนหน้า Maintainance ไม่ต้องสร้างใหม่ · ของเดิมที่เหลือไม่แตะ แค่รายงานจำนวน */
+/* ลบจอของบล็อกที่ตัดออก (เจ้าของงาน 10 พ.ย. 2569 "ลบจอบล็อก M N เก่าออกให้ด้วย") — บล็อกว่างอ่านจาก BLOCK_OF ("… ตัดออก": J S11 · M S14 · N S15 · U S22)
+   ทุกหน้า Maintainance / Maintenance (รวม -2 -3) · ลบเฉพาะชิ้นชั้นบนสุดที่ปลั๊กอินสร้าง: จอ "MT / M.1 · …" · ป้าย "MT · M …" "MT · M.1 …" · flowchart "MT · M flowchart S14"
+   journey "MT · journey flowchart S14" · จอชุดเก่าที่ชื่อมี " · S14 — " · ชิ้นอื่นไม่แตะ · Ctrl/Cmd+Z ย้อนได้ */
+const CUT_BLOCKS = () => BLOCK_OF.map((t, i) => /ตัดออก/.test(t) ? [LETTERS[i], t.split(' ')[0]] : null).filter(Boolean);
+const cutHit = (n, P0) => CUT_BLOCKS().some(([L, tag]) => n.indexOf(P0 + ' / ' + L + '.') === 0 || n.indexOf(P0 + ' · ' + L + ' ') === 0 || n.indexOf(P0 + ' · ' + L + '.') === 0
+  || (n.indexOf(P0 + ' / ') === 0 && n.indexOf(' · ' + tag + ' — ') > 0) || n === P0 + ' · journey flowchart ' + tag);
+async function purgeCut() {
+  const P0 = PLUGIN.prefix;
+  await figma.loadAllPagesAsync();
+  const norm = (p) => p.name.trim().toLowerCase().replace(/^[^a-z0-9ก-๙]+/, '').replace(/[^a-z0-9ก-๙]+$/, '');
+  const pages = figma.root.children.filter(p => /^(maintainance|maintenance)(-\d+)?$/.test(norm(p)));
+  log('ลบจอของบล็อกที่ตัดออก: ' + CUT_BLOCKS().map(([L, t]) => L + ' (' + t + ')').join(' · ') + ' · หน้า ' + (pages.map(p => p.name.trim()).join(', ') || 'ไม่พบหน้า Maintainance'));
+  let total = 0;
+  for (const pg of pages) {
+    const dead = pg.children.filter(n => cutHit(n.name, P0));
+    const by = {}; dead.forEach(n => { const k = (n.name.match(/^\S+ [\/·] ([A-Z])/) || [])[1] || (n.name.match(/ (S\d+)( —|$)/) || [])[1] || '?'; by[k] = (by[k] || 0) + 1; });
+    dead.forEach(n => n.remove()); total += dead.length;
+    if (dead.length) log('  · หน้า ' + pg.name.trim() + ' ลบ ' + dead.length + ' ชิ้น (' + Object.keys(by).map(k => k + ' ' + by[k]).join(' · ') + ')');
+  }
+  log(total ? '✓ ลบแล้ว ' + total + ' ชิ้น · ย้อนได้ด้วย Ctrl/Cmd+Z' : '✓ ไม่มีจอของบล็อกที่ตัดออกเหลืออยู่');
+}
 async function moveLatest() {
   const main = (await namedPage(PAGE_NAMES)).page, tag = PLUGIN.prefix + ' · ', scr = PLUGIN.prefix + ' / ';
   await figma.setCurrentPageAsync(main);
@@ -2931,13 +2944,16 @@ async function clearPrototype(page) {
    parts: desktop (userflow + จอ desktop) · mobile · journey · storymap · usecase — เรียงตามลำดับนี้ ต่อใต้ของเดิมทุกส่วน */
 /* ตาราง scenario (เจ้าของงาน 2 พ.ย. 2569 "อยากให้ทำตาราง เขียนใน figma") — ช่วงงาน/ผู้ทำจากตารางภาพรวม (หัวข้อ 0) ของ userflow · บล็อก/จำนวนจอจาก GROUPS
    เรียงตามลำดับงานจริง · ท้ายตารางมีกลุ่ม scenario ที่ตัดออก · สถานะรีวิว = ที่ไล่กับเจ้าของงานแล้วในรอบ 2 พ.ย. */
-const SCEN_SEQ = ['S1', 'S2', 'S19', 'S20', 'S21', 'S4', 'S6', 'S9', 'S7', 'S8', 'S10', 'S23', 'S25', 'S12', 'S13', 'S14', 'S15', 'S16', 'S17', 'S18', 'S24'];
+const SCEN_SEQ = ['S1', 'S2', 'S19', 'S20', 'S21', 'S4', 'S6', 'S9', 'S7', 'S8', 'S10', 'S23', 'S25', 'S12', 'S13', 'S16', 'S17', 'S18', 'S24'];
 const SCEN_REVIEW = { S1: 'ปรับตามรีวิว 5 พ.ย. · เลือกยานพาหนะแบบ A · เพิ่มยานพาหนะจากแท็บไตรมาสว่าง (เจ้าของงาน 5 พ.ย.)', S2: 'ปรับตามรีวิว 5 พ.ย.', S4: 'เปลี่ยนเป็นแดชบอร์ด 6 พ.ย. (รีวิว บล็อก C)', S21: 'ปรับตามเจ้าของงาน 5 พ.ย. · จัดการอะไหล่ทีละคัน', S19: 'ปรับตาม S1 2 พ.ย.',
-  S6: 'ปรับตามรีวิว 5 พ.ย.', S7: 'ทำตาม S2 5 พ.ย. · รอรีวิวจอ', S8: 'ใหม่ 3 พ.ย. · รอรีวิวจอ', S9: 'ใหม่ 3 พ.ย. · รอรีวิวจอ', S10: 'ปรับตามรีวิว 5 พ.ย. · แผนจ้าง Step 2 ไม่มีค่าใช้จ่ายและราคา 10 พ.ย.', S23: 'เอากลับ 10 พ.ย. · UI แบบ S10 การมองเห็นแบบเดิม · รอรีวิวจอ', S12: 'ปรับตามรีวิว 4 พ.ย.', S18: 'ยังไม่ออกแบบ (เจ้าของงาน 4 พ.ย.)', S24: 'ใหม่ 4 พ.ย. · รอรีวิวจอ', S25: 'ใหม่ 5 พ.ย. · รอรีวิวจอ' };   // 4 พ.ย. 2569: ทำตามที่เจ้าของงานสั่งแล้ว แต่ยังไม่ได้ไล่จอด้วยกัน
+  S6: 'ปรับตามรีวิว 5 พ.ย.', S7: 'ทำตาม S2 5 พ.ย. · รอรีวิวจอ', S8: 'ใหม่ 3 พ.ย. · รอรีวิวจอ', S9: 'ใหม่ 3 พ.ย. · รอรีวิวจอ', S10: 'ปรับตามรีวิว 5 พ.ย. · แผนจ้าง Step 2 ไม่มีค่าใช้จ่ายและราคา 10 พ.ย.', S23: 'เอากลับ 10 พ.ย. · UI แบบ S10 การมองเห็นแบบเดิม · รอรีวิวจอ', S12: 'ปรับตามรีวิว 4 พ.ย.', S18: 'ยังไม่ออกแบบ (เจ้าของงาน 4 พ.ย.)', S24: 'ใหม่ 4 พ.ย. · รอรีวิวจอ', S25: 'ใหม่ 5 พ.ย. · รอรีวิวจอ', S13: 'ปรับ 10 พ.ย. ผู้ดูแลยานพาหนะรับทราบ + ประเมินรายคัน (Q19 Q23 Q28) · รอรีวิว', S16: 'O.6 ผู้ดำเนินการส่งใหม่หลังตีกลับ 10 พ.ย. (S15 ตัด)'
+};   // 4 พ.ย. 2569: ทำตามที่เจ้าของงานสั่งแล้ว แต่ยังไม่ได้ไล่จอด้วยกัน
 const SCEN_UPDATED = '10 พ.ย. 2569';   // วันที่ข้อมูลในตาราง scenario ล่าสุด — แก้ SCEN_REVIEW แล้วเปลี่ยนวันนี้ด้วย (ขึ้นที่หัวตาราง)
 const SCEN_CUT = [['S3', 'ผพจ. ออกเลขงานและจัดซื้ออะไหล่', 'ตัดออก 2 พ.ย.'], ['S5', 'หน่วยงาน เบิกอะไหล่ผ่านระบบจองอะไหล่', 'รวมเข้า S4 2 พ.ย.'],
   ['S11', 'หน่วยงาน ตรวจรับงานรายคันของผู้รับจ้างและรับคืนอะไหล่', 'ตัดออก 4 พ.ย. · หน่วยงานปิดงานแผนจ้างเองที่ S10 · S23 ส่งตรวจงานแล้ว ผู้ตรวจรับยังไม่เคาะ'],
-  ['S22', 'คลัง รับทราบรายการอะไหล่รายไตรมาส', 'ตัดออก 6 พ.ย. · ระบบแจ้ง Smart Inventory ตอนอนุมัติแผน (S2)']];
+  ['S22', 'คลัง รับทราบรายการอะไหล่รายไตรมาส', 'ตัดออก 6 พ.ย. · ระบบแจ้ง Smart Inventory ตอนอนุมัติแผน (S2)'],
+  ['S14', 'หน่วยงาน/เจ้าของยานพาหนะ ตรวจสอบหลักฐานและประเมินความพึงพอใจ (ครบทุกคัน)', 'ตัดออก 10 พ.ย. · รับทราบรอบเดียวรายคัน ประเมินย้ายไป S13 (Q28)'],
+  ['S15', 'หน่วยงาน บันทึกและส่งประวัติงานบำรุงรักษา', 'ตัดออก 10 พ.ย. · รับทราบครบทุกคันแล้วประวัติไปหัวหน้าหน่วยงาน (S16) เอง']];
 const SCEN_COLS = [['scenario', 110], ['บล็อก', 90], ['ชื่อ', 600], ['ผู้ทำ', 300], ['จอ', 90], ['สถานะรีวิว', 260]];
 function scenData() {
   const sec = DOCS.scenarios.sections.find(s => /^0\./.test(s.h)) || { rows: [] };
@@ -3028,6 +3044,7 @@ figma.ui.onmessage = async (msg) => {
     if (msg.type === 'build-activity') await buildActivity();
     if (msg.type === 'export-shots') await exportShots('flow-maintainance', msg.scen);   // msg.scen = scenario ที่ติ๊ก (9 พ.ย. 2569 แยก export FigJam ราย S)
     if (msg.type === 'move-latest') await moveLatest();
+    if (msg.type === 'purge-cut') await purgeCut();   // 10 พ.ย. 2569 ลบจอบล็อก M N (S14 S15) และบล็อกว่างอื่น
     if (msg.type === 'clear-proto') { const tp = await namedPage(PAGE_NAMES); await figma.setCurrentPageAsync(tp.page); await clearPrototype(tp.page); }
     if (msg.type === 'build-docs') await buildDocs({ parts: msg.parts });   // 30 ต.ค. 2569 ติ๊กเลือกส่วน / สร้างทั้งหมด   // 30 ต.ค. 2569 ส่งภาพจอบนหน้านี้ไป FigJam
     if (msg.type === 'check') { log('— เช็ค component (ไม่สร้างอะไร) —'); await resolveAll(NEEDED, true); log(deviceSetInfo()); }

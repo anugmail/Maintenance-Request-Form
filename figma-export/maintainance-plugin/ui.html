@@ -21,6 +21,8 @@
 <button id="activity" style="background:#0e7490">สร้าง flowchart กิจกรรม</button></p>
 <p><b>ลบลิงก์กดต่อจอ</b> — ลบลิงก์ที่กดแล้วไปจอถัดไปบนหน้า Maintainance จอ ปุ่ม และข้อความอยู่ครบ · interaction อื่นของ component ไม่ถูกแตะ<br>
 <button id="clearProto" style="background:#b42318">ลบลิงก์กดต่อจอบนหน้านี้</button> <button id="moveLatest" style="background:#0e7490">ย้ายบล็อกล่าสุดกลับเข้าหน้า Maintainance</button></p>
+<p><b>ลบจอของ scenario ที่ตัดออก</b> — ลบจอ ป้าย และ flowchart ของบล็อกว่าง (M = S14 · N = S15 ตัด 10 พ.ย. · J = S11 · U = S22) ทุกหน้า Maintainance · ชิ้นอื่นไม่แตะ · ย้อนได้ด้วย Ctrl/Cmd+Z<br>
+<button id="purgeCut" style="background:#b42318">ลบจอของบล็อกที่ตัดออก</button></p>
 <p><b>ส่งภาพจอไป FigJam</b> — export จอ desktop บนหน้าที่เปิดอยู่ (รวมจอที่แก้มือแล้ว) ไปที่ <code>figma-export/out/figjam/flow-maintainance/</code> · ต้องรัน <code>node figma-export/serve.js</code> ก่อน · แล้วสร้างบอร์ดด้วย <code>3-figjam-board.js --maintainance-flow-ui</code> · <b>ส่งราย S</b>: ติ๊ก scenario ในหัวข้อ "สร้างเฉพาะ scenario ที่เลือก" แล้วกด "ส่งภาพจอ scenario ที่เลือกไป FigJam"<br>
 <button id="shots" style="background:#334155">ส่งภาพจอบนหน้านี้ไป FigJam</button></p>
 <p><b>สร้างเฉพาะ scenario ที่เลือก</b> — รหัสตัวอักษร A–X = S1, S2, S4, S6–S10, S12–S21, S23–S25 (S11 ตัดออก 4 พ.ย. บล็อก J ว่าง · V = S23 ผู้รับจ้าง เอากลับ 10 พ.ย. · S22 ตัดออก 6 พ.ย. · S24 ข้อมูลการบำรุงรักษา = W · S25 = X · S3 ตัดออก · S5 รวมเข้า S4 2 พ.ย.) · อุปกรณ์: <label><input type="radio" name="dev" value="both" checked> ทั้งคู่</label> <label><input type="radio" name="dev" value="desktop"> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label><br>
@@ -47,6 +49,7 @@ document.getElementById('shots').onclick = () => send('export-shots');
 /* 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่" ⇒ ใช้ช่องติ๊ก scenario ชุดเดียวกับปุ่มสร้าง · ส่งเฉพาะจอของ S ที่ติ๊ก */
 document.getElementById('pickshots').onclick = () => { const scen = [...document.querySelectorAll('#pick input:checked')].map(i => i.dataset.s); if (!scen.length) { document.getElementById('log').textContent = 'ติ๊ก scenario ก่อน (ไม่ติ๊ก = ใช้ปุ่ม ส่งภาพจอบนหน้านี้ไป FigJam ด้านบน)'; return; } send('export-shots', { scen }); };
 document.getElementById('clearProto').onclick = () => send('clear-proto');
+document.getElementById('purgeCut').onclick = () => send('purge-cut');
 document.getElementById('moveLatest').onclick = () => send('move-latest');
 async function postFile(path, body) { const r = await fetch(SERVE + path.split('/').map(encodeURIComponent).join('/'), { method: 'POST', body }); if (!r.ok) throw new Error(path + ' ' + r.status); }
 let shotOk = 0, shotErr = 0;

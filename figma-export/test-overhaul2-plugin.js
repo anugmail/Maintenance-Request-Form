@@ -424,7 +424,7 @@ const MODE_CHECK = process.env.MODE === 'check';
      ห้ามถอยไปแถบวาดเองเงียบๆ เมื่อ component มีอยู่ */
   if (code.includes('async function blockHeader') && SETS.has('Header') && process.env.R19 !== '0') {
     const P0 = process.env.PREFIX || 'OH2', pv = (n) => n.variantProperties || {};
-    for (const b of labels.filter(n => !/ · (Device|Desktop|Mobile)$/.test(n.name) && !/ (flowchart|userflow) S\d/.test(n.name) && n.name.indexOf(P0 + ' · journey') !== 0 && n.name.indexOf(P0 + ' · ป้าย ') !== 0 && !/ · (use case|user story mapping|scenario|use case ตาม scenario|user journey swimlane)$/.test(n.name))) {
+    for (const b of labels.filter(n => !/ · (Device|Desktop|Mobile)$/.test(n.name) && !/(flowchart|userflow)/.test(n.name) && n.name.indexOf(P0 + ' · journey') !== 0 && n.name.indexOf(P0 + ' · ป้าย ') !== 0 && !/ · (use case|user story mapping|scenario|use case ตาม scenario|user journey swimlane)$/.test(n.name))) {
       const code1 = b.name.slice(P0.length + 3).split(' ')[0], isState = /\.\d+$/.test(code1), isPhase = code1 === 'ช่วง';
       if (b.type !== 'INSTANCE') { logs.push('⚠ R19 แถบ ' + b.name.slice(0, 50) + ' วาดเอง ทั้งที่ไฟล์มี component Header (Design Annotations)'); continue; }
       const want = (code1 === 'Journey' || code1 === 'Page') ? 'Header' : 'Subheader';   // หน้าจริงของ UI Release#2: Type=Header 1 ตัวต่อหน้า · บล็อกตัวอักษร/state/ช่วงงาน = Subheader

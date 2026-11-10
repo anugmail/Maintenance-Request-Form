@@ -79,6 +79,16 @@ function check(screens, opt) {   // opt.inFile(ชื่อ) = ไฟล์ม�
         fail(r, sc, r.component + ' แท็บไม่ตรง ' + r.tabTexts.join(' · '));   // R88 แท็บของหน้าอนุมัติ (10 พ.ย. 2569)
       for (const t of r.forbidSectionTitles || []) if (all.some(x => isInst(x, 'Section header') && shown(x) && prop(x, 'Title') === t)) fail(r, sc, 'ยังมีหัวข้อเดิม "' + t + '"');
     }
+    // R89 ปุ่มสีตามหน้าจริง (10 พ.ย. 2569 S13 ปุ่มรับทราบสีเขียวแบบปุ่ม "ตรวจแล้ว" หน้า 5.14 - 5.15 UI Release#2): ปุ่มข้อความ text ที่กดได้ ต้องพื้นสี fill · forbidText = ข้อความปุ่มที่ห้ามมีในจอชุดนี้
+    for (const r of RULES.buttonFill || []) {
+      if (!new RegExp(r.screens).test(sc.name)) continue;
+      const bs = all.filter(x => isInst(x, r.component) && shown(x));
+      const hex = (f) => { const c = f && f.color; return c ? '#' + [c.r, c.g, c.b].map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('').toUpperCase() : ''; };
+      for (const b of bs.filter(x => (prop(x, 'Text') || '').trim() === r.text && !/Disabled/.test((x.variantProperties || {}).State || '')))
+        if (hex((b.fills || [])[0]) !== r.fill.toUpperCase()) fail(r, sc, 'ปุ่ม "' + r.text + '" ต้องพื้น ' + r.fill + ' (ได้ ' + (hex((b.fills || [])[0]) || 'ค่าตั้งต้นของ component') + ')');
+      for (const t of r.forbidText || []) if (all.some(x => /button/i.test(compName(x) || x.name) && shown(x) && (prop(x, 'Text') || '').trim() === t)) fail(r, sc, 'มีปุ่ม "' + t + '" — ' + r.source);
+      if (r.requireText && !bs.some(x => (prop(x, 'Text') || '').trim() === r.text) && (!r.requireUnless || !new RegExp(r.requireUnless).test(sc.name))) fail(r, sc, 'ไม่มีปุ่ม "' + r.text + '"');
+    }
     // R76 กล่องข้อมูลแยกตามประเภทงาน (5 พ.ย. 2569): ป้ายของ _Content item base ชุดแรกในจอต้องเรียงตาม labels · ป้ายใน forbidLabels (ไม่มีที่มาในข้อมูลของงานนั้น) ห้ามมีในจอ
     for (const r of RULES.displayLabels || []) {
       if (!new RegExp(r.screens).test(sc.name)) continue;
