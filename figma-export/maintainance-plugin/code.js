@@ -117,20 +117,35 @@ const INDEX = new Map();     // ชื่อ → COMPONENT_SET / COMPONENT ท�
 const ROUTE = {};            // ชื่อ → ได้มาทางไหน
 let IMPORT_ERR = '';
 const holderOf = (c) => (c.parent && c.parent.type === 'COMPONENT_SET') ? c.parent : c;
+/* ลดการโหลดทุกหน้า (10 พ.ย. 2569 เจ้าของงาน "ทำไมเวลาไฟล์เยอะๆ ถึงกินทรัพยากรของ figma เยอะ" · เลือกข้อ ก.)
+   เดิมทุกครั้งที่กดสร้างจะ loadAllPagesAsync + ไล่ component ทั้งไฟล์ และถ้ามีตัวที่ไม่อยู่ในไฟล์ (เช่น Component 1) จะสแกน instance ทั้งไฟล์ทุกรอบ
+   ⇒ 1) นำเข้าด้วย key ก่อน ไม่ต้องโหลดหน้าอื่น  2) ตัวที่ไม่มี key (component ยืมจากไฟล์ Maintain-D) เปิดตรงจาก id ที่จำไว้ในไฟล์ (pluginData ของ document)
+   3) ยังไม่ได้ และรอบก่อนไม่ได้บันทึกว่าไม่มีในไฟล์ → โหลดทุกหน้าแล้วหาแบบเดิม  4) ตัวที่หาไม่เจอจำไว้ รอบหน้าข้าม (ไม่สแกน instance ทั้งไฟล์ซ้ำ)
+   ปุ่ม "เช็ค component" (checkOnly) หาเต็มทุกครั้งแล้วเขียนที่จำไว้ใหม่ — วาง component ลงไฟล์ใหม่ให้กดปุ่มนี้ก่อน */
+const COMP_CACHE = 'componentCache';
+function readCompCache() { try { const c = JSON.parse(figma.root.getPluginData(COMP_CACHE) || '{}'); return { ids: c.ids || {}, absent: c.absent || [] }; } catch (e) { return { ids: {}, absent: [] }; } }
+function writeCompCache(c) { try { figma.root.setPluginData(COMP_CACHE, JSON.stringify(c)); } catch (e) { /* เขียนไม่ได้ก็หาเต็มรอบหน้า */ } }
 async function resolveAll(list, checkOnly) {
   list = list || NEEDED;
-  await figma.loadAllPagesAsync();
-  const local = new Map();
-  for (const n of figma.root.findAllWithCriteria({ types: ['COMPONENT_SET', 'COMPONENT'] })) {
-    if (n.type === 'COMPONENT' && n.parent && n.parent.type === 'COMPONENT_SET') continue;
-    if (!local.has(n.name)) local.set(n.name, n);
-  }
-  log('component ในไฟล์นี้เอง ' + local.size + ' ตัว');
+  const cache = checkOnly ? { ids: {}, absent: [] } : readCompCache();
+  let local = null;
+  const loadLocal = async () => {   // โหลดทุกหน้า + รายการ component ในไฟล์ — ทำเมื่อจำเป็นเท่านั้น ครั้งเดียวต่อรอบ
+    if (local) return local;
+    await figma.loadAllPagesAsync();
+    local = new Map();
+    for (const n of figma.root.findAllWithCriteria({ types: ['COMPONENT_SET', 'COMPONENT'] })) {
+      if (n.type === 'COMPONENT' && n.parent && n.parent.type === 'COMPONENT_SET') continue;
+      if (!local.has(n.name)) local.set(n.name, n);
+    }
+    log('โหลดทุกหน้าเพื่อหา component ในไฟล์นี้เอง ' + local.size + ' ตัว');
+    return local;
+  };
   /* ยืมจาก instance ในไฟล์ = ทางสุดท้าย — สแกนเฉพาะเมื่อมีตัวที่นำเข้าไม่ได้ (เดิมสแกนทุกรอบ: ไฟล์มี instance หลายพันตัว ช้ามาก) */
   const viaInst = new Map();
   let scanned = false;
   const scanInstances = async () => {
     if (scanned) return; scanned = true;
+    await loadLocal();
     log('กำลังสแกน instance ในไฟล์ (มีตัวที่นำเข้าจากไลบรารีไม่ได้)…');
     const insts = figma.root.findAllWithCriteria({ types: ['INSTANCE'] });
     for (const i of insts) {
@@ -142,6 +157,12 @@ async function resolveAll(list, checkOnly) {
       } catch (e) { /* ข้าม instance ที่เข้าไม่ถึง */ }
     }
   };
+  const fromCache = async (x) => {   // id ที่จำไว้ → node · ถูกลบหรือเปลี่ยนชื่อแล้ว = ไม่ใช้
+    const c = cache.ids[x]; if (!c || typeof figma.getNodeByIdAsync !== 'function') return null;
+    try { const n = await figma.getNodeByIdAsync(c[0]); if (n && !n.removed && (n.type === 'COMPONENT' || n.type === 'COMPONENT_SET') && n.name === c[2]) return [n, c[1]]; } catch (e) { /* หาใหม่ */ }
+    return null;
+  };
+  const skipped = [];
   const missing = [];
   for (const name of list) {
     const names = [name].concat(ALIAS[name] || []);
@@ -156,14 +177,23 @@ async function resolveAll(list, checkOnly) {
       try { got = k[1] ? await figma.importComponentSetByKeyAsync(k[0]) : await figma.importComponentByKeyAsync(k[0]); how = 'นำเข้าจากไลบรารี'; break; }
       catch (e) { importErr = (e && e.message) || String(e); }
     }
-    if (!got) for (const x of names) { if (local.has(x)) { got = local.get(x); how = 'สำเนาในไฟล์นี้ ⚠ ลิงก์วนในไฟล์นี้'; break; } }
-    if (!got) await scanInstances();
-    if (!got) for (const x of names) { if (viaInst.has(x)) { got = viaInst.get(x); how = 'จาก instance ในไฟล์ ⚠ อาจลิงก์ไปไลบรารีที่เปิดไม่ได้'; break; } }
+    if (!got) for (const x of names) { const c = await fromCache(x); if (c) { [got, how] = c; break; } }
+    const absent = !got && names.every(x => cache.absent.indexOf(x) >= 0);
+    if (absent) skipped.push(name);
+    if (!got && !absent) { const L = await loadLocal(); for (const x of names) { if (L.has(x)) { got = L.get(x); how = 'สำเนาในไฟล์นี้ ⚠ ลิงก์วนในไฟล์นี้'; break; } } }
+    if (!got && !absent) await scanInstances();
+    if (!got && !absent) for (const x of names) { if (viaInst.has(x)) { got = viaInst.get(x); how = 'จาก instance ในไฟล์ ⚠ อาจลิงก์ไปไลบรารีที่เปิดไม่ได้'; break; } }
+    if (got && how.indexOf('นำเข้าจากไลบรารี') !== 0) cache.ids[name] = [got.id, how, got.name];
+    if (got) cache.absent = cache.absent.filter(x => x !== name);
+    else if (!absent && cache.absent.indexOf(name) < 0) cache.absent.push(name);
     if (!got && importErr) how = 'นำเข้าไม่ได้: ' + importErr;
     if (importErr && !IMPORT_ERR && !NESTED_ONLY.has(name) && !SOFT_KEY.has(name)) IMPORT_ERR = importErr;   // ชิ้นส่วนซ้อน (เช่น _Dropdown menu item ที่ Figma ไม่ publish) ไม่ต้องเตือน
     if (got) { INDEX.set(name, got); ROUTE[name] = how + (got.name !== name ? ' (ชื่อ ' + got.name + ')' : ''); }
     else missing.push(name + (how ? ' — ' + how : ''));
   }
+  writeCompCache(cache);
+  if (!local) log('ไม่ต้องโหลดทุกหน้า — นำเข้าจากไลบรารีด้วย key · ตัวในไฟล์ใช้ตำแหน่งที่จำไว้');
+  if (skipped.length) log('ข้าม ' + skipped.length + ' ตัวที่รอบก่อนไม่เจอในไฟล์ (' + skipped.join(', ') + ') — ถ้าเพิ่งวางลงไฟล์ กด "เช็ค component" ก่อน');
   if (IMPORT_ERR) log('⚠ นำเข้าจากไลบรารีไม่ได้ (' + IMPORT_ERR + ') — ตัวที่ได้ "จาก instance ในไฟล์" จะกด Go to main component ไปไฟล์ Component ที่อ่านมาไม่ได้ · เปิดใช้ไลบรารี (Component) VMS Plus ในไฟล์นี้ (Assets → Libraries) แล้วรันใหม่');
   const by = {};
   for (const n of Object.keys(ROUTE)) { const r = ROUTE[n].split(' (')[0]; by[r] = (by[r] || 0) + 1; }

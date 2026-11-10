@@ -187,6 +187,11 @@ for (const n of root.findAll(n => n.type === 'COMPONENT')) n.createInstance = ()
 
 /* ---------- figma global ---------- */
 const logs = [];
+const LOAD_ALL = { n: 0 };
+/* pluginData ของ document — COMP_CACHE_FILE=ไฟล์ json = เก็บข้ามรอบ (จำลองไฟล์ Figma เดิมที่กดซ้ำ) */
+const PD = (() => { try { return process.env.COMP_CACHE_FILE ? JSON.parse(fs.readFileSync(process.env.COMP_CACHE_FILE, 'utf8')) : {}; } catch (e) { return {}; } })();
+root.getPluginData = (k) => PD[k] || '';
+root.setPluginData = (k, v) => { PD[k] = v; if (process.env.COMP_CACHE_FILE) fs.writeFileSync(process.env.COMP_CACHE_FILE, JSON.stringify(PD)); };
 let uiHandler = null;
 const pages = [];
 const figma = {
@@ -195,7 +200,8 @@ const figma = {
   currentPage: Object.assign(root.children[0], { selection: [] }),
   showUI() {},
   ui: { postMessage: (m) => { if (m.type === 'log') logs.push(m.text); if (m.type === 'shots-done') { const sh = m.manifest.shots, n = (d) => sh.filter(x => x.device === d).length; console.log('ส่งภาพจอ: desktop ' + n('desktop') + ' · mobile ' + n('mobile') + ' · ไฟล์ mobile ลงท้าย -mobile ' + sh.filter(x => x.device === 'mobile').every(x => /-mobile\.png$/.test(x.file))); } }, set onmessage(f) { uiHandler = f; } },   // shots-done (5 พ.ย. 2569) = ตรวจว่าส่ง mobile ด้วย   // ข้อความชนิดอื่น (รายการ scenario ให้หน้าต่างติ๊ก) ไม่ใช่ log
-  async loadAllPagesAsync() {},
+  async loadAllPagesAsync() { LOAD_ALL.n++; },   // นับครั้งที่โหลดทุกหน้า (10 พ.ย. 2569 ข้อ ก. — นำเข้าด้วย key ก่อน ไม่ต้องโหลดทุกหน้า)
+  async getNodeByIdAsync(id) { return root.findOne ? root.findOne(n => n.id === id) : root.findAll(n => n.id === id)[0] || null; },
   async loadFontAsync() {},
   async setCurrentPageAsync(p) { figma.currentPage = p; },
   createFrame() { const f = new Node({ type: 'FRAME', name: 'Frame' }); return f; },
@@ -640,6 +646,7 @@ const MODE_CHECK = process.env.MODE === 'check';
   logs.slice(printed).filter(l => /^⚠/.test(l)).forEach(l => console.log(l));
   const bad = logs.filter(l => /^⚠|^✗/.test(l));
   const want = (code0.match(/^  \[\'(?:หน้ารายการแผน|S\d+)/gm) || []).length;   // จำนวน section ที่ประกาศ
+  console.log('โหลดทุกหน้า (loadAllPagesAsync) ' + LOAD_ALL.n + ' ครั้ง');
   console.log('\n— ผลทดสอบ — แถว ' + sections.length + ' · หน้าจอ ' + screens.length + ' · คำเตือน ' + bad.length);
   process.exitCode = MODE_CHECK || (screens.length > 0 && !bad.length) ? 0 : 1;
 })().catch(e => { console.error(e); process.exit(1); });
