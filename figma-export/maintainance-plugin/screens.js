@@ -56,9 +56,10 @@ Object.assign(KEYS, {
   "Metric item": ["5e82119aab7dc5401c7f5940b7a500339ace506a", true],   // S4 แดชบอร์ดอะไหล่ (6 พ.ย. 2569) — key เดียวกับแดชบอร์ด Overhaul (R22)
   "download-24-300-round": ["336f0dff014c26316e0fa56959bc75f09f71531d", false],   // S4 ปุ่มส่งออก — key เดียวกับ S18 ของ Overhaul (R32)
   "swap_driving_apps_wheel-24-300-round": ["d431c64461da6f292b3989371704fd336e1f719b", false],   // S25 เมนู/ปุ่ม "ย้ายไปไตรมาสอื่น" (ไฟล์ Component หน้าไอคอน · UI Release#2 ปุ่ม "โอนย้ายสังกัด" ใช้ swap_driving_apps)
+  "car_repair-24-300-round": ["f87c5a858bf895fee867a3af065e82f75f620d9e", false],   // S25 เมนู "ดำเนินการบำรุงรักษา" (10 พ.ย. 2569) — ไฟล์ Component หน้า Icons
   "calendar_month-24-300-round": ["afb81bef65f96089512284d42edd7bb46646a465", false]   // ไอคอนนำช่องวันดำเนินการ (6 พ.ย. 2569 · R83) — ไฟล์ Component หน้า Icons · ช่องช่วงวันที่ Date range picker / Trip date ของ UI Release#2 หน้า 5.2 Vehicle Management มีไอคอนนำ
 });
-NEEDED.push('Metric item', 'download-24-300-round', 'swap_driving_apps_wheel-24-300-round', 'Step circles / 4 steps', 'account_balance-24-300-round', 'calendar_month-24-300-round');   // S25 (5 พ.ย. 2569) ไอคอนย้ายไปไตรมาสอื่น · 6 พ.ย. 2569 ไอคอนช่องวันดำเนินการ
+NEEDED.push('Metric item', 'download-24-300-round', 'swap_driving_apps_wheel-24-300-round', 'car_repair-24-300-round', 'Step circles / 4 steps', 'account_balance-24-300-round', 'calendar_month-24-300-round');   // S25 (5 พ.ย. 2569) ไอคอนย้ายไปไตรมาสอื่น · 6 พ.ย. 2569 ไอคอนช่องวันดำเนินการ
 
 /* ---------- ข้อมูลตัวอย่าง (ยกชื่อรถ/หน่วยงาน/จังหวัดจาก maintainance-yearly/mock-yearly.js — ค่าสมมติทั้งหมด) ---------- */
 const PST = { review: ['รออนุมัติ', 'Warning'],   // 30 ต.ค. 2569: ส่งอนุมัติทั่วไป ไม่ผ่าน ผพจ.
@@ -891,7 +892,7 @@ async function tripList(name, o) {
          เบอร์ติดต่อ = เบอร์บรรทัดบน ชื่อผู้ดูแลบรรทัดรอง แบบ tripPhoneCell (9 พ.ย. 2569 · 10 พ.ย. 2569 แก้จุดนี้ที่ยังเป็นชื่อบน เบอร์ล่าง) */
       const base = i >= 0 ? tripVCells(i, k >= 0 ? trips[k] : {}, { drop: ['สถานที่บำรุงรักษา'] }) : [c[0], typeOf(c), c[1], c[2], { text: c[3], sub: c[4] }, '—'];
       if (sub) base[0] = { text: c[0], sub };
-      return base.concat([J[c[0]] ? { pill: WSTAT[J[c[0]]] } : k >= 0 ? { text: trips[k].name, sub: 'เพิ่มเข้าแผนเดินทางแล้ว' } : { pill: ['ยังไม่มีแผนเดินทาง', 'Gray'] },   /* 6 พ.ย. 2569 เจ้าของงาน "หลังจากสร้างแผนการเดินทางแล้ว รถที่เพิ่ม จะแสดงว่าถูกเพิ่มแล้ว" */ J[c[0]] ? { menu: 1, items: [MOVE_ITEM] } : { icons: k >= 0 ? ['stylus-24-300-round'] : ['stylus-24-300-round', 'delete-24-300-round'] }]); }), qAll.length > qCars.length ? { pagination: { shown: qCars.length, total: qAll.length } } : {})], 16);
+      return base.concat([J[c[0]] ? { pill: WSTAT[J[c[0]]] } : k >= 0 ? { text: trips[k].name, sub: 'เพิ่มเข้าแผนเดินทางแล้ว' } : { pill: ['ยังไม่มีแผนเดินทาง', 'Gray'] },   /* 6 พ.ย. 2569 เจ้าของงาน "หลังจากสร้างแผนการเดินทางแล้ว รถที่เพิ่ม จะแสดงว่าถูกเพิ่มแล้ว" */ J[c[0]] ? { menu: 1, items: [MAINT_ITEM, MOVE_ITEM] } : { icons: k >= 0 ? ['stylus-24-300-round'] : ['stylus-24-300-round', 'delete-24-300-round'] }]); }), qAll.length > qCars.length ? { pagination: { shown: qCars.length, total: qAll.length } } : {})], 16);
   const free = qAll.filter(([, i]) => i < 0 || tripOf(i) < 0).length;   // 5 พ.ย. 2569 รีวิว "สามารถสร้างแผนได้จนกว่าจะไม่เหลือรถอยู่แล้ว" ⇒ รถทุกคันอยู่ในแผนเดินทางแล้ว ปุ่มกดไม่ได้
   const sec = col('Section', [await sectionLabel('แผนเดินทาง', { badge: trips.length, buttons: [{ kind: 'Primary button', text: 'สร้างแผนเดินทาง', icon: 'add-24-300-round', disabled: !free }] })], 16);
   if (trips.length) add(sec, await tblShort(TRIP_COLS, trips.map(t => [{ text: t.name, sub: tripPlaces(t) }, t.d1 + ' – ' + t.d2, String(t.sel.length), tripBy(t), { pill: TST[t.st] }, { icons: ['keyboard_arrow_right-20-400-round'] }])), 'h');
@@ -2386,6 +2387,11 @@ async function feedback(score) {
    ยืนยัน = confirm แบบ EDIT_CONFIRM · สำเร็จ = กลับหน้าไตรมาสเดิม รถคันนั้นออกจากตาราง + toast ขวาบน (R60) · ไตรมาสใหม่ รถขึ้นก่อน บรรทัดรอง "ย้ายมาจากไตรมาส 1" ยังไม่มีแผนเดินทาง · ไม่ต้องอนุมัติใหม่ (ตามเพิ่มรถเข้าไตรมาส) */
 const MOVE_ICON = 'swap_driving_apps_wheel-24-300-round';
 const MOVE_ITEM = ['ย้ายไปไตรมาสอื่น', MOVE_ICON];
+/* 10 พ.ย. 2569 เจ้าของงาน "s25 ตัวเลือกต้องสามารถเลือก ดำเนินการบำรุงรักษา และ ย้ายไปไตรมาสอื่น" + เคาะ "กลับเป็นรอเข้าแผนเดินทางในไตรมาสเดิม"
+   ⇒ เมนู "…" ของยานพาหนะที่บำรุงรักษาไม่ได้มี 2 รายการ · ดำเนินการบำรุงรักษา = ยืนยัน แล้วยานพาหนะกลับเป็น "ยังไม่มีแผนเดินทาง" ในไตรมาสเดิม ใส่แผนเดินทางใบใหม่แล้วบำรุงรักษาตามปกติ (S6 S10) */
+const MAINT_ITEM = ['ดำเนินการบำรุงรักษา', 'car_repair-24-300-round'];
+const MAINT_CONFIRM = () => ({ title: 'ยืนยันดำเนินการบำรุงรักษา · ' + MOVE_CAR[0], sub: MOVE_CAR[0] + ' จะกลับเป็นยานพาหนะที่ยังไม่มีแผนเดินทางใน' + NOW_Q + ' เพื่อเพิ่มเข้าแผนเดินทางแล้วบำรุงรักษาตามปกติ', cancel: 'ยกเลิก', ok: 'ยืนยัน' });   // ฟังก์ชัน: MOVE_CAR ประกาศทีหลัง
+const MAINT_TOAST = () => 'นำ ' + MOVE_CAR[0] + ' กลับมาบำรุงรักษาใน' + NOW_Q + ' แล้ว';
 const MOVE_I = TRIP_1.sel[2], MOVE_CAR = TRIP_CARS[MOVE_I];   // คันที่บำรุงรักษาไม่ได้ใน S10 (JOB_MIX) = 80-9981 ลำปาง
 const MOVE_JOB = { [MOVE_CAR[0]]: 'cannot' };
 const qName = (k) => QUARTERS[k].split(' (')[0];   // ลำดับ 0–3 → "ไตรมาส n"
@@ -2412,11 +2418,11 @@ const MOVE_CAR_QTY = PARTS.map((_, i) => { const k = MOVE_PART_OF.indexOf(i); re
 const MOVE_Q3_QTY = MOVE_CAR_QTY.map((n, i) => n + (CAR_PICK.indexOf(i) >= 0 ? CAR_QTY[i] : 0));
 function moveMenu(scr, row, off) {   // เมนู "…" ใต้ปุ่มของแถวที่ row (ลำดับแถวในตารางรถของไตรมาส) · off = ไตรมาสสุดท้าย รายการกดไม่ได้
   const cells = scr.findAll(n => n.type === 'INSTANCE' && n.name === 'Table cell' && n.variantProperties && n.variantProperties.Style === 'Action icons');
-  const m = menuAt(scr, cells[row], [MOVE_ITEM]);
+  const m = menuAt(scr, cells[row], [MAINT_ITEM, MOVE_ITEM]);   // 10 พ.ย. 2569 ดำเนินการบำรุงรักษา + ย้ายไปไตรมาสอื่น
   if (!m) return null;   // มือถือ: ปุ่มอยู่บนการ์ดแล้ว (moveCard)
   const list = (find(m, 'Menu items') || m).children;
-  if (list[3]) list[3].visible = false;   // เมนูเดียว ⇒ ซ่อนเส้นคั่น (แบบ planMenu)
-  if (off && list[0]) setProps(list[0], { State: 'Disabled' });
+  if (list[3]) list[3].visible = false;   // 2 รายการ ไม่มีเส้นคั่น (แบบ planMenu)
+  if (off && list[1]) setProps(list[1], { State: 'Disabled' });   // ไตรมาส 4: ย้ายไม่ได้ แต่ดำเนินการบำรุงรักษาได้
   return m;
 }
 function moveCard(scr, row, off) {   // มือถือ: ช่องท้ายการ์ดของแถว row → Style=Action buttons ปุ่มเดียว "ย้ายไปไตรมาสอื่น"
@@ -2424,9 +2430,10 @@ function moveCard(scr, row, off) {   // มือถือ: ช่องท้�
   const card = box && box.children[row]; if (!card) return;
   const it = card.children.filter(c => c.name === 'Mobile table item').pop(); if (!it) return;
   setProps(it, { Style: 'Action buttons' });
-  setProps(it, { 'Action 2': false, 'Action 3': false, 'Action 4': false });
-  const b = it.findAll(n => n.type === 'INSTANCE' && n.name === 'Secondary button')[0];
-  if (b) setProps(b, { Text: MOVE_ITEM[0], 'Leading icon': true, 'Leading icon swap': icon(MOVE_ICON), 'Trailing icon': false, State: off ? 'Disabled' : 'Default' });
+  setProps(it, { 'Action 2': true, 'Action 3': false, 'Action 4': false });   // 10 พ.ย. 2569 2 ปุ่ม ดำเนินการบำรุงรักษา · ย้ายไปไตรมาสอื่น
+  const bs = it.findAll(n => n.type === 'INSTANCE' && n.name === 'Secondary button');
+  if (bs[0]) setProps(bs[0], { Text: MAINT_ITEM[0], 'Leading icon': true, 'Leading icon swap': icon(MAINT_ITEM[1]), 'Trailing icon': false, State: 'Default' });
+  if (bs[1]) setProps(bs[1], { Text: MOVE_ITEM[0], 'Leading icon': true, 'Leading icon swap': icon(MOVE_ICON), 'Trailing icon': false, State: off ? 'Disabled' : 'Default' });
 }
 /* popup ย้ายไปไตรมาสอื่น · o.cur = ไตรมาสปัจจุบัน (0–3) · o.sel = ไตรมาสที่เลือก (-1 ยังไม่เลือก · ปุ่ม Disabled) · o.trip = แผนเดินทางที่บำรุงรักษาไม่ได้ */
 async function moveModal(scr, o) {
@@ -2753,7 +2760,7 @@ const SCENARIOS = [
   /* S25 ย้ายรถที่บำรุงรักษาไม่ได้ไปไตรมาสอื่น (เจ้าของงาน 5 พ.ย. 2569 · บล็อก X) — ทางเข้าหน้าไตรมาส (S6) · ไปได้เฉพาะไตรมาสถัดไปของแผนเดียวกัน · รถและอะไหล่ตามแผนย้ายตาม · ไม่ต้องอนุมัติใหม่ */
   ['S25 · ผู้ดำเนินการ ย้ายยานพาหนะที่บำรุงรักษาไม่ได้ไปไตรมาสอื่น', [
     ['หน้าไตรมาส 1 — ยานพาหนะที่บำรุงรักษาไม่ได้ ป้ายบำรุงรักษาไม่ได้', () => moveQuarter('S25 ไตรมาส 1 ยานพาหนะบำรุงรักษาไม่ได้', 0)],
-    ['กดปุ่ม … ของยานพาหนะ — ย้ายไปไตรมาสอื่น', async () => { const s = await moveQuarter('S25 เมนูย้ายไปไตรมาสอื่น', 0); moveMenu(s, MOVE_I); return s; }],
+    ['กดปุ่ม … ของยานพาหนะ — ดำเนินการบำรุงรักษา หรือ ย้ายไปไตรมาสอื่น', async () => { const s = await moveQuarter('S25 เมนูย้ายไปไตรมาสอื่น', 0); moveMenu(s, MOVE_I); return s; }],
     ['popup ย้ายไปไตรมาสอื่น — ยังไม่เลือกไตรมาส', async () => { const s = await moveQuarter('S25 popup ย้ายไปไตรมาสอื่น', 0); await moveModal(s, { cur: 0 }); return s; }],
     ['เลือกไตรมาส 2 — ปุ่มย้ายยานพาหนะกดได้', async () => { const s = await moveQuarter('S25 เลือกไตรมาส 2', 0); await moveModal(s, { cur: 0, sel: MOVE_TO }); return s; }],
     ['กรณีไตรมาส 3 — ไตรมาสก่อนหน้าและไตรมาสปัจจุบันเลือกไม่ได้', async () => { const s = await moveQuarter('S25 popup ไตรมาส 3', 2); await moveModal(s, { cur: 2, trip: MOVE_T3 }); return s; }],
@@ -2761,7 +2768,10 @@ const SCENARIOS = [
     ['ย้ายสำเร็จ — ไตรมาส 1 ไม่มียานพาหนะคันนี้แล้ว', async () => { const s = await tripList('S25 ย้ายสำเร็จ', { trips: [JOB_T], removed: [MOVE_I] }); notify(s, MOVE_TOAST); return s; }],
     ['หน้าไตรมาส 2 — ยานพาหนะที่ย้ายมา ยังไม่มีแผนเดินทาง', () => moveQuarter('S25 ไตรมาส 2', MOVE_TO)],   // 9 พ.ย. 2569 ชุดเดียวกับ X.9 (MOVE_Q2_PAGE)
     ['หน้าไตรมาส 2 — อะไหล่ในไตรมาสรวมอะไหล่ของยานพาหนะที่ย้ายมา', () => moveQuarter('S25 อะไหล่ไตรมาส 2', MOVE_TO)],   // 9 พ.ย. 2569 แก้ moveQuarter(…, 2) ที่ได้หน้าไตรมาส 3 · 6 พ.ย. 2569 เดิมหน้าความคืบหน้าอะไหล่ S4 (เปลี่ยนเป็นแดชบอร์ด) ⇒ หัวข้ออะไหล่ในไตรมาสของหน้าไตรมาส   // 6 พ.ย. 2569 เดิมหน้าความคืบหน้าอะไหล่ S4 (เปลี่ยนเป็นแดชบอร์ด) ⇒ หัวข้ออะไหล่ในไตรมาสของหน้าไตรมาส
-    ['ไตรมาส 4 — เมนูย้ายไปไตรมาสอื่นกดไม่ได้', async () => { const s = await moveQuarter('S25 ไตรมาส 4 ย้ายไม่ได้', 3); moveMenu(s, 0, true); return s; }]]],
+    ['ไตรมาส 4 — เมนูย้ายไปไตรมาสอื่นกดไม่ได้', async () => { const s = await moveQuarter('S25 ไตรมาส 4 ย้ายไม่ได้', 3); moveMenu(s, 0, true); return s; }],
+    // 10 พ.ย. 2569 เจ้าของงาน "ตัวเลือกต้องสามารถเลือก ดำเนินการบำรุงรักษา และ ย้ายไปไตรมาสอื่น" — ต่อท้าย X.11 X.12 รหัสเดิมไม่เลื่อน
+    ['เลือกดำเนินการบำรุงรักษา — ยืนยันนำยานพาหนะกลับมาบำรุงรักษาในไตรมาสเดิม', async () => { const s = await moveQuarter('S25 ยืนยันดำเนินการบำรุงรักษา', 0); await confirm(s, MAINT_CONFIRM()); return s; }],
+    ['ดำเนินการบำรุงรักษาแล้ว — ยานพาหนะกลับเป็นยังไม่มีแผนเดินทาง รอเพิ่มเข้าแผนเดินทาง', async () => { const s = await tripList('S25 ดำเนินการบำรุงรักษาแล้ว', { trips: [Object.assign({}, JOB_T, { sel: JOB_T.sel.filter(i => i !== MOVE_I) })] }); notify(s, MAINT_TOAST()); return s; }]]],
 ];
 
 
