@@ -1767,21 +1767,26 @@ const maDues = (r) => {
 const maNext = (r) => { const d = maDues(r); if (!d) return null; let k = -1; d.forEach((x, i) => { if (x && (k < 0 || maKey(x[0]) < maKey(d[k][0]))) k = i; }); return [k, d[k][0], d[k][1]]; };
 const maOil = (r) => { const d = maDues(r); return d[3] ? ['เก็บตัวอย่าง', d[3]] : ['เปลี่ยนน้ำมัน', d[2]]; };
 const toneOf = (st) => MA_DUE[st] ? { sub: MA_DUE[st][0], tone: MA_DUE[st][1] } : {};
-const MA_COLS = [['ทะเบียน', 190, 'Lead text'], ['ประเภทยานพาหนะ', 170], ['บำรุงรักษาล่าสุด', 140], ['ไส้กรองอากาศ', 160], ['น้ำมันไฮดรอลิก', 200], ['Safety Inspection', 160], ['ครั้งถัดไป', 0], ['', 64]];
+/* หน้ารายการ (10 พ.ย. 2569 รอบ 2 เจ้าของงาน "ไส้ใน column อยากปรับใหม่ … หน้าของ list อยากแสดงรายละเอียดอื่นๆ ตัวอย่างเช่นพวกอายุการใช้งาน หรืออะไรที่เกี่ยวข้องกับการบำรุงรักษา")
+   ⇒ คอลัมน์รายการ (ไส้กรองอากาศ · น้ำมัน · Safety) ย้ายไปแท็บตารางบำรุงรักษาของหน้ารายละเอียด · เจ้าของงานเลือก อายุการใช้งาน/เลขไมล์ · บำรุงรักษาล่าสุด · ครั้งถัดไป · ผลตรวจน้ำมัน · ประกัน · สถานะยานพาหนะ · ผู้ดูแลยานพาหนะ
+   Table ของไลบรารี 8 คอลัมน์ ⇒ ไม่มีคอลัมน์ปุ่ม … · เปิดรายละเอียดด้วยลิงก์เลขทะเบียน (แบบลิงก์ทะเบียนทุกจุดของงานบำรุงรักษา 6 พ.ย. 2569 · AFTER_SCREEN) */
+const MA_VSTAT = { ok: ['ปกติ', 'Success'], repair: ['อยู่ระหว่างซ่อม', 'Warning'], off: ['งดใช้งาน', 'Gray'] };   // สถานะยานพาหนะ (ค่าสมมติ ป้าย "ปกติ" ตามหน้ายานพาหนะของปลั๊กอิน Overhaul)
+/* ต่อแถว MA_ROWS: [ปีที่จดทะเบียน, เลขไมล์สะสม, ชั่วโมงเครื่องจักรสะสม, ประกัน (MA_WAR), สถานะยานพาหนะ] (ค่าสมมติ) */
+const MA_USE = [[2557, '171,220', '5,610', 'none', 'ok'], [2558, '168,900', '5,480', 'out', 'repair'], [2560, '154,300', '4,920', 'none', 'ok'], [2561, '176,050', '5,840', 'in', 'ok'],
+  [2562, '149,700', '4,410', 'none', 'ok'], [2559, '176,050', '6,010', 'near', 'ok'], [2563, '163,480', '5,120', 'none', 'ok'], [2564, '182,640', '6,131', 'in', 'ok'], [2566, '41,200', '980', 'none', 'off']];
+const MA_COLS = [['ทะเบียน', 200, 'Lead text'], ['อายุการใช้งาน', 170], ['บำรุงรักษาล่าสุด', 140], ['ครั้งถัดไป', 0], ['ผลตรวจน้ำมันล่าสุด', 160], ['ประกัน', 150, 'Badge'], ['สถานะยานพาหนะ', 150, 'Badge'], ['ผู้ดูแลยานพาหนะ', 190]];
 const maRow = (r) => {
-  const c = TRIP_CARS[r[0]], d = maDues(r);
-  if (!d) return [{ text: c[0], sub: c[1] }, { text: typeOf(c), sub: c[2] }, '-', '-', '-', '-', { text: 'ยังไม่มีข้อมูลการบำรุงรักษา' }, { menu: 1, items: MENU.slice(0, 1) }];
-  const [oa, od] = maOil(r), n = maNext(r);
-  return [{ text: c[0], sub: c[1] }, { text: typeOf(c), sub: c[2] }, { text: r[1], sub: r[2] }, Object.assign({ text: d[1][0] }, toneOf(d[1][1])),
-    Object.assign({ text: oa + ' ' + od[0] }, MA_DUE[od[1]] ? toneOf(od[1]) : { sub: 'ผลตรวจล่าสุด ' + r[6] }), Object.assign({ text: d[4][0] }, toneOf(d[4][1])),
-    Object.assign({ text: n[1] + ' · ' + MA_ITEMS[n[0]] }, toneOf(n[2])), { menu: 1, items: MENU.slice(0, 1) }];
+  const k = MA_ROWS.indexOf(r), c = TRIP_CARS[r[0]], u = MA_USE[k], n = maNext(r);
+  return [{ text: c[0], sub: typeOf(c) }, { text: (MA_TODAY[2] - u[0]) + ' ปี', sub: u[1] + ' กม. · ' + u[2] + ' ชม.' }, r[1] ? { text: r[1], sub: r[2] } : '-',
+    n ? Object.assign({ text: n[1] + ' · ' + MA_ITEMS[n[0]] }, toneOf(n[2])) : { text: 'ยังไม่มีข้อมูลการบำรุงรักษา' }, r[6] ? { text: r[6], sub: 'เก็บตัวอย่าง ' + r[5] } : '-',
+    { pill: MA_WAR[u[3]] }, { pill: MA_VSTAT[u[4]] }, { text: CTRL_NAME[r[0]], sub: OWNER_PH[r[0]] }];
 };
 const maIdx = (fn) => MA_ROWS.map((r, i) => fn(r) ? i : -1).filter(i => i >= 0);
 const MA_DUE_N = maIdx(r => { const n = maNext(r); return n && n[2]; }).length;
 const maMetrics = () => { const all = MA_ROWS.filter(r => r[1]), oilSoon = (a) => all.filter(r => { const [x, d] = maOil(r); return x === a && d[1]; }).length;
   return [['ครบกำหนดบำรุงรักษา', String(all.filter(r => maNext(r)[2] === 'over').length), 'Error'], ['ใกล้ครบกำหนดบำรุงรักษา', String(all.filter(r => maNext(r)[2] === 'near').length), 'Warning'],
     ['ต้องเก็บตัวอย่างน้ำมันใน 6 เดือน', String(oilSoon('เก็บตัวอย่าง')), 'Brand'], ['ต้องเปลี่ยนน้ำมันไฮดรอลิกใน 6 เดือน', String(oilSoon('เปลี่ยนน้ำมัน')), 'Brand']]; };
-async function maTabs() { return tabs([['ปฏิทินการจอง', null], ['ยานพาหนะ', null], ['การบำรุงรักษา', MA_DUE_N]], 2); }   // แท็บของ Vehicle list · ป้าย = คันที่ใกล้หรือถึงกำหนด
+async function maTabs() { return tabs([['ยานพาหนะ', null], ['การบำรุงรักษา', MA_DUE_N]], 1); }   // แท็บของ Vehicle list · ป้าย = คันที่ใกล้หรือถึงกำหนด · ปฏิทินการจอง (ระบบจองยานพาหนะ) เอาออก 10 พ.ย. 2569 เจ้าของงาน
 async function searchNotFound() {   // Empty state/Search not found ข้อความตาม Vehicle list (State=Search not found) ของ UI Release#2
   const es = inst('Empty state/Search not found');
   await text(es, 'Text', 'ไม่พบข้อมูล'); await text(es, 'Supporting text', 'เปลี่ยนคำค้นหรือเงื่อนไขแล้วลองใหม่อีกครั้ง');
@@ -1807,7 +1812,6 @@ async function maList(name, o) {
       dropdown('บำรุงรักษาล่าสุด', f.last || 'ทั้งหมด'), dropdown('ครบกำหนดภายใน', f.within || 'ทั้งหมด'),
       multiDropdown('รายการที่ครบกำหนด', f.items || [], { placeholder: 'ทั้งหมด', optional: true }), dropdown('ผลตรวจน้ำมันล่าสุด', f.oil || 'ทั้งหมด')]);
   }
-  if (o.menu) planMenu(scr, MENU.slice(0, 1));
   return scr;
 }
 const MA_LAST_OPTS = ['ทั้งหมด', 'ภายใน 6 เดือน', '6 ถึง 12 เดือนที่แล้ว', 'เกิน 12 เดือน', 'ยังไม่เคยบำรุงรักษา'];   // ตัวเลือกช่อง "บำรุงรักษาล่าสุด" (เสนอ)
@@ -1836,23 +1840,21 @@ const MA_WAR_COLS = [['ประเภทงาน', 140, 'Lead text'], ['เล
 const MA_WARRANTY = [['ซ่อม', 'RP-2569-0611', 'อู่ ศรีเมืองการช่าง', 'ปั๊มไฮดรอลิก', '02/09/2569', { text: '01/03/2570', sub: 'เหลือ 111 วัน' }, { pill: MA_WAR.in }],
   ['Overhaul', 'PO-680412', 'บริษัท สยามไฮดรอลิก จำกัด', 'ไฮดรอลิกกระเช้า · เครื่องยนต์', '15/12/2568', { text: '10/12/2569', sub: 'เหลือ 30 วัน' }, { pill: MA_WAR.near }],
   ['ซ่อม', 'RP-2568-0877', 'กรย. ภาค 1', 'กันชนหน้า', '03/08/2568', { text: '01/11/2568' }, { pill: MA_WAR.out }]];
-const MA_OH_JOB = [['แผน', 'ORZ6800003 Overhaul ประจำปีงบ 2568 — กระเช้าแก้ไฟ'], ['PO', 'PO-680412 ยกเครื่องไฮดรอลิกกระเช้าและเครื่องยนต์'], ['ศูนย์บริการ/อู่', 'บริษัท สยามไฮดรอลิก จำกัด'], ['หน่วยงานเจ้าของยานพาหนะ', 'กฟฉ.1 ขอนแก่น'], ['ปีแผน', '2568'], ['สถานะงาน', 'ปิดงานแล้ว 15/12/2568']];
-const MA_OH_WAR = [['วันเริ่มรับประกัน', '15/12/2568'], ['ระยะรับประกัน', '360 วัน'], ['วันหมดอายุประกัน', '10/12/2569 (เหลือ 30 วัน)'], ['แจ้งเตือนก่อนหมด', 'ผู้ดูแลยานพาหนะ 30 วัน และ 15 วัน']];
-const MA_OH_BA = [['วันรับยานพาหนะเข้าอู่ → รับคืน', '01/11/2568 → 15/12/2568'], ['ซ่อมก่อน Overhaul (12 เดือน)', '4 ครั้ง · 61,300 บาท'], ['ซ่อมหลัง Overhaul', '1 ครั้ง · 28,400 บาท (อยู่ในประกัน)']];
-async function maShell(name, tab) {
-  const c = TRIP_CARS[MA_ROWS[MA_CAR][0]];
+async function maShell(name, tab, row) {
+  const c = TRIP_CARS[MA_ROWS[row == null ? MA_CAR : row][0]];
   const { scr, page } = await shell(name, { title: c[0], back: true, root: 'ยานพาหนะ', crumbs: ['ข้อมูลยานพาหนะ', c[0]] });
   const sec = col('Section', [], 24); add(page, sec, 'h');
   add(sec, await tabs(MA_VTABS.map(t => [t, null]), tab), 'h');
   return { scr, sec, c };
 }
-/* o.tab = 0–4 · o.menu = เมนู … ในประวัติ · o.empty = แท็บการรับประกัน / Overhaul ว่าง */
+/* o.tab = 0–3 (แท็บ Overhaul มีในแถบแต่ไม่ทำจอเนื้อหา — เจ้าของงาน 10 พ.ย. 2569 "มี tab แต่ไม่มี display ออกมา") · o.row = แถวใน MA_ROWS (ค่าเริ่ม MA_CAR) · o.menu · o.empty = แท็บการรับประกันว่าง */
 async function maDetail(name, o) {
   o = o || {};
-  const tab = o.tab == null ? 1 : o.tab, r = MA_ROWS[MA_CAR];
-  const { scr, sec, c } = await maShell(name, tab);
+  const tab = o.tab == null ? 1 : o.tab, row = o.row == null ? MA_CAR : o.row, r = MA_ROWS[row];
+  const { scr, sec, c } = await maShell(name, tab, row);
   if (tab === 0) add(sec, await vehicleInfo([['ทะเบียน', c[0]], ['ยี่ห้อ/รุ่น', c[1]], ['ประเภทยานพาหนะ', typeOf(c)], ['หน่วยงานเจ้าของยานพาหนะ', c[2]],
-    ['ผู้ดูแลยานพาหนะ', CTRL_NAME[MA_ROWS[MA_CAR][0]]], ['เบอร์ติดต่อ', OWNER_PH[MA_ROWS[MA_CAR][0]]], ['เลขไมล์สะสม', '176,050 กม.'], ['ชั่วโมงเครื่องจักรสะสม', '6,010 ชม.']]), 'h');
+    ['ผู้ดูแลยานพาหนะ', CTRL_NAME[r[0]]], ['เบอร์ติดต่อ', OWNER_PH[r[0]]], ['ปีที่จดทะเบียน', String(MA_USE[row][0])], ['อายุการใช้งาน', (MA_TODAY[2] - MA_USE[row][0]) + ' ปี'],
+    ['เลขไมล์สะสม', MA_USE[row][1] + ' กม.'], ['ชั่วโมงเครื่องจักรสะสม', MA_USE[row][2] + ' ชม.'], ['สถานะยานพาหนะ', MA_VSTAT[MA_USE[row][4]][0]]]), 'h');
   if (tab === 1) {
     add(sec, col('Section', [await sectionLabel('กำหนดครั้งถัดไป'), await tblShort(MA_NEXT_COLS, maNextRows(r))], 16), 'h');
     add(sec, col('Section', [await sectionLabel('ประวัติการบำรุงรักษา', { badge: MA_HIST.length }), await tblShort(MA_HIST_COLS, MA_HIST, { pagination: MA_HIST.length })], 16), 'h');
@@ -1861,15 +1863,13 @@ async function maDetail(name, o) {
     add(sec, await tableHeader({ placeholder: 'ค้นหาหมายเลขงาน, อาการ' }), 'h');
     add(sec, await tblShort(MA_REPAIR_COLS, MA_REPAIRS.map(h => [h[0], h[1], h[2], h[4] ? { text: h[3], sub: h[4] } : h[3], { text: h[5], sub: h[6] }, { pill: MA_WAR[h[7]] }, h[8], { icons: ['quick_reference_all-24-300-round'] }]), { pagination: MA_REPAIRS.length }), 'h');
   }
-  if (tab === 3 || tab === 4) {
+  if (tab === 3) {
     if (o.empty) {
       const es = inst('Empty state/Data empty'); add(sec, es, 'h');
-      await text(es, 'Text', tab === 3 ? 'ยังไม่มีงานที่อยู่ในประกัน' : 'ยานพาหนะคันนี้ยังไม่เคย Overhaul');
-      await text(es, 'Supporting text', tab === 3 ? 'เมื่อปิดงานซ่อม Overhaul หรือบำรุงรักษาแผนจ้างที่มีประกันของผู้รับจ้าง รายการจะมาอยู่ที่นี่' : 'เมื่อปิดงาน Overhaul ของยานพาหนะคันนี้ ข้อมูลงานและประกันจะมาอยู่ที่นี่');
+      await text(es, 'Text', 'ยังไม่มีงานที่อยู่ในประกัน');
+      await text(es, 'Supporting text', 'เมื่อปิดงานซ่อม Overhaul หรือบำรุงรักษาแผนจ้างที่มีประกันของผู้รับจ้าง รายการจะมาอยู่ที่นี่');
       const a = find(es, 'Actions'); if (a) a.visible = false;
-    } else if (tab === 3) add(sec, await tblShort(MA_WAR_COLS, MA_WARRANTY, { pagination: MA_WARRANTY.length }), 'h');
-    else add(sec, col('Content', [col('Section', [await sectionLabel('งาน Overhaul'), kv(MA_OH_JOB)], 16), col('Section', [await sectionLabel('ประกันของผู้รับจ้าง'), kv(MA_OH_WAR)], 16),
-      col('Section', [await sectionLabel('ก่อน → หลัง Overhaul'), kv(MA_OH_BA, 2)], 16)], 32), 'h');
+    } else add(sec, await tblShort(MA_WAR_COLS, MA_WARRANTY, { pagination: MA_WARRANTY.length }), 'h');
   }
   if (o.menu) planMenu(scr, MENU.slice(0, 1));
   return scr;
@@ -2791,18 +2791,18 @@ const SCENARIOS = [
     ['ค้นหาไม่พบ', () => maList('S24 ค้นหาไม่พบ', { query: '99-9999', rows: [] })],
     ['กดตัวกรอง — แผงตัวกรอง ประเภท สังกัด บำรุงรักษาล่าสุด ครบกำหนดภายใน รายการ ผลตรวจน้ำมัน', () => maList('S24 แผงตัวกรอง', { filter: {} })],
     ['กรองแล้ว — ใกล้ครบกำหนดบำรุงรักษา', () => maList('S24 กรองใกล้ครบกำหนด', { chips: [MA_DUE.near[0]], rows: maIdx(r => { const n = maNext(r); return n && n[2] === 'near'; }) })],
-    ['กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด', () => maList('S24 เมนูของยานพาหนะ', { menu: true })],
+    ['กดเลขทะเบียน — เปิดหน้ารายละเอียดยานพาหนะ แท็บข้อมูลยานพาหนะ', () => maDetail('S24 กดเลขทะเบียน', { tab: 0 })],   // 10 พ.ย. 2569 รอบ 2 ไม่มีคอลัมน์ปุ่ม … แล้ว
     ['รายละเอียดยานพาหนะ — แท็บตารางบำรุงรักษา กำหนดครั้งถัดไป 5 รายการ', () => maDetail('S24 ตารางบำรุงรักษา', { tab: 1 })],
     ['ประวัติ กดปุ่ม … — ดูรายละเอียดงานที่ปิดแล้ว', () => maDetail('S24 เมนูประวัติ', { tab: 1, menu: true })],
     ['กรองแล้ว — ต้องเก็บตัวอย่างน้ำมัน', () => maList('S24 กรองเก็บตัวอย่างน้ำมัน', { chips: ['เก็บตัวอย่างน้ำมัน'], rows: maIdx(r => r[1] && maOil(r)[0] === 'เก็บตัวอย่าง' && maOil(r)[1][1]) })],
     ['กรองแล้ว — บำรุงรักษาล่าสุดเกิน 12 เดือน', () => maList('S24 กรองบำรุงรักษาล่าสุด', { chips: ['บำรุงรักษาล่าสุด เกิน 12 เดือน'], rows: maIdx(r => r[1] && maKey(r[1]) < maKey('10/11/2568')) })],
     ['กรองแล้ว — ครบกำหนดภายใน 3 เดือน', () => maList('S24 กรองภายใน 3 เดือน', { chips: ['ครบกำหนดภายใน 3 เดือน'], rows: maIdx(r => { const n = maNext(r); return n && maKey(n[1]) <= maKey('10/02/2570'); }) })],
-    ['รายละเอียดยานพาหนะ — แท็บข้อมูลยานพาหนะ', () => maDetail('S24 ข้อมูลยานพาหนะ', { tab: 0 })],
+    ['แท็บตารางบำรุงรักษา — คันที่ครบกำหนดหลายรายการ ปีที่ครบเปลี่ยนน้ำมัน', () => maDetail('S24 ตารางบำรุงรักษา ครบกำหนด', { tab: 1, row: 0 })],   // 10 พ.ย. 2569 รอบ 2 แทนแท็บข้อมูลยานพาหนะ (ย้ายไป W.6)
     ['รายละเอียดยานพาหนะ — แท็บประวัติการซ่อมบำรุง', () => maDetail('S24 ประวัติการซ่อมบำรุง', { tab: 2 })],
     ['รายละเอียดยานพาหนะ — แท็บการรับประกัน', () => maDetail('S24 การรับประกัน', { tab: 3 })],
     ['แท็บการรับประกัน — ยังไม่มีงานที่อยู่ในประกัน', () => maDetail('S24 การรับประกัน ว่าง', { tab: 3, empty: true })],
-    ['รายละเอียดยานพาหนะ — แท็บ Overhaul', () => maDetail('S24 Overhaul', { tab: 4 })],
-    ['แท็บ Overhaul — ยังไม่เคย Overhaul', () => maDetail('S24 Overhaul ว่าง', { tab: 4, empty: true })]]],
+    // W.16 W.17 แท็บ Overhaul เอาออก 10 พ.ย. 2569 รอบ 2 (เจ้าของงาน "มี tab แต่ไม่มี display ออกมา")
+    ]],
   /* S25 ย้ายรถที่บำรุงรักษาไม่ได้ไปไตรมาสอื่น (เจ้าของงาน 5 พ.ย. 2569 · บล็อก X) — ทางเข้าหน้าไตรมาส (S6) · ไปได้เฉพาะไตรมาสถัดไปของแผนเดียวกัน · รถและอะไหล่ตามแผนย้ายตาม · ไม่ต้องอนุมัติใหม่ */
   ['S25 · ผู้ดำเนินการ ย้ายยานพาหนะที่บำรุงรักษาไม่ได้ไปไตรมาสอื่น', [
     ['หน้าไตรมาส 1 — ยานพาหนะที่บำรุงรักษาไม่ได้ ป้ายบำรุงรักษาไม่ได้', () => moveQuarter('S25 ไตรมาส 1 ยานพาหนะบำรุงรักษาไม่ได้', 0)],
