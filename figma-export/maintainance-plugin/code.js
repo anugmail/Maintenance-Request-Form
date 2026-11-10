@@ -4551,8 +4551,8 @@ async function buildSet(SCEN, GRP, what, devices) {
   const before = new Set(page.children);
   const TOTAL = SCEN.reduce((a, x) => a + x[1].length, 0);
   log(INDEX.has('Header') ? 'แถบหัวบล็อก/ป้าย state: component Header ของ Design Annotations (' + ROUTE.Header + ')' : 'แถบหัวบล็อก/ป้าย state: ไม่พบ component Header — วาดแถบธรรมดาสีเดียวกันแทน · เปิดไฟล์ (UI) VMS Plus – Release#2 เป็นไลบรารี หรือวาง Header จากหน้า Design Annotations ไว้ในไฟล์ 1 ชิ้น');
-  /* หัวหน้าของชุดจอ = Header Type=Header 1 ตัว แบบหน้า 5.x ของ UI Release#2 (10 พ.ย. 2569) · สถานะ Work In Progress จนกว่าเจ้าของงานเคาะ Ready for Review */
-  const { made, flows } = await buildGrid(page, PLUGIN.prefix, GRP, before.size ? pageBottom(page) + 400 : 0, TOTAL * devices.length, { devices, page: { title: PLUGIN.menu, status: 'Work In Progress' } });
+  /* ไม่มีหัวหน้า Type=Header บนสุด — เจ้าของงาน 10 พ.ย. 2569 "ป้ายบนสุดไม่ต้องมี ที่เป็นป้าย บำรุงรักษา ที่ status inprogress เอาออก" (buildGrid ยังรับ opts.page ไว้) */
+  const { made, flows } = await buildGrid(page, PLUGIN.prefix, GRP, before.size ? pageBottom(page) + 400 : 0, TOTAL * devices.length, { devices });
   const fresh = page.children.filter(n => !before.has(n));
   const fit = fresh.length ? fitOn(page, fresh) : { dx: 0, dy: 0, y: 0 };
   const hgt = fresh.length ? Math.round(Math.max(...fresh.map(n => n.y + n.height)) - Math.min(...fresh.map(n => n.y))) : 0;

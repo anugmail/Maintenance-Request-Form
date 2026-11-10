@@ -748,11 +748,8 @@
         "since": "2026-11-10"
       },
       "page": {
-        "component": "Header",
-        "Type": "Header",
-        "count": "1 ต่อชุดจอ",
-        "status": "Work In Progress | Ready for Review",
-        "since": "2026-11-10"
+        "use": false,
+        "note": "เจ้าของงาน 10 พ.ย. 2569 \"ป้ายบนสุดไม่ต้องมี ที่เป็นป้าย บำรุงรักษา ที่ status inprogress เอาออก\" — ไม่ใส่ Header Type=Header บนสุดของชุดจอ"
       }
     },
     "side": {
