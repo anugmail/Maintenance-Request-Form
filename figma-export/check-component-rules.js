@@ -86,6 +86,10 @@ function check(screens, opt) {   // opt.inFile(ชื่อ) = ไฟล์ม�
         fail(r, sc, r.component + ' ไม่มี Badge ข้อความตรง ' + r.badgeMatch);   // R71 ตัวนับ "ตรวจแล้ว x/y" (5 พ.ย. 2569)
       else if (r.tabTexts && !all.some(x => isInst(x, r.component) && shown(x) && x.findAll(b => isInst(b, 'Tab item') && shown(b)).map(b => (prop(b, 'Text') || '').trim()).join('|') === r.tabTexts.join('|')))
         fail(r, sc, r.component + ' แท็บไม่ตรง ' + r.tabTexts.join(' · '));   // R88 แท็บของหน้าอนุมัติ (10 พ.ย. 2569)
+      else if (r.buttonText && !all.some(x => isInst(x, r.component) && shown(x) && (prop(x, 'Text') || '').trim() === r.buttonText && new RegExp(r.state).test((x.variantProperties || {}).State || '')))
+        fail(r, sc, r.component + ' "' + r.buttonText + '" ต้อง State ตรง ' + r.state);   // R93 ปุ่มเพิ่มยานพาหนะของหน้าไตรมาส Disabled เมื่อทุกคันปิดงาน (11 พ.ย. 2569)
+      else if (r.hasTexts) { const vals = new Set(all.filter(x => x.type === 'INSTANCE' && shown(x)).flatMap(x => Object.values(x.componentProperties || {}).filter(v => v.type === 'TEXT').map(v => String(v.value).trim())));
+        const miss = r.hasTexts.filter(t => !vals.has(t)); if (miss.length) fail(r, sc, 'ไม่มีข้อความ ' + miss.join(' · ')); }   // R93 รายการภาค/เขตในแผงตัวกรอง (11 พ.ย. 2569)
       for (const t of r.forbidSectionTitles || []) if (all.some(x => isInst(x, 'Section header') && shown(x) && prop(x, 'Title') === t)) fail(r, sc, 'ยังมีหัวข้อเดิม "' + t + '"');
     }
     // R89 ปุ่มสีตามหน้าจริง (10 พ.ย. 2569 S13 ปุ่มรับทราบสีเขียวแบบปุ่ม "ตรวจแล้ว" หน้า 5.14 - 5.15 UI Release#2): ปุ่มข้อความ text ที่กดได้ ต้องพื้นสี fill · forbidText = ข้อความปุ่มที่ห้ามมีในจอชุดนี้
