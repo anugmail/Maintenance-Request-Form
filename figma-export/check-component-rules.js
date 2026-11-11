@@ -18,6 +18,14 @@ function check(screens, opt) {   // opt.inFile(ชื่อ) = ไฟล์ม�
   opt = opt || {};
   const fails = [], pending = new Map();
   const fail = (r, sc, msg) => fails.push(r.id + ' ' + sc.name + ' — ' + msg);
+  /* กติการายจอที่ไม่ตรงจอไหนเลย = กติกาตาย (ชื่อจอเปลี่ยนแล้วกติกาไม่ได้ตาม เช่น รถ → ยานพาหนะ 9 พ.ย. 2569) · นับเฉพาะชุดที่มีจอขึ้นต้นด้วยคำนำหน้าเดียวกัน (MT / · OH2 / …)
+     retired = scenario ที่ตัดแล้ว เก็บกติกาไว้ดูประวัติ ไม่ตรวจ (10 พ.ย. 2569) */
+  const unmatched = [];
+  for (const k of ['screensUse', 'buttonFill', 'displayLabels']) for (const r of RULES[k] || []) {
+    const m = /^\^([^ ]+) \//.exec(r.screens || '');
+    if (r.retired || !m || !screens.some(sc => sc.name.indexOf(m[1] + ' / ') === 0)) continue;
+    if (!screens.some(sc => new RegExp(r.screens).test(sc.name))) unmatched.push(r.id + ' (' + k + ') ' + r.screens);
+  }
   for (const sc of screens) {
     const mobile = sc.width <= 500;
     const all = sc.findAll(() => true);
@@ -70,6 +78,7 @@ function check(screens, opt) {   // opt.inFile(ชื่อ) = ไฟล์ม�
     }
     // จอที่ต้องใช้ component เฉพาะ (เช่น นัดหมาย = RepairAppointmentStep)
     for (const r of RULES.screensUse || []) {
+      if (r.retired) continue;
       if (!new RegExp(r.screens).test(sc.name) || (r.desktopOnly && mobile) || (r.mobileOnly && !mobile)) continue;   // mobileOnly (5 พ.ย. 2569 R70 Mobile progress steps)
       if (r.ifInFile && opt.inFile && !opt.inFile(r.component)) continue;
       if (!all.some(x => isInst(x, r.component) && shown(x))) fail(r, sc, 'ไม่มี ' + r.component);
@@ -77,6 +86,10 @@ function check(screens, opt) {   // opt.inFile(ชื่อ) = ไฟล์ม�
         fail(r, sc, r.component + ' ไม่มี Badge ข้อความตรง ' + r.badgeMatch);   // R71 ตัวนับ "ตรวจแล้ว x/y" (5 พ.ย. 2569)
       else if (r.tabTexts && !all.some(x => isInst(x, r.component) && shown(x) && x.findAll(b => isInst(b, 'Tab item') && shown(b)).map(b => (prop(b, 'Text') || '').trim()).join('|') === r.tabTexts.join('|')))
         fail(r, sc, r.component + ' แท็บไม่ตรง ' + r.tabTexts.join(' · '));   // R88 แท็บของหน้าอนุมัติ (10 พ.ย. 2569)
+      else if (r.buttonText && !all.some(x => isInst(x, r.component) && shown(x) && (prop(x, 'Text') || '').trim() === r.buttonText && new RegExp(r.state).test((x.variantProperties || {}).State || '')))
+        fail(r, sc, r.component + ' "' + r.buttonText + '" ต้อง State ตรง ' + r.state);   // R93 ปุ่มเพิ่มยานพาหนะของหน้าไตรมาส Disabled เมื่อทุกคันปิดงาน (11 พ.ย. 2569)
+      else if (r.hasTexts) { const vals = new Set(all.filter(x => x.type === 'INSTANCE' && shown(x)).flatMap(x => Object.values(x.componentProperties || {}).filter(v => v.type === 'TEXT').map(v => String(v.value).trim())));
+        const miss = r.hasTexts.filter(t => !vals.has(t)); if (miss.length) fail(r, sc, 'ไม่มีข้อความ ' + miss.join(' · ')); }   // R93 รายการภาค/เขตในแผงตัวกรอง (11 พ.ย. 2569)
       for (const t of r.forbidSectionTitles || []) if (all.some(x => isInst(x, 'Section header') && shown(x) && prop(x, 'Title') === t)) fail(r, sc, 'ยังมีหัวข้อเดิม "' + t + '"');
     }
     // R89 ปุ่มสีตามหน้าจริง (10 พ.ย. 2569 S13 ปุ่มรับทราบสีเขียวแบบปุ่ม "ตรวจแล้ว" หน้า 5.14 - 5.15 UI Release#2): ปุ่มข้อความ text ที่กดได้ ต้องพื้นสี fill · forbidText = ข้อความปุ่มที่ห้ามมีในจอชุดนี้
@@ -137,7 +150,7 @@ function check(screens, opt) {   // opt.inFile(ชื่อ) = ไฟล์ม�
     // เส้นคั่นที่มองเห็น
     for (const n of all.filter(x => shown(x) && (x.name === 'Divider' || x.name === 'Content divider'))) fail(RULES.noVisibleDivider, sc, 'ยังเห็นเส้นคั่น ' + (n.parent ? n.parent.name : ''));
   }
-  return { fails, pending: [...pending].map(([k, s]) => k + ' (' + s.size + ' จอ)') };
+  return { fails, unmatched, pending: [...pending].map(([k, s]) => k + ' (' + s.size + ' จอ)') };
 }
 
 /* R80 ตรวจซอร์สปลั๊กอิน (6 พ.ย. 2569): ข้อความใน string literal ห้ามมีคำต้องห้าม ยกเว้น allow — ข้ามคอมเมนต์และ regex literal (คำพูดเจ้าของงานในคอมเมนต์คงตามจริง)

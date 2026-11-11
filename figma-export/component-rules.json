@@ -1,32 +1,869 @@
 {
- "_about": "กติกาการสร้างจอด้วย component จริงของไลบรารี (Component) VMS Plus — ตัวทดสอบ test-overhaul2-plugin.js อ่านไฟล์นี้แล้วตรวจทุกจอ · ผิดกติกา = ทดสอบไม่ผ่าน · คำอธิบายรายข้ออยู่ที่ component-rules.md · แก้กติกาต้องแก้ทั้ง 2 ไฟล์",
- "_updated": "2026-11-11",
- "library": {
-  "Table": {
-   "cols": 8,
-   "rows": 10,
-   "key": "f1bf4ff71490cea64e92f210d8941eecb1d236e3",
-   "variant": {
-    "Alternating fills": "True"
-   },
-   "_note": "R25 เจ้าของงานสั่ง 21 ต.ค. 2569 ค่ำ: ทุก scenario ที่มีตาราง (desktop) ต้องเป็น instance ของ component นี้ ห้ามประกอบเอง · cols/rows = ค่าตั้งต้น (ฉบับ 19 ต.ค.) — ไลบรารี publish Table > 8 คอลัมน์แล้ว (21 ต.ค. ค่ำ) ปลั๊กอิน probeTable() อ่านของจริงตอนสร้าง เกินแล้วยุบเป็นช่อง 2 บรรทัด/ตัด"
+  "_about": "กติกาการสร้างจอด้วย component จริงของไลบรารี (Component) VMS Plus — ตัวทดสอบ test-overhaul2-plugin.js อ่านไฟล์นี้แล้วตรวจทุกจอ · ผิดกติกา = ทดสอบไม่ผ่าน · คำอธิบายรายข้ออยู่ที่ component-rules.md · แก้กติกาต้องแก้ทั้ง 2 ไฟล์",
+  "_updated": "2026-11-11 (R94 ฉบับ 2: แบบประเมินความพึงพอใจของ กบค. ย้ายออกจาก S13 เป็นหน้าแยก S27 บล็อก Y แบบประเมินผู้รับจ้าง ดาว Rating · เต็ม 55 · S13 รับทราบอย่างเดียว L.2 L.4 L.7 เปลี่ยนเนื้อ · R89 Radio text card retired · R80 allow ผู้ใช้รถฯ ทะเบียนรถ) · 2026-11-11 (R93 ภาค สนง. (สำนักงานใหญ่) เขต กกฟ.1 กกฟ.2 ในแผงตัวกรอง S1 S19 · ปุ่มเพิ่มยานพาหนะของหน้าไตรมาส S6 Disabled เมื่อทุกคันในไตรมาสปิดงาน รวมบำรุงรักษาไม่ได้) · 2026-11-10 (R92 S18 ต้นทุนการบำรุงรักษา แท็บในหน้ารายละเอียดแผน Metric 4 ใบ ตารางรายไตรมาส รายคัน คันที่บำรุงรักษาไม่ได้ · S10 Step 2 ชั่วโมงทำงาน × อัตรา) · 2026-11-10 (R91 สะกด ไฮดรอลิก ทุกจอบำรุงรักษา) · 2026-11-10 (ตรวจก่อน export: R75 R60 regex ยานพาหนะ · R38 R39 retired · เตือนกติกาไม่ตรงจอ) · 2026-11-10 (R90 S24 แดชบอร์ดการบำรุงรักษารายคัน Metric 4 ใบ ตาราง 8 คอลัมน์ ตัวกรอง 6 ช่อง · รายละเอียดยานพาหนะ 5 แท็บ · เกณฑ์ครั้งถัดไปตามเวลา) · 2026-11-10 (R89 S13 ผู้ดูแลยานพาหนะรับทราบผลรายคัน ปุ่มรับทราบสีเขียว + ประเมินความพึงพอใจรายคัน · S14 S15 ตัดออก) · 2026-11-10 (R88 หน้าอนุมัติแผน S2 และแผนเดินทาง S7 มีแท็บ รออนุมัติ อนุมัติแล้ว ส่งกลับแก้ไข) · 2026-11-10 (R19 ฉบับ 10 พ.ย. แถบหัวบล็อกและป้าย state ใช้ component กลางของหน้า Design Annotations UI Release#2) · 2026-11-10 (R87 เอา S23 มุมผู้รับจ้างกลับ บล็อก V · UI แบบ S10 การมองเห็นแบบเดิม เมนู … ดูรายละเอียดอย่างเดียว · แผนจ้าง Step 2 ทั้ง S23 และ S10 ไม่มีส่วนค่าใช้จ่ายของยานพาหนะและคอลัมน์ราคา · R72 ไม่ตรวจ Step 2 ของแผนจ้าง) · 2026-11-09 (R85 แท็บทั้งหมดของฟอร์มแผน อะไหล่รวมทุกไตรมาส รวมทุกไตรมาส · R81 ตารางอะไหล่รวมตามรายการชุดเดียว QPART_COLS · R82 ตารางยานพาหนะของแผนเดินทางชุดเดียว TRIP_V_COLS + ประเภทยานพาหนะ วันดำเนินการ ทุกหน้า S6 S7 S8 S9 S10 หน้าไตรมาส ไฟล์ส่งออก · R83 popup แก้ไขยานพาหนะในแผนเดินทาง เลือกวันดำเนินการเป็นช่วง วันนอกช่วงวันเดินทาง Disabled · R84 ส่งออกแผนเดินทาง PDF Excel · R79 regex ตามชื่อจอใหม่) · 2026-11-06 (R80 จอบำรุงรักษาใช้คำว่า \"ยานพาหนะ\" แทน \"รถ\" ยกเว้นข้อมูลจาก API) · 2026-11-05 (R77 S1/S19 ภาค เขต ประเภทรถ ย้ายเข้าแผงตัวกรอง · Tabs + Table header แสดงเสมอ · Empty state รถ \"ยังไม่มีรายการรถ\") · 2026-11-05 (R76 ประเมินผู้รับจ้าง กล่องข้อมูลผู้รับจ้างแยกตามประเภทงาน งานซ่อม บำรุงรักษา Overhaul + สร้างแยกประเภท) · 2026-11-05 (R75 S1 แท็บไตรมาสที่ยังไม่มีรถ มีปุ่มเพิ่มรถเข้าไตรมาส + popup แบบ S6) · 2026-11-05 (R70–R74 รีวิวทีมออกแบบ S10: ขั้นตอนบำรุงรักษา 2 ขั้น Progress steps · ตัวนับ ตรวจแล้ว x/y ไม่นับคันที่บำรุงรักษาไม่ได้ · งบที่ตัด + ศูนย์ต้นทุนแบบงานซ่อม · วันที่เปลี่ยนน้ำมันครั้งล่าสุด Date picker · จำนวนที่ใช้จริง Number input · toast S10 ขวาบน R60) · 2026-11-05 (R69 ภาค เขต ประเภทรถ ไม่มี Disabled) · 2026-11-05 (R67 R68 S25 ย้ายรถที่บำรุงรักษาไม่ได้ไปไตรมาสอื่น บล็อก X · เมนู … รายการเดียว ไตรมาส 4 Disabled · มือถือ Action buttons · popup เลือกไตรมาสถัดไป) · 2026-11-05 (R65 S10 ตัดตรวจสภาพรถปิดงาน · R62 จัดการอะไหล่ของรถรายคัน S1 แท็บไตรมาส + S21 · อะไหล่ในไตรมาสตั้งต้นว่าง รวมจากรถ · popup จัดลงไตรมาสเหลือไตรมาส 1–4 · R61 Empty state รถของ S1 ใช้ภาพรถกับแว่นขยาย · R56–R60 รีวิวทีมออกแบบ S1 S2 S6 ของปลั๊กอินบำรุงรักษา · R57 แบบ A เลือกพื้นที่แล้วเห็นรถทุกคัน ติ๊กแล้วจัดลงไตรมาส · ปุ่มหลักในแถบค้นหาขวาของตัวกรอง · รายการว่าง · Validation Out of focus ปุ่ม Disabled จนกว่าครบ · ผลการพิจารณาบนสุดไม่มีค่าเริ่มต้น · toast ขวาบน · ทางเข้าหน้าไตรมาส · popup รถในแผนเดินทางอื่นเลือกไม่ได้) · 2026-11-04 (R55 ตัด S11 S23 ของปลั๊กอินบำรุงรักษา · แผนจ้างดำเนินการ กบค. ปิดงานรายคันแทนผู้รับจ้างที่ S10 · จอ I.22 I.23 ต้องมีเมนูและปุ่มของ กบค.) · 2026-10-30 (R34 ปลั๊กอินบำรุงรักษา S19 แก้ไขแผน S20 ลบแผน · เมนู … ตามสถานะแผน) · 2026-10-30 (R33 ปลั๊กอิน login-plugin จอตาม role ของ กรย./หน่วยงานเจ้าของรถ ห้ามมีปุ่มแก้ไข) · 2026-10-30 (R32 ส่งออกสรุปรายคัน PDF/Excel · เฟรมหน้าตาไฟล์ยกเว้นขนาดจอ) · 2026-10-30 (R31 S18 บล็อก S หน้าสรุปรายคัน · R30 ครอบจอสรุปฝั่งหน่วยงาน) · 2026-10-30 (R30 S17 บล็อก R จอดูอย่างเดียวของหน่วยงานเจ้าของรถ / กรย. — ซ่อนปุ่มแก้ไข/ลบ/สร้าง) · 2026-10-30 (R29 S16 บล็อก Q หน่วยงานตอบกลับนัดหมาย ตอบรับ/ปฏิเสธ · Radio text card) · 2026-10-30 (R28 ส่วนรับประกันเป็น Toggle + dropdown ระยะรับประกัน 90/180/360/720 วัน · เตือนเจ้าของรถ และ กบค. · S15 บล็อก P) · 2026-10-22 (R23 บล็อก M S12 ฉบับเจ้าของงาน) · 2026-10-22 (R28 ปิดงาน S14 มีการรับประกันของผู้รับจ้าง: จำนวนวัน + วันเริ่มตั้งต้นเป็นวันปิดงาน แก้ได้ + วันหมดอายุคำนวณ) · 2026-10-22 (R26 ผัง userflow ข้างจอ · ปลั๊กอินบำรุงรักษาปรับ export ให้ตรง Overhaul) · 2026-10-21 (R23 บล็อก A ฉบับเจ้าของงาน 8 คอลัมน์ ไม่มีหน่วยงาน + ตัวกรอง dropdown · R23 หน้ารายการแผนตามจอเจ้าของงาน 8 คอลัมน์ + ปุ่ม … · R21 ฉบับเจ้าของงาน: ปุ่ม … + Dropdown menu บนตารางรายการแผน/PO · R25 ตารางทุก scenario = component Table เสมอ ห้ามประกอบเอง · R24 เลือกรถในฟอร์ม PO = Input dropdown + ชิป · R23 แบบที่เจ้าของงานส่งเป็นหลัก · R22 dashboard แบบ MA Overview · R20 หน้า toast แยก · R21 จัดการเป็นไอคอน) · 2026-10-19 (R10 R16–R17)",
+  "library": {
+    "Table": {
+      "cols": 8,
+      "rows": 10,
+      "key": "f1bf4ff71490cea64e92f210d8941eecb1d236e3",
+      "variant": {
+        "Alternating fills": "True"
+      },
+      "_note": "R25 เจ้าของงานสั่ง 21 ต.ค. 2569 ค่ำ: ทุก scenario ที่มีตาราง (desktop) ต้องเป็น instance ของ component นี้ ห้ามประกอบเอง · cols/rows = ค่าตั้งต้น (ฉบับ 19 ต.ค.) — ไลบรารี publish Table > 8 คอลัมน์แล้ว (21 ต.ค. ค่ำ) ปลั๊กอิน probeTable() อ่านของจริงตอนสร้าง เกินแล้วยุบเป็นช่อง 2 บรรทัด/ตัด"
+    },
+    "Progress steps": {
+      "steps": 7,
+      "_note": "เจ้าของงานเพิ่มเป็น 7 ช่อง + publish 19 ต.ค. 2569 (เดิม 5)"
+    }
   },
-  "Progress steps": {
-   "steps": 7,
-   "_note": "เจ้าของงานเพิ่มเป็น 7 ช่อง + publish 19 ต.ค. 2569 (เดิม 5)"
-  }
- },
- "variants": [
-  {
-   "id": "R1",
-   "component": "Header navigation",
-   "desktop": {
-    "Breakpoint": "Tablet"
-   },
-   "mobile": {
-    "Breakpoint": "Mobile"
-   },
-   "source": "รีวิว 19 ต.ค. 2569"
+  "variants": [
+    {
+      "id": "R1",
+      "component": "Header navigation",
+      "desktop": {
+        "Breakpoint": "Tablet"
+      },
+      "mobile": {
+        "Breakpoint": "Mobile"
+      },
+      "source": "รีวิว 19 ต.ค. 2569"
+    },
+    {
+      "id": "R15",
+      "component": "Progress steps",
+      "desktop": {
+        "Type": "Horizontal"
+      },
+      "source": "เจ้าของงานส่งภาพ component Progress steps 19 ต.ค. 2569 — stepper ใช้ component นี้ทั้งก้อน"
+    },
+    {
+      "id": "R25",
+      "component": "Table",
+      "desktop": {
+        "Alternating fills": "True"
+      },
+      "source": "เจ้าของงานส่ง instance Table Alternating fills เปิด 21 ต.ค. 2569 ค่ำ (§4.4)"
+    }
+  ],
+  "props": [
+    {
+      "id": "R2",
+      "component": "Page header",
+      "must": {
+        "Divider": false
+      },
+      "source": "รีวิว 19 ต.ค. 2569 + คำสั่งปิด divider ทั้งหมด"
+    },
+    {
+      "id": "R3",
+      "component": "Section header",
+      "must": {
+        "Divider": false
+      },
+      "source": "คำสั่งปิด divider ทั้งหมด 19 ต.ค. 2569"
+    },
+    {
+      "id": "R4",
+      "component": "Input label",
+      "must": {
+        "Info icon": false
+      },
+      "source": "รีวิว 19 ต.ค. 2569 (Text input > ปิด Info icon — ตัวที่โผล่คือ Input label ที่ซ้อนอยู่)"
+    },
+    {
+      "id": "R5",
+      "component": "Section label",
+      "must": {
+        "Info icon": false,
+        "More actions": false
+      },
+      "source": "รีวิว 19 ต.ค. 2569"
+    },
+    {
+      "id": "R6",
+      "component": "Text input",
+      "must": {
+        "Info icon": false
+      },
+      "onlyIf": {
+        "Label": true
+      },
+      "skipInside": [
+        "Header navigation"
+      ],
+      "source": "รีวิว 19 ต.ค. 2569 · ช่องค้นหาในตัว Header navigation เป็นของไลบรารี ไม่แตะ"
+    },
+    {
+      "id": "R18",
+      "component": "Text input",
+      "labels": [
+        "เลข WBS",
+        "เลขโครงข่าย",
+        "เลขกิจกรรม",
+        "เลขที่ใบสั่ง"
+      ],
+      "must": {
+        "Optional": true,
+        "Helper": false
+      },
+      "source": "เจ้าของงานเคาะ 19 ต.ค. 2569 — 3 ช่อง WBS ไม่บังคับ แสดง (ถ้ามี) · 29 ต.ค. 2569 ช่องตามประเภทงบประมาณ \"ไม่บังคับเลย\" (หมายเหตุ/ศูนย์ต้นทุนชื่อซ้ำกับช่องอื่นของระบบ จึงตรวจใน harness แทน · ศูนย์ต้นทุนแบบ Readonly ไม่ต้องมี (ถ้ามี))"
+    },
+    {
+      "id": "R16",
+      "component": "RepairAppointmentStep",
+      "must": {
+        "RepairMethod": false
+      },
+      "source": "เจ้าของงานสั่ง 19 ต.ค. 2569 — นัดหมายใช้แบบงานซ่อม ไม่มี section รูปแบบการซ่อม"
+    },
+    {
+      "id": "R7",
+      "component": "Input dropdown",
+      "must": {
+        "Info icon": false
+      },
+      "onlyIf": {
+        "Label": true
+      },
+      "source": "รีวิว 19 ต.ค. 2569"
+    }
+  ],
+  "insideOnly": [
+    {
+      "id": "R8",
+      "component": "Table cell",
+      "parent": "Table",
+      "allowInside": [
+        "ReturnPart",
+        "ReceiptChecklist",
+        "InspectionChecklist"
+      ],
+      "allowInFrame": [
+        "ReceiptChecklist",
+        "InspectionChecklist",
+        "ReturnPart"
+      ],
+      "source": "รีวิว 19 ต.ค. 2569 (ต้องเรียก component Table ทั้งก้อน) · 21 ต.ค. ค่ำ R25: ถอดข้อยกเว้นขนาด — ประกอบเอง = ไม่ผ่านทุกขนาด · 5 พ.ย. 2569 R74: เฟรม ReturnPart = แบบสำรองลอกตารางอะไหล่ของงานซ่อม (Number input ในคอลัมน์จำนวนที่ใช้) ใน S10 Step 2"
+    },
+    {
+      "id": "R9",
+      "component": "Table header cell",
+      "parent": "Table",
+      "allowInside": [
+        "ReturnPart",
+        "ReceiptChecklist",
+        "InspectionChecklist"
+      ],
+      "allowInFrame": [
+        "ReceiptChecklist",
+        "InspectionChecklist",
+        "ReturnPart"
+      ],
+      "source": "รีวิว 19 ต.ค. 2569 · 21 ต.ค. ค่ำ R25: ถอดข้อยกเว้นขนาด — ประกอบเอง = ไม่ผ่านทุกขนาด · 5 พ.ย. 2569 R74: เฟรม ReturnPart = แบบสำรองลอกตารางอะไหล่ของงานซ่อม (Number input ในคอลัมน์จำนวนที่ใช้) ใน S10 Step 2"
+    },
+    {
+      "id": "R10",
+      "component": "Horizontal step item",
+      "parent": "Progress steps",
+      "allowInStyledFrame": true,
+      "source": "รีวิว 19 ต.ค. 2569 — ต้องเป็น instance ของ Progress steps (ไลบรารีมี 7 ช่องแล้ว) · เฟรมมีกรอบใช้ได้เฉพาะไฟล์ที่ยังไม่อัปเดตไลบรารี"
+    }
+  ],
+  "pages": [
+    {
+      "id": "R11",
+      "when": "detail",
+      "detailTitle": "^หมายเลข",
+      "forbid": [
+        "Section header"
+      ],
+      "use": "Section label",
+      "source": "รีวิว 19 ต.ค. 2569 (Section header ใช้เฉพาะ Create/Edit)"
+    }
+  ],
+  "screensUse": [
+    {
+      "id": "R77",
+      "screens": "^MT / .*S1 — (กดตัวกรอง — แผงตัวกรอง|เลือกภาค เขต ในแผงตัวกรอง)",
+      "desktopOnly": true,
+      "component": "Side panel header",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 ค่ำ \"อยากย้ายสิ่งที่ filter ด้านบน มาไว้ที่เมนู filter ด้านล่างแทน\" + \"อยากให้เอาสิ่งที่ต้องเลือก 3 อย่างนี้ ไปอยู่ใน filter เลย และปุ่ม filter and search มีขึ้นมาเลย หัวตารางมาเลย แล้วมี icon car empty มาแสดง ถ้ายังไม่ได้เลือกรถ\" (ยืนยันต้นแบบเว็บ PlanForm.tsx แล้ว) ⇒ S1/S19 ภาค เขต ประเภทรถ อยู่ในแผงตัวกรอง (filterPanel: Side panel header + Input dropdown with badges Optional ×3 + Side panel footer · มือถือ bottom sheet) ตาม \"PEA Car Cost Filter\" ของ UI Release#2 · Tabs + Table header แสดงเสมอ · ยังไม่เลือก = Empty state/Data empty ภาพรถ \"ยังไม่มีรายการรถ\" · component-rules.md §5.31"
+    },
+    {
+      "id": "R77",
+      "screens": "^MT / .*S1 — (กดตัวกรอง — แผงตัวกรอง|เลือกภาค เขต ในแผงตัวกรอง)",
+      "desktopOnly": true,
+      "component": "Side panel footer",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 ค่ำ \"อยากย้ายสิ่งที่ filter ด้านบน มาไว้ที่เมนู filter ด้านล่างแทน\" + \"อยากให้เอาสิ่งที่ต้องเลือก 3 อย่างนี้ ไปอยู่ใน filter เลย และปุ่ม filter and search มีขึ้นมาเลย หัวตารางมาเลย แล้วมี icon car empty มาแสดง ถ้ายังไม่ได้เลือกรถ\" (ยืนยันต้นแบบเว็บ PlanForm.tsx แล้ว) ⇒ S1/S19 ภาค เขต ประเภทรถ อยู่ในแผงตัวกรอง (filterPanel: Side panel header + Input dropdown with badges Optional ×3 + Side panel footer · มือถือ bottom sheet) ตาม \"PEA Car Cost Filter\" ของ UI Release#2 · Tabs + Table header แสดงเสมอ · ยังไม่เลือก = Empty state/Data empty ภาพรถ \"ยังไม่มีรายการรถ\" · component-rules.md §5.31"
+    },
+    {
+      "id": "R77",
+      "screens": "^MT / .*S1 — (กดตัวกรอง — แผงตัวกรอง|เลือกภาค เขต ในแผงตัวกรอง)",
+      "mobileOnly": true,
+      "component": "Bottom sheet header",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 ค่ำ \"อยากย้ายสิ่งที่ filter ด้านบน มาไว้ที่เมนู filter ด้านล่างแทน\" + \"อยากให้เอาสิ่งที่ต้องเลือก 3 อย่างนี้ ไปอยู่ใน filter เลย และปุ่ม filter and search มีขึ้นมาเลย หัวตารางมาเลย แล้วมี icon car empty มาแสดง ถ้ายังไม่ได้เลือกรถ\" (ยืนยันต้นแบบเว็บ PlanForm.tsx แล้ว) ⇒ S1/S19 ภาค เขต ประเภทรถ อยู่ในแผงตัวกรอง (filterPanel: Side panel header + Input dropdown with badges Optional ×3 + Side panel footer · มือถือ bottom sheet) ตาม \"PEA Car Cost Filter\" ของ UI Release#2 · Tabs + Table header แสดงเสมอ · ยังไม่เลือก = Empty state/Data empty ภาพรถ \"ยังไม่มีรายการรถ\" · component-rules.md §5.31"
+    },
+    {
+      "id": "R77",
+      "screens": "^MT / .*S1 — (ฟอร์มสร้างแผน \\(ว่าง\\)|เลือกปีงบประมาณ|Validation|กดตัวกรอง — แผงตัวกรอง|เลือกภาค เขต ในแผงตัวกรอง)",
+      "component": "Table header",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 ค่ำ \"อยากย้ายสิ่งที่ filter ด้านบน มาไว้ที่เมนู filter ด้านล่างแทน\" + \"อยากให้เอาสิ่งที่ต้องเลือก 3 อย่างนี้ ไปอยู่ใน filter เลย และปุ่ม filter and search มีขึ้นมาเลย หัวตารางมาเลย แล้วมี icon car empty มาแสดง ถ้ายังไม่ได้เลือกรถ\" (ยืนยันต้นแบบเว็บ PlanForm.tsx แล้ว) ⇒ S1/S19 ภาค เขต ประเภทรถ อยู่ในแผงตัวกรอง (filterPanel: Side panel header + Input dropdown with badges Optional ×3 + Side panel footer · มือถือ bottom sheet) ตาม \"PEA Car Cost Filter\" ของ UI Release#2 · Tabs + Table header แสดงเสมอ · ยังไม่เลือก = Empty state/Data empty ภาพรถ \"ยังไม่มีรายการรถ\" · component-rules.md §5.31"
+    },
+    {
+      "id": "R77",
+      "screens": "^MT / .*S1 — (ฟอร์มสร้างแผน \\(ว่าง\\)|เลือกปีงบประมาณ|Validation|กดตัวกรอง — แผงตัวกรอง|เลือกภาค เขต ในแผงตัวกรอง)",
+      "component": "Tabs",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 ค่ำ \"อยากย้ายสิ่งที่ filter ด้านบน มาไว้ที่เมนู filter ด้านล่างแทน\" + \"อยากให้เอาสิ่งที่ต้องเลือก 3 อย่างนี้ ไปอยู่ใน filter เลย และปุ่ม filter and search มีขึ้นมาเลย หัวตารางมาเลย แล้วมี icon car empty มาแสดง ถ้ายังไม่ได้เลือกรถ\" (ยืนยันต้นแบบเว็บ PlanForm.tsx แล้ว) ⇒ S1/S19 ภาค เขต ประเภทรถ อยู่ในแผงตัวกรอง (filterPanel: Side panel header + Input dropdown with badges Optional ×3 + Side panel footer · มือถือ bottom sheet) ตาม \"PEA Car Cost Filter\" ของ UI Release#2 · Tabs + Table header แสดงเสมอ · ยังไม่เลือก = Empty state/Data empty ภาพรถ \"ยังไม่มีรายการรถ\" · component-rules.md §5.31"
+    },
+    {
+      "id": "R77",
+      "screens": "^MT / .*S1 — (ฟอร์มสร้างแผน \\(ว่าง\\)|เลือกปีงบประมาณ|Validation|กดตัวกรอง — แผงตัวกรอง|เลือกภาค เขต ในแผงตัวกรอง)",
+      "component": "Empty state/Data empty",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 ค่ำ \"อยากย้ายสิ่งที่ filter ด้านบน มาไว้ที่เมนู filter ด้านล่างแทน\" + \"อยากให้เอาสิ่งที่ต้องเลือก 3 อย่างนี้ ไปอยู่ใน filter เลย และปุ่ม filter and search มีขึ้นมาเลย หัวตารางมาเลย แล้วมี icon car empty มาแสดง ถ้ายังไม่ได้เลือกรถ\" (ยืนยันต้นแบบเว็บ PlanForm.tsx แล้ว) ⇒ S1/S19 ภาค เขต ประเภทรถ อยู่ในแผงตัวกรอง (filterPanel: Side panel header + Input dropdown with badges Optional ×3 + Side panel footer · มือถือ bottom sheet) ตาม \"PEA Car Cost Filter\" ของ UI Release#2 · Tabs + Table header แสดงเสมอ · ยังไม่เลือก = Empty state/Data empty ภาพรถ \"ยังไม่มีรายการรถ\" · component-rules.md §5.31"
+    },
+    {
+      "id": "R69",
+      "screens": "^MT / .*S1 — เลือกภาค เขต ในแผงตัวกรอง",
+      "component": "Input dropdown with badges",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 \"ตรงที่เลือก ไม่ต้องมี disable เลือกตรงใหนก็ได้\" · ภาค เขต ประเภทรถ ไม่มี State=Disabled เลือกช่องไหนก่อนก็ได้ · ยังไม่เลือกภาค รายการเขต = ทุกเขต · R77 ช่องอยู่ในแผงตัวกรองแล้ว · component-rules.md §5.23 §5.31"
+    },
+    {
+      "id": "R65",
+      "screens": "^MT / .*S(10|12) — (.*Step 2|Validation|เลือกวันที่เปลี่ยนน้ำมัน|เลือกงบที่ตัด|กรอกผลงาน)",
+      "component": "Primary button",
+      "forbidSectionTitles": [
+        "ตรวจสภาพรถปิดงาน"
+      ],
+      "source": "เจ้าของงาน 5 พ.ย. 2569 \"s10 เอาตรวจสภาพปิดงาน ออกไปเลย\" ⇒ หน้าปิดงาน (S10 ทั้งแผนดำเนินการเองและแผนจ้าง · S12) ไม่มีหัวข้อ ตรวจสภาพรถปิดงาน · คงลงนามการส่งคืนรถ · component-rules.md §5.27 · 5 พ.ย. 2569 หน้าปิดงานเป็น Step 2 สรุปงานก่อนปิดงาน (R70)"
+    },
+    {
+      "id": "R62",
+      "screens": "^MT / .*(S1 — แท็บไตรมาส|S21 — (แท็บไตรมาส|บันทึกสำเร็จ|เลือกไส้กรอง|ระบุอะไหล่เพิ่มเติมแล้ว))",
+      "desktopOnly": true,
+      "component": "Table",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 \"หน้านี้จะเห็นรถในไตรมาส แต่จะยังไม่เห็นอะใหล่ อยากให้จัดการสิ่งที่ต้องทำของรถแต่ละคัน …\" + แก้ \"ไม่ได้ให้เอาออกจากการสร้างแผน แต่ให้เอารายการอะใหล่ออก เป็น empty ก่อน …\" ⇒ แท็บไตรมาสสรุปสิ่งที่ต้องทำรายคัน (Table + Action icons) + อะไหล่ในไตรมาสรวมจากรถ · หน้าจัดการอะไหล่ของรถ อะไหล่อื่นๆ เป็น Table ชื่อ ยี่ห้อ รุ่น รหัส จำนวน หน่วย · component-rules.md §5.26"
+    },
+    {
+      "id": "R62",
+      "screens": "^MT / .*S21 — ระบุอะไหล่เพิ่มเติม — popup",
+      "desktopOnly": true,
+      "component": "Modal",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 ระบุ ชื่อ ยี่ห้อ รุ่น รหัส · การ์ดรายการเพิ่มเติมของงานซ่อมมีแค่ 3 ช่อง ⇒ Modal Type=Form Card form row 3 แถว × Input 1/Input 2 · component-rules.md §5.26"
+    },
+    {
+      "id": "R61",
+      "screens": "^MT / .*S1 — ฟอร์มสร้างแผน \\(ว่าง\\)",
+      "component": "Empty state/Data empty",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 \"empty s1 ของรถ ใช้ ui นี้นะ\" (ภาพรถกับแว่นขยาย) · Graphic ใส่ภาพทับแบบ Contract vehicle list - Empty (1-54) ของ UI Release#2 · emptyGraphic(es, 'empty-vehicle') ใน core (ภาพฝังจาก build.json images) — ไม่เจอสี่เหลี่ยมใน Graphic หรือไม่มีภาพ = คำเตือน · component-rules.md §5.23"
+    },
+    {
+      "id": "R75",
+      "screens": "^MT / .*S1 — ไตรมาสที่ยังไม่มียานพาหนะ",
+      "component": "Empty state/Data empty",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 \"ทำให้หน้า ไตรมาสยังไม่่มีรถสามารถเพิ่มรถจากจุดนี้ได้ด้วย\" ⇒ แท็บไตรมาสที่ยังไม่มีรถ Empty state/Data empty (ภาพรถ R61) + ปุ่มหลัก \"เพิ่มรถเข้าไตรมาส n\" ตาม Create vehicle step 3 > State=Empty ของ 5.2 Vehicle Management (UI Release#2) · popup แบบเพิ่มรถเข้าไตรมาส S6 (tripCarModal) · component-rules.md §5.23"
+    },
+    {
+      "id": "R75",
+      "screens": "^MT / .*S1 — (กดเพิ่มยานพาหนะเข้าไตรมาส|ติ๊กยานพาหนะ 2 คัน — ปุ่มเพิ่มเข้าไตรมาส|ทุกคันในพื้นที่จัดลงไตรมาสแล้ว)",
+      "desktopOnly": true,
+      "component": "Modal footer",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 \"ทำให้หน้า ไตรมาสยังไม่่มีรถสามารถเพิ่มรถจากจุดนี้ได้ด้วย\" ⇒ แท็บไตรมาสที่ยังไม่มีรถ Empty state/Data empty (ภาพรถ R61) + ปุ่มหลัก \"เพิ่มรถเข้าไตรมาส n\" ตาม Create vehicle step 3 > State=Empty ของ 5.2 Vehicle Management (UI Release#2) · popup แบบเพิ่มรถเข้าไตรมาส S6 (tripCarModal) · component-rules.md §5.23"
+    },
+    {
+      "id": "R75",
+      "screens": "^MT / .*S1 — (กดเพิ่มยานพาหนะเข้าไตรมาส|ติ๊กยานพาหนะ 2 คัน — ปุ่มเพิ่มเข้าไตรมาส)",
+      "desktopOnly": true,
+      "component": "Table",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 \"ทำให้หน้า ไตรมาสยังไม่่มีรถสามารถเพิ่มรถจากจุดนี้ได้ด้วย\" ⇒ แท็บไตรมาสที่ยังไม่มีรถ Empty state/Data empty (ภาพรถ R61) + ปุ่มหลัก \"เพิ่มรถเข้าไตรมาส n\" ตาม Create vehicle step 3 > State=Empty ของ 5.2 Vehicle Management (UI Release#2) · popup แบบเพิ่มรถเข้าไตรมาส S6 (tripCarModal) · component-rules.md §5.23"
+    },
+    {
+      "id": "R60",
+      "screens": "^MT / .*S1 — เพิ่มยานพาหนะเข้าไตรมาส 3 แล้ว",
+      "component": "Notification",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 toast ขวาบนเสมอ · \"จัดรถ k คันลงไตรมาส n สำเร็จ\" (R75)"
+    },
+    {
+      "id": "R70",
+      "screens": "^MT / .*S(10|12) — (กดเริ่มงาน|กดเซ็นลงนาม|ตรวจรายการและลงนามครบ|ยืนยันการตรวจสภาพ|Validation|เลือกวันที่เปลี่ยนน้ำมัน|เลือกงบที่ตัด|กรอกผลงาน|บำรุงรักษาไม่ได้ระหว่าง Step|Step 2|.*— Step 2)",
+      "desktopOnly": true,
+      "component": "Progress steps",
+      "source": "รีวิวทีมออกแบบ S10 5 พ.ย. 2569 \"เมื่อกดเริ่มงาน จะพาเข้า Step การ Maintain · Step1 : ตรวจสภาพก่อนบำรุงรักษา · Step2 : ไม่ต้องมีแล้ว · Step3 : เอาไปแทน Step2 สรุปงานก่อนปิดงาน\" ⇒ หน้าขั้นตอนมี Progress steps Type=Horizontal ทั้งก้อน 2 ขั้น ซ่อนช่อง 3–7 (R10 · แบบ Create vehicle ของ 5.2 Vehicle Management ใน UI Release#2) · component-rules.md §5.29"
+    },
+    {
+      "id": "R70",
+      "screens": "^MT / .*S(10|12) — (กดเริ่มงาน|กดเซ็นลงนาม|ตรวจรายการและลงนามครบ|ยืนยันการตรวจสภาพ|Validation|เลือกวันที่เปลี่ยนน้ำมัน|เลือกงบที่ตัด|กรอกผลงาน|บำรุงรักษาไม่ได้ระหว่าง Step|Step 2|.*— Step 2)",
+      "mobileOnly": true,
+      "component": "Mobile progress steps",
+      "source": "รีวิวทีมออกแบบ S10 5 พ.ย. 2569 · มือถือ Mobile progress steps Collapsed=True + Step circles / 4 steps ตัวเลข 1/2 2/2 แบบ Check Expense Modal หน้า 5.14 - 5.15 Cost & Expense Check ของ UI Release#2 · component-rules.md §5.29"
+    },
+    {
+      "id": "R71",
+      "screens": "^MT / .*S(10|12) — (หน้ารายละเอียดแผนเดินทาง|ปิดงานสำเร็จ|บันทึกบำรุงรักษาไม่ได้แล้ว|แผนจ้างดำเนินการ — หน้ารายละเอียด|ปิดงานโดยยังไม่มีผล|กลับหน้าแผนเดินทาง)",
+      "component": "Section header",
+      "badgeMatch": "^ตรวจแล้ว \\d+/\\d+$",
+      "source": "รีวิวทีมออกแบบ S10 5 พ.ย. 2569 \"อยากให้มีนับ progress แบบ 0/10 ของรายการรถที่ตรวจแล้ว\" + เจ้าของงาน 5 พ.ย. 2569 \"ถ้าบำรุงรักษาไม่ได้ ไม่เอามานับ เช่น ถ้าทั้งหมด 10 แล้วมีคันที่ไม่ได้บำรุงรักษา จะเหลือ 9\" ⇒ Section header \"รถในแผนเดินทาง\" + Badge outline \"ตรวจแล้ว เสร็จสิ้น/(ทั้งหมด − บำรุงรักษาไม่ได้)\" แบบ Section header + Badge \"2 รายการ\" หน้า 5.1 Rental Contract Management ของ UI Release#2 · component-rules.md §5.29"
+    },
+    {
+      "id": "R72",
+      "screens": "^MT / .*S(10|12) — (ยืนยันการตรวจสภาพ — Step 2|Validation|เลือกวันที่เปลี่ยนน้ำมัน|เลือกงบที่ตัด|กรอกผลงานครบ|Step 2 —|Step 2 สรุปงาน)",
+      "component": "Request Repair/Budget",
+      "ifInFile": true,
+      "source": "รีวิวทีมออกแบบ S10 5 พ.ย. 2569 \"เลือกศูนย์ต้นทุน ต้องเป็นรูปแบบเดียวกันกับงานซ่อมและ overhaul\" ⇒ งบที่ตัด + ศูนย์ต้นทุน = component Request Repair/Budget ของงานซ่อม (ไฟล์ Maintain-D หน้า Local Component) · Overhaul R18 ต่างที่ชื่อช่องและตำแหน่ง ใช้แบบงานซ่อม · ไฟล์ที่ไม่มี component นี้ใช้แบบสำรอง · component-rules.md §5.29 · 10 พ.ย. 2569 (R87) Step 2 ของแผนจ้างดำเนินการไม่มีส่วนค่าใช้จ่ายทั้งส่วน จึงไม่ตรวจ I.26"
+    },
+    {
+      "id": "R73",
+      "screens": "^MT / .*S10 — เลือกวันที่เปลี่ยนน้ำมันครั้งล่าสุด",
+      "desktopOnly": true,
+      "component": "Date picker",
+      "source": "รีวิวทีมออกแบบ S10 5 พ.ย. 2569 \"น้ำมันไฮโดรลิก เลือกตัวเลือก สามารถระบุวันที่เปลี่ยนน้ำมันครั้งล่าสุดได้\" ⇒ Text input \"วันที่เปลี่ยนน้ำมันครั้งล่าสุด (ถ้ามี)\" + Date picker Type=Single ใต้ช่อง (แบบช่องวันที่ S6) · component-rules.md §5.29"
+    },
+    {
+      "id": "R74",
+      "screens": "^MT / .*S(10|12) — (ยืนยันการตรวจสภาพ — Step 2|Validation|กรอกผลงานครบ|Step 2 —|แผนจ้างดำเนินการ — Step 2|Step 2 สรุปงาน)",
+      "desktopOnly": true,
+      "component": "Number input",
+      "source": "รีวิวทีมออกแบบ S10 5 พ.ย. 2569 \"ระบุจำนวนอะไหล่ที่ใช้จริงในงานนี้\" ⇒ คอลัมน์จำนวนที่ใช้ของรายการสภาพวัสดุอะไหล่เป็น Number input ตาม ReturnPart ของงานซ่อม (ไฟล์ Maintain-D หน้า Design) · component-rules.md §5.29"
+    },
+    {
+      "id": "R60",
+      "screens": "^MT / .*S10 — (กดเริ่มงาน|ปิดงานสำเร็จ|บันทึกบำรุงรักษาไม่ได้แล้ว|บันทึกเอกสาร Safety)",
+      "component": "Notification",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 \"toast ต้องแสดงด้านมุมบนขวามือเสมอเลย\" + รีวิว S10 \"ปิดงานทำเร็จ แสดง Toast ด้านบนขวา\" · notify() ใน core วางขวาบนทุกอุปกรณ์ · component-rules.md §5.29"
+    },
+    {
+      "id": "R60",
+      "screens": "^MT / .*(S1 — (จัดลงไตรมาสแล้ว|บันทึกและส่งอนุมัติสำเร็จ)|S2 — อนุมัติแผนสำเร็จ|S6 — สร้างแผนเดินทางสำเร็จ)",
+      "component": "Notification",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 \"toast จะขึ้นที่มุมขวาบน เสมอ ไม่อยู่ตรงกลาง\" + รีวิวทีมออกแบบ S2 \"แสดง Toast ด้านบนขวา · ไม่ต้องแสดง Alert อนุมัติแผนแล้ว ซ้ำ ให้แสดงแค่ Toast\" · notify() ใน core วางขวาบนทุกอุปกรณ์ (มือถือ override การจัดวางของ instance) · component-rules.md §5.23"
+    },
+    {
+      "id": "R57",
+      "screens": "^MT / .*S1 — (รถทั้งหมด|ค้นหาและกรอง|ติ๊กรถ|กดจัดลงไตรมาส|จัดลงไตรมาสแล้ว|แท็บไตรมาส|ย้ายรถไปไตรมาสอื่น|เอาภาคหรือตัวกรองออก)",
+      "desktopOnly": true,
+      "component": "Table",
+      "source": "เจ้าของงานเลือกแบบ A 5 พ.ย. 2569 \"หน้าตอนที่เลือก ภาค เลือกเขต อยากให้แสดงรถทั้งหมด ของภาคหรือเขตนั้นๆเลย ที่เลือกมา แล้วค่อยเข้าสู่กระบวนการเลือกรถเข้าไตรมาส\" · ตารางรถทุกคันของพื้นที่ ตาม Vehicle list / Export reports - Select vehicles ของ 5.2 Vehicle Management (UI Release#2) · component-rules.md §5.23"
+    },
+    {
+      "id": "R57",
+      "screens": "^MT / .*S1 — (รถทั้งหมด|ค้นหาและกรอง|ไม่พบรถ|ติ๊กรถ|กดจัดลงไตรมาส|จัดลงไตรมาสแล้ว|แท็บไตรมาส|ย้ายรถไปไตรมาสอื่น|เอาภาคหรือตัวกรองออก)",
+      "component": "Table header",
+      "source": "แบบ A 5 พ.ย. 2569: แถบเหนือตาราง หัว + Badge n คัน · ค้นหา · ตัวกรอง · จัดลงไตรมาส · ชิปตัวกรอง (Vehicle list ของ UI Release#2) · component-rules.md §5.23"
+    },
+    {
+      "id": "R57",
+      "screens": "^MT / .*S1 — (กดจัดลงไตรมาส|ย้ายรถไปไตรมาสอื่น)",
+      "component": "Radio text card",
+      "source": "แบบ A 5 พ.ย. 2569: popup จัดลงไตรมาส เลือก ไตรมาส 1–4 หรือเอาออกจากไตรมาส · component-rules.md §5.23"
+    },
+    {
+      "id": "R56",
+      "screens": "^MT / .*S1 — รายการแผน — ยังไม่มีแผน",
+      "component": "Empty state/Data empty",
+      "source": "รีวิวทีมออกแบบ 5 พ.ย. 2569 \"เพิ่มกรณีที่ไม่มีรายการ (empty)\" · ตามหน้ารายการว่างของ RP & MA Job (State=Empty) และ Wall charger list - Empty ของ UI Release#2 · component-rules.md §5.23"
+    },
+    {
+      "id": "R56",
+      "screens": "^MT / .*S1 — (รายการแผน|บันทึกและส่งอนุมัติสำเร็จ)( · mobile)?$",
+      "component": "Table header",
+      "source": "รีวิวทีมออกแบบ 5 พ.ย. 2569 \"ปุ่ม Primary สร้างแผน ต้องแสดงด้านขวาของปุ่ม ตัวกรอง\" ⇒ ปุ่มอยู่ใน Actions ของ Table header ตาม Incident list ของ 5.5 Repair & Maintenance Job (Admin) · component-rules.md §5.23"
+    },
+    {
+      "id": "R58",
+      "screens": "^MT / .*S(2|7) — (รายละเอียดแผน|อนุมัติ — ยืนยัน|เลือกส่งกลับ|ส่งกลับแก้ไข —)",
+      "component": "Section label",
+      "source": "รีวิวทีมออกแบบ 5 พ.ย. 2569 ผลการพิจารณาบนสุดแบบงานซ่อม (Section label + Radio text card) ไม่มีค่าเริ่มต้น · component-rules.md §5.24"
+    },
+    {
+      "id": "R59",
+      "screens": "^MT / .*S6 — รายละเอียดแผน — กดไปหน้าไตรมาส",
+      "component": "Tabs",
+      "source": "รีวิวทีมออกแบบ 5 พ.ย. 2569 \"เพิ่ม Flow การเข้าจากหน้า บำรุงรักษาตามวาระ มาจนถึงหน้า แผนเดินทาง\" + เจ้าของงานเคาะทางเข้า รายการแผน → รายละเอียดแผน → ไตรมาส 1 · component-rules.md §5.25"
+    },
+    {
+      "id": "R59",
+      "screens": "^MT / .*S6 — (หน้าไตรมาส|สร้างแผนเดินทางสำเร็จ|แผนเดินทาง 2 ใบ)",
+      "desktopOnly": true,
+      "component": "Table",
+      "source": "รีวิวทีมออกแบบ 5 พ.ย. 2569 หน้า E.1 เดิม = หน้า ไตรมาส 1 · สร้างแผนเดินทางสำเร็จกลับมาหน้านี้ · component-rules.md §5.25"
+    },
+    {
+      "id": "R59",
+      "screens": "^MT / .*S(6|9) — (สร้างแผนเดินทางใบถัดไป|กดเพิ่มรถ — popup รถในแผนเดินทางอื่น)",
+      "desktopOnly": true,
+      "component": "Modal footer",
+      "source": "รีวิวทีมออกแบบ 5 พ.ย. 2569 รถที่อยู่ในแผนเดินทางอื่นแสดงใน popup แต่เลือกไม่ได้ (Checkbox State=Disabled + บรรทัดรอง) · component-rules.md §5.25"
+    },
+    {
+      "id": "R29",
+      "screens": "^OH2 / .*S16 — (?!.*สำเร็จ)",
+      "component": "Radio text card",
+      "source": "เจ้าของงานสั่ง 30 ต.ค. 2569 \"ออกแบบ ตอบรับนัดหมายของงาน Overhaul ให้สอดคล้องกับงานแจ้งซ่อม … แยกเป็น ตอบรับ และ ปฏิสเธ\" → เคาะ \"ตามที่แนะนำ\" · หน่วยงานเลือก ตอบรับนัดหมาย / ปฏิเสธนัดหมาย ด้วย Radio text card 2 ใบ (แทน Select Repair Method ของงานซ่อม) · จอ \"…สำเร็จ\" เป็นอ่านอย่างเดียว ไม่ตรวจ · component-rules.md §4.2.13"
+    },
+    {
+      "id": "R17",
+      "screens": "^OH2 / S(7|13) — ",
+      "desktopOnly": true,
+      "component": "RepairAppointmentStep",
+      "forbidSectionTitles": [
+        "นัดหมายนำรถเข้าอู่",
+        "นัดหมายรับรถ"
+      ],
+      "source": "เจ้าของงานสั่ง 19 ต.ค. 2569 — การนัดหมายเข้าซ่อม/รับรถใช้ component นัดหมายของงานซ่อม (ไฟล์ Maintain-D หน้า Design)"
+    },
+    {
+      "id": "R24",
+      "screens": "^OH2 / .*S4 — (เลือกรถ|กรอกครบ|บันทึกไม่สำเร็จ)",
+      "desktopOnly": true,
+      "component": "Table",
+      "source": "แก้ 5 พ.ย. 2569 — เจ้าของงานสั่งเปลี่ยนจาก Input dropdown + ชิป Badge outline with remove icon (R24 เดิม 21 ต.ค. 2569) เป็นตาราง checkbox (Table cell Style=Lead checkbox) เพราะตอนนี้เลือกรถในแผนไปแล้วตั้งแต่ขั้นสร้างแผน PO แค่ติ๊กจากรถในแผน ไม่ค้นรถทั้งระบบอีกต่อไป — ดู component-rules.md §4.3"
+    },
+    {
+      "id": "R21",
+      "screens": "^OH2 / .*เมนู \"…\"",
+      "component": "Dropdown menu",
+      "source": "เจ้าของงานเคาะ 21 ต.ค. 2569 ค่ำ จากภาพจอจริง \"ตรงนี้จริงๆ มันเป็นจุด 3 จุด แล้ว action ถึงจะมีให้เลือกว่า view edit delete\" · \"สร้างแผน สร้าง PO 2 ตาราง\" · \"เลือกแล้ว ใช้เป็น component ของ 2 หน้านี้เลย เซฟให้หน่อย\" — ตารางรายการแผน/PO ช่องจัดการ = ปุ่ม … (Table cell Style=Action icons เปิดช่องเดียว ไอคอน more_horiz) + Dropdown menu ดูรายละเอียด · แก้ไข · ลบ ตอนกด · แทนชีต CF \"ICON Action\" (ฉบับเช้า เคย forbid Dropdown menu) · component-rules.md §5"
+    },
+    {
+      "id": "R31",
+      "screens": "^OH2 / .*S18 — สรุปรายคัน",
+      "component": "Table",
+      "source": "เจ้าของงานสั่ง 30 ต.ค. 2569 \"หน้าสรุปรายคัน ส่วนในหน้าสรุปรายคันจะแสดงประกันอยู่แล้ว\" · หน้าสรุปรายคันอ่านอย่างเดียว ตารางขั้นตอน อะไหล่ ความคืบหน้า = component Table (R25) · component-rules.md §4.2.15",
+      "desktopOnly": true
+    },
+    {
+      "id": "R34",
+      "screens": "^MT / .*S(19|20) — .*เมนู \"…\"(?!.* · mobile$)",
+      "component": "Dropdown menu",
+      "source": "เจ้าของงานสั่ง 30 ต.ค. 2569 เพิ่มแก้ไขและลบแผนบำรุงรักษา ไม่มียกเลิกแผน · เมนู \"…\" แสดงเฉพาะรายการที่ทำได้ในสถานะนั้น · component-rules.md §5.6"
+    },
+    {
+      "id": "R35",
+      "screens": "^MT / .*S1 — (กดตัวกรอง — แผงตัวกรอง|เลือกภาค เขต ในแผงตัวกรอง)",
+      "component": "Input dropdown with badges",
+      "source": "เจ้าของงานสั่ง 2 พ.ย. 2569 \"ภาค เขต ประเภทรถ อยากให้มัลติซีเล็คได้\" ตาม Dropdown/Fleet card gas station หน้า 5.2 Vehicle Management ของ UI Release#2 · ชิปรถใต้ช่องเลือกรถเอาออกแล้ว รถที่เลือกอยู่ในตารางรายคัน · 5 พ.ย. 2569 ค่ำ R77 ช่องย้ายเข้าแผงตัวกรอง ⇒ ตรวจเฉพาะจอที่แผงเปิด · component-rules.md §5.7 §5.31"
+    },
+    {
+      "id": "R35",
+      "screens": "^MT / .*S1 — เลือกภาค เขต ในแผงตัวกรอง",
+      "component": "Dropdown list",
+      "source": "เจ้าของงานสั่ง 2 พ.ย. 2569 เลือกภาค แล้วเลือกเขตภายใต้ภาค แล้วถึงเห็นรถ · รายการเขตและรายการรถใช้ Dropdown list · 5 พ.ย. 2569 ค่ำ R77 รายการเขตเปิดในแผงตัวกรอง · component-rules.md §5.7 §5.31"
+    },
+    {
+      "id": "R40",
+      "screens": "^MT / .*S6 — (กดเพิ่มรถ|เพิ่มรถแล้ว|แก้ไขเบอร์ติดต่อ|เลือกช่วงวัน|กรอกครบ|สร้างแผนเดินทางใบถัดไป)",
+      "desktopOnly": true,
+      "component": "Table",
+      "source": "เจ้าของงานสั่ง 2 พ.ย. 2569 สถานที่บำรุงรักษารายคัน + 3 พ.ย. 2569 เพิ่มรถผ่าน popup · component-rules.md §5.12"
+    },
+    {
+      "id": "R40",
+      "screens": "^MT / .*S6 — (กดเพิ่มรถ|สร้างแผนเดินทางใบถัดไป)",
+      "desktopOnly": true,
+      "component": "Modal footer",
+      "source": "เจ้าของงานสั่ง 3 พ.ย. 2569 popup เพิ่มรถเข้าแผนเดินทาง · Modal header + Modal footer ของไฟล์ Component ตามโครง Modal Card list · component-rules.md §5.12"
+    },
+    {
+      "id": "R39",
+      "retired": "เลิกใช้ 10 พ.ย. 2569 — S4 เปลี่ยนเป็นแดชบอร์ดความคืบหน้า (R86/C.14) ไม่มีหน้าเบิกอะไหล่ไตรมาสแล้ว",
+      "screens": "^MT / .*S4 — (อะไหล่ไตรมาส|ยืนยันเบิก|ผลเบิก|เบิกครบ|Smart Inventory)",
+      "desktopOnly": true,
+      "component": "Table",
+      "source": "เจ้าของงานสั่ง 2 พ.ย. 2569 S4 เป็นความคืบหน้าอะไหล่ เห็นต้องเบิกเทียบคงเหลือ Smart Inventory + สถานะการเบิก · รวม S5 · component-rules.md §5.11"
+    },
+    {
+      "id": "R38",
+      "retired": "เลิกใช้ 10 พ.ย. 2569 — S22 ตัดออก (บล็อก U ว่าง)",
+      "screens": "^MT / .*S22 — (อะไหล่ไตรมาส|แท็บไตรมาส|ยืนยันรับทราบ|รับทราบไตรมาส|ฝั่ง กบค\\. — รายละเอียด)",
+      "component": "Tabs",
+      "source": "เจ้าของงานสั่ง 2 พ.ย. 2569 ส่งรายการอะไหล่ให้ กบค. คลัง แยกไตรมาส · component-rules.md §5.10"
+    },
+    {
+      "id": "R37",
+      "screens": "^MT / .*S2 — (รายละเอียดแผน|อนุมัติ — ยืนยัน|เลือกส่งกลับ|ส่งกลับแก้ไข —)",
+      "component": "Radio text card",
+      "source": "เจ้าของงานสั่ง 2 พ.ย. 2569 ผลการพิจารณาแผนเป็น radio อนุมัติค่าเริ่มต้น / ส่งกลับแก้ไข ตามการ์ด R29 ของ Overhaul · component-rules.md §5.9"
+    },
+    {
+      "id": "R36",
+      "screens": "^MT / .*S21 — บันทึกสำเร็จ",
+      "desktopOnly": true,
+      "component": "Table",
+      "source": "เจ้าของงานสั่ง 2 พ.ย. 2569 เพิ่มปุ่มเพิ่มอะไหล่ใน scen A และมี scen เลือกอะไหล่ของรถแต่ละคัน · ตารางอะไหล่รายคันเป็น component Table · component-rules.md §5.8"
+    },
+    {
+      "id": "R36",
+      "screens": "^MT / .*S21 — (กดไอคอนแก้ไข|เลือกเปลี่ยนน้ำมัน|เลือกไส้กรอง)",
+      "component": "Radio text card",
+      "source": "เจ้าของงานสั่ง 2 พ.ย. 2569 ให้เลือกว่าเก็บตัวอย่างหรือเปลี่ยนน้ำมันไฮดรอลิก และบอกวันที่เปลี่ยนครั้งล่าสุด · component-rules.md §5.8"
+    },
+    {
+      "id": "R41",
+      "screens": "^MT / .*S7 — (รายละเอียดแผนเดินทาง|อนุมัติ — ยืนยัน|เลือกส่งกลับ|ส่งกลับแก้ไข —)",
+      "desktopOnly": true,
+      "component": "Radio text card",
+      "source": "เจ้าของงาน 3 พ.ย. 2569 S7 อนุมัติแผนเดินทางแบบเดียวกับ S2 (R37) · component-rules.md §5.13"
+    },
+    {
+      "id": "R42",
+      "screens": "^MT / .*S8 — .*แผงแจ้งเตือน",
+      "desktopOnly": true,
+      "component": "Notification card",
+      "source": "เจ้าของงาน 3 พ.ย. 2569 S8 แจ้งเตือนในแอปถึง กรย. และหน่วยงานเจ้าของรถ · แผงแจ้งเตือนแบบ Overhaul · component-rules.md §5.14"
+    },
+    {
+      "id": "R43",
+      "screens": "^MT / .*S9 — (เลือกจ้าง|เลือกผู้รับจ้าง|Validation|กรอกครบ)",
+      "desktopOnly": true,
+      "component": "Horizontal radio groups",
+      "source": "เจ้าของงาน 3 พ.ย. 2569 ชื่อแผนเดินทางกับรูปแบบดำเนินการแถวเดียวกัน radio เล็ก (กบค. ดำเนินการเอง / จ้างดำเนินการ) · ตาม UI Release#2 หน้า 5.1 Rental Contract Management · component-rules.md §5.15"
+    },
+    {
+      "id": "R86",
+      "screens": "^MT / .*S10 — (กดเริ่มงาน|กดเซ็นลงนาม|ตรวจรายการและลงนามครบ|ยานพาหนะประเภทรถพ่วงฉีดน้ำ)",
+      "desktopOnly": true,
+      "component": "Radio button",
+      "source": "เจ้าของงาน 9 พ.ย. 2569 แบบตรวจตามประเภทยานพาหนะแทนรายการรับยานพาหนะ (เดิม R44 ReceiptChecklist) · ตารางประกอบจากชิ้นไลบรารี เพราะ InspectionChecklist มี 25 แถวตายตัว · component-rules.md §5.16"
+    },
+    {
+      "id": "R86",
+      "screens": "^MT / .*S10 — (กดเริ่มงาน|กดเซ็นลงนาม|ตรวจรายการและลงนามครบ|ยานพาหนะประเภทรถพ่วงฉีดน้ำ)",
+      "mobileOnly": true,
+      "component": "Radio text card",
+      "source": "เจ้าของงาน 9 พ.ย. 2569 แบบตรวจตามประเภทยานพาหนะแทนรายการรับยานพาหนะ (เดิม R44 ReceiptChecklist) · ตารางประกอบจากชิ้นไลบรารี เพราะ InspectionChecklist มี 25 แถวตายตัว · component-rules.md §5.16"
+    },
+    {
+      "id": "R45",
+      "screens": "^MT / .*S10 — (หน้ารายละเอียดแผนเดินทาง|ปิดงานสำเร็จ)",
+      "desktopOnly": true,
+      "component": "Table",
+      "source": "เจ้าของงาน 3 พ.ย. 2569 เข้าหน้ารายคันจากหน้ารายละเอียดแผนเดินทาง · component-rules.md §5.16"
+    },
+    {
+      "id": "R46",
+      "screens": "^MT / .*S10 — (ยืนยันการตรวจสภาพ — Step 2|Validation|กรอกผลงานครบ)",
+      "component": "InspectionChecklist",
+      "source": "เจ้าของงาน 3 พ.ย. 2569 \"ตอนปิดงานก็เหมือนกัน มีให้ตรวจสภาพรถปิดงาน\" → 5 พ.ย. 2569 \"s10 เอาตรวจสภาพปิดงาน ออกไปเลย\" (R65) ⇒ InspectionChecklist ของ Flow การซ่อม AfterRepair=true ใช้เฉพาะลงนามการส่งคืนรถ (ซ่อนส่วนตรวจสภาพ) ซ่อน RepairFeedback ReturnPart · component-rules.md §5.16",
+      "ifInFile": true
+    },
+    {
+      "id": "R55",
+      "screens": "^MT / .*S10 — แผนจ้างดำเนินการ — หน้ารายละเอียดแผนเดินทาง",
+      "desktopOnly": true,
+      "component": "Dropdown menu",
+      "source": "เจ้าของงาน 4 พ.ย. 2569 \"อยากตัด scen ผู้รับจ้าง หรือ vendor ตรวจรับทีละคัน ออก คือ S23 และ S11 ที่อยากเอาออก\" แล้วเลือกให้ กบค. ปิดงานรายคันของแผนจ้างเองด้วยหน้าเดียวกับ S10 · component-rules.md §5.16 (ใบจ้างใช้เมนู … ของ กบค. ชุดเดียวกัน)"
+    },
+    {
+      "id": "R55",
+      "screens": "^MT / .*S10 — แผนจ้างดำเนินการ — Step 2",
+      "component": "Primary button",
+      "source": "เจ้าของงาน 4 พ.ย. 2569 \"อยากตัด scen ผู้รับจ้าง หรือ vendor ตรวจรับทีละคัน ออก คือ S23 และ S11 ที่อยากเอาออก\" แล้วเลือกให้ กบค. ปิดงานรายคันของแผนจ้างเองด้วยหน้าเดียวกับ S10 · component-rules.md §5.16 (หน้างานรายคันของใบจ้างมีปุ่มปิดงานของ กบค.) · 5 พ.ย. 2569 หน้างานรายคันแบบอยู่ระหว่างบำรุงรักษาเลิกใช้ ⇒ ตรวจที่ Step 2 ของใบจ้าง (ปุ่มปิดงาน)"
+    },
+    {
+      "id": "R67",
+      "screens": "^MT / .*S25 — (กดปุ่ม … ของยานพาหนะ|ไตรมาส 4)",
+      "desktopOnly": true,
+      "component": "Dropdown menu",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 \"จะเรื่องรถที่บำรุงไม่ได้ ต้องมีหน้าที่สามารถเอาไปใส่ในไตรมาสอื่นๆได้ด้วย\" · ทางเข้าหน้าไตรมาส เมนู … \"ย้ายไปไตรมาสอื่น\" (ไตรมาส 4 State=Disabled) ตาม Dropdown menu เมนูเดียวของ 5.10 Vehicle In Use (EV) ของ UI Release#2 · มือถือ Mobile table item Style=Action buttons · component-rules.md §5.28 · 10 พ.ย. 2569 เมนู 2 รายการ ดำเนินการบำรุงรักษา + ย้ายไปไตรมาสอื่น (เจ้าของงาน \"s25 ตัวเลือกต้องสามารถเลือก ดำเนินการบำรุงรักษา และ ย้ายไปไตรมาสอื่น\") · regex เดิม \"ของรถ\" ไม่ตรงจอหลังเปลี่ยนคำเป็นยานพาหนะ"
+    },
+    {
+      "id": "R68",
+      "screens": "^MT / .*S25 — (popup ย้ายไปไตรมาสอื่น|เลือกไตรมาส 2|กรณีไตรมาส 3)",
+      "desktopOnly": true,
+      "component": "Modal footer",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 ย้ายได้เฉพาะไตรมาสถัดไปของแผนเดียวกัน · อะไหล่ตามแผนย้ายตาม · popupModal + Radio text card (ไตรมาสก่อนหน้าและปัจจุบัน State=Disabled) + Modal footer แบบ popup จัดลงไตรมาส S1 · component-rules.md §5.28"
+    },
+    {
+      "id": "R68",
+      "screens": "^MT / .*S25 — (popup ย้ายไปไตรมาสอื่น|เลือกไตรมาส 2|กรณีไตรมาส 3)",
+      "component": "Radio text card",
+      "source": "เจ้าของงาน 5 พ.ย. 2569 ย้ายได้เฉพาะไตรมาสถัดไปของแผนเดียวกัน · อะไหล่ตามแผนย้ายตาม · popupModal + Radio text card (ไตรมาสก่อนหน้าและปัจจุบัน State=Disabled) + Modal footer แบบ popup จัดลงไตรมาส S1 · component-rules.md §5.28"
+    },
+    {
+      "id": "R78",
+      "screens": "^MT / .*S2 — อะไหล่ในแผน",
+      "desktopOnly": true,
+      "component": "Table",
+      "source": "เจ้าของงาน 6 พ.ย. 2569 \"scen s2 อยากเพิ่ม section อะใหล่ โดย group ชนิด ประเภท จำนวน ไม่แยกรายคัน แต่ละไตรมาส\" + \"อยากเพิ่มการเบิก โดยอยากให้มีการเลือกว่า ว่าเบิกอะใหล่ หรือไม่เบิก\" ⇒ S2 อะไหล่ในแผน = Section label + Tabs ไตรมาส + Table ชนิด ประเภท จำนวน หน่วย · S21 การเบิกอะไหล่ = Radio text card 2 ใบ ไม่มีค่าเริ่มต้น · component-rules.md §5.32"
+    },
+    {
+      "id": "R78",
+      "screens": "^MT / .*S2 — อะไหล่ในแผน",
+      "component": "Tabs",
+      "source": "เจ้าของงาน 6 พ.ย. 2569 \"scen s2 อยากเพิ่ม section อะใหล่ โดย group ชนิด ประเภท จำนวน ไม่แยกรายคัน แต่ละไตรมาส\" + \"อยากเพิ่มการเบิก โดยอยากให้มีการเลือกว่า ว่าเบิกอะใหล่ หรือไม่เบิก\" ⇒ S2 อะไหล่ในแผน = Section label + Tabs ไตรมาส + Table ชนิด ประเภท จำนวน หน่วย · S21 การเบิกอะไหล่ = Radio text card 2 ใบ ไม่มีค่าเริ่มต้น · component-rules.md §5.32"
+    },
+    {
+      "id": "R78",
+      "screens": "^MT / .*S21 — เลือก(เบิก|ไม่เบิก)อะไหล่",
+      "component": "Radio text card",
+      "source": "เจ้าของงาน 6 พ.ย. 2569 \"scen s2 อยากเพิ่ม section อะใหล่ โดย group ชนิด ประเภท จำนวน ไม่แยกรายคัน แต่ละไตรมาส\" + \"อยากเพิ่มการเบิก โดยอยากให้มีการเลือกว่า ว่าเบิกอะใหล่ หรือไม่เบิก\" ⇒ S2 อะไหล่ในแผน = Section label + Tabs ไตรมาส + Table ชนิด ประเภท จำนวน หน่วย · S21 การเบิกอะไหล่ = Radio text card 2 ใบ ไม่มีค่าเริ่มต้น · component-rules.md §5.32"
+    },
+    {
+      "id": "R79",
+      "screens": "^MT / .*(S(6|9) — (แก้ไขยานพาหนะในแผนเดินทาง|เลือกวันดำเนินการ)|S10 — เมนูแก้ไข)",
+      "desktopOnly": true,
+      "component": "Modal",
+      "source": "เจ้าของงาน 6 พ.ย. 2569 \"ตรงป๊อบอัพ เลยต้องมีให้แก้ชื่อโดย prefill ข้อมูลมาให้\" ⇒ popup แก้ไขรถในแผนเดินทาง = Modal Type=Form (ผู้ดูแลยานพาหนะ · เบอร์ติดต่อ · สถานที่บำรุงรักษา) · component-rules.md §5.32 · 6 พ.ย. 2569 (R83) popup ของยานพาหนะที่อยู่ในแผนเดินทาง หัว \"แก้ไขยานพาหนะในแผนเดินทาง · {ทะเบียน}\" 4 ช่อง (ผู้ดูแลยานพาหนะ | เบอร์ติดต่อ · สถานที่บำรุงรักษา · วันดำเนินการ) ใช้ทั้ง S6 S9 S10 · หน้าไตรมาส (ยังไม่อยู่ในแผนเดินทาง) คง 3 ช่องเดิม"
+    },
+    {
+      "id": "R83",
+      "screens": "^MT / .*S6 — เลือกวันดำเนินการ",
+      "desktopOnly": true,
+      "component": "Date picker",
+      "source": "เจ้าของงาน 6 พ.ย. 2569 รีวิว S6 \"เลือกซ้ำวันกันได้ เลือกเป็นช่วงวัน\" + \"เพิ่มการเลือกวันดำเนิน จาก icon แก้ไข ได้ด้วย\" + \"เลือกได้ไม่เกิน range ของแผนที่กำหนดมาเท่านั้น\" ⇒ ช่องวันดำเนินการ (Text input ไอคอน calendar_month) + Date picker Type=Single ใต้ช่อง ช่วงที่เลือก = Selected day / Day in range · วันนอกช่วงวันเดินทาง = _Date picker calendar item base State=Disabled ตาม Date range picker / Trip date ของ UI Release#2 หน้า 5.2 Vehicle Management · component-rules.md §5.34"
+    },
+    {
+      "id": "R84",
+      "screens": "^MT / .*S10 — หน้ารายละเอียดแผนเดินทาง — กดส่งออก",
+      "desktopOnly": true,
+      "component": "Modal footer",
+      "source": "เจ้าของงาน 6 พ.ย. 2569 \"ตอน export ก็เกี่ยวข้องด้วย\" ⇒ ส่งออกแผนเดินทาง: ปุ่ม Secondary button \"ส่งออก\" ที่หัวหน้ารายละเอียดแผนเดินทาง (S10 S12 S8) + popup exportModal (popupModal + Radio text card PDF/Excel) ชุดเดียวกับ S4 · ไฟล์ PDF A4 2 หน้า Excel 2 ชีต คอลัมน์ชุดเดียวกับจอ (R81 R82) · component-rules.md §5.34"
+    },
+    {
+      "id": "R84",
+      "screens": "^MT / .*S10 — หน้ารายละเอียดแผนเดินทาง — กดส่งออก",
+      "component": "Radio text card",
+      "source": "popup ส่งออกแผนเดินทาง เลือกรูปแบบไฟล์ PDF / Excel ด้วย Radio text card (radioPick) แบบ S4 · component-rules.md §5.34"
+    },
+    {
+      "id": "R85",
+      "screens": "^MT / .*S1 — แท็บทั้งหมด — อะไหล่รวมทุกไตรมาส",
+      "desktopOnly": true,
+      "component": "Table",
+      "source": "เจ้าของงาน 9 พ.ย. 2569 (ภาพแท็บทั้งหมดของหน้าสร้างแผนที่ขึ้น Empty state) \"หน้าอะใหล่ทั้งไตรมาส ต้องรวมมาให้ด้วย ทั้งไตรมาส\" ⇒ แท็บทั้งหมดของ planForm (S1 S19) หัวข้อ \"อะไหล่รวมทุกไตรมาส\" + Table QPART_COLS รวมอะไหล่ของยานพาหนะทุกคันที่จัดลงไตรมาสแล้ว ไม่ขึ้นกับตัวกรอง = ผลรวมแท็บไตรมาส 1–4 · ว่าง = Empty state \"ยังไม่มีรายการอะไหล่\" · component-rules.md §5.34"
+    },
+    {
+      "id": "R87",
+      "screens": "^MT / .*S23 — กดปุ่ม … ของยานพาหนะ",
+      "desktopOnly": true,
+      "component": "Dropdown menu",
+      "source": "เจ้าของงาน 10 พ.ย. 2569 \"scen s23 อยากปรับ ui ให้เหมือนกับ s10 แต่ว่า เงื่อนไขการมองเห็น เมนูต่างๆ ยังเป็นเหมือนเดิม\" · เมนู … ของผู้รับจ้างมีแค่ดูรายละเอียด (เจ้าของงาน 4 พ.ย. 2569 \"vendor ดูรายละเอียดรายคัน จะเห็นแค่ ปุ่มเริ่มงาน และบำรุงรักษาได้ โดยไม่เห็นปุ่ม ลบ และแก้ไข\") · component-rules.md §5.17"
+    },
+    {
+      "id": "R87",
+      "screens": "^MT / .*(S23 — (ยืนยันการตรวจสภาพ — Step 2|Validation|กรอกผลงานครบ|บำรุงรักษาไม่ได้ระหว่าง Step 2)|S10 — แผนจ้างดำเนินการ — Step 2)",
+      "component": "Primary button",
+      "forbidSectionTitles": [
+        "ค่าใช้จ่ายของยานพาหนะคันนี้ (บาท)"
+      ],
+      "source": "เจ้าของงาน 10 พ.ย. 2569 \"จะไม่มีเรื่องทั้ง section ค่าใช้จ่ายรายคัน ที่ต้องกรอก ส่วนที่สภาพวัสดุอะไหล่ ส่วนที่เป็นราคาต้องไม่แสดง\" + \"s23 ยังแสดงเหมือนเดิมแต่ส่วนที่เป็นราคา ของค่าใช้จ่ายของรถรายคัน จะไม่มี ส่วนที่เหลือยังคงเดิม\" ⇒ Step 2 ของแผนจ้างดำเนินการ (ผู้รับจ้าง S23 และหน่วยงานปิดงานแทน S10 I.26) ไม่มีส่วนค่าใช้จ่ายของยานพาหนะคันนี้ทั้งส่วน · ปุ่มปิดงานยังอยู่ · component-rules.md §5.17"
+    },
+    {
+      "id": "R87",
+      "screens": "^MT / .*S23 — (กดเริ่มงาน|ปิดงานสำเร็จ|ส่งตรวจงานแล้ว)",
+      "component": "Notification",
+      "source": "เจ้าของงาน 10 พ.ย. 2569 \"scen s23 อยากปรับ ui ให้เหมือนกับ s10 แต่ว่า เงื่อนไขการมองเห็น เมนูต่างๆ ยังเป็นเหมือนเดิม\" · toast ขวาบนแบบ S10 (R60) เริ่มงานบำรุงรักษาแล้ว · บันทึกงานบำรุงรักษาสำเร็จ · ส่งตรวจงานแล้ว · component-rules.md §5.17"
+    },
+    {
+      "id": "R87",
+      "screens": "^MT / .*S23 — (หน้ารายละเอียดแผนเดินทาง|ปิดงานสำเร็จ)",
+      "component": "Section header",
+      "badgeMatch": "^ตรวจแล้ว \\d+/\\d+$",
+      "source": "เจ้าของงาน 10 พ.ย. 2569 \"scen s23 อยากปรับ ui ให้เหมือนกับ s10 แต่ว่า เงื่อนไขการมองเห็น เมนูต่างๆ ยังเป็นเหมือนเดิม\" · ตัวนับแบบ S10 (R71) · ผู้รับจ้างนับคันที่ทำเสร็จแล้ว (ดำเนินการบำรุงรักษาแล้ว รอตรวจรับ เสร็จสิ้น) ไม่นับคันที่แจ้งบำรุงรักษาไม่ได้ (เสนอ ยังไม่เคาะ) · component-rules.md §5.17"
+    },
+    {
+      "id": "R88",
+      "screens": "^MT / .*(S2 — (รายการแผนรออนุมัติ|ส่งกลับแล้ว|แท็บ)|S7 — (รายการแผนเดินทางรออนุมัติ|ส่งกลับแล้ว|แท็บ))",
+      "component": "Tabs",
+      "tabTexts": [
+        "รออนุมัติ",
+        "อนุมัติแล้ว",
+        "ส่งกลับแก้ไข"
+      ],
+      "source": "เจ้าของงาน 10 พ.ย. 2569 \"หน้าอนุมัติต้องมี tab รออนุมัติ อนุมัติแล้ว และ ส่งกลับแก้ไขด้วย\" · แบบแท็บ รอตรวจสอบ อนุมัติแล้ว ปฏิเสธ ของหน้ารายการตรวจสอบเดิมในไฟล์ Maintain-D (ตัวเลขเฉพาะแท็บรออนุมัติ) · component-rules.md §5.36"
+    },
+    {
+      "id": "R89",
+      "screens": "^MT / .*S13 — (ผลการบำรุงรักษารายคัน|ประเมินความพึงพอใจแล้ว|รับทราบแล้ว)",
+      "component": "Radio text card",
+      "source": "เจ้าของงาน 10 พ.ย. 2569 Q28 \"ย้ายไปตอนรับทราบ ให้ประเมินรายคัน ตอนรับทราบ\" · คะแนน 1–5 (RepairFeedback / Radio text card) · คันที่บำรุงรักษาไม่ได้ไม่มีประเมิน (เสนอ) · component-rules.md §5.37 · retired 11 พ.ย. 2569: ประเมินย้ายออกจาก S13 ไป S27 (R94) S13 ไม่มี Radio text card แล้ว",
+      "retired": true
+    },
+    {
+      "id": "R90",
+      "screens": "^MT / .*S24 — (รายละเอียดยานพาหนะ|กดเลขทะเบียน|แท็บตารางบำรุงรักษา|ประวัติ กดปุ่ม|แท็บการรับประกัน)",
+      "component": "Tabs",
+      "tabTexts": [
+        "ข้อมูลยานพาหนะ",
+        "ตารางบำรุงรักษา",
+        "ประวัติการซ่อมบำรุง",
+        "การรับประกัน",
+        "Overhaul"
+      ],
+      "source": "เจ้าของงาน 10 พ.ย. 2569 \"ตั้งใจอยากให้หน้านี้เป็นหน้า dashboard ที่สามารถกรองสิ่งต่างๆที่ต้องการ\" + \"อยากให้ออกแบบรายละเอียดรถแต่ละคัน … เพิ่ม tab ประกัน การ overhaul ตารางบำรุงรักษา\" · Tabs ของไลบรารี 5 ช่อง ⇒ เคาะ ข้อมูลยานพาหนะ · ตารางบำรุงรักษา · ประวัติการซ่อมบำรุง · การรับประกัน · Overhaul · component-rules.md §5.38"
+    },
+    {
+      "id": "R90",
+      "screens": "^MT / .*S24 — (แท็บการบำรุงรักษา|ค้นหา|กดตัวกรอง|กรองแล้ว)",
+      "desktopOnly": false,
+      "component": "Metric item",
+      "source": "เจ้าของงาน 10 พ.ย. 2569 \"ตั้งใจอยากให้หน้านี้เป็นหน้า dashboard ที่สามารถกรองสิ่งต่างๆที่ต้องการ\" + \"อยากให้ออกแบบรายละเอียดรถแต่ละคัน … เพิ่ม tab ประกัน การ overhaul ตารางบำรุงรักษา\" · Tabs ของไลบรารี 5 ช่อง ⇒ เคาะ ข้อมูลยานพาหนะ · ตารางบำรุงรักษา · ประวัติการซ่อมบำรุง · การรับประกัน · Overhaul · component-rules.md §5.38 · แดชบอร์ดตาม MA Overview ของ UI Release#2 (Metric item 4 ใบ)"
+    },
+    {
+      "id": "R90",
+      "screens": "^MT / .*S24 — (แท็บการบำรุงรักษา|ค้นหา|กดตัวกรอง|กรองแล้ว)",
+      "component": "Tabs",
+      "tabTexts": [
+        "ยานพาหนะ",
+        "การบำรุงรักษา"
+      ],
+      "source": "เจ้าของงาน 10 พ.ย. 2569 \"tab ปฎิทินการจองคืออะไร เอาออก\" · แท็บของ Vehicle list เหลือ ยานพาหนะ · การบำรุงรักษา · component-rules.md §5.38"
+    },
+    {
+      "id": "R92",
+      "screens": "^MT / Q\\.[1-3] · S18",
+      "component": "Tabs",
+      "tabTexts": [
+        "รายละเอียดแผน",
+        "ต้นทุนการบำรุงรักษา"
+      ],
+      "source": "เจ้าของงานเคาะ 10 พ.ย. 2569 S18 ต้นทุน 12 ข้อ + 4 ข้อรอบ 2 (ไฟล์ 14 Scenario 18): แท็บ \"ต้นทุนการบำรุงรักษา\" ในหน้ารายละเอียดแผนที่อนุมัติแล้ว · โครงตามหน้า 5.13 EV charging costs ของ UI Release#2 (Metric item ×4 + Table คอลัมน์ศูนย์ต้นทุน · ไม่มีกราฟ) · component-rules.md §5.39"
+    },
+    {
+      "id": "R92",
+      "screens": "^MT / Q\\.[23] · S18",
+      "component": "Metric item",
+      "source": "เจ้าของงานเคาะ 10 พ.ย. 2569 S18 ต้นทุน 12 ข้อ + 4 ข้อรอบ 2 (ไฟล์ 14 Scenario 18): แท็บ \"ต้นทุนการบำรุงรักษา\" ในหน้ารายละเอียดแผนที่อนุมัติแล้ว · โครงตามหน้า 5.13 EV charging costs ของ UI Release#2 (Metric item ×4 + Table คอลัมน์ศูนย์ต้นทุน · ไม่มีกราฟ) · component-rules.md §5.39"
+    },
+    {
+      "id": "R92",
+      "screens": "^MT / Q\\.[23] · S18",
+      "component": "Table",
+      "source": "เจ้าของงานเคาะ 10 พ.ย. 2569 S18 ต้นทุน 12 ข้อ + 4 ข้อรอบ 2 (ไฟล์ 14 Scenario 18): แท็บ \"ต้นทุนการบำรุงรักษา\" ในหน้ารายละเอียดแผนที่อนุมัติแล้ว · โครงตามหน้า 5.13 EV charging costs ของ UI Release#2 (Metric item ×4 + Table คอลัมน์ศูนย์ต้นทุน · ไม่มีกราฟ) · component-rules.md §5.39",
+      "desktopOnly": true
+    },
+    {
+      "id": "R92",
+      "screens": "^MT / Q\\.6 · S18",
+      "component": "Empty state/Data empty",
+      "source": "เจ้าของงานเคาะ 10 พ.ย. 2569 S18 ต้นทุน 12 ข้อ + 4 ข้อรอบ 2 (ไฟล์ 14 Scenario 18): แท็บ \"ต้นทุนการบำรุงรักษา\" ในหน้ารายละเอียดแผนที่อนุมัติแล้ว · โครงตามหน้า 5.13 EV charging costs ของ UI Release#2 (Metric item ×4 + Table คอลัมน์ศูนย์ต้นทุน · ไม่มีกราฟ) · component-rules.md §5.39"
+    },
+    {
+      "id": "R93",
+      "screens": "^MT / A\\.41 · S1",
+      "component": "Dropdown list",
+      "hasTexts": [
+        "ภาค 1 (เหนือ)",
+        "ภาค 2 (ตะวันออกเฉียงเหนือ)",
+        "ภาค 3 (กลาง)",
+        "ภาค 4 (ใต้)",
+        "สนง. (สำนักงานใหญ่)"
+      ],
+      "source": "เจ้าของงาน 11 พ.ย. 2569 \"แก้ s1 เรื่องตัวกรอง ให้เพิ่ม ภาค อีกหนึ่งรายการคือ สนง = สำนักงานใหญ่ โดย ภายใต้สำนักงานใหญ่จะมี กกฟ1 กกฟ2\" + \"ต้องสามารถเพิ่มรถรายคันได้ โดยเงื่อนไขการเพิ่มรถคือ ถ้าไตรมาสนั้นยังบำรุงไม่เสร็จทุกคันจะสามารถเพิ่มรถเข้ามาไตรมาสนั้นๆ ได้\" ⇒ ภาคที่ 5 \"สนง. (สำนักงานใหญ่)\" เขต กกฟ.1 กกฟ.2 ในแผงตัวกรอง S1 S19 · ปุ่ม \"เพิ่มยานพาหนะ\" ของหน้าไตรมาส (S6) กดได้ตราบที่ยังมียานพาหนะไม่ปิดงาน ทุกคันปิดงาน (รวมบำรุงรักษาไม่ได้) = Disabled · component-rules.md §5.40"
+    },
+    {
+      "id": "R93",
+      "screens": "^MT / A\\.42 · S1",
+      "component": "Dropdown list",
+      "hasTexts": [
+        "กกฟ.1",
+        "กกฟ.2"
+      ],
+      "source": "เจ้าของงาน 11 พ.ย. 2569 \"แก้ s1 เรื่องตัวกรอง ให้เพิ่ม ภาค อีกหนึ่งรายการคือ สนง = สำนักงานใหญ่ โดย ภายใต้สำนักงานใหญ่จะมี กกฟ1 กกฟ2\" + \"ต้องสามารถเพิ่มรถรายคันได้ โดยเงื่อนไขการเพิ่มรถคือ ถ้าไตรมาสนั้นยังบำรุงไม่เสร็จทุกคันจะสามารถเพิ่มรถเข้ามาไตรมาสนั้นๆ ได้\" ⇒ ภาคที่ 5 \"สนง. (สำนักงานใหญ่)\" เขต กกฟ.1 กกฟ.2 ในแผงตัวกรอง S1 S19 · ปุ่ม \"เพิ่มยานพาหนะ\" ของหน้าไตรมาส (S6) กดได้ตราบที่ยังมียานพาหนะไม่ปิดงาน ทุกคันปิดงาน (รวมบำรุงรักษาไม่ได้) = Disabled · component-rules.md §5.40"
+    },
+    {
+      "id": "R93",
+      "screens": "^MT / E\\.26 · S6",
+      "component": "Tertiary button",
+      "buttonText": "เพิ่มยานพาหนะ",
+      "state": "Disabled",
+      "source": "เจ้าของงาน 11 พ.ย. 2569 \"แก้ s1 เรื่องตัวกรอง ให้เพิ่ม ภาค อีกหนึ่งรายการคือ สนง = สำนักงานใหญ่ โดย ภายใต้สำนักงานใหญ่จะมี กกฟ1 กกฟ2\" + \"ต้องสามารถเพิ่มรถรายคันได้ โดยเงื่อนไขการเพิ่มรถคือ ถ้าไตรมาสนั้นยังบำรุงไม่เสร็จทุกคันจะสามารถเพิ่มรถเข้ามาไตรมาสนั้นๆ ได้\" ⇒ ภาคที่ 5 \"สนง. (สำนักงานใหญ่)\" เขต กกฟ.1 กกฟ.2 ในแผงตัวกรอง S1 S19 · ปุ่ม \"เพิ่มยานพาหนะ\" ของหน้าไตรมาส (S6) กดได้ตราบที่ยังมียานพาหนะไม่ปิดงาน ทุกคันปิดงาน (รวมบำรุงรักษาไม่ได้) = Disabled · component-rules.md §5.40"
+    },
+    {
+      "id": "R93",
+      "screens": "^MT / E\\.(3|15) · S6",
+      "component": "Tertiary button",
+      "buttonText": "เพิ่มยานพาหนะ",
+      "state": "^(?!Disabled)",
+      "source": "เจ้าของงาน 11 พ.ย. 2569 \"แก้ s1 เรื่องตัวกรอง ให้เพิ่ม ภาค อีกหนึ่งรายการคือ สนง = สำนักงานใหญ่ โดย ภายใต้สำนักงานใหญ่จะมี กกฟ1 กกฟ2\" + \"ต้องสามารถเพิ่มรถรายคันได้ โดยเงื่อนไขการเพิ่มรถคือ ถ้าไตรมาสนั้นยังบำรุงไม่เสร็จทุกคันจะสามารถเพิ่มรถเข้ามาไตรมาสนั้นๆ ได้\" ⇒ ภาคที่ 5 \"สนง. (สำนักงานใหญ่)\" เขต กกฟ.1 กกฟ.2 ในแผงตัวกรอง S1 S19 · ปุ่ม \"เพิ่มยานพาหนะ\" ของหน้าไตรมาส (S6) กดได้ตราบที่ยังมียานพาหนะไม่ปิดงาน ทุกคันปิดงาน (รวมบำรุงรักษาไม่ได้) = Disabled · component-rules.md §5.40"
+    },
+    {
+      "id": "R94",
+      "screens": "^MT / Y\\.(4|5|6|7|8|10) · S27",
+      "component": "Rating",
+      "hasTexts": [
+        "ด้านระบบการให้บริการ",
+        "ด้านเจ้าหน้าที่และ/หรือผู้ให้บริการ",
+        "ด้านคุณภาพของสินค้าและ/หรือบริการ",
+        "ด้านสภาพแวดล้อมต่างๆ",
+        "1. ความรวดเร็วในการรับบริการ",
+        "2. ความสะดวกในการติดต่อเพื่อขอรับบริการ",
+        "1. อัธยาศัยของผู้ให้บริการ",
+        "2. ความรู้ของผู้ให้บริการ",
+        "3. การให้ความรู้และคำแนะนำแก่ผู้รับบริการ",
+        "4. ความตั้งใจในการดำเนินการให้ผู้รับบริการ",
+        "1. คุณภาพของอะไหล่และการบริการ",
+        "2. ระยะเวลาในการได้รับอะไหล่และการบริการ",
+        "3. อุปกรณ์ เครื่องมือและเทคโนโลยีในการให้บริการ",
+        "1. การทำความสะอาดพื้นที่หลังการให้บริการ",
+        "2. การทำความสะอาดเครื่องจักรกลหลังการให้บริการ"
+      ],
+      "source": "เจ้าของงาน 11 พ.ย. 2569 \"ใช่ ประเมินแทน S13 หลังบำรุงรักษาเสร็จ\" → รอบต่อมา \"แบบประเมินความพอใจ น่าจะเป็นเรื่องนี้ ที่ให้เอาของที่ส่งไป ทำเป็นอีก 1 view\" + \"ย้ายออกจาก S13 ไปอยู่ view ใหม่\" ⇒ S27 บล็อก Y แบบประเมินผู้รับจ้าง (contractor-eval-plugin): Tabs ยังไม่ได้ประเมิน/ประเมินแล้ว · ฟอร์มดาว Rating 1–5 ต่อข้อ 4 ด้าน 11 ข้อ ตามแบบสำรวจ XCHO ของ กบค. · เต็ม 55 · S13 รับทราบอย่างเดียว · component-rules.md §5.41"
+    },
+    {
+      "id": "R94",
+      "screens": "^MT / Y\\.(4|5) · S27",
+      "component": "Primary button",
+      "buttonText": "บันทึกการประเมิน",
+      "state": "Disabled",
+      "source": "เจ้าของงาน 11 พ.ย. 2569 \"ใช่ ประเมินแทน S13 หลังบำรุงรักษาเสร็จ\" → รอบต่อมา \"แบบประเมินความพอใจ น่าจะเป็นเรื่องนี้ ที่ให้เอาของที่ส่งไป ทำเป็นอีก 1 view\" + \"ย้ายออกจาก S13 ไปอยู่ view ใหม่\" ⇒ S27 บล็อก Y แบบประเมินผู้รับจ้าง (contractor-eval-plugin): Tabs ยังไม่ได้ประเมิน/ประเมินแล้ว · ฟอร์มดาว Rating 1–5 ต่อข้อ 4 ด้าน 11 ข้อ ตามแบบสำรวจ XCHO ของ กบค. · เต็ม 55 · S13 รับทราบอย่างเดียว · component-rules.md §5.41"
+    },
+    {
+      "id": "R94",
+      "screens": "^MT / Y\\.6 · S27",
+      "component": "Primary button",
+      "buttonText": "บันทึกการประเมิน",
+      "state": "^(?!Disabled)",
+      "source": "เจ้าของงาน 11 พ.ย. 2569 \"ใช่ ประเมินแทน S13 หลังบำรุงรักษาเสร็จ\" → รอบต่อมา \"แบบประเมินความพอใจ น่าจะเป็นเรื่องนี้ ที่ให้เอาของที่ส่งไป ทำเป็นอีก 1 view\" + \"ย้ายออกจาก S13 ไปอยู่ view ใหม่\" ⇒ S27 บล็อก Y แบบประเมินผู้รับจ้าง (contractor-eval-plugin): Tabs ยังไม่ได้ประเมิน/ประเมินแล้ว · ฟอร์มดาว Rating 1–5 ต่อข้อ 4 ด้าน 11 ข้อ ตามแบบสำรวจ XCHO ของ กบค. · เต็ม 55 · S13 รับทราบอย่างเดียว · component-rules.md §5.41"
+    },
+    {
+      "id": "R94",
+      "screens": "^MT / Y\\.(1|2|3|9) · S27",
+      "component": "Tabs",
+      "tabTexts": [
+        "ยังไม่ได้ประเมิน",
+        "ประเมินแล้ว"
+      ],
+      "source": "เจ้าของงาน 11 พ.ย. 2569 \"ใช่ ประเมินแทน S13 หลังบำรุงรักษาเสร็จ\" → รอบต่อมา \"แบบประเมินความพอใจ น่าจะเป็นเรื่องนี้ ที่ให้เอาของที่ส่งไป ทำเป็นอีก 1 view\" + \"ย้ายออกจาก S13 ไปอยู่ view ใหม่\" ⇒ S27 บล็อก Y แบบประเมินผู้รับจ้าง (contractor-eval-plugin): Tabs ยังไม่ได้ประเมิน/ประเมินแล้ว · ฟอร์มดาว Rating 1–5 ต่อข้อ 4 ด้าน 11 ข้อ ตามแบบสำรวจ XCHO ของ กบค. · เต็ม 55 · S13 รับทราบอย่างเดียว · component-rules.md §5.41"
+    },
+    {
+      "id": "R94",
+      "screens": "^MT / Y\\.11 · S27",
+      "component": "Table",
+      "desktopOnly": true,
+      "source": "เจ้าของงาน 11 พ.ย. 2569 \"ใช่ ประเมินแทน S13 หลังบำรุงรักษาเสร็จ\" → รอบต่อมา \"แบบประเมินความพอใจ น่าจะเป็นเรื่องนี้ ที่ให้เอาของที่ส่งไป ทำเป็นอีก 1 view\" + \"ย้ายออกจาก S13 ไปอยู่ view ใหม่\" ⇒ S27 บล็อก Y แบบประเมินผู้รับจ้าง (contractor-eval-plugin): Tabs ยังไม่ได้ประเมิน/ประเมินแล้ว · ฟอร์มดาว Rating 1–5 ต่อข้อ 4 ด้าน 11 ข้อ ตามแบบสำรวจ XCHO ของ กบค. · เต็ม 55 · S13 รับทราบอย่างเดียว · component-rules.md §5.41"
+    },
+    {
+      "id": "R94",
+      "screens": "^MT / L\\.2 · S13",
+      "component": "Primary button",
+      "buttonText": "รับทราบ",
+      "state": "^(?!Disabled)",
+      "source": "เจ้าของงาน 11 พ.ย. 2569 \"ใช่ ประเมินแทน S13 หลังบำรุงรักษาเสร็จ\" → รอบต่อมา \"แบบประเมินความพอใจ น่าจะเป็นเรื่องนี้ ที่ให้เอาของที่ส่งไป ทำเป็นอีก 1 view\" + \"ย้ายออกจาก S13 ไปอยู่ view ใหม่\" ⇒ S27 บล็อก Y แบบประเมินผู้รับจ้าง (contractor-eval-plugin): Tabs ยังไม่ได้ประเมิน/ประเมินแล้ว · ฟอร์มดาว Rating 1–5 ต่อข้อ 4 ด้าน 11 ข้อ ตามแบบสำรวจ XCHO ของ กบค. · เต็ม 55 · S13 รับทราบอย่างเดียว · component-rules.md §5.41"
+    },
+    {
+      "id": "R94",
+      "screens": "^MT / L\\.[0-9]+ · S13",
+      "component": "Page header",
+      "forbidSectionTitles": [
+        "ข้อมูลผู้ใช้รถฯ",
+        "คะแนนประเมินความพึงพอใจงานบำรุงรักษา",
+        "ด้านระบบการให้บริการ",
+        "ด้านเจ้าหน้าที่และ/หรือผู้ให้บริการ",
+        "ด้านคุณภาพของสินค้าและ/หรือบริการ",
+        "ด้านสภาพแวดล้อมต่างๆ"
+      ],
+      "source": "เจ้าของงาน 11 พ.ย. 2569 \"ใช่ ประเมินแทน S13 หลังบำรุงรักษาเสร็จ\" → รอบต่อมา \"แบบประเมินความพอใจ น่าจะเป็นเรื่องนี้ ที่ให้เอาของที่ส่งไป ทำเป็นอีก 1 view\" + \"ย้ายออกจาก S13 ไปอยู่ view ใหม่\" ⇒ S27 บล็อก Y แบบประเมินผู้รับจ้าง (contractor-eval-plugin): Tabs ยังไม่ได้ประเมิน/ประเมินแล้ว · ฟอร์มดาว Rating 1–5 ต่อข้อ 4 ด้าน 11 ข้อ ตามแบบสำรวจ XCHO ของ กบค. · เต็ม 55 · S13 รับทราบอย่างเดียว · component-rules.md §5.41"
+    }
+  ],
+  "displayBox": {
+    "id": "R12",
+    "frame": "Content",
+    "contains": "Content item row",
+    "fill": "#F9FAFB",
+    "radius": 8,
+    "padding": 24,
+    "gap": 24,
+    "source": "ตัวอย่างเจ้าของงาน 19 ต.ค. 2569 — Maintain-D หน้า Flow การซ่อม · VehicleInfo > Content"
   },
   {
    "id": "R15",
@@ -805,532 +1642,62 @@
    "desktop",
    "mobile"
   ],
-  "mobileUnderDesktopSameColumn": true,
-  "noSection": true,
-  "grid": {
-   "side": 300,
-   "gap": 80,
-   "colW": 1440,
-   "colGap": 200,
-   "rowGap": 160,
-   "groupGap": 400,
-   "barH": 120
-  },
-  "checkedBy": "test-overhaul2-plugin.js (ป้ายต้องมี · mobile ใต้ desktop คอลัมน์เดียวกัน)",
-  "freshPage": "สร้างบนหน้า <base>-N ใหม่ทุกครั้ง ไม่ลบ/ไม่แตะชุดเดิม",
-  "devices": {
-   "buttons": [
-    "build-desktop → overhaul-desktop-N",
-    "build-mobile → overhaul-mobile-N"
-   ],
-   "note": "21 ต.ค. 2569 เจ้าของงานสั่งแยกปุ่ม export mobile ออกจาก desktop — หน้าอุปกรณ์เดียวมีแถวเดียว ป้าย Device Type ต้องตรงอุปกรณ์ · MODE=build (ทั้งคู่บนหน้าเดียว) ยังใช้ใน harness"
-  },
-  "annotations": {
-   "source": "เจ้าของงานสั่ง 10 พ.ย. 2569 \"ตอนออกแบบครั้งต่ออยากให้ใช้ design จาก component กลาง\" + \"แก้ไขทั้งหมดของการออกแบบเรื่องบำรุงรักษาเลย\" — หน้า Design Annotations ของไฟล์ (UI) VMS Plus – Release#2 (ดัมป์ design-system/.figma-extract/ui-release2/1-56.json) · ลอกจากหน้าจริง 5.1–5.17 ของไฟล์เดียวกัน (Backup AO5hfAa5kNVCWEoHku80Jp)",
-   "keys": {
-    "Header": "cbdb14c4c43c175124ce4c7bb138bb980fc2f4ae",
-    "State": "4fd866c3dccbc0e936e7160ad58916b3ee2b256f"
-   },
-   "check": "test-overhaul2-plugin.js: ปลั๊กอินที่มี blockHeader + ไฟล์มี Header ⇒ หัวบล็อก Type=Header · ป้าย state/ช่วงงาน Type=Subheader",
-   "notYet": [
-    "Header Type=Section/Case",
-    "Flow item",
-    "Note",
-    "Remark",
-    "Ninode",
-    "Check",
-    "Status"
-   ]
-  }
- },
- "userflowBeside": {
-  "id": "R26",
-  "title": "ผัง userflow ข้างจอ — 1 บล็อก scenario = ผังซ้ายสุด + ป้าย Device + คอลัมน์จอ (22 ต.ค. 2569 · ปลั๊กอินบำรุงรักษา)",
-  "flowName": "<prefix> · <ตัวอักษร> userflow S<เลข scenario>",
-  "gapToDevice": 200,
-  "topAlignsWithBar": true,
-  "badge": {
-   "fill": "#9CACCC",
-   "text": "รหัสจอ เช่น B.2 · B.3 — ต้องเป็นจอที่มีจริงในบล็อกเดียวกัน"
-  },
-  "unmappedScreens": "เขียนตัวแดงใต้ผัง ห้ามเติมกล่องในผังเอง",
-  "source": "Diagram/<เรื่อง>/NN-<เรื่อง>-userflow.md ผ่าน plugin-lib/userflow-layout.js (ฝังตอน build-plugin.js · <ปลั๊กอิน>/build.json)",
-  "targetPage": "บำรุงรักษา = หน้า \"Maintainance\" ต่อใต้ของเดิม ไม่ลบ/ไม่ย้ายของที่มีอยู่",
-  "checkedBy": "test-overhaul2-plugin.js เมื่อ FLOW=1 (test-maintainance-plugin.js ตั้งให้)",
-  "note": "เจ้าของงานสั่ง 22 ต.ค. 2569 \"อยากให้ userflow กับ wireframe เรียงต่อกัน … อยู่ข้างๆกัน ตอนที่ export ออกมา\" + \"จะเอาลงในเพจ Maintainance ด้วยกันเลย\""
- },
- "forbid": [
-  {
-   "id": "R77",
-   "screens": "^MT / .*S(1|19|21) — (?!กดตัวกรอง — แผงตัวกรอง|เลือกภาค เขต ในแผงตัวกรอง|รายการแผน — กดตัวกรอง)",
-   "component": "Input dropdown with badges",
-   "source": "เจ้าของงาน 5 พ.ย. 2569 ค่ำ \"อยากย้ายสิ่งที่ filter ด้านบน มาไว้ที่เมนู filter ด้านล่างแทน\" + \"อยากให้เอาสิ่งที่ต้องเลือก 3 อย่างนี้ ไปอยู่ใน filter เลย และปุ่ม filter and search มีขึ้นมาเลย หัวตารางมาเลย แล้วมี icon car empty มาแสดง ถ้ายังไม่ได้เลือกรถ\" (ยืนยันต้นแบบเว็บ PlanForm.tsx แล้ว) ⇒ S1/S19 ภาค เขต ประเภทรถ อยู่ในแผงตัวกรอง (filterPanel: Side panel header + Input dropdown with badges Optional ×3 + Side panel footer · มือถือ bottom sheet) ตาม \"PEA Car Cost Filter\" ของ UI Release#2 · Tabs + Table header แสดงเสมอ · ยังไม่เลือก = Empty state/Data empty ภาพรถ \"ยังไม่มีรายการรถ\" · component-rules.md §5.31 · ห้ามมีช่องภาค เขต ประเภทรถ บนฟอร์มนอกแผงตัวกรอง"
-  },
-  {
-   "id": "R56",
-   "screens": "^MT / .*S1 — (รายการแผน|บันทึกและส่งอนุมัติสำเร็จ.*)( · mobile)?$",
-   "component": "Primary button",
-   "allowInside": [
-    "Table header"
-   ],
-   "source": "รีวิวทีมออกแบบ 5 พ.ย. 2569 ปุ่มสร้างแผนอยู่ขวาของปุ่มตัวกรองใน Table header เท่านั้น ไม่มีปุ่มหลักที่ Page header แล้ว · component-rules.md §5.23"
-  },
-  {
-   "id": "R24",
-   "screens": "^OH2 / .*S[45] — (?!.*· mobile$)",
-   "component": "List with checkbox",
-   "source": "เจ้าของงานสั่ง 21 ต.ค. 2569 (ค่ำ): เลือกรถในฟอร์ม PO เป็น dropdown select (ทะเบียน จังหวัด) รถที่เลือกแล้วเป็นชิป — desktop ไม่ใช้ dual list / List with checkbox แล้ว (mobile ยังไม่ทำ คงเดิม)"
-  },
-  {
-   "id": "R30",
-   "screens": "^OH2 / .*(S17 — |S18 — .*ดูอย่างเดียว)",
-   "component": "Secondary danger button",
-   "source": "เจ้าของงานสั่ง 30 ต.ค. 2569 จอดูอย่างเดียวของหน่วยงานเจ้าของรถ / กรย. → เคาะ \"เอาตามนั้นเลย\": ปุ่มที่บทบาทนี้ไม่มีวันกดได้ ซ่อน ไม่ใช้ Disabled (Smashing Hidden vs Disabled 2024 · NN/g · USWDS 2023 · UI Release#2 หน้า User/Driver ไม่มีปุ่ม Admin) · component-rules.md §4.2.14"
-  },
-  {
-   "id": "R30",
-   "screens": "^OH2 / .*(S17 — |S18 — .*ดูอย่างเดียว)",
-   "component": "Primary button",
-   "source": "เจ้าของงานสั่ง 30 ต.ค. 2569 จอดูอย่างเดียวของหน่วยงานเจ้าของรถ / กรย. → เคาะ \"เอาตามนั้นเลย\": ปุ่มที่บทบาทนี้ไม่มีวันกดได้ ซ่อน ไม่ใช้ Disabled (Smashing Hidden vs Disabled 2024 · NN/g · USWDS 2023 · UI Release#2 หน้า User/Driver ไม่มีปุ่ม Admin) · component-rules.md §4.2.14"
-  },
-  {
-   "id": "R30",
-   "screens": "^OH2 / .*(S17 — |S18 — .*ดูอย่างเดียว)",
-   "component": "Secondary button",
-   "source": "เจ้าของงานสั่ง 30 ต.ค. 2569 จอดูอย่างเดียวของหน่วยงานเจ้าของรถ / กรย. → เคาะ \"เอาตามนั้นเลย\": ปุ่มที่บทบาทนี้ไม่มีวันกดได้ ซ่อน ไม่ใช้ Disabled (Smashing Hidden vs Disabled 2024 · NN/g · USWDS 2023 · UI Release#2 หน้า User/Driver ไม่มีปุ่ม Admin) · component-rules.md §4.2.14",
-   "allowInside": [
-    "Table header"
-   ],
-   "_note": "ปุ่ม \"ตัวกรอง\" ใน Table header และปุ่มส่งออก PDF / Excel ใช้ได้ (ดูข้อมูล ไม่ใช่แก้ข้อมูล)",
-   "allowText": [
-    "ส่งออก PDF",
-    "ส่งออก Excel"
-   ]
-  },
-  {
-   "id": "R30",
-   "screens": "^OH2 / .*(S17 — |S18 — .*ดูอย่างเดียว)",
-   "component": "Dropdown menu",
-   "source": "เจ้าของงานสั่ง 30 ต.ค. 2569 จอดูอย่างเดียวของหน่วยงานเจ้าของรถ / กรย. → เคาะ \"เอาตามนั้นเลย\": ปุ่มที่บทบาทนี้ไม่มีวันกดได้ ซ่อน ไม่ใช้ Disabled (Smashing Hidden vs Disabled 2024 · NN/g · USWDS 2023 · UI Release#2 หน้า User/Driver ไม่มีปุ่ม Admin) · component-rules.md §4.2.14"
-  },
-  {
-   "id": "R30",
-   "screens": "^OH2 / .*(S17 — |S18 — .*ดูอย่างเดียว)",
-   "component": "Modal",
-   "source": "เจ้าของงานสั่ง 30 ต.ค. 2569 จอดูอย่างเดียวของหน่วยงานเจ้าของรถ / กรย. → เคาะ \"เอาตามนั้นเลย\": ปุ่มที่บทบาทนี้ไม่มีวันกดได้ ซ่อน ไม่ใช้ Disabled (Smashing Hidden vs Disabled 2024 · NN/g · USWDS 2023 · UI Release#2 หน้า User/Driver ไม่มีปุ่ม Admin) · component-rules.md §4.2.14"
-  },
-  {
-   "id": "R33",
-   "screens": "^LG / .*S2 — (กรย|หน่วยงาน)",
-   "component": "Primary button",
-   "source": "เจ้าของงานสั่ง 30 ต.ค. 2569 \"Overhaul กบค. แก้ไขได้หน่วยงานเดียว หน่วยงานอื่นที่เป็นเจ้าของรถ หรือ กรย. เจ้าของรถ เห็นแต่แก้ไขไม่ได้\" → ปลั๊กอิน login-plugin บล็อก B หน้ารายการแผนของ กรย. / หน่วยงานเจ้าของรถ ต้องไม่มีปุ่มสร้าง/แก้ไข/ลบ ที่มองเห็น (ซ่อน ไม่ disable ตาม R30)"
-  },
-  {
-   "id": "R33",
-   "screens": "^LG / .*S2 — (กรย|หน่วยงาน)",
-   "component": "Secondary danger button",
-   "source": "เจ้าของงานสั่ง 30 ต.ค. 2569 \"Overhaul กบค. แก้ไขได้หน่วยงานเดียว หน่วยงานอื่นที่เป็นเจ้าของรถ หรือ กรย. เจ้าของรถ เห็นแต่แก้ไขไม่ได้\" → ปลั๊กอิน login-plugin บล็อก B หน้ารายการแผนของ กรย. / หน่วยงานเจ้าของรถ ต้องไม่มีปุ่มสร้าง/แก้ไข/ลบ ที่มองเห็น (ซ่อน ไม่ disable ตาม R30)"
-  },
-  {
-   "id": "R33",
-   "screens": "^LG / .*S2 — (กรย|หน่วยงาน)",
-   "component": "Dropdown menu",
-   "source": "เจ้าของงานสั่ง 30 ต.ค. 2569 \"Overhaul กบค. แก้ไขได้หน่วยงานเดียว หน่วยงานอื่นที่เป็นเจ้าของรถ หรือ กรย. เจ้าของรถ เห็นแต่แก้ไขไม่ได้\" → ปลั๊กอิน login-plugin บล็อก B หน้ารายการแผนของ กรย. / หน่วยงานเจ้าของรถ ต้องไม่มีปุ่มสร้าง/แก้ไข/ลบ ที่มองเห็น (ซ่อน ไม่ disable ตาม R30)"
-  },
-  {
-   "id": "R34",
-   "screens": "^MT / .*S20 — แผนอนุมัติแล้ว",
-   "component": "Secondary danger button",
-   "source": "เจ้าของงานสั่ง 30 ต.ค. 2569 มีแก้ไขและลบ ไม่มียกเลิกแผน · ลบได้เฉพาะก่อนอนุมัติ แผนที่อนุมัติแล้วต้องไม่มีปุ่มลบที่มองเห็น (ซ่อน ไม่ disable) · component-rules.md §5.6"
-  }
- ],
- "dashboard": {
-  "id": "R22",
-  "screens": "^OH2 / .*DASH (แผน|รถหลัง|ซ่อมหลัง|อะไหล่)",
-  "mustHave": [
-   "Tabs",
-   "Metric item"
+  "wording": [
+    {
+      "id": "R80",
+      "screens": "^MT / ",
+      "word": "รถ",
+      "use": "ยานพาหนะ",
+      "allow": [
+        "สามารถ",
+        "รถพ่วงฉีดน้ำ",
+        "รถเสีย",
+        "ผู้ใช้รถฯ",
+        "ทะเบียนรถ"
+      ],
+      "note": "ทุกข้อความบนจอ (ชื่อคอลัมน์ ป้ายช่อง ปุ่ม หัวข้อ toast ข้อความว่าง) ใช้ \"ยานพาหนะ\" แทน \"รถ\" เช่น ประเภทรถ เป็น ประเภทยานพาหนะ · รถเช่า เป็น ยานพาหนะเช่า · ข้อมูลที่ดึงมาจาก API ไม่แก้ เช่น ชื่อประเภทยานพาหนะ (กระเช้าฮอทไลน์ กระเช้าแก้ไฟ รถพ่วงฉีดน้ำ ตามโค้ดจริง · 6 พ.ย. 2569) ชื่อแผนหรือชื่อแผนเดินทางที่ผู้ใช้ตั้ง · allow = คำที่มี \"รถ\" ที่ยอมให้อยู่บนจอได้ ข้อมูลจาก API ตัวใหม่ต้องเพิ่มที่นี่ · ตอนนี้ใช้กับงานบำรุงรักษาก่อน (Overhaul งานซ่อม ยังไม่ปรับ) · 11 พ.ย. 2569 R94: \"ผู้ใช้รถฯ\" \"ทะเบียนรถ\" = ข้อความของแบบสำรวจ กบค. ที่ลอกตรงตัว (S27 แบบประเมิน)",
+      "source": "เจ้าของงาน 6 พ.ย. 2569 \"คำว่า รถ ที่อยู่ใน โปรแกรม อยากให้เปลี่ยนเป็นคำว่า ยานพาหนะ แทน โดยถ้าเป็นข้อมูลที่ดึงมาจาก api จะไม่ต้องแก้ไข แต่ถ้าเป็น คอลัมม์ แล้วมีคำว่ารถ เช่น รถเช่า เปลี่ยนเป็นยานพาหนะเช่า\" + เลือกขอบเขต บำรุงรักษาก่อน · component-rules.md §5.33"
+    },
+    {
+      "id": "R91",
+      "screens": "^MT / ",
+      "word": "ไฮโดรลิก",
+      "use": "ไฮดรอลิก",
+      "allow": [],
+      "note": "เจ้าของงาน 10 พ.ย. 2569 สะกดตามราชบัณฑิต \"ไฮดรอลิก\" ทุกจอบำรุงรักษา รวมรายการในแบบฟอร์มตรวจสภาพ"
+    },
+    {
+      "id": "R91",
+      "screens": "^MT / ",
+      "word": "ไฮดรอลิค",
+      "use": "ไฮดรอลิก",
+      "allow": [],
+      "note": "เจ้าของงาน 10 พ.ย. 2569 สะกดตามราชบัณฑิต \"ไฮดรอลิก\" ทุกจอบำรุงรักษา รวมรายการในแบบฟอร์มตรวจสภาพ"
+    },
+    {
+      "id": "R91",
+      "screens": "^MT / ",
+      "word": "ไฮโดรลิค",
+      "use": "ไฮดรอลิก",
+      "allow": [],
+      "note": "เจ้าของงาน 10 พ.ย. 2569 สะกดตามราชบัณฑิต \"ไฮดรอลิก\" ทุกจอบำรุงรักษา รวมรายการในแบบฟอร์มตรวจสภาพ"
+    }
   ],
-  "maxTableCols": 8,
-  "note": "Dashboard งาน Overhaul (เจ้าของงานสั่ง 21 ต.ค. 2569) ลอกโครงหน้า MA Overview ของ UI Release#2: Page header → Tabs + Pill นับ → Metric item ×4 (Featured icon สีตามความหมาย) → Alert ข้อมูล ณ วันที่ → Table header → Table ≤ 8 คอลัมน์ → pagination/empty · ไม่มี chart component ในไลบรารี ห้ามวาดกราฟเอง · หน้ารายคันเป็นหน้า Detail (Section label + กล่องแสดงข้อมูล) · 6 พ.ย. 2569: เจ้าของงานอนุญาต A.5 เพิ่ม grouped horizontal bar chart แนว Chart.js เป็น editable layers ใช้ palette/font VMS Plus และ filter scope เดียวกับ dashboard; เป็นข้อยกเว้นของกฎห้ามวาดกราฟเดิมเฉพาะกราฟนี้ · 9 พ.ย. 2569 เจ้าของงานอนุญาตกราฟแบบอื่นด้วย: native editable arcs/text/frames ภายใน Executive visual dashboard; นับแยกจาก unsupported loose layers. · 10 พ.ย. 2569: A.5 เงิน comma และทศนิยม 2 หลัก อายุรถในช่องข้อมูลรถ กราฟทุกส่วนรวมอันดับยี่ห้อใช้รถตามตัวกรองเดียวกับตาราง; คืน shared helpers ในไฟล์หลักและ bundle SP09 จาก source เดียวกัน.",
-  "source": "เจ้าของงานสั่ง 21 ต.ค. 2569 · แม่แบบ UI Release#2 node 351:181468 · Metric item 2011:13829"
- },
- "ownerDesign": [
-  {
-   "id": "R23",
-   "screens": "^OH2 / .*(S9 — เพิ่มความคืบหน้าสำเร็จ|S10 — (แก้ไขรายละเอียด|Update)|S11 — )",
-   "desktopOnly": true,
-   "tableHeaders": [
-    "วันที่",
-    "รายละเอียด",
-    "ความคืบหน้า",
-    "หมายเหตุ"
-   ],
-   "note": "ลำดับแหล่งความจริงของโครงจอ: ข้อความ/ภาพจากเฟรม Figma ที่เจ้าของงานส่ง → ชีต CF ของ PO → userflow/AC · คอลัมน์ในชีตที่จอของเจ้าของงานไม่มี ไม่ใส่ (จดรอเคาะในไฟล์ 19) · ตรวจด้วย harness DUMP_TEXT",
-   "source": "เจ้าของงานสั่ง 21 ต.ค. 2569 (ค่ำ) พร้อมข้อความจากเฟรม J.1–J.3: \"scen J ให้ปรับแก้ใน script เป็นแบบที่ส่งไป ครั้งหน้าถ้าต้อง gen ui ให้ยึดตามแบบที่ส่งไป\" · component-rules.md §4.2"
-  },
-  {
-   "id": "R23",
-   "screens": "^OH2 / .*(S1 — (รายการแผน|บันทึกสำเร็จ)|S2 — (เมนู|ไม่พบแผน)|S3 — (เมนู|กดลบ|ลบสำเร็จ)|หน้ารายการแผน — ค้นหา — (รายการแผน|ตัวกรอง))",
-   "desktopOnly": true,
-   "minCols": 9,
-   "tableHeaders": [
-    "หมายเลขแผน",
-    "ชื่อแผน",
-    "ประเภทงบ",
-    "ปีงบประมาณ",
-    "งบประมาณ (บาท)",
-    "ความคืบหน้า",
-    "สถานะ",
-    "วันที่สร้าง"
-   ],
-   "note": "บล็อก A ฉบับที่เจ้าของงานแก้แล้ว 21 ต.ค. 2569 ค่ำ (\"ให้ยึดเป็นหลักในการออกแบบครั้งต่อไป\"): 4 state รายการแผน · ตัวกรอง · ค้นไม่เจอ · ยังไม่มีแผน · ตาราง 8 คอลัมน์ + ปุ่ม … (ไม่มีหน่วยงาน — เจ้าของงานยืนยันซ้ำ \"ตัดหน่วยงานออก สิ่งที่ต้องมีคือชื่อแผน\") · 10 แถว \"แสดง 1 ถึง 10 จาก 95 รายการ\" · ค้นหา \"ค้นหาเลขแผน, ชื่อแผน, เลขศูนย์ต้นทุน\" · ตัวกรอง = dropdown 3 ช่อง (ถ้ามี) ปีงบประมาณ · งบประมาณ (บาท) 6 ช่วง · สถานะ + ปุ่ม ล้างตัวกรอง ยกเลิก ตกลง · ความคืบหน้าเป็น Progress bar พร้อมเปอร์เซ็นต์จริง (6 พ.ย. 2569) · จอว่าง \"สร้างแผน Overhaul เพื่อเพิ่ม Purchase Order และติดตามสถานะซ่อมของรถแต่ละคัน\" · คอลัมน์ที่ชีต CF มีแต่จอไม่มี (หน่วยงาน จำนวนรถ รถรอติดตาม แก้ไขล่าสุด) และตัวกรองประเภทยานพาหนะ ไม่ใส่ รอเคาะ · minCols: ไม่ตรวจเมื่อไลบรารีมีไม่ถึง 9 คอลัมน์ (แบบสำรอง) · pagination เลขหน้า 1 2 … 9 10 · ข้อความ \"แสดง 1 ถึง 10  จาก 95 รายการ\"",
-   "source": "เจ้าของงานวางข้อความทั้งบล็อก A (A.1–A.4) 21 ต.ค. 2569 ค่ำ: \"scen A ที่ถูกปรับแก้แล้ว ให้ยึดเป็นหลักในการออกแบบครั้งต่อไป จดไว้ด้วย\" · ข้อความดิบ ~/PEA/Maintain-D/userflow/figma-ref/overhaul-A-list-2569-10-21.txt"
-  },
-  {
-   "id": "R28",
-   "screens": "^OH2 / .*S14 — (ระบุอะไหล่แล้ว|ปิดงานแล้ว)",
-   "desktopOnly": true,
-   "tableHeaders": [
-    "ชื่ออะไหล่",
-    "จำนวน",
-    "หน่วย"
-   ],
-   "note": "ขั้นปิดงาน: ตารางอะไหล่ที่ใช้ แล้วตามด้วย Section header \"การรับประกันของผู้รับจ้าง\" 3 ช่อง วันเริ่มรับประกัน (ค่าตั้งต้น = วันปิดงาน แก้ได้) · ระยะรับประกัน (วัน) บังคับ · วันหมดอายุประกัน (Readonly ระบบคำนวณ = วันเริ่ม + จำนวนวัน) + Alert Info \"ระบบจะแจ้งเตือน กบค. ทางกระดิ่งในระบบ ก่อนประกันของผู้รับจ้างหมด 30 วัน และ 15 วัน\" · เตือนทุกคนในหน่วยงาน กบค. ทางกระดิ่งเท่านั้น แจ้งเตือนอย่างเดียว (N14) เพื่อให้ กบค. แจ้งหน่วยงานสำรวจความสมบูรณ์ของรถ/นำรถเข้าเก็บงานก่อนหมดประกัน · ใช้เฉพาะ Overhaul ก่อน · ปิดงานแล้ว = กล่อง Content item 4 ช่อง · ประกันของ กบค. เป็นอีกเรื่อง ไม่อยู่ในจอนี้ · 29 ต.ค. 2569: บล็อก O ฉบับเจ้าของงานเหลือ 3 state — ส่วนรับประกันอยู่ใน O.2 ระบุอะไหล่แล้ว และ O.3 ปิดงานแล้ว (เจ้าของงานเคาะคง R28 ไว้) · 30 ต.ค. 2569: หัว \"การรับประกันงานซ่อม\" + Toggle with description \"มีการรับประกันงานซ่อม\" (ตั้งต้นเปิด · ปิด = ไม่มีประกัน ไม่แจ้งเตือน) · ระยะรับประกันเป็น Input dropdown ค่าตายตัว 90/180/360/720 วัน · เตือนทั้งหน่วยงานเจ้าของรถ และ กบค. (S15 บล็อก P) · เพิ่ม O.2.1 เลือกระยะรับประกัน · O.2.2 ไม่มีการรับประกัน",
-   "source": "เจ้าของงานสั่ง 22 ต.ค. 2569: \"ตอนที่กรอกหน้าสุดท้ายของการปิดงาน ต้องมีให้เจ้าหน้าที่ กบค กรอกวันรับประกัน … กรอก จำนวนวันแล้ว ระบบคำนวนวันหมดอายุให้\" + \"default วันปิดงาน แต่ว่าสามารถแก้ไขได้ … การเตือนให้เป็นประกัน ของบริษัท ไม่ใช่ของกบค\" · component-rules.md §4.2.5 · Diagram/…/21 หัวข้อ 4"
-  },
-  {
-   "id": "R23",
-   "screens": "^OH2 / .*S12 — ",
-   "desktopOnly": true,
-   "tableHeaders": [],
-   "note": "บล็อก M ฉบับเจ้าของงาน 22 ต.ค. 2569: 2 state (Default ยังไม่มีเอกสาร · Filled อัปโหลดเอกสารแล้ว) · Section header \"เอกสารแนบ\" · File upload \"เอกสาร Safety Inspection\" (ถ้ามี) \"PDF, PNG, or JPG (สูงสุด 10 ไฟล์)\" · M.2 ไฟล์ Completed 100% / In progress ×2 / Error อัปโหลดไม่สำเร็จ · ปุ่ม ย้อนกลับ / ยืนยันการตรวจสภาพ",
-   "source": "เจ้าของงาน 22 ต.ค. 2569 \"update script ให้ไฟล์นี้เป็นไฟล์ตั้งต้น ในการ export ครั้งต่อไปของ scen M\" · component-rules.md §4.2.6"
-  },
-  {
-   "id": "R23",
-   "screens": "^OH2 / (E\\.\\d+ · S4 — บันทึกสำเร็จ|F\\.(1\\.1|4\\.1) · S5 — |G\\.\\d+ · S6 — )",
-   "desktopOnly": true,
-   "tableHeaders": [
-    "หมายเลข PO",
-    "ชื่อ PO",
-    "ศูนย์บริการ/อู่",
-    "จำนวนรถ",
-    "ความคืบหน้า",
-    "ระยะสัญญา"
-   ],
-   "note": "บล็อก E F G ฉบับเจ้าของงาน 29 ต.ค. 2569: หน้ารายละเอียดแผนใช้แบบ E/F ทุกจอ (ตาราง PO 6 คอลัมน์ + ปุ่ม … · หัว Purchase Order (n) ไม่มีปุ่ม · อะไหล่ที่ใช้ + เบิกอะไหล่) · เฟรม G (ตาราง 4 คอลัมน์ · ปุ่ม PO · อะไหล่จากคลัง) เป็นฉบับก่อน CF ใช้แค่ชื่อ state · modal · toast — component-rules §4.2.7–4.2.9",
-   "source": "เจ้าของงานส่งข้อความเฟรม E F G 29 ต.ค. 2569 \"จำ design ในครั้งต่อไป\" + เคาะ \"ตามที่แนะนำ\""
-  },
-  {
-   "id": "R82",
-   "screens": "^MT / .*(S6 — (เพิ่มยานพาหนะแล้ว|กรอกครบ|บันทึกวันดำเนินการแล้ว)|S10 — ไฟล์ Excel — ชีตยานพาหนะ|S7 — รายละเอียดแผนเดินทาง|S8 — .*แผนเดินทาง ดูอย่างเดียว|S9 — กรอกครบ)",
-   "desktopOnly": true,
-   "tableHeaders": [
-    "ทะเบียน",
-    "ประเภทยานพาหนะ",
-    "ยี่ห้อ/รุ่น",
-    "หน่วยงานเจ้าของยานพาหนะ",
-    "เบอร์ติดต่อ",
-    "สถานที่บำรุงรักษา",
-    "วันดำเนินการ"
-   ],
-   "note": "ตารางยานพาหนะของแผนเดินทาง ชุดเดียว (TRIP_V_COLS) ในฟอร์มแผนเดินทาง S6 S9 (+ ไอคอนแก้ไข ลบ) · ตรวจสอบแผนเดินทาง S7 · ดูอย่างเดียว S8 · ไฟล์ Excel ชีตยานพาหนะ · ตารางแรกของจอ · 9 พ.ย. 2569 เจ้าของงาน \"E4 ตรงติดต่อ อยากให้ เพิ่มชื่อผู้ดูแลรถ ตรงด้านล่างเบอร์โทร\" ⇒ คอลัมน์ \"เบอร์ติดต่อ\" เบอร์บน ชื่อผู้ดูแลยานพาหนะบรรทัดรอง (เดิม \"ผู้ดูแลยานพาหนะ\" ชื่อบน)",
-   "source": "เจ้าของงาน 6 พ.ย. 2569 รีวิว S6 \"เพิ่ม คอลัมม์ \"วันดำเนินการ\" โดยเลือกได้ไม่เกิน range ของแผนที่กำหนดมาเท่านั้น\" + \"ถ้าเพิ่ม คอลัมน์ ก็ส่งผลกระทบกับ หน้าอื่นๆที่เป็นหน้าที่เหมือนกันด้วย ตอน export ก็เกี่ยวข้องด้วย\" ⇒ ตารางยานพาหนะของแผนเดินทางทุกหน้าใช้คอลัมน์ชุดเดียว TRIP_V_COLS (screens.js) · component-rules.md §5.34"
-  },
-  {
-   "id": "R82",
-   "screens": "^MT / .*S10 — หน้ารายละเอียดแผนเดินทาง",
-   "desktopOnly": true,
-   "tableHeaders": [
-    "ทะเบียน",
-    "ประเภทยานพาหนะ",
-    "ยี่ห้อ/รุ่น",
-    "เบอร์ติดต่อ",
-    "สถานที่บำรุงรักษา",
-    "วันดำเนินการ",
-    "สถานะงาน"
-   ],
-   "note": "หน้ารายละเอียดแผนเดินทาง (S10): ชุด TRIP_V_COLS โดยหน่วยงานเจ้าของยานพาหนะเป็นบรรทัดรองของทะเบียน + สถานะงาน + ปุ่ม … (Table ของไลบรารี 8 คอลัมน์) · 9 พ.ย. 2569 เจ้าของงาน \"E4 ตรงติดต่อ อยากให้ เพิ่มชื่อผู้ดูแลรถ ตรงด้านล่างเบอร์โทร\" ⇒ คอลัมน์ \"เบอร์ติดต่อ\" เบอร์บน ชื่อผู้ดูแลยานพาหนะบรรทัดรอง (เดิม \"ผู้ดูแลยานพาหนะ\" ชื่อบน)",
-   "source": "เจ้าของงาน 6 พ.ย. 2569 รีวิว S6 \"เพิ่ม คอลัมม์ \"วันดำเนินการ\" โดยเลือกได้ไม่เกิน range ของแผนที่กำหนดมาเท่านั้น\" + \"ถ้าเพิ่ม คอลัมน์ ก็ส่งผลกระทบกับ หน้าอื่นๆที่เป็นหน้าที่เหมือนกันด้วย ตอน export ก็เกี่ยวข้องด้วย\" ⇒ ตารางยานพาหนะของแผนเดินทางทุกหน้าใช้คอลัมน์ชุดเดียว TRIP_V_COLS (screens.js) · component-rules.md §5.34"
-  },
-  {
-   "id": "R82",
-   "screens": "^MT / .*(S6 — หน้าไตรมาส 1|S25 — หน้าไตรมาส [12])",
-   "desktopOnly": true,
-   "tableHeaders": [
-    "ทะเบียน",
-    "ประเภทยานพาหนะ",
-    "ยี่ห้อ/รุ่น",
-    "หน่วยงานเจ้าของยานพาหนะ",
-    "เบอร์ติดต่อ",
-    "วันดำเนินการ",
-    "แผนเดินทาง"
-   ],
-   "note": "หน้าไตรมาส: ชุด TRIP_V_COLS ไม่มีสถานที่บำรุงรักษา (สถานที่อยู่กับแผนเดินทาง) + แผนเดินทาง + ไอคอน · 9 พ.ย. 2569 เจ้าของงาน \"E4 ตรงติดต่อ อยากให้ เพิ่มชื่อผู้ดูแลรถ ตรงด้านล่างเบอร์โทร\" ⇒ คอลัมน์ \"เบอร์ติดต่อ\" เบอร์บน ชื่อผู้ดูแลยานพาหนะบรรทัดรอง (เดิม \"ผู้ดูแลยานพาหนะ\" ชื่อบน) · 10 พ.ย. 2569 ตรวจหน้าไตรมาสของ S25 (X.1 ไตรมาส 1 · X.8 ไตรมาส 2 ที่มียานพาหนะย้ายมา) ด้วย และยานพาหนะที่ยังไม่อยู่ในแผนเดินทาง (เพิ่มเข้าไตรมาส · ย้ายมา) เบอร์บน ชื่อล่างเหมือนกัน",
-   "source": "เจ้าของงาน 6 พ.ย. 2569 รีวิว S6 \"เพิ่ม คอลัมม์ \"วันดำเนินการ\" โดยเลือกได้ไม่เกิน range ของแผนที่กำหนดมาเท่านั้น\" + \"ถ้าเพิ่ม คอลัมน์ ก็ส่งผลกระทบกับ หน้าอื่นๆที่เป็นหน้าที่เหมือนกันด้วย ตอน export ก็เกี่ยวข้องด้วย\" ⇒ ตารางยานพาหนะของแผนเดินทางทุกหน้าใช้คอลัมน์ชุดเดียว TRIP_V_COLS (screens.js) · component-rules.md §5.34"
-  },
-  {
-   "id": "R81",
-   "screens": "^MT / .*(S10 — ไฟล์ (PDF หน้า 2|Excel — ชีตอะไหล่)|S4 — ไฟล์ (PDF — รวมตามรายการ|Excel — ชีตรวมตามรายการ))",
-   "tableHeaders": [
-    "ชนิด",
-    "รหัสอะไหล่",
-    "ประเภท",
-    "จำนวน",
-    "หน่วย"
-   ],
-   "note": "ตารางอะไหล่รวมตามรายการ ชุดเดียว (QPART_COLS ใน screens.js) ใช้ที่อะไหล่ในไตรมาส (S1 S19) · อะไหล่ในแผน (S2) · อะไหล่ในไตรมาส n ของหน้าไตรมาส · แดชบอร์ด S4 แท็บรวมตามรายการ · อะไหล่ของแผนเดินทาง (S6 S7 S8 S9 S10) · ไฟล์ PDF Excel ที่ส่งออก · ตรวจที่เฟรมไฟล์ส่งออกซึ่งตารางอะไหล่เป็นตารางแรก",
-   "source": "เจ้าของงาน 6 พ.ย. 2569 \"ถ้าเพิ่ม คอลัมน์ ก็ส่งผลกระทบกับ หน้าอื่นๆที่เป็นหน้าที่เหมือนกันด้วย ตอน export ก็เกี่ยวข้องด้วย\" + S2 \"group ชนิด ประเภท จำนวน\" + รีวิว S4 \"ค้นหาจาก ชื่ออะใหล่ รหัสอะใหล่\" · component-rules.md §5.32"
-  },
-  {
-   "id": "R87",
-   "screens": "^MT / .*(S23 — (ยืนยันการตรวจสภาพ — Step 2|Validation|กรอกผลงานครบ)|S10 — แผนจ้างดำเนินการ — Step 2)",
-   "desktopOnly": true,
-   "tableHeaders": [
-    "ชื่ออะไหล่",
-    "จำนวนที่ใช้",
-    "จำนวนที่คืน",
-    "จำนวนอะไหล่เก่า",
-    "หมายเหตุ"
-   ],
-   "note": "Step 2 ของแผนจ้างดำเนินการ ตารางรายการสภาพวัสดุอะไหล่ไม่มีคอลัมน์ ราคาต่อหน่วย · ราคารวมที่ใช้ · ราคารวมที่คืน (CLOSE_PRICE_COLS ใน screens.js · closeParts noPrice) · มือถือตัดคอลัมน์เดียวกัน",
-   "source": "เจ้าของงาน 10 พ.ย. 2569 \"จะไม่มีเรื่องทั้ง section ค่าใช้จ่ายรายคัน ที่ต้องกรอก ส่วนที่สภาพวัสดุอะไหล่ ส่วนที่เป็นราคาต้องไม่แสดง\" + \"s23 ยังแสดงเหมือนเดิมแต่ส่วนที่เป็นราคา ของค่าใช้จ่ายของรถรายคัน จะไม่มี ส่วนที่เหลือยังคงเดิม\" · component-rules.md §5.17"
-  },
-  {
-   "id": "R87",
-   "screens": "^MT / .*S10 — (ยืนยันการตรวจสภาพ — Step 2|กรอกผลงานครบ)",
-   "desktopOnly": true,
-   "tableHeaders": [
-    "ชื่ออะไหล่",
-    "ราคาต่อหน่วย",
-    "จำนวนที่ใช้",
-    "ราคารวมที่ใช้",
-    "จำนวนที่คืน",
-    "ราคารวมที่คืน",
-    "จำนวนอะไหล่เก่า",
-    "หมายเหตุ"
-   ],
-   "note": "แผนที่ดำเนินการเอง (S10) ยังมีคอลัมน์ราคาครบตามเฟรมรายงานปิดงาน (3 พ.ย. 2569) — ตรวจคู่กับแถวบนให้รู้ว่าตัดราคาเฉพาะแผนจ้าง",
-   "source": "เจ้าของงาน 10 พ.ย. 2569 \"จะไม่มีเรื่องทั้ง section ค่าใช้จ่ายรายคัน ที่ต้องกรอก ส่วนที่สภาพวัสดุอะไหล่ ส่วนที่เป็นราคาต้องไม่แสดง\" + \"s23 ยังแสดงเหมือนเดิมแต่ส่วนที่เป็นราคา ของค่าใช้จ่ายของรถรายคัน จะไม่มี ส่วนที่เหลือยังคงเดิม\" · component-rules.md §5.17"
-  }
- ],
- "tables": {
-  "id": "R25",
-  "component": "Table",
-  "neverCompose": true,
-  "source": "เจ้าของงานวางข้อความ component Table + ภาพหน้ารายการแผนที่ประกอบเอง 21 ต.ค. 2569 ค่ำ: \"ถ้าต้องเลือกตารางให้ดึง component นี้ ที่ผ่านมาดึงผิด\" · \"ถ้าเป็นหน้า list ต้องดึงตารางให้ถูก\" · \"ทุก scen ที่ใช้ตาราง ให้ดึง component ที่ส่งให้ทั้งหมด … ของ desktop ก่อน\" — component-rules.md §4.4"
- },
- "displayLabels": [
-  {
-   "id": "R76",
-   "screens": "^CE / (B1\\.[1-57]|C1\\.1) ",
-   "type": "งานซ่อม",
-   "labels": [
-    "ผู้รับจ้าง",
-    "ประเภทงาน",
-    "เลขที่ใบแจ้งซ่อม",
-    "หมายเลขงานซ่อม",
-    "ทะเบียนรถ",
-    "เลขที่ใบแจ้งหนี้",
-    "วันที่ / เวลาที่คาดว่าจะซ่อมเสร็จ",
-    "วันที่ / เวลาที่ซ่อมเสร็จ",
-    "ระยะเวลารับประกัน"
-   ],
-   "forbidLabels": [
-    "ใบสั่งจ้างเลขที่",
-    "สัญญาเลขที่",
-    "ที่อยู่"
-   ],
-   "note": "งานซ่อมส่งอู่: ข้อมูลงานซ่อมที่ศูนย์บริการ เก็บชื่อศูนย์บริการเป็นข้อความ (รหัสผู้รับจ้างยังไม่ถูกบันทึก) · ไม่มีเลขใบสั่งจ้าง/สัญญา/ที่อยู่อู่ ⇒ ไม่แสดง (ยังไม่เคาะ)",
-   "source": "เจ้าของงาน 5 พ.ย. 2569 \"ส่วนที่เป็น display เป็นส่วนที่มีความแตกต่างกันของงาน คืองานซ่อม งานบำรุงรักษา งาน Overhaul ดังนั้น ส่วนที่เป็น display ต้องแยกการแสดงที่แตกต่างกัน\" · ช่องตามข้อมูลจริง code-maintainD / แบบของเรา ที่มารายช่อง ไฟล์นอกรีโป db-schema/map-09-ประเมินผู้รับจ้าง-ข้อมูลผู้รับจ้างตามประเภทงาน.md (มีชื่อตาราง DB จริง ไม่เก็บในรีโป public) · component-rules.md §5.30"
-  },
-  {
-   "id": "R76",
-   "screens": "^CE / (B2\\.[1-57]|C2\\.1) ",
-   "type": "งานบำรุงรักษา",
-   "labels": [
-    "ผู้รับจ้าง",
-    "ที่อยู่",
-    "ประเภทงาน",
-    "เลขที่สัญญา/ใบสั่งจ้าง",
-    "เลขที่ MR",
-    "ชื่อแผนเดินทาง",
-    "ช่วงวันทำงาน",
-    "รถในแผนเดินทาง"
-   ],
-   "forbidLabels": [
-    "ใบสั่งจ้างเลขที่",
-    "สัญญาเลขที่",
-    "ระยะเวลารับประกัน"
-   ],
-   "note": "แผนเดินทางจ้างดำเนินการ S9 (ปลั๊กอินบำรุงรักษา tripKv) มีช่องเดียว เลขที่สัญญา/ใบสั่งจ้าง (ไม่บังคับ) · ไม่มีการรับประกัน",
-   "source": "เจ้าของงาน 5 พ.ย. 2569 \"ส่วนที่เป็น display เป็นส่วนที่มีความแตกต่างกันของงาน คืองานซ่อม งานบำรุงรักษา งาน Overhaul ดังนั้น ส่วนที่เป็น display ต้องแยกการแสดงที่แตกต่างกัน\" · ช่องตามข้อมูลจริง code-maintainD / แบบของเรา ที่มารายช่อง ไฟล์นอกรีโป db-schema/map-09-ประเมินผู้รับจ้าง-ข้อมูลผู้รับจ้างตามประเภทงาน.md (มีชื่อตาราง DB จริง ไม่เก็บในรีโป public) · component-rules.md §5.30"
-  },
-  {
-   "id": "R76",
-   "screens": "^CE / (B3\\.[1-57]|C3\\.1) ",
-   "type": "งาน Overhaul",
-   "labels": [
-    "ผู้รับจ้าง",
-    "ที่อยู่",
-    "ประเภทงาน",
-    "ใบสั่งจ้างเลขที่",
-    "ชื่อ Purchase Order",
-    "หมายเลขแผน",
-    "จำนวนรถ",
-    "ระยะสัญญา",
-    "วันที่ปิดงาน",
-    "ระยะเวลารับประกัน"
-   ],
-   "forbidLabels": [
-    "สัญญาเลขที่"
-   ],
-   "note": "Purchase Order ของปลั๊กอิน Overhaul (poForm/poDetail/PO_COLS) + ประกันผู้รับจ้าง S14 (R28) · ฟอร์ม PO ไม่มีเลขที่สัญญา (Q9) ⇒ ไม่แสดง",
-   "source": "เจ้าของงาน 5 พ.ย. 2569 \"ส่วนที่เป็น display เป็นส่วนที่มีความแตกต่างกันของงาน คืองานซ่อม งานบำรุงรักษา งาน Overhaul ดังนั้น ส่วนที่เป็น display ต้องแยกการแสดงที่แตกต่างกัน\" · ช่องตามข้อมูลจริง code-maintainD / แบบของเรา ที่มารายช่อง ไฟล์นอกรีโป db-schema/map-09-ประเมินผู้รับจ้าง-ข้อมูลผู้รับจ้างตามประเภทงาน.md (มีชื่อตาราง DB จริง ไม่เก็บในรีโป public) · component-rules.md §5.30"
-  }
- ],
- "wording": [
-  {
-   "id": "R80",
-   "screens": "^MT / ",
-   "word": "รถ",
-   "use": "ยานพาหนะ",
-   "allow": [
-    "สามารถ",
-    "รถพ่วงฉีดน้ำ",
-    "รถเสีย"
-   ],
-   "note": "ทุกข้อความบนจอ (ชื่อคอลัมน์ ป้ายช่อง ปุ่ม หัวข้อ toast ข้อความว่าง) ใช้ \"ยานพาหนะ\" แทน \"รถ\" เช่น ประเภทรถ เป็น ประเภทยานพาหนะ · รถเช่า เป็น ยานพาหนะเช่า · ข้อมูลที่ดึงมาจาก API ไม่แก้ เช่น ชื่อประเภทยานพาหนะ (กระเช้าฮอทไลน์ กระเช้าแก้ไฟ รถพ่วงฉีดน้ำ ตามโค้ดจริง · 6 พ.ย. 2569) ชื่อแผนหรือชื่อแผนเดินทางที่ผู้ใช้ตั้ง · allow = คำที่มี \"รถ\" ที่ยอมให้อยู่บนจอได้ ข้อมูลจาก API ตัวใหม่ต้องเพิ่มที่นี่ · ตอนนี้ใช้กับงานบำรุงรักษาก่อน (Overhaul งานซ่อม ยังไม่ปรับ)",
-   "source": "เจ้าของงาน 6 พ.ย. 2569 \"คำว่า รถ ที่อยู่ใน โปรแกรม อยากให้เปลี่ยนเป็นคำว่า ยานพาหนะ แทน โดยถ้าเป็นข้อมูลที่ดึงมาจาก api จะไม่ต้องแก้ไข แต่ถ้าเป็น คอลัมม์ แล้วมีคำว่ารถ เช่น รถเช่า เปลี่ยนเป็นยานพาหนะเช่า\" + เลือกขอบเขต บำรุงรักษาก่อน · component-rules.md §5.33"
-  }
- ],
- "buttonFill": [
-  {
-   "id": "R89",
-   "screens": "^MT / .*S13 — ",
-   "component": "Primary button",
-   "text": "รับทราบ",
-   "fill": "#17B26A",
-   "forbidText": [
-    "ยอมรับผล",
-    "ยอมรับผลการตรวจบำรุงยานพาหนะ"
-   ],
-   "requireText": true,
-   "requireUnless": "รายการ|รับทราบแล้ว|แผงแจ้งเตือน",
-   "source": "เจ้าของงาน 10 พ.ย. 2569 Q23 \"มีแค่ปุ่มยอมรับ เหมือนปุ่มรับทราบ\" + \"ข้อความบนปุ่ม จริงๆอยากใช้คำกลางๆ แล้วเปลี่ยนสี เป็นสีเขียวแทน\" · Primary button พื้นผูก Color/surface/success แบบปุ่ม \"ตรวจแล้ว\" หน้า 5.14 - 5.15 Cost & Expense Check ของ UI Release#2 · component-rules.md §5.37"
-  }
- ],
- "_overhaulUatReview": {
-  "date": "2026-11-10",
-  "reference": "overhaul2-plugin/uat-feedback-review.md",
-  "source": "https://vms-plus-uat.odds.team/maintain-d/overhaul-utility-vehicle",
-  "feedback": [
-   "A.5 เงินสองตำแหน่ง อายุรถ และทุกกราฟตามรถในตาราง",
-   "เลือกรถในแผนเป็นส่วนที่ 2 พร้อม B.8–B.13",
-   "PO เฉพาะรถในแผน วันสัญญาแยก และ progress รายคัน",
-   "ติดตามงานครบ 4 ช่อง เปอร์เซ็นต์รายการล่าสุดใช้เปิดปุ่มซ่อมสำเร็จ",
-   "ปิดงานแยกอะไหล่สองหมวดและค่าใช้จ่าย",
-   "P.1–P.2 ขั้น 7 ยืนยันการส่งอนุมัติ Q–T แจ้งเตือนและหน่วยงาน",
-   "Summary/History 4 state",
-   "A.5 อายุรถขึ้นต้นบรรทัดรอง และ Dashboard แสดงอายุเฉลี่ย/จำนวนรถที่มีข้อมูลจากตารางหลังกรอง"
-  ],
-  "requiredSourceNodes": {
-   "P.1–P.2": "2623:88498; clone ต้นฉบับเท่านั้น หากไม่มีให้แจ้งข้อจำกัด",
-   "I.1–I.5 / S.5": "ReceiptChecklist และ HandoverSignature"
-  },
-  "validation": "135 callbacks กับ mock API ไม่ใช่การยืนยันภาพจริงหรือ library import"
- },
- "_sharedBehaviorReview": {
-  "id": "R91",
-  "date": "2026-11-10",
-  "reference": "../design-system/behavior-consistency.md",
-  "source": "https://vms-plus-uat.odds.team/maintain-d/repair-utility-vehicle",
-  "verifiedInteractions": [
-   "filter cancel discards draft",
-   "filter apply updates result and condition count",
-   "next disabled for incomplete repair form",
-   "sign disabled before signer selection",
-   "dirty form back opens exit confirmation",
-   "completed step can be opened for review"
-  ],
-  "pluginChanges": [
-   "readonly attachments allow completed-file downloads without deletion",
-   "in-progress/failed files have no download action",
-   "numeric zero remains a filled value",
-   "computed coordinator phone is Readonly",
-   "plan and PO share document hints",
-   "create forms have Back and Save",
-   "B.4/C.3 share EXIT_CONFIRM with Cancel and Confirm"
-  ],
-  "test": "node figma-export/test-overhaul-shared-behavior.js",
-  "limit": "Figma states only; no UAT writes or live submission/permission-backend tests"
- },
- "_overhaulDashboardEntry": {
-  "date": "2026-11-10",
-  "button": "สร้าง Dashboard รถที่ Overhaul (A.5–A.8)",
-  "message": "build-overhaul-dashboard",
-  "states": [
-   "A.5",
-   "A.6",
-   "A.7",
-   "A.8"
-  ],
-  "reuse": "SCENARIOS[0] callbacks without altering full inventory",
-  "placement": "append to current page and select created frames",
-  "test": "node figma-export/test-overhaul-dashboard-entry.js"
- },
- "_overhaulA5Latest": {
-  "date": "2026-11-10",
-  "supersedes": "all older A.5 eight-column and replacement-price/difference/purchase-price requirements",
-  "tableHeaders": [
-   "ทะเบียน",
-   "ข้อมูลรถ",
-   "ราคากลาง",
-   "ประเมิน Overhaul (บาท)",
-   "อายุการใช้งาน",
-   "ความคืบหน้า",
-   ""
-  ],
-  "moneyFormat": {
-   "grouping": true,
-   "minimumFractionDigits": 2,
-   "maximumFractionDigits": 2
-  },
-  "referencePriceSource": "PLAN_VEHICLES[c][9]",
-  "remove": [
-   "ส่วนต่างประมาณการ (บาท)",
-   "ราคาซื้อเดิม (บาท)"
-  ],
-  "age": "dedicated table column",
-  "dashboard": "reference price and overhaul totals, no difference or purchase price; identical filtered vehicle cohort"
- },
- "_bahtFormatting": {
-  "date": "2026-11-10",
-  "scope": "all Overhaul plugin baht values and shared SP09 helpers",
-  "formatter": "currency",
-  "fractionDigits": 2,
-  "examples": [
-   "0.00",
-   "1,000.00",
-   "1,234.50"
-  ],
-  "groupedStringInput": true,
-  "missing": "—",
-  "emptyInput": "preserve placeholder",
-  "includes": [
-   "plan budgets",
-   "money fields",
-   "detail values",
-   "chart amounts",
-   "parts totals",
-   "actual costs",
-   "repair-history amounts",
-   "budget-filter ranges"
-  ],
-  "tests": [
-   "test-overhaul-shared-behavior.js",
-   "test-overhaul-all-screen-runtime.js"
+  "buttonFill": [
+    {
+      "id": "R89",
+      "screens": "^MT / .*S13 — ",
+      "component": "Primary button",
+      "text": "รับทราบ",
+      "fill": "#17B26A",
+      "forbidText": [
+        "ยอมรับผล",
+        "ยอมรับผลการตรวจบำรุงยานพาหนะ"
+      ],
+      "requireText": true,
+      "requireUnless": "รายการ|รับทราบแล้ว|แผงแจ้งเตือน|บทบาทอื่น",
+      "source": "เจ้าของงาน 10 พ.ย. 2569 Q23 \"มีแค่ปุ่มยอมรับ เหมือนปุ่มรับทราบ\" + \"ข้อความบนปุ่ม จริงๆอยากใช้คำกลางๆ แล้วเปลี่ยนสี เป็นสีเขียวแทน\" · Primary button พื้นผูก Color/surface/success แบบปุ่ม \"ตรวจแล้ว\" หน้า 5.14 - 5.15 Cost & Expense Check ของ UI Release#2 · component-rules.md §5.37"
+    }
   ]
  },
  "_bahtRenderedRepair": {

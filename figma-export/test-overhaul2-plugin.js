@@ -187,6 +187,11 @@ for (const n of root.findAll(n => n.type === 'COMPONENT')) n.createInstance = ()
 
 /* ---------- figma global ---------- */
 const logs = [];
+const LOAD_ALL = { n: 0 };
+/* pluginData ของ document — COMP_CACHE_FILE=ไฟล์ json = เก็บข้ามรอบ (จำลองไฟล์ Figma เดิมที่กดซ้ำ) */
+const PD = (() => { try { return process.env.COMP_CACHE_FILE ? JSON.parse(fs.readFileSync(process.env.COMP_CACHE_FILE, 'utf8')) : {}; } catch (e) { return {}; } })();
+root.getPluginData = (k) => PD[k] || '';
+root.setPluginData = (k, v) => { PD[k] = v; if (process.env.COMP_CACHE_FILE) fs.writeFileSync(process.env.COMP_CACHE_FILE, JSON.stringify(PD)); };
 let uiHandler = null;
 const pages = [];
 const figma = {
@@ -195,7 +200,8 @@ const figma = {
   currentPage: Object.assign(root.children[0], { selection: [] }),
   showUI() {},
   ui: { postMessage: (m) => { if (m.type === 'log') logs.push(m.text); if (m.type === 'shots-done') { const sh = m.manifest.shots, n = (d) => sh.filter(x => x.device === d).length; console.log('ส่งภาพจอ: desktop ' + n('desktop') + ' · mobile ' + n('mobile') + ' · ไฟล์ mobile ลงท้าย -mobile ' + sh.filter(x => x.device === 'mobile').every(x => /-mobile\.png$/.test(x.file))); } }, set onmessage(f) { uiHandler = f; } },   // shots-done (5 พ.ย. 2569) = ตรวจว่าส่ง mobile ด้วย   // ข้อความชนิดอื่น (รายการ scenario ให้หน้าต่างติ๊ก) ไม่ใช่ log
-  async loadAllPagesAsync() {},
+  async loadAllPagesAsync() { LOAD_ALL.n++; },   // นับครั้งที่โหลดทุกหน้า (10 พ.ย. 2569 ข้อ ก. — นำเข้าด้วย key ก่อน ไม่ต้องโหลดทุกหน้า)
+  async getNodeByIdAsync(id) { return root.findOne ? root.findOne(n => n.id === id) : root.findAll(n => n.id === id)[0] || null; },
   async loadFontAsync() {},
   async setCurrentPageAsync(p) { figma.currentPage = p; },
   createFrame() { const f = new Node({ type: 'FRAME', name: 'Frame' }); return f; },
@@ -271,7 +277,10 @@ if (process.env.EXISTING) {
   const pg = new Node({ type: 'PAGE', name: process.env.EXISTING_PAGE || '🔧 Maintainance ' }, root); root.children.push(pg);   // EXISTING_PAGE= ชื่อหน้าของปลั๊กอินอื่น (ประเมินผู้รับจ้าง 22 ต.ค. 2569)
   const old = new Node({ type: 'FRAME', name: 'ของเดิมที่แก้มือ', w: +process.env.EXISTING_W || 1440, h: +process.env.EXISTING_H || 900 }, pg); old.y = +process.env.EXISTING_Y || 120; pg.children.push(old);   // EXISTING_Y= ของเดิมเกินขอบพื้นที่วางงาน (2 พ.ย. 2569) · EXISTING_W= ของเดิมกว้างเต็มขอบ ⇒ ไม่มีคอลัมน์ทางขวา ต้องไปหน้า -2 (4 พ.ย. 2569)
   global.__existing = { page: pg, node: old, x: old.x, y: old.y };
-  if (process.env.EXISTING_CURRENT) figma.currentPage = Object.assign(pg, { selection: [] });   // ปลั๊กอิน login (30 ต.ค. 2569): วางบนหน้าที่เปิดอยู่ ⇒ หน้าเดิมต้องเป็นหน้าปัจจุบัน
+  if (process.env.EXISTING_CURRENT) figma.currentPage = Object.assign(pg, { selection: [] });
+  /* FAKE_CUT=1 (10 พ.ย. 2569): ใส่จอเก่าของบล็อกที่ตัดออก (M = S14 · O = S16) + จอที่ยังใช้ (L = S13) บนหน้าเดิม ⇒ ทดสอบปุ่มแยกจอที่ตัดออก (MODE=archive-cut) ว่าย้ายเฉพาะบล็อกที่ตัด */
+  if (process.env.FAKE_CUT) [['MT / M.1 · S14 — รายการ', 0], ['MT · M S14 หน่วยงาน ตรวจหลักฐาน', -200], ['MT / O.2 · S16 — ประวัติของแผน', 2000], ['MT / L.1 · S13 — ยังใช้อยู่', 4000]].forEach(([nm, y]) => {
+    const f = new Node({ type: 'FRAME', name: nm, w: 1440, h: 900 }, pg); f.x = 400; f.y = 2000 + y; pg.children.push(f); });   // ปลั๊กอิน login (30 ต.ค. 2569): วางบนหน้าที่เปิดอยู่ ⇒ หน้าเดิมต้องเป็นหน้าปัจจุบัน
 }
 const MODE_CHECK = process.env.MODE === 'check';
 (async () => {
@@ -313,6 +322,20 @@ const MODE_CHECK = process.env.MODE === 'check';
     if (n(btn[3]) !== 1) logs.push('⚠ ลิงก์ที่ปลั๊กอินไม่ได้ผูกถูกลบไปด้วย');
     if (pg.flowStartingPoints.length !== 1 || pg.flowStartingPoints[0].nodeId !== 'อื่น') logs.push('⚠ flow starting point ลบไม่ตรง');
     console.log('ลบลิงก์กดต่อจอ: ตรวจ 4 ชิ้น + flow starting point ครบ');
+  }
+  if (process.env.MODE === 'archive-cut' && process.env.FAKE_CUT) {   // ปุ่มแยกจอที่ตัดออก (10 พ.ย. 2569): ย้ายเฉพาะบล็อกที่ตัดเข้ากรอบ "ตัดออกแล้ว" · จอที่ยังใช้อยู่คงที่เดิม · ไม่ลบ · ชื่อขึ้นต้น "ตัดออก · "
+    const pg = global.__existing.page, box = pg.children.find(n => n.name === 'ตัดออกแล้ว'), errs = [];
+    if (!box) errs.push('ไม่มีกรอบ ตัดออกแล้ว');
+    if (box && box.type === 'SECTION') errs.push('กรอบเป็น section (R19 ห้าม)');
+    if (pg.children.some(n => /^MT \/ [MO]\.|^MT · M /.test(n.name))) errs.push('ยังมีจอของบล็อกที่ตัดอยู่นอกกรอบ');
+    if (!pg.children.some(n => n.name === 'MT / L.1 · S13 — ยังใช้อยู่')) errs.push('จอที่ยังใช้ (S13) ถูกย้ายหรือหาย');
+    const moved = box ? box.children.filter(n => n.name.indexOf('ตัดออก · MT') === 0).length : 0;
+    if (moved !== 3) errs.push('ย้ายเข้ากรอบ ' + moved + ' ชิ้น ต้องเป็น 3');
+    if (box && box.children.filter(n => /^ตัดออก · S1[46] \(บล็อก/.test(n.name)).length !== 2) errs.push('ไม่มีแถบบอกบล็อกที่ตัดครบ 2 แถบ');
+    errs.forEach(e => console.log('⚠ ' + e));
+    console.log('แยกจอที่ตัดออก: ย้าย ' + moved + ' ชิ้น · แถบ 2 · S13 อยู่ที่เดิม' + (errs.length ? '' : ' ✓'));
+    console.log('\n— ผลทดสอบ — แยกจอที่ตัดออก · คำเตือน ' + errs.length);
+    process.exit(errs.length ? 1 : 0);
   }
   if (process.env.MODE === 'patch') {   // สร้างแบบเก่า (CODE=ไฟล์เก่า) แล้วแก้เฉพาะส่วนด้วยโค้ดปัจจุบัน · PATCH=ชื่อข้อความ (ค่าเริ่ม patch-dividers)
     figma.currentPage.selection = [];
@@ -412,6 +435,7 @@ const MODE_CHECK = process.env.MODE === 'check';
   rc.fails.slice(0, 40).forEach(f => { logs.push('⚠ กติกา ' + f); console.log('⚠ กติกา ' + f); }); if (rc.fails.length > 40) logs.push('⚠ กติกา … อีก ' + (rc.fails.length - 40) + ' จุด');
   console.log(rc.fails.length ? 'ผิดกติกา component ' + rc.fails.length + ' จุด' : 'ตรงกติกา component-rules.json ✓');
   rc.pending.forEach(p => console.log('  รอเคาะ: ' + p));
+  if (!process.env.MODE && !process.env.CHECK_ONLY && process.env.PREFIX === 'MT') rc.unmatched.forEach(u => { logs.push('⚠ กติกาไม่ตรงจอไหนเลย (ชื่อจอเปลี่ยน? scenario ตัดแล้วให้ใส่ retired): ' + u); console.log('⚠ กติกาไม่ตรงจอไหนเลย: ' + u); });   // เฉพาะโหมดสร้างครบทุกจอของปลั๊กอินบำรุงรักษา (10 พ.ย. 2569 · Overhaul มี R17 ไม่ตรงจอ รอเจ้าของชุดนั้นดู)
   console.log('ตาราง Table ' + nT + ' · Section label ในหน้า Detail ' + nL);
   if (wbs) console.log('ตรวจแถววงเงิน + WBS ' + wbs + ' จอ' + (logs.some(l => /^⚠.*WBS/.test(l)) ? '' : ' ✓'));
   // แผง Layers ของ Figma แสดงลูกตัวสุดท้ายไว้บนสุด ⇒ จอแรกของ userflow ต้องเป็นตัวสุดท้าย
@@ -419,7 +443,7 @@ const MODE_CHECK = process.env.MODE === 'check';
   if (top && !process.env.CHECK_ONLY && top.name.indexOf(process.env.FIRST || 'หน้ารายการแผน') < 0) logs.push('⚠ แผง Layers ไม่ได้เรียงจอแรกไว้บนสุด: ' + top.name);
   // R19 แพทเทิร์นจัดวาง (เจ้าของงานสั่ง 20 ต.ค. 2569): ป้ายรหัส flow "<prefix> · …" ต้องมี · จอ mobile อยู่ใต้จอ desktop คอลัมน์เดียวกัน (x เท่ากัน · y มากกว่า)
   const labels = page.children.filter(n => n.name.indexOf((process.env.PREFIX || 'OH2') + ' · ') === 0);
-  if (!labels.length && process.env.R19 !== '0') logs.push('⚠ R19 ไม่มีป้ายรหัส flow (แถบตัวอักษร/ย่อย/state · Device/Desktop/Mobile)');   // R19=0 = หน้าเก่าก่อนมีป้าย (19 ต.ค.)
+  if (!labels.length && screens.length && process.env.R19 !== '0') logs.push('⚠ R19 ไม่มีป้ายรหัส flow (แถบตัวอักษร/ย่อย/state · Device/Desktop/Mobile)');   // R19=0 = หน้าเก่าก่อนมีป้าย (19 ต.ค.) · หน้าที่ไม่มีจอ (MODE=build-docs เฉพาะ swimlane/storymap/usecase/scenarios) ไม่ต้องมีป้าย (11 พ.ย. 2569)
   /* R19 ฉบับ 10 พ.ย. 2569 (component กลางของหน้า Design Annotations · UI Release#2): ปลั๊กอินที่มี blockHeader + ไฟล์มี Header ⇒ แถบหัวบล็อก = Header Type=Header · ป้าย state = Header Type=Subheader (State=Default)
      ห้ามถอยไปแถบวาดเองเงียบๆ เมื่อ component มีอยู่ */
   if (code.includes('async function blockHeader') && SETS.has('Header') && process.env.R19 !== '0') {
@@ -622,6 +646,19 @@ const MODE_CHECK = process.env.MODE === 'check';
   logs.slice(printed).filter(l => /^⚠/.test(l)).forEach(l => console.log(l));
   const bad = logs.filter(l => /^⚠|^✗/.test(l));
   const want = (code0.match(/^  \[\'(?:หน้ารายการแผน|S\d+)/gm) || []).length;   // จำนวน section ที่ประกาศ
+  console.log('โหลดทุกหน้า (loadAllPagesAsync) ' + LOAD_ALL.n + ' ครั้ง');
+  if (process.env.NODE_STATS) {   // NODE_STATS=1 นับชั้นต่อจอ (10 พ.ย. 2569 เจ้าของงานกังวลแรมของ Figma — แรมโตตามจำนวนชั้นในไฟล์)
+    let tot = 0, hid = 0; const byComp = new Map(), perScr = [];
+    const shownN = (n) => { for (let p = n; p; p = p.parent) if (p.visible === false) return false; return true; };
+    for (const sc of screens) { const all = sc.findAll(() => true); tot += all.length; const h = all.filter(n => !shownN(n)).length; hid += h; perScr.push([all.length, h, sc.name]);
+      for (const n of sc.findAll(n => n.type === 'INSTANCE' && !(n.parent && n.parent.type === 'INSTANCE'))) { const k = n.name; const c = n.findAll(() => true).length + 1; const v = byComp.get(k) || [0, 0]; byComp.set(k, [v[0] + c, v[1] + 1]); } }
+    const other = page.children.filter(n => screens.indexOf(n) < 0).reduce((a, n) => a + 1 + (n.findAll ? n.findAll(() => true).length : 0), 0);
+    console.log('NODE_STATS จอ ' + screens.length + ' · ชั้นในจอรวม ' + tot + ' (ซ่อน ' + hid + ' = ' + Math.round(hid * 100 / tot) + '%) · เฉลี่ย ' + Math.round(tot / screens.length) + ' ชั้น/จอ · ชิ้นนอกจอ (ป้าย ผัง) ' + other);
+    const grp = (re) => perScr.filter(x => re.test(x[2])).reduce((a, x) => a + x[0], 0);
+    console.log('  desktop ' + grp(/^(?!.*· mobile$)/) + ' · mobile ' + grp(/· mobile$/) + ' · หน้าตาไฟล์ (PDF/Excel) ที่ซ้ำในแถว mobile ' + grp(/ไฟล์ (PDF|Excel).*· mobile$/));
+    perScr.sort((x, y) => y[0] - x[0]).slice(0, 5).forEach(x => console.log('  จอหนัก ' + x[0] + ' ชั้น (ซ่อน ' + x[1] + ') ' + x[2].slice(0, 90)));
+    [...byComp].sort((x, y) => y[1][0] - x[1][0]).slice(0, 12).forEach(([k, v]) => console.log('  component ' + k + ' · ' + v[1] + ' ชิ้น · ' + v[0] + ' ชั้น (' + Math.round(v[0] * 100 / tot) + '%)'));
+  }
   console.log('\n— ผลทดสอบ — แถว ' + sections.length + ' · หน้าจอ ' + screens.length + ' · คำเตือน ' + bad.length);
   process.exitCode = MODE_CHECK || (screens.length > 0 && !bad.length) ? 0 : 1;
 })().catch(e => { console.error(e); process.exit(1); });
