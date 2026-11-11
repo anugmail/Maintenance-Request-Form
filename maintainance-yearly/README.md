@@ -9,7 +9,8 @@ Prototype แบบ **static HTML คลิกเล่นได้จริง*
 
 | ที่ | ลิงก์ |
 |---|---|
-| **🌐 ต้นแบบเว็บบำรุงรักษา (live)** | **https://anugmail.github.io/maintenance-utility-vehicle/** — ลิงก์เดียวที่ใช้ · GitHub Pages ของรีโปนี้ (`…/Maintenance-Request-Form/…`) เลิกใช้และปิดแล้ว 10 พ.ย. 2569 |
+| **🌐 GitHub Pages (live)** | **https://anugmail.github.io/Maintenance-Request-Form/maintainance-yearly/** — Flow · `.../maintainance-yearly/admin.html` — Master Data |
+| **🏠 หน้า Landing รวม** | https://anugmail.github.io/Maintenance-Request-Form/ (มี card "บำรุงรักษาตามวาระ") |
 | **📦 Repo** | https://github.com/anugmail/Maintenance-Request-Form |
 | **💻 Local** | `http://127.0.0.1:8124/maintainance-yearly/index.html` (ดู "วิธีรัน") |
 

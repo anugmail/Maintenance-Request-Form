@@ -25,6 +25,7 @@ Mock v0.3 มี 2 บทบาทในไฟล์เดียว สลับ
 
 > ℹ️ **repo นี้คือบ้านหลักของ design system** (ตัดสินใจ 17 ก.ค. 2569) — แก้ tokens/components ที่นี่ที่เดียว ทุกหน้าในระบบอ้างจากที่นี่
 
-## 🌐 เปิดดูออนไลน์
+## 🌐 เปิดดูออนไลน์ (GitHub Pages)
 
-> เลิกใช้ 10 พ.ย. 2569 (เจ้าของงาน "ลิงก์นี้เลิกใช้แล้ว ยกเลิกไปเลย เหลือเรื่องบำรุงรักษาเรื่องเดียวลิงก์เดียว") — ปิด GitHub Pages ของรีโปนี้และลบ workflow deploy แล้ว · ลิงก์เดียวที่ใช้: ต้นแบบเว็บบำรุงรักษา https://anugmail.github.io/maintenance-utility-vehicle/ (รีโป maintenance-utility-vehicle) · หน้าในรีโปนี้เปิดดูที่เครื่องด้วย `python3 -m http.server 8123 --bind 127.0.0.1`
+- ต้นแบบ: https://anugmail.github.io/Maintenance-Request-Form/mock/Maintenance-Request-Form.html
+- Style guide: https://anugmail.github.io/Maintenance-Request-Form/design-system/index.html

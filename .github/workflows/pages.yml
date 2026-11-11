@@ -1,0 +1,75 @@
+# Deploy หน้า static ขึ้น GitHub Pages ด้วย Actions
+# ย้ายมาจาก legacy branch build (7 ส.ค. 2569) เพราะ legacy พังติดกัน 4 ครั้ง
+# โดยไม่บอกสาเหตุ — Actions มี log เต็มทุกขั้น
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:      # กดรันเองได้จากหน้า Actions ไม่ต้อง push commit เปล่า
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# ถ้ามี deploy ค้างอยู่ ให้ตัวใหม่รอ ไม่ยกเลิกตัวที่กำลังรัน
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ตรวจว่าไฟล์หลักครบ
+        run: |
+          for f in index.html mock/Maintenance-Request-Form.html design-system/components.css; do
+            test -f "$f" || { echo "::error::ไม่พบไฟล์ $f"; exit 1; }
+          done
+          echo "ไฟล์ทั้งหมดที่จะ deploy: $(find . -type f -not -path './.git/*' | wc -l) ไฟล์"
+
+      # ต้นแบบ Next.js "จัดการงาน Overhaul" 14 scenario (19 ต.ค. 2569) — build เป็น static แล้ววางที่ /overhaul-v2-app/
+      # build พังไม่ให้ทั้ง deploy ล้ม (หน้า mock อื่นของทีมยังขึ้นตามปกติ) แต่ขึ้นคำเตือนใน log
+      - uses: actions/setup-node@v4
+        if: hashFiles('overhaul-next/package-lock.json') != ''
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: overhaul-next/package-lock.json
+
+      - name: build ต้นแบบ Next.js → overhaul-v2-app/
+        if: hashFiles('overhaul-next/package-lock.json') != ''
+        continue-on-error: true
+        run: |
+          set -e
+          cd overhaul-next
+          npm ci
+          NEXT_PUBLIC_BASE_PATH=/${{ github.event.repository.name }}/overhaul-v2-app npm run build || { echo "::warning::build overhaul-next ไม่ผ่าน — ข้ามการ deploy ต้นแบบ Next.js รอบนี้"; exit 1; }
+          cd ..
+          rm -rf overhaul-v2-app && cp -r overhaul-next/out overhaul-v2-app
+
+      - name: ไม่อัปโหลดของ build ของ Next.js
+        if: always()
+        run: rm -rf overhaul-next/node_modules overhaul-next/.next overhaul-next/out
+
+      # PDF ใหญ่ที่ไม่มีหน้าไหนลิงก์ — ไม่อัปโหลดขึ้น Pages (ไฟล์ยังอยู่ในรีโป) · 10 พ.ย. 2569 deploy ค้าง syncing_files เกิน 10 นาทีติดกัน 3 รอบ (artifact 63 MB · UI.pdf อย่างเดียว 57 MB)
+      - name: ไม่อัปโหลด PDF ใหญ่ที่ไม่มีหน้าไหนลิงก์
+        run: rm -f "UI.pdf" "TOR_PEA_FINAL.pdf"
+
+      - uses: actions/configure-pages@v5
+
+      # อัปโหลดทั้ง repo ตามที่เป็น — ไม่ผ่าน Jekyll จึงไม่มีขั้นแปลงไฟล์
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          timeout: 1800000   # 30 นาที (ค่าตั้งต้น 10 นาที) — Pages sync ช้าเป็นช่วงๆ 10 พ.ย. 2569
