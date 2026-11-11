@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 let next = 0;
+let sourceCardAvailable = true;
 class Node {
   constructor(type = 'FRAME', name = '') {
     Object.assign(this, { id: 'test-' + ++next, type, name, children: [], width: 1440, height: 1024, x: 0, y: 0, visible: true, componentProperties: {} });
@@ -40,6 +41,7 @@ const figma = {
   createFrame() { const n = new Node(); page.appendChild(n); return n; },
   createText() { const n = new Node('TEXT'); n.characters = ''; page.appendChild(n); return n; },
   createEllipse() { const n = new Node('ELLIPSE'); page.appendChild(n); return n; },
+  async getNodeByIdAsync(id) { return sourceCardAvailable && id === '2623:88498' ? { type:'FRAME', findAllWithCriteria(){return [];}, clone(){return new Node('INSTANCE','Original vehicle card');} } : null; },
   async loadFontAsync() {}, async listAvailableFontsAsync() { return []; },
   variables: { async getLocalVariableCollectionsAsync() { return []; } },
 };
@@ -54,6 +56,24 @@ context.makeComponent = name => ({ type: 'COMPONENT', name, id: name, createInst
   page.appendChild(n); return n;
 } });
 run(fs.readFileSync(path.join(__dirname, 'overhaul2-plugin/code.js'), 'utf8'));
+run(`
+ globalThis.moneyCellFailures=[];
+ const renderTable=tbl;
+ tbl=async function(columns,rows,options){
+   const cols=typeof columns==='function'?columns():columns;
+   for(const row of rows)cols.forEach((col,i)=>{
+     if(!/บาท|^ราคา/.test(col[0]))return;
+     const cell=row[i];
+     for(const value of (cell&&typeof cell==='object'?[cell.text,cell.sub]:[cell])){
+       if(typeof value!=='string'&&typeof value!=='number')continue;
+       const raw=String(value).replace(/ บาท$/,'');
+       if(/^-?[0-9,]+(?:[.][0-9]+)?$/.test(raw)&&raw!==currency(raw))moneyCellFailures.push({header:col[0],value});
+     }
+   });
+   return renderTable(columns,rows,options);
+ };
+`);
+
 run(`for (const name of NEEDED) INDEX.set(name, makeComponent(name));`);
 // Reported Figma failure: Tertiary button has Default/md, not Default/lg.
 // Keep the real main()/btn() resolver so invalid variants abort the callback.
@@ -82,6 +102,7 @@ run(`INDEX.set('List with checkbox', listComponent);`);
   const inventory = run(`SCENARIOS.map((s,si)=>s[1].map((state,i)=>({si,i,code:stateCode(GROUPS[si].subs[0],i),label:state[0]}))).flat()`);
   // Both supported resolver outcomes: local Maintain-D composites present or absent.
   for (const localAvailable of [true, false]) {
+    sourceCardAvailable = localAvailable;
     if (!localAvailable) run('for (const name of LOCAL_OPTIONAL) INDEX.delete(name)');
     for (const info of inventory) {
       try {
@@ -93,6 +114,10 @@ run(`INDEX.set('List with checkbox', listComponent);`);
           assert.equal(screen.findAll(n => n.name.startsWith('Executive chart · ')).length, 4);
           assert.ok(screen.findAll(n => n.type === 'ELLIPSE').length > 4);
           assert.equal(screen.findAll(n => n.name === 'Metric item').length, 0);
+          const labels=screen.findAll(n=>n.type==='TEXT').map(n=>n.characters);
+          assert.ok(!labels.some(t=>/ส่วนต่าง|ราคาซื้อเดิม|ซื้อใหม่ทดแทน/.test(t)), 'A.5 must not display removed prices or differences');
+          assert.ok(labels.includes(run("dashboardMoney(dashboardSummary(dashboardVehicles()).reference)+' บาท'")));
+          assert.ok(labels.includes(run("dashboardMoney(dashboardSummary(dashboardVehicles()).overhaul)+' บาท'")));
         }
         for (const modal of screen.children.filter(n => ['Modal', 'Modal Signature'].includes(n.name))) {
           for (const shade of modal.findAll(n => n.name === 'Background overlay')) {
@@ -101,7 +126,9 @@ run(`INDEX.set('List with checkbox', listComponent);`);
           }
         }
       } catch (error) {
-        if (!localAvailable && /^I\.[1-5]$/.test(info.code) && /ต้องใช้ ReceiptChecklist และ HandoverSignature/.test(error.message)) {
+        if (!localAvailable && (/^(I\.[1-7]|S\.5)$/.test(info.code)) && /ต้องใช้ ReceiptChecklist และ HandoverSignature/.test(error.message)) {
+          expectedMissing.push(info.code);
+        } else if (!localAvailable && /^P\.[12]$/.test(info.code) && /ต้องใช้การ์ดยานพาหนะต้นฉบับ/.test(error.message)) {
           expectedMissing.push(info.code);
         } else failed.push({ code: info.code, label: info.label, localAvailable, error: error.message });
       }
@@ -116,6 +143,8 @@ run(`INDEX.set('List with checkbox', listComponent);`);
   } catch (error) { failed.push({code:'flow header',label:'incompatible Header variant',error:error.message}); }
   for (const f of failed) console.error(`${f.code}: ${f.label} -> ${f.error}`);
   assert.equal(failed.length, 0, `${failed.length}/${inventory.length} real screen callbacks crashed`);
-  assert.equal(expectedMissing.length, 5, 'missing receipt components must explicitly block the five I screens');
-  console.log(`PASS: ${inventory.length}/${inventory.length} desktop callbacks with components present; absent receipt components explicitly block I.1–I.5 (not library/layout validation)`);
+  assert.equal(run('moneyCellFailures.length'),0,JSON.stringify(run('moneyCellFailures')));
+  // 11 พ.ย. 2569 เจ้าของงาน "อยากให้มีหน้าจอออกมาทุก scene": ไม่มี ReceiptChecklist/การ์ดต้นฉบับ ⇒ ใช้แบบสำรอง ไม่บล็อกจอ
+  assert.equal(expectedMissing.length, 0, 'every scene must render even without local Maintain-D components (fallback, not block)');
+  console.log(`PASS: ${inventory.length}/${inventory.length} desktop callbacks render; absent receipt components/vehicle card fall back instead of blocking (not library/layout validation)`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

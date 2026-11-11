@@ -5,8 +5,8 @@
  * Fixture data is illustrative, never presented as a live integration.
  */
 const SP_VENDORS = [
-  {id:'VND-001',name:'ศูนย์บริการตัวอย่าง สงขลา',type:'รถกระเช้า',brand:'HINO',address:'สงขลา',phone:'074-000-001',email:'service@example.com',lat:'7.0084',lng:'100.4747',ratings:[4,5],po:'PO-700201'},
-  {id:'VND-002',name:'อู่ตัวอย่าง นครปฐม',type:'รถเครน',brand:'ISUZU',address:'นครปฐม',phone:'034-000-002',email:'garage@example.com',lat:'13.8199',lng:'100.0622',ratings:[],po:'—'},
+  {id:'VND-001',name:'ศูนย์บริการตัวอย่าง สงขลา',type:'รถกระเช้า',types:['รถกระเช้า','รถเครน 10 ตัน','รถเจาะหลุมปักเสา'],brand:'HINO',address:'สงขลา',phone:'074-000-001',email:'service@example.com',lat:'7.0084',lng:'100.4747',ratings:[4,5],po:'PO-700201'},
+  {id:'VND-002',name:'อู่ตัวอย่าง นครปฐม',type:'รถเครน',types:['รถเครน 5 ตัน','รถเครน 10 ตัน'],brand:'ISUZU',address:'นครปฐม',phone:'034-000-002',email:'garage@example.com',lat:'13.8199',lng:'100.0622',ratings:[],po:'—'},
 ];
 const SP_PLAN = {id:'MA-700001',name:'บำรุงรักษารถกระเช้า ประจำปี 2570',org:'กฟฟ.สงขลา',plate:'72-6648 สงขลา',cycle:'ตามรอบบำรุงรักษาที่กำหนด',from:'16/11/2569',to:'27/11/2569'};
 const spScore = values => values.length ? (values.reduce((a,b)=>a+b,0)/values.length).toFixed(1) + ' / 5 (' + values.length + ' ครั้ง)' : 'ยังไม่มีคะแนน';
@@ -86,26 +86,30 @@ async function spVendorList(mode) {
   if(mode==='error') overlay(scr,alertBox('Error','โหลดรายการอู่ไม่สำเร็จ','ลองใหม่อีกครั้ง'),112,230);
   return scr;
 }
+const SP_VEHICLE_TYPES=[...new Set(PLAN_VEHICLES.map(c=>c[3]))];
 async function spVendorForm(mode) {
-  const filled = ['filled','edit'].includes(mode), error = mode==='validation';
+  const filled = ['filled','edit','types'].includes(mode), error = mode==='validation';
   const v = filled ? SP_VENDORS[0] : {};
   const required = label=>({error:error?'กรุณาระบุ'+label:''});
-  return spPage(mode==='edit'?'แก้ไขข้อมูลอู่/ศูนย์บริการ':'เพิ่มอู่/ศูนย์บริการ',{back:true},[
+  const scr = await spPage(mode==='edit'?'แก้ไขข้อมูลอู่/ศูนย์บริการ':'เพิ่มอู่/ศูนย์บริการ',{back:true},[
     col('Section',[await section('ข้อมูลอู่/ศูนย์บริการ'),
       field('ชื่ออู่/ศูนย์บริการ',v.name,required('ชื่ออู่/ศูนย์บริการ')),
-      row('Row',[field('ประเภทที่รองรับ',v.type,{optional:true}),field('ยี่ห้อที่รองรับ',v.brand,{optional:true})]),
+      // R97: ประเภทที่รองรับ = เลือกหลายค่าจากประเภทรถในระบบ (SP_VEHICLE_TYPES จาก PLAN_VEHICLES)
+      row('Row',[multiDropdown('ประเภทที่รองรับ',v.types||[],{optional:true,placeholder:'เลือกประเภทที่รองรับ',state:mode==='types'?'Focused':undefined}),field('ยี่ห้อที่รองรับ',v.brand,{optional:true})]),
       area('ที่อยู่',v.address,{optional:true}),
       row('Row',[field('เบอร์โทร',v.phone,{optional:true}),field('อีเมล',v.email,{optional:true})])],16),
     col('Section',[await section('พิกัด'),row('Row',[field('ละติจูด',v.lat,{optional:true}),field('ลองจิจูด',v.lng,{optional:true})])],16),
     col('Section',[await section('เอกสารอ้างอิง'),await upload('เอกสารที่เกี่ยวข้อง',[],{optional:true})],16),
     btnRow([['Secondary button','ยกเลิก'],['Primary button','บันทึก']]),
   ]);
+  if(mode==='types'){const dd=scr.findAll(n=>n.type==='INSTANCE'&&n.name==='Input dropdown with badges')[0];comboAt(scr,dd&&(find(dd,'Container')||dd),SP_VEHICLE_TYPES.map(t=>[t,'',(v.types||[]).includes(t)]));}
+  return scr;
 }
 async function spVendorDetail(noRating) {
   const v = SP_VENDORS[noRating?1:0];
   return spPage('รายละเอียดอู่/ศูนย์บริการ',{back:true},[
     col('Section',[await sectionLabel('ข้อมูลอู่/ศูนย์บริการ',{buttons:[{kind:'Primary button',text:'แก้ไข'}]}),
-      kv([['ชื่ออู่',v.name],['ประเภทที่รองรับ',v.type],['ยี่ห้อที่รองรับ',v.brand],['ที่อยู่',v.address],['เบอร์โทร',v.phone],['อีเมล',v.email]])],16),
+      kv([['ชื่ออู่',v.name],['ประเภทที่รองรับ',(v.types||[v.type]).join(', ')],['ยี่ห้อที่รองรับ',v.brand],['ที่อยู่',v.address],['เบอร์โทร',v.phone],['อีเมล',v.email]])],16),
     col('Section',[await sectionLabel('พิกัดและการนำทาง'),kv([['ละติจูด',v.lat],['ลองจิจูด',v.lng]]),btnRow([['Secondary button','นำทางด้วย Google Maps']])],16),
     col('Section',[await sectionLabel('คะแนนคุณภาพงานซ่อม'),kv([['คะแนนเฉลี่ย',spScore(v.ratings)]])],16),
     col('Section',[await sectionLabel('เอกสารและ Purchase Order ที่เกี่ยวข้อง'),
@@ -329,7 +333,7 @@ async function spResponseDetail(index,mode) {
 }
 const SP_SCENARIOS = [
   ['อู่และศูนย์บริการ · UC-6/18',[
-    ['รายการอู่',()=>spVendorList()],['เพิ่มอู่ — ว่าง',()=>spVendorForm()],['เพิ่มอู่ — กรอกครบ',()=>spVendorForm('filled')],
+    ['รายการอู่',()=>spVendorList()],['เพิ่มอู่ — ว่าง',()=>spVendorForm()],['เพิ่มอู่ — กรอกครบ',()=>spVendorForm('filled')],['เลือกประเภทที่รองรับ (หลายค่า)',()=>spVendorForm('types')],
     ['Validation',()=>spVendorForm('validation')],['รายละเอียดและคะแนน',()=>spVendorDetail()],['รายละเอียด — ยังไม่มีคะแนน',()=>spVendorDetail(true)],
     ['แก้ไขข้อมูลอู่',()=>spVendorForm('edit')],['บันทึกสำเร็จ',()=>spVendorList('saved')],['ไม่มีข้อมูล',()=>spVendorList('empty')],['ค้นหาไม่พบ',()=>spVendorList('search')],['โหลดไม่สำเร็จ',()=>spVendorList('error')],
   ]],
@@ -385,7 +389,7 @@ const SP_PENDING = [
 const SP_GROUPS = SP_SCENARIOS.map(([title,screens],i)=>{const code=String.fromCharCode(65+i);return {code,title,subs:[{code,title,tag:'SP09',screens}]};});
 // Resolve only shared primitives used by these screens, not ReceiptChecklist,
 // appointment composites, signatures or unrelated Overhaul-only dependencies.
-const SP_COMPONENTS = ['Sidebar navigation','Header navigation','Page header','Section header','Section label','Table','Content item row','Table header',
+const SP_COMPONENTS = ['Sidebar navigation','Header navigation','Page header','Section header','Section label','Table','Content item row','Table header','Badge outline with remove icon','Dropdown list',
   'Table pagination','Text input','Input dropdown','Text area','File upload','Input label','Badge outline with remove icon','Alert','Pill outline',
   'Primary button','Secondary button','Notification','Notification card','Modal','Empty state/Search not found','Empty state/Data empty','Metric item',
   'add-24-300-round','filter_list-24-400-round','more_horiz-20-400-round','quick_reference_all-24-300-round','stylus-24-300-round',

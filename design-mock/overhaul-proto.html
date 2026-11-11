@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>จัดการงาน Overhaul | Maintain-D</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261111-ds76">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  11 พ.ย. 2569 — ต้นแบบ Overhaul ตามหน้าจริง UAT (ไฟล์บันทึกหน้า ~/Downloads/maintain-d-pages: overhaul-utility-vehicle · repair-utility-vehicle/*)
+  โครงหน้า/ช่อง/คอลัมน์/สถานะ/รูปแบบตัวเลขยกจาก UAT · ปรับตามรายการ B.1 E.2 H.1 O.1 P.1 Q A (เจ้าของงาน 11 พ.ย. 2569)
+   B.1/E.2 เลือกรถ = vehPickSection/vehPickerModal จาก figma-export R92 (popupเพิ่มรถ + ตารางเฉพาะที่เลือก) · ราคารายคันใช้ Modal Type=Form
+   H.1 ทาง 1: นัดหมาย (ขั้น 1/5) ข้ามได้ · วันที่รับรถเข้าอู่จริง (ขั้น 2) และวันที่ส่งมอบรถคืนจริง (ขั้น 6) บังคับ · วันส่งมอบ = วันเริ่มรับประกัน
+   O.1 แยกค่าแรง / ค่าอะไหล่ตัวรถ / ค่าอะไหล่เครื่องมือกล / ค่าใช้จ่ายอื่น · ระยะสัญญาย้ายไปหน้าสรุป (P.1)
+   Q คืนอะไหล่ที่เบิกจากคลัง — คอลัมน์และตัวปรับจำนวนแบบ "รายการสภาพวัสดุอะไหล่" ของรายงานปิดงานงานซ่อม UAT
+   A ประเภทรถที่รองรับ = เลือกหลายค่าจากประเภทรถในระบบ (Input dropdown with badges)
+  ต่อจาก Claude ตาม overhaul-v1.pdf: Dashboard ปีงบ/แผน + financial drilldown; ดู overhaul-proto-notes.md.
+  ที่มา component: (Component) VMS Plus — Section header (Line) · Table · Table header · Modal · Text input · Input dropdown with badges ·
+   Badge/Pill outline · Progress steps · Side panel · Empty state · Notification · Pagination
+  แหล่งออกแบบหลัก: figma-export/component-rules.json + plugin-lib/core.js + overhaul2-plugin/code.js.
+  หน้า PO ใช้ vehPickerModal เลือกรถ และแสดงเฉพาะที่เลือกในหน้า; field/label/spacing อ่านจาก out/figma-dump.
+  เปิด: python3 -m http.server 8123 --bind 127.0.0.1 → /design-mock/overhaul-proto.html (?reset=1 = ล้างข้อมูลกลับค่าตั้งต้น)
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side !w-20 !py-3 max-md:!hidden" data-ui-component="Sidebar navigation" aria-label="เมนูหลัก">
+    <div class="flex items-center justify-center w-10 h-10 mb-2"><img src="assets/vms/pea-logo.svg" alt="การไฟฟ้าส่วนภูมิภาค" class="w-8 h-8 object-contain"></div>
+    <a class="nv" href="../index.html" title="รายการแจ้งซ่อม"><span class="ms">assignment</span></a>
+    <a class="nv" href="../mock/Maintenance-Request-Form.html" title="สร้างใบแจ้งซ่อม"><span class="ms">build</span></a>
+    <a class="nv" href="../maintainance-yearly/index.html" title="บำรุงรักษา"><span class="ms">description</span></a>
+    <a class="nv on" href="#/" aria-current="page" title="overhaul"><span class="ms">construction</span></a>
+    <a class="nv" href="#/vendor" title="อู่/ศูนย์บริการ" id="nv-vendor"><span class="ms">garage</span></a>
+  </aside>
+  <div class="work">
+    <header class="topbar !h-16 !min-h-16 !px-4 !py-3" data-ui-component="Header navigation">
+      <a href="#/" class="mr-auto inline-flex items-center" aria-label="VMS Plus"><img src="assets/vms/vms-logo.svg" alt="VMS Plus"></a>
+      <button class="btn btn-t btn-icon" type="button" aria-label="โหมดสี"><span class="ms">light_mode</span></button>
+      <button class="btn btn-t btn-icon relative" type="button" aria-label="การแจ้งเตือน"><span class="ms">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary-600"></span></button>
+      <button class="btn btn-t !h-10" id="oh-profile" type="button" aria-label="เมนูผู้ใช้งาน"><span id="oh-role-label" class="text-sm text-gray-700">กบค.</span><img src="assets/vms/avatar.png" alt="" class="w-8 h-8 rounded-full bg-brand-50 object-cover ml-2"><span class="ms">keyboard_arrow_down</span></button>
+    </header>
+    <main class="content !p-8" id="app"></main>
+  </div>
+</div>
+<div id="modals"></div>
+<script src="assets/vendor/chart.umd-4.4.8.js"></script>
+<script src="overhaul-a5-uat-data.js"></script>
+<script src="overhaul-v2-mock.js?v=20261106-1"></script>
+<script src="overhaul-proto-data.js?v=20261111-picker-r92-1"></script>
+<script src="overhaul-proto-dashboard.js?v=20261111-picker-r92-1"></script>
+<script src="overhaul-proto-pdf.js?v=20261111-picker-r92-1"></script>
+<script src="overhaul-proto-po-select.js?v=20261111-picker-r92-1"></script>
+<script src="overhaul-proto-ui.js?v=20261111-picker-r92-1"></script>
+<script src="overhaul-proto.js?v=20261111-picker-r92-1"></script>
+</body>
+</html>

@@ -27,7 +27,7 @@ context.component=name=>({type:'COMPONENT',name,id:name,createInstance(){const n
 run('for(const name of SP_COMPONENTS) INDEX.set(name,component(name))');
 (async()=>{
   const inventory=run('SP_SCENARIOS.map((g,i)=>g[1].map((s,j)=>({i,j,label:s[0]}))).flat()');
-  assert.equal(inventory.length,80);
+  assert.equal(inventory.length,81);   // R97 +เลือกประเภทที่รองรับ (หลายค่า)
   const failed=[];
   for(const item of inventory){
     try{const scr=await run(`SP_SCENARIOS[${item.i}][1][${item.j}][1]()`);assert.equal(scr.type,'FRAME');context.screen=scr;run('stripDividers(screen); fitOverlays(screen)');}

@@ -34,12 +34,16 @@ run(`
   assert.ok(!messages.some(s => /^✓ A /.test(s)), 'a partial block must never report complete');
   assert.ok(messages.some(s => s && s.includes('A.2') && s.includes('Missing component X')));
   const ui = fs.readFileSync(path.join(__dirname, 'overhaul2-plugin/ui.html'), 'utf8');
-  const elements = new Map();
-  const uiContext = vm.createContext({ document: { getElementById(id) { if (!elements.has(id)) elements.set(id, {textContent:'',innerHTML:''}); return elements.get(id); } } });
+  // Model browser lookup: missing markup must return null, never invent elements.
+  const elements = new Map([...ui.matchAll(/\bid="([^"]+)"/g)].map(([, id]) => [id, {textContent:'',innerHTML:''}]));
+  const uiContext = vm.createContext({ document: { getElementById(id) { return elements.get(id) || null; } } });
   vm.runInContext(ui.match(/<script>([\s\S]*?)<\/script>/)[1], uiContext);
   uiContext.event = {data:{pluginMessage:{type:'scenarios',items:['one','two'],counts:[1,2],totalScreens:3}}};
   vm.runInContext('onmessage(event)', uiContext);
   assert.ok(elements.get('inventory').textContent.includes('3 จอต่ออุปกรณ์'));
+  assert.equal((elements.get('pick').innerHTML.match(/type="checkbox"/g) || []).length, 2, 'scenario message must render every option');
+  assert.ok(elements.get('pick').innerHTML.includes('value="0"'));
+  assert.ok(elements.get('pick').innerHTML.includes('value="1"'));
   uiContext.event = {data:{pluginMessage:{type:'build-report',report:{page:'test',created:2,expected:3,failed:result.failed,incomplete:result.incomplete}}}};
   vm.runInContext('onmessage(event)', uiContext);
   assert.ok(elements.get('build-report').textContent.includes('สร้าง 2/3'));

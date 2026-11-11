@@ -10,31 +10,26 @@ const run = code => vm.runInContext(code, context);
 const plain = value => JSON.parse(JSON.stringify(value));
 
 (async () => {
-  assert.equal(run("partsTotal(Array.from({length:5},()=>['part',5,'ชิ้น','vehicle','PE',2500]))"), 12500);
-  assert.equal(run("partsTotal([['part',5,'ชิ้น','vehicle','PE',0]])"), 0);
-  assert.equal(run("partsTotal([['part',5,'ชิ้น']])"), null);
-  assert.equal(run("partsTotal([['part',1,'ชิ้น','vehicle','PE',-1]])"), null);
-  assert.equal(run("partsTotal([['part',1,'ชิ้น','vehicle','PE',NaN]])"), null);
   const dashboard = plain(run('dashboardSummary(dashboardVehicles())'));
   const model = plain(run("dashboardSummary(dashboardVehicles(), {model:'HINO FM2P'})"));
   assert.equal(dashboard.count, 8);
   assert.equal(model.count, 1);
-  assert.equal(model.replacement, 2700000);
+  assert.equal(model.reference, 1950000);
   assert.equal(model.overhaul, 250000);
-  assert.equal(model.saving, 2450000);
+  assert.ok(!('saving' in model));
   assert.equal(model.progress, 100);
   assert.deepEqual(model.topBrand, {name:'HINO', count:1}, 'brand ranking must reflect table filters');
   const empty = plain(run("dashboardSummary(dashboardVehicles(), {model:'missing'})"));
   assert.equal(empty.count, 0);
-  assert.equal(empty.saving, null);
+  assert.equal(empty.reference, null);
   assert.equal(empty.progress, null);
   assert.equal(empty.topBrand, null);
-  assert.equal(run("dashboardSummary([{brand:'A',replacementEstimate:100,overhaulEstimate:150,progress:0}]).saving"), -50);
-  assert.equal(run("dashboardSummary([{brand:'A',replacementEstimate:100,overhaulEstimate:150,progress:0}]).progress"), 0);
-  const partial = plain(run("dashboardSummary([{brand:'A',replacementEstimate:100,overhaulEstimate:30}, {brand:'B',replacementEstimate:999,overhaulEstimate:null}])"));
+
+  assert.equal(run("dashboardSummary([{brand:'A',referencePrice:100,overhaulEstimate:150,progress:0}]).progress"), 0);
+  const partial = plain(run("dashboardSummary([{brand:'A',referencePrice:100,overhaulEstimate:30}, {brand:'B',referencePrice:999,overhaulEstimate:null}])"));
   assert.equal(partial.pricedCount, 1);
-  assert.equal(partial.replacement, 100, 'compare the same priced cohort, not mismatched sums');
-  assert.equal(partial.saving, 70);
+  assert.equal(partial.reference, 100, 'compare the same priced cohort, not mismatched sums');
+  assert.equal(partial.overhaul, 30);
   assert.equal(run("logProgressCell(['','','','23']).progress"), 23);
   assert.equal(run("logProgressCell(['','','',''])"), '—');
   // Unequal PO sizes must be weighted by individual cars, not PO averages.
@@ -46,10 +41,12 @@ const plain = value => JSON.parse(JSON.stringify(value));
   }
   assert.equal(run("planAvgPct({pos:[{}]})"), null);
   assert.equal(run("planProgressBar({0:'unknown',7:3,8:2})"), '-');
+  assert.equal(run("planRowD(Object.assign(['plan','name','unit','budget','code','2569','100.00',3,2,0,'P2','10/11/2569'], {pos:[{cars:[{progress:23},{progress:23}]}]}))[5].progress"), 23);
+  assert.equal(run("planRowD8(Object.assign(['plan','name','unit','budget','code','2569','100.00',3,2,0,'P2','10/11/2569'], {pos:[{cars:[{progress:23},{progress:23}]}]}))[4].progress"), 23);
   assert.equal(run("poRow(Object.assign(['PO-X','name','vendor',3,2,'01/01/2570','31/12/2570'],{cars:[{progress:23},{progress:23},{progress:23}]}))[4].progress"), 23);
   assert.deepEqual(plain(run('PO_COLS.slice(5,7).map(c=>c[0])')), ['วันเริ่มสัญญา', 'วันสิ้นสุดสัญญา']);
   assert.equal(run('SCENARIOS[0][1].length'), 8);
-  assert.equal(run('SCENARIOS[1][1].length'), 13);
+  assert.equal(run('SCENARIOS[1][1].length'), 24);   // R92 +B.14–B.19
   assert.equal(run('FILLED.cars[0].estPrice'), 2700000);
 
   run(`
@@ -69,7 +66,7 @@ const plain = value => JSON.parse(JSON.stringify(value));
   `);
   await run(`formModal(mockScreen(), {title:'ติดตามผล',fields:LOG_FIELDS(null)})`);
   const fields = run('lastModal.children[0].children.flatMap(r=>r.children.filter(c=>c.visible).map(c=>c.label))');
-  assert.deepEqual(plain(fields).sort(), ['วันที่/เวลา', 'รายละเอียด', 'หมายเหตุ', 'ความคืบหน้า (%)'].sort());
+  assert.deepEqual(plain(fields).sort(), ['รายละเอียด', 'หมายเหตุ', 'ความคืบหน้า (%)'].sort());   // R101: ไม่มีช่องวันที่ — ระบบลงให้
   assert.equal(run('lastModal.height'), 1800);
 
   await run(`globalThis.scr = mockScreen(2300); toast(scr,{title:'สำเร็จ'})`);
@@ -129,11 +126,11 @@ const plain = value => JSON.parse(JSON.stringify(value));
   assert.ok(!filter.children[1].children.some(n => n.name === 'List with checkbox'));
   const budgetChecks = filter.children[1].children.filter(n => n.name === 'Checkbox with description');
   assert.equal(budgetChecks.length, 6);
-  assert.equal(budgetChecks[1].props.Text, 'มากกว่า 1,000,000 - 5,000,000');
+  assert.equal(budgetChecks[1].props.Text, 'มากกว่า 1,000,000.00 - 5,000,000.00');
   assert.ok(budgetChecks.every(n => n.props.Supporting === false));
   assert.ok(budgetChecks.every(n => n.children.find(c => c.name === 'Checkbox').props.Type === 'Unselected'));
   const statusChecks = filter.children[2].children.filter(n => n.name === 'Checkbox with badge');
-  assert.deepEqual(plain(statusChecks.map(n=>n.children.find(c=>c.name==='Pill outline').props.Text)), ['รอเลข PO','รอดำเนินการ','เสร็จสิ้น']);
+  assert.deepEqual(plain(statusChecks.map(n=>n.children.find(c=>c.name==='Pill outline').props.Text)), ['รอเลข Purchase Order','กำลังดำเนินการ Purchase Order','เสร็จสิ้น']);
   assert.ok(statusChecks.every(n=>n.children.find(c=>c.name==='Checkbox').props.Type==='Unselected'));
-  console.log('PASS: weighted progress, exact percentages, PO dates, scenario states, four-field modal, full-height overlays, top-right toast, completion gate');
+  console.log('PASS: weighted progress, exact percentages, PO dates, scenario states, three-field progress modal (no manual date), full-height overlays, top-right toast, completion gate');
 })().catch(error => { console.error(error); process.exitCode = 1; });

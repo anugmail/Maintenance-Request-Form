@@ -35,7 +35,10 @@ vm.runInContext(code, context);
   assert.ok(!imports.includes('977a92f38614b4e85dc43cfa15609c8856217b53'));
   assert.ok(imports.includes('dfc323f6bb605f586c4928ecb08c77acfb241f53'), 'use the checkbox key verified in the current dump');
   assert.ok(vm.runInContext("INDEX.has('List with checkbox')", context));
-  // Real missing dependencies must still stop with their exact name.
-  await assert.rejects(vm.runInContext("resolveAll(['Deliberately missing component'])", context), /Deliberately missing component/);
-  console.log('PASS: verified checkbox key used, stale key excluded; actual missing component is named');
+  // 11 พ.ย. 2569: ขาด component = ไม่หยุดทั้งชุด (เจ้าของงาน "อยากให้มีหน้าจอออกมาทุก scene") แต่ต้องบอกชื่อตัวที่ขาดใน log เสมอ
+  logs.length = 0;
+  await vm.runInContext("resolveAll(['Deliberately missing component'])", context);
+  assert.ok(logs.some(t => /✗ Deliberately missing component/.test(t || '')), 'missing component must be named in the log');
+  assert.ok(!vm.runInContext("INDEX.has('Deliberately missing component')", context));
+  console.log('PASS: verified checkbox key used, stale key excluded; missing component named in log without aborting the build');
 })().catch(error => { console.error(error); process.exitCode = 1; });

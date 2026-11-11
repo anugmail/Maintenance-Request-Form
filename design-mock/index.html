@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
 <link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
-<link rel="stylesheet" href="../design-system/components.css?v=20261019-ds72">
+<link rel="stylesheet" href="../design-system/components.css?v=20261111-ds76">
 <!-- ไม่มี <style> ในหน้าโดยตั้งใจ — ใช้คอมโพเนนต์จาก design system เท่านั้น:
      .content · .card/.sect/.sub · .stack · .gallery/.gcard/.gframe/.gcard-body
      .badge/.b-ok/.b-low/.b-brand · .btn · .page-title -->
@@ -20,6 +20,57 @@
     <h1 class="page-title">แกลเลอรีแบบหน้าจอ — Maintain-D</h1>
 
     <div class="stack loose">
+
+      <!-- 11 พ.ย. 2569 — ทางเข้าข้อเสนอเลือกรถเข้าแผน Overhaul (เจ้าของงาน: "หาทางเข้าไม่เจอ" ⇒ วางบนสุด) -->
+      <div class="card">
+        <div class="stack">
+          <div class="sect">ข้อเสนอ — เลือกรถเข้าแผน Overhaul (11 พ.ย. 2569)</div>
+          <div class="sub">แยก "เลือกรถ" (ติ๊กชั่วคราว ยังไม่ลง DB) ออกจาก "ตารางรถในแผน + ราคากลาง/ราคาประเมินรายคัน" · เลือกรถเป็น section ที่ 2 ·
+            2 แบบให้เลือก · อ้างอิง SAP Fiori · PatternFly · Material · Shopify Resource Picker</div>
+          <div class="gallery">
+            <div class="gcard">
+              <div class="gframe"><iframe src="overhaul-proto.html#/" loading="lazy" title="ต้นแบบ Overhaul ตามหน้าจริง" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">ต้นแบบ Overhaul ตามหน้าจริง UAT (11 พ.ย.)</span>
+                <span class="badge b-brand">ใช้ตัวนี้ตรวจ</span>
+                <div class="meta">B.1 E.2 เลือกรถ modal · H.1 นัดหมาย/วันจริง · O.1 แยกค่าแรง-ค่าอะไหล่ · P.1 ระยะสัญญา · Q คืนอะไหล่ · A อู่ประเภทรถหลายค่า</div>
+                <a class="btn btn-s btn-sm" href="overhaul-proto.html#/" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="overhaul-v2-02-plan-form-r1.html?id=123456" loading="lazy" title="แบบ 1 Modal + แผงตัวกรองกาง" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">แบบ 1 · Modal + แผงตัวกรองกาง</span>
+                <span class="badge b-low">ต้องขอ component เพิ่ม</span>
+                <div class="meta">กด "เพิ่มรถ" เปิด modal บนฟอร์ม · ปุ่มตัวกรองกางแผงในกล่อง · ไม่ต้องออกจากฟอร์ม</div>
+                <a class="btn btn-s btn-sm" href="overhaul-v2-02-plan-form-r1.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="overhaul-v2-02-plan-form-r2.html?id=123456" loading="lazy" title="แบบ 2 หน้าเต็ม + Side panel" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">แบบ 2 · หน้าเต็ม + Side panel</span>
+                <span class="badge b-ok">component ในไลบรารีครบ</span>
+                <div class="meta">กด "เพิ่มรถ" ไปหน้าเลือกรถ · แท็บ ที่เลือกได้/ที่เลือก/อยู่ในแผนแล้ว · ตัวกรอง Side panel แบบหน้ารายการ</div>
+                <a class="btn btn-s btn-sm" href="overhaul-v2-02-plan-form-r2.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+            <div class="gcard">
+              <div class="gframe"><iframe src="overhaul-vehicle-picker-index.html" loading="lazy" title="หน้ารวมข้อเสนอ" scrolling="no"></iframe></div>
+              <div class="gcard-body">
+                <span class="nm">หน้ารวมข้อเสนอ + อ้างอิง</span>
+                <span class="badge b-neutral">สรุป</span>
+                <div class="meta">เทียบ 2 แบบ · ที่มาในไลบรารี · ลิงก์ฟอร์มเดิมและตัวเปรียบเทียบรอบสำรวจ</div>
+                <a class="btn btn-s btn-sm" href="overhaul-vehicle-picker-index.html" target="_blank" rel="noopener">
+                  <span class="ms">open_in_new</span> เปิดหน้าเต็ม</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="card">
         <div class="stack">

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>A.5 รถที่ Overhaul — Mock</title><link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css"><link rel="stylesheet" href="../design-system/components.css"><script src="https://cdn.tailwindcss.com"></script><script src="../design-system/tailwind-theme.js"></script>
+<!-- Prototype · 11 Nov 2026: one agreed A.5 layout, latest seven columns. In-memory state only.
+Component: VMS Plus / Page header, Tabs, Table, Text input, Secondary button,
+Section label, Side panel, Empty state, Progress bar. UI Release#2: Contract list,
+Filter Side panel, MA Overview; existing mapping overhaul-v2-component-map.md.
+Charts use the owner-approved editable chart exception. Vehicle and plan records
+are a read-only UAT snapshot captured on 11 Nov 2026 (overhaul-a5-uat-data.js).
+Money fields absent from UAT remain null and display an em dash. No credentials, personal contacts or API writes.
+Run: python3 -m http.server 8123 --bind 127.0.0.1
+--></head><body><div class="shell">
+<aside class="side !w-24 !py-4 max-md:!hidden" aria-label="เมนูหลัก"><div class="vlogo">M<em>D</em></div><a class="nv" href="../index.html" title="รายการแจ้งซ่อม"><span class="ms">assignment</span></a><a class="nv" href="../mock/Maintenance-Request-Form.html" title="แจ้งซ่อม"><span class="ms">build</span></a><a class="nv" href="../maintainance-yearly/index.html" title="บำรุงรักษา"><span class="ms">description</span></a><a class="nv on" href="overhaul-a5-prototype.html" aria-current="page" title="Overhaul"><span class="ms">construction</span></a></aside>
+<div class="work"><header class="topbar !min-h-[61px] !px-6"><span class="mr-auto"></span><span class="ms text-gray-500">light_mode</span><span class="ms text-gray-500">notifications</span><span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-900">กบค.</span></header>
+<main class="content !pt-6"><div class="crumbs"><span class="ms">home</span><a href="overhaul-v2-01-plans.html">จัดการงาน Overhaul</a></div>
+<div class="flex items-center justify-between gap-4 mb-6"><h1 class="page-title !m-0">จัดการงาน Overhaul</h1><span class="badge b-neutral">Mock · ข้อมูล UAT 11/11/2569</span></div>
+<div class="tabs" role="tablist" aria-label="จัดการงาน Overhaul"><button id="tab-plans" class="tab-btn" role="tab" aria-selected="false" data-tab="plans" type="button">แผน Overhaul</button><button id="tab-cars" class="tab-btn on" role="tab" aria-selected="true" data-tab="cars" type="button">รถที่ Overhaul</button></div>
+<div class="list-toolbar split !my-6"><div class="lt-search"><div class="search !w-[360px] !max-w-full"><span class="ms">search</span><input id="query" type="search" placeholder="ค้นหาทะเบียน, ยี่ห้อ/รุ่น" aria-label="ค้นหารถที่ Overhaul"></div></div><div class="lt-actions"><button id="open-filter" type="button" class="btn btn-s"><span class="ms">filter_list</span>ตัวกรอง<span id="filter-count" class="hidden badge b-brand"></span></button><a id="create-plan" class="btn btn-p !no-underline hidden" href="overhaul-v2-02-plan-form.html"><span class="ms">add</span>สร้างแผน Overhaul</a></div></div>
+<div id="chips" class="flex flex-wrap gap-2 mb-4"></div>
+<section id="plans-view" class="hidden" role="tabpanel" aria-labelledby="tab-plans"><div class="tblwrap"><table id="plans-table" class="tbl striped !w-full [&_td]:!text-gray-700 [&_td]:!font-normal [&_th]:!text-gray-700 [&_th]:!text-xs [&_th]:!px-3 [&_td]:!px-3"><thead><tr><th><button class="btn btn-t btn-sm !p-0 !h-auto !min-h-0 !font-semibold !text-gray-700 !text-xs" type="button" data-sort-plan="plan_no">หมายเลขแผน <span class="ms text-sm">unfold_more</span></button></th><th><button class="btn btn-t btn-sm !p-0 !h-auto !min-h-0 !font-semibold !text-gray-700 !text-xs" type="button" data-sort-plan="plan_name">ชื่อแผน <span class="ms text-sm">unfold_more</span></button></th><th>ประเภทงบประมาณ</th><th>ปีงบประมาณ</th><th class="num !text-right">งบประมาณ (บาท)</th><th>ความคืบหน้า</th><th>สถานะ</th><th>วันที่สร้าง</th><th aria-label="จัดการ"></th></tr></thead><tbody id="plan-rows"></tbody></table></div><div id="plan-empty" class="filter-empty hidden"><span class="ms">search_off</span><b>ไม่พบแผน Overhaul</b><span>ไม่มีแผนที่ตรงกับคำค้นหาหรือตัวกรอง</span><button type="button" class="btn btn-s mt-3" id="reset-plan-search">ล้างคำค้นและตัวกรอง</button></div><div class="tblfoot"><div class="tf-left"><span id="plan-pagination"></span><select class="select-inline" id="plan-page-size" aria-label="จำนวนแถวต่อหน้า"><option>10</option><option>25</option><option>50</option></select></div><div class="pager" id="plan-pages"></div></div></section>
+<section id="cars-view" role="tabpanel" aria-labelledby="tab-cars">
+<div class="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 mb-6 text-xs text-gray-600"><span class="flex-1">ข้อมูลรถจากแผน <strong>ORZ6900026 · Test PO-001</strong> · 8 คัน จาก 3 Purchase Order</span><span id="price-source-note" class="w-full text-gray-500">ราคากลางและประเมิน Overhaul ที่ยังไม่มีข้อมูลแสดง —</span></div>
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-12 mb-6">
+<section class="card !m-0 !p-6 lg:col-span-7" aria-labelledby="finance-title"><h2 id="finance-title" class="!text-lg">ราคากลางและประเมิน Overhaul</h2><p id="finance-caption" class="text-xs text-gray-500 mt-1"></p><div class="flex items-baseline gap-2 mt-4"><strong id="reference-total" class="text-[30px] leading-tight font-semibold text-brand-900 tabular-nums"></strong><span class="text-sm text-gray-500">บาท</span></div><p class="text-xs text-gray-500 mt-1">ราคากลางรวมของรถตามตัวกรอง</p><div id="finance-bars" class="mt-5 space-y-4"></div></section>
+<section class="card !m-0 !p-6 lg:col-span-5" aria-labelledby="progress-title"><h2 id="progress-title" class="!text-lg">ความคืบหน้างาน</h2><p id="progress-caption" class="text-xs text-gray-500 mt-1"></p><div class="flex flex-col sm:flex-row items-center gap-8 mt-5"><div id="progress-chart" class="shrink-0"></div><div class="space-y-4"><div><strong id="complete-count" class="text-2xl font-semibold text-success-700"></strong><p class="text-xs text-gray-500 mt-1">คันที่ถึง 100%</p></div><div><strong id="unknown-count" class="text-2xl font-semibold text-gray-500"></strong><p class="text-xs text-gray-500 mt-1">คันยังไม่มีข้อมูล</p></div></div></div></section>
+<section class="card !m-0 !p-6 lg:col-span-6" aria-labelledby="type-title"><h2 id="type-title" class="!text-lg">ประเภทรถที่ Overhaul</h2><p id="age-caption" class="text-xs text-gray-500 mt-1"></p><div class="flex flex-col sm:flex-row items-center gap-8 mt-5"><div id="type-chart" class="shrink-0"></div><div id="type-legend" class="flex-1 space-y-3"></div></div></section>
+<section class="card !m-0 !p-6 lg:col-span-6" aria-labelledby="brand-title"><h2 id="brand-title" class="!text-lg">จำนวนรถแยกตามยี่ห้อ</h2><p id="brand-caption" class="text-xs text-gray-500 mt-1"></p><div id="brand-bars" class="space-y-4 mt-6"></div></section>
+</div>
+<section aria-labelledby="table-title"><div class="flex items-center gap-3 mb-4"><h2 id="table-title" class="text-lg font-semibold">รถที่ Overhaul</h2><span id="vehicle-count" class="badge b-neutral"></span><span class="ml-auto text-xs text-gray-500">หน่วยเงิน: บาท</span></div>
+<div id="table-wrap" class="tblwrap"><table class="tbl striped !w-full [&_td]:!text-gray-700 [&_td]:!font-normal [&_th]:!text-gray-700 [&_th]:!text-xs [&_th]:!px-3 [&_td]:!px-3"><thead><tr><th>ทะเบียน</th><th>ข้อมูลรถ</th><th class="num !text-right">ราคากลาง</th><th class="num !text-right">ประเมิน Overhaul (บาท)</th><th class="num !text-right">อายุการใช้งาน</th><th>ความคืบหน้า</th><th aria-label="รายละเอียด"></th></tr></thead><tbody id="vehicle-rows"></tbody></table></div>
+<div id="empty" class="filter-empty hidden"><span class="ms">search_off</span><b>ไม่พบรถตามตัวกรอง</b><span>เปลี่ยนคำค้นหาหรือตัวกรองเพื่อดูข้อมูลรถ</span><button id="empty-reset" class="btn btn-s mt-3" type="button">ล้างคำค้นและตัวกรอง</button></div>
+<div class="tblfoot"><div id="pagination" class="tf-left"></div><div class="pager"><button class="pg" type="button" aria-label="หน้าก่อนหน้า" disabled><span class="ms">chevron_left</span></button><button type="button" class="pg on" aria-current="page">1</button><button class="pg" type="button" aria-label="หน้าถัดไป" disabled><span class="ms">chevron_right</span></button></div></div></section>
+</section></main></div></div>
+<div class="filter-panel filter-drawer" id="filters"><div class="filter-drawer-sheet" role="dialog" aria-modal="true" aria-labelledby="filter-title"><div class="filter-drawer-head"><span class="filter-drawer-icon"><span class="ms">filter_list</span></span><div class="filter-drawer-title"><h2 id="filter-title">ตัวกรอง</h2><p>กรองข้อมูลให้แสดงเฉพาะข้อมูลที่ต้องการ</p></div><button id="close-filter" class="filter-drawer-close" type="button" aria-label="ปิดตัวกรอง"><span class="ms">close</span></button></div><div class="filter-drawer-body"><div id="car-filter-fields" class="grid gap-5"><div class="filter-field"><label for="filter-brand">ยี่ห้อ</label><select id="filter-brand"></select></div><div class="filter-field"><label for="filter-model">รุ่นรถ</label><select id="filter-model"></select></div><div class="filter-field"><label for="filter-type">ประเภทรถ</label><select id="filter-type"></select></div></div><div id="plan-filter-fields" class="grid gap-5 hidden"><div class="filter-field"><label for="filter-year">ปีงบประมาณ</label><select id="filter-year"><option value="">ทั้งหมด</option></select></div><fieldset><legend class="font-medium text-gray-700 text-sm mb-3">งบประมาณ (บาท)</legend><div id="budget-checks" class="grid gap-3"></div></fieldset><fieldset><legend class="font-medium text-gray-700 text-sm mb-3">สถานะ</legend><div class="grid gap-3"><label class="flex items-center gap-2 text-sm"><input type="checkbox" name="plan-status" value="pending_approval">รอเลข PO</label><label class="flex items-center gap-2 text-sm"><input type="checkbox" name="plan-status" value="in_progress">รอดำเนินการ</label></div></fieldset></div></div><div class="filter-drawer-foot"><button id="clear-draft" class="btn btn-link" type="button">ล้างตัวกรอง</button><button id="cancel-filter" class="btn btn-s" type="button">ยกเลิก</button><button id="apply-filter" class="btn btn-p" type="button">ตกลง</button></div></div></div>
+<div class="filter-panel filter-drawer" id="details"><div class="filter-drawer-sheet" role="dialog" aria-modal="true" aria-labelledby="detail-title"><div class="filter-drawer-head"><div class="filter-drawer-title"><h2 id="detail-title"></h2><p id="detail-subtitle"></p></div><button id="close-details" class="filter-drawer-close" type="button" aria-label="ปิดรายละเอียด"><span class="ms">close</span></button></div><div id="detail-body" class="filter-drawer-body"></div><div class="filter-drawer-foot"><button id="done-details" class="btn btn-s" type="button">ปิด</button></div></div></div>
+<script src="overhaul-a5-uat-data.js"></script>
+<script>
+const SOURCE=window.OH_A5_UAT, VEHICLES=SOURCE.vehicles, PLANS=SOURCE.plans;
+
+const money=n => {
+  if (n == null) return '—';
+  if (typeof n !== 'number' && (typeof n !== 'string' || !/^-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/.test(n.trim()))) return '—';
+  const value = typeof n === 'number' ? n : Number(n.trim().replace(/,/g, ''));
+  return Number.isFinite(value) ? value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+};
+const summarize=function dashboardSummary(all, filters) {
+  filters = filters || {};
+  const rows = all.filter(c => (!filters.model || c.model === filters.model) && (!filters.brand || c.brand === filters.brand)
+    && (!filters.type || c.type === filters.type) && (!filters.query || (c.plate + ' ' + c.model).toLowerCase().includes(filters.query.toLowerCase())));
+  const validMoney = n => typeof n === 'number' && Number.isFinite(n) && n >= 0;
+  const priced = rows.filter(c => validMoney(c.referencePrice) && validMoney(c.overhaulEstimate));
+  // Compare the identical priced cohort on both sides, expose coverage.
+  const reference = priced.reduce((n, c) => n + c.referencePrice, 0);
+  const overhaul = priced.reduce((n, c) => n + c.overhaulEstimate, 0);
+  const tracked = rows.filter(c => typeof c.progress === 'number' && Number.isFinite(c.progress) && c.progress >= 0 && c.progress <= 100);
+  const aged = rows.filter(c => typeof c.age === 'number' && Number.isFinite(c.age) && c.age >= 0);
+  const brands = {};
+  for (const c of rows) brands[c.brand] = (brands[c.brand] || 0) + 1;
+  const top = Object.entries(brands).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+  return { rows, count: rows.length, ageCount: aged.length,
+    averageAge: aged.length ? aged.reduce((sum, c) => sum + c.age, 0) / aged.length : null,
+    pricedCount: priced.length, reference: priced.length ? reference : null,
+    overhaul: priced.length ? overhaul : null,
+    trackedCount: tracked.length, progress: tracked.length ? Math.round(tracked.reduce((n, c) => n + c.progress, 0) / tracked.length) : null,
+    completeCount: tracked.filter(c => c.progress === 100).length, typeCount: new Set(rows.map(c => c.type)).size,
+    topBrand: top ? { name: top[0], count: top[1] } : null };
+};
+const visualData=function executiveVisualData(data) {
+  const countBy = (rows,key) => {
+    const groups = new Map();
+    for (const c of rows) {const label=c[key]||'ไม่ระบุ';groups.set(label,(groups.get(label)||0)+1);}
+    return [...groups].map(([label,value])=>({label,value})).sort((a,b)=>b.value-a.value||a.label.localeCompare(b.label));
+  };
+  const types=countBy(data.rows,'type');
+  const displayed=types.length>5?types.slice(0,4).concat([{label:'ประเภทอื่นๆ',value:types.slice(4).reduce((n,t)=>n+t.value,0)}]):types;
+  return {types:displayed,brands:countBy(data.rows,'brand')};
+};
+const $=id=>document.getElementById(id), escapeText=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const palette=['var(--brand-900)','var(--info-600)','var(--success-600)','var(--brand-600)','var(--brand-950)'];
+let filters={}, activeTab=new URLSearchParams(location.search).get('tab')==='plans'?'plans':'cars', planPage=1, planSort=null, planSortDirection=1;
+const filtersByTab={cars:{},plans:{}},queries={cars:'',plans:''};
+const budgetRanges=[[0,999999.99],[1000000,5000000],[5000000.01,10000000],[10000000.01,15000000],[15000000.01,20000000],[20000000.01,Infinity]];
+const getVehicles=()=>VEHICLES;
+const formatAge=months=>Math.floor(months/12)+' ปี'+(months%12?' '+months%12+' เดือน':'');
+const date=value=>new Intl.DateTimeFormat('th-TH',{timeZone:'Asia/Bangkok',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(value));
+const statusName=p=>p.plan_status==='in_progress'?'รอดำเนินการ':'รอเลข PO';
+function closeFilter(){$('filters').classList.remove('open');$('open-filter').focus();}
+function renderCars(){
+ const data=summarize(getVehicles(),{...filters,query:$('query').value.trim()}), visuals=visualData(data), max=Math.max(1,data.reference||0,data.overhaul||0);
+ $('reference-total').textContent=money(data.reference);
+ $('finance-caption').textContent=`รถตามตัวกรอง ${data.count} คัน · ข้อมูลราคา UAT · มีราคาครบ ${data.pricedCount}/${data.count} คัน`;
+ $('finance-bars').innerHTML=[['ราคากลาง',data.reference,palette[1]],['ประเมิน Overhaul',data.overhaul,palette[0]]].map(([label,value,color])=>`<div><div class="flex items-center justify-between gap-4 text-sm"><span class="text-gray-600">${label}</span><strong class="font-semibold tabular-nums">${money(value)} <span class="font-normal text-gray-500">บาท</span></strong></div><svg viewBox="0 0 100 2" preserveAspectRatio="none" class="w-full h-2 mt-2 rounded-full" aria-hidden="true"><rect width="100" height="2" fill="var(--gray-100)"/><rect width="${100*(value||0)/max}" height="2" fill="${color}"/></svg></div>`).join('');
+ $('progress-caption').textContent=`เฉลี่ยจากรถที่มีข้อมูล ${data.trackedCount}/${data.count} คัน`;
+ const pct=data.progress, circumference=2*Math.PI*52;
+ $('progress-chart').innerHTML=`<svg width="156" height="156" viewBox="0 0 156 156" role="img" aria-label="ความคืบหน้าเฉลี่ย ${pct==null?'ไม่มีข้อมูล':pct+'%'}"><circle cx="78" cy="78" r="52" fill="none" stroke="var(--gray-100)" stroke-width="13"/><circle cx="78" cy="78" r="52" fill="none" stroke="var(--brand-900)" stroke-width="13" stroke-dasharray="${circumference*(pct||0)/100} ${circumference}" transform="rotate(-90 78 78)"/><text x="78" y="80" text-anchor="middle" dominant-baseline="middle" font-size="30" font-weight="600" fill="var(--gray-900)">${pct==null?'—':pct+'%'}</text><text x="78" y="105" text-anchor="middle" font-size="12" fill="var(--gray-500)">เฉลี่ย</text></svg>`;
+ $('complete-count').textContent=data.completeCount; $('unknown-count').textContent=data.count-data.trackedCount;
+ $('age-caption').textContent=`จำนวนคันตามตัวกรอง · อายุเฉลี่ย ${data.averageAge==null?'—':formatAge(Math.round(data.rows.reduce((n,c)=>n+c.ageMonths,0)/data.count))} (${data.ageCount}/${data.count} คันมีข้อมูล)`;
+ const items=visuals.types, count=items.length, maxType=Math.max(1,...items.map(x=>x.value)), radius=67, center=80;
+ let plot='<svg width="160" height="160" viewBox="0 0 160 160" role="img" aria-label="จำนวนรถแยกตามประเภท">';
+ for(const r of [22,45,67])plot+=`<circle cx="80" cy="80" r="${r}" fill="none" stroke="var(--gray-200)"/>`;
+ items.forEach((item,i)=>{const r=radius*item.value/maxType,start=2*Math.PI*i/count-Math.PI/2,end=2*Math.PI*(i+1)/count-Math.PI/2-0.025,x1=center+r*Math.cos(start),y1=center+r*Math.sin(start),x2=center+r*Math.cos(end),y2=center+r*Math.sin(end); plot+=`<path d="M80 80 L${x1} ${y1} A${r} ${r} 0 ${end-start>Math.PI?1:0} 1 ${x2} ${y2} Z" fill="${palette[i%palette.length]}" fill-opacity="0.85"><title>${escapeText(item.label)} ${item.value} คัน</title></path>`;});
+ $('type-chart').innerHTML=plot+'</svg>';
+ $('type-legend').innerHTML=items.length?items.map((t,i)=>`<div class="flex items-center gap-3 text-sm"><svg width="10" height="10" aria-hidden="true"><rect width="10" height="10" rx="2" fill="${palette[i%palette.length]}"/></svg><span class="text-gray-600 flex-1 min-w-0">${escapeText(t.label)}</span><strong class="font-semibold">${t.value} คัน</strong></div>`).join(''):'<p class="text-sm text-gray-500">ไม่มีข้อมูลตามตัวกรอง</p>';
+ $('brand-caption').textContent=`รถชุดเดียวกับตาราง · ${data.count} คัน`;
+ const maxBrand=Math.max(1,...visuals.brands.map(b=>b.value));
+ $('brand-bars').innerHTML=visuals.brands.length?visuals.brands.map((b,i)=>`<div><div class="flex items-center justify-between text-sm"><div class="flex items-center gap-3"><span class="text-gray-400 text-xs">${String(i+1).padStart(2,'0')}</span><strong class="font-semibold">${escapeText(b.label)}</strong></div><span class="font-semibold">${b.value} คัน</span></div><svg viewBox="0 0 100 2" preserveAspectRatio="none" class="w-full h-2 mt-2 rounded-full" aria-hidden="true"><rect width="100" height="2" fill="var(--gray-100)"/><rect width="${100*b.value/maxBrand}" height="2" fill="${palette[i%palette.length]}"/></svg></div>`).join(''):'<p class="text-sm text-gray-500">ไม่มีข้อมูลยี่ห้อ</p>';
+ $('vehicle-count').textContent=data.count;
+ $('vehicle-rows').innerHTML=data.rows.map(c=>`<tr><td class="!font-medium !text-gray-900 w-[175px]">${escapeText(c.plate)}</td><td class="min-w-[250px] max-w-[340px]"><div class="font-medium">${escapeText(c.model)}</div><div class="text-xs text-gray-500 mt-1">${escapeText(c.type)}</div><div class="text-xs text-gray-500 mt-1">${escapeText(c.department)}</div></td><td class="num !text-right !font-normal tabular-nums whitespace-nowrap" data-money="reference">${money(c.referencePrice)}</td><td class="num !text-right !font-normal tabular-nums whitespace-nowrap" data-money="overhaul">${money(c.overhaulEstimate)}</td><td class="num !text-right !font-normal whitespace-nowrap">${escapeText(c.ageText)}</td><td>${c.progress==null?'<span class="text-gray-400">—</span>':`<div class="flex items-center gap-3"><svg width="74" height="6" viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true"><rect width="100" height="6" rx="3" fill="var(--gray-200)"/><rect width="${c.progress}" height="6" rx="3" fill="var(--brand-900)"/></svg><span class="text-xs tabular-nums">${c.progress}%</span></div>`}</td><td><button class="btn btn-t btn-sm !px-1" type="button" data-vehicle="${c.id}" aria-label="ดูรายละเอียด ${escapeText(c.plate)}"><span class="ms">chevron_right</span></button></td></tr>`).join('');
+ $('table-wrap').classList.toggle('hidden',!data.count);$('empty').classList.toggle('hidden',!!data.count);
+ $('pagination').textContent=data.count?`แสดง 1 ถึง ${data.count} จาก ${data.count} รายการ`:'แสดง 0 รายการ';
+ window.mockSnapshot={tab:'cars',rows:data.rows.map(c=>c.id),count:data.count,reference:data.reference,overhaul:data.overhaul};
+}
+function renderPlans(){
+ const q=$('query').value.trim().toLowerCase();
+ let rows=PLANS.filter(p=>(!q||[p.plan_no,p.plan_name,p.cost_center,p.wbs_number,p.ref_cost_type_name].join(' ').toLowerCase().includes(q))&&(!filters.year||p.fiscal_year===filters.year)&&(!filters.status?.length||filters.status.includes(p.plan_status))&&(!filters.budget?.length||filters.budget.some(i=>Number(p.approved_budget)>=budgetRanges[i][0]&&Number(p.approved_budget)<=budgetRanges[i][1])));
+ if(planSort)rows.sort((a,b)=>planSortDirection*(planSort==='approved_budget'?Number(a[planSort])-Number(b[planSort]):String(a[planSort]).localeCompare(String(b[planSort]),'th')));
+ const size=Number($('plan-page-size').value),pages=Math.max(1,Math.ceil(rows.length/size));planPage=Math.min(planPage,pages);
+ const pageRows=rows.slice((planPage-1)*size,planPage*size);
+ $('plan-rows').innerHTML=pageRows.map(p=>`<tr><td class="!font-medium !text-gray-900 whitespace-nowrap">${escapeText(p.plan_no)}</td><td class="min-w-[240px] max-w-[340px]">${escapeText(p.plan_name)}</td><td class="max-w-[210px]"><div>${escapeText(p.ref_cost_type_name)}</div><div class="text-xs text-gray-500 mt-1">${escapeText(p.cost_center||p.wbs_number||p.pm_order_no||p.cost_type_other_reason||'—')}</div></td><td>${p.fiscal_year}</td><td class="num !text-right !font-normal tabular-nums whitespace-nowrap" data-plan-money>${money(p.approved_budget)}</td><td>${escapeText(p.overhauled_po_count||'—')}</td><td><span class="badge ${p.plan_status==='in_progress'?'b-info':'b-neutral'}">${statusName(p)}</span></td><td class="whitespace-nowrap">${date(p.created_at)}</td><td><button class="btn btn-t btn-sm !px-1" type="button" data-plan="${p.id}" aria-label="ดูรายละเอียดแผน ${escapeText(p.plan_no)}"><span class="ms">more_horiz</span></button></td></tr>`).join('');
+ $('plan-empty').classList.toggle('hidden',!!rows.length);$('plans-table').classList.toggle('hidden',!rows.length);
+ $('plan-pagination').textContent=rows.length?`แสดง ${(planPage-1)*size+1} ถึง ${Math.min(planPage*size,rows.length)} จาก ${rows.length} รายการ`:'แสดง 0 รายการ';
+ $('plan-pages').innerHTML=`<button class="pg" type="button" data-page="${Math.max(1,planPage-1)}" ${planPage===1?'disabled':''} aria-label="หน้าก่อน"><span class="ms">chevron_left</span></button>`+Array.from({length:pages},(_,i)=>`<button class="pg ${planPage===i+1?'on':''}" type="button" data-page="${i+1}" ${planPage===i+1?'aria-current="page"':''}>${i+1}</button>`).join('')+`<button class="pg" type="button" data-page="${Math.min(pages,planPage+1)}" ${planPage===pages?'disabled':''} aria-label="หน้าถัดไป"><span class="ms">chevron_right</span></button>`;
+ window.mockSnapshot={tab:'plans',rows:rows.map(p=>p.id),count:rows.length,budget:rows.reduce((n,p)=>n+Number(p.approved_budget),0),page:planPage};
+}
+function render(){
+ filters=filtersByTab[activeTab];
+ if(activeTab==='cars')renderCars();else renderPlans();
+ const chips=[];
+ for(const [key,value] of Object.entries(filters)){
+  if(Array.isArray(value))for(const entry of value)chips.push([key,key==='budget'?budgetLabel(entry):entry==='in_progress'?'รอดำเนินการ':'รอเลข PO',entry]);
+  else if(value)chips.push([key,value,value]);
+ }
+ $('chips').innerHTML=chips.map(([key,label,value])=>`<button class="fchip" type="button" data-remove="${key}" data-value="${escapeText(value)}">${escapeText(label)} <span class="ms">close</span></button>`).join('');
+ $('chips').classList.toggle('hidden',!chips.length);$('filter-count').textContent=chips.length;$('filter-count').classList.toggle('hidden',!chips.length);
+}
+function selectTab(tab){
+ queries[activeTab]=$('query').value;activeTab=tab;filters=filtersByTab[tab];$('query').value=queries[tab];
+ for(const key of ['cars','plans']){$(key+'-view').classList.toggle('hidden',key!==tab);$('tab-'+key).classList.toggle('on',key===tab);$('tab-'+key).setAttribute('aria-selected',String(key===tab));}
+ $('query').placeholder=tab==='cars'?'ค้นหาทะเบียน, ยี่ห้อ/รุ่น':'ค้นหาหมายเลขแผน, ชื่อแผน, ประเภท...';$('query').setAttribute('aria-label',tab==='cars'?'ค้นหารถที่ Overhaul':'ค้นหาแผน Overhaul');$('create-plan').classList.toggle('hidden',tab!=='plans');
+ const url=new URL(location.href);url.searchParams.set('tab',tab);history.replaceState(null,'',url);render();
+}
+function budgetLabel(i){const [low,high]=budgetRanges[Number(i)];return !low?'น้อยกว่า '+money(1000000):!Number.isFinite(high)?'มากกว่า '+money(20000000):money(low)+' – '+money(high);}
+function detail(title,sub,pairs,extra=''){
+ $('detail-title').textContent=title;$('detail-subtitle').textContent=sub;$('detail-body').innerHTML=pairs.map(([k,v])=>`<div><div class="text-xs text-gray-500 mb-1">${escapeText(k)}</div><div class="text-sm text-gray-900">${escapeText(v??'—')}</div></div>`).join('')+extra;$('details').classList.add('open');$('close-details').focus();
+}
+function showVehicle(id){const c=getVehicles().find(c=>c.id===id);if(!c)return;detail(c.plate,c.model+' · '+c.type,[['หน่วยงานเจ้าของรถ',c.department],['อายุการใช้งาน',c.ageText],['เลขไมล์สะสม (กม.)',c.mileage==null?'—':c.mileage.toLocaleString('th-TH')],['สถานะงาน',c.status||'—'],['ราคากลาง (บาท)',money(c.referencePrice)],['ประเมิน Overhaul (บาท)',money(c.overhaulEstimate)],['แผน',SOURCE.vehiclePlanNo+' · '+SOURCE.vehiclePlanName],['Purchase Order',c.purchaseOrders.join(', ')],['ข้อมูลราคา','ยังไม่มีข้อมูลราคาใน snapshot UAT']]);}
+function showPlan(id){const p=PLANS.find(p=>p.id===id);if(!p)return;const known=id===SOURCE.vehiclePlanId;const extra=known?`<div class="border-t border-gray-200 pt-4"><h3 class="font-semibold mb-3">Purchase Order (${SOURCE.purchaseOrders.length})</h3>${SOURCE.purchaseOrders.map(po=>`<div class="text-sm mb-3"><strong>${escapeText(po.po_number)}</strong><div class="text-gray-600">${escapeText(po.po_name)} · ${escapeText(po.vendor_name)} · ${po.vehicle_count} คัน</div></div>`).join('')}<button type="button" class="btn btn-p mt-2" id="view-plan-vehicles">ดูรถในแผน (${VEHICLES.length} คัน)</button></div>`:'<p class="text-xs text-gray-500 border-t border-gray-200 pt-4">mock นี้มี snapshot รายละเอียดรถเฉพาะแผน ORZ6900026</p>';detail(p.plan_no,p.plan_name,[['ประเภทงบประมาณ',p.ref_cost_type_name],['ปีงบประมาณ',p.fiscal_year],['งบประมาณ (บาท)',money(p.approved_budget)],['สถานะ',statusName(p)],['วันที่สร้าง',date(p.created_at)],['ศูนย์ต้นทุน / เลข WBS',p.cost_center||p.wbs_number||'—']],extra);if(known)$('view-plan-vehicles').onclick=()=>{$('details').classList.remove('open');selectTab('cars');};}
+
+for(const key of ['brand','model','type'])$('filter-'+key).innerHTML='<option value="">ทั้งหมด</option>'+[...new Set(VEHICLES.map(c=>c[key]))].sort().map(v=>`<option value="${escapeText(v)}">${escapeText(v)}</option>`).join('');
+$('filter-year').innerHTML='<option value="">ทั้งหมด</option>'+[...new Set(PLANS.map(p=>p.fiscal_year))].sort().map(y=>`<option>${y}</option>`).join('');
+$('budget-checks').innerHTML=budgetRanges.map((r,i)=>`<label class="flex items-center gap-2 text-sm"><input type="checkbox" name="plan-budget" value="${i}">${budgetLabel(i)}</label>`).join('');
+$('query').addEventListener('input',()=>{planPage=1;render();});
+for(const tab of ['cars','plans'])$('tab-'+tab).onclick=()=>selectTab(tab);
+$('open-filter').onclick=()=>{
+ $('car-filter-fields').classList.toggle('hidden',activeTab!=='cars');$('plan-filter-fields').classList.toggle('hidden',activeTab!=='plans');
+ for(const key of ['brand','model','type'])$('filter-'+key).value=filters[key]||'';
+ $('filter-year').value=filters.year||'';
+ document.querySelectorAll('[name="plan-status"]').forEach(n=>{n.checked=(filters.status||[]).includes(n.value);});document.querySelectorAll('[name="plan-budget"]').forEach(n=>{n.checked=(filters.budget||[]).includes(n.value);});
+ $('filters').classList.add('open');$('close-filter').focus();
+};
+$('close-filter').onclick=closeFilter;$('cancel-filter').onclick=closeFilter;
+$('apply-filter').onclick=()=>{filtersByTab[activeTab]=activeTab==='cars'?Object.fromEntries(['brand','model','type'].map(key=>[key,$('filter-'+key).value])):{year:$('filter-year').value,status:[...document.querySelectorAll('[name="plan-status"]:checked')].map(n=>n.value),budget:[...document.querySelectorAll('[name="plan-budget"]:checked')].map(n=>n.value)};planPage=1;closeFilter();render();};
+$('clear-draft').onclick=()=>{for(const key of ['brand','model','type','year'])$('filter-'+key).value='';document.querySelectorAll('#plan-filter-fields input').forEach(n=>{n.checked=false;});};
+$('chips').onclick=e=>{const b=e.target.closest('[data-remove]');if(!b)return;const key=b.dataset.remove;if(Array.isArray(filters[key]))filters[key]=filters[key].filter(v=>String(v)!==b.dataset.value);else delete filters[key];planPage=1;render();};
+function reset(){filtersByTab[activeTab]={};queries[activeTab]='';$('query').value='';planPage=1;render();}
+$('empty-reset').onclick=reset;$('reset-plan-search').onclick=reset;
+$('filters').onclick=e=>{if(e.target===$('filters'))closeFilter();};
+const closeDetails=()=>{$('details').classList.remove('open');};$('close-details').onclick=closeDetails;$('done-details').onclick=closeDetails;$('details').onclick=e=>{if(e.target===$('details'))closeDetails();};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeFilter();closeDetails();}});
+$('plan-rows').onclick=e=>{const b=e.target.closest('[data-plan]');if(b)showPlan(b.dataset.plan);};$('vehicle-rows').onclick=e=>{const b=e.target.closest('[data-vehicle]');if(b)showVehicle(b.dataset.vehicle);};
+$('plan-pages').onclick=e=>{const b=e.target.closest('[data-page]');if(b&&!b.disabled){planPage=Number(b.dataset.page);render();}};$('plan-page-size').onchange=()=>{planPage=1;render();};
+document.querySelectorAll('[data-sort-plan]').forEach(b=>b.onclick=()=>{planSortDirection=planSort===b.dataset.sortPlan?-planSortDirection:1;planSort=b.dataset.sortPlan;render();});
+selectTab(activeTab);
+</script></body></html>

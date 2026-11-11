@@ -1,20 +1,36 @@
 # Maintain-D — Overhaul v2
 
+เทียบ UAT และปรับตาม feedback ทั้ง flow: [รายละเอียดการปรับและผลตรวจ 10 พ.ย. 2569](uat-feedback-review.md).
+
+พฤติกรรมร่วมกับงานซ่อม: [behavior-consistency.md](../../design-system/behavior-consistency.md) · ตัวตรวจ `node figma-export/test-overhaul-shared-behavior.js`.
+
+จำนวนเงินบาททุกหน้าของปลั๊กอินใช้ทศนิยม 2 ตำแหน่ง เช่น `0.00`, `1,000.00` และ `1,234.50` รวมงบแผน ฟอร์ม รายละเอียด Dashboard ยอดรวมและค่าซ่อม; ค่าว่างแสดง — หรือ placeholder ตามชนิดช่อง.
+
 ## Acceptance Criteria — 9 พฤศจิกายน 2569
 
 **ฉบับใหม่ที่แยกตามแต่ละเฟรม A–P:** [อ่านฉบับรวม](AC-A-P-new.md) · [เลือกอ่านแยก Flow](AC-new-A-P/README.md) · [ตาราง AC สำหรับติดตามผล](AC-A-P-new.csv). รวม **16 Flow / 78 เฟรม / 252 AC** ใช้รหัส `OH2-…-NEW-*` และคง 16 ข้อของ [A.1 ฉบับใหม่](AC-A1-new.md) ไว้ตามเดิม. ขอบเขตถึง P เท่านั้น ไม่รวมชุดทดลอง/แบบเก่า. เป็นเกณฑ์ตรวจรับ ไม่ใช่ผลทดสอบผ่าน.
 
 [AC รวมก่อนแยกรายเฟรม](acceptance-criteria.md) 110 ข้อ และ [ตารางอ้างอิงเดิม](acceptance-criteria-frames.csv) 125 state รวม Summary/Notification/Toast ยังเก็บไว้แยกต่างหาก. เอกสารใน figjam-userstory-plugin ยังคงไว้เช่นกัน.
 
-## Dashboard แบบกราฟ — 9 พฤศจิกายน 2569
+## แก้ราคากลางบนเฟรมเดิม
 
-Dashboard เดิมแท็บ “รถที่ Overhaul” (A.5 ในรายการสคริปต์) แทนกรอบตัวเลข 8 ใบด้วยกราฟ 4 ส่วน: แท่งเทียบราคาซื้อใหม่/ประเมิน Overhaul, วงแหวนความคืบหน้าเฉลี่ย, Polar Area จำนวนรถแยกประเภท และอันดับยี่ห้อข้อมูลรวม. ตัวกรองมีผลกับสามส่วนแรก; อันดับยี่ห้อคงข้อมูลรวมตามกติกาเดิม. กราฟใช้เลเยอร์ Figma แก้ไขได้ ไม่ใช่ภาพ screenshot.
+เปิด plugin ใหม่ เลือก **ทั้งเฟรม A.5** แล้วกด **จัดรูปแบบเงินบาทบนจอที่เลือก**. ปุ่มนี้อ่านคอลัมน์ราคากลาง/เงินบาทและแก้ข้อความ Text จริง เช่น 1,950,000 เป็น 1,950,000.00 และ 0 เป็น 0.00 โดยโหลดฟอนต์ก่อนเขียน. คงอายุ จำนวนรถ และจอที่ไม่ได้เลือก. Log แจ้งจำนวนที่ตรวจ/แก้/ล้มเหลว. การสร้างหน้าใหม่ตรวจข้อความเงินจริงซ้ำหลัง polish อัตโนมัติ.
 
-ดู [พรีวิวกราฟ](dashboard-visual-preview.svg) ซึ่งสร้างจาก geometry ของ helper และ fixture เดียวกัน; ไม่ใช่ผล render จาก Figma และการแสดงฟอนต์ขึ้นกับเครื่องที่เปิด. ตำแหน่งบนหน้าและตัวอักษรต้องตรวจใน Figma จริง. ใช้ IBM Plex Sans Thai และ palette VMS Plus. Mobile คงรูปแบบเดิม.
+เทสต์ `node figma-export/test-overhaul-currency-repair.js` จำลองข้อความใน cell ที่ยังไม่มี .00 และตรวจ UI click ถึง dispatcher จริง การโหลดฟอนต์ การไม่แตะจออื่น และผลหลังสร้างหน้าใหม่. ยังไม่ใช่หลักฐานตรวจภาพจริงใน Figma.
 
-อ้างอิง [Polar Area](https://www.chartjs.org/docs/latest/charts/polar.html) และ [Doughnut](https://www.chartjs.org/docs/latest/charts/doughnut.html) ของ Chart.js; URL ตัวอย่างรุ่น next ที่ให้มาเปิดผ่านเครื่องมือไม่ได้. ตัวเลขเป็นประมาณการ ไม่อ้างเป็นผลประหยัดจริง; แยกข้อมูลราคา/progress ที่ขาดและแสดง coverage.
+## Dashboard รถที่ Overhaul — A.5 ฉบับแก้ไขล่าสุด 10 พฤศจิกายน 2569
 
-นำเข้า `manifest.json` ใน Figma ผ่าน Plugins → Development → Import plugin from manifest
+เปิดปลั๊กอินใหม่แล้วกด **สร้าง Dashboard รถที่ Overhaul (A.5–A.8)** เพื่อสร้างภาพรวม ตัวกรอง ผลหลังกรอง และไม่พบข้อมูล ต่อท้ายหน้าที่เปิดอยู่ พร้อมเลือกเฟรมที่สร้าง. ใช้ตัวเลือก Desktop/Mobile ของหน้าต่างปลั๊กอิน.
+
+ตารางมี 7 คอลัมน์: ทะเบียน, ข้อมูลรถ, **ราคากลาง**, **ประเมิน Overhaul (บาท)**, **อายุการใช้งาน**, ความคืบหน้า และดูรายละเอียด. ไม่มีส่วนต่างประมาณการและราคาซื้อเดิม. อายุเป็นคอลัมน์แยก เช่น 12 ปี.
+
+เงินทั้งตารางและกราฟใช้ comma และทศนิยม 2 ตำแหน่ง เช่น **1,950,000.00** และ **250,000.00**. ราคากลางใช้ช่องราคากลางใน PLAN_VEHICLES (`c[9]`) ไม่ใช้ราคาซื้อใหม่ทดแทนหรือราคาซื้อเดิม. กราฟราคากลาง/ประเมิน Overhaul อายุเฉลี่ย จำนวนประเภทรถ ยี่ห้อ และความคืบหน้าคำนวณจากรถตามตัวกรองเดียวกับตาราง. เมื่อราคาไม่ครบแสดงจำนวนที่มีข้อมูล ไม่แทนค่าที่ขาดด้วยศูนย์.
+
+ใช้ Table/Tabs จาก (Component) VMS Plus และโครงหน้าจัดการงานจาก UI VMS Plus Release#2 ตาม component map เดิม. กราฟเป็น native editable layers ตามข้อยกเว้นที่อนุญาต. พรีวิว SVG เก่าเป็นภาพอ้างอิงเวอร์ชันก่อนแก้หัวคอลัมน์ ไม่ใช่ผลตรวจฉบับนี้.
+
+ตรวจ: `node figma-export/test-overhaul-round2.js`, `node figma-export/test-overhaul-all-screen-runtime.js`, `node figma-export/test-overhaul-dashboard-entry.js`. ผล mock API ไม่ยืนยันภาพหรือ import จริงใน Figma.
+
+นำเข้า `manifest.json` ใน Figma ผ่าน Plugins → Development → Import plugin from manifest.
 
 ## Summary รายคันและประวัติการซ่อม — Scenario 19
 
