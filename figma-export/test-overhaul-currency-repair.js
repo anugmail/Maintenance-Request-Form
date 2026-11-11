@@ -57,5 +57,9 @@ context.selectedScreen=root;
  run('function stripDividers(){} async function polish(){} function fitOverlays(){}');
  await run('makeAt(async()=>fresh,false,0,0)');
  assert.equal(fresh.children[1].children[0].characters,'1,234.00','new frames must normalize rendered cells after polish');
- console.log('PASS: repair selected reference-price text, zero, font loading, hidden/unrelated safety, repeat and new-frame path');
+ // 11 พ.ย. 2569: export ทั้งชุด (buildGrid) ต้องจัดเงินบาทเหมือนอัปเดตจอที่เลือก (เดิมจัดเฉพาะ makeAt ⇒ "figma export ผิดตลอด")
+{ const src = require('node:fs').readFileSync(require('node:path').join(__dirname, 'overhaul2-plugin/code.js'), 'utf8');
+  const grid = src.slice(src.indexOf('async function buildGrid'), src.indexOf('async function buildGrid') + 6000);
+  require('node:assert/strict').ok(/await polish\(s\); await formatRenderedBaht\(s\)/.test(grid), 'buildGrid must format baht on every exported screen'); }
+console.log('PASS: repair selected reference-price text, zero, font loading, hidden/unrelated safety, repeat and new-frame path');
 })().catch(e=>{console.error(e);process.exitCode=1});

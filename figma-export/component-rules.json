@@ -1461,6 +1461,11 @@
      "E.5"
     ],
     "rule": "picker table = EXEC_CAR_COLS/executiveCarRow (same as A.5 dashboard); plate column as Lead checkbox"
+   },
+   "R103": {
+    "scope": "every exported screen",
+    "rule": "buildGrid runs formatRenderedBaht; covers money table columns, text with บาท, Content item values with nearest money label",
+    "test": "node figma-export/test-overhaul-currency-repair.js"
    }
   },
   "test": [

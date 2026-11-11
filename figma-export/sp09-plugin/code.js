@@ -1224,7 +1224,7 @@ const currency = n => {
 async function formatRenderedBaht(root) {
   const nodes = [root].concat(typeof root.findAll === 'function' ? root.findAll(() => true) : []);
   const visible = n => { for (let p = n; p; p = p.parent) if (p.visible === false) return false; return true; };
-  const monetary = /บาท|ราคากลาง|ราคาประเมิน|ประเมิน Overhaul|ค่าใช้จ่าย|ค่าซ่อม|วงเงิน/;
+  const monetary = /บาท|ราคา|ประเมิน Overhaul|ค่าใช้จ่าย|ค่าซ่อม|ค่าแรง|ค่าอะไหล่|วงเงิน|งบประมาณ|มูลค่า|จำนวนเงิน|ยอด/;
   const numeric = /^-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/;
   const targets = new Set();
   const moneyTexts = new Set();
@@ -1238,6 +1238,12 @@ async function formatRenderedBaht(root) {
     }
   }
   for (const n of nodes) if (n.type === 'TEXT' && visible(n) && /บาท/.test(n.characters)) targets.add(n);
+  /* 11 พ.ย. 2569 (เจ้าของงาน "figma export ผิดตลอด"): กล่องข้อมูล (Content item row) / ป้าย+ค่า นอกตาราง — ค่าเป็นตัวเลขล้วน
+     และมีป้ายเงินอยู่ในกลุ่มเดียวกัน (พี่น้องหรือชั้นเหนือ 2 ชั้น) ⇒ จัดเป็น 1,000.00 · ปีงบ/เลขไมล์/จำนวนคัน ไม่มีป้ายเงิน = ไม่แตะ */
+  // ป้ายที่ใกล้ที่สุด: ข้อความที่ไม่ใช่ตัวเลขในชั้นแม่ก่อน (Content item / Text input) ถ้าไม่มีค่อยขึ้นไปอีก 1 ชั้น
+  const labelOf = n => { for (let p = n.parent, k = 0; p && k < 2; p = p.parent, k++) { const t = (p.findAll ? p.findAll(x => x.type === 'TEXT' && x !== n && visible(x) && !numeric.test((x.characters || '').trim())) : [])[0]; if (t) return t.characters; } return ''; };
+  for (const n of nodes) if (n.type === 'TEXT' && visible(n) && numeric.test((n.characters || '').trim()) && /\d{1,3},\d{3}|^\d{4,}$|^0$/.test(n.characters.trim())) {
+    const lb = labelOf(n); if (monetary.test(lb) && !/ปีงบ|ปี |เลขไมล์|กม\.|คัน|ชม\.|ครั้ง|%/.test(lb)) { targets.add(n); moneyTexts.add(n); } }
   let changed = 0, checked = 0, failed = 0;
   for (const t of targets) {
     const before = t.characters;
@@ -2853,7 +2859,7 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
           const code = stateCode(sub, i), device = mob ? 'mobile' : 'desktop';
           try {
             const name = prefix + ' / ' + stateCode(sub, i) + ' · ' + sub.tag + ' — ' + label + (mob ? ' · mobile' : '');
-            const s = await fn(); stripDividers(s); await polish(s); fitOverlays(s);
+            const s = await fn(); stripDividers(s); await polish(s); await formatRenderedBaht(s); fitOverlays(s);   // เงินบาท 1,000.00 ทุกจอที่ export (11 พ.ย. 2569)
             s.name = name;
             put(s, x, rowY); h = Math.max(h, s.height); made.push(s);
             if (errors.length > warningStart) incomplete.push({ code, label, device, name: s.name, warnings: errors.slice(warningStart) });
