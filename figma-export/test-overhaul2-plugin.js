@@ -443,7 +443,7 @@ const MODE_CHECK = process.env.MODE === 'check';
   if (top && !process.env.CHECK_ONLY && top.name.indexOf(process.env.FIRST || 'หน้ารายการแผน') < 0) logs.push('⚠ แผง Layers ไม่ได้เรียงจอแรกไว้บนสุด: ' + top.name);
   // R19 แพทเทิร์นจัดวาง (เจ้าของงานสั่ง 20 ต.ค. 2569): ป้ายรหัส flow "<prefix> · …" ต้องมี · จอ mobile อยู่ใต้จอ desktop คอลัมน์เดียวกัน (x เท่ากัน · y มากกว่า)
   const labels = page.children.filter(n => n.name.indexOf((process.env.PREFIX || 'OH2') + ' · ') === 0);
-  if (!labels.length && process.env.R19 !== '0') logs.push('⚠ R19 ไม่มีป้ายรหัส flow (แถบตัวอักษร/ย่อย/state · Device/Desktop/Mobile)');   // R19=0 = หน้าเก่าก่อนมีป้าย (19 ต.ค.)
+  if (!labels.length && screens.length && process.env.R19 !== '0') logs.push('⚠ R19 ไม่มีป้ายรหัส flow (แถบตัวอักษร/ย่อย/state · Device/Desktop/Mobile)');   // R19=0 = หน้าเก่าก่อนมีป้าย (19 ต.ค.) · หน้าที่ไม่มีจอ (MODE=build-docs เฉพาะ swimlane/storymap/usecase/scenarios) ไม่ต้องมีป้าย (11 พ.ย. 2569)
   /* R19 ฉบับ 10 พ.ย. 2569 (component กลางของหน้า Design Annotations · UI Release#2): ปลั๊กอินที่มี blockHeader + ไฟล์มี Header ⇒ แถบหัวบล็อก = Header Type=Header · ป้าย state = Header Type=Subheader (State=Default)
      ห้ามถอยไปแถบวาดเองเงียบๆ เมื่อ component มีอยู่ */
   if (code.includes('async function blockHeader') && SETS.has('Header') && process.env.R19 !== '0') {
