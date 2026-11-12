@@ -91,6 +91,10 @@ function check(screens, opt) {   // opt.inFile(ชื่อ) = ไฟล์ม�
       else if (r.hasTexts) { const vals = new Set(all.filter(x => x.type === 'INSTANCE' && shown(x)).flatMap(x => Object.values(x.componentProperties || {}).filter(v => v.type === 'TEXT').map(v => String(v.value).trim())));
         const miss = r.hasTexts.filter(t => !vals.has(t)); if (miss.length) fail(r, sc, 'ไม่มีข้อความ ' + miss.join(' · ')); }   // R93 รายการภาค/เขตในแผงตัวกรอง (11 พ.ย. 2569)
       for (const t of r.forbidSectionTitles || []) if (all.some(x => isInst(x, 'Section header') && shown(x) && prop(x, 'Title') === t)) fail(r, sc, 'ยังมีหัวข้อเดิม "' + t + '"');
+      if (r.sectionOrder) {   // R107 (12 พ.ย. 2569) ลำดับหัวข้อ Section label ของหน้า — นับเฉพาะชื่อที่ขึ้นต้นตามรายการ (หัวการ์ดอื่นไม่นับ) · ขาด/เกิน/สลับ = ไม่ผ่าน
+        const got = all.filter(x => isInst(x, 'Section label') && shown(x)).map(x => (prop(x, 'Title') || '').trim()).filter(t => r.sectionOrder.some(w => t.indexOf(w) === 0));
+        if (got.length !== r.sectionOrder.length || r.sectionOrder.some((w, k) => got[k].indexOf(w) !== 0)) fail(r, sc, 'ลำดับหัวข้อ [' + got.join(' · ') + '] ไม่ตรง [' + r.sectionOrder.join(' · ') + ']');
+      }
     }
     // R89 ปุ่มสีตามหน้าจริง (10 พ.ย. 2569 S13 ปุ่มรับทราบสีเขียวแบบปุ่ม "ตรวจแล้ว" หน้า 5.14 - 5.15 UI Release#2): ปุ่มข้อความ text ที่กดได้ ต้องพื้นสี fill · forbidText = ข้อความปุ่มที่ห้ามมีในจอชุดนี้
     for (const r of RULES.buttonFill || []) {

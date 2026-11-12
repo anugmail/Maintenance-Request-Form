@@ -60,11 +60,21 @@ Object.assign(KEYS, {
   "car_repair-24-300-round": ["f87c5a858bf895fee867a3af065e82f75f620d9e", false],   // S25 เมนู "ดำเนินการบำรุงรักษา" (10 พ.ย. 2569) — ไฟล์ Component หน้า Icons
   "no_crash-24-300-round": ["3d940da7d6274fd75d090c7a9155a482de01a923", false],   // แดชบอร์ดแบบ VMS+ (12 พ.ย. 2569 · R106) การ์ดตัวเลขยานพาหนะปกติ — ไฟล์ Component หน้า Icons
   "event_busy-24-300-round": ["d7e88cfc5a57d608dafa7d93a8e7f6532cf35096", false],   // แดชบอร์ดแบบ VMS+ (R106) เรื่องที่ควรดู · เลยกำหนด — ไฟล์ Component หน้า Icons
+  /* S24 แท็บข้อมูลยานพาหนะแบบ Vehicle info (12 พ.ย. 2569 · R107) — การ์ดของไลบรารี (Component หน้า Cards / Badge) + ไอคอนแถวการใช้งานล่าสุด */
+  "Card item row": ["5511f46face9e65e08d274bbf7c9d73489124362", true],
+  "Card item base": ["68f4c18df873c10da2f8bfac894446e5c2bbc731", true],
+  "Badge outline with indicator": ["95e26f4acaeb8a30653090c1a8c5d53e915c2996", true],
+  "local_gas_station-24-300-round-filled": ["6676743d43062ce200124ade93829519500d5004", false],   // ไฟล์ Component หน้า Icons (Last usage ของ UI Release#2 ใช้ไอคอนชื่อเดียวกัน)
+  "schedule-24-300-round": ["be1da86a82307fa8d337f57c38fbc1b2f3e882d6", false],   // ชั่วโมงเครื่องจักรสะสม — ไฟล์ Component ไม่มี timer (เว็บใช้ timer) ⇒ ใช้ schedule ของหน้า Icons
+  "local_car_wash-24-300-round": ["70479232ec906f6477857a48fed92bdf9b6bf771", false],   // ไลบรารีไอคอนที่ UI Release#2 อ้าง (Last usage) · ไฟล์ Component ไม่มี ⇒ นำเข้าไม่ได้ = แถวไม่มีไอคอน
+  "local_parking-24-fill-300-round": ["31f53c49f2a25c3ca3b7ac06cbb6a9442249b2c6", false],   // ไลบรารีไอคอนที่ทั้งไฟล์ Component (หน้า Modals) และ UI Release#2 อ้าง · นำเข้าไม่ได้ = แถวไม่มีไอคอน
   "calendar_month-24-300-round": ["afb81bef65f96089512284d42edd7bb46646a465", false]   // ไอคอนนำช่องวันดำเนินการ (6 พ.ย. 2569 · R83) — ไฟล์ Component หน้า Icons · ช่องช่วงวันที่ Date range picker / Trip date ของ UI Release#2 หน้า 5.2 Vehicle Management มีไอคอนนำ
 });
 NEEDED.push('Featured icon', 'no_crash-24-300-round', 'event_busy-24-300-round');   // แดชบอร์ดแบบ VMS+ S4 S24 (R106 · 12 พ.ย. 2569) Featured icon ของหัวแดชบอร์ด/การ์ดกราฟ/เรื่องที่ควรดู (ถอดจาก DIRECT ตอนย้าย S27 ออก R105 — แดชบอร์ดใช้ต่อ) + ไอคอน — ไอคอนไม่มีในไฟล์ก็ใช้ไอคอนตั้งต้นของ Featured icon
 NESTED_ONLY.add('no_crash-24-300-round'); NESTED_ONLY.add('event_busy-24-300-round');
 NEEDED.push('Metric item', 'download-24-300-round', 'swap_driving_apps_wheel-24-300-round', 'car_repair-24-300-round', 'Step circles / 4 steps', 'account_balance-24-300-round', 'calendar_month-24-300-round');   // S25 (5 พ.ย. 2569) ไอคอนย้ายไปไตรมาสอื่น · 6 พ.ย. 2569 ไอคอนช่องวันดำเนินการ
+NEEDED.push('Card item row', 'Card item base', 'Badge outline with indicator', 'local_gas_station-24-300-round-filled', 'schedule-24-300-round', 'local_car_wash-24-300-round', 'local_parking-24-fill-300-round');   // S24 แท็บข้อมูลยานพาหนะ (12 พ.ย. 2569 · R107) — Fleet card · Last usage · การ์ดเครื่องมือกล ประกอบจาก Card item row/base · Badge outline with indicator
+['Card item base', 'local_gas_station-24-300-round-filled', 'schedule-24-300-round', 'local_car_wash-24-300-round', 'local_parking-24-fill-300-round'].forEach(n => NESTED_ONLY.add(n));   // ชิ้นซ้อน/ไอคอน — นำเข้าไม่ได้ก็ใช้ตัวที่ซ้อนใน Card item row · แถวไม่มีไอคอน
 
 /* ---------- ข้อมูลตัวอย่าง (ยกชื่อรถ/หน่วยงาน/จังหวัดจาก maintainance-yearly/mock-yearly.js — ค่าสมมติทั้งหมด) ---------- */
 const PST = { review: ['รออนุมัติ', 'Warning'],   // 30 ต.ค. 2569: ส่งอนุมัติทั่วไป ไม่ผ่าน ผพจ.
@@ -484,7 +494,7 @@ let LINK_VAR;
 /* R80 คำว่า "ยานพาหนะ" แทน "รถ" (6 พ.ย. 2569 เจ้าของงาน "คำว่า รถ ที่อยู่ใน โปรแกรม อยากให้เปลี่ยนเป็นคำว่า ยานพาหนะ แทน โดยถ้าเป็นข้อมูลที่ดึงมาจาก api จะไม่ต้องแก้ไข")
    ข้อความที่ปลั๊กอินใส่เองเขียนเป็น "ยานพาหนะ" ในโค้ดแล้ว (เทสตรวจซอร์สด้วย) · ตัวนี้แก้ข้อความตั้งต้นของ component ที่ยืมมา เช่น "สถานะรถ" ของ component งานซ่อม
    WORD_ALLOW = ข้อมูลจาก API ที่คงคำว่ารถ (ชื่อประเภทยานพาหนะ) + คำที่มี "รถ" แต่ไม่ได้แปลว่ารถ · ต้องตรงกับ allow ของ R80 ใน component-rules.json (เทสเทียบให้) */
-const WORD_ALLOW = ['สามารถ', 'รถพ่วงฉีดน้ำ', 'รถเสีย', 'รถกระเช้า'];   // รถกระเช้า = ประเภทยานพาหนะ/ชื่อแผนจากข้อมูล Overhaul (12 พ.ย. 2569 ตรง ALLOW ของ check-wording.mjs ในรีโปเว็บ) · รถเสีย = ประเภทการซ่อมของระบบแจ้งซ่อม (5.3 Vehicle Breakdown) ใช้ในประวัติการซ่อมบำรุง S24 (10 พ.ย. 2569) · 12 พ.ย. 2569 ถอด ผู้ใช้รถฯ ทะเบียนรถ (ข้อความแบบสำรวจของ S27 ย้ายไป satisfaction-plugin R105)
+const WORD_ALLOW = ['สามารถ', 'รถพ่วงฉีดน้ำ', 'รถเสีย', 'รถกระเช้า', 'รถบรรทุกขนาดใหญ่', 'รถส่วนกลาง', 'รถยนต์บรรทุกส่วนบุคคล'];   // รถกระเช้า = ประเภทยานพาหนะ/ชื่อแผนจากข้อมูล Overhaul (12 พ.ย. 2569 ตรง ALLOW ของ check-wording.mjs ในรีโปเว็บ) · รถเสีย = ประเภทการซ่อมของระบบแจ้งซ่อม (5.3 Vehicle Breakdown) ใช้ในประวัติการซ่อมบำรุง S24 (10 พ.ย. 2569) · 12 พ.ย. 2569 ถอด ผู้ใช้รถฯ ทะเบียนรถ (ข้อความแบบสำรวจของ S27 ย้ายไป satisfaction-plugin R105) · 12 พ.ย. 2569 รถบรรทุกขนาดใหญ่ รถส่วนกลาง รถยนต์บรรทุกส่วนบุคคล = ข้อมูลจาก API ของ VMS+ (หมวดหมู่ · ลักษณะการใช้งาน · ประเภทตามกรมการขนส่งทางบก) ในแท็บข้อมูลยานพาหนะ S24 (R107 · ALLOW ของ check-wording.mjs เว็บ f6f5e0d)
 const OLD_WORD = '\u0E23\u0E16';   // "รถ" เขียนแบบ escape ให้เทสตรวจซอร์สไม่นับตัวแปลงเอง
 const toVehicleWord = (s) => { let t = s; WORD_ALLOW.forEach((w, i) => { t = t.split(w).join('\u0001' + i + '\u0002'); }); t = t.split(OLD_WORD).join('ยานพาหนะ'); WORD_ALLOW.forEach((w, i) => { t = t.split('\u0001' + i + '\u0002').join(w); }); return t; };
 async function AFTER_SCREEN(root) {
@@ -2236,11 +2246,13 @@ async function maList(name, o) {
 }
 const MA_LAST_OPTS = ['ทั้งหมด', 'ภายใน 6 เดือน', '6 ถึง 12 เดือนที่แล้ว', 'เกิน 12 เดือน', 'ยังไม่เคยบำรุงรักษา'];   // ตัวเลือกช่อง "บำรุงรักษาล่าสุด" (เสนอ)
 const MA_WITHIN_OPTS = ['ทั้งหมด', 'เลยกำหนดแล้ว', 'ภายใน 1 เดือน', 'ภายใน 3 เดือน', 'ภายใน 6 เดือน'];
-/* หน้ารายละเอียดยานพาหนะ 5 แท็บ (10 พ.ย. 2569 เจ้าของงาน "อยากให้ออกแบบรายละเอียดรถแต่ละคัน โดยเห็นว่ามีแท็บประวัติการซ่อม เลยอยากให้เพิ่ม tab ประกัน การ overhaul ตารางบำรุงรักษา"
-   + เคาะ Tabs ของไลบรารีมี 5 ช่อง ⇒ ข้อมูลยานพาหนะ · ตารางบำรุงรักษา · ประวัติการซ่อมบำรุง · การรับประกัน · Overhaul (เอา ข้อมูลการเดินทาง / การเติมเชื้อเพลิง ออกจากหน้านี้ แบบทีม Overhaul ในไฟล์ Maintain-D)
-   โครงตาม Vehicle detail หน้า 5.2 Vehicle Management ของ UI Release#2 + DASH รายคัน (แท็บประวัติการซ่อมบำรุง · หลัง Overhaul) ของปลั๊กอิน Overhaul · ดูอย่างเดียว ไม่มีปุ่มแก้ไข */
+/* หน้ารายละเอียดยานพาหนะ 5 แท็บ (10 พ.ย. 2569 · R90) ปรับ 12 พ.ย. 2569 ตามต้นแบบเว็บที่เจ้าของงานรีวิวแล้ว (maintenance-utility-vehicle f6f5e0d · BACKLOG ข้อ 83 84 85 · R107 §5.45)
+   เจ้าของงาน 12 พ.ย. 2569 _"tab นี้ มีเพิ่ม โดยแบ่ง ประวัติการบำรุงรักษาเครื่องจักร ประวัติการบำรุงรักษาเครื่องยนต์ ประวัติการซ่อมบำรุงจะแสดงทั้งการซ่อมและบำรุง ตัดtab การรับประกัน
+   เดี๋ยวจะเอาข้อมูลไปใส่ในข้อมูลรถ และ tab overhaul ก็เอาออก ให้เป็นส่วนหนึ่งของประวัติการซ่อมบำรุง โดยมีแทกว่าเป็นการ overhaul ถ้าการซ่อมนั้นผ่านการ overhaul มา"_
+   ⇒ Tabs 5 ช่อง ข้อมูลยานพาหนะ · ตารางบำรุงรักษา · ประวัติการบำรุงรักษาเครื่องจักร · ประวัติการบำรุงรักษาเครื่องยนต์ · ประวัติการซ่อมบำรุง (ไม่มีแท็บการรับประกัน · Overhaul)
+   ตาม `Tabs` `Tab item` ของไฟล์ Component + เฟรม "Vehicle info" (Vehicle detail) หน้า 5.2 Vehicle Management ของ UI Release#2 · ดูอย่างเดียว ยกเว้นเครื่องมือกลของ กบค. */
 const MA_CAR = 5;   // แถวใน MA_ROWS = 82-1145 (TRIP_CARS[1]) ใกล้ครบรอบเปลี่ยนน้ำมันไฮดรอลิก
-const MA_VTABS = ['ข้อมูลยานพาหนะ', 'ตารางบำรุงรักษา', 'ประวัติการซ่อมบำรุง', 'การรับประกัน', 'Overhaul'];
+const MA_VTABS = ['ข้อมูลยานพาหนะ', 'ตารางบำรุงรักษา', 'ประวัติการบำรุงรักษาเครื่องจักร', 'ประวัติการบำรุงรักษาเครื่องยนต์', 'ประวัติการซ่อมบำรุง'];   // = TAB_TITLES ของเว็บ (_lib/tabs.ts)
 const MA_NEXT_COLS = [['รายการ', 0, 'Lead text'], ['ครั้งล่าสุด', 220], ['รอบ', 220], ['ครบกำหนด', 320]];
 const maNextRows = (r) => { const d = maDues(r), last = [r[1], r[3], r[4], maKey(r[5]) > maKey(r[4]) ? r[5] + ' · ผล ' + r[6] : r[4], r[7]];
   return MA_ITEMS.map((t, i) => [t, last[i], MA_CYCLE[i], d[i] ? Object.assign({ text: d[i][0] }, toneOf(d[i][1])) : { text: 'ปีนี้ครบรอบเปลี่ยนน้ำมัน ไม่ต้องเก็บตัวอย่าง' }]); };
@@ -2248,48 +2260,266 @@ const MA_HIST_COLS = [['วันที่ปิดงาน', 130, 'Lead text']
 const MA_HIST = [['18/06/2569', 'MRZ6900014', 'เปลี่ยนไส้กรองไฮดรอลิก · ไส้กรองอากาศ', 'เปลี่ยน', { text: 'เก็บตัวอย่าง', sub: 'ผลตรวจ ผ่าน' }, 'บันทึกเอกสารแล้ว', TRIP.staff[0]],
   ['20/06/2568', 'MRZ6800007', 'เปลี่ยนไส้กรองไฮดรอลิก · ไส้กรองอากาศ', 'เปลี่ยน', { text: 'เก็บตัวอย่าง', sub: 'ผลตรวจ ผ่าน' }, 'บันทึกเอกสารแล้ว', TRIP.staff[2]],
   ['12/03/2567', 'MRZ6700004', 'เปลี่ยนน้ำมันไฮดรอลิก · ไส้กรอง', 'เปลี่ยน', { text: 'เปลี่ยนน้ำมัน' }, 'บันทึกเอกสารแล้ว', TRIP.staff[1]]].map(r => r.concat([{ menu: 1, items: MENU.slice(0, 1) }]));
-/* ประวัติการซ่อมบำรุงของ 82-1145 — แบบ VEH_HISTORY ของปลั๊กอิน Overhaul: หมายเลขงาน · วันที่ซ่อมเสร็จ · ศูนย์บริการ · ประเภท (บรรทัดรอง) · อาการ / รายละเอียด · ป้าย · ค่าซ่อม */
-const MA_REPAIR_COLS = [['หมายเลขงาน', 150, 'Lead text'], ['วันที่ซ่อมเสร็จ', 130], ['ศูนย์บริการ', 170], ['ประเภทการซ่อม', 160], ['อาการ / รายละเอียดการซ่อม', 0], ['การรับประกัน', 170, 'Badge'], ['ค่าซ่อม (บาท)', 120], ['', 64]];
 const MA_WAR = { in: ['อยู่ในประกัน', 'Success'], near: ['ใกล้หมดประกัน', 'Warning'], out: ['หมดประกัน', 'Gray'], none: ['ไม่มีประกัน', 'Gray'] };
+/* งานซ่อมของ 82-1145 (แบบ VEH_HISTORY ของปลั๊กอิน Overhaul) — [หมายเลขงาน, วันที่ปิดงาน, ศูนย์บริการ, ประเภท, บรรทัดรองประเภท, อาการ, รายละเอียด, ประกัน, ค่าซ่อม] · ชุดเดียวกับ MA_REPAIRS ของเว็บ
+   แถวบำรุงรักษา MA-2569-0102 ซ้ำกับบันทึก 18/06/2569 ⇒ ประวัติการซ่อมบำรุงใช้บันทึก (MA_HIST) แทน แบบเว็บ (machineHistoryOf) */
 const MA_REPAIRS = [['RP-2569-0611', '02/09/2569', 'อู่ ศรีเมืองการช่าง', 'รถเสีย', '', 'บูมยกช้า', 'เปลี่ยนปั๊มไฮดรอลิก', 'in', '28,400'],
   ['MA-2569-0102', '18/06/2569', 'กบผ.', 'บำรุงรักษา', 'ตามวาระ MRZ6900014', 'ตรวจตามรอบ', 'เปลี่ยนไส้กรองไฮดรอลิก · ไส้กรองอากาศ', 'none', '-'],
   ['PO-680412', '15/12/2568', 'บริษัท สยามไฮดรอลิก จำกัด', 'Overhaul', 'แผน ORZ6800003', 'ยกเครื่องตามแผน', 'ไฮดรอลิกกระเช้า · เครื่องยนต์', 'in', '-'],
   ['RP-2568-0877', '03/08/2568', 'กรย. ภาค 1', 'อุบัติเหตุ', '', 'กันชนหน้าบุบ', 'เปลี่ยนกันชนหน้า', 'out', '6,500']];
-/* การรับประกัน — รวมทุกงานที่มีประกันของผู้รับจ้าง (ซ่อม · Overhaul R28 90/180/360/720 วัน · บำรุงรักษาแผนจ้าง) */
+/* การรับประกัน — รวมทุกงานที่มีประกันของผู้รับจ้าง (ซ่อม · Overhaul R28 90/180/360/720 วัน · บำรุงรักษาแผนจ้าง) · 12 พ.ย. 2569 ย้ายจากแท็บการรับประกันมาเป็นส่วนท้ายแท็บข้อมูลยานพาหนะ (มีเฉพาะ 82-1145 แบบ warrantyOf ของเว็บ) */
 const MA_WAR_COLS = [['ประเภทงาน', 140, 'Lead text'], ['เลขที่งาน / PO', 150], ['ผู้รับจ้าง', 0], ['รายการที่รับประกัน', 220], ['วันเริ่ม', 120], ['วันหมดอายุ', 170], ['สถานะ', 150, 'Badge']];
 const MA_WARRANTY = [['ซ่อม', 'RP-2569-0611', 'อู่ ศรีเมืองการช่าง', 'ปั๊มไฮดรอลิก', '02/09/2569', { text: '01/03/2570', sub: 'เหลือ 111 วัน' }, { pill: MA_WAR.in }],
   ['Overhaul', 'PO-680412', 'บริษัท สยามไฮดรอลิก จำกัด', 'ไฮดรอลิกกระเช้า · เครื่องยนต์', '15/12/2568', { text: '10/12/2569', sub: 'เหลือ 30 วัน' }, { pill: MA_WAR.near }],
   ['ซ่อม', 'RP-2568-0877', 'กรย. ภาค 1', 'กันชนหน้า', '03/08/2568', { text: '01/11/2568' }, { pill: MA_WAR.out }]];
+
+/* ---------- แท็บข้อมูลยานพาหนะแบบ Vehicle info ของ VMS+ (เจ้าของงาน 12 พ.ย. 2569 _"หน้าข้อมูลยานพาหนะ อยากให้อ่าน vehicle-management component แล้วเอามาแสดง"_ · R107) ----------
+   ค่าทุกช่องคิดแบบเดียวกับ vehicleInfoOf() ของเว็บ (src/lib/mock/vehicleInfo.ts) จากข้อมูลเดิมของปลั๊กอิน (TRIP_CARS · MA_USE · CTRL_NAME · OWNER_PH) ⇒ ทะเบียนเดียวกันได้ค่าเท่ากับเว็บ
+   ค่าที่ข้อมูลจำลองไม่มี = ค่าสมมติคำนวณจากเลขทะเบียน (เลขสัญญา ศูนย์ต้นทุน เลขตัวยานพาหนะ บัตรเติมน้ำมัน ฯลฯ) · ข้อมูลจาก API ของ VMS+ คงคำว่า "รถ" (R80 allow) */
+const VI_CHASSIS = {   // สเปกแชสซีตามรุ่น (ค่าสมมติ · CHASSIS ของเว็บ) — [แรงม้า, เพลา, ล้อ, ยาง, ราคา, ขึ้นต้นเลขตัว, ขึ้นต้นเลขเครื่องยนต์]
+  'Isuzu FRR': [190, 2, 6, 6, 2850000, 'MP1FRR34', '4HK1-'], 'Isuzu FTR': [240, 2, 6, 6, 3450000, 'MP1FTR34', '6HK1-'],
+  'Hino FC': [175, 2, 6, 6, 3200000, 'JHHFC9JL', 'J05E-'], 'Hino FG': [230, 2, 6, 6, 3900000, 'JHHFG8JL', 'J08E-'], 'Hino FM': [260, 3, 10, 10, 4600000, 'JHHFM2PL', 'J08E-'] };
+const viPad = (n, w) => String(n).padStart(w, '0');
+const viId = (plate) => plate.split(' ')[0];
+const viDigits = (plate) => viId(plate).replace(/\D/g, '').padStart(6, '0').slice(-6);   // ชุดเดียวกับรหัสทรัพย์สิน 500000 + 6 หลัก
+const viNum = (n) => n.toLocaleString('en-US');
+/* รหัสข้างยานพาหนะ (sideCodeOf ของเว็บ · vehicleTypes.ts) — 81-2210 = 04 (ในกลุ่ม ยังไม่มีเครื่องมือกล) · 80-4458 = 06 (นอกกลุ่ม) · กระเช้าอื่น = 09
+   กลุ่มที่มีส่วนเครื่องมือกล 04 07 08 09 10 (เจ้าของงาน "กลุ่มรหัสข้างรถ เลข 04, 07, 08, 09, 10 จะสามารถเพิ่มเครื่องมือกลได้ ถ้ามีข้อมูลต้องสามารถแก้ไขได้" · BACKLOG ข้อ 68ก) */
+const VI_SIDE = { '81-2210': '04', '80-4458': '06' }, VI_EQUIP = ['04', '07', '08', '09', '10'], VI_PREFILL = ['09', '08', '10'];
+const viSide = (c) => VI_SIDE[viId(c[0])] || (/กระเช้า/.test(c[1]) ? '09' : '06');
+const viMachine = (model) => { const [vehicle, rest] = model.split(' + '); const m = rest && rest.match(/^\S*[฀-๿]\S*\s+([A-Za-z][\w.-]*)\s+(.+)$/); return { vehicle, brand: m ? m[1] : '-', model: m ? m[2] : (rest || '-') }; };
+const viMonths = (k) => { const t = (MA_TODAY[2] - 543) * 12 + MA_TODAY[1] - 1 + k; return viPad(MA_TODAY[0], 2) + '/' + viPad(t % 12 + 1, 2) + '/' + (Math.floor(t / 12) + 543); };   // addMonths(TODAY, k) ของเว็บ
+function vInfo(row) {
+  const c = TRIP_CARS[MA_ROWS[row][0]], u = MA_USE[row], d = viDigits(c[0]), n = Number(d), year = u[0];
+  const spec = VI_CHASSIS[viMachine(c[1]).vehicle] || [180, 2, 6, 6, 3000000, 'MP1XXX34', 'ENG-'];
+  const [brand, ...rest] = c[1].split(' '), dist = c[2].split(' ')[0], prefix = dist.indexOf('กฟ') === 0 ? dist.slice(2) : dist;
+  const reg = /^[นฉกต]\./.test(prefix) ? { น: 'N', ฉ: 'E', ก: 'C', ต: 'S' }[prefix[0]] : 'A', regNo = Number(prefix.replace(/\D/g, '')) || 0;
+  const type = typeOf(c), water = /ฉีดน้ำ/.test(c[1]);
+  return { c, d, n, type, side: viSide(c), vstat: MA_VSTAT[u[4]],
+    general: [[['หมวดหมู่ยานพาหนะหลัก', 'รถบรรทุกขนาดใหญ่'], ['หมวดหมู่ยานพาหนะย่อย', water ? 'รถพ่วงฉีดน้ำ' : 'รถกระเช้า']], [['ประเภทยานพาหนะหลัก', type], ['ประเภทยานพาหนะย่อย', type]],
+      [['ลักษณะการใช้งาน', 'รถส่วนกลาง'], ['ประเภทเกียร์', 'ธรรมดา']], [['หมายเหตุ', '-']]],
+    finance: [[['เลขที่สัญญา', 'สญ2-จซ-' + viPad(1 + (n % 200), 3) + '-' + (year - 1)]], [['งวดที่ส่งมอบ', 'งวดที่ ' + (1 + (n % 3))]], [['มูลค่ายานพาหนะ', viNum(spec[4]) + '.00']]].map(items => ({ items, half: true })),
+    dept: [[['สังกัดยานพาหนะ', c[2]], ['รหัสข้างยานพาหนะ', prefix + '-' + viSide(c) + '-' + d.slice(-4)]], [['ผู้ดูแลยานพาหนะ', CTRL_NAME[MA_ROWS[row][0]]], ['เบอร์ติดต่อ', OWNER_PH[MA_ROWS[row][0]]]],
+      [['ศูนย์ต้นทุน', 'Z' + reg + viPad(regNo, 2) + '010100 : ' + dist + '-บห.'], ['รหัสประเภทธุรกิจ (BA)', reg + viPad(regNo, 2) + '0']], [['รหัสทรัพย์สิน', '500000' + d], ['วันที่ได้รับยานพาหนะ', viPad(1 + (n % 28), 2) + '/' + viPad(1 + (n % 12), 2) + '/' + year]],
+      [['ประเภททรัพย์สิน', 'Z6020 : ยานพาหนะ'], ['ประเภทย่อยทรัพย์สิน', '602004 : ' + type + ' - ซื้อ']], [['ใช้งานอยู่ในกลุ่มยานพาหนะ', 'ไม่ใช่'], ['หน่วยงานอื่นสามารถขอใช้งานได้', 'ไม่ได้']]].map(items => ({ items })),
+    reg: [{ half: true, items: [['ประเภทยานพาหนะ', 'รถยนต์บรรทุกส่วนบุคคล (รย.3)']] }, { items: [['ยี่ห้อยานพาหนะ', brand], ['แบบ / รุ่น', rest.join(' ')], ['รุ่นปี ค.ศ.', String(year - 543)], ['สี', 'ขาว']] },
+      { items: [['เลขตัวยานพาหนะ', spec[5] + 'H' + viPad(n % 10000000, 7)], ['ตำแหน่งเลขตัวยานพาหนะ', 'โครงคัสซีด้านหน้าขวา']] }, { items: [['เลขเครื่องยนต์', spec[6] + viPad((n * 7) % 1000000, 6)], ['ตำแหน่งเลขเครื่องยนต์', 'ข้างเสื้อสูบด้านซ้าย']] },
+      { half: true, items: [['ประเภทเชื้อเพลิง', 'ดีเซล']] }, { items: [['ขนาดแรงม้า', String(spec[0])], ['จำนวนเพลา', String(spec[1])], ['จำนวนล้อ', String(spec[2])], ['จำนวนยาง', String(spec[3])]] },
+      { items: [['ปีที่จดทะเบียน', String(year)], ['อายุการใช้งาน', (MA_TODAY[2] - year) + ' ปี']] }],   // ปีที่จดทะเบียน · อายุการใช้งาน = ของเรา (VMS+ ไม่มีช่องนี้)
+    file: ['เล่มทะเบียน_' + viId(c[0]) + '.pdf', (160 + (n % 120)) + ' KB'],
+    fleet: { number: '4030 5263 ' + d.slice(-4) + ' ' + viPad((n * 7) % 10000, 4), dates: 'ใช้ได้ตั้งแต่ 01/10/2567 | ใช้ได้ถึง 30/09/2572', bank: 'KTB', limit: 'วงเงินบัตร 60,000.00' },
+    usage: [['swap_driving_apps_wheel-24-300-round', 'เลขไมล์', u[1] + ' กม.'], ['schedule-24-300-round', 'ชั่วโมงเครื่องจักรสะสม', u[2] + ' ชม.'],   // ชั่วโมงเครื่องจักรสะสม = ของเรา (VMS+ ไม่มีแถวนี้)
+      ['local_gas_station-24-300-round-filled', 'ปริมาณเชื้อเพลิง', (40 + (n % 60)) + '%'], ['local_car_wash-24-300-round', 'ความสะอาด', ['ดูดฝุ่น', 'ล้างภายนอก', 'ล้างภายนอกและดูดฝุ่น'][n % 3]],
+      ['local_parking-24-fill-300-round', 'สถานที่จอดยานพาหนะ', 'ลานจอด สำนักงาน ' + c[2]]] };
+}
+/* เครื่องมือกล (machines.ts ของเว็บ · BACKLOG ข้อ 68 72 73 84) — ค่าตั้งต้น 1 เครื่องจาก ยี่ห้อ/รุ่น ของยานพาหนะ เฉพาะรหัสข้าง 09 08 10 (04 07 เริ่มว่าง) · ชั่วโมงตาม CAND ของเว็บ (ค่าสมมติ) */
+const VI_HOURS = { '80-5738': [7280, 3440], '80-3316': [3085, 2155], '80-9981': [2291, 1733], '82-7720': [2688, 1944], '82-1145': [2397, 1011], '81-6604': [3482, 2366], '82-6789': [2000, 800] };
+const VI_NO_LIFT = ['ถังฉีดน้ำ', 'อื่นๆ'];
+function vMachines(v) {
+  if (VI_EQUIP.indexOf(v.side) < 0 || VI_PREFILL.indexOf(v.side) < 0) return [];
+  const m = viMachine(v.c[1]), type = /ถังฉีดน้ำ/.test(v.c[1]) ? 'ถังฉีดน้ำ' : /เครน/.test(v.c[1]) ? 'เครน' : /กระเช้า/.test(v.c[1]) ? 'กระเช้า' : 'อื่นๆ', h = VI_HOURS[viId(v.c[0])] || [2000, 800];
+  return [{ type, brand: m.brand === '-' ? '' : m.brand, model: m.model === '-' ? '' : m.model, asset: '500000' + v.d, sub: '0001',
+    lift: VI_NO_LIFT.indexOf(type) >= 0 ? null : /Tadano/.test(v.c[1]) ? 300 : 200, hc: type === 'กระเช้า' || type === 'เครน' ? 'HC - ' + v.d.slice(-4) : '', engineHours: h[0], machineHours: h[1] }];
+}
+/* ประวัติการบำรุงรักษาเครื่องยนต์ (engineHistoryOf ของเว็บ · เช็คระยะแชสซีที่ศูนย์บริการยี่ห้อ ค่าสมมติ) — ทุก 6 เดือนย้อนจากวันนี้ · จำนวนครั้ง = อายุการใช้งาน (สูงสุด 4) */
+const VI_ENGINE_WORK = ['เปลี่ยนน้ำมันเครื่อง · ไส้กรองน้ำมันเครื่อง', 'เปลี่ยนน้ำมันเครื่อง · ไส้กรองน้ำมันเครื่อง · ไส้กรองน้ำมันเชื้อเพลิง'];
+function vEngine(row) {
+  const v = vInfo(row), year = MA_USE[row][0], km = Number(MA_USE[row][1].replace(/,/g, '')), count = Math.max(1, Math.min(4, MA_TODAY[2] - year));
+  return Array.from({ length: count }, (_, i) => { const date = viMonths(-(1 + (v.n % 4)) - 6 * i);
+    return { no: 'EG-' + date.slice(6) + '-' + viPad((v.n + i * 37) % 10000, 4), date, center: 'ศูนย์บริการ ' + v.c[1].split(' ')[0] + ' ' + v.c[0].split(' ').slice(1).join(' '),
+      work: VI_ENGINE_WORK[i % 2], km: viNum(Math.max(0, km - 2000 - (v.n % 3000) - i * 10000)), cost: viNum(i % 2 ? 6850 : 4200) }; });
+}
+const VI_ENGINE_COLS = [['วันที่ปิดงาน', 130, 'Lead text'], ['เลขที่งาน', 150], ['ศูนย์บริการ', 220], ['งานที่ทำ', 0], ['เลขไมล์ (กม.)', 130], ['ค่าใช้จ่าย (บาท)', 140]];
+/* ประวัติการซ่อมบำรุง (serviceHistoryOf ของเว็บ) = งานซ่อม + Overhaul + บันทึกบำรุงรักษาเครื่องจักร (MA_HIST) + บำรุงรักษาเครื่องยนต์ เรียงวันที่ปิดงานใหม่สุดก่อน
+   คอลัมน์ "ประเภท" Pill outline บำรุงรักษา (Brand) / ซ่อม (Warning) + Pill "Overhaul" (Purple) ต่อท้ายเมื่องานมาจาก Overhaul (Table cell Style=Multiple badges) */
+const MA_KIND = { ma: ['บำรุงรักษา', 'Brand'], repair: ['ซ่อม', 'Warning'], overhaul: ['Overhaul', 'Purple'] };
+const MA_REPAIR_COLS = [['หมายเลขงาน', 160, 'Lead text'], ['วันที่ปิดงาน', 130], ['ประเภท', 140, 'Badge'], ['ศูนย์บริการ', 170], ['อาการ / รายละเอียด', 0], ['การรับประกัน', 150, 'Badge'], ['ค่าซ่อม (บาท)', 120], ['', 64]];
+function vService(row) {
+  const rec = MA_REPAIRS.filter(h => h[3] !== 'บำรุงรักษา').map(h => ({ kind: h[3] === 'Overhaul' ? 'overhaul' : 'repair', no: h[0], sub: h[4] || h[3], date: h[1], center: h[2], text: h[5], detail: h[6], war: h[7], cost: h[8] }))
+    .concat(MA_HIST.map(h => ({ kind: 'ma', no: h[1], date: h[0], center: UNITS[0], text: 'ตรวจตามรอบ', detail: h[2], war: 'none', cost: '-' })),
+      vEngine(row).map(e => ({ kind: 'ma', no: e.no, sub: 'บำรุงรักษาเครื่องยนต์', date: e.date, center: e.center, text: 'เช็คระยะตามเลขไมล์ ' + e.km + ' กม.', detail: e.work, war: 'none', cost: e.cost })));
+  rec.sort((a, b) => maKey(b.date) - maKey(a.date));
+  return rec.map(h => [h.sub ? { text: h.no, sub: h.sub } : h.no, h.date, { pills: h.kind === 'overhaul' ? [MA_KIND.repair, MA_KIND.overhaul] : [MA_KIND[h.kind]] }, h.center,
+    h.detail ? { text: h.text, sub: h.detail } : h.text, { pill: MA_WAR[h.war] }, h.cost, { icons: ['quick_reference_all-24-300-round'] }]);
+}
+
+/* ---------- ประกอบแท็บข้อมูลยานพาหนะจากชิ้นไลบรารี (Fleet card · Last usage · Vehicle detail เป็น component ของไฟล์ UI Release#2 (remote=false) นำเข้าด้วย key ไม่ได้ ⇒ ประกอบแบบเว็บ COMPOSED.md ศ5) ---------- */
+let VI_BORDER;
+async function viBorder() {   // เส้นกรอบการ์ด = Color/border/secondary (#EAECF0) ของไลบรารีแบบ Fleet card / Last usage ของ UI Release#2
+  if (VI_BORDER === undefined) VI_BORDER = await libVar(/^Color\/border\/secondary$/i);
+  let p = { type: 'SOLID', color: rgbOf('#EAECF0') };
+  if (VI_BORDER) try { p = figma.variables.setBoundVariableForPaint(p, 'color', VI_BORDER); } catch (e) { /* ใช้ค่าสี */ }
+  return p;
+}
+async function viSubtle(f) {   // พื้นกล่องในการ์ด = Color/surface/secondary-subtle (#F9FAFB) รัศมี 8 (Content ของ Fleet card)
+  let p = { type: 'SOLID', color: SURFACE_SUB }; const v = await surfaceVar();
+  if (v) try { p = figma.variables.setBoundVariableForPaint(p, 'color', v); } catch (e) { /* ใช้ค่าสี */ }
+  f.fills = [p]; f.cornerRadius = 8; return f;
+}
+async function viCard(name, dir) {   // กรอบการ์ด white ขอบ gray-200 รัศมี 16 ขอบใน 16 ช่องไฟ 16 (Fleet card · Last usage > Card ของเฟรม Vehicle info)
+  const f = frame(name, dir || 'VERTICAL', { gap: 16, pad: 16, fill: WHITE });
+  f.cornerRadius = 16; f.strokes = [await viBorder()]; f.strokeWeight = 1; f.strokeAlign = 'INSIDE';
+  return f;
+}
+const viSection = (kids) => col('Section', kids, 8);   // Section label → ห่าง 8 → เนื้อหา (ทุกส่วนของเฟรม Vehicle info)
+async function viBox(title, rows) {   // กล่องแสดงข้อมูล R12 (Content item row Full / 50% first column · _Content item base Text with label) · มือถือ แถวละ 2
+  const box = frame('Content item', 'VERTICAL', { gap: 8 });
+  for (const r of rows) for (let i = 0; i < r.items.length; i += MOB ? 2 : 4) {
+    const part = r.items.slice(i, i + (MOB ? 2 : 4)), half = part.length === 1 && (MOB || r.half);
+    const ci = inst('Content item row', { 'Column width': half ? '50% first column' : 'Full' });
+    const bases = ci.findAll(n => n.type === 'INSTANCE' && n.name === '_Content item base');
+    bases.forEach((b, j) => { if (j >= part.length) return; setProps(b, { Type: 'Text with label' }); setProps(b, { Label: part[j][0], Text: part[j][1], Supporting: false, 'Leading icon': false }); });
+    setProps(ci, { 'Item 2': part.length > 1, 'Item 3': part.length > 2, 'Item 4': part.length > 3 });
+    add(box, ci, 'h');
+  }
+  return viSection([await sectionLabel(title), box]);
+}
+/* แถวของการ์ด = Card item row Type=1 Row (Item 2 ปิด) · Card item base Type=Text with label · Text ชิดขวา (แบบ Last usage ของ UI Release#2)
+   iconName = ไอคอนนำ (ไม่มีในไฟล์นี้ = ไม่มีไอคอน) · value = ข้อความ หรือ { add: true } = ปุ่ม Tertiary brand button "เพิ่ม" (สลับชิ้น Badge outline ของ Type=Text with label and component) */
+function viCardRow(iconName, label, value) {
+  const r = inst('Card item row', { Type: '1 Row' }, { 'Item 2': false });
+  const b = r.children.find(c => c.type === 'INSTANCE' && c.name === 'Card item base');
+  if (!b) return r;
+  try { b.layoutSizingHorizontal = 'FILL'; } catch (e) { /* ตามขนาดของ component */ }
+  const ico = iconName && has(iconName);
+  setProps(b, { Type: value && value.add ? 'Text with label and component' : 'Text with label' });
+  setProps(b, Object.assign({ Label: label, Text: value && value.add ? '' : value, Supporting: false, 'Leading icon': !!ico }, ico ? { 'Icon swap': icon(iconName) } : {}));
+  const own = b.children.find(c => c.type === 'TEXT' && c.name === 'Text'), lab = b.children.find(c => c.type === 'TEXT' && c.name === 'Label');
+  if (value && value.add) {
+    if (own) own.visible = false;
+    if (lab) try { lab.layoutGrow = 1; } catch (e) { /* ตามขนาดของ component */ }
+    const slot = b.children.find(c => c.type === 'INSTANCE' && c.name === 'Badge outline');
+    if (slot) try {
+      slot.swapComponent(main('Tertiary brand button', { State: 'Default' })); slot.name = 'Tertiary brand button';
+      setProps(slot, { Text: 'เพิ่ม', 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') });
+    } catch (e) { warn('ปุ่มเพิ่มในการ์ดเครื่องมือกล', e); }
+  } else if (own) try { own.textAlignHorizontal = 'RIGHT'; } catch (e) { /* ชิดซ้ายตาม component */ }
+  return r;
+}
+/* Section label ที่มีปุ่ม Secondary button (แบบ SectionLabel Actions ของเว็บ) — สลับช่อง Secondary action (Tertiary button) ของ Section label เป็น Secondary button แบบ Table header ของ core */
+async function viLabelWithButton(title, label, size) {
+  const sl = await sectionLabel(title, { buttons: [{ kind: 'Secondary', text: label, icon: 'add-24-300-round' }] });
+  const tb = sl.findAll(n => n.type === 'INSTANCE' && n.name === 'Tertiary button')[0];
+  if (tb) try { tb.swapComponent(main('Secondary button', { State: 'Default', Size: size || 'md' })); tb.name = 'Secondary button';
+    setProps(tb, { Text: label, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') }); } catch (e) { warn('ปุ่มเพิ่มเครื่องมือกล', e); }
+  return sl;
+}
+/* ส่วนเครื่องมือกล (เจ้าของงาน 12 พ.ย. 2569 _"ส่วน section ของการเพิ่มเครื่องจักร อยากให้เป็น คล้ายๆ การ์ด ในcomponent 1 การ์ด แล้วข้อมูลข้างใน ถ้ามีข้อมูลจาก api ก็แสดง
+   ถ้าไม่มี ก็ให้เป็นข้อมูลที่สามารถเพิ่มได้ และที่ แสดง ก็สามารถแก้ไขได้"_) — MachineSection.tsx ของเว็บ
+   การ์ด 1 ใบต่อเครื่อง = กรอบแบบ Last usage + Section label (ชื่อ · Supporting text รหัสทรัพย์สิน · Primary action "แก้ไข") + Card item row 11 แถว
+   ช่องว่าง: กบค. = ปุ่ม "เพิ่ม" · บทบาทอื่น "-" · พิกัดยกของถังฉีดน้ำ/อื่นๆ = "-" · ยังไม่มีเครื่อง = การ์ดว่างแบบ Fleet card Status=Empty · แก้ได้เฉพาะ กบค. (kbk) */
+async function viMachines(v, kbk) {
+  const list = vMachines(v);
+  const head = kbk && list.length ? await viLabelWithButton('เครื่องมือกล (' + list.length + ')', 'เพิ่มเครื่องมือกล') : await sectionLabel('เครื่องมือกล', { badge: list.length });
+  const kids = [head];
+  if (!list.length) {
+    const card = await viCard('Machine card'), box = await viSubtle(frame('Content', MOB ? 'VERTICAL' : 'HORIZONTAL', { gap: 12, pad: [12, 16] }));
+    const sl = await sectionLabel('ไม่มีเครื่องมือกล'); setProps(sl, { Supporting: true, 'Supporting text': 'ยานพาหนะคันนี้ยังไม่มีข้อมูลเครื่องมือกล' });
+    add(box, sl, 'h'); box.counterAxisAlignItems = 'CENTER';
+    if (kbk) { const b = btn('Secondary button', 'เพิ่มเครื่องมือกล', { icon: 'add-24-300-round', size: 'lg' }); box.appendChild(b); if (MOB) b.layoutSizingHorizontal = 'FILL'; }
+    add(card, box, 'h'); kids.push(card);
+  }
+  for (const x of list) {
+    const name = [x.type, x.brand, x.model].filter(Boolean).join(' ');
+    const card = await viCard('Machine card');
+    const sl = await sectionLabel(name || 'เครื่องมือกล', { buttons: kbk ? [{ kind: 'Primary button', text: 'แก้ไข' }] : [] });
+    setProps(sl, { Supporting: true, 'Supporting text': 'รหัสทรัพย์สิน ' + x.asset + ' - ' + x.sub });
+    add(card, sl, 'h');
+    const fields = [['ประเภทเครื่องมือกล', x.type], ['ยี่ห้อ', x.brand], ['รุ่น', x.model], ['พิกัดยก (กก.)', x.lift != null ? viNum(x.lift) : '', x.lift == null],
+      ['รหัสทรัพย์สิน', x.asset], ['รหัสทรัพย์สินย่อย', x.sub], ['ชั่วโมงเครื่องยนต์', viNum(x.engineHours)], ['ชั่วโมงเครื่องจักร', viNum(x.machineHours)],
+      ['หมายเลข HC', x.hc], ['หมายเลขประจำเครื่องจักร (Serial No.)', ''], ['หมายเลขเครื่องยนต์ (ส่วนเครื่องจักร)', '']];   // Serial No. · เลขเครื่องยนต์ของเครื่องจักร แมปจากฐานข้อมูลไม่ได้ ค่าตั้งต้นว่าง
+    for (const [label, val, na] of fields) add(card, viCardRow(null, label, val ? val : na || !kbk ? '-' : { add: true }), 'h');
+    kids.push(card);
+  }
+  return viSection(kids);
+}
+async function viFleet(f) {   // Fleet card Status=Valid — Images sm 108 + กล่อง gray-50 (Section label เลขบัตร + วันใช้ได้) + Badge outline with indicator "ปกติ" · Badge outline ธนาคาร · วงเงินบัตร (ไม่มีโลโก้ธนาคาร/ปั๊ม — ภาพไม่มีในดัมป์)
+  const card = await viCard('Fleet card', 'HORIZONTAL');
+  const img = inst('Images', { Size: 'sm', Type: 'Empty' }); img.resize(108, 108); card.appendChild(img);
+  const box = await viSubtle(frame('Content', 'VERTICAL', { gap: 8, pad: [12, 16] }));
+  const sl = await sectionLabel(f.number); setProps(sl, { Supporting: true, 'Supporting text': f.dates }); add(box, sl, 'h');
+  const badges = frame('Badges', 'HORIZONTAL', { gap: 8 });
+  badges.appendChild(inst('Badge outline with indicator', { Color: 'Success' }, { Text: 'ปกติ' }));
+  [f.bank, f.limit].forEach(t => badges.appendChild(inst('Badge outline', { Color: 'Gray' }, { Text: t })));
+  add(box, badges, 'h');
+  card.appendChild(box); box.layoutGrow = 1;
+  return card;
+}
+async function viLastUsage(v) {   // Last usage Fuel=true — Card item row 1 แถวต่อรายการ ไอคอนนำ · ข้อความชิดขวา · + ชั่วโมงเครื่องจักรสะสม (ของเรา)
+  const card = await viCard('Card');
+  v.usage.forEach(([ic, label, val]) => add(card, viCardRow(ic, label, val), 'h'));
+  return viSection([await sectionLabel('การใช้งานล่าสุด'), card]);
+}
+async function viWarranty(v) {   // การรับประกัน (n) ท้ายแท็บ เต็มแถว (เดิมแท็บการรับประกัน) — มีเฉพาะ 82-1145 แบบเว็บ (warrantyOf)
+  const rows = viId(v.c[0]) === viId(TRIP_CARS[MA_ROWS[MA_CAR][0]][0]) ? MA_WARRANTY : [];
+  let body;
+  if (rows.length) body = await tblShort(MA_WAR_COLS, rows, { pagination: rows.length });
+  else {
+    body = inst('Empty state/Data empty');
+    await text(body, 'Text', 'ยังไม่มีงานที่อยู่ในประกัน');
+    await text(body, 'Supporting text', 'เมื่อปิดงานซ่อม Overhaul หรือบำรุงรักษาแผนจ้างที่มีประกันของผู้รับจ้าง รายการจะมาอยู่ที่นี่');
+    const a = find(body, 'Actions'); if (a) a.visible = false;
+  }
+  return viSection([await sectionLabel('การรับประกัน', { badge: rows.length }), body]);
+}
+/* แท็บข้อมูลยานพาหนะ — desktop 2 คอลัมน์ (ซ้าย FILL · ขวา 526 ช่องไฟ 24 ตาม Section ของ Vehicle detail) · มือถือ 1 คอลัมน์ลำดับเดียวกัน (UI Release#2 ไม่มีเฟรม Vehicle info มือถือ)
+   ซ้าย ข้อมูลทั่วไป → ข้อมูลการเงินและสัญญา → ข้อมูลสังกัดยานพาหนะ → ข้อมูลการจดทะเบียน → เครื่องมือกล (เฉพาะรหัสข้าง 04 07 08 09 10)
+   ขวา รูปยานพาหนะ (Images md) → ใบคู่มือจดทะเบียน (_File upload item base) → บัตรเติมน้ำมัน (Fleet card) → การใช้งานล่าสุด (Last usage) · ใต้ 2 คอลัมน์ การรับประกัน
+   ไม่มีปุ่ม แก้ไข ดูรายละเอียด เปลี่ยนเลขทะเบียน เปลี่ยนสังกัด ของ VMS+ (งานผู้ดูแลข้อมูลยานพาหนะ) · ดาวน์โหลดใบคู่มือคงไว้ */
+async function vehicleInfoTab(row, kbk) {
+  const v = vInfo(row);
+  const left = [await viBox('ข้อมูลทั่วไป', v.general.map(items => ({ items }))), await viBox('ข้อมูลการเงินและสัญญา', v.finance), await viBox('ข้อมูลสังกัดยานพาหนะ', v.dept), await viBox('ข้อมูลการจดทะเบียน', v.reg)];
+  if (VI_EQUIP.indexOf(v.side) >= 0) left.push(await viMachines(v, kbk));
+  const img = inst('Images', { Size: 'md', Type: 'Empty' });
+  const file = inst('_File upload item base', { State: 'Completed' }, { 'File name': v.file[0], 'File size': v.file[1], 'Progress bar': false, Actions: true, 'Download action': true, 'Delete action': false });
+  const right = [viSection([await sectionLabel('รูปยานพาหนะ'), img]), viSection([await sectionLabel('ใบคู่มือจดทะเบียน'), file]), viSection([await sectionLabel('บัตรเติมน้ำมัน'), await viFleet(v.fleet)]), await viLastUsage(v)];
+  const out = col('Vehicle info', [], 24);
+  if (MOB) left.concat(right).forEach(k => add(out, k, 'h'));
+  else {
+    const two = frame('Row', 'HORIZONTAL', { gap: 24 });
+    const l = col('Column', left, 24), r = col('Column', right, 24);
+    two.appendChild(l); l.layoutGrow = 1; two.appendChild(r); r.counterAxisSizingMode = 'FIXED'; r.resize(526, r.height);
+    add(out, two, 'h');
+  }
+  try { img.layoutSizingHorizontal = 'FILL'; img.resize(img.width, MOB ? 278 : 395); } catch (e) { /* ขนาดตาม component */ }   // สัดส่วน 4:3 แบบเว็บ (526 × 395)
+  add(out, await viWarranty(v), 'h');
+  return out;
+}
+
 async function maShell(name, tab, row) {
-  const c = TRIP_CARS[MA_ROWS[row == null ? MA_CAR : row][0]];
-  const { scr, page } = await shell(name, { title: c[0], back: true, root: 'ยานพาหนะ', crumbs: ['ข้อมูลยานพาหนะ', c[0]] });
+  row = row == null ? MA_CAR : row;
+  const c = TRIP_CARS[MA_ROWS[row][0]], st = MA_VSTAT[MA_USE[row][4]];
+  const { scr, page } = await shell(name, { title: c[0], back: true, root: 'ยานพาหนะ', crumbs: ['ข้อมูลยานพาหนะ', c[0]], badge: st });
+  headPill(scr, st);   // Pill outline สถานะยานพาหนะใน Page header แบบ Page header Page=View ของเฟรม Vehicle info
   const sec = col('Section', [], 24); add(page, sec, 'h');
   add(sec, await tabs(MA_VTABS.map(t => [t, null]), tab), 'h');
   return { scr, sec, c };
 }
-/* o.tab = 0–3 (แท็บ Overhaul มีในแถบแต่ไม่ทำจอเนื้อหา — เจ้าของงาน 10 พ.ย. 2569 "มี tab แต่ไม่มี display ออกมา") · o.row = แถวใน MA_ROWS (ค่าเริ่ม MA_CAR) · o.menu · o.empty = แท็บการรับประกันว่าง */
+/* o.tab = 0 ข้อมูลยานพาหนะ · 1 ตารางบำรุงรักษา · 2 ประวัติการบำรุงรักษาเครื่องจักร · 3 ประวัติการบำรุงรักษาเครื่องยนต์ · 4 ประวัติการซ่อมบำรุง
+   o.row = แถวใน MA_ROWS (ค่าเริ่ม MA_CAR) · o.menu · o.kbk = บทบาท กบค. (แก้/เพิ่มเครื่องมือกลได้) */
 async function maDetail(name, o) {
   o = o || {};
   const tab = o.tab == null ? 1 : o.tab, row = o.row == null ? MA_CAR : o.row, r = MA_ROWS[row];
-  const { scr, sec, c } = await maShell(name, tab, row);
-  if (tab === 0) add(sec, await vehicleInfo([['ทะเบียน', c[0]], ['ยี่ห้อ/รุ่น', c[1]], ['ประเภทยานพาหนะ', typeOf(c)], ['หน่วยงานเจ้าของยานพาหนะ', c[2]],
-    ['ผู้ดูแลยานพาหนะ', CTRL_NAME[r[0]]], ['เบอร์ติดต่อ', OWNER_PH[r[0]]], ['ปีที่จดทะเบียน', String(MA_USE[row][0])], ['อายุการใช้งาน', (MA_TODAY[2] - MA_USE[row][0]) + ' ปี'],
-    ['เลขไมล์สะสม', MA_USE[row][1] + ' กม.'], ['ชั่วโมงเครื่องจักรสะสม', MA_USE[row][2] + ' ชม.'], ['สถานะยานพาหนะ', MA_VSTAT[MA_USE[row][4]][0]]]), 'h');
+  const { scr, sec } = await maShell(name, tab, row);
+  if (tab === 0) add(sec, await vehicleInfoTab(row, !!o.kbk), 'h');
   if (tab === 1) {
     add(sec, col('Section', [await sectionLabel('กำหนดครั้งถัดไป'), await tblShort(MA_NEXT_COLS, maNextRows(r))], 16), 'h');
     add(sec, col('Section', [await sectionLabel('ประวัติการบำรุงรักษา', { badge: MA_HIST.length }), await tblShort(MA_HIST_COLS, MA_HIST, { pagination: MA_HIST.length })], 16), 'h');
   }
-  if (tab === 2) {
-    add(sec, await tableHeader({ placeholder: 'ค้นหาหมายเลขงาน, อาการ' }), 'h');
-    add(sec, await tblShort(MA_REPAIR_COLS, MA_REPAIRS.map(h => [h[0], h[1], h[2], h[4] ? { text: h[3], sub: h[4] } : h[3], { text: h[5], sub: h[6] }, { pill: MA_WAR[h[7]] }, h[8], { icons: ['quick_reference_all-24-300-round'] }]), { pagination: MA_REPAIRS.length }), 'h');
+  if (tab === 2) {   // บันทึกบำรุงรักษาตามวาระของ flow นี้ (มุมมอง "บำรุงรักษาเครื่องจักร" เดิม) · ค้นหาเลขที่ MR งานที่ทำ
+    add(sec, await tableHeader({ placeholder: 'ค้นหาเลขที่ MR, งานที่ทำ' }), 'h');
+    add(sec, await tblShort(MA_HIST_COLS, MA_HIST, { pagination: MA_HIST.length }), 'h');
   }
   if (tab === 3) {
-    if (o.empty) {
-      const es = inst('Empty state/Data empty'); add(sec, es, 'h');
-      await text(es, 'Text', 'ยังไม่มีงานที่อยู่ในประกัน');
-      await text(es, 'Supporting text', 'เมื่อปิดงานซ่อม Overhaul หรือบำรุงรักษาแผนจ้างที่มีประกันของผู้รับจ้าง รายการจะมาอยู่ที่นี่');
-      const a = find(es, 'Actions'); if (a) a.visible = false;
-    } else add(sec, await tblShort(MA_WAR_COLS, MA_WARRANTY, { pagination: MA_WARRANTY.length }), 'h');
+    const e = vEngine(row);
+    add(sec, await tableHeader({ placeholder: 'ค้นหาเลขที่งาน, งานที่ทำ' }), 'h');
+    add(sec, await tblShort(VI_ENGINE_COLS, e.map(x => [x.date, x.no, x.center, x.work, x.km, x.cost]), { pagination: e.length }), 'h');
+  }
+  if (tab === 4) {   // Metric item 2 ใบ (บำรุงรักษาเครื่องจักรล่าสุด · ซ่อมเครื่องจักรล่าสุด) + ตารางรวม
+    const rows = vService(row);
+    add(sec, metricRow([await metric('บำรุงรักษาเครื่องจักรล่าสุด', MA_HIST[0][0], 'Brand'), await metric('ซ่อมเครื่องจักรล่าสุด', MA_REPAIRS[0][1], 'Warning')]), 'h');
+    add(sec, await tableHeader({ placeholder: 'ค้นหาหมายเลขงาน, อาการ' }), 'h');
+    add(sec, await tblShort(MA_REPAIR_COLS, rows, { pagination: rows.length }), 'h');
   }
   if (o.menu) planMenu(scr, MENU.slice(0, 1));
   return scr;
@@ -3208,21 +3438,28 @@ const SCENARIOS = [
     ['ค้นหาไม่พบ', () => maList('S24 ค้นหาไม่พบ', { query: '99-9999', rows: [] })],
     ['กดตัวกรอง — แผงตัวกรอง ประเภท สังกัด บำรุงรักษาล่าสุด ครบกำหนดภายใน รายการ ผลตรวจน้ำมัน', () => maList('S24 แผงตัวกรอง', { filter: {} })],
     ['กรองแล้ว — ใกล้ครบกำหนดบำรุงรักษา', () => maList('S24 กรองใกล้ครบกำหนด', { chips: [MA_DUE.near[0]], rows: maIdx(r => { const n = maNext(r); return n && n[2] === 'near'; }) })],
-    ['กดเลขทะเบียน — เปิดหน้ารายละเอียดยานพาหนะ แท็บข้อมูลยานพาหนะ', () => maDetail('S24 กดเลขทะเบียน', { tab: 0 })],   // 10 พ.ย. 2569 รอบ 2 ไม่มีคอลัมน์ปุ่ม … แล้ว
+    ['กดเลขทะเบียน — เปิดหน้ารายละเอียดยานพาหนะ แท็บข้อมูลยานพาหนะ', () => maDetail('S24 กดเลขทะเบียน', { tab: 0, row: 1 })],   // 12 พ.ย. 2569 (R107) แบบ Vehicle info ของ VMS+ · 80-5738 น่าน = ภาพที่เจ้าของงานรีวิวบนเว็บ (info-80-5738)   // 10 พ.ย. 2569 รอบ 2 ไม่มีคอลัมน์ปุ่ม … แล้ว
     ['รายละเอียดยานพาหนะ — แท็บตารางบำรุงรักษา กำหนดครั้งถัดไป 5 รายการ', () => maDetail('S24 ตารางบำรุงรักษา', { tab: 1 })],
     ['ประวัติ กดปุ่ม … — ดูรายละเอียดงานที่ปิดแล้ว', () => maDetail('S24 เมนูประวัติ', { tab: 1, menu: true })],
     ['กรองแล้ว — ต้องเก็บตัวอย่างน้ำมัน', () => maList('S24 กรองเก็บตัวอย่างน้ำมัน', { chips: ['เก็บตัวอย่างน้ำมัน'], rows: maIdx(r => r[1] && maOil(r)[0] === 'เก็บตัวอย่าง' && maOil(r)[1][1]) })],
     ['กรองแล้ว — บำรุงรักษาล่าสุดเกิน 12 เดือน', () => maList('S24 กรองบำรุงรักษาล่าสุด', { chips: ['บำรุงรักษาล่าสุด เกิน 12 เดือน'], rows: maIdx(r => r[1] && maKey(r[1]) < maKey('10/11/2568')) })],
     ['กรองแล้ว — ครบกำหนดภายใน 3 เดือน', () => maList('S24 กรองภายใน 3 เดือน', { chips: ['ครบกำหนดภายใน 3 เดือน'], rows: maIdx(r => { const n = maNext(r); return n && maKey(n[1]) <= maKey('10/02/2570'); }) })],
     ['แท็บตารางบำรุงรักษา — คันที่ครบกำหนดหลายรายการ ปีที่ครบเปลี่ยนน้ำมัน', () => maDetail('S24 ตารางบำรุงรักษา ครบกำหนด', { tab: 1, row: 0 })],   // 10 พ.ย. 2569 รอบ 2 แทนแท็บข้อมูลยานพาหนะ (ย้ายไป W.6)
-    ['รายละเอียดยานพาหนะ — แท็บประวัติการซ่อมบำรุง', () => maDetail('S24 ประวัติการซ่อมบำรุง', { tab: 2 })],
-    ['รายละเอียดยานพาหนะ — แท็บการรับประกัน', () => maDetail('S24 การรับประกัน', { tab: 3 })],
-    ['แท็บการรับประกัน — ยังไม่มีงานที่อยู่ในประกัน', () => maDetail('S24 การรับประกัน ว่าง', { tab: 3, empty: true })],
+    /* 12 พ.ย. 2569 (R107) W.13 = แท็บประวัติการซ่อมบำรุงแบบรวมซ่อม + บำรุงรักษา ป้าย Overhaul · W.14 W.15 เดิมแท็บการรับประกัน (เอาออก) ⇒ ส่วนการรับประกันท้ายแท็บข้อมูลยานพาหนะ · ยานพาหนะนอกกลุ่มเครื่องมือกล */
+    ['รายละเอียดยานพาหนะ — แท็บประวัติการซ่อมบำรุง ซ่อมและบำรุงรักษาเรียงวันที่ปิดงาน ป้าย Overhaul', () => maDetail('S24 ประวัติการซ่อมบำรุง', { tab: 4 })],
+    ['แท็บข้อมูลยานพาหนะ — มีงานในประกัน ส่วนการรับประกันท้ายแท็บ', () => maDetail('S24 ข้อมูลยานพาหนะ มีประกัน', { tab: 0 })],
+    ['แท็บข้อมูลยานพาหนะ — รหัสข้างนอกกลุ่ม 04 07 08 09 10 ไม่มีส่วนเครื่องมือกล ไม่มีงานในประกัน', () => maDetail('S24 ข้อมูลยานพาหนะ นอกกลุ่มเครื่องมือกล', { tab: 0, row: 0 })],
     // W.16 W.17 แท็บ Overhaul เอาออก 10 พ.ย. 2569 รอบ 2 (เจ้าของงาน "มี tab แต่ไม่มี display ออกมา")
     /* 12 พ.ย. 2569 แดชบอร์ดแบบ VMS+ (R106) — ต่อท้าย W.16 W.17 W.18 (รหัสเดิมของแท็บ Overhaul ที่เอาออกแล้ว) · กดกราฟ/กดเรื่องที่ควรดู = กรองทั้งหน้า + ชิปตัวกรองที่เลือก */
     ['กดกราฟ — ส่วนเลยกำหนดของโดนัทสถานะกำหนดบำรุงรักษา กรองทั้งหน้า', () => maList('S24 กดกราฟเลยกำหนด', { chips: ['สถานะ เลยกำหนด'], rows: MA_ALERT.over, pickChart: 'status' })],
     ['กดเรื่องที่ควรดู — ผลตรวจน้ำมันล่าสุดไม่ผ่าน กรองทั้งหน้า', () => maList('S24 กดเรื่องที่ควรดู', { chips: ['ผลตรวจน้ำมันล่าสุด ไม่ผ่าน'], rows: MA_ALERT.fail, alert: 'fail', pickChart: 'oil' })],
     ['มุมมองมือถือ — การ์ดตัวเลข 2 ใบต่อแถว กราฟเรียงทีละใบ ตารางเป็นการ์ด', () => maList('S24 มุมมองมือถือ', { mobileAll: true })],
+    /* 12 พ.ย. 2569 (R107 · เว็บ f6f5e0d BACKLOG ข้อ 84 85) — การ์ดเครื่องมือกลของ กบค. · แท็บประวัติใหม่ 2 แท็บ · มุมมองมือถือของแท็บข้อมูลยานพาหนะ */
+    ['กบค. — การ์ดเครื่องมือกล ช่องที่ยังไม่มีข้อมูลมีปุ่มเพิ่ม ช่องที่มีข้อมูลแก้ไขได้', () => maDetail('S24 เครื่องมือกล กบค.', { tab: 0, row: 1, kbk: true })],
+    ['กบค. — ยานพาหนะในกลุ่มที่ยังไม่มีเครื่องมือกล การ์ดว่าง ปุ่มเพิ่มเครื่องมือกล', () => maDetail('S24 ไม่มีเครื่องมือกล กบค.', { tab: 0, row: 8, kbk: true })],
+    ['แท็บประวัติการบำรุงรักษาเครื่องจักร — บันทึกบำรุงรักษาตามวาระ', () => maDetail('S24 ประวัติเครื่องจักร', { tab: 2 })],
+    ['แท็บประวัติการบำรุงรักษาเครื่องยนต์ — เช็คระยะที่ศูนย์บริการ', () => maDetail('S24 ประวัติเครื่องยนต์', { tab: 3 })],
+    ['แท็บข้อมูลยานพาหนะบนมือถือ — เรียง 1 คอลัมน์ลำดับเดียวกับ desktop กบค. แก้ไขเครื่องมือกลได้', () => maDetail('S24 ข้อมูลยานพาหนะ มุมมองมือถือ', { tab: 0, kbk: true })],
     ]],
   /* S25 ย้ายรถที่บำรุงรักษาไม่ได้ไปไตรมาสอื่น (เจ้าของงาน 5 พ.ย. 2569 · บล็อก X) — ทางเข้าหน้าไตรมาส (S6) · ไปได้เฉพาะไตรมาสถัดไปของแผนเดียวกัน · รถและอะไหล่ตามแผนย้ายตาม · ไม่ต้องอนุมัติใหม่ */
   ['S25 · ผู้ดำเนินการ ย้ายยานพาหนะที่บำรุงรักษาไม่ได้ไปไตรมาสอื่น', [
@@ -3263,7 +3500,13 @@ const FLOW_NODES = {
     'กดไอคอนแก้ไขอะไหล่ — แก้จำนวนที่ใช้จริง': 'A6', 'กดเพิ่มอะไหล่ — popup เพิ่มอะไหล่ที่ใช้จริง': 'A6', 'กดไอคอนลบอะไหล่ — ยืนยันเอาออก': 'A6', 'กดส่งตรวจงาน — ยืนยันส่งตรวจงาน': 'A8', 'ส่งตรวจงานแล้ว — รอตรวจรับ': 'D7',
     'บำรุงรักษาไม่ได้ — ระบุสาเหตุ ยืนยันอะไหล่ส่งคืน': 'A3', 'บำรุงรักษาไม่ได้ระหว่าง Step 2 — อะไหล่ที่ใช้ไปแล้ว': 'A3', 'หน้างานรายคัน แจ้งบำรุงรักษาไม่ได้ — ปุ่มแก้ไขงาน ส่งตรวจงาน': 'D5',
     'ถูกส่งกลับแก้ไข — คันที่ปิดงานไว้': 'D8', 'ถูกส่งกลับแก้ไข — คันที่แจ้งบำรุงรักษาไม่ได้': 'D8', 'หน้ารายละเอียดแผนเดินทาง — สถานะงานรายคันระหว่างทาง ตรวจแล้ว 2/6': 'D1' },
-  S24: { 'แท็บการบำรุงรักษา — ยานพาหนะทุกคัน เรียงกำหนดครั้งถัดไป': 'D1', 'ค้นหาทะเบียน': 'A1', 'ค้นหาไม่พบ': 'D2', 'กดตัวกรอง — แผงตัวกรอง': 'D3', 'กรองแล้ว — ใกล้ครบกำหนดบำรุงรักษา': 'D4', 'กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด': 'A4', 'รายละเอียดยานพาหนะ — แท็บตารางบำรุงรักษา': 'D5', 'ประวัติ กดปุ่ม … — ดูรายละเอียดงานที่ปิดแล้ว': 'A5' },
+  S24: { 'แท็บการบำรุงรักษา — ยานพาหนะทุกคัน เรียงกำหนดครั้งถัดไป': 'D1', 'ค้นหาทะเบียน': 'A1', 'ค้นหาไม่พบ': 'D2', 'กดตัวกรอง — แผงตัวกรอง': 'D3', 'กรองแล้ว — ใกล้ครบกำหนดบำรุงรักษา': 'D4', 'กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด': 'A4', 'รายละเอียดยานพาหนะ — แท็บตารางบำรุงรักษา': 'D5', 'ประวัติ กดปุ่ม … — ดูรายละเอียดงานที่ปิดแล้ว': 'A5',
+    // 12 พ.ย. 2569 (R107) หน้ารายละเอียดยานพาหนะ = D5 · เพิ่ม/แก้ไขเครื่องมือกลของ กบค. = A7
+    'กดเลขทะเบียน — เปิดหน้ารายละเอียดยานพาหนะ แท็บข้อมูลยานพาหนะ': 'A4 D5', 'รายละเอียดยานพาหนะ — แท็บตารางบำรุงรักษา กำหนดครั้งถัดไป 5 รายการ': 'D5',
+    'รายละเอียดยานพาหนะ — แท็บประวัติการซ่อมบำรุง ซ่อมและบำรุงรักษาเรียงวันที่ปิดงาน ป้าย Overhaul': 'D5', 'แท็บข้อมูลยานพาหนะ — มีงานในประกัน ส่วนการรับประกันท้ายแท็บ': 'D5',
+    'แท็บข้อมูลยานพาหนะ — รหัสข้างนอกกลุ่ม 04 07 08 09 10 ไม่มีส่วนเครื่องมือกล ไม่มีงานในประกัน': 'D5', 'กบค. — การ์ดเครื่องมือกล ช่องที่ยังไม่มีข้อมูลมีปุ่มเพิ่ม ช่องที่มีข้อมูลแก้ไขได้': 'Q2 A7',
+    'กบค. — ยานพาหนะในกลุ่มที่ยังไม่มีเครื่องมือกล การ์ดว่าง ปุ่มเพิ่มเครื่องมือกล': 'A7', 'แท็บประวัติการบำรุงรักษาเครื่องจักร — บันทึกบำรุงรักษาตามวาระ': 'D5',
+    'แท็บประวัติการบำรุงรักษาเครื่องยนต์ — เช็คระยะที่ศูนย์บริการ': 'D5', 'แท็บข้อมูลยานพาหนะบนมือถือ — เรียง 1 คอลัมน์ลำดับเดียวกับ desktop กบค. แก้ไขเครื่องมือกลได้': 'D5' },
   S12: { 'Step 2 สรุปงานก่อนปิดงาน — เลือกเก็บตัวอย่าง ใส่ผลการทดสอบได้ (ถ้ามี)': 'A1', 'ปิดงานโดยยังไม่มีผล — ป้ายรอผลตรวจน้ำมัน': 'D1', 'กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด': 'A3', 'หน้างานรายคัน — ส่วนผลการทดสอบยังว่าง': 'D2', 'กดบันทึกโดยยังไม่เลือกผล': 'Q2', 'เลือกผล + แนบไฟล์ (ถ้ามี)': 'A4', 'บันทึกสำเร็จ — แสดงผลที่บันทึก แก้ได้ภายหลัง': 'D3', 'กลับหน้าแผนเดินทาง — ป้ายน้ำมันไม่ผ่าน': 'D4' },
   S18: { 'ต้นทุนการบำรุงรักษา + Summary': 'D2 D3', 'ดาวน์โหลด Excel แล้ว': 'A3' },
   S19: { 'เมนู "…" → แก้ไข': 'A1', 'รายละเอียดแผน — ส่งกลับแก้ไข': 'A1', 'ฟอร์มแก้ไข Prefield ข้อมูลที่สร้างไว้': 'D3', 'เอาภาคหรือตัวกรองออก — ยานพาหนะที่จัดไว้แล้วยังอยู่': 'D4', '“ยกเลิก” → ยืนยันการออก กรณีที่มีการแก้ไขเกิดขึ้น': 'D5', 'ยืนยันการแก้ไขแผน': 'D6', 'บันทึกไม่สำเร็จ': 'D7', 'บันทึกสำเร็จ — รออนุมัติ': 'D8', 'แผนอนุมัติแล้ว — เมนู "…" → แก้ไข': 'A1', 'แผนอนุมัติแล้ว — ฟอร์มแก้ไข ต้องส่งอนุมัติใหม่': 'D3', 'แผนดำเนินการแล้ว — เมนู "…" ดูรายละเอียดอย่างเดียว': 'D2' },
