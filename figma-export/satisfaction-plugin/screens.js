@@ -29,7 +29,7 @@ const PLUGIN = { prefix: 'SAT', page: 'ประเมินความพึ�
 /* ---------- component ที่ใช้ — ชุดเดียวกับ contractor-eval-plugin + Table header/แผงตัวกรอง (ขาดตัวไหนหยุด) · NESTED = ชิ้นซ้อน · LOCAL_OPTIONAL = ป้ายของทีมออกแบบ ไม่มีก็วาดแถบธรรมดา ---------- */
 const DIRECT = ['Sidebar navigation', 'Header navigation', 'Page header', 'Section header', 'Section label', 'Table', 'Content item row', 'Featured icon',
   'Table header', 'Table pagination', 'Text input', 'Text area', 'Input label', 'Input dropdown with badges', 'Alert', 'Tabs', 'Rating',
-  'Primary button', 'Secondary button', 'Background overlay', 'Modal', 'Notification', 'Empty state/Data empty', 'Side panel header', 'Side panel footer',
+  'Primary button', 'Secondary button', 'Background overlay', 'Modal', 'Notification', 'Empty state/Data empty', 'Empty state/Search not found', 'Side panel header', 'Side panel footer',
   'add-24-300-round', 'filter_list-24-400-round', 'search-24-300-round', 'keyboard_arrow_right-20-400-round', 'quick_reference_all-24-300-round',
   'Mobile table', 'Bottom sheet header', 'Bottom sheet footer', 'Modal header'];
 const NESTED = ['Nav button', 'Sort icon', 'Badge outline with remove icon', 'Button groups pagination item', 'Tertiary brand button', 'Tertiary button',
@@ -131,12 +131,23 @@ async function tabs(items, active) {   // component Tabs (5 ช่อง Tab ite
   return t;
 }
 const PEND_COLS = [['เลขที่งาน', 170, 'Lead text'], ['ประเภทงาน', 170, 'Badge'], ['ทะเบียน', 200], ['งาน', 0], [PROVIDER, 170], ['วันที่ปิดงาน', 130], ['ดำเนินการ', 104]];
-const pendRow = (k) => { const j = JOBS[k]; return [j.no, { pill: KIND[j.kind] }, { text: j.plate, sub: j.vtype }, j.work, j.provider, j.closed,
-  { icons: [has('star-24-300-round') ? 'star-24-300-round' : 'keyboard_arrow_right-20-400-round'] }]; };
+const pendRow = (ro) => (k) => { const j = JOBS[k]; return [j.no, { pill: KIND[j.kind] }, { text: j.plate, sub: j.vtype }, j.work, j.provider, j.closed,
+  { icons: ro ? [] : [has('star-24-300-round') ? 'star-24-300-round' : 'keyboard_arrow_right-20-400-round'] }]; };   // ro = ดูอย่างเดียว (กบค.) ช่องดำเนินการว่าง แบบ actions [] ของเว็บ (canEvaluate = ผู้ดูแลยานพาหนะเท่านั้น)
 const DONE_COLS = [['เลขที่งาน', 170, 'Lead text'], ['ประเภทงาน', 170, 'Badge'], ['ทะเบียน', 0], [PROVIDER, 170], ['วันที่ประเมิน', 130], ['ผู้ประเมิน', 190], ['คะแนน (เต็ม ' + SURVEY_MAX + ')', 190], ['', 60]];
 const doneRow = (saved) => (k) => { const j = JOBS[k], d = doneOf(k, saved); return [j.no, { pill: KIND[j.kind] }, { text: j.plate, sub: j.vtype }, j.provider, d.at.slice(0, 10), j.caretaker,
   ssum(d.answers) + ' / ' + SURVEY_MAX + ' · เฉลี่ย ' + savg(d.answers), { icons: ['quick_reference_all-24-300-round'] }]; };
-async function listScreen(name, o) {   // o.tab · o.pending / o.done (คีย์ JOBS) · o.saved = ผลที่เพิ่งบันทึก { คีย์: ผล }
+/* ค้นหา/กรองไม่พบ — Empty state/Search not found ค่าของเว็บ (EmptyStateSearchNotFound ค่าเริ่ม "ไม่พบข้อมูล" / "เปลี่ยนคำค้นหรือเงื่อนไขแล้วลองใหม่อีกครั้ง") + Secondary button "ล้างตัวกรอง" (Primary button ซ่อน)
+   ยกแบบ copy จาก searchNotFound() ของ maintainance-plugin (S24 ค้นหาไม่พบ · Vehicle list State=Search not found ของ UI Release#2) ไม่ import ข้ามปลั๊กอิน */
+const NOT_FOUND = ['ไม่พบข้อมูล', 'เปลี่ยนคำค้นหรือเงื่อนไขแล้วลองใหม่อีกครั้ง'], CLEAR_BTN = 'ล้างตัวกรอง';
+async function searchNotFound() {
+  const es = inst('Empty state/Search not found');
+  await text(es, 'Text', NOT_FOUND[0]); await text(es, 'Supporting text', NOT_FOUND[1]);
+  es.findAll(n => n.type === 'INSTANCE' && /button/i.test(n.name)).forEach((b, i) => { if (i === 0) setProps(b, { Text: CLEAR_BTN, 'Leading icon': false, 'Trailing icon': false }); else b.visible = false; });
+  return es;
+}
+/* o.tab · o.pending / o.done (คีย์ JOBS) · o.saved = ผลที่เพิ่งบันทึก { คีย์: ผล }
+   o.readOnly = มุม กบค. (rowsFor ของเว็บ: เห็นเฉพาะงานที่หน่วยงานที่ให้บริการเป็น กบค. ดูอย่างเดียว ไม่มีไอคอนดาว · ดูผลได้) · o.query = คำค้นในช่องค้นหา · o.notFound = ค้นหาไม่พบ */
+async function listScreen(name, o) {
   o = o || {};
   const pend = o.pending || PENDING, done = o.done || DONE;
   const { scr, page } = await shell(name, { title: TITLE });
@@ -151,8 +162,9 @@ async function listScreen(name, o) {   // o.tab · o.pending / o.done (คีย
     const sb = find(es, 'Secondary button'); if (sb) setProps(sb, { Text: EMPTY_BTN, 'Leading icon': false, 'Trailing icon': false });
     return scr;
   }
-  add(sec, await tableHeader({}), 'h');   // ค้นหา "ค้นหาเลขที่งาน, ทะเบียน" (PLUGIN.searchHint) + ปุ่มตัวกรอง
-  add(sec, await tbl(o.tab ? DONE_COLS : PEND_COLS, rows.map(o.tab ? doneRow(o.saved) : pendRow), { pagination: rows.length }), 'h');
+  add(sec, await tableHeader({ query: o.query }), 'h');   // ค้นหา "ค้นหาเลขที่งาน, ทะเบียน" (PLUGIN.searchHint) + ปุ่มตัวกรอง
+  if (o.notFound) { add(sec, await searchNotFound(), 'h'); return scr; }   // ค้นหา/กรองไม่เจอ = Empty state/Search not found แทนตาราง (Tabs + Table header คงอยู่ ตามเว็บ)
+  add(sec, await tbl(o.tab ? DONE_COLS : PEND_COLS, rows.map(o.tab ? doneRow(o.saved) : pendRow(o.readOnly)), { pagination: rows.length }), 'h');
   return scr;
 }
 const FILTER_FIELDS = () => [multiDropdown('ประเภทงาน', [], { optional: true, placeholder: 'ทั้งหมด' }), multiDropdown(PROVIDER, [], { optional: true, placeholder: 'ทั้งหมด' })];   // FilterShell ของเว็บ (ชุดเดียวกับ S24) · ค่าเริ่ม "ทั้งหมด"
@@ -218,12 +230,19 @@ async function resultScreen(name, k, saved) {
 }
 
 /* ---------- state ราย scenario (R19: 1 scenario = 1 บล็อก · A.1 A.2 = state · state ใหม่ต่อท้าย รหัสเดิมไม่เลื่อน) ---------- */
+const KBK = (k) => JOBS[k].provider === 'กบค.';   // rowsFor ของเว็บ: บทบาท กบค. เห็นเฉพาะงานที่ประเมิน กบค.
+const KBK_VIEW = { readOnly: true, pending: PENDING.filter(KBK), done: DONE.filter(KBK) };   // ยังไม่ได้ประเมิน MRZ7100004 MTD-691003-014 ORZ6900002 · ประเมินแล้ว MTD-690716-031
+const NOT_FOUND_Q = '99-9999';   // คำค้นที่ไม่ตรงงานไหน (เลขที่งาน ทะเบียน งาน หน่วยงานที่ให้บริการ) — ค่าเดียวกับ S24 ค้นหาไม่พบของบำรุงรักษา
 const AFTER_SAVE = { tab: 1, pending: ['kbk', 'rp014', 'oh'], done: ['ma1145', 'ma6789', 'rp031', 'ma4458'], saved: { ma6789: SAVED } };   // เรียงวันที่ปิดงาน (82-1145 05/11 ก่อน 82-6789 04/11)
 const LIST_STATES = [
   ['แท็บยังไม่ได้ประเมิน — งานที่ปิดแล้ว', () => listScreen('S1 ยังไม่ได้ประเมิน', { tab: 0 })],
   ['แท็บประเมินแล้ว', () => listScreen('S1 ประเมินแล้ว', { tab: 1 })],
   ['ไม่มีรายการที่ต้องประเมิน', () => listScreen('S1 ไม่มีรายการ', { tab: 0, pending: [] })],
-  ['กดตัวกรอง — แผงตัวกรอง ประเภทงาน หน่วยงานที่ให้บริการ', async () => { const s = await listScreen('S1 ตัวกรอง', { tab: 0 }); await filterPanel(s, FILTER_FIELDS()); return s; }]];   // A.4 ต่อท้าย 12 พ.ย. 2569 รอบ 2 (ตัวกรองของเว็บ)
+  ['กดตัวกรอง — แผงตัวกรอง ประเภทงาน หน่วยงานที่ให้บริการ', async () => { const s = await listScreen('S1 ตัวกรอง', { tab: 0 }); await filterPanel(s, FILTER_FIELDS()); return s; }],   // A.4 ต่อท้าย 12 พ.ย. 2569 รอบ 2 (ตัวกรองของเว็บ)
+  /* A.5–A.7 ต่อท้าย 12 พ.ย. 2569 รอบ 3 (ต้นแบบเว็บ ?sample=S27_kbk · EmptyStateSearchNotFound ของ /satisfaction/) */
+  ['กบค. — แท็บยังไม่ได้ประเมิน เฉพาะงานที่ประเมิน กบค. ดูอย่างเดียว ไม่มีไอคอนดาว', () => listScreen('S1 กบค. ยังไม่ได้ประเมิน', Object.assign({ tab: 0 }, KBK_VIEW))],
+  ['กบค. — แท็บประเมินแล้ว เฉพาะการประเมินที่ประเมิน กบค. ดูผลได้', () => listScreen('S1 กบค. ประเมินแล้ว', Object.assign({ tab: 1 }, KBK_VIEW))],
+  ['ค้นหาไม่พบ — ไม่พบข้อมูล ปุ่มล้างตัวกรอง', () => listScreen('S1 ค้นหาไม่พบ', { tab: 0, query: NOT_FOUND_Q, notFound: true })]];
 const FORM_STATES = [
   ['ฟอร์มประเมิน (ยังไม่ให้คะแนน) — บำรุงรักษาตามวาระ หน่วยงานที่ให้บริการ กบผ.', () => evalForm('S2 ฟอร์มว่าง', 'ma6789', {})],
   ['ให้คะแนนบางข้อ + กรอกหมายเหตุท้ายฟอร์ม', () => evalForm('S2 กรอกบางข้อ', 'ma6789', { scores: PART, remark: PART_REMARK })],

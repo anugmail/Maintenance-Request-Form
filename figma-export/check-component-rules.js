@@ -90,6 +90,11 @@ function check(screens, opt) {   // opt.inFile(ชื่อ) = ไฟล์ม�
         fail(r, sc, r.component + ' "' + r.buttonText + '" ต้อง State ตรง ' + r.state);   // R93 ปุ่มเพิ่มยานพาหนะของหน้าไตรมาส Disabled เมื่อทุกคันปิดงาน (11 พ.ย. 2569)
       else if (r.hasTexts) { const vals = new Set(all.filter(x => x.type === 'INSTANCE' && shown(x)).flatMap(x => Object.values(x.componentProperties || {}).filter(v => v.type === 'TEXT').map(v => String(v.value).trim())));
         const miss = r.hasTexts.filter(t => !vals.has(t)); if (miss.length) fail(r, sc, 'ไม่มีข้อความ ' + miss.join(' · ')); }   // R93 รายการภาค/เขตในแผงตัวกรอง (11 พ.ย. 2569)
+      if (r.mustProps) {   // R105 (12 พ.ย. 2569) ทุก instance ของ component ที่ property ตรง where ต้องมี property ตาม must · ไม่มีตัวที่ตรง where เลย = ไม่ผ่าน (กันกติกาว่าง)
+        const hit = all.filter(x => isInst(x, r.component) && shown(x) && Object.keys(r.mustProps.where || {}).every(k => prop(x, k) === r.mustProps.where[k]));
+        if (!hit.length) fail(r, sc, 'ไม่มี ' + r.component + ' ที่ ' + JSON.stringify(r.mustProps.where));
+        else if (hit.some(x => Object.keys(r.mustProps.must).some(k => prop(x, k) !== r.mustProps.must[k]))) fail(r, sc, r.component + ' ' + JSON.stringify(r.mustProps.where) + ' ต้อง ' + JSON.stringify(r.mustProps.must));
+      }
       for (const t of r.forbidSectionTitles || []) if (all.some(x => isInst(x, 'Section header') && shown(x) && prop(x, 'Title') === t)) fail(r, sc, 'ยังมีหัวข้อเดิม "' + t + '"');
       if (r.sectionOrder) {   // R107 (12 พ.ย. 2569) ลำดับหัวข้อ Section label ของหน้า — นับเฉพาะชื่อที่ขึ้นต้นตามรายการ (หัวการ์ดอื่นไม่นับ) · ขาด/เกิน/สลับ = ไม่ผ่าน
         const got = all.filter(x => isInst(x, 'Section label') && shown(x)).map(x => (prop(x, 'Title') || '').trim()).filter(t => r.sectionOrder.some(w => t.indexOf(w) === 0));
