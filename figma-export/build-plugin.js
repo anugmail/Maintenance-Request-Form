@@ -66,13 +66,35 @@ if (cfg.images) {   // ภาพประกอบที่ UI Release#2 ใส�
   images = JSON.stringify(im);
   imagesNote = ' · ภาพ ' + Object.keys(im).join(', ');
 }
+/* include (12 พ.ย. 2569 เจ้าของงาน "อยากให้เขียนเรื่องการประเมิน กบค มาใส่ในนี้" ที่หน้าต่างปลั๊กอินประเมินผู้รับจ้าง)
+   build.json { "include": { "SAT": "satisfaction-plugin" } } ⇒ ต่อ screens.js ของปลั๊กอินนั้นไว้ใน IIFE (ชื่อไม่ชนกัน) + ผัง flowchart ของมันเอง → const INCLUDE = { SAT: {...} }
+   ต้นทางยังเป็นโฟลเดอร์ปลั๊กอินนั้นที่เดียว (ไม่ก๊อปโค้ด) · ตัดส่วน figma.ui ท้ายไฟล์ออก · screens.js ของปลั๊กอินหลักสลับ PLUGIN/ACTIVITY/NEEDED ตอนสร้าง (withInclude) */
+let inc = '', incNote = '';
+for (const [key, idir] of Object.entries(cfg.include || {})) {
+  const src = fs.readFileSync(path.join(__dirname, idir, 'screens.js'), 'utf8');
+  const cut = src.indexOf('\nfigma.ui.onmessage');
+  if (cut < 0) { console.error('✗ include ' + idir + ': ไม่พบ figma.ui.onmessage ท้าย screens.js'); process.exit(1); }
+  const icfgFile = path.join(__dirname, idir, 'build.json'), icfg = fs.existsSync(icfgFile) ? JSON.parse(fs.readFileSync(icfgFile, 'utf8')) : {};
+  let iact = 'null';
+  if (icfg.activity) {
+    const a2 = require('./plugin-lib/activity-layout.js').build(path.resolve(__dirname, '..', icfg.activity));
+    if (a2.problems.length) { console.error('✗ include ' + idir + ' flowchart กิจกรรม จัดวางไม่ผ่าน:\n' + a2.problems.join('\n')); process.exit(1); }
+    iact = JSON.stringify(Object.assign({ src: icfg.activity }, a2));
+  }
+  inc += '\n/* ======================== include ' + key + ' = ' + idir + '/screens.js (ฝังตอน build) ======================== */\n' +
+    'INCLUDE[' + JSON.stringify(key) + '] = (() => {\nconst ACTIVITY_INC = ' + iact + ';\n' + src.slice(0, cut) +
+    '\nreturn { PLUGIN, NEEDED, NESTED, ACTIVITY: ACTIVITY_INC, SCENARIOS, groupsFor, ALL_IDX, buildSet, buildPick };\n})();\n';
+  incNote += ' · รวม ' + idir + ' (' + key + ')';
+}
 const out = '/* ⚠ ไฟล์นี้ประกอบอัตโนมัติจาก plugin-lib/core.js + ' + dir + '/screens.js' + (cfg.userflow ? ' + ' + cfg.userflow : '') + ' ด้วย build-plugin.js — แก้ที่ต้นทางแล้วรัน  node figma-export/build-plugin.js ' + dir + '  (' + new Date().toISOString().slice(0, 10) + ') */\n\n' +
   core + '\n/* ======================== userflow (ฝังตอน build) ======================== */\nconst USERFLOW = ' + flow + ';\n' +
   '\n/* ======================== AC รายจอ (ฝังตอน build) ======================== */\nconst AC = ' + ac + ';\n' +
   '\n/* ======================== เอกสาร story map / use case (ฝังตอน build) ======================== */\nconst DOCS = ' + docs + ';\n' +
   '\n/* ======================== user journey swimlane (ฝังตอน build) ======================== */\nconst SWIMLANE = ' + swim + ';\n' +
-  '\n/* ======================== flowchart กิจกรรมราย scenario (ฝังตอน build) ======================== */\nconst ACTIVITY = ' + act + ';\n' +
+  '\n/* ======================== flowchart กิจกรรมราย scenario (ฝังตอน build) ======================== */\nlet ACTIVITY = ' + act + ';   // let: ปลั๊กอินที่รวมปลั๊กอินอื่นเข้ามา (build.json include) สลับผังตอนสร้างจอของปลั๊กอินนั้น\n' +
   '\n/* ======================== ภาพประกอบ (ฝังตอน build) ======================== */\nconst IMAGES = ' + images + ';\n' +
-  '\n/* ======================== ' + dir + '/screens.js ======================== */\n' + screens;
+  '\n/* ======================== ปลั๊กอินที่รวมเข้ามา (build.json include · เติมท้ายไฟล์) ======================== */\nconst INCLUDE = {};\n' +
+  '\n/* ======================== ' + dir + '/screens.js ======================== */\n' + screens +
+  (inc ? '\n/* ======================== ปลั๊กอินที่รวมเข้ามา (build.json include) ======================== */\n' + inc : '');
 fs.writeFileSync(path.join(__dirname, dir, 'code.js'), out);
-console.log(dir + '/code.js: ' + out.split('\n').length + ' บรรทัด (core ' + core.split('\n').length + ' + screens ' + screens.split('\n').length + ') · ' + flowNote + acNote + docsNote + swimNote + actNote + imagesNote);
+console.log(dir + '/code.js: ' + out.split('\n').length + ' บรรทัด (core ' + core.split('\n').length + ' + screens ' + screens.split('\n').length + ') · ' + flowNote + acNote + docsNote + swimNote + actNote + imagesNote + incNote);

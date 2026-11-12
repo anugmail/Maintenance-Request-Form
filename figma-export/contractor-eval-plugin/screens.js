@@ -333,6 +333,23 @@ async function buildType(t, o) {
   await buildSet(groupsFor([1, 2], [t]), TYPE_TITLE[t], devOf(o));
 }
 
+/* แบบประเมินความพึงพอใจ กบค. (XCHO) ในหน้าต่างเดียวกัน — เจ้าของงาน 12 พ.ย. 2569 "อยากให้เขียนเรื่องการประเมิน กบค มาใส่ในนี้"
+   โค้ดจอมาจาก satisfaction-plugin/screens.js (build.json include · ไม่ก๊อป) · วางบนหน้า "ประเมินความพึงพอใจ" ของไฟล์นี้ (เรื่องแยกจากประเมินผู้รับจ้าง · R105)
+   ตอนสร้าง สลับค่าที่ core อ่าน (PLUGIN prefix/page/menu/searchHint · ผัง flowchart · รายการ component) เป็นของแบบประเมินความพึงพอใจ แล้วคืนค่าเดิมเสมอ */
+async function withInclude(key, fn) {
+  const inc = INCLUDE[key];
+  if (!inc) { log('✗ ไม่มี ' + key + ' ฝังมา — รัน node figma-export/build-plugin.js contractor-eval-plugin ใหม่'); return; }
+  const keep = Object.assign({}, PLUGIN), act = ACTIVITY;
+  const addNeed = inc.NEEDED.filter(n => NEEDED.indexOf(n) < 0), addNested = inc.NESTED.filter(n => !NESTED_ONLY.has(n) && NEEDED.indexOf(n) < 0);
+  Object.assign(PLUGIN, inc.PLUGIN); ACTIVITY = inc.ACTIVITY; NEEDED.push(...addNeed); addNested.forEach(n => NESTED_ONLY.add(n));
+  try { await fn(inc); }
+  finally {
+    Object.keys(PLUGIN).forEach(k => { if (!(k in keep)) delete PLUGIN[k]; }); Object.assign(PLUGIN, keep); ACTIVITY = act;
+    addNeed.forEach(n => NEEDED.splice(NEEDED.indexOf(n), 1)); addNested.forEach(n => NESTED_ONLY.delete(n));
+  }
+}
+const SAT_BOTH = [false, true];   // ปุ่มทั้งชุดได้ flowchart + Desktop + Mobile ครบเสมอ (export ครบ 3 อย่าง 6 พ.ย. 2569)
+
 figma.ui.onmessage = async (msg) => {
   try {
     const o = { devices: msg.devices, pick: msg.pick, types: msg.types };
@@ -344,6 +361,9 @@ figma.ui.onmessage = async (msg) => {
     if (msg.type === 'build-pm') await buildType('pm', o);
     if (msg.type === 'build-oh') await buildType('oh', o);
     if (msg.type === 'check') { log('— เช็ค component (ไม่สร้างอะไร) —'); await resolveAll(NEEDED, true); log(deviceSetInfo()); }
+    if (msg.type === 'sat-build') await withInclude('SAT', (inc) => inc.buildSet(inc.groupsFor(inc.ALL_IDX), 'แบบประเมินความพึงพอใจ กบค.', SAT_BOTH));
+    if (msg.type === 'sat-pick') await withInclude('SAT', (inc) => inc.buildPick(o));
   } catch (e) { log('✗ หยุด — ' + (e && e.message ? e.message : e)); }
 };
 figma.ui.postMessage({ type: 'scenarios', items: SCENARIOS.map(x => x[0]), types: TYPES.map((t, i) => [t, TYPE_TITLE[t], i + 1]) });   // รายการติ๊กของปุ่ม "สร้างเฉพาะ scenario ที่เลือก" + ประเภทงาน
+Promise.resolve().then(() => { if (INCLUDE.SAT) figma.ui.postMessage({ type: 'sat-scenarios', items: INCLUDE.SAT.SCENARIOS.map(x => x[0]) }); });   // INCLUDE เติมท้าย code.js หลังบรรทัดนี้ ⇒ ส่งหลังโหลดครบ
