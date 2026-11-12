@@ -23,11 +23,10 @@ const DIRECT = ['Sidebar navigation', 'Header navigation', 'Page header', 'Secti
   'add-24-300-round', 'filter_list-24-400-round', 'more_horiz-20-400-round', 'delete-24-300-round', 'search-24-300-round', 'keyboard_arrow_right-20-400-round',
   'cloud_upload-24-300-round', 'stylus-24-300-round', 'check-24-300-round', 'quick_reference_all-24-300-round', 'description-24-300-round', 'Dropdown menu',
   'Mobile table', 'Bottom sheet header', 'Bottom sheet footer', 'Modal header', 'Modal footer', 'Tabs', 'Notification card', 'Horizontal radio groups', 'Checkbox text card',
-  'Side panel header', 'Side panel footer', 'Empty state/Search not found', 'Rating', 'Featured icon',   // S27 แบบประเมินความพึงพอใจ ดาว + หัวด้าน แบบประเมินผู้รับจ้าง (11 พ.ย. 2569 · R94)
+  'Side panel header', 'Side panel footer', 'Empty state/Search not found',   // 12 พ.ย. 2569 ถอด Rating · Featured icon (S27 แบบประเมินความพึงพอใจย้ายไป satisfaction-plugin R105)
   'Progress steps', 'Mobile progress steps'];   // S10 ขั้นตอนบำรุงรักษา 2 ขั้น (รีวิว 5 พ.ย. 2569 · R70) ตาม 5.2 Vehicle Management ของ UI Release#2 · S24 แผงตัวกรอง + ไม่พบข้อมูล ตาม Vehicle list ของ UI Release#2 (4 พ.ย. 2569)
 const NESTED = ['_Dropdown menu item', 'Nav button', 'Tab item', 'Sort icon', 'Badge outline with remove icon', 'Button groups pagination item', 'Tertiary brand button', 'Primary danger button',
-  '_Content item base', '_File upload item base', 'List with checkbox item', 'List header item', 'Checkbox', 'Badge outline', 'Mobile table item', 'Table cell', 'Table header cell', 'Radio button', '_Notification item base', 'Status',
-  '_Rating star base', 'call-24-300-round', 'groups-24-300-round', 'search_check-24-300-round', 'star-24-300-round'];   // S27 ดาวใน Rating + ไอคอนหัวด้าน/ปุ่มดาว ของ contractor-eval-plugin — นำเข้าไม่ได้ = Featured icon ใช้ไอคอนตั้งต้น
+  '_Content item base', '_File upload item base', 'List with checkbox item', 'List header item', 'Checkbox', 'Badge outline', 'Mobile table item', 'Table cell', 'Table header cell', 'Radio button', '_Notification item base', 'Status'];   // 12 พ.ย. 2569 ถอด _Rating star base และไอคอนหัวด้าน call groups search_check star ของ S27 (ย้ายไป satisfaction-plugin R105)
 const LOCAL_OPTIONAL = ['RepairFeedback', 'ReturnPart', 'PartRequestStepPanel', 'PartsInventoryPanel', 'RequestedPartsPanel', 'Spare Part Card Item', 'IncidentPhotoGallery', 'VehicleAndReporterInfo', 'SummaryRequestedParts',
   'ReceiptChecklist', 'HandoverSignature', 'Modal Signature', 'InspectionChecklist',   // รับรถ / ลงนาม / ตรวจสภาพ ของงานซ่อม (S10 · 3 พ.ย. 2569) ไม่มีในไฟล์ → แบบสำรองจากไลบรารี
   'Request Repair/Budget',   // งบที่ตัด + ศูนย์ต้นทุน ของงานซ่อม (หน้า Local Component ของไฟล์ Maintain-D) — S10 Step 2 (รีวิว 5 พ.ย. 2569 · R72) ไม่มีในไฟล์ → แบบสำรองจากไลบรารี
@@ -50,12 +49,6 @@ Object.assign(KEYS, {
   "_Notification item base": ["5e4101e154462cac0b912c28d0499b61f84c3001", false],
   "Status": ["65871480cb419a27224a15825374bc1486ab34d6", true],
   "Checkbox with description": ["dfc323f6bb605f586c4928ecb08c77acfb241f53", false],
-  "Rating": ["1d3c2e045977bc6b2b407cdd2c82eb43dc00325a", true],
-  "_Rating star base": ["51d4e5f5f09b643b0816d27100d99a9bf08432f5", true],   // S27 (11 พ.ย. 2569) key เดียวกับ contractor-eval-plugin
-  "call-24-300-round": ["117dd21b39fd7f89391fa783e220ad32b61746e2", false],
-  "groups-24-300-round": ["16f9e5ce96b0b738a6cc2e87a7500a6898ac28ae", false],
-  "search_check-24-300-round": ["230bb3b003a72d41a3649ee10760711ec3846d87", false],
-  "star-24-300-round": ["ecf8821fb00ba65575f6814101291f6166e00aa6", false],
   "Checkbox text card": ["a29fe414b23f6ac84089cc837b8f2ff06ac561a3", true],
   "Step circles / 4 steps": ["5d90e00c1796d10ae8a19989403f503e0d54bf87", true],   // S10 มือถือ วงขั้นตอน 1/2 2/2 แบบ Check Expense Modal หน้า 5.14 - 5.15 Cost & Expense Check ของ UI Release#2 (5 พ.ย. 2569 · R70)
   "account_balance-24-300-round": ["48c0cb9ff8ec9c4c6c9a2be469bcd54a12742890", false],   // ไอคอนนำช่องศูนย์ต้นทุน แบบสำรองของ Request Repair/Budget (ตัวเดียวกับ Overhaul R18 · 5 พ.ย. 2569 · R72)
@@ -485,7 +478,7 @@ let LINK_VAR;
 /* R80 คำว่า "ยานพาหนะ" แทน "รถ" (6 พ.ย. 2569 เจ้าของงาน "คำว่า รถ ที่อยู่ใน โปรแกรม อยากให้เปลี่ยนเป็นคำว่า ยานพาหนะ แทน โดยถ้าเป็นข้อมูลที่ดึงมาจาก api จะไม่ต้องแก้ไข")
    ข้อความที่ปลั๊กอินใส่เองเขียนเป็น "ยานพาหนะ" ในโค้ดแล้ว (เทสตรวจซอร์สด้วย) · ตัวนี้แก้ข้อความตั้งต้นของ component ที่ยืมมา เช่น "สถานะรถ" ของ component งานซ่อม
    WORD_ALLOW = ข้อมูลจาก API ที่คงคำว่ารถ (ชื่อประเภทยานพาหนะ) + คำที่มี "รถ" แต่ไม่ได้แปลว่ารถ · ต้องตรงกับ allow ของ R80 ใน component-rules.json (เทสเทียบให้) */
-const WORD_ALLOW = ['สามารถ', 'รถพ่วงฉีดน้ำ', 'รถเสีย', 'ผู้ใช้รถฯ', 'ทะเบียนรถ'];   // รถเสีย = ประเภทการซ่อมของระบบแจ้งซ่อม (5.3 Vehicle Breakdown) ใช้ในประวัติการซ่อมบำรุง S24 (10 พ.ย. 2569) · ผู้ใช้รถฯ ทะเบียนรถ = ข้อความของแบบสำรวจ กบค. ลอกตรงตัว (S27 R94 · 11 พ.ย. 2569)
+const WORD_ALLOW = ['สามารถ', 'รถพ่วงฉีดน้ำ', 'รถเสีย'];   // รถเสีย = ประเภทการซ่อมของระบบแจ้งซ่อม (5.3 Vehicle Breakdown) ใช้ในประวัติการซ่อมบำรุง S24 (10 พ.ย. 2569) · 12 พ.ย. 2569 ถอด ผู้ใช้รถฯ ทะเบียนรถ (ข้อความแบบสำรวจของ S27 ย้ายไป satisfaction-plugin R105)
 const OLD_WORD = '\u0E23\u0E16';   // "รถ" เขียนแบบ escape ให้เทสตรวจซอร์สไม่นับตัวแปลงเอง
 const toVehicleWord = (s) => { let t = s; WORD_ALLOW.forEach((w, i) => { t = t.split(w).join('\u0001' + i + '\u0002'); }); t = t.split(OLD_WORD).join('ยานพาหนะ'); WORD_ALLOW.forEach((w, i) => { t = t.split('\u0001' + i + '\u0002').join(w); }); return t; };
 async function AFTER_SCREEN(root) {
@@ -2418,139 +2411,15 @@ async function ackResult(name, o) {   // o.cannot · o.done = รับทรา
     nodes.push(col('Section', [await sectionLabel('ผลการตรวจสภาพก่อนบำรุงรักษา')].concat(await inspectStep(c, true, true)), 16),
       await photoGallery('ภาพก่อนเริ่มงาน (' + BEFORE.length + ')', BEFORE.length),
       col('Section', [await sectionLabel('รายการงานและอะไหล่ที่ใช้จริง', { badge: WORK.length }), await tblShort(WORK_COLS2, WORK.map(w => [w[0], w[1], w[2], w[3], w[4]]))], 16),
-      );   // 11 พ.ย. 2569 รอบต่อมา: ไม่มีการประเมินในหน้านี้แล้ว — แบบประเมินความพึงพอใจของ กบค. ย้ายไป S27 บล็อก Y (R94)
+      );   // 11 พ.ย. 2569 รอบต่อมา: ไม่มีการประเมินในหน้านี้แล้ว · 12 พ.ย. 2569 แบบประเมินความพึงพอใจเป็นเรื่องแยก (satisfaction-plugin R105 · Diagram/09-ประเมินความพึงพอใจ)
   }
   if (!o.done) nodes.push(o.viewOnly ? btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }]]) : await ackRow(false));   // รับทราบอย่างเดียว กดได้ทันที (11 พ.ย. 2569) · บทบาทอื่น = ย้อนกลับอย่างเดียว (Permission S13)
   add(page, col('Content', nodes, 32), 'h');
   return scr;
 }
-/* ---------- S27 ประเมินความพึงพอใจการให้บริการของ กบค. — หน้าแยก (บล็อก Y · R94 · เจ้าของงาน 11 พ.ย. 2569) ----------
-   เจ้าของงาน 11 พ.ย. 2569 "ทำเรื่องการประเมิน … อันนี้เป็นการประเมิน ที่หน่วยงานประเมิน กบค" + "ใช่ ประเมินแทน S13 หลังบำรุงรักษาเสร็จ"
-     → รอบต่อมา "แบบประเมินความพอใจ น่าจะเป็นเรื่องนี้ ที่ให้เอาของที่ส่งไป ทำเป็นอีก 1 view" + เคาะ "ย้ายออกจาก S13 ไปอยู่ view ใหม่" · 1 แถว = ยานพาหนะ 1 คันที่บำรุงรักษาเสร็จ · ผู้ประเมิน = ผู้ดูแลยานพาหนะ (R89)
-   โครงจอยก (copy แล้วปรับ ไม่ import ข้ามปลั๊กอิน) จาก contractor-eval-plugin/screens.js: listScreen → satList · question/groupHead → satQuestion/satGroupHead · evalForm → satForm · resultScreen → satResult
-     ยึดตามโค้ดล่าสุดของประเมินผู้รับจ้าง (เจ้าของงานเคาะ 22 ต.ค. 2569): รายการไม่มีช่องค้นหา · ไม่มีหมายเหตุรายข้อ (หมายเหตุช่องเดียวท้ายฟอร์ม) · ไม่มีส่วนแนบแบบที่ลงนาม
-   เนื้อหา: แบบสำรวจ "VMS+" ของ กบค. ในระบบ XCHO 5 ขั้น (ไฟล์ VMS+ _ Xcho-1…5.pdf) — ข้อความหัวข้อ คำถาม สเกล ลอกตรงตัว (รวม "ผู้ใช้รถฯ" "ทะเบียนรถ" · R80 allow)
-     ข้อมูลผู้ใช้รถฯ 5 ช่อง = กล่องแสดงข้อมูล (เติมให้) · 4 ด้าน 11 ข้อ ดาว 1–5 (Rating ตัวเดียวกับประเมินผู้รับจ้าง) · ด้านละ 10/20/15/10 · รวมเต็ม 55 (ไม่แปลงเป็นร้อย) · ผลระดับ "รอเคาะเกณฑ์"
-   หน้าดูผล: ไม่มีปุ่มพิมพ์แบบประเมิน (PDF) — แบบสำรวจตอบออนไลน์ ไม่มีผู้ลงนามฝั่งผู้ให้บริการ (เสนอ ยังไม่เคาะ) · คะแนนรายข้อเป็นตัวเลข (แบบสำรวจไม่มีชื่อระดับ)
-   ที่มา: Tabs · Table · Empty state/Data empty · Section header · Section label · Content item row · Alert · Featured icon · Input label · Rating · Text area · Modal · Notification ของไฟล์ Component
-     + หน้าจอประเมินผู้รับจ้าง (บล็อก A B C ของ contractor-eval-plugin) · ไม่มี component ใหม่ */
-const SURVEY_INFO = ['ทะเบียนรถ', 'ชื่อผู้ตอบแบบสอบถาม', 'นามสกุลผู้ตอบแบบสอบถาม', 'ตำแหน่ง ผู้ตอบแบบสอบถาม', 'สังกัด'];
-const SURVEY_SCALE = 'โดย 1 คือคะแนนแย่สุด และ 5 คือคะแนนดีสุด';
-const SURVEY = [   // [ชื่อด้าน, ข้อ, ไอคอนหัวด้าน (ไอคอนที่ contractor-eval นำเข้าได้)]
-  ['ด้านระบบการให้บริการ', ['ความรวดเร็วในการรับบริการ', 'ความสะดวกในการติดต่อเพื่อขอรับบริการ'], 'call-24-300-round'],
-  ['ด้านเจ้าหน้าที่และ/หรือผู้ให้บริการ', ['อัธยาศัยของผู้ให้บริการ', 'ความรู้ของผู้ให้บริการ', 'การให้ความรู้และคำแนะนำแก่ผู้รับบริการ', 'ความตั้งใจในการดำเนินการให้ผู้รับบริการ'], 'groups-24-300-round'],
-  ['ด้านคุณภาพของสินค้าและ/หรือบริการ', ['คุณภาพของอะไหล่และการบริการ', 'ระยะเวลาในการได้รับอะไหล่และการบริการ', 'อุปกรณ์ เครื่องมือและเทคโนโลยีในการให้บริการ'], 'car_repair-24-300-round'],
-  ['ด้านสภาพแวดล้อมต่างๆ', ['การทำความสะอาดพื้นที่หลังการให้บริการ', 'การทำความสะอาดเครื่องจักรกลหลังการให้บริการ'], 'search_check-24-300-round']];
-const SURVEY_N = SURVEY.reduce((n, g) => n + g[1].length, 0);   // 11
-const SURVEY_MAX = SURVEY_N * 5;   // 55
-const SAT_TITLE = 'ประเมินความพึงพอใจ';
-const SURVEY_SAMPLE = [5, 4, 4, 5, 4, 4, 4, 3, 4, 5, 4];   // ครบ 11 ข้อ = 46 (ตรง SAMPLE_ANSWERS ของเว็บ lib/mock/survey.ts)
-const SURVEY_PART = SURVEY_SAMPLE.slice(0, 6);              // 2 ด้านแรก 6 ข้อ = 26
-const SURVEY_PREV = [4, 4, 5, 4, 4, 5, 4, 4, 4, 4, 5];     // คันที่ประเมินไปก่อน (แท็บประเมินแล้ว) = 47
-const SAT_REMARK = ['ช่างมาตรงเวลา', 'ช่างมาตรงเวลา อธิบายงานที่ทำก่อนส่งคืนยานพาหนะ'];
-const CARETAKER_POS = 'ชก.7';   // ตำแหน่งผู้ดูแลยานพาหนะ (ค่าสมมติ ตรงเว็บ)
-const ssum = (a) => a.reduce((t, x) => t + (x || 0), 0);
-const savg = (a) => { const n = a.filter(Boolean).length; return n ? (ssum(a) / n).toFixed(2) : '-'; };
-const SAT_PEND = JOB_I, SAT_PREV = TRIP_1.sel[1];   // 82-6789 ยังไม่ได้ประเมิน · 82-1145 ประเมินแล้ว (ผู้ดูแลคนเดียวกัน · รับทราบแล้วทั้งคู่ใน S13)
-const surveyInfo = (i) => { const c = TRIP_CARS[i], who = tripCtrl(i, TRIP_1.phones), sp = who.indexOf(' ');
-  return [c[0], sp < 0 ? who : who.slice(0, sp), sp < 0 ? '-' : who.slice(sp + 1), CARETAKER_POS, c[2]]; };
-const satJob = (i) => [['เลขที่ MR', P[0]], ['แผนเดินทาง', JOB_T.name], ['ประเภทยานพาหนะ', typeOf(TRIP_CARS[i])], ['วันดำเนินการ', '04/11/2569'], ['ผู้ดำเนินการ', JOB_BY], ['รับทราบเมื่อ', '06/11/2569 10:05 น.']];
-
-/* ---------- Y.1–Y.3 รายการ — listScreen ของประเมินผู้รับจ้าง: Tabs ยังไม่ได้ประเมิน (จำนวน) / ประเมินแล้ว · ไม่มีช่องค้นหา · คอลัมน์แรก # ---------- */
-const SAT_PEND_COLS = [['#', 64], ['ทะเบียน', 0, 'Lead text'], ['เลขที่ MR', 150], ['แผนเดินทาง', 260], ['ผู้ดำเนินการ', 220], ['วันที่รับทราบ', 140], ['ดำเนินการ', 104]];
-const SAT_DONE_COLS = [['#', 64], ['ทะเบียน', 0, 'Lead text'], ['เลขที่ MR', 150], ['แผนเดินทาง', 240], ['วันที่ประเมิน', 140], ['ผู้ประเมิน', 200], ['คะแนน (เต็ม ' + SURVEY_MAX + ')', 200], ['', 60]];
-const satPendRow = (i, k) => [String(k + 1), { text: TRIP_CARS[i][0], sub: typeOf(TRIP_CARS[i]) }, P[0], JOB_T.name, { text: TRIP.staff[0], sub: UNITS[0] }, '06/11/2569',
-  { icons: [has('star-24-300-round') ? 'star-24-300-round' : 'keyboard_arrow_right-20-400-round'] }];
-const satDoneRow = ([i, a, date], k) => [String(k + 1), { text: TRIP_CARS[i][0], sub: typeOf(TRIP_CARS[i]) }, P[0], JOB_T.name, date, tripCtrl(i, TRIP_1.phones),
-  ssum(a) + ' / ' + SURVEY_MAX + ' · เฉลี่ย ' + savg(a), { icons: ['quick_reference_all-24-300-round'] }];
-async function satList(name, o) {
-  o = o || {};
-  const pend = o.pending || [SAT_PEND], done = o.done || [[SAT_PREV, SURVEY_PREV, '06/11/2569']];
-  const { scr, page } = await shell(name, { title: SAT_TITLE });
-  const sec = col('Section', [], 24); add(page, sec, 'h');
-  add(sec, await tabs([['ยังไม่ได้ประเมิน', pend.length], ['ประเมินแล้ว', null]], o.tab || 0), 'h');
-  if (!(o.tab ? done : pend).length) {   // Empty state + ปุ่มไปแท็บประเมินแล้ว (แบบประเมินผู้รับจ้าง)
-    const es = inst('Empty state/Data empty'); add(sec, es, 'h');
-    await text(es, 'Text', 'ไม่มีรายการที่ต้องประเมิน');
-    await text(es, 'Supporting text', 'ยานพาหนะที่บำรุงรักษาเสร็จจะเข้ามาที่นี่เมื่อผู้ดูแลยานพาหนะรับทราบผลการบำรุงรักษาแล้ว');
-    const pb = find(es, 'Primary button'); if (pb) pb.visible = false;
-    const sb = find(es, 'Secondary button'); if (sb) setProps(sb, { Text: 'ดูรายการที่ประเมินแล้ว', 'Leading icon': false, 'Trailing icon': false });
-    return scr;
-  }
-  add(sec, o.tab ? await tbl(SAT_DONE_COLS, done.map(satDoneRow), { pagination: done.length }) : await tbl(SAT_PEND_COLS, pend.map(satPendRow), { pagination: pend.length }), 'h');
-  return scr;
-}
-
-/* ---------- Y.4–Y.10 ฟอร์ม — evalForm ของประเมินผู้รับจ้าง · หน้า Create ⇒ Section header (R3) ---------- */
-function satQuestion(no, q, score) {   // Input label (ข้อความตัวหนา ไม่มี "(ถ้ามี)" = บังคับ) → ห่าง 12 → Rating ดาว 5 ดวง (เริ่มว่าง Point=0)
-  const lb = inst('Input label', {}, { 'Label text': no + '. ' + q, Optional: false, 'Info icon': false });
-  const rt = inst('Rating', { Point: String(score || 0) }); rt.name = 'Rating';
-  return col('Item', [lb, rt], 12);
-}
-async function satGroupHead(title, ic, badge) {   // Featured icon สีหลัก + Section header (ชื่อด้าน + Badge คะแนนด้าน)
-  const fi = inst('Featured icon', { Color: 'Brand', Size: 'md' });
-  if (has(ic)) setProps(fi, { 'Icon swap': icon(ic) });
-  const sh = await section(title, { badge });
-  const r = row('Group', [fi, sh], { hug: true, gap: 16, align: 'CENTER', keep: true });
-  sh.layoutGrow = 1;
-  return r;
-}
-async function satForm(name, o) {
-  o = o || {};
-  const sc = o.scores || [], c = TRIP_CARS[SAT_PEND];
-  const { scr, page } = await shell(name, { title: SAT_TITLE + ' ' + P[0] + ' · ' + c[0], back: true, crumbs: [SAT_TITLE, c[0]] });
-  const info = surveyInfo(SAT_PEND);
-  const parts = [col('Section', [await section('ข้อมูลงานบำรุงรักษา'), kv(satJob(SAT_PEND))], 16),
-    col('Section', [await section('ข้อมูลผู้ใช้รถฯ'), kv(SURVEY_INFO.map((l, k) => [l, info[k]]))], 16),
-    alertBox('Info', 'ให้คะแนนทุกข้อ 1 ถึง 5 ดาว', SURVEY_SCALE + ' · คะแนนรวมเต็ม ' + SURVEY_MAX + ' (' + SURVEY_N + ' ข้อ × 5) · หมายเหตุไม่บังคับ')];
-  let k = 0;
-  for (const [title, qs, ic] of SURVEY) {
-    const items = [], gs = [];
-    qs.forEach((q, i) => { gs.push(sc[k] || 0); items.push(satQuestion(i + 1, q, sc[k])); k++; });
-    const qcol = col('Questions', items, 24); if (!MOB) qcol.paddingLeft = 64;   // ข้อเยื้องตรงชื่อด้าน (ไอคอน 48 + ช่อง 16)
-    parts.push(col('Section', [await satGroupHead(title, ic, ssum(gs) + '/' + qs.length * 5), qcol], 16));
-  }
-  parts.push(col('Section', [await section('หมายเหตุ/ข้อเสนอแนะเพิ่มเติม'), area('หมายเหตุ/ข้อเสนอแนะเพิ่มเติม', o.remark || '', { optional: true, placeholder: 'ระบุหมายเหตุหรือข้อเสนอแนะ' })], 16));
-  const n = sc.filter(Boolean).length;
-  parts.push(col('Section', [await section('สรุปคะแนน'), kv([['ให้คะแนนแล้ว', n + ' / ' + SURVEY_N + ' ข้อ'], ['คะแนนรวม', ssum(sc) + ' / ' + SURVEY_MAX], ['ค่าเฉลี่ย', n ? savg(sc) + ' จาก 5' : '-'], ['ผลระดับ', 'รอเคาะเกณฑ์']])], 16));
-  parts.push(btnRow([['Secondary button', 'ยกเลิก', { size: 'lg' }], ['Primary button', 'บันทึกการประเมิน', { size: 'lg', disabled: n < SURVEY_N }]]));
-  add(page, col('Content', parts, 32), 'h');
-  return scr;
-}
-
-/* ---------- Y.11 ดูผล — resultScreen ของประเมินผู้รับจ้าง · หน้า Detail ⇒ Section label (R5/R11) · ตารางต่อด้าน (ข้อ · รายการประเมิน · คะแนน) ---------- */
-const SAT_DETAIL_COLS = [['ข้อ', 80], ['รายการประเมิน', 0], ['คะแนน', 160]];
-async function satResult(name) {
-  const a = SURVEY_SAMPLE, c = TRIP_CARS[SAT_PEND], info = surveyInfo(SAT_PEND);
-  const { scr, page } = await shell(name, { title: 'ผล' + SAT_TITLE + ' ' + P[0] + ' · ' + c[0], back: true, crumbs: [SAT_TITLE, c[0]], badge: ['ประเมินแล้ว', 'Success'] });
-  const gsum = []; let k = 0;
-  for (const [title, qs] of SURVEY) { gsum.push([title, ssum(a.slice(k, k + qs.length)) + ' / ' + qs.length * 5]); k += qs.length; }
-  const parts = [col('Section', [await sectionLabel('ข้อมูลงานบำรุงรักษา'), kv(satJob(SAT_PEND))], 16),
-    col('Section', [await sectionLabel('ข้อมูลผู้ใช้รถฯ'), kv(SURVEY_INFO.map((l, x) => [l, info[x]]))], 16),
-    col('Section', [await sectionLabel('สรุปผลการประเมิน'), kv([['คะแนนรวม', ssum(a) + ' / ' + SURVEY_MAX], ['ค่าเฉลี่ย', savg(a) + ' จาก 5'], ['ผู้ประเมิน', tripCtrl(SAT_PEND, TRIP_1.phones)], ['วันที่ประเมิน', '07/11/2569 09:30 น.']]
-      .concat(gsum, [['หมายเหตุ/ข้อเสนอแนะเพิ่มเติม', SAT_REMARK[1]]]))], 16)];
-  k = 0;
-  for (const [gi, [title, qs]] of SURVEY.entries()) {
-    const rows = qs.map((q, i) => { k++; return [String(i + 1), q, String(a[k - 1])]; });
-    parts.push(col('Section', [await sectionLabel(title + ' ' + gsum[gi][1]), await tbl(SAT_DETAIL_COLS, rows)], 16));
-  }
-  parts.push(btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }]]));
-  add(page, col('Content', parts, 32), 'h');
-  return scr;
-}
-const SAT_CONFIRM = () => ({ title: 'ยืนยันการประเมิน', sub: 'คุณต้องการบันทึกการประเมินความพึงพอใจของ ' + TRIP_CARS[SAT_PEND][0] + ' ใช่หรือไม่? คะแนนรวม ' + ssum(SURVEY_SAMPLE) + ' / ' + SURVEY_MAX + ' · บันทึกแล้วแก้ไขไม่ได้', ok: 'ยืนยัน' });
-const SAT_STATES = [
-  ['แท็บยังไม่ได้ประเมิน — ยานพาหนะที่รับทราบแล้ว', () => satList('S27 ยังไม่ได้ประเมิน', { tab: 0 })],
-  ['แท็บประเมินแล้ว', () => satList('S27 ประเมินแล้ว', { tab: 1 })],
-  ['ไม่มีรายการที่ต้องประเมิน', () => satList('S27 ไม่มีรายการ', { tab: 0, pending: [] })],
-  ['ฟอร์มประเมิน — ยังไม่ให้คะแนน', () => satForm('S27 ฟอร์มว่าง', {})],
-  ['ให้คะแนนบางข้อ + กรอกหมายเหตุท้ายฟอร์ม', () => satForm('S27 กรอกบางข้อ', { scores: SURVEY_PART, remark: SAT_REMARK[0] })],
-  ['ให้คะแนนครบ 11 ข้อ', () => satForm('S27 กรอกครบ', { scores: SURVEY_SAMPLE, remark: SAT_REMARK[1] })],
-  ['ยืนยันการประเมิน', async () => { const s = await satForm('S27 ยืนยัน', { scores: SURVEY_SAMPLE, remark: SAT_REMARK[1] }); await confirm(s, SAT_CONFIRM()); return s; }],
-  ['บันทึกไม่สำเร็จ', async () => { const s = await satForm('S27 บันทึกไม่สำเร็จ', { scores: SURVEY_SAMPLE, remark: SAT_REMARK[1] }); notify(s, 'บันทึกการประเมินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง', true); return s; }],
-  ['บันทึกสำเร็จ — ย้ายไปแท็บประเมินแล้ว', async () => { const s = await satList('S27 บันทึกสำเร็จ', { tab: 1, pending: [], done: [[SAT_PEND, SURVEY_SAMPLE, '07/11/2569'], [SAT_PREV, SURVEY_PREV, '06/11/2569']] }); notify(s, 'ประเมินความพึงพอใจสำเร็จ (' + TRIP_CARS[SAT_PEND][0] + ')'); return s; }],
-  ['ยกเลิกระหว่างกรอก — ยืนยันการออก', async () => { const s = await satForm('S27 ยืนยันการออก', { scores: SURVEY_PART, remark: SAT_REMARK[0] }); await confirm(s, { title: 'ยืนยันการออก', sub: 'ข้อมูลที่กรอกไว้จะไม่ถูกบันทึก', cancel: 'ปิด', ok: 'ออก' }); return s; }],
-  ['ผลประเมิน', () => satResult('S27 ผลประเมิน')]];
+/* ---------- S27 แบบประเมินความพึงพอใจ (บล็อก Y เดิม · R94 11 พ.ย. 2569) ย้ายออก 12 พ.ย. 2569 ----------
+   เจ้าของงาน 12 พ.ย. 2569 "เรื่องการประเมินเป็นเรื่องแยกที่จะไปผูกตาม flow ต่างๆ เลยอยากแยกใว้" ⇒ ปลั๊กอินแยก figma-export/satisfaction-plugin/ (R105)
+   เอกสาร Diagram/09-ประเมินความพึงพอใจ/ · ยานพาหนะที่ผู้ดูแลรับทราบผลแล้ว (S13) เข้ารายการยังไม่ได้ประเมินของเรื่องนั้น 1 งาน 1 แถว · ตัวอักษร Y ว่าง (BLOCK_OF) */
 /* planEvidence (S14 หลักฐานทั้งแผน + ยอมรับผลทั้งแผน) เอาออก 10 พ.ย. 2569 — S14 ตัดออก ประเมินย้ายไป S13 รายคัน */
 
 /* S16 headHistory (หัวหน้าหน่วยงาน ตรวจประวัติ) เอาออก 10 พ.ย. 2569 — S16 ตัดออก */
@@ -2869,7 +2738,7 @@ const SCENARIOS = [
     ['บันทึกสำเร็จ — แสดงผลที่บันทึก แก้ได้ภายหลัง', async () => { const s = await workDetail('S12 บันทึกผลสำเร็จ', { res: { sel: 1, files: [OIL_FILE], saved: true } }); notify(s, 'บันทึกผลการทดสอบน้ำมันไฮดรอลิกสำเร็จ'); return s; }],
     ['กลับหน้าแผนเดินทาง — ป้ายน้ำมันไม่ผ่าน', () => tripDetail('S12 น้ำมันไม่ผ่าน', { st: JOB_MIX, oil: { [JOB_I]: 'fail' } })]]],
   /* S13 ปรับ 10 พ.ย. 2569 (เจ้าของงาน Q19 Q23 Q28 · ผู้ดูแลยานพาหนะรับทราบ + ประเมินรายคัน) — รหัส L.1–L.5 เดิม (ยังไม่เคยรีวิว) เปลี่ยนเนื้อ · L.6 ต่อท้าย
-     11 พ.ย. 2569 (R94) ประเมินเป็นแบบประเมินความพึงพอใจของ กบค. → รอบต่อมา เจ้าของงาน "ย้ายออกจาก S13 ไปอยู่ view ใหม่" ⇒ S13 รับทราบอย่างเดียว · ประเมินอยู่ S27 บล็อก Y
+     11 พ.ย. 2569 (R94) ประเมินเป็นแบบประเมินความพึงพอใจของ กบค. → รอบต่อมา เจ้าของงาน "ย้ายออกจาก S13 ไปอยู่ view ใหม่" ⇒ S13 รับทราบอย่างเดียว · ประเมินอยู่ S27 บล็อก Y → 12 พ.ย. 2569 ย้ายเป็นเรื่องแยก satisfaction-plugin (R105) คันที่รับทราบแล้วเข้ารายการประเมินของเรื่องนั้น
      L.2 ปุ่มรับทราบกดได้ · L.4 รายการหลังรับทราบ (เดิมประเมินแล้ว) · L.7 บทบาทอื่นดูอย่างเดียว (เดิมตอบยังไม่ครบ) — รหัสเดิมไม่เลื่อน
      S14 ตรวจหลักฐานทั้งแผน และ S15 ส่งประวัติ ตัดออก 10 พ.ย. 2569 (บล็อก M N ว่าง) — S16 S17 ตัดตามมา 10 พ.ย. 2569 · ผู้ดูแลยานพาหนะรับทราบรายคันเป็นขั้นสุดท้าย รับทราบครบทุกคันแล้วแผนปิดงานเอง (เสนอ) */
   ['S13 · ผู้ดูแลยานพาหนะ รับทราบผลการบำรุงรักษารายคัน', [
@@ -2962,8 +2831,7 @@ const SCENARIOS = [
     // 10 พ.ย. 2569 เจ้าของงาน "ตัวเลือกต้องสามารถเลือก ดำเนินการบำรุงรักษา และ ย้ายไปไตรมาสอื่น" — ต่อท้าย X.11 X.12 รหัสเดิมไม่เลื่อน
     ['เลือกดำเนินการบำรุงรักษา — ยืนยันนำยานพาหนะกลับมาบำรุงรักษาในไตรมาสเดิม', async () => { const s = await moveQuarter('S25 ยืนยันดำเนินการบำรุงรักษา', 0); await confirm(s, MAINT_CONFIRM()); return s; }],
     ['ดำเนินการบำรุงรักษาแล้ว — ยานพาหนะกลับเป็นยังไม่มีแผนเดินทาง รอเพิ่มเข้าแผนเดินทาง', async () => { const s = await tripList('S25 ดำเนินการบำรุงรักษาแล้ว', { trips: [Object.assign({}, JOB_T, { sel: JOB_T.sel.filter(i => i !== MOVE_I) })] }); notify(s, MAINT_TOAST()); return s; }]]],
-  /* S27 (เจ้าของงาน 11 พ.ย. 2569 · R94) แบบประเมินความพึงพอใจของ กบค. ย้ายออกจาก S13 เป็นหน้าแยก แบบ "ประเมินผู้รับจ้าง" (contractor-eval-plugin A B C) · บล็อก Y */
-  ['S27 · ผู้ดูแลยานพาหนะ ประเมินความพึงพอใจการให้บริการของ กบค. รายคัน', SAT_STATES]
+  /* S27 แบบประเมินความพึงพอใจ (บล็อก Y เดิม) ย้ายไปเรื่องแยก satisfaction-plugin 12 พ.ย. 2569 (R105) */
 ];
 
 
@@ -2999,7 +2867,6 @@ const FLOW_NODES = {
   S9: { 'เลือกจ้างดำเนินการ — ช่องผู้รับจ้างขึ้น': 'D2', 'เลือกผู้รับจ้าง — รายชื่อผู้รับจ้างเปิด': 'A3', 'กดเพิ่มยานพาหนะ — popup ยานพาหนะในแผนเดินทางอื่นแสดงแต่เลือกไม่ได้': 'D5', 'แก้ไขยานพาหนะในแผนเดินทาง — ผู้ดูแลยานพาหนะ สถานที่ และวันดำเนินการ ค่าเริ่มต้นทั้งช่วงวันทำงาน': 'A5', 'Validation กรณีไม่ได้ระบุข้อมูล, Out of focus': 'Q1', 'กรอกครบ': 'A6', 'ยืนยันแล้ว — ส่งให้ผู้อนุมัติ (รออนุมัติ)': 'D3' },
   S8: { 'กรย. — มีแจ้งเตือนใหม่ (จุดแดงที่กระดิ่ง)': 'D1', 'กรย. — เปิดแผงแจ้งเตือน': 'A1', 'กรย. — แผนเดินทาง ดูอย่างเดียว (ยานพาหนะทุกคันในใบ)': 'D2', 'หน่วยงานเจ้าของยานพาหนะ — เปิดแผงแจ้งเตือน': 'A2', 'หน่วยงานเจ้าของยานพาหนะ — แผนเดินทาง ดูอย่างเดียว (เฉพาะยานพาหนะของหน่วยงาน)': 'D3' },
   S13: { 'รายการผลการบำรุงรักษารอรับทราบ — มีแจ้งเตือนใหม่': 'D1', 'ผลการบำรุงรักษารายคัน — ปุ่มรับทราบกดได้': 'D2', 'คันที่บำรุงรักษาไม่ได้ — ฟอร์มเดียวกัน แสดงสาเหตุ รับทราบได้เลย': 'D3', 'กลับหน้ารายการ — คันที่รับทราบแล้วสถานะรับทราบแล้ว': 'D6', 'รับทราบแล้ว — ปุ่มหาย ป้ายรับทราบแล้ว': 'A3 D5', 'เปิดแผงแจ้งเตือน — ปิดงานแล้ว รอรับทราบ': 'A0 D0', 'บทบาทอื่นเปิดดูผล — ไม่มีปุ่มรับทราบ': 'D7' },
-  S27: { 'แท็บยังไม่ได้ประเมิน — ยานพาหนะที่รับทราบแล้ว': 'D1', 'แท็บประเมินแล้ว': 'A6 D9', 'ไม่มีรายการที่ต้องประเมิน': 'D0', 'ฟอร์มประเมิน — ยังไม่ให้คะแนน': 'A1 D2', 'ให้คะแนนบางข้อ + กรอกหมายเหตุท้ายฟอร์ม': 'A2 D3', 'ให้คะแนนครบ 11 ข้อ': 'D4', 'ยืนยันการประเมิน': 'A3 D5', 'บันทึกไม่สำเร็จ': 'D6', 'บันทึกสำเร็จ — ย้ายไปแท็บประเมินแล้ว': 'D7', 'ยกเลิกระหว่างกรอก — ยืนยันการออก': 'A4 D8', 'ผลประเมิน': 'A5 D10' },
   S25: { 'หน้าไตรมาส 1 — ยานพาหนะที่บำรุงรักษาไม่ได้ ป้ายบำรุงรักษาไม่ได้': 'D0', 'กดปุ่ม … ของยานพาหนะ — ย้ายไปไตรมาสอื่น': 'A1', 'popup ย้ายไปไตรมาสอื่น — ยังไม่เลือกไตรมาส': 'A2 D2', 'เลือกไตรมาส 2 — ปุ่มย้ายยานพาหนะกดได้': 'A3', 'กรณีไตรมาส 3 — ไตรมาสก่อนหน้าและไตรมาสปัจจุบันเลือกไม่ได้': 'D2', 'ยืนยันการย้ายยานพาหนะ': 'D3', 'ย้ายสำเร็จ — ไตรมาส 1 ไม่มียานพาหนะคันนี้แล้ว': 'D4', 'หน้าไตรมาส 2 — ยานพาหนะที่ย้ายมา ยังไม่มีแผนเดินทาง': 'A4 D5', 'หน้าไตรมาส 2 — อะไหล่ในไตรมาสรวมอะไหล่ของยานพาหนะที่ย้ายมา': 'D6', 'ไตรมาส 4 — เมนูย้ายไปไตรมาสอื่นกดไม่ได้': 'D1' },   // 5 พ.ย. 2569 บล็อก X
 };
 
@@ -3008,7 +2875,7 @@ const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 /* ตัวอักษรบล็อกผูกกับตำแหน่งใน BLOCK_OF ตายตัว (2 พ.ย. 2569) — ตัด/รวม scenario แล้วบล็อกอื่นไม่เลื่อน ชื่อเฟรมที่ export ไปแล้วยังตรง · S5 รวมเข้า S4 ⇒ D เว้นว่าง
    4 พ.ย. 2569 ตัด S11 (J) และ S23 (V) ⇒ คงช่องไว้เป็นป้ายกันที่ ('S11 ตัดออก' · 'S23 ตัดออก' ไม่ตรงกับ scenario ไหน) ถ้าเอาออกจาก array ตัวอักษร K–U และ W จะเลื่อน ชื่อเฟรม Figma ที่ export แล้วจะไม่ตรง
    10 พ.ย. 2569 เอา S23 กลับ (R87) ⇒ ช่อง V กลับเป็น 'S23' ตัวอักษรอื่นไม่เลื่อน · J ยังว่าง (S11 ยังตัด) */
-const BLOCK_OF = ['S1', 'S2', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11 ตัดออก', 'S12', 'S13', 'S14 ตัดออก', 'S15 ตัดออก', 'S16 ตัดออก', 'S17 ตัดออก', 'S18', 'S19', 'S20', 'S21', 'S22 ตัดออก', 'S23', 'S24', 'S25', 'S27'];   // S27 ประเมินความพึงพอใจของ กบค. = Y (11 พ.ย. 2569)   // S24 ข้อมูลการบำรุงรักษา (4 พ.ย. 2569) = W · J ว่าง · V = S23 (เอากลับ 10 พ.ย. 2569)
+const BLOCK_OF = ['S1', 'S2', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11 ตัดออก', 'S12', 'S13', 'S14 ตัดออก', 'S15 ตัดออก', 'S16 ตัดออก', 'S17 ตัดออก', 'S18', 'S19', 'S20', 'S21', 'S22 ตัดออก', 'S23', 'S24', 'S25', 'S27 ย้ายไปเรื่องแยก'];   // Y ว่าง: S27 ประเมินความพึงพอใจ (11 พ.ย. 2569) ย้ายไป satisfaction-plugin 12 พ.ย. 2569   // S24 ข้อมูลการบำรุงรักษา (4 พ.ย. 2569) = W · J ว่าง · V = S23 (เอากลับ 10 พ.ย. 2569)
 const GROUPS = SCENARIOS.map(([title, screens], i) => {
   const tag0 = title.split(' · ')[0], code = BLOCK_OF.indexOf(tag0) >= 0 ? LETTERS[BLOCK_OF.indexOf(tag0)] : LETTERS[i], tag = title.split(' · ')[0], rest = title.split(' · ').slice(1).join(' · ');
   const map = FLOW_NODES[tag] || {};
@@ -3224,18 +3091,19 @@ async function clearPrototype(page) {
    parts: desktop (userflow + จอ desktop) · mobile · journey · storymap · usecase — เรียงตามลำดับนี้ ต่อใต้ของเดิมทุกส่วน */
 /* ตาราง scenario (เจ้าของงาน 2 พ.ย. 2569 "อยากให้ทำตาราง เขียนใน figma") — ช่วงงาน/ผู้ทำจากตารางภาพรวม (หัวข้อ 0) ของ userflow · บล็อก/จำนวนจอจาก GROUPS
    เรียงตามลำดับงานจริง · ท้ายตารางมีกลุ่ม scenario ที่ตัดออก · สถานะรีวิว = ที่ไล่กับเจ้าของงานแล้วในรอบ 2 พ.ย. */
-const SCEN_SEQ = ['S1', 'S2', 'S19', 'S20', 'S21', 'S4', 'S6', 'S9', 'S7', 'S8', 'S10', 'S23', 'S25', 'S12', 'S13', 'S27', 'S18', 'S24'];   // S27 ต่อจาก S13 (11 พ.ย. 2569)
+const SCEN_SEQ = ['S1', 'S2', 'S19', 'S20', 'S21', 'S4', 'S6', 'S9', 'S7', 'S8', 'S10', 'S23', 'S25', 'S12', 'S13', 'S18', 'S24'];   // S27 (ต่อจาก S13 · 11 พ.ย. 2569) ย้ายไปเรื่องแยก 12 พ.ย. 2569 ⇒ อยู่กลุ่มตัดออกท้ายตาราง
 const SCEN_REVIEW = { S1: 'ปรับตามรีวิว 5 พ.ย. · เลือกยานพาหนะแบบ A · เพิ่มยานพาหนะจากแท็บไตรมาสว่าง (เจ้าของงาน 5 พ.ย.)', S2: 'ปรับตามรีวิว 5 พ.ย.', S4: 'เปลี่ยนเป็นแดชบอร์ด 6 พ.ย. (รีวิว บล็อก C)', S21: 'ปรับตามเจ้าของงาน 5 พ.ย. · จัดการอะไหล่ทีละคัน', S19: 'ปรับตาม S1 2 พ.ย.',
   S6: 'ปรับตามรีวิว 5 พ.ย.', S7: 'ทำตาม S2 5 พ.ย. · รอรีวิวจอ', S8: 'ใหม่ 3 พ.ย. · รอรีวิวจอ', S9: 'ใหม่ 3 พ.ย. · รอรีวิวจอ', S10: 'ปรับตามรีวิว 5 พ.ย. · แผนจ้าง Step 2 ไม่มีค่าใช้จ่ายและราคา 10 พ.ย.', S23: 'เอากลับ 10 พ.ย. · UI แบบ S10 การมองเห็นแบบเดิม · รอรีวิวจอ', S12: 'ปรับตามรีวิว 4 พ.ย.', S18: 'ยังไม่ออกแบบ (เจ้าของงาน 4 พ.ย.)', S24: 'ใหม่ 4 พ.ย. · รอรีวิวจอ', S25: 'ใหม่ 5 พ.ย. · รอรีวิวจอ', S13: 'ปรับ 10 พ.ย. ผู้ดูแลยานพาหนะรับทราบรายคัน (Q19 Q23 Q28) · 11 พ.ย. ประเมินย้ายไป S27 รับทราบอย่างเดียว · รอรีวิว', S27: 'ใหม่ 11 พ.ย. · แบบประเมินความพึงพอใจของ กบค. (XCHO) หน้าแยกแบบประเมินผู้รับจ้าง (R94) · รอรีวิวจอ'
 };   // 4 พ.ย. 2569: ทำตามที่เจ้าของงานสั่งแล้ว แต่ยังไม่ได้ไล่จอด้วยกัน
-const SCEN_UPDATED = '11 พ.ย. 2569';   // วันที่ข้อมูลในตาราง scenario ล่าสุด — แก้ SCEN_REVIEW แล้วเปลี่ยนวันนี้ด้วย (ขึ้นที่หัวตาราง)
+const SCEN_UPDATED = '12 พ.ย. 2569';   // วันที่ข้อมูลในตาราง scenario ล่าสุด — แก้ SCEN_REVIEW แล้วเปลี่ยนวันนี้ด้วย (ขึ้นที่หัวตาราง)
 const SCEN_CUT = [['S3', 'ผพจ. ออกเลขงานและจัดซื้ออะไหล่', 'ตัดออก 2 พ.ย.'], ['S5', 'หน่วยงาน เบิกอะไหล่ผ่านระบบจองอะไหล่', 'รวมเข้า S4 2 พ.ย.'],
   ['S11', 'หน่วยงาน ตรวจรับงานรายคันของผู้รับจ้างและรับคืนอะไหล่', 'ตัดออก 4 พ.ย. · หน่วยงานปิดงานแผนจ้างเองที่ S10 · S23 ส่งตรวจงานแล้ว ผู้ตรวจรับยังไม่เคาะ'],
   ['S22', 'คลัง รับทราบรายการอะไหล่รายไตรมาส', 'ตัดออก 6 พ.ย. · ระบบแจ้ง Smart Inventory ตอนอนุมัติแผน (S2)'],
   ['S14', 'หน่วยงาน/เจ้าของยานพาหนะ ตรวจสอบหลักฐานและประเมินความพึงพอใจ (ครบทุกคัน)', 'ตัดออก 10 พ.ย. · รับทราบรอบเดียวรายคัน ประเมินย้ายไป S13 (Q28)'],
   ['S15', 'หน่วยงาน บันทึกและส่งประวัติงานบำรุงรักษา', 'ตัดออก 10 พ.ย. · รับทราบรอบเดียวรายคันที่ S13'],
   ['S16', 'หัวหน้าหน่วยงาน ตรวจสอบประวัติงานบำรุงรักษา', 'ตัดออก 10 พ.ย. · ไม่ต้องรับทราบทั้งแผน รับทราบรายคันที่ S13 ก็พอ'],
-  ['S17', 'ผู้ดำเนินการ ออกรายงานผลและปิดงาน', 'ตัดออก 10 พ.ย. · รับทราบครบทุกคันแล้วแผนปิดงานเอง (เสนอ) · ดูผลที่แดชบอร์ด']];
+  ['S17', 'ผู้ดำเนินการ ออกรายงานผลและปิดงาน', 'ตัดออก 10 พ.ย. · รับทราบครบทุกคันแล้วแผนปิดงานเอง (เสนอ) · ดูผลที่แดชบอร์ด'],
+  ['S27', 'ผู้ดูแลยานพาหนะ ประเมินความพึงพอใจการให้บริการของ กบค. รายคัน', 'ย้ายไปเรื่องแยก 12 พ.ย. · แบบประเมินความพึงพอใจ (XCHO) ปลั๊กอิน satisfaction-plugin']];
 const SCEN_COLS = [['scenario', 110], ['บล็อก', 90], ['ชื่อ', 600], ['ผู้ทำ', 300], ['จอ', 90], ['สถานะรีวิว', 260]];
 function scenData() {
   const sec = DOCS.scenarios.sections.find(s => /^0\./.test(s.h)) || { rows: [] };
