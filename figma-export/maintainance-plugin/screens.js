@@ -879,10 +879,16 @@ async function dashXls(name, sheet) {
 const TRIP_Q_COLS = tripVCols({ drop: ['สถานที่บำรุงรักษา'] }).concat([['แผนเดินทาง', 200]]);   // R82 ชุดเดียวกับตารางยานพาหนะของแผนเดินทาง (หน้าไตรมาสไม่มีสถานที่ เพราะสถานที่อยู่กับแผนเดินทาง)   // 6 พ.ย. 2569 + ประเภทยานพาหนะ · ช่วงวันเดินทาง เป็น วันดำเนินการรายคัน   // มีใบ = ชื่อแผนเดินทาง (Text) · ยังไม่มี = Badge Gray · เบอร์ติดต่อ 3 พ.ย. 2569 เจ้าของงาน "หน้า e1 ก็อยากให้มีเบอร์ติดต่อด้วย" (อยู่ในใบแล้ว = เบอร์ของใบนั้น)
 /* ยานพาหนะที่ยังไม่อยู่ในแผนนี้ (ค่าสมมติ · 12 พ.ย. 2569 X5 เพิ่มได้ทุกคัน ไม่จำกัดขอบเขตภาค เขต ประเภทของแผน · เดิม = รถในแผนปีที่ยังไม่ได้อยู่ในไตรมาสนี้) — ทะเบียน · ยี่ห้อ/รุ่น · หน่วยงานเจ้าของรถ · เบอร์ · ชื่อผู้ดูแลยานพาหนะ · popup "เพิ่มรถเข้า" ไตรมาส (E.16) */
 const Q_EXTRA = [['81-9035 ลำปาง', 'Isuzu FTR + กระเช้า Aichi SK12A', 'กฟน.2 ลำปาง', '054-218-330', 'นายเกรียงไกร มูลเมือง'], ['82-4417 น่าน', 'Hino FC + กระเช้า Tadano AT-121', 'กฟน.2 น่าน', '054-710-244', 'นายสุเมธ จันทร์ดี'],
-  ['80-6652 ลำพูน', 'Isuzu FRR + กระเช้า Aichi SK10A', 'กฟน.1 ลำพูน', '053-511-090', 'นายวิทยา สายสุข']];
+  ['80-6652 ลำพูน', 'Isuzu FRR + กระเช้า Aichi SK10A', 'กฟน.1 ลำพูน', '053-511-090', 'นายวิทยา สายสุข'],
+  /* 12 พ.ย. 2569 เจ้าของงาน "ป๊อบอัพ ควรมีแบ่งหน้า" (R104) ⇒ ชุดตัวอย่างครบ 1 หน้า (10 คัน) จากทุกภาคและกองของ สนง. แบบเดียวกับ 3 คันแรก · ค่าสมมติ */
+  ['85-3127 พระนครศรีอยุธยา', 'Isuzu FTR + กระเช้า Aichi SK12A', 'กฟก.1 พระนครศรีอยุธยา', '035-241-560', 'นายธนพล แก้วมณี'], ['86-4402 ชลบุรี', 'Hino FC + กระเช้า Tadano AT-100', 'กฟก.2 ชลบุรี', '038-273-415', 'นายอำนาจ บุญมา'],
+  ['84-7719 นครปฐม', 'Isuzu FRR + กระเช้า Aichi SK10A', 'กฟก.3 นครปฐม', '034-251-907', 'นายสมศักดิ์ เพ็ชรรัตน์'], ['83-2286 เพชรบุรี', 'Hino FG + กระเช้า Tadano AT-146', 'กฟต.1 เพชรบุรี', '032-425-338', 'นายจักรพันธ์ ทองคำ'],
+  ['85-6043 นครศรีธรรมราช', 'Isuzu FTR + กระเช้า Aichi SH15A', 'กฟต.2 นครศรีธรรมราช', '075-356-212', 'นายอนันต์ แสงทอง'], ['70-4415 กรุงเทพมหานคร', 'Hino FC + กระเช้า Tadano AT-100', 'กบค.', '02-590-5541', 'นายปกรณ์ วงศ์ใหญ่'],
+  ['71-2208 กรุงเทพมหานคร', 'Isuzu FRR + กระเช้า Aichi SK10A', 'กรย.', '02-590-5618', 'นายชัยวัฒน์ รุ่งเรือง']];
+const Q_EXTRA_TOTAL = 370;   // จำนวนยานพาหนะที่ยังไม่อยู่ในแผน (ค่าสมมติ หลายร้อยคันตั้งแต่ 12 พ.ย. 2569 X5) · popup แสดงหน้าแรก 10 คัน (Q_EXTRA) + Table pagination "แสดง 1 ถึง 10 จาก 370 รายการ" แบบ { shown, total } ของตารางอื่น
 const Q_REMOVE_CONFIRM = (c) => ({ danger: true, title: 'ยืนยันการเอายานพาหนะออกจาก' + NOW_Q, sub: c[0] + ' จะถูกเอาออกจาก' + NOW_Q + ' ของแผนนี้ และอะไหล่ของยานพาหนะคันนี้ออกจากรายการเบิกของไตรมาส', cancel: 'ยกเลิก', ok: 'เอาออก' });   // แบบ CAR_REMOVE_CONFIRM
 const Q_DONE_JOBS = Object.fromEntries(TRIP_CARS.map((c, i) => [c[0], i === 2 ? 'cannot' : 'done']));   // E.26 (R93) ทุกคันของไตรมาส 1 ปิดงานแล้ว · 1 คันบำรุงรักษาไม่ได้ (นับว่าเสร็จ)
-const qAddModal = (scr, ticked) => tripCarModal(scr, { cars: Q_EXTRA, pool: [0, 1, 2], ticked, title: 'เพิ่มยานพาหนะเข้า' + NOW_Q, sub: 'ยานพาหนะที่ยังไม่อยู่ในแผนนี้ เพิ่มได้ทุกคัน รวมยานพาหนะที่รับมอบระหว่างปี', okText: 'เพิ่มเข้า' + NOW_Q });
+const qAddModal = (scr, ticked) => tripCarModal(scr, { cars: Q_EXTRA, pool: Q_EXTRA.map((_, i) => i), pagination: { shown: Q_EXTRA.length, total: Q_EXTRA_TOTAL }, ticked, title: 'เพิ่มยานพาหนะเข้า' + NOW_Q, sub: 'ยานพาหนะที่ยังไม่อยู่ในแผนนี้ เพิ่มได้ทุกคัน รวมยานพาหนะที่รับมอบระหว่างปี', okText: 'เพิ่มเข้า' + NOW_Q });
 const Q_PARTS_EMPTY = 'ไตรมาสนี้ไม่มีอะไหล่ที่ต้องเบิก';   // บรรทัดรองของ Empty state หัวข้ออะไหล่ในไตรมาส n (ชุดเดียวกับ S2 อะไหล่ในแผน)
 const TRIP_COLS = [['ชื่อแผนเดินทาง', 0, 'Lead text'], ['ช่วงวัน', 220], ['ยานพาหนะ (คัน)', 100], ['ผู้ดำเนินการ', 260], ['สถานะ', 150, 'Badge'], ['', 72]];
 const tripPlaces = (t) => { const n = new Set(t.sel.map(i => tripLoc(i, t.locs))).size, own = t.sel.filter(i => !t.locs[i]).length; return n + ' แห่ง' + (own ? ' (สำนักงานเจ้าของยานพาหนะ ' + own + ' คัน)' : ''); };
@@ -1067,18 +1073,20 @@ const TRIP_PICK_COLS = [['ทะเบียน', 300], ['ยี่ห้อ/ร
 /* 5 พ.ย. 2569 รีวิว "รถ 1 คันในไตรมาส สามารถอยู่ได้เพียง 1 แผนการเดินทางเท่านั้น · รถที่ถูกเลือกลงแผนอื่นไปแล้ว จะยังแสดงให้เห็นตอนที่กดเพิ่มรถเข้าแผนเดินทาง แต่ไม่สามารถเลือกลงแผนเดินทางนี้ได้"
    ⇒ o.taken = { ลำดับรถ: ชื่อแผนเดินทาง } แสดงในตาราง Checkbox State=Disabled + บรรทัดรอง "อยู่ในแผนเดินทาง {ชื่อ}" (Table cell Lead checkbox · มือถือ List with checkbox item State=Disabled) · ติ๊กทั้งหมดนับเฉพาะคันที่เลือกได้ */
 async function tripCarModal(scr, o) {   // o.cars = รายการรถแทน TRIP_CARS (เพิ่มรถเข้าไตรมาส E.19) · o.title · o.sub · o.okText · o.pool = รถที่แสดง (ไม่รวมคันที่อยู่ในใบนี้แล้ว) · o.taken
+  /* o.pagination = { shown, total } ส่งต่อให้ tblShort ⇒ Table pagination ใต้ตาราง (desktop ในตัว Table · มือถือ Breakpoint=Mobile ใต้การ์ด) · 12 พ.ย. 2569 เจ้าของงาน "ป๊อบอัพ ควรมีแบ่งหน้า" ใช้เฉพาะ popup เพิ่มยานพาหนะเข้าไตรมาส (E.19 · R104) · popup เพิ่มเข้าแผนเดินทางไม่ส่ง = ไม่มีตัวแบ่งหน้าเหมือนเดิม */
+  const pg = o.pagination ? { pagination: o.pagination } : undefined;
   const cars = o.cars || TRIP_CARS, pool = o.pool, ticked = o.ticked || [], n = ticked.length, taken = o.taken || {}, nTaken = pool.filter(i => taken[i]).length;
   const sub = o.sub || ('ยานพาหนะทุกคันของ' + NOW_Q + (nTaken ? ' · ' + nTaken + ' คันอยู่ในแผนเดินทางอื่นแล้ว เลือกไม่ได้' : ''));
   const ok = (o.okText || 'เพิ่มเข้าแผนเดินทาง') + (n ? ' (' + n + ')' : '');
   const rows = pool.map(i => [{ check: !taken[i] && ticked.indexOf(i) >= 0, text: cars[i][0], sub: taken[i] ? 'อยู่ในแผนเดินทาง ' + taken[i] : '', disabled: !!taken[i] }, cars[i][1], cars[i][2]]);
   const empty = async () => { const es = inst('Empty state/Data empty'); await text(es, 'Text', o.empty ? o.empty[0] : 'ยานพาหนะทุกคันของ' + NOW_Q + ' อยู่ในแผนเดินทางแล้ว'); await text(es, 'Supporting text', o.empty ? o.empty[1] : 'ไม่มียานพาหนะที่เพิ่มเข้าแผนเดินทางนี้ได้'); /* o.empty = [หัว, บรรทัดรอง] (R75) */ const a = find(es, 'Actions'); if (a) a.visible = false; return es; };
   const search = () => { const f = field('', '', { placeholder: 'ค้นหาทะเบียน, ยี่ห้อ/รุ่น, หน่วยงาน', lead: 'search-24-300-round' }); setProps(f, { Label: false, Helper: false }); return f; };
-  if (MOB) { await popupModal(scr, { title: o.title || 'เพิ่มยานพาหนะเข้าแผนเดินทาง', body: pool.length ? [search(), await tblShort(TRIP_PICK_COLS, rows)] : [await empty()], ok, okOff: !n }); return; }
+  if (MOB) { await popupModal(scr, { title: o.title || 'เพิ่มยานพาหนะเข้าแผนเดินทาง', body: pool.length ? [search(), await tblShort(TRIP_PICK_COLS, rows, pg)] : [await empty()], ok, okOff: !n }); return; }
   const body = [];
   if (pool.length) {
     const th = await tableHeader({ placeholder: 'ค้นหาทะเบียน, ยี่ห้อ/รุ่น, หน่วยงาน' });
     const acts = find(th, 'Actions'); if (acts) acts.visible = false;
-    const t = await tblShort(TRIP_PICK_COLS, rows);
+    const t = await tblShort(TRIP_PICK_COLS, rows, pg);
     headCheck(t, rows);   // เลือกทั้งหมดที่หัวคอลัมน์แรก (ตาม Select vehicles) นับเฉพาะคันที่เลือกได้
     body.push(th, t);
   } else body.push(await empty());
