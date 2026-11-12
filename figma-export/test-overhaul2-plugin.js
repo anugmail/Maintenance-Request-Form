@@ -457,10 +457,10 @@ const MODE_CHECK = process.env.MODE === 'check';
         const det = b.children.find(c => c.name === 'Detail'), t0 = det && det.children.find(c => c.type === 'TEXT');
         if (!t0 || t0._lsh !== 'FILL' || t0.textAutoResize !== 'HEIGHT') logs.push('⚠ R19 แถบ ' + code1 + ' ชื่อไม่ตัดบรรทัดในกว้างของแถบ (ต้อง FILL + HEIGHT) — ชื่อยาวจะล้นทับคอลัมน์ข้าง');
       }
-      if (want === 'Subheader' && !isPhase) {   // สี State: บล็อก = Default · state = Sub Flow / Success / Failed ตามชื่อจอ
+      if (want === 'Subheader' && !isPhase) {   // สี State: บล็อก = Default · เรื่องย่อย (A1 A2 … 12 พ.ย. 2569) = Sub Flow · state = Sub Flow / Success / Failed ตามชื่อจอ
         const st = b.children.find(c => c.name === 'State'), tone = st && (st.variantProperties || {}).State;
         const label = b.name.slice(P0.length + 3 + code1.length + 1);
-        const exp = !isState ? 'Default' : /ไม่สำเร็จ|Validation/.test(label) ? 'Failed' : /สำเร็จ/.test(label) ? 'Success' : 'Sub Flow';
+        const exp = /^[A-Z]+\d+$/.test(code1) ? 'Sub Flow' : !isState ? 'Default' : /ไม่สำเร็จ|Validation/.test(label) ? 'Failed' : /สำเร็จ/.test(label) ? 'Success' : 'Sub Flow';
         if (tone !== exp) logs.push('⚠ R19 แถบ ' + code1 + ' State ต้องเป็น ' + exp + ' (ได้ ' + tone + ')');
       }
     }

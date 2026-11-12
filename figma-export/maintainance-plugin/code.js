@@ -1658,13 +1658,14 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
     CREATED = []; put(await flowBar(prefix, g.code, g.title, 'Default', nCols * GRID.colW + (nCols - 1) * GRID.colGap), x0, y);   // บล็อกตัวอักษร = Subheader State=Default (หน้าจริง: "A แก้ไขตารางบำรุงรักษา…")
     y += GRID.barH + GRID.gap;
     let flowBottom = top;
+    const flowDone = new Set();   // บล็อกที่แบ่งเรื่องย่อย (A1 A2 …) ใช้ scenario เดียวกัน ⇒ ผังข้างจอวางครั้งเดียวต่อบล็อก (12 พ.ย. 2569)
     for (const sub of g.subs) {
       const n = sub.screens.length, w = n * GRID.colW + (n - 1) * GRID.colGap;
       if (sub.code !== g.code) {   // แถบย่อย (B1 B2) เฉพาะเมื่อกลุ่มมีหลาย scenario · เจ้าของงานเคาะ 20 ต.ค. 2569: 1 scenario = 1 บล็อก ⇒ ไม่มีแถบย่อย ป้าย state = A.1 A.2 …
         put(await flowBar(prefix, sub.code, sub.title, 'Sub Flow', w), x0, y);
         y += GRID.barH + GRID.gap;
       }
-      const sn = scenNo(sub.tag);
+      const sn = flowDone.has(sub.tag) ? null : scenNo(sub.tag); flowDone.add(sub.tag);
       let flowSlots = null; const byCode = {};   // รหัสจอ → เฟรมจอ (desktop ก่อน) สำหรับภาพย่อในผัง
       /* ปลั๊กอินที่ฝัง ACTIVITY (บำรุงรักษา) วาง flowchart กิจกรรมซ้ายของบล็อกแทนผัง userflow (เจ้าของงาน 6 พ.ย. 2569 "อยากให้ flowchart คู่กับ ui ไม่ใช่ user flow")
          ไม่มีภาพย่อจอ ไม่มีป้ายรหัสจอ (flowchart ไม่มีหน้าจอ) · ปลั๊กอินอื่นที่ไม่มี ACTIVITY ใช้ผัง userflow ตามเดิม */
@@ -5331,11 +5332,38 @@ const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
    4 พ.ย. 2569 ตัด S11 (J) และ S23 (V) ⇒ คงช่องไว้เป็นป้ายกันที่ ('S11 ตัดออก' · 'S23 ตัดออก' ไม่ตรงกับ scenario ไหน) ถ้าเอาออกจาก array ตัวอักษร K–U และ W จะเลื่อน ชื่อเฟรม Figma ที่ export แล้วจะไม่ตรง
    10 พ.ย. 2569 เอา S23 กลับ (R87) ⇒ ช่อง V กลับเป็น 'S23' ตัวอักษรอื่นไม่เลื่อน · J ยังว่าง (S11 ยังตัด) */
 const BLOCK_OF = ['S1', 'S2', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11 ตัดออก', 'S12', 'S13', 'S14 ตัดออก', 'S15 ตัดออก', 'S16 ตัดออก', 'S17 ตัดออก', 'S18', 'S19', 'S20', 'S21', 'S22 ตัดออก', 'S23', 'S24', 'S25', 'S27 ย้ายไปเรื่องแยก'];   // Y ว่าง: S27 ประเมินความพึงพอใจ (11 พ.ย. 2569) ย้ายไป satisfaction-plugin 12 พ.ย. 2569   // S24 ข้อมูลการบำรุงรักษา (4 พ.ย. 2569) = W · J ว่าง · V = S23 (เอากลับ 10 พ.ย. 2569)
+/* เรื่องย่อยในบล็อก (เจ้าของงาน 12 พ.ย. 2569 "S1 อยากเรียง scenario แบบไม่มี if คือไม่เจอหน้า error เช่น ถ้าเป็นการสร้าง ก็ สร้างสำเร็จ กด a b c d
+   ถ้า scen ต่อไป เป็นเรื่อง แก้ไข ก็เลือกแก้ไขแล้ว ไปเจอหน้าแก้ไข") ⇒ 1 เรื่องย่อย = 1 เส้นตรงตามลำดับการกด ไม่มีทางแยก · แถบ Sub Flow A1 A2 … ป้ายจอ A1.1 A1.2 …
+   ตัวเลข = ลำดับจอในรายการ S1 ของ SCENARIOS (A.1–A.42 เดิม) · จอเดียวกันอยู่ได้หลายเรื่อง (เช่น รายการแผนเป็นจุดเริ่มหลายเรื่อง)
+   หน้า error ช่องไม่ครบ ปุ่มกดไม่ได้ และรายการว่าง รวมไว้เรื่องสุดท้าย ไม่ปนกับเส้นหลัก · จอที่ไม่ได้อยู่ในเรื่องไหนจะต่อท้ายเรื่องสุดท้ายเอง (กันจอหาย) */
+const SUBS_OF = {
+  S1: [
+    ['สร้างแผนใหม่จนส่งอนุมัติสำเร็จ', [1, 3, 4, 5, 6, 7, 10, 11, 12, 13, 38, 30, 19, 20]],
+    ['ค้นหาและเปลี่ยนตัวกรองยานพาหนะในฟอร์มสร้างแผน', [7, 8, 15]],
+    ['สร้างแผนของกองในสำนักงานใหญ่ เลือกภาค สนง.', [5, 41, 42]],
+    ['เพิ่มยานพาหนะเข้าไตรมาสที่ยังไม่มียานพาหนะ', [23, 24, 25, 26]],
+    ['ย้ายยานพาหนะไปไตรมาสอื่น', [13, 14]],
+    ['ดูอะไหล่ของยานพาหนะในไตรมาส', [13, 33, 34]],
+    ['เอายานพาหนะออกจากไตรมาส', [13, 33, 35, 36]],
+    ['เปิดดูแผนที่อนุมัติแล้ว', [1, 21]],
+    ['แผนถูกส่งกลับแก้ไข แล้วไปแก้ไขแผน (S19)', [1, 22]],
+    ['กบค. ดูแผนของทุกหน่วยงาน', [31, 37, 32]],
+    ['กองอื่นเปิดรายการแผนของกองตัวเอง', [39, 40]],
+    ['กรณีข้อผิดพลาดและเงื่อนไข (ไม่อยู่ในเส้นหลัก)', [2, 9, 16, 17, 18, 27, 28, 29]],
+  ],
+};
 const GROUPS = SCENARIOS.map(([title, screens], i) => {
   const tag0 = title.split(' · ')[0], code = BLOCK_OF.indexOf(tag0) >= 0 ? LETTERS[BLOCK_OF.indexOf(tag0)] : LETTERS[i], tag = title.split(' · ')[0], rest = title.split(' · ').slice(1).join(' · ');
   const map = FLOW_NODES[tag] || {};
-  return { code, title: tag + ' ' + rest, subs: [{ code, title: rest, tag, screens: screens.map(([label, fn]) => [label, fn, map[label] || '']) }] };
+  const row = ([label, fn]) => [label, fn, map[label] || ''];
+  const parts = SUBS_OF[tag];
+  if (!parts) return { code, title: tag + ' ' + rest, subs: [{ code, title: rest, tag, screens: screens.map(row) }] };
+  const used = new Set(parts.flatMap(p => p[1])), left = screens.map((_, k) => k + 1).filter(k => !used.has(k));
+  const subs = parts.map(([t, nums], k) => ({ code: code + (k + 1), title: t, tag, screens: nums.concat(k === parts.length - 1 ? left : []).filter(n => screens[n - 1]).map(n => row(screens[n - 1])) }));
+  return { code, title: tag + ' ' + rest, subs };
 });
+/* จำนวนจอที่สร้างจริงของ scenario (เรื่องย่อยใช้จอซ้ำได้) — ใช้นับความคืบหน้าและตารางสรุป */
+const SCREEN_COUNT = (title) => { const g = GROUPS.find(x => x.subs[0].tag === title.split(' · ')[0]); return g ? g.subs.reduce((a, s) => a + s.screens.length, 0) : 0; };
 
 /* ---------- สร้าง (ปุ่มชุดเดียวกับ Overhaul 21 ต.ค. 2569: ทั้งชุด · Desktop · Mobile · เฉพาะ scenario ที่เลือก · เช็ค component) ----------
    เจ้าของงานสั่ง 22 ต.ค. 2569 "จะเอาลงในเพจ Maintainance ด้วยกันเลย" ⇒ ทุกปุ่มวางบนหน้า "Maintainance" (ไม่มีก็สร้าง) ต่อใต้ของเดิม · ใต้ของเดิมเกินขอบพื้นที่วางงานแล้ววางเหนือของเดิม (roomyPage) ไม่ลบ/ไม่ย้ายของที่มีอยู่
@@ -5440,7 +5468,7 @@ async function buildSet(SCEN, GRP, what, devices) {
   if (page.loadAsync) await page.loadAsync();
   await figma.setCurrentPageAsync(page);
   const before = new Set(page.children);
-  const TOTAL = SCEN.reduce((a, x) => a + x[1].length, 0);
+  const TOTAL = SCEN.reduce((a, x) => a + SCREEN_COUNT(x[0]), 0);
   log(INDEX.has('Header') ? 'แถบหัวบล็อก/ป้าย state: component Header ของ Design Annotations (' + ROUTE.Header + ')' : 'แถบหัวบล็อก/ป้าย state: ไม่พบ component Header — วาดแถบธรรมดาสีเดียวกันแทน · เปิดไฟล์ (UI) VMS Plus – Release#2 เป็นไลบรารี หรือวาง Header จากหน้า Design Annotations ไว้ในไฟล์ 1 ชิ้น');
   /* ไม่มีหัวหน้า Type=Header บนสุด — เจ้าของงาน 10 พ.ย. 2569 "ป้ายบนสุดไม่ต้องมี ที่เป็นป้าย บำรุงรักษา ที่ status inprogress เอาออก" (buildGrid ยังรับ opts.page ไว้) */
   const { made, flows } = await buildGrid(page, PLUGIN.prefix, GRP, before.size ? pageBottom(page) + 400 : 0, TOTAL * devices.length, { devices });
@@ -5500,8 +5528,8 @@ async function buildPick(o) {   // ติ๊กเฉพาะบาง scenario
    วางต่อใต้ของเดิมบนหน้า "Maintainance" ไม่ลบ/ไม่ย้ายของที่มีอยู่ */
 function journeyCodes(n) {
   const g = GROUPS.find(x => x.subs[0].tag === 'S' + n); if (!g) return null;
-  const sub = g.subs[0], codes = {}, loose = [];
-  sub.screens.forEach(([label, , ids], i) => { const c = sub.code + '.' + (i + 1); const list = String(ids || '').split(/\s+/).filter(Boolean); if (!list.length) loose.push(c + ' ' + label); list.forEach(id => { (codes[id] = codes[id] || []).push(c); }); });
+  const codes = {}, loose = [];
+  for (const sub of g.subs) sub.screens.forEach(([label, , ids], i) => { const c = sub.code + '.' + (i + 1); const list = String(ids || '').split(/\s+/).filter(Boolean); if (!list.length) loose.push(c + ' ' + label); list.forEach(id => { (codes[id] = codes[id] || []).push(c); }); });
   return { codes, loose };
 }
 async function buildJourneyAll() {
@@ -5565,7 +5593,7 @@ const SCEN_COLS = [['scenario', 110], ['บล็อก', 90], ['ชื่อ', 
 function scenData() {
   const sec = DOCS.scenarios.sections.find(s => /^0\./.test(s.h)) || { rows: [] };
   const info = {}; sec.rows.forEach(r => { info[r[0]] = r; });   // # · scenario · ช่วงงาน · บทบาท · กล่องบนบอร์ด
-  const rows = SCEN_SEQ.map(tag => { const g = GROUPS.find(x => x.subs[0].tag === tag), r = info[tag] || []; return [r[2] || '-', tag, g ? g.code : '-', r[1] || (g ? g.subs[0].title : ''), r[3] || '-', g ? String(g.subs[0].screens.length) : '0', SCEN_REVIEW[tag] || 'ยังไม่ได้รีวิวรอบนี้']; });
+  const rows = SCEN_SEQ.map(tag => { const g = GROUPS.find(x => x.subs[0].tag === tag), r = info[tag] || []; return [r[2] || '-', tag, g ? g.code : '-', r[1] || (g ? g.subs[0].title : ''), r[3] || '-', g ? String(g.subs.reduce((a, x) => a + x.screens.length, 0)) : '0', SCEN_REVIEW[tag] || 'ยังไม่ได้รีวิวรอบนี้']; });
   return { head: ['ช่วงงาน', 'scenario', 'บล็อก', 'ชื่อ', 'ผู้ทำ', 'จอ', 'สถานะรีวิว'], rows: rows.concat(SCEN_CUT.map(([tag, t, st]) => ['ตัดออกแล้ว', tag, '-', t, '-', '0', st])) };
 }
 /* use case ตาราง เดียว (4 พ.ย. 2569 เจ้าของงาน "ปรับแก้ให้เหลืออันเดียวได้มั้ย") — กลุ่มตามช่วงงานของ JO 7.3 มีคอลัมน์ scenario + ข้อ JO ⇒ ตามได้ทั้งสองทาง · เลิกตาราง "use case ตาม scenario" */
