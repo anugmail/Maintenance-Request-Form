@@ -56,8 +56,12 @@ Object.assign(KEYS, {
   "download-24-300-round": ["336f0dff014c26316e0fa56959bc75f09f71531d", false],   // S4 ปุ่มส่งออก — key เดียวกับ S18 ของ Overhaul (R32)
   "swap_driving_apps_wheel-24-300-round": ["d431c64461da6f292b3989371704fd336e1f719b", false],   // S25 เมนู/ปุ่ม "ย้ายไปไตรมาสอื่น" (ไฟล์ Component หน้าไอคอน · UI Release#2 ปุ่ม "โอนย้ายสังกัด" ใช้ swap_driving_apps)
   "car_repair-24-300-round": ["f87c5a858bf895fee867a3af065e82f75f620d9e", false],   // S25 เมนู "ดำเนินการบำรุงรักษา" (10 พ.ย. 2569) — ไฟล์ Component หน้า Icons
+  "no_crash-24-300-round": ["3d940da7d6274fd75d090c7a9155a482de01a923", false],   // แดชบอร์ดแบบ VMS+ (12 พ.ย. 2569 · R106) การ์ดตัวเลขยานพาหนะปกติ — ไฟล์ Component หน้า Icons
+  "event_busy-24-300-round": ["d7e88cfc5a57d608dafa7d93a8e7f6532cf35096", false],   // แดชบอร์ดแบบ VMS+ (R106) เรื่องที่ควรดู · เลยกำหนด — ไฟล์ Component หน้า Icons
   "calendar_month-24-300-round": ["afb81bef65f96089512284d42edd7bb46646a465", false]   // ไอคอนนำช่องวันดำเนินการ (6 พ.ย. 2569 · R83) — ไฟล์ Component หน้า Icons · ช่องช่วงวันที่ Date range picker / Trip date ของ UI Release#2 หน้า 5.2 Vehicle Management มีไอคอนนำ
 });
+NEEDED.push('Featured icon', 'no_crash-24-300-round', 'event_busy-24-300-round');   // แดชบอร์ดแบบ VMS+ S4 S24 (R106 · 12 พ.ย. 2569) Featured icon ของหัวแดชบอร์ด/การ์ดกราฟ/เรื่องที่ควรดู (ถอดจาก DIRECT ตอนย้าย S27 ออก R105 — แดชบอร์ดใช้ต่อ) + ไอคอน — ไอคอนไม่มีในไฟล์ก็ใช้ไอคอนตั้งต้นของ Featured icon
+NESTED_ONLY.add('no_crash-24-300-round'); NESTED_ONLY.add('event_busy-24-300-round');
 NEEDED.push('Metric item', 'download-24-300-round', 'swap_driving_apps_wheel-24-300-round', 'car_repair-24-300-round', 'Step circles / 4 steps', 'account_balance-24-300-round', 'calendar_month-24-300-round');   // S25 (5 พ.ย. 2569) ไอคอนย้ายไปไตรมาสอื่น · 6 พ.ย. 2569 ไอคอนช่องวันดำเนินการ
 
 /* ---------- ข้อมูลตัวอย่าง (ยกชื่อรถ/หน่วยงาน/จังหวัดจาก maintainance-yearly/mock-yearly.js — ค่าสมมติทั้งหมด) ---------- */
@@ -755,6 +759,282 @@ async function partsProgress(name, o) {
   return scr;
 }
 
+/* ---------- แดชบอร์ดแบบ VMS+ — ชุดวาดกราฟ/การ์ด (R106 · เจ้าของงาน 12 พ.ย. 2569) ----------
+   เจ้าของงาน 12 พ.ย. 2569: "อยากให้ออกแบบเป็นสไตล์นี้ เฉยๆ วิธีการวิชชัลข้อมูล หรือวิธีการแสดงข้อมูล โดยไม่ต้องตรง component ของ pea ให้เฉพาะ dashboard ที่ทำสิ่งนี้ได้ หน้าอื่นๆ ยังคงต้องตาม component เหมือนเดิม"
+   + "จากข้อมูลที่ได้มา อยากให้ปรับข้อมูลการแสดงให้สอดคล้องกับเรื่องการบำรุงรักษา" · ต้นแบบหน้าตา vmsplus.pea.co.th/dashboard (ภาพ + SPEC-maintenance-dashboards.md ใน ~/PEA/Maintain-D/userflow/figma-ref/vmsplus-dashboard-2569-11-12/)
+   ข้อยกเว้นเฉพาะ S4 (บล็อก C) และ S24 (บล็อก W) — ชิ้นที่วาดเอง (สี่เหลี่ยม วงกลม/ส่วนโค้ง ข้อความ) ต้องอยู่ในกรอบชื่อขึ้นต้น DASH_BOX เท่านั้น ตัวตรวจ R106 ไม่ผ่านถ้าวาดนอกกรอบหรือนอกสองหน้านี้
+   กรอบหน้า (Sidebar navigation · Header navigation · Page header) Tabs · Table header · Table · ปุ่ม · ป้าย · Featured icon · ไอคอน ยังเป็น instance ของไลบรารี
+   สีทุกชิ้นผูกตัวแปรสีของไลบรารี (Color/surface|text|icon|border/…) ตอนจบจอด้วย bindDash() แบบ bindTones() — หาไม่ได้ใช้ค่าสีของตัวแปรนั้น (ค่าจากไฟล์ Component)
+   การ์ดตัวเลขไล่เฉดใช้ค่าสีของตัวแปรคู่เดียวกัน (gradient stop ผูกตัวแปรไม่ได้) · ข้อความใช้ docText (IBM Plex Sans Thai ของโปรเจกต์) */
+const DASH_BOX = { head: 'VMS+ head · ', alert: 'VMS+ alert · ', kpi: 'VMS+ KPI · ', chart: 'VMS+ chart · ', note: 'VMS+ note · ' };   // ชื่อกรอบที่ R106 ยอมให้มีชิ้นวาดเอง
+const DASH_SCR = /^MT \/ (C\.\d+ · S4|W\.\d+ · S24) — /, DASH_IN = /^VMS\+ (head|alert|KPI|chart|note) · /;   // ตรงกับ drawnShapes ใน component-rules.json
+/* [ตัวแปรสีของไลบรารี, ค่าสีของตัวแปรนั้นในไฟล์ Component] — สเกล brand / success / warning / error / info (ฟ้า) / gray เท่านั้น */
+const VC = {
+  brand: ['Color/surface/brand', '#A80689'], brand2: ['Color/icon/brand-secondary', '#CF07AA'], brandT: ['Color/text/brand', '#A80689'],
+  success: ['Color/surface/success', '#17B26A'], successD: ['Color/icon/success', '#079455'],
+  warning: ['Color/surface/warning', '#F79009'], warningT: ['Color/text/warning', '#DC6803'], warningBg: ['Color/surface/warning-secondary', '#FFFAEB'], warningLine: ['Color/border/warning', '#FEDF89'],
+  error: ['Color/surface/error', '#F04438'], errorT: ['Color/text/error', '#D92D20'],
+  info: ['Color/surface/info', '#6172F3'], infoT: ['Color/text/info', '#444CE7'], infoBg: ['Color/surface/info-secondary', '#EEF4FF'], infoLine: ['Color/border/info', '#C7D7FE'],
+  gray: ['Color/icon/secondary', '#667085'], track: ['Color/surface/tertiary', '#EAECF0'], subtle: ['Color/surface/secondary-subtle', '#F9FAFB'], line: ['Color/border/secondary', '#EAECF0'],
+  text: ['Color/text/primary', '#000000'], text2: ['Color/text/secondary', '#475467'], text3: ['Color/text/placeholder', '#98A2B3'], white: ['Color/surface/primary', '#FFFFFF'], onBrand: ['Color/text/primary-on-brand', '#FFFFFF']
+};
+const DASH_GRAD = { brand: ['brand', 'brand2'], success: ['successD', 'success'], warning: ['warningT', 'warning'], error: ['errorT', 'error'], info: ['infoT', 'info'], gray: ['text2', 'gray'] };   // การ์ดตัวเลข เข้ม → อ่อน
+const DASH_TONES = ['brand', 'info', 'success', 'warning', 'error', 'gray'];   // สีแถวของกราฟแถบ (วนตามลำดับแบบ VMS+)
+const dashAsof = () => 'ข้อมูล ณ ' + MA_TODAY.map((v, i) => i < 2 ? String(v).padStart(2, '0') : String(v)).join('/') + ' 07:00 น.';   // วันนี้ของข้อมูลสมมติ (MA_TODAY ของ S24)
+const DASH_ARROW = 'keyboard_arrow_right-20-400-round';
+let DASH_BIND = [];
+const DASH_VAR = {};
+const dSolid = (k) => ({ type: 'SOLID', color: rgbOf(VC[k][1]) });
+function dPaint(n, k, prop) { n[prop || 'fills'] = [dSolid(k)]; DASH_BIND.push([n, prop || 'fills', k]); return n; }
+async function bindDash() {   // ผูกตัวแปรสีของไลบรารีหลังประกอบจอ (แบบ bindTones) — หาไม่ได้คงค่าสี
+  const list = DASH_BIND; DASH_BIND = [];
+  for (const [n, p, k] of list) {
+    if (!(k in DASH_VAR)) DASH_VAR[k] = await libVar(new RegExp('^' + VC[k][0].replace(/\//g, '\\/') + '$', 'i'));
+    const v = DASH_VAR[k]; if (!v) continue;
+    try { n[p] = [figma.variables.setBoundVariableForPaint(dSolid(k), 'color', v)]; } catch (e) { /* คงค่าสี */ }
+  }
+}
+function dGrad(n, tone) {   // ไล่เฉดซ้าย → ขวา ของการ์ดตัวเลข
+  const [a, b] = DASH_GRAD[tone] || DASH_GRAD.brand, c = (k) => Object.assign({ a: 1 }, rgbOf(VC[k][1]));
+  n.fills = [{ type: 'GRADIENT_LINEAR', gradientTransform: [[1, 0, 0], [0, 1, 0]], gradientStops: [{ position: 0, color: c(a) }, { position: 1, color: c(b) }] }];
+  return n;
+}
+async function dT(s, size, k, bold) { const t = await docText(String(s), size, VC[k][1], null, !bold); t.name = String(s).slice(0, 40); DASH_BIND.push([t, 'fills', k]); return t; }
+function dF(name, dir, o) {
+  o = o || {};
+  const f = frame(name, dir, { gap: o.gap || 0, pad: o.pad || 0 });
+  if (o.fill) dPaint(f, o.fill);
+  if (o.stroke) { dPaint(f, o.stroke, 'strokes'); f.strokeWeight = o.sw || 1; f.strokeAlign = 'INSIDE'; }
+  if (o.r) f.cornerRadius = o.r;
+  if (dir === 'HORIZONTAL') f.counterAxisAlignItems = o.align || 'CENTER';
+  return f;
+}
+function dAp(p, c, how) {   // grow = ยืดตามแกนหลัก · fill = เต็มกว้าง · stretch = สูงเท่าเพื่อนในแถว
+  if (!c) return c;
+  p.appendChild(c);
+  try {
+    if (how === 'grow') { c.layoutGrow = 1; if (c.type === 'TEXT') c.textAutoResize = 'HEIGHT'; }
+    else if (how === 'fill') { c.layoutSizingHorizontal = 'FILL'; if (c.type === 'TEXT') c.textAutoResize = 'HEIGHT'; }
+    else if (how === 'stretch') c.layoutAlign = 'STRETCH';
+  } catch (e) { warn('จัดวางแดชบอร์ด ' + c.name, e); }
+  return c;
+}
+function dFixW(f, w) { if (f.layoutMode === 'VERTICAL') f.counterAxisSizingMode = 'FIXED'; else f.primaryAxisSizingMode = 'FIXED'; f.resize(Math.max(1, Math.round(w)), Math.max(1, f.height || 1)); return f; }
+function dRect(w, h, k, r) { const n = figma.createRectangle(); CREATED.push(n); n.name = 'แถบ'; n.resize(Math.max(1, Math.round(w)), Math.max(1, Math.round(h))); if (r) n.cornerRadius = r; dPaint(n, k); return n; }
+function dDot(k, d) { const e = figma.createEllipse(); CREATED.push(e); e.name = 'จุดสี'; e.resize(d || 8, d || 8); dPaint(e, k); return e; }
+async function dTxtW(s, size, k, w, align, bold) { const t = await dT(s, size, k, bold); t.textAutoResize = 'HEIGHT'; t.resize(Math.max(1, Math.round(w)), t.height || size + 6); t.textAlignHorizontal = align || 'LEFT'; return t; }
+function fIcon(color, name, size) { const fi = inst('Featured icon', { Color: color, Size: size || 'sm' }); if (name && has(name)) setProps(fi, { 'Icon swap': icon(name) }); return fi; }
+function wIcon(name) {   // ไอคอนของไลบรารีสีขาวบนการ์ดไล่เฉด (override สีชั้นใน instance)
+  if (!name || !has(name)) return null;
+  const ic = inst(name);
+  ic.findAll(n => /VECTOR|BOOLEAN_OPERATION|ELLIPSE|RECTANGLE|POLYGON|STAR/.test(n.type) && (n.fills || []).length).forEach(v => { try { dPaint(v, 'onBrand'); } catch (e) { /* คงสีเดิม */ } });
+  return ic;
+}
+const dFmt = (n) => Number(n).toLocaleString('en-US');
+const dPct = (v, t) => (t ? (v * 100 / t).toFixed(1) : '0.0') + '%';
+function dashW(scr) {   // กว้างเนื้อหาของหน้า (จอ − Sidebar − ขอบ 32 สองข้าง) · มือถือ 402 − 32
+  if (MOB) return VW() - 32;
+  const sb = scr.findOne(n => n.type === 'INSTANCE' && n.name === 'Sidebar navigation');
+  return 1440 - (sb && sb.width > 40 && sb.width < 400 ? Math.round(sb.width) : 80) - 64;
+}
+/* หัวแดชบอร์ด: กรอบไอคอนสี + ชื่อ + บรรทัดอธิบาย · ขวา ป้าย "ข้อมูล ณ …" จุดเขียว */
+async function dashHead(o) {
+  const h = dF(DASH_BOX.head + o.title, MOB ? 'VERTICAL' : 'HORIZONTAL', { gap: 16 });
+  const left = dF('ชื่อ', 'HORIZONTAL', { gap: 16, align: 'MIN' });
+  dAp(left, fIcon('Brand', o.icon, 'md'));
+  const tx = dF('ข้อความ', 'VERTICAL', { gap: 4 });
+  dAp(tx, await dT(o.title, MOB ? 20 : 24, 'text', true), 'fill'); dAp(tx, await dT(o.desc, MOB ? 12 : 14, 'text2'), 'fill');
+  dAp(left, tx, 'grow'); dAp(h, left, MOB ? 'fill' : 'grow');
+  const asof = dF('ข้อมูล ณ', 'HORIZONTAL', { gap: 8, pad: [6, 12], r: 999, stroke: 'line', fill: 'white' });
+  dAp(asof, dDot('success', 8)); dAp(asof, await dT(dashAsof(), 12, 'text2'));
+  dAp(h, asof);
+  return h;
+}
+/* เรื่องที่ควรดู: การ์ด 2 คอลัมน์ (มือถือ 1) เหลือง = ต้องรีบดู · ฟ้า = ข้อมูลไม่ครบ · ไม่มีเรื่อง (n = 0) ไม่แสดงการ์ดนั้น · active = เรื่องที่กดแล้ว (กรองทั้งหน้า) */
+async function dashAlerts(items, active) {
+  items = items.filter(x => x.n > 0);
+  if (!items.length) return null;
+  const box = dF(DASH_BOX.alert + 'เรื่องที่ควรดู', 'VERTICAL', { gap: 16, pad: MOB ? 16 : 24, r: 16, stroke: 'line', fill: 'white' });
+  const hd = dF('หัว', 'HORIZONTAL', { gap: 8 });
+  dAp(hd, fIcon('Warning', 'event_busy-24-300-round', 'sm')); dAp(hd, await dT('เรื่องที่ควรดู', 16, 'text', true));
+  dAp(hd, inst('Pill outline', { Color: 'Gray' }, { Text: items.length + ' เรื่อง' }));
+  dAp(box, hd, 'fill');
+  const per = MOB ? 1 : 2;
+  for (let i = 0; i < items.length; i += per) {
+    const r = dF('แถว', 'HORIZONTAL', { gap: 12, align: 'MIN' });
+    for (const it of items.slice(i, i + per)) {
+      const warnT = it.tone !== 'info', on = it.key === active;
+      const c = dF('เรื่อง · ' + it.title, 'HORIZONTAL', { gap: 12, pad: [12, 16], r: 12, fill: warnT ? 'warningBg' : 'infoBg', stroke: on ? (warnT ? 'warning' : 'info') : (warnT ? 'warningLine' : 'infoLine'), sw: on ? 2 : 1 });
+      dAp(c, fIcon(warnT ? 'Warning' : 'Info', it.icon, 'sm'));
+      const t = dF('ข้อความ', 'VERTICAL', { gap: 2 });
+      dAp(t, await dT(it.title, 14, warnT ? 'warningT' : 'infoT', true), 'fill'); dAp(t, await dT(it.sub, 12, 'text2'), 'fill');
+      dAp(c, t, 'grow');
+      if (has(DASH_ARROW)) dAp(c, inst(DASH_ARROW));
+      dAp(r, c, 'grow'); dAp(r, c, 'stretch');
+    }
+    if (per === 2 && items.length - i === 1) dAp(r, dF('ว่าง', 'HORIZONTAL', {}), 'grow');   // เรื่องเดียวในแถว = ครึ่งความกว้างแบบ VMS+
+    dAp(box, r, 'fill');
+  }
+  return box;
+}
+/* ตัวกรองที่เลือก (หลังกดกราฟ/เรื่องที่ควรดู/แผงตัวกรอง): "n ตัวกรอง" · ชิป Badge outline with remove icon · ล้างทั้งหมด (Tertiary button) */
+async function dashChips(chips) {
+  if (!chips || !chips.length) return null;
+  const box = dF(DASH_BOX.head + 'ตัวกรองที่เลือก', 'HORIZONTAL', { gap: 8, pad: [12, 16], r: 12, fill: 'subtle', stroke: 'line', align: 'CENTER' });
+  if (MOB) { box.layoutMode = 'VERTICAL'; box.counterAxisAlignItems = 'MIN'; }
+  dAp(box, await dT('ตัวกรองที่เลือก:', 13, 'text2', true));
+  const cs = dF('ชิป', 'HORIZONTAL', { gap: 8 });
+  for (const c of chips) dAp(cs, has('Badge outline with remove icon') ? inst('Badge outline with remove icon', { Color: 'Brand' }, { Text: c }) : await dT(c, 13, 'brandT', true));
+  dAp(box, cs, MOB ? 'fill' : 'grow');
+  dAp(box, inst('Pill outline', { Color: 'Brand' }, { Text: chips.length + ' ตัวกรอง' }));
+  dAp(box, btn('Tertiary button', 'ล้างทั้งหมด', {}));
+  return box;
+}
+/* การ์ดตัวเลขไล่เฉด: ไอคอน + ชื่อ · ตัวเลขใหญ่ + หน่วย · บรรทัดรอง — desktop เรียงแถวเดียว · มือถือ 2 ใบต่อแถว */
+async function dashKpis(items) {
+  const box = dF(DASH_BOX.kpi + 'การ์ดตัวเลข', 'VERTICAL', { gap: 12 });
+  const per = MOB ? 2 : items.length;
+  for (let i = 0; i < items.length; i += per) {
+    const r = dF('แถว', 'HORIZONTAL', { gap: MOB ? 12 : 16, align: 'MIN' });
+    for (const it of items.slice(i, i + per)) {
+      const c = dF('การ์ด · ' + it.label, 'VERTICAL', { gap: 6, pad: MOB ? 12 : 16, r: 12 }); dGrad(c, it.tone);
+      const hd = dF('หัว', 'HORIZONTAL', { gap: 6 });
+      dAp(hd, wIcon(it.icon)); dAp(hd, await dT(it.label, 13, 'onBrand', true), 'grow'); dAp(c, hd, 'fill');
+      const v = dF('ตัวเลข', 'HORIZONTAL', { gap: 4, align: 'MAX' });
+      dAp(v, await dT(it.value, MOB ? 24 : 28, 'onBrand', true)); if (it.unit) dAp(v, await dT(it.unit, 13, 'onBrand'));
+      dAp(c, v, 'fill');
+      if (it.sub) { const s = await dT(it.sub, 12, 'onBrand'); s.opacity = 0.85; dAp(c, s, 'fill'); }
+      dAp(r, c, 'grow'); dAp(r, c, 'stretch');
+    }
+    dAp(box, r, 'fill');
+  }
+  return box;
+}
+/* ปุ่มสลับในหัวการ์ด (หน่วยงาน / เขต) */
+async function dashToggle(labels, on) {
+  const t = dF('สลับ', 'HORIZONTAL', { gap: 2, pad: 2, r: 8, fill: 'subtle', stroke: 'line' });
+  for (const [i, l] of labels.entries()) { const s = dF(l, 'HORIZONTAL', { pad: [4, 10], r: 6, fill: i === on ? 'white' : null }); dAp(s, await dT(l, 12, i === on ? 'brandT' : 'text2', i === on)); dAp(t, s); }
+  return t;
+}
+/* การ์ดกราฟ: หัว Featured icon + ชื่อ + บรรทัดรอง (+ ปุ่มสลับ) · เนื้อ = build(กว้างด้านใน) · ท้าย "ข้อมูลจาก … | คลิกกราฟหรือรายการเพื่อกรองทั้งหน้า" */
+async function chartCard(w, o) {
+  const pad = MOB ? 16 : 24, c = dF(DASH_BOX.chart + o.title, 'VERTICAL', { gap: 16, pad, r: 16, stroke: 'line', fill: 'white' });
+  dFixW(c, w);
+  const hd = dF('หัว', 'HORIZONTAL', { gap: 12, align: 'MIN' });
+  dAp(hd, fIcon(o.color || 'Brand', o.icon, 'sm'));
+  const tx = dF('ชื่อ', 'VERTICAL', { gap: 2 }); dAp(tx, await dT(o.title, 16, 'text', true), 'fill'); if (o.sub) dAp(tx, await dT(o.sub, 12, 'text3'), 'fill');
+  dAp(hd, tx, 'grow');
+  if (o.toggle) dAp(hd, await dashToggle(o.toggle[0], o.toggle[1]));
+  dAp(c, hd, 'fill');
+  for (const n of await o.build(w - pad * 2)) if (n) dAp(c, n, n.layoutMode ? 'fill' : undefined);
+  if (o.more) dAp(c, await dT(o.more, 13, 'brandT', true));
+  const ft = dF('ท้าย', 'VERTICAL', { gap: 0 }); dAp(ft, await dT((o.src || 'ข้อมูลจากแผนบำรุงรักษาในระบบ') + '  |  คลิกกราฟหรือรายการเพื่อกรองทั้งหน้า', 12, 'text3'), 'fill');
+  dAp(c, ft, 'fill');
+  return c;
+}
+/* วางการ์ดกราฟเป็นแถว (desktop 3 ช่องต่อแถว span 1–3 · มือถือทีละใบเต็มกว้าง) — กว้างคำนวณจากกว้างเนื้อหาของหน้า */
+async function chartGrid(W, specs) {
+  const box = frame('กราฟ', 'VERTICAL', { gap: MOB ? 16 : 24 }), gap = 24, unit = (W - gap * 2) / 3;
+  let row = null, used = 3;
+  for (const sp of specs.filter(Boolean)) {
+    const span = MOB ? 3 : sp.span || 1, w = MOB ? W : unit * span + gap * (span - 1);
+    if (MOB || used + span > 3) { row = frame('แถว', 'HORIZONTAL', { gap }); row.counterAxisAlignItems = 'MIN'; dAp(box, row, 'fill'); used = 0; }
+    const c = await chartCard(w, sp); dAp(row, c); dAp(row, c, 'stretch'); used += span;
+  }
+  return box;
+}
+/* แถบแนวนอนต่อแถว: จุดสี · ชื่อ · จำนวน หน่วย · % · แถบ (ยาวตามค่ามากสุด) · บรรทัดรอง · dim = ไม่อยู่ในตัวกรองที่กด */
+function dTrack(w, h, segs) {
+  const t = frame('ราง', null); dPaint(t, 'track'); t.cornerRadius = h / 2; t.resize(Math.max(1, Math.round(w)), h); let x = 0;
+  for (const [f, k] of segs) { const bw = Math.round(w * f); if (bw < 1) continue; const b = dRect(bw, h, k, h / 2); t.appendChild(b); b.x = x; b.y = 0; x += bw; }
+  return t;
+}
+async function hBars(w, rows, o) {
+  o = o || {};
+  const box = dF('แถบแนวนอน', 'VERTICAL', { gap: 14 }), max = Math.max(1, ...rows.map(r => r.value)), tot = o.total || rows.reduce((a, r) => a + r.value, 0);
+  for (const [i, r] of rows.entries()) {
+    const k = r.tone || DASH_TONES[i % DASH_TONES.length], it = dF('แถว · ' + r.label, 'VERTICAL', { gap: 6 });
+    const top = dF('ชื่อ', 'HORIZONTAL', { gap: 8 });
+    dAp(top, dDot(k, 8)); dAp(top, await dT(r.label, 13, 'text'), 'grow'); dAp(top, await dT(dFmt(r.value), 13, 'text', true)); dAp(top, await dT(r.unit || o.unit || '', 12, 'text3'));
+    dAp(top, await dTxtW(dPct(r.value, tot), 12, 'text3', 52, 'RIGHT'));
+    dAp(it, top, 'fill');
+    dAp(it, dTrack(w, 6, [[r.value / max, k]]));
+    if (r.sub) dAp(it, await dT(r.sub, 12, 'text3'), 'fill');
+    if (r.dim) it.opacity = 0.35;
+    dAp(box, it, 'fill');
+  }
+  return box;
+}
+/* ตารางคำอธิบาย (สี · ชื่อ · จำนวน · %) ใต้โดนัท/แท่ง · total = แถวรวมท้าย */
+async function dLegend(rows, heads, o) {
+  o = o || {};
+  const tot = rows.reduce((a, r) => a + r.value, 0), box = dF('คำอธิบาย', 'VERTICAL', { gap: 10 });
+  const hd = dF('หัวตาราง', 'HORIZONTAL', { gap: 8 }); dAp(hd, await dT(heads[0], 12, 'text3'), 'grow'); dAp(hd, await dTxtW(heads[1], 12, 'text3', 96, 'RIGHT')); dAp(hd, await dTxtW('%', 12, 'text3', 52, 'RIGHT')); dAp(box, hd, 'fill');
+  for (const [i, r] of rows.entries()) {
+    const ln = dF('แถว · ' + r.label, 'HORIZONTAL', { gap: 8 });
+    dAp(ln, dDot(r.tone || DASH_TONES[i % DASH_TONES.length], 8)); dAp(ln, await dT(r.label, 13, 'text'), 'grow');
+    dAp(ln, await dTxtW(dFmt(r.value), 13, 'text', 96, 'RIGHT', true)); dAp(ln, await dTxtW(dPct(r.value, tot), 12, 'text3', 52, 'RIGHT'));
+    if (r.dim) ln.opacity = 0.35;
+    dAp(box, ln, 'fill');
+  }
+  if (o.total) { const ln = dF('รวม', 'HORIZONTAL', { gap: 8 }); dAp(ln, await dT('รวม', 13, 'text', true), 'grow'); dAp(ln, await dTxtW(dFmt(tot), 13, 'text', 96, 'RIGHT', true)); dAp(ln, await dTxtW('100%', 12, 'text3', 52, 'RIGHT')); dAp(box, ln, 'fill'); }
+  return box;
+}
+/* โดนัท + ตัวเลขรวมตรงกลาง + ตารางคำอธิบาย (ส่วนโค้ง = ELLIPSE arcData) */
+async function donut(w, segs, o) {
+  const D = Math.min(o.size || 176, Math.round(w)), ring = frame('โดนัท', null); ring.resize(D, D);
+  const tot = segs.reduce((a, s) => a + s.value, 0); let a = -Math.PI / 2;
+  const arc = (from, to, k) => { const e = figma.createEllipse(); CREATED.push(e); e.name = 'ส่วนโค้ง'; e.resize(D, D); e.arcData = { startingAngle: from, endingAngle: to, innerRadius: 0.7 }; dPaint(e, k); ring.appendChild(e); e.x = 0; e.y = 0; return e; };
+  if (!tot) arc(0, Math.PI * 2, 'track');
+  for (const [i, s] of segs.entries()) { if (!s.value) continue; const sw = s.value / tot * Math.PI * 2; const e = arc(a, a + sw, s.tone || DASH_TONES[i % DASH_TONES.length]); if (s.dim) e.opacity = 0.3; a += sw; }
+  const c1 = await dTxtW(dFmt(tot), 24, 'text', D, 'CENTER', true); ring.appendChild(c1); c1.x = 0; c1.y = Math.round(D / 2 - 24);
+  const c2 = await dTxtW(o.unit, 12, 'text3', D, 'CENTER'); ring.appendChild(c2); c2.x = 0; c2.y = Math.round(D / 2 + 6);
+  const wrap = dF('โดนัทกลาง', 'VERTICAL', { gap: 0 }); wrap.counterAxisAlignItems = 'CENTER'; dAp(wrap, ring);   // ผู้เรียกวางเต็มกว้าง ⇒ วงอยู่กลางการ์ด
+  return [wrap, await dLegend(segs, o.heads || ['สถานะ', 'จำนวน (' + o.unit + ')'])];
+}
+/* แท่งแนวตั้ง (ซ้อนได้) + แกนตัวเลข + ป้ายใต้แท่ง · groups [{ label, vals: [ต่อ series], dim }] · series [{ label, tone }] */
+const dNice = (m) => { if (m <= 5) return Math.max(1, m); const p = Math.pow(10, Math.floor(Math.log10(m))); for (const s of [1, 2, 2.5, 5, 10]) if (s * p >= m) return s * p; return 10 * p; };
+async function vBars(w, groups, series, o) {
+  o = o || {};
+  const H = o.h || 168, top = 8, axisW = 36, lab = 34, chart = frame('กราฟแท่ง', null); chart.resize(Math.round(w), top + H + lab);
+  const max = dNice(Math.max(1, ...groups.map(g => g.vals.reduce((a, v) => a + v, 0)))), steps = max <= 5 ? max : max % 4 === 0 ? 4 : 5;   // เส้นแกนตกเลขกลม (เช่น 10 → ทีละ 2 · 20 → ทีละ 5)
+  for (let i = 0; i <= steps; i++) {
+    const y = Math.round(top + H - H * i / steps), ln = dRect(w - axisW, 1, 'line'); chart.appendChild(ln); ln.x = axisW; ln.y = y;
+    const t = await dTxtW(dFmt(Math.round(max * i / steps * 10) / 10), 11, 'text3', axisW - 8, 'RIGHT'); chart.appendChild(t); t.x = 0; t.y = y - 8;
+  }
+  const slot = (w - axisW) / groups.length, bw = Math.max(8, Math.min(44, Math.round(slot * 0.56)));
+  for (const [gi, g] of groups.entries()) {
+    const x = Math.round(axisW + slot * gi + (slot - bw) / 2); let y = top + H; const segs = [];
+    for (const [si, v] of g.vals.entries()) { const bh = Math.round(H * v / max); if (!bh) continue; y -= bh; const r = dRect(bw, bh, series[si].tone, 0); chart.appendChild(r); r.x = x; r.y = y; segs.push(r); if (g.dim) r.opacity = 0.3; }
+    const last = segs[segs.length - 1]; if (last) { last.topLeftRadius = 4; last.topRightRadius = 4; }
+    const t = await dTxtW(g.label, 11, 'text2', Math.max(24, Math.round(slot - 4)), 'CENTER'); chart.appendChild(t); t.x = Math.round(axisW + slot * gi + 2); t.y = top + H + 8;
+  }
+  const out = [chart];
+  if (series.length > 1) {
+    const lg = dF('คำอธิบายสี', 'HORIZONTAL', { gap: 16 });
+    for (const s of series) { const it = dF(s.label, 'HORIZONTAL', { gap: 6 }); dAp(it, dDot(s.tone, 8)); dAp(it, await dT(s.label, 12, 'text2')); dAp(lg, it); }
+    out.push(lg);
+  }
+  return out;
+}
+/* แถบซ้อนต่อแถว (ความคืบหน้าของแผน): ชื่อ · x/y · แถบหลายสีต่อกัน */
+async function stackRows(w, rows, series) {
+  const box = dF('แถบซ้อน', 'VERTICAL', { gap: 16 });
+  for (const r of rows) {
+    const tot = r.vals.reduce((a, v) => a + v, 0), it = dF('แถว · ' + r.label, 'VERTICAL', { gap: 6 });
+    const top = dF('ชื่อ', 'HORIZONTAL', { gap: 8 }); dAp(top, await dT(r.label, 13, 'text', true), 'grow'); dAp(top, await dT(r.right, 12, 'text2')); dAp(it, top, 'fill');
+    dAp(it, dTrack(w, 10, r.vals.map((v, i) => [tot ? v / tot : 0, series[i].tone])));
+    if (r.sub) dAp(it, await dT(r.sub, 12, 'text3'), 'fill');
+    if (r.dim) it.opacity = 0.35;
+    dAp(box, it, 'fill');
+  }
+  const lg = dF('คำอธิบายสี', 'HORIZONTAL', { gap: 16 });
+  for (const s of series) { const it = dF(s.label, 'HORIZONTAL', { gap: 6 }); dAp(it, dDot(s.tone, 8)); dAp(it, await dT(s.label, 12, 'text2')); dAp(lg, it); }
+  dAp(box, lg);
+  return box;
+}
+async function dashNote(s) { const n = dF(DASH_BOX.note + 'แหล่งข้อมูล', 'VERTICAL', { gap: 0 }); n.counterAxisAlignItems = 'CENTER'; const t = await dT(s, 12, 'text3'); t.textAlignHorizontal = 'CENTER'; dAp(n, t, 'fill'); return n; }
+
 /* ---------- S4 แดชบอร์ดอะไหล่และความคืบหน้าของแผนที่อนุมัติแล้ว (6 พ.ย. 2569 · แทนหน้าความคืบหน้าอะไหล่รายไตรมาส partsProgress) ----------
    รีวิว 6 พ.ย. 2569 (บล็อก C): "เปลี่ยนหน้านี้เป็นหน้า รวมอะใหล่ของแผนที่อนุมัติแล้ว" + "filter หน่วยงานผู้ขอเบิก เขต,แผน, ค้นหาจาก ชื่ออะใหล่ รหัสอะใหล่ ssorting ทุกคอลัมม์" + "export pdf excel"
    + "เลือกแผน, ติดตามความคืบหน้า" · เจ้าของงานเคาะ: หน้าที่จาก Smart Inventory เปลี่ยนเป็นแดชบอร์ด ไม่แสดงค่าจาก Smart Inventory · แท็บรวมตามรายการ / แยกรายคัน
@@ -779,9 +1059,6 @@ const DASH_PROG = [['MRZ7000001', 1, 2, 4, 6, 'doing'], ['MRZ7000001', 2, 0, 0, 
    ค่าเริ่มต้นของจอ = ผู้ใช้ กบผ. เห็นเฉพาะแผนของ กบผ. ไม่มีตัวกรองหน่วยงาน · o.kbk = ผู้ใช้ กบค. เห็นทุกหน่วยงาน มีตัวกรองหน่วยงานผู้ขอเบิก (แดชบอร์ดดูอย่างเดียวทุกบทบาท) */
 const DASH_OWN = 'กบผ.';
 const dashMine = (kbk) => (r) => kbk || PLAN_UNIT[r[0]] === DASH_OWN;
-const dashMetrics = (kbk) => { const pl = DASH_PLANS().filter(dashMine(kbk)), pr = DASH_PROG.filter(dashMine(kbk));
-  const cars = pl.reduce((a, p) => a + +p[4], 0), done = pr.reduce((a, r) => a + r[3], 0);
-  return [['แผนที่อนุมัติแล้ว', String(pl.length), 'Brand'], ['ยานพาหนะในแผน', String(cars), 'Brand'], ['รายการอะไหล่', String(DASH_AGG.length), 'Brand'], ['ยานพาหนะบำรุงรักษาแล้ว', done + '/' + cars, 'Success']]; };
 const dashProgRow = (r) => { const p = DASH_PLANS().find(x => x[0] === r[0]); return [{ text: r[0], sub: PLAN_UNIT[r[0]] }, p[1], 'ไตรมาส ' + r[1], r[2] + ' ใบ', r[3] + '/' + r[4] + ' คัน', { pill: QST[r[5]] }, GO]; };
 const DASH_HINT = ['ค้นหาชื่ออะไหล่, รหัสอะไหล่', 'ค้นหาทะเบียน, ชื่ออะไหล่, รหัสอะไหล่', 'ค้นหาเลขที่ MR, ชื่อแผน'];
 async function metric(text, number, color) {   // Metric item (Breakpoint ตามจอ) + สี Featured icon ที่ซ้อนอยู่ — ยกจาก overhaul2-plugin (R22)
@@ -798,7 +1075,26 @@ function metricRow(items) {   // desktop: 4 ใบเต็มแถว gap 24 (
   const r = frame('Metrics', 'HORIZONTAL', { gap: 24 }); items.forEach(m => { r.appendChild(m); m.layoutGrow = 1; }); return r;
 }
 const DASH_TABLE = (tab, kbk) => tab === 0 ? [sortAll(QPART_COLS), DASH_AGG] : tab === 1 ? [sortAll(DASH_CAR_COLS), DASH_CAR_ROWS()] : [sortAll(DASH_PROG_COLS), DASH_PROG.filter(dashMine(kbk)).map(dashProgRow)];
-/* o.tab · o.query · o.chips (ตัวกรองที่ใช้แล้ว) · o.notFound · o.empty · o.filter = แผงตัวกรอง { open } · o.exportPdf = popup ส่งออก (true PDF / false Excel) · o.kbk = มุมมอง กบค. ทุกหน่วยงาน */
+/* S4 แบบ VMS+ (12 พ.ย. 2569 · R106 · ชุดวาดด้านบน) — ลำดับ: หัวแดชบอร์ด → เรื่องที่ควรดู → ตัวกรองที่เลือก → การ์ดตัวเลข 6 ใบ → กราฟ 4 ใบ → แท็บ 3 แท็บเดิม + Table header + Table → หมายเหตุแหล่งข้อมูล
+   ตัวเลขทุกส่วนคิดจากข้อมูลเดิมของหน้า (DASH_PLANS · รายไตรมาสของแผน · DASH_PROG · DASH_AGG · อะไหล่รายคันของแผน MRZ7000004) ไม่เพิ่มแหล่งข้อมูล
+   ที่ทำไม่ได้จากข้อมูลเดิม (ตัดออก แจ้งเจ้าของงาน): อะไหล่รายไตรมาส (DASH_AGG เป็นยอดทั้งปี) · ไตรมาสที่บำรุงรักษาช้ากว่ากำหนด (ไม่มีวันครบกำหนดรายไตรมาส) · อะไหล่ตามหน่วยงานผู้ขอเบิก (แสดงยานพาหนะตามหน่วยงานแทน) */
+const planQs = (p) => p[9].split(' · ').map(s => +s.split(': ')[1] || 0);   // ยานพาหนะรายไตรมาส [ไตรมาส 1..4] ของแผน
+const progOf = (id, q) => DASH_PROG.find(r => r[0] === id && r[1] === q);
+const DASH_NOPARTS = CAND.map((c, i) => i).filter(i => !(A_PICKS[i] || []).length && !A_OILS[i]);   // ยานพาหนะของแผน MRZ7000004 (CAND) ที่ไม่มีอะไหล่และไม่เปลี่ยนน้ำมัน = ไม่เบิกอะไหล่
+const DASH_PCS = DASH_AGG.filter(r => r[4] === 'ชิ้น').reduce((a, r) => a + +r[3], 0), DASH_LITRE = DASH_AGG.filter(r => r[4] === 'ลิตร').reduce((a, r) => a + +r[3], 0);
+function dashStats(o) {   // o.kbk · o.q = ไตรมาสที่กดในกราฟ · o.plan = แผนในตัวกรอง
+  const pl = DASH_PLANS().filter(dashMine(o.kbk)).filter(p => !o.plan || p[0] === o.plan);
+  const per = pl.map(p => {
+    const qs = planQs(p), qd = [1, 2, 3, 4].map(q => { const r = progOf(p[0], q); return { cars: qs[q - 1], done: r ? r[3] : 0, st: r ? r[5] : 'todo', trips: r ? r[2] : 0 }; });
+    const pick = o.q ? [qd[o.q - 1]] : qd, cars = pick.reduce((a, x) => a + x.cars, 0), done = pick.reduce((a, x) => a + x.done, 0), doing = pick.reduce((a, x) => a + (x.st === 'doing' ? x.cars - x.done : 0), 0);
+    return { p, qd, cars, done, doing, todo: cars - done - doing, nowQ: +p[3].split(' ')[1] };
+  }).filter(x => x.cars > 0);
+  const cars = per.reduce((a, x) => a + x.cars, 0), done = per.reduce((a, x) => a + x.done, 0);
+  const byQ = [0, 1, 2, 3].map(q => per.reduce((a, x) => [a[0] + x.qd[q].done, a[1] + x.qd[q].cars - x.qd[q].done], [0, 0]));
+  return { per, cars, done, byQ };
+}
+/* o.tab · o.query · o.chips (ตัวกรองที่ใช้แล้ว · ชิปที่เป็นเลขที่ MR = กรองแผน) · o.notFound · o.empty · o.filter = แผงตัวกรอง { open } · o.exportPdf = popup ส่งออก (true PDF / false Excel) · o.kbk = มุมมอง กบค. ทุกหน่วยงาน
+   o.q = กดแท่งไตรมาส (กรองทั้งหน้า) · o.alert = กดเรื่องที่ควรดู ('noparts') · o.mobileAll = มือถือแสดงกราฟครบทุกใบ (จอมือถืออื่นแสดงเฉพาะกราฟที่กด) */
 async function partsDash(name, o) {
   o = o || {};
   const tab = o.tab || 0;
@@ -809,23 +1105,60 @@ async function partsDash(name, o) {
     const a = find(es, 'Actions'); if (a) a.visible = false;
     return scr;
   }
-  const [cols, rows] = DASH_TABLE(tab, o.kbk);
-  add(page, await tabs(DASH_TABS.map((t, i) => [t, i === 0 ? DASH_AGG.length : i === 1 ? 214 : DASH_PROG.filter(dashMine(o.kbk)).length]), tab), 'h');
-  add(page, metricRow(await Promise.all(dashMetrics(o.kbk).map(m => metric(m[0], m[1], m[2])))), 'h');
+  const plan = (o.chips || []).find(c => /^MRZ\d+$/.test(c)), st = dashStats({ kbk: o.kbk, q: o.q, plan }), W = dashW(scr);
+  add(page, await dashHead({ title: 'อะไหล่ของแผนที่อนุมัติแล้ว', icon: 'quick_reference_all-24-300-round',
+    desc: 'อะไหล่และน้ำมันไฮดรอลิกที่ต้องใช้ตามแผนบำรุงรักษาที่อนุมัติแล้ว แยกตามไตรมาส แผน และหน่วยงาน — คลิกกราฟหรือรายการเพื่อกรองทั้งหน้า' }), 'h');
+  const seeNp = st.per.some(x => x.p[0] === NP[0]), noTrip = st.per.filter(x => !o.q && x.qd[x.nowQ - 1].cars && !x.qd[x.nowQ - 1].trips);
+  const al = await dashAlerts([
+    { key: 'notrip', tone: 'warn', n: noTrip.length, icon: 'event_busy-24-300-round', title: 'ไตรมาสปัจจุบันที่ยังไม่มีแผนเดินทาง ' + noTrip.length + ' ไตรมาส', sub: noTrip.map(x => x.p[0] + ' ' + x.p[3]).join(' · ') + ' — ยานพาหนะในไตรมาสยังไม่ได้จัดเข้าแผนเดินทาง' },
+    { key: 'noparts', tone: 'info', n: seeNp ? DASH_NOPARTS.length : 0, icon: 'description-24-300-round', title: 'ยานพาหนะในแผนที่ไม่เบิกอะไหล่ ' + DASH_NOPARTS.length + ' คัน', sub: DASH_NOPARTS.map(i => CAND[i][0]).join(' · ') + ' ในแผน ' + NP[0] + ' ไม่มีอะไหล่และไม่เปลี่ยนน้ำมันไฮดรอลิก — ตรวจว่าตั้งใจหรือยังจัดอะไหล่ไม่ครบ' }], o.alert);
+  if (al) add(page, al, 'h');
+  const ch = await dashChips(o.chips); if (ch) add(page, ch, 'h');
+  const partSub = o.q || plan ? 'ยอดทั้งปีของทุกแผน ไม่แยกตามตัวกรอง' : 'รวมทุกแผนที่อนุมัติแล้ว';
+  add(page, await dashKpis([
+    { label: 'แผนที่อนุมัติแล้ว', value: st.per.length, unit: 'แผน', sub: 'ปีงบประมาณ 2570' + (o.kbk ? ' ทุกหน่วยงาน' : ' ของ ' + DASH_OWN), tone: 'brand', icon: 'description-24-300-round' },
+    { label: 'ยานพาหนะในแผน', value: st.cars, unit: 'คัน', sub: o.q ? 'ไตรมาส ' + o.q : 'ทุกไตรมาส', tone: 'info', icon: 'car_repair-24-300-round' },
+    { label: 'รายการอะไหล่', value: DASH_AGG.length, unit: 'รายการ', sub: partSub, tone: 'gray', icon: 'quick_reference_all-24-300-round' },
+    { label: 'จำนวนอะไหล่รวม', value: dFmt(DASH_PCS), unit: 'ชิ้น', sub: 'ไม่รวมน้ำมันไฮดรอลิก', tone: 'warning', icon: 'search_check-24-300-round' },
+    { label: 'น้ำมันไฮดรอลิก', value: dFmt(DASH_LITRE), unit: 'ลิตร', sub: OIL_SPEC.grade + ' · ' + partSub, tone: 'brand', icon: 'search_check-24-300-round' },
+    { label: 'ความคืบหน้า', value: st.done + '/' + st.cars, unit: 'คัน', sub: dPct(st.done, st.cars) + ' บำรุงรักษาแล้ว', tone: 'success', icon: 'check-24-300-round' }]), 'h');
+  /* กราฟ 4 ใบ — มือถือ: จอ C.18 แสดงครบ · จออื่นแสดงเฉพาะกราฟที่กด (ประหยัดชั้นบนหน้า Figma) */
+  const byUnit = uniq(st.per.map(x => PLAN_UNIT[x.p[0]])).map(u => ({ label: u, value: st.per.filter(x => PLAN_UNIT[x.p[0]] === u).reduce((a, x) => a + x.cars, 0) }));
+  const parts = DASH_AGG.filter(r => r[4] === 'ชิ้น').slice().sort((a, b) => b[3] - a[3]);
+  const specs = [
+    { key: 'quarter', span: 2, title: 'ยานพาหนะในแผนรายไตรมาส', sub: 'บำรุงรักษาแล้วเทียบยังไม่บำรุงรักษา แยกตามไตรมาส', icon: 'calendar_month-24-300-round', src: 'ข้อมูลจากแผนที่อนุมัติแล้ว ปีงบประมาณ 2570',
+      build: async (w) => (await vBars(w, st.byQ.map((v, i) => ({ label: 'ไตรมาส ' + (i + 1), vals: v, dim: !!o.q && o.q !== i + 1 })), [{ label: 'บำรุงรักษาแล้ว', tone: 'success' }, { label: 'ยังไม่บำรุงรักษา', tone: 'info' }]))
+        .concat([await dLegend(st.byQ.map((v, i) => ({ label: 'ไตรมาส ' + (i + 1), value: v[0] + v[1], tone: DASH_TONES[i], dim: !!o.q && o.q !== i + 1 })), ['ไตรมาส', 'ยานพาหนะ (คัน)'], { total: true })]) },
+    { key: 'unit', span: 1, title: o.kbk ? 'ตามหน่วยงานผู้ขอเบิก' : 'ยานพาหนะตามแผน', sub: o.kbk ? 'ยานพาหนะในแผนของแต่ละหน่วยงาน' : 'ยานพาหนะในแผนของ ' + DASH_OWN + ' แยกตามแผน', icon: 'groups-24-300-round', color: 'Info', src: 'ข้อมูลจากแผนที่อนุมัติแล้ว',
+      build: async (w) => donut(w, o.kbk ? byUnit : st.per.map(x => ({ label: x.p[0], value: x.cars })), { unit: 'คัน', heads: [o.kbk ? 'หน่วยงาน' : 'แผน', 'จำนวน (คัน)'] }) },
+    { key: 'parts', span: 2, title: 'อะไหล่ที่ใช้มากที่สุด', sub: 'จำนวนชิ้นรวมทุกแผน · น้ำมันไฮดรอลิกนับเป็นลิตรที่การ์ดตัวเลข', icon: 'quick_reference_all-24-300-round', color: 'Warning', src: 'ข้อมูลจากอะไหล่ของยานพาหนะในแผน',
+      more: parts.length > 10 ? 'แสดงทั้งหมด ' + parts.length + ' รายการ' : null,
+      build: async (w) => [await hBars(w, parts.slice(0, 10).map(r => ({ label: r[0], value: +r[3], unit: r[4], sub: (r[1] && r[1] !== '-' ? 'รหัส ' + r[1] + ' · ' : '') + r[2] })), { total: DASH_PCS })] },
+    { key: 'progress', span: 1, title: 'ความคืบหน้าของแผน', sub: 'ยานพาหนะแยกตามสถานะงานของแต่ละแผน', icon: 'check-24-300-round', color: 'Success', src: 'ข้อมูลจากแผนเดินทางและงานรายคัน',
+      build: async (w) => [await stackRows(w, st.per.map(x => ({ label: x.p[0], right: x.done + '/' + x.cars + ' คัน', vals: [x.done, x.doing, x.todo], sub: PLAN_UNIT[x.p[0]] + ' · ' + x.p[1] })),
+        [{ label: 'บำรุงรักษาแล้ว', tone: 'success' }, { label: 'กำลังดำเนินการ', tone: 'info' }, { label: 'ยังไม่เริ่ม', tone: 'track' }])] }];
+  add(page, await chartGrid(W, MOB && !o.mobileAll ? specs.filter(s => s.key === (o.q ? 'quarter' : '')) : specs), 'h');
+  /* ตารางท้ายหน้า: แท็บ 3 แท็บเดิม + Table header (ค้นหา · ตัวกรอง · ส่งออก) + Table เรียงได้ทุกคอลัมน์ + แบ่งหน้า */
+  let [cols, rows] = DASH_TABLE(tab, o.kbk);
+  if (tab === 2) rows = DASH_PROG.filter(dashMine(o.kbk)).filter(r => (!o.q || r[1] === o.q) && (!plan || r[0] === plan)).map(dashProgRow);
+  if (o.alert === 'noparts') rows = DASH_NOPARTS.map(i => [CAND[i][0], { text: NP[0], sub: PLAN_UNIT[NP[0]] }, 'ไตรมาส ' + A_ALL[i], 'ไม่เบิกอะไหล่', '-', '-', '0', '-']);
   const sec = col('Section', [], 24); add(page, sec, 'h');
+  add(sec, await tabs(DASH_TABS.map((t, i) => [t, i === 0 ? DASH_AGG.length : i === 1 ? (o.alert ? rows.length : 214) : (tab === 2 ? rows.length : DASH_PROG.filter(dashMine(o.kbk)).length)]), tab), 'h');
   add(sec, await tableHeader({ placeholder: DASH_HINT[tab], query: o.query, chips: o.chips, filterCount: (o.chips || []).length || null, more: [{ text: 'ส่งออก', icon: 'download-24-300-round' }] }), 'h');
   if (o.notFound) add(sec, await searchNotFound(), 'h');
-  else add(sec, await tblShort(cols, rows.slice(0, TABLE_MAX.rows), { pagination: tab === 1 ? { shown: TABLE_MAX.rows, total: 214 } : rows.length }), 'h');
+  else add(sec, await tblShort(cols, rows.slice(0, TABLE_MAX.rows), { pagination: tab === 1 && !o.alert ? { shown: TABLE_MAX.rows, total: 214 } : rows.length }), 'h');
+  add(page, await dashNote('ข้อมูลจากแผนบำรุงรักษาที่อนุมัติแล้วของปีงบประมาณ 2570 ' + (o.kbk ? 'ทุกหน่วยงาน' : 'ของ ' + DASH_OWN) + ' · จำนวนอะไหล่เป็นยอดตามแผน ไม่ใช่ยอดเบิกจริง · ตัวเลขทุกส่วนคำนวณตามตัวกรองที่เลือก'), 'h');
+  await bindDash();
   /* แผงตัวกรอง (รีวิว "filter หน่วยงานผู้ขอเบิก เขต, แผน") + ปีงบประมาณ (หน้ารวมของแผนที่อนุมัติแล้ว "ในปีนั้นๆ") · filterPanel แบบรายการแผน · หลายค่า = Input dropdown with badges Optional */
   if (o.filter) {
     const fd = o.filter, at = (n) => n.findOne(x => x.name === 'Container') || n;
     const yr = dropdown('ปีงบประมาณ', '2570', { optional: true });
     const unit = o.kbk ? multiDropdown('หน่วยงานผู้ขอเบิก', fd.units || [], { placeholder: 'เลือกหน่วยงานผู้ขอเบิก', optional: true, state: fd.open === 'unit' ? 'Focused' : undefined }) : null;   // ผู้ใช้หน่วยงานเห็นเฉพาะแผนของตัวเอง ⇒ ตัวกรองหน่วยงานมีเฉพาะ กบค. (10 พ.ย. 2569)
     const dist = multiDropdown('เขต', fd.districts || [], { placeholder: 'เลือกเขต', optional: true });
-    const plan = multiDropdown('แผน', fd.plans || [], { placeholder: 'เลือกแผน', optional: true, state: fd.open === 'plan' ? 'Focused' : undefined });
-    await filterPanel(scr, [yr, unit, dist, plan].filter(Boolean));
+    const pln = multiDropdown('แผน', fd.plans || [], { placeholder: 'เลือกแผน', optional: true, state: fd.open === 'plan' ? 'Focused' : undefined });
+    await filterPanel(scr, [yr, unit, dist, pln].filter(Boolean));
     if (unit && fd.open === 'unit') comboAt(scr, at(unit), UNITS.map(u => [u, '', (fd.units || []).indexOf(u) >= 0]));
-    if (fd.open === 'plan') comboAt(scr, at(plan), DASH_PLANS().filter(dashMine(o.kbk)).map(p => [p[0], p[1], (fd.plans || []).indexOf(p[0]) >= 0]));
+    if (fd.open === 'plan') comboAt(scr, at(pln), DASH_PLANS().filter(dashMine(o.kbk)).map(p => [p[0], p[1], (fd.plans || []).indexOf(p[0]) >= 0]));
   }
   if (o.exportPdf != null) await exportModal(scr, o.exportPdf, { scope: [rows.length + ' รายการตามแท็บ ' + DASH_TABS[tab] + ((o.chips || []).length ? ' และตัวกรองที่ใช้อยู่' : ''), (tab === 1 ? 214 : rows.length) + ' รายการ ทุกแผนที่อนุมัติแล้วในปีงบประมาณ 2570'] });
   return scr;
@@ -1806,9 +2139,6 @@ const maRow = (r) => {
 };
 const maIdx = (fn) => MA_ROWS.map((r, i) => fn(r) ? i : -1).filter(i => i >= 0);
 const MA_DUE_N = maIdx(r => { const n = maNext(r); return n && n[2]; }).length;
-const maMetrics = () => { const all = MA_ROWS.filter(r => r[1]), oilSoon = (a) => all.filter(r => { const [x, d] = maOil(r); return x === a && d[1]; }).length;
-  return [['ครบกำหนดบำรุงรักษา', String(all.filter(r => maNext(r)[2] === 'over').length), 'Error'], ['ใกล้ครบกำหนดบำรุงรักษา', String(all.filter(r => maNext(r)[2] === 'near').length), 'Warning'],
-    ['ต้องเก็บตัวอย่างน้ำมันใน 6 เดือน', String(oilSoon('เก็บตัวอย่าง')), 'Brand'], ['ต้องเปลี่ยนน้ำมันไฮดรอลิกใน 6 เดือน', String(oilSoon('เปลี่ยนน้ำมัน')), 'Brand']]; };
 async function maTabs() { return tabs([['ยานพาหนะ', null], ['การบำรุงรักษา', MA_DUE_N]], 1); }   // แท็บของ Vehicle list · ป้าย = คันที่ใกล้หรือถึงกำหนด · ปฏิทินการจอง (ระบบจองยานพาหนะ) เอาออก 10 พ.ย. 2569 เจ้าของงาน
 async function searchNotFound() {   // Empty state/Search not found ข้อความตาม Vehicle list (State=Search not found) ของ UI Release#2
   const es = inst('Empty state/Search not found');
@@ -1820,15 +2150,80 @@ async function searchNotFound() {   // Empty state/Search not found ข้อค
 /* แดชบอร์ดการบำรุงรักษารายคัน (10 พ.ย. 2569 เจ้าของงาน "ตั้งใจอยากให้หน้านี้เป็นหน้า dashboard ที่สามารถกรองสิ่งต่างๆที่ต้องการ เช่น รถที่จะเข้าบำรุงครั้งต่อไป โดย filter จากเวลาในการบำรุงรักษาล่าสุด
    หรืออยาก filter รถที่ต้องเก็บผลน้ำมัน และรถแต่ละคันควรจะเข้าไปดูรายละเอียดได้") — โครงตาม MA Overview ของ UI Release#2: Tabs → Metric item → Table header → Table · R90
    o.query · o.rows = แถวที่เหลือ (ลำดับใน MA_ROWS) · o.chips · o.filter = แผงตัวกรอง { open } · o.menu */
+/* S24 แบบ VMS+ (12 พ.ย. 2569 · R106 · ชุดวาดเหนือ S4) — Tabs ของ Vehicle list → หัวแดชบอร์ด → เรื่องที่ควรดู → ตัวกรองที่เลือก → การ์ดตัวเลข 6 ใบ → กราฟ 6 ใบ → Table header + Table (MA_COLS เดิม) → หมายเหตุแหล่งข้อมูล
+   ตัวเลขทุกส่วนคิดจาก MA_ROWS · MA_USE · TRIP_CARS เดิม (maNext · maDues · maOil) · ตัวกรอง/กดกราฟ/กดเรื่องที่ควรดู กรองทั้งหน้า (o.rows) · ช่องค้นหากรองเฉพาะตาราง */
+const maDate = (s) => { const [d, m, y] = maD(s); return new Date(y - 543, m - 1, d); };
+const MA_NOW = () => new Date(MA_TODAY[2] - 543, MA_TODAY[1] - 1, MA_TODAY[0]);
+const maUnit = (r) => TRIP_CARS[r[0]][2];   // หน่วยงานเจ้าของยานพาหนะ เช่น "กฟฉ.1 ขอนแก่น" · เขต = คำแรก
+const maAge = (i) => MA_TODAY[2] - MA_USE[i][0];
+const maState = (r) => !r[1] ? 'none' : (maNext(r)[2] || 'ok');   // ปกติ · ใกล้ครบ · เลยกำหนด · ยังไม่มีข้อมูล
+const MA_STATE = { ok: ['ปกติ', 'success'], near: ['ใกล้ครบกำหนด', 'warning'], over: ['เลยกำหนด', 'error'], none: ['ยังไม่มีข้อมูล', 'gray'] };
+const MA_OILRES = [['ผ่าน', 'success'], ['ไม่ผ่าน', 'error'], ['รอผลตรวจ', 'warning'], ['ยังไม่ตรวจ', 'gray']];
+const MA_AGE_GROUPS = [['0–5 ปี', 0, 5], ['6–10 ปี', 6, 10], ['11–15 ปี', 11, 15], ['มากกว่า 15 ปี', 16, 999]];
+const TH_MON = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+const maOilDue = (r) => r[1] ? maDues(r)[2] : null;   // [วันครบเปลี่ยนน้ำมันไฮดรอลิก, สถานะ]
+const maDays = (s) => Math.round((maDate(s) - MA_NOW()) / 864e5);
+const MA_ALERT = {   // เรื่องที่ควรดู — นับจากยานพาหนะทุกคัน (ไม่ขึ้นกับตัวกรอง) · กดแล้วกรองทั้งหน้าตามเรื่องนั้น
+  over: maIdx(r => maState(r) === 'over'),
+  oil30: maIdx(r => { const d = maOilDue(r); return d && maDays(d[0]) >= 0 && maDays(d[0]) <= 30; }),
+  fail: maIdx(r => r[6] === 'ไม่ผ่าน'),
+  none: maIdx(r => !r[1])
+};
+const maPlates = (ix) => ix.map(i => TRIP_CARS[MA_ROWS[i][0]][0]).join(' · ');
+function maStats(ix) {
+  const R = ix.map(i => MA_ROWS[i]), n = (fn) => R.filter(fn).length;
+  return { total: R.length, doneYear: n(r => r[1] && maD(r[1])[2] === MA_TODAY[2]), near: n(r => maState(r) === 'near'), over: n(r => maState(r) === 'over'),
+    oilYear: n(r => r[1] && maD(maOilDue(r)[0])[2] <= MA_TODAY[2]), age: R.length ? (ix.reduce((a, i) => a + maAge(i), 0) / R.length).toFixed(1) : '-' };
+}
 async function maList(name, o) {
   o = o || {};
   const { scr, page } = await shell(name, { title: 'ข้อมูลยานพาหนะ', root: 'ยานพาหนะ' });
+  const W = dashW(scr), all = MA_ROWS.map((r, i) => i), ix = o.chips && o.rows ? o.rows : all, R = ix.map(i => MA_ROWS[i]), st = maStats(ix);
+  add(page, await maTabs(), 'h');
+  add(page, await dashHead({ title: 'แดชบอร์ดการบำรุงรักษา', icon: 'car_repair-24-300-round',
+    desc: 'ยานพาหนะที่ติดตั้งเครื่องมือกล แยกตามสังกัด ประเภท และกำหนดบำรุงรักษาครั้งถัดไป — คลิกกราฟหรือรายการเพื่อกรองทั้งหน้า' }), 'h');
+  const al = await dashAlerts([
+    { key: 'over', n: MA_ALERT.over.length, icon: 'event_busy-24-300-round', title: 'เลยกำหนดบำรุงรักษา ' + MA_ALERT.over.length + ' คัน', sub: maPlates(MA_ALERT.over) + ' — ครั้งถัดไปเลยวันครบกำหนดแล้ว ควรจัดเข้าแผนไตรมาสถัดไป' },
+    { key: 'oil30', n: MA_ALERT.oil30.length, icon: 'calendar_month-24-300-round', title: 'ครบกำหนดเปลี่ยนน้ำมันไฮดรอลิกภายใน 30 วัน ' + MA_ALERT.oil30.length + ' คัน', sub: maPlates(MA_ALERT.oil30) + ' — ครบรอบ 3 ปีหลังเปลี่ยนครั้งล่าสุด' },
+    { key: 'fail', n: MA_ALERT.fail.length, icon: 'search_check-24-300-round', title: 'ผลตรวจน้ำมันล่าสุดไม่ผ่าน ' + MA_ALERT.fail.length + ' คัน', sub: maPlates(MA_ALERT.fail) + ' — ผลตรวจตัวอย่างน้ำมันไฮดรอลิกครั้งล่าสุดไม่ผ่าน ควรเปลี่ยนก่อนครบรอบ' },
+    { key: 'none', tone: 'info', n: MA_ALERT.none.length, icon: 'description-24-300-round', title: 'ยังไม่มีข้อมูลบำรุงรักษาล่าสุด ' + MA_ALERT.none.length + ' คัน', sub: maPlates(MA_ALERT.none) + ' — ยังไม่มีงานบำรุงรักษาที่ปิดในระบบ คำนวณครั้งถัดไปไม่ได้' }], o.alert);
+  if (al) add(page, al, 'h');
+  const ch = await dashChips(o.chips); if (ch) add(page, ch, 'h');
+  add(page, await dashKpis([
+    { label: 'ยานพาหนะทั้งหมด', value: st.total, unit: 'คัน', sub: o.chips ? 'ตามตัวกรองที่เลือก' : 'ทุกสังกัด', tone: 'brand', icon: 'car_repair-24-300-round' },
+    { label: 'บำรุงรักษาแล้วในปี ' + MA_TODAY[2], value: st.doneYear, unit: 'คัน', sub: dPct(st.doneYear, st.total) + ' ของทั้งหมด', tone: 'success', icon: 'check-24-300-round' },
+    { label: 'ใกล้ครบกำหนด', value: st.near, unit: 'คัน', sub: 'เหลือไม่เกิน ' + MA_NEAR + ' เดือน', tone: 'warning', icon: 'calendar_month-24-300-round' },
+    { label: 'เลยกำหนด', value: st.over, unit: 'คัน', sub: 'ครั้งถัดไปเลยวันครบกำหนด', tone: 'error', icon: 'event_busy-24-300-round' },
+    { label: 'ครบเปลี่ยนน้ำมันไฮดรอลิกในปีนี้', value: st.oilYear, unit: 'คัน', sub: 'ภายในปี ' + MA_TODAY[2] + ' รวมที่เลยกำหนด', tone: 'info', icon: 'search_check-24-300-round' },
+    { label: 'อายุการใช้งานเฉลี่ย', value: st.age, unit: 'ปี', sub: 'นับจากปีที่จดทะเบียน', tone: 'gray', icon: 'no_crash-24-300-round' }]), 'h');
+  /* กราฟ 6 ใบ (คิดจากยานพาหนะตามตัวกรอง) — มือถือ: จอมุมมองมือถือแสดงครบ · จออื่นแสดงเฉพาะกราฟที่กด */
+  const count = (keyOf) => { const m = new Map(); R.forEach(r => { const k = keyOf(r); m.set(k, (m.get(k) || 0) + 1); }); return [...m].sort((a, b) => b[1] - a[1]); };
+  const dueN = (keyOf, k) => R.filter(r => keyOf(r) === k && /near|over/.test(maState(r))).length;
+  const t0 = MA_TODAY[2] * 12 + MA_TODAY[1] - 1, mIdx = (s) => { const [, m, y] = maD(s); return y * 12 + m - 1 - t0; };
+  const months = [...Array(12)].map((_, i) => { const k = t0 + i; return { label: TH_MON[k % 12] + ' ' + String(Math.floor(k / 12)).slice(2), vals: [0, 0] }; });
+  let past = 0;
+  R.filter(r => r[1]).forEach(r => { const d = maDues(r); [[d[0], 0], [d[2], 1]].forEach(([x, s]) => { const k = mIdx(x[0]); if (k < 0) past++; else if (k < 12) months[k].vals[s]++; }); });
+  const specs = [
+    { key: 'unit', span: 2, title: 'ยานพาหนะตามสังกัด', sub: 'แยกตามหน่วยงานเจ้าของยานพาหนะ (ทั้งหมด ' + st.total + ' คัน)', icon: 'groups-24-300-round', toggle: [['หน่วยงาน', 'เขต'], 0], src: 'ข้อมูลจากทะเบียนยานพาหนะ',
+      build: async (w) => [await hBars(w, count(maUnit).map(([k, v]) => ({ label: k, value: v, unit: 'คัน', sub: dueN(maUnit, k) ? 'ใกล้ครบหรือเลยกำหนด ' + dueN(maUnit, k) + ' คัน' : '' })))] },
+    { key: 'status', span: 1, title: 'สถานะกำหนดบำรุงรักษา', sub: 'ตามครั้งถัดไปของแต่ละคัน', icon: 'event_busy-24-300-round', color: 'Warning', src: 'ข้อมูลจากงานบำรุงรักษาที่ปิดแล้ว',
+      build: async (w) => donut(w, Object.keys(MA_STATE).map(k => ({ label: MA_STATE[k][0], tone: MA_STATE[k][1], value: R.filter(r => maState(r) === k).length })), { unit: 'คัน', heads: ['สถานะ', 'จำนวน (คัน)'] }) },
+    { key: 'month', span: 2, title: 'กำหนดบำรุงรักษา 12 เดือนข้างหน้า', sub: 'จำนวนรายการที่ครบกำหนดในแต่ละเดือน' + (past ? ' · ไม่รวมที่เลยกำหนดแล้ว ' + past + ' รายการ' : ''), icon: 'calendar_month-24-300-round', src: 'ข้อมูลจากเกณฑ์ครั้งถัดไป (รอบบำรุงรักษา 12 เดือน · เปลี่ยนน้ำมันทุก 3 ปี)',
+      build: async (w) => vBars(w, months, [{ label: 'บำรุงรักษาตามวาระ', tone: 'brand' }, { label: 'เปลี่ยนน้ำมันไฮดรอลิก', tone: 'info' }]) },
+    { key: 'oil', span: 1, title: 'ผลตรวจน้ำมันล่าสุด', sub: 'ผลตรวจตัวอย่างน้ำมันไฮดรอลิกครั้งล่าสุด', icon: 'search_check-24-300-round', color: 'Info', src: 'ข้อมูลจากผลตรวจน้ำมัน',
+      build: async (w) => donut(w, MA_OILRES.map(([l, k]) => ({ label: l, tone: k, value: R.filter(r => (r[6] || 'ยังไม่ตรวจ') === l).length })), { unit: 'คัน', heads: ['ผลตรวจ', 'จำนวน (คัน)'] }) },
+    { key: 'age', span: 2, title: 'อายุการใช้งานของยานพาหนะ', sub: 'แบ่งกลุ่มตามอายุนับจากปีที่จดทะเบียน', icon: 'no_crash-24-300-round', color: 'Gray', src: 'ข้อมูลจากทะเบียนยานพาหนะ',
+      build: async (w) => { const g = MA_AGE_GROUPS.map(([l, a, b]) => ({ label: l, value: ix.filter(i => maAge(i) >= a && maAge(i) <= b).length }));
+        return (await vBars(w, g.map(x => ({ label: x.label, vals: [x.value] })), [{ label: 'ยานพาหนะ', tone: 'info' }], { h: 140 })).concat([await dLegend(g, ['กลุ่มอายุ', 'จำนวน (คัน)'], { total: true })]); } },
+    { key: 'type', span: 1, title: 'ตามประเภทยานพาหนะ', sub: VTYPES.length + ' ประเภท', icon: 'car_repair-24-300-round', color: 'Success', src: 'ข้อมูลจากทะเบียนยานพาหนะ',
+      build: async (w) => [await hBars(w, count(r => typeOf(TRIP_CARS[r[0]])).map(([k, v]) => ({ label: k, value: v, unit: 'คัน' })))] }];
+  add(page, await chartGrid(W, MOB && !o.mobileAll ? specs.filter(s => s.key === o.pickChart) : specs), 'h');
   const sec = col('Section', [], 24); add(page, sec, 'h');
-  add(sec, await maTabs(), 'h');
-  add(sec, metricRow(await Promise.all(maMetrics().map(m => metric(m[0], m[1], m[2])))), 'h');
-  add(sec, await tableHeader({ placeholder: 'เลขทะเบียน, ยี่ห้อ, รุ่น', query: o.query, chips: o.chips, filterCount: (o.chips || []).length || null }), 'h');
-  const rows = (o.rows || MA_ROWS.map((r, i) => i)).map(i => maRow(MA_ROWS[i]));
-  add(sec, rows.length ? await tblShort(MA_COLS, rows, { pagination: rows.length }) : await searchNotFound(), 'h');
+  add(sec, await tableHeader({ placeholder: 'เลขทะเบียน, ยี่ห้อ, รุ่น', query: o.query, chips: o.chips, filterCount: (o.chips || []).length || null, more: [{ text: 'ส่งออก', icon: 'download-24-300-round' }] }), 'h');
+  const rows = (o.rows || all).map(i => maRow(MA_ROWS[i]));
+  add(sec, rows.length ? await tblShort(sortAll(MA_COLS), rows, { pagination: rows.length }) : await searchNotFound(), 'h');
+  add(page, await dashNote('ข้อมูลจากงานบำรุงรักษาที่ปิดแล้วและผลตรวจน้ำมันล่าสุดของยานพาหนะทุกคัน ณ ' + dashAsof().slice(9) + ' · ใกล้ครบกำหนด = เหลือไม่เกิน ' + MA_NEAR + ' เดือน · ตัวเลขทุกส่วนคำนวณตามตัวกรองที่เลือก'), 'h');
+  await bindDash();
   if (o.filter) {
     const f = o.filter;
     await filterPanel(scr, [multiDropdown('ประเภทยานพาหนะ', f.types || [], { placeholder: 'ทั้งหมด', optional: true }), multiDropdown('สังกัดยานพาหนะ', f.units || [], { placeholder: 'ทั้งหมด', optional: true }),
@@ -2594,7 +2989,11 @@ const SCENARIOS = [
     ['ยังไม่มีแผนที่อนุมัติแล้ว', () => partsDash('S4 ว่าง', { empty: true })],
     // 10 พ.ย. 2569 เจ้าของงาน "ผู้สร้างแผนเห็นเฉพาะแผนของหน่วยงานตัวเอง ยกเว้น กบค จะเห็นแผนของหน่วยงานอื่นด้วย แต่แก้ไขไม่ได้" — ต่อท้าย (C.14 C.15) รหัสจอเดิมไม่เลื่อน
     ['กบค. — ความคืบหน้าของแผนทุกหน่วยงาน ดูอย่างเดียว', () => partsDash('S4 กบค. ทุกหน่วยงาน', { kbk: true, tab: 2 })],
-    ['กบค. — แผงตัวกรอง มีหน่วยงานผู้ขอเบิก', () => partsDash('S4 กบค. แผงตัวกรอง', { kbk: true, filter: { units: ['กปส.'], open: 'unit' } })]]],
+    ['กบค. — แผงตัวกรอง มีหน่วยงานผู้ขอเบิก', () => partsDash('S4 กบค. แผงตัวกรอง', { kbk: true, filter: { units: ['กปส.'], open: 'unit' } })],
+    /* 12 พ.ย. 2569 แดชบอร์ดแบบ VMS+ (R106) — ต่อท้าย C.16 C.17 C.18 รหัสจอเดิมไม่เลื่อน · กดกราฟ/กดเรื่องที่ควรดู = กรองทั้งหน้า + ชิปตัวกรองที่เลือก */
+    ['กดกราฟ — แท่งไตรมาส 1 กรองทั้งหน้า ชิปตัวกรองที่เลือก แท็บความคืบหน้าเหลือไตรมาส 1', () => partsDash('S4 กดกราฟไตรมาส 1', { q: 1, chips: ['ไตรมาส 1'], tab: 2 })],
+    ['กดเรื่องที่ควรดู — ยานพาหนะในแผนที่ไม่เบิกอะไหล่ กรองทั้งหน้า แท็บแยกรายคัน', () => partsDash('S4 กดเรื่องที่ควรดู', { alert: 'noparts', chips: ['ไม่เบิกอะไหล่'], tab: 1 })],
+    ['มุมมองมือถือ — การ์ดตัวเลข 2 ใบต่อแถว กราฟเรียงทีละใบ ตารางเป็นการ์ด', () => partsDash('S4 มุมมองมือถือ', { mobileAll: true })]]],
   // S5 เบิกอะไหล่ผ่านระบบจองอะไหล่ — รวมเข้า S4 2 พ.ย. 2569 (เจ้าของงาน "รวบ s4 s5 เป็นหน้าเดียวกัน ยุบ S5 ออกไปก่อน") · บล็อก D เว้นว่าง
   /* S6 ปรับ 5 พ.ย. 2569 (รีวิวทีมออกแบบ): ทางเข้าจากเมนูถึงหน้าไตรมาส (E.1–E.3) · หน้า E.3 = "ไตรมาส 1" · popup รถในแผนเดินทางอื่นแสดงแต่เลือกไม่ได้ · เอารถออกจากแผนเดินทาง (soft delete) แล้วกลับมาเลือกได้
      · Validation Out of focus · สร้างสำเร็จกลับหน้าไตรมาส + toast · สร้างได้จนรถหมด แล้วปุ่มสร้างแผนเดินทางกดไม่ได้ (ตัด popup "รถทุกคันอยู่ในแผนเดินทางแล้ว") */
@@ -2815,6 +3214,10 @@ const SCENARIOS = [
     ['รายละเอียดยานพาหนะ — แท็บการรับประกัน', () => maDetail('S24 การรับประกัน', { tab: 3 })],
     ['แท็บการรับประกัน — ยังไม่มีงานที่อยู่ในประกัน', () => maDetail('S24 การรับประกัน ว่าง', { tab: 3, empty: true })],
     // W.16 W.17 แท็บ Overhaul เอาออก 10 พ.ย. 2569 รอบ 2 (เจ้าของงาน "มี tab แต่ไม่มี display ออกมา")
+    /* 12 พ.ย. 2569 แดชบอร์ดแบบ VMS+ (R106) — ต่อท้าย W.16 W.17 W.18 (รหัสเดิมของแท็บ Overhaul ที่เอาออกแล้ว) · กดกราฟ/กดเรื่องที่ควรดู = กรองทั้งหน้า + ชิปตัวกรองที่เลือก */
+    ['กดกราฟ — ส่วนเลยกำหนดของโดนัทสถานะกำหนดบำรุงรักษา กรองทั้งหน้า', () => maList('S24 กดกราฟเลยกำหนด', { chips: ['สถานะ เลยกำหนด'], rows: MA_ALERT.over, pickChart: 'status' })],
+    ['กดเรื่องที่ควรดู — ผลตรวจน้ำมันล่าสุดไม่ผ่าน กรองทั้งหน้า', () => maList('S24 กดเรื่องที่ควรดู', { chips: ['ผลตรวจน้ำมันล่าสุด ไม่ผ่าน'], rows: MA_ALERT.fail, alert: 'fail', pickChart: 'oil' })],
+    ['มุมมองมือถือ — การ์ดตัวเลข 2 ใบต่อแถว กราฟเรียงทีละใบ ตารางเป็นการ์ด', () => maList('S24 มุมมองมือถือ', { mobileAll: true })],
     ]],
   /* S25 ย้ายรถที่บำรุงรักษาไม่ได้ไปไตรมาสอื่น (เจ้าของงาน 5 พ.ย. 2569 · บล็อก X) — ทางเข้าหน้าไตรมาส (S6) · ไปได้เฉพาะไตรมาสถัดไปของแผนเดียวกัน · รถและอะไหล่ตามแผนย้ายตาม · ไม่ต้องอนุมัติใหม่ */
   ['S25 · ผู้ดำเนินการ ย้ายยานพาหนะที่บำรุงรักษาไม่ได้ไปไตรมาสอื่น', [
@@ -3012,17 +3415,19 @@ async function buildSet(SCEN, GRP, what, devices) {
       log('หน้า "' + tp.page.name.trim() + '" ไม่มีที่ว่างในขอบพื้นที่วางงานของ Figma แล้ว — ใช้หน้า "' + page.name + '" แทน');
     } else log('⚠ หน้าเดิมเกินขอบพื้นที่วางงานของ Figma และสร้างหน้าใหม่ไม่ได้ — จอชุดนี้อาจเลื่อนไปดูไม่ถึง');
   }
-  let instances = 0, loose = 0;
+  let instances = 0, loose = 0, drawn = 0;
+  /* R106 (12 พ.ย. 2569): ชิ้นวาดเองยอมเฉพาะในกรอบ VMS+ … ของแดชบอร์ด S4 (C) S24 (W) — ที่อื่นยังต้องเป็น 0 และนับเป็นคำเตือน */
+  const inDash = (n, s) => { if (!DASH_SCR.test(s.name)) return false; for (let p = n.parent; p && p !== s; p = p.parent) if (p.type === 'FRAME' && DASH_IN.test(p.name)) return true; return false; };
   for (const s of made) for (const n of s.findAll(x => !findInstanceAncestor(x))) {
     if (n.type === 'INSTANCE') instances++;
-    else if (n.type !== 'FRAME') loose++;
+    else if (n.type !== 'FRAME') { if (inDash(n, s)) drawn++; else { loose++; if (loose <= 5) warn('R106 ' + s.name, 'ชิ้นวาดเอง ' + n.type + ' "' + n.name + '" นอกกรอบแดชบอร์ด VMS+ — จอนี้ต้องเป็น instance ของไลบรารีเท่านั้น'); } }
   }
   figma.currentPage.selection = made.slice(0, 1);   // ของใหม่อยู่ล่างสุดของ Layers ⇒ เลือกจอแรกให้ Layers เลื่อนไปหา
   figma.viewport.scrollAndZoomIntoView(made.slice(0, 6));
   log('');
   if (pageBottom(page) > CANVAS_MAX) log('หมายเหตุ: ชุดนี้ยาวเกินขอบพื้นที่วางงานของ Figma จอท้ายๆ อาจเลื่อนไปไม่ถึง — ใช้สร้างทีละ scenario แทน');
   log('สร้าง ' + made.length + ' จอ (' + (devices.length === 2 ? 'Desktop + Mobile' : devices[0] ? 'Mobile' : 'Desktop') + ') · ผัง userflow ' + flows + ' ผัง · ' + GRP.length + ' บล็อก ' + what + ' (' + GRP.map(g => g.code).join(' ') + ') · instance ชั้นบนสุด ' + instances + ' ชิ้น');
-  log('ชิ้นในจอที่ไม่ใช่ instance/กรอบ: ' + loose + (loose ? ' ⚠ ต้องเป็น 0' : ' ✓') + ' (ผัง userflow เป็นของวาดประกอบนอกจอ ไม่นับ)');
+  log('ชิ้นในจอที่ไม่ใช่ instance/กรอบ: ' + loose + (loose ? ' ⚠ ต้องเป็น 0' : ' ✓') + ' (ผัง userflow เป็นของวาดประกอบนอกจอ ไม่นับ · ชิ้นวาดในกรอบ VMS+ ของแดชบอร์ด S4 S24 ตามข้อยกเว้น R106 ' + drawn + ' ชิ้น)');
   log('component ที่ใช้ (' + USED.size + '): ' + [...USED].sort().join(' · '));
   log(errors.length ? '⚠ เตือน ' + errors.length + ' จุด (รายการด้านบน) — ส่งข้อความนี้กลับมาให้ตรวจ' : 'ไม่มีคำเตือน ✓');
   if (FONT_SWAPPED) log('· ข้อความที่ต้องสลับเป็นฟอนต์สำรอง (component ใช้ฟอนต์ที่เครื่องไม่มี) ' + FONT_SWAPPED + ' จุด — ฟอนต์ ' + (FALLBACK_FONT ? FALLBACK_FONT.family + ' ' + FALLBACK_FONT.style : '-'));

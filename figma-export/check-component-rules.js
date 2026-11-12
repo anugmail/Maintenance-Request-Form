@@ -123,6 +123,16 @@ function check(screens, opt) {   // opt.inFile(ชื่อ) = ไฟล์ม�
       const bad = [...new Set(texts.filter(([t]) => strip(t).indexOf(r.word) >= 0).map(([t, w]) => t + '"' + w))];
       if (bad.length) fail(r, sc, 'ยังมีคำว่า "' + r.word + '" ต้องใช้ "' + r.use + '": ' + bad.slice(0, 3).map(t => '"' + t).join(' · '));
     }
+    // R106 ชิ้นวาดเอง (12 พ.ย. 2569 เจ้าของงาน "ให้เฉพาะ dashboard ที่ทำสิ่งนี้ได้ หน้าอื่นๆ ยังคงต้องตาม component เหมือนเดิม"): ชิ้นที่ไม่ใช่ instance/กรอบ นอก instance
+    // ยอมเฉพาะในกรอบชื่อ containerRegex บนจอ allowScreens (แดชบอร์ด S4 S24) · จออื่นในชุด screens = ไม่ผ่าน · mustHave = จอแดชบอร์ดต้องมีกรอบนั้น
+    const ds = RULES.drawnShapes;
+    if (ds && new RegExp(ds.screens).test(sc.name)) {
+      const okScr = new RegExp(ds.allowScreens).test(sc.name), box = new RegExp(ds.containerRegex);
+      const inBox = (x) => { for (let p = x.parent; p && p !== sc; p = p.parent) if (p.type === 'FRAME' && box.test(p.name)) return true; return false; };
+      const bad = all.filter(x => x.type !== 'INSTANCE' && x.type !== 'FRAME' && !inInst(x) && !(okScr && inBox(x)));
+      if (bad.length) fail(ds, sc, 'ชิ้นวาดเอง ' + bad.length + ' ชิ้น (' + [...new Set(bad.map(x => x.type + ' "' + x.name + '"'))].slice(0, 3).join(' · ') + ') ' + (okScr ? 'นอกกรอบ VMS+ ของแดชบอร์ด' : '— จอนี้ไม่ใช่แดชบอร์ด S4 S24 ต้องเป็น instance ของไลบรารีเท่านั้น'));
+      for (const m of ds.mustHave || []) if (!(m.desktopOnly && mobile) && new RegExp(m.screens).test(sc.name) && !all.some(x => x.type === 'FRAME' && x.name.indexOf(m.frame) === 0)) fail(ds, sc, 'ไม่มีกรอบ ' + m.frame + '…');
+    }
     // R22 dashboard: จอแท็บต้องมี Tabs + Metric item (21 ต.ค. 2569)
     const dr = RULES.dashboard;
     if (dr && new RegExp(dr.screens).test(sc.name)) for (const c of dr.mustHave) if (!all.some(x => isInst(x, c) && shown(x))) fail(dr, sc, 'ไม่มี ' + c);
