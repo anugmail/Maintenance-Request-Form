@@ -869,6 +869,8 @@ let PINS = [];
 function pin(place) { place(); PINS.push(place); }
 function repin() { const p = PINS; PINS = []; for (const f of p) { try { f(); } catch (e) { /* ช่องถูกลบไปแล้ว */ } } }
 let MENU_SHEET = false;
+/* ช่องของ Dropdown menu: 3 รายการ = 0 1 (เส้นคั่น) 4 แบบเดิม · 4 รายการ = 0 1 2 (เส้นคั่น) 4 — รายการสุดท้าย (ลบ) อยู่ใต้เส้นคั่นเสมอ (12 พ.ย. 2569 เมนูยานพาหนะของฟอร์มแผนเพิ่ม ย้ายไปไตรมาสอื่น) */
+const slotsOf = (items) => items.length > 3 ? { 0: items[0], 1: items[1], 2: items[2], 3: 'divider', 4: items[3] } : { 0: items[0], 1: items[1], 3: 'divider', 4: items[2] };
 function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "…" · mobile = ไม่เปิดเมนู เพราะการ์ดมือถือแสดงไอคอนดู แก้ไข ลบ ครบแล้ว (4 พ.ย. 2569) · ตั้ง MENU_SHEET = true ถ้าจะกลับไปใช้ bottom sheet
   if (MOB && !MENU_SHEET) return null;
   if (MOB) {
@@ -877,7 +879,7 @@ function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "
     overlay(scr, sh, 0, 0); sh.counterAxisSizingMode = 'FIXED'; sh.resize(VW(), sh.height);
     const hd = inst('Bottom sheet header'); add(sh, hd, 'h'); const ta = find(hd, 'Text and action'); if (ta) ta.visible = false; const dv = find(hd, 'Divider'); if (dv) dv.visible = false;
     const m = inst('Dropdown menu'); add(sh, m, 'h'); hide(m, '_Dropdown menu header');
-    const list = (find(m, 'Menu items') || m).children; const want = { 0: items[0], 1: items[1], 3: 'divider', 4: items[2] };
+    const list = (find(m, 'Menu items') || m).children; const want = slotsOf(items);
     list.forEach((it, i) => { const w = want[i]; if (!w) { it.visible = false; return; } if (w !== 'divider') setProps(it, { Text: w[0], Shortcut: false, Icon: true, 'Icon swap': icon(w[1]) }); });
     m.strokes = []; sh.y = VH() - sh.height;
     return m;
@@ -885,7 +887,7 @@ function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "
   const m = inst('Dropdown menu');
   hide(m, '_Dropdown menu header');
   const list = (find(m, 'Menu items') || m).children;
-  const want = { 0: items[0], 1: items[1], 3: 'divider', 4: items[2] };
+  const want = slotsOf(items);
   list.forEach((it, i) => {
     const w = want[i];
     if (!w) { it.visible = false; return; }
@@ -920,7 +922,9 @@ async function tableHeader(o) {
   if (ti) setProps(ti, { Label: false, Helper: false, 'Trailing icon': false, Text: o.query || o.placeholder || PLUGIN.searchHint, State: o.query ? 'Filled' : 'Default' });
   const acts = find(th, 'Actions'), more = (o.more || []).slice();
   if (acts) { let first = true; for (const b of acts.children) {
-    if (b.name === 'Secondary button' && first) { first = false; setProps(b, { Text: 'ตัวกรอง', 'Leading icon': true, 'Leading icon swap': icon('filter_list-24-400-round') }); const p = find(b, 'Pill outline'); if (p) { if (o.filterCount) setProps(p, { Text: String(o.filterCount) }); else p.visible = false; } }
+    if (b.name === 'Secondary button' && first && o.add) { first = false; setProps(b, { Text: o.add, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') }); const p = find(b, 'Pill outline'); if (p) p.visible = false; }   // o.add = ปุ่มเพิ่มแทนตัวกรอง (ฟอร์มแผนแท็บไตรมาส 12 พ.ย. 2569)
+    else if (b.name === 'Secondary button' && first && o.noFilter) { first = false; b.visible = false; }
+    else if (b.name === 'Secondary button' && first) { first = false; setProps(b, { Text: 'ตัวกรอง', 'Leading icon': true, 'Leading icon swap': icon('filter_list-24-400-round') }); const p = find(b, 'Pill outline'); if (p) { if (o.filterCount) setProps(p, { Text: String(o.filterCount) }); else p.visible = false; } }
     else if (b.name === 'Secondary button' && more.length) { const m = more.shift(); b.visible = true; setProps(b, { Text: m.text, 'Leading icon': !!m.icon, 'Trailing icon': false, State: m.disabled ? 'Disabled' : 'Default' }); if (m.icon) setProps(b, { 'Leading icon swap': icon(m.icon) }); }
     else if (o.primary && b.name === 'Primary button') setProps(b, { Text: o.primary, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') });
     else if (o.primary && MOB && b.name === 'Secondary button' && !acts.children.some(x => x.name === 'Primary button')) {   // Table header Mobile มีแค่ Secondary 2 ช่อง ⇒ สลับช่องที่ 2 เป็น Primary แบบ Request list ของ 5.10 Vehicle In Use (EV) · UI Release#2

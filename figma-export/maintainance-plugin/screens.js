@@ -579,7 +579,7 @@ const quarterParts = (cars, picks) => PARTS.map((p, i) => [p[0], p[1], p[2], Str
    ตาม Empty state ที่มีปุ่มหลักในฟอร์มของ UI Release#2 หน้า 5.2 Vehicle Management (Create vehicle step 3 > State=Empty ปุ่ม "เพิ่ม") + ปุ่มของ Empty state หน้าไตรมาส S6 ("สร้างแผนเดินทาง") */
 async function noCarsInQ(q) {
   const es = inst('Empty state/Data empty');
-  await text(es, 'Text', 'ยังไม่มียานพาหนะในไตรมาสนี้'); await text(es, 'Supporting text', 'เลือกยานพาหนะในพื้นที่ที่ยังไม่ได้จัดลงไตรมาสใด หรือติ๊กยานพาหนะในแท็บทั้งหมดแล้วกดจัดลงไตรมาส');
+  await text(es, 'Text', 'ยังไม่มียานพาหนะในไตรมาสนี้'); await text(es, 'Supporting text', 'เพิ่มยานพาหนะที่ยังไม่อยู่ในแผนเข้าไตรมาสนี้ เพิ่มได้ทุกคัน');
   const s2 = find(es, 'Secondary button'); if (s2) s2.visible = false;
   const pb = find(es, 'Primary button'); if (pb) setProps(pb, { Text: 'เพิ่มยานพาหนะเข้าไตรมาส ' + q, 'Leading icon': true, 'Leading icon swap': icon('add-24-300-round') });
   return emptyGraphic(es, 'empty-vehicle');
@@ -612,7 +612,7 @@ function headCheck(t, rows) {
    o.regions / o.districts / o.types / o.query = ตัวกรองที่ใช้แล้ว (กดตกลงแล้ว) และคำค้น · o.filter = เปิดแผงตัวกรอง { regions, districts, types = ค่าที่เลือกในแผง (ยังไม่กดตกลง) · open: 'region' | 'district' = รายการเปิด }
    o.yearOpen = รายการปีเปิด · o.alloc = { ลำดับรถใน CAND: ไตรมาส } · o.q = แท็บ (0 = ทั้งหมด · 1–4 = ไตรมาส) · o.ticked = แถวที่ติ๊ก
    o.assign = เปิด popup จัดลงไตรมาส { sel: 0–3 ไตรมาส · -1 ยังไม่เลือก } · o.picks / o.manualCars = อะไหล่ (S21) · o.edit = ฟอร์มแก้ไข S19 (ปีงบประมาณ Readonly · ปุ่ม "ยกเลิก") · o.alert = [สี, หัวข้อ, ข้อความ] */
-const PICK_COLS = [['ทะเบียน', 260], ['ประเภทยานพาหนะ', 160], ['เขต / หน่วยงานเจ้าของยานพาหนะ', 0], ['ไตรมาส', 160, 'Badge']];
+const PICK_COLS = [['ทะเบียน', 260], ['ประเภทยานพาหนะ', 160], ['เขต / หน่วยงานเจ้าของยานพาหนะ', 0], ['ไตรมาส', 160, 'Badge'], ['', 60]];   // แท็บทั้งหมดของฟอร์มแผน · ท้ายแถว = ถังขยะ ลบออกจากแผน (R109 · BACKLOG 86 ของเว็บ)
 /* แท็บไตรมาส n (5 พ.ย. 2569 เจ้าของงาน "หน้านี้จะเห็นรถในไตรมาส แต่จะยังไม่เห็นอะใหล่ อยากให้จัดการสิ่งที่ต้องทำของรถแต่ละคัน …"
    + แก้ "ข้อ 2 ไม่ได้ให้เอาออกจากการสร้างแผน แต่ให้เอารายการอะใหล่ออก เป็น empty ก่อน แล้วค่อยให้เลือกจัดการอะใหล่ ทีละคัน แล้วค่อยเอามาลงในรายการอะใหล่ตอนจะส่งอนุมัติ …")
    ตารางรถของไตรมาสบอกสิ่งที่ต้องทำรายคัน: น้ำมันไฮดรอลิก (คำของ JOB_OIL_OPTS · บรรทัดรอง เบอร์น้ำมัน · จำนวนลิตร) · อะไหล่อื่นๆ ("n รายการ" · บรรทัดรอง ชื่อรายการแรก) · ไอคอนแก้ไข (Table cell Action icons) ไปหน้าจัดการอะไหล่ของรถ (S21)
@@ -620,9 +620,9 @@ const PICK_COLS = [['ทะเบียน', 260], ['ประเภทยาน
    6 คอลัมน์ ไม่ต้องรวมช่อง (คอลัมน์ไตรมาสของแท็บทั้งหมดไม่แสดง เพราะทุกคันอยู่ไตรมาสเดียวกัน) · มือถือ List with checkbox = สรุปอยู่บรรทัดรอง */
 const Q_COLS = [['ทะเบียน', 240], ['ประเภทยานพาหนะ', 130], ['เขต / หน่วยงานเจ้าของยานพาหนะ', 0], ['น้ำมันไฮดรอลิก', 200], ['อะไหล่อื่นๆ', 200], ['', 60]];   // 6 พ.ย. 2569 ท้ายแถว = ปุ่ม … (Q_MENU) แทนไอคอนแก้ไข
 /* เมนู … ของยานพาหนะในแท็บไตรมาส (6 พ.ย. 2569 เจ้าของงาน "เพิ่ม ... ดูรายละเอียด แก้ไข ลบ ของรถแต่ละคัน" + เลือกอยู่ที่ฟอร์มสร้าง/แก้ไขแผน S1 S19)
-   ดูรายละเอียด = อะไหล่ของยานพาหนะคันนั้น ดูอย่างเดียว (carPartsView) · แก้ไข = หน้าจัดการอะไหล่ S21 · ลบ = เอาออกจากไตรมาส กลับเป็นยังไม่จัด (Q_OUT_CONFIRM)
+   ดูรายละเอียด = อะไหล่ของยานพาหนะคันนั้น ดูอย่างเดียว (carPartsView) · แก้ไข = หน้าจัดการอะไหล่ S21 · ย้ายไปไตรมาสอื่น = moveQModal · ลบ = ลบออกจากแผน (PLAN_OUT_CONFIRM · R109 12 พ.ย. 2569 · เดิมเอาออกจากไตรมาส กลับเป็นยังไม่จัด)
    ชุดเดียวกับ MENU ของรายการแผนและหน้ารายละเอียดแผนเดินทาง (S10 JOB_MENU) · เปิดด้วย planMenu */
-const Q_MENU = MENU;
+// Q_MENU ย้ายไปไว้เหนือ planForm (12 พ.ย. 2569 เพิ่ม ย้ายไปไตรมาสอื่น · R109)
 const TODO_NONE = 'ยังไม่กำหนด';
 const OIL_SPEC = { grade: 'ISO VG 46', code: 'OL-0011', litre: '30' };   // ค่าสมมติตามน้ำมันไฮดรอลิก ISO VG 46 รหัส OL-0011 ใน PARTS
 const oilCell = (k) => k == null ? TODO_NONE : { text: JOB_OIL_OPTS[k], sub: k ? OIL_SPEC.grade + ' · ' + OIL_SPEC.litre + ' ลิตร' : OIL_SPEC.grade };
@@ -640,64 +640,60 @@ const qAgg = (cars, picks, oils, manualCars) => {
 };
 const inArea = (c, f) => (!f.regions.length || f.regions.indexOf(regionOf(c)) >= 0) && (!f.districts.length || f.districts.indexOf(dCode(c)) >= 0) && (!f.types.length || f.types.indexOf(typeOf(c)) >= 0);
 const inQuery = (c, f) => !f.query || (c[0] + ' ' + c[1]).indexOf(f.query) >= 0;
-const ASSIGN_OPTS = QUARTERS;   // 5 พ.ย. 2569 เจ้าของงาน "เอาตัวเลือกนี้ออก" (เอาออกจากไตรมาส (ยังไม่จัด)) ⇒ popup เลือกได้เฉพาะไตรมาส 1–4 · วิธีเอารถออกจากแผนหลังจัดแล้วยังไม่เคาะ
 /* popup จัดลงไตรมาส — popupModal (Modal header + Radio text card เรียงลง 4 ใบ + Modal footer · ตามโครง popup ของ S6) · มือถือ = bottom sheet · ปุ่ม ยืนยัน Disabled จนกว่าจะเลือก */
-async function assignModal(scr, n, sel) {
-  const r = col('Radio', [], 12);
-  ASSIGN_OPTS.forEach((t, i) => { const c = inst('Radio text card', { State: 'Default', Selected: i === sel ? 'True' : 'False' }, { Text: t, Supporting: false }); add(r, c, 'h'); });
-  await popupModal(scr, { title: 'จัดลงไตรมาส', sub: 'ยานพาหนะที่เลือก ' + n + ' คัน · ยานพาหนะที่จัดไว้แล้วจะย้ายไปไตรมาสที่เลือก', body: [r], ok: 'ยืนยัน', okOff: sel < 0 });
-}
 const ALL_Q_PARTS_EMPTY = 'จัดการอะไหล่ทีละคันจากปุ่ม … ที่แถวยานพาหนะในแท็บไตรมาส รายการจะรวมมาที่นี่';   // แท็บทั้งหมด ยังไม่มีอะไหล่สักคัน (9 พ.ย. 2569 · ข้อความเสนอ)
+/* ฟอร์มแผน S1 S19 แบบเลือกยานพาหนะผ่าน modal (เจ้าของงาน 12 พ.ย. 2569 ส่งภาพ modal "เพิ่มรถเข้า Purchase Order" ของ Overhaul + "หน้าจอเลือกรถ อยากให้เป็น modal ตามรูป แก้ใน flow ด้วย"
+   เคาะ: ยานพาหนะที่เลือกเข้าไตรมาสที่เปิดอยู่ทันที) — R109 · แทนแบบ A (5 พ.ย. 2569 ตารางยานพาหนะของพื้นที่ในหน้า + แผงตัวกรอง R77 + ติ๊กแล้วจัดลงไตรมาส)
+   หัวข้อ "ยานพาหนะในแผน" Badge "ในแผน n คัน" + Tabs ทั้งหมด · ไตรมาส 1–4 · แท็บไตรมาส: Table header หัว + Badge กำหนดอะไหล่แล้ว + ค้นหา + ปุ่ม "เพิ่มยานพาหนะ" (o.add แทนตัวกรอง) · เมนู … ดูรายละเอียด แก้ไข ย้ายไปไตรมาสอื่น ลบ
+   แท็บทั้งหมด: ทุกคันในแผน + ป้ายไตรมาส + ถังขยะท้ายแถว (ลบออกจากแผน · BACKLOG 86 ของเว็บ) ไม่มีปุ่มตัวกรอง/เพิ่ม · ไม่มีสถานะ "ยังไม่จัด" แล้ว (ทุกคันในแผนอยู่ในไตรมาส)
+   o.pick = เปิด modal เพิ่มยานพาหนะ (planCarModal) · o.move = popup ย้ายไปไตรมาสอื่น { car, cur, sel } */
+const Q_MENU = [MENU[0], MENU[1], ['ย้ายไปไตรมาสอื่น', 'swap_driving_apps_wheel-24-300-round'], MENU[2]];   // ไอคอนเดียวกับ MOVE_ITEM ของ S25
+const PLAN_OUT_CONFIRM = (c, q) => ({ danger: true, title: 'ยืนยันการลบยานพาหนะออกจากแผน', sub: c[0] + ' จะออกจากไตรมาส ' + q + ' และไม่อยู่ในแผนนี้ เพิ่มกลับได้จากปุ่มเพิ่มยานพาหนะ', cancel: 'ยกเลิก', ok: 'ลบ' });   // ข้อความชุดเดียวกับเว็บ BACKLOG 86
+async function noCarsInPlan() {
+  const es = inst('Empty state/Data empty');
+  await text(es, 'Text', 'ยังไม่มียานพาหนะในแผน'); await text(es, 'Supporting text', 'เปิดแท็บไตรมาสแล้วกดเพิ่มยานพาหนะ');
+  const a = find(es, 'Actions'); if (a) a.visible = false;
+  return emptyGraphic(es, 'empty-vehicle');
+}
 async function planForm(name, o) {
   o = o || {};
   const v = o.values || {}, E = (m) => o.errors ? m : '';
   const heading = o.edit ? 'แก้ไขแผน ' + NEW_PLAN[0] : 'สร้างแผนบำรุงรักษา';
   const { scr, page } = await shell(name, { title: heading, back: true, crumbs: [o.edit ? heading : 'สร้างแผน'] });
-  const f = { regions: o.regions || [], districts: o.districts || [], types: o.types || [], query: o.query || '' };
-  const alloc = o.alloc || {}, q = o.q || 0, nIn = Object.keys(alloc).length, ticked = o.ticked || [];
+  const alloc = o.alloc || {}, q = o.q || 0, nIn = Object.keys(alloc).length, query = o.query || '';
   const yr = o.edit ? field('ปีงบประมาณ', v.year, { state: 'Readonly' })
     : dropdown('ปีงบประมาณ', v.year || '', { placeholder: 'เลือกปีงบประมาณ', error: E('กรุณาเลือกปีงบประมาณ'), state: o.yearOpen ? 'Focused' : undefined });
-  /* R77 (5 พ.ย. 2569 ค่ำ): ภาค เขต ประเภทรถ ย้ายเข้าแผงตัวกรอง — section ไม่มีแถวช่องบนสุดแล้ว · Tabs + Table header แสดงเสมอ (ตาม PlanForm.tsx ของต้นแบบเว็บ) */
-  /* 6 พ.ย. 2569 เจ้าของงาน "ต้องเอารถเข้า ไตรมาสทุกคัน" ⇒ ป้ายบอกจัดแล้วกี่คันจากรถทั้งหมดของหน่วยงาน แทน "ในแผน n คัน" · 9 พ.ย. 2569 เลิกบังคับครบทุกคัน ป้าย "จัดลงไตรมาสแล้ว n คัน" ไม่มีตัวหาร (ดู complete) */
   const draw = o.draw || {};
-  const carSec = col('Section', [await section('เลือกยานพาหนะเข้าแผนและจัดลงไตรมาส', { badge: 'จัดลงไตรมาสแล้ว ' + nIn + ' คัน' })], 16);
-  const picked = f.regions.length || f.districts.length || f.types.length;   // เลือกช่องใดช่องหนึ่งก็แสดงรถที่ตรง (R69)
-  const area = CAND.map((c, i) => [c, i]).filter(([c]) => picked && inArea(c, f));
+  const carSec = col('Section', [await section('ยานพาหนะในแผน', { badge: 'ในแผน ' + nIn + ' คัน' })], 16);
   const inQ = (k) => CAND.map((c, i) => [c, i]).filter(([, i]) => alloc[i] === k);
-  add(carSec, await tabs([['ทั้งหมด', area.length]].concat(QUARTERS.map((t, k) => ['ไตรมาส ' + (k + 1), inQ(k + 1).length])), q), 'h');
-  const shown = (q ? inQ(q) : area).filter(([c]) => inQuery(c, f));
-  const chips = f.regions.map(shortRegion).concat(f.districts, f.types);   // ชิปตัวกรองที่ใช้แล้ว · Pill บนปุ่มตัวกรอง = จำนวนชิป
+  const inPlan = CAND.map((c, i) => [c, i]).filter(([, i]) => alloc[i]);
+  add(carSec, await tabs([['ทั้งหมด', nIn]].concat(QUARTERS.map((t, k) => ['ไตรมาส ' + (k + 1), inQ(k + 1).length])), q), 'h');
+  const shown = (q ? inQ(q) : inPlan).filter(([c]) => inQuery(c, { query }));
   /* 6 พ.ย. 2569 เจ้าของงาน "บังคับให้กรอกอะใหล่ทุกคัน" ⇒ แท็บไตรมาสบอกกำหนดอะไหล่แล้วกี่คัน (กำหนด = เลือกไม่เบิก หรือเบิกแล้วมีรายการ) */
   const decided = (i) => draw[i] === 'none' || ((o.picks || {})[i] || []).length > 0 || (o.manualCars || []).indexOf(i) >= 0;
   const qDone = q ? inQ(q).filter(([, i]) => decided(i)).length : 0;
-  add(carSec, await tableHeader({ title: q ? 'ยานพาหนะในไตรมาส ' + q : 'ยานพาหนะในพื้นที่ที่เลือก', badge: q ? 'กำหนดอะไหล่แล้ว ' + qDone + '/' + inQ(q).length + ' คัน' : shown.length + ' คัน', placeholder: 'เลขทะเบียน, ยี่ห้อ, รุ่น', query: f.query, chips, filterCount: chips.length || null,
-    more: [{ text: 'จัดลงไตรมาส' + (ticked.length ? ' (' + ticked.length + ')' : ''), disabled: !ticked.length }] }), 'h');
-  if (!q && !picked) {   // ยังไม่เลือกช่องใดในแผงตัวกรอง (แท็บทั้งหมด) — ภาพรถกับแว่นขยาย (R61) · ไม่มีปุ่ม (ปุ่มตัวกรองอยู่ที่ Table header)
-    const es = inst('Empty state/Data empty'); add(carSec, es, 'h');
-    await text(es, 'Text', 'ยังไม่มีรายการยานพาหนะ'); await text(es, 'Supporting text', 'กดตัวกรองเพื่อเลือกภาค เขต หรือประเภทยานพาหนะ ตารางจะแสดงยานพาหนะทั้งหมดที่ตรงกัน');
-    const a = find(es, 'Actions'); if (a) a.visible = false; await emptyGraphic(es, 'empty-vehicle');
-  } else if (shown.length) {
-    const qPill = (i) => alloc[i] ? ['ไตรมาส ' + alloc[i], 'Brand'] : ['ยังไม่จัด', 'Gray'];
+  add(carSec, await tableHeader(q ? { title: 'ยานพาหนะในไตรมาส ' + q, badge: 'กำหนดอะไหล่แล้ว ' + qDone + '/' + inQ(q).length + ' คัน', placeholder: 'เลขทะเบียน, ยี่ห้อ, รุ่น', query, add: 'เพิ่มยานพาหนะ' }
+    : { title: 'ยานพาหนะทั้งหมดในแผน', badge: nIn + ' คัน', placeholder: 'เลขทะเบียน, ยี่ห้อ, รุ่น', query, noFilter: true }), 'h');
+  if (shown.length) {
     const oils = o.oils || {}, picks = o.picks || {}, manualCars = o.manualCars || [];
     const rows = q
-      ? shown.map(([c, i]) => { const pl = partList(i, picks, manualCars), oc = oilCell(oils[i]); const pc = draw[i] === 'none' ? 'ไม่เบิกอะไหล่' : partCell(pl); return [{ check: ticked.indexOf(i) >= 0, text: c[0], sub: MOB ? 'น้ำมัน ' + (oc.text || oc) + ' · อะไหล่อื่นๆ ' + (pc.text || pc) : c[1] }, typeOf(c), c[2], oc, pc, { menu: 1, items: Q_MENU }]; })
-      : shown.map(([c, i]) => [{ check: ticked.indexOf(i) >= 0, text: c[0], sub: MOB ? c[1] + ' · ' + qPill(i)[0] : c[1] }, typeOf(c), c[2], { pill: qPill(i) }]);
-    const t = await tblShort(q ? Q_COLS : PICK_COLS, rows, { pagination: rows.length }); headCheck(t, rows); add(carSec, t, 'h');
-  } else if (q && !f.query) add(carSec, await noCarsInQ(q), 'h');
-  else add(carSec, await searchNotFound(), 'h');   // ไม่มีรถตรงคำค้น/ตัวกรอง = Vehicle list - Search not found ของ UI Release#2
+      ? shown.map(([c, i]) => { const pl = partList(i, picks, manualCars), oc = oilCell(oils[i]); const pc = draw[i] === 'none' ? 'ไม่เบิกอะไหล่' : partCell(pl); return [{ text: c[0], sub: MOB ? 'น้ำมัน ' + (oc.text || oc) + ' · อะไหล่อื่นๆ ' + (pc.text || pc) : c[1] }, typeOf(c), c[2], oc, pc, { menu: 1, items: Q_MENU }]; })
+      : shown.map(([c, i]) => [{ text: c[0], sub: MOB ? c[1] + ' · ไตรมาส ' + alloc[i] : c[1] }, typeOf(c), c[2], { pill: ['ไตรมาส ' + alloc[i], 'Brand'] }, { icons: ['delete-24-300-round'] }]);
+    add(carSec, await tblShort(q ? Q_COLS : PICK_COLS, rows, { pagination: rows.length }), 'h');
+  } else if (query) add(carSec, await searchNotFound(), 'h');   // ไม่มีคันตรงคำค้น = Vehicle list - Search not found ของ UI Release#2
+  else if (q) add(carSec, await noCarsInQ(q), 'h');
+  else add(carSec, await noCarsInPlan(), 'h');
   /* อะไหล่ในไตรมาส n — 5 พ.ย. 2569 เจ้าของงาน "ให้เอารายการอะใหล่ออก เป็น empty ก่อน แล้วค่อยให้เลือกจัดการอะใหล่ ทีละคัน แล้วค่อยเอามาลงในรายการอะใหล่ตอนจะส่งอนุมัติ"
-     ⇒ ตั้งต้น Empty state (noParts) · รวมจากรถที่จัดการแล้ว · ไม่มีปุ่มเพิ่มอะไหล่และไอคอนแก้ไข ลบ ของแถว
-     9 พ.ย. 2569 เจ้าของงาน (ภาพแท็บทั้งหมดที่ขึ้น "เปิดแท็บไตรมาสเพื่อดูอะไหล่…") _"หน้าอะใหล่ทั้งไตรมาส ต้องรวมมาให้ด้วย ทั้งไตรมาส"_
-     ⇒ แท็บทั้งหมด = หัวข้อ "อะไหล่รวมทุกไตรมาส" (เจ้าของงานเคาะ 9 พ.ย. 2569 "ใช้ชื่ออะไหล่รวมทุกไตรมาส") รวมอะไหล่ของยานพาหนะทุกคันที่จัดลงไตรมาสแล้ว ไม่ขึ้นกับตัวกรองภาค เขต ประเภท · ยอด = ผลรวมของแท็บไตรมาส 1–4 (qAgg บวกรายคัน) · คันไม่เบิกไม่นับ */
-  const inQs = Object.keys(alloc).map(Number).filter(i => !q || alloc[i] === q);   // แท็บทั้งหมด = ทุกคันที่จัดลงไตรมาสแล้ว
-  const qRows = qAgg(inQs.filter(i => draw[i] !== 'none'), o.picks || {}, o.oils || {}, o.manualCars || []);   // คันที่ไม่เบิกอะไหล่ไม่รวมในรายการ
-  const partsSec = col('Section', [await section(q ? 'อะไหล่ในไตรมาส ' + q : 'อะไหล่รวมทุกไตรมาส')], 16); // 9 พ.ย. 2569 เจ้าของงาน "เอาเลขออกไปเลยได้ป่ะ ถ้าหมายถึงจำนวนชนิด" ⇒ หัวข้ออะไหล่รวมตามรายการไม่มีตัวเลขจำนวนชนิด
+     9 พ.ย. 2569 เจ้าของงาน _"หน้าอะใหล่ทั้งไตรมาส ต้องรวมมาให้ด้วย ทั้งไตรมาส"_ ⇒ แท็บทั้งหมด = หัวข้อ "อะไหล่รวมทุกไตรมาส" รวมอะไหล่ของยานพาหนะทุกคันในแผน (qAgg บวกรายคัน) · คันที่ไม่เบิกไม่รวม */
+  const inQs = Object.keys(alloc).map(Number).filter(i => !q || alloc[i] === q);
+  const qRows = qAgg(inQs.filter(i => draw[i] !== 'none'), o.picks || {}, o.oils || {}, o.manualCars || []);
+  const partsSec = col('Section', [await section(q ? 'อะไหล่ในไตรมาส ' + q : 'อะไหล่รวมทุกไตรมาส')], 16);   // 9 พ.ย. 2569 เจ้าของงาน "เอาเลขออกไปเลยได้ป่ะ" ⇒ ไม่มีตัวเลขจำนวนชนิด
   add(partsSec, qRows.length ? await tblShort(QPART_COLS, qRows) :
-    await noParts(!q ? ALL_Q_PARTS_EMPTY : inQs.length ? 'จัดการอะไหล่ทีละคันจากปุ่ม … ที่แถวยานพาหนะ รายการจะรวมมาที่นี่' : 'จัดยานพาหนะลงไตรมาสนี้ก่อน แล้วจึงจัดการอะไหล่ทีละคันได้'), 'h');
-  /* รีวิว 5 พ.ย. 2569 "ต้องกรอกข้อมูลที่ require ครบถึงจะ enable ปุ่ม" + 6 พ.ย. 2569 เจ้าของงาน "ต้องเอารถเข้า ไตรมาสทุกคัน" "บังคับให้กรอกอะใหล่ทุกคัน ไปหน้าต่อไปไม่ได้" (เลือกแบบ ก หน้าเดียว)
-     ⇒ ปุ่มบันทึกและส่งอนุมัติกดได้เมื่อ ชื่อแผน · ปีงบประมาณ · รถทุกคันของหน่วยงานอยู่ในไตรมาส · ทุกคันกำหนดอะไหล่แล้ว (เบิกพร้อมรายการ หรือ ไม่เบิก) */
-  const complete = !!(v.name && v.year && nIn > 0 && area.every(([, i]) => alloc[i]) && Object.keys(alloc).every(i => decided(+i)));   // 9 พ.ย. 2569 ค่ำ เจ้าของงาน (ภาพหน้าแก้ไขแผน แท็บทั้งหมดมียานพาหนะ "ยังไม่จัด" แต่ปุ่มกดได้) _"ยังจัดอะใหล่ไม่เสร็จ ปุ่มอนุมัติต้อง disable"_ + เคาะ "ยานพาหนะในตารางต้องจัดครบ" ⇒ ยานพาหนะทุกคันในตาราง (แท็บทั้งหมด = ตรงตัวกรองภาค เขต ประเภท) ต้องจัดลงไตรมาส + ทุกคันที่จัดกำหนดอะไหล่แล้ว · ไม่ใช่ทุกคันของหน่วยงาน (243 คัน)
-  // เดิม 9 พ.ย. บ่าย: เจ้าของงาน (หน้าแก้ไขแผนที่ถูกส่งกลับ "จัดลงไตรมาสแล้ว 6/243 คัน" ส่งไม่ได้) เคาะ "คันที่เลือกไว้กำหนดอะไหล่ครบ" ⇒ ปุ่มบันทึกและส่งอนุมัติกดได้เมื่อมียานพาหนะในแผนอย่างน้อย 1 คัน และทุกคันที่จัดลงไตรมาสกำหนดอะไหล่แล้ว (หรือไม่เบิก) ทั้งตอนสร้างและแก้ไข · เลิกบังคับจัดครบทุกคันของหน่วยงาน (กติกา 6 พ.ย.) · ป้ายไม่มีตัวหาร
+    await noParts(!q ? ALL_Q_PARTS_EMPTY : inQs.length ? 'จัดการอะไหล่ทีละคันจากปุ่ม … ที่แถวยานพาหนะ รายการจะรวมมาที่นี่' : 'เพิ่มยานพาหนะเข้าไตรมาสนี้ก่อน แล้วจึงจัดการอะไหล่ทีละคันได้'), 'h');
+  /* รีวิว 5 พ.ย. 2569 "ต้องกรอกข้อมูลที่ require ครบถึงจะ enable ปุ่ม" + 6 พ.ย. 2569 "บังคับให้กรอกอะใหล่ทุกคัน"
+     ⇒ ปุ่มบันทึกและส่งอนุมัติกดได้เมื่อ ชื่อแผน · ปีงบประมาณ · มียานพาหนะในแผนอย่างน้อย 1 คัน · ทุกคันกำหนดอะไหล่แล้ว (เบิกพร้อมรายการ หรือ ไม่เบิก)
+     12 พ.ย. 2569 (R109) ตัดเงื่อนไข "ยานพาหนะในตารางต้องจัดครบ" (9 พ.ย. ค่ำ) — เพิ่มจาก modal เข้าไตรมาสทันที ไม่มีคันที่อยู่ในแผนแต่ยังไม่จัด */
+  const complete = !!(v.name && v.year && nIn > 0 && Object.keys(alloc).every(i => decided(+i)));
   add(page, col('Content', (o.alert ? [alertBox(...o.alert)] : []).concat([
     col('Section', [await section('ข้อมูลแผน'),
       row('Row', [field('ชื่อแผน', v.name, { placeholder: 'ระบุชื่อแผน', error: E('กรุณาระบุชื่อแผน') }), yr])], 16),
@@ -706,40 +702,65 @@ async function planForm(name, o) {
     btnRow([['Secondary button', o.edit ? 'ยกเลิก' : 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'บันทึกและส่งอนุมัติ', { size: 'lg', disabled: !complete }]])
   ]), 32), 'h');
   if (o.yearOpen) comboAt(scr, yr.findOne(n => n.name === 'Container') || yr, YEARS.map(y => [y, '', y === v.year]));
-  /* แผงตัวกรอง (R77) — filterPanel ใน core แบบ S24 (Side panel header "ตัวกรอง" + Side panel footer ล้างตัวกรอง · ยกเลิก · ตกลง · มือถือ bottom sheet ล้างตัวกรองที่หัว ยกเลิก / ตกลง ที่ท้าย)
-     ช่อง Input dropdown with badges Optional ×3 ตาม "PEA Car Cost Filter" ของ UI Release#2 · ค่าในแผง = o.filter (ยังไม่กดตกลง ตารางยังเป็นตัวกรองเดิม) */
-  if (o.filter) {
-    const fd = { regions: o.filter.regions || [], districts: o.filter.districts || [], types: o.filter.types || [] }, op = o.filter.open;
-    const reg = multiDropdown('ภาค', fd.regions, { placeholder: 'เลือกภาค', optional: true, state: op === 'region' ? 'Focused' : undefined });
-    const dist = multiDropdown('เขต', fd.districts, { placeholder: 'เลือกเขต', optional: true, state: op === 'district' ? 'Focused' : undefined });   // ไม่มี Disabled เลือกช่องไหนก่อนก็ได้ (R69)
-    const typ = multiDropdown('ประเภทยานพาหนะ', fd.types, { placeholder: 'เลือกประเภทยานพาหนะ', optional: true });
-    await filterPanel(scr, [reg, dist, typ]);
-    const at = (n) => n.findOne(x => x.name === 'Container') || n;
-    if (op === 'region') comboAt(scr, at(reg), REGIONS.map(r => [r, '', fd.regions.indexOf(r) >= 0]));
-    if (op === 'district') comboAt(scr, at(dist), (fd.regions.length ? fd.regions : REGIONS).flatMap(r => DISTRICTS[r]).map(d => [d, '', fd.districts.indexOf(d) >= 0]));   // เขตของทุกภาคที่เลือกในแผงรวมกัน · ยังไม่เลือกภาค = ทุกเขต
-  }
-  if (o.assign) await assignModal(scr, ticked.length, o.assign.sel);
-  /* popup เพิ่มรถเข้าไตรมาส n จากแท็บไตรมาสที่ว่าง (R75) = แบบ popup เพิ่มรถเข้าไตรมาสของ S6 (qAddModal → tripCarModal: Modal header + Table header ค้นหา + Table Lead checkbox ติ๊กทั้งหมดที่หัว + Modal footer · มือถือ bottom sheet)
-     รถ = ของพื้นที่ที่เลือก (ยังไม่เลือกพื้นที่ = รถทุกคัน) ที่ยังไม่อยู่ในไตรมาสใด · รถในไตรมาสอื่นไม่แสดง (ย้ายไตรมาสใช้ popup จัดลงไตรมาส) · ไม่มีรถให้เพิ่ม = Empty state ใน popup */
-  if (o.qAdd) {
-    const pool = CAND.map((c, i) => [c, i]).filter(([c, i]) => !alloc[i] && (!picked || inArea(c, f))).map(([, i]) => i);
-    await tripCarModal(scr, { cars: CAND, pool, ticked: o.qAdd.ticked || [], title: 'เพิ่มยานพาหนะเข้าไตรมาส ' + q, okText: 'เพิ่มเข้าไตรมาส ' + q,
-      sub: (picked ? 'ยานพาหนะในพื้นที่ที่เลือก' : 'ยานพาหนะทุกคัน') + 'ที่ยังไม่อยู่ในไตรมาสใด · ' + pool.length + ' คัน',
-      empty: ['ยานพาหนะในพื้นที่ที่เลือกจัดลงไตรมาสครบแล้ว', 'ย้ายยานพาหนะระหว่างไตรมาสได้ที่ปุ่ม จัดลงไตรมาส ในแท็บทั้งหมด'] });
-  }
+  if (o.pick) await planCarModal(scr, Object.assign({ q: q || 1, alloc }, o.pick));
+  if (o.move) await moveQModal(scr, o.move);
   return scr;
+}
+/* modal "เพิ่มยานพาหนะเข้าไตรมาส n" (R109) — โครงตาม vehPickerModal ของปลั๊กอิน Overhaul (ภาพ "เพิ่มรถเข้า Purchase Order" ที่เจ้าของงานส่ง 12 พ.ย. 2569):
+   Background overlay + กรอบ Modal 1140 (Modal Size=xl) + Modal header Alignment=Left ปุ่มปิด + Table header (ค้นหา + ปุ่มตัวกรอง Pill จำนวน + ชิป)
+   + แผงตัวกรองกางในตัว modal (Input dropdown with badges ×3 ภาค เขต ประเภทยานพาหนะ placeholder "ทั้งหมด" + Tertiary ล้างตัวกรอง · Secondary ยกเลิก · Primary ตกลง — ไลบรารีไม่มีแผงตัวกรองใน Modal ทั้งก้อน แบบเดียวกับ R92 ของ Overhaul)
+   + Table Lead checkbox ติ๊กทั้งหมดที่หัว (headCheck · indeterminate) + Table pagination หน้าละ 10 + Modal footer ยกเลิก / "เพิ่มเข้าไตรมาส n (k)"
+   คอลัมน์ชุดเดียวกับ TripCarPicker ของเว็บ: ทะเบียน (บรรทัดรอง หน่วยงานเจ้าของยานพาหนะ) · ยี่ห้อ/รุ่น · บำรุงรักษาเครื่องจักรล่าสุด · ซ่อมเครื่องจักรล่าสุด
+   ยานพาหนะ = ทุกคันที่ยังไม่อยู่ในแผนนี้ (X5 เพิ่มได้ทุกคัน) · มือถือ = bottom sheet (popupModal) · แผงตัวกรองบนมือถือ = filterPanel bottom sheet แบบเดิม
+   o.filter = { regions, districts, types, open } แผงกางอยู่ · o.regions/districts/types = ตัวกรองที่กดตกลงแล้ว · o.query · o.ticked = ลำดับใน PICK_POOL() · o.full = ทุกคันอยู่ในแผนแล้ว */
+const PICK_POOL = () => CAND.map(c => c.slice(0, 3)).concat(Q_EXTRA.map(c => c.slice(0, 3)));   // ฟังก์ชัน: Q_EXTRA ประกาศทีหลังในไฟล์   // ลำดับ 0–9 = CAND (ลำดับเดียวกับ alloc) · ต่อด้วยยานพาหนะนอกพื้นที่ของ E.19
+const MA_HEAD = 'บำรุงรักษาเครื่องจักรล่าสุด', REPAIR_HEAD = 'ซ่อมเครื่องจักรล่าสุด', NO_HIST = 'ไม่มีข้อมูล';   // = vehicleHistory.ts ของเว็บ (BACKLOG 64)
+const PICK_MODAL_COLS = [['ทะเบียน', 260], ['ยี่ห้อ/รุ่น', 0], [MA_HEAD, 220], [REPAIR_HEAD, 200]];
+/* วันที่ของเครื่องจักร (ค่าสมมติ สูตรเดียวกับ vehicleHistory.ts ของเว็บ) — ค่าของ S24 ก่อน · ที่เหลือคำนวณจากลำดับ · ทุก 9 คันไม่มีประวัติบำรุงรักษา ทุก 5 คันไม่มีประวัติซ่อม */
+const HIST_MA = { '82-1145': '18/06/2569', '81-2210': NO_HIST, '82-6789': NO_HIST, '80-4458': '01/10/2568', '82-7720': '02/02/2569' }, HIST_RP = { '82-1145': '02/09/2569' };
+const histDate = (d, m, y) => String(d).padStart(2, '0') + '/' + String(y === 2569 && m > 10 ? m - 6 : m).padStart(2, '0') + '/' + y;
+const lastMa = (c, i) => HIST_MA[c[0].split(' ')[0]] || (i % 9 === 4 ? NO_HIST : histDate(1 + ((i * 11) % 28), 1 + ((i * 7) % 12), 2567 + (i % 3)));
+const lastRepair = (c, i) => HIST_RP[c[0].split(' ')[0]] || (i % 5 === 2 ? NO_HIST : histDate(1 + ((i * 13) % 28), 1 + ((i * 5) % 12), 2566 + (i % 4)));
+const PICK_SEARCH = 'ค้นหาทะเบียน, ยี่ห้อ/รุ่น, หน่วยงาน';
+async function planCarModal(scr, o) {
+  const f = { regions: o.regions || [], districts: o.districts || [], types: o.types || [], query: o.query || '' };
+  const picked = f.regions.length || f.districts.length || f.types.length, alloc = o.alloc || {}, ticked = o.ticked || [];
+  const pool = o.full ? [] : PICK_POOL().map((c, i) => [c, i]).filter(([c, i]) => !alloc[i] && (!picked || inArea(c, f)) && inQuery(c, f));
+  const shown = pool.slice(0, 10), total = picked || f.query ? pool.length : Q_EXTRA_TOTAL;   // ยังไม่กรอง = ทุกคันที่ยังไม่อยู่ในแผน (ค่าสมมติ 370 แบบ E.19)
+  const rows = shown.map(([c, i]) => [{ check: ticked.indexOf(i) >= 0, text: c[0], sub: c[2] }, c[1], lastMa(c, i), lastRepair(c, i)]);
+  const chips = f.regions.map(shortRegion).concat(f.districts, f.types), n = ticked.length;
+  const body = [await tableHeader({ placeholder: PICK_SEARCH, query: f.query, chips, filterCount: chips.length })];
+  const fd = o.filter && { regions: o.filter.regions || [], districts: o.filter.districts || [], types: o.filter.types || [], open: o.filter.open };
+  const fields = fd && [multiDropdown('ภาค', fd.regions, { placeholder: 'ทั้งหมด', optional: true, state: fd.open === 'region' ? 'Focused' : undefined }),
+    multiDropdown('เขต', fd.districts, { placeholder: 'ทั้งหมด', optional: true, state: fd.open === 'district' ? 'Focused' : undefined }),
+    multiDropdown('ประเภทยานพาหนะ', fd.types, { placeholder: 'ทั้งหมด', optional: true })];
+  if (fd && !MOB) body.push(col('Filter panel', [row('Row', fields), btnRow([['Tertiary button', 'ล้างตัวกรอง'], ['Secondary button', 'ยกเลิก'], ['Primary button', 'ตกลง']])], 20));
+  if (rows.length) { const t = await tblShort(PICK_MODAL_COLS, rows, { pagination: { shown: rows.length, total } }); headCheck(t, rows); body.push(t); }
+  else if (o.full) { const es = inst('Empty state/Data empty'); await text(es, 'Text', 'ยานพาหนะทุกคันอยู่ในแผนแล้ว'); await text(es, 'Supporting text', 'ไม่มียานพาหนะที่เพิ่มเข้าแผนนี้ได้'); const a = find(es, 'Actions'); if (a) a.visible = false; body.push(es); }
+  else body.push(await searchNotFound());
+  if (fd && MOB) { await filterPanel(scr, fields); }   // มือถือ: แผงตัวกรอง bottom sheet ทับฟอร์ม (แบบเดิม R77)
+  else await popupModal(scr, { title: 'เพิ่มยานพาหนะเข้าไตรมาส ' + o.q, sub: 'ยานพาหนะที่ยังไม่อยู่ในแผนนี้ เพิ่มได้ทุกคัน', w: 1140, body, ok: 'เพิ่มเข้าไตรมาส ' + o.q + (n ? ' (' + n + ')' : ''), okOff: !n });
+  if (fd) {
+    const at = (x) => x.findOne(y => y.name === 'Container') || x;
+    if (fd.open === 'region') comboAt(scr, at(fields[0]), REGIONS.map(r => [r, '', fd.regions.indexOf(r) >= 0]));
+    if (fd.open === 'district') comboAt(scr, at(fields[1]), (fd.regions.length ? fd.regions : REGIONS).flatMap(r => DISTRICTS[r]).map(d => [d, '', fd.districts.indexOf(d) >= 0]));   // เขตของทุกภาคที่เลือกรวมกัน · สนง. = 6 กอง (X3)
+  }
+}
+/* popup ย้ายไปไตรมาสอื่น (R109 · เมนู … ของยานพาหนะในแท็บไตรมาส) — Radio text card ไตรมาส 1–4 แบบ popup จัดลงไตรมาสเดิม · ไตรมาสปัจจุบันของคันนั้น State=Disabled */
+async function moveQModal(scr, o) {
+  const c = CAND[o.car], sel = o.sel == null ? -1 : o.sel;
+  const r = col('Radio', [], 12);
+  QUARTERS.forEach((t, k) => add(r, inst('Radio text card', { State: k + 1 === o.cur ? 'Disabled' : 'Default', Selected: k === sel ? 'True' : 'False' }, { Text: t, Supporting: k + 1 === o.cur, 'Supporting text': 'ไตรมาสปัจจุบัน' }), 'h'));
+  await popupModal(scr, { title: 'ย้ายไปไตรมาสอื่น · ' + c[0], sub: 'ยานพาหนะและอะไหล่ที่กำหนดไว้ของยานพาหนะคันนี้จะย้ายไปไตรมาสที่เลือก', body: [r], ok: 'ย้ายยานพาหนะ', okOff: sel < 0 });
 }
 const FILLED = { name: NEW_PLAN[1], year: '2570' };
 const R2 = { regions: [REGIONS[1]] };   // พื้นที่ที่เลือก: ภาค 2 ทุกเขต → ตารางรถ 8 คัน (แบบ A 5 พ.ย. 2569)
-const A_PANEL = { regions: [REGIONS[0]], districts: ['กฟน.2', 'กฟน.1'], open: 'district' };   // R77 ค่าในแผงตัวกรองของ A.6 ตามภาพต้นแบบเว็บที่เจ้าของงานยืนยัน (ภาค 1 + กฟน.2 กฟน.1) → A.7 กดตกลงแล้ว
 const A_Q1 = { 0: 1, 1: 1, 2: 1 };                          // แท็บไตรมาส 1: เลือกไว้ 3 คัน
 const A_PICKS = { 0: CAR_PICK, 1: CAR_PICK, 2: CAR_PICK, 3: CAR_PICK, 5: CAR_PICK, 6: CAR_PICK, 7: CAR_PICK, 8: CAR_PICK, 9: CAR_PICK };
 const A_OILS = { 0: 2, 1: 0, 2: 2, 3: 0, 4: 0, 5: 1, 6: 0, 7: 0, 8: 1, 9: 0 };   // 5 พ.ย. 2569 82-6789 = เก็บตัวอย่างและเปลี่ยน ให้ตรงงานตัวอย่าง S10 (TRIP_OIL)   // น้ำมันไฮดรอลิกรายคัน (ลำดับใน JOB_OIL_OPTS) ที่กำหนดแล้ว · 5 พ.ย. 2569   // เลือกอะไหล่ครบทุกคันแล้ว
 const Q3_ADD = [3, 5];   // R75 ติ๊กเพิ่มเข้าไตรมาส 3: 82-4410 ขอนแก่น · 84-5521 นครราชสีมา
-const A_FULL = { 0: 1, 1: 1, 2: 1, 3: 2, 4: 2, 5: 2, 6: 3, 9: 3 };   // R75 รถภาค 2 ทุกคันจัดลงไตรมาสแล้ว (ไตรมาส 4 ว่าง) ⇒ popup เพิ่มรถไม่มีรถให้เลือก
 const A_ALL = { 0: 1, 1: 1, 2: 1, 3: 2, 4: 2, 5: 2, 6: 3, 7: 4, 8: 4, 9: 3 };   // 6 พ.ย. 2569 เจ้าของงาน "ต้องเอารถเข้า ไตรมาสทุกคัน" ⇒ รถทุกคันของหน่วยงาน (CAND 10 คัน) อยู่ในไตรมาส · เดิม 6 คัน ไตรมาส 4 ว่าง
 /* การเบิกอะไหล่รายคัน (6 พ.ย. 2569 เจ้าของงาน "อยากเพิ่มการเบิก โดยอยากให้มีการเลือกว่า ว่าเบิกอะใหล่ หรือไม่เบิก ด้วย") · { ลำดับรถ: 'none' } = ไม่เบิกอะไหล่ · ไม่มีในนี้แต่มีอะไหล่ = เบิกอะไหล่ */
-const A_PART = { 0: 1, 1: 1, 2: 1, 3: 2, 5: 2 };   // 9 พ.ย. 2569 ค่ำ ยานพาหนะภาค 2 จัดลงไตรมาสแล้ว 5 จาก 8 คัน (คันที่จัดกำหนดอะไหล่ครบ) ⇒ ยังส่งไม่ได้ เพราะยานพาหนะในตารางต้องจัดครบ
 const A_DRAW = { 4: 'none' };       // จัดครบ: ไตรมาส 1 3 คัน · ไตรมาส 2 2 คัน · ไตรมาส 3 1 คัน · ไตรมาส 4 ว่าง · รถซ่อม (83-1207) ไม่อยู่ในแผน · มีรถจากเขตอื่น (สลับเขตแล้วเพิ่มต่อ)
 
 /* ---------- S4 ความคืบหน้าและเบิกอะไหล่ของไตรมาส (2 พ.ย. 2569 รวม S5 เดิม · ตัดการตรวจรถ) ----------
@@ -2891,7 +2912,6 @@ async function carPartsView(name, i, o) {
   add(page, col('Content', [await vehicleInfo(kv, 'ข้อมูลยานพาหนะ'), list], 32), 'h');
   return scr;
 }
-const Q_OUT_CONFIRM = (c, q) => ({ danger: true, title: 'ยืนยันการเอายานพาหนะออกจากไตรมาส ' + q, sub: c[0] + ' จะกลับเป็นยังไม่จัด ต้องจัดลงไตรมาสอีกครั้งก่อนบันทึกและส่งอนุมัติ', cancel: 'ยกเลิก', ok: 'เอาออก' });   // แบบ Q_REMOVE_CONFIRM ของหน้าไตรมาส
 const EDIT_FORM = Object.assign({ edit: true, values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }, R2);   // prefill แท็บไตรมาส 1 พร้อมสิ่งที่ต้องทำรายคัน (5 พ.ย. 2569)
 const EDIT_CONFIRM = { title: 'ยืนยันการแก้ไข', sub: 'แผนจะกลับเป็นสถานะรออนุมัติ และส่งให้ผู้อนุมัติตรวจสอบอีกครั้ง โปรดตรวจสอบก่อนยืนยัน', cancel: 'ยกเลิก', ok: 'ยืนยัน' };
 // AREA_CONFIRM (ยืนยันเอารถของเขตที่เอาออก) เลิกใช้ 5 พ.ย. 2569 — รีวิว "หากมีการลบ Filter ใดก็ตาม จะไม่ส่งผลเกี่ยวต่อรถที่ถูกเลือกเข้าในไตรมาส"
@@ -3168,63 +3188,83 @@ async function moveQuarter(name, q, o) {
 }
 
 /* ---------- รายการจอแยกตาม scenario (ชื่อ = scenario ใน 14-บำรุงรักษา-userflow.md) ---------- */
-const SCENARIOS = [
-  /* S1 ปรับ 5 พ.ย. 2569 (รีวิวทีมออกแบบ + เจ้าของงานเลือกแบบ A): รายการว่าง · ปุ่มสร้างแผนขวาของตัวกรอง · เลือกภาค เขต ประเภทรถ แล้วเห็นรถทุกคันของพื้นที่ · ติ๊กแล้วจัดลงไตรมาสผ่าน popup
-     · เอาพื้นที่/ตัวกรองออกรถที่จัดแล้วไม่หาย · Validation Out of focus · รายละเอียดแผนหลังส่งอนุมัติ 3 สถานะ
-     · ค่ำ 5 พ.ย. 2569 (R77): ภาค เขต ประเภทรถ อยู่ในแผงตัวกรองของ Table header — A.5 แผงตัวกรองยังไม่เลือก · A.6 เลือกภาค 1 + กฟน.2 กฟน.1 ในแผง (รายการเขตเปิด) · A.7 กดตกลงแล้ว ตารางรถ + ชิป
-       (รหัส A.1–A.27 ไม่เลื่อน · A.5 A.6 A.7 เปลี่ยนชื่อ) */
-  ['S1 · ผู้สร้างแผน สร้างแผนบำรุงรักษาประจำปี และจัดยานพาหนะลงไตรมาส', [
+/* S1 เรื่องย่อย (R108 · 12 พ.ย. 2569 "เรียง scenario แบบไม่มี if … สร้างสำเร็จ กด a b c d") + เลือกยานพาหนะผ่าน modal (R109 · 12 พ.ย. 2569 "หน้าจอเลือกรถ อยากให้เป็น modal ตามรูป แก้ใน flow ด้วย")
+   1 เรื่อง = 1 แถวเรียงตามลำดับการกด · จอเดียวกันใช้ซ้ำได้หลายเรื่อง · error/ปุ่มกดไม่ได้/รายการว่างรวมเรื่องสุดท้าย
+   ตัดจอแบบ A (5 พ.ย. 2569): แผงตัวกรองในฟอร์ม · ตารางยานพาหนะของพื้นที่ · ติ๊กแล้วจัดลงไตรมาส · เอาภาคออกแล้วยานพาหนะยังอยู่ · ยังจัดไม่ครบปุ่มกดไม่ได้ (ไม่มีคันที่อยู่ในแผนแต่ยังไม่จัดแล้ว) */
+const M_PANEL = { regions: [REGIONS[1]], districts: ['กฟฉ.1'], open: 'district' };   // แผงตัวกรองใน modal: ภาค 2 + กฟฉ.1 รายการเขตเปิด
+const M_AREA = { regions: [REGIONS[1]], districts: ['กฟฉ.1'] };                       // กดตกลงแล้ว
+const A_MOVED = Object.assign({}, A_ALL, { 0: 2 });                                     // 82-6789 ย้ายจากไตรมาส 1 ไปไตรมาส 2
+const A_OUT = (() => { const a = Object.assign({}, A_ALL); delete a[0]; return a; })(); // 82-6789 ลบออกจากแผน
+const S1_SUBS = [
+  ['สร้างแผนใหม่ เลือกยานพาหนะผ่าน modal จนส่งอนุมัติสำเร็จ', [
     ['รายการแผน', () => listScreen('S1 รายการแผน', { rows: ownPlans(UNITS[0]) })],
-    ['รายการแผน — ยังไม่มีแผน', () => listScreen('S1 รายการว่าง', { empty: true })],
-    ['ฟอร์มสร้างแผน (ว่าง)', () => planForm('S1 ฟอร์มสร้างแผน', {})],
-    ['เลือกปีงบประมาณ — รายการปีเปิด', () => planForm('S1 เลือกปีงบประมาณ', { values: { name: FILLED.name }, yearOpen: true })],
-    ['กดตัวกรอง — แผงตัวกรอง ยังไม่เลือกภาค เขต ประเภทยานพาหนะ', () => planForm('S1 แผงตัวกรอง', { values: FILLED, filter: {} })],
-    ['เลือกภาค เขต ในแผงตัวกรอง — รายการเขตของภาคที่เลือก', () => planForm('S1 เลือกเขตในแผงตัวกรอง', { values: FILLED, filter: A_PANEL })],
-    ['ยานพาหนะทั้งหมดของพื้นที่ที่เลือก — กดตกลงแล้ว ชิปตัวกรอง ยังไม่ติ๊ก', () => planForm('S1 ยานพาหนะทั้งหมด', { values: FILLED, regions: A_PANEL.regions, districts: A_PANEL.districts })],
-    ['ค้นหาและกรองแล้ว', () => planForm('S1 ค้นหาและกรอง', { values: FILLED, regions: [REGIONS[1]], districts: ['กฟฉ.1'], query: '82-' })],
-    ['ไม่พบยานพาหนะที่ตรงกับคำค้นหรือตัวกรอง', () => planForm('S1 ไม่พบยานพาหนะ', { values: FILLED, regions: [REGIONS[0]], types: [VTYPES[2]] })],
-    ['ติ๊กยานพาหนะ 3 คัน — ปุ่มจัดลงไตรมาสกดได้', () => planForm('S1 ติ๊กยานพาหนะ', Object.assign({ values: FILLED, ticked: [0, 1, 2] }, R2))],
-    ['กดจัดลงไตรมาส — popup เลือกไตรมาส', () => planForm('S1 popup จัดลงไตรมาส', Object.assign({ values: FILLED, ticked: [0, 1, 2], assign: { sel: 0 } }, R2))],
-    ['จัดลงไตรมาสแล้ว — ป้ายไตรมาสในตาราง ตัวเลขบนแท็บเปลี่ยน', async () => { const s = await planForm('S1 จัดลงไตรมาสแล้ว', Object.assign({ values: FILLED, alloc: A_Q1 }, R2)); notify(s, 'จัดยานพาหนะ 3 คันลงไตรมาส 1 สำเร็จ'); return s; }],
-    ['แท็บไตรมาส 1 — ทุกคันกำหนดแล้ว อะไหล่ในไตรมาสรวมครบ', () => planForm('S1 ไตรมาส 1', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }, R2))],
-    ['ย้ายยานพาหนะไปไตรมาสอื่น — ติ๊กยานพาหนะที่จัดแล้ว', () => planForm('S1 ย้ายไตรมาส', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 2, ticked: [5], assign: { sel: 2 } }, R2))],
-    ['เอาภาคหรือตัวกรองออก — ยานพาหนะที่จัดแล้วยังอยู่ในไตรมาส', () => planForm('S1 เอาตัวกรองออก', { values: FILLED, alloc: A_ALL, picks: A_PICKS, regions: [REGIONS[0]] })],
-    ['Validation กรณีไม่ได้ระบุข้อมูล, Out of focus', () => planForm('S1 Validation', { errors: true })],
-    ['ย้อนกลับ — ยืนยันการออก', async () => { const s = await planForm('S1 ยืนยันการออก', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS }, R2)); await confirm(s, EXIT_CONFIRM('ข้อมูลที่กรอกไว้จะไม่ถูกบันทึก')); return s; }],
-    ['บันทึกไม่สำเร็จ', async () => { const s = await planForm('S1 บันทึกไม่สำเร็จ', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS }, R2)); notify(s, 'general error', true); return s; }],
+    ['ฟอร์มสร้างแผน (ว่าง) — เปิดแท็บไตรมาส 1', () => planForm('S1 ฟอร์มสร้างแผน', { q: 1 })],
+    ['เลือกปีงบประมาณ — รายการปีเปิด', () => planForm('S1 เลือกปีงบประมาณ', { values: { name: FILLED.name }, q: 1, yearOpen: true })],
+    ['กดเพิ่มยานพาหนะ — modal ยานพาหนะทุกคันที่ยังไม่อยู่ในแผน', () => planForm('S1 modal เพิ่มยานพาหนะ', { values: FILLED, q: 1, pick: {} })],
+    ['กดตัวกรอง — แผงตัวกรองใน modal ยังไม่เลือกภาค เขต ประเภทยานพาหนะ', () => planForm('S1 แผงตัวกรองใน modal', { values: FILLED, q: 1, pick: { filter: {} } })],
+    ['เลือกภาค เขต ในแผงตัวกรอง — รายการเขตของภาคที่เลือก', () => planForm('S1 เลือกเขตในแผงตัวกรอง', { values: FILLED, q: 1, pick: { filter: M_PANEL } })],
+    ['กดตกลง — ชิปตัวกรอง ตารางเหลือยานพาหนะของพื้นที่ที่เลือก', () => planForm('S1 modal กรองแล้ว', { values: FILLED, q: 1, pick: M_AREA })],
+    ['ติ๊กยานพาหนะ 3 คัน — ปุ่มเพิ่มเข้าไตรมาส 1 กดได้', () => planForm('S1 ติ๊กยานพาหนะใน modal', { values: FILLED, q: 1, pick: Object.assign({ ticked: [0, 1, 2] }, M_AREA) })],
+    ['เพิ่มเข้าไตรมาส 1 สำเร็จ — แท็บไตรมาส 1 มียานพาหนะ 3 คัน ตัวเลขบนแท็บเปลี่ยน', async () => { const s = await planForm('S1 เพิ่มเข้าไตรมาส 1 แล้ว', { values: FILLED, alloc: A_Q1, q: 1 }); notify(s, 'เพิ่มยานพาหนะ 3 คันเข้าไตรมาส 1 สำเร็จ'); return s; }],
+    ['แท็บไตรมาส 1 — ทุกคันกำหนดแล้ว อะไหล่ในไตรมาสรวมครบ', () => planForm('S1 ไตรมาส 1', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 })],
+    ['แท็บทั้งหมด — อะไหล่รวมทุกไตรมาส รวมอะไหล่ของยานพาหนะทุกคันในแผน', () => planForm('S1 อะไหล่รวมทุกไตรมาส', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW })],
+    ['ยานพาหนะในแผนกำหนดอะไหล่ครบทุกคัน — ปุ่มบันทึกและส่งอนุมัติกดได้', () => planForm('S1 ครบทุกคัน', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 2 })],
     ['บันทึกและส่งอนุมัติสำเร็จ — รออนุมัติ', async () => { const s = await listScreen('S1 บันทึกสำเร็จ', { rows: [NEW_PLAN].concat(ownPlans(UNITS[0])) }); notify(s, 'ส่งแผนบำรุงรักษาเพื่ออนุมัติสำเร็จ'); return s; }],
-    ['รายละเอียดแผน — รออนุมัติ ดูอย่างเดียว', () => planDetail('S1 รายละเอียด รออนุมัติ', { status: 'review', readonly: true })],
-    ['รายละเอียดแผน — อนุมัติแล้ว', () => planDetail('S1 รายละเอียด อนุมัติแล้ว', { status: 'approved' })],
-    ['รายละเอียดแผน — ส่งกลับแก้ไข เห็นเหตุผล กดแก้ไขไป S19', () => planDetail('S1 รายละเอียด ส่งกลับแก้ไข', { status: 'returned' })],
-    // 5 พ.ย. 2569 เจ้าของงาน "ทำให้หน้า ไตรมาสยังไม่่มีรถสามารถเพิ่มรถจากจุดนี้ได้ด้วย" (R75) — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน
-    ['ไตรมาสที่ยังไม่มียานพาหนะ — ปุ่มเพิ่มยานพาหนะเข้าไตรมาส 3', () => planForm('S1 ไตรมาส 3 ยังไม่มียานพาหนะ', Object.assign({ values: FILLED, alloc: A_Q1, q: 3 }, R2))],
-    ['กดเพิ่มยานพาหนะเข้าไตรมาส 3 — popup ยานพาหนะที่ยังไม่อยู่ในไตรมาสใด', () => planForm('S1 popup เพิ่มยานพาหนะเข้าไตรมาส 3', Object.assign({ values: FILLED, alloc: A_Q1, q: 3, qAdd: {} }, R2))],
-    ['ติ๊กยานพาหนะ 2 คัน — ปุ่มเพิ่มเข้าไตรมาส 3 กดได้', () => planForm('S1 ติ๊กยานพาหนะเข้าไตรมาส 3', Object.assign({ values: FILLED, alloc: A_Q1, q: 3, qAdd: { ticked: Q3_ADD } }, R2))],
-    ['เพิ่มยานพาหนะเข้าไตรมาส 3 แล้ว — แท็บไตรมาส 3 มียานพาหนะ ตัวเลขบนแท็บเปลี่ยน', async () => { const s = await planForm('S1 เพิ่มยานพาหนะเข้าไตรมาส 3 แล้ว', Object.assign({ values: FILLED, alloc: Object.assign({}, A_Q1, Object.fromEntries(Q3_ADD.map(i => [i, 3]))), q: 3 }, R2)); notify(s, 'จัดยานพาหนะ ' + Q3_ADD.length + ' คันลงไตรมาส 3 สำเร็จ'); return s; }],
-    ['ทุกคันในพื้นที่จัดลงไตรมาสแล้ว — popup ไม่มียานพาหนะให้เพิ่ม', () => planForm('S1 popup ไม่มียานพาหนะให้เพิ่ม', Object.assign({ values: FILLED, alloc: A_FULL, q: 4, qAdd: {} }, R2))],
-    /* 6 พ.ย. 2569 เจ้าของงาน "ต้องเอารถเข้า ไตรมาสทุกคัน" + "บังคับให้กรอกอะใหล่ทุกคัน ไปหน้าต่อไปไม่ได้" (แบบ ก หน้าเดียว) — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน */
-    ['ยานพาหนะในตารางยังจัดลงไตรมาสไม่ครบ คันที่จัดกำหนดอะไหล่ครบแล้ว — ปุ่มบันทึกและส่งอนุมัติกดไม่ได้', () => planForm('S1 ยังจัดไม่ครบ', Object.assign({ values: FILLED, alloc: A_PART, picks: A_PICKS, oils: A_OILS, q: 0 }, R2))],   // 9 พ.ย. 2569 ค่ำ เจ้าของงาน (ภาพหน้าแก้ไขแผน แท็บทั้งหมดมียานพาหนะ "ยังไม่จัด" แต่ปุ่มกดได้) _"ยังจัดอะใหล่ไม่เสร็จ ปุ่มอนุมัติต้อง disable"_ + เคาะ "ยานพาหนะในตารางต้องจัดครบ" (เดิม 9 พ.ย. บ่าย "จัดบางคัน อะไหล่ครบ — กดได้")
-    // เดิม 9 พ.ย. บ่าย: ไม่ต้องจัดครบทุกคันของหน่วยงานแล้ว (เดิม "ยังมียานพาหนะไม่ได้จัดลงไตรมาส — กดไม่ได้")
-    ['ยานพาหนะที่จัดลงไตรมาสยังกำหนดอะไหล่ไม่ครบ — ปุ่มบันทึกและส่งอนุมัติกดไม่ได้', () => planForm('S1 อะไหล่ยังไม่ครบ', Object.assign({ values: FILLED, alloc: A_ALL, picks: { 0: CAR_PICK }, oils: { 0: 1 }, q: 1 }, R2))],
-    ['ยานพาหนะที่จัดลงไตรมาสกำหนดอะไหล่ครบทุกคัน — ปุ่มบันทึกและส่งอนุมัติกดได้', () => planForm('S1 ครบทุกคัน', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 2 }, R2))],
-    /* 6 พ.ย. 2569 เจ้าของงาน "กบค แค่เห็นแผนทั้งหมด" ⇒ รายการแผนทุกหน่วยงาน ไม่มีปุ่มสร้างแผน · เมนู … เหลือดูรายละเอียด · รายละเอียดแผนไม่มีปุ่ม (แบบ R30 ของ Overhaul ซ่อนปุ่มที่ทำไม่ได้) */
+    ['รายละเอียดแผน — รออนุมัติ ดูอย่างเดียว', () => planDetail('S1 รายละเอียด รออนุมัติ', { status: 'review', readonly: true })]]],
+  ['ค้นหายานพาหนะใน modal', [
+    ['กดเพิ่มยานพาหนะ — modal ยานพาหนะทุกคันที่ยังไม่อยู่ในแผน', () => planForm('S1 modal เพิ่มยานพาหนะ', { values: FILLED, q: 1, pick: {} })],
+    ['พิมพ์ค้นหา — ตารางเหลือยานพาหนะที่ตรงคำค้น', () => planForm('S1 modal ค้นหา', { values: FILLED, q: 1, pick: { query: '82-' } })],
+    ['ติ๊กยานพาหนะจากผลค้นหา — ปุ่มเพิ่มเข้าไตรมาส 1 กดได้', () => planForm('S1 modal ค้นหาแล้วติ๊ก', { values: FILLED, q: 1, pick: { query: '82-', ticked: [0] } })]]],
+  ['สร้างแผนของกองในสำนักงานใหญ่ เลือกภาค สนง. ใน modal', [
+    ['กดตัวกรอง — แผงตัวกรองใน modal ยังไม่เลือกภาค เขต ประเภทยานพาหนะ', () => planForm('S1 แผงตัวกรองใน modal', { values: FILLED, q: 1, pick: { filter: {} } })],
+    ['กดตัวกรอง — แผงตัวกรอง รายการภาค มี สนง. (สำนักงานใหญ่)', () => planForm('S1 รายการภาค', { values: FILLED, q: 1, pick: { filter: { regions: [REGIONS[4]], open: 'region' } } })],
+    ['กดตัวกรอง — แผงตัวกรอง เลือกภาค สนง. รายการเขต กองของสำนักงานใหญ่', () => planForm('S1 เขตของ สนง.', { values: FILLED, q: 1, pick: { filter: { regions: [REGIONS[4]], districts: ['กบผ.'], open: 'district' } } })]]],
+  ['เพิ่มยานพาหนะเข้าไตรมาสที่ยังไม่มียานพาหนะ', [
+    ['ไตรมาสที่ยังไม่มียานพาหนะ — ปุ่มเพิ่มยานพาหนะเข้าไตรมาส 3', () => planForm('S1 ไตรมาส 3 ยังไม่มียานพาหนะ', { values: FILLED, alloc: A_Q1, q: 3 })],
+    ['กดเพิ่มยานพาหนะเข้าไตรมาส 3 — modal ยานพาหนะที่ยังไม่อยู่ในแผน', () => planForm('S1 modal เพิ่มยานพาหนะเข้าไตรมาส 3', { values: FILLED, alloc: A_Q1, q: 3, pick: {} })],
+    ['ติ๊กยานพาหนะ 2 คัน — ปุ่มเพิ่มเข้าไตรมาส 3 กดได้', () => planForm('S1 ติ๊กยานพาหนะเข้าไตรมาส 3', { values: FILLED, alloc: A_Q1, q: 3, pick: { ticked: Q3_ADD } })],
+    ['เพิ่มยานพาหนะเข้าไตรมาส 3 สำเร็จ — แท็บไตรมาส 3 มียานพาหนะ ตัวเลขบนแท็บเปลี่ยน', async () => { const s = await planForm('S1 เพิ่มยานพาหนะเข้าไตรมาส 3 แล้ว', { values: FILLED, alloc: Object.assign({}, A_Q1, Object.fromEntries(Q3_ADD.map(i => [i, 3]))), q: 3 }); notify(s, 'เพิ่มยานพาหนะ ' + Q3_ADD.length + ' คันเข้าไตรมาส 3 สำเร็จ'); return s; }]]],
+  ['ย้ายยานพาหนะไปไตรมาสอื่น', [
+    ['แท็บไตรมาส 1 — กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด แก้ไข ย้ายไปไตรมาสอื่น ลบ', async () => { const s = await planForm('S1 เมนูของยานพาหนะ', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }); planMenu(s, Q_MENU); return s; }],
+    ['เมนู … → ย้ายไปไตรมาสอื่น — popup ยังไม่เลือกไตรมาส', () => planForm('S1 popup ย้ายไตรมาส', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1, move: { car: 0, cur: 1 } })],
+    ['เลือกไตรมาส 2 — ปุ่มย้ายยานพาหนะกดได้', () => planForm('S1 เลือกไตรมาสที่จะย้าย', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1, move: { car: 0, cur: 1, sel: 1 } })],
+    ['ย้ายสำเร็จ — แท็บไตรมาส 2 มียานพาหนะคันนี้ ตัวเลขบนแท็บเปลี่ยน', async () => { const s = await planForm('S1 ย้ายไตรมาสแล้ว', { values: FILLED, alloc: A_MOVED, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 2 }); notify(s, 'ย้ายยานพาหนะไปไตรมาส 2 สำเร็จ'); return s; }]]],
+  ['ดูอะไหล่ของยานพาหนะในไตรมาส', [
+    ['แท็บไตรมาส 1 — กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด แก้ไข ย้ายไปไตรมาสอื่น ลบ', async () => { const s = await planForm('S1 เมนูของยานพาหนะ', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }); planMenu(s, Q_MENU); return s; }],
+    ['เมนู … → ดูรายละเอียด — อะไหล่ของยานพาหนะคันนี้ ดูอย่างเดียว', () => carPartsView('S1 ดูอะไหล่ของยานพาหนะ', 0)]]],
+  ['ลบยานพาหนะออกจากแผนจากเมนู …', [
+    ['แท็บไตรมาส 1 — กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด แก้ไข ย้ายไปไตรมาสอื่น ลบ', async () => { const s = await planForm('S1 เมนูของยานพาหนะ', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }); planMenu(s, Q_MENU); return s; }],
+    ['เมนู … → ลบ — ยืนยันการลบยานพาหนะออกจากแผน', async () => { const s = await planForm('S1 ยืนยันลบออกจากแผน', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }); await confirm(s, PLAN_OUT_CONFIRM(CAND[0], 1)); return s; }],
+    ['ลบแล้ว — ยานพาหนะออกจากแผน ตัวเลขบนแท็บเปลี่ยน', async () => { const s = await planForm('S1 ลบออกจากแผนแล้ว', { values: FILLED, alloc: A_OUT, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }); notify(s, 'ลบยานพาหนะออกจากแผนสำเร็จ'); return s; }]]],
+  ['ลบยานพาหนะออกจากแผนจากแท็บทั้งหมด', [
+    ['แท็บทั้งหมด — อะไหล่รวมทุกไตรมาส รวมอะไหล่ของยานพาหนะทุกคันในแผน', () => planForm('S1 อะไหล่รวมทุกไตรมาส', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW })],
+    ['กดถังขยะ — ยืนยันการลบยานพาหนะออกจากแผน', async () => { const s = await planForm('S1 ยืนยันลบจากแท็บทั้งหมด', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW }); await confirm(s, PLAN_OUT_CONFIRM(CAND[0], 1)); return s; }],
+    ['ลบแล้ว — แท็บทั้งหมดไม่มียานพาหนะคันนี้', async () => { const s = await planForm('S1 ลบจากแท็บทั้งหมดแล้ว', { values: FILLED, alloc: A_OUT, picks: A_PICKS, oils: A_OILS, draw: A_DRAW }); notify(s, 'ลบยานพาหนะออกจากแผนสำเร็จ'); return s; }]]],
+  ['เปิดดูแผนที่อนุมัติแล้ว', [
+    ['รายการแผน', () => listScreen('S1 รายการแผน', { rows: ownPlans(UNITS[0]) })],
+    ['รายละเอียดแผน — อนุมัติแล้ว', () => planDetail('S1 รายละเอียด อนุมัติแล้ว', { status: 'approved' })]]],
+  ['แผนถูกส่งกลับแก้ไข แล้วไปแก้ไขแผน (S19)', [
+    ['รายการแผน', () => listScreen('S1 รายการแผน', { rows: ownPlans(UNITS[0]) })],
+    ['รายละเอียดแผน — ส่งกลับแก้ไข เห็นเหตุผล กดแก้ไขไป S19', () => planDetail('S1 รายละเอียด ส่งกลับแก้ไข', { status: 'returned' })]]],
+  ['กบค. ดูแผนของทุกหน่วยงาน', [
     ['กบค. — รายการแผนทุกหน่วยงาน สร้างแผนได้ แผนหน่วยงานอื่นดูอย่างเดียว', () => listScreen('S1 กบค. รายการแผน', { rows: [NEW_PLAN].concat(allPlans()), view: 'กบค.' })],
-    // 9 พ.ย. 2569 เจ้าของงาน "A32 ต้องมี section อะใหล่เพิ่มเข้ามาด้วย เพราะตอนที่ หน้าอนุมัติก็ต้องมี section นี้ขึ้นมาด้วย" ⇒ อะไหล่ในแผนชุดเดียวกับ S2 (มาจาก planBody เหมือนทุกหน้ารายละเอียดแผน)
-    ['กบค. — รายละเอียดแผนของหน่วยงานอื่น ดูอย่างเดียว', () => planDetail('S1 กบค. รายละเอียดแผน', { status: 'approved', readonly: true })],
-    // 6 พ.ย. 2569 (ต่อท้าย A.33–A.37) เมนู … ของยานพาหนะแต่ละคัน (ดูรายละเอียด แก้ไข ลบ) — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน
-    ['แท็บไตรมาส 1 — กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด แก้ไข ลบ', async () => { const s = await planForm('S1 เมนูของยานพาหนะ', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }, R2)); planMenu(s, Q_MENU); return s; }],
-    ['เมนู … → ดูรายละเอียด — อะไหล่ของยานพาหนะคันนี้ ดูอย่างเดียว', () => carPartsView('S1 ดูอะไหล่ของยานพาหนะ', 0)],
-    ['เมนู … → ลบ — ยืนยันเอายานพาหนะออกจากไตรมาส', async () => { const s = await planForm('S1 ยืนยันเอาออกจากไตรมาส', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }, R2)); await confirm(s, Q_OUT_CONFIRM(CAND[0], 1)); return s; }],
-    ['เอาออกแล้ว — ยานพาหนะกลับเป็นยังไม่จัด ปุ่มบันทึกและส่งอนุมัติกดไม่ได้', async () => { const al = Object.assign({}, A_ALL); delete al[0]; const s = await planForm('S1 เอาออกจากไตรมาสแล้ว', Object.assign({ values: FILLED, alloc: al, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }, R2)); notify(s, 'เอายานพาหนะออกจากไตรมาส 1 สำเร็จ'); return s; }],
     ['รายการแผน — กดตัวกรอง แผงตัวกรอง เขต หน่วยงานหน้างาน (กบค.)', () => listScreen('S1 กบค. ตัวกรองรายการแผน', { rows: [NEW_PLAN].concat(allPlans()), view: 'กบค.', filter: { units: ['กบผ.'], open: 'unit' } })],
-    // 9 พ.ย. 2569 เจ้าของงาน "หน้าอะใหล่ทั้งไตรมาส ต้องรวมมาให้ด้วย ทั้งไตรมาส" — ต่อท้ายบล็อก (A.38) รหัสจอเดิมไม่เลื่อน
-    ['แท็บทั้งหมด — อะไหล่รวมทุกไตรมาส รวมอะไหล่ของยานพาหนะทุกคันที่จัดลงไตรมาสแล้ว', () => planForm('S1 อะไหล่รวมทุกไตรมาส', Object.assign({ values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW }, R2))],
-    // 9 พ.ย. 2569 เจ้าของงาน "ปรับให้มีการสร้าง ของ กรย และ กกฟ ทำ persona ของทั้ง 3 กองนนี้ โดยหน้ารวม เห็นไม่เหมือนกันคือ กกฟ1,2 และ กรย สร้างได้ และเห็นแค่ของตัวเองแต่ กบคจะเห็นของคนอื่นด้วย" — ต่อท้ายบล็อก (A.39 A.40) รหัสจอเดิมไม่เลื่อน · A.1 = กบผ. (เดิม กกฟ.1) · A.31 = กบค.
-    ['กปส. — รายการแผน เห็นเฉพาะแผนของ กปส. สร้างแผนได้', () => listScreen('S1 กปส. รายการแผน', { rows: ownPlans('กปส.') })],   // 12 พ.ย. 2569 เดิม กกฟ.2 (X6)
-    ['กรย. — รายการแผน เห็นเฉพาะแผนของ กรย. สร้างแผนได้', () => listScreen('S1 กรย. รายการแผน', { rows: ownPlans('กรย.') })],
-    // 11 พ.ย. 2569 เจ้าของงาน ภาค สนง. (สำนักงานใหญ่) (R93) — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน · 12 พ.ย. 2569 เขตภายใต้เป็น 6 กอง (X3)
-    ['กดตัวกรอง — แผงตัวกรอง รายการภาค มี สนง. (สำนักงานใหญ่)', () => planForm('S1 รายการภาค', { values: FILLED, filter: { regions: [REGIONS[4]], open: 'region' } })],
-    ['กดตัวกรอง — แผงตัวกรอง เลือกภาค สนง. รายการเขต กองของสำนักงานใหญ่', () => planForm('S1 เขตของ สนง.', { values: FILLED, filter: { regions: [REGIONS[4]], districts: ['กบผ.'], open: 'district' } })]]],
+    ['กบค. — รายละเอียดแผนของหน่วยงานอื่น ดูอย่างเดียว', () => planDetail('S1 กบค. รายละเอียดแผน', { status: 'approved', readonly: true })]]],
+  ['กองอื่นเปิดรายการแผนของกองตัวเอง', [
+    ['กปส. — รายการแผน เห็นเฉพาะแผนของ กปส. สร้างแผนได้', () => listScreen('S1 กปส. รายการแผน', { rows: ownPlans('กปส.') })],
+    ['กรย. — รายการแผน เห็นเฉพาะแผนของ กรย. สร้างแผนได้', () => listScreen('S1 กรย. รายการแผน', { rows: ownPlans('กรย.') })]]],
+  ['กรณีข้อผิดพลาดและเงื่อนไข (ไม่อยู่ในเส้นหลัก)', [
+    ['รายการแผน — ยังไม่มีแผน', () => listScreen('S1 รายการว่าง', { empty: true })],
+    ['ค้นหาใน modal ไม่พบยานพาหนะ', () => planForm('S1 modal ไม่พบยานพาหนะ', { values: FILLED, q: 1, pick: { query: '99-9999' } })],
+    ['ยานพาหนะทุกคันอยู่ในแผนแล้ว — modal ไม่มียานพาหนะให้เพิ่ม', () => planForm('S1 modal ไม่มียานพาหนะให้เพิ่ม', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 4, pick: { full: true } })],
+    ['Validation กรณีไม่ได้ระบุข้อมูล, Out of focus', () => planForm('S1 Validation', { errors: true, q: 1 })],
+    ['ย้อนกลับ — ยืนยันการออก', async () => { const s = await planForm('S1 ยืนยันการออก', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }); await confirm(s, EXIT_CONFIRM('ข้อมูลที่กรอกไว้จะไม่ถูกบันทึก')); return s; }],
+    ['บันทึกไม่สำเร็จ', async () => { const s = await planForm('S1 บันทึกไม่สำเร็จ', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 }); notify(s, 'general error', true); return s; }],
+    ['ยานพาหนะในแผนยังกำหนดอะไหล่ไม่ครบ — ปุ่มบันทึกและส่งอนุมัติกดไม่ได้', () => planForm('S1 อะไหล่ยังไม่ครบ', { values: FILLED, alloc: A_ALL, picks: { 0: CAR_PICK }, oils: { 0: 1 }, q: 1 })]]],
+];
+const SCENARIOS = [
+  /* S1 = เรื่องย่อย S1_SUBS (R108 R109 · 12 พ.ย. 2569) — ประวัติแบบ A (5 พ.ย. 2569) R77 R75 R93 R104 อยู่ใน component-rules.md */
+  ['S1 · ผู้สร้างแผน สร้างแผนบำรุงรักษาประจำปี และเพิ่มยานพาหนะเข้าไตรมาส', S1_SUBS.flatMap(x => x[1])],
   /* S2 ปรับ 5 พ.ย. 2569 (รีวิวทีมออกแบบ): ผลการพิจารณาบนสุด ไม่มีค่าเริ่มต้น · อนุมัติสำเร็จแสดงแค่ toast ขวาบน สถานะอนุมัติแล้ว ส่วนผลการพิจารณาหาย */
   ['S2 · ผู้อนุมัติ ตรวจสอบและอนุมัติแผนบำรุงรักษา', [
     ['รายการแผนรออนุมัติ', () => planReviewList('S2 แผนรออนุมัติ', REVIEW_ROWS)],
@@ -3573,30 +3613,16 @@ const BLOCK_OF = ['S1', 'S2', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11 �
    ถ้า scen ต่อไป เป็นเรื่อง แก้ไข ก็เลือกแก้ไขแล้ว ไปเจอหน้าแก้ไข") ⇒ 1 เรื่องย่อย = 1 เส้นตรงตามลำดับการกด ไม่มีทางแยก · แถบ Sub Flow A1 A2 … ป้ายจอ A1.1 A1.2 …
    ตัวเลข = ลำดับจอในรายการ S1 ของ SCENARIOS (A.1–A.42 เดิม) · จอเดียวกันอยู่ได้หลายเรื่อง (เช่น รายการแผนเป็นจุดเริ่มหลายเรื่อง)
    หน้า error ช่องไม่ครบ ปุ่มกดไม่ได้ และรายการว่าง รวมไว้เรื่องสุดท้าย ไม่ปนกับเส้นหลัก · จอที่ไม่ได้อยู่ในเรื่องไหนจะต่อท้ายเรื่องสุดท้ายเอง (กันจอหาย) */
-const SUBS_OF = {
-  S1: [
-    ['สร้างแผนใหม่จนส่งอนุมัติสำเร็จ', [1, 3, 4, 5, 6, 7, 10, 11, 12, 13, 38, 30, 19, 20]],
-    ['ค้นหาและเปลี่ยนตัวกรองยานพาหนะในฟอร์มสร้างแผน', [7, 8, 15]],
-    ['สร้างแผนของกองในสำนักงานใหญ่ เลือกภาค สนง.', [5, 41, 42]],
-    ['เพิ่มยานพาหนะเข้าไตรมาสที่ยังไม่มียานพาหนะ', [23, 24, 25, 26]],
-    ['ย้ายยานพาหนะไปไตรมาสอื่น', [13, 14]],
-    ['ดูอะไหล่ของยานพาหนะในไตรมาส', [13, 33, 34]],
-    ['เอายานพาหนะออกจากไตรมาส', [13, 33, 35, 36]],
-    ['เปิดดูแผนที่อนุมัติแล้ว', [1, 21]],
-    ['แผนถูกส่งกลับแก้ไข แล้วไปแก้ไขแผน (S19)', [1, 22]],
-    ['กบค. ดูแผนของทุกหน่วยงาน', [31, 37, 32]],
-    ['กองอื่นเปิดรายการแผนของกองตัวเอง', [39, 40]],
-    ['กรณีข้อผิดพลาดและเงื่อนไข (ไม่อยู่ในเส้นหลัก)', [2, 9, 16, 17, 18, 27, 28, 29]],
-  ],
-};
+const SUBS_OF = { S1: S1_SUBS };   // [ชื่อเรื่องย่อย, [[ชื่อจอ, fn] …] หรือ [เลขลำดับในรายการของ scenario …]]
 const GROUPS = SCENARIOS.map(([title, screens], i) => {
   const tag0 = title.split(' · ')[0], code = BLOCK_OF.indexOf(tag0) >= 0 ? LETTERS[BLOCK_OF.indexOf(tag0)] : LETTERS[i], tag = title.split(' · ')[0], rest = title.split(' · ').slice(1).join(' · ');
   const map = FLOW_NODES[tag] || {};
   const row = ([label, fn]) => [label, fn, map[label] || ''];
   const parts = SUBS_OF[tag];
   if (!parts) return { code, title: tag + ' ' + rest, subs: [{ code, title: rest, tag, screens: screens.map(row) }] };
-  const used = new Set(parts.flatMap(p => p[1])), left = screens.map((_, k) => k + 1).filter(k => !used.has(k));
-  const subs = parts.map(([t, nums], k) => ({ code: code + (k + 1), title: t, tag, screens: nums.concat(k === parts.length - 1 ? left : []).filter(n => screens[n - 1]).map(n => row(screens[n - 1])) }));
+  const pick = (x) => Array.isArray(x) ? x : screens[x - 1];   // รายการจอ หรือเลขลำดับ
+  const used = new Set(parts.flatMap(p => p[1]).filter(x => !Array.isArray(x))), left = parts.some(p => p[1].some(x => !Array.isArray(x))) ? screens.map((_, k) => k + 1).filter(k => !used.has(k)) : [];
+  const subs = parts.map(([t, items], k) => ({ code: code + (k + 1), title: t, tag, screens: items.concat(k === parts.length - 1 ? left : []).map(pick).filter(Boolean).map(row) }));
   return { code, title: tag + ' ' + rest, subs };
 });
 /* จำนวนจอที่สร้างจริงของ scenario (เรื่องย่อยใช้จอซ้ำได้) — ใช้นับความคืบหน้าและตารางสรุป */
