@@ -348,6 +348,18 @@ async function withInclude(key, fn) {
     addNeed.forEach(n => NEEDED.splice(NEEDED.indexOf(n), 1)); addNested.forEach(n => NESTED_ONLY.delete(n));
   }
 }
+/* ส่งภาพจอไป FigJam (13 พ.ย. 2569 เจ้าของงาน "อยาก export แบบประเมิน figjam") — แบบละโฟลเดอร์ out/figjam/<dir>/ ผ่าน serve.js แบบปุ่มของบำรุงรักษา
+   เปิดหน้าของแบบนั้นก่อน (ประเมินผู้รับจ้าง / ประเมินความพึงพอใจ) แล้วส่งจอชุดล่าสุดทุกจอ (desktop + mobile) · ชื่อ scenario ใส่ manifest ให้ตัวสร้างบอร์ดตั้งชื่อ section */
+const SHOT_DIR = { ce: 'flow-eval-contractor', sat: 'flow-eval-satisfaction' };
+const titlesOf = (scen) => Object.fromEntries(scen.map(([t]) => [t.split(' · ')[0], t.split(' · ').slice(1).join(' · ')]));
+async function shotsOn(pageName, dir, titles) {
+  const pg = figma.root.children.find(p => p.name.trim() === pageName);
+  if (!pg) { log('✗ ไม่พบหน้า "' + pageName + '" ในไฟล์นี้ — กดสร้างจอของแบบนี้ก่อน แล้วค่อยส่งภาพ'); return; }
+  if (pg.loadAsync) await pg.loadAsync();
+  await figma.setCurrentPageAsync(pg);
+  await exportShots(dir, null, titles);
+  log('ขั้นต่อไป: node figma-export/3-figjam-board.js --eval-ui --only แล้วเปิดปลั๊กอินบอร์ดใน FigJam เลือก "แบบประเมิน · ' + (dir === SHOT_DIR.ce ? 'ประเมินผู้รับจ้าง' : 'ประเมินความพึงพอใจ') + '"');
+}
 const SAT_BOTH = [false, true];   // ปุ่มทั้งชุดได้ flowchart + Desktop + Mobile ครบเสมอ (export ครบ 3 อย่าง 6 พ.ย. 2569)
 if (figma.ui.resize) figma.ui.resize(460, 680);   // 13 พ.ย. 2569 หน้าต่างมี 2 แบบ (สลับที่หัว) ⇒ สูงขึ้นให้เห็นปุ่มครบ
 
@@ -364,6 +376,8 @@ figma.ui.onmessage = async (msg) => {
     if (msg.type === 'check') { log('— เช็ค component (ไม่สร้างอะไร) —'); await resolveAll(NEEDED, true); log(deviceSetInfo()); }
     if (msg.type === 'sat-build') await withInclude('SAT', (inc) => inc.buildSet(inc.groupsFor(inc.ALL_IDX), 'แบบประเมินความพึงพอใจ กบค.', SAT_BOTH));
     if (msg.type === 'sat-pick') await withInclude('SAT', (inc) => inc.buildPick(o));
+    if (msg.type === 'shots-ce') await shotsOn(PLUGIN.page, SHOT_DIR.ce, titlesOf(SCENARIOS));
+    if (msg.type === 'shots-sat') await withInclude('SAT', (inc) => shotsOn(inc.PLUGIN.page, SHOT_DIR.sat, titlesOf(inc.SCENARIOS)));
   } catch (e) { log('✗ หยุด — ' + (e && e.message ? e.message : e)); }
 };
 figma.ui.postMessage({ type: 'scenarios', items: SCENARIOS.map(x => x[0]), types: TYPES.map((t, i) => [t, TYPE_TITLE[t], i + 1]) });   // รายการติ๊กของปุ่ม "สร้างเฉพาะ scenario ที่เลือก" + ประเภทงาน

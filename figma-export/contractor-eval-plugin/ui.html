@@ -23,6 +23,8 @@ A รายการ (ใช้ร่วม) · B ประเมิน · C ด
 <p><b>สร้างเฉพาะ scenario ที่เลือก</b> (ตามอุปกรณ์ที่เลือก)<br>
 <span id="pick"></span><br>ประเภทงานของ B C: <span id="types"></span></p>
 <button id="pickgo" style="background:#1d4ed8">สร้างเฉพาะ scenario ที่เลือก</button>
+<p><b>ส่งภาพจอไป FigJam</b> — จอชุดล่าสุดบนหน้า "ประเมินผู้รับจ้าง" (Desktop + Mobile) ไปที่ <code>out/figjam/flow-eval-contractor/</code> · ต้องรัน <code>node figma-export/serve.js</code> ค้างไว้<br>
+<button id="shots-ce" style="background:#334155">ส่งภาพจอประเมินผู้รับจ้างไป FigJam</button></p>
 </div>
 <div id="sat" style="display:none">
 <p class="box">ผู้ดูแลยานพาหนะประเมินหน่วยงานที่ให้บริการหลังงานปิด (งานที่ กบค. ทำ = ประเมิน กบค. · งานที่กองอื่นทำ = ประเมินกองนั้น) · ด้าน <b>ระบบการให้บริการ · เจ้าหน้าที่และ/หรือผู้ให้บริการ · คุณภาพของสินค้าและ/หรือบริการ · สภาพแวดล้อมต่างๆ</b> 11 ข้อ เต็ม 55<br>
@@ -30,6 +32,8 @@ A รายการ · B ประเมิน 1 งาน (มีฟอร์�
 <button id="sat-all" style="background:#b54708">สร้างแบบประเมินความพึงพอใจทั้งชุด (flowchart + Desktop + Mobile)</button></p>
 <p>เฉพาะ scenario ที่เลือก (ตามอุปกรณ์ที่เลือกด้านบน): <span id="sat-pick"></span>
 <button id="sat-go" style="background:#93370d">สร้างเฉพาะที่เลือก</button></p>
+<p><b>ส่งภาพจอไป FigJam</b> — จอชุดล่าสุดบนหน้า "ประเมินความพึงพอใจ" (Desktop + Mobile) ไปที่ <code>out/figjam/flow-eval-satisfaction/</code> · ต้องรัน <code>node figma-export/serve.js</code> ค้างไว้<br>
+<button id="shots-sat" style="background:#334155">ส่งภาพจอประเมินความพึงพอใจไป FigJam</button></p>
 </div>
 <p><small>เปลี่ยนไฟล์หรือไลบรารี → เช็คก่อนว่า component ครบ · ปิด-เปิดปลั๊กอินใหม่ทุกครั้งหลังสคริปต์เปลี่ยน</small></p>
 <button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button> <button id="copylog" style="background:#334155">คัดลอก log</button>
@@ -46,6 +50,13 @@ document.getElementById('pickgo').onclick = () => send('build-pick', { pick: [..
 document.getElementById('sat-all').onclick = () => send('sat-build');
 document.getElementById('sat-go').onclick = () => send('sat-pick', { pick: [...document.querySelectorAll('#sat-pick input:checked')].map(i => +i.value) });
 document.querySelectorAll('input[name=form]').forEach(r => r.onchange = () => { const v = document.querySelector('input[name=form]:checked').value; document.getElementById('ce').style.display = v === 'ce' ? '' : 'none'; document.getElementById('sat').style.display = v === 'sat' ? '' : 'none'; });
+/* ส่งภาพจอไป FigJam (13 พ.ย. 2569) — ปลั๊กอินส่งภาพมาทีละจอ → POST เข้า serve.js (out/figjam/<dir>/) แบบปลั๊กอินบำรุงรักษา */
+const SERVE = 'http://localhost:8124/';
+document.getElementById('shots-ce').onclick = () => send('shots-ce');
+document.getElementById('shots-sat').onclick = () => send('shots-sat');
+async function postFile(path, body) { const r = await fetch(SERVE + path.split('/').map(encodeURIComponent).join('/'), { method: 'POST', body }); if (!r.ok) throw new Error(path + ' ' + r.status); }
+const logLine = (t) => { const el = document.getElementById('log'); el.textContent += t + '\n'; el.scrollTop = el.scrollHeight; };
+let shotOk = 0, shotErr = 0, shotJobs = [];
 document.getElementById('chk').onclick = () => send('check');
 document.getElementById('copylog').onclick = () => { const ta = document.createElement('textarea'); ta.value = document.getElementById('log').textContent; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); };
 onmessage = (e) => { const m = e.data.pluginMessage;
@@ -56,5 +67,7 @@ onmessage = (e) => { const m = e.data.pluginMessage;
   if (m && m.type === 'sat-scenarios') {
     document.getElementById('sat-pick').innerHTML = m.items.map((t, i) => '<label style="display:inline-block;margin:2px 10px 2px 0"><input type="checkbox" value="' + i + '"> ' + String.fromCharCode(65 + i) + ' ' + t.split(' · ')[0] + '</label>').join('');
     return; }
+  if (m && m.type === 'shot') { shotJobs.push(postFile('figjam/' + m.dir + '/' + m.file, m.bytes).then(() => { shotOk++; }, (err) => { shotErr++; logLine('✗ ส่ง ' + m.file + ' ไม่ได้ — รัน node figma-export/serve.js อยู่หรือยัง (' + err.message + ')'); })); return; }
+  if (m && m.type === 'shots-done') { Promise.all(shotJobs).then(() => postFile('figjam/' + m.dir + '/manifest.json', JSON.stringify(m.manifest, null, 1))).then(() => logLine('✓ เขียนภาพ ' + shotOk + ' ไฟล์ + manifest.json ที่ out/figjam/' + m.dir + '/' + (shotErr ? ' · ✗ ไม่สำเร็จ ' + shotErr : '')), (err) => logLine('✗ เขียน manifest.json ไม่ได้ — ' + err.message)).then(() => { shotOk = 0; shotErr = 0; shotJobs = []; }); return; }
   if (m && m.type === 'log') { const el = document.getElementById('log'); el.textContent += m.text + '\n'; el.scrollTop = el.scrollHeight; } };
 </script>

@@ -1525,8 +1525,10 @@ function splitBoard(page, f) {
 /* ---------- ส่งภาพจอบนหน้านี้ไป FigJam (เจ้าของงาน 30 ต.ค. 2569 "export … ไปที่ figjam ด้วย userflow และ design มาจาก figma ปรับใหม่ล่าสุด") ----------
    export เฟรมจอ "<prefix> / A.1 · S1 — ชื่อ" บนหน้าที่เปิดอยู่ (จอที่ทีมแก้มือแล้วก็ได้) เป็น PNG ส่งให้หน้าต่างปลั๊กอิน → POST เข้า serve.js ที่ out/figjam/<dir>/
    แล้ว 3-figjam-board.js วางภาพต่อจากผัง userflow ของ scenario เดียวกัน · desktop อย่างเดียว · ด้านยาวไม่เกิน 4000 px (FigJam รับไม่เกิน 4096) */
-const SHOT_RE = /^(\S+) \/ ([A-Z])\.([0-9.]+) · (S\d+) — (.+)$/;
-async function exportShots(dir, scen) {   // scen = ['S1', 'S2'] ส่งเฉพาะ scenario ที่ติ๊ก (ว่าง = ทุกจอ · 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่")
+/* ชื่อเฟรมจอ "MT / A.3 · S1 — ชื่อ" · เรื่องย่อย "MT / A1.3 · S1 — ชื่อ" (R108) · บล็อกย่อยตามประเภทงาน "CE / B1.5 · S2 งานซ่อม — ชื่อ" (13 พ.ย. 2569 เดิมไม่ตรง ⇒ จอพวกนี้ไม่ถูกส่งไป FigJam)
+   กลุ่ม: 1 prefix · 2 ตัวอักษรบล็อก · 3 เลขเรื่องย่อย (ว่างได้) · 4 ลำดับจอ · 5 scenario · 6 ชื่อบล็อกย่อย (ว่างได้) · 7 ชื่อจอ */
+const SHOT_RE = /^(\S+) \/ ([A-Z])(\d*)\.([0-9.]+) · (S\d+)(?: ([^—]+?))? — (.+)$/;
+async function exportShots(dir, scen, titles) {   // titles = { S1: 'ชื่อ scenario' } ใส่ใน manifest ให้ตัวสร้างบอร์ดตั้งชื่อ section (13 พ.ย. 2569 แบบประเมิน)   // scen = ['S1', 'S2'] ส่งเฉพาะ scenario ที่ติ๊ก (ว่าง = ทุกจอ · 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่")
   errors.length = 0;
   const page = figma.currentPage;
   /* 5 พ.ย. 2569 เจ้าของงาน "export figjam อยากให้ออกมาเป็นแบบนี้ มี mobile มาด้วย … บอกว่าส่วนใหน desktop , mobile" ⇒ ส่งจอ mobile ด้วย (ชื่อเฟรมลงท้าย " · mobile") · device ใน manifest */
@@ -1534,7 +1536,7 @@ async function exportShots(dir, scen) {   // scen = ['S1', 'S2'] ส่งเฉ
   const shots = [], skipped = [];
   for (const f of all) {
     const mob = / · mobile$/.test(f.name), m = f.name.replace(/ · mobile$/, '').match(SHOT_RE);
-    if (m) shots.push({ f, code: m[2] + '.' + m[3], letter: m[2], no: m[3], scenario: m[4], name: m[5], device: mob ? 'mobile' : 'desktop' }); else skipped.push(f.name);
+    if (m) shots.push({ f, code: m[2] + m[3] + '.' + m[4], letter: m[2], sub: m[3], no: m[4], scenario: m[5], group: m[2] + m[3], groupName: m[6] || '', name: m[7], device: mob ? 'mobile' : 'desktop' }); else skipped.push(f.name);
   }
   /* หน้าเดียวกันมีหลายชุด ⇒ จอรหัสเดียวกันเก็บตัวที่สร้างล่าสุด
      9 พ.ย. 2569 เดิมเลือกตามตำแหน่งล่างสุด แต่หน้าเต็มแล้วปลั๊กอินวางชุดใหม่ที่ช่องว่างด้านบนหรือคอลัมน์ขวา ⇒ ส่งชุดเก่าไป FigJam (เจ้าของงาน "ของฝั่ง figma มาแล้ว แต่ figjam ยังไม่มา")
@@ -1548,23 +1550,23 @@ async function exportShots(dir, scen) {   // scen = ['S1', 'S2'] ส่งเฉ
   shots.splice(0, shots.length, ...shots.filter(x => !seen.has(x.code + x.device) && seen.add(x.code + x.device)));
   if (total > shots.length) log('หน้านี้มีจอหลายชุด — ส่งเฉพาะชุดที่สร้างล่าสุดของแต่ละจอ · ข้ามชุดเก่า ' + (total - shots.length) + ' จอ');
   if (scen && scen.length) { shots.splice(0, shots.length, ...shots.filter(x => scen.indexOf(x.scenario) >= 0)); log('ส่งเฉพาะ ' + scen.join(' ')); }
-  const key = (s) => s.letter + s.no.split('.').map(x => x.padStart(3, '0')).join('.');
+  const key = (s) => s.letter + (s.sub || '').padStart(3, '0') + '.' + s.no.split('.').map(x => x.padStart(3, '0')).join('.');
   shots.sort((a, b) => key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0);
   if (!shots.length) { log('ไม่พบเฟรมจอ "' + PLUGIN.prefix + ' / …" บนหน้า "' + page.name + '" — เปิดหน้าที่มีจอแล้วกดใหม่'); return; }
   log('ส่งภาพจอ ' + shots.length + ' จอ จากหน้า "' + page.name + '" ไปที่ out/figjam/' + dir + '/ …');
-  const manifest = { source: 'figma', page: page.name, exportedAt: new Date().toISOString(), scen: scen && scen.length ? scen : undefined, shots: [] };
+  const manifest = { source: 'figma', page: page.name, exportedAt: new Date().toISOString(), scen: scen && scen.length ? scen : undefined, titles: titles || undefined, shots: [] };
   for (const s of shots) {
     try {
       const scale = Math.min(1, 4000 / Math.max(s.f.width, s.f.height));
       const bytes = await s.f.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: scale } });
       const file = s.code + '-' + s.scenario + (s.device === 'mobile' ? '-mobile' : '') + '.png';
       figma.ui.postMessage({ type: 'shot', dir, file, bytes });
-      manifest.shots.push({ code: s.code, scenario: s.scenario, name: s.name, device: s.device, file, w: Math.round(s.f.width * scale), h: Math.round(s.f.height * scale) });
+      manifest.shots.push({ code: s.code, scenario: s.scenario, group: s.group, groupName: s.groupName || undefined, name: s.name, device: s.device, file, w: Math.round(s.f.width * scale), h: Math.round(s.f.height * scale) });
     } catch (e) { warn('export ' + s.f.name, e); }
   }
   figma.ui.postMessage({ type: 'shots-done', dir, manifest });
   log('export แล้ว ' + manifest.shots.length + '/' + shots.length + ' จอ' + (skipped.length ? ' · ข้าม ' + skipped.length + ' เฟรมที่ชื่อไม่ตรงรูปแบบ (เช่น ' + skipped[0] + ')' : '') + (errors.length ? ' · ⚠ เตือน ' + errors.length + ' จุด' : ''));
-  log('ขั้นต่อไป: node figma-export/3-figjam-board.js --maintainance-ui --only --split-scen --out=board-maintainance-ui.json (ชุดเต็ม + แยกไฟล์ราย S) แล้วเปิดปลั๊กอินบอร์ดใน FigJam ใหม่ เลือกกลุ่ม "บำรุงรักษาตามวาระ · ราย scenario"');
+  if (dir === 'flow-maintainance') log('ขั้นต่อไป: node figma-export/3-figjam-board.js --maintainance-ui --only --split-scen --out=board-maintainance-ui.json (ชุดเต็ม + แยกไฟล์ราย S) แล้วเปิดปลั๊กอินบอร์ดใน FigJam ใหม่ เลือกกลุ่ม "บำรุงรักษาตามวาระ · ราย scenario"');
 }
 
 /* ---------- journey แนวขวาง (เจ้าของงานสั่ง 22 ต.ค. 2569: "ทำ scen มาต่อกันเป็นแนวขวาง สำหรับ export" + "ลงในเพจ maintainance แต่มีปุ่มแยก") ----------
@@ -2118,6 +2120,18 @@ async function withInclude(key, fn) {
     addNeed.forEach(n => NEEDED.splice(NEEDED.indexOf(n), 1)); addNested.forEach(n => NESTED_ONLY.delete(n));
   }
 }
+/* ส่งภาพจอไป FigJam (13 พ.ย. 2569 เจ้าของงาน "อยาก export แบบประเมิน figjam") — แบบละโฟลเดอร์ out/figjam/<dir>/ ผ่าน serve.js แบบปุ่มของบำรุงรักษา
+   เปิดหน้าของแบบนั้นก่อน (ประเมินผู้รับจ้าง / ประเมินความพึงพอใจ) แล้วส่งจอชุดล่าสุดทุกจอ (desktop + mobile) · ชื่อ scenario ใส่ manifest ให้ตัวสร้างบอร์ดตั้งชื่อ section */
+const SHOT_DIR = { ce: 'flow-eval-contractor', sat: 'flow-eval-satisfaction' };
+const titlesOf = (scen) => Object.fromEntries(scen.map(([t]) => [t.split(' · ')[0], t.split(' · ').slice(1).join(' · ')]));
+async function shotsOn(pageName, dir, titles) {
+  const pg = figma.root.children.find(p => p.name.trim() === pageName);
+  if (!pg) { log('✗ ไม่พบหน้า "' + pageName + '" ในไฟล์นี้ — กดสร้างจอของแบบนี้ก่อน แล้วค่อยส่งภาพ'); return; }
+  if (pg.loadAsync) await pg.loadAsync();
+  await figma.setCurrentPageAsync(pg);
+  await exportShots(dir, null, titles);
+  log('ขั้นต่อไป: node figma-export/3-figjam-board.js --eval-ui --only แล้วเปิดปลั๊กอินบอร์ดใน FigJam เลือก "แบบประเมิน · ' + (dir === SHOT_DIR.ce ? 'ประเมินผู้รับจ้าง' : 'ประเมินความพึงพอใจ') + '"');
+}
 const SAT_BOTH = [false, true];   // ปุ่มทั้งชุดได้ flowchart + Desktop + Mobile ครบเสมอ (export ครบ 3 อย่าง 6 พ.ย. 2569)
 if (figma.ui.resize) figma.ui.resize(460, 680);   // 13 พ.ย. 2569 หน้าต่างมี 2 แบบ (สลับที่หัว) ⇒ สูงขึ้นให้เห็นปุ่มครบ
 
@@ -2134,6 +2148,8 @@ figma.ui.onmessage = async (msg) => {
     if (msg.type === 'check') { log('— เช็ค component (ไม่สร้างอะไร) —'); await resolveAll(NEEDED, true); log(deviceSetInfo()); }
     if (msg.type === 'sat-build') await withInclude('SAT', (inc) => inc.buildSet(inc.groupsFor(inc.ALL_IDX), 'แบบประเมินความพึงพอใจ กบค.', SAT_BOTH));
     if (msg.type === 'sat-pick') await withInclude('SAT', (inc) => inc.buildPick(o));
+    if (msg.type === 'shots-ce') await shotsOn(PLUGIN.page, SHOT_DIR.ce, titlesOf(SCENARIOS));
+    if (msg.type === 'shots-sat') await withInclude('SAT', (inc) => shotsOn(inc.PLUGIN.page, SHOT_DIR.sat, titlesOf(inc.SCENARIOS)));
   } catch (e) { log('✗ หยุด — ' + (e && e.message ? e.message : e)); }
 };
 figma.ui.postMessage({ type: 'scenarios', items: SCENARIOS.map(x => x[0]), types: TYPES.map((t, i) => [t, TYPE_TITLE[t], i + 1]) });   // รายการติ๊กของปุ่ม "สร้างเฉพาะ scenario ที่เลือก" + ประเภทงาน
