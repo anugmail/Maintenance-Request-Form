@@ -2130,7 +2130,6 @@ async function shotsOn(pageName, dir, titles) {
   if (pg.loadAsync) await pg.loadAsync();
   await figma.setCurrentPageAsync(pg);
   await exportShots(dir, null, titles);
-  log('ขั้นต่อไป: node figma-export/3-figjam-board.js --eval-ui --only แล้วเปิดปลั๊กอินบอร์ดใน FigJam เลือก "แบบประเมิน · ' + (dir === SHOT_DIR.ce ? 'ประเมินผู้รับจ้าง' : 'ประเมินความพึงพอใจ') + '"');
 }
 const SAT_BOTH = [false, true];   // ปุ่มทั้งชุดได้ flowchart + Desktop + Mobile ครบเสมอ (export ครบ 3 อย่าง 6 พ.ย. 2569)
 if (figma.ui.resize) figma.ui.resize(460, 680);   // 13 พ.ย. 2569 หน้าต่างมี 2 แบบ (สลับที่หัว) ⇒ สูงขึ้นให้เห็นปุ่มครบ

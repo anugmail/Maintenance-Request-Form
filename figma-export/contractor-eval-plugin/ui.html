@@ -23,7 +23,7 @@ A รายการ (ใช้ร่วม) · B ประเมิน · C ด
 <p><b>สร้างเฉพาะ scenario ที่เลือก</b> (ตามอุปกรณ์ที่เลือก)<br>
 <span id="pick"></span><br>ประเภทงานของ B C: <span id="types"></span></p>
 <button id="pickgo" style="background:#1d4ed8">สร้างเฉพาะ scenario ที่เลือก</button>
-<p><b>ส่งภาพจอไป FigJam</b> — จอชุดล่าสุดบนหน้า "ประเมินผู้รับจ้าง" (Desktop + Mobile) ไปที่ <code>out/figjam/flow-eval-contractor/</code> · ต้องรัน <code>node figma-export/serve.js</code> ค้างไว้<br>
+<p><b>ส่งภาพจอไป FigJam</b> — จอชุดล่าสุดบนหน้า "ประเมินผู้รับจ้าง" (Desktop + Mobile) ไปที่ <code>out/figjam/flow-eval-contractor/</code> · ต้องรัน <code>node figma-export/serve.js</code> ค้างไว้ · ส่งเสร็จปลั๊กอินสร้างไฟล์บอร์ดให้เอง แล้วไปเปิด <b>"Maintain-D → FigJam board"</b> ใน FigJam เลือก "แบบประเมิน · ประเมินผู้รับจ้าง"<br>
 <button id="shots-ce" style="background:#334155">ส่งภาพจอประเมินผู้รับจ้างไป FigJam</button></p>
 </div>
 <div id="sat" style="display:none">
@@ -32,7 +32,7 @@ A รายการ · B ประเมิน 1 งาน (มีฟอร์�
 <button id="sat-all" style="background:#b54708">สร้างแบบประเมินความพึงพอใจทั้งชุด (flowchart + Desktop + Mobile)</button></p>
 <p>เฉพาะ scenario ที่เลือก (ตามอุปกรณ์ที่เลือกด้านบน): <span id="sat-pick"></span>
 <button id="sat-go" style="background:#93370d">สร้างเฉพาะที่เลือก</button></p>
-<p><b>ส่งภาพจอไป FigJam</b> — จอชุดล่าสุดบนหน้า "ประเมินความพึงพอใจ" (Desktop + Mobile) ไปที่ <code>out/figjam/flow-eval-satisfaction/</code> · ต้องรัน <code>node figma-export/serve.js</code> ค้างไว้<br>
+<p><b>ส่งภาพจอไป FigJam</b> — จอชุดล่าสุดบนหน้า "ประเมินความพึงพอใจ" (Desktop + Mobile) ไปที่ <code>out/figjam/flow-eval-satisfaction/</code> · ต้องรัน <code>node figma-export/serve.js</code> ค้างไว้ · ส่งเสร็จปลั๊กอินสร้างไฟล์บอร์ดให้เอง แล้วไปเปิด <b>"Maintain-D → FigJam board"</b> ใน FigJam เลือก "แบบประเมิน · ประเมินความพึงพอใจ"<br>
 <button id="shots-sat" style="background:#334155">ส่งภาพจอประเมินความพึงพอใจไป FigJam</button></p>
 </div>
 <p><small>เปลี่ยนไฟล์หรือไลบรารี → เช็คก่อนว่า component ครบ · ปิด-เปิดปลั๊กอินใหม่ทุกครั้งหลังสคริปต์เปลี่ยน</small></p>
@@ -57,6 +57,29 @@ document.getElementById('shots-sat').onclick = () => send('shots-sat');
 async function postFile(path, body) { const r = await fetch(SERVE + path.split('/').map(encodeURIComponent).join('/'), { method: 'POST', body }); if (!r.ok) throw new Error(path + ' ' + r.status); }
 const logLine = (t) => { const el = document.getElementById('log'); el.textContent += t + '\n'; el.scrollTop = el.scrollHeight; };
 let shotOk = 0, shotErr = 0, shotJobs = [];
+/* 13 พ.ย. 2569 เจ้าของงาน "ตอน export figjam ไม่ได้ หาเมนูไม่เจอ" — เดิมต้องรัน node 3-figjam-board.js --eval-ui เองก่อน ปลั๊กอินบอร์ดใน FigJam ถึงมีรายการ
+   ⇒ ส่งภาพเสร็จแล้วสร้างไฟล์บอร์ดให้ทันที: อ่าน manifest ที่ serve.js รวมแล้วกลับมา → เขียน out/board-eval-*.json (POST .json ใต้ out/ ของ serve.js)
+   รูปแบบต้องตรง --eval-ui ของ 3-figjam-board.js (แก้ที่หนึ่งให้แก้อีกที่ด้วย) */
+const BOARDS = { 'flow-eval-contractor': ['board-eval-contractor.json', 'ประเมินผู้รับจ้าง', [248, 245, 255]], 'flow-eval-satisfaction': ['board-eval-satisfaction.json', 'ประเมินความพึงพอใจ (XCHO)', [241, 254, 253]] };
+async function writeBoard(dir) {
+  const [file, title, color] = BOARDS[dir];
+  try {
+    const sm = await (await fetch(SERVE + 'figjam/' + dir + '/manifest.json', { cache: 'no-store' })).json();
+    const titles = sm.titles || {}, dev = (x) => x.device || 'desktop', grp = (x) => x.group || x.code.split('.')[0];
+    const groups = [...new Set(sm.shots.map(grp))];
+    const sections = groups.map((g) => {
+      const shots = sm.shots.filter((x) => grp(x) === g), f = shots[0], codes = [...new Set(shots.map((x) => x.code))], hasMob = shots.some((x) => dev(x) === 'mobile');
+      const rowH = (d) => Math.max(0, ...shots.filter((x) => dev(x) === d).map((x) => x.h)), im = (x, row) => ({ src: 'figjam/' + dir + '/' + x.file, w: x.w, h: x.h, row });
+      return { name: 'แบบประเมิน · ' + title + ' · ' + g + ' · ' + f.scenario + (f.groupName ? ' ' + f.groupName : '') + (titles[f.scenario] ? ' · ' + titles[f.scenario] : ''), color, connect: 'sequence',
+        rows: hasMob ? [{ label: 'Desktop', h: rowH('desktop') }, { label: 'Mobile', h: rowH('mobile') }] : undefined,
+        cols: codes.map((code) => { const d = shots.find((x) => x.code === code && dev(x) === 'desktop'), mo = shots.find((x) => x.code === code && dev(x) === 'mobile');
+          return { label: code + ' · ' + (d || mo).name, note: '', images: [d && im(d, 0), mo && im(mo, hasMob ? 1 : 0)].filter(Boolean) }; }) };
+    });
+    await postFile(file, JSON.stringify({ version: 1, anchor: 'below', title: 'แบบประเมิน · ' + title, generatedAt: new Date().toISOString(), font: { family: 'IBM Plex Sans Thai', style: 'Medium' }, fallbackFont: { family: 'Inter', style: 'Medium' }, sections }));
+    logLine('✓ สร้างบอร์ด ' + file + ' แล้ว (' + sections.length + ' section · ' + sm.shots.length + ' รูป)');
+    logLine('ขั้นต่อไปใน FigJam: Plugins → Development → "Maintain-D → FigJam board" → ติ๊ก "แบบประเมิน · ' + title + '" (ถ้าเปิดค้างไว้ กดโหลดรายการใหม่) → สร้าง');
+  } catch (e) { logLine('✗ สร้างไฟล์บอร์ดไม่ได้ — ' + e.message + ' · รันเองได้: node figma-export/3-figjam-board.js --eval-ui --only'); }
+}
 document.getElementById('chk').onclick = () => send('check');
 document.getElementById('copylog').onclick = () => { const ta = document.createElement('textarea'); ta.value = document.getElementById('log').textContent; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); };
 onmessage = (e) => { const m = e.data.pluginMessage;
@@ -68,6 +91,11 @@ onmessage = (e) => { const m = e.data.pluginMessage;
     document.getElementById('sat-pick').innerHTML = m.items.map((t, i) => '<label style="display:inline-block;margin:2px 10px 2px 0"><input type="checkbox" value="' + i + '"> ' + String.fromCharCode(65 + i) + ' ' + t.split(' · ')[0] + '</label>').join('');
     return; }
   if (m && m.type === 'shot') { shotJobs.push(postFile('figjam/' + m.dir + '/' + m.file, m.bytes).then(() => { shotOk++; }, (err) => { shotErr++; logLine('✗ ส่ง ' + m.file + ' ไม่ได้ — รัน node figma-export/serve.js อยู่หรือยัง (' + err.message + ')'); })); return; }
-  if (m && m.type === 'shots-done') { Promise.all(shotJobs).then(() => postFile('figjam/' + m.dir + '/manifest.json', JSON.stringify(m.manifest, null, 1))).then(() => logLine('✓ เขียนภาพ ' + shotOk + ' ไฟล์ + manifest.json ที่ out/figjam/' + m.dir + '/' + (shotErr ? ' · ✗ ไม่สำเร็จ ' + shotErr : '')), (err) => logLine('✗ เขียน manifest.json ไม่ได้ — ' + err.message)).then(() => { shotOk = 0; shotErr = 0; shotJobs = []; }); return; }
+  if (m && m.type === 'shots-done') {
+    Promise.all(shotJobs).then(() => postFile('figjam/' + m.dir + '/manifest.json', JSON.stringify(m.manifest, null, 1)))
+      .then(() => { logLine('✓ เขียนภาพ ' + shotOk + ' ไฟล์ + manifest.json ที่ out/figjam/' + m.dir + '/' + (shotErr ? ' · ✗ ไม่สำเร็จ ' + shotErr : '')); return writeBoard(m.dir); },
+        (err) => logLine('✗ เขียน manifest.json ไม่ได้ — ' + err.message))
+      .then(() => { shotOk = 0; shotErr = 0; shotJobs = []; });
+    return; }
   if (m && m.type === 'log') { const el = document.getElementById('log'); el.textContent += m.text + '\n'; el.scrollTop = el.scrollHeight; } };
 </script>
