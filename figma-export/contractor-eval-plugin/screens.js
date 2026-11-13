@@ -349,6 +349,7 @@ async function withInclude(key, fn) {
   }
 }
 const SAT_BOTH = [false, true];   // ปุ่มทั้งชุดได้ flowchart + Desktop + Mobile ครบเสมอ (export ครบ 3 อย่าง 6 พ.ย. 2569)
+if (figma.ui.resize) figma.ui.resize(460, 680);   // 13 พ.ย. 2569 หน้าต่างมี 2 แบบ (สลับที่หัว) ⇒ สูงขึ้นให้เห็นปุ่มครบ
 
 figma.ui.onmessage = async (msg) => {
   try {

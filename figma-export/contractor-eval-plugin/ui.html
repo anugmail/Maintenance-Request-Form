@@ -3,12 +3,16 @@
   button{padding:8px 14px;border:0;border-radius:6px;background:#a80689;color:#fff;font:inherit;cursor:pointer;margin:2px 4px 2px 0}
   p{margin:10px 0 4px}
   small{color:#475467}
+  .pick{padding:8px 10px;background:#f2f4f7;border-radius:6px}
+  .box{background:#faf7f9;border-left:3px solid #a80689;padding:6px 10px;border-radius:4px}
   #log{margin-top:10px;height:240px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
 </style>
-<p><b>ประเมินผู้รับจ้าง — 3 scenario · S2 S3 แยกตามประเภทงาน (27 จอ/อุปกรณ์)</b> · ทุกชิ้นในจอเป็น instance ของ component จริงในไลบรารี · คะแนนใช้ component Rating (ดาว 1–5)<br>
-A รายการ (ใช้ร่วม) · B ประเมิน · C ดูผล — บล็อกย่อยตามประเภทงาน <b>B1/C1 งานซ่อม · B2/C2 งานบำรุงรักษา · B3/C3 งาน Overhaul</b> (กล่องข้อมูลผู้รับจ้างต่างกันตามข้อมูลของงาน)<br>
-<b>ทุกปุ่มวางบนหน้า "ประเมินผู้รับจ้าง"</b> ต่อใต้ของเดิม (ไม่มีหน้าก็สร้าง) — ของที่มีอยู่ไม่ถูกแตะ</p>
+<p><b>แบบประเมิน 2 แบบ — หัวข้อคำถามคนละชุด</b> · ทุกชิ้นในจอเป็น instance ของ component จริงในไลบรารี · คะแนนใช้ component Rating (ดาว 1–5)</p>
+<p class="pick"><label><input type="radio" name="form" value="ce" checked> <b>1 ประเมินผู้รับจ้าง</b></label> &nbsp; <label><input type="radio" name="form" value="sat"> <b>2 ประเมินความพึงพอใจ (XCHO)</b></label></p>
 <p>อุปกรณ์: <label><input type="radio" name="dev" value="desktop" checked> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label> <label><input type="radio" name="dev" value="both"> ทั้งคู่</label></p>
+<div id="ce">
+<p class="box">กบค. ประเมินผู้รับจ้างหลังงานจ้างปิด · หมวด <b>สถานประกอบการ · เครื่องมืออุปกรณ์ · ผู้ปฏิบัติงาน · การให้บริการ · คุณภาพของผลงาน · การส่งมอบงาน</b><br>
+A รายการ (ใช้ร่วม) · B ประเมิน · C ดูผล — บล็อกย่อยตามประเภทงาน B1/C1 งานซ่อม · B2/C2 งานบำรุงรักษา · B3/C3 งาน Overhaul · วางบนหน้า <b>"ประเมินผู้รับจ้าง"</b></p>
 <p><b>สร้างแยกประเภทงาน</b> (B ฟอร์มประเมิน + C ดูผล ของประเภทนั้นอย่างเดียว · ตามอุปกรณ์ที่เลือก)<br>
 <button id="t-repair" style="background:#1570ef">สร้างงานซ่อม (B1 · C1)</button>
 <button id="t-pm" style="background:#079455">สร้างงานบำรุงรักษา (B2 · C2)</button>
@@ -19,12 +23,14 @@ A รายการ (ใช้ร่วม) · B ประเมิน · C ด
 <p><b>สร้างเฉพาะ scenario ที่เลือก</b> (ตามอุปกรณ์ที่เลือก)<br>
 <span id="pick"></span><br>ประเภทงานของ B C: <span id="types"></span></p>
 <button id="pickgo" style="background:#1d4ed8">สร้างเฉพาะ scenario ที่เลือก</button>
-<hr style="border:0;border-top:1px solid #eee;margin:14px 0 4px">
-<p><b>แบบประเมินความพึงพอใจ กบค. (XCHO)</b> — ผู้ดูแลยานพาหนะประเมินหน่วยงานที่ให้บริการ หลังปิดงาน · เรื่องแยกจากประเมินผู้รับจ้าง<br>
-A รายการ · B ประเมิน 1 งาน · C ดูผล · <b>วางบนหน้า "ประเมินความพึงพอใจ"</b> ของไฟล์นี้ (ไม่มีหน้าก็สร้าง) ต่อใต้ของเดิม<br>
+</div>
+<div id="sat" style="display:none">
+<p class="box">ผู้ดูแลยานพาหนะประเมินหน่วยงานที่ให้บริการหลังงานปิด (งานที่ กบค. ทำ = ประเมิน กบค. · งานที่กองอื่นทำ = ประเมินกองนั้น) · ด้าน <b>ระบบการให้บริการ · เจ้าหน้าที่และ/หรือผู้ให้บริการ · คุณภาพของสินค้าและ/หรือบริการ · สภาพแวดล้อมต่างๆ</b> 11 ข้อ เต็ม 55<br>
+A รายการ · B ประเมิน 1 งาน (มีฟอร์มประเมิน กบค. MRZ7100004 และประเมิน กบผ. MRZ7000001) · C ดูผล · วางบนหน้า <b>"ประเมินความพึงพอใจ"</b> ของไฟล์นี้ (ไม่มีหน้าก็สร้าง) ต่อใต้ของเดิม<br>
 <button id="sat-all" style="background:#b54708">สร้างแบบประเมินความพึงพอใจทั้งชุด (flowchart + Desktop + Mobile)</button></p>
 <p>เฉพาะ scenario ที่เลือก (ตามอุปกรณ์ที่เลือกด้านบน): <span id="sat-pick"></span>
 <button id="sat-go" style="background:#93370d">สร้างเฉพาะที่เลือก</button></p>
+</div>
 <p><small>เปลี่ยนไฟล์หรือไลบรารี → เช็คก่อนว่า component ครบ · ปิด-เปิดปลั๊กอินใหม่ทุกครั้งหลังสคริปต์เปลี่ยน</small></p>
 <button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button> <button id="copylog" style="background:#334155">คัดลอก log</button>
 <div id="log"></div>
@@ -39,6 +45,7 @@ document.getElementById('mob').onclick = () => send('build-mobile');
 document.getElementById('pickgo').onclick = () => send('build-pick', { pick: [...document.querySelectorAll('#pick input:checked')].map(i => +i.value), types: types() });
 document.getElementById('sat-all').onclick = () => send('sat-build');
 document.getElementById('sat-go').onclick = () => send('sat-pick', { pick: [...document.querySelectorAll('#sat-pick input:checked')].map(i => +i.value) });
+document.querySelectorAll('input[name=form]').forEach(r => r.onchange = () => { const v = document.querySelector('input[name=form]:checked').value; document.getElementById('ce').style.display = v === 'ce' ? '' : 'none'; document.getElementById('sat').style.display = v === 'sat' ? '' : 'none'; });
 document.getElementById('chk').onclick = () => send('check');
 document.getElementById('copylog').onclick = () => { const ta = document.createElement('textarea'); ta.value = document.getElementById('log').textContent; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); };
 onmessage = (e) => { const m = e.data.pluginMessage;
