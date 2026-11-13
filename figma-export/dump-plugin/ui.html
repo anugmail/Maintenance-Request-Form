@@ -27,12 +27,26 @@
 <button id="go" style="margin-top:6px;width:100%">เริ่มดัมป์หน้าที่เลือก</button>
 <div id="log"></div>
 <script>
+/* 13 พ.ย. 2569 แก้ — merge 55fce43 (10 พ.ย. 2569) ทำ renderPages + ปุ่ม "โหลดรายชื่อหน้า" หาย และเหลือ onclick เก่าที่อ่าน #pagefilter (ไม่มีแล้ว)
+   ⇒ กดโหลดรายชื่อหน้าแล้วไม่มีอะไรเกิดขึ้น เลือกหน้าไม่ได้ ดัมป์ไม่ได้ · คืนจาก 743c7c1 + คงการรอส่งไฟล์ครบก่อนสรุป (pending · 4 พ.ย. 2569) */
 const log = (s) => { const d = document.getElementById('log'); d.textContent += s + '\n'; d.scrollTop = d.scrollHeight; };
+let pages = [];
 let total = 0, ok = 0, fail = 0, pending = [];   // pending = การส่งไฟล์ที่ยังไม่เสร็จ — รอครบก่อนสรุป (4 พ.ย. 2569 เคยขึ้น "สำเร็จ 0 หน้า" ก่อนส่งเสร็จ)
-document.getElementById('go').onclick = () => {
-  document.getElementById('log').textContent=''; ok=fail=0; pending=[];
-  const pageFilter = document.getElementById('pagefilter').value || '';
-  parent.postMessage({pluginMessage:{type:'start', pageFilter}}, '*');
+
+function renderPages() {
+  const box = document.getElementById('pageslist');
+  if (!pages.length) { box.textContent = 'ไฟล์นี้ไม่มีหน้าเลย'; return; }
+  box.innerHTML = '';
+  pages.forEach((p) => {   // สร้างด้วย DOM (ชื่อหน้ามี < > & ได้ ไม่ต่อสตริง HTML)
+    const lb = document.createElement('label'), cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = p.id;
+    lb.appendChild(cb); lb.appendChild(document.createTextNode(' ' + p.name)); box.appendChild(lb);
+  });
+}
+
+document.getElementById('loadpages').onclick = () => {
+  document.getElementById('pageslist').textContent = 'กำลังโหลด…';
+  parent.postMessage({ pluginMessage: { type: 'list-pages' } }, '*');
 };
 document.getElementById('selall').onclick = () => {
   document.querySelectorAll('#pageslist input[type=checkbox]').forEach((c) => (c.checked = true));
@@ -43,9 +57,9 @@ document.getElementById('selnone').onclick = () => {
 
 document.getElementById('go').onclick = () => {
   const ids = [...document.querySelectorAll('#pageslist input[type=checkbox]:checked')].map((c) => c.value);
-  if (!ids.length) { log('ยังไม่ได้ติ๊กหน้าไหนเลย — เลือกก่อนแล้วกดใหม่'); return; }
+  if (!ids.length) { log(pages.length ? 'ยังไม่ได้ติ๊กหน้าไหนเลย — เลือกก่อนแล้วกดใหม่' : 'ยังไม่ได้โหลดรายชื่อหน้า — กด "โหลดรายชื่อหน้า" แล้วติ๊กหน้าที่ต้องการก่อน'); return; }
   document.getElementById('log').textContent = '';
-  ok = fail = 0;
+  ok = fail = 0; pending = [];
   parent.postMessage({ pluginMessage: { type: 'start', pageIds: ids } }, '*');
 };
 
