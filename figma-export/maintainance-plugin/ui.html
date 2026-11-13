@@ -19,6 +19,8 @@
 <button id="journey" style="background:#0e7490">สร้าง flowchart ยาวทั้งเส้น</button></p>
 <p><b>flowchart กิจกรรมราย scenario</b> — 21 ผัง แยกกรอบละ scenario บอกว่าใครทำอะไร ตรงไหนต้องเลือก และไปต่อที่ไหน ไม่มีหน้าจอ · จาก <code>Diagram/01-บำรุงรักษาตามวาระ/27-บำรุงรักษา-flowchart-กิจกรรม.md</code> · กดซ้ำจะแทนชุดเดิม<br>
 <button id="activity" style="background:#0e7490">สร้าง flowchart กิจกรรม</button></p>
+<p style="background:#eef4ff;border:1px solid #c7d7fe;border-radius:6px;padding:8px"><b>แทนที่จอที่เลือกด้วยฉบับล่าสุด</b> — คลิกเลือกเฟรมจอ "MT / …" บนหน้า (กด Shift เลือกหลายจอ) แล้วกด · ปลั๊กอินสร้างจอนั้นจากสคริปต์ล่าสุดวางแทนที่ตำแหน่งเดิม · จอที่ไม่ได้เลือกไม่แตะ · ส่วนที่แก้มือในจอที่เลือกจะหาย (Cmd+Z ย้อนได้) · จอที่ชื่อไม่มีในชุดล่าสุดแล้วจะข้าม<br>
+<button id="replaceSel" style="background:#1d4ed8">แทนที่จอที่เลือกด้วยฉบับล่าสุด</button></p>
 <p><b>ลบลิงก์กดต่อจอ</b> — ลบลิงก์ที่กดแล้วไปจอถัดไปบนหน้า Maintainance จอ ปุ่ม และข้อความอยู่ครบ · interaction อื่นของ component ไม่ถูกแตะ<br>
 <button id="clearProto" style="background:#b42318">ลบลิงก์กดต่อจอบนหน้านี้</button> <button id="moveLatest" style="background:#0e7490">ย้ายบล็อกล่าสุดกลับเข้าหน้า Maintainance</button></p>
 <p><b>แยกจอของ scenario ที่ตัดออก</b> — ย้ายจอ ป้าย และ flowchart ของบล็อกที่ตัดออก (M N O P = S14–S17 · J = S11 · U = S22) ไปรวมในกรอบ "ตัดออกแล้ว" ขวาสุดของหน้า มีแถบแดงบอกว่าตัดเมื่อไหร่และเพราะอะไร · ชื่อจอขึ้นต้น "ตัดออก · " export ไม่หยิบไป · ไม่ลบ<br>
@@ -50,6 +52,7 @@ const SERVE = 'http://localhost:8124/';
 document.getElementById('shots').onclick = () => send('export-shots');
 /* 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่" ⇒ ใช้ช่องติ๊ก scenario ชุดเดียวกับปุ่มสร้าง · ส่งเฉพาะจอของ S ที่ติ๊ก */
 document.getElementById('pickshots').onclick = () => { const scen = [...document.querySelectorAll('#pick input:checked')].map(i => i.dataset.s); if (!scen.length) { document.getElementById('log').textContent = 'ติ๊ก scenario ก่อน (ไม่ติ๊ก = ใช้ปุ่ม ส่งภาพจอบนหน้านี้ไป FigJam ด้านบน)'; return; } send('export-shots', { scen }); };
+document.getElementById('replaceSel').onclick = () => send('replace-selected');
 document.getElementById('clearProto').onclick = () => send('clear-proto');
 document.getElementById('purgeCut').onclick = () => send('purge-cut');
 document.getElementById('archiveCut').onclick = () => send('archive-cut');

@@ -309,7 +309,7 @@ const MODE_CHECK = process.env.MODE === 'check';
     pg.flowStartingPoints = [{ nodeId: scr[0].id, name: 'ของปลั๊กอิน' }, { nodeId: 'อื่น', name: 'ของคนอื่น' }];
     protoSeed = { pg, scr, btn };
   }
-  await uiHandler({ type: process.env.MODE === 'patch' ? 'build' : (process.env.MODE || 'build'), here: process.env.HERE === '1', pick: (process.env.PICK || '').split(',').filter(Boolean), devices: process.env.DEVICES || 'both', parts: (process.env.PARTS || '').split(',').filter(Boolean) });   // PARTS=storymap,usecase สำหรับ MODE=build-docs (30 ต.ค. 2569)   // PICK=7,13 DEVICES=desktop สำหรับ MODE=build-pick   // HERE=1 = ติ๊ก "วางต่อท้ายหน้าที่เปิดอยู่"
+  await uiHandler({ type: process.env.MODE === 'patch' ? (process.env.PATCH_BUILD || 'build') : (process.env.MODE || 'build'), here: process.env.HERE === '1', pick: (process.env.PICK || '').split(',').filter(Boolean), devices: process.env.DEVICES || 'both', parts: (process.env.PARTS || '').split(',').filter(Boolean) });   // PARTS=storymap,usecase สำหรับ MODE=build-docs (30 ต.ค. 2569)   // PICK=7,13 DEVICES=desktop สำหรับ MODE=build-pick   // HERE=1 = ติ๊ก "วางต่อท้ายหน้าที่เปิดอยู่"
   if (moveSeed) {
     const to = figma.currentPage, top = Math.min(...to.children.map(n => n.y)), low = Math.max(...to.children.map(n => n.y + n.height));
     if (to !== moveSeed.pg || to.children.length !== moveSeed.n || top < -60000 || low > 60000 || (moveSeed.p2 && root.children.indexOf(moveSeed.p2) >= 0)) logs.push('⚠ ย้ายบล็อกล้นขอบไม่ครบ ' + to.name + ' ' + to.children.length + '/' + moveSeed.n + ' y ' + top + ' ถึง ' + low);
@@ -345,10 +345,10 @@ const MODE_CHECK = process.env.MODE === 'check';
       vm.runInNewContext(fs.readFileSync(process.env.BROKEN, 'utf8'), ctx());
       for (const t of (process.env.PATCH || 'patch-dividers').split(',')) await uiHandler({ type: t }).catch(e => console.log('(รอบพัง) ' + e.message));
     }
-    if (process.env.CODE) vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'overhaul2-plugin', 'code.js'), 'utf8'), ctx());
+    if (process.env.CODE && (process.env.PREFIX || 'OH2') === 'OH2') vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'overhaul2-plugin', 'code.js'), 'utf8'), ctx());   // Overhaul: สร้างด้วยไฟล์เก่า (CODE) แล้วแก้ด้วยโค้ดปัจจุบัน · ปลั๊กอินอื่นใช้โค้ดเดียวกันทั้งสองรอบ
     if (process.env.SELECT) {   // SELECT=all | regex — จำลองผู้ใช้คลิกเลือกเฟรมบนหน้าก่อนกด "อัปเดตจอที่เลือก" (21 ต.ค. 2569)
       const re = process.env.SELECT === 'all' ? null : new RegExp(process.env.SELECT);
-      figma.currentPage.selection = figma.currentPage.children.filter(n => n.type === 'FRAME' && n.name.indexOf('OH2 / ') === 0 && (!re || re.test(n.name)));
+      figma.currentPage.selection = figma.currentPage.children.filter(n => n.type === 'FRAME' && n.name.indexOf((process.env.PREFIX || 'OH2') + ' / ') === 0 && (!re || re.test(n.name)));   // PREFIX= ปลั๊กอินอื่น (MT · 13 พ.ย. 2569 แทนที่จอที่เลือกของบำรุงรักษา)
       console.log('(เลือกเฟรม ' + figma.currentPage.selection.length + ' เฟรม)');
       global.__before = figma.currentPage.children.map(n => [n.id, n.name, n.x, n.y]);
     }
@@ -365,7 +365,7 @@ const MODE_CHECK = process.env.MODE === 'check';
     const re = process.env.SELECT === 'all' ? null : new RegExp(process.env.SELECT);
     let kept = 0, replaced = 0;
     for (const [id, name, x, y] of global.__before) {
-      const sel = name.indexOf('OH2 / ') === 0 && (!re || re.test(name));
+      const sel = name.indexOf((process.env.PREFIX || 'OH2') + ' / ') === 0 && (!re || re.test(name));
       const n = byId.get(id);
       if (!sel) { if (!n || n.x !== x || n.y !== y) logs.push('⚠ จอที่ไม่ได้เลือกถูกแตะ: ' + name); else kept++; continue; }
       if (n && n.name.indexOf(' · ตัดแล้ว') < 0) logs.push('⚠ จอที่เลือกไม่ถูกแทนที่: ' + name);

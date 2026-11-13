@@ -5591,6 +5591,46 @@ async function buildPick(o) {   // ติ๊กเฉพาะบาง scenario
   await buildSet(SCENARIOS.filter((_, i) => idx.indexOf(i) >= 0), GROUPS.filter((_, i) => idx.indexOf(i) >= 0), 'scenario ที่เลือก', devOf(o));
 }
 
+/* ---------- แทนที่จอที่เลือกด้วยฉบับล่าสุด (เจ้าของงาน 13 พ.ย. 2569 "เพิ่มปุ่มแทนที่จอที่เลือกในปลั๊กอินบำรุงรักษา") ----------
+   แบบปุ่ม "อัปเดตจอที่เลือกเป็นฉบับ CF" ของปลั๊กอิน Overhaul: เลือกเฟรมจอ "MT / … · Sx — ชื่อจอ" บนหน้า แล้วกด → สร้างจอนั้นจากสคริปต์ปัจจุบันวางที่ตำแหน่งและลำดับ layer เดิม
+   · จับคู่ด้วย scenario + ชื่อจอ (รหัสเปลี่ยนได้เมื่อแตกเรื่องย่อยใหม่) · ชื่อซ้ำหลายเรื่องย่อย = ใช้ตัวที่รหัสตรงก่อน · ชื่อจอไม่มีในชุดปัจจุบัน = ข้าม ไม่แตะ บอกใน log
+   · ชื่อเฟรมใหม่ใช้รหัสปัจจุบัน · ป้าย state เหนือจอไม่เปลี่ยน · จอที่ไม่ได้เลือกไม่แตะ · ส่วนที่แก้มือในจอที่เลือกหาย (กู้ได้ด้วย Cmd+Z หรือ Version history) */
+const FRAME_RE = /^MT \/ ([A-Z]\d*\.[0-9.]+) · (S\d+)(?: [^—]+?)? — (.+?)( · mobile)?$/;
+function findState(tag, label, code) {   // → { code, label, fn } หรือ null
+  const g = GROUPS.find(x => x.subs[0].tag === tag); if (!g) return null;
+  const hits = [];
+  g.subs.forEach(sub => sub.screens.forEach(([l, fn], i) => { if (l === label) hits.push({ code: sub.code + '.' + (i + 1), label: l, fn }); }));
+  return hits.find(h => h.code === code) || hits[0] || null;
+}
+async function replaceSelected() {
+  errors.length = 0; const t0 = Date.now();
+  const page = figma.currentPage;
+  const sel = (page.selection || []).filter(n => n.type === 'FRAME' && n.parent === page && FRAME_RE.test(n.name));
+  if (!sel.length) { log('ยังไม่ได้เลือกเฟรมจอ "MT / …" บนหน้านี้ — คลิกเลือกเฟรมจอที่อยากให้เป็นฉบับล่าสุด (กด Shift เลือกหลายจอได้) แล้วกดอีกครั้ง'); return; }
+  log('นำเข้า component จากไลบรารี…'); await resolveAll(); log(deviceSetInfo());
+  let done = 0, skipped = 0;
+  for (const old of sel) {
+    const m = FRAME_RE.exec(old.name), mob = !!m[4] || old.width <= 500, st = findState(m[2], m[3], m[1]);
+    if (!st) { skipped++; log('  · ข้าม "' + old.name + '" — ไม่มีจอชื่อนี้ในชุดปัจจุบันของ ' + m[2] + ' (ชื่อจอเปลี่ยนหรือตัดออกแล้ว) ไม่แตะ · ใช้ "สร้างเฉพาะ scenario ที่เลือก" สร้างชุดใหม่แทน'); continue; }
+    const at = page.children.indexOf(old), x = old.x, y = old.y;
+    MOB = mob; PLACE = { x, y }; CREATED = []; PINS = [];
+    try {
+      const s = await st.fn(); stripDividers(s); await polish(s); repin(); await bindTones(); await AFTER_SCREEN(s);   // ขั้นเดียวกับ buildGrid
+      s.name = PLUGIN.prefix + ' / ' + st.code + ' · ' + m[2] + ' — ' + st.label + (mob ? ' · mobile' : '');
+      if (s.setPluginData) s.setPluginData('builtAt', String(Date.now()));
+      page.insertChild(Math.min(at, page.children.length), s); s.x = x; s.y = y;
+      old.remove(); done++;
+      log('  · ' + done + '/' + sel.length + ' แทนที่ ' + s.name + (st.code !== m[1] ? ' (รหัสเดิม ' + m[1] + ')' : ''));
+    } catch (e) { warn('แทนที่ ' + old.name, e); const k = dropCreated(page); if (k) log('    ลบชิ้นที่ค้าง ' + k + ' ชิ้น'); }
+    MOB = false; PLACE = null; CREATED = [];
+  }
+  figma.currentPage.selection = page.children.filter(n => n.type === 'FRAME' && n.getPluginData && +n.getPluginData('builtAt') >= t0);
+  log('');
+  log('แทนที่แล้ว ' + done + ' จอ · ข้าม ' + skipped + ' · จอที่ไม่ได้เลือกไม่ถูกแตะ · ป้าย state เหนือจอไม่เปลี่ยน · ย้อนได้ด้วย Cmd+Z หรือ Version history');
+  log(errors.length ? '⚠ เตือน ' + errors.length + ' จุด (รายการด้านบน) — ส่งข้อความนี้กลับมาให้ตรวจ' : 'ไม่มีคำเตือน ✓');
+  log('ใช้เวลา ' + Math.round((Date.now() - t0) / 1000) + ' วินาที');
+}
+
 /* ---------- journey แนวขวาง (ปุ่มแยก · เจ้าของงานสั่ง 22 ต.ค. 2569 "ลงในเพจ maintainance แต่มีปุ่มแยกการ generate userflow") ----------
    18 scenario ต่อกันซ้าย → ขวา ตาม build.json "journey" · กล่องหน้าจอในผังติดป้ายรหัสจอ (A.1 …) และใส่ภาพย่อจากจอที่สร้างไว้บนหน้านี้แล้ว (ไม่มีจอ = กล่องเปล่า)
    วางต่อใต้ของเดิมบนหน้า "Maintainance" ไม่ลบ/ไม่ย้ายของที่มีอยู่ */
@@ -5746,6 +5786,7 @@ figma.ui.onmessage = async (msg) => {
     if (msg.type === 'build-journey') await buildJourneyAll();
     if (msg.type === 'build-activity') await buildActivity();
     if (msg.type === 'export-shots') await exportShots('flow-maintainance', msg.scen);   // msg.scen = scenario ที่ติ๊ก (9 พ.ย. 2569 แยก export FigJam ราย S)
+    if (msg.type === 'replace-selected') await replaceSelected();   // 13 พ.ย. 2569 แทนที่จอที่เลือกด้วยฉบับล่าสุด
     if (msg.type === 'move-latest') await moveLatest();
     if (msg.type === 'purge-cut') await purgeCut();
     if (msg.type === 'archive-cut') await archiveCut();   // 10 พ.ย. 2569 ย้ายไปกรอบ ตัดออกแล้ว แทนการลบ   // 10 พ.ย. 2569 ลบจอบล็อก M N (S14 S15) และบล็อกว่างอื่น
