@@ -729,8 +729,10 @@ async function planCarModal(scr, o) {
   const shown = pool.slice(0, 10), total = picked || f.query ? pool.length : Q_EXTRA_TOTAL;   // ยังไม่กรอง = ทุกคันที่ยังไม่อยู่ในแผน (ค่าสมมติ 370 แบบ E.19)
   const rows = shown.map(([c, i]) => [{ check: ticked.indexOf(i) >= 0, text: c[0], sub: c[2] }, c[1], lastMa(c, i), lastRepair(c, i)]);
   const chips = f.regions.map(shortRegion).concat(f.districts, f.types), n = ticked.length;
-  const body = [await tableHeader({ placeholder: PICK_SEARCH, query: f.query, chips, filterCount: chips.length })];
-  const fd = o.filter && { regions: o.filter.regions || [], districts: o.filter.districts || [], types: o.filter.types || [], open: o.filter.open };
+  /* 13 พ.ย. 2569 เจ้าของงาน "ใน modal ต้องมี filter แบบ ที่ตอนเลือก filter ของเดิม" + เลือก "ช่องเดิม S1 + กางไว้ตั้งแต่เปิด" ⇒ desktop แผงกางเสมอ (ค่าในช่อง = ที่ใช้อยู่ หรือ o.filter ค่าร่าง) ชิปซ่อนระหว่างแผงกาง (แบบเว็บ TripCarPicker) · o.collapsed = กดปุ่มตัวกรองหุบแล้ว · มือถือ = bottom sheet เมื่อส่ง o.filter */
+  const panel = !MOB && !o.collapsed;
+  const fd = o.filter ? { regions: o.filter.regions || [], districts: o.filter.districts || [], types: o.filter.types || [], open: o.filter.open } : panel ? { regions: f.regions, districts: f.districts, types: f.types } : null;
+  const body = [await tableHeader({ placeholder: PICK_SEARCH, query: f.query, chips: panel ? [] : chips, filterCount: chips.length })];
   const fields = fd && [multiDropdown('ภาค', fd.regions, { placeholder: 'ทั้งหมด', optional: true, state: fd.open === 'region' ? 'Focused' : undefined }),
     multiDropdown('เขต', fd.districts, { placeholder: 'ทั้งหมด', optional: true, state: fd.open === 'district' ? 'Focused' : undefined }),
     multiDropdown('ประเภทยานพาหนะ', fd.types, { placeholder: 'ทั้งหมด', optional: true })];
@@ -3200,10 +3202,9 @@ const S1_SUBS = [
     ['รายการแผน', () => listScreen('S1 รายการแผน', { rows: ownPlans(UNITS[0]) })],
     ['ฟอร์มสร้างแผน (ว่าง) — เปิดแท็บไตรมาส 1', () => planForm('S1 ฟอร์มสร้างแผน', { q: 1 })],
     ['เลือกปีงบประมาณ — รายการปีเปิด', () => planForm('S1 เลือกปีงบประมาณ', { values: { name: FILLED.name }, q: 1, yearOpen: true })],
-    ['กดเพิ่มยานพาหนะ — modal ยานพาหนะทุกคันที่ยังไม่อยู่ในแผน', () => planForm('S1 modal เพิ่มยานพาหนะ', { values: FILLED, q: 1, pick: {} })],
-    ['กดตัวกรอง — แผงตัวกรองใน modal ยังไม่เลือกภาค เขต ประเภทยานพาหนะ', () => planForm('S1 แผงตัวกรองใน modal', { values: FILLED, q: 1, pick: { filter: {} } })],
+    ['กดเพิ่มยานพาหนะ — modal ยานพาหนะทุกคันที่ยังไม่อยู่ในแผน แผงตัวกรองกางอยู่', () => planForm('S1 modal เพิ่มยานพาหนะ', { values: FILLED, q: 1, pick: {} })],
     ['เลือกภาค เขต ในแผงตัวกรอง — รายการเขตของภาคที่เลือก', () => planForm('S1 เลือกเขตในแผงตัวกรอง', { values: FILLED, q: 1, pick: { filter: M_PANEL } })],
-    ['กดตกลง — ชิปตัวกรอง ตารางเหลือยานพาหนะของพื้นที่ที่เลือก', () => planForm('S1 modal กรองแล้ว', { values: FILLED, q: 1, pick: M_AREA })],
+    ['กดตกลง — ตารางเหลือยานพาหนะของพื้นที่ที่เลือก แผงยังกางอยู่', () => planForm('S1 modal กรองแล้ว', { values: FILLED, q: 1, pick: M_AREA })],
     ['ติ๊กยานพาหนะ 3 คัน — ปุ่มเพิ่มเข้าไตรมาส 1 กดได้', () => planForm('S1 ติ๊กยานพาหนะใน modal', { values: FILLED, q: 1, pick: Object.assign({ ticked: [0, 1, 2] }, M_AREA) })],
     ['เพิ่มเข้าไตรมาส 1 สำเร็จ — แท็บไตรมาส 1 มียานพาหนะ 3 คัน ตัวเลขบนแท็บเปลี่ยน', async () => { const s = await planForm('S1 เพิ่มเข้าไตรมาส 1 แล้ว', { values: FILLED, alloc: A_Q1, q: 1 }); notify(s, 'เพิ่มยานพาหนะ 3 คันเข้าไตรมาส 1 สำเร็จ'); return s; }],
     ['แท็บไตรมาส 1 — ทุกคันกำหนดแล้ว อะไหล่ในไตรมาสรวมครบ', () => planForm('S1 ไตรมาส 1', { values: FILLED, alloc: A_ALL, picks: A_PICKS, oils: A_OILS, draw: A_DRAW, q: 1 })],
@@ -3212,11 +3213,12 @@ const S1_SUBS = [
     ['บันทึกและส่งอนุมัติสำเร็จ — รออนุมัติ', async () => { const s = await listScreen('S1 บันทึกสำเร็จ', { rows: [NEW_PLAN].concat(ownPlans(UNITS[0])) }); notify(s, 'ส่งแผนบำรุงรักษาเพื่ออนุมัติสำเร็จ'); return s; }],
     ['รายละเอียดแผน — รออนุมัติ ดูอย่างเดียว', () => planDetail('S1 รายละเอียด รออนุมัติ', { status: 'review', readonly: true })]]],
   ['ค้นหายานพาหนะใน modal', [
-    ['กดเพิ่มยานพาหนะ — modal ยานพาหนะทุกคันที่ยังไม่อยู่ในแผน', () => planForm('S1 modal เพิ่มยานพาหนะ', { values: FILLED, q: 1, pick: {} })],
-    ['พิมพ์ค้นหา — ตารางเหลือยานพาหนะที่ตรงคำค้น', () => planForm('S1 modal ค้นหา', { values: FILLED, q: 1, pick: { query: '82-' } })],
-    ['ติ๊กยานพาหนะจากผลค้นหา — ปุ่มเพิ่มเข้าไตรมาส 1 กดได้', () => planForm('S1 modal ค้นหาแล้วติ๊ก', { values: FILLED, q: 1, pick: { query: '82-', ticked: [0] } })]]],
+    ['กดเพิ่มยานพาหนะ — modal ยานพาหนะทุกคันที่ยังไม่อยู่ในแผน แผงตัวกรองกางอยู่', () => planForm('S1 modal เพิ่มยานพาหนะ', { values: FILLED, q: 1, pick: {} })],
+    ['กดปุ่มตัวกรอง — แผงตัวกรองหุบ เหลือช่องค้นหาและตาราง', () => planForm('S1 modal หุบแผงตัวกรอง', { values: FILLED, q: 1, pick: { collapsed: true } })],
+    ['พิมพ์ค้นหา — ตารางเหลือยานพาหนะที่ตรงคำค้น', () => planForm('S1 modal ค้นหา', { values: FILLED, q: 1, pick: { query: '82-', collapsed: true } })],
+    ['ติ๊กยานพาหนะจากผลค้นหา — ปุ่มเพิ่มเข้าไตรมาส 1 กดได้', () => planForm('S1 modal ค้นหาแล้วติ๊ก', { values: FILLED, q: 1, pick: { query: '82-', ticked: [0], collapsed: true } })]]],
   ['สร้างแผนของกองในสำนักงานใหญ่ เลือกภาค สนง. ใน modal', [
-    ['กดตัวกรอง — แผงตัวกรองใน modal ยังไม่เลือกภาค เขต ประเภทยานพาหนะ', () => planForm('S1 แผงตัวกรองใน modal', { values: FILLED, q: 1, pick: { filter: {} } })],
+    ['กดเพิ่มยานพาหนะ — modal ยานพาหนะทุกคันที่ยังไม่อยู่ในแผน แผงตัวกรองกางอยู่', () => planForm('S1 modal เพิ่มยานพาหนะ', { values: FILLED, q: 1, pick: {} })],
     ['กดตัวกรอง — แผงตัวกรอง รายการภาค มี สนง. (สำนักงานใหญ่)', () => planForm('S1 รายการภาค', { values: FILLED, q: 1, pick: { filter: { regions: [REGIONS[4]], open: 'region' } } })],
     ['กดตัวกรอง — แผงตัวกรอง เลือกภาค สนง. รายการเขต กองของสำนักงานใหญ่', () => planForm('S1 เขตของ สนง.', { values: FILLED, q: 1, pick: { filter: { regions: [REGIONS[4]], districts: ['กบผ.'], open: 'district' } } })]]],
   ['เพิ่มยานพาหนะเข้าไตรมาสที่ยังไม่มียานพาหนะ', [
