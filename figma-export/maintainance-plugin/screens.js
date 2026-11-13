@@ -645,14 +645,15 @@ const ALL_Q_PARTS_EMPTY = 'จัดการอะไหล่ทีละค�
 /* ฟอร์มแผน S1 S19 แบบเลือกยานพาหนะผ่าน modal (เจ้าของงาน 12 พ.ย. 2569 ส่งภาพ modal "เพิ่มรถเข้า Purchase Order" ของ Overhaul + "หน้าจอเลือกรถ อยากให้เป็น modal ตามรูป แก้ใน flow ด้วย"
    เคาะ: ยานพาหนะที่เลือกเข้าไตรมาสที่เปิดอยู่ทันที) — R109 · แทนแบบ A (5 พ.ย. 2569 ตารางยานพาหนะของพื้นที่ในหน้า + แผงตัวกรอง R77 + ติ๊กแล้วจัดลงไตรมาส)
    หัวข้อ "ยานพาหนะในแผน" Badge "ในแผน n คัน" + Tabs ทั้งหมด · ไตรมาส 1–4 · แท็บไตรมาส: Table header หัว + Badge กำหนดอะไหล่แล้ว + ค้นหา + ปุ่ม "เพิ่มยานพาหนะ" (o.add แทนตัวกรอง) · เมนู … ดูรายละเอียด แก้ไข ย้ายไปไตรมาสอื่น ลบ
-   แท็บทั้งหมด: ทุกคันในแผน + ป้ายไตรมาส + ถังขยะท้ายแถว (ลบออกจากแผน · BACKLOG 86 ของเว็บ) ไม่มีปุ่มตัวกรอง/เพิ่ม · ไม่มีสถานะ "ยังไม่จัด" แล้ว (ทุกคันในแผนอยู่ในไตรมาส)
+   แท็บทั้งหมด: ทุกคันในแผน + ป้ายไตรมาส + ถังขยะท้ายแถว (ลบออกจากแผน · BACKLOG 86 ของเว็บ) · ปุ่มเพิ่มยานพาหนะ เลือกไตรมาสใน modal (13 พ.ย. 2569) · ไม่มีสถานะ "ยังไม่จัด" แล้ว (ทุกคันในแผนอยู่ในไตรมาส)
    o.pick = เปิด modal เพิ่มยานพาหนะ (planCarModal) · o.move = popup ย้ายไปไตรมาสอื่น { car, cur, sel } */
 const Q_MENU = [MENU[0], MENU[1], ['ย้ายไปไตรมาสอื่น', 'swap_driving_apps_wheel-24-300-round'], MENU[2]];   // ไอคอนเดียวกับ MOVE_ITEM ของ S25
 const PLAN_OUT_CONFIRM = (c, q) => ({ danger: true, title: 'ยืนยันการลบยานพาหนะออกจากแผน', sub: c[0] + ' จะออกจากไตรมาส ' + q + ' และไม่อยู่ในแผนนี้ เพิ่มกลับได้จากปุ่มเพิ่มยานพาหนะ', cancel: 'ยกเลิก', ok: 'ลบ' });   // ข้อความชุดเดียวกับเว็บ BACKLOG 86
 async function noCarsInPlan() {
   const es = inst('Empty state/Data empty');
-  await text(es, 'Text', 'ยังไม่มียานพาหนะในแผน'); await text(es, 'Supporting text', 'เปิดแท็บไตรมาสแล้วกดเพิ่มยานพาหนะ');
-  const a = find(es, 'Actions'); if (a) a.visible = false;
+  await text(es, 'Text', 'ยังไม่มียานพาหนะในแผน'); await text(es, 'Supporting text', 'กดเพิ่มยานพาหนะ หรือเปิดแท็บไตรมาสแล้วกดเพิ่มยานพาหนะ');
+  const s2 = find(es, 'Secondary button'); if (s2) s2.visible = false;   // 13 พ.ย. 2569 ปุ่มหลักเปิด modal เพิ่มยานพาหนะเข้าแผน (แบบ noCarsInQ)
+  const pb = find(es, 'Primary button'); if (pb) setProps(pb, { Text: 'เพิ่มยานพาหนะเข้าแผน', 'Leading icon': true, 'Leading icon swap': icon('add-24-300-round') });
   return emptyGraphic(es, 'empty-vehicle');
 }
 async function planForm(name, o) {
@@ -674,7 +675,7 @@ async function planForm(name, o) {
   const decided = (i) => draw[i] === 'none' || ((o.picks || {})[i] || []).length > 0 || (o.manualCars || []).indexOf(i) >= 0;
   const qDone = q ? inQ(q).filter(([, i]) => decided(i)).length : 0;
   add(carSec, await tableHeader(q ? { title: 'ยานพาหนะในไตรมาส ' + q, badge: 'กำหนดอะไหล่แล้ว ' + qDone + '/' + inQ(q).length + ' คัน', placeholder: 'เลขทะเบียน, ยี่ห้อ, รุ่น', query, add: 'เพิ่มยานพาหนะ' }
-    : { title: 'ยานพาหนะทั้งหมดในแผน', badge: nIn + ' คัน', placeholder: 'เลขทะเบียน, ยี่ห้อ, รุ่น', query, noFilter: true }), 'h');
+    : { title: 'ยานพาหนะทั้งหมดในแผน', badge: nIn + ' คัน', placeholder: 'เลขทะเบียน, ยี่ห้อ, รุ่น', query, add: 'เพิ่มยานพาหนะ' }), 'h');   // 13 พ.ย. 2569 แท็บทั้งหมดเพิ่มได้ เลือกไตรมาสใน modal
   if (shown.length) {
     const oils = o.oils || {}, picks = o.picks || {}, manualCars = o.manualCars || [];
     const rows = q
@@ -703,7 +704,7 @@ async function planForm(name, o) {
     btnRow([['Secondary button', o.edit ? 'ยกเลิก' : 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'บันทึกและส่งอนุมัติ', { size: 'lg', disabled: !complete }]])
   ]), 32), 'h');
   if (o.yearOpen) comboAt(scr, yr.findOne(n => n.name === 'Container') || yr, YEARS.map(y => [y, '', y === v.year]));
-  if (o.pick) await planCarModal(scr, Object.assign({ q: q || 1, alloc }, o.pick));
+  if (o.pick) await planCarModal(scr, Object.assign({ q, alloc }, o.pick));   // q 0 = แท็บทั้งหมด (เลือกไตรมาสใน modal)
   if (o.move) await moveQModal(scr, o.move);
   return scr;
 }
@@ -723,31 +724,49 @@ const histDate = (d, m, y) => String(d).padStart(2, '0') + '/' + String(y === 25
 const lastMa = (c, i) => HIST_MA[c[0].split(' ')[0]] || (i % 9 === 4 ? NO_HIST : histDate(1 + ((i * 11) % 28), 1 + ((i * 7) % 12), 2567 + (i % 3)));
 const lastRepair = (c, i) => HIST_RP[c[0].split(' ')[0]] || (i % 5 === 2 ? NO_HIST : histDate(1 + ((i * 13) % 28), 1 + ((i * 5) % 12), 2566 + (i % 4)));
 const PICK_SEARCH = 'ค้นหาทะเบียน, ยี่ห้อ/รุ่น, หน่วยงาน';
-async function planCarModal(scr, o) {
+/* ฟอร์มเลือกยานพาหนะกลาง (13 พ.ย. 2569 เจ้าของงาน "วิธีการเลือกรถเข้าไตรมาส ถูกต้องแล้ว แต่อยากให้เลือกรถเข้าแผน ใช้วิธีการเดียวกับเลือกรถเข้าไตรมาส"
+   ทั้ง 3 จุด: แท็บทั้งหมดของฟอร์มแผน S1 S19 · popup เพิ่มยานพาหนะเข้าแผนเดินทาง S6 S9 · popup เพิ่มยานพาหนะที่หน้าไตรมาสของแผนที่อนุมัติแล้ว S6 · "ฟอร์มการเลือกรถอยากให้ใช้เหมือนกัน แต่ต่างกันที่ คอลัมน์")
+   = modal เพิ่มยานพาหนะเข้าไตรมาสของ S1 (R109): Modal 1140 · Table header ค้นหา + ปุ่มตัวกรอง · แผงตัวกรองกาง (desktop) ภาค เขต ประเภทยานพาหนะ · ตาราง Lead checkbox แบ่งหน้า 10 · ปุ่มหลัก (k)
+   o.items = [[ยานพาหนะ, ลำดับ]] ที่ให้เลือกก่อนกรอง · o.cols + o.cell(c, i) = คอลัมน์ของแต่ละจุด (ต่อจากทะเบียน) · o.taken = { ลำดับ: ชื่อแผนเดินทาง } แสดงแต่ติ๊กไม่ได้ · o.total = จำนวนเมื่อยังไม่กรอง
+   o.regions districts types query = กรองแล้ว · o.filter = แผงค่าร่าง { …, open } · o.collapsed = หุบแผง · o.chooseQ = { sel, open } ช่องเลือกไตรมาส (แท็บทั้งหมด) · o.emptyText = [หัว, รอง] เมื่อไม่มีให้เลือก */
+async function pickModal(scr, o) {
   const f = { regions: o.regions || [], districts: o.districts || [], types: o.types || [], query: o.query || '' };
-  const picked = f.regions.length || f.districts.length || f.types.length, alloc = o.alloc || {}, ticked = o.ticked || [];
-  const pool = o.full ? [] : PICK_POOL().map((c, i) => [c, i]).filter(([c, i]) => !alloc[i] && (!picked || inArea(c, f)) && inQuery(c, f));
-  const shown = pool.slice(0, 10), total = picked || f.query ? pool.length : Q_EXTRA_TOTAL;   // ยังไม่กรอง = ทุกคันที่ยังไม่อยู่ในแผน (ค่าสมมติ 370 แบบ E.19)
-  const rows = shown.map(([c, i]) => [{ check: ticked.indexOf(i) >= 0, text: c[0], sub: c[2] }, c[1], lastMa(c, i), lastRepair(c, i)]);
-  const chips = f.regions.map(shortRegion).concat(f.districts, f.types), n = ticked.length;
-  /* 13 พ.ย. 2569 เจ้าของงาน "ใน modal ต้องมี filter แบบ ที่ตอนเลือก filter ของเดิม" + เลือก "ช่องเดิม S1 + กางไว้ตั้งแต่เปิด" ⇒ desktop แผงกางเสมอ (ค่าในช่อง = ที่ใช้อยู่ หรือ o.filter ค่าร่าง) ชิปซ่อนระหว่างแผงกาง (แบบเว็บ TripCarPicker) · o.collapsed = กดปุ่มตัวกรองหุบแล้ว · มือถือ = bottom sheet เมื่อส่ง o.filter */
+  const picked = f.regions.length || f.districts.length || f.types.length, ticked = o.ticked || [], taken = o.taken || {}, items = o.items || [];
+  const pool = items.filter(([c]) => (!picked || inArea(c, f)) && inQuery(c, f));
+  const shown = pool.slice(0, 10), total = picked || f.query || o.total == null ? pool.length : o.total;
+  const rows = shown.map(([c, i]) => [{ check: !taken[i] && ticked.indexOf(i) >= 0, text: c[0], sub: taken[i] ? 'อยู่ในแผนเดินทาง ' + taken[i] : c[2], disabled: !!taken[i] }].concat(o.cell(c, i)));
+  const chips = f.regions.map(shortRegion).concat(f.districts, f.types), n = ticked.filter(i => !taken[i]).length;
+  /* 13 พ.ย. 2569 เจ้าของงาน "ใน modal ต้องมี filter แบบ ที่ตอนเลือก filter ของเดิม" + เลือก "ช่องเดิม S1 + กางไว้ตั้งแต่เปิด" ⇒ desktop แผงกางเสมอ ชิปซ่อนระหว่างแผงกาง (แบบเว็บ TripCarPicker) · มือถือ = bottom sheet เมื่อส่ง o.filter */
   const panel = !MOB && !o.collapsed;
   const fd = o.filter ? { regions: o.filter.regions || [], districts: o.filter.districts || [], types: o.filter.types || [], open: o.filter.open } : panel ? { regions: f.regions, districts: f.districts, types: f.types } : null;
-  const body = [await tableHeader({ placeholder: PICK_SEARCH, query: f.query, chips: panel ? [] : chips, filterCount: chips.length })];
-  const fields = fd && [multiDropdown('ภาค', fd.regions, { placeholder: 'ทั้งหมด', optional: true, state: fd.open === 'region' ? 'Focused' : undefined }),
+  const body = [];
+  /* แท็บทั้งหมด: เลือกไตรมาสในตัว modal (ช่องบังคับ แถวแรก) · ปุ่มหลักกดได้เมื่อเลือกไตรมาสและติ๊กอย่างน้อย 1 คัน */
+  const qField = o.chooseQ ? dropdown('เพิ่มเข้าไตรมาส', o.chooseQ.sel != null ? QUARTERS[o.chooseQ.sel] : '', { placeholder: 'เลือกไตรมาส', state: o.chooseQ.open ? 'Focused' : undefined }) : null;
+  if (qField) body.push(qField);
+  if (items.length) body.push(await tableHeader({ placeholder: PICK_SEARCH, query: f.query, chips: panel ? [] : chips, filterCount: chips.length }));
+  const fields = items.length && fd && [multiDropdown('ภาค', fd.regions, { placeholder: 'ทั้งหมด', optional: true, state: fd.open === 'region' ? 'Focused' : undefined }),
     multiDropdown('เขต', fd.districts, { placeholder: 'ทั้งหมด', optional: true, state: fd.open === 'district' ? 'Focused' : undefined }),
     multiDropdown('ประเภทยานพาหนะ', fd.types, { placeholder: 'ทั้งหมด', optional: true })];
-  if (fd && !MOB) body.push(col('Filter panel', [row('Row', fields), btnRow([['Tertiary button', 'ล้างตัวกรอง'], ['Secondary button', 'ยกเลิก'], ['Primary button', 'ตกลง']])], 20));
-  if (rows.length) { const t = await tblShort(PICK_MODAL_COLS, rows, { pagination: { shown: rows.length, total } }); headCheck(t, rows); body.push(t); }
-  else if (o.full) { const es = inst('Empty state/Data empty'); await text(es, 'Text', 'ยานพาหนะทุกคันอยู่ในแผนแล้ว'); await text(es, 'Supporting text', 'ไม่มียานพาหนะที่เพิ่มเข้าแผนนี้ได้'); const a = find(es, 'Actions'); if (a) a.visible = false; body.push(es); }
+  if (fields && !MOB) body.push(col('Filter panel', [row('Row', fields), btnRow([['Tertiary button', 'ล้างตัวกรอง'], ['Secondary button', 'ยกเลิก'], ['Primary button', 'ตกลง']])], 20));
+  if (rows.length) { const t = await tblShort(o.cols, rows, { pagination: { shown: rows.length, total } }); headCheck(t, rows); body.push(t); }
+  else if (!items.length) { const es = inst('Empty state/Data empty'); await text(es, 'Text', o.emptyText[0]); await text(es, 'Supporting text', o.emptyText[1]); const a = find(es, 'Actions'); if (a) a.visible = false; body.push(es); }
   else body.push(await searchNotFound());
-  if (fd && MOB) { await filterPanel(scr, fields); }   // มือถือ: แผงตัวกรอง bottom sheet ทับฟอร์ม (แบบเดิม R77)
-  else await popupModal(scr, { title: 'เพิ่มยานพาหนะเข้าไตรมาส ' + o.q, sub: 'ยานพาหนะที่ยังไม่อยู่ในแผนนี้ เพิ่มได้ทุกคัน', w: 1140, body, ok: 'เพิ่มเข้าไตรมาส ' + o.q + (n ? ' (' + n + ')' : ''), okOff: !n });
-  if (fd) {
-    const at = (x) => x.findOne(y => y.name === 'Container') || x;
+  if (fields && MOB && o.filter) { await filterPanel(scr, fields); }   // มือถือ: แผงตัวกรอง bottom sheet ทับฟอร์ม (แบบเดิม R77)
+  else await popupModal(scr, { title: o.title, sub: o.sub, w: 1140, body, ok: o.okText + (n ? ' (' + n + ')' : ''), okOff: !n || (o.chooseQ && o.chooseQ.sel == null) });
+  const at = (x) => x.findOne(y => y.name === 'Container') || x;
+  if (fields) {
     if (fd.open === 'region') comboAt(scr, at(fields[0]), REGIONS.map(r => [r, '', fd.regions.indexOf(r) >= 0]));
     if (fd.open === 'district') comboAt(scr, at(fields[1]), (fd.regions.length ? fd.regions : REGIONS).flatMap(r => DISTRICTS[r]).map(d => [d, '', fd.districts.indexOf(d) >= 0]));   // เขตของทุกภาคที่เลือกรวมกัน · สนง. = 6 กอง (X3)
   }
+  if (qField && o.chooseQ.open) comboAt(scr, at(qField), QUARTERS.map((t, k) => [t, '', k === o.chooseQ.sel]));
+}
+/* modal ของฟอร์มแผน S1 S19: แท็บไตรมาส n = "เพิ่มยานพาหนะเข้าไตรมาส n" · แท็บทั้งหมด (o.q = 0) = "เพิ่มยานพาหนะเข้าแผน" + ช่องเลือกไตรมาส · ยานพาหนะที่ยังไม่อยู่ในแผนนี้ เพิ่มได้ทุกคัน (X5) · ยังไม่กรอง = 370 คัน (ค่าสมมติแบบ E.19) */
+async function planCarModal(scr, o) {
+  const alloc = o.alloc || {};
+  await pickModal(scr, Object.assign({}, o, {
+    items: o.full ? [] : PICK_POOL().map((c, i) => [c, i]).filter(([, i]) => !alloc[i]), cols: PICK_MODAL_COLS, cell: (c, i) => [c[1], lastMa(c, i), lastRepair(c, i)], total: Q_EXTRA_TOTAL,
+    title: o.q ? 'เพิ่มยานพาหนะเข้าไตรมาส ' + o.q : 'เพิ่มยานพาหนะเข้าแผน', sub: 'ยานพาหนะที่ยังไม่อยู่ในแผนนี้ เพิ่มได้ทุกคัน', okText: o.q ? 'เพิ่มเข้าไตรมาส ' + o.q : 'เพิ่มเข้าแผน',
+    emptyText: ['ยานพาหนะทุกคันอยู่ในแผนแล้ว', 'ไม่มียานพาหนะที่เพิ่มเข้าแผนนี้ได้'], chooseQ: o.q ? null : (o.chooseQ || {}) }));
 }
 /* popup ย้ายไปไตรมาสอื่น (R109 · เมนู … ของยานพาหนะในแท็บไตรมาส) — Radio text card ไตรมาส 1–4 แบบ popup จัดลงไตรมาสเดิม · ไตรมาสปัจจุบันของคันนั้น State=Disabled */
 async function moveQModal(scr, o) {
@@ -1431,28 +1450,17 @@ async function noTripCars() { const es = inst('Empty state/Data empty'); await t
    + ตารางติ๊กเลือกรถ Table Lead checkbox ตามหน้า Vehicle Management "Export reports - Select vehicles" ของ UI Release#2 + Modal footer Horizontal right
    Modal instance เพิ่มตารางข้างในไม่ได้ ⇒ วางชิ้นไลบรารีเรียงในกรอบ Modal แบบเดียวกับ bottom sheet (§จ) · กว้าง 800 = Modal Size=lg · mobile = bottom sheet
    o.pool = รถที่เลือกได้ (ของไตรมาสที่ยังไม่อยู่ในแผนเดินทางใด และยังไม่อยู่ในใบนี้) · o.ticked = ที่ติ๊กไว้ · o.used = จำนวนรถของไตรมาสที่อยู่ในแผนเดินทางอื่นแล้ว */
-const TRIP_PICK_COLS = [['ทะเบียน', 300], ['ยี่ห้อ/รุ่น', 0], ['หน่วยงานเจ้าของยานพาหนะ', 200]];
 /* 5 พ.ย. 2569 รีวิว "รถ 1 คันในไตรมาส สามารถอยู่ได้เพียง 1 แผนการเดินทางเท่านั้น · รถที่ถูกเลือกลงแผนอื่นไปแล้ว จะยังแสดงให้เห็นตอนที่กดเพิ่มรถเข้าแผนเดินทาง แต่ไม่สามารถเลือกลงแผนเดินทางนี้ได้"
-   ⇒ o.taken = { ลำดับรถ: ชื่อแผนเดินทาง } แสดงในตาราง Checkbox State=Disabled + บรรทัดรอง "อยู่ในแผนเดินทาง {ชื่อ}" (Table cell Lead checkbox · มือถือ List with checkbox item State=Disabled) · ติ๊กทั้งหมดนับเฉพาะคันที่เลือกได้ */
-async function tripCarModal(scr, o) {   // o.cars = รายการรถแทน TRIP_CARS (เพิ่มรถเข้าไตรมาส E.19) · o.title · o.sub · o.okText · o.pool = รถที่แสดง (ไม่รวมคันที่อยู่ในใบนี้แล้ว) · o.taken
-  /* o.pagination = { shown, total } ส่งต่อให้ tblShort ⇒ Table pagination ใต้ตาราง (desktop ในตัว Table · มือถือ Breakpoint=Mobile ใต้การ์ด) · 12 พ.ย. 2569 เจ้าของงาน "ป๊อบอัพ ควรมีแบ่งหน้า" ใช้เฉพาะ popup เพิ่มยานพาหนะเข้าไตรมาส (E.19 · R104) · popup เพิ่มเข้าแผนเดินทางไม่ส่ง = ไม่มีตัวแบ่งหน้าเหมือนเดิม */
-  const pg = o.pagination ? { pagination: o.pagination } : undefined;
-  const cars = o.cars || TRIP_CARS, pool = o.pool, ticked = o.ticked || [], n = ticked.length, taken = o.taken || {}, nTaken = pool.filter(i => taken[i]).length;
-  const sub = o.sub || ('ยานพาหนะทุกคันของ' + NOW_Q + (nTaken ? ' · ' + nTaken + ' คันอยู่ในแผนเดินทางอื่นแล้ว เลือกไม่ได้' : ''));
-  const ok = (o.okText || 'เพิ่มเข้าแผนเดินทาง') + (n ? ' (' + n + ')' : '');
-  const rows = pool.map(i => [{ check: !taken[i] && ticked.indexOf(i) >= 0, text: cars[i][0], sub: taken[i] ? 'อยู่ในแผนเดินทาง ' + taken[i] : '', disabled: !!taken[i] }, cars[i][1], cars[i][2]]);
-  const empty = async () => { const es = inst('Empty state/Data empty'); await text(es, 'Text', o.empty ? o.empty[0] : 'ยานพาหนะทุกคันของ' + NOW_Q + ' อยู่ในแผนเดินทางแล้ว'); await text(es, 'Supporting text', o.empty ? o.empty[1] : 'ไม่มียานพาหนะที่เพิ่มเข้าแผนเดินทางนี้ได้'); /* o.empty = [หัว, บรรทัดรอง] (R75) */ const a = find(es, 'Actions'); if (a) a.visible = false; return es; };
-  const search = () => { const f = field('', '', { placeholder: 'ค้นหาทะเบียน, ยี่ห้อ/รุ่น, หน่วยงาน', lead: 'search-24-300-round' }); setProps(f, { Label: false, Helper: false }); return f; };
-  if (MOB) { await popupModal(scr, { title: o.title || 'เพิ่มยานพาหนะเข้าแผนเดินทาง', body: pool.length ? [search(), await tblShort(TRIP_PICK_COLS, rows, pg)] : [await empty()], ok, okOff: !n }); return; }
-  const body = [];
-  if (pool.length) {
-    const th = await tableHeader({ placeholder: 'ค้นหาทะเบียน, ยี่ห้อ/รุ่น, หน่วยงาน' });
-    const acts = find(th, 'Actions'); if (acts) acts.visible = false;
-    const t = await tblShort(TRIP_PICK_COLS, rows, pg);
-    headCheck(t, rows);   // เลือกทั้งหมดที่หัวคอลัมน์แรก (ตาม Select vehicles) นับเฉพาะคันที่เลือกได้
-    body.push(th, t);
-  } else body.push(await empty());
-  await popupModal(scr, { title: o.title || 'เพิ่มยานพาหนะเข้าแผนเดินทาง', sub, w: 800, body, ok, okOff: !n });
+   ⇒ o.taken = { ลำดับรถ: ชื่อแผนเดินทาง } แสดงในตาราง Checkbox State=Disabled + บรรทัดรอง "อยู่ในแผนเดินทาง {ชื่อ}" · ติ๊กทั้งหมดนับเฉพาะคันที่เลือกได้
+   13 พ.ย. 2569 ใช้ฟอร์มกลาง pickModal (เจ้าของงาน "อยากให้เลือกรถเข้าแผน ใช้วิธีการเดียวกับเลือกรถเข้าไตรมาส") — แผงตัวกรองกาง · แบ่งหน้าทุก popup · คอลัมน์ชุดเดียวกับ TripCarPicker ของเว็บ (ทะเบียน · ยี่ห้อ/รุ่น · บำรุงรักษาเครื่องจักรล่าสุด · ซ่อมเครื่องจักรล่าสุด · BACKLOG 64)
+   เดิม TRIP_PICK_COLS ทะเบียน · ยี่ห้อ/รุ่น · หน่วยงานเจ้าของยานพาหนะ กว้าง 800 ไม่มีตัวกรอง · o.pagination = { shown, total } ของ popup เพิ่มยานพาหนะเข้าไตรมาส (E.19 · R104) */
+async function tripCarModal(scr, o) {   // o.cars = รายการรถแทน TRIP_CARS (เพิ่มรถเข้าไตรมาส E.19) · o.title · o.sub · o.okText · o.pool = ลำดับรถที่แสดง · o.taken · o.empty = [หัว, รอง] (R75)
+  const cars = o.cars || TRIP_CARS, taken = o.taken || {}, nTaken = o.pool.filter(i => taken[i]).length;
+  await pickModal(scr, Object.assign({}, o, {
+    items: o.pool.map(i => [cars[i], i]), cols: PICK_MODAL_COLS, cell: (c, i) => [c[1], lastMa(c, i), lastRepair(c, i)], total: o.pagination ? o.pagination.total : null,
+    title: o.title || 'เพิ่มยานพาหนะเข้าแผนเดินทาง', okText: o.okText || 'เพิ่มเข้าแผนเดินทาง',
+    sub: o.sub || ('ยานพาหนะทุกคันของ' + NOW_Q + (nTaken ? ' · ' + nTaken + ' คันอยู่ในแผนเดินทางอื่นแล้ว เลือกไม่ได้' : '')),
+    emptyText: o.empty || ['ยานพาหนะทุกคันของ' + NOW_Q + ' อยู่ในแผนเดินทางแล้ว', 'ไม่มียานพาหนะที่เพิ่มเข้าแผนเดินทางนี้ได้'] }));
 }
 /* popup ประกอบจากไลบรารี (Modal ของไลบรารีใส่ Table / File upload ไม่ได้): Background overlay + กรอบ Modal (มุม 12) + Modal header + เนื้อหา (ขอบใน 24 ระยะ 24) + Modal footer Horizontal right
    ตามโครง Modal Type=Card list xl ของไฟล์ Component + popup Open Job / Repair Completed หน้า RP & MA Job ของ UI Release#2 · mobile = bottom sheet (sheet())
@@ -3242,6 +3250,13 @@ const S1_SUBS = [
     ['กดเพิ่มยานพาหนะเข้าไตรมาส 3 — modal ยานพาหนะที่ยังไม่อยู่ในแผน', () => planForm('S1 modal เพิ่มยานพาหนะเข้าไตรมาส 3', IN3({ q: 3, pick: {} }))],
     ['ติ๊กยานพาหนะ 2 คัน — ปุ่มเพิ่มเข้าไตรมาส 3 (2) กดได้', () => planForm('S1 ติ๊กยานพาหนะเข้าไตรมาส 3', IN3({ q: 3, pick: { ticked: Q3_ADD } }))],
     ['เพิ่มยานพาหนะเข้าไตรมาส 3 สำเร็จ — แท็บไตรมาส 3 มี 2 คัน', async () => { const s = await planForm('S1 เพิ่มยานพาหนะเข้าไตรมาส 3 แล้ว', IN3({ alloc: Object.assign({}, A_Q1, Object.fromEntries(Q3_ADD.map(i => [i, 3]))), q: 3 })); notify(s, 'เพิ่มยานพาหนะ ' + Q3_ADD.length + ' คันเข้าไตรมาส 3 สำเร็จ'); return s; }]]],
+  /* 13 พ.ย. 2569 เจ้าของงาน "อยากให้เลือกรถเข้าแผน ใช้วิธีการเดียวกับเลือกรถเข้าไตรมาส" — แท็บทั้งหมดเพิ่มได้ เลือกไตรมาสในตัว modal */
+  ['เพิ่มยานพาหนะจากแท็บทั้งหมด (เลือกไตรมาสใน modal)', [
+    ['แท็บทั้งหมด — มี 3 คัน กดเพิ่มยานพาหนะ', () => planForm('S1 แท็บทั้งหมด สามคัน', IN3({}))],
+    ['กดเพิ่มยานพาหนะ — modal เพิ่มยานพาหนะเข้าแผน ยังไม่เลือกไตรมาส ปุ่มเพิ่มเข้าแผนกดไม่ได้', () => planForm('S1 modal เพิ่มเข้าแผน', IN3({ pick: {} }))],
+    ['เลือกไตรมาส — รายการไตรมาสเปิด', () => planForm('S1 modal เลือกไตรมาส', IN3({ pick: { chooseQ: { open: true } } }))],
+    ['ติ๊กยานพาหนะ 2 คัน — เลือกไตรมาส 2 แล้ว ปุ่มเพิ่มเข้าแผน (2) กดได้', () => planForm('S1 modal เพิ่มเข้าแผน ติ๊ก', IN3({ pick: { chooseQ: { sel: 1 }, ticked: Q3_ADD } }))],
+    ['เพิ่มเข้าแผนสำเร็จ — แท็บทั้งหมดมี 5 คัน ไตรมาส 2 มี 2 คัน', async () => { const s = await planForm('S1 เพิ่มเข้าแผนแล้ว', IN3({ alloc: Object.assign({}, A_Q1, Object.fromEntries(Q3_ADD.map(i => [i, 2]))) })); notify(s, 'เพิ่มยานพาหนะ ' + Q3_ADD.length + ' คันเข้าไตรมาส 2 สำเร็จ'); return s; }]]],
   /* ---------- จัดการยานพาหนะในแผน (เริ่มจากแท็บไตรมาส 1 ที่มี 3 คัน) ---------- */
   ['ย้ายยานพาหนะไปไตรมาสอื่น', [
     ['แท็บไตรมาส 1 — กดปุ่ม … ของยานพาหนะ — ดูรายละเอียด แก้ไข ย้ายไปไตรมาสอื่น ลบ', () => FIRST_MENU('S1 เมนูของยานพาหนะ', IN3({ q: 1 }))],
