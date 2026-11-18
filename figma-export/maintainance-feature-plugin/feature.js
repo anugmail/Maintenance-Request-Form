@@ -96,7 +96,7 @@ function featurePages(j, ji) {
       const code = (ji + 1) + '.' + (k + 1) + '.' + (n + 1), ix = x + n * (GRID.colW + GRID.colGap);
       if (String(it[0]).indexOf('toast:') === 0) {
         const id = it[0].slice(6), t = FEATURE_TOASTS[id];
-        return { code, x: ix, label: 'Toast ' + t.text + ' (แสดงบน' + t.page + ' เมื่อ' + t.when + ')', fn: () => toastScreen(id) };
+        return { code, x: ix, label: 'Toast ' + t.text + ' (แสดงบน' + t.page + ' เมื่อ' + t.when + ')', fn: () => toastScreen(id), data: t };   // data = ข้อความ toast เข้าลายเซ็น (ซอร์ส fn ไม่มีข้อความ)
       }
       const s = SCREEN_FN[it[0]];
       return { code, x: ix, label: it[1] + ' (' + it[0] + ')', fn: s ? s.fn : null, old: it[0] };
@@ -159,7 +159,7 @@ function desktopHeader(s) {
   }
 }
 
-/* ติดป้าย pluginData 'mf' = 'title' หรือเลข journey (ไว้ใช้ภายหลัง · ไม่ได้ใช้ลบอะไร) */
+/* ติดป้าย pluginData 'mf' ทุกชิ้นที่วาง: 'title' · 'happy' / 'happy-<j>' (Happy flow) · 'full' / '<j>' (ทุกเคส) — ปุ่มลบส่วน (update.js) ใช้แยกส่วน · Title ไม่ลบ */
 const MF_TAG = 'mf';
 let orphans = 0; let TIMES = [];
 /* กล่องหัวส่วน (Happy flow / ทุกเคส) — แบบ Title หลักแต่เล็กกว่า อยู่นอกจอ */
@@ -170,6 +170,30 @@ async function sectionTitle(prefix, text, width) {
   f.appendChild(await labelText(text, 80, '#FFFFFF'));
   f.name = prefix + ' · ส่วน ' + text;
   return f;
+}
+/* สร้างจอ 1 จอ (ขั้นเดียวกันทุกทาง: สร้างทั้ง Feature · อัปเดตจอที่เปลี่ยน · สร้างจอที่เลือกใหม่) — place(s) = วางลงหน้า (คนเรียกเลือกตำแหน่ง/ลำดับ layer)
+   ลายเซ็น (sig.js) เก็บใน pluginData mfSig ของเฟรม ⇒ โหมดอัปเดตรู้ว่าจอไหนเปลี่ยน · คืน null เมื่อพัง (ลบชิ้นที่ค้างแล้ว) */
+const MAKE_BASE = ['makeScreen'];   // ชื่อที่ทุกจอพึ่ง (ขั้นแต่งจอหลังสร้าง) — อยู่ในลายเซ็นของทุกจอ
+const screenName = (prefix, it, frameTitle, pgName, mob) => prefix + ' / ' + it.code + ' · ' + frameTitle + ' › ' + pgName + ' — ' + it.label + (mob ? ' · mobile' : '');
+function itemSig(it, mob, frameTitle, pgName) { return sigOf(it.fn, F.id, MAKE_BASE, { code: it.code, label: it.label, page: pgName, title: frameTitle, mob: !!mob, data: it.data || null }); }
+async function makeScreen(page, it, mob, prefix, frameTitle, pgName, at, place) {
+  MOB = mob; CREATED = []; PLACE = { x: at.x, y: at.y }; const ts = Date.now();
+  try {
+    PINS = []; const s = await it.fn(); desktopHeader(s); stripDividers(s); await polish(s); repin(); await bindTones(); if (typeof AFTER_SCREEN === 'function') await AFTER_SCREEN(s);
+    capOverlayScreen(s); showPlaceholders(s);
+    s.name = screenName(prefix, it, frameTitle, pgName, mob);
+    if (s.setPluginData) { s.setPluginData('builtAt', String(Date.now())); s.setPluginData('mfSig', itemSig(it, mob, frameTitle, pgName)); s.setPluginData('mfFeature', F.id); }
+    place(s);
+    TIMES.push([Date.now() - ts, it.code + (mob ? ' mobile' : '') + ' ' + it.label.slice(0, 40)]);
+    /* ชิ้นที่ฟังก์ชันจอสร้างไว้แต่ไม่ได้ใส่เข้าจอ (carPartsScreen สร้าง Section "อะไหล่อื่นๆ" + ช่องน้ำมันทุกครั้ง) ค้างบนหน้า (ผู้ใช้เจอ 13 พ.ย. 2569)
+       ⇒ ลบเฉพาะชิ้นที่รอบนี้เพิ่งสร้างและไม่ได้อยู่ในจอ ของเดิมบนหน้าไม่แตะ */
+    for (const c of CREATED) { try { if (c !== s && c.parent === page) { c.remove(); orphans++; } } catch (e) { /* ลบไปแล้ว */ } }
+    return s;
+  } catch (e) {
+    warn(it.code + ' ' + it.label + (mob ? ' (mobile)' : ''), e);
+    const d = dropCreated(page); if (d) log('    ลบชิ้นที่ค้างจากจอที่พัง ' + d + ' ชิ้น');
+    return null;
+  } finally { CREATED = []; PLACE = null; MOB = false; }
 }
 async function featureGrid(page, prefix, journeys, y0, total, devices, opts) {
   opts = opts || {};
@@ -190,22 +214,8 @@ async function featureGrid(page, prefix, journeys, y0, total, devices, opts) {
       MOB = mob; let h = 0; const rowY = y;
       for (const pg of pages) for (const it of pg.items) {
         if (!it.fn) { warn(it.code + ' ไม่พบจอเดิม ' + it.old + ' ใน screens.js', 'ข้าม'); continue; }
-        CREATED = []; PLACE = { x: it.x, y: rowY }; const ts = Date.now();
-        try {
-          PINS = []; const s = await it.fn(); desktopHeader(s); stripDividers(s); await polish(s); repin(); await bindTones(); if (typeof AFTER_SCREEN === 'function') await AFTER_SCREEN(s);
-          capOverlayScreen(s); showPlaceholders(s);
-          s.name = prefix + ' / ' + it.code + ' · ' + frameTitle + ' › ' + pg.name + ' — ' + it.label + (mob ? ' · mobile' : '');
-          if (s.setPluginData) s.setPluginData('builtAt', String(Date.now()));
-          put(s, it.x, rowY); h = Math.max(h, s.height); made.push(s);
-          TIMES.push([Date.now() - ts, it.code + (mob ? ' mobile' : '') + ' ' + it.label.slice(0, 40)]);
-          /* ชิ้นที่ฟังก์ชันจอสร้างไว้แต่ไม่ได้ใส่เข้าจอ (carPartsScreen สร้าง Section "อะไหล่อื่นๆ" + ช่องน้ำมันทุกครั้ง) ค้างบนหน้า (ผู้ใช้เจอ 13 พ.ย. 2569)
-             ⇒ ลบเฉพาะชิ้นที่รอบนี้เพิ่งสร้างและไม่ได้อยู่ในจอ ของเดิมบนหน้าไม่แตะ */
-          for (const c of CREATED) { try { if (c !== s && c.parent === page) { c.remove(); orphans++; } } catch (e) { /* ลบไปแล้ว */ } }
-          log('  · ' + made.length + '/' + total + ' ' + s.name);
-        } catch (e) {
-          warn(it.code + ' ' + it.label + (mob ? ' (mobile)' : ''), e);
-          const d = dropCreated(page); if (d) log('    ลบชิ้นที่ค้างจากจอที่พัง ' + d + ' ชิ้น');
-        }
+        const s = await makeScreen(page, it, mob, prefix, frameTitle, pg.name, { x: it.x, y: rowY }, (n) => put(n, it.x, rowY));
+        if (s) { h = Math.max(h, s.height); made.push(s); log('  · ' + made.length + '/' + total + ' ' + s.name); }
         CREATED = []; PLACE = null;
       }
       MOB = false;
@@ -306,14 +316,15 @@ async function preImport(names) {
   for (let i = 0; i < jobs.length; i += 10) await Promise.all(jobs.slice(i, i + 10).map(j => j()));
   return jobs.length;
 }
+let RESOLVED = false;   // หาครบแล้วในรอบเปิดปลั๊กอินนี้ ⇒ Feature ถัดไป/กดซ้ำ ไม่ต้องหาใหม่ (18 พ.ย. 2569)
 async function resolveFast() {
+  if (RESOLVED) { log('ใช้ component ที่หาไว้แล้วตอนเปิดปลั๊กอินรอบนี้'); return; }
   const lib = NEEDED.filter(n => LOCAL_OPTIONAL.indexOf(n) < 0);
   let t = Date.now();
   const pre = await preImport(lib);
   log('⏱ นำเข้าจากไลบรารีพร้อมกัน ' + pre + ' ตัว ' + secs(t));
   t = Date.now();
-  await resolveAll(lib);   // ตัวที่นำเข้าไม่ได้จริงๆ resolveAll ยังสแกนเป็นทางสุดท้ายตามเดิม
-  log('⏱ resolveAll ' + secs(t));
+  await resolveLib(lib);   // 18 พ.ย. 2569: แทน resolveAll — จำผลไว้ในไฟล์ (rcache.js) รอบหน้าไม่สแกน instance ซ้ำ
   t = Date.now();
   const lab = await importLabels();
   if (lab.length) log('ป้ายข้างจอจากไลบรารี: ' + lab.join(' · ') + ' ' + secs(t));
@@ -324,12 +335,13 @@ async function resolveFast() {
     const n = want.get(c.name); if (n && !INDEX.has(n)) { INDEX.set(n, c); ROUTE[n] = 'สำเนาในไฟล์นี้'; }
   }
   const left = () => [...new Set(want.values())].filter(n => !INDEX.has(n));
-  if (left().length) for (const i of figma.root.findAllWithCriteria({ types: ['INSTANCE'] })) {
-    const n = want.get(i.name); if (!n || INDEX.has(n)) continue;
-    try { const mc = await i.getMainComponentAsync(); if (mc) { INDEX.set(n, holderOf(mc)); ROUTE[n] = 'จาก instance ในไฟล์'; } } catch (e) { /* ข้าม */ }
-    if (!left().length) break;
+  if (left().length) {   // หาจาก instance ชื่อตรง ผ่านความจำของไฟล์ (เจอ/ไม่เจอ จำไว้ทั้งคู่ · ไม่สแกนทั้งไฟล์)
+    const cache = rcLoad(), r = await rcFind(left(), cache, () => false, { mem: 0, memMiss: 0, scanned: 0, calls: 0 });
+    for (const [n, c] of r) { INDEX.set(n, c); ROUTE[n] = 'จาก instance ในไฟล์'; }
+    rcSave(cache);
   }
   const miss = left();
+  RESOLVED = true;
   log('component ของไฟล์ Maintain-D / ป้าย: ได้ ' + (LOCAL_OPTIONAL.length - miss.length) + '/' + LOCAL_OPTIONAL.length + (miss.length ? ' · ไม่พบ ' + miss.join(' · ') + ' — ใช้แบบสำรอง' : '') + ' ' + secs(t));
 }
 
@@ -650,6 +662,7 @@ const featureList = () => MF_FEATURES.map(f => { useFeature(f.id); return { id: 
 figma.ui.onmessage = async (msg) => {
   try {
     if (await tgtHandle(msg)) return;   // เลือก / เพิ่ม / ลบบอร์ดปลายทาง · เปิดลิงก์ (targets.js)
+    if (await updHandle(msg)) return;   // แท็บอัปเดต / ลบ (update.js · 18 พ.ย. 2569)
     /* msg.features = หลาย Feature ที่ติ๊ก (17 พ.ย. 2569) ⇒ ทำทีละ Feature ตามลำดับ · journey ที่ติ๊ก (pick) ใช้เฉพาะตอนเลือก Feature เดียว */
     const ids = Array.isArray(msg.features) && msg.features.length ? msg.features : [msg.feature];
     const multi = ids.length > 1, picks = msg.picks || {};   // picks = { id: [journey] } เลือก journey ราย Feature · ไม่มี id = ทุก journey

@@ -1,4 +1,4 @@
-/* ⚠ ไฟล์นี้ประกอบอัตโนมัติด้วย maintainance-feature-plugin/build.js — แก้ที่ feature.js (หรือต้นทาง core.js / screens.js) แล้วรันใหม่ (2026-11-18T04:37) */
+/* ⚠ ไฟล์นี้ประกอบอัตโนมัติด้วย maintainance-feature-plugin/build.js — แก้ที่ feature.js (หรือต้นทาง core.js / screens.js) แล้วรันใหม่ (2026-11-18T05:03) */
 /* ======================== บอร์ดปลายทาง FigJam (ผู้ใช้สั่ง 17 พ.ย. 2569 "ให้เลือกได้ว่าจะส่ง ui ไป figjam อันไหน") ========================
    ปลั๊กอินตัวเดียวใช้ได้ทั้งไฟล์ Figma (สร้างจอ + ส่งจอ) และไฟล์ FigJam (วางลงบอร์ด) · รายการบอร์ดเก็บใน clientStorage
    (ของปลั๊กอินต่อผู้ใช้ ใช้ร่วมกันทุกไฟล์) ⇒ เลือกบอร์ดในฝั่ง Figma แล้วฝั่ง FigJam รู้ว่าปลายทางคือบอร์ดไหน
@@ -5739,6 +5739,244 @@ return {
 };
 })());
 
+/* ======================== maintainance-feature-plugin/sig.js ======================== */
+/* ============================================================================
+   maintainance-feature-plugin/sig.js — ลายเซ็นจอ (18 พ.ย. 2569 · ผู้ใช้ขอ "อัปเดตเฉพาะจอที่เปลี่ยน ไม่ต้องสร้างใหม่ทั้งหมด")
+   ----------------------------------------------------------------------------
+   ใช้ 2 ที่ (ไฟล์เดียวกัน):
+     · build.js  (node)  — ตัดซอร์สทุกไฟล์เป็นก้อนตามการประกาศชั้นนอกสุด (function / const / let / class ที่ขึ้นต้นคอลัมน์ 0)
+                           หาว่าก้อนไหนอ้างชื่อไหน แล้วคิด hash ของ "ก้อนนั้น + ทุกก้อนที่มันพึ่งต่อกันไป" ⇒ MF_DEPHASH ฝังใน code.js
+     · ปลั๊กอิน (Figma) — ลายเซ็นของจอ = hash( ซอร์สฟังก์ชันจอ + MF_DEPHASH ของทุกชื่อที่ฟังก์ชันจออ้าง + ข้อมูลเคส/ป้าย )
+   ไม่นับคอมเมนต์และช่องว่าง ⇒ แก้คอมเมนต์ไม่ทำให้จอ "เปลี่ยน"
+   ไม่ผูกกับโครง screens.js — อ่านแค่ซอร์ส ⇒ ย้ายฐาน core/screens แล้วยังใช้ได้ (build ใหม่ = hash ใหม่)
+   ============================================================================ */
+const SIG_SALT = 'mf-sig-1';   // เปลี่ยนค่านี้ = ทุกจอนับว่า "เปลี่ยน" (ใช้เมื่อแก้ขั้นตอนสร้างจอแบบที่ตัวหาการพึ่งพาจับไม่ได้)
+
+/* hash 64 บิต (FNV-1a 2 ชุด) เป็นเลขฐาน 16 ยาว 16 ตัว — ไม่ใช่การเข้ารหัส ใช้เทียบว่าเหมือนเดิมไหม */
+function sigHash(s) {
+  let a = 0x811c9dc5, b = 0x01000193 ^ 0x5bd1e995;
+  s = String(s);
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    a ^= c; a = Math.imul(a, 0x01000193) >>> 0;
+    b ^= c; b = Math.imul(b, 0x5bd1e995) >>> 0; b ^= b >>> 15;
+  }
+  return ('0000000' + (a >>> 0).toString(16)).slice(-8) + ('0000000' + (b >>> 0).toString(16)).slice(-8);
+}
+
+/* ตัดคอมเมนต์ + บีบช่องว่าง · เก็บชื่อตัวแปรที่อยู่นอกข้อความ (รวมใน ${…} ของ template) — ตัวตัดคำแบบย่อ แยก regex จาก / หารด้วยตัวอักษรก่อนหน้า */
+function sigScan(src) {
+  src = String(src);
+  const ids = new Set(); let out = '', i = 0, last = '';   // last = ตัวอักษรที่มีความหมายตัวล่าสุด (ไว้เดาว่า / คือ regex ไหม)
+  const n = src.length, idStart = /[A-Za-z_$]/, idChar = /[\w$]/;
+  const KW = /^(return|typeof|case|do|else|in|of|new|delete|void|throw|instanceof|await|yield)$/;
+  let lastWord = '';
+  const stack = [];   // ความลึกของ ${ } ใน template
+  function template() {   // อยู่หลัง ` แล้ว · คืนเมื่อเจอ ` ปิด
+    out += '`';
+    while (i < n) {
+      const c = src[i];
+      if (c === '\\') { out += src.substr(i, 2); i += 2; continue; }
+      if (c === '`') { out += '`'; i++; return; }
+      if (c === '$' && src[i + 1] === '{') { out += '${'; i += 2; stack.push(0); code(true); out += '}'; continue; }
+      out += c; i++;
+    }
+  }
+  function code(inTpl) {
+    let depth = 0;
+    while (i < n) {
+      const c = src[i], d = src[i + 1];
+      if (c === '/' && d === '/') { while (i < n && src[i] !== '\n') i++; continue; }
+      if (c === '/' && d === '*') { const e = src.indexOf('*/', i + 2); i = e < 0 ? n : e + 2; if (!/\s$/.test(out)) out += ' '; continue; }
+      if (c === '"' || c === "'") { const q = c; let j = i + 1; while (j < n && src[j] !== q && src[j] !== '\n') { if (src[j] === '\\') j++; j++; } out += src.slice(i, j + 1); i = j + 1; last = q; lastWord = ''; continue; }
+      if (c === '`') { i++; template(); last = '`'; lastWord = ''; continue; }
+      if (c === '/') {
+        const re = !last || /[(,=:[!&|?{};+\-*%<>~^]/.test(last) || KW.test(lastWord);
+        if (re) { let j = i + 1, cls = false; while (j < n && src[j] !== '\n') { const x = src[j]; if (x === '\\') { j += 2; continue; } if (x === '[') cls = true; else if (x === ']') cls = false; else if (x === '/' && !cls) break; j++; } j++; while (j < n && /[a-z]/.test(src[j])) j++; out += src.slice(i, j); i = j; last = '/'; lastWord = ''; continue; }
+      }
+      if (idStart.test(c)) {
+        let j = i + 1; while (j < n && idChar.test(src[j])) j++;
+        const w = src.slice(i, j), prev = out.replace(/\s+$/, '').slice(-1);
+        if (prev !== '.' || out.replace(/\s+$/, '').slice(-3) === '...') ids.add(w);   // a.b ⇒ นับแค่ a (b เป็นชื่อ property)
+        out += w; i = j; last = 'a'; lastWord = w; continue;
+      }
+      if (/\s/.test(c)) { if (!/\s$/.test(out)) out += ' '; i++; continue; }
+      if (inTpl) { if (c === '{') depth++; else if (c === '}') { if (!depth) { i++; stack.pop(); return; } depth--; } }
+      out += c; i++; last = c; lastWord = '';
+    }
+  }
+  code(false);
+  return { code: out.trim(), ids };
+}
+
+/* ก้อนการประกาศชั้นนอกสุด: บรรทัดที่ขึ้นต้นคอลัมน์ 0 ด้วย function / async function / const / let / var / class
+   ก้อน = ตั้งแต่บรรทัดนั้นถึงก่อนการประกาศถัดไป (คำสั่งอื่นที่คอลัมน์ 0 เช่น for … / figma.ui.onmessage = ติดไปกับก้อนก่อนหน้า) */
+const SIG_DECL = /^(?:async\s+)?(?:function\s*\*?\s*([A-Za-z_$][\w$]*)|class\s+([A-Za-z_$][\w$]*)|(?:const|let|var)\s+(.+))/;
+function sigChunks(src) {
+  const lines = String(src).split('\n'), chunks = []; let cur = null;
+  for (const l of lines) {
+    const m = l.match(SIG_DECL);
+    if (m) {
+      let names = [];
+      if (m[1] || m[2]) names = [m[1] || m[2]];
+      else { const head = m[3].replace(/(['"`]).*?\1/g, '""'); names = [...head.matchAll(/(?:^|,)\s*([A-Za-z_$][\w$]*)\s*=/g)].map(x => x[1]); if (!names.length) { const one = head.match(/^([A-Za-z_$][\w$]*)/); if (one) names = [one[1]]; } }
+      if (names.length) { cur = { names, text: l }; chunks.push(cur); continue; }
+    }
+    if (cur) cur.text += '\n' + l;
+  }
+  return chunks;
+}
+
+/* build.js: scopes = { '*': [ซอร์สส่วนกลาง…], '<id>': ซอร์สของ features/<id>.js } ⇒ { '*': { ชื่อ: hash }, '<id>': { ชื่อ: hash } }
+   ชื่อในไฟล์ Feature หาในไฟล์นั้นก่อน (ทุกไฟล์มี TOASTS / SCREENS / HAPPY ของตัวเอง) แล้วค่อยหาส่วนกลาง */
+function sigDepHash(scopes) {
+  const nodes = new Map();   // key → { own, deps:Set<key> }
+  const table = {};          // scope → { ชื่อ → key }
+  for (const [sc, srcs] of Object.entries(scopes)) {
+    table[sc] = {};
+    for (const src of [].concat(srcs)) for (const ch of sigChunks(src)) {
+      const s = sigScan(ch.text), key = sc + ':' + ch.names[0] + ':' + nodes.size;
+      nodes.set(key, { own: sigHash(s.code), ids: s.ids, scope: sc });
+      for (const nm of ch.names) table[sc][nm] = table[sc][nm] ? table[sc][nm].concat(key) : [key];   // ชื่อซ้ำ (ประกาศทับ) ⇒ พึ่งทุกก้อน
+    }
+  }
+  for (const nd of nodes.values()) {
+    nd.deps = new Set();
+    for (const id of nd.ids) for (const k of (nd.scope !== '*' && table[nd.scope][id]) || table['*'][id] || []) nd.deps.add(k);
+  }
+  const closure = (key) => { const seen = new Set([key]), st = [key]; while (st.length) for (const d of nodes.get(st.pop()).deps) if (!seen.has(d)) { seen.add(d); st.push(d); } return seen; };
+  const out = {};
+  for (const [sc, t] of Object.entries(table)) {
+    out[sc] = {};
+    for (const [nm, keys] of Object.entries(t)) {
+      const all = new Set(); keys.forEach(k => closure(k).forEach(x => all.add(x)));
+      out[sc][nm] = sigHash([...all].map(k => nodes.get(k).own).sort().join(','));
+    }
+  }
+  return out;
+}
+
+/* ปลั๊กอิน: ลายเซ็นของฟังก์ชันจอ 1 ตัว · fid = Feature (หาชื่อในไฟล์ Feature ก่อน) · base = ชื่อขั้นตอนที่ทุกจอผ่าน (makeScreen) · data = ป้าย/ข้อความเคส */
+function sigOf(fn, fid, base, data) {
+  const D = (typeof MF_DEPHASH !== 'undefined' && MF_DEPHASH) || { '*': {} };
+  const s = sigScan(fn ? Function.prototype.toString.call(fn) : '');
+  const look = (nm) => (D[fid] && D[fid][nm]) || D['*'][nm];
+  const deps = [...s.ids].concat(base || []).filter(look).sort().map(nm => nm + '=' + look(nm));
+  return sigHash([SIG_SALT, s.code, deps.join(';'), JSON.stringify(data || null)].join('\n'));
+}
+/* ซอร์สฟังก์ชันอ่านได้จริงไหม (บาง sandbox คืน [native code]) — อ่านไม่ได้ ⇒ ลายเซ็นไว้ใจไม่ได้ โหมดอัปเดตจอที่เปลี่ยนจะไม่ทำงาน */
+function sigSourceOk() {
+  try { const probe = function mfProbe() { return 'mf-probe-41'; }; return Function.prototype.toString.call(probe).indexOf('mf-probe-41') >= 0; } catch (e) { return false; }
+}
+
+if (typeof module !== 'undefined' && module.exports) module.exports = { sigHash, sigScan, sigChunks, sigDepHash, sigOf, sigSourceOk, SIG_SALT };
+
+const MF_DEPHASH = {"*":{"log":"f77a66c7a3d6da80","errors":"3a220519171e22dd","warn":"f77a66c7a3d6da80","KEYS":"62453d2ba8aacaa1","ALIAS":"17d7a61879541404","INDEX":"7cd4c36ecdfe855a","ROUTE":"28cd88a1fcbf9233","IMPORT_ERR":"c61fb57143b7f864","holderOf":"79324dbf94193d00","resolveAll":"47d6746f5e3e0439","main":"bf4125408c2b9449","icon":"15b9c9343ee5df97","setProps":"c19057dba29fdf71","USED":"c583d85f3aa90c88","CREATED":"285650ca1e6afefe","PLACE":"62e5454527dd2fc2","INNER_FRAMES":"e34ba422faaa8938","sweepOrphans":"756ac3ac8726b160","dropCreated":"d0d7504e49a0cbbe","inst":"67fd213b8579730d","find":"25b0610251b7976d","FONTS":"d926b5ba7426a836","FONT_SWAPPED":"6602ae17c330dc62","fallbackFont":"ba4582d114ba0589","text":"f77a66c7a3d6da80","hide":"5f6e4b14f26b46a6","frame":"41335e4ac80be72b","add":"e2fc5af89e791fe0","WHITE":"0e81755097a1a348","BADGE_OF":"b71d082625b97cb4","MOB":"c0e34169d583a870","BP":"ac7dcbc2afcf2fbe","VW":"37ab5161abd7e106","VH":"37ab5161abd7e106","btn":"7f76d14ee61767fc","row":"fdceff0e3c75c706","col":"1b4e8d2ead1398a3","syncLabel":"a1992f1850465ee3","field":"f08e64c0367b595d","dropdown":"0658ba40eddbcea4","multiDropdown":"cd8b478575a5117a","area":"35790abdd3f1dcd4","section":"77aba4e12f8c4617","sectionLabel":"164d533b8b324c82","SURFACE_SUB":"a89a2fbb2bec0cdd","SURFACE_VAR":"fa9bd7cb17bdd901","surfaceVar":"a1b66acb2b7240f0","displayBox":"4b6badcf9715f1bf","kv":"785d082751f5b5b7","upload":"2ccf2525ffa9b35d","mobileCards":"76bebdad62137f74","tblComposed":"feea95da8e354edc","fillPills":"9dec5857fd46ff58","fillCell":"cfc2b1893d387267","TONE_HEX":"e69ac0a0a4507ecc","TONED":"d1377fca850400d4","TONE_VARS":"9c3ace0b6ab2c091","toneText":"75fcba54a010d2b2","libVar":"c3435886ea6b88e0","bindTones":"530ccc299b4289c3","sizeCol":"282995d8da95a0f5","TABLE_MAX":"303d6a850cef8ecc","OVERSIZE":"3ba9517fbf962996","tbl":"006fc3d27d88708c","listCheck":"3d9981c742a3cdd0","alertBox":"cee9e3df47cbec53","pill":"eebb399ded41fd71","shell":"b3d1fbcb4c06a0ea","pageHead":"386e927b303d4de5","btnRow":"5a7e031393c86237","overlay":"a5ca7905ea99f1bd","notify":"5a5bfcdeddcc7f2c","filterPanel":"571714234e8f9e63","sheet":"68bb9972a7d038b2","modalHead":"b64b5f025c4fe8cf","confirm":"9a390a50bc33238a","formModal":"1f08a869a4334c73","PINS":"4baef648cc2c2320","pin":"2726f6f4faf8ab1b","repin":"5908145501ed8135","MENU_SHEET":"0c20cbff398362ea","menuAt":"de19868fbea72123","MENU":"082cf506c43b49bf","comboAt":"0849e92c39314455","tableHeader":"242792313f68f20b","pagination":"f1750263c97c562b","fillPagination":"3f63ae5b4a00d9db","firstMenuCell":"a387e62c3351b50b","stripDividers":"dbda2a47674f28f7","polish":"0991995401c7b027","reportOversize":"d278bac1baaf4b66","findInstanceAncestor":"bff11141ed969cf4","GRID":"0b62d65458b7e181","BAR_FILL":"7fad210c4f8865b1","HEADER_BROKEN":"e44cba4acbd6a413","rgbOf":"a268e7df01e4464c","LABEL_FONT":"24aa77ff9ffa32c1","labelText":"36fda98de9657169","fixed":"39fb583c0e3f9e01","flowBar":"9817ad1fa5992244","DEVICE_ALIAS":"fd56a7229352f39e","deviceVariant":"8d96acb6aeae3dae","deviceSetInfo":"bcc06a9013e1c558","deviceLabel":"1f7ea759d50bacd9","devOf":"297d52b07c6e8808","targetPage":"1b91f5c730efb7fb","namedPage":"ea8d0eeea0226dca","CANVAS_MAX":"5335463185613201","pageBottom":"789993bf3eb925cf","pageTop":"55b2f34d437e397f","spotOn":"21af53f2e3ca16a2","roomyPage":"1c8c1ad1635fe7f6","liftAbove":"6d0a4ae3a96481e4","fitOn":"a3be1aeb17649170","shiftAll":"d33c3f3d3ffaa6f8","FLOW_GAP":"6ad471f5cb5b0718","STICKY_FILL":"4ca6db98af6a64f8","BADGE_FILL":"4ca6db98af6a64f8","FLOW_LINE":"4ca6db98af6a64f8","scenNo":"856b2f29f29bd149","flowNode":"2269643955ca3dc4","flowText":"e6b90332b8abaf95","arrow":"68a08e8f5904f760","userflowFrame":"b12f2bd793dadd19","emptyGraphic":"c909dbce6183d24a","fillThumb":"1325e8364f3bee7e","DOC_STATUS":"2333b95258a2b471","DOC_FONT":"ff9608800647b35b","docText":"2a938e632fa8578d","docBox":"cd3eaceac137edb7","putBelow":"768512a83d087a00","storyMapBoard":"a1b8b8ac5acc1fc2","tableBoard":"f4521289ed72ba6e","swimlaneBoard":"afdd60fbb629677f","activityFrame":"82b77df168949828","activityBoard":"40638cd19b547f8d","splitBoard":"62a53121c2e4d023","SHOT_RE":"e01c51ed33155ff4","auditDuplicates":"6b5d07fe452b76a8","exportShots":"369c862f578bed1f","JGAP":"dae9d7edd7a05fec","buildJourney":"60e5cfbc21b80a6b","isPath":"f2df0053e3311030","countScreens":"4cd6af5f677b214c","flatScreens":"fc38c28bd7776684","buildGrid":"5fb276b7305cf5f1","PLUGIN":"f1aea653f9600e35","DIRECT":"274eb3d21274c5c1","NESTED":"56d549adae14b05f","LOCAL_OPTIONAL":"f3a1bb3b17d01302","NEEDED":"dc24b2bd9d736ff0","NESTED_ONLY":"f86418cb7288f28b","has":"d85ac1cf6aaffc2d","PST":"85f49137e27f34cc","PLANS":"8a2b8f52f6d16d4c","NEW_PLAN":"cbf0717b21dd55e0","UNITS":"26563a729f5f0d4c","CREATOR":"26563a729f5f0d4c","UNIT_PLANS":"ffb13e2a55f48bfb","allPlans":"26e2d8a4fae99f38","ownPlans":"a8752ac4522af0b7","REGIONS":"d384c5e3bb606275","DISTRICTS":"42ba939d74bcccea","dCode":"cd23304e239325f7","CAND":"f8efdbadc8a3ba17","REG_OF":"31c325cb6f227047","regionOf":"957c1ddc549fcf70","VTYPES":"597d6a992f1cd5a2","typeOf":"e8a50774ec4393b3","shortRegion":"abde5ca28ddac743","uniq":"473856dadc558f26","P":"4d7073af4bd2a39e","PLAN_KV":"5e576861977ed118","VST":"a918466d856d5428","RDY":"d32d8cd5b1e89b6d","VEH":"587bce86bdcf501a","V":"4d5769163c833df3","NOW_Q":"96faf83a234e9255","NOW_CARS":"96faf83a234e9255","VEH_KV":"f6e56bc0e2db3f0b","PSTAT":"5c86fbbd3f918ae5","PARTS":"c84aa6a95054d8ce","WH":"cbca78cab98ac381","PRICE":"1e41155f5c555522","BUYER":"d95af54537f6dedb","BUYER_OF":"35e972e44ad3c106","baht":"5ca137dbc332c9b7","shortOf":"06749a39d04b89b5","TST":"8506556644e6e387","STAFF_INFO":"0deb0f7db5e74f40","TRIP":"32c83ee532b09444","TRIP_CARS":"57f94d398eaeaf79","TRIP_KV":"5213f898172da116","TRIP_SEL":"7ae91139ac6cd2ae","TRIP_LOCS":"7ae91139ac6cd2ae","tripLoc":"e144dfa56076e409","tripWork":"f28f814f00f38945","tripRange":"e3400ec85fcf8925","tripWorkCell":"c02a345d11e3b766","TRIP_WORKS":"7e960ab7e40fddd0","TRIP_OIL_CARS":"fb7f04da105b3cab","TRIP_FILTER_CARS":"fb7f04da105b3cab","TRIP_FUEL_CARS":"fb7f04da105b3cab","tripParts":"65398b7b95d1c132","OWNER_PH":"11b801d0877b4227","CTRL_NAME":"94758e8e13af6ade","TRIP_PHONES":"f68c29bc3c4ca1d6","TRIP_V_LOCS":"f68c29bc3c4ca1d6","TRIP_V_PHONES":"f68c29bc3c4ca1d6","tripPhone":"0645ebcf3169d627","tripCtrl":"9e5b9a0695f8637f","tripPhoneCell":"fa5c77c7102353d3","UNIT_COL":"205a2c02e01ff96b","TRIP_V_COLS":"6931f60874ac89b5","tripVCols":"1713aaab1b4c512c","tripVCells":"ed77a53d4178dcda","TRIP_ALL":"18a3bee3ec307797","TRIP_REST":"18a3bee3ec307797","TRIP_OUT":"b0ab2a688d47b245","TRIP_KEEP":"b0ab2a688d47b245","TRIP_1":"0339b0e6bc9d6d5d","TRIP_2":"0339b0e6bc9d6d5d","tripAs":"241010843ccc9a3a","TAKEN_1":"8797914584f1aad9","VENDORS":"9f348b7babdf5974","TRIP_V":"51f695598aef41a3","tripBy":"3efe3ca0d3888434","TRIP_RETURN":"fbdbbc78ddceaf10","WORK":"f223b416b0f6d62b","BEFORE":"a836781fb6f7d855","AFTER":"6aeb482badd294a4","WSTAT":"37a4d7c83021e1af","ACC":"d8fe7198950fe9da","pdf":"b080b7e79e39fd9e","jpg":"d13e9f585380c202","detail":"243dc50b2790261f","radioPick":"aa87e975285dfe22","radioGroup":"f0a0e9d0ea8b417a","carPick":"06a33e3863487a44","vehicleInfo":"f1241e0551f46140","photoGallery":"ce71679274d17a23","photoUploads":"280f557ae000b7d9","partRow":"3f804c483a5cb4e4","PART_COLS":"3f9faec1515ab2d2","fillPartCard":"9b9ce9e49d2c16f3","partsPanel":"c590a302967ff7d9","findInstanceAncestorIn":"ed4e756519f7503a","partsSummary":"28394e3fd4e403a6","PLATE_RE":"3a31c38577f69109","PLATE_SKIP":"dfc086bad25d11f7","LINK_VAR":"330ee2785535bebf","WORD_ALLOW":"ed4ab30b85579010","OLD_WORD":"48fbf9b37b748323","toVehicleWord":"900a2335bfa80b93","AFTER_SCREEN":"5a8ad6c59f6fc079","PLAN_COLS":"c9e18a3126d2c40f","qCell":"3cb5036cc3a7e2b6","PLAN_MENU_OF":"9b7488902164b1ba","PLAN_SCOPE":"87af67c85a57ca66","scopeCell":"edbc7aba9f08b6b9","PLAN_UNIT":"8b11c1154a961595","PLAN_COLS_ALL":"d68484d28ef0ee12","planRow":"b09fb610a5c1a47f","listScreen":"1ecc01271d44e8a3","CARS":"a1cad9459a5216b2","YEARS":"23ac3e88ffce9907","CARP_COLS":"81c1af0deec6517d","CAR_PICK":"e2c4bdc5b6f734ae","CAR_QTY":"664c2df6849d1561","MANUAL":"01d1f9cba1f2275c","MANUAL_ROW":"bdfb401267297b01","quarterParts":"01c54b4d83747e03","noCarsInQ":"e90d697212c1eb05","noParts":"519921c091fad4c1","OIL_OPTS":"3fb7fb54d5694037","LAST_OIL":"d9c6c9a51e04412f","QUARTERS":"70c209aa62dc4f56","headCheck":"5dce7a4950a3cb30","PICK_COLS":"73875c70663484ff","Q_COLS":"848684bbc740bc94","Q_MENU":"d04dc2fcb1c40c75","TODO_NONE":"9cab3c287914b92b","OIL_SPEC":"008674543a16763b","oilCell":"7649e49720a1488f","partList":"f895ef1284abada2","partCell":"fe5a5b0111a057e6","QPART_COLS":"fec92da3859217e6","qAgg":"b80f0e9362a563a8","inArea":"d23e296102093a12","inQuery":"5c0385058dc58f69","ASSIGN_OPTS":"7aae1111aab5b00f","assignModal":"bb607f44690ba8de","ALL_Q_PARTS_EMPTY":"b004a8ec2b4bb01b","planForm":"7f73054f563cbc74","FILLED":"b685d684d97932ad","R2":"8dd514cea6d9d5ab","A_PANEL":"745f194fe951b7d4","A_Q1":"7a4767ae0c5bcf09","A_PICKS":"5adb8c13b5746ed9","A_OILS":"ed546218bcae4792","Q3_ADD":"d57dc26644fa1976","A_FULL":"a49499cf0a9cdd2b","A_ALL":"66ef3cffe161ca7a","A_PART":"e41b4be471fe2e23","A_DRAW":"9da523bb46b483e1","Q_ALL":"74548e6ddec0694f","WD":"47b323680fa4a69f","PROG_COLS":"e662f8fa42d9f266","partsProgress":"bb74f60d2c166220","DASH_PLANS":"ba1d35fb8c619198","DASH_TABS":"526886dbf091be1c","sortAll":"b56ca907ce1f2177","i":"b56ca907ce1f2177","DASH_AGG":"45cca4a725ac9aab","DASH_CAR_COLS":"b4cf91e73b73d09f","DASH_CAR_ROWS":"9081ef7a1bc8f5ea","QST":"7711a41a05d1f80e","DASH_PROG_COLS":"077f8f9931f84a36","DASH_PROG":"abc15d89e9da1ebd","dashProgRow":"6d7adea869ed6f21","DASH_METRICS":"1e94cf6ea97101ad","DASH_HINT":"23154d186bfc4788","metric":"66e9136896d7d7c7","metricRow":"c30c8da111b36b6b","DASH_TABLE":"0a3d64b060d33116","partsDash":"39c69b2cd410ab39","EXPORT_CARDS":"4d6740179cc7ef0f","exportModal":"9b529cd78299c647","docFrame":"c85b54f027c12878","DOC_HEAD":"c0a3ddaf19f42c91","dashPdf":"e14ed3864e20fc9e","dashXls":"b41de8864e38aae6","TRIP_Q_COLS":"b3e7251a83792a74","Q_EXTRA":"e855c9e7193d1317","Q_REMOVE_CONFIRM":"30a5fba7143b07d3","qAddModal":"b03e517b544b1717","Q_PARTS_EMPTY":"923913eff9b8346e","TRIP_COLS":"b503dfc048a8613d","tripPlaces":"adebd527d8636ca6","own":"adebd527d8636ca6","tripList":"8f4cea887e926d40","TRIP_CAR_COLS":"03f1d2e047c4a771","TRIP_PARTS_EMPTY":"92ef09717adcfa73","tripPartsSec":"f28ebb8b53beb972","tripForm":"848ce8c3f57e0270","TH_WD":"300bc0612996887f","ptext":"9f677635fa120ded","k":"9f677635fa120ded","thaiDatePicker":"9c081f9106de58b8","TRIP_DATES":"47a5e8e682b5b707","TRIP_FILLED":"24f41803cd78e396","TH_MONTH":"e0e383c0bb56132d","dayOf":"5c83e9440a4ef6c3","monthOf":"5c83e9440a4ef6c3","workRange":"14e57dda7f2a2558","tripCarEdit":"2777bfdd12127f67","rangeDays":"713617183adca2d6","noTripCars":"dee123effc72bee7","TRIP_PICK_COLS":"deb6df7983591e24","tripCarModal":"ca75b54b1066a10d","popupModal":"8e16573e1e0ee803","tblShort":"e4b1fff758b45eb5","JOB_T":"8567bd41c5302950","JOB_I":"8567bd41c5302950","JOB_START":"5c02f89f656d2456","JOB_END":"5c02f89f656d2456","JOB_BY":"5c02f89f656d2456","JOB_MIX":"6485029d2d4c0371","JOB_CANNOT":"6388271833ea04be","TRIP_JOB_COLS":"bdc466f2ef5f6f80","JOB_MENU":"1f63ebfd44e40128","VENDOR_MENU":"47cbea37cc816244","EXIT_CONFIRM":"fd0331fb4516dc0e","CAR_REMOVE_CONFIRM":"1e7daa038330b1b2","tripDetail":"a89b4a4ed5a688d6","TRIP_EXPORT_BTN":"d7a0ef956194155d","TRIP_SHEETS":"1255426e01042877","tripExport":"7072b915479760e3","tripDocHead":"d6baca4f1086c36a","tripPdf":"d314026f73787b26","tripXls":"52061debb92ef44c","OIL_FILE":"a2ee2a52bd75d75b","OIL_TAG":"2ddbc1d13787e786","OIL_SAMPLED":"f86660dea6d40c2b","oilResult":"9f2a04d1dfbffac4","SAFETY_TYPES":"d0cd4a964f2cbdb1","JOB_TYPE":"d0cd4a964f2cbdb1","SAFETY_FILES":"8a96f36adfc6770e","SAFETY_DONE":"47618945d91a8693","safetyOn":"2e69fb44d9effc38","safetyDocs":"a7f8b2d8aac93409","JOB_COLS":"418772cf903ad52e","JOB_OIL_OPTS":"4fe1da46ebf9fea0","JOB_OIL":"4fe1da46ebf9fea0","lastOil":"1b08a49ea32a1d60","TRIP_OIL":"d0df52b0e96aba1b","oilDateField":"934b421bc22670d9","jobOil":"aef06dc952c0b674","jobWork":"53e2b191b106ec11","jobBoxes":"a77e3b4faad05de9","jobPage":"37ae94bc7fc6dd12","RET_COLS":"19a368f744679758","retRows":"a8d3acb9b18040dd","CANNOT_USED":"158dbbb6ff203c4a","retTable":"cd3dfd3ec7f04677","cannotModal":"4641ab9bae0a6dd0","HIRE_T":"287b393b9ffa3d3d","HIRE_START":"287b393b9ffa3d3d","HIRE_WHY":"ab973987307a48f9","HIRE_ST":"91a7942adfb56972","WORK_COLS2":"d70f7448f782e127","HIRE_DONE":"e04e0ad797d3e663","HIRE_CANNOT":"e04e0ad797d3e663","HIRE_BY":"266823b7507e4cd8","HIRE_TECH":"266823b7507e4cd8","HIRE_END":"266823b7507e4cd8","HIRE_SENT":"266823b7507e4cd8","HIRE_REPORTED":"266823b7507e4cd8","HIRE_BACK":"68e2788b43f2d4be","HIRE_BACK_CANNOT":"2d755d5cce2f61b5","HIRE_VENDOR":"7b8de1d22ebb32f6","vendorSign":"d7150e383cbc4715","vendorJob":"bec5c3279f114425","HIRE_SEND_CONFIRM":"dee9e615356ce605","EDIT_ICONS":"684309b97f3030f1","PART_K":"684309b97f3030f1","photoFiles":"ba4448bf967e74b1","partEditModal":"e94f3c2faf52aa8c","ADD_PART":"c5518f1e4c148470","partAddModal":"b3973138b0337fe4","PART_DEL_CONFIRM":"bcf39d03f9e0bc9c","CLOSE_PARTS":"84c3eaefd3fb07c9","CLOSE_PART_HEADS":"f1fa5d3b977314f9","CLOSE_DOCS_REPAIR":"87aff5808706e596","CLOSE_DOCS":"ba16f9e7db3e8306","CLOSE_DOC_SEL":"8864944ab88dfcc0","CLOSE_PRICE_COLS":"f031a4c7d19229ae","closeParts":"293a33367e201f0e","closeDocs":"403922898c471d76","CLOSE_COST_BY":"1d03a42a1a790c53","CLOSE_TRAVEL":"59d08a4b21ded13a","nf":"d83ffab816d679f3","personSum":"77c0b364ff0f597a","costSum":"7c3c1e6bde8cf12d","CLOSE_COST":"a255ce9eeed9e411","OWNER_CC":"0337a657a0ee78e8","BUDGET_CUT":"8fe3a61892dff31e","OTHER_CC":"71908a59c58f3528","budgetPick":"2be560901f6922e6","closeCosts":"58da3fdc4eea6036","RECEIPT_ITEMS":"bceac49221e8acae","SIGN_OWNER":"d528215516767838","SIGN_DATE":"d528215516767838","ctrlCell":"85527cee940d9f44","checkTable":"2b5ff25563225ae2","radioCell":"a079233b147f0c84","checkCell":"bb9aed63bbd68524","noteCell":"8ce9dbdf0c935b2d","checkCard":"a96e1f4b2f163ab8","RECEIPT_NOTE":"f3534789a3a05185","RECEIPT_BAD":"f3534789a3a05185","signSection":"597614eccdbb1616","SIGN_IN":"ac570be481dfc3b0","SIGN_OUT":"1bbec0b4f3d3dbb7","putText":"323c490b487c769f","signFix":"5109c0525125091d","signModal":"30a764b676259c85","BUCKET_ITEMS":"efdf2182d89c1684","WATER_ITEMS":"fae38e0d9cebfe56","WATER_CAR":"1180de321baf3736","brandModel":"3fff2614d23df4a9","inspectForm":"44a7a3f8818eac1e","INSPECT_NOTE":"992a153bff35ea3d","INSPECT_FIX":"992a153bff35ea3d","inspectStep":"0634af0229e401e1","SIGN_INSPECT":"b50dfcccbfc5572b","receiptPanel":"886de44b853ec134","inspectPanel":"6fd84ed3f190abe0","MT_STEPS":"7a40341fd12a4445","headPill":"a91421d190b7c7cc","mtStepper":"ca531c08d42a62f1","stepPage":"1147131767c5fac8","workDetail":"5dd8763411ac4085","MA_DUE":"3d84baec0805a0de","MA_ITEMS":"9fe4fe8abc14eb02","MA_ROWS":"38967e0f4a427208","MA_COLS":"f5747cb40a845195","maRow":"9e1c842e73cecca0","MA_DUE_N":"31dc78bbebb09821","maTabs":"569b7a6da49d32bb","searchNotFound":"be6f40a9ea10ebee","maList":"335a290c62ea2cc4","MA_CAR":"23dbc81668421f35","MA_NEXT_COLS":"0620b50067eb56d0","MA_NEXT":"6dbaa4d43f1d4377","MA_HIST_COLS":"9f901057208259fd","MA_HIST":"d6e918bbd578c92e","maDetail":"fb4cc5793d10e010","HIST_COLS":"3884161300fd175a","HIST":"d16030b34ec9c044","progressScreen":"90b05b341fa092ea","historyScreen":"f0461eb6f75b0271","reportScreen":"f9e78288e52c7e72","COST_COLS":"3f6815d235abc07d","COSTS":"0e04fdc476fe7919","costScreen":"fe458a540729ccd4","tabs":"ae851b6bf49df9e4","roleList":"6d994209010583b4","reason":"c1bad58d39ced1cd","GO":"3a1b61aa30731871","TRIP_VIEW_COLS":"cb0ca6c7214d52b3","tripCarIdx":"6c9e58658757a611","tripCarRows":"7ad1d475e72b9423","tripKv":"2c20b81da2903f5a","TRIP_REVIEW_COLS":"4e35aceaa3e5955a","tripReviewRow":"7d4574781b834c14","TRIP_OTHER":"886882fd4f621de7","tripReviewList":"9043e35855e20ed2","tripReview":"9aa2de459d85b0a6","propVal":"499696d2124164ae","bell":"7c3c840bc5bd86e4","fillNotiItem":"8fd2a4c8f463aff0","notiPanel":"d52c5c5f87e7099c","OWN_UNIT":"cbc4660bd6b0f162","ownCars":"6b9805301888e053","NOTI_KRY":"5ddf4e9675ac7be0","NOTI_OWN":"82d24a0f50d7a649","NOTI_OLD":"3de7693b1004b60b","TRIP_SEEN_COLS":"5ca7a674ebde2df3","tripSeenList":"93a956ff4276eca3","tripView":"542ab00bce86eae7","NP":"cdd4a3378f65700f","NO_NEW":"a3e775ae6f9ec7ab","npKv":"ca0c0b66e499aec1","VEH7":"6031e9a12d212461","REVIEW_COLS":"d4bc744d4f11ca08","reviewRow":"87b93c7bf168a08f","REVIEW_ROWS":"a43dd365fb1fd043","PART_CHECK_COLS":"9e00d8a94a65953d","partCheckRows":"c91c6e6db0b0d3f3","planBody":"5103d9dffb13e505","decisionSection":"6829bb38b15c5324","planQParts":"4b39a9dd2ef46430","planPartsSec":"bacbe3fae5c7368f","planReview":"98ed429b641ff5e7","WH_QS":"0cf9238daa3fd95c","wst":"292bf50804573b41","WH_COLS":"8ac6d0865c9a8174","whRow":"c8e07e53a60abc8e","WH_PART_COLS":"5cb3e5cd21b54d63","whCars":"8ab0b2f4639fd861","whParts":"a2b26c2b28a8b037","need":"a2b26c2b28a8b037","warehouseScreen":"3823ce41daea16bb","planAs":"ca8d64ef4d71d98b","RETURN_REASON":"48f813a4ceebffc8","ALERT_RETURNED":"ec5f07516c8c4444","ALERT_APPROVED":"9a6f1964c779ff9e","Q_CARS":"9097819e124f90d2","CAR_ADD":"9097819e124f90d2","PART_BM":"36577e460c720d0a","MANUAL_BM":"381c1c09140f68eb","OIL_GRADES":"72cf3df844a893bc","CARP_PART_COLS":"f846aefb1e016f8c","MANUAL_FIELDS":"004c16e8c9262622","carWarehouse":"a0bdb798c008bdff","carPartsScreen":"148a73fd3adb430b","carPartsView":"d09392ea353dbe57","Q_OUT_CONFIRM":"cc437bd3714016b7","EDIT_FORM":"a96a7b29ddd3ba0f","EDIT_CONFIRM":"5aa9dae78246c1d8","DELETE_CONFIRM":"2bf85251ec15cb97","planMenu":"f6fe23446b689774","planDetail":"3209f3f0ed7b32b2","Q_BTN":"366bf9c799a81979","P_Q":"321ffc4181dc1f4c","P_COUNTS":"410d24700a4eea7f","pQty":"ec0f73b93897438a","pQParts":"a0fcc625ec47a99a","planDetailQ":"6a5b895e8d6f2d0d","PO_ITEMS":"54e585682e902be7","PO_TOTAL":"e1c4fcc2ac5895d7","PO_KV":"bc5321858e60a96c","planIssue":"95b94cd5122dd8ec","headPartCheck":"fb5581ea14b05d26","poForm":"7b1b80a00b036b33","HIRE":"725d85a84f4a29fc","CONTRACTOR":"09cb959fcdf21a12","TRIP_ST":"4e300ee38d4131c5","HTRIP":"9d96993f4ac24554","JOBS_COLS":"dad759a48da60b41","jobsRows":"b75b311ff0f60a58","hireTripForm":"64e47308473bec24","HT_COLS":"3f6f2a8b225f3a68","HT_ROWS":"b23c2ca3e9c6e092","hireTripReview":"608a20302b7ebd6b","PREP":"ab4205e6922b938e","PREP_COLS":"df16e9c083b92f47","prepRows":"669763943fc17549","prepDetail":"fe4bab9ee18fd513","ACC_COLS":"885193ddff621558","ACC_PLAN":"abede1e6277fa44e","accRows":"f9b3141a24c1766a","carResult":"85b81462851c3087","feedback":"dba110cd271af110","planEvidence":"b1682cb2115723a0","HST":"5d64fbef414b9bb5","HQ_COLS":"3696082aa745797d","hqRows":"edaf892addcc428c","headHistory":"4c71bebbe01527a5","MOVE_ICON":"eb9722c0fbafb3ee","MOVE_ITEM":"29581425f7adc75a","MOVE_I":"26f126c1ab4f398f","MOVE_CAR":"26f126c1ab4f398f","MOVE_JOB":"881d78624d6aaea7","qName":"ab47a3138c202720","MOVE_TO":"d611f8f70f4fc9df","MOVE_TOAST":"c42c151d0f8835c5","MOVE_CONFIRM":"976cb4088f4c84cb","movePartRows":"5b0f259aaec51f38","MOVE_Q2":"8f47ec0f50660e3e","MOVE_Q3_OTHER":"886a6db2e406d4dd","moveTrip":"f1573abb9c397068","MOVE_T3":"70a62b4d572d4015","MOVE_T4":"70a62b4d572d4015","MOVE_Q2_BASE":"033a4ec889e354cb","MOVE_PART_OF":"731553b78b0e65cf","MOVE_Q2_QTY":"405f8a5f8986a174","MOVE_Q2_SUBS":"2137d45190bd99c2","MOVE_Q2_PAGE":"637efad7e0a75e96","MOVE_CAR_QTY":"9b34cf354a387391","MOVE_Q3_QTY":"247a3293a74713d8","moveMenu":"53b6da951e0f4018","moveCard":"e353b296e7fced04","moveModal":"1525474089188c09","moveQuarter":"5fd370c98e4c8f4d","SCENARIOS":"7cf7d5feb2cad9c3","FLOW_NODES":"832b8847bc8b93a4","LETTERS":"75f20bfc4d367783","BLOCK_OF":"ba41b6210c683330","GROUPS":"948854e65639ecea","PAGE_NAMES":"b07610da2ac2dac2","BLOCK_H":"a18021eede6ad30b","moveLatest":"2955f4694dec19e3","buildSet":"4d7fdc40c6ad8ba2","build":"bdb83172381c91df","buildDesktop":"388efbdd907dbad5","buildMobile":"4c80d3a5d2eebe90","buildPick":"8cd4f403c9cd13e7","journeyCodes":"08ce9a85031c92aa","buildJourneyAll":"5383f768e4b8936e","clearPrototype":"8be10c736105ac03","SCEN_SEQ":"32b39f4deddcc1e6","SCEN_REVIEW":"86e37114c2626f61","SCEN_UPDATED":"00a3ead8ea219bd0","SCEN_CUT":"c7931717c9f5e310","SCEN_COLS":"c9f459b6390edda5","scenData":"511840b5154790a9","UC_COLS":"928c5ae8b3239055","buildSwimlane":"55a85e8f9830be06","buildActivity":"6253bb1a6f698d51","buildDocs":"8a5f39fe9a96a72c","SIG_SALT":"3aa0e0f2e210a026","sigHash":"6fdd1a29199c825b","sigScan":"f9c1428af6de9221","SIG_DECL":"6ac5796ce71390a7","sigChunks":"a6708381f19856a8","sigDepHash":"0f505058bfff3e6e","sigOf":"06ffed144b3cf6cb","sigSourceOk":"4e99893cf2d09e49","RC_KEY":"34e7734fc6a67b16","RC_VER":"85793d27f736fa3e","rcLoad":"16c4729d3715d814","rcSave":"5fb7479abffb8be2","rcClear":"4510d0760f339405","rcNode":"b9bf6bd249619c80","rcScan":"bc042761c11fc09a","RC_STAT":"f1e34bf898a7faaf","resolveLib":"f95d296e7e6aa706","rcFind":"acb8c3f13e9f1f03","FEATURE_PREFIX":"b96faf62d3d77d9d","PAGE_GAP":"cdb223005607b3d7","F":"0949fcbdc6d5b49a","FEATURE":"0949fcbdc6d5b49a","HAPPY":"0949fcbdc6d5b49a","FEATURE_TOASTS":"0949fcbdc6d5b49a","FEATURE_TITLE":"0949fcbdc6d5b49a","FEATURE_PAGE":"0949fcbdc6d5b49a","SCREEN_FN":"0949fcbdc6d5b49a","FJ_DIR":"0949fcbdc6d5b49a","FJ_BOARD":"0949fcbdc6d5b49a","FJ_TITLE":"0949fcbdc6d5b49a","SCREEN_CACHE":"4a1f9555b2d7568b","screenFns":"72e12ce3ea379553","useFeature":"0d8f15474f3690df","ALT_PAGE":"7014c92ca91872b9","ownedNode":"f35bfe862aded57e","featurePage":"31fc38bbfcef2233","happyCount":"f92eb23e9deced37","happyPages":"dcfa135c0b68b19b","toastScreen":"528504d5d3565377","ROW_X0":"8cc8079233cb4b7c","featurePages":"6544033a3eafbc9d","featureCount":"f1122448a8dda10c","rowEnd":"705e2779c062c144","featureTitle":"926b590411c98318","PH_INPUTS":"c18a0a70f498349c","showPlaceholders":"fabea2abe9cba75a","OVERLAY_NAMES":"addf990c3291f69a","isOverlay":"7e266fc7eb207811","hasOverlay":"b3c43341fbcc0c9d","capped":"cd76c0322ecc3105","capOverlayScreen":"152583a1c19f80f4","desktopHeader":"d18ecd11901e4759","MF_TAG":"c0fbfd01e39e1ddd","orphans":"60892a77eb1b10e3","sectionTitle":"78a84972704d9ba5","MAKE_BASE":"7e90c5c257a0adfa","screenName":"80a531db6f814f7e","itemSig":"bbe394042621ac8c","makeScreen":"993f2780b722159d","featureGrid":"c7186971caa1cbff","LKEY":"653d87d9c3b47898","LABEL_DEFAULT":"8592f10b5fdadd31","LABEL_PICK":"1a9e05efb15b9316","LABEL_ERR":"f99315e6630db7c7","LABEL_KNOWN":"f99315e6630db7c7","labelKeys":"8ee9e005c81677a8","rememberLabels":"de0e52f767e0315e","importLabels":"4369f1de863c72e5","resolveLabelsOnly":"ef477e049fb88492","secs":"032cdc6098220bcd","preImport":"c547140403d60998","RESOLVED":"fa81f2064daa966f","resolveFast":"9f0836de31781a02","buildFeature":"fefb517bb1446b66","FJ_RE":"ef45a56ddef23541","FJ_COLOR":"984cbd97fc616026","fjKey":"092d06eae3270a74","fjShots":"efe57652d04c54f9","fjSection":"caf514ca012a297a","fjBoards":"aa7851b2606405d3","exportFigJam":"5665baa8ad14e2f3","LABEL_RE":"ec91c1d4f124b099","HEAD_RE":"a3c640cb69289825","headerBlock":"da025db5f1cb3791","BAR_RE":"e7a51461981ec488","CODE_RE":"f6844f669d56d4b3","barState":"8067c189daadc148","DEV_WORD":"878323a7b5bbb898","texts":"fd8e13bd8b57a5f7","isGrey":"1dccbbd5e54c0edf","mainOf":"286d25271bc445d2","devTypeOf":"e1c12802956d775d","newKeyOf":"6c2250edd6063cf6","classify":"6fa42b21b943aff7","scanLabels":"790b16f1eb244a11","singleDeviceInfo":"0953125fe4766f87","singleDevice":"3a542896d06cb5ed","checkMade":"bba3b6668c39f9ca","dropMade":"81c65ee7a6df952c","patchLabels":"b66776bf10253456","labelReady":"c3d5144fcb0a1f36","labelPreflight":"abfe9caa823f72bb","exportAll":"b6fe7d776c972504","featureList":"c09c6a5982bfd009","FRAME_CODE_RE":"1d9bd90992a85200","SECTION_OF_TAG":"559a3ff5bf0be517","PART_NAME":"7f2b6e61a9d9264b","tagOf":"55580f4f86c6d7d0","pdata":"0fbc17be9eccaef3","existingPage":"acca0537b39abb18","walkPage":"483071fdef4d2240","sectionPieces":"3691775cca81487b","deleteSections":"6a21a0acd2ccec88","done":"d8df35795ac89273","featureItems":"66152844329703e7","pageFrames":"52cb002548acefe1","replaceFrame":"0a71157ac34a4c5e","refreshBar":"4512a5efaf04ec6d","slotFor":"12feb164074be967","updateChanged":"b943394da243106f","rebuildSelected":"e03557cbfe29a76e","updHandle":"5458c4eb5efbd0d9"},"plan":{"LIST10_EXTRA":"957e4525abd6435a","dmy":"c727a2c6b9b597d4","byDate":"b657d64b169ed800","EXTRA_MR":"80675e0c98267fa1","EXTRA":"1ddaf38908275be8","unitPool":"8559a874f2139b82","KBK_POOL":"a3d80b1d72ac8f85","rows10":"cfd916ffa8107a9d","LIST10":"898138311d53d8ff","PLAN_ACTIVE":"40a56a4dc6be28e8","LIST_OVERRIDE":"a67a79f19685d795","HAPPY":"76c5668f5287cf3b","FEATURE_TOASTS":"9d4e9c100df63bce","FEATURE_TITLE":"2ce5b9c1b619fcd2","FEATURE":"a5034427e6030af4"},"trip":{"TOASTS":"f75abeff7ad448cf","SCREENS":"2f50c5286f06ee18","HAPPY":"e7f2b193f107e9e7","JOURNEYS":"873ad183ea01976b"},"job":{"TOASTS":"6b5af80a2f7ba7ce","SCREENS":"6c6eda33f02cf6b6","HAPPY":"57c6148dc230ce46","JOURNEYS":"f9f474e51de90a4a"},"close":{"TOASTS":"4095d05567cc8cb6","SCREENS":"66f78e131239baa9","HAPPY":"a9137e09abacebd6","JOURNEYS":"c06d8aa161288292"},"track":{"DASH":"b1bbbfdb9d3eb81a","PDF":"b1bbbfdb9d3eb81a","XLS":"b1bbbfdb9d3eb81a","MA":"7feb0a46d6f44c20","MAD":"7feb0a46d6f44c20","TRACK_TOASTS":"30ee8845cf4a0d24","TRACK_SCREENS":"d9322a79998a0ef7","TRACK_HAPPY":"10e8ee86c81d4f48","TRACK":"1ce72020c31fa170"}};
+
+/* ======================== maintainance-feature-plugin/rcache.js ======================== */
+/* ============================================================================
+   maintainance-feature-plugin/rcache.js — หา component แบบจำผลไว้ (18 พ.ย. 2569)
+   ----------------------------------------------------------------------------
+   ปัญหา: log จริงในไฟล์ใหญ่ resolveAll (core.js) ใช้ 837 วินาที — component บางตัวนำเข้าจากไลบรารีไม่ได้ (ชิ้นส่วนซ้อนที่ไม่ได้ publish)
+          resolveAll จึงไล่ instance ทั้งไฟล์ + getMainComponentAsync ทีละตัว ทุกครั้งที่กดสร้าง
+   ทางของเรา (ไม่แก้ core.js · ลำดับการหาเหมือน resolveAll):
+     1. นำเข้าด้วย key (preImport ทำพร้อมกันไว้แล้ว ⇒ เร็ว)
+     2. component ในไฟล์นี้ (สำเนา)
+     3. ความจำของไฟล์ (pluginData บน document ชื่อ mf-resolve): เคยเจอจาก instance ⇒ เปิดด้วย id ทันที · เคยหาไม่เจอ ⇒ ข้าม ไม่สแกนซ้ำ
+     4. ไม่มีในความจำ ⇒ ไล่ instance ที่ "ชื่อตรง" (เรียก getMainComponentAsync เฉพาะตัวที่ชื่อตรง) · ตัวที่ขาดไม่ได้ (ไม่ใช่ชิ้นส่วนซ้อน/ของไฟล์ Maintain-D) ยังไม่เจอ ⇒ สแกนทั้งไฟล์แบบ resolveAll
+     5. จำผลลงไฟล์ (ทั้งเจอและไม่เจอ) · ปุ่ม "ล้างความจำ component" ในแท็บอัปเดต/ลบ ⇒ รอบหน้าหาใหม่หมด
+   ความจำอยู่ในไฟล์ (ไม่ใช่ clientStorage) เพราะ id ของ component ที่ยืมจาก instance ใช้ได้เฉพาะไฟล์นั้น
+   ============================================================================ */
+const RC_KEY = 'mf-resolve';
+const RC_VER = 1;
+function rcLoad() {
+  try { const j = JSON.parse((figma.root.getPluginData && figma.root.getPluginData(RC_KEY)) || '{}'); return j && j.v === RC_VER && j.items ? j : { v: RC_VER, items: {} }; } catch (e) { return { v: RC_VER, items: {} }; }
+}
+function rcSave(c) { try { c.at = Date.now(); if (figma.root.setPluginData) figma.root.setPluginData(RC_KEY, JSON.stringify(c)); } catch (e) { /* จำไม่ได้ก็ทำงานต่อ รอบหน้าหาใหม่ */ } }
+function rcClear() { try { if (figma.root.setPluginData) figma.root.setPluginData(RC_KEY, ''); } catch (e) { /* */ } }
+async function rcNode(id) {
+  try { const n = figma.getNodeByIdAsync ? await figma.getNodeByIdAsync(id) : figma.getNodeById ? figma.getNodeById(id) : null; return n && !n.removed && (n.type === 'COMPONENT' || n.type === 'COMPONENT_SET') ? n : null; } catch (e) { return null; }
+}
+/* ไล่ instance ในไฟล์หา component ของ want (Map ชื่อที่จะหา → ชื่อใน INDEX) · byName = เรียกเฉพาะ instance ที่ชื่อตรง · คืนจำนวนครั้งที่เรียก getMainComponentAsync */
+async function rcScan(want, found, byName) {
+  let calls = 0;
+  const left = () => [...new Set(want.values())].filter(n => !found.has(n));
+  if (!left().length) return 0;
+  for (const i of figma.root.findAllWithCriteria({ types: ['INSTANCE'] })) {
+    if (byName && !want.has(i.name)) continue;
+    try {
+      calls++; const mc = await i.getMainComponentAsync(); if (!mc) continue;
+      const h = holderOf(mc), n = want.get(byName ? i.name : h.name);
+      if (n && !found.has(n)) found.set(n, h);
+    } catch (e) { /* เข้าไม่ถึง ข้าม */ }
+    if (!left().length) break;
+  }
+  return calls;
+}
+/* ใช้แทน resolveAll(list) — ผลลง INDEX / ROUTE แบบเดียวกัน · คำเตือน/โยน error ตามกติกาเดิมของ resolveAll */
+let RC_STAT = null;   // สถิติรอบล่าสุด (เทสอ่าน)
+async function resolveLib(list) {
+  const t = Date.now(), cache = rcLoad(), st = { fromKey: 0, local: 0, mem: 0, memMiss: 0, scanned: 0, calls: 0, full: false };
+  if (figma.loadAllPagesAsync) await figma.loadAllPagesAsync();
+  const local = new Map();
+  for (const n of figma.root.findAllWithCriteria({ types: ['COMPONENT_SET', 'COMPONENT'] })) {
+    if (n.type === 'COMPONENT' && n.parent && n.parent.type === 'COMPONENT_SET') continue;
+    if (!local.has(n.name)) local.set(n.name, n);
+  }
+  const pending = [], errOf = {};
+  for (const name of list) {
+    const names = [name].concat(ALIAS[name] || []); let got = null, how = '', importErr = '';
+    for (const x of names) {
+      const k = KEYS[x]; if (!k) continue;
+      try { got = k[1] ? await figma.importComponentSetByKeyAsync(k[0]) : await figma.importComponentByKeyAsync(k[0]); how = 'นำเข้าจากไลบรารี'; break; }
+      catch (e) { importErr = (e && e.message) || String(e); }
+    }
+    if (got) st.fromKey++;
+    if (!got) for (const x of names) if (local.has(x)) { got = local.get(x); how = 'สำเนาในไฟล์นี้ ⚠ ลิงก์วนในไฟล์นี้'; st.local++; break; }
+    if (importErr && !IMPORT_ERR && !NESTED_ONLY.has(name)) IMPORT_ERR = importErr;
+    if (got) { INDEX.set(name, got); ROUTE[name] = how + (got.name !== name ? ' (ชื่อ ' + got.name + ')' : ''); continue; }
+    errOf[name] = importErr; pending.push(name);
+  }
+  const r = await rcFind(pending, cache, (n) => !NESTED_ONLY.has(n) && LOCAL_OPTIONAL.indexOf(n) < 0, st);
+  const missing = [];
+  for (const name of pending) {
+    if (r.has(name)) { const got = r.get(name); INDEX.set(name, got); ROUTE[name] = 'จาก instance ในไฟล์ ⚠ อาจลิงก์ไปไลบรารีที่เปิดไม่ได้' + (got.name !== name ? ' (ชื่อ ' + got.name + ')' : ''); }
+    else missing.push(name + (errOf[name] ? ' — นำเข้าไม่ได้: ' + errOf[name] : ''));
+  }
+  rcSave(cache);
+  if (IMPORT_ERR) log('⚠ นำเข้าจากไลบรารีไม่ได้ (' + IMPORT_ERR + ') — ตัวที่ได้ "จาก instance ในไฟล์" จะกด Go to main component ไปไฟล์ Component ที่อ่านมาไม่ได้ · เปิดใช้ไลบรารี (Component) VMS Plus ในไฟล์นี้ (Assets → Libraries) แล้วรันใหม่');
+  log('หา component ได้ ' + list.filter(n => INDEX.has(n)).length + '/' + list.length + ' · ไลบรารี ' + st.fromKey + ' · สำเนาในไฟล์ ' + st.local + ' · จากความจำ ' + st.mem + (st.memMiss ? ' · จำไว้ว่าไม่มี ' + st.memMiss : '') + (st.scanned ? ' · สแกนหา ' + st.scanned + ' ตัว (เรียก ' + st.calls + ' ครั้ง' + (st.full ? ' · ทั้งไฟล์' : ' · เฉพาะชื่อตรง') + ')' : ' · ไม่ต้องสแกนไฟล์') + ' ' + secs(t));
+  if (st.memMiss) log('  · จำไว้ว่าไฟล์นี้ไม่มี ' + st.memMiss + ' ตัว (ไม่สแกนซ้ำ) — ถ้าเพิ่งเพิ่ม component กด "ล้างความจำ component" ในแท็บอัปเดต/ลบ');
+  RC_STAT = st;
+  const soft = missing.filter(m => NESTED_ONLY.has(m.split(' — ')[0]));
+  missing.filter(m => LOCAL_OPTIONAL.includes(m.split(' — ')[0])).forEach(m => log('  · ไม่พบ ' + m.split(' — ')[0] + ' ในไฟล์นี้ (component ของไฟล์ Maintain-D) — ใช้แบบเดิมแทน'));
+  soft.forEach(m => log('  · ไม่พบ ' + m.split(' — ')[0] + ' — ไม่เป็นไร ใช้ตัวที่ซ้อนอยู่ใน component อื่น'));
+  const hard = missing.filter(m => !NESTED_ONLY.has(m.split(' — ')[0]) && !LOCAL_OPTIONAL.includes(m.split(' — ')[0]));
+  if (hard.length) {
+    log('ไม่พบ ' + hard.length + ' ตัวที่ต้องสร้างเอง:'); hard.forEach(m => log('  ✗ ' + m));
+    throw new Error('component ไม่ครบ — ถ้าขึ้น "นำเข้าไม่ได้" ให้เปิดใช้ไลบรารี VMS Plus ในไฟล์นี้ (Assets → Libraries) แล้วรันใหม่');
+  }
+}
+/* ส่วนกลางของข้อ 3–5: names = ชื่อที่ยังหาไม่ได้ · mustFull(n) = ตัวที่ขาดไม่ได้ (ยอมสแกนทั้งไฟล์) · คืน Map ชื่อ → component · แก้ cache ในที่ */
+async function rcFind(names, cache, mustFull, st) {
+  const found = new Map(), want = new Map();
+  for (const name of names) {
+    const c = cache.items[name];
+    if (c && c.id) { const n = await rcNode(c.id); if (n) { found.set(name, n); st.mem++; continue; } }   // id ใช้ไม่ได้แล้ว (ถูกลบ) ⇒ หาใหม่
+    if (c && c.miss) { st.memMiss++; continue; }
+    [name].concat(ALIAS[name] || []).forEach(x => want.set(x, name));
+  }
+  const todo = [...new Set(want.values())];
+  if (todo.length) {
+    st.scanned += todo.length;
+    st.calls += await rcScan(want, found, true);
+    const hard = todo.filter(n => !found.has(n) && mustFull(n));
+    if (hard.length) { const w2 = new Map(); hard.forEach(n => [n].concat(ALIAS[n] || []).forEach(x => w2.set(x, n))); st.full = true; st.calls += await rcScan(w2, found, false); }
+    for (const n of todo) { if (found.has(n)) cache.items[n] = { id: found.get(n).id, name: found.get(n).name }; else if (mustFull(n)) delete cache.items[n]; else cache.items[n] = { miss: 1 }; }   // ตัวที่ขาดไม่ได้ไม่จำว่า "ไม่มี" (รอบหน้าหาใหม่ทันทีหลังผู้ใช้เพิ่ม)
+  }
+  return found;
+}
+
 /* ======================== maintainance-feature-plugin/feature.js ======================== */
 /* ============================================================================
    maintainance-feature-plugin/feature.js — จัดวางจอของ Feature แผนบำรุงรักษา ตามหน้าและ case (13 พ.ย. 2569)
@@ -5838,7 +6076,7 @@ function featurePages(j, ji) {
       const code = (ji + 1) + '.' + (k + 1) + '.' + (n + 1), ix = x + n * (GRID.colW + GRID.colGap);
       if (String(it[0]).indexOf('toast:') === 0) {
         const id = it[0].slice(6), t = FEATURE_TOASTS[id];
-        return { code, x: ix, label: 'Toast ' + t.text + ' (แสดงบน' + t.page + ' เมื่อ' + t.when + ')', fn: () => toastScreen(id) };
+        return { code, x: ix, label: 'Toast ' + t.text + ' (แสดงบน' + t.page + ' เมื่อ' + t.when + ')', fn: () => toastScreen(id), data: t };   // data = ข้อความ toast เข้าลายเซ็น (ซอร์ส fn ไม่มีข้อความ)
       }
       const s = SCREEN_FN[it[0]];
       return { code, x: ix, label: it[1] + ' (' + it[0] + ')', fn: s ? s.fn : null, old: it[0] };
@@ -5901,7 +6139,7 @@ function desktopHeader(s) {
   }
 }
 
-/* ติดป้าย pluginData 'mf' = 'title' หรือเลข journey (ไว้ใช้ภายหลัง · ไม่ได้ใช้ลบอะไร) */
+/* ติดป้าย pluginData 'mf' ทุกชิ้นที่วาง: 'title' · 'happy' / 'happy-<j>' (Happy flow) · 'full' / '<j>' (ทุกเคส) — ปุ่มลบส่วน (update.js) ใช้แยกส่วน · Title ไม่ลบ */
 const MF_TAG = 'mf';
 let orphans = 0; let TIMES = [];
 /* กล่องหัวส่วน (Happy flow / ทุกเคส) — แบบ Title หลักแต่เล็กกว่า อยู่นอกจอ */
@@ -5912,6 +6150,30 @@ async function sectionTitle(prefix, text, width) {
   f.appendChild(await labelText(text, 80, '#FFFFFF'));
   f.name = prefix + ' · ส่วน ' + text;
   return f;
+}
+/* สร้างจอ 1 จอ (ขั้นเดียวกันทุกทาง: สร้างทั้ง Feature · อัปเดตจอที่เปลี่ยน · สร้างจอที่เลือกใหม่) — place(s) = วางลงหน้า (คนเรียกเลือกตำแหน่ง/ลำดับ layer)
+   ลายเซ็น (sig.js) เก็บใน pluginData mfSig ของเฟรม ⇒ โหมดอัปเดตรู้ว่าจอไหนเปลี่ยน · คืน null เมื่อพัง (ลบชิ้นที่ค้างแล้ว) */
+const MAKE_BASE = ['makeScreen'];   // ชื่อที่ทุกจอพึ่ง (ขั้นแต่งจอหลังสร้าง) — อยู่ในลายเซ็นของทุกจอ
+const screenName = (prefix, it, frameTitle, pgName, mob) => prefix + ' / ' + it.code + ' · ' + frameTitle + ' › ' + pgName + ' — ' + it.label + (mob ? ' · mobile' : '');
+function itemSig(it, mob, frameTitle, pgName) { return sigOf(it.fn, F.id, MAKE_BASE, { code: it.code, label: it.label, page: pgName, title: frameTitle, mob: !!mob, data: it.data || null }); }
+async function makeScreen(page, it, mob, prefix, frameTitle, pgName, at, place) {
+  MOB = mob; CREATED = []; PLACE = { x: at.x, y: at.y }; const ts = Date.now();
+  try {
+    PINS = []; const s = await it.fn(); desktopHeader(s); stripDividers(s); await polish(s); repin(); await bindTones(); if (typeof AFTER_SCREEN === 'function') await AFTER_SCREEN(s);
+    capOverlayScreen(s); showPlaceholders(s);
+    s.name = screenName(prefix, it, frameTitle, pgName, mob);
+    if (s.setPluginData) { s.setPluginData('builtAt', String(Date.now())); s.setPluginData('mfSig', itemSig(it, mob, frameTitle, pgName)); s.setPluginData('mfFeature', F.id); }
+    place(s);
+    TIMES.push([Date.now() - ts, it.code + (mob ? ' mobile' : '') + ' ' + it.label.slice(0, 40)]);
+    /* ชิ้นที่ฟังก์ชันจอสร้างไว้แต่ไม่ได้ใส่เข้าจอ (carPartsScreen สร้าง Section "อะไหล่อื่นๆ" + ช่องน้ำมันทุกครั้ง) ค้างบนหน้า (ผู้ใช้เจอ 13 พ.ย. 2569)
+       ⇒ ลบเฉพาะชิ้นที่รอบนี้เพิ่งสร้างและไม่ได้อยู่ในจอ ของเดิมบนหน้าไม่แตะ */
+    for (const c of CREATED) { try { if (c !== s && c.parent === page) { c.remove(); orphans++; } } catch (e) { /* ลบไปแล้ว */ } }
+    return s;
+  } catch (e) {
+    warn(it.code + ' ' + it.label + (mob ? ' (mobile)' : ''), e);
+    const d = dropCreated(page); if (d) log('    ลบชิ้นที่ค้างจากจอที่พัง ' + d + ' ชิ้น');
+    return null;
+  } finally { CREATED = []; PLACE = null; MOB = false; }
 }
 async function featureGrid(page, prefix, journeys, y0, total, devices, opts) {
   opts = opts || {};
@@ -5932,22 +6194,8 @@ async function featureGrid(page, prefix, journeys, y0, total, devices, opts) {
       MOB = mob; let h = 0; const rowY = y;
       for (const pg of pages) for (const it of pg.items) {
         if (!it.fn) { warn(it.code + ' ไม่พบจอเดิม ' + it.old + ' ใน screens.js', 'ข้าม'); continue; }
-        CREATED = []; PLACE = { x: it.x, y: rowY }; const ts = Date.now();
-        try {
-          PINS = []; const s = await it.fn(); desktopHeader(s); stripDividers(s); await polish(s); repin(); await bindTones(); if (typeof AFTER_SCREEN === 'function') await AFTER_SCREEN(s);
-          capOverlayScreen(s); showPlaceholders(s);
-          s.name = prefix + ' / ' + it.code + ' · ' + frameTitle + ' › ' + pg.name + ' — ' + it.label + (mob ? ' · mobile' : '');
-          if (s.setPluginData) s.setPluginData('builtAt', String(Date.now()));
-          put(s, it.x, rowY); h = Math.max(h, s.height); made.push(s);
-          TIMES.push([Date.now() - ts, it.code + (mob ? ' mobile' : '') + ' ' + it.label.slice(0, 40)]);
-          /* ชิ้นที่ฟังก์ชันจอสร้างไว้แต่ไม่ได้ใส่เข้าจอ (carPartsScreen สร้าง Section "อะไหล่อื่นๆ" + ช่องน้ำมันทุกครั้ง) ค้างบนหน้า (ผู้ใช้เจอ 13 พ.ย. 2569)
-             ⇒ ลบเฉพาะชิ้นที่รอบนี้เพิ่งสร้างและไม่ได้อยู่ในจอ ของเดิมบนหน้าไม่แตะ */
-          for (const c of CREATED) { try { if (c !== s && c.parent === page) { c.remove(); orphans++; } } catch (e) { /* ลบไปแล้ว */ } }
-          log('  · ' + made.length + '/' + total + ' ' + s.name);
-        } catch (e) {
-          warn(it.code + ' ' + it.label + (mob ? ' (mobile)' : ''), e);
-          const d = dropCreated(page); if (d) log('    ลบชิ้นที่ค้างจากจอที่พัง ' + d + ' ชิ้น');
-        }
+        const s = await makeScreen(page, it, mob, prefix, frameTitle, pg.name, { x: it.x, y: rowY }, (n) => put(n, it.x, rowY));
+        if (s) { h = Math.max(h, s.height); made.push(s); log('  · ' + made.length + '/' + total + ' ' + s.name); }
         CREATED = []; PLACE = null;
       }
       MOB = false;
@@ -6048,14 +6296,15 @@ async function preImport(names) {
   for (let i = 0; i < jobs.length; i += 10) await Promise.all(jobs.slice(i, i + 10).map(j => j()));
   return jobs.length;
 }
+let RESOLVED = false;   // หาครบแล้วในรอบเปิดปลั๊กอินนี้ ⇒ Feature ถัดไป/กดซ้ำ ไม่ต้องหาใหม่ (18 พ.ย. 2569)
 async function resolveFast() {
+  if (RESOLVED) { log('ใช้ component ที่หาไว้แล้วตอนเปิดปลั๊กอินรอบนี้'); return; }
   const lib = NEEDED.filter(n => LOCAL_OPTIONAL.indexOf(n) < 0);
   let t = Date.now();
   const pre = await preImport(lib);
   log('⏱ นำเข้าจากไลบรารีพร้อมกัน ' + pre + ' ตัว ' + secs(t));
   t = Date.now();
-  await resolveAll(lib);   // ตัวที่นำเข้าไม่ได้จริงๆ resolveAll ยังสแกนเป็นทางสุดท้ายตามเดิม
-  log('⏱ resolveAll ' + secs(t));
+  await resolveLib(lib);   // 18 พ.ย. 2569: แทน resolveAll — จำผลไว้ในไฟล์ (rcache.js) รอบหน้าไม่สแกน instance ซ้ำ
   t = Date.now();
   const lab = await importLabels();
   if (lab.length) log('ป้ายข้างจอจากไลบรารี: ' + lab.join(' · ') + ' ' + secs(t));
@@ -6066,12 +6315,13 @@ async function resolveFast() {
     const n = want.get(c.name); if (n && !INDEX.has(n)) { INDEX.set(n, c); ROUTE[n] = 'สำเนาในไฟล์นี้'; }
   }
   const left = () => [...new Set(want.values())].filter(n => !INDEX.has(n));
-  if (left().length) for (const i of figma.root.findAllWithCriteria({ types: ['INSTANCE'] })) {
-    const n = want.get(i.name); if (!n || INDEX.has(n)) continue;
-    try { const mc = await i.getMainComponentAsync(); if (mc) { INDEX.set(n, holderOf(mc)); ROUTE[n] = 'จาก instance ในไฟล์'; } } catch (e) { /* ข้าม */ }
-    if (!left().length) break;
+  if (left().length) {   // หาจาก instance ชื่อตรง ผ่านความจำของไฟล์ (เจอ/ไม่เจอ จำไว้ทั้งคู่ · ไม่สแกนทั้งไฟล์)
+    const cache = rcLoad(), r = await rcFind(left(), cache, () => false, { mem: 0, memMiss: 0, scanned: 0, calls: 0 });
+    for (const [n, c] of r) { INDEX.set(n, c); ROUTE[n] = 'จาก instance ในไฟล์'; }
+    rcSave(cache);
   }
   const miss = left();
+  RESOLVED = true;
   log('component ของไฟล์ Maintain-D / ป้าย: ได้ ' + (LOCAL_OPTIONAL.length - miss.length) + '/' + LOCAL_OPTIONAL.length + (miss.length ? ' · ไม่พบ ' + miss.join(' · ') + ' — ใช้แบบสำรอง' : '') + ' ' + secs(t));
 }
 
@@ -6392,6 +6642,7 @@ const featureList = () => MF_FEATURES.map(f => { useFeature(f.id); return { id: 
 figma.ui.onmessage = async (msg) => {
   try {
     if (await tgtHandle(msg)) return;   // เลือก / เพิ่ม / ลบบอร์ดปลายทาง · เปิดลิงก์ (targets.js)
+    if (await updHandle(msg)) return;   // แท็บอัปเดต / ลบ (update.js · 18 พ.ย. 2569)
     /* msg.features = หลาย Feature ที่ติ๊ก (17 พ.ย. 2569) ⇒ ทำทีละ Feature ตามลำดับ · journey ที่ติ๊ก (pick) ใช้เฉพาะตอนเลือก Feature เดียว */
     const ids = Array.isArray(msg.features) && msg.features.length ? msg.features : [msg.feature];
     const multi = ids.length > 1, picks = msg.picks || {};   // picks = { id: [journey] } เลือก journey ราย Feature · ไม่มี id = ทุก journey
@@ -6424,5 +6675,262 @@ figma.ui.onmessage = async (msg) => {
 tgtPost();   // รายการบอร์ดปลายทางที่จำไว้
 rememberLabels();   // เปิดในไฟล์ที่มี Device Type / Header / State ⇒ จำ key ไว้ใช้ในไฟล์อื่น (17 พ.ย. 2569)
 try { figma.ui.resize(360, 620); } catch (e) { /* core.js เปิดหน้าต่าง 460×520 · หน้าต่างพระผู้สร้างแบบ Figma ใช้ 360×620 (17 พ.ย. 2569) */ }
+
+/* ======================== maintainance-feature-plugin/update.js ======================== */
+/* ============================================================================
+   maintainance-feature-plugin/update.js — แท็บ "อัปเดต / ลบ" (18 พ.ย. 2569 · ผู้ใช้ขอ)
+   ----------------------------------------------------------------------------
+   ก. ลบส่วนที่สร้างแล้ว — Feature ที่ติ๊ก × ส่วน Happy flow / ทุกเคส ⇒ ลบหัวส่วน แถบ Header ป้าย Device และจอของส่วนนั้น (ทุกชุดบน Page)
+      หาจากป้าย pluginData 'mf' ที่ featureGrid ติดไว้ ('happy' 'happy-<j>' = Happy flow · 'full' '<j>' = ทุกเคส · 'title' = Title Feature ไม่ลบเด็ดขาด)
+      ชิ้นที่ไม่มีป้าย ⇒ ดูตำแหน่ง: อยู่ใต้หัวส่วนไหน (หัวที่ใกล้ที่สุดด้านบน และแนวนอนอยู่ในช่วงของหัวนั้น)
+      ชิ้นที่ไม่ใช่ของปลั๊กอิน (ไม่มีป้าย และชื่อไม่ขึ้นต้น "MF / " หรือ "MF · ") ไม่แตะ · ต้องยืนยันจำนวนก่อนลบ · ลบแล้วไม่ขยับของอื่น
+   ข. อัปเดตจอที่เปลี่ยน — เทียบลายเซ็น (sig.js) ที่เก็บในจอกับลายเซ็นของโค้ดตอนนี้ ⇒ สร้างใหม่เฉพาะจอที่ต่าง วางที่เดิม (parent · ลำดับ layer · x/y)
+      จอที่ยังไม่มีบนหน้า วางในช่องของมันถ้าช่องว่าง · จอที่ไม่มีใน Feature แล้ว รายงานเฉยๆ ไม่ลบ
+      จอเก่าที่สร้างก่อนมีลายเซ็น ⇒ เลือกได้: "เก็บเป็นฐาน" (จำลายเซ็นตอนนี้ ไม่สร้าง) หรือ "สร้างใหม่"
+   ค. สร้างจอที่เลือกใหม่ — เลือกเฟรมจอ MF / … ใน Figma แล้วกด (แนวเดียวกับ replaceSelected ของพี่นุ 890d54c: จับคู่ด้วยชื่อเคส วางที่ตำแหน่งและลำดับ layer เดิม)
+   ทุกโหมด: ไม่แตะจอที่ไม่เกี่ยว · ย้อนได้ด้วย Cmd+Z หรือ Version history
+   ============================================================================ */
+const FRAME_CODE_RE = /^MF \/ (H?\d+(?:\.\d+)+) · (.+?) › (.+?) — (.+?)( · mobile)?$/;
+const SECTION_OF_TAG = (t) => t === 'title' ? 'title' : t === 'happy' || /^happy-\d+$/.test(t) ? 'happy' : t === 'full' || /^\d+$/.test(t) ? 'full' : '';
+const PART_NAME = { happy: 'Happy flow', full: 'ทุกเคส' };
+const tagOf = (n) => { try { return (n.getPluginData && n.getPluginData(MF_TAG)) || ''; } catch (e) { return ''; } };
+const pdata = (n, k) => { try { return (n.getPluginData && n.getPluginData(k)) || ''; } catch (e) { return ''; } };
+
+/* Page ของ Feature ที่มีอยู่แล้ว — ไม่สร้าง · ต่างจาก featurePage(false) ตรงที่ยอมให้มีของคนอื่นปนบน Page (ผู้ใช้วางของเพิ่มเองได้) */
+async function existingPage() {
+  const name = FEATURE_PAGE[0], byName = (n) => figma.root.children.find(p => p.type === 'PAGE' && p.name === n);
+  const p = byName(ALT_PAGE(name)) || byName(name);
+  if (p && p.loadAsync) await p.loadAsync();
+  return p || null;
+}
+/* ไล่ชิ้นบน Page แบบลึก (ผู้ใช้อาจย้ายเข้า Section / Group) · ไม่เข้าไปในจอ */
+function walkPage(page, fn) {
+  (function w(node) { for (const c of (node.children || []).slice()) { fn(c); if (c.children && (c.type === 'SECTION' || c.type === 'GROUP') ) w(c); } })(page);
+}
+
+/* ======================= ก. ลบส่วน ======================= */
+function sectionPieces(page, parts) {
+  const all = [], heads = [];
+  walkPage(page, (n) => {
+    const nm = n.name || '', t = tagOf(n), mine = !!t || ownedNode(n);
+    if (!mine) return;
+    const h = nm.match(HEAD_RE);
+    if (h) heads.push({ n, kind: h[1] === 'Feature' ? 'title' : /^Happy flow/.test(h[2]) ? 'happy' : 'full' });
+    all.push({ n, t });
+  });
+  const abs = (n) => (n.absoluteBoundingBox || { x: n.x, y: n.y, width: n.width });
+  const byPos = (n) => {   // หัวที่ใกล้ที่สุดด้านบน ที่แนวนอนครอบชิ้นนี้ (ป้าย Device อยู่ซ้ายหัว GRID.side + GRID.gap)
+    const b = abs(n); let best = null;
+    for (const h of heads) { const hb = abs(h.n); if (hb.y <= b.y + 1 && b.x >= hb.x - GRID.side - GRID.gap - 50 && b.x < hb.x + hb.width && (!best || hb.y > abs(best.n).y)) best = h; }
+    return best ? best.kind : '';
+  };
+  const out = [], cnt = { head: 0, bar: 0, dev: 0, screen: 0 }; let guessed = 0, unknown = 0;
+  for (const { n, t } of all) {
+    if (/^MF · Feature /.test(n.name || '') || t === 'title') continue;   // Title Feature ไม่ลบเด็ดขาด
+    let kind = SECTION_OF_TAG(t);
+    if (!kind) { kind = byPos(n); if (kind === 'title' || !kind) { unknown++; continue; } guessed++; }
+    if (parts.indexOf(kind) < 0) continue;
+    out.push(n);
+    const nm = n.name || '';
+    if (n.type === 'FRAME' && nm.indexOf(FEATURE_PREFIX + ' / ') === 0) cnt.screen++;
+    else if (HEAD_RE.test(nm)) cnt.head++;
+    else if (LABEL_RE.test(nm)) cnt.dev++;
+    else cnt.bar++;
+  }
+  return { list: out, cnt, guessed, unknown };
+}
+async function deleteSections(msg, ids) {
+  const parts = (msg.parts || []).filter(p => PART_NAME[p]);
+  if (!parts.length) { log('✗ ยังไม่ได้ติ๊กส่วนที่จะลบ (Happy flow / ทุกเคส)'); return done([], [], 0); }
+  const per = [];
+  for (const id of ids) {
+    useFeature(id);
+    const page = await existingPage();
+    if (!page) { per.push({ id, title: F.title, none: true }); continue; }
+    per.push(Object.assign({ id, title: F.title, page }, sectionPieces(page, parts)));
+  }
+  const total = per.reduce((a, p) => a + (p.list ? p.list.length : 0), 0);
+  const what = parts.map(p => PART_NAME[p]).join(' + ');
+  const lines = per.map(p => p.none ? p.title + ': ยังไม่มี Page' : p.title + ': ' + p.list.length + ' ชิ้น (หัวส่วน ' + p.cnt.head + ' · แถบ ' + p.cnt.bar + ' · ป้าย ' + p.cnt.dev + ' · จอ ' + p.cnt.screen + ')' + (p.guessed ? ' · ดูจากตำแหน่ง ' + p.guessed : ''));
+  if (!msg.confirm) {
+    log('ตรวจก่อนลบส่วน ' + what + ':'); lines.forEach(l => log('  · ' + l));
+    log(total ? 'รอยืนยัน: จะลบ ' + total + ' ชิ้น · Title Feature และของที่ไม่ใช่ของปลั๊กอินไม่ถูกแตะ' : 'ไม่มีชิ้นของส่วน ' + what + ' ให้ลบ');
+    figma.ui.postMessage({ type: 'mf-confirm', action: 'delete', total, title: 'ลบส่วน ' + what, lines, payload: { parts, features: ids } });
+    return true;
+  }
+  if (msg.expect !== total) { log('✗ จำนวนชิ้นเปลี่ยนจากตอนตรวจ (' + msg.expect + ' → ' + total + ') ยังไม่ลบ — กดตรวจใหม่อีกครั้ง'); return done([], [], ids.length); }
+  let gone = 0;
+  for (const p of per) if (p.list) { for (const n of p.list) { try { if (!n.removed) { n.remove(); gone++; } } catch (e) { warn('ลบ ' + n.name, e); } } log('✓ ' + p.title + ': ลบส่วน ' + what + ' แล้ว ' + p.list.length + ' ชิ้น'); }
+  log(''); log('ลบแล้ว ' + gone + ' ชิ้น · ของอื่นอยู่ที่เดิม ไม่ถูกขยับ · ย้อนได้ด้วย Cmd+Z');
+  log(errors.length ? '⚠ เตือน ' + errors.length + ' จุด (รายการด้านบน)' : 'ไม่มีคำเตือน ✓');
+  return done(per.filter(p => p.list).map(p => p.title), [], ids.length);
+}
+function done(ok, fail, total) { figma.ui.postMessage({ type: 'build-all-done', ok, fail, total }); return true; }
+
+/* ======================= ข. อัปเดตจอที่เปลี่ยน ======================= */
+/* ทุกจอของ Feature ตามที่ featureGrid จัด (x ตามผังก่อนเลื่อนทั้งชุด) · row = แถวเดียวกัน (Happy/ทุกเคส × journey) */
+function featureItems(pick) {
+  const js = pick && pick.length ? FEATURE.filter((j, i) => pick.indexOf(String(i)) >= 0) : FEATURE, out = [];
+  for (const j of js) {
+    const ji = FEATURE.indexOf(j);
+    for (const pg of happyPages(ji)) for (const it of pg.items) out.push({ it, row: 'h' + ji, title: j.title + ' (Happy flow)', pg: pg.name, ji });
+    for (const pg of featurePages(j, ji)) for (const it of pg.items) out.push({ it, row: 'f' + ji, title: j.title, pg: pg.name, ji });
+  }
+  return { out, js: js.map(j => FEATURE.indexOf(j)) };
+}
+/* จอบนหน้า: รหัส|อุปกรณ์ → เฟรมที่สร้างล่าสุด (หลายชุดบนหน้า ⇒ ชุดล่าสุดตามแบบ fjShots) */
+function pageFrames(page) {
+  const map = new Map(); let older = 0;
+  walkPage(page, (n) => {
+    if (n.type !== 'FRAME') return; const m = (n.name || '').match(FRAME_CODE_RE); if (!m) return;
+    const k = m[1] + '|' + (m[5] ? 'm' : 'd'), cur = map.get(k);
+    if (cur) older++;
+    if (!cur || +pdata(n, 'builtAt') >= +pdata(cur, 'builtAt')) map.set(k, n);
+  });
+  return { map, older };
+}
+/* วางจอใหม่แทนที่เฟรมเดิม: parent · ลำดับ layer · x/y เดิม · ป้าย mf เดิม แล้วลบเฟรมเดิม */
+async function replaceFrame(page, old, x, mob) {
+  const parent = old.parent, at = { x: old.x, y: old.y }, tag = tagOf(old);
+  const s = await makeScreen(page, x.it, mob, FEATURE_PREFIX, x.title, x.pg, at, (n) => {
+    parent.insertChild(Math.min(parent.children.indexOf(old), parent.children.length), n); n.x = at.x; n.y = at.y;
+    try { if (tag && n.setPluginData) n.setPluginData(MF_TAG, tag); } catch (e) { /* */ }
+  });
+  if (!s) return null;
+  try { old.remove(); } catch (e) { warn('ลบจอเดิม ' + old.name, e); }
+  return s;
+}
+/* แถบเคสเหนือจอ desktop: ชื่อเคสเปลี่ยน ⇒ แทนแถบที่ x เดียวกัน (ที่เดิม · กว้างเดิม) */
+async function refreshBar(page, frame, it) {
+  const want = FEATURE_PREFIX + ' · ' + it.code + ' ' + it.label; let bar = null;
+  walkPage(page, (n) => { const m = (n.name || '').match(BAR_RE); if (m && m[1] === it.code && Math.abs(n.x - frame.x) < 1 && n.y < frame.y && (!bar || n.y > bar.y)) bar = n; });
+  if (!bar || bar.name === want) return false;
+  CREATED = [];
+  try {
+    const n = await flowBar(FEATURE_PREFIX, it.code, it.label, barState(it.code), bar.width), parent = bar.parent;
+    parent.insertChild(parent.children.indexOf(bar), n); n.x = bar.x; n.y = bar.y;
+    try { const t = tagOf(bar); if (t) n.setPluginData(MF_TAG, t); } catch (e) { /* */ }
+    bar.remove(); CREATED = []; return true;
+  } catch (e) { warn('แถบ ' + it.code, e); dropMade(); return false; }
+}
+/* ช่องของจอที่ยังไม่มี: เทียบจอข้างเคียงในแถวเดียวกัน (ชุดเดียวกัน) ⇒ x/y · ช่องต้องว่าง (ไม่ทับเฟรมใด) */
+function slotFor(page, x, mob, items, frames) {
+  const sib = items.map(o => ({ o, f: frames.get(o.it.code + '|' + (mob ? 'm' : 'd')) })).find(p => p.o.row === x.row && p.f);
+  if (!sib) return null;
+  const dx = sib.f.x - sib.o.it.x, pos = { x: x.it.x + dx, y: sib.f.y, parent: sib.f.parent, sib: sib.f, sibItem: sib.o.it };
+  const w = mob ? GRID.mobW : GRID.colW, h = mob ? GRID.mobH : GRID.deskH;
+  const hit = (sib.f.parent.children || []).some(n => n.type === 'FRAME' && n.x < pos.x + w && n.x + n.width > pos.x && n.y < pos.y + h && n.y + n.height > pos.y);
+  return hit ? Object.assign(pos, { busy: true }) : pos;
+}
+async function updateChanged(msg, ids) {
+  const devices = devOf({ devices: msg.devices }), srcOk = sigSourceOk(), plans = [];
+  for (const id of ids) {
+    useFeature(id);
+    const page = await existingPage();
+    if (!page) { plans.push({ id, title: F.title, none: true }); continue; }
+    const pick = (msg.picks || {})[id] || (ids.length > 1 ? null : msg.pick);
+    const { out: items, js } = featureItems(pick), { map: frames, older } = pageFrames(page);
+    const P = { id, title: F.title, page, items, frames, older, changed: [], unknown: [], missing: [], same: 0, nofn: 0, removed: [] };
+    const keys = new Set();
+    for (const x of items) for (const mob of devices) {
+      const k = x.it.code + '|' + (mob ? 'm' : 'd'); keys.add(k);
+      if (!x.it.fn) { P.nofn++; continue; }
+      const f = frames.get(k), sig = itemSig(x.it, mob, x.title, x.pg), old = f && pdata(f, 'mfSig');
+      if (!f) P.missing.push({ x, mob, sig });
+      else if (!old) P.unknown.push({ x, mob, f, sig });
+      else if (old !== sig || msg.force) P.changed.push({ x, mob, f, sig });
+      else P.same++;
+    }
+    for (const [k, f] of frames) { const [code, d] = k.split('|'); if (!keys.has(k) && devices.indexOf(d === 'm') >= 0 && js.indexOf(+code.replace('H', '').split('.')[0] - 1) >= 0) P.removed.push(f.name); }
+    plans.push(P);
+  }
+  const live = plans.filter(p => !p.none), sum = (k) => live.reduce((a, p) => a + (Array.isArray(p[k]) ? p[k].length : p[k]), 0);
+  const legacy = msg.legacy === 'rebuild' ? 'rebuild' : 'baseline';
+  const baseWork = sum('changed') + sum('missing'), work = baseWork + (legacy === 'rebuild' ? sum('unknown') : 0);   // total ที่ส่งไปหน้าต่าง = baseWork (จอเก่าแยกนับใน unknown)
+  const lines = plans.map(p => p.none ? p.title + ': ยังไม่มี Page — กดสร้างในแท็บสร้างจอก่อน' : p.title + ': ' + (msg.force ? 'สร้างใหม่ ' : 'เปลี่ยน ') + p.changed.length + ' · ยังไม่มีบนหน้า ' + p.missing.length + ' · ไม่รู้ลายเซ็น ' + p.unknown.length + ' · ไม่เปลี่ยน ' + p.same + (p.removed.length ? ' · ไม่มีใน Feature แล้ว ' + p.removed.length + ' (ไม่ลบ)' : '') + (p.older ? ' · ชุดเก่าบนหน้า ' + p.older + ' (ไม่แตะ)' : ''));
+  if (!msg.confirm) {
+    log('ตรวจจอที่เปลี่ยน (' + (devices.length === 2 ? 'Desktop + Mobile' : devices[0] ? 'Mobile' : 'Desktop') + '):'); lines.forEach(l => log('  · ' + l));
+    live.forEach(p => p.removed.slice(0, 5).forEach(n => log('    ไม่มีใน Feature แล้ว: ' + n)));
+    if (!srcOk && !msg.force) log('ⓘ เครื่องนี้อ่านซอร์สฟังก์ชันจอไม่ได้ ลายเซ็นไว้ใจไม่ได้ — ติ๊ก "สร้างใหม่ทุกจอของ journey ที่ติ๊ก" หรือใช้ "สร้างจอที่เลือกใหม่" แทน');
+    figma.ui.postMessage({ type: 'mf-confirm', action: 'update', total: baseWork, unknown: sum('unknown'), title: msg.force ? 'สร้างใหม่ทุกจอของ journey ที่ติ๊ก' : 'อัปเดตจอที่เปลี่ยน', lines, blocked: !srcOk && !msg.force, payload: { features: ids, picks: msg.picks, pick: msg.pick, devices: msg.devices, force: !!msg.force } });
+    return true;
+  }
+  if (!srcOk && !msg.force) { log('✗ ยังไม่อัปเดต — เครื่องนี้อ่านซอร์สฟังก์ชันจอไม่ได้ (ลายเซ็นไว้ใจไม่ได้)'); return done([], [], ids.length); }
+  if (msg.expect !== baseWork || (msg.expectUnknown != null && msg.expectUnknown !== sum('unknown'))) { log('✗ จำนวนจอเปลี่ยนจากตอนตรวจ (' + msg.expect + ' → ' + baseWork + (msg.expectUnknown != null ? ' · จอเก่า ' + msg.expectUnknown + ' → ' + sum('unknown') : '') + ') ยังไม่อัปเดต — กดตรวจใหม่อีกครั้ง'); return done([], [], ids.length); }
+  errors.length = 0; const t0 = Date.now(); orphans = 0; TIMES = []; capped = 0;
+  if (work) { log('นำเข้า component จากไลบรารี…'); await resolveFast(); }
+  let n = 0, based = 0, placed = 0, bars = 0; const ok = [], notPlaced = [];
+  for (const p of live) {
+    useFeature(p.id); await figma.setCurrentPageAsync(p.page);
+    if (legacy === 'baseline') for (const u of p.unknown) { try { u.f.setPluginData('mfSig', u.sig); u.f.setPluginData('mfFeature', p.id); based++; } catch (e) { warn('เก็บลายเซ็น ' + u.f.name, e); } }
+    const redo = p.changed.concat(legacy === 'rebuild' ? p.unknown : []);
+    for (const c of redo) {
+      const s = await replaceFrame(p.page, c.f, c.x, c.mob);
+      if (s) { n++; log('  · ' + n + '/' + work + ' แทนที่ ' + s.name); if (!c.mob && await refreshBar(p.page, s, c.x.it)) bars++; }
+    }
+    for (const m of p.missing) {
+      const pos = slotFor(p.page, m.x, m.mob, p.items, p.frames);
+      if (!pos || pos.busy) { notPlaced.push(p.title + ' ' + m.x.it.code + (m.mob ? ' mobile' : '') + (pos ? ' (ช่องถูกใช้แล้ว — โครงแถวเปลี่ยน)' : ' (ไม่มีจออื่นในแถวนี้ให้เทียบตำแหน่ง)')); continue; }
+      const tag = tagOf(pos.sib), parent = pos.parent;
+      const s = await makeScreen(p.page, m.x.it, m.mob, FEATURE_PREFIX, m.x.title, m.x.pg, pos, (nn) => { parent.insertChild(parent.children.indexOf(pos.sib), nn); nn.x = pos.x; nn.y = pos.y; try { if (tag) nn.setPluginData(MF_TAG, tag); } catch (e) { /* */ } });
+      if (!s) continue;
+      n++; placed++; p.frames.set(m.x.it.code + '|' + (m.mob ? 'm' : 'd'), s); log('  · ' + n + '/' + work + ' วางจอใหม่ ' + s.name);
+      if (!m.mob) {   // แถบเคสเหนือจอ (แถวแถบเดียวกับแถบของจอข้างเคียง)
+        let sb = null; walkPage(p.page, (x) => { const mm = (x.name || '').match(BAR_RE); if (mm && mm[1] === pos.sibItem.code && Math.abs(x.x - pos.sib.x) < 1 && x.y < pos.sib.y) sb = x; });
+        if (sb) { CREATED = []; try { const b = await flowBar(FEATURE_PREFIX, m.x.it.code, m.x.it.label, barState(m.x.it.code), GRID.colW); sb.parent.insertChild(sb.parent.children.indexOf(sb), b); b.x = pos.x; b.y = sb.y; try { if (tagOf(sb)) b.setPluginData(MF_TAG, tagOf(sb)); } catch (e) { /* */ } bars++; } catch (e) { warn('แถบ ' + m.x.it.code, e); dropMade(); } CREATED = []; }
+      }
+    }
+    ok.push(p.title);
+  }
+  log('');
+  log('อัปเดตแล้ว ' + n + ' จอ (แทนที่ ' + (n - placed) + ' · วางจอใหม่ ' + placed + ')' + (bars ? ' · แถบเคส ' + bars : '') + (based ? ' · เก็บลายเซ็นเป็นฐาน ' + based + ' จอ' : '') + ' · จอที่ไม่เปลี่ยนไม่ถูกแตะ');
+  if (notPlaced.length) { log('ⓘ วางไม่ได้ ' + notPlaced.length + ' จอ — ติ๊ก journey นั้นแล้วกด "สร้าง" ในแท็บสร้างจอ (ได้ชุดใหม่ต่อใต้):'); notPlaced.slice(0, 10).forEach(x => log('    ' + x)); }
+  const rm = live.reduce((a, p) => a + p.removed.length, 0); if (rm) log('ⓘ จอที่ไม่มีใน Feature แล้ว ' + rm + ' จอ ยังอยู่บนหน้า (ไม่ลบเอง) — ลบเองได้');
+  if (orphans) log('ชิ้นที่หลุดนอกจอระหว่างสร้าง (ลบแล้ว): ' + orphans);
+  log(errors.length ? '⚠ เตือน ' + errors.length + ' จุด (รายการด้านบน) — ส่งข้อความนี้กลับมาให้ตรวจ' : 'ไม่มีคำเตือน ✓');
+  log('ใช้เวลา ' + Math.round((Date.now() - t0) / 1000) + ' วินาที');
+  return done(ok, [], ids.length);
+}
+
+/* ======================= ค. สร้างจอที่เลือกใหม่ ======================= */
+async function rebuildSelected() {
+  errors.length = 0; const t0 = Date.now(); orphans = 0; TIMES = []; capped = 0;
+  const page = figma.currentPage;
+  const f = MF_FEATURES.find(x => page.name === x.page[0] || page.name === ALT_PAGE(x.page[0]));
+  const up = (n) => { for (let p = n; p && p.type !== 'PAGE'; p = p.parent) if (p.type === 'FRAME' && FRAME_CODE_RE.test(p.name || '')) return p; return null; };
+  const sel = [...new Set((page.selection || []).map(up).filter(Boolean))];
+  if (!f) { log('✗ Page นี้ ("' + page.name + '") ไม่ใช่ Page ของ Feature ใด — เปิด Page ของ Feature แล้วเลือกจอ "MF / …"'); return done([], [], 1); }
+  if (!sel.length) { log('✗ ยังไม่ได้เลือกจอ "MF / …" บนหน้านี้ — คลิกเลือกเฟรมจอ (กด Shift เลือกหลายจอ) แล้วกดอีกครั้ง'); return done([], [], 1); }
+  useFeature(f.id);
+  const { out: items } = featureItems(null);
+  log('สร้างจอที่เลือกใหม่ ' + sel.length + ' จอ · Feature ' + F.title);
+  log('นำเข้า component จากไลบรารี…'); await resolveFast();
+  let n = 0, skip = 0; const made = [];
+  for (const old of sel) {
+    const m = old.name.match(FRAME_CODE_RE), mob = !!m[5] || old.width <= 500, happy = m[1][0] === 'H';
+    const pool = items.filter(x => (x.it.code[0] === 'H') === happy);
+    let x = pool.find(o => o.it.code === m[1] && o.it.label === m[4]) || pool.find(o => o.it.label === m[4]) || null, note = '';
+    if (!x) { x = pool.find(o => o.it.code === m[1]) || null; if (x) note = ' (ชื่อเคสเปลี่ยน: "' + m[4].slice(0, 40) + '" → "' + x.it.label.slice(0, 40) + '")'; }
+    if (!x || !x.it.fn) { skip++; log('  · ข้าม "' + old.name + '" — ไม่มีเคสนี้ใน Feature ตอนนี้ ไม่แตะ'); continue; }
+    const s = await replaceFrame(page, old, x, mob);
+    if (s) { n++; made.push(s); log('  · ' + n + '/' + sel.length + ' แทนที่ ' + s.name + (x.it.code !== m[1] ? ' (รหัสเดิม ' + m[1] + ')' : '') + note); if (!mob) await refreshBar(page, s, x.it); }
+  }
+  figma.currentPage.selection = made;
+  log('');
+  log('แทนที่แล้ว ' + n + ' จอ · ข้าม ' + skip + ' · จอที่ไม่ได้เลือกไม่ถูกแตะ · ส่วนที่แก้มือในจอที่เลือกหาย ย้อนได้ด้วย Cmd+Z หรือ Version history');
+  log(errors.length ? '⚠ เตือน ' + errors.length + ' จุด (รายการด้านบน) — ส่งข้อความนี้กลับมาให้ตรวจ' : 'ไม่มีคำเตือน ✓');
+  log('ใช้เวลา ' + Math.round((Date.now() - t0) / 1000) + ' วินาที');
+  return done([F.title], [], 1);
+}
+
+/* ตัวรับคำสั่งของแท็บอัปเดต/ลบ — คืน true = จัดการแล้ว */
+async function updHandle(msg) {
+  const ids = Array.isArray(msg.features) && msg.features.length ? msg.features : [msg.feature || MF_FEATURES[0].id];
+  if (msg.type === 'delete-section') return deleteSections(msg, ids);
+  if (msg.type === 'update-changed') return updateChanged(msg, ids);
+  if (msg.type === 'rebuild-selected') return rebuildSelected();
+  if (msg.type === 'rc-clear') { rcClear(); RESOLVED = false; log('✓ ล้างความจำ component ของไฟล์นี้แล้ว — รอบหน้าหาใหม่ทั้งหมด (ครั้งแรกอาจนานขึ้น)'); return done(['ล้างความจำ'], [], 1); }
+  return false;
+}
 
 })();

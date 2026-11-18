@@ -17,7 +17,7 @@
   body{font:400 11px/16px Inter,"IBM Plex Sans Thai",Helvetica,sans-serif;color:var(--text);background:var(--bg);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
   b,.b{font-weight:600}
   .view{display:flex;flex-direction:column;flex:1;min-height:0}
-  .view[hidden],.pane[hidden],.sheet[hidden],#log[hidden],.bar[hidden]{display:none}
+  .view[hidden],.pane[hidden],.sheet[hidden],#log[hidden],.bar[hidden],.sec[hidden],.grp[hidden]{display:none}
   /* Tabs (tabs.module.css) + ปุ่ม ? ชิดขวา */
   .tabs{display:flex;align-items:center;padding:0 4px;border-bottom:1px solid var(--border)}
   .tab{font:inherit;color:var(--text2);background:none;border:0;padding:8px 4px;cursor:pointer}
@@ -62,6 +62,8 @@
   .btn.secondary{border-color:var(--border);background:transparent;color:var(--text)}
   .btn.secondary:active{background:var(--pressed)}
   .btn.secondary:disabled{color:var(--textdis);cursor:not-allowed}
+  .btn.danger{background:var(--figma-color-bg-danger,#f24822);color:var(--figma-color-text-ondanger,#fff)}   /* ปุ่มยืนยันลบ (button.module.css danger) */
+  .btn.danger:disabled{background:var(--dis);color:var(--ondis);cursor:not-allowed}
   .btn:focus-visible{border-color:var(--sel);outline:0}
   .full{display:block;width:100%}
   .row{display:flex;gap:8px;align-items:center}
@@ -153,6 +155,7 @@
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" aria-selected="true" data-pane="pBuild"><span>สร้างจอ</span></button>
     <button class="tab" role="tab" aria-selected="false" data-pane="pSend"><span>ส่งไป FigJam</span></button>
+    <button class="tab" role="tab" aria-selected="false" data-pane="pUpd"><span>อัปเดต / ลบ</span></button>
     <span class="spacer"></span><button class="iconbtn" data-help="hDesign" title="วิธีใช้"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11M1.5 8a6.5 6.5 0 1 1 13 0 6.5 6.5 0 0 1-13 0m5.25-1.75C6.75 5.56 7.31 5 8 5s1.25.56 1.25 1.25c0 .4-.2.66-.55.94l-.1.08c-.33.26-.85.67-.85 1.48V9h1v-.25c0-.3.15-.43.5-.71l.08-.07C9.78 7.6 10.25 7.1 10.25 6.25a2.25 2.25 0 0 0-4.5 0zM8 10a.6.6 0 1 0 0 1.2.6.6 0 0 0 0-1.2"/></svg></button>
   </nav>
   <div class="body">
@@ -179,6 +182,45 @@
         <details>
           <summary><svg width="16" height="16" viewBox="0 0 16 16"><path d="M7.47486 5.52513c-.19526-.19526-.51184-.19526-.70711 0-.19526.19527-.19526.51185 0 .70711L8.53552 8l-1.76777 1.76777c-.19526.19526-.19526.51186 0 .70706.19527.1953.51185.1953.70711 0l2.12132-2.12128.35355-.35355-.35355-.35355z"/></svg>เครื่องมือ</summary>
           <div class="in"><button id="patchLab" class="btn secondary full">อัปเดตป้าย Device Type / Header บนจอที่สร้างแล้ว</button><span class="muted">ทำทุก Feature ที่สร้างไว้แล้วในไฟล์นี้ ไม่ต้องติ๊ก · แทนเฉพาะแถบหัวและป้ายข้างจอ จอไม่ถูกแตะ</span><button id="chk" class="btn secondary full">เช็ค component (ไม่สร้างอะไร)</button></div>
+        </details>
+      </div>
+    </div>
+
+    <!-- แท็บอัปเดต / ลบ (18 พ.ย. 2569) — ใช้ Feature/journey/อุปกรณ์ที่ติ๊กในแท็บสร้างจอ · ทุกปุ่มตรวจก่อน แล้วยืนยันจำนวนในกล่องด้านบน -->
+    <div class="pane" id="pUpd" hidden>
+      <div class="sec" id="cfm" hidden>
+        <div class="banner warn"><b id="cfmTitle"></b><div id="cfmLines"></div></div>
+        <div id="cfmLegacy" class="grp" hidden>
+          <span class="lbl">จอเก่าที่ยังไม่มีลายเซ็น <b id="cfmUnk"></b> จอ</span>
+          <div class="seg">
+            <label><input type="radio" name="legacy" value="baseline" checked><span>เก็บเป็นฐาน ไม่สร้าง</span></label>
+            <label><input type="radio" name="legacy" value="rebuild"><span>สร้างใหม่</span></label>
+          </div>
+          <span class="muted">เก็บเป็นฐาน = ถือว่าจอตอนนี้ตรงกับโค้ดล่าสุด (เร็ว) · ครั้งต่อไปอัปเดตเฉพาะจอที่เปลี่ยน</span>
+        </div>
+        <div class="row"><button id="cfmGo" class="btn primary grow"></button><button id="cfmNo" class="btn secondary">ยกเลิก</button></div>
+      </div>
+      <div class="sec">
+        <div class="kv"><span>Feature ที่ติ๊ก (แท็บสร้างจอ)</span><b id="updSel">-</b></div>
+      </div>
+      <div class="sec">
+        <span class="lbl">อัปเดตจอที่สร้างแล้ว</span>
+        <button id="updCheck" class="btn primary full">ตรวจจอที่เปลี่ยน</button>
+        <label class="chk"><input type="checkbox" id="updForce"><span>สร้างใหม่ทุกจอของ journey ที่ติ๊ก แม้ไม่เปลี่ยน</span></label>
+        <button id="rebuildSel" class="btn secondary full">สร้างจอที่เลือกใหม่</button>
+        <span class="muted">เลือกเฟรมจอ “MF / …” ใน Figma ก่อน (Shift เลือกหลายจอ) · วางแทนที่ตำแหน่งเดิม</span>
+      </div>
+      <div class="sec">
+        <span class="lbl">ลบส่วนที่สร้างแล้ว</span>
+        <label class="chk"><input type="checkbox" class="delPart" value="happy"><span>Happy flow — เส้นทางหลักแบบสั้น</span></label>
+        <label class="chk"><input type="checkbox" class="delPart" value="full"><span>ทุกเคส</span></label>
+        <button id="delCheck" class="btn secondary full">ตรวจก่อนลบ</button>
+        <span class="muted">ลบหัวส่วน แถบ ป้าย และจอของส่วนนั้นทุกชุดบน Page · Title Feature และของอื่นไม่ถูกแตะ</span>
+      </div>
+      <div class="sec">
+        <details>
+          <summary><svg width="16" height="16" viewBox="0 0 16 16"><path d="M7.47486 5.52513c-.19526-.19526-.51184-.19526-.70711 0-.19526.19527-.19526.51185 0 .70711L8.53552 8l-1.76777 1.76777c-.19526.19526-.19526.51186 0 .70706.19527.1953.51185.1953.70711 0l2.12132-2.12128.35355-.35355-.35355-.35355z"/></svg>เครื่องมือ</summary>
+          <div class="in"><button id="rcClear" class="btn secondary full">ล้างความจำ component ของไฟล์นี้</button><span class="muted">ใช้เมื่อเพิ่งเพิ่ม/publish component แล้วปลั๊กอินยังหาไม่เจอ · รอบหน้าหาใหม่ทั้งหมด</span></div>
         </details>
       </div>
     </div>
@@ -237,9 +279,18 @@
         <li><span>กด <b>ส่งทุก Feature ไป FigJam</b> แล้วกด <b>เปิดบอร์ดปลายทาง</b></span></li>
         <li><span>ในบอร์ด รันพระผู้สร้าง กด <b>วางลงบอร์ดนี้</b></span></li>
       </ol></div>
+    <div class="sec"><span class="lbl">อัปเดต / ลบ</span>
+      <ol class="steps2">
+        <li><span>ติ๊ก Feature / journey / อุปกรณ์ ในแท็บสร้างจอ</span></li>
+        <li><span><b>ตรวจจอที่เปลี่ยน</b> ดูจำนวน แล้วกด <b>อัปเดต</b> — สร้างใหม่เฉพาะจอที่โค้ดเปลี่ยน วางที่เดิม</span></li>
+        <li><span>ครั้งแรก จอเก่ายังไม่มีลายเซ็น เลือก <b>เก็บเป็นฐาน</b> (เร็ว) หรือ <b>สร้างใหม่</b></span></li>
+        <li><span>อยากทำบางจอ: เลือกเฟรมจอใน Figma แล้วกด <b>สร้างจอที่เลือกใหม่</b></span></li>
+        <li><span>ลบส่วน: ติ๊ก Happy flow / ทุกเคส กด <b>ตรวจก่อนลบ</b> แล้วยืนยันจำนวน</span></li>
+      </ol></div>
     <div class="sec"><span class="lbl">ควรรู้</span>
       <ul class="tips">
         <li><span>ไม่ทับของเดิม กดซ้ำได้ชุดใหม่ต่อด้านล่าง ลบชุดเก่าเอง</span></li>
+        <li><span>อัปเดต/ลบ ย้อนได้ด้วย Cmd+Z · จอที่ไม่มีใน Feature แล้วปลั๊กอินแค่รายงาน ไม่ลบเอง</span></li>
         <li><span>มีปัญหา กด <b>คัดลอก</b> ที่แถบล่าง แล้วส่ง log ให้ทีม</span></li>
       </ul></div>
   </div>
@@ -355,7 +406,7 @@ function drawTotal() {
     '<span class="sum">รวมที่จะสร้าง (' + dn + ')</span><span class="n sum">' + (h + c) * nd + ' เฟรม</span>';
   $('happy').textContent = 'สร้างเฉพาะ Happy flow (' + h * nd + ' เฟรม)';
 }
-document.querySelectorAll('input[name=dev]').forEach(r => { r.addEventListener('change', drawTotal); });
+document.querySelectorAll('input[name=dev]').forEach(r => { r.addEventListener('change', drawSel); });
 function drawSel() {
   drawTotal();
   const s = selF(), all = FEATS.length && FEATS.every(f => PICK[f.id] && PICK[f.id].size === f.journeys.length);
@@ -363,7 +414,9 @@ function drawSel() {
   $('featAll').textContent = all ? 'ล้าง' : 'เลือกทั้งหมด';
   const part = Object.keys(picksOf()).length;
   $('all').textContent = !s.length ? 'เลือก Feature ก่อน' : 'สร้าง ' + (s.length > 1 ? s.length + ' Feature' : 'Feature ที่เลือก') + (part ? ' (บาง journey)' : '');
-  $('all').disabled = $('happy').disabled = $('figjam').disabled = !s.length;
+  $('all').disabled = $('happy').disabled = $('figjam').disabled = $('updCheck').disabled = !s.length;
+  $('updSel').textContent = s.length ? (s.length > 2 ? s.length + ' Feature' : s.map(id => (FEATS.find(f => f.id === id) || {}).title).join(' · ')) + (part ? ' (บาง journey)' : '') + ' · ' + ({ both: 'Desktop + Mobile', desktop: 'Desktop', mobile: 'Mobile' })[dev()] : 'ยังไม่ได้ติ๊ก';
+  $('delCheck').disabled = !s.length || !document.querySelector('.delPart:checked');
 }
 $('featAll').onclick = () => { const all = FEATS.every(f => PICK[f.id].size === f.journeys.length); FEATS.forEach(f => { PICK[f.id] = new Set(all ? [] : f.journeys.map((_, k) => k)); }); drawFeatures(); };
 const fNames = () => { const s = selF(); return s.length > 1 ? s.length + ' Feature' : ((FEATS.find(f => f.id === s[0]) || {}).title || ''); };
@@ -372,6 +425,37 @@ $('all').onclick = () => send('build', null, 'เริ่มสร้าง ' +
 $('happy').onclick = () => send('build-happy', null, 'เริ่มสร้าง Happy flow ' + fNames() + ' …');
 $('patchLab').onclick = () => { const all = FEATS.map(f => f.id); pending = nRun = all.length; start('กำลังอัปเดตป้ายทุก Feature …'); post({ type: 'patch-labels', features: all, feature: all[0] }); };   // ไม่ต้องติ๊ก Feature · ทำทุก Feature ที่มี Page แล้ว
 $('chk').onclick = () => send('check', null, 'กำลังเช็ค component …');
+/* ===== แท็บอัปเดต / ลบ (18 พ.ย. 2569) — ตรวจก่อน (ปลั๊กอินส่ง mf-confirm กลับมา) แล้วยืนยันจำนวนในกล่องด้านบน ===== */
+let CFM = null;
+const hideCfm = () => { CFM = null; $('cfm').hidden = true; };
+const legacyVal = () => document.querySelector('input[name=legacy]:checked').value;
+function cfmCount() { return CFM ? CFM.total + (CFM.action === 'update' && legacyVal() === 'rebuild' ? CFM.unknown : 0) : 0; }
+function drawCfm() {
+  if (!CFM) return;
+  const n = cfmCount(), del = CFM.action === 'delete';
+  $('cfmGo').className = 'btn grow ' + (del ? 'danger' : 'primary');
+  $('cfmGo').textContent = del ? 'ลบ ' + n + ' ชิ้น' : n ? 'อัปเดต ' + n + ' จอ' : 'เก็บลายเซ็นเป็นฐาน ' + CFM.unknown + ' จอ';
+  $('cfmGo').disabled = !!CFM.blocked;
+}
+function showCfm(m) {
+  if (!m.total && !(m.action === 'update' && m.unknown)) { hideCfm(); setStatus(m.action === 'delete' ? 'ไม่มีชิ้นให้ลบ' : 'ทุกจอตรงกับโค้ดล่าสุด ไม่มีอะไรต้องอัปเดต', 'ok'); return; }
+  CFM = m; $('cfm').hidden = false; $('cfmTitle').textContent = m.title;
+  $('cfmLines').innerHTML = m.lines.map(l => '<div>' + esc(l) + '</div>').join('');
+  $('cfmLegacy').hidden = !(m.action === 'update' && m.unknown); $('cfmUnk').textContent = m.unknown || 0;
+  drawCfm(); setStatus('รอยืนยัน — ดูจำนวนในกล่องด้านบน', ''); $('cfm').scrollIntoView({ block: 'nearest' });
+}
+document.querySelectorAll('input[name=legacy]').forEach(r => { r.addEventListener('change', drawCfm); });
+document.querySelectorAll('.delPart').forEach(c => { c.addEventListener('change', drawSel); });
+$('cfmNo').onclick = () => { hideCfm(); setStatus('ยกเลิกแล้ว ไม่มีอะไรถูกแตะ', ''); };
+$('cfmGo').onclick = () => {
+  if (!CFM) return; const m = CFM, n = cfmCount(); hideCfm();
+  pending = nRun = 1; start(m.action === 'delete' ? 'กำลังลบ ' + n + ' ชิ้น …' : 'กำลังอัปเดต ' + n + ' จอ …');
+  post(Object.assign({}, m.payload, { type: m.action === 'delete' ? 'delete-section' : 'update-changed', confirm: true, expect: m.total, expectUnknown: m.unknown, legacy: legacyVal() }));
+};
+$('updCheck').onclick = () => { hideCfm(); const s = selF(); start('กำลังตรวจจอที่เปลี่ยน …'); post({ type: 'update-changed', features: s, feature: s[0], picks: picksOf(), devices: dev(), force: $('updForce').checked }); };
+$('delCheck').onclick = () => { hideCfm(); const s = selF(); start('กำลังนับชิ้นที่จะลบ …'); post({ type: 'delete-section', features: s, feature: s[0], parts: [...document.querySelectorAll('.delPart:checked')].map(c => c.value) }); };
+$('rebuildSel').onclick = () => { hideCfm(); pending = nRun = 1; start('กำลังสร้างจอที่เลือกใหม่ …'); post({ type: 'rebuild-selected' }); };
+$('rcClear').onclick = () => { pending = nRun = 1; start('กำลังล้างความจำ …'); post({ type: 'rc-clear' }); };
 /* บอร์ดปลายทาง (17 พ.ย. 2569) — ปลั๊กอินจำไว้ใน clientStorage (ใช้ร่วมกันทุกไฟล์ ทั้งฝั่ง Figma และ FigJam) */
 let targets = [], sel = -1;
 function drawTargets() {
@@ -480,6 +564,7 @@ onmessage = (e) => {
   if (m.type === 'fj-mode') { $('design').hidden = true; $('fj').hidden = false; fjInfo = { file: m.file, key: m.key }; drawFj(); loadFjParts(); }
   if (m.type === 'fj-targets') { targets = m.list || []; sel = m.sel; drawTargets(); if (!$('fj').hidden) drawFj(); }
   if (m.type === 'features') { FEATS = m.list || []; drawFeatures(); }
+  if (m.type === 'mf-confirm') { busy = false; progress(0, 0); showCfm(m); }
   if (m.type === 'fj-all-done') logLine(m.sent.length ? '— ส่งครบทุก Feature ที่มีจอ (' + m.sent.length + ')' + (m.skip.length ? ' · ยังไม่มีจอ: ' + m.skip.join(' · ') : '') : '✗ ยังไม่มี Feature ไหนสร้างจอ — กดสร้างก่อน');
   if (m.type === 'journeys' && !FEATS.length) $('pick').innerHTML = m.items.map((t, i) => '<label class="chk"><input type="checkbox" value="' + i + '"><span>' + esc(t) + '</span></label>').join('');
   if (m.type === 'log') logLine(m.text);

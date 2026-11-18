@@ -63,6 +63,98 @@ process.on('beforeExit', () => {
   console.log('ไม่สร้างทับ: จอบนหน้า ' + fr.length + '/' + process.env.WANT_FRAMES + ' · Title ' + titles + '/' + wantT + ' · ชื่อซ้ำ (จากชุดเก่า) ' + dup.length + (ok ? ' ✓' : ' ⚠'));
   if (!ok) process.exitCode = 1;
 });
+/* ---------- อัปเดต / ลบ (18 พ.ย. 2569) ----------
+   MODE=delete-section PARTS=happy|full (FEATURES=… หลาย Feature) · UNTAG=1 ลบป้าย mf ของชิ้นในส่วน (ต้องหาจากตำแหน่ง) · DEL_FOREIGN=1 วางของผู้ใช้ไว้กลางส่วนที่ลบ (ต้องไม่ถูกแตะ)
+   MODE=update-changed UPD_SETUP=1: ปลอมลายเซ็น 3 จอ (= โค้ดเปลี่ยน) + ชื่อแถบเก่า · ลบ 2 จอ (= ยังไม่มีบนหน้า) · ลบลายเซ็น 5 คู่ (= จอเก่า) · จอรหัสที่ไม่มีแล้ว 1 · LEGACY=rebuild · UPD_TWICE=1 ตรวจซ้ำต้องเหลือ 0
+   MODE=rebuild-selected SEL=<regex ชื่อจอ> (+ SEL_INNER=1 เลือกชิ้นในจออีก 1 จอ) */
+const UPD = { started: false, confirm: null, before: [], setup: {} }, LOGS = [];
+const MF_TAG_T = 'mf';
+const fpages = () => (process.env.FEATURES ? process.env.FEATURES.split(',') : [FEAT]).map(id => { const sx = fs.readFileSync(path.join(__dirname, 'maintainance-feature-plugin', 'features', id + '.js'), 'utf8'); const pg = (sx.match(/page: \[\s*'([^']+)'/) || [])[1]; return mockFigma.root.children.find(p => p.name === pg || p.name === pg + ' (พระผู้สร้าง)'); }).filter(Boolean);
+const deskFrames = (pg) => pg.children.filter(n => n.type === 'FRAME' && /^MF \/ \d/.test(n.name) && !/ · mobile$/.test(n.name)).sort((a, b) => a.y - b.y || a.x - b.x);
+const mobOf = (pg, d) => pg.children.find(n => n.name === d.name + ' · mobile' && n.x === d.x);
+function updSetup(m) {
+  for (const pg of fpages()) UPD.before.push(...pg.children.map((n, i) => ({ pg, n, x: n.x, y: n.y, i, name: n.name, tag: n.getPluginData(MF_TAG_T) })));
+  const pg = fpages()[0]; if (!pg) return;
+  if (process.env.UNTAG) { let k = 0; for (const n of pg.children) { const t = n.getPluginData(MF_TAG_T); if (t && t !== 'title') { n.setPluginData(MF_TAG_T, ''); k++; } } UPD.setup.untag = k; }
+  if (process.env.DEL_FOREIGN) { const h = pg.children.filter(n => /^MF \/ H/.test(n.name)).sort((a, b) => a.y - b.y)[0] || pg.children.find(n => /^MF \/ \d/.test(n.name)); const f = mockFigma.createFrame(); f.name = 'ของผู้ใช้'; pg.appendChild(f); f.x = h.x + 10; f.y = h.y + 10; UPD.setup.foreign = { f, x: f.x, y: f.y }; }
+  if (process.env.UPD_SETUP) {
+    const D = deskFrames(pg), S = UPD.setup; S.tamper = []; S.gone = []; S.legacy = [];
+    for (const i of [3, 10]) { S.tamper.push(D[i]); D[i].setPluginData('mfSig', 'tampered'); }
+    const m3 = mobOf(pg, D[3]); m3.setPluginData('mfSig', 'tampered'); S.tamper.push(m3);
+    const code3 = D[3].name.match(/^MF \/ (\S+) /)[1]; S.bar = pg.children.find(n => n.name.indexOf('MF · ' + code3 + ' ') === 0 && n.x === D[3].x); S.barWant = S.bar.name; S.bar.name = 'MF · ' + code3 + ' ชื่อเคสเก่า';
+    for (const n of [D[5], mobOf(pg, D[12])]) { S.gone.push({ name: n.name, x: n.x, y: n.y }); n.remove(); }
+    for (const i of [20, 21, 22, 23, 24]) for (const n of [D[i], mobOf(pg, D[i])]) { n.setPluginData('mfSig', ''); S.legacy.push(n); }
+    const x = mockFigma.createFrame(); x.name = 'MF / 1.1.99 · จอที่ตัดออกแล้ว › หน้าเก่า — ทดสอบ'; x.resize(1440, 100); pg.insertChild(0, x); x.x = D[0].x; x.y = Math.max(...pg.children.map(n => n.y + n.height)) + 2000; S.extra = x;
+    S.all = UPD.before.filter(b => b.pg === pg && b.n.type === 'FRAME' && /^MF \//.test(b.name));
+    S.order = pg.children.slice();   // ลำดับ layer หลังเตรียม (ก่อนกดอัปเดต)
+  }
+  if (process.env.SEL) {
+    const re = new RegExp(process.env.SEL), sel = pg.children.filter(n => n.type === 'FRAME' && re.test(n.name));
+    if (process.env.SEL_INNER) { const other = deskFrames(pg).find(n => !re.test(n.name) && n.children.length); if (other) { sel.push(other.children[0]); UPD.setup.inner = other; } }
+    UPD.setup.sel = sel.filter(n => n.type === 'FRAME' && /^MF \//.test(n.name)).concat(UPD.setup.inner ? [UPD.setup.inner] : []);
+    mockFigma.currentPage = pg; pg.selection = sel;
+  }
+}
+process.on('beforeExit', () => {
+  if (global.__mfUpd || !mockFigma || !UPD.started) return; global.__mfUpd = true;
+  const bad = [], t = (ok, msg) => { if (!ok) bad.push(msg); };
+  const still = (b) => b.pg.children.indexOf(b.n) >= 0 && b.n.x === b.x && b.n.y === b.y;
+  if (process.env.MODE === 'delete-section') {
+    const parts = (process.env.PARTS || '').split(','), isPart = (b) => { const tg = b.tag, nm = b.name, inH = /^(happy|happy-\d+)$/.test(tg) || /^MF \/ H|^MF · H\d|^MF · ส่วน Happy/.test(nm), inF = /^(full|\d+)$/.test(tg) || /^MF \/ \d|^MF · \d|^MF · ส่วน ทุกเคส/.test(nm); return (parts.includes('happy') && inH) || (parts.includes('full') && inF); };
+    const pgs = fpages(), NOOP = !!(process.env.EXPECT_SHIFT || process.env.NO_CONFIRM); let gone = 0, kept = 0, wrongly = 0;
+    for (const b of UPD.before) {
+      if (b.n === (UPD.setup.foreign || {}).f) continue;
+      const del = !NOOP && isPart(b) && !/^MF · Feature /.test(b.name) && b.tag !== 'title' && /^MF [\/·] /.test(b.name);
+      if (del) { if (b.pg.children.indexOf(b.n) >= 0) bad.push('ยังไม่ถูกลบ: ' + b.name); else gone++; }
+      else if (!still(b)) { wrongly++; if (wrongly < 6) bad.push('ถูกแตะทั้งที่ไม่ใช่ส่วนที่ลบ: ' + b.name); } else kept++;
+    }
+    for (const pg of pgs) t(pg.children.filter(n => /^MF · Feature /.test(n.name)).length === 1, 'Title Feature หาย: ' + pg.name);
+    const f = UPD.setup.foreign; if (f) { t(f.f.parent && f.f.x === f.x && f.f.y === f.y, 'ของผู้ใช้ถูกแตะ'); f.f.remove(); }
+    if (!NOOP) t(UPD.first && UPD.first.total === gone, 'ยืนยัน ' + (UPD.first && UPD.first.total) + ' ชิ้น แต่ลบไป ' + gone);
+    if (NOOP) { t(gone === 0, 'จำนวนไม่ตรง/ยกเลิก แต่ยังลบ ' + gone); const w = LOGS.filter(l => /^⚠|^✗/.test(l));   // จำนวนเปลี่ยน ⇒ ปลั๊กอินขึ้น ✗ ตามตั้งใจ (ตัวกลางนับเป็นคำเตือน) · ไม่มีอย่างอื่น ⇒ ผ่าน
+      if (process.env.EXPECT_SHIFT) { t(w.length === 1 && /จำนวนชิ้นเปลี่ยนจากตอนตรวจ/.test(w[0]), 'ไม่ได้บอกว่าจำนวนเปลี่ยน: ' + w.join(' | ')); if (!bad.length) process.exitCode = 0; } }
+    else t(gone > 0, 'ไม่ได้ลบอะไร');
+    console.log('ลบส่วน ' + parts.join('+') + ': ' + pgs.map(p => p.name).join(' · ') + ' · ลบ ' + gone + ' ชิ้น (ยืนยัน ' + (UPD.first && UPD.first.total) + ') · ไม่แตะ ' + kept + (UPD.setup.untag ? ' · ลบป้ายก่อน ' + UPD.setup.untag + ' ชิ้น (หาจากตำแหน่ง)' : '') + (f ? ' · ของผู้ใช้ไม่ถูกแตะ' : '') + (bad.length ? ' ⚠' : ' ✓'));
+  }
+  if (process.env.MODE === 'update-changed' && UPD.setup.all) {
+    const S = UPD.setup, pg = fpages()[0], rebuild = process.env.LEGACY === 'rebuild';
+    const at = (b) => pg.children.find(n => n.type === 'FRAME' && n.x === b.x && n.y === b.y && n.name === b.name);
+    let replaced = 0, untouched = 0, placed = 0, based = 0;
+    for (const b of S.all) {
+      if (b.n === S.extra) continue;
+      const tam = S.tamper.includes(b.n), leg = S.legacy.includes(b.n), gone = S.gone.some(g => g.name === b.name && g.x === b.x);
+      if (gone) continue;
+      if (tam || (leg && rebuild)) { const n = at(b); if (!n || n === b.n) bad.push('จอที่ต้องสร้างใหม่ไม่ถูกแทนที่ที่เดิม: ' + b.name); else { replaced++; t(n.getPluginData('mfSig') && n.getPluginData('mfSig') !== 'tampered', 'ลายเซ็นใหม่ไม่ถูกเก็บ: ' + b.name); } }
+      else if (!still(b)) bad.push('จอที่ไม่เปลี่ยนถูกแตะ: ' + b.name);
+      else { untouched++; if (leg) { if (b.n.getPluginData('mfSig')) based++; else bad.push('จอเก่าไม่ได้เก็บลายเซ็นเป็นฐาน: ' + b.name); } }
+    }
+    for (const g of S.gone) { const n = at(g); if (!n) bad.push('จอที่หายไม่ถูกวางกลับที่ช่องเดิม: ' + g.name); else placed++; }
+    t(pg.children.indexOf(S.extra) >= 0, 'จอที่ไม่มีใน Feature แล้วถูกลบ (ต้องรายงานเฉยๆ)');
+    const bar = pg.children.find(n => n.name === S.barWant && n.x === S.bar.x && n.y === S.bar.y); t(bar && pg.children.indexOf(S.bar) < 0, 'แถบชื่อเคสเก่าไม่ถูกแทน');
+    /* ลำดับ layer: จอใหม่ต้องอยู่ระหว่างเพื่อนบ้านเดิม (ชิ้นที่ไม่ถูกแตะที่อยู่ติดกันก่อนกด) */
+    const live = (n) => pg.children.indexOf(n) >= 0 && !S.tamper.includes(n) && !S.legacy.includes(n);
+    const order = S.tamper.map(n => UPD.before.find(b => b.n === n)).every(b => { const i = S.order.indexOf(b.n), prev = S.order.slice(0, i).reverse().find(live), next = S.order.slice(i + 1).find(live), k = pg.children.indexOf(at(b));
+      return (!prev || pg.children.indexOf(prev) < k) && (!next || pg.children.indexOf(next) > k); });
+    t(order, 'ลำดับ layer ของจอที่แทนที่ไม่ตรงเดิม');
+    const F1 = UPD.first || {}; t(F1.unknown === S.legacy.length, 'นับจอเก่าไม่มีลายเซ็น ' + F1.unknown + ' ต้อง ' + S.legacy.length);
+    t(F1.total === S.tamper.length + S.gone.length, 'นับจอที่ต้องอัปเดต ' + F1.total + ' ต้อง ' + (S.tamper.length + S.gone.length));
+    if (process.env.UPD_TWICE) t(UPD.second && UPD.second.total === 0 && UPD.second.unknown === 0, 'ตรวจซ้ำหลังอัปเดตยังเหลือ ' + JSON.stringify(UPD.second && [UPD.second.total, UPD.second.unknown]));
+    console.log('อัปเดตจอที่เปลี่ยน: แทนที่ ' + replaced + ' · วางกลับช่องเดิม ' + placed + ' · ไม่แตะ ' + untouched + ' · จอเก่า ' + (rebuild ? 'สร้างใหม่' : 'เก็บเป็นฐาน ' + based) + ' · จอที่ตัดแล้วยังอยู่ · แถบชื่อเคสแทนแล้ว' + (process.env.UPD_TWICE ? ' · ตรวจซ้ำเหลือ ' + (UPD.second ? UPD.second.total : '?') : '') + (bad.length ? ' ⚠' : ' ✓'));
+    S.extra.remove();   // ไม่ให้ตัวตรวจส่วนอื่นนับจอปลอม
+  }
+  if (process.env.MODE === 'rebuild-selected') {
+    const pg = fpages()[0], sel = UPD.setup.sel || [];
+    let rep = 0, kept = 0;
+    for (const b of UPD.before.filter(x => x.pg === pg && x.n.type === 'FRAME' && /^MF \//.test(x.name))) {
+      if (sel.includes(b.n)) { const n = pg.children[b.i]; if (pg.children.indexOf(b.n) >= 0 || !n || n.name !== b.name || n.x !== b.x || n.y !== b.y) bad.push('จอที่เลือกไม่ถูกแทนที่ตำแหน่ง/ลำดับเดิม: ' + b.name); else rep++; }
+      else if (!still(b)) bad.push('จอที่ไม่ได้เลือกถูกแตะ: ' + b.name); else kept++;
+    }
+    t(sel.length && rep === sel.length, 'แทนที่ ' + rep + '/' + sel.length);
+    console.log('สร้างจอที่เลือกใหม่: แทนที่ ' + rep + '/' + sel.length + (UPD.setup.inner ? ' (รวมจอที่เลือกชิ้นข้างใน)' : '') + ' · ไม่แตะ ' + kept + (bad.length ? ' ⚠' : ' ✓'));
+  }
+  bad.slice(0, 15).forEach(b => console.log('⚠ ' + b));
+  if (bad.length) process.exitCode = 1;
+});
 /* ตรวจระยะหลังตัวกลางทดสอบเสร็จ — ตัวกลางเก็บ figma (mock) ไว้ในตัว ⇒ ดักจาก vm.runInNewContext ตอนโหลด code.js */
 const vm = require('vm'), run0 = vm.runInNewContext;
 let mockFigma = null;
@@ -74,20 +166,33 @@ vm.runInNewContext = function (code, ctx) {
     if (process.env.FOREIGN) { const fp = ctx.figma.createPage(); fp.name = FPAGE; const r = ctx.figma.createFrame(); r.name = 'ของทีมอื่น'; fp.appendChild(r); global.__foreign = fp; }
     /* FAIL_PAGE=<ชื่อ Page>: จำลอง Feature นั้นพังกลางทาง ⇒ Feature ที่เหลือต้องยังถูกสร้าง */
     if (process.env.FAIL_PAGE) { const sc = ctx.figma.setCurrentPageAsync; ctx.figma.setCurrentPageAsync = async (pg) => { if (pg && pg.name === process.env.FAIL_PAGE) throw new Error('จำลองพัง'); return sc ? sc.call(ctx.figma, pg) : undefined; }; }
-    ctx.figma.ui.postMessage = (m) => { if (m && m.type === 'shot') FJ.shots.push(m); if (m && m.type === 'fj-file') FJ.files.push(m); if (m && m.type === 'fj-done') FJ.done = m; if (m && m.type === 'fj-all-done') FJ.allDone = m; if (m && m.type === 'build-all-done') FJ.buildDone = m; return pm(m); };
+    ctx.figma.ui.postMessage = (m) => { if (m && m.type === 'shot') FJ.shots.push(m); if (m && m.type === 'fj-file') FJ.files.push(m); if (m && m.type === 'fj-done') FJ.done = m; if (m && m.type === 'fj-all-done') FJ.allDone = m; if (m && m.type === 'build-all-done') FJ.buildDone = m; if (m && m.type === 'mf-confirm') UPD.confirm = m; if (m && m.type === 'log') LOGS.push(m.text); return pm(m); };
     /* FJ_TARGET=<ลิงก์บอร์ด>: เลือกบอร์ดปลายทางก่อนกดปุ่มใดๆ ⇒ สเปกต้องมี target */
     /* FEATURE: ทุกข้อความจากหน้าต่างแนบ feature (แบบที่ ui.html ส่ง) */
     /* MODE=export-figjam-all + PRE_FEATURES=plan,trip,…: ปุ่มสร้าง (PRE_MODE) กดครั้งละ Feature ตามรายการ แล้วกด "ส่งทุก Feature" */
     const PRE_F = process.env.MODE === 'export-figjam-all' ? (process.env.PRE_FEATURES || FEAT).split(',') : null;
     { const d = Object.getOwnPropertyDescriptor(ctx.figma.ui, 'onmessage'); Object.defineProperty(ctx.figma.ui, 'onmessage', { configurable: true, set(f) { d.set.call(ctx.figma.ui, async (m) => {
       if (PRE_F && m && /^build/.test(m.type)) { for (const id of PRE_F) await f(Object.assign({}, m, { feature: id })); return; }
-      if (process.env.PICKS && m && typeof m === 'object' && /^(build|export-figjam$)/.test(m.type || '')) m = Object.assign({}, m, { picks: Object.fromEntries(process.env.PICKS.split(';').map(x => [x.split(':')[0], x.split(':')[1].split(',')])) });   // PICKS=plan:1;close:0 เลือก journey ราย Feature (17 พ.ย. 2569)
-      if (process.env.FEATURES && m && typeof m === 'object' && /^(build|export-figjam$)/.test(m.type || '')) m = Object.assign({}, m, { features: process.env.FEATURES.split(',') });   // FEATURES=close,track: ติ๊กหลาย Feature (17 พ.ย. 2569)
+      if (process.env.PICKS && m && typeof m === 'object' && /^(build|export-figjam$|update-changed$)/.test(m.type || '')) m = Object.assign({}, m, { picks: Object.fromEntries(process.env.PICKS.split(';').map(x => [x.split(':')[0], x.split(':')[1].split(',')])) });   // PICKS=plan:1;close:0 เลือก journey ราย Feature (17 พ.ย. 2569)
+      if (process.env.FEATURES && m && typeof m === 'object' && /^(build|export-figjam$|update-changed$|delete-section$)/.test(m.type || '')) m = Object.assign({}, m, { features: process.env.FEATURES.split(',') });   // FEATURES=close,track: ติ๊กหลาย Feature (17 พ.ย. 2569)
       return f(m && typeof m === 'object' && !m.feature ? Object.assign({ feature: FEAT }, m) : m); }); } }); }
     /* FEATURES: ทุก Feature ที่ติ๊กต้องมีหน้าของตัวเองและมีจอ */
     if (process.env.FEATURES) process.on('beforeExit', () => { if (global.__mfMulti) return; global.__mfMulti = true;
       const want = process.env.FEATURES.split(','), got = want.map(id => { const s = fs.readFileSync(path.join(__dirname, 'maintainance-feature-plugin', 'features', id + '.js'), 'utf8'); const pg = (s.match(/page: \[\s*'([^']+)'/) || [])[1]; const page = mockFigma.root.children.find(p => p.name === pg); return id + ' ' + (page ? page.children.filter(n => n.type === 'FRAME' && n.name.indexOf('MF / ') === 0).length : 0); });
       const ok = got.every(g => +g.split(' ')[1] > 0); console.log('ติ๊กหลาย Feature: ' + got.join(' · ') + ' เฟรม' + (ok ? ' ✓' : ' ⚠')); if (!ok) process.exitCode = 1; });
+    /* อัปเดต / ลบ (18 พ.ย. 2569): mock ไม่มี getNodeByIdAsync · MODE=delete-section / update-changed กดตรวจ → ยืนยันจำนวนที่ปลั๊กอินบอก (แบบหน้าต่าง) · ก่อนกดเตรียมหน้าตาม env (updSetup) */
+    if (!ctx.figma.getNodeByIdAsync) ctx.figma.getNodeByIdAsync = async (id) => { const w = (n) => { if (n.id === id) return n; for (const c of n.children || []) { const r = w(c); if (r) return r; } return null; }; return w(ctx.figma.root); };
+    if (/^(delete-section|update-changed|rebuild-selected)$/.test(process.env.MODE || '')) { const d = Object.getOwnPropertyDescriptor(ctx.figma.ui, 'onmessage'); Object.defineProperty(ctx.figma.ui, 'onmessage', { configurable: true, set(f) { d.set.call(ctx.figma.ui, async (m) => {
+      if (!m || m.type !== process.env.MODE || UPD.started) return f(m);
+      UPD.started = true; updSetup(m);
+      if (m.type === 'rebuild-selected') return f(m);
+      await f(m); UPD.first = UPD.confirm;
+      if (!UPD.first) { console.log('⚠ ไม่ได้รับ mf-confirm'); process.exitCode = 1; return; }
+      if (process.env.NO_CONFIRM) return;   // กดตรวจแล้วกดยกเลิก ⇒ ต้องไม่มีอะไรถูกแตะ
+      const expect = process.env.EXPECT_SHIFT ? UPD.first.total + 1 : UPD.first.total;   // EXPECT_SHIFT = จำนวนเปลี่ยนระหว่างตรวจกับยืนยัน ⇒ ต้องไม่ทำ
+      await f(Object.assign({}, m, UPD.first.payload, { confirm: true, expect, expectUnknown: UPD.first.unknown, legacy: process.env.LEGACY || 'baseline' }));
+      if (process.env.UPD_TWICE) { UPD.confirm = null; await f(Object.assign({}, m, UPD.first.payload, { confirm: false })); UPD.second = UPD.confirm; }
+    }); } }); }
     if (process.env.FJ_TARGET) { const d = Object.getOwnPropertyDescriptor(ctx.figma.ui, 'onmessage'); Object.defineProperty(ctx.figma.ui, 'onmessage', { configurable: true, set(f) { d.set.call(ctx.figma.ui, async (m) => { if (!FJ.tgt) { FJ.tgt = true; await f({ type: 'fj-target-add', url: process.env.FJ_TARGET }); } return f(m); }); } }); }
   }
   return run0.apply(this, arguments);
