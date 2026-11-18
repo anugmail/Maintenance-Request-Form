@@ -1,0 +1,497 @@
+<!-- พระผู้สร้าง — หน้าต่างปลั๊กอิน (ปรับหน้าตาแบบ Figma 17 พ.ย. 2569 · ผู้ใช้เลือก "แบบ Figma")
+     สีใช้ตัวแปรธีมของ Figma (--figma-color-*) มีค่าสำรองโทนสว่างของ Figma · ปุ่มหลักสีน้ำเงินปุ่มเดียวต่อหน้า ที่เหลือเป็นปุ่มรอง
+     id ของทุกปุ่ม/ช่องคงเดิม (ตัวเทสและ code.js อ้างถึง) -->
+<style>
+  /* ค่าทุกตัวยกจาก Figma UI3 ผ่านไลบรารี @create-figma-plugin/ui 4.0.1 (lib/css/base.css + components/*.module.css)
+     control สูง 24 · ตัวอักษร 11/16 Inter · มุม input 4 ปุ่ม 6 · ระยะ 8/12/16 · สีจากตัวแปรธีม --figma-color-* (ค่าสำรอง = ธีมสว่างของ Figma) */
+  :root{
+    --bg:var(--figma-color-bg,#fff);--bg2:var(--figma-color-bg-secondary,#f5f5f5);--hover:var(--figma-color-bg-hover,#f5f5f5);--pressed:var(--figma-color-bg-pressed,#f5f5f5);
+    --text:var(--figma-color-text,#1e1e1e);--text2:var(--figma-color-text-secondary,#757575);--text3:var(--figma-color-text-tertiary,#b3b3b3);
+    --icon2:var(--figma-color-icon-secondary,#757575);--border:var(--figma-color-border,#e6e6e6);--sel:var(--figma-color-border-selected,#0d99ff);
+    --brand:var(--figma-color-bg-brand,#0d99ff);--brandP:var(--figma-color-bg-brand-pressed,#007be5);--onbrand:var(--figma-color-text-onbrand,#fff);
+    --dis:var(--figma-color-bg-disabled,#d9d9d9);--ondis:var(--figma-color-text-ondisabled,#fff);--textdis:var(--figma-color-text-disabled,#b3b3b3);
+    --danger:var(--figma-color-text-danger,#dc3412);--success:var(--figma-color-text-success,#009951);
+    --warnbg:var(--figma-color-bg-warning-tertiary,#fff1c2);--warn:var(--figma-color-text-warning,#b86200)}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font:400 11px/16px Inter,"IBM Plex Sans Thai",Helvetica,sans-serif;color:var(--text);background:var(--bg);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+  b,.b{font-weight:600}
+  .view{display:flex;flex-direction:column;flex:1;min-height:0}
+  .view[hidden],.pane[hidden],.sheet[hidden],#log[hidden],.bar[hidden]{display:none}
+  /* Tabs (tabs.module.css) + ปุ่ม ? ชิดขวา */
+  .tabs{display:flex;align-items:center;padding:0 4px;border-bottom:1px solid var(--border)}
+  .tab{font:inherit;color:var(--text2);background:none;border:0;padding:8px 4px;cursor:pointer}
+  .tab:first-child{padding-left:8px}
+  .tab>span{display:block;height:24px;padding:4px 8px;border-radius:4px}
+  .tab:hover{color:var(--text)}
+  .tab:hover>span{background:var(--bg2)}
+  .tab[aria-selected=true]{color:var(--text)}
+  .tab[aria-selected=true]>span{background:var(--bg2);font-weight:600}
+  .spacer{flex:1}
+  .iconbtn{width:24px;height:24px;margin-right:8px;padding:0;border:0;border-radius:4px;background:none;color:var(--icon2);display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .iconbtn:hover{background:var(--hover);color:var(--text)}
+  .iconbtn svg{fill:currentColor}
+  /* Container 16 · ระยะในส่วน 8 · ระหว่างส่วนคั่นด้วย Divider */
+  .body{flex:1;overflow:auto}
+  .sec{padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+  .sec+.sec{border-top:1px solid var(--border)}
+  .lbl{color:var(--text2)}
+  .muted{color:var(--text2)}
+  /* Dropdown (dropdown.module.css): สูง 24 · ขอบ 1 · มุม 4 · ไอคอน chevron-down-16 */
+  .dd{position:relative;display:flex;height:24px;border:1px solid var(--border);border-radius:4px}
+  .dd:hover{border-color:var(--border)}
+  .dd:focus-within{border-color:var(--sel)}
+  .dd select{appearance:none;-webkit-appearance:none;font:inherit;color:var(--text);background:none;border:0;outline:0;width:100%;height:22px;padding:0 24px 0 7px;cursor:pointer}
+  .dd svg{position:absolute;right:4px;top:3px;fill:var(--icon2);pointer-events:none}
+  /* Textbox (textbox.module.css): พื้นเทา ไม่มีขอบ hover มีขอบ */
+  input[type=text]{font:inherit;color:var(--text);display:block;width:100%;height:24px;padding:0 7px;border:1px solid transparent;border-radius:4px;background:var(--bg2);outline:0}
+  input[type=text]:hover{border-color:var(--border)}
+  input[type=text]:focus{border-color:var(--sel)}
+  input[type=text]::placeholder{color:var(--text3)}
+  /* Segmented control */
+  .seg{display:flex;border-radius:4px;background:var(--bg2)}
+  .seg label{flex:1;cursor:pointer}
+  .seg input{display:none}
+  .seg span{display:flex;height:24px;align-items:center;justify-content:center;padding:4px 8px;border:1px solid transparent;border-radius:4px;color:var(--text2)}
+  .seg input:checked+span{border-color:var(--border);background:var(--bg);color:var(--text)}
+  /* Button (button.module.css): สูง 24 · padding 0 8 · มุม 6 */
+  button.btn{font:inherit;font-weight:600;height:24px;padding:0 8px;border:1px solid transparent;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .btn.primary{background:var(--brand);color:var(--onbrand)}
+  .btn.primary:active{background:var(--brandP)}
+  .btn.primary:disabled{background:var(--dis);color:var(--ondis);cursor:not-allowed}
+  .btn.secondary{border-color:var(--border);background:transparent;color:var(--text)}
+  .btn.secondary:active{background:var(--pressed)}
+  .btn.secondary:disabled{color:var(--textdis);cursor:not-allowed}
+  .btn:focus-visible{border-color:var(--sel);outline:0}
+  .full{display:block;width:100%}
+  .row{display:flex;gap:8px;align-items:center}
+  .row>.grow{flex:1;min-width:0}
+  /* ปุ่มข้อความ (ลิงก์ในแถบล่าง · ลบ · โหลดใหม่) */
+  .link{font:inherit;background:none;border:0;padding:0;color:var(--text2);cursor:pointer}
+  .link:hover{color:var(--text)}
+  .link.brand{color:var(--brand)}
+  .link:disabled{color:var(--textdis);cursor:default}
+  /* Disclosure (disclosure.module.css): หัวตัวหนา ไอคอน chevron-right หมุน 90° */
+  details>summary{list-style:none;cursor:pointer;position:relative;padding:0 0 0 16px;font-weight:600;display:flex;gap:6px;align-items:center;height:24px}
+  details>summary::-webkit-details-marker{display:none}
+  details>summary svg{position:absolute;left:-4px;top:4px;fill:var(--text);transition:transform .1s}
+  details[open]>summary svg{transform:rotate(90deg)}
+  details>.in{padding:4px 0 0 16px;display:flex;flex-direction:column;gap:8px}
+  /* Checkbox */
+  .chk{display:flex;gap:8px;align-items:flex-start;cursor:pointer;min-height:16px}
+  .chk input,.frow input{appearance:none;-webkit-appearance:none;width:16px;height:16px;margin:0;flex:none;border:1px solid var(--border);border-radius:4px;background:var(--bg) center/16px no-repeat;cursor:pointer}
+  .chk input:checked,.frow input:checked,.jrow input:checked{border-color:var(--figma-color-border-brand-strong,#007be5);background-color:var(--brand);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M11.35 5.65a.5.5 0 0 1 0 .7l-4 4a.5.5 0 0 1-.7 0l-2-2a.5.5 0 1 1 .7-.7L7 9.29l3.65-3.64a.5.5 0 0 1 .7 0'/%3E%3C/svg%3E")}
+  .chk input:focus-visible,.frow input:focus-visible{outline:1px solid var(--sel);outline-offset:1px}
+  .chk small{color:var(--text2);font-size:11px}
+  .list{display:flex;flex-direction:column;gap:8px}
+  .grp{display:flex;flex-direction:column;gap:8px}
+  .grp+.grp{margin-top:4px}
+  .grp>.chk.part{padding-left:24px}
+  /* รายการ Feature: ตาราง 3 คอลัมน์ [checkbox 16][ชื่อ + รายละเอียด][จำนวนเฟรม ชิดขวา] · hover พื้นเทา (แบบ selectable-item) */
+  .flist{display:flex;flex-direction:column;margin:0 -8px}
+  .frow{display:grid;grid-template-columns:16px minmax(0,1fr) auto;column-gap:8px;align-items:start;padding:6px 8px;border-radius:4px;cursor:pointer}
+  .frow:hover{background:var(--hover)}
+  .frow .t{display:flex;flex-direction:column;min-width:0}
+  .frow .t .m{color:var(--text2)}
+  .nw{white-space:nowrap}   /* ตัดบรรทัดได้เฉพาะที่ · ไม่ตัดกลางวลี */
+  .frow .n{text-align:right;font-variant-numeric:tabular-nums}
+  .frow .n small{display:block;color:var(--text2);font-size:11px}
+  .frow{grid-template-columns:16px minmax(0,1fr) 24px}
+  .frow .exp{margin:-4px -4px 0 0}
+  .frow .exp svg{transition:transform .1s}
+  .fitem.open .exp svg{transform:rotate(90deg)}
+  .frow .n .of{color:var(--text2)}
+  .jlist{display:none;flex-direction:column;padding:0 40px 6px 32px}
+  .fitem.open .jlist{display:flex}
+  .jrow{display:grid;grid-template-columns:16px minmax(0,1fr) 40px 44px;column-gap:8px;align-items:center;padding:4px 0;cursor:pointer}
+  .jrow .n{text-align:right;color:var(--text2);font-variant-numeric:tabular-nums}
+  .jhead{cursor:default;padding:0 0 2px;color:var(--text2);font-size:10px}
+  .jhead .n{color:var(--text2)}
+  .total{display:grid;grid-template-columns:minmax(0,1fr) auto;row-gap:2px;color:var(--text2)}
+  .total .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--text)}
+  .total .sum{border-top:1px solid var(--border);padding-top:4px;margin-top:2px;color:var(--text);font-weight:600}
+  .jrow input{appearance:none;-webkit-appearance:none;width:16px;height:16px;margin:0;border:1px solid var(--border);border-radius:4px;background:var(--bg) center/16px no-repeat;cursor:pointer}
+  .frow input:indeterminate{border-color:var(--figma-color-border-brand-strong,#007be5);background-color:var(--brand);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect x='4' y='7.5' width='8' height='1' rx='.5' fill='white'/%3E%3C/svg%3E")}
+  .kv{display:flex;justify-content:space-between;gap:8px}
+  .kv span{color:var(--text2)}
+  /* Banner */
+  .banner{border-radius:6px;padding:8px;background:var(--bg2);color:var(--text)}
+  .banner.warn{background:var(--warnbg);color:var(--text)}
+  .banner.ok{color:var(--success);padding:0;background:none}
+  .warn{color:var(--danger)}
+  .ok{color:var(--success)}
+  code{font:10px/16px SFMono-Regular,Menlo,monospace;background:var(--bg2);padding:1px 4px;border-radius:2px}
+  /* แถบล่าง: สถานะ · ความคืบหน้า · log */
+  footer{border-top:1px solid var(--border);padding:8px 16px;display:flex;flex-direction:column;gap:8px}
+  .status{display:flex;align-items:center;gap:8px;height:24px}
+  .dot{width:6px;height:6px;border-radius:3px;background:var(--text3);flex:none}
+  .dot.run{background:var(--brand);animation:p 1s infinite}
+  .dot.ok{background:var(--success)}
+  .dot.err{background:var(--danger)}
+  @keyframes p{50%{opacity:.3}}
+  #statusText{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text2)}
+  #statusText.ok{color:var(--success)}
+  #statusText.warn{color:var(--danger)}
+  #statusText.run{color:var(--text)}
+  .bar{height:2px;background:var(--bg2);border-radius:1px;overflow:hidden}
+  .bar>i{display:block;height:100%;width:0;background:var(--brand);transition:width .2s}
+  #log{height:120px;overflow:auto;background:var(--bg2);border-radius:4px;padding:8px;white-space:pre-wrap;font:10px/16px SFMono-Regular,Menlo,monospace}
+  /* แผ่นวิธีใช้ */
+  .sheet{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:10}
+  .sheet .top{display:flex;align-items:center;height:41px;padding:0 8px 0 16px;border-bottom:1px solid var(--border)}
+  .sheet .top b{flex:1}
+  .steps2{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none;counter-reset:s}
+  .steps2 li{display:flex;gap:8px;counter-increment:s}
+  .steps2 li::before{content:counter(s);flex:none;width:16px;height:16px;border-radius:8px;background:var(--bg2);color:var(--text2);font-weight:600;font-size:10px;line-height:16px;text-align:center}
+  .tips{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;color:var(--text2)}
+  .tips li{display:flex;gap:8px}
+  .tips li::before{content:"";flex:none;width:4px;height:4px;border-radius:2px;background:var(--text3);margin-top:6px}
+</style>
+
+<!-- ======================= ไฟล์ Figma: สร้างจอ + ส่ง FigJam ======================= -->
+<div id="design" class="view">
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-pane="pBuild"><span>สร้างจอ</span></button>
+    <button class="tab" role="tab" aria-selected="false" data-pane="pSend"><span>ส่งไป FigJam</span></button>
+    <span class="spacer"></span><button class="iconbtn" data-help="hDesign" title="วิธีใช้"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11M1.5 8a6.5 6.5 0 1 1 13 0 6.5 6.5 0 0 1-13 0m5.25-1.75C6.75 5.56 7.31 5 8 5s1.25.56 1.25 1.25c0 .4-.2.66-.55.94l-.1.08c-.33.26-.85.67-.85 1.48V9h1v-.25c0-.3.15-.43.5-.71l.08-.07C9.78 7.6 10.25 7.1 10.25 6.25a2.25 2.25 0 0 0-4.5 0zM8 10a.6.6 0 1 0 0 1.2.6.6 0 0 0 0-1.2"/></svg></button>
+  </nav>
+  <div class="body">
+    <div class="pane" id="pBuild">
+      <div class="sec">
+        <div class="row"><span class="lbl grow">Feature</span><span class="muted" id="featSel"></span><button id="featAll" class="link brand">เลือกทั้งหมด</button></div>
+        <div id="featList" class="flist"></div>
+      </div>
+      <div class="sec">
+        <span class="lbl">อุปกรณ์</span>
+        <div class="seg">
+          <label><input type="radio" name="dev" value="both" checked><span>ทั้งคู่</span></label>
+          <label><input type="radio" name="dev" value="desktop"><span>Desktop</span></label>
+          <label><input type="radio" name="dev" value="mobile"><span>Mobile</span></label>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="total" id="total"></div>
+        <button id="all" class="btn primary full">สร้าง Feature ที่เลือก</button>
+        <button id="happy" class="btn secondary full">สร้างเฉพาะ Happy flow</button>
+        <span class="muted">วางต่อใต้ของเดิม ไม่ทับ · <button class="link brand" data-help="hDesign">วิธีใช้</button></span>
+      </div>
+      <div class="sec">
+        <details>
+          <summary><svg width="16" height="16" viewBox="0 0 16 16"><path d="M7.47486 5.52513c-.19526-.19526-.51184-.19526-.70711 0-.19526.19527-.19526.51185 0 .70711L8.53552 8l-1.76777 1.76777c-.19526.19526-.19526.51186 0 .70706.19527.1953.51185.1953.70711 0l2.12132-2.12128.35355-.35355-.35355-.35355z"/></svg>เครื่องมือ</summary>
+          <div class="in"><button id="patchLab" class="btn secondary full">อัปเดตป้าย Device Type / Header บนจอที่สร้างแล้ว</button><span class="muted">ทำทุก Feature ที่สร้างไว้แล้วในไฟล์นี้ ไม่ต้องติ๊ก · แทนเฉพาะแถบหัวและป้ายข้างจอ จอไม่ถูกแตะ</span><button id="chk" class="btn secondary full">เช็ค component (ไม่สร้างอะไร)</button></div>
+        </details>
+      </div>
+    </div>
+
+    <div class="pane" id="pSend" hidden>
+      <div class="sec">
+        <div class="row"><span class="lbl grow">บอร์ดปลายทาง</span><button id="tgtDel" class="link" title="ลบบอร์ดนี้ออกจากรายการ">ลบ</button></div>
+        <div class="dd"><select id="tgt"></select><svg width="16" height="16" viewBox="0 0 16 16"><path d="M10.4751 7.47486c.1953-.19526.1953-.51184 0-.70711-.1953-.19526-.51184-.19526-.7071 0L8.00023 8.53552 6.23246 6.76775c-.19526-.19526-.51184-.19526-.70711 0-.19526.19527-.19526.51185 0 .70711l2.12133 2.12132.35355.35355.35355-.35355z"/></svg></div>
+        <div class="row"><input type="text" id="tgtUrl" class="grow" placeholder="วางลิงก์บอร์ด FigJam"><button id="tgtAdd" class="btn secondary">เพิ่ม</button></div>
+      </div>
+      <div class="sec">
+        <button id="figjamAll" class="btn primary full">ส่งทุก Feature ไป FigJam</button>
+        <div class="row"><button id="figjam" class="btn secondary grow">ส่ง Feature ที่เลือก</button><button id="openTgt" class="btn secondary grow" disabled>เปิดบอร์ดปลายทาง</button></div>
+        <span class="muted">ต้องเปิด <code>node figma-export/serve.js</code> ก่อน · <button class="link brand" data-help="hDesign">วิธีใช้</button></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= ไฟล์ FigJam: วางลงบอร์ด ======================= -->
+<div id="fj" class="view" hidden>
+  <nav class="tabs"><button class="tab" aria-selected="true"><span>วางลงบอร์ด</span></button><span class="spacer"></span><button class="iconbtn" data-help="hFj" title="วิธีใช้"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11M1.5 8a6.5 6.5 0 1 1 13 0 6.5 6.5 0 0 1-13 0m5.25-1.75C6.75 5.56 7.31 5 8 5s1.25.56 1.25 1.25c0 .4-.2.66-.55.94l-.1.08c-.33.26-.85.67-.85 1.48V9h1v-.25c0-.3.15-.43.5-.71l.08-.07C9.78 7.6 10.25 7.1 10.25 6.25a2.25 2.25 0 0 0-4.5 0zM8 10a.6.6 0 1 0 0 1.2.6.6 0 0 0 0-1.2"/></svg></button></nav>
+  <div class="body">
+    <div class="sec">
+      <div class="kv"><span>บอร์ดที่เปิดอยู่</span><b id="fjFile">-</b></div>
+      <div class="kv"><span>บอร์ดปลายทาง</span><b id="fjTgt">-</b></div>
+      <div id="fjMatch"></div>
+      <button id="fjSetHere" class="btn secondary full">ตั้งบอร์ดนี้เป็นปลายทาง</button>
+    </div>
+    <div class="sec">
+      <div class="row"><span class="lbl grow">ชุดที่ส่งมาล่าสุด</span><button id="fjReload" class="link">โหลดใหม่</button></div>
+      <div id="fjParts" class="muted">กำลังโหลดรายการจาก serve.js …</div>
+    </div>
+    <div class="sec">
+      <button id="fjGo" class="btn primary full" disabled>วางลงบอร์ดนี้</button>
+      <span class="muted">วางซ้ำได้ ชุดเดิมถูกแทน · <button class="link brand" data-help="hFj">วิธีใช้</button></span>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= วิธีใช้ ======================= -->
+<div id="hDesign" class="sheet" hidden>
+  <div class="top"><b>วิธีใช้</b><button class="btn secondary help-close">ปิด</button></div>
+  <div class="body">
+    <div class="sec"><span class="lbl">สร้างจอ</span>
+      <ol class="steps2">
+        <li><span>ติ๊ก <b>Feature</b> (หลายตัวได้ หรือ<b>เลือกทั้งหมด</b>) และเลือก<b>อุปกรณ์</b></span></li>
+        <li><span>จะเอาบาง journey กดลูกศร <b>›</b> ท้ายแถว Feature แล้วติ๊กเฉพาะ journey ที่ต้องการ</span></li>
+        <li><span>กด <b>สร้าง</b> หรือแท็บส่งไป FigJam กด <b>ส่ง Feature ที่เลือก</b> (ใช้ journey ที่ติ๊กเหมือนกัน)</span></li>
+        <li><span>รอแถบด้านล่างขึ้น <b>เสร็จ</b> จอจะอยู่ใน <b>Page</b> ของ Feature นั้น (ดูชื่อใต้ชื่อ Feature · เปิดได้จากแถบ Pages ทางซ้ายของ Figma · ยังไม่มีปลั๊กอินสร้างให้)</span></li>
+      </ol></div>
+    <div class="sec"><span class="lbl">ส่งไป FigJam</span>
+      <ol class="steps2">
+        <li><span>เปิด <code>node figma-export/serve.js</code> ในเทอร์มินัล</span></li>
+        <li><span>แท็บ <b>ส่งไป FigJam</b> วางลิงก์บอร์ด กด <b>เพิ่ม</b> (ครั้งแรกครั้งเดียว)</span></li>
+        <li><span>กด <b>ส่งทุก Feature ไป FigJam</b> แล้วกด <b>เปิดบอร์ดปลายทาง</b></span></li>
+        <li><span>ในบอร์ด รันพระผู้สร้าง กด <b>วางลงบอร์ดนี้</b></span></li>
+      </ol></div>
+    <div class="sec"><span class="lbl">ควรรู้</span>
+      <ul class="tips">
+        <li><span>ไม่ทับของเดิม กดซ้ำได้ชุดใหม่ต่อด้านล่าง ลบชุดเก่าเอง</span></li>
+        <li><span>มีปัญหา กด <b>คัดลอก</b> ที่แถบล่าง แล้วส่ง log ให้ทีม</span></li>
+      </ul></div>
+  </div>
+</div>
+<div id="hFj" class="sheet" hidden>
+  <div class="top"><b>วิธีใช้</b><button class="btn secondary help-close">ปิด</button></div>
+  <div class="body">
+    <div class="sec"><span class="lbl">วางลงบอร์ด</span>
+      <ol class="steps2">
+        <li><span>เปิด <code>node figma-export/serve.js</code> ไว้</span></li>
+        <li><span>ดูว่าบอร์ดที่เปิดอยู่<b>ตรงกับปลายทาง</b> ถ้าจะใช้บอร์ดนี้ กด "ตั้งบอร์ดนี้เป็นปลายทาง"</span></li>
+        <li><span>ติ๊กชุดที่จะวาง (ติ๊กหัวกลุ่ม = ทั้ง Feature)</span></li>
+        <li><span>กด <b>วางลงบอร์ดนี้</b></span></li>
+      </ol></div>
+    <div class="sec"><span class="lbl">ควรรู้</span>
+      <ul class="tips">
+        <li><span>เปิดผิดบอร์ด กดวางครั้งแรกจะเตือนก่อน กดอีกครั้งถึงวาง</span></li>
+        <li><span>วางซ้ำ ชุดเดิมบนบอร์ดถูกแทน ของอื่นไม่ถูกแตะ</span></li>
+        <li><span>ไม่เห็นชุดใหม่ กด <b>โหลดใหม่</b></span></li>
+      </ul></div>
+  </div>
+</div>
+
+<footer>
+  <div class="status"><span class="dot" id="dot"></span><span id="statusText">พร้อม</span>
+    <button id="logToggle" class="link">ดู log</button><button id="copylog" class="link">คัดลอก</button></div>
+  <div class="bar" id="bar" hidden><i id="barFill"></i></div>
+  <div id="log" hidden></div>
+</footer>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const SERVE = 'http://localhost:8124/';
+const post = (msg) => parent.postMessage({ pluginMessage: msg }, '*');
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+
+/* ===== แถบสถานะ + log (log ซ่อนไว้ กด "ดู log" · มี ✗ จะเปิดให้เอง) ===== */
+let busy = false, leftOld = 0;   // leftOld = ป้ายเก่าที่ยังเหลือ (รวมทุก Feature) ⇒ จบรอบต้องแดง ไม่ใช่เขียว
+function setStatus(text, kind) {   // kind: run · ok · err · ''
+  $('statusText').textContent = text; $('statusText').className = kind === 'err' ? 'warn' : kind || '';
+  $('dot').className = 'dot ' + (kind || '');
+}
+function progress(n, total) { $('bar').hidden = !total; $('barFill').style.width = total ? Math.round(100 * n / total) + '%' : '0'; }
+function showLog(v) { $('log').hidden = !v; $('logToggle').textContent = v ? 'ซ่อน log' : 'ดู log'; }
+function logLine(t) {
+  const el = $('log'); el.textContent += t + '\n'; el.scrollTop = el.scrollHeight;
+  const s = t.trim(), m = t.match(/^\s*·\s*(\d+)\/(\d+)\s/);
+  if (m) { progress(+m[1], +m[2]); setStatus((nRun > 1 ? 'Feature ' + (nRun - pending + 1) + '/' + nRun + ' · ' : '') + 'กำลังสร้าง ' + m[1] + '/' + m[2], 'run'); return; }
+  if (/^✗/.test(s)) { setStatus(s.replace(/^✗\s*/, ''), 'err'); showLog(true); if (!/ไปต่อ Feature ถัดไป/.test(s)) busy = false; else pending--; return; }
+  if (/^⚠ .*เหลือของเก่า/.test(s)) { leftOld += +((s.match(/เหลือของเก่า (\d+)/) || [])[1] || 0); setStatus(s.replace(/^⚠\s*/, '').split(' — ')[0], 'err'); showLog(true); return; }
+  if (/^⚠ เตือน/.test(s)) { setStatus(s.replace(/^⚠\s*/, ''), 'err'); return; }
+  if (/^✓ จำ component/.test(s)) { setStatus(s.replace(/^✓\s*/, '').split(' — ')[0], 'ok'); return; }
+  if (/^ไม่มีคำเตือน ✓/.test(s)) { setStatus('เสร็จ · ไม่มีคำเตือน', 'ok'); progress(0, 0); return; }
+  if (/^ใช้เวลารวม/.test(s)) { pending--; if (nRun > 1) setStatus('Feature ' + (nRun - pending) + '/' + nRun + ' เสร็จ · ต่อ Feature ถัดไป', 'run'); return; }   // จบจริงตัดสินที่ build-all-done
+  if (/^(✓ ส่งครบ|✓ วางครบ|— ส่งครบ)/.test(s)) { setStatus(s.replace(/^[✓—]\s*/, ''), 'ok'); progress(0, 0); busy = false; return; }
+  if (busy && s && !/^⏱|^·/.test(s)) setStatus(s.slice(0, 90), 'run');
+}
+function start(text) { $('log').textContent = ''; leftOld = 0; busy = true; setStatus(text, 'run'); progress(0, 0); }
+$('logToggle').onclick = () => showLog($('log').hidden);
+$('copylog').onclick = () => { const ta = document.createElement('textarea'); ta.value = $('log').textContent; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); setStatus('คัดลอก log แล้ว', 'ok'); } catch (e) {} ta.remove(); };
+
+/* ===== วิธีใช้ ===== */
+document.querySelectorAll('[data-help]').forEach(b => { b.onclick = () => { $(b.dataset.help).hidden = false; }; });
+document.querySelectorAll('.help-close').forEach(b => { b.onclick = () => { b.closest('.sheet').hidden = true; }; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.sheet').forEach(s => { s.hidden = true; }); });
+
+/* ===== แท็บ ===== */
+document.querySelectorAll('.tab').forEach(t => { t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', String(x === t)));
+  document.querySelectorAll('#design .pane').forEach(p => { p.hidden = p.id !== t.dataset.pane; });
+}; });
+
+/* ===== ฝั่งไฟล์ Figma ===== */
+const dev = () => document.querySelector('input[name=dev]:checked').value;
+/* หลาย Feature + เลือก journey ราย Feature (17 พ.ย. 2569 ผู้ใช้ขอ "เลือก multi หรือ all" แล้ว "เลือกได้ว่าจะ export journey ไหนของ feature นั้น")
+   แต่ละแถว Feature มีลูกศรกางรายการ journey · ติ๊ก Feature = ทุก journey · ติ๊กบาง journey = Feature ขึ้นขีด (บางส่วน)
+   ส่งไปปลั๊กอิน: features = Feature ที่มี journey ถูกเลือก · picks = { id: [journey] } (ไม่มี id = ทุก journey) */
+let FEATS = [], pending = 0, nRun = 0;
+const PICK = {}, OPEN = {};   // PICK[id] = Set ของ journey ที่เลือก · OPEN[id] = กางอยู่
+const jFrames = (t) => +((t.match(/(\d+) เฟรม/) || [])[1] || 0);
+const selF = () => FEATS.filter(f => PICK[f.id] && PICK[f.id].size).map(f => f.id);
+const feat = () => selF()[0] || (FEATS[0] && FEATS[0].id) || 'plan';
+const picksOf = () => { const o = {}; for (const f of FEATS) { const s = PICK[f.id]; if (s && s.size && s.size < f.journeys.length) o[f.id] = [...s].sort((a, b) => a - b).map(String); } return o; };
+const CHEV_R = '<svg width="16" height="16" viewBox="0 0 16 16"><path d="M7.47486 5.52513c-.19526-.19526-.51184-.19526-.70711 0-.19526.19527-.19526.51185 0 .70711L8.53552 8l-1.76777 1.76777c-.19526.19526-.19526.51186 0 .70706.19527.1953.51185.1953.70711 0l2.12132-2.12128.35355-.35355-.35355-.35355z"/></svg>';
+function drawFeatures() {
+  FEATS.forEach((f, i) => { if (!PICK[f.id]) PICK[f.id] = new Set(i === 0 ? f.journeys.map((_, k) => k) : []); });
+  $('featList').innerHTML = FEATS.map(f => {
+    const s = PICK[f.id], n = f.journeys.length, jc = (k) => f.jcases ? f.jcases[k] : jFrames(f.journeys[k]), jh = (k) => f.jhappy ? f.jhappy[k] : 0;
+    const frames = [...s].reduce((a, k) => a + jc(k), 0), hp = [...s].reduce((a, k) => a + jh(k), 0);
+    const part = s.size > 0 && s.size < n;
+    return '<div class="fitem' + (OPEN[f.id] ? ' open' : '') + '" data-id="' + f.id + '">' +
+      '<label class="frow"><input type="checkbox" class="fchk" value="' + f.id + '"' + (s.size === n ? ' checked' : '') + '>' +
+      '<span class="t"><b>' + esc(f.title) + '</b>' +
+        '<span class="m">' + [part ? 'เลือก ' + s.size + '/' + n + ' journey' : n + ' journey', 'Happy flow ' + (part ? hp + '/' : '') + (f.happy || 0) + ' เฟรม', 'ทุกเคส ' + (part ? frames + '/' : '') + (f.cases || 0) + ' เฟรม'].map(x => '<span class="nw">' + x + '</span>').join(' · ') + '</span>' +
+        '<span class="m" title="ชื่อ Page ในแถบ Pages ทางซ้ายของ Figma · ยังไม่มีปลั๊กอินสร้างให้">สร้างจอลง Page “' + esc(f.page) + '”</span></span>' +
+      '<button class="iconbtn exp" title="เลือก journey">' + CHEV_R + '</button></label>' +
+      '<div class="jlist"><div class="jrow jhead"><span></span><span>journey · เฟรมต่ออุปกรณ์</span><span class="n">Happy</span><span class="n">ทุกเคส</span></div>' + f.journeys.map((t, k) => '<label class="jrow"><input type="checkbox" class="jchk" data-k="' + k + '"' + (s.has(k) ? ' checked' : '') + '><span>' + esc(t.replace(/ \((.*)\)$/, '')) + '</span><span class="n">' + jh(k) + '</span><span class="n">' + jc(k) + '</span></label>').join('') + '</div></div>';
+  }).join('');
+  $('featList').querySelectorAll('.fitem').forEach(el => {
+    const id = el.dataset.id, f = FEATS.find(x => x.id === id), fc = el.querySelector('.fchk');
+    fc.indeterminate = PICK[id].size > 0 && PICK[id].size < f.journeys.length;
+    fc.onchange = () => { PICK[id] = new Set(fc.checked ? f.journeys.map((_, k) => k) : []); drawFeatures(); };
+    el.querySelector('.exp').onclick = (e) => { e.preventDefault(); e.stopPropagation(); OPEN[id] = !OPEN[id]; drawFeatures(); };
+    el.querySelectorAll('.jchk').forEach(j => { j.onchange = () => { const k = +j.dataset.k; if (j.checked) PICK[id].add(k); else PICK[id].delete(k); drawFeatures(); }; });
+  });
+  drawSel();
+}
+function drawTotal() {
+  const nd = dev() === 'both' ? 2 : 1, dn = dev() === 'both' ? 'Desktop + Mobile' : dev() === 'desktop' ? 'Desktop' : 'Mobile';
+  let h = 0, c = 0;
+  for (const f of FEATS) for (const k of (PICK[f.id] || [])) { h += f.jhappy ? f.jhappy[k] : 0; c += f.jcases ? f.jcases[k] : jFrames(f.journeys[k]); }
+  $('total').innerHTML = '<span>Happy flow</span><span class="n">' + h * nd + ' เฟรม</span><span>ทุกเคส</span><span class="n">' + c * nd + ' เฟรม</span>' +
+    '<span class="sum">รวมที่จะสร้าง (' + dn + ')</span><span class="n sum">' + (h + c) * nd + ' เฟรม</span>';
+  $('happy').textContent = 'สร้างเฉพาะ Happy flow (' + h * nd + ' เฟรม)';
+}
+document.querySelectorAll('input[name=dev]').forEach(r => { r.addEventListener('change', drawTotal); });
+function drawSel() {
+  drawTotal();
+  const s = selF(), all = FEATS.length && FEATS.every(f => PICK[f.id] && PICK[f.id].size === f.journeys.length);
+  $('featSel').textContent = 'เลือก ' + s.length + '/' + FEATS.length + ' ·';
+  $('featAll').textContent = all ? 'ล้าง' : 'เลือกทั้งหมด';
+  const part = Object.keys(picksOf()).length;
+  $('all').textContent = !s.length ? 'เลือก Feature ก่อน' : 'สร้าง ' + (s.length > 1 ? s.length + ' Feature' : 'Feature ที่เลือก') + (part ? ' (บาง journey)' : '');
+  $('all').disabled = $('happy').disabled = $('figjam').disabled = !s.length;
+}
+$('featAll').onclick = () => { const all = FEATS.every(f => PICK[f.id].size === f.journeys.length); FEATS.forEach(f => { PICK[f.id] = new Set(all ? [] : f.journeys.map((_, k) => k)); }); drawFeatures(); };
+const fNames = () => { const s = selF(); return s.length > 1 ? s.length + ' Feature' : ((FEATS.find(f => f.id === s[0]) || {}).title || ''); };
+const send = (type, extra, text) => { const s = selF(); pending = nRun = Math.max(1, s.length); start(text || 'กำลังทำงาน…'); post(Object.assign({ type, devices: dev(), feature: s[0] || feat(), features: s, picks: picksOf() }, extra || {})); };
+$('all').onclick = () => send('build', null, 'เริ่มสร้าง ' + fNames() + ' …');
+$('happy').onclick = () => send('build-happy', null, 'เริ่มสร้าง Happy flow ' + fNames() + ' …');
+$('patchLab').onclick = () => { const all = FEATS.map(f => f.id); pending = nRun = all.length; start('กำลังอัปเดตป้ายทุก Feature …'); post({ type: 'patch-labels', features: all, feature: all[0] }); };   // ไม่ต้องติ๊ก Feature · ทำทุก Feature ที่มี Page แล้ว
+$('chk').onclick = () => send('check', null, 'กำลังเช็ค component …');
+/* บอร์ดปลายทาง (17 พ.ย. 2569) — ปลั๊กอินจำไว้ใน clientStorage (ใช้ร่วมกันทุกไฟล์ ทั้งฝั่ง Figma และ FigJam) */
+let targets = [], sel = -1;
+function drawTargets() {
+  $('tgt').innerHTML = targets.length ? targets.map((t, i) => '<option value="' + i + '"' + (i === sel ? ' selected' : '') + '>' + esc(t.name) + '</option>').join('') : '<option value="-1">ยังไม่ได้เพิ่มบอร์ด</option>';
+  $('openTgt').disabled = !(targets[sel] && targets[sel].url);
+  $('tgtDel').disabled = sel < 0;
+}
+$('tgt').onchange = () => post({ type: 'fj-target-select', index: +$('tgt').value });
+$('tgtDel').onclick = () => { if (sel >= 0) post({ type: 'fj-target-del', index: sel }); };
+$('tgtAdd').onclick = () => {
+  const url = $('tgtUrl').value.trim();
+  if (!/figma\.com\/board\/[A-Za-z0-9]+/.test(url)) { logLine('ลิงก์ต้องเป็นบอร์ด FigJam รูปแบบ https://www.figma.com/board/<key>/<ชื่อบอร์ด>'); setStatus('ลิงก์ไม่ใช่บอร์ด FigJam', 'err'); return; }
+  post({ type: 'fj-target-add', url }); $('tgtUrl').value = ''; setStatus('เพิ่มบอร์ดแล้ว', 'ok');
+};
+$('openTgt').onclick = () => { if (targets[sel]) post({ type: 'open-url', url: targets[sel].url }); };
+/* ส่งจอไป FigJam — POST ภาพ + สเปกเข้า serve.js (out/) ทีละไฟล์ตามลำดับ แบบ maintainance-plugin/ui.html ของพี่นุ */
+async function postFile(path, body) { const r = await fetch(SERVE + path.split('/').map(encodeURIComponent).join('/'), { method: 'POST', body }); if (!r.ok) throw new Error(path + ' ' + r.status); }
+let fjQ = Promise.resolve(), fjOk = 0, fjErr = 0;
+const fjPost = (path, body, label) => { fjQ = fjQ.then(() => postFile(path, body)).then(() => { fjOk++; if (label) logLine(label); }).catch(e => { fjErr++; logLine('✗ ส่ง ' + path + ' ไม่ได้ — ' + e.message); }); };
+async function fjStart(type, extra) {
+  start('กำลังส่งไป FigJam …');
+  if (!targets[sel]) logLine('· ยังไม่ได้เลือกบอร์ดปลายทาง — ส่งได้ แต่ฝั่ง FigJam จะเตือนว่าไม่รู้ปลายทาง');
+  try { const r = await fetch(SERVE + 'boards.json'); if (!r.ok) throw new Error(r.status); }
+  catch (e) { logLine('✗ ต่อ serve.js ไม่ได้ — เปิด  node figma-export/serve.js  ในเทอร์มินัลก่อน แล้วกดใหม่'); return; }
+  fjOk = 0; fjErr = 0;
+  post(Object.assign({ type, devices: dev(), feature: feat(), features: selF(), picks: picksOf() }, extra || {}));
+}
+$('figjam').onclick = () => fjStart('export-figjam');
+$('figjamAll').onclick = () => fjStart('export-figjam-all');
+
+/* ===== ฝั่งไฟล์ FigJam ===== */
+let fjInfo = { file: '', key: '' }, waiting = null, confirmAnyway = false;
+const norm = (s) => String(s || '').toLowerCase().replace(/[^0-9a-z฀-๿]+/g, '');
+const keyOf = (url) => ((String(url || '').match(/figma\.com\/board\/([A-Za-z0-9]+)/) || [])[1] || '');
+function matchState() {
+  const t = targets[sel];
+  if (!t) return { ok: false, text: 'ยังไม่ได้ตั้งบอร์ดปลายทาง — กด "ตั้งบอร์ดนี้เป็นปลายทาง" ถ้าจะใช้บอร์ดนี้' };
+  if ((fjInfo.key && keyOf(t.url) === fjInfo.key) || norm(t.name) === norm(fjInfo.file)) return { ok: true, text: '✓ ตรงกับบอร์ดปลายทาง' };
+  return { ok: false, text: '⚠ บอร์ดที่เปิดอยู่ไม่ใช่บอร์ดปลายทาง — กดวางอีกครั้งถ้าจะวางที่นี่จริง หรือกด "ตั้งบอร์ดนี้เป็นปลายทาง"' };
+}
+function drawFj() {
+  $('fjFile').textContent = fjInfo.file || '(อ่านชื่อไฟล์ไม่ได้)';
+  $('fjTgt').textContent = targets[sel] ? targets[sel].name : '-';
+  const m = matchState(); $('fjMatch').textContent = m.text; $('fjMatch').className = 'banner ' + (m.ok ? 'ok' : 'warn');
+}
+$('fjSetHere').onclick = () => post({ type: 'fj-target-here' });
+async function loadFjParts() {
+  const box = $('fjParts');
+  try {
+    const r = await fetch(SERVE + 'boards.json'); if (!r.ok) throw new Error(r.status);
+    const list = (await r.json()).boards.filter(b => /^board-maintainance-feature-/.test(b.file));
+    /* board-maintainance-feature-[<id>-](happy|<n>).json · ไม่มี id = แผนบำรุงรักษา (ชื่อเดิม) · เรียง Feature ตามลำดับในปลั๊กอิน แล้ว happy → 1..n */
+    const FO = ['plan', 'trip', 'job', 'close', 'track'];
+    const fidOf = (f) => (f.match(/^board-maintainance-feature-([a-z]+)-(?:happy|\d+)\.json$/) || [])[1] || 'plan';
+    const order = (f) => /-happy\.json$/.test(f) ? 0 : +((f.match(/-(\d+)\.json$/) || [])[1] || 99);
+    const fo = (f) => { const i = FO.indexOf(fidOf(f)); return i < 0 ? 99 : i; };
+    list.sort((a, b) => fo(a.file) - fo(b.file) || order(a.file) - order(b.file) || (a.file < b.file ? -1 : 1));
+    let html = '', cur = null;
+    for (const b of list) {
+      const g = fidOf(b.file);
+      if (g !== cur) { if (cur !== null) html += '</div>'; cur = g; html += '<div class="grp" data-g="' + g + '"><label class="chk"><input type="checkbox" checked class="grp" data-g="' + g + '"><span>' + esc(b.label.split(' · ')[0].replace(/^Feature /, '')) + '</span></label>'; }
+      html += '<label class="chk part"><input type="checkbox" checked class="part" data-g="' + g + '" value="' + b.file + '"><span>' + esc(b.label.split(' · ').slice(1).join(' · ') || b.label) + ' <small>' + b.images + ' ภาพ · ' + new Date(b.updated).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }) + '</small></span></label>';
+    }
+    if (cur !== null) html += '</div>';
+    box.className = list.length ? 'list' : 'muted';
+    box.innerHTML = list.length ? html : 'ยังไม่มีชุดที่ส่งมา — กด "ส่งทุก Feature ไป FigJam" ในไฟล์ Figma ก่อน';
+    box.querySelectorAll('input.grp').forEach(g => { g.onchange = () => box.querySelectorAll('input.part[data-g="' + g.dataset.g + '"]').forEach(i => { i.checked = g.checked; }); });
+    box.querySelectorAll('input.part').forEach(i => { i.onchange = () => { const all = [...box.querySelectorAll('input.part[data-g="' + i.dataset.g + '"]')]; box.querySelector('input.grp[data-g="' + i.dataset.g + '"]').checked = all.every(x => x.checked); }; });
+    $('fjGo').disabled = !list.length;
+  } catch (e) { box.className = ''; box.innerHTML = '<div class="banner warn">ต่อ serve.js ไม่ได้ — เปิด <code>node figma-export/serve.js</code> ในเทอร์มินัลก่อน แล้วกด "โหลดใหม่"</div>'; $('fjGo').disabled = true; }
+}
+$('fjReload').onclick = loadFjParts;
+async function buildSpec(file) {   // โหลดสเปก + ภาพจาก serve.js แล้วส่งให้ส่วนวางบอร์ด (ลอกวิธีจาก figjam-plugin/ui.html ของพี่นุ)
+  const r0 = await fetch(SERVE + file); if (!r0.ok) throw new Error('ไม่พบ ' + file + ' (' + r0.status + ')');
+  const spec = await r0.json();
+  const srcs = [...new Set(spec.sections.flatMap(s => (s.cols || []).flatMap(c => c.images.map(i => i.src))))];
+  logLine('— ' + spec.title + ' · ภาพ ' + srcs.length);
+  const images = [];
+  for (const src of srcs) {
+    const r = await fetch(SERVE + src.split('/').map(encodeURIComponent).join('/'));
+    if (!r.ok) throw new Error('โหลดภาพไม่ได้: ' + src + ' (' + r.status + ')');
+    images.push({ src, bytes: new Uint8Array(await r.arrayBuffer()) });
+  }
+  const p = new Promise(res => { waiting = res; });
+  post({ type: 'build', spec, images });
+  return p;
+}
+$('fjGo').onclick = async () => {
+  const m = matchState();
+  if (!m.ok && !confirmAnyway) { confirmAnyway = true; logLine(m.text); setStatus('บอร์ดไม่ตรงปลายทาง — กดวางอีกครั้งเพื่อยืนยัน', 'err'); return; }
+  confirmAnyway = false;
+  const files = [...document.querySelectorAll('#fjParts input.part:checked')].map(i => i.value);
+  if (!files.length) { setStatus('ยังไม่ได้ติ๊กชุดไหน', 'err'); return; }
+  $('fjGo').disabled = true; start('กำลังวาง ' + files.length + ' ชุด …');
+  let ok = 0;
+  for (const f of files) {
+    try { progress(ok, files.length); if (await buildSpec(f)) ok++; else break; }
+    catch (e) { logLine('✗ ' + e.message); break; }
+  }
+  logLine(ok === files.length ? '✓ วางครบ ' + ok + ' ชุด' : '✗ วางได้ ' + ok + '/' + files.length + ' ชุด');
+  $('fjGo').disabled = false;
+};
+
+onmessage = (e) => {
+  const m = e.data.pluginMessage; if (!m) return;
+  if (m.type === 'fj-mode') { $('design').hidden = true; $('fj').hidden = false; fjInfo = { file: m.file, key: m.key }; drawFj(); loadFjParts(); }
+  if (m.type === 'fj-targets') { targets = m.list || []; sel = m.sel; drawTargets(); if (!$('fj').hidden) drawFj(); }
+  if (m.type === 'features') { FEATS = m.list || []; drawFeatures(); }
+  if (m.type === 'fj-all-done') logLine(m.sent.length ? '— ส่งครบทุก Feature ที่มีจอ (' + m.sent.length + ')' + (m.skip.length ? ' · ยังไม่มีจอ: ' + m.skip.join(' · ') : '') : '✗ ยังไม่มี Feature ไหนสร้างจอ — กดสร้างก่อน');
+  if (m.type === 'journeys' && !FEATS.length) $('pick').innerHTML = m.items.map((t, i) => '<label class="chk"><input type="checkbox" value="' + i + '"><span>' + esc(t) + '</span></label>').join('');
+  if (m.type === 'log') logLine(m.text);
+  if (m.type === 'build-all-done') { progress(0, 0); busy = false;   // จบทั้งรอบ (17 พ.ย. 2569) · มี Feature พัง ⇒ แดง + เปิด log
+    if (leftOld) { setStatus('อัปเดตป้ายไม่ครบ · เหลือของเก่า ' + leftOld + ' ชิ้น — กด "คัดลอก" ส่ง log', 'err'); showLog(true); }
+    else if (m.fail.length) { setStatus('ทำได้ ' + m.ok.length + '/' + m.total + ' Feature · พัง: ' + m.fail.join(' · '), 'err'); showLog(true); }
+    else if ($('dot').className.indexOf('err') < 0) setStatus('เสร็จ ' + (m.total > 1 ? m.total + ' Feature ' : '') + '· ไม่มีคำเตือน', 'ok'); }
+  if (m.type === 'shot') { progress(m.n, m.total); setStatus('ส่งภาพ ' + m.n + '/' + m.total, 'run'); fjPost('figjam/' + m.dir + '/' + m.file, m.bytes, m.n % 20 === 0 || m.n === m.total ? '… ส่งภาพแล้ว ' + m.n + '/' + m.total : ''); }
+  if (m.type === 'fj-file') fjPost(m.path, m.text, m.board ? '✓ สเปกบอร์ด ' + m.path : '');
+  if (m.type === 'fj-done') fjQ = fjQ.then(() => { logLine(fjErr ? '✗ ส่งไม่สำเร็จ ' + fjErr + ' ไฟล์ (สำเร็จ ' + fjOk + ')' : '✓ ส่งครบ ' + fjOk + ' ไฟล์ (ภาพชุดนี้ ' + m.shots + ' + บอร์ด ' + m.boards.length + ')' + (targets[sel] ? ' — กด "เปิดบอร์ดปลายทาง" แล้วรันพระผู้สร้างในบอร์ด ' + targets[sel].name : '')); });
+  if (m.type === 'done') { logLine('  ✓ section ' + m.result.sections + ' · ภาพ ' + m.result.shapes + ' · ลูกศร ' + m.result.connectors); if (waiting) { waiting(true); waiting = null; } }
+  if (m.type === 'error') { logLine('✗ ' + m.message); if (waiting) { waiting(false); waiting = null; } }
+};
+drawTargets();   // ก่อนปลั๊กอินส่งรายการบอร์ดมา
+</script>
