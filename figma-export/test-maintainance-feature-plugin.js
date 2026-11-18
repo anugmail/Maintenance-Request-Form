@@ -2,7 +2,7 @@
 /* ทดสอบ maintainance-feature-plugin/code.js บน mock Plugin API ชุดเดียวกับปลั๊กอินอื่น (test-overhaul2-plugin.js)
    รัน:  node figma-export/maintainance-feature-plugin/build.js && node figma-export/test-maintainance-feature-plugin.js
          MODE=build-pick PICK=0,2 · DEVICES=desktop
-   ตรวจเพิ่มจากตัวกลาง: ระยะ case ในหน้าเดียวกัน 200 · คนละหน้า 500 · เฟรม toast มีแค่ Notification · รหัสจอใน feature.js ตรงไฟล์ 32 */
+   ตรวจเพิ่มจากตัวกลาง: ระยะ case ในหน้าเดียวกัน 200 · คนละหน้า 500 · เฟรม toast มีแค่ Notification · รหัสจอใน features/*.js ตรงเอกสาร Feature 40–44 (หัวข้อ 3) */
 const path = require('path'), fs = require('fs');
 process.env.CODE = process.env.CODE || path.join(__dirname, 'maintainance-feature-plugin', 'code.js');
 process.env.PREFIX = 'MF';
@@ -29,7 +29,7 @@ const FDIR = (FSRC.match(/fjDir: '([^']+)'/) || [])[1] || 'flow-maintainance-fea
     const cols = hdr.map((h, i) => /^จอที่สร้าง/.test(h) ? i : -1).filter(i => i > 0);   // ทุกคอลัมน์ที่หัวขึ้นต้น "จอที่สร้าง"
     rowsT.slice(1).filter(l => /^\| [^-|]/.test(l)).forEach(l => { const c = l.split('|'); (cols.length ? cols : [3]).forEach(i => exp(c[i] || '').forEach(x => want.add(x))); });
     const miss = [...want].filter(c => !used.has(c)), extra = [...used].filter(c => !want.has(c));
-    /* DOC_PENDING=1 (18 พ.ย. 2569 ย้ายฐาน): เอกสาร 32–36 ยังเป็นรหัสฐานเก่า รอแก้ ⇒ พิมพ์รายการที่เอกสารต้องเปลี่ยน (ⓘ) ไม่นับเป็นไม่ผ่าน */
+    /* DOC_PENDING=1 (18 พ.ย. 2569 ย้ายฐาน): เอกสาร 40–44 (เดิม 32–36) ยังเป็นรหัสฐานเก่า รอแก้ ⇒ พิมพ์รายการที่เอกสารต้องเปลี่ยน (ⓘ) ไม่นับเป็นไม่ผ่าน */
     const pend = !!process.env.DOC_PENDING;
     if (!want.size || miss.length || extra.length) { console.log((pend ? 'ⓘ เอกสารต้องแก้ ' : '⚠ ') + 'features/' + FEAT + '.js ไม่ตรง ' + docName + ' — เอกสารมีแต่ Feature ไม่ใช้ (' + miss.length + '): ' + (miss.join(' ') || '-') + ' · Feature ใช้แต่เอกสารไม่มี (' + extra.length + '): ' + (extra.join(' ') || '-') + (want.size ? '' : ' · เอกสารไม่มีตารางหัวข้อ 3')); if (!pend) process.exitCode = 1; }
     else console.log('Feature ' + FEAT + ': รหัสจอตรง ' + docName + ' ครบ ' + used.size + ' จอ ✓');
@@ -88,6 +88,11 @@ function updSetup(m) {
     UPD.setup.alt = { page: alt, happy: [mk('MF / H1.1 · ทดสอบ (Happy flow) › หน้า — ขั้น 1 · ทดสอบ', 'happy-0', 0), mk('MF · H1 ทดสอบ · Happy flow', 'happy', -300)], full: mk('MF / 1.1.1 · ทดสอบ › หน้า — ทดสอบ', '0', 2000) };
     const f = mockFigma.createFrame(); f.name = 'MF · ป้ายลอย'; pg.appendChild(f); f.x = Math.min(...pg.children.map(n => n.x)); f.y = Math.min(...pg.children.map(n => n.y)) - 3000; UPD.setup.loose = { f, x: f.x, y: f.y };
   }
+  if (process.env.DEL_OLD) {   // ชื่อ Page เดิมของ Feature (page ช่องที่ 2 · close เดิม "ประวัติและปิดงาน") ⇒ ปุ่มลบส่วนต้องลบชุดเก่าบน Page นั้นด้วย
+    const old = mockFigma.createPage(); old.name = process.env.DEL_OLD;
+    const mk = (name, tag, y) => { const f = mockFigma.createFrame(); f.name = name; old.appendChild(f); f.x = 0; f.y = y; f.resize(1440, 100); f.setPluginData(MF_TAG_T, tag); return f; };
+    UPD.setup.oldPage = { page: old, happy: mk('MF / H1.1 · ชุดเก่า (Happy flow) › หน้า — ขั้น 1 · เก่า', 'happy-0', 0), title: mk('MF · Feature ' + process.env.DEL_OLD, 'title', -1000) };
+  }
   if (process.env.UPD_SETUP) {
     const D = deskFrames(pg), S = UPD.setup; S.tamper = []; S.gone = []; S.legacy = []; S.old = []; S.renamed = [];
     for (const i of [3, 10]) { S.tamper.push(D[i]); D[i].setPluginData('mfSig', 'tampered'); }
@@ -144,10 +149,12 @@ process.on('beforeExit', () => {
       t(L.f.parent && L.f.x === L.x && L.f.y === L.y, 'ชิ้นที่ไม่รู้ว่าอยู่ส่วนไหนถูกแตะ'); L.f.remove();
       extra = A.happy.length;
     }
+    const O = UPD.setup.oldPage;
+    if (O) { t((UPD.first.lines || []).join('\n').indexOf('Page "' + O.page.name + '"') >= 0, 'กล่องยืนยันไม่บอก Page ชื่อเดิม'); t(O.page.children.indexOf(O.happy) < 0 && O.page.children.indexOf(O.title) >= 0, 'Page ชื่อเดิม: Happy ต้องถูกลบ Title ต้องอยู่'); extra += 1; }
     if (!NOOP) t(UPD.first && UPD.first.total === gone + extra, 'ยืนยัน ' + (UPD.first && UPD.first.total) + ' ชิ้น แต่ลบไป ' + (gone + extra));
     if (NOOP) { t(gone === 0, 'จำนวนไม่ตรง/ยกเลิก แต่ยังลบ ' + gone); if (process.env.EXPECT_SHIFT) { t(okWarn(/จำนวนชิ้นเปลี่ยนจากตอนตรวจ/), 'ไม่ได้บอกว่าจำนวนเปลี่ยน'); allowWarn = /จำนวนชิ้นเปลี่ยนจากตอนตรวจ/; } }
     else t(gone > 0, 'ไม่ได้ลบอะไร');
-    console.log('ลบส่วน ' + parts.join('+') + ': ' + pgs.map(p => p.name).join(' · ') + ' · ลบ ' + (gone + extra) + ' ชิ้น (ยืนยัน ' + (UPD.first && UPD.first.total) + ') · ไม่แตะ ' + kept + (UPD.setup.untag ? ' · ลบป้ายก่อน ' + UPD.setup.untag + ' ชิ้น (หาจากตำแหน่ง)' : '') + (f ? ' · ของผู้ใช้ไม่ถูกแตะ' : '') + (A ? ' · 2 Page + ชิ้นไม่รู้ส่วนไม่ลบ' : '') + (bad.length ? ' ⚠' : ' ✓'));
+    console.log('ลบส่วน ' + parts.join('+') + ': ' + pgs.map(p => p.name).join(' · ') + ' · ลบ ' + (gone + extra) + ' ชิ้น (ยืนยัน ' + (UPD.first && UPD.first.total) + ') · ไม่แตะ ' + kept + (UPD.setup.untag ? ' · ลบป้ายก่อน ' + UPD.setup.untag + ' ชิ้น (หาจากตำแหน่ง)' : '') + (f ? ' · ของผู้ใช้ไม่ถูกแตะ' : '') + (A ? ' · 2 Page + ชิ้นไม่รู้ส่วนไม่ลบ' : '') + (O ? ' · Page ชื่อเดิม "' + O.page.name + '" ลบด้วย' : '') + (bad.length ? ' ⚠' : ' ✓'));
   }
   if (process.env.MODE === 'update-changed' && UPD.setup.all) {
     const S = UPD.setup, pg = fpages()[0], force = !!process.env.UPD_FORCE, base = process.env.LEGACY === 'baseline' && !force;

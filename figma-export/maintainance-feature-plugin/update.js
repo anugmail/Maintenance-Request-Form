@@ -23,10 +23,11 @@ const pdata = (n, k) => { try { return (n.getPluginData && n.getPluginData(k)) |
    2 ติ๊กสร้างใหม่ทุกจอ ⇒ จอเก่าเข้า "สร้างใหม่" ด้วยเสมอ · 5 จอใหม่สูงขึ้นจนทับเฟรมอื่น ⇒ เตือนพร้อมชื่อจอ · 6 สร้างจอที่เลือกใหม่ จับคู่ journey + หน้า ก่อนชื่อเคส
    7 ลบส่วน บอกชิ้นที่ไม่รู้ว่าอยู่ส่วนไหน + ชื่อ Page · Page หลักและ "(พระผู้สร้าง)" มีชุดทั้งคู่ ⇒ บอกและทำทั้งสอง Page · 8 แถบเคสหาด้วยพิกัด absolute ทำทั้ง Desktop/Mobile */
 const absOf = (n) => n.absoluteBoundingBox || { x: n.x, y: n.y, width: n.width, height: n.height };
-/* Page ของ Feature ที่มีอยู่แล้ว (ไม่สร้าง) — Page หลัก และ/หรือ "<ชื่อ> (พระผู้สร้าง)" · ยอมให้มีของคนอื่นปน (ผู้ใช้วางของเพิ่มเองได้) */
-async function existingPages() {
-  const name = FEATURE_PAGE[0], out = [];
-  for (const n of [ALT_PAGE(name), name]) { const p = figma.root.children.find(x => x.type === 'PAGE' && x.name === n); if (p) { if (p.loadAsync) await p.loadAsync(); out.push(p); } }
+/* Page ของ Feature ที่มีอยู่แล้ว (ไม่สร้าง) — Page หลัก และ/หรือ "<ชื่อ> (พระผู้สร้าง)" · ยอมให้มีของคนอื่นปน (ผู้ใช้วางของเพิ่มเองได้)
+   withOld = รวมชื่อเดิมของ Feature (page ช่องที่ 2 เป็นต้นไป เช่น close เดิม "ประวัติและปิดงาน") — ใช้กับปุ่มลบส่วนเท่านั้น ให้ลบชุดเก่าได้ */
+async function existingPages(withOld) {
+  const out = [], names = withOld ? FEATURE_PAGE : FEATURE_PAGE.slice(0, 1);
+  for (const n of names.flatMap(x => [ALT_PAGE(x), x])) { const p = figma.root.children.find(x => x.type === 'PAGE' && x.name === n); if (p) { if (p.loadAsync) await p.loadAsync(); out.push(p); } }
   return out;
 }
 const hasScreens = (p) => p.children.some(n => n.type === 'FRAME' && (n.name || '').indexOf(FEATURE_PREFIX + ' / ') === 0);
@@ -77,7 +78,7 @@ async function deleteSections(msg, ids) {
   const per = [];
   for (const id of ids) {
     useFeature(id);
-    const pages = await existingPages();
+    const pages = await existingPages(true);
     if (!pages.length) { per.push({ id, title: F.title, none: true }); continue; }
     const both = pages.filter(hasScreens).length > 1;
     for (const page of pages) per.push(Object.assign({ id, title: F.title, page, both }, sectionPieces(page, parts)));
