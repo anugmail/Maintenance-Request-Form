@@ -88,8 +88,17 @@ build.js ประกอบ code.js จากไฟล์ของพี่น�
 - คำถามค้างไฟล์ 37: เปิดอยู่ 75 ข้อ (หนัก 10 · กลาง 34 · เบา 31) · ราว 20 ข้อ origin ตอบแล้วหรือหายไปเอง (ตัด S14–S17 · R89 · R92)
 
 ## 5. แท็บอัปเดต / ลบ (18 พ.ย. 2569) — สิ่งที่ต้องรู้ตอนย้ายฐาน
-ไฟล์ใหม่ของเรา (ไม่แตะไฟล์พี่นุ): `sig.js` (ลายเซ็นจอ) · `rcache.js` (จำผลหา component) · `update.js` (ลบส่วน · อัปเดตจอที่เปลี่ยน · สร้างจอที่เลือกใหม่) · build.js ฝัง `MF_DEPHASH` ที่คิดจากซอร์สตอน build
-- ชื่อจาก core/screens ที่ `rcache.js` ใช้: `KEYS` `ALIAS` `INDEX` `ROUTE` `IMPORT_ERR` `NESTED_ONLY` `LOCAL_OPTIONAL` `holderOf` `log` — ถ้าเปลี่ยนชื่อ ปลั๊กอินเปิดไม่ขึ้น (ReferenceError)
+ไฟล์ใหม่ของเรา (ไม่แตะไฟล์พี่นุ): `sig.js` (ลายเซ็นจอ) · `update.js` (ลบส่วน · อัปเดตจอที่เปลี่ยน · สร้างจอที่เลือกใหม่) · build.js ฝัง `MF_DEPHASH` + `MF_BUILT_AT` ที่คิดตอน build · (`rcache.js` เลิกใช้ตอนย้ายฐาน 18 พ.ย. — ใช้ resolveAll ของ origin ที่มีแคชในตัว)
+- ชื่อจาก core/screens ที่เราใช้เพิ่ม: `GROUPS` (รหัสจอ) · `COMP_CACHE` (ปุ่มล้างความจำ) · `DASH_BOX` (ข้อยกเว้นตัวนับชิ้นวาดเอง R106) · `resolveAll` — ถ้าเปลี่ยนชื่อ ปลั๊กอินเปิดไม่ขึ้น (ReferenceError)
 - ลายเซ็นไม่ผูกโครง screens.js: build ใหม่ = hash ใหม่จากซอร์สจริง ⇒ หลังย้ายฐาน จอที่ฟังก์ชันจอเปลี่ยนจะขึ้นว่า "เปลี่ยน" เอง · ถ้าอยากให้ทุกจอนับว่าเปลี่ยน เปลี่ยน `SIG_SALT` ใน sig.js
 - ตัวหาการพึ่งพาอ่านเฉพาะการประกาศที่ขึ้นต้นคอลัมน์ 0 (`function` / `const` / `let` / `class`) — ถ้าฐานใหม่ห่อทั้งไฟล์ในฟังก์ชันหรือย่อหน้าการประกาศ ลายเซ็นจะหยาบลง (จอเปลี่ยนแต่จับไม่ได้) ⇒ ใช้ "สร้างจอที่เลือกใหม่" หรือติ๊ก "สร้างใหม่ทุกจอของ journey ที่ติ๊ก"
 - เทส: `node figma-export/test-maintainance-feature-update.js` (ลายเซ็น + ความจำ component) · โหมดใหม่ใน test-maintainance-feature-plugin.js: `MODE=delete-section` `MODE=update-changed` `MODE=rebuild-selected` (ดูหัวบล็อก "อัปเดต / ลบ" ในไฟล์เทส)
+
+## 6. ฐานใหม่ (18 พ.ย. 2569) — ย้ายไป origin/main ee11614
+- **ที่มา:** `base/core.js` `base/screens.js` `base/build.json` = สำเนาอ่านอย่างเดียวจาก origin/main ee11614 (13 พ.ย. 2569 17:45) หัวไฟล์บอกคอมมิต · build.js อ่านจาก base/ ไม่อ่านไฟล์พี่นุใน working tree · `figjam-plugin/code.js` ของ origin ตรงกับ working tree ⇒ ยังอ่านที่เดิม
+- **ย้ายฐานรอบหน้า:** `git show origin/main:figma-export/plugin-lib/core.js > base/core.js` (และ screens.js build.json) → ใส่หัวไฟล์ใหม่ → build → เทส · เทสจะเตือน "รหัส X ชี้จอ … ไม่ใช่ …" ทุกจุดที่ความหมายรหัสเปลี่ยน (case มีชื่อจอใน SCENARIOS เป็นช่องสุดท้าย)
+- **รหัสจอ:** อ่านจาก `GROUPS` ของ screens.js (ไม่มี flatScreens แล้ว) · S1 แบ่งเรื่องย่อย A1–A23 รหัส `A<k>.<n>` · scenario อื่น `<ตัวอักษร>.<n>` · S23 เป็นเส้นตรง V.1–V.22
+- **จอต่อ Feature (Desktop+Mobile):** plan 208 → 330 · trip 180 → 192 · job 240 → 226 · close 58 → 18 · track 68 → 124 · รวม 754 → 890
+- **resolve:** ใช้ `resolveAll` ของ origin (แคช componentCache · เช็คชื่อ · โหลดทุกหน้าเฉพาะตอนจำเป็น · จำตัวที่ไม่มี) · ปุ่ม "ล้างความจำ component" ล้าง componentCache ของ origin
+- **เทส:** `DOC_PENDING=1` = เอกสาร 32–36 ยังเป็นรหัสฐานเก่า พิมพ์รายการที่เอกสารต้องแก้ (ⓘ) ไม่นับไม่ผ่าน — เอาออกเมื่อเอกสารแก้แล้ว
+- **ค้าง (origin ยังไม่มีจอ ห้ามทำเอง):** ฟอร์มแก้ไขแผนดำเนินการ (S19) · S7 S8 แผนจ้าง · จอตรวจรับของหน่วยงาน + ค่าจ้าง/ค่าเดินทาง · ผู้ดูแลตัวอย่าง "นายสมชาย แก้วมณี" · ย้ายวันตัวอย่างไป ม.ค. 2570

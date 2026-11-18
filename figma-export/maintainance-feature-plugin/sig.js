@@ -70,6 +70,15 @@ function sigScan(src) {
 /* ก้อนการประกาศชั้นนอกสุด: บรรทัดที่ขึ้นต้นคอลัมน์ 0 ด้วย function / async function / const / let / var / class
    ก้อน = ตั้งแต่บรรทัดนั้นถึงก่อนการประกาศถัดไป (คำสั่งอื่นที่คอลัมน์ 0 เช่น for … / figma.ui.onmessage = ติดไปกับก้อนก่อนหน้า) */
 const SIG_DECL = /^(?:async\s+)?(?:function\s*\*?\s*([A-Za-z_$][\w$]*)|class\s+([A-Za-z_$][\w$]*)|(?:const|let|var)\s+(.+))/;
+/* คำสั่งที่คอลัมน์ 0 ที่ไม่ใช่การประกาศ (รีวิวโคนัน 18 พ.ย. 2569) — เช่น Object.assign(KEYS, …) · NEEDED.push(…) · LIST_OVERRIDE['T.4'] = … · for (…) PLAN_UNIT[x] = …
+   เป็นก้อนแยก (mut) ผูกกับตัวแปรที่มันแก้ ⇒ แก้คำสั่งนี้แล้วลายเซ็นของทุกจอที่ใช้ตัวแปรนั้นเปลี่ยน (เดิมติดไปกับก้อนก่อนหน้า ผูกผิดตัว) */
+const SIG_STMT = /^(?:for\b|if\b|Object\.assign\b|[A-Za-z_$][\w$]*\s*(?:\.|\[|\())/;
+function sigTargets(text) {
+  const t = new Set(), code = sigScan(text).code;
+  for (const re of [/Object\.assign\(\s*([A-Za-z_$][\w$]*)/g, /([A-Za-z_$][\w$]*)\[[^\n;]*?\]\s*=(?!=)/g, /([A-Za-z_$][\w$]*)\.[A-Za-z_$][\w$]*\s*=(?!=)/g, /([A-Za-z_$][\w$]*)\.(?:push|unshift|splice|set|add)\(/g])
+    for (const m of code.matchAll(re)) t.add(m[1]);
+  return [...t];
+}
 function sigChunks(src) {
   const lines = String(src).split('\n'), chunks = []; let cur = null;
   for (const l of lines) {
@@ -80,8 +89,10 @@ function sigChunks(src) {
       else { const head = m[3].replace(/(['"`]).*?\1/g, '""'); names = [...head.matchAll(/(?:^|,)\s*([A-Za-z_$][\w$]*)\s*=/g)].map(x => x[1]); if (!names.length) { const one = head.match(/^([A-Za-z_$][\w$]*)/); if (one) names = [one[1]]; } }
       if (names.length) { cur = { names, text: l }; chunks.push(cur); continue; }
     }
+    if (SIG_STMT.test(l) && !/^(return|typeof|await)\b/.test(l)) { cur = { names: [], mut: true, text: l }; chunks.push(cur); continue; }
     if (cur) cur.text += '\n' + l;
   }
+  chunks.filter(c => c.mut).forEach(c => { c.targets = sigTargets(c.text); });
   return chunks;
 }
 
@@ -93,8 +104,8 @@ function sigDepHash(scopes) {
   for (const [sc, srcs] of Object.entries(scopes)) {
     table[sc] = {};
     for (const src of [].concat(srcs)) for (const ch of sigChunks(src)) {
-      const s = sigScan(ch.text), key = sc + ':' + ch.names[0] + ':' + nodes.size;
-      nodes.set(key, { own: sigHash(s.code), ids: s.ids, scope: sc });
+      const s = sigScan(ch.text), key = sc + ':' + (ch.names[0] || '(mut)') + ':' + nodes.size;
+      nodes.set(key, { own: sigHash(s.code), ids: s.ids, scope: sc, targets: ch.targets || null });
       for (const nm of ch.names) table[sc][nm] = table[sc][nm] ? table[sc][nm].concat(key) : [key];   // ชื่อซ้ำ (ประกาศทับ) ⇒ พึ่งทุกก้อน
     }
   }
@@ -102,6 +113,7 @@ function sigDepHash(scopes) {
     nd.deps = new Set();
     for (const id of nd.ids) for (const k of (nd.scope !== '*' && table[nd.scope][id]) || table['*'][id] || []) nd.deps.add(k);
   }
+  for (const [key, nd] of nodes) if (nd.targets) for (const t of nd.targets) for (const k of (nd.scope !== '*' && table[nd.scope][t]) || table['*'][t] || []) nodes.get(k).deps.add(key);   // ตัวแปรที่ถูกแก้ พึ่งคำสั่งที่แก้มัน
   const closure = (key) => { const seen = new Set([key]), st = [key]; while (st.length) for (const d of nodes.get(st.pop()).deps) if (!seen.has(d)) { seen.add(d); st.push(d); } return seen; };
   const out = {};
   for (const [sc, t] of Object.entries(table)) {
@@ -114,12 +126,13 @@ function sigDepHash(scopes) {
   return out;
 }
 
-/* ปลั๊กอิน: ลายเซ็นของฟังก์ชันจอ 1 ตัว · fid = Feature (หาชื่อในไฟล์ Feature ก่อน) · base = ชื่อขั้นตอนที่ทุกจอผ่าน (makeScreen) · data = ป้าย/ข้อความเคส */
-function sigOf(fn, fid, base, data) {
+/* ปลั๊กอิน: ลายเซ็นของฟังก์ชันจอ 1 ตัว · scope = '*' (จอของ screens.js / toast ของ feature.js) หรือรหัส Feature (จอที่ไฟล์ Feature แทนเอง — หาชื่อในไฟล์นั้นก่อน)
+   แยก scope กันชื่อชน (plan.js มี HAPPY FEATURE … ชื่อเดียวกับ feature.js) · base = ชื่อขั้นตอนที่ทุกจอผ่าน (makeScreen · หาส่วนกลางเสมอ) · data = ป้าย/ข้อความเคส */
+function sigOf(fn, scope, base, data) {
   const D = (typeof MF_DEPHASH !== 'undefined' && MF_DEPHASH) || { '*': {} };
   const s = sigScan(fn ? Function.prototype.toString.call(fn) : '');
-  const look = (nm) => (D[fid] && D[fid][nm]) || D['*'][nm];
-  const deps = [...s.ids].concat(base || []).filter(look).sort().map(nm => nm + '=' + look(nm));
+  const look = (nm) => (scope !== '*' && D[scope] && D[scope][nm]) || D['*'][nm];
+  const deps = [...s.ids].filter(look).sort().map(nm => nm + '=' + look(nm)).concat((base || []).map(nm => '@' + nm + '=' + D['*'][nm]));
   return sigHash([SIG_SALT, s.code, deps.join(';'), JSON.stringify(data || null)].join('\n'));
 }
 /* ซอร์สฟังก์ชันอ่านได้จริงไหม (บาง sandbox คืน [native code]) — อ่านไม่ได้ ⇒ ลายเซ็นไว้ใจไม่ได้ โหมดอัปเดตจอที่เปลี่ยนจะไม่ทำงาน */
@@ -127,4 +140,4 @@ function sigSourceOk() {
   try { const probe = function mfProbe() { return 'mf-probe-41'; }; return Function.prototype.toString.call(probe).indexOf('mf-probe-41') >= 0; } catch (e) { return false; }
 }
 
-if (typeof module !== 'undefined' && module.exports) module.exports = { sigHash, sigScan, sigChunks, sigDepHash, sigOf, sigSourceOk, SIG_SALT };
+if (typeof module !== 'undefined' && module.exports) module.exports = { sigHash, sigScan, sigChunks, sigTargets, sigDepHash, sigOf, sigSourceOk, SIG_SALT };

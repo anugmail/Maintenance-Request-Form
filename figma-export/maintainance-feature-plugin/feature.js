@@ -19,14 +19,16 @@ const PAGE_GAP = 500;            // ระหว่างฉาก/หัวข�
    useFeature(id) สลับตัวแปรด้านล่างให้ชี้ Feature ที่เลือก ⇒ ส่วนจัดวาง / happy flow / toast / FigJam ทำงานเหมือนเดิม */
 let F = null, FEATURE = [], HAPPY = [], FEATURE_TOASTS = {}, FEATURE_TITLE = '', FEATURE_PAGE = [], SCREEN_FN = {}, FJ_DIR = '', FJ_BOARD = '', FJ_TITLE = '';
 const SCREEN_CACHE = {};
-function screenFns(f) {   // รหัสจอ → ฟังก์ชันจอ: จอเดิมของ scenario (รหัสบล็อกตาม BLOCK_OF ของ screens.js) แล้วทับด้วย f.screens
+function screenFns(f) {   // รหัสจอ → { fn, label, sub }: จอของ scenario ตาม GROUPS ของ screens.js แล้วทับด้วย f.screens
+  /* 18 พ.ย. 2569 ฐาน origin/main ee11614: ไม่มี flatScreens (เส้นทางย่อยของงานค้าง) แล้ว — อ่านรหัสจาก GROUPS ตรงๆ แบบที่ buildGrid ของพี่นุใช้
+     scenario ที่ไม่แบ่งเรื่องย่อย: รหัส <ตัวอักษร>.<n> (B.3) · scenario ที่แบ่งเรื่องย่อย (SUBS_OF · S1 R108): รหัส <ตัวอักษร><k>.<n> (A1.7) */
   const out = {};
   for (const tag of f.scenarios) {
-    const i = BLOCK_OF.indexOf(tag), sc = SCENARIOS.find(x => x[0].split(' · ')[0] === tag);
-    if (i < 0 || !sc) { warn('Feature ' + f.title + ': ไม่พบ ' + tag + ' ใน screens.js', 'ข้าม'); continue; }
-    flatScreens(sc[1], LETTERS[i]).forEach(s => { out[s.code] = { fn: s.fn, label: s.label }; });
+    const g = GROUPS.find(x => x.subs[0].tag === tag);
+    if (!g) { warn('Feature ' + f.title + ': ไม่พบ ' + tag + ' ใน screens.js', 'ข้าม'); continue; }
+    for (const sub of g.subs) sub.screens.forEach(([label, fn], i) => { out[sub.code + '.' + (i + 1)] = { fn, label, sub: sub.title }; });
   }
-  for (const [code, fn] of Object.entries(f.screens || {})) { if (out[code]) out[code].fn = fn; else out[code] = { fn }; }
+  for (const [code, fn] of Object.entries(f.screens || {})) { if (out[code]) Object.assign(out[code], { fn, own: true }); else out[code] = { fn, own: true }; }   // own = ซอร์สอยู่ในไฟล์ Feature (ลายเซ็นหาชื่อใน scope ของ Feature)
   return out;
 }
 function useFeature(id) {
@@ -57,16 +59,26 @@ async function featurePage(create) {
   const p = figma.createPage(); p.name = same ? ALT_PAGE(name) : name;
   return { page: p, fresh: true };
 }
+/* รหัสจอชี้จอที่ตั้งใจไหม (18 พ.ย. 2569 ย้ายฐาน: รหัสเดิมชี้จอคนละจอได้โดยไม่มีคำเตือน เช่น V.6 L.4 Q.1) — case ใส่ชื่อจอใน SCENARIOS เป็นช่องที่ 3 ⇒ ไม่ตรง = เตือน
+   เตือนครั้งเดียวต่อรหัสต่อ Feature (featurePages ถูกเรียกหลายรอบ) */
+const LABEL_WARNED = new Set();
+function checkLabel(code, want) {
+  if (!want || code.indexOf('H:') === 0) return;
+  const s = SCREEN_FN[code], k = F.id + ' ' + code; if (LABEL_WARNED.has(k)) return;
+  if (!s || s.label === undefined) { LABEL_WARNED.add(k); warn('Feature ' + F.title + ': รหัส ' + code + ' ไม่มีใน screens.js (ต้องเป็น "' + want + '")', 'ข้าม'); return; }
+  if (s.label !== want) { LABEL_WARNED.add(k); warn('Feature ' + F.title + ': รหัส ' + code + ' ชี้จอ "' + s.label + '" ไม่ใช่ "' + want + '"', 'ตรวจ features/' + F.id + '.js'); }
+}
 const happyCount = (list) => list.reduce((a, j) => a + (HAPPY[FEATURE.indexOf(j)] || []).length, 0);
 /* แถว happy flow ในรูปเดียวกับ featurePages (กลุ่มหน้า = ขั้นที่ติดกันในหน้าเดียวกัน) · รหัส H<journey>.<ขั้น> */
 function happyPages(ji) {
   let x = ROW_X0 + GRID.side + GRID.gap, n = 0; const pages = [];
-  for (const [ref, label, pg] of HAPPY[ji] || []) {
+  for (const [ref, label, pg, want] of HAPPY[ji] || []) {
+    checkLabel(ref, want);
     let cur = pages[pages.length - 1];
     if (!cur || cur.name !== pg) { if (cur) x = cur.x + cur.w + PAGE_GAP; cur = { name: pg, x, w: 0, items: [] }; pages.push(cur); }
     n++;
     const ix = cur.x + cur.items.length * (GRID.colW + GRID.colGap), s = SCREEN_FN[ref];
-    cur.items.push({ code: 'H' + (ji + 1) + '.' + n, x: ix, label: 'ขั้น ' + n + ' · ' + label + (ref.indexOf('H:') === 0 ? '' : ' (' + ref + ')'), fn: s ? s.fn : null, old: ref });
+    cur.items.push({ code: 'H' + (ji + 1) + '.' + n, x: ix, label: 'ขั้น ' + n + ' · ' + label + (ref.indexOf('H:') === 0 ? '' : ' (' + ref + ')'), fn: s ? s.fn : null, old: ref, scope: s && s.own ? F.id : '*' });
     cur.w = cur.items.length * GRID.colW + (cur.items.length - 1) * GRID.colGap;
   }
   return pages;
@@ -99,7 +111,8 @@ function featurePages(j, ji) {
         return { code, x: ix, label: 'Toast ' + t.text + ' (แสดงบน' + t.page + ' เมื่อ' + t.when + ')', fn: () => toastScreen(id), data: t };   // data = ข้อความ toast เข้าลายเซ็น (ซอร์ส fn ไม่มีข้อความ)
       }
       const s = SCREEN_FN[it[0]];
-      return { code, x: ix, label: it[1] + ' (' + it[0] + ')', fn: s ? s.fn : null, old: it[0] };
+      checkLabel(it[0], it[2]);
+      return { code, x: ix, label: it[1] + ' (' + it[0] + ')', fn: s ? s.fn : null, old: it[0], scope: s && s.own ? F.id : '*' };
     });
     const w = items.length * GRID.colW + (items.length - 1) * GRID.colGap, page = { code: (ji + 1) + '.' + (k + 1), name: pg.name, x, w, items };
     x += w + PAGE_GAP;
@@ -175,7 +188,7 @@ async function sectionTitle(prefix, text, width) {
    ลายเซ็น (sig.js) เก็บใน pluginData mfSig ของเฟรม ⇒ โหมดอัปเดตรู้ว่าจอไหนเปลี่ยน · คืน null เมื่อพัง (ลบชิ้นที่ค้างแล้ว) */
 const MAKE_BASE = ['makeScreen'];   // ชื่อที่ทุกจอพึ่ง (ขั้นแต่งจอหลังสร้าง) — อยู่ในลายเซ็นของทุกจอ
 const screenName = (prefix, it, frameTitle, pgName, mob) => prefix + ' / ' + it.code + ' · ' + frameTitle + ' › ' + pgName + ' — ' + it.label + (mob ? ' · mobile' : '');
-function itemSig(it, mob, frameTitle, pgName) { return sigOf(it.fn, F.id, MAKE_BASE, { code: it.code, label: it.label, page: pgName, title: frameTitle, mob: !!mob, data: it.data || null }); }
+function itemSig(it, mob, frameTitle, pgName) { return sigOf(it.fn, it.scope || '*', MAKE_BASE, { code: it.code, label: it.label, page: pgName, title: frameTitle, mob: !!mob, data: it.data || null }); }
 async function makeScreen(page, it, mob, prefix, frameTitle, pgName, at, place) {
   MOB = mob; CREATED = []; PLACE = { x: at.x, y: at.y }; const ts = Date.now();
   try {
@@ -324,22 +337,13 @@ async function resolveFast() {
   const pre = await preImport(lib);
   log('⏱ นำเข้าจากไลบรารีพร้อมกัน ' + pre + ' ตัว ' + secs(t));
   t = Date.now();
-  await resolveLib(lib);   // 18 พ.ย. 2569: แทน resolveAll — จำผลไว้ในไฟล์ (rcache.js) รอบหน้าไม่สแกน instance ซ้ำ
+  await resolveAll(lib);   // 18 พ.ย. 2569 ฐาน origin: resolveAll มีแคช pluginData (componentCache · เช็คชื่อ · โหลดทุกหน้าเฉพาะตอนจำเป็น · จำตัวที่ไม่มี) แล้ว ⇒ เลิกใช้ rcache.js ของเรา
+  log('⏱ resolveAll ' + secs(t));
   t = Date.now();
   const lab = await importLabels();
   if (lab.length) log('ป้ายข้างจอจากไลบรารี: ' + lab.join(' · ') + ' ' + secs(t));
-  const want = new Map();   // ชื่อที่จะหา → ชื่อใน LOCAL_OPTIONAL
-  for (const n of LOCAL_OPTIONAL) if (!INDEX.has(n)) [n].concat(ALIAS[n] || []).forEach(x => want.set(x, n));
-  for (const c of figma.root.findAllWithCriteria({ types: ['COMPONENT_SET', 'COMPONENT'] })) {
-    if (c.type === 'COMPONENT' && c.parent && c.parent.type === 'COMPONENT_SET') continue;
-    const n = want.get(c.name); if (n && !INDEX.has(n)) { INDEX.set(n, c); ROUTE[n] = 'สำเนาในไฟล์นี้'; }
-  }
-  const left = () => [...new Set(want.values())].filter(n => !INDEX.has(n));
-  if (left().length) {   // หาจาก instance ชื่อตรง ผ่านความจำของไฟล์ (เจอ/ไม่เจอ จำไว้ทั้งคู่ · ไม่สแกนทั้งไฟล์)
-    const cache = rcLoad(), r = await rcFind(left(), cache, () => false, { mem: 0, memMiss: 0, scanned: 0, calls: 0 });
-    for (const [n, c] of r) { INDEX.set(n, c); ROUTE[n] = 'จาก instance ในไฟล์'; }
-    rcSave(cache);
-  }
+  const left = () => LOCAL_OPTIONAL.filter(n => !INDEX.has(n));
+  if (left().length) await resolveAll(left());   // component ของไฟล์ Maintain-D / ป้าย ที่ยังไม่ได้ — ผ่านแคชเดียวกันของฐาน (ไม่สแกนซ้ำทุกรอบ) · ไม่มี = ใช้แบบสำรอง
   const miss = left();
   RESOLVED = true;
   log('component ของไฟล์ Maintain-D / ป้าย: ได้ ' + (LOCAL_OPTIONAL.length - miss.length) + '/' + LOCAL_OPTIONAL.length + (miss.length ? ' · ไม่พบ ' + miss.join(' · ') + ' — ใช้แบบสำรอง' : '') + ' ' + secs(t));
@@ -370,7 +374,10 @@ async function buildFeature(devices, pick, happyOnly) {
   else log('⚠ หน้า "' + page.name.trim() + '" ไม่มีที่ว่างในขอบพื้นที่วางงานแล้ว — ลบชุดเก่าบนหน้านี้ก่อน แล้วกดใหม่');
   log(tp.fresh ? 'สร้างหน้าใหม่ "' + page.name + '" แล้ววางลงไป' : 'วางชุดใหม่บนหน้า "' + page.name.trim() + '" ต่อจากของเดิม · ของเดิมไม่ถูกแตะ (ลบชุดเก่าเองได้)');
   let loose = 0;
-  for (const s of made) for (const n of s.findAll(x => !findInstanceAncestor(x))) if (n.type !== 'INSTANCE' && n.type !== 'FRAME') loose++;
+  /* ชิ้นวาดเองในกรอบแดชบอร์ด VMS+ (DASH_BOX ของ screens.js · R106 S4 S24) ได้รับยกเว้นแบบเดียวกับตัวตรวจ R106 ของพี่นุ (18 พ.ย. 2569 ฐาน origin) */
+  const DASH = typeof DASH_BOX === 'object' ? Object.values(DASH_BOX) : [];
+  const inDash = (n, top) => { for (let p = n.parent; p && p !== top; p = p.parent) if (DASH.some(d => String(p.name || '').indexOf(d) === 0)) return true; return false; };
+  for (const s of made) for (const n of s.findAll(x => !findInstanceAncestor(x))) if (n.type !== 'INSTANCE' && n.type !== 'FRAME' && !inDash(n, s)) loose++;
   figma.currentPage.selection = made.slice(0, 1);
   figma.viewport.scrollAndZoomIntoView(made.slice(0, 6));
   log('');

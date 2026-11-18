@@ -2,9 +2,8 @@
 /* เทสหน่วยของงาน "อัปเดตเฉพาะจุด" ปลั๊กอินพระผู้สร้าง (18 พ.ย. 2569) — ไม่ต้องเปิด Figma
    ก. ลายเซ็นจอ (maintainance-feature-plugin/sig.js) จากซอร์สจริง:
       แก้ฟังก์ชันจอ ⇒ ลายเซ็นของจอที่ใช้ฟังก์ชันนั้นเปลี่ยน · จอที่ไม่เกี่ยวไม่เปลี่ยน · แก้คอมเมนต์อย่างเดียวไม่เปลี่ยน · ชื่อในไฟล์ Feature หาในไฟล์นั้นก่อน
-   ข. ความจำการหา component (maintainance-feature-plugin/rcache.js) บน figma จำลอง:
-      รอบแรกสแกนเฉพาะ instance ชื่อตรง · รอบสอง (เปิดปลั๊กอินใหม่) ไม่สแกนเลย · ตัวที่ไม่มีจำว่าไม่มี · component ถูกลบ ⇒ หาใหม่ · ล้างความจำ ⇒ หาใหม่
-      ตัวที่ขาดไม่ได้ (ไม่ใช่ชิ้นส่วนซ้อน) หาชื่อตรงไม่เจอ ⇒ สแกนทั้งไฟล์ (เหมือน resolveAll) และไม่จำว่าไม่มี
+   ข. (18 พ.ย. 2569 รีวิวโคนัน) คำสั่งคอลัมน์ 0 ที่แก้ตัวแปร (Object.assign · push · X[k] = …) ผูกกับตัวแปรนั้น · แยก scope จอของ screens.js กับจอของไฟล์ Feature
+      (rcache.js เลิกใช้แล้ว — ย้ายฐาน origin ใช้ resolveAll ที่มีแคชในตัว)
    รัน:  node figma-export/test-maintainance-feature-update.js */
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const D = path.join(__dirname, 'maintainance-feature-plugin');
@@ -14,7 +13,7 @@ const out = []; const t = (ok, m) => out.push((ok ? '✓ ' : '⚠ ') + m);
 /* ---------- ก. ลายเซ็น ---------- */
 {
   const rd = (f) => fs.readFileSync(path.join(__dirname, f), 'utf8');
-  const core = rd('plugin-lib/core.js'), screens = rd('maintainance-plugin/screens.js'), feat = rd('maintainance-feature-plugin/feature.js');
+  const core = rd('maintainance-feature-plugin/base/core.js'), screens = rd('maintainance-feature-plugin/base/screens.js'), feat = rd('maintainance-feature-plugin/feature.js');   // ฐาน origin (base/)
   const fsrc = (id) => rd('maintainance-feature-plugin/features/' + id + '.js');
   const scopes = (scr, trip) => ({ '*': [core, scr, feat], plan: fsrc('plan'), trip: trip || fsrc('trip') });
   const A = S.sigDepHash(scopes(screens));
@@ -54,68 +53,28 @@ const out = []; const t = (ok, m) => out.push((ok ? '✓ ' : '⚠ ') + m);
   t(S.sigSourceOk(), 'node อ่านซอร์สฟังก์ชันได้ (ใน Figma ตรวจตอนกดอีกครั้ง)');
 }
 
-/* ---------- ข. ความจำการหา component ---------- */
+
+/* ---------- ข. คำสั่งที่แก้ตัวแปร + แยก scope ---------- */
 {
-  const src = fs.readFileSync(path.join(D, 'rcache.js'), 'utf8');
-  let uid = 0;
-  const mk = (type, name, kids, extra) => { const n = Object.assign({ id: 'n' + (++uid), type, name, children: kids || [], parent: null }, extra || {}); n.children.forEach(c => { c.parent = n; }); return n; };
-  function world() {
-    const comps = { A: mk('COMPONENT_SET', 'A'), B: mk('COMPONENT', 'B'), Nest: mk('COMPONENT', '_Nest'), Loc: mk('COMPONENT', 'Loc') };
-    const insts = [];
-    const inst = (name, main) => { const i = mk('INSTANCE', name); i.getMainComponentAsync = async () => { calls++; return main; }; insts.push(i); return i; };
-    let calls = 0;
-    const pageKids = [inst('A', comps.A), inst('ชื่อเปลี่ยน', comps.B), inst('_Nest', comps.Nest), inst('X', null)].concat(Array.from({ length: 50 }, (_, k) => inst('อื่น ' + k, null)));
-    const doc = mk('DOCUMENT', 'doc', [mk('PAGE', 'p', pageKids.concat([comps.Loc]))]);
-    const byId = new Map(); (function w(n) { byId.set(n.id, n); (n.children || []).forEach(w); })(doc);
-    Object.values(comps).forEach(c => byId.set(c.id, c));
-    let pd = {};
-    doc.getPluginData = (k) => pd[k] || ''; doc.setPluginData = (k, v) => { pd[k] = v; };
-    const all = (n, f, o) => { for (const c of n.children || []) { if (f(c)) o.push(c); all(c, f, o); } return o; };
-    doc.findAllWithCriteria = (c) => all(doc, n => c.types.includes(n.type), []);
-    const figma = { root: doc, loadAllPagesAsync: async () => {}, getNodeByIdAsync: async (id) => byId.get(id) || null,
-      importComponentSetByKeyAsync: async () => { throw new Error('not published'); }, importComponentByKeyAsync: async () => { throw new Error('not published'); } };
-    return { figma, comps, byId, get calls() { return calls; }, reset() { calls = 0; }, pd: () => pd, setPd: (x) => { pd = x; } };
-  }
-  function load(W) {
-    const logs = [];
-    const ctx = { figma: W.figma, KEYS: { A: ['k1', true], B: ['k2', false] }, ALIAS: {}, INDEX: new Map(), ROUTE: {}, IMPORT_ERR: '', NESTED_ONLY: new Set(['_Nest', '_Gone']), LOCAL_OPTIONAL: ['LocalOpt'],
-      holderOf: (c) => (c.parent && c.parent.type === 'COMPONENT_SET') ? c.parent : c, log: (x) => logs.push(x), secs: () => '', JSON, Date, Map, Set, Error, Promise, String, Object, Array };
-    vm.createContext(ctx); vm.runInContext(src + '\nthis.run = (l) => resolveLib(l); this.stat = () => RC_STAT; this.clear = () => rcClear();', ctx);
-    return { ctx, logs };
-  }
-  (async () => {
-    const W = world();
-    let P = load(W); await P.ctx.run(['A', 'Loc', '_Nest', '_Gone']);
-    const s1 = P.ctx.stat();
-    t(P.ctx.INDEX.get('A') === W.comps.A && P.ctx.INDEX.get('Loc') === W.comps.Loc && P.ctx.INDEX.get('_Nest') === W.comps.Nest && !P.ctx.INDEX.has('_Gone'), 'รอบแรก: ได้ A (instance ชื่อตรง) · Loc (สำเนาในไฟล์) · _Nest · _Gone ไม่มี (ชิ้นส่วนซ้อน ไม่บังคับ)');
-    t(s1.calls === 2 && !s1.full, 'รอบแรก: เรียก getMainComponentAsync เฉพาะ instance ชื่อตรง ' + s1.calls + ' ครั้ง (ไม่สแกนทั้งไฟล์ 54 ชิ้น)');
-    const mem = JSON.parse(W.pd()['mf-resolve']);
-    t(mem.items.A && mem.items.A.id === W.comps.A.id && mem.items._Gone && mem.items._Gone.miss, 'จำไว้ในไฟล์: A = id · _Gone = ไม่มี');
-    W.reset(); P = load(W); await P.ctx.run(['A', 'Loc', '_Nest', '_Gone']);
-    const s2 = P.ctx.stat();
-    t(W.calls === 0 && s2.mem === 2 && s2.memMiss === 1 && P.ctx.INDEX.get('A') === W.comps.A, 'เปิดปลั๊กอินใหม่: ไม่สแกนเลย (เรียก ' + W.calls + ' ครั้ง) · จากความจำ ' + s2.mem + ' · จำว่าไม่มี ' + s2.memMiss);
-    t(P.logs.some(l => /ล้างความจำ component/.test(l)), 'log บอกทางล้างความจำเมื่อมีตัวที่จำว่าไม่มี');
-    W.byId.delete(W.comps.A.id); W.reset(); P = load(W); await P.ctx.run(['A']);
-    t(P.ctx.INDEX.get('A') === W.comps.A && W.calls === 1, 'component ที่จำไว้หาด้วย id ไม่เจอ ⇒ หาใหม่ด้วย instance ชื่อตรง');
-    W.byId.set(W.comps.A.id, W.comps.A);
-    P.ctx.clear(); W.reset(); P = load(W); await P.ctx.run(['A', '_Gone']);
-    t(W.calls === 1 && P.ctx.stat().memMiss === 0 && P.ctx.stat().mem === 0 && P.ctx.stat().scanned === 2, 'ล้างความจำแล้ว ⇒ หาใหม่ทั้งหมด ไม่ใช้ความจำเดิม (หา 2 ตัว · เรียก ' + W.calls + ' ครั้ง)');
-    /* B ตัวขาดไม่ได้ ชื่อ instance ไม่ตรง ⇒ สแกนทั้งไฟล์แบบ resolveAll */
-    W.reset(); P = load(W); await P.ctx.run(['B']);
-    t(P.ctx.INDEX.get('B') === W.comps.B && P.ctx.stat().full, 'ตัวขาดไม่ได้ (B) instance ชื่อไม่ตรง ⇒ สแกนทั้งไฟล์ แล้วเจอ');
-    W.reset(); P = load(W); await P.ctx.run(['B']);
-    t(W.calls === 0 && P.ctx.INDEX.get('B') === W.comps.B, 'รอบถัดไป B มาจากความจำ ไม่สแกน');
-    /* ตัวขาดไม่ได้ที่ไม่มีจริง ⇒ หยุดพร้อม error เดิมของ resolveAll และไม่จำว่าไม่มี */
-    W.reset(); P = load(W); let err = '';
-    try { await P.ctx.run(['Hard']); } catch (e) { err = e.message; }
-    const mem2 = JSON.parse(W.pd()['mf-resolve']);
-    t(/component ไม่ครบ/.test(err) && !mem2.items.Hard, 'ตัวขาดไม่ได้ที่ไม่มีจริง ⇒ หยุดแบบ resolveAll · ไม่จำว่าไม่มี (เพิ่มแล้วกดใหม่ได้ทันที)');
-    /* ความจำเสีย (JSON พัง) ⇒ ทำงานต่อได้ */
-    W.setPd({ 'mf-resolve': '{พัง' }); W.reset(); P = load(W); await P.ctx.run(['A']);
-    t(P.ctx.INDEX.get('A') === W.comps.A, 'ความจำในไฟล์เสีย ⇒ หาใหม่ ไม่พัง');
-    out.forEach(x => console.log(x));
-    const bad = out.filter(x => x[0] === '⚠').length;
-    console.log(bad ? 'ผล: ⚠ ไม่ผ่าน ' + bad + ' ข้อ' : 'ผล: ผ่านทุกข้อ (' + out.length + ')');
-    process.exitCode = bad ? 1 : 0;
-  })().catch(e => { console.log('พัง', e); process.exitCode = 1; });
+  const G = "const KEYS = { a: 1 };\nconst NEEDED = ['x'];\nconst PLAN_UNIT = {};\nconst HAPPY = 1;\nfunction listS() { return KEYS.a + NEEDED.length; }\nfunction unitS() { return PLAN_UNIT.q; }\nfunction other() { return 2; }\n";
+  const H = (g, plan) => S.sigDepHash({ '*': [g], plan: plan || "const HAPPY = 2;\nconst EXTRA = { q: 1 };\nfor (const [u, v] of Object.entries(EXTRA)) PLAN_UNIT[u] = v;\n" });
+  const A = H(G);
+  const B = H(G + "Object.assign(KEYS, { b: 2 });\n"), C = H(G + "NEEDED.push('y');\n");
+  const P = H(G, "const HAPPY = 2;\nconst EXTRA = { q: 2 };\nfor (const [u, v] of Object.entries(EXTRA)) PLAN_UNIT[u] = v;\n");
+  t(A['*'].listS !== B['*'].listS && A['*'].other === B['*'].other, 'Object.assign(KEYS, …) ที่คอลัมน์ 0 ⇒ จอที่ใช้ KEYS เปลี่ยน · จอที่ไม่ใช้ไม่เปลี่ยน');
+  t(A['*'].listS !== C['*'].listS, 'NEEDED.push(…) ที่คอลัมน์ 0 ⇒ จอที่ใช้ NEEDED เปลี่ยน');
+  t(A['*'].unitS !== P['*'].unitS && A['*'].listS === P['*'].listS, 'plan.js แก้ PLAN_UNIT ตอนโหลด ⇒ จอของ screens.js ที่ใช้ PLAN_UNIT เปลี่ยน');
+  global.MF_DEPHASH = A;
+  const fn = function () { return HAPPY; };
+  const s1 = S.sigOf(fn, '*', [], {}), s2 = S.sigOf(fn, 'plan', [], {});
+  global.MF_DEPHASH = H(G, "const HAPPY = 3;\nconst EXTRA = { q: 1 };\nfor (const [u, v] of Object.entries(EXTRA)) PLAN_UNIT[u] = v;\n");
+  t(S.sigOf(fn, '*', [], {}) === s1 && S.sigOf(fn, 'plan', [], {}) !== s2, 'ชื่อชน (HAPPY ทั้งส่วนกลางและ plan.js): จอของ screens.js ใช้ของส่วนกลาง · จอของไฟล์ Feature ใช้ของไฟล์นั้น');
+  global.MF_DEPHASH = undefined;
+  /* build จริง: ภาพ (IMAGES) และเวลา build อยู่ใน code.js */
+  const code = fs.readFileSync(path.join(D, 'code.js'), 'utf8');
+  const dep = JSON.parse((code.match(/const MF_DEPHASH = (\{.*\});/) || [])[1] || '{}');
+  t(dep['*'] && dep['*'].IMAGES && dep['*'].KEYS && dep['*'].NEEDED && /const MF_BUILT_AT = \d{13};/.test(code), 'code.js มีลายเซ็นของ IMAGES KEYS NEEDED และเวลา build (MF_BUILT_AT)');
+  t(!/rcache/.test(fs.readFileSync(path.join(D, 'build.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')), 'build.js ไม่ประกอบ rcache.js แล้ว (ใช้ resolveAll ของฐาน)');
 }
+out.forEach(x => console.log(x));
+{ const bad = out.filter(x => x[0] === '⚠').length; console.log(bad ? 'ผล: ⚠ ไม่ผ่าน ' + bad + ' ข้อ' : 'ผล: ผ่านทุกข้อ (' + out.length + ')'); process.exitCode = bad ? 1 : 0; }

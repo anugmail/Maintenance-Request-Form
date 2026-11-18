@@ -22,14 +22,16 @@ const FDIR = (FSRC.match(/fjDir: '([^']+)'/) || [])[1] || 'flow-maintainance-fea
   else {
     const doc = fs.readFileSync(path.join(__dirname, '..', 'Diagram', '01-บำรุงรักษาตามวาระ', docName), 'utf8');
     /* รหัสชั้นเดียว (A.3 · ช่วง A.3–A.9) และรหัสซ้อนของเส้นทางย่อย (V.4.1 · ช่วง V.4.1–V.4.3) — 17 พ.ย. 2569 รองรับรหัสซ้อน (Feature งานรายคัน) */
-    const exp = (t) => { const r = []; t.replace(/\b([A-Z])\.((?:\d+\.)*)(\d+)(?:[–-](?:\1\.\2)?(\d+))?/g, (m, a, mid, x, y) => { for (let i = +x; i <= (y ? +y : +x); i++) r.push(a + '.' + mid + i); }); return r; };
-    const used = new Set([...FSRC.matchAll(/\['([A-Z]\.\d+(?:\.\d+)*)', '/g)].map(m => m[1]));
+    const exp = (t) => { const r = []; t.replace(/\b([A-Z]\d*)\.((?:\d+\.)*)(\d+)(?:[–-](?:\1\.\2)?(\d+))?/g, (m, a, mid, x, y) => { for (let i = +x; i <= (y ? +y : +x); i++) r.push(a + '.' + mid + i); }); return r; };
+    const used = new Set([...FSRC.matchAll(/\['([A-Z]\d*\.\d+(?:\.\d+)*)', '/g)].map(m => m[1]));   // 18 พ.ย. 2569 ฐาน origin: รหัสเรื่องย่อย A1.7
     const sec = (doc.split('## 3.')[1] || '').split('## 4.')[0], want = new Set();
     const rowsT = sec.split('\n').filter(l => /^\| /.test(l)), hdr = (rowsT[0] || '').split('|').map(s => s.trim());
     const cols = hdr.map((h, i) => /^จอที่สร้าง/.test(h) ? i : -1).filter(i => i > 0);   // ทุกคอลัมน์ที่หัวขึ้นต้น "จอที่สร้าง"
     rowsT.slice(1).filter(l => /^\| [^-|]/.test(l)).forEach(l => { const c = l.split('|'); (cols.length ? cols : [3]).forEach(i => exp(c[i] || '').forEach(x => want.add(x))); });
     const miss = [...want].filter(c => !used.has(c)), extra = [...used].filter(c => !want.has(c));
-    if (!want.size || miss.length || extra.length) { console.log('⚠ features/' + FEAT + '.js ไม่ตรง ' + docName + ' — ขาด ' + (miss.join(' ') || '-') + ' · เกิน ' + (extra.join(' ') || '-') + (want.size ? '' : ' · เอกสารไม่มีตารางหัวข้อ 3')); process.exitCode = 1; }
+    /* DOC_PENDING=1 (18 พ.ย. 2569 ย้ายฐาน): เอกสาร 32–36 ยังเป็นรหัสฐานเก่า รอแก้ ⇒ พิมพ์รายการที่เอกสารต้องเปลี่ยน (ⓘ) ไม่นับเป็นไม่ผ่าน */
+    const pend = !!process.env.DOC_PENDING;
+    if (!want.size || miss.length || extra.length) { console.log((pend ? 'ⓘ เอกสารต้องแก้ ' : '⚠ ') + 'features/' + FEAT + '.js ไม่ตรง ' + docName + ' — เอกสารมีแต่ Feature ไม่ใช้ (' + miss.length + '): ' + (miss.join(' ') || '-') + ' · Feature ใช้แต่เอกสารไม่มี (' + extra.length + '): ' + (extra.join(' ') || '-') + (want.size ? '' : ' · เอกสารไม่มีตารางหัวข้อ 3')); if (!pend) process.exitCode = 1; }
     else console.log('Feature ' + FEAT + ': รหัสจอตรง ' + docName + ' ครบ ' + used.size + ' จอ ✓');
   }
 }
@@ -63,27 +65,39 @@ process.on('beforeExit', () => {
   console.log('ไม่สร้างทับ: จอบนหน้า ' + fr.length + '/' + process.env.WANT_FRAMES + ' · Title ' + titles + '/' + wantT + ' · ชื่อซ้ำ (จากชุดเก่า) ' + dup.length + (ok ? ' ✓' : ' ⚠'));
   if (!ok) process.exitCode = 1;
 });
-/* ---------- อัปเดต / ลบ (18 พ.ย. 2569) ----------
+/* ---------- อัปเดต / ลบ (18 พ.ย. 2569 · ปรับตามรีวิวโคนัน) ----------
    MODE=delete-section PARTS=happy|full (FEATURES=… หลาย Feature) · UNTAG=1 ลบป้าย mf ของชิ้นในส่วน (ต้องหาจากตำแหน่ง) · DEL_FOREIGN=1 วางของผู้ใช้ไว้กลางส่วนที่ลบ (ต้องไม่ถูกแตะ)
-   MODE=update-changed UPD_SETUP=1: ปลอมลายเซ็น 3 จอ (= โค้ดเปลี่ยน) + ชื่อแถบเก่า · ลบ 2 จอ (= ยังไม่มีบนหน้า) · ลบลายเซ็น 5 คู่ (= จอเก่า) · จอรหัสที่ไม่มีแล้ว 1 · LEGACY=rebuild · UPD_TWICE=1 ตรวจซ้ำต้องเหลือ 0
-   MODE=rebuild-selected SEL=<regex ชื่อจอ> (+ SEL_INNER=1 เลือกชิ้นในจออีก 1 จอ) */
+     DEL_BOTH=1 Page "(พระผู้สร้าง)" มีชุดด้วย + ชิ้นที่ไม่รู้ว่าอยู่ส่วนไหน 1 ชิ้น ⇒ กล่องยืนยันบอกชื่อ Page ทั้งสอง + จำนวนที่ไม่ลบ · ลบทั้งสอง Page
+   MODE=update-changed UPD_SETUP=1: ปลอมลายเซ็น 3 จอ (= โค้ดเปลี่ยน) + ชื่อแถบเก่า · ลบ 2 จอ (= ยังไม่มีบนหน้า) · จอที่สร้างก่อนมีระบบตรวจ: ใหม่กว่า build 5 คู่ · เก่ากว่า build 2 คู่ · ชื่อเคสไม่ตรง 1 จอ · จอรหัสที่ไม่มีแล้ว 1
+     ค่าตั้งต้น (ไม่ส่ง legacy) = สร้างใหม่ทั้งหมด · LEGACY=baseline = ถือว่าล่าสุดเฉพาะจอใหม่กว่า build · UPD_FORCE=1 สร้างใหม่ทุกจอ (จอเก่าต้องเข้าด้วย) · UPD_OVERLAP=1 จอใหม่สูงขึ้นทับของข้างล่าง ⇒ เตือนพร้อมชื่อ · UPD_TWICE=1 ตรวจซ้ำ
+   MODE=rebuild-selected SEL=<regex ชื่อจอ> (+ SEL_INNER=1 เลือกชิ้นในจออีก 1 จอ) · SEL_MATCH=1 จับคู่ journey + หน้า ก่อนชื่อเคส (รหัสเปลี่ยน · ชื่อเคสเปลี่ยน · journey ไม่มีแล้ว ⇒ ข้าม) */
 const UPD = { started: false, confirm: null, before: [], setup: {} }, LOGS = [];
 const MF_TAG_T = 'mf';
 const fpages = () => (process.env.FEATURES ? process.env.FEATURES.split(',') : [FEAT]).map(id => { const sx = fs.readFileSync(path.join(__dirname, 'maintainance-feature-plugin', 'features', id + '.js'), 'utf8'); const pg = (sx.match(/page: \[\s*'([^']+)'/) || [])[1]; return mockFigma.root.children.find(p => p.name === pg || p.name === pg + ' (พระผู้สร้าง)'); }).filter(Boolean);
 const deskFrames = (pg) => pg.children.filter(n => n.type === 'FRAME' && /^MF \/ \d/.test(n.name) && !/ · mobile$/.test(n.name)).sort((a, b) => a.y - b.y || a.x - b.x);
 const mobOf = (pg, d) => pg.children.find(n => n.name === d.name + ' · mobile' && n.x === d.x);
+const okWarn = (re) => { const w = LOGS.filter(l => /^⚠|^✗/.test(l)); return w.length > 0 && w.every(l => re.test(l)); };   // คำเตือนที่ตั้งใจให้เกิดเท่านั้น ⇒ ไม่นับว่าไม่ผ่าน
 function updSetup(m) {
   for (const pg of fpages()) UPD.before.push(...pg.children.map((n, i) => ({ pg, n, x: n.x, y: n.y, i, name: n.name, tag: n.getPluginData(MF_TAG_T) })));
   const pg = fpages()[0]; if (!pg) return;
   if (process.env.UNTAG) { let k = 0; for (const n of pg.children) { const t = n.getPluginData(MF_TAG_T); if (t && t !== 'title') { n.setPluginData(MF_TAG_T, ''); k++; } } UPD.setup.untag = k; }
   if (process.env.DEL_FOREIGN) { const h = pg.children.filter(n => /^MF \/ H/.test(n.name)).sort((a, b) => a.y - b.y)[0] || pg.children.find(n => /^MF \/ \d/.test(n.name)); const f = mockFigma.createFrame(); f.name = 'ของผู้ใช้'; pg.appendChild(f); f.x = h.x + 10; f.y = h.y + 10; UPD.setup.foreign = { f, x: f.x, y: f.y }; }
+  if (process.env.DEL_BOTH) {
+    const alt = mockFigma.createPage(); alt.name = pg.name + ' (พระผู้สร้าง)';
+    const mk = (name, tag, y) => { const f = mockFigma.createFrame(); f.name = name; alt.appendChild(f); f.x = 0; f.y = y; f.resize(1440, 100); f.setPluginData(MF_TAG_T, tag); return f; };
+    UPD.setup.alt = { page: alt, happy: [mk('MF / H1.1 · ทดสอบ (Happy flow) › หน้า — ขั้น 1 · ทดสอบ', 'happy-0', 0), mk('MF · H1 ทดสอบ · Happy flow', 'happy', -300)], full: mk('MF / 1.1.1 · ทดสอบ › หน้า — ทดสอบ', '0', 2000) };
+    const f = mockFigma.createFrame(); f.name = 'MF · ป้ายลอย'; pg.appendChild(f); f.x = Math.min(...pg.children.map(n => n.x)); f.y = Math.min(...pg.children.map(n => n.y)) - 3000; UPD.setup.loose = { f, x: f.x, y: f.y };
+  }
   if (process.env.UPD_SETUP) {
-    const D = deskFrames(pg), S = UPD.setup; S.tamper = []; S.gone = []; S.legacy = [];
+    const D = deskFrames(pg), S = UPD.setup; S.tamper = []; S.gone = []; S.legacy = []; S.old = []; S.renamed = [];
     for (const i of [3, 10]) { S.tamper.push(D[i]); D[i].setPluginData('mfSig', 'tampered'); }
     const m3 = mobOf(pg, D[3]); m3.setPluginData('mfSig', 'tampered'); S.tamper.push(m3);
     const code3 = D[3].name.match(/^MF \/ (\S+) /)[1]; S.bar = pg.children.find(n => n.name.indexOf('MF · ' + code3 + ' ') === 0 && n.x === D[3].x); S.barWant = S.bar.name; S.bar.name = 'MF · ' + code3 + ' ชื่อเคสเก่า';
     for (const n of [D[5], mobOf(pg, D[12])]) { S.gone.push({ name: n.name, x: n.x, y: n.y }); n.remove(); }
     for (const i of [20, 21, 22, 23, 24]) for (const n of [D[i], mobOf(pg, D[i])]) { n.setPluginData('mfSig', ''); S.legacy.push(n); }
+    for (const i of [26, 27]) for (const n of [D[i], mobOf(pg, D[i])]) { n.setPluginData('mfSig', ''); n.setPluginData('builtAt', '1'); S.old.push(n); }   // สร้างก่อน build ปลั๊กอินรุ่นนี้
+    D[29].setPluginData('mfSig', ''); D[29].name = D[29].name + ' (ชื่อเคสเดิม)'; S.renamed.push(D[29]);   // ชื่อเคสในชื่อเฟรมไม่ตรง label ปัจจุบัน ⇒ เปลี่ยน
+    if (process.env.UPD_OVERLAP) { D[10].resize(D[10].width, 200); const f = mockFigma.createFrame(); f.name = 'ของผู้ใช้ใต้จอ'; pg.appendChild(f); f.x = D[10].x; f.y = D[10].y + 400; f.resize(1440, 100); S.under = f; }
     const x = mockFigma.createFrame(); x.name = 'MF / 1.1.99 · จอที่ตัดออกแล้ว › หน้าเก่า — ทดสอบ'; x.resize(1440, 100); pg.insertChild(0, x); x.x = D[0].x; x.y = Math.max(...pg.children.map(n => n.y + n.height)) + 2000; S.extra = x;
     S.all = UPD.before.filter(b => b.pg === pg && b.n.type === 'FRAME' && /^MF \//.test(b.name));
     S.order = pg.children.slice();   // ลำดับ layer หลังเตรียม (ก่อนกดอัปเดต)
@@ -94,11 +108,21 @@ function updSetup(m) {
     UPD.setup.sel = sel.filter(n => n.type === 'FRAME' && /^MF \//.test(n.name)).concat(UPD.setup.inner ? [UPD.setup.inner] : []);
     mockFigma.currentPage = pg; pg.selection = sel;
   }
+  if (process.env.SEL_MATCH) {   // ข้อ 6: A รหัสเปลี่ยน · B ชื่อเคสเปลี่ยน · C journey ไม่มีแล้ว + ชื่อเคสเปลี่ยน
+    const D = deskFrames(pg), [A, B, C] = [D[2], D[4], D[6]], S = UPD.setup;
+    S.match = { A: { n: A, name: A.name }, B: { n: B, name: B.name }, C: { n: C, name: C.name } };
+    A.name = A.name.replace(/^MF \/ \S+ /, 'MF / 1.9.9 ');
+    B.name = B.name.replace(/ \(([A-Z]\d*\.\d+)\)$/, ' เดิม ($1)');
+    C.name = C.name.replace(/ · ([^›]+) › /, ' · journey ที่ไม่มีแล้ว › ') + ' เดิม';
+    S.sel = [A, B]; S.skip = C;
+    mockFigma.currentPage = pg; pg.selection = [A, B, C];
+  }
 }
 process.on('beforeExit', () => {
   if (global.__mfUpd || !mockFigma || !UPD.started) return; global.__mfUpd = true;
   const bad = [], t = (ok, msg) => { if (!ok) bad.push(msg); };
   const still = (b) => b.pg.children.indexOf(b.n) >= 0 && b.n.x === b.x && b.n.y === b.y;
+  let allowWarn = null;   // regex ของคำเตือนที่เทสนี้ตั้งใจให้เกิด
   if (process.env.MODE === 'delete-section') {
     const parts = (process.env.PARTS || '').split(','), isPart = (b) => { const tg = b.tag, nm = b.name, inH = /^(happy|happy-\d+)$/.test(tg) || /^MF \/ H|^MF · H\d|^MF · ส่วน Happy/.test(nm), inF = /^(full|\d+)$/.test(tg) || /^MF \/ \d|^MF · \d|^MF · ส่วน ทุกเคส/.test(nm); return (parts.includes('happy') && inH) || (parts.includes('full') && inF); };
     const pgs = fpages(), NOOP = !!(process.env.EXPECT_SHIFT || process.env.NO_CONFIRM); let gone = 0, kept = 0, wrongly = 0;
@@ -110,39 +134,64 @@ process.on('beforeExit', () => {
     }
     for (const pg of pgs) t(pg.children.filter(n => /^MF · Feature /.test(n.name)).length === 1, 'Title Feature หาย: ' + pg.name);
     const f = UPD.setup.foreign; if (f) { t(f.f.parent && f.f.x === f.x && f.f.y === f.y, 'ของผู้ใช้ถูกแตะ'); f.f.remove(); }
-    if (!NOOP) t(UPD.first && UPD.first.total === gone, 'ยืนยัน ' + (UPD.first && UPD.first.total) + ' ชิ้น แต่ลบไป ' + gone);
-    if (NOOP) { t(gone === 0, 'จำนวนไม่ตรง/ยกเลิก แต่ยังลบ ' + gone); const w = LOGS.filter(l => /^⚠|^✗/.test(l));   // จำนวนเปลี่ยน ⇒ ปลั๊กอินขึ้น ✗ ตามตั้งใจ (ตัวกลางนับเป็นคำเตือน) · ไม่มีอย่างอื่น ⇒ ผ่าน
-      if (process.env.EXPECT_SHIFT) { t(w.length === 1 && /จำนวนชิ้นเปลี่ยนจากตอนตรวจ/.test(w[0]), 'ไม่ได้บอกว่าจำนวนเปลี่ยน: ' + w.join(' | ')); if (!bad.length) process.exitCode = 0; } }
+    let extra = 0; const A = UPD.setup.alt, L = UPD.setup.loose;
+    if (A) {   // ข้อ 7
+      const lines = (UPD.first && UPD.first.lines || []).join('\n');
+      t(lines.indexOf('Page "' + pgs[0].name + '"') >= 0 && lines.indexOf('Page "' + A.page.name + '"') >= 0, 'กล่องยืนยันไม่บอกชื่อ Page ทั้งสอง: ' + lines);
+      t(/ชิ้นที่ไม่รู้ว่าอยู่ส่วนไหน \(ไม่ลบ\) 1/.test(lines), 'กล่องยืนยันไม่บอกชิ้นที่ไม่รู้ว่าอยู่ส่วนไหน: ' + lines);
+      t(/มีชุดทั้ง Page หลักและ "\(พระผู้สร้าง\)"/.test(lines), 'กล่องยืนยันไม่บอกว่ามีชุดทั้งสอง Page');
+      t(A.happy.every(n => A.page.children.indexOf(n) < 0) && A.page.children.indexOf(A.full) >= 0, 'Page "(พระผู้สร้าง)": Happy ต้องถูกลบ ทุกเคสต้องอยู่');
+      t(L.f.parent && L.f.x === L.x && L.f.y === L.y, 'ชิ้นที่ไม่รู้ว่าอยู่ส่วนไหนถูกแตะ'); L.f.remove();
+      extra = A.happy.length;
+    }
+    if (!NOOP) t(UPD.first && UPD.first.total === gone + extra, 'ยืนยัน ' + (UPD.first && UPD.first.total) + ' ชิ้น แต่ลบไป ' + (gone + extra));
+    if (NOOP) { t(gone === 0, 'จำนวนไม่ตรง/ยกเลิก แต่ยังลบ ' + gone); if (process.env.EXPECT_SHIFT) { t(okWarn(/จำนวนชิ้นเปลี่ยนจากตอนตรวจ/), 'ไม่ได้บอกว่าจำนวนเปลี่ยน'); allowWarn = /จำนวนชิ้นเปลี่ยนจากตอนตรวจ/; } }
     else t(gone > 0, 'ไม่ได้ลบอะไร');
-    console.log('ลบส่วน ' + parts.join('+') + ': ' + pgs.map(p => p.name).join(' · ') + ' · ลบ ' + gone + ' ชิ้น (ยืนยัน ' + (UPD.first && UPD.first.total) + ') · ไม่แตะ ' + kept + (UPD.setup.untag ? ' · ลบป้ายก่อน ' + UPD.setup.untag + ' ชิ้น (หาจากตำแหน่ง)' : '') + (f ? ' · ของผู้ใช้ไม่ถูกแตะ' : '') + (bad.length ? ' ⚠' : ' ✓'));
+    console.log('ลบส่วน ' + parts.join('+') + ': ' + pgs.map(p => p.name).join(' · ') + ' · ลบ ' + (gone + extra) + ' ชิ้น (ยืนยัน ' + (UPD.first && UPD.first.total) + ') · ไม่แตะ ' + kept + (UPD.setup.untag ? ' · ลบป้ายก่อน ' + UPD.setup.untag + ' ชิ้น (หาจากตำแหน่ง)' : '') + (f ? ' · ของผู้ใช้ไม่ถูกแตะ' : '') + (A ? ' · 2 Page + ชิ้นไม่รู้ส่วนไม่ลบ' : '') + (bad.length ? ' ⚠' : ' ✓'));
   }
   if (process.env.MODE === 'update-changed' && UPD.setup.all) {
-    const S = UPD.setup, pg = fpages()[0], rebuild = process.env.LEGACY === 'rebuild';
+    const S = UPD.setup, pg = fpages()[0], force = !!process.env.UPD_FORCE, base = process.env.LEGACY === 'baseline' && !force;
     const at = (b) => pg.children.find(n => n.type === 'FRAME' && n.x === b.x && n.y === b.y && n.name === b.name);
-    let replaced = 0, untouched = 0, placed = 0, based = 0;
+    let replaced = 0, untouched = 0, placed = 0, based = 0, oldKept = 0;
     for (const b of S.all) {
       if (b.n === S.extra) continue;
-      const tam = S.tamper.includes(b.n), leg = S.legacy.includes(b.n), gone = S.gone.some(g => g.name === b.name && g.x === b.x);
+      const tam = S.tamper.includes(b.n), leg = S.legacy.includes(b.n), old = S.old.includes(b.n), ren = S.renamed.includes(b.n), gone = S.gone.some(g => g.name === b.name && g.x === b.x);
       if (gone) continue;
-      if (tam || (leg && rebuild)) { const n = at(b); if (!n || n === b.n) bad.push('จอที่ต้องสร้างใหม่ไม่ถูกแทนที่ที่เดิม: ' + b.name); else { replaced++; t(n.getPluginData('mfSig') && n.getPluginData('mfSig') !== 'tampered', 'ลายเซ็นใหม่ไม่ถูกเก็บ: ' + b.name); } }
+      const redo = force || tam || ren || ((leg || old) && !base);
+      if (redo) { const n = at(b); if (!n || n === b.n) bad.push('จอที่ต้องสร้างใหม่ไม่ถูกแทนที่ที่เดิม: ' + b.name); else { replaced++; t(n.getPluginData('mfSig') && n.getPluginData('mfSig') !== 'tampered', 'ลายเซ็นใหม่ไม่ถูกเก็บ: ' + b.name); } }
       else if (!still(b)) bad.push('จอที่ไม่เปลี่ยนถูกแตะ: ' + b.name);
-      else { untouched++; if (leg) { if (b.n.getPluginData('mfSig')) based++; else bad.push('จอเก่าไม่ได้เก็บลายเซ็นเป็นฐาน: ' + b.name); } }
+      else { untouched++; if (leg) { if (b.n.getPluginData('mfSig')) based++; else bad.push('จอเก่าที่สร้างหลัง build ไม่ได้ถือว่าล่าสุด: ' + b.name); } if (old) { if (!b.n.getPluginData('mfSig')) oldKept++; else bad.push('จอที่สร้างก่อน build ถูกถือว่าล่าสุด (ห้าม): ' + b.name); } }
     }
     for (const g of S.gone) { const n = at(g); if (!n) bad.push('จอที่หายไม่ถูกวางกลับที่ช่องเดิม: ' + g.name); else placed++; }
     t(pg.children.indexOf(S.extra) >= 0, 'จอที่ไม่มีใน Feature แล้วถูกลบ (ต้องรายงานเฉยๆ)');
     const bar = pg.children.find(n => n.name === S.barWant && n.x === S.bar.x && n.y === S.bar.y); t(bar && pg.children.indexOf(S.bar) < 0, 'แถบชื่อเคสเก่าไม่ถูกแทน');
-    /* ลำดับ layer: จอใหม่ต้องอยู่ระหว่างเพื่อนบ้านเดิม (ชิ้นที่ไม่ถูกแตะที่อยู่ติดกันก่อนกด) */
-    const live = (n) => pg.children.indexOf(n) >= 0 && !S.tamper.includes(n) && !S.legacy.includes(n);
+    const live = (n) => pg.children.indexOf(n) >= 0 && !S.tamper.includes(n) && !S.legacy.includes(n) && !S.old.includes(n) && !S.renamed.includes(n) && !force;
     const order = S.tamper.map(n => UPD.before.find(b => b.n === n)).every(b => { const i = S.order.indexOf(b.n), prev = S.order.slice(0, i).reverse().find(live), next = S.order.slice(i + 1).find(live), k = pg.children.indexOf(at(b));
       return (!prev || pg.children.indexOf(prev) < k) && (!next || pg.children.indexOf(next) > k); });
     t(order, 'ลำดับ layer ของจอที่แทนที่ไม่ตรงเดิม');
-    const F1 = UPD.first || {}; t(F1.unknown === S.legacy.length, 'นับจอเก่าไม่มีลายเซ็น ' + F1.unknown + ' ต้อง ' + S.legacy.length);
-    t(F1.total === S.tamper.length + S.gone.length, 'นับจอที่ต้องอัปเดต ' + F1.total + ' ต้อง ' + (S.tamper.length + S.gone.length));
-    if (process.env.UPD_TWICE) t(UPD.second && UPD.second.total === 0 && UPD.second.unknown === 0, 'ตรวจซ้ำหลังอัปเดตยังเหลือ ' + JSON.stringify(UPD.second && [UPD.second.total, UPD.second.unknown]));
-    console.log('อัปเดตจอที่เปลี่ยน: แทนที่ ' + replaced + ' · วางกลับช่องเดิม ' + placed + ' · ไม่แตะ ' + untouched + ' · จอเก่า ' + (rebuild ? 'สร้างใหม่' : 'เก็บเป็นฐาน ' + based) + ' · จอที่ตัดแล้วยังอยู่ · แถบชื่อเคสแทนแล้ว' + (process.env.UPD_TWICE ? ' · ตรวจซ้ำเหลือ ' + (UPD.second ? UPD.second.total : '?') : '') + (bad.length ? ' ⚠' : ' ✓'));
+    const F1 = UPD.first || {}, nLeg = S.legacy.length + S.old.length;
+    if (force) { t(F1.unknown === 0 && F1.total === S.all.length, 'ติ๊กสร้างใหม่ทุกจอ: จอเก่าต้องเข้าสร้างใหม่ (unknown ' + F1.unknown + ' · total ' + F1.total + ' ต้อง ' + S.all.length + ')'); }
+    else {
+      t(F1.unknown === nLeg, 'นับจอที่สร้างก่อนมีระบบตรวจ ' + F1.unknown + ' ต้อง ' + nLeg);
+      t(F1.unknownFresh === S.legacy.length, 'นับจอที่ถือว่าล่าสุดได้ ' + F1.unknownFresh + ' ต้อง ' + S.legacy.length + ' (จอที่สร้างก่อน build ห้ามนับ)');
+      t(F1.total === S.tamper.length + S.gone.length + S.renamed.length, 'นับจอที่ต้องอัปเดต ' + F1.total + ' ต้อง ' + (S.tamper.length + S.gone.length + S.renamed.length) + ' (รวมจอชื่อเคสไม่ตรง)');
+    }
+    if (process.env.UPD_TWICE) { const want = base ? S.old.length : 0, wantT = force ? F1.total : 0; t(UPD.second && UPD.second.total === wantT && UPD.second.unknown === want, 'ตรวจซ้ำหลังอัปเดต ' + JSON.stringify(UPD.second && [UPD.second.total, UPD.second.unknown]) + ' ต้อง [' + wantT + ',' + want + ']'); }   // ติ๊กสร้างใหม่ทุกจอ ⇒ ตรวจซ้ำยังนับทุกจอ
+    if (S.under) {   // ข้อ 5
+      t(okWarn(/สูงขึ้น/) && LOGS.some(l => /^⚠ จอ "MF \/ .*" สูงขึ้นจาก 200 เป็น \d+ จึงทับ "ของผู้ใช้ใต้จอ"/.test(l)), 'จอสูงขึ้นทับเฟรมอื่นไม่ได้เตือนพร้อมชื่อ: ' + LOGS.filter(l => /^⚠/.test(l)).join(' | '));
+      allowWarn = /สูงขึ้น/; S.under.remove();
+    }
+    console.log('อัปเดตจอที่เปลี่ยน' + (force ? ' (สร้างใหม่ทุกจอ)' : '') + ': แทนที่ ' + replaced + ' · วางกลับช่องเดิม ' + placed + ' · ไม่แตะ ' + untouched + ' · จอก่อนมีระบบตรวจ ' + (force ? 'สร้างใหม่' : base ? 'ถือว่าล่าสุด ' + based + ' · สร้างก่อน build ไม่แตะ ' + oldKept : 'สร้างใหม่ (ค่าตั้งต้น)') + ' · ชื่อเคสไม่ตรงสร้างใหม่ · จอที่ตัดแล้วยังอยู่ · แถบชื่อเคสแทนแล้ว' + (S.under ? ' · เตือนจอสูงขึ้นทับ' : '') + (process.env.UPD_TWICE ? ' · ตรวจซ้ำเหลือ ' + (UPD.second ? UPD.second.total + '/' + UPD.second.unknown : '?') : '') + (bad.length ? ' ⚠' : ' ✓'));
     S.extra.remove();   // ไม่ให้ตัวตรวจส่วนอื่นนับจอปลอม
   }
-  if (process.env.MODE === 'rebuild-selected') {
+  if (process.env.MODE === 'rebuild-selected' && UPD.setup.match) {   // ข้อ 6
+    const pg = fpages()[0], M = UPD.setup.match;
+    for (const k of ['A', 'B']) { const o = M[k], b = UPD.before.find(x => x.n === o.n), n = pg.children.find(c => c.type === 'FRAME' && c.x === b.x && c.y === b.y && c !== o.n);
+      t(pg.children.indexOf(o.n) < 0 && n && n.name === o.name, k + ': ต้องจับคู่ด้วย journey + หน้า แล้วแทนที่ด้วยชื่อเดิม (ได้ ' + (n && n.name) + ')'); }
+    t(M.cKept, 'C (journey ไม่มีแล้ว) ต้องข้าม ไม่แตะ');
+    let kept = 0; for (const b of UPD.before.filter(x => x.pg === pg && x.n.type === 'FRAME' && /^MF \//.test(x.name) && ![M.A.n, M.B.n, M.C.n].includes(x.n))) { if (!still(b)) bad.push('จอที่ไม่ได้เลือกถูกแตะ: ' + b.name); else kept++; }
+    console.log('สร้างจอที่เลือกใหม่ (จับคู่ journey + หน้า): รหัสเปลี่ยน ✓ ชื่อเคสเปลี่ยน ✓ journey ไม่มีแล้ว ข้าม · ไม่แตะ ' + kept + (bad.length ? ' ⚠' : ' ✓'));
+  } else if (process.env.MODE === 'rebuild-selected') {
     const pg = fpages()[0], sel = UPD.setup.sel || [];
     let rep = 0, kept = 0;
     for (const b of UPD.before.filter(x => x.pg === pg && x.n.type === 'FRAME' && /^MF \//.test(x.name))) {
@@ -154,6 +203,7 @@ process.on('beforeExit', () => {
   }
   bad.slice(0, 15).forEach(b => console.log('⚠ ' + b));
   if (bad.length) process.exitCode = 1;
+  else if (allowWarn && okWarn(allowWarn)) { process.exitCode = 0; console.log('(คำเตือนที่ตัวกลางนับ = คำเตือนที่เทสนี้ตั้งใจให้เกิดเท่านั้น ⇒ ผ่าน)'); }
 });
 /* ตรวจระยะหลังตัวกลางทดสอบเสร็จ — ตัวกลางเก็บ figma (mock) ไว้ในตัว ⇒ ดักจาก vm.runInNewContext ตอนโหลด code.js */
 const vm = require('vm'), run0 = vm.runInNewContext;
@@ -184,13 +234,13 @@ vm.runInNewContext = function (code, ctx) {
     if (!ctx.figma.getNodeByIdAsync) ctx.figma.getNodeByIdAsync = async (id) => { const w = (n) => { if (n.id === id) return n; for (const c of n.children || []) { const r = w(c); if (r) return r; } return null; }; return w(ctx.figma.root); };
     if (/^(delete-section|update-changed|rebuild-selected)$/.test(process.env.MODE || '')) { const d = Object.getOwnPropertyDescriptor(ctx.figma.ui, 'onmessage'); Object.defineProperty(ctx.figma.ui, 'onmessage', { configurable: true, set(f) { d.set.call(ctx.figma.ui, async (m) => {
       if (!m || m.type !== process.env.MODE || UPD.started) return f(m);
-      UPD.started = true; updSetup(m);
-      if (m.type === 'rebuild-selected') return f(m);
+      UPD.started = true; updSetup(m); if (process.env.UPD_FORCE) m = Object.assign({}, m, { force: true });
+      if (m.type === 'rebuild-selected') { const r = await f(m); const M = UPD.setup.match; if (M) { M.cKept = M.C.n.parent && M.C.n.parent.children.indexOf(M.C.n) >= 0 && M.C.n.name !== M.C.name; M.C.n.name = M.C.name; } return r; }   // SEL_MATCH: คืนชื่อ C ก่อนตัวตรวจกลาง (R19 จับคู่ด้วยชื่อ)
       await f(m); UPD.first = UPD.confirm;
       if (!UPD.first) { console.log('⚠ ไม่ได้รับ mf-confirm'); process.exitCode = 1; return; }
       if (process.env.NO_CONFIRM) return;   // กดตรวจแล้วกดยกเลิก ⇒ ต้องไม่มีอะไรถูกแตะ
       const expect = process.env.EXPECT_SHIFT ? UPD.first.total + 1 : UPD.first.total;   // EXPECT_SHIFT = จำนวนเปลี่ยนระหว่างตรวจกับยืนยัน ⇒ ต้องไม่ทำ
-      await f(Object.assign({}, m, UPD.first.payload, { confirm: true, expect, expectUnknown: UPD.first.unknown, legacy: process.env.LEGACY || 'baseline' }));
+      await f(Object.assign({}, m, UPD.first.payload, Object.assign({ confirm: true, expect, expectUnknown: UPD.first.unknown }, process.env.LEGACY ? { legacy: process.env.LEGACY } : {})));
       if (process.env.UPD_TWICE) { UPD.confirm = null; await f(Object.assign({}, m, UPD.first.payload, { confirm: false })); UPD.second = UPD.confirm; }
     }); } }); }
     if (process.env.FJ_TARGET) { const d = Object.getOwnPropertyDescriptor(ctx.figma.ui, 'onmessage'); Object.defineProperty(ctx.figma.ui, 'onmessage', { configurable: true, set(f) { d.set.call(ctx.figma.ui, async (m) => { if (!FJ.tgt) { FJ.tgt = true; await f({ type: 'fj-target-add', url: process.env.FJ_TARGET }); } return f(m); }); } }); }
@@ -314,7 +364,7 @@ process.on('beforeExit', () => {
       if (n.name !== 'Input dropdown') { nSp++; if (pv(n, 'Show Placeholder') !== true) badIn.push('ช่อง "' + lb + '" Show Placeholder ปิด (' + st + ' "' + tx.slice(0, 20) + '"): ' + fr.name); }
       if (lb === 'Label') return;   // ช่องค้นหาของแถบเครื่องมือ (ป้ายซ่อน) ตรวจเฉพาะ Show Placeholder
       nIn++;
-      const ph = n.name === 'Input dropdown' ? /^(เลือก|ค้นหา)/.test(tx) : /^(ระบุ|เลือก|0$|ค้นหา|วว\/ดด\/ปปปป|0XX-)/.test(tx);   // 17 พ.ย. 2569 + placeholder วันที่ · เบอร์โทร · dropdown ค้นหา (Feature แผนเดินทาง)
+      const ph = n.name === 'Input dropdown' ? /^(เลือก|ค้นหา)/.test(tx) : /^(ระบุ|เลือก|0$|ค้นหา|วว\/ดด\/ปปปป|0XX-|เช่น |\d+ หลัก$|ชั่วโมง$)/.test(tx);   // 18 พ.ย. 2569 ฐาน origin: placeholder popup เครื่องมือกล W.24–W.26 (เช่น … · 12 หลัก · ชั่วโมง)   // 17 พ.ย. 2569 + placeholder วันที่ · เบอร์โทร · dropdown ค้นหา (Feature แผนเดินทาง)
       const filledSt = n.name === 'Input dropdown' ? /^(Selected)$/.test(st) : /^(Filled|Readonly)$/.test(st);
       if (ph && filledSt && !(tx === '0' && st === 'Readonly')) badIn.push('ช่อง "' + lb + '" เป็น placeholder "' + tx + '" แต่ State ' + st + ': ' + fr.name);
       if (!ph && tx && st === 'Default') badIn.push('ช่อง "' + lb + '" มีค่า "' + tx + '" แต่ State Default (สี placeholder): ' + fr.name);

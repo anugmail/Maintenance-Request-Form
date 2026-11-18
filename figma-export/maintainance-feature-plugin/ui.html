@@ -54,6 +54,7 @@
   .seg input{display:none}
   .seg span{display:flex;height:24px;align-items:center;justify-content:center;padding:4px 8px;border:1px solid transparent;border-radius:4px;color:var(--text2)}
   .seg input:checked+span{border-color:var(--border);background:var(--bg);color:var(--text)}
+  .seg input:disabled+span{color:var(--textdis);cursor:not-allowed}
   /* Button (button.module.css): สูง 24 · padding 0 8 · มุม 6 */
   button.btn{font:inherit;font-weight:600;height:24px;padding:0 8px;border:1px solid transparent;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .btn.primary{background:var(--brand);color:var(--onbrand)}
@@ -191,12 +192,12 @@
       <div class="sec" id="cfm" hidden>
         <div class="banner warn"><b id="cfmTitle"></b><div id="cfmLines"></div></div>
         <div id="cfmLegacy" class="grp" hidden>
-          <span class="lbl">จอเก่าที่ยังไม่มีลายเซ็น <b id="cfmUnk"></b> จอ</span>
+          <span class="lbl">จอที่สร้างก่อนมีระบบตรวจ (บอกไม่ได้ว่าตรงกับโค้ดล่าสุดไหม) <b id="cfmUnk"></b> จอ</span>
           <div class="seg">
-            <label><input type="radio" name="legacy" value="baseline" checked><span>เก็บเป็นฐาน ไม่สร้าง</span></label>
-            <label><input type="radio" name="legacy" value="rebuild"><span>สร้างใหม่</span></label>
+            <label><input type="radio" name="legacy" value="rebuild" checked><span>สร้างใหม่</span></label>
+            <label><input type="radio" name="legacy" value="baseline" id="legacyBase"><span>ถือว่าล่าสุดแล้ว</span></label>
           </div>
-          <span class="muted">เก็บเป็นฐาน = ถือว่าจอตอนนี้ตรงกับโค้ดล่าสุด (เร็ว) · ครั้งต่อไปอัปเดตเฉพาะจอที่เปลี่ยน</span>
+          <span class="muted" id="cfmLegacyNote">ถือว่าจอนี้ล่าสุดแล้ว — เลือกเฉพาะเมื่อเพิ่งสร้างด้วยปลั๊กอินเวอร์ชันนี้</span>
         </div>
         <div class="row"><button id="cfmGo" class="btn primary grow"></button><button id="cfmNo" class="btn secondary">ยกเลิก</button></div>
       </div>
@@ -208,7 +209,7 @@
         <button id="updCheck" class="btn primary full">ตรวจจอที่เปลี่ยน</button>
         <label class="chk"><input type="checkbox" id="updForce"><span>สร้างใหม่ทุกจอของ journey ที่ติ๊ก แม้ไม่เปลี่ยน</span></label>
         <button id="rebuildSel" class="btn secondary full">สร้างจอที่เลือกใหม่</button>
-        <span class="muted">เลือกเฟรมจอ “MF / …” ใน Figma ก่อน (Shift เลือกหลายจอ) · วางแทนที่ตำแหน่งเดิม</span>
+        <span class="muted">เลือกเฟรมจอ “MF / …” ใน Figma ก่อน (Shift เลือกหลายจอ) · วางแทนที่ตำแหน่งเดิม · การตรวจไม่นับการเปลี่ยนในไลบรารี Figma</span>
       </div>
       <div class="sec">
         <span class="lbl">ลบส่วนที่สร้างแล้ว</span>
@@ -283,12 +284,13 @@
       <ol class="steps2">
         <li><span>ติ๊ก Feature / journey / อุปกรณ์ ในแท็บสร้างจอ</span></li>
         <li><span><b>ตรวจจอที่เปลี่ยน</b> ดูจำนวน แล้วกด <b>อัปเดต</b> — สร้างใหม่เฉพาะจอที่โค้ดเปลี่ยน วางที่เดิม</span></li>
-        <li><span>ครั้งแรก จอเก่ายังไม่มีลายเซ็น เลือก <b>เก็บเป็นฐาน</b> (เร็ว) หรือ <b>สร้างใหม่</b></span></li>
+        <li><span>จอที่สร้างก่อนมีระบบตรวจ ปลั๊กอินเลือก <b>สร้างใหม่</b> ไว้ให้ (ครั้งเดียว ครั้งต่อไปตรวจได้)</span></li>
         <li><span>อยากทำบางจอ: เลือกเฟรมจอใน Figma แล้วกด <b>สร้างจอที่เลือกใหม่</b></span></li>
         <li><span>ลบส่วน: ติ๊ก Happy flow / ทุกเคส กด <b>ตรวจก่อนลบ</b> แล้วยืนยันจำนวน</span></li>
       </ol></div>
     <div class="sec"><span class="lbl">ควรรู้</span>
       <ul class="tips">
+        <li><span>ปลั๊กอินตรวจไม่ได้ว่าจอไหนเปลี่ยน (ไม่มีกล่องยืนยัน) ให้ใช้สร้างใหม่ทุกจอ หรือเลือกจอแล้วสร้างใหม่</span></li>
         <li><span>ไม่ทับของเดิม กดซ้ำได้ชุดใหม่ต่อด้านล่าง ลบชุดเก่าเอง</span></li>
         <li><span>อัปเดต/ลบ ย้อนได้ด้วย Cmd+Z · จอที่ไม่มีใน Feature แล้วปลั๊กอินแค่รายงาน ไม่ลบเอง</span></li>
         <li><span>มีปัญหา กด <b>คัดลอก</b> ที่แถบล่าง แล้วส่ง log ให้ทีม</span></li>
@@ -429,19 +431,24 @@ $('chk').onclick = () => send('check', null, 'กำลังเช็ค compon
 let CFM = null;
 const hideCfm = () => { CFM = null; $('cfm').hidden = true; };
 const legacyVal = () => document.querySelector('input[name=legacy]:checked').value;
-function cfmCount() { return CFM ? CFM.total + (CFM.action === 'update' && legacyVal() === 'rebuild' ? CFM.unknown : 0) : 0; }
+function cfmCount() { return CFM ? CFM.total + (CFM.action === 'update' && legacyVal() === 'rebuild' ? CFM.unknown : 0) : 0; }   // ถือว่าล่าสุด ⇒ ไม่สร้างจอเก่า (นับเฉพาะเปลี่ยน + ยังไม่มี)
 function drawCfm() {
   if (!CFM) return;
   const n = cfmCount(), del = CFM.action === 'delete';
   $('cfmGo').className = 'btn grow ' + (del ? 'danger' : 'primary');
-  $('cfmGo').textContent = del ? 'ลบ ' + n + ' ชิ้น' : n ? 'อัปเดต ' + n + ' จอ' : 'เก็บลายเซ็นเป็นฐาน ' + CFM.unknown + ' จอ';
-  $('cfmGo').disabled = !!CFM.blocked;
+  const fresh = CFM.unknownFresh || 0;
+  $('cfmGo').textContent = del ? 'ลบ ' + n + ' ชิ้น' : n ? 'อัปเดต ' + n + ' จอ' : fresh ? 'ถือว่าล่าสุด ' + fresh + ' จอ' : 'ไม่มีจอที่ถือว่าล่าสุดได้';
+  $('cfmGo').disabled = !!CFM.blocked || (!del && !n && !fresh);
 }
 function showCfm(m) {
   if (!m.total && !(m.action === 'update' && m.unknown)) { hideCfm(); setStatus(m.action === 'delete' ? 'ไม่มีชิ้นให้ลบ' : 'ทุกจอตรงกับโค้ดล่าสุด ไม่มีอะไรต้องอัปเดต', 'ok'); return; }
   CFM = m; $('cfm').hidden = false; $('cfmTitle').textContent = m.title;
   $('cfmLines').innerHTML = m.lines.map(l => '<div>' + esc(l) + '</div>').join('');
   $('cfmLegacy').hidden = !(m.action === 'update' && m.unknown); $('cfmUnk').textContent = m.unknown || 0;
+  /* รีวิวโคนัน 18 พ.ย. 2569: ค่าตั้งต้น = สร้างใหม่ทุกครั้ง · ถือว่าล่าสุดได้เฉพาะจอที่สร้างหลัง build ปลั๊กอินรุ่นนี้ (unknownFresh) ไม่มี ⇒ ปิดตัวเลือก */
+  document.querySelector('input[name=legacy][value=rebuild]').checked = true;
+  $('legacyBase').disabled = !m.unknownFresh;
+  $('cfmLegacyNote').textContent = m.unknownFresh ? 'ถือว่าจอนี้ล่าสุดแล้ว — เลือกเฉพาะเมื่อเพิ่งสร้างด้วยปลั๊กอินเวอร์ชันนี้ (ใช้ได้ ' + m.unknownFresh + '/' + m.unknown + ' จอ)' : 'ถือว่าล่าสุดใช้ไม่ได้ — จอเหล่านี้สร้างก่อนปลั๊กอินเวอร์ชันนี้ ต้องสร้างใหม่ถึงจะตรวจได้ครั้งต่อไป';
   drawCfm(); setStatus('รอยืนยัน — ดูจำนวนในกล่องด้านบน', ''); $('cfm').scrollIntoView({ block: 'nearest' });
 }
 document.querySelectorAll('input[name=legacy]').forEach(r => { r.addEventListener('change', drawCfm); });
