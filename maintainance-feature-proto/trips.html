@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แผนเดินทางบำรุงรักษา | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature แผนเดินทาง — แผนเดินทางบำรุงรักษา ฝั่งผู้ดูแลยานพาหนะ (จอ G.1 · G.2 แผงแจ้งเตือน)
+  ต้นแบบหน้าตา = จอ Figma "MF / H4.1 · H4.2 … หน้าแผนเดินทางบำรุงรักษา" (node 195:723265 · 195:724165) ไฟล์ Untitled D0ahPEpyZtZ09gnnrcv4sU
+  แผงแจ้งเตือนเปิดจากกระดิ่งที่แถบบน (Notification card · .ncard ใน proto.js shell())
+  ที่มา · ไฟล์ Component: Page header (Breadcrumbs) · Table header (Text input ค้นหา) · Table (.tbl.striped) · Table pagination · Notification card · Empty state
+        · ไฟล์ UI Release#2: หน้า "5.1 Rental Contract Management" เฟรม `Contract list`
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="crumbs"><a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><span class="cur">บำรุงรักษาตามวาระ</span></div>
+      <div class="page-title-row"><h1 class="page-title mb-0">แผนเดินทางบำรุงรักษา</h1></div>
+      <div class="w-full stack">
+        <div class="list-toolbar split mb-0"><div class="lt-search max-w-[320px]"><div class="search"><span class="ms">search</span><input type="search" id="q" placeholder="ค้นหาชื่อแผนเดินทาง, ทะเบียน" aria-label="ค้นหาแผนเดินทาง"></div></div></div>
+        <div class="tblwrap mt-0" id="wrap"><table class="tbl striped"><thead><tr><th>ชื่อแผนเดินทาง</th><th class="w-[200px]">ช่วงวันเดินทาง</th><th class="w-[160px]">ยานพาหนะ (คัน)</th><th class="w-[60px]" aria-label="ดู"></th></tr></thead><tbody id="body"></tbody></table><div id="foot"></div></div>
+        <div class="hidden" id="empty"></div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, 'trips');
+function render() {
+  const q = $('q').value.trim().toLowerCase();
+  /* ผู้ดูแลยานพาหนะเห็นเฉพาะแผนเดินทางที่อนุมัติแล้วและมียานพาหนะที่ตนดูแล */
+  /* ผู้รับจ้าง (S23) เห็นแผนเดินทางจ้างดำเนินการของตัวเองที่อนุมัติแล้ว ทุกคันในใบ */
+  const mine = (t) => S.role === 'contractor' ? (t.mode === 'hire' && t.vendor === ROLES.contractor[0] ? t.cars : []) : t.cars.filter(i => carInfo(t, i).ctrl === ROLES.owner[0]);
+  const list = (S.trips || []).filter(t => t.status === 'approved' && mine(t).length && (!q || (t.name + t.cars.map(i => POOL[i][0]).join(' ')).toLowerCase().includes(q)));
+  $('body').innerHTML = list.map(t => `<tr><td><a href="trip-detail.html?id=${t.id}">${esc(t.name)}</a><div class="text-xs text-gray-500">${esc(t.plan)} · ไตรมาส ${t.q}</div></td>
+    <td><div class="truncate max-w-[180px]">${tripRange(t)}</div></td><td>${mine(t).length}</td>
+    <td class="dt-action"><a class="btn btn-t btn-icon !no-underline" href="trip-detail.html?id=${t.id}" aria-label="ดู ${esc(t.name)}"><span class="ms">chevron_right</span></a></td></tr>`).join('');
+  $('foot').innerHTML = pager(list.length, list.length ? 1 : 0, list.length, 1, 0);
+  $('wrap').classList.toggle('hidden', !list.length); $('empty').classList.toggle('hidden', !!list.length);
+  $('empty').innerHTML = emptyState('data-empty', 'ยังไม่มีแผนเดินทาง', 'เมื่อแผนเดินทางที่มียานพาหนะที่คุณดูแลได้รับอนุมัติ จะแสดงที่นี่');
+}
+$('q').addEventListener('input', render);
+render();
+</script>
+</body>
+</html>

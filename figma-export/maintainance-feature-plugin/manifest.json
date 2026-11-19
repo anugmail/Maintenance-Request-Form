@@ -1,0 +1,24 @@
+{
+  "name": "พระผู้สร้าง",
+  "id": "maintaind-maintainance-feature-plan",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": [
+    "figma",
+    "figjam"
+  ],
+  "documentAccess": "dynamic-page",
+  "permissions": [
+    "teamlibrary"
+  ],
+  "networkAccess": {
+    "allowedDomains": [
+      "none"
+    ],
+    "devAllowedDomains": [
+      "http://localhost:8124"
+    ],
+    "reasoning": "ส่งภาพจอ + สเปกบอร์ดไป serve.js ในเครื่อง (out/) และฝั่ง FigJam โหลดกลับมาวางบอร์ด — ไม่ต่อออกอินเทอร์เน็ต"
+  }
+}

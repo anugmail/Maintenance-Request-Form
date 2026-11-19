@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แผนรออนุมัติ | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature แผนบำรุงรักษา — แผนรออนุมัติ ฝั่งผู้อนุมัติ (จอ B.1 ของ features/plan.js)
+  แท็บ รออนุมัติ / อนุมัติแล้ว / ส่งกลับแก้ไข (R88 origin · B.10 B.11) · อนุมัติแล้วรวมดำเนินการและปิดงาน (R116)
+  ค้นหา "ค้นหาชื่อแผน, ผู้สร้าง" ตาม base/screens.js
+  ที่มา · ไฟล์ Component: Page header + Breadcrumbs · Tabs (.tabs) · Text input (.search) · Table (.tbl) · Pill outline (.badge) · Table pagination · Empty state
+        · ไฟล์ UI Release#2: หน้า "5.1 Rental Contract Management" เฟรม `Contract list`
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="draft flex items-center gap-3 flex-wrap">
+        <span class="mr-auto">Prototype · แผนบำรุงรักษา — แผนรออนุมัติ · ข้อมูลจำลองทั้งหมด</span>
+        <label class="flex items-center gap-2">บทบาท <select id="role" class="select-inline"><option value="creator">ผู้สร้างแผน</option><option value="approver">ผู้อนุมัติ</option></select></label>
+        <button class="btn btn-t btn-sm" type="button" id="reset"><span class="ms">restart_alt</span>คืนค่าข้อมูลตัวอย่าง</button>
+      </div>
+      <div class="crumbs"><a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><span class="cur">แผนรออนุมัติ</span></div>
+      <div class="page-title-row"><h1 class="page-title mb-0 mr-auto">แผนรออนุมัติ</h1></div>
+
+      <div class="note note-info hidden mb-4" id="role-note"><span class="ms">info</span><div>หน้านี้เป็นของผู้อนุมัติ — เปลี่ยนบทบาทเป็น "ผู้อนุมัติ" ที่แถบด้านบนเพื่อพิจารณาแผน</div></div>
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="w-full stack mt-4">
+        <div class="list-toolbar split mb-0"><div class="lt-search max-w-[320px]"><div class="search"><span class="ms">search</span><input type="search" id="q" placeholder="ค้นหาชื่อแผน, ผู้สร้าง" aria-label="ค้นหาแผน"></div></div></div>
+        <div class="tblwrap mt-0" id="wrap">
+          <table class="tbl striped"><thead><tr>
+            <th class="w-[150px]">เลขที่ MR</th><th>ชื่อแผน</th><th class="w-[120px]">หน่วยงาน</th><th class="w-[200px]">ผู้สร้าง</th><th class="num w-[110px]">จำนวนยานพาหนะ</th><th class="w-[130px]">วันที่ส่ง</th><th class="w-[150px]">สถานะ</th><th class="w-[60px]" aria-label="จัดการ"></th>
+          </tr></thead><tbody id="body"></tbody></table>
+          <div class="tblfoot"><div class="tf-left"><span id="foot"></span></div></div>
+        </div>
+        <div class="filter-empty hidden" id="empty"><span class="ms">fact_check</span><b>ไม่มีแผนในสถานะนี้</b></div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, 'approvals');
+$('role-note').classList.toggle('hidden', S.role === 'approver');
+const TABS = [['รออนุมัติ', ['review']], ['อนุมัติแล้ว', ['approved', 'active', 'closed']], ['ส่งกลับแก้ไข', ['returned']]];
+let tab = 0;
+function render() {
+  $('tabs').innerHTML = TABS.map(([l, st], k) => `<button type="button" class="tab-btn${k === tab ? ' on' : ''}" role="tab" data-tab="${k}">${l} <span class="badge b-brand">${S.plans.filter(p => st.includes(p.status)).length}</span></button>`).join('');
+  const q = $('q').value.trim().toLowerCase();
+  const list = S.plans.filter(p => TABS[tab][1].includes(p.status) && (!q || (p.name + CREATOR).toLowerCase().includes(q)));
+  $('body').innerHTML = list.map(p => `<tr>
+    <td><div class="cell-key"><a href="plan-detail.html?id=${p.id}">${esc(p.id)}</a></div></td>
+    <td>${two(p.name, 'ปีงบประมาณ ' + p.year)}</td><td>${p.unit}</td><td>${CREATOR}</td><td class="num">${carIds(p).length}</td><td>${p.sentAt}</td><td>${badge(p.status)}</td>
+    <td class="dt-action">${menu('จัดการแผน ' + p.id, [{ label: p.status === 'review' && S.role === 'approver' ? 'พิจารณาแผน' : 'ดูรายละเอียด', icon: 'quick_reference_all', href: 'plan-detail.html?id=' + p.id }])}</td></tr>`).join('');
+  $('foot').textContent = list.length ? `แสดง 1 ถึง ${list.length} จาก ${list.length} รายการ` : '';
+  $('wrap').classList.toggle('hidden', !list.length); $('empty').classList.toggle('hidden', !!list.length);
+}
+$('tabs').addEventListener('click', e => { const t = e.target.closest('[data-tab]'); if (t) { tab = +t.dataset.tab; render(); } });
+$('q').addEventListener('input', render);
+render();
+</script>
+</body>
+</html>

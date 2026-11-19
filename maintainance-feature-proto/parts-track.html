@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>อะไหล่ของแผนที่อนุมัติแล้ว | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature ติดตามและแดชบอร์ด — อะไหล่ของแผนที่อนุมัติแล้ว (จอ C.1 · C.3 · C.4 · C.6–C.9)
+  ต้นแบบหน้าตา = จอ Figma "MF / H1.1 – H2.3 … หน้าอะไหล่ของแผนที่อนุมัติแล้ว" (node 195:1025606 · 195:1028015 · 195:1029243) ไฟล์ Untitled D0ahPEpyZtZ09gnnrcv4sU
+  ⚠ ส่วนหัว/เรื่องที่ควรดู/การ์ดตัวเลขสี/กราฟ เหนือแท็บ เป็นกรอบที่ปลั๊กอินวาดเอง (VMS+ head · alert · KPI · chart) ไม่ใช่ component ของไลบรารี — ยังไม่ทำ รอเจ้าของงานเคาะ
+  ที่มา · ไฟล์ Component: Page header (Breadcrumbs) · Tabs + Badge · Table header (ค้นหา + Secondary ตัวกรอง + Secondary ส่งออก) · Badge outline with remove (.fchip) ·
+           Table (.tbl.striped · Sort icon) · Pill outline · Table pagination · Modal (เลือกแผน · เลือกรูปแบบไฟล์) · Radio text card · Notification
+        · ไฟล์ UI Release#2: หน้า "5.1 Rental Contract Management" เฟรม `Contract list` · `Filter Side panel`
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="crumbs"><a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><span class="cur">บำรุงรักษาตามวาระ</span></div>
+      <div class="page-title-row"><h1 class="page-title mb-0">อะไหล่ของแผนที่อนุมัติแล้ว</h1></div>
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="w-full stack mt-4">
+        <div class="list-toolbar split mb-0"><div class="lt-search max-w-[320px]"><div class="search"><span class="ms">search</span><input type="search" id="q" aria-label="ค้นหา"></div></div>
+          <div class="lt-actions flex gap-3"><button class="btn btn-s" type="button" id="fbtn"><span class="ms">filter_list</span>ตัวกรอง</button><button class="btn btn-s" type="button" id="xbtn"><span class="ms">download</span>ส่งออก</button></div></div>
+        <div class="fchips" id="fchips"></div>
+        <div class="tblwrap mt-0" id="wrap"><table class="tbl striped"><thead id="head"></thead><tbody id="body"></tbody></table><div id="foot"></div></div>
+        <div class="hidden" id="empty"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ตัวกรอง (C.3) — เลือกแผน -->
+<div class="modal-overlay hidden" id="m-f">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-f-t">
+    <div class="modal-hd"><div class="modal-hd-c"><h2 id="m-f-t">ตัวกรอง</h2><button class="modal-x" type="button" data-close="m-f" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd"><div class="f mb-0"><label for="f-plan">แผน</label><div class="in noic"><select id="f-plan"></select></div></div>
+      <div class="f mt-6 mb-0"><label for="f-q">ไตรมาส</label><div class="in noic"><select id="f-q"><option value="">ทั้งหมด</option><option value="1">ไตรมาส 1</option><option value="2">ไตรมาส 2</option><option value="3">ไตรมาส 3</option><option value="4">ไตรมาส 4</option></select></div></div></div>
+    <div class="modal-ft"><div class="modal-ft-a"><button class="btn btn-link" type="button" id="f-clear">ล้างตัวกรอง</button><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-f">ยกเลิก</button><button class="btn btn-p" type="button" id="f-ok">ตกลง</button></div></div></div>
+  </div>
+</div>
+<!-- ส่งออก (C.8) — เลือกรูปแบบไฟล์ -->
+<div class="modal-overlay hidden" id="m-x">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-x-t">
+    <div class="modal-hd"><div class="modal-hd-c"><h2 id="m-x-t">ส่งออกรายงานอะไหล่</h2><button class="modal-x" type="button" data-close="m-x" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd"><div class="f mb-0"><label>รูปแบบไฟล์</label></div>
+      <div class="radcards" id="x-type">
+        <label class="radcard sel"><input type="radio" name="x" value="pdf" checked><span class="rdot"></span><span class="rc-tx"><b>PDF</b><small>รายงานสำหรับพิมพ์ ตามตัวกรองที่ใช้อยู่</small></span></label>
+        <label class="radcard"><input type="radio" name="x" value="xls"><span class="rdot"></span><span class="rc-tx"><b>Excel</b><small>ตารางตามแท็บที่เปิดอยู่</small></span></label>
+      </div></div>
+    <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-x">ยกเลิก</button><button class="btn btn-p" type="button" id="x-ok"><span class="ms">download</span>ส่งออก</button></div></div></div>
+  </div>
+</div>
+
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, 'parts-track');
+const plans = S.plans.filter(p => ['approved', 'active'].includes(p.status));
+let tab = 0, page = 0, F = { plan: '', q: '' };
+$('f-plan').innerHTML = '<option value="">ทั้งหมด</option>' + plans.map(p => `<option value="${p.id}">${p.id} · ${esc(p.name)}</option>`).join('');
+/* แถวข้อมูลของแต่ละแท็บ — รวมตามรายการ (ชนิด) · แยกรายคัน · ความคืบหน้าของแผน (รายไตรมาส) */
+function data() {
+  const ps = plans.filter(p => !F.plan || p.id === F.plan);
+  const perCar = [];
+  ps.forEach(p => carIds(p).filter(i => !F.q || p.cars[i] === +F.q).forEach(i => jobTasks(p, i).forEach(r => perCar.push([POOL[i][0], p.id, p.unit, p.cars[i], r[1], r[4], r[4] === 'OL-0011' ? 'น้ำมัน' : 'ไส้กรอง', r[2], r[3]]))));
+  const agg = {}; perCar.forEach(r => { const a = agg[r[5]] || (agg[r[5]] = [r[4], r[5], r[6], 0, r[8]]); a[3] += +r[7]; });
+  const prog = []; ps.forEach(p => [1, 2, 3, 4].filter(q => !F.q || q === +F.q).forEach(q => { const cars = inQ(p, q), trips = (S.trips || []).filter(t => t.plan === p.id && t.q === q);
+    const done = cars.filter(i => trips.some(t => ((S.jobs || {})[jobKey(t, i)] || {}).st === 'done')).length; prog.push([p.id, p.unit, p.name, q, trips.length, done, cars.length]); }));
+  return [Object.values(agg), perCar, prog];
+}
+function render() {
+  const d = data(), labels = ['รวมตามรายการ', 'แยกรายคัน', 'ความคืบหน้าของแผน'];
+  $('tabs').innerHTML = labels.map((l, k) => `<button type="button" class="tab-btn${k === tab ? ' on' : ''}" role="tab" data-tab="${k}">${l} <span class="badge b-brand">${d[k].length}</span></button>`).join('');
+  $('q').placeholder = ['ค้นหาชื่ออะไหล่, รหัสอะไหล่', 'ค้นหาทะเบียน, ชื่ออะไหล่', 'ค้นหาเลขที่ MR, ชื่อแผน'][tab];
+  const k = $('q').value.trim().toLowerCase(), rows = d[tab].filter(r => !k || r.join(' ').toLowerCase().includes(k));
+  const pages = Math.max(1, Math.ceil(rows.length / 10)); page = Math.min(page, pages - 1); const view = rows.slice(page * 10, page * 10 + 10);
+  $('head').innerHTML = '<tr>' + [[['ชนิด', 0, 1], ['รหัสอะไหล่', 180], ['ประเภท', 180], ['จำนวน', 160], ['หน่วย', 160]],
+    [['ทะเบียน', 160, 1], ['เลขที่ MR', 160], ['ไตรมาส', 150], ['ชนิด', 0], ['รหัสอะไหล่', 150], ['ประเภท', 150], ['จำนวน', 140], ['หน่วย', 110]],
+    [['เลขที่ MR', 150, 1], ['ชื่อแผน', 0], ['ไตรมาส', 140], ['แผนเดินทาง', 140], ['ยานพาหนะบำรุงรักษาแล้ว', 200], ['สถานะ', 150]]][tab].map(([l, w, f]) => sortTh(l, w, f)).join('') + (tab === 2 ? '<th class="w-[60px]" aria-label="ดู"></th>' : '') + '</tr>';
+  $('body').innerHTML = view.map(r => tab === 0 ? `<tr><td>${esc(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`
+    : tab === 1 ? `<tr><td><a href="#" data-plate class="whitespace-nowrap">${esc(r[0])}</a></td><td>${r[1]}<div class="text-xs text-gray-500">${r[2]}</div></td><td>ไตรมาส ${r[3]}</td><td><div class="truncate max-w-[180px]">${esc(r[4])}</div></td><td>${r[5]}</td><td>${r[6]}</td><td>${r[7]}</td><td>${r[8]}</td></tr>`
+    : `<tr><td>${r[0]}<div class="text-xs text-gray-500">${r[1]}</div></td><td><div class="truncate max-w-[300px]">${esc(r[2])}</div></td><td>ไตรมาส ${r[3]}</td><td>${r[4]} ใบ</td><td>${r[5]}/${r[6]} คัน</td>
+      <td>${r[4] ? pill('กำลังดำเนินการ', 'b-info') : pill('ยังไม่เริ่ม', 'b-neutral')}</td><td class="dt-action"><a class="btn btn-t btn-icon !no-underline" href="quarter.html?plan=${r[0]}&q=${r[3]}" aria-label="ไปหน้าไตรมาส"><span class="ms">chevron_right</span></a></td></tr>`).join('');
+  $('foot').innerHTML = pager(rows.length, rows.length ? page * 10 + 1 : 0, page * 10 + view.length, pages, page);
+  $('wrap').classList.toggle('hidden', !rows.length); $('empty').classList.toggle('hidden', !!rows.length);
+  $('empty').innerHTML = emptyState('data-empty', 'ไม่พบข้อมูล', 'ไม่มีรายการที่ตรงกับคำค้นหรือตัวกรอง');
+  const chips = []; if (F.plan) chips.push(['plan', F.plan]); if (F.q) chips.push(['q', 'ไตรมาส ' + F.q]);
+  $('fchips').innerHTML = chips.map(([k2, t]) => `<span class="fchip">${esc(t)}<button class="fchip-x" type="button" data-rm="${k2}" aria-label="เอาตัวกรอง ${esc(t)} ออก"><span class="ms">close_small</span></button></span>`).join('');
+}
+$('tabs').addEventListener('click', e => { const t = e.target.closest('[data-tab]'); if (t) { tab = +t.dataset.tab; page = 0; $('q').value = ''; render(); } });
+$('q').addEventListener('input', () => { page = 0; render(); });
+$('foot').addEventListener('click', e => { const b = e.target.closest('[data-pg]'); if (b && !b.disabled) { page = +b.dataset.pg; render(); } });
+$('fbtn').addEventListener('click', () => { $('f-plan').value = F.plan; $('f-q').value = F.q; modal('m-f', true); });
+$('f-clear').addEventListener('click', () => { $('f-plan').value = ''; $('f-q').value = ''; });
+$('f-ok').addEventListener('click', () => { F = { plan: $('f-plan').value, q: $('f-q').value }; page = 0; modal('m-f', false); render(); });
+$('fchips').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b) { F[b.dataset.rm] = ''; render(); } });
+$('xbtn').addEventListener('click', () => modal('m-x', true));
+$('x-type').addEventListener('change', () => document.querySelectorAll('#x-type .radcard').forEach(l => l.classList.toggle('sel', l.querySelector('input').checked)));
+$('x-ok').addEventListener('click', () => { modal('m-x', false); notify('ส่งออกไฟล์สำเร็จ', { sub: 'Prototype — ยังไม่มีไฟล์จริง' }); });   // C.9
+render();
+</script>
+</body>
+</html>

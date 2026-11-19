@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ข้อมูลยานพาหนะ | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature ติดตามและแดชบอร์ด — ข้อมูลยานพาหนะ แท็บการบำรุงรักษา (จอ W.1 · W.4 · W.5)
+  ต้นแบบหน้าตา = จอ Figma "MF / H3.1 – H3.3 … หน้าข้อมูลยานพาหนะ แท็บการบำรุงรักษา" (node 195:1013759 · ตาราง 195:1014552) ไฟล์ Untitled D0ahPEpyZtZ09gnnrcv4sU
+  ⚠ ส่วนหัว/เรื่องที่ควรดู/การ์ดตัวเลขสี/กราฟ เหนือตาราง เป็นกรอบที่ปลั๊กอินวาดเอง (VMS+ head · alert · KPI · chart) ไม่ใช่ component ของไลบรารี — ยังไม่ทำ รอเจ้าของงานเคาะ
+  ที่มา · ไฟล์ Component: Page header (Breadcrumbs) · Tabs + Badge · Table header (ค้นหา + ตัวกรอง + ส่งออก) · Badge outline with remove (.fchip) · Table (.tbl.striped · Sort icon) ·
+           Pill outline (ประกัน · สถานะยานพาหนะ) · Table pagination · Modal · Notification
+        · ไฟล์ UI Release#2: หน้า "5.2 Vehicle Management" เฟรม `Vehicle list`
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="crumbs"><a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><span class="cur">ยานพาหนะ</span></div>
+      <div class="page-title-row"><h1 class="page-title mb-0">ข้อมูลยานพาหนะ</h1></div>
+      <div class="tabs" role="tablist"><button type="button" class="tab-btn" id="tab-veh">ยานพาหนะ</button><button type="button" class="tab-btn on">การบำรุงรักษา <span class="badge b-brand" id="n-all"></span></button></div>
+      <div class="w-full stack mt-4">
+        <div class="list-toolbar split mb-0"><div class="lt-search max-w-[320px]"><div class="search"><span class="ms">search</span><input type="search" id="q" placeholder="เลขทะเบียน, ยี่ห้อ, รุ่น" aria-label="ค้นหายานพาหนะ"></div></div>
+          <div class="lt-actions flex gap-3"><button class="btn btn-s" type="button" id="fbtn"><span class="ms">filter_list</span>ตัวกรอง</button><button class="btn btn-s" type="button" id="xbtn"><span class="ms">download</span>ส่งออก</button></div></div>
+        <div class="fchips" id="fchips"></div>
+        <div class="tblwrap mt-0" id="wrap"><table class="tbl striped"><thead><tr id="head"></tr></thead><tbody id="body"></tbody></table><div id="foot"></div></div>
+        <div class="hidden" id="empty"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ตัวกรอง (W.4) — สถานะตามกำหนด -->
+<div class="modal-overlay hidden" id="m-f">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-f-t">
+    <div class="modal-hd"><div class="modal-hd-c"><h2 id="m-f-t">ตัวกรอง</h2><button class="modal-x" type="button" data-close="m-f" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd"><div class="f mb-0"><label for="f-due">กำหนดบำรุงรักษา</label><div class="in noic"><select id="f-due"><option value="">ทั้งหมด</option><option value="soon">ใกล้ครบกำหนด</option><option value="due">เลยกำหนด</option></select></div></div>
+      <div class="f mt-6 mb-0"><label for="f-type">ประเภทยานพาหนะ</label><div class="in noic"><select id="f-type"><option value="">ทั้งหมด</option><option>กระเช้าแก้ไฟ</option><option>กระเช้าฮอทไลน์</option></select></div></div></div>
+    <div class="modal-ft"><div class="modal-ft-a"><button class="btn btn-link" type="button" id="f-clear">ล้างตัวกรอง</button><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-f">ยกเลิก</button><button class="btn btn-p" type="button" id="f-ok">ตกลง</button></div></div></div>
+  </div>
+</div>
+
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, 'vehicles');
+let F = { due: '', type: '' };
+$('n-all').textContent = VDATA.length;
+$('head').innerHTML = [['ทะเบียน', 160, 1], ['อายุการใช้งาน', 170], ['บำรุงรักษาล่าสุด', 150], ['ครั้งถัดไป', 0], ['ผลตรวจน้ำมันล่าสุด', 170], ['ประกัน', 140], ['สถานะยานพาหนะ', 160], ['ผู้ดูแลยานพาหนะ', 170]].map(([l, w, f]) => sortTh(l, w, f)).join('');
+function render() {
+  const k = $('q').value.trim().toLowerCase();
+  const list = VDATA.map((v, n) => [v, n]).filter(([v]) => (!k || v.join(' ').toLowerCase().includes(k)) && (!F.due || v[7] === F.due) && (!F.type || v[1] === F.type));
+  $('body').innerHTML = list.map(([v, n]) => `<tr><td><a href="vehicle.html?v=${n}" class="whitespace-nowrap">${esc(v[0])}</a><div class="text-xs text-gray-500">${v[1]}</div></td>
+    <td>${v[2]} ปี<div class="text-xs text-gray-500 whitespace-nowrap">${v[3]}</div></td><td>${v[4]}<div class="text-xs text-gray-500">${v[5]}</div></td>
+    <td><div class="truncate max-w-[180px]">${esc(v[6])}</div>${v[7] ? `<div class="text-xs ${DUE[v[7]][1]}">${DUE[v[7]][0]}</div>` : ''}</td>
+    <td>${v[8]}${v[9] ? `<div class="text-xs text-gray-500">เก็บตัวอย่าง ${v[9]}</div>` : ''}</td><td>${pill(v[10], INS[v[10]])}</td><td>${pill(v[11], VST2[v[11]])}</td>
+    <td>${esc(v[12])}<div class="text-xs text-gray-500">${v[13]}</div></td></tr>`).join('');
+  $('foot').innerHTML = pager(list.length, list.length ? 1 : 0, list.length, 1, 0);
+  $('wrap').classList.toggle('hidden', !list.length); $('empty').classList.toggle('hidden', !!list.length);
+  $('empty').innerHTML = emptyState('empty-vehicle', 'ไม่พบยานพาหนะ', 'ไม่มียานพาหนะที่ตรงกับคำค้นหรือตัวกรอง');
+  const chips = []; if (F.due) chips.push(['due', F.due === 'soon' ? 'ใกล้ครบกำหนด' : 'เลยกำหนด']); if (F.type) chips.push(['type', F.type]);
+  $('fchips').innerHTML = chips.map(([k2, t]) => `<span class="fchip">${esc(t)}<button class="fchip-x" type="button" data-rm="${k2}" aria-label="เอาตัวกรอง ${esc(t)} ออก"><span class="ms">close_small</span></button></span>`).join('');
+}
+$('q').addEventListener('input', render);
+$('tab-veh').addEventListener('click', () => notify('แท็บยานพาหนะ', { sub: 'อยู่ในเมนูข้อมูลยานพาหนะของระบบหลัก — ไม่อยู่ใน Feature นี้' }));
+$('fbtn').addEventListener('click', () => { $('f-due').value = F.due; $('f-type').value = F.type; modal('m-f', true); });
+$('f-clear').addEventListener('click', () => { $('f-due').value = ''; $('f-type').value = ''; });
+$('f-ok').addEventListener('click', () => { F = { due: $('f-due').value, type: $('f-type').value }; modal('m-f', false); render(); });
+$('fchips').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b) { F[b.dataset.rm] = ''; render(); } });
+$('xbtn').addEventListener('click', () => notify('ส่งออกไฟล์สำเร็จ', { sub: 'Prototype — ยังไม่มีไฟล์จริง' }));
+render();
+</script>
+</body>
+</html>

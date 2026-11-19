@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ผลการบำรุงรักษา | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature งานบำรุงรักษารายคัน — ผลการบำรุงรักษารายคัน ฝั่งผู้ดูแลยานพาหนะ (จอ L.2 · L.5)
+  ต้นแบบหน้าตา = จอ Figma "MF / H6.3 · H6.4 … หน้าผลการบำรุงรักษารายคัน" (node 195:884797 · 195:888164) ไฟล์ Untitled D0ahPEpyZtZ09gnnrcv4sU
+  ⚠ ปุ่ม "รับทราบ" ในจอเป็น Primary button ที่ปลั๊กอินเปลี่ยนสีเป็นเขียว (Success) — components.css ยังไม่มีคลาสสีนี้ ใช้ .btn-p ไปก่อน (จดเป็นจุดต่าง)
+  ที่มา · ไฟล์ Component: Page header (Breadcrumbs + Pill outline) · Section label · VehicleAndReporterInfo (.incident-summary) · Section header (.sect) ·
+           Table + Radio button (ผลตรวจสภาพ ดูอย่างเดียว) · Table · Secondary/Primary button Size=lg · Notification
+        · ไฟล์ UI Release#2: หน้า "5.3 Vehicle Breakdown"
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="crumbs" id="crumbs"></div>
+      <div class="page-title-row"><h1 class="page-title mb-0" id="title"></h1><span id="st"></span></div>
+      <div class="flex flex-col gap-8" id="body"></div>
+      <div class="flex items-center justify-between gap-3 mt-8">
+        <a class="btn btn-s btn-lg !no-underline" href="acks.html">ย้อนกลับ</a>
+        <div class="flex gap-3 ml-auto" id="acts"></div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, 'acks');
+const qs = new URLSearchParams(location.search);
+const t = (S.trips || []).find(x => x.id === qs.get('trip')), i = +qs.get('car');
+if (!t) location.href = 'acks.html';
+const p = S.plans.find(x => x.id === t.plan), c = POOL[i], J = jobOf(S, t, i), x = carInfo(t, i);
+function render() {
+  $('crumbs').innerHTML = `<a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><a href="acks.html">ผลการบำรุงรักษารอรับทราบ</a><span class="sep"></span><span class="cur">${esc(c[0])}</span>`;
+  $('title').textContent = 'ผลการบำรุงรักษา · ' + c[0]; $('st').innerHTML = J.ack ? pill('รับทราบแล้ว', 'b-ok') : pill('รอรับทราบ', 'b-low');
+  const tasks = jobTasks(p, i), used = J.used || {}, checks = J.checks || CHECK_ITEMS.map(() => ['ok', '']);
+  $('body').innerHTML = `<section><div class="sect-label">ข้อมูลยานพาหนะและงาน</div>${kvCard([['ทะเบียน', `<a href="#" data-plate>${esc(c[0])}</a>`], ['ยี่ห้อ/รุ่น', esc(c[1])], ['ประเภทยานพาหนะ', typeOf(c)], ['หน่วยงานเจ้าของยานพาหนะ', esc(c[2])],
+      ['แผนเดินทาง', esc(t.name)], ['เลขที่ MR', p.id], ['ผู้ดูแลยานพาหนะ', esc(x.ctrl)], ['วันดำเนินการ', (J.closed || '').split(' ')[0]],
+      ['เริ่มงาน', J.started || '—'], ['ปิดงาน', J.closed || '—'], ['ผู้ดำเนินการ', CREATOR + ' (' + p.unit + ')'], ['น้ำมันไฮดรอลิก', esc(J.oil || '—')], ['เลขไมล์หลังทำ', (J.mile || '182,640') + ' กม.']])}</section>
+    <section><div class="sect-label">ผลการตรวจสภาพก่อนบำรุงรักษา</div></section>
+    <section>${'<div class="sect border-b-0 pb-0"><span>รายการตรวจสภาพ</span><span class="badge sq">' + CHECK_ITEMS.length + '</span></div>'}
+      <div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th>รายการ</th><th class="w-[80px] text-center">ปกติ</th><th class="w-[80px] text-center">แก้ไข</th><th class="w-[340px]">หมายเหตุ</th></tr></thead>
+      <tbody>${CHECK_ITEMS.map((it, k) => `<tr><td>${k + 1}. ${esc(it)}</td><td class="text-center"><input type="radio" disabled${checks[k][0] === 'ok' ? ' checked' : ''} aria-label="ปกติ"></td><td class="text-center"><input type="radio" disabled${checks[k][0] === 'fix' ? ' checked' : ''} aria-label="แก้ไข"></td><td>${esc(checks[k][1] || '—')}</td></tr>`).join('')}</tbody></table></div></section>
+    <section><div class="sect border-b-0 pb-0">ลงนามการตรวจสภาพ</div>${kvCard([['ผู้ตรวจ (หน่วยงานผู้ดำเนินการ)', CREATOR + ' · ลงนามแล้ว'], ['ผู้รับการตรวจ (หน่วยงานเจ้าของยานพาหนะ)', 'นายสุรชัย แก้วมณี · ลงนามแล้ว']])}</section>
+    <section><div class="sect-label">ภาพก่อนเริ่มงาน (2)</div><div class="grid grid-cols-2 md:grid-cols-3 gap-4">${photoBox()}${photoBox()}</div></section>
+    <section><div class="sect-label">รายการงานและอะไหล่ที่ใช้จริง (${tasks.length})</div>
+      <div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th>รายการงาน</th><th class="w-[180px]">อะไหล่ที่ใช้</th><th class="w-[150px]">จำนวนตามแผน</th><th class="w-[150px]">จำนวนที่ใช้จริง</th><th class="w-[120px]">หน่วย</th></tr></thead>
+      <tbody>${tasks.map(r => `<tr><td>${esc(r[0])}</td><td><div class="truncate max-w-[170px]">${esc(r[1])}</div></td><td>${r[2]}</td><td>${used[r[4]] ?? r[2]}</td><td>${esc(r[3])}</td></tr>`).join('')}</tbody></table></div></section>`;
+  /* L.2 ปุ่มรับทราบ · L.5 รับทราบแล้ว มีปุ่มประเมินความพึงพอใจ (R105 · แผนจ้างไม่มีปุ่มประเมิน) */
+  $('acts').innerHTML = J.ack ? (t.mode === 'hire' ? '' : '<button class="btn btn-s btn-lg" type="button" id="eval"><span class="ms">star</span>ประเมินความพึงพอใจ</button>')
+    : '<button class="btn btn-p btn-lg" type="button" id="ack"><span class="ms">check</span>รับทราบ</button>';
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('#ack')) { J.ack = true; mfpSave(S); render(); scrollTo(0, 0); notify(`รับทราบผลการบำรุงรักษา ${c[0]} แล้ว`); }
+  if (e.target.closest('#eval')) notify('ประเมินความพึงพอใจ', { sub: 'แบบประเมินอยู่ในปลั๊กอิน satisfaction (C025e0e R105) — ไม่อยู่ใน Prototype รอบนี้' });
+});
+render();
+</script>
+</body>
+</html>

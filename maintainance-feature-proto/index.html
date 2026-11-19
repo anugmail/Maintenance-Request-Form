@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prototype แผนบำรุงรักษา | Maintain-D</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  หน้าเริ่ม Prototype — บอกเส้นทาง Happy flow 8 เส้นของ Feature แผนบำรุงรักษา (HAPPY ใน features/plan.js) ให้ทีมกดตาม
+  ที่มา · ไฟล์ Component: Section header (.sect) · Table (.tbl) · Primary/Secondary button · Inline alert (.note)
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="draft flex items-center gap-3 flex-wrap">
+        <span class="mr-auto">Prototype · Feature แผนบำรุงรักษา (Happy flow) · ข้อมูลจำลองทั้งหมด · ข้อมูลที่กรอกเก็บในเบราว์เซอร์นี้เท่านั้น</span>
+        <button class="btn btn-t btn-sm" type="button" id="reset"><span class="ms">restart_alt</span>คืนค่าข้อมูลตัวอย่าง</button>
+      </div>
+      <div class="page-title-row"><h1 class="page-title mb-0 mr-auto">Prototype — บำรุงรักษาตามวาระ</h1></div>
+
+      <div class="flex flex-col gap-8 max-w-[960px]">
+        <div class="note note-info"><span class="ms">info</span><div>หน้าตาและข้อความตามจอ Figma ของ Feature "แผนบำรุงรักษา" และ "แผนเดินทาง" (ปลั๊กอินพระผู้สร้าง) · รอบนี้ทำเฉพาะ Happy flow · สลับบทบาท เปิดจำลองบันทึกไม่สำเร็จ และคืนค่าข้อมูลตัวอย่าง ได้จากเมนูรูปโปรไฟล์มุมขวาบน</div></div>
+
+        <section>
+          <div class="sect">เริ่มเล่น</div>
+          <div class="flex flex-wrap gap-3 mt-4">
+            <button class="btn btn-p" type="button" data-go="creator" data-href="plans.html"><span class="ms">person</span>เข้าในบทบาทผู้สร้างแผน</button>
+            <button class="btn btn-s" type="button" data-go="approver" data-href="approvals.html"><span class="ms">fact_check</span>เข้าในบทบาทผู้อนุมัติ</button>
+            <button class="btn btn-s" type="button" data-go="owner" data-href="trips.html"><span class="ms">directions_car</span>เข้าในบทบาทผู้ดูแลยานพาหนะ</button>
+            <button class="btn btn-s" type="button" data-go="contractor" data-href="trips.html"><span class="ms">engineering</span>เข้าในบทบาทผู้รับจ้าง</button>
+          </div>
+        </section>
+
+        <section>
+          <div class="sect">Feature แผนเดินทาง (Happy flow 5 เส้น)</div>
+          <div class="tblwrap mt-4"><table class="tbl"><thead><tr><th class="w-[80px]">เส้น</th><th class="w-[140px]">บทบาท</th><th>ขั้นตอน</th></tr></thead><tbody>
+            <tr><td>E</td><td>ผู้สร้างแผน</td><td>รายการแผน · ปุ่ม … ของแผนดำเนินการ ดูรายละเอียด · ไปหน้าไตรมาส 1 · สร้างแผนเดินทาง · กรอกชื่อ ช่วงวัน พนักงาน · เพิ่มยานพาหนะ · ยืนยันการสร้างแผนเดินทาง</td></tr>
+            <tr><td>F</td><td>ผู้อนุมัติ</td><td>เมนูซ้าย แผนเดินทางรออนุมัติ · เลือกแผนเดินทาง · เลือกอนุมัติ · ยืนยันผลการพิจารณา · อนุมัติ</td></tr>
+            <tr><td>E.16</td><td>ผู้สร้างแผน</td><td>(ผู้อนุมัติเลือกส่งกลับแก้ไขก่อน) หน้าไตรมาส · แผนเดินทางที่ถูกส่งกลับ · แก้ไข · ส่งอนุมัติใหม่</td></tr>
+            <tr><td>G</td><td>ผู้ดูแลยานพาหนะ</td><td>หลังอนุมัติ กดกระดิ่งที่แถบบน · เปิดแผงแจ้งเตือน · กดข้อความ ดูแผนเดินทาง</td></tr>
+            <tr><td>H</td><td>ผู้สร้างแผน</td><td>สร้างแผนเดินทาง · เลือกจ้างดำเนินการ · เลือกผู้รับจ้าง · เพิ่มยานพาหนะ · ยืนยัน</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section>
+          <div class="sect">Feature งานบำรุงรักษารายคัน (Happy flow 6 เส้น)</div>
+          <div class="tblwrap mt-4"><table class="tbl"><thead><tr><th class="w-[80px]">เส้น</th><th class="w-[140px]">บทบาท</th><th>ขั้นตอน</th></tr></thead><tbody>
+            <tr><td>I</td><td>ผู้สร้างแผน</td><td>หลังแผนเดินทางอนุมัติแล้ว · หน้าไตรมาส กดแผนเดินทาง · ปุ่ม … ของยานพาหนะ ดูรายละเอียด · เริ่มงาน · ตรวจสภาพ 30 รายการ ยืนยันการตรวจสภาพ · สรุปงานก่อนปิดงาน ปรับจำนวนอะไหล่ ค่าใช้จ่าย · ปิดงาน</td></tr>
+            <tr><td>I.27</td><td>ผู้สร้างแผน</td><td>รายละเอียดแผนเดินทาง · ส่งออก · เลือก PDF หรือ Excel</td></tr>
+            <tr><td>K</td><td>ผู้สร้างแผน</td><td>งานรายคันที่เก็บตัวอย่างน้ำมัน · ป้ายรอผลตรวจน้ำมัน · เลือกผลการทดสอบ · บันทึกผลการทดสอบ</td></tr>
+            <tr><td>L</td><td>ผู้ดูแลยานพาหนะ</td><td>เมนูผลการบำรุงรักษารอรับทราบ · เลือกยานพาหนะ · รับทราบ · ประเมินความพึงพอใจ</td></tr>
+            <tr><td>V</td><td>ผู้รับจ้าง</td><td>แผนเดินทางที่รับจ้าง (ต้องสร้างแผนเดินทางแบบจ้างดำเนินการและอนุมัติก่อน) · บันทึกงานเหมือนเส้น I · ส่งตรวจงาน · รอตรวจรับ</td></tr>
+            <tr><td>X</td><td>ผู้สร้างแผน</td><td>งานรายคัน บำรุงรักษาไม่ได้ · หน้าไตรมาส ปุ่ม … ย้ายไปไตรมาสอื่น · ยืนยันการย้าย</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section>
+          <div class="sect">Feature ต้นทุนการบำรุงรักษา</div>
+          <div class="tblwrap mt-4"><table class="tbl"><thead><tr><th class="w-[80px]">เส้น</th><th class="w-[140px]">บทบาท</th><th>ขั้นตอน</th></tr></thead><tbody>
+            <tr><td>Q</td><td>ผู้สร้างแผน</td><td>รายละเอียดแผนที่อนุมัติแล้ว · แท็บต้นทุนการบำรุงรักษา · ส่งออก (ดูตัวอย่างข้อมูลครบได้ที่แผน MRZ6900011)</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section>
+          <div class="sect">Feature ติดตามและแดชบอร์ด</div>
+          <div class="tblwrap mt-4"><table class="tbl"><thead><tr><th class="w-[80px]">เส้น</th><th class="w-[140px]">บทบาท</th><th>ขั้นตอน</th></tr></thead><tbody>
+            <tr><td>C</td><td>ผู้สร้างแผน</td><td>เมนูอะไหล่ของแผนที่อนุมัติแล้ว · แท็บรวมตามรายการ / แยกรายคัน / ความคืบหน้าของแผน · ตัวกรองเลือกแผน · ส่งออก</td></tr>
+            <tr><td>W</td><td>ผู้สร้างแผน</td><td>เมนูข้อมูลยานพาหนะ · ตัวกรองใกล้ครบกำหนด · กดทะเบียน · แท็บตารางบำรุงรักษา</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section>
+          <div class="sect">Feature แผนบำรุงรักษา (Happy flow 8 เส้น)</div>
+          <div class="tblwrap mt-4"><table class="tbl"><thead><tr><th class="w-[80px]">เส้น</th><th class="w-[140px]">บทบาท</th><th>ขั้นตอน</th></tr></thead><tbody>
+            <tr><td>A1</td><td>ผู้สร้างแผน</td><td>รายการแผน กดสร้างแผน · กรอกชื่อแผน ปีงบประมาณ · เพิ่มยานพาหนะ ติ๊ก 3 คัน เพิ่มเข้าแผน · แท็บไตรมาส 1 กดเพิ่มยานพาหนะเข้าไตรมาส 1 · ติ๊ก 2 คันรุ่นเดียวกัน กดกำหนดอะไหล่ · เลือกเบิกอะไหล่ บันทึก · คันที่เหลือกำหนดอะไหล่จากปุ่ม … แก้ไข · กดบันทึกและส่งอนุมัติ</td></tr>
+            <tr><td>A5</td><td>ผู้สร้างแผน</td><td>ในฟอร์มสร้างแผน แท็บไตรมาส · ปุ่ม … ของยานพาหนะ แก้ไข · จัดการอะไหล่ของยานพาหนะ · บันทึก</td></tr>
+            <tr><td>A7</td><td>ผู้สร้างแผน</td><td>ในฟอร์มสร้างแผน แท็บไตรมาส · ปุ่ม … ย้ายไปไตรมาสอื่น · เลือกไตรมาส 2 · ย้ายยานพาหนะ</td></tr>
+            <tr><td>A11</td><td>ผู้สร้างแผน</td><td>รายการแผน · ปุ่ม … ของแผนที่อนุมัติแล้ว ดูรายละเอียด</td></tr>
+            <tr><td>A23</td><td>ผู้สร้างแผน</td><td>ในฟอร์มสร้างแผน เปิด "จำลองบันทึกไม่สำเร็จ" จากเมนูรูปโปรไฟล์ · กดบันทึกและส่งอนุมัติ · ค่าที่กรอกยังอยู่</td></tr>
+            <tr><td>R</td><td>ผู้สร้างแผน</td><td>รายการแผน · ปุ่ม … ของแผนที่อนุมัติแล้วหรือดำเนินการ แก้ไข · แก้ข้อมูล · บันทึกและส่งอนุมัติ · ยืนยันการแก้ไข</td></tr>
+            <tr><td>S</td><td>ผู้สร้างแผน</td><td>รายการแผน · ปุ่ม … ของแผนส่งกลับแก้ไข ลบ · ยืนยันการลบ</td></tr>
+            <tr><td>B</td><td>ผู้อนุมัติ</td><td>แผนรออนุมัติ · พิจารณาแผน · เลือกอนุมัติ · ยืนยันผลการพิจารณา · ยืนยัน</td></tr>
+          </tbody></table></div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, 'start');
+document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { S.role = b.dataset.go; mfpSave(S); location.href = b.dataset.href; }));
+</script>
+</body>
+</html>

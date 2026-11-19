@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
 <link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
-<link rel="stylesheet" href="../design-system/components.css?v=20261111-ds76">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
 <!--
@@ -101,7 +101,8 @@
                 <th class="num">จำนวนรถที่ Overhaul</th>
                 <th class="sortable" data-k="status"><button type="button">สถานะ<span class="ms">swap_vert</span></button></th>
                 <th>วันที่สร้าง</th>
-                <th>หมายเหตุ</th>
+                <!-- หมายเหตุ (เจ้าของงาน 5 พ.ย. 2569 "ดำเนินการ ระยะเป็นปี อยาก track ได้") · ไม่มีข้อมูลแสดง "—" -->
+                <th class="w-[240px]">หมายเหตุ</th>
                 <th class="w-[72px]" aria-label="จัดการ"></th>
               </tr>
             </thead>
@@ -293,7 +294,7 @@ function render(){
       <td class="num">${oh2PlanCars(p).length}</td>
       <td>${oh2Badge(OH2_PLAN,statusOf(p))}</td>
       <td>${oh2Date(p.created)}</td>
-      <td>${p.remark?`<span class="cell-clip" style="max-width:220px" title="${oh2Esc(p.remark)}">${oh2Esc(p.remark)}</span>`:`<span class="text-[var(--gray-400)]">—</span>`}</td>
+      <td>${p.note?oh2Esc(p.note):'—'}</td>
       <td class="dt-action">
         <details class="dd"><summary class="btn btn-t btn-icon" aria-label="จัดการแผน ${oh2Esc(p.id)}"><span class="ms">more_horiz</span></summary>
           <div class="dd-menu">

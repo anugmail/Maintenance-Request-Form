@@ -167,7 +167,9 @@ figma.ui.onmessage = async (msg) => {
     try {
       await p.loadAsync();
       const data = { node: p.id, page: p.name, sets: await Promise.all(p.children.map((c) => trim(c, 0))) };
-      figma.ui.postMessage({ type: 'page', i, id: p.id.replace(':', '-'), name: p.name, data });
+      /* ค่า figma.mixed (Symbol) หลุดมาในบางหน้า (Cards) → postMessage โยน "Cannot unwrap symbol" (12 พ.ย. 2569) ⇒ แปลงเป็น 'mixed' ก่อนส่ง */
+      const safe = JSON.parse(JSON.stringify(data, (k, v) => (typeof v === 'symbol' ? 'mixed' : v)));
+      figma.ui.postMessage({ type: 'page', i, id: p.id.replace(':', '-'), name: p.name, data: safe });
     } catch (e) {
       figma.ui.postMessage({ type: 'error', i, name: p.name, message: String(e && e.message || e) });
     }

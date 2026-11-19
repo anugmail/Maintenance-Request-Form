@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ไตรมาส | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature แผนเดินทาง — หน้าไตรมาส (จอ E.3 · E.13 · E.16 · H.7 · E.19–E.20)
+  ต้นแบบหน้าตา = จอ Figma "MF / H1.3 · H1.9 … หน้าไตรมาส" ของ Page แผนเดินทาง (ไฟล์ Untitled D0ahPEpyZtZ09gnnrcv4sU node 195:655930 · 195:667190)
+  เนื้อหา: tripList() ของ base/screens.js — รายละเอียดแผน · ยานพาหนะในไตรมาส (TRIP_V_COLS ไม่มีสถานที่ + แผนเดินทาง) · อะไหล่ในไตรมาส · แผนเดินทาง (TRIP_COLS)
+  ที่มา · ไฟล์ Component: Page header (Breadcrumbs + Pill outline สถานะแผน) · Section label (.sect-label) + Tertiary button · VehicleAndReporterInfo (.incident-summary) ·
+           Table (.tbl.striped) + Action icons แก้ไข/ลบ · Pill outline · Empty state/Data empty · Modal · Notification
+        · ไฟล์ UI Release#2: หน้า "5.1 Rental Contract Management" เฟรม `Contract detail`
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="crumbs" id="crumbs"></div>
+      <div class="page-title-row"><h1 class="page-title mb-0" id="title"></h1><span id="st"></span></div>
+      <div class="flex flex-col gap-8">
+        <section><div class="sect-label">รายละเอียดแผน</div><dl class="incident-summary lg:grid-cols-4" id="info"></dl></section>
+        <section>
+          <div class="sect-label"><span id="n-car"></span><button class="btn btn-t" type="button" id="add-car"><span class="ms">add</span>เพิ่มยานพาหนะ</button></div>
+          <div id="cars"></div>
+        </section>
+        <section><div class="sect-label" id="parts-t"></div><div id="parts"></div></section>
+        <section>
+          <div class="sect-label"><span id="n-trip"></span><a class="btn btn-t text-brand-900 !no-underline" id="new-trip"><span class="ms">add</span>สร้างแผนเดินทาง</a></div>
+          <div id="trips"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- เพิ่มยานพาหนะเข้าไตรมาส (E.19) — ยานพาหนะที่ยังไม่อยู่ในแผน -->
+<div class="modal-overlay hidden" id="m-add">
+  <div class="modal xl" role="dialog" aria-modal="true" aria-labelledby="m-add-t">
+    <div class="modal-hd"><div class="modal-hd-c"><div class="flex-1 min-w-0"><h2 id="m-add-t"></h2><div class="modal-sub">ยานพาหนะทุกคันที่ยังไม่อยู่ในแผน</div></div>
+      <button class="modal-x" type="button" data-close="m-add" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd">
+      <div class="tblwrap mt-0" id="add-wrap"><table class="tbl striped"><thead><tr><th class="w-[176px]">ทะเบียน</th><th>ยี่ห้อ/รุ่น</th><th class="w-[200px]">หน่วยงานเจ้าของยานพาหนะ</th></tr></thead><tbody id="add-body"></tbody></table></div>
+      <div class="hidden" id="add-empty"></div>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-add">ยกเลิก</button>
+      <button class="btn btn-p" type="button" id="add-ok" disabled>เพิ่มเข้าไตรมาส</button>
+    </div></div></div>
+  </div>
+</div>
+<!-- เอายานพาหนะออกจากไตรมาส -->
+<!-- ย้ายยานพาหนะไปไตรมาสอื่น (X.3–X.7) — เลือกไตรมาส → ยืนยันการย้าย -->
+<div class="modal-overlay hidden" id="m-xmove">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-xmove-t">
+    <div class="modal-hd"><div class="modal-hd-c"><div class="flex-1 min-w-0"><h2 id="m-xmove-t"></h2><div class="modal-sub">ยานพาหนะและอะไหล่ที่กำหนดไว้ของยานพาหนะคันนี้จะย้ายไปไตรมาสที่เลือก</div></div>
+      <button class="modal-x" type="button" data-close="m-xmove" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd"><div class="f mb-0"><label for="xmove-q">ไตรมาส</label><div class="in noic"><select id="xmove-q"></select></div></div></div>
+    <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-xmove">ยกเลิก</button><button class="btn btn-p" type="button" id="xmove-ok" disabled>ย้ายยานพาหนะ</button></div></div></div>
+  </div>
+</div>
+<div class="modal-overlay hidden" id="m-xconf">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-xconf-t">
+    <div class="modal-hd center"><div class="modal-hd-c"><div class="flex-1 min-w-0 text-center"><h2 id="m-xconf-t">ยืนยันการย้าย</h2><div class="modal-sub" id="m-xconf-s"></div></div></div></div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-xconf">ยกเลิก</button><button class="btn btn-p" type="button" id="xconf-ok">ยืนยัน</button></div></div></div>
+  </div>
+</div>
+<div class="modal-overlay hidden" id="m-out">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-out-t">
+    <div class="modal-hd center"><div class="modal-hd-c"><span class="ficon err"><span class="ms">delete</span></span><h2 id="m-out-t">เอายานพาหนะออกจากไตรมาส</h2><div class="modal-sub" id="m-out-s"></div></div>
+      <button class="modal-x" type="button" data-close="m-out" aria-label="ปิด"><span class="ms">close</span></button></div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-out">ยกเลิก</button>
+      <button class="btn btn-d" type="button" id="m-out-ok">เอาออก</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, 'plans');
+const qs = new URLSearchParams(location.search);
+const p = S.plans.find(x => x.id === qs.get('plan')), q = +(qs.get('q') || 1);
+if (!p) location.href = 'plans.html';
+S.trips = S.trips || [];
+let addSel = [], outCar = null;
+const jst = (t, i) => ((S.jobs || {})[jobKey(t, i)] || {}).st && ((S.jobs || {})[jobKey(t, i)] || {}).st !== 'todo' ? S.jobs[jobKey(t, i)].st : '';   // สถานะงานรายคัน (ป้ายแทนชื่อแผนเดินทาง)
+const f = (k, v) => `<div class="incident-field"><dt>${k}</dt><dd>${v}</dd></div>`;
+function render() {
+  const trips = S.trips.filter(t => t.plan === p.id && t.q === q), cars = inQ(p, q);
+  document.title = 'ไตรมาส ' + q + ' | Maintain-D (Prototype)';
+  $('crumbs').innerHTML = `<a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><a href="plans.html">บำรุงรักษาตามวาระ</a><span class="sep"></span><a href="plan-detail.html?id=${p.id}">${esc(p.name)}</a><span class="sep"></span><span class="cur">ไตรมาส ${q}</span>`;
+  $('title').textContent = 'ไตรมาส ' + q; $('st').innerHTML = badge(p.status);
+  $('info').innerHTML = f('ชื่อแผน', esc(p.name)) + f('ปีงบประมาณ', p.year) + f('หน่วยงาน', p.unit) + f('ไตรมาส', `ไตรมาส ${q} (${cars.length} คัน)`) +
+    f('จำนวนยานพาหนะ', carIds(p).length + ' คัน') + f('เลขที่ MR', p.id) + f('ผู้สร้างแผน', CREATOR + ' (' + p.unit + ')') + f('วันที่สร้าง', p.created) + (p.approvedAt ? f('อนุมัติเมื่อ', p.approvedAt) : '');
+  $('n-car').textContent = `ยานพาหนะในไตรมาส ${q} (${cars.length})`;
+  $('cars').innerHTML = cars.length ? `<div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th class="w-[130px]">ทะเบียน</th><th class="w-[120px]">ประเภทยานพาหนะ</th><th>ยี่ห้อ/รุ่น</th><th class="w-[130px]">หน่วยงานเจ้าของยานพาหนะ</th><th class="w-[120px]">เบอร์ติดต่อ</th><th class="w-[130px]">วันดำเนินการ</th><th class="w-[150px]">แผนเดินทาง</th><th class="w-[96px]" aria-label="จัดการ"></th></tr></thead>
+    <tbody>${cars.map(i => { const t = tripOf(S, p.id, q, i), c = POOL[i], x = carInfo(t || {}, i);
+      return `<tr><td><a href="#" data-plate class="whitespace-nowrap">${esc(c[0])}</a></td><td>${typeOf(c)}</td><td><div class="truncate max-w-[160px]">${esc(c[1])}</div></td><td><div class="truncate max-w-[120px]">${esc(c[2])}</div></td>
+        <td><span class="whitespace-nowrap">${x.tel}</span><div class="text-xs text-gray-500 whitespace-nowrap">${esc(x.ctrl)}</div></td>
+        <td>${t ? `<div class="truncate max-w-[120px]">${x.w}</div><div class="text-xs text-gray-500">${x.wEdited ? 'แก้จากช่วงวันเดินทาง' : 'ค่าเริ่มต้น ช่วงวันเดินทาง'}</div>` : '—'}</td>
+        <td>${t && jst(t, i) ? wBadge(jst(t, i)) : t ? `<div class="truncate max-w-[140px]">${esc(t.name)}</div><div class="text-xs text-gray-500">เพิ่มเข้าแผนเดินทางแล้ว</div>` : pill('ยังไม่มีแผนเดินทาง', 'b-neutral')}</td>
+        <td class="dt-action">${t && jst(t, i) === 'cannot'
+          /* X.1–X.2 ยานพาหนะบำรุงรักษาไม่ได้ — เมนู … ดำเนินการบำรุงรักษา / ย้ายไปไตรมาสอื่น (S25 · R67) */
+          ? menu('จัดการ ' + c[0], [{ label: 'ดำเนินการบำรุงรักษา', icon: 'build', href: `job.html?trip=${t.id}&car=${i}` }, { label: 'ย้ายไปไตรมาสอื่น', icon: 'swap_driving_apps_wheel', attr: `data-xmove="${i}"` }])
+          : t && jst(t, i) === 'done' ? '' : `<button class="btn btn-t btn-icon" type="button" data-cedit="${i}" aria-label="แก้ไข ${esc(c[0])}"><span class="ms">stylus</span></button>${t ? '' : `<button class="btn btn-t btn-icon" type="button" data-cout="${i}" aria-label="เอา ${esc(c[0])} ออก"><span class="ms">delete</span></button>`}`}</td></tr>`; }).join('')}</tbody></table></div>`
+    : emptyState('empty-vehicle', 'ยังไม่มียานพาหนะในไตรมาสนี้', 'กดเพิ่มยานพาหนะเพื่อเลือกยานพาหนะที่ยังไม่อยู่ในแผน');
+  $('parts-t').textContent = 'อะไหล่ในไตรมาส ' + q;
+  $('parts').innerHTML = partsTable(partsOf(p, cars), 'ไตรมาสนี้ไม่มีอะไหล่ที่ต้องเบิก');
+  $('n-trip').textContent = `แผนเดินทาง (${trips.length})`;
+  const free = cars.filter(i => !tripOf(S, p.id, q, i)).length;
+  $('new-trip').href = `trip-form.html?plan=${p.id}&q=${q}`; $('new-trip').classList.toggle('hidden', !free || !trips.length);
+  $('trips').innerHTML = trips.length ? `<div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th>ชื่อแผนเดินทาง</th><th class="w-[200px]">ช่วงวัน</th><th class="w-[130px]">ยานพาหนะ (คัน)</th><th class="w-[220px]">ผู้ดำเนินการ</th><th class="w-[140px]">สถานะ</th><th class="w-[60px]" aria-label="ดู"></th></tr></thead>
+    <tbody>${trips.map(t => `<tr><td>${esc(t.name)}<div class="text-xs text-gray-500">${esc(tripPlaces(t))}</div></td><td><div class="truncate max-w-[180px]">${tripRange(t)}</div></td><td>${t.cars.length}</td>
+      <td><div class="truncate max-w-[200px]">${esc(tripBy(t))}</div></td><td>${tBadge(t.status)}</td>
+      <td class="dt-action"><a class="btn btn-t btn-icon !no-underline" href="${t.status === 'returned' ? `trip-form.html?plan=${p.id}&q=${q}&trip=${t.id}` : 'trip-detail.html?id=' + t.id}" aria-label="ดู ${esc(t.name)}"><span class="ms">chevron_right</span></a></td></tr>`).join('')}</tbody></table></div>`
+    : emptyState('data-empty', 'ยังไม่มีแผนเดินทาง', 'สร้างแผนเดินทางเพื่อนัดวันเข้าตรวจ แจ้งผู้ดูแลยานพาหนะและ กรย.', free ? `<a class="btn btn-p mt-4 !no-underline" href="trip-form.html?plan=${p.id}&q=${q}"><span class="ms">add</span>สร้างแผนเดินทาง</a>` : '');
+  /* แผนเดินทางถูกส่งกลับ (E.16) — แจ้งเหตุผลเหนือรายการ */
+  const back = trips.find(t => t.status === 'returned');
+  if (back) $('trips').insertAdjacentHTML('afterbegin', `<div class="note note-warn mb-4"><span class="ms">undo</span><div><b>แผนเดินทาง ${esc(back.name)} ถูกส่งกลับแก้ไข</b><div>${esc(back.reason || '')}</div></div></div>`);
+}
+/* เพิ่มยานพาหนะเข้าไตรมาส (E.19–E.20) — ยานพาหนะที่ยังไม่อยู่ในแผน ไม่ต้องส่งอนุมัติแผนใหม่ (R93) */
+$('add-car').addEventListener('click', () => {
+  addSel = []; $('m-add-t').textContent = 'เพิ่มยานพาหนะเข้าไตรมาส ' + q;
+  const pool = POOL.map((c, i) => i).filter(i => !(i in p.cars));
+  $('add-wrap').classList.toggle('hidden', !pool.length); $('add-empty').classList.toggle('hidden', !!pool.length);
+  $('add-empty').innerHTML = emptyState('empty-vehicle', 'ไม่มียานพาหนะที่เพิ่มเข้าไตรมาสนี้ได้', '');
+  $('add-body').innerHTML = pool.map(i => `<tr><td><div class="flex items-start gap-3"><input type="checkbox" class="mt-1" data-add="${i}" aria-label="เลือก ${esc(POOL[i][0])}"><div>${plateCell(POOL[i], POOL[i][2], 'max-w-[110px]')}</div></div></td><td>${esc(POOL[i][1])}</td><td>${esc(POOL[i][2])}</td></tr>`).join('');
+  $('add-ok').disabled = true; $('add-ok').textContent = 'เพิ่มเข้าไตรมาส ' + q; modal('m-add', true);
+});
+$('add-body').addEventListener('change', e => { const i = +e.target.dataset.add; addSel = e.target.checked ? addSel.concat(i) : addSel.filter(x => x !== i);
+  $('add-ok').disabled = !addSel.length; $('add-ok').textContent = 'เพิ่มเข้าไตรมาส ' + q + (addSel.length ? ' (' + addSel.length + ')' : ''); });
+$('add-ok').addEventListener('click', () => { addSel.forEach(i => { p.cars[i] = q; p.parts[i] = { oil: OIL_OPTS[0], none: false, list: PART_DEFAULT.map(r => r.slice()) }; });
+  mfpSave(S); modal('m-add', false); render(); notify(`เพิ่มยานพาหนะ ${addSel.length} คันเข้าไตรมาส ${q} สำเร็จ`); });
+document.addEventListener('click', e => {
+  const ed = e.target.closest('[data-cedit]'); if (ed) notify('แก้ไขผู้ดูแลยานพาหนะและสถานที่ · ' + POOL[+ed.dataset.cedit][0], { sub: 'แก้ได้ในฟอร์มแผนเดินทาง (ปุ่มแก้ไขของแถว)' });
+  const ot = e.target.closest('[data-cout]'); if (ot) { outCar = +ot.dataset.cout; $('m-out-s').textContent = POOL[outCar][0] + ' จะถูกเอาออกจากไตรมาส ' + q; modal('m-out', true); }
+});
+let xCar = null;
+document.addEventListener('click', e => { const b = e.target.closest('[data-xmove]'); if (!b) return; xCar = +b.dataset.xmove; const d = b.closest('details'); if (d) d.open = false;
+  $('m-xmove-t').textContent = 'ย้ายไปไตรมาสอื่น · ' + POOL[xCar][0];
+  $('xmove-q').innerHTML = '<option value="">เลือกไตรมาส</option>' + [1, 2, 3, 4].filter(k => k !== q).map(k => `<option value="${k}">${QUARTERS[k - 1]}</option>`).join('');
+  $('xmove-ok').disabled = true; modal('m-xmove', true); });
+$('xmove-q').addEventListener('change', () => { $('xmove-ok').disabled = !$('xmove-q').value; });
+$('xmove-ok').addEventListener('click', () => { modal('m-xmove', false); $('m-xconf-s').textContent = `${POOL[xCar][0]} จะย้ายไปไตรมาส ${$('xmove-q').value} พร้อมอะไหล่ที่กำหนดไว้`; modal('m-xconf', true); });
+$('xconf-ok').addEventListener('click', () => { const to = +$('xmove-q').value; p.cars[xCar] = to;
+  S.trips.forEach(t => { if (t.plan === p.id && t.q === q && t.cars.includes(xCar)) { t.cars = t.cars.filter(x => x !== xCar); delete (S.jobs || {})[jobKey(t, xCar)]; } });
+  mfpSave(S); modal('m-xconf', false); render(); notify(`ย้ายยานพาหนะ ${POOL[xCar][0]} ไปไตรมาส ${to} สำเร็จ`); });   // X.7 MOVE_TOAST
+$('m-out-ok').addEventListener('click', () => { delete p.cars[outCar]; delete p.parts[outCar]; mfpSave(S); modal('m-out', false); render(); notify(`เอายานพาหนะออกจากไตรมาส ${q} สำเร็จ`); });
+render();
+</script>
+</body>
+</html>

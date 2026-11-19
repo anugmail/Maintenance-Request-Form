@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บันทึกงานรายคัน | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature งานบำรุงรักษารายคัน — หน้าบันทึกงานรายคัน 2 ขั้น
+  Step 1 ตรวจสภาพก่อนบำรุงรักษา = จอ Figma "MF / H1.3 · H1.4 (I.6 · I.8)" (node 195:904648 · 195:907868)
+  Step 2 สรุปงานก่อนปิดงาน = จอ "MF / H1.5 · H1.6 (I.9 · I.13)" (node 195:911129 · 195:913713) ไฟล์ Untitled D0ahPEpyZtZ09gnnrcv4sU
+  ที่มา · ไฟล์ Component: Page header (Pill outline + Secondary button บำรุงรักษาไม่ได้) · Stepper ลูกศร (.wsteps — Horizontal step item) ·
+           Section header (.sect Divider ปิด) + Badge · Section label · VehicleAndReporterInfo (.incident-summary) · Table + Radio button (ปกติ/แก้ไข) + Text input ·
+           Input dropdown · Date picker · Quantity stepper (.qty) · Radio text card (น้ำมันไฮดรอลิก) · Radio button (.rads) · File upload (.fu + .fu-list) · Notification
+        · ไฟล์ UI Release#2: หน้า "5.3 Vehicle Breakdown" (ฟอร์มงานซ่อม + อัปโหลดภาพ)
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="crumbs" id="crumbs"></div>
+      <div class="page-title-row"><h1 class="page-title mb-0" id="title"></h1><span id="st"></span>
+        <button class="btn btn-s ml-auto" type="button" id="cannot">บำรุงรักษาไม่ได้</button></div>
+      <div class="wsteps mb-8" id="steps"></div>
+      <div class="flex flex-col gap-8" id="body"></div>
+      <div class="flex items-center justify-between gap-3 mt-8">
+        <button class="btn btn-s btn-lg" type="button" id="back">ย้อนกลับ</button>
+        <button class="btn btn-p btn-lg ml-auto" type="button" id="next"></button>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, 'plans');
+const qs = new URLSearchParams(location.search);
+const t = (S.trips || []).find(x => x.id === qs.get('trip')), i = +qs.get('car');
+if (!t) location.href = 'plans.html';
+const p = S.plans.find(x => x.id === t.plan), c = POOL[i], J = jobOf(S, t, i), x = carInfo(t, i);
+let step = +(qs.get('step') || J.step || 1);
+J.checks = J.checks || CHECK_ITEMS.map((_, k) => k === 17 ? ['fix', 'สายน้ำมันไฮดรอลิกซึมที่ข้อต่อ เปลี่ยนแล้ว'] : ['ok', '']);
+const tasks = jobTasks(p, i);
+J.used = J.used || Object.fromEntries(tasks.map(r => [r[4], r[2]]));
+J.oil = J.oil || (p.parts[i] || {}).oil || OIL_OPTS[0];
+const staffIdx = (t.staff && t.staff.length ? t.staff : [0, 1, 2]);
+J.cost = J.cost || { staff: staffIdx.map((s, k) => ({ name: STAFF[s][0], per: 240, lodge: 800, days: k < 2 ? 2 : 1 })), travel: 1210, hours: 6, rate: 150 };
+const sect = (title, extra) => `<div class="sect border-b-0 pb-0"><span>${title}</span>${extra || ''}</div>`;
+const upload = (label, hint, file) => `<div class="f mb-0"><label>${label}</label>
+  <label class="fu"><input type="file" accept=".pdf,.jpg,.jpeg,.png"><span class="ficon sm gray"><span class="ms">cloud_upload</span></span><span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>${hint}</small></span></label>
+  <div class="fu-list">${file ? `<div class="fu-item"><span class="ficon sm gray"><span class="ms">image</span></span><span class="fu-item-tx"><b>${esc(file)}</b><small>2.4 MB</small></span>
+    <span class="fu-item-act"><button class="btn btn-t btn-icon" type="button" aria-label="ดาวน์โหลด"><span class="ms">download</span></button><button class="btn btn-t btn-icon" type="button" aria-label="ลบ"><span class="ms">delete</span></button></span></div>` : ''}</div></div>`;
+const signRow = (l1, n1, l2, n2) => `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">${[[l1, n1], [l2, n2]].map(([l, n]) => `<div class="f mb-0"><label>${l}</label><div class="in noic"><select><option>${n}</option></select></div>
+  <div class="flex items-center gap-3 mt-3"><button class="btn btn-s btn-sm" type="button">แก้ไขลงนาม</button><span class="badge b-ok">ลงนามแล้ว</span></div></div>`).join('')}</div>`;
+function costCalc() { const k = J.cost; k.perSum = k.staff.reduce((a, s) => a + s.per * s.days, 0); k.lodgeSum = k.staff.reduce((a, s) => a + s.lodge * s.days, 0);
+  k.total = k.perSum + k.lodgeSum + (+k.travel || 0) + (+k.hours || 0) * (+k.rate || 0); return k; }
+
+function render() {
+  $('crumbs').innerHTML = `<a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><a href="plans.html">บำรุงรักษาตามวาระ</a><span class="sep"></span><a href="quarter.html?plan=${p.id}&q=${t.q}">ไตรมาส ${t.q}</a><span class="sep"></span><a href="trip-detail.html?id=${t.id}">${esc(t.name)}</a><span class="sep"></span><span class="cur">${esc(c[0])}</span>`;
+  $('title').textContent = c[0]; $('st').innerHTML = wBadge('doing');
+  $('steps').innerHTML = ['ตรวจสภาพก่อนบำรุงรักษา', 'สรุปงานก่อนปิดงาน'].map((s, k) => { const cls = k + 1 === step ? 'active' : k + 1 < step ? 'passed' : '';
+    return `<div class="wstep ${cls}"><span class="num">${cls === 'passed' ? '<span class="ms">check</span>' : '0' + (k + 1)}</span><span class="lbl">${s}</span></div>`; }).join('');
+  const appoint = kvCard([['แผนเดินทาง', esc(t.name)], ['ช่วงวันเดินทาง', tripRange(t)], ['วันดำเนินการ', x.w], ['สถานที่บำรุงรักษา', esc(x.loc)], ['เบอร์ติดต่อ', x.tel], ['ผู้ดูแลยานพาหนะ', esc(x.ctrl)], ['เริ่มงาน', J.started || '—'], ['ผู้เริ่มงาน', CREATOR + ' (' + p.unit + ')']]);
+  const head = `<section><div class="sect-label">ข้อมูลยานพาหนะ</div>${vehicleCard(i)}</section><section><div class="sect-label">การนัดหมาย</div>${appoint}</section>`;
+  if (step === 1) {
+    $('body').innerHTML = head + `<section>${sect('วันดำเนินการ')}<div class="f mb-0 max-w-[440px]"><label>วันดำเนินการ</label><div class="in"><span class="ms">calendar_today</span><input type="text" value="${x.w}" readonly></div></div></section>
+      <section><div class="sect-label">แบบฟอร์มการตรวจสภาพกระเช้าแก้ไฟและกระเช้าฮอทไลน์</div>${kvCard([['งานเลขที่', p.id], ['ยี่ห้อกระเช้า', esc((c[1].split('กระเช้า ')[1] || '').split(' ')[0])], ['รุ่นกระเช้า', esc((c[1].split('กระเช้า ')[1] || '').split(' ')[1] || '—')], ['ทะเบียน', `<a href="#" data-plate>${esc(c[0])}</a>`],
+        ['รหัส', 'B-2563-0412'], ['ใช้งานประจำที่', esc(c[2])], ['SERIAL No.', 'SK17A-11873'], ['หมายเลข HC', 'HC-0412'], ['ยี่ห้อยานพาหนะ', esc(modelOf(c).split(' ')[0])], ['รุ่นยานพาหนะ', esc(modelOf(c).split(' ')[1] || '—')], ['ระยะทางการใช้งานยานพาหนะ (Km)', '182,400'], ['ระยะเวลาการใช้งานเครน (Hr)', '6,120']])}</section>
+      <section>${sect('รายการตรวจสภาพ', `<span class="badge sq">${CHECK_ITEMS.length}</span>`)}
+        <div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th>รายการ</th><th class="w-[80px] text-center">ปกติ</th><th class="w-[80px] text-center">แก้ไข</th><th class="w-[340px]">หมายเหตุ</th></tr></thead>
+        <tbody>${CHECK_ITEMS.map((it, k) => `<tr><td>${k + 1}. ${esc(it)}</td>
+          <td class="text-center"><input type="radio" name="ck-${k}" value="ok" data-ck="${k}"${J.checks[k][0] === 'ok' ? ' checked' : ''} aria-label="${esc(it)} ปกติ"></td>
+          <td class="text-center"><input type="radio" name="ck-${k}" value="fix" data-ck="${k}"${J.checks[k][0] === 'fix' ? ' checked' : ''} aria-label="${esc(it)} แก้ไข"></td>
+          <td><div class="in noic"><input type="text" data-cn="${k}" value="${esc(J.checks[k][1])}" placeholder="ระบุหมายเหตุ"></div></td></tr>`).join('')}</tbody></table>
+          <div class="p-3"><button class="btn btn-s btn-sm" type="button" data-todo="เพิ่มรายการตรวจ"><span class="ms">add</span>เพิ่มรายการ</button></div></div></section>
+      <section>${sect('ลงนามการตรวจสภาพ')}${signRow('ผู้ตรวจ (หน่วยงานผู้ดำเนินการ)', CREATOR, 'ผู้รับการตรวจ (หน่วยงานเจ้าของยานพาหนะ)', 'นายสุรชัย แก้วมณี')}</section>
+      <section>${sect('ภาพก่อนเริ่มงาน')}<div class="stack">${upload('รูปยานพาหนะ + ทะเบียน', 'JPG, PNG · 1 ภาพ · 1/10 ไฟล์', 'รูปยานพาหนะ-ทะเบียน-1.jpg')}${upload('อะไหล่ใหม่', 'JPG, PNG · 1 ภาพ · 1/10 ไฟล์', 'อะไหล่ใหม่-2.jpg')}</div></section>`;
+    $('next').textContent = 'ยืนยันการตรวจสภาพ';
+    return;
+  }
+  const k = costCalc();
+  $('body').innerHTML = head + `<section>${sect('ข้อมูลเอกสาร')}${kvCard([['เลขที่งาน', p.id], ['หน่วยงานผู้ใช้บริการ', esc(c[2])], ['ชื่องาน', `บำรุงรักษา${typeOf(c)} ${esc(c[1])} ทะเบียน ${esc(c[0])} ณ ${esc(x.loc)}`], ['วันที่รับงาน', (J.started || '').split(' ')[0]], ['วันที่เสร็จงาน', today()]])}</section>
+    <section>${sect('บันทึกข้อตกลงลูกค้า')}${kvCard([['ติดต่อลูกค้าชื่อ', 'นายสุรชัย แก้วมณี'], ['ตำแหน่ง', 'หัวหน้าแผนก ' + esc(c[2].split(' ')[0]) + ' ' + esc(c[2].split(' ')[1] || '')], ['เมื่อวันที่', isoTh(t.d1)], ['เบอร์โทรศัพท์', x.tel], ['ความต้องการลูกค้า', 'บำรุงรักษาตามแผน ณ ' + esc(x.loc)]])}</section>
+    <section>${sect('รายการสภาพวัสดุอะไหล่', `<span class="badge sq">${tasks.length}</span>`)}
+      <div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th>ชื่ออะไหล่</th><th class="w-[110px]">ราคาต่อหน่วย</th><th class="w-[130px]">จำนวนที่ใช้</th><th class="w-[120px]">ราคารวมที่ใช้</th><th class="w-[110px]">จำนวนที่คืน</th><th class="w-[120px]">ราคารวมที่คืน</th><th class="w-[130px]">จำนวนอะไหล่เก่า</th></tr></thead>
+      <tbody>${tasks.map(r => { const u = J.used[r[4]], pr = PRICE[r[4]] || 0, ret = Math.max(0, r[2] - u); return `<tr><td>${esc(r[1])}</td><td>${pr}</td>
+        <td><div class="qty w-fit"><button type="button" data-q="${r[4]}" data-d="-1" aria-label="ลด">−</button><span>${u}</span><button type="button" data-q="${r[4]}" data-d="1" aria-label="เพิ่ม">+</button></div></td>
+        <td>${(pr * u).toLocaleString()}</td><td>${ret}</td><td>${(pr * ret).toLocaleString()}</td><td>${u}</td></tr>`; }).join('')}</tbody></table></div></section>
+    <section>${sect('ค่าใช้จ่ายของยานพาหนะคันนี้ (บาท)', `<span class="badge sq">${k.staff.length} คน</span>`)}
+      <div class="stack">${k.staff.map((s, n) => `<div class="grid grid-cols-[1.4fr_1fr_1fr_1fr_1fr_40px] gap-4 items-end">
+        <div class="f mb-0"><label>พนักงาน</label><div class="in noic"><select><option>${esc(s.name)}</option></select></div></div>
+        <div class="f mb-0"><label>ค่าเบี้ยเลี้ยง (บาท/วัน) <small>(ถ้ามี)</small></label><div class="in noic"><input type="number" data-cs="${n}" data-k="per" value="${s.per}"></div></div>
+        <div class="f mb-0"><label>ค่าที่พัก (บาท/วัน) <small>(ถ้ามี)</small></label><div class="in noic"><input type="number" data-cs="${n}" data-k="lodge" value="${s.lodge}"></div></div>
+        <div class="f mb-0"><label>จำนวนวัน</label><div class="in noic"><select data-cs="${n}" data-k="days">${[1, 2, 3, 4, 5].map(d => `<option value="${d}"${d === s.days ? ' selected' : ''}>${d} วัน</option>`).join('')}</select></div></div>
+        <div class="f mb-0"><label>รวม (บาท)</label><div class="in noic"><input type="text" value="${(s.per + s.lodge) * s.days}" readonly></div></div>
+        <button class="btn btn-t btn-icon mb-1" type="button" data-todo="ลบพนักงาน" aria-label="ลบพนักงาน"><span class="ms">delete</span></button></div>`).join('')}</div>
+      <button class="btn btn-s w-full mt-4" type="button" data-todo="เพิ่มพนักงาน"><span class="ms">add</span>เพิ่มพนักงาน</button>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div class="f mb-0 md:col-span-1"><label>ค่าเดินทาง (รวมทุกคน) <small>(ถ้ามี)</small></label><div class="in noic"><input type="number" data-ck2="travel" value="${k.travel}"></div></div><div></div>
+        <div class="f mb-0"><label>ชั่วโมงทำงาน <small>(ถ้ามี)</small></label><div class="in noic"><input type="number" data-ck2="hours" value="${k.hours}"></div></div>
+        <div class="f mb-0"><label>อัตราค่าแรง (บาท/ชั่วโมง) <small>(ถ้ามี)</small></label><div class="in noic"><input type="number" data-ck2="rate" value="${k.rate}"></div></div></div>
+      <div class="mt-6">${kvCard([['รวมค่าเบี้ยเลี้ยง', k.perSum + ' บาท'], ['รวมค่าที่พัก', k.lodgeSum + ' บาท'], ['ค่าเดินทาง', k.travel + ' บาท'], ['ค่าชั่วโมงทำงาน', k.hours * k.rate + ' บาท'], ['รวมค่าใช้จ่ายของยานพาหนะคันนี้', k.total + ' บาท']])}</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div class="f mb-0"><label>งบที่ตัด</label><div class="in noic"><select><option>งบทำการ หน่วยงานต้นสังกัด</option><option>งบลงทุน</option></select></div></div>
+        <div class="f mb-0"><label>ศูนย์ต้นทุน</label><div class="in"><span class="ms">account_balance</span><input type="text" value="E301010000 ${esc(c[2])} - บริหาร" readonly></div></div></div></section>
+    <section>${sect('ผลการบำรุงรักษา')}<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="f mb-0"><label>เลขไมล์ยานพาหนะ (กม.)</label><div class="in noic"><input type="text" id="mile" value="${J.mile || '182,640'}"></div></div>
+      <div class="f mb-0"><label>ชั่วโมงเครื่องจักร (ชม.)</label><div class="in noic"><input type="text" id="hour" value="${J.hour || '6,131'}"></div></div></div></section>
+    <section>${sect('น้ำมันไฮดรอลิก')}<div class="radcards cols-3" id="oil">${OIL_OPTS.map(o => `<label class="radcard${o === J.oil ? ' sel' : ''}"><input type="radio" name="oil" value="${o}"${o === J.oil ? ' checked' : ''}><span class="rdot"></span><span class="rc-tx"><b>${o}</b></span></label>`).join('')}</div>
+      <div class="f mt-6 mb-0 max-w-[440px]"><label>วันที่เปลี่ยนน้ำมันครั้งล่าสุด <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" value="${lastOil(i)}"></div></div>
+      ${/เก็บ/.test(J.oil) ? `<div class="f mt-6 mb-0"><label>ผลการทดสอบ <small>(ถ้ามี)</small></label><div class="rads"><label><input type="radio" name="oiltest" value="pass"> ผ่าน</label><label><input type="radio" name="oiltest" value="fail"> ไม่ผ่าน</label></div></div>
+      <div class="mt-6">${upload('ไฟล์ผลการทดสอบ <small>(ถ้ามี)</small>', 'PDF, JPG, PNG · สูงสุด 10 ไฟล์ · 0/10 ไฟล์', '')}</div>` : ''}</section>
+    <section>${sect('Safety Inspection')}${upload('เอกสาร Safety Inspection <small>(ถ้ามี)</small>', 'PDF, PNG, or JPG (สูงสุด 10 ไฟล์) · 0/10 ไฟล์', '')}</section>
+    <section>${sect('ลงนามการส่งคืนยานพาหนะ')}${signRow('ผู้ส่งมอบยานพาหนะ (หน่วยงานผู้ดำเนินการ)', CREATOR, 'ผู้รับมอบยานพาหนะ (หน่วยงานเจ้าของยานพาหนะ)', 'นายสุรชัย แก้วมณี')}</section>
+    <section>${sect('บันทึกตรวจสอบเอกสารปิดงาน', '<span class="badge sq">1</span>')}
+      <div class="flex items-center gap-4"><div class="f mb-0 mr-auto"><label>บันทึกใบสั่งงาน</label><div class="rads"><label><input type="radio" name="doc" checked> มี</label><label><input type="radio" name="doc"> ไม่มี</label><label><input type="radio" name="doc"> ไม่ต้องใช้</label></div></div>
+        <button class="btn btn-s btn-sm" type="button" data-todo="อัพโหลดเอกสาร"><span class="ms">cloud_upload</span>อัพโหลดเอกสาร</button></div>
+      <button class="btn btn-s w-full mt-4" type="button" data-todo="เพิ่มรายการเอกสาร"><span class="ms">add</span>เพิ่มรายการ</button></section>`;
+  $('next').textContent = 'ปิดงาน';
+}
+document.addEventListener('change', e => {
+  const ck = e.target.closest('[data-ck]'); if (ck) J.checks[+ck.dataset.ck][0] = ck.value;
+  const cs = e.target.closest('[data-cs]'); if (cs) { J.cost.staff[+cs.dataset.cs][cs.dataset.k] = +cs.value || 0; render(); }
+  const c2 = e.target.closest('[data-ck2]'); if (c2) { J.cost[c2.dataset.ck2] = +c2.value || 0; render(); }
+  if (e.target.name === 'oil') { J.oil = e.target.value; render(); }
+  if (e.target.name === 'oiltest') J.oilResult = e.target.value;
+});
+document.addEventListener('input', e => { const cn = e.target.closest('[data-cn]'); if (cn) J.checks[+cn.dataset.cn][1] = cn.value; });
+document.addEventListener('click', e => {
+  const qb = e.target.closest('[data-q]'); if (qb) { const code = qb.dataset.q; J.used[code] = Math.max(0, (J.used[code] || 0) + +qb.dataset.d); render(); }
+  const td = e.target.closest('[data-todo]'); if (td) notify(td.dataset.todo, { sub: 'ไม่อยู่ใน Happy flow — Prototype รอบนี้ยังไม่เปิด' });
+});
+$('cannot').addEventListener('click', () => { location.href = `job.html?trip=${t.id}&car=${i}`; });
+$('back').addEventListener('click', () => { if (step === 2) { step = 1; J.step = 1; mfpSave(S); render(); scrollTo(0, 0); } else location.href = 'trip-detail.html?id=' + t.id; });
+$('next').addEventListener('click', () => {
+  if (step === 1) { step = 2; J.step = 2; mfpSave(S); render(); scrollTo(0, 0); notify('บันทึกการตรวจสภาพแล้ว'); return; }
+  if (simFail()) { notify('general error', { err: true, sub: 'ข้อความจริงยังไม่เคาะ' }); return; }
+  /* ปิดงาน (I.13 → I.14) — เก็บตัวอย่างน้ำมันแต่ยังไม่มีผล = ป้ายรอผลตรวจน้ำมัน · แจ้งผู้ดูแลยานพาหนะให้รับทราบผล (L) */
+  Object.assign(J, { st: 'done', step: 2, closed: nowTh(), mile: $('mile').value, hour: $('hour').value, oilWait: /เก็บ/.test(J.oil) && !J.oilResult, ack: false });
+  costCalc();
+  S.notis = (S.notis || []).concat([{ to: 'owner', text: `ปิดงานบำรุงรักษา ${c[0]} แล้ว รอผู้ดูแลยานพาหนะรับทราบผล`, at: 'เมื่อสักครู่', isNew: true, href: 'acks.html' }]);
+  mfpSave(S); flash('บันทึกงานบำรุงรักษาสำเร็จ'); location.href = 'trip-detail.html?id=' + t.id;
+});
+render();
+</script>
+</body>
+</html>
