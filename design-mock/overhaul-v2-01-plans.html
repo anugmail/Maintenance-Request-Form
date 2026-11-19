@@ -88,6 +88,8 @@
                 <th class="num">จำนวนรถที่ Overhaul</th>
                 <th class="sortable" data-k="status"><button type="button">สถานะ<span class="ms">swap_vert</span></button></th>
                 <th>วันที่สร้าง</th>
+                <!-- หมายเหตุ (เจ้าของงาน 5 พ.ย. 2569 "ดำเนินการ ระยะเป็นปี อยาก track ได้") · ไม่มีข้อมูลแสดง "—" -->
+                <th class="w-[240px]">หมายเหตุ</th>
                 <th class="w-[72px]" aria-label="จัดการ"></th>
               </tr>
             </thead>
@@ -193,6 +195,7 @@ function render(){
       <td class="num">${oh2PlanCars(p).length}</td>
       <td>${oh2Badge(OH2_PLAN,statusOf(p))}</td>
       <td>${oh2Date(p.created)}</td>
+      <td>${p.note?oh2Esc(p.note):'—'}</td>
       <td class="dt-action">
         <details class="dd"><summary class="btn btn-t btn-icon" aria-label="จัดการแผน ${oh2Esc(p.id)}"><span class="ms">more_horiz</span></summary>
           <div class="dd-menu">

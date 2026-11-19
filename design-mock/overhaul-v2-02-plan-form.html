@@ -76,9 +76,14 @@
             <div class="f md:col-span-2 xl:col-span-4" data-req><label for="name">ชื่อแผน</label><div class="in noic"><input type="text" id="name" placeholder="เช่น Overhaul ประจำปีงบ 2570 — รถเครน"></div><div class="help hidden"></div></div>
             <div class="f xl:col-span-2" data-req><label for="year">ประจำปีงบประมาณ</label><div class="in noic"><select id="year"></select></div><div class="help hidden"></div></div>
             <div class="f md:col-span-3" data-req><label for="budget">วงเงินอนุมัติ (บาท)</label><div class="in noic"><input type="text" id="budget" inputmode="decimal" placeholder="0"></div><div class="help hidden"></div></div>
-            <div class="f"><label for="wbs">เลข WBS <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="wbs" placeholder="เช่น C-70-OH-0003"></div><div class="help hidden"></div></div>
-            <div class="f"><label for="net">เลขโครงข่าย <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="net" inputmode="numeric" placeholder="เช่น 60002103"></div><div class="help hidden"></div></div>
-            <div class="f"><label for="act">เลขกิจกรรม <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="act" inputmode="numeric" placeholder="เช่น 0010"></div><div class="help hidden"></div></div>
+            <!-- เจ้าของงาน 5 พ.ย. 2569: "เลข WBS ยาว และเลขกิจกรรม สั้นได้" ⇒ 3 ช่องอยู่ในแถวเดียวกัน แบ่งกว้าง 4 : 3 : 3 (มือถือเรียงลง) -->
+            <div class="md:col-span-3 flex flex-col gap-y-8 md:flex-row md:gap-6">
+              <div class="f flex-[4]"><label for="wbs">เลข WBS <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="wbs" placeholder="เช่น C-70-OH-0003"></div><div class="help hidden"></div></div>
+              <div class="f flex-[3]"><label for="net">เลขโครงข่าย <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="net" inputmode="numeric" placeholder="เช่น 60002103"></div><div class="help hidden"></div></div>
+              <div class="f flex-[3]"><label for="act">เลขกิจกรรม <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="act" inputmode="numeric" placeholder="เช่น 0010"></div><div class="help hidden"></div></div>
+            </div>
+            <!-- หมายเหตุ — คู่กับคอลัมน์หมายเหตุในหน้ารายการแผน (เจ้าของงาน 5 พ.ย. 2569) -->
+            <div class="f md:col-span-3 xl:col-span-6"><label for="note">หมายเหตุ <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="note" placeholder="เช่น ดำเนินการข้ามปีงบ 2570–2571 · รออะไหล่นำเข้า"></div><div class="help hidden"></div></div>
           </div>
         </section>
 
@@ -145,7 +150,7 @@ let S=oh2Load();
 const editId=q.get('id');
 const plan=editId?S.plans.find(p=>p.id===editId):null;
 const backTo=q.get('from')==='detail'&&plan?`overhaul-v2-03-plan-detail.html?id=${plan.id}`:'overhaul-v2-01-plans.html';
-const FIELDS=['name','year','budget','wbs','net','act'];
+const FIELDS=['name','year','budget','wbs','net','act','note'];   // note = หมายเหตุ (5 พ.ย. 2569)
 
 /* ปีงบ — ปีปัจจุบันเป็นค่าตั้งต้น · แผนเดิมที่เป็นปีก่อนหน้า (แก้ไข) ให้เห็นปีเดิมด้วย ไม่เลือกปีอื่นย้อนหลังได้ */
 const years=oh2Years(5);
@@ -156,7 +161,7 @@ const docs=plan?JSON.parse(JSON.stringify(plan.docs)):{approve:[],budget:[],othe
 if(plan){
   $('title').textContent=`แก้ไขแผน ${plan.id}`;$('crumb').textContent=`แก้ไขแผน ${plan.id}`;document.title=`แก้ไขแผน ${plan.id} | Maintain-D (Mock)`;
   $('name').value=plan.name;$('year').value=plan.year;$('budget').value=oh2Money(plan.budget);
-  $('wbs').value=plan.wbs;$('net').value=plan.net;$('act').value=plan.act;
+  $('wbs').value=plan.wbs;$('net').value=plan.net;$('act').value=plan.act;$('note').value=plan.note||'';
   $('cancel').classList.remove('hidden');
 } else if(editId){oh2Notify(`ไม่พบแผน ${editId}`,{err:true});}
 
@@ -187,7 +192,7 @@ $('budget').addEventListener('blur',()=>{const n=money($('budget').value);if(n>0
 
 function commit(){
   if($('simfail').checked){oh2Notify('general error',{err:true});return false}
-  const data={name:$('name').value.trim(),year:+$('year').value,budget:money($('budget').value),wbs:$('wbs').value.trim(),net:$('net').value.trim(),act:$('act').value.trim(),docs};
+  const data={name:$('name').value.trim(),year:+$('year').value,budget:money($('budget').value),wbs:$('wbs').value.trim(),net:$('net').value.trim(),act:$('act').value.trim(),note:$('note').value.trim(),docs};
   if(plan)Object.assign(plan,data);
   else S.plans.push(Object.assign({id:oh2NextPlanId(S),created:new Date().toISOString().slice(0,10),pos:[]},data));
   oh2Save(S);return true;

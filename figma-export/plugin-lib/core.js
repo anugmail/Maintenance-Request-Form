@@ -958,7 +958,10 @@ function findInstanceAncestor(n) { let p = n.parent; while (p) { if (p.type === 
    → แถว Desktop (1440) → แถว Mobile (402) ใต้คอลัมน์เดียวกัน · ป้ายข้างซ้าย = component "Component 1" ของทีมออกแบบ (Type=Header "Device" · Desktop · Mobile)
    ตัวอย่างต้นแบบ: หน้า Flow การซ่อม ไฟล์ Maintain-D (B นัดหมายวันซ่อม › B1 เข้าซ่อมที่… › B1.1 Default …) · ป้ายทุกตัวชื่อ "<prefix> · …" ปลั๊กอินล้างตอนรันซ้ำ
    Header/State เป็น component จากอีกไลบรารี (หาได้จาก instance ในไฟล์) — เปิดไม่ได้ → วาดแถบธรรมดาสีเดียวกัน (อยู่นอกจอ ไม่กระทบกติกา "ทุกชิ้นในจอเป็น instance") */
-const GRID = { side: 300, gap: 80, colW: 1440, colGap: 200, rowGap: 160, groupGap: 400, barH: 120, stateW: 344, mobW: 402, deskH: 1024, mobH: 874 };
+/* ระยะในกริดบล็อก — เจ้าของงาน 10 พ.ย. 2569: "ปรับ spacing ของแต่ละหน้าจอและหัวข้อให้เป็น 200 เสมอ"
+   gap = แถบหัวข้อ → จอ (และระยะเริ่มคอลัมน์จากคอลัมน์ป้าย Device) · colGap = จอ → จอ · rowGap = แถว desktop → แถว mobile
+   ทั้งสามเป็น 200 เท่ากันหมด · groupGap คง 400 ไว้ให้บล็อก scenario ยังแยกจากกันชัด (เดิม gap 80 · rowGap 160) */
+const GRID = { side: 300, gap: 200, colW: 1440, colGap: 200, rowGap: 200, groupGap: 400, barH: 120, stateW: 344, mobW: 402, deskH: 1024, mobH: 874 };
 const BAR_FILL = { Default: '#101828', 'Sub Flow': '#667085', 'Sub Flow 2': '#9CACCC' };
 let HEADER_BROKEN = false;   // แถบ Header ของทีมออกแบบใส่ข้อความไม่ได้ (ฟอนต์หาย) → ใช้แถบธรรมดาตลอดรอบ
 const rgbOf = (hex) => ({ r: parseInt(hex.slice(1, 3), 16) / 255, g: parseInt(hex.slice(3, 5), 16) / 255, b: parseInt(hex.slice(5, 7), 16) / 255 });
@@ -1451,6 +1454,42 @@ function splitBoard(page, f) {
    export เฟรมจอ "<prefix> / A.1 · S1 — ชื่อ" บนหน้าที่เปิดอยู่ (จอที่ทีมแก้มือแล้วก็ได้) เป็น PNG ส่งให้หน้าต่างปลั๊กอิน → POST เข้า serve.js ที่ out/figjam/<dir>/
    แล้ว 3-figjam-board.js วางภาพต่อจากผัง userflow ของ scenario เดียวกัน · desktop อย่างเดียว · ด้านยาวไม่เกิน 4000 px (FigJam รับไม่เกิน 4096) */
 const SHOT_RE = /^(\S+) \/ ([A-Z])\.([0-9.]+) · (S\d+) — (.+)$/;
+/* ตรวจจอซ้ำบนหน้าปัจจุบัน — ไม่แก้ไม่ลบอะไรทั้งสิ้น (เจ้าของงาน 10 พ.ย. 2569 "ช่วยหาทางตรวจให้" · "ลบเองได้")
+   ทุกปุ่มสร้างของปลั๊กอินวางชุดใหม่ "ต่อใต้ของเดิม" เสมอ ⇒ กดสร้างซ้ำบนหน้าเดิมจะมีหลายชุดซ้อนกัน (เช่น เคยกด "สร้างเฉพาะ Desktop" แล้วมากด "สร้างทั้งชุด" ทีหลัง = Desktop 2 แถว Mobile 1 แถว)
+   จับคู่ด้วย รหัสจอ + อุปกรณ์ จากชื่อเฟรม (SHOT_RE) · ชุดล่าสุดดูจาก pluginData builtAt */
+async function auditDuplicates() {
+  errors.length = 0;
+  const page = figma.currentPage;
+  if (page.loadAsync) await page.loadAsync();
+  const all = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(PLUGIN.prefix + ' / ') === 0);
+  if (!all.length) { log('ไม่พบเฟรมจอ "' + PLUGIN.prefix + ' / …" บนหน้า "' + page.name.trim() + '" — เปิดหน้าที่มีจอแล้วกดใหม่'); return; }
+  const by = new Map(); let skipped = 0;
+  for (const f of all) {
+    const mob = / · mobile$/.test(f.name), m = f.name.replace(/ · mobile$/, '').match(SHOT_RE);
+    if (!m) { skipped++; continue; }
+    const key = m[2] + '.' + m[3] + ' · ' + (mob ? 'mobile' : 'desktop');
+    if (!by.has(key)) by.set(key, []);
+    by.get(key).push(f);
+  }
+  const builtAt = (f) => +((f.getPluginData && f.getPluginData('builtAt')) || 0);
+  const dup = [...by.entries()].filter(([, v]) => v.length > 1);
+  log('— ตรวจจอซ้ำบนหน้า "' + page.name.trim() + '" (ไม่แก้อะไร) —');
+  log('เฟรมจอทั้งหมด ' + all.length + ' · รหัสจอไม่ซ้ำ ' + by.size + (skipped ? ' · ชื่อไม่เข้ารูปแบบ ' + skipped : ''));
+  if (!dup.length) { log('✓ ไม่มีจอซ้ำ — หน้านี้มีชุดเดียว'); return; }
+  const copies = Math.max(...dup.map(([, v]) => v.length));
+  log('⚠ มีจอซ้ำ ' + dup.length + ' รหัส · ซ้ำมากสุด ' + copies + ' ชุด ⇒ หน้านี้น่าจะมี ' + copies + ' ชุดซ้อนกัน');
+  const rows = {};   // แถว y ของแต่ละชุด เพื่อบอกว่าชุดไหนอยู่ตรงไหน
+  for (const [, v] of dup) v.forEach((f, i) => { const k = Math.round(f.y / 500) * 500; rows[k] = (rows[k] || 0) + 1; });
+  log('แถวที่พบจอซ้ำ (y โดยประมาณ → จำนวนจอ): ' + Object.keys(rows).sort((a, b) => a - b).map(k => k + ' → ' + rows[k]).join(' · '));
+  for (const [k, v] of dup.slice(0, 20)) {
+    const newest = v.reduce((a, b) => builtAt(b) > builtAt(a) ? b : a);
+    log('  · ' + k + ' — ' + v.length + ' ชุด · y = ' + v.map(f => Math.round(f.y)).sort((a, b) => a - b).join(', ')
+      + ' · ล่าสุด y=' + Math.round(newest.y) + (builtAt(newest) ? '' : ' (ชุดเก่าไม่มีเวลาสร้าง เดาจากลำดับไม่ได้)'));
+  }
+  if (dup.length > 20) log('  … และอีก ' + (dup.length - 20) + ' รหัส');
+  log('วิธีเก็บกวาด: เก็บชุดที่ y ของ "ล่าสุด" ไว้ แล้วลบชุดอื่นเองใน Figma (ปลั๊กอินไม่ลบให้ — ตั้งใจไม่แตะของบนหน้า)');
+}
+
 async function exportShots(dir, scen) {   // scen = ['S1', 'S2'] ส่งเฉพาะ scenario ที่ติ๊ก (ว่าง = ทุกจอ · 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่")
   errors.length = 0;
   const page = figma.currentPage;
@@ -1566,7 +1605,25 @@ async function buildJourney(page, prefix, y0, info) {
   return { made, links, thumbs: tk, slots: thumbs.length, w: totalW };
 }
 
-/* GROUPS = [{ code: 'A', title: '…', subs: [{ code: 'A', title: '…', tag: 'S1', screens: [[label, fn, 'D1 D2'?], …] }] }]
+/* เส้นทางย่อยในบล็อก — แพตเทิร์นที่เจ้าของงานเคาะ 10 พ.ย. 2569 จากบล็อก S20 (S.3 ลบจากหน้า Detail → S.3.1 S.3.2)
+   screens[i] เป็น { path: 'ชื่อเส้นทาง', screens: [[label, fn, ids], …] } แทน [label, fn, ids] ได้
+   ⇒ ตำแหน่งนั้นมีแถบชื่อเส้นทาง (Sub Flow) คร่อมคอลัมน์ของตัวเอง และจอข้างใต้ได้รหัสซ้อน <code>.<i+1>.<j+1>
+   ลำดับตำแหน่งระดับบนยังนับ 1..n ตามเดิม ⇒ เส้นหลักอ่านเป็นแถวเดียวจบ ส่วนทางแยกไม่กินเลขของเส้นหลัก
+   entry แบบ array เดิมทำงานเหมือนเดิมทุกอย่าง (ปลั๊กอิน login · contractor-eval ไม่ต้องแก้) */
+const isPath = (e) => !!e && !Array.isArray(e) && Array.isArray(e.screens);
+const countScreens = (list) => list.reduce((a, e) => a + (isPath(e) ? e.screens.length : 1), 0);
+function flatScreens(list, code) {   // → [{ code, label, fn, ids, path?, pathCode?, first, span }] เรียงตามคอลัมน์จริง
+  const out = [];
+  list.forEach((e, i) => {
+    const c = code + '.' + (i + 1);
+    if (isPath(e)) e.screens.forEach(([label, fn, ids], j) =>
+      out.push({ code: c + '.' + (j + 1), label: label, fn: fn, ids: ids, path: e.path, pathCode: c, first: j === 0, span: e.screens.length }));
+    else out.push({ code: c, label: e[0], fn: e[1], ids: e[2], first: true, span: 1 });
+  });
+  return out;
+}
+
+/* GROUPS = [{ code: 'A', title: '…', subs: [{ code: 'A', title: '…', tag: 'S1', screens: [[label, fn, 'D1 D2'?] | { path, screens }, …] }] }]
    screens[i][2] = id กล่องในผัง userflow ที่จอนี้แสดง (คั่นด้วยช่องว่าง · ไม่ใส่ = ผังยังไม่มีกล่องของจอนี้)
    fn() สร้างจอตามตัวแปร MOB · จอชื่อ "<prefix> / A.2 · S1 — <label>[ · mobile]" · คืน { made, y, flows }
    opts.devices = [false] desktop · [true] mobile · ไม่ส่ง = ทั้งคู่ · opts.rowMin = ความสูงแถวขั้นต่ำ · opts.flow = false ไม่วางผัง userflow */
@@ -1575,13 +1632,13 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
   const made = []; let y = y0; const x0 = GRID.side + GRID.gap; const pitch = GRID.colW + GRID.colGap; let flows = 0;
   const put = (n, x, yy) => { page.insertChild(0, n); n.x = x; n.y = yy; return n; };
   for (const g of GROUPS) {
-    const nCols = Math.max(...g.subs.map(s => s.screens.length));
+    const nCols = Math.max(...g.subs.map(s => countScreens(s.screens)));
     const top = y;
     CREATED = []; put(await flowBar(prefix, g.code, g.title, 'Default', nCols * GRID.colW + (nCols - 1) * GRID.colGap), x0, y);
     y += GRID.barH + GRID.gap;
     let flowBottom = top;
     for (const sub of g.subs) {
-      const n = sub.screens.length, w = n * GRID.colW + (n - 1) * GRID.colGap;
+      const flat = flatScreens(sub.screens, sub.code), n = flat.length, w = n * GRID.colW + (n - 1) * GRID.colGap;
       if (sub.code !== g.code) {   // แถบย่อย (B1 B2) เฉพาะเมื่อกลุ่มมีหลาย scenario · เจ้าของงานเคาะ 20 ต.ค. 2569: 1 scenario = 1 บล็อก ⇒ ไม่มีแถบย่อย ป้าย state = A.1 A.2 …
         put(await flowBar(prefix, sub.code, sub.title, 'Sub Flow', w), x0, y);
         y += GRID.barH + GRID.gap;
@@ -1601,8 +1658,7 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
         CREATED = [];
       } else if (opts.flow !== false && USERFLOW && sn != null && USERFLOW.scenarios[sn]) {   // ผัง userflow ซ้ายของบล็อก (ขอบขวาห่างป้าย Device FLOW_GAP)
         const codes = {}, loose = [];
-        sub.screens.forEach(([label, , ids], i) => {
-          const c = sub.code + '.' + (i + 1);
+        flat.forEach(({ code: c, label, ids }) => {
           const list = String(ids || '').split(/\s+/).filter(Boolean);
           if (!list.length) loose.push(c + ' ' + label);
           list.forEach(id => { (codes[id] = codes[id] || []).push(c); });
@@ -1617,23 +1673,34 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
         } catch (e) { warn('ผัง userflow S' + sn, e); const k = dropCreated(page); if (k) log('    ลบชิ้นที่ค้างจากผังที่พัง ' + k + ' ชิ้น'); }
         CREATED = [];
       }
+      /* แถวบน: จอเดี่ยว = ป้ายจอ · เส้นทางย่อย = ป้ายชื่อเส้นทางคร่อมคอลัมน์ของตัวเอง (Sub Flow)
+         แถวล่าง: ป้ายจอของเส้นทางย่อย มีเฉพาะบล็อกที่มีเส้นทางย่อย (แพตเทิร์น S20 · 10 พ.ย. 2569) */
+      const hasPath = flat.some(s => s.path);
       put(await deviceLabel(prefix, 'Header', GRID.barH), 0, y);
-      for (const [i, [label]] of sub.screens.entries()) put(await flowBar(prefix, sub.code + '.' + (i + 1), label, 'Sub Flow 2', GRID.colW), x0 + i * pitch, y);
+      for (const [i, sc] of flat.entries()) {
+        if (!sc.path) put(await flowBar(prefix, sc.code, sc.label, 'Sub Flow 2', GRID.colW), x0 + i * pitch, y);
+        else if (sc.first) put(await flowBar(prefix, sc.pathCode, sc.path, 'Sub Flow', sc.span * GRID.colW + (sc.span - 1) * GRID.colGap), x0 + i * pitch, y);
+      }
+      if (hasPath) {
+        y += GRID.barH + GRID.gap;
+        put(await deviceLabel(prefix, 'Header', GRID.barH), 0, y);
+        for (const [i, sc] of flat.entries()) if (sc.path) put(await flowBar(prefix, sc.code, sc.label, 'Sub Flow 2', GRID.colW), x0 + i * pitch, y);
+      }
       y += GRID.barH + GRID.gap;
       for (const mob of (opts.devices || [false, true])) {   // devices: [false]=desktop อย่างเดียว · [true]=mobile อย่างเดียว · ไม่ส่ง=ทั้งคู่ (แถว mobile ใต้ desktop)
         MOB = mob; let h = 0; const rowY = y;
-        for (const [i, [label, fn]] of sub.screens.entries()) {
+        for (const [i, { code: cd, label, fn }] of flat.entries()) {
           const x = x0 + i * pitch;
           CREATED = []; PLACE = { x, y: rowY };   // เฟรมจอไปอยู่ตำแหน่งจริงทันทีที่สร้าง · ชิ้นที่สร้างระหว่างทางถูกติดตามไว้
           try {
             PINS = []; const s = await fn(); stripDividers(s); await polish(s); repin(); await bindTones(); if (typeof AFTER_SCREEN === 'function') await AFTER_SCREEN(s);   // AFTER_SCREEN = ตัวเรียกเฉพาะปลั๊กอิน (บำรุงรักษา: ลิงก์เลขทะเบียน 6 พ.ย. 2569)
-            s.name = prefix + ' / ' + sub.code + '.' + (i + 1) + ' · ' + sub.tag + ' — ' + label + (mob ? ' · mobile' : '');
+            s.name = prefix + ' / ' + cd + ' · ' + sub.tag + ' — ' + label + (mob ? ' · mobile' : '');
             if (s.setPluginData) s.setPluginData('builtAt', String(Date.now()));   // ส่งภาพไป FigJam เลือกจอที่สร้างล่าสุดตามเวลานี้ (exportShots · 9 พ.ย. 2569)
             put(s, x, rowY); h = Math.max(h, s.height); made.push(s);
-            const cd = sub.code + '.' + (i + 1); if (!byCode[cd]) byCode[cd] = s;
+            if (!byCode[cd]) byCode[cd] = s;
             log('  · ' + made.length + '/' + total + ' ' + s.name);
           } catch (e) {
-            warn(sub.code + '.' + (i + 1) + ' ' + label + (mob ? ' (mobile)' : ''), e);
+            warn(cd + ' ' + label + (mob ? ' (mobile)' : ''), e);
             const k = dropCreated(page); if (k) log('    ลบชิ้นที่ค้างจากจอที่พัง ' + k + ' ชิ้น');
           }
           CREATED = []; PLACE = null;

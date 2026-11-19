@@ -27,7 +27,7 @@
 <span id="pick"></span></p>
 <button id="pickgo" style="background:#1d4ed8">สร้างเฉพาะ scenario ที่เลือก</button> <button id="pickshots" style="background:#334155">ส่งภาพจอ scenario ที่เลือกไป FigJam</button>
 <p><small>เปลี่ยนไฟล์หรือไลบรารี → เช็คก่อนว่า component ครบ · แก้ไฟล์ flowchart (27) หรือ userflow (14) แล้วต้อง build ปลั๊กอินใหม่ ผังถึงจะตาม · ปิด-เปิดปลั๊กอินใหม่ทุกครั้งหลังสคริปต์เปลี่ยน</small></p>
-<button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button> <button id="copylog" style="background:#334155">คัดลอก log</button>
+<button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button> <button id="audit" style="background:#475467">ตรวจจอซ้ำบนหน้านี้ (ไม่แก้อะไร)</button> <button id="copylog" style="background:#334155">คัดลอก log</button>
 <div id="log"></div>
 <script>
 const send = (type, extra) => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: Object.assign({ type, devices: document.querySelector('input[name=dev]:checked').value }, extra || {}) }, '*'); };
@@ -47,6 +47,7 @@ document.getElementById('shots').onclick = () => send('export-shots');
 /* 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่" ⇒ ใช้ช่องติ๊ก scenario ชุดเดียวกับปุ่มสร้าง · ส่งเฉพาะจอของ S ที่ติ๊ก */
 document.getElementById('pickshots').onclick = () => { const scen = [...document.querySelectorAll('#pick input:checked')].map(i => i.dataset.s); if (!scen.length) { document.getElementById('log').textContent = 'ติ๊ก scenario ก่อน (ไม่ติ๊ก = ใช้ปุ่ม ส่งภาพจอบนหน้านี้ไป FigJam ด้านบน)'; return; } send('export-shots', { scen }); };
 document.getElementById('clearProto').onclick = () => send('clear-proto');
+document.getElementById('audit').onclick = () => send('audit-dup');
 document.getElementById('moveLatest').onclick = () => send('move-latest');
 async function postFile(path, body) { const r = await fetch(SERVE + path.split('/').map(encodeURIComponent).join('/'), { method: 'POST', body }); if (!r.ok) throw new Error(path + ' ' + r.status); }
 let shotOk = 0, shotErr = 0;
