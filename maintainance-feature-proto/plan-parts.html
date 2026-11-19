@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการอะไหล่ของยานพาหนะ | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature แผนบำรุงรักษา — หน้าจัดการอะไหล่ของยานพาหนะ (จอ A1.14 · A5.2)
+  ต้นแบบหน้าตา = จอ Figma "MF / H1.9 … หน้าจัดการอะไหล่ของยานพาหนะ" (ไฟล์ Untitled D0ahPEpyZtZ09gnnrcv4sU node 195:489313)
+  ลำดับในจอ: ยานพาหนะที่เลือก → การเบิกอะไหล่ (เบิก / ไม่เบิก) → น้ำมันไฮดรอลิก (3 ตัวเลือก + เบอร์ รหัส จำนวน เมื่อเปลี่ยน) → อะไหล่อื่นๆ (ตาราง + ระบุอะไหล่เพิ่มเติม)
+  ที่มา · ไฟล์ Component: Page header (Breadcrumbs) · Section header (.sect Divider ปิด) + Badge · Table (.tbl.striped) · Radio text card (.radcards) ·
+           Input dropdown · Text input · Secondary button (ระบุอะไหล่เพิ่มเติม) · Action icons แก้ไข/ลบ · Modal · Notification
+        · ไฟล์ UI Release#2: หน้า "5.3 Vehicle Breakdown" (Radio text card) · หน้า "5.2 Vehicle Management" (ตาราง)
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="crumbs"><a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><a href="plans.html">บำรุงรักษาตามวาระ</a><span class="sep"></span><a href="#" data-back id="crumb-form">สร้างแผน</a><span class="sep"></span><span class="cur">จัดการอะไหล่ของยานพาหนะ</span></div>
+      <div class="page-title-row"><h1 class="page-title mb-0" id="title">จัดการอะไหล่ของยานพาหนะ</h1></div>
+
+      <div class="flex flex-col gap-8">
+        <section>
+          <div class="sect border-b-0 pb-0"><span>ยานพาหนะที่เลือก</span><span class="badge sq" id="n-car"></span></div>
+          <div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th class="w-[160px]">ทะเบียน</th><th class="w-[160px]">ประเภทยานพาหนะ</th><th class="w-[160px]">เปลี่ยนน้ำมันครั้งล่าสุด</th><th>น้ำมันไฮดรอลิก</th><th class="w-[144px]">อะไหล่อื่นๆ</th></tr></thead><tbody id="cars"></tbody></table></div>
+        </section>
+
+        <div><div class="f mb-0"><label>การเบิกอะไหล่</label></div>
+          <div class="radcards" id="draw">
+            <label class="radcard"><input type="radio" name="draw" value="pick"><span class="rdot"></span><span class="rc-tx"><b>เบิกอะไหล่</b><small>เลือกอะไหล่ที่ต้องเบิกให้ยานพาหนะที่เลือก</small></span></label>
+            <label class="radcard"><input type="radio" name="draw" value="none"><span class="rdot"></span><span class="rc-tx"><b>ไม่เบิกอะไหล่</b><small>ยานพาหนะที่เลือกไม่ใช้อะไหล่จากการเบิก</small></span></label>
+          </div></div>
+
+        <section>
+          <div class="sect border-b-0 pb-0">น้ำมันไฮดรอลิก</div>
+          <div class="radcards cols-3" id="oil"></div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 hidden" id="oil-change">
+            <div class="f mb-0"><label for="oil-no">เบอร์น้ำมัน</label><div class="in noic"><select id="oil-no"><option value="">เลือกเบอร์น้ำมัน</option><option>ISO VG 32</option><option selected>ISO VG 46</option><option>ISO VG 68</option></select></div></div>
+            <div class="f mb-0"><label for="oil-code">รหัสน้ำมัน</label><div class="in noic"><input type="text" id="oil-code" value="OL-0011" placeholder="ระบุรหัสน้ำมัน"></div></div>
+            <div class="f mb-0"><label for="oil-qty">จำนวน (ลิตร)</label><div class="in noic"><input type="number" id="oil-qty" value="30" min="1"></div></div>
+          </div>
+        </section>
+
+        <section class="hidden" id="parts-sec">
+          <div class="sect border-b-0 pb-0"><span>อะไหล่อื่นๆ</span><span class="badge sq" id="n-part"></span>
+            <button class="btn btn-s ml-auto" type="button" id="add-part"><span class="ms">add</span>ระบุอะไหล่เพิ่มเติม</button></div>
+          <div id="parts"></div>
+        </section>
+
+        <div class="flex items-center justify-between gap-3">
+          <a class="btn btn-s btn-lg !no-underline" href="#" data-back>ย้อนกลับ</a>
+          <button class="btn btn-p btn-lg ml-auto" type="button" id="save"></button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ระบุอะไหล่เพิ่มเติม / แก้ไขอะไหล่ -->
+<div class="modal-overlay hidden" id="m-part">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-part-t">
+    <div class="modal-hd"><div class="modal-hd-c"><h2 id="m-part-t">ระบุอะไหล่เพิ่มเติม</h2>
+      <button class="modal-x" type="button" data-close="m-part" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd">
+      <div class="grid grid-cols-2 gap-6">
+        <div class="f mb-0 col-span-2"><label for="pt-name">ชื่ออะไหล่</label><div class="in noic"><input type="text" id="pt-name" placeholder="ระบุชื่ออะไหล่"></div></div>
+        <div class="f mb-0"><label for="pt-brand">ยี่ห้อ</label><div class="in noic"><input type="text" id="pt-brand" placeholder="ระบุยี่ห้อ"></div></div>
+        <div class="f mb-0"><label for="pt-model">รุ่น</label><div class="in noic"><input type="text" id="pt-model" placeholder="ระบุรุ่น"></div></div>
+        <div class="f mb-0"><label for="pt-code">รหัสอะไหล่</label><div class="in noic"><input type="text" id="pt-code" placeholder="ระบุรหัสอะไหล่"></div></div>
+        <div class="f mb-0"><label for="pt-qty">จำนวน</label><div class="in noic"><input type="number" id="pt-qty" min="1" value="1"></div></div>
+        <div class="f mb-0"><label for="pt-unit">หน่วย</label><div class="in noic"><input type="text" id="pt-unit" placeholder="ระบุหน่วย" value="ชิ้น"></div></div>
+      </div>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-part">ยกเลิก</button>
+      <button class="btn btn-p" type="button" id="pt-ok">บันทึก</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, 'plans');
+const qs = new URLSearchParams(location.search);
+const cars = (qs.get('cars') || '').split(',').filter(Boolean).map(Number), q = qs.get('q') || 0;
+const back = `plan-form.html?keep=1&q=${q}${S.draft && S.draft.editId ? '&id=' + S.draft.editId : ''}`;
+document.querySelectorAll('[data-back]').forEach(a => a.href = back);
+if (!S.draft || !cars.length) location.href = 'plans.html';
+const D = S.draft;
+if (D.editId) $('crumb-form').textContent = 'แก้ไขแผน';
+/* ค่าตั้งต้น = ของคันแรก (แก้ไข A5) · ยังไม่กำหนด = ยังไม่เลือกการเบิก · น้ำมัน เก็บตัวอย่าง */
+const first = D.parts[cars[0]] || {};
+let oil = first.oil || OIL_OPTS[0], draw = first.none ? 'none' : first.oil ? 'pick' : '', list = first.oil ? listOf(first).map(r => r.slice()) : PART_DEFAULT.map(r => r.slice()), editAt = -1;
+
+const label = cars.length > 1 ? cars.length + ' คัน' : POOL[cars[0]][0];
+$('title').textContent = 'จัดการอะไหล่ของยานพาหนะ ' + label;
+$('save').textContent = 'บันทึกอะไหล่ของยานพาหนะ ' + label;
+$('n-car').textContent = cars.length + ' คัน';
+const NOTSET = 'ยังไม่กำหนด';
+$('cars').innerHTML = cars.map(i => { const c = POOL[i], x = D.parts[i]; return `<tr><td>${plateCell(c, c[1], 'max-w-[130px]')}</td><td>${typeOf(c)}</td><td>${lastOil(i)}</td>
+  <td>${x ? esc(x.oil) : NOTSET}</td><td>${x ? (x.none ? 'ไม่เบิกอะไหล่' : listOf(x).length + ' รายการ') : NOTSET}</td></tr>`; }).join('');
+$('oil').innerHTML = OIL_OPTS.map(o => `<label class="radcard"><input type="radio" name="oil" value="${o}"><span class="rdot"></span><span class="rc-tx"><b>${o}</b></span></label>`).join('');
+if (first.oilQty) $('oil-qty').value = first.oilQty;
+
+function render() {
+  [['#draw', draw], ['#oil', oil]].forEach(([g, v]) => document.querySelectorAll(g + ' .radcard').forEach(l => { const on = l.querySelector('input').value === v; l.classList.toggle('sel', on); l.querySelector('input').checked = on; }));
+  $('oil-change').classList.toggle('hidden', !oilChange(oil));
+  $('parts-sec').classList.toggle('hidden', draw !== 'pick');
+  $('n-part').textContent = list.length;
+  $('parts').innerHTML = list.length ? `<div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th>ชื่อ</th><th class="w-[160px]">ยี่ห้อ</th><th class="w-[160px]">รุ่น</th><th class="w-[160px]">รหัส</th><th class="w-[160px]">จำนวน</th><th class="w-[120px]">หน่วย</th><th class="w-[104px]" aria-label="จัดการ"></th></tr></thead>
+    <tbody>${list.map((r, k) => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td>${r[4]}</td><td>${esc(r[5])}</td>
+      <td class="dt-action"><button class="btn btn-t btn-icon" type="button" data-pe="${k}" aria-label="แก้ไข ${esc(r[0])}"><span class="ms">stylus</span></button><button class="btn btn-t btn-icon" type="button" data-pd="${k}" aria-label="ลบ ${esc(r[0])}"><span class="ms">delete</span></button></td></tr>`).join('')}</tbody></table></div>`
+    : emptyState('data-empty', 'ยังไม่มีรายการอะไหล่', 'เลือกไส้กรองหรืออะไหล่อื่นจากคลัง หรือกดระบุอะไหล่เพิ่มเติม');
+  /* บันทึกได้เมื่อเลือกการเบิกแล้ว · เบิกต้องมีอย่างน้อย 1 รายการ (6 พ.ย. 2569 บังคับกรอกอะไหล่ทุกคัน) */
+  $('save').disabled = !draw || (draw === 'pick' && !list.length);
+}
+$('draw').addEventListener('change', e => { draw = e.target.value; render(); });
+$('oil').addEventListener('change', e => { oil = e.target.value; render(); });
+const F = ['pt-name', 'pt-brand', 'pt-model', 'pt-code', 'pt-qty', 'pt-unit'];
+function openPart(k) { editAt = k; const r = k >= 0 ? list[k] : ['', '', '', '', 1, 'ชิ้น']; F.forEach((id, j) => $(id).value = r[j]);
+  $('m-part-t').textContent = k >= 0 ? 'แก้ไขอะไหล่' : 'ระบุอะไหล่เพิ่มเติม'; modal('m-part', true); $('pt-name').focus(); }
+$('add-part').addEventListener('click', () => openPart(-1));
+$('parts').addEventListener('click', e => { const ed = e.target.closest('[data-pe]'); if (ed) openPart(+ed.dataset.pe);
+  const dl = e.target.closest('[data-pd]'); if (dl) { list.splice(+dl.dataset.pd, 1); render(); } });
+$('pt-ok').addEventListener('click', () => { const r = F.map(id => $(id).value.trim()); if (!r[0]) { $('pt-name').focus(); return; } r[4] = +r[4] || 1;
+  if (editAt >= 0) list[editAt] = r; else list.push(r); modal('m-part', false); render(); });
+$('save').addEventListener('click', () => {
+  cars.forEach(i => { D.parts[i] = { oil, oilQty: oilChange(oil) ? +$('oil-qty').value || CAR_QTY[0] : 0, none: draw === 'none', list: draw === 'pick' ? list.map(r => r.slice()) : [] }; });
+  mfpSave(S);
+  flash(cars.length > 1 ? `บันทึกอะไหล่ของยานพาหนะ ${cars.length} คันแล้ว` : `บันทึกอะไหล่ของยานพาหนะ ${POOL[cars[0]][0]} แล้ว`);   // FEATURE_TOASTS.T1
+  location.href = back;
+});
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายละเอียดยานพาหนะ | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature ติดตามและแดชบอร์ด — รายละเอียดยานพาหนะ (จอ W.6 · W.9 · W.10)
+  ต้นแบบหน้าตา = จอ Figma "MF / H3.4 · H3.5 … หน้ารายละเอียดยานพาหนะ" (node 195:1015187 · 195:1016799) ไฟล์ Untitled D0ahPEpyZtZ09gnnrcv4sU
+  แท็บข้อมูลยานพาหนะในจอใช้ Vehicle info · Fleet card · Machine card (component ของไฟล์ Maintain-D) — Prototype แสดงด้วย .incident-summary (VehicleAndReporterInfo) ไปก่อน จดเป็นจุดต่าง
+  ที่มา · ไฟล์ Component: Page header (Breadcrumbs + Pill outline) · Tabs · Section label · Table (.tbl.striped) · Dropdown menu · Table pagination · Empty state
+        · ไฟล์ UI Release#2: หน้า "5.2 Vehicle Management" เฟรม `Vehicle detail`
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="crumbs" id="crumbs"></div>
+      <div class="page-title-row"><h1 class="page-title mb-0" id="title"></h1><span id="st"></span></div>
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="flex flex-col gap-8 mt-8" id="body"></div>
+    </main>
+  </div>
+</div>
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, 'vehicles');
+const n = +(new URLSearchParams(location.search).get('v') || 5), v = VDATA[n] || VDATA[5];
+const TABS = ['ข้อมูลยานพาหนะ', 'ตารางบำรุงรักษา', 'ประวัติการบำรุงรักษาเครื่องจักร', 'ประวัติการบำรุงรักษาเครื่องยนต์', 'ประวัติการซ่อมบำรุง'];
+let tab = 1;
+/* ตารางบำรุงรักษา (W.10) — กำหนดครั้งถัดไป + ประวัติการบำรุงรักษา · ค่าตามจอ H3.5 (82-1145 ขอนแก่น) */
+const last = v[4] === '-' ? '—' : v[4], nextY = (d) => d === '—' ? '—' : d.replace(/(\d{4})$/, (y) => +y + 1);
+const NEXT = [['รอบบำรุงรักษา', last, 'ทุก 12 เดือน', nextY(last), ''], ['ไส้กรองอากาศ', last, 'เปลี่ยนทุก 1 ปี', nextY(last), ''],
+  ['เปลี่ยนน้ำมันไฮดรอลิก', '12/03/2567', 'เปลี่ยนทุก 3 ปี (ปีที่ 1 และ 2 เก็บตัวอย่าง)', '12/03/2570', 'ใกล้ครบกำหนดบำรุงรักษา'], ['เก็บตัวอย่างน้ำมัน', last + ' · ผล ' + v[8], 'เก็บตัวอย่างปีที่ 2 และ 3', 'ปีนี้ครบรอบเปลี่ยนน้ำมัน', ''], ['การตรวจ ปจ.2', last, 'ทุก 1 ปี', nextY(last), '']];
+const HIST = v[4] === '-' ? [] : [[v[4], v[5], 'เปลี่ยนไส้กรองไฮดรอลิก · ไส้กรองอากาศ', 'เปลี่ยน', 'เก็บตัวอย่าง', 'ผลตรวจ ' + v[8], 'บันทึกเอกสารแล้ว', 'นายวิชัย ทองดี'],
+  ['20/06/2568', 'MRZ6800007', 'เปลี่ยนไส้กรองไฮดรอลิก · ไส้กรองอากาศ', 'เปลี่ยน', 'เก็บตัวอย่าง', 'ผลตรวจ ผ่าน', 'บันทึกเอกสารแล้ว', 'นายสมชาย พูลสุข'],
+  ['12/03/2567', 'MRZ6700004', 'เปลี่ยนน้ำมันไฮดรอลิก · ไส้กรองทุกรายการ', 'เปลี่ยน', 'เปลี่ยนน้ำมัน', '', 'บันทึกเอกสารแล้ว', 'นางสาวกนกวรรณ ใจมั่น']];
+function render() {
+  $('crumbs').innerHTML = `<a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><span>ยานพาหนะ</span><span class="sep"></span><a href="vehicles.html">ข้อมูลยานพาหนะ</a><span class="sep"></span><span class="cur">${esc(v[0])}</span>`;
+  $('title').textContent = v[0]; $('st').innerHTML = pill(v[11], VST2[v[11]]);
+  $('tabs').innerHTML = TABS.map((l, k) => `<button type="button" class="tab-btn${k === tab ? ' on' : ''}" role="tab" data-tab="${k}">${l}</button>`).join('');
+  if (tab === 0) {
+    $('body').innerHTML = `<section><div class="sect-label">ข้อมูลยานพาหนะ</div>${kvCard([['ทะเบียน', esc(v[0])], ['ประเภท', v[1]], ['อายุการใช้งาน', v[2] + ' ปี'], ['ระยะทาง · ชั่วโมงเครื่องจักร', v[3]], ['ประกัน', pill(v[10], INS[v[10]])], ['สถานะยานพาหนะ', pill(v[11], VST2[v[11]])], ['ผู้ดูแลยานพาหนะ', esc(v[12])], ['เบอร์ติดต่อ', v[13]]])}</section>
+      <section><div class="sect-label">เครื่องมือกล</div>${kvCard([['ชนิด', 'กระเช้า'], ['ยี่ห้อ/รุ่น', 'Tadano AT-100'], ['SERIAL No.', 'AT100-20931'], ['หมายเลข HC', 'HC-0388'], ['ชั่วโมงเครื่องจักรสะสม', v[3].split(' · ')[1] || '—'], ['บำรุงรักษาล่าสุด', last]])}</section>`;
+    return;
+  }
+  if (tab > 1) { $('body').innerHTML = emptyState('data-empty', 'ยังไม่มีข้อมูล', 'แท็บนี้อยู่ในระบบหลัก ไม่อยู่ใน Feature บำรุงรักษาตามวาระ'); return; }
+  $('body').innerHTML = `<section><div class="sect-label">กำหนดครั้งถัดไป</div><div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th>รายการ</th><th class="w-[200px]">ครั้งล่าสุด</th><th class="w-[200px]">รอบ</th><th class="w-[200px]">ครบกำหนด</th></tr></thead>
+      <tbody>${NEXT.map(r => `<tr><td>${r[0]}</td><td><div class="truncate max-w-[190px]">${esc(r[1])}</div></td><td><div class="truncate max-w-[190px]">${esc(r[2])}</div></td><td><div class="truncate max-w-[190px]">${esc(r[3])}</div>${r[4] ? `<div class="text-xs text-warning-600">${r[4]}</div>` : ''}</td></tr>`).join('')}</tbody></table></div></section>
+    <section><div class="sect-label">ประวัติการบำรุงรักษา (${HIST.length})</div>${HIST.length ? `<div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th class="w-[130px]">วันที่ปิดงาน</th><th class="w-[130px]">เลขที่ MR</th><th>งานที่ทำ</th><th class="w-[130px]">ไส้กรองอากาศ</th><th class="w-[150px]">น้ำมันไฮดรอลิก</th><th class="w-[150px]">การตรวจ ปจ.2</th><th class="w-[170px]">ผู้ดำเนินการ</th><th class="w-[60px]" aria-label="จัดการ"></th></tr></thead>
+      <tbody>${HIST.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td><div class="truncate max-w-[200px]">${esc(r[2])}</div></td><td>${r[3]}</td><td>${r[4]}${r[5] ? `<div class="text-xs text-gray-500">${r[5]}</div>` : ''}</td><td>${r[6]}</td><td><div class="truncate max-w-[160px]">${esc(r[7])}</div></td>
+        <td class="dt-action">${menu('จัดการ ' + r[1], [{ label: 'ดูรายละเอียด', icon: 'quick_reference_all', attr: 'data-hist' }])}</td></tr>`).join('')}</tbody></table>${pager(HIST.length, 1, HIST.length, 1, 0)}</div>` : emptyState('data-empty', 'ยังไม่มีประวัติการบำรุงรักษา', '')}</section>`;
+}
+document.addEventListener('click', e => { const t = e.target.closest('[data-tab]'); if (t) { tab = +t.dataset.tab; render(); }
+  if (e.target.closest('[data-hist]')) notify('ดูรายละเอียดงานบำรุงรักษา', { sub: 'อยู่ใน Feature งานรายคัน (หน้าผลการบำรุงรักษา)' }); });
+render();
+</script>
+</body>
+</html>

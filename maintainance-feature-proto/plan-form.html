@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สร้างแผนบำรุงรักษา | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature แผนบำรุงรักษา — ฟอร์มสร้าง/แก้ไขแผน (จอ A1.2–A1.17 · A5.1 · A7.1–A7.4 · A23.1–A23.2 · R.3 · R.6)
+  ต้นแบบหน้าตา = จอ Figma "MF / H1.2 – H1.11 … หน้าสร้างแผน" (ไฟล์ Untitled D0ahPEpyZtZ09gnnrcv4sU · H1.5 195:483989 · H1.7 195:486738 · H1.8 195:488040 · modal H1.3 195:481015)
+  ลำดับ (R111): เพิ่มยานพาหนะเข้าแผนก่อน (แท็บทั้งหมด) แล้วจัดเข้าไตรมาส · ส่งอนุมัติได้เมื่อทุกคันอยู่ในไตรมาสและกำหนดอะไหล่ครบ (R112)
+  ที่มา · ไฟล์ Component: Page header (Breadcrumbs) · Section header (.sect · Divider ปิด) + Badge · Text input · Input dropdown · Tabs + Badge ·
+           Table header (ค้นหา + Secondary button) · Table + Checkbox · Pill outline · Table pagination · Dropdown menu · Empty state/Data empty ·
+           Modal (ตารางติ๊ก + ตัวกรอง + pagination) · Notification · Secondary/Primary button Size=lg
+        · ไฟล์ UI Release#2: หน้า "5.2 Vehicle Management" เฟรม `Export reports - Select vehicles` · หน้า "5.1 Rental Contract Management" เฟรม `Create contract`
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="crumbs"><a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><a href="plans.html">บำรุงรักษาตามวาระ</a><span class="sep"></span><span class="cur" id="crumb">สร้างแผน</span></div>
+      <div class="page-title-row"><h1 class="page-title mb-0" id="title">สร้างแผนบำรุงรักษา</h1></div>
+
+      <div class="flex flex-col gap-8">
+        <section>
+          <div class="sect border-b-0 pb-0">ข้อมูลแผน</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="f mb-0"><label for="name">ชื่อแผน</label><div class="in noic"><input type="text" id="name" placeholder="ระบุชื่อแผน"></div><div class="help hidden" id="name-err">กรุณาระบุชื่อแผน</div></div>
+            <div class="f mb-0"><label for="year">ปีงบประมาณ</label><div class="in noic"><select id="year"></select></div><div class="help hidden" id="year-err">กรุณาเลือกปีงบประมาณ</div></div>
+          </div>
+        </section>
+
+        <section>
+          <div class="sect border-b-0 pb-0"><span>ยานพาหนะในแผน</span><span class="badge sq" id="n-in"></span></div>
+          <div class="tabs" role="tablist" id="tabs"></div>
+          <div class="mt-4" id="tab-body"></div>
+        </section>
+
+        <section>
+          <div class="sect border-b-0 pb-0" id="parts-t"></div>
+          <div id="parts"></div>
+        </section>
+
+        <div class="flex items-center justify-between gap-3">
+          <a class="btn btn-s btn-lg !no-underline" href="plans.html">ย้อนกลับ</a>
+          <button class="btn btn-p btn-lg ml-auto" type="button" id="save">บันทึกและส่งอนุมัติ</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- เพิ่มยานพาหนะเข้าแผน (A1.4–A1.7) / เพิ่มยานพาหนะเข้าไตรมาส (A1.10–A1.11) — ตามจอ H1.3: ค้นหา + ปุ่มตัวกรอง (กางช่อง ภาค เขต ประเภทยานพาหนะ "(ถ้ามี)") · ตารางติ๊ก · pagination -->
+<div class="modal-overlay hidden" id="m-pick">
+  <div class="modal xl" role="dialog" aria-modal="true" aria-labelledby="m-pick-t">
+    <div class="modal-hd"><div class="modal-hd-c"><div class="flex-1 min-w-0"><h2 id="m-pick-t"></h2><div class="modal-sub" id="m-pick-s"></div></div>
+      <button class="modal-x" type="button" data-close="m-pick" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd">
+      <div class="stack" id="pick-tools">
+        <div class="list-toolbar split mb-0">
+          <div class="lt-search max-w-[320px]"><div class="search"><span class="ms">search</span><input type="search" id="pick-q" placeholder="ค้นหาทะเบียน, ยี่ห้อ/รุ่น, หน่วยงาน" aria-label="ค้นหายานพาหนะ"></div></div>
+          <div class="lt-actions"><button class="btn btn-s" type="button" id="pick-fbtn"><span class="ms">filter_list</span>ตัวกรอง</button></div>
+        </div>
+        <div class="hidden" id="pick-filter">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="f mb-0"><label for="pick-r">ภาค <small>(ถ้ามี)</small></label><div class="in noic"><select id="pick-r"></select></div></div>
+            <div class="f mb-0"><label for="pick-d">เขต <small>(ถ้ามี)</small></label><div class="in noic"><select id="pick-d"></select></div></div>
+            <div class="f mb-0"><label for="pick-t">ประเภทยานพาหนะ <small>(ถ้ามี)</small></label><div class="in noic"><select id="pick-t"></select></div></div>
+          </div>
+          <div class="flex items-center gap-3 mt-4"><button class="btn btn-link mr-auto" type="button" id="pick-fclear">ล้างตัวกรอง</button>
+            <button class="btn btn-s btn-sm" type="button" id="pick-fcancel">ยกเลิก</button><button class="btn btn-p btn-sm" type="button" id="pick-fok">ตกลง</button></div>
+        </div>
+      </div>
+      <div class="tblwrap mt-4" id="pick-wrap">
+        <table class="tbl striped"><thead><tr><th class="w-[176px]"><label class="flex items-center gap-3"><input type="checkbox" id="pick-all" aria-label="เลือกทั้งหมด">ทะเบียน</label></th><th>ยี่ห้อ/รุ่น</th><th class="w-[160px]">บำรุงรักษาเครื่องจักรล่าสุด</th><th class="w-[150px]">ซ่อมเครื่องจักรล่าสุด</th></tr></thead>
+          <tbody id="pick-body"></tbody></table>
+        <div id="pick-foot"></div>
+      </div>
+      <div class="hidden" id="pick-empty"></div>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-pick">ยกเลิก</button>
+      <button class="btn btn-p" type="button" id="pick-ok" disabled></button>
+    </div></div></div>
+  </div>
+</div>
+
+<!-- ย้ายไปไตรมาสอื่น (A7.2–A7.4) -->
+<div class="modal-overlay hidden" id="m-move">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-move-t">
+    <div class="modal-hd"><div class="modal-hd-c"><div class="flex-1 min-w-0"><h2 id="m-move-t"></h2><div class="modal-sub">ยานพาหนะและอะไหล่ที่กำหนดไว้ของยานพาหนะคันนี้จะย้ายไปไตรมาสที่เลือก</div></div>
+      <button class="modal-x" type="button" data-close="m-move" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd"><div class="f mb-0"><label for="move-q">ไตรมาส</label><div class="in noic"><select id="move-q"></select></div></div></div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-move">ยกเลิก</button>
+      <button class="btn btn-p" type="button" id="move-ok" disabled>ย้ายยานพาหนะ</button>
+    </div></div></div>
+  </div>
+</div>
+
+<!-- ยืนยันการแก้ไขแผน (R.6) -->
+<div class="modal-overlay hidden" id="m-edit">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-edit-t">
+    <div class="modal-hd center"><div class="modal-hd-c"><h2 id="m-edit-t">ยืนยันการแก้ไขแผน</h2>
+      <div class="modal-sub">เมื่อบันทึก แผนจะกลับเป็นสถานะรออนุมัติ และต้องให้ผู้อนุมัติตรวจสอบอีกครั้ง</div></div>
+      <button class="modal-x" type="button" data-close="m-edit" aria-label="ปิด"><span class="ms">close</span></button></div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-edit">ยกเลิก</button>
+      <button class="btn btn-p" type="button" id="m-edit-ok">ยืนยัน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, 'plans');
+const qs = new URLSearchParams(location.search);
+const editId = qs.get('id');
+/* ร่างแผนอยู่ใน S.draft — กลับจากหน้าจัดการอะไหล่ (?keep=1) ใช้ร่างเดิม · เข้าใหม่เริ่มร่างใหม่ */
+if (!qs.get('keep') || !S.draft) {
+  const src = editId && S.plans.find(p => p.id === editId);
+  S.draft = src ? JSON.parse(JSON.stringify({ editId, name: src.name, year: src.year, cars: src.cars, parts: src.parts }))
+    : { editId: null, name: '', year: '', cars: {}, parts: {} };
+  mfpSave(S);
+}
+const D = S.draft;
+let tab = +(qs.get('q') || 0), ticked = [], query = '';
+history.replaceState(null, '', location.pathname + (editId ? '?id=' + editId : ''));
+
+if (D.editId) { $('title').textContent = 'แก้ไขแผน ' + D.editId; $('crumb').textContent = 'แก้ไขแผน'; document.title = 'แก้ไขแผน | Maintain-D (Prototype)'; }
+$('name').value = D.name;
+$('year').innerHTML = '<option value="">เลือกปีงบประมาณ</option>' + YEARS.map(y => `<option>${y}</option>`).join('');
+$('year').value = D.year; $('year').disabled = !!D.editId;
+$('name').addEventListener('input', () => { D.name = $('name').value; $('name-err').classList.add('hidden'); $('name').closest('.f').classList.remove('err'); mfpSave(S); });
+$('year').addEventListener('change', () => { D.year = $('year').value; $('year-err').classList.add('hidden'); $('year').closest('.f').classList.remove('err'); mfpSave(S); });
+
+const ids = () => Object.keys(D.cars).map(Number);
+const qIds = (q) => ids().filter(i => D.cars[i] === q);
+const P = () => ({ cars: D.cars, parts: D.parts });
+const plate = (i) => POOL[i][0];
+const NOTSET = 'ยังไม่กำหนด';
+const oilText = (i) => D.parts[i] ? D.parts[i].oil : NOTSET;
+const otherText = (i) => { const x = D.parts[i]; return !x ? NOTSET : x.none ? 'ไม่เบิกอะไหล่' : listOf(x).length + ' รายการ'; };
+const match = (c) => !query || c.join(' ').toLowerCase().includes(query.toLowerCase());
+
+function renderTabs() {
+  const t = [['ทั้งหมด', ids().length]].concat([1, 2, 3, 4].map(q => ['ไตรมาส ' + q, qIds(q).length]));
+  $('tabs').innerHTML = t.map(([l, n], k) => `<button type="button" class="tab-btn${k === tab ? ' on' : ''}" role="tab" data-tab="${k}">${l} <span class="badge b-brand">${n}</span></button>`).join('');
+  $('n-in').textContent = 'ในแผน ' + ids().length + ' คัน';
+}
+function rowMenu(i) {
+  const base = [{ label: 'ดูรายละเอียด', icon: 'quick_reference_all', attr: `data-view="${i}"` }, { label: 'แก้ไข', icon: 'stylus', attr: `data-edit="${i}"` }];
+  return tab ? menu('จัดการ ' + plate(i), base.concat(['-', { label: 'ย้ายไปไตรมาสอื่น', icon: 'swap_driving_apps_wheel', attr: `data-move="${i}"` }, { label: 'เอาออกจากไตรมาส', icon: 'remove', attr: `data-out="${i}"` }]))
+    : menu('จัดการ ' + plate(i), base.concat(['-', { label: 'ลบ', icon: 'delete', attr: `data-rm="${i}"` }]));
+}
+/* ปุ่มขวาของ Table header — "+ เพิ่มยานพาหนะ" เสมอ · ติ๊กในแท็บไตรมาสแล้วมี "กำหนดอะไหล่ (n)" ต่อท้าย (จอ H1.8) */
+function actsHtml() {
+  return `<button class="btn btn-s" type="button" ${tab ? `data-addq="${tab}"` : 'data-addplan="1"'}><span class="ms">add</span>เพิ่มยานพาหนะ</button>` +
+    (tab && ticked.length ? `<button class="btn btn-s" type="button" id="set-parts">กำหนดอะไหล่ (${ticked.length})</button>` : '');
+}
+function renderActs() { const a = $('acts'); if (a) a.innerHTML = actsHtml();
+  const ta = $('t-all'), boxes = [...document.querySelectorAll('[data-tick]')]; if (ta) ta.checked = boxes.length > 0 && boxes.every(b => b.checked); }
+function renderBody() {
+  const b = $('tab-body'), all = tab ? qIds(tab) : ids(), list = all.filter(i => match(POOL[i]));
+  const done = all.filter(i => decided(P(), i)).length;
+  const head = `<div class="sect border-b-0 pb-0">${tab ? 'ยานพาหนะในไตรมาส ' + tab : 'ยานพาหนะทั้งหมดในแผน'}<span class="badge sq">${tab ? `กำหนดอะไหล่แล้ว ${done}/${all.length} คัน` : all.length + ' คัน'}</span></div>`;
+  if (!all.length) {
+    b.innerHTML = head + (tab
+      ? emptyState('empty-vehicle', 'ยังไม่มียานพาหนะในไตรมาสนี้', 'เลือกจากยานพาหนะในแผนที่ยังไม่จัดไตรมาส', `<button class="btn btn-p mt-4" type="button" data-addq="${tab}"><span class="ms">add</span>เพิ่มยานพาหนะเข้าไตรมาส ${tab}</button>`)
+      : emptyState('empty-vehicle', 'ยังไม่มียานพาหนะในแผน', 'ยานพาหนะที่ยังไม่อยู่ในแผนนี้ เพิ่มได้ทุกคัน', '<button class="btn btn-p mt-4" type="button" data-addplan="1"><span class="ms">add</span>เพิ่มยานพาหนะเข้าแผน</button>'));
+    return;
+  }
+  const tools = `<div class="list-toolbar split mb-0">
+      <div class="lt-search max-w-[320px]"><div class="search"><span class="ms">search</span><input type="search" id="tq" value="${esc(query)}" placeholder="เลขทะเบียน, ยี่ห้อ, รุ่น" aria-label="ค้นหายานพาหนะในแผน"></div></div>
+      <div class="lt-actions flex gap-3" id="acts">${actsHtml()}</div></div>`;
+  const th = `<th class="w-[176px]"><label class="flex items-center gap-3"><input type="checkbox" id="t-all" aria-label="เลือกทั้งหมด"${ticked.length && ticked.length === list.length ? ' checked' : ''}>ทะเบียน</label></th><th class="w-[150px]">ประเภทยานพาหนะ</th><th>เขต / หน่วยงานเจ้าของยานพาหนะ</th>` +
+    (tab ? '<th class="w-[160px]">น้ำมันไฮดรอลิก</th>' : '<th class="w-[160px]">ไตรมาส</th>') + '<th class="w-[160px]">อะไหล่อื่นๆ</th><th class="w-[60px]" aria-label="จัดการ"></th>';
+  const rows = list.map(i => { const c = POOL[i];
+    return `<tr><td><div class="flex items-start gap-3"><input type="checkbox" class="mt-1" data-tick="${i}" aria-label="เลือก ${esc(c[0])}"${ticked.includes(i) ? ' checked' : ''}><div>${plateCell(c, modelOf(c) + ' + ' + c[1].split(' + ')[1], 'max-w-[100px]')}</div></div></td>
+      <td>${esc(typeOf(c))}</td><td>${esc(c[2])}</td>
+      <td>${tab ? esc(oilText(i)) : D.cars[i] ? pill('ไตรมาส ' + D.cars[i], 'b-info') : pill('ยังไม่จัดไตรมาส', 'b-neutral')}</td>
+      <td>${esc(otherText(i))}</td><td class="dt-action">${rowMenu(i)}</td></tr>`; }).join('');
+  b.innerHTML = head + tools + `<div class="tblwrap mt-4"><table class="tbl striped"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>${pager(list.length, list.length ? 1 : 0, list.length, 1, 0)}</div>`;
+  const tq = $('tq'); tq.addEventListener('input', () => { query = tq.value; renderBody(); const n = $('tq'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); });
+}
+/* อะไหล่ — แท็บทั้งหมด = "อะไหล่รวมทุกไตรมาส" · แท็บไตรมาส = "อะไหล่ในไตรมาส n" (quarterParts · QPART_COLS) */
+function renderParts() {
+  $('parts-t').textContent = tab ? 'อะไหล่ในไตรมาส ' + tab : 'อะไหล่รวมทุกไตรมาส';
+  const r = partsOf(P(), tab ? qIds(tab) : ids());
+  $('parts').innerHTML = r.length ? `<div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th>ชนิด</th><th class="w-[160px]">รหัสอะไหล่</th><th class="w-[160px]">ประเภท</th><th class="w-[160px]">จำนวน</th><th class="w-[120px]">หน่วย</th></tr></thead>
+      <tbody>${r.map(x => `<tr><td>${esc(x[0])}</td><td>${x[1]}</td><td>${x[2]}</td><td>${x[3]}</td><td>${x[4]}</td></tr>`).join('')}</tbody></table></div>`
+    : emptyState('data-empty', 'ยังไม่มีรายการอะไหล่', tab ? 'จัดการอะไหล่ทีละคันจากปุ่ม … ที่แถวยานพาหนะ รายการจะรวมมาที่นี่' : 'จัดการอะไหล่ทีละคันจากปุ่ม … ที่แถวยานพาหนะในแท็บไตรมาส รายการจะรวมมาที่นี่');
+}
+const ready = () => ids().length > 0 && ids().every(i => D.cars[i] > 0 && decided(P(), i));
+function render() { renderTabs(); renderBody(); renderParts(); $('save').disabled = !ready(); }
+
+/* ---------- modal เพิ่มยานพาหนะ ---------- */
+let pickMode = 0, pickSel = [], pickPage = 0, pf = { r: '', d: '', t: '' };
+$('pick-r').innerHTML = '<option value="">ทั้งหมด</option>' + REGIONS.map(r => `<option>${r}</option>`).join('');
+$('pick-d').innerHTML = '<option value="">ทั้งหมด</option>' + [...new Set(POOL.map(c => c[2].split(' ')[0]))].map(d => `<option>${d}</option>`).join('');
+$('pick-t').innerHTML = '<option value="">ทั้งหมด</option>' + VTYPES.map(t => `<option>${t}</option>`).join('');
+const pickBase = () => pickMode ? ids().filter(i => !D.cars[i]) : POOL.map((c, i) => i).filter(i => !(i in D.cars));
+function pickPool() {
+  const q = $('pick-q').value.trim().toLowerCase();
+  return pickBase().filter(i => { const c = POOL[i]; return (!q || c.join(' ').toLowerCase().includes(q)) && (!pf.r || regionOf(c) === pf.r) && (!pf.d || c[2].startsWith(pf.d)) && (!pf.t || typeOf(c) === pf.t); });
+}
+function renderPick() {
+  const all = pickPool(), per = 10, pages = Math.max(1, Math.ceil(all.length / per)); pickPage = Math.min(pickPage, pages - 1);
+  const list = all.slice(pickPage * per, pickPage * per + per), none = !pickBase().length;
+  $('pick-wrap').classList.toggle('hidden', !list.length); $('pick-tools').classList.toggle('hidden', none);
+  $('pick-empty').classList.toggle('hidden', !!list.length);
+  $('pick-empty').innerHTML = emptyState('empty-vehicle', none ? (pickMode ? 'ยานพาหนะในแผนจัดเข้าไตรมาสครบแล้ว' : 'ยานพาหนะทุกคันอยู่ในแผนแล้ว') : 'ไม่มียานพาหนะที่เพิ่มเข้าแผนนี้ได้', '');
+  $('pick-body').innerHTML = list.map(i => { const c = POOL[i]; return `<tr><td><div class="flex items-start gap-3"><input type="checkbox" class="mt-1" data-pick="${i}" aria-label="เลือก ${esc(c[0])}"${pickSel.includes(i) ? ' checked' : ''}><div>${plateCell(c, c[2], 'max-w-[100px]')}</div></div></td>
+    <td>${esc(c[1])}</td><td>${lastMa(i)}</td><td>${lastRepair(i)}</td></tr>`; }).join('');
+  $('pick-all').checked = list.length > 0 && list.every(i => pickSel.includes(i));
+  $('pick-foot').innerHTML = pager(all.length, pickPage * per + 1, pickPage * per + list.length, pages, pickPage);
+  $('pick-ok').disabled = !pickSel.length;
+  $('pick-ok').textContent = (pickMode ? 'เพิ่มเข้าไตรมาส ' + pickMode : 'เพิ่มเข้าแผน') + (pickSel.length ? ' (' + pickSel.length + ')' : '');
+}
+function openPick(q) {
+  pickMode = q; pickSel = []; pickPage = 0; pf = { r: '', d: '', t: '' }; $('pick-q').value = ''; $('pick-filter').classList.add('hidden');
+  $('pick-fbtn').classList.toggle('hidden', !!q);
+  $('m-pick-t').textContent = q ? 'เพิ่มยานพาหนะเข้าไตรมาส ' + q : 'เพิ่มยานพาหนะเข้าแผน';
+  $('m-pick-s').textContent = q ? 'ยานพาหนะในแผนที่ยังไม่จัดไตรมาส' : 'ยานพาหนะที่ยังไม่อยู่ในแผนนี้ เพิ่มได้ทุกคัน';
+  renderPick(); modal('m-pick', true);
+}
+$('pick-q').addEventListener('input', () => { pickPage = 0; renderPick(); });
+$('pick-fbtn').addEventListener('click', () => { $('pick-r').value = pf.r; $('pick-d').value = pf.d; $('pick-t').value = pf.t; $('pick-filter').classList.toggle('hidden'); });
+$('pick-fclear').addEventListener('click', () => { ['pick-r', 'pick-d', 'pick-t'].forEach(id => $(id).value = ''); });
+$('pick-fcancel').addEventListener('click', () => $('pick-filter').classList.add('hidden'));
+$('pick-fok').addEventListener('click', () => { pf = { r: $('pick-r').value, d: $('pick-d').value, t: $('pick-t').value }; pickPage = 0; $('pick-filter').classList.add('hidden'); renderPick(); });
+$('m-pick').addEventListener('change', e => {
+  const c = e.target.closest('[data-pick]'); if (c) { const i = +c.dataset.pick; pickSel = c.checked ? pickSel.concat(i) : pickSel.filter(x => x !== i); renderPick(); }
+  if (e.target.id === 'pick-all') { const vis = [...$('pick-body').querySelectorAll('[data-pick]')].map(x => +x.dataset.pick);
+    pickSel = e.target.checked ? [...new Set(pickSel.concat(vis))] : pickSel.filter(x => !vis.includes(x)); renderPick(); }
+});
+$('pick-foot').addEventListener('click', e => { const b = e.target.closest('[data-pg]'); if (!b || b.disabled) return; pickPage = +b.dataset.pg; renderPick(); });
+$('pick-ok').addEventListener('click', () => {
+  const n = pickSel.length;
+  if (pickMode) { pickSel.forEach(i => D.cars[i] = pickMode); tab = pickMode; notify(`เพิ่มยานพาหนะ ${n} คันเข้าไตรมาส ${pickMode} สำเร็จ`); }
+  else { pickSel.forEach(i => D.cars[i] = 0); tab = 0; notify(`เพิ่มยานพาหนะ ${n} คันเข้าแผนสำเร็จ`); }
+  mfpSave(S); modal('m-pick', false); ticked = []; render();
+});
+
+/* ---------- เหตุการณ์ในหน้า ---------- */
+let moveCar = null;
+$('move-q').addEventListener('change', () => { $('move-ok').disabled = !$('move-q').value; });
+$('move-ok').addEventListener('click', () => {
+  const to = +$('move-q').value; D.cars[moveCar] = to; mfpSave(S); modal('m-move', false); tab = to; ticked = []; render();
+  notify(`ย้ายยานพาหนะ ${plate(moveCar)} ไปไตรมาส ${to} สำเร็จ`);
+});
+const toParts = (list) => { mfpSave(S); location.href = `plan-parts.html?cars=${list.join(',')}&q=${tab}`; };
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-tab]'); if (t) { tab = +t.dataset.tab; ticked = []; query = ''; render(); return; }
+  const a = e.target.closest('[data-addq]'); if (a) { openPick(+a.dataset.addq); return; }
+  if (e.target.closest('[data-addplan]')) { openPick(0); return; }
+  if (e.target.closest('#set-parts')) { toParts(ticked); return; }
+  const dd = e.target.closest('.dd-item'); if (dd) { const d = dd.closest('details'); if (d) d.open = false; }
+  const ed = e.target.closest('[data-edit]'); if (ed) { toParts([+ed.dataset.edit]); return; }
+  const vw = e.target.closest('[data-view]'); if (vw) { notify('ดูรายละเอียด ' + plate(+vw.dataset.view), { sub: 'Prototype รอบนี้ยังไม่มีหน้ารายละเอียดยานพาหนะ' }); return; }
+  const mv = e.target.closest('[data-move]'); if (mv) { moveCar = +mv.dataset.move; $('m-move-t').textContent = 'ย้ายไปไตรมาสอื่น · ' + plate(moveCar);
+    $('move-q').innerHTML = '<option value="">เลือกไตรมาส</option>' + [1, 2, 3, 4].filter(q => q !== D.cars[moveCar]).map(q => `<option value="${q}">${QUARTERS[q - 1]}</option>`).join('');
+    $('move-ok').disabled = true; modal('m-move', true); return; }
+  const ot = e.target.closest('[data-out]'); if (ot) { const i = +ot.dataset.out, q = D.cars[i]; D.cars[i] = 0; mfpSave(S); ticked = []; render(); notify(`เอายานพาหนะออกจากไตรมาส ${q} สำเร็จ`); return; }
+  const rm = e.target.closest('[data-rm]'); if (rm) { const i = +rm.dataset.rm; delete D.cars[i]; delete D.parts[i]; mfpSave(S); render(); notify(`เอายานพาหนะ ${plate(i)} ออกจากแผนแล้ว`); }
+});
+document.addEventListener('change', e => {
+  const c = e.target.closest('[data-tick]'); if (c) { const i = +c.dataset.tick; ticked = c.checked ? ticked.concat(i) : ticked.filter(x => x !== i); renderActs(); }
+  if (e.target.id === 't-all') { ticked = e.target.checked ? (tab ? qIds(tab) : ids()).filter(i => match(POOL[i])) : []; document.querySelectorAll('[data-tick]').forEach(b => b.checked = e.target.checked); renderActs(); }
+});
+
+/* ---------- บันทึก ---------- */
+function commit() {
+  if (simFail()) { notify('general error', { err: true, sub: 'ข้อความจริงยังไม่เคาะ (ตาม Figma จอ A23.2)' }); return; }   // E1 · ค่าที่กรอกยังอยู่
+  if (D.editId) {
+    const p = S.plans.find(x => x.id === D.editId);
+    Object.assign(p, { name: D.name, cars: D.cars, parts: D.parts, status: 'review', sentAt: today(), reason: '' });
+    S.draft = null; mfpSave(S); flash('บันทึกการแก้ไขแผนและส่งอนุมัติสำเร็จ'); location.href = 'plans.html'; return;
+  }
+  S.plans.unshift({ id: nextMr(S, D.year), name: D.name, year: D.year, unit: 'กบผ.', status: 'review', created: today(), sentAt: today(), approvedAt: '', reason: '', cars: D.cars, parts: D.parts, mine: true });
+  S.draft = null; mfpSave(S); flash('ส่งแผนบำรุงรักษาเพื่ออนุมัติสำเร็จ'); location.href = 'plans.html';
+}
+$('save').addEventListener('click', () => {
+  const bad = [!D.name.trim() && 'name', !D.year && 'year'].filter(Boolean);
+  bad.forEach(k => { $(k + '-err').classList.remove('hidden'); $(k).closest('.f').classList.add('err'); });
+  if (bad.length) { $(bad[0]).focus(); return; }
+  if (D.editId) modal('m-edit', true); else commit();
+});
+$('m-edit-ok').addEventListener('click', () => { modal('m-edit', false); commit(); });
+render();
+</script>
+</body>
+</html>

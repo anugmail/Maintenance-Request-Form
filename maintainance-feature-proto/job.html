@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>งานรายคัน | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature งานบำรุงรักษารายคัน — หน้างานรายคัน
+  ก่อนเริ่มงาน = จอ Figma "MF / H1.2 … หน้างานรายคัน — งานรายคัน กดเริ่มงาน (I.5)" (node 195:903512)
+  ปิดงานแล้ว = จอ "MF / H5.3 – H5.5 … งานรายคัน ส่วนผลการทดสอบ / เลือกผลและแนบไฟล์ / บันทึกผลสำเร็จ (K.4–K.7)" (node 195:864886 · 195:866927 · 195:868971) ไฟล์ Untitled D0ahPEpyZtZ09gnnrcv4sU
+  ที่มา · ไฟล์ Component: Page header (Breadcrumbs + Pill outline + Secondary/Primary button) · Section label (.sect-label) · VehicleAndReporterInfo (.incident-summary) ·
+           Table + Action icons · Radio button (.rads) · File upload (.fu) · Modal · Notification
+        · ไฟล์ UI Release#2: หน้า "5.3 Vehicle Breakdown" (รายละเอียดงาน + อัปโหลดไฟล์)
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="crumbs" id="crumbs"></div>
+      <div class="page-title-row"><h1 class="page-title mb-0" id="title"></h1><span id="st"></span><div class="flex gap-3 ml-auto" id="actions"></div></div>
+      <div class="flex flex-col gap-8" id="body"></div>
+    </main>
+  </div>
+</div>
+
+<!-- ยืนยันส่งตรวจงาน (V.15) -->
+<div class="modal-overlay hidden" id="m-sub">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-sub-t">
+    <div class="modal-hd center"><div class="modal-hd-c"><div class="flex-1 min-w-0 text-center"><h2 id="m-sub-t">ยืนยันส่งตรวจงาน</h2><div class="modal-sub" id="m-sub-s"></div></div></div></div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-sub">ยกเลิก</button><button class="btn btn-p" type="button" id="sub-ok">ส่งตรวจงาน</button></div></div></div>
+  </div>
+</div>
+<!-- บำรุงรักษาไม่ได้ — ระบุสาเหตุ -->
+<div class="modal-overlay hidden" id="m-cannot">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-cannot-t">
+    <div class="modal-hd"><div class="modal-hd-c"><h2 id="m-cannot-t">บำรุงรักษาไม่ได้</h2>
+      <button class="modal-x" type="button" data-close="m-cannot" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd"><div class="f mb-0" id="why-f"><label for="why">สาเหตุที่บำรุงรักษาไม่ได้</label><textarea id="why" rows="3" placeholder="ระบุสาเหตุ">ยานพาหนะติดภารกิจซ่อมสายส่งฉุกเฉิน ไม่อยู่ที่จุดนัดในวันเดินทาง</textarea></div></div>
+    <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-cannot">ยกเลิก</button>
+      <button class="btn btn-p" type="button" id="cannot-ok">ยืนยัน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, S.role === 'owner' ? 'trips' : 'plans');
+const qs = new URLSearchParams(location.search);
+const t = (S.trips || []).find(x => x.id === qs.get('trip')), i = +qs.get('car');
+if (!t) location.href = 'plans.html';
+const p = S.plans.find(x => x.id === t.plan), c = POOL[i], J = jobOf(S, t, i), x = carInfo(t, i);
+if (J.st === 'doing') location.href = `job-record.html?trip=${t.id}&car=${i}&step=${J.step || 1}`;
+let oilRes = J.oilResult || '';
+function render() {
+  $('crumbs').innerHTML = `<a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><a href="plans.html">บำรุงรักษาตามวาระ</a><span class="sep"></span><a href="quarter.html?plan=${p.id}&q=${t.q}">ไตรมาส ${t.q}</a><span class="sep"></span><a href="trip-detail.html?id=${t.id}">${esc(t.name)}</a><span class="sep"></span><span class="cur">${esc(c[0])}</span>`;
+  $('title').textContent = c[0]; $('st').innerHTML = wBadge(J.st) + (J.st === 'done' && J.oilWait ? ' ' + pill('รอผลตรวจน้ำมัน', 'b-low') : '');
+  /* ผู้รับจ้าง (V.11–V.16): ปิดงานแล้ว → ส่งตรวจงาน → ส่งตรวจงานแล้ว รอตรวจรับ */
+  if (S.role === 'contractor' && J.st === 'done') { $('st').innerHTML += ' ' + (J.submitted ? pill('รอตรวจรับ', 'b-low') : ''); }
+  $('actions').innerHTML = S.role === 'contractor' && J.st === 'done' && !J.submitted ? '<button class="btn btn-p" type="button" id="submit-job"><span class="ms">send</span>ส่งตรวจงาน</button>' : J.st === 'todo' ? '<button class="btn btn-s" type="button" id="cannot">บำรุงรักษาไม่ได้</button><button class="btn btn-p" type="button" id="start">เริ่มงาน</button>' : '';
+  const tasks = jobTasks(p, i);
+  if (J.st === 'todo' || J.st === 'cannot') {
+    $('body').innerHTML = (J.st === 'cannot' ? `<div class="note note-warn"><span class="ms">block</span><div><b>บำรุงรักษาไม่ได้</b><div>${esc(J.reason || '')}</div></div></div>` : '') +
+      `<section><div class="sect-label">ข้อมูลยานพาหนะ</div>${vehicleCard(i)}</section>
+      <section><div class="sect-label">การนัดหมาย</div>${kvCard([['แผนเดินทาง', esc(t.name)], ['ช่วงวันเดินทาง', tripRange(t)], ['วันดำเนินการ', x.w], ['สถานที่บำรุงรักษา', esc(x.loc)], ['เบอร์ติดต่อ', x.tel], ['', ''], ['ผู้ดูแลยานพาหนะ', esc(x.ctrl)]])}</section>
+      <section><div class="sect-label"><span>รายการงานและอะไหล่ตามแผน (${tasks.length})</span><button class="btn btn-t" type="button" id="newpart"><span class="ms">add</span>เพิ่มอะไหล่</button></div>
+        <div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th>รายการงาน</th><th class="w-[180px]">อะไหล่ตามแผน</th><th class="w-[160px]">จำนวนตามแผน</th><th class="w-[160px]">หน่วย</th><th class="w-[96px]" aria-label="จัดการ"></th></tr></thead>
+        <tbody>${tasks.map(r => `<tr><td>${esc(r[0])}</td><td><div class="truncate max-w-[170px]">${esc(r[1])}</div></td><td>${r[2]}</td><td>${esc(r[3])}</td>
+          <td class="dt-action"><button class="btn btn-t btn-icon" type="button" data-todo="แก้ไขอะไหล่" aria-label="แก้ไข"><span class="ms">stylus</span></button><button class="btn btn-t btn-icon" type="button" data-todo="ลบอะไหล่" aria-label="ลบ"><span class="ms">delete</span></button></td></tr>`).join('')}</tbody></table></div></section>`;
+    return;
+  }
+  /* ปิดงานแล้ว (K.4) — ข้อมูลยานพาหนะและงาน · ภาพก่อนเริ่มงาน · อะไหล่ที่ใช้จริง · ค่าใช้จ่าย · ผลการทดสอบน้ำมัน · Safety Inspection */
+  const used = J.used || {}, cost = J.cost || {};
+  $('body').innerHTML = `<section><div class="sect-label">ข้อมูลยานพาหนะและงาน</div>${kvCard([['ทะเบียน', `<a href="#" data-plate>${esc(c[0])}</a>`], ['ยี่ห้อ/รุ่น', esc(c[1])], ['ประเภท', typeOf(c)], ['หน่วยงานเจ้าของยานพาหนะ', esc(c[2])],
+      ['เลขไมล์สะสม', '182,400 กม.'], ['ชั่วโมงเครื่องจักรสะสม', '6,120 ชม.'], ['แผน', p.id], ['แผนเดินทาง', esc(t.name) + ' · ' + tripRange(t)],
+      ['เริ่มงาน', J.started || '—'], ['ปิดงาน', J.closed || '—'], ['ผู้บันทึก', CREATOR + ' (' + p.unit + ')'], ['น้ำมันไฮดรอลิก', esc(J.oil || '—')],
+      ['เลขไมล์หลังทำ', (J.mile || '182,640') + ' กม.'], ['', ''], ['ชั่วโมงเครื่องจักรหลังทำ', (J.hour || '6,131') + ' ชม.']])}</section>
+    <section><div class="sect-label">ภาพก่อนเริ่มงาน (2)</div><div class="grid grid-cols-2 md:grid-cols-3 gap-4">${photoBox()}${photoBox()}</div></section>
+    <section><div class="sect-label">รายการงานและอะไหล่ที่ใช้จริง (${tasks.length})</div>
+      <div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th>รายการงาน</th><th class="w-[180px]">อะไหล่ที่ใช้</th><th class="w-[150px]">จำนวนตามแผน</th><th class="w-[150px]">จำนวนที่ใช้จริง</th><th class="w-[120px]">หน่วย</th></tr></thead>
+      <tbody>${tasks.map(r => `<tr><td>${esc(r[0])}</td><td><div class="truncate max-w-[170px]">${esc(r[1])}</div></td><td>${r[2]}</td><td>${used[r[4]] ?? r[2]}</td><td>${esc(r[3])}</td></tr>`).join('')}</tbody></table></div></section>
+    <section><div class="sect-label">ค่าใช้จ่ายของยานพาหนะคันนี้ (บาท)</div>
+      <div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th>พนักงาน</th><th class="w-[150px]">ค่าเบี้ยเลี้ยง/วัน</th><th class="w-[150px]">ค่าที่พัก/วัน</th><th class="w-[150px]">จำนวนวัน</th><th class="w-[120px]">รวม</th></tr></thead>
+      <tbody>${(cost.staff || []).map(s => `<tr><td>${esc(s.name)}</td><td>${s.per}</td><td>${s.lodge}</td><td>${s.days}</td><td>${(s.per + s.lodge) * s.days}</td></tr>`).join('')}</tbody></table></div>
+      <div class="mt-4">${kvCard([['รวมค่าเบี้ยเลี้ยง', (cost.perSum || 0) + ' บาท'], ['รวมค่าที่พัก', (cost.lodgeSum || 0) + ' บาท'], ['ค่าเดินทาง (รวมทุกคน)', (cost.travel || 0) + ' บาท'], ['ค่าชั่วโมงทำงาน', `${cost.hours || 0} ชม. × ${cost.rate || 0} บาท = ${(cost.hours || 0) * (cost.rate || 0)} บาท`],
+        ['รวมค่าใช้จ่ายของยานพาหนะคันนี้', (cost.total || 0) + ' บาท'], ['งบที่ตัด', 'งบทำการ หน่วยงานต้นสังกัด'], ['ศูนย์ต้นทุน', 'E301010000 ' + esc(c[2].split(' ')[0]) + ' ' + esc(c[2].split(' ')[1] || '') + ' - บริหาร']])}</div></section>
+    ${/เก็บ/.test(J.oil || '') ? `<section><div class="sect-label">ผลการทดสอบน้ำมันไฮดรอลิก</div>
+      <div class="f mb-0"><label>ผลการทดสอบ</label><div class="rads" id="oilres"><label><input type="radio" name="oilres" value="pass"${oilRes === 'pass' ? ' checked' : ''}> ผ่าน</label><label><input type="radio" name="oilres" value="fail"${oilRes === 'fail' ? ' checked' : ''}> ไม่ผ่าน</label></div></div>
+      <div class="f mt-6 mb-0"><label>ไฟล์ผลการทดสอบ <small>(ถ้ามี)</small></label>
+        <label class="fu"><input type="file" accept=".pdf,.jpg,.jpeg,.png"><span class="ficon sm gray"><span class="ms">cloud_upload</span></span><span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PDF, JPG, PNG · สูงสุด 10 ไฟล์</small></span></label>
+        <div class="fu-list">${J.oilFile ? `<div class="fu-item"><span class="ficon sm gray"><span class="ms">draft</span></span><span class="fu-item-tx"><b>${esc(J.oilFile)}</b><small>420 KB</small></span></div>` : ''}</div></div>
+      <div class="mt-4">${kvCard([['เก็บตัวอย่างเมื่อ', (J.started || '').split(' ')[0] + ' โดย ' + CREATOR + ' (' + p.unit + ')']])}</div>
+      <div class="flex justify-end mt-4"><button class="btn btn-p" type="button" id="save-oil"${oilRes ? '' : ' disabled'}>บันทึกผลการทดสอบ</button></div></section>` : ''}
+    <section><div class="sect-label">Safety Inspection</div>
+      <div class="f mb-0"><label>เอกสาร Safety Inspection <small>(ถ้ามี)</small></label>
+        <label class="fu"><input type="file" accept=".pdf,.jpg,.jpeg,.png" id="si-file"><span class="ficon sm gray"><span class="ms">cloud_upload</span></span><span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PDF, PNG, or JPG (สูงสุด 10 ไฟล์)</small></span></label></div>
+      <div class="flex justify-end mt-4"><button class="btn btn-p" type="button" id="save-si">บันทึกเอกสาร Safety Inspection</button></div></section>`;
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('#start')) { Object.assign(J, { st: 'doing', step: 1, started: nowTh() }); mfpSave(S); location.href = `job-record.html?trip=${t.id}&car=${i}&step=1`; }
+  if (e.target.closest('#cannot')) modal('m-cannot', true);
+  if (e.target.closest('#submit-job')) { $('m-sub-s').textContent = 'งานของยานพาหนะคันนี้จะส่งให้หน่วยงานตรวจรับ'; modal('m-sub', true); }
+  const td = e.target.closest('[data-todo]'); if (td) notify(td.dataset.todo, { sub: 'Prototype รอบนี้ยังไม่เปิดการแก้รายการตามแผน' });
+  if (e.target.closest('#newpart')) notify('เพิ่มอะไหล่', { sub: 'Prototype รอบนี้ยังไม่เปิดการเพิ่มอะไหล่หน้างาน' });
+  if (e.target.closest('#save-oil')) {   // K.7 — บันทึกผล · ไม่ผ่าน = แจ้งผู้ดูแลยานพาหนะ (R115)
+    Object.assign(J, { oilResult: oilRes, oilWait: false, oilFile: J.oilFile || 'oil-test-' + c[0].split(' ')[0] + '.pdf' });
+    if (oilRes === 'fail') S.notis = (S.notis || []).concat([{ to: 'owner', text: `ผลตรวจน้ำมันไฮดรอลิก ${c[0]} ไม่ผ่าน`, at: 'เมื่อสักครู่', isNew: true }]);
+    mfpSave(S); render(); notify('บันทึกผลการทดสอบน้ำมันไฮดรอลิกสำเร็จ');
+  }
+  if (e.target.closest('#save-si')) notify('บันทึกเอกสาร Safety Inspection สำเร็จ');
+});
+document.addEventListener('change', e => { if (e.target.name === 'oilres') { oilRes = e.target.value; const b = $('save-oil'); if (b) b.disabled = false; } });
+$('cannot-ok').addEventListener('click', () => { Object.assign(J, { st: 'cannot', reason: $('why').value.trim() }); mfpSave(S); modal('m-cannot', false); flash(`บันทึก ${c[0]} บำรุงรักษาไม่ได้แล้ว`); location.href = 'trip-detail.html?id=' + t.id; });
+$('sub-ok').addEventListener('click', () => { Object.assign(J, { submitted: true, submittedAt: nowTh() }); mfpSave(S); modal('m-sub', false); render(); notify('ส่งตรวจงานแล้ว', { sub: 'รอหน่วยงานตรวจรับ' }); });   // V.16
+render();
+</script>
+</body>
+</html>

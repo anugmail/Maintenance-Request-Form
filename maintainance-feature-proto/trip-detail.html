@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แผนเดินทาง | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature แผนเดินทาง — ตรวจสอบแผนเดินทาง (ผู้อนุมัติ F.2–F.4) / รายละเอียดแผนเดินทาง (ผู้ดูแลยานพาหนะ G.3 · ผู้สร้างแผน)
+  ต้นแบบหน้าตา = จอ Figma "MF / H2.2 … หน้าตรวจสอบแผนเดินทาง" (node 195:702245) และ "MF / H4.3 … หน้ารายละเอียดแผนเดินทาง" (195:725174) ไฟล์ Untitled D0ahPEpyZtZ09gnnrcv4sU
+  เนื้อหา: tripReview() · tripView() · tripDetail() ของ base/screens.js
+  ที่มา · ไฟล์ Component: Page header (Breadcrumbs + Pill outline + Secondary button ส่งออก) · Section label (.sect-label) · VehicleAndReporterInfo (.incident-summary) ·
+           Radio text card (ผลการพิจารณา) · Text area · Table (.tbl.striped) · Modal Centered · Notification · Secondary/Primary button Size=lg
+        · ไฟล์ UI Release#2: หน้า "5.1 Rental Contract Management" เฟรม `Contract detail` · หน้า "5.3 Vehicle Breakdown" (Radio text card)
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="crumbs" id="crumbs"></div>
+      <div class="page-title-row"><h1 class="page-title mb-0" id="title"></h1><span id="st"></span>
+        <div class="ml-auto hidden" id="export"><button class="btn btn-s" type="button" id="exp-btn"><span class="ms">download</span>ส่งออก</button></div></div>
+      <div class="flex flex-col gap-8">
+        <div class="hidden" id="decide">
+          <div class="f mb-0"><label>ผลการพิจารณา</label></div>
+          <div class="radcards" id="decision">
+            <label class="radcard"><input type="radio" name="dec" value="ok"><span class="rdot"></span><span class="rc-tx"><b>อนุมัติ</b><small>แผนเดินทางผ่านการตรวจสอบ แจ้งผู้ดูแลยานพาหนะและ กรย.</small></span></label>
+            <label class="radcard"><input type="radio" name="dec" value="back"><span class="rdot"></span><span class="rc-tx"><b>ส่งกลับแก้ไข</b><small>แจ้งเหตุผลให้ผู้สร้างแผนเดินทางแก้ไขแล้วส่งใหม่</small></span></label>
+          </div>
+          <div class="f mt-6 mb-0 hidden" id="why-f"><label for="why">เหตุผลที่ส่งกลับ</label><textarea id="why" rows="3" placeholder="ระบุเหตุผลที่ส่งกลับ"></textarea><div class="help hidden" id="why-err">กรุณาระบุเหตุผลที่ส่งกลับ</div></div>
+        </div>
+        <section><div class="sect-label">รายละเอียดแผนเดินทาง</div><dl class="incident-summary lg:grid-cols-4" id="info"></dl></section>
+        <section><div class="sect-label" id="n-car"></div><div id="cars"></div></section>
+        <section><div class="sect-label">อะไหล่ของแผนเดินทาง</div><div id="parts"></div></section>
+        <div class="flex items-center justify-between gap-3 hidden" id="dec-actions">
+          <a class="btn btn-s btn-lg !no-underline" href="trip-approvals.html">ย้อนกลับ</a>
+          <button class="btn btn-p btn-lg ml-auto" type="button" id="submit" disabled>ยืนยันผลการพิจารณา</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ส่งออกแผนเดินทาง (I.27) -->
+<div class="modal-overlay hidden" id="m-exp">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-exp-t">
+    <div class="modal-hd"><div class="modal-hd-c"><h2 id="m-exp-t">ส่งออกแผนเดินทาง</h2>
+      <button class="modal-x" type="button" data-close="m-exp" aria-label="ปิด"><span class="ms">close</span></button></div></div>
+    <div class="modal-bd"><div class="f mb-0"><label>รูปแบบไฟล์</label></div>
+      <div class="radcards" id="exp-type">
+        <label class="radcard"><input type="radio" name="exp" value="pdf"><span class="rdot"></span><span class="rc-tx"><b>PDF</b><small>ใบแผนเดินทางสำหรับพิมพ์</small></span></label>
+        <label class="radcard"><input type="radio" name="exp" value="xls"><span class="rdot"></span><span class="rc-tx"><b>Excel</b><small>ตารางยานพาหนะและอะไหล่</small></span></label>
+      </div></div>
+    <div class="modal-ft"><div class="modal-ft-a"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-exp">ยกเลิก</button>
+      <button class="btn btn-p" type="button" id="m-exp-ok"><span class="ms">download</span>ส่งออก</button>
+    </div></div></div>
+  </div>
+</div>
+<div class="modal-overlay hidden" id="m-dec">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-dec-t">
+    <div class="modal-hd center"><div class="modal-hd-c"><div class="flex-1 min-w-0 text-center"><h2 id="m-dec-t"></h2><div class="modal-sub" id="m-dec-s"></div></div></div></div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-dec">ยกเลิก</button>
+      <button class="btn btn-p" type="button" id="m-dec-ok"></button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, S.role === 'approver' ? 'trip-approvals' : S.role === 'owner' ? 'trips' : 'plans');
+const t = (S.trips || []).find(x => x.id === new URLSearchParams(location.search).get('id'));
+if (!t) location.href = ROLES[S.role][2];
+const p = S.plans.find(x => x.id === t.plan);
+const review = () => S.role === 'approver' && t.status === 'review';
+let dec = '';
+const f = (k, v) => `<div class="incident-field"><dt>${k}</dt><dd>${v}</dd></div>`;
+function render() {
+  const rv = review();
+  const mid = S.role === 'approver' ? '<a href="trip-approvals.html">อนุมัติแผนเดินทาง</a>' : S.role === 'owner' ? '<a href="trips.html">แผนเดินทางบำรุงรักษา</a>' : `<a href="quarter.html?plan=${p.id}&q=${t.q}">ไตรมาส ${t.q}</a>`;
+  $('crumbs').innerHTML = `<a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><a href="plans.html">บำรุงรักษาตามวาระ</a><span class="sep"></span>${mid}<span class="sep"></span><span class="cur">${esc(t.name)}</span>`;
+  $('title').textContent = rv ? 'ตรวจสอบแผนเดินทาง' : t.name; $('st').innerHTML = tBadge(t.status);
+  $('export').classList.toggle('hidden', t.status !== 'approved');
+  const staff = (t.staff || []).map(s => STAFF[s] && STAFF[s][0]).filter(Boolean).join(', ');
+  $('info').innerHTML = f('ชื่อแผนเดินทาง', esc(t.name)) + f('แผน', esc(p.id + ' ' + p.name)) + f('ไตรมาส', 'ไตรมาส ' + t.q) + f('รูปแบบดำเนินการ', t.mode === 'hire' ? 'จ้างดำเนินการ' : 'ดำเนินการเอง') +
+    f(t.mode === 'hire' ? 'ช่วงวันทำงาน' : 'ช่วงวันเดินทาง', tripRange(t)) + (t.mode === 'hire' ? f('ผู้รับจ้าง', esc(t.vendor)) + f('เลขที่สัญญา/ใบสั่งจ้าง', esc(t.contract || '—')) : f('พนักงานที่เดินทาง', esc(staff || '—'))) +
+    f('ผู้สร้าง', CREATOR + ' (' + p.unit + ')') + f(t.approvedAt ? 'อนุมัติเมื่อ' : 'วันที่ส่ง', t.approvedAt || t.sentAt);
+  /* ผู้ดูแลยานพาหนะเห็นเฉพาะคันที่ตนดูแล (tripView own) — ต้นแบบ: คันที่ผู้ดูแลชื่อ นายสมชาย แก้วมณี */
+  const cars = S.role === 'owner' ? t.cars.filter(i => carInfo(t, i).ctrl === ROLES.owner[0]) : t.cars;
+  /* ผู้สร้างแผน + แผนเดินทางอนุมัติแล้ว = หน้ารายละเอียดแผนเดินทางของงานรายคัน (จอ I.1 · I.14): ความคืบหน้า · สถานะงาน · เมนู … */
+  const work = (S.role === 'creator' || S.role === 'contractor') && t.status === 'approved';   // ผู้รับจ้างบันทึกงานแผนจ้าง (V.1)
+  if (work) {
+    const js = t.cars.map(i => jobOf(S, t, i)), n = (s) => js.filter(j => j.st === s).length, cannot = n('cannot');
+    $('info').innerHTML += f('ความคืบหน้า', `เสร็จสิ้น ${n('done')} จาก ${t.cars.length - cannot} คัน` + (n('doing') ? ` · อยู่ระหว่างบำรุงรักษา ${n('doing')}` : '') + (cannot ? ` · บำรุงรักษาไม่ได้ ${cannot} (ไม่นับรวม)` : ''));
+    $('n-car').className = 'sect border-b-0 pb-0'; $('n-car').innerHTML = `<span>ยานพาหนะในแผนเดินทาง</span><span class="badge sq">ตรวจแล้ว ${n('done')}/${t.cars.length - cannot}</span>`;
+    $('cars').innerHTML = `<div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th class="w-[130px]">ทะเบียน</th><th class="w-[120px]">ประเภทยานพาหนะ</th><th>ยี่ห้อ/รุ่น</th><th class="w-[120px]">เบอร์ติดต่อ</th><th class="w-[140px]">สถานที่บำรุงรักษา</th><th class="w-[130px]">วันดำเนินการ</th><th class="w-[200px]">สถานะงาน</th><th class="w-[60px]" aria-label="จัดการ"></th></tr></thead>
+      <tbody>${t.cars.map(i => { const c = POOL[i], x = carInfo(t, i), j = jobOf(S, t, i);
+        return `<tr><td><a href="#" data-plate class="whitespace-nowrap">${esc(c[0])}</a><div class="text-xs text-gray-500">${esc(c[2])}</div></td><td>${typeOf(c)}</td><td><div class="truncate max-w-[150px]">${esc(c[1])}</div></td>
+          <td><span class="whitespace-nowrap">${x.tel}</span><div class="text-xs text-gray-500 whitespace-nowrap">${esc(x.ctrl)}</div></td><td><div class="truncate max-w-[130px]">${esc(x.loc)}</div></td><td><div class="truncate max-w-[120px]">${x.w}</div></td>
+          <td><div class="flex flex-wrap gap-1">${wBadge(j.st)}${j.st === 'done' && j.oilWait ? pill('รอผลตรวจน้ำมัน', 'b-low') : ''}${j.st === 'done' && j.oilResult === 'fail' ? pill('น้ำมันไม่ผ่าน', 'b-out') : ''}</div></td>
+          <td class="dt-action">${menu('จัดการ ' + c[0], [{ label: 'ดูรายละเอียด', icon: 'quick_reference_all', href: `job.html?trip=${t.id}&car=${i}` }])}</td></tr>`; }).join('')}</tbody></table></div>`;
+    $('parts').innerHTML = partsTable(partsOf(p, cars), 'แผนเดินทางนี้ไม่มีอะไหล่ที่ต้องเบิก');
+    $('decide').classList.add('hidden'); $('dec-actions').classList.add('hidden'); return;
+  }
+  $('n-car').textContent = `ยานพาหนะในแผนเดินทาง (${cars.length})`;
+  $('cars').innerHTML = `<div class="tblwrap mt-0"><table class="tbl striped"><thead><tr>${TRIP_TH}</tr></thead><tbody>${cars.map(i => tripRow(t, i)).join('')}</tbody></table></div>`;
+  $('parts').innerHTML = partsTable(partsOf(p, cars), 'แผนเดินทางนี้ไม่มีอะไหล่ที่ต้องเบิก');
+  $('decide').classList.toggle('hidden', !rv); $('dec-actions').classList.toggle('hidden', !rv);
+}
+/* ส่งออกแผนเดินทาง (I.27) — เลือกรูปแบบไฟล์ PDF / Excel แล้วส่งออก */
+$('exp-btn').addEventListener('click', () => { document.querySelectorAll('#exp-type .radcard').forEach((l, k) => { l.classList.toggle('sel', !k); l.querySelector('input').checked = !k; }); modal('m-exp', true); });
+$('exp-type').addEventListener('change', () => document.querySelectorAll('#exp-type .radcard').forEach(l => l.classList.toggle('sel', l.querySelector('input').checked)));
+$('m-exp-ok').addEventListener('click', () => { modal('m-exp', false); notify('ส่งออกแผนเดินทางสำเร็จ', { sub: 'Prototype — ยังไม่มีไฟล์จริง' }); });
+$('decision').addEventListener('change', e => { dec = e.target.value;
+  document.querySelectorAll('#decision .radcard').forEach(l => l.classList.toggle('sel', l.querySelector('input').checked));
+  $('why-f').classList.toggle('hidden', dec !== 'back'); $('submit').disabled = false; });
+$('why').addEventListener('input', () => { $('why-err').classList.add('hidden'); $('why-f').classList.remove('err'); });
+$('submit').addEventListener('click', () => {
+  if (dec === 'back' && !$('why').value.trim()) { $('why-err').classList.remove('hidden'); $('why-f').classList.add('err'); $('why').focus(); return; }
+  $('m-dec-t').textContent = dec === 'ok' ? 'ยืนยันอนุมัติแผนเดินทาง' : 'ยืนยันส่งกลับแก้ไข';
+  $('m-dec-s').textContent = dec === 'ok' ? `${t.name} · ${t.cars.length} คัน · ${tripRange(t)} · อนุมัติแล้วระบบแจ้งผู้ดูแลยานพาหนะและ กรย.` : `${t.name} · ผู้สร้างแผนเดินทางจะเห็นเหตุผลและแก้ไขแล้วส่งใหม่`;
+  $('m-dec-ok').textContent = dec === 'ok' ? 'อนุมัติ' : 'ส่งกลับแก้ไข'; modal('m-dec', true);
+});
+$('m-dec-ok').addEventListener('click', () => {
+  modal('m-dec', false);
+  if (dec === 'ok') {
+    Object.assign(t, { status: 'approved', approvedAt: today() });
+    /* แจ้งผู้ดูแลยานพาหนะ (NOTI_KRY / NOTI_OWN ของ base/screens.js) */
+    S.notis = (S.notis || []).concat([{ to: 'owner', text: `แผนเดินทาง ${t.name} อนุมัติแล้ว หน่วยงานผู้ดำเนินการจะเข้าบำรุงรักษายานพาหนะ ${t.cars.length} คัน ระหว่างวันที่ ${isoTh(t.d1)} ถึง ${isoTh(t.d2)}`, at: 'เมื่อสักครู่', isNew: true, href: 'trip-detail.html?id=' + t.id }]);
+    mfpSave(S); render(); notify('อนุมัติแผนเดินทางสำเร็จ');   // F.4
+  } else { Object.assign(t, { status: 'returned', reason: $('why').value.trim() }); mfpSave(S); flash('ส่งแผนเดินทางกลับให้ผู้สร้างแผนเดินทางแก้ไขแล้ว'); location.href = 'trip-approvals.html'; }
+});
+render();
+</script>
+</body>
+</html>

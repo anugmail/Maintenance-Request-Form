@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แผนเดินทางรออนุมัติ | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature แผนเดินทาง — แผนเดินทางรออนุมัติ ฝั่งผู้อนุมัติ (จอ F.1 · แท็บ F.9 F.10)
+  ต้นแบบหน้าตา = จอ Figma "MF / H2.1 … หน้าแผนเดินทางรออนุมัติ" (node 195:701241) ไฟล์ Untitled D0ahPEpyZtZ09gnnrcv4sU · โครงเดียวกับหน้ารายการแผน
+  ที่มา · ไฟล์ Component: Page header (Breadcrumbs) · Tabs + Badge · Table header (Text input ค้นหา) · Table (.tbl.striped) · Pill outline · Table pagination · Empty state
+        · ไฟล์ UI Release#2: หน้า "5.1 Rental Contract Management" เฟรม `Contract list`
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="crumbs"><a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><a href="plans.html">บำรุงรักษาตามวาระ</a><span class="sep"></span><span class="cur">อนุมัติแผนเดินทาง</span></div>
+      <div class="page-title-row"><h1 class="page-title mb-0">อนุมัติแผนเดินทาง</h1></div>
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="w-full stack mt-4">
+        <div class="list-toolbar split mb-0"><div class="lt-search max-w-[320px]"><div class="search"><span class="ms">search</span><input type="search" id="q" placeholder="ค้นหาชื่อแผนเดินทาง, ทะเบียน" aria-label="ค้นหาแผนเดินทาง"></div></div></div>
+        <div class="tblwrap mt-0" id="wrap"><table class="tbl striped"><thead><tr><th>ชื่อแผนเดินทาง</th><th class="w-[200px]">ช่วงวัน</th><th class="w-[130px]">ยานพาหนะ (คัน)</th><th class="w-[220px]">ผู้ดำเนินการ</th><th class="w-[130px]">วันที่ส่ง</th><th class="w-[140px]">สถานะ</th><th class="w-[60px]" aria-label="ดู"></th></tr></thead><tbody id="body"></tbody></table><div id="foot"></div></div>
+        <div class="hidden" id="empty"></div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, 'trip-approvals');
+const TABS = [['รออนุมัติ', 'review'], ['อนุมัติแล้ว', 'approved'], ['ส่งกลับแก้ไข', 'returned']];
+let tab = 0;
+function render() {
+  const all = S.trips || [];
+  $('tabs').innerHTML = TABS.map(([l, st], k) => `<button type="button" class="tab-btn${k === tab ? ' on' : ''}" role="tab" data-tab="${k}">${l} <span class="badge b-brand">${all.filter(t => t.status === st).length}</span></button>`).join('');
+  const q = $('q').value.trim().toLowerCase();
+  const list = all.filter(t => t.status === TABS[tab][1] && (!q || (t.name + t.cars.map(i => POOL[i][0]).join(' ')).toLowerCase().includes(q)));
+  $('body').innerHTML = list.map(t => { const p = S.plans.find(x => x.id === t.plan); return `<tr><td><a href="trip-detail.html?id=${t.id}">${esc(t.name)}</a><div class="text-xs text-gray-500">${esc(p.id)} · ไตรมาส ${t.q}</div></td>
+    <td><div class="truncate max-w-[180px]">${tripRange(t)}</div></td><td>${t.cars.length}</td><td><div class="truncate max-w-[200px]">${esc(tripBy(t))}</div></td><td>${t.sentAt || '—'}</td><td>${tBadge(t.status)}</td>
+    <td class="dt-action"><a class="btn btn-t btn-icon !no-underline" href="trip-detail.html?id=${t.id}" aria-label="ดู ${esc(t.name)}"><span class="ms">chevron_right</span></a></td></tr>`; }).join('');
+  $('foot').innerHTML = pager(list.length, list.length ? 1 : 0, list.length, 1, 0);
+  $('wrap').classList.toggle('hidden', !list.length); $('empty').classList.toggle('hidden', !!list.length);
+  $('empty').innerHTML = emptyState('data-empty', 'ไม่มีแผนเดินทางในสถานะนี้', 'เมื่อผู้สร้างแผนส่งแผนเดินทาง รายการจะแสดงที่นี่');
+}
+$('tabs').addEventListener('click', e => { const t = e.target.closest('[data-tab]'); if (t) { tab = +t.dataset.tab; render(); } });
+$('q').addEventListener('input', render);
+render();
+</script>
+</body>
+</html>

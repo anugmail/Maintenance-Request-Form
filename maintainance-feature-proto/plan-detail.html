@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายละเอียดแผน | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature แผนบำรุงรักษา — รายละเอียดแผน (ผู้สร้างแผน A11.2) / ตรวจสอบแผนบำรุงรักษา (ผู้อนุมัติ B.2–B.4)
+  ต้นแบบหน้าตา = จอ Figma "MF / H4.2 … หน้ารายละเอียดแผน" (node 195:544460) และ "MF / H5.3 … หน้าพิจารณาแผน" (node 145:445081) ไฟล์ Untitled D0ahPEpyZtZ09gnnrcv4sU
+  ที่มา · ไฟล์ Component: Page header (Breadcrumbs · Pill outline ข้างหัว · Secondary button แก้ไข) · Section label (.sect-label) ·
+           VehicleAndReporterInfo (.incident-summary) · Tabs + Badge · Table (.tbl.striped) · Radio text card (ผลการพิจารณา) · Text area ·
+           Modal Centered (ยืนยันอนุมัติ) · Notification
+        · ไฟล์ UI Release#2: หน้า "5.1 Rental Contract Management" เฟรม `Contract detail` · หน้า "5.3 Vehicle Breakdown" (Radio text card)
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="crumbs" id="crumbs"></div>
+      <div class="page-title-row">
+        <h1 class="page-title mb-0" id="title"></h1><span id="st"></span>
+        <div class="flex gap-3 ml-auto" id="actions"></div>
+      </div>
+
+      <div class="flex flex-col gap-8">
+        <div class="note note-warn hidden" id="returned"><span class="ms">undo</span><div><b>ผู้อนุมัติส่งกลับให้แก้ไข</b><div id="reason"></div></div></div>
+
+        <!-- ผลการพิจารณา (ผู้อนุมัติ · แผนรออนุมัติ) — ขึ้นก่อนรายละเอียดตามจอ H5.3 -->
+        <div class="hidden" id="decide">
+          <div><div class="f mb-0"><label>ผลการพิจารณา</label></div>
+            <div class="radcards" id="decision">
+              <label class="radcard"><input type="radio" name="dec" value="ok"><span class="rdot"></span><span class="rc-tx"><b>อนุมัติ</b><small>แผนผ่านการตรวจสอบ หน่วยงานเริ่มงานรายไตรมาสได้</small></span></label>
+              <label class="radcard"><input type="radio" name="dec" value="back"><span class="rdot"></span><span class="rc-tx"><b>ส่งกลับแก้ไข</b><small>แจ้งเหตุผลให้ผู้สร้างแผนแก้ไขแล้วส่งใหม่</small></span></label>
+            </div></div>
+          <div class="f mt-6 mb-0 hidden" id="why-f"><label for="why">เหตุผลที่ส่งกลับ</label><textarea id="why" rows="3" placeholder="ระบุเหตุผลที่ส่งกลับ"></textarea><div class="help hidden" id="why-err">กรุณาระบุเหตุผลที่ส่งกลับ</div></div>
+        </div>
+
+        <!-- แท็บของแผนที่อนุมัติแล้ว: รายละเอียดแผน / ต้นทุนการบำรุงรักษา (PLAN_TABS · S18 · R92) -->
+        <div class="tabs hidden" role="tablist" id="page-tabs"></div>
+        <div class="flex flex-col gap-8" id="tab-detail">
+        <section><div class="sect-label">รายละเอียดแผน</div><dl class="incident-summary lg:grid-cols-4" id="info"></dl></section>
+        <section>
+          <div class="sect-label"><span id="n-car"></span><button class="btn btn-link" type="button" id="to-q"><span class="ms">chevron_right</span>ไปหน้าไตรมาส 1</button></div>
+          <div class="tabs" role="tablist" id="tabs"></div>
+          <div class="mt-4" id="cars"></div>
+        </section>
+        <section>
+          <div class="sect-label">อะไหล่ในแผน</div>
+          <div class="tabs" role="tablist" id="ptabs"></div>
+          <div class="mt-4" id="parts"></div>
+        </section>
+        </div>
+        <div class="flex flex-col gap-8 hidden" id="tab-cost"></div>
+
+        <div class="flex items-center justify-between gap-3 hidden" id="dec-actions">
+          <a class="btn btn-s btn-lg !no-underline" href="approvals.html">ย้อนกลับ</a>
+          <button class="btn btn-p btn-lg ml-auto" type="button" id="submit" disabled>ยืนยันผลการพิจารณา</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ยืนยันผลการพิจารณา (B.3) — Modal Centered ตามจอ H5.3 -->
+<div class="modal-overlay hidden" id="m-dec">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-dec-t">
+    <div class="modal-hd center"><div class="modal-hd-c"><div class="flex-1 min-w-0 text-center"><h2 id="m-dec-t"></h2><div class="modal-sub" id="m-dec-s"></div></div></div></div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-dec">ยกเลิก</button>
+      <button class="btn btn-p" type="button" id="m-dec-ok"></button>
+    </div></div></div>
+  </div>
+</div>
+<!-- ยืนยันการลบแผน -->
+<div class="modal-overlay hidden" id="m-del">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-del-t">
+    <div class="modal-hd center"><div class="modal-hd-c"><span class="ficon err"><span class="ms">delete</span></span><h2 id="m-del-t">ยืนยันการลบแผน</h2><div class="modal-sub" id="m-del-s"></div></div>
+      <button class="modal-x" type="button" data-close="m-del" aria-label="ปิด"><span class="ms">close</span></button></div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-del">ยกเลิก</button>
+      <button class="btn btn-d" type="button" id="m-del-ok">ลบแผน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, S.role === 'approver' ? 'approvals' : 'plans');
+const p = S.plans.find(x => x.id === new URLSearchParams(location.search).get('id'));
+if (!p) location.href = 'plans.html';
+const review = () => S.role === 'approver' && p.status === 'review';
+let tab = 1, ptab = 0, dec = '', pageTab = new URLSearchParams(location.search).get('tab') === 'cost' ? 1 : 0;
+/* แท็บต้นทุนการบำรุงรักษา (Q.1–Q.6) — Metric item ×4 · สรุปรายไตรมาส · ต้นทุนรายคัน · ยานพาหนะที่บำรุงรักษาไม่ได้ · ว่าง = Q.6 */
+function renderCost() {
+  const { done, cannot } = costRowsOf(S, p), all = done.concat(cannot);
+  $('actions').innerHTML = all.length ? '<button class="btn btn-s" type="button" id="cost-exp"><span class="ms">download</span>ส่งออก</button>' : '';
+  if (!all.length) { $('tab-cost').innerHTML = emptyState('data-empty', 'ยังไม่มีต้นทุนการบำรุงรักษา', 'ต้นทุนจะแสดงเมื่อยานพาหนะในแผนเดินทางที่ดำเนินการเอง ปิดงานคันแรก'); return; }
+  const tot = all.reduce((a, r) => a + costTotal(r), 0);
+  const metric = (ic, cls, t, n) => `<div class="metric"><div class="metric-hd"><span class="ficon${cls}"><span class="ms">${ic}</span></span>${t}</div><div class="metric-num">${n}</div></div>`;
+  const sums = (rs) => [rs.reduce((a, r) => a + r[2], 0), rs.reduce((a, r) => a + r[3], 0), rs.reduce((a, r) => a + r[4] * r[5], 0), rs.reduce((a, r) => a + r[6], 0), rs.reduce((a, r) => a + r[7], 0), rs.reduce((a, r) => a + costTotal(r), 0)];
+  const th = '<th class="w-[120px]">ค่าอะไหล่</th><th class="w-[120px]">ค่าเบี้ยเลี้ยง</th><th class="w-[150px]">ค่าชั่วโมงทำงาน</th><th class="w-[110px]">ค่าที่พัก</th><th class="w-[110px]">ค่าเดินทาง</th><th class="w-[120px]">รวม (บาท)</th>';
+  const row = (r, cannot) => { const c = POOL[r[0]]; return `<tr><td><a href="#" data-plate>${esc(c[0])}</a><div class="text-xs text-gray-500">ไตรมาส ${r[8]} · ${cannot ? 'บำรุงรักษาไม่ได้' : 'ปิดงาน ' + r[1]}</div></td>
+    <td>E301010000<div class="text-xs text-gray-500">${esc(c[2])} - บริหาร</div></td><td>${nf(r[2])}</td><td>${nf(r[3])}</td>
+    <td>${r[4] ? nf(r[4] * r[5]) + `<div class="text-xs text-gray-500">${r[4]} ชม. × ${nf(r[5])} บาท</div>` : '-'}</td><td>${nf(r[6])}</td><td>${nf(r[7])}</td><td>${nf(costTotal(r))}</td></tr>`; };
+  const qRows = [1, 2, 3, 4].map(q => { const rs = all.filter(r => r[8] === q); return [QUARTERS[q - 1], rs.length].concat(sums(rs)); }).concat([['รวมทั้งแผน', all.length].concat(sums(all))]);
+  $('tab-cost').innerHTML = `<div class="grid grid-cols-2 lg:grid-cols-4 gap-6">${metric('payments', '', 'ต้นทุนรวมของแผน', nf(tot) + ' บาท')}${metric('directions_car', '', 'เฉลี่ยต่อคัน', nf(Math.round(tot / all.length)) + ' บาท')}
+      ${metric('task_alt', ' ok', 'ยานพาหนะที่ปิดงานแล้ว', done.length + '/' + carIds(p).length + ' คัน')}${metric('block', ' err', 'บำรุงรักษาไม่ได้', cannot.length + ' คัน')}</div>
+    <section><div class="sect-label">สรุปรายไตรมาส</div><div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th>ไตรมาส</th><th class="w-[140px]">ยานพาหนะ (คัน)</th>${th}</tr></thead>
+      <tbody>${qRows.map((r, k) => `<tr${k === 4 ? ' class="font-semibold"' : ''}>${r.map((v, j) => `<td>${j > 1 ? nf(v) : esc(String(v))}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>
+    <section><div class="sect-label"><span>ต้นทุนรายคัน <span class="badge sq">${done.length}</span></span></div><div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th class="w-[190px]">ทะเบียน</th><th>ศูนย์ต้นทุน</th>${th}</tr></thead><tbody>${done.map(r => row(r)).join('')}</tbody></table></div></section>
+    <section><div class="sect-label"><span>ยานพาหนะที่บำรุงรักษาไม่ได้ <span class="badge sq">${cannot.length}</span></span></div>${cannot.length ? `<div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th class="w-[190px]">ทะเบียน</th><th>ศูนย์ต้นทุน</th>${th}</tr></thead><tbody>${cannot.map(r => row(r, true)).join('')}</tbody></table></div>` : emptyState('empty-vehicle', 'ไม่มียานพาหนะที่บำรุงรักษาไม่ได้', '')}</section>`;
+}
+document.addEventListener('click', e => { const pt = e.target.closest('[data-pt]'); if (pt) { pageTab = +pt.dataset.pt; render(); }
+  if (e.target.closest('#cost-exp')) notify('ส่งออกไฟล์สำเร็จ', { sub: 'ไฟล์ Excel 2 ชีต: สรุปรายไตรมาส · ต้นทุนรายคัน (Prototype — ยังไม่มีไฟล์จริง)' }); });
+const f = (k, v, wide) => `<div class="incident-field${wide ? ' wide' : ''}"><dt>${k}</dt><dd>${v}</dd></div>`;
+const NOTSET = 'ยังไม่กำหนด';
+
+function render() {
+  const rv = review();
+  $('crumbs').innerHTML = `<a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><a href="plans.html">บำรุงรักษาตามวาระ</a>` +
+    (S.role === 'approver' ? '<span class="sep"></span><a href="approvals.html">แผนรออนุมัติ</a>' : '') + `<span class="sep"></span><span class="cur">${esc(p.name)}</span>`;
+  $('title').textContent = rv ? 'ตรวจสอบแผนบำรุงรักษา' : 'เลขที่ ' + p.id;
+  $('st').innerHTML = badge(p.status);
+  const btns = [];
+  /* แผนที่อนุมัติแล้ว/ดำเนินการ/ปิดงาน มีแท็บ รายละเอียดแผน · ต้นทุนการบำรุงรักษา — แท็บต้นทุน ปุ่มหัวหน้าเป็น "ส่งออก" (COST_EXPORT_BTN) */
+  const hasCost = !rv && ['approved', 'active', 'closed'].includes(p.status);
+  $('page-tabs').classList.toggle('hidden', !hasCost);
+  $('page-tabs').innerHTML = ['รายละเอียดแผน', 'ต้นทุนการบำรุงรักษา'].map((l, k) => `<button type="button" class="tab-btn${k === pageTab ? ' on' : ''}" role="tab" data-pt="${k}">${l}</button>`).join('');
+  $('tab-detail').classList.toggle('hidden', hasCost && pageTab === 1); $('tab-cost').classList.toggle('hidden', !(hasCost && pageTab === 1));
+  if (hasCost && pageTab === 1) { renderCost(); return; }
+  if (S.role === 'creator' && p.status === 'returned') btns.push('<button class="btn btn-s" type="button" id="del"><span class="ms">delete</span>ลบแผน</button>');
+  if (S.role === 'creator' && ['returned', 'approved', 'active'].includes(p.status)) btns.push(`<a class="btn btn-s !no-underline" href="plan-form.html?id=${p.id}"><span class="ms">stylus</span>แก้ไข</a>`);
+  $('actions').innerHTML = btns.join('');
+  $('returned').classList.toggle('hidden', p.status !== 'returned'); $('reason').textContent = p.reason || '';
+  const cs = carIds(p).map(i => POOL[i]);
+  $('info').innerHTML = f('ชื่อแผน', esc(p.name)) + f('ปีงบประมาณ', p.year) + f('หน่วยงาน', p.unit) + f('เขต', [...new Set(cs.map(c => c[2].split(' ')[0]))].join(', ') || '—') +
+    f('ยานพาหนะรายไตรมาส', qSummary(p).join(' · ')) + f('จำนวนยานพาหนะ', carIds(p).length + ' คัน') + f('เลขที่ MR', p.id) + f('ผู้สร้างแผน', CREATOR + ' (' + p.unit + ')') +
+    f(p.approvedAt ? 'อนุมัติเมื่อ' : 'วันที่ส่ง', p.approvedAt || p.sentAt);
+  $('n-car').textContent = `ยานพาหนะในแผน (${carIds(p).length})`;
+  $('to-q').classList.toggle('hidden', rv || !['approved', 'active'].includes(p.status));
+  $('tabs').innerHTML = [1, 2, 3, 4].map(q => `<button type="button" class="tab-btn${q === tab ? ' on' : ''}" role="tab" data-tab="${q}">${QUARTERS[q - 1]} <span class="badge b-brand">${inQ(p, q).length}</span></button>`).join('');
+  const list = inQ(p, tab);
+  $('cars').innerHTML = list.length ? `<div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th class="w-[160px]">ทะเบียน</th><th>ยี่ห้อ/รุ่น</th><th class="w-[160px]">หน่วยงานเจ้าของยานพาหนะ</th><th class="w-[160px]">น้ำมันไฮดรอลิก</th><th class="w-[160px]">เปลี่ยนล่าสุด</th><th class="w-[144px]">อะไหล่</th></tr></thead>
+    <tbody>${list.map(i => { const c = POOL[i], x = p.parts[i]; return `<tr><td><a href="#" data-plate>${esc(c[0])}</a></td><td>${esc(c[1])}</td><td><div class="truncate max-w-[150px]">${esc(c[2])}</div></td><td>${x ? esc(x.oil) : NOTSET}</td><td>${lastOil(i)}</td><td>${esc(otherParts(p, i))}</td></tr>`; }).join('')}</tbody></table></div>`
+    : emptyState('empty-vehicle', 'ไตรมาสนี้ไม่มียานพาหนะในแผน', '');
+  $('ptabs').innerHTML = ['รวมทุกไตรมาส'].concat(QUARTERS).map((l, k) => `<button type="button" class="tab-btn${k === ptab ? ' on' : ''}" role="tab" data-ptab="${k}">${l}</button>`).join('');
+  const r = partsOf(p, ptab ? inQ(p, ptab) : carIds(p));
+  $('parts').innerHTML = r.length ? `<div class="tblwrap mt-0"><table class="tbl striped"><thead><tr><th>ชนิด</th><th class="w-[160px]">รหัสอะไหล่</th><th class="w-[160px]">ประเภท</th><th class="w-[160px]">จำนวน</th><th class="w-[144px]">หน่วย</th></tr></thead>
+    <tbody>${r.map(x => `<tr><td>${esc(x[0])}</td><td>${x[1]}</td><td>${x[2]}</td><td>${x[3]}</td><td>${x[4]}</td></tr>`).join('')}</tbody></table></div>`
+    : emptyState('data-empty', 'แผนนี้ไม่มีอะไหล่ที่ต้องเบิก', '');   // B.12
+  $('decide').classList.toggle('hidden', !rv); $('dec-actions').classList.toggle('hidden', !rv);
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-tab]'); if (t) { tab = +t.dataset.tab; render(); }
+  const pt = e.target.closest('[data-ptab]'); if (pt) { ptab = +pt.dataset.ptab; render(); }
+  if (e.target.closest('#del')) { $('m-del-s').textContent = `แผน ${p.id} "${p.name}" จะถูกลบ`; modal('m-del', true); }
+  if (e.target.closest('#to-q')) location.href = 'quarter.html?plan=' + p.id + '&q=1';
+});
+$('m-del-ok').addEventListener('click', () => { S.plans = S.plans.filter(x => x.id !== p.id); mfpSave(S); flash('ลบแผนบำรุงรักษาสำเร็จ'); location.href = 'plans.html'; });
+$('decision').addEventListener('change', e => {
+  dec = e.target.value;
+  document.querySelectorAll('#decision .radcard').forEach(l => l.classList.toggle('sel', l.querySelector('input').checked));
+  $('why-f').classList.toggle('hidden', dec !== 'back'); $('submit').disabled = false;
+});
+$('why').addEventListener('input', () => { $('why-err').classList.add('hidden'); $('why-f').classList.remove('err'); });
+$('submit').addEventListener('click', () => {
+  if (dec === 'back' && !$('why').value.trim()) { $('why-err').classList.remove('hidden'); $('why-f').classList.add('err'); $('why').focus(); return; }
+  $('m-dec-t').textContent = dec === 'ok' ? 'ยืนยันอนุมัติแผนบำรุงรักษา' : 'ยืนยันส่งกลับแก้ไข';
+  $('m-dec-s').textContent = dec === 'ok' ? `${p.name} · ${carIds(p).length} คัน · อนุมัติแล้ว ระบบแจ้งจำนวนอะไหล่ทั้งปีให้ Smart Inventory ทราบ (ยังไม่ตัดจากคลัง) และหน่วยงานเริ่มงานรายไตรมาสได้` : `${p.name} · ผู้สร้างแผนจะเห็นเหตุผลและแก้ไขแล้วส่งใหม่`;
+  $('m-dec-ok').textContent = dec === 'ok' ? 'อนุมัติ' : 'ส่งกลับแก้ไข';
+  modal('m-dec', true);
+});
+$('m-dec-ok').addEventListener('click', () => {
+  modal('m-dec', false);
+  if (dec === 'ok') { Object.assign(p, { status: 'approved', approvedAt: today() }); mfpSave(S); render(); notify('อนุมัติแผนบำรุงรักษาสำเร็จ'); }   // B.4 แจ้งบนหน้าพิจารณาแผน
+  else { Object.assign(p, { status: 'returned', reason: $('why').value.trim() }); mfpSave(S); flash('ส่งแผนกลับให้ผู้สร้างแผนแก้ไขแล้ว'); location.href = 'approvals.html'; }
+});
+render();
+</script>
+</body>
+</html>

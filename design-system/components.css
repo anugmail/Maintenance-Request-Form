@@ -549,9 +549,39 @@ body.modal-open{overflow:hidden}
 /* ---------- หัวข้อ section แถบ magenta ---------- */
 /* ไลบรารีใหม่ `Section header` (Breakpoint=Desktop) — ยกตามไลบรารี 1 ก.ย. 2569
    หัวข้อ 20/SemiBold สีดำ · คำโปรย 14/Regular #475467 · gap 12 · เส้นคั่นล่าง 1px #D0D5DD (ห่าง 20)
-   ⚠️ แถบ magenta นำหน้าแบบเดิมถอดออกแล้ว — ไลบรารีไม่มี */
+   18 พ.ย. 2569 (v0.75): ใส่แถบหน้าหัวข้อกลับ — ไลบรารีรุ่นปัจจุบัน (ดัมป์ 13 พ.ย. · Section header Breakpoint=Desktop › Text and badge)
+   มีชิ้น `Line` 4×24 มุม Radius/full สี Color/icon/brand (#A80689 = --brand-900) อยู่หน้า Text เสมอ (ไม่มี property ปิด) · ที่ ds41 ถอดออกเพราะอ่านว่าไลบรารีไม่มี
+   ที่มา: Section header ของไฟล์ Component + จอ "หน้าสร้างแผน" (MF / H1.7) ที่ปลั๊กอินสร้างจาก component จริง · Divider (เส้นล่าง) เป็น property เปิด/ปิดได้ — จอที่ปิดใช้ utility border-b-0 pb-0 */
 .sect{display:flex;gap:12px;align-items:center;font-weight:600;color:#000;font-size:var(--fs-h1);line-height:30px;
   margin:8px 0 16px;padding-bottom:20px;border-bottom:1px solid var(--gray-300)}
+.sect::before{content:"";flex:0 0 4px;width:4px;height:24px;border-radius:9999px;background:var(--brand-900)}
+/* หัวข้อรองในหน้ารายละเอียด — ไลบรารี `Section label` Breakpoint=Desktop (ไฟล์ Component หน้า Section headers 2011:6955) · เพิ่ม 18 พ.ย. 2569 v0.75
+   Label 16/SemiBold Color/text/primary · Content แถวเดียว SPACE_BETWEEN gap 12 (ปุ่ม Actions ชิดขวา) · ไม่มีแถบนำหน้า ไม่มีเส้นคั่น
+   ใช้ที่: จอ "หน้ารายละเอียดแผน" (MF / H4.2) และ "หน้าพิจารณาแผน" (MF / H5.3) ของปลั๊กอินพระผู้สร้าง — หัว "รายละเอียดแผน" · "ยานพาหนะในแผน (n)" · "อะไหล่ในแผน" */
+.sect-label{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:var(--fs-h2);font-weight:600;line-height:24px;color:#000;margin:0 0 16px}
+
+/* ---------- แผงแจ้งเตือน (เปิดจากกระดิ่งของ Header navigation) — ไลบรารี `Notification card` (ไฟล์ Component หน้า 2-4) · เพิ่ม 18 พ.ย. 2569 v0.75 ----------
+   Container 314 · r8 · ขอบ #EAECF0 (--gray-200) · เงา DROP_SHADOW 0 12 16 -4 #10182814 (= --shadow-lg)
+   _Notification header: pad 12 · เส้นล่าง gray-200 · Text 18/SemiBold ดำ + Badge outline "n แจ้งเตือนใหม่" (.badge.sq)
+   Content สูง 400 เลื่อนได้ · _Notification item base: pad 12 gap 8 เส้นล่าง gray-200 · Status จุด 12 (Success #17B26A = --success-600 · ใหม่ = --brand-900)
+   ใช้ที่: จอ "หน้าแผนเดินทางบำรุงรักษา — เปิดแผงแจ้งเตือน" (MF / H4.2 ของ Feature แผนเดินทาง) */
+.ncard{position:absolute;right:24px;top:72px;z-index:70;width:314px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column}
+.ncard-hd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-bottom:1px solid var(--gray-200);font-size:18px;font-weight:600;line-height:27px;color:#000}
+.ncard-bd{height:400px;overflow-y:auto}
+.ncard-item{display:flex;gap:8px;padding:12px;border-bottom:1px solid var(--gray-200);font-size:var(--fs-text-sm);line-height:var(--lh-text-sm);color:var(--gray-700)}
+.ncard-item small{display:block;margin-top:4px;font-size:var(--fs-text-xs);color:var(--gray-500)}
+.ncard-dot{flex:none;width:12px;height:12px;margin-top:5px;border-radius:9999px;background:var(--success-600)}
+.ncard-dot.new{background:var(--brand-900)}
+.ncard-ft{padding:12px}
+.ncard-ft .btn{width:100%;justify-content:center}
+
+/* ---------- ตัวเลขสรุป — ไลบรารี `Metric item` Breakpoint=Desktop (ไฟล์ Component หน้า Metrics 2011:13829) · เพิ่ม 18 พ.ย. 2569 v0.75 ----------
+   r12 (Radius/300) · ขอบ #D0D5DD (Color/border/primary = --gray-300) · pad 20/16 · สูง 156 · แนวตั้ง SPACE_BETWEEN gap 20
+   Icon and text: Featured icon 48 (.ficon) + Text 16/SemiBold ดำ (Label/02) gap 12 · Number 32/SemiBold ดำ (Headline/03)
+   แถว 4 ใบ gap 24 (metricRow ของปลั๊กอิน · MA Overview) · ใช้ที่: แท็บ "ต้นทุนการบำรุงรักษา" ของหน้ารายละเอียดแผน (Feature ต้นทุน Q.1–Q.2) */
+.metric{display:flex;flex-direction:column;justify-content:space-between;gap:20px;min-height:156px;padding:20px 16px;border:1px solid var(--gray-300);border-radius:12px;background:#fff}
+.metric-hd{display:flex;align-items:center;gap:12px;font-size:var(--fs-text-md);font-weight:600;line-height:24px;color:#000}
+.metric-num{font-size:32px;font-weight:600;line-height:48px;color:#000}
 
 /* ---------- ฟอร์มแบบหน้าใน: label บน + ไอคอนในช่อง ----------
    ตามไลบรารี Input field (Size=md): ช่องสูง 44 · r8 · pad นอน 14 · เงา xs

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บำรุงรักษาตามวาระ | Maintain-D (Prototype)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261118-ds75">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  Prototype Feature แผนบำรุงรักษา — หน้ารายการแผน (จอ A1.1 · A1.18 · A11.1 · R.1 · R.8 · S.1–S.3)
+  ต้นแบบหน้าตา = จอ Figma "MF / H1.1 … หน้ารายการแผน" (ไฟล์ Untitled D0ahPEpyZtZ09gnnrcv4sU node 195:479066) ที่ปลั๊กอินพระผู้สร้างสร้างจาก component จริง
+  ที่มา · ไฟล์ Component: Sidebar navigation · Header navigation · Page header (Breadcrumbs) · Table header (Text input ค้นหา + Secondary ตัวกรอง + Primary สร้างแผน) ·
+           Table Alternating fills (.tbl.striped) · Table cell Lead text / Badge (Pill outline) · Table pagination · Dropdown menu (.dd-menu) ·
+           Modal Type=Destructive centered · Notification
+        · ไฟล์ UI Release#2: หน้า "5.1 Rental Contract Management" เฟรม `Contract list`
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide" id="side"></aside>
+  <div class="work">
+    <div class="topbar"></div>
+    <main class="content">
+      <div class="crumbs"><a href="index.html" aria-label="หน้าแรก"><span class="ms">home</span></a><span class="sep"></span><span class="cur">บำรุงรักษาตามวาระ</span></div>
+      <div class="page-title-row"><h1 class="page-title mb-0">บำรุงรักษาตามวาระ</h1></div>
+
+      <div class="w-full stack">
+        <div class="list-toolbar split mb-0" id="toolbar">
+          <div class="lt-search max-w-[320px]"><div class="search"><span class="ms">search</span><input type="search" id="q" placeholder="ค้นหาเลขที่ MR, ชื่อแผน" aria-label="ค้นหาแผน"></div></div>
+          <div class="lt-actions flex gap-3">
+            <button class="btn btn-s" type="button" id="fbtn"><span class="ms">filter_list</span>ตัวกรอง</button>
+            <a class="btn btn-p !no-underline" href="plan-form.html" id="create"><span class="ms">add</span>สร้างแผน</a>
+          </div>
+        </div>
+        <div class="tblwrap mt-0" id="wrap">
+          <table class="tbl striped">
+            <thead><tr>
+              <th class="w-[150px]">เลขที่ MR <span class="ms">arrow_downward</span></th><th>ชื่อแผน <span class="ms">swap_vert</span></th><th class="w-[160px]">ภาค / ประเภทยานพาหนะ</th>
+              <th class="w-[150px]">จำนวนยานพาหนะ</th><th class="w-[160px]">ยานพาหนะรายไตรมาส</th><th class="w-[150px]">สถานะ <span class="ms">swap_vert</span></th><th class="w-[60px]" aria-label="จัดการ"></th>
+            </tr></thead>
+            <tbody id="body"></tbody>
+          </table>
+          <div id="foot"></div>
+        </div>
+        <div class="hidden" id="notfound"></div>
+        <div class="hidden" id="empty"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ยืนยันการลบแผน (S.2) — Modal Type=Destructive centered -->
+<div class="modal-overlay hidden" id="m-del">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-del-t">
+    <div class="modal-hd center">
+      <div class="modal-hd-c"><span class="ficon err"><span class="ms">delete</span></span><h2 id="m-del-t">ยืนยันการลบแผน</h2><div class="modal-sub" id="m-del-s"></div></div>
+      <button class="modal-x" type="button" data-close="m-del" aria-label="ปิด"><span class="ms">close</span></button>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-del">ยกเลิก</button>
+      <button class="btn btn-d" type="button" id="m-del-ok">ลบแผน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="proto.js?v=20261119-1"></script>
+<script>
+const S = mfpLoad();
+shell(S, 'plans');
+if (S.role === 'approver') $('create').classList.add('hidden');
+let delId = null;
+/* เมนู "…" ตามสถานะ (PLAN_MENU_OF): ส่งกลับแก้ไข = ดูรายละเอียด แก้ไข ลบ · อนุมัติแล้ว/ดำเนินการ = ดูรายละเอียด แก้ไข · อื่นๆ = ดูรายละเอียด */
+function items(p) {
+  const view = { label: 'ดูรายละเอียด', icon: 'quick_reference_all', href: 'plan-detail.html?id=' + p.id };
+  const edit = { label: 'แก้ไข', icon: 'stylus', href: 'plan-form.html?id=' + p.id };
+  const del = { label: 'ลบ', icon: 'delete', attr: `data-del="${p.id}"` };
+  if (S.role === 'approver') return [view];
+  return p.status === 'returned' ? [view, edit, '-', del] : p.status === 'approved' || p.status === 'active' ? [view, edit] : [view];
+}
+function render() {
+  const q = $('q').value.trim().toLowerCase();
+  const list = S.plans.filter(p => !q || (p.id + p.name).toLowerCase().includes(q));
+  $('body').innerHTML = list.slice(0, 10).map(p => { const sc = scopeOf(p), qs = qSummary(p); return `<tr>
+    <td><b>${esc(p.id)}</b></td>
+    <td><div class="truncate max-w-[300px]">${esc(p.name)}</div><div class="text-xs text-gray-500">ปีงบประมาณ ${p.year}</div></td>
+    <td><div class="truncate max-w-[150px]">${esc(sc.text)}</div><div class="text-xs text-gray-500 truncate max-w-[150px]">${esc(sc.sub)}</div></td>
+    <td>${carIds(p).length}</td>
+    <td><div class="truncate max-w-[150px]">${qs.slice(0, 2).join(' · ')}</div><div class="text-xs text-gray-500 truncate max-w-[150px]">${qs.slice(2).join(' · ')}</div></td>
+    <td>${badge(p.status)}</td>
+    <td class="dt-action">${menu('จัดการแผน ' + p.id, items(p))}</td></tr>`; }).join('');
+  $('foot').innerHTML = pager(list.length, 1, Math.min(10, list.length), Math.ceil(list.length / 10), 0);
+  const none = !S.plans.length;
+  $('wrap').classList.toggle('hidden', !list.length);
+  $('empty').classList.toggle('hidden', !none); $('empty').innerHTML = emptyState('data-empty', 'ไม่มีแผนบำรุงรักษา', 'เมื่อสร้างแผนบำรุงรักษา รายการแผนจะแสดงที่นี่', '<a class="btn btn-p mt-4 !no-underline" href="plan-form.html"><span class="ms">add</span>สร้างแผน</a>');
+  $('notfound').classList.toggle('hidden', none || !!list.length); $('notfound').innerHTML = emptyState('data-empty', 'ไม่พบแผนบำรุงรักษา', 'ไม่มีแผนที่ตรงกับคำค้น');
+  $('toolbar').classList.toggle('hidden', none);
+}
+$('q').addEventListener('input', render);
+$('fbtn').addEventListener('click', () => notify('ตัวกรอง (เขต · หน่วยงานหน้างาน)', { sub: 'ไม่อยู่ใน Happy flow — Prototype รอบนี้ยังไม่เปิด' }));
+document.addEventListener('click', e => {
+  const d = e.target.closest('[data-del]'); if (!d) return;
+  delId = d.dataset.del; const dd = d.closest('details'); if (dd) dd.open = false;
+  const p = S.plans.find(x => x.id === delId);
+  $('m-del-s').textContent = `แผน ${p.id} "${p.name}" จะถูกลบ`;
+  modal('m-del', true);
+});
+$('m-del-ok').addEventListener('click', () => {
+  S.plans = S.plans.filter(p => p.id !== delId); mfpSave(S); modal('m-del', false); render();
+  notify('ลบแผนบำรุงรักษาสำเร็จ');   // FEATURE_TOASTS.S3
+});
+render();
+</script>
+</body>
+</html>
