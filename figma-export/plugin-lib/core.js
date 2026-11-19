@@ -25,6 +25,9 @@ const warn = (where, e) => {   // แนบบรรทัดใน code.js ท�
    ทั้ง 3 ทางได้ instance ที่ผูกกับ component จริง ไม่มีการวาดเอง */
 /* key ของ component ต้นฉบับในไฟล์ "component" ที่เราอ่านค่ามา (ดัมป์ 19 ต.ค. 2569 10:52 · เก็บ key ของ main component ตรงๆ) · [key, เป็น component set ไหม] */
 const KEYS = {
+  /* 10 พ.ย. 2569 เจ้าของงาน "ตอนออกแบบครั้งต่ออยากให้ใช้ design จาก component กลาง" = หน้า Design Annotations ของไฟล์ (UI) VMS Plus – Release#2
+     แถบหัวบล็อก/ป้าย state (Header · Type=Header / Subheader) — key จากดัมป์ design-system/.figma-extract/ui-release2/1-56.json · นำเข้าไม่ได้ (ไฟล์นั้นไม่ได้เปิดเป็นไลบรารี) → หาในไฟล์/instance ตามเดิม */
+  "Header": ["cbdb14c4c43c175124ce4c7bb138bb980fc2f4ae", true],
   "Mobile table": ["4ca09b73532ee1f8f21e3e0a6f2c7f151839ee62", true],
   "Mobile table item": ["754d62b4c29ea0f402f67950cfe7a4eae279e591", true],
   "Mobile progress steps": ["9154edd850c0be2201a44213fe6e94163a7a1516", true],
@@ -85,6 +88,7 @@ const KEYS = {
   "Nav button": ["fb0cf06df292e5bff53d7503855a3b943fb8225b", true],
   "quick_reference_all-24-300-round": ["9ed6481ba385035617f2491e6e7b5d6a58e9997c", false],
   "stylus-24-300-round": ["803aec7e2947f42a48164aa843ea6078b14cae1f", false],
+  "check-24-300-round": ["8c1bd305deb686415a28e6999512f486d5b3d5b1", false],   // ไอคอนนำปุ่ม "รับทราบ" สีเขียว S13 (10 พ.ย. 2569 · แบบปุ่ม "ตรวจแล้ว" หน้า 5.14 - 5.15 UI Release#2)
   "delete-24-300-round": ["d0a4abe7a062d89630de6bd7cb8ce325d1fd8336", false],
   "Table cell": ["2c5b641cf63a8a66f18d2a702c0fddf3fe3b2b20", true],
   "Table header cell": ["d689fd327ddac63e712a5bb5a3b4f3e39fab435e", true],
@@ -105,25 +109,41 @@ const KEYS = {
   "keyboard_arrow_left-20-400-round": ["32933c0651c04a63cb2aa78648cf8b15ebc7c266", false],
   "cloud_upload-24-300-round": ["bb12332b86d47144684d92bf7d358b9c2b7a4e50", false],
 };
+const SOFT_KEY = new Set(['Header']);   // นำเข้าด้วย key ไม่ได้ไม่ต้องเตือนเรื่องไลบรารี VMS Plus (อยู่คนละไฟล์) — ถอยไปหาในไฟล์ตามเดิม
 const ALIAS = {};   // 19 ต.ค.: Sidebar navigation มี key ของไฟล์ component แล้ว ไม่ต้องอ้างชื่อ Sidebar ของ UI Release#2
 const INDEX = new Map();     // ชื่อ → COMPONENT_SET / COMPONENT ที่ใช้ได้
 const ROUTE = {};            // ชื่อ → ได้มาทางไหน
 let IMPORT_ERR = '';
 const holderOf = (c) => (c.parent && c.parent.type === 'COMPONENT_SET') ? c.parent : c;
+/* ลดการโหลดทุกหน้า (10 พ.ย. 2569 เจ้าของงาน "ทำไมเวลาไฟล์เยอะๆ ถึงกินทรัพยากรของ figma เยอะ" · เลือกข้อ ก.)
+   เดิมทุกครั้งที่กดสร้างจะ loadAllPagesAsync + ไล่ component ทั้งไฟล์ และถ้ามีตัวที่ไม่อยู่ในไฟล์ (เช่น Component 1) จะสแกน instance ทั้งไฟล์ทุกรอบ
+   ⇒ 1) นำเข้าด้วย key ก่อน ไม่ต้องโหลดหน้าอื่น  2) ตัวที่ไม่มี key (component ยืมจากไฟล์ Maintain-D) เปิดตรงจาก id ที่จำไว้ในไฟล์ (pluginData ของ document)
+   3) ยังไม่ได้ และรอบก่อนไม่ได้บันทึกว่าไม่มีในไฟล์ → โหลดทุกหน้าแล้วหาแบบเดิม  4) ตัวที่หาไม่เจอจำไว้ รอบหน้าข้าม (ไม่สแกน instance ทั้งไฟล์ซ้ำ)
+   ปุ่ม "เช็ค component" (checkOnly) หาเต็มทุกครั้งแล้วเขียนที่จำไว้ใหม่ — วาง component ลงไฟล์ใหม่ให้กดปุ่มนี้ก่อน */
+const COMP_CACHE = 'componentCache';
+function readCompCache() { try { const c = JSON.parse(figma.root.getPluginData(COMP_CACHE) || '{}'); return { ids: c.ids || {}, absent: c.absent || [] }; } catch (e) { return { ids: {}, absent: [] }; } }
+function writeCompCache(c) { try { figma.root.setPluginData(COMP_CACHE, JSON.stringify(c)); } catch (e) { /* เขียนไม่ได้ก็หาเต็มรอบหน้า */ } }
 async function resolveAll(list, checkOnly) {
   list = list || NEEDED;
-  await figma.loadAllPagesAsync();
-  const local = new Map();
-  for (const n of figma.root.findAllWithCriteria({ types: ['COMPONENT_SET', 'COMPONENT'] })) {
-    if (n.type === 'COMPONENT' && n.parent && n.parent.type === 'COMPONENT_SET') continue;
-    if (!local.has(n.name)) local.set(n.name, n);
-  }
-  log('component ในไฟล์นี้เอง ' + local.size + ' ตัว');
+  const cache = checkOnly ? { ids: {}, absent: [] } : readCompCache();
+  let local = null;
+  const loadLocal = async () => {   // โหลดทุกหน้า + รายการ component ในไฟล์ — ทำเมื่อจำเป็นเท่านั้น ครั้งเดียวต่อรอบ
+    if (local) return local;
+    await figma.loadAllPagesAsync();
+    local = new Map();
+    for (const n of figma.root.findAllWithCriteria({ types: ['COMPONENT_SET', 'COMPONENT'] })) {
+      if (n.type === 'COMPONENT' && n.parent && n.parent.type === 'COMPONENT_SET') continue;
+      if (!local.has(n.name)) local.set(n.name, n);
+    }
+    log('โหลดทุกหน้าเพื่อหา component ในไฟล์นี้เอง ' + local.size + ' ตัว');
+    return local;
+  };
   /* ยืมจาก instance ในไฟล์ = ทางสุดท้าย — สแกนเฉพาะเมื่อมีตัวที่นำเข้าไม่ได้ (เดิมสแกนทุกรอบ: ไฟล์มี instance หลายพันตัว ช้ามาก) */
   const viaInst = new Map();
   let scanned = false;
   const scanInstances = async () => {
     if (scanned) return; scanned = true;
+    await loadLocal();
     log('กำลังสแกน instance ในไฟล์ (มีตัวที่นำเข้าจากไลบรารีไม่ได้)…');
     const insts = figma.root.findAllWithCriteria({ types: ['INSTANCE'] });
     for (const i of insts) {
@@ -135,6 +155,12 @@ async function resolveAll(list, checkOnly) {
       } catch (e) { /* ข้าม instance ที่เข้าไม่ถึง */ }
     }
   };
+  const fromCache = async (x) => {   // id ที่จำไว้ → node · ถูกลบหรือเปลี่ยนชื่อแล้ว = ไม่ใช้
+    const c = cache.ids[x]; if (!c || typeof figma.getNodeByIdAsync !== 'function') return null;
+    try { const n = await figma.getNodeByIdAsync(c[0]); if (n && !n.removed && (n.type === 'COMPONENT' || n.type === 'COMPONENT_SET') && n.name === c[2]) return [n, c[1]]; } catch (e) { /* หาใหม่ */ }
+    return null;
+  };
+  const skipped = [];
   const missing = [];
   for (const name of list) {
     const names = [name].concat(ALIAS[name] || []);
@@ -149,14 +175,23 @@ async function resolveAll(list, checkOnly) {
       try { got = k[1] ? await figma.importComponentSetByKeyAsync(k[0]) : await figma.importComponentByKeyAsync(k[0]); how = 'นำเข้าจากไลบรารี'; break; }
       catch (e) { importErr = (e && e.message) || String(e); }
     }
-    if (!got) for (const x of names) { if (local.has(x)) { got = local.get(x); how = 'สำเนาในไฟล์นี้ ⚠ ลิงก์วนในไฟล์นี้'; break; } }
-    if (!got) await scanInstances();
-    if (!got) for (const x of names) { if (viaInst.has(x)) { got = viaInst.get(x); how = 'จาก instance ในไฟล์ ⚠ อาจลิงก์ไปไลบรารีที่เปิดไม่ได้'; break; } }
+    if (!got) for (const x of names) { const c = await fromCache(x); if (c) { [got, how] = c; break; } }
+    const absent = !got && names.every(x => cache.absent.indexOf(x) >= 0);
+    if (absent) skipped.push(name);
+    if (!got && !absent) { const L = await loadLocal(); for (const x of names) { if (L.has(x)) { got = L.get(x); how = 'สำเนาในไฟล์นี้ ⚠ ลิงก์วนในไฟล์นี้'; break; } } }
+    if (!got && !absent) await scanInstances();
+    if (!got && !absent) for (const x of names) { if (viaInst.has(x)) { got = viaInst.get(x); how = 'จาก instance ในไฟล์ ⚠ อาจลิงก์ไปไลบรารีที่เปิดไม่ได้'; break; } }
+    if (got && how.indexOf('นำเข้าจากไลบรารี') !== 0) cache.ids[name] = [got.id, how, got.name];
+    if (got) cache.absent = cache.absent.filter(x => x !== name);
+    else if (!absent && cache.absent.indexOf(name) < 0) cache.absent.push(name);
     if (!got && importErr) how = 'นำเข้าไม่ได้: ' + importErr;
-    if (importErr && !IMPORT_ERR && !NESTED_ONLY.has(name)) IMPORT_ERR = importErr;   // ชิ้นส่วนซ้อน (เช่น _Dropdown menu item ที่ Figma ไม่ publish) ไม่ต้องเตือน
+    if (importErr && !IMPORT_ERR && !NESTED_ONLY.has(name) && !SOFT_KEY.has(name)) IMPORT_ERR = importErr;   // ชิ้นส่วนซ้อน (เช่น _Dropdown menu item ที่ Figma ไม่ publish) ไม่ต้องเตือน
     if (got) { INDEX.set(name, got); ROUTE[name] = how + (got.name !== name ? ' (ชื่อ ' + got.name + ')' : ''); }
     else missing.push(name + (how ? ' — ' + how : ''));
   }
+  writeCompCache(cache);
+  if (!local) log('ไม่ต้องโหลดทุกหน้า — นำเข้าจากไลบรารีด้วย key · ตัวในไฟล์ใช้ตำแหน่งที่จำไว้');
+  if (skipped.length) log('ข้าม ' + skipped.length + ' ตัวที่รอบก่อนไม่เจอในไฟล์ (' + skipped.join(', ') + ') — ถ้าเพิ่งวางลงไฟล์ กด "เช็ค component" ก่อน');
   if (IMPORT_ERR) log('⚠ นำเข้าจากไลบรารีไม่ได้ (' + IMPORT_ERR + ') — ตัวที่ได้ "จาก instance ในไฟล์" จะกด Go to main component ไปไฟล์ Component ที่อ่านมาไม่ได้ · เปิดใช้ไลบรารี (Component) VMS Plus ในไฟล์นี้ (Assets → Libraries) แล้วรันใหม่');
   const by = {};
   for (const n of Object.keys(ROUTE)) { const r = ROUTE[n].split(' (')[0]; by[r] = (by[r] || 0) + 1; }
@@ -834,6 +869,8 @@ let PINS = [];
 function pin(place) { place(); PINS.push(place); }
 function repin() { const p = PINS; PINS = []; for (const f of p) { try { f(); } catch (e) { /* ช่องถูกลบไปแล้ว */ } } }
 let MENU_SHEET = false;
+/* ช่องของ Dropdown menu: 3 รายการ = 0 1 (เส้นคั่น) 4 แบบเดิม · 4 รายการ = 0 1 2 (เส้นคั่น) 4 — รายการสุดท้าย (ลบ) อยู่ใต้เส้นคั่นเสมอ (12 พ.ย. 2569 เมนูยานพาหนะของฟอร์มแผนเพิ่ม ย้ายไปไตรมาสอื่น) */
+const slotsOf = (items) => items.length > 3 ? { 0: items[0], 1: items[1], 2: items[2], 3: 'divider', 4: items[3] } : { 0: items[0], 1: items[1], 3: 'divider', 4: items[2] };
 function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "…" · mobile = ไม่เปิดเมนู เพราะการ์ดมือถือแสดงไอคอนดู แก้ไข ลบ ครบแล้ว (4 พ.ย. 2569) · ตั้ง MENU_SHEET = true ถ้าจะกลับไปใช้ bottom sheet
   if (MOB && !MENU_SHEET) return null;
   if (MOB) {
@@ -842,7 +879,7 @@ function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "
     overlay(scr, sh, 0, 0); sh.counterAxisSizingMode = 'FIXED'; sh.resize(VW(), sh.height);
     const hd = inst('Bottom sheet header'); add(sh, hd, 'h'); const ta = find(hd, 'Text and action'); if (ta) ta.visible = false; const dv = find(hd, 'Divider'); if (dv) dv.visible = false;
     const m = inst('Dropdown menu'); add(sh, m, 'h'); hide(m, '_Dropdown menu header');
-    const list = (find(m, 'Menu items') || m).children; const want = { 0: items[0], 1: items[1], 3: 'divider', 4: items[2] };
+    const list = (find(m, 'Menu items') || m).children; const want = slotsOf(items);
     list.forEach((it, i) => { const w = want[i]; if (!w) { it.visible = false; return; } if (w !== 'divider') setProps(it, { Text: w[0], Shortcut: false, Icon: true, 'Icon swap': icon(w[1]) }); });
     m.strokes = []; sh.y = VH() - sh.height;
     return m;
@@ -850,7 +887,7 @@ function menuAt(scr, anchor, items) {   // Dropdown menu ใต้ปุ่ม "
   const m = inst('Dropdown menu');
   hide(m, '_Dropdown menu header');
   const list = (find(m, 'Menu items') || m).children;
-  const want = { 0: items[0], 1: items[1], 3: 'divider', 4: items[2] };
+  const want = slotsOf(items);
   list.forEach((it, i) => {
     const w = want[i];
     if (!w) { it.visible = false; return; }
@@ -885,7 +922,9 @@ async function tableHeader(o) {
   if (ti) setProps(ti, { Label: false, Helper: false, 'Trailing icon': false, Text: o.query || o.placeholder || PLUGIN.searchHint, State: o.query ? 'Filled' : 'Default' });
   const acts = find(th, 'Actions'), more = (o.more || []).slice();
   if (acts) { let first = true; for (const b of acts.children) {
-    if (b.name === 'Secondary button' && first) { first = false; setProps(b, { Text: 'ตัวกรอง', 'Leading icon': true, 'Leading icon swap': icon('filter_list-24-400-round') }); const p = find(b, 'Pill outline'); if (p) { if (o.filterCount) setProps(p, { Text: String(o.filterCount) }); else p.visible = false; } }
+    if (b.name === 'Secondary button' && first && o.add) { first = false; setProps(b, { Text: o.add, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') }); const p = find(b, 'Pill outline'); if (p) p.visible = false; }   // o.add = ปุ่มเพิ่มแทนตัวกรอง (ฟอร์มแผนแท็บไตรมาส 12 พ.ย. 2569)
+    else if (b.name === 'Secondary button' && first && o.noFilter) { first = false; b.visible = false; }
+    else if (b.name === 'Secondary button' && first) { first = false; setProps(b, { Text: 'ตัวกรอง', 'Leading icon': true, 'Leading icon swap': icon('filter_list-24-400-round') }); const p = find(b, 'Pill outline'); if (p) { if (o.filterCount) setProps(p, { Text: String(o.filterCount) }); else p.visible = false; } }
     else if (b.name === 'Secondary button' && more.length) { const m = more.shift(); b.visible = true; setProps(b, { Text: m.text, 'Leading icon': !!m.icon, 'Trailing icon': false, State: m.disabled ? 'Disabled' : 'Default' }); if (m.icon) setProps(b, { 'Leading icon swap': icon(m.icon) }); }
     else if (o.primary && b.name === 'Primary button') setProps(b, { Text: o.primary, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') });
     else if (o.primary && MOB && b.name === 'Secondary button' && !acts.children.some(x => x.name === 'Primary button')) {   // Table header Mobile มีแค่ Secondary 2 ช่อง ⇒ สลับช่องที่ 2 เป็น Primary แบบ Request list ของ 5.10 Vehicle In Use (EV) · UI Release#2
@@ -973,7 +1012,7 @@ async function labelText(chars, size, hex) {
   return t;
 }
 function fixed(f, w, h) { f.primaryAxisSizingMode = 'FIXED'; f.counterAxisSizingMode = 'FIXED'; f.resize(w, h); return f; }
-async function flowBar(prefix, code, title, state, width) {
+async function flowBar(prefix, code, title, state, width, desc) {
   let bar = null;
   if (INDEX.has('Header') && !HEADER_BROKEN) {
     bar = inst('Header', { Type: 'Subheader' });
@@ -983,20 +1022,54 @@ async function flowBar(prefix, code, title, state, width) {
     const okCode = st ? await text(st, 'Text', code) : false;
     const det = find(bar, 'Detail'); const ts = det ? det.children.filter(c => c.type === 'TEXT') : [];
     const okTitle = ts[0] ? await text(det, ts[0], title) : false;
-    if (ts[1]) ts[1].visible = false;   // บรรทัด "เงื่อนไข" ของทีมออกแบบ — ไม่ใช้
+    /* บรรทัดที่ 2 = เงื่อนไขของ state (แบบตัวอย่าง "เงื่อนไขการแสดงผล …" ใน Design Annotations · 10 พ.ย. 2569) — ไม่มีก็ซ่อน */
+    if (ts[1]) { if (desc && await text(det, ts[1], desc)) { try { ts[1].layoutSizingHorizontal = 'FILL'; ts[1].textAutoResize = 'HEIGHT'; } catch (e) { /* ปล่อยกว้างตาม component */ } } else ts[1].visible = false; }
     if (!(okCode && okTitle)) {   // ใส่ข้อความไม่ได้ (ฟอนต์/โครง) → ป้ายจะไม่ตรง scenario ⇒ ถอยไปแถบธรรมดาทั้งชุด
       try { bar.remove(); } catch (e) { /* ลบไม่ได้ ปล่อย */ }
       bar = null; HEADER_BROKEN = true;
       log('⚠ แถบ Header ของทีมออกแบบใส่ข้อความไม่ได้ (ฟอนต์ของ component ไม่มีในเครื่อง) — ใช้แถบธรรมดาสีเดียวกันแทนทั้งชุด');
-    } else { try { bar.resize(width, bar.height); } catch (e) { warn('ปรับกว้างแถบ ' + code, e); } }
+    } else {
+      try { bar.resize(width, bar.height); } catch (e) { warn('ปรับกว้างแถบ ' + code, e); }
+      /* ชื่อยาวไม่ล้นไปทับคอลัมน์ข้าง (เจ้าของงาน 10 พ.ย. 2569 ส่งภาพ V.4.1 ทับ V.4.2 "ปรับกล่องให้เหมาะสมกับคำ"):
+         ข้อความกว้างเต็ม Detail แล้วขึ้นบรรทัดใหม่ · แถบสูงตามข้อความ (กว้างคงเท่าจอ) · กล่องรหัสยืดสูงตาม */
+      try { ts[0].layoutSizingHorizontal = 'FILL'; ts[0].textAutoResize = 'HEIGHT'; bar.counterAxisSizingMode = 'AUTO'; if (st) st.layoutSizingVertical = 'FILL'; } catch (e) { warn('ตัดบรรทัดแถบ ' + code, e); }
+    }
   }
-  if (!bar) {
+  if (!bar) {   // แถบธรรมดา: กว้างคงที่ สูงตามข้อความ (อย่างน้อย GRID.barH) · ชื่อยาวขึ้นบรรทัดใหม่ไม่ล้นคอลัมน์ (10 พ.ย. 2569)
     bar = fixed(frame('Header', 'HORIZONTAL'), width, GRID.barH);
+    bar.counterAxisSizingMode = 'AUTO'; bar.minHeight = GRID.barH;
     const st = fixed(frame('State', 'HORIZONTAL', { fill: rgbOf(BAR_FILL[state] || BAR_FILL.Default), pad: [0, 40] }), GRID.stateW, GRID.barH);
-    st.primaryAxisAlignItems = 'CENTER'; st.counterAxisAlignItems = 'CENTER'; st.appendChild(await labelText(code, 64, '#FFFFFF')); bar.appendChild(st);
-    const det = frame('Detail', 'HORIZONTAL', { fill: WHITE, pad: [0, 40] }); det.counterAxisAlignItems = 'CENTER'; bar.appendChild(det); det.layoutGrow = 1; det.layoutSizingVertical = 'FILL';
-    det.appendChild(await labelText(title, 48, '#101828'));
+    st.primaryAxisAlignItems = 'CENTER'; st.counterAxisAlignItems = 'CENTER'; st.appendChild(await labelText(code, 64, '#FFFFFF')); bar.appendChild(st); st.layoutSizingVertical = 'FILL';
+    const det = frame('Detail', 'HORIZONTAL', { fill: WHITE, pad: [24, 40] }); det.counterAxisAlignItems = 'CENTER'; bar.appendChild(det); det.layoutGrow = 1;
+    const tt = await labelText(title + (desc ? ' — ' + desc : ''), 48, '#101828'); det.appendChild(tt); tt.layoutSizingHorizontal = 'FILL'; tt.textAutoResize = 'HEIGHT';
   }
+  bar.name = prefix + ' · ' + code + ' ' + title + (desc ? ' — ' + desc : '');
+  return bar;
+}
+/* สีป้าย state ตามหน้าจริงของ UI Release#2 (10 พ.ย. 2569): ปกติ Sub Flow (เทา) · ผลสำเร็จ (A - S1 …) Success (เขียว) · ผิดพลาด (A3.1 - F …) Failed (แดง)
+   ของเรา: ชื่อจอมี "สำเร็จ" = Success · "Validation" หรือ "ไม่สำเร็จ" = Failed · ที่เหลือ Sub Flow */
+const stateTone = (label) => /ไม่สำเร็จ|Validation/.test(label) ? 'Failed' : /สำเร็จ/.test(label) ? 'Success' : 'Sub Flow';
+/* หัวหน้า (10 พ.ย. 2569 เจ้าของงาน "ใช้ design จาก component กลาง" — หน้า Design Annotations ของ UI Release#2 · ไฟล์ Backup):
+   Header Type=Header = ชื่อใหญ่ + บรรทัดอธิบาย + Header / Status · หน้าจริงของไฟล์ (5.1–5.17) ใช้ "1 ตัวต่อหน้า" เป็นชื่อขอบเขตงาน สถานะ Ready for Review / Work In Progress
+   บรรทัดอธิบายซ่อน · บล็อกตัวอักษรไม่ใช้ตัวนี้ (ใช้ Subheader State=Default) · ใช้กับหัวหน้าของชุดจอ และแถบ Journey
+   component ไม่มี variant Type=Header (ชุดเก่าในไฟล์) หรือใส่ข้อความไม่ได้ → แถบ Subheader แบบเดิม */
+async function blockHeader(prefix, code, title, width, desc, status) {
+  const set = INDEX.get('Header');
+  const top = !HEADER_BROKEN && set && set.type === 'COMPONENT_SET' && set.children.some(c => c.variantProperties && c.variantProperties.Type === 'Header');
+  if (!top) return flowBar(prefix, code, title, 'Default', width);
+  const bar = inst('Header', { Type: 'Header' });
+  const ts = bar.children.filter(c => c.type === 'TEXT');
+  if (!(ts[0] && await text(bar, ts[0], code === 'Page' ? title : code + ' · ' + title))) {
+    try { bar.remove(); } catch (e) { /* ลบไม่ได้ ปล่อย */ }
+    log('⚠ แถบหัวบล็อก (Header Type=Header) ใส่ข้อความไม่ได้ — ใช้แถบ Subheader แทน');
+    return flowBar(prefix, code, title, 'Default', width);
+  }
+  if (ts[1]) { if (desc && await text(bar, ts[1], desc)) { try { ts[1].textAutoResize = 'HEIGHT'; } catch (e) { /* ปล่อย */ } } else ts[1].visible = false; }
+  const hs = find(bar, 'Header / Status');   // ค่าที่หน้าจริงใช้: Work In Progress (ค่าตั้งต้นของ component) · Ready for Review
+  if (hs && !status) hs.visible = false;   // ไม่ส่งสถานะ = ซ่อนป้าย (เจ้าของงาน 10 พ.ย. 2569 "แถบ Journey เอาป้าย Work In Progress ออกด้วย")
+  else if (hs && Object.keys(hs.componentProperties || {}).some(k => k.split('#')[0] === 'Property 1')) setProps(hs, { 'Property 1': status });
+  else if (hs && status !== 'Work In Progress') warn('Header / Status', 'เปลี่ยนเป็น ' + status + ' ไม่ได้ (component ไม่เปิด property)');
+  try { bar.resize(width, bar.height); } catch (e) { warn('ปรับกว้างแถบหัวบล็อก ' + code, e); }
   bar.name = prefix + ' · ' + code + ' ' + title;
   return bar;
 }
@@ -1498,7 +1571,7 @@ async function exportShots(dir, scen) {   // scen = ['S1', 'S2'] ส่งเฉ
   const shots = [], skipped = [];
   for (const f of all) {
     const mob = / · mobile$/.test(f.name), m = f.name.replace(/ · mobile$/, '').match(SHOT_RE);
-    if (m) shots.push({ f, code: m[2] + '.' + m[3], letter: m[2], no: m[3], scenario: m[4], name: m[5], device: mob ? 'mobile' : 'desktop' }); else skipped.push(f.name);
+    if (m) shots.push({ f, code: m[2] + m[3] + '.' + m[4], letter: m[2], sub: m[3], no: m[4], scenario: m[5], group: m[2] + m[3], groupName: m[6] || '', name: m[7], device: mob ? 'mobile' : 'desktop' }); else skipped.push(f.name);
   }
   /* หน้าเดียวกันมีหลายชุด ⇒ จอรหัสเดียวกันเก็บตัวที่สร้างล่าสุด
      9 พ.ย. 2569 เดิมเลือกตามตำแหน่งล่างสุด แต่หน้าเต็มแล้วปลั๊กอินวางชุดใหม่ที่ช่องว่างด้านบนหรือคอลัมน์ขวา ⇒ ส่งชุดเก่าไป FigJam (เจ้าของงาน "ของฝั่ง figma มาแล้ว แต่ figjam ยังไม่มา")
@@ -1512,23 +1585,23 @@ async function exportShots(dir, scen) {   // scen = ['S1', 'S2'] ส่งเฉ
   shots.splice(0, shots.length, ...shots.filter(x => !seen.has(x.code + x.device) && seen.add(x.code + x.device)));
   if (total > shots.length) log('หน้านี้มีจอหลายชุด — ส่งเฉพาะชุดที่สร้างล่าสุดของแต่ละจอ · ข้ามชุดเก่า ' + (total - shots.length) + ' จอ');
   if (scen && scen.length) { shots.splice(0, shots.length, ...shots.filter(x => scen.indexOf(x.scenario) >= 0)); log('ส่งเฉพาะ ' + scen.join(' ')); }
-  const key = (s) => s.letter + s.no.split('.').map(x => x.padStart(3, '0')).join('.');
+  const key = (s) => s.letter + (s.sub || '').padStart(3, '0') + '.' + s.no.split('.').map(x => x.padStart(3, '0')).join('.');
   shots.sort((a, b) => key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0);
   if (!shots.length) { log('ไม่พบเฟรมจอ "' + PLUGIN.prefix + ' / …" บนหน้า "' + page.name + '" — เปิดหน้าที่มีจอแล้วกดใหม่'); return; }
   log('ส่งภาพจอ ' + shots.length + ' จอ จากหน้า "' + page.name + '" ไปที่ out/figjam/' + dir + '/ …');
-  const manifest = { source: 'figma', page: page.name, exportedAt: new Date().toISOString(), scen: scen && scen.length ? scen : undefined, shots: [] };
+  const manifest = { source: 'figma', page: page.name, exportedAt: new Date().toISOString(), scen: scen && scen.length ? scen : undefined, titles: titles || undefined, shots: [] };
   for (const s of shots) {
     try {
       const scale = Math.min(1, 4000 / Math.max(s.f.width, s.f.height));
       const bytes = await s.f.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: scale } });
       const file = s.code + '-' + s.scenario + (s.device === 'mobile' ? '-mobile' : '') + '.png';
       figma.ui.postMessage({ type: 'shot', dir, file, bytes });
-      manifest.shots.push({ code: s.code, scenario: s.scenario, name: s.name, device: s.device, file, w: Math.round(s.f.width * scale), h: Math.round(s.f.height * scale) });
+      manifest.shots.push({ code: s.code, scenario: s.scenario, group: s.group, groupName: s.groupName || undefined, name: s.name, device: s.device, file, w: Math.round(s.f.width * scale), h: Math.round(s.f.height * scale) });
     } catch (e) { warn('export ' + s.f.name, e); }
   }
   figma.ui.postMessage({ type: 'shots-done', dir, manifest });
   log('export แล้ว ' + manifest.shots.length + '/' + shots.length + ' จอ' + (skipped.length ? ' · ข้าม ' + skipped.length + ' เฟรมที่ชื่อไม่ตรงรูปแบบ (เช่น ' + skipped[0] + ')' : '') + (errors.length ? ' · ⚠ เตือน ' + errors.length + ' จุด' : ''));
-  log('ขั้นต่อไป: node figma-export/3-figjam-board.js --maintainance-ui --only --split-scen --out=board-maintainance-ui.json (ชุดเต็ม + แยกไฟล์ราย S) แล้วเปิดปลั๊กอินบอร์ดใน FigJam ใหม่ เลือกกลุ่ม "บำรุงรักษาตามวาระ · ราย scenario"');
+  if (dir === 'flow-maintainance') log('ขั้นต่อไป: node figma-export/3-figjam-board.js --maintainance-ui --only --split-scen --out=board-maintainance-ui.json (ชุดเต็ม + แยกไฟล์ราย S) แล้วเปิดปลั๊กอินบอร์ดใน FigJam ใหม่ เลือกกลุ่ม "บำรุงรักษาตามวาระ · ราย scenario"');
 }
 
 /* ---------- journey แนวขวาง (เจ้าของงานสั่ง 22 ต.ค. 2569: "ทำ scen มาต่อกันเป็นแนวขวาง สำหรับ export" + "ลงในเพจ maintainance แต่มีปุ่มแยก") ----------
@@ -1557,7 +1630,9 @@ async function buildJourney(page, prefix, y0, info) {
   /* ตำแหน่ง: คอลัมน์กว้างเท่ากรอบที่กว้างสุดในคอลัมน์ · แถว 2 อยู่ใต้กรอบแถว 1 ที่สูงสุด */
   const rowOf = (n) => (J.row && J.row[n]) || 0;
   const backTop = J.links.filter(l => l[3] === 'back' && !rowOf(l[0]) && !rowOf(l[1])).length;
-  const top = y0 + GRID.barH + JGAP.bar + GRID.barH + JGAP.bar + backTop * JGAP.lane;
+  /* แถบ Journey = Header Type=Header (สูงกว่าแถบเดิม) ⇒ สร้างก่อนเพื่อวัดความสูง แล้วค่อยยืดกว้างเท่าผังด้านล่าง (10 พ.ย. 2569) */
+  CREATED = []; const jb = put(await blockHeader(prefix, 'Journey', J.title, 1000), 0, y0); const jh = Math.max(GRID.barH, jb.height);
+  const top = y0 + jh + JGAP.bar + GRID.barH + JGAP.bar + backTop * JGAP.lane;
   const colX = []; let x = 0;
   J.cols.forEach((col, i) => { colX[i] = x; x += Math.max(...col.map(n => F[n] ? F[n].width : 0)) + JGAP.col; });
   const totalW = x - JGAP.col;
@@ -1567,11 +1642,11 @@ async function buildJourney(page, prefix, y0, info) {
   for (const n of Object.keys(F)) { F[n].x = colX[colOf[n]]; F[n].y = rowY[rowOf(n)]; }
   /* แถบ Journey + ช่วงงาน (component Header ของทีมออกแบบ · ไม่มี = แถบธรรมดา) */
   CREATED = [];
-  put(await flowBar(prefix, 'Journey', J.title, 'Default', totalW), 0, y0);
+  try { jb.resize(totalW, jb.height); } catch (e) { warn('ปรับกว้างแถบ Journey', e); }
   for (const [i, [title, ns]] of (J.phases || []).entries()) {
     const xs = ns.filter(n => F[n]).map(n => F[n].x), xe = ns.filter(n => F[n]).map(n => F[n].x + F[n].width);
     if (!xs.length) continue;
-    put(await flowBar(prefix, 'ช่วง ' + (i + 1), title, 'Sub Flow', Math.max(...xe) - Math.min(...xs)), Math.min(...xs), y0 + GRID.barH + JGAP.bar);
+    put(await flowBar(prefix, 'ช่วง ' + (i + 1), title, 'Sub Flow', Math.max(...xe) - Math.min(...xs)), Math.min(...xs), y0 + jh + JGAP.bar);
   }
   /* ภาพย่อจอจริง (จอที่สร้างไว้บนหน้านี้แล้ว) */
   let tk = 0;
@@ -1631,19 +1706,25 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
   opts = opts || {};
   const made = []; let y = y0; const x0 = GRID.side + GRID.gap; const pitch = GRID.colW + GRID.colGap; let flows = 0;
   const put = (n, x, yy) => { page.insertChild(0, n); n.x = x; n.y = yy; return n; };
+  if (opts.page) {   // หัวหน้าของชุดจอ 1 ตัว (Header Type=Header) กว้างเท่าบล็อกที่กว้างสุด — แบบหน้า 5.x ของ UI Release#2
+    const nMax = Math.max(...GROUPS.map(g => Math.max(...g.subs.map(s => s.screens.length))));
+    CREATED = []; const ph = put(await blockHeader(prefix, 'Page', opts.page.title, nMax * GRID.colW + (nMax - 1) * GRID.colGap, '', opts.page.status), x0, y);
+    y += ph.height + GRID.groupGap;
+  }
   for (const g of GROUPS) {
     const nCols = Math.max(...g.subs.map(s => countScreens(s.screens)));
     const top = y;
-    CREATED = []; put(await flowBar(prefix, g.code, g.title, 'Default', nCols * GRID.colW + (nCols - 1) * GRID.colGap), x0, y);
+    CREATED = []; put(await flowBar(prefix, g.code, g.title, 'Default', nCols * GRID.colW + (nCols - 1) * GRID.colGap), x0, y);   // บล็อกตัวอักษร = Subheader State=Default (หน้าจริง: "A แก้ไขตารางบำรุงรักษา…")
     y += GRID.barH + GRID.gap;
     let flowBottom = top;
+    const flowDone = new Set();   // บล็อกที่แบ่งเรื่องย่อย (A1 A2 …) ใช้ scenario เดียวกัน ⇒ ผังข้างจอวางครั้งเดียวต่อบล็อก (12 พ.ย. 2569)
     for (const sub of g.subs) {
       const flat = flatScreens(sub.screens, sub.code), n = flat.length, w = n * GRID.colW + (n - 1) * GRID.colGap;
       if (sub.code !== g.code) {   // แถบย่อย (B1 B2) เฉพาะเมื่อกลุ่มมีหลาย scenario · เจ้าของงานเคาะ 20 ต.ค. 2569: 1 scenario = 1 บล็อก ⇒ ไม่มีแถบย่อย ป้าย state = A.1 A.2 …
         put(await flowBar(prefix, sub.code, sub.title, 'Sub Flow', w), x0, y);
         y += GRID.barH + GRID.gap;
       }
-      const sn = scenNo(sub.tag);
+      const sn = flowDone.has(sub.tag) ? null : scenNo(sub.tag); flowDone.add(sub.tag);
       let flowSlots = null; const byCode = {};   // รหัสจอ → เฟรมจอ (desktop ก่อน) สำหรับภาพย่อในผัง
       /* ปลั๊กอินที่ฝัง ACTIVITY (บำรุงรักษา) วาง flowchart กิจกรรมซ้ายของบล็อกแทนผัง userflow (เจ้าของงาน 6 พ.ย. 2569 "อยากให้ flowchart คู่กับ ui ไม่ใช่ user flow")
          ไม่มีภาพย่อจอ ไม่มีป้ายรหัสจอ (flowchart ไม่มีหน้าจอ) · ปลั๊กอินอื่นที่ไม่มี ACTIVITY ใช้ผัง userflow ตามเดิม */

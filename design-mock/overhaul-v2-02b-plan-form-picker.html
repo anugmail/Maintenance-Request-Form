@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สร้างแผน Overhaul — เลือกรถแบบ Picker | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261111-ds76">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  11 พ.ย. 2569 — ข้อเสนอ: แยก "เลือกรถ" ออกจาก "กรอกราคารายคัน" (ตอบ dev concern: checkbox ยังไม่ลง DB ≠ แถวข้อมูลที่มีราคา)
+  เทียบกับ overhaul-v2-02-plan-form.html (ตาราง checkbox + ช่องกรอกราคาในแถวเดียวกัน)
+
+  3 ชิ้น · 3 state แยกกัน
+   ① ตัวเลือกรถ (modal หรือหน้าเต็ม)  → pending (Set ชั่วคราว) — ยกเลิก/ปิด = ทิ้ง · ไม่ลง DB
+   ② ตาราง "รถที่จะเข้า Overhaul"       → draft.vehicles [{id, estPrice, estOverhaul}] — ลง DB ตอนกด "บันทึก" แผนเท่านั้น
+   ③ Modal "ระบุราคารายคัน"            → แก้ draft ทีละแถว
+   เอาติ๊กออกใน ① ไม่กระทบแถวใน ② · รถออกจากแผนได้ทางเดียว = ไอคอนลบใน ②
+
+  ตัวกรองของตัวเลือกรถ 4 แบบให้เลือก (?f=1..4 · ค่าตั้งต้น 3)
+   1 Side panel ซ้อนบน modal · 2 Dropdown ในแถบเครื่องมือ · 3 แผงตัวกรองกางใน modal · 4 หน้าเต็ม + Side panel (overhaul-v2-02c-vehicle-picker-page.html)
+   ช่องตัวกรองชุดเดียวกันทุกแบบ (overhaul-v2-picker.js pkFieldsHTML) ต่างกันแค่กรอบที่ห่อ
+  วิธีเลือกรถ 3 แบบ (?s=A|B|E · ใช้กับ modal แบบ 1–3 · แบบ 4 ใช้ A)
+   A ติ๊ก checkbox → "เพิ่มรถ (n)" · B ปุ่ม "เพิ่ม" ท้ายแถว ลง draft ทันที ไม่มี pending ปุ่มท้ายเป็น "เสร็จสิ้น" ·
+   E = A + Tabs "วางรายการทะเบียน" (Text area → ตรวจสอบ → Alert 5 กลุ่ม: เลือกให้แล้ว · ไม่พบ · ตรงหลายคัน · อยู่ในแผนนี้แล้ว · อยู่ในแผนอื่น)
+   ตัดไปแล้วตามกติกา R24: dual list (List with checkbox) · dropdown + ชิป (Badge outline with remove icon)
+
+  ที่มา · ไฟล์ Component: Section header + Badge outline + Secondary button (เพิ่มรถ) · Table (Alternating fills) ·
+           Table cell Lead text / Action icons (stylus · delete) · Table header cell Checkbox=True (Indeterminate) ·
+           Table pagination · Modal (Size=xl สำหรับตัวเลือกรถ · md สำหรับ Form) · Text input · Alert Warning · Badge Warning ·
+           Side panel header/footer (.filter-drawer · แบบ 1) · Badge outline with remove icon (.fchip) · Empty state · Notification
+        · แบบที่มีในโปรเจกต์: popup "เพิ่มรถเข้าแผนเดินทาง" (component-rules.md §5.25 · R57) · ไอคอนแก้ไขท้ายแถว (§5.26) ·
+           modal ราคารายคัน B.13 · แผงตัวกรองหน้ารายการแผน (overhaul-v2-01-plans.html)
+        · ⚠️ ไฟล์ UI Release#2: ยังไม่ได้เทียบ — ไม่มี design-system/.figma-extract/ui-release2 ในเครื่อง (ต้อง pull ก่อนส่ง dev)
+        · ⚠️ .filter-panel (แบบ 3) ใน components.css ประกอบจาก token ไม่ได้ยกจาก component ไลบรารี — ต้องถามทีมออกแบบ
+        · อ้างอิงภายนอก (pattern เท่านั้น ไม่ยกหน้าตา): SAP Fiori Value Help Dialog (filter bar ใน dialog) · Shopify Resource Picker
+  ตีความเอง (รอเคาะ): modal กว้าง xl · รถในแผนอื่นที่ยังไม่เสร็จ = เลือกไม่ได้ ·
+          บังคับกรอกราคาหรือไม่ = toggle "บังคับกรอกราคา" (บังคับ: Badge Warning "ยังไม่ระบุ" · Alert Warning นับคันที่ขาด ·
+          ปุ่มบันทึกแผน/บันทึกราคา Disabled จนครบ · Out of focus ช่องว่าง = State=Error "กรุณาระบุ…") · รถเพิ่ม 14 คันเป็นข้อมูลจำลอง
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility
+-->
+</head>
+<body>
+<div class="shell">
+  <aside class="side wide">
+    <div class="vlogo">VMS<em>+</em></div>
+    <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span><span class="nvlbl">แกลเลอรีแบบหน้าจอ</span></a>
+    <a class="nv on" href="overhaul-v2-01-plans.html" title="จัดการงาน Overhaul"><span class="ms">build_circle</span><span class="nvlbl">จัดการงาน Overhaul</span></a>
+  </aside>
+
+  <div class="work">
+    <div class="topbar">
+      <span class="mr-auto"></span>
+      <span class="ms">account_circle</span>
+      <span>นางสาวกนกวรรณ ใจมั่น — กบค.</span>
+    </div>
+
+    <main class="content">
+      <div class="draft flex flex-col gap-2">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="mr-auto">Prototype (Mock) · ข้อเสนอเลือกรถ + ตารางรถในแผน · ข้อมูลจำลองทั้งหมด</span>
+          <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="req" checked>บังคับกรอกราคา</label>
+          <a id="lnk-edit" href="#">ดูโหมดแก้ไข (แผน 123459)</a>
+          <a href="overhaul-v2-02-plan-form.html">เทียบแบบเดิม</a>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap"><b>ตัวกรองของตัวเลือกรถ:</b><span class="chips" id="var-chips"></span></div>
+        <div class="flex items-center gap-2 flex-wrap"><b>วิธีเลือกรถ:</b><span class="chips" id="sel-chips"></span><span class="text-gray-500" id="sel-note"></span></div>
+      </div>
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep"></span><a href="overhaul-v2-01-plans.html">จัดการงาน Overhaul</a>
+        <span class="sep"></span><span class="cur" id="crumb">สร้างแผน Overhaul</span>
+      </div>
+
+      <div class="page-title-row">
+        <button class="btn btn-t btn-icon" type="button" id="back" aria-label="ย้อนกลับ"><span class="ms">arrow_back</span></button>
+        <h1 class="page-title mb-0" id="title">สร้างแผน Overhaul</h1>
+      </div>
+
+      <form class="flex flex-col gap-8" id="form" novalidate>
+        <section>
+          <div class="sect">ข้อมูลแผน</div>
+          <div class="fgrid gap-y-8 mb-0 grid-cols-1 md:grid-cols-3 xl:grid-cols-6">
+            <div class="f md:col-span-2 xl:col-span-4"><label for="name">ชื่อแผน</label><div class="in noic"><input type="text" id="name" placeholder="ระบุชื่อแผน"></div></div>
+            <div class="f xl:col-span-2"><label for="year">ประจำปีงบประมาณ</label><div class="in noic"><select id="year"></select></div></div>
+            <div class="f md:col-span-2 xl:col-span-2"><label for="budget">วงเงินอนุมัติ (บาท)</label><div class="in noic"><input type="text" id="budget" inputmode="decimal" placeholder="ระบุวงเงินอนุมัติ"></div></div>
+            <div class="f md:col-span-2 xl:col-span-2"><label for="wbs">เลข WBS <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="wbs" placeholder="เช่น I-70-Z-DPMXX.JM.0002"></div></div>
+            <div class="f"><label for="net">เลขโครงข่าย <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="net" placeholder="ระบุเลขโครงข่าย"></div></div>
+            <div class="f"><label for="act">เลขกิจกรรม <small>(ถ้ามี)</small></label><div class="in noic"><input type="text" id="act" placeholder="ระบุเลขกิจกรรม"></div></div>
+          </div>
+        </section>
+
+        <!-- ② ตารางรถในแผน = ข้อมูลจริงของแผน (draft.vehicles) -->
+        <section>
+          <div class="sect">รถที่จะเข้า Overhaul <span class="badge sq" id="n-veh">0</span>
+            <button class="btn btn-s ml-auto hidden" type="button" id="add-top"><span class="ms">add</span>เพิ่มรถ</button></div>
+          <!-- บังคับกรอกราคา: Alert Warning นับคันที่ขาด + ทางลัดไปคันแรกที่ขาด · ปุ่มบันทึก Disabled จนครบ (R56) -->
+          <div class="note note-warn mt-4 mb-0 items-center hidden" id="veh-warn"><span class="ms">warning</span>
+            <span class="flex-1" id="veh-warn-t"></span>
+            <button class="btn btn-s btn-sm" type="button" id="veh-next">ระบุราคาคันถัดไป</button></div>
+          <div class="tblwrap mt-4 hidden" id="veh-wrap">
+            <table class="tbl striped">
+              <thead><tr>
+                <th>ทะเบียน</th>
+                <th>ประเภทรถ</th>
+                <th class="num">เลขไมล์ / ชม.ทำงาน</th>
+                <th class="num">อายุ</th>
+                <th class="num">มูลค่าได้มา</th>
+                <th class="num">ราคากลาง (บาท)</th>
+                <th class="num">ราคาประเมิน Overhaul (บาท)</th>
+                <th class="w-[104px]" aria-label="จัดการ"></th>
+              </tr></thead>
+              <tbody id="veh-body"></tbody>
+            </table>
+          </div>
+          <div class="filter-empty mt-4" id="veh-empty">
+            <span class="ms">local_shipping</span>
+            <b>ยังไม่มีรถในแผน</b>
+            <span>กดเพิ่มรถเพื่อเลือกรถที่จะเข้า Overhaul แล้วระบุราคารายคัน</span>
+            <button class="btn btn-p btn-sm mt-2" type="button" id="add-empty"><span class="ms">add</span>เพิ่มรถ</button>
+          </div>
+        </section>
+
+        <section>
+          <div class="sect">เอกสาร</div>
+          <div class="flex flex-col gap-6 mt-4">
+            <div class="f"><label>หนังสืออนุมัติหลักการ</label>
+              <label class="fu"><input type="file" multiple accept=".pdf,.jpg,.jpeg,.png"><span class="ficon sm gray"><span class="ms">cloud_upload</span></span>
+                <span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PDF, PNG, or JPG (สูงสุด 10 ไฟล์)</small></span></label></div>
+          </div>
+        </section>
+
+        <details class="border border-gray-300 rounded-md p-4" id="dev">
+          <summary class="cursor-pointer font-semibold">สถานะข้อมูล (สำหรับ dev) — pending ของตัวเลือกรถ กับ draft ของแผน แยกกัน</summary>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 text-sm">
+            <div><b>① pending</b> <span class="text-gray-500">(Set ชั่วคราว · ไม่ลง DB)</span><pre class="bg-gray-50 rounded-md p-3 mt-2 overflow-auto text-xs" id="dev-pending"></pre></div>
+            <div><b>② draft.vehicles</b> <span class="text-gray-500">(ลง DB ตอนกดบันทึกแผน)</span><pre class="bg-gray-50 rounded-md p-3 mt-2 overflow-auto text-xs" id="dev-draft"></pre></div>
+          </div>
+        </details>
+
+        <div class="flex items-center justify-between gap-3">
+          <button class="btn btn-s btn-lg" type="button" id="cancel">ยกเลิก</button>
+          <button class="btn btn-p btn-lg ml-auto" type="submit" id="save">บันทึก</button>
+        </div>
+      </form>
+    </main>
+  </div>
+</div>
+
+<!-- ① ตัวเลือกรถแบบ modal (แบบ 1–3) -->
+<div class="modal-overlay hidden" id="m-pick">
+  <div class="modal xl" role="dialog" aria-modal="true" aria-labelledby="m-pick-t">
+    <div class="modal-hd">
+      <div class="modal-hd-c">
+        <div class="flex-1 min-w-0 pt-5"><h2 id="m-pick-t">เพิ่มรถเข้าแผน</h2><div class="modal-sub" id="m-pick-s"></div></div>
+        <button class="modal-x" type="button" data-close="m-pick" aria-label="ปิด"><span class="ms">close</span></button>
+      </div>
+    </div>
+    <div class="modal-bd">
+      <div class="draft mb-0" id="p-varnote"></div>   <!-- mock เท่านั้น: บอกว่ากำลังดูแบบไหน + ต้องกดอะไรถึงเห็นความต่าง -->
+      <!-- วิธีเลือก E: Tabs 2 แท็บ — ค้นหาและเลือก (= วิธี A) · วางรายการทะเบียน · ผลของทั้งสองแท็บลง pending ชุดเดียวกัน -->
+      <div class="tabs hidden" role="tablist" id="p-tabs">
+        <button type="button" class="tab-btn on" role="tab" aria-selected="true" data-ptab="search">ค้นหาและเลือก</button>
+        <button type="button" class="tab-btn" role="tab" aria-selected="false" data-ptab="paste">วางรายการทะเบียน</button>
+      </div>
+      <div class="flex flex-col gap-3" id="p-search">
+      <div class="list-toolbar split mb-0">
+        <div class="lt-search"><div class="search"><span class="ms">search</span><input type="search" id="p-q" placeholder="ค้นหาทะเบียน, ยี่ห้อ/รุ่น, สังกัด" aria-label="ค้นหารถ"></div></div>
+        <div class="lt-actions flex-wrap" id="p-actions"></div>
+      </div>
+      <!-- แบบ 3: แผงตัวกรองกางใต้แถบเครื่องมือ (ไม่ลอยทับ) -->
+      <div class="filter-panel mb-0" id="p-fpanel">
+        <div class="flex flex-wrap gap-4 items-end flex-1" id="p-fpanel-fields"></div>
+        <div class="flex items-center gap-3 ml-auto">
+          <button class="btn btn-link" type="button" data-fclear>ล้างตัวกรอง</button>
+          <button class="btn btn-p" type="button" data-fapply>ตกลง</button>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="fchips" id="p-chips" aria-label="ตัวกรองที่ใช้อยู่"></div>
+        <span class="chips"><button class="chip" type="button" id="p-only" aria-pressed="false">แสดงเฉพาะที่เลือก (<span id="p-only-n">0</span>)</button></span>
+      </div>
+      <div class="tblwrap" id="p-wrap">
+        <table class="tbl striped"><thead><tr id="p-head"></tr></thead><tbody id="p-body"></tbody></table>
+        <div class="tblfoot"><div class="tf-left"><span id="p-foot"></span></div><div class="pager" id="p-pager"></div></div>
+      </div>
+      <div class="filter-empty hidden" id="p-none">
+        <span class="ms">search_off</span><b>ไม่พบรถ</b><span>ไม่มีรถที่ตรงกับคำค้นหรือตัวกรอง</span>
+        <button class="btn btn-s btn-sm mt-2" type="button" id="p-clear">ล้างคำค้นและตัวกรอง</button>
+      </div>
+      </div>
+      <!-- วิธีเลือก E: วางเลขทะเบียน 1 บรรทัดต่อ 1 คัน (Text area) → ตรวจสอบ → แจ้งผล 4 กลุ่มด้วย Alert -->
+      <div class="flex flex-col gap-4 hidden" id="p-paste">
+        <div class="f"><label for="p-text">เลขทะเบียน</label>
+          <div class="in noic"><textarea id="p-text" rows="6" placeholder="วางเลขทะเบียน 1 บรรทัดต่อ 1 คัน หรือคั่นด้วยจุลภาค เช่น&#10;84-1000 ลำปาง&#10;85-1317&#10;90-2902"></textarea></div></div>
+        <div class="flex items-center gap-3">
+          <button class="btn btn-s" type="button" id="p-check" disabled><span class="ms">fact_check</span>ตรวจสอบรายการ</button>
+          <button class="btn btn-link" type="button" id="p-demo">ใส่ตัวอย่าง</button>
+        </div>
+        <div class="flex flex-col gap-3" id="p-result"></div>
+      </div>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a">
+      <span class="text-sm text-gray-600" id="p-count">ยังไม่ได้เลือกรถ</span>
+      <div class="modal-ft-r">
+        <button class="btn btn-s" type="button" data-close="m-pick" id="p-cancel">ยกเลิก</button>
+        <button class="btn btn-p" type="button" id="p-ok" disabled>เพิ่มรถ</button>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- แบบ 1: Side panel ซ้อนบน modal (z-index 70 > modal 60) -->
+<div class="filter-panel filter-drawer" id="p-drawer">
+  <div class="filter-drawer-sheet" role="dialog" aria-modal="true" aria-labelledby="p-drawer-t">
+    <div class="filter-drawer-head">
+      <span class="filter-drawer-icon"><span class="ms">filter_list</span></span>
+      <div class="filter-drawer-title"><h2 id="p-drawer-t">ตัวกรอง</h2><p>กรองข้อมูลให้แสดงเฉพาะข้อมูลที่ต้องการ</p></div>
+      <button type="button" class="filter-drawer-close" data-fcancel aria-label="ปิดตัวกรอง"><span class="ms">close</span></button>
+    </div>
+    <div class="filter-drawer-body" id="p-drawer-fields"></div>
+    <div class="filter-drawer-foot"><button class="btn btn-link" type="button" data-fclear>ล้างตัวกรอง</button><button class="btn btn-s" type="button" data-fcancel>ยกเลิก</button><button class="btn btn-p" type="button" data-fapply>ตกลง</button></div>
+  </div>
+</div>
+
+<!-- ③ ราคารายคัน — Modal Form (B.13) -->
+<div class="modal-overlay hidden" id="m-price">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-price-t">
+    <div class="modal-hd">
+      <div class="modal-hd-c">
+        <div class="flex-1 min-w-0 pt-5"><h2 id="m-price-t">ระบุราคารายคัน</h2><div class="modal-sub" id="m-price-s"></div></div>
+        <button class="modal-x" type="button" data-close="m-price" aria-label="ปิด"><span class="ms">close</span></button>
+      </div>
+    </div>
+    <div class="modal-bd">
+      <div class="flex flex-col gap-4">
+        <div class="f" data-name="ราคากลาง"><label for="pr-ref">ราคากลาง (บาท)<small class="opt"> (ถ้ามี)</small></label><div class="in noic"><input type="text" id="pr-ref" inputmode="decimal" placeholder="ระบุราคากลาง"></div><div class="help hidden"></div></div>
+        <div class="f" data-name="ราคาประเมิน Overhaul"><label for="pr-oh">ราคาประเมิน Overhaul (บาท)<small class="opt"> (ถ้ามี)</small></label><div class="in noic"><input type="text" id="pr-oh" inputmode="decimal" placeholder="ระบุราคาประเมิน Overhaul"></div><div class="help hidden"></div></div>
+        <div class="text-sm text-gray-500" id="pr-hint"></div>
+      </div>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-price">ยกเลิก</button>
+      <button class="btn btn-p" type="button" id="pr-ok">บันทึก</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="overhaul-v2-mock.js?v=20261106-1"></script>
+<script src="overhaul-v2-picker.js?v=20261111-3"></script>
+<script>
+const $=id=>document.getElementById(id);
+const S=oh2Load();
+const q=new URLSearchParams(location.search);
+const plan=q.get('id')?S.plans.find(p=>p.id===q.get('id')):null;
+const VAR=['1','2','3','4'].includes(q.get('f'))?q.get('f'):'3';
+/* วิธีเลือกรถ (?s=) — A ติ๊ก checkbox · B ปุ่มเพิ่มท้ายแถว (เข้าแผนทันที ไม่มี pending) · E A + แท็บวางรายการทะเบียน · ใช้กับแบบ modal 1–3 */
+const SEL=['A','B','E'].includes(q.get('s'))?q.get('s'):'A';
+if(q.get('req')==='0')$('req').checked=false;
+const {POOL,lockedBy,byId}=pkSetup(S,plan);
+const inPO=new Set(plan?oh2PlanCars(plan):[]);   // รถที่มี PO แล้ว → ลบออกจากแผนไม่ได้
+
+/* ===== แถบเลือกแบบ (mock) ===== */
+const url=(o)=>{const u=new URLSearchParams({f:VAR,s:SEL,req:$('req').checked?'1':'0'});if(plan)u.set('id',plan.id);Object.entries(o||{}).forEach(([k,v])=>v==null?u.delete(k):u.set(k,v));return 'overhaul-v2-02b-plan-form-picker.html?'+u};
+const VARS=[['1','1 · Side panel ซ้อนบน modal'],['2','2 · Dropdown ในแถบเครื่องมือ'],['3','3 · แผงตัวกรองกางใน modal (แนะนำ)'],['4','4 · หน้าเต็ม + Side panel']];
+const SELS=[['A','A · ติ๊ก checkbox'],['B','B · ปุ่ม "เพิ่ม" ท้ายแถว'],['E','E · ติ๊ก + วางรายการทะเบียน']];
+function drawVars(){$('var-chips').innerHTML=VARS.map(([k,t])=>`<a class="chip${k===VAR?' sel':''} !no-underline" href="${url({f:k})}">${t}</a>`).join('');
+  $('sel-chips').innerHTML=SELS.map(([k,t])=>`<a class="chip${k===SEL?' sel':''} !no-underline" href="${url({s:k,f:VAR==='4'?'3':VAR})}">${t}</a>`).join('');
+  $('sel-note').textContent=VAR==='4'?'(แบบ 4 หน้าเต็มใช้วิธี A · กดเลือกวิธีแล้วจะสลับไปแบบ 3)':'กด "เพิ่มรถ" เพื่อดูใน modal';
+  $('lnk-edit').href=plan?url({id:null}):url({id:'123459'});$('lnk-edit').textContent=plan?'ดูโหมดสร้างแผน':'ดูโหมดแก้ไข (แผน 123459)'}
+
+/* ===== ② draft ของแผน ===== */
+let draft=(plan?plan.cars:[]).map(c=>({id:c.id,estPrice:c.estPrice||'',estOverhaul:c.estOverhaul||''}));
+const FIELDS=['name','year','budget','wbs','net','act'];
+const money=v=>{const n=Number(String(v).replace(/,/g,''));return String(v).trim()===''||isNaN(n)?'':n};
+const REQ=()=>$('req').checked;
+const empty=n=>n===''||n==null;
+const missing=()=>draft.filter(d=>empty(d.estPrice)||empty(d.estOverhaul));
+const showMoney=n=>empty(n)?(REQ()?'<span class="badge b-low">ยังไม่ระบุ</span>':'<span class="text-gray-400">—</span>'):oh2Money(n)+'.00';
+function drawReq(){
+  const m=REQ()?missing():[];
+  $('veh-warn').classList.toggle('hidden',!m.length);
+  $('veh-warn-t').textContent=`กรุณาระบุราคากลางและราคาประเมิน Overhaul ให้ครบทุกคัน · ยังไม่ระบุ ${m.length} จาก ${draft.length} คัน`;
+  $('save').disabled=REQ()&&!!m.length;
+  document.querySelectorAll('#m-price .opt').forEach(s=>s.classList.toggle('hidden',REQ()));
+}
+$('req').addEventListener('change',()=>{drawVeh();drawVars()});
+$('veh-next').addEventListener('click',()=>{const m=missing();if(m.length)openPrice(m[0].id)});
+function drawVeh(){
+  $('n-veh').textContent=draft.length;
+  $('veh-wrap').classList.toggle('hidden',!draft.length);
+  $('veh-empty').classList.toggle('hidden',!!draft.length);
+  $('add-top').classList.toggle('hidden',!draft.length);
+  $('veh-body').innerHTML=draft.map(d=>{const v=byId(d.id);const lock=inPO.has(d.id);return `<tr>
+    <td><div class="cell-key">${oh2Esc(v.plate)}</div><div class="cell-sub">${oh2Esc(v.brand)}</div></td>
+    <td>${oh2Esc(v.type)}<div class="cell-sub">${oh2Esc(v.dept)}</div></td>
+    <td class="num">${oh2Num(v.mileage)} กม.<div class="cell-sub">${oh2Num(v.hours)} ชม.</div></td>
+    <td class="num">${v.age} ปี</td>
+    <td class="num">${oh2Money(v.acqValue)}.00</td>
+    <td class="num">${showMoney(d.estPrice)}</td>
+    <td class="num">${showMoney(d.estOverhaul)}</td>
+    <td><div class="flex justify-end gap-1">
+      <button class="btn btn-t btn-icon" type="button" data-edit="${d.id}" aria-label="ระบุราคา ${oh2Esc(v.plate)}" title="ระบุราคา"><span class="ms">stylus</span></button>
+      <button class="btn btn-t btn-icon" type="button" data-del="${d.id}"${lock?' disabled title="รถคันนี้มี Purchase Order แล้ว ลบออกจากแผนไม่ได้"':' title="นำออกจากแผน"'} aria-label="นำ ${oh2Esc(v.plate)} ออกจากแผน"><span class="ms">delete</span></button>
+    </div></td></tr>`}).join('');
+  drawReq();drawDev();
+}
+$('veh-body').addEventListener('click',e=>{
+  const ed=e.target.closest('[data-edit]');if(ed)openPrice(ed.dataset.edit);
+  const dl=e.target.closest('[data-del]');if(dl&&!dl.disabled){const v=byId(dl.dataset.del);
+    draft=draft.filter(d=>d.id!==dl.dataset.del);drawVeh();oh2Notify(`นำ ${v.plate} ออกจากแผนแล้ว`)}
+});
+function addCars(ids){
+  ids.forEach(id=>{if(!draft.some(d=>d.id===id))draft.push({id,estPrice:'',estOverhaul:''})});drawVeh();
+  oh2Notify(`เพิ่มรถเข้าแผน ${ids.length} คัน`,{sub:REQ()?'ระบุราคากลางและราคาประเมินให้ครบทุกคันก่อนบันทึกแผน':'ระบุราคารายคันได้ที่ไอคอนแก้ไข'});
+}
+
+/* ===== ① ตัวเลือกรถแบบ modal (แบบ 1–3) ===== */
+let pending=new Set(),page=1,onlySel=false,F={...PK_F0};const PER=6;
+const inDraft=id=>draft.some(d=>d.id===id);
+let addedNow=new Set();   // วิธี B: คันที่กดเพิ่มในรอบนี้ (ลง draft ทันทีแล้ว)
+$('p-head').innerHTML=SEL==='B'?PK_HEAD_ADD:PK_HEAD;
+$('p-varnote').textContent=({'1':'แบบ 1 · กดปุ่ม "ตัวกรอง" ขวาบน → Side panel เลื่อนเข้ามาจากขวา ซ้อนทับ modal นี้',
+  '2':'แบบ 2 · ตัวกรองเป็น dropdown วางในแถบเครื่องมือเลย เลือกแล้วกรองทันที ไม่มีปุ่มตัวกรอง',
+  '3':'แบบ 3 · กดปุ่ม "ตัวกรอง" ขวาบน → แผงตัวกรองกางลงใต้ช่องค้นหาในกล่องนี้ (กดอีกครั้งเพื่อพับ)'}[VAR]||'')+'  ·  '+
+  ({A:'วิธี A · ติ๊กหลายคันแล้วกด "เพิ่มรถ (n)" ครั้งเดียว',B:'วิธี B · กด "เพิ่ม" ท้ายแถว รถเข้าตารางรถในแผนทันที ไม่มีขั้นติ๊กค้าง',E:'วิธี E · แท็บ "วางรายการทะเบียน" วางทะเบียนทีเดียวหลายคัน แล้วระบบติ๊กให้'}[SEL]);
+if(SEL==='E')$('p-tabs').classList.remove('hidden');
+if(SEL==='B'){$('p-only').closest('.chips').classList.add('hidden');$('p-cancel').classList.add('hidden')}
+/* วางตัวกรองตามแบบ — แบบ 2 ใช้ค่าทันที · แบบ 1/3 แก้ในแผงแล้วกดตกลงถึงใช้ (staged prefix pp) */
+if(VAR==='2')$('p-actions').innerHTML=pkFieldsHTML('p2',POOL,true);
+else $('p-actions').innerHTML=`<button class="btn btn-s" type="button" id="p-fbtn" aria-expanded="false"><span class="ms">filter_list</span>ตัวกรอง<span class="badge b-brand hidden" id="p-fn"></span></button>`;
+if(VAR==='3')$('p-fpanel-fields').innerHTML=pkFieldsHTML('pp',POOL);
+if(VAR==='1')$('p-drawer-fields').innerHTML=pkFieldsHTML('pp',POOL);
+function setPanel(o){
+  if(VAR==='3'){$('p-fpanel').classList.toggle('open',o);$('p-fbtn').setAttribute('aria-expanded',o)}
+  if(VAR==='1')$('p-drawer').classList.toggle('open',o);
+  if(o)pkWrite('pp',F);
+}
+if($('p-fbtn'))$('p-fbtn').addEventListener('click',()=>setPanel(VAR==='3'?!$('p-fpanel').classList.contains('open'):true));
+document.querySelectorAll('[data-fapply]').forEach(b=>b.addEventListener('click',()=>{F=pkRead('pp');page=1;setPanel(false);drawPick()}));
+document.querySelectorAll('[data-fclear]').forEach(b=>b.addEventListener('click',()=>pkWrite('pp',PK_F0)));
+document.querySelectorAll('[data-fcancel]').forEach(b=>b.addEventListener('click',()=>setPanel(false)));
+$('p-drawer').addEventListener('click',e=>{if(e.target===$('p-drawer'))setPanel(false)});
+if(VAR==='2')Object.keys(PK_F0).forEach(k=>$('p2-'+k).addEventListener('change',()=>{F=pkRead('p2');page=1;drawPick()}));
+$('p-chips').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;F[b.dataset.rm]=PK_F0[b.dataset.rm];if(VAR==='2')pkWrite('p2',F);page=1;drawPick()});
+
+function pickList(){return POOL.filter(v=>(!inDraft(v.id)||addedNow.has(v.id))&&pkMatch(v,$('p-q').value,F)&&(!onlySel||pending.has(v.id)))}
+function drawPick(){
+  const list=pickList(),pages=Math.max(1,Math.ceil(list.length/PER));page=Math.min(page,pages);
+  $('p-body').innerHTML=list.slice((page-1)*PER,page*PER).map(v=>pkRow(v,{checked:pending.has(v.id),disabled:!!lockedBy[v.id],sub:lockedBy[v.id]&&`อยู่ในแผน ${lockedBy[v.id]} แล้ว`,
+    add:SEL==='B'&&(addedNow.has(v.id)?'done':'can')})).join('');
+  $('p-wrap').classList.toggle('hidden',!list.length);$('p-none').classList.toggle('hidden',!!list.length);
+  $('p-foot').textContent=list.length?`แสดง ${(page-1)*PER+1} ถึง ${Math.min(page*PER,list.length)} จาก ${list.length} รายการ`:'';
+  $('p-pager').innerHTML=pkPager(page,pages);
+  /* checkbox หัวตาราง = เลือกเฉพาะหน้าที่เห็น (PatternFly Bulk selection · Material Data tables เมื่อมีการแบ่งหน้า) */
+  const can=pageRows().filter(v=>!lockedBy[v.id]),n=can.filter(v=>pending.has(v.id)).length;
+  if($('p-all')){$('p-all').checked=!!can.length&&n===can.length;$('p-all').indeterminate=n>0&&n<can.length;$('p-all').disabled=!can.length}
+  if(SEL==='B'){   // ไม่มี pending — ปุ่มท้ายเป็น "เสร็จสิ้น" กดได้เสมอ
+    $('p-count').textContent=addedNow.size?`เพิ่มเข้าแผนแล้ว ${addedNow.size} คันในรอบนี้`:'กด "เพิ่ม" ท้ายแถว รถจะเข้าแผนทันที';
+    $('p-ok').disabled=false;$('p-ok').textContent='เสร็จสิ้น';
+  }else{
+    $('p-count').textContent=pending.size?`เลือกแล้ว ${pending.size} คัน`:'ยังไม่ได้เลือกรถ';
+    $('p-ok').disabled=!pending.size;$('p-ok').textContent=pending.size?`เพิ่มรถ (${pending.size})`:'เพิ่มรถ';
+  }
+  $('p-only-n').textContent=pending.size;
+  $('p-chips').innerHTML=pkChipsHTML(F,POOL);
+  const fn=pkCount(F);if($('p-fn')){$('p-fn').textContent=fn;$('p-fn').classList.toggle('hidden',!fn)}
+  drawDev();
+}
+function openPick(){
+  if(VAR==='4'){   // แบบ 4: ฝากร่างฟอร์มไว้ แล้วไปหน้าเลือกรถ
+    pkSet(PK_FORM_KEY,{planId:plan?plan.id:null,fields:Object.fromEntries(FIELDS.map(f=>[f,$(f).value])),draft});
+    location.href='overhaul-v2-02c-vehicle-picker-page.html?'+new URLSearchParams({ret:url({back:'1'}),plan:plan?plan.id:''});return;
+  }
+  pending=new Set();addedNow=new Set();page=1;onlySel=false;F={...PK_F0};if(VAR==='2')pkWrite('p2',F);setPanel(false);
+  if(SEL==='E'){setPTab('search');$('p-text').value='';$('p-result').innerHTML='';$('p-check').disabled=true}
+  $('p-only').classList.remove('sel');$('p-only').setAttribute('aria-pressed','false');$('p-q').value='';
+  const nLock=POOL.filter(v=>!inDraft(v.id)&&lockedBy[v.id]).length;
+  $('m-pick-s').textContent=`รถทั้งหมดในระบบที่ยังไม่อยู่ในแผนนี้${nLock?` · ${nLock} คันอยู่ในแผนอื่นที่ยังไม่เสร็จ เลือกไม่ได้`:''}`;
+  drawPick();oh2Modal('m-pick',true);setTimeout(()=>$('p-q').focus(),0);
+}
+$('add-top').addEventListener('click',openPick);$('add-empty').addEventListener('click',openPick);
+$('p-body').addEventListener('change',e=>{const c=e.target;if(!c.classList.contains('p-ck'))return;c.checked?pending.add(c.value):pending.delete(c.value);drawPick()});
+/* วิธี B: กดเพิ่ม = ลง draft ทันที (ไม่มีสถานะติ๊กค้าง) · เอาออกได้ที่ตารางรถในแผนเหมือนเดิม */
+$('p-body').addEventListener('click',e=>{const b=e.target.closest('[data-add]');if(!b)return;const id=b.dataset.add;
+  addedNow.add(id);draft.push({id,estPrice:'',estOverhaul:''});drawVeh();drawPick();oh2Notify(`เพิ่ม ${byId(id).plate} เข้าแผนแล้ว`)});
+const pageRows=()=>pickList().slice((page-1)*PER,page*PER);
+if($('p-all'))$('p-all').addEventListener('change',()=>{pageRows().filter(v=>!lockedBy[v.id]).forEach(v=>$('p-all').checked?pending.add(v.id):pending.delete(v.id));drawPick()});
+$('p-q').addEventListener('input',()=>{page=1;drawPick()});
+$('p-pager').addEventListener('click',e=>{const b=e.target.closest('[data-pg]');if(b&&!b.disabled){page=+b.dataset.pg;drawPick()}});
+$('p-only').addEventListener('click',()=>{onlySel=!onlySel;$('p-only').classList.toggle('sel',onlySel);$('p-only').setAttribute('aria-pressed',onlySel);page=1;drawPick()});
+$('p-clear').addEventListener('click',()=>{$('p-q').value='';F={...PK_F0};if(VAR==='2')pkWrite('p2',F);onlySel=false;$('p-only').classList.remove('sel');drawPick()});
+$('p-ok').addEventListener('click',()=>{
+  if(SEL==='B'){const n=addedNow.size;addedNow=new Set();oh2Modal('m-pick',false);if(n)oh2Notify(`เพิ่มรถเข้าแผน ${n} คัน`,{sub:REQ()?'ระบุราคากลางและราคาประเมินให้ครบทุกคันก่อนบันทึกแผน':'ระบุราคารายคันได้ที่ไอคอนแก้ไข'});return}
+  const ids=POOL.filter(v=>pending.has(v.id)).map(v=>v.id);pending=new Set();oh2Modal('m-pick',false);addCars(ids)});
+
+/* ===== วิธี E: วางรายการทะเบียน → ติ๊กให้ใน pending ชุดเดียวกับแท็บค้นหา ===== */
+function setPTab(t){document.querySelectorAll('[data-ptab]').forEach(b=>{const on=b.dataset.ptab===t;b.classList.toggle('on',on);b.setAttribute('aria-selected',on)});
+  $('p-search').classList.toggle('hidden',t!=='search');$('p-paste').classList.toggle('hidden',t!=='paste');if(t==='paste')setTimeout(()=>$('p-text').focus(),0)}
+$('p-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-ptab]');if(b){setPTab(b.dataset.ptab);if(b.dataset.ptab==='search')drawPick()}});
+$('p-text').addEventListener('input',()=>{$('p-check').disabled=!$('p-text').value.trim()});
+$('p-demo').addEventListener('click',()=>{$('p-text').value=['84-1000 ลำปาง','85-1317','90-2902','8234 กค กทม','99-9999 นนทบุรี','9'].join('\n');$('p-check').disabled=false});
+$('p-check').addEventListener('click',()=>{
+  const G={ok:[],plan:[],other:[],multi:[],none:[]};
+  pkMatchPlates($('p-text').value,POOL).forEach(({raw,hit})=>{
+    if(!hit.length)G.none.push(raw);else if(hit.length>1)G.multi.push(`${raw} (ตรง ${hit.length} คัน)`);
+    else{const v=hit[0];if(inDraft(v.id))G.plan.push(v.plate);else if(lockedBy[v.id])G.other.push(`${v.plate} (แผน ${lockedBy[v.id]})`);else{pending.add(v.id);G.ok.push(v.plate)}}});
+  const box=(cls,ic,t,items)=>items.length?`<div class="note ${cls} mb-0"><span class="ms">${ic}</span><div><b>${t} ${items.length} รายการ</b><div>${items.map(oh2Esc).join(' · ')}</div></div></div>`:'';
+  $('p-result').innerHTML=
+    (G.ok.length?`<div class="note note-ok mb-0 items-center"><span class="ms">check_circle</span><div class="flex-1"><b>เลือกให้แล้ว ${G.ok.length} คัน</b><div>${G.ok.map(oh2Esc).join(' · ')}</div></div><button class="btn btn-s btn-sm" type="button" id="p-review">ดูรถที่เลือก</button></div>`:'')+
+    box('note-warn','error','ไม่พบทะเบียน',G.none)+box('note-warn','help','ตรงหลายคัน ระบุทะเบียนให้ครบ',G.multi)+
+    box('note-info','info','อยู่ในแผนนี้แล้ว',G.plan)+box('note-info','block','อยู่ในแผนอื่น เลือกไม่ได้',G.other);
+  const r=$('p-review');if(r)r.addEventListener('click',()=>{onlySel=true;$('p-only').classList.add('sel');$('p-only').setAttribute('aria-pressed','true');page=1;setPTab('search');drawPick()});
+  drawPick();
+});
+/* ปิด modal ด้วยวิธีอื่น = ทิ้ง pending + ปิด side panel ที่ซ้อนอยู่ */
+new MutationObserver(()=>{if($('m-pick').classList.contains('hidden')){setPanel(false);if(pending.size){pending=new Set();drawDev()}}}).observe($('m-pick'),{attributes:true,attributeFilter:['class']});
+
+/* ===== ③ ราคารายคัน ===== */
+let editing=null;
+function openPrice(id){
+  editing=id;const v=byId(id),d=draft.find(x=>x.id===id);
+  $('m-price-s').textContent=`${v.plate} · ${v.brand} ${v.type}`;
+  $('pr-ref').value=empty(d.estPrice)?'':oh2Money(d.estPrice);$('pr-oh').value=empty(d.estOverhaul)?'':oh2Money(d.estOverhaul);
+  $('pr-hint').textContent=`อ้างอิง: มูลค่าได้มา ${oh2Money(v.acqValue)}.00 บาท · ราคากลางในระบบ ${oh2Money(v.refPrice)}.00 บาท`;
+  ['pr-ref','pr-oh'].forEach(i=>prErr(i,''));prGate();
+  oh2Modal('m-price',true);setTimeout(()=>$('pr-ref').focus(),0);
+}
+function prErr(i,msg){const f=$(i).closest('.f');f.classList.toggle('err',!!msg);const h=f.querySelector('.help');h.textContent=msg;h.classList.toggle('hidden',!msg)}
+function prGate(){$('pr-ok').disabled=REQ()&&['pr-ref','pr-oh'].some(i=>money($(i).value)==='')}
+['pr-ref','pr-oh'].forEach(i=>{
+  $(i).addEventListener('input',()=>{prGate();if(money($(i).value)!=='')prErr(i,'')});
+  $(i).addEventListener('blur',()=>{const n=money($(i).value);$(i).value=n===''?'':oh2Money(n);
+    if(REQ()&&n==='')prErr(i,'กรุณาระบุ'+$(i).closest('.f').dataset.name)});
+});
+$('pr-ok').addEventListener('click',()=>{
+  const d=draft.find(x=>x.id===editing);d.estPrice=money($('pr-ref').value);d.estOverhaul=money($('pr-oh').value);
+  oh2Modal('m-price',false);drawVeh();
+  const left=REQ()?missing().length:0;
+  oh2Notify(`บันทึกราคา ${byId(editing).plate} แล้ว`,{sub:left?`เหลืออีก ${left} คันที่ยังไม่ระบุราคา`:'ยังไม่ลงระบบจนกว่าจะกดบันทึกแผน'});
+});
+
+function drawDev(){$('dev-pending').textContent=VAR==='4'?'(แบบ 4: อยู่ในหน้าเลือกรถ)':JSON.stringify([...pending],null,1);$('dev-draft').textContent=JSON.stringify(draft,null,1)}
+
+/* ===== ฟอร์ม ===== */
+const years=oh2Years(5);if(plan&&!years.includes(plan.year))years.unshift(plan.year);
+$('year').innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join('');
+if(plan){
+  $('title').textContent=`แก้ไขแผน ${plan.id}`;$('crumb').textContent=`แก้ไขแผน ${plan.id}`;
+  $('name').value=plan.name;$('year').value=plan.year;$('budget').value=oh2Money(plan.budget);$('wbs').value=plan.wbs;$('net').value=plan.net;$('act').value=plan.act;
+}
+/* แบบ 4: กลับจากหน้าเลือกรถ → คืนร่างฟอร์ม + ต่อรถที่เลือก (ยกเลิกมา = คืนร่างอย่างเดียว) */
+const saved=pkGet(PK_FORM_KEY);
+if(q.get('back')==='1'&&saved&&saved.planId===(plan?plan.id:null)){
+  FIELDS.forEach(f=>{if(saved.fields[f]!=null)$(f).value=saved.fields[f]});draft=saved.draft;
+  const res=pkGet(PK_RESULT_KEY);pkSet(PK_RESULT_KEY,null);pkSet(PK_FORM_KEY,null);
+  history.replaceState(null,'',url({back:null}));
+  drawVeh();if(res&&res.length)addCars(res);
+}else{pkSet(PK_FORM_KEY,null);pkSet(PK_RESULT_KEY,null)}
+const backTo='overhaul-v2-01-plans.html';
+$('back').addEventListener('click',()=>location.href=backTo);$('cancel').addEventListener('click',()=>location.href=backTo);
+/* บันทึก = จังหวะเดียวที่ draft.vehicles ลง DB (ในต้นแบบ = localStorage) */
+$('form').addEventListener('submit',e=>{
+  e.preventDefault();
+  const cars=draft.map(d=>({id:d.id,estPrice:d.estPrice||0,estOverhaul:d.estOverhaul||0}));
+  /* ไม่เขียนกลับ localStorage ของชุด v2 — รถจำลองเพิ่ม (PK_EXTRA) ไม่มีในหน้าอื่น บันทึกไปจะทำหน้ารายละเอียดพัง */
+  if(plan)oh2Notify('บันทึกการแก้ไขแผน (จำลอง)',{sub:`รถในแผน ${cars.length} คัน · ต้นแบบนี้ไม่บันทึกจริง`});
+  else oh2Notify('บันทึกแผน (จำลอง)',{sub:`ส่ง plan + vehicles ${cars.length} คันใน request เดียว · ต้นแบบนี้ไม่สร้างแผนจริง`});
+});
+drawVars();drawVeh();
+</script>
+</body>
+</html>

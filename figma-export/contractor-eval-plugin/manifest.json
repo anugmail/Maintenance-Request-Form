@@ -1,5 +1,5 @@
 {
-  "name": "Maintain-D — ประเมินผู้รับจ้าง (component จริง)",
+  "name": "Maintain-D — แบบประเมิน 2 แบบ ผู้รับจ้าง + ความพึงพอใจ (component จริง)",
   "id": "1472903116188005391",
   "api": "1.0.0",
   "main": "code.js",
@@ -7,5 +7,5 @@
   "editorType": ["figma"],
   "documentAccess": "dynamic-page",
   "permissions": ["teamlibrary"],
-  "networkAccess": { "allowedDomains": ["none"], "reasoning": "ข้อมูลหน้าจออยู่ใน code.js ทั้งหมด ไม่ต่อเครือข่าย" }
+  "networkAccess": { "allowedDomains": ["none"], "devAllowedDomains": ["http://localhost:8124"], "reasoning": "ข้อมูลหน้าจออยู่ใน code.js ทั้งหมด · ส่งภาพจอไป FigJam เขียนลงเครื่องผ่าน serve.js เท่านั้น ไม่ต่อออกอินเทอร์เน็ต" }
 }

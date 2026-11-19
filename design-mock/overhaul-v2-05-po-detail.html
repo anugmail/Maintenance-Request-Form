@@ -74,11 +74,15 @@
             <div><div class="text-sm font-semibold mb-2">อื่นๆ</div><div id="doc-other"></div></div>
           </div>
         </section>
+        <!-- [ลอง] JO 7.4.2 24 ต.ค. 2569 — ผสาน "เปรียบเทียบค่าใช้จ่ายกับราคารถ" เข้าตาราง "รายการรถ" เดิมแทนแยกตาราง (เจ้าของงานขอ "ทำให้ table รถเลย")
+             คอลัมน์ "ค่า Overhaul" เป็น 2 บรรทัด (ค่า Overhaul / xx% ของราคารถ) บรรทัดรองแดงเมื่อเกินเกณฑ์ — ราคารถ/เกณฑ์ % เป็นค่าสมมติทั้งหมด ยังไม่ยืนยันดีไซน์จริง
+             ที่มา: Diagram/01-บำรุงรักษาตามวาระ/20-overhaul-dashboard-หลัง-overhaul.md หัวข้อ 7 ช่อง E (ราคารถยังไม่มีแหล่งข้อมูลจริงในระบบ) -->
         <section>
-          <div class="sect"><span>รายการรถ</span><span class="badge sq" id="n-cars"></span></div>
+          <div class="sect"><span>รายการรถ</span><span class="badge sq" id="n-cars"></span>
+            <span class="ml-auto"><button class="btn btn-s btn-sm" type="button" id="test-alert"><span class="ms">notifications</span>[ลอง] ทดสอบแจ้งเตือนเกินเกณฑ์</button></span></div>
           <div class="tblwrap mt-4">
             <table class="tbl striped">
-              <thead><tr><th>ทะเบียน</th><th>ยี่ห้อ/รุ่น · ประเภท</th><th class="num">เลขไมล์ (กม.)</th><th class="num">อายุการใช้งาน</th><th>สถานะงาน</th><th class="w-[120px]" aria-label="หน้างาน"></th></tr></thead>
+              <thead><tr><th>ทะเบียน</th><th>ยี่ห้อ/รุ่น · ประเภท</th><th class="num">เลขไมล์ (กม.)</th><th class="num">อายุการใช้งาน</th><th class="num">[ลอง] เปรียบเทียบราคา Overhaul</th><th>สถานะงาน</th><th class="w-[120px]" aria-label="หน้างาน"></th></tr></thead>
               <tbody id="cars"></tbody>
             </table>
           </div>
@@ -106,7 +110,7 @@
   </div>
 </div>
 
-<script src="overhaul-v2-mock.js?v=20261019-4"></script>
+<script src="overhaul-v2-mock.js?v=20261106-1"></script>
 <script>
 const $=id=>document.getElementById(id);
 const q=new URLSearchParams(location.search);
@@ -125,11 +129,29 @@ else{
   $('info').innerHTML=f('ชื่อแผน',oh2Esc(plan.name),true)+f('ชื่อ Purchase Order',oh2Esc(po.name))+f('ศูนย์บริการ/อู่',oh2Esc(v.name))+
     f('เบอร์โทรอู่',oh2Esc(v.tel))+f('ที่อยู่',oh2Esc(v.addr));
   $('doc-order').innerHTML=oh2FilesRO(po.docs.order);$('doc-other').innerHTML=oh2FilesRO(po.docs.other);
+  /* [ลอง] JO 7.4.2 เปรียบเทียบค่าใช้จ่ายกับราคารถ — ผสานเป็นคอลัมน์เดียวในตาราง "รายการรถ" เดิม (เจ้าของงานขอ 24 ต.ค. 2569 "ทำให้ table รถเลย")
+     ราคารถ/ค่า Overhaul เป็นค่าสมมติทั้งหมด (ยังไม่มีแหล่งข้อมูลจริงในระบบ) · เกณฑ์แจ้งเตือนตัวอย่าง 10% (ยังไม่เคาะกับเจ้าของงาน — ดู Diagram/.../20-overhaul-dashboard-หลัง-overhaul.md หัวข้อ 9 "ยังไม่เคาะ") */
+  /* ไม่ใส่ c5 ไว้โดยตั้งใจ — จำลองรถที่ยังไม่มีราคาต้นทุนในระบบ (สภาพจริงปัจจุบันตามเอกสาร 20 "ราคารถยังไม่มีแหล่งข้อมูลจริงในระบบ") */
+  const OH2_COST_MOCK={c1:{price:1850000,cost:92500},c2:{price:1620000,cost:243000},c3:{price:1450000,cost:72500},c4:{price:1720000,cost:258000},
+    c6:{price:1900000,cost:95000},c7:{price:1680000,cost:252000},c8:{price:1550000,cost:77500}};
+  const COST_ALERT_PCT=10;
   $('n-cars').textContent=po.cars.length;
-  $('cars').innerHTML=po.cars.map(id=>{const c=oh2Car(id);const j=S.jobs[plan.id+':'+id]||{stage:'V1'};return `<tr>
+  $('cars').innerHTML=po.cars.map(id=>{const c=oh2Car(id);const j=S.jobs[plan.id+':'+id]||{stage:'V1'};
+    const m=OH2_COST_MOCK[id];let costCell;
+    if(!m){costCell=`<span class="text-[var(--gray-400)]">—</span><div class="cell-sub">ยังไม่มีราคารถในระบบ</div>`}
+    else{const pct=Math.round(m.cost/m.price*1000)/10;const over=pct>=COST_ALERT_PCT;
+      costCell=`<div class="cell-key">${oh2Num(m.cost)} บาท</div><div class="cell-sub${over?' !text-[var(--error-600)]':''}">${pct}% ของราคารถ (ทุน ${oh2Num(m.price)} บาท)</div>`}
+    return `<tr>
     <td><div class="cell-key">${oh2Esc(c.plate)}</div></td><td>${oh2Esc(c.brand)} · ${oh2Esc(c.type)}</td>
-    <td class="num">${oh2Num(c.mileage)}</td><td class="num">${c.age} ปี</td><td>${oh2Badge(OH2_JOB,j.stage)}</td>
+    <td class="num">${oh2Num(c.mileage)}</td><td class="num">${c.age} ปี</td>
+    <td class="num">${costCell}</td>
+    <td>${oh2Badge(OH2_JOB,j.stage)}</td>
     <td><a class="btn btn-s btn-sm !no-underline" href="overhaul-v2-06-job.html?plan=${plan.id}&car=${id}&po=${po.id}">หน้างาน</a></td></tr>`}).join('');
+
+  $('test-alert').addEventListener('click',()=>{
+    const over=po.cars.map(id=>({id,c:oh2Car(id),m:OH2_COST_MOCK[id]})).filter(x=>x.m).find(x=>x.m.cost/x.m.price>=COST_ALERT_PCT/100);
+    oh2Notify(over?`ค่า Overhaul ของ ${over.c.plate} เกิน ${COST_ALERT_PCT}% ของราคารถ`:`ไม่มีคันไหนเกินเกณฑ์ ${COST_ALERT_PCT}% ในหน้านี้ (บางคันยังไม่มีราคารถให้เทียบ)`,{err:!!over,sub:'[ลอง] เกณฑ์ % ตัวอย่าง ยังไม่เคาะกับเจ้าของงาน'});
+  });
 }
 $('del').addEventListener('click',()=>{$('m-del-s').textContent=`PO ${po.id} "${po.name}" และงานของรถ ${po.cars.length} คันใน PO นี้จะถูกลบ`;oh2Modal('m-del',true)});
 $('m-del-ok').addEventListener('click',()=>{plan.pos=plan.pos.filter(o=>o.id!==po.id);oh2Save(S);location.href=planUrl+'&saved=podel'});

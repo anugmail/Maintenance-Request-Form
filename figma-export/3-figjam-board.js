@@ -23,6 +23,7 @@
                                                     userflow บำรุงรักษา 18 scenario เป็นผังเดียวต่อกัน (start จุดเดียว · 8-flow-userflow.js --journey)
                                                     userflow บำรุงรักษาตามวาระ 17 scenario (section ละ scenario · ผังรูปทรง Template
                                                     จาก Diagram/01-…/14-บำรุงรักษา-userflow.md ผ่าน 8-flow-userflow.js — ไม่มีรูป capture)
+     node figma-export/3-figjam-board.js --eval-ui --only   แบบประเมิน 2 แบบ (ภาพจอจากปลั๊กอินแบบประเมิน) → board-eval-contractor.json · board-eval-satisfaction.json (13 พ.ย. 2569)
      node figma-export/3-figjam-board.js --pages    + หน้ารวมทุกหน้าจัดหมวด
      node figma-export/3-figjam-board.js --all      ทุกชุด
 
@@ -66,6 +67,41 @@ function main() {
   const only = args.has('--only');
 
   const sections = [];
+
+  /* --eval-ui (13 พ.ย. 2569 เจ้าของงาน "อยาก export แบบประเมิน figjam" · "แบบประเมินมี 2 แบบ" หัวข้อต่างกัน)
+     ภาพจอจากปุ่ม "ส่งภาพจอ…ไป FigJam" ของปลั๊กอินแบบประเมิน (out/figjam/flow-eval-contractor/ · flow-eval-satisfaction/)
+     → บอร์ดแยกไฟล์ละแบบ board-eval-contractor.json · board-eval-satisfaction.json (ติ๊กทีละแบบในปลั๊กอินบอร์ด · ไม่ชนชื่อ section กัน)
+     section ละบล็อก (A · B1 B2 B3 · C1 …) แถว Desktop / Mobile แบบบอร์ด UI ของบำรุงรักษา · มีแค่แบบเดียว = เขียนแบบนั้นแบบเดียว */
+  if (args.has('--eval-ui')) {
+    const FORMS = [['flow-eval-contractor', 'board-eval-contractor.json', 'ประเมินผู้รับจ้าง', COLORS.violet], ['flow-eval-satisfaction', 'board-eval-satisfaction.json', 'ประเมินความพึงพอใจ (XCHO)', COLORS.teal]];
+    let wrote = 0;
+    for (const [dir, file, title, color] of FORMS) {
+      const mf = path.join(FJ, dir, 'manifest.json');
+      if (!fs.existsSync(mf)) { console.log('⚠ ข้าม ' + title + ' — ยังไม่มี ' + path.relative(path.join(__dirname, '..'), mf) + ' (กดปุ่มส่งภาพจอของแบบนี้ในปลั๊กอินแบบประเมินก่อน)'); continue; }
+      const sm = read(mf), titles = sm.titles || {}, dev = (x) => x.device || 'desktop';
+      const groups = [...new Set(sm.shots.map(x => x.group || x.code.split('.')[0]))];
+      const secs = groups.map(g => {
+        const shots = sm.shots.filter(x => (x.group || x.code.split('.')[0]) === g), f = shots[0];
+        const codes = [...new Set(shots.map(x => x.code))], hasMob = shots.some(x => dev(x) === 'mobile');
+        const rowH = (d) => Math.max(0, ...shots.filter(x => dev(x) === d).map(x => x.h));
+        const im = (x, row) => ({ src: 'figjam/' + dir + '/' + x.file, w: x.w, h: x.h, row });
+        return {
+          name: 'แบบประเมิน · ' + title + ' · ' + g + ' · ' + f.scenario + (f.groupName ? ' ' + f.groupName : '') + (titles[f.scenario] ? ' · ' + titles[f.scenario] : ''), color, connect: 'sequence',
+          rows: hasMob ? [{ label: 'Desktop', h: rowH('desktop') }, { label: 'Mobile', h: rowH('mobile') }] : undefined,
+          cols: codes.map(code => {
+            const d = shots.find(x => x.code === code && dev(x) === 'desktop'), mo = shots.find(x => x.code === code && dev(x) === 'mobile');
+            return { label: code + ' · ' + (d || mo).name, note: '', images: [d && im(d, 0), mo && im(mo, hasMob ? 1 : 0)].filter(Boolean) };
+          })
+        };
+      });
+      const board = { version: 1, anchor: 'below', title: 'แบบประเมิน · ' + title, generatedAt: new Date().toISOString(), font: { family: 'IBM Plex Sans Thai', style: 'Medium' }, fallbackFont: { family: 'Inter', style: 'Medium' }, sections: secs };
+      fs.writeFileSync(path.join(OUT, file), JSON.stringify(board));
+      console.log(file + ': ' + title + ' · ' + secs.length + ' section (' + groups.join(' ') + ') · ' + secs.reduce((a, x) => a + x.cols.length, 0) + ' จอ · ' + sm.shots.length + ' รูป · export ' + sm.exportedAt);
+      wrote++;
+    }
+    if (!wrote) process.exit(1);
+    return;
+  }
 
   if (!only) {
   const diagFile = path.join(OUT, 'diagram-plan.json');

@@ -1,0 +1,12 @@
+{
+  "name": "Maintain-D — Card Calendar (Trello → FigJam)",
+  "id": "1471820935506372201",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figjam"],
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "reasoning": "อ่านไฟล์ CSV ที่ผู้ใช้เลือกจากเครื่องเท่านั้น — ไม่ต่อออกอินเทอร์เน็ต"
+  }
+}

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เลือกรถเข้าแผน — หน้าเต็ม | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261111-ds76">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!--
+  11 พ.ย. 2569 — แบบ 4: ตัวเลือกรถเป็นหน้าเต็ม (เปิดจากปุ่ม "เพิ่มรถ" ของ overhaul-v2-02b-plan-form-picker.html?f=4)
+  การแสดงการเลือก:
+   · Page header Actions = ยกเลิก + "เพิ่มรถเข้าแผน (n)" (Disabled เมื่อยังไม่เลือก) — อยู่บนหัวหน้าเสมอ ไม่ต้องเลื่อนลงไปหา
+   · Tabs 3 แท็บ: รถที่เลือกได้ · ที่เลือก (n) = ทบทวน/เอาติ๊กออกก่อนยืนยัน · อยู่ในแผนนี้แล้ว (k) = ดูอย่างเดียว
+   · รถที่อยู่ในแผนนี้แล้ว = ติ๊กไว้ + Disabled + "อยู่ในแผนนี้แล้ว" · รถในแผนอื่น = Disabled + "อยู่ในแผน … แล้ว"
+  การแก้ไข:
+   · ก่อนยืนยัน = ติ๊ก/เอาติ๊กออกในหน้านี้ (แท็บ "ที่เลือก")
+   · หลังยืนยัน = แก้ที่ฟอร์มแผน (ลบ · ระบุราคา) — หน้านี้เพิ่มรถอย่างเดียว ไม่ลบรถที่อยู่ในแผนแล้ว (กันราคาที่กรอกไว้หาย)
+  ส่งค่าข้ามหน้า: ฟอร์มฝากร่างใน sessionStorage (oh2-pk-form) → หน้านี้ฝากผล (oh2-pk-result) → กลับฟอร์ม ?back=1
+  ออกโดยมีรถที่เลือกค้าง = Modal ยืนยันการออก (EXIT_CONFIRM แบบฟอร์มแผน)
+
+  ที่มา · ไฟล์ Component: Breadcrumbs · Page header (Back action + Actions) · Tabs + Tab item · Table header · Text input ·
+           Secondary button + Pill (ตัวกรอง) · Side panel header/footer (.filter-drawer) · Badge outline with remove icon (.fchip) ·
+           Table + Table header cell Checkbox=True · Table pagination · Empty state · Modal Centered (ยืนยันการออก)
+        · แบบที่มีในโปรเจกต์: หน้ารายการแผน overhaul-v2-01-plans.html (แถบค้นหา + ตัวกรอง side panel + ป้ายตัวกรอง) ·
+           หน้า "จัดการอะไหล่ของรถ" ของบำรุงรักษา (§5.26 — งานย่อยของฟอร์มเปิดเป็นหน้าแยกพร้อม breadcrumb)
+        · ⚠️ ไฟล์ UI Release#2: ยังไม่ได้เทียบ (ไม่มี extract ในเครื่อง)
+  ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility · ข้อมูลจำลองทั้งหมด
+-->
+</head>
+<body>
+<div class="shell">
+  <!-- Sidebar navigation State=Collapsed (ไฟล์ Component node 1877:44402): กว้าง 80 · PEA logo 32 ที่ y12 · Nav button 40×40 ห่าง 8 · Footer menu ชิดล่าง -->
+  <aside class="side !gap-0 !pt-3 !pb-3" aria-label="เมนูหลัก">
+    <img src="assets/vms/pea-logo.svg" alt="การไฟฟ้าส่วนภูมิภาค" class="w-8 h-8">
+    <nav class="flex flex-col gap-2 mt-5" aria-label="ระบบงาน">
+      <a class="nv" href="../index.html" title="รายการแจ้งซ่อม"><span class="ms">assignment</span></a>
+      <a class="nv" href="../mock/Maintenance-Request-Form.html" title="แจ้งซ่อม"><span class="ms">build</span></a>
+      <a class="nv" href="../maintainance-yearly/index.html" title="บำรุงรักษาตามวาระ"><span class="ms">event_repeat</span></a>
+      <a class="nv on" href="overhaul-v2-01-plans.html" aria-current="page" title="จัดการงาน Overhaul"><span class="ms">construction</span></a>
+    </nav>
+    <nav class="flex flex-col gap-2 mt-auto" aria-label="เมนูท้าย">
+      <a class="nv" href="index.html" title="แกลเลอรีแบบหน้าจอ"><span class="ms">apps</span></a>
+      <a class="nv" href="overhaul-vehicle-picker-index.html" title="หน้ารวมข้อเสนอเลือกรถ"><span class="ms">help</span></a>
+    </nav>
+  </aside>
+
+  <div class="work">
+    <!-- Header navigation Breakpoint=Tablet (node 598:4294 · จอ desktop ใช้ Tablet ตามรีวิว 19 ต.ค. 2569): สูง 64 · Brand logo + Nav button ซ้าย · Nav button 3 ปุ่ม + Avatar 36 ขวา -->
+    <header class="topbar !justify-between !py-3 !px-4 !gap-2 !min-h-[64px]">
+      <div class="flex items-center gap-2"><img src="assets/vms/vms-logo.svg" alt="VMS+" class="h-7 w-auto ml-1"><button class="btn btn-t btn-icon" type="button" aria-label="เปิดเมนู"><span class="ms">menu</span></button></div>
+      <div class="flex items-center gap-2">
+        <button class="btn btn-t btn-icon" type="button" aria-label="ค้นหา"><span class="ms">search</span></button>
+        <button class="btn btn-t btn-icon" type="button" aria-label="โหมดสี"><span class="ms">light_mode</span></button>
+        <button class="btn btn-t btn-icon relative" type="button" aria-label="การแจ้งเตือน"><span class="ms">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary-600"></span></button>
+        <img src="assets/vms/avatar.png" alt="นางสาวกนกวรรณ ใจมั่น — กบค." title="นางสาวกนกวรรณ ใจมั่น — กบค." class="w-9 h-9 rounded-full bg-brand-50 object-cover ml-2">
+      </div>
+    </header>
+
+    <main class="content">
+
+      <div class="crumbs">
+        <span class="ms">home</span><a href="index.html">หน้าแรก</a>
+        <span class="sep"></span><a href="overhaul-v2-01-plans.html">จัดการงาน Overhaul</a>
+        <span class="sep"></span><a href="#" id="crumb-form">สร้างแผน Overhaul</a>
+        <span class="sep"></span><span class="cur">เลือกรถเข้าแผน</span>
+      </div>
+
+      <div class="page-title-row flex-wrap">
+        <button class="btn btn-t btn-icon" type="button" id="back" aria-label="ย้อนกลับ"><span class="ms">arrow_back</span></button>
+        <div class="min-w-0">
+          <h1 class="page-title mb-0">เลือกรถเข้าแผน</h1>
+          <div class="text-md text-gray-600" id="sub"></div>
+        </div>
+        <div class="flex items-center gap-3 ml-auto">
+          <button class="btn btn-s" type="button" id="cancel">ยกเลิก</button>
+          <button class="btn btn-p" type="button" id="ok" disabled>เพิ่มรถเข้าแผน</button>
+        </div>
+      </div>
+
+      <div class="tabs mt-6" role="tablist" id="tabs"></div>
+
+      <div class="flex flex-col gap-3 mt-4">
+        <div class="list-toolbar split mb-0" id="toolbar">
+          <div class="lt-search"><div class="search"><span class="ms">search</span><input type="search" id="q" placeholder="ค้นหาทะเบียน, ยี่ห้อ/รุ่น, สังกัด" aria-label="ค้นหารถ"></div></div>
+          <div class="lt-actions"><button class="btn btn-s" type="button" id="fbtn"><span class="ms">filter_list</span>ตัวกรอง<span class="badge b-brand hidden" id="fn"></span></button></div>
+        </div>
+        <div class="fchips" id="chips" aria-label="ตัวกรองที่ใช้อยู่"></div>
+        <div class="note note-info mb-0 hidden" id="in-plan-note"><span class="ms">info</span><span>รถในแท็บนี้อยู่ในแผนแล้ว นำออกจากแผนหรือระบุราคาได้ที่หน้าฟอร์มแผน</span></div>
+        <div class="tblwrap" id="wrap">
+          <table class="tbl striped"><thead><tr id="head"></tr></thead><tbody id="body"></tbody></table>
+          <div class="tblfoot">
+            <div class="tf-left"><span id="foot"></span>
+              <select class="select-inline" id="per" aria-label="จำนวนแถวต่อหน้า"><option>10</option><option>25</option><option>50</option></select></div>
+            <div class="pager" id="pager"></div>
+          </div>
+        </div>
+        <div class="filter-empty hidden" id="none">
+          <span class="ms" id="none-ic">search_off</span><b id="none-t">ไม่พบรถ</b><span id="none-s">ไม่มีรถที่ตรงกับคำค้นหรือตัวกรอง</span>
+          <button class="btn btn-s btn-sm mt-2" type="button" id="clear">ล้างคำค้นและตัวกรอง</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ตัวกรอง — Side panel แบบเดียวกับหน้ารายการแผน -->
+<div class="filter-panel filter-drawer" id="drawer">
+  <div class="filter-drawer-sheet" role="dialog" aria-modal="true" aria-labelledby="drawer-t">
+    <div class="filter-drawer-head">
+      <span class="filter-drawer-icon"><span class="ms">filter_list</span></span>
+      <div class="filter-drawer-title"><h2 id="drawer-t">ตัวกรอง</h2><p>กรองข้อมูลให้แสดงเฉพาะข้อมูลที่ต้องการ</p></div>
+      <button type="button" class="filter-drawer-close" data-fcancel aria-label="ปิดตัวกรอง"><span class="ms">close</span></button>
+    </div>
+    <div class="filter-drawer-body" id="drawer-fields"></div>
+    <div class="filter-drawer-foot"><button class="btn btn-link" type="button" id="fclear">ล้างตัวกรอง</button><button class="btn btn-s" type="button" data-fcancel>ยกเลิก</button><button class="btn btn-p" type="button" id="fapply">ตกลง</button></div>
+  </div>
+</div>
+
+<!-- ยืนยันการออก (มีรถที่เลือกค้างอยู่) -->
+<div class="modal-overlay hidden" id="m-leave">
+  <div class="modal md" role="dialog" aria-modal="true" aria-labelledby="m-leave-t">
+    <div class="modal-hd center">
+      <div class="modal-hd-c"><span class="ficon"><span class="ms">info</span></span><h2 id="m-leave-t">ยืนยันการออก</h2><div class="modal-sub" id="m-leave-s"></div></div>
+      <button class="modal-x" type="button" data-close="m-leave" aria-label="ปิด"><span class="ms">close</span></button>
+    </div>
+    <div class="modal-ft"><div class="modal-ft-a fill"><div class="modal-ft-r">
+      <button class="btn btn-s" type="button" data-close="m-leave">ยกเลิก</button>
+      <button class="btn btn-p" type="button" id="m-leave-ok">ยืนยัน</button>
+    </div></div></div>
+  </div>
+</div>
+
+<script src="overhaul-v2-mock.js?v=20261106-1"></script>
+<script src="overhaul-v2-picker.js?v=20261111-3"></script>
+<script>
+const $=id=>document.getElementById(id);
+const S=oh2Load();
+const q=new URLSearchParams(location.search);
+const plan=q.get('plan')?S.plans.find(p=>p.id===q.get('plan')):null;
+const ret=q.get('ret')||'overhaul-v2-02b-plan-form-picker.html?f=4';
+const form=pkGet(PK_FORM_KEY);   // ร่างฟอร์มที่ฝากไว้ (ไม่มี = เปิดหน้านี้ตรงๆ)
+/* ?pool=base (ฟอร์มข้อเสนอแบบ 2 · overhaul-v2-02-plan-form-r2.html) = รถชุดจริงของ mock ไม่ล็อกรถที่อยู่แผนอื่น (ยังไม่มีกติกา) */
+const {POOL,lockedBy,byId}=q.get('pool')==='base'?{POOL:OH2_VEHICLES,lockedBy:{},byId:id=>OH2_VEHICLES.find(v=>v.id===id)}:pkSetup(S,plan);
+const inPlan=new Set(form?form.draft.map(d=>d.id):(plan?plan.cars.map(c=>c.id):[]));
+
+const planName=(form&&form.fields.name)||(plan&&plan.name)||'';
+$('sub').textContent=`${plan?`แผน ${plan.id}`:'แผนใหม่ (ยังไม่บันทึก)'}${planName?` · ${planName}`:''} · มีรถในแผนแล้ว ${inPlan.size} คัน`;
+$('crumb-form').textContent=plan?`แก้ไขแผน ${plan.id}`:'สร้างแผน Overhaul';$('crumb-form').href=ret;
+
+let pending=new Set(),tab='all',page=1,F={...PK_F0};
+$('head').innerHTML=PK_HEAD;
+$('drawer-fields').innerHTML=pkFieldsHTML('pp',POOL);
+
+const TABS=[['all','รถที่เลือกได้',()=>POOL.filter(v=>!inPlan.has(v.id)).length],['sel','ที่เลือก',()=>pending.size],['in','อยู่ในแผนนี้แล้ว',()=>inPlan.size]];
+function drawTabs(){$('tabs').innerHTML=TABS.map(([k,t,n])=>`<button type="button" class="tab-btn${k===tab?' on':''}" role="tab" aria-selected="${k===tab}" data-tab="${k}">${t} <span class="badge b-neutral">${n()}</span></button>`).join('')}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){tab=b.dataset.tab;page=1;draw()}});
+
+function list(){
+  const base=tab==='all'?POOL.filter(v=>!inPlan.has(v.id)):tab==='sel'?POOL.filter(v=>pending.has(v.id)):POOL.filter(v=>inPlan.has(v.id));
+  /* แท็บทบทวน (ที่เลือก · อยู่ในแผนนี้แล้ว) แสดงครบทุกคันเสมอ ไม่โดนคำค้น/ตัวกรอง — กันรถที่เลือกไว้ถูกซ่อนตอนทบทวน */
+  return tab==='all'?base.filter(v=>pkMatch(v,$('q').value,F)):base;
+}
+function rowState(v){
+  if(inPlan.has(v.id))return {checked:true,disabled:true,sub:'อยู่ในแผนนี้แล้ว'};
+  if(lockedBy[v.id])return {checked:false,disabled:true,sub:`อยู่ในแผน ${lockedBy[v.id]} แล้ว`};
+  return {checked:pending.has(v.id),disabled:false};
+}
+function draw(){
+  drawTabs();
+  const L=list(),per=+$('per').value,pages=Math.max(1,Math.ceil(L.length/per));page=Math.min(page,pages);
+  $('body').innerHTML=L.slice((page-1)*per,page*per).map(v=>pkRow(v,rowState(v))).join('');
+  $('wrap').classList.toggle('hidden',!L.length);$('none').classList.toggle('hidden',!!L.length);
+  $('toolbar').classList.toggle('hidden',tab!=='all');$('chips').classList.toggle('hidden',tab!=='all');
+  const filtered=tab==='all'&&(!!$('q').value.trim()||!!pkCount(F));
+  /* empty ต่างกันตามแท็บ: ค้นไม่เจอ vs ยังไม่ได้เลือก vs ยังไม่มีรถในแผน */
+  const E=filtered?['search_off','ไม่พบรถ','ไม่มีรถที่ตรงกับคำค้นหรือตัวกรอง']
+    :tab==='sel'?['check_box_outline_blank','ยังไม่ได้เลือกรถ','ติ๊กเลือกรถจากแท็บ "รถที่เลือกได้"']:['local_shipping','ยังไม่มีรถในแผน','รถที่เพิ่มเข้าแผนแล้วจะแสดงที่นี่'];
+  $('none-ic').textContent=E[0];$('none-t').textContent=E[1];$('none-s').textContent=E[2];$('clear').classList.toggle('hidden',!filtered);
+  $('foot').textContent=L.length?`แสดง ${(page-1)*per+1} ถึง ${Math.min(page*per,L.length)} จาก ${L.length} รายการ`:'';
+  $('pager').innerHTML=pkPager(page,pages);
+  const can=L.slice((page-1)*per,page*per).filter(v=>!rowState(v).disabled),n=can.filter(v=>pending.has(v.id)).length;
+  $('p-all').checked=!!can.length&&n===can.length;$('p-all').indeterminate=n>0&&n<can.length;$('p-all').disabled=!can.length;
+  $('ok').disabled=!pending.size;$('ok').textContent=pending.size?`เพิ่มรถเข้าแผน (${pending.size})`:'เพิ่มรถเข้าแผน';
+  $('in-plan-note').classList.toggle('hidden',tab!=='in'||!inPlan.size);
+  $('chips').innerHTML=pkChipsHTML(F,POOL);const fn=pkCount(F);$('fn').textContent=fn;$('fn').classList.toggle('hidden',!fn);
+}
+$('body').addEventListener('change',e=>{const c=e.target;if(!c.classList.contains('p-ck'))return;c.checked?pending.add(c.value):pending.delete(c.value);draw()});
+$('head').addEventListener('change',e=>{if(e.target.id!=='p-all')return;list().slice((page-1)*+$('per').value,page*+$('per').value).filter(v=>!rowState(v).disabled).forEach(v=>e.target.checked?pending.add(v.id):pending.delete(v.id));draw()});
+$('q').addEventListener('input',()=>{page=1;draw()});
+$('per').addEventListener('change',()=>{page=1;draw()});
+$('pager').addEventListener('click',e=>{const b=e.target.closest('[data-pg]');if(b&&!b.disabled){page=+b.dataset.pg;draw()}});
+$('chips').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;F[b.dataset.rm]=PK_F0[b.dataset.rm];page=1;draw()});
+$('clear').addEventListener('click',()=>{$('q').value='';F={...PK_F0};draw()});
+
+/* Side panel ตัวกรอง — แก้ในแผงแล้วกดตกลงถึงใช้ */
+function setDrawer(o){$('drawer').classList.toggle('open',o);document.body.classList.toggle('modal-open',o);if(o)pkWrite('pp',F)}
+$('fbtn').addEventListener('click',()=>setDrawer(true));
+document.querySelectorAll('[data-fcancel]').forEach(b=>b.addEventListener('click',()=>setDrawer(false)));
+$('drawer').addEventListener('click',e=>{if(e.target===$('drawer'))setDrawer(false)});
+$('fclear').addEventListener('click',()=>pkWrite('pp',PK_F0));
+$('fapply').addEventListener('click',()=>{F=pkRead('pp');page=1;setDrawer(false);draw()});
+
+/* ยืนยัน → ฝากผลไว้แล้วกลับฟอร์ม · ออกโดยมีรถค้าง → ยืนยันการออก */
+$('ok').addEventListener('click',()=>{pkSet(PK_RESULT_KEY,POOL.filter(v=>pending.has(v.id)).map(v=>v.id));location.href=ret});
+const leave=()=>{if(!pending.size){location.href=ret;return}
+  $('m-leave-s').textContent=`รถที่เลือกไว้ ${pending.size} คันจะไม่ถูกเพิ่มเข้าแผน`;oh2Modal('m-leave',true)};
+$('back').addEventListener('click',leave);$('cancel').addEventListener('click',leave);
+$('crumb-form').addEventListener('click',e=>{e.preventDefault();leave()});
+$('m-leave-ok').addEventListener('click',()=>{location.href=ret});
+draw();
+</script>
+</body>
+</html>

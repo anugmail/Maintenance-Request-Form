@@ -14,9 +14,11 @@
 <script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
 <!-- ⚠️ ไลบรารี PEA ไม่มีหน้า "ตรวจรับการโอน" — เคาะ 22 ก.ย. 2569 ให้ประกอบจาก component ที่มี ไม่ออกแบบใหม่
      โครง 2 คอลัมน์ยกจาก `Incident detail` (หน้า 5.3 Vehicle Breakdown ของ UI Release#2)
-     component ที่ใช้ (ไฟล์ Component VMS Plus): Modal [Type=Form] · Checkbox · Badge · File upload chip · Button
+     component ที่ใช้ (ไฟล์ Component VMS Plus): Modal [Type=Form] · Checkbox · Badge · File upload · Button
      คลาสกลางจาก components.css: .incident-layout/.incident-view/.incident-side/.incident-card/.incident-summary
-     .incident-field · .chks/.cbox · .file-chip · .note · .tl · .modal-overlay/.modal/.modal-hd-c/.modal-bd/.modal-ft-a
+     .incident-field · .chks/.cbox · .note · .tl · .modal-overlay/.modal/.modal-hd-c/.modal-bd/.modal-ft-a
+     รูปสภาพรถ (.fu + .photo-grid/.photo-card/.photo-card-rm) — เพิ่ม 6 พ.ย. 2569 แทนที่ .file-chip เดิม ให้แนบรูปได้แบบงานซ่อม
+     (.fu = component ไลบรารีเดิม · .photo-grid ไม่มี component ตรงในไฟล์ Component ยกจากสกรีนช็อตแอปจริง ดู design-system/README.md §4)
      ไม่มี <style> ในหน้า — layout/spacing ใช้ Tailwind utility -->
 </head>
 <body>
@@ -103,15 +105,12 @@
                   <textarea rows="3" placeholder="เช่น สีตัวถังซีดด้านขวา · ยางหน้าซ้ายดอกเหลือ 40%"></textarea>
                 </div>
                 <div class="f">
-                  <label>รูปถ่ายประกอบการตรวจรับ <small>(JPG · PNG)</small></label>
-                  <div class="flex flex-wrap gap-2">
-                    <span class="file-chip"><span class="ms">image</span>
-                      <span class="file-chip-name">ตรวจรับ-ด้านหน้า.jpg</span>
-                      <button class="file-chip-rm" aria-label="ลบไฟล์"><span class="ms">close</span></button></span>
-                    <span class="file-chip"><span class="ms">image</span>
-                      <span class="file-chip-name">ตรวจรับ-ชุดกระเช้า.jpg</span>
-                      <button class="file-chip-rm" aria-label="ลบไฟล์"><span class="ms">close</span></button></span>
-                    <button class="btn btn-s btn-sm"><span class="ms">add_a_photo</span> เพิ่มรูป</button>
+                  <label>รูปสภาพรถประกอบการตรวจรับ <small>(ถ้ามี)</small></label>
+                  <label class="fu"><input type="file" accept="image/*" multiple><span class="ficon sm gray"><span class="ms">cloud_upload</span></span>
+                    <span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PNG, JPG, GIF หรือ WebP (สูงสุด 20 ไฟล์)</small></span></label>
+                  <div class="photo-grid mt-4">
+                    <div class="photo-card"><button class="photo-card-rm" type="button" aria-label="ลบรูปที่ 1"><span class="ms">delete</span></button></div>
+                    <div class="photo-card"><button class="photo-card-rm" type="button" aria-label="ลบรูปที่ 2"><span class="ms">delete</span></button></div>
                   </div>
                 </div>
               </div>

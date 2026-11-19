@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<style>
+  body { font-family: Inter, "IBM Plex Sans Thai", sans-serif; margin: 0; padding: 16px; font-size: 13px; color: #1a1a1a; }
+  h1 { font-size: 14px; margin: 0 0 4px; }
+  p.sub { color: #666; margin: 0 0 16px; line-height: 1.5; }
+  .row { display: flex; gap: 8px; margin-bottom: 10px; }
+  button { flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-size: 13px; }
+  button.primary { background: #18794e; color: #fff; border-color: #18794e; }
+  button.danger { background: #b31212; color: #fff; border-color: #b31212; }
+  button.secondary { background: #eee; color: #1a1a1a; }
+  #result { margin-top: 12px; padding: 10px; border-radius: 6px; background: #f4f4f4; white-space: pre-wrap; line-height: 1.5; min-height: 40px; }
+  #result.ok { background: #e8f5e9; }
+  #result.err { background: #fdecea; }
+  .legend { margin-top: 16px; font-size: 12px; line-height: 1.8; }
+  .legend span { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+  details { margin-top: 14px; }
+  summary { cursor: pointer; font-size: 12px; color: #333; }
+  #known { font-size: 11px; color: #555; margin-top: 8px; line-height: 1.7; word-break: break-word; }
+  select { flex: 1; padding: 7px 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px; }
+  hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }
+</style>
+</head>
+<body>
+  <h1>Overhaul schema annotator</h1>
+  <p class="sub">เลือกตาราง (หรือเฟรมที่ครอบหัวตาราง) ที่ overhaul2-plugin สร้างไว้ในหน้า Figma แล้วกด "แปะ schema ที่เลือก" — จะมีป้ายเล็กๆ ใต้หัวคอลัมน์ที่จับคู่ได้ บอก DB/PARTIAL/GAP/EXTERNAL/NEW พร้อม table.column จริง</p>
+
+  <div class="row">
+    <button class="primary" id="btn-annotate">แปะ schema ที่เลือก</button>
+  </div>
+  <div class="row">
+    <button class="danger" id="btn-clear">ล้างป้ายที่แปะไว้</button>
+  </div>
+  <div class="row">
+    <button class="secondary" id="btn-debug">ดูข้อความจริงที่เลือก (debug)</button>
+  </div>
+
+  <div id="result">ยังไม่ได้ทำอะไร</div>
+
+  <hr>
+
+  <p class="sub"><b>เขียน AC ลงหน้า</b> จากตารางที่เลือก — สร้างเฟรม "AC draft" ขึ้นข้างสิ่งที่เลือกเลย (ไม่ใช่ copy ไปวางที่อื่น) เป็น Rule list (เฉพาะ field ที่มี rule จริง) + Flow (ถ้ามีเก็บไว้ให้)</p>
+  <div class="row">
+    <select id="ac-flow">
+      <option value="">— ไม่ใส่ Flow (เฉพาะ Rule list) —</option>
+      <option value="plan13">Scenario 1-3 — จัดการแผน Overhaul</option>
+      <option value="po46">Scenario 4-6 — Purchase Order</option>
+      <option value="scenario7">Scenario 7 — นัดหมายนำรถเข้า overhaul</option>
+      <option value="scenario8">Scenario 8 — Check Pick-up</option>
+      <option value="scenario911">Scenario 9-11 — ติดตามงานซ่อม</option>
+      <option value="scenario12">Scenario 12 — Check Safety</option>
+      <option value="scenario13">Scenario 13 — นัดหมายรับรถคืน</option>
+      <option value="scenario14">Scenario 14 — บันทึกอะไหล่และปิดงาน</option>
+    </select>
+  </div>
+  <div class="row">
+    <button class="primary" id="btn-ac">เขียน AC ลงหน้า (เฉพาะที่เลือก)</button>
+  </div>
+  <p class="sub">หรือ — ไม่ต้องเลือกอะไรเลย สร้าง AC ของ <b>ทุก scenario ใน AC_FLOWS รวดเดียว</b> (เรียงซ้อนคอลัมน์เดียวจากมุมบนซ้ายของหน้า)</p>
+  <div class="row">
+    <button class="primary" id="btn-ac-all">สร้าง AC ทุกหน้า (8 scenario)</button>
+  </div>
+
+  <div class="legend">
+    <div><span style="background:#18794e"></span> DB — มี column จริง ความหมายตรง</div>
+    <div><span style="background:#d98c0d"></span> PARTIAL — มี column แต่ไม่ตรงทั้งหมด (format/semantics)</div>
+    <div><span style="background:#cc2626"></span> GAP — ไม่มี column/ตารางรองรับเลย</div>
+    <div><span style="background:#4166d9"></span> EXTERNAL — มาจาก vms_mas_vehicle/main-be ไม่ใช่ repo นี้</div>
+    <div><span style="background:#1a7399"></span> NEW — derive จากตารางลูกที่มีอยู่แล้วได้ (ไม่ใช่ column ตรง)</div>
+    <div><span style="background:#737373"></span> RESOLVED — เคยดูเหมือน gap แต่ตรวจซ้ำแล้วไม่ใช่ gap จริง (ทีมเคาะปิดแล้ว)</div>
+  </div>
+
+  <details>
+    <summary>หัวคอลัมน์ที่ปลั๊กอินนี้รู้จัก (ถ้าไม่เจอ แปลว่าข้อความไม่ตรง key)</summary>
+    <div id="known">กดเพื่อโหลดรายการ…</div>
+  </details>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const result = $('result');
+
+    $('btn-annotate').onclick = () => parent.postMessage({ pluginMessage: { type: 'annotate' } }, '*');
+    $('btn-clear').onclick = () => parent.postMessage({ pluginMessage: { type: 'clear' } }, '*');
+    $('known').onclick = () => parent.postMessage({ pluginMessage: { type: 'list-known' } }, '*');
+    $('btn-debug').onclick = () => parent.postMessage({ pluginMessage: { type: 'debug-texts' } }, '*');
+    $('btn-ac').onclick = () => parent.postMessage({ pluginMessage: { type: 'generate-ac', flow: $('ac-flow').value } }, '*');
+    $('btn-ac-all').onclick = () => parent.postMessage({ pluginMessage: { type: 'generate-ac-all' } }, '*');
+
+    onmessage = (e) => {
+      const msg = e.data.pluginMessage;
+      if (!msg) return;
+      if (msg.type === 'result') {
+        result.textContent = msg.text;
+        result.className = msg.ok ? 'ok' : 'err';
+      }
+      if (msg.type === 'known') {
+        $('known').textContent = msg.keys.join(' · ');
+      }
+      if (msg.type === 'ac-result') {
+        result.textContent = msg.text;
+        result.className = msg.ok ? 'ok' : 'err';
+      }
+    };
+  </script>
+</body>
+</html>

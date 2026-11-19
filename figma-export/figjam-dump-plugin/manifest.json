@@ -1,0 +1,13 @@
+{
+  "name": "Maintain-D — FigJam frame dump",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figjam"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "devAllowedDomains": ["http://localhost:8124"],
+    "reasoning": "ส่งค่าที่อ่านจาก frame/section ที่เลือกกลับมาเขียนลงเครื่องผ่าน serve.js — ไม่ต่อออกอินเทอร์เน็ต"
+  }
+}

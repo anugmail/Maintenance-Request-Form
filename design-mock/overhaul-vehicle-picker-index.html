@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รวม mock เลือกรถเข้าแผน Overhaul | Maintain-D (Mock)</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../design-system/tokens.css?v=20261104-ds74">
+<link rel="stylesheet" href="../design-system/components.css?v=20261111-ds76">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../design-system/tailwind-theme.js?v=20261019-ds72"></script>
+<!-- 11 พ.ย. 2569 — หน้ารวม mock ข้อเสนอ "เลือกรถเข้าแผน Overhaul" (ไม่แตะแกลเลอรีหลัก index.html) · ไม่มีบล็อกสไตล์ในหน้า · layout ใช้ Tailwind utility -->
+</head>
+<body>
+<main class="content max-w-[1100px] mx-auto flex flex-col gap-8 py-8">
+  <div>
+    <div class="crumbs"><span class="ms">home</span><a href="index.html">แกลเลอรีแบบหน้าจอ</a><span class="sep"></span><span class="cur">เลือกรถเข้าแผน Overhaul</span></div>
+    <h1 class="page-title mb-0">รวม mock — เลือกรถเข้าแผน Overhaul</h1>
+    <p class="text-md text-gray-600 mt-2">ข้อเสนอแยก "เลือกรถ" (ติ๊กชั่วคราว ยังไม่ลง DB) ออกจาก "ตารางรถในแผน + ราคารายคัน" (ลง DB พร้อมแผนตอนบันทึก) · ข้อมูลจำลองทั้งหมด</p>
+  </div>
+
+  <section class="flex flex-col gap-4">
+    <div class="sect">ข้อเสนอให้เลือก <span class="badge sq">2</span></div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="border border-gray-300 rounded-lg p-6 flex flex-col gap-3">
+        <div class="flex items-center gap-2 flex-wrap"><b class="text-md">แบบ 1 · Modal + แผงตัวกรองกาง</b><span class="badge b-low">ต้องขอ component เพิ่ม</span></div>
+        <p class="text-sm text-gray-600">กด "เพิ่มรถ" → modal บนหน้าฟอร์ม · ปุ่ม "ตัวกรอง" กางแผงลงใต้ช่องค้นหาในกล่อง · ไม่ต้องออกจากฟอร์ม</p>
+        <ul class="text-sm list-disc pl-5 flex flex-col gap-1">
+          <li>อ้างอิง: SAP Fiori Value Help Dialog (ซ่อนตัวกรองเป็นค่าตั้งต้น + ปุ่มแสดง/ซ่อนในตัว dialog)</li>
+          <li>ไลบรารี VMS Plus ยังไม่มีแผงตัวกรองแบบกาง และ Modal xl สำหรับตาราง</li>
+        </ul>
+        <div class="flex gap-3 flex-wrap mt-auto">
+          <a class="btn btn-p btn-sm !no-underline" href="overhaul-v2-02-plan-form-r1.html">เปิดโหมดสร้างแผน</a>
+          <a class="btn btn-s btn-sm !no-underline" href="overhaul-v2-02-plan-form-r1.html?id=123456">โหมดแก้ไข (แผน 123456)</a>
+        </div>
+      </div>
+      <div class="border border-gray-300 rounded-lg p-6 flex flex-col gap-3">
+        <div class="flex items-center gap-2 flex-wrap"><b class="text-md">แบบ 2 · หน้าเต็ม + Side panel</b><span class="badge b-ok">มี component ในไลบรารีครบ</span></div>
+        <p class="text-sm text-gray-600">กด "เพิ่มรถ" → หน้า "เลือกรถเข้าแผน" · แท็บ รถที่เลือกได้ / ที่เลือก / อยู่ในแผนนี้แล้ว · ตัวกรองเป็น Side panel แบบหน้ารายการแผน · ยืนยันแล้วกลับฟอร์มพร้อมข้อมูลเดิม</p>
+        <ul class="text-sm list-disc pl-5 flex flex-col gap-1">
+          <li>ไลบรารี: Side panel › Filter_Panel (1964:13912) · Table header Desktop (2003:270) · Tabs · Table</li>
+          <li>ข้อเสีย: ต้องออกจากฟอร์มไปอีกหน้า แล้วพาค่ากลับ</li>
+        </ul>
+        <div class="flex gap-3 flex-wrap mt-auto">
+          <a class="btn btn-p btn-sm !no-underline" href="overhaul-v2-02-plan-form-r2.html">เปิดโหมดสร้างแผน</a>
+          <a class="btn btn-s btn-sm !no-underline" href="overhaul-v2-02-plan-form-r2.html?id=123456">โหมดแก้ไข (แผน 123456)</a>
+        </div>
+      </div>
+    </div>
+    <div class="note note-info mb-0"><span class="ms">info</span><span>ทั้ง 2 แบบ: checkbox ทุกแถว · หัวตารางเลือกเฉพาะหน้าที่เห็น (Material Data tables · PatternFly Bulk selection) · ติ๊กค้างข้ามหน้า/ตัวกรอง · นับจำนวนที่เลือก + แสดงเฉพาะที่เลือก (SAP Fiori) · ยืนยันครั้งเดียวแล้วค่อยลงตาราง (Shopify Resource Picker) · ระบุราคากลาง/ราคาประเมินรายคันจากไอคอนแก้ไข · ตรวจราคาครบตอนกดบันทึก</span></div>
+  </section>
+
+  <section class="flex flex-col gap-4">
+    <div class="sect">อ้างอิง</div>
+    <div class="tblwrap"><table class="tbl striped"><thead><tr><th>หน้า</th><th>ใช้ทำอะไร</th></tr></thead><tbody>
+      <tr><td><a href="overhaul-v2-02-plan-form.html">ฟอร์มสร้างแผนเดิม</a></td><td>ตาราง checkbox + ช่องกรอกราคาในแถวเดียวกัน (แบบที่ dev กังวล) — ใช้เทียบ</td></tr>
+      <tr><td><a href="overhaul-v2-02b-plan-form-picker.html">ตัวเปรียบเทียบหลายแบบ</a></td><td>รอบสำรวจ: ตัวกรอง 4 แบบ · วิธีเลือก A/B/E · สวิตช์บังคับกรอกราคา (มีแบบที่ไม่แนะนำรวมอยู่)</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <p class="text-sm text-gray-500">⚠️ ยังไม่ได้เทียบไฟล์ UI Release#2 · ถ้าเปิดแล้วหน้าตาไม่เปลี่ยน กด Cmd+Shift+R</p>
+</main>
+</body>
+</html>

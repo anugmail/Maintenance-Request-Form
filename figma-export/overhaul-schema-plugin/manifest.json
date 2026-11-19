@@ -1,0 +1,9 @@
+{
+  "name": "Maintain-D — Overhaul schema annotator",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": { "allowedDomains": ["none"], "reasoning": "ตาราง mapping ฝังอยู่ใน code.js ทั้งหมด ไม่ต่อเครือข่าย" }
+}

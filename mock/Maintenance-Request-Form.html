@@ -4302,10 +4302,24 @@ function krdClose(no){
     const E = { mode: null, garages: [], loc: 'hq', addOpen: false };
     let K = { slots: {}, note: '', mode: 'range', from: '', to: '', one: '', insp: null };
 const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned'],gclosed:['gclosed'],work:['work'],appt:['appt'],closing:['closing'],closed:['closed']};
-    function initInsp() { return { zones: ZONES.map(z => ({ name: z, bad: false, note: '' })), fuel: null, odo: '', symOk: {}, extra: '' } }
+    function initInsp() { return { zones: ZONES.map(z => ({ name: z, bad: false, note: '' })), fuel: null, odo: '', symOk: {}, extra: '', photos: [] } }
     function zSet(no, zi, v) { K.insp.zones[zi].bad = v; renderKbkDetail(no) }
     function fuelSet(no, f) { K.insp.fuel = f; renderKbkDetail(no) }
     function symTog(no, i) { K.insp.symOk[i] = !K.insp.symOk[i] }
+    // แกลเลอรีรูปสภาพรถ — ตาม `.fu`/`.photo-grid` เดิม (ยกจากสกรีนช็อตแอปจริง "แจ้งซ่อม" ที่เจ้าของงานส่ง 6 พ.ย. 2569 · ใช้ที่ Overhaul v2 แล้ว)
+    function inspAddPhotoFiles(no, files) {
+      [...files].forEach(f => { const r = new FileReader(); r.onload = () => { K.insp.photos.push({ url: r.result }); renderKbkDetail(no) }; r.readAsDataURL(f) });
+    }
+    function inspAddDemoPhoto(no) { K.insp.photos.push({ url: null }); renderKbkDetail(no) }
+    function inspRmPhoto(no, i) { K.insp.photos.splice(i, 1); renderKbkDetail(no) }
+    function inspPhotoPickerHTML(no) {
+      return `<div class="f mt-3.5"><label>รูปสภาพรถ <small>(ถ้ามี)</small></label>
+      <label class="fu"><input type="file" accept="image/*" multiple onchange="inspAddPhotoFiles('${no}',this.files);this.value=''"><span class="ficon sm gray"><span class="ms">cloud_upload</span></span>
+        <span class="fu-tx"><span><b>คลิกเพื่อเลือกไฟล์</b> หรือลากไฟล์มาวางบริเวณนี้</span><small>PNG, JPG, GIF หรือ WebP (สูงสุด 20 ไฟล์)</small></span></label>
+      <div class="photo-grid mt-4">${K.insp.photos.map((p, i) => `<div class="photo-card">${p.url ? `<img src="${esc(p.url)}">` : ''}<button class="photo-card-rm" type="button" onclick="inspRmPhoto('${no}',${i})" aria-label="ลบรูปที่ ${i + 1}"><span class="ms">delete</span></button></div>`).join('')}</div>
+      <button class="btn btn-t btn-sm mt-3" type="button" onclick="inspAddDemoPhoto('${no}')"><span class="ms">add_photo_alternate</span>เพิ่มรูปตัวอย่าง (ต้นแบบ)</button>
+    </div>`;
+    }
     function inspFormHTML(no, kind, j) {
       const I = K.insp;
       return `<div class="panel">
@@ -4322,9 +4336,11 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
     ${kind === 'in'
           ? `<div class="f"><label>③ อาการเสียของเดิม (ตามที่แจ้งไว้)</label><div class="chk">${j.syms.map(s => `<label><input type="checkbox" checked disabled>${s}</label>`).join('')}</div></div>
       <div class="f"><label>อาการ/ตำหนิอื่นที่พบเพิ่มตอนรับรถ <small>(ถ้ามี)</small></label><textarea rows="2" oninput="K.insp.extra=this.value" placeholder="เช่น ไฟเลี้ยวซ้ายหลังไม่ติด…">${I.extra}</textarea></div>
+      ${inspPhotoPickerHTML(no)}
       <div class="rowbtns"><button class="btn btn-p" onclick="saveInspIn('${no}')">บันทึกตรวจสภาพขาเข้า — รับรถเข้าซ่อม</button></div>`
           : `<div class="f"><label>③ ผลการซ่อม — ทดสอบตามอาการที่แจ้ง</label><div class="chk">${j.syms.map((s, i) => `<label><input type="checkbox" ${I.symOk[i] ? 'checked' : ''} onchange="symTog('${no}',${i})">${s} — ซ่อมแล้ว ทดสอบปกติ</label>`).join('')}</div></div>
       <div class="f"><label>บันทึกเพิ่มเติม <small>(ถ้ามี)</small></label><textarea rows="2" oninput="K.insp.extra=this.value" placeholder="เช่น ทดสอบยกโหลด 80% ปกติ…">${I.extra}</textarea></div>
+      ${inspPhotoPickerHTML(no)}
       <div class="rowbtns">
         <button class="btn btn-g" onclick="kbkFail('${no}')">ไม่ผ่าน — กลับไปแก้งานซ่อม</button>
         <button class="btn btn-p" onclick="kbkClose('${no}')">ผ่าน — ไปขั้นรายงานปิดงาน</button>
@@ -4333,7 +4349,7 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
     }
     function inspRecord() {
       const I = K.insp;
-      return { fuel: I.fuel, odo: esc(I.odo), defects: I.zones.filter(z => z.bad).map(z => ({ zone: z.name, note: esc(z.note.trim()) })), extra: esc(I.extra.trim()), t: nowStr() };
+      return { fuel: I.fuel, odo: esc(I.odo), defects: I.zones.filter(z => z.bad).map(z => ({ zone: z.name, note: esc(z.note.trim()) })), extra: esc(I.extra.trim()), photos: I.photos.slice(), t: nowStr() };
     }
     function saveInspIn(no) {
       const j = JOBS.find(x => x.no === no);
@@ -4347,7 +4363,8 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
       return `<div class="panel"><div class="sect mt-0 mb-2 mx-0">${title}</div>
     <div class="text-sm">น้ำมัน: <b>${rec.fuel}</b> · เลขไมล์: <b>${rec.odo || '—'}</b> กม. · บันทึกเมื่อ ${rec.t}</div>
     <div class="text-sm mt-1.5"><b>ตำหนิรอบตัวรถ:</b> ${rec.defects.length ? rec.defects.map(d => `${d.zone}${d.note ? ' (' + d.note + ')' : ''}`).join(' · ') : 'ไม่มี'}</div>
-    ${rec.extra ? `<div class="hint">เพิ่มเติม: ${rec.extra}</div>` : ''}</div>`;
+    ${rec.extra ? `<div class="hint">เพิ่มเติม: ${rec.extra}</div>` : ''}
+    ${rec.photos && rec.photos.length ? `<div class="photo-grid mt-3">${rec.photos.map(p => `<div class="photo-card">${p.url ? `<img src="${esc(p.url)}">` : ''}</div>`).join('')}</div>` : ''}</div>`;
     }
     function renderKbkList() {
       const phases=KBK_STATUS_PHASES[$('kbk-status-filter').value];
@@ -4523,6 +4540,7 @@ const KBK_STATUS_PHASES={pending:['pending'],quote:['quote'],returned:['returned
         <div class="rowbtns"><button class="btn btn-p" onclick="kbkSendSlots('${no}')">ส่งตารางว่างให้ผู้แจ้งเลือก</button></div>
       </div>`;
         }
+      }
       }
 
       if (j.phase === 'slots') {   // เฉพาะเส้นซ่อมเอง (นำรถเข้า สนญ.) — กำลังเปิดตารางว่างรอผู้แจ้งเลือกวันนัดรับ ก่อนถึงขั้นตรวจสภาพรถหลังซ่อม
@@ -4901,7 +4919,7 @@ function partsStockPaneHTML(no, j){
       <span class="ar-price">${baht(p.price)} / ${esc(p.unit)}</span>
       <span class="ms text-primary-600">add_circle</span>
     </div>`;
-  }).join('')}</div>`;
+  }).join('');
 }
 // คอลัมน์ขวา "อะไหล่ที่ต้องการใช้งาน" — j.parts (มาจากคลัง/ผู้แจ้ง) + j.customParts (กบค. พิมพ์เอง ไม่มีในทะเบียน)
 // 7 ก.ย. 2569: เพิ่มป้ายเตือนชัดเจนต่อรายการ แยก "ระบบจัดซื้อให้อัตโนมัติ" (คลังที่ 1 ขาด) กับ "ต้องซื้อเอง"

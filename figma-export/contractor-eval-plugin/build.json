@@ -1,0 +1,4 @@
+{
+  "_note": "12 พ.ย. 2569 เจ้าของงาน \"อยากให้เขียนเรื่องการประเมิน กบค มาใส่ในนี้\" ⇒ รวมแบบประเมินความพึงพอใจ กบค. (satisfaction-plugin) ไว้ในหน้าต่างเดียวกัน · ต้นทางยังเป็น satisfaction-plugin/screens.js ที่เดียว · แก้แล้วรัน node figma-export/build-plugin.js contractor-eval-plugin",
+  "include": { "SAT": "satisfaction-plugin" }
+}

@@ -58,6 +58,10 @@ jobs:
         if: always()
         run: rm -rf overhaul-next/node_modules overhaul-next/.next overhaul-next/out
 
+      # PDF ใหญ่ที่ไม่มีหน้าไหนลิงก์ — ไม่อัปโหลดขึ้น Pages (ไฟล์ยังอยู่ในรีโป) · 10 พ.ย. 2569 deploy ค้าง syncing_files เกิน 10 นาทีติดกัน 3 รอบ (artifact 63 MB · UI.pdf อย่างเดียว 57 MB)
+      - name: ไม่อัปโหลด PDF ใหญ่ที่ไม่มีหน้าไหนลิงก์
+        run: rm -f "UI.pdf" "TOR_PEA_FINAL.pdf"
+
       - uses: actions/configure-pages@v5
 
       # อัปโหลดทั้ง repo ตามที่เป็น — ไม่ผ่าน Jekyll จึงไม่มีขั้นแปลงไฟล์
@@ -67,3 +71,5 @@ jobs:
 
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          timeout: 1800000   # 30 นาที (ค่าตั้งต้น 10 นาที) — Pages sync ช้าเป็นช่วงๆ 10 พ.ย. 2569

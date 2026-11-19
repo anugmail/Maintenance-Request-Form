@@ -1,0 +1,101 @@
+<!-- หน้าต่างปลั๊กอิน Card Calendar — อ่านไฟล์ CSV จากเครื่อง (sandbox อ่านไฟล์เองไม่ได้)
+     แล้วส่งข้อความ + ค่าตั้ง sprint เข้า code.js · สีใช้ตัวแปรธีมของ Figma ล้วน ไม่มี hex -->
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:16px;
+    font:12px/1.6 'IBM Plex Sans Thai','Inter',sans-serif;
+    background:var(--figma-color-bg);color:var(--figma-color-text);
+  }
+  h1{font-size:13px;font-weight:600;margin:0 0 2px}
+  .sub{color:var(--figma-color-text-secondary);margin:0 0 14px}
+  label{display:block;font-weight:600;margin:0 0 4px}
+  input[type=text],input[type=number],input[type=date]{
+    width:100%;padding:7px 9px;margin:0 0 12px;
+    border:1px solid var(--figma-color-border);border-radius:6px;
+    background:var(--figma-color-bg-secondary);color:var(--figma-color-text);
+    font:inherit;
+  }
+  input[type=file]{margin:0 0 4px;font:inherit}
+  .row{display:flex;gap:8px}
+  .row > div{flex:1}
+  .check{display:flex;align-items:center;gap:6px;font-weight:400;margin:0 0 6px}
+  .hint{color:var(--figma-color-text-secondary);margin:0 0 12px}
+  button{
+    width:100%;padding:8px 10px;border:1px solid transparent;border-radius:6px;
+    font:inherit;font-weight:600;cursor:pointer;margin:6px 0 12px;
+    background:var(--figma-color-bg-brand);color:var(--figma-color-text-onbrand);
+  }
+  button:hover{background:var(--figma-color-bg-brand-hover)}
+  button:disabled{opacity:.5;cursor:default}
+  #log{
+    height:170px;overflow:auto;padding:8px 10px;
+    border:1px solid var(--figma-color-border);border-radius:6px;
+    background:var(--figma-color-bg-secondary);
+    font:11px/1.55 ui-monospace,'SF Mono',Menlo,monospace;white-space:pre-wrap;
+  }
+  #log div{margin:0 0 2px}
+  .err{color:var(--figma-color-text-danger)}
+  .warn{color:var(--figma-color-text-secondary)}
+</style>
+
+<h1>Card Calendar (Trello → FigJam)</h1>
+<p class="sub">วางการ์ดลงปฏิทินตาม sprint ในชื่อการ์ด · แถวละ UC · สีตามทีม ⭐️ / ❤️</p>
+
+<label for="files">ไฟล์ CSV (เลือกได้หลายไฟล์)</label>
+<input id="files" type="file" accept=".csv,text/csv" multiple>
+<p class="hint">รองรับ export ของ Trello และไฟล์ import ที่เขียนไว้ · การ์ดเลขซ้ำจากหลายไฟล์นับใบเดียว (ใบ Done ชนะ)</p>
+
+<div class="row">
+  <div>
+    <label for="anchorSprint">Sprint อ้างอิง</label>
+    <input id="anchorSprint" type="number" min="1" value="8">
+  </div>
+  <div>
+    <label for="anchorStart">วันเริ่ม sprint นั้น</label>
+    <input id="anchorStart" type="date" value="2026-11-02">
+  </div>
+</div>
+<div class="row">
+  <div>
+    <label for="weeks">ความยาว sprint (สัปดาห์)</label>
+    <input id="weeks" type="number" min="1" value="2">
+  </div>
+  <div>
+    <label for="until">แสดงถึงเดือน (ค.ศ.)</label>
+    <input id="until" type="month" value="2027-02">
+  </div>
+</div>
+
+<p class="hint">2027-02 = ก.พ. 2570 · รวมทุก sprint ที่เริ่มก่อนสิ้นเดือนนั้น</p>
+
+<label class="check"><input id="defects" type="checkbox"> รวมการ์ด Defect</label>
+<label class="check"><input id="nonumber" type="checkbox"> รวมการ์ดที่ไม่มีเลข [PEA-x.x.x]</label>
+
+<button id="go" disabled>วางลงปฏิทิน</button>
+<div id="log"></div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const log = (text, cls) => { const d = document.createElement('div'); d.textContent = text; if (cls) d.className = cls; $('log').appendChild(d); $('log').scrollTop = 1e9; };
+  $('files').onchange = () => { $('go').disabled = !$('files').files.length; };
+  $('go').onclick = async () => {
+    $('go').disabled = true;
+    $('log').textContent = '';
+    const files = [];
+    for (const f of $('files').files) files.push({ name: f.name, text: await f.text() });
+    parent.postMessage({ pluginMessage: { type: 'build', files, opt: {
+      anchorSprint: +$('anchorSprint').value,
+      anchorStart: $('anchorStart').value,
+      weeks: +$('weeks').value,
+      untilMonth: $('until').value,
+      includeDefects: $('defects').checked,
+      includeNoNumber: $('nonumber').checked
+    } } }, '*');
+  };
+  onmessage = (e) => {
+    const m = e.data.pluginMessage; if (!m) return;
+    if (m.type === 'log') log(m.text, m.cls);
+    if (m.type === 'done') $('go').disabled = !$('files').files.length;
+  };
+</script>
