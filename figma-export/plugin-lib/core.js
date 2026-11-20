@@ -335,7 +335,7 @@ const VW = () => (MOB ? 402 : 1440), VH = () => (MOB ? 874 : 1024);
 function btn(kind, label, o) {
   o = o || {};
   const variant = { State: o.disabled ? 'Disabled' : 'Default' };
-  if (kind !== 'Tertiary brand button') variant.Size = o.size || 'md';   // Tertiary brand button ไม่มี Size
+  if (kind !== 'Tertiary brand button' && kind !== 'Tertiary danger button') variant.Size = o.size || 'md';   // Tertiary brand / Tertiary danger button ไม่มี Size (20 พ.ย. 2569 ส่งกลับแก้ไขที่หัวหน้า S2 S7)
   const props = { Text: label, 'Leading icon': !!o.icon, 'Trailing icon': false };
   if (o.icon) props['Leading icon swap'] = icon(o.icon);
   return inst(kind, variant, props);
@@ -823,7 +823,7 @@ async function confirm(scr, o) {   // Modal กลาง — danger = Destructiv
   const pb = find(m, o.danger ? 'Primary danger button' : 'Primary button'); if (pb) setProps(pb, { Text: o.ok || 'ยืนยัน', 'Leading icon': false, 'Trailing icon': false });
 }
 async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 สลับเป็น Text area ด้วย property "Input 1 swap" ของ Card form row · o.ok / o.cancel = ชื่อปุ่ม (ค่าเริ่ม บันทึก / ยกเลิก · 22 ต.ค. 2569 ใช้กับ "ส่งกลับ" "ปฏิเสธ")
-  if (MOB) { await sheet(scr, { title: o.title, content: [].concat(...o.fields.map(f => f.pair || [f])).map(f => f.area ? area(f.label, f.value) : field(f.label, f.value, { optional: f.optional })), ok: o.ok || 'บันทึก', cancel: o.cancel }); return; }
+  if (MOB) { await sheet(scr, { title: o.title, content: [].concat(...o.fields.map(f => f.pair || [f])).map(f => f.area ? area(f.label, f.value, { placeholder: f.placeholder, error: f.error }) : field(f.label, f.value, { optional: f.optional })), ok: o.ok || 'บันทึก', cancel: o.cancel, danger: o.danger }); return; }
   const m = inst('Modal', { Type: 'Form', Size: 'md' });
   overlay(scr, m, 0, 0);
   modalHead(find(m, 'Modal header'), o.title, o.sub, { 'Back icon': false, 'Featured icon': false });
@@ -849,7 +849,8 @@ async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 
     if (f.area) setProps(r, { 'Input 1 swap': main('Text area', { State: 'Filled', Size: 'md' }).id });
     const inp = r.children.find(c => c.type === 'INSTANCE' && c.visible !== false);
     if (inp) setProps(inp, { State: f.value ? 'Filled' : 'Default' });
-    if (inp) setProps(inp, { 'Label text': f.label, Text: f.value || f.placeholder || '', Optional: !!f.optional, Helper: false, 'Info icon': false, 'Show Placeholder': !f.value });
+    if (inp) setProps(inp, { 'Label text': f.label, Text: f.value || f.placeholder || '', Optional: !!f.optional, Helper: !!f.error, 'Info icon': false, 'Show Placeholder': !f.value });
+    if (inp && f.error) setProps(inp, { State: 'Error', 'Helper text': f.error });   // 20 พ.ย. 2569 popup ส่งกลับแก้ไข (S2 S7) เหตุผลบังคับ · error แบบ area()
     if (inp) syncLabel(inp, f.label, f.optional);   // ป้ายที่เห็นคือ Input label ที่ซ้อน (ตาม Overhaul) — เดิมไม่ตั้ง ป้ายเลยค้าง "ผู้ใช้ยานพาหนะ" ของไลบรารี
     const ct = inp && !f.area && find(inp, 'Container'), tv = ct && ct.findOne(n => n.type === 'TEXT' && n.visible !== false);
     if (tv && f.value && tv.characters !== f.value) await text(ct, tv, f.value);   // 3 พ.ย. 2569 ไฟล์จริงช่องขึ้นว่าง — ค่าที่เห็นไม่ตรง property ก็ใส่ที่ข้อความโดยตรง
@@ -858,7 +859,8 @@ async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 
      (ชีตลูกค้า 5 พ.ย. 2569: popup ตีกลับขึ้น "บันทึก" แทน "ตีกลับ" · popup ระบุอะไหล่เพิ่มเติมขึ้น "บันทึก" แทน "เพิ่ม") */
   const ft = m.findAll(n => n.type === 'INSTANCE' && /button/.test(n.name) && n.parent && (n.parent.name === 'Actions' || n.parent.name === 'Primary and secondary actions'));
   ft.forEach(b => {
-    if (b.name === 'Primary button') setProps(b, { Text: o.ok || 'บันทึก', 'Leading icon': false, 'Trailing icon': false });
+    if (b.name === 'Primary button' && o.danger) { try { b.swapComponent(main('Primary danger button', { State: 'Default', Size: 'lg' })); b.name = 'Primary danger button'; } catch (e) { warn('ปุ่มหลักสีแดงของ popup ฟอร์ม', e); } }   // 20 พ.ย. 2569 o.danger = ปุ่มหลัก Primary danger (ส่งกลับแก้ไข แบบหน้าอนุมัติปิดงานของ Overhaul)
+    if (b.name === 'Primary button' || b.name === 'Primary danger button') setProps(b, { Text: o.ok || 'บันทึก', 'Leading icon': false, 'Trailing icon': false });
     else if (b.name === 'Secondary button') setProps(b, { Text: o.cancel || 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false });
     else b.visible = false;
   });
