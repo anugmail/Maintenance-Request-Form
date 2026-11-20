@@ -128,7 +128,7 @@ function build(src, horizontalMode) {
 module.exports = { build, vertical, horizontal, SIZE };
 if (require.main === module) {   // ดูผลเร็ว: node figma-export/plugin-lib/userflow-layout.js <ไฟล์ userflow.md>
   const path = require('path');
-  const src = path.resolve(process.argv[2] || path.join(__dirname, '..', '..', 'Diagram', '01-บำรุงรักษาตามวาระ', '14-บำรุงรักษา-userflow.md'));
+  const src = process.argv[2] ? path.resolve(process.argv[2]) : require('./maint-docs.js').docPath(path.join('Diagram', '01-บำรุงรักษาตามวาระ', '14-บำรุงรักษา-userflow.md'));
   const r = build(src);
   for (const k of Object.keys(r)) {
     const f = r[k];

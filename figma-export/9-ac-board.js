@@ -41,7 +41,7 @@ const arg = (k, d) => {
   return hit ? hit.slice(k.length + 3) : d;
 };
 const ROOT = path.join(__dirname, '..');
-const SRC = path.resolve(ROOT, arg('src', path.join('Diagram', '01-บำรุงรักษาตามวาระ', '18-overhaul-AC-หน้า1-รายการแผน.md')));
+const SRC = require('./plugin-lib/maint-docs.js').docPath(arg('src', path.join('Diagram', '01-บำรุงรักษาตามวาระ', '18-overhaul-AC-หน้า1-รายการแผน.md')));
 const OUT = path.join(__dirname, 'out', arg('out', 'board-ac-overhaul-page1.json'));
 const PREFIX = arg('prefix', 'AC หน้า 1 รายการแผน');
 const SHOTS = arg('shots', '');   // โฟลเดอร์ใต้ out/ ที่มีภาพ .png → section ภาพเรียงตามชื่อไฟล์ ต่อจากภาพรวม (30 ต.ค. 2569 ภาพหน้า login จริง)

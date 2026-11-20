@@ -20,7 +20,7 @@ const FDIR = (FSRC.match(/fjDir: '([^']+)'/) || [])[1] || 'flow-maintainance-fea
   const docName = (FSRC.match(/doc: '([^']+)'/) || [])[1];
   if (!docName) { console.log('⚠ features/' + FEAT + '.js ไม่มี doc'); process.exitCode = 1; }
   else {
-    const doc = fs.readFileSync(path.join(__dirname, '..', 'Diagram', '01-บำรุงรักษาตามวาระ', docName), 'utf8');
+    const doc = fs.readFileSync(require('./plugin-lib/maint-docs.js').docPath(path.join('Diagram', '01-บำรุงรักษาตามวาระ', docName)), 'utf8');
     /* รหัสชั้นเดียว (A.3 · ช่วง A.3–A.9) และรหัสซ้อนของเส้นทางย่อย (V.4.1 · ช่วง V.4.1–V.4.3) — 17 พ.ย. 2569 รองรับรหัสซ้อน (Feature งานรายคัน) */
     const exp = (t) => { const r = []; t.replace(/\b([A-Z]\d*)\.((?:\d+\.)*)(\d+)(?:[–-](?:\1\.\2)?(\d+))?/g, (m, a, mid, x, y) => { for (let i = +x; i <= (y ? +y : +x); i++) r.push(a + '.' + mid + i); }); return r; };
     const used = new Set([...FSRC.matchAll(/\['([A-Z]\d*\.\d+(?:\.\d+)*)', '/g)].map(m => m[1]));   // 18 พ.ย. 2569 ฐาน origin: รหัสเรื่องย่อย A1.7

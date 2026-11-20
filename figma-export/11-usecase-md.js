@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const arg = (k, d) => { const h = process.argv.slice(2).find(a => a.startsWith('--' + k + '=')); return h ? h.slice(k.length + 3) : d; };
 const ROOT = path.join(__dirname, '..');
-const SRC = path.resolve(ROOT, arg('src', 'Diagram/01-บำรุงรักษาตามวาระ/24-บำรุงรักษา-usecase.csv'));
+const SRC = require('./plugin-lib/maint-docs.js').docPath(arg('src', 'Diagram/01-บำรุงรักษาตามวาระ/24-บำรุงรักษา-usecase.csv'));
 const OUT = SRC.replace(/\.csv$/, '.md');
 
 /* CSV แบบมีเครื่องหมายคำพูด (ไม่มีขึ้นบรรทัดใหม่ในช่อง) */

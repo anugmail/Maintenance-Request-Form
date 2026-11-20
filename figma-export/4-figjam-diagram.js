@@ -30,7 +30,7 @@ const arg = (k, d) => {
   const hit = process.argv.slice(2).find(a => a.startsWith('--' + k + '='));
   return hit ? hit.slice(k.length + 3) : d;
 };
-const SRC = path.resolve(__dirname, '..', arg('src', path.join('Diagram', '01-บำรุงรักษาตามวาระ', '01-ออกเลขงาน.md')));
+const SRC = require('./plugin-lib/maint-docs.js').docPath(arg('src', path.join('Diagram', '01-บำรุงรักษาตามวาระ', '01-ออกเลขงาน.md')));
 const OUT = path.join(__dirname, 'out', arg('out', 'diagram-plan.json'));
 const SCALE = 2;          // ผัง mermaid ตัวเล็ก — ขยายให้อ่านบน FigJam สบาย
 

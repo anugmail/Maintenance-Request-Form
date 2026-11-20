@@ -33,7 +33,7 @@ const arg = (k, d) => {
   const hit = process.argv.slice(2).find(a => a.startsWith('--' + k + '='));
   return hit ? hit.slice(k.length + 3) : d;
 };
-const SRC = path.resolve(__dirname, '..', arg('src', path.join('Diagram', '01-บำรุงรักษาตามวาระ', '14-บำรุงรักษา-userflow.md')));
+const SRC = require('./plugin-lib/maint-docs.js').docPath(arg('src', path.join('Diagram', '01-บำรุงรักษาตามวาระ', '14-บำรุงรักษา-userflow.md')));
 const JOURNEY = process.argv.includes('--journey');
 const OUT = path.join(__dirname, 'out', arg('out', JOURNEY ? 'diagram-userflow-maintainance-journey.json' : 'diagram-userflow-maintainance.json'));
 const JOURNEY_CFG = path.resolve(__dirname, arg('journey-cfg', path.join('maintainance-plugin', 'build.json')));
