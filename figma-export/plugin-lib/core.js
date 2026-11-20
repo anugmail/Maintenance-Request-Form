@@ -923,8 +923,12 @@ async function tableHeader(o) {
   const ti = find(th, 'Text input');
   if (ti) setProps(ti, { Label: false, Helper: false, 'Trailing icon': false, Text: o.query || o.placeholder || PLUGIN.searchHint, State: o.query ? 'Filled' : 'Default' });
   const acts = find(th, 'Actions'), more = (o.more || []).slice();
+  if (o.addLast && o.add) more.push({ text: o.add, icon: 'add-24-300-round', disabled: !!o.addDisabled });   // 20 พ.ย. 2569 o.addLast = ปุ่มเพิ่มอยู่ท้ายปุ่มรอง (ลำดับแบบเว็บ PlanForm: กำหนดอะไหล่ → ย้าย/จัดเข้าไตรมาส → เพิ่มยานพาหนะ)
+  const addFirst = o.addLast ? null : o.add;
   if (acts) { let first = true; for (const b of acts.children) {
-    if (b.name === 'Secondary button' && first && o.add) { first = false; setProps(b, { Text: o.add, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') }); const p = find(b, 'Pill outline'); if (p) p.visible = false; }   // o.add = ปุ่มเพิ่มแทนตัวกรอง (ฟอร์มแผนแท็บไตรมาส 12 พ.ย. 2569)
+    if (b.name === 'Secondary button' && first && o.addLast) { first = false; const m = more.shift(); const p = find(b, 'Pill outline'); if (p) p.visible = false;
+      if (m) setProps(b, { Text: m.text, 'Leading icon': !!m.icon, 'Trailing icon': false, State: m.disabled ? 'Disabled' : 'Default' }), m.icon && setProps(b, { 'Leading icon swap': icon(m.icon) }); else b.visible = false; }
+    else if (b.name === 'Secondary button' && first && addFirst) { first = false; setProps(b, { Text: o.add, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') }); const p = find(b, 'Pill outline'); if (p) p.visible = false; }   // o.add = ปุ่มเพิ่มแทนตัวกรอง (ฟอร์มแผนแท็บไตรมาส 12 พ.ย. 2569)
     else if (b.name === 'Secondary button' && first && o.noFilter) { first = false; b.visible = false; }
     else if (b.name === 'Secondary button' && first) { first = false; setProps(b, { Text: 'ตัวกรอง', 'Leading icon': true, 'Leading icon swap': icon('filter_list-24-400-round') }); const p = find(b, 'Pill outline'); if (p) { if (o.filterCount) setProps(p, { Text: String(o.filterCount) }); else p.visible = false; } }
     else if (b.name === 'Secondary button' && more.length) { const m = more.shift(); b.visible = true; setProps(b, { Text: m.text, 'Leading icon': !!m.icon, 'Trailing icon': false, State: m.disabled ? 'Disabled' : 'Default' }); if (m.icon) setProps(b, { 'Leading icon swap': icon(m.icon) }); }
