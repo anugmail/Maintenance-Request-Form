@@ -631,7 +631,7 @@ const Q_COLS = [['ทะเบียน', 240], ['ประเภทยานพ
 // Q_MENU ย้ายไปไว้เหนือ planForm (12 พ.ย. 2569 เพิ่ม ย้ายไปไตรมาสอื่น · R109)
 const TODO_NONE = 'ยังไม่กำหนด';
 const OIL_SPEC = { grade: 'ISO VG 46', code: 'OL-0011', litre: '30' };   // ค่าสมมติตามน้ำมันไฮดรอลิก ISO VG 46 รหัส OL-0011 ใน PARTS
-const oilCell = (k) => k == null ? TODO_NONE : { text: JOB_OIL_OPTS[k], sub: k ? OIL_SPEC.grade + ' · ' + OIL_SPEC.litre + ' ลิตร' : OIL_SPEC.grade };
+const oilCell = (k) => k == null ? TODO_NONE : k ? { text: JOB_OIL_OPTS[k], sub: OIL_SPEC.grade + ' · ' + OIL_SPEC.litre + ' ลิตร' } : JOB_OIL_OPTS[k];   // 23 พ.ย. 2569 การ์ด MTD-282: เก็บตัวอย่างอย่างเดียวไม่มีบรรทัดรอง (เบอร์ · ลิตร แสดงเฉพาะเมื่อเปลี่ยนน้ำมัน)
 const partList = (i, picks, manualCars) => (picks[i] || []).filter(x => x !== 0).map(x => PARTS[x][0]).concat(manualCars.indexOf(i) >= 0 ? [MANUAL.name] : []);
 const partCell = (l) => l.length ? { text: l.length + ' รายการ', sub: l[0] + (l.length > 1 ? ' และอื่น ๆ' : '') } : TODO_NONE;
 /* ตารางอะไหล่รวมตามรายการ (R81 · 6 พ.ย. 2569 เจ้าของงาน "ถ้าเพิ่ม คอลัมน์ ก็ส่งผลกระทบกับ หน้าอื่นๆที่เป็นหน้าที่เหมือนกันด้วย ตอน export ก็เกี่ยวข้องด้วย")
