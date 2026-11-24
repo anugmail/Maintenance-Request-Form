@@ -9,6 +9,13 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+/* 24 พ.ย. 2569 ได้ภาพจอบำรุงรักษาชุดใหม่ (manifest ของ flow-maintainance) ⇒ สร้างบอร์ดราย scenario ให้เลย ไม่ต้องรัน 3-figjam-board.js เอง */
+function autoMaintBoards() {
+  const args = [path.join(__dirname, '3-figjam-board.js'), '--maintainance-ui', '--only', '--split-scen', '--out=board-maintainance-ui.json'];
+  require('child_process').execFile(process.execPath, args, { cwd: path.join(__dirname, '..') }, (err, out, errOut) => {
+    console.log(err ? '✗ สร้างบอร์ดราย scenario ไม่ได้ — ' + (errOut || err.message).trim() : '✓ สร้างบอร์ดราย scenario ใหม่แล้ว · ' + String(out).trim().split('\n').filter(l => /แยกราย scenario|ข้ามจอ/.test(l)).join(' · '));
+  });
+}
 
 const PORT = Number(process.env.PORT) || 8124;
 const OUT = path.join(__dirname, 'out');
@@ -100,6 +107,7 @@ const handler = (req, res) => {
           const ok = !err;
           console.log((ok ? '✓ เขียน ' : '✗ เขียนไม่ได้ ') + path.relative(process.cwd(), file)
             + (ok ? ' (' + body.length.toLocaleString() + ' ไบต์)' : ' — ' + err.message));
+          if (ok && file === path.join(OUT, 'figjam', 'flow-maintainance', 'manifest.json')) autoMaintBoards();
           res.writeHead(ok ? 200 : 500, Object.assign({ 'Content-Type': 'application/json; charset=utf-8' }, cors));
           res.end(JSON.stringify(ok ? { ok: true, bytes: body.length } : { error: err.message }));
         });

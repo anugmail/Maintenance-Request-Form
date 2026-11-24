@@ -273,11 +273,20 @@ function main() {
       if (shots.length) {
         /* 5 พ.ย. 2569 แถว Desktop / Mobile ตามผัง R19 ของไฟล์ Figma — จอเดียวกันอยู่คอลัมน์เดียว desktop บน mobile ล่าง · ป้ายแถวซ้ายสุด */
         const dev = (x) => x.device || 'desktop';
+        /* 24 พ.ย. 2569 จอเรื่องย่อย (รหัส A1.3 · group A1) แยก section ละเรื่องย่อย ชื่อจาก sm.titles · ชื่อลงท้าย "· S<n> · ชื่อ scenario" ให้ --split-scen รวมไว้ไฟล์ S เดียวกัน */
+        const subOf = (x) => (x.group && /\d/.test(x.group) ? x.group : '');
+        const subs = [...new Set(shots.map(subOf))];
+        const tOrder = Object.keys(sm.titles || {});
+        const subOnly = subs.filter(Boolean).sort((a, b) => (tOrder.indexOf(a) < 0 ? 999 : tOrder.indexOf(a)) - (tOrder.indexOf(b) < 0 ? 999 : tOrder.indexOf(b)));
+        if (subOnly.length && subs.includes('')) console.log('S' + m[1] + ': ข้ามจอรหัสแบบเก่า ' + shots.filter(x => !subOf(x)).length + ' จอ (มีจอเรื่องย่อยแล้ว · ชุดเก่าที่ค้างบนหน้า Figma)');
+        const parts = subOnly.length ? subOnly.map(g => ({ g, shots: shots.filter(x => subOf(x) === g) })) : [{ g: '', shots }];
+        for (const part of parts) {
+        const shots = part.shots;
         const codes = [...new Set(shots.map(x => x.code))];
         const hasMob = shots.some(x => dev(x) === 'mobile');
         const rowH = (d) => Math.max(0, ...shots.filter(x => dev(x) === d).map(x => x.h));
         sections.push({
-          name: (args.has('--maintainance-ui') ? 'UI scenario บำรุงรักษา · S' + m[1] + ' · ' + m[2] : sec.name + ' · จอจาก Figma'), color, connect: 'sequence',
+          name: (args.has('--maintainance-ui') ? 'UI scenario บำรุงรักษา · ' + (part.g ? part.g + ' ' + ((sm.titles || {})[part.g] || '') + ' · ' : '') + 'S' + m[1] + ' · ' + m[2] : sec.name + (part.g ? ' · ' + part.g : '') + ' · จอจาก Figma'), color, connect: 'sequence',
           rows: hasMob ? [{ label: 'Desktop', h: rowH('desktop') }, { label: 'Mobile', h: rowH('mobile') }] : undefined,
           cols: codes.map(code => {
             const d = shots.find(x => x.code === code && dev(x) === 'desktop'), mo = shots.find(x => x.code === code && dev(x) === 'mobile');
@@ -285,6 +294,7 @@ function main() {
             return { label: code + ' · ' + (d || mo).name, note: '', images: [d && im(d, 0), mo && im(mo, hasMob ? 1 : 0)].filter(Boolean) };
           })
         });
+        }
       }
     });
   }
@@ -335,7 +345,7 @@ function main() {
     const by = new Map();
     sections.forEach(s => { const m = s.name.match(/Scenario (\d+) · (.+?)(?: · จอจาก Figma)?$/) || s.name.match(/· S(\d+) · (.+)$/); if (!m) return; const k = m[1]; if (!by.has(k)) by.set(k, { title: 'S' + k + ' · ' + m[2], sections: [] }); by.get(k).sections.push(s); });
     /* ชื่อ section ต้องไม่ซ้ำกับบอร์ดชุดเต็ม — ปลั๊กอินบอร์ดลบ section ชื่อเดียวกันก่อนวาง ติ๊กชุดเต็มคู่กับราย S แล้วภาพของชุดเต็มหายหลังเห็นแวบเดียว (เจ้าของงาน 9 พ.ย. 2569 "พอ export เห็นรูป จะกด ก็หายไป") */
-    by.forEach((v, k) => fs.writeFileSync(path.join(OUT, 'board-maintainance-ui-S' + k + '.json'), JSON.stringify(Object.assign({}, board, { title: v.title, sections: v.sections.map(x => Object.assign({}, x, { name: 'ราย scenario · ' + x.name })) }))));
+    by.forEach((v, k) => fs.writeFileSync(path.join(OUT, 'board-maintainance-ui-S' + k + '.json'), JSON.stringify(Object.assign({}, board, { title: v.title, replace: { prefix: 'ราย scenario · ', suffix: ' · ' + v.title }, sections: v.sections.map(x => Object.assign({}, x, { name: 'ราย scenario · ' + x.name })) }))));
     console.log('แยกราย scenario: ' + by.size + ' ไฟล์ (' + [...by.keys()].map(k => 'S' + k).join(' ') + ') → out/board-maintainance-ui-S<n>.json');
   }
   const outArg = [...args].find(a => a.indexOf('--out=') === 0);
