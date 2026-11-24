@@ -1,4 +1,4 @@
-/* ⚠ ไฟล์นี้ประกอบอัตโนมัติจาก plugin-lib/core.js + satisfaction-plugin/screens.js ด้วย build-plugin.js — แก้ที่ต้นทางแล้วรัน  node figma-export/build-plugin.js satisfaction-plugin  (2026-11-13) */
+/* ⚠ ไฟล์นี้ประกอบอัตโนมัติจาก plugin-lib/core.js + satisfaction-plugin/screens.js ด้วย build-plugin.js — แก้ที่ต้นทางแล้วรัน  node figma-export/build-plugin.js satisfaction-plugin  (2026-11-24) */
 
 /* ============================================================================
    plugin-lib/core.js — โค้ดส่วนกลางของปลั๊กอินสร้างจอจาก component จริง (แยกจาก overhaul2-plugin 20 ต.ค. 2569)
@@ -337,7 +337,7 @@ const VW = () => (MOB ? 402 : 1440), VH = () => (MOB ? 874 : 1024);
 function btn(kind, label, o) {
   o = o || {};
   const variant = { State: o.disabled ? 'Disabled' : 'Default' };
-  if (kind !== 'Tertiary brand button') variant.Size = o.size || 'md';   // Tertiary brand button ไม่มี Size
+  if (kind !== 'Tertiary brand button' && kind !== 'Tertiary danger button') variant.Size = o.size || 'md';   // Tertiary brand / Tertiary danger button ไม่มี Size (20 พ.ย. 2569 ส่งกลับแก้ไขที่หัวหน้า S2 S7)
   const props = { Text: label, 'Leading icon': !!o.icon, 'Trailing icon': false };
   if (o.icon) props['Leading icon swap'] = icon(o.icon);
   return inst(kind, variant, props);
@@ -825,7 +825,7 @@ async function confirm(scr, o) {   // Modal กลาง — danger = Destructiv
   const pb = find(m, o.danger ? 'Primary danger button' : 'Primary button'); if (pb) setProps(pb, { Text: o.ok || 'ยืนยัน', 'Leading icon': false, 'Trailing icon': false });
 }
 async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 สลับเป็น Text area ด้วย property "Input 1 swap" ของ Card form row · o.ok / o.cancel = ชื่อปุ่ม (ค่าเริ่ม บันทึก / ยกเลิก · 22 ต.ค. 2569 ใช้กับ "ส่งกลับ" "ปฏิเสธ")
-  if (MOB) { await sheet(scr, { title: o.title, content: [].concat(...o.fields.map(f => f.pair || [f])).map(f => f.area ? area(f.label, f.value) : field(f.label, f.value, { optional: f.optional })), ok: o.ok || 'บันทึก', cancel: o.cancel }); return; }
+  if (MOB) { await sheet(scr, { title: o.title, content: [].concat(...o.fields.map(f => f.pair || [f])).map(f => f.area ? area(f.label, f.value, { placeholder: f.placeholder, error: f.error }) : field(f.label, f.value, { optional: f.optional })), ok: o.ok || 'บันทึก', cancel: o.cancel, danger: o.danger }); return; }
   const m = inst('Modal', { Type: 'Form', Size: 'md' });
   overlay(scr, m, 0, 0);
   modalHead(find(m, 'Modal header'), o.title, o.sub, { 'Back icon': false, 'Featured icon': false });
@@ -851,7 +851,8 @@ async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 
     if (f.area) setProps(r, { 'Input 1 swap': main('Text area', { State: 'Filled', Size: 'md' }).id });
     const inp = r.children.find(c => c.type === 'INSTANCE' && c.visible !== false);
     if (inp) setProps(inp, { State: f.value ? 'Filled' : 'Default' });
-    if (inp) setProps(inp, { 'Label text': f.label, Text: f.value || f.placeholder || '', Optional: !!f.optional, Helper: false, 'Info icon': false, 'Show Placeholder': !f.value });
+    if (inp) setProps(inp, { 'Label text': f.label, Text: f.value || f.placeholder || '', Optional: !!f.optional, Helper: !!f.error, 'Info icon': false, 'Show Placeholder': !f.value });
+    if (inp && f.error) setProps(inp, { State: 'Error', 'Helper text': f.error });   // 20 พ.ย. 2569 popup ส่งกลับแก้ไข (S2 S7) เหตุผลบังคับ · error แบบ area()
     if (inp) syncLabel(inp, f.label, f.optional);   // ป้ายที่เห็นคือ Input label ที่ซ้อน (ตาม Overhaul) — เดิมไม่ตั้ง ป้ายเลยค้าง "ผู้ใช้ยานพาหนะ" ของไลบรารี
     const ct = inp && !f.area && find(inp, 'Container'), tv = ct && ct.findOne(n => n.type === 'TEXT' && n.visible !== false);
     if (tv && f.value && tv.characters !== f.value) await text(ct, tv, f.value);   // 3 พ.ย. 2569 ไฟล์จริงช่องขึ้นว่าง — ค่าที่เห็นไม่ตรง property ก็ใส่ที่ข้อความโดยตรง
@@ -860,7 +861,8 @@ async function formModal(scr, o) {   // Modal Type=Form · แถวที่ 2 
      (ชีตลูกค้า 5 พ.ย. 2569: popup ตีกลับขึ้น "บันทึก" แทน "ตีกลับ" · popup ระบุอะไหล่เพิ่มเติมขึ้น "บันทึก" แทน "เพิ่ม") */
   const ft = m.findAll(n => n.type === 'INSTANCE' && /button/.test(n.name) && n.parent && (n.parent.name === 'Actions' || n.parent.name === 'Primary and secondary actions'));
   ft.forEach(b => {
-    if (b.name === 'Primary button') setProps(b, { Text: o.ok || 'บันทึก', 'Leading icon': false, 'Trailing icon': false });
+    if (b.name === 'Primary button' && o.danger) { try { b.swapComponent(main('Primary danger button', { State: 'Default', Size: 'lg' })); b.name = 'Primary danger button'; } catch (e) { warn('ปุ่มหลักสีแดงของ popup ฟอร์ม', e); } }   // 20 พ.ย. 2569 o.danger = ปุ่มหลัก Primary danger (ส่งกลับแก้ไข แบบหน้าอนุมัติปิดงานของ Overhaul)
+    if (b.name === 'Primary button' || b.name === 'Primary danger button') setProps(b, { Text: o.ok || 'บันทึก', 'Leading icon': false, 'Trailing icon': false });
     else if (b.name === 'Secondary button') setProps(b, { Text: o.cancel || 'ยกเลิก', 'Leading icon': false, 'Trailing icon': false });
     else b.visible = false;
   });
@@ -923,8 +925,12 @@ async function tableHeader(o) {
   const ti = find(th, 'Text input');
   if (ti) setProps(ti, { Label: false, Helper: false, 'Trailing icon': false, Text: o.query || o.placeholder || PLUGIN.searchHint, State: o.query ? 'Filled' : 'Default' });
   const acts = find(th, 'Actions'), more = (o.more || []).slice();
+  if (o.addLast && o.add) more.push({ text: o.add, icon: 'add-24-300-round', disabled: !!o.addDisabled });   // 20 พ.ย. 2569 o.addLast = ปุ่มเพิ่มอยู่ท้ายปุ่มรอง (ลำดับแบบเว็บ PlanForm: กำหนดอะไหล่ → ย้าย/จัดเข้าไตรมาส → เพิ่มยานพาหนะ)
+  const addFirst = o.addLast ? null : o.add;
   if (acts) { let first = true; for (const b of acts.children) {
-    if (b.name === 'Secondary button' && first && o.add) { first = false; setProps(b, { Text: o.add, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') }); const p = find(b, 'Pill outline'); if (p) p.visible = false; }   // o.add = ปุ่มเพิ่มแทนตัวกรอง (ฟอร์มแผนแท็บไตรมาส 12 พ.ย. 2569)
+    if (b.name === 'Secondary button' && first && o.addLast) { first = false; const m = more.shift(); const p = find(b, 'Pill outline'); if (p) p.visible = false;
+      if (m) setProps(b, { Text: m.text, 'Leading icon': !!m.icon, 'Trailing icon': false, State: m.disabled ? 'Disabled' : 'Default' }), m.icon && setProps(b, { 'Leading icon swap': icon(m.icon) }); else b.visible = false; }
+    else if (b.name === 'Secondary button' && first && addFirst) { first = false; setProps(b, { Text: o.add, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') }); const p = find(b, 'Pill outline'); if (p) p.visible = false; }   // o.add = ปุ่มเพิ่มแทนตัวกรอง (ฟอร์มแผนแท็บไตรมาส 12 พ.ย. 2569)
     else if (b.name === 'Secondary button' && first && o.noFilter) { first = false; b.visible = false; }
     else if (b.name === 'Secondary button' && first) { first = false; setProps(b, { Text: 'ตัวกรอง', 'Leading icon': true, 'Leading icon swap': icon('filter_list-24-400-round') }); const p = find(b, 'Pill outline'); if (p) { if (o.filterCount) setProps(p, { Text: String(o.filterCount) }); else p.visible = false; } }
     else if (b.name === 'Secondary button' && more.length) { const m = more.shift(); b.visible = true; setProps(b, { Text: m.text, 'Leading icon': !!m.icon, 'Trailing icon': false, State: m.disabled ? 'Disabled' : 'Default' }); if (m.icon) setProps(b, { 'Leading icon swap': icon(m.icon) }); }
@@ -999,7 +1005,10 @@ function findInstanceAncestor(n) { let p = n.parent; while (p) { if (p.type === 
    → แถว Desktop (1440) → แถว Mobile (402) ใต้คอลัมน์เดียวกัน · ป้ายข้างซ้าย = component "Component 1" ของทีมออกแบบ (Type=Header "Device" · Desktop · Mobile)
    ตัวอย่างต้นแบบ: หน้า Flow การซ่อม ไฟล์ Maintain-D (B นัดหมายวันซ่อม › B1 เข้าซ่อมที่… › B1.1 Default …) · ป้ายทุกตัวชื่อ "<prefix> · …" ปลั๊กอินล้างตอนรันซ้ำ
    Header/State เป็น component จากอีกไลบรารี (หาได้จาก instance ในไฟล์) — เปิดไม่ได้ → วาดแถบธรรมดาสีเดียวกัน (อยู่นอกจอ ไม่กระทบกติกา "ทุกชิ้นในจอเป็น instance") */
-const GRID = { side: 300, gap: 80, colW: 1440, colGap: 200, rowGap: 160, groupGap: 400, barH: 120, stateW: 344, mobW: 402, deskH: 1024, mobH: 874 };
+/* ระยะในกริดบล็อก — เจ้าของงาน 10 พ.ย. 2569: "ปรับ spacing ของแต่ละหน้าจอและหัวข้อให้เป็น 200 เสมอ"
+   gap = แถบหัวข้อ → จอ (และระยะเริ่มคอลัมน์จากคอลัมน์ป้าย Device) · colGap = จอ → จอ · rowGap = แถว desktop → แถว mobile
+   ทั้งสามเป็น 200 เท่ากันหมด · groupGap คง 400 ไว้ให้บล็อก scenario ยังแยกจากกันชัด (เดิม gap 80 · rowGap 160) */
+const GRID = { side: 300, gap: 200, colW: 1440, colGap: 200, rowGap: 200, groupGap: 400, barH: 120, stateW: 344, mobW: 402, deskH: 1024, mobH: 874 };
 const BAR_FILL = { Default: '#101828', 'Sub Flow': '#667085', 'Sub Flow 2': '#9CACCC' };
 let HEADER_BROKEN = false;   // แถบ Header ของทีมออกแบบใส่ข้อความไม่ได้ (ฟอนต์หาย) → ใช้แถบธรรมดาตลอดรอบ
 const rgbOf = (hex) => ({ r: parseInt(hex.slice(1, 3), 16) / 255, g: parseInt(hex.slice(3, 5), 16) / 255, b: parseInt(hex.slice(5, 7), 16) / 255 });
@@ -1525,10 +1534,44 @@ function splitBoard(page, f) {
 /* ---------- ส่งภาพจอบนหน้านี้ไป FigJam (เจ้าของงาน 30 ต.ค. 2569 "export … ไปที่ figjam ด้วย userflow และ design มาจาก figma ปรับใหม่ล่าสุด") ----------
    export เฟรมจอ "<prefix> / A.1 · S1 — ชื่อ" บนหน้าที่เปิดอยู่ (จอที่ทีมแก้มือแล้วก็ได้) เป็น PNG ส่งให้หน้าต่างปลั๊กอิน → POST เข้า serve.js ที่ out/figjam/<dir>/
    แล้ว 3-figjam-board.js วางภาพต่อจากผัง userflow ของ scenario เดียวกัน · desktop อย่างเดียว · ด้านยาวไม่เกิน 4000 px (FigJam รับไม่เกิน 4096) */
-/* ชื่อเฟรมจอ "MT / A.3 · S1 — ชื่อ" · เรื่องย่อย "MT / A1.3 · S1 — ชื่อ" (R108) · บล็อกย่อยตามประเภทงาน "CE / B1.5 · S2 งานซ่อม — ชื่อ" (13 พ.ย. 2569 เดิมไม่ตรง ⇒ จอพวกนี้ไม่ถูกส่งไป FigJam)
-   กลุ่ม: 1 prefix · 2 ตัวอักษรบล็อก · 3 เลขเรื่องย่อย (ว่างได้) · 4 ลำดับจอ · 5 scenario · 6 ชื่อบล็อกย่อย (ว่างได้) · 7 ชื่อจอ */
-const SHOT_RE = /^(\S+) \/ ([A-Z])(\d*)\.([0-9.]+) · (S\d+)(?: ([^—]+?))? — (.+)$/;
-async function exportShots(dir, scen, titles) {   // titles = { S1: 'ชื่อ scenario' } ใส่ใน manifest ให้ตัวสร้างบอร์ดตั้งชื่อ section (13 พ.ย. 2569 แบบประเมิน)   // scen = ['S1', 'S2'] ส่งเฉพาะ scenario ที่ติ๊ก (ว่าง = ทุกจอ · 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่")
+const SHOT_RE = /^(\S+) \/ ([A-Z])\.([0-9.]+) · (S\d+) — (.+)$/;
+/* ตรวจจอซ้ำบนหน้าปัจจุบัน — ไม่แก้ไม่ลบอะไรทั้งสิ้น (เจ้าของงาน 10 พ.ย. 2569 "ช่วยหาทางตรวจให้" · "ลบเองได้")
+   ทุกปุ่มสร้างของปลั๊กอินวางชุดใหม่ "ต่อใต้ของเดิม" เสมอ ⇒ กดสร้างซ้ำบนหน้าเดิมจะมีหลายชุดซ้อนกัน (เช่น เคยกด "สร้างเฉพาะ Desktop" แล้วมากด "สร้างทั้งชุด" ทีหลัง = Desktop 2 แถว Mobile 1 แถว)
+   จับคู่ด้วย รหัสจอ + อุปกรณ์ จากชื่อเฟรม (SHOT_RE) · ชุดล่าสุดดูจาก pluginData builtAt */
+async function auditDuplicates() {
+  errors.length = 0;
+  const page = figma.currentPage;
+  if (page.loadAsync) await page.loadAsync();
+  const all = page.children.filter(n => n.type === 'FRAME' && n.name.indexOf(PLUGIN.prefix + ' / ') === 0);
+  if (!all.length) { log('ไม่พบเฟรมจอ "' + PLUGIN.prefix + ' / …" บนหน้า "' + page.name.trim() + '" — เปิดหน้าที่มีจอแล้วกดใหม่'); return; }
+  const by = new Map(); let skipped = 0;
+  for (const f of all) {
+    const mob = / · mobile$/.test(f.name), m = f.name.replace(/ · mobile$/, '').match(SHOT_RE);
+    if (!m) { skipped++; continue; }
+    const key = m[2] + '.' + m[3] + ' · ' + (mob ? 'mobile' : 'desktop');
+    if (!by.has(key)) by.set(key, []);
+    by.get(key).push(f);
+  }
+  const builtAt = (f) => +((f.getPluginData && f.getPluginData('builtAt')) || 0);
+  const dup = [...by.entries()].filter(([, v]) => v.length > 1);
+  log('— ตรวจจอซ้ำบนหน้า "' + page.name.trim() + '" (ไม่แก้อะไร) —');
+  log('เฟรมจอทั้งหมด ' + all.length + ' · รหัสจอไม่ซ้ำ ' + by.size + (skipped ? ' · ชื่อไม่เข้ารูปแบบ ' + skipped : ''));
+  if (!dup.length) { log('✓ ไม่มีจอซ้ำ — หน้านี้มีชุดเดียว'); return; }
+  const copies = Math.max(...dup.map(([, v]) => v.length));
+  log('⚠ มีจอซ้ำ ' + dup.length + ' รหัส · ซ้ำมากสุด ' + copies + ' ชุด ⇒ หน้านี้น่าจะมี ' + copies + ' ชุดซ้อนกัน');
+  const rows = {};   // แถว y ของแต่ละชุด เพื่อบอกว่าชุดไหนอยู่ตรงไหน
+  for (const [, v] of dup) v.forEach((f, i) => { const k = Math.round(f.y / 500) * 500; rows[k] = (rows[k] || 0) + 1; });
+  log('แถวที่พบจอซ้ำ (y โดยประมาณ → จำนวนจอ): ' + Object.keys(rows).sort((a, b) => a - b).map(k => k + ' → ' + rows[k]).join(' · '));
+  for (const [k, v] of dup.slice(0, 20)) {
+    const newest = v.reduce((a, b) => builtAt(b) > builtAt(a) ? b : a);
+    log('  · ' + k + ' — ' + v.length + ' ชุด · y = ' + v.map(f => Math.round(f.y)).sort((a, b) => a - b).join(', ')
+      + ' · ล่าสุด y=' + Math.round(newest.y) + (builtAt(newest) ? '' : ' (ชุดเก่าไม่มีเวลาสร้าง เดาจากลำดับไม่ได้)'));
+  }
+  if (dup.length > 20) log('  … และอีก ' + (dup.length - 20) + ' รหัส');
+  log('วิธีเก็บกวาด: เก็บชุดที่ y ของ "ล่าสุด" ไว้ แล้วลบชุดอื่นเองใน Figma (ปลั๊กอินไม่ลบให้ — ตั้งใจไม่แตะของบนหน้า)');
+}
+
+async function exportShots(dir, scen) {   // scen = ['S1', 'S2'] ส่งเฉพาะ scenario ที่ติ๊ก (ว่าง = ทุกจอ · 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่")
   errors.length = 0;
   const page = figma.currentPage;
   /* 5 พ.ย. 2569 เจ้าของงาน "export figjam อยากให้ออกมาเป็นแบบนี้ มี mobile มาด้วย … บอกว่าส่วนใหน desktop , mobile" ⇒ ส่งจอ mobile ด้วย (ชื่อเฟรมลงท้าย " · mobile") · device ใน manifest */
@@ -1645,7 +1688,25 @@ async function buildJourney(page, prefix, y0, info) {
   return { made, links, thumbs: tk, slots: thumbs.length, w: totalW };
 }
 
-/* GROUPS = [{ code: 'A', title: '…', subs: [{ code: 'A', title: '…', tag: 'S1', screens: [[label, fn, 'D1 D2'?], …] }] }]
+/* เส้นทางย่อยในบล็อก — แพตเทิร์นที่เจ้าของงานเคาะ 10 พ.ย. 2569 จากบล็อก S20 (S.3 ลบจากหน้า Detail → S.3.1 S.3.2)
+   screens[i] เป็น { path: 'ชื่อเส้นทาง', screens: [[label, fn, ids], …] } แทน [label, fn, ids] ได้
+   ⇒ ตำแหน่งนั้นมีแถบชื่อเส้นทาง (Sub Flow) คร่อมคอลัมน์ของตัวเอง และจอข้างใต้ได้รหัสซ้อน <code>.<i+1>.<j+1>
+   ลำดับตำแหน่งระดับบนยังนับ 1..n ตามเดิม ⇒ เส้นหลักอ่านเป็นแถวเดียวจบ ส่วนทางแยกไม่กินเลขของเส้นหลัก
+   entry แบบ array เดิมทำงานเหมือนเดิมทุกอย่าง (ปลั๊กอิน login · contractor-eval ไม่ต้องแก้) */
+const isPath = (e) => !!e && !Array.isArray(e) && Array.isArray(e.screens);
+const countScreens = (list) => list.reduce((a, e) => a + (isPath(e) ? e.screens.length : 1), 0);
+function flatScreens(list, code) {   // → [{ code, label, fn, ids, path?, pathCode?, first, span }] เรียงตามคอลัมน์จริง
+  const out = [];
+  list.forEach((e, i) => {
+    const c = code + '.' + (i + 1);
+    if (isPath(e)) e.screens.forEach(([label, fn, ids], j) =>
+      out.push({ code: c + '.' + (j + 1), label: label, fn: fn, ids: ids, path: e.path, pathCode: c, first: j === 0, span: e.screens.length }));
+    else out.push({ code: c, label: e[0], fn: e[1], ids: e[2], first: true, span: 1 });
+  });
+  return out;
+}
+
+/* GROUPS = [{ code: 'A', title: '…', subs: [{ code: 'A', title: '…', tag: 'S1', screens: [[label, fn, 'D1 D2'?] | { path, screens }, …] }] }]
    screens[i][2] = id กล่องในผัง userflow ที่จอนี้แสดง (คั่นด้วยช่องว่าง · ไม่ใส่ = ผังยังไม่มีกล่องของจอนี้)
    fn() สร้างจอตามตัวแปร MOB · จอชื่อ "<prefix> / A.2 · S1 — <label>[ · mobile]" · คืน { made, y, flows }
    opts.devices = [false] desktop · [true] mobile · ไม่ส่ง = ทั้งคู่ · opts.rowMin = ความสูงแถวขั้นต่ำ · opts.flow = false ไม่วางผัง userflow */
@@ -1659,14 +1720,14 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
     y += ph.height + GRID.groupGap;
   }
   for (const g of GROUPS) {
-    const nCols = Math.max(...g.subs.map(s => s.screens.length));
+    const nCols = Math.max(...g.subs.map(s => countScreens(s.screens)));
     const top = y;
     CREATED = []; put(await flowBar(prefix, g.code, g.title, 'Default', nCols * GRID.colW + (nCols - 1) * GRID.colGap), x0, y);   // บล็อกตัวอักษร = Subheader State=Default (หน้าจริง: "A แก้ไขตารางบำรุงรักษา…")
     y += GRID.barH + GRID.gap;
     let flowBottom = top;
     const flowDone = new Set();   // บล็อกที่แบ่งเรื่องย่อย (A1 A2 …) ใช้ scenario เดียวกัน ⇒ ผังข้างจอวางครั้งเดียวต่อบล็อก (12 พ.ย. 2569)
     for (const sub of g.subs) {
-      const n = sub.screens.length, w = n * GRID.colW + (n - 1) * GRID.colGap;
+      const flat = flatScreens(sub.screens, sub.code), n = flat.length, w = n * GRID.colW + (n - 1) * GRID.colGap;
       if (sub.code !== g.code) {   // แถบย่อย (B1 B2) เฉพาะเมื่อกลุ่มมีหลาย scenario · เจ้าของงานเคาะ 20 ต.ค. 2569: 1 scenario = 1 บล็อก ⇒ ไม่มีแถบย่อย ป้าย state = A.1 A.2 …
         put(await flowBar(prefix, sub.code, sub.title, 'Sub Flow', w), x0, y);
         y += GRID.barH + GRID.gap;
@@ -1686,8 +1747,7 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
         CREATED = [];
       } else if (opts.flow !== false && USERFLOW && sn != null && USERFLOW.scenarios[sn]) {   // ผัง userflow ซ้ายของบล็อก (ขอบขวาห่างป้าย Device FLOW_GAP)
         const codes = {}, loose = [];
-        sub.screens.forEach(([label, , ids], i) => {
-          const c = sub.code + '.' + (i + 1);
+        flat.forEach(({ code: c, label, ids }) => {
           const list = String(ids || '').split(/\s+/).filter(Boolean);
           if (!list.length) loose.push(c + ' ' + label);
           list.forEach(id => { (codes[id] = codes[id] || []).push(c); });
@@ -1702,29 +1762,34 @@ async function buildGrid(page, prefix, GROUPS, y0, total, opts) {
         } catch (e) { warn('ผัง userflow S' + sn, e); const k = dropCreated(page); if (k) log('    ลบชิ้นที่ค้างจากผังที่พัง ' + k + ' ชิ้น'); }
         CREATED = [];
       }
-      /* ป้าย state รายคอลัมน์ = Header Subheader สีตาม stateTone (หน้าจริงของ UI Release#2 · 10 พ.ย. 2569) · บรรทัดอธิบายซ่อนแบบหน้าจริง
-         ป้าย Device สูงเท่าป้าย state ที่สูงสุด */
-      let sh = GRID.barH;
-      for (const [i, [label]] of sub.screens.entries()) {
-        const b = put(await flowBar(prefix, sub.code + '.' + (i + 1), label, stateTone(label), GRID.colW), x0 + i * pitch, y);
-        sh = Math.max(sh, b.height);
+      /* แถวบน: จอเดี่ยว = ป้ายจอ · เส้นทางย่อย = ป้ายชื่อเส้นทางคร่อมคอลัมน์ของตัวเอง (Sub Flow)
+         แถวล่าง: ป้ายจอของเส้นทางย่อย มีเฉพาะบล็อกที่มีเส้นทางย่อย (แพตเทิร์น S20 · 10 พ.ย. 2569) */
+      const hasPath = flat.some(s => s.path);
+      put(await deviceLabel(prefix, 'Header', GRID.barH), 0, y);
+      for (const [i, sc] of flat.entries()) {
+        if (!sc.path) put(await flowBar(prefix, sc.code, sc.label, 'Sub Flow 2', GRID.colW), x0 + i * pitch, y);
+        else if (sc.first) put(await flowBar(prefix, sc.pathCode, sc.path, 'Sub Flow', sc.span * GRID.colW + (sc.span - 1) * GRID.colGap), x0 + i * pitch, y);
       }
-      put(await deviceLabel(prefix, 'Header', sh), 0, y);
-      y += sh + GRID.gap;
+      if (hasPath) {
+        y += GRID.barH + GRID.gap;
+        put(await deviceLabel(prefix, 'Header', GRID.barH), 0, y);
+        for (const [i, sc] of flat.entries()) if (sc.path) put(await flowBar(prefix, sc.code, sc.label, 'Sub Flow 2', GRID.colW), x0 + i * pitch, y);
+      }
+      y += GRID.barH + GRID.gap;
       for (const mob of (opts.devices || [false, true])) {   // devices: [false]=desktop อย่างเดียว · [true]=mobile อย่างเดียว · ไม่ส่ง=ทั้งคู่ (แถว mobile ใต้ desktop)
         MOB = mob; let h = 0; const rowY = y;
-        for (const [i, [label, fn]] of sub.screens.entries()) {
+        for (const [i, { code: cd, label, fn }] of flat.entries()) {
           const x = x0 + i * pitch;
           CREATED = []; PLACE = { x, y: rowY };   // เฟรมจอไปอยู่ตำแหน่งจริงทันทีที่สร้าง · ชิ้นที่สร้างระหว่างทางถูกติดตามไว้
           try {
             PINS = []; const s = await fn(); stripDividers(s); await polish(s); repin(); await bindTones(); if (typeof AFTER_SCREEN === 'function') await AFTER_SCREEN(s);   // AFTER_SCREEN = ตัวเรียกเฉพาะปลั๊กอิน (บำรุงรักษา: ลิงก์เลขทะเบียน 6 พ.ย. 2569)
-            s.name = prefix + ' / ' + sub.code + '.' + (i + 1) + ' · ' + sub.tag + ' — ' + label + (mob ? ' · mobile' : '');
+            s.name = prefix + ' / ' + cd + ' · ' + sub.tag + ' — ' + label + (mob ? ' · mobile' : '');
             if (s.setPluginData) s.setPluginData('builtAt', String(Date.now()));   // ส่งภาพไป FigJam เลือกจอที่สร้างล่าสุดตามเวลานี้ (exportShots · 9 พ.ย. 2569)
             put(s, x, rowY); h = Math.max(h, s.height); made.push(s);
-            const cd = sub.code + '.' + (i + 1); if (!byCode[cd]) byCode[cd] = s;
+            if (!byCode[cd]) byCode[cd] = s;
             log('  · ' + made.length + '/' + total + ' ' + s.name);
           } catch (e) {
-            warn(sub.code + '.' + (i + 1) + ' ' + label + (mob ? ' (mobile)' : ''), e);
+            warn(cd + ' ' + label + (mob ? ' (mobile)' : ''), e);
             const k = dropCreated(page); if (k) log('    ลบชิ้นที่ค้างจากจอที่พัง ' + k + ' ชิ้น');
           }
           CREATED = []; PLACE = null;
@@ -1788,7 +1853,7 @@ const INCLUDE = {};
      ประเมิน "หน่วยงานที่ให้บริการ" — ระบบเติมให้ ฟอร์มเดียวกัน:
        งานซ่อม = กบค. · Overhaul = กบค. · บำรุงรักษาตามวาระ แผนที่ กบค. ดำเนินการ = กบค. · แผนของกองอื่น (กบผ. กปส. กรย. กส.1 กส.2) = กองที่ดำเนินการ
    ข้อมูลจำลอง = ชุดเดียวกับเว็บ (survey.ts seeds + ?sample=S27):
-     ยังไม่ได้ประเมิน MRZ7100004 73-5019 เพชรบุรี (กบค.) · MRZ7000001 82-6789 ขอนแก่น (กบผ.) · งานซ่อม MTD-691003-014 82-1145 ขอนแก่น (กบค.) · Overhaul ORZ6900002 PO-690201 72-6648 สงขลา (กบค.)
+     ยังไม่ได้ประเมิน MRZ7100004 73-5019 เพชรบุรี (กบค.) · MRZ7000001 82-6789 ขอนแก่น (กบผ.) · งานซ่อม MTD-691020-007 82-1145 ขอนแก่น (กบค.) · Overhaul ORZ6900002 PO-690201 72-6648 สงขลา (กบค.)
      ประเมินแล้ว MRZ7000001 82-1145 ขอนแก่น (กบผ. · 47/55) · งานซ่อม MTD-690716-031 82-6789 ขอนแก่น (กบค. · 45/55) · MRZ6900011 80-4458 แพร่ (กรย. · 48/55)
    ที่มา: component Tabs · Table header · Table · Pill outline · Empty state/Data empty · Section header · Section label · Content item row · Alert · Featured icon · Input label · Rating
      · Text input · Text area · Input dropdown with badges · Side panel header/footer · Primary/Secondary button · Modal · Notification · Mobile table ของไฟล์ (Component) VMS Plus
@@ -1865,8 +1930,8 @@ const JOBS = {
     caretaker: 'นายธนกร ศรีสมุทร', owner: 'กฟต.1 เพชรบุรี', pairs: [['ชื่อแผน', 'บำรุงรักษากระเช้าแก้ไฟ กบค. ปีงบประมาณ 2571'], ['ไตรมาส', 'ไตรมาส 1'], ['ผู้ดำเนินการ', 'นายวิชัย ทองดี (กบค.)']] },
   ma6789: { kind: 'ma', no: 'MRZ7000001', plate: '82-6789 ขอนแก่น', vtype: 'กระเช้าแก้ไฟ', work: TRIP_T1, provider: 'กบผ.', closed: '04/11/2569',
     caretaker: 'นายสมชาย แก้วมณี', owner: 'กฟฉ.1 ขอนแก่น', pairs: [['ชื่อแผน', PLAN_T1], ['แผนเดินทาง', TRIP_T1], ['ผู้ดำเนินการ', 'นายวิชัย ทองดี (กบผ.)'], ['รับทราบผลเมื่อ', '06/11/2569 10:05 น.']] },
-  rp014: { kind: 'repair', no: 'MTD-691003-014', plate: '82-1145 ขอนแก่น', vtype: 'กระเช้าฮอทไลน์', work: 'ระบบไฮดรอลิกกระเช้ารั่วซึม', provider: 'กบค.', closed: '15/10/2569',
-    caretaker: 'นายสมชาย แก้วมณี', owner: 'กฟฉ.1 ขอนแก่น', pairs: [['หมายเลขงานซ่อม', 'RAM000245'], ['อาการที่แจ้ง', 'ระบบไฮดรอลิกกระเช้ารั่วซึม'], ['วันที่ / เวลาที่ซ่อมเสร็จ', '15/10/2569 16:30 น.']] },
+  rp007: { kind: 'repair', no: 'MTD-691020-007', plate: '82-1145 ขอนแก่น', vtype: 'กระเช้าฮอทไลน์', work: 'ไฟส่องสว่างกระเช้าไม่ติด', provider: 'กบค.', closed: '22/10/2569',   // 24 พ.ย. 2569 ตามเว็บ (ไฟล์ 34 ข้อ 23 ก · เดิม MTD-691020-007 ซึ่งเป็นงานส่งอู่ในแบบประเมินผู้รับจ้าง) งานที่ กบค. ซ่อมเอง
+    caretaker: 'นายสมชาย แก้วมณี', owner: 'กฟฉ.1 ขอนแก่น', pairs: [['หมายเลขงานซ่อม', 'RAM000261'], ['อาการที่แจ้ง', 'ไฟส่องสว่างกระเช้าไม่ติด'], ['วันที่ / เวลาที่ซ่อมเสร็จ', '22/10/2569 16:00 น.']] },
   oh: { kind: 'oh', no: 'ORZ6900002', plate: '72-6648 สงขลา', vtype: 'รถกระเช้า', work: 'ซ่อมระบบไฮดรอลิกกระเช้า', provider: 'กบค.', closed: '05/10/2569',
     caretaker: 'นายอดิศักดิ์ ทองสุข', owner: 'กฟต.3 สงขลา', pairs: [['ชื่อแผน', 'Overhaul ประจำปีงบ 2569 — รถกระเช้า'], ['ใบสั่งจ้างเลขที่', 'PO-690201'], ['ชื่อ Purchase Order', 'ซ่อมระบบไฮดรอลิกกระเช้า'], ['ยี่ห้อ/รุ่น', 'HINO FG1J']] },
   ma1145: { kind: 'ma', no: 'MRZ7000001', plate: '82-1145 ขอนแก่น', vtype: 'กระเช้าฮอทไลน์', work: TRIP_T1, provider: 'กบผ.', closed: '05/11/2569',
@@ -1884,7 +1949,7 @@ const SAMPLE_NOTES = SAMPLE.map((_, i) => (i === 7 ? 'รออะไหล่�
 const SAMPLE_REMARK = 'ช่างมาตรงเวลา อธิบายงานที่ทำก่อนส่งคืนยานพาหนะ';   // SAMPLE_FORM_REMARK ของเว็บ
 const PART_REMARK = 'ช่างมาตรงเวลา';
 const SAVED = { answers: SAMPLE, notes: SAMPLE_NOTES, at: EVAL_AT, remark: SAMPLE_REMARK };   // MRZ7000001 82-6789 หลังกดบันทึก (B.6 · C.4)
-const PENDING = ['kbk', 'ma6789', 'rp014', 'oh'];   // เรียงวันที่ปิดงานใหม่สุดก่อน (evalRows ของเว็บ)
+const PENDING = ['kbk', 'ma6789', 'rp007', 'oh'];   // เรียงวันที่ปิดงานใหม่สุดก่อน (evalRows ของเว็บ)
 const DONE = ['ma1145', 'rp031', 'ma4458'];
 const doneOf = (k, saved) => (saved && saved[k]) || JOBS[k].done;
 const surveyInfo = (j) => { const s = j.caretaker.indexOf(' '); return [j.plate, j.caretaker.slice(0, s), j.caretaker.slice(s + 1), CARETAKER_POS, j.owner]; };
@@ -2003,9 +2068,9 @@ async function resultScreen(name, k, saved) {
 
 /* ---------- state ราย scenario (R19: 1 scenario = 1 บล็อก · A.1 A.2 = state · state ใหม่ต่อท้าย รหัสเดิมไม่เลื่อน) ---------- */
 const KBK = (k) => JOBS[k].provider === 'กบค.';   // rowsFor ของเว็บ: บทบาท กบค. เห็นเฉพาะงานที่ประเมิน กบค.
-const KBK_VIEW = { readOnly: true, pending: PENDING.filter(KBK), done: DONE.filter(KBK) };   // ยังไม่ได้ประเมิน MRZ7100004 MTD-691003-014 ORZ6900002 · ประเมินแล้ว MTD-690716-031
+const KBK_VIEW = { readOnly: true, pending: PENDING.filter(KBK), done: DONE.filter(KBK) };   // ยังไม่ได้ประเมิน MRZ7100004 MTD-691020-007 ORZ6900002 · ประเมินแล้ว MTD-690716-031
 const NOT_FOUND_Q = '99-9999';   // คำค้นที่ไม่ตรงงานไหน (เลขที่งาน ทะเบียน งาน หน่วยงานที่ให้บริการ) — ค่าเดียวกับ S24 ค้นหาไม่พบของบำรุงรักษา
-const AFTER_SAVE = { tab: 1, pending: ['kbk', 'rp014', 'oh'], done: ['ma1145', 'ma6789', 'rp031', 'ma4458'], saved: { ma6789: SAVED } };   // เรียงวันที่ปิดงาน (82-1145 05/11 ก่อน 82-6789 04/11)
+const AFTER_SAVE = { tab: 1, pending: ['kbk', 'rp007', 'oh'], done: ['ma1145', 'ma6789', 'rp031', 'ma4458'], saved: { ma6789: SAVED } };   // เรียงวันที่ปิดงาน (82-1145 05/11 ก่อน 82-6789 04/11)
 const LIST_STATES = [
   ['แท็บยังไม่ได้ประเมิน — งานที่ปิดแล้ว', () => listScreen('S1 ยังไม่ได้ประเมิน', { tab: 0 })],
   ['แท็บประเมินแล้ว', () => listScreen('S1 ประเมินแล้ว', { tab: 1 })],
@@ -2023,7 +2088,7 @@ const FORM_STATES = [
   ['บันทึกไม่สำเร็จ', async () => { const s = await evalForm('S2 บันทึกไม่สำเร็จ', 'ma6789', { scores: SAMPLE, notes: SAMPLE_NOTES, remark: SAMPLE_REMARK }); notify(s, FAIL, true); return s; }],
   ['บันทึกสำเร็จ — ย้ายไปแท็บประเมินแล้ว', async () => { const s = await listScreen('S2 บันทึกสำเร็จ', AFTER_SAVE); notify(s, OK(JOBS.ma6789.no)); return s; }],
   ['ยกเลิกระหว่างกรอก — ยืนยันการออก', async () => { const s = await evalForm('S2 ยืนยันการออก', 'ma6789', { scores: PART, remark: PART_REMARK }); await confirm(s, LEAVE); return s; }],
-  ['ฟอร์มประเมินงานซ่อม — หน่วยงานที่ให้บริการ กบค.', () => evalForm('S2 ฟอร์มงานซ่อม', 'rp014', {})],
+  ['ฟอร์มประเมินงานซ่อม — หน่วยงานที่ให้บริการ กบค.', () => evalForm('S2 ฟอร์มงานซ่อม', 'rp007', {})],
   ['ฟอร์มประเมิน Overhaul — หน่วยงานที่ให้บริการ กบค.', () => evalForm('S2 ฟอร์ม Overhaul', 'oh', {})],
   /* 13 พ.ย. 2569 เจ้าของงาน (ภาพหน้า /satisfaction/form ของเว็บ "แบบประเมินความพึงพอใจ MRZ7100004") "อยากสร้าง export … ใส่ในแบบประเมิน"
      ⇒ ฟอร์มบำรุงรักษาตามวาระที่ กบค. ดำเนินการ (แผนของ กบค. · หน่วยงานที่ให้บริการ กบค.) ต่อท้าย B.10 รหัสจอเดิมไม่เลื่อน · ข้อมูล JOBS.kbk = แถวแรกของแท็บยังไม่ได้ประเมินของเว็บ */

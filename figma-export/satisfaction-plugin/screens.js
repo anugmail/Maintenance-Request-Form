@@ -16,7 +16,7 @@
      ประเมิน "หน่วยงานที่ให้บริการ" — ระบบเติมให้ ฟอร์มเดียวกัน:
        งานซ่อม = กบค. · Overhaul = กบค. · บำรุงรักษาตามวาระ แผนที่ กบค. ดำเนินการ = กบค. · แผนของกองอื่น (กบผ. กปส. กรย. กส.1 กส.2) = กองที่ดำเนินการ
    ข้อมูลจำลอง = ชุดเดียวกับเว็บ (survey.ts seeds + ?sample=S27):
-     ยังไม่ได้ประเมิน MRZ7100004 73-5019 เพชรบุรี (กบค.) · MRZ7000001 82-6789 ขอนแก่น (กบผ.) · งานซ่อม MTD-691003-014 82-1145 ขอนแก่น (กบค.) · Overhaul ORZ6900002 PO-690201 72-6648 สงขลา (กบค.)
+     ยังไม่ได้ประเมิน MRZ7100004 73-5019 เพชรบุรี (กบค.) · MRZ7000001 82-6789 ขอนแก่น (กบผ.) · งานซ่อม MTD-691020-007 82-1145 ขอนแก่น (กบค.) · Overhaul ORZ6900002 PO-690201 72-6648 สงขลา (กบค.)
      ประเมินแล้ว MRZ7000001 82-1145 ขอนแก่น (กบผ. · 47/55) · งานซ่อม MTD-690716-031 82-6789 ขอนแก่น (กบค. · 45/55) · MRZ6900011 80-4458 แพร่ (กรย. · 48/55)
    ที่มา: component Tabs · Table header · Table · Pill outline · Empty state/Data empty · Section header · Section label · Content item row · Alert · Featured icon · Input label · Rating
      · Text input · Text area · Input dropdown with badges · Side panel header/footer · Primary/Secondary button · Modal · Notification · Mobile table ของไฟล์ (Component) VMS Plus
@@ -93,8 +93,8 @@ const JOBS = {
     caretaker: 'นายธนกร ศรีสมุทร', owner: 'กฟต.1 เพชรบุรี', pairs: [['ชื่อแผน', 'บำรุงรักษากระเช้าแก้ไฟ กบค. ปีงบประมาณ 2571'], ['ไตรมาส', 'ไตรมาส 1'], ['ผู้ดำเนินการ', 'นายวิชัย ทองดี (กบค.)']] },
   ma6789: { kind: 'ma', no: 'MRZ7000001', plate: '82-6789 ขอนแก่น', vtype: 'กระเช้าแก้ไฟ', work: TRIP_T1, provider: 'กบผ.', closed: '04/11/2569',
     caretaker: 'นายสมชาย แก้วมณี', owner: 'กฟฉ.1 ขอนแก่น', pairs: [['ชื่อแผน', PLAN_T1], ['แผนเดินทาง', TRIP_T1], ['ผู้ดำเนินการ', 'นายวิชัย ทองดี (กบผ.)'], ['รับทราบผลเมื่อ', '06/11/2569 10:05 น.']] },
-  rp014: { kind: 'repair', no: 'MTD-691003-014', plate: '82-1145 ขอนแก่น', vtype: 'กระเช้าฮอทไลน์', work: 'ระบบไฮดรอลิกกระเช้ารั่วซึม', provider: 'กบค.', closed: '15/10/2569',
-    caretaker: 'นายสมชาย แก้วมณี', owner: 'กฟฉ.1 ขอนแก่น', pairs: [['หมายเลขงานซ่อม', 'RAM000245'], ['อาการที่แจ้ง', 'ระบบไฮดรอลิกกระเช้ารั่วซึม'], ['วันที่ / เวลาที่ซ่อมเสร็จ', '15/10/2569 16:30 น.']] },
+  rp007: { kind: 'repair', no: 'MTD-691020-007', plate: '82-1145 ขอนแก่น', vtype: 'กระเช้าฮอทไลน์', work: 'ไฟส่องสว่างกระเช้าไม่ติด', provider: 'กบค.', closed: '22/10/2569',   // 24 พ.ย. 2569 ตามเว็บ (ไฟล์ 34 ข้อ 23 ก · เดิม MTD-691020-007 ซึ่งเป็นงานส่งอู่ในแบบประเมินผู้รับจ้าง) งานที่ กบค. ซ่อมเอง
+    caretaker: 'นายสมชาย แก้วมณี', owner: 'กฟฉ.1 ขอนแก่น', pairs: [['หมายเลขงานซ่อม', 'RAM000261'], ['อาการที่แจ้ง', 'ไฟส่องสว่างกระเช้าไม่ติด'], ['วันที่ / เวลาที่ซ่อมเสร็จ', '22/10/2569 16:00 น.']] },
   oh: { kind: 'oh', no: 'ORZ6900002', plate: '72-6648 สงขลา', vtype: 'รถกระเช้า', work: 'ซ่อมระบบไฮดรอลิกกระเช้า', provider: 'กบค.', closed: '05/10/2569',
     caretaker: 'นายอดิศักดิ์ ทองสุข', owner: 'กฟต.3 สงขลา', pairs: [['ชื่อแผน', 'Overhaul ประจำปีงบ 2569 — รถกระเช้า'], ['ใบสั่งจ้างเลขที่', 'PO-690201'], ['ชื่อ Purchase Order', 'ซ่อมระบบไฮดรอลิกกระเช้า'], ['ยี่ห้อ/รุ่น', 'HINO FG1J']] },
   ma1145: { kind: 'ma', no: 'MRZ7000001', plate: '82-1145 ขอนแก่น', vtype: 'กระเช้าฮอทไลน์', work: TRIP_T1, provider: 'กบผ.', closed: '05/11/2569',
@@ -112,7 +112,7 @@ const SAMPLE_NOTES = SAMPLE.map((_, i) => (i === 7 ? 'รออะไหล่�
 const SAMPLE_REMARK = 'ช่างมาตรงเวลา อธิบายงานที่ทำก่อนส่งคืนยานพาหนะ';   // SAMPLE_FORM_REMARK ของเว็บ
 const PART_REMARK = 'ช่างมาตรงเวลา';
 const SAVED = { answers: SAMPLE, notes: SAMPLE_NOTES, at: EVAL_AT, remark: SAMPLE_REMARK };   // MRZ7000001 82-6789 หลังกดบันทึก (B.6 · C.4)
-const PENDING = ['kbk', 'ma6789', 'rp014', 'oh'];   // เรียงวันที่ปิดงานใหม่สุดก่อน (evalRows ของเว็บ)
+const PENDING = ['kbk', 'ma6789', 'rp007', 'oh'];   // เรียงวันที่ปิดงานใหม่สุดก่อน (evalRows ของเว็บ)
 const DONE = ['ma1145', 'rp031', 'ma4458'];
 const doneOf = (k, saved) => (saved && saved[k]) || JOBS[k].done;
 const surveyInfo = (j) => { const s = j.caretaker.indexOf(' '); return [j.plate, j.caretaker.slice(0, s), j.caretaker.slice(s + 1), CARETAKER_POS, j.owner]; };
@@ -231,9 +231,9 @@ async function resultScreen(name, k, saved) {
 
 /* ---------- state ราย scenario (R19: 1 scenario = 1 บล็อก · A.1 A.2 = state · state ใหม่ต่อท้าย รหัสเดิมไม่เลื่อน) ---------- */
 const KBK = (k) => JOBS[k].provider === 'กบค.';   // rowsFor ของเว็บ: บทบาท กบค. เห็นเฉพาะงานที่ประเมิน กบค.
-const KBK_VIEW = { readOnly: true, pending: PENDING.filter(KBK), done: DONE.filter(KBK) };   // ยังไม่ได้ประเมิน MRZ7100004 MTD-691003-014 ORZ6900002 · ประเมินแล้ว MTD-690716-031
+const KBK_VIEW = { readOnly: true, pending: PENDING.filter(KBK), done: DONE.filter(KBK) };   // ยังไม่ได้ประเมิน MRZ7100004 MTD-691020-007 ORZ6900002 · ประเมินแล้ว MTD-690716-031
 const NOT_FOUND_Q = '99-9999';   // คำค้นที่ไม่ตรงงานไหน (เลขที่งาน ทะเบียน งาน หน่วยงานที่ให้บริการ) — ค่าเดียวกับ S24 ค้นหาไม่พบของบำรุงรักษา
-const AFTER_SAVE = { tab: 1, pending: ['kbk', 'rp014', 'oh'], done: ['ma1145', 'ma6789', 'rp031', 'ma4458'], saved: { ma6789: SAVED } };   // เรียงวันที่ปิดงาน (82-1145 05/11 ก่อน 82-6789 04/11)
+const AFTER_SAVE = { tab: 1, pending: ['kbk', 'rp007', 'oh'], done: ['ma1145', 'ma6789', 'rp031', 'ma4458'], saved: { ma6789: SAVED } };   // เรียงวันที่ปิดงาน (82-1145 05/11 ก่อน 82-6789 04/11)
 const LIST_STATES = [
   ['แท็บยังไม่ได้ประเมิน — งานที่ปิดแล้ว', () => listScreen('S1 ยังไม่ได้ประเมิน', { tab: 0 })],
   ['แท็บประเมินแล้ว', () => listScreen('S1 ประเมินแล้ว', { tab: 1 })],
@@ -251,7 +251,7 @@ const FORM_STATES = [
   ['บันทึกไม่สำเร็จ', async () => { const s = await evalForm('S2 บันทึกไม่สำเร็จ', 'ma6789', { scores: SAMPLE, notes: SAMPLE_NOTES, remark: SAMPLE_REMARK }); notify(s, FAIL, true); return s; }],
   ['บันทึกสำเร็จ — ย้ายไปแท็บประเมินแล้ว', async () => { const s = await listScreen('S2 บันทึกสำเร็จ', AFTER_SAVE); notify(s, OK(JOBS.ma6789.no)); return s; }],
   ['ยกเลิกระหว่างกรอก — ยืนยันการออก', async () => { const s = await evalForm('S2 ยืนยันการออก', 'ma6789', { scores: PART, remark: PART_REMARK }); await confirm(s, LEAVE); return s; }],
-  ['ฟอร์มประเมินงานซ่อม — หน่วยงานที่ให้บริการ กบค.', () => evalForm('S2 ฟอร์มงานซ่อม', 'rp014', {})],
+  ['ฟอร์มประเมินงานซ่อม — หน่วยงานที่ให้บริการ กบค.', () => evalForm('S2 ฟอร์มงานซ่อม', 'rp007', {})],
   ['ฟอร์มประเมิน Overhaul — หน่วยงานที่ให้บริการ กบค.', () => evalForm('S2 ฟอร์ม Overhaul', 'oh', {})],
   /* 13 พ.ย. 2569 เจ้าของงาน (ภาพหน้า /satisfaction/form ของเว็บ "แบบประเมินความพึงพอใจ MRZ7100004") "อยากสร้าง export … ใส่ในแบบประเมิน"
      ⇒ ฟอร์มบำรุงรักษาตามวาระที่ กบค. ดำเนินการ (แผนของ กบค. · หน่วยงานที่ให้บริการ กบค.) ต่อท้าย B.10 รหัสจอเดิมไม่เลื่อน · ข้อมูล JOBS.kbk = แถวแรกของแท็บยังไม่ได้ประเมินของเว็บ */
