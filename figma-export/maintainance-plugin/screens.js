@@ -4277,7 +4277,7 @@ figma.ui.onmessage = async (msg) => {
     if (msg.type === 'build-s1-journeys') await buildS1Journeys(o);   // 24 พ.ย. 2569 S1 แยกตาม journey เรื่องละบล็อก
     if (msg.type === 'build-journey') await buildJourneyAll();
     if (msg.type === 'build-activity') await buildActivity();
-    if (msg.type === 'export-shots') await exportShots('flow-maintainance', msg.scen);   // msg.scen = scenario ที่ติ๊ก (9 พ.ย. 2569 แยก export FigJam ราย S)
+    if (msg.type === 'export-shots') await exportShots('flow-maintainance', msg.scen, Object.fromEntries(S1_JOURNEYS.flatMap(([j, jt, parts]) => parts.filter(p => typeof p === 'number').map(p => ['A' + p, j + ' ' + jt + ' › ' + S1_SUBS[p - 1][0]]))));   // titles = เรื่องย่อย S1 เรียงตาม journey เหมือนหน้า Figma ⇒ บอร์ด FigJam แยก section ราย A1 A2 … (24 พ.ย. 2569)   // msg.scen = scenario ที่ติ๊ก (9 พ.ย. 2569 แยก export FigJam ราย S)
     if (msg.type === 'replace-selected') await replaceSelected();   // 13 พ.ย. 2569 แทนที่จอที่เลือกด้วยฉบับล่าสุด
     if (msg.type === 'move-latest') await moveLatest();
     if (msg.type === 'purge-cut') await purgeCut();

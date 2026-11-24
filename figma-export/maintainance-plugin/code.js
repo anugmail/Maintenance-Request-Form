@@ -1534,7 +1534,7 @@ function splitBoard(page, f) {
 /* ---------- ส่งภาพจอบนหน้านี้ไป FigJam (เจ้าของงาน 30 ต.ค. 2569 "export … ไปที่ figjam ด้วย userflow และ design มาจาก figma ปรับใหม่ล่าสุด") ----------
    export เฟรมจอ "<prefix> / A.1 · S1 — ชื่อ" บนหน้าที่เปิดอยู่ (จอที่ทีมแก้มือแล้วก็ได้) เป็น PNG ส่งให้หน้าต่างปลั๊กอิน → POST เข้า serve.js ที่ out/figjam/<dir>/
    แล้ว 3-figjam-board.js วางภาพต่อจากผัง userflow ของ scenario เดียวกัน · desktop อย่างเดียว · ด้านยาวไม่เกิน 4000 px (FigJam รับไม่เกิน 4096) */
-const SHOT_RE = /^(\S+) \/ ([A-Z])\.([0-9.]+) · (S\d+) — (.+)$/;
+const SHOT_RE = /^(\S+) \/ ([A-Z])(\d*)\.([0-9.]+) · (S\d+)(?: ([^—]+?))? — (.+)$/;   // 24 พ.ย. 2569 คืนฉบับที่อ่านรหัสเรื่องย่อย A1.3 ได้ (ตอนรวมสาขาย้อนเป็นฉบับเก่า ⇒ จอ S1 แยก journey ถูกข้ามตอนส่ง FigJam)
 /* ตรวจจอซ้ำบนหน้าปัจจุบัน — ไม่แก้ไม่ลบอะไรทั้งสิ้น (เจ้าของงาน 10 พ.ย. 2569 "ช่วยหาทางตรวจให้" · "ลบเองได้")
    ทุกปุ่มสร้างของปลั๊กอินวางชุดใหม่ "ต่อใต้ของเดิม" เสมอ ⇒ กดสร้างซ้ำบนหน้าเดิมจะมีหลายชุดซ้อนกัน (เช่น เคยกด "สร้างเฉพาะ Desktop" แล้วมากด "สร้างทั้งชุด" ทีหลัง = Desktop 2 แถว Mobile 1 แถว)
    จับคู่ด้วย รหัสจอ + อุปกรณ์ จากชื่อเฟรม (SHOT_RE) · ชุดล่าสุดดูจาก pluginData builtAt */
@@ -1548,7 +1548,7 @@ async function auditDuplicates() {
   for (const f of all) {
     const mob = / · mobile$/.test(f.name), m = f.name.replace(/ · mobile$/, '').match(SHOT_RE);
     if (!m) { skipped++; continue; }
-    const key = m[2] + '.' + m[3] + ' · ' + (mob ? 'mobile' : 'desktop');
+    const key = m[2] + m[3] + '.' + m[4] + ' · ' + (mob ? 'mobile' : 'desktop');
     if (!by.has(key)) by.set(key, []);
     by.get(key).push(f);
   }
@@ -1571,7 +1571,7 @@ async function auditDuplicates() {
   log('วิธีเก็บกวาด: เก็บชุดที่ y ของ "ล่าสุด" ไว้ แล้วลบชุดอื่นเองใน Figma (ปลั๊กอินไม่ลบให้ — ตั้งใจไม่แตะของบนหน้า)');
 }
 
-async function exportShots(dir, scen) {   // scen = ['S1', 'S2'] ส่งเฉพาะ scenario ที่ติ๊ก (ว่าง = ทุกจอ · 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่")
+async function exportShots(dir, scen, titles) {   // scen = ['S1', 'S2'] ส่งเฉพาะ scenario ที่ติ๊ก (ว่าง = ทุกจอ · 9 พ.ย. 2569 เจ้าของงาน "อยากแยกการ export figjam ออกเป็น S เหมือนกันได้หรือไม่")
   errors.length = 0;
   const page = figma.currentPage;
   /* 5 พ.ย. 2569 เจ้าของงาน "export figjam อยากให้ออกมาเป็นแบบนี้ มี mobile มาด้วย … บอกว่าส่วนใหน desktop , mobile" ⇒ ส่งจอ mobile ด้วย (ชื่อเฟรมลงท้าย " · mobile") · device ใน manifest */
@@ -1609,7 +1609,7 @@ async function exportShots(dir, scen) {   // scen = ['S1', 'S2'] ส่งเฉ
   }
   figma.ui.postMessage({ type: 'shots-done', dir, manifest });
   log('export แล้ว ' + manifest.shots.length + '/' + shots.length + ' จอ' + (skipped.length ? ' · ข้าม ' + skipped.length + ' เฟรมที่ชื่อไม่ตรงรูปแบบ (เช่น ' + skipped[0] + ')' : '') + (errors.length ? ' · ⚠ เตือน ' + errors.length + ' จุด' : ''));
-  if (dir === 'flow-maintainance') log('ขั้นต่อไป: node figma-export/3-figjam-board.js --maintainance-ui --only --split-scen --out=board-maintainance-ui.json (ชุดเต็ม + แยกไฟล์ราย S) แล้วเปิดปลั๊กอินบอร์ดใน FigJam ใหม่ เลือกกลุ่ม "บำรุงรักษาตามวาระ · ราย scenario"');
+  if (dir === 'flow-maintainance') log('ขั้นต่อไป: serve.js สร้างบอร์ดราย scenario ให้เอง (ดูหน้าต่าง serve.js) → ใน FigJam เปิด "Maintain-D → FigJam board" → โหลดรายการใหม่ → ติ๊ก S ในกลุ่ม "บำรุงรักษาตามวาระ · ราย scenario" → สร้างส่วนที่ติ๊ก (แทนที่ของเดิมตรงตำแหน่งเดิม)');
 }
 
 /* ---------- journey แนวขวาง (เจ้าของงานสั่ง 22 ต.ค. 2569: "ทำ scen มาต่อกันเป็นแนวขวาง สำหรับ export" + "ลงในเพจ maintainance แต่มีปุ่มแยก") ----------
@@ -6114,7 +6114,7 @@ figma.ui.onmessage = async (msg) => {
     if (msg.type === 'build-s1-journeys') await buildS1Journeys(o);   // 24 พ.ย. 2569 S1 แยกตาม journey เรื่องละบล็อก
     if (msg.type === 'build-journey') await buildJourneyAll();
     if (msg.type === 'build-activity') await buildActivity();
-    if (msg.type === 'export-shots') await exportShots('flow-maintainance', msg.scen);   // msg.scen = scenario ที่ติ๊ก (9 พ.ย. 2569 แยก export FigJam ราย S)
+    if (msg.type === 'export-shots') await exportShots('flow-maintainance', msg.scen, Object.fromEntries(S1_JOURNEYS.flatMap(([j, jt, parts]) => parts.filter(p => typeof p === 'number').map(p => ['A' + p, j + ' ' + jt + ' › ' + S1_SUBS[p - 1][0]]))));   // titles = เรื่องย่อย S1 เรียงตาม journey เหมือนหน้า Figma ⇒ บอร์ด FigJam แยก section ราย A1 A2 … (24 พ.ย. 2569)   // msg.scen = scenario ที่ติ๊ก (9 พ.ย. 2569 แยก export FigJam ราย S)
     if (msg.type === 'replace-selected') await replaceSelected();   // 13 พ.ย. 2569 แทนที่จอที่เลือกด้วยฉบับล่าสุด
     if (msg.type === 'move-latest') await moveLatest();
     if (msg.type === 'purge-cut') await purgeCut();

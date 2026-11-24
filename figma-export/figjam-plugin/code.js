@@ -56,12 +56,15 @@ async function build(spec, images) {
      — บอร์ดของคนอื่น (เช่น Planning 1-2) มีรูปที่คนวางไว้เองเป็น MEDIA ระดับบนสุด
      ถ้าล้างทุกครั้ง แค่รันผังล้วนก็ลบรูปของเขาทิ้ง (เจอ 5 ต.ค. 2569 ก่อนรันจริง) */
   const hasImages = spec.sections.some(s => Array.isArray(s.cols));
-  let cleaned = 0;
+  let cleaned = 0, oldPos = null;
   if (spec.anchor === 'below') {
     /* โหมดวางต่อใต้ของเดิม = หน้านี้มีงานคนอื่นอยู่ (19 ต.ค. 2569 — ชุด Overhaul v2 ลงหน้าที่มีข้อมูลแล้ว)
        ⇒ ลบเฉพาะของชุดนี้เอง: section ชื่อเดียวกับใน spec + ลูกศรที่ปลายข้างใดข้างหนึ่งต่อกับของใน section นั้น
        ไม่แตะ MEDIA · ลูกศร flow อื่น · shape ระดับบนสุดของคนอื่น */
-    const mine = figma.currentPage.children.filter(n => n.type === 'SECTION' && names.has(n.name));
+    /* 24 พ.ย. 2569 บอร์ดราย S (spec.replace): ลบทุก section ของ scenario นั้น รวมที่ชื่อเปลี่ยน (เรื่องย่อยเปลี่ยนชื่อ · แถวยาวแบบเก่า) แล้ววางใหม่ที่ตำแหน่งเดิม ⇒ แก้ Figma แล้วส่งใหม่ บอร์ดอัปเดตที่เดิม */
+    const rp = spec.replace || null;
+    const mine = figma.currentPage.children.filter(n => n.type === 'SECTION' && (names.has(n.name) || (rp && n.name.indexOf(rp.prefix) === 0 && n.name.slice(-rp.suffix.length) === rp.suffix)));
+    if (mine.length) oldPos = { x: Math.min(...mine.map(n => n.x)), y: Math.min(...mine.map(n => n.y)) };
     const ids = new Set();
     mine.forEach(sec => { ids.add(sec.id); (sec.findAll ? sec.findAll(() => true) : []).forEach(k => ids.add(k.id)); });
     const touches = (c) => [c.connectorStart, c.connectorEnd].some(e => e && e.endpointNodeId && ids.has(e.endpointNodeId));
@@ -104,6 +107,7 @@ async function build(spec, images) {
       y = Math.max(...rest.map(n => n.y + n.height)) + 400;
       x0 = Math.min(...rest.map(n => n.x));
     }
+    if (oldPos) { y = oldPos.y; x0 = oldPos.x; post('วางแทนที่ตำแหน่งเดิม'); }
   }
   const built = [];
 
