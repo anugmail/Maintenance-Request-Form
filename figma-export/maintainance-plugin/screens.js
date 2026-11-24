@@ -3975,7 +3975,7 @@ async function moveLatest() {
   const left = main.children.filter(n => n.y > CANVAS_MAX && n.name.indexOf(scr) === 0).length;
   if (left) log('บนหน้านี้ยังมีจอชุดเก่าเกินขอบอีก ' + left + ' จอ ไม่ได้แตะ');
 }
-async function buildSet(SCEN, GRP, what, devices) {
+async function buildSet(SCEN, GRP, what, devices, gridOpts) {
   errors.length = 0;
   const t0 = Date.now();
   log('นำเข้า component จากไลบรารี + ยืมจาก flow งานซ่อมในไฟล์นี้…');
@@ -3995,7 +3995,7 @@ async function buildSet(SCEN, GRP, what, devices) {
   const before = new Set(page.children);
   const TOTAL = SCEN.reduce((a, x) => a + countScreens(x[1]), 0);   // นับจอในเส้นทางย่อยด้วย (countScreens ใน core.js)
   log(INDEX.has('Header') ? 'แถบรหัส flow: component Header ของทีมออกแบบ' : 'แถบรหัส flow: ไม่พบ component Header ในไฟล์ — วาดแถบธรรมดาสีเดียวกันแทน');
-  const { made, flows } = await buildGrid(page, PLUGIN.prefix, GRP, before.size ? pageBottom(page) + 400 : 0, TOTAL * devices.length, { devices });
+  const { made, flows } = await buildGrid(page, PLUGIN.prefix, GRP, before.size ? pageBottom(page) + 400 : 0, TOTAL * devices.length, Object.assign({ devices }, gridOpts || {}));
   const fresh = page.children.filter(n => !before.has(n));
   const fit = fresh.length ? fitOn(page, fresh) : { dx: 0, dy: 0, y: 0 };
   const hgt = fresh.length ? Math.round(Math.max(...fresh.map(n => n.y + n.height)) - Math.min(...fresh.map(n => n.y))) : 0;
@@ -4045,6 +4045,35 @@ async function buildPick(o) {   // ติ๊กเฉพาะบาง scenario
   const idx = (o.pick || []).map(Number).filter(i => i >= 0 && i < SCENARIOS.length);
   if (!idx.length) { log('ยังไม่ได้ติ๊ก scenario — ติ๊กอย่างน้อย 1 รายการแล้วกดอีกครั้ง'); return; }
   await buildSet(SCENARIOS.filter((_, i) => idx.indexOf(i) >= 0), GROUPS.filter((_, i) => idx.indexOf(i) >= 0), 'scenario ที่เลือก', devOf(o));
+}
+
+/* ---------- S1 แยกเรื่องย่อยตาม journey ของ Feature แผนบำรุงรักษา (เจ้าของงาน 24 พ.ย. 2569 "อยากได้ แยกscenario ย่อย ออกมาคือ ไม่อยากได้ยาวๆ อยากได้ย่อยว่า scenario 1 เฉพาะสร้างแผน happy flow มีอะไรบ้าง แก้ไขแผน มี จอใหนบ้าง") ----------
+   เคาะ: แบ่งตาม journey J1–J8 ของเอกสาร 40 · เรื่องละบล็อก (แถบหัวบล็อก "Jn · S1 ชื่อ journey" แล้วแถว Desktop ตามด้วย Mobile) เรียงลงทีละบล็อก
+   ในบล็อก: เรื่องย่อย A1… ของ S1_SUBS เป็นแถบ Sub Flow · J2 ต่อด้วยหน้าจัดการอะไหล่ S21 (T) · J6 J7 J8 ใช้จอของ S19 S20 S2 (รหัส R S B เดิม)
+   ชื่อเฟรมจอเหมือนปุ่มสร้างปกติ (A1.1 R.1 …) ⇒ ปุ่มแทนที่จอที่เลือกใช้กับจอชุดนี้ได้ · ไม่วาง flowchart ข้างบล็อก (บล็อกสั้น) */
+const S1_JOURNEYS = [
+  ['J1', 'สร้างแผนจนส่งอนุมัติ (เส้นหลัก)', [1]],
+  ['J2', 'ทางเลือกตอนเพิ่มยานพาหนะและกำหนดอะไหล่', [2, 3, 4, 5, 6, 'S21']],
+  ['J3', 'จัดการยานพาหนะในแผน', [7, 8, 24, 25, 9, 10]],
+  ['J4', 'หลังส่งอนุมัติและมุมบทบาทอื่น', [11, 12, 13, 14]],
+  ['J5', 'error และเงื่อนไข', [15, 16, 17, 18, 19, 20, 21, 22, 23]],
+  ['J6', 'แก้ไขแผน', ['S19']],
+  ['J7', 'ลบแผน', ['S20']],
+  ['J8', 'อนุมัติแผน', ['S2']]
+];
+function journeyGroups() {
+  const map = FLOW_NODES.S1 || {};
+  const node = (e) => isPath(e) ? { path: e.path, screens: e.screens.map(([l, f]) => [l, f, map[l] || '']) } : [e[0], e[1], map[e[0]] || ''];
+  return S1_JOURNEYS.map(([j, title, parts]) => ({ code: j, title: 'S1 ' + title, subs: parts.map(p => {
+    if (typeof p === 'number') { const [t, list] = S1_SUBS[p - 1]; return { code: 'A' + p, title: t, tag: 'S1', screens: list.map(node) }; }
+    const g = GROUPS.find(x => x.subs[0].tag === p);
+    return Object.assign({}, g.subs[0], { title: p + ' ' + g.subs[0].title });
+  }) }));
+}
+async function buildS1Journeys(o) {
+  const JG = journeyGroups();
+  log('S1 แยกตาม journey: ' + JG.map(g => g.code + ' ' + g.subs.reduce((a, s) => a + countScreens(s.screens), 0) + ' จอ').join(' · '));
+  await buildSet(JG.map(g => [g.title, g.subs.flatMap(s => s.screens)]), JG, 'S1 แยกตาม journey', devOf(o), { flow: false });
 }
 
 /* ---------- แทนที่จอที่เลือกด้วยฉบับล่าสุด (เจ้าของงาน 13 พ.ย. 2569 "เพิ่มปุ่มแทนที่จอที่เลือกในปลั๊กอินบำรุงรักษา") ----------
@@ -4239,6 +4268,7 @@ figma.ui.onmessage = async (msg) => {
     if (msg.type === 'build-desktop') await buildDesktop();
     if (msg.type === 'build-mobile') await buildMobile();
     if (msg.type === 'build-pick') await buildPick(o);
+    if (msg.type === 'build-s1-journeys') await buildS1Journeys(o);   // 24 พ.ย. 2569 S1 แยกตาม journey เรื่องละบล็อก
     if (msg.type === 'build-journey') await buildJourneyAll();
     if (msg.type === 'build-activity') await buildActivity();
     if (msg.type === 'export-shots') await exportShots('flow-maintainance', msg.scen);   // msg.scen = scenario ที่ติ๊ก (9 พ.ย. 2569 แยก export FigJam ราย S)
