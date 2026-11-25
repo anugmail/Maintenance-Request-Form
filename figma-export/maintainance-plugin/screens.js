@@ -2501,10 +2501,16 @@ function viCardRow(iconName, label, value) {
   if (!b) return r;
   try { b.layoutSizingHorizontal = 'FILL'; } catch (e) { /* ตามขนาดของ component */ }
   const ico = iconName && has(iconName);
-  setProps(b, { Type: value && value.add ? 'Text with label and component' : 'Text with label' });
-  setProps(b, Object.assign({ Label: label, Text: value && value.add ? '' : value, Supporting: false, 'Leading icon': !!ico }, ico ? { 'Icon swap': icon(iconName) } : {}));
+  const comp = value && (value.add || value.pill);
+  setProps(b, { Type: comp ? 'Text with label and component' : 'Text with label' });
+  setProps(b, Object.assign({ Label: label, Text: comp ? '' : value, Supporting: false, 'Leading icon': !!ico }, ico ? { 'Icon swap': icon(iconName) } : {}));
   const own = b.children.find(c => c.type === 'TEXT' && c.name === 'Text'), lab = b.children.find(c => c.type === 'TEXT' && c.name === 'Label');
-  if (value && value.add) {
+  if (value && value.pill) {   // 25 พ.ย. 2569 ผลการตรวจ ปจ.2 = Pill outline ชิดขวา (ช่อง component ของ Card item base)
+    if (own) own.visible = false;
+    if (lab) try { lab.layoutGrow = 1; } catch (e) { /* ตามขนาดของ component */ }
+    const slot = b.children.find(c => c.type === 'INSTANCE' && c.name === 'Badge outline');
+    if (slot) try { slot.swapComponent(main('Pill outline', { Color: value.pill[1] })); slot.name = 'Pill outline'; setProps(slot, { Text: value.pill[0] }); } catch (e) { warn('ผลการตรวจ ปจ.2', e); }
+  } else if (value && value.add) {
     if (own) own.visible = false;
     if (lab) try { lab.layoutGrow = 1; } catch (e) { /* ตามขนาดของ component */ }
     const slot = b.children.find(c => c.type === 'INSTANCE' && c.name === 'Badge outline');
@@ -2533,8 +2539,9 @@ async function viMachines(v, kbk) {
   const list = vMachines(v), title = list.length ? 'เครื่องมือกล (' + list.length + ')' : 'เครื่องมือกล';
   const head = await sectionLabel(title);   // 20 พ.ย. 2569 รอบต่อมา เจ้าของงาน "เคสมีอยู่แล้ว ต้องไม่มีปุ่มเพิ่ม มีแต่ แก้ไข" ⇒ ไม่มีปุ่มเพิ่มเครื่องมือกลที่หัวส่วน (R118)
   const kids = [head];
-  for (const x of list.length ? list : [null]) {
-    const name = x ? [x.type, x.brand, x.model].filter(Boolean).join(' ') : '';
+  if (!list.length) { kids.push(await viMachineEmpty(kbk)); return viSection(kids); }   // 25 พ.ย. 2569 ยังไม่มีเครื่อง = กล่องว่างแบบไม่มีบัตรเติมน้ำมัน (แทนการ์ด 11 ช่อง "-")
+  for (const x of list) {
+    const name = [x.type, x.brand, x.model].filter(Boolean).join(' ');
     const card = await viCard('Machine card');
     const sl = await sectionLabel(name || 'เครื่องมือกล', { buttons: kbk ? [{ kind: 'Primary button', text: x ? 'แก้ไข' : 'เพิ่ม' }] : [] });   // 20 พ.ย. 2569 เจ้าของงาน "ไม่มีเครื่องมือกล มีปุ่มเพิ่ม ไม่มีปุ่มแก้ไข เพิ่มแล้วถึงจะเป็นแก้ไข"
     setProps(sl, { Supporting: true, 'Supporting text': 'รหัสทรัพย์สิน ' + (x ? x.asset + ' - ' + x.sub : '-') });
@@ -2582,6 +2589,33 @@ async function machineModal(scr, ri, o) {   // ri = แถวใน MA_ROWS (row
   }
   return r;
 }
+/* 25 พ.ย. 2569 เจ้าของงาน "ย้ายไปใว้เป็นการ์ดด้านขวา รวมถึงเรื่อง safety inspection ด้วย" (ตามต้นแบบ Safety Inspection) — MachineEmpty ของเว็บ
+   กล่องแบบ Fleet card Status=Empty: Images sm 108 + กล่อง gray-50 "ไม่มีเครื่องมือกล" / "ยานพาหนะคันนี้ยังไม่มีข้อมูลเครื่องมือกล" · กบค. มี Secondary button "เพิ่ม" */
+async function viMachineEmpty(kbk) {
+  const card = await viCard('Machine card · ว่าง', 'HORIZONTAL');
+  const img = inst('Images', { Size: 'sm', Type: 'Empty' }); img.resize(108, 108); card.appendChild(img);
+  const box = await viSubtle(frame('Content', 'VERTICAL', { gap: 8, pad: [12, 16] }));
+  const sl = kbk ? await viLabelWithButton('ไม่มีเครื่องมือกล', 'เพิ่ม', 'md') : await sectionLabel('ไม่มีเครื่องมือกล');
+  setProps(sl, { Supporting: true, 'Supporting text': 'ยานพาหนะคันนี้ยังไม่มีข้อมูลเครื่องมือกล' }); add(box, sl, 'h');
+  card.appendChild(box); box.layoutGrow = 1;
+  return card;
+}
+/* ประวัติการตรวจ ปจ.2 (SafetySection ของเว็บ · 25 พ.ย. 2569) — คอลัมน์ขวาต่อจากเครื่องมือกล เฉพาะรหัสข้าง 09 (ยานพาหนะที่ต้องตรวจ ปจ.2)
+   การ์ดแบบ Last usage 1 ใบต่อการตรวจ: วันที่ตรวจ · ผลการตรวจ (Pill outline) · กำหนดตรวจครั้งต่อไป · รอบตรวจประจำ · เอกสาร · ค่าจาก MA_ROWS ช่องการตรวจ ปจ.2 (ผลตั้งต้นของเว็บ = ผ่าน รอบ 12 เดือน ไม่มีเอกสาร) */
+const VI_SAFETY_SIDE = '09';
+async function viSafety(v, row) {
+  if (v.side !== VI_SAFETY_SIDE) return null;
+  const date = MA_ROWS[row][7], head = await sectionLabel('ประวัติการตรวจ ปจ.2');
+  if (!date) {
+    const box = await viSubtle(frame('Content', 'VERTICAL', { gap: 8, pad: [12, 16] }));
+    const sl = await sectionLabel('ไม่มีประวัติการตรวจ ปจ.2'); setProps(sl, { Supporting: true, 'Supporting text': 'ยานพาหนะคันนี้ยังไม่มีผลการตรวจ ปจ.2' }); add(box, sl, 'h');
+    return viSection([head, box]);
+  }
+  const [d, m, y] = date.split('/'), card = await viCard('Safety card');
+  [['วันที่ตรวจ', date], ['ผลการตรวจ', { pill: ['ผ่าน', 'Success'] }], ['กำหนดตรวจครั้งต่อไป', d + '/' + m + '/' + (Number(y) + 1)], ['รอบตรวจประจำ', '12 เดือน'], ['เอกสาร', '-']]
+    .forEach(([label, val]) => add(card, viCardRow(null, label, val), 'h'));
+  return viSection([head, card]);
+}
 async function viFleet(f) {   // Fleet card Status=Valid — Images sm 108 + กล่อง gray-50 (Section label เลขบัตร + วันใช้ได้) + Badge outline with indicator "ปกติ" · Badge outline ธนาคาร · วงเงินบัตร (ไม่มีโลโก้ธนาคาร/ปั๊ม — ภาพไม่มีในดัมป์)
   const card = await viCard('Fleet card', 'HORIZONTAL');
   const img = inst('Images', { Size: 'sm', Type: 'Empty' }); img.resize(108, 108); card.appendChild(img);
@@ -2612,16 +2646,17 @@ async function viWarranty(v) {   // การรับประกัน (n) ท
   return viSection([await sectionLabel('การรับประกัน', { badge: rows.length }), body]);
 }
 /* แท็บข้อมูลยานพาหนะ — desktop 2 คอลัมน์ (ซ้าย FILL · ขวา 526 ช่องไฟ 24 ตาม Section ของ Vehicle detail) · มือถือ 1 คอลัมน์ลำดับเดียวกัน (UI Release#2 ไม่มีเฟรม Vehicle info มือถือ)
-   ซ้าย ข้อมูลทั่วไป → ข้อมูลการเงินและสัญญา → ข้อมูลสังกัดยานพาหนะ → ข้อมูลการจดทะเบียน → เครื่องมือกล (เฉพาะรหัสข้าง 04 07 08 09 10)
-   ขวา รูปยานพาหนะ (Images md) → ใบคู่มือจดทะเบียน (_File upload item base) → บัตรเติมน้ำมัน (Fleet card) → การใช้งานล่าสุด (Last usage) · ใต้ 2 คอลัมน์ การรับประกัน
+   ซ้าย ข้อมูลทั่วไป → ข้อมูลการเงินและสัญญา → ข้อมูลสังกัดยานพาหนะ → ข้อมูลการจดทะเบียน
+   ขวา รูปยานพาหนะ (Images md) → ใบคู่มือจดทะเบียน (_File upload item base) → บัตรเติมน้ำมัน (Fleet card) → การใช้งานล่าสุด (Last usage) → เครื่องมือกล (เฉพาะรหัสข้าง 04 07 08 09 10) → ประวัติการตรวจ ปจ.2 (เฉพาะรหัสข้าง 09) · ใต้ 2 คอลัมน์ การรับประกัน (25 พ.ย. 2569 ย้ายเครื่องมือกลมาขวา · เพิ่ม ปจ.2)
    ไม่มีปุ่ม แก้ไข ดูรายละเอียด เปลี่ยนเลขทะเบียน เปลี่ยนสังกัด ของ VMS+ (งานผู้ดูแลข้อมูลยานพาหนะ) · ดาวน์โหลดใบคู่มือคงไว้ */
 async function vehicleInfoTab(row, kbk) {
   const v = vInfo(row);
   const left = [await viBox('ข้อมูลทั่วไป', v.general.map(items => ({ items }))), await viBox('ข้อมูลการเงินและสัญญา', v.finance), await viBox('ข้อมูลสังกัดยานพาหนะ', v.dept), await viBox('ข้อมูลการจดทะเบียน', v.reg)];
-  if (VI_EQUIP.indexOf(v.side) >= 0) left.push(await viMachines(v, kbk));
   const img = inst('Images', { Size: 'md', Type: 'Empty' });
   const file = inst('_File upload item base', { State: 'Completed' }, { 'File name': v.file[0], 'File size': v.file[1], 'Progress bar': false, Actions: true, 'Download action': true, 'Delete action': false });
   const right = [viSection([await sectionLabel('รูปยานพาหนะ'), img]), viSection([await sectionLabel('ใบคู่มือจดทะเบียน'), file]), viSection([await sectionLabel('บัตรเติมน้ำมัน'), await viFleet(v.fleet)]), await viLastUsage(v)];
+  if (VI_EQUIP.indexOf(v.side) >= 0) right.push(await viMachines(v, kbk));   // 25 พ.ย. 2569 เครื่องมือกลย้ายไปคอลัมน์ขวาต่อจากการใช้งานล่าสุด
+  const safety = await viSafety(v, row); if (safety) right.push(safety);
   const out = col('Vehicle info', [], 24);
   if (MOB) left.concat(right).forEach(k => add(out, k, 'h'));
   else {
@@ -3801,7 +3836,7 @@ const SCENARIOS = [
     ['มุมมองมือถือ — การ์ดตัวเลข 2 ใบต่อแถว กราฟเรียงทีละใบ ตารางเป็นการ์ด', () => maList('S24 มุมมองมือถือ', { mobileAll: true })],
     /* 12 พ.ย. 2569 (R107 · เว็บ f6f5e0d BACKLOG ข้อ 84 85) — การ์ดเครื่องมือกลของ กบค. · แท็บประวัติใหม่ 2 แท็บ · มุมมองมือถือของแท็บข้อมูลยานพาหนะ */
     ['กบค. — การ์ดเครื่องมือกล ช่องที่มีข้อมูลแสดงค่า ช่องที่ไม่มีแสดง - หัวการ์ดมีแต่ปุ่มแก้ไข', () => maDetail('S24 เครื่องมือกล กบค.', { tab: 0, row: 1, kbk: true })],
-    ['กบค. — ยานพาหนะในกลุ่มที่ยังไม่มีข้อมูลเครื่องมือกล การ์ด 1 ใบทุกช่องแสดง - หัวการ์ดมีแต่ปุ่มเพิ่ม', () => maDetail('S24 ไม่มีเครื่องมือกล กบค.', { tab: 0, row: 8, kbk: true })],
+    ['กบค. — ยานพาหนะในกลุ่มที่ยังไม่มีข้อมูลเครื่องมือกล กล่องว่างไม่มีเครื่องมือกล มีปุ่มเพิ่ม', () => maDetail('S24 ไม่มีเครื่องมือกล กบค.', { tab: 0, row: 8, kbk: true })],
     ['แท็บประวัติการบำรุงรักษาเครื่องจักร — บันทึกบำรุงรักษาตามวาระ', () => maDetail('S24 ประวัติเครื่องจักร', { tab: 2 })],
     ['แท็บประวัติการบำรุงรักษาเครื่องยนต์ — เช็คระยะที่ศูนย์บริการ', () => maDetail('S24 ประวัติเครื่องยนต์', { tab: 3 })],
     ['แท็บข้อมูลยานพาหนะบนมือถือ — เรียง 1 คอลัมน์ลำดับเดียวกับ desktop กบค. แก้ไขเครื่องมือกลได้', () => maDetail('S24 ข้อมูลยานพาหนะ มุมมองมือถือ', { tab: 0, kbk: true })],
@@ -3855,7 +3890,7 @@ const FLOW_NODES = {
     'กดเลขทะเบียน — เปิดหน้ารายละเอียดยานพาหนะ แท็บข้อมูลยานพาหนะ': 'A4 D5', 'รายละเอียดยานพาหนะ — แท็บตารางบำรุงรักษา กำหนดครั้งถัดไป 5 รายการ': 'D5',
     'รายละเอียดยานพาหนะ — แท็บประวัติการซ่อมบำรุง ซ่อมและบำรุงรักษาเรียงวันที่ปิดงาน ป้าย Overhaul': 'D5', 'แท็บข้อมูลยานพาหนะ — มีงานในประกัน ส่วนการรับประกันท้ายแท็บ': 'D5',
     'แท็บข้อมูลยานพาหนะ — รหัสข้างนอกกลุ่ม 04 07 08 09 10 ไม่มีส่วนเครื่องมือกล ไม่มีงานในประกัน': 'D5', 'กบค. — การ์ดเครื่องมือกล ช่องที่มีข้อมูลแสดงค่า ช่องที่ไม่มีแสดง - หัวการ์ดมีแต่ปุ่มแก้ไข': 'Q2 A7',
-    'กบค. — ยานพาหนะในกลุ่มที่ยังไม่มีข้อมูลเครื่องมือกล การ์ด 1 ใบทุกช่องแสดง - หัวการ์ดมีแต่ปุ่มเพิ่ม': 'A7', 'แท็บประวัติการบำรุงรักษาเครื่องจักร — บันทึกบำรุงรักษาตามวาระ': 'D5',
+    'กบค. — ยานพาหนะในกลุ่มที่ยังไม่มีข้อมูลเครื่องมือกล กล่องว่างไม่มีเครื่องมือกล มีปุ่มเพิ่ม': 'A7', 'แท็บประวัติการบำรุงรักษาเครื่องจักร — บันทึกบำรุงรักษาตามวาระ': 'D5',
     'แท็บประวัติการบำรุงรักษาเครื่องยนต์ — เช็คระยะที่ศูนย์บริการ': 'D5', 'แท็บข้อมูลยานพาหนะบนมือถือ — เรียง 1 คอลัมน์ลำดับเดียวกับ desktop กบค. แก้ไขเครื่องมือกลได้': 'D5',
     // 12 พ.ย. 2569 popup เพิ่ม/แก้ไขเครื่องมือกล = D8 · บันทึกสำเร็จกลับหน้ารายละเอียด D5
     'popup เพิ่มเครื่องมือกล — กบค. กดเพิ่มบนการ์ดของคันที่ยังไม่มีข้อมูล ช่องว่าง รหัสทรัพย์สินย่อยตั้งต้น 0001': 'A7 D8', 'popup แก้ไขเครื่องมือกล — ค่าเดิมของเครื่องเป็นค่าตั้งต้น ช่องที่ไม่มีข้อมูลว่าง': 'A7 D8',
