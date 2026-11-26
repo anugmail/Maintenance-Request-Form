@@ -23,7 +23,7 @@ const DIRECT = ['Sidebar navigation', 'Header navigation', 'Page header', 'Secti
   'add-24-300-round', 'filter_list-24-400-round', 'more_horiz-20-400-round', 'delete-24-300-round', 'search-24-300-round', 'keyboard_arrow_right-20-400-round',
   'cloud_upload-24-300-round', 'stylus-24-300-round', 'check-24-300-round', 'quick_reference_all-24-300-round', 'description-24-300-round',
   'calendar_month-24-300-round', 'download-24-300-round', 'paid-24-300-round', 'close-24-300-round', 'arrow_right_alt-24-300-round'];
-const NESTED = ['_Dropdown menu item', 'Nav button', 'Tab item', 'Sort icon', 'Badge outline with remove icon', 'Button groups pagination item', 'Tertiary brand button', 'Primary danger button',
+const NESTED = ['_Dropdown menu item', 'Nav button', 'Tab item', 'Sort icon', 'Badge outline with remove icon', 'Button groups pagination item', 'Tertiary brand button', 'Tertiary danger button', 'Primary danger button',
   '_Content item base', '_File upload item base', 'Checkbox', 'Badge outline', 'Mobile table item', 'Table cell', 'Table header cell', 'List with checkbox', 'List with checkbox item', 'List header item',
   '_Notification item base', 'Status', 'Card item base', 'Dropdown list item', 'Featured icon'];
 const LOCAL_OPTIONAL = ['Device Type', 'Component 1', 'Header'];
@@ -702,49 +702,83 @@ async function registry(name, o) {
   if (o.toast) notify(scr, o.toast);
   return scr;
 }
-/* หน้าข้อมูลยานพาหนะ (ปลายทางลิงก์เลขทะเบียน · /vehicle/?id=) — ซ้าย: ข้อมูลทั่วไป · ขวา: รูปยานพาหนะ · เครื่องมือกล · ประวัติการตรวจ ปจ.2 (การ์ดต่อการตรวจ) */
+/* หน้าข้อมูลยานพาหนะ (ปลายทางลิงก์เลขทะเบียน · /vehicle/?id=) ตามเว็บ src/app/vehicle/page.tsx + _lib/MachineSection.tsx (26 พ.ย. 2569)
+   ซ้าย: ข้อมูลทั่วไป · ขวา: รูปยานพาหนะ · เครื่องมือกล · การตรวจ ปจ.2 ครั้งล่าสุด
+   เครื่องมือกล: หัว section มี "เพิ่ม" (Tertiary brand) เมื่อมีเครื่องแล้ว · การ์ดละเครื่อง มี "ลบ" (Tertiary danger · หน้าต่างยืนยัน) + "แก้ไข" (Tertiary brand) · พิกัดยกเป็นตัน
+   ยังไม่มีเครื่อง = กล่องแบบบัตรเติมน้ำมันว่าง (ภาพ + กล่องเทา + Secondary button "เพิ่ม") · การตรวจ ปจ.2 แสดงเฉพาะครั้งล่าสุด 1 กล่อง (Notion ข้อ 118) */
+const machineOf = (id) => {   // defaultMachines() ของเว็บ (src/lib/mock/machines.ts): ยี่ห้อ/รุ่นจากยานพาหนะ · พิกัดยก = liftTon ?? 0.2 ตัน · HC = 4 หลักท้ายทะเบียน · ชั่วโมงคิดจากเลขทะเบียน
+  const v = V[id], n = Number(v[0].split(' ')[0].replace(/\D/g, '')), [brand, ...rest] = v[9].split(' ');
+  const type = /สว่าน/.test(v[2]) ? 'สว่านขุดเจาะ' : /เครน/.test(v[2]) ? 'เครน' : /กระเช้า/.test(v[2]) ? 'กระเช้า' : 'อื่นๆ';
+  return { type, brand, model: rest.join(' '), lift: (LIFT_TON[id] != null ? LIFT_TON[id] : 0.2), asset: '5000' + String(n % 1e8).padStart(8, '0'), sub: '0001',
+    hc: type === 'กระเช้า' || type === 'เครน' ? 'HC - ' + String(n).slice(-4) : '', eh: 2000 + (n * 397) % 6000, mh: 800 + (n * 211) % 3000 };
+};
+const LIFT_TON = { v04: 30, v09: 25, v16: 6.1, v19: 30, v21: 4.15, v42: null, v58: 12.72 };
+const nf = (x) => x == null || x === '' ? '-' : Number(x).toLocaleString('en-US', { maximumFractionDigits: 2 });
+/* การตรวจ ปจ.2 ครั้งล่าสุด (ทะเบียน ปจ.2 · REG): [วันที่ตรวจ, ผล, กำหนดตรวจครั้งต่อไป, ไฟล์] */
+const latestOf = (id) => { const r = REG.find(x => x[0] === id); if (!r || !r[1]) return null; return [r[1], r[2], r[3], r[2] === 'ตรวจไม่ได้' ? 'หนังสือรับรอง-' + V[id][0].split(' ')[0] + '.pdf' : 'ปจ2-' + V[id][0].split(' ')[0] + '.pdf']; };
+async function labelWithSecondary(title, sub, label) {   // Section label ที่ช่อง Secondary action สลับเป็น Secondary button (viLabelWithButton ของปลั๊กอินบำรุงรักษา)
+  const sl = await sectionLabel(title, { buttons: [{ kind: 'Secondary', text: label, icon: 'add-24-300-round' }] });
+  setProps(sl, { Supporting: true, 'Supporting text': sub });
+  const tb = sl.findAll(n => n.type === 'INSTANCE' && n.name === 'Tertiary button')[0];
+  if (tb) try { tb.swapComponent(main('Secondary button', { State: 'Default', Size: 'md' })); tb.name = 'Secondary button'; setProps(tb, { Text: label, 'Leading icon': true, 'Trailing icon': false, 'Leading icon swap': icon('add-24-300-round') }); } catch (e) { warn('ปุ่มเพิ่มเครื่องมือกล', e); }
+  return sl;
+}
+async function machineCard(x) {   // MachineCard ของเว็บ: Section label ชื่อ + รหัสทรัพย์สิน · ลบ (Tertiary danger) + แก้ไข (Tertiary brand) · Card item row 11 แถว
+  const card = await viCard('Machine card');
+  const sl = await sectionLabel([x.type, x.brand, x.model].filter(Boolean).join(' '), { buttons: [{ kind: 'Primary button', text: 'แก้ไข' }, { kind: 'Secondary', text: 'ลบ' }] });
+  setProps(sl, { Supporting: true, 'Supporting text': 'รหัสทรัพย์สิน ' + x.asset + ' - ' + x.sub });
+  const tb = sl.findAll(n => n.type === 'INSTANCE' && n.name === 'Tertiary button')[0];
+  if (tb) try { tb.swapComponent(main('Tertiary danger button', { State: 'Default' })); tb.name = 'Tertiary danger button'; setProps(tb, { Text: 'ลบ', 'Leading icon': false, 'Trailing icon': false }); } catch (e) { warn('ปุ่มลบเครื่องมือกล', e); }
+  add(card, sl, 'h');
+  [['ประเภทเครื่องมือกล', x.type], ['ยี่ห้อ', x.brand], ['รุ่น', x.model], ['พิกัดยก (ตัน)', nf(x.lift)], ['รหัสทรัพย์สิน', x.asset], ['รหัสทรัพย์สินย่อย', x.sub],
+    ['ชั่วโมงเครื่องยนต์', nf(x.eh)], ['ชั่วโมงเครื่องจักร', nf(x.mh)], ['หมายเลข HC', x.hc || '-'], ['หมายเลขประจำเครื่องจักร (Serial No.)', '-'], ['หมายเลขเครื่องยนต์ (ส่วนเครื่องจักร)', '-']]
+    .forEach(([l, val]) => add(card, viCardRow(l, val), 'h'));
+  return card;
+}
 async function vehiclePage(name, o) {
   o = o || {};
-  const id = o.id || 'v18', v = V[id];
+  const id = o.id || 'v17', v = V[id], x = o.noMachine ? null : machineOf(id), last = o.noHistory ? null : latestOf(id);
   const { scr, page } = await shell(name, { title: v[0], back: true, root: 'ข้อมูลพนักงานและยานพาหนะ', crumbs: ['ข้อมูลยานพาหนะ', v[0]], badge: ['พร้อมใช้งาน', 'Success'] });
   const left = [viSection([await sectionLabel('ข้อมูลทั่วไป'), kv([['ทะเบียน', v[0]], ['รหัสข้างยานพาหนะ', v[1]], ['ประเภทยานพาหนะ', v[2]], ['ยี่ห้อ / รุ่น (เครื่องมือกล)', v[9]], ['สังกัด', v[3]], ['ผู้ครอบครอง', v[4]], ['เบอร์ติดต่อ', v[5]], ['ผู้ดูแลยานพาหนะ', ADMIN[v[3]][0]]], 2)])];
   const img = inst('Images', { Size: 'md', Type: 'Empty' });
   const right = [viSection([await sectionLabel('รูปยานพาหนะ'), img])];
-  if (o.machine) {
-    const card = await viCard('Machine card');
-    const sl = await sectionLabel('เครื่องมือกล ' + v[9], { buttons: [{ kind: 'Primary button', text: 'แก้ไข' }] }); setProps(sl, { Supporting: true, 'Supporting text': 'รหัสทรัพย์สิน 500000123456 - 0001' }); add(card, sl, 'h');
-    [['ประเภทเครื่องมือกล', 'กระเช้า'], ['ยี่ห้อ', v[9].split(' ')[0]], ['รุ่น', v[9].split(' ').slice(1).join(' ')], ['พิกัดยก (กก.)', '230'], ['รหัสทรัพย์สิน', '500000123456'], ['รหัสทรัพย์สินย่อย', '0001'],
-      ['ชั่วโมงเครื่องยนต์', '4,210'], ['ชั่วโมงเครื่องจักร', '1,380'], ['หมายเลข HC', 'HC - 9001'], ['หมายเลขประจำเครื่องจักร (Serial No.)', '-'], ['หมายเลขเครื่องยนต์ (ส่วนเครื่องจักร)', '-']].forEach(([l, x]) => add(card, viCardRow(l, x), 'h'));
-    right.push(viSection([await sectionLabel('เครื่องมือกล (1)'), card]));
-  } else {
+  if (x) right.push(viSection([await sectionLabel('เครื่องมือกล', { buttons: [{ kind: 'Primary button', text: 'เพิ่ม', icon: 'add-24-300-round' }] }), await machineCard(x)]));
+  else {
     const card = await viCard('Machine card · ว่าง', 'HORIZONTAL');
     const im = inst('Images', { Size: 'sm', Type: 'Empty' }); im.resize(108, 108); card.appendChild(im);
     const box = await viSubtle(frame('Content', 'VERTICAL', { gap: 8, pad: [12, 16] }));
-    const sl = await sectionLabel('ไม่มีเครื่องมือกล', { buttons: [{ kind: 'Primary button', text: 'เพิ่ม', icon: 'add-24-300-round' }] }); setProps(sl, { Supporting: true, 'Supporting text': 'ยานพาหนะคันนี้ยังไม่มีข้อมูลเครื่องมือกล' }); add(box, sl, 'h');
+    add(box, await labelWithSecondary('ไม่มีเครื่องมือกล', 'ยานพาหนะคันนี้ยังไม่มีข้อมูลเครื่องมือกล', 'เพิ่ม'), 'h');
     card.appendChild(box); box.layoutGrow = 1;
     right.push(viSection([await sectionLabel('เครื่องมือกล'), card]));
   }
-  const hist = id === 'v18' ? [['17/11/2569', 'ตรวจไม่ได้', '12/12/2569', 'หนังสือรับรอง-72-3302.pdf'], ['12/06/2569', 'ผ่าน', '12/12/2569', 'ปจ2-72-3302.pdf']] : [['12/11/2569', 'ผ่าน', '12/05/2570', 'ปจ2-' + v[0].split(' ')[0] + '.pdf']];
-  const cards = [];
-  for (const h of hist) { const c = await viCard('Safety card'); [['วันที่ตรวจ', h[0]], ['ผลการตรวจ', { pill: [h[1], RES_C[h[1]]] }], ['กำหนดตรวจครั้งต่อไป', h[2]], ['รอบตรวจประจำ', v[7] + ' เดือน']].forEach(([l, x]) => add(c, viCardRow(l, x), 'h'));
-    add(c, await upload('เอกสาร', [{ name: h[3], size: '1.1 MB' }], { readonly: true }), 'h'); cards.push(c); }
-  right.push(viSection([await sectionLabel('ประวัติการตรวจ ปจ.2 (' + hist.length + ')')].concat(cards)));
+  if (last) {
+    const c = await viCard('Safety card');
+    [['วันที่ตรวจ', last[0]], ['ผลการตรวจ', { pill: [last[1], RES_C[last[1]]] }], ['กำหนดตรวจครั้งต่อไป', last[2]], ['รอบตรวจประจำ', v[7] + ' เดือน'], ['เอกสาร', ' ']].forEach(([l, val]) => add(c, viCardRow(l, val), 'h'));
+    add(c, inst('_File upload item base', { State: 'Completed' }, { 'File name': last[3], 'File size': '1.1 MB', 'Progress bar': false, Actions: true, 'Download action': true, 'Delete action': false }), 'h');
+    right.push(viSection([await sectionLabel('การตรวจ ปจ.2 ครั้งล่าสุด'), c]));
+  } else {
+    const box = await viSubtle(frame('Content', 'VERTICAL', { gap: 8, pad: [12, 16] }));
+    const sl = await sectionLabel('ไม่มีประวัติการตรวจ ปจ.2'); setProps(sl, { Supporting: true, 'Supporting text': 'ยานพาหนะคันนี้ยังไม่มีผลการตรวจ ปจ.2' }); add(box, sl, 'h');
+    right.push(viSection([await sectionLabel('การตรวจ ปจ.2 ครั้งล่าสุด'), box]));
+  }
   const out = col('Vehicle info', [], 24);
   if (MOB) left.concat(right).forEach(k => add(out, k, 'h'));
   else { const two = frame('Row', 'HORIZONTAL', { gap: 24 }); const l = col('Column', left, 24), r = col('Column', right, 24); two.appendChild(l); l.layoutGrow = 1; two.appendChild(r); r.counterAxisSizingMode = 'FIXED'; r.resize(526, r.height); add(out, two, 'h'); }
   try { img.layoutSizingHorizontal = 'FILL'; img.resize(img.width, MOB ? 278 : 395); } catch (e) { /* ขนาดตาม component */ }
   add(page, out, 'h');
-  if (o.machineModal) {
-    const x = o.machine ? { type: 'กระเช้า', brand: v[9].split(' ')[0], model: v[9].split(' ').slice(1).join(' '), lift: '230', asset: '500000123456', sub: '0001', eh: '4210', mh: '1380', hc: 'HC - 9001' } : { type: '', brand: '', model: '', lift: '', asset: '', sub: '0001', eh: '', mh: '', hc: '' };
-    const err = o.machineModal === 'error';
-    const f = (k, label, ph, opt, msg) => field(label, x[k], { placeholder: ph, optional: !!opt, error: err && !x[k] && msg ? msg : '' });
-    const grid = col('Content', [row('Row', [dropdown('ประเภทเครื่องมือกล', x.type, { placeholder: 'เลือกประเภทเครื่องมือกล', error: err && !x.type ? 'กรุณาเลือกประเภทเครื่องมือกล' : '' }), f('lift', 'พิกัดยก (กก.)', 'เช่น 200', false, 'กรุณาระบุพิกัดยกเป็นตัวเลขมากกว่า 0')]),
+  if (o.machineModal) {   // MachineModal ของเว็บ: เพิ่ม = ช่องว่าง (รหัสทรัพย์สินตั้งต้น = ของเครื่องแรก · รหัสย่อยถัดไป) · แก้ไข = ค่าเดิม · พิกัดยกเป็นตัน
+    const edit = o.machineModal === 'edit', base = machineOf(id), err = o.machineModal === 'error';
+    const d = edit ? { type: base.type, brand: base.brand, model: base.model, lift: String(base.lift), asset: base.asset, sub: base.sub, eh: String(base.eh), mh: String(base.mh), hc: base.hc }
+      : { type: '', brand: '', model: '', lift: '', asset: x ? base.asset : '', sub: x ? '0002' : '0001', eh: '', mh: '', hc: '' };
+    const f = (k, label, ph, opt, msg) => field(label, d[k], { placeholder: ph, optional: !!opt, error: err && !d[k] && msg ? msg : '' });
+    const grid = col('Content', [row('Row', [dropdown('ประเภทเครื่องมือกล', d.type, { placeholder: 'เลือกประเภทเครื่องมือกล', error: err && !d.type ? 'กรุณาเลือกประเภทเครื่องมือกล' : '' }), f('lift', 'พิกัดยก (ตัน)', 'เช่น 3.25', false, 'กรุณาระบุพิกัดยกเป็นตัวเลขมากกว่า 0')]),
       row('Row', [f('brand', 'ยี่ห้อ', 'ระบุยี่ห้อ', false, 'กรุณาระบุยี่ห้อ'), f('model', 'รุ่น', 'ระบุรุ่น', false, 'กรุณาระบุรุ่น')]), row('Row', [f('asset', 'รหัสทรัพย์สิน', '12 หลัก', false, 'กรุณาระบุรหัสทรัพย์สิน 12 หลัก'), f('sub', 'รหัสทรัพย์สินย่อย', '4 หลัก เช่น 0001')]),
       row('Row', [f('eh', 'ชั่วโมงเครื่องยนต์', 'ชั่วโมง', false, 'กรุณาระบุชั่วโมงเครื่องยนต์เป็นจำนวนเต็มตั้งแต่ 0'), f('mh', 'ชั่วโมงเครื่องจักร', 'ชั่วโมง', false, 'กรุณาระบุชั่วโมงเครื่องจักรเป็นจำนวนเต็มตั้งแต่ 0')]),
       row('Row', [f('hc', 'หมายเลข HC', 'เช่น HC - 9001', true), field('หมายเลขประจำเครื่องจักร (Serial No.)', '', { placeholder: 'ระบุหมายเลขประจำเครื่องจักร', optional: true })]),
       row('Row', [field('หมายเลขเครื่องยนต์ (ส่วนเครื่องจักร)', '', { placeholder: 'ระบุหมายเลขเครื่องยนต์ของเครื่องจักร', optional: true }), frame('Spacer', 'VERTICAL')])], 16);
-    await popupModal(scr, { title: o.machine ? 'แก้ไขเครื่องมือกล' : 'เพิ่มเครื่องมือกล', sub: v[0], w: 800, ok: 'บันทึก', body: [grid] });
+    await popupModal(scr, { title: edit ? 'แก้ไขเครื่องมือกล' : 'เพิ่มเครื่องมือกล', sub: v[0], w: 800, ok: 'บันทึก', body: [grid] });
   }
+  if (o.del && x) await confirm(scr, { danger: true, title: 'ลบเครื่องมือกล', sub: [x.type, x.brand, x.model].join(' ') + ' · รหัสทรัพย์สิน ' + x.asset + ' - ' + x.sub + ' จะถูกลบ', ok: 'ลบ' });
   if (o.toast) notify(scr, o.toast);
   return scr;
 }
@@ -865,13 +899,16 @@ const SCENARIOS = [
     ['อัปโหลดผลนอกแผน', () => registry('S12 อัปโหลดว่าง', { upload: { car: 'v03' } })],
     ['อัปโหลดผลนอกแผน กรอกครบ', () => registry('S12 อัปโหลดครบ', { upload: { car: 'v03', filled: true } })],
     ['บันทึกสำเร็จ', () => registry('S12 บันทึกสำเร็จ', { rows: [['v03', '20/11/2569', 'ผ่าน', '20/05/2570', '-']].concat(REG.filter(r => r[0] !== 'v03')), toast: 'บันทึกผลตรวจนอกแผน 72-6079 สระบุรี แล้ว · ทะเบียน ปจ.2 อัปเดตแล้ว' })]]],
-  ['S13 · ข้อมูลยานพาหนะ (เครื่องมือกล · ประวัติการตรวจ ปจ.2)', [
-    ['ยังไม่มีเครื่องมือกล', () => vehiclePage('S13 ไม่มีเครื่องมือกล', { id: 'v18' })],
-    ['เพิ่มเครื่องมือกล', () => vehiclePage('S13 เพิ่มเครื่องมือกล', { id: 'v18', machineModal: 'new' })],
-    ['เพิ่มเครื่องมือกล ข้อมูลไม่ครบ', () => vehiclePage('S13 เพิ่มไม่ครบ', { id: 'v18', machineModal: 'error' })],
-    ['มีเครื่องมือกล', () => vehiclePage('S13 มีเครื่องมือกล', { id: 'v17', machine: true })],
-    ['แก้ไขเครื่องมือกล', () => vehiclePage('S13 แก้ไขเครื่องมือกล', { id: 'v17', machine: true, machineModal: 'edit' })],
-    ['บันทึกสำเร็จ', () => vehiclePage('S13 บันทึกสำเร็จ', { id: 'v17', machine: true, toast: 'บันทึกเครื่องมือกลสำเร็จ' })]]],
+  ['S13 · ข้อมูลยานพาหนะ (เครื่องมือกล · การตรวจ ปจ.2 ครั้งล่าสุด)', [
+    ['มีเครื่องมือกล · ผลตรวจครั้งล่าสุด', () => vehiclePage('S13 มีเครื่องมือกล', { id: 'v17' })],
+    ['ผลตรวจครั้งล่าสุด ตรวจไม่ได้', () => vehiclePage('S13 ตรวจไม่ได้', { id: 'v18' })],
+    ['ไม่มีประวัติการตรวจ', () => vehiclePage('S13 ไม่มีประวัติ', { id: 'v01' })],
+    ['เพิ่มเครื่องมือกลเครื่องที่ 2', () => vehiclePage('S13 เพิ่มเครื่องที่ 2', { id: 'v17', machineModal: 'new' })],
+    ['แก้ไขเครื่องมือกล', () => vehiclePage('S13 แก้ไขเครื่องมือกล', { id: 'v17', machineModal: 'edit' })],
+    ['บันทึกสำเร็จ', () => vehiclePage('S13 บันทึกสำเร็จ', { id: 'v17', toast: 'บันทึกเครื่องมือกลสำเร็จ' })],
+    ['ยืนยันลบเครื่องมือกล', () => vehiclePage('S13 ลบเครื่องมือกล', { id: 'v17', del: true })],
+    ['ลบแล้ว · ยังไม่มีเครื่องมือกล', () => vehiclePage('S13 ไม่มีเครื่องมือกล', { id: 'v17', noMachine: true, toast: 'ลบเครื่องมือกลแล้ว' })],
+    ['เพิ่มเครื่องมือกล ข้อมูลไม่ครบ', () => vehiclePage('S13 เพิ่มไม่ครบ', { id: 'v17', noMachine: true, machineModal: 'error' })]]],
   ['S14 · ผู้ดูแลยานพาหนะรับแจ้งเตือนนัดตรวจและผลตรวจ', [
     ['หน้าหลัก', () => caretaker('S14 หน้าหลัก')],
     ['แจ้งเตือนที่กระดิ่ง', () => caretaker('S14 แจ้งเตือน', { bell: true })]]],
