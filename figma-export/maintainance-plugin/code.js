@@ -1,4 +1,4 @@
-/* ⚠ ไฟล์นี้ประกอบอัตโนมัติจาก plugin-lib/core.js + maintainance-plugin/screens.js + Diagram/01-บำรุงรักษาตามวาระ/14-บำรุงรักษา-userflow.md ด้วย build-plugin.js — แก้ที่ต้นทางแล้วรัน  node figma-export/build-plugin.js maintainance-plugin  (2026-11-25) */
+/* ⚠ ไฟล์นี้ประกอบอัตโนมัติจาก plugin-lib/core.js + maintainance-plugin/screens.js + Diagram/01-บำรุงรักษาตามวาระ/14-บำรุงรักษา-userflow.md ด้วย build-plugin.js — แก้ที่ต้นทางแล้วรัน  node figma-export/build-plugin.js maintainance-plugin  (2026-11-26) */
 
 /* ============================================================================
    plugin-lib/core.js — โค้ดส่วนกลางของปลั๊กอินสร้างจอจาก component จริง (แยกจาก overhaul2-plugin 20 ต.ค. 2569)
@@ -2383,6 +2383,7 @@ const planRow = (p, view) => (view ? [p[0], PLAN_UNIT[p[0]] || UNITS[0]] : [p[0]
 async function listScreen(name, o) {
   o = o || {};
   const { scr, page } = await shell(name, { title: 'บำรุงรักษาตามวาระ' });
+  add(page, await tabs([['บำรุงรักษาตามวาระ', null], ['Safety Inspection', null]], 0), 'h');   // 26 พ.ย. 2569 R124 แท็บคู่กับต้นแบบ Safety Inspection · แท็บ Safety Inspection หน้าตาปกติแต่กดไม่ได้ในงานบำรุงรักษา (Tab item ไม่มี State=Disabled)
   const sec = col('Section', [], 24); add(page, sec, 'h');
   if (o.empty) {
     const es = inst('Empty state/Data empty'); add(sec, es, 'h');
