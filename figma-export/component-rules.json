@@ -1910,8 +1910,8 @@
     "บำรุงรักษาตามวาระ",
     "Safety Inspection"
    ],
-   "source": "เจ้าของงาน 26 พ.ย. 2569 (BACKLOG ข้อ 101 ของรีโป maintenance-utility-vehicle) \"หมายถึงใน tab ของงานบำรุงรักษาที่จะมี 2 tab นะ ที่ tab ของ safety-inspecyion จะกดไม่ได้ ถ้าเป็นเรื่องบำรุงรักษา\" · เลือกหน้าตาปกติแค่กดไม่ได้ · เฉพาะหน้ารายการแผน · component-rules.md §5.61",
-   "note": "หน้ารายการแผน S1 มี Tabs 2 แท็บใต้หัวหน้า: บำรุงรักษาตามวาระ (Active) · Safety Inspection (กดไม่ได้ในงานบำรุงรักษา · ไลบรารีไม่มี State=Disabled จึงวาดเป็น Default)"
+   "source": "เจ้าของงาน 26 พ.ย. 2569 (BACKLOG ข้อ 101 ของรีโป maintenance-utility-vehicle) \"หมายถึงใน tab ของงานบำรุงรักษาที่จะมี 2 tab นะ ที่ tab ของ safety-inspecyion จะกดไม่ได้ ถ้าเป็นเรื่องบำรุงรักษา\" · เลือกหน้าตาปกติแค่กดไม่ได้ · เฉพาะหน้ารายการแผน · เปลี่ยนเป็นกดข้ามต้นแบบได้ 26 พ.ย. 2569 \"เอาลิงค์ของทั้งหมดมาวางใว้ดีกว่า คือกดอะไรก็ได้ สามารถเล่นได้ทั้งสองเมนู\" (BACKLOG ข้อ 102) · component-rules.md §5.61",
+   "note": "หน้ารายการแผน S1 มี Tabs 2 แท็บใต้หัวหน้า: บำรุงรักษาตามวาระ (Active) · Safety Inspection (Active=False State=Default · บนเว็บกดแล้วไปต้นแบบ Safety Inspection อีกเว็บ)"
   }
  ],
  "displayBox": {
