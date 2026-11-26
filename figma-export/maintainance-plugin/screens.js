@@ -13,7 +13,7 @@
      + flowchart กิจกรรมของ scenario นั้นซ้ายสุดของบล็อก (6 พ.ย. 2569 "อยากให้ flowchart คู่กับ ui ไม่ใช่ user flow" · ไม่มี ACTIVITY ฝังมา = กลับไปใช้ผัง userflow ที่ FLOW_NODES ผูกจอกับกล่อง) · ทุกปุ่มวางบนหน้า "Maintainance" ต่อใต้ของเดิม
    ============================================================================ */
 
-const PLUGIN = { prefix: 'MT', page: 'Maintainance', menu: 'บำรุงรักษาตามวาระ', searchHint: 'ค้นหาเลขที่ MR, ชื่อแผน' };   // toast ขวาบนเสมอ — notify() ใน core (5 พ.ย. 2569)
+const PLUGIN = { prefix: 'MT', page: 'Maintainance', menu: 'บำรุงรักษาตามวาระ', searchHint: 'ค้นหาเลขที่ MR, ชื่อแผน, หน่วยงาน' };   // toast ขวาบนเสมอ — notify() ใน core (5 พ.ย. 2569)
 
 /* ---------- component ที่ใช้ — ขาดตัวไหนหยุด (ไลบรารี) · NESTED = ชิ้นซ้อนใน component อื่น · LOCAL_OPTIONAL = ของไฟล์ Maintain-D ไม่มีก็ใช้แบบสำรอง ---------- */
 const DIRECT = ['Sidebar navigation', 'Header navigation', 'Page header', 'Section header', 'Section label', 'Table', 'Content item row', 'Table header',
@@ -3245,6 +3245,7 @@ const NOTI_ACK = ['Brand', 'ปิดงานบำรุงรักษา ' +
 /* S12 ผลตรวจน้ำมันไฮดรอลิกไม่ผ่าน → แจ้งผู้ดูแลยานพาหนะของคันนั้น ทางกระดิ่งในระบบ (เจ้าของงาน 13 พ.ย. 2569 "ผลตรวจน้ำมันไม่ผ่านต้องส่งเตือนหาเจ้าของรถด้วย" · R115)
    จุดสถานะ Error · กดแล้วเปิดรายละเอียดยานพาหนะคันนั้น แท็บประวัติการบำรุงรักษาเครื่องจักร (เว็บ oilFailNoti) · ผลผ่านไม่ส่ง · ข้อความผู้บันทึก (toast) คงเดิม */
 const NOTI_OIL_FAIL = ['Error', 'ผลตรวจน้ำมันไฮดรอลิก ' + TRIP_CARS[JOB_I][0] + ' ไม่ผ่าน', '5 นาทีที่แล้ว'];
+const NOTI_OIL_FAIL_KRY = ['Error', 'ผลตรวจน้ำมันไฮดรอลิก ' + TRIP_CARS[JOB_I][0] + ' ในเขต ' + TRIP_CARS[JOB_I][2].split(' ')[0] + ' ไม่ผ่าน', '5 นาทีที่แล้ว'];   // 26 พ.ย. 2569 BACKLOG ข้อ 103 ข้อความของ กรย. บอกเขต
 let ACK_VAR;
 async function ackRow(off) {   // ย้อนกลับ + รับทราบ (เขียว) — Primary button ของไฟล์ Component พื้นผูกตัวแปร Color/surface/success (#17B26A) + ไอคอนนำ check-24-300-round
   // ตามปุ่ม "ตรวจแล้ว" / "ขึ้น SAP แล้ว" ของหน้า 5.14 - 5.15 Cost & Expense Check · UI Release#2 · Disabled (ยังไม่ประเมิน) = State=Disabled ของไลบรารี ไม่ทาเขียว
@@ -3514,7 +3515,7 @@ const S1_SUBS = [
     ['ออกแล้ว — รายการแผน ไม่มีแผนใหม่', () => listScreen('S1 ออกไม่บันทึก', { rows: ownPlans(UNITS[0]) })]]],
   ['บันทึกและส่งอนุมัติไม่สำเร็จ', [
     ['กำหนดอะไหล่ครบ 3/3 — กดบันทึกและส่งอนุมัติ', () => planForm('S1 ก่อนบันทึก', IN3({ q: 1 }))],
-    ['บันทึกไม่สำเร็จ — toast ผิดพลาด ค่าที่กรอกยังอยู่ กดบันทึกใหม่ได้', async () => { const s = await planForm('S1 บันทึกไม่สำเร็จ', IN3({ q: 1 })); notify(s, 'general error', true); return s; }]]],
+    ['บันทึกไม่สำเร็จ — toast ผิดพลาด ค่าที่กรอกยังอยู่ กดบันทึกใหม่ได้', async () => { const s = await planForm('S1 บันทึกไม่สำเร็จ', IN3({ q: 1 })); notify(s, 'บันทึกไม่สำเร็จ', true); return s; }]]],
   /* ---------- 20 พ.ย. 2569 ไฟล์ 34 ข้อ 4 (ก) R119 ย้ายและจัดเข้าไตรมาสหลายคัน (เว็บ PlanForm 299231e) — ต่อท้าย รหัสเรื่องย่อยเดิมไม่เลื่อน ---------- */
   ['จัดยานพาหนะหลายคันเข้าไตรมาสจากแท็บทั้งหมด', [
     ['แท็บทั้งหมด — ติ๊ก 82-6789 82-4410 84-5521 ปุ่มกำหนดอะไหล่ (3) และจัดเข้าไตรมาส (2) นับเฉพาะคันที่ยังไม่จัด', () => planForm('S1 ติ๊กจัดเข้าไตรมาส', IN3({ alloc: plus(A_Q1, { 3: 0, 5: 0 }), ticked: [0, 3, 5] }))],
@@ -3602,7 +3603,8 @@ const SCENARIOS = [
     ['เลือกวันดำเนินการ — ปฏิทินเลือกได้เฉพาะช่วงวันเดินทาง วันนอกช่วงกดไม่ได้', async () => { const s = await tripForm('S6 เลือกวันดำเนินการ', { values: TRIP_FILLED, sel: TRIP_SEL, locs: TRIP_LOCS, phones: TRIP_PHONES }); await tripCarEdit(s, 0, TRIP_PHONES, TRIP_LOCS, { trip: TRIP_DATES, pick: TRIP_WORKS[0] }); return s; }],
     ['บันทึกวันดำเนินการแล้ว — หลายคันวันเดียวกันได้ คันที่ไม่แก้คงทั้งช่วงวันเดินทาง', () => tripForm('S6 บันทึกวันดำเนินการแล้ว', { values: TRIP_FILLED, sel: TRIP_SEL, locs: TRIP_LOCS, phones: TRIP_PHONES, works: TRIP_WORKS })],
     // 11 พ.ย. 2569 เจ้าของงาน เพิ่มยานพาหนะเข้าไตรมาสได้จนกว่าทุกคันในไตรมาสปิดงาน (R93) — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน (E.26)
-    ['ทุกคันในไตรมาสปิดงานแล้ว (รวมบำรุงรักษาไม่ได้) — ปุ่มเพิ่มยานพาหนะกดไม่ได้', () => tripList('S6 ไตรมาสปิดงานครบทุกคัน', { trips: [tripAs(TRIP_1, 'done'), tripAs(TRIP_2, 'done')], jobs: Q_DONE_JOBS })]]],
+    ['ทุกคันในไตรมาสปิดงานแล้ว (รวมบำรุงรักษาไม่ได้) — ปุ่มเพิ่มยานพาหนะกดไม่ได้', () => tripList('S6 ไตรมาสปิดงานครบทุกคัน', { trips: [tripAs(TRIP_1, 'done'), tripAs(TRIP_2, 'done')], jobs: Q_DONE_JOBS })],
+    ['ฟอร์มแผนเดินทาง เมนู … เลือกลบ — ยืนยันการเอายานพาหนะออกจากแผนเดินทาง', async () => { const s = await tripForm('S6 ยืนยันเอายานพาหนะออกจากแผนเดินทาง', { sel: TRIP_SEL, locs: TRIP_LOCS, phones: TRIP_PHONES }); await confirm(s, CAR_REMOVE_CONFIRM(TRIP_CARS[TRIP_OUT])); return s; }]]],   // 26 พ.ย. 2569 ไฟล์ 34 · BACKLOG ข้อ 103 ฟอร์มแผนเดินทางถามก่อนเอายานพาหนะออก ต่อท้ายบล็อก รหัสเดิมไม่เลื่อน
   ['S7 · ผู้อนุมัติ ตรวจสอบและอนุมัติแผนเดินทาง', [
     ['รายการแผนเดินทางรออนุมัติ', () => tripReviewList('S7 รออนุมัติ', [TRIP_1, TRIP_V, TRIP_OTHER])],
     ['รายละเอียดแผนเดินทาง — ปุ่มส่งกลับแก้ไขและอนุมัติที่หัวหน้า', () => tripReview('S7 รายละเอียด', {})],   // 20 พ.ย. 2569 แบบ Overhaul ถาวร (ตาม S2)
@@ -3732,7 +3734,8 @@ const SCENARIOS = [
     ['เลือกผล + แนบไฟล์ (ถ้ามี)', () => workDetail('S12 ผลการทดสอบกรอกครบ', { res: { sel: 1, files: [OIL_FILE] } })],
     ['บันทึกสำเร็จ — แสดงผลที่บันทึก แก้ได้ภายหลัง', async () => { const s = await workDetail('S12 บันทึกผลสำเร็จ', { res: { sel: 1, files: [OIL_FILE], saved: true } }); notify(s, 'บันทึกผลการทดสอบน้ำมันไฮดรอลิกสำเร็จ'); return s; }],
     ['กลับหน้าแผนเดินทาง — ป้ายน้ำมันไม่ผ่าน', () => tripDetail('S12 น้ำมันไม่ผ่าน', { st: JOB_MIX, oil: { [JOB_I]: 'fail' } })],
-    ['ผู้ดูแลยานพาหนะ — แผงแจ้งเตือน ผลตรวจน้ำมันไฮดรอลิกไม่ผ่าน กดแล้วเปิดรายละเอียดยานพาหนะ', async () => { const s = await ackList('S12 ผู้ดูแลยานพาหนะ แผงแจ้งเตือน', {}); bell(s, true); await notiPanel(s, [NOTI_OIL_FAIL, NOTI_OLD], '1 แจ้งเตือนใหม่'); return s; }]]],   // 13 พ.ย. 2569 R115 ต่อท้ายบล็อก รหัสเดิมไม่เลื่อน
+    ['ผู้ดูแลยานพาหนะ — แผงแจ้งเตือน ผลตรวจน้ำมันไฮดรอลิกไม่ผ่าน กดแล้วเปิดรายละเอียดยานพาหนะ', async () => { const s = await ackList('S12 ผู้ดูแลยานพาหนะ แผงแจ้งเตือน', {}); bell(s, true); await notiPanel(s, [NOTI_OIL_FAIL, NOTI_OLD], '1 แจ้งเตือนใหม่'); return s; }],   // 13 พ.ย. 2569 R115 ต่อท้ายบล็อก รหัสเดิมไม่เลื่อน
+    ['กรย. — แผงแจ้งเตือน ผลตรวจน้ำมันไฮดรอลิกไม่ผ่านของยานพาหนะในเขต กดแล้วเปิดรายละเอียดยานพาหนะ', async () => { const s = await tripSeenList('S12 กรย. แผงแจ้งเตือน', false); bell(s, true); await notiPanel(s, [NOTI_OIL_FAIL_KRY, NOTI_OLD], '1 แจ้งเตือนใหม่'); return s; }]]],   // 26 พ.ย. 2569 BACKLOG ข้อ 103 กรย. ของเขตได้แจ้งเตือนด้วย ต่อท้ายบล็อก
   /* S13 ปรับ 10 พ.ย. 2569 (เจ้าของงาน Q19 Q23 Q28 · ผู้ดูแลยานพาหนะรับทราบ + ประเมินรายคัน) — รหัส L.1–L.5 เดิม (ยังไม่เคยรีวิว) เปลี่ยนเนื้อ · L.6 ต่อท้าย
      11 พ.ย. 2569 (R94) ประเมินเป็นแบบประเมินความพึงพอใจของ กบค. → รอบต่อมา เจ้าของงาน "ย้ายออกจาก S13 ไปอยู่ view ใหม่" ⇒ S13 รับทราบอย่างเดียว · ประเมินอยู่ S27 บล็อก Y → 12 พ.ย. 2569 ย้ายเป็นเรื่องแยก satisfaction-plugin (R105) คันที่รับทราบแล้วเข้ารายการประเมินของเรื่องนั้น
      L.2 ปุ่มรับทราบกดได้ · L.4 รายการหลังรับทราบ (เดิมประเมินแล้ว) · L.7 บทบาทอื่นดูอย่างเดียว (เดิมตอบยังไม่ครบ) — รหัสเดิมไม่เลื่อน
@@ -3763,7 +3766,7 @@ const SCENARIOS = [
     ['เพิ่มยานพาหนะเข้าแผนในฟอร์มแก้ไข — ป้ายยังไม่จัดไตรมาส ปุ่มบันทึกและส่งอนุมัติกดไม่ได้', () => planForm('S19 เพิ่มเข้าแผนในฟอร์มแก้ไข', Object.assign({ alert: ALERT_RETURNED }, EDIT_FORM, { q: 0, alloc: Object.assign(without(A_ALL, 9), { 10: 0 }) }))],   // 13 พ.ย. 2569 R111 แทนจอ "เอาภาคหรือตัวกรองออก" (ตัวกรองในฟอร์มเลิก 12 พ.ย. R109 · จอเดิมไม่มีอะไรต่างจากฟอร์มแก้ไข)
     ['“ยกเลิก” → ยืนยันการออก กรณีที่มีการแก้ไขเกิดขึ้น', async () => { const s = await planForm('S19 ยืนยันการออก', EDIT_FORM); await confirm(s, EXIT_CONFIRM('ข้อมูลที่แก้ไขไว้จะไม่ถูกบันทึก')); return s; }],
     ['ยืนยันการแก้ไขแผน', async () => { const s = await planForm('S19 ยืนยันการแก้ไข', EDIT_FORM); await confirm(s, EDIT_CONFIRM); return s; }],
-    ['บันทึกไม่สำเร็จ', async () => { const s = await planForm('S19 บันทึกไม่สำเร็จ', EDIT_FORM); notify(s, 'general error', true); return s; }],
+    ['บันทึกไม่สำเร็จ', async () => { const s = await planForm('S19 บันทึกไม่สำเร็จ', EDIT_FORM); notify(s, 'บันทึกไม่สำเร็จ', true); return s; }],
     ['บันทึกสำเร็จ — รออนุมัติ', async () => { const s = await listScreen('S19 บันทึกสำเร็จ', { rows: [NEW_PLAN].concat(ownPlans(UNITS[0])) }); notify(s, 'บันทึกการแก้ไขแผนและส่งอนุมัติสำเร็จ'); return s; }],
     ['แผนอนุมัติแล้ว — เมนู "…" → แก้ไข', async () => { const s = await listScreen('S19 เมนูอนุมัติแล้ว', { rows: [planAs('approved')].concat(ownPlans(UNITS[0])) }); planMenu(s, MENU); return s; }],   // BACKLOG ข้อ 95 R2 แผนอนุมัติแล้วลบได้ ⇒ เมนู ดู แก้ไข ลบ
     ['แผนอนุมัติแล้ว — ฟอร์มแก้ไขแผน กล่องแผนนี้อนุมัติแล้ว แก้ได้เฉพาะยานพาหนะที่ยังดำเนินการไม่เสร็จ', () => planForm('S19 ฟอร์มอนุมัติแล้ว', APPROVED_FORM)],   // 23 พ.ย. 2569 BACKLOG ข้อ 95 R1 แทน "ฟอร์มแก้ไข ต้องส่งอนุมัติใหม่" (รหัสเดิม R.10) · บันทึกแล้วไป R.15 toast S6
@@ -3795,7 +3798,7 @@ const SCENARIOS = [
     ['ระบุอะไหล่เพิ่มเติม — popup ชื่อ ยี่ห้อ รุ่น รหัส จำนวน หน่วย', () => carPartsScreen('S21 ระบุอะไหล่', { oil: 1, oilSpec: OIL_SPEC, picked: CAR_ADD, manual: {} })],
     ['ระบุอะไหล่เพิ่มเติมแล้ว — อยู่ในรายการ', () => carPartsScreen('S21 ระบุอะไหล่แล้ว', { oil: 1, oilSpec: OIL_SPEC, picked: CAR_ADD, manual: { filled: true } })],
     ['ย้อนกลับ — ยืนยันการออก', async () => { const s = await carPartsScreen('S21 ยืนยันการออก', { oil: 1, oilSpec: OIL_SPEC, picked: CAR_ADD, manual: { filled: true } }); await confirm(s, EXIT_CONFIRM('อะไหล่ที่แก้ไขไว้จะไม่ถูกบันทึก')); return s; }],
-    ['บันทึกไม่สำเร็จ', async () => { const s = await carPartsScreen('S21 บันทึกไม่สำเร็จ', { oil: 1, oilSpec: OIL_SPEC, picked: CAR_ADD, manual: { filled: true } }); notify(s, 'general error', true); return s; }],
+    ['บันทึกไม่สำเร็จ', async () => { const s = await carPartsScreen('S21 บันทึกไม่สำเร็จ', { oil: 1, oilSpec: OIL_SPEC, picked: CAR_ADD, manual: { filled: true } }); notify(s, 'บันทึกไม่สำเร็จ', true); return s; }],
     ['บันทึกสำเร็จ — กลับแท็บไตรมาส 1 ยานพาหนะ 1 คันกำหนดแล้ว อะไหล่ในไตรมาสมีของคันนี้', async () => { const s = await planForm('S21 บันทึกสำเร็จ', Object.assign({ values: FILLED, alloc: A_ALL, q: 1, picks: { 0: CAR_ADD }, oils: { 0: 1 }, manualCars: [0] }, R2)); notify(s, 'บันทึกอะไหล่ของยานพาหนะ ' + CAND[0][0] + ' แล้ว'); return s; }],
     // 6 พ.ย. 2569 เลือกเบิก หรือไม่เบิกอะไหล่ — ต่อท้ายบล็อก รหัสจอเดิมไม่เลื่อน
     ['เลือกเบิกอะไหล่ — คลังอะไหล่และรายการขึ้น ยังไม่เลือกอะไหล่ ปุ่มบันทึกกดไม่ได้', () => carPartsScreen('S21 เลือกเบิกอะไหล่', { draw: 'take' })],
