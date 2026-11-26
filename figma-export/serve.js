@@ -36,6 +36,7 @@ const BOARD_LABELS = [
   { file: 'board-eval-contractor.json', group: 'แบบประเมิน', label: 'ประเมินผู้รับจ้าง · ภาพจอจาก Figma (13 พ.ย. 2569)' },   // 3-figjam-board.js --eval-ui
   { file: 'board-eval-satisfaction.json', group: 'แบบประเมิน', label: 'ประเมินความพึงพอใจ (XCHO) · ภาพจอจาก Figma (13 พ.ย. 2569)' },
   { file: 'board-login-flow.json', group: 'Login และสิทธิ์', label: 'ลำดับ login + ภาพหน้าจริง' },
+  { file: 'board-safety-inspection.json', group: 'Safety Inspection', label: 'แผนตรวจ ปจ.2 · ภาพจอจาก Figma (26 พ.ย. 2569)' },   // ปุ่มส่งภาพจอไป FigJam ของ safety-inspection-plugin เขียนไฟล์นี้
   { file: 'board-login-permission.json', group: 'Login และสิทธิ์', label: 'สิทธิ์ Overhaul ตาม role' },
   { file: 'board-login-ac.json', group: 'Login และสิทธิ์', label: 'AC รายจอ 7 จอ' },
   { file: 'board-ac-overhaul-page1.json', group: 'Overhaul', label: 'AC หน้า 1 รายการแผน' },
