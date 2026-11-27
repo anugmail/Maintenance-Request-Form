@@ -1,0 +1,11 @@
+{
+  "name": "Maintain-D — Safety Inspection (component จริง)",
+  "id": "1472903116188005633",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "permissions": ["teamlibrary"],
+  "networkAccess": { "allowedDomains": ["none"], "devAllowedDomains": ["http://localhost:8124"], "reasoning": "ข้อมูลหน้าจออยู่ใน code.js ทั้งหมด · ส่งภาพจอไป FigJam เขียนลงเครื่องผ่าน serve.js เท่านั้น ไม่ต่อออกอินเทอร์เน็ต" }
+}

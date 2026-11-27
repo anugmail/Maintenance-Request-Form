@@ -1,0 +1,59 @@
+<style>
+  body{font:12px/1.5 -apple-system,"IBM Plex Sans Thai",sans-serif;margin:0;padding:14px;color:#1b1b1b}
+  button{padding:8px 14px;border:0;border-radius:6px;background:#a80689;color:#fff;font:inherit;cursor:pointer;margin:2px 4px 2px 0}
+  p{margin:10px 0 4px}
+  small{color:#475467}
+  .pick{padding:8px 10px;background:#f2f4f7;border-radius:6px}
+  .box{background:#faf7f9;border-left:3px solid #a80689;padding:6px 10px;border-radius:4px}
+  #log{margin-top:10px;height:220px;overflow:auto;background:#faf7f9;border:1px solid #eee;border-radius:6px;padding:8px;white-space:pre-wrap}
+</style>
+<p><b>Safety Inspection — แผนตรวจ ปจ.2</b> · ทุกชิ้นในจอเป็น instance ของ component จริงในไลบรารี · วางบนหน้า <b>"Safety Inspection"</b> ต่อใต้ของเดิม (ไม่มีก็สร้าง)</p>
+<p class="box">จอตามต้นแบบ safety-inspection ครบทุกหน้า · 1 scenario = 1 บล็อกตัวอักษร (A.1 A.2 = state) · Desktop 1440 + Mobile 402</p>
+<p>อุปกรณ์: <label><input type="radio" name="dev" value="both" checked> ทั้งคู่</label> <label><input type="radio" name="dev" value="desktop"> Desktop</label> <label><input type="radio" name="dev" value="mobile"> Mobile</label></p>
+<p><b>สร้างทั้งชุด</b><br><button id="all">สร้างทุก scenario</button></p>
+<p><b>สร้างเฉพาะ scenario ที่เลือก</b><br><span id="pick"></span><br><button id="pickgo" style="background:#1d4ed8">สร้างเฉพาะที่เลือก</button></p>
+<p><b>ส่งภาพจอไป FigJam</b> — จอชุดล่าสุดบนหน้า "Safety Inspection" (Desktop + Mobile) ไปที่ <code>out/figjam/flow-safety-inspection/</code> · ต้องรัน <code>node figma-export/serve.js</code> ค้างไว้ · ส่งเสร็จปลั๊กอินสร้างไฟล์บอร์ดให้เอง แล้วไปเปิด <b>"Maintain-D → FigJam board"</b> ใน FigJam เลือก "Safety Inspection"<br>
+<button id="shots" style="background:#334155">ส่งภาพจอไป FigJam</button></p>
+<p><small>เปลี่ยนไฟล์หรือไลบรารี → เช็คก่อนว่า component ครบ · ปิด-เปิดปลั๊กอินใหม่ทุกครั้งหลังสคริปต์เปลี่ยน</small></p>
+<button id="chk" style="background:#475467">เช็ค component (ไม่สร้างอะไร)</button> <button id="copylog" style="background:#334155">คัดลอก log</button>
+<div id="log"></div>
+<script>
+const send = (type, extra) => { document.getElementById('log').textContent = ''; parent.postMessage({ pluginMessage: Object.assign({ type, devices: document.querySelector('input[name=dev]:checked').value }, extra || {}) }, '*'); };
+document.getElementById('all').onclick = () => send('build');
+document.getElementById('pickgo').onclick = () => send('build-pick', { pick: [...document.querySelectorAll('#pick input:checked')].map(i => +i.value) });
+document.getElementById('shots').onclick = () => send('shots');
+document.getElementById('chk').onclick = () => send('check');
+document.getElementById('copylog').onclick = () => { const ta = document.createElement('textarea'); ta.value = document.getElementById('log').textContent; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e) {} ta.remove(); };
+/* ส่งภาพจอไป FigJam — แบบปลั๊กอินแบบประเมิน (contractor-eval-plugin/ui.html): ภาพทีละจอ → POST เข้า serve.js (out/figjam/<dir>/) → manifest → ไฟล์บอร์ด out/board-safety-inspection.json */
+const SERVE = 'http://localhost:8124/', DIR = 'flow-safety-inspection', BOARD = ['board-safety-inspection.json', 'Safety Inspection', [253, 244, 255]];
+async function postFile(path, body) { const r = await fetch(SERVE + path.split('/').map(encodeURIComponent).join('/'), { method: 'POST', body }); if (!r.ok) throw new Error(path + ' ' + r.status); }
+const logLine = (t) => { const el = document.getElementById('log'); el.textContent += t + '\n'; el.scrollTop = el.scrollHeight; };
+let shotOk = 0, shotErr = 0, shotJobs = [];
+async function writeBoard() {
+  const [file, title, color] = BOARD;
+  try {
+    const sm = await (await fetch(SERVE + 'figjam/' + DIR + '/manifest.json', { cache: 'no-store' })).json();
+    const titles = sm.titles || {}, dev = (x) => x.device || 'desktop', grp = (x) => x.group || x.code.split('.')[0];
+    const sections = [...new Set(sm.shots.map(grp))].map((g) => {
+      const shots = sm.shots.filter((x) => grp(x) === g), f = shots[0], codes = [...new Set(shots.map((x) => x.code))], hasMob = shots.some((x) => dev(x) === 'mobile');
+      const rowH = (d) => Math.max(0, ...shots.filter((x) => dev(x) === d).map((x) => x.h)), im = (x, row) => ({ src: 'figjam/' + DIR + '/' + x.file, w: x.w, h: x.h, row });
+      return { name: title + ' · ' + g + ' · ' + f.scenario + (titles[f.scenario] ? ' · ' + titles[f.scenario] : ''), color, connect: 'sequence',
+        rows: hasMob ? [{ label: 'Desktop', h: rowH('desktop') }, { label: 'Mobile', h: rowH('mobile') }] : undefined,
+        cols: codes.map((code) => { const d = shots.find((x) => x.code === code && dev(x) === 'desktop'), mo = shots.find((x) => x.code === code && dev(x) === 'mobile');
+          return { label: code + ' · ' + (d || mo).name, note: '', images: [d && im(d, 0), mo && im(mo, hasMob ? 1 : 0)].filter(Boolean) }; }) };
+    });
+    await postFile(file, JSON.stringify({ version: 1, anchor: 'below', title, generatedAt: new Date().toISOString(), font: { family: 'IBM Plex Sans Thai', style: 'Medium' }, fallbackFont: { family: 'Inter', style: 'Medium' }, sections }));
+    logLine('✓ สร้างบอร์ด ' + file + ' แล้ว (' + sections.length + ' section · ' + sm.shots.length + ' รูป)');
+    logLine('ขั้นต่อไปใน FigJam: Plugins → Development → "Maintain-D → FigJam board" → ติ๊ก "Safety Inspection" (ถ้าเปิดค้างไว้ กดโหลดรายการใหม่) → สร้าง');
+  } catch (e) { logLine('✗ สร้างไฟล์บอร์ดไม่ได้ — ' + e.message); }
+}
+onmessage = (e) => { const m = e.data.pluginMessage;
+  if (m && m.type === 'scenarios') { document.getElementById('pick').innerHTML = m.items.map((t, i) => '<label style="display:inline-block;margin:2px 10px 2px 0"><input type="checkbox" value="' + i + '"> ' + String.fromCharCode(65 + i) + ' ' + t + '</label>').join('<br>'); return; }
+  if (m && m.type === 'shot') { shotJobs.push(postFile('figjam/' + m.dir + '/' + m.file, m.bytes).then(() => { shotOk++; }, (err) => { shotErr++; logLine('✗ ส่ง ' + m.file + ' ไม่ได้ — รัน node figma-export/serve.js อยู่หรือยัง (' + err.message + ')'); })); return; }
+  if (m && m.type === 'shots-done') {
+    Promise.all(shotJobs).then(() => postFile('figjam/' + m.dir + '/manifest.json', JSON.stringify(m.manifest, null, 1)))
+      .then(() => { logLine('✓ เขียนภาพ ' + shotOk + ' ไฟล์ + manifest.json ที่ out/figjam/' + m.dir + '/' + (shotErr ? ' · ✗ ไม่สำเร็จ ' + shotErr : '')); return writeBoard(); }, (err) => logLine('✗ เขียน manifest.json ไม่ได้ — ' + err.message))
+      .then(() => { shotOk = 0; shotErr = 0; shotJobs = []; });
+    return; }
+  if (m && m.type === 'log') logLine(m.text); };
+</script>
