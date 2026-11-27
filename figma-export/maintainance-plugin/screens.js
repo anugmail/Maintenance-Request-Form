@@ -2357,8 +2357,8 @@ async function maList(name, o) {
     { key: 'age', span: 2, title: 'อายุการใช้งานของยานพาหนะ', sub: 'แบ่งกลุ่มตามอายุนับจากปีที่จดทะเบียน', icon: 'no_crash-24-300-round', color: 'Gray', src: 'ข้อมูลจากทะเบียนยานพาหนะ',
       build: async (w) => { const g = MA_AGE_GROUPS.map(([l, a, b]) => ({ label: l, value: ix.filter(i => maAge(i) >= a && maAge(i) <= b).length }));
         return (await vBars(w, g.map(x => ({ label: x.label, vals: [x.value] })), [{ label: 'ยานพาหนะ', tone: 'info' }], { h: 140 })).concat([await dLegend(g, ['กลุ่มอายุ', 'จำนวน (คัน)'], { total: true })]); } },
-    { key: 'type', span: 1, title: 'ตามประเภทยานพาหนะ', sub: VTYPES.length + ' ประเภท', icon: 'car_repair-24-300-round', color: 'Success', src: 'ข้อมูลจากทะเบียนยานพาหนะ',
-      build: async (w) => [await hBars(w, VTYPES.map(t => ({ label: t, value: R.filter(r => typeOf(TRIP_CARS[r[0]]) === t).length, unit: 'คัน' })))] }];   // 27 พ.ย. 2569 ทุกประเภทตามลำดับ VEHICLE_TYPES ของเว็บ (typeItems · ประเภทที่ไม่มีคัน = 0)
+    { key: 'type', span: 1, title: 'ตามประเภทยานพาหนะ', sub: count(r => typeOf(TRIP_CARS[r[0]])).length + ' ประเภท', icon: 'car_repair-24-300-round', color: 'Success', src: 'ข้อมูลจากทะเบียนยานพาหนะ',
+      build: async (w) => [await hBars(w, count(r => typeOf(TRIP_CARS[r[0]])).map(([k, v]) => ({ label: k, value: v, unit: 'คัน' })))] }];   // typeItems ของเว็บ: เฉพาะประเภทที่มีคัน เรียงจากมากไปน้อย · บรรทัดรอง = จำนวนประเภทที่มีคัน
   add(page, await chartGrid(W, MOB && !o.mobileAll ? specs.filter(s => s.key === o.pickChart) : specs), 'h');
   const sec = col('Section', [], 24); add(page, sec, 'h');
   add(sec, await tableHeader({ placeholder: 'เลขทะเบียน, ยี่ห้อ, รุ่น', query: o.query, chips: o.chips, filterCount: (o.chips || []).length || null, more: [{ text: 'ส่งออก', icon: 'download-24-300-round' }] }), 'h');
