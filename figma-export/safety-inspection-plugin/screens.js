@@ -15,6 +15,7 @@
    กติกา: component-rules.md · 1 scenario = 1 บล็อกตัวอักษร (R19) · ตารางไม่เกิน 8 คอลัมน์ · คำว่า "ยานพาหนะ" แทน "รถ" (ยกเว้นข้อมูลจาก API เช่นชื่อประเภท)
    ============================================================================ */
 
+/* แถบสีฟ้าอธิบาย (Alert Color=Info) ไม่ใช้ในงาน Safety (ผู้ใช้ 27 พ.ย. 2569 "ไม่ต้องทำ เอาออกในทุกที่") — ห้ามเพิ่ม alertBox('Info', …) */
 const PLUGIN = { prefix: 'SI', page: 'Safety Inspection', menu: 'งานซ่อมและบำรุงรักษา', searchHint: 'ค้นหาชื่อแผน, เลขที่ MR, หน่วยงานที่สร้างแผน' };
 
 /* ---------- component ที่ใช้ — ขาดตัวไหนหยุด (ไลบรารี) · NESTED = ชิ้นซ้อนใน component อื่น · LOCAL_OPTIONAL = ป้ายของทีมออกแบบ ไม่มีก็วาดแถบธรรมดา ---------- */
@@ -482,7 +483,6 @@ async function planDetail(name, o) {
   const actions = !own ? null : (p.st === 'review' || p.st === 'returned') ? [['Secondary danger button', 'ลบ', 'delete-24-300-round'], ['Secondary button', 'แก้ไข', 'stylus-24-300-round']] : p.st === 'approved' && !trips.length ? [['Secondary danger button', 'ยกเลิกแผน', 'close-24-300-round']] : null;
   const { scr, page } = await shell(name, { title: p.name, back: true, crumbs: ['บำรุงรักษาตามวาระ', 'รายละเอียดแผน'], actions });
   const parts = [];
-  if (!own) parts.push(alertBox('Info', 'แผนของ ' + p.dept + ' · ดูได้อย่างเดียว', 'กบค. ไม่ดำเนินการในส่วนของ กรย. การสร้างแผนเดินทาง การอนุมัติผลตรวจ การแก้ไขและลบแผน ทำโดย กรย.'));
   parts.push(...await planBoxes(p, { extra: p.st === 'returned' ? [['เหตุผลที่ส่งกลับแก้ไข', 'แก้ชื่อแผนให้ระบุภาคที่ตรวจ']] : p.st === 'cancelled' ? [['ยกเลิกเมื่อ', '26/11/2569 · ผู้รับจ้างยกเลิกสัญญา']] : [] }));
   const canCreate = own && p.st === 'approved';
   const tripSec = col('Section', [await sectionLabel('แผนเดินทาง', { badge: trips.length, buttons: canCreate && trips.length ? [{ kind: 'Primary button', text: 'สร้างแผนเดินทาง', icon: 'add-24-300-round', disabled: p.mr === 'MRZ7000010' }] : [] })], 16);
@@ -530,8 +530,7 @@ async function tripForm(name, o) {
     const tb = await tblShort(TRIP_FORM_COLS, rows); headCheck(tb, rows); add(carSec, tb, 'h');
   } else add(carSec, await dataEmpty('ยังไม่มียานพาหนะในแผนเดินทาง', 'เพิ่มยานพาหนะของแผนนี้ที่ยังไม่อยู่ในแผนเดินทางใด อย่างน้อย 1 คัน', 'เพิ่มยานพาหนะ'), 'h');
   const complete = v.name && v.d1 && sel.length;
-  add(page, col('Content', [proposed ? alertBox('Info', 'ผู้รับจ้างเสนอแผนเดินทางนี้', 'ตรวจหรือแก้ไขได้ (กรอกค่าจ้างตรวจรายคันได้ ไม่บังคับ) แล้วกดบันทึกและส่งอนุมัติให้หัวหน้า กบค. · เสนอเมื่อ ' + t.sent) : null,
-    t && t.st === 'returned' ? alertBox('Error', 'หัวหน้า กบค. ส่งกลับให้แก้ไข', 'ตรวจวันที่อีกครั้ง · แก้ไขแล้วกดบันทึกและส่งอนุมัติอีกครั้ง') : null, info, carSec,
+  add(page, col('Content', [t && t.st === 'returned' ? alertBox('Error', 'หัวหน้า กบค. ส่งกลับให้แก้ไข', 'ตรวจวันที่อีกครั้ง · แก้ไขแล้วกดบันทึกและส่งอนุมัติอีกครั้ง') : null, info, carSec,
     btnRow([['Secondary button', t ? 'ยกเลิก' : 'ย้อนกลับ', { size: 'lg' }], ['Primary button', t && t.st === 'active' ? 'บันทึก' : 'บันทึกและส่งอนุมัติ', { size: 'lg', disabled: !complete }]])], 32), 'h');
   if (o.dateOpen && !MOB) {
     const dp = await thaiDatePicker(inst('Date picker', { Type: 'Dual' }, { 'Time picker': false }), ['ธันวาคม 2569', 'มกราคม 2570']);
@@ -568,7 +567,6 @@ async function tripDetail(name, o) {
   if (t.st === 'active') actions.push(['Secondary button', 'ปิดแผนเดินทาง', 'check-24-300-round'], ['Secondary button', 'แก้ไข', 'stylus-24-300-round']);
   const { scr, page } = await shell(name, { title: t.name, back: true, crumbs: ['บำรุงรักษาตามวาระ', p.mr, t.name], actions });
   const parts = [];
-  if (proposed) parts.push(alertBox('Info', 'ผู้รับจ้างเสนอแผนเดินทางนี้', 'ตรวจหรือแก้ไขได้ (กรอกค่าจ้างตรวจรายคันได้ ไม่บังคับ) แล้วกดบันทึกและส่งอนุมัติให้หัวหน้า กบค. · เสนอเมื่อ ' + t.sent));
   if (t.st === 'closed') parts.push(alertBox('Success', 'เสร็จสิ้นเมื่อ 26/11/2569', 'กบค. อนุมัติผลตรวจครบทุกคันหรือปิดแผนเดินทางแล้ว · ทะเบียน ปจ.2 อัปเดตตามผลที่อนุมัติ'));
   parts.push(...await tripBoxes(t, p));
   if (t.st === 'closed') parts.push(col('Section', [await sectionLabel('สรุปผลการตรวจ'), kv([['ผลอนุมัติแล้ว', '4/4 คัน'], ['ผ่าน', '3 เครื่อง'], ['ไม่ผ่าน', '1 เครื่อง'], ['ระงับ', '0 เครื่อง'], ['ตรวจไม่ได้', '1 เครื่อง'], ['ค่าจ้างตรวจรวม', '27,500.00 บาท'], ['งบประมาณ', '36,500.00 บาท']])], 16));
@@ -595,9 +593,7 @@ async function resultModal(scr, t, id, o) {   /* popup ของคัน: แ�
   const body = [];
   if (ms.length > 1) body.push(await tabs(ms.map(x => [machineTag(ms, x), null]), ui));
   if (MOB) body.push(kv([['ทะเบียน', v[0]], ['เครื่องมือกล', machineLabel(m)], ['รหัสทรัพย์สิน', m.asset + ' - ' + m.sub], ['วาระการตรวจ', v[7] + ' เดือน']]));
-  if (o.behalf) body.push(alertBox('Info', 'กบค. บันทึกผลแทนผู้รับจ้าง', 'กรอกผลแล้วกดส่งอนุมัติ จากนั้นพิจารณาอนุมัติผลของเครื่องนี้ได้ตามปกติ'));
   if (st === 'returned' && o.mode !== 'review') body.push(alertBox('Error', 'กบค. ส่งกลับแก้ไข', r[3] + ' · แก้ไขแล้วกดส่งอนุมัติอีกครั้ง'));
-  if (st === 'sent' && o.mode === 'view') body.push(alertBox('Info', 'ส่งอนุมัติแล้วเมื่อ 18/11/2569 · รอ กบค. อนุมัติ', 'ระหว่างรออนุมัติแก้ไขหรือลบไม่ได้ ดูและดาวน์โหลดได้'));
   const sum = v[0] + ' · ' + machineLabel(m) + ' · วาระ ' + v[7] + ' เดือน';
   if (o.mode === 'review' || o.mode === 'view') {
     body.push(kv([['วันที่ตรวจ', r[2] || '-'], ['ค่าจ้างตรวจคันนี้', baht(t.costs[id])], ['ผลการตรวจ', res || '-'], ['ครบกำหนดตรวจเดิม', v[6]]].concat(cannot ? [['เหตุผลที่ตรวจไม่ได้', r[3]]] : []), 2));
@@ -725,11 +721,10 @@ async function registry(name, o) {
     multiDropdown('ครบกำหนดครั้งถัดไป', [], { placeholder: 'ทั้งหมด', optional: true }), multiDropdown('แผน', [], { placeholder: 'ทั้งหมด', optional: true })]);
   if (o.history) await historyModal(scr, o.history, o.unit);
   if (o.upload) {   /* อัปโหลดผลนอกแผนรายเครื่อง: แท็บต่อเครื่อง · ที่มา (บังคับ) + เลขที่อ้างอิง · บอกครบกำหนดครั้งถัดไปก่อนบันทึก */
-    const f = o.upload, id = f.car, v = V[id], ms = machinesOfCar(id), ui = f.unit || 0, m = ms[ui], r = REG.find(x => x[0] === id), inPlan = r && r[4] !== '-' ? r[4] : '';
+    const f = o.upload, id = f.car, v = V[id], ms = machinesOfCar(id), ui = f.unit || 0, m = ms[ui];
     const body = [];
     if (ms.length > 1) body.push(await tabs(ms.map(x => [machineTag(ms, x), null]), ui));
-    body.push(alertBox('Info', 'ใช้สำหรับผลตรวจนอกแผน เช่น ตรวจรายคัน ตรวจหลังซ่อมหรือ Overhaul', 'บันทึกแล้วทะเบียน ปจ.2 อัปเดตทันที ไม่ต้องอนุมัติ' + (inPlan ? ' · คันนี้อยู่ในแผน ' + inPlan + ' ที่ยังไม่ปิด' : '')),
-      row('Row', [dropdown('ที่มา', f.filled ? 'งานซ่อม' : '', { placeholder: 'เลือกที่มาของผลตรวจ' }), field('เลขที่อ้างอิง', f.filled ? 'MRP-2569-0412' : '', { placeholder: 'เช่น เลขที่ใบแจ้งซ่อม หรือแผนบำรุงรักษา', optional: true })]),
+    body.push(row('Row', [dropdown('ที่มา', f.filled ? 'งานซ่อม' : '', { placeholder: 'เลือกที่มาของผลตรวจ' }), field('เลขที่อ้างอิง', f.filled ? 'MRP-2569-0412' : '', { placeholder: 'เช่น เลขที่ใบแจ้งซ่อม หรือแผนบำรุงรักษา', optional: true })]),
       field('วันที่ตรวจ', f.filled ? '20/11/2569' : '', { placeholder: 'ระบุวันที่', lead: 'calendar_month-24-300-round' }),
       labeled('ผลการตรวจ', radioCards(RESULTS, f.filled ? 0 : -1)),
       row('Row', [field('ผู้ตรวจ', f.filled ? 'บจก. เซฟตี้ เอ็นจิเนียริ่ง' : '', { placeholder: 'ชื่อผู้ตรวจหรือบริษัท', optional: true }), field('ค่าจ้าง (บาท)', f.filled ? '9,000.00' : '', { placeholder: '0.00', optional: true })]),
