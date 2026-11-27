@@ -11,6 +11,8 @@
    อัปเดต 27 พ.ย. 2569 ให้ตรงเว็บล่าสุด (6b08a2d): ผลตรวจรายเครื่องมือกลแสดงเป็นคันเดียวมีเครื่องข้างใน (ป้ายต่อเครื่อง · popup แท็บต่อเครื่อง · ติ๊กเป็นคัน)
      · ทะเบียน ปจ.2 แถวละคัน + ที่มา/เลขที่อ้างอิงของผลนอกแผน · การตรวจ ปจ.2 ในหน้าข้อมูลยานพาหนะการ์ดละเครื่อง + ดูประวัติ · ย้ายเครื่องเมื่อรหัสซ้ำ
      · สถานะตามตาราง status (ผู้รับจ้าง: เสร็จสิ้นสีเขียว) · แผนเดินทางที่ผู้รับจ้างเสนอเปิดแล้วเข้าหน้าแก้ไขเลย ไม่มีปุ่มส่งออก
+     · ค่าจ้างรายคันอยู่ที่แผน (เว็บ 0298f7a): กำหนดตอนสร้างแผน (ไม่บังคับ · ติ๊กหลายคันได้) หรือในรายละเอียดแผนหลังอนุมัติ · แผนเดินทางแสดงอย่างเดียว
+       ค่าจ้างตามใบสั่งจ้าง (รวมทุกคันในแผน) อยู่ในข้อมูลผู้รับจ้างทั้งหน้าแผนและแผนเดินทาง (แผนเดินทาง: แทนงบประมาณ) · เกินงบประมาณ = เตือนในฟอร์มแผน
      · ตัวอย่างคันที่มีเครื่องมือกล 2 เครื่อง = 74-7745 (เครน + กระเช้า) — เว็บตั้งต้นทุกคันมีเครื่องเดียว คันหลายเครื่องเกิดจากเพิ่มในหน้าข้อมูลยานพาหนะ
    กติกา: component-rules.md · 1 scenario = 1 บล็อกตัวอักษร (R19) · ตารางไม่เกิน 8 คอลัมน์ · คำว่า "ยานพาหนะ" แทน "รถ" (ยกเว้นข้อมูลจาก API เช่นชื่อประเภท)
    ============================================================================ */
@@ -240,11 +242,11 @@ const RES_C = { 'ผ่าน': 'Success', 'ไม่ผ่าน': 'Error', '�
 const RESULTS = ['ผ่าน', 'ไม่ผ่าน', 'ระงับ', 'ตรวจไม่ได้'];
 /* แผน (ช่วงของแผน = ระยะเวลาตามสัญญา · 26 พ.ย. 2569 ไม่มีรอบตรวจ) */
 const PLANS = [
-  { mr: 'MRA7000013', name: 'ตรวจ ปจ.2 กฟน.1 เชียงใหม่ รอบ ธ.ค. 2569', dept: 'กรย. กฟน.1', by: 'นายพีระพงษ์ ใจมั่น', budget: '40,000.00', ven: 1, contract: 'PO-2570-0131', c1: '16/11/2569', c2: '31/12/2569', days: 45, cars: ['v02', 'v42', 'v50', 'v58'], st: 'approved', docs: ['อนุมัติ 1/4', 'รออนุมัติ 1 คัน'] },
+  { mr: 'MRA7000013', costs: { v02: 9000, v42: 8500, v50: 9500, v58: 9000 }, name: 'ตรวจ ปจ.2 กฟน.1 เชียงใหม่ รอบ ธ.ค. 2569', dept: 'กรย. กฟน.1', by: 'นายพีระพงษ์ ใจมั่น', budget: '40,000.00', ven: 1, contract: 'PO-2570-0131', c1: '16/11/2569', c2: '31/12/2569', days: 45, cars: ['v02', 'v42', 'v50', 'v58'], st: 'approved', docs: ['อนุมัติ 1/4', 'รออนุมัติ 1 คัน'] },
   { mr: 'MRZ7000012', name: 'ตรวจ ปจ.2 กระเช้าฮอทไลน์ ก.พ. 2570', dept: 'กบค.', by: ME, budget: '10,000.00', ven: 2, contract: '', c1: '15/01/2570', c2: '01/03/2570', days: 45, cars: ['v24'], st: 'review', docs: ['อนุมัติ 0/1'], sent: '18/11/2569' },
   { mr: 'MRZ7000011', name: 'ตรวจ ปจ.2 ภาคตะวันออก รอบ ม.ค. – มี.ค. 2570', dept: 'กบค.', by: 'นายธนวัฒน์ มีสุข', budget: '20,000.00', ven: 1, contract: '', c1: '01/01/2570', c2: '02/03/2570', days: 60, cars: ['v21', 'v22'], st: 'approved', docs: ['อนุมัติ 0/2'] },
   { mr: 'MRZ7000010', name: 'ตรวจ ปจ.2 รอบ ธ.ค. 2569 – ก.พ. 2570', dept: 'กบค.', by: ME, budget: '45,000.00', ven: 0, contract: 'PO-2570-0112', c1: '01/11/2569', c2: '30/01/2570', days: 90, cars: ['v17', 'v18', 'v19', 'v20', 'v23'], st: 'approved', docs: ['อนุมัติ 2/5', 'รออนุมัติ 1 คัน'], approvedAt: '10/11/2569' },
-  { mr: 'MRZ7000009', name: 'ตรวจ ปจ.2 หลัง Overhaul รอบ ม.ค. 2570', dept: 'กบค.', by: ME, budget: '15,000.00', ven: 0, contract: 'PO-2570-0098', c1: '01/11/2569', c2: '01/12/2569', days: 30, cars: ['v16'], st: 'approved', docs: ['อนุมัติ 0/1', 'รออนุมัติ 1 คัน'] },
+  { mr: 'MRZ7000009', costs: { v16: 12000 }, name: 'ตรวจ ปจ.2 หลัง Overhaul รอบ ม.ค. 2570', dept: 'กบค.', by: ME, budget: '15,000.00', ven: 0, contract: 'PO-2570-0098', c1: '01/11/2569', c2: '01/12/2569', days: 30, cars: ['v16'], st: 'approved', docs: ['อนุมัติ 0/1', 'รออนุมัติ 1 คัน'] },
   { mr: 'MRZ7000008', name: 'ตรวจ ปจ.2 เครน ภาคใต้ มี.ค. 2570', dept: 'กบค.', by: 'นายธนวัฒน์ มีสุข', budget: '12,000.00', ven: 0, contract: 'PO-2570-0140', c1: '20/02/2570', c2: '01/04/2570', days: 40, cars: ['v09'], st: 'review', docs: ['อนุมัติ 0/1'], sent: '19/11/2569' },
 ];
 const DONE_PLANS = [
@@ -291,7 +293,10 @@ async function dataEmpty(t, sub, btnText) {
 }
 const planInfoPairs = (p) => [['เลขที่ MR', p.mr], ['ชื่อแผน', p.name], ['หน่วยงานที่สร้างแผน', p.dept + ' · ' + p.by], ['งบประมาณ', p.budget + ' บาท'],
   ['จำนวนยานพาหนะ', p.cars.length + ' คัน'], ['สถานะแผน', PLAN_ST[p.st][0]], ['แผนเดินทาง', p.mr === 'MRZ7000010' ? '2 แผน · ยังไม่อยู่ในแผนเดินทาง 0 คัน' : '0 แผน · ยังไม่อยู่ในแผนเดินทาง ' + p.cars.length + ' คัน']];
-const vendorPairs = (p) => [['ผู้รับจ้าง', vend(p)[0]], ['เบอร์โทรผู้รับจ้าง', vend(p)[1]], ['เลขที่สัญญา/ใบสั่งจ้าง', p.contract || '-'], ['ระยะเวลาตามสัญญา (' + p.days + ' วัน)', contractTxt(p)]];
+/* ค่าจ้างรายคันของแผน (Plan.costs ของเว็บ) — ข้อมูลตัวอย่างเก็บไว้ที่แผนเดินทางเดิม (T*.costs) + p.costs · ค่าจ้างตามใบสั่งจ้าง = รวมทุกคันในแผน */
+const planCosts = (p) => Object.assign({}, ...[T1, T2, T3].filter(t => t.mr === p.mr).map(t => t.costs), p.costs || {});
+const orderTxt = (p) => { const c = planCosts(p), sum = p.cars.reduce((a, id) => a + (c[id] || 0), 0); return sum ? baht(sum) : 'ยังไม่กำหนด'; };
+const vendorPairs = (p) => [['ผู้รับจ้าง', vend(p)[0]], ['เบอร์โทรผู้รับจ้าง', vend(p)[1]], ['เลขที่สัญญา/ใบสั่งจ้าง', p.contract || '-'], ['ค่าจ้างตามใบสั่งจ้าง', orderTxt(p)], ['ระยะเวลาตามสัญญา (' + p.days + ' วัน)', contractTxt(p)]];
 async function planBoxes(p, o) {   // กล่องข้อมูลแผน + ข้อมูลผู้รับจ้าง (PlanInfo · VendorInfo ของเว็บ)
   o = o || {};
   const pairs = planInfoPairs(p).concat(o.extra || []);
@@ -299,7 +304,7 @@ async function planBoxes(p, o) {   // กล่องข้อมูลแผน
 }
 const tripPairs = (t, p) => [['ชื่อแผนเดินทาง', t.name], ['แผนตรวจ ปจ.2', p.mr + ' · ' + p.name], ['สร้างโดย', t.by === 'vendor' ? 'ผู้รับจ้าง · ' + vend(p)[0] : p.dept], ['ช่วงวันที่ดำเนินการ', t.d1 + ' – ' + t.d2],
   ['จำนวนยานพาหนะ', t.cars.length + ' คัน'], ['สถานะ', TRIP_ST[t.st][0]], ['อนุมัติโดย', t.approvedBy || '-']];
-const tripVendorPairs = (t, p) => vendorPairs(p).concat([['งบประมาณ', baht(tripBudget(t))], ['ค่าจ้างตรวจรวม', t.id === T1.id ? (t.st === 'closed' ? '27,500.00 บาท' : '9,000.00 บาท') : '0.00 บาท']]);
+const tripVendorPairs = (t, p) => [['ผู้รับจ้าง', vend(p)[0]], ['เบอร์โทรผู้รับจ้าง', vend(p)[1]], ['เลขที่สัญญา/ใบสั่งจ้าง', p.contract || '-'], ['ระยะเวลาตามสัญญา (' + p.days + ' วัน)', contractTxt(p)]].concat([['ค่าจ้างตามใบสั่งจ้าง', orderTxt(p)], ['ค่าจ้างตรวจรวม', t.id === T1.id ? (t.st === 'closed' ? '27,500.00 บาท' : '9,000.00 บาท') : '0.00 บาท']]);
 async function tripBoxes(t, p, vendor) {
   const parts = [];
   if (!vendor) parts.push(col('Section', [await sectionLabel('ข้อมูลแผนเดินทาง'), kv(tripPairs(t, p))], 16));
@@ -349,11 +354,12 @@ async function planList(name, o) {
 /* ============================================================================
    S2 สร้าง/แก้ไขแผน — section เดียว "ข้อมูลแผนและผู้รับจ้าง" + ยานพาหนะในแผน (กบค. · กรย.)
    ============================================================================ */
-const FORM_COLS = [['ทะเบียน', 260, 'Lead text'], ['สังกัด', 150], ['ผู้ครอบครอง/เบอร์ติดต่อ', 0], ['วาระ', 170], ['ครบกำหนดตรวจ', 150], ['', 104]];
+const FORM_COLS = [['ทะเบียน', 240, 'Lead text'], ['สังกัด', 150], ['ผู้ครอบครอง/เบอร์ติดต่อ', 0], ['วาระ', 150], ['ครบกำหนดตรวจ', 150], ['ค่าจ้างตรวจ (บาท)', 160], ['', 104]];
 const formCarRow = (id, o) => { const v = V[id], unknown = o && o.unknown === id;
-  return [{ text: v[0], sub: v[1] + ' · ' + v[2] }, v[3], { text: v[4], sub: v[5] }, unknown ? (o.cycleSet ? { text: '12 เดือน', sub: 'กรอกเอง · ไม่พบเกณฑ์วาระ' } : { pill: ['ยังไม่ระบุวาระ', 'Error'] }) : { text: v[7] + ' เดือน', sub: v[8] || undefined },
-    { text: v[6], sub: id === 'v01' ? 'เกินกำหนด 21 วัน' : 'อีก ' + (20 + id.slice(1) * 3 % 60) + ' วัน' }, { icons: unknown ? ['stylus-24-300-round', 'delete-24-300-round'] : ['delete-24-300-round'] }]; };
-const FILLED = { name: 'ตรวจ ปจ.2 รอบ ธ.ค. 2569 – ก.พ. 2570', ven: 0, contract: 'PO-2570-0150', c1: '01/12/2569', days: '90', c2: '01/03/2570', budget: '40,000.00', cars: ['v01', 'v03', 'v04', 'v05'] };
+  const cost = ((o && o.values && o.values.costs) || {})[id];
+  return [{ check: ((o && o.ticked) || []).indexOf(id) >= 0, text: v[0], sub: v[1] + ' · ' + v[2] }, v[3], { text: v[4], sub: v[5] }, unknown ? (o.cycleSet ? { text: '12 เดือน', sub: 'กรอกเอง · ไม่พบเกณฑ์วาระ' } : { pill: ['ยังไม่ระบุวาระ', 'Error'] }) : { text: v[7] + ' เดือน', sub: v[8] || undefined },
+    { text: v[6], sub: id === 'v01' ? 'เกินกำหนด 21 วัน' : 'อีก ' + (20 + id.slice(1) * 3 % 60) + ' วัน' }, cost ? cost.toLocaleString('en-US', { minimumFractionDigits: 2 }) : 'ยังไม่กำหนด', { icons: unknown ? ['stylus-24-300-round', 'delete-24-300-round'] : ['delete-24-300-round'] }]; };
+const FILLED = { name: 'ตรวจ ปจ.2 รอบ ธ.ค. 2569 – ก.พ. 2570', ven: 0, contract: 'PO-2570-0150', c1: '01/12/2569', days: '90', c2: '01/03/2570', budget: '40,000.00', cars: ['v01', 'v03', 'v04', 'v05'], costs: { v01: 9000, v03: 9500, v04: 9000, v05: 9500 } };
 async function planForm(name, o) {
   o = o || {};
   const d = o.values || {}, E = (m) => o.errors ? m : '';
@@ -369,11 +375,13 @@ async function planForm(name, o) {
       field('งบประมาณ (บาท)', d.budget, { placeholder: '0.00', error: E(d.budget ? '' : 'กรุณาระบุงบประมาณ') })]),
     row('Row', [c1, field('ระยะเวลาตามสัญญา (วัน)', d.days, { placeholder: 'เช่น 90', error: E(d.days ? '' : 'กรุณาระบุจำนวนวัน') }), field('วันสิ้นสุดสัญญา', d.c2, { state: 'Readonly', placeholder: 'ระบบคำนวณให้' })])], 16);
   const cars = d.cars || [];
-  const carSec = col('Section', [await section('ยานพาหนะในแผน', { badge: cars.length + ' คัน' })], 16);
+  const costs = d.costs || {}, total = cars.reduce((a, c) => a + (costs[c] || 0), 0), ticked = o.ticked || [];
+  const carSec = col('Section', [await section('ยานพาหนะในแผน', { badge: cars.length + ' คัน · ค่าจ้างตามใบสั่งจ้าง ' + (total ? baht(total) : '0.00 บาท') })], 16);
+  if (o.over) add(carSec, alertBox('Warning', 'ค่าจ้างตามใบสั่งจ้างเกินงบประมาณของแผน ' + baht(total - 40000), 'งบประมาณของแผน 40,000.00 บาท · ค่าจ้างตามใบสั่งจ้าง ' + baht(total) + ' · บันทึกต่อได้'), 'h');
   if (o.unknown && cars.indexOf(o.unknown) >= 0 && !o.cycleSet) add(carSec, alertBox('Warning', 'ยังไม่ระบุวาระ 1 คัน', 'ยานพาหนะที่หาเกณฑ์วาระไม่เจอ กดไอคอนระบุวาระท้ายแถวเพื่อเลือกวาระการตรวจเอง'), 'h');
   if (cars.length) {
-    add(carSec, await tableHeader({ placeholder: 'ค้นหาทะเบียน, รหัส, สังกัด', noFilter: true, more: [{ text: 'เพิ่มยานพาหนะ', icon: 'add-24-300-round' }] }), 'h');
-    add(carSec, await tblShort(FORM_COLS, cars.map(id => formCarRow(id, o))), 'h');
+    add(carSec, await tableHeader({ placeholder: 'ค้นหาทะเบียน, รหัส, สังกัด', noFilter: true, more: (ticked.length ? [{ text: 'กำหนดค่าจ้าง (' + ticked.length + ' คัน)', icon: 'paid-24-300-round', kind: 'Secondary button' }] : []).concat([{ text: 'เพิ่มยานพาหนะ', icon: 'add-24-300-round' }]) }), 'h');
+    const frows = cars.map(id => formCarRow(id, o)); const ft = await tblShort(FORM_COLS, frows); headCheck(ft, frows); add(carSec, ft, 'h');
   } else add(carSec, await dataEmpty('ยังไม่มียานพาหนะในแผน', 'เพิ่มยานพาหนะประเภท 09 ที่ต้องตรวจ ปจ.2 อย่างน้อย 1 คัน', 'เพิ่มยานพาหนะ'), 'h');
   const complete = d.name && d.ven != null && d.c1 && d.days && d.budget && cars.length && !(o.unknown && !o.cycleSet);
   add(page, col('Content', [o.edit && o.returned ? alertBox('Error', 'หัวหน้า กบค. ส่งกลับให้แก้ไข', 'แก้ชื่อแผนให้ระบุภาคที่ตรวจ · แก้ไขแล้วกดบันทึกและส่งอนุมัติอีกครั้ง') : null, info, carSec,
@@ -386,6 +394,7 @@ async function planForm(name, o) {
   }
   if (o.picker) await vehiclePicker(scr, o.picker);
   if (o.cyclePick) await popupModal(scr, { title: 'ระบุวาระการตรวจ · ' + V[o.unknown][0], sub: 'ไม่พบเกณฑ์วาระของยานพาหนะคันนี้ในตารางวาระ กบค. เลือกวาระเอง', w: 640, ok: 'บันทึก', body: [radioCards(['3 เดือน', '6 เดือน', '12 เดือน'], 2)] });
+  if (o.costFor) await formModal(scr, { title: 'กำหนดค่าจ้างตรวจ · ' + ticked.length + ' คัน', sub: 'ใส่ค่าเดียวกันให้ทุกคันที่ติ๊ก', fields: [{ label: 'ค่าจ้างตรวจ (บาท)', value: '9,000.00' }], ok: 'บันทึก' });
   if (o.drop) await confirm(scr, { danger: true, title: 'เอายานพาหนะออกจากแผน', sub: V[o.drop][0] + ' จะถูกเอาออกจากแผนนี้ เพิ่มกลับได้ภายหลัง', ok: 'เอาออก' });
   if (o.leave) await confirm(scr, { danger: true, title: 'ยืนยันการออกจากหน้านี้', sub: 'ข้อมูลที่กรอกไว้จะไม่ถูกบันทึก', cancel: 'อยู่ต่อ', ok: 'ออกจากหน้านี้' });
   return scr;
@@ -435,7 +444,7 @@ async function decisionSec(trip, sel, reason, err) {
   if (sel === 1) kids.push(area('เหตุผลที่ส่งกลับ', reason || '', { placeholder: 'ระบุเหตุผลที่ส่งกลับ', error: err ? 'กรุณาระบุเหตุผลที่ส่งกลับ' : '' }));
   return col('Section', kids, 16);
 }
-const APR_CAR_COLS = [['ทะเบียน', 260, 'Lead text'], ['สังกัด', 180], ['วาระ', 170], ['ครบกำหนดตรวจ', 0]];
+const APR_CAR_COLS = [['ทะเบียน', 260, 'Lead text'], ['สังกัด', 180], ['วาระ', 170], ['ครบกำหนดตรวจ', 0], ['ค่าจ้างตรวจ', 160]];
 async function planApproval(name, o) {
   o = o || {};
   const p = o.plan || PLANS[1];
@@ -444,7 +453,7 @@ async function planApproval(name, o) {
   if (o.done) parts.push(alertBox('Success', 'อนุมัติแล้ว', 'โดย ' + HEAD1 + ' · 26/11/2569'));
   else parts.push(await decisionSec(false, o.sel == null ? -1 : o.sel, o.reason, o.err));
   parts.push(...await planBoxes(p));
-  parts.push(col('Section', [await sectionLabel('ยานพาหนะในแผน', { badge: p.cars.length }), await tblShort(APR_CAR_COLS, p.cars.map(id => [{ text: V[id][0], sub: V[id][1] + ' · ' + V[id][2] }, V[id][3], { text: V[id][7] + ' เดือน', sub: V[id][8] || undefined }, V[id][6]]))], 16));
+  parts.push(col('Section', [await sectionLabel('ยานพาหนะในแผน', { badge: p.cars.length }), await tblShort(APR_CAR_COLS, p.cars.map(id => [{ text: V[id][0], sub: V[id][1] + ' · ' + V[id][2] }, V[id][3], { text: V[id][7] + ' เดือน', sub: V[id][8] || undefined }, V[id][6], planCosts(p)[id] ? baht(planCosts(p)[id]) : 'ยังไม่กำหนด']))], 16));
   if (!o.done) parts.push(btnRow([['Secondary button', 'ย้อนกลับ', { size: 'lg' }], ['Primary button', 'ยืนยันผลการพิจารณา', { size: 'lg', disabled: o.sel == null || (o.sel === 1 && !o.reason) }]]));
   add(page, col('Content', parts, 32), 'h');
   return scr;
@@ -467,14 +476,16 @@ async function tripApproval(name, o) {
    S4 รายละเอียดแผน (กบค.) — กล่องข้อมูลแผน + ผู้รับจ้าง · ตารางแผนเดินทาง · ยานพาหนะในแผน
    ============================================================================ */
 const TRIP_COLS = [['ชื่อแผนเดินทาง', 0, 'Lead text'], ['ช่วงวันที่ดำเนินการ', 210], ['ผลตรวจอนุมัติ', 140], ['ตรวจไม่ได้', 110], ['ค่าจ้างตรวจรวม', 150], ['สถานะ', 130], ['', 72]];
-const CAR_COLS = [['ทะเบียน', 220, 'Lead text'], ['สังกัด', 150], ['ผู้ดูแลยานพาหนะ', 190], ['วาระ', 130], ['แผนเดินทาง', 0], ['ผล ปจ.2', 180], ['สถานะ', 150], ['', 72]];   /* ผู้ดูแลยานพาหนะ (เว็บ 27 พ.ย. 2569): ของแผนเดินทาง · ยังไม่มี = ผู้ดูแลหลักของสังกัด */
+const CAR_COLS = [['ทะเบียน', 220, 'Lead text'], ['สังกัด', 150], ['ผู้ดูแลยานพาหนะ', 190], ['แผนเดินทาง', 0], ['ผล ปจ.2', 170], ['สถานะ', 150], ['ค่าจ้างตรวจ', 130], ['', 104]];   /* ไม่มีคอลัมน์วาระ (ผู้ใช้ 27 พ.ย. 2569) · จำนวนเครื่องมือกลอยู่บรรทัดรองของทะเบียน */   /* ค่าจ้างตรวจของแผน (เว็บ 27 พ.ย. 2569) · ไอคอน paid = กำหนดค่าจ้าง (เจ้าของแผน · อนุมัติแล้ว) */   /* ผู้ดูแลยานพาหนะ (เว็บ 27 พ.ย. 2569): ของแผนเดินทาง · ยังไม่มี = ผู้ดูแลหลักของสังกัด */
 const tripOfCar = (id) => [T1, T2].find(t => t.cars.indexOf(id) >= 0);
 const carRowDetail = (id, o) => {
   const v = V[id], t = tripOfCar(id), n = machinesOfCar(id).length;
   const st = !t ? null : carSt(t, id);
-  return [o && o.check ? { check: (o.ticked || []).indexOf(id) >= 0, text: v[0], sub: v[1] + ' · ' + v[2], disabled: st !== 'sent' } : { text: v[0], sub: v[1] + ' · ' + v[2] }, v[3], { text: ADMIN[v[3]][0], sub: ADMIN[v[3]][1] }, { text: v[7] + ' เดือน', sub: n > 1 ? n + ' เครื่องมือกล' : v[8] || undefined },
+  const sub = v[1] + ' · ' + v[2] + (n > 1 ? ' · ' + n + ' เครื่องมือกล' : '');
+  return [o && o.check ? { check: (o.ticked || []).indexOf(id) >= 0, text: v[0], sub, disabled: st !== 'sent' } : { text: v[0], sub }, v[3], { text: ADMIN[v[3]][0], sub: ADMIN[v[3]][1] },
     t ? { text: t.name, sub: 'วันดำเนินการ ' + t.d1 + ' – ' + t.d2 } : { pill: ['ยังไม่มีแผนเดินทาง', 'Gray'] },
-    t ? resPills(t, id, ['sent', 'approved', 'returned']) : '-', st ? { pill: DOC_ST[st] } : '-', { icons: [st === 'sent' ? 'check-24-300-round' : 'quick_reference_all-24-300-round'] }];
+    t ? resPills(t, id, ['sent', 'approved', 'returned']) : '-', st ? { pill: DOC_ST[st] } : '-', (o && o.costs && o.costs[id]) ? baht(o.costs[id]) : 'ยังไม่กำหนด',
+    { icons: (o && o.costIcon ? ['paid-24-300-round'] : []).concat([st === 'sent' ? 'check-24-300-round' : 'quick_reference_all-24-300-round']) }];
 };
 async function planDetail(name, o) {
   o = o || {};
@@ -492,12 +503,13 @@ async function planDetail(name, o) {
   parts.push(tripSec);
   const check = own && p.mr === 'MRZ7000010' && !o.noCheck, ticked = o.ticked || [];
   const carSec = col('Section', [await sectionLabel('ยานพาหนะในแผน', { badge: p.cars.length, buttons: check ? [{ kind: 'Primary button', text: 'อนุมัติ' + (ticked.length ? ' (' + ticked.length + ' คัน)' : ''), icon: 'check-24-300-round', disabled: !ticked.length }] : [] })], 16);
-  if (p.cars.length) { const rows = p.cars.map(id => carRowDetail(id, { check, ticked })); const t = await tblShort(CAR_COLS, rows); if (check) headCheck(t, rows); add(carSec, t, 'h'); }
+  if (p.cars.length) { const rows = p.cars.map(id => carRowDetail(id, { check, ticked, costs: Object.assign(planCosts(p), o.costSet || {}), costIcon: own && p.st === 'approved' })); const t = await tblShort(CAR_COLS, rows); if (check) headCheck(t, rows); add(carSec, t, 'h'); }
   else add(carSec, await dataEmpty('ไม่มียานพาหนะในแผน', 'แผนนี้เสร็จสิ้นแล้ว'), 'h');
   parts.push(carSec);
   add(page, col('Content', parts, 32), 'h');
   if (o.cancel) await formModal(scr, { title: 'ยกเลิกแผน ' + p.mr, sub: 'ยกเลิกได้เฉพาะแผนที่ยังไม่มีผลตรวจ · แผนเดินทางของแผนนี้จะถูกลบ และยานพาหนะกลับไปเลือกเข้าแผนอื่นได้', fields: [{ label: 'เหตุผลที่ยกเลิก', value: o.cancel === 2 ? 'ผู้รับจ้างยกเลิกสัญญา' : '', area: 1, placeholder: 'ระบุเหตุผล' }], ok: 'ยกเลิกแผน', danger: true });
   if (o.del) await confirm(scr, { danger: true, title: 'ยืนยันการลบแผนตรวจ ปจ.2', sub: 'แผนและรายการยานพาหนะในแผนจะถูกลบ ไม่สามารถกู้คืนได้', ok: 'ลบแผน' });
+  if (o.costEdit) await formModal(scr, { title: 'กำหนดค่าจ้างตรวจ · ' + V[o.costEdit][0], sub: 'ค่าจ้างตรวจรายคันของแผน ใช้กับแผนเดินทางและผู้รับจ้างเห็น · ผลที่ผู้รับจ้างส่งแล้วคงค่าเดิมของตอนส่ง', fields: [{ label: 'ค่าจ้างตรวจ (บาท)', value: o.costValue || '' }], ok: 'บันทึก' });
   if (o.bulk) await confirm(scr, { title: 'อนุมัติผลตรวจ ปจ.2 ' + ticked.length + ' คัน', sub: 'เครื่องมือกลที่รออนุมัติของคันที่เลือก ' + sentUnits(T1, ticked) + ' เครื่อง · ผลตรวจและเอกสารจะถูกล็อก ส่งกลับแก้ไขไม่ได้อีก', ok: 'อนุมัติ' });
   if (o.toast) notify(scr, o.toast);
   return scr;
@@ -507,14 +519,14 @@ const sentUnits = (t, cars) => cars.reduce((a, id) => a + unitRes(t, id).filter(
 /* ============================================================================
    S5 สร้าง/แก้ไขแผนเดินทาง — 2 เส้น: กบค. สร้างเอง · ผู้รับจ้างเสนอ (byVendor) · ค่าจ้างรายคันไม่บังคับ
    ============================================================================ */
-const TRIP_FORM_COLS = [['ทะเบียน', 260], ['สถานที่ตรวจ / ผู้ดูแลยานพาหนะ', 0], ['วันดำเนินการ', 200], ['ค่าจ้างตรวจ (บาท)', 160], ['', 104]];
+const TRIP_FORM_COLS = [['ทะเบียน', 260], ['สถานที่ตรวจ / ผู้ดูแลยานพาหนะ', 0], ['วันดำเนินการ', 200], ['ค่าจ้างตรวจ', 160], ['', 104]];   /* ค่าจ้างตรวจ = ของแผน อ่านอย่างเดียว (เว็บ 27 พ.ย. 2569) */
 async function tripForm(name, o) {
   o = o || {};
   const p = o.plan || P10, t = o.trip, vendor = !!o.byVendor, v = o.values || {};
   const head = t ? 'แก้ไขแผนเดินทาง' : 'สร้างแผนเดินทาง';
   const proposed = !!t && t.st === 'proposed';   /* แผนเดินทางที่ผู้รับจ้างเสนอ: หน่วยงานที่สร้างแผนเปิดแล้วมาหน้านี้เลย · ลบได้ที่หัวหน้า · ไม่มีส่งออก (เว็บ 27 พ.ย. 2569) */
   const { scr, page } = await shell(name, { title: head, back: true, crumbs: vendor ? ['เอกสาร ปจ.2', p.mr, head] : ['บำรุงรักษาตามวาระ', p.mr, head], actions: proposed ? [['Secondary danger button', 'ลบ', 'delete-24-300-round']] : null });
-  const sel = v.cars || [], costs = v.costs || {};
+  const sel = v.cars || [], costs = planCosts(p);
   const work = field('ช่วงวันที่ดำเนินการ', v.d1 ? v.d1 + ' – ' + v.d2 : '', { placeholder: 'เลือกวันเริ่มและวันสิ้นสุด', lead: 'calendar_month-24-300-round', state: o.dateOpen ? 'Focused' : undefined, error: o.errors && !v.d1 ? 'กรุณาเลือกช่วงวันที่ดำเนินการ' : '' });
   const info = col('Section', [await section('ข้อมูลแผนเดินทาง'),
     alertBox('Gray', vendor ? 'ส่งให้ ' + p.dept + ' ตรวจหรือแก้ไข แล้วส่งให้หัวหน้า ' + p.dept + ' อนุมัติ' : t && t.by === 'vendor' ? 'ผู้รับจ้างเสนอแผนเดินทางนี้' : t && t.st === 'active' ? 'แผนเดินทางอนุมัติแล้ว บันทึกการแก้ไขแล้วมีผลทันที' : 'ผู้รับจ้างเห็นแผนเดินทางหลังหัวหน้า กบค. อนุมัติ',
@@ -523,11 +535,10 @@ async function tripForm(name, o) {
     row('Row', [field('ระยะเวลาตามสัญญา', contractTxt(p) + ' (' + p.days + ' วัน)', { state: 'Readonly' }), work])], 16);
   const carSec = col('Section', [await section('ยานพาหนะในแผนเดินทาง', { badge: sel.length + ' คัน · งบประมาณ ' + (sel.length ? baht(sel.reduce((a, c) => a + (costs[c] || 0), 0)).replace('ยังไม่กำหนด', '0.00 บาท') : '0.00 บาท'),
     buttons: sel.length ? [{ kind: 'Secondary button', text: 'เพิ่มยานพาหนะ', icon: 'add-24-300-round' }] : [] })], 16);
-  if (!vendor && o.over) add(carSec, alertBox('Warning', 'งบประมาณแผนเดินทางรวมเกินงบประมาณของแผน 4,500.00 บาท', 'งบประมาณของแผน 45,000.00 บาท · แผนเดินทางทั้งหมดของแผนนี้รวม 49,500.00 บาท · บันทึกต่อได้'), 'h');
   if (sel.length) {
-    const rows = sel.map(id => [{ check: (o.ticked || []).indexOf(id) >= 0, text: V[id][0], sub: V[id][1] + ' · ' + V[id][2] }, { text: 'สำนักงาน ' + V[id][3], sub: ADMIN[V[id][3]][0] + ' · ' + ADMIN[V[id][3]][1] },
-      { text: v.d1 ? v.d1 + ' – ' + v.d2 : '-', sub: v.d1 ? 'ตามช่วงวันที่ดำเนินการ' : undefined }, costs[id] ? costs[id].toLocaleString('en-US', { minimumFractionDigits: 2 }) : 'ยังไม่กำหนด', { icons: ['stylus-24-300-round', 'delete-24-300-round'] }]);
-    const tb = await tblShort(TRIP_FORM_COLS, rows); headCheck(tb, rows); add(carSec, tb, 'h');
+    const rows = sel.map(id => [{ text: V[id][0], sub: V[id][1] + ' · ' + V[id][2] }, { text: 'สำนักงาน ' + V[id][3], sub: ADMIN[V[id][3]][0] + ' · ' + ADMIN[V[id][3]][1] },
+      { text: v.d1 ? v.d1 + ' – ' + v.d2 : '-', sub: v.d1 ? 'ตามช่วงวันที่ดำเนินการ' : undefined }, { text: costs[id] ? baht(costs[id]) : 'ยังไม่กำหนด', sub: 'ตามแผน' }, { icons: ['stylus-24-300-round', 'delete-24-300-round'] }]);
+    add(carSec, await tblShort(TRIP_FORM_COLS, rows), 'h');
   } else add(carSec, await dataEmpty('ยังไม่มียานพาหนะในแผนเดินทาง', 'เพิ่มยานพาหนะของแผนนี้ที่ยังไม่อยู่ในแผนเดินทางใด อย่างน้อย 1 คัน', 'เพิ่มยานพาหนะ'), 'h');
   const complete = v.name && v.d1 && sel.length;
   add(page, col('Content', [t && t.st === 'returned' ? alertBox('Error', 'หัวหน้า กบค. ส่งกลับให้แก้ไข', 'ตรวจวันที่อีกครั้ง · แก้ไขแล้วกดบันทึกและส่งอนุมัติอีกครั้ง') : null, info, carSec,
@@ -540,7 +551,6 @@ async function tripForm(name, o) {
   if (o.picker) await vehiclePicker(scr, { title: 'เพิ่มยานพาหนะ', sub: 'เลือกจากยานพาหนะในแผนที่ยังไม่อยู่ในแผนเดินทางใด', pool: o.picker.pool || ['v17', 'v18', 'v19', 'v20', 'v23'], ticked: o.picker.ticked || [], total: 5 });
   if (o.carEdit) await formModal(scr, { title: 'แก้ไขยานพาหนะในแผนเดินทาง · ' + V[o.carEdit][0], sub: 'ค่าเริ่มต้น: สำนักงาน ' + V[o.carEdit][3] + ' · ' + ADMIN[V[o.carEdit][3]][0],
     fields: [{ pair: [{ label: 'เบอร์ติดต่อ', value: ADMIN[V[o.carEdit][3]][1] }, { label: 'ผู้ดูแลยานพาหนะ', value: ADMIN[V[o.carEdit][3]][0] }] }, { label: 'สถานที่ตรวจ', value: 'สำนักงาน ' + V[o.carEdit][3] }, { label: 'วันดำเนินการ', value: v.d1 + ' – ' + v.d2 }], ok: 'บันทึก' });
-  if (o.costFor) await formModal(scr, { title: 'กำหนดค่าจ้างตรวจ · ' + o.costFor + ' คัน', sub: 'ใส่ค่าเดียวกันให้ทุกคันที่ติ๊ก', fields: [{ label: 'ค่าจ้างตรวจ (บาท)', value: '9,000.00' }], ok: 'บันทึก' });
   if (o.leave) await confirm(scr, { danger: true, title: 'ยืนยันการออกจากหน้านี้', sub: 'ข้อมูลที่กรอกไว้จะไม่ถูกบันทึก', cancel: 'อยู่ต่อ', ok: 'ออกจากหน้านี้' });
   if (o.del) await confirm(scr, { danger: true, title: 'ยืนยันการลบแผนเดินทาง', sub: 'ยานพาหนะในแผนเดินทางนี้จะกลับไปเป็นคันที่ยังไม่มีแผนเดินทาง', ok: 'ลบแผนเดินทาง' });
   return scr;
@@ -635,7 +645,7 @@ async function vendorPlans(name, o) {
   return scr;
 }
 const VTRIP_COLS = [['ชื่อแผนเดินทาง', 0, 'Lead text'], ['ช่วงวันที่ดำเนินการ', 210], ['ยานพาหนะ', 110], ['อนุมัติแล้ว', 120], ['ตรวจไม่ได้', 110], ['สถานะ', 210], ['', 72]];
-const VCAR_COLS = [['ทะเบียน', 220, 'Lead text'], ['สังกัด / สถานที่ตรวจ', 0], ['ครบกำหนดตรวจ', 150], ['แผนเดินทาง', 240], ['ผล ปจ.2', 120]];
+const VCAR_COLS = [['ทะเบียน', 220, 'Lead text'], ['สังกัด / สถานที่ตรวจ', 0], ['ครบกำหนดตรวจ', 150], ['แผนเดินทาง', 240], ['ผล ปจ.2', 180], ['ค่าจ้างตรวจ', 140]];   /* ผู้รับจ้างเห็นค่าจ้าง กำหนดไม่ได้ */
 async function vendorPlan(name, o) {
   o = o || {};
   const p = o.plan || P10, trips = o.trips || [T1, T2], can = o.can !== false;
@@ -649,7 +659,7 @@ async function vendorPlan(name, o) {
   const inTrip = (id) => trips.find(t => t.cars.indexOf(id) >= 0);
   parts.push(col('Section', [await sectionLabel('ยานพาหนะในแผน', { badge: p.cars.length }), await tblShort(VCAR_COLS, p.cars.map(id => { const t = inTrip(id);
     return [{ text: V[id][0], sub: V[id][1] + ' · ' + V[id][2] }, { text: V[id][3], sub: t ? 'สำนักงาน ' + V[id][3] : undefined }, { text: V[id][6], sub: 'วาระ ' + V[id][7] + ' เดือน' },
-      t ? { text: t.name, sub: 'วันดำเนินการ ' + t.d1 + ' – ' + t.d2 } : { pill: ['ยังไม่มีแผนเดินทาง', 'Gray'] }, t ? resPills(t, id, ['sent', 'approved']) : '-']; }), { pagination: p.cars.length })], 16));
+      t ? { text: t.name, sub: 'วันดำเนินการ ' + t.d1 + ' – ' + t.d2 } : { pill: ['ยังไม่มีแผนเดินทาง', 'Gray'] }, t ? resPills(t, id, ['sent', 'approved']) : '-', planCosts(p)[id] ? baht(planCosts(p)[id]) : 'ยังไม่กำหนด']; }), { pagination: p.cars.length })], 16));
   add(page, col('Content', parts, 32), 'h');
   if (o.toast) notify(scr, o.toast);
   return scr;
@@ -865,6 +875,8 @@ const SCENARIOS = [
     ['ยานพาหนะที่หาวาระไม่เจอ', () => planForm('S2 ยังไม่ระบุวาระ', { values: Object.assign({}, FILLED, { cars: FILLED.cars.concat(['v22']) }), unknown: 'v22' })],
     ['ระบุวาระเอง', () => planForm('S2 ระบุวาระ', { values: Object.assign({}, FILLED, { cars: FILLED.cars.concat(['v22']) }), unknown: 'v22', cyclePick: true })],
     ['เอายานพาหนะออก', () => planForm('S2 เอาออก', { values: FILLED, drop: 'v05' })],
+    ['กำหนดค่าจ้างหลายคัน', () => planForm('S2 กำหนดค่าจ้าง', { values: Object.assign({}, FILLED, { costs: { v04: 9000 } }), ticked: ['v01', 'v03', 'v05'], costFor: true })],
+    ['ค่าจ้างตามใบสั่งจ้างเกินงบประมาณ', () => planForm('S2 เกินงบ', { values: Object.assign({}, FILLED, { costs: { v01: 12000, v03: 12000, v04: 12000, v05: 12000 } }), over: true })],
     ['กรอกครบ', () => planForm('S2 กรอกครบ', { values: FILLED })],
     ['ข้อมูลไม่ครบ', () => planForm('S2 ไม่ครบ', { values: { cars: [] }, errors: true })],
     ['ยืนยันการออก', () => planForm('S2 ยืนยันการออก', { values: FILLED, leave: true })],
@@ -887,16 +899,15 @@ const SCENARIOS = [
     ['ยังไม่มีแผนเดินทาง', () => planDetail('S5 ยังไม่มีแผนเดินทาง', { plan: PLANS[2], trips: [] })],
     ['ยกเลิกแผน', () => planDetail('S5 ยกเลิกแผน', { plan: PLANS[2], trips: [], cancel: 2 })],
     ['มีแผนเดินทาง', () => planDetail('S5 มีแผนเดินทาง')],
+    ['กำหนดค่าจ้างหลังอนุมัติ', () => planDetail('S5 กำหนดค่าจ้าง', { noCheck: true, costEdit: 'v23' })],
+    ['บันทึกค่าจ้างแล้ว', () => planDetail('S5 บันทึกค่าจ้าง', { noCheck: true, costSet: { v23: 8000 }, toast: 'บันทึกค่าจ้างตรวจ 63-2208 ยะลา 8,000.00 บาท แล้ว' })],
     ['แผนของ กรย. (ดูอย่างเดียว)', () => planDetail('S5 แผน กรย.', { plan: PLANS[0], trips: [], noCheck: true })],
     ['แผนที่ยกเลิก', () => planDetail('S5 ยกเลิกแล้ว', { plan: DONE_PLANS[1], trips: [] })]]],
   ['S6 · กบค. สร้างแผนเดินทางเอง และส่งอนุมัติ', [
     ['ฟอร์มว่าง', () => tripForm('S6 ฟอร์มว่าง', { plan: PLANS[2], values: {} })],
     ['ปฏิทินช่วงวันที่ดำเนินการ', () => tripForm('S6 ช่วงวันที่ดำเนินการ', { plan: PLANS[2], values: { name: 'ตรวจ ปจ.2 ชลบุรีและอุดรธานี' }, dateOpen: true })],
     ['หน้าต่างเพิ่มยานพาหนะ', () => tripForm('S6 เพิ่มยานพาหนะ', { values: { name: TRIP_FILLED.name, d1: TRIP_FILLED.d1, d2: TRIP_FILLED.d2 }, picker: { ticked: ['v17', 'v18', 'v19'] } })],
-    ['ค่าจ้างรายคันไม่บังคับ', () => tripForm('S6 ยังไม่กรอกค่าจ้าง', { values: Object.assign({}, TRIP_FILLED, { costs: {} }) })],
-    ['กำหนดค่าจ้างหลายคัน', () => tripForm('S6 กำหนดค่าจ้าง', { values: Object.assign({}, TRIP_FILLED, { costs: {} }), ticked: ['v17', 'v18', 'v19'], costFor: 3 })],
     ['แก้ไขยานพาหนะรายคัน', () => tripForm('S6 แก้ไขรายคัน', { values: TRIP_FILLED, carEdit: 'v17' })],
-    ['งบประมาณเกิน', () => tripForm('S6 งบเกิน', { values: TRIP_FILLED, over: true })],
     ['กรอกครบ', () => tripForm('S6 กรอกครบ', { values: TRIP_FILLED })],
     ['ส่งอนุมัติสำเร็จ', async () => { const s = await planDetail('S6 ส่งสำเร็จ', { plan: PLANS[2], trips: [T3] }); notify(s, 'สร้างแผนเดินทางและส่งให้หัวหน้า กบค. อนุมัติแล้ว'); return s; }]]],
   ['S7 · ผู้รับจ้างเห็นแผนและเสนอแผนเดินทาง', [
@@ -909,7 +920,6 @@ const SCENARIOS = [
   ['S8 · กบค. รับแผนเดินทางที่ผู้รับจ้างเสนอ (เปิดแล้วเข้าหน้าแก้ไขเลย)', [
     ['รายละเอียดแผน · มีแผนเดินทางที่เสนอ', () => planDetail('S8 แผนมีข้อเสนอ')],
     ['เปิดแผนเดินทางที่เสนอ = หน้าแก้ไข', () => tripForm('S8 เปิดข้อเสนอ', { trip: T2, values: TRIP_VENDOR })],
-    ['กรอกค่าจ้าง', () => tripForm('S8 กรอกค่าจ้าง', { trip: T2, values: Object.assign({}, TRIP_VENDOR, { costs: { v23: 9000 } }) })],
     ['ยืนยันลบแผนเดินทาง', () => tripForm('S8 ลบข้อเสนอ', { trip: T2, values: TRIP_VENDOR, del: true })],
     ['ส่งอนุมัติสำเร็จ', async () => { const s = await tripDetail('S8 ส่งสำเร็จ', { trip: Object.assign({}, T2, { st: 'review' }) }); notify(s, 'ส่งแผนเดินทาง ' + T2.name + ' ให้หัวหน้า กบค. อนุมัติแล้ว'); return s; }]]],
   ['S9 · หัวหน้า กบค. อนุมัติแผนเดินทาง', [
