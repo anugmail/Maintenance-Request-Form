@@ -2303,12 +2303,12 @@ async function tripApproval(name, o) {
    S4 รายละเอียดแผน (กบค.) — กล่องข้อมูลแผน + ผู้รับจ้าง · ตารางแผนเดินทาง · ยานพาหนะในแผน
    ============================================================================ */
 const TRIP_COLS = [['ชื่อแผนเดินทาง', 0, 'Lead text'], ['ช่วงวันที่ดำเนินการ', 210], ['ผลตรวจอนุมัติ', 140], ['ตรวจไม่ได้', 110], ['ค่าจ้างตรวจรวม', 150], ['สถานะ', 130], ['', 72]];
-const CAR_COLS = [['ทะเบียน', 220, 'Lead text'], ['สังกัด', 150], ['วาระ', 130], ['แผนเดินทาง', 0], ['ผล ปจ.2', 120], ['สถานะ', 150], ['', 72]];
+const CAR_COLS = [['ทะเบียน', 220, 'Lead text'], ['สังกัด', 150], ['ผู้ดูแลยานพาหนะ', 190], ['วาระ', 130], ['แผนเดินทาง', 0], ['ผล ปจ.2', 180], ['สถานะ', 150], ['', 72]];   /* ผู้ดูแลยานพาหนะ (เว็บ 27 พ.ย. 2569): ของแผนเดินทาง · ยังไม่มี = ผู้ดูแลหลักของสังกัด */
 const tripOfCar = (id) => [T1, T2].find(t => t.cars.indexOf(id) >= 0);
 const carRowDetail = (id, o) => {
   const v = V[id], t = tripOfCar(id), n = machinesOfCar(id).length;
   const st = !t ? null : carSt(t, id);
-  return [o && o.check ? { check: (o.ticked || []).indexOf(id) >= 0, text: v[0], sub: v[1] + ' · ' + v[2], disabled: st !== 'sent' } : { text: v[0], sub: v[1] + ' · ' + v[2] }, v[3], { text: v[7] + ' เดือน', sub: n > 1 ? n + ' เครื่องมือกล' : v[8] || undefined },
+  return [o && o.check ? { check: (o.ticked || []).indexOf(id) >= 0, text: v[0], sub: v[1] + ' · ' + v[2], disabled: st !== 'sent' } : { text: v[0], sub: v[1] + ' · ' + v[2] }, v[3], { text: ADMIN[v[3]][0], sub: ADMIN[v[3]][1] }, { text: v[7] + ' เดือน', sub: n > 1 ? n + ' เครื่องมือกล' : v[8] || undefined },
     t ? { text: t.name, sub: 'วันดำเนินการ ' + t.d1 + ' – ' + t.d2 } : { pill: ['ยังไม่มีแผนเดินทาง', 'Gray'] },
     t ? resPills(t, id, ['sent', 'approved', 'returned']) : '-', st ? { pill: DOC_ST[st] } : '-', { icons: [st === 'sent' ? 'check-24-300-round' : 'quick_reference_all-24-300-round'] }];
 };
