@@ -1,4 +1,4 @@
-/* ⚠ ไฟล์นี้ประกอบอัตโนมัติจาก plugin-lib/core.js + safety-inspection-plugin/screens.js ด้วย build-plugin.js — แก้ที่ต้นทางแล้วรัน  node figma-export/build-plugin.js safety-inspection-plugin  (2026-11-26) */
+/* ⚠ ไฟล์นี้ประกอบอัตโนมัติจาก plugin-lib/core.js + safety-inspection-plugin/screens.js ด้วย build-plugin.js — แก้ที่ต้นทางแล้วรัน  node figma-export/build-plugin.js safety-inspection-plugin  (2026-11-27) */
 
 /* ============================================================================
    plugin-lib/core.js — โค้ดส่วนกลางของปลั๊กอินสร้างจอจาก component จริง (แยกจาก overhaul2-plugin 20 ต.ค. 2569)
@@ -1845,6 +1845,10 @@ const INCLUDE = {};
        (กบค. สร้างเอง · ผู้รับจ้างเสนอ → กบค. ตรวจ/กรอกค่าจ้าง → ส่งหัวหน้า) → ผู้รับจ้างบันทึกผลรายคัน → กบค. อนุมัติรายคัน → เสร็จสิ้นเอง
      · เมนูอยู่ในกลุ่ม "งานซ่อมและบำรุงรักษา" · หน้ารายการแผน = บำรุงรักษาตามวาระ แท็บ Safety Inspection
    โครงปลั๊กอินตามแบบประเมินผู้รับจ้าง (contractor-eval-plugin) · ตัวช่วยที่ยกมาจากปลั๊กอินบำรุงรักษา (maintainance-plugin/screens.js) ระบุไว้ที่ฟังก์ชัน
+   อัปเดต 27 พ.ย. 2569 ให้ตรงเว็บล่าสุด (6b08a2d): ผลตรวจรายเครื่องมือกลแสดงเป็นคันเดียวมีเครื่องข้างใน (ป้ายต่อเครื่อง · popup แท็บต่อเครื่อง · ติ๊กเป็นคัน)
+     · ทะเบียน ปจ.2 แถวละคัน + ที่มา/เลขที่อ้างอิงของผลนอกแผน · การตรวจ ปจ.2 ในหน้าข้อมูลยานพาหนะการ์ดละเครื่อง + ดูประวัติ · ย้ายเครื่องเมื่อรหัสซ้ำ
+     · สถานะตามตาราง status (ผู้รับจ้าง: เสร็จสิ้นสีเขียว) · แผนเดินทางที่ผู้รับจ้างเสนอเปิดแล้วเข้าหน้าแก้ไขเลย ไม่มีปุ่มส่งออก
+     · ตัวอย่างคันที่มีเครื่องมือกล 2 เครื่อง = 74-7745 (เครน + กระเช้า) — เว็บตั้งต้นทุกคันมีเครื่องเดียว คันหลายเครื่องเกิดจากเพิ่มในหน้าข้อมูลยานพาหนะ
    กติกา: component-rules.md · 1 scenario = 1 บล็อกตัวอักษร (R19) · ตารางไม่เกิน 8 คอลัมน์ · คำว่า "ยานพาหนะ" แทน "รถ" (ยกเว้นข้อมูลจาก API เช่นชื่อประเภท)
    ============================================================================ */
 
@@ -2089,10 +2093,21 @@ const planOf = (mr) => PLANS.concat(DONE_PLANS).find(p => p.mr === mr);
 const T1 = { id: 'MRZ7000010-1', mr: 'MRZ7000010', name: 'ตรวจ ปจ.2 ภาคเหนือและภาคกลาง', d1: '10/11/2569', d2: '20/12/2569', cars: ['v17', 'v18', 'v19', 'v20'],
   costs: { v17: 9000, v18: 9000, v19: 9500, v20: 9000 }, st: 'active', by: 'กบค.', approvedBy: HEAD1 + ' · 11/11/2569',
   res: { v17: ['approved', 'ผ่าน', '12/11/2569', '', 'ปจ2-70-8801.pdf'], v18: ['approved', 'ตรวจไม่ได้', '17/11/2569', 'ยานพาหนะอยู่ระหว่างซ่อมระบบไฮดรอลิก ไม่สามารถยกกระเช้าทดสอบได้', 'หนังสือรับรอง-72-3302.pdf'],
-    v19: ['sent', 'ไม่ผ่าน', '14/11/2569', '', 'ปจ2-74-7745.pdf'], v20: ['returned', 'ผ่าน', '13/11/2569', 'เอกสารไม่ชัด อ่านเลขตัวถังไม่ได้ กรุณาสแกนใหม่', 'ปจ2-82-9956.jpg'] } };
+    v19: ['sent', 'ไม่ผ่าน', '14/11/2569', '', 'ปจ2-74-7745.pdf'], v20: ['returned', 'ผ่าน', '13/11/2569', 'เอกสารไม่ชัด อ่านเลขตัวถังไม่ได้ กรุณาสแกนใหม่', 'ปจ2-82-9956.jpg'] },
+  res2: { v19: [['sent', 'ผ่าน', '14/11/2569', '', 'ปจ2-74-7745-กระเช้า.pdf']] } };   /* res2 = ผลของเครื่องที่ 2 ขึ้นไปของคัน (EXTRA_M) */
 const T2 = { id: 'MRZ7000010-2', mr: 'MRZ7000010', name: 'ตรวจ ปจ.2 ปทุมธานี (ผู้รับจ้างเสนอ)', d1: '21/12/2569', d2: '10/01/2570', cars: ['v23'], costs: {}, st: 'proposed', by: 'vendor', res: {}, sent: '25/11/2569' };
 const T3 = { id: 'MRZ7000011-1', mr: 'MRZ7000011', name: 'ตรวจ ปจ.2 ชลบุรีและอุดรธานี', d1: '10/01/2570', d2: '15/02/2570', cars: ['v21', 'v22'], costs: { v21: 8500, v22: 9200 }, st: 'review', by: 'กบค.', res: {}, sent: '19/11/2569' };
-const T1_DONE = Object.assign({}, T1, { st: 'closed', res: Object.assign({}, T1.res, { v19: ['approved', 'ไม่ผ่าน', '14/11/2569', '', 'ปจ2-74-7745.pdf'], v20: ['approved', 'ผ่าน', '13/11/2569', '', 'ปจ2-82-9956.pdf'] }) });
+const T1_DONE = Object.assign({}, T1, { st: 'closed', res: Object.assign({}, T1.res, { v19: ['approved', 'ไม่ผ่าน', '14/11/2569', '', 'ปจ2-74-7745.pdf'], v20: ['approved', 'ผ่าน', '13/11/2569', '', 'ปจ2-82-9956.pdf'] }),
+  res2: { v19: [['approved', 'ผ่าน', '14/11/2569', '', 'ปจ2-74-7745-กระเช้า.pdf']] } });
+/* ผลรายเครื่องของคัน (เครื่องหลัก = res · เครื่องอื่น = res2) · สถานะรวมของคัน = เสร็จสิ้นเมื่อทุกเครื่องอนุมัติ อื่นๆ ตามลำดับ ส่งกลับแก้ไข › รออนุมัติ › กำลังดำเนินการ › รอดำเนินการ (carState ของเว็บ) */
+const unitRes = (t, id) => [t.res[id]].concat((t.res2 && t.res2[id]) || []).concat(Array(Math.max(0, machinesOfCar(id).length - 1 - ((t.res2 && t.res2[id]) || []).length)).fill(undefined));
+const carSt = (t, id) => { const sts = unitRes(t, id).map(r => r ? r[0] : 'none'); return sts.every(x => x === 'approved') ? 'approved' : ['returned', 'sent', 'draft', 'none'].find(x => sts.indexOf(x) >= 0) || 'none'; };
+/* ป้ายผลต่อเครื่อง (carPills ของเว็บ): คันเครื่องเดียว = ผลอย่างเดียว · หลายเครื่อง = "ประเภท · ผล" (ไม่มีผล = "ประเภท · -" สีเทา) · only = เฉพาะสถานะที่นับ */
+function resPills(t, id, only) {
+  const ms = machinesOfCar(id), many = ms.length > 1, out = [];
+  unitRes(t, id).forEach((r, i) => { const ok = r && r[0] !== 'none' && (!only || only.indexOf(r[0]) >= 0); if (ok) out.push([(many ? machineTag(ms, ms[i]) + ' · ' : '') + r[1], RES_C[r[1]]]); else if (many) out.push([machineTag(ms, ms[i]) + ' · -', 'Gray']); });
+  return out.some(x => !/ · -$/.test(x[0])) ? { pills: out } : '-';
+}
 const baht = (n) => n ? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' บาท' : 'ยังไม่กำหนด';
 const tripBudget = (t) => t.cars.reduce((a, c) => a + (t.costs[c] || 0), 0);
 const vend = (p) => VENDORS[p.ven];
@@ -2291,11 +2306,11 @@ const TRIP_COLS = [['ชื่อแผนเดินทาง', 0, 'Lead text'
 const CAR_COLS = [['ทะเบียน', 220, 'Lead text'], ['สังกัด', 150], ['วาระ', 130], ['แผนเดินทาง', 0], ['ผล ปจ.2', 120], ['สถานะ', 150], ['', 72]];
 const tripOfCar = (id) => [T1, T2].find(t => t.cars.indexOf(id) >= 0);
 const carRowDetail = (id, o) => {
-  const v = V[id], t = tripOfCar(id), r = t && t.res[id];
-  const st = !t ? null : r ? r[0] : 'none';
-  return [o && o.check ? { check: (o.ticked || []).indexOf(id) >= 0, text: v[0], sub: v[1] + ' · ' + v[2], disabled: st !== 'sent' } : { text: v[0], sub: v[1] + ' · ' + v[2] }, v[3], { text: v[7] + ' เดือน', sub: v[8] || undefined },
+  const v = V[id], t = tripOfCar(id), n = machinesOfCar(id).length;
+  const st = !t ? null : carSt(t, id);
+  return [o && o.check ? { check: (o.ticked || []).indexOf(id) >= 0, text: v[0], sub: v[1] + ' · ' + v[2], disabled: st !== 'sent' } : { text: v[0], sub: v[1] + ' · ' + v[2] }, v[3], { text: v[7] + ' เดือน', sub: n > 1 ? n + ' เครื่องมือกล' : v[8] || undefined },
     t ? { text: t.name, sub: 'วันดำเนินการ ' + t.d1 + ' – ' + t.d2 } : { pill: ['ยังไม่มีแผนเดินทาง', 'Gray'] },
-    r && r[0] !== 'draft' ? { pill: [r[1], RES_C[r[1]]] } : '-', st ? { pill: DOC_ST[st] } : '-', { icons: [st === 'sent' ? 'check-24-300-round' : 'quick_reference_all-24-300-round'] }];
+    t ? resPills(t, id, ['sent', 'approved', 'returned']) : '-', st ? { pill: DOC_ST[st] } : '-', { icons: [st === 'sent' ? 'check-24-300-round' : 'quick_reference_all-24-300-round'] }];
 };
 async function planDetail(name, o) {
   o = o || {};
@@ -2320,10 +2335,11 @@ async function planDetail(name, o) {
   add(page, col('Content', parts, 32), 'h');
   if (o.cancel) await formModal(scr, { title: 'ยกเลิกแผน ' + p.mr, sub: 'ยกเลิกได้เฉพาะแผนที่ยังไม่มีผลตรวจ · แผนเดินทางของแผนนี้จะถูกลบ และยานพาหนะกลับไปเลือกเข้าแผนอื่นได้', fields: [{ label: 'เหตุผลที่ยกเลิก', value: o.cancel === 2 ? 'ผู้รับจ้างยกเลิกสัญญา' : '', area: 1, placeholder: 'ระบุเหตุผล' }], ok: 'ยกเลิกแผน', danger: true });
   if (o.del) await confirm(scr, { danger: true, title: 'ยืนยันการลบแผนตรวจ ปจ.2', sub: 'แผนและรายการยานพาหนะในแผนจะถูกลบ ไม่สามารถกู้คืนได้', ok: 'ลบแผน' });
-  if (o.bulk) await confirm(scr, { title: 'อนุมัติผลตรวจ ปจ.2 ' + ticked.length + ' คัน', sub: 'ผลตรวจและเอกสารของยานพาหนะที่เลือกจะถูกล็อก ส่งกลับแก้ไขไม่ได้อีก', ok: 'อนุมัติ' });
+  if (o.bulk) await confirm(scr, { title: 'อนุมัติผลตรวจ ปจ.2 ' + ticked.length + ' คัน', sub: 'เครื่องมือกลที่รออนุมัติของคันที่เลือก ' + sentUnits(T1, ticked) + ' เครื่อง · ผลตรวจและเอกสารจะถูกล็อก ส่งกลับแก้ไขไม่ได้อีก', ok: 'อนุมัติ' });
   if (o.toast) notify(scr, o.toast);
   return scr;
 }
+const sentUnits = (t, cars) => cars.reduce((a, id) => a + unitRes(t, id).filter(r => r && r[0] === 'sent').length, 0);
 
 /* ============================================================================
    S5 สร้าง/แก้ไขแผนเดินทาง — 2 เส้น: กบค. สร้างเอง · ผู้รับจ้างเสนอ (byVendor) · ค่าจ้างรายคันไม่บังคับ
@@ -2333,7 +2349,8 @@ async function tripForm(name, o) {
   o = o || {};
   const p = o.plan || P10, t = o.trip, vendor = !!o.byVendor, v = o.values || {};
   const head = t ? 'แก้ไขแผนเดินทาง' : 'สร้างแผนเดินทาง';
-  const { scr, page } = await shell(name, { title: head, back: true, crumbs: vendor ? ['เอกสาร ปจ.2', p.mr, head] : ['บำรุงรักษาตามวาระ', p.mr, head] });
+  const proposed = !!t && t.st === 'proposed';   /* แผนเดินทางที่ผู้รับจ้างเสนอ: หน่วยงานที่สร้างแผนเปิดแล้วมาหน้านี้เลย · ลบได้ที่หัวหน้า · ไม่มีส่งออก (เว็บ 27 พ.ย. 2569) */
+  const { scr, page } = await shell(name, { title: head, back: true, crumbs: vendor ? ['เอกสาร ปจ.2', p.mr, head] : ['บำรุงรักษาตามวาระ', p.mr, head], actions: proposed ? [['Secondary danger button', 'ลบ', 'delete-24-300-round']] : null });
   const sel = v.cars || [], costs = v.costs || {};
   const work = field('ช่วงวันที่ดำเนินการ', v.d1 ? v.d1 + ' – ' + v.d2 : '', { placeholder: 'เลือกวันเริ่มและวันสิ้นสุด', lead: 'calendar_month-24-300-round', state: o.dateOpen ? 'Focused' : undefined, error: o.errors && !v.d1 ? 'กรุณาเลือกช่วงวันที่ดำเนินการ' : '' });
   const info = col('Section', [await section('ข้อมูลแผนเดินทาง'),
@@ -2350,7 +2367,8 @@ async function tripForm(name, o) {
     const tb = await tblShort(TRIP_FORM_COLS, rows); headCheck(tb, rows); add(carSec, tb, 'h');
   } else add(carSec, await dataEmpty('ยังไม่มียานพาหนะในแผนเดินทาง', 'เพิ่มยานพาหนะของแผนนี้ที่ยังไม่อยู่ในแผนเดินทางใด อย่างน้อย 1 คัน', 'เพิ่มยานพาหนะ'), 'h');
   const complete = v.name && v.d1 && sel.length;
-  add(page, col('Content', [t && t.st === 'returned' ? alertBox('Error', 'หัวหน้า กบค. ส่งกลับให้แก้ไข', 'ตรวจวันที่อีกครั้ง · แก้ไขแล้วกดบันทึกและส่งอนุมัติอีกครั้ง') : null, info, carSec,
+  add(page, col('Content', [proposed ? alertBox('Info', 'ผู้รับจ้างเสนอแผนเดินทางนี้', 'ตรวจหรือแก้ไขได้ (กรอกค่าจ้างตรวจรายคันได้ ไม่บังคับ) แล้วกดบันทึกและส่งอนุมัติให้หัวหน้า กบค. · เสนอเมื่อ ' + t.sent) : null,
+    t && t.st === 'returned' ? alertBox('Error', 'หัวหน้า กบค. ส่งกลับให้แก้ไข', 'ตรวจวันที่อีกครั้ง · แก้ไขแล้วกดบันทึกและส่งอนุมัติอีกครั้ง') : null, info, carSec,
     btnRow([['Secondary button', t ? 'ยกเลิก' : 'ย้อนกลับ', { size: 'lg' }], ['Primary button', t && t.st === 'active' ? 'บันทึก' : 'บันทึกและส่งอนุมัติ', { size: 'lg', disabled: !complete }]])], 32), 'h');
   if (o.dateOpen && !MOB) {
     const dp = await thaiDatePicker(inst('Date picker', { Type: 'Dual' }, { 'Time picker': false }), ['ธันวาคม 2569', 'มกราคม 2570']);
@@ -2362,6 +2380,7 @@ async function tripForm(name, o) {
     fields: [{ pair: [{ label: 'เบอร์ติดต่อ', value: ADMIN[V[o.carEdit][3]][1] }, { label: 'ผู้ดูแลยานพาหนะ', value: ADMIN[V[o.carEdit][3]][0] }] }, { label: 'สถานที่ตรวจ', value: 'สำนักงาน ' + V[o.carEdit][3] }, { label: 'วันดำเนินการ', value: v.d1 + ' – ' + v.d2 }], ok: 'บันทึก' });
   if (o.costFor) await formModal(scr, { title: 'กำหนดค่าจ้างตรวจ · ' + o.costFor + ' คัน', sub: 'ใส่ค่าเดียวกันให้ทุกคันที่ติ๊ก', fields: [{ label: 'ค่าจ้างตรวจ (บาท)', value: '9,000.00' }], ok: 'บันทึก' });
   if (o.leave) await confirm(scr, { danger: true, title: 'ยืนยันการออกจากหน้านี้', sub: 'ข้อมูลที่กรอกไว้จะไม่ถูกบันทึก', cancel: 'อยู่ต่อ', ok: 'ออกจากหน้านี้' });
+  if (o.del) await confirm(scr, { danger: true, title: 'ยืนยันการลบแผนเดินทาง', sub: 'ยานพาหนะในแผนเดินทางนี้จะกลับไปเป็นคันที่ยังไม่มีแผนเดินทาง', ok: 'ลบแผนเดินทาง' });
   return scr;
 }
 const TRIP_FILLED = { name: 'ตรวจ ปจ.2 ภาคเหนือและภาคกลาง', d1: '01/12/2569', d2: '15/01/2570', cars: ['v17', 'v18', 'v19'], costs: { v17: 9000, v18: 9500, v19: 9000 } };
@@ -2371,58 +2390,60 @@ const TRIP_VENDOR = { name: 'ตรวจ ปจ.2 ปทุมธานี', d1
    S6 รายละเอียดแผนเดินทาง (กบค.) · ผลการตรวจ ปจ.2 รายคัน · แผนเดินทางที่ผู้รับจ้างเสนอ
    ============================================================================ */
 const RES_COLS = [['ทะเบียน', 200, 'Lead text'], ['ผู้ดูแลยานพาหนะ', 0], ['ครบกำหนดตรวจ', 150], ['วันที่ตรวจ', 120], ['ผล ปจ.2', 120], ['ค่าจ้างตรวจ', 150], ['สถานะ', 160], ['', 72]];
-const resRow = (t, id, o) => {
-  const v = V[id], r = t.res[id], st = r ? r[0] : 'none';
-  const lead = o && o.check ? { check: (o.ticked || []).indexOf(id) >= 0, text: v[0], sub: v[1] + ' · ' + v[3], disabled: !(o.can || ['sent']).includes(st) } : { text: v[0], sub: v[1] + ' · ' + v[3] };
-  return [lead, { text: ADMIN[v[3]][0], sub: ADMIN[v[3]][1] }, { text: v[6], sub: 'วาระ ' + v[7] + ' เดือน' }, r ? r[2] : '-', r ? { pill: [r[1], RES_C[r[1]]] } : '-',
+const resRow = (t, id, o) => {   /* แถวละคัน มีเครื่องอยู่ข้างใน (resultCells ของเว็บ): บรรทัดรอง สังกัด · n เครื่องมือกล · วันที่ตรวจล่าสุด x/y เครื่อง · ผลป้ายต่อเครื่อง · สถานะรวมของคัน */
+  const v = V[id], n = machinesOfCar(id).length, st = carSt(t, id), dates = unitRes(t, id).filter(r => r && r[2]).map(r => r[2]);
+  const sub = v[3] + (n > 1 ? ' · ' + n + ' เครื่องมือกล' : '');
+  const lead = o && o.check ? { check: (o.ticked || []).indexOf(id) >= 0, text: v[0], sub, disabled: !(o.can || ['sent']).includes(st) } : { text: v[0], sub };
+  return [lead, { text: ADMIN[v[3]][0], sub: ADMIN[v[3]][1] }, { text: v[6], sub: 'วาระ ' + v[7] + ' เดือน' }, dates.length ? { text: dates[dates.length - 1], sub: n > 1 ? dates.length + '/' + n + ' เครื่อง' : undefined } : '-', resPills(t, id),
     { text: baht(t.costs[id]), sub: t.costs[id] ? 'ตามสัญญา' : undefined }, { pill: DOC_ST[st] }, { icons: [o && o.vendor ? (st === 'approved' || st === 'sent' ? 'quick_reference_all-24-300-round' : 'stylus-24-300-round') : st === 'sent' ? 'check-24-300-round' : st === 'approved' ? 'quick_reference_all-24-300-round' : 'stylus-24-300-round'] }];
 };
 async function tripDetail(name, o) {
   o = o || {};
   const t = o.trip || T1, p = planOf(t.mr), proposed = t.st === 'proposed';
-  const actions = [['Secondary button', 'ส่งออก', 'download-24-300-round']];
-  if (proposed) actions.push(['Secondary danger button', 'ลบ', 'delete-24-300-round'], ['Secondary button', 'แก้ไข', 'stylus-24-300-round'], ['Primary button', 'ส่งอนุมัติ', 'arrow_right_alt-24-300-round']);
-  else if (t.st === 'active') actions.push(['Secondary button', 'ปิดแผนเดินทาง', 'check-24-300-round'], ['Secondary button', 'แก้ไข', 'stylus-24-300-round']);
+  /* แผนเดินทางที่ผู้รับจ้างเสนอ: หน่วยงานที่สร้างแผนไปหน้าแก้ไข (tripForm) · หน้านี้ = ดูอย่างเดียว ไม่มีปุ่มส่งออก (เว็บ 27 พ.ย. 2569) */
+  const actions = proposed ? [] : [['Secondary button', 'ส่งออก', 'download-24-300-round']];
+  if (t.st === 'active') actions.push(['Secondary button', 'ปิดแผนเดินทาง', 'check-24-300-round'], ['Secondary button', 'แก้ไข', 'stylus-24-300-round']);
   const { scr, page } = await shell(name, { title: t.name, back: true, crumbs: ['บำรุงรักษาตามวาระ', p.mr, t.name], actions });
   const parts = [];
-  if (proposed) parts.push(alertBox('Info', 'ผู้รับจ้างเสนอแผนเดินทางนี้', 'ตรวจหรือแก้ไขได้ (กรอกค่าจ้างตรวจรายคันได้ ไม่บังคับ) แล้วกดส่งอนุมัติให้หัวหน้า กบค. · เสนอเมื่อ ' + t.sent));
+  if (proposed) parts.push(alertBox('Info', 'ผู้รับจ้างเสนอแผนเดินทางนี้', 'ตรวจหรือแก้ไขได้ (กรอกค่าจ้างตรวจรายคันได้ ไม่บังคับ) แล้วกดบันทึกและส่งอนุมัติให้หัวหน้า กบค. · เสนอเมื่อ ' + t.sent));
   if (t.st === 'closed') parts.push(alertBox('Success', 'เสร็จสิ้นเมื่อ 26/11/2569', 'กบค. อนุมัติผลตรวจครบทุกคันหรือปิดแผนเดินทางแล้ว · ทะเบียน ปจ.2 อัปเดตตามผลที่อนุมัติ'));
   parts.push(...await tripBoxes(t, p));
-  if (t.st === 'closed') parts.push(col('Section', [await sectionLabel('สรุปผลการตรวจ'), kv([['ผ่าน', '2 คัน'], ['ไม่ผ่าน', '1 คัน'], ['ระงับ', '0 คัน'], ['ตรวจไม่ได้', '1 คัน'], ['ค่าจ้างตรวจรวม', '27,500.00 บาท'], ['งบประมาณ', '36,500.00 บาท']])], 16));
+  if (t.st === 'closed') parts.push(col('Section', [await sectionLabel('สรุปผลการตรวจ'), kv([['ผลอนุมัติแล้ว', '4/4 คัน'], ['ผ่าน', '3 เครื่อง'], ['ไม่ผ่าน', '1 เครื่อง'], ['ระงับ', '0 เครื่อง'], ['ตรวจไม่ได้', '1 เครื่อง'], ['ค่าจ้างตรวจรวม', '27,500.00 บาท'], ['งบประมาณ', '36,500.00 บาท']])], 16));
   const check = t.st === 'active' && !o.noCheck, ticked = o.ticked || [];
   const sec = col('Section', [await sectionLabel('ผลการตรวจ ปจ.2 รายคัน', { badge: 'อนุมัติแล้ว ' + t.cars.filter(c => t.res[c] && t.res[c][0] === 'approved').length + '/' + t.cars.length + ' คัน',
     buttons: check ? [{ kind: 'Primary button', text: 'อนุมัติ' + (ticked.length ? ' (' + ticked.length + ' คัน)' : ''), icon: 'check-24-300-round', disabled: !ticked.length }] : [] })], 16);
   const rows = t.cars.map(id => resRow(t, id, { check, ticked })); const tb = await tblShort(RES_COLS, rows); if (check) headCheck(tb, rows); add(sec, tb, 'h');
   parts.push(sec);
   add(page, col('Content', parts, 32), 'h');
-  if (o.forward) await confirm(scr, { title: 'ส่งแผนเดินทาง ' + t.name + ' ให้หัวหน้า กบค. อนุมัติ', sub: 'แผนเดินทางที่ผู้รับจ้างเสนอ · ส่งตามข้อมูลที่แสดง (แก้ไขก่อนได้ด้วยปุ่มแก้ไข)', ok: 'ส่งอนุมัติ' });
-  if (o.close) await confirm(scr, { title: 'ปิดแผนเดินทาง ' + t.name, sub: 'ยานพาหนะที่ยังไม่อนุมัติผล 2 คันจะออกจากแผนเดินทางนี้ กลับไปเป็นคันที่ยังไม่มีแผนเดินทาง · ผลที่ยังไม่อนุมัติของคันเหล่านั้นจะถูกล้าง', ok: 'ปิดแผนเดินทาง' });
+  if (o.close) await confirm(scr, { title: 'ปิดแผนเดินทาง ' + t.name, sub: 'ยานพาหนะที่ยังไม่อนุมัติผล 2 คันจะออกจากแผนเดินทางนี้ กลับไปเป็นคันที่ยังไม่มีแผนเดินทาง (สร้างแผนเดินทางใหม่ หรือเอาออกจากแผนได้) · ผลที่ยังไม่อนุมัติของคันเหล่านั้นจะถูกล้าง เครื่องที่อนุมัติแล้วเก็บผลไว้ แผนเดินทางใหม่ส่งผลแค่เครื่องที่ค้าง', ok: 'ปิดแผนเดินทาง' });
   if (o.del) await confirm(scr, { danger: true, title: 'ยืนยันการลบแผนเดินทาง', sub: 'ยานพาหนะในแผนเดินทางนี้จะกลับไปเป็นคันที่ยังไม่มีแผนเดินทาง', ok: 'ลบแผนเดินทาง' });
-  if (o.bulk) await confirm(scr, { title: 'อนุมัติผลตรวจ ปจ.2 ' + ticked.length + ' คัน', sub: 'ผลตรวจและเอกสารของยานพาหนะที่เลือกจะถูกล็อก ส่งกลับแก้ไขไม่ได้อีก', ok: 'อนุมัติ' });
-  if (o.export) await popupModal(scr, { title: 'ส่งออกแผนเดินทาง', sub: t.name + ' · ยานพาหนะ ' + t.cars.length + ' คัน และผลการตรวจ ปจ.2 รายคัน', w: 640, ok: 'ส่งออก',
+  if (o.bulk) await confirm(scr, { title: 'อนุมัติผลตรวจ ปจ.2 ' + ticked.length + ' คัน', sub: 'เครื่องมือกลที่รออนุมัติของคันที่เลือก ' + sentUnits(t, ticked) + ' เครื่อง · ผลตรวจและเอกสารจะถูกล็อก ส่งกลับแก้ไขไม่ได้อีก', ok: 'อนุมัติ' });
+  if (o.export) await popupModal(scr, { title: 'ส่งออกแผนเดินทาง', sub: t.name + ' · ยานพาหนะ ' + t.cars.length + ' คัน และผลการตรวจ ปจ.2 รายคัน (ป้ายผลต่อเครื่องคั่นด้วยจุลภาค)', w: 640, ok: 'ส่งออก',
     body: [labeled('รูปแบบไฟล์', radioCards([['PDF', 'เอกสาร A4 สำหรับพิมพ์หรือแนบเอกสาร'], ['Excel', 'ไฟล์ .csv เปิดด้วย Excel ได้']], 0))] });
   if (o.result) await resultModal(scr, t, o.result.car, o.result);
   if (o.toast) notify(scr, o.toast);
   return scr;
 }
 /* popup ผลการตรวจ ปจ.2 รายคัน (ResultModal ของเว็บ) — ผู้รับจ้างบันทึก · กบค. พิจารณา (อนุมัติ / ส่งกลับแก้ไข) · บันทึกแทนผู้รับจ้าง */
-async function resultModal(scr, t, id, o) {
+async function resultModal(scr, t, id, o) {   /* popup ของคัน: แท็บต่อเครื่อง (CarResultModal) + ผลของเครื่องที่เลือก (ResultModal) · o.unit = ลำดับเครื่อง */
   o = o || {};
-  const v = V[id], r = t.res[id] || [], res = o.res || r[1] || '', st = r[0] || 'none';
+  const v = V[id], ms = machinesOfCar(id), ui = o.unit || 0, m = ms[ui], r = unitRes(t, id)[ui] || [], res = o.res || r[1] || '', st = r[0] || 'none';
   const cannot = res === 'ตรวจไม่ได้', needFile = res === 'ผ่าน' || res === 'ไม่ผ่าน';
   const body = [];
-  if (o.behalf) body.push(alertBox('Brand', 'บันทึกผลแทนผู้รับจ้าง', 'ผลที่ส่งแล้วพิจารณาอนุมัติได้ตามปกติ'));
+  if (ms.length > 1) body.push(await tabs(ms.map(x => [machineTag(ms, x), null]), ui));
+  if (MOB) body.push(kv([['ทะเบียน', v[0]], ['เครื่องมือกล', machineLabel(m)], ['รหัสทรัพย์สิน', m.asset + ' - ' + m.sub], ['วาระการตรวจ', v[7] + ' เดือน']]));
+  if (o.behalf) body.push(alertBox('Info', 'กบค. บันทึกผลแทนผู้รับจ้าง', 'กรอกผลแล้วกดส่งอนุมัติ จากนั้นพิจารณาอนุมัติผลของเครื่องนี้ได้ตามปกติ'));
   if (st === 'returned' && o.mode !== 'review') body.push(alertBox('Error', 'กบค. ส่งกลับแก้ไข', r[3] + ' · แก้ไขแล้วกดส่งอนุมัติอีกครั้ง'));
   if (st === 'sent' && o.mode === 'view') body.push(alertBox('Info', 'ส่งอนุมัติแล้วเมื่อ 18/11/2569 · รอ กบค. อนุมัติ', 'ระหว่างรออนุมัติแก้ไขหรือลบไม่ได้ ดูและดาวน์โหลดได้'));
-  body.push(kv([['ทะเบียน', v[0]], ['ประเภทยานพาหนะ', v[2]], ['สังกัด', v[3]], ['ครบกำหนดตรวจ', v[6]]]));
+  const sum = v[0] + ' · ' + machineLabel(m) + ' · วาระ ' + v[7] + ' เดือน';
   if (o.mode === 'review' || o.mode === 'view') {
-    body.push(kv([['วันที่ตรวจ', r[2] || '-'], ['ผลการตรวจ', res || '-'], ['ค่าจ้างตรวจคันนี้', baht(t.costs[id])]].concat(cannot ? [['เหตุผลที่ตรวจไม่ได้', r[3]]] : [])));
+    body.push(kv([['วันที่ตรวจ', r[2] || '-'], ['ค่าจ้างตรวจคันนี้', baht(t.costs[id])], ['ผลการตรวจ', res || '-'], ['ครบกำหนดตรวจเดิม', v[6]]].concat(cannot ? [['เหตุผลที่ตรวจไม่ได้', r[3]]] : []), 2));
     if (r[4]) body.push(await upload(cannot ? 'หนังสือรับรองจากผู้แทนหน่วยงาน' : 'เอกสารการตรวจ ปจ.2', [{ name: r[4], size: '1.2 MB' }], { readonly: true }));
     if (o.mode === 'review') {
       body.push(col('Section', [await sectionLabel('ผลการพิจารณา'), radioCards([['อนุมัติ', 'ทะเบียน ปจ.2 อัปเดตทันที'], ['ส่งกลับแก้ไข', 'ผู้รับจ้างแก้ไขแล้วส่งใหม่']], o.sel == null ? -1 : o.sel)], 16));
       if (o.sel === 1) body.push(area('เหตุผลที่ส่งกลับ', o.reason || '', { placeholder: 'ระบุเหตุผลที่ส่งกลับ', error: o.err ? 'กรุณาระบุเหตุผลที่ส่งกลับ' : '' }));
     }
-    await popupModal(scr, { title: 'ผลการตรวจ ปจ.2 · ' + v[0], sub: t.name, w: 800, body, ok: o.mode === 'review' ? 'ยืนยันผลการพิจารณา' : null, cancel: o.mode === 'review' ? 'ยกเลิก' : 'ปิด', okOff: o.mode === 'review' && (o.sel == null || (o.sel === 1 && !o.reason)) });
+    await popupModal(scr, { title: o.mode === 'review' ? 'พิจารณาผลการตรวจ ปจ.2' : 'ผลการตรวจ ปจ.2', sub: sum, w: 640, body, ok: o.mode === 'review' ? 'ยืนยันผลการพิจารณา' : null, cancel: o.mode === 'review' ? 'ยกเลิก' : 'ปิด', okOff: o.mode === 'review' && (o.sel == null || (o.sel === 1 && !o.reason)) });
     return;
   }
   /* บันทึกผล (ผู้รับจ้าง · บันทึกแทน) */
@@ -2434,7 +2455,7 @@ async function resultModal(scr, t, id, o) {
   const files = o.files || (r[4] && st !== 'none' ? [{ name: r[4], size: '1.2 MB' }] : []);
   body.push(await upload(cannot ? 'หนังสือรับรองจากผู้แทนหน่วยงาน' : 'เอกสารการตรวจ ปจ.2', files, { optional: res && !needFile, hint: 'PDF, PNG, JPG · ไฟล์ละไม่เกิน 10 MB · สูงสุด 10 ไฟล์', error: o.errors && needFile && !files.length ? 'กรุณาแนบเอกสารอย่างน้อย 1 ไฟล์' : '' }));
   const complete = date && res && (!cannot || o.reason) && (!needFile || files.length);
-  const r0 = await popupModal(scr, { title: 'บันทึกผลการตรวจ ปจ.2 · ' + v[0], sub: t.name, w: 800, body, ok: 'ส่งอนุมัติ', okOff: !complete });
+  const r0 = await popupModal(scr, { title: o.behalf ? 'บันทึกผลการตรวจ ปจ.2 แทนผู้รับจ้าง' : 'บันทึกผลการตรวจ ปจ.2', sub: sum, w: 640, body, ok: 'ส่งอนุมัติ', okOff: !complete });
   if (r0 && r0.m) { const ft = r0.m.findAll(n => n.type === 'INSTANCE' && n.name === 'Modal footer')[0]; const tb = ft && ft.findAll(n => n.type === 'INSTANCE' && n.name === 'Tertiary button')[0]; if (tb) { /* ปุ่ม "บันทึก" (เก็บไว้ กรอกไม่ครบได้) ใช้ Tertiary action ของ Modal footer */ setProps(ft, { 'Tertiary action': true }); tb.visible = true; setProps(tb, { Text: 'บันทึก', 'Leading icon': false, 'Trailing icon': false }); } }
   if (o.dateOpen && !MOB && r0 && r0.m) { const dp = await thaiDatePicker(inst('Date picker', { Type: 'Single' }, { 'Time picker': false }), ['พฤศจิกายน 2569']); overlay(scr, dp, 0, 0); const di = r0.body.findAll(n => n.type === 'INSTANCE' && n.name === 'Text input')[0]; pin(() => { const sb = scr.absoluteBoundingBox, ab = di.absoluteBoundingBox; dp.x = ab.x - sb.x; dp.y = ab.y - sb.y + ab.height + 4; }); }
 }
@@ -2443,7 +2464,7 @@ async function resultModal(scr, t, id, o) {
    S7–S9 ผู้รับจ้าง — เอกสาร ปจ.2 (รายการแผน) · หน้าแผนของผู้รับจ้าง · แผนเดินทางของผู้รับจ้าง
    ============================================================================ */
 const VPLAN_COLS = [['เลขที่ MR', 0, 'Lead text'], ['ระยะเวลาตามสัญญา', 220], ['ยานพาหนะ', 110], ['แผนเดินทาง', 120], ['อนุมัติแล้ว', 120], ['ตรวจไม่ได้', 110], ['สถานะ', 210], ['', 72]];
-const V_PLANS = [[P10, '2 แผน', '2/5 คัน', '1 คัน', ['มีเอกสารที่ถูกส่งกลับแก้ไข', 'Error']], [PLANS[4], '1 แผน', '0/1 คัน', '0 คัน', ['รออนุมัติ', 'Info']], [DONE_PLANS[0], '0 แผน', '0/0 คัน', '0 คัน', ['เสร็จสิ้น', 'Gray']]];
+const V_PLANS = [[P10, '2 แผน', '2/5 คัน', '1 คัน', ['มีเอกสารที่ถูกส่งกลับแก้ไข', 'Error']], [PLANS[4], '1 แผน', '0/1 คัน', '0 คัน', ['รออนุมัติ', 'Info']], [DONE_PLANS[0], '0 แผน', '0/0 คัน', '0 คัน', ['เสร็จสิ้น', 'Success']]];   /* ตาราง status ข้อ 25: เสร็จสิ้นสีเขียว · ข้อ 20: แผนที่ยังไม่มีแผนเดินทางที่อนุมัติ = "อนุมัติแล้ว" (ฟ้า) */
 async function vendorPlans(name, o) {
   o = o || {};
   const { scr, page } = await shell(name, { title: 'เอกสาร ปจ.2', crumbs: ['เอกสาร ปจ.2'] });
@@ -2463,13 +2484,13 @@ async function vendorPlan(name, o) {
   const parts = [col('Section', [await sectionLabel('ข้อมูลผู้รับจ้าง'), kv(vendorPairs(p))], 16)];
   const tsec = col('Section', [await sectionLabel('แผนเดินทาง', { badge: trips.length, buttons: can && trips.length ? [{ kind: 'Primary button', text: 'สร้างแผนเดินทาง', icon: 'add-24-300-round' }] : [] })], 16);
   if (trips.length) add(tsec, await tblShort(VTRIP_COLS, trips.map(t => [{ text: t.name }, t.d1 + ' – ' + t.d2, t.cars.length + ' คัน', t.id === T1.id ? '2/4 คัน' : '0/' + t.cars.length + ' คัน', t.id === T1.id ? '1 คัน' : '0 คัน',
-    { pill: t.st === 'active' ? ['มีเอกสารที่ถูกส่งกลับแก้ไข', 'Error'] : t.st === 'closed' ? ['เสร็จสิ้น', 'Gray'] : ['รออนุมัติ', 'Info'] }, viewCell()])), 'h');
+    { pill: t.st === 'active' ? ['มีเอกสารที่ถูกส่งกลับแก้ไข', 'Error'] : t.st === 'closed' ? ['เสร็จสิ้น', 'Success'] : ['รออนุมัติ', 'Info'] }, viewCell()])), 'h');
   else add(tsec, await dataEmpty('ยังไม่มีแผนเดินทาง', 'สร้างแผนเดินทางเสนอ ' + p.dept + ' หรือรอ ' + p.dept + ' จัดแผนเดินทาง', can ? 'สร้างแผนเดินทาง' : null), 'h');
   parts.push(tsec);
   const inTrip = (id) => trips.find(t => t.cars.indexOf(id) >= 0);
-  parts.push(col('Section', [await sectionLabel('ยานพาหนะในแผน', { badge: p.cars.length }), await tblShort(VCAR_COLS, p.cars.map(id => { const t = inTrip(id), r = t && t.res[id];
+  parts.push(col('Section', [await sectionLabel('ยานพาหนะในแผน', { badge: p.cars.length }), await tblShort(VCAR_COLS, p.cars.map(id => { const t = inTrip(id);
     return [{ text: V[id][0], sub: V[id][1] + ' · ' + V[id][2] }, { text: V[id][3], sub: t ? 'สำนักงาน ' + V[id][3] : undefined }, { text: V[id][6], sub: 'วาระ ' + V[id][7] + ' เดือน' },
-      t ? { text: t.name, sub: 'วันดำเนินการ ' + t.d1 + ' – ' + t.d2 } : { pill: ['ยังไม่มีแผนเดินทาง', 'Gray'] }, r && (r[0] === 'sent' || r[0] === 'approved') ? { pill: [r[1], RES_C[r[1]]] } : '-']; }), { pagination: p.cars.length })], 16));
+      t ? { text: t.name, sub: 'วันดำเนินการ ' + t.d1 + ' – ' + t.d2 } : { pill: ['ยังไม่มีแผนเดินทาง', 'Gray'] }, t ? resPills(t, id, ['sent', 'approved']) : '-']; }), { pagination: p.cars.length })], 16));
   add(page, col('Content', parts, 32), 'h');
   if (o.toast) notify(scr, o.toast);
   return scr;
@@ -2492,7 +2513,7 @@ async function vendorTrip(name, o) {
   parts.push(sec);
   add(page, col('Content', parts, 32), 'h');
   if (o.result) await resultModal(scr, res, o.result.car, o.result);
-  if (o.ask) await confirm(scr, { title: 'ยืนยันส่งผลการตรวจ ปจ.2 ' + ticked.length + ' คันเพื่ออนุมัติ', sub: 'ระหว่างรออนุมัติจะแก้ไขหรือลบเอกสารของยานพาหนะที่เลือกไม่ได้ แต่ยังดูได้', ok: 'ส่งอนุมัติ' });
+  if (o.ask) await confirm(scr, { title: 'ยืนยันส่งผลการตรวจ ปจ.2 ' + ticked.length + ' คันเพื่ออนุมัติ', sub: 'เครื่องมือกลที่กรอกครบของคันที่เลือก ' + ticked.reduce((a, id) => a + unitRes(res, id).filter(r => r && r[0] === 'draft').length, 0) + ' เครื่อง · ระหว่างรออนุมัติจะแก้ไขหรือลบเอกสารไม่ได้ แต่ยังดูได้', ok: 'ส่งอนุมัติ' });
   if (o.toast) notify(scr, o.toast);
   return scr;
 }
@@ -2500,41 +2521,58 @@ async function vendorTrip(name, o) {
 /* ============================================================================
    S10 ทะเบียน ปจ.2 · S11 ข้อมูลยานพาหนะ · S12 ผู้ดูแลยานพาหนะ (แจ้งเตือน)
    ============================================================================ */
-const REG_COLS = [['ทะเบียน', 220, 'Lead text'], ['สังกัด', 0], ['ตรวจล่าสุด', 140], ['ผลล่าสุด', 130], ['ครบกำหนดครั้งถัดไป', 170], ['แผน', 140], ['', 104]];
+const REG_COLS = [['ทะเบียน', 220, 'Lead text'], ['สังกัด', 0], ['ตรวจล่าสุด', 140], ['ผลล่าสุด', 180], ['ครบกำหนดครั้งถัดไป', 170], ['แผน', 140], ['', 104]];
+const NO_RESULT = 'ยังไม่มีผลในระบบ';
 const REG = [['v17', '12/11/2569', 'ผ่าน', '12/05/2570', 'MRZ7000010'], ['v18', '17/11/2569', 'ตรวจไม่ได้', '12/12/2569', 'MRZ7000010'], ['v42', '20/11/2569', 'ผ่าน', '20/11/2570', 'MRA7000013'],
   ['v01', '', '', '05/11/2569', '-'], ['v03', '05/06/2569', 'ผ่าน', '20/12/2569', '-'], ['v04', '10/07/2569', 'ระงับ', '10/01/2570', '-'], ['v05', '25/01/2569', 'ผ่าน', '25/01/2570', '-'],
   ['v16', '08/06/2569', 'ผ่าน', '08/06/2570', 'MRZ7000009'], ['v19', '03/01/2569', 'ไม่ผ่าน', '03/01/2570', 'MRZ7000010'], ['v24', '30/01/2569', 'ผ่าน', '30/01/2570', 'MRZ7000012']];
-const regRow = (r) => [{ text: V[r[0]][0], sub: V[r[0]][1] + ' · ' + V[r[0]][2] }, V[r[0]][3], r[1] || '-', r[2] ? { pill: [r[2], RES_C[r[2]]] } : '-',
-  { text: r[3], sub: r[0] === 'v01' ? 'เกินกำหนด 21 วัน' : r[0] === 'v18' ? 'อีก 16 วัน' : undefined, tone: r[0] === 'v01' ? 'error' : r[0] === 'v18' ? 'warning' : undefined }, r[4], { icons: ['quick_reference_all-24-300-round', 'cloud_upload-24-300-round'] }];
+/* แถวละคัน (ทะเบียน ปจ.2 ของเว็บ): ตรวจล่าสุด บรรทัดรอง วาระ (+ n เครื่องมือกล) · ผลล่าสุดป้ายต่อเครื่อง (ไม่มีผล = "ยังไม่มีผลในระบบ") · แผน บรรทัดรอง = เจ้าของแผน · ไม่อยู่ในแผน */
+const ownerOf = (mr) => (planOf(mr) || {}).dept || 'กบค.';
+const regRow = (r) => { const id = r[0], ms = machinesOfCar(id), many = ms.length > 1;
+  return [{ text: V[id][0], sub: V[id][1] + ' · ' + V[id][2] }, V[id][3], { text: r[1] || '-', sub: 'วาระ ' + V[id][7] + ' เดือน' + (many ? ' · ' + ms.length + ' เครื่องมือกล' : '') },
+    { pills: ms.map((m, i) => { const l = i === 0 ? r[2] : ''; return [(many ? machineTag(ms, m) + ' · ' : '') + (l || NO_RESULT), l ? RES_C[l] : 'Gray']; }) },
+    { text: r[3], sub: id === 'v01' ? 'เกินกำหนด 21 วัน' : id === 'v18' ? 'อีก 16 วัน' : undefined, tone: id === 'v01' ? 'error' : id === 'v18' ? 'warning' : undefined },
+    r[4] !== '-' ? { text: r[4], sub: ownerOf(r[4]) } : 'ไม่อยู่ในแผน', { icons: ['quick_reference_all-24-300-round', 'cloud_upload-24-300-round'] }]; };
+/* ที่มาของผลล่าสุด (sourceText ของเว็บ): ผลจากแผนที่อนุมัติ พ.ย. 2569 = "แผนตรวจ ปจ.2 MR…" · อื่นๆ = ผลนอกแผน */
+const srcOf = (r) => r[4] !== '-' && /\/11\/2569$/.test(r[1]) ? 'แผนตรวจ ปจ.2 ' + r[4] : 'ผลนอกแผน';
+/* popup ประวัติการตรวจ ปจ.2 ของคัน (HistoryModal) — แท็บต่อเครื่อง · ผลล่าสุดและย้อนหลัง 1 ครั้ง · เปิดจากทะเบียนและหน้าข้อมูลยานพาหนะ */
+async function historyModal(scr, id, ui) {
+  ui = ui || 0;
+  const v = V[id], ms = machinesOfCar(id), m = ms[ui], r = REG.find(x => x[0] === id) || [id, '', '', v[6], '-'], has = ui === 0 && !!r[1];
+  const body = [];
+  if (ms.length > 1) body.push(await tabs(ms.map(x => [machineTag(ms, x), null]), ui));
+  body.push(kv([['ผลล่าสุด', has ? r[2] : NO_RESULT], ['ตรวจล่าสุด', has ? r[1] : '-'], ['วาระการตรวจ', v[7] + ' เดือน'], ['ครบกำหนดครั้งถัดไป', has ? r[3] : v[6]],
+    ['ผู้ครอบครอง', v[4] + ' · ' + v[5]], ['แผนที่ยังไม่ปิด', r[4] !== '-' ? r[4] : 'ไม่อยู่ในแผน']]));
+  if (has && r[2] === 'ตรวจไม่ได้') body.push(alertBox('Gray', 'เหตุผลที่ตรวจไม่ได้', 'ยานพาหนะอยู่ระหว่างซ่อมระบบไฮดรอลิก ไม่สามารถยกกระเช้าทดสอบได้'));
+  if (has) body.push(await upload('เอกสารผลล่าสุด', [{ name: r[2] === 'ตรวจไม่ได้' ? 'หนังสือรับรอง-' + v[0].split(' ')[0] + '.pdf' : 'ปจ2-' + v[0].split(' ')[0] + '.pdf', size: '1.2 MB' }], { readonly: true }));
+  body.push(labeled('ประวัติการตรวจ (ล่าสุดและย้อนหลัง 1 ครั้ง)', has
+    ? await tblShort([['วันที่ตรวจ', 120], ['ผล', 120], ['ที่มา', 0], ['ครบกำหนดถัดไป', 150]], [[r[1], { pill: [r[2], RES_C[r[2]]] }, { text: srcOf(r), sub: srcOf(r) === 'ผลนอกแผน' ? undefined : 'ผู้ตรวจ ' + VENDORS[0][0] }, r[3]], ['12/05/2568', { pill: ['ผ่าน', 'Success'] }, 'ผลนอกแผน', '12/11/2568']])
+    : alertBox('Gray', 'ยังไม่มีประวัติการตรวจในระบบ', 'ครบกำหนดตั้งต้น ' + v[6])));
+  await popupModal(scr, { title: 'ประวัติการตรวจ ปจ.2 · ' + v[0], sub: machineLabel(m) + ' · รหัสทรัพย์สิน ' + m.asset + ' - ' + m.sub, w: 800, body, ok: null, cancel: 'ปิด' });
+}
 async function registry(name, o) {
   o = o || {};
   const { scr, page } = await shell(name, { title: 'ทะเบียน ปจ.2', crumbs: ['ทะเบียน ปจ.2'] });
   const sec = col('Section', [], 24); add(page, sec, 'h');
-  add(sec, alertBox('Gray', 'ผลตรวจล่าสุดและวันครบกำหนดของยานพาหนะประเภท 09', 'อัปเดตทันทีที่อนุมัติผลรายคัน · อัปโหลดผลนอกแผนได้ทุกคัน'), 'h');
-  add(sec, await tableHeader({ placeholder: 'ค้นหาทะเบียน, รหัส, สังกัด, เลขที่ MR', chips: o.chips, filterCount: o.chips ? o.chips.length : 0 }), 'h');
+  add(sec, alertBox('Gray', 'ผลตรวจล่าสุดและวันครบกำหนดของเครื่องมือกลทุกเครื่อง ยานพาหนะประเภท 09', 'อัปเดตทันทีที่อนุมัติผลรายเครื่อง · อัปโหลดผลนอกแผนได้ทุกเครื่อง'), 'h');
+  add(sec, await tableHeader({ placeholder: 'ค้นหาทะเบียน, รหัส, สังกัด, ผู้ครอบครอง, เจ้าของแผน, เครื่องมือกล', chips: o.chips, filterCount: o.chips ? o.chips.length : 0 }), 'h');
   const rows = o.rows || REG;
   if (!rows.length) add(sec, await searchNotFound(), 'h'); else add(sec, await tblShort(REG_COLS, rows.map(regRow), { pagination: { shown: rows.length, total: 62 } }), 'h');
-  if (o.filter) await filterPanel(scr, [multiDropdown('สังกัด', [], { placeholder: 'ทั้งหมด', optional: true }), multiDropdown('ผลล่าสุด', o.filter, { placeholder: 'ทั้งหมด', optional: true }),
+  if (o.filter) await filterPanel(scr, [multiDropdown('สังกัด', [], { placeholder: 'ทั้งหมด', optional: true }), multiDropdown('ประเภทเครื่องมือกล', [], { placeholder: 'ทั้งหมด', optional: true }), multiDropdown('ผลล่าสุด', o.filter, { placeholder: 'ทั้งหมด', optional: true }),
     multiDropdown('ครบกำหนดครั้งถัดไป', [], { placeholder: 'ทั้งหมด', optional: true }), multiDropdown('แผน', [], { placeholder: 'ทั้งหมด', optional: true })]);
-  if (o.history) {
-    const r = REG.find(x => x[0] === o.history), v = V[o.history], body = [kv([['ทะเบียน', v[0]], ['ประเภทยานพาหนะ', v[2]], ['สังกัด', v[3]], ['วาระ', v[7] + ' เดือน']])];
-    if (r[1]) {
-      body.push(kv([['ตรวจล่าสุด', r[1]], ['ผลล่าสุด', r[2]], ['ครบกำหนดครั้งถัดไป', r[3]], ['ที่มา', r[4] === '-' ? 'นอกแผน' : 'แผน ' + r[4]]]));
-      if (r[2] === 'ตรวจไม่ได้') body.push(alertBox('Gray', 'เหตุผลที่ตรวจไม่ได้', 'ยานพาหนะอยู่ระหว่างซ่อมระบบไฮดรอลิก ไม่สามารถยกกระเช้าทดสอบได้'));
-      body.push(await upload('เอกสารผลล่าสุด', [{ name: r[2] === 'ตรวจไม่ได้' ? 'หนังสือรับรอง-72-3302.pdf' : 'ปจ2-' + v[0].split(' ')[0] + '.pdf', size: '1.2 MB' }], { readonly: true }));
-      body.push(col('Section', [await sectionLabel('ประวัติย้อนหลัง'), await tblShort([['วันที่ตรวจ', 120], ['ผล', 120], ['ที่มา', 0], ['ครบกำหนดถัดไป', 150]], [[r[1], { pill: [r[2], RES_C[r[2]]] }, r[4] === '-' ? 'นอกแผน' : 'แผน ' + r[4], r[3]], ['12/05/2568', { pill: ['ผ่าน', 'Success'] }, 'นอกแผน', '12/11/2568']])], 16));
-    } else body.push(alertBox('Gray', 'ยังไม่มีประวัติการตรวจในระบบ', 'ครบกำหนดตั้งต้น ' + v[6]));
-    await popupModal(scr, { title: 'ประวัติการตรวจ ปจ.2 · ' + v[0], w: 800, body, ok: null, cancel: 'ปิด' });
-  }
-  if (o.upload) {
-    const v = V[o.upload.car], f = o.upload;
-    await popupModal(scr, { title: 'อัปโหลดผลตรวจนอกแผน · ' + v[0], w: 800, ok: 'บันทึก', okOff: !f.filled, body: [
-      alertBox('Info', 'ใช้สำหรับผลตรวจนอกแผน เช่น ตรวจรายคัน ตรวจหลังซ่อมหรือ Overhaul', 'บันทึกแล้วทะเบียน ปจ.2 อัปเดตทันที ไม่ต้องอนุมัติ'),
+  if (o.history) await historyModal(scr, o.history, o.unit);
+  if (o.upload) {   /* อัปโหลดผลนอกแผนรายเครื่อง: แท็บต่อเครื่อง · ที่มา (บังคับ) + เลขที่อ้างอิง · บอกครบกำหนดครั้งถัดไปก่อนบันทึก */
+    const f = o.upload, id = f.car, v = V[id], ms = machinesOfCar(id), ui = f.unit || 0, m = ms[ui], r = REG.find(x => x[0] === id), inPlan = r && r[4] !== '-' ? r[4] : '';
+    const body = [];
+    if (ms.length > 1) body.push(await tabs(ms.map(x => [machineTag(ms, x), null]), ui));
+    body.push(alertBox('Info', 'ใช้สำหรับผลตรวจนอกแผน เช่น ตรวจรายคัน ตรวจหลังซ่อมหรือ Overhaul', 'บันทึกแล้วทะเบียน ปจ.2 อัปเดตทันที ไม่ต้องอนุมัติ' + (inPlan ? ' · คันนี้อยู่ในแผน ' + inPlan + ' ที่ยังไม่ปิด' : '')),
+      row('Row', [dropdown('ที่มา', f.filled ? 'งานซ่อม' : '', { placeholder: 'เลือกที่มาของผลตรวจ' }), field('เลขที่อ้างอิง', f.filled ? 'MRP-2569-0412' : '', { placeholder: 'เช่น เลขที่ใบแจ้งซ่อม หรือแผนบำรุงรักษา', optional: true })]),
       field('วันที่ตรวจ', f.filled ? '20/11/2569' : '', { placeholder: 'ระบุวันที่', lead: 'calendar_month-24-300-round' }),
       labeled('ผลการตรวจ', radioCards(RESULTS, f.filled ? 0 : -1)),
       row('Row', [field('ผู้ตรวจ', f.filled ? 'บจก. เซฟตี้ เอ็นจิเนียริ่ง' : '', { placeholder: 'ชื่อผู้ตรวจหรือบริษัท', optional: true }), field('ค่าจ้าง (บาท)', f.filled ? '9,000.00' : '', { placeholder: '0.00', optional: true })]),
-      field('เลขที่เอกสาร', '', { placeholder: 'ระบุเลขที่เอกสาร', optional: true }),
-      await upload('เอกสารการตรวจ ปจ.2', f.filled ? [{ name: 'ปจ2-' + v[0].split(' ')[0] + '.pdf', size: '1.1 MB' }] : [], { hint: 'PDF, PNG, JPG · ไฟล์ละไม่เกิน 10 MB · สูงสุด 10 ไฟล์' })] });
+      await upload('เอกสารการตรวจ ปจ.2', f.filled ? [{ name: 'ปจ2-' + v[0].split(' ')[0] + '.pdf', size: '1.1 MB' }] : [], { hint: 'PDF, PNG, JPG · ไฟล์ละไม่เกิน 10 MB · สูงสุด 10 ไฟล์' }));
+    if (f.filled) body.push(alertBox('Success', 'ครบกำหนดครั้งถัดไป: 20/05/2570', 'วันที่ตรวจ + วาระ ' + v[7] + ' เดือน'));
+    await popupModal(scr, { title: 'อัปโหลดผลตรวจนอกแผน · ' + v[0], sub: machineLabel(m) + ' · วาระ ' + v[7] + ' เดือน', w: 640, ok: 'บันทึก', okOff: !f.filled, body });
   }
   if (o.toast) notify(scr, o.toast);
   return scr;
@@ -2550,9 +2588,32 @@ const machineOf = (id) => {   // defaultMachines() ของเว็บ (src/li
     hc: type === 'กระเช้า' || type === 'เครน' ? 'HC - ' + String(n).slice(-4) : '', eh: 2000 + (n * 397) % 6000, mh: 800 + (n * 211) % 3000 };
 };
 const LIFT_TON = { v04: 30, v09: 25, v16: 6.1, v19: 30, v21: 4.15, v42: null, v58: 12.72 };
+/* เครื่องมือกลของคัน (machinesOf ของเว็บ) · ตัวอย่างคันที่มี 2 เครื่อง: 74-7745 มีกระเช้าที่เพิ่มในหน้าข้อมูลยานพาหนะ (รหัสทรัพย์สินเดียวกัน รหัสย่อย 0002) */
+const EXTRA_M = { v19: [{ type: 'กระเช้า', brand: 'ALTEC', model: 'AT37G', lift: 0.2, sub: '0002', hc: 'HC - 7746', eh: 1250, mh: 640 }] };
+const machinesOfCar = (id) => { const b = machineOf(id); return [b].concat((EXTRA_M[id] || []).map(x => Object.assign({}, b, x))); };
+const machineLabel = (x) => [x.type, x.brand, x.model].filter(Boolean).join(' ') || 'เครื่องมือกล';
+/* ชื่อสั้นของเครื่องในคัน (ป้ายในตาราง · แท็บใน popup) = ประเภท · ประเภทซ้ำในคัน = ประเภท + ลำดับ */
+const machineTag = (list, x) => { const same = list.filter(y => y.type === x.type); return same.length > 1 ? x.type + ' ' + (same.indexOf(x) + 1) : x.type; };
 const nf = (x) => x == null || x === '' ? '-' : Number(x).toLocaleString('en-US', { maximumFractionDigits: 2 });
 /* การตรวจ ปจ.2 ครั้งล่าสุด (ทะเบียน ปจ.2 · REG): [วันที่ตรวจ, ผล, กำหนดตรวจครั้งต่อไป, ไฟล์] */
-const latestOf = (id) => { const r = REG.find(x => x[0] === id); if (!r || !r[1]) return null; return [r[1], r[2], r[3], r[2] === 'ตรวจไม่ได้' ? 'หนังสือรับรอง-' + V[id][0].split(' ')[0] + '.pdf' : 'ปจ2-' + V[id][0].split(' ')[0] + '.pdf']; };
+const latestOf = (id) => { const r = REG.find(x => x[0] === id); if (!r || !r[1]) return null; return [r[1], r[2], r[3], r[2] === 'ตรวจไม่ได้' ? 'หนังสือรับรอง-' + V[id][0].split(' ')[0] + '.pdf' : 'ปจ2-' + V[id][0].split(' ')[0] + '.pdf', srcOf(r)]; };
+/* การ์ดการตรวจ ปจ.2 ครั้งล่าสุดของเครื่อง (SafetySection ของเว็บ): หัว = ชื่อเครื่อง + รหัสทรัพย์สิน + "ดูประวัติ" · มีผล = 6 แถว (+ เหตุผลเมื่อตรวจไม่ได้) + เอกสาร · ไม่มีผล = กล่องเทา */
+async function safetyCard(id, m, i) {
+  const v = V[id], c = await viCard('Safety card'), last = i === 0 ? latestOf(id) : null;
+  const sl = await sectionLabel(machineLabel(m), { buttons: [{ kind: 'Primary button', text: 'ดูประวัติ' }] });
+  setProps(sl, { Supporting: true, 'Supporting text': 'รหัสทรัพย์สิน ' + m.asset + ' - ' + m.sub }); add(c, sl, 'h');
+  if (last) {
+    [['วันที่ตรวจ', last[0]], ['ผลการตรวจ', { pill: [last[1], RES_C[last[1]]] }], ['กำหนดตรวจครั้งต่อไป', last[2]], ['รอบตรวจประจำ', v[7] + ' เดือน'], ['ที่มา', last[4]]]
+      .concat(last[1] === 'ตรวจไม่ได้' ? [['เหตุผลที่ตรวจไม่ได้', 'ยานพาหนะอยู่ระหว่างซ่อมระบบไฮดรอลิก ไม่สามารถยกกระเช้าทดสอบได้']] : []).concat([['เอกสาร', ' ']])
+      .forEach(([l, val]) => add(c, viCardRow(l, val), 'h'));
+    add(c, inst('_File upload item base', { State: 'Completed' }, { 'File name': last[3], 'File size': '1.1 MB', 'Progress bar': false, Actions: true, 'Download action': true, 'Delete action': false }), 'h');
+  } else {
+    const box = await viSubtle(frame('Content', 'VERTICAL', { gap: 8, pad: [12, 16] }));
+    const el = await sectionLabel('ไม่มีประวัติการตรวจ ปจ.2'); setProps(el, { Supporting: true, 'Supporting text': 'เครื่องนี้ยังไม่มีผลการตรวจ ปจ.2 · ครบกำหนด ' + v[6] }); add(box, el, 'h');
+    add(c, box, 'h');
+  }
+  return c;
+}
 async function labelWithSecondary(title, sub, label) {   // Section label ที่ช่อง Secondary action สลับเป็น Secondary button (viLabelWithButton ของปลั๊กอินบำรุงรักษา)
   const sl = await sectionLabel(title, { buttons: [{ kind: 'Secondary', text: label, icon: 'add-24-300-round' }] });
   setProps(sl, { Supporting: true, 'Supporting text': sub });
@@ -2574,30 +2635,21 @@ async function machineCard(x) {   // MachineCard ของเว็บ: Section 
 }
 async function vehiclePage(name, o) {
   o = o || {};
-  const id = o.id || 'v17', v = V[id], x = o.noMachine ? null : machineOf(id), last = o.noHistory ? null : latestOf(id);
+  const id = o.id || 'v17', v = V[id], ms = o.noMachine ? [] : machinesOfCar(id), x = ms[0] || null;
   const { scr, page } = await shell(name, { title: v[0], back: true, root: 'ข้อมูลพนักงานและยานพาหนะ', crumbs: ['ข้อมูลยานพาหนะ', v[0]], badge: ['พร้อมใช้งาน', 'Success'] });
   const left = [viSection([await sectionLabel('ข้อมูลทั่วไป'), kv([['ทะเบียน', v[0]], ['รหัสข้างยานพาหนะ', v[1]], ['ประเภทยานพาหนะ', v[2]], ['ยี่ห้อ / รุ่น (เครื่องมือกล)', v[9]], ['สังกัด', v[3]], ['ผู้ครอบครอง', v[4]], ['เบอร์ติดต่อ', v[5]], ['ผู้ดูแลยานพาหนะ', ADMIN[v[3]][0]]], 2)])];
   const img = inst('Images', { Size: 'md', Type: 'Empty' });
   const right = [viSection([await sectionLabel('รูปยานพาหนะ'), img])];
-  if (x) right.push(viSection([await sectionLabel('เครื่องมือกล', { buttons: [{ kind: 'Primary button', text: 'เพิ่ม', icon: 'add-24-300-round' }] }), await machineCard(x)]));
-  else {
+  if (x) { const cards = []; for (const m of ms) cards.push(await machineCard(m)); right.push(viSection([await sectionLabel('เครื่องมือกล', { buttons: [{ kind: 'Primary button', text: 'เพิ่ม', icon: 'add-24-300-round' }] })].concat(cards))); }
+  else {   /* ยังไม่มีเครื่อง = กล่องเทา + ปุ่มเพิ่ม · ไม่มีรูป (เว็บ 26 พ.ย. 2569 "ไม่ต้องมี") */
     const card = await viCard('Machine card · ว่าง', 'HORIZONTAL');
-    const im = inst('Images', { Size: 'sm', Type: 'Empty' }); im.resize(108, 108); card.appendChild(im);
     const box = await viSubtle(frame('Content', 'VERTICAL', { gap: 8, pad: [12, 16] }));
     add(box, await labelWithSecondary('ไม่มีเครื่องมือกล', 'ยานพาหนะคันนี้ยังไม่มีข้อมูลเครื่องมือกล', 'เพิ่ม'), 'h');
     card.appendChild(box); box.layoutGrow = 1;
     right.push(viSection([await sectionLabel('เครื่องมือกล'), card]));
   }
-  if (last) {
-    const c = await viCard('Safety card');
-    [['วันที่ตรวจ', last[0]], ['ผลการตรวจ', { pill: [last[1], RES_C[last[1]]] }], ['กำหนดตรวจครั้งต่อไป', last[2]], ['รอบตรวจประจำ', v[7] + ' เดือน'], ['เอกสาร', ' ']].forEach(([l, val]) => add(c, viCardRow(l, val), 'h'));
-    add(c, inst('_File upload item base', { State: 'Completed' }, { 'File name': last[3], 'File size': '1.1 MB', 'Progress bar': false, Actions: true, 'Download action': true, 'Delete action': false }), 'h');
-    right.push(viSection([await sectionLabel('การตรวจ ปจ.2 ครั้งล่าสุด'), c]));
-  } else {
-    const box = await viSubtle(frame('Content', 'VERTICAL', { gap: 8, pad: [12, 16] }));
-    const sl = await sectionLabel('ไม่มีประวัติการตรวจ ปจ.2'); setProps(sl, { Supporting: true, 'Supporting text': 'ยานพาหนะคันนี้ยังไม่มีผลการตรวจ ปจ.2' }); add(box, sl, 'h');
-    right.push(viSection([await sectionLabel('การตรวจ ปจ.2 ครั้งล่าสุด'), box]));
-  }
+  /* การตรวจ ปจ.2 ครั้งล่าสุด: การ์ดละเครื่อง · ไม่มีเครื่องมือกล = ไม่แสดง section นี้ */
+  if (ms.length) { const cards = []; for (const [i, m] of ms.entries()) cards.push(await safetyCard(id, m, i)); right.push(viSection([await sectionLabel('การตรวจ ปจ.2 ครั้งล่าสุด')].concat(cards))); }
   const out = col('Vehicle info', [], 24);
   if (MOB) left.concat(right).forEach(k => add(out, k, 'h'));
   else { const two = frame('Row', 'HORIZONTAL', { gap: 24 }); const l = col('Column', left, 24), r = col('Column', right, 24); two.appendChild(l); l.layoutGrow = 1; two.appendChild(r); r.counterAxisSizingMode = 'FIXED'; r.resize(526, r.height); add(out, two, 'h'); }
@@ -2616,6 +2668,9 @@ async function vehiclePage(name, o) {
     await popupModal(scr, { title: edit ? 'แก้ไขเครื่องมือกล' : 'เพิ่มเครื่องมือกล', sub: v[0], w: 800, ok: 'บันทึก', body: [grid] });
   }
   if (o.del && x) await confirm(scr, { danger: true, title: 'ลบเครื่องมือกล', sub: [x.type, x.brand, x.model].join(' ') + ' · รหัสทรัพย์สิน ' + x.asset + ' - ' + x.sub + ' จะถูกลบ', ok: 'ลบ' });
+  if (o.history != null) await historyModal(scr, id, o.history);
+  if (o.move) { const h = machinesOfCar(o.move)[0];   /* รหัสทรัพย์สินซ้ำกับเครื่องของคันอื่น = เตือนแล้วย้ายมาพร้อมประวัติ (MachineSection ของเว็บ) */
+    await confirm(scr, { title: 'รหัสทรัพย์สินนี้อยู่กับยานพาหนะคันอื่น', sub: 'รหัสทรัพย์สิน ' + h.asset + ' - ' + h.sub + ' เป็น' + machineLabel(h) + ' ของ ' + V[o.move][0] + ' · ยืนยันแล้วเครื่องนี้จะย้ายมา ' + v[0] + ' พร้อมประวัติการตรวจ ปจ.2', ok: 'ย้ายมาคันนี้' }); }
   if (o.toast) notify(scr, o.toast);
   return scr;
 }
@@ -2693,11 +2748,11 @@ const SCENARIOS = [
     ['ฟอร์มเสนอแผนเดินทาง', () => tripForm('S7 ฟอร์มเสนอ', { byVendor: true, values: TRIP_VENDOR })],
     ['เสนอแล้ว · รออนุมัติ', async () => { const s = await vendorPlan('S7 เสนอแล้ว', { can: false }); notify(s, 'ส่งแผนเดินทางให้ กบค. แล้ว · กบค. ตรวจแล้วส่งอนุมัติต่อ'); return s; }],
     ['แผนเดินทางที่เสนอ (รออนุมัติ)', () => vendorTrip('S7 แผนเดินทางที่เสนอ', { trip: T2 })]]],
-  ['S8 · กบค. รับแผนเดินทางที่ผู้รับจ้างเสนอ', [
+  ['S8 · กบค. รับแผนเดินทางที่ผู้รับจ้างเสนอ (เปิดแล้วเข้าหน้าแก้ไขเลย)', [
     ['รายละเอียดแผน · มีแผนเดินทางที่เสนอ', () => planDetail('S8 แผนมีข้อเสนอ')],
-    ['แผนเดินทางที่ผู้รับจ้างเสนอ', () => tripDetail('S8 แผนเดินทางที่เสนอ', { trip: T2 })],
-    ['แก้ไขและกรอกค่าจ้าง', () => tripForm('S8 แก้ไขข้อเสนอ', { trip: T2, values: Object.assign({}, TRIP_VENDOR, { costs: { v23: 9000 } }) })],
-    ['ยืนยันส่งอนุมัติ', () => tripDetail('S8 ยืนยันส่ง', { trip: T2, forward: true })],
+    ['เปิดแผนเดินทางที่เสนอ = หน้าแก้ไข', () => tripForm('S8 เปิดข้อเสนอ', { trip: T2, values: TRIP_VENDOR })],
+    ['กรอกค่าจ้าง', () => tripForm('S8 กรอกค่าจ้าง', { trip: T2, values: Object.assign({}, TRIP_VENDOR, { costs: { v23: 9000 } }) })],
+    ['ยืนยันลบแผนเดินทาง', () => tripForm('S8 ลบข้อเสนอ', { trip: T2, values: TRIP_VENDOR, del: true })],
     ['ส่งอนุมัติสำเร็จ', async () => { const s = await tripDetail('S8 ส่งสำเร็จ', { trip: Object.assign({}, T2, { st: 'review' }) }); notify(s, 'ส่งแผนเดินทาง ' + T2.name + ' ให้หัวหน้า กบค. อนุมัติแล้ว'); return s; }]]],
   ['S9 · หัวหน้า กบค. อนุมัติแผนเดินทาง', [
     ['แท็บแผนเดินทาง', () => approvals('S9 รายการ', { tab: 1 })],
@@ -2717,10 +2772,12 @@ const SCENARIOS = [
     ['ติ๊กหลายคันส่งอนุมัติ', () => vendorTrip('S10 ติ๊กหลายคัน', { res: T1_V20, ready: ['v20'], ticked: ['v20'] })],
     ['ยืนยันส่งอนุมัติ', () => vendorTrip('S10 ยืนยันส่ง', { res: T1_V20, ready: ['v20'], ticked: ['v20'], ask: true })],
     ['ส่งอนุมัติสำเร็จ', async () => { const s = await vendorTrip('S10 ส่งสำเร็จ', { res: { v20: ['sent', 'ผ่าน', '13/11/2569', '', 'ปจ2-82-9956-ใหม่.pdf'] } }); notify(s, 'ส่งผลการตรวจ ปจ.2 1 คันเพื่ออนุมัติแล้ว'); return s; }],
-    ['ดูผลที่รออนุมัติ', () => vendorTrip('S10 ดูผลรออนุมัติ', { result: { car: 'v19', mode: 'view' } })]]],
-  ['S11 · กบค. พิจารณาผลรายคัน ปิดแผนเดินทาง และส่งออก', [
+    ['ดูผลที่รออนุมัติ · คันมี 2 เครื่อง (แท็บ)', () => vendorTrip('S10 ดูผลรออนุมัติ', { result: { car: 'v19', mode: 'view' } })],
+    ['สลับแท็บเครื่องที่ 2', () => vendorTrip('S10 แท็บเครื่องที่ 2', { result: { car: 'v19', mode: 'view', unit: 1 } })]]],
+  ['S11 · กบค. พิจารณาผลรายเครื่องมือกล ปิดแผนเดินทาง และส่งออก', [
     ['รายละเอียดแผนเดินทาง', () => tripDetail('S11 รายละเอียด')],
-    ['พิจารณาผลรายคัน', () => tripDetail('S11 พิจารณา', { result: { car: 'v19', mode: 'review' } })],
+    ['พิจารณาผล · แท็บเครื่องแรก', () => tripDetail('S11 พิจารณา', { result: { car: 'v19', mode: 'review' } })],
+    ['พิจารณาผล · แท็บเครื่องที่ 2', () => tripDetail('S11 พิจารณาเครื่องที่ 2', { result: { car: 'v19', mode: 'review', unit: 1, sel: 0 } })],
     ['เลือกส่งกลับแก้ไข ไม่ระบุเหตุผล', () => tripDetail('S11 ส่งกลับไม่มีเหตุผล', { result: { car: 'v19', mode: 'review', sel: 1, err: true } })],
     ['ติ๊กหลายคันอนุมัติ', () => tripDetail('S11 ติ๊กหลายคัน', { ticked: ['v19'], bulk: true })],
     ['บันทึกผลแทนผู้รับจ้าง', () => tripDetail('S11 บันทึกแทน', { trip: Object.assign({}, T1, { res: Object.assign({}, T1.res, { v20: undefined }) }), result: { car: 'v20', res: 'ผ่าน', behalf: true, date: '13/11/2569', files: [{ name: 'ปจ2-82-9956.pdf', size: '1.2 MB' }] } })],
@@ -2732,16 +2789,21 @@ const SCENARIOS = [
     ['แผงตัวกรอง', () => registry('S12 ตัวกรอง', { filter: ['ไม่ผ่าน', 'ตรวจไม่ได้'] })],
     ['กรองแล้ว', () => registry('S12 กรองแล้ว', { chips: ['ไม่ผ่าน', 'ตรวจไม่ได้'], rows: REG.filter(r => r[2] === 'ไม่ผ่าน' || r[2] === 'ตรวจไม่ได้') })],
     ['ประวัติการตรวจ', () => registry('S12 ประวัติ', { history: 'v18' })],
+    ['ประวัติ · คันมี 2 เครื่อง (แท็บ)', () => registry('S12 ประวัติ 2 เครื่อง', { history: 'v19', unit: 1 })],
     ['ยังไม่มีประวัติ', () => registry('S12 ไม่มีประวัติ', { history: 'v01' })],
     ['อัปโหลดผลนอกแผน', () => registry('S12 อัปโหลดว่าง', { upload: { car: 'v03' } })],
     ['อัปโหลดผลนอกแผน กรอกครบ', () => registry('S12 อัปโหลดครบ', { upload: { car: 'v03', filled: true } })],
-    ['บันทึกสำเร็จ', () => registry('S12 บันทึกสำเร็จ', { rows: [['v03', '20/11/2569', 'ผ่าน', '20/05/2570', '-']].concat(REG.filter(r => r[0] !== 'v03')), toast: 'บันทึกผลตรวจนอกแผน 72-6079 สระบุรี แล้ว · ทะเบียน ปจ.2 อัปเดตแล้ว' })]]],
-  ['S13 · ข้อมูลยานพาหนะ (เครื่องมือกล · การตรวจ ปจ.2 ครั้งล่าสุด)', [
+    ['อัปโหลด · คันมี 2 เครื่อง (แท็บ)', () => registry('S12 อัปโหลด 2 เครื่อง', { upload: { car: 'v19', unit: 1 } })],
+    ['บันทึกสำเร็จ', () => registry('S12 บันทึกสำเร็จ', { rows: [['v03', '20/11/2569', 'ผ่าน', '20/05/2570', '-']].concat(REG.filter(r => r[0] !== 'v03')), toast: 'บันทึกผลตรวจนอกแผนของ 72-6079 สระบุรี ' + machineLabel(machineOf('v03')) + ' แล้ว · ทะเบียนอัปเดตแล้ว' })]]],
+  ['S13 · ข้อมูลยานพาหนะ (เครื่องมือกล · การตรวจ ปจ.2 ครั้งล่าสุดรายเครื่อง)', [
     ['มีเครื่องมือกล · ผลตรวจครั้งล่าสุด', () => vehiclePage('S13 มีเครื่องมือกล', { id: 'v17' })],
     ['ผลตรวจครั้งล่าสุด ตรวจไม่ได้', () => vehiclePage('S13 ตรวจไม่ได้', { id: 'v18' })],
     ['ไม่มีประวัติการตรวจ', () => vehiclePage('S13 ไม่มีประวัติ', { id: 'v01' })],
+    ['มีเครื่องมือกล 2 เครื่อง', () => vehiclePage('S13 สองเครื่อง', { id: 'v19' })],
+    ['ดูประวัติการตรวจของเครื่อง', () => vehiclePage('S13 ดูประวัติ', { id: 'v19', history: 0 })],
     ['เพิ่มเครื่องมือกลเครื่องที่ 2', () => vehiclePage('S13 เพิ่มเครื่องที่ 2', { id: 'v17', machineModal: 'new' })],
     ['แก้ไขเครื่องมือกล', () => vehiclePage('S13 แก้ไขเครื่องมือกล', { id: 'v17', machineModal: 'edit' })],
+    ['รหัสทรัพย์สินซ้ำกับคันอื่น · ย้ายมาคันนี้', () => vehiclePage('S13 ย้ายเครื่อง', { id: 'v17', move: 'v19' })],
     ['บันทึกสำเร็จ', () => vehiclePage('S13 บันทึกสำเร็จ', { id: 'v17', toast: 'บันทึกเครื่องมือกลสำเร็จ' })],
     ['ยืนยันลบเครื่องมือกล', () => vehiclePage('S13 ลบเครื่องมือกล', { id: 'v17', del: true })],
     ['ลบแล้ว · ยังไม่มีเครื่องมือกล', () => vehiclePage('S13 ไม่มีเครื่องมือกล', { id: 'v17', noMachine: true, toast: 'ลบเครื่องมือกลแล้ว' })],
